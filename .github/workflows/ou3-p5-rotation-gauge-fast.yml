@@ -83,7 +83,94 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  classify:
+    name: classify latest V18B delta
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      run_v18b: ${{ steps.changes.outputs.run_v18b }}
+    steps:
+      - name: Checkout history for latest delta
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Detect V18B dependency change
+        id: changes
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          EVENT_ACTION: ${{ github.event.action }}
+          BEFORE: ${{ github.event.before }}
+          AFTER: ${{ github.event.after }}
+        run: |
+          set -euo pipefail
+          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            echo "run_v18b=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [[ "$EVENT_NAME" == "pull_request" && "$EVENT_ACTION" != "synchronize" ]]; then
+            echo "run_v18b=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [[ -z "$BEFORE" || -z "$AFTER" || "$BEFORE" =~ ^0+$ ]]; then
+            echo "run_v18b=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          git diff --name-only "$BEFORE" "$AFTER" > /tmp/ou3-v18b-changed.txt
+          cat /tmp/ou3-v18b-changed.txt
+          if [[ ! -s /tmp/ou3-v18b-changed.txt ]]; then
+            echo "run_v18b=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          run_v18b=false
+          while IFS= read -r path; do
+            case "$path" in
+              tools/ou3_p5_sample1_structured_full_gain_v12d.py|\
+              tools/ou3_p5_sample1_signed_radial_subcells_v13.py|\
+              tools/ou3_p5_sample1_signed_radial_subcells_v13d.py|\
+              tools/ou3_p5_sample1_signed_radial_subcells_v13e.py|\
+              tools/ou3_p5_sample1_signed_cayley_q8_v14.py|\
+              tools/ou3_p5_sample1_signed_cayley_q8_v14b.py|\
+              tools/ou3_p5_sample1_signed_cayley_q8_v14c.py|\
+              tools/ou3_p5_sample1_signed_cayley_q8_v14d.py|\
+              tools/ou3_p5_sample1_signed_cayley_q8_v15.py|\
+              tools/ou3_p5_sample1_signed_cayley_q8_v16.py|\
+              tools/ou3_p5_sample1_signed_cayley_q8_v17.py|\
+              tools/ou3_p5_sample1_signed_cayley_q8_v18.py|\
+              tools/ou3_p5_sample1_signed_cayley_q8_v18b.py|\
+              tools/ou3_p5_signed_full_angle_trig.py|\
+              tools/ou3_p5_sample1_signed_cayley_q8_gate.py|\
+              tools/ou3_p5_sample1_source_phase_manifest.py|\
+              tools/ou3_p5_deployed_quaternion_cayley_cell.py|\
+              tools/ou3_p5_deployed_quaternion_cayley_cell_v2.py|\
+              tools/ou3_p5_first_accel_exact_source.py|\
+              tools/ou3_p5_sample1_prefix_v2.py|\
+              tools/ou3_proof_operating_domain.json|\
+              tests/validation/test_ou3_p5_sample1_signed_cayley_q8_v14.py|\
+              tests/validation/test_ou3_p5_sample1_signed_cayley_q8_v14b.py|\
+              tests/validation/test_ou3_p5_sample1_signed_cayley_q8_v14c.py|\
+              tests/validation/test_ou3_p5_sample1_signed_cayley_q8_v14d.py|\
+              tests/validation/test_ou3_p5_sample1_signed_cayley_q8_v15.py|\
+              tests/validation/test_ou3_p5_sample1_signed_cayley_q8_v16.py|\
+              tests/validation/test_ou3_p5_sample1_signed_cayley_q8_v17.py|\
+              tests/validation/test_ou3_p5_sample1_signed_cayley_q8_v18.py|\
+              tests/validation/test_ou3_p5_sample1_signed_cayley_q8_v18b.py|\
+              tests/validation/test_ou3_p5_sample1_signed_cayley_q8_gate.py|\
+              tests/validation/test_ou3_p5_sample1_source_phase_manifest.py|\
+              tests/validation/test_ou3_p5_deployed_quaternion_cayley_cell_v2.py|\
+              .github/workflows/ou3-p5-rotation-gauge-fast.yml)
+                run_v18b=true
+                break
+                ;;
+            esac
+          done < /tmp/ou3-v18b-changed.txt
+          echo "run_v18b=$run_v18b" >> "$GITHUB_OUTPUT"
+
   sample1-signed-full-angle-current-yz-q8-v18b:
+    needs: classify
+    if: needs.classify.outputs.run_v18b == 'true'
     name: P5 sample-1 signed full-angle current-yz q8 V18B
     runs-on: macos-latest
     timeout-minutes: 45
