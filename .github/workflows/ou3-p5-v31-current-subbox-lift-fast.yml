@@ -1,0 +1,61 @@
+name: ou3-p5-v31-current-subbox-lift-fast
+
+on:
+  push:
+    paths:
+      - "tools/ou3_p5_sample1_v30_current_subbox_lift_v31.py"
+      - "tools/ou3_p5_sample1_theta_x_gain_perturbation_v30.py"
+      - "tools/ou3_p5_sample1_directional_v12d_remainder_v29.py"
+      - "tools/ou3_p5_sample1_split_gravity_signed_components_v28.py"
+      - "tools/ou3_p5_sample1_signed_post_first_aw_components_v27.py"
+      - "tools/ou3_p5_sample1_current_exact_residual_subdivision_v23.py"
+      - "tools/ou3_p5_sample1_exact_nonlinear_residual_v22.py"
+      - "tools/ou3_p5_sample1_structured_full_gain_v12d.py"
+      - "tools/ou3_proof_operating_domain.json"
+      - "tests/validation/test_ou3_p5_sample1_v30_current_subbox_lift_v31.py"
+      - ".github/workflows/ou3-p5-v31-current-subbox-lift-fast.yml"
+  pull_request:
+    paths:
+      - "tools/ou3_p5_sample1_v30_current_subbox_lift_v31.py"
+      - "tools/ou3_p5_sample1_theta_x_gain_perturbation_v30.py"
+      - "tools/ou3_p5_sample1_directional_v12d_remainder_v29.py"
+      - "tools/ou3_p5_sample1_split_gravity_signed_components_v28.py"
+      - "tools/ou3_p5_sample1_signed_post_first_aw_components_v27.py"
+      - "tools/ou3_p5_sample1_current_exact_residual_subdivision_v23.py"
+      - "tools/ou3_p5_sample1_exact_nonlinear_residual_v22.py"
+      - "tools/ou3_p5_sample1_structured_full_gain_v12d.py"
+      - "tools/ou3_proof_operating_domain.json"
+      - "tests/validation/test_ou3_p5_sample1_v30_current_subbox_lift_v31.py"
+      - ".github/workflows/ou3-p5-v31-current-subbox-lift-fast.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ou3-p5-v31-current-subbox-lift-fast-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sample1-v30-current-subbox-lift-v31:
+    name: P5 sample-1 V30 current-subbox lift V31
+    runs-on: macos-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v6
+      - name: Compile V31 producer and test
+        run: |
+          python3 -m py_compile \
+            tools/ou3_p5_sample1_v30_current_subbox_lift_v31.py \
+            tests/validation/test_ou3_p5_sample1_v30_current_subbox_lift_v31.py
+      - name: Test V31 semantics
+        working-directory: tests/validation
+        run: python3 -m unittest -v test_ou3_p5_sample1_v30_current_subbox_lift_v31
+      - name: Emit V31 all-current-subbox lift audit
+        run: |
+          python3 tools/ou3_p5_sample1_v30_current_subbox_lift_v31.py \
+            --source-pieces 4 --source-cell-index 0 \
+            --p-pieces 24 --tangent-pieces 24 --axial-pieces 24 \
+            --residual-x-pieces 6 --parallel-pieces 6 \
+            --current-component-pieces 4 \
+            --output /tmp/p5_sample1_v31_current_subbox_lift.json
