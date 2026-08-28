@@ -37,40 +37,69 @@ of samples, the pooled value is
 
 which is exactly the RMS obtained by concatenating the eight scored windows.
 
+The same run writes the two published SVG figures alongside the tables, using a
+fixed Matplotlib hash salt and no creation timestamp so repeated runs on the
+same evidence produce byte-identical files.  `--no-plots` skips them for
+environments without Matplotlib.
+
 ## Results
 
 | Family | X disp [m] | Y disp [m] | Z disp [m] | 3D disp [m] | Z / ref RMS [%] | Roll [deg] | Pitch [deg] | Yaw [deg] | Acc bias 3D [m/s^2] | Gyro bias 3D [rad/s] |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| OU-II | 0.3328 | 0.2241 | 0.2399 | 0.4675 | 20.319 | 0.0900 | 0.2137 | 0.5560 | 0.038405 | 0.0000250 |
-| OU-III | 0.2464 | 0.1736 | 0.1401 | 0.3323 | 11.867 | 0.0701 | 0.0647 | 0.2770 | 0.013235 | 0.0000243 |
-| TFG | 0.5425 | 0.1993 | 0.1553 | 0.5984 | 13.152 | 0.0888 | 0.1339 | 0.3026 | 0.025373 | 0.0002315 |
+| OU-II | 0.3578 | 0.2478 | 0.2372 | 0.4957 | 20.088 | 0.1147 | 0.2277 | 0.5441 | 0.042484 | 0.0000112 |
+| OU-III | 0.2772 | 0.2003 | 0.1392 | 0.3692 | 11.790 | 0.1151 | 0.0733 | 0.2609 | 0.021110 | 0.0000097 |
+| TFG | 0.5388 | 0.2043 | 0.1494 | 0.5952 | 12.650 | 0.1179 | 0.1839 | 0.4806 | 0.031267 | 0.0002692 |
 
-The complete per-record table, raw CSV, pooled CSV, and machine-readable
-manifest are committed under `reports/results/model_mismatch_ablation/`.
+The complete per-record table, raw CSV, pooled CSV, machine-readable manifest,
+and the two published figures are committed under
+`reports/results/model_mismatch_ablation/`.
+
+## Figures
+
+`ou_model_mismatch_floor.svg` shows the pooled floor per family across the
+displacement channels, the attitude channels, and the two estimator-generated
+bias states.  The gyro-bias panel is logarithmic because TFG exceeds the OU
+families by more than an order of magnitude on that channel.
+
+`ou_model_mismatch_scaling.svg` shows the per-record residual against `H_s`
+on the four heights, separating JONSWAP (solid, filled markers) from PM-Stokes
+(dashed, open markers).  The two logarithmic panels carry a slope-one guide;
+the center panel normalizes the vertical residual by `H_s`.
+
+Both files are mirrored byte-for-byte into `doc/kalman_ou_iii/` and included in
+the OU-III article, which reproduces the pooled table and both figures in
+Sec. "Noise-Free Model-Mismatch Floor".
 
 ## Interpretation
 
 OU-III has the lowest residual displacement floor of the three families.  Its
-pooled vertical RMS is 0.1401 m and its pooled 3-D RMS is 0.3323 m.  OU-II's
-corresponding residuals are 0.2399 m and 0.4675 m.  TFG is close to OU-III on
-the vertical channel at 0.1553 m, but its X-axis floor is 0.5425 m, more than
-twice OU-III's 0.2464 m, which drives TFG's pooled 3-D floor to 0.5984 m.
+pooled vertical RMS is 0.1392 m and its pooled 3-D RMS is 0.3692 m.  OU-II's
+corresponding residuals are 0.2372 m and 0.4957 m.  TFG is close to OU-III on
+the vertical channel at 0.1494 m, but its X-axis floor is 0.5388 m, nearly
+twice OU-III's 0.2772 m, which drives TFG's pooled 3-D floor to 0.5952 m.
+
+On attitude the three families share essentially one roll floor
+(0.115-0.118 deg).  The separation is in pitch and yaw, where OU-III reaches
+0.0733 deg and 0.2609 deg against 0.2277 deg and 0.5441 deg for OU-II and
+0.1839 deg and 0.4806 deg for TFG.
 
 The residual vertical error scales approximately with wave amplitude within
 each family rather than disappearing with ideal sensor inputs.  Across the
-individual records the Z error is about 2.9--3.4% of `H_s` for OU-III, about
-5.0--5.45% for OU-II, and about 2.94--3.35% for TFG.  That behavior is
-consistent with a substantial deterministic estimator/regularization component
-rather than an electronics-noise floor.
+individual records the Z error is about 2.83-3.41% of `H_s` for OU-III, about
+4.91-5.44% for OU-II, and about 3.02-3.62% for TFG, over a 31:1 range of `H_s`.
+A sensor-noise-limited floor would instead be roughly fixed in absolute terms
+and would fall as a fraction of `H_s` as the sea grows.  The observed
+amplitude-proportional behavior is consistent with a substantial deterministic
+estimator/regularization component rather than an electronics-noise floor.
 
 The zero-bias input also exposes estimator-generated bias states.  OU-III has
-the smallest pooled accelerometer-bias residual, 0.0132 m/s^2, compared with
-0.0384 m/s^2 for OU-II and 0.0254 m/s^2 for TFG.  TFG's pooled gyro-bias
-residual is 2.31e-4 rad/s, roughly an order of magnitude above the two OU
-families (~2.4--2.5e-5 rad/s).  These quantities are not sensor bias errors in
-this experiment: the true injected biases are identically zero, so they measure
-how much bias state the estimator creates while fitting ideal-but-model-mismatched
-wave motion.
+the smallest pooled accelerometer-bias residual, 0.0211 m/s^2, compared with
+0.0425 m/s^2 for OU-II and 0.0313 m/s^2 for TFG.  TFG's pooled gyro-bias
+residual is 2.69e-4 rad/s, more than an order of magnitude above the two OU
+families (9.70e-6 and 1.12e-5 rad/s).  These quantities are not sensor bias
+errors in this experiment: the true injected biases are identically zero, so
+they measure how much bias state the estimator creates while fitting
+ideal-but-model-mismatched wave motion.
 
 These results should not be interpreted as proving that all remaining error is
 caused by the OU or TFG stochastic model alone.  In particular, the

@@ -28,29 +28,76 @@ RMS is the RMS obtained by concatenating the eight scored windows.
     \toprule
     Family & $X$ [m] & $Y$ [m] & $Z$ [m] & 3-D [m] & $Z/Z_{\rm ref}$ [\%] \\
     \midrule
-    OU--II  & 0.333 & 0.224 & 0.240 & 0.467 & 20.32 \\
-    OU--III & 0.246 & 0.174 & 0.140 & 0.332 & 11.87 \\
-    TFG     & 0.542 & 0.199 & 0.155 & 0.598 & 13.15 \\
+    OU--II  & 0.358 & 0.248 & 0.237 & 0.496 & 20.09 \\
+    OU--III & 0.277 & 0.200 & 0.139 & 0.369 & 11.79 \\
+    TFG     & 0.539 & 0.204 & 0.149 & 0.595 & 12.65 \\
     \bottomrule
   \end{tabular}
 \end{table}
 
 OU--III has the lowest pooled displacement floor: vertical RMS is
-\SI{0.140}{m} and 3-D RMS is \SI{0.332}{m}, compared with
-\SI{0.240}{m} and \SI{0.467}{m} for OU--II.  TFG is close to OU--III
-vertically at \SI{0.155}{m}, but its \SI{0.542}{m} $X$-axis floor drives the
-3-D value to \SI{0.598}{m}.  The residual therefore does not vanish when the
-sensor corruption is removed.  Across individual records, vertical residual
-error remains approximately \pct{2.9}--\pct{3.4} of $H_s$ for OU--III,
-\pct{5.0}--\pct{5.45} for OU--II, and \pct{2.94}--\pct{3.35} for TFG, which is
-consistent with a substantial deterministic estimator/regularization component.
+\SI{0.139}{m} and 3-D RMS is \SI{0.369}{m}, compared with
+\SI{0.237}{m} and \SI{0.496}{m} for OU--II.  TFG is close to OU--III
+vertically at \SI{0.149}{m}, but its \SI{0.539}{m} $X$-axis floor drives the
+3-D value to \SI{0.595}{m}.  The residual therefore does not vanish when the
+sensor corruption is removed.  Figure~\ref{fig:model-mismatch-floor} shows the
+same pooled comparison across all four displacement channels together with the
+attitude and bias-state channels.  The three families share essentially one
+roll floor (\SIrange{0.115}{0.118}{\degree}), so the attitude separation is
+carried by pitch and yaw, where OU--III reaches \SI{0.073}{\degree} and
+\SI{0.261}{\degree} against \SI{0.228}{\degree} and \SI{0.544}{\degree} for
+OU--II and \SI{0.184}{\degree} and \SI{0.481}{\degree} for TFG.
+
+\IfFileExists{ou_model_mismatch_floor.svg}{%
+  \begin{figure}[t]
+    \centering
+    \includesvg[width=\columnwidth,inkscapelatex=false]{ou_model_mismatch_floor}
+    \caption{Pooled noise-free floor by channel over the eight stationary
+    records.  Displacement and attitude panels use linear axes; the
+    estimator-generated gyro-bias panel is logarithmic because TFG exceeds the
+    two OU families by more than an order of magnitude.  The injected true
+    sensor biases are identically zero, so the two lower panels report bias
+    state created by the estimator rather than sensor-bias error.}
+    \label{fig:model-mismatch-floor}
+  \end{figure}
+}{}
+
+The per-record behavior in Fig.~\ref{fig:model-mismatch-scaling} identifies
+what kind of floor this is.  Over a \num{31}:1 range of $H_s$ the residual
+tracks the slope-one reference rather than flattening toward a fixed offset,
+and the normalized panel is close to constant within each family: vertical
+residual error stays at \pct{2.83}--\pct{3.41} of $H_s$ for OU--III,
+\pct{4.91}--\pct{5.44} for OU--II, and \pct{3.02}--\pct{3.62} for TFG.  A
+sensor-noise-limited floor would instead be roughly fixed in absolute terms and
+would therefore fall as a fraction of $H_s$ as the sea grows.  The observed
+amplitude-proportional behavior is consistent with a deterministic
+estimator/regularization component that scales with the motion being tracked.
+The third panel isolates where the families separate: the along-$x$ residual
+carries the same proportionality but places TFG above both OU families at every
+height, which is what drives its pooled 3-D floor.
+
+\IfFileExists{ou_model_mismatch_scaling.svg}{%
+  \begin{figure}[t]
+    \centering
+    \includesvg[width=\columnwidth,inkscapelatex=false]{ou_model_mismatch_scaling}
+    \caption{Per-record noise-free residual against significant wave height.
+    Solid lines with filled markers are JONSWAP records; dashed lines with open
+    markers are PM--Stokes.  The dotted guide in the two logarithmic panels has
+    slope one.  The center panel normalizes the vertical residual by $H_s$ and
+    is nearly flat, indicating an amplitude-proportional rather than a fixed
+    error floor.}
+    \label{fig:model-mismatch-scaling}
+  \end{figure}
+}{}
 
 The zero-bias input also exposes estimator-generated bias states.  Pooled
-accelerometer-bias-state RMS is \SI{0.0132}{m.s^{-2}} for OU--III,
-\SI{0.0384}{m.s^{-2}} for OU--II, and \SI{0.0254}{m.s^{-2}} for TFG.  These are
-not physical sensor-bias errors in this experiment because the injected true
-bias is zero; they quantify bias state used by each estimator while fitting
-ideal but model-mismatched motion.
+accelerometer-bias-state RMS is \SI{0.0211}{m.s^{-2}} for OU--III,
+\SI{0.0425}{m.s^{-2}} for OU--II, and \SI{0.0313}{m.s^{-2}} for TFG, and the
+pooled gyro-bias-state RMS is \SI{9.70e-6}{rad.s^{-1}}, \SI{1.12e-5}{rad.s^{-1}},
+and \SI{2.69e-4}{rad.s^{-1}} respectively.  These are not physical sensor-bias
+errors in this experiment because the injected true bias is zero; they quantify
+bias state used by each estimator while fitting ideal but model-mismatched
+motion.
 
 The result should not be attributed to the OU or TFG stochastic model alone.
 The virtual measurements intentionally distort low-frequency physical motion,
