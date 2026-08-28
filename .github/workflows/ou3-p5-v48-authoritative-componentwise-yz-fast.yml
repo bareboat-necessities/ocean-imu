@@ -38,21 +38,36 @@ jobs:
         id: audit
         shell: bash
         run: |
+          set +e
           python3 tools/ou3_p5_sample1_authoritative_componentwise_yz_v48.py \
             --source-pieces 4 --source-cell-index 0 \
             --p-pieces 24 --tangent-pieces 24 --axial-pieces 24 \
             --residual-x-pieces 6 --parallel-pieces 6 \
-            --output /tmp/p5_sample1_v48.json
-          python3 - "$GITHUB_OUTPUT" <<'PY'
-          import json, math, sys
-          with open('/tmp/p5_sample1_v48.json', encoding='utf-8') as fh:
-              d=json.load(fh)
+            --output /tmp/p5_sample1_v48.json \
+            > /tmp/p5_sample1_v48.log 2>&1
+          rc=$?
+          set -e
+          cat /tmp/p5_sample1_v48.log
+          python3 - "$GITHUB_OUTPUT" "$rc" <<'PY'
+          import json, math, pathlib, sys
+          out, rc = sys.argv[1], int(sys.argv[2])
+          path = pathlib.Path('/tmp/p5_sample1_v48.json')
+          d = json.loads(path.read_text(encoding='utf-8')) if path.exists() else {}
+          log = pathlib.Path('/tmp/p5_sample1_v48.log').read_text(encoding='utf-8', errors='replace')
           def fmt(x):
               try: y=float(x)
               except (TypeError, ValueError): return 'na'
               return f'{y:.12g}' if math.isfinite(y) else str(y)
           caps=d.get('componentwise_yz_perturbation_detail') or {}
-          with open(sys.argv[1], 'a', encoding='utf-8') as gh:
+          failures=d.get('validation_failures') or d.get('failures') or []
+          if failures:
+              diagnostic=str(failures[0])
+          else:
+              lines=[x.strip() for x in log.splitlines() if x.strip()]
+              diagnostic=lines[-1] if lines else 'none'
+          diagnostic=' '.join(diagnostic.split())[:180]
+          with open(out, 'a', encoding='utf-8') as gh:
+              print(f"rc={rc}", file=gh)
               print(f"status={d.get('P5_SAMPLE1_AUTHORITATIVE_COMPONENTWISE_YZ_V48')}", file=gh)
               print(f"parentq={fmt(d.get('authoritative_parent_best_q_upper'))}", file=gh)
               print(f"refinedq={fmt(d.get('authoritative_componentwise_best_q_upper'))}", file=gh)
@@ -64,8 +79,15 @@ jobs:
               print(f"strict={d.get('at_least_one_yz_component_strictly_refined')}", file=gh)
               print(f"closed={d.get('first_V41_survivor_closed_by_V48_componentwise_yz')}", file=gh)
               print(f"next={d.get('next_obligation')}", file=gh)
-      - name: "V48 status=${{ steps.audit.outputs.status }} parentq=${{ steps.audit.outputs.parentq }} refinedq=${{ steps.audit.outputs.refinedq }} productq=${{ steps.audit.outputs.productq }} geodesicq=${{ steps.audit.outputs.geodesicq }}"
+              print(f"diagnostic={diagnostic}", file=gh)
+      - name: "V48 rc=${{ steps.audit.outputs.rc }} status=${{ steps.audit.outputs.status }} parentq=${{ steps.audit.outputs.parentq }} refinedq=${{ steps.audit.outputs.refinedq }}"
         run: |
+          echo "productq=${{ steps.audit.outputs.productq }} geodesicq=${{ steps.audit.outputs.geodesicq }}"
           echo "ey=${{ steps.audit.outputs.ey }} ez=${{ steps.audit.outputs.ez }} oldyz=${{ steps.audit.outputs.oldyz }}"
           echo "strict=${{ steps.audit.outputs.strict }} closed=${{ steps.audit.outputs.closed }}"
           echo "next=${{ steps.audit.outputs.next }}"
+      - name: "V48 diagnostic=${{ steps.audit.outputs.diagnostic }}"
+        run: echo "producer_rc=${{ steps.audit.outputs.rc }}"
+      - name: Fail closed on producer validation
+        if: steps.audit.outputs.rc != '0'
+        run: exit 2
