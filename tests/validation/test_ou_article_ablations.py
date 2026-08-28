@@ -6,9 +6,11 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 DOC = ROOT / "doc" / "kalman_ou_iii"
-MISMATCH_SUMMARY = (
-    ROOT / "reports" / "results" / "model_mismatch_ablation"
-    / "model_mismatch_summary.csv"
+MISMATCH_RESULTS = ROOT / "reports" / "results" / "model_mismatch_ablation"
+MISMATCH_SUMMARY = MISMATCH_RESULTS / "model_mismatch_summary.csv"
+MISMATCH_FIGURES = (
+    "ou_model_mismatch_floor.svg",
+    "ou_model_mismatch_scaling.svg",
 )
 
 
@@ -104,6 +106,44 @@ class OuArticleAblationContractTests(unittest.TestCase):
                 )
             )
             self.assertIn(expected, normalized)
+
+    def test_model_mismatch_figures_are_mirrored_from_generated_evidence(self):
+        for name in MISMATCH_FIGURES:
+            with self.subTest(name=name):
+                generated = MISMATCH_RESULTS / name
+                mirrored = DOC / name
+                self.assertTrue(generated.exists(), generated)
+                self.assertEqual(generated.read_bytes(), mirrored.read_bytes(), name)
+
+    def test_model_mismatch_section_renders_both_figures(self):
+        text = (DOC / "w3d-model-mismatch-ablation.tex-part").read_text(
+            encoding="utf-8"
+        )
+        for name in MISMATCH_FIGURES:
+            stem = name.removesuffix(".svg")
+            with self.subTest(name=name):
+                self.assertIn(rf"\IfFileExists{{{name}}}", text)
+                self.assertIn(
+                    rf"\includesvg[width=\columnwidth,inkscapelatex=false]{{{stem}}}",
+                    text,
+                )
+        self.assertIn(r"\label{fig:model-mismatch-floor}", text)
+        self.assertIn(r"\label{fig:model-mismatch-scaling}", text)
+        self.assertIn(r"Fig.~\ref{fig:model-mismatch-scaling}", text)
+
+    def test_model_mismatch_generator_publishes_the_article_figures(self):
+        tool = (ROOT / "tools" / "model_mismatch_ablation.py").read_text(
+            encoding="utf-8"
+        )
+        for token in (
+            "write_floor_plot",
+            "write_scaling_plot",
+            "ou_model_mismatch_floor.svg",
+            "ou_model_mismatch_scaling.svg",
+            'rcParams["svg.hashsalt"]',
+            'metadata={"Date": None}',
+        ):
+            self.assertIn(token, tool)
 
 
 if __name__ == "__main__":
