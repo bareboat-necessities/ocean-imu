@@ -11,6 +11,14 @@ on:
       - "tools/ou3_p5_sample1_signed_cayley_q8_v14b.py"
       - "tools/ou3_p5_sample1_signed_cayley_q8_v14c.py"
       - "tools/ou3_p5_sample1_signed_cayley_q8_v14d.py"
+      - "tools/ou3_p5_sample1_signed_cayley_q8_v15.py"
+      - "tools/ou3_p5_sample1_signed_cayley_q8_v16.py"
+      - "tools/ou3_p5_sample1_signed_cayley_q8_v17.py"
+      - "tools/ou3_p5_sample1_signed_cayley_q8_v18.py"
+      - "tools/ou3_p5_sample1_signed_cayley_q8_v18b.py"
+      - "tools/ou3_p5_signed_full_angle_trig.py"
+      - "tools/ou3_p5_sample1_signed_cayley_q8_gate.py"
+      - "tools/ou3_p5_sample1_source_phase_manifest.py"
       - "tools/ou3_p5_deployed_quaternion_cayley_cell.py"
       - "tools/ou3_p5_deployed_quaternion_cayley_cell_v2.py"
       - "tools/ou3_p5_first_accel_exact_source.py"
@@ -20,6 +28,13 @@ on:
       - "tests/validation/test_ou3_p5_sample1_signed_cayley_q8_v14b.py"
       - "tests/validation/test_ou3_p5_sample1_signed_cayley_q8_v14c.py"
       - "tests/validation/test_ou3_p5_sample1_signed_cayley_q8_v14d.py"
+      - "tests/validation/test_ou3_p5_sample1_signed_cayley_q8_v15.py"
+      - "tests/validation/test_ou3_p5_sample1_signed_cayley_q8_v16.py"
+      - "tests/validation/test_ou3_p5_sample1_signed_cayley_q8_v17.py"
+      - "tests/validation/test_ou3_p5_sample1_signed_cayley_q8_v18.py"
+      - "tests/validation/test_ou3_p5_sample1_signed_cayley_q8_v18b.py"
+      - "tests/validation/test_ou3_p5_sample1_signed_cayley_q8_gate.py"
+      - "tests/validation/test_ou3_p5_sample1_source_phase_manifest.py"
       - "tests/validation/test_ou3_p5_deployed_quaternion_cayley_cell_v2.py"
       - ".github/workflows/ou3-p5-rotation-gauge-fast.yml"
   pull_request:
@@ -32,6 +47,14 @@ on:
       - "tools/ou3_p5_sample1_signed_cayley_q8_v14b.py"
       - "tools/ou3_p5_sample1_signed_cayley_q8_v14c.py"
       - "tools/ou3_p5_sample1_signed_cayley_q8_v14d.py"
+      - "tools/ou3_p5_sample1_signed_cayley_q8_v15.py"
+      - "tools/ou3_p5_sample1_signed_cayley_q8_v16.py"
+      - "tools/ou3_p5_sample1_signed_cayley_q8_v17.py"
+      - "tools/ou3_p5_sample1_signed_cayley_q8_v18.py"
+      - "tools/ou3_p5_sample1_signed_cayley_q8_v18b.py"
+      - "tools/ou3_p5_signed_full_angle_trig.py"
+      - "tools/ou3_p5_sample1_signed_cayley_q8_gate.py"
+      - "tools/ou3_p5_sample1_source_phase_manifest.py"
       - "tools/ou3_p5_deployed_quaternion_cayley_cell.py"
       - "tools/ou3_p5_deployed_quaternion_cayley_cell_v2.py"
       - "tools/ou3_p5_first_accel_exact_source.py"
@@ -41,6 +64,13 @@ on:
       - "tests/validation/test_ou3_p5_sample1_signed_cayley_q8_v14b.py"
       - "tests/validation/test_ou3_p5_sample1_signed_cayley_q8_v14c.py"
       - "tests/validation/test_ou3_p5_sample1_signed_cayley_q8_v14d.py"
+      - "tests/validation/test_ou3_p5_sample1_signed_cayley_q8_v15.py"
+      - "tests/validation/test_ou3_p5_sample1_signed_cayley_q8_v16.py"
+      - "tests/validation/test_ou3_p5_sample1_signed_cayley_q8_v17.py"
+      - "tests/validation/test_ou3_p5_sample1_signed_cayley_q8_v18.py"
+      - "tests/validation/test_ou3_p5_sample1_signed_cayley_q8_v18b.py"
+      - "tests/validation/test_ou3_p5_sample1_signed_cayley_q8_gate.py"
+      - "tests/validation/test_ou3_p5_sample1_source_phase_manifest.py"
       - "tests/validation/test_ou3_p5_deployed_quaternion_cayley_cell_v2.py"
       - ".github/workflows/ou3-p5-rotation-gauge-fast.yml"
   workflow_dispatch:
@@ -53,13 +83,100 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  sample1-signed-cayley-q8-v14d:
-    name: P5 sample-1 signed Cayley q8 composition V14D
+  classify:
+    name: classify latest V18B delta
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      run_v18b: ${{ steps.changes.outputs.run_v18b }}
+    steps:
+      - name: Checkout history for latest delta
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Detect V18B dependency change
+        id: changes
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          EVENT_ACTION: ${{ github.event.action }}
+          BEFORE: ${{ github.event.before }}
+          AFTER: ${{ github.event.after }}
+        run: |
+          set -euo pipefail
+          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            echo "run_v18b=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [[ "$EVENT_NAME" == "pull_request" && "$EVENT_ACTION" != "synchronize" ]]; then
+            echo "run_v18b=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [[ -z "$BEFORE" || -z "$AFTER" || "$BEFORE" =~ ^0+$ ]]; then
+            echo "run_v18b=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          git diff --name-only "$BEFORE" "$AFTER" > /tmp/ou3-v18b-changed.txt
+          cat /tmp/ou3-v18b-changed.txt
+          if [[ ! -s /tmp/ou3-v18b-changed.txt ]]; then
+            echo "run_v18b=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          run_v18b=false
+          while IFS= read -r path; do
+            case "$path" in
+              tools/ou3_p5_sample1_structured_full_gain_v12d.py|\
+              tools/ou3_p5_sample1_signed_radial_subcells_v13.py|\
+              tools/ou3_p5_sample1_signed_radial_subcells_v13d.py|\
+              tools/ou3_p5_sample1_signed_radial_subcells_v13e.py|\
+              tools/ou3_p5_sample1_signed_cayley_q8_v14.py|\
+              tools/ou3_p5_sample1_signed_cayley_q8_v14b.py|\
+              tools/ou3_p5_sample1_signed_cayley_q8_v14c.py|\
+              tools/ou3_p5_sample1_signed_cayley_q8_v14d.py|\
+              tools/ou3_p5_sample1_signed_cayley_q8_v15.py|\
+              tools/ou3_p5_sample1_signed_cayley_q8_v16.py|\
+              tools/ou3_p5_sample1_signed_cayley_q8_v17.py|\
+              tools/ou3_p5_sample1_signed_cayley_q8_v18.py|\
+              tools/ou3_p5_sample1_signed_cayley_q8_v18b.py|\
+              tools/ou3_p5_signed_full_angle_trig.py|\
+              tools/ou3_p5_sample1_signed_cayley_q8_gate.py|\
+              tools/ou3_p5_sample1_source_phase_manifest.py|\
+              tools/ou3_p5_deployed_quaternion_cayley_cell.py|\
+              tools/ou3_p5_deployed_quaternion_cayley_cell_v2.py|\
+              tools/ou3_p5_first_accel_exact_source.py|\
+              tools/ou3_p5_sample1_prefix_v2.py|\
+              tools/ou3_proof_operating_domain.json|\
+              tests/validation/test_ou3_p5_sample1_signed_cayley_q8_v14.py|\
+              tests/validation/test_ou3_p5_sample1_signed_cayley_q8_v14b.py|\
+              tests/validation/test_ou3_p5_sample1_signed_cayley_q8_v14c.py|\
+              tests/validation/test_ou3_p5_sample1_signed_cayley_q8_v14d.py|\
+              tests/validation/test_ou3_p5_sample1_signed_cayley_q8_v15.py|\
+              tests/validation/test_ou3_p5_sample1_signed_cayley_q8_v16.py|\
+              tests/validation/test_ou3_p5_sample1_signed_cayley_q8_v17.py|\
+              tests/validation/test_ou3_p5_sample1_signed_cayley_q8_v18.py|\
+              tests/validation/test_ou3_p5_sample1_signed_cayley_q8_v18b.py|\
+              tests/validation/test_ou3_p5_sample1_signed_cayley_q8_gate.py|\
+              tests/validation/test_ou3_p5_sample1_source_phase_manifest.py|\
+              tests/validation/test_ou3_p5_deployed_quaternion_cayley_cell_v2.py|\
+              .github/workflows/ou3-p5-rotation-gauge-fast.yml)
+                run_v18b=true
+                break
+                ;;
+            esac
+          done < /tmp/ou3-v18b-changed.txt
+          echo "run_v18b=$run_v18b" >> "$GITHUB_OUTPUT"
+
+  sample1-signed-full-angle-current-yz-q8-v18b:
+    needs: classify
+    if: needs.classify.outputs.run_v18b == 'true'
+    name: P5 sample-1 signed full-angle current-yz q8 V18B
     runs-on: macos-latest
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v6
-      - name: Compile focused producer
+      - name: Compile focused producers
         run: |
           python3 -m py_compile \
             tools/ou3_p5_sample1_structured_full_gain_v12d.py \
@@ -70,10 +187,25 @@ jobs:
             tools/ou3_p5_sample1_signed_cayley_q8_v14b.py \
             tools/ou3_p5_sample1_signed_cayley_q8_v14c.py \
             tools/ou3_p5_sample1_signed_cayley_q8_v14d.py \
+            tools/ou3_p5_sample1_signed_cayley_q8_v15.py \
+            tools/ou3_p5_sample1_signed_cayley_q8_v16.py \
+            tools/ou3_p5_sample1_signed_cayley_q8_v17.py \
+            tools/ou3_p5_signed_full_angle_trig.py \
+            tools/ou3_p5_sample1_signed_cayley_q8_v18.py \
+            tools/ou3_p5_sample1_signed_cayley_q8_v18b.py \
+            tools/ou3_p5_sample1_signed_cayley_q8_gate.py \
+            tools/ou3_p5_sample1_source_phase_manifest.py \
             tests/validation/test_ou3_p5_sample1_signed_cayley_q8_v14.py \
             tests/validation/test_ou3_p5_sample1_signed_cayley_q8_v14b.py \
             tests/validation/test_ou3_p5_sample1_signed_cayley_q8_v14c.py \
             tests/validation/test_ou3_p5_sample1_signed_cayley_q8_v14d.py \
+            tests/validation/test_ou3_p5_sample1_signed_cayley_q8_v15.py \
+            tests/validation/test_ou3_p5_sample1_signed_cayley_q8_v16.py \
+            tests/validation/test_ou3_p5_sample1_signed_cayley_q8_v17.py \
+            tests/validation/test_ou3_p5_sample1_signed_cayley_q8_v18.py \
+            tests/validation/test_ou3_p5_sample1_signed_cayley_q8_v18b.py \
+            tests/validation/test_ou3_p5_sample1_signed_cayley_q8_gate.py \
+            tests/validation/test_ou3_p5_sample1_source_phase_manifest.py \
             tests/validation/test_ou3_p5_deployed_quaternion_cayley_cell_v2.py
       - name: Test focused semantics
         working-directory: tests/validation
@@ -83,26 +215,30 @@ jobs:
             test_ou3_p5_sample1_signed_cayley_q8_v14b \
             test_ou3_p5_sample1_signed_cayley_q8_v14c \
             test_ou3_p5_sample1_signed_cayley_q8_v14d \
+            test_ou3_p5_sample1_signed_cayley_q8_v15 \
+            test_ou3_p5_sample1_signed_cayley_q8_v16 \
+            test_ou3_p5_sample1_signed_cayley_q8_v17 \
+            test_ou3_p5_sample1_signed_cayley_q8_v18 \
+            test_ou3_p5_sample1_signed_cayley_q8_v18b \
+            test_ou3_p5_sample1_signed_cayley_q8_gate \
+            test_ou3_p5_sample1_source_phase_manifest \
             test_ou3_p5_deployed_quaternion_cayley_cell_v2
-      - name: Emit source-correlated sample-1 q8 composition
+      - name: Emit complete source-phase manifest
         run: |
-          python3 tools/ou3_p5_sample1_signed_cayley_q8_v14d.py \
+          python3 tools/ou3_p5_sample1_source_phase_manifest.py \
+            --source-pieces 4 \
+            --output /tmp/p5_sample1_source_phase_manifest.json
+      - name: Evaluate V13E-to-V14D diagnostic gate
+        run: |
+          python3 tools/ou3_p5_sample1_signed_cayley_q8_gate.py \
+            --source-pieces 4 --source-cell-index 0 \
+            --p-pieces 24 --tangent-pieces 24 --axial-pieces 24 \
+            --residual-x-pieces 2 --parallel-pieces 2 \
+            --output /tmp/p5_sample1_v13e_to_v14d_gate.json
+      - name: Emit fine V18B signed full-angle current-yz cover
+        run: |
+          python3 tools/ou3_p5_sample1_signed_cayley_q8_v18b.py \
             --source-pieces 4 --source-cell-index 0 \
             --p-pieces 24 --tangent-pieces 24 --axial-pieces 24 \
             --residual-x-pieces 6 --parallel-pieces 6 \
-            --output /tmp/p5_sample1_v14d.json
-          python3 - <<'PY'
-          import json
-          d=json.load(open('/tmp/p5_sample1_v14d.json'))
-          print('P5_V14D_STATUS:',d['P5_SAMPLE1_SIGNED_CAYLEY_Q8_V14D'])
-          print('P5_V14D_CELLS:',d['evaluated_signed_cayley_cells'])
-          print('P5_V14D_RADIAL_NOT_READY:',d['radial_not_ready_cells'])
-          print('P5_V14D_ANTIPODE_CELLS:',d['product_scalar_antipode_cells'])
-          print('P5_V14D_UNCLOSED:',d['unclosed_q8_cells'])
-          print('P5_V14D_MIN_ABS_W:',d['minimum_abs_product_scalar_lower'])
-          print('P5_V14D_MAX_Q_PLUS:',d['max_post_sample1_cayley_norm_upper'])
-          print('P5_V14D_FIRST_UNCLOSED:',d['first_unclosed_q8_cell'])
-          print('P5_V14D_WORST:',d['worst_q8_cell'])
-          print('P5_V14D_NEXT:',d['next_obligation'])
-          print('P5_V14D_VALIDATION:',d['validation_failures'])
-          PY
+            --output /tmp/p5_sample1_v18b.json

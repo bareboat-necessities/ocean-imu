@@ -60,6 +60,10 @@ jobs:
               .github/workflows/ou3-proof-fast.yml|\
               .github/workflows/ou3-proof-completion.yml|\
               .github/workflows/ou3-numerical-certificate.yml|\
+              .github/workflows/ou3-p5-*.yml|\
+              tools/ou3_p5_*.py|\
+              tests/validation/test_ou3_p5_*.py|\
+              tools/ou3_proof_operating_domain.json|\
               tools/ou3_certificate_completion.py|\
               tools/ou3_validate_enclosure.py|\
               tools/ou3_deployment_gate.py|\
