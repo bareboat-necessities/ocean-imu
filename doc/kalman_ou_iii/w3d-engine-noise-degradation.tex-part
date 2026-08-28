@@ -1,0 +1,313 @@
+\subsection{Degradation Under Inboard-Diesel Engine Noise}
+\label{sec:engine-noise-degradation}
+
+The sensor noise injected everywhere else in this work is electronic: white
+noise, initial bias, bias random walk, and magnetometer calibration error.  A
+cruising sailboat carrying this estimator spends a substantial fraction of its
+passages under power, and an inboard auxiliary diesel puts mechanical
+vibration into the same accelerometer and gyroscope.  This section measures
+what that costs.
+
+\subsubsection{Vibration model}
+
+The simulator gains a sensor-path model of the archetypal auxiliary for a
+\SIrange{35}{45}{ft} cruising boat: a naturally aspirated three-cylinder
+four-stroke diesel on flexible mounts, a $2.6\!:\!1$ reduction gear, and a
+three-blade fixed propeller.  It injects the crank orders --- the half order,
+the first order, the firing order $n_{\rm cyl}/2$ and its harmonics ---
+together with driveline shaft-rate and propeller-blade-rate lines, a broadband
+structural floor above a few Hz, governor hunting and combustion variability
+that widen each order from a line into a narrow band, accelerometer vibration
+rectification, and gyroscope linear-acceleration sensitivity.  The vessel's
+rigid-body response to the sea is untouched; only the sensor path changes.
+
+Amplitudes are physical rather than fitted.  Each order is an inertial
+excitation growing as $f^{2}$, transmitted through a mount of natural
+frequency $f_n$ and damping $\zeta$ with
+%
+\begin{equation}
+  T(f) = \sqrt{\frac{1 + (2\zeta r)^{2}}{(1-r^{2})^{2} + (2\zeta r)^{2}}},
+  \qquad r = f/f_n ,
+  \label{eq:mount-transmissibility}
+\end{equation}
+%
+so a single gain, calibrated once so the hull broadband RMS matches a stated
+level at a reference speed, fixes the level at every other speed.  The speed
+dependence this produces is the familiar one rather than a plain $\rm rpm^{2}$
+law: a diesel auxiliary is rough at idle, where the low orders sit near the
+mount resonance and $T > 1$, and smooths relative to its excitation as the
+orders climb past it.  The sensor is given a finite two-pole anti-alias
+bandwidth ahead of the \SI{200}{Hz} sample rate, and because each line's phase
+is advanced at that sample rate, orders above Nyquist fold on their own.
+
+The nominal operating point is \SI{2400}{rpm} with \SI{0.60}{m.s^{-2}} of hull
+broadband RMS and an \SI{80}{Hz} sensor bandwidth, of which
+\SI{0.454}{m.s^{-2}} survives to the sample.  That level is about
+\SI{0.061}{g}; at the \SIrange{30}{60}{Hz} carrying most of the energy it is
+roughly \SI{2}{mm.s^{-1}} RMS velocity, inside the range ISO 6954 treats as
+comfortable for small-craft accommodation.  It is a routine cruise condition
+for a sensor on a cabin bulkhead, not a worst case, and the sweeps below run
+from a quieter installation to a sensor near the engine bed.
+
+\subsubsection{Cost at the nominal cruise condition}
+
+Table~\ref{tab:engine-noise-cruise} replays the eight stationary records
+through each family with the engine off and at the nominal cruise condition.
+This is the comparison that motivates the remedy of
+Sec.~\ref{sec:engine-noise-guard}, so it holds all three families in the same
+unconditioned configuration: OU--III's front-end guard, which ships armed, is
+switched off throughout this subsection and switched on again there.
+All three degrade by a large factor.  OU--III's pooled 3-D displacement RMS
+goes from \SI{0.522}{m} to \SI{4.232}{m}, a factor of \num{8.1}; vertical RMS
+goes from \SI{0.179}{m} to \SI{0.828}{m}.  OU--II degrades by \num{5.2} and
+TFG by \num{18.8}.
+
+\begin{table}[t]
+  \centering
+  \caption{Pooled error over eight stationary records with the engine off and
+  at \SI{2400}{rpm}.  ``Offset'' is the systematic part: the RMS across
+  records of each record's mean error.}
+  \label{tab:engine-noise-cruise}
+  \footnotesize
+  \setlength{\tabcolsep}{3.2pt}
+  \begin{tabular}{@{}llrrrr@{}}
+    \toprule
+    Family & Engine & 3-D [m] & 3-D offset [m] & Pitch [\si{\degree}] & Yaw [\si{\degree}] \\
+    \midrule
+    OU--II  & off  &  0.642 &  0.178 &  0.196 &  0.67 \\
+    OU--II  & on   &  3.363 &  2.862 &  2.436 & 58.59 \\
+    OU--III & off  &  0.522 &  0.140 &  0.158 &  0.63 \\
+    OU--III & on   &  4.232 &  3.875 &  3.084 & 45.38 \\
+    TFG     & off  &  0.745 &  0.206 &  0.386 &  0.80 \\
+    TFG     & on   & 14.026 & 12.903 & 16.205 & 74.35 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+The ordering is worth stating plainly: OU--III has the lowest engine-off
+displacement error of the three, but at the cruise condition OU--II is lower
+(\SI{3.363}{m} against \SI{4.232}{m}).  The margin OU--III holds over OU--II
+in the clean case does not survive vibration.  What both OU families do retain
+is their margin over TFG, whose error is more than three times OU--III's and
+whose degradation factor is \num{18.8} against \num{8.1}.
+
+\subsubsection{The error becomes an offset}
+
+The RMS understates what has happened.  With the engine off, OU--III's
+\SI{0.522}{m} 3-D error is mostly fluctuation: the systematic part is
+\SI{0.140}{m}, \pct{27} of it.  At cruise the systematic part is
+\SI{3.875}{m} of \SI{4.232}{m}, \pct{92}.  The attitude channel shows the same
+thing more sharply still --- pitch RMS is \SI{3.084}{\degree} and the pitch
+\emph{offset} is \SI{3.075}{\degree}, so the attitude error is a static tilt
+with almost no fluctuation on it.  Vibration does not add noise to the
+estimate; it moves the estimate's operating point.
+
+This identifies the mechanism.  The accelerometer update is a joint
+measurement of attitude and world acceleration, with predicted specific force
+$\hat{f} = R_{wb}(\hat{a}_w - g)$ and a covariance sized for a quiet sensor.
+Wide-band vibration cannot be attributed to $\hat{a}_w$, whose OU prior has
+wave-band bandwidth, so the residual is taken up by attitude and by the
+accelerometer bias state.  The resulting static tilt then leaks gravity into
+the strapdown horizontal acceleration --- \SI{3}{\degree} of tilt is
+\SI{0.51}{m.s^{-2}} --- which the integral-regularized displacement estimator
+converts into the bounded static displacement offset that dominates the table.
+Consistently, OU--III's accelerometer bias-state error rises from
+\SI{0.046}{m.s^{-2}} with the engine off to \SI{0.469}{m.s^{-2}} at cruise.
+
+Two candidate mechanisms are ruled out by the same evidence.  Modeled
+vibration rectification contributes an offset of \SI{2.3e-5}{m.s^{-2}}, five
+orders of magnitude below the bias-state error, so it is not the source.  And
+rerunning the cruise cell with the model's gyroscope terms switched off leaves
+every family unchanged to four significant figures (OU--III \SI{4.2318}{m}
+against \SI{4.2316}{m}): the degradation is entirely an accelerometer-path
+effect.
+
+\subsubsection{Onset, and what controls it}
+
+Fig.~\ref{fig:engine-noise-speed} sweeps engine speed.  Degradation is present
+at idle and grows monotonically with the vibration the model transmits.  The
+important feature is that there is no quiet regime to operate in: at
+\SI{800}{rpm} OU--III already carries a \SI{2.014}{\degree} tilt offset
+against \SI{0.144}{\degree} with the engine off, and even at the quietest
+level swept --- \SI{0.15}{m.s^{-2}} of hull vibration, \SI{0.114}{m.s^{-2}}
+recorded, a well-isolated installation --- the offset is
+\SI{1.957}{\degree}, more than thirteen times the engine-off value.  The tilt
+offset appears almost fully formed as soon as any vibration is present and
+then grows slowly; what grows quickly with level is the displacement offset it
+drives.
+
+\IfFileExists{ou_engine_noise_speed.svg}{%
+  \begin{figure}[t]
+    \centering
+    \includesvg[width=\columnwidth,inkscapelatex=false]{ou_engine_noise_speed}
+    \caption{Engine-speed sweep at the nominal vibration level.  The first
+    panel is the injected vibration itself: hull RMS, and the part surviving
+    the sensor's anti-alias bandwidth.  Dotted horizontals in the remaining
+    panels are each family's engine-off baseline.  The hull level does not
+    follow $\rm rpm^{2}$, because the low orders pass through the mount
+    resonance at idle.}
+    \label{fig:engine-noise-speed}
+  \end{figure}
+}{}
+
+Fig.~\ref{fig:engine-noise-mechanism} separates level from spectrum.  The
+level sweep shows a knee rather than a gentle trend: between \SI{0.60}{} and
+\SI{1.20}{m.s^{-2}} of hull vibration OU--III goes from \num{8.1} to \num{72}
+times its baseline, \SI{37.5}{m}, which is loss of lock rather than
+degradation.  Narrowing the sensor's anti-alias bandwidth from \SI{80}{} to
+\SI{20}{Hz} recovers most of the loss, taking OU--III from \SI{4.232}{m} to
+\SI{0.791}{m}.
+
+The matched-power control establishes why.  Repeating the bandwidth sweep with
+the hull level rescaled so every cell records the same \SI{0.454}{m.s^{-2}}
+leaves the folded line frequencies different from cell to cell but the
+recorded power equal.  Across an \num{8}:1 bandwidth range the as-is cells
+span a factor of \num{9.6} for OU--III and \num{9.4} for OU--II; the matched
+cells span \num{2.0} and \num{1.9}.  Degradation is therefore set by how much
+out-of-band accelerometer power survives to the sample, and not by where the
+aliased orders happen to land --- including the cells where an order folds to
+within a fraction of a Hz of DC, which does not stand out.  The practical
+consequence is that anti-alias filtering and mechanical isolation act on the
+quantity that matters, while choosing a cruising rpm to move the aliases does
+not.
+
+\IfFileExists{ou_engine_noise_mechanism.svg}{%
+  \begin{figure}[t]
+    \centering
+    \includesvg[width=\columnwidth,inkscapelatex=false]{ou_engine_noise_mechanism}
+    \caption{Level, bandwidth, and mechanism.  Top left: 3-D error against
+    hull vibration level at cruise rpm, with engine-off baselines dotted.  Top
+    right: the anti-alias bandwidth sweep (solid, filled) and the same sweep
+    with the level rescaled to a common recorded power (dashed, open); the
+    matched cells collapse where the as-is cells spread.  Bottom left: every
+    cell of the study against recorded vibration RMS.  Bottom right: the
+    static tilt offset that drives all of it, which is already an order of
+    magnitude above the engine-off value (dotted) at the quietest level
+    tested.}
+    \label{fig:engine-noise-mechanism}
+  \end{figure}
+}{}
+
+\subsubsection{A front-end guard, and what it recovers}
+\label{sec:engine-noise-guard}
+
+The attribution above is narrow enough to act on.  The damage is done by
+out-of-band power in one sensor, its size follows how much of that power
+survives to the sample, and the wave band it has to be separated from is a
+decade below it.  Nothing about that requires the estimator to change: it
+requires the vibration not to reach it.
+
+\texttt{AccelVibrationGuard} is placed at the single point in
+\texttt{updateCore\_} where raw measurements arrive, so the Mahony proxy, the
+MEKF, and the tilt watchdog all read the same conditioned accelerometer and no
+consumer can be left on a different version of it.  It is a two-pole cascade at
+\SI{14}{Hz}, in the empty spectrum between the two bands.
+
+The corner is chosen against delay rather than against rejection.  A low pass
+costs group delay $\tau = n_{\rm poles}/(2\pi f_c)$, flat across the wave band,
+and acceleration delayed by $\tau$ yields displacement delayed by $\tau$: an
+error of $A \, 2\pi f \tau$ that grows with wave amplitude, so an
+unconditional filter charges the biggest seas the most.  Two poles at
+\SI{14}{Hz} cost \SI{22.7}{ms}.  Sweeping the alternatives, \SI{10}{Hz} costs
+\SI{32}{ms} for no better result and \SI{20}{Hz} costs \SI{16}{ms} for a
+markedly worse one; at matched delay a longer cascade rejects less of what
+matters here, because the damaging content sits just above the corner rather
+than deep in the stopband.
+
+Because the delay is only worth paying when there is something to remove, the
+guard engages on a measurement rather than always.  A separate two-pole
+high-pass at \SI{25}{Hz} watches the accelerometer, and the guard ramps in over
+\SI{5}{s} as that reading crosses \SIrange{0.03}{0.08}{m.s^{-2}}.  The detector
+is deliberately placed well above the conditioning corner: at the corner it
+would be reading the top of the sea spectrum, which grows with wave height, and
+would then engage hardest in big seas, which is exactly backwards.  Placed
+above the sea it reads \SIrange{0.00796}{0.00805}{m.s^{-2}} across the eight
+stationary records --- a one percent spread over a \num{31}:1 range of $H_s$ ---
+against \SI{0.087}{m.s^{-2}} at idle and \SI{0.144}{m.s^{-2}} at the nominal
+cruise condition.
+
+Table~\ref{tab:engine-noise-guard} is the result.  At the nominal cruise
+condition pooled 3-D RMS falls from \SI{4.232}{m} to \SI{0.596}{m}, so the
+penalty against the engine-off baseline goes from a factor of \num{8.1} to
+\num{1.14}.  The standing tilt offset the guard targets falls from
+\SI{3.075}{\degree} to \SI{1.180}{\degree} and yaw from \SI{45.4}{\degree} to
+\SI{4.2}{\degree}.  The worst condition swept --- a sensor at the engine bed,
+which unguarded loses lock at \SI{37.5}{m} --- returns to \SI{0.834}{m}, a
+factor of \num{1.6}.
+
+\begin{table}[t]
+  \centering
+  \caption{OU--III pooled over the eight stationary records with the front-end
+  vibration guard off and on.  ``Offset'' is the systematic part of the 3-D
+  error.  The engine-off rows are identical to every digit.}
+  \label{tab:engine-noise-guard}
+  \footnotesize
+  \setlength{\tabcolsep}{3.0pt}
+  \begin{tabular}{@{}lrrrrr@{}}
+    \toprule
+    & \multicolumn{2}{c}{3-D [m]} & \multicolumn{2}{c}{Pitch offset [\si{\degree}]} & \\
+    \cmidrule(lr){2-3}\cmidrule(lr){4-5}
+    Condition & off & on & off & on & $\times$ base \\
+    \midrule
+    Engine off      &  0.522 & 0.522 & 0.144 & 0.144 & 1.00 \\
+    \SI{800}{rpm}   &  0.877 & 0.598 & 2.014 & 1.327 & 1.15 \\
+    \SI{1600}{rpm}  &  1.402 & 0.589 & 1.211 & 1.125 & 1.13 \\
+    \SI{2400}{rpm}  &  4.232 & 0.596 & 3.075 & 1.180 & 1.14 \\
+    \SI{3200}{rpm}  &  8.651 & 0.675 & 3.283 & 1.773 & 1.29 \\
+    Quiet mount     &  1.372 & 0.567 & 2.744 & 0.584 & 1.09 \\
+    Engine bed      & 37.531 & 0.834 & 7.705 & 2.260 & 1.60 \\
+    Wide sensor     &  7.570 & 0.580 & 2.360 & 0.520 & 1.11 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\IfFileExists{ou_engine_noise_guard.svg}{%
+  \begin{figure}[t]
+    \centering
+    \includesvg[width=\columnwidth,inkscapelatex=false]{ou_engine_noise_guard}
+    \caption{Pooled displacement error and standing tilt offset with the
+    front-end guard off and on, over the same eight records.  Both panels are
+    logarithmic and the dotted line is the engine-off baseline.  The guard
+    holds every engine condition within a factor of \num{1.6} of that baseline,
+    against factors from \num{1.7} to \num{72} without it.}
+    \label{fig:engine-noise-guard}
+  \end{figure}
+}{}
+
+The engine-off row is the other half of the claim, and it is why the guard is
+armed by default rather than offered as an option.  With no machinery running
+the detector never reaches its lower rail, the guard returns its input
+unchanged, and the replay is bit-identical to the unguarded one --- on all
+eight stationary records, and on every record shipped with the simulation
+archive.  There is therefore no quiet-water case to trade away: no fitted
+quality gate is re-cut and no committed replay is invalidated by arming it.
+
+The measurement above is what makes that safe, and it is a property of the
+detector rather than a coincidence.  Because the detector sits well above the
+sea, its clean reading is set by the accelerometer's own white noise: across a
+\num{100}:1 range of wave amplitude it varies by \pct{0.02}.  A big sea cannot
+look like machinery to it, and a near-still one cannot lower the bar.
+
+Two limits are worth stating.  The guard conditions the measurement but does
+not make the estimator vibration-aware: the accelerometer measurement
+covariance is unchanged, so the filter still treats a conditioned sample as
+though it were a quiet one, and inflating $R_{\rm acc}$ from the same detector
+reading is the obvious next step.  And no front-end filter can help with
+machinery whose orders reach into the wave band, because there is nothing there
+to separate them from the sea.
+
+\subsubsection{Scope}
+
+This is a sensor-path result and should not be read as the full cost of
+motoring.  The magnetometer is left unperturbed, the wave records are the same
+stationary seas used elsewhere, and the vessel's rigid-body motion does not
+change: a real passage under power also alters the encounter spectrum, adds
+propeller-induced surge, and runs the engine at a speed that itself varies
+with the sea.  Nor is the estimator retuned for the condition.  The
+measurement covariances, adaptation law, pseudo-measurements, startup logic,
+and regularization are exactly those deployed, which is the point: the
+numbers above are what the shipped configuration does when the boat starts its
+engine.  What they indicate is that the remedy belongs in the measurement path
+rather than in the wave model, which is where
+Sec.~\ref{sec:engine-noise-guard} puts it.
+

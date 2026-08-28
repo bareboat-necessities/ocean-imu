@@ -69,6 +69,7 @@
 #include "tuner/SeaStateAutoTuner.h"
 #include "tuner/WavePeriodEstimator.h"
 #include "tuner/VerticalAccelComplementary.h"
+#include "tuner/AccelVibrationGuard.h"
 #include "tuner/MagAutoTuner.h"
 #include "tuner/ContinuousMagHardIronEstimator.h"
 #include "kalman_ou_iii/Kalman3D_Wave_OU_III.h"
@@ -209,6 +210,28 @@ constexpr float MAG_DELAY_SEC              = 7.0f;
 // has to estimate it; see the member declaration for the measurement.
 constexpr float STARTUP_PROXY_TWO_KP_DEFAULT = 0.2f;
 constexpr float STARTUP_PROXY_TWO_KI_DEFAULT = 0.02f;
+
+// Front-end accelerometer vibration guard, armed by default.
+//
+// docs/engine-noise-degradation.md is the measurement.  Machinery vibration
+// rectifies into a standing tilt error and from there into a displacement
+// offset, and at a routine cruise condition that costs a factor of eight in
+// pooled 3-D error; the guard holds every engine condition swept inside a
+// factor of 1.6 of the engine-off baseline.
+//
+// Arming it costs nothing when there is no machinery, because the guard is
+// gated on its own detector and returns its input unchanged below the lower
+// rail.  Across the eight stationary records the clean detector reading is
+// 0.00796 to 0.00805 m/s^2 against a 0.03 rail, and the replays are
+// bit-identical to the unguarded ones.  That is why this is a default rather
+// than an option: there is no quiet-water case to trade away.
+//
+// Two poles at 14 Hz sits in the gap between the wave band and the lowest
+// crank order a small auxiliary diesel puts on the hull, and costs 22.7 ms of
+// group delay at full engagement.  Set the cutoff to zero to remove the guard
+// entirely and restore the unconditioned measurement path.
+constexpr float ACC_VIBRATION_GUARD_HZ_DEFAULT = 14.0f;
+constexpr int   ACC_VIBRATION_GUARD_POLES_DEFAULT = 2;
 
 // Frequency smoother dt (SeaStateFusionFilter_OU_III is designed for 200 Hz)
 constexpr float FREQ_SMOOTHER_DT = 1.0f / 200.0f;
@@ -415,6 +438,8 @@ public:
     {
         // Default cutoff ~max_freq_hz_ Hz: passes waves, kills 8–37 Hz engine band
         freq_input_lpf_.setCutoff(max_freq_hz_);
+        setAccelVibrationGuard(ACC_VIBRATION_GUARD_HZ_DEFAULT,
+                               ACC_VIBRATION_GUARD_POLES_DEFAULT);
         freq_stillness_.setTargetFreqHz(min_freq_hz_);
         startup_stage_   = StartupStage::Cold;
         startup_stage_t_ = 0.0f;
@@ -517,6 +542,45 @@ public:
         return vertical_accel_comp_.isInitialized();
     }
 
+    // Out-of-band accelerometer guard, ahead of the proxy and the MEKF.
+    //
+    // The cutoff sits in the gap between the wave band and the machinery band
+    // and stops vibration reaching the attitude loop, where it rectifies into a
+    // standing tilt error.  Armed by default; pass zero to remove it and
+    // restore the unconditioned measurement path exactly.  The cost is group
+    // delay, accelVibrationGuardDelaySec(), which appears in displacement as
+    // amplitude * 2 pi f * delay -- so prefer the highest corner that removes
+    // the machinery, not the lowest corner that fits above the waves.
+    void setAccelVibrationGuard(float cutoff_hz, int poles = 2) {
+        accel_guard_.setPoles(poles);
+        accel_guard_.setCutoffHz(cutoff_hz);
+    }
+
+    [[nodiscard]] float accelVibrationGuardDelaySec() const noexcept {
+        return accel_guard_.groupDelaySec();
+    }
+
+    [[nodiscard]] float accelVibrationGuardCutoffHz() const noexcept {
+        return accel_guard_.cutoffHz();
+    }
+
+    [[nodiscard]] int accelVibrationGuardPoles() const noexcept {
+        return accel_guard_.poles();
+    }
+
+    // How far the guard is currently engaged, in [0, 1].  Zero means the
+    // measurement path is the unconditioned one.
+    [[nodiscard]] float accelVibrationGuardEngagement() const noexcept {
+        return accel_guard_.engagement();
+    }
+
+    // Smoothed RMS of the out-of-band content the guard is removing, m/s^2.
+    // Zero when the guard is disabled, so it reads as a health signal only
+    // where it is actually measuring something.
+    [[nodiscard]] float accelVibrationRms() const noexcept {
+        return accel_guard_.removedRms();
+    }
+
     // Gains of the private Mahony observer, which serves both the vertical
     // channel and the startup attitude.  Same knob as
     // setWavePeriodComplementaryGains(); kept under this name because the
@@ -571,16 +635,25 @@ private:
         time_ += dt;
         startup_stage_t_ += dt;
 
+        // Strip out-of-band accelerometer vibration before anything reads it.
+        // This is the one place raw measurements enter, so filtering here is
+        // what keeps the guard's effect describable: the proxy, the MEKF, and
+        // the tilt watchdog below all see the same conditioned signal, and no
+        // consumer can be left on a different version of the accelerometer.
+        //
+        // Disabled by default, in which case acc_in is acc unchanged.
+        const Eigen::Vector3f acc_in = accel_guard_.step(acc, dt);
+
         // Private Mahony observer for the wave-period estimator and default
-        // sigma channel. It is fed raw gyro and accelerometer before the MEKF
+        // sigma channel. It is fed gyro and accelerometer before the MEKF
         // sees them, so its levelled vertical acceleration remains a pure
         // function of the measurements.
-        vertical_accel_comp_.update(dt, gyro, acc, g_std);
+        vertical_accel_comp_.update(dt, gyro, acc_in, g_std);
 
         // MEKF updates first (attitude + latent a_w)
         if (drive_mekf) {
             mekf_->time_update(gyro, dt);
-            mekf_->measurement_update_acc_only(acc, tempC);
+            mekf_->measurement_update_acc_only(acc_in, tempC);
         }
 
         // The tilt watchdog reads and rewrites MEKF attitude, so it only has
@@ -615,10 +688,10 @@ private:
             if (tilt_over_limit_sec_ >= TILT_RESET_HOLD_SEC && tilt_reset_cooldown_sec_ <= 0.0f) {
                 if (startup_stage_ == StartupStage::Live) {
                     // In Live, re-lock only tilt while preserving yaw/north frame.
-                    mekf_->initialize_from_acc_preserve_yaw(acc);
+                    mekf_->initialize_from_acc_preserve_yaw(acc_in);
                 } else {
                     // During startup stages, accel-only re-lock is acceptable.
-                    mekf_->initialize_from_acc(acc);
+                    mekf_->initialize_from_acc(acc_in);
                     enterCold_();
                     resetTrackingState_();
                 }
@@ -2064,6 +2137,11 @@ private:
     VerticalAccelComplementary      vertical_accel_comp_{
         STARTUP_PROXY_TWO_KP_DEFAULT,
         STARTUP_PROXY_TWO_KI_DEFAULT};
+
+    // Armed in the constructor at ACC_VIBRATION_GUARD_HZ_DEFAULT, and dormant
+    // until its own detector sees machinery, so an unconditioned replay is
+    // bit-identical to a guarded one.
+    seastate::tuner::AccelVibrationGuard accel_guard_{};
 
     AdaptiveWaveBandPass            sigma_wave_band_{
         SIGMA_BAND_LOW_RATIO_DEFAULT,
