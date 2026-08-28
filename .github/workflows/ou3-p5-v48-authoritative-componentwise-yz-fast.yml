@@ -1,0 +1,71 @@
+name: ou3-p5-v48-authoritative-componentwise-yz-fast
+
+on:
+  push:
+    paths:
+      - "tools/ou3_p5_sample1_authoritative_componentwise_yz_v48.py"
+      - "tests/validation/test_ou3_p5_sample1_authoritative_componentwise_yz_v48.py"
+      - "tools/ou3_p5_sample1_directional_innovation_row_lift_v34.py"
+      - "tools/ou3_p5_sample1_first_psd_exact_joseph_components_v40.py"
+      - "tools/ou3_p5_sample1_v40_split_signed_first_survivor_v44.py"
+      - "tools/ou3_p5_sample1_v41_authoritative_split_signed_v45.py"
+      - ".github/workflows/ou3-p5-v48-authoritative-componentwise-yz-fast.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ou3-p5-v48-authoritative-componentwise-yz-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  v48-componentwise-yz:
+    name: P5 V48 authoritative componentwise yz
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+      - name: Compile V48 producer and test
+        run: |
+          python3 -m py_compile \
+            tools/ou3_p5_sample1_authoritative_componentwise_yz_v48.py \
+            tests/validation/test_ou3_p5_sample1_authoritative_componentwise_yz_v48.py
+      - name: Test V48 contract
+        working-directory: tests/validation
+        run: python3 -m unittest -v test_ou3_p5_sample1_authoritative_componentwise_yz_v48
+      - name: Run V48 authoritative componentwise-yz audit
+        id: audit
+        shell: bash
+        run: |
+          python3 tools/ou3_p5_sample1_authoritative_componentwise_yz_v48.py \
+            --source-pieces 4 --source-cell-index 0 \
+            --p-pieces 24 --tangent-pieces 24 --axial-pieces 24 \
+            --residual-x-pieces 6 --parallel-pieces 6 \
+            --output /tmp/p5_sample1_v48.json
+          python3 - "$GITHUB_OUTPUT" <<'PY'
+          import json, math, sys
+          with open('/tmp/p5_sample1_v48.json', encoding='utf-8') as fh:
+              d=json.load(fh)
+          def fmt(x):
+              try: y=float(x)
+              except (TypeError, ValueError): return 'na'
+              return f'{y:.12g}' if math.isfinite(y) else str(y)
+          caps=d.get('componentwise_yz_perturbation_detail') or {}
+          with open(sys.argv[1], 'a', encoding='utf-8') as gh:
+              print(f"status={d.get('P5_SAMPLE1_AUTHORITATIVE_COMPONENTWISE_YZ_V48')}", file=gh)
+              print(f"parentq={fmt(d.get('authoritative_parent_best_q_upper'))}", file=gh)
+              print(f"refinedq={fmt(d.get('authoritative_componentwise_best_q_upper'))}", file=gh)
+              print(f"productq={fmt(d.get('authoritative_componentwise_product_q_upper'))}", file=gh)
+              print(f"geodesicq={fmt(d.get('authoritative_componentwise_geodesic_q_upper'))}", file=gh)
+              print(f"ey={fmt(caps.get('theta_y_component_abs_upper_rad'))}", file=gh)
+              print(f"ez={fmt(caps.get('theta_z_component_abs_upper_rad'))}", file=gh)
+              print(f"oldyz={fmt(caps.get('V31_parent_yz_norm_upper_rad'))}", file=gh)
+              print(f"strict={d.get('at_least_one_yz_component_strictly_refined')}", file=gh)
+              print(f"closed={d.get('first_V41_survivor_closed_by_V48_componentwise_yz')}", file=gh)
+              print(f"next={d.get('next_obligation')}", file=gh)
+      - name: "V48 status=${{ steps.audit.outputs.status }} parentq=${{ steps.audit.outputs.parentq }} refinedq=${{ steps.audit.outputs.refinedq }} productq=${{ steps.audit.outputs.productq }} geodesicq=${{ steps.audit.outputs.geodesicq }}"
+        run: |
+          echo "ey=${{ steps.audit.outputs.ey }} ez=${{ steps.audit.outputs.ez }} oldyz=${{ steps.audit.outputs.oldyz }}"
+          echo "strict=${{ steps.audit.outputs.strict }} closed=${{ steps.audit.outputs.closed }}"
+          echo "next=${{ steps.audit.outputs.next }}"
