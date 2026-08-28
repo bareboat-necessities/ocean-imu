@@ -18,7 +18,7 @@ concurrency:
 jobs:
   v44-first-survivor:
     name: P5 V44 split-signed first survivor
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v6
