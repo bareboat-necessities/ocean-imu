@@ -1,0 +1,59 @@
+name: ou3-p5-v45-authoritative-first-survivor-fast
+
+on:
+  push:
+    paths:
+      - "tools/ou3_p5_sample1_v41_authoritative_split_signed_v45.py"
+      - "tests/validation/test_ou3_p5_sample1_v41_authoritative_split_signed_v45.py"
+      - ".github/workflows/ou3-p5-v45-authoritative-first-survivor-fast.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ou3-p5-v45-authoritative-first-survivor-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  v45-authoritative:
+    name: P5 V45 authoritative first survivor
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+      - name: Compile V45 producer and test
+        run: |
+          python3 -m py_compile \
+            tools/ou3_p5_sample1_v41_authoritative_split_signed_v45.py \
+            tests/validation/test_ou3_p5_sample1_v41_authoritative_split_signed_v45.py
+      - name: Test V45 contract
+        working-directory: tests/validation
+        run: python3 -m unittest -v test_ou3_p5_sample1_v41_authoritative_split_signed_v45
+      - name: Run V45 authoritative first-survivor audit
+        id: audit
+        shell: bash
+        run: |
+          python3 tools/ou3_p5_sample1_v41_authoritative_split_signed_v45.py \
+            --source-pieces 4 --source-cell-index 0 \
+            --p-pieces 24 --tangent-pieces 24 --axial-pieces 24 \
+            --residual-x-pieces 6 --parallel-pieces 6 \
+            --output /tmp/p5_sample1_v45.json
+          python3 - "$GITHUB_OUTPUT" <<'PY'
+          import json, math, sys
+          with open('/tmp/p5_sample1_v45.json', encoding='utf-8') as fh:
+              d=json.load(fh)
+          def fmt(x):
+              try: y=float(x)
+              except (TypeError, ValueError): return 'na'
+              return f'{y:.12g}' if math.isfinite(y) else str(y)
+          c=d.get('authoritative_current_chart') or {}
+          with open(sys.argv[1], 'a', encoding='utf-8') as gh:
+              print(f"status={d.get('P5_SAMPLE1_V41_AUTHORITATIVE_SPLIT_SIGNED_V45')}", file=gh)
+              print(f"currentq={fmt(c.get('q1'))}", file=gh)
+              print(f"parentq={fmt(d.get('authoritative_parent_best_q_upper'))}", file=gh)
+              print(f"refinedq={fmt(d.get('authoritative_refined_best_q_upper'))}", file=gh)
+              print(f"closed={d.get('first_V41_survivor_closed_by_authoritative_V45')}", file=gh)
+              print(f"next={d.get('next_obligation')}", file=gh)
+      - name: "V45 status=${{ steps.audit.outputs.status }} currentq=${{ steps.audit.outputs.currentq }} parentq=${{ steps.audit.outputs.parentq }} refinedq=${{ steps.audit.outputs.refinedq }} closed=${{ steps.audit.outputs.closed }}"
+        run: echo "next=${{ steps.audit.outputs.next }}"
