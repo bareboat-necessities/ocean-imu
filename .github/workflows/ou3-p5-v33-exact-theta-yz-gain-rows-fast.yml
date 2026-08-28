@@ -1,8 +1,9 @@
-name: ou3-p5-v32-exact-theta-x-deltac-fast
+name: ou3-p5-v33-exact-theta-yz-gain-rows-fast
 
 on:
   push:
     paths:
+      - "tools/ou3_p5_sample1_exact_theta_yz_gain_rows_lift_v33.py"
       - "tools/ou3_p5_sample1_exact_theta_x_deltac_lift_v32.py"
       - "tools/ou3_p5_sample1_v30_current_subbox_lift_v31.py"
       - "tools/ou3_p5_sample1_theta_x_gain_perturbation_v30.py"
@@ -13,10 +14,11 @@ on:
       - "tools/ou3_p5_sample1_exact_nonlinear_residual_v22.py"
       - "tools/ou3_p5_sample1_structured_full_gain_v12d.py"
       - "tools/ou3_proof_operating_domain.json"
-      - "tests/validation/test_ou3_p5_sample1_exact_theta_x_deltac_lift_v32.py"
-      - ".github/workflows/ou3-p5-v32-exact-theta-x-deltac-fast.yml"
+      - "tests/validation/test_ou3_p5_sample1_exact_theta_yz_gain_rows_lift_v33.py"
+      - ".github/workflows/ou3-p5-v33-exact-theta-yz-gain-rows-fast.yml"
   pull_request:
     paths:
+      - "tools/ou3_p5_sample1_exact_theta_yz_gain_rows_lift_v33.py"
       - "tools/ou3_p5_sample1_exact_theta_x_deltac_lift_v32.py"
       - "tools/ou3_p5_sample1_v30_current_subbox_lift_v31.py"
       - "tools/ou3_p5_sample1_theta_x_gain_perturbation_v30.py"
@@ -27,37 +29,37 @@ on:
       - "tools/ou3_p5_sample1_exact_nonlinear_residual_v22.py"
       - "tools/ou3_p5_sample1_structured_full_gain_v12d.py"
       - "tools/ou3_proof_operating_domain.json"
-      - "tests/validation/test_ou3_p5_sample1_exact_theta_x_deltac_lift_v32.py"
-      - ".github/workflows/ou3-p5-v32-exact-theta-x-deltac-fast.yml"
+      - "tests/validation/test_ou3_p5_sample1_exact_theta_yz_gain_rows_lift_v33.py"
+      - ".github/workflows/ou3-p5-v33-exact-theta-yz-gain-rows-fast.yml"
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: ou3-p5-v32-exact-theta-x-deltac-fast-${{ github.event.pull_request.number || github.ref }}
+  group: ou3-p5-v33-exact-theta-yz-gain-rows-fast-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
-  sample1-exact-theta-x-deltac-v32:
-    name: P5 sample-1 exact theta-x Delta-C V32
+  sample1-exact-theta-yz-gain-rows-v33:
+    name: P5 sample-1 exact theta-yz gain rows V33
     runs-on: macos-latest
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v6
-      - name: Compile V32 producer and test
+      - name: Compile V33 producer and test
         run: |
           python3 -m py_compile \
-            tools/ou3_p5_sample1_exact_theta_x_deltac_lift_v32.py \
-            tests/validation/test_ou3_p5_sample1_exact_theta_x_deltac_lift_v32.py
-      - name: Test V32 semantics
+            tools/ou3_p5_sample1_exact_theta_yz_gain_rows_lift_v33.py \
+            tests/validation/test_ou3_p5_sample1_exact_theta_yz_gain_rows_lift_v33.py
+      - name: Test V33 semantics
         working-directory: tests/validation
-        run: python3 -m unittest -v test_ou3_p5_sample1_exact_theta_x_deltac_lift_v32
-      - name: Emit V32 exact theta-x Delta-C lift audit
+        run: python3 -m unittest -v test_ou3_p5_sample1_exact_theta_yz_gain_rows_lift_v33
+      - name: Emit V33 exact theta-yz gain-row lift audit
         run: |
-          python3 tools/ou3_p5_sample1_exact_theta_x_deltac_lift_v32.py \
+          python3 tools/ou3_p5_sample1_exact_theta_yz_gain_rows_lift_v33.py \
             --source-pieces 4 --source-cell-index 0 \
             --p-pieces 24 --tangent-pieces 24 --axial-pieces 24 \
             --residual-x-pieces 6 --parallel-pieces 6 \
             --current-component-pieces 4 \
-            --output /tmp/p5_sample1_v32_exact_theta_x_deltac.json
+            --output /tmp/p5_sample1_v33_exact_theta_yz_gain_rows.json
