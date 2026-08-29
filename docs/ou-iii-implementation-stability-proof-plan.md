@@ -188,6 +188,62 @@ The bridge remains fail-closed. Its current first unclosed numerical obligations
 
 Thus the next work is the outward source-correlated subdivision over the **later** prefixes of the complete 1 s word: prediction, accepted/rejected vector corrections, due/not-due `S`, covariance/source-schedule evolution, and each immediate reset. Each cell must keep `P,H,R,K,r,d_eff` (or the effective accelerometer `a_w` input) jointly reachable and accumulate the exact reset/prediction budget. Only after those prefix cells prove an outer recurrence into the existing P4 inner seed may the certificate set a finite integer `N_H_words` and capture time. `N_H_words` remains intentionally unset today.
 
+#### Sample-1 first-accelerometer `q<8` chart line: perturbation route closed out
+
+A separate machine-checked line (`tools/ou3_p5_sample1_*_v29..v50.py`) works the
+sample-1 first-accelerometer Cayley chart, whose `q<8` target keeps the deployed
+normalized-quaternion branch inside its validated composition range. V41's
+complete source-cell-0 cover leaves one authoritative first survivor at
+`(p,t,a)=(0,0,23)` with `q = 8.344528951460543`. V42 through V49 all attacked the
+same object: the correction-perturbation caps that widen the nominal V10
+directional correction.
+
+`tools/ou3_p5_sample1_zero_perturbation_barrier_v50.py` closes that line out.
+
+First it supplies the strongest remaining refinement on it. In the sample-1 body
+gauge the shipping accelerometer Jacobian is exactly `H = [-[f]_x | I]`, because
+the source block `J_aw = R_wb()` is orthogonal and the gauge places it on the
+identity while `J_att = -skew(f_cog_b)` carries the whole modelled dependence.
+The Jacobian perturbation is therefore supported on the attitude columns,
+`Delta H = [E_theta | 0]`. That is exactly the fact which lets the certified
+V12C/V12D `Delta C` parent be the four-term sum
+`dP ||H_theta|| + ||P_theta|| dH + dP dH + dP` with no `P_theta,aw Delta H_aw`
+term, so V50 reproduces that parent bit-for-bit before reusing the support
+anywhere else. Three of V34's seven first-row `Delta S` terms then collapse onto
+attitude-restricted nominal factors,
+
+`e_i^T H P E^T -> ||(h_i P)_theta|| dH`, `e_i^T E P H^T -> dH ||(P H^T)_theta||`,
+`e_i^T E P E^T -> dH ||P_theta,theta|| dH`,
+
+each taken as a minimum against its own V34 parent term and still intersected
+with V12D's full `||Delta S||`. The certified row bound improves from
+`1.5212753710318652e-07` to `1.3328773849908888e-07`, which unpins the theta-y
+gain row from the V12D parent but leaves theta-z pinned.
+
+Second, V50 decomposes the certified sample-1 reduced covariance perturbation
+`dP = 2.76914978691018e-10`, reproducing the V40/V12C parent exactly. Its
+largest constituent is the raw sample-1 prediction attitude-covariance epsilon,
+`1.4828249737599615e-10`, at 53.5 percent, ahead of the reset-gauge direction
+term and the transported first posterior.
+
+Third, and decisively, V50 reruns the authoritative V48 composition with every
+componentwise correction-perturbation cap forced to zero. The composed q is
+`8.344528951460543` — bit-identical to the parent. The perturbation caps do not
+move q at all, so no refinement of `Delta S`, `Delta C`, `dP`, or the
+componentwise split can close the authoritative survivor. The reason is
+quantitative and is reported alongside: on the binding geodesic branch the
+principal angle must fall by `0.019476337434169544` rad to reach `q<8`, while the
+entire certified perturbation budget is `0.003654031568545583` rad, 18.8 percent
+of it. Removing that whole budget from the parent radius as well still leaves the
+geodesic branch at `8.277775079246444`.
+
+The next work on this line is therefore the nominal geometry, not the
+perturbation: sharpen V10's exact first-accelerometer directional correction
+magnitude, or the sample-0 current chart `q1`, on the authoritative V45 parent.
+This is a redirection of the proof search only. No filter setting, source
+domain, six-radian correction limit, `q<8` target, source language, whole-word
+criterion, or `N_H` state changes, and `N_H_words` remains unset.
+
 The independent implementation-stability composition gate continues to consume P5 directly. The older generic affine deployment-capture arithmetic is not accepted as a substitute.
 
 **PASS criterion for closing P5:** every certified normal or timeout handoff lies in a validated outer H capture funnel; every source-word prefix stays safe; the outer recurrence reaches `W_*` in a finite machine-certified number of H words/time. The current certificate does **not** yet satisfy this criterion.
