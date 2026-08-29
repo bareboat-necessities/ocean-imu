@@ -686,6 +686,218 @@ void w3d_install_engine_vibration_from_env(SimulationNoiseModels& noise_models, 
         });
 }
 
+// ---------------------------------------------------------------------------
+// IMU installation lever arm
+// ---------------------------------------------------------------------------
+
+Vector3f W3dRateDerivative::update(const Vector3f& omega)
+{
+    Vector3f alpha = Vector3f::Zero();
+    if (dt_ > 0.0f) {
+        if (seen_ >= 2) {
+            // Second-order backward difference.  Causal, so the stage can run
+            // inside the streaming record loop without buffering the future,
+            // and its O(dt^2) error is negligible next to a rotation whose
+            // energy sits below 1 Hz at a 200 Hz sample rate.
+            alpha = (3.0f * omega - 4.0f * prev_ + prev2_) / (2.0f * dt_);
+        } else if (seen_ == 1) {
+            alpha = (omega - prev_) / dt_;
+        }
+    }
+    prev2_ = prev_;
+    prev_ = omega;
+    if (seen_ < 2) ++seen_;
+    return alpha;
+}
+
+W3dLeverArm::W3dLeverArm(const W3dLeverArmConfig& cfg, float dt)
+    : cfg_(cfg),
+      offset_(cfg.offset_body_zu),
+      offset_norm_(cfg.offset_body_zu.norm()),
+      truth_derivative_(dt),
+      model_derivative_(dt)
+{
+    if (!(dt > 0.0f) || !std::isfinite(dt)) {
+        throw std::invalid_argument("lever-arm stage needs a positive dt");
+    }
+    if (!offset_.allFinite()) {
+        throw std::invalid_argument("W3D_IMU_LEVER_ARM_M must be finite");
+    }
+    // Two cascaded one-pole sections, i.e. a critically damped second-order
+    // low-pass with corner cfg.derivative_cutoff_hz.  A cutoff at or above
+    // Nyquist degenerates to a pass-through, which is the honest behaviour
+    // for "do not band-limit".
+    const float cutoff = cfg_.derivative_cutoff_hz;
+    if (cutoff > 0.0f && std::isfinite(cutoff)) {
+        const float tau = 1.0f / (2.0f * float(std::numbers::pi_v<float>) * cutoff);
+        lp_gain_ = dt / (tau + dt);
+        if (lp_gain_ > 1.0f) lp_gain_ = 1.0f;
+    } else {
+        lp_gain_ = 1.0f;
+    }
+}
+
+Vector3f W3dLeverArm::install(const Vector3f& acc_cg_body_zu,
+                              const Vector3f& gyr_truth_body_zu)
+{
+    const Vector3f alpha = truth_derivative_.update(gyr_truth_body_zu);
+    last_installed_ = installs()
+        ? w3d_lever_acceleration(gyr_truth_body_zu, alpha, offset_)
+        : Vector3f::Zero();
+    installed_sumsq_ += double(last_installed_.squaredNorm());
+    ++samples_;
+    return acc_cg_body_zu + last_installed_;
+}
+
+Vector3f W3dLeverArm::compensate(const Vector3f& acc_meas_body_zu,
+                                 const Vector3f& gyr_meas_body_zu)
+{
+    Vector3f modelled = Vector3f::Zero();
+    if (cfg_.model == W3dLeverArmConfig::Model::Exact) {
+        // The oracle reuses the term the installation stage applied, which is
+        // the exact rigid-body acceleration at r.  It answers how much of the
+        // penalty is deterministically recoverable, nothing more.
+        modelled = last_installed_;
+    } else if (cfg_.model == W3dLeverArmConfig::Model::MeasuredGyro) {
+        // The deployable model sees only the corrupted rate.  Band-limit it
+        // to the rigid-body band before differencing, then evaluate the same
+        // rigid-body expression on what is left.
+        if (!lp_primed_) {
+            lp_stage1_ = gyr_meas_body_zu;
+            lp_stage2_ = gyr_meas_body_zu;
+            lp_primed_ = true;
+        } else {
+            lp_stage1_ += lp_gain_ * (gyr_meas_body_zu - lp_stage1_);
+            lp_stage2_ += lp_gain_ * (lp_stage1_ - lp_stage2_);
+        }
+        const Vector3f alpha = model_derivative_.update(lp_stage2_);
+        modelled = w3d_lever_acceleration(lp_stage2_, alpha, offset_);
+    }
+
+    // With no model this is the whole installed term, which is exactly what
+    // the unmodeled arm is meant to report.
+    residual_sumsq_ += double((last_installed_ - modelled).squaredNorm());
+    return acc_meas_body_zu - modelled;
+}
+
+float W3dLeverArm::installed_rms_mps2() const
+{
+    if (samples_ == 0) return 0.0f;
+    return float(std::sqrt(installed_sumsq_ / double(samples_)));
+}
+
+float W3dLeverArm::residual_rms_mps2() const
+{
+    if (samples_ == 0) return 0.0f;
+    return float(std::sqrt(residual_sumsq_ / double(samples_)));
+}
+
+namespace {
+
+W3dLeverArmConfig::Model w3d_lever_arm_model_from_text(const std::string& text)
+{
+    if (text == "none" || text == "off" || text == "unmodeled") {
+        return W3dLeverArmConfig::Model::None;
+    }
+    if (text == "exact" || text == "oracle") {
+        return W3dLeverArmConfig::Model::Exact;
+    }
+    if (text == "gyro" || text == "measured") {
+        return W3dLeverArmConfig::Model::MeasuredGyro;
+    }
+    throw std::invalid_argument(
+        "W3D_IMU_LEVER_ARM_MODEL must be none, exact, or gyro");
+}
+
+Vector3f w3d_vector_from_text(const char* name, const std::string& text)
+{
+    Vector3f out = Vector3f::Zero();
+    std::stringstream stream(text);
+    std::string field;
+    int count = 0;
+    while (std::getline(stream, field, ',')) {
+        if (count >= 3) {
+            throw std::invalid_argument(std::string(name) + " must be \"x,y,z\"");
+        }
+        errno = 0;
+        char* end = nullptr;
+        const double value = std::strtod(field.c_str(), &end);
+        if (errno == ERANGE || end == field.c_str() || *end != '\0' ||
+            !std::isfinite(value))
+        {
+            throw std::invalid_argument(
+                std::string(name) + " must be three finite numbers");
+        }
+        out[count] = static_cast<float>(value);
+        ++count;
+    }
+    if (count != 3) {
+        throw std::invalid_argument(std::string(name) + " must be \"x,y,z\"");
+    }
+    return out;
+}
+
+const char* w3d_lever_arm_model_name(W3dLeverArmConfig::Model model)
+{
+    switch (model) {
+        case W3dLeverArmConfig::Model::Exact: return "exact";
+        case W3dLeverArmConfig::Model::MeasuredGyro: return "gyro";
+        case W3dLeverArmConfig::Model::None: break;
+    }
+    return "none";
+}
+
+} // namespace
+
+std::optional<W3dLeverArmConfig> w3d_lever_arm_config_from_env()
+{
+    const char* offset = std::getenv("W3D_IMU_LEVER_ARM_M");
+    if (!offset || *offset == '\0') return std::nullopt;
+
+    W3dLeverArmConfig cfg;
+    cfg.offset_body_zu = w3d_vector_from_text("W3D_IMU_LEVER_ARM_M", offset);
+
+    if (const char* model = std::getenv("W3D_IMU_LEVER_ARM_MODEL")) {
+        if (*model != '\0') {
+            cfg.model = w3d_lever_arm_model_from_text(model);
+        }
+    }
+    // Shares the engine model's numeric env reader; the name is historical,
+    // the parsing and the error text are not engine specific.
+    (void)w3d_engine_float_from_env("W3D_IMU_LEVER_ARM_CUTOFF_HZ",
+                                    cfg.derivative_cutoff_hz);
+    if (!(cfg.derivative_cutoff_hz > 0.0f)) {
+        throw std::invalid_argument(
+            "W3D_IMU_LEVER_ARM_CUTOFF_HZ must be positive");
+    }
+    return cfg;
+}
+
+std::shared_ptr<W3dLeverArm> w3d_lever_arm_from_env(float dt)
+{
+    const auto cfg = w3d_lever_arm_config_from_env();
+    if (!cfg) return nullptr;
+
+    auto stage = std::make_shared<W3dLeverArm>(*cfg, dt);
+    std::cout << "IMU_LEVER_ARM offset_m=[" << cfg->offset_body_zu.transpose()
+              << "] norm_m=" << stage->offset_norm_m()
+              << " model=" << w3d_lever_arm_model_name(cfg->model)
+              << " derivative_cutoff_hz=" << cfg->derivative_cutoff_hz
+              << "\n";
+    return stage;
+}
+
+void w3d_report_lever_arm(const std::shared_ptr<W3dLeverArm>& lever_arm)
+{
+    if (!lever_arm) return;
+    std::cout << "IMU_LEVER_ARM_RESULT norm_m=" << lever_arm->offset_norm_m()
+              << " model=" << w3d_lever_arm_model_name(lever_arm->config().model)
+              << " samples=" << lever_arm->samples()
+              << " installed_rms_mps2=" << lever_arm->installed_rms_mps2()
+              << " residual_rms_mps2=" << lever_arm->residual_rms_mps2()
+              << "\n";
+}
+
 unsigned w3d_expand_seed(unsigned base_seed, unsigned stream_id)
 {
     // SplitMix32 finalizer. Stream IDs make the expanded streams independent
@@ -977,6 +1189,12 @@ std::optional<W3dSimulationRunResult> W3dSimulationRunner::run(const std::string
         Vector3f acc_b(rec.imu.acc_bx, rec.imu.acc_by, rec.imu.acc_bz);
         Vector3f gyr_b(rec.imu.gyro_x, rec.imu.gyro_y, rec.imu.gyro_z);
 
+        // Installation physics, on the record's own truth: an IMU at r sees
+        // the CG specific force plus the rigid-body rotational terms.
+        if (options_.lever_arm) {
+            acc_b = options_.lever_arm->install(acc_b, gyr_b);
+        }
+
         if (options_.add_noise) {
             if (noise_models_.accel_noise) {
                 acc_b = apply_imu_noise(acc_b, *noise_models_.accel_noise, options_.dt);
@@ -987,6 +1205,13 @@ std::optional<W3dSimulationRunResult> W3dSimulationRunner::run(const std::string
             for (auto& model : noise_models_.extra_imu_noise_models) {
                 model(acc_b, gyr_b, options_.dt);
             }
+        }
+
+        // Filter-side lever-arm model, on the corrupted signals the estimator
+        // actually receives.  Nothing downstream of this point knows the IMU
+        // is off the CG.
+        if (options_.lever_arm) {
+            acc_b = options_.lever_arm->compensate(acc_b, gyr_b);
         }
 
         const Vector3f acc_meas_ned = zu_to_ned(acc_b);
@@ -1258,6 +1483,12 @@ std::optional<TvgNloSimulationRunResult> TvgNloSimulationRunner::run(const std::
         Vector3f acc_b(rec.imu.acc_bx, rec.imu.acc_by, rec.imu.acc_bz);
         Vector3f gyr_b(rec.imu.gyro_x, rec.imu.gyro_y, rec.imu.gyro_z);
 
+        // Installation physics, on the record's own truth: an IMU at r sees
+        // the CG specific force plus the rigid-body rotational terms.
+        if (options_.lever_arm) {
+            acc_b = options_.lever_arm->install(acc_b, gyr_b);
+        }
+
         if (options_.add_noise) {
             if (noise_models_.accel_noise) {
                 acc_b = apply_imu_noise(acc_b, *noise_models_.accel_noise, options_.dt);
@@ -1268,6 +1499,13 @@ std::optional<TvgNloSimulationRunResult> TvgNloSimulationRunner::run(const std::
             for (auto& model : noise_models_.extra_imu_noise_models) {
                 model(acc_b, gyr_b, options_.dt);
             }
+        }
+
+        // Filter-side lever-arm model, on the corrupted signals the estimator
+        // actually receives.  Nothing downstream of this point knows the IMU
+        // is off the CG.
+        if (options_.lever_arm) {
+            acc_b = options_.lever_arm->compensate(acc_b, gyr_b);
         }
 
         const Vector3f acc_meas_ned = zu_to_ned(acc_b);

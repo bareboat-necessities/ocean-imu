@@ -532,6 +532,143 @@ struct W3dRandomSeeds {
 unsigned w3d_expand_seed(unsigned base_seed, unsigned stream_id);
 W3dRandomSeeds w3d_random_seeds_from_env();
 
+// ---------------------------------------------------------------------------
+// IMU installation lever arm and its filter-side model
+// ---------------------------------------------------------------------------
+//
+// The versioned wave records carry specific force at the vessel centre of
+// gravity (CG).  A real IMU is bolted somewhere else on the hull.  For a
+// body-fixed offset r the rigid-body relation between the two locations is
+//
+//   a_IMU = a_CG + omega_dot x r + omega x (omega x r),
+//
+// a tangential term and a centripetal term.  Both are deterministic and both
+// are correlated with attitude, so a few decimetres of installation offset
+// inject a structured error into the one channel the OU filters use for
+// attitude and wave acceleration at the same time.
+//
+// The two halves of the experiment sit on opposite sides of the sensor and
+// are therefore modelled as separate stages:
+//
+//   * install()    runs on the record's noiseless truth, before sensor
+//                  corruption.  It is the physics: what a sensor at r really
+//                  measures.
+//   * compensate() runs after sensor corruption, immediately before fusion.
+//                  It is the filter's own lever-arm model, and it is the
+//                  stage a firmware implementation would own.
+//
+// Keeping them apart is what makes the comparison meaningful.  The oracle
+// model removes exactly what the installation stage added and bounds the
+// recoverable error; the deployable model has to rebuild the same term from
+// the noisy, biased rate the filter actually receives.
+struct W3dLeverArmConfig {
+    enum class Model {
+        None,          // no filter-side model: the installation error stands
+        Exact,         // oracle: the record's own angular kinematics
+        MeasuredGyro,  // deployable: band-limited derivative of the measured rate
+    };
+
+    // Offset of the IMU from the CG, in the body z-up frame, metres.
+    Vector3f offset_body_zu = Vector3f::Zero();
+    Model model = Model::None;
+    // Corner frequency of the two-pole low-pass the MeasuredGyro model runs
+    // ahead of its derivative.  This is the model's one real design choice
+    // and it is a two-sided one.  Too narrow and the low-pass phase lag
+    // misaligns a term that is already the right size, so the "correction"
+    // adds error; too wide and differentiating the raw 200 Hz rate hands the
+    // filter more white noise than lever-arm signal.  15 Hz sits in the flat
+    // basin between the two over the whole Hs range measured here.
+    float derivative_cutoff_hz = 15.0f;
+};
+
+// Rigid-body acceleration of a point at r relative to the body origin.
+inline Vector3f w3d_lever_acceleration(const Vector3f& omega_radps,
+                                       const Vector3f& alpha_radps2,
+                                       const Vector3f& r_body_m)
+{
+    return alpha_radps2.cross(r_body_m) +
+        omega_radps.cross(omega_radps.cross(r_body_m));
+}
+
+// Causal second-order backward difference of a body rate, with a first-order
+// start-up so the first two samples of a record stay finite and bounded.
+class W3dRateDerivative {
+public:
+    explicit W3dRateDerivative(float dt) : dt_(dt) {}
+
+    Vector3f update(const Vector3f& omega);
+
+private:
+    float dt_;
+    Vector3f prev_ = Vector3f::Zero();
+    Vector3f prev2_ = Vector3f::Zero();
+    int seen_ = 0;
+};
+
+class W3dLeverArm {
+public:
+    W3dLeverArm(const W3dLeverArmConfig& cfg, float dt);
+
+    const W3dLeverArmConfig& config() const { return cfg_; }
+    bool installs() const { return offset_norm_ > 0.0f; }
+    bool compensates() const { return cfg_.model != W3dLeverArmConfig::Model::None; }
+    float offset_norm_m() const { return offset_norm_; }
+
+    // Physics stage: move the record's CG specific force to the sensor
+    // location using the record's own body rate.  Call once per sample,
+    // before any sensor corruption.
+    Vector3f install(const Vector3f& acc_cg_body_zu,
+                     const Vector3f& gyr_truth_body_zu);
+
+    // Filter stage: remove the modelled term from the measured specific
+    // force.  Call exactly once per install(), after sensor corruption and
+    // immediately before fusion; the residual accounting below assumes the
+    // pairing.  With Model::None it removes nothing, which is what makes the
+    // unmodeled arm report the whole installed term as its residual.
+    Vector3f compensate(const Vector3f& acc_meas_body_zu,
+                        const Vector3f& gyr_meas_body_zu);
+
+    // RMS magnitude of the term the installation added, and of the residual
+    // the filter is left with after its own model.  Both are accumulated over
+    // the whole record so a study can chart the mechanism and not only the
+    // score.  Equal values mean the model removed nothing; a residual near
+    // zero means it removed everything.
+    float installed_rms_mps2() const;
+    float residual_rms_mps2() const;
+    std::size_t samples() const { return samples_; }
+
+private:
+    W3dLeverArmConfig cfg_;
+    Vector3f offset_ = Vector3f::Zero();
+    float offset_norm_ = 0.0f;
+    float lp_gain_ = 1.0f;
+
+    W3dRateDerivative truth_derivative_;
+    W3dRateDerivative model_derivative_;
+    Vector3f lp_stage1_ = Vector3f::Zero();
+    Vector3f lp_stage2_ = Vector3f::Zero();
+    bool lp_primed_ = false;
+
+    Vector3f last_installed_ = Vector3f::Zero();
+    double installed_sumsq_ = 0.0;
+    double residual_sumsq_ = 0.0;
+    std::size_t samples_ = 0;
+};
+
+// Reads W3D_IMU_LEVER_ARM_M ("x,y,z" in metres, body z-up) and the optional
+// W3D_IMU_LEVER_ARM_MODEL (none|exact|gyro) and W3D_IMU_LEVER_ARM_CUTOFF_HZ.
+// Returns nullopt when no lever arm is configured, which is the default and
+// reproduces the historical realization bit for bit.
+std::optional<W3dLeverArmConfig> w3d_lever_arm_config_from_env();
+
+// Builds the stage from the environment and prints an IMU_LEVER_ARM banner
+// describing it.  Returns nullptr when no lever arm is configured.
+std::shared_ptr<W3dLeverArm> w3d_lever_arm_from_env(float dt);
+
+// Prints the post-record IMU_LEVER_ARM_RESULT diagnostic line.  A no-op for a
+// null stage, so callers need no branch of their own.
+void w3d_report_lever_arm(const std::shared_ptr<W3dLeverArm>& lever_arm);
+
 struct W3dSimulationOptions {
     float dt = 0.005f;
     bool with_mag = true;
@@ -541,6 +678,9 @@ struct W3dSimulationOptions {
     bool write_timeseries = true;
     std::string output_suffix_with_mag = "_fusion";
     std::string output_suffix_no_mag = "_fusion_nomag";
+    // Optional IMU installation lever arm.  Null is the default and leaves
+    // both the truth path and the fusion input exactly as they were.
+    std::shared_ptr<W3dLeverArm> lever_arm;
 };
 
 struct W3dSimulationRunResult {
@@ -715,8 +855,17 @@ inline std::optional<W3dSimulationRunResult> process_wave_file_for_tracker(const
     options.output_suffix_with_mag = std::move(output_suffix_with_mag);
     options.output_suffix_no_mag = std::move(output_suffix_no_mag);
 
+    // Optional IMU installation lever arm and its filter-side model.  Absent
+    // unless W3D_IMU_LEVER_ARM_M is set, so the historical realization is
+    // untouched by default.  The runner copies the options but shares this
+    // stage, so the diagnostics it accumulates are readable here once the
+    // record is done.
+    options.lever_arm = w3d_lever_arm_from_env(dt);
+
     W3dSimulationRunner runner(options, std::move(noise_models), adapter);
-    return runner.run(filename);
+    auto result = runner.run(filename);
+    w3d_report_lever_arm(options.lever_arm);
+    return result;
 }
 
 #endif
