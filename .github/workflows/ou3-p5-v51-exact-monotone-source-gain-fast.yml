@@ -1,0 +1,81 @@
+name: ou3-p5-v51-exact-monotone-source-gain-fast
+
+on:
+  push:
+    paths:
+      - "tools/ou3_p5_sample1_exact_monotone_source_gain_v51.py"
+      - "tests/validation/test_ou3_p5_sample1_exact_monotone_source_gain_v51.py"
+      - "tools/ou3_p5_sample1_structured_full_gain_v8.py"
+      - "tools/ou3_p5_sample1_structured_full_gain_v9.py"
+      - "tools/ou3_p5_sample1_structured_full_gain_v10.py"
+      - "tools/ou3_p5_sample1_signed_cayley_q8_v15.py"
+      - "tools/ou3_p5_sample1_v41_authoritative_split_signed_v45.py"
+      - "tools/ou3_interval.py"
+      - "tools/ou3_proof_operating_domain.json"
+      - ".github/workflows/ou3-p5-v51-exact-monotone-source-gain-fast.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ou3-p5-v51-exact-monotone-source-gain-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  v51-exact-monotone-source-gain:
+    name: P5 V51 exact monotone source gain
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+      - name: Compile V51 producer and test
+        run: |
+          python3 -m py_compile \
+            tools/ou3_p5_sample1_exact_monotone_source_gain_v51.py \
+            tests/validation/test_ou3_p5_sample1_exact_monotone_source_gain_v51.py
+      - name: Test V51 contract
+        working-directory: tests/validation
+        run: python3 -m unittest -v test_ou3_p5_sample1_exact_monotone_source_gain_v51
+      - name: Run V51 exact monotone source-gain refinement
+        id: audit
+        shell: bash
+        run: |
+          set +e
+          python3 tools/ou3_p5_sample1_exact_monotone_source_gain_v51.py \
+            --source-pieces 4 --source-cell-index 0 \
+            --p-pieces 24 --tangent-pieces 24 --axial-pieces 24 \
+            --output /tmp/p5_sample1_v51.json \
+            > /tmp/p5_sample1_v51.log 2>&1
+          rc=$?
+          set -e
+          cat /tmp/p5_sample1_v51.log
+          python3 - "$GITHUB_OUTPUT" "$rc" <<'PY'
+          import json, math, pathlib, sys
+          out, rc = sys.argv[1], int(sys.argv[2])
+          path = pathlib.Path('/tmp/p5_sample1_v51.json')
+          d = json.loads(path.read_text(encoding='utf-8')) if path.exists() else {}
+          cmp_ = d.get('witness_comparison') or {}
+          nar = cmp_.get('narrowing') or {}
+          corr = nar.get('combined_directional_correction_norm_upper_rad') or {}
+          def fmt(x):
+              try: y = float(x)
+              except (TypeError, ValueError): return 'na'
+              return f'{y:.12g}' if math.isfinite(y) else str(y)
+          with open(out, 'a', encoding='utf-8') as gh:
+              print(f"rc={rc}", file=gh)
+              print(f"status={d.get('P5_SAMPLE1_EXACT_MONOTONE_SOURCE_GAIN_V51')}", file=gh)
+              print(f"closed={d.get('authoritative_witness_closed')}", file=gh)
+              print(f"corr_parent={fmt(corr.get('parent'))}", file=gh)
+              print(f"corr_refined={fmt(corr.get('refined'))}", file=gh)
+              print(f"parent_q={fmt(cmp_.get('parent_geodesic_q_upper'))}", file=gh)
+              print(f"refined_q={fmt(cmp_.get('refined_geodesic_q_upper'))}", file=gh)
+              print(f"next={d.get('next_obligation')}", file=gh)
+      - name: "V51 rc=${{ steps.audit.outputs.rc }} status=${{ steps.audit.outputs.status }} closed=${{ steps.audit.outputs.closed }} refined_q=${{ steps.audit.outputs.refined_q }}"
+        run: |
+          echo "correction ${{ steps.audit.outputs.corr_parent }} -> ${{ steps.audit.outputs.corr_refined }} rad"
+          echo "geodesic q ${{ steps.audit.outputs.parent_q }} -> ${{ steps.audit.outputs.refined_q }} (target 8)"
+          echo "next=${{ steps.audit.outputs.next }}"
+      - name: Fail closed on producer validation
+        if: steps.audit.outputs.rc != '0'
+        run: exit 2
