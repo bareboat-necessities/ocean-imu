@@ -1,6 +1,6 @@
 {
   "algorithm": "sha256-framed-v1",
-  "replay_fingerprint": "b8de5942e23edeb2474110e19a09c9f8125883fe5b6ef99dba57539d5597c98e",
+  "replay_fingerprint": "4a2129ff86155238077244f24d5cc73551f142d88aa1f89cc965d6c59339d697",
   "results_file_count": 128,
   "results_files": [
     {
@@ -256,7 +256,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_manifest.json",
-      "sha256": "ee88858f9a4e119ec7bfb0b3ff957d693a6ba4e0df1ca9abb89ec4033c930815"
+      "sha256": "880eb8e786dc813ef512679d66159b2155a19488150abf893172325c7144c8c4"
     },
     {
       "kind": "file",
@@ -501,37 +501,37 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation.json",
-      "sha256": "867c539eb201fcdc556053d4e288dd0e052c60e02a794649cbaf79958ab5c4da"
+      "sha256": "c2821950c38fb39f050dacb64e79ba63eba6cb5a5f35855de474225db8dfb855"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_attitude.svg",
-      "sha256": "69632d045a27c432669682821f0dd05445b4fa081a2a6e250a2c53b1a6fac272"
+      "sha256": "cdef92cbae33ffe79a147791e405bc7b8ed5875bb27055c494b6dae0e06e39f4"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_covsync.svg",
-      "sha256": "8ad64aa9a18c74eca0c02d9f94e2e524793450ce6e4cc753c79fcef08a7c0940"
+      "sha256": "4f4e42dc958f4e77e98fbb6de8b635f158a314dcf29d7dcdf2ddc24dd7961b2a"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_displacement.svg",
-      "sha256": "7ee680420bfa5f76709b391433662168c0ee96451b4865a83f618d81ab1d4323"
+      "sha256": "ceceb6cc7ab97e878fc1aae0092679b7bd3df859f5212772864c33f7385d930b"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_macros.tex",
-      "sha256": "453a21d71bce224bcddb3e29d8da55c318a5bd68ca42940e71b30e197d64f158"
+      "sha256": "0892b666279489725fd3f1932d274c9ba69d09ee5a1f85947c9370ecad074f0f"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_manifest.json",
-      "sha256": "f943de6c9c33752129e6fb640173ddc1d8584a88b9a0fa7d286f24366b89cc64"
+      "sha256": "59de06b189c65c960c82256832421fa4d6765f6ef55dbf84520a82d8cadfe1c8"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_paired_effects.csv",
-      "sha256": "0317bd8c9bc014f6726e88f3b3625024771693445dc27d1220a20d9717375a96"
+      "sha256": "05f0b419e57c9254301f5735f34358e96997e4729c63a012a19ed43d29057248"
     },
     {
       "kind": "file",
@@ -541,12 +541,12 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_raw.csv",
-      "sha256": "bcfcd8604aeb3ed662b1ad7bf225bb700e0fa4b8ce1da90413a32f5ebb521f0a"
+      "sha256": "41c694cc94502fb7b0b8d4921d5789b01d5c50ad6494cb036b0700971c9d963a"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_summary.csv",
-      "sha256": "5ee35f367f9a584d3729f9b06c9c7b4f2c614363c940e48979192601fbe21690"
+      "sha256": "d2b210a1ec68882c74cd683e2fe2be64280aecb6949994e9e41392e452454052"
     },
     {
       "kind": "file",
@@ -571,7 +571,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_vertical.svg",
-      "sha256": "c59497f26b6c2a3e267181faf0c1eec08f946b4faa5a20d1a045f1ba37d25811"
+      "sha256": "27b47096ad2bdb0e860c61eabd450463aa0c37faf6d1cfa5fd98e8fe774bf1a6"
     },
     {
       "kind": "file",
@@ -644,13 +644,13 @@
       "sha256": "27537c8895cf78c1bf92c9d0d4d8b45cbd323585f02c5de12982f1616bdcab55"
     }
   ],
-  "results_fingerprint": "a9b0dd8f7393d1ae43c9546d67f953885b6e01a8e7d016933018b31af032e6de",
+  "results_fingerprint": "237b9b28073181c109acf52e72f1e6885242239e5fe78d5532ab526413d7bac3",
   "schema_version": 3,
   "simulation_data": {
     "file": "sim-data-files.zip",
     "sha256": "55cad13e6b928e9e4d9540adbedfa0189a8feb57febac41b4561bfb68986dcff"
   },
-  "tracked_replay_file_count": 572,
+  "tracked_replay_file_count": 577,
   "tracked_replay_files": [
     {
       "mode": "100644",
@@ -671,6 +671,11 @@
       "mode": "100644",
       "path": ".github/workflows/ou-validation.yml",
       "sha256": "a2ef7d0bf28af3f66deae283f5ca7be4c36721f48859fb443864633456b7e098"
+    },
+    {
+      "mode": "100644",
+      "path": ".github/workflows/ou3-lever-arm-study.yml",
+      "sha256": "28b0833e88ad95aa6577e6355b98fd676e7a850749b9eca485e0dfd97fb56f17"
     },
     {
       "mode": "100644",
@@ -1724,6 +1729,16 @@
     },
     {
       "mode": "100644",
+      "path": "tests/validation/test_ou3_lever_arm_article.py",
+      "sha256": "a49df5c75849f10565925704fa9ffe3a9fc561afa4b370aac07e8aff19531d5c"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/validation/test_ou3_lever_arm_study.py",
+      "sha256": "2e216a1240486e0818141114f86017c3bda0b722f3a5da7555055e00964e5d26"
+    },
+    {
+      "mode": "100644",
       "path": "tests/validation/test_ou3_neighborhood_diagnostic.py",
       "sha256": "66245212b5854dfb012d09efc26c555749143f56f7ab5ba0fbfe4f528711107e"
     },
@@ -2706,6 +2721,16 @@
       "mode": "100644",
       "path": "tools/ou3_interval_linear_algebra.py",
       "sha256": "b34cc57aa49aa90e1d1bc613db29500b32ba5c4807063f84a21ed6a393743245"
+    },
+    {
+      "mode": "100644",
+      "path": "tools/ou3_lever_arm_study.py",
+      "sha256": "3bdd805a0fa92f44e7f0a3be162ac773ee973f9417912999ef845fc67d6f5b49"
+    },
+    {
+      "mode": "100644",
+      "path": "tools/ou3_lever_arm_tex.py",
+      "sha256": "f4aa516988223a3514af2dbac131e2308a537dcb3cb9b732758ff3175a45ec30"
     },
     {
       "mode": "100644",
