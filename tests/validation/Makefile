@@ -29,6 +29,8 @@ build:
 		../../tools/ou3_p4_exact_word_map.py \
 		../../tools/ou3_p4_node_metrics.py \
 		../../tools/ou3_p4_nonlinear_word_certificate.py \
+		../../tools/ou3_p4_nextgen_widened_certificate.py \
+		../../tools/ou3_p4_nextgen_directional_certificate.py \
 		../../tools/ou3_p5_startup_capture_certificate.py \
 		../../tools/ou3_p5_outer_h_word_certificate.py \
 		../../tools/ou3_p5_go_live_covariance_stage.py \
@@ -76,6 +78,8 @@ build:
 		test_ou3_p4_group_algebra.py \
 		test_ou3_p4_word_map_and_metrics.py \
 		test_ou3_p4_nonlinear_word_certificate.py \
+		test_ou3_p4_nextgen_widened_certificate.py \
+		test_ou3_p4_nextgen_directional_certificate.py \
 		test_ou3_p5_startup_capture_certificate.py \
 		test_ou3_p5_outer_h_word_certificate.py \
 		test_ou3_p5_go_live_covariance_stage.py \
