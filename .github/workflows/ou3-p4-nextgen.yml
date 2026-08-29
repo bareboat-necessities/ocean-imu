@@ -5,6 +5,7 @@ on:
     paths:
       - "tools/ou3_p4_nextgen_widened_certificate.py"
       - "tools/ou3_p4_nextgen_directional_certificate.py"
+      - "tools/ou3_p4_nextgen_gain_certificate.py"
       - "tools/ou3_p4_nonlinear_word_certificate.py"
       - "tools/ou3_p4_group_algebra.py"
       - "tools/ou3_p4_exact_word_map.py"
@@ -13,6 +14,7 @@ on:
       - "tools/ou3_proof_operating_domain.json"
       - "tests/validation/test_ou3_p4_nextgen_widened_certificate.py"
       - "tests/validation/test_ou3_p4_nextgen_directional_certificate.py"
+      - "tests/validation/test_ou3_p4_nextgen_gain_certificate.py"
       - ".github/workflows/ou3-p4-nextgen.yml"
   workflow_dispatch:
 
@@ -39,34 +41,39 @@ jobs:
           python3 -m py_compile \
             tools/ou3_p4_nextgen_widened_certificate.py \
             tools/ou3_p4_nextgen_directional_certificate.py \
+            tools/ou3_p4_nextgen_gain_certificate.py \
             tests/validation/test_ou3_p4_nextgen_widened_certificate.py \
-            tests/validation/test_ou3_p4_nextgen_directional_certificate.py
+            tests/validation/test_ou3_p4_nextgen_directional_certificate.py \
+            tests/validation/test_ou3_p4_nextgen_gain_certificate.py
       - name: Test next-generation widened P4 layers
         working-directory: tests/validation
         run: |
           python3 -m unittest -v \
             test_ou3_p4_nextgen_widened_certificate \
-            test_ou3_p4_nextgen_directional_certificate
+            test_ou3_p4_nextgen_directional_certificate \
+            test_ou3_p4_nextgen_gain_certificate
       - name: Emit widened P4 certificates and improvement factors
         run: |
           python3 tools/ou3_p4_nextgen_widened_certificate.py \
             --output /tmp/ou3_p4_nextgen_widened_certificate.json
           python3 tools/ou3_p4_nextgen_directional_certificate.py \
             --output /tmp/ou3_p4_nextgen_directional_certificate.json
+          python3 tools/ou3_p4_nextgen_gain_certificate.py \
+            --output /tmp/ou3_p4_nextgen_gain_certificate.json
           python3 - <<'PY'
           import json
-          p=json.load(open('/tmp/ou3_p4_nextgen_directional_certificate.json'))
-          print('P4_NEXTGEN_DIRECTIONAL_WORD_CERTIFICATE:', p['P4_NEXTGEN_DIRECTIONAL_WORD_CERTIFICATE'])
+          p=json.load(open('/tmp/ou3_p4_nextgen_gain_certificate.json'))
+          print('P4_NEXTGEN_GAIN_WORD_CERTIFICATE:', p['P4_NEXTGEN_GAIN_WORD_CERTIFICATE'])
           for mode in ('H','A'):
               r=p['modes'][mode]
               print(
-                  f"P4_NEXTGEN_DIRECTIONAL_NUMERICAL {mode} "
+                  f"P4_NEXTGEN_GAIN_NUMERICAL {mode} "
                   f"W_legacy={r['certified_level_W_legacy']:.17e} "
-                  f"W_stage1={r['certified_level_W_previous_nextgen']:.17e} "
-                  f"W_stage2={r['certified_level_W']:.17e} "
-                  f"stage2_factor={r['secondgen_W_widening_factor_lower']:.17e} "
+                  f"W_before_gain={r['certified_level_W_previous_gain_stage']:.17e} "
+                  f"W_final={r['certified_level_W']:.17e} "
+                  f"gain_stage_factor={r['gain_stage_W_widening_factor_lower']:.17e} "
                   f"total_factor={r['total_W_widening_factor_vs_legacy_lower']:.17e} "
-                  f"directional_B_factor={r['directional_B_reduction_factor_lower']:.17e} "
+                  f"gain_B_factor={r['gain_stage_B_reduction_factor_lower']:.17e} "
                   f"prefix_norm={r['prefix_canonical_error_norm_upper']:.17e}"
               )
           PY
