@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Source-derived manifest for the OU-III implementation stability proof.
 
-This is deliberately not a simulator manifest.  It binds the proof to the
+This is deliberately not a simulator manifest. It binds the proof to the
 shipping `SeaStateFusion_OU_III` wrapper and `Kalman3D_Wave_OU_III` operations
-that define startup, normal Live words, and hard hybrid events.  A source change
+that define startup, normal Live words, and hard hybrid events. A source change
 that removes or changes one of the required semantics invalidates the manifest
 instead of silently leaving the theorem attached to an older algorithm.
 """
@@ -27,10 +27,12 @@ SCHEMA = 3
 
 
 def sha256(path: Path) -> str:
+    """Return the SHA-256 digest of a source file bound into the manifest."""
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
 def one_float(text: str, pattern: str, label: str) -> float:
+    """Extract exactly one implementation scalar using a source-audit regex."""
     m = re.search(pattern, text, flags=re.MULTILINE | re.DOTALL)
     if not m:
         raise RuntimeError(f"cannot extract implementation value {label}")
@@ -38,11 +40,13 @@ def one_float(text: str, pattern: str, label: str) -> float:
 
 
 def require(text: str, marker: str, label: str) -> None:
+    """Fail closed unless a required shipping-source semantic marker exists."""
     if marker not in text:
         raise RuntimeError(f"missing implementation semantic marker {label}: {marker}")
 
 
 def build() -> dict:
+    """Build the source-bound implementation manifest for the proof chain."""
     w = WRAPPER.read_text(encoding="utf-8")
     k = MEKF.read_text(encoding="utf-8")
     c = CORE.read_text(encoding="utf-8")
@@ -96,6 +100,7 @@ def build() -> dict:
         "h_to_a_release": "mekf_->set_acc_bias_updates_enabled(true);",
         "mag_refinement_rewrites_heading": "impl_.mekf().set_quaternion_boat(q_new);",
         "mag_refinement_releases_bias_hold": "impl_.setAccBiasHold(false);",
+        "guard_armed_by_constructor": "setAccelVibrationGuard(ACC_VIBRATION_GUARD_HZ_DEFAULT,\n                               ACC_VIBRATION_GUARD_POLES_DEFAULT);",
         "guard_single_conditioned_feed": "const Eigen::Vector3f acc_in = accel_guard_.step(acc, dt);",
         "guard_conditioned_feed_reaches_proxy": "vertical_accel_comp_.update(dt, gyro, acc_in, g_std);",
         "guard_zero_weight_is_bit_exact_transparent": "if (weight_ <= 0.0f) return acc;",
@@ -184,6 +189,7 @@ def build() -> dict:
         ],
         "vibration_guard": {
             "armed_by_default": guard_hz > 0.0,
+            "constructor_arm_call_source_bound": True,
             "zero_engagement_is_bit_exact_transparent": True,
             "active_guard_changes_measurement_dynamics": True,
             "active_guard_requires_separate_source_certificate": True,
@@ -194,6 +200,7 @@ def build() -> dict:
 
 
 def validate(d: dict) -> list[str]:
+    """Validate source-binding and conservative vibration-guard proof scope."""
     failures: list[str] = []
     if d.get("schema") != SCHEMA:
         failures.append("schema mismatch")
@@ -230,6 +237,8 @@ def validate(d: dict) -> list[str]:
     vg = d.get("vibration_guard", {})
     if vg.get("armed_by_default") is not True:
         failures.append("vibration guard is not source-bound as armed by default")
+    if vg.get("constructor_arm_call_source_bound") is not True:
+        failures.append("vibration guard constructor arm call is not source bound")
     if vg.get("zero_engagement_is_bit_exact_transparent") is not True:
         failures.append("vibration guard zero-engagement transparency is not source certified")
     if vg.get("active_guard_requires_separate_source_certificate") is not True:
@@ -238,6 +247,7 @@ def validate(d: dict) -> list[str]:
 
 
 def main() -> int:
+    """Write the validated implementation manifest as a machine-readable artifact."""
     ap = argparse.ArgumentParser()
     ap.add_argument("--output", type=Path, required=True)
     args = ap.parse_args()
