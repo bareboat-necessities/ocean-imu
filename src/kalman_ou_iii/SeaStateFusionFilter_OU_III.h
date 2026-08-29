@@ -233,6 +233,30 @@ constexpr float STARTUP_PROXY_TWO_KI_DEFAULT = 0.02f;
 constexpr float ACC_VIBRATION_GUARD_HZ_DEFAULT = 14.0f;
 constexpr int   ACC_VIBRATION_GUARD_POLES_DEFAULT = 2;
 
+// Vibration-aware accelerometer measurement covariance, on by default.
+//
+// Conditioning removes the machinery the guard can reach; what survives its
+// stopband still arrives as measurement error the MEKF does not know about.
+// This raises the commanded accelerometer sigma by the guard's own gated
+// excess, so the covariance and the measurement describe the same conditions.
+//
+// The gain is swept in docs/engine-noise-degradation.md.  Pooled over the
+// eight stationary records it takes the residual against the engine-off
+// baseline from 1.141x to 1.104x at cruise, 1.291x to 1.125x near maximum
+// revs, and 1.597x to 1.170x with the sensor at the engine bed, while the
+// standing tilt offset falls 1.180 to 0.444 deg and yaw 4.17 to 1.84 deg.
+//
+// 0.75 sits at the displacement optimum with margin below the cliff.  Past
+// about 1.25 the accelerometer is de-weighted enough that the wave estimate
+// starts leaning on the OU prior instead, and displacement turns back up --
+// the accelerometer is the only wave measurement there is, so trusting it less
+// cannot be free.  Attitude keeps improving past that point, which is why the
+// two channels disagree about the optimum.
+//
+// Zero disables it.  Like the guard, it is driven by a gated excess that is
+// identically zero on a quiet installation, so it is bit-transparent there.
+constexpr float ACC_VIBRATION_RACC_GAIN_DEFAULT = 0.75f;
+
 // Frequency smoother dt (SeaStateFusionFilter_OU_III is designed for 200 Hz)
 constexpr float FREQ_SMOOTHER_DT = 1.0f / 200.0f;
 
@@ -440,6 +464,7 @@ public:
         freq_input_lpf_.setCutoff(max_freq_hz_);
         setAccelVibrationGuard(ACC_VIBRATION_GUARD_HZ_DEFAULT,
                                ACC_VIBRATION_GUARD_POLES_DEFAULT);
+        setAccelVibrationRaccGain(ACC_VIBRATION_RACC_GAIN_DEFAULT);
         freq_stillness_.setTargetFreqHz(min_freq_hz_);
         startup_stage_   = StartupStage::Cold;
         startup_stage_t_ = 0.0f;
@@ -556,8 +581,41 @@ public:
         accel_guard_.setCutoffHz(cutoff_hz);
     }
 
+    // Engagement band of the guard's detector.  Exposed mainly so a study can
+    // force the guard on over a quiet input and separate the delay it costs
+    // from the vibration it removes.
+    void setAccelVibrationEngagement(float lo_mps2, float hi_mps2,
+                                     float slew_tau_sec) noexcept {
+        accel_guard_.setEngagement(lo_mps2, hi_mps2, slew_tau_sec);
+    }
+
     [[nodiscard]] float accelVibrationGuardDelaySec() const noexcept {
         return accel_guard_.groupDelaySec();
+    }
+
+    // Vibration-aware accelerometer measurement covariance.
+    //
+    // The guard removes the machinery it can, but what survives its stopband
+    // still reaches the MEKF as measurement error the filter does not know
+    // about.  This tells it: the commanded accelerometer standard deviation
+    // becomes sqrt(sigma_base^2 + (gain * excess)^2), where excess is the
+    // guard's detector reading above its engagement floor.
+    //
+    // Zero disables it and leaves the commanded covariance exactly as the
+    // startup and stage logic set it.  Because the drive is the guard's own
+    // gated excess, it is identically zero on a quiet installation, so an
+    // enabled gain is still bit-transparent there.
+    void setAccelVibrationRaccGain(float gain) noexcept {
+        if (std::isfinite(gain) && gain >= 0.0f) racc_vibration_gain_ = gain;
+    }
+
+    [[nodiscard]] float accelVibrationRaccGain() const noexcept {
+        return racc_vibration_gain_;
+    }
+
+    // Accelerometer sigma currently commanded to the MEKF, m/s^2 per axis.
+    [[nodiscard]] Eigen::Vector3f accelVibrationRaccStd() const noexcept {
+        return racc_effective_;
     }
 
     [[nodiscard]] float accelVibrationGuardCutoffHz() const noexcept {
@@ -649,6 +707,12 @@ private:
         // sees them, so its levelled vertical acceleration remains a pure
         // function of the measurements.
         vertical_accel_comp_.update(dt, gyro, acc_in, g_std);
+
+        // Tell the MEKF how much it should trust that sample before it uses
+        // it, so the covariance and the measurement describe the same
+        // conditions.  A no-op unless a gain is set and the guard sees
+        // machinery.
+        if (drive_mekf) apply_racc_vibration_inflation_();
 
         // MEKF updates first (attitude + latent a_w)
         if (drive_mekf) {
@@ -1919,6 +1983,45 @@ private:
         }
     }
 
+    // The accelerometer sigma the startup and stage logic wants, before any
+    // vibration inflation.  Returns a zero vector when it is not known, which
+    // is the signal to leave the commanded covariance alone.
+    Eigen::Vector3f racc_base_std_() const {
+        if (warmup_Racc_active_ && Racc_warmup_std_ > 0.0f) {
+            return Eigen::Vector3f::Constant(Racc_warmup_std_);
+        }
+        if (Racc_nominal_.allFinite() && Racc_nominal_.minCoeff() > 0.0f) {
+            return Racc_nominal_;
+        }
+        return Eigen::Vector3f::Zero();
+    }
+
+    void apply_racc_vibration_inflation_() {
+        if (!mekf_ || !(racc_vibration_gain_ > 0.0f)) return;
+
+        const Eigen::Vector3f base = racc_base_std_();
+        if (!(base.minCoeff() > 0.0f)) return;
+
+        const float excess = accel_guard_.excessRms();
+        if (!(excess > 0.0f)) {
+            // Hand the base back once on the way down, then stay quiet, so a
+            // dormant guard leaves the stage logic's covariance untouched.
+            if (racc_inflated_) {
+                mekf_->set_Racc_std(base);
+                racc_effective_ = base;
+                racc_inflated_ = false;
+            }
+            return;
+        }
+
+        const float added = racc_vibration_gain_ * excess;
+        const Eigen::Vector3f effective =
+            (base.array().square() + added * added).sqrt().matrix();
+        mekf_->set_Racc_std(effective);
+        racc_effective_ = effective;
+        racc_inflated_ = true;
+    }
+
     void enterLive_() {
         startup_stage_   = StartupStage::Live;
         startup_stage_t_ = 0.0f;
@@ -1948,6 +2051,12 @@ private:
 
     // Warmup behavior
     bool  freeze_acc_bias_until_live_ = true;
+    // Vibration-aware measurement covariance, armed in the constructor at
+    // ACC_VIBRATION_RACC_GAIN_DEFAULT and inert until the guard sees machinery.
+    float racc_vibration_gain_        = 0.0f;
+    bool  racc_inflated_              = false;
+    Eigen::Vector3f racc_effective_   = Eigen::Vector3f::Zero();
+
     float Racc_warmup_std_            = 0.6f;
     bool  warmup_Racc_active_         = false;
     Eigen::Vector3f Racc_nominal_     = Eigen::Vector3f::Constant(0.0f);

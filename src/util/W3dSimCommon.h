@@ -435,6 +435,11 @@ struct EngineVibrationConfig {
     float gyro_g_sensitivity = 1.78e-4f;
     // Accelerometer vibration rectification, in mg per g^2 of vibration.
     float vre_mg_per_g2 = 1.0f;
+    // Seconds into the record at which the engine is shut down; the model
+    // contributes nothing from then on.  Zero or negative means it runs for
+    // the whole record, which is the default.  This exists so a study can
+    // watch the estimator's vibration guard release rather than only engage.
+    float stop_sec = 0.0f;
     unsigned seed = 20260828u;
 };
 
@@ -484,6 +489,9 @@ struct EngineVibrationModel {
     Vector3f hp_prev_in = Vector3f::Zero();
     Vector3f hp_out = Vector3f::Zero();
     float hp_alpha = 0.0f;
+
+    // Elapsed record time, for the optional shutdown.
+    float time_sec = 0.0f;
 
     // Constant accelerometer offset from vibration rectification, and the
     // hull vibration RMS per axis it was computed from.

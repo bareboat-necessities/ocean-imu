@@ -226,37 +226,80 @@ stationary records --- a one percent spread over a \num{31}:1 range of $H_s$ ---
 against \SI{0.087}{m.s^{-2}} at idle and \SI{0.144}{m.s^{-2}} at the nominal
 cruise condition.
 
-Table~\ref{tab:engine-noise-guard} is the result.  At the nominal cruise
-condition pooled 3-D RMS falls from \SI{4.232}{m} to \SI{0.596}{m}, so the
-penalty against the engine-off baseline goes from a factor of \num{8.1} to
-\num{1.14}.  The standing tilt offset the guard targets falls from
-\SI{3.075}{\degree} to \SI{1.180}{\degree} and yaw from \SI{45.4}{\degree} to
-\SI{4.2}{\degree}.  The worst condition swept --- a sensor at the engine bed,
-which unguarded loses lock at \SI{37.5}{m} --- returns to \SI{0.834}{m}, a
-factor of \num{1.6}.
+Conditioning alone already recovers most of the loss, but it leaves a residual,
+and forcing the guard on over a \emph{quiet} input says what that residual is
+made of.  On the JONSWAP records at $H_s = \SI{1.5}{m}$ and \SI{8.5}{m} the
+delay alone costs \num{1.021} and \num{1.063} against deployed residuals of
+\num{1.074} and \num{1.151}: roughly half the gap is the guard's own group
+delay, which no covariance change can touch, and the other half is vibration
+that survived the stopband.
+
+That other half is measurement error the MEKF is not told about, so the second
+stage tells it.  The commanded accelerometer standard deviation is raised to
+$\sqrt{\sigma^{2} + (\kappa \, e)^{2}}$, where $e$ is the guard's detector
+reading above its engagement floor --- the same gated excess, so this stage is
+inert on a quiet installation for the same reason the guard is.
+
+The gain is not free in both channels at once, which is what fixes it.
+Attitude improves monotonically as the accelerometer is de-weighted, but the
+accelerometer is also the only measurement of wave acceleration there is, so
+past $\kappa \approx \num{1.25}$ the displacement estimate starts leaning on
+the OU prior and the 3-D error turns back up.  Swept pooled over the eight
+records, the displacement optimum is broad and flat between \num{0.75} and
+\num{1.0}; the deployed value is $\kappa = \num{0.75}$, at the optimum with
+margin below the cliff.
+
+Table~\ref{tab:engine-noise-guard} is the result of both stages.  At the
+nominal cruise condition pooled 3-D RMS falls from \SI{4.232}{m} unguarded to
+\SI{0.596}{m} with conditioning and \SI{0.577}{m} with the covariance stage
+as well, so the penalty against the engine-off baseline goes from a factor of
+\num{8.1} to \num{1.10}.  The second stage earns most of its keep where the
+first leaves most behind: at the engine bed it takes \SI{0.834}{m} down to
+\SI{0.611}{m}, a residual of \num{1.17} against \num{1.60}, and near maximum
+revs \SI{0.675}{m} to \SI{0.588}{m}.  The standing tilt offset it targets
+falls from \SI{1.180}{\degree} to \SI{0.444}{\degree} at cruise and yaw from
+\SI{4.17}{\degree} to \SI{1.84}{\degree}.
+
+Both stages are driven by the detector and both release when the machinery
+stops; nothing is latched.  Shutting the modeled engine down part-way through a
+record measures it: from full engagement at \SI{2400}{rpm} the covariance
+returns to its nominal value in \SI{11.5}{s} and the guard fully disengages,
+giving back its group delay, in \SI{54}{s}.  The covariance releases first,
+which is the safe order --- it stops understating the measurement while the low
+pass is still settling rather than the reverse --- and the difference is
+structural, since the covariance follows the detector directly while the
+conditioning weight additionally slews on a \SI{5}{s} time constant so a
+throttle change cannot step the measurement path.
+
+One condition does not benefit.  At \SI{800}{rpm} the residual rises from
+\num{1.145} to \num{1.153}, \pct{0.7}: idle puts the crank orders lowest in
+frequency, so the guard removes least of them and what leaks through is closest
+to the wave band, where de-weighting the accelerometer cannot separate it from
+the sea.
 
 \begin{table}[t]
   \centering
-  \caption{OU--III pooled over the eight stationary records with the front-end
-  vibration guard off and on.  ``Offset'' is the systematic part of the 3-D
-  error.  The engine-off rows are identical to every digit.}
+  \caption{OU--III pooled over the eight stationary records, unguarded, with
+  the front-end guard, and with the vibration-aware measurement covariance as
+  well.  The last column is the guarded residual against the engine-off
+  baseline.  The engine-off rows are identical to every digit.}
   \label{tab:engine-noise-guard}
   \footnotesize
-  \setlength{\tabcolsep}{3.0pt}
-  \begin{tabular}{@{}lrrrrr@{}}
+  \setlength{\tabcolsep}{2.6pt}
+  \begin{tabular}{@{}lrrrrrrr@{}}
     \toprule
-    & \multicolumn{2}{c}{3-D [m]} & \multicolumn{2}{c}{Pitch offset [\si{\degree}]} & \\
-    \cmidrule(lr){2-3}\cmidrule(lr){4-5}
-    Condition & off & on & off & on & $\times$ base \\
+    & \multicolumn{3}{c}{3-D [m]} & \multicolumn{3}{c}{Pitch offset [\si{\degree}]} & \\
+    \cmidrule(lr){2-4}\cmidrule(lr){5-7}
+    Condition & off & guard & $+R$ & off & guard & $+R$ & $\times$ base \\
     \midrule
-    Engine off      &  0.522 & 0.522 & 0.144 & 0.144 & 1.00 \\
-    \SI{800}{rpm}   &  0.877 & 0.598 & 2.014 & 1.327 & 1.15 \\
-    \SI{1600}{rpm}  &  1.402 & 0.589 & 1.211 & 1.125 & 1.13 \\
-    \SI{2400}{rpm}  &  4.232 & 0.596 & 3.075 & 1.180 & 1.14 \\
-    \SI{3200}{rpm}  &  8.651 & 0.675 & 3.283 & 1.773 & 1.29 \\
-    Quiet mount     &  1.372 & 0.567 & 2.744 & 0.584 & 1.09 \\
-    Engine bed      & 37.531 & 0.834 & 7.705 & 2.260 & 1.60 \\
-    Wide sensor     &  7.570 & 0.580 & 2.360 & 0.520 & 1.11 \\
+    Engine off      &  0.522 & 0.522 & 0.522 & 0.144 & 0.144 & 0.144 & 1.000 \\
+    \SI{800}{rpm}   &  0.877 & 0.598 & 0.602 & 2.014 & 1.327 & 1.369 & 1.153 \\
+    \SI{1600}{rpm}  &  1.402 & 0.589 & 0.583 & 1.211 & 1.125 & 0.814 & 1.115 \\
+    \SI{2400}{rpm}  &  4.232 & 0.596 & 0.577 & 3.075 & 1.180 & 0.444 & 1.104 \\
+    \SI{3200}{rpm}  &  8.651 & 0.675 & 0.588 & 3.283 & 1.773 & 0.551 & 1.125 \\
+    Quiet mount     &  1.372 & 0.567 & 0.563 & 2.744 & 0.584 & 0.369 & 1.078 \\
+    Engine bed      & 37.531 & 0.834 & 0.611 & 7.705 & 2.260 & 0.567 & 1.170 \\
+    Wide sensor     &  7.570 & 0.580 & 0.572 & 2.360 & 0.520 & 0.047 & 1.094 \\
     \bottomrule
   \end{tabular}
 \end{table}
@@ -265,11 +308,13 @@ factor of \num{1.6}.
   \begin{figure}[t]
     \centering
     \includesvg[width=\columnwidth,inkscapelatex=false]{ou_engine_noise_guard}
-    \caption{Pooled displacement error and standing tilt offset with the
-    front-end guard off and on, over the same eight records.  Both panels are
-    logarithmic and the dotted line is the engine-off baseline.  The guard
-    holds every engine condition within a factor of \num{1.6} of that baseline,
-    against factors from \num{1.7} to \num{72} without it.}
+    \caption{Pooled displacement error and standing tilt offset over the same
+    eight records, unguarded, with the front-end guard, and with the
+    vibration-aware measurement covariance as well.  Both panels are
+    logarithmic and the dotted line is the engine-off baseline.  Conditioning
+    holds every engine condition within a factor of \num{1.6} of that baseline
+    against factors from \num{1.7} to \num{72} without it, and the covariance
+    stage brings the worst of them to \num{1.17}.}
     \label{fig:engine-noise-guard}
   \end{figure}
 }{}
@@ -288,13 +333,12 @@ sea, its clean reading is set by the accelerometer's own white noise: across a
 \num{100}:1 range of wave amplitude it varies by \pct{0.02}.  A big sea cannot
 look like machinery to it, and a near-still one cannot lower the bar.
 
-Two limits are worth stating.  The guard conditions the measurement but does
-not make the estimator vibration-aware: the accelerometer measurement
-covariance is unchanged, so the filter still treats a conditioned sample as
-though it were a quiet one, and inflating $R_{\rm acc}$ from the same detector
-reading is the obvious next step.  And no front-end filter can help with
-machinery whose orders reach into the wave band, because there is nothing there
-to separate them from the sea.
+What remains is the part neither stage can reach.  Group delay is the price of
+conditioning and is still paid when there is nothing left to remove, so the
+residual cannot go to one while the guard is engaged; and no front-end filter
+helps with machinery whose orders reach into the wave band, because there is
+nothing there to separate them from the sea.  The \SI{800}{rpm} row is that
+limit showing itself early.
 
 \subsubsection{Scope}
 

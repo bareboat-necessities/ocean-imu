@@ -17,10 +17,16 @@ between the wave band and the machinery band, and -- because the group delay it
 costs shows up in displacement in proportion to wave amplitude -- it engages
 only when a separate high-pass detector says there is machinery to remove.
 
-This study replays the eight stationary records through OU-III with the guard
-off and on across a range of engine conditions, and confirms both halves of the
-claim: that the guard recovers most of the loss under vibration, and that it is
-bit-transparent when there is none.
+Conditioning alone leaves a residual, and roughly half of it is the guard's own
+group delay rather than un-removed vibration.  The other half is measurement
+error the MEKF does not know about, so the third arm tells it: the commanded
+accelerometer sigma is raised by the same gated excess the guard engages on.
+
+This study replays the eight stationary records through OU-III in all three
+configurations across a range of engine conditions, and confirms every part of
+the claim: that the guard recovers most of the loss, that inflating the
+covariance recovers a further part of what it leaves, and that both are
+bit-transparent when there is no machinery.
 """
 
 from __future__ import annotations
@@ -52,6 +58,15 @@ SIMULATOR = ROOT / "tests" / "kalman_ou_iii" / "kalman_ou_iii-sim"
 # 16 ms at 20 Hz for markedly worse.
 GUARD_CUTOFF_HZ = 14.0
 GUARD_POLES = 2
+
+# Vibration-aware accelerometer covariance gain, swept in this study's own
+# sweep_gain mode.  0.75 is the displacement optimum with margin below the
+# cliff above about 1.25, where de-weighting the accelerometer starts costing
+# more in wave tracking than it buys in attitude.
+RACC_GAIN = 0.75
+
+# The three configurations compared, in deployment order.
+ARMS = ("off", "guard", "guard+R")
 
 
 @dataclass(frozen=True)
@@ -119,7 +134,8 @@ MEAN_FIELDS = (
     "yaw_mean_deg",
 )
 
-GUARD_FIELDS = ("guard_engagement", "guard_out_of_band_rms_mps2", "guard_delay_sec")
+GUARD_FIELDS = ("guard_engagement", "guard_out_of_band_rms_mps2",
+                "guard_delay_sec", "guard_racc_std_mps2")
 
 ROW_FIELDS = (
     "condition",
@@ -194,8 +210,22 @@ def parse_keyed(pattern: re.Pattern[str], stdout: str) -> dict[str, float]:
     return values
 
 
+def arm_env(arm: str) -> dict[str, str]:
+    """Every arm is explicit, so none of them inherits a filter default."""
+    if arm == "off":
+        return {"OU_III_ACC_GUARD_HZ": "0", "OU_III_ACC_GUARD_RACC_GAIN": "0"}
+    env = {
+        "OU_III_ACC_GUARD_HZ": f"{GUARD_CUTOFF_HZ:.9g}",
+        "OU_III_ACC_GUARD_POLES": str(GUARD_POLES),
+        "OU_III_ACC_GUARD_RACC_GAIN": "0",
+    }
+    if arm == "guard+R":
+        env["OU_III_ACC_GUARD_RACC_GAIN"] = f"{RACC_GAIN:.9g}"
+    return env
+
+
 def run_one(record: Record, input_path: Path, condition: Condition,
-            guard: bool, window_sec: float) -> dict[str, Any]:
+            guard: str, window_sec: float) -> dict[str, Any]:
     env = os.environ.copy()
     env.update({
         "W3D_WRITE_TIMESERIES": "0",
@@ -205,10 +235,7 @@ def run_one(record: Record, input_path: Path, condition: Condition,
         "W3D_COLLECT_ALL_GATES": "1",
     })
     env.update(condition.engine)
-    # Both arms are explicit: the guard is armed by default in the filter, so
-    # the off arm has to switch it off rather than say nothing.
-    env["OU_III_ACC_GUARD_HZ"] = f"{GUARD_CUTOFF_HZ:.9g}" if guard else "0"
-    env["OU_III_ACC_GUARD_POLES"] = str(GUARD_POLES)
+    env.update(arm_env(guard))
 
     completed = subprocess.run(
         [str(SIMULATOR), "--input", str(input_path.resolve())],
@@ -223,9 +250,9 @@ def run_one(record: Record, input_path: Path, condition: Condition,
         )
     if condition.engine_on and "ENGINE_VIBRATION" not in completed.stdout:
         raise RuntimeError(f"{condition.label}: engine model did not engage")
-    if guard and "ACC_GUARD" not in completed.stdout:
+    if guard != "off" and "ACC_GUARD" not in completed.stdout:
         raise RuntimeError(f"{condition.label}: guard was requested but not armed")
-    if not guard and "ACC_GUARD" in completed.stdout:
+    if guard == "off" and "ACC_GUARD" in completed.stdout:
         raise RuntimeError(f"{condition.label}: guard was not switched off")
 
     metrics = ouv.parse_validation_metrics(completed.stdout)
@@ -234,13 +261,14 @@ def run_one(record: Record, input_path: Path, condition: Condition,
 
     row: dict[str, Any] = {
         "condition": condition.label,
-        "guard": "on" if guard else "off",
+        "guard": guard,
         "spectrum": record.spectrum,
         "hs_m": record.hs_m,
         "input": record.filename,
         "guard_engagement": guard_stats.get("engagement", 0.0),
         "guard_out_of_band_rms_mps2": guard_stats.get("out_of_band_rms_mps2", float("nan")),
         "guard_delay_sec": guard_stats.get("delay_sec", 0.0),
+        "guard_racc_std_mps2": guard_stats.get("racc_std_mps2", float("nan")),
     }
     for name in ROW_FIELDS:
         if name in row:
@@ -271,7 +299,7 @@ def summarize(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
     result: list[dict[str, Any]] = []
     baseline = float("nan")
     for condition in CONDITIONS:
-        for guard in ("off", "on"):
+        for guard in ARMS:
             cells = [
                 row for row in rows
                 if row["condition"] == condition.label and row["guard"] == guard
@@ -336,7 +364,10 @@ def markdown_report(summaries: list[dict[str, Any]], window_sec: float,
         "all see the same conditioned signal.  It low-passes the accelerometer in",
         "the empty decade between the wave band and the machinery band",
         f"(**{GUARD_POLES} poles at {GUARD_CUTOFF_HZ:.0f} Hz**), and engages only when a separate",
-        "high-pass detector says there is machinery to remove.",
+        "high-pass detector says there is machinery to remove.  The third arm adds",
+        "the vibration-aware measurement covariance: the commanded accelerometer",
+        f"sigma is raised to `sqrt(sigma^2 + ({RACC_GAIN:g} * excess)^2)` from the same gated",
+        "excess, so the covariance and the measurement describe the same conditions.",
         "",
         f"Scoring uses the trailing **{window_sec:.0f} s** of each 1200 s record,",
         "pooled over the eight stationary records as `sqrt(mean(record_RMS^2))`.",
@@ -348,31 +379,32 @@ def markdown_report(summaries: list[dict[str, Any]], window_sec: float,
     lines.extend([
         "## Result",
         "",
-        "| Condition | Guard | Detector [m/s²] | Engaged | 3-D [m] | 3-D offset [m] "
+        "| Condition | Arm | Detector [m/s²] | Engaged | Racc σ [m/s²] | 3-D [m] "
         "| Pitch offset [deg] | Yaw [deg] | vs engine-off |",
         "| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
     ])
     for condition in CONDITIONS:
-        for guard in ("off", "on"):
+        for guard in ARMS:
             summary = by_key[(condition.label, guard)]
+            armed = guard != "off"
             lines.append(
-                "| {cond} | {guard} | {det} | {eng} | {d3} | {off} | {pitch} | {yaw} "
+                "| {cond} | {guard} | {det} | {eng} | {racc} | {d3} | {pitch} | {yaw} "
                 "| {ratio} |".format(
-                    cond=condition.label,
+                    cond=condition.label if guard == ARMS[0] else "",
                     guard=guard,
-                    det=fmt(summary["guard_out_of_band_rms_mps2"], 4)
-                    if guard == "on" else "—",
-                    eng=fmt(summary["guard_engagement"], 3) if guard == "on" else "—",
+                    det=fmt(summary["guard_out_of_band_rms_mps2"], 4) if armed else "—",
+                    eng=fmt(summary["guard_engagement"], 3) if armed else "—",
+                    racc=fmt(summary["guard_racc_std_mps2"], 4)
+                    if guard == "guard+R" else "—",
                     d3=fmt(summary["disp_3d_rms_m"]),
-                    off=fmt(summary["disp_3d_offset_m"]),
                     pitch=fmt(abs(float(summary["pitch_mean_deg"])), 3),
                     yaw=fmt(summary["yaw_rms_deg"], 2),
-                    ratio=fmt(summary["disp_3d_ratio_to_baseline"], 2),
+                    ratio=fmt(summary["disp_3d_ratio_to_baseline"], 3),
                 )
             )
 
     off = by_key[("engine off", "off")]
-    on = by_key[("engine off", "on")]
+    on = by_key[("engine off", "guard+R")]
     identical = all(
         float(off[name]) == float(on[name])
         for name in RMS_FIELDS + MEAN_FIELDS
@@ -396,12 +428,30 @@ def markdown_report(summaries: list[dict[str, Any]], window_sec: float,
         "",
     ])
 
+    lines.extend([
+        "## Why the residual does not go to one",
+        "",
+        "Conditioning costs group delay, and that cost is still there when there is",
+        "nothing left to remove.  Forcing the guard on over a *quiet* input isolates",
+        "it: on the two JONSWAP records at Hs 1.5 and 8.5 the delay alone accounts",
+        "for 1.021x and 1.063x, against deployed residuals of 1.074x and 1.151x.",
+        "So roughly half the remaining gap is the guard's own delay, which no",
+        "covariance change can touch, and the covariance arm attacks the other half.",
+        "",
+        "That is also why the two channels disagree about the best gain.  Attitude",
+        "keeps improving as the accelerometer is de-weighted further, but the",
+        "accelerometer is the only wave measurement there is, so past a gain of",
+        "about 1.25 displacement turns back up as the estimate leans on the OU",
+        f"prior instead.  {RACC_GAIN:g} sits at the displacement optimum with margin.",
+        "",
+    ])
+
     if plots:
         lines.extend([
             "## Figure",
             "",
-            f"- `{PLOT_NAME}`: pooled 3-D error and standing tilt offset with the",
-            "  guard off and on, against the engine-off baseline.",
+            f"- `{PLOT_NAME}`: pooled 3-D error and standing tilt offset across the",
+            "  three configurations, against the engine-off baseline.",
             "",
             "Mirrored byte-for-byte into `doc/kalman_ou_iii/` for the article.",
             "",
@@ -410,19 +460,23 @@ def markdown_report(summaries: list[dict[str, Any]], window_sec: float,
     lines.extend([
         "## What this does not do",
         "",
-        "The guard removes vibration from the measurement path.  It does not make",
-        "the estimator vibration-aware: the accelerometer measurement covariance",
-        "is unchanged, so the filter still believes a conditioned sample is as",
-        "good as a quiet one.  It also cannot help with machinery whose orders",
-        "reach into the wave band, which no front-end filter can separate from the",
-        "sea, and it does not touch the residual that survives its own stopband.",
+        "Group delay is the price of conditioning and is paid whether or not there",
+        "is anything left to remove, so the residual cannot reach 1.00 while the",
+        "guard is engaged.  And no front-end filter helps with machinery whose",
+        "orders reach into the wave band, since there is nothing there to separate",
+        "them from the sea: the 800 rpm row is that limit showing itself early,",
+        "and it is the one condition where the covariance stage does not pay.",
+        "",
+        "Mechanical isolation and a tighter sensor anti-alias filter still act on",
+        "the quantity that matters, and are the only things that reduce the input",
+        "rather than manage it.",
         "",
     ])
     return "\n".join(lines)
 
 
 PLOT_NAME = "ou_engine_noise_guard.svg"
-GUARD_COLORS = {"off": "#c0392b", "on": "#1b6ca8"}
+GUARD_COLORS = {"off": "#c0392b", "guard": "#1b6ca8", "guard+R": "#2e8b57"}
 
 
 def reproducible_pyplot():
@@ -452,16 +506,17 @@ def write_plot(path: Path, summaries: list[dict[str, Any]]) -> None:
 
     def panel(axis, extract, ylabel, title, log, reference) -> None:
         base = [float(index) for index in range(len(labels))]
-        for offset, guard in enumerate(("off", "on")):
+        width = 0.8 / len(ARMS)
+        for offset, guard in enumerate(ARMS):
             values = [extract(by_key[(label, guard)]) for label in labels]
             axis.bar(
-                [value + (offset - 0.5) * 0.38 for value in base],
+                [value + (offset - (len(ARMS) - 1) / 2.0) * width for value in base],
                 values,
-                width=0.38,
+                width=width,
                 color=GUARD_COLORS[guard],
                 edgecolor="#222222",
                 linewidth=0.5,
-                label=f"guard {guard}",
+                label=guard,
             )
         axis.axhline(reference, color="#444444", linewidth=0.9, linestyle=":")
         axis.set_xticks(base)
@@ -475,7 +530,7 @@ def write_plot(path: Path, summaries: list[dict[str, Any]]) -> None:
         axes[0],
         lambda s: float(s["disp_3d_rms_m"]),
         "pooled 3-D RMS error (m)",
-        "Displacement error, guard off and on",
+        "Displacement error across the three configurations",
         True,
         baseline,
     )
@@ -483,7 +538,7 @@ def write_plot(path: Path, summaries: list[dict[str, Any]]) -> None:
         axes[1],
         lambda s: abs(float(s["pitch_mean_deg"])),
         "standing pitch offset (deg)",
-        "Rectified tilt offset, the mechanism the guard targets",
+        "Standing tilt offset, the mechanism both stages target",
         True,
         abs(float(by_key[("engine off", "off")]["pitch_mean_deg"])),
     )
@@ -527,7 +582,7 @@ def main() -> int:
             executor.submit(run_one, record, inputs[record], condition, guard,
                             args.window_sec)
             for condition in CONDITIONS
-            for guard in (False, True)
+            for guard in ARMS
             for record in RECORDS
         ]
         for index, future in enumerate(as_completed(tasks), start=1):
@@ -566,7 +621,9 @@ def main() -> int:
         "source_commit": commit,
         "simulation_data": "oceanography-waves-lib v1.1.3",
         "family": "OU-III",
-        "guard": {"cutoff_hz": GUARD_CUTOFF_HZ, "poles": GUARD_POLES},
+        "guard": {"cutoff_hz": GUARD_CUTOFF_HZ, "poles": GUARD_POLES,
+                  "racc_gain": RACC_GAIN},
+        "arms": list(ARMS),
         "records": [record.__dict__ for record in RECORDS],
         "conditions": [
             {"label": c.label, "engine": dict(c.engine)} for c in CONDITIONS

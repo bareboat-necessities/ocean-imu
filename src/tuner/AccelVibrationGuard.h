@@ -226,6 +226,16 @@ public:
         return removed_ms_.cwiseSqrt();
     }
 
+    // Detector-band RMS above the engagement floor, in m/s^2.  Zero whenever
+    // the guard is dormant, which makes it usable as a drive signal that is
+    // exactly inert on a quiet installation.
+    [[nodiscard]] float excessRms() const noexcept {
+        if (!enabled()) return 0.0f;
+        return std::max(0.0f, removedRms() - engage_lo_);
+    }
+
+    [[nodiscard]] float engageLo() const noexcept { return engage_lo_; }
+
     // Vector RMS in the detector band, in m/s^2.  Measured whenever the guard
     // has a cutoff, engaged or not, so it is readable as a vibration
     // diagnostic in its own right.
