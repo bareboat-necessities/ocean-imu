@@ -44,11 +44,13 @@ SCHEMA = 2
 
 # This order is copied from the source-derived implementation manifest.  It is
 # intentionally more detailed than the covariance operation classes below: the
-# S pseudo update happens inside time_update() before the accelerometer update,
-# and every accepted correction performs its quaternion injection/reset
-# immediately rather than through one shared end-of-sample reset.
+# vibration guard runs before prediction, the S pseudo update happens inside
+# time_update() before the accelerometer update, and every accepted correction
+# performs its quaternion injection/reset immediately rather than through one
+# shared end-of-sample reset.
 EXPECTED_ORDER = [
     "commit_previous_tune",
+    "vibration_guard_conditioning",
     "prediction",
     "apply_pending_aw_covariance_psd_increment",
     "periodic_S_zero_when_due_then_immediate_quaternion_injection_and_left_error_reset",
@@ -95,6 +97,11 @@ def build() -> dict:
     reset_policy = manifest.get("same_sample_reset_policy", {})
     if reset_policy.get("single_shared_end_of_sample_reset") is not False:
         failures.append("source manifest merged immediate correction resets")
+    vibration_guard = manifest.get("vibration_guard", {})
+    if vibration_guard.get("zero_engagement_is_bit_exact_transparent") is not True:
+        failures.append("P3 requires source-certified zero-engagement vibration-guard transparency")
+    if vibration_guard.get("active_guard_requires_separate_source_certificate") is not True:
+        failures.append("P3 must not absorb active vibration-guard dynamics into the dormant branch")
 
     # Bind the abstract affine-PSD operations to the exact shipping source.
     _require(k, "P_LL_new = F_LL * P_LL_old * F_LLᵀ + Q_LL", "linear prediction", failures)
@@ -107,6 +114,17 @@ def build() -> dict:
     _require(k, "evals(i) = std::max(T(0), evals(i));", "a_w increment PSD projection", failures)
 
     operations = {
+        "vibration_guard_dormant": {
+            "affine_map": "P+=P",
+            "A": "I",
+            "B": "0",
+            "B_psd": True,
+            "measurement_map": "acc_in=acc",
+            "scope": "zero-engagement bit-exact-transparent branch only",
+            "active_or_transitioning_guard_covered": False,
+            "active_or_transitioning_guard_requires_separate_source_certificate": True,
+            "source_bound": "implementation manifest vibration_guard zero-engagement contract",
+        },
         "prediction": {
             "affine_map": "P+=F P F^T+Q",
             "A": "F",
@@ -168,6 +186,8 @@ def build() -> dict:
         "fixed_dimensions": {"H": 18, "A": 21},
         "dimension_change_inside_word": False,
         "normal_live_update_order": EXPECTED_ORDER,
+        "vibration_guard_scope": "dormant_zero_engagement_bit_exact_transparent_only",
+        "active_vibration_guard_covered": False,
         "same_sample_reset_policy": "immediate_after_each_accepted_S_acc_mag_correction",
         "operation_classes": operations,
         "covariance_decomposition_invariant": {
@@ -211,16 +231,27 @@ def validate(d: dict) -> list[str]:
         failures.append("dimension change was admitted inside a P3 word")
     if d.get("normal_live_update_order") != EXPECTED_ORDER:
         failures.append("normal-Live order mismatch")
+    if d.get("vibration_guard_scope") != "dormant_zero_engagement_bit_exact_transparent_only":
+        failures.append("P3 vibration-guard scope is not the certified dormant branch")
+    if d.get("active_vibration_guard_covered") is not False:
+        failures.append("P3 incorrectly claims active vibration-guard coverage")
     if d.get("same_sample_reset_policy") != "immediate_after_each_accepted_S_acc_mag_correction":
         failures.append("same-sample reset order is not source-faithful")
 
     ops = d.get("operation_classes", {})
-    required = {"prediction", "accepted_joseph", "rejected_or_not_due", "left_error_reset", "aw_covariance_sync"}
+    required = {"vibration_guard_dormant", "prediction", "accepted_joseph", "rejected_or_not_due", "left_error_reset", "aw_covariance_sync"}
     if set(ops) != required:
         failures.append("P3 operation class coverage is incomplete")
     for name in required:
         if ops.get(name, {}).get("B_psd") is not True:
             failures.append(f"{name} additive covariance is not PSD")
+    guard_op = ops.get("vibration_guard_dormant", {})
+    if guard_op.get("A") != "I" or guard_op.get("B") != "0":
+        failures.append("dormant vibration guard is not represented as exact identity")
+    if guard_op.get("active_or_transitioning_guard_covered") is not False:
+        failures.append("active vibration guard was admitted into dormant identity class")
+    if guard_op.get("active_or_transitioning_guard_requires_separate_source_certificate") is not True:
+        failures.append("active vibration guard is not fail-closed as a separate source obligation")
 
     reset = d.get("reset", {})
     if reset.get("determinant_formula") != "1+||dtheta||^2/4":
