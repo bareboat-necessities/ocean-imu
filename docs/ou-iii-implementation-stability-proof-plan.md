@@ -332,7 +332,40 @@ geometry, now at `(0,2,23)` and at the far worse `(23,18,4)`, whose correction
 radial upper bound of `3.1593913566884573` rad is past `pi` and so wraps rather
 than composing.
 
-None of V51, V52 or V53 composes `q<8`, promotes sample 1 or P5, or sets
+`tools/ou3_p5_sample1_open_cell_correction_budget_v54.py` measures how far the
+remaining cells are. For each it reconstructs the refined chain from source,
+decomposes `corr^2 = k_perp^2 rho_x^2 + k_par^2 (rho^2 - rho_x^2)`, and compares
+against the largest correction the SO(3) triangle admits for that cell's
+recorded chart, `phi_d <= 2 atan(4) - 2 atan(q_current/2)`:
+
+| cell | correction | admissible | gap | `rho` reduction that would suffice |
+| --- | --- | --- | --- | --- |
+| `(0,2,23)` first open | 1.9595039241752017 | 1.9389861206167838 | +1.05% | 1.25% |
+| `(23,18,4)` worst | 3.1985263367953887 | 1.257263970049669 | +60.7% | 65.0% |
+| `(0,0,23)` retired | 1.7313776836494923 | 2.0308497552113565 | -17.3% | already inside |
+
+So the two remaining named cells are in completely different regimes. The
+first-open cell misses by about one percent - the same order as the gap V50
+measured at the retired witness, which the exact monotone enclosure then beat by
+sixteen times - while the worst cell needs the residual cut by roughly two
+thirds, and there zeroing `rho_x` or `k_perp` outright cannot reach the target
+because `k_par rho` alone already exceeds it.
+
+The two cells also fail for different reasons. At `(0,2,23)` the residual is 58
+percent predicted force and 39 percent post-update `a_w` error; at `(23,18,4)`
+that inverts to 28 and 69 percent, with the post-update `a_w` bound driven by
+the tangent term `|(1 - k_aw,t) r_t| = 9.2` m/s^2 that the large `p` cell
+produces. Sharpening the post-update `a_w` bound needs signed structure on the
+first tangent residual, in the way V10's equations (1) and (2) already supply
+for the `x` row.
+
+V54's reduction figures are arithmetic on outward-rounded enclosures, not
+enclosures themselves, and they cover the geodesic branch only: V41 closes a
+cell on `min(geodesic, product)`, so reaching the geodesic target closes a cell
+but missing it does not prove one open. V54 therefore reports a distance and
+never a verdict.
+
+None of V51, V52, V53 or V54 composes `q<8`, promotes sample 1 or P5, or sets
 `N_H_words`.
 
 The independent implementation-stability composition gate continues to consume P5 directly. The older generic affine deployment-capture arithmetic is not accepted as a substitute.
