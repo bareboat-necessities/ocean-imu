@@ -26,7 +26,8 @@ jobs:
   v53-exact-monotone-q8-cover:
     name: P5 V53 exact monotone q8 cover
     runs-on: macos-latest
-    timeout-minutes: 90
+    # Two complete V41 covers back to back; the single-cover V41 job budgets 45.
+    timeout-minutes: 150
     steps:
       - uses: actions/checkout@v6
       - name: Compile V53 producer and test
