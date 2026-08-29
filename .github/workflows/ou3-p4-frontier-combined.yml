@@ -1,0 +1,56 @@
+name: ou3-p4-frontier-combined
+
+on:
+  pull_request:
+    paths:
+      - 'tools/ou3_p4_frontier_combined_certificate.py'
+      - 'tools/ou3_p4_direct_word_contraction_certificate.py'
+      - 'tools/ou3_p4_exact_correction_structure_certificate.py'
+      - 'tools/ou3_p4_thirdgen_combined_certificate.py'
+      - 'tools/ou3_p4_nextgen_*.py'
+      - 'tools/ou3_p4_nonlinear_word_certificate.py'
+      - 'tools/ou3_proof_operating_domain.json'
+      - 'tests/validation/test_ou3_p4_frontier_combined_certificate.py'
+      - '.github/workflows/ou3-p4-frontier-combined.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: ou3-p4-frontier-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  frontier:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install numerical dependency
+        run: |
+          sudo apt-get update
+          sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends python3-numpy
+      - name: Compile combined frontier producer and test
+        run: |
+          python3 -m py_compile \
+            tools/ou3_p4_frontier_combined_certificate.py \
+            tests/validation/test_ou3_p4_frontier_combined_certificate.py
+      - name: Test combined frontier P4
+        working-directory: tests/validation
+        run: python3 -m unittest -v test_ou3_p4_frontier_combined_certificate
+      - name: Emit combined frontier P4 numbers
+        run: |
+          python3 tools/ou3_p4_frontier_combined_certificate.py --output /tmp/p4-frontier.json
+          python3 - <<'PY'
+          import json
+          p=json.load(open('/tmp/p4-frontier.json'))
+          print('P4_FRONTIER_COMBINED_CERTIFICATE:',p['P4_FRONTIER_COMBINED_CERTIFICATE'])
+          for mode in ('H','A'):
+              r=p['modes'][mode]
+              print(
+                  f"P4_FRONTIER {mode} "
+                  f"W_before={r['certified_level_W_before_frontier']:.17e} "
+                  f"W_after={r['certified_level_W']:.17e} "
+                  f"factor={r['frontier_W_widening_factor_lower']:.17e} "
+                  f"B_factor={r['frontier_B_reduction_factor_lower']:.17e} "
+                  f"gamma={r['frontier_bootstrap_gamma_upper']:.17e} "
+                  f"cap={r['frontier_selected_active_cap']}"
+              )
+          PY
