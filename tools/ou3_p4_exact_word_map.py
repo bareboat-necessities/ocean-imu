@@ -20,6 +20,12 @@ all attitude/non-attitude cross gains.  Rejected/not-due branches are identity
 corrections.  In A mode the source's accelerometer-bias ball projection follows
 every state injection and is retained as an exact convex projection operation.
 
+The deployed vibration guard precedes prediction.  This P4 semantic map covers
+only the source-certified zero-engagement branch, where the guard returns the
+accelerometer input bit-for-bit and is therefore the exact identity on the
+measurement/error state.  Active or transitioning guard dynamics are a separate
+source/hybrid obligation and are deliberately not absorbed into this word map.
+
 The numerical P4 enclosure backend consumes this semantic map together with
 validated covariance/gain/source-node boxes.  Keeping semantics in a separate
 source-bound producer prevents a later interval optimization from changing the
@@ -40,6 +46,7 @@ SCHEMA = 1
 
 EXPECTED_ORDER = [
     "commit_previous_tune",
+    "vibration_guard_conditioning",
     "prediction",
     "apply_pending_aw_covariance_psd_increment",
     "periodic_S_zero_when_due_then_immediate_quaternion_injection_and_left_error_reset",
@@ -63,6 +70,16 @@ def _mode(mode: str, dimension: int, coordinates: list[str]) -> dict:
                 "kind": "source_state_commit",
                 "state_map": "identity_on_error_state",
                 "covariance_map": "parameter_commit_only",
+            },
+            {
+                "name": "vibration_guard_conditioning",
+                "kind": "source_measurement_conditioning",
+                "certified_branch": "dormant_zero_engagement_bit_exact_transparent_only",
+                "measurement_map": "acc_in=acc",
+                "state_map": "identity",
+                "covariance_map": "identity",
+                "active_or_transitioning_guard_covered": False,
+                "active_or_transitioning_guard_requires_separate_source_certificate": True,
             },
             {
                 "name": "prediction",
@@ -143,6 +160,11 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     reset = manifest.get("same_sample_reset_policy", {})
     if reset.get("single_shared_end_of_sample_reset") is not False:
         failures.append("same-sample reset policy is not source-faithful")
+    vibration_guard = manifest.get("vibration_guard", {})
+    if vibration_guard.get("zero_engagement_is_bit_exact_transparent") is not True:
+        failures.append("P4 requires source-certified zero-engagement vibration-guard transparency")
+    if vibration_guard.get("active_guard_requires_separate_source_certificate") is not True:
+        failures.append("P4 must keep active vibration-guard dynamics outside the dormant word map")
     dims = manifest["state_coordinates"]
     return {
         "schema": SCHEMA,
@@ -150,6 +172,8 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "source_generated_not_trajectory_fit": True,
         "joint_source_reachability_required": True,
         "shipping_operation_order": order,
+        "vibration_guard_scope": "dormant_zero_engagement_bit_exact_transparent_only",
+        "active_vibration_guard_covered": False,
         "H": _mode("H", dims["H_dimension"], dims["H"]),
         "A": _mode("A", dims["A_dimension"], dims["A"]),
         "source_word_horizon_s": words["word_contract"]["conditional_word_language"]["word_horizon_lower_s"],
@@ -174,8 +198,20 @@ def validate(d: dict) -> list[str]:
         failures.append("word map permits Cartesian edge mixing")
     if d.get("shipping_operation_order") != EXPECTED_ORDER:
         failures.append("shipping operation order mismatch")
+    if d.get("vibration_guard_scope") != "dormant_zero_engagement_bit_exact_transparent_only":
+        failures.append("P4 vibration-guard scope is not the certified dormant branch")
+    if d.get("active_vibration_guard_covered") is not False:
+        failures.append("P4 incorrectly claims active vibration-guard coverage")
     for mode in ("H", "A"):
         m = d.get(mode, {})
+        operators = {op.get("name"): op for op in m.get("operators", [])}
+        guard = operators.get("vibration_guard_conditioning", {})
+        if guard.get("measurement_map") != "acc_in=acc" or guard.get("state_map") != "identity":
+            failures.append(f"{mode}: dormant vibration guard is not exact identity")
+        if guard.get("active_or_transitioning_guard_covered") is not False:
+            failures.append(f"{mode}: active vibration guard admitted into dormant P4 map")
+        if guard.get("active_or_transitioning_guard_requires_separate_source_certificate") is not True:
+            failures.append(f"{mode}: active vibration guard is not fail-closed")
         cp = m.get("correction_policy", {})
         if cp.get("deployed_normalized_quaternion_map") is not True:
             failures.append(f"{mode}: deployed quaternion injection missing")
