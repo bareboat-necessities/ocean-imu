@@ -134,6 +134,15 @@ ROW_FIELDS = (
     "sigma_applied_mps2",
 )
 
+# Reproducing this study on another machine is not a byte-for-byte exercise.
+# The simulator is built with -march=native, so a different CPU can move the
+# last digits, and Matplotlib renders slightly different SVG markup from one
+# release to the next.  What has to survive a re-run is the published claim,
+# so a comparison checks the ratios the article quotes, to a tolerance well
+# below the effects it reports.
+COMPARE_FIELDS = ("disp_3d_ratio_to_baseline", "tilt_ratio_to_baseline")
+COMPARE_TOLERANCE = 0.01
+
 FIGURES = (
     "ou3_lever_arm_penalty.svg",
     "ou3_lever_arm_tilt.svg",
@@ -156,6 +165,17 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="copy the article figures into doc/kalman_ou_iii/ byte for byte",
     )
+    p.add_argument(
+        "--compare-to",
+        type=Path,
+        default=None,
+        help=(
+            "directory holding a previous lever_arm_summary.csv and "
+            "lever_arm_cutoff_summary.csv; fail if any published ratio moved "
+            "by more than --compare-tolerance"
+        ),
+    )
+    p.add_argument("--compare-tolerance", type=float, default=COMPARE_TOLERANCE)
     return p.parse_args()
 
 
@@ -847,6 +867,50 @@ def write_cutoff_plot(
     plt.close(fig)
 
 
+def read_csv(path: Path) -> list[dict[str, str]]:
+    with path.open(encoding="utf-8", newline="") as stream:
+        return list(csv.DictReader(stream))
+
+
+def compare_summaries(
+    previous: list[dict[str, str]],
+    current: list[dict[str, Any]],
+    keys: Sequence[str],
+    fields: Sequence[str],
+    tolerance: float,
+) -> list[str]:
+    """Names every published ratio that a re-run moved too far.
+
+    Keyed on the case rather than on row order, so a reordered or extended
+    matrix reports what actually changed instead of a wall of noise.
+    """
+
+    def index(rows: Iterable[dict[str, Any]]) -> dict[tuple[str, ...], dict[str, Any]]:
+        return {tuple(f"{float(r[k]):g}" if k == "distance_m" or k == "cutoff_hz"
+                      else str(r[k]) for k in keys): r for r in rows}
+
+    before = index(previous)
+    after = index(current)
+    complaints: list[str] = []
+    for key in sorted(set(before) | set(after)):
+        if key not in before:
+            complaints.append(f"{'/'.join(key)}: new case, not in the committed summary")
+            continue
+        if key not in after:
+            complaints.append(f"{'/'.join(key)}: committed case is missing from the re-run")
+            continue
+        for field in fields:
+            was = float(before[key][field])
+            now = float(after[key][field])
+            if math.isnan(was) and math.isnan(now):
+                continue
+            if not (abs(now - was) <= tolerance):
+                complaints.append(
+                    f"{'/'.join(key)}: {field} moved {was:.4f} -> {now:.4f}"
+                )
+    return complaints
+
+
 def write_csv(path: Path, rows: list[dict[str, Any]]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     fields = list(rows[0].keys()) if rows else []
@@ -1057,6 +1121,38 @@ def main() -> int:
     manifest_path = out / "manifest.json"
     manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
     print(report_path.read_text())
+
+    if args.compare_to is not None:
+        complaints = compare_summaries(
+            read_csv(args.compare_to / summary_path.name),
+            summaries,
+            ("mode", "axis", "distance_m"),
+            COMPARE_FIELDS,
+            args.compare_tolerance,
+        )
+        sweep_reference = args.compare_to / sweep_path.name
+        if sweep and sweep_reference.exists():
+            complaints += compare_summaries(
+                read_csv(sweep_reference),
+                sweep,
+                ("cutoff_hz",),
+                ("disp_3d_ratio_to_baseline",),
+                args.compare_tolerance,
+            )
+        if complaints:
+            print(
+                f"\nRe-run disagrees with {args.compare_to} beyond "
+                f"{args.compare_tolerance:g}:",
+                flush=True,
+            )
+            for line in complaints:
+                print(f"  {line}", flush=True)
+            return 1
+        print(
+            f"\nRe-run agrees with {args.compare_to} within "
+            f"{args.compare_tolerance:g} on every published ratio.",
+            flush=True,
+        )
     return 0
 
 

@@ -143,6 +143,93 @@ class LeverArmSummaryTests(unittest.TestCase):
         self.assertAlmostEqual(got["exact"]["residual_rms_mps2"], 0.0)
 
 
+class LeverArmReproducibilityTests(unittest.TestCase):
+    """A re-run has to reach the same claim, not the same bytes."""
+
+    KEYS = ("mode", "axis", "distance_m")
+    FIELDS = ("disp_3d_ratio_to_baseline", "tilt_ratio_to_baseline")
+
+    def committed(self) -> list[dict[str, str]]:
+        return [
+            {
+                "mode": "unmodeled",
+                "axis": "x-athwartships",
+                "distance_m": "0.3",
+                "disp_3d_ratio_to_baseline": "1.009",
+                "tilt_ratio_to_baseline": "1.986",
+            },
+            {
+                "mode": "exact",
+                "axis": "x-athwartships",
+                "distance_m": "0.3",
+                "disp_3d_ratio_to_baseline": "1.000",
+                "tilt_ratio_to_baseline": "1.000",
+            },
+        ]
+
+    def test_last_digit_movement_is_accepted(self):
+        rerun = [dict(row) for row in self.committed()]
+        rerun[0]["disp_3d_ratio_to_baseline"] = "1.0128"
+        rerun[1]["tilt_ratio_to_baseline"] = "1.0007"
+        self.assertEqual(
+            mod.compare_summaries(
+                self.committed(), rerun, self.KEYS, self.FIELDS, 0.01
+            ),
+            [],
+        )
+
+    def test_a_moved_claim_is_reported_with_both_values(self):
+        rerun = [dict(row) for row in self.committed()]
+        rerun[0]["tilt_ratio_to_baseline"] = "1.100"
+        complaints = mod.compare_summaries(
+            self.committed(), rerun, self.KEYS, self.FIELDS, 0.01
+        )
+        self.assertEqual(len(complaints), 1, complaints)
+        self.assertIn("tilt_ratio_to_baseline", complaints[0])
+        self.assertIn("1.9860", complaints[0])
+        self.assertIn("1.1000", complaints[0])
+
+    def test_a_missing_or_added_case_is_reported(self):
+        committed = self.committed()
+        self.assertEqual(
+            len(
+                mod.compare_summaries(
+                    committed, committed[:1], self.KEYS, self.FIELDS, 0.01
+                )
+            ),
+            1,
+        )
+        self.assertEqual(
+            len(
+                mod.compare_summaries(
+                    committed[:1], committed, self.KEYS, self.FIELDS, 0.01
+                )
+            ),
+            1,
+        )
+
+    def test_matching_is_keyed_on_the_case_not_the_row_order(self):
+        rerun = list(reversed([dict(row) for row in self.committed()]))
+        self.assertEqual(
+            mod.compare_summaries(
+                self.committed(), rerun, self.KEYS, self.FIELDS, 0.01
+            ),
+            [],
+        )
+
+    def test_distance_is_compared_numerically(self):
+        """0.30 and 0.3 are the same case; string keys alone would disagree."""
+        rerun = [dict(row) for row in self.committed()]
+        for row in rerun:
+            row["distance_m"] = "0.30"
+        self.assertEqual(
+            mod.compare_summaries(
+                self.committed(), rerun, self.KEYS, self.FIELDS, 0.01
+            ),
+            [],
+        )
+
+
 class LeverArmCutoffSweepTests(unittest.TestCase):
     def test_sweep_is_pooled_per_cutoff_and_normalized(self):
         rows = [
