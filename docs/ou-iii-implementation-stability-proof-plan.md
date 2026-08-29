@@ -244,6 +244,54 @@ This is a redirection of the proof search only. No filter setting, source
 domain, six-radian correction limit, `q<8` target, source language, whole-word
 criterion, or `N_H` state changes, and `N_H_words` remains unset.
 
+`tools/ou3_p5_sample1_exact_monotone_source_gain_v51.py` discharges that
+obligation at the witness. The first-accelerometer block is described by eight
+rational functions of the same three source intervals - the attitude variance
+`t`, the `a_w` variance `p`, and the accelerometer noise variance `r`:
+
+`a = t(p+r)/D`, `b = p(g^2 t + r)/D`, `c0 = -g t p/D`, `bz = p r/(p+r)`,
+`det = t p r/D`, `k_theta = g t/D`, `k_aw,t = p/D`, `k_z = p/(p+r)`,
+with `D = g^2 t + p + r`.
+
+The parent backend evaluates each as a straight interval expression, losing the
+dependency between numerator and denominator. The loss is not cosmetic: at the
+witness the parent encloses `k_z = p/(p+r)` in
+`[0.5594923342554586, 1.0537323143362434]`, even though `p/(p+r) < 1` holds
+identically for positive `p, r`.
+
+Each expression is monotone in `t`, `p` and `r` separately, so its exact range
+over the parameter box is attained at a corner. `a` and `b` reduce to two
+variables (`u = p+r` and `w = g^2 t + r`) that each range over an exact interval
+independent of the remaining variable, so their corners are genuine corners of
+the original box. V51 evaluates every expression at its extremal corner with the
+same outward-rounded backend and intersects the result with the parent, so a
+refinement can never widen a bound or leave its parent, and fails closed if it
+would.
+
+At the authoritative witness, reproduced from source rather than copied:
+
+| quantity | parent | exact monotone |
+| --- | --- | --- |
+| `k_z` upper | 1.0537323143362434 | 0.8001468619320714 |
+| sample-1 `\|f\|` | 21.395742136954993 | 18.606777069495593 |
+| post-first `a_w` axial | 4.911252706804307 | 2.9343396015749246 |
+| sample-1 `rho` | 17.922551201967796 | 15.229738748335985 |
+| `k_perp` | 0.9753682347137846 | 0.8468904975139163 |
+| `k_parallel` | 0.09899544770387604 | 0.09772949400653325 |
+| V10 correction | 2.0466720610769817 rad | 1.7313776836494923 rad |
+
+V50 measured that the geodesic branch needed the correction principal angle to
+fall by `0.019476337434169544` rad. This removes `0.3152943774274895` rad,
+sixteen times that. Composing the refined correction with V41's archived
+sample-0 chart - an upper bound computed with the unrefined gains, hence a
+conservative partner - gives `q = 4.8010333986449245` against the archived
+parent `q = 8.344528951460543`. The authoritative first survivor closes.
+
+V51 evaluates the single authoritative witness cell. It does not yet lift the
+exact monotone enclosure over the complete V41 source-cell-0 cover, and it does
+not compose `q<8`, promote sample 1 or P5, or set `N_H_words`. That lift is the
+next obligation on this line.
+
 The independent implementation-stability composition gate continues to consume P5 directly. The older generic affine deployment-capture arithmetic is not accepted as a substitute.
 
 **PASS criterion for closing P5:** every certified normal or timeout handoff lies in a validated outer H capture funnel; every source-word prefix stays safe; the outer recurrence reaches `W_*` in a finite machine-certified number of H words/time. The current certificate does **not** yet satisfy this criterion.
