@@ -2,6 +2,7 @@ name: ou3-p5-v50-authoritative-theta-z-projected-deltap-fast
 
 on:
   push:
+    branches: [main]
     paths:
       - "tools/ou3_p5_sample1_authoritative_theta_z_projected_deltap_v50.py"
       - "tests/validation/test_ou3_p5_sample1_authoritative_theta_z_projected_deltap_v50.py"
