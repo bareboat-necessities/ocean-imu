@@ -1,0 +1,62 @@
+{
+  "axes": {
+    "x-athwartships": [
+      1.0,
+      0.0,
+      0.0
+    ],
+    "y-fore-aft": [
+      0.0,
+      1.0,
+      0.0
+    ],
+    "z-vertical": [
+      0.0,
+      0.0,
+      1.0
+    ]
+  },
+  "cutoff_sweep_hz": [
+    1.0,
+    2.0,
+    5.0,
+    10.0,
+    15.0,
+    25.0,
+    50.0,
+    100.0
+  ],
+  "derivative_cutoff_hz": 15.0,
+  "distances_m": [
+    0.1,
+    0.2,
+    0.3
+  ],
+  "exact_arm": "oracle: truth angular kinematics; an upper bound, not a claim",
+  "files": {
+    "lever_arm_cutoff_runs.csv": "d9d01654adc60c586b7a5776b85ebd052bb83c61889360552cd796d41cd1db59",
+    "lever_arm_cutoff_summary.csv": "e9a08d2b446b8e0cde126805971299236d257e8c6215591a827080a77fe0a7ce",
+    "lever_arm_report.md": "f21466b72b3761db25f53986dd5381d06d2ba739be8ae762b7ebb8989a589786",
+    "lever_arm_runs.csv": "7dec6d14b5b9b335889c5a09787ed0fd77d8748f0bcbd77bd7e6b3de1dd1dbb6",
+    "lever_arm_summary.csv": "ab0a236524d6dc0900031aadb4e78e2a23a21ce5ffc086e40d7e1ff33beb4347",
+    "ou3_lever_arm_cutoff.svg": "026a4bafd382bb721869ef01d9b6276c36ef8ebf5c8b01fb8d30b5d2711fe630",
+    "ou3_lever_arm_mechanism.svg": "6962996003347922abf933ba725c110f305dc5add19664273b79725a33877b13",
+    "ou3_lever_arm_penalty.svg": "2b72055bf757f0ae1753c89d1420e8dc4020ee8aed8dcaa1c932fb9f4b106e19",
+    "ou3_lever_arm_sea_state.svg": "f3c625abbe7785bb6dad4029b0ca3190c4226de27826f4584b5ce8e95c0ed109",
+    "ou3_lever_arm_tilt.svg": "3029db6206488afd553700b162a33961649ac02d22e1b01f114554805b9dfb9d"
+  },
+  "gyro_arm": "deployable: two-pole low-pass on the measured rate followed by a causal second-order difference",
+  "installation_stage": "simulator applies the rigid-body term to the accelerometer truth before sensor corruption (W3D_IMU_LEVER_ARM_M)",
+  "mode": "full",
+  "model": "a_imu = a_cg + alpha x r + omega x (omega x r)",
+  "model_stage": "simulator removes the filter's modelled term after sensor corruption, immediately before fusion (W3D_IMU_LEVER_ARM_MODEL)",
+  "modes": {
+    "exact": "exact",
+    "gyro": "gyro",
+    "unmodeled": "none"
+  },
+  "scoring_window_sec": 900.0,
+  "simulation_data": "oceanography-waves-lib v1.1.3",
+  "source_commit": "dd30ffb2ea6fa2b41d8bb85dd9e5604c3735ece5",
+  "study": "OU-III IMU lever-arm installation"
+}

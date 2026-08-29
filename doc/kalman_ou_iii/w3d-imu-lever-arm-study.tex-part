@@ -26,18 +26,29 @@ standard eight JONSWAP and PM--Stokes records are replayed with the IMU moved
 \SIlist{10;20;30}{cm} along each canonical body direction: athwartships,
 fore--aft, and vertical.  The record's CG motion, attitude, gyroscope,
 magnetometer, stochastic sensor realization, OU adaptation, covariance,
-pseudo-measurements, startup logic, and vibration guard are unchanged.  Only
-the accelerometer truth is moved from the CG to the sensor location using
-\eqref{eq:imu-lever-arm}.
+pseudo-measurements, startup logic, and vibration guard are unchanged.
 
-Two matched arms separate installation error from the estimator's remaining
-error.  In the \emph{unmodeled} arm, OU--III receives the off-CG specific
-force as if it came from the CG.  In the \emph{exact-model} arm, the same
-lever vector and the exact angular kinematics are supplied to the measurement
-model, so the two rotational terms are removed immediately before fusion.
-The latter is intentionally an oracle bound: it measures the error recoverable
-from correct lever-arm modeling and does not claim that differentiating a
-noisy MEMS gyroscope reproduces exact $\dot{\omega}$ in hardware.
+The installation and the estimator's model of it sit on opposite sides of the
+sensor, and the harness implements them there rather than by pre-processing
+records.  The \emph{installation stage} applies \eqref{eq:imu-lever-arm} to the
+accelerometer truth before sensor corruption, which is what a sensor at $r$
+physically measures; the \emph{model stage} removes the estimator's own
+reconstruction of the same term after corruption, immediately before fusion,
+which is the stage a firmware implementation owns.  Nothing downstream of that
+point knows the IMU is off the CG, so any difference in the scored error is
+attributable to the lever arm alone.
+
+Three matched modeling arms share one installation.  In the \emph{unmodeled}
+arm no lever-arm model runs and the installation error stands.  In the
+\emph{exact-model} arm the lever vector and the record's own angular kinematics
+are supplied to the measurement model, so both rotational terms are removed
+exactly.  In the \emph{gyro-model} arm the estimator has only what it would
+have on hardware: it reconstructs $\dot{\omega}$ from the corrupted rate by a
+two-pole low-pass at \SI{15}{Hz} followed by a causal second-order backward
+difference, and evaluates \eqref{eq:imu-lever-arm} on the result.  The
+exact-model arm is intentionally an oracle bound --- it measures the error
+recoverable from correct lever-arm modeling --- while the gyro-model arm
+measures what a deployable implementation actually recovers.
 
 \IfFileExists{w3d-imu-lever-arm-results.tex-part}{%
   \input{w3d-imu-lever-arm-results.tex-part}
@@ -46,25 +57,101 @@ noisy MEMS gyroscope reproduces exact $\dot{\omega}$ in hardware.
   from the versioned simulation records.
 }
 
-\IfFileExists{ou3_lever_arm_3d.svg}{%
-  \begin{figure}[t]
+\IfFileExists{ou3_lever_arm_penalty.svg}{%
+  \begin{figure*}[t]
     \centering
-    \includesvg[width=\columnwidth,inkscapelatex=false]{ou3_lever_arm_3d}
+    \includesvg[width=\textwidth,inkscapelatex=false]{ou3_lever_arm_penalty}
     \caption{Pooled OU--III 3-D displacement RMS, normalized by the CG-mounted
-    baseline, versus IMU lever-arm magnitude.  The three solid curves are the
-    unmodeled canonical installation directions; the dashed curve is the mean
-    exact-model result over those directions.}
-    \label{fig:imu-lever-arm-3d}
-  \end{figure}
+    baseline, versus IMU lever-arm magnitude, one panel per canonical
+    installation direction.  The unmodeled curve is the installation penalty;
+    the exact-model curve is what an ideal lever-arm model recovers, and the
+    gyro-model curve is what the deployable reconstruction recovers from the
+    corrupted rate alone.  A curve on the unit line is indistinguishable from
+    a CG-mounted IMU.}
+    \label{fig:imu-lever-arm-penalty}
+  \end{figure*}
 }{}
 
 \IfFileExists{ou3_lever_arm_tilt.svg}{%
+  \begin{figure*}[t]
+    \centering
+    \includesvg[width=\textwidth,inkscapelatex=false]{ou3_lever_arm_tilt}
+    \caption{Pooled maximum roll/pitch RMS for the same sweep, normalized by
+    the CG-mounted baseline.  This is the channel the effect reaches first:
+    off-CG translational acceleration is absorbed by the attitude solution
+    before it appears in displacement, so the athwartships arm roughly doubles
+    the pooled tilt error at \SI{30}{cm} while barely moving the 3-D score of
+    Fig.~\ref{fig:imu-lever-arm-penalty}.  The fore--aft arm briefly reduces
+    pooled tilt at short offsets, which is the injected term happening to
+    oppose the residual the estimator already carries there; it is not a
+    benefit an installation can rely on, and it reverses by \SI{30}{cm}.}
+    \label{fig:imu-lever-arm-tilt}
+  \end{figure*}
+}{}
+
+\IfFileExists{ou3_lever_arm_mechanism.svg}{%
+  \begin{figure*}[t]
+    \centering
+    \includesvg[width=\textwidth,inkscapelatex=false]{ou3_lever_arm_mechanism}
+    \caption{The mechanism behind Figs.~\ref{fig:imu-lever-arm-penalty} and
+    \ref{fig:imu-lever-arm-tilt}, measured directly on the specific-force
+    channel rather than on the score.  Left: RMS of the rotational term
+    \eqref{eq:imu-lever-arm} that the installation injects, which grows
+    linearly in $|r|$ at fixed sea state.  Right: the fraction of that term
+    each modeling arm leaves behind at \SI{30}{cm}.  The unmodeled arm leaves
+    all of it by definition, the exact model cancels it identically, and the
+    gyro model leaves only the fifth its finite derivative band cannot follow
+    --- in every canonical direction alike, since the reconstruction does not
+    depend on which direction $r$ points.}
+    \label{fig:imu-lever-arm-mechanism}
+  \end{figure*}
+}{}
+
+\IfFileExists{ou3_lever_arm_sea_state.svg}{%
+  \begin{figure*}[t]
+    \centering
+    \includesvg[width=\textwidth,inkscapelatex=false]{ou3_lever_arm_sea_state}
+    \caption{Per-sea penalty at \SI{30}{cm}, each sea normalized by its own
+    CG-mounted baseline, for the direction that maximizes each channel.  The
+    two channels run in opposite directions with sea state: the displacement
+    penalty is worst in the mildest seas, where the injected term is largest
+    relative to the wave signal, while the tilt penalty is worst in the
+    steepest seas.  Pooling over all eight seas, as
+    Table~\ref{tab:imu-lever-arm} does, is dominated by the largest and
+    therefore understates both.  Both models remove the penalty in every sea.}
+    \label{fig:imu-lever-arm-sea-state}
+  \end{figure*}
+}{}
+
+\IfFileExists{ou3_lever_arm_cutoff.svg}{%
   \begin{figure}[t]
     \centering
-    \includesvg[width=\columnwidth,inkscapelatex=false]{ou3_lever_arm_tilt}
-    \caption{Pooled maximum roll/pitch RMS, normalized by the CG-mounted
-    baseline, for the same lever-arm sweep.  This exposes whether off-CG
-    translational acceleration is being absorbed by the attitude channel.}
-    \label{fig:imu-lever-arm-tilt}
+    \includesvg[width=\columnwidth,inkscapelatex=false]{ou3_lever_arm_cutoff}
+    \caption{The deployable model's one design parameter.  Too narrow a
+    derivative band and the low-pass phase lag misaligns a correction whose
+    amplitude is already right, so the model is worse than none; too wide and
+    the differentiated gyroscope noise it admits exceeds the term it removes.
+    Between the two failure modes the basin is flat, which is what makes the
+    deployable model robust rather than tuned.}
+    \label{fig:imu-lever-arm-cutoff}
   \end{figure}
 }{}
+
+Two conclusions follow.  First, the installation penalty is real at realistic
+offsets and it is not uniform across the state.  Attitude degrades well before
+displacement does, and the two channels do not even share a worst case: the
+displacement penalty peaks in the mildest seas, where the injected term is
+largest relative to the wave signal, while the tilt penalty peaks in the
+steepest ones.  A single pooled ratio therefore understates the effect in both
+directions, which is why Fig.~\ref{fig:imu-lever-arm-sea-state} reports it sea
+by sea.
+
+Second, the penalty is entirely deterministic.  The exact-model arm returns to
+the CG baseline in every direction, at every offset, and in every sea, so
+nothing about an off-CG installation exceeds what \eqref{eq:imu-lever-arm}
+describes; there is no residual stochastic cost to pay.  The gyro-model arm
+shows that most of that recovery survives having only a noisy, biased rate to
+differentiate, provided the derivative band is chosen inside the basin of
+Fig.~\ref{fig:imu-lever-arm-cutoff}.  The practical consequence for an
+installation is that the lever arm must be measured and modeled, not that the
+IMU must be moved to the CG.

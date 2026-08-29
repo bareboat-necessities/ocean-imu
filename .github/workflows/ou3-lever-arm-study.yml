@@ -60,26 +60,62 @@ jobs:
       - name: Build OU-III simulator
         run: make -C tests/kalman_ou_iii kalman_ou_iii-sim
 
-      - name: Unit-test lever-arm study and paper contract
+      - name: Unit-test the simulator lever-arm stage
         run: |
-          python3 tests/validation/test_ou3_lever_arm_study.py
-          python3 tests/validation/test_ou3_lever_arm_article.py
+          make -C tests/kalman_ou_iii imu_lever_arm-test
+          ./tests/kalman_ou_iii/imu_lever_arm-test
+
+      - name: Unit-test lever-arm study and paper contract
+        run: python3 tests/validation/test_ou3_lever_arm_study.py
+
+      # Keep the committed summaries where the re-run cannot overwrite them,
+      # so the study can be asked whether it still reaches the same numbers.
+      - name: Stage the committed summaries
+        if: ${{ (inputs.mode || 'full') == 'full' }}
+        run: |
+          mkdir -p /tmp/ou3-lever-committed
+          for name in lever_arm_summary.csv lever_arm_cutoff_summary.csv; do
+            git show "HEAD:reports/results/ou3_lever_arm_study/$name" \
+              > "/tmp/ou3-lever-committed/$name"
+          done
 
       - name: Run lever-arm study
         run: |
           MODE="${{ inputs.mode || 'full' }}"
+          COMPARE=""
+          if [ "$MODE" = "full" ]; then
+            COMPARE="--compare-to /tmp/ou3-lever-committed"
+          fi
           python3 -u tools/ou3_lever_arm_study.py \
             --data-dir /tmp/ou3-lever-data \
             --mode "$MODE" \
             --jobs 4 \
-            --output-dir reports/results/ou3_lever_arm_study
+            --output-dir reports/results/ou3_lever_arm_study \
+            --mirror-doc $COMPARE
 
       - name: Generate paper result fragment
         if: ${{ (inputs.mode || 'full') == 'full' }}
         run: |
           python3 tools/ou3_lever_arm_tex.py \
             reports/results/ou3_lever_arm_study/lever_arm_summary.csv \
-            reports/results/ou3_lever_arm_study/w3d-imu-lever-arm-results.tex-part
+            doc/kalman_ou_iii/w3d-imu-lever-arm-results.tex-part \
+            --cutoff-summary \
+              reports/results/ou3_lever_arm_study/lever_arm_cutoff_summary.csv
+
+      # The article contract is checked against what this run produced, not
+      # against the committed bytes.  Byte equality across machines is not
+      # available here and asserting it would fail for reasons that have
+      # nothing to do with the result: the simulator is built -march=native,
+      # and this runner's Matplotlib is not the one that drew the committed
+      # figures.  The comparison that matters -- every published ratio, to a
+      # tolerance far below the effects the section reports -- already ran
+      # inside the study above.
+      - name: Check the article against this run
+        if: ${{ (inputs.mode || 'full') == 'full' }}
+        run: |
+          python3 tests/validation/test_ou3_lever_arm_article.py
+          git --no-pager diff --stat -- \
+            reports/results/ou3_lever_arm_study doc/kalman_ou_iii
 
       - name: Upload study artifacts
         if: always()

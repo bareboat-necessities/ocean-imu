@@ -1,0 +1,54 @@
+The CG-mounted baseline has pooled 3-D displacement RMS of
+\SI{0.522}{m} and maximum pooled
+roll/pitch RMS of \SI{0.236}{\degree}.
+Table~\ref{tab:imu-lever-arm} reports the worst canonical direction at each
+installation distance.  At \SI{30}{cm} the rotational term
+reaches \SI{0.648}{\meter\per\second\squared} RMS in the worst
+direction.  Leaving it unmodeled raises 3-D displacement to
+\num{1.022} times the CG
+baseline in the vertical direction, and the largest tilt
+ratio is \num{1.986} in the
+athwartships direction.  Modelling the same lever arm inside
+the filter removes it: with exact angular kinematics the largest 3-D ratio over
+the three directions falls to \num{1.000}, and with the deployable
+model driven by the measured rate it is
+\num{1.003}, leaving only
+\SI{0.129}{\meter\per\second\squared} of the injected term
+behind.  The attitude channel, which carries the larger penalty, recovers with
+it: the worst tilt ratio falls to \num{1.000} under the exact model
+and \num{1.007} under the deployable one.  The installation penalty
+is therefore deterministic and recoverable rather than intrinsic OU--III error.
+
+\begin{table}[t]
+  \centering
+  \caption{Worst pooled degradation over the three canonical IMU lever-arm directions.  Ratios are relative to the CG-mounted OU--III baseline; the parenthesized direction is the maximizing unmodeled case.  The last two columns are the worst ratio over the same three directions once the lever arm is modelled inside the filter.}
+  \label{tab:imu-lever-arm}
+  \footnotesize
+  \setlength{\tabcolsep}{3.0pt}
+  \begin{tabular}{@{}rrrrr@{}}
+    \toprule
+    Offset & Max 3-D / CG & Max tilt / CG & Gyro model & Exact model \\
+    [cm] & unmodeled & unmodeled & max 3-D / CG & max 3-D / CG \\
+    \midrule
+    10 & 1.006 (vertical) & 1.080 (athwartships) & 1.001 & 1.000 \\
+    20 & 1.014 (vertical) & 1.548 (athwartships) & 1.002 & 1.000 \\
+    30 & 1.022 (vertical) & 1.986 (athwartships) & 1.003 & 1.000 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+The deployable model has one design parameter, the band of its rate
+derivative, and it is two-sided.  Over the same eight seas with a
+\SI{30}{cm} fore--aft arm, a
+\SI{1}{Hz} corner leaves
+\num{1.061} times the CG
+baseline because the low-pass phase lag misaligns a correction whose
+amplitude is already right, and a \SI{100}{Hz}
+corner leaves \num{1.027} because
+the differentiated gyro noise it admits exceeds the term it removes.  The
+basin between them is flat: the deployed
+\SI{15}{Hz} corner reaches
+\num{1.003} and the best
+corner measured, \SI{25}{Hz}, reaches
+\num{1.002}, so the model is
+robust to this choice rather than tuned to it.
