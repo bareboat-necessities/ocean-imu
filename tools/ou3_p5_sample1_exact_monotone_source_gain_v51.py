@@ -104,6 +104,10 @@ FIRST = V8.FIRST
 V41_Q_CURRENT = V45.V41_Q_CURRENT
 V41_Q_POST = V45.V41_Q_POST
 
+#: Bound at import time.  A later stage that installs a refined block into V8
+#: therefore cannot silently change what V51 compares its refinement against.
+_PARENT_FIRST_BLOCK = V8._first_block_quantities
+
 #: Archived parent values for the authoritative witness cell.  V51 recomputes
 #: them from source in parent mode and refuses to continue unless every one is
 #: reproduced exactly.
@@ -151,17 +155,7 @@ def _first_block(*, t: Interval, p: Interval, r: Interval, g: float,
     """
     G = FULL.I(g)
     G2 = FULL.I(g * g)
-    D = G2 * t + p + r
-    parent = {
-        "a": t * (p + r) / D,
-        "c0": -(G * t * p / D),
-        "b": p * (G2 * t + r) / D,
-        "bz": p * r / (p + r),
-        "det_first": t * p * r / D,
-        "ktheta": G * t / D,
-        "kaw_t": p / D,
-        "kz": p / (p + r),
-    }
+    parent = _PARENT_FIRST_BLOCK(t=t, p=p, r=r, g=g)
     if not exact:
         return parent
 
