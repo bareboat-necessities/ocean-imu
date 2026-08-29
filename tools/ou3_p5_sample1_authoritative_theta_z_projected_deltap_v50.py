@@ -333,28 +333,11 @@ def build(domain_path: Path = DEFAULT_DOMAIN, *, source_pieces: int = 4,
     path = Path(domain_path).resolve()
     failures: list[str] = []
 
-    # Precompute the same authoritative V40 witness rows used by V48, solely
-    # to audit the refinement before injecting it into V48's q composition.
-    _core, _v12, base, vr, row_failures = V48._build_v40_rows(
-        path, source_pieces=source_pieces,
-        source_cell_index=source_cell_index, p_pieces=p_pieces,
-        tangent_pieces=tangent_pieces, axial_pieces=axial_pieces)
-    failures += row_failures
-    try:
-        ds = V48.V34._directional_delta_s_detail(
-            path, source_pieces=source_pieces,
-            source_cell_index=source_cell_index, p_pieces=p_pieces,
-            base=base, vr=vr)
-        detail = _authoritative_theta_z_detail(
-            path, source_pieces=source_pieces,
-            source_cell_index=source_cell_index, p_pieces=p_pieces,
-            base=base, vr=vr, ds_detail=ds)
-    except Exception as exc:
-        failures.append(f"V50 theta-z projected Delta-P construction: {exc}")
-        detail = None
-
+    # V48 already constructs the authoritative V40 witness once.  Refine it
+    # exactly where V48 asks for y/z correction caps instead of rebuilding the
+    # same 24^3 witness a second time.
     original_caps = V48._componentwise_yz_caps
-    injected = {"calls": 0, "last_detail": detail}
+    injected = {"calls": 0, "last_detail": None}
 
     def v50_caps(*, base: dict, vr: dict, ds_detail: dict,
                  parent_caps: dict) -> dict:
