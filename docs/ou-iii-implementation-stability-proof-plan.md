@@ -287,10 +287,53 @@ sample-0 chart - an upper bound computed with the unrefined gains, hence a
 conservative partner - gives `q = 4.8010333986449245` against the archived
 parent `q = 8.344528951460543`. The authoritative first survivor closes.
 
-V51 evaluates the single authoritative witness cell. It does not yet lift the
-exact monotone enclosure over the complete V41 source-cell-0 cover, and it does
-not compose `q<8`, promote sample 1 or P5, or set `N_H_words`. That lift is the
-next obligation on this line.
+V51 evaluates the single authoritative witness cell.
+`tools/ou3_p5_sample1_exact_monotone_cover_lift_v52.py` lifts the same
+enclosure over the complete cover. `ou3_p5_sample1_structured_full_gain_v8`
+gained a module-level `_first_block_quantities` helper holding the eight
+expressions unchanged, so a refinement can be installed without editing the
+producer, exactly as V12D/V40 do for the PSD perturbation; a full 12816-cell
+V10 rebuild before and after that refactor is bit-identical in every summary
+field. With V51's exact path installed there:
+
+| cover quantity | parent | exact monotone |
+| --- | --- | --- |
+| cells evaluated | 12816 | 12816 |
+| cells narrowed / widened | - | 12816 / 0 |
+| per-cell narrowing ratio | - | 1.0106991820188718 .. 1.495825177084859 |
+| max sample-1 residual | 46.01460061569009 | 42.67399431981034 |
+| max `k_perp` | 1.3986770467171177 | 1.2187023949259914 |
+| max `k_parallel` | 0.19289137244367335 | 0.19082905441803827 |
+| max V10 correction | 7.016940736774492 rad | 6.7576910288356276 rad |
+
+Containment is checked cell by cell, not only in aggregate: a single widened
+cell fails the producer closed.
+
+`tools/ou3_p5_sample1_exact_monotone_q8_cover_v53.py` then re-runs V41's
+signed-chart `q<8` composition itself, regenerating both the shipping and the
+refined cover in one process rather than quoting an archived count, and
+requiring the parent run to reproduce V45's archived first-survivor
+`q = 8.344528951460543`. The refinement closes the archived first survivor and
+strictly improves the cover, but does not close it:
+
+| `q<8` cover | parent | exact monotone |
+| --- | --- | --- |
+| signed-Cayley cells | 461376 | 461376 |
+| open cells | 235738 | 219574 |
+| first open cell | `(0,0,23)` at `q = 8.344528951460543` | `(0,2,23)` at `q = 8.475205389989586` |
+| worst composed `q` | 525593.677323337 at `(20,16,20)` | 499303.8238549043 at `(23,18,4)` |
+
+So the exact monotone enclosure is a real and uniform tightening of the whole
+first-accelerometer block - it closes 16164 further signed-Cayley cells and
+retires the survivor that V42 through V50 could not move - but roughly 48
+percent of the cover is still open, and the worst cell remains five orders of
+magnitude above the target. The remaining obstruction is again nominal
+geometry, now at `(0,2,23)` and at the far worse `(23,18,4)`, whose correction
+radial upper bound of `3.1593913566884573` rad is past `pi` and so wraps rather
+than composing.
+
+None of V51, V52 or V53 composes `q<8`, promotes sample 1 or P5, or sets
+`N_H_words`.
 
 The independent implementation-stability composition gate continues to consume P5 directly. The older generic affine deployment-capture arithmetic is not accepted as a substitute.
 
