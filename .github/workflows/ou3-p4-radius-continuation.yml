@@ -1,0 +1,63 @@
+name: ou3-p4-radius-continuation
+
+on:
+  pull_request:
+    paths:
+      - "tools/ou3_p4_radius_continuation_certificate.py"
+      - "tools/ou3_p4_nonlinear_word_certificate.py"
+      - "tools/ou3_p4_group_algebra.py"
+      - "tools/ou3_p4_exact_word_map.py"
+      - "tools/ou3_p4_node_metrics.py"
+      - "tools/ou3_explicit_information_word_certificate.py"
+      - "tools/ou3_proof_operating_domain.json"
+      - "tests/validation/test_ou3_p4_radius_continuation_certificate.py"
+      - ".github/workflows/ou3-p4-radius-continuation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ou3-p4-radius-continuation-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  radius-p4:
+    name: radius-continuation exact Cayley H A P4
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install numerical dependency
+        run: |
+          sudo apt-get update
+          sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends python3-numpy
+      - name: Compile radius-continuation producer and test
+        run: |
+          python3 -m py_compile \
+            tools/ou3_p4_radius_continuation_certificate.py \
+            tests/validation/test_ou3_p4_radius_continuation_certificate.py
+      - name: Test radius-continuation P4
+        working-directory: tests/validation
+        run: python3 -m unittest -v test_ou3_p4_radius_continuation_certificate
+      - name: Emit radius-continuation P4 numbers
+        run: |
+          python3 tools/ou3_p4_radius_continuation_certificate.py \
+            --output /tmp/ou3_p4_radius_continuation_certificate.json
+          python3 - <<'PY'
+          import json
+          p=json.load(open('/tmp/ou3_p4_radius_continuation_certificate.json'))
+          print('P4_RADIUS_CONTINUATION_WORD_CERTIFICATE:', p['P4_RADIUS_CONTINUATION_WORD_CERTIFICATE'])
+          for mode in ('H','A'):
+              r=p['modes'][mode]
+              print(
+                  f"P4_RADIUS_NUMERICAL {mode} "
+                  f"W_legacy={r['certified_level_W_legacy']:.17e} "
+                  f"W_radius={r['certified_level_W']:.17e} "
+                  f"W_factor={r['radius_W_widening_factor_lower']:.17e} "
+                  f"sqrtW_factor={r['radius_sqrtW_widening_factor_lower']:.17e} "
+                  f"q_selected={r['radius_selected_design_norm']:.17e} "
+                  f"q_prefix={r['prefix_canonical_error_norm_upper']:.17e} "
+                  f"active_cap={r['radius_selected_active_cap']}"
+              )
+          PY
