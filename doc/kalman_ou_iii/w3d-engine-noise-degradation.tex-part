@@ -260,6 +260,17 @@ revs \SI{0.675}{m} to \SI{0.588}{m}.  The standing tilt offset it targets
 falls from \SI{1.180}{\degree} to \SI{0.444}{\degree} at cruise and yaw from
 \SI{4.17}{\degree} to \SI{1.84}{\degree}.
 
+Both stages are driven by the detector and both release when the machinery
+stops; nothing is latched.  Shutting the modeled engine down part-way through a
+record measures it: from full engagement at \SI{2400}{rpm} the covariance
+returns to its nominal value in \SI{11.5}{s} and the guard fully disengages,
+giving back its group delay, in \SI{54}{s}.  The covariance releases first,
+which is the safe order --- it stops understating the measurement while the low
+pass is still settling rather than the reverse --- and the difference is
+structural, since the covariance follows the detector directly while the
+conditioning weight additionally slews on a \SI{5}{s} time constant so a
+throttle change cannot step the measurement path.
+
 One condition does not benefit.  At \SI{800}{rpm} the residual rises from
 \num{1.145} to \num{1.153}, \pct{0.7}: idle puts the crank orders lowest in
 frequency, so the guard removes least of them and what leaks through is closest

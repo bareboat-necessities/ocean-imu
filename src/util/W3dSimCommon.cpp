@@ -501,6 +501,12 @@ void apply_engine_vibration(Vector3f& acc_body_zu,
 {
     if (m.lines.empty() && !(m.broadband_sigma.norm() > 0.0f)) return;
 
+    // Optional shutdown part-way through the record.  Everything downstream
+    // then sees a quiet sensor again, which is what exercises the release
+    // side of an estimator's vibration handling rather than only the onset.
+    m.time_sec += dt;
+    if (m.cfg.stop_sec > 0.0f && m.time_sec >= m.cfg.stop_sec) return;
+
     // Instantaneous crank frequency: nominal, plus governor wander.
     m.rpm_ou += -m.rpm_ou_alpha * m.rpm_ou + m.rpm_ou_sigma * m.n01(m.rng);
     m.hunt_phase += kTwoPi * m.hunt_hz * dt;
@@ -619,6 +625,7 @@ std::optional<EngineVibrationConfig> w3d_engine_vibration_from_env()
     w3d_engine_float_from_env("W3D_ENGINE_GYRO_LEVER_M", cfg.gyro_lever_m);
     w3d_engine_float_from_env("W3D_ENGINE_GYRO_G_SENS", cfg.gyro_g_sensitivity);
     w3d_engine_float_from_env("W3D_ENGINE_VRE_MG_PER_G2", cfg.vre_mg_per_g2);
+    w3d_engine_float_from_env("W3D_ENGINE_STOP_SEC", cfg.stop_sec);
 
     float seed = static_cast<float>(cfg.seed);
     if (w3d_engine_float_from_env("W3D_ENGINE_SEED", seed)) {
@@ -663,6 +670,7 @@ void w3d_install_engine_vibration_from_env(SimulationNoiseModels& noise_models, 
               << " recorded_rms_mps2=" << model->recorded_rms.norm()
               << " vre_offset_mps2=" << model->vre_offset.norm()
               << " lines=" << model->lines.size()
+              << " stop_sec=" << cfg->stop_sec
               << "\n";
     for (const auto& line : model->lines) {
         std::cout << "ENGINE_LINE order=" << (line.freq_ratio)

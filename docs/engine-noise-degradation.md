@@ -72,6 +72,7 @@ vibration.  Configuration:
 | `W3D_ENGINE_GYRO_LEVER_M` | 1.5 | lever arm for hull angular vibration |
 | `W3D_ENGINE_GYRO_G_SENS` | 1.78e-4 | gyro g-sensitivity, (rad/s)/(m/s^2) |
 | `W3D_ENGINE_VRE_MG_PER_G2` | 1.0 | accelerometer vibration rectification |
+| `W3D_ENGINE_STOP_SEC` | 0 | shut the engine down this far into the record; 0 runs it throughout |
 | `W3D_ENGINE_SEED` | 20260828 | phase and modulation seed |
 
 The simulator prints an `ENGINE_VIBRATION` banner with the resulting hull and
@@ -373,6 +374,32 @@ them to 1.17×.  It earns most where the guard leaves most: engine bed 0.834 →
 1.153 (+0.7 %).  Idle puts the crank orders lowest in frequency, so the guard
 removes least of them and what leaks through sits closest to the wave band,
 where de-weighting the accelerometer cannot separate it from the sea.
+
+### Engaging and releasing
+
+Both stages are driven automatically by the detector, and both release when the
+machinery stops.  Nothing is latched and there is no operator input: the
+detector reading rises, the guard ramps in and the covariance follows it; the
+reading falls, and both back out.
+
+Measured with `W3D_ENGINE_STOP_SEC`, which shuts the modeled engine down
+part-way through a record, from full engagement at 2400 rpm:
+
+| | release time |
+| --- | ---: |
+| covariance drive back to nominal `R_acc` | **11.5 s** |
+| guard fully disengaged (group delay gone) | **54.1 s** |
+
+The covariance lets go first, which is the order that is safe: it stops
+understating the measurement while the low pass is still settling out, rather
+than the reverse.  The difference is structural — the covariance follows the
+detector EMA directly, while the conditioning weight additionally slews on a
+5 s time constant so a throttle change cannot step the measurement path.
+
+End to end on a 1200 s record scored over its last 300 s, with the engine
+stopped at t = 600 s: the detector returns to 0.00798 m/s² (exactly its clean
+floor), `R_acc` to the nominal 0.0294 m/s², engagement to 0, and the 3-D error
+to 0.1521 m against a never-ran-the-engine 0.1532 m.
 
 ### It is bit-transparent with no engine running
 

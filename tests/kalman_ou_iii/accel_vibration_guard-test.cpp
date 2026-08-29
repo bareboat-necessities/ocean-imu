@@ -154,6 +154,70 @@ bool test_engine_vibration_engages_and_is_removed() {
     return ok;
 }
 
+// Feeds the guard for `seconds` and returns the time in seconds at which the
+// predicate first held, or -1 if it never did.
+template <typename Predicate>
+float time_until(AccelVibrationGuard& guard, bool with_engine, float seconds,
+                 Predicate held)
+{
+    std::mt19937 rng(99u);
+    std::normal_distribution<float> white(0.0f, ACC_WHITE_SIGMA);
+    const int n = static_cast<int>(FS * seconds);
+    for (int k = 0; k < n; ++k) {
+        const float t = static_cast<float>(k) * DT;
+        Eigen::Vector3f acc(white(rng), white(rng),
+                            G + 1.5f * std::sin(TWO_PI * 0.25f * t) + white(rng));
+        if (with_engine) {
+            for (const auto& line : CRUISE_LINES) {
+                acc.z() += line.amp * std::sin(TWO_PI * line.hz * t);
+                acc.x() += 0.75f * line.amp * std::sin(TWO_PI * line.hz * t + 1.0f);
+                acc.y() += 0.55f * line.amp * std::sin(TWO_PI * line.hz * t + 2.0f);
+            }
+        }
+        guard.step(acc, DT);
+        if (held(guard)) return static_cast<float>(k) * DT;
+    }
+    return -1.0f;
+}
+
+bool test_guard_releases_when_the_engine_stops() {
+    // Engaging is only half of it: an estimator that keeps paying the guard's
+    // group delay, and keeps telling the MEKF to distrust a quiet
+    // accelerometer, long after the engine is shut down would be worse than
+    // one that never engaged.  Both signals have to come back down.
+    AccelVibrationGuard guard;
+    guard.setCutoffHz(14.0f);
+
+    time_until(guard, /*with_engine=*/true, 300.0f,
+               [](const AccelVibrationGuard&) { return false; });
+    bool ok = check(guard.engagement() == 1.0f, "fully engaged before shutdown");
+    ok &= check(guard.excessRms() > 0.0f, "excess is driving before shutdown");
+
+    AccelVibrationGuard excess_guard = guard;
+    const float excess_release = time_until(
+        excess_guard, /*with_engine=*/false, 600.0f,
+        [](const AccelVibrationGuard& g) { return g.excessRms() == 0.0f; });
+
+    AccelVibrationGuard engage_guard = guard;
+    const float engage_release = time_until(
+        engage_guard, /*with_engine=*/false, 600.0f,
+        [](const AccelVibrationGuard& g) { return g.engagement() == 0.0f; });
+
+    ok &= check(excess_release >= 0.0f, "the covariance drive returns to zero");
+    ok &= check(engage_release >= 0.0f, "the guard fully disengages");
+    // Both must release in well under the time a passage spends under power,
+    // and the covariance must let go no later than the conditioning does --
+    // releasing R first is the safe order, since it stops understating the
+    // measurement while the low pass is still settling.
+    ok &= check(excess_release < 60.0f, "covariance drive releases inside a minute");
+    ok &= check(engage_release < 180.0f, "guard disengages inside three minutes");
+    ok &= check(excess_release <= engage_release,
+                "the covariance releases no later than the conditioning");
+    std::cout << "  release after shutdown: covariance drive " << excess_release
+              << " s, conditioning " << engage_release << " s\n";
+    return ok;
+}
+
 bool test_separation_between_clean_and_engine_is_wide() {
     AccelVibrationGuard clean_guard;
     clean_guard.setCutoffHz(14.0f);
@@ -218,6 +282,7 @@ int main() {
     ok &= test_clean_input_never_engages_the_guard();
     ok &= test_detector_floor_does_not_follow_the_motion();
     ok &= test_engine_vibration_engages_and_is_removed();
+    ok &= test_guard_releases_when_the_engine_stops();
     ok &= test_separation_between_clean_and_engine_is_wide();
     ok &= test_group_delay_follows_the_configuration();
     ok &= test_poles_are_clamped_to_the_supported_range();
