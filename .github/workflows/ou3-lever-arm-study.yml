@@ -3,9 +3,18 @@ name: ou3-lever-arm-study
 on:
   pull_request:
     paths:
+      - "src/kalman_ou_iii/**"
+      - "src/tuner/**"
+      - "src/util/W3dSimCommon.*"
+      - "tests/kalman_ou_iii/**"
+      - "tools/ou_validation.py"
       - "tools/ou3_lever_arm_study.py"
+      - "tools/ou3_lever_arm_tex.py"
       - "tests/validation/test_ou3_lever_arm_study.py"
+      - "tests/validation/test_ou3_lever_arm_article.py"
       - "docs/ou-iii-imu-lever-arm.md"
+      - "doc/kalman_ou_iii/w3d-imu-lever-arm-study.tex-part"
+      - "doc/kalman_ou_iii/w3d-post-results-investigations.tex-part"
       - ".github/workflows/ou3-lever-arm-study.yml"
   workflow_dispatch:
     inputs:
@@ -51,8 +60,10 @@ jobs:
       - name: Build OU-III simulator
         run: make -C tests/kalman_ou_iii kalman_ou_iii-sim
 
-      - name: Unit-test lever-arm kinematics
-        run: python3 tests/validation/test_ou3_lever_arm_study.py
+      - name: Unit-test lever-arm study and paper contract
+        run: |
+          python3 tests/validation/test_ou3_lever_arm_study.py
+          python3 tests/validation/test_ou3_lever_arm_article.py
 
       - name: Run lever-arm study
         run: |
@@ -62,6 +73,13 @@ jobs:
             --mode "$MODE" \
             --jobs 4 \
             --output-dir reports/results/ou3_lever_arm_study
+
+      - name: Generate paper result fragment
+        if: ${{ (inputs.mode || 'full') == 'full' }}
+        run: |
+          python3 tools/ou3_lever_arm_tex.py \
+            reports/results/ou3_lever_arm_study/lever_arm_summary.csv \
+            reports/results/ou3_lever_arm_study/w3d-imu-lever-arm-results.tex-part
 
       - name: Upload study artifacts
         if: always()
