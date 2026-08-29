@@ -114,9 +114,25 @@ class OUIIIStabilityPhaseBContractTests(unittest.TestCase):
             "constexpr float TILT_RESET_DEG = 70.0f;",
             "constexpr float TILT_RESET_HOLD_SEC = 0.35f;",
             "constexpr float TILT_RESET_COOLDOWN_SEC = 3.0f;",
-            "initialize_from_acc_preserve_yaw(acc)",
         ):
             self.assertIn(token, src)
+
+        # The proof re-lock map rebuilds roll/pitch from the instantaneous
+        # accelerometer and preserves pre-reset Euler yaw.  Name the sample by
+        # the variable the surrounding update uses rather than by a literal
+        # argument, so front-end conditioning of the accelerometer stays free to
+        # rename it; what the proof needs is that the re-lock reads the same
+        # sample the MEKF measurement update consumed, not a different version
+        # of the accelerometer.
+        relock = re.search(
+            r"initialize_from_acc_preserve_yaw\(\s*([A-Za-z_]\w*)\s*\)", src
+        )
+        self.assertIsNotNone(relock, "Live tilt re-lock must preserve yaw")
+        measurement = re.search(
+            r"measurement_update_acc_only\(\s*([A-Za-z_]\w*)\s*,", src
+        )
+        self.assertIsNotNone(measurement, "MEKF must take an accelerometer update")
+        self.assertEqual(relock.group(1), measurement.group(1))
 
 
 if __name__ == "__main__":
