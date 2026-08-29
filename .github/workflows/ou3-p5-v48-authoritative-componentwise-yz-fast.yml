@@ -9,6 +9,10 @@ on:
       - "tools/ou3_p5_sample1_first_psd_exact_joseph_components_v40.py"
       - "tools/ou3_p5_sample1_v40_split_signed_first_survivor_v44.py"
       - "tools/ou3_p5_sample1_v41_authoritative_split_signed_v45.py"
+      - "tools/ou3_implementation_proof_manifest.py"
+      - "tools/ou3_proof_operating_domain.json"
+      - "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h"
+      - "src/tuner/AccelVibrationGuard.h"
       - ".github/workflows/ou3-p5-v48-authoritative-componentwise-yz-fast.yml"
   workflow_dispatch:
 
@@ -26,11 +30,16 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v6
-      - name: Compile V48 producer and test
+      - name: Compile V48 producer, manifest, and test
         run: |
           python3 -m py_compile \
+            tools/ou3_implementation_proof_manifest.py \
             tools/ou3_p5_sample1_authoritative_componentwise_yz_v48.py \
             tests/validation/test_ou3_p5_sample1_authoritative_componentwise_yz_v48.py
+      - name: Audit deployed proof manifest including vibration guard
+        run: |
+          python3 tools/ou3_implementation_proof_manifest.py \
+            --output /tmp/ou3_implementation_proof_manifest.json
       - name: Test V48 contract
         working-directory: tests/validation
         run: python3 -m unittest -v test_ou3_p5_sample1_authoritative_componentwise_yz_v48
