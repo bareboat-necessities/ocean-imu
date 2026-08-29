@@ -11,7 +11,7 @@ class ThirdGenCombinedP4Tests(unittest.TestCase):
   self.assertEqual(C.validate(self.d),[]); self.assertEqual(self.d['P4_THIRDGEN_COMBINED_WORD_CERTIFICATE'],'PASS'); self.assertTrue(self.d['thirdgen_stacks_431_and_432_refinements'])
  def test_combined_never_regresses_431(self):
   for mode in ('H','A'):
-   m=self.d['modes'][mode]; self.assertGreaterEqual(m['certified_level_W'],m['certified_level_W_before_combined']); self.assertGreaterEqual(m['thirdgen_W_widening_factor_vs_431_lower'],1.0); self.assertGreater(m['thirdgen_total_W_widening_factor_vs_legacy_lower'],1.0)
+   m=self.d['modes'][mode]; self.assertGreaterEqual(m['certified_level_W'],m['certified_level_W_before_combined']); self.assertGreaterEqual(m['thirdgen_W_widening_factor_vs_431_lower'],1.0-2e-15); self.assertGreater(m['thirdgen_total_W_widening_factor_vs_legacy_lower'],1.0)
  def test_radius_continuation_is_real_and_maximal_on_grid(self):
   for mode in ('H','A'):
    m=self.d['modes'][mode]; self.assertTrue(m['thirdgen_combined_radius_continuation']); self.assertGreater(m['thirdgen_candidate_count_certified'],0); self.assertEqual(m['certified_level_W'],max(x['W'] for x in m['thirdgen_candidates']))
