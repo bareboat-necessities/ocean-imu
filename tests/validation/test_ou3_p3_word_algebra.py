@@ -18,8 +18,20 @@ class Ou3P3WordAlgebraTests(unittest.TestCase):
         self.assertFalse(d["dimension_change_inside_word"])
         self.assertEqual(
             set(d["operation_classes"]),
-            {"prediction", "accepted_joseph", "rejected_or_not_due", "left_error_reset", "aw_covariance_sync"},
+            {
+                "vibration_guard_dormant",
+                "prediction",
+                "accepted_joseph",
+                "rejected_or_not_due",
+                "left_error_reset",
+                "aw_covariance_sync",
+            },
         )
+        guard = d["operation_classes"]["vibration_guard_dormant"]
+        self.assertEqual(guard["A"], "I")
+        self.assertEqual(guard["B"], "0")
+        self.assertFalse(guard["active_or_transitioning_guard_covered"])
+        self.assertTrue(guard["active_or_transitioning_guard_requires_separate_source_certificate"])
         self.assertTrue(d["covariance_decomposition_invariant"]["Omega_s_psd"])
         self.assertTrue(d["strict_margin_preservation"]["covers_every_operation_class"])
         self.assertFalse(d["strict_margin_preservation"]["one_step_contraction_assumed"])
