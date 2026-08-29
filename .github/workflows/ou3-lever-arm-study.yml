@@ -60,10 +60,13 @@ jobs:
       - name: Build OU-III simulator
         run: make -C tests/kalman_ou_iii kalman_ou_iii-sim
 
-      - name: Unit-test lever-arm study and paper contract
+      - name: Unit-test the simulator lever-arm stage
         run: |
-          python3 tests/validation/test_ou3_lever_arm_study.py
-          python3 tests/validation/test_ou3_lever_arm_article.py
+          make -C tests/kalman_ou_iii imu_lever_arm-test
+          ./tests/kalman_ou_iii/imu_lever_arm-test
+
+      - name: Unit-test lever-arm study and paper contract
+        run: python3 tests/validation/test_ou3_lever_arm_study.py
 
       - name: Run lever-arm study
         run: |
@@ -72,14 +75,38 @@ jobs:
             --data-dir /tmp/ou3-lever-data \
             --mode "$MODE" \
             --jobs 4 \
-            --output-dir reports/results/ou3_lever_arm_study
+            --output-dir reports/results/ou3_lever_arm_study \
+            --mirror-doc
 
       - name: Generate paper result fragment
         if: ${{ (inputs.mode || 'full') == 'full' }}
         run: |
           python3 tools/ou3_lever_arm_tex.py \
             reports/results/ou3_lever_arm_study/lever_arm_summary.csv \
-            reports/results/ou3_lever_arm_study/w3d-imu-lever-arm-results.tex-part
+            doc/kalman_ou_iii/w3d-imu-lever-arm-results.tex-part \
+            --cutoff-summary \
+              reports/results/ou3_lever_arm_study/lever_arm_cutoff_summary.csv
+
+      # The committed figures, fragment, and summaries are the article's
+      # evidence.  A re-run that moves any of them means the published section
+      # no longer describes the code, so fail rather than let the two drift.
+      - name: Check the committed evidence still reproduces
+        if: ${{ (inputs.mode || 'full') == 'full' }}
+        run: |
+          python3 tests/validation/test_ou3_lever_arm_article.py
+          git --no-pager diff --stat -- \
+            reports/results/ou3_lever_arm_study doc/kalman_ou_iii
+          git diff --quiet -- \
+            reports/results/ou3_lever_arm_study/lever_arm_runs.csv \
+            reports/results/ou3_lever_arm_study/lever_arm_cutoff_runs.csv \
+            reports/results/ou3_lever_arm_study/lever_arm_summary.csv \
+            reports/results/ou3_lever_arm_study/lever_arm_cutoff_summary.csv \
+            doc/kalman_ou_iii/w3d-imu-lever-arm-results.tex-part \
+            doc/kalman_ou_iii/ou3_lever_arm_penalty.svg \
+            doc/kalman_ou_iii/ou3_lever_arm_tilt.svg \
+            doc/kalman_ou_iii/ou3_lever_arm_sea_state.svg \
+            doc/kalman_ou_iii/ou3_lever_arm_mechanism.svg \
+            doc/kalman_ou_iii/ou3_lever_arm_cutoff.svg
 
       - name: Upload study artifacts
         if: always()
