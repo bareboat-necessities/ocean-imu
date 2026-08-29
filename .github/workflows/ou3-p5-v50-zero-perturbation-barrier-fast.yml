@@ -1,0 +1,88 @@
+name: ou3-p5-v50-zero-perturbation-barrier-fast
+
+on:
+  push:
+    paths:
+      - "tools/ou3_p5_sample1_zero_perturbation_barrier_v50.py"
+      - "tests/validation/test_ou3_p5_sample1_zero_perturbation_barrier_v50.py"
+      - "tools/ou3_p5_sample1_authoritative_componentwise_yz_v48.py"
+      - "tools/ou3_p5_sample1_directional_innovation_row_lift_v34.py"
+      - "tools/ou3_p5_sample1_signed_radial_subcells_v13.py"
+      - "tools/ou3_p5_sample1_first_psd_exact_joseph_components_v40.py"
+      - "tools/ou3_p5_sample1_v40_split_signed_first_survivor_v44.py"
+      - "tools/ou3_p5_sample1_v41_authoritative_split_signed_v45.py"
+      - "tools/ou3_interval.py"
+      - "tools/ou3_proof_operating_domain.json"
+      - ".github/workflows/ou3-p5-v50-zero-perturbation-barrier-fast.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ou3-p5-v50-zero-perturbation-barrier-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  v50-zero-perturbation-barrier:
+    name: P5 V50 zero-perturbation barrier
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v6
+      - name: Compile V50 producer and test
+        run: |
+          python3 -m py_compile \
+            tools/ou3_p5_sample1_zero_perturbation_barrier_v50.py \
+            tests/validation/test_ou3_p5_sample1_zero_perturbation_barrier_v50.py
+      - name: Test V50 contract
+        working-directory: tests/validation
+        run: python3 -m unittest -v test_ou3_p5_sample1_zero_perturbation_barrier_v50
+      - name: Run V50 zero-perturbation barrier audit
+        id: audit
+        shell: bash
+        run: |
+          set +e
+          python3 tools/ou3_p5_sample1_zero_perturbation_barrier_v50.py \
+            --source-pieces 4 --source-cell-index 0 \
+            --p-pieces 24 --tangent-pieces 24 --axial-pieces 24 \
+            --residual-x-pieces 6 --parallel-pieces 6 \
+            --output /tmp/p5_sample1_v50.json \
+            > /tmp/p5_sample1_v50.log 2>&1
+          rc=$?
+          set -e
+          cat /tmp/p5_sample1_v50.log
+          python3 - "$GITHUB_OUTPUT" "$rc" <<'PY'
+          import json, math, pathlib, sys
+          out, rc = sys.argv[1], int(sys.argv[2])
+          path = pathlib.Path('/tmp/p5_sample1_v50.json')
+          d = json.loads(path.read_text(encoding='utf-8')) if path.exists() else {}
+          detail = d.get('attitude_supported_row_detail') or {}
+          barrier = d.get('zero_perturbation_barrier') or {}
+          dp = d.get('reduced_covariance_perturbation_decomposition') or {}
+          def fmt(x):
+              try: y = float(x)
+              except (TypeError, ValueError): return 'na'
+              return f'{y:.12g}' if math.isfinite(y) else str(y)
+          with open(out, 'a', encoding='utf-8') as gh:
+              print(f"rc={rc}", file=gh)
+              print(f"status={d.get('P5_SAMPLE1_ZERO_PERTURBATION_BARRIER_V50')}", file=gh)
+              print(f"parent_ds={fmt(detail.get('V34_first_measurement_row_DeltaS_intersected_upper'))}", file=gh)
+              print(f"refined_ds={fmt(detail.get('attitude_supported_row_DeltaS_intersected_upper'))}", file=gh)
+              print(f"ds_ratio={fmt(detail.get('row_DeltaS_refinement_ratio'))}", file=gh)
+              print(f"ds_dominant={detail.get('refined_dominant_term')}", file=gh)
+              print(f"dp_dominant={dp.get('dominant_term')}", file=gh)
+              print(f"dp_fraction={fmt(dp.get('dominant_fraction'))}", file=gh)
+              print(f"parent_q={fmt(barrier.get('authoritative_parent_best_q_upper'))}", file=gh)
+              print(f"zero_q={fmt(barrier.get('zero_perturbation_best_q_upper'))}", file=gh)
+              print(f"barrier={barrier.get('barrier_established')}", file=gh)
+              print(f"next={d.get('next_obligation')}", file=gh)
+      - name: "V50 rc=${{ steps.audit.outputs.rc }} status=${{ steps.audit.outputs.status }} barrier=${{ steps.audit.outputs.barrier }} zero_q=${{ steps.audit.outputs.zero_q }}"
+        run: |
+          echo "parent_q=${{ steps.audit.outputs.parent_q }} zero_q=${{ steps.audit.outputs.zero_q }}"
+          echo "row DeltaS ${{ steps.audit.outputs.parent_ds }} -> ${{ steps.audit.outputs.refined_ds }} (ratio ${{ steps.audit.outputs.ds_ratio }}, dominant ${{ steps.audit.outputs.ds_dominant }})"
+          echo "dP dominant=${{ steps.audit.outputs.dp_dominant }} fraction=${{ steps.audit.outputs.dp_fraction }}"
+          echo "next=${{ steps.audit.outputs.next }}"
+      - name: Fail closed on producer validation
+        if: steps.audit.outputs.rc != '0'
+        run: exit 2

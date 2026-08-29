@@ -188,6 +188,186 @@ The bridge remains fail-closed. Its current first unclosed numerical obligations
 
 Thus the next work is the outward source-correlated subdivision over the **later** prefixes of the complete 1 s word: prediction, accepted/rejected vector corrections, due/not-due `S`, covariance/source-schedule evolution, and each immediate reset. Each cell must keep `P,H,R,K,r,d_eff` (or the effective accelerometer `a_w` input) jointly reachable and accumulate the exact reset/prediction budget. Only after those prefix cells prove an outer recurrence into the existing P4 inner seed may the certificate set a finite integer `N_H_words` and capture time. `N_H_words` remains intentionally unset today.
 
+#### Sample-1 first-accelerometer `q<8` chart line: perturbation route closed out
+
+A separate machine-checked line (`tools/ou3_p5_sample1_*_v29..v50.py`) works the
+sample-1 first-accelerometer Cayley chart, whose `q<8` target keeps the deployed
+normalized-quaternion branch inside its validated composition range. V41's
+complete source-cell-0 cover leaves one authoritative first survivor at
+`(p,t,a)=(0,0,23)` with `q = 8.344528951460543`. V42 through V49 all attacked the
+same object: the correction-perturbation caps that widen the nominal V10
+directional correction.
+
+`tools/ou3_p5_sample1_zero_perturbation_barrier_v50.py` closes that line out.
+
+First it supplies the strongest remaining refinement on it. In the sample-1 body
+gauge the shipping accelerometer Jacobian is exactly `H = [-[f]_x | I]`, because
+the source block `J_aw = R_wb()` is orthogonal and the gauge places it on the
+identity while `J_att = -skew(f_cog_b)` carries the whole modelled dependence.
+The Jacobian perturbation is therefore supported on the attitude columns,
+`Delta H = [E_theta | 0]`. That is exactly the fact which lets the certified
+V12C/V12D `Delta C` parent be the four-term sum
+`dP ||H_theta|| + ||P_theta|| dH + dP dH + dP` with no `P_theta,aw Delta H_aw`
+term, so V50 reproduces that parent bit-for-bit before reusing the support
+anywhere else. Three of V34's seven first-row `Delta S` terms then collapse onto
+attitude-restricted nominal factors,
+
+`e_i^T H P E^T -> ||(h_i P)_theta|| dH`, `e_i^T E P H^T -> dH ||(P H^T)_theta||`,
+`e_i^T E P E^T -> dH ||P_theta,theta|| dH`,
+
+each taken as a minimum against its own V34 parent term and still intersected
+with V12D's full `||Delta S||`. The certified row bound improves from
+`1.5212753710318652e-07` to `1.3328773849908888e-07`, which unpins the theta-y
+gain row from the V12D parent but leaves theta-z pinned.
+
+Second, V50 decomposes the certified sample-1 reduced covariance perturbation
+`dP = 2.76914978691018e-10`, reproducing the V40/V12C parent exactly. Its
+largest constituent is the raw sample-1 prediction attitude-covariance epsilon,
+`1.4828249737599615e-10`, at 53.5 percent, ahead of the reset-gauge direction
+term and the transported first posterior.
+
+Third, and decisively, V50 reruns the authoritative V48 composition with every
+componentwise correction-perturbation cap forced to zero. The composed q is
+`8.344528951460543` — bit-identical to the parent. The perturbation caps do not
+move q at all, so no refinement of `Delta S`, `Delta C`, `dP`, or the
+componentwise split can close the authoritative survivor. The reason is
+quantitative and is reported alongside: on the binding geodesic branch the
+principal angle must fall by `0.019476337434169544` rad to reach `q<8`, while the
+entire certified perturbation budget is `0.003654031568545583` rad, 18.8 percent
+of it. Removing that whole budget from the parent radius as well still leaves the
+geodesic branch at `8.277775079246444`.
+
+The next work on this line is therefore the nominal geometry, not the
+perturbation: sharpen V10's exact first-accelerometer directional correction
+magnitude, or the sample-0 current chart `q1`, on the authoritative V45 parent.
+This is a redirection of the proof search only. No filter setting, source
+domain, six-radian correction limit, `q<8` target, source language, whole-word
+criterion, or `N_H` state changes, and `N_H_words` remains unset.
+
+`tools/ou3_p5_sample1_exact_monotone_source_gain_v51.py` discharges that
+obligation at the witness. The first-accelerometer block is described by eight
+rational functions of the same three source intervals - the attitude variance
+`t`, the `a_w` variance `p`, and the accelerometer noise variance `r`:
+
+`a = t(p+r)/D`, `b = p(g^2 t + r)/D`, `c0 = -g t p/D`, `bz = p r/(p+r)`,
+`det = t p r/D`, `k_theta = g t/D`, `k_aw,t = p/D`, `k_z = p/(p+r)`,
+with `D = g^2 t + p + r`.
+
+The parent backend evaluates each as a straight interval expression, losing the
+dependency between numerator and denominator. The loss is not cosmetic: at the
+witness the parent encloses `k_z = p/(p+r)` in
+`[0.5594923342554586, 1.0537323143362434]`, even though `p/(p+r) < 1` holds
+identically for positive `p, r`.
+
+Each expression is monotone in `t`, `p` and `r` separately, so its exact range
+over the parameter box is attained at a corner. `a` and `b` reduce to two
+variables (`u = p+r` and `w = g^2 t + r`) that each range over an exact interval
+independent of the remaining variable, so their corners are genuine corners of
+the original box. V51 evaluates every expression at its extremal corner with the
+same outward-rounded backend and intersects the result with the parent, so a
+refinement can never widen a bound or leave its parent, and fails closed if it
+would.
+
+At the authoritative witness, reproduced from source rather than copied:
+
+| quantity | parent | exact monotone |
+| --- | --- | --- |
+| `k_z` upper | 1.0537323143362434 | 0.8001468619320714 |
+| sample-1 `\|f\|` | 21.395742136954993 | 18.606777069495593 |
+| post-first `a_w` axial | 4.911252706804307 | 2.9343396015749246 |
+| sample-1 `rho` | 17.922551201967796 | 15.229738748335985 |
+| `k_perp` | 0.9753682347137846 | 0.8468904975139163 |
+| `k_parallel` | 0.09899544770387604 | 0.09772949400653325 |
+| V10 correction | 2.0466720610769817 rad | 1.7313776836494923 rad |
+
+V50 measured that the geodesic branch needed the correction principal angle to
+fall by `0.019476337434169544` rad. This removes `0.3152943774274895` rad,
+sixteen times that. Composing the refined correction with V41's archived
+sample-0 chart - an upper bound computed with the unrefined gains, hence a
+conservative partner - gives `q = 4.8010333986449245` against the archived
+parent `q = 8.344528951460543`. The authoritative first survivor closes.
+
+V51 evaluates the single authoritative witness cell.
+`tools/ou3_p5_sample1_exact_monotone_cover_lift_v52.py` lifts the same
+enclosure over the complete cover. `ou3_p5_sample1_structured_full_gain_v8`
+gained a module-level `_first_block_quantities` helper holding the eight
+expressions unchanged, so a refinement can be installed without editing the
+producer, exactly as V12D/V40 do for the PSD perturbation; a full 12816-cell
+V10 rebuild before and after that refactor is bit-identical in every summary
+field. With V51's exact path installed there:
+
+| cover quantity | parent | exact monotone |
+| --- | --- | --- |
+| cells evaluated | 12816 | 12816 |
+| cells narrowed / widened | - | 12816 / 0 |
+| per-cell narrowing ratio | - | 1.0106991820188718 .. 1.495825177084859 |
+| max sample-1 residual | 46.01460061569009 | 42.67399431981034 |
+| max `k_perp` | 1.3986770467171177 | 1.2187023949259914 |
+| max `k_parallel` | 0.19289137244367335 | 0.19082905441803827 |
+| max V10 correction | 7.016940736774492 rad | 6.7576910288356276 rad |
+
+Containment is checked cell by cell, not only in aggregate: a single widened
+cell fails the producer closed.
+
+`tools/ou3_p5_sample1_exact_monotone_q8_cover_v53.py` then re-runs V41's
+signed-chart `q<8` composition itself, regenerating both the shipping and the
+refined cover in one process rather than quoting an archived count, and
+requiring the parent run to reproduce V45's archived first-survivor
+`q = 8.344528951460543`. The refinement closes the archived first survivor and
+strictly improves the cover, but does not close it:
+
+| `q<8` cover | parent | exact monotone |
+| --- | --- | --- |
+| signed-Cayley cells | 461376 | 461376 |
+| open cells | 235738 | 219574 |
+| first open cell | `(0,0,23)` at `q = 8.344528951460543` | `(0,2,23)` at `q = 8.475205389989586` |
+| worst composed `q` | 525593.677323337 at `(20,16,20)` | 499303.8238549043 at `(23,18,4)` |
+
+So the exact monotone enclosure is a real and uniform tightening of the whole
+first-accelerometer block - it closes 16164 further signed-Cayley cells and
+retires the survivor that V42 through V50 could not move - but roughly 48
+percent of the cover is still open, and the worst cell remains five orders of
+magnitude above the target. The remaining obstruction is again nominal
+geometry, now at `(0,2,23)` and at the far worse `(23,18,4)`, whose correction
+radial upper bound of `3.1593913566884573` rad is past `pi` and so wraps rather
+than composing.
+
+`tools/ou3_p5_sample1_open_cell_correction_budget_v54.py` measures how far the
+remaining cells are. For each it reconstructs the refined chain from source,
+decomposes `corr^2 = k_perp^2 rho_x^2 + k_par^2 (rho^2 - rho_x^2)`, and compares
+against the largest correction the SO(3) triangle admits for that cell's
+recorded chart, `phi_d <= 2 atan(4) - 2 atan(q_current/2)`:
+
+| cell | correction | admissible | gap | `rho` reduction that would suffice |
+| --- | --- | --- | --- | --- |
+| `(0,2,23)` first open | 1.9595039241752017 | 1.9389861206167838 | +1.05% | 1.25% |
+| `(23,18,4)` worst | 3.1985263367953887 | 1.257263970049669 | +60.7% | 65.0% |
+| `(0,0,23)` retired | 1.7313776836494923 | 2.0308497552113565 | -17.3% | already inside |
+
+So the two remaining named cells are in completely different regimes. The
+first-open cell misses by about one percent - the same order as the gap V50
+measured at the retired witness, which the exact monotone enclosure then beat by
+sixteen times - while the worst cell needs the residual cut by roughly two
+thirds, and there zeroing `rho_x` or `k_perp` outright cannot reach the target
+because `k_par rho` alone already exceeds it.
+
+The two cells also fail for different reasons. At `(0,2,23)` the residual is 58
+percent predicted force and 39 percent post-update `a_w` error; at `(23,18,4)`
+that inverts to 28 and 69 percent, with the post-update `a_w` bound driven by
+the tangent term `|(1 - k_aw,t) r_t| = 9.2` m/s^2 that the large `p` cell
+produces. Sharpening the post-update `a_w` bound needs signed structure on the
+first tangent residual, in the way V10's equations (1) and (2) already supply
+for the `x` row.
+
+V54's reduction figures are arithmetic on outward-rounded enclosures, not
+enclosures themselves, and they cover the geodesic branch only: V41 closes a
+cell on `min(geodesic, product)`, so reaching the geodesic target closes a cell
+but missing it does not prove one open. V54 therefore reports a distance and
+never a verdict.
+
+None of V51, V52, V53 or V54 composes `q<8`, promotes sample 1 or P5, or sets
+`N_H_words`.
+
 The independent implementation-stability composition gate continues to consume P5 directly. The older generic affine deployment-capture arithmetic is not accepted as a substitute.
 
 **PASS criterion for closing P5:** every certified normal or timeout handoff lies in a validated outer H capture funnel; every source-word prefix stays safe; the outer recurrence reaches `W_*` in a finite machine-certified number of H words/time. The current certificate does **not** yet satisfy this criterion.

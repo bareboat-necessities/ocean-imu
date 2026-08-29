@@ -130,6 +130,23 @@ def _block_gain_bounds(a:Interval,Y:Interval,c0:Interval,alpha:Interval,qaw:Inte
     }
 
 
+def _first_block_quantities(*,t:Interval,p:Interval,r:Interval,g:float)->dict:
+    """Analytic first-accelerometer block entries and gains.
+
+    These eight rationals of ``t``, ``p`` and ``r`` are the only place the block
+    parameters enter the row loop.  Keeping them behind a module-level name lets
+    a later stage install an equally source-faithful but tighter enclosure
+    without editing this producer, exactly as V12D/V40 do for the PSD
+    perturbation.  The expressions here are unchanged.
+    """
+    D=FULL.I(g*g)*t+p+r
+    return {
+        "a":t*(p+r)/D,"c0":-(FULL.I(g)*t*p/D),
+        "b":p*(FULL.I(g*g)*t+r)/D,"bz":p*r/(p+r),"det_first":t*p*r/D,
+        "ktheta":FULL.I(g)*t/D,"kaw_t":p/D,"kz":p/(p+r),
+    }
+
+
 def build(domain_path:Path=DEFAULT_DOMAIN,*,source_pieces:int=4,source_cell_index:int=0,
           p_pieces:int=24,tangent_pieces:int=24,axial_pieces:int=24)->dict:
     FULL3._install_backend(); path=Path(domain_path).resolve(); dom=json.loads(path.read_text(encoding="utf-8"))
@@ -152,9 +169,9 @@ def build(domain_path:Path=DEFAULT_DOMAIN,*,source_pieces:int=4,source_cell_inde
     pcells=SUB.parts(p_all.lo,p_all.hi,p_pieces); rtcells=SUB.parts(0.0,rt_cap,tangent_pieces); rzcells=SUB.parts(-rz_cap,rz_cap,axial_pieces)
     rows=[]; bad=None; pruned=0; maxK=maxD=maxRho=maxF=maxEaw=0.0; minS=minDet=math.inf
     for pi,p in enumerate(pcells):
-        D=FULL.I(g*g)*t+p+r; a=t*(p+r)/D; c0=-(FULL.I(g)*t*p/D)
-        b=p*(FULL.I(g*g)*t+r)/D; bz=p*r/(p+r); det_first=t*p*r/D
-        ktheta=FULL.I(g)*t/D; kaw_t=p/D; kz=p/(p+r)
+        blk=_first_block_quantities(t=t,p=p,r=r,g=g)
+        a=blk["a"]; c0=blk["c0"]; b=blk["b"]; bz=blk["bz"]; det_first=blk["det_first"]
+        ktheta=blk["ktheta"]; kaw_t=blk["kaw_t"]; kz=blk["kz"]
         for ti,rt0 in enumerate(rtcells):
             for zi,rz0 in enumerate(rzcells):
                 child=V6._residual_child(rt0,rz0,rho0)
