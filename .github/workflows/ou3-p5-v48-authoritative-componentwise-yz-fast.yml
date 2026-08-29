@@ -11,6 +11,7 @@ on:
       - "tools/ou3_p5_sample1_v41_authoritative_split_signed_v45.py"
       - "tools/ou3_implementation_proof_manifest.py"
       - "tools/ou3_proof_operating_domain.json"
+      - "tools/ou3_interval.py"
       - "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h"
       - "src/tuner/AccelVibrationGuard.h"
       - ".github/workflows/ou3-p5-v48-authoritative-componentwise-yz-fast.yml"
@@ -91,10 +92,12 @@ jobs:
               print(f"diagnostic={diagnostic}", file=gh)
       - name: "V48 rc=${{ steps.audit.outputs.rc }} status=${{ steps.audit.outputs.status }} parentq=${{ steps.audit.outputs.parentq }} refinedq=${{ steps.audit.outputs.refinedq }}"
         run: |
-          echo "productq=${{ steps.audit.outputs.productq }} geodesicq=${{ steps.audit.outputs.geodesicq }}"
-          echo "ey=${{ steps.audit.outputs.ey }} ez=${{ steps.audit.outputs.ez }} oldyz=${{ steps.audit.outputs.oldyz }}"
           echo "strict=${{ steps.audit.outputs.strict }} closed=${{ steps.audit.outputs.closed }}"
           echo "next=${{ steps.audit.outputs.next }}"
+      - name: "V48 q product=${{ steps.audit.outputs.productq }} geodesic=${{ steps.audit.outputs.geodesicq }}"
+        run: echo "q_target=8"
+      - name: "V48 caps ey=${{ steps.audit.outputs.ey }} ez=${{ steps.audit.outputs.ez }} oldyz=${{ steps.audit.outputs.oldyz }}"
+        run: echo "componentwise_yz=true"
       - name: "V48 diagnostic=${{ steps.audit.outputs.diagnostic }}"
         run: echo "producer_rc=${{ steps.audit.outputs.rc }}"
       - name: Fail closed on producer validation
