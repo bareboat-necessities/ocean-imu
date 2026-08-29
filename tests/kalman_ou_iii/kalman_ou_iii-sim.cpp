@@ -221,6 +221,20 @@ public:
                 if (env_float("OU_III_ACC_GUARD_HZ", guard_hz)) {
                     filter.setAccelVibrationGuard(guard_hz, guard_poles);
                 }
+                float racc_gain = 0.0f;
+                if (env_float("OU_III_ACC_GUARD_RACC_GAIN", racc_gain)) {
+                    filter.setAccelVibrationRaccGain(racc_gain);
+                }
+                float engage_lo = 0.0f, engage_hi = 0.0f, engage_tau = 0.0f;
+                const bool lo_set = env_float("OU_III_ACC_GUARD_ENGAGE_LO", engage_lo);
+                const bool hi_set = env_float("OU_III_ACC_GUARD_ENGAGE_HI", engage_hi);
+                const bool tau_set = env_float("OU_III_ACC_GUARD_ENGAGE_TAU", engage_tau);
+                if (lo_set || hi_set || tau_set) {
+                    filter.setAccelVibrationEngagement(
+                        lo_set ? engage_lo : -1.0f,
+                        hi_set ? engage_hi : -1.0f,
+                        tau_set ? engage_tau : -1.0f);
+                }
             }
 
             if (env_float("OU_ADAPT_TAU_SEC", v)) {
@@ -527,6 +541,8 @@ public:
                   << " engagement=" << filter.accelVibrationGuardEngagement()
                   << " out_of_band_rms_mps2=" << filter.accelVibrationRms()
                   << " delay_sec=" << filter.accelVibrationGuardDelaySec()
+                  << " racc_gain=" << filter.accelVibrationRaccGain()
+                  << " racc_std_mps2=" << filter.accelVibrationRaccStd().x()
                   << "\n";
     }
 

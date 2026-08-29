@@ -333,7 +333,7 @@ class OuArticleVibrationGuardContractTests(unittest.TestCase):
 
         rows = self.summary()
         off = rows[("engine off", "off")]
-        on = rows[("engine off", "on")]
+        on = rows[("engine off", "guard+R")]
         for name in ("disp_3d_rms_m", "disp_z_rms_m", "pitch_rms_deg",
                      "yaw_rms_deg", "pitch_mean_deg", "disp_z_mean_m"):
             with self.subTest(name=name):
@@ -344,7 +344,7 @@ class OuArticleVibrationGuardContractTests(unittest.TestCase):
         rows = self.summary()
         baseline = float(rows[("engine off", "off")]["disp_3d_rms_m"])
         for (condition, guard), row in rows.items():
-            if guard != "on" or condition == "engine off":
+            if guard != "guard+R" or condition == "engine off":
                 continue
             ratio = float(row["disp_3d_rms_m"]) / baseline
             with self.subTest(condition=condition):
@@ -358,7 +358,7 @@ class OuArticleVibrationGuardContractTests(unittest.TestCase):
             if condition == "engine off":
                 continue
             off = float(rows[(condition, "off")]["disp_3d_rms_m"])
-            on = float(rows[(condition, "on")]["disp_3d_rms_m"])
+            on = float(rows[(condition, "guard+R")]["disp_3d_rms_m"])
             with self.subTest(condition=condition):
                 self.assertLess(on, off)
 
@@ -372,7 +372,7 @@ class OuArticleVibrationGuardContractTests(unittest.TestCase):
         with (GUARD_RESULTS / "guard_runs.csv").open(encoding="utf-8", newline="") as s:
             clean = [
                 row for row in csv.DictReader(s)
-                if row["condition"] == "engine off" and row["guard"] == "on"
+                if row["condition"] == "engine off" and row["guard"] == "guard+R"
             ]
         self.assertEqual(len(clean), 8)
         readings = [float(row["guard_out_of_band_rms_mps2"]) for row in clean]
@@ -401,14 +401,17 @@ class OuArticleVibrationGuardContractTests(unittest.TestCase):
         baseline = float(rows[("engine off", "off")]["disp_3d_rms_m"])
         for condition, label in tex_rows.items():
             off = rows[(condition, "off")]
-            on = rows[(condition, "on")]
+            guard = rows[(condition, "guard")]
+            both = rows[(condition, "guard+R")]
             expected = " ".join((
                 label, "&",
                 f"{float(off['disp_3d_rms_m']):.3f}", "&",
-                f"{float(on['disp_3d_rms_m']):.3f}", "&",
+                f"{float(guard['disp_3d_rms_m']):.3f}", "&",
+                f"{float(both['disp_3d_rms_m']):.3f}", "&",
                 f"{abs(float(off['pitch_mean_deg'])):.3f}", "&",
-                f"{abs(float(on['pitch_mean_deg'])):.3f}", "&",
-                f"{float(on['disp_3d_rms_m']) / baseline:.2f}",
+                f"{abs(float(guard['pitch_mean_deg'])):.3f}", "&",
+                f"{abs(float(both['pitch_mean_deg'])):.3f}", "&",
+                f"{float(both['disp_3d_rms_m']) / baseline:.3f}",
             ))
             with self.subTest(condition=condition):
                 self.assertIn(expected, normalized)
@@ -449,11 +452,39 @@ class OuArticleVibrationGuardContractTests(unittest.TestCase):
         self.assertIn("constexpr float ACC_VIBRATION_GUARD_HZ_DEFAULT = 14.0f;", filt)
         self.assertIn("constexpr int   ACC_VIBRATION_GUARD_POLES_DEFAULT = 2;", filt)
         self.assertIn("setAccelVibrationGuard(ACC_VIBRATION_GUARD_HZ_DEFAULT,", filt)
+        self.assertIn(
+            "constexpr float ACC_VIBRATION_RACC_GAIN_DEFAULT = 0.75f;", filt)
+        self.assertIn(
+            "setAccelVibrationRaccGain(ACC_VIBRATION_RACC_GAIN_DEFAULT);", filt)
+        # The covariance inflation must be driven by the guard's gated excess,
+        # which is what keeps it inert on a quiet installation.
+        self.assertIn("accel_guard_.excessRms()", filt)
+
         # One conditioning point, feeding every consumer.
         self.assertIn("const Eigen::Vector3f acc_in = accel_guard_.step(acc, dt);", filt)
         self.assertIn("vertical_accel_comp_.update(dt, gyro, acc_in, g_std);", filt)
         self.assertIn("mekf_->measurement_update_acc_only(acc_in, tempC);", filt)
         self.assertNotIn("measurement_update_acc_only(acc,", filt)
+
+    def test_covariance_inflation_helps_where_the_guard_leaves_most(self):
+        """The arm exists to attack what conditioning cannot reach."""
+
+        rows = self.summary()
+        for condition in ("2400 rpm", "3200 rpm", "2400 rpm, engine bed"):
+            guard = float(rows[(condition, "guard")]["disp_3d_rms_m"])
+            both = float(rows[(condition, "guard+R")]["disp_3d_rms_m"])
+            with self.subTest(condition=condition):
+                self.assertLess(both, guard, condition)
+        # And the standing tilt offset it targets falls everywhere it engages.
+        for (condition, arm), row in rows.items():
+            if arm != "guard+R" or condition == "engine off":
+                continue
+            guard_pitch = abs(float(rows[(condition, "guard")]["pitch_mean_deg"]))
+            both_pitch = abs(float(row["pitch_mean_deg"]))
+            if float(row["guard_engagement"]) < 0.9:
+                continue
+            with self.subTest(condition=condition):
+                self.assertLessEqual(both_pitch, guard_pitch * 1.05, condition)
 
     def test_degradation_study_pins_the_guard_off(self):
         """It is the unguarded comparison, and OU-III now arms the guard.
@@ -470,9 +501,11 @@ class OuArticleVibrationGuardContractTests(unittest.TestCase):
         mitigation = (ROOT / "tools" / "ou3_engine_noise_mitigation.py").read_text(
             encoding="utf-8"
         )
-        # Both arms explicit, so neither inherits the filter default.
-        self.assertIn('env["OU_III_ACC_GUARD_HZ"] = ', mitigation)
-        self.assertIn('if guard else "0"', mitigation)
+        # Every arm explicit, so none of them inherits the filter default.
+        self.assertIn("def arm_env(arm: str)", mitigation)
+        self.assertIn('"OU_III_ACC_GUARD_HZ": "0", "OU_III_ACC_GUARD_RACC_GAIN": "0"',
+                      mitigation)
+        self.assertIn('env.update(arm_env(guard))', mitigation)
 
     def test_generator_publishes_the_guard_figure(self):
         tool = (ROOT / "tools" / "ou3_engine_noise_mitigation.py").read_text(

@@ -313,24 +313,66 @@ Placed above the sea, the detector reads:
 A one percent spread across a 31:1 range of `Hs` is what a detector placed
 above the sea should look like.
 
+### Second stage: vibration-aware measurement covariance
+
+Conditioning leaves a residual, and forcing the guard on over a *quiet* input
+says what it is made of.  On the JONSWAP records at `Hs` 1.5 and 8.5 m the
+group delay alone costs 1.021x and 1.063x, against deployed residuals of
+1.074x and 1.151x — so roughly **half the residual is the guard's own delay**,
+which no covariance change can touch, and the other half is vibration that
+survived the stopband.
+
+That other half is measurement error the MEKF is not told about.  The second
+stage tells it: the commanded accelerometer sigma becomes
+`sqrt(sigma^2 + (kappa * excess)^2)`, driven by the same gated excess the guard
+engages on — so it is inert on a quiet installation for the same reason.
+
+**Choosing kappa.** The two channels disagree, which is what pins it. Pooled
+over the eight records at 2400 rpm:
+
+| kappa | 3-D ×base | pitch offset [deg] | yaw [deg] |
+| ---: | ---: | ---: | ---: |
+| 0 | 1.141 | 1.180 | 4.17 |
+| 0.50 | 1.112 | 0.709 | 2.66 |
+| 0.75 | 1.104 | 0.444 | 1.84 |
+| 1.00 | 1.104 | 0.274 | 1.33 |
+| 1.25 | 1.110 | 0.165 | 1.02 |
+| 1.50 | 1.122 | 0.096 | 0.83 |
+
+Attitude improves monotonically, but displacement turns back up past about
+1.25: the accelerometer is the only wave measurement there is, so trusting it
+less cannot be free.  The displacement optimum is broad and flat between 0.75
+and 1.0.  **The deployed value is `ACC_VIBRATION_RACC_GAIN_DEFAULT = 0.75`**,
+at the optimum with margin below the cliff.
+
 ### What it recovers
 
 `tools/ou3_engine_noise_mitigation.py`, pooled over the same eight records:
 
-| Condition | 3-D off [m] | 3-D on [m] | Pitch offset off | on | × baseline (off → on) |
-| --- | ---: | ---: | ---: | ---: | --- |
-| engine off | 0.5224 | 0.5224 | 0.144 | 0.144 | 1.00 → 1.00 |
-| 800 rpm | 0.8770 | 0.5982 | 2.014 | 1.327 | 1.68 → 1.15 |
-| 1600 rpm | 1.4021 | 0.5889 | 1.211 | 1.125 | 2.68 → 1.13 |
-| 2400 rpm | 4.2318 | 0.5961 | 3.075 | 1.180 | 8.10 → 1.14 |
-| 3200 rpm | 8.6509 | 0.6746 | 3.283 | 1.773 | 16.56 → 1.29 |
-| 2400 rpm, quiet mount | 1.3724 | 0.5673 | 2.744 | 0.584 | 2.63 → 1.09 |
-| 2400 rpm, engine bed | 37.5310 | 0.8345 | 7.705 | 2.260 | 71.84 → 1.60 |
-| 2400 rpm, wide sensor | 7.5696 | 0.5795 | 2.360 | 0.520 | 14.49 → 1.11 |
+3-D RMS [m], and the standing pitch offset [deg], across the three
+configurations:
 
-Every engine condition is held within a factor of 1.6 of the engine-off
-baseline, against factors of 1.7 to 72 without the guard.  At nominal cruise
-yaw goes from 45.4 to 4.2 deg.
+| Condition | off | guard | guard+R | pitch off | guard | guard+R | ×base |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| engine off | 0.522 | 0.522 | 0.522 | 0.144 | 0.144 | 0.144 | 1.000 |
+| 800 rpm | 0.877 | 0.598 | 0.602 | 2.014 | 1.327 | 1.369 | 1.153 |
+| 1600 rpm | 1.402 | 0.589 | 0.583 | 1.211 | 1.125 | 0.814 | 1.115 |
+| 2400 rpm | 4.232 | 0.596 | 0.577 | 3.075 | 1.180 | 0.444 | 1.104 |
+| 3200 rpm | 8.651 | 0.675 | 0.588 | 3.283 | 1.773 | 0.551 | 1.125 |
+| 2400 rpm, quiet mount | 1.372 | 0.567 | 0.563 | 2.744 | 0.584 | 0.369 | 1.078 |
+| 2400 rpm, engine bed | 37.531 | 0.834 | 0.611 | 7.705 | 2.260 | 0.567 | 1.170 |
+| 2400 rpm, wide sensor | 7.570 | 0.580 | 0.572 | 2.360 | 0.520 | 0.047 | 1.094 |
+
+Conditioning holds every engine condition within 1.6× of the engine-off
+baseline against 1.7–72× without it; the covariance stage brings the worst of
+them to 1.17×.  It earns most where the guard leaves most: engine bed 0.834 →
+0.611 m, 3200 rpm 0.675 → 0.588 m.  At nominal cruise yaw goes 45.4 → 4.2 →
+1.8 deg.
+
+**One condition does not benefit.** At 800 rpm the residual rises 1.145 →
+1.153 (+0.7 %).  Idle puts the crank orders lowest in frequency, so the guard
+removes least of them and what leaks through sits closest to the wave band,
+where de-weighting the accelerometer cannot separate it from the sea.
 
 ### It is bit-transparent with no engine running
 
@@ -357,6 +399,8 @@ trade away.
 | --- | ---: | --- |
 | `OU_III_ACC_GUARD_HZ` | 14 | conditioning corner; **0 removes the guard entirely** |
 | `OU_III_ACC_GUARD_POLES` | 2 | conditioning cascade length |
+| `OU_III_ACC_GUARD_RACC_GAIN` | 0.75 | covariance inflation gain; 0 disables |
+| `OU_III_ACC_GUARD_ENGAGE_LO` / `_HI` / `_TAU` | 0.03 / 0.08 / 5 | detector engagement band |
 
 In code: `SeaStateFusionFilter_OU_III::setAccelVibrationGuard(cutoff_hz, poles)`,
 with `AccelVibrationGuard::setEngagement()` and `setDetectHz()` for the
@@ -371,10 +415,13 @@ match.
 
 ### What it does not do
 
-The guard conditions the measurement; it does not make the estimator
-vibration-aware.  The accelerometer measurement covariance is unchanged, so the
-filter still treats a conditioned sample as though it were a quiet one —
-inflating `R_acc` from the same detector reading is the obvious next step, and
-would attack the residual the guard leaves.  No front-end filter can help with
-machinery whose orders reach into the wave band, since there is nothing there
-to separate them from the sea.
+Group delay is the price of conditioning and is paid whether or not there is
+anything left to remove, so the residual cannot reach 1.00 while the guard is
+engaged — about half of what remains at cruise is delay.  And no front-end
+filter helps with machinery whose orders reach into the wave band, since there
+is nothing there to separate them from the sea; the 800 rpm row is that limit
+showing itself early.
+
+Mechanical isolation and a tighter sensor anti-alias filter still act on the
+quantity that matters and are the only things that reduce the input rather
+than manage it.
