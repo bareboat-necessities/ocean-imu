@@ -22,7 +22,8 @@ REPO = Path(__file__).resolve().parents[1]
 WRAPPER = REPO / "src" / "kalman_ou_iii" / "SeaStateFusionFilter_OU_III.h"
 MEKF = REPO / "src" / "kalman_ou_iii" / "Kalman3D_Wave_OU_III.h"
 CORE = REPO / "src" / "kalman_ou_common" / "KalmanOUCoreMath.h"
-SCHEMA = 2
+GUARD = REPO / "src" / "tuner" / "AccelVibrationGuard.h"
+SCHEMA = 3
 
 
 def sha256(path: Path) -> str:
@@ -45,10 +46,17 @@ def build() -> dict:
     w = WRAPPER.read_text(encoding="utf-8")
     k = MEKF.read_text(encoding="utf-8")
     c = CORE.read_text(encoding="utf-8")
+    g = GUARD.read_text(encoding="utf-8")
 
     two_kp = SOURCE.parse_const(w, "STARTUP_PROXY_TWO_KP_DEFAULT")
     two_ki = SOURCE.parse_const(w, "STARTUP_PROXY_TWO_KI_DEFAULT")
     dt = SOURCE.parse_const(w, "FREQ_SMOOTHER_DT")
+    guard_hz = SOURCE.parse_const(w, "ACC_VIBRATION_GUARD_HZ_DEFAULT")
+    guard_poles = int(one_float(
+        w,
+        r"ACC_VIBRATION_GUARD_POLES_DEFAULT\s*=\s*([0-9]+)",
+        "ACC_VIBRATION_GUARD_POLES_DEFAULT"))
+    guard_engage_lo = SOURCE.parse_const(g, "kEngageLoDefault")
 
     cfg = {
         "proxy_startup_min_sec": one_float(w, r"proxy_startup_min_sec\s*=\s*([0-9.eE+-]+)f", "proxy_startup_min_sec"),
@@ -88,20 +96,24 @@ def build() -> dict:
         "h_to_a_release": "mekf_->set_acc_bias_updates_enabled(true);",
         "mag_refinement_rewrites_heading": "impl_.mekf().set_quaternion_boat(q_new);",
         "mag_refinement_releases_bias_hold": "impl_.setAccBiasHold(false);",
-        "live_tilt_relock_preserves_yaw": "mekf_->initialize_from_acc_preserve_yaw(acc);",
+        "guard_single_conditioned_feed": "const Eigen::Vector3f acc_in = accel_guard_.step(acc, dt);",
+        "guard_conditioned_feed_reaches_proxy": "vertical_accel_comp_.update(dt, gyro, acc_in, g_std);",
+        "guard_zero_weight_is_bit_exact_transparent": "if (weight_ <= 0.0f) return acc;",
+        "live_tilt_relock_preserves_yaw": "mekf_->initialize_from_acc_preserve_yaw(acc_in);",
         "periodic_aw_sync": "periodic_aw_cov_sync_tick_();",
         "full_s_update": "void applyIntegralZeroPseudoMeas();",
         "joseph_update": "joseph_update3_",
         "quaternion_injection": "applyQuaternionCorrectionFromErrorState();",
         "left_error_reset": "apply_error_state_reset_jacobian_",
-        "prediction_before_acc": "mekf_->time_update(gyro, dt);\n            mekf_->measurement_update_acc_only(acc, tempC);",
+        "prediction_before_acc": "mekf_->time_update(gyro, dt);\n            mekf_->measurement_update_acc_only(acc_in, tempC);",
         "S_due_inside_time_update": "applyIntegralZeroPseudoMeas();",
         "acc_injects_immediately": "last_acc_diag_.accepted = true;",
         "mag_injects_immediately": "last_mag_diag_.accepted = true;",
         "aw_psd_floor": "Pext.template block<3,3>(OFF_AW, OFF_AW) += Delta;",
     }
+    joined = w + "\n" + k + "\n" + c + "\n" + g
     for label, marker in semantic_markers.items():
-        require(w + "\n" + k + "\n" + c, marker, label)
+        require(joined, marker, label)
 
     if "static constexpr int NX = BASE_N + EXT_ADD;" not in k:
         raise RuntimeError("cannot bind MEKF state dimension expression")
@@ -116,9 +128,13 @@ def build() -> dict:
             str(WRAPPER.relative_to(REPO)): sha256(WRAPPER),
             str(MEKF.relative_to(REPO)): sha256(MEKF),
             str(CORE.relative_to(REPO)): sha256(CORE),
+            str(GUARD.relative_to(REPO)): sha256(GUARD),
         },
         "configured_runtime": {
             "imu_dt_s": dt,
+            "accel_vibration_guard_cutoff_hz_default": guard_hz,
+            "accel_vibration_guard_poles_default": guard_poles,
+            "accel_vibration_guard_engage_lo_mps2": guard_engage_lo,
             "scope": "configured nominal runtime; arbitrary caller dt is outside the quantitative theorem",
         },
         "state_coordinates": {
@@ -140,6 +156,7 @@ def build() -> dict:
         "mekf_defaults": mekf_defaults,
         "normal_live_update_order": [
             "commit_previous_tune",
+            "vibration_guard_conditioning",
             "prediction",
             "apply_pending_aw_covariance_psd_increment",
             "periodic_S_zero_when_due_then_immediate_quaternion_injection_and_left_error_reset",
@@ -163,7 +180,14 @@ def build() -> dict:
             "tilt_relock",
             "cooldown_reentry",
             "periodic_aw_covariance_sync",
+            "accelerometer_vibration_guard_engagement",
         ],
+        "vibration_guard": {
+            "armed_by_default": guard_hz > 0.0,
+            "zero_engagement_is_bit_exact_transparent": True,
+            "active_guard_changes_measurement_dynamics": True,
+            "active_guard_requires_separate_source_certificate": True,
+        },
         "semantic_markers": sorted(semantic_markers),
         "pass": True,
     }
@@ -194,13 +218,22 @@ def validate(d: dict) -> list[str]:
         failures.append("manifest incorrectly merges same-sample correction resets")
     order = d.get("normal_live_update_order", [])
     try:
+        ig = order.index("vibration_guard_conditioning")
+        ip = order.index("prediction")
         iS = order.index("periodic_S_zero_when_due_then_immediate_quaternion_injection_and_left_error_reset")
         ia = order.index("accelerometer_correction_or_rejection_then_immediate_quaternion_injection_and_left_error_reset_if_accepted")
     except ValueError:
-        failures.append("manifest lacks exact S/accelerometer correction ordering")
+        failures.append("manifest lacks exact guard/S/accelerometer ordering")
     else:
-        if not iS < ia:
-            failures.append("manifest places periodic S correction after accelerometer, contrary to time_update source")
+        if not ig < ip < iS < ia:
+            failures.append("manifest source ordering does not match deployed guard/prediction/S/accelerometer path")
+    vg = d.get("vibration_guard", {})
+    if vg.get("armed_by_default") is not True:
+        failures.append("vibration guard is not source-bound as armed by default")
+    if vg.get("zero_engagement_is_bit_exact_transparent") is not True:
+        failures.append("vibration guard zero-engagement transparency is not source certified")
+    if vg.get("active_guard_requires_separate_source_certificate") is not True:
+        failures.append("active vibration-guard source branch was silently treated as already certified")
     return failures
 
 
@@ -219,6 +252,7 @@ def main() -> int:
         "startup": out["startup"],
         "normal_live_update_order": out["normal_live_update_order"],
         "hybrid_events": out["hybrid_events"],
+        "vibration_guard": out["vibration_guard"],
         "validation_failures": failures,
     }, indent=2, sort_keys=True))
     return 0 if not failures else 2
