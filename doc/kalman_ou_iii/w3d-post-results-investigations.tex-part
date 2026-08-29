@@ -3,13 +3,15 @@
 
 The preceding sections define the deployed estimator and present its primary
 comparative evidence.  The material below adds a bidirectional transition
-diagnostic, a model-mismatch ablation, an engine-noise degradation study, and
-the optional full-state physical-error formulation.  These investigations
-expose residual behavior and identify where the reduced model is limited
-without revisiting superseded regularizer-law comparisons.
+diagnostic, a model-mismatch ablation, an IMU lever-arm installation study, an
+engine-noise degradation study, and the optional full-state physical-error
+formulation.  These investigations expose residual behavior and identify where
+the reduced model is limited without revisiting superseded regularizer-law
+comparisons.
 
 \input{w3d-roundtrip-transition-ablation.tex-part}
 \input{w3d-model-mismatch-ablation.tex-part}
+\input{w3d-imu-lever-arm-study.tex-part}
 \input{w3d-engine-noise-degradation.tex-part}
 \input{w3d-full-state-h2.tex-part}
 \input{w3d-full-state-h2-scaling.tex-part}
