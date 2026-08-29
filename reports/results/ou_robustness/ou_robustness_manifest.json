@@ -42,7 +42,7 @@
     "reports/results/ou_robustness"
   ],
   "git_branch": "main",
-  "git_commit": "227b3828c1a97ee2cdd9a9a5fe2a208affcccddf",
+  "git_commit": "0df127586906bc212ba180d55172e4592363ee96",
   "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json | 2 --\n 1 file changed, 2 deletions(-)",
   "implementation_files": {
     "src/ahrs/FrameConversions.h": {
@@ -94,8 +94,12 @@
       "sha256": "ab76e29edd22a12bf2d46766232ccca36aa3cf29f733734907f847528d306faa"
     },
     "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": {
-      "bytes": 164378,
-      "sha256": "cb03046e83c85983fdb8155b59358a627bc6d7f44afe777bb12ab49a67ef3b7d"
+      "bytes": 173464,
+      "sha256": "85eae610e5a825fe3ddb878c4e98954bfaa2d45c469c843e5db5deeb478806b0"
+    },
+    "src/tuner/AccelVibrationGuard.h": {
+      "bytes": 12356,
+      "sha256": "09ec79b607a4c7e2cc7961930813a3c0cf66d6f82c7bddde4b7dc4084a01398e"
     },
     "src/tuner/AdaptiveWaveBandPass.h": {
       "bytes": 5864,
@@ -130,12 +134,12 @@
       "sha256": "6f2cde3f0ddba64504977f55adf55d6d8f1268e53cac2a869eb5bd1e559959d8"
     },
     "src/util/W3dSimCommon.cpp": {
-      "bytes": 69915,
-      "sha256": "7c1d5c33e92d1fefc6f42f2796b469f2f8afdad350095e332cfd4d5d54132e72"
+      "bytes": 91704,
+      "sha256": "cb7dce5374f3d9144b3bcc1a5c2822a5d943e4e5bda0e23cfb0747f43f12147a"
     },
     "src/util/W3dSimCommon.h": {
-      "bytes": 20064,
-      "sha256": "7d3bc4d283d31a1ae48dc15fb66c00fd0914dc58c6e8155dc9f84a36b0778eb6"
+      "bytes": 27411,
+      "sha256": "7ce37f180b5567b96db4da3e428e24cf66e92dd5fa046f95a51080a885e64f49"
     },
     "src/util/WaveFilesSupport.h": {
       "bytes": 13244,
@@ -158,8 +162,8 @@
       "sha256": "4dcf49d7fb2376987501a4374d1b064920830735c9038422fc92322ef97be39b"
     },
     "tests/kalman_ou_iii/kalman_ou_iii-sim.cpp": {
-      "bytes": 55707,
-      "sha256": "8639213e72c55cb06d8696ef2aaf5e156b80c903f61faa2d71de0bd965853d29"
+      "bytes": 58072,
+      "sha256": "7b1c9020b85b849161d20708b546bfb7507ecc737334df0bd57e1cb9bf1dbae2"
     }
   },
   "matplotlib": "3.6.3",
@@ -285,8 +289,8 @@
       "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
       "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]"
     },
-    "generated_at": "2026-08-27T03:23:00+00:00",
-    "git_commit": "227b3828c1a97ee2cdd9a9a5fe2a208affcccddf",
+    "generated_at": "2026-08-29T04:25:13+00:00",
+    "git_commit": "0df127586906bc212ba180d55172e4592363ee96",
     "implementation_files": {
       "src/ahrs/FrameConversions.h": {
         "sha256": "7d402b7a283a21df7c739ca6d3a15782fec68eeedf745949a18cff807458d78d",
@@ -337,8 +341,12 @@
         "size_bytes": 99058
       },
       "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": {
-        "sha256": "cb03046e83c85983fdb8155b59358a627bc6d7f44afe777bb12ab49a67ef3b7d",
-        "size_bytes": 164378
+        "sha256": "85eae610e5a825fe3ddb878c4e98954bfaa2d45c469c843e5db5deeb478806b0",
+        "size_bytes": 173464
+      },
+      "src/tuner/AccelVibrationGuard.h": {
+        "sha256": "09ec79b607a4c7e2cc7961930813a3c0cf66d6f82c7bddde4b7dc4084a01398e",
+        "size_bytes": 12356
       },
       "src/tuner/AdaptiveWaveBandPass.h": {
         "sha256": "ddc8c59444008552de60f8ebe2298b0db08c8bc28aa9fff679ef1772a0ad5021",
@@ -373,12 +381,12 @@
         "size_bytes": 10594
       },
       "src/util/W3dSimCommon.cpp": {
-        "sha256": "7c1d5c33e92d1fefc6f42f2796b469f2f8afdad350095e332cfd4d5d54132e72",
-        "size_bytes": 69915
+        "sha256": "cb7dce5374f3d9144b3bcc1a5c2822a5d943e4e5bda0e23cfb0747f43f12147a",
+        "size_bytes": 91704
       },
       "src/util/W3dSimCommon.h": {
-        "sha256": "7d3bc4d283d31a1ae48dc15fb66c00fd0914dc58c6e8155dc9f84a36b0778eb6",
-        "size_bytes": 20064
+        "sha256": "7ce37f180b5567b96db4da3e428e24cf66e92dd5fa046f95a51080a885e64f49",
+        "size_bytes": 27411
       },
       "src/util/WaveFilesSupport.h": {
         "sha256": "e46bccb68c72d841ed3adbd9b9aa0b24348804d71120a0ee3af775cdc9c98128",
@@ -401,8 +409,8 @@
         "size_bytes": 809
       },
       "tests/kalman_ou_iii/kalman_ou_iii-sim.cpp": {
-        "sha256": "8639213e72c55cb06d8696ef2aaf5e156b80c903f61faa2d71de0bd965853d29",
-        "size_bytes": 55707
+        "sha256": "7b1c9020b85b849161d20708b546bfb7507ecc737334df0bd57e1cb9bf1dbae2",
+        "size_bytes": 58072
       }
     },
     "input_files": {
@@ -428,8 +436,8 @@
     "raw_rows_size_bytes": 195175,
     "workflow_run": {
       "job": "commit",
-      "run_attempt": "2",
-      "run_id": "33029056369",
+      "run_attempt": "1",
+      "run_id": "33232214071",
       "workflow": "build"
     }
   },
