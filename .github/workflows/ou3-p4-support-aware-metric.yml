@@ -1,0 +1,21 @@
+name: ou3-p4-support-aware-metric
+on:
+  pull_request:
+    paths:
+      - "tools/ou3_p4_support_aware_metric_certificate.py"
+      - "tests/validation/test_ou3_p4_support_aware_metric_certificate.py"
+      - ".github/workflows/ou3-p4-support-aware-metric.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  support-aware:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+      - run: sudo apt-get update && sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends python3-numpy
+      - run: python3 -m py_compile tools/ou3_p4_support_aware_metric_certificate.py tests/validation/test_ou3_p4_support_aware_metric_certificate.py
+      - working-directory: tests/validation
+        run: python3 -m unittest -v test_ou3_p4_support_aware_metric_certificate
+      - run: python3 tools/ou3_p4_support_aware_metric_certificate.py --output /tmp/support.json
