@@ -1,0 +1,53 @@
+name: ou3-p4-thirdgen-combined
+on:
+  pull_request:
+    paths:
+      - "tools/ou3_p4_nextgen_widened_certificate.py"
+      - "tools/ou3_p4_nextgen_directional_certificate.py"
+      - "tools/ou3_p4_nextgen_gain_certificate.py"
+      - "tools/ou3_p4_thirdgen_combined_certificate.py"
+      - "tools/ou3_p4_nonlinear_word_certificate.py"
+      - "tools/ou3_p4_group_algebra.py"
+      - "tools/ou3_p4_node_metrics.py"
+      - "tools/ou3_proof_operating_domain.json"
+      - "tests/validation/test_ou3_p4_thirdgen_combined_certificate.py"
+      - ".github/workflows/ou3-p4-thirdgen-combined.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ou3-p4-thirdgen-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  combined-p4:
+    name: third-generation combined exact Cayley H A P4
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install numerical dependency
+        run: |
+          sudo apt-get update
+          sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends python3-numpy
+      - name: Compile combined P4 stack
+        run: |
+          python3 -m py_compile \
+            tools/ou3_p4_nextgen_widened_certificate.py \
+            tools/ou3_p4_nextgen_directional_certificate.py \
+            tools/ou3_p4_nextgen_gain_certificate.py \
+            tools/ou3_p4_thirdgen_combined_certificate.py \
+            tests/validation/test_ou3_p4_thirdgen_combined_certificate.py
+      - name: Test combined P4
+        working-directory: tests/validation
+        run: python3 -m unittest -v test_ou3_p4_thirdgen_combined_certificate
+      - name: Emit combined P4 numbers
+        run: |
+          python3 tools/ou3_p4_thirdgen_combined_certificate.py --output /tmp/p4-thirdgen.json
+          python3 - <<'PY'
+          import json
+          p=json.load(open('/tmp/p4-thirdgen.json'))
+          print('P4_THIRDGEN_COMBINED_WORD_CERTIFICATE:',p['P4_THIRDGEN_COMBINED_WORD_CERTIFICATE'])
+          for mode in ('H','A'):
+              r=p['modes'][mode]
+              print(f"P4_THIRDGEN {mode} W_legacy={r['certified_level_W_legacy']:.17e} W_431={r['certified_level_W_before_combined']:.17e} W_combined={r['certified_level_W']:.17e} factor_vs_431={r['thirdgen_W_widening_factor_vs_431_lower']:.17e} factor_vs_legacy={r['thirdgen_total_W_widening_factor_vs_legacy_lower']:.17e} q={r['thirdgen_selected_design_norm']:.17e} active_cap={r['thirdgen_selected_active_cap']}")
+          PY
