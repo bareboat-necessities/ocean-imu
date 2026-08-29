@@ -19,6 +19,12 @@ Prediction retains the complete tangent H map and its exact finite-angle group
 defect.  Tuner staging changes future source parameters but is not silently
 turned into a state contraction.
 
+The deployed vibration guard also precedes prediction.  On the only branch
+covered by the present certificate, zero engagement is source-certified to be
+bit-exact transparent, so its transport is the identity.  Active or
+transitioning guard behavior is intentionally left outside this calculus as a
+separate source/hybrid obligation.
+
 The first-due S correction is also composed exactly.  Its coarse source-staged
 bound does not stay in the convenient |c|<1 diagnostic set, but the Cayley chart
 has no singularity there.  ``ou3_p5_first_s_exact_prefix`` therefore widens to a
@@ -66,6 +72,16 @@ def _operation_calculus() -> list[dict]:
             "state_map": "identity_on_error_state",
             "covariance_map": "source_parameter_commit_only",
             "nonlinear_budget": "none_at_commit; parameters remain jointly source correlated",
+        },
+        {
+            "operation": "vibration_guard_conditioning",
+            "state_map": "identity_on_error_state",
+            "measurement_map": "acc_in=acc",
+            "covariance_map": "identity",
+            "certified_branch": "dormant_zero_engagement_bit_exact_transparent_only",
+            "active_or_transitioning_guard_covered": False,
+            "active_or_transitioning_guard_requires_separate_source_certificate": True,
+            "nonlinear_budget": "none on certified dormant branch",
         },
         {
             "operation": "prediction",
@@ -141,6 +157,13 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     source_ops = list(word["shipping_operation_order"])
     if calc_ops != source_ops:
         failures.append("exact transport calculus does not match shipping source operation order")
+    guard = next((row for row in calculus if row["operation"] == "vibration_guard_conditioning"), None)
+    if guard is None or guard.get("state_map") != "identity_on_error_state" or guard.get("measurement_map") != "acc_in=acc":
+        failures.append("dormant vibration guard is not exact identity in P5 transport calculus")
+    if guard is not None and guard.get("active_or_transitioning_guard_covered") is not False:
+        failures.append("P5 transport calculus incorrectly covers active vibration guard")
+    if guard is not None and guard.get("active_or_transitioning_guard_requires_separate_source_certificate") is not True:
+        failures.append("P5 transport calculus does not fail closed on active vibration guard")
 
     horizon = float(word["source_word_horizon_s"])
     bg_bound = float(p1["go_live"]["physical_coordinate_bounds"]["gyro_bias_error_norm_upper_rad_s"])
@@ -159,6 +182,8 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "source_generated_not_trajectory_fit": True,
         "source_replay_used": False,
         "filter_changed": False,
+        "vibration_guard_scope": "dormant_zero_engagement_bit_exact_transparent_only",
+        "active_vibration_guard_covered": False,
         "source_word_horizon_s": horizon,
         "source_operation_order": source_ops,
         "operation_transport_calculus": calculus,
@@ -230,6 +255,10 @@ def validate(d: dict) -> list[str]:
         failures.append("complete-word transport uses replay")
     if d.get("filter_changed") is not False:
         failures.append("complete-word transport changes filter")
+    if d.get("vibration_guard_scope") != "dormant_zero_engagement_bit_exact_transparent_only":
+        failures.append("complete-word transport vibration-guard scope changed")
+    if d.get("active_vibration_guard_covered") is not False:
+        failures.append("complete-word transport incorrectly covers active vibration guard")
     if d.get("all_source_operation_classes_bound_to_transport_calculus") is not True:
         failures.append("complete-word transport calculus misses a source operation")
     if d.get("reset_condition_number_multiplier_used") is not False:
