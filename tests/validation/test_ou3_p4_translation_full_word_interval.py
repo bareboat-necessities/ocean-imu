@@ -24,6 +24,9 @@ class P4TranslationFullWordIntervalTests(unittest.TestCase):
    self.assertTrue(m['corrections_allowed_every_sample_for_lower_bound'])
    self.assertGreater(m['S_measurement_information_beta_conditioned'],0.0)
    self.assertGreater(m['accelerometer_aw_information_beta_conditioned'],0.0)
+ def test_exact_lower_is_retained_through_word(self):
+  for mode in ('H','A'):
+   self.assertTrue(self.d['modes'][mode]['exact_rational_lower_retained_through_word'])
  def test_source_only(self):
   self.assertTrue(self.d['source_only']); self.assertFalse(self.d['trajectory_replay_used']); self.assertTrue(self.d['outward_rounded'])
 
