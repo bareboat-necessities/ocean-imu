@@ -45,8 +45,14 @@ class LeverArmArticleContractTests(unittest.TestCase):
         self.assertIn(r"\input{w3d-imu-lever-arm-study.tex-part}", text)
 
     def test_section_states_the_model_the_stages_and_the_oracle_boundary(self):
-        text = (DOC / "w3d-imu-lever-arm-study.tex-part").read_text(
-            encoding="utf-8"
+        # Prose is wrapped at 78 columns, so a phrase the section certainly
+        # contains may not be contiguous in the file.  Match against a
+        # whitespace-normalized copy so the contract is about what the section
+        # says and not about where the lines happen to break.
+        text = " ".join(
+            (DOC / "w3d-imu-lever-arm-study.tex-part")
+            .read_text(encoding="utf-8")
+            .split()
         )
         for token in (
             r"\dot{\omega}\times r",
@@ -60,7 +66,9 @@ class LeverArmArticleContractTests(unittest.TestCase):
             "sec:imu-lever-arm-selfcal",
             "M(\\omega,\\dot{\\omega})",
             "annihilates any $r$ parallel to the instantaneous rotation axis",
-            "not an accuracy claim",
+            "it is not an accuracy claim, and it must not be read as one",
+            # The result that decides how the feature should be used.
+            "makes displacement \\emph{worse} than leaving the lever arm alone",
             # The two stages are the whole point of running this in the
             # simulator instead of pre-processing records.
             "before sensor corruption",
@@ -219,8 +227,14 @@ class LeverArmCommittedEvidenceTests(unittest.TestCase):
                 self.assertTrue(math.isfinite(float(row["lever_estimate_err_m"])))
                 self.assertTrue(math.isfinite(float(row["lever_sigma_max_m"])))
 
-        text = FRAGMENT.read_text(encoding="utf-8")
-        for token in ("recovers", "standard deviation"):
+        text = " ".join(FRAGMENT.read_text(encoding="utf-8").split())
+        for token in (
+            "of the installed arm in the",
+            "reporting a standard deviation of at most",
+            # The caveat has to travel with the number, in the generated text
+            # rather than only in the hand-written prose around it.
+            "worse than none on that channel",
+        ):
             with self.subTest(token=token):
                 self.assertIn(token, text)
 

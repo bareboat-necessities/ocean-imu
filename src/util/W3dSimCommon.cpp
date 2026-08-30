@@ -749,6 +749,26 @@ Vector3f W3dLeverArm::install(const Vector3f& acc_cg_body_zu,
     return acc_cg_body_zu + last_installed_;
 }
 
+// Band-limit the measured rate, difference it, and evaluate the rigid-body
+// term at r.  Shared by the two arms that have to rebuild the kinematics from
+// the rate the filter actually receives; the low-pass state is deliberately
+// shared too, because both arms are the same reconstruction and only one of
+// them runs in any given record.
+Vector3f W3dLeverArm::reconstructed_lever_term_(const Vector3f& gyr_meas_body_zu,
+                                               const Vector3f& r_body_zu)
+{
+    if (!lp_primed_) {
+        lp_stage1_ = gyr_meas_body_zu;
+        lp_stage2_ = gyr_meas_body_zu;
+        lp_primed_ = true;
+    } else {
+        lp_stage1_ += lp_gain_ * (gyr_meas_body_zu - lp_stage1_);
+        lp_stage2_ += lp_gain_ * (lp_stage1_ - lp_stage2_);
+    }
+    const Vector3f alpha = model_derivative_.update(lp_stage2_);
+    return w3d_lever_acceleration(lp_stage2_, alpha, r_body_zu);
+}
+
 Vector3f W3dLeverArm::compensate(const Vector3f& acc_meas_body_zu,
                                  const Vector3f& gyr_meas_body_zu)
 {
@@ -762,34 +782,16 @@ Vector3f W3dLeverArm::compensate(const Vector3f& acc_meas_body_zu,
         // The deployable model sees only the corrupted rate.  Band-limit it
         // to the rigid-body band before differencing, then evaluate the same
         // rigid-body expression on what is left.
-        if (!lp_primed_) {
-            lp_stage1_ = gyr_meas_body_zu;
-            lp_stage2_ = gyr_meas_body_zu;
-            lp_primed_ = true;
-        } else {
-            lp_stage1_ += lp_gain_ * (gyr_meas_body_zu - lp_stage1_);
-            lp_stage2_ += lp_gain_ * (lp_stage1_ - lp_stage2_);
-        }
-        const Vector3f alpha = model_derivative_.update(lp_stage2_);
-        modelled = w3d_lever_acceleration(lp_stage2_, alpha, offset_);
+        modelled = reconstructed_lever_term_(gyr_meas_body_zu, offset_);
     } else if (cfg_.model == W3dLeverArmConfig::Model::Estimated) {
         // Nothing is removed here: the estimator holds r as filter states and
         // cancels the term inside its own measurement model.  What is scored
-        // is the term its current estimate accounts for, reconstructed through
-        // exactly the band-limited path the deployable model uses -- so the
-        // residual of the two arms differs only in where r came from, not in
-        // how the kinematics were rebuilt.
-        if (!lp_primed_) {
-            lp_stage1_ = gyr_meas_body_zu;
-            lp_stage2_ = gyr_meas_body_zu;
-            lp_primed_ = true;
-        } else {
-            lp_stage1_ += lp_gain_ * (gyr_meas_body_zu - lp_stage1_);
-            lp_stage2_ += lp_gain_ * (lp_stage1_ - lp_stage2_);
-        }
-        const Vector3f alpha = model_derivative_.update(lp_stage2_);
+        // is the term its current estimate accounts for, through exactly the
+        // reconstruction the deployable model uses above -- so the residual of
+        // the two arms differs only in where r came from, and not in how the
+        // kinematics were rebuilt.
         const Vector3f accounted =
-            w3d_lever_acceleration(lp_stage2_, alpha, estimated_offset_);
+            reconstructed_lever_term_(gyr_meas_body_zu, estimated_offset_);
         residual_sumsq_ += double((last_installed_ - accounted).squaredNorm());
         return acc_meas_body_zu;
     }

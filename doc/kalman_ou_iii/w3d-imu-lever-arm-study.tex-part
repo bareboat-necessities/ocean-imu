@@ -74,7 +74,10 @@ the estimator is told nothing about the installation and has to find it.
     the exact-model curve is what an ideal lever-arm model recovers, and the
     gyro-model curve is what the deployable reconstruction recovers from the
     corrupted rate alone.  A curve on the unit line is indistinguishable from
-    a CG-mounted IMU.}
+    a CG-mounted IMU.  The self-calibrated curve is the one arm that rises
+    above the unmodeled one here: on this channel a lever arm estimated to the
+    wrong size costs more than not modelling it at all, which is the trade
+    Sec.~\ref{sec:imu-lever-arm-selfcal} is about.}
     \label{fig:imu-lever-arm-penalty}
   \end{figure*}
 }{}
@@ -91,7 +94,11 @@ the estimator is told nothing about the installation and has to find it.
     Fig.~\ref{fig:imu-lever-arm-penalty}.  The fore--aft arm briefly reduces
     pooled tilt at short offsets, which is the injected term happening to
     oppose the residual the estimator already carries there; it is not a
-    benefit an installation can rely on, and it reverses by \SI{30}{cm}.}
+    benefit an installation can rely on, and it reverses by \SI{30}{cm}.  This
+    is the channel the self-calibrated arm does help: a lever arm estimated
+    even to the wrong size removes most of the attitude penalty, which is why
+    Sec.~\ref{sec:imu-lever-arm-selfcal} reads this figure and
+    Fig.~\ref{fig:imu-lever-arm-penalty} together rather than either alone.}
     \label{fig:imu-lever-arm-tilt}
   \end{figure*}
 }{}
@@ -109,7 +116,10 @@ the estimator is told nothing about the installation and has to find it.
     all of it by definition, the exact model cancels it identically, and the
     gyro model leaves only the fifth its finite derivative band cannot follow
     --- in every canonical direction alike, since the reconstruction does not
-    depend on which direction $r$ points.}
+    depend on which direction $r$ points.  The self-calibrated arm leaves
+    considerably more, and unlike the other two it leaves a different amount
+    per direction, because what it is short of is not derivative band but the
+    rotational excitation that would identify $r$ in that direction.}
     \label{fig:imu-lever-arm-mechanism}
   \end{figure*}
 }{}
@@ -125,7 +135,9 @@ the estimator is told nothing about the installation and has to find it.
     relative to the wave signal, while the tilt penalty is worst in the
     steepest seas.  Pooling over all eight seas, as
     Table~\ref{tab:imu-lever-arm} does, is dominated by the largest and
-    therefore understates both.  Both models remove the penalty in every sea.}
+    therefore understates both.  The two models that are given $r$ remove the
+    penalty in every sea; the self-calibrated arm does not, and the sea-by-sea
+    view is where that shows.}
     \label{fig:imu-lever-arm-sea-state}
   \end{figure*}
 }{}
@@ -209,21 +221,39 @@ separate because the lever term is rigidly tied to a rate the filter also
 measures, while $a_w$'s prior says it is unpredictable.  Restrict the same
 scenario to a single rotation axis and the component along that axis is not
 recovered at all, while the covariance correctly keeps essentially its whole
-prior width there.  On the wave records the excitation is the binding
-constraint rather than the algebra, and it scales with sea state: the arm is
-substantially recovered in the steepest seas and barely at all in the mildest,
-in the same direction the injected term itself grows.
+prior width there.
 
-Fig.~\ref{fig:imu-lever-arm-calibration} reports this on the calibration
-rather than on the score, and its right-hand panel is the part that matters for
-anyone tempted to use the number.  The estimate's error is set by model error
---- residual tilt, the accelerometer bias competing for the non-zero mean of the
+On the wave records the excitation is the binding constraint rather than the
+algebra, and it scales with sea state exactly as
+\eqref{eq:imu-lever-arm-linear} predicts.  Sea by sea, at \SI{30}{cm} and in
+every canonical direction, the recovered fraction of the arm is monotone in
+$H_s$: at \SI{0.27}{m} the estimator recovers essentially none of it, and at
+\SI{8.5}{m} it recovers between roughly half and nine tenths of it depending on
+direction.  The vertical arm is the best case throughout, because roll and
+pitch are the rotations a seaway supplies most of, and they are the ones that
+move a vertically offset sensor.
+
+The consequence for the score is not a uniform improvement, and this is the
+result that decides how the feature should be used.  A partial calibration
+removes almost the whole attitude penalty --- the worst pooled tilt ratio at
+\SI{30}{cm} falls from about \num{1.99} unmodeled to about \num{1.02} --- but
+it makes displacement \emph{worse} than leaving the lever arm alone, the worst
+3-D ratio rising from about \num{1.02} to about \num{1.11}.  A correction of
+the wrong size, applied in a way that is correlated with the rotation, is worse
+for a doubly integrated quantity than no correction at all.  The exact and
+gyro-derived models do not have this failure mode because they are not guessing
+at the size.
+
+Fig.~\ref{fig:imu-lever-arm-calibration} reports the calibration itself rather
+than the score, and its right-hand panel is the part that matters for anyone
+tempted to use the number.  The estimate's error is set by model error ---
+residual tilt, the accelerometer bias competing for the non-zero mean of the
 centripetal term, and an $\dot{\omega}$ reconstructed by differentiating a
 noisy rate --- and none of that is in the innovation covariance.  The filter
-therefore reports millimetres of uncertainty on an estimate that is centimetres
-or decimetres out.  The covariance is a correct statement about how well
-conditioned the regression is; it is not an accuracy claim, and it must not be
-read as one.
+therefore reports a couple of millimetres of uncertainty on an estimate that is
+tens of centimetres out, two orders of magnitude apart.  The covariance is a
+correct statement about how well conditioned the regression is; it is not an
+accuracy claim, and it must not be read as one.
 
 \IfFileExists{ou3_lever_arm_calibration.svg}{%
   \begin{figure*}[t]
@@ -233,26 +263,32 @@ read as one.
     the displacement it produces.  Left: the fraction of the installed lever
     arm the estimator recovers, against installation offset, per canonical
     direction.  Right: that error sea by sea at \SI{30}{cm}, drawn against the
-    widest principal standard deviation the filter reports for it.  The gap
-    between the two bars is the finding: the estimate is limited by what the
-    measurement model omits, not by measurement noise, so the covariance
+    widest principal standard deviation the filter reports for it, for the
+    direction the estimator does \emph{best} in --- the gap is wider still in
+    the other two.  That gap is the finding: the estimate is limited by what
+    the measurement model omits, not by measurement noise, so the covariance
     describes the conditioning of the regression and not the accuracy of its
     answer.}
     \label{fig:imu-lever-arm-calibration}
   \end{figure*}
 }{}
 
-The engineering conclusion is narrower than ``the filter calibrates itself''.
-Self-calibration is worth enabling as a \emph{check on a survey} rather than a
-replacement for one.  Seeded with a measured $r$ and a prior of a few
-centimetres, it does both halves of what a calibration has to do: a survey
-entered \SI{10}{cm} wrong is pulled to within \SI{1}{cm} of truth over ten
-minutes of the same three-axis rotation, and a survey entered correctly drifts
-by \SI{2}{mm} over the same run rather than wandering off it.  The motion that
-makes it move is the same lively multi-axis motion in which an unmodeled lever
-arm costs the most.
-Seeded with nothing, it converges to a partial answer whose remaining error is
-not visible in its own covariance.  Where the lever arm can be measured, the
-gyro-model arm of Table~\ref{tab:imu-lever-arm} remains the better instrument:
-it recovers the whole penalty, and it does not have to discover the geometry to
-do it.
+The engineering conclusion is narrower than ``the filter calibrates itself'',
+and it is a conclusion about the prior rather than about the algebra.  Seeded
+with nothing, the estimator converges to a partial answer that helps attitude,
+hurts displacement, and does not report its own remaining error --- three
+reasons not to run it that way at sea.  Seeded with a measured $r$ and a prior
+of a few centimetres, it does both halves of what a calibration has to do: a
+survey entered \SI{10}{cm} wrong is pulled to within \SI{1}{cm} of truth over
+ten minutes of three-axis rotation, and a survey entered correctly drifts by
+\SI{2}{mm} over the same run rather than wandering off it.  That is the useful
+mode --- a \emph{check on a survey}, not a replacement for one --- and the
+motion that makes it work is the same lively multi-axis motion in which an
+unmodeled lever arm costs the most.
+
+Where the lever arm can be measured at all, the gyro-model arm of
+Table~\ref{tab:imu-lever-arm} remains the better instrument.  It recovers the
+whole penalty on both channels, it does so in every sea rather than only the
+lively ones, and it does not have to discover the geometry to do it.  What the
+estimated arm adds is not a way to skip the tape measure; it is a way to find
+out that the tape measure was read wrong.

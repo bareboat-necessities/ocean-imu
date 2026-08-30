@@ -170,22 +170,39 @@ def generate(
         err = value(worst_dir, "lever_estimate_err_m")
         overconfidence = err / sigma if sigma > 0.0 else float("nan")
 
+        unmodeled_3d = max(
+            value(row, "disp_3d_ratio_to_baseline") for row in unmodeled_far
+        )
+        unmodeled_tilt = max(
+            value(row, "tilt_ratio_to_baseline") for row in unmodeled_far
+        )
         lines += [
-            "Estimating the same lever arm instead of supplying it recovers part of",
-            "the penalty and none of the certainty.  Over the same eight seas with the",
+            "Estimating the same lever arm instead of supplying it splits the two",
+            "channels rather than recovering both.  Over the same eight seas with the",
             f"IMU \\SI{{{100.0 * far:.0f}}}{{cm}} off the CG and a prior that says only",
-            "\\SI{0.5}{m} per axis about where the sensor is, the worst 3-D ratio over",
-            f"the three directions is \\num{{{est_3d:.3f}}} and the worst tilt ratio is",
-            f"\\num{{{est_tilt:.3f}}}, leaving",
+            "\\SI{0.5}{m} per axis about where the sensor is, the worst tilt ratio over",
+            f"the three directions falls from \\num{{{unmodeled_tilt:.3f}}} unmodeled to",
+            f"\\num{{{est_tilt:.3f}}} --- nearly the whole attitude penalty, which is the",
+            "larger one --- while the worst 3-D displacement ratio rises from",
+            f"\\num{{{unmodeled_3d:.3f}}} unmodeled to \\num{{{est_3d:.3f}}}, leaving",
             f"\\SI{{{est_residual:.3f}}}{{\\meter\\per\\second\\squared}} of the injected",
-            "term behind.  The calibration behind those numbers is only partly",
-            "converged: the estimator recovers",
+            "term behind.  A half-converged lever arm is worse than none on that",
+            "channel: the correction it applies is the wrong size, and being wrong in a",
+            "way correlated with the rotation is worse for a doubly integrated quantity",
+            "than leaving the term alone.",
+            "",
+            "The calibration behind those numbers is only partly converged, and by how",
+            "much depends on how hard the sea rotates the hull.  Pooled over the eight",
+            "seas the estimator recovers",
             f"\\num{{{100.0 * value(best_dir, 'lever_recovered_fraction'):.0f}}}\\,\\%",
             f"of the installed arm in the {axis_tex(best_dir['axis'])} direction and",
             f"\\num{{{100.0 * value(worst_dir, 'lever_recovered_fraction'):.0f}}}\\,\\%",
-            f"in the {axis_tex(worst_dir['axis'])} one, an error of",
-            f"\\SI{{{err:.3f}}}{{m}} against a reported standard deviation of at most",
-            f"\\SI{{{sigma:.4f}}}{{m}} --- a factor of",
+            f"in the {axis_tex(worst_dir['axis'])} one, and sea by sea the recovery is",
+            "monotone in $H_s$: essentially nothing at",
+            "\\SI{0.27}{m} and most of the arm at \\SI{8.5}{m}.",
+            "None of that is visible in the filter's own uncertainty.  The worst",
+            f"direction is off by \\SI{{{err:.3f}}}{{m}} while reporting a standard",
+            f"deviation of at most \\SI{{{sigma:.4f}}}{{m}}, a factor of",
             f"\\num{{{overconfidence:.0f}}} between what the filter is wrong by and what",
             "it says it is wrong by.  The covariance is measuring the conditioning of",
             "the regression, which is genuinely good after twenty minutes of rolling;",

@@ -676,6 +676,11 @@ private:
     float offset_norm_ = 0.0f;
     float lp_gain_ = 1.0f;
 
+    // Band-limited derivative of the measured rate, evaluated at a lever arm.
+    // Both reconstructing arms go through here so they cannot drift apart.
+    Vector3f reconstructed_lever_term_(const Vector3f& gyr_meas_body_zu,
+                                       const Vector3f& r_body_zu);
+
     W3dRateDerivative truth_derivative_;
     W3dRateDerivative model_derivative_;
     Vector3f lp_stage1_ = Vector3f::Zero();
