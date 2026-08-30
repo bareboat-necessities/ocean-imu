@@ -20,7 +20,7 @@ class P4TranslationFullWordIntervalTests(unittest.TestCase):
  def test_measurement_information_keeps_translation_directions(self):
   for mode in ('H','A'):
    m=self.d['modes'][mode]
-   self.assertEqual(m['measurement_information_geometry'],'rank_one_S_and_aw_each_sample')
+   self.assertEqual(m['measurement_information_geometry'],'rank_one_S_and_aw_each_sample_exact_rational')
    self.assertTrue(m['corrections_allowed_every_sample_for_lower_bound'])
    self.assertGreater(m['S_measurement_information_beta_conditioned'],0.0)
    self.assertGreater(m['accelerometer_aw_information_beta_conditioned'],0.0)
