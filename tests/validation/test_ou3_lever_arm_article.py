@@ -118,6 +118,33 @@ class LeverArmCommittedEvidenceTests(unittest.TestCase):
         expected = mod.generate(load(SUMMARY), load(CUTOFF_SUMMARY))
         self.assertEqual(FRAGMENT.read_text(encoding="utf-8"), expected)
 
+    def test_no_row_opens_with_an_unbraced_bracket(self):
+        """A row after ``\\\\`` that opens with ``[`` is read as its optional
+        vertical-space argument, and LaTeX stops with "Missing number".  This
+        took down the published build once; braces are the fix, and this is
+        the check that keeps them there."""
+        for path in (FRAGMENT, DOC / "w3d-imu-lever-arm-study.tex-part"):
+            lines = path.read_text(encoding="utf-8").splitlines()
+            for previous, current in zip(lines, lines[1:]):
+                if not previous.rstrip().endswith(r"\\"):
+                    continue
+                with self.subTest(path=path.name, line=current):
+                    self.assertFalse(
+                        current.lstrip().startswith("["),
+                        f"{path.name}: row after a line break opens with an "
+                        f"unbraced bracket: {current.strip()!r}",
+                    )
+
+    def test_generator_braces_the_bracketed_unit_row(self):
+        """The same guard on the generator, so a regenerated fragment cannot
+        reintroduce it even before anything is committed."""
+        text = mod.generate(load(SUMMARY), load(CUTOFF_SUMMARY))
+        self.assertIn("{[cm]}", text)
+        lines = text.splitlines()
+        for previous, current in zip(lines, lines[1:]):
+            if previous.rstrip().endswith(r"\\"):
+                self.assertFalse(current.lstrip().startswith("["), current)
+
     def test_exact_model_returns_to_the_cg_baseline(self):
         """The section's central claim, checked against the numbers."""
         rows = load(SUMMARY)

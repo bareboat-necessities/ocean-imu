@@ -28,7 +28,7 @@ is therefore deterministic and recoverable rather than intrinsic OU--III error.
   \begin{tabular}{@{}rrrrr@{}}
     \toprule
     Offset & Max 3-D / CG & Max tilt / CG & Gyro model & Exact model \\
-    [cm] & unmodeled & unmodeled & max 3-D / CG & max 3-D / CG \\
+    {[cm]} & unmodeled & unmodeled & max 3-D / CG & max 3-D / CG \\
     \midrule
     10 & 1.006 (vertical) & 1.080 (athwartships) & 1.001 & 1.000 \\
     20 & 1.014 (vertical) & 1.548 (athwartships) & 1.002 & 1.000 \\
