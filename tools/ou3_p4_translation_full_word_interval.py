@@ -16,13 +16,20 @@ covariance lower and a possible scalar measurement contributes information
     posterior(P,J) >= posterior(L,beta e_q e_q')
                     = L - beta L e_q e_q' L /(1+beta e_q' L e_q).
 
-The right-hand side is evaluated with outward-rounded intervals and converted
-back to a deterministic Loewner lower.  Thus the S=0 pseudo can only remove
-information in the S direction and the translation part of accelerometer
-corrections can only remove information in the a_w direction.  We still apply
-*both* possible corrections at every IMU sample, which is more informative than
-shipping scheduling/rejection and therefore conservative.  This removes the
-previous artificial isotropic shrink without relying on favorable timing.
+For the rank-one correction the inputs are deterministic binary64 certificate
+numbers.  The Woodbury expression is therefore evaluated exactly as rational
+arithmetic first, then converted to binary64 with one rigorous matrix rounding
+allowance.  This avoids the catastrophic interval cancellation that occurs when
+``L - beta*L[:,q]*L[q,:]/den`` is evaluated entry by entry with wide intervals.
+The conversion subtracts an infinity-norm bound for the exact rational-to-float
+rounding residual from the diagonal, which preserves a certified Loewner lower.
+
+Thus the S=0 pseudo can only remove information in the S direction and the
+translation part of accelerometer corrections can only remove information in
+the a_w direction.  We still apply *both* possible corrections at every IMU
+sample, which is more informative than shipping scheduling/rejection and
+therefore conservative.  This removes the previous artificial isotropic shrink
+without relying on favorable timing.
 
 All promoted arithmetic is outward-rounded. Tau is adaptively subdivided when
 interval dependency prevents a positive Loewner lower. This file proves only
@@ -31,6 +38,7 @@ complete P4.
 """
 from __future__ import annotations
 import argparse,json,math,re
+from fractions import Fraction
 from pathlib import Path
 from ou3_interval import Interval,matrix_mul,matrix_transpose,symmetric_positive_definite_ldlt
 from ou3_interval_linear_algebra import matrix_symmetric_hull
@@ -55,6 +63,31 @@ def _center_radius_lower(A):
  if not symmetric_positive_definite_ldlt(_pm(L))[0]:raise RuntimeError(f'Loewner lower extraction lost SPD (conditioned radius={rad:.3e})')
  return L,rad
 
+def _down_fraction(q):
+ f=float(q)
+ if not math.isfinite(f):raise OverflowError('exact rational does not fit binary64')
+ if Fraction.from_float(f)>q:f=math.nextafter(f,-math.inf)
+ return f
+
+def _up_fraction(q):
+ f=float(q)
+ if not math.isfinite(f):raise OverflowError('exact rational does not fit binary64')
+ if Fraction.from_float(f)<q:f=math.nextafter(f,math.inf)
+ return f
+
+def _exact_rational_loewner_lower(Q):
+ """Convert an exact symmetric rational matrix to a deterministic Loewner lower."""
+ n=len(Q);C=[[float(Q[i][j]) for j in range(n)] for i in range(n)];rows=[]
+ for i in range(n):
+  s=Fraction(0)
+  for j in range(n):s+=abs(Q[i][j]-Fraction.from_float(C[i][j]))
+  rows.append(s)
+ rad=_up_fraction(max(rows,default=Fraction(0)))
+ L=[r[:] for r in C]
+ for i in range(n):L[i][i]=down(L[i][i]-rad)
+ if not symmetric_positive_definite_ldlt(_pm(L))[0]:raise RuntimeError(f'exact-rational Loewner lower lost SPD (rounding radius={rad:.3e})')
+ return L,rad
+
 def _F(tau,h):
  x=I(h)/tau
  if x.hi>=1e-2:raise RuntimeError('limiting cell left shipping small-x branch')
@@ -68,20 +101,14 @@ def _predict(L,F,rho):
  return _center_radius_lower(M)
 
 def _rank1_information_update_lower(L,beta,q):
- """Validated lower for (L^-1 + beta e_q e_q')^-1.
-
- ``L`` is already a deterministic SPD Loewner lower.  The rank-one Woodbury
- identity is evaluated with point intervals, so the returned deterministic
- matrix remains an outward-certified lower after center/radius extraction.
- """
+ """Validated lower for (L^-1 + beta e_q e_q')^-1 without interval cancellation."""
  if not (0<=q<4 and beta>=0 and math.isfinite(beta)):raise RuntimeError('invalid rank-one information update')
  if beta==0:return L,0.0
- A=_pm(L); b=I(beta); den=I(1)+b*A[q][q]
- if den.lo<=0:raise RuntimeError('rank-one information denominator lost positivity')
- M=[[None]*4 for _ in range(4)]
- for i in range(4):
-  for j in range(4):M[i][j]=A[i][j]-(b*A[i][q]*A[q][j])/den
- return _center_radius_lower(M)
+ A=[[Fraction.from_float(float(L[i][j])) for j in range(4)] for i in range(4)]
+ b=Fraction.from_float(float(beta)); den=Fraction(1)+b*A[q][q]
+ if den<=0:raise RuntimeError('rank-one information denominator lost positivity')
+ M=[[A[i][j]-b*A[i][q]*A[q][j]/den for j in range(4)] for i in range(4)]
+ return _exact_rational_loewner_lower(M)
 
 def _spd_delta(L,upper,d):
  A=_pm(L);q=I(d)
@@ -108,8 +135,6 @@ def _prop(tau,h,n,rho,betaS,betaA,depth=0):
   for k in range(n):
    if k==0:L=[[rho if i==j else 0.0 for j in range(4)] for i in range(4)]
    else:L,r=_predict(L,F,rho);mr=max(mr,r)
-   # Conservative source envelope: allow both corrections at every IMU sample.
-   # Unlike the retired scalar shrink, preserve their orthogonal translation directions.
    L,r=_rank1_information_update_lower(L,betaS,2);mr=max(mr,r)
    L,r=_rank1_information_update_lower(L,betaA,3);mr=max(mr,r)
   return [(tau,L,mr,depth)]
@@ -128,7 +153,7 @@ def _mode(mode,p,horizon_s):
   if d<=0 or not _spd_delta(L,upper,d):raise RuntimeError(f'nonpositive endpoint margin on tau leaf {t.as_list()}')
   cert.append({'tau_s':t.as_list(),'delta_lower':d,'max_conditioned_radius_removed':rad,'split_depth':dep})
  w=min(cert,key=lambda q:q['delta_lower']);old=float(row['direct_translation_generalized_margin_lower'])
- return {'source_cell':s,'conditioned_coordinates':'D^-1[v,p,S,a_w]','tau_interval_s':tau.as_list(),'tau_leaf_count':len(cert),'max_tau_split_depth_used':max(q['split_depth'] for q in cert),'steps':n,'horizon_s':horizon_s,'process_injection_lower_conditioned':rho,'S_measurement_information_beta_conditioned':betaS,'accelerometer_aw_information_beta_conditioned':betaA,'measurement_information_geometry':'rank_one_S_and_aw_each_sample','corrections_allowed_every_sample_for_lower_bound':True,'artificial_S_variance_conditioned':rS,'artificial_acc_aw_variance_conditioned':rA,'translation_covariance_upper_conditioned':upper,'tau_leaf_certificates':cert,'complete_word_translation_margin_lower':w['delta_lower'],'limiting_tau_leaf':w,'old_single_seed_translation_margin_lower':old,'margin_widening_factor_lower':down(w['delta_lower']/old),'interval_ldlt_endpoint_recertified':True}
+ return {'source_cell':s,'conditioned_coordinates':'D^-1[v,p,S,a_w]','tau_interval_s':tau.as_list(),'tau_leaf_count':len(cert),'max_tau_split_depth_used':max(q['split_depth'] for q in cert),'steps':n,'horizon_s':horizon_s,'process_injection_lower_conditioned':rho,'S_measurement_information_beta_conditioned':betaS,'accelerometer_aw_information_beta_conditioned':betaA,'measurement_information_geometry':'rank_one_S_and_aw_each_sample_exact_rational','corrections_allowed_every_sample_for_lower_bound':True,'artificial_S_variance_conditioned':rS,'artificial_acc_aw_variance_conditioned':rA,'translation_covariance_upper_conditioned':upper,'tau_leaf_certificates':cert,'complete_word_translation_margin_lower':w['delta_lower'],'limiting_tau_leaf':w,'old_single_seed_translation_margin_lower':old,'margin_widening_factor_lower':down(w['delta_lower']/old),'interval_ldlt_endpoint_recertified':True}
 def build(domain_path=DEFAULT_DOMAIN,horizon_s=DEFAULT_HORIZON_S):
  horizon_s=float(horizon_s)
  if not math.isfinite(horizon_s) or horizon_s<=0:raise ValueError('horizon_s must be finite positive')
@@ -145,7 +170,7 @@ def validate(d):
   m=d.get('modes',{}).get(mode,{})
   if not float(m.get('complete_word_translation_margin_lower',0))>0:f.append(f'{mode}: no complete-word translation margin')
   if m.get('interval_ldlt_endpoint_recertified') is not True:f.append(f'{mode}: endpoint not recertified')
-  if m.get('measurement_information_geometry')!='rank_one_S_and_aw_each_sample':f.append(f'{mode}: directional measurement geometry missing')
+  if m.get('measurement_information_geometry')!='rank_one_S_and_aw_each_sample_exact_rational':f.append(f'{mode}: directional measurement geometry missing')
   if m.get('corrections_allowed_every_sample_for_lower_bound') is not True:f.append(f'{mode}: lower no longer covers maximum correction frequency')
   if not float(m.get('margin_widening_factor_lower',0))>1:f.append(f'{mode}: complete word did not widen seed')
  if d.get('P4_USABLE_CERTIFICATE_STATUS')!='NOT_ESTABLISHED':f.append('partial result prematurely promoted P4')
