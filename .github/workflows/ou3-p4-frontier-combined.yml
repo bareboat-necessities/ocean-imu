@@ -9,6 +9,7 @@ on:
       - 'tools/ou3_p4_translation_full_word_design.py'
       - 'tools/ou3_p4_translation_full_word_interval.py'
       - 'tools/ou3_p4_source_path_reachability.py'
+      - 'tools/ou3_p4_post_translation_bottleneck.py'
       - 'tools/ou3_p4_usable_status.py'
       - 'tools/ou3_p4_direct_word_contraction_certificate.py'
       - 'tools/ou3_p4_exact_correction_structure_certificate.py'
@@ -26,6 +27,7 @@ on:
       - 'tests/validation/test_ou3_p4_translation_full_word_design.py'
       - 'tests/validation/test_ou3_p4_translation_full_word_interval.py'
       - 'tests/validation/test_ou3_p4_source_path_reachability.py'
+      - 'tests/validation/test_ou3_p4_post_translation_bottleneck.py'
       - 'tests/validation/test_ou3_p4_usable_status.py'
       - '.github/workflows/ou3-p4-frontier-combined.yml'
   workflow_dispatch:
@@ -79,9 +81,11 @@ jobs:
             tools/ou3_p4_translation_full_word_design.py \
             tools/ou3_p4_translation_full_word_interval.py \
             tools/ou3_p4_source_path_reachability.py \
+            tools/ou3_p4_post_translation_bottleneck.py \
             tools/ou3_p4_usable_status.py \
             tests/validation/test_ou3_p4_translation_full_word_design.py \
             tests/validation/test_ou3_p4_translation_full_word_interval.py \
+            tests/validation/test_ou3_p4_post_translation_bottleneck.py \
             tests/validation/test_ou3_p4_usable_status.py
       - name: Test usable-status fail-closed gate
         working-directory: tests/validation
@@ -96,6 +100,25 @@ jobs:
           for mode in ('H','A'):
               r=p['modes'][mode]
               print(f"P4_FULL_WORD_VALIDATED {mode} delta={r['complete_word_translation_margin_lower']:.17e} old={r['old_single_seed_translation_margin_lower']:.17e} factor={r['margin_widening_factor_lower']:.17e}")
+          PY
+      - name: Diagnose next full-state bottleneck
+        run: |
+          python3 tools/ou3_p4_post_translation_bottleneck.py \
+            --translation /tmp/p4-translation-full-word-interval.json \
+            --output /tmp/p4-post-translation-bottleneck.json
+          python3 - <<'PY'
+          import json
+          p=json.load(open('/tmp/p4-post-translation-bottleneck.json'))
+          for mode in ('H','A'):
+              r=p['modes'][mode]
+              print(
+                  f"P4_POST_TRANSLATION {mode} "
+                  f"translation={r['validated_complete_word_translation_margin_lower']:.17e} "
+                  f"nontranslation={r['existing_direct_nontranslation_margin_lower']:.17e} "
+                  f"diagnostic={r['diagnostic_blockwise_margin_lower']:.17e} "
+                  f"factor_vs_old={r['diagnostic_widening_vs_old_full_margin_lower']:.17e} "
+                  f"limiting={r['post_translation_limiting_block']}"
+              )
           PY
       - name: Probe longer complete-word translation horizons
         run: |
