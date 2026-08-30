@@ -3,7 +3,7 @@
 
 The old P4 radius is destroyed by a translation margin obtained from one
 covariance seed. Here we accumulate a certified covariance component through a
-whole one-second word instead of discarding every later process contribution.
+whole configurable word instead of discarding every later process contribution.
 
 Use the P3-conditioned coordinates
  D=diag(sigma_min*h, sigma_min*h^2, sigma_min*h^3, sigma_min).
@@ -37,7 +37,7 @@ import ou3_validated_transcendentals as VT
 import ou3_p4_worst_translation_cell as WORST
 
 REPO=Path(__file__).resolve().parents[1]; DEFAULT_DOMAIN=REPO/'tools'/'ou3_proof_operating_domain.json'; WRAPPER=REPO/'src'/'kalman_ou_iii'/'SeaStateFusionFilter_OU_III.h'
-HORIZON_S=1.0; MAX_TAU_SPLIT_DEPTH=14
+DEFAULT_HORIZON_S=1.0; MAX_TAU_SPLIT_DEPTH=14
 
 def down(x):return math.nextafter(float(x),-math.inf)
 def up(x):return math.nextafter(float(x),math.inf)
@@ -113,26 +113,29 @@ def _prop(tau,h,n,rho,beta,depth=0):
   mid=math.sqrt(tau.lo*tau.hi);a=Interval.outward_bounds(tau.lo,mid);b=Interval.outward_bounds(mid,tau.hi)
   return _prop(a,h,n,rho,beta,depth+1)+_prop(b,h,n,rho,beta,depth+1)
 
-def _mode(mode,p):
+def _mode(mode,p,horizon_s):
  c=WORST.build_cell(mode,p);s=WORST.serializable(c);row=c['row'];h=float(c['sched']['dt_s']);x=c['x'];tau=Interval.outward_bounds(h/x.hi,h/x.lo);sigma=float(c['sigma'].lo);rho=float(c['rho_translation_lower'])
  scale2=[(sigma*h)**2,(sigma*h*h)**2,(sigma*h*h*h)**2,sigma*sigma];u=list(map(float,row['Sigma_diagonal_upper']));physical=[u[6],u[9],u[12],u[15]];upper=[(I(physical[i])/I(scale2[i])).hi for i in range(4)]
  text=WRAPPER.read_text();rh=min(_member(text,'R_S_x_factor_'),_member(text,'R_S_y_factor_'),1.0);rs=(I(rh)*I(float(c['rs'].lo))).lo;rsvar=I(rs).square().lo;acc=float(c['vector']['configured_measurement_bounds']['acc_measurement_std_mps2']);accvar=I(acc).square().lo
- rS=(I(rsvar)/I(scale2[2])).lo;rA=(I(accvar)/I(scale2[3])).lo;invS=(I(1)/I(rS)).hi;invA=(I(1)/I(rA)).hi;beta=up(max(invS,invA));n=int(math.ceil(HORIZON_S/h));leaves=_prop(tau,h,n,rho,beta);cert=[]
+ rS=(I(rsvar)/I(scale2[2])).lo;rA=(I(accvar)/I(scale2[3])).lo;invS=(I(1)/I(rS)).hi;invA=(I(1)/I(rA)).hi;beta=up(max(invS,invA));n=int(math.ceil(horizon_s/h));leaves=_prop(tau,h,n,rho,beta);cert=[]
  for t,L,rad,dep in leaves:
   d=_delta(L,upper)
   if d<=0 or not _spd_delta(L,upper,d):raise RuntimeError(f'nonpositive endpoint margin on tau leaf {t.as_list()}')
   cert.append({'tau_s':t.as_list(),'delta_lower':d,'max_conditioned_radius_removed':rad,'split_depth':dep})
  w=min(cert,key=lambda q:q['delta_lower']);old=float(row['direct_translation_generalized_margin_lower'])
- return {'source_cell':s,'conditioned_coordinates':'D^-1[v,p,S,a_w]','tau_interval_s':tau.as_list(),'tau_leaf_count':len(cert),'max_tau_split_depth_used':max(q['split_depth'] for q in cert),'steps':n,'process_injection_lower_conditioned':rho,'maximum_measurement_information_beta_conditioned':beta,'artificial_S_variance_conditioned':rS,'artificial_acc_aw_variance_conditioned':rA,'translation_covariance_upper_conditioned':upper,'tau_leaf_certificates':cert,'complete_word_translation_margin_lower':w['delta_lower'],'limiting_tau_leaf':w,'old_single_seed_translation_margin_lower':old,'margin_widening_factor_lower':down(w['delta_lower']/old),'interval_ldlt_endpoint_recertified':True}
-def build(domain_path=DEFAULT_DOMAIN):
+ return {'source_cell':s,'conditioned_coordinates':'D^-1[v,p,S,a_w]','tau_interval_s':tau.as_list(),'tau_leaf_count':len(cert),'max_tau_split_depth_used':max(q['split_depth'] for q in cert),'steps':n,'horizon_s':horizon_s,'process_injection_lower_conditioned':rho,'maximum_measurement_information_beta_conditioned':beta,'artificial_S_variance_conditioned':rS,'artificial_acc_aw_variance_conditioned':rA,'translation_covariance_upper_conditioned':upper,'tau_leaf_certificates':cert,'complete_word_translation_margin_lower':w['delta_lower'],'limiting_tau_leaf':w,'old_single_seed_translation_margin_lower':old,'margin_widening_factor_lower':down(w['delta_lower']/old),'interval_ldlt_endpoint_recertified':True}
+def build(domain_path=DEFAULT_DOMAIN,horizon_s=DEFAULT_HORIZON_S):
+ horizon_s=float(horizon_s)
+ if not math.isfinite(horizon_s) or horizon_s<=0:raise ValueError('horizon_s must be finite positive')
  p=Path(domain_path).resolve();m={};f=[]
  for mode in ('H','A'):
-  try:m[mode]=_mode(mode,p)
+  try:m[mode]=_mode(mode,p,horizon_s)
   except Exception as e:f.append(f'{mode}: {e}')
- return {'qualification':'OU3_P4_VALIDATED_WORST_CELL_COMPLETE_WORD_TRANSLATION_DISSIPATION','source_only':True,'trajectory_replay_used':False,'outward_rounded':True,'horizon_s':HORIZON_S,'modes':m,'P4_COMPLETE_TRANSLATION_WORST_CELL_STATUS':'PASS' if not f and len(m)==2 else 'NOT_ESTABLISHED','P4_USABLE_CERTIFICATE_STATUS':'NOT_ESTABLISHED','remaining_obligation':'extend complete-word propagation to every reachable source cell/edge and attitude-bias blocks, then validate exact nonlinear return map','failures':f}
+ return {'qualification':'OU3_P4_VALIDATED_WORST_CELL_COMPLETE_WORD_TRANSLATION_DISSIPATION','source_only':True,'trajectory_replay_used':False,'outward_rounded':True,'horizon_s':horizon_s,'modes':m,'P4_COMPLETE_TRANSLATION_WORST_CELL_STATUS':'PASS' if not f and len(m)==2 else 'NOT_ESTABLISHED','P4_USABLE_CERTIFICATE_STATUS':'NOT_ESTABLISHED','remaining_obligation':'extend complete-word propagation to every reachable source cell/edge and attitude-bias blocks, then validate exact nonlinear return map','failures':f}
 def validate(d):
  f=list(d.get('failures',[]))
  if d.get('source_only') is not True or d.get('trajectory_replay_used') is not False or d.get('outward_rounded') is not True:f.append('qualification flags invalid')
+ if not float(d.get('horizon_s',0))>0:f.append('invalid horizon')
  for mode in ('H','A'):
   m=d.get('modes',{}).get(mode,{})
   if not float(m.get('complete_word_translation_margin_lower',0))>0:f.append(f'{mode}: no complete-word translation margin')
@@ -141,5 +144,5 @@ def validate(d):
  if d.get('P4_USABLE_CERTIFICATE_STATUS')!='NOT_ESTABLISHED':f.append('partial result prematurely promoted P4')
  return f
 def main():
- ap=argparse.ArgumentParser();ap.add_argument('--domain',type=Path,default=DEFAULT_DOMAIN);ap.add_argument('--output',type=Path,required=True);a=ap.parse_args();d=build(a.domain);f=validate(d);d['validation_failures']=f;a.output.write_text(json.dumps(d,indent=2,sort_keys=True));print(json.dumps({'translation_status':d['P4_COMPLETE_TRANSLATION_WORST_CELL_STATUS'],'modes':{x:{'delta':d.get('modes',{}).get(x,{}).get('complete_word_translation_margin_lower'),'factor':d.get('modes',{}).get(x,{}).get('margin_widening_factor_lower'),'tau_leaves':d.get('modes',{}).get(x,{}).get('tau_leaf_count')} for x in ('H','A')},'failures':f},indent=2));return 0 if not f else 2
+ ap=argparse.ArgumentParser();ap.add_argument('--domain',type=Path,default=DEFAULT_DOMAIN);ap.add_argument('--horizon-s',type=float,default=DEFAULT_HORIZON_S);ap.add_argument('--output',type=Path,required=True);a=ap.parse_args();d=build(a.domain,a.horizon_s);f=validate(d);d['validation_failures']=f;a.output.write_text(json.dumps(d,indent=2,sort_keys=True));print(json.dumps({'translation_status':d['P4_COMPLETE_TRANSLATION_WORST_CELL_STATUS'],'horizon_s':d['horizon_s'],'modes':{x:{'delta':d.get('modes',{}).get(x,{}).get('complete_word_translation_margin_lower'),'factor':d.get('modes',{}).get(x,{}).get('margin_widening_factor_lower'),'tau_leaves':d.get('modes',{}).get(x,{}).get('tau_leaf_count')} for x in ('H','A')},'failures':f},indent=2));return 0 if not f else 2
 if __name__=='__main__':raise SystemExit(main())
