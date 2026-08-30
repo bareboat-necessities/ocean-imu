@@ -22,6 +22,7 @@ FIGURES = (
     "ou3_lever_arm_sea_state.svg",
     "ou3_lever_arm_mechanism.svg",
     "ou3_lever_arm_cutoff.svg",
+    "ou3_lever_arm_calibration.svg",
 )
 
 spec = importlib.util.spec_from_file_location("ou3_lever_arm_tex", GENERATOR)
@@ -55,6 +56,11 @@ class LeverArmArticleContractTests(unittest.TestCase):
             "exact-model",
             "gyro-model",
             "oracle bound",
+            # The self-calibrating arm, and the two things that bound it.
+            "sec:imu-lever-arm-selfcal",
+            "M(\\omega,\\dot{\\omega})",
+            "annihilates any $r$ parallel to the instantaneous rotation axis",
+            "not an accuracy claim",
             # The two stages are the whole point of running this in the
             # simulator instead of pre-processing records.
             "before sensor corruption",
@@ -80,6 +86,7 @@ class LeverArmArticleContractTests(unittest.TestCase):
             "fig:imu-lever-arm-mechanism",
             "fig:imu-lever-arm-sea-state",
             "fig:imu-lever-arm-cutoff",
+            "fig:imu-lever-arm-calibration",
         ):
             with self.subTest(label=label):
                 self.assertIn(rf"\label{{{label}}}", text)
@@ -102,6 +109,7 @@ class LeverArmArticleContractTests(unittest.TestCase):
             "write_sea_state_plot",
             "write_mechanism_plot",
             "write_cutoff_plot",
+            "write_calibration_plot",
             *FIGURES,
             'rcParams["svg.hashsalt"]',
             'metadata={"Date": None}',
@@ -193,6 +201,48 @@ class LeverArmCommittedEvidenceTests(unittest.TestCase):
             with self.subTest(axis=axis, distance=distance):
                 self.assertGreater(float(row["excess_removed_fraction"]), 0.5)
         self.assertGreater(checked, 0)
+
+    def test_the_self_calibrating_arm_is_reported_on_its_calibration(self):
+        """The arm is only publishable with the caveat attached to it.
+
+        A self-calibrating lever arm that quotes a score without quoting how
+        far the calibration actually got, and how far the covariance is from
+        saying so, reads as a solved problem.  It is not one, and the section
+        has to keep saying which.
+        """
+        rows = [row for row in load(SUMMARY) if row["mode"] == "estimated"]
+        self.assertTrue(rows, "the study must run the estimated arm")
+        for row in rows:
+            with self.subTest(axis=row["axis"], distance=row["distance_m"]):
+                # Every estimated case carries a calibration error and the
+                # uncertainty the filter reported alongside it.
+                self.assertTrue(math.isfinite(float(row["lever_estimate_err_m"])))
+                self.assertTrue(math.isfinite(float(row["lever_sigma_max_m"])))
+
+        text = FRAGMENT.read_text(encoding="utf-8")
+        for token in ("recovers", "standard deviation"):
+            with self.subTest(token=token):
+                self.assertIn(token, text)
+
+    def test_the_reported_uncertainty_understates_the_calibration_error(self):
+        """The finding the section leads with, checked against the numbers.
+
+        If a re-run ever made the covariance an honest accuracy statement, the
+        section's warning would be wrong and would have to be rewritten -- so
+        this fails rather than passing quietly.
+        """
+        rows = [
+            row
+            for row in load(SUMMARY)
+            if row["mode"] == "estimated"
+            and math.isclose(float(row["distance_m"]), 0.30, abs_tol=1e-9)
+        ]
+        self.assertTrue(rows)
+        worst = max(rows, key=lambda row: float(row["lever_estimate_err_m"]))
+        self.assertGreater(
+            float(worst["lever_estimate_err_m"]),
+            5.0 * float(worst["lever_sigma_max_m"]),
+        )
 
     def test_the_two_channels_peak_on_opposite_sea_states(self):
         """The section says so in prose; the runs have to say it too."""

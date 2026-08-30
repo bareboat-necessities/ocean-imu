@@ -2602,9 +2602,12 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias, with_lever_arm>::m
                 if constexpr (with_accel_bias) {
                     // J_ba = I, and the bias cross-term is marginalized in
                     // exactly as it is above whether or not BA is updating.
+                    // The pairing is J_ba cov(b_a, r) J_r' plus its transpose.
+                    // Transposing the wrong factor here still leaves S
+                    // symmetric, so nothing downstream would have caught it.
                     const Matrix3 P_ba_r = Pext.template block<3,3>(OFF_BA, OFF_R);
-                    S_mat.noalias() += P_ba_r.transpose() * J_r.transpose();
-                    S_mat.noalias() += J_r * P_ba_r;
+                    S_mat.noalias() += P_ba_r * J_r.transpose();
+                    S_mat.noalias() += J_r * P_ba_r.transpose();
                 }
                 if constexpr (with_gyro_bias) {
                     if (use_imu_lever_arm_) {

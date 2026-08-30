@@ -65,13 +65,19 @@ def generate(
         unmodeled = at(rows, "unmodeled", distance)
         gyro = at(rows, "gyro", distance)
         exact = at(rows, "exact", distance)
+        estimated = at(rows, "estimated", distance)
         worst_3d = max(unmodeled, key=lambda row: value(row, "disp_3d_ratio_to_baseline"))
         worst_tilt = max(unmodeled, key=lambda row: value(row, "tilt_ratio_to_baseline"))
         gyro_max = max(value(row, "disp_3d_ratio_to_baseline") for row in gyro)
         exact_max = max(value(row, "disp_3d_ratio_to_baseline") for row in exact)
+        estimated_max = (
+            max(value(row, "disp_3d_ratio_to_baseline") for row in estimated)
+            if estimated
+            else float("nan")
+        )
         table_rows.append(
             "    {cm:.0f} & {d3:.3f} ({daxis}) & {tilt:.3f} ({taxis}) & "
-            "{gyro:.3f} & {exact:.3f} \\\\".format(
+            "{gyro:.3f} & {exact:.3f} & {est} \\\\".format(
                 cm=100.0 * distance,
                 d3=value(worst_3d, "disp_3d_ratio_to_baseline"),
                 daxis=axis_tex(worst_3d["axis"]),
@@ -79,6 +85,7 @@ def generate(
                 taxis=axis_tex(worst_tilt["axis"]),
                 gyro=gyro_max,
                 exact=exact_max,
+                est="---" if math.isnan(estimated_max) else f"{estimated_max:.3f}",
             )
         )
 
@@ -121,17 +128,19 @@ def generate(
         "",
         "\\begin{table}[t]",
         "  \\centering",
-        "  \\caption{Worst pooled degradation over the three canonical IMU lever-arm directions.  Ratios are relative to the CG-mounted OU--III baseline; the parenthesized direction is the maximizing unmodeled case.  The last two columns are the worst ratio over the same three directions once the lever arm is modelled inside the filter.}",
+        "  \\caption{Worst pooled degradation over the three canonical IMU lever-arm directions.  Ratios are relative to the CG-mounted OU--III baseline; the parenthesized direction is the maximizing unmodeled case.  The last three columns are the worst ratio over the same three directions once the lever arm is handled inside the filter: given exactly, reconstructed from the measured rate, or estimated as filter states from no survey at all.}",
         "  \\label{tab:imu-lever-arm}",
         "  \\footnotesize",
         "  \\setlength{\\tabcolsep}{3.0pt}",
-        "  \\begin{tabular}{@{}rrrrr@{}}",
+        "  \\begin{tabular}{@{}rrrrrr@{}}",
         "    \\toprule",
-        "    Offset & Max 3-D / CG & Max tilt / CG & Gyro model & Exact model \\\\",
+        "    Offset & Max 3-D / CG & Max tilt / CG & Gyro model & Exact model & "
+        "Estimated \\\\",
         # The brace is load-bearing.  A row opening with an unbraced
         # bracket is swallowed by the preceding \\ as its optional
         # vertical-space argument, and LaTeX dies on "Missing number".
-        "    {[cm]} & unmodeled & unmodeled & max 3-D / CG & max 3-D / CG \\\\",
+        "    {[cm]} & unmodeled & unmodeled & max 3-D / CG & max 3-D / CG & "
+        "max 3-D / CG \\\\",
         "    \\midrule",
         *table_rows,
         "    \\bottomrule",
@@ -139,6 +148,51 @@ def generate(
         "\\end{table}",
         "",
     ]
+
+    estimated_far = at(rows, "estimated", far)
+    if estimated_far:
+        # The self-calibrating arm is reported on two different questions, and
+        # they do not have the same answer: what it does to the score, and
+        # whether it actually found the lever arm.  Quoting only the first
+        # would let a partially-converged calibration pass for a converged one.
+        est_3d = max(
+            value(row, "disp_3d_ratio_to_baseline") for row in estimated_far
+        )
+        est_tilt = max(value(row, "tilt_ratio_to_baseline") for row in estimated_far)
+        est_residual = max(value(row, "residual_rms_mps2") for row in estimated_far)
+        best_dir = max(
+            estimated_far, key=lambda row: value(row, "lever_recovered_fraction")
+        )
+        worst_dir = min(
+            estimated_far, key=lambda row: value(row, "lever_recovered_fraction")
+        )
+        sigma = max(value(row, "lever_sigma_max_m") for row in estimated_far)
+        err = value(worst_dir, "lever_estimate_err_m")
+        overconfidence = err / sigma if sigma > 0.0 else float("nan")
+
+        lines += [
+            "Estimating the same lever arm instead of supplying it recovers part of",
+            "the penalty and none of the certainty.  Over the same eight seas with the",
+            f"IMU \\SI{{{100.0 * far:.0f}}}{{cm}} off the CG and a prior that says only",
+            "\\SI{0.5}{m} per axis about where the sensor is, the worst 3-D ratio over",
+            f"the three directions is \\num{{{est_3d:.3f}}} and the worst tilt ratio is",
+            f"\\num{{{est_tilt:.3f}}}, leaving",
+            f"\\SI{{{est_residual:.3f}}}{{\\meter\\per\\second\\squared}} of the injected",
+            "term behind.  The calibration behind those numbers is only partly",
+            "converged: the estimator recovers",
+            f"\\num{{{100.0 * value(best_dir, 'lever_recovered_fraction'):.0f}}}\\,\\%",
+            f"of the installed arm in the {axis_tex(best_dir['axis'])} direction and",
+            f"\\num{{{100.0 * value(worst_dir, 'lever_recovered_fraction'):.0f}}}\\,\\%",
+            f"in the {axis_tex(worst_dir['axis'])} one, an error of",
+            f"\\SI{{{err:.3f}}}{{m}} against a reported standard deviation of at most",
+            f"\\SI{{{sigma:.4f}}}{{m}} --- a factor of",
+            f"\\num{{{overconfidence:.0f}}} between what the filter is wrong by and what",
+            "it says it is wrong by.  The covariance is measuring the conditioning of",
+            "the regression, which is genuinely good after twenty minutes of rolling;",
+            "the error is set by everything the regression does not model, and those",
+            "are different quantities.",
+            "",
+        ]
 
     if sweep:
         best = min(sweep, key=lambda row: value(row, "disp_3d_ratio_to_baseline"))

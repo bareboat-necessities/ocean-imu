@@ -12,6 +12,7 @@ on:
       - "tools/ou3_lever_arm_tex.py"
       - "tests/validation/test_ou3_lever_arm_study.py"
       - "tests/validation/test_ou3_lever_arm_article.py"
+      - "src/kalman_ou_common/**"
       - "docs/ou-iii-imu-lever-arm.md"
       - "doc/kalman_ou_iii/w3d-imu-lever-arm-study.tex-part"
       - "doc/kalman_ou_iii/w3d-post-results-investigations.tex-part"
@@ -64,6 +65,15 @@ jobs:
         run: |
           make -C tests/kalman_ou_iii imu_lever_arm-test
           ./tests/kalman_ou_iii/imu_lever_arm-test
+
+      # The other side of the same study: the arm that is not given r, but
+      # estimates it.  Covers the observability limit as well as the recovery,
+      # so a change that quietly breaks either fails here rather than in a
+      # forty-minute study run.
+      - name: Unit-test the lever-arm estimator states
+        run: |
+          make -C tests/kalman_ou_iii lever_arm_estimation-test
+          ./tests/kalman_ou_iii/lever_arm_estimation-test
 
       - name: Unit-test lever-arm study and paper contract
         run: python3 tests/validation/test_ou3_lever_arm_study.py

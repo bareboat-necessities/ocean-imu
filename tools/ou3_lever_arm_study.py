@@ -92,13 +92,18 @@ MODES: dict[str, str] = {
     "unmodeled": "none",
     "gyro": "gyro",
     "exact": "exact",
+    "estimated": "estimated",
 }
 MODE_LABELS = {
     "baseline": "IMU at CG",
     "unmodeled": "off-CG, unmodeled",
     "gyro": "off-CG, gyro-derived model",
     "exact": "off-CG, exact model",
+    "estimated": "off-CG, self-calibrated",
 }
+# The arms that actually run a lever-arm model, in reporting order.  Kept in
+# one place because four of them appear in three figures and two tables.
+MODELLED_MODES = ("gyro", "exact", "estimated")
 
 # The derivative band the deployable model runs ahead of its difference.  The
 # sweep is the study's answer to "why 15 Hz": below it the low-pass phase lag
@@ -107,6 +112,14 @@ SWEEP_CUTOFFS_HZ = (1.0, 2.0, 5.0, 10.0, 15.0, 25.0, 50.0, 100.0)
 SWEEP_AXIS = "y-fore-aft"
 SWEEP_DISTANCE_M = 0.30
 DEFAULT_CUTOFF_HZ = 15.0
+
+# The self-calibrating arm is scored on two more things than the others: how
+# far its estimate ended from the installation it was never told, and how wide
+# it still says it is.  Both are per-record and pooled as an RMS like the rest.
+CALIBRATION_FIELDS = (
+    "lever_estimate_err_m",
+    "lever_sigma_max_m",
+)
 
 RMS_FIELDS = (
     "disp_x_rms_m",
@@ -132,6 +145,7 @@ ROW_FIELDS = (
     "disp_z_pct_hs",
     "tau_applied_s",
     "sigma_applied_mps2",
+    *CALIBRATION_FIELDS,
 )
 
 # Reproducing this study on another machine is not a byte-for-byte exercise.
@@ -149,6 +163,7 @@ FIGURES = (
     "ou3_lever_arm_sea_state.svg",
     "ou3_lever_arm_mechanism.svg",
     "ou3_lever_arm_cutoff.svg",
+    "ou3_lever_arm_calibration.svg",
 )
 
 
@@ -247,6 +262,9 @@ def invoke(
         "W3D_IMU_LEVER_ARM_M",
         "W3D_IMU_LEVER_ARM_MODEL",
         "W3D_IMU_LEVER_ARM_CUTOFF_HZ",
+        "W3D_IMU_LEVER_ARM_PRIOR_STD_M",
+        "W3D_IMU_LEVER_ARM_ALPHA_TAU_S",
+        "W3D_IMU_LEVER_ARM_TRACE_SEC",
     ):
         env.pop(name, None)
     env.update(
@@ -275,20 +293,43 @@ def invoke(
 
 
 def parse_lever_arm_result(stdout: str) -> dict[str, float]:
-    """Reads the simulator's IMU_LEVER_ARM_RESULT diagnostic line.
+    """Reads the simulator's lever-arm diagnostic lines.
 
-    Returns the installed and residual specific-force RMS, i.e. what the
-    installation added and what the filter's model failed to remove.  A
-    baseline run emits no such line and reports zeros.
+    IMU_LEVER_ARM_RESULT carries the installed and residual specific-force RMS,
+    i.e. what the installation added and what the filter's model failed to
+    remove.  A baseline run emits no such line and reports zeros.
+
+    The self-calibrating arm also emits IMU_LEVER_ARM_ESTIMATE, which is the
+    only place the calibration itself is scored: how far the estimate ended
+    from the installed truth, and the widest of its three principal standard
+    deviations.  The gap between those two is the point -- an estimator whose
+    error is decimetres while it reports millimetres is not merely inaccurate,
+    it is misreporting, and only carrying both numbers shows it.
     """
-    out = {"installed_rms_mps2": 0.0, "residual_rms_mps2": 0.0}
+    out = {
+        "installed_rms_mps2": 0.0,
+        "residual_rms_mps2": 0.0,
+        "lever_estimate_err_m": float("nan"),
+        "lever_sigma_max_m": float("nan"),
+    }
+    aliases = {
+        "estimate_err_m": "lever_estimate_err_m",
+        "sigma_max_m": "lever_sigma_max_m",
+    }
     for line in stdout.splitlines():
-        if not line.startswith("IMU_LEVER_ARM_RESULT "):
+        if not (
+            line.startswith("IMU_LEVER_ARM_RESULT ")
+            or line.startswith("IMU_LEVER_ARM_ESTIMATE ")
+        ):
             continue
         for token in line.split()[1:]:
             key, _, value = token.partition("=")
+            key = aliases.get(key, key)
             if key in out:
-                out[key] = float(value)
+                try:
+                    out[key] = float(value)
+                except ValueError:
+                    pass
     return out
 
 
@@ -378,6 +419,16 @@ def summarize(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
         item["tilt_ratio_to_baseline"] = tilt / basetilt
         item["installed_rms_mps2"] = pooled_rms(rs, "installed_rms_mps2")
         item["residual_rms_mps2"] = pooled_rms(rs, "residual_rms_mps2")
+        for field in CALIBRATION_FIELDS:
+            item[field] = pooled_rms(rs, field)
+        # How much of the installed arm the calibration actually found.  1.0 is
+        # the whole of it; 0.0 is an estimator that never moved off its prior.
+        installed_norm = float(distance)
+        item["lever_recovered_fraction"] = (
+            1.0 - item["lever_estimate_err_m"] / installed_norm
+            if installed_norm > 0.0 and math.isfinite(item["lever_estimate_err_m"])
+            else float("nan")
+        )
         # Fraction of the unmodeled excess this arm removes.  1.0 is a full
         # return to the CG baseline; 0.0 is no model at all.
         item["excess_removed_fraction"] = float("nan")
@@ -388,7 +439,7 @@ def summarize(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
         (s["axis"], s["distance_m"]): s for s in out if s["mode"] == "unmodeled"
     }
     for item in out:
-        if item["mode"] not in ("gyro", "exact"):
+        if item["mode"] not in MODELLED_MODES:
             continue
         reference = unmodeled.get((item["axis"], item["distance_m"]))
         if reference is None:
@@ -464,6 +515,7 @@ def markdown_report(
         "| unmodeled | off-CG specific force, no filter-side model |",
         "| gyro | off-CG specific force, compensated from the measured rate |",
         "| exact | off-CG specific force, compensated from truth kinematics |",
+        "| estimated | off-CG specific force, and `r` estimated as filter states |",
         "",
         "The canonical body directions are x = athwartships, y = fore-aft, and z = vertical.",
         f"Scoring uses the trailing **{window_sec:.0f} s** of each 1200 s record.",
@@ -473,6 +525,13 @@ def markdown_report(
         f"reconstructs `alpha` through a two-pole low-pass at {DEFAULT_CUTOFF_HZ:.0f} Hz",
         "followed by a causal second-order difference.",
         "",
+        "Both of those are handed `r`.  The `estimated` arm is not: OU-III carries the",
+        "lever arm as three more states, starting from zero with a half-metre prior,",
+        "and has to find the installation from the motion.  It is scored on the same",
+        "displacement and attitude channels as the others, and additionally on the",
+        "calibration itself -- how far the estimate ended from the installed truth, and",
+        "how wide the filter still says it is.",
+        "",
     ]
     if commit:
         lines += [f"Source commit: `{commit}`.", ""]
@@ -481,8 +540,9 @@ def markdown_report(
         "",
         "| Arm | Axis | Offset [cm] | 3D disp [m] | 3D / CG | Max roll/pitch RMS [deg] "
         "| Tilt / CG | Installed [m/s^2] | Residual [m/s^2] | 3D excess removed "
-        "| Tilt excess removed |",
-        "| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
+        "| Tilt excess removed | Calib err [m] | Calib sigma [m] |",
+        "| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: "
+        "| ---: | ---: |",
     ]
 
     def pct(value: Any) -> str:
@@ -496,7 +556,9 @@ def markdown_report(
             f"{fmt(s['max_tilt_rms_deg'])} | {fmt(s['tilt_ratio_to_baseline'],3)}x | "
             f"{fmt(s['installed_rms_mps2'],4)} | {fmt(s['residual_rms_mps2'],4)} | "
             f"{pct(s['excess_removed_fraction'])} | "
-            f"{pct(s['tilt_excess_removed_fraction'])} |"
+            f"{pct(s['tilt_excess_removed_fraction'])} | "
+            f"{fmt(s.get('lever_estimate_err_m', float('nan')))} | "
+            f"{fmt(s.get('lever_sigma_max_m', float('nan')))} |"
         )
     if sweep:
         lines += [
@@ -550,7 +612,11 @@ MODE_STYLE = {
     "unmodeled": {"color": "#c1272d", "marker": "o", "linestyle": "-"},
     "gyro": {"color": "#0072b2", "marker": "s", "linestyle": "--"},
     "exact": {"color": "#1a7f37", "marker": "^", "linestyle": ":"},
+    "estimated": {"color": "#8250df", "marker": "D", "linestyle": "-."},
 }
+# Bars for the arms that run a model, plus the unmodeled reference they are
+# measured against.
+BAR_MODES = ("unmodeled", *MODELLED_MODES)
 AXIS_LABEL = {
     "x-athwartships": "athwartships",
     "y-fore-aft": "fore-aft",
@@ -618,7 +684,7 @@ def write_ratio_plot(
         handles,
         labels,
         loc="lower center",
-        ncol=3,
+        ncol=4,
         fontsize=8,
         frameon=False,
         bbox_to_anchor=(0.5, -0.02),
@@ -679,7 +745,7 @@ def write_sea_state_plot(
     """Per-sea penalty and its removal, for both channels the effect reaches."""
     plt = reproducible_pyplot()
     fig, panels = plt.subplots(1, 2, figsize=(9.6, 3.8))
-    width = 0.26
+    width = 0.20
     for panel, (field, axis, title) in zip(
         panels,
         (
@@ -697,10 +763,13 @@ def write_sea_state_plot(
     ):
         seas: list[tuple[float, str]] = []
         lowest = 1.0
-        for index, mode in enumerate(("unmodeled", "gyro", "exact")):
+        for index, mode in enumerate(BAR_MODES):
             seas, ratios = _per_sea_ratio(rows, mode, axis, distance, field)
             lowest = min([lowest] + [v for v in ratios if math.isfinite(v)])
-            positions = [i + (index - 1) * width for i in range(len(seas))]
+            positions = [
+                i + (index - 0.5 * (len(BAR_MODES) - 1)) * width
+                for i in range(len(seas))
+            ]
             panel.bar(
                 positions,
                 ratios,
@@ -724,7 +793,7 @@ def write_sea_state_plot(
         handles,
         labels,
         loc="lower center",
-        ncol=3,
+        ncol=4,
         fontsize=8,
         frameon=False,
         bbox_to_anchor=(0.5, -0.02),
@@ -764,8 +833,8 @@ def write_mechanism_plot(path: Path, summaries: list[dict[str, Any]]) -> None:
     # draw, and the fraction is the quantity the comparison is about anyway.
     axis_names = list(AXES)
     positions = range(len(axis_names))
-    width = 0.27
-    for index, mode in enumerate(("unmodeled", "gyro", "exact")):
+    width = 0.20
+    for index, mode in enumerate(BAR_MODES):
         heights = []
         for axis in axis_names:
             match = pick(summaries, mode, axis, DISTANCES_M[-1])
@@ -775,7 +844,9 @@ def write_mechanism_plot(path: Path, summaries: list[dict[str, Any]]) -> None:
             heights.append(
                 float(match["residual_rms_mps2"]) / float(match["installed_rms_mps2"])
             )
-        offsets = [p + (index - 1) * width for p in positions]
+        offsets = [
+            p + (index - 0.5 * (len(BAR_MODES) - 1)) * width for p in positions
+        ]
         right.bar(
             offsets,
             heights,
@@ -805,6 +876,113 @@ def write_mechanism_plot(path: Path, summaries: list[dict[str, Any]]) -> None:
     right.legend(fontsize=8, loc="upper center", ncol=1, framealpha=0.9)
 
     fig.tight_layout()
+    _save(fig, path)
+    plt.close(fig)
+
+
+def write_calibration_plot(
+    path: Path,
+    summaries: list[dict[str, Any]],
+    rows: list[dict[str, Any]],
+    distance: float,
+) -> None:
+    """The self-calibrating arm scored on the calibration, not on the score.
+
+    Two questions, and they have different answers.  Left: how much of the
+    installed arm the estimator actually found, against offset.  Right: that
+    error sea by sea, drawn against the uncertainty the filter reports for it.
+    The gap between the two on the right is the finding -- the estimate is
+    limited by model error, not by measurement noise, so the covariance is a
+    statement about conditioning and not about accuracy.
+    """
+    plt = reproducible_pyplot()
+    fig, (left, right) = plt.subplots(1, 2, figsize=(9.6, 3.8))
+
+    for axis in AXES:
+        xs, ys = [], []
+        for d in DISTANCES_M:
+            match = pick(summaries, "estimated", axis, d)
+            if match is None:
+                continue
+            value = float(match.get("lever_recovered_fraction", float("nan")))
+            if not math.isfinite(value):
+                continue
+            xs.append(100.0 * d)
+            ys.append(100.0 * value)
+        if xs:
+            left.plot(xs, ys, marker="o", markersize=5, label=AXIS_LABEL[axis])
+    left.axhline(100.0, color="#666666", linewidth=0.8)
+    left.axhline(0.0, color="#999999", linewidth=0.8, linestyle=":")
+    left.set_xlabel("Installed IMU offset from CG [cm]")
+    left.set_ylabel("Lever arm recovered [%]")
+    left.set_title("How much of the arm the filter found", fontsize=10)
+    left.grid(True, alpha=0.3)
+    left.legend(fontsize=8)
+
+    # Sea by sea, on the direction the pooled table is worst in, because the
+    # excitation that makes r identifiable is exactly what varies with sea
+    # state and pooling averages it away.
+    axis = max(
+        AXES,
+        key=lambda a: float(
+            (pick(summaries, "estimated", a, distance) or {}).get(
+                "lever_recovered_fraction", float("-inf")
+            )
+        ),
+    )
+    seas = sorted({(float(r["hs_m"]), r["spectrum"]) for r in rows})
+    errs, sigmas = [], []
+    for hs, spectrum in seas:
+        match = next(
+            (
+                r
+                for r in rows
+                if r["mode"] == "estimated"
+                and r["axis"] == axis
+                and abs(float(r["distance_m"]) - distance) < 1e-9
+                and abs(float(r["hs_m"]) - hs) < 1e-9
+                and r["spectrum"] == spectrum
+            ),
+            None,
+        )
+        errs.append(float(match["lever_estimate_err_m"]) if match else float("nan"))
+        sigmas.append(float(match["lever_sigma_max_m"]) if match else float("nan"))
+
+    positions = list(range(len(seas)))
+    width = 0.36
+    right.bar(
+        [p - width / 2 for p in positions],
+        errs,
+        width=width,
+        color=MODE_STYLE["estimated"]["color"],
+        label="actual error",
+    )
+    right.bar(
+        [p + width / 2 for p in positions],
+        sigmas,
+        width=width,
+        color="#b0b0b0",
+        label="reported 1$\\sigma$ (widest axis)",
+    )
+    right.axhline(distance, color="#c1272d", linewidth=1.0, linestyle="--",
+                  label=f"installed |r| = {100*distance:.0f} cm")
+    right.set_xticks(positions)
+    right.set_xticklabels(
+        [f"{SPECTRUM_SHORT[spectrum]}\n$H_s$ {hs:g}" for hs, spectrum in seas],
+        fontsize=7,
+    )
+    right.set_ylabel("Lever-arm error [m]")
+    right.set_yscale("log")
+    right.set_title(
+        f"Error against reported uncertainty, {AXIS_LABEL[axis]} arm at "
+        f"{100*distance:.0f} cm",
+        fontsize=10,
+    )
+    right.grid(True, axis="y", alpha=0.3, which="both")
+    right.legend(fontsize=7)
+
+    fig.suptitle("The self-calibrating arm, scored on its calibration", fontsize=11)
+    fig.tight_layout(rect=(0.0, 0.0, 1.0, 0.94))
     _save(fig, path)
     plt.close(fig)
 
@@ -894,7 +1072,10 @@ def compare_summaries(
     complaints: list[str] = []
     for key in sorted(set(before) | set(after)):
         if key not in before:
-            complaints.append(f"{'/'.join(key)}: new case, not in the committed summary")
+            # An added arm or offset is more evidence, not a disagreement.  A
+            # comparison exists to catch a published number that moved, and a
+            # case the committed summary never had cannot have moved.
+            print(f"  (new case not in the committed summary: {'/'.join(key)})")
             continue
         if key not in after:
             complaints.append(f"{'/'.join(key)}: committed case is missing from the re-run")
@@ -1057,6 +1238,7 @@ def main() -> int:
         sea_state = out / "ou3_lever_arm_sea_state.svg"
         mechanism = out / "ou3_lever_arm_mechanism.svg"
         cutoff_plot = out / "ou3_lever_arm_cutoff.svg"
+        calibration = out / "ou3_lever_arm_calibration.svg"
         write_ratio_plot(
             penalty,
             summaries,
@@ -1085,7 +1267,8 @@ def main() -> int:
             float(sweep_reference_unmodeled["disp_3d_ratio_to_baseline"]),
             float(sweep_reference_exact["disp_3d_ratio_to_baseline"]),
         )
-        generated += [penalty, tilt, sea_state, mechanism, cutoff_plot]
+        write_calibration_plot(calibration, summaries, rows, DISTANCES_M[-1])
+        generated += [penalty, tilt, sea_state, mechanism, cutoff_plot, calibration]
 
         if args.mirror_doc:
             for name in FIGURES:
@@ -1115,6 +1298,11 @@ def main() -> int:
         "gyro_arm": (
             "deployable: two-pole low-pass on the measured rate followed by a "
             "causal second-order difference"
+        ),
+        "estimated_arm": (
+            "self-calibrating: OU-III carries r as three states, seeded at zero "
+            "with a 0.5 m per-axis prior, and is told nothing about the "
+            "installation"
         ),
         "files": {p.name: sha256(p) for p in generated},
     }

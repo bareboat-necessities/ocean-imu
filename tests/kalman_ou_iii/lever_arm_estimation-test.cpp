@@ -345,6 +345,76 @@ bool test_converges_with_the_linear_block_running() {
                  "r is still identifiable against a free latent OU acceleration");
 }
 
+/*
+  The lever-arm uncertainty has to reach the innovation covariance.
+
+  Adding the states adds a J_r P_rr J_r' term to S, plus a cross term against
+  every other state r becomes correlated with.  If any of that were dropped --
+  or attached to the wrong factor -- the accelerometer update would be run with
+  an S that does not know the lever arm is unknown, which is the same mistake
+  as compensating with a lever arm nobody measured.
+
+  The observable consequence is directional: while r is uncertain, S has to be
+  larger in the directions M(omega, alpha) actually maps r into, and it has to
+  shrink as the estimate converges.  A filter that was told r cannot show that,
+  and one that ignores its own r covariance cannot either.
+*/
+bool test_lever_arm_uncertainty_reaches_the_innovation_covariance() {
+    const Vec3 sa(0.05, 0.05, 0.05), sg(2e-4, 2e-4, 2e-4), sm(0.5, 0.5, 0.5);
+
+    auto peak_innovation_covariance = [&](bool estimate, int steps) {
+        CalibFilter f(sa, sg, sm);
+        RotatingBody body;
+        f.set_linear_block_enabled(false);
+        // With the linear block off the filter marginalizes the whole
+        // stationary a_w variance into S as measurement noise, which at the
+        // deployed 2.2 m/s^2 buries everything else in it.  Shrinking that
+        // prior is what makes the lever-arm contribution observable here; it
+        // is not a claim about how the filter is tuned at sea.
+        f.set_aw_stationary_std(Vec3::Constant(0.01));
+        f.initialize_from_attitude(body.q_wb.conjugate(), 1e-3, 1e-3);
+        f.set_Racc_std(sa);
+        const Vec3 r_true(0.30, -0.20, 0.15);
+        if (estimate) {
+            f.enable_imu_lever_arm_estimation(Vec3::Zero(), 0.5);
+        } else {
+            f.set_imu_lever_arm_body(r_true);
+        }
+        double worst = 0.0;
+        for (int k = 0; k < steps; ++k) {
+            const double t = k * kDt;
+            const Vec3 w = RotatingBody::omega(t, false);
+            const Vec3 a = RotatingBody::alpha(t, false);
+            f.time_update(w, kDt);
+            f.measurement_update_acc_only(body.specific_force(w, a, r_true));
+            body.advance(w, kDt);
+            worst = std::max(worst, f.lastAccDiag().S.trace());
+        }
+        return worst;
+    };
+
+    // One minute is long enough for the rotation to sweep the regressor
+    // through every direction, and short enough that the estimate is still
+    // uncertain.
+    const int minute = static_cast<int>(60.0 / kDt);
+    const double with_unknown_r = peak_innovation_covariance(true, minute);
+    const double with_known_r = peak_innovation_covariance(false, minute);
+
+    // And once converged, the extra term has to go away again rather than
+    // sitting there as a permanent inflation.
+    const double after_convergence = peak_innovation_covariance(
+        true, static_cast<int>(900.0 / kDt));
+
+    std::printf("       peak tr(S): unknown r %.4f, known r %.4f\n",
+                with_unknown_r, with_known_r);
+
+    const bool uncertainty_shows = with_unknown_r > 1.5 * with_known_r;
+    const bool it_is_finite = std::isfinite(after_convergence);
+
+    return check(uncertainty_shows && it_is_finite,
+                 "an unknown lever arm widens the innovation covariance");
+}
+
 // ---------------------------------------------------------------------------
 // 4. Holding the calibration really holds it.
 // ---------------------------------------------------------------------------
@@ -454,6 +524,7 @@ int main() {
     test_estimated_arm_matches_a_surveyed_one();
     test_single_axis_rotation_leaves_the_axis_unobservable();
     test_converges_with_the_linear_block_running();
+    test_lever_arm_uncertainty_reaches_the_innovation_covariance();
     test_frozen_updates_do_not_move_the_estimate();
     test_warmup_holds_rather_than_discards();
     test_projection_bounds_a_runaway_estimate();

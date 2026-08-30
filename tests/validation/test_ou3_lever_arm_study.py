@@ -83,6 +83,30 @@ class LeverArmInvocationTests(unittest.TestCase):
         self.assertEqual(got["installed_rms_mps2"], 0.0)
         self.assertEqual(got["residual_rms_mps2"], 0.0)
 
+    def test_the_calibration_is_parsed_from_the_estimate_line(self):
+        """The self-calibrating arm is scored on two numbers no other arm has."""
+        stdout = "\n".join(
+            (
+                "IMU_LEVER_ARM_RESULT norm_m=0.3 model=estimated samples=240000 "
+                "installed_rms_mps2=0.79 residual_rms_mps2=0.26 "
+                "estimate_m=[0.235 -0.055 0.007] estimate_err_m=0.0851",
+                "IMU_LEVER_ARM_ESTIMATE r_zu=[0.235 -0.055 0.007] "
+                "sigma_min_m=0.00084 sigma_max_m=0.00214 sigma_rms_m=0.00142",
+            )
+        )
+        got = mod.parse_lever_arm_result(stdout)
+        self.assertAlmostEqual(got["lever_estimate_err_m"], 0.0851)
+        self.assertAlmostEqual(got["lever_sigma_max_m"], 0.00214)
+
+    def test_an_arm_that_was_handed_r_reports_no_calibration(self):
+        """A model given the answer has no calibration error to report."""
+        got = mod.parse_lever_arm_result(
+            "IMU_LEVER_ARM_RESULT norm_m=0.3 model=gyro samples=1 "
+            "installed_rms_mps2=0.37 residual_rms_mps2=0.05"
+        )
+        self.assertTrue(math.isnan(got["lever_estimate_err_m"]))
+        self.assertTrue(math.isnan(got["lever_sigma_max_m"]))
+
 
 class LeverArmSummaryTests(unittest.TestCase):
     def rows(self) -> list[dict[str, object]]:
@@ -108,7 +132,11 @@ class LeverArmSummaryTests(unittest.TestCase):
                     "unmodeled": 0.30,
                     "gyro": 0.05,
                     "exact": 0.0,
+                    "estimated": 0.12,
                 }[mode],
+                # Only the self-calibrating arm has a calibration to score.
+                "lever_estimate_err_m": 0.06 if mode == "estimated" else float("nan"),
+                "lever_sigma_max_m": 0.002 if mode == "estimated" else float("nan"),
             }
 
         return [
@@ -116,6 +144,7 @@ class LeverArmSummaryTests(unittest.TestCase):
             row("unmodeled", "y-fore-aft", 0.30, 0.200, 0.40),
             row("gyro", "y-fore-aft", 0.30, 0.125, 0.22),
             row("exact", "y-fore-aft", 0.30, 0.100, 0.20),
+            row("estimated", "y-fore-aft", 0.30, 0.140, 0.26),
         ]
 
     def summaries(self) -> dict[str, dict[str, object]]:
@@ -134,6 +163,21 @@ class LeverArmSummaryTests(unittest.TestCase):
         self.assertAlmostEqual(got["gyro"]["excess_removed_fraction"], 0.75)
         self.assertTrue(
             math.isnan(float(got["unmodeled"]["excess_removed_fraction"]))
+        )
+
+    def test_the_self_calibrating_arm_is_scored_like_the_others(self):
+        got = self.summaries()
+        # 0.14 of a 0.10-to-0.20 excess is 60% of it removed.
+        self.assertAlmostEqual(got["estimated"]["excess_removed_fraction"], 0.60)
+
+    def test_the_calibration_is_summarized_as_a_recovered_fraction(self):
+        """A 6 cm error on a 30 cm installed arm is 80% of the arm found."""
+        got = self.summaries()
+        self.assertAlmostEqual(got["estimated"]["lever_estimate_err_m"], 0.06)
+        self.assertAlmostEqual(got["estimated"]["lever_recovered_fraction"], 0.80)
+        # And an arm that was handed r has no such number to report.
+        self.assertTrue(
+            math.isnan(float(got["gyro"]["lever_recovered_fraction"]))
         )
 
     def test_the_injected_term_is_carried_into_the_summary(self):
@@ -189,7 +233,13 @@ class LeverArmReproducibilityTests(unittest.TestCase):
         self.assertIn("1.9860", complaints[0])
         self.assertIn("1.1000", complaints[0])
 
-    def test_a_missing_or_added_case_is_reported(self):
+    def test_a_missing_case_is_reported_and_an_added_one_is_not(self):
+        """Extending the matrix is more evidence; losing a case is a regression.
+
+        A published number cannot have moved in a case the committed summary
+        never had, so adding an arm must not fail the comparison that exists to
+        catch numbers that moved.
+        """
         committed = self.committed()
         self.assertEqual(
             len(
@@ -200,12 +250,10 @@ class LeverArmReproducibilityTests(unittest.TestCase):
             1,
         )
         self.assertEqual(
-            len(
-                mod.compare_summaries(
-                    committed[:1], committed, self.KEYS, self.FIELDS, 0.01
-                )
+            mod.compare_summaries(
+                committed[:1], committed, self.KEYS, self.FIELDS, 0.01
             ),
-            1,
+            [],
         )
 
     def test_matching_is_keyed_on_the_case_not_the_row_order(self):

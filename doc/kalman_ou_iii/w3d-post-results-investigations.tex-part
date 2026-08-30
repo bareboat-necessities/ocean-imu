@@ -3,9 +3,9 @@
 
 The preceding sections define the deployed estimator and present its primary
 comparative evidence.  The material below adds a bidirectional transition
-diagnostic, a model-mismatch ablation, an IMU lever-arm installation study, an
-engine-noise degradation study, and the optional full-state physical-error
-formulation.  These investigations expose residual behavior and identify where
+diagnostic, a model-mismatch ablation, an IMU lever-arm installation study and
+its self-calibrating variant, an engine-noise degradation study, and the
+optional full-state physical-error formulation.  These investigations expose residual behavior and identify where
 the reduced model is limited without revisiting superseded regularizer-law
 comparisons.
 
