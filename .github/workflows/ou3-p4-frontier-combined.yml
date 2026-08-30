@@ -140,6 +140,33 @@ jobs:
             --path /tmp/p4-source-path.json \
             --output /tmp/p4-usable-status.json
 
+  full-word-translation-2s:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install numerical dependency
+        run: |
+          sudo apt-get update
+          sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends python3-numpy
+      - name: Validate two-second complete-word translation on recurrent worst cell
+        run: |
+          python3 tools/ou3_p4_translation_full_word_interval.py \
+            --horizon-s 2.0 \
+            --output /tmp/p4-translation-full-word-2s.json
+          python3 - <<'PY'
+          import json
+          p=json.load(open('/tmp/p4-translation-full-word-2s.json'))
+          print('P4_COMPLETE_TRANSLATION_2S_STATUS:',p['P4_COMPLETE_TRANSLATION_WORST_CELL_STATUS'])
+          for mode in ('H','A'):
+              r=p['modes'][mode]
+              print(
+                  f"P4_FULL_WORD_VALIDATED_2S {mode} "
+                  f"delta={r['complete_word_translation_margin_lower']:.17e} "
+                  f"factor_vs_seed={r['margin_widening_factor_lower']:.17e} "
+                  f"tau_leaves={r['tau_leaf_count']}"
+              )
+          PY
+
   source-path-reachability:
     runs-on: ubuntu-24.04
     steps:
