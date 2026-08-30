@@ -8,6 +8,7 @@ on:
       - 'tools/ou3_p4_full_word_dissipation_route.py'
       - 'tools/ou3_p4_translation_full_word_design.py'
       - 'tools/ou3_p4_translation_full_word_interval.py'
+      - 'tools/ou3_p4_source_path_reachability.py'
       - 'tools/ou3_p4_direct_word_contraction_certificate.py'
       - 'tools/ou3_p4_exact_correction_structure_certificate.py'
       - 'tools/ou3_p4_thirdgen_combined_certificate.py'
@@ -23,6 +24,7 @@ on:
       - 'tests/validation/test_ou3_p4_full_word_dissipation_route.py'
       - 'tests/validation/test_ou3_p4_translation_full_word_design.py'
       - 'tests/validation/test_ou3_p4_translation_full_word_interval.py'
+      - 'tests/validation/test_ou3_p4_source_path_reachability.py'
       - '.github/workflows/ou3-p4-frontier-combined.yml'
   workflow_dispatch:
 
@@ -97,4 +99,29 @@ jobs:
               for horizon,row in p['modes'][mode]['horizons'].items():
                   w=row['worst_grid_point']
                   print(f"P4_FULL_WORD_DESIGN {mode} T={horizon}s delta_design={w['translation_complete_word_generalized_margin_design']:.17e} factor_vs_seed={row['design_worst_to_old_margin_ratio']:.17e}")
+          PY
+
+  source-path-reachability:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+      - name: Compile source-path backend
+        run: |
+          python3 -m py_compile \
+            tools/ou3_p4_source_path_reachability.py \
+            tests/validation/test_ou3_p4_source_path_reachability.py
+      - name: Validate source-dynamic path graph
+        working-directory: tests/validation
+        run: python3 -m unittest -v test_ou3_p4_source_path_reachability
+      - name: Emit old-worst-corner residence result
+        run: |
+          python3 tools/ou3_p4_source_path_reachability.py --output /tmp/p4-source-path.json
+          python3 - <<'PY'
+          import json
+          p=json.load(open('/tmp/p4-source-path.json'))
+          print('P4_SOURCE_PATH_GRAPH:',p['partition'])
+          print('P4_SOURCE_PATH_EDGES:',p['transition_edges'])
+          print('P4_OLD_WORST_CORNER_STATES:',p['old_worst_corner_state_count'])
+          print('P4_OLD_WORST_CORNER_INTERNAL_CYCLE:',p['old_worst_corner_has_internal_recurrent_cycle'])
+          print('P4_OLD_WORST_CORNER_MAX_RESIDENCE_S:',p['old_worst_corner_max_residence_s_upper'])
           PY
