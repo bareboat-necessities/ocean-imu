@@ -31,7 +31,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  frontier:
+  frontier-baseline:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v6
@@ -39,54 +39,43 @@ jobs:
         run: |
           sudo apt-get update
           sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends python3-numpy
-      - name: Compile frontier and full-word backends
+      - name: Compile baseline route
         run: |
           python3 -m py_compile \
             tools/ou3_p4_frontier_combined_certificate.py \
             tools/ou3_p4_frontier_margin_diagnostic.py \
             tools/ou3_p4_full_word_dissipation_route.py \
-            tools/ou3_p4_translation_full_word_design.py \
-            tools/ou3_p4_translation_full_word_interval.py \
             tests/validation/test_ou3_p4_frontier_combined_certificate.py \
             tests/validation/test_ou3_p4_frontier_margin_diagnostic.py \
-            tests/validation/test_ou3_p4_full_word_dissipation_route.py \
-            tests/validation/test_ou3_p4_translation_full_word_design.py \
-            tests/validation/test_ou3_p4_translation_full_word_interval.py
-      - name: Test combined frontier and full-word replacement route
+            tests/validation/test_ou3_p4_full_word_dissipation_route.py
+      - name: Test baseline and route gate
         working-directory: tests/validation
         run: |
           python3 -m unittest -v \
             test_ou3_p4_frontier_combined_certificate \
             test_ou3_p4_frontier_margin_diagnostic \
-            test_ou3_p4_full_word_dissipation_route \
-            test_ou3_p4_translation_full_word_design \
-            test_ou3_p4_translation_full_word_interval
-      - name: Emit combined frontier P4 numbers
+            test_ou3_p4_full_word_dissipation_route
+      - name: Emit old frontier as regression baseline
         run: |
           python3 tools/ou3_p4_frontier_combined_certificate.py --output /tmp/p4-frontier.json
-          python3 - <<'PY'
-          import json
-          p=json.load(open('/tmp/p4-frontier.json'))
-          print('P4_FRONTIER_COMBINED_CERTIFICATE:',p['P4_FRONTIER_COMBINED_CERTIFICATE'])
-          for mode in ('H','A'):
-              r=p['modes'][mode]
-              print(f"P4_FRONTIER {mode} W_after={r['certified_level_W']:.17e} factor={r['frontier_W_widening_factor_lower']:.17e} cap={r['frontier_selected_active_cap']}")
-          PY
-      - name: Emit P3 source-cell margin and usability diagnosis
-        run: python3 tools/ou3_p4_frontier_margin_diagnostic.py --output /tmp/p4-margin-diagnostic.json
-      - name: Verify full-word dissipation replacement route
-        run: python3 tools/ou3_p4_full_word_dissipation_route.py --output /tmp/p4-full-word-route.json
-      - name: Probe complete-word translation dissipation
+          python3 tools/ou3_p4_frontier_margin_diagnostic.py --output /tmp/p4-margin-diagnostic.json
+          python3 tools/ou3_p4_full_word_dissipation_route.py --output /tmp/p4-full-word-route.json
+
+  full-word-translation:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install numerical dependency
         run: |
-          python3 tools/ou3_p4_translation_full_word_design.py --output /tmp/p4-translation-full-word-design.json
-          python3 - <<'PY'
-          import json
-          p=json.load(open('/tmp/p4-translation-full-word-design.json'))
-          for mode in ('H','A'):
-              for horizon,row in p['modes'][mode]['horizons'].items():
-                  w=row['worst_grid_point']
-                  print(f"P4_FULL_WORD_DESIGN {mode} T={horizon}s delta_design={w['translation_complete_word_generalized_margin_design']:.17e} factor_vs_seed={row['design_worst_to_old_margin_ratio']:.17e}")
-          PY
+          sudo apt-get update
+          sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends python3-numpy
+      - name: Compile complete-word translation backends
+        run: |
+          python3 -m py_compile \
+            tools/ou3_p4_translation_full_word_design.py \
+            tools/ou3_p4_translation_full_word_interval.py \
+            tests/validation/test_ou3_p4_translation_full_word_design.py \
+            tests/validation/test_ou3_p4_translation_full_word_interval.py
       - name: Validate complete-word translation lower on old worst cell
         run: |
           python3 tools/ou3_p4_translation_full_word_interval.py --output /tmp/p4-translation-full-word-interval.json
@@ -97,4 +86,15 @@ jobs:
           for mode in ('H','A'):
               r=p['modes'][mode]
               print(f"P4_FULL_WORD_VALIDATED {mode} delta={r['complete_word_translation_margin_lower']:.17e} old={r['old_single_seed_translation_margin_lower']:.17e} factor={r['margin_widening_factor_lower']:.17e}")
+          PY
+      - name: Probe longer complete-word translation horizons
+        run: |
+          python3 tools/ou3_p4_translation_full_word_design.py --output /tmp/p4-translation-full-word-design.json
+          python3 - <<'PY'
+          import json
+          p=json.load(open('/tmp/p4-translation-full-word-design.json'))
+          for mode in ('H','A'):
+              for horizon,row in p['modes'][mode]['horizons'].items():
+                  w=row['worst_grid_point']
+                  print(f"P4_FULL_WORD_DESIGN {mode} T={horizon}s delta_design={w['translation_complete_word_generalized_margin_design']:.17e} factor_vs_seed={row['design_worst_to_old_margin_ratio']:.17e}")
           PY
