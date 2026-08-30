@@ -47,6 +47,12 @@ DEFAULT_DOMAIN = REPO / 'tools' / 'ou3_proof_operating_domain.json'
 WRAPPER = REPO / 'src' / 'kalman_ou_iii' / 'SeaStateFusionFilter_OU_III.h'
 DEFAULT_HORIZON_S = 1.0
 MAX_TAU_SPLIT_DEPTH = 14
+# For x < 1e-2 the width between the 11th (odd) and 12th (even)
+# alternating partial sums is at most x^12/12! < 2.1e-33.  That is already
+# more than four orders below the validated ~1e-29 margin we are trying to
+# resolve.  Using 40 exact Fraction terms made denominators explode across the
+# 200/400-step word and hit the six-hour CI limit without adding useful rigor.
+EXP_TAYLOR_TERMS = 12
 N = 4
 
 
@@ -89,10 +95,11 @@ def _rational_spd(A):
 def _exp_neg_bounds(x):
     """Exact rational bracket for exp(-x), 0 <= x < 1e-2.
 
-    The alternating series has decreasing term magnitudes.  Odd partial sums
-    are lower bounds and even partial sums are upper bounds.  Forty terms leave
-    a remainder far below every scale relevant to this certificate while the
-    bracket itself remains exact rational arithmetic.
+    The alternating series has decreasing term magnitudes. Odd partial sums
+    are lower bounds and even partial sums are upper bounds. Twelve terms are
+    sufficient here: at x=1e-2 the exact bracket width is below 2.1e-33,
+    already far below the certificate scale, while keeping Fraction
+    denominators small enough for complete-word propagation.
     """
     x = _q(x)
     if x < 0 or x >= Fraction(1, 100):
@@ -101,7 +108,7 @@ def _exp_neg_bounds(x):
     s = Fraction(1)
     lower = None
     upper = s
-    for k in range(1, 41):
+    for k in range(1, EXP_TAYLOR_TERMS + 1):
         term *= x / k
         s = s - term if k & 1 else s + term
         if k & 1:
@@ -179,15 +186,9 @@ def _predict(L, F, rho):
     Fc, R = _midrad(F)
     Q = _qm(L)
 
-    # B=Fc*L exactly.  The old implementation converted this operation to
-    # binary64 interval arithmetic solely to form the cross-term bound; that
-    # conversion created the irreducible conditioned radius floor.
     B = [[sum((Fc[i][k] * Q[k][j] for k in range(N)), Fraction(0))
           for j in range(N)] for i in range(N)]
 
-    # For C=Fc*L*E' + E*L*Fc', |C_ij| <= cij.  Therefore
-    # C >= -diag(sum_j cij) by symmetric diagonal dominance.  Everything here
-    # is exact rational, so the penalty now tracks genuine tau-cell width.
     penalty = []
     for i in range(N):
         rowsum = Fraction(0)
@@ -351,6 +352,7 @@ def _mode(mode, domain_path, horizon_s):
         'measurement_information_geometry': 'rank_one_S_and_aw_each_sample_exact_rational',
         'prediction_enclosure': 'exact_rational_transition_interval_rowwise_loewner',
         'exact_rational_transition_enclosure': True,
+        'exp_taylor_terms': EXP_TAYLOR_TERMS,
         'exact_rational_lower_retained_through_word': True,
         'corrections_allowed_every_sample_for_lower_bound': True,
         'artificial_S_variance_conditioned': rS,
@@ -408,6 +410,8 @@ def validate(d):
             f.append(f'{mode}: exact-rational transition enclosure missing')
         if m.get('exact_rational_transition_enclosure') is not True:
             f.append(f'{mode}: transition enclosure fell back to binary64')
+        if int(m.get('exp_taylor_terms', 0)) != EXP_TAYLOR_TERMS:
+            f.append(f'{mode}: compact exact exponential bracket missing')
         if m.get('exact_rational_lower_retained_through_word') is not True:
             f.append(f'{mode}: exact rational lower was not retained through word')
         if m.get('corrections_allowed_every_sample_for_lower_bound') is not True:
