@@ -17,6 +17,13 @@ class P4TranslationFullWordIntervalTests(unittest.TestCase):
    self.assertTrue(m['interval_ldlt_endpoint_recertified'])
    self.assertGreater(m['complete_word_translation_margin_lower'],m['old_single_seed_translation_margin_lower'])
    self.assertGreater(m['margin_widening_factor_lower'],1.0)
+ def test_measurement_information_keeps_translation_directions(self):
+  for mode in ('H','A'):
+   m=self.d['modes'][mode]
+   self.assertEqual(m['measurement_information_geometry'],'rank_one_S_and_aw_each_sample')
+   self.assertTrue(m['corrections_allowed_every_sample_for_lower_bound'])
+   self.assertGreater(m['S_measurement_information_beta_conditioned'],0.0)
+   self.assertGreater(m['accelerometer_aw_information_beta_conditioned'],0.0)
  def test_source_only(self):
   self.assertTrue(self.d['source_only']); self.assertFalse(self.d['trajectory_replay_used']); self.assertTrue(self.d['outward_rounded'])
 
