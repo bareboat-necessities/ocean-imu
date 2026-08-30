@@ -415,6 +415,58 @@ bool test_lever_arm_uncertainty_reaches_the_innovation_covariance() {
                  "an unknown lever arm widens the innovation covariance");
 }
 
+/*
+  The deployment case: refining a survey rather than replacing one.
+
+  Starting from nothing is the stress test, not the recommendation.  What an
+  installation actually has is a tape measure and a guess at where the centre
+  of gravity is -- a lever arm known to a few centimetres.  Seeded that way the
+  estimator has to do two things and neither is optional: move a value that was
+  entered wrong, and leave one that was entered right where it is.  An
+  estimator that only did the first would be a drift, not a calibration.
+*/
+bool test_a_surveyed_prior_is_refined_and_a_correct_one_is_left_alone() {
+    const Vec3 r_true(0.30, -0.20, 0.15);
+    const double survey_sigma = 0.05;   // "measured, to a few centimetres"
+
+    auto settle = [&](const Vec3& seed) {
+        const Vec3 sa(0.02, 0.02, 0.02), sg(2e-4, 2e-4, 2e-4), sm(0.5, 0.5, 0.5);
+        CalibFilter f(sa, sg, sm);
+        RotatingBody body;
+        f.set_linear_block_enabled(false);
+        f.initialize_from_attitude(body.q_wb.conjugate(), 1e-3, 1e-3);
+        f.set_Racc_std(Vec3::Constant(0.05));
+        f.enable_imu_lever_arm_estimation(seed, survey_sigma);
+        const int steps = static_cast<int>(600.0 / kDt);
+        for (int k = 0; k < steps; ++k) {
+            const double t = k * kDt;
+            const Vec3 w = RotatingBody::omega(t, false);
+            const Vec3 a = RotatingBody::alpha(t, false);
+            f.time_update(w, kDt);
+            f.measurement_update_acc_only(body.specific_force(w, a, r_true));
+            body.advance(w, kDt);
+        }
+        return f.get_imu_lever_arm_body();
+    };
+
+    // A survey that is 10 cm out on one axis -- a plausible mistake, and well
+    // outside the prior it was entered with.
+    const Vec3 wrong_seed = r_true + Vec3(0.10, 0.0, 0.0);
+    const Vec3 refined = settle(wrong_seed);
+    const double before = (wrong_seed - r_true).norm();
+    const double after = (refined - r_true).norm();
+
+    // And a survey that was right.
+    const Vec3 held = settle(r_true);
+    const double drift = (held - r_true).norm();
+
+    std::printf("       wrong survey %.3f m -> %.3f m; correct survey drifted %.4f m\n",
+                before, after, drift);
+
+    return check(after < 0.25 * before && drift < 0.01,
+                 "a surveyed lever arm is corrected when wrong and held when right");
+}
+
 // ---------------------------------------------------------------------------
 // 4. Holding the calibration really holds it.
 // ---------------------------------------------------------------------------
@@ -525,6 +577,7 @@ int main() {
     test_single_axis_rotation_leaves_the_axis_unobservable();
     test_converges_with_the_linear_block_running();
     test_lever_arm_uncertainty_reaches_the_innovation_covariance();
+    test_a_surveyed_prior_is_refined_and_a_correct_one_is_left_alone();
     test_frozen_updates_do_not_move_the_estimate();
     test_warmup_holds_rather_than_discards();
     test_projection_bounds_a_runaway_estimate();

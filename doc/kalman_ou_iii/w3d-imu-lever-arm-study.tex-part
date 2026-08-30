@@ -244,10 +244,13 @@ read as one.
 
 The engineering conclusion is narrower than ``the filter calibrates itself''.
 Self-calibration is worth enabling as a \emph{check on a survey} rather than a
-replacement for one: seeded with a measured $r$ and a prior of a few
-centimetres, it will move a lever arm that was entered wrong and it will hold
-one that was entered right, and the motion that makes it move is the same
-lively multi-axis motion in which an unmodeled lever arm costs the most.
+replacement for one.  Seeded with a measured $r$ and a prior of a few
+centimetres, it does both halves of what a calibration has to do: a survey
+entered \SI{10}{cm} wrong is pulled to within \SI{1}{cm} of truth over ten
+minutes of the same three-axis rotation, and a survey entered correctly drifts
+by \SI{2}{mm} over the same run rather than wandering off it.  The motion that
+makes it move is the same lively multi-axis motion in which an unmodeled lever
+arm costs the most.
 Seeded with nothing, it converges to a partial answer whose remaining error is
 not visible in its own covariance.  Where the lever arm can be measured, the
 gyro-model arm of Table~\ref{tab:imu-lever-arm} remains the better instrument:
