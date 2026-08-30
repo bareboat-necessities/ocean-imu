@@ -9,6 +9,7 @@ on:
       - 'tools/ou3_p4_translation_full_word_design.py'
       - 'tools/ou3_p4_translation_full_word_interval.py'
       - 'tools/ou3_p4_source_path_reachability.py'
+      - 'tools/ou3_p4_usable_status.py'
       - 'tools/ou3_p4_direct_word_contraction_certificate.py'
       - 'tools/ou3_p4_exact_correction_structure_certificate.py'
       - 'tools/ou3_p4_thirdgen_combined_certificate.py'
@@ -25,6 +26,7 @@ on:
       - 'tests/validation/test_ou3_p4_translation_full_word_design.py'
       - 'tests/validation/test_ou3_p4_translation_full_word_interval.py'
       - 'tests/validation/test_ou3_p4_source_path_reachability.py'
+      - 'tests/validation/test_ou3_p4_usable_status.py'
       - '.github/workflows/ou3-p4-frontier-combined.yml'
   workflow_dispatch:
 
@@ -71,13 +73,19 @@ jobs:
         run: |
           sudo apt-get update
           sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends python3-numpy
-      - name: Compile complete-word translation backends
+      - name: Compile complete-word translation backends and status gate
         run: |
           python3 -m py_compile \
             tools/ou3_p4_translation_full_word_design.py \
             tools/ou3_p4_translation_full_word_interval.py \
+            tools/ou3_p4_source_path_reachability.py \
+            tools/ou3_p4_usable_status.py \
             tests/validation/test_ou3_p4_translation_full_word_design.py \
-            tests/validation/test_ou3_p4_translation_full_word_interval.py
+            tests/validation/test_ou3_p4_translation_full_word_interval.py \
+            tests/validation/test_ou3_p4_usable_status.py
+      - name: Test usable-status fail-closed gate
+        working-directory: tests/validation
+        run: python3 -m unittest -v test_ou3_p4_usable_status
       - name: Validate complete-word translation lower on old worst cell
         run: |
           python3 tools/ou3_p4_translation_full_word_interval.py --output /tmp/p4-translation-full-word-interval.json
@@ -100,6 +108,14 @@ jobs:
                   w=row['worst_grid_point']
                   print(f"P4_FULL_WORD_DESIGN {mode} T={horizon}s delta_design={w['translation_complete_word_generalized_margin_design']:.17e} factor_vs_seed={row['design_worst_to_old_margin_ratio']:.17e}")
           PY
+      - name: Emit fail-closed usable-certificate status
+        run: |
+          python3 tools/ou3_p4_source_path_reachability.py --output /tmp/p4-source-path.json
+          python3 tools/ou3_p4_usable_status.py \
+            --translation /tmp/p4-translation-full-word-interval.json \
+            --design /tmp/p4-translation-full-word-design.json \
+            --path /tmp/p4-source-path.json \
+            --output /tmp/p4-usable-status.json
 
   source-path-reachability:
     runs-on: ubuntu-24.04
