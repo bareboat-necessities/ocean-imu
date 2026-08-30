@@ -24,6 +24,7 @@ class P4SourcePathReachabilityTests(unittest.TestCase):
 
     def test_old_worst_corner_is_explicit(self):
         self.assertGreater(self.d['old_worst_corner_state_count'],0)
-        self.assertGreaterEqual(self.d['old_worst_corner_recurrent_state_count'],0)
+        self.assertGreaterEqual(self.d['old_worst_corner_states_in_any_recurrent_SCC'],0)
+        self.assertIn(self.d['old_worst_corner_has_internal_recurrent_cycle'],(True,False))
 
 if __name__=='__main__': unittest.main()
