@@ -1,37 +1,34 @@
 #!/usr/bin/env python3
 """Validated complete-word translation dissipation on the limiting P3 cell.
 
-The old P4 scalar route kept only one covariance seed and discarded later
-positive process/Joseph contributions.  This backend instead accumulates a
-complete translation word in the P3-conditioned coordinates
+This backend accumulates the complete translation word in the conditioned
+coordinates D = diag(sigma*h, sigma*h^2, sigma*h^3, sigma).  The propagated
+Loewner lower and the source-dependent transition enclosure are retained as
+exact rational quantities.
 
-    D = diag(sigma_min*h, sigma_min*h^2, sigma_min*h^3, sigma_min).
+The previous backend kept the covariance lower exact but formed F(tau) with
+binary64 outward intervals.  On the strongly conditioned recurrent worst cell,
+the irreducible ~ulp radius of those intervals was amplified to an O(1e-9)
+Loewner penalty even after deep tau subdivision.  That was a representation
+floor, not source uncertainty.  Here the shipping small-x branch is enclosed
+with exact Fraction arithmetic.  exp(-x) is bracketed by alternating Taylor
+partial sums (x < 1e-2), while the p/a and S/a small-x polynomials are exact
+rational functions of x.  Thus tau subdivision reduces the genuine source
+uncertainty instead of stopping at a binary64 radius floor.
 
-The source-dependent transition remains interval-valued, but the propagated
-Loewner lower is kept as an exact rational matrix.  This is important for the
-strongly anisotropic recurrent worst cell: repeatedly converting that lower to
-a binary64 point matrix was losing SPD from ~1e-18 representation error even
-when the exact lower remained positive.
-
-For prediction, write F = Fc + E.  Since L >= 0,
+For prediction write F = Fc + E.  Since L >= 0,
 
     F L F' >= Fc L Fc' - D_E,
 
-where D_E is an outward-rounded diagonal dominance bound for the symmetric
-Fc L E' + E L Fc' cross term.  Keeping the rowwise diagonal penalties matters
-for the anisotropic translation chain: replacing D_E by max(diag(D_E))*I
-artificially charged the worst source uncertainty to every state direction and
-lost SPD at about 4.5e-9.  The midpoint product and all rank-one Woodbury
-corrections are evaluated exactly as Fractions.  Only genuine source
-uncertainty enters through outward-rounded binary64 bounds used to form D_E.
-Endpoint positivity of L - delta*Sigma_upper is then checked by exact rational
-LDL/Schur pivots.
+where D_E is the rowwise diagonal-dominance bound on the symmetric cross term
+Fc L E' + E L Fc'.  Fc L Fc', D_E, rank-one Woodbury corrections, and endpoint
+LDL tests are all exact rational operations.  The S pseudo acts only in S and
+the translational accelerometer correction only in a_w.  Both possible
+corrections remain allowed at every IMU sample, conservatively covering the
+shipping scheduling/rejection behavior.
 
-The S pseudo acts only in S and the translational accelerometer correction only
-in a_w.  Both possible corrections are still applied at every IMU sample, which
-is conservative relative to shipping scheduling/rejection.  This file proves
-only the previously limiting translation source cell; it cannot by itself
-promote the full P4 certificate.
+This file proves only the previously limiting translation source cell; it does
+not by itself promote the full reachable-path/nonlinear P4 certificate.
 """
 from __future__ import annotations
 
@@ -42,8 +39,7 @@ import re
 from fractions import Fraction
 from pathlib import Path
 
-from ou3_interval import Interval, matrix_mul
-import ou3_validated_transcendentals as VT
+from ou3_interval import Interval
 import ou3_p4_worst_translation_cell as WORST
 
 REPO = Path(__file__).resolve().parents[1]
@@ -74,34 +70,6 @@ def _qm(A):
     return [[_q(x) for x in row] for row in A]
 
 
-def _down_fraction(q):
-    f = float(q)
-    if not math.isfinite(f):
-        raise OverflowError('exact rational does not fit binary64')
-    if Fraction.from_float(f) > q:
-        f = math.nextafter(f, -math.inf)
-    return f
-
-
-def _up_fraction(q):
-    f = float(q)
-    if not math.isfinite(f):
-        raise OverflowError('exact rational does not fit binary64')
-    if Fraction.from_float(f) < q:
-        f = math.nextafter(f, math.inf)
-    return f
-
-
-def _qi(q):
-    """Outward interval enclosure of one exact rational scalar."""
-    q = _q(q)
-    return Interval.outward_bounds(_down_fraction(q), _up_fraction(q))
-
-
-def _qpm(A):
-    return [[_qi(x) for x in row] for row in A]
-
-
 def _rational_spd(A):
     """Exact positive-definiteness test by unpivoted symmetric Schur pivots."""
     M = _qm(A)
@@ -118,26 +86,73 @@ def _rational_spd(A):
     return True
 
 
-def _F(tau, h):
-    x = I(h) / tau
-    if x.hi >= 1e-2:
+def _exp_neg_bounds(x):
+    """Exact rational bracket for exp(-x), 0 <= x < 1e-2.
+
+    The alternating series has decreasing term magnitudes.  Odd partial sums
+    are lower bounds and even partial sums are upper bounds.  Forty terms leave
+    a remainder far below every scale relevant to this certificate while the
+    bracket itself remains exact rational arithmetic.
+    """
+    x = _q(x)
+    if x < 0 or x >= Fraction(1, 100):
         raise RuntimeError('limiting cell left shipping small-x branch')
-    a = VT.exp_interval(-x)
-    em1 = VT.expm1_interval(-x)
-    pva = -(tau * em1)
-    x2 = x * x
-    x3 = x2 * x
-    x4 = x3 * x
-    x5 = x4 * x
-    ppa = tau * tau * (I(.5) * x2 - I(1 / 6) * x3 + I(1 / 24) * x4)
-    psa = tau * tau * tau * (I(1 / 6) * x3 - I(1 / 24) * x4 + I(1 / 120) * x5)
-    z = Interval.point(0)
-    o = Interval.point(1)
+    term = Fraction(1)
+    s = Fraction(1)
+    lower = None
+    upper = s
+    for k in range(1, 41):
+        term *= x / k
+        s = s - term if k & 1 else s + term
+        if k & 1:
+            lower = s
+        else:
+            upper = s
+    if lower is None or not lower <= upper:
+        raise RuntimeError('invalid exact exponential bracket')
+    return lower, upper
+
+
+def _F(tau, h):
+    """Exact-rational interval enclosure of the conditioned transition."""
+    qh = Fraction.from_float(float(h))
+    tlo = Fraction.from_float(float(tau.lo))
+    thi = Fraction.from_float(float(tau.hi))
+    if not (0 < tlo <= thi):
+        raise RuntimeError('invalid tau interval')
+    xhi = qh / tlo
+    xlo = qh / thi
+    if xhi >= Fraction(1, 100):
+        raise RuntimeError('limiting cell left shipping small-x branch')
+
+    # a=exp(-h/tau) is increasing in tau.
+    alo, _ = _exp_neg_bounds(xhi)
+    _, ahi = _exp_neg_bounds(xlo)
+
+    # pva/h = tau*(1-exp(-h/tau))/h is increasing in tau because
+    # d/dtau[tau(1-exp(-x))] = 1-(1+x)exp(-x) > 0 for x>0.
+    _, ehi_at_lo = _exp_neg_bounds(xhi)
+    elo_at_hi, _ = _exp_neg_bounds(xlo)
+    g0lo = tlo * (Fraction(1) - ehi_at_lo) / qh
+    g0hi = thi * (Fraction(1) - elo_at_hi) / qh
+
+    # Shipping small-x polynomial branches after conditioning:
+    # ppa/h^2 = 1/2 - x/6 + x^2/24,
+    # psa/h^3 = 1/6 - x/24 + x^2/120.
+    # Both decrease with x on x<1e-2, hence increase with tau.
+    def g1(x):
+        return Fraction(1, 2) - x / 6 + x * x / 24
+    def g2(x):
+        return Fraction(1, 6) - x / 24 + x * x / 120
+
+    z = (Fraction(0), Fraction(0))
+    o = (Fraction(1), Fraction(1))
+    half = (Fraction(1, 2), Fraction(1, 2))
     return [
-        [o, z, z, pva / I(h)],
-        [o, o, z, ppa / I(h * h)],
-        [I(.5), o, o, psa / I(h * h * h)],
-        [z, z, z, a],
+        [o, z, z, (g0lo, g0hi)],
+        [o, o, z, (g1(xhi), g1(xlo))],
+        [half, o, o, (g2(xhi), g2(xlo))],
+        [z, z, z, (alo, ahi)],
     ]
 
 
@@ -145,9 +160,11 @@ def _midrad(A):
     C, R = [], []
     for row in A:
         cr, rr = [], []
-        for a in row:
-            c = min(max(.5 * a.lo + .5 * a.hi, a.lo), a.hi)
-            r = up(max(abs(a.lo - c), abs(a.hi - c)))
+        for lo, hi in row:
+            if lo > hi:
+                raise RuntimeError('invalid rational transition interval')
+            c = (lo + hi) / 2
+            r = (hi - lo) / 2
             cr.append(c)
             rr.append(r)
         C.append(cr)
@@ -155,47 +172,45 @@ def _midrad(A):
     return C, R
 
 
-def _abs_upper(a):
-    return up(max(abs(a.lo), abs(a.hi)))
-
-
 def _predict(L, F, rho):
     """Exact-rational Loewner lower for F L F' + rho I."""
     if not _rational_spd(L):
         raise RuntimeError('exact lower entered prediction non-SPD')
     Fc, R = _midrad(F)
+    Q = _qm(L)
 
-    # Enclose Fc*L only for the genuine interval cross-term bound.  L itself
-    # stays exact rational; no binary64 point lower is formed.
-    B = matrix_mul([[I(x) for x in row] for row in Fc], _qpm(L))
+    # B=Fc*L exactly.  The old implementation converted this operation to
+    # binary64 interval arithmetic solely to form the cross-term bound; that
+    # conversion created the irreducible conditioned radius floor.
+    B = [[sum((Fc[i][k] * Q[k][j] for k in range(N)), Fraction(0))
+          for j in range(N)] for i in range(N)]
 
-    # For C = Fc*L*E' + E*L*Fc', build |C_ij| <= cij.  Then
-    # C >= -diag(sum_j cij): diag(sum_j cij) + C is symmetric diagonally
-    # dominant with nonnegative diagonal, hence PSD.  Do not collapse this
-    # directional penalty to max_i(sum_j cij) * I; that old scalarization
-    # needlessly charged the worst transition uncertainty to every state.
+    # For C=Fc*L*E' + E*L*Fc', |C_ij| <= cij.  Therefore
+    # C >= -diag(sum_j cij) by symmetric diagonal dominance.  Everything here
+    # is exact rational, so the penalty now tracks genuine tau-cell width.
     penalty = []
     for i in range(N):
-        rowsum = 0.0
+        rowsum = Fraction(0)
         for j in range(N):
-            cij = 0.0
+            cij = Fraction(0)
             for k in range(N):
-                cij = up(cij + up(_abs_upper(B[i][k]) * R[j][k]))
-                cij = up(cij + up(R[i][k] * _abs_upper(B[j][k])))
-            rowsum = up(rowsum + cij)
+                cij += abs(B[i][k]) * R[j][k]
+                cij += R[i][k] * abs(B[j][k])
+            rowsum += cij
         penalty.append(rowsum)
-    max_penalty = max(penalty)
+    max_penalty_q = max(penalty)
 
-    A = [[Fraction.from_float(float(Fc[i][j])) for j in range(N)] for i in range(N)]
-    Q = _qm(L)
-    AQ = [[sum((A[i][k] * Q[k][j] for k in range(N)), Fraction(0)) for j in range(N)] for i in range(N)]
-    M = [[sum((AQ[i][k] * A[j][k] for k in range(N)), Fraction(0)) for j in range(N)] for i in range(N)]
+    AQ = B
+    M = [[sum((AQ[i][k] * Fc[j][k] for k in range(N)), Fraction(0))
+          for j in range(N)] for i in range(N)]
     qrho = Fraction.from_float(float(rho))
     for i in range(N):
-        M[i][i] += qrho - Fraction.from_float(float(penalty[i]))
+        M[i][i] += qrho - penalty[i]
     if not _rational_spd(M):
-        raise RuntimeError(f'exact prediction lower lost SPD (max rowwise source penalty={max_penalty:.3e})')
-    return M, max_penalty
+        raise RuntimeError(
+            f'exact prediction lower lost SPD '
+            f'(max exact source penalty={float(max_penalty_q):.3e})')
+    return M, float(max_penalty_q)
 
 
 def _rank1_information_update_lower(L, beta, qidx):
@@ -211,7 +226,8 @@ def _rank1_information_update_lower(L, beta, qidx):
     den = Fraction(1) + b * A[qidx][qidx]
     if den <= 0:
         raise RuntimeError('rank-one information denominator lost positivity')
-    M = [[A[i][j] - b * A[i][qidx] * A[qidx][j] / den for j in range(N)] for i in range(N)]
+    M = [[A[i][j] - b * A[i][qidx] * A[qidx][j] / den
+          for j in range(N)] for i in range(N)]
     if not _rational_spd(M):
         raise RuntimeError('exact rank-one posterior lower lost SPD')
     return M, 0.0
@@ -221,7 +237,6 @@ def _spd_delta(L, upper, d):
     A = _qm(L)
     qd = Fraction.from_float(float(d))
     for i in range(N):
-        # upper[i] is already an outward upper binary64 bound.
         A[i][i] -= qd * Fraction.from_float(float(upper[i]))
     return _rational_spd(A)
 
@@ -259,7 +274,8 @@ def _prop(tau, h, n, rho, betaS, betaA, depth=0):
         for k in range(n):
             if k == 0:
                 r = Fraction.from_float(float(rho))
-                L = [[r if i == j else Fraction(0) for j in range(N)] for i in range(N)]
+                L = [[r if i == j else Fraction(0) for j in range(N)]
+                     for i in range(N)]
             else:
                 L, radius = _predict(L, F, rho)
                 mr = max(mr, radius)
@@ -333,7 +349,8 @@ def _mode(mode, domain_path, horizon_s):
         'S_measurement_information_beta_conditioned': betaS,
         'accelerometer_aw_information_beta_conditioned': betaA,
         'measurement_information_geometry': 'rank_one_S_and_aw_each_sample_exact_rational',
-        'prediction_enclosure': 'midpoint_plus_rowwise_symmetric_cross_term_loewner',
+        'prediction_enclosure': 'exact_rational_transition_interval_rowwise_loewner',
+        'exact_rational_transition_enclosure': True,
         'exact_rational_lower_retained_through_word': True,
         'corrections_allowed_every_sample_for_lower_bound': True,
         'artificial_S_variance_conditioned': rS,
@@ -387,8 +404,10 @@ def validate(d):
             f.append(f'{mode}: endpoint not recertified')
         if m.get('measurement_information_geometry') != 'rank_one_S_and_aw_each_sample_exact_rational':
             f.append(f'{mode}: directional measurement geometry missing')
-        if m.get('prediction_enclosure') != 'midpoint_plus_rowwise_symmetric_cross_term_loewner':
-            f.append(f'{mode}: structured prediction enclosure missing')
+        if m.get('prediction_enclosure') != 'exact_rational_transition_interval_rowwise_loewner':
+            f.append(f'{mode}: exact-rational transition enclosure missing')
+        if m.get('exact_rational_transition_enclosure') is not True:
+            f.append(f'{mode}: transition enclosure fell back to binary64')
         if m.get('exact_rational_lower_retained_through_word') is not True:
             f.append(f'{mode}: exact rational lower was not retained through word')
         if m.get('corrections_allowed_every_sample_for_lower_bound') is not True:
