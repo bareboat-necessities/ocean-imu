@@ -116,6 +116,37 @@ hence the exact source-uniform worst prefix information gain is `1.0` rather tha
 
 The final producer `tools/ou3_explicit_information_word_certificate.py` emits `P3_IMPLEMENTATION_WORD_CERTIFICATE=PASS` only when the direct H/A interval inequalities, optimized four-S qualification, current source-word language, exact Live-operation algebra, reset nonsingularity, branch coverage, and unit prefix-information bound all validate together.
 
+#### `Omega_word` is the word's injected noise, not one IMU step
+
+The endpoint inequality is `Omega_word - delta Sigma_upper >> 0`, and `Sigma_upper` is a word-horizon covariance. The backend was comparing it against a single 5 ms `Q`. That is a valid lower bound -- the word contains at least one prediction -- but on the `S` channel the two differ by `(T/h)^7`, and it is what held `delta` at `3.79233618771658e-35`.
+
+`tools/ou3_p3_word_noise_accumulation.py` and the direct backend supply the accumulated floor from the shipping recursion itself. Over `N` pure prediction steps the source injects exactly
+
+`Omega_N = sum_{k<N} Phi^k Q (Phi^k)'`,
+
+which obeys the exact doubling identity `Omega_2m = Phi^m Omega_m Phi^m' + Omega_m`. That identity carries the `(theta, gyro-bias)` block. The translation block does not need it: for the integrated-OU chain the same sum is exactly `Q(N h)`, and scaled by `diag(sigma T, sigma T^2, sigma T^3, sigma)` the chain depends only on `X = T/tau`, so the analytic family the certificate already validates supplies the accumulated floor when it is read at the word horizon instead of at one step. `N` comes from a *lower* bound on the word's step count, so the floor stays a lower bound while `Sigma_upper` stays an upper bound at the horizon upper.
+
+Three further corrections were needed before that could be used.
+
+1. **The measurement information is block structured.** The word's Joseph updates shrink the injected floor, bounded conservatively by `(Omega^-1 + H' R^-1 H)^-1`. One scalar information bound collapses the comparison: the accelerometer's information lives in the `a_w` coordinate and is four orders above the attitude information, and no shipping update measures the gyro bias at all. Charging the `a_w` figure against the bias coordinate erased the entire accumulated bias floor.
+2. **The attitude propagation factor does not belong to the bias row.** `Sigma_upper` propagates the post-observation `(theta, bias)` bound to the word endpoint through `Phi = [[I,-T I],[0,I]]`. Only the attitude row integrates the bias over the word, so only it pays `2(1+T^2)`; the bias row propagates as itself plus its own random walk. Sharing one value inflated the binding channel by twenty-two times.
+3. **The exact-series tail factor was a literal `2.0`.** That is `exp(lambda x)` at `lambda x < ln 2`, which held for the per-step read and expires the moment the same family is read at a word horizon. It now carries `exp(lambda x.hi)`, which also tightens the per-step read slightly.
+
+The comparison itself is then normalised rather than certified in the congruence basis. Forming the posterior explicitly breaks down once the word assimilates real information -- `Omega (I + D Omega)^-1` cancels the measured directions almost exactly and no interval enclosure of it stays definite past a sixty-four step horizon -- and the information form `Omega^-1 + D <= (1/delta) Sigma^-1` fails in the rational congruence basis for the opposite reason: `Sigma^-1` there is assembled from a diagonal spanning thirteen decades and is not certifiably definite at all. Normalising `Sigma` to the identity with the diagonal `G = Sigma^{1/2}` leaves
+
+`lambda_max( G (Omega_word^-1 + D) G ) <= 1/delta`,
+
+an upper bound on one symmetric matrix. `Omega^-1` is read in the congruence basis, where it is well conditioned, and transported back by the exact rational `C`.
+
+The congruence certifies only on a narrow `X` cell, so each source cell is refined -- 128 sub-cells at the full word horizon, fewer for short ones -- and the margin is the minimum over its sub-cells. Every admissible horizon is scanned and the best kept: the trade is not monotone, because a longer horizon injects more noise but also assimilates more information, and `N = 1` reproduces the single-step comparison, so the scan can only improve on it. Each block keeps its own better route, since bundling would let a capped translation horizon discard an attitude floor that still carries the full word.
+
+The binding source cell moves from `tau` at its ceiling to `tau` in `[1.4837, 1.7226]` s, and the certified margin becomes
+
+- H: `delta >= 2.29539973862766885e-20` (translation `2.295399738627669e-20`, attitude/gyro-bias `1.602057713637565e-16`), against `2.1495791638793494e-34` for the single-step comparison;
+- A: `delta >= 2.29539973862766885e-20` (same limiting block, active-bias block `1.3919202799031725e-15`).
+
+That is fourteen and a half decades above the retired single-step floor, and it is what lifts the P4 level below.
+
 **PASS:** strict source-uniform H and A information contraction with explicit positive endpoint margins and an exact finite prefix information-gain bound. P4 consumes this information-word geometry directly through the exact Cayley lift below.
 
 ### P4 — Exact nonlinear SO(3) word certificate — COMPLETE
@@ -144,12 +175,13 @@ The nonlinear layer supplies one number: an upper bound `B` on `||r_word||_M / W
 
 Both gains bound the same quantity, so the producer keeps `min(B_isotropic, B_metric)` and the refinement can never widen the certificate. The structured route binds, taking `B` from `8.26237725542113e+34` to `2.19808143397921e+09`.
 
-The final validated CI certificate reports:
+The final validated CI certificate reports, for both H and A:
 
-- H: `W_* = 4.65099776131798868e-90`, `mu_W >= 1.89616809385829038e-35`, endpoint relative decrease `>= 1.89616809385829092e-35`, prefix canonical norm `<= 4.31323440648337294e-45`, certified attitude Cayley radius `<= 5.58190376455273201e-47`;
-- A: `W_* = 4.65099773925429715e-90`, `mu_W >= 1.89616808936071053e-35`, endpoint relative decrease `>= 1.89616808936071107e-35`, prefix canonical norm `<= 4.31323439625267857e-45`, certified attitude Cayley radius `<= 5.58190375131284112e-47`.
+- `W_* = 2.74835136346049263e-62`, `mu_W >= 1.14769986931383397e-20`, endpoint relative decrease `>= 1.14769986931383427e-20`, prefix canonical norm `<= 3.31563047606966924e-31`, certified attitude Cayley radius `<= 2.90423979800536192e-32`.
 
-That is fifty-one decades of `W_*` above the retired isotropic envelope (`3.29172575174270652e-141`), and it is still not a practical basin. The reason is no longer the defect constant: with `B` fixed, `sqrt(W_*) = delta/(8B)` is capped by the P3 word endpoint margin `delta = 3.79233618771658e-35`. Strict positivity is stored directly, so the proof never forms `1 - delta/2` when binary64 would round that quantity back to one.
+That is seventy-nine decades of `W_*` above the retired isotropic envelope (`3.29172575174270652e-141`): fifty-one from the structured transport that took `B` from `9.570736e+32` to `1.73074152502409096e+10`, and twenty-eight more from the P3 word-noise floor that took `delta` from `3.79233618771658e-35` to `2.29539973862766885e-20`. Strict positivity is stored directly, so the proof never forms `1 - delta/2` when binary64 would round that quantity back to one.
+
+It is still not a practical basin, and by the ceiling below it cannot become one on this route.
 
 #### The route, not its constants, is now the binding obstruction
 
@@ -159,7 +191,7 @@ That is fifty-one decades of `W_*` above the retired isotropic envelope (`3.2917
 
 `a_t` cancels. The ceiling does not depend on the covariance bound, on the metric normalization, or on any constant the search has been sharpening. At `delta = 1` and with no prefix overshoot at all it is `4.95049504950495e-03` rad; at the shipping prefix factor it is `1.23762376237624e-03` rad. The bounded P1 handoff nodes are `0.2721648148683776` and `0.5947333355555983` rad, so the route is short by at least a factor of `120` even at its own theoretical maximum, and the word would have to inject fewer than `1.69` accepted attitude corrections per second for it ever to reach the handoff.
 
-This is a ceiling on the proof route, not on the filter. It retires further sharpening of `kappa`, of the covariance enclosure, or of `delta` as a P5 direction: the ceiling is independent of all three.
+This is a ceiling on the proof route, not on the filter. It retires further sharpening of `kappa`, of the covariance enclosure, or of `delta` as a P5 direction: the ceiling is independent of all three. The two widenings recorded above are the direct evidence -- together they moved the reported radius by thirty-nine decades, from `5.73735631780239850e-71` to `2.90423979800536192e-32`, and moved the ceiling not at all.
 
 **PASS:** `P4_EXACT_NONLINEAR_WORD_CERTIFICATE=PASS` for both H and A with explicit positive `W_*`, positive `mu_W`, exact source-operation semantics, complete branch coverage, and prefix/chart safety. The level remains a theorem seed, and the route ceiling proves it cannot be promoted to the P1 handoff radius without the structural change named in P5.
 

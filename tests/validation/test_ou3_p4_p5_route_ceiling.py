@@ -58,7 +58,9 @@ class Ou3P4P5RouteCeilingTests(unittest.TestCase):
                 m["certified_attitude_capture_radius_now"],
                 m["route_ceiling_at_shipping_prefix_factor"],
             )
-            self.assertGreater(m["shortfall_factor_now_vs_largest_handoff"], 1.0e30)
+            # A floor, not a pin: tightening P3 or P4 raises the reported
+            # radius and must not churn the obstruction test.
+            self.assertGreater(m["shortfall_factor_now_vs_largest_handoff"], 1.0e20)
 
     def test_breakeven_shows_the_word_structure_is_the_binding_hypothesis(self):
         for mode in ("H", "A"):

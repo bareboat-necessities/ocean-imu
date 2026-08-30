@@ -49,7 +49,7 @@ jobs:
   full-matrix-prefix:
     name: P5 full 18x18 H prefix cells
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v6
       - name: Compile full-matrix prefix producers

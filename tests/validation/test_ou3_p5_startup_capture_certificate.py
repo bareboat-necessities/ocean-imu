@@ -75,8 +75,10 @@ class Ou3P5StartupCaptureCertificateTests(unittest.TestCase):
         self.assertGreater(timeout, normal)
         self.assertTrue(b["normal_gauged_inside_current_promoted_cayley_norm_limit"])
         self.assertTrue(b["timeout_gauged_inside_current_promoted_cayley_norm_limit"])
-        self.assertGreater(b["normal_gauged_over_current_P4_design_radius_factor"], 1.0e11)
-        self.assertGreater(b["timeout_gauged_over_current_P4_design_radius_factor"], 5.0e11)
+        # Floors, not pins: a tighter covariance enclosure raises the P4
+        # design radius and must not churn the obstruction test.
+        self.assertGreater(b["normal_gauged_over_current_P4_design_radius_factor"], 1.0e8)
+        self.assertGreater(b["timeout_gauged_over_current_P4_design_radius_factor"], 1.0e8)
 
     def test_ungauged_timeout_has_no_fake_full_heading_radius(self):
         b = self.d["outer_bridge_requirements"]

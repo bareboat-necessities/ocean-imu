@@ -35,6 +35,7 @@ on:
       - "tools/ou3_p4_group_algebra.py"
       - "tools/ou3_p4_exact_word_map.py"
       - "tools/ou3_p4_node_metrics.py"
+      - "tools/ou3_p3_word_noise_accumulation.py"
       - "tools/ou3_p4_metric_defect_transport.py"
       - "tools/ou3_p4_nonlinear_word_certificate.py"
       - "tools/ou3_p4_p5_route_ceiling_certificate.py"
@@ -64,6 +65,7 @@ on:
       - "tests/validation/test_ou3_explicit_information_word_certificate.py"
       - "tests/validation/test_ou3_p4_group_algebra.py"
       - "tests/validation/test_ou3_p4_word_map_and_metrics.py"
+      - "tests/validation/test_ou3_p3_word_noise_accumulation.py"
       - "tests/validation/test_ou3_p4_metric_defect_transport.py"
       - "tests/validation/test_ou3_p4_nonlinear_word_certificate.py"
       - "tests/validation/test_ou3_p4_p5_route_ceiling.py"
@@ -175,7 +177,7 @@ jobs:
   enclosure:
     name: source-reachable matrix P3 and enclosure arithmetic
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v6
       - name: Install numerical dependency
@@ -189,12 +191,15 @@ jobs:
             tools/ou3_validated_kalman_interval.py \
             tools/ou3_source_reachable_matrix_p3.py \
             tools/ou3_source_reachable_matrix_p3_factored.py \
+            tools/ou3_source_reachable_matrix_p3_direct.py \
+            tools/ou3_p3_word_noise_accumulation.py \
             tools/ou3_p3_word_algebra.py \
             tools/ou3_explicit_information_word_certificate.py \
             tools/ou3_certificate_completion.py \
             tools/ou3_information_enclosure_contract.py \
             tools/ou3_validate_enclosure.py \
             tests/validation/test_ou3_validated_kalman_interval.py \
+            tests/validation/test_ou3_p3_word_noise_accumulation.py \
             tests/validation/test_ou3_p3_word_algebra.py \
             tests/validation/test_ou3_explicit_information_word_certificate.py \
             tests/validation/test_ou3_certificate_completion.py \
@@ -205,6 +210,7 @@ jobs:
           python3 -m unittest -v \
             test_ou3_validated_kalman_interval \
             test_ou3_p3_word_algebra \
+            test_ou3_p3_word_noise_accumulation \
             test_ou3_explicit_information_word_certificate \
             test_ou3_certificate_completion \
             test_ou3_validate_enclosure
@@ -215,7 +221,7 @@ jobs:
     name: exact Cayley nonlinear H A source-word P4
     needs: enclosure
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v6
       - name: Install numerical dependency
@@ -275,7 +281,7 @@ jobs:
     name: P5 outer-H word and startup capture gate
     needs: [startup-proof, p4-nonlinear]
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v6
       - name: Install numerical dependency
@@ -317,7 +323,7 @@ jobs:
   composition:
     name: stochastic capture and final composition arithmetic
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v6
       - name: Install numerical dependency
