@@ -15,13 +15,17 @@ when the exact lower remained positive.
 
 For prediction, write F = Fc + E.  Since L >= 0,
 
-    F L F' >= Fc L Fc' - gamma I,
+    F L F' >= Fc L Fc' - D_E,
 
-where gamma outward-bounds the symmetric Fc L E' + E L Fc' cross term.  The
-midpoint product and all rank-one Woodbury corrections are evaluated exactly
-as Fractions.  Only genuine source uncertainty enters through outward-rounded
-binary64 bounds used to form gamma.  Endpoint positivity of
-L - delta*Sigma_upper is then checked by exact rational LDL/Schur pivots.
+where D_E is an outward-rounded diagonal dominance bound for the symmetric
+Fc L E' + E L Fc' cross term.  Keeping the rowwise diagonal penalties matters
+for the anisotropic translation chain: replacing D_E by max(diag(D_E))*I
+artificially charged the worst source uncertainty to every state direction and
+lost SPD at about 4.5e-9.  The midpoint product and all rank-one Woodbury
+corrections are evaluated exactly as Fractions.  Only genuine source
+uncertainty enters through outward-rounded binary64 bounds used to form D_E.
+Endpoint positivity of L - delta*Sigma_upper is then checked by exact rational
+LDL/Schur pivots.
 
 The S pseudo acts only in S and the translational accelerometer correction only
 in a_w.  Both possible corrections are still applied at every IMU sample, which
@@ -164,7 +168,13 @@ def _predict(L, F, rho):
     # Enclose Fc*L only for the genuine interval cross-term bound.  L itself
     # stays exact rational; no binary64 point lower is formed.
     B = matrix_mul([[I(x) for x in row] for row in Fc], _qpm(L))
-    gamma = 0.0
+
+    # For C = Fc*L*E' + E*L*Fc', build |C_ij| <= cij.  Then
+    # C >= -diag(sum_j cij): diag(sum_j cij) + C is symmetric diagonally
+    # dominant with nonnegative diagonal, hence PSD.  Do not collapse this
+    # directional penalty to max_i(sum_j cij) * I; that old scalarization
+    # needlessly charged the worst transition uncertainty to every state.
+    penalty = []
     for i in range(N):
         rowsum = 0.0
         for j in range(N):
@@ -173,18 +183,19 @@ def _predict(L, F, rho):
                 cij = up(cij + up(_abs_upper(B[i][k]) * R[j][k]))
                 cij = up(cij + up(R[i][k] * _abs_upper(B[j][k])))
             rowsum = up(rowsum + cij)
-        gamma = max(gamma, rowsum)
+        penalty.append(rowsum)
+    max_penalty = max(penalty)
 
     A = [[Fraction.from_float(float(Fc[i][j])) for j in range(N)] for i in range(N)]
     Q = _qm(L)
     AQ = [[sum((A[i][k] * Q[k][j] for k in range(N)), Fraction(0)) for j in range(N)] for i in range(N)]
     M = [[sum((AQ[i][k] * A[j][k] for k in range(N)), Fraction(0)) for j in range(N)] for i in range(N)]
-    shift = Fraction.from_float(float(rho)) - Fraction.from_float(float(gamma))
+    qrho = Fraction.from_float(float(rho))
     for i in range(N):
-        M[i][i] += shift
+        M[i][i] += qrho - Fraction.from_float(float(penalty[i]))
     if not _rational_spd(M):
-        raise RuntimeError(f'exact prediction lower lost SPD (source radius={gamma:.3e})')
-    return M, gamma
+        raise RuntimeError(f'exact prediction lower lost SPD (max rowwise source penalty={max_penalty:.3e})')
+    return M, max_penalty
 
 
 def _rank1_information_update_lower(L, beta, qidx):
@@ -322,7 +333,7 @@ def _mode(mode, domain_path, horizon_s):
         'S_measurement_information_beta_conditioned': betaS,
         'accelerometer_aw_information_beta_conditioned': betaA,
         'measurement_information_geometry': 'rank_one_S_and_aw_each_sample_exact_rational',
-        'prediction_enclosure': 'midpoint_plus_symmetric_cross_term_loewner',
+        'prediction_enclosure': 'midpoint_plus_rowwise_symmetric_cross_term_loewner',
         'exact_rational_lower_retained_through_word': True,
         'corrections_allowed_every_sample_for_lower_bound': True,
         'artificial_S_variance_conditioned': rS,
@@ -376,7 +387,7 @@ def validate(d):
             f.append(f'{mode}: endpoint not recertified')
         if m.get('measurement_information_geometry') != 'rank_one_S_and_aw_each_sample_exact_rational':
             f.append(f'{mode}: directional measurement geometry missing')
-        if m.get('prediction_enclosure') != 'midpoint_plus_symmetric_cross_term_loewner':
+        if m.get('prediction_enclosure') != 'midpoint_plus_rowwise_symmetric_cross_term_loewner':
             f.append(f'{mode}: structured prediction enclosure missing')
         if m.get('exact_rational_lower_retained_through_word') is not True:
             f.append(f'{mode}: exact rational lower was not retained through word')
