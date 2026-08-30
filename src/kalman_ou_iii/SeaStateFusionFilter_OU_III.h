@@ -406,12 +406,23 @@ struct TuneState {
 };
 
 //  Unified SeaState fusion filter
-template<TrackerType trackerT>
+//
+//  with_lever_arm selects the MEKF instantiation that carries the IMU lever
+//  arm as estimated states rather than as a supplied constant.  It defaults
+//  to false, which is the historical filter down to its memory layout; see
+//  Kalman3D_Wave_OU_III's lever-arm API for what turning it on buys and what
+//  it needs from the motion to work.
+template<TrackerType trackerT, bool with_lever_arm = false>
 class SeaStateFusionFilter_OU_III {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
     using TrackingPolicy = TrackerPolicy<trackerT>;
+
+    // The MEKF this fusion filter drives.  Named so a caller can talk about
+    // the lever-arm API without repeating the instantiation.
+    using Mekf = Kalman3D_Wave_OU_III<float, true, true, with_lever_arm>;
+    static constexpr bool estimates_imu_lever_arm = with_lever_arm;
 
     enum class StartupStage {
         Cold,        // just booted or just had a big tilt reset
@@ -493,7 +504,7 @@ public:
                     const Eigen::Vector3f& sigma_g,
                     const Eigen::Vector3f& sigma_m)
     {
-        mekf_ = std::make_unique<Kalman3D_Wave_OU_III<float>>(sigma_a, sigma_g, sigma_m);
+        mekf_ = std::make_unique<Kalman3D_Wave_OU_III<float, true, true, with_lever_arm>>(sigma_a, sigma_g, sigma_m);
         seastate::common::finalizeInitialization(
             mekf_,
             [this]() { enterCold_(); },
@@ -507,7 +518,7 @@ public:
                         float b0, float R_S_noise,
                         float gravity_magnitude)
     {
-        mekf_ = std::make_unique<Kalman3D_Wave_OU_III<float>>(sigma_a, sigma_g, sigma_m, Pq0, Pb0, b0, R_S_noise, gravity_magnitude);
+        mekf_ = std::make_unique<Kalman3D_Wave_OU_III<float, true, true, with_lever_arm>>(sigma_a, sigma_g, sigma_m, Pq0, Pb0, b0, R_S_noise, gravity_magnitude);
         seastate::common::finalizeInitialization(
             mekf_,
             [this]() { enterCold_(); },
@@ -2296,7 +2307,7 @@ private:
     float tau_coeff_    = 1.0f;
     float sigma_coeff_  = 0.9f;
 
-    std::unique_ptr<Kalman3D_Wave_OU_III<float>>  mekf_;
+    std::unique_ptr<Kalman3D_Wave_OU_III<float, true, true, with_lever_arm>>  mekf_;
     KalmanWaveDirection                    dir_filter_{2.0f * static_cast<float>(M_PI) * FREQ_GUESS};
 
     FreqInputLPF        freq_input_lpf_;
@@ -2306,13 +2317,18 @@ private:
     WaveDirection                dir_sign_state_ = UNCERTAIN;
 };
 
-template<TrackerType trackerT>
+template<TrackerType trackerT, bool with_lever_arm = false>
 class SeaStateFusion_OU_III {
+public:
+    // The fusion filter raw() hands back, named so callers can take it by type
+    // instead of by auto.
+    using Impl = SeaStateFusionFilter_OU_III<trackerT, with_lever_arm>;
+
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
     using StartupInitPolicy =
-        typename SeaStateFusionFilter_OU_III<trackerT>::StartupInitPolicy;
+        typename SeaStateFusionFilter_OU_III<trackerT, with_lever_arm>::StartupInitPolicy;
 
     struct Config {
         bool with_mag = true;
@@ -2848,7 +2864,7 @@ public:
         const auto cur_stage = impl_.getStartupStage();
 
         if (cur_stage != last_impl_startup_stage_) {
-            if (cur_stage == SeaStateFusionFilter_OU_III<trackerT>::StartupStage::Cold) {
+            if (cur_stage == SeaStateFusionFilter_OU_III<trackerT, with_lever_arm>::StartupStage::Cold) {
                 mag_ref_set_ = false;
                 mag_auto_tuner_.reset();
 
@@ -3147,11 +3163,11 @@ public:
         return displacement_det_out_;
     }
 
-    SeaStateFusionFilter_OU_III<trackerT>& raw() {
+    SeaStateFusionFilter_OU_III<trackerT, with_lever_arm>& raw() {
         return impl_;
     }
 
-    const SeaStateFusionFilter_OU_III<trackerT>& raw() const {
+    const SeaStateFusionFilter_OU_III<trackerT, with_lever_arm>& raw() const {
         return impl_;
     }
 
@@ -3696,15 +3712,15 @@ private:
 
 private:
     Config cfg_{};
-    SeaStateFusionFilter_OU_III<trackerT> impl_{false};
+    SeaStateFusionFilter_OU_III<trackerT, with_lever_arm> impl_{false};
 
     bool begun_ = false;
 
     Stage stage_ = Stage::Uninitialized;
     float t_ = 0.0f;
 
-    typename SeaStateFusionFilter_OU_III<trackerT>::StartupStage last_impl_startup_stage_ =
-        SeaStateFusionFilter_OU_III<trackerT>::StartupStage::Cold;
+    typename SeaStateFusionFilter_OU_III<trackerT, with_lever_arm>::StartupStage last_impl_startup_stage_ =
+        SeaStateFusionFilter_OU_III<trackerT, with_lever_arm>::StartupStage::Cold;
 
     Eigen::Vector3f last_acc_body_ned_  = Eigen::Vector3f::Zero();
     Eigen::Vector3f last_gyro_body_ned_ = Eigen::Vector3f::Zero();

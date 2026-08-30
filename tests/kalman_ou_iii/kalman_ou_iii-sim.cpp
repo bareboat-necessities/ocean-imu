@@ -18,6 +18,8 @@
 #include "util/W3dSimCommon.h"
 #include "kalman_ou_iii/SeaStateFusionFilter_OU_III.h"
 
+#include <type_traits>
+
 using Eigen::Quaternionf;
 using Eigen::Vector3f;
 using Eigen::Matrix3f;
@@ -47,6 +49,12 @@ bool env_int(const char* name, int& out)
 
 } // namespace
 
+// with_lever_arm selects the OU-III instantiation that carries the IMU lever
+// arm as estimated states.  It is false everywhere except the study arm that
+// asks the estimator to find the installation for itself
+// (W3D_IMU_LEVER_ARM_MODEL=estimated), so every other run drives the same
+// filter, with the same state dimension, that it always did.
+template <bool with_lever_arm = false>
 class FusionAdapter_OU_III final : public IW3dFusionAdapter {
 public:
     // OU-III's own MEKF sensor variances, as multiples of the ones the shared
@@ -107,6 +115,8 @@ public:
         const std::string aw_cov_sync = load_aw_cov_sync_policy();
         filter.setPeriodicAwCovarianceSync(aw_cov_sync != "reconfigure");
         filter.setAwCovarianceSyncCongruent(aw_cov_sync == "congruent");
+
+        configure_lever_arm_estimation(filter);
 
         if (attitude_only) {
             filter.enableLinearBlock(false);
@@ -513,6 +523,33 @@ public:
             t_trace_ += dt;
         }
 
+        if constexpr (with_lever_arm) {
+            // Trace the calibration as it converges, so a run can be asked
+            // whether it ran out of time or out of excitation: the estimate
+            // tells the first, its covariance tells the second.
+            if (lever_trace_sec_ > 0.0f) {
+                lever_trace_elapsed_ += dt;
+                lever_trace_t_ += dt;
+                if (lever_trace_elapsed_ >= lever_trace_sec_) {
+                    lever_trace_elapsed_ = 0.0f;
+                    const auto& mekf = fusion_.raw().mekf();
+                    const Vector3f r_zu = ned_to_zu(mekf.get_imu_lever_arm_body());
+                    const auto P = mekf.get_imu_lever_arm_covariance();
+                    Eigen::SelfAdjointEigenSolver<Eigen::Matrix3f> es(P);
+                    Vector3f sig = Vector3f::Zero();
+                    if (es.info() == Eigen::Success) {
+                        sig = es.eigenvalues().cwiseMax(0.0f).cwiseSqrt();
+                    }
+                    std::cerr << "LEVERARM t=" << int(lever_trace_t_)
+                              << " r_zu=[" << r_zu.transpose() << "]"
+                              << " sigma_min_m=" << sig.minCoeff()
+                              << " sigma_max_m=" << sig.maxCoeff()
+                              << " active=" << mekf.imu_lever_arm_updates_active()
+                              << "\n";
+                }
+            }
+        }
+
         auto& filter = fusion_.raw();
         if (tuning_ == TuningMode::Adaptive) return;
         if (fixed_tuning_applied_ || !filter.isAdaptiveLive()) return;
@@ -529,11 +566,98 @@ public:
         fixed_tuning_applied_ = true;
     }
 
+    // The estimator's own lever arm, handed back to the simulator's lever-arm
+    // stage in the frame that stage works in.  Absent unless the states are
+    // compiled in and actually being estimated, so the stage can tell an arm
+    // that calibrates itself from one that was told the answer.
+    std::optional<Vector3f> estimatedLeverArmBodyZu() const override {
+        if constexpr (with_lever_arm) {
+            const auto& mekf = fusion_.raw().mekf();
+            if (mekf.imu_lever_arm_estimation_enabled()) {
+                return ned_to_zu(mekf.get_imu_lever_arm_body());
+            }
+        }
+        return std::nullopt;
+    }
+
+    /*
+      Turn the lever arm into filter states when the harness asks for the
+      self-calibrating arm.
+
+      The prior is deliberately uninformative: r starts at zero with a 0.5 m
+      standard deviation per axis, which says "somewhere on this boat, I do not
+      know where".  Nothing about the installation the record was built with
+      reaches the filter -- that is the whole point of this arm, and it is what
+      separates it from the exact and gyro-derived models, which are both
+      handed r.
+
+      Estimation is held through warmup by the filter's own warmup mode, so the
+      calibration is never fitted against an attitude solution that has not
+      converged.
+    */
+    template <typename FilterT>
+    void configure_lever_arm_estimation(FilterT& filter) {
+        if constexpr (with_lever_arm) {
+            const auto cfg = w3d_lever_arm_config_from_env();
+            if (!cfg || cfg->model != W3dLeverArmConfig::Model::Estimated) return;
+
+            float prior_std_m = 0.5f;
+            env_float("W3D_IMU_LEVER_ARM_PRIOR_STD_M", prior_std_m);
+            env_float("W3D_IMU_LEVER_ARM_TRACE_SEC", lever_trace_sec_);
+
+            float alpha_tau_s = -1.0f;
+            if (env_float("W3D_IMU_LEVER_ARM_ALPHA_TAU_S", alpha_tau_s)) {
+                filter.mekf().set_alpha_smoothing_tau(alpha_tau_s);
+            }
+
+            filter.mekf().enable_imu_lever_arm_estimation(
+                Vector3f::Zero(), prior_std_m);
+
+            std::cout << "IMU_LEVER_ARM_ESTIMATION prior_m=[0 0 0]"
+                      << " prior_std_m=" << prior_std_m
+                      << " states=" << filter.mekf().state_dimension()
+                      << "\n";
+        } else {
+            (void)filter;
+        }
+    }
+
+    /*
+      End-of-record report on the calibration itself.
+
+      The three principal standard deviations are the point of it.  A lever arm
+      is identifiable only in the directions the seaway actually rotated about,
+      so a single pooled number hides the case that matters: two sharp
+      directions and one the motion never excited.  Reporting the spread is
+      what lets a reader tell "the estimator is wrong" from "the estimator has
+      correctly declined to guess".
+    */
+    void report_lever_arm_estimate() const {
+        if constexpr (with_lever_arm) {
+            const auto& mekf = fusion_.raw().mekf();
+            if (!mekf.imu_lever_arm_estimation_enabled()) return;
+
+            const Vector3f r_zu = ned_to_zu(mekf.get_imu_lever_arm_body());
+            const Eigen::Matrix3f P = mekf.get_imu_lever_arm_covariance();
+            Eigen::SelfAdjointEigenSolver<Eigen::Matrix3f> es(P);
+            Vector3f sig = Vector3f::Zero();
+            if (es.info() == Eigen::Success) {
+                sig = es.eigenvalues().cwiseMax(0.0f).cwiseSqrt();
+            }
+            std::cout << "IMU_LEVER_ARM_ESTIMATE r_zu=[" << r_zu.transpose() << "]"
+                      << " sigma_min_m=" << sig.minCoeff()
+                      << " sigma_max_m=" << sig.maxCoeff()
+                      << " sigma_rms_m=" << std::sqrt(P.trace() / 3.0f)
+                      << "\n";
+        }
+    }
+
     // Vibration-guard telemetry, so a replay can say whether the guard engaged
     // and how much out-of-band accelerometer content it was seeing.  The shared
     // runner owns the adapter, so end-of-record is the destructor; silent
     // unless a cutoff was configured, which keeps default runs unchanged.
     ~FusionAdapter_OU_III() override {
+        report_lever_arm_estimate();
         const auto& filter = fusion_.raw();
         if (!(filter.accelVibrationGuardCutoffHz() > 0.0f)) return;
         std::cout << "ACC_GUARD cutoff_hz=" << filter.accelVibrationGuardCutoffHz()
@@ -706,6 +830,10 @@ private:
     mutable float trace_elapsed_ = 0.0f;
     mutable float t_trace_ = 0.0f;
 
+    float lever_trace_sec_ = 0.0f;
+    mutable float lever_trace_elapsed_ = 0.0f;
+    mutable float lever_trace_t_ = 0.0f;
+
     mutable bool reported_lock_ = false;
     mutable bool reported_live_ = false;
     mutable bool reported_refine_ = false;
@@ -714,9 +842,9 @@ private:
     float fixed_tau_s_ = NAN;
     float fixed_sigma_a_ = NAN;
     float fixed_RS_ = NAN;
-    using Fusion = SeaStateFusion_OU_III<TrackerType::KALMANF>;
+    using Fusion = SeaStateFusion_OU_III<TrackerType::KALMANF, with_lever_arm>;
     mutable Fusion fusion_;
-    Fusion::Config cfg_{};
+    typename Fusion::Config cfg_{};
 };
 
 // Regression sentinels for the deterministic single-realization protocol, not
@@ -1074,16 +1202,31 @@ static void process_wave_file_for_tracker(const std::string& filename,
 {
     constexpr float MAG_ODR_HZ = 25.0f;
 
-    auto result = process_wave_file_for_tracker<FusionAdapter_OU_III>(
-        filename,
-        dt,
-        with_mag,
-        add_noise,
-        MAG_ODR_HZ,
-        "_fusion_ou3",
-        "_fusion_ou3_nomag",
-        seeds,
-        write_timeseries);
+    // The self-calibrating lever-arm arm is the one run that needs the larger
+    // state vector; every other run drives the historical 21-state filter.
+    // The choice is compile-time in the filter and runtime here, so it is made
+    // once, by picking which instantiation to hand the record to.
+    const auto lever_cfg = w3d_lever_arm_config_from_env();
+    const bool estimate_lever_arm =
+        lever_cfg && lever_cfg->model == W3dLeverArmConfig::Model::Estimated;
+
+    auto run = [&](auto tag) {
+        using AdapterT = typename decltype(tag)::type;
+        return process_wave_file_for_tracker<AdapterT>(
+            filename,
+            dt,
+            with_mag,
+            add_noise,
+            MAG_ODR_HZ,
+            "_fusion_ou3",
+            "_fusion_ou3_nomag",
+            seeds,
+            write_timeseries);
+    };
+
+    auto result = estimate_lever_arm
+        ? run(std::type_identity<FusionAdapter_OU_III<true>>{})
+        : run(std::type_identity<FusionAdapter_OU_III<false>>{});
 
     if (!result) return;
 

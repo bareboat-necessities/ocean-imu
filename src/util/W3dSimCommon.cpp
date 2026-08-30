@@ -772,6 +772,26 @@ Vector3f W3dLeverArm::compensate(const Vector3f& acc_meas_body_zu,
         }
         const Vector3f alpha = model_derivative_.update(lp_stage2_);
         modelled = w3d_lever_acceleration(lp_stage2_, alpha, offset_);
+    } else if (cfg_.model == W3dLeverArmConfig::Model::Estimated) {
+        // Nothing is removed here: the estimator holds r as filter states and
+        // cancels the term inside its own measurement model.  What is scored
+        // is the term its current estimate accounts for, reconstructed through
+        // exactly the band-limited path the deployable model uses -- so the
+        // residual of the two arms differs only in where r came from, not in
+        // how the kinematics were rebuilt.
+        if (!lp_primed_) {
+            lp_stage1_ = gyr_meas_body_zu;
+            lp_stage2_ = gyr_meas_body_zu;
+            lp_primed_ = true;
+        } else {
+            lp_stage1_ += lp_gain_ * (gyr_meas_body_zu - lp_stage1_);
+            lp_stage2_ += lp_gain_ * (lp_stage1_ - lp_stage2_);
+        }
+        const Vector3f alpha = model_derivative_.update(lp_stage2_);
+        const Vector3f accounted =
+            w3d_lever_acceleration(lp_stage2_, alpha, estimated_offset_);
+        residual_sumsq_ += double((last_installed_ - accounted).squaredNorm());
+        return acc_meas_body_zu;
     }
 
     // With no model this is the whole installed term, which is exactly what
@@ -796,6 +816,9 @@ namespace {
 
 W3dLeverArmConfig::Model w3d_lever_arm_model_from_text(const std::string& text)
 {
+    if (text == "estimated" || text == "estimate" || text == "self") {
+        return W3dLeverArmConfig::Model::Estimated;
+    }
     if (text == "none" || text == "off" || text == "unmodeled") {
         return W3dLeverArmConfig::Model::None;
     }
@@ -806,7 +829,7 @@ W3dLeverArmConfig::Model w3d_lever_arm_model_from_text(const std::string& text)
         return W3dLeverArmConfig::Model::MeasuredGyro;
     }
     throw std::invalid_argument(
-        "W3D_IMU_LEVER_ARM_MODEL must be none, exact, or gyro");
+        "W3D_IMU_LEVER_ARM_MODEL must be none, exact, gyro, or estimated");
 }
 
 Vector3f w3d_vector_from_text(const char* name, const std::string& text)
@@ -842,6 +865,7 @@ const char* w3d_lever_arm_model_name(W3dLeverArmConfig::Model model)
     switch (model) {
         case W3dLeverArmConfig::Model::Exact: return "exact";
         case W3dLeverArmConfig::Model::MeasuredGyro: return "gyro";
+        case W3dLeverArmConfig::Model::Estimated: return "estimated";
         case W3dLeverArmConfig::Model::None: break;
     }
     return "none";
@@ -894,8 +918,18 @@ void w3d_report_lever_arm(const std::shared_ptr<W3dLeverArm>& lever_arm)
               << " model=" << w3d_lever_arm_model_name(lever_arm->config().model)
               << " samples=" << lever_arm->samples()
               << " installed_rms_mps2=" << lever_arm->installed_rms_mps2()
-              << " residual_rms_mps2=" << lever_arm->residual_rms_mps2()
-              << "\n";
+              << " residual_rms_mps2=" << lever_arm->residual_rms_mps2();
+    if (lever_arm->estimates()) {
+        // The calibration itself, and how far it ended from the installation
+        // the record was generated with.  This is the number that says whether
+        // the estimator found the lever arm, as distinct from whether the
+        // score improved.
+        const Vector3f& r_hat = lever_arm->estimated_offset();
+        const Vector3f err = r_hat - lever_arm->config().offset_body_zu;
+        std::cout << " estimate_m=[" << r_hat.transpose() << "]"
+                  << " estimate_err_m=" << err.norm();
+    }
+    std::cout << "\n";
 }
 
 unsigned w3d_expand_seed(unsigned base_seed, unsigned stream_id)
@@ -1210,7 +1244,17 @@ std::optional<W3dSimulationRunResult> W3dSimulationRunner::run(const std::string
         // Filter-side lever-arm model, on the corrupted signals the estimator
         // actually receives.  Nothing downstream of this point knows the IMU
         // is off the CG.
+        //
+        // A self-calibrating estimator is the exception: it holds r as states
+        // and cancels the term inside itself, so the stage takes nothing off
+        // the signal here and only scores what the estimator's own lever arm
+        // accounts for.
         if (options_.lever_arm) {
+            if (options_.lever_arm->estimates()) {
+                if (const auto r = fusion_adapter_.estimatedLeverArmBodyZu()) {
+                    options_.lever_arm->set_estimated_offset(*r);
+                }
+            }
             acc_b = options_.lever_arm->compensate(acc_b, gyr_b);
         }
 
@@ -1504,7 +1548,17 @@ std::optional<TvgNloSimulationRunResult> TvgNloSimulationRunner::run(const std::
         // Filter-side lever-arm model, on the corrupted signals the estimator
         // actually receives.  Nothing downstream of this point knows the IMU
         // is off the CG.
+        //
+        // A self-calibrating estimator is the exception: it holds r as states
+        // and cancels the term inside itself, so the stage takes nothing off
+        // the signal here and only scores what the estimator's own lever arm
+        // accounts for.
         if (options_.lever_arm) {
+            if (options_.lever_arm->estimates()) {
+                if (const auto r = fusion_adapter_.estimatedLeverArmBodyZu()) {
+                    options_.lever_arm->set_estimated_offset(*r);
+                }
+            }
             acc_b = options_.lever_arm->compensate(acc_b, gyr_b);
         }
 

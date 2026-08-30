@@ -822,6 +822,35 @@ class Kalman3D_Wave_OU_III {
         return T(0);
     }
 
+    /*
+      Whether the accelerometer innovation covariance accounts for the noise in
+      the rate the lever-arm term is built from.  On by default, and it matters
+      more than it sounds.
+
+      The lever-arm term is evaluated at a measured omega and at an alpha
+      differentiated from it, and the filter otherwise treats both as if they
+      were exact.  They are not: differentiating a 200 Hz rate whose white
+      noise is a couple of milliradians per second per sample produces an alpha
+      whose error is a sizable fraction of the wave-band signal itself.  Left
+      unmodelled, that error is invisible to the filter, so a lever arm
+      estimated against it collapses its covariance to millimetres while the
+      estimate is still decimetres out -- confidently wrong, which is the one
+      failure mode a calibration must not have.
+
+      The correction is exact in form and free in cost: a white rate error
+      delta_w perturbs the lever term by the same matrix that already carries
+      the gyro-bias sensitivity, because omega = gyr - b_g makes the two
+      derivatives differ only in sign.  So the per-sample rate noise the filter
+      already knows about, pushed through that matrix, is the covariance the
+      innovation was missing.
+
+      It does not remove the attenuation that regressor noise causes -- nothing
+      that keeps treating the regressor as exact can -- but it stops the filter
+      claiming an accuracy it does not have.
+    */
+    void set_lever_arm_rate_noise_modelled(bool on) { model_lever_rate_noise_ = on; }
+    [[nodiscard]] bool lever_arm_rate_noise_modelled() const { return model_lever_rate_noise_; }
+
     // Stop / resume corrections of r without discarding what is known about
     // it.  Used by warmup, and available to a caller that wants to hold the
     // calibration while something else is re-initialized.
@@ -947,6 +976,9 @@ class Kalman3D_Wave_OU_III {
     bool   use_imu_lever_arm_       = false;
     // Lever arm in *physical* BODY frame B (what you measure on the boat).
     Vector3 r_imu_wrt_cog_body_phys_ = Vector3::Zero();
+
+    // See set_lever_arm_rate_noise_modelled().
+    bool model_lever_rate_noise_ = true;
 
     // Cached kinematics in the virtual un-heeled frame B'
     Vector3 prev_omega_b_ = Vector3::Zero(); // ω^{B'}
@@ -2529,6 +2561,20 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias, with_lever_arm>::m
                         S_mat.noalias() += J_bg * P_bg_ba; // J_ba = I
                         S_mat.noalias() += P_bg_ba.transpose() * J_bg.transpose();
                     }
+                }
+
+                // White rate noise in the lever-arm term.  J_bg is the
+                // sensitivity of that term to a rate error already (omega =
+                // gyr - b_g, so the two derivatives differ only in sign), and
+                // Qbase's gyro block is a noise *density*, so dividing by the
+                // step turns it into the per-sample rate covariance the
+                // reconstruction actually carries.  See
+                // set_lever_arm_rate_noise_modelled() for why this is not
+                // optional in practice.
+                if (model_lever_rate_noise_ && last_dt_ > T(0)) {
+                    const Matrix3 Sigma_rate =
+                        Qbase.template topLeftCorner<3,3>() / last_dt_;
+                    S_mat.noalias() += J_bg * Sigma_rate * J_bg.transpose();
                 }
             }
         }

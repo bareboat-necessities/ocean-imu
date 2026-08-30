@@ -332,6 +332,14 @@ public:
                         const Vector3f& acc_meas_ned,
                         float temperature_c) = 0;
     virtual FilterSnapshot snapshot() const = 0;
+
+    // An estimator that carries the IMU lever arm as states reports it here,
+    // body z-up, metres, so the lever-arm stage can score a calibration it
+    // never supplied.  Absent for every estimator that is handed r instead,
+    // which is all of them by default.
+    virtual std::optional<Vector3f> estimatedLeverArmBodyZu() const {
+        return std::nullopt;
+    }
 };
 
 template <typename SnapshotT>
@@ -349,6 +357,11 @@ public:
                         float temperature_c) = 0;
 
     virtual SnapshotT snapshot() const = 0;
+
+    // See IW3dFusionAdapter::estimatedLeverArmBodyZu.
+    virtual std::optional<Vector3f> estimatedLeverArmBodyZu() const {
+        return std::nullopt;
+    }
 };
 
 using ImuNoiseInjector = std::function<void(Vector3f& acc_body_zu,
@@ -566,6 +579,12 @@ struct W3dLeverArmConfig {
         None,          // no filter-side model: the installation error stands
         Exact,         // oracle: the record's own angular kinematics
         MeasuredGyro,  // deployable: band-limited derivative of the measured rate
+        // Self-calibrating: nothing is removed here.  The estimator carries r
+        // as three of its own states and cancels the term inside its
+        // measurement model, so this stage only watches.  It is the arm that
+        // answers "what if nobody measured the lever arm at all", where the
+        // other two are handed r and differ only in the kinematics they use.
+        Estimated,
     };
 
     // Offset of the IMU from the CG, in the body z-up frame, metres.
@@ -625,8 +644,22 @@ public:
     // immediately before fusion; the residual accounting below assumes the
     // pairing.  With Model::None it removes nothing, which is what makes the
     // unmodeled arm report the whole installed term as its residual.
+    //
+    // Model::Estimated also returns the measurement untouched, because there
+    // the cancellation happens inside the estimator.  What it does do is score
+    // the term the estimator's own lever arm accounts for, using the same
+    // band-limited reconstruction the deployable model uses, so the residual
+    // reported for the two arms differs only in where r came from.
     Vector3f compensate(const Vector3f& acc_meas_body_zu,
                         const Vector3f& gyr_meas_body_zu);
+
+    // Publish the estimator's current lever arm, body z-up, metres.  Only
+    // Model::Estimated reads it; call it once per sample before compensate().
+    void set_estimated_offset(const Vector3f& r_body_zu) {
+        estimated_offset_ = r_body_zu;
+    }
+    const Vector3f& estimated_offset() const { return estimated_offset_; }
+    bool estimates() const { return cfg_.model == W3dLeverArmConfig::Model::Estimated; }
 
     // RMS magnitude of the term the installation added, and of the residual
     // the filter is left with after its own model.  Both are accumulated over
@@ -650,13 +683,15 @@ private:
     bool lp_primed_ = false;
 
     Vector3f last_installed_ = Vector3f::Zero();
+    Vector3f estimated_offset_ = Vector3f::Zero();
     double installed_sumsq_ = 0.0;
     double residual_sumsq_ = 0.0;
     std::size_t samples_ = 0;
 };
 
 // Reads W3D_IMU_LEVER_ARM_M ("x,y,z" in metres, body z-up) and the optional
-// W3D_IMU_LEVER_ARM_MODEL (none|exact|gyro) and W3D_IMU_LEVER_ARM_CUTOFF_HZ.
+// W3D_IMU_LEVER_ARM_MODEL (none|exact|gyro|estimated) and
+// W3D_IMU_LEVER_ARM_CUTOFF_HZ.
 // Returns nullopt when no lever arm is configured, which is the default and
 // reproduces the historical realization bit for bit.
 std::optional<W3dLeverArmConfig> w3d_lever_arm_config_from_env();
