@@ -21,8 +21,10 @@ numbers.  The Woodbury expression is therefore evaluated exactly as rational
 arithmetic first, then converted to binary64 with one rigorous matrix rounding
 allowance.  This avoids the catastrophic interval cancellation that occurs when
 ``L - beta*L[:,q]*L[q,:]/den`` is evaluated entry by entry with wide intervals.
-The conversion subtracts an infinity-norm bound for the exact rational-to-float
-rounding residual from the diagonal, which preserves a certified Loewner lower.
+The conversion uses a signed residual/Gershgorin Loewner correction: diagonals
+are rounded downward first, then only the off-diagonal residual not already
+covered by that favorable diagonal residual is removed.  This preserves a
+certified Loewner lower without charging the former coarse global row radius.
 
 Prediction also preserves matrix structure.  Writing the interval transition as
 ``F = Fc + E`` gives
@@ -94,15 +96,30 @@ def _up_fraction(q):
  return f
 
 def _exact_rational_loewner_lower(Q):
- """Convert an exact symmetric rational matrix to a deterministic Loewner lower."""
- n=len(Q);C=[[float(Q[i][j]) for j in range(n)] for i in range(n)];rows=[]
+ """Convert an exact symmetric rational matrix to a deterministic Loewner lower.
+
+ Diagonal entries are first rounded downward, making their exact residuals
+ nonnegative.  Off-diagonals use nearest binary64.  For each row choose the
+ smallest nonnegative diagonal correction d_i satisfying
+
+     d_i + r_ii >= sum_{j!=i} |r_ij|,
+
+ where R=Q-C is the exact rounding residual.  Therefore R+diag(d) is symmetric
+ diagonally dominant with nonnegative diagonal and hence PSD, proving
+ C-diag(d) <= Q in Loewner order.  This is strictly sharper than subtracting a
+ single max row-sum radius from every diagonal.
+ """
+ n=len(Q);C=[[0.0]*n for _ in range(n)]
  for i in range(n):
-  s=Fraction(0)
-  for j in range(n):s+=abs(Q[i][j]-Fraction.from_float(C[i][j]))
-  rows.append(s)
- rad=_up_fraction(max(rows,default=Fraction(0)))
- L=[r[:] for r in C]
- for i in range(n):L[i][i]=down(L[i][i]-rad)
+  for j in range(n):C[i][j]=_down_fraction(Q[i][j]) if i==j else float(Q[i][j])
+ corr=[]
+ for i in range(n):
+  rii=Q[i][i]-Fraction.from_float(C[i][i]);off=Fraction(0)
+  for j in range(n):
+   if j!=i:off+=abs(Q[i][j]-Fraction.from_float(C[i][j]))
+  corr.append(max(Fraction(0),off-rii))
+ dc=[_up_fraction(q) for q in corr];rad=max(dc,default=0.0);L=[r[:] for r in C]
+ for i in range(n):L[i][i]=down(L[i][i]-dc[i])
  if not symmetric_positive_definite_ldlt(_pm(L))[0]:raise RuntimeError(f'exact-rational Loewner lower lost SPD (rounding radius={rad:.3e})')
  return L,rad
 
@@ -130,8 +147,6 @@ def _predict(L,F,rho):
  """Structured Loewner lower for F L F' + rho I."""
  Fc,R=_midrad(F)
  B=matrix_mul(_pm(Fc),_pm(L))
- # Cross term C = (Fc L)E' + E(L Fc').  It is symmetric.  Bound
- # ||C||_2 <= ||C||_inf by an outward-rounded row-sum enclosure.
  gamma=0.0
  for i in range(4):
   rowsum=0.0
@@ -142,10 +157,6 @@ def _predict(L,F,rho):
     cij=up(cij+up(R[i][k]*_abs_upper(B[j][k])))
    rowsum=up(rowsum+cij)
   gamma=max(gamma,rowsum)
- # Fc and L are deterministic binary64 certificate numbers.  Evaluate the
- # midpoint product exactly as rationals rather than as zero-width intervals;
- # interval point multiplication accumulates ulp radii large enough to destroy
- # the anisotropic lower before the mathematically required gamma subtraction.
  A=[[Fraction.from_float(float(Fc[i][j])) for j in range(4)] for i in range(4)]
  Q=[[Fraction.from_float(float(L[i][j])) for j in range(4)] for i in range(4)]
  AQ=[[sum((A[i][k]*Q[k][j] for k in range(4)),Fraction(0)) for j in range(4)] for i in range(4)]
