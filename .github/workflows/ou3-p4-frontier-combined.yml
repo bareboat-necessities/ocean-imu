@@ -6,6 +6,7 @@ on:
       - 'tools/ou3_p4_frontier_combined_certificate.py'
       - 'tools/ou3_p4_frontier_margin_diagnostic.py'
       - 'tools/ou3_p4_full_word_dissipation_route.py'
+      - 'tools/ou3_p4_translation_full_word_design.py'
       - 'tools/ou3_p4_direct_word_contraction_certificate.py'
       - 'tools/ou3_p4_exact_correction_structure_certificate.py'
       - 'tools/ou3_p4_thirdgen_combined_certificate.py'
@@ -19,6 +20,7 @@ on:
       - 'tests/validation/test_ou3_p4_frontier_combined_certificate.py'
       - 'tests/validation/test_ou3_p4_frontier_margin_diagnostic.py'
       - 'tests/validation/test_ou3_p4_full_word_dissipation_route.py'
+      - 'tests/validation/test_ou3_p4_translation_full_word_design.py'
       - '.github/workflows/ou3-p4-frontier-combined.yml'
   workflow_dispatch:
 
@@ -41,16 +43,19 @@ jobs:
             tools/ou3_p4_frontier_combined_certificate.py \
             tools/ou3_p4_frontier_margin_diagnostic.py \
             tools/ou3_p4_full_word_dissipation_route.py \
+            tools/ou3_p4_translation_full_word_design.py \
             tests/validation/test_ou3_p4_frontier_combined_certificate.py \
             tests/validation/test_ou3_p4_frontier_margin_diagnostic.py \
-            tests/validation/test_ou3_p4_full_word_dissipation_route.py
+            tests/validation/test_ou3_p4_full_word_dissipation_route.py \
+            tests/validation/test_ou3_p4_translation_full_word_design.py
       - name: Test combined frontier and full-word replacement route
         working-directory: tests/validation
         run: |
           python3 -m unittest -v \
             test_ou3_p4_frontier_combined_certificate \
             test_ou3_p4_frontier_margin_diagnostic \
-            test_ou3_p4_full_word_dissipation_route
+            test_ou3_p4_full_word_dissipation_route \
+            test_ou3_p4_translation_full_word_design
       - name: Emit combined frontier P4 numbers
         run: |
           python3 tools/ou3_p4_frontier_combined_certificate.py --output /tmp/p4-frontier.json
@@ -76,3 +81,19 @@ jobs:
       - name: Verify full-word dissipation replacement route
         run: |
           python3 tools/ou3_p4_full_word_dissipation_route.py --output /tmp/p4-full-word-route.json
+      - name: Probe complete-word translation dissipation
+        run: |
+          python3 tools/ou3_p4_translation_full_word_design.py --output /tmp/p4-translation-full-word-design.json
+          python3 - <<'PY'
+          import json
+          p=json.load(open('/tmp/p4-translation-full-word-design.json'))
+          for mode in ('H','A'):
+              for horizon,row in p['modes'][mode]['horizons'].items():
+                  w=row['worst_grid_point']
+                  print(
+                      f"P4_FULL_WORD_DESIGN {mode} T={horizon}s "
+                      f"delta_design={w['translation_complete_word_generalized_margin_design']:.17e} "
+                      f"factor_vs_seed={row['design_worst_to_old_margin_ratio']:.17e} "
+                      f"tau={w['tau_s']:.9g} sigma={w['sigma_aw_mps2']:.9g} RS={w['R_S_std']:.9g}"
+                  )
+          PY
