@@ -34,15 +34,37 @@ using Eigen::Matrix;
 
 #include "kalman_ou_common/KalmanOUCoreMath.h"
 
-template <typename T = float, bool with_gyro_bias = true, bool with_accel_bias = true>
+namespace ocean_imu::kalman::ou_detail {
+
+// Scalars that only the self-calibrating lever-arm instantiation needs.
+// Empty when the states are compiled out, so a [[no_unique_address]] member
+// of this type costs the default filter nothing at all -- not a byte of
+// storage and not a shift in any other member's offset.
+template <bool Enabled, typename Scalar>
+struct LeverArmCalib {
+    bool   estimating = false;   // caller asked for r to be estimated
+    bool   frozen     = false;   // held (warmup, or by request)
+    Scalar q          = Scalar(1e-10);  // random-walk driving variance [m^2/s]
+    Scalar limit      = Scalar(20);     // radius of the ball r is confined to [m]
+    Scalar prior_var  = Scalar(0);      // prior variance a full reset restores
+};
+
+template <typename Scalar>
+struct LeverArmCalib<false, Scalar> {};
+
+} // namespace ocean_imu::kalman::ou_detail
+
+template <typename T = float, bool with_gyro_bias = true, bool with_accel_bias = true,
+          bool with_lever_arm = false>
 class Kalman3D_Wave_OU_III {
 
     // Base (att_err + optional gyro bias)
     static constexpr int BASE_N = with_gyro_bias ? 6 : 3;
 
-    // Extended added states: v(3), p(3), S(3), a_w(3) [+ b_acc(3)]
+    // Extended added states: v(3), p(3), S(3), a_w(3) [+ b_acc(3)] [+ r_imu(3)]
     static constexpr int EXT_ADD = 12
-        + (with_accel_bias ? 3 : 0);
+        + (with_accel_bias ? 3 : 0)
+        + (with_lever_arm ? 3 : 0);
 
     static constexpr int NX = BASE_N + EXT_ADD;
 
@@ -53,6 +75,15 @@ class Kalman3D_Wave_OU_III {
     static constexpr int OFF_AW  = BASE_N + 9;
 
     static constexpr int OFF_BA  = with_accel_bias ? (BASE_N + 12) : -1;
+
+    // Self-calibrated IMU lever arm r (position of the IMU relative to the
+    // point the linear states track), in the *physical* BODY frame B.  Off by
+    // default: with_lever_arm == false leaves NX, every block index and every
+    // arithmetic operation below exactly as they were, so a build that does
+    // not ask for the states pays nothing for them and reproduces the previous
+    // realization bit for bit.
+    static constexpr int OFF_R   = with_lever_arm
+        ? (BASE_N + 12 + (with_accel_bias ? 3 : 0)) : -1;
 
 
     typedef Matrix<T, 3, 1> Vector3;
@@ -208,6 +239,15 @@ class Kalman3D_Wave_OU_III {
     void set_warmup_mode(bool on) {
         set_linear_block_enabled(!on);                 // off during warmup
         set_acc_bias_updates_enabled(!on);             // freeze BA during warmup
+        if constexpr (with_lever_arm) {
+            // An installation constant is not something warmup should throw
+            // away.  Warmup only stops the estimator fitting geometry against
+            // an attitude solution that has not converged yet.
+            if (lever_.estimating) {
+                set_lever_arm_updates_frozen(on);
+                return;
+            }
+        }
         if (on) clear_imu_lever_arm();                 // optional: safest during warmup
     }
 
@@ -569,16 +609,235 @@ class Kalman3D_Wave_OU_III {
 	    command_sigma_S(sigma_S_cmd);
 	}
 
+    // ---------------------------------------------------------------------
     // IMU lever-arm API
-    // r_b: IMU position w.r.t. CoG in the *physical* BODY frame B [m].
-    // Internally we de-heel this into B' each step when applying lever-arm kinematics.
+    // ---------------------------------------------------------------------
+    //
+    // The lever arm r is the position of the IMU relative to the point whose
+    // motion the linear states [v, p, S, a_w] describe, in the *physical*
+    // BODY frame B (what you measure on the boat with a tape).  Internally we
+    // de-heel it into B' each step when applying lever-arm kinematics.
+    //
+    // There are two ways to supply it:
+    //
+    //  * as a survey constant -- set_imu_lever_arm_body(), estimation left
+    //    off.  The filter subtracts alpha x r + omega x (omega x r) from its
+    //    predicted specific force and never questions r.  This is the
+    //    "gyro-derived model" of the lever-arm study: it reconstructs the
+    //    *kinematics* from the measured rate, but the *geometry* is an input.
+    //
+    //  * as estimated states -- enable_imu_lever_arm_estimation(), available
+    //    only when the class is instantiated with with_lever_arm = true.  r
+    //    then becomes three more filter states, corrected by the same
+    //    accelerometer update that corrects attitude and the biases, and read
+    //    back through get_imu_lever_arm_body() with a covariance of its own.
+    //    set_imu_lever_arm_body() is then a prior mean rather than the answer,
+    //    and Vector3::Zero() is a legitimate prior: it says "near the tracked
+    //    point, but I do not know where".
+    //
+    // What makes the second one work is that the rotational term is *linear*
+    // in r,
+    //
+    //     a_lever = alpha x r + omega x (omega x r) = M(omega, alpha) r,
+    //     M(omega, alpha) = [alpha]x + [omega]x [omega]x,
+    //
+    // so its Jacobian with respect to r is M itself: exact, cheap, and with no
+    // linearization error of its own.  Observability is the real constraint,
+    // not the algebra.  M(omega, alpha) annihilates any r parallel to the
+    // instantaneous rotation axis, so a vessel turning about one fixed axis
+    // never reveals the component of r along it; a seaway rolls, pitches and
+    // yaws at once and the axis wanders, which is what makes r identifiable
+    // there over minutes.  A flat calm reveals nothing at all, and the
+    // estimate then simply has to hold -- which is what the small random walk
+    // and the ball projection below are for.
     void set_imu_lever_arm_body(const Vector3& r_b) {
         r_imu_wrt_cog_body_phys_ = r_b;
+        if constexpr (with_lever_arm) {
+            xext.template segment<3>(OFF_R) = r_b;
+            // A zero *prior* is meaningful while estimating, so the lever-arm
+            // term stays in the measurement model either way; without
+            // estimation the historical "zero means off" rule is preserved.
+            use_imu_lever_arm_ = lever_.estimating || (r_b.squaredNorm() > T(0));
+            return;
+        }
         use_imu_lever_arm_ = (r_b.squaredNorm() > T(0));
     }
     void clear_imu_lever_arm() {
         r_imu_wrt_cog_body_phys_.setZero();
+        if constexpr (with_lever_arm) {
+            xext.template segment<3>(OFF_R).setZero();
+            lever_.estimating = false;
+            decouple_lever_arm_();
+        }
         use_imu_lever_arm_ = false;
+    }
+
+    // Current lever arm [m], physical BODY frame B.  With estimation off this
+    // is whatever was supplied; with estimation on it is a filter output.
+    [[nodiscard]] Vector3 get_imu_lever_arm_body() const {
+        if constexpr (with_lever_arm) {
+            if (lever_.estimating) return xext.template segment<3>(OFF_R);
+        }
+        return r_imu_wrt_cog_body_phys_;
+    }
+
+    // Cheapest consistency check a caller can make: the value the prediction
+    // reads and the value the state holds must be the same vector.
+    [[nodiscard]] bool lever_arm_mirror_consistent(T tol = T(1e-6)) const {
+        if constexpr (with_lever_arm) {
+            if (!lever_.estimating) return true;
+            return (xext.template segment<3>(OFF_R) - r_imu_wrt_cog_body_phys_)
+                       .cwiseAbs().maxCoeff() <= tol;
+        }
+        (void)tol;
+        return true;
+    }
+
+    // Marginal covariance of the lever-arm estimate [m^2].  Zero when the
+    // states are not compiled in, which is how a caller can tell that
+    // get_imu_lever_arm_body() is an input rather than an estimate.
+    [[nodiscard]] Matrix3 get_imu_lever_arm_covariance() const {
+        if constexpr (with_lever_arm) {
+            return Pext.template block<3,3>(OFF_R, OFF_R);
+        }
+        return Matrix3::Zero();
+    }
+
+    [[nodiscard]] static constexpr bool has_lever_arm_states() { return with_lever_arm; }
+    [[nodiscard]] static constexpr int state_dimension() { return NX; }
+
+    // The rigid-body term an IMU at r sees on top of the tracked point's
+    // specific force, and its derivative with respect to r.  Exposed because
+    // they *are* the model: a caller can check the filter's arithmetic against
+    // them, and a caller that wants to compensate outside the filter can use
+    // the same function the filter uses inside it.
+    [[nodiscard]] static Vector3 lever_arm_acceleration(const Vector3& omega,
+                                                        const Vector3& alpha,
+                                                        const Vector3& r) {
+        return alpha.cross(r) + omega.cross(omega.cross(r));
+    }
+
+    // d/dr of the above.  The term is linear in r, so this is exact.
+    [[nodiscard]] static Matrix3 lever_arm_sensitivity(const Vector3& omega,
+                                                       const Vector3& alpha) {
+        Matrix3 Ax, Wx;
+        Ax <<        T(0), -alpha.z(),  alpha.y(),
+               alpha.z(),        T(0), -alpha.x(),
+              -alpha.y(),  alpha.x(),        T(0);
+        Wx <<        T(0), -omega.z(),  omega.y(),
+               omega.z(),        T(0), -omega.x(),
+              -omega.y(),  omega.x(),        T(0);
+        return Ax + Wx * Wx;
+    }
+
+    [[nodiscard]] bool imu_lever_arm_estimation_enabled() const {
+        if constexpr (with_lever_arm) return lever_.estimating;
+        return false;
+    }
+
+    // True while the states exist and are actually being corrected: estimation
+    // was asked for, and nothing is holding it.
+    [[nodiscard]] bool imu_lever_arm_updates_active() const {
+        if constexpr (with_lever_arm) return lever_.estimating && !lever_.frozen;
+        return false;
+    }
+
+    /*
+      Turn the lever arm into estimated states.
+
+      r0      prior mean [m], BODY frame B.  Zero is a fine prior.
+      sigma0  prior std per axis [m].  Make this the honest size of what is not
+              known: 0.5 m for "somewhere on this boat", 0.02 m for "surveyed,
+              but confirm it".
+
+      Compiles to nothing unless with_lever_arm is true, so the same startup
+      code can be written for both instantiations.
+    */
+    void enable_imu_lever_arm_estimation(const Vector3& r0, T sigma0) {
+        if constexpr (with_lever_arm) {
+            lever_.estimating = true;
+            lever_.frozen = false;
+            r_imu_wrt_cog_body_phys_ = r0;
+            xext.template segment<3>(OFF_R) = r0;
+            const T sig = std::max(T(0), sigma0);
+            lever_.prior_var = sig * sig;
+            decouple_lever_arm_();
+            Pext.template block<3,3>(OFF_R, OFF_R) = Matrix3::Identity() * lever_.prior_var;
+            use_imu_lever_arm_ = true;
+        } else {
+            (void)r0; (void)sigma0;
+        }
+    }
+
+    // Stop estimating and keep what was learned as the constant the
+    // measurement model uses from now on.
+    void disable_imu_lever_arm_estimation(bool keep_estimate_as_constant = true) {
+        if constexpr (with_lever_arm) {
+            r_imu_wrt_cog_body_phys_ = xext.template segment<3>(OFF_R);
+            lever_.estimating = false;
+            decouple_lever_arm_();
+            use_imu_lever_arm_ = keep_estimate_as_constant &&
+                (r_imu_wrt_cog_body_phys_.squaredNorm() > T(0));
+        } else {
+            (void)keep_estimate_as_constant;
+        }
+    }
+
+    /*
+      Driving-noise density of the lever-arm random walk [m per sqrt(s)].
+
+      A bolted IMU does not move, so this is not a model of the installation:
+      it is what stops the estimator locking up once the covariance has
+      collapsed, and what lets it re-converge if the sensor really is
+      re-mounted.  The default is small enough that the state wanders well
+      under a millimetre across a calm day, and large enough that a re-mount is
+      picked up within an hour of lively motion.
+    */
+    void set_lever_arm_random_walk(T density_m_per_sqrt_s) {
+        if constexpr (with_lever_arm) {
+            const T s = std::max(T(0), density_m_per_sqrt_s);
+            lever_.q = s * s;
+        } else {
+            (void)density_m_per_sqrt_s;
+        }
+    }
+    [[nodiscard]] T get_lever_arm_random_walk() const {
+        if constexpr (with_lever_arm) return std::sqrt(lever_.q);
+        return T(0);
+    }
+
+    /*
+      Radius of the ball the lever-arm estimate is confined to [m].  The bound
+      is a statement about the vessel rather than about the filter: no IMU on a
+      boat this library runs on is 20 m from the point being tracked, so an
+      estimate that runs past it has stopped being a lever arm and is absorbing
+      something else.  Set <= 0 to disable the projection.
+    */
+    void set_lever_arm_limit(T radius_m) {
+        if constexpr (with_lever_arm) lever_.limit = radius_m;
+        else (void)radius_m;
+    }
+    [[nodiscard]] T get_lever_arm_limit() const {
+        if constexpr (with_lever_arm) return lever_.limit;
+        return T(0);
+    }
+
+    // Stop / resume corrections of r without discarding what is known about
+    // it.  Used by warmup, and available to a caller that wants to hold the
+    // calibration while something else is re-initialized.
+    void set_lever_arm_updates_frozen(bool frozen) {
+        if constexpr (with_lever_arm) {
+            if (lever_.frozen == frozen) return;
+            if (frozen) {
+                // The policy the accelerometer bias already uses when frozen:
+                // stop other channels driving a held state through what is now
+                // a stale correlation.
+                decouple_lever_arm_();
+            }
+            lever_.frozen = frozen;
+        } else {
+            (void)frozen;
+        }
     }
 
     void set_alpha_smoothing_tau(T tau_sec) { alpha_smooth_tau_ = std::max(T(0), tau_sec); }
@@ -959,6 +1218,69 @@ class Kalman3D_Wave_OU_III {
         }
     }
 
+    // Zero the gain rows of the lever arm, so a measurement leaves a held
+    // calibration exactly where it was.
+    EIGEN_STRONG_INLINE void freeze_lever_arm_rows_(MatrixNX3& M) const {
+        if constexpr (with_lever_arm) {
+            M.template block<3,3>(OFF_R, 0).setZero();
+        }
+    }
+
+    /*
+      Drop every cross-covariance between the lever arm and the rest of the
+      state, keeping the calibration's own variance.
+
+      Used when the calibration is re-seeded or held: a correlation learned
+      against a state that has since been re-initialized is worse than no
+      correlation at all.  What must survive is P_rr itself -- zeroing it would
+      claim perfect knowledge of r, and the gain would then be identically zero
+      for the rest of the run, so a held calibration could never resume.
+    */
+    void decouple_lever_arm_() {
+        if constexpr (with_lever_arm) {
+            const Matrix3 P_rr = Pext.template block<3,3>(OFF_R, OFF_R);
+            Pext.template block<3,NX>(OFF_R, 0).setZero();
+            Pext.template block<NX,3>(0, OFF_R).setZero();
+            Pext.template block<3,3>(OFF_R, OFF_R) = P_rr;
+        }
+    }
+
+    /*
+      Project the lever-arm estimate onto the ball of radius lever_.limit, then
+      publish it into r_imu_wrt_cog_body_phys_.
+
+      That second step is what lets the measurement model keep reading the
+      lever arm from one place.  r_imu_wrt_cog_body_phys_ is the value the
+      prediction uses; while the arm is estimated this call is what keeps it
+      equal to the state, and it runs after every update that can move the
+      state, so the two never disagree at a point where either is read.  The
+      measurement code is then character-for-character what it was before the
+      states existed, which is what keeps a build without them identical.
+    */
+    void sync_and_project_lever_arm_() {
+        if constexpr (with_lever_arm) {
+            auto r = xext.template segment<3>(OFF_R);
+            if (!r.allFinite()) { r = r_imu_wrt_cog_body_phys_; return; }
+            if (lever_.limit > T(0)) {
+                const T n = r.norm();
+                if (n > lever_.limit) r *= (lever_.limit / n);
+            }
+            r_imu_wrt_cog_body_phys_ = r;
+        }
+    }
+
+    // Lever-arm sensitivity of the predicted specific force,
+    //   d/dr [ alpha x r + omega x (omega x r) ] = [alpha]x + [omega]x [omega]x,
+    // expressed against r in the *physical* body frame B by composing with the
+    // de-heel rotation B -> B'.  Exact, not a linearization: the term is
+    // linear in r.
+    Matrix3 lever_arm_jacobian_(const Vector3& omega_bprime,
+                                const Vector3& alpha_bprime) const {
+        const Matrix3 M = lever_arm_sensitivity(omega_bprime, alpha_bprime);
+        if (std::abs(wind_heel_rad_) < T(1e-9)) return M;
+        return M * Rx_(-wind_heel_rad_);
+    }
+
     // Steady wind heel model (roll about BODY X)
     // wind_heel_rad_ : current steady heel in radians (hull frame)
     // Internally we work in a virtual "un-heeled" body frame B'
@@ -1177,12 +1499,18 @@ class Kalman3D_Wave_OU_III {
 	    log_tau_aw_f_.update(z);
 	    refresh_model_params_from_filtered_();
 	}
+
+    // The lever-arm calibration's own scalars.  They live in a member that is
+    // empty in the default instantiation, so a build without the states keeps
+    // the exact size and layout of the class it had before -- which is what
+    // makes that build bit-for-bit identical rather than merely equivalent.
+    [[no_unique_address]] ocean_imu::kalman::ou_detail::LeverArmCalib<with_lever_arm, T> lever_{};
 };
 
 // Implementation
 
-template <typename T, bool with_gyro_bias, bool with_accel_bias>
-Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::Kalman3D_Wave_OU_III(
+template <typename T, bool with_gyro_bias, bool with_accel_bias, bool with_lever_arm>
+Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias, with_lever_arm>::Kalman3D_Wave_OU_III(
     Vector3 const& sigma_a,
     Vector3 const& gyro_noise_density_rad_sqrt_s,
     Vector3 const& sigma_m,
@@ -1266,10 +1594,10 @@ Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::Kalman3D_Wave_OU_III(
 	}
 }
 
-template<typename T, bool with_gyro_bias, bool with_accel_bias>
-typename Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::MatrixBaseN
-Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::initialize_Q(
-              typename Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::Vector3 gyro_noise_density_rad_sqrt_s, T b0) {
+template<typename T, bool with_gyro_bias, bool with_accel_bias, bool with_lever_arm>
+typename Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias, with_lever_arm>::MatrixBaseN
+Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias, with_lever_arm>::initialize_Q(
+              typename Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias, with_lever_arm>::Vector3 gyro_noise_density_rad_sqrt_s, T b0) {
     MatrixBaseN Q; Q.setZero();
     if constexpr (with_gyro_bias) {
         Q.template topLeftCorner<3,3>() = gyro_noise_density_rad_sqrt_s.array().square().matrix().asDiagonal(); // gyro RW
@@ -1280,8 +1608,8 @@ Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::initialize_Q(
     return Q;
 }
 
-template <typename T, bool with_gyro_bias, bool with_accel_bias>
-void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::set_aw_stationary_cov_full(const Matrix3& Sigma_in)
+template <typename T, bool with_gyro_bias, bool with_accel_bias, bool with_lever_arm>
+void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias, with_lever_arm>::set_aw_stationary_cov_full(const Matrix3& Sigma_in)
 {
     Matrix3 S = T(0.5) * (Sigma_in + Sigma_in.transpose());
     ocean_imu::kalman::ou_detail::regularize_psd_if_needed<T,3>(S);
@@ -1298,8 +1626,8 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::set_aw_stationary
 // Inputs:
 //   acc_body  — accelerometer specific force in body frame (NED)
 //   mag_body  — magnetometer measurement in body frame (NED)
-template<typename T, bool with_gyro_bias, bool with_accel_bias>
-void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::initialize_from_acc_mag(
+template<typename T, bool with_gyro_bias, bool with_accel_bias, bool with_lever_arm>
+void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias, with_lever_arm>::initialize_from_acc_mag(
     Vector3 const& acc_body,
     Vector3 const& mag_body)
 {
@@ -1375,9 +1703,9 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::initialize_from_a
     symmetrize_Pext_();
 }
 
-template<typename T, bool with_gyro_bias, bool with_accel_bias>
+template<typename T, bool with_gyro_bias, bool with_accel_bias, bool with_lever_arm>
 Eigen::Quaternion<T>
-Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::quaternion_from_acc(Vector3 const& acc)
+Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias, with_lever_arm>::quaternion_from_acc(Vector3 const& acc)
 {
     // Raw accelerometer is specific force; at rest in NED: acc ≈ (0,0,-g) in body
     // We want body +Z (down) to align with world +Z (down), i.e. align zb to -acc.
@@ -1410,8 +1738,8 @@ Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::quaternion_from_acc(Ve
     return q;
 }
 
-template<typename T, bool with_gyro_bias, bool with_accel_bias>
-void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::initialize_from_acc(Vector3 const& acc_body)
+template<typename T, bool with_gyro_bias, bool with_accel_bias, bool with_lever_arm>
+void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias, with_lever_arm>::initialize_from_acc(Vector3 const& acc_body)
 {
     const Vector3 acc = deheel_vector_(acc_body);
 
@@ -1462,8 +1790,8 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::initialize_from_a
 // world-down axis, and the attitude-to-bias cross-covariances are dropped,
 // since a correlation learned against the discarded attitude does not describe
 // the new one.
-template<typename T, bool with_gyro_bias, bool with_accel_bias>
-void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::initialize_from_attitude(
+template<typename T, bool with_gyro_bias, bool with_accel_bias, bool with_lever_arm>
+void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias, with_lever_arm>::initialize_from_attitude(
     Eigen::Quaternion<T> const& q_bw,
     T tilt_sigma_rad,
     T yaw_sigma_rad)
@@ -1506,8 +1834,8 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::initialize_from_a
     symmetrize_Pext_();
 }
 
-template<typename T, bool with_gyro_bias, bool with_accel_bias>
-void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::initialize_from_acc_preserve_yaw(
+template<typename T, bool with_gyro_bias, bool with_accel_bias, bool with_lever_arm>
+void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias, with_lever_arm>::initialize_from_acc_preserve_yaw(
     Vector3 const& acc_body)
 {
     const Eigen::Quaternion<T> q_old_bw = quaternion_boat();
@@ -1556,8 +1884,8 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::initialize_from_a
     set_quaternion_boat(q_new_bw);
 }
 
-template <typename T, bool with_gyro_bias, bool with_accel_bias>
-void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::initialize_from_truth(
+template <typename T, bool with_gyro_bias, bool with_accel_bias, bool with_lever_arm>
+void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias, with_lever_arm>::initialize_from_truth(
     const Vector3 &p_ned, const Vector3 &v_ned,
     const Eigen::Quaternion<T> &q_bw, const Vector3 &a_w_ned)
 {
@@ -1576,6 +1904,12 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::initialize_from_t
     }
     if constexpr (with_accel_bias) {
         xext.template segment<3>(OFF_BA).setZero();  // accel bias block
+    }
+    if constexpr (with_lever_arm) {
+        // The lever arm is geometry, not a navigation state: seeding the
+        // filter from truth does not un-install the IMU, so the calibration
+        // (or the supplied constant) survives the reset above.
+        xext.template segment<3>(OFF_R) = r_imu_wrt_cog_body_phys_;
     }
 
     // Input q_bw is the PHYSICAL boat/body attitude B->W.
@@ -1608,6 +1942,16 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::initialize_from_t
     const T p_0 = T(1e-5);
     Pext.diagonal().array() = p_0;
 
+    if constexpr (with_lever_arm) {
+        // The truth seed knows nothing about the installation, so the lever
+        // arm goes back to its prior width rather than inheriting p_0, which
+        // would claim 3 mm of confidence the caller never offered.
+        if (lever_.prior_var > p_0) {
+            Pext.template block<3,3>(OFF_R, OFF_R) =
+                Matrix3::Identity() * lever_.prior_var;
+        }
+    }
+
     // Keep cached kinematics coherent with the fresh reset
     last_gyr_bias_corrected.setZero();
     prev_omega_b_.setZero();
@@ -1615,8 +1959,8 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::initialize_from_t
     have_prev_omega_ = false;
 }
 
-template<typename T, bool with_gyro_bias, bool with_accel_bias>
-void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::time_update(
+template<typename T, bool with_gyro_bias, bool with_accel_bias, bool with_lever_arm>
+void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias, with_lever_arm>::time_update(
     Vector3 const& gyr_body, T Ts)
 {
     last_dt_ = Ts;   // Remember last dt
@@ -1941,6 +2285,59 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::time_update(
             Pext.template block<NL,NB>(OFF_V,OFF_BA) = tmpLB;
             Pext.template block<NB,NL>(OFF_BA,OFF_V) = tmpLB.transpose();
         }
+        if constexpr (with_lever_arm) {
+            // P_{b_a r} carries the same phi_b the bias itself does.
+            constexpr int NR = 3;
+            Eigen::Matrix<T,NB,NR> P_BR = Pext.template block<NB,NR>(OFF_BA, OFF_R);
+            P_BR *= phi_b;
+            Pext.template block<NB,NR>(OFF_BA, OFF_R) = P_BR;
+            Pext.template block<NR,NB>(OFF_R, OFF_BA) = P_BR.transpose();
+        }
+    }
+
+    // Lever arm: a rigid installation constant, so F_RR = I and the only
+    // process term is the small random walk that keeps the state adaptable.
+    // Its cross-covariances still move, because everything they are correlated
+    // with moves.
+    if constexpr (with_lever_arm) {
+        constexpr int NA = BASE_N;
+        constexpr int NR = 3;
+
+        // P_AR <- F_AA P_AR
+        Eigen::Matrix<T,NA,NR> tmpAR;
+        for (int i = 0; i < NA; ++i) {
+            for (int j = 0; j < NR; ++j) {
+                T sum = T(0);
+                for (int k = 0; k < NA; ++k) {
+                    sum += F_AA(i,k) * Pext(k, OFF_R + j);
+                }
+                tmpAR(i,j) = sum;
+            }
+        }
+        Pext.template block<NA,NR>(0, OFF_R) = tmpAR;
+        Pext.template block<NR,NA>(OFF_R, 0) = tmpAR.transpose();
+
+        // P_LR <- F_LL P_LR
+        if (linear_block_enabled_) {
+            constexpr int NL = 12;
+            Eigen::Matrix<T,NL,NR> tmpLR;
+            for (int i = 0; i < NL; ++i) {
+                for (int j = 0; j < NR; ++j) {
+                    T sum = T(0);
+                    for (int k = 0; k < NL; ++k) {
+                        sum += F_LL(i,k) * Pext(OFF_V + k, OFF_R + j);
+                    }
+                    tmpLR(i,j) = sum;
+                }
+            }
+            Pext.template block<NL,NR>(OFF_V, OFF_R) = tmpLR;
+            Pext.template block<NR,NL>(OFF_R, OFF_V) = tmpLR.transpose();
+        }
+
+        if (imu_lever_arm_updates_active() && Ts > T(0)) {
+            auto P_RR = Pext.template block<NR,NR>(OFF_R, OFF_R);
+            for (int i = 0; i < NR; ++i) P_RR(i,i) += lever_.q * Ts;
+        }
     }
 
     if (linear_block_enabled_) {
@@ -1956,8 +2353,8 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::time_update(
     }
 }
 
-template<typename T, bool with_gyro_bias, bool with_accel_bias>
-void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::measurement_update_acc_only(
+template<typename T, bool with_gyro_bias, bool with_accel_bias, bool with_lever_arm>
+void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias, with_lever_arm>::measurement_update_acc_only(
     Vector3 const& acc_meas_body, T tempC)
 {
     last_acc_diag_ = MeasDiag3{};
@@ -1971,7 +2368,11 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::measurement_updat
     // Physical accelerometer measurement model
     const Vector3 g_world(0,0,+gravity_magnitude_);
 
-    // Lever-arm term (for non-full-model branches and J_bg)
+    // Lever-arm term (for non-full-model branches and J_bg).  While the lever
+    // arm is being estimated, lever_arm_body_current_() reads it from the
+    // state, so the term this update predicts and the term this update
+    // corrects are the same one; otherwise it is the supplied constant,
+    // exactly as before.
     Vector3 lever = Vector3::Zero();
     if (use_imu_lever_arm_) {
         const Vector3& omega_bprime = last_gyr_bias_corrected; // ω^{B'}
@@ -2131,6 +2532,43 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::measurement_updat
                 }
             }
         }
+        // Lever-arm states.  Every state this update already touches is
+        // correlated with r, so each contributes a cross term; the gyro-bias
+        // one matters most, because b_g enters both the omega and the
+        // reconstructed alpha that multiply r.
+        if constexpr (with_lever_arm) {
+            if (imu_lever_arm_updates_active()) {
+                const Matrix3 J_r =
+                    lever_arm_jacobian_(last_gyr_bias_corrected, alpha_b_);
+
+                const Matrix3 P_th_r = Pext.template block<3,3>(OFF_TH, OFF_R);
+                const Matrix3 P_r_r  = Pext.template block<3,3>(OFF_R,  OFF_R);
+
+                S_mat.noalias() += J_att * P_th_r * J_r.transpose();
+                S_mat.noalias() += J_r * P_th_r.transpose() * J_att.transpose();
+                S_mat.noalias() += J_r * P_r_r * J_r.transpose();
+
+                if (linear_block_enabled_) {
+                    const Matrix3 P_aw_r = Pext.template block<3,3>(OFF_AW, OFF_R);
+                    S_mat.noalias() += J_aw * P_aw_r * J_r.transpose();
+                    S_mat.noalias() += J_r * P_aw_r.transpose() * J_aw.transpose();
+                }
+                if constexpr (with_accel_bias) {
+                    // J_ba = I, and the bias cross-term is marginalized in
+                    // exactly as it is above whether or not BA is updating.
+                    const Matrix3 P_ba_r = Pext.template block<3,3>(OFF_BA, OFF_R);
+                    S_mat.noalias() += P_ba_r.transpose() * J_r.transpose();
+                    S_mat.noalias() += J_r * P_ba_r;
+                }
+                if constexpr (with_gyro_bias) {
+                    if (use_imu_lever_arm_) {
+                        const Matrix3 P_bg_r = Pext.template block<3,3>(3, OFF_R);
+                        S_mat.noalias() += J_bg * P_bg_r * J_r.transpose();
+                        S_mat.noalias() += J_r * P_bg_r.transpose() * J_bg.transpose();
+                    }
+                }
+            }
+        }
     }
 
     // PCᵀ = P Cᵀ (NX×3)
@@ -2156,12 +2594,23 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::measurement_updat
                 PCt.noalias() += P_all_bg * J_bg.transpose();
             }
         }
+        if constexpr (with_lever_arm) {
+            if (imu_lever_arm_updates_active()) {
+                const Matrix3 J_r =
+                    lever_arm_jacobian_(last_gyr_bias_corrected, alpha_b_);
+                const auto P_all_r = Pext.template block<NX,3>(0, OFF_R);
+                PCt.noalias() += P_all_r * J_r.transpose();
+            }
+        }
     }
     if (!linear_block_enabled_) {
         freeze_linear_rows_(PCt);
     }
     if constexpr (with_accel_bias) {
         if (!use_ba) freeze_acc_bias_rows_(PCt);
+    }
+    if constexpr (with_lever_arm) {
+        if (!imu_lever_arm_updates_active()) freeze_lever_arm_rows_(PCt);
     }
 
     // Gain
@@ -2185,17 +2634,24 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::measurement_updat
     if constexpr (with_accel_bias) {
         if (!use_ba) freeze_acc_bias_rows_(K);
     }
+    if constexpr (with_lever_arm) {
+        if (!imu_lever_arm_updates_active()) freeze_lever_arm_rows_(K);
+    }
 
     xext.noalias() += K * r;          // State update
     joseph_update3_(K, S_mat, PCt);   // Covariance update
+
+    if constexpr (with_lever_arm) {
+        if (imu_lever_arm_updates_active()) sync_and_project_lever_arm_();
+    }
 
     // Apply quaternion correction
     applyQuaternionCorrectionFromErrorState();
     last_acc_diag_.accepted = true;
 }
 
-template<typename T, bool with_gyro_bias, bool with_accel_bias>
-void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::measurement_update_mag_only(
+template<typename T, bool with_gyro_bias, bool with_accel_bias, bool with_lever_arm>
+void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias, with_lever_arm>::measurement_update_mag_only(
     const Vector3& mag_meas_body)
 {
     last_mag_diag_ = MeasDiag3{};
@@ -2244,6 +2700,12 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::measurement_updat
 		    freeze_acc_bias_rows_(PCt);
 		}
     }
+    // The magnetometer says nothing about r directly, but it corrects the
+    // attitude r is correlated with, so it does reach the calibration -- unless
+    // the calibration is being held.
+    if constexpr (with_lever_arm) {
+        if (!imu_lever_arm_updates_active()) freeze_lever_arm_rows_(PCt);
+    }
 
     Eigen::LDLT<Matrix3> ldlt;
     if (!safe_ldlt3_(S_mat, ldlt, Rmag.norm())) {
@@ -2266,19 +2728,25 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::measurement_updat
 		    freeze_acc_bias_rows_(K);
 		}
     }
+    if constexpr (with_lever_arm) {
+        if (!imu_lever_arm_updates_active()) freeze_lever_arm_rows_(K);
+    }
 
     // State + covariance update
     xext.noalias() += K * r;
     joseph_update3_(K, S_mat, PCt);
+    if constexpr (with_lever_arm) {
+        if (imu_lever_arm_updates_active()) sync_and_project_lever_arm_();
+    }
     applyQuaternionCorrectionFromErrorState();
 	last_mag_diag_.accepted = true;
 }
 
 // specific force prediction (BODY'):
 //   f_b' = R_wb (a_w − g) + α^{B'} × r_imu^{B'} + ω^{B'} × (ω^{B'} × r_imu^{B'}) + b_a(temp)
-template<typename T, bool with_gyro_bias, bool with_accel_bias>
+template<typename T, bool with_gyro_bias, bool with_accel_bias, bool with_lever_arm>
 Matrix<T,3,1>
-Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::accelerometer_measurement_func(T tempC) const {
+Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias, with_lever_arm>::accelerometer_measurement_func(T tempC) const {
     const Vector3 g_world(0,0,+gravity_magnitude_);
     const Vector3 aw = xext.template segment<3>(OFF_AW);
 
@@ -2305,8 +2773,8 @@ Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::accelerometer_measurem
 }
 
 // utility functions
-template<typename T, bool with_gyro_bias, bool with_accel_bias>
-Matrix<T, 3, 3> Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::skew_symmetric_matrix(const Eigen::Ref<const Vector3>& vec) const {
+template<typename T, bool with_gyro_bias, bool with_accel_bias, bool with_lever_arm>
+Matrix<T, 3, 3> Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias, with_lever_arm>::skew_symmetric_matrix(const Eigen::Ref<const Vector3>& vec) const {
     Matrix3 M;
     M << 0, -vec(2), vec(1),
          vec(2), 0, -vec(0),
@@ -2314,15 +2782,15 @@ Matrix<T, 3, 3> Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::skew_s
     return M;
 }
 
-template<typename T, bool with_gyro_bias, bool with_accel_bias>
-void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::apply_error_state_reset_jacobian_(
+template<typename T, bool with_gyro_bias, bool with_accel_bias, bool with_lever_arm>
+void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias, with_lever_arm>::apply_error_state_reset_jacobian_(
     const Vector3& dtheta_injected)
 {
     ocean_imu::kalman::ou_detail::apply_left_error_reset<T, NX>(Pext, dtheta_injected);
 }
 
-template<typename T, bool with_gyro_bias, bool with_accel_bias>
-void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::applyQuaternionCorrectionFromErrorState()
+template<typename T, bool with_gyro_bias, bool with_accel_bias, bool with_lever_arm>
+void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias, with_lever_arm>::applyQuaternionCorrectionFromErrorState()
 {
     const Vector3 dtheta = xext.template segment<3>(0);
 
@@ -2355,8 +2823,8 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::applyQuaternionCo
   acc_bias_limit_. Called after every state injection, so the bound holds at
   all times. See set_accel_bias_limit().
 */
-template<typename T, bool with_gyro_bias, bool with_accel_bias>
-void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::project_acc_bias_()
+template<typename T, bool with_gyro_bias, bool with_accel_bias, bool with_lever_arm>
+void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias, with_lever_arm>::project_acc_bias_()
 {
     if constexpr (with_accel_bias) {
         if (!(acc_bias_limit_ > T(0))) return;
@@ -2371,8 +2839,8 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::project_acc_bias_
     }
 }
 
-template<typename T, bool with_gyro_bias, bool with_accel_bias>
-void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::applyIntegralZeroPseudoMeas()
+template<typename T, bool with_gyro_bias, bool with_accel_bias, bool with_lever_arm>
+void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias, with_lever_arm>::applyIntegralZeroPseudoMeas()
 {
     if (!linear_block_enabled_) return;
 
@@ -2391,6 +2859,9 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::applyIntegralZero
 	if constexpr (with_accel_bias) {
         if (!acc_bias_updates_enabled_) freeze_acc_bias_rows_(PCt);
     }
+    if constexpr (with_lever_arm) {
+        if (!imu_lever_arm_updates_active()) freeze_lever_arm_rows_(PCt);
+    }
 
     Eigen::LDLT<Matrix3> ldlt;
     if (!safe_ldlt3_(S_mat, ldlt, R_S.norm())) return;
@@ -2399,16 +2870,22 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::applyIntegralZero
     if constexpr (with_accel_bias) {
         if (!acc_bias_updates_enabled_) freeze_acc_bias_rows_(K);
     }
+    if constexpr (with_lever_arm) {
+        if (!imu_lever_arm_updates_active()) freeze_lever_arm_rows_(K);
+    }
 
     xext.noalias() += K * r;            // State update
     joseph_update3_(K, S_mat, PCt);     // Covariance update
+    if constexpr (with_lever_arm) {
+        if (imu_lever_arm_updates_active()) sync_and_project_lever_arm_();
+    }
 
     // Apply quaternion correction (attitude may get nudged via cross-covariances)
     applyQuaternionCorrectionFromErrorState();
 }
 
-template<typename T, bool with_gyro_bias, bool with_accel_bias>
-void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::measurement_update_position_pseudo(
+template<typename T, bool with_gyro_bias, bool with_accel_bias, bool with_lever_arm>
+void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias, with_lever_arm>::measurement_update_position_pseudo(
     const Vector3& p_meas, const Vector3& sigma_meas)
 {
     if (!linear_block_enabled_) return;
@@ -2453,16 +2930,25 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::measurement_updat
 
     MatrixNX3& K = K_scratch_;
     gain_from_ldlt3_(PCt, ldlt, K);
+    if constexpr (with_lever_arm) {
+        if (!imu_lever_arm_updates_active()) {
+            freeze_lever_arm_rows_(PCt);
+            freeze_lever_arm_rows_(K);
+        }
+    }
 
     xext.noalias() += K * r;           // State update
     joseph_update3_(K, S_mat, PCt);    // Covariance update (Joseph form, 3D)
 
+    if constexpr (with_lever_arm) {
+        if (imu_lever_arm_updates_active()) sync_and_project_lever_arm_();
+    }
     // Attitude may have been nudged via cross-covariance → apply correction
     applyQuaternionCorrectionFromErrorState();
 }
 
-template<typename T, bool with_gyro_bias, bool with_accel_bias>
-void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::measurement_update_velocity_pseudo(
+template<typename T, bool with_gyro_bias, bool with_accel_bias, bool with_lever_arm>
+void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias, with_lever_arm>::measurement_update_velocity_pseudo(
     const Vector3& v_meas, const Vector3& sigma_meas)
 {
     if (!linear_block_enabled_) return;
@@ -2498,15 +2984,24 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::measurement_updat
 
     MatrixNX3& K = K_scratch_;
     gain_from_ldlt3_(PCt, ldlt, K);
+    if constexpr (with_lever_arm) {
+        if (!imu_lever_arm_updates_active()) {
+            freeze_lever_arm_rows_(PCt);
+            freeze_lever_arm_rows_(K);
+        }
+    }
 
     xext.noalias() += K * r;
     joseph_update3_(K, S_mat, PCt);
 
+    if constexpr (with_lever_arm) {
+        if (imu_lever_arm_updates_active()) sync_and_project_lever_arm_();
+    }
     applyQuaternionCorrectionFromErrorState();
 }
 
-template<typename T, bool with_gyro_bias, bool with_accel_bias>
-void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::measurement_update_vert_velocity_pseudo(
+template<typename T, bool with_gyro_bias, bool with_accel_bias, bool with_lever_arm>
+void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias, with_lever_arm>::measurement_update_vert_velocity_pseudo(
     T vz_meas, T sigma_meas)
 {
     if (!linear_block_enabled_) return;
@@ -2538,6 +3033,14 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::measurement_updat
     Eigen::Matrix<T, NX, 1> K;
     for (int i = 0; i < NX; ++i) {
         K(i) = PCt(i) / S;
+    }
+    if constexpr (with_lever_arm) {
+        if (!imu_lever_arm_updates_active()) {
+            K.template segment<3>(OFF_R).setZero();
+            PCt.template segment<3>(OFF_R).setZero();
+        }
+    }
+    for (int i = 0; i < NX; ++i) {
         xext(i) += K(i) * r;
     }
 
@@ -2554,11 +3057,14 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::measurement_updat
         }
     }
 
+    if constexpr (with_lever_arm) {
+        if (imu_lever_arm_updates_active()) sync_and_project_lever_arm_();
+    }
     applyQuaternionCorrectionFromErrorState();
 }
 
-template<typename T, bool with_gyro_bias, bool with_accel_bias>
-void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::PhiAxis4x1_analytic(
+template<typename T, bool with_gyro_bias, bool with_accel_bias, bool with_lever_arm>
+void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias, with_lever_arm>::PhiAxis4x1_analytic(
     T tau, T h, Eigen::Matrix<T,4,4>& Phi_axis)
 {
     ocean_imu::kalman::ou_detail::IntegratedOUChain<T, 3>::transition(tau, h, Phi_axis);
@@ -2571,8 +3077,8 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::PhiAxis4x1_analyt
 //   sigma2  = stationary variance of a [ (m/s^2)^2 ]
 // Outputs:
 //   Qd_axis = (4x4) discrete covariance contribution for [v, p, S, a]
-template<typename T, bool with_gyro_bias, bool with_accel_bias>
-void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::QdAxis4x1_analytic(
+template<typename T, bool with_gyro_bias, bool with_accel_bias, bool with_lever_arm>
+void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias, with_lever_arm>::QdAxis4x1_analytic(
     T tau, T h, T sigma2, Eigen::Matrix<T,4,4>& Qd_axis)
 {
     ocean_imu::kalman::ou_detail::IntegratedOUChain<T, 3>::process_covariance(

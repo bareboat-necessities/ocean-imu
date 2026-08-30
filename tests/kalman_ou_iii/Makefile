@@ -21,7 +21,7 @@ LDFLAGS  =
 # Tell make to look for source files in src/util
 VPATH = $(REPO_ROOT)/src/util
 
-TARGETS = kalman_ou_iii-sim accel_vibration_guard-test imu_lever_arm-test ou3-certificate-sim ou3-information-certificate-sim ou3-neighborhood-sim kalman_ou_common-test aw_covariance_policy-test acc_bias_ou-test channel_freeze-test wave_period-test mag_hard_iron-test continuous_mag_hard_iron-test tuner_coupling-test tuner_schedule-test wave_band_sigma-test iss_contract-test rs_law-test startup_init-test
+TARGETS = kalman_ou_iii-sim accel_vibration_guard-test imu_lever_arm-test lever_arm_estimation-test ou3-certificate-sim ou3-information-certificate-sim ou3-neighborhood-sim kalman_ou_common-test aw_covariance_policy-test acc_bias_ou-test channel_freeze-test wave_period-test mag_hard_iron-test continuous_mag_hard_iron-test tuner_coupling-test tuner_schedule-test wave_band_sigma-test iss_contract-test rs_law-test startup_init-test
 
 all: build test
 
@@ -50,6 +50,11 @@ accel_vibration_guard-test: accel_vibration_guard-test.o
 
 # Exercises the lever-arm stage that lives in W3dSimCommon.
 imu_lever_arm-test: imu_lever_arm-test.o W3dSimCommon.o
+	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+
+# Exercises the lever arm as estimated filter states, which is the other side
+# of the same study: imu_lever_arm-test covers the models that are *given* r.
+lever_arm_estimation-test: lever_arm_estimation-test.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
 kalman_ou_common-test: kalman_ou_common-test.o

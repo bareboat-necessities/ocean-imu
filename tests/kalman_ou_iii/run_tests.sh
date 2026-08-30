@@ -3,6 +3,7 @@
 ./kalman_ou_iii-sim
 ./accel_vibration_guard-test
 ./imu_lever_arm-test
+./lever_arm_estimation-test
 ./kalman_ou_common-test
 ./aw_covariance_policy-test
 ./acc_bias_ou-test
