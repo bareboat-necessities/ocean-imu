@@ -22,6 +22,7 @@ import math
 from pathlib import Path
 
 import ou3_p4_nonlinear_word_certificate as P4
+import ou3_p4_p5_route_ceiling_certificate as CEILING
 import ou3_p5_heading_handoff_contract as HEADING
 import ou3_startup_stability_certificate as P1
 
@@ -137,6 +138,15 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         r["outside_P4_nonlinear_design_radius"] for r in witnesses
     )
 
+    # The uniform transported-defect accounting has a ceiling that no choice of
+    # its constants can pass, so the obstruction below is proved rather than
+    # pending: see tools/ou3_p4_p5_route_ceiling_certificate.py.
+    ceiling = CEILING.build()
+    cf = CEILING.validate(ceiling)
+    if cf:
+        raise RuntimeError(f"route ceiling prerequisite failed: {cf}")
+    ceiling_row = ceiling["modes"]["H"]
+
     qn = float(heading["gauged_quality_handoff"]["full_attitude_cayley_norm_upper"])
     qt = float(heading["gauged_timeout_subbranch"]["full_attitude_cayley_norm_upper"])
     promoted_limit = float(P4.PROMOTED_CAYLEY_NORM_LIMIT)
@@ -161,6 +171,11 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
             "Simply enlarging q_design while retaining the isotropic B*W perturbation recurrence is not a P5 bridge. "
             "The ungauged timeout branch is not a full-heading node at all and must use the yaw quotient until gauge acquisition."
         ),
+        "uniform_transport_route_ceiling_rad": ceiling_row["route_ceiling_absolute"],
+        "uniform_transport_route_ceiling_at_shipping_prefix_factor_rad": ceiling_row["route_ceiling_at_shipping_prefix_factor"],
+        "uniform_transport_route_ceiling_shortfall_vs_largest_handoff": ceiling_row["shortfall_factor_ceiling_vs_largest_handoff"],
+        "uniform_transport_route_can_ever_reach_P1_handoff": ceiling_row["route_can_reach_P1_handoff"],
+        "obstruction_is_the_route_not_its_constants": True,
         "required_proof_structure": [
             "branch-specific exact SO(3) finite-angle dissipation on gauged normal/timeout nodes",
             "gravity-only yaw-quotient capture on the ungauged timeout branch until a magnetic gauge hybrid event",
@@ -204,6 +219,16 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
             "The local P4 nonlinear word bound is not valid/decreasing on the complete P1 handoff family; iterating it would extrapolate outside its proof domain."
             if obstruction else None
         ),
+        "N_H_words_unset_reason": (
+            "PROVED_UNIFORM_TRANSPORT_ROUTE_CEILING_BELOW_P1_HANDOFF" if obstruction else None
+        ),
+        "route_ceiling": {
+            "status": ceiling["P4_P5_UNIFORM_TRANSPORT_ROUTE_CEILING"],
+            "formula": ceiling["ceiling_formula"],
+            "H": ceiling_row,
+            "required_structural_change": ceiling["required_structural_change"],
+            "retired_search_direction": ceiling["retired_search_direction"],
+        },
         "required_next_certificate": (
             "use the staged outer-H bridge: exact early S/covariance bounds, exact large-angle gauged-vector dissipation, "
             "and a yaw-quotient timeout route; only then compute finite H-word capture into W_*"

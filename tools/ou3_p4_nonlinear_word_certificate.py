@@ -60,7 +60,9 @@ from pathlib import Path
 import ou3_explicit_information_word_certificate as P3
 import ou3_implementation_proof_manifest as MANIFEST
 import ou3_p4_exact_word_map as WORDMAP
+import ou3_full_process_ucc as PROCESS
 import ou3_p4_group_algebra as GROUP
+import ou3_p4_metric_defect_transport as TRANSPORT
 import ou3_p4_node_metrics as METRIC
 import ou3_source_domain_contract as SOURCE
 import ou3_vector_uco_certificate as VECTOR
@@ -255,6 +257,31 @@ def _mode_certificate(mode: str, p3: dict, metric: dict, wordmap: dict,
     Cvec = max(Cvec_acc, Cvec_mag)
     Cinput = mul_up(Kmax, Cvec)
 
+    # Structured inputs for the metric-consistent transport route.  The P3
+    # covariance upper is a Loewner diagonal dominator, so a block maximum over
+    # its diagonal bounds lambda_max of that marginal block.
+    diag_upper = [float(v) for v in row["matrix_comparison"]["Sigma_diagonal_upper"]]
+    if len(diag_upper) != int(row["dimension"]):
+        raise RuntimeError(f"{mode}: P3 covariance diagonal upper does not match mode dimension")
+    sigma_attitude_upper = TRANSPORT._block_upper(diag_upper, range(0, 3))
+    sigma_gyro_bias_upper = TRANSPORT._block_upper(diag_upper, range(3, 6))
+    sigma_aw_upper = TRANSPORT._block_upper(diag_upper, range(15, 18))
+    # The exact word defects are quadratic in the attitude, gyro-bias and a_w
+    # coordinates only; the translation block never enters them.
+    sigma_defect_input_upper = up(max(sigma_attitude_upper, sigma_gyro_bias_upper, sigma_aw_upper))
+    proc = PROCESS.build()
+    pf = PROCESS.validate(proc)
+    if pf:
+        raise RuntimeError(f"{mode}: process certificate failed: {pf}")
+    ab = proc["attitude_gyro_bias"]
+    q_theta_lower = float(ab["theta_diagonal_lower"])
+    q_bias_lower = float(ab["gyro_bias_diagonal_lower"])
+    cross_upper = float(ab["cross_norm_upper"])
+    rho_attitude = down(1.0 - div_up(cross_upper, down(math.sqrt(q_theta_lower * q_bias_lower))))
+    if not rho_attitude > 0.0:
+        raise RuntimeError(f"{mode}: scaled attitude/bias process comparison lost positivity")
+    H_attitude = up(max(fmax, magmax))
+
     q_design = min(1.0e-6, div_down(0.002, mul_up(2.0, max(Lcorr, 1.0))))
     if not q_design > 0.0:
         raise RuntimeError(f"{mode}: failed to obtain positive nonlinear design radius")
@@ -275,12 +302,38 @@ def _mode_certificate(mode: str, p3: dict, metric: dict, wordmap: dict,
     samples = int(p3["source_word_binding"]["word_samples_upper_at_configured_dt"])
     operation_count = MAX_STATE_OPERATIONS_PER_IMU_SAMPLE * samples
 
-    B = mul_up(PREFIX_BOOTSTRAP_W_FACTOR, float(operation_count))
-    B = mul_up(B, sqrt_mmax)
-    B = mul_up(B, Coperation)
-    B = div_up(B, mmin)
-    if not (math.isfinite(B) and B > 0.0):
+    B_isotropic = mul_up(PREFIX_BOOTSTRAP_W_FACTOR, float(operation_count))
+    B_isotropic = mul_up(B_isotropic, sqrt_mmax)
+    B_isotropic = mul_up(B_isotropic, Coperation)
+    B_isotropic = div_up(B_isotropic, mmin)
+    if not (math.isfinite(B_isotropic) and B_isotropic > 0.0):
         raise RuntimeError(f"{mode}: nonlinear word defect gain is not finite positive")
+
+    # Metric-consistent structured transport of the same word defect.  Both are
+    # upper bounds on ||r_word||_M/W_0, so the certificate keeps the smaller one
+    # and can never be widened by the refinement.
+    transport = TRANSPORT.build({
+        "metric_scale": metric_scale,
+        "word_endpoint_delta_lower": delta,
+        "correction_R_lambda_min_lower": rmin,
+        "Sigma_attitude_upper": sigma_attitude_upper,
+        "Sigma_gyro_bias_upper": sigma_gyro_bias_upper,
+        "Sigma_defect_input_upper": sigma_defect_input_upper,
+        "rho_attitude_scaled_lower": rho_attitude,
+        "Q_theta_diagonal_lower": q_theta_lower,
+        "H_attitude_norm_upper": H_attitude,
+        "vector_residual_quadratic_constant_upper": Cvec,
+        "prediction_increment_gain_upper": Lpred,
+        "state_operation_count_upper": operation_count,
+    })
+    transport_failures = TRANSPORT.validate(transport)
+    if transport_failures:
+        raise RuntimeError(f"{mode}: metric defect transport failed: {transport_failures}")
+    B_metric = float(transport["transported_word_defect_B_upper"])
+    if B_metric <= B_isotropic:
+        B, defect_route = B_metric, "METRIC_CONSISTENT_STRUCTURED_DEFECT_TRANSPORT"
+    else:
+        B, defect_route = B_isotropic, "ISOTROPIC_EUCLIDEAN_DEFECT_ENVELOPE"
 
     sqrt_W_star = div_down(delta, mul_up(8.0, B))
     W_star = mul_down(sqrt_W_star, sqrt_W_star)
@@ -354,6 +407,15 @@ def _mode_certificate(mode: str, p3: dict, metric: dict, wordmap: dict,
         "word_samples_upper": samples,
         "state_operation_count_upper": operation_count,
         "transported_word_defect_B_upper": B,
+        "transported_word_defect_B_isotropic_upper": B_isotropic,
+        "transported_word_defect_B_metric_consistent_upper": B_metric,
+        "transported_word_defect_route": defect_route,
+        "metric_consistent_defect_transport": transport,
+        "Sigma_attitude_block_upper": sigma_attitude_upper,
+        "Sigma_defect_input_block_upper": sigma_defect_input_upper,
+        "certified_attitude_cayley_radius_upper": mul_up(
+            transport["attitude_chart_scale"], mul_up(2.0, sqrt_W_star)
+        ),
         "nonlinear_sqrt_budget_fraction_of_delta_upper": nonlinear_sqrt_fraction,
         "certified_level_W": W_star,
         "certified_level_sqrt_W": sqrt_W_star,

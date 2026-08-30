@@ -35,7 +35,9 @@ on:
       - "tools/ou3_p4_group_algebra.py"
       - "tools/ou3_p4_exact_word_map.py"
       - "tools/ou3_p4_node_metrics.py"
+      - "tools/ou3_p4_metric_defect_transport.py"
       - "tools/ou3_p4_nonlinear_word_certificate.py"
+      - "tools/ou3_p4_p5_route_ceiling_certificate.py"
       - "tools/ou3_p5_startup_capture_certificate.py"
       - "tools/ou3_p5_outer_h_word_certificate.py"
       - "tools/ou3_proof_operating_domain.json"
@@ -62,7 +64,9 @@ on:
       - "tests/validation/test_ou3_explicit_information_word_certificate.py"
       - "tests/validation/test_ou3_p4_group_algebra.py"
       - "tests/validation/test_ou3_p4_word_map_and_metrics.py"
+      - "tests/validation/test_ou3_p4_metric_defect_transport.py"
       - "tests/validation/test_ou3_p4_nonlinear_word_certificate.py"
+      - "tests/validation/test_ou3_p4_p5_route_ceiling.py"
       - "tests/validation/test_ou3_p5_startup_capture_certificate.py"
       - "tests/validation/test_ou3_p5_outer_h_word_certificate.py"
       - "tests/validation/test_ou_stability_source_path_widening.py"
@@ -224,10 +228,14 @@ jobs:
             tools/ou3_p4_group_algebra.py \
             tools/ou3_p4_exact_word_map.py \
             tools/ou3_p4_node_metrics.py \
+            tools/ou3_p4_metric_defect_transport.py \
             tools/ou3_p4_nonlinear_word_certificate.py \
+            tools/ou3_p4_p5_route_ceiling_certificate.py \
             tests/validation/test_ou3_p4_group_algebra.py \
             tests/validation/test_ou3_p4_word_map_and_metrics.py \
+            tests/validation/test_ou3_p4_metric_defect_transport.py \
             tests/validation/test_ou3_p4_nonlinear_word_certificate.py \
+            tests/validation/test_ou3_p4_p5_route_ceiling.py \
             tests/validation/test_ou_stability_source_path_widening.py
       - name: Test exact P4 algebra, source map, metric and publication contract
         working-directory: tests/validation
@@ -235,7 +243,9 @@ jobs:
           python3 -m unittest -v \
             test_ou3_p4_group_algebra \
             test_ou3_p4_word_map_and_metrics \
+            test_ou3_p4_metric_defect_transport \
             test_ou3_p4_nonlinear_word_certificate \
+            test_ou3_p4_p5_route_ceiling \
             test_ou_stability_source_path_widening
       - name: Emit exact nonlinear P4 certificate and numerical margins
         run: |
@@ -247,6 +257,18 @@ jobs:
           for m in ('H','A'):
               r=p['modes'][m]
               print(f"P4_NUMERICAL {m} W_star={r['certified_level_W']:.17e} mu_W_lower={r['mu_W_lower']:.17e} gap_lower={r['endpoint_relative_W_decrease_lower']:.17e} prefix_norm={r['prefix_canonical_error_norm_upper']:.17e}")
+              print(f"P4_DEFECT_ROUTE {m} route={r['transported_word_defect_route']} B={r['transported_word_defect_B_upper']:.17e} B_isotropic={r['transported_word_defect_B_isotropic_upper']:.17e}")
+          PY
+      - name: Emit the P4/P5 uniform transported-defect route ceiling
+        run: |
+          python3 tools/ou3_p4_p5_route_ceiling_certificate.py --output /tmp/ou3_p4_p5_route_ceiling_certificate.json
+          python3 - <<'PY'
+          import json
+          c=json.load(open('/tmp/ou3_p4_p5_route_ceiling_certificate.json'))
+          print('P4_P5_UNIFORM_TRANSPORT_ROUTE_CEILING:',c['P4_P5_UNIFORM_TRANSPORT_ROUTE_CEILING'])
+          for m in ('H','A'):
+              r=c['modes'][m]
+              print(f"ROUTE_CEILING {m} now={r['certified_attitude_capture_radius_now']:.17e} ceiling={r['route_ceiling_absolute']:.17e} largest_handoff={r['largest_bounded_P1_handoff_cayley_norm']:.17e} shortfall={r['shortfall_factor_ceiling_vs_largest_handoff']:.6e}")
           PY
 
   p5-capture-identification:
@@ -263,6 +285,7 @@ jobs:
       - name: Compile P5 outer-H and capture certificates
         run: |
           python3 -m py_compile \
+            tools/ou3_p4_p5_route_ceiling_certificate.py \
             tools/ou3_p5_startup_capture_certificate.py \
             tools/ou3_p5_outer_h_word_certificate.py \
             tests/validation/test_ou3_p5_startup_capture_certificate.py \
