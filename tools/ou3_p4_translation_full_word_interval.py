@@ -36,9 +36,11 @@ interval enclosure of ``Fc L``.  Hence
 
     F L F' >= Fc L Fc' - gamma I.
 
-This avoids the severe dependency inflation of multiplying the full interval
-matrix ``F L F'`` after directional measurement updates while remaining a
-source-uniform Loewner lower.
+The deterministic midpoint product ``Fc L Fc'`` is evaluated as exact rational
+arithmetic before one final rigorous rational-to-binary64 Loewner conversion.
+This is essential after directional updates: evaluating the midpoint product as
+interval point arithmetic introduces a fresh ~ulp interval at every multiply
+and can erase an otherwise positive anisotropic lower even after tau splitting.
 
 Thus the S=0 pseudo can only remove information in the S direction and the
 translation part of accelerometer corrections can only remove information in
@@ -56,7 +58,7 @@ from __future__ import annotations
 import argparse,json,math,re
 from fractions import Fraction
 from pathlib import Path
-from ou3_interval import Interval,matrix_mul,matrix_transpose,symmetric_positive_definite_ldlt
+from ou3_interval import Interval,matrix_mul,symmetric_positive_definite_ldlt
 from ou3_interval_linear_algebra import matrix_symmetric_hull
 import ou3_validated_transcendentals as VT
 import ou3_p4_worst_translation_cell as WORST
@@ -140,9 +142,17 @@ def _predict(L,F,rho):
     cij=up(cij+up(R[i][k]*_abs_upper(B[j][k])))
    rowsum=up(rowsum+cij)
   gamma=max(gamma,rowsum)
- M=matrix_mul(B,matrix_transpose(_pm(Fc)))
- for i in range(4):M[i][i]=M[i][i]+I(rho)-I(gamma)
- Lout,rad=_center_radius_lower(M)
+ # Fc and L are deterministic binary64 certificate numbers.  Evaluate the
+ # midpoint product exactly as rationals rather than as zero-width intervals;
+ # interval point multiplication accumulates ulp radii large enough to destroy
+ # the anisotropic lower before the mathematically required gamma subtraction.
+ A=[[Fraction.from_float(float(Fc[i][j])) for j in range(4)] for i in range(4)]
+ Q=[[Fraction.from_float(float(L[i][j])) for j in range(4)] for i in range(4)]
+ AQ=[[sum((A[i][k]*Q[k][j] for k in range(4)),Fraction(0)) for j in range(4)] for i in range(4)]
+ M=[[sum((AQ[i][k]*A[j][k] for k in range(4)),Fraction(0)) for j in range(4)] for i in range(4)]
+ shift=Fraction.from_float(float(rho))-Fraction.from_float(float(gamma))
+ for i in range(4):M[i][i]+=shift
+ Lout,rad=_exact_rational_loewner_lower(M)
  return Lout,up(rad+gamma)
 
 def _rank1_information_update_lower(L,beta,q):
