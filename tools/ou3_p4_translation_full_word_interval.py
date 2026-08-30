@@ -24,6 +24,22 @@ allowance.  This avoids the catastrophic interval cancellation that occurs when
 The conversion subtracts an infinity-norm bound for the exact rational-to-float
 rounding residual from the diagonal, which preserves a certified Loewner lower.
 
+Prediction also preserves matrix structure.  Writing the interval transition as
+``F = Fc + E`` gives
+
+    F L F' = Fc L Fc' + Fc L E' + E L Fc' + E L E'.
+
+Because ``L`` is positive definite, the final term is PSD and may be discarded
+for a lower bound.  The symmetric cross term is enclosed by an outward-rounded
+infinity-norm bound ``gamma`` assembled from elementwise radii of ``E`` and an
+interval enclosure of ``Fc L``.  Hence
+
+    F L F' >= Fc L Fc' - gamma I.
+
+This avoids the severe dependency inflation of multiplying the full interval
+matrix ``F L F'`` after directional measurement updates while remaining a
+source-uniform Loewner lower.
+
 Thus the S=0 pseudo can only remove information in the S direction and the
 translation part of accelerometer corrections can only remove information in
 the a_w direction.  We still apply *both* possible corrections at every IMU
@@ -95,10 +111,39 @@ def _F(tau,h):
  ppa=tau*tau*(I(.5)*x2-I(1/6)*x3+I(1/24)*x4);psa=tau*tau*tau*(I(1/6)*x3-I(1/24)*x4+I(1/120)*x5);z=Interval.point(0);o=Interval.point(1)
  return [[o,z,z,pva/I(h)],[o,o,z,ppa/I(h*h)],[I(.5),o,o,psa/I(h*h*h)],[z,z,z,a]]
 
+def _midrad(A):
+ C=[];R=[]
+ for row in A:
+  cr=[];rr=[]
+  for a in row:
+   c=min(max(.5*a.lo+.5*a.hi,a.lo),a.hi)
+   r=up(max(abs(a.lo-c),abs(a.hi-c)))
+   cr.append(c);rr.append(r)
+  C.append(cr);R.append(rr)
+ return C,R
+
+def _abs_upper(a):return up(max(abs(a.lo),abs(a.hi)))
+
 def _predict(L,F,rho):
- M=matrix_mul(matrix_mul(F,_pm(L)),matrix_transpose(F))
- for i in range(4):M[i][i]=M[i][i]+I(rho)
- return _center_radius_lower(M)
+ """Structured Loewner lower for F L F' + rho I."""
+ Fc,R=_midrad(F)
+ B=matrix_mul(_pm(Fc),_pm(L))
+ # Cross term C = (Fc L)E' + E(L Fc').  It is symmetric.  Bound
+ # ||C||_2 <= ||C||_inf by an outward-rounded row-sum enclosure.
+ gamma=0.0
+ for i in range(4):
+  rowsum=0.0
+  for j in range(4):
+   cij=0.0
+   for k in range(4):
+    cij=up(cij+up(_abs_upper(B[i][k])*R[j][k]))
+    cij=up(cij+up(R[i][k]*_abs_upper(B[j][k])))
+   rowsum=up(rowsum+cij)
+  gamma=max(gamma,rowsum)
+ M=matrix_mul(B,matrix_transpose(_pm(Fc)))
+ for i in range(4):M[i][i]=M[i][i]+I(rho)-I(gamma)
+ Lout,rad=_center_radius_lower(M)
+ return Lout,up(rad+gamma)
 
 def _rank1_information_update_lower(L,beta,q):
  """Validated lower for (L^-1 + beta e_q e_q')^-1 without interval cancellation."""
@@ -153,7 +198,7 @@ def _mode(mode,p,horizon_s):
   if d<=0 or not _spd_delta(L,upper,d):raise RuntimeError(f'nonpositive endpoint margin on tau leaf {t.as_list()}')
   cert.append({'tau_s':t.as_list(),'delta_lower':d,'max_conditioned_radius_removed':rad,'split_depth':dep})
  w=min(cert,key=lambda q:q['delta_lower']);old=float(row['direct_translation_generalized_margin_lower'])
- return {'source_cell':s,'conditioned_coordinates':'D^-1[v,p,S,a_w]','tau_interval_s':tau.as_list(),'tau_leaf_count':len(cert),'max_tau_split_depth_used':max(q['split_depth'] for q in cert),'steps':n,'horizon_s':horizon_s,'process_injection_lower_conditioned':rho,'S_measurement_information_beta_conditioned':betaS,'accelerometer_aw_information_beta_conditioned':betaA,'measurement_information_geometry':'rank_one_S_and_aw_each_sample_exact_rational','corrections_allowed_every_sample_for_lower_bound':True,'artificial_S_variance_conditioned':rS,'artificial_acc_aw_variance_conditioned':rA,'translation_covariance_upper_conditioned':upper,'tau_leaf_certificates':cert,'complete_word_translation_margin_lower':w['delta_lower'],'limiting_tau_leaf':w,'old_single_seed_translation_margin_lower':old,'margin_widening_factor_lower':down(w['delta_lower']/old),'interval_ldlt_endpoint_recertified':True}
+ return {'source_cell':s,'conditioned_coordinates':'D^-1[v,p,S,a_w]','tau_interval_s':tau.as_list(),'tau_leaf_count':len(cert),'max_tau_split_depth_used':max(q['split_depth'] for q in cert),'steps':n,'horizon_s':horizon_s,'process_injection_lower_conditioned':rho,'S_measurement_information_beta_conditioned':betaS,'accelerometer_aw_information_beta_conditioned':betaA,'measurement_information_geometry':'rank_one_S_and_aw_each_sample_exact_rational','prediction_enclosure':'midpoint_plus_symmetric_cross_term_loewner','corrections_allowed_every_sample_for_lower_bound':True,'artificial_S_variance_conditioned':rS,'artificial_acc_aw_variance_conditioned':rA,'translation_covariance_upper_conditioned':upper,'tau_leaf_certificates':cert,'complete_word_translation_margin_lower':w['delta_lower'],'limiting_tau_leaf':w,'old_single_seed_translation_margin_lower':old,'margin_widening_factor_lower':down(w['delta_lower']/old),'interval_ldlt_endpoint_recertified':True}
 def build(domain_path=DEFAULT_DOMAIN,horizon_s=DEFAULT_HORIZON_S):
  horizon_s=float(horizon_s)
  if not math.isfinite(horizon_s) or horizon_s<=0:raise ValueError('horizon_s must be finite positive')
@@ -171,10 +216,11 @@ def validate(d):
   if not float(m.get('complete_word_translation_margin_lower',0))>0:f.append(f'{mode}: no complete-word translation margin')
   if m.get('interval_ldlt_endpoint_recertified') is not True:f.append(f'{mode}: endpoint not recertified')
   if m.get('measurement_information_geometry')!='rank_one_S_and_aw_each_sample_exact_rational':f.append(f'{mode}: directional measurement geometry missing')
+  if m.get('prediction_enclosure')!='midpoint_plus_symmetric_cross_term_loewner':f.append(f'{mode}: structured prediction enclosure missing')
   if m.get('corrections_allowed_every_sample_for_lower_bound') is not True:f.append(f'{mode}: lower no longer covers maximum correction frequency')
   if not float(m.get('margin_widening_factor_lower',0))>1:f.append(f'{mode}: complete word did not widen seed')
  if d.get('P4_USABLE_CERTIFICATE_STATUS')!='NOT_ESTABLISHED':f.append('partial result prematurely promoted P4')
  return f
 def main():
- ap=argparse.ArgumentParser();ap.add_argument('--domain',type=Path,default=DEFAULT_DOMAIN);ap.add_argument('--horizon-s',type=float,default=DEFAULT_HORIZON_S);ap.add_argument('--output',type=Path,required=True);a=ap.parse_args();d=build(a.domain,a.horizon_s);f=validate(d);d['validation_failures']=f;a.output.write_text(json.dumps(d,indent=2,sort_keys=True));print(json.dumps({'translation_status':d['P4_COMPLETE_TRANSLATION_WORST_CELL_STATUS'],'horizon_s':d['horizon_s'],'modes':{x:{'delta':d.get('modes',{}).get(x,{}).get('complete_word_translation_margin_lower'),'factor':d.get('modes',{}).get(x,{}).get('margin_widening_factor_lower'),'tau_leaves':d.get('modes',{}).get(x,{}).get('tau_leaf_count'),'geometry':d.get('modes',{}).get(x,{}).get('measurement_information_geometry')} for x in ('H','A')},'failures':f},indent=2));return 0 if not f else 2
+ ap=argparse.ArgumentParser();ap.add_argument('--domain',type=Path,default=DEFAULT_DOMAIN);ap.add_argument('--horizon-s',type=float,default=DEFAULT_HORIZON_S);ap.add_argument('--output',type=Path,required=True);a=ap.parse_args();d=build(a.domain,a.horizon_s);f=validate(d);d['validation_failures']=f;a.output.write_text(json.dumps(d,indent=2,sort_keys=True));print(json.dumps({'translation_status':d['P4_COMPLETE_TRANSLATION_WORST_CELL_STATUS'],'horizon_s':d['horizon_s'],'modes':{x:{'delta':d.get('modes',{}).get(x,{}).get('complete_word_translation_margin_lower'),'factor':d.get('modes',{}).get(x,{}).get('margin_widening_factor_lower'),'tau_leaves':d.get('modes',{}).get(x,{}).get('tau_leaf_count'),'geometry':d.get('modes',{}).get(x,{}).get('measurement_information_geometry'),'prediction':d.get('modes',{}).get(x,{}).get('prediction_enclosure')} for x in ('H','A')},'failures':f},indent=2));return 0 if not f else 2
 if __name__=='__main__':raise SystemExit(main())
