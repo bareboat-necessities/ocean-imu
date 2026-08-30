@@ -128,7 +128,10 @@ def generate(
         "  \\begin{tabular}{@{}rrrrr@{}}",
         "    \\toprule",
         "    Offset & Max 3-D / CG & Max tilt / CG & Gyro model & Exact model \\\\",
-        "    [cm] & unmodeled & unmodeled & max 3-D / CG & max 3-D / CG \\\\",
+        # The brace is load-bearing.  A row opening with an unbraced
+        # bracket is swallowed by the preceding \\ as its optional
+        # vertical-space argument, and LaTeX dies on "Missing number".
+        "    {[cm]} & unmodeled & unmodeled & max 3-D / CG & max 3-D / CG \\\\",
         "    \\midrule",
         *table_rows,
         "    \\bottomrule",
