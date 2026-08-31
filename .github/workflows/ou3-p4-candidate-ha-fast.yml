@@ -4,24 +4,34 @@ on:
   push:
     paths:
       - "tools/ou3_p4_candidate_full_word.py"
+      - "tools/ou3_p4_candidate_first_accel_range.py"
       - "tools/ou3_p4_p5_entrance_search_domain.py"
       - "tools/ou3_p4_operation_matched_sector_certificate.py"
+      - "tools/ou3_p5_first_accel_rotation_gauge.py"
+      - "tools/ou3_p5_first_accel_rotation_gauge_v3.py"
+      - "tools/ou3_p5_first_accel_structured_gain.py"
       - "tools/ou3_p5_full_h_prefix_cells.py"
       - "tools/ou3_p5_full_h_prefix_cells_v2.py"
       - "tools/ou3_p5_full_h_prefix_cells_v3.py"
       - "tools/ou3_proof_operating_domain.json"
       - "tests/validation/test_ou3_p4_candidate_full_word.py"
+      - "tests/validation/test_ou3_p4_candidate_first_accel_range.py"
       - ".github/workflows/ou3-p4-candidate-ha-fast.yml"
   pull_request:
     paths:
       - "tools/ou3_p4_candidate_full_word.py"
+      - "tools/ou3_p4_candidate_first_accel_range.py"
       - "tools/ou3_p4_p5_entrance_search_domain.py"
       - "tools/ou3_p4_operation_matched_sector_certificate.py"
+      - "tools/ou3_p5_first_accel_rotation_gauge.py"
+      - "tools/ou3_p5_first_accel_rotation_gauge_v3.py"
+      - "tools/ou3_p5_first_accel_structured_gain.py"
       - "tools/ou3_p5_full_h_prefix_cells.py"
       - "tools/ou3_p5_full_h_prefix_cells_v2.py"
       - "tools/ou3_p5_full_h_prefix_cells_v3.py"
       - "tools/ou3_proof_operating_domain.json"
       - "tests/validation/test_ou3_p4_candidate_full_word.py"
+      - "tests/validation/test_ou3_p4_candidate_first_accel_range.py"
       - ".github/workflows/ou3-p4-candidate-ha-fast.yml"
   workflow_dispatch:
 
@@ -40,27 +50,55 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - name: Compile candidate producer and test
+      - name: Compile candidate producers and tests
         run: |
           python3 -m py_compile \
             tools/ou3_p4_candidate_full_word.py \
-            tests/validation/test_ou3_p4_candidate_full_word.py
+            tools/ou3_p4_candidate_first_accel_range.py \
+            tests/validation/test_ou3_p4_candidate_full_word.py \
+            tests/validation/test_ou3_p4_candidate_first_accel_range.py
 
-      - name: Test candidate domain and A-mode semantics
+      - name: Test candidate domain, A-mode, and analytic first-accel semantics
         working-directory: tests/validation
-        run: python3 -m unittest -v test_ou3_p4_candidate_full_word
+        run: |
+          python3 -m unittest -v \
+            test_ou3_p4_candidate_full_word \
+            test_ou3_p4_candidate_first_accel_range
 
-      - name: Run first shipping prefix on candidate ladder
+      - name: Certify analytic first-accelerometer correction range
+        run: |
+          python3 tools/ou3_p4_candidate_first_accel_range.py \
+            --source-pieces 2 \
+            --alignment-pieces 16 \
+            --force-magnitude-pieces 4 \
+            --output /tmp/ou3_p4_candidate_first_accel_range.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/ou3_p4_candidate_first_accel_range.json'))
+          assert d['validation_pass'] is True
+          assert d['deployed_correction_limit_rad'] == 6.0
+          assert d['deployed_correction_limit_increased'] is False
+          assert d['candidate_ball_norm_used_without_cartesian_cover_inflation'] is True
+          assert d['independent_accelerometer_eta_penalty_used'] is False
+          assert d['A_first_prefix_attitude_gain_bounded_by_H_gain'] is True
+          print('P4_CANDIDATE_FIRST_ACCEL_RANGE:', d['P4_CANDIDATE_FIRST_ACCEL_RANGE_CERTIFICATE'])
+          print('WIDEST_ACCEL_RANGE_SAFE_DEG:', d['widest_candidate_first_accel_range_safe_deg'])
+          for r in d['candidate_rows']:
+              print('ACCEL_RANGE', r['angle_deg'], 'qpred', r['post_prediction_q_upper'], 'K', r['max_Ktheta_norm_upper'], 'resid', r['max_combined_residual_norm_upper_mps2'], 'd', r['max_first_accelerometer_correction_norm_upper_rad'], 'margin', r['minimum_correction_range_margin_rad'], 'safe', r['first_accelerometer_range_safe'])
+          PY
+
+      - name: Run generic first shipping prefix on candidate ladder
         run: |
           python3 tools/ou3_p4_candidate_full_word.py \
             --max-samples 1 \
             --cover-factor 1.55 \
             --output /tmp/ou3_p4_candidate_preflight.json
 
-      - name: Report first real obstruction or widest safe candidate
+      - name: Report remaining signed-cell obstruction or widest safe candidate
         run: |
           python3 - <<'PY'
           import json
+          a=json.load(open('/tmp/ou3_p4_candidate_first_accel_range.json'))
           d=json.load(open('/tmp/ou3_p4_candidate_preflight.json'))
           assert d['validation_pass'] is True
           assert d['old_q8_chart_used'] is False
@@ -70,7 +108,8 @@ jobs:
           assert d['Hs_upper_m'] == 8.5
           assert d['cover_factor'] == 1.55
           assert d['P4_COMPLETE_WORD_DISSIPATION_ESTABLISHED_HERE'] is False
-          print('P4_CANDIDATE_PREFLIGHT:', d['P4_CANDIDATE_FULL_HA_PREFIX_CERTIFICATE'])
+          print('P4_CANDIDATE_ANALYTIC_ACCEL_RANGE:', a['P4_CANDIDATE_FIRST_ACCEL_RANGE_CERTIFICATE'])
+          print('P4_CANDIDATE_GENERIC_PREFIX:', d['P4_CANDIDATE_FULL_HA_PREFIX_CERTIFICATE'])
           print('WIDEST_SAFE_DEG:', d['widest_candidate_prefix_safe_deg'])
           for r in d['candidate_rows']:
               f=r['first_unclosed_cell']
