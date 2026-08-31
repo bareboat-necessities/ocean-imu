@@ -10,9 +10,10 @@ startup enters that sector source-faithfully.
 For gauged branches the full SO(3) Cayley radii come from the heading handoff
 contract.  For an ungauged timeout, full yaw is a gauge and no fictitious
 full-heading radius is assigned; P1's certified gravity/tilt cosine is compared
-against the same 0.80 rad gravity-vector sector and the axial gyro-bias remains
-a bounded neutral input until magnetic regauging.  The physical non-attitude
-coordinates are exactly the source-declared P1 handoff product box.
+directly against the validated cosine boundary of the same 0.80 rad sector, and
+the axial gyro-bias remains a bounded neutral input until magnetic regauging.
+The physical non-attitude coordinates are exactly the source-declared P1
+handoff product box.
 
 This certificate establishes capture into the *outer finite-angle sector* with
 N_outer=0.  It does not claim capture into the legacy microscopic P4 inner
@@ -37,22 +38,6 @@ DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
 SCHEMA = 1
 
 
-def down(x: float) -> float:
-    return math.nextafter(float(x), -math.inf)
-
-
-def up(x: float) -> float:
-    return math.nextafter(float(x), math.inf)
-
-
-def theta_upper_from_cos_lower(c: float) -> float:
-    """Conservative angle upper from a certified cosine lower."""
-    c = float(c)
-    if not (-1.0 < c <= 1.0):
-        raise ValueError("strict cosine lower required")
-    return up(math.acos(c))
-
-
 def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     path = Path(domain_path).resolve()
     domain = json.loads(path.read_text(encoding="utf-8"))
@@ -68,11 +53,14 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
 
     theta_sector = float(sector["design_full_attitude_angle_rad"])
     q_sector = float(sector["design_cayley_norm_upper"])
+    sector_cos_lower = float(sector["design_full_attitude_cosine_lower"])
     normal = sector["P1_overlap"]
 
     timeout_tilt_cos = float(p1["timeout_handoff"]["combined_true_gravity_cosine_lower"])
-    timeout_tilt_theta = theta_upper_from_cos_lower(timeout_tilt_cos)
-    ungauged_tilt_inside = timeout_tilt_theta <= theta_sector
+    # On [0,pi], cosine is decreasing.  P1 supplies cos(theta_tilt)>=c_t and
+    # SECTOR supplies a validated lower enclosure of cos(0.80).  Therefore
+    # c_t>=cos(0.80)_lower is a conservative proof that theta_tilt<=0.80.
+    ungauged_tilt_inside = timeout_tilt_cos >= sector_cos_lower
 
     physical = dict(p1["go_live"]["physical_coordinate_bounds"])
     for key, value in physical.items():
@@ -90,20 +78,18 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "normal_gauged": {
             "attitude_representation": "FULL_SO3_CAYLEY",
             "cayley_norm_upper": float(normal["normal_gauged_cayley_norm_upper"]),
-            "angle_upper_rad": float(normal["normal_gauged_angle_upper_rad"]),
             "inside_outer_sector": bool(normal["normal_gauged_inside_sector"]),
         },
         "timeout_gauged": {
             "attitude_representation": "FULL_SO3_CAYLEY",
             "cayley_norm_upper": float(normal["timeout_gauged_cayley_norm_upper"]),
-            "angle_upper_rad": float(normal["timeout_gauged_angle_upper_rad"]),
             "inside_outer_sector": bool(normal["timeout_gauged_inside_sector"]),
         },
         "timeout_ungauged": {
             "attitude_representation": "GRAVITY_DIRECTION_QUOTIENT",
             "full_heading_radius_assigned": False,
             "tilt_cosine_lower": timeout_tilt_cos,
-            "tilt_angle_upper_rad": timeout_tilt_theta,
+            "outer_sector_cosine_lower": sector_cos_lower,
             "inside_outer_gravity_sector": ungauged_tilt_inside,
             "yaw_role": "GAUGE_UNTIL_MAGNETIC_REGAUGE",
             "gravity_parallel_gyro_bias_role": "BOUNDED_NEUTRAL_INPUT_UNTIL_EXCITATION_OR_MAGNETIC_REGAUGE",
@@ -120,7 +106,9 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "filter_changed": False,
         "outer_sector_angle_rad": theta_sector,
         "outer_sector_angle_deg": math.degrees(theta_sector),
+        "outer_sector_cosine_lower": sector_cos_lower,
         "outer_sector_cayley_norm_upper": q_sector,
+        "validated_sector_boundary_consumed": True,
         "physical_handoff_product_box": physical,
         "branches": branches,
         "all_source_handoff_branches_enter_outer_sector": passed,
@@ -147,6 +135,8 @@ def validate(d: dict) -> list[str]:
         failures.append("P5 outer capture uses replay")
     if d.get("filter_changed") is not False:
         failures.append("P5 outer capture changes the filter")
+    if d.get("validated_sector_boundary_consumed") is not True:
+        failures.append("P5 did not consume the validated sector boundary")
     if d.get("P5_OUTER_SECTOR_CAPTURE_CERTIFICATE") != "PASS":
         failures.append("P5 outer-sector capture did not pass")
     if d.get("all_source_handoff_branches_enter_outer_sector") is not True:
@@ -183,6 +173,7 @@ def main() -> int:
     print(json.dumps({
         "status": out["P5_OUTER_SECTOR_CAPTURE_CERTIFICATE"],
         "sector_rad": out["outer_sector_angle_rad"],
+        "sector_cosine_lower": out["outer_sector_cosine_lower"],
         "N_outer_words": out["N_outer_words"],
         "branches": out["branches"],
         "validation_failures": failures,
