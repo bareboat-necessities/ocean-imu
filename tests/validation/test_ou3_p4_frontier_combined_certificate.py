@@ -1,5 +1,5 @@
 from pathlib import Path
-import sys, unittest
+import os, sys, unittest
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / 'tools'))
@@ -8,6 +8,10 @@ import ou3_p4_frontier_combined_certificate as F
 import ou3_validate_enclosure as ENC
 
 
+@unittest.skipUnless(
+    os.environ.get('OU3_RUN_OBSOLETE_P4_FRONTIER') == '1',
+    'retired microscopic P4 frontier regression runs only in its non-gating focused job',
+)
 class P4FrontierCombinedTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
