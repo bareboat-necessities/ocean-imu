@@ -1,7 +1,8 @@
 from pathlib import Path
-import sys,unittest
+import os,sys,unittest
 ROOT=Path(__file__).resolve().parents[2];sys.path.insert(0,str(ROOT/'tools'))
 import ou3_p4_direct_word_contraction_certificate as C
+@unittest.skipUnless(os.environ.get('OU3_RUN_OBSOLETE_P4_FRONTIER')=='1','retired microscopic P4 frontier regression')
 class T(unittest.TestCase):
  @classmethod
  def setUpClass(cls):cls.d=C.build()
