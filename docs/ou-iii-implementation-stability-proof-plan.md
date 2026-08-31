@@ -116,6 +116,37 @@ hence the exact source-uniform worst prefix information gain is `1.0` rather tha
 
 The final producer `tools/ou3_explicit_information_word_certificate.py` emits `P3_IMPLEMENTATION_WORD_CERTIFICATE=PASS` only when the direct H/A interval inequalities, optimized four-S qualification, current source-word language, exact Live-operation algebra, reset nonsingularity, branch coverage, and unit prefix-information bound all validate together.
 
+#### `Omega_word` is the word's injected noise, not one IMU step
+
+The endpoint inequality is `Omega_word - delta Sigma_upper >> 0`, and `Sigma_upper` is a word-horizon covariance. The backend was comparing it against a single 5 ms `Q`. That is a valid lower bound -- the word contains at least one prediction -- but on the `S` channel the two differ by `(T/h)^7`, and it is what held `delta` at `3.79233618771658e-35`.
+
+`tools/ou3_p3_word_noise_accumulation.py` and the direct backend supply the accumulated floor from the shipping recursion itself. Over `N` pure prediction steps the source injects exactly
+
+`Omega_N = sum_{k<N} Phi^k Q (Phi^k)'`,
+
+which obeys the exact doubling identity `Omega_2m = Phi^m Omega_m Phi^m' + Omega_m`. That identity carries the `(theta, gyro-bias)` block. The translation block does not need it: for the integrated-OU chain the same sum is exactly `Q(N h)`, and scaled by `diag(sigma T, sigma T^2, sigma T^3, sigma)` the chain depends only on `X = T/tau`, so the analytic family the certificate already validates supplies the accumulated floor when it is read at the word horizon instead of at one step. `N` comes from a *lower* bound on the word's step count, so the floor stays a lower bound while `Sigma_upper` stays an upper bound at the horizon upper.
+
+Three further corrections were needed before that could be used.
+
+1. **The measurement information is block structured.** The word's Joseph updates shrink the injected floor, bounded conservatively by `(Omega^-1 + H' R^-1 H)^-1`. One scalar information bound collapses the comparison: the accelerometer's information lives in the `a_w` coordinate and is four orders above the attitude information, and no shipping update measures the gyro bias at all. Charging the `a_w` figure against the bias coordinate erased the entire accumulated bias floor.
+2. **The attitude propagation factor does not belong to the bias row.** `Sigma_upper` propagates the post-observation `(theta, bias)` bound to the word endpoint through `Phi = [[I,-T I],[0,I]]`. Only the attitude row integrates the bias over the word, so only it pays `2(1+T^2)`; the bias row propagates as itself plus its own random walk. Sharing one value inflated the binding channel by twenty-two times.
+3. **The exact-series tail factor was a literal `2.0`.** That is `exp(lambda x)` at `lambda x < ln 2`, which held for the per-step read and expires the moment the same family is read at a word horizon. It now carries `exp(lambda x.hi)`, which also tightens the per-step read slightly.
+
+The comparison itself is then normalised rather than certified in the congruence basis. Forming the posterior explicitly breaks down once the word assimilates real information -- `Omega (I + D Omega)^-1` cancels the measured directions almost exactly and no interval enclosure of it stays definite past a sixty-four step horizon -- and the information form `Omega^-1 + D <= (1/delta) Sigma^-1` fails in the rational congruence basis for the opposite reason: `Sigma^-1` there is assembled from a diagonal spanning thirteen decades and is not certifiably definite at all. Normalising `Sigma` to the identity with the diagonal `G = Sigma^{1/2}` leaves
+
+`lambda_max( G (Omega_word^-1 + D) G ) <= 1/delta`,
+
+an upper bound on one symmetric matrix. `Omega^-1` is read in the congruence basis, where it is well conditioned, and transported back by the exact rational `C`.
+
+The congruence certifies only on a narrow `X` cell, so each source cell is refined -- 128 sub-cells at the full word horizon, fewer for short ones -- and the margin is the minimum over its sub-cells. Every admissible horizon is scanned and the best kept: the trade is not monotone, because a longer horizon injects more noise but also assimilates more information, and `N = 1` reproduces the single-step comparison, so the scan can only improve on it. Each block keeps its own better route, since bundling would let a capped translation horizon discard an attitude floor that still carries the full word.
+
+The binding source cell moves from `tau` at its ceiling to `tau` in `[1.4837, 1.7226]` s, and the certified margin becomes
+
+- H: `delta >= 2.29539973862766885e-20` (translation `2.295399738627669e-20`, attitude/gyro-bias `1.602057713637565e-16`), against `2.1495791638793494e-34` for the single-step comparison;
+- A: `delta >= 2.29539973862766885e-20` (same limiting block, active-bias block `1.3919202799031725e-15`).
+
+That is fourteen and a half decades above the retired single-step floor, and it is what lifts the P4 level below.
+
 **PASS:** strict source-uniform H and A information contraction with explicit positive endpoint margins and an exact finite prefix information-gain bound. P4 consumes this information-word geometry directly through the exact Cayley lift below.
 
 ### P4 — Exact nonlinear SO(3) word certificate — COMPLETE
@@ -132,16 +163,39 @@ The validated word map follows the shipping order exactly: prediction; a due `S=
 
 P3's exact prefix information gain upper bound of `1.0` transports source-uniform quadratic nonlinear defects through arbitrary admissible accepted/rejected/not-due placements, so P4 covers the complete source branch family without enumerating an exponential list of rejection strings. The prefix bootstrap proves the certified Cayley norm is below one, hence `theta < 1 < pi`, and proves every accepted correction remains below `1e-2`, fixing the exact deployed quaternion branch throughout the inner funnel. In A mode the certified prefix also stays strictly inside the shipping accelerometer-bias projection ball, so the exact projection branch is the smooth identity-interior branch there; the nonsmooth projection surface is not silently linearized.
 
-The final validated CI certificate reports:
+#### Metric-consistent structured defect transport
 
-- H: `W_* = 3.29172575174270652e-141`, `mu_W >= 1.89616809385829038e-35`, endpoint relative decrease `>= 1.89616809385829092e-35`, prefix canonical norm `<= 1.14747126356047970e-70`;
-- A: `W_* = 3.29172573612719601e-141`, `mu_W >= 1.89616808936071053e-35`, endpoint relative decrease `>= 1.89616808936071107e-35`, prefix canonical norm `<= 1.14747126083875398e-70`.
+The nonlinear layer supplies one number: an upper bound `B` on `||r_word||_M / W_0`. The original route obtained it by leaving the metric -- `||z||_2 <= sqrt(W/m_-)` and `||r||_M <= sqrt(m_+) ||r||_2` -- and by bounding the gain isotropically as `||K|| <= sqrt(Sigma_max/R_min)`. That pays the full `sqrt(cond(Sigma))` of a covariance whose diagonal upper bounds span thirty-four decades, and it charges attitude-driven defects against the translation block that carries the whole spread.
 
-The tiny levels are theorem seeds, not practical-basin claims. Strict positivity is stored directly, so the proof never forms `1 - delta/2` when binary64 would round that quantity back to one. Source-node subdivision may later enlarge `W_*`, but it is only a widening of this same certificate route, not a fallback theorem.
+`tools/ou3_p4_metric_defect_transport.py` supplies the structured replacement. Three exact facts, each stated against the same source-derived P3/process bounds the certificate already consumes:
 
-**PASS:** `P4_EXACT_NONLINEAR_WORD_CERTIFICATE=PASS` for both H and A with explicit positive `W_*`, positive `mu_W`, exact source-operation semantics, complete branch coverage, and prefix/chart safety. P5 must now bridge the P1 handoff family to this inner H seed.
+1. **Gain transport.** For the shipping gain `K = P H^T S^-1` write `A = R^-1/2 H P^1/2`. Then `P^-1/2 K = A^T (A A^T + I)^-1 R^-1/2` and `||A^T (A A^T + I)^-1|| = max_i sigma_i/(1+sigma_i^2) <= 1/2`, so every residual defect satisfies `||K q||_M <= sqrt(s) ||q|| / (2 sqrt(lambda_min R))`. The node metric uses `Sigma_KF(g) >= P`, so the same bound holds there.
+2. **Chart transport.** Marginalising the exact quadratic form gives `min_xi [c;xi]^T Sigma^-1 [c;xi] = c^T (Sigma_cc)^-1 c`, hence `||c||^2 <= lambda_max(Sigma_cc) W / s`. The P3 covariance upper is a Loewner diagonal dominator, so the marginal block maximum bounds it. The exact word defects are quadratic in the attitude, gyro-bias and `a_w` coordinates only; the translation block never enters them.
+3. **Attitude-injection cost.** The quaternion injection remainder is supported on the attitude coordinates, so it is charged on the conditional attitude covariance. Every source node is post-prediction, where `Sigma >= Q` gives `(Sigma^-1)_tt <= I/(rho_att q_theta)`, or is reached from one by at most three in-sample corrections, each adding at most `||H_theta||^2/lambda_min(R)` in the exact information form `P+^-1 = P^-1 + H^T R^-1 H`.
 
-### P5 — Initialization-to-inner-funnel finite capture — OUTER ALGEBRA CLOSED, LATER PREFIX ENCLOSURE PENDING
+Both gains bound the same quantity, so the producer keeps `min(B_isotropic, B_metric)` and the refinement can never widen the certificate. The structured route binds, taking `B` from `8.26237725542113e+34` to `2.19808143397921e+09`.
+
+The final validated CI certificate reports, for both H and A:
+
+- `W_* = 2.74835136346049263e-62`, `mu_W >= 1.14769986931383397e-20`, endpoint relative decrease `>= 1.14769986931383427e-20`, prefix canonical norm `<= 3.31563047606966924e-31`, certified attitude Cayley radius `<= 2.90423979800536192e-32`.
+
+That is seventy-nine decades of `W_*` above the retired isotropic envelope (`3.29172575174270652e-141`): fifty-one from the structured transport that took `B` from `9.570736e+32` to `1.73074152502409096e+10`, and twenty-eight more from the P3 word-noise floor that took `delta` from `3.79233618771658e-35` to `2.29539973862766885e-20`. Strict positivity is stored directly, so the proof never forms `1 - delta/2` when binary64 would round that quantity back to one.
+
+It is still not a practical basin, and by the ceiling below it cannot become one on this route.
+
+#### The route, not its constants, is now the binding obstruction
+
+`tools/ou3_p4_p5_route_ceiling_certificate.py` closes the question of how far this accounting can go. The certified attitude radius of a level is exactly `theta(W) = a_t sqrt(W)` with `a_t = sqrt(Sigma_tt_upper/s)`. Under four hypotheses the shipping producer satisfies -- `delta <= 1` because `Omega_word <= Sigma`; the word must cover the all-accepted branch, so the injecting-operation count is at least the sample count; the exact Cayley cross term `0.5 d x c` is not slack; and the uniform accepted-injection bound is `a_t sqrt(W)`, which is the exact supremum of the attitude part of `K H z` on the metric ball -- an attitude-supported defect costs at least `1/a_t` in the metric, so
+
+`kappa >= 0.5 a_t`, `B >= F N 0.5 a_t`, `theta_capture <= delta / (F N)`.
+
+`a_t` cancels. The ceiling does not depend on the covariance bound, on the metric normalization, or on any constant the search has been sharpening. At `delta = 1` and with no prefix overshoot at all it is `4.95049504950495e-03` rad; at the shipping prefix factor it is `1.23762376237624e-03` rad. The bounded P1 handoff nodes are `0.2721648148683776` and `0.5947333355555983` rad, so the route is short by at least a factor of `120` even at its own theoretical maximum, and the word would have to inject fewer than `1.69` accepted attitude corrections per second for it ever to reach the handoff.
+
+This is a ceiling on the proof route, not on the filter. It retires further sharpening of `kappa`, of the covariance enclosure, or of `delta` as a P5 direction: the ceiling is independent of all three. The two widenings recorded above are the direct evidence -- together they moved the reported radius by thirty-nine decades, from `5.73735631780239850e-71` to `2.90423979800536192e-32`, and moved the ceiling not at all.
+
+**PASS:** `P4_EXACT_NONLINEAR_WORD_CERTIFICATE=PASS` for both H and A with explicit positive `W_*`, positive `mu_W`, exact source-operation semantics, complete branch coverage, and prefix/chart safety. The level remains a theorem seed, and the route ceiling proves it cannot be promoted to the P1 handoff radius without the structural change named in P5.
+
+### P5 — Initialization-to-inner-funnel finite capture — UNIFORM-TRANSPORT ROUTE PROVED INSUFFICIENT, MATCHED ROUTE REQUIRED
 
 The original composition audit correctly found that the useful P1 handoff family lies far outside the microscopic P4 inner seed. That result remains a guard against illegally extrapolating the P4 local recurrence, but it is no longer the current P5 obstruction. The outer bridge has since progressed through the source-staged startup covariance, first-`S`, large-angle geometry, quotient correction, and exact transport layers.
 
@@ -370,7 +424,63 @@ None of V51, V52, V53 or V54 composes `q<8`, promotes sample 1 or P5, or sets
 
 The independent implementation-stability composition gate continues to consume P5 directly. The older generic affine deployment-capture arithmetic is not accepted as a substitute.
 
-**PASS criterion for closing P5:** every certified normal or timeout handoff lies in a validated outer H capture funnel; every source-word prefix stays safe; the outer recurrence reaches `W_*` in a finite machine-certified number of H words/time. The current certificate does **not** yet satisfy this criterion.
+#### The uniform transported-defect route cannot close P5
+
+Every P5 attempt so far, including the whole V1..V54 sample-1 line, sharpens a
+constant inside one accounting:
+
+`||r_word||_M <= B W_0`, `B = F N kappa`, strict decrease requires `sqrt(W_0) <= delta/(2B)`.
+
+`tools/ou3_p4_p5_route_ceiling_certificate.py` bounds what that accounting can
+report, before any constant in it is chosen. Because the certified attitude
+radius of a level is exactly `theta(W) = a_t sqrt(W)` and an attitude-supported
+defect costs at least `1/a_t` in the metric, the chart scale `a_t` cancels and
+
+`theta_capture <= delta / (F N)`.
+
+With `delta <= 1` and `N` at least the word's sample count, the ceiling is
+`4.95049504950495e-03` rad with no prefix overshoot and `1.23762376237624e-03`
+rad at the shipping prefix factor. The bounded P1 handoff nodes are
+`0.2721648148683776` rad (normal gauged) and `0.5947333355555983` rad (timeout
+gauged). The route is therefore short by at least a factor of `120`, and would
+need the source word to inject fewer than `1.69` accepted attitude corrections
+per second before it could reach the handoff at all.
+
+The ceiling is independent of `kappa`, of the covariance enclosure, of the metric
+normalization and of `delta`. Retightening any of them -- including the
+fifty-one-decade metric-consistent widening of `B` recorded in P4 above -- moves
+the reported radius but not the ceiling. The `Delta S`, `Delta C`, `dP` and
+componentwise-split search directions of V42..V54 are constants of exactly this
+kind, so that line is retired here rather than continued.
+
+#### What a closing P5 route must change
+
+The failure is structural and localised: the accounting compares a defect that is
+*fast* (attitude, refreshed every accepted vector correction) against a margin
+that is *slow* (`delta`, rate-limited by the gyro-bias channel of the same word),
+and then accumulates the defect `N` times with no credit for the contraction
+happening in between. Three changes follow, and all three are needed:
+
+1. **Match each defect to its own operation.** For an accepted correction the
+   exact information identity gives `W - W+ = ||H z||^2_{s S^-1}` on the same
+   step that injects the defect. Charging the injected defect against that step's
+   own decrease removes both the `N`-fold accumulation and the dependence on the
+   whole-word `delta`.
+2. **Carry a directional or block margin.** The attitude channel must not be
+   rate-limited by the slowest source channel of the word. This means a block
+   Lyapunov function with a small-gain coupling constant, not one scalar `delta`
+   over the full 18/21-state box.
+3. **Replace the Cayley quadratic remainder on the attitude channel with an
+   exact finite-angle sector contraction** of the deployed correction. The
+   quadratic remainder is what forces the basin to shrink like `delta/(F N)`;
+   the finite-angle statement is what makes a radius of order `0.3` rad
+   expressible at all. `tools/ou3_p5_large_angle_sector_certificate.py` is the
+   existing entry point for that geometry.
+
+Until those land, `N_H_words` stays unset -- now for a proved reason rather than
+a pending computation.
+
+**PASS criterion for closing P5:** every certified normal or timeout handoff lies in a validated outer H capture funnel; every source-word prefix stays safe; the outer recurrence reaches `W_*` in a finite machine-certified number of H words/time. The current certificate does **not** yet satisfy this criterion, and the route ceiling above proves the present accounting never can.
 
 ### P6 — Prove every implemented hybrid jump
 

@@ -55,11 +55,13 @@ class Ou3P5StartupCaptureCertificateTests(unittest.TestCase):
         weak = d["weakest_axis_witness"]
         self.assertEqual(weak["group"], "b_g")
         self.assertAlmostEqual(weak["axis_witness_W_lower"], 1.0e-4, delta=1.0e-18)
-        self.assertGreater(weak["W_lower_over_strict_decrease_threshold"], 1.0e135)
+        # Floors express "many orders", not a pinned value: a legitimate P4
+        # widening shrinks these ratios and must not churn the obstruction test.
+        self.assertGreater(weak["W_lower_over_strict_decrease_threshold"], 1.0e40)
         strong = d["largest_axis_witness"]
         self.assertEqual(strong["group"], "S")
         self.assertAlmostEqual(strong["axis_witness_W_lower"], 9.0e4, delta=1.0e-8)
-        self.assertGreater(strong["W_lower_over_strict_decrease_threshold"], 1.0e144)
+        self.assertGreater(strong["W_lower_over_strict_decrease_threshold"], 1.0e50)
 
     def test_gauged_handoffs_use_composed_full_attitude_not_tilt_only(self):
         b = self.d["outer_bridge_requirements"]
@@ -73,8 +75,10 @@ class Ou3P5StartupCaptureCertificateTests(unittest.TestCase):
         self.assertGreater(timeout, normal)
         self.assertTrue(b["normal_gauged_inside_current_promoted_cayley_norm_limit"])
         self.assertTrue(b["timeout_gauged_inside_current_promoted_cayley_norm_limit"])
-        self.assertGreater(b["normal_gauged_over_current_P4_design_radius_factor"], 1.0e11)
-        self.assertGreater(b["timeout_gauged_over_current_P4_design_radius_factor"], 5.0e11)
+        # Floors, not pins: a tighter covariance enclosure raises the P4
+        # design radius and must not churn the obstruction test.
+        self.assertGreater(b["normal_gauged_over_current_P4_design_radius_factor"], 1.0e8)
+        self.assertGreater(b["timeout_gauged_over_current_P4_design_radius_factor"], 1.0e8)
 
     def test_ungauged_timeout_has_no_fake_full_heading_radius(self):
         b = self.d["outer_bridge_requirements"]
@@ -82,10 +86,32 @@ class Ou3P5StartupCaptureCertificateTests(unittest.TestCase):
         self.assertIn("YAW_QUOTIENT", b["timeout_ungauged_required_route"])
         self.assertIn("yaw-quotient", " ".join(b["required_proof_structure"]))
 
+    def test_N_H_words_is_unset_for_a_proved_route_ceiling_not_a_pending_count(self):
+        d = self.d
+        self.assertIsNone(d["N_H_words"])
+        self.assertEqual(
+            d["N_H_words_unset_reason"],
+            "PROVED_UNIFORM_TRANSPORT_ROUTE_CEILING_BELOW_P1_HANDOFF",
+        )
+        rc = d["route_ceiling"]
+        self.assertEqual(rc["status"], "BELOW_P1_HANDOFF")
+        b = d["outer_bridge_requirements"]
+        self.assertTrue(b["obstruction_is_the_route_not_its_constants"])
+        self.assertFalse(b["uniform_transport_route_can_ever_reach_P1_handoff"])
+        self.assertLess(
+            b["uniform_transport_route_ceiling_rad"],
+            b["timeout_gauged_full_attitude_cayley_norm_upper"],
+        )
+        self.assertLess(
+            b["uniform_transport_route_ceiling_rad"],
+            b["normal_gauged_full_attitude_cayley_norm_upper"],
+        )
+        self.assertGreater(b["uniform_transport_route_ceiling_shortfall_vs_largest_handoff"], 50.0)
+
     def test_unchanged_isotropic_P4_recurrence_is_not_outer_bridge(self):
         b = self.d["outer_bridge_requirements"]
-        self.assertGreater(b["uniform_B_reduction_factor_needed_at_weakest_witness"], 1.0e67)
-        self.assertGreater(b["uniform_B_reduction_factor_needed_at_largest_witness"], 1.0e72)
+        self.assertGreater(b["uniform_B_reduction_factor_needed_at_weakest_witness"], 1.0e20)
+        self.assertGreater(b["uniform_B_reduction_factor_needed_at_largest_witness"], 1.0e25)
         self.assertIn("Simply enlarging q_design", b["interpretation"])
         self.assertIn("staged outer-H bridge", self.d["required_next_certificate"])
 

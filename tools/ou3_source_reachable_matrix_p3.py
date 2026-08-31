@@ -309,8 +309,15 @@ def translation_upper(tau: Interval,sigma: Interval,rs: Interval,Tpe: float,sche
     roots=[math.sqrt(v) for v in variances]
     total=up(sum(roots))
     noise=[up(r*total) for r in roots]
+    # Same construction evaluated downward, so a consumer that needs a lower
+    # bound on the word's own length (the injected-noise floor does) never
+    # borrows the upward-rounded horizon used for the covariance ceiling.
+    gap_lo=down(cadence[0]+h)
+    spacing_lo=down(max(Tpe,2.0*gap_lo))
+    Tword_lo=down(down(2.0*spacing_lo+gap_lo)+Tpe)
     return [up(u[i]+noise[i]) for i in range(3)]+[noise[3]],{
         "cadence_s":cadence,"gap_s_upper":gap,"word_horizon_s_upper":Tword,
+        "word_horizon_s_lower":Tword_lo,
     }
 
 
@@ -336,7 +343,14 @@ def mode_cell(mode: str,x: Interval,rho_trans: float,sigma: Interval,rs: Interva
     whitened=up((fhi*fhi/ra+mhi*mhi/rm)*qab+(3.0*qc*pair)/ra+(3.0*qba*pair)/ra+(6.0*pba)/ra)
     u0=up(1.0/alpha6+whitened/alpha6)
     T=timing["word_horizon_s_upper"]
-    uab=up(2.0*(1.0+T*T)*u0+6.0*(qg*T+qb*(T+T**3/3.0)))
+    # Endpoint propagation of the post-observation (theta,bias) bound through
+    # Phi=[[I,-T I],[0,I]].  Only the attitude row integrates the bias over the
+    # word, so only it pays the 2(1+T^2) factor; the bias row propagates as
+    # itself plus its own random walk.  Charging the attitude factor to the bias
+    # row inflated the binding P3 channel by more than an order of magnitude.
+    uab_prop=up(6.0*(qg*T+qb*(T+T**3/3.0)))
+    uab=up(2.0*(1.0+T*T)*u0+uab_prop)
+    uab_bias=up(2.0*u0+uab_prop)
 
     qtheta=pos(process["attitude_gyro_bias"]["theta_diagonal_lower"],"theta process")
     qbg=pos(process["attitude_gyro_bias"]["gyro_bias_diagonal_lower"],"bias process")
@@ -351,7 +365,7 @@ def mode_cell(mode: str,x: Interval,rho_trans: float,sigma: Interval,rs: Interva
     sS2=(sigma.lo*h*h*h)**2
     sa2=sigma.lo*sigma.lo
     scales2=[qtheta]*3+[qbg]*3+[sv2]*3+[sp2]*3+[sS2]*3+[sa2]*3
-    upper=[uab]*6+[utrans[0]]*3+[utrans[1]]*3+[utrans[2]]*3+[utrans[3]]*3
+    upper=[uab]*3+[uab_bias]*3+[utrans[0]]*3+[utrans[1]]*3+[utrans[2]]*3+[utrans[3]]*3
     rho=min(rho_trans,rho_att)
     if mode=="A":
         scales2 += [qba_d]*3

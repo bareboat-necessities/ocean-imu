@@ -31,12 +31,14 @@ from __future__ import annotations
 
 import argparse
 from fractions import Fraction
+import functools
 import json
 import math
 from pathlib import Path
 
 from ou3_interval import Interval, hull
 import ou3_source_reachable_matrix_p3 as BASE
+import ou3_validated_transcendentals as VT
 
 BRANCH_X = BASE.BRANCH_X
 DEFAULT_DOMAIN = BASE.DEFAULT_DOMAIN
@@ -104,6 +106,33 @@ def _small_process_shape(x: Interval):
     ]
 
 
+@functools.lru_cache(maxsize=512)
+def _exact_series_coefficients(denominator_power: int, exp_terms, polynomial):
+    """Exact Taylor coefficients of ``numerator/x^denominator_power``.
+
+    They depend only on the source expression, not on the evaluation cell, so
+    the exact ``Fraction`` arithmetic is done once.  The word-horizon read of
+    this family evaluates it on two orders of magnitude more cells than the
+    per-step read did, and rebuilding these rationals on every cell was the
+    whole cost of that.
+    """
+    N = EXACT_SERIES_ORDER
+    coeff = [F(0) for _ in range(N+1)]
+    for degree,value in polynomial:
+        if degree <= N:
+            coeff[degree] += value
+    for lam,p in exp_terms:
+        for j,pj in p:
+            for n in range(j,N+1):
+                k=n-j
+                coeff[n] += pj * F((-lam)**k, math.factorial(k))
+    if any(coeff[n] != 0 for n in range(min(denominator_power,N+1))):
+        raise RuntimeError("exponential source cancellation order mismatch")
+    # Carry the float enclosures alongside the exact values: the Horner pass
+    # below converts every coefficient on every cell otherwise.
+    return tuple((c, _FI(c)) for c in coeff[denominator_power:])
+
+
 def _exact_scaled_entry(
     x: Interval,
     denominator_power: int,
@@ -119,31 +148,28 @@ def _exact_scaled_entry(
     if x.lo <= 0.0:
         raise ValueError("positive x required")
     N = EXACT_SERIES_ORDER
-    coeff = [F(0) for _ in range(N+1)]
-    for degree,value in polynomial.items():
-        if degree <= N:
-            coeff[degree] += value
-    for lam,p in exp_terms:
-        for j,pj in p.items():
-            for n in range(j,N+1):
-                k=n-j
-                coeff[n] += pj * F((-lam)**k, math.factorial(k))
-    if any(coeff[n] != 0 for n in range(min(denominator_power,N+1))):
-        raise RuntimeError("exponential source cancellation order mismatch")
-
-    scaled=coeff[denominator_power:]
-    y=_FI(scaled[-1])
-    for c in reversed(scaled[:-1]):
-        y=_FI(c)+x*y
+    scaled = _exact_series_coefficients(
+        denominator_power,
+        tuple((lam, tuple(sorted(pp.items()))) for lam, pp in exp_terms),
+        tuple(sorted(polynomial.items())),
+    )
+    y=scaled[-1][1]
+    for _, ci in reversed(scaled[:-1]):
+        y=ci+x*y
 
     rem=0.0
     for lam,p in exp_terms:
+        # The tail of exp(-lam*x) after order k is bounded by its next term times
+        # exp(lam*x.hi).  The literal 2.0 this used to carry is that factor at
+        # lam*x < ln 2, which held for the per-step read but silently expires the
+        # moment the same family is read at a word horizon.
+        growth=BASE.up(math.exp(lam*x.hi)*(1.0+1.0e-12))
         for j,pj in p.items():
             k=N-j+1
             if k<=0:
                 continue
             term=(
-                2.0*abs(float(pj))*(float(lam)**k)*(x.hi**(N+1))
+                growth*abs(float(pj))*(float(lam)**k)*(x.hi**(N+1))
                 /(math.factorial(k)*(x.lo**denominator_power))
             )
             rem=BASE.up(rem+term)
@@ -186,6 +212,8 @@ def _large_scaled_q(x: Interval):
 def _large_process_shape(x: Interval):
     # One additional exact cancelled power returns Q_scaled/x directly.
     return _large_family(x,1)
+
+
 
 
 def _branch_hull(x: Interval, small_fn, large_fn):
