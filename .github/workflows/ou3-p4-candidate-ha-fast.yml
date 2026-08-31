@@ -9,6 +9,7 @@ on:
       - "tools/ou3_p4_candidate_first_accel_range_v3.py"
       - "tools/ou3_p4_candidate_first_accel_exact_source.py"
       - "tools/ou3_p4_p5_entrance_search_domain.py"
+      - "tools/ou3_p5_45deg_first_accel_q8_bridge.py"
       - "tools/ou3_p5_first_accel_exact_source.py"
       - "tools/ou3_p5_first_accel_exact_source_v2.py"
       - "tools/ou3_p5_first_accel_rotation_gauge.py"
@@ -16,6 +17,7 @@ on:
       - "tools/ou3_p5_first_accel_structured_gain.py"
       - "tools/ou3_proof_operating_domain.json"
       - "tests/validation/test_ou3_p4_candidate_first_accel_range.py"
+      - "tests/validation/test_ou3_p5_45deg_first_accel_q8_bridge.py"
       - ".github/workflows/ou3-p4-candidate-ha-fast.yml"
   pull_request:
     paths:
@@ -25,6 +27,7 @@ on:
       - "tools/ou3_p4_candidate_first_accel_range_v3.py"
       - "tools/ou3_p4_candidate_first_accel_exact_source.py"
       - "tools/ou3_p4_p5_entrance_search_domain.py"
+      - "tools/ou3_p5_45deg_first_accel_q8_bridge.py"
       - "tools/ou3_p5_first_accel_exact_source.py"
       - "tools/ou3_p5_first_accel_exact_source_v2.py"
       - "tools/ou3_p5_first_accel_rotation_gauge.py"
@@ -32,6 +35,7 @@ on:
       - "tools/ou3_p5_first_accel_structured_gain.py"
       - "tools/ou3_proof_operating_domain.json"
       - "tests/validation/test_ou3_p4_candidate_first_accel_range.py"
+      - "tests/validation/test_ou3_p5_45deg_first_accel_q8_bridge.py"
       - ".github/workflows/ou3-p4-candidate-ha-fast.yml"
   workflow_dispatch:
 
@@ -44,24 +48,29 @@ concurrency:
 
 jobs:
   candidate-preflight:
-    name: 30/25/20/15 deg exact-source first-Live accel gate
+    name: 45deg P5 to q8 + 30/25/20/15 exact-source accel gate
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v6
 
-      - name: Compile exact-source candidate producer and tests
+      - name: Compile exact-source bridge producers and tests
         run: |
           python3 -m py_compile \
             tools/ou3_p4_candidate_first_accel_range.py \
             tools/ou3_p4_candidate_first_accel_range_v2.py \
             tools/ou3_p4_candidate_first_accel_range_v3.py \
             tools/ou3_p4_candidate_first_accel_exact_source.py \
-            tests/validation/test_ou3_p4_candidate_first_accel_range.py
+            tools/ou3_p5_45deg_first_accel_q8_bridge.py \
+            tests/validation/test_ou3_p4_candidate_first_accel_range.py \
+            tests/validation/test_ou3_p5_45deg_first_accel_q8_bridge.py
 
-      - name: Test exact-source candidate semantics
+      - name: Test exact-source range and q8 bridge semantics
         working-directory: tests/validation
-        run: python3 -m unittest -v test_ou3_p4_candidate_first_accel_range
+        run: |
+          python3 -m unittest -v \
+            test_ou3_p4_candidate_first_accel_range \
+            test_ou3_p5_45deg_first_accel_q8_bridge
 
       - name: Certify exact-source first-Live accelerometer correction range
         run: |
@@ -86,6 +95,32 @@ jobs:
           print('FIRST_FORCE_MPS2:', d['first_accel_specific_force_magnitude_mps2'])
           for r in d['candidate_rows']:
               print('ACCEL_RANGE', r['angle_deg'], 'qpred', r['post_prediction_q_upper'], 'K', r['max_Ktheta_norm_upper'], 'resid', r['max_combined_residual_norm_upper_mps2'], 'd', r['max_first_accelerometer_correction_norm_upper_rad'], 'margin', r['minimum_correction_range_margin_rad'], 'safe', r['first_accelerometer_range_safe'])
-              if r['first_unclosed_child'] is not None:
-                  print('FIRST_UNCLOSED', r['angle_deg'], json.dumps(r['first_unclosed_child'], sort_keys=True))
+          PY
+
+      - name: Certify sign-complete 45deg first-accel bridge into q8
+        run: |
+          python3 tools/ou3_p5_45deg_first_accel_q8_bridge.py \
+            --source-pieces 2 \
+            --output /tmp/ou3_p5_45deg_first_accel_q8_bridge.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/ou3_p5_45deg_first_accel_q8_bridge.json'))
+          assert d['validation_pass'] is True
+          assert d['P5_45DEG_FIRST_ACCEL_Q8_BRIDGE_CERTIFICATE'] == 'PASS'
+          assert d['accepted_correction_sign_assumed_favorable'] is False
+          assert d['deployed_correction_limit_rad'] == 6.0
+          assert d['deployed_correction_limit_increased'] is False
+          assert d['P5_45deg_entrance_first_accel']['accepted_or_rejected_branch_family_inside_q8'] is True
+          assert d['all_P4_candidate_first_accel_branches_inside_q8'] is True
+          assert d['returned_to_30deg_P4_sector_here'] is False
+          p=d['P5_45deg_entrance_first_accel']
+          print('P5_45DEG_Q8_BRIDGE:', d['P5_45DEG_FIRST_ACCEL_Q8_BRIDGE_CERTIFICATE'])
+          print('Q45_PRED:', p['post_prediction_q_upper'])
+          print('D45_MAX:', p['max_first_accelerometer_correction_norm_upper_rad'])
+          print('W_LOWER:', p['product']['homogeneous_product_scalar_lower'])
+          print('QPLUS_UPPER:', p['product']['post_update_q_upper_from_scalar'])
+          print('Q8_ALGEBRA_MARGIN:', p['product']['q8_test_lhs_lower_17W2']-p['product']['q8_test_rhs_upper_4plusq2'])
+          print('RESET_COV_MULT:', p['reset']['reset_covariance_spectral_multiplier_upper'])
+          for r in d['P4_candidate_first_accel_rows']:
+              print('P4_FIRST_PACKET_QPLUS', r['angle_deg'], r['product']['post_update_q_upper_from_scalar'])
           PY
