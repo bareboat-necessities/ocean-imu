@@ -1,0 +1,130 @@
+name: ou3-usable-certificates-fast
+
+on:
+  push:
+    paths:
+      - "tools/ou3_p4_source_path_reachability.py"
+      - "tools/ou3_p4_operation_matched_sector_certificate.py"
+      - "tools/ou3_p5_outer_sector_capture_certificate.py"
+      - "tools/ou3_p5_cayley_eta_geometry.py"
+      - "tools/ou3_p5_effective_vector_input.py"
+      - "tools/ou3_p5_exact_correction_transport.py"
+      - "tools/ou3_p5_heading_handoff_contract.py"
+      - "tools/ou3_startup_stability_certificate.py"
+      - "tools/ou3_validated_transcendentals.py"
+      - "tools/ou3_proof_operating_domain.json"
+      - "src/kalman_ou_iii/**"
+      - "src/kalman_ou_common/**"
+      - "tests/validation/test_ou3_p4_source_path_reachability.py"
+      - "tests/validation/test_ou3_p4_operation_matched_sector_certificate.py"
+      - "tests/validation/test_ou3_p5_outer_sector_capture_certificate.py"
+      - "docs/ou-iii-certificate-usability-envelope.md"
+      - ".github/workflows/ou3-usable-certificates-fast.yml"
+  pull_request:
+    paths:
+      - "tools/ou3_p4_source_path_reachability.py"
+      - "tools/ou3_p4_operation_matched_sector_certificate.py"
+      - "tools/ou3_p5_outer_sector_capture_certificate.py"
+      - "tools/ou3_p5_cayley_eta_geometry.py"
+      - "tools/ou3_p5_effective_vector_input.py"
+      - "tools/ou3_p5_exact_correction_transport.py"
+      - "tools/ou3_p5_heading_handoff_contract.py"
+      - "tools/ou3_startup_stability_certificate.py"
+      - "tools/ou3_validated_transcendentals.py"
+      - "tools/ou3_proof_operating_domain.json"
+      - "src/kalman_ou_iii/**"
+      - "src/kalman_ou_common/**"
+      - "tests/validation/test_ou3_p4_source_path_reachability.py"
+      - "tests/validation/test_ou3_p4_operation_matched_sector_certificate.py"
+      - "tests/validation/test_ou3_p5_outer_sector_capture_certificate.py"
+      - "docs/ou-iii-certificate-usability-envelope.md"
+      - ".github/workflows/ou3-usable-certificates-fast.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ou3-usable-certificates-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  usable-certificates:
+    name: P2/P4/P5 usable certificate contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Compile certificate producers and tests
+        run: |
+          python3 -m py_compile \
+            tools/ou3_p4_source_path_reachability.py \
+            tools/ou3_p4_operation_matched_sector_certificate.py \
+            tools/ou3_p5_outer_sector_capture_certificate.py \
+            tests/validation/test_ou3_p4_source_path_reachability.py \
+            tests/validation/test_ou3_p4_operation_matched_sector_certificate.py \
+            tests/validation/test_ou3_p5_outer_sector_capture_certificate.py
+
+      - name: Run focused usability tests
+        working-directory: tests/validation
+        run: |
+          python3 -m unittest -v \
+            test_ou3_p4_source_path_reachability \
+            test_ou3_p4_operation_matched_sector_certificate \
+            test_ou3_p5_outer_sector_capture_certificate
+
+      - name: Emit P2 source-path certificate
+        run: |
+          python3 tools/ou3_p4_source_path_reachability.py \
+            --output /tmp/ou3_p2_source_path.json
+
+      - name: Emit P4 finite-angle sector certificate
+        run: |
+          python3 tools/ou3_p4_operation_matched_sector_certificate.py \
+            --output /tmp/ou3_p4_operation_sector.json
+
+      - name: Emit P5 outer capture certificate
+        run: |
+          python3 tools/ou3_p5_outer_sector_capture_certificate.py \
+            --output /tmp/ou3_p5_outer_capture.json
+
+      - name: Enforce material usability margins
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          p2 = json.loads(Path('/tmp/ou3_p2_source_path.json').read_text())
+          p4 = json.loads(Path('/tmp/ou3_p4_operation_sector.json').read_text())
+          p5 = json.loads(Path('/tmp/ou3_p5_outer_capture.json').read_text())
+
+          assert p2['P2_SOURCE_PATH_CERTIFICATE'] == 'PASS'
+          assert p2['source_only'] is True
+          assert p2['usable_P4_promoted'] is False
+
+          assert p4['P4_OPERATION_MATCHED_FINITE_ANGLE_SECTOR_CERTIFICATE'] == 'PASS'
+          assert p4['design_full_attitude_angle_rad'] >= 0.80
+          assert p4['design_cayley_norm_upper'] < 1.0
+          assert p4['exact_vector_strong_monotonicity_factor_lower'] > 0.80
+          assert p4['exact_eta_to_rotational_residual_information_ratio_upper'] < 0.25
+          assert p4['P1_overlap']['normal_gauged_inside_sector'] is True
+          assert p4['P1_overlap']['timeout_gauged_inside_sector'] is True
+          assert p4['global_packet_count_times_lipschitz_defect_used'] is False
+          assert p4['P4_COMPLETE_WORD_DISSIPATION_ESTABLISHED_HERE'] is False
+
+          assert p5['P5_OUTER_SECTOR_CAPTURE_CERTIFICATE'] == 'PASS'
+          assert p5['all_source_handoff_branches_enter_outer_sector'] is True
+          assert p5['N_outer_words'] == 0
+          assert p5['legacy_microscopic_inner_seed_used_as_outer_capture_target'] is False
+          assert p5['legacy_uniform_transport_route_used'] is False
+          assert p5['P5_INNER_FUNNEL_FINITE_CAPTURE_ESTABLISHED_HERE'] is False
+
+          print('P2 source states:', p2['partition']['states'])
+          print('P2 source edges:', p2['transition_edges'])
+          print('P4 sector rad:', p4['design_full_attitude_angle_rad'])
+          print('P4 sector q:', p4['design_cayley_norm_upper'])
+          print('P4 monotonicity:', p4['exact_vector_strong_monotonicity_factor_lower'])
+          print('P4 eta ratio:', p4['exact_eta_to_rotational_residual_information_ratio_upper'])
+          print('P5 N_outer:', p5['N_outer_words'])
+          PY
