@@ -1,3 +1,4 @@
+from copy import deepcopy
 from pathlib import Path
 import sys
 import unittest
@@ -28,10 +29,40 @@ class P5OuterSectorCaptureTests(unittest.TestCase):
         self.assertTrue(b["timeout_ungauged"]["inside_outer_gravity_sector"])
         self.assertFalse(b["timeout_ungauged"]["full_heading_radius_assigned"])
 
+    def test_ungauged_timeout_uses_upper_cosine_enclosure(self):
+        b = self.d["branches"]["timeout_ungauged"]
+        self.assertTrue(self.d["upper_cosine_enclosure_used_for_ungauged_inclusion"])
+        self.assertEqual(b["boundary_cosine_direction_used"], "UPPER_ENCLOSURE")
+        self.assertLessEqual(
+            self.d["outer_sector_cosine_lower"],
+            self.d["outer_sector_cosine_upper"],
+        )
+        self.assertGreaterEqual(
+            b["tilt_cosine_lower"],
+            b["outer_sector_cosine_upper"],
+        )
+
     def test_retired_microscopic_route_is_not_capture_definition(self):
         self.assertFalse(self.d["legacy_microscopic_inner_seed_used_as_outer_capture_target"])
         self.assertFalse(self.d["legacy_uniform_transport_route_used"])
         self.assertFalse(self.d["P5_INNER_FUNNEL_FINITE_CAPTURE_ESTABLISHED_HERE"])
+
+    def test_wrong_boundary_direction_or_dead_route_fails_closed(self):
+        d = deepcopy(self.d)
+        d["upper_cosine_enclosure_used_for_ungauged_inclusion"] = False
+        self.assertNotEqual(C.validate(d), [])
+
+        d = deepcopy(self.d)
+        d["branches"]["timeout_ungauged"]["boundary_cosine_direction_used"] = "LOWER_ENCLOSURE"
+        self.assertNotEqual(C.validate(d), [])
+
+        d = deepcopy(self.d)
+        d["legacy_uniform_transport_route_used"] = True
+        self.assertNotEqual(C.validate(d), [])
+
+        d = deepcopy(self.d)
+        d["legacy_microscopic_inner_seed_used_as_outer_capture_target"] = True
+        self.assertNotEqual(C.validate(d), [])
 
 
 if __name__ == "__main__":
