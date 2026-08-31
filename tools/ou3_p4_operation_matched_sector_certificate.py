@@ -22,13 +22,15 @@ J_aw=R_wb is orthogonal/full-row-rank.  S=0 has no nonlinear residual.  Joseph
 information transport and the covariance reset are exact congruence identities.
 
 The certified sector is chosen to cover a 0.80 rad full-attitude error, larger
-than both source-faithful gauged P1 handoff branches.  0.80 rad is not inferred
-from replay data; it is a proof-design radius below the q<1 Cayley chart already
-used by the P5 source machinery.  This file deliberately does NOT claim the
-complete P4 word contraction: the remaining numerical backend must pair each
-operation's sector residual with that operation's own information decrease and
-carry directional state blocks along source-reachable paths.  What is proved
-here is that the nonlinear geometry itself is no longer microscopic.
+than both source-faithful gauged P1 handoff branches.  The corresponding Cayley
+and cosine bounds are computed from the repository's validated transcendental
+enclosures, not ordinary libm.  0.80 rad is not inferred from replay data; it is
+a proof-design radius below the q<1 Cayley chart already used by the P5 source
+machinery.  This file deliberately does NOT claim the complete P4 word
+contraction: the remaining numerical backend must pair each operation's sector
+residual with that operation's own information decrease and carry directional
+state blocks along source-reachable paths.  What is proved here is that the
+nonlinear geometry itself is no longer microscopic.
 """
 from __future__ import annotations
 
@@ -41,6 +43,7 @@ import ou3_p5_cayley_eta_geometry as ETA
 import ou3_p5_effective_vector_input as VEFF
 import ou3_p5_exact_correction_transport as CORR
 import ou3_p5_heading_handoff_contract as HEADING
+import ou3_validated_transcendentals as VT
 
 REPO = Path(__file__).resolve().parents[1]
 DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
@@ -56,20 +59,34 @@ def up(x: float) -> float:
     return math.nextafter(float(x), math.inf)
 
 
-def cayley_from_theta_upper(theta: float) -> float:
-    """Outward upper q=2 tan(theta/2), for 0<=theta<pi."""
+def _validated_design_geometry(theta: float) -> dict:
+    """Outward Cayley/cosine bounds for the fixed design angle.
+
+    The validated transcendental backend is most accurate on the half-angle.
+    With h=theta/2,
+
+        q = 2 sin(h)/cos(h),     cos(theta)=2 cos(h)^2-1.
+
+    All arithmetic is widened outward after the validated sin/cos enclosure.
+    """
     theta = float(theta)
     if not (math.isfinite(theta) and 0.0 <= theta < math.pi):
         raise ValueError("finite attitude angle in [0,pi) required")
-    return up(2.0 * math.tan(up(0.5 * theta)))
-
-
-def theta_from_cayley_upper(q: float) -> float:
-    """Outward upper theta=2 atan(q/2)."""
-    q = float(q)
-    if not (math.isfinite(q) and q >= 0.0):
-        raise ValueError("finite nonnegative Cayley radius required")
-    return up(2.0 * math.atan(up(0.5 * q)))
+    half = down(0.5 * theta)
+    s = VT.sin_point(half)
+    c = VT.cos_point(half)
+    if not c.lo > 0.0:
+        raise RuntimeError("design half-angle cosine lost positivity")
+    q_hi = up(up(2.0 * s.hi) / c.lo)
+    c2_lo = down(c.lo * c.lo)
+    cos_lo = down(down(2.0 * c2_lo) - 1.0)
+    return {
+        "half_angle_rad": half,
+        "validated_sin_half_interval": s.as_list(),
+        "validated_cos_half_interval": c.as_list(),
+        "cayley_norm_upper": q_hi,
+        "cosine_lower": cos_lo,
+    }
 
 
 def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
@@ -87,19 +104,18 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     failures += [f"effective-vector: {x}" for x in VEFF.validate(veff)]
     failures += [f"correction-transport: {x}" for x in CORR.validate(corr)]
 
-    q = cayley_from_theta_upper(DESIGN_THETA_RAD)
+    design = _validated_design_geometry(DESIGN_THETA_RAD)
+    q = float(design["cayley_norm_upper"])
     if not q < 1.0:
         failures.append("0.80 rad design sector does not stay inside q<1 chart")
 
-    residual_factor_lower = down(4.0 / up(4.0 + up(q * q)))
-    eta_to_residual_info_upper = up(up(q * q) / 4.0)
-    tangent_defect_ratio_upper = up(q / down(math.sqrt(down(4.0 + down(q*q)))))
-    exact_residual_to_tangent_norm_lower = down(2.0 / up(math.sqrt(up(4.0 + up(q*q)))))
+    residual_factor_lower = ETA.exact_residual_factor_lower(q)
+    eta_to_residual_info_upper = ETA.exact_eta_to_residual_information_ratio_upper(q)
+    tangent_defect_ratio_upper = VEFF.mag_effective_vs_tangent_defect_ratio_upper(q)
+    exact_residual_to_tangent_norm_lower = down(math.sqrt(residual_factor_lower))
 
     normal_q = float(heading["gauged_quality_handoff"]["full_attitude_cayley_norm_upper"])
     timeout_q = float(heading["gauged_timeout_subbranch"]["full_attitude_cayley_norm_upper"])
-    normal_theta = theta_from_cayley_upper(normal_q)
-    timeout_theta = theta_from_cayley_upper(timeout_q)
     covers_normal = normal_q <= q
     covers_timeout = timeout_q <= q
 
@@ -134,8 +150,11 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "filter_changed": False,
         "design_full_attitude_angle_rad": DESIGN_THETA_RAD,
         "design_full_attitude_angle_deg": math.degrees(DESIGN_THETA_RAD),
+        "design_geometry": design,
+        "design_full_attitude_cosine_lower": design["cosine_lower"],
         "design_cayley_norm_upper": q,
         "design_cayley_chart_q_lt_1": q < 1.0,
+        "validated_transcendentals_used_for_design_boundary": True,
         "exact_vector_strong_monotonicity_factor_lower": residual_factor_lower,
         "exact_eta_to_rotational_residual_information_ratio_upper": eta_to_residual_info_upper,
         "exact_residual_to_tangent_norm_ratio_lower": exact_residual_to_tangent_norm_lower,
@@ -164,10 +183,8 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         },
         "P1_overlap": {
             "normal_gauged_cayley_norm_upper": normal_q,
-            "normal_gauged_angle_upper_rad": normal_theta,
             "normal_gauged_inside_sector": covers_normal,
             "timeout_gauged_cayley_norm_upper": timeout_q,
-            "timeout_gauged_angle_upper_rad": timeout_theta,
             "timeout_gauged_inside_sector": covers_timeout,
             "ungauged_timeout_route": heading["ungauged_timeout_subbranch"]["required_route"],
         },
@@ -187,15 +204,16 @@ def validate(d: dict) -> list[str]:
     failures = list(d.get("failures", []))
     if d.get("schema") != SCHEMA:
         failures.append("schema mismatch")
-    for key in ("source_generated_not_trajectory_fit",):
-        if d.get(key) is not True:
-            failures.append(f"{key} is not true")
+    if d.get("source_generated_not_trajectory_fit") is not True:
+        failures.append("source_generated_not_trajectory_fit is not true")
     for key in ("source_replay_used", "filter_changed",
                 "global_packet_count_times_lipschitz_defect_used",
                 "whole_word_weakest_P3_delta_used_as_attitude_sector_margin",
                 "P4_COMPLETE_WORD_DISSIPATION_ESTABLISHED_HERE"):
         if d.get(key) is not False:
             failures.append(f"{key} is not false")
+    if d.get("validated_transcendentals_used_for_design_boundary") is not True:
+        failures.append("finite-angle design boundary is not validated")
     if d.get("P4_OPERATION_MATCHED_FINITE_ANGLE_SECTOR_CERTIFICATE") != "PASS":
         failures.append("operation-matched finite-angle sector did not pass")
     if not float(d.get("design_full_attitude_angle_rad", 0.0)) >= 0.80:
@@ -229,6 +247,7 @@ def main() -> int:
         "status": out["P4_OPERATION_MATCHED_FINITE_ANGLE_SECTOR_CERTIFICATE"],
         "theta_rad": out["design_full_attitude_angle_rad"],
         "q": out["design_cayley_norm_upper"],
+        "cosine_lower": out["design_full_attitude_cosine_lower"],
         "monotonicity": out["exact_vector_strong_monotonicity_factor_lower"],
         "eta_ratio": out["exact_eta_to_rotational_residual_information_ratio_upper"],
         "P1_overlap": out["P1_overlap"],
