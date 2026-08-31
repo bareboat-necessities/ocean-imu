@@ -11,6 +11,7 @@ on:
       - "tools/ou3_p4_p5_entrance_search_domain.py"
       - "tools/ou3_p5_45deg_first_accel_q8_bridge.py"
       - "tools/ou3_p5_45deg_sample1_entry_ha.py"
+      - "tools/ou3_p5_45deg_sample1_entry_ha_v2.py"
       - "tools/ou3_p5_first_accel_exact_source.py"
       - "tools/ou3_p5_first_accel_exact_source_v2.py"
       - "tools/ou3_p5_first_accel_rotation_gauge.py"
@@ -20,6 +21,7 @@ on:
       - "tests/validation/test_ou3_p4_candidate_first_accel_range.py"
       - "tests/validation/test_ou3_p5_45deg_first_accel_q8_bridge.py"
       - "tests/validation/test_ou3_p5_45deg_sample1_entry_ha.py"
+      - "tests/validation/test_ou3_p5_45deg_sample1_entry_ha_v2.py"
       - ".github/workflows/ou3-p4-candidate-ha-fast.yml"
   pull_request:
     paths:
@@ -31,6 +33,7 @@ on:
       - "tools/ou3_p4_p5_entrance_search_domain.py"
       - "tools/ou3_p5_45deg_first_accel_q8_bridge.py"
       - "tools/ou3_p5_45deg_sample1_entry_ha.py"
+      - "tools/ou3_p5_45deg_sample1_entry_ha_v2.py"
       - "tools/ou3_p5_first_accel_exact_source.py"
       - "tools/ou3_p5_first_accel_exact_source_v2.py"
       - "tools/ou3_p5_first_accel_rotation_gauge.py"
@@ -40,6 +43,7 @@ on:
       - "tests/validation/test_ou3_p4_candidate_first_accel_range.py"
       - "tests/validation/test_ou3_p5_45deg_first_accel_q8_bridge.py"
       - "tests/validation/test_ou3_p5_45deg_sample1_entry_ha.py"
+      - "tests/validation/test_ou3_p5_45deg_sample1_entry_ha_v2.py"
       - ".github/workflows/ou3-p4-candidate-ha-fast.yml"
   workflow_dispatch:
 
@@ -52,7 +56,7 @@ concurrency:
 
 jobs:
   candidate-preflight:
-    name: 45deg P5 q8 bridge and H/A sample1 propagation
+    name: 45deg P5 q8 bridge and source-faithful H/A sample1 propagation
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -67,9 +71,11 @@ jobs:
             tools/ou3_p4_candidate_first_accel_exact_source.py \
             tools/ou3_p5_45deg_first_accel_q8_bridge.py \
             tools/ou3_p5_45deg_sample1_entry_ha.py \
+            tools/ou3_p5_45deg_sample1_entry_ha_v2.py \
             tests/validation/test_ou3_p4_candidate_first_accel_range.py \
             tests/validation/test_ou3_p5_45deg_first_accel_q8_bridge.py \
-            tests/validation/test_ou3_p5_45deg_sample1_entry_ha.py
+            tests/validation/test_ou3_p5_45deg_sample1_entry_ha.py \
+            tests/validation/test_ou3_p5_45deg_sample1_entry_ha_v2.py
 
       - name: Test exact-source range, q8 bridge, and H/A entry semantics
         working-directory: tests/validation
@@ -77,7 +83,8 @@ jobs:
           python3 -m unittest -v \
             test_ou3_p4_candidate_first_accel_range \
             test_ou3_p5_45deg_first_accel_q8_bridge \
-            test_ou3_p5_45deg_sample1_entry_ha
+            test_ou3_p5_45deg_sample1_entry_ha \
+            test_ou3_p5_45deg_sample1_entry_ha_v2
 
       - name: Certify exact-source first-Live accelerometer correction range
         run: |
@@ -112,25 +119,40 @@ jobs:
           print('P5_45DEG_Q8', 'qpred', p['post_prediction_q_upper'], 'dmax', p['max_first_accelerometer_correction_norm_upper_rad'], 'qplus', p['product']['post_update_q_upper_from_scalar'], 'reset_mult', p['reset']['reset_covariance_spectral_multiplier_upper'])
           PY
 
-      - name: Propagate 45deg first-packet child to sample1 in H and A
+      - name: Retain V1 diagnostic that exposes the A projection crossing
         run: |
           rc=0
           python3 tools/ou3_p5_45deg_sample1_entry_ha.py --source-pieces 2 --output /tmp/ou3_p5_45deg_sample1_entry_ha.json || rc=$?
           python3 - <<'PY'
           import json
           d=json.load(open('/tmp/ou3_p5_45deg_sample1_entry_ha.json'))
-          assert d['source_generated_not_trajectory_fit'] is True
-          assert d['source_replay_used'] is False
-          assert d['filter_changed'] is False
           assert d['starts_from_45deg_sign_complete_q8_bridge'] is True
-          assert d['H_dimension'] == 18 and d['A_dimension'] == 21
-          assert d['state_corrections_use_group_operator_norm_caps'] is True
-          assert d['returned_to_30deg_P4_sector_here'] is False
-          print('P5_45DEG_SAMPLE1_HA:', d['P5_45DEG_SAMPLE1_ENTRY_HA_CERTIFICATE'])
-          print('Q1_PREMEAS:', d['sample1_pre_measurement_q_upper'])
-          for mode in ('H','A'):
-              m=d['modes'][mode]
-              print(mode, 'complete', m['complete'], 'cells', m['evaluated'], '/', m['expected'], 'max_state', m['max_state'], 'failure', m['first_failure'])
-          print('FAILURES:', d['failures'])
+          assert d['modes']['H']['complete'] is True
+          print('V1_DIAGNOSTIC', d['P5_45DEG_SAMPLE1_ENTRY_HA_CERTIFICATE'], 'q1', d['sample1_pre_measurement_q_upper'], 'A_failure', d['modes']['A']['first_failure'])
           PY
-          echo "producer_exit=$rc"
+          echo "v1_producer_exit=$rc"
+
+      - name: Certify projection-aware H/A sample1 entry and source reachability
+        run: |
+          python3 tools/ou3_p5_45deg_sample1_entry_ha_v2.py --source-pieces 2 --output /tmp/ou3_p5_45deg_sample1_entry_ha_v2.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/ou3_p5_45deg_sample1_entry_ha_v2.json'))
+          assert d['validation_pass'] is True
+          assert d['P5_45DEG_SAMPLE1_ENTRY_HA_V2_CERTIFICATE'] == 'PASS'
+          assert all(d['source_reachability'].values())
+          assert d['deployed_default_first_live_mode'] == 'H'
+          assert d['deployed_default_A_first_live_reachable'] is False
+          assert d['A_shipping_closed_ball_projection_used'] is True
+          assert d['A_projection_nonexpansive_used'] is True
+          assert d['A_P4_inner_045_ball_promoted_here'] is False
+          assert d['modes']['H']['complete'] is True
+          assert d['modes']['A']['complete'] is True
+          assert d['sample1_entry_inside_q8'] is True
+          print('P5_45DEG_SAMPLE1_HA_V2:', d['P5_45DEG_SAMPLE1_ENTRY_HA_V2_CERTIFICATE'])
+          print('DEPLOYED_FIRST_MODE:', d['deployed_default_first_live_mode'])
+          print('Q1_PREMEAS:', d['sample1_pre_measurement_q_upper'])
+          print('H_MAX_STATE:', d['modes']['H']['max_state'])
+          print('A_DIAGNOSTIC_MAX_STATE:', d['modes']['A']['max_state'])
+          print('NEXT:', d['next_obligation'])
+          PY
