@@ -5,13 +5,22 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / 'tools'))
 
 import ou3_p4_post_translation_bottleneck as B
-import ou3_p4_translation_full_word_interval as T
 
 
 class P4PostTranslationBottleneckTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.translation = T.build()
+        # Unit-test the post-translation algebra without recomputing the rigorous
+        # 1 s complete-word enclosure.  That expensive producer is theorem-gating
+        # and runs only in focused ou3-p4-frontier-combined CI; generic
+        # ou-validation must not silently spend hours rebuilding it.
+        cls.translation = {
+            'P4_COMPLETE_TRANSLATION_WORST_CELL_STATUS': 'PASS',
+            'modes': {
+                'H': {'complete_word_translation_margin_lower': 9.676620313503055e-25},
+                'A': {'complete_word_translation_margin_lower': 9.676620313503055e-25},
+            },
+        }
         cls.d = B.build(cls.translation)
 
     def test_validates(self):
