@@ -1,5 +1,4 @@
 from pathlib import Path
-import math
 import sys
 import unittest
 
@@ -20,6 +19,7 @@ class P4OperationMatchedSectorTests(unittest.TestCase):
         self.assertGreaterEqual(self.d["design_full_attitude_angle_rad"], 0.80)
         self.assertGreater(self.d["design_full_attitude_angle_deg"], 45.0)
         self.assertLess(self.d["design_cayley_norm_upper"], 1.0)
+        self.assertTrue(self.d["validated_transcendentals_used_for_design_boundary"])
 
     def test_exact_vector_sector_has_material_margin(self):
         self.assertGreater(self.d["exact_vector_strong_monotonicity_factor_lower"], 0.80)
@@ -30,8 +30,8 @@ class P4OperationMatchedSectorTests(unittest.TestCase):
         o = self.d["P1_overlap"]
         self.assertTrue(o["normal_gauged_inside_sector"])
         self.assertTrue(o["timeout_gauged_inside_sector"])
-        self.assertLess(o["normal_gauged_angle_upper_rad"], 0.80)
-        self.assertLess(o["timeout_gauged_angle_upper_rad"], 0.80)
+        self.assertLess(o["normal_gauged_cayley_norm_upper"], self.d["design_cayley_norm_upper"])
+        self.assertLess(o["timeout_gauged_cayley_norm_upper"], self.d["design_cayley_norm_upper"])
 
     def test_old_global_defect_route_is_not_reintroduced(self):
         self.assertFalse(self.d["global_packet_count_times_lipschitz_defect_used"])
