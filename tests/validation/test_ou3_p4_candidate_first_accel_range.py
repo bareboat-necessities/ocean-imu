@@ -5,7 +5,7 @@ import unittest
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools"))
 
-import ou3_p4_candidate_first_accel_range_v2 as G
+import ou3_p4_candidate_first_accel_range_v3 as G
 
 
 class Ou3P4CandidateFirstAccelRangeTests(unittest.TestCase):
@@ -45,6 +45,11 @@ class Ou3P4CandidateFirstAccelRangeTests(unittest.TestCase):
         self.assertTrue(a["first_prefix_theta_aw_S_to_ba_cross_exact_zero"])
         self.assertTrue(a["A_accelerometer_J_ba_identity"])
         self.assertEqual(a["missing_source_markers"], [])
+
+    def test_tangent_PSD_resolvent_retires_axial_noise_floor(self):
+        d = self.d
+        self.assertTrue(d["V12D_tangent_PSD_resolvent_used"])
+        self.assertFalse(d["PSD_remainder_axial_noise_floor_inverse_used"])
 
     def test_candidate_ladder_is_complete_and_fail_closed(self):
         d = self.d
