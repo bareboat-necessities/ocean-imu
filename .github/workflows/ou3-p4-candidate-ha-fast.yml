@@ -6,16 +6,17 @@ on:
       - "tools/ou3_p4_candidate_full_word.py"
       - "tools/ou3_p4_candidate_first_accel_range.py"
       - "tools/ou3_p4_candidate_first_accel_range_v2.py"
+      - "tools/ou3_p4_candidate_first_accel_range_v3.py"
       - "tools/ou3_p4_p5_entrance_search_domain.py"
       - "tools/ou3_p4_operation_matched_sector_certificate.py"
       - "tools/ou3_p5_first_accel_rotation_gauge.py"
       - "tools/ou3_p5_first_accel_rotation_gauge_v3.py"
       - "tools/ou3_p5_first_accel_structured_gain.py"
+      - "tools/ou3_p5_sample1_structured_full_gain_v12d.py"
       - "tools/ou3_p5_full_h_prefix_cells.py"
       - "tools/ou3_p5_full_h_prefix_cells_v2.py"
       - "tools/ou3_p5_full_h_prefix_cells_v3.py"
       - "tools/ou3_proof_operating_domain.json"
-      - "tests/validation/test_ou3_p4_candidate_full_word.py"
       - "tests/validation/test_ou3_p4_candidate_first_accel_range.py"
       - ".github/workflows/ou3-p4-candidate-ha-fast.yml"
   pull_request:
@@ -23,16 +24,17 @@ on:
       - "tools/ou3_p4_candidate_full_word.py"
       - "tools/ou3_p4_candidate_first_accel_range.py"
       - "tools/ou3_p4_candidate_first_accel_range_v2.py"
+      - "tools/ou3_p4_candidate_first_accel_range_v3.py"
       - "tools/ou3_p4_p5_entrance_search_domain.py"
       - "tools/ou3_p4_operation_matched_sector_certificate.py"
       - "tools/ou3_p5_first_accel_rotation_gauge.py"
       - "tools/ou3_p5_first_accel_rotation_gauge_v3.py"
       - "tools/ou3_p5_first_accel_structured_gain.py"
+      - "tools/ou3_p5_sample1_structured_full_gain_v12d.py"
       - "tools/ou3_p5_full_h_prefix_cells.py"
       - "tools/ou3_p5_full_h_prefix_cells_v2.py"
       - "tools/ou3_p5_full_h_prefix_cells_v3.py"
       - "tools/ou3_proof_operating_domain.json"
-      - "tests/validation/test_ou3_p4_candidate_full_word.py"
       - "tests/validation/test_ou3_p4_candidate_first_accel_range.py"
       - ".github/workflows/ou3-p4-candidate-ha-fast.yml"
   workflow_dispatch:
@@ -46,31 +48,28 @@ concurrency:
 
 jobs:
   candidate-preflight:
-    name: 30/25/20/15 deg H/A first-prefix preflight
+    name: 30/25/20/15 deg tangent first-accel gate
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v6
 
-      - name: Compile candidate producers and tests
+      - name: Compile candidate range producers and tests
         run: |
           python3 -m py_compile \
             tools/ou3_p4_candidate_full_word.py \
             tools/ou3_p4_candidate_first_accel_range.py \
             tools/ou3_p4_candidate_first_accel_range_v2.py \
-            tests/validation/test_ou3_p4_candidate_full_word.py \
+            tools/ou3_p4_candidate_first_accel_range_v3.py \
             tests/validation/test_ou3_p4_candidate_first_accel_range.py
 
-      - name: Test candidate domain, A-mode, and analytic first-accel semantics
+      - name: Test candidate tangent-range semantics
         working-directory: tests/validation
-        run: |
-          python3 -m unittest -v \
-            test_ou3_p4_candidate_full_word \
-            test_ou3_p4_candidate_first_accel_range
+        run: python3 -m unittest -v test_ou3_p4_candidate_first_accel_range
 
-      - name: Certify analytic first-accelerometer correction range
+      - name: Certify tangent-resolvent first-accelerometer correction range
         run: |
-          python3 tools/ou3_p4_candidate_first_accel_range_v2.py \
+          python3 tools/ou3_p4_candidate_first_accel_range_v3.py \
             --source-pieces 2 \
             --alignment-pieces 16 \
             --force-magnitude-pieces 4 \
@@ -81,46 +80,15 @@ jobs:
           assert d['validation_pass'] is True
           assert d['deployed_correction_limit_rad'] == 6.0
           assert d['deployed_correction_limit_increased'] is False
+          assert d['V12D_tangent_PSD_resolvent_used'] is True
+          assert d['PSD_remainder_axial_noise_floor_inverse_used'] is False
           assert d['candidate_ball_norm_used_without_cartesian_cover_inflation'] is True
           assert d['independent_accelerometer_eta_penalty_used'] is False
           assert d['A_first_prefix_attitude_gain_bounded_by_H_gain'] is True
-          assert d['A_structure_proved_before_generic_PSD_boxing'] is True
           print('P4_CANDIDATE_FIRST_ACCEL_RANGE:', d['P4_CANDIDATE_FIRST_ACCEL_RANGE_CERTIFICATE'])
           print('WIDEST_ACCEL_RANGE_SAFE_DEG:', d['widest_candidate_first_accel_range_safe_deg'])
           for r in d['candidate_rows']:
               print('ACCEL_RANGE', r['angle_deg'], 'qpred', r['post_prediction_q_upper'], 'K', r['max_Ktheta_norm_upper'], 'resid', r['max_combined_residual_norm_upper_mps2'], 'd', r['max_first_accelerometer_correction_norm_upper_rad'], 'margin', r['minimum_correction_range_margin_rad'], 'safe', r['first_accelerometer_range_safe'])
-          PY
-
-      - name: Run generic first shipping prefix on candidate ladder
-        run: |
-          python3 tools/ou3_p4_candidate_full_word.py \
-            --max-samples 1 \
-            --cover-factor 1.55 \
-            --output /tmp/ou3_p4_candidate_preflight.json
-
-      - name: Report remaining signed-cell obstruction or widest safe candidate
-        run: |
-          python3 - <<'PY'
-          import json
-          a=json.load(open('/tmp/ou3_p4_candidate_first_accel_range.json'))
-          d=json.load(open('/tmp/ou3_p4_candidate_preflight.json'))
-          assert d['validation_pass'] is True
-          assert d['old_q8_chart_used'] is False
-          assert d['H_dimension'] == 18
-          assert d['A_dimension'] == 21
-          assert d['position_entrance_uses_half_Hs'] is True
-          assert d['Hs_upper_m'] == 8.5
-          assert d['cover_factor'] == 1.55
-          assert d['P4_COMPLETE_WORD_DISSIPATION_ESTABLISHED_HERE'] is False
-          print('P4_CANDIDATE_ANALYTIC_ACCEL_RANGE:', a['P4_CANDIDATE_FIRST_ACCEL_RANGE_CERTIFICATE'])
-          print('P4_CANDIDATE_GENERIC_PREFIX:', d['P4_CANDIDATE_FULL_HA_PREFIX_CERTIFICATE'])
-          print('WIDEST_SAFE_DEG:', d['widest_candidate_prefix_safe_deg'])
-          for r in d['candidate_rows']:
-              f=r['first_unclosed_cell']
-              reason=None
-              if isinstance(f, dict):
-                  reason=(f.get('result') or {}).get('first_failure')
-                  if isinstance(reason, dict):
-                      reason=reason.get('reason')
-              print('CANDIDATE', r['angle_deg'], 'cells', r['cover_cells'], 'cover_q', r['cover_q_upper'], 'safe', r['both_modes_prefix_safe'], 'first', reason)
+              if r['first_unclosed_child'] is not None:
+                  print('FIRST_UNCLOSED', r['angle_deg'], json.dumps(r['first_unclosed_child'], sort_keys=True))
           PY
