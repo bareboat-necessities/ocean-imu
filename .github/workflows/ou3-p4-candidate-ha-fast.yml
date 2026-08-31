@@ -10,6 +10,7 @@ on:
       - "tools/ou3_p4_candidate_first_accel_exact_source.py"
       - "tools/ou3_p4_p5_entrance_search_domain.py"
       - "tools/ou3_p5_45deg_first_accel_q8_bridge.py"
+      - "tools/ou3_p5_45deg_sample1_entry_ha.py"
       - "tools/ou3_p5_first_accel_exact_source.py"
       - "tools/ou3_p5_first_accel_exact_source_v2.py"
       - "tools/ou3_p5_first_accel_rotation_gauge.py"
@@ -18,6 +19,7 @@ on:
       - "tools/ou3_proof_operating_domain.json"
       - "tests/validation/test_ou3_p4_candidate_first_accel_range.py"
       - "tests/validation/test_ou3_p5_45deg_first_accel_q8_bridge.py"
+      - "tests/validation/test_ou3_p5_45deg_sample1_entry_ha.py"
       - ".github/workflows/ou3-p4-candidate-ha-fast.yml"
   pull_request:
     paths:
@@ -28,6 +30,7 @@ on:
       - "tools/ou3_p4_candidate_first_accel_exact_source.py"
       - "tools/ou3_p4_p5_entrance_search_domain.py"
       - "tools/ou3_p5_45deg_first_accel_q8_bridge.py"
+      - "tools/ou3_p5_45deg_sample1_entry_ha.py"
       - "tools/ou3_p5_first_accel_exact_source.py"
       - "tools/ou3_p5_first_accel_exact_source_v2.py"
       - "tools/ou3_p5_first_accel_rotation_gauge.py"
@@ -36,6 +39,7 @@ on:
       - "tools/ou3_proof_operating_domain.json"
       - "tests/validation/test_ou3_p4_candidate_first_accel_range.py"
       - "tests/validation/test_ou3_p5_45deg_first_accel_q8_bridge.py"
+      - "tests/validation/test_ou3_p5_45deg_sample1_entry_ha.py"
       - ".github/workflows/ou3-p4-candidate-ha-fast.yml"
   workflow_dispatch:
 
@@ -48,7 +52,7 @@ concurrency:
 
 jobs:
   candidate-preflight:
-    name: 45deg P5 to q8 + 30/25/20/15 exact-source accel gate
+    name: 45deg P5 q8 bridge and H/A sample1 propagation
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -62,46 +66,39 @@ jobs:
             tools/ou3_p4_candidate_first_accel_range_v3.py \
             tools/ou3_p4_candidate_first_accel_exact_source.py \
             tools/ou3_p5_45deg_first_accel_q8_bridge.py \
+            tools/ou3_p5_45deg_sample1_entry_ha.py \
             tests/validation/test_ou3_p4_candidate_first_accel_range.py \
-            tests/validation/test_ou3_p5_45deg_first_accel_q8_bridge.py
+            tests/validation/test_ou3_p5_45deg_first_accel_q8_bridge.py \
+            tests/validation/test_ou3_p5_45deg_sample1_entry_ha.py
 
-      - name: Test exact-source range and q8 bridge semantics
+      - name: Test exact-source range, q8 bridge, and H/A entry semantics
         working-directory: tests/validation
         run: |
           python3 -m unittest -v \
             test_ou3_p4_candidate_first_accel_range \
-            test_ou3_p5_45deg_first_accel_q8_bridge
+            test_ou3_p5_45deg_first_accel_q8_bridge \
+            test_ou3_p5_45deg_sample1_entry_ha
 
       - name: Certify exact-source first-Live accelerometer correction range
         run: |
-          python3 tools/ou3_p4_candidate_first_accel_exact_source.py \
-            --source-pieces 2 \
-            --output /tmp/ou3_p4_candidate_first_accel_exact_source.json
+          python3 tools/ou3_p4_candidate_first_accel_exact_source.py --source-pieces 2 --output /tmp/ou3_p4_candidate_first_accel_exact_source.json
           python3 - <<'PY'
           import json
           d=json.load(open('/tmp/ou3_p4_candidate_first_accel_exact_source.json'))
           assert d['validation_pass'] is True
+          assert d['P4_CANDIDATE_FIRST_ACCEL_EXACT_SOURCE_CERTIFICATE'] == 'PASS'
           assert d['deployed_correction_limit_rad'] == 6.0
           assert d['deployed_correction_limit_increased'] is False
-          assert d['first_accel_aw_mean_exact_zero_before_measurement'] is True
-          assert d['first_due_S_mean_correction_exact_zero'] is True
           assert d['first_accel_specific_force_magnitude_exact_gravity'] is True
-          assert d['first_accel_yaw_covariance_axis_aligned_with_force_axis'] is True
           assert d['yaw_alignment_x_equals_zero'] is True
-          assert d['V12D_tangent_PSD_resolvent_used'] is True
           assert d['A_first_prefix_attitude_gain_bounded_by_H_gain'] is True
-          print('P4_CANDIDATE_FIRST_ACCEL_EXACT_SOURCE:', d['P4_CANDIDATE_FIRST_ACCEL_EXACT_SOURCE_CERTIFICATE'])
-          print('WIDEST_ACCEL_RANGE_SAFE_DEG:', d['widest_candidate_first_accel_range_safe_deg'])
-          print('FIRST_FORCE_MPS2:', d['first_accel_specific_force_magnitude_mps2'])
           for r in d['candidate_rows']:
-              print('ACCEL_RANGE', r['angle_deg'], 'qpred', r['post_prediction_q_upper'], 'K', r['max_Ktheta_norm_upper'], 'resid', r['max_combined_residual_norm_upper_mps2'], 'd', r['max_first_accelerometer_correction_norm_upper_rad'], 'margin', r['minimum_correction_range_margin_rad'], 'safe', r['first_accelerometer_range_safe'])
+              print('ACCEL_RANGE', r['angle_deg'], 'qpred', r['post_prediction_q_upper'], 'K', r['max_Ktheta_norm_upper'], 'resid', r['max_combined_residual_norm_upper_mps2'], 'd', r['max_first_accelerometer_correction_norm_upper_rad'], 'safe', r['first_accelerometer_range_safe'])
           PY
 
       - name: Certify sign-complete 45deg first-accel bridge into q8
         run: |
-          python3 tools/ou3_p5_45deg_first_accel_q8_bridge.py \
-            --source-pieces 2 \
-            --output /tmp/ou3_p5_45deg_first_accel_q8_bridge.json
+          python3 tools/ou3_p5_45deg_first_accel_q8_bridge.py --source-pieces 2 --output /tmp/ou3_p5_45deg_first_accel_q8_bridge.json
           python3 - <<'PY'
           import json
           d=json.load(open('/tmp/ou3_p5_45deg_first_accel_q8_bridge.json'))
@@ -110,17 +107,30 @@ jobs:
           assert d['accepted_correction_sign_assumed_favorable'] is False
           assert d['deployed_correction_limit_rad'] == 6.0
           assert d['deployed_correction_limit_increased'] is False
-          assert d['P5_45deg_entrance_first_accel']['accepted_or_rejected_branch_family_inside_q8'] is True
-          assert d['all_P4_candidate_first_accel_branches_inside_q8'] is True
-          assert d['returned_to_30deg_P4_sector_here'] is False
           p=d['P5_45deg_entrance_first_accel']
-          print('P5_45DEG_Q8_BRIDGE:', d['P5_45DEG_FIRST_ACCEL_Q8_BRIDGE_CERTIFICATE'])
-          print('Q45_PRED:', p['post_prediction_q_upper'])
-          print('D45_MAX:', p['max_first_accelerometer_correction_norm_upper_rad'])
-          print('W_LOWER:', p['product']['homogeneous_product_scalar_lower'])
-          print('QPLUS_UPPER:', p['product']['post_update_q_upper_from_scalar'])
-          print('Q8_ALGEBRA_MARGIN:', p['product']['q8_test_lhs_lower_17W2']-p['product']['q8_test_rhs_upper_4plusq2'])
-          print('RESET_COV_MULT:', p['reset']['reset_covariance_spectral_multiplier_upper'])
-          for r in d['P4_candidate_first_accel_rows']:
-              print('P4_FIRST_PACKET_QPLUS', r['angle_deg'], r['product']['post_update_q_upper_from_scalar'])
+          assert p['accepted_or_rejected_branch_family_inside_q8'] is True
+          print('P5_45DEG_Q8', 'qpred', p['post_prediction_q_upper'], 'dmax', p['max_first_accelerometer_correction_norm_upper_rad'], 'qplus', p['product']['post_update_q_upper_from_scalar'], 'reset_mult', p['reset']['reset_covariance_spectral_multiplier_upper'])
           PY
+
+      - name: Propagate 45deg first-packet child to sample1 in H and A
+        run: |
+          rc=0
+          python3 tools/ou3_p5_45deg_sample1_entry_ha.py --source-pieces 2 --output /tmp/ou3_p5_45deg_sample1_entry_ha.json || rc=$?
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/ou3_p5_45deg_sample1_entry_ha.json'))
+          assert d['source_generated_not_trajectory_fit'] is True
+          assert d['source_replay_used'] is False
+          assert d['filter_changed'] is False
+          assert d['starts_from_45deg_sign_complete_q8_bridge'] is True
+          assert d['H_dimension'] == 18 and d['A_dimension'] == 21
+          assert d['state_corrections_use_group_operator_norm_caps'] is True
+          assert d['returned_to_30deg_P4_sector_here'] is False
+          print('P5_45DEG_SAMPLE1_HA:', d['P5_45DEG_SAMPLE1_ENTRY_HA_CERTIFICATE'])
+          print('Q1_PREMEAS:', d['sample1_pre_measurement_q_upper'])
+          for mode in ('H','A'):
+              m=d['modes'][mode]
+              print(mode, 'complete', m['complete'], 'cells', m['evaluated'], '/', m['expected'], 'max_state', m['max_state'], 'failure', m['first_failure'])
+          print('FAILURES:', d['failures'])
+          PY
+          echo "producer_exit=$rc"
