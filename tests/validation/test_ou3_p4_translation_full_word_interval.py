@@ -1,9 +1,14 @@
 from pathlib import Path
-import sys, unittest
+import os, sys, unittest
 ROOT=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT/'tools'))
 import ou3_p4_translation_full_word_interval_fast as C
 
+
+@unittest.skipUnless(
+ os.environ.get('OU3_RUN_EXPENSIVE_P4_FULL_WORD') == '1',
+ 'rigorous full-word P4 enclosure runs only in focused ou3-p4-frontier-combined CI',
+)
 class P4TranslationFullWordIntervalTests(unittest.TestCase):
  @classmethod
  def setUpClass(cls): cls.d=C.build()
