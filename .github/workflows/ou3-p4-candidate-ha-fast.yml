@@ -5,6 +5,7 @@ on:
     paths:
       - "tools/ou3_p4_candidate_full_word.py"
       - "tools/ou3_p4_candidate_first_accel_range.py"
+      - "tools/ou3_p4_candidate_first_accel_range_v2.py"
       - "tools/ou3_p4_p5_entrance_search_domain.py"
       - "tools/ou3_p4_operation_matched_sector_certificate.py"
       - "tools/ou3_p5_first_accel_rotation_gauge.py"
@@ -21,6 +22,7 @@ on:
     paths:
       - "tools/ou3_p4_candidate_full_word.py"
       - "tools/ou3_p4_candidate_first_accel_range.py"
+      - "tools/ou3_p4_candidate_first_accel_range_v2.py"
       - "tools/ou3_p4_p5_entrance_search_domain.py"
       - "tools/ou3_p4_operation_matched_sector_certificate.py"
       - "tools/ou3_p5_first_accel_rotation_gauge.py"
@@ -55,6 +57,7 @@ jobs:
           python3 -m py_compile \
             tools/ou3_p4_candidate_full_word.py \
             tools/ou3_p4_candidate_first_accel_range.py \
+            tools/ou3_p4_candidate_first_accel_range_v2.py \
             tests/validation/test_ou3_p4_candidate_full_word.py \
             tests/validation/test_ou3_p4_candidate_first_accel_range.py
 
@@ -67,7 +70,7 @@ jobs:
 
       - name: Certify analytic first-accelerometer correction range
         run: |
-          python3 tools/ou3_p4_candidate_first_accel_range.py \
+          python3 tools/ou3_p4_candidate_first_accel_range_v2.py \
             --source-pieces 2 \
             --alignment-pieces 16 \
             --force-magnitude-pieces 4 \
@@ -81,6 +84,7 @@ jobs:
           assert d['candidate_ball_norm_used_without_cartesian_cover_inflation'] is True
           assert d['independent_accelerometer_eta_penalty_used'] is False
           assert d['A_first_prefix_attitude_gain_bounded_by_H_gain'] is True
+          assert d['A_structure_proved_before_generic_PSD_boxing'] is True
           print('P4_CANDIDATE_FIRST_ACCEL_RANGE:', d['P4_CANDIDATE_FIRST_ACCEL_RANGE_CERTIFICATE'])
           print('WIDEST_ACCEL_RANGE_SAFE_DEG:', d['widest_candidate_first_accel_range_safe_deg'])
           for r in d['candidate_rows']:
