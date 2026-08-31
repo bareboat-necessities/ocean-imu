@@ -1,0 +1,81 @@
+name: ou3-p4-candidate-ha-fast
+
+on:
+  push:
+    paths:
+      - "tools/ou3_p4_candidate_full_word.py"
+      - "tools/ou3_p4_p5_entrance_search_domain.py"
+      - "tools/ou3_p4_operation_matched_sector_certificate.py"
+      - "tools/ou3_p5_full_h_prefix_cells.py"
+      - "tools/ou3_p5_full_h_prefix_cells_v2.py"
+      - "tools/ou3_p5_full_h_prefix_cells_v3.py"
+      - "tools/ou3_proof_operating_domain.json"
+      - "tests/validation/test_ou3_p4_candidate_full_word.py"
+      - ".github/workflows/ou3-p4-candidate-ha-fast.yml"
+  pull_request:
+    paths:
+      - "tools/ou3_p4_candidate_full_word.py"
+      - "tools/ou3_p4_p5_entrance_search_domain.py"
+      - "tools/ou3_p4_operation_matched_sector_certificate.py"
+      - "tools/ou3_p5_full_h_prefix_cells.py"
+      - "tools/ou3_p5_full_h_prefix_cells_v2.py"
+      - "tools/ou3_p5_full_h_prefix_cells_v3.py"
+      - "tools/ou3_proof_operating_domain.json"
+      - "tests/validation/test_ou3_p4_candidate_full_word.py"
+      - ".github/workflows/ou3-p4-candidate-ha-fast.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ou3-p4-candidate-ha-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  candidate-preflight:
+    name: 30/25/20/15 deg H/A first-prefix preflight
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Compile candidate producer and test
+        run: |
+          python3 -m py_compile \
+            tools/ou3_p4_candidate_full_word.py \
+            tests/validation/test_ou3_p4_candidate_full_word.py
+
+      - name: Test candidate domain and A-mode semantics
+        working-directory: tests/validation
+        run: python3 -m unittest -v test_ou3_p4_candidate_full_word
+
+      - name: Run first shipping prefix on candidate ladder
+        run: |
+          python3 tools/ou3_p4_candidate_full_word.py \
+            --max-samples 1 \
+            --output /tmp/ou3_p4_candidate_preflight.json
+
+      - name: Report first real obstruction or widest safe candidate
+        run: |
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/ou3_p4_candidate_preflight.json'))
+          assert d['validation_pass'] is True
+          assert d['old_q8_chart_used'] is False
+          assert d['H_dimension'] == 18
+          assert d['A_dimension'] == 21
+          assert d['position_entrance_uses_half_Hs'] is True
+          assert d['Hs_upper_m'] == 8.5
+          assert d['P4_COMPLETE_WORD_DISSIPATION_ESTABLISHED_HERE'] is False
+          print('P4_CANDIDATE_PREFLIGHT:', d['P4_CANDIDATE_FULL_HA_PREFIX_CERTIFICATE'])
+          print('WIDEST_SAFE_DEG:', d['widest_candidate_prefix_safe_deg'])
+          for r in d['candidate_rows']:
+              f=r['first_unclosed_cell']
+              reason=None
+              if isinstance(f, dict):
+                  reason=(f.get('result') or {}).get('first_failure')
+                  if isinstance(reason, dict):
+                      reason=reason.get('reason')
+              print('CANDIDATE', r['angle_deg'], 'cells', r['cover_cells'], 'cover_q', r['cover_q_upper'], 'safe', r['both_modes_prefix_safe'], 'first', reason)
+          PY
