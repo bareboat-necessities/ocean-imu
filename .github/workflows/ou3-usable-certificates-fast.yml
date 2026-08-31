@@ -5,6 +5,10 @@ on:
     paths:
       - "tools/ou3_p4_source_path_reachability.py"
       - "tools/ou3_p4_operation_matched_sector_certificate.py"
+      - "tools/ou3_p4_worst_translation_cell.py"
+      - "tools/ou3_p4_translation_full_word_interval.py"
+      - "tools/ou3_p4_translation_full_word_interval_fast.py"
+      - "tools/ou3_p4_translation_full_word_rigorous.py"
       - "tools/ou3_p5_outer_sector_capture_certificate.py"
       - "tools/ou3_p5_cayley_eta_geometry.py"
       - "tools/ou3_p5_effective_vector_input.py"
@@ -17,6 +21,8 @@ on:
       - "src/kalman_ou_common/**"
       - "tests/validation/test_ou3_p4_source_path_reachability.py"
       - "tests/validation/test_ou3_p4_operation_matched_sector_certificate.py"
+      - "tests/validation/test_ou3_p4_translation_full_word_interval.py"
+      - "tests/validation/test_ou3_p4_translation_full_word_rigorous.py"
       - "tests/validation/test_ou3_p5_outer_sector_capture_certificate.py"
       - "docs/ou-iii-certificate-usability-envelope.md"
       - ".github/workflows/ou3-usable-certificates-fast.yml"
@@ -24,6 +30,10 @@ on:
     paths:
       - "tools/ou3_p4_source_path_reachability.py"
       - "tools/ou3_p4_operation_matched_sector_certificate.py"
+      - "tools/ou3_p4_worst_translation_cell.py"
+      - "tools/ou3_p4_translation_full_word_interval.py"
+      - "tools/ou3_p4_translation_full_word_interval_fast.py"
+      - "tools/ou3_p4_translation_full_word_rigorous.py"
       - "tools/ou3_p5_outer_sector_capture_certificate.py"
       - "tools/ou3_p5_cayley_eta_geometry.py"
       - "tools/ou3_p5_effective_vector_input.py"
@@ -36,6 +46,8 @@ on:
       - "src/kalman_ou_common/**"
       - "tests/validation/test_ou3_p4_source_path_reachability.py"
       - "tests/validation/test_ou3_p4_operation_matched_sector_certificate.py"
+      - "tests/validation/test_ou3_p4_translation_full_word_interval.py"
+      - "tests/validation/test_ou3_p4_translation_full_word_rigorous.py"
       - "tests/validation/test_ou3_p5_outer_sector_capture_certificate.py"
       - "docs/ou-iii-certificate-usability-envelope.md"
       - ".github/workflows/ou3-usable-certificates-fast.yml"
@@ -61,9 +73,15 @@ jobs:
           python3 -m py_compile \
             tools/ou3_p4_source_path_reachability.py \
             tools/ou3_p4_operation_matched_sector_certificate.py \
+            tools/ou3_p4_worst_translation_cell.py \
+            tools/ou3_p4_translation_full_word_interval.py \
+            tools/ou3_p4_translation_full_word_interval_fast.py \
+            tools/ou3_p4_translation_full_word_rigorous.py \
             tools/ou3_p5_outer_sector_capture_certificate.py \
             tests/validation/test_ou3_p4_source_path_reachability.py \
             tests/validation/test_ou3_p4_operation_matched_sector_certificate.py \
+            tests/validation/test_ou3_p4_translation_full_word_interval.py \
+            tests/validation/test_ou3_p4_translation_full_word_rigorous.py \
             tests/validation/test_ou3_p5_outer_sector_capture_certificate.py
 
       - name: Run focused usability tests
@@ -72,12 +90,18 @@ jobs:
           python3 -m unittest -v \
             test_ou3_p4_source_path_reachability \
             test_ou3_p4_operation_matched_sector_certificate \
+            test_ou3_p4_translation_full_word_rigorous \
             test_ou3_p5_outer_sector_capture_certificate
 
       - name: Emit P2 source-path certificate
         run: |
           python3 tools/ou3_p4_source_path_reachability.py \
             --output /tmp/ou3_p2_source_path.json
+
+      - name: Emit rigorous reused P4 translation certificate
+        run: |
+          python3 tools/ou3_p4_translation_full_word_rigorous.py \
+            --output /tmp/ou3_p4_translation_full_word.json
 
       - name: Emit P4 finite-angle sector certificate
         run: |
@@ -96,12 +120,25 @@ jobs:
           from pathlib import Path
 
           p2 = json.loads(Path('/tmp/ou3_p2_source_path.json').read_text())
+          tr = json.loads(Path('/tmp/ou3_p4_translation_full_word.json').read_text())
           p4 = json.loads(Path('/tmp/ou3_p4_operation_sector.json').read_text())
           p5 = json.loads(Path('/tmp/ou3_p5_outer_capture.json').read_text())
 
           assert p2['P2_SOURCE_PATH_CERTIFICATE'] == 'PASS'
           assert p2['source_only'] is True
           assert p2['usable_P4_promoted'] is False
+
+          assert tr['P4_COMPLETE_TRANSLATION_WORST_CELL_STATUS'] == 'PASS'
+          assert tr['reused_from_PR_438'] is True
+          assert tr['unsafe_438_pre_interval_scale_setup_used'] is False
+          assert tr['P4_USABLE_CERTIFICATE_STATUS'] == 'NOT_ESTABLISHED'
+          for mode in ('H', 'A'):
+              row = tr['modes'][mode]
+              assert row['complete_word_translation_margin_lower'] > 0.0
+              assert row['margin_widening_factor_lower'] > 1.0
+              assert row['source_float_literals_rounded_as_binary32'] is True
+              assert row['conditioned_scale_products_outward_rounded_from_first_operation'] is True
+              assert row['pre_interval_binary64_scale_products_used'] is False
 
           assert p4['P4_OPERATION_MATCHED_FINITE_ANGLE_SECTOR_CERTIFICATE'] == 'PASS'
           assert p4['design_full_attitude_angle_rad'] >= 0.80
@@ -122,6 +159,8 @@ jobs:
 
           print('P2 source states:', p2['partition']['states'])
           print('P2 source edges:', p2['transition_edges'])
+          print('P4 translation H delta:', tr['modes']['H']['complete_word_translation_margin_lower'])
+          print('P4 translation A delta:', tr['modes']['A']['complete_word_translation_margin_lower'])
           print('P4 sector rad:', p4['design_full_attitude_angle_rad'])
           print('P4 sector q:', p4['design_cayley_norm_upper'])
           print('P4 monotonicity:', p4['exact_vector_strong_monotonicity_factor_lower'])
