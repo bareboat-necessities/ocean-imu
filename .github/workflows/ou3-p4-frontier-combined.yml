@@ -8,6 +8,7 @@ on:
       - 'tools/ou3_p4_full_word_dissipation_route.py'
       - 'tools/ou3_p4_translation_full_word_design.py'
       - 'tools/ou3_p4_translation_full_word_interval.py'
+      - 'tools/ou3_p4_translation_full_word_interval_fast.py'
       - 'tools/ou3_p4_source_path_reachability.py'
       - 'tools/ou3_p4_post_translation_bottleneck.py'
       - 'tools/ou3_p4_usable_status.py'
@@ -80,6 +81,7 @@ jobs:
           python3 -m py_compile \
             tools/ou3_p4_translation_full_word_design.py \
             tools/ou3_p4_translation_full_word_interval.py \
+            tools/ou3_p4_translation_full_word_interval_fast.py \
             tools/ou3_p4_source_path_reachability.py \
             tools/ou3_p4_post_translation_bottleneck.py \
             tools/ou3_p4_usable_status.py \
@@ -92,14 +94,14 @@ jobs:
         run: python3 -m unittest -v test_ou3_p4_usable_status
       - name: Validate complete-word translation lower on old worst cell
         run: |
-          python3 tools/ou3_p4_translation_full_word_interval.py --output /tmp/p4-translation-full-word-interval.json
+          python3 tools/ou3_p4_translation_full_word_interval_fast.py --output /tmp/p4-translation-full-word-interval.json
           python3 - <<'PY'
           import json
           p=json.load(open('/tmp/p4-translation-full-word-interval.json'))
           print('P4_COMPLETE_TRANSLATION_WORST_CELL_STATUS:',p['P4_COMPLETE_TRANSLATION_WORST_CELL_STATUS'])
           for mode in ('H','A'):
               r=p['modes'][mode]
-              print(f"P4_FULL_WORD_VALIDATED {mode} delta={r['complete_word_translation_margin_lower']:.17e} old={r['old_single_seed_translation_margin_lower']:.17e} factor={r['margin_widening_factor_lower']:.17e}")
+              print(f"P4_FULL_WORD_VALIDATED {mode} delta={r['complete_word_translation_margin_lower']:.17e} old={r['old_single_seed_translation_margin_lower']:.17e} factor={r['margin_widening_factor_lower']:.17e} dyadic_bits={r['dyadic_loewner_bits']}")
           PY
       - name: Diagnose next full-state bottleneck
         run: |
@@ -150,7 +152,7 @@ jobs:
           sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends python3-numpy
       - name: Validate two-second complete-word translation on recurrent worst cell
         run: |
-          python3 tools/ou3_p4_translation_full_word_interval.py \
+          python3 tools/ou3_p4_translation_full_word_interval_fast.py \
             --horizon-s 2.0 \
             --output /tmp/p4-translation-full-word-2s.json
           python3 - <<'PY'
@@ -163,7 +165,8 @@ jobs:
                   f"P4_FULL_WORD_VALIDATED_2S {mode} "
                   f"delta={r['complete_word_translation_margin_lower']:.17e} "
                   f"factor_vs_seed={r['margin_widening_factor_lower']:.17e} "
-                  f"tau_leaves={r['tau_leaf_count']}"
+                  f"tau_leaves={r['tau_leaf_count']} "
+                  f"dyadic_bits={r['dyadic_loewner_bits']}"
               )
           PY
 
