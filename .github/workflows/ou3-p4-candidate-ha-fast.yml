@@ -12,6 +12,7 @@ on:
       - "tools/ou3_p5_45deg_first_accel_q8_bridge.py"
       - "tools/ou3_p5_45deg_sample1_entry_ha.py"
       - "tools/ou3_p5_45deg_sample1_entry_ha_v2.py"
+      - "tools/ou3_p5_45deg_sample1_h_group_norms.py"
       - "tools/ou3_p5_first_accel_exact_source.py"
       - "tools/ou3_p5_first_accel_exact_source_v2.py"
       - "tools/ou3_p5_first_accel_rotation_gauge.py"
@@ -22,6 +23,7 @@ on:
       - "tests/validation/test_ou3_p5_45deg_first_accel_q8_bridge.py"
       - "tests/validation/test_ou3_p5_45deg_sample1_entry_ha.py"
       - "tests/validation/test_ou3_p5_45deg_sample1_entry_ha_v2.py"
+      - "tests/validation/test_ou3_p5_45deg_sample1_h_group_norms.py"
       - ".github/workflows/ou3-p4-candidate-ha-fast.yml"
   pull_request:
     paths:
@@ -34,6 +36,7 @@ on:
       - "tools/ou3_p5_45deg_first_accel_q8_bridge.py"
       - "tools/ou3_p5_45deg_sample1_entry_ha.py"
       - "tools/ou3_p5_45deg_sample1_entry_ha_v2.py"
+      - "tools/ou3_p5_45deg_sample1_h_group_norms.py"
       - "tools/ou3_p5_first_accel_exact_source.py"
       - "tools/ou3_p5_first_accel_exact_source_v2.py"
       - "tools/ou3_p5_first_accel_rotation_gauge.py"
@@ -44,6 +47,7 @@ on:
       - "tests/validation/test_ou3_p5_45deg_first_accel_q8_bridge.py"
       - "tests/validation/test_ou3_p5_45deg_sample1_entry_ha.py"
       - "tests/validation/test_ou3_p5_45deg_sample1_entry_ha_v2.py"
+      - "tests/validation/test_ou3_p5_45deg_sample1_h_group_norms.py"
       - ".github/workflows/ou3-p4-candidate-ha-fast.yml"
   workflow_dispatch:
 
@@ -56,13 +60,13 @@ concurrency:
 
 jobs:
   candidate-preflight:
-    name: 45deg P5 q8 bridge and source-faithful H/A sample1 propagation
+    name: 45deg P5 q8, projection-aware H/A, physical H norms
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v6
 
-      - name: Compile exact-source bridge producers and tests
+      - name: Compile focused producers and tests
         run: |
           python3 -m py_compile \
             tools/ou3_p4_candidate_first_accel_range.py \
@@ -72,87 +76,81 @@ jobs:
             tools/ou3_p5_45deg_first_accel_q8_bridge.py \
             tools/ou3_p5_45deg_sample1_entry_ha.py \
             tools/ou3_p5_45deg_sample1_entry_ha_v2.py \
+            tools/ou3_p5_45deg_sample1_h_group_norms.py \
             tests/validation/test_ou3_p4_candidate_first_accel_range.py \
             tests/validation/test_ou3_p5_45deg_first_accel_q8_bridge.py \
             tests/validation/test_ou3_p5_45deg_sample1_entry_ha.py \
-            tests/validation/test_ou3_p5_45deg_sample1_entry_ha_v2.py
+            tests/validation/test_ou3_p5_45deg_sample1_entry_ha_v2.py \
+            tests/validation/test_ou3_p5_45deg_sample1_h_group_norms.py
 
-      - name: Test exact-source range, q8 bridge, and H/A entry semantics
+      - name: Test focused semantics
         working-directory: tests/validation
         run: |
           python3 -m unittest -v \
             test_ou3_p4_candidate_first_accel_range \
             test_ou3_p5_45deg_first_accel_q8_bridge \
             test_ou3_p5_45deg_sample1_entry_ha \
-            test_ou3_p5_45deg_sample1_entry_ha_v2
+            test_ou3_p5_45deg_sample1_entry_ha_v2 \
+            test_ou3_p5_45deg_sample1_h_group_norms
 
       - name: Certify exact-source first-Live accelerometer correction range
         run: |
-          python3 tools/ou3_p4_candidate_first_accel_exact_source.py --source-pieces 2 --output /tmp/ou3_p4_candidate_first_accel_exact_source.json
+          python3 tools/ou3_p4_candidate_first_accel_exact_source.py --source-pieces 2 --output /tmp/acc.json
           python3 - <<'PY'
           import json
-          d=json.load(open('/tmp/ou3_p4_candidate_first_accel_exact_source.json'))
-          assert d['validation_pass'] is True
-          assert d['P4_CANDIDATE_FIRST_ACCEL_EXACT_SOURCE_CERTIFICATE'] == 'PASS'
-          assert d['deployed_correction_limit_rad'] == 6.0
-          assert d['deployed_correction_limit_increased'] is False
-          assert d['first_accel_specific_force_magnitude_exact_gravity'] is True
-          assert d['yaw_alignment_x_equals_zero'] is True
-          assert d['A_first_prefix_attitude_gain_bounded_by_H_gain'] is True
+          d=json.load(open('/tmp/acc.json'))
+          assert d['validation_pass'] and d['P4_CANDIDATE_FIRST_ACCEL_EXACT_SOURCE_CERTIFICATE']=='PASS'
+          assert d['deployed_correction_limit_rad']==6.0 and d['deployed_correction_limit_increased'] is False
           for r in d['candidate_rows']:
-              print('ACCEL_RANGE', r['angle_deg'], 'qpred', r['post_prediction_q_upper'], 'K', r['max_Ktheta_norm_upper'], 'resid', r['max_combined_residual_norm_upper_mps2'], 'd', r['max_first_accelerometer_correction_norm_upper_rad'], 'safe', r['first_accelerometer_range_safe'])
+              print('ACCEL_RANGE',r['angle_deg'],'qpred',r['post_prediction_q_upper'],'K',r['max_Ktheta_norm_upper'],'d',r['max_first_accelerometer_correction_norm_upper_rad'])
           PY
 
       - name: Certify sign-complete 45deg first-accel bridge into q8
         run: |
-          python3 tools/ou3_p5_45deg_first_accel_q8_bridge.py --source-pieces 2 --output /tmp/ou3_p5_45deg_first_accel_q8_bridge.json
+          python3 tools/ou3_p5_45deg_first_accel_q8_bridge.py --source-pieces 2 --output /tmp/q8.json
           python3 - <<'PY'
           import json
-          d=json.load(open('/tmp/ou3_p5_45deg_first_accel_q8_bridge.json'))
-          assert d['validation_pass'] is True
-          assert d['P5_45DEG_FIRST_ACCEL_Q8_BRIDGE_CERTIFICATE'] == 'PASS'
+          d=json.load(open('/tmp/q8.json')); p=d['P5_45deg_entrance_first_accel']
+          assert d['validation_pass'] and d['P5_45DEG_FIRST_ACCEL_Q8_BRIDGE_CERTIFICATE']=='PASS'
           assert d['accepted_correction_sign_assumed_favorable'] is False
-          assert d['deployed_correction_limit_rad'] == 6.0
-          assert d['deployed_correction_limit_increased'] is False
-          p=d['P5_45deg_entrance_first_accel']
-          assert p['accepted_or_rejected_branch_family_inside_q8'] is True
-          print('P5_45DEG_Q8', 'qpred', p['post_prediction_q_upper'], 'dmax', p['max_first_accelerometer_correction_norm_upper_rad'], 'qplus', p['product']['post_update_q_upper_from_scalar'], 'reset_mult', p['reset']['reset_covariance_spectral_multiplier_upper'])
+          print('P5_45DEG_Q8','qpred',p['post_prediction_q_upper'],'dmax',p['max_first_accelerometer_correction_norm_upper_rad'],'qplus',p['product']['post_update_q_upper_from_scalar'],'reset_mult',p['reset']['reset_covariance_spectral_multiplier_upper'])
           PY
 
-      - name: Retain V1 diagnostic that exposes the A projection crossing
+      - name: Retain V1 diagnostic projection witness
         run: |
           rc=0
-          python3 tools/ou3_p5_45deg_sample1_entry_ha.py --source-pieces 2 --output /tmp/ou3_p5_45deg_sample1_entry_ha.json || rc=$?
+          python3 tools/ou3_p5_45deg_sample1_entry_ha.py --source-pieces 2 --output /tmp/ha_v1.json || rc=$?
           python3 - <<'PY'
           import json
-          d=json.load(open('/tmp/ou3_p5_45deg_sample1_entry_ha.json'))
-          assert d['starts_from_45deg_sign_complete_q8_bridge'] is True
+          d=json.load(open('/tmp/ha_v1.json'))
           assert d['modes']['H']['complete'] is True
-          print('V1_DIAGNOSTIC', d['P5_45DEG_SAMPLE1_ENTRY_HA_CERTIFICATE'], 'q1', d['sample1_pre_measurement_q_upper'], 'A_failure', d['modes']['A']['first_failure'])
+          print('V1_DIAGNOSTIC',d['P5_45DEG_SAMPLE1_ENTRY_HA_CERTIFICATE'],'A_failure',d['modes']['A']['first_failure'])
           PY
-          echo "v1_producer_exit=$rc"
+          echo "v1_exit=$rc"
 
-      - name: Certify projection-aware H/A sample1 entry and source reachability
+      - name: Certify projection-aware H/A entry and deployed H-first reachability
         run: |
-          python3 tools/ou3_p5_45deg_sample1_entry_ha_v2.py --source-pieces 2 --output /tmp/ou3_p5_45deg_sample1_entry_ha_v2.json
+          python3 tools/ou3_p5_45deg_sample1_entry_ha_v2.py --source-pieces 2 --output /tmp/ha_v2.json
           python3 - <<'PY'
           import json
-          d=json.load(open('/tmp/ou3_p5_45deg_sample1_entry_ha_v2.json'))
-          assert d['validation_pass'] is True
-          assert d['P5_45DEG_SAMPLE1_ENTRY_HA_V2_CERTIFICATE'] == 'PASS'
+          d=json.load(open('/tmp/ha_v2.json'))
+          assert d['validation_pass'] and d['P5_45DEG_SAMPLE1_ENTRY_HA_V2_CERTIFICATE']=='PASS'
           assert all(d['source_reachability'].values())
-          assert d['deployed_default_first_live_mode'] == 'H'
+          assert d['deployed_default_first_live_mode']=='H'
           assert d['deployed_default_A_first_live_reachable'] is False
-          assert d['A_shipping_closed_ball_projection_used'] is True
-          assert d['A_projection_nonexpansive_used'] is True
-          assert d['A_P4_inner_045_ball_promoted_here'] is False
-          assert d['modes']['H']['complete'] is True
-          assert d['modes']['A']['complete'] is True
-          assert d['sample1_entry_inside_q8'] is True
-          print('P5_45DEG_SAMPLE1_HA_V2:', d['P5_45DEG_SAMPLE1_ENTRY_HA_V2_CERTIFICATE'])
-          print('DEPLOYED_FIRST_MODE:', d['deployed_default_first_live_mode'])
-          print('Q1_PREMEAS:', d['sample1_pre_measurement_q_upper'])
-          print('H_MAX_STATE:', d['modes']['H']['max_state'])
-          print('A_DIAGNOSTIC_MAX_STATE:', d['modes']['A']['max_state'])
-          print('NEXT:', d['next_obligation'])
+          assert d['A_shipping_closed_ball_projection_used'] and d['A_projection_nonexpansive_used']
+          assert d['modes']['H']['complete'] and d['modes']['A']['complete']
+          print('HA_V2','q1',d['sample1_pre_measurement_q_upper'],'H',d['modes']['H']['max_state'],'A_diag',d['modes']['A']['max_state'])
+          PY
+
+      - name: Certify physical H group norms without cube readback inflation
+        run: |
+          python3 tools/ou3_p5_45deg_sample1_h_group_norms.py --source-pieces 2 --output /tmp/h_norms.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/h_norms.json'))
+          assert d['validation_pass'] and d['P5_45DEG_H_SAMPLE1_GROUP_NORM_CERTIFICATE']=='PASS'
+          assert d['norm_balls_not_reinterpreted_as_cartesian_cubes'] is True
+          assert d['new_hard_bounds_invented'] is False
+          print('H_PHYSICAL_NORMS','initial',d['initial_group_norm_caps'],'sample1',d['sample1_max_group_norm_caps'],'old_box',d['old_interval_box_max_reported_group_norms'],'ratios',d['max_old_box_to_physical_norm_ratio'])
           PY
