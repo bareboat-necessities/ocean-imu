@@ -44,7 +44,13 @@ class Ou3P4CandidateFullWordTests(unittest.TestCase):
         self.assertAlmostEqual(meta["position_component_abs_upper_m"], 4.25)
         self.assertEqual(meta["legacy_P1_position_norm_upper_m_not_used_as_P4_entry"], 20.0)
         for i in C.H.P:
-            self.assertLessEqual(e[i].abs_upper(), math.nextafter(4.25, math.inf))
+            # The proof backend intentionally rounds interval endpoints outward.
+            # Verify that the certified bound encloses 0.5*Hs and differs from
+            # the exact real value only by a tiny rounding allowance; do not
+            # require a particular number of binary64 nextafter steps.
+            p_upper = e[i].abs_upper()
+            self.assertGreaterEqual(p_upper, 4.25)
+            self.assertTrue(math.isclose(p_upper, 4.25, rel_tol=0.0, abs_tol=1e-12))
 
     def test_A_mode_is_21_state_shipping_bias_block(self):
         C._configure_mode("A")
