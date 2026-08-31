@@ -31,6 +31,36 @@
       "accelerometer_bias_error_norm_upper_mps2": 0.5
     }
   },
+  "initial_filter_entrance": {
+    "scope": "DECLARED_ERROR_SET_PRESENTED_TO_P5_CAPTURE",
+    "attitude": {
+      "representation": "SO3_GEODESIC",
+      "full_attitude_error_upper_deg": 45.0,
+      "componentwise_euler_box_interpretation": false,
+      "gauged_branch_full_attitude_bound": true,
+      "ungauged_branch_tilt_bound_only_until_regauge": true
+    },
+    "position": {
+      "truth_error_not_estimate_magnitude": true,
+      "component_abs_error_upper_Hs_factor": 0.5,
+      "significant_wave_height_Hs_positive_required": true
+    },
+    "sea_scaled_translation_coordinates": {
+      "position": "delta_p / Hs",
+      "velocity": "delta_v * Ts / Hs",
+      "integral_displacement": "delta_S / (Hs * Ts)",
+      "latent_acceleration": "delta_a_w * Ts^2 / Hs",
+      "Ts_role": "positive characteristic sea period used only as a coordinate scale unless a separate theorem bound is declared"
+    },
+    "additional_hard_sea_scaled_bounds_declared": false,
+    "note": "The 45 deg attitude and |delta p_i| <= 0.5 Hs conditions are entrance assumptions, not a claim that the earlier startup interval preserves them automatically. P1 retains its conservative source handoff box. Any theorem path that starts before P5 must propagate this entrance set through the exact startup/source dynamics rather than silently substituting it for the P1 handoff box. No additional hard bounds on v, S, or a_w are introduced here; their sea-scaled forms are conditioning coordinates for the subsequent P4/P5 search."
+  },
+  "certificate_search": {
+    "p4_complete_word_full_attitude_candidate_deg": [30.0, 25.0, 20.0, 15.0],
+    "p4_candidate_selection_rule": "USE_WIDEST_SOURCE_COMPLETE_FINITE_ANGLE_CELL_THAT_CLOSES_FULL_STATE_DISSIPATION",
+    "p4_outer_geometry_sector_remains_separate": true,
+    "search_strategy_not_theorem_assumption": true
+  },
   "normal_live": {
     "vector_pe_recurrence_window_s": 1.0,
     "specific_force_norm_lower_mps2": 5.0,
