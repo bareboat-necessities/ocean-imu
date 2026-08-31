@@ -2,7 +2,7 @@ from pathlib import Path
 import sys, unittest
 ROOT=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT/'tools'))
-import ou3_p4_translation_full_word_interval as C
+import ou3_p4_translation_full_word_interval_fast as C
 
 class P4TranslationFullWordIntervalTests(unittest.TestCase):
  @classmethod
@@ -27,9 +27,12 @@ class P4TranslationFullWordIntervalTests(unittest.TestCase):
  def test_exact_transition_and_lower_are_retained_through_word(self):
   for mode in ('H','A'):
    m=self.d['modes'][mode]
-   self.assertEqual(m['prediction_enclosure'],'exact_rational_transition_interval_rowwise_loewner')
+   self.assertEqual(m['prediction_enclosure'],'exact_rational_transition_interval_rowwise_loewner_dyadic192')
    self.assertTrue(m['exact_rational_transition_enclosure'])
    self.assertTrue(m['exact_rational_lower_retained_through_word'])
+   self.assertTrue(m['dyadic_loewner_compression'])
+   self.assertEqual(m['dyadic_loewner_bits'],192)
+   self.assertLess(m['dyadic_loewner_max_added_diagonal_loss'],1e-50)
  def test_source_only(self):
   self.assertTrue(self.d['source_only']); self.assertFalse(self.d['trajectory_replay_used']); self.assertTrue(self.d['outward_rounded'])
 
