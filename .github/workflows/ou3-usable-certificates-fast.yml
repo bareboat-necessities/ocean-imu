@@ -114,6 +114,12 @@ jobs:
           python3 tools/ou3_p4_translation_full_word_rigorous.py \
             --output /tmp/ou3_p4_translation_full_word.json
 
+      - name: Emit post-translation full-state bottleneck diagnostic
+        run: |
+          python3 tools/ou3_p4_post_translation_bottleneck.py \
+            --translation /tmp/ou3_p4_translation_full_word.json \
+            --output /tmp/ou3_p4_post_translation.json
+
       - name: Emit P4 finite-angle sector certificate
         run: |
           python3 tools/ou3_p4_operation_matched_sector_certificate.py \
@@ -132,6 +138,7 @@ jobs:
 
           p2 = json.loads(Path('/tmp/ou3_p2_source_path.json').read_text())
           tr = json.loads(Path('/tmp/ou3_p4_translation_full_word.json').read_text())
+          post = json.loads(Path('/tmp/ou3_p4_post_translation.json').read_text())
           p4 = json.loads(Path('/tmp/ou3_p4_operation_sector.json').read_text())
           p5 = json.loads(Path('/tmp/ou3_p5_outer_capture.json').read_text())
 
@@ -152,6 +159,18 @@ jobs:
               assert row['source_float_literals_rounded_as_binary32'] is True
               assert row['conditioned_scale_products_outward_rounded_from_first_operation'] is True
               assert row['pre_interval_binary64_scale_products_used'] is False
+
+          assert post['P4_USABLE_CERTIFICATE_STATUS'] == 'NOT_ESTABLISHED'
+          assert post['blockwise_min_is_final_certificate'] is False
+          assert post['cross_block_budget_is_final_certificate'] is False
+          for mode in ('H', 'A'):
+              row = post['modes'][mode]
+              assert row['validated_complete_word_translation_margin_lower'] > 0.0
+              assert row['existing_direct_nontranslation_margin_lower'] > 0.0
+              assert row['normalized_full_state_cross_block_spectral_norm_budget_open'] > 0.0
+              assert row['full_state_cross_block_bound_validated'] is False
+              assert row['full_state_complete_word_cross_blocks_propagated'] is False
+              assert row['usable_P4_promoted'] is False
 
           assert p4['P4_OPERATION_MATCHED_FINITE_ANGLE_SECTOR_CERTIFICATE'] == 'PASS'
           assert p4['design_full_attitude_angle_rad'] >= 0.80
@@ -176,6 +195,8 @@ jobs:
           print('P2 source edges:', p2['transition_edges'])
           print('P4 translation H delta:', tr['modes']['H']['complete_word_translation_margin_lower'])
           print('P4 translation A delta:', tr['modes']['A']['complete_word_translation_margin_lower'])
+          print('P4 post H cross-block budget:', post['modes']['H']['normalized_full_state_cross_block_spectral_norm_budget_open'])
+          print('P4 post A cross-block budget:', post['modes']['A']['normalized_full_state_cross_block_spectral_norm_budget_open'])
           print('P4 sector rad:', p4['design_full_attitude_angle_rad'])
           print('P4 sector q:', p4['design_cayley_norm_upper'])
           print('P4 monotonicity:', p4['exact_vector_strong_monotonicity_factor_lower'])
