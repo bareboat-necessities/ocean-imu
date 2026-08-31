@@ -34,6 +34,10 @@ build:
 		../../tools/ou3_p4_p5_route_ceiling_certificate.py \
 		../../tools/ou3_p4_source_path_reachability.py \
 		../../tools/ou3_p4_operation_matched_sector_certificate.py \
+		../../tools/ou3_p4_translation_full_word_interval.py \
+		../../tools/ou3_p4_translation_full_word_interval_fast.py \
+		../../tools/ou3_p4_translation_full_word_rigorous.py \
+		../../tools/ou3_p4_post_translation_bottleneck.py \
 		../../tools/ou3_p5_startup_capture_certificate.py \
 		../../tools/ou3_p5_outer_sector_capture_certificate.py \
 		../../tools/ou3_p5_outer_h_word_certificate.py \
@@ -87,6 +91,10 @@ build:
 		test_ou3_p4_p5_route_ceiling.py \
 		test_ou3_p4_source_path_reachability.py \
 		test_ou3_p4_operation_matched_sector_certificate.py \
+		test_ou3_p4_translation_full_word_interval.py \
+		test_ou3_p4_translation_full_word_rigorous.py \
+		test_ou3_p4_post_translation_bottleneck.py \
+		test_ou3_certificate_dead_end_nonregression.py \
 		test_ou3_p5_startup_capture_certificate.py \
 		test_ou3_p5_outer_sector_capture_certificate.py \
 		test_ou3_p5_outer_h_word_certificate.py \
