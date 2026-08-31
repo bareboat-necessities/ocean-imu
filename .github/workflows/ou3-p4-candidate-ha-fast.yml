@@ -7,15 +7,13 @@ on:
       - "tools/ou3_p4_candidate_first_accel_range.py"
       - "tools/ou3_p4_candidate_first_accel_range_v2.py"
       - "tools/ou3_p4_candidate_first_accel_range_v3.py"
+      - "tools/ou3_p4_candidate_first_accel_exact_source.py"
       - "tools/ou3_p4_p5_entrance_search_domain.py"
-      - "tools/ou3_p4_operation_matched_sector_certificate.py"
+      - "tools/ou3_p5_first_accel_exact_source.py"
+      - "tools/ou3_p5_first_accel_exact_source_v2.py"
       - "tools/ou3_p5_first_accel_rotation_gauge.py"
       - "tools/ou3_p5_first_accel_rotation_gauge_v3.py"
       - "tools/ou3_p5_first_accel_structured_gain.py"
-      - "tools/ou3_p5_sample1_structured_full_gain_v12d.py"
-      - "tools/ou3_p5_full_h_prefix_cells.py"
-      - "tools/ou3_p5_full_h_prefix_cells_v2.py"
-      - "tools/ou3_p5_full_h_prefix_cells_v3.py"
       - "tools/ou3_proof_operating_domain.json"
       - "tests/validation/test_ou3_p4_candidate_first_accel_range.py"
       - ".github/workflows/ou3-p4-candidate-ha-fast.yml"
@@ -25,15 +23,13 @@ on:
       - "tools/ou3_p4_candidate_first_accel_range.py"
       - "tools/ou3_p4_candidate_first_accel_range_v2.py"
       - "tools/ou3_p4_candidate_first_accel_range_v3.py"
+      - "tools/ou3_p4_candidate_first_accel_exact_source.py"
       - "tools/ou3_p4_p5_entrance_search_domain.py"
-      - "tools/ou3_p4_operation_matched_sector_certificate.py"
+      - "tools/ou3_p5_first_accel_exact_source.py"
+      - "tools/ou3_p5_first_accel_exact_source_v2.py"
       - "tools/ou3_p5_first_accel_rotation_gauge.py"
       - "tools/ou3_p5_first_accel_rotation_gauge_v3.py"
       - "tools/ou3_p5_first_accel_structured_gain.py"
-      - "tools/ou3_p5_sample1_structured_full_gain_v12d.py"
-      - "tools/ou3_p5_full_h_prefix_cells.py"
-      - "tools/ou3_p5_full_h_prefix_cells_v2.py"
-      - "tools/ou3_p5_full_h_prefix_cells_v3.py"
       - "tools/ou3_proof_operating_domain.json"
       - "tests/validation/test_ou3_p4_candidate_first_accel_range.py"
       - ".github/workflows/ou3-p4-candidate-ha-fast.yml"
@@ -48,45 +44,46 @@ concurrency:
 
 jobs:
   candidate-preflight:
-    name: 30/25/20/15 deg tangent first-accel gate
+    name: 30/25/20/15 deg exact-source first-Live accel gate
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v6
 
-      - name: Compile candidate range producers and tests
+      - name: Compile exact-source candidate producer and tests
         run: |
           python3 -m py_compile \
-            tools/ou3_p4_candidate_full_word.py \
             tools/ou3_p4_candidate_first_accel_range.py \
             tools/ou3_p4_candidate_first_accel_range_v2.py \
             tools/ou3_p4_candidate_first_accel_range_v3.py \
+            tools/ou3_p4_candidate_first_accel_exact_source.py \
             tests/validation/test_ou3_p4_candidate_first_accel_range.py
 
-      - name: Test candidate tangent-range semantics
+      - name: Test exact-source candidate semantics
         working-directory: tests/validation
         run: python3 -m unittest -v test_ou3_p4_candidate_first_accel_range
 
-      - name: Certify tangent-resolvent first-accelerometer correction range
+      - name: Certify exact-source first-Live accelerometer correction range
         run: |
-          python3 tools/ou3_p4_candidate_first_accel_range_v3.py \
+          python3 tools/ou3_p4_candidate_first_accel_exact_source.py \
             --source-pieces 2 \
-            --alignment-pieces 16 \
-            --force-magnitude-pieces 4 \
-            --output /tmp/ou3_p4_candidate_first_accel_range.json
+            --output /tmp/ou3_p4_candidate_first_accel_exact_source.json
           python3 - <<'PY'
           import json
-          d=json.load(open('/tmp/ou3_p4_candidate_first_accel_range.json'))
+          d=json.load(open('/tmp/ou3_p4_candidate_first_accel_exact_source.json'))
           assert d['validation_pass'] is True
           assert d['deployed_correction_limit_rad'] == 6.0
           assert d['deployed_correction_limit_increased'] is False
+          assert d['first_accel_aw_mean_exact_zero_before_measurement'] is True
+          assert d['first_due_S_mean_correction_exact_zero'] is True
+          assert d['first_accel_specific_force_magnitude_exact_gravity'] is True
+          assert d['first_accel_yaw_covariance_axis_aligned_with_force_axis'] is True
+          assert d['yaw_alignment_x_equals_zero'] is True
           assert d['V12D_tangent_PSD_resolvent_used'] is True
-          assert d['PSD_remainder_axial_noise_floor_inverse_used'] is False
-          assert d['candidate_ball_norm_used_without_cartesian_cover_inflation'] is True
-          assert d['independent_accelerometer_eta_penalty_used'] is False
           assert d['A_first_prefix_attitude_gain_bounded_by_H_gain'] is True
-          print('P4_CANDIDATE_FIRST_ACCEL_RANGE:', d['P4_CANDIDATE_FIRST_ACCEL_RANGE_CERTIFICATE'])
+          print('P4_CANDIDATE_FIRST_ACCEL_EXACT_SOURCE:', d['P4_CANDIDATE_FIRST_ACCEL_EXACT_SOURCE_CERTIFICATE'])
           print('WIDEST_ACCEL_RANGE_SAFE_DEG:', d['widest_candidate_first_accel_range_safe_deg'])
+          print('FIRST_FORCE_MPS2:', d['first_accel_specific_force_magnitude_mps2'])
           for r in d['candidate_rows']:
               print('ACCEL_RANGE', r['angle_deg'], 'qpred', r['post_prediction_q_upper'], 'K', r['max_Ktheta_norm_upper'], 'resid', r['max_combined_residual_norm_upper_mps2'], 'd', r['max_first_accelerometer_correction_norm_upper_rad'], 'margin', r['minimum_correction_range_margin_rad'], 'safe', r['first_accelerometer_range_safe'])
               if r['first_unclosed_child'] is not None:
