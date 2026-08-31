@@ -1,4 +1,5 @@
 from pathlib import Path
+import os
 import sys
 import unittest
 
@@ -7,6 +8,10 @@ sys.path.insert(0, str(ROOT / "tools"))
 import ou3_p4_translation_full_word_rigorous as R
 
 
+@unittest.skipUnless(
+    os.environ.get("OU3_RUN_EXPENSIVE_P4_FULL_WORD") == "1",
+    "rigorous reused #438 full-word P4 enclosure runs only in focused P4 CI",
+)
 class P4RigorousReusedTranslationTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
