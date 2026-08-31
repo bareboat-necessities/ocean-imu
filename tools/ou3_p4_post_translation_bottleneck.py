@@ -16,6 +16,17 @@ translation value is the outward-validated complete-word result.  Taking their
 minimum is only a diagnostic lower bound and is explicitly forbidden from being
 used as the final P4 certificate because cross-block complete-word coupling has
 not yet been propagated.
+
+The producer now also emits a rigorous numerical target for that missing
+full-state coupling.  If the normalized endpoint comparison has block form
+
+    G = [[A, C], [C^T, B]],
+
+and the two diagonal blocks obey A >= a I and B >= b I, then a sufficient
+Schur/Young condition for G >> 0 is ||C||_2 < sqrt(a*b).  The emitted
+cross-block budget is therefore the exact next quantity the 18/21-state
+Phi/Omega backend must outward-validate on the recurrent source path.  No bound
+on C is guessed here, so P4 remains fail-closed.
 """
 from __future__ import annotations
 
@@ -45,6 +56,7 @@ def build(translation: dict, domain_path: Path = DEFAULT_DOMAIN) -> dict:
             continue
         limiting = "translation_complete_word" if d_trans <= d_non else "nontranslation_existing_direct"
         diag = min(d_trans, d_non)
+        cross_budget = math.sqrt(d_trans * d_non)
         modes[mode] = {
             "source_cell": s,
             "validated_complete_word_translation_margin_lower": d_trans,
@@ -54,6 +66,11 @@ def build(translation: dict, domain_path: Path = DEFAULT_DOMAIN) -> dict:
             "diagnostic_widening_vs_old_full_margin_lower": diag / d_old,
             "post_translation_limiting_block": limiting,
             "translation_still_limits_after_full_word_widening": d_trans <= d_non,
+            "normalized_full_state_cross_block_spectral_norm_budget_open": cross_budget,
+            "full_state_cross_block_sufficient_condition": (
+                "validated ||C||_2 < sqrt(delta_translation*delta_nontranslation)"
+            ),
+            "full_state_cross_block_bound_validated": False,
             "full_state_complete_word_cross_blocks_propagated": False,
             "usable_P4_promoted": False,
         }
@@ -63,11 +80,13 @@ def build(translation: dict, domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "source_only": True,
         "trajectory_replay_used": False,
         "blockwise_min_is_final_certificate": False,
+        "cross_block_budget_is_final_certificate": False,
         "modes": modes,
         "P4_USABLE_CERTIFICATE_STATUS": "NOT_ESTABLISHED",
         "next_obligation": (
-            "propagate full 18/21-state complete-word Phi/Omega, including translation-attitude cross blocks, "
-            "on the recurrent worst source cell; use this diagnostic only to prioritize which block requires refinement"
+            "propagate full 18/21-state complete-word Phi/Omega on the recurrent source graph and outward-validate "
+            "the normalized translation/nontranslation cross-block spectral norm C below the emitted Schur budget; "
+            "then validate the exact finite-angle complete return map on the same reachable cells/paths"
         ),
         "failures": failures,
     }
@@ -79,6 +98,8 @@ def validate(d: dict) -> list[str]:
         f.append("diagnostic is not source-only")
     if d.get("blockwise_min_is_final_certificate") is not False:
         f.append("blockwise diagnostic was promoted as final certificate")
+    if d.get("cross_block_budget_is_final_certificate") is not False:
+        f.append("cross-block budget was promoted as final certificate")
     if d.get("P4_USABLE_CERTIFICATE_STATUS") != "NOT_ESTABLISHED":
         f.append("diagnostic prematurely promoted P4")
     for mode in ("H", "A"):
@@ -88,6 +109,7 @@ def validate(d: dict) -> list[str]:
             "existing_direct_nontranslation_margin_lower",
             "diagnostic_blockwise_margin_lower",
             "diagnostic_widening_vs_old_full_margin_lower",
+            "normalized_full_state_cross_block_spectral_norm_budget_open",
         ):
             x = m.get(k)
             if not isinstance(x, (int, float)) or not math.isfinite(float(x)) or float(x) <= 0.0:
@@ -96,6 +118,8 @@ def validate(d: dict) -> list[str]:
             "translation_complete_word", "nontranslation_existing_direct"
         ):
             f.append(f"{mode}: missing limiting block")
+        if m.get("full_state_cross_block_bound_validated") is not False:
+            f.append(f"{mode}: cross-block bound incorrectly claimed")
         if m.get("full_state_complete_word_cross_blocks_propagated") is not False:
             f.append(f"{mode}: cross-block propagation incorrectly claimed")
         if m.get("usable_P4_promoted") is not False:
@@ -122,6 +146,7 @@ def main() -> int:
                 "diagnostic_margin": d.get("modes", {}).get(mode, {}).get("diagnostic_blockwise_margin_lower"),
                 "factor_vs_old": d.get("modes", {}).get(mode, {}).get("diagnostic_widening_vs_old_full_margin_lower"),
                 "limiting_block": d.get("modes", {}).get(mode, {}).get("post_translation_limiting_block"),
+                "cross_block_budget": d.get("modes", {}).get(mode, {}).get("normalized_full_state_cross_block_spectral_norm_budget_open"),
             }
             for mode in ("H", "A")
         },
