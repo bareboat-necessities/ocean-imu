@@ -54,6 +54,7 @@ jobs:
         run: |
           python3 tools/ou3_p4_candidate_full_word.py \
             --max-samples 1 \
+            --cover-factor 1.55 \
             --output /tmp/ou3_p4_candidate_preflight.json
 
       - name: Report first real obstruction or widest safe candidate
@@ -67,6 +68,7 @@ jobs:
           assert d['A_dimension'] == 21
           assert d['position_entrance_uses_half_Hs'] is True
           assert d['Hs_upper_m'] == 8.5
+          assert d['cover_factor'] == 1.55
           assert d['P4_COMPLETE_WORD_DISSIPATION_ESTABLISHED_HERE'] is False
           print('P4_CANDIDATE_PREFLIGHT:', d['P4_CANDIDATE_FULL_HA_PREFIX_CERTIFICATE'])
           print('WIDEST_SAFE_DEG:', d['widest_candidate_prefix_safe_deg'])
