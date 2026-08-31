@@ -43,7 +43,10 @@
     "position": {
       "truth_error_not_estimate_magnitude": true,
       "component_abs_error_upper_Hs_factor": 0.5,
-      "significant_wave_height_Hs_positive_required": true
+      "significant_wave_height_Hs_positive_required": true,
+      "significant_wave_height_Hs_upper_m": 8.5,
+      "Hs_upper_role": "DECLARED_CURRENT_PROOF_DEPLOYMENT_ENVELOPE_NOT_REPLAY_FIT",
+      "widening_beyond_current_envelope": "SEPARATE_DOMAIN_WIDENING_OBLIGATION"
     },
     "sea_scaled_translation_coordinates": {
       "position": "delta_p / Hs",
@@ -53,7 +56,7 @@
       "Ts_role": "positive characteristic sea period used only as a coordinate scale unless a separate theorem bound is declared"
     },
     "additional_hard_sea_scaled_bounds_declared": false,
-    "note": "The 45 deg attitude and |delta p_i| <= 0.5 Hs conditions are entrance assumptions, not a claim that the earlier startup interval preserves them automatically. P1 retains its conservative source handoff box. Any theorem path that starts before P5 must propagate this entrance set through the exact startup/source dynamics rather than silently substituting it for the P1 handoff box. No additional hard bounds on v, S, or a_w are introduced here; their sea-scaled forms are conditioning coordinates for the subsequent P4/P5 search."
+    "note": "The 45 deg attitude and |delta p_i| <= 0.5 Hs conditions are entrance assumptions, not a claim that the earlier startup interval preserves them automatically. The current numerical theorem envelope additionally declares 0 < Hs <= 8.5 m so the componentwise position entrance is finite for CI; 8.5 m is the present proof/deployment envelope and widening it is a separate theorem-domain task, not an inference from replay extrema. P1 retains its conservative source handoff box. Any theorem path that starts before P5 must propagate this entrance set through the exact startup/source dynamics rather than silently substituting it for the P1 handoff box. No additional hard bounds on v, S, or a_w are introduced here; their sea-scaled forms are conditioning coordinates for the subsequent P4/P5 search."
   },
   "certificate_search": {
     "p4_complete_word_full_attitude_candidate_deg": [30.0, 25.0, 20.0, 15.0],
