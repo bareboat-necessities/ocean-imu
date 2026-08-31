@@ -10,6 +10,7 @@ on:
       - "tools/ou3_p4_translation_full_word_interval_fast.py"
       - "tools/ou3_p4_translation_full_word_rigorous.py"
       - "tools/ou3_p4_post_translation_bottleneck.py"
+      - "tools/ou3_p4_p5_route_ceiling_certificate.py"
       - "tools/ou3_p5_outer_sector_capture_certificate.py"
       - "tools/ou3_p5_cayley_eta_geometry.py"
       - "tools/ou3_p5_effective_vector_input.py"
@@ -20,11 +21,14 @@ on:
       - "tools/ou3_proof_operating_domain.json"
       - "src/kalman_ou_iii/**"
       - "src/kalman_ou_common/**"
+      - "src/kalman_common/**"
+      - "src/tuner/SeaStateAdaptationLimits.h"
       - "tests/validation/test_ou3_p4_source_path_reachability.py"
       - "tests/validation/test_ou3_p4_operation_matched_sector_certificate.py"
       - "tests/validation/test_ou3_p4_translation_full_word_interval.py"
       - "tests/validation/test_ou3_p4_translation_full_word_rigorous.py"
       - "tests/validation/test_ou3_p4_post_translation_bottleneck.py"
+      - "tests/validation/test_ou3_p4_p5_route_ceiling.py"
       - "tests/validation/test_ou3_p5_outer_sector_capture_certificate.py"
       - "tests/validation/test_ou3_certificate_dead_end_nonregression.py"
       - "docs/ou-iii-certificate-usability-envelope.md"
@@ -38,6 +42,7 @@ on:
       - "tools/ou3_p4_translation_full_word_interval_fast.py"
       - "tools/ou3_p4_translation_full_word_rigorous.py"
       - "tools/ou3_p4_post_translation_bottleneck.py"
+      - "tools/ou3_p4_p5_route_ceiling_certificate.py"
       - "tools/ou3_p5_outer_sector_capture_certificate.py"
       - "tools/ou3_p5_cayley_eta_geometry.py"
       - "tools/ou3_p5_effective_vector_input.py"
@@ -48,11 +53,14 @@ on:
       - "tools/ou3_proof_operating_domain.json"
       - "src/kalman_ou_iii/**"
       - "src/kalman_ou_common/**"
+      - "src/kalman_common/**"
+      - "src/tuner/SeaStateAdaptationLimits.h"
       - "tests/validation/test_ou3_p4_source_path_reachability.py"
       - "tests/validation/test_ou3_p4_operation_matched_sector_certificate.py"
       - "tests/validation/test_ou3_p4_translation_full_word_interval.py"
       - "tests/validation/test_ou3_p4_translation_full_word_rigorous.py"
       - "tests/validation/test_ou3_p4_post_translation_bottleneck.py"
+      - "tests/validation/test_ou3_p4_p5_route_ceiling.py"
       - "tests/validation/test_ou3_p5_outer_sector_capture_certificate.py"
       - "tests/validation/test_ou3_certificate_dead_end_nonregression.py"
       - "docs/ou-iii-certificate-usability-envelope.md"
@@ -70,7 +78,7 @@ jobs:
   usable-certificates:
     name: P2/P4/P5 usable certificate contracts
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v6
 
@@ -84,16 +92,18 @@ jobs:
             tools/ou3_p4_translation_full_word_interval_fast.py \
             tools/ou3_p4_translation_full_word_rigorous.py \
             tools/ou3_p4_post_translation_bottleneck.py \
+            tools/ou3_p4_p5_route_ceiling_certificate.py \
             tools/ou3_p5_outer_sector_capture_certificate.py \
             tests/validation/test_ou3_p4_source_path_reachability.py \
             tests/validation/test_ou3_p4_operation_matched_sector_certificate.py \
             tests/validation/test_ou3_p4_translation_full_word_interval.py \
             tests/validation/test_ou3_p4_translation_full_word_rigorous.py \
             tests/validation/test_ou3_p4_post_translation_bottleneck.py \
+            tests/validation/test_ou3_p4_p5_route_ceiling.py \
             tests/validation/test_ou3_p5_outer_sector_capture_certificate.py \
             tests/validation/test_ou3_certificate_dead_end_nonregression.py
 
-      - name: Run focused usability and dead-end tests
+      - name: Run focused usability and dead-end regression tests
         working-directory: tests/validation
         run: |
           python3 -m unittest -v \
@@ -101,6 +111,7 @@ jobs:
             test_ou3_p4_operation_matched_sector_certificate \
             test_ou3_p4_translation_full_word_rigorous \
             test_ou3_p4_post_translation_bottleneck \
+            test_ou3_p4_p5_route_ceiling \
             test_ou3_p5_outer_sector_capture_certificate \
             test_ou3_certificate_dead_end_nonregression
 
@@ -114,7 +125,7 @@ jobs:
           python3 tools/ou3_p4_translation_full_word_rigorous.py \
             --output /tmp/ou3_p4_translation_full_word.json
 
-      - name: Emit post-translation full-state bottleneck diagnostic
+      - name: Emit post-translation full-state target
         run: |
           python3 tools/ou3_p4_post_translation_bottleneck.py \
             --translation /tmp/ou3_p4_translation_full_word.json \
@@ -130,7 +141,7 @@ jobs:
           python3 tools/ou3_p5_outer_sector_capture_certificate.py \
             --output /tmp/ou3_p5_outer_capture.json
 
-      - name: Enforce material usability margins
+      - name: Enforce material usability margins and fail-closed scope
         run: |
           python3 - <<'PY'
           import json
@@ -147,6 +158,14 @@ jobs:
           assert p2['path_graph_ready'] is True
           assert p2['old_worst_corner_state_count'] > 0
           assert p2['usable_P4_promoted'] is False
+          assert p2['raw_tuner_sigma_subfloor_states_included'] is True
+          assert p2['raw_tuner_sigma_partition_lower'] < p2['filter_sigma_floor_mps2']
+          assert p2['filter_sigma_floor_separate_from_tuner_state'] is True
+          assert p2['validated_exponential_used_for_ema'] is True
+          assert p2['arbitrary_late_commit_overapproximated'] is True
+          assert p2['RS_discrepancy_slew_horizon_covered'] is True
+          assert p2['RS_target_full_deployed_clamp_overapprox'] is True
+          assert p2['RS_target_powf_tightening_used'] is False
 
           assert tr['P4_COMPLETE_TRANSLATION_WORST_CELL_STATUS'] == 'PASS'
           assert tr['reused_from_PR_438'] is True
@@ -160,21 +179,22 @@ jobs:
               assert row['conditioned_scale_products_outward_rounded_from_first_operation'] is True
               assert row['pre_interval_binary64_scale_products_used'] is False
 
+              prow = post['modes'][mode]
+              assert prow['diagnostic_blockwise_margin_lower'] > 0.0
+              assert prow['normalized_full_state_cross_block_spectral_norm_budget_lower_open'] > 0.0
+              assert prow['cross_block_budget_outward_lower_enclosed'] is True
+              assert prow['full_state_cross_block_bound_validated'] is False
+              assert prow['full_state_complete_word_cross_blocks_propagated'] is False
+              assert prow['usable_P4_promoted'] is False
           assert post['P4_USABLE_CERTIFICATE_STATUS'] == 'NOT_ESTABLISHED'
           assert post['blockwise_min_is_final_certificate'] is False
           assert post['cross_block_budget_is_final_certificate'] is False
-          for mode in ('H', 'A'):
-              row = post['modes'][mode]
-              assert row['validated_complete_word_translation_margin_lower'] > 0.0
-              assert row['existing_direct_nontranslation_margin_lower'] > 0.0
-              assert row['normalized_full_state_cross_block_spectral_norm_budget_open'] > 0.0
-              assert row['full_state_cross_block_bound_validated'] is False
-              assert row['full_state_complete_word_cross_blocks_propagated'] is False
-              assert row['usable_P4_promoted'] is False
 
           assert p4['P4_OPERATION_MATCHED_FINITE_ANGLE_SECTOR_CERTIFICATE'] == 'PASS'
           assert p4['design_full_attitude_angle_rad'] >= 0.80
           assert p4['design_cayley_norm_upper'] < 1.0
+          assert p4['design_full_attitude_cosine_lower'] <= p4['design_full_attitude_cosine_upper']
+          assert p4['validated_half_angle_interval_used_for_design_boundary'] is True
           assert p4['exact_vector_strong_monotonicity_factor_lower'] > 0.80
           assert p4['exact_eta_to_rotational_residual_information_ratio_upper'] < 0.25
           assert p4['P1_overlap']['normal_gauged_inside_sector'] is True
@@ -186,17 +206,19 @@ jobs:
           assert p5['P5_OUTER_SECTOR_CAPTURE_CERTIFICATE'] == 'PASS'
           assert p5['all_source_handoff_branches_enter_outer_sector'] is True
           assert p5['N_outer_words'] == 0
+          assert p5['upper_cosine_enclosure_used_for_ungauged_inclusion'] is True
+          assert p5['branches']['timeout_ungauged']['boundary_cosine_direction_used'] == 'UPPER_ENCLOSURE'
+          assert p5['branches']['timeout_ungauged']['full_heading_radius_assigned'] is False
           assert p5['legacy_microscopic_inner_seed_used_as_outer_capture_target'] is False
           assert p5['legacy_uniform_transport_route_used'] is False
-          assert p5['branches']['timeout_ungauged']['full_heading_radius_assigned'] is False
           assert p5['P5_INNER_FUNNEL_FINITE_CAPTURE_ESTABLISHED_HERE'] is False
 
           print('P2 source states:', p2['partition']['states'])
           print('P2 source edges:', p2['transition_edges'])
           print('P4 translation H delta:', tr['modes']['H']['complete_word_translation_margin_lower'])
           print('P4 translation A delta:', tr['modes']['A']['complete_word_translation_margin_lower'])
-          print('P4 post H cross-block budget:', post['modes']['H']['normalized_full_state_cross_block_spectral_norm_budget_open'])
-          print('P4 post A cross-block budget:', post['modes']['A']['normalized_full_state_cross_block_spectral_norm_budget_open'])
+          print('P4 post H cross budget:', post['modes']['H']['normalized_full_state_cross_block_spectral_norm_budget_lower_open'])
+          print('P4 post A cross budget:', post['modes']['A']['normalized_full_state_cross_block_spectral_norm_budget_lower_open'])
           print('P4 sector rad:', p4['design_full_attitude_angle_rad'])
           print('P4 sector q:', p4['design_cayley_norm_upper'])
           print('P4 monotonicity:', p4['exact_vector_strong_monotonicity_factor_lower'])
