@@ -9,6 +9,7 @@ on:
       - "tools/ou3_p4_translation_full_word_interval.py"
       - "tools/ou3_p4_translation_full_word_interval_fast.py"
       - "tools/ou3_p4_translation_full_word_rigorous.py"
+      - "tools/ou3_p4_post_translation_bottleneck.py"
       - "tools/ou3_p5_outer_sector_capture_certificate.py"
       - "tools/ou3_p5_cayley_eta_geometry.py"
       - "tools/ou3_p5_effective_vector_input.py"
@@ -23,7 +24,9 @@ on:
       - "tests/validation/test_ou3_p4_operation_matched_sector_certificate.py"
       - "tests/validation/test_ou3_p4_translation_full_word_interval.py"
       - "tests/validation/test_ou3_p4_translation_full_word_rigorous.py"
+      - "tests/validation/test_ou3_p4_post_translation_bottleneck.py"
       - "tests/validation/test_ou3_p5_outer_sector_capture_certificate.py"
+      - "tests/validation/test_ou3_certificate_dead_end_nonregression.py"
       - "docs/ou-iii-certificate-usability-envelope.md"
       - ".github/workflows/ou3-usable-certificates-fast.yml"
   pull_request:
@@ -34,6 +37,7 @@ on:
       - "tools/ou3_p4_translation_full_word_interval.py"
       - "tools/ou3_p4_translation_full_word_interval_fast.py"
       - "tools/ou3_p4_translation_full_word_rigorous.py"
+      - "tools/ou3_p4_post_translation_bottleneck.py"
       - "tools/ou3_p5_outer_sector_capture_certificate.py"
       - "tools/ou3_p5_cayley_eta_geometry.py"
       - "tools/ou3_p5_effective_vector_input.py"
@@ -48,7 +52,9 @@ on:
       - "tests/validation/test_ou3_p4_operation_matched_sector_certificate.py"
       - "tests/validation/test_ou3_p4_translation_full_word_interval.py"
       - "tests/validation/test_ou3_p4_translation_full_word_rigorous.py"
+      - "tests/validation/test_ou3_p4_post_translation_bottleneck.py"
       - "tests/validation/test_ou3_p5_outer_sector_capture_certificate.py"
+      - "tests/validation/test_ou3_certificate_dead_end_nonregression.py"
       - "docs/ou-iii-certificate-usability-envelope.md"
       - ".github/workflows/ou3-usable-certificates-fast.yml"
   workflow_dispatch:
@@ -77,21 +83,26 @@ jobs:
             tools/ou3_p4_translation_full_word_interval.py \
             tools/ou3_p4_translation_full_word_interval_fast.py \
             tools/ou3_p4_translation_full_word_rigorous.py \
+            tools/ou3_p4_post_translation_bottleneck.py \
             tools/ou3_p5_outer_sector_capture_certificate.py \
             tests/validation/test_ou3_p4_source_path_reachability.py \
             tests/validation/test_ou3_p4_operation_matched_sector_certificate.py \
             tests/validation/test_ou3_p4_translation_full_word_interval.py \
             tests/validation/test_ou3_p4_translation_full_word_rigorous.py \
-            tests/validation/test_ou3_p5_outer_sector_capture_certificate.py
+            tests/validation/test_ou3_p4_post_translation_bottleneck.py \
+            tests/validation/test_ou3_p5_outer_sector_capture_certificate.py \
+            tests/validation/test_ou3_certificate_dead_end_nonregression.py
 
-      - name: Run focused usability tests
+      - name: Run focused usability and dead-end tests
         working-directory: tests/validation
         run: |
           python3 -m unittest -v \
             test_ou3_p4_source_path_reachability \
             test_ou3_p4_operation_matched_sector_certificate \
             test_ou3_p4_translation_full_word_rigorous \
-            test_ou3_p5_outer_sector_capture_certificate
+            test_ou3_p4_post_translation_bottleneck \
+            test_ou3_p5_outer_sector_capture_certificate \
+            test_ou3_certificate_dead_end_nonregression
 
       - name: Emit P2 source-path certificate
         run: |
@@ -126,6 +137,8 @@ jobs:
 
           assert p2['P2_SOURCE_PATH_CERTIFICATE'] == 'PASS'
           assert p2['source_only'] is True
+          assert p2['path_graph_ready'] is True
+          assert p2['old_worst_corner_state_count'] > 0
           assert p2['usable_P4_promoted'] is False
 
           assert tr['P4_COMPLETE_TRANSLATION_WORST_CELL_STATUS'] == 'PASS'
@@ -148,6 +161,7 @@ jobs:
           assert p4['P1_overlap']['normal_gauged_inside_sector'] is True
           assert p4['P1_overlap']['timeout_gauged_inside_sector'] is True
           assert p4['global_packet_count_times_lipschitz_defect_used'] is False
+          assert p4['whole_word_weakest_P3_delta_used_as_attitude_sector_margin'] is False
           assert p4['P4_COMPLETE_WORD_DISSIPATION_ESTABLISHED_HERE'] is False
 
           assert p5['P5_OUTER_SECTOR_CAPTURE_CERTIFICATE'] == 'PASS'
@@ -155,6 +169,7 @@ jobs:
           assert p5['N_outer_words'] == 0
           assert p5['legacy_microscopic_inner_seed_used_as_outer_capture_target'] is False
           assert p5['legacy_uniform_transport_route_used'] is False
+          assert p5['branches']['timeout_ungauged']['full_heading_radius_assigned'] is False
           assert p5['P5_INNER_FUNNEL_FINITE_CAPTURE_ESTABLISHED_HERE'] is False
 
           print('P2 source states:', p2['partition']['states'])
