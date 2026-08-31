@@ -5,7 +5,7 @@ import unittest
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools"))
 
-import ou3_p4_candidate_first_accel_range as G
+import ou3_p4_candidate_first_accel_range_v2 as G
 
 
 class Ou3P4CandidateFirstAccelRangeTests(unittest.TestCase):
@@ -35,9 +35,16 @@ class Ou3P4CandidateFirstAccelRangeTests(unittest.TestCase):
         d = self.d
         self.assertTrue(d["H_bias_error_bound_contains_A"])
         self.assertTrue(d["A_first_prefix_attitude_gain_bounded_by_H_gain"])
+        self.assertTrue(d["A_structure_proved_before_generic_PSD_boxing"])
         a = d["A_mode_structure"]
+        self.assertTrue(a["check_uses_structural_source_matrices_not_psd_tightened_box"])
+        self.assertTrue(a["A_bias_seed_cross_exact_zero"])
+        self.assertTrue(a["A_bias_transition_cross_exact_zero"])
+        self.assertTrue(a["A_bias_process_cross_exact_zero"])
         self.assertTrue(a["A_bias_innovation_addition_isotropic_PSD"])
         self.assertTrue(a["first_prefix_theta_aw_S_to_ba_cross_exact_zero"])
+        self.assertTrue(a["A_accelerometer_J_ba_identity"])
+        self.assertEqual(a["missing_source_markers"], [])
 
     def test_candidate_ladder_is_complete_and_fail_closed(self):
         d = self.d
