@@ -3,6 +3,7 @@ name: ou3-p4-source-node-p3-bridge
 on:
   push:
     paths:
+      - "tools/ou3_interval.py"
       - "tools/ou3_p4_source_node_p3_bridge.py"
       - "tools/ou3_p4_source_node_cells.py"
       - "tools/ou3_p4_source_path_reachability.py"
@@ -13,6 +14,7 @@ on:
       - ".github/workflows/ou3-p4-source-node-p3-bridge.yml"
   pull_request:
     paths:
+      - "tools/ou3_interval.py"
       - "tools/ou3_p4_source_node_p3_bridge.py"
       - "tools/ou3_p4_source_node_cells.py"
       - "tools/ou3_p4_source_path_reachability.py"
@@ -37,6 +39,8 @@ jobs:
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
       - name: Compile bridge producer
         run: python3 -m py_compile tools/ou3_p4_source_node_p3_bridge.py
       - name: Evaluate exact P2 node zero
