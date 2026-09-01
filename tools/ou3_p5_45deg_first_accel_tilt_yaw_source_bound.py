@@ -1,27 +1,26 @@
 #!/usr/bin/env python3
-"""Deployed-startup tilt/yaw subroute for the 45 deg P5 capture problem.
+"""Tilt/yaw-separated signed first-accelerometer bound for deployed startup P5.
 
-The generic signed-source P5 stage covers every state in the declared full
-SO(3) 45 deg entrance ball.  This producer does something deliberately
-narrower and must not be confused with that generic route: it intersects the
-same 45 deg full-attitude bound with the *additional* gravity-direction bound
-already established by P1 for source-reachable deployed startup handoffs.
+The generic signed 45 deg first-accelerometer stage preserves correction
+orientation but still lets the gravity-tangent Cayley coordinate range over the
+entire 45 deg ball.  The deployed startup route has additional information from
+P1: the gravity-direction error is already certified separately from heading.
+Intersecting those two already-proved facts gives a source-reachable two-
+coordinate chart:
 
-The exact-source first-accelerometer certificate converts that startup tilt
-information after the first prediction into
+    ||c|| <= q_45,        ||c_tangent|| <= q_tilt.
 
-    ||c_tangent|| <= q_tilt,
+This is a deployed startup subroute, not a proof for every abstract state in the
+standalone 45 deg P5 entrance set.  No new deployment assumption is introduced
+and the generic P5 route remains separate.
 
-while the full attitude still satisfies ||c||<=q_45.  The resulting two-
-coordinate chart is useful when composing P1 into P5, but it does not prove
-capture for an arbitrary abstract 45 deg P5 entrance state whose tilt could use
-the whole 45 deg allowance.
-
-No new deployment assumption is introduced: q_tilt is imported from P1 through
-the source-audited exact first-Live certificate.  Nevertheless it is additional
-information relative to the standalone P5 entrance, so this producer is marked
-as a startup-source subroute and is forbidden from replacing the generic 45 deg
-P5 obligation.
+The producer also carries the resulting full Cayley bound through the *next*
+shipping 5 ms prediction.  Prediction uses only the already-declared gyro-bias
+and deterministic transport bounds through the same exact Cayley composition
+helper used by the first-prefix proof.  This closes a bookkeeping gap in the
+previous continuation: the strong startup intersection is no longer discarded
+before sample 1.  Sample-1 S/accelerometer/magnetometer corrections are still
+left to the next source-correlated numerical stage.
 """
 from __future__ import annotations
 
@@ -31,6 +30,8 @@ import math
 from pathlib import Path
 
 import ou3_p5_first_accel_exact_source_v2 as EXACT
+import ou3_p5_first_accel_rotation_gauge as RG
+import ou3_p5_full_h_prefix_cells as FULL
 import ou3_p5_45deg_first_accel_signed_source_bound as V1
 import ou3_p5_45deg_first_accel_signed_source_bound_v2 as V2
 
@@ -42,6 +43,7 @@ DEFAULT_TANGENT_CELLS = 96
 def build(domain_path: Path = DEFAULT_DOMAIN, *, source_pieces: int = 2,
           tangent_cells: int = DEFAULT_TANGENT_CELLS) -> dict:
     path = Path(domain_path).resolve()
+    domain = json.loads(path.read_text(encoding="utf-8"))
     exact = EXACT.build(path, source_pieces=source_pieces)
     ef = EXACT.validate(exact)
     if ef:
@@ -65,16 +67,20 @@ def build(domain_path: Path = DEFAULT_DOMAIN, *, source_pieces: int = 2,
         "qualification": "OU3_P5_DEPLOYED_STARTUP_TILT_YAW_FIRST_ACCEL_SUBROUTE",
         "full_attitude_q_upper_retained": float(out["pre_update_q_upper"]),
         "certified_gravity_tangent_q_upper": q_tilt,
-        "tangent_bound_source": "P1 via ou3_p5_first_accel_exact_source_v2.post_prediction_cayley_tangent_norm_upper",
+        "tangent_bound_source": "ou3_p5_first_accel_exact_source_v2.post_prediction_cayley_tangent_norm_upper",
         "source_tilt_cosine_lower": float(exact["post_prediction_true_gravity_cosine_lower"]),
         "source_reachable_startup_intersection_only": True,
         "uses_additional_P1_tilt_information": True,
-        "generic_P5_45deg_entrance_covered_here": False,
         "does_not_replace_generic_P5_45deg_route": True,
+        "generic_P5_45deg_entrance_covered_here": False,
         "new_deployment_assumption_added": False,
         "accelerometer_claims_yaw_contraction": False,
         "two_coordinate_attitude_chart_used": True,
+        "signed_V2_post_update_q_upper": float(out["signed_source_correlated_post_update_q_upper"]),
     })
+
+    # Compare against the generic full-ball signed stage after restoring the
+    # tangent helper.  This is a comparison only; it does not alter either set.
     baseline = V2.build(path, source_pieces=source_pieces, tangent_cells=tangent_cells)
     out["signed_full_ball_baseline_post_update_q_upper"] = float(
         baseline["signed_source_correlated_post_update_q_upper"])
@@ -83,13 +89,32 @@ def build(domain_path: Path = DEFAULT_DOMAIN, *, source_pieces: int = 2,
     b = out["signed_full_ball_baseline_post_update_q_upper"]
     qnew = out["startup_intersection_post_update_q_upper"]
     out["startup_intersection_improvement_factor"] = b / qnew if qnew > 0.0 else math.inf
-    out["strictly_improves_source_reachable_startup_subroute"] = qnew < b
+    out["strictly_improves_generic_signed_route"] = qnew < b
+
+    # Carry both charts through the next exact source-uniform 5 ms prediction.
+    # This is still before any sample-1 S/vector correction.
+    h = float(FULL._source_cell()["dt_s"])
+    q1_startup = RG._q_after_first_prediction(qnew, domain, h)
+    q1_generic = RG._q_after_first_prediction(b, domain, h)
+    out["next_prediction_dt_s"] = h
+    out["startup_subroute_sample1_pre_measurement_q_upper"] = q1_startup
+    out["generic_signed_sample1_pre_measurement_q_upper"] = q1_generic
+    out["startup_sample1_vs_generic_signed_improvement_factor"] = (
+        q1_generic / q1_startup if q1_startup > 0.0 else math.inf
+    )
+    out["startup_sample1_pre_measurement_inside_q8"] = q1_startup < 8.0
+    out["generic_signed_sample1_pre_measurement_inside_q8"] = q1_generic < 8.0
+    out["sample1_measurements_evaluated_here"] = False
+    out["sample1_source_phase_transition_classified_here"] = False
+    out["sample1_to_30deg_recapture_established_here"] = False
+
     out["P5_DEPLOYED_STARTUP_TILT_YAW_FIRST_ACCEL_SUBROUTE"] = (
         "PASS" if out.get("P5_45DEG_FIRST_ACCEL_SIGNED_SOURCE_BOUND") == "PASS"
-        and out["strictly_improves_source_reachable_startup_subroute"] else "NOT_ESTABLISHED"
+        and out["strictly_improves_generic_signed_route"]
+        and out["startup_sample1_pre_measurement_inside_q8"] else "NOT_ESTABLISHED"
     )
     out["next_obligation"] = (
-        "for deployed startup composition, propagate this P1-intersected child toward magnetic yaw correction; for the standalone generic 45deg P5 entrance, keep the full-ball signed route and preserve the joint attitude-a_w Kalman correction instead of adding the P1 tilt restriction"
+        "start the sample1 due/not-due S and accepted/identity vector-prefix enclosure from startup_subroute_sample1_pre_measurement_q_upper rather than the generic q<8 chart; retain the physical H group-norm caps and source-correlated Joseph/reset covariance, then apply the first source-reachable magnetic information before testing 30deg recapture"
     )
     return out
 
@@ -99,21 +124,23 @@ def validate(d: dict) -> list[str]:
     if d.get("schema") != SCHEMA:
         f.append("schema mismatch")
     if d.get("P5_45DEG_FIRST_ACCEL_SIGNED_SOURCE_BOUND") != "PASS":
-        f.append("underlying generic signed source bound did not pass")
+        f.append("underlying signed source bound did not pass")
     for k in (
         "two_coordinate_attitude_chart_used",
+        "strictly_improves_generic_signed_route",
         "source_reachable_startup_intersection_only",
         "uses_additional_P1_tilt_information",
         "does_not_replace_generic_P5_45deg_route",
-        "strictly_improves_source_reachable_startup_subroute",
+        "startup_sample1_pre_measurement_inside_q8",
+        "generic_signed_sample1_pre_measurement_inside_q8",
     ):
         if d.get(k) is not True:
             f.append(f"{k} is not true")
     for k in (
-        "generic_P5_45deg_entrance_covered_here",
-        "new_deployment_assumption_added",
-        "accelerometer_claims_yaw_contraction",
-        "source_replay_used", "filter_changed", "deployed_correction_limit_increased",
+        "generic_P5_45deg_entrance_covered_here", "new_deployment_assumption_added",
+        "accelerometer_claims_yaw_contraction", "source_replay_used", "filter_changed",
+        "deployed_correction_limit_increased", "sample1_measurements_evaluated_here",
+        "sample1_source_phase_transition_classified_here", "sample1_to_30deg_recapture_established_here",
     ):
         if d.get(k) is not False:
             f.append(f"{k} is not false")
@@ -121,13 +148,22 @@ def validate(d: dict) -> list[str]:
     qt = float(d.get("certified_gravity_tangent_q_upper", math.inf))
     qbase = float(d.get("signed_full_ball_baseline_post_update_q_upper", math.inf))
     qnew = float(d.get("startup_intersection_post_update_q_upper", math.inf))
+    q1base = float(d.get("generic_signed_sample1_pre_measurement_q_upper", math.inf))
+    q1new = float(d.get("startup_subroute_sample1_pre_measurement_q_upper", math.inf))
     ctilt = float(d.get("source_tilt_cosine_lower", -math.inf))
     if not (0.0 <= qt < qfull < 1.0):
-        f.append("startup tilt/full two-coordinate relation invalid")
+        f.append("tilt/full two-coordinate entrance relation invalid")
     if not (0.0 < ctilt <= 1.0):
         f.append("source tilt cosine is invalid")
     if not (math.isfinite(qnew) and 0.0 < qnew < qbase < 8.0):
-        f.append("startup-intersection q bound is not a strict finite improvement")
+        f.append("startup intersection q bound is not a strict finite improvement")
+    if not (math.isfinite(q1new) and 0.0 < q1new < q1base < 8.0):
+        f.append("startup sample1 prediction did not preserve the strict chart improvement")
+    factor = float(d.get("startup_sample1_vs_generic_signed_improvement_factor", 0.0))
+    if not (math.isfinite(factor) and factor > 1.0):
+        f.append("startup sample1 improvement factor is not strict")
+    if float(d.get("next_prediction_dt_s", -1.0)) != 0.005:
+        f.append("next prediction step is not the deployed 5 ms interval")
     if d.get("P5_DEPLOYED_STARTUP_TILT_YAW_FIRST_ACCEL_SUBROUTE") == "PASS" and f:
         f.append("PASS carries validation failures")
     return list(dict.fromkeys(f))
@@ -151,10 +187,12 @@ def main() -> int:
         "tilt_cos": d["source_tilt_cosine_lower"],
         "q_full_pre": d["full_attitude_q_upper_retained"],
         "q_tangent_pre": d["certified_gravity_tangent_q_upper"],
-        "q_generic_signed": d["signed_full_ball_baseline_post_update_q_upper"],
-        "q_startup_intersection": d["startup_intersection_post_update_q_upper"],
-        "improvement_factor": d["startup_intersection_improvement_factor"],
-        "generic_45deg_covered": d["generic_P5_45deg_entrance_covered_here"],
+        "q_generic_signed_post_accel": d["signed_full_ball_baseline_post_update_q_upper"],
+        "q_startup_post_accel": d["startup_intersection_post_update_q_upper"],
+        "q_generic_sample1_pre": d["generic_signed_sample1_pre_measurement_q_upper"],
+        "q_startup_sample1_pre": d["startup_subroute_sample1_pre_measurement_q_upper"],
+        "sample1_improvement_factor": d["startup_sample1_vs_generic_signed_improvement_factor"],
+        "returned30": d["returned_to_30deg_P4_sector_here"],
         "validation_failures": vf,
         "next": d["next_obligation"],
     }, indent=2, sort_keys=True))
