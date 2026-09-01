@@ -70,6 +70,19 @@ any of the following shortcuts:
 14. Do not change filter gains, schedules, or estimator equations merely to make
     the proof pass.  A filter change is a separate design decision and requires
     new performance evidence.
+15. Do not evaluate a gain row `m N / (m^2 p + lambda)` as an interval quotient.
+    The specific-force magnitude `m` appears in the numerator and in the
+    denominator, so the naive quotient overstates the accelerometer gain by up
+    to the cell's magnitude ratio.  Use the exact unimodal supremum in
+    `ou3_p4_shared_force_gain.py`.
+16. Do not present the descending `30 -> 25 -> 20 -> 15` deg candidate ladder as
+    the route that closes the first accelerometer operation.  The measured
+    nuisance-over-budget ratio stays above one down to a 1 deg probe, so a
+    narrower candidate cannot close that operation by itself.
+17. Do not report `P1_P5_COMPLETE_STABILITY_PROOF_ESTABLISHED` while the
+    complete-word P4 dissipation or the finite P5 inner capture is open.  A
+    stage with usable geometry and an open obligation is
+    `USABLE_GEOMETRY_OPEN_OBLIGATION`, never `USABLE`.
 
 ## Quantitative outer target
 
@@ -123,6 +136,38 @@ progress and the new finite-angle sector meet.
 Once that outer complete-word decrease overlaps the existing inner stochastic
 localization level, P5 can derive a finite word count from the P1/outer sector to
 that inner level without the PR #441 uniform-transport obstruction.
+
+## Measured first-accelerometer obstruction
+
+`tools/ou3_p4_first_accel_sector_budget.py` measures why the complete-word P4
+composition has not been emitted.  For each candidate angle it compares the
+**budget** -- the largest correction norm whose worst-case signed Cayley
+composition stays inside the `0.80` rad outer sector -- against the **nuisance
+term**, the shared-force-magnitude accelerometer gain applied to the effective
+`a_w` input.  The ratio falls from `5.05` at 30 deg to `2.12` at 15 deg, but the
+non-candidate limit probes show it saturating at `1.34` for a 1 deg candidate.
+The floor is source-faithful: the declared `0.3 g` latent-acceleration error
+over the lowest admitted specific force is `2.941995 / 5.0 = 0.5884`, so the
+accelerometer-implied gravity direction can be off by `0.6291` rad in the
+low-force cells regardless of the candidate angle.
+
+That producer reports a **distance and never a verdict**: the nuisance term is
+an outward bound and the `a_w` covariance endpoints feeding the gain are
+enclosure endpoints, not certified reachable points.  It does not retire the
+ladder as a diagnostic; it retires the ladder as the closing route.
+
+The complementary widening is `tools/ou3_p4_shared_force_gain.py`, which removes
+the shared specific-force-magnitude dependency from the gain rows.  It is
+uniformly between `1.17` and `1.78` tighter over the audited cells, and it moved
+the signed 30 deg first-accelerometer stage from an abort after 13 of 40960
+children -- with a composition denominator that could cross zero -- to a
+complete evaluation of all 40960 with `max_d = 2.2251526515093487` rad and a
+minimum denominator of `0.6356874937572935`.  The stage is still
+`NOT_ESTABLISHED`, but for a measured reason rather than a lost enclosure.
+
+`tools/ou3_p1_p5_certificate_numbers.py` collects every stage number and
+re-applies the usability thresholds above to the recomputed values; see
+`docs/ou-iii-p1-p5-certificate-numbers.md`.
 
 Until that composition is emitted, the truthful status is:
 

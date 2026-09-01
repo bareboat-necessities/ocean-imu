@@ -46,6 +46,21 @@ The rule is to attempt the widest candidate first and promote only the widest ca
 
 This ladder is a certificate-search strategy, not an extra deployment theorem assumption.
 
+### Measured limit of the descending ladder
+
+`tools/ou3_p4_first_accel_sector_budget.py` evaluates the ladder against the
+first deployed accelerometer operation.  Narrowing the candidate does widen the
+correction budget and does lower the nuisance-over-budget ratio -- from `5.05`
+at 30 deg to `2.12` at 15 deg -- but the producer's non-candidate limit probes
+show the ratio saturating at `1.34` for a 1 deg candidate.  The floor is set by
+the declared `0.3 g` latent-acceleration error over the lowest admitted specific
+force, `2.941995 / 5.0 = 0.5884`, which no candidate angle changes.
+
+The ladder therefore stays a useful conditioning strategy for the complete-word
+search, but it is not the route that closes the first accelerometer operation.
+That still needs the operation-matched information decrease and a directional
+block margin.  The producer reports a distance, never a verdict.
+
 ## Proof obligations after this change
 
 1. If the theorem starts before P5, propagate the declared 45 deg / `0.5 Hs` entrance set through the exact preceding startup/source interval; do not substitute it directly for the P1 handoff box.
