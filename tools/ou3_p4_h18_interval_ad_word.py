@@ -397,7 +397,13 @@ def build(domain_path: Path = DEFAULT_DOMAIN, *, samples: int | None = None,
     screen_complete = first_failure is None and len(cells) == len(selected)
     whole_word = use_samples == full_samples
     whole_ball = limit == total_cells and screen_complete
-    gamma_lt_one = bool(whole_word and whole_ball and max_endpoint < 1.0)
+    mandatory_four_S = bool(cells) and all(len(row["schedule"]["S_steps"]) == 4 for row in cells)
+    mandatory_two_vector = bool(cells) and all(len(row["schedule"]["vector_steps"]) == 2 for row in cells)
+    gamma_lt_one = bool(
+        whole_word and whole_ball and first_failure is None
+        and mandatory_four_S and mandatory_two_vector
+        and math.isfinite(max_endpoint) and max_endpoint < 1.0
+    )
 
     return {
         "schema": SCHEMA,
@@ -421,8 +427,8 @@ def build(domain_path: Path = DEFAULT_DOMAIN, *, samples: int | None = None,
         "full_18_state_cross_derivatives_retained": True,
         "canonical_common_rotation_PE_gauge_used": True,
         "all_source_vector_orientation_covariance_correlations_checked": False,
-        "mandatory_four_S_events_used": True,
-        "mandatory_two_packet_vector_PE_used": True,
+        "mandatory_four_S_events_used": mandatory_four_S,
+        "mandatory_two_packet_vector_PE_used": mandatory_two_vector,
         "optional_accepted_branch_family_between_required_events_checked": False,
         "aw_covariance_sync_overapproximated_at_every_prefix": True,
         "actual_per_node_Sigma_KF_whitening_used": False,
@@ -450,19 +456,22 @@ def validate(d: dict) -> list[str]:
         f.append("schema mismatch")
     if d.get("qualification") != "OU3_P4_H18_INTERVAL_AD_WORD_SCREEN":
         f.append("wrong H18 interval-AD qualification")
-    for key in ("source_generated_not_trajectory_fit", "interval_AD_used_for_state_return_map",
-                "deployed_quaternion_generalized_jacobian_used", "full_18_state_cross_derivatives_retained",
-                "canonical_common_rotation_PE_gauge_used", "mandatory_four_S_events_used",
-                "mandatory_two_packet_vector_PE_used", "aw_covariance_sync_overapproximated_at_every_prefix",
-                "P3_computational_congruence_used_for_screening_only"):
+    for key in (
+        "source_generated_not_trajectory_fit", "interval_AD_used_for_state_return_map",
+        "deployed_quaternion_generalized_jacobian_used", "full_18_state_cross_derivatives_retained",
+        "canonical_common_rotation_PE_gauge_used", "aw_covariance_sync_overapproximated_at_every_prefix",
+        "P3_computational_congruence_used_for_screening_only",
+    ):
         if d.get(key) is not True:
             f.append(f"{key} is not true")
-    for key in ("source_replay_used", "filter_changed", "finite_difference_used",
-                "all_source_vector_orientation_covariance_correlations_checked",
-                "optional_accepted_branch_family_between_required_events_checked",
-                "actual_per_node_Sigma_KF_whitening_used", "P3_delta_used_as_nonlinear_radius",
-                "source_graph_all_reachable_edges_checked", "H18_COMPLETE_SOURCE_EDGE_CONTRACTION_ESTABLISHED_HERE",
-                "P4_USABLE_CERTIFICATE_PROMOTED"):
+    for key in (
+        "source_replay_used", "filter_changed", "finite_difference_used",
+        "all_source_vector_orientation_covariance_correlations_checked",
+        "optional_accepted_branch_family_between_required_events_checked",
+        "actual_per_node_Sigma_KF_whitening_used", "P3_delta_used_as_nonlinear_radius",
+        "source_graph_all_reachable_edges_checked", "H18_COMPLETE_SOURCE_EDGE_CONTRACTION_ESTABLISHED_HERE",
+        "P4_USABLE_CERTIFICATE_PROMOTED",
+    ):
         if d.get(key) is not False:
             f.append(f"{key} is not false")
     if int(d.get("dimension", 0)) != N:
@@ -471,14 +480,41 @@ def validate(d: dict) -> list[str]:
         f.append("H18 screen outer angle is not exactly 0.80 rad")
     if int(d.get("outer_ball_box_cover_total", 0)) <= 0:
         f.append("H18 screen outer-ball cover is empty")
-    for key in ("max_endpoint_P3_congruence_conditioned_norm_upper", "max_prefix_P3_congruence_conditioned_norm_upper"):
+
+    whole_word = d.get("full_word_horizon_checked") is True
+    if whole_word:
+        if d.get("mandatory_four_S_events_used") is not True:
+            f.append("full-word H18 screen did not contain all four mandatory S events")
+        if d.get("mandatory_two_packet_vector_PE_used") is not True:
+            f.append("full-word H18 screen did not contain both mandatory vector packets")
+
+    for key in (
+        "max_endpoint_P3_congruence_conditioned_norm_upper",
+        "max_prefix_P3_congruence_conditioned_norm_upper",
+    ):
         x = d.get(key)
-        if not isinstance(x, (int, float)) or not math.isfinite(float(x)) or float(x) < 0.0:
+        if isinstance(x, bool) or not isinstance(x, (int, float)) \
+                or not math.isfinite(float(x)) or float(x) < 0.0:
             if d.get("first_failure") is None:
                 f.append(f"{key} is invalid without a numerical failure witness")
-    # A sub-unity screen is never enough to promote while the source/metric flags above are false.
-    if d.get("H18_SCREEN_GAMMA_LT_ONE") is True and d.get("P4_USABLE_CERTIFICATE_PROMOTED") is not False:
-        f.append("H18 screening norm improperly promoted P4")
+
+    if d.get("H18_SCREEN_GAMMA_LT_ONE") is True:
+        if d.get("full_word_horizon_checked") is not True:
+            f.append("sub-unity H18 gamma claimed without complete word horizon")
+        if d.get("all_outer_ball_cells_checked") is not True:
+            f.append("sub-unity H18 gamma claimed without complete outer-ball coverage")
+        if d.get("first_failure") is not None:
+            f.append("sub-unity H18 gamma claimed despite numerical failure")
+        if d.get("mandatory_four_S_events_used") is not True:
+            f.append("sub-unity H18 gamma claimed without four mandatory S events")
+        if d.get("mandatory_two_packet_vector_PE_used") is not True:
+            f.append("sub-unity H18 gamma claimed without two mandatory vector packets")
+        endpoint = d.get("max_endpoint_P3_congruence_conditioned_norm_upper")
+        if isinstance(endpoint, bool) or not isinstance(endpoint, (int, float)) \
+                or not math.isfinite(float(endpoint)) or not float(endpoint) < 1.0:
+            f.append("sub-unity H18 gamma claim lacks a finite endpoint norm below one")
+        if d.get("P4_USABLE_CERTIFICATE_PROMOTED") is not False:
+            f.append("H18 screening norm improperly promoted P4")
     return list(dict.fromkeys(f))
 
 
@@ -503,6 +539,8 @@ def main() -> int:
         "cells": [out["outer_ball_box_cells_completed"], out["outer_ball_box_cells_requested"], out["outer_ball_box_cover_total"]],
         "max_endpoint_conditioned_norm": out["max_endpoint_P3_congruence_conditioned_norm_upper"],
         "max_prefix_conditioned_norm": out["max_prefix_P3_congruence_conditioned_norm_upper"],
+        "mandatory_four_S": out["mandatory_four_S_events_used"],
+        "mandatory_two_vector": out["mandatory_two_packet_vector_PE_used"],
         "screen_gamma_lt_one": out["H18_SCREEN_GAMMA_LT_ONE"],
         "first_failure": out["first_failure"],
         "next": out["next_obligation"],
