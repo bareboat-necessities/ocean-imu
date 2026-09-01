@@ -127,9 +127,6 @@ int main() {
     }
 
     f.startup_stage_ = Filter::StartupStage::Live;
-    f.mekf_->set_linear_block_enabled(true);
-    if (!f.mekf_->linear_block_enabled())
-        return fail("Live state did not enable the OU-III linear block");
 
     const float h = 0.005f;
     const float Tp = 7.0f;
@@ -186,7 +183,6 @@ int main() {
             return fail("OU-III four-point observability determinant violated the lemma bound");
     }
 
-    f.mekf_->set_linear_block_enabled(false);
     f.mekf_->set_acc_bias_updates_enabled(true);
     f.mekf_->set_acc_bias_time_constant(2.0f);
     const Eigen::Vector3f b0(0.20f, -0.10f, 0.05f);
@@ -201,8 +197,6 @@ int main() {
     f.enterLive_();
     if (!f.mekf_->acc_bias_updates_enabled_)
         return fail("post-unlock Live state did not enable accel-bias OU propagation");
-    if (!f.mekf_->linear_block_enabled())
-        return fail("default Live state did not re-enable the OU-III linear block");
 
     std::cout << "OU-III local ISS implementation contract PASS\n";
     return 0;

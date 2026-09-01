@@ -12,9 +12,6 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 
-MAX_BOOT_TIMEOUT_SEC = 20.0
-MIN_MARGIN_SEC = 1.0
-MAX_MARGIN_SEC = 4.0
 
 PARAM_RE = re.compile(r"^(SF_|OU_)")
 
@@ -37,15 +34,12 @@ RX = {
 }
 
 # kind: "log", "linear", or "int"
+#
+# The staged-MEKF warmup and its gravity bootstrap are gone from the OU
+# wrappers -- the Mahony proxy owns startup -- so the only startup knob the
+# simulator still reads is how long the tuner collects before it is trusted.
 BOOT_SPECS = {
-    "SF_RACC_WARMUP_STD": (0.35, 1.40, "log"),
     "SF_ONLINE_TUNE_WARMUP_SEC": (4.0, 10.0, "log"),
-    "SF_BOOT_TILT_ACC_TAU": (1.2, 2.8, "log"),
-    "SF_BOOT_GRAV_SLOW_TAU": (4.5, 12.0, "log"),
-    "SF_BOOT_GRAV_ALIGN_MAX_SIN": (0.08, 0.16, "linear"),
-    "SF_BOOT_GRAV_HOLD_SEC": (0.8, 2.5, "log"),
-    "SF_BOOT_GRAV_MIN_SEC": (2.0, 7.0, "linear"),
-    "SF_BOOT_GRAV_NORM_FRAC": (0.18, 0.65, "linear"),
 }
 
 # OU_II ranges.  OU_TAU_COEFF is re-centred on the wave-band operating point:
@@ -159,9 +153,7 @@ def make_space(fam, mode, tune_mag):
 
 
 def allowed_keys(fam, mode, tune_mag):
-    keys = set(make_space(fam, mode, tune_mag).keys())
-    keys.add("SF_BOOT_GRAV_TIMEOUT_SEC")
-    return keys
+    return set(make_space(fam, mode, tune_mag).keys())
 
 
 def clean_params(p, fam=None, mode="full", tune_mag=False):
@@ -201,7 +193,7 @@ def lhs_values(rng, n):
     return vals
 
 
-def sample_lhs(space, n, rng, require_timeout=False):
+def sample_lhs(space, n, rng):
     if n <= 0:
         return []
 
@@ -209,41 +201,19 @@ def sample_lhs(space, n, rng, require_timeout=False):
     out = []
 
     for i in range(n):
-        p = {k: value_from_unit(space[k], cols[k][i]) for k in space}
-        if require_timeout and not apply_timeout_constraint(p, rng):
-            continue
-        out.append(p)
+        out.append({k: value_from_unit(space[k], cols[k][i]) for k in space})
 
     attempts = 0
     max_attempts = max(1000, 60 * n)
 
     while len(out) < n and attempts < max_attempts:
         attempts += 1
-        p = {k: value_from_unit(spec, rng.random()) for k, spec in space.items()}
-        if require_timeout and not apply_timeout_constraint(p, rng):
-            continue
-        out.append(p)
+        out.append({k: value_from_unit(spec, rng.random()) for k, spec in space.items()})
 
     if len(out) < n:
         log(f"WARNING_SAMPLE_UNDERFILLED requested={n} produced={len(out)}")
 
     return out[:n]
-
-
-def apply_timeout_constraint(p, rng):
-    if "SF_BOOT_GRAV_MIN_SEC" not in p or "SF_BOOT_GRAV_HOLD_SEC" not in p:
-        return True
-
-    min_sec = float(p["SF_BOOT_GRAV_MIN_SEC"])
-    hold_sec = float(p["SF_BOOT_GRAV_HOLD_SEC"])
-
-    margin_max = min(MAX_MARGIN_SEC, MAX_BOOT_TIMEOUT_SEC - min_sec - hold_sec)
-    if margin_max < MIN_MARGIN_SEC:
-        return False
-
-    margin = MIN_MARGIN_SEC + rng.random() * (margin_max - MIN_MARGIN_SEC)
-    p["SF_BOOT_GRAV_TIMEOUT_SEC"] = min_sec + hold_sec + margin
-    return p["SF_BOOT_GRAV_TIMEOUT_SEC"] <= MAX_BOOT_TIMEOUT_SEC
 
 
 def finite_float(x, default=float("inf")):
@@ -258,10 +228,6 @@ def coerce_candidate_to_space(p, space):
     out = {}
 
     for k, v in p.items():
-        if k == "SF_BOOT_GRAV_TIMEOUT_SEC":
-            out[k] = v
-            continue
-
         if k not in space:
             continue
 
@@ -286,9 +252,6 @@ def validate_candidate(p, space=None):
 
     if space is not None:
         for k, v in p.items():
-            if k == "SF_BOOT_GRAV_TIMEOUT_SEC":
-                continue
-
             if k not in space:
                 bad.append(f"unknown_key:{k}")
                 continue
@@ -301,20 +264,6 @@ def validate_candidate(p, space=None):
 
             if kind == "int" and abs(fv - round(fv)) > 1e-9:
                 bad.append(f"not_int:{k}={fv}")
-
-    timeout = p.get("SF_BOOT_GRAV_TIMEOUT_SEC")
-    if timeout is not None:
-        timeout = float(timeout)
-
-        if timeout > MAX_BOOT_TIMEOUT_SEC:
-            bad.append(f"SF_BOOT_GRAV_TIMEOUT_SEC>{MAX_BOOT_TIMEOUT_SEC}")
-
-        if "SF_BOOT_GRAV_MIN_SEC" in p and "SF_BOOT_GRAV_HOLD_SEC" in p:
-            min_sec = float(p["SF_BOOT_GRAV_MIN_SEC"])
-            hold_sec = float(p["SF_BOOT_GRAV_HOLD_SEC"])
-
-            if timeout <= min_sec + hold_sec + MIN_MARGIN_SEC:
-                bad.append("SF_BOOT_GRAV_TIMEOUT_SEC<=min+hold+margin")
 
     return len(bad) == 0, ";".join(bad)
 
@@ -344,22 +293,6 @@ def probe_candidates(space, fam):
         out.append((f"probe_low_{k}", {k: value_from_unit(spec, 0.08)}))
         out.append((f"probe_mid_{k}", {k: value_from_unit(spec, 0.50)}))
         out.append((f"probe_high_{k}", {k: value_from_unit(spec, 0.92)}))
-
-    if "SF_BOOT_GRAV_MIN_SEC" in space:
-        base = {
-            "SF_BOOT_TILT_ACC_TAU": 2.0,
-            "SF_BOOT_GRAV_SLOW_TAU": 5.0,
-            "SF_BOOT_GRAV_ALIGN_MAX_SIN": 0.14,
-            "SF_BOOT_GRAV_HOLD_SEC": 1.0,
-            "SF_BOOT_GRAV_MIN_SEC": 6.0,
-            "SF_BOOT_GRAV_NORM_FRAC": 0.35,
-            "SF_ONLINE_TUNE_WARMUP_SEC": 8.0,
-            "SF_RACC_WARMUP_STD": 0.5,
-        }
-        for i, timeout in enumerate((8.5, 10.0, 12.0, 15.0), 1):
-            p = dict(base)
-            p["SF_BOOT_GRAV_TIMEOUT_SEC"] = timeout
-            add_candidate_if_valid(out, f"practical_boot_{i:02d}", p, space)
 
     tau_key = find_space_key(space, "OU_TAU_COEFF")
     sigma_key = find_space_key(space, "OU_SIGMA_COEFF")
@@ -1230,10 +1163,6 @@ def sample_local_perturbations(base_params, space, rng, n):
 
             p[k] = min(max(nv, lo), hi)
 
-        if "SF_BOOT_GRAV_MIN_SEC" in p and "SF_BOOT_GRAV_HOLD_SEC" in p:
-            if not apply_timeout_constraint(p, rng):
-                continue
-
         out.append((f"local_{i:04d}", p))
 
     return out
@@ -1402,7 +1331,6 @@ def main():
 
         rng = random.Random(args.seed + (0 if fam == "OU_II" else 1000000))
         space = make_space(fam, args.mode, args.tune_mag)
-        require_timeout = args.mode in ("gravity", "full")
 
         log(f"SEARCH_SPACE family={fam} keys={','.join(sorted(space.keys()))}")
 
@@ -1427,7 +1355,7 @@ def main():
 
         mc = [
             (f"mc_{i:04d}", p)
-            for i, p in enumerate(sample_lhs(space, args.samples, rng, require_timeout=require_timeout), 1)
+            for i, p in enumerate(sample_lhs(space, args.samples, rng), 1)
         ]
 
         rows_b = eval_candidates(

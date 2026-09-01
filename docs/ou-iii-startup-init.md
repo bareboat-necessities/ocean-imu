@@ -9,10 +9,12 @@
 > attitude-quality argument in this document is unchanged, but read its startup
 > timings as the intent rather than as measurements.
 
-`SeaStateFusion_OU_III::Config::startup_init_policy` selects which estimator
-solves the attitude the filter starts from. `MahonyProxy` is the default;
-`StagedMekf` restores the previous behaviour and is the matched ablation.
-The simulator exposes both as `W3D_STARTUP_INIT=mahony_proxy|staged_mekf`.
+This document records the comparison that made the Mahony proxy the startup
+path for OU-II and OU-III. Both wrappers now have only that path: the
+`startup_init_policy` selector, the `StagedMekf` arm and the simulator's
+`W3D_STARTUP_INIT` variable have all been removed, so the numbers below are a
+record rather than something re-runnable there. `SeaStateFusionFilter_TFG` still
+carries both arms for anyone who wants to reproduce the shape of the result.
 
 ## What the staged policy did
 

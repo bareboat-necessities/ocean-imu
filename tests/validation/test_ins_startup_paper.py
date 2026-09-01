@@ -51,18 +51,29 @@ class InsStartupPaperTests(unittest.TestCase):
             self.assertIn(phrase, self.paper)
         self.assertIn(r"\bibliography{w3d}", self.paper)
 
-    def test_all_three_wrappers_keep_proxy_and_staged_paths(self):
+    def test_tfg_keeps_the_matched_staged_ablation(self):
+        # TFG still carries both startup paths so the published comparison can
+        # be re-run.  The OU wrappers dropped the staged path once the proxy
+        # became the only deployed one.
+        self.assertIn("enum class StartupInitPolicy", self.tfg)
+        self.assertIn("StagedMekf", self.tfg)
+        self.assertIn("MahonyProxy", self.tfg)
+        self.assertRegex(
+            self.tfg,
+            re.compile(r"startup_init_policy\s*=\s*StartupInitPolicy::MahonyProxy"),
+        )
+
+    def test_all_three_wrappers_keep_the_proxy_path(self):
         for source in (self.ou3, self.ou2, self.tfg):
-            self.assertIn("enum class StartupInitPolicy", source)
-            self.assertIn("StagedMekf", source)
-            self.assertIn("MahonyProxy", source)
-            self.assertRegex(
-                source,
-                re.compile(
-                    r"startup_init_policy\s*=\s*StartupInitPolicy::MahonyProxy"
-                ),
-            )
+            self.assertIn("proxy_handoff_tilt_sigma_rad", source)
+            self.assertIn("proxy_handoff_yaw_sigma_free_rad", source)
             self.assertIn("ContinuousMagHardIronEstimator", source)
+
+    def test_ou_wrappers_dropped_the_staged_startup(self):
+        for source in (self.ou3, self.ou2):
+            self.assertNotIn("StagedMekf", source)
+            self.assertNotIn("enum class StartupInitPolicy", source)
+            self.assertNotIn("set_linear_block_enabled", source)
 
     def test_two_stage_magnetic_policy_matches_sources(self):
         for source in (self.ou3, self.ou2, self.tfg):

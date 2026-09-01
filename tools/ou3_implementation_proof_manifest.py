@@ -90,13 +90,12 @@ def build() -> dict:
     }
 
     semantic_markers = {
-        "startup_policy_default_mahony": "StartupInitPolicy startup_init_policy = StartupInitPolicy::MahonyProxy;",
         "timeout_requires_aligned_branch": "(t_ >= timeout_sec) &&\n            mag_gravity_aligned_branch_",
         "quality_requires_tilt_north_tuner": "tilt_trusted &&\n            north_ready &&\n            impl_.isTunerReady()",
         "handoff_bias_held": "/*allow_acc_bias=*/false",
         "go_live_initializes_attitude": "mekf_->initialize_from_attitude(q_bw, tilt_sigma_rad, yaw_sigma_rad);",
         "live_applies_ou_sync": "apply_ou_tune_(true);",
-        "live_enables_linear_block": "mekf_->set_linear_block_enabled(enable_linear_block_);",
+        "live_reseats_aw_marginal": "mekf_->reset_aw_covariance_to_stationary();",
         "h_to_a_release": "mekf_->set_acc_bias_updates_enabled(true);",
         "mag_refinement_rewrites_heading": "impl_.mekf().set_quaternion_boat(q_new);",
         "mag_refinement_releases_bias_hold": "impl_.setAccBiasHold(false);",

@@ -96,12 +96,26 @@ void bring_up(F& f) {
     f.initialize_from_acc(acc);
 }
 
+// Drives the filter the way the wrapper does: the measurement-only front end
+// runs until the tuner is ready, then the proxy attitude is handed over and the
+// MEKF takes the samples.  The handoff instant and the seed are both functions
+// of the measurements alone, so two filters given identical samples hand over
+// on the same sample with the same attitude.
 template <typename F>
 void run(F& f, int from, int to) {
     Eigen::Vector3f gyro, acc;
     for (int k = from; k < to; ++k) {
         sample(k, gyro, acc);
-        f.updateTime(DT, gyro, acc);
+
+        if (f.isAdaptiveLive()) {
+            f.updateTime(DT, gyro, acc);
+            continue;
+        }
+
+        f.updateFrontEnd(DT, gyro, acc);
+        if (f.isTunerReady()) {
+            f.goLive(f.startupProxyQuat(), 0.035f, 1.5708f);
+        }
     }
 }
 

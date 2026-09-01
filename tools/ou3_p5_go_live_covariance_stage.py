@@ -10,18 +10,20 @@ The shipping sequence is
     initialize_from_attitude(...)
     enterLive_()
       apply_ou_tune_(true)
-      set_linear_block_enabled(true)
+      reset_aw_covariance_to_stationary()
 
 and the MEKF source gives two exact resets relevant to P5:
 
 * initialize_from_attitude() calls zero_AL_cross_cov_once_(), so every
   attitude/gyro-bias <-> [v,p,S,a_w] covariance block is zero;
-* enabling the previously disabled linear block calls
-  reset_aw_covariance_to_stationary(), which zeros every a_w cross covariance,
-  and resets pseudo_update_elapsed_s_ to zero.
+* enterLive_() calls reset_aw_covariance_to_stationary(), which zeros every
+  a_w cross covariance and seats P_awaw on the committed stationary
+  covariance.
 
-During warmup the linear block is disabled, so the constructor's v/p/S
-covariance seed is not propagated. Therefore at the instant H mode starts,
+During the bootstrap the MEKF is not driven at all -- the wrapper runs the
+measurement-only front end and withholds time_update() until the handoff -- so
+the constructor's v/p/S covariance seed is not propagated and
+pseudo_update_elapsed_s_ is still zero. Therefore at the instant H mode starts,
 P_theta,S=P_theta,aw=P_aw,S=0 and P_SS=(50 m s)^2 I exactly (up to the source
 scalar semantics). In particular the *entrance* S->attitude Kalman gain is
 exactly zero. This removes the invalid use of the many-orders-looser global P3
@@ -83,11 +85,9 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "go_live_initializes_attitude": "mekf_->initialize_from_attitude(q_bw, tilt_sigma_rad, yaw_sigma_rad);",
         "go_live_enters_live": "enterLive_();",
         "live_applies_ou_before_enable": "apply_ou_tune_(true);",
-        "live_enables_linear_block": "mekf_->set_linear_block_enabled(enable_linear_block_);",
-        "warmup_disables_linear": "mekf_->set_linear_block_enabled(false);",
+        "bootstrap_withholds_time_update": "impl_.updateFrontEnd(dt, gyro_body_ned, acc_body_ned);",
         "attitude_init_zeros_AL": "zero_AL_cross_cov_once_();",
-        "enable_resets_aw": "reset_aw_covariance_to_stationary();",
-        "enable_resets_pseudo_phase": "pseudo_update_elapsed_s_ = T(0);",
+        "live_resets_aw": "reset_aw_covariance_to_stationary();",
         "aw_reset_zeros_cross": "Pext.template block<3,1>(OFF_AW, i).setZero();",
         "pseudo_due_uses_elapsed": "periodic_update_due(Ts, pseudo_update_period_s_, pseudo_update_elapsed_s_)",
     }
@@ -117,8 +117,8 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     seed = {
         "mode": "H",
         "dimension": 18,
-        "linear_block_was_disabled_during_warmup": True,
-        "linear_block_enable_resets_pseudo_elapsed": True,
+        "mekf_was_not_propagated_during_bootstrap": True,
+        "pseudo_elapsed_untouched_during_bootstrap": True,
         "pseudo_update_elapsed_s_at_goLive": 0.0,
         "attitude_linear_cross_covariance_exact_zero": True,
         "theta_S_cross_covariance_operator_norm_upper": 0.0,
@@ -197,7 +197,7 @@ def validate(d: dict) -> list[str]:
         "attitude_linear_cross_covariance_exact_zero",
         "P_awaw_reset_to_current_stationary_covariance",
         "S_to_attitude_gain_at_goLive_exact_zero",
-        "linear_block_enable_resets_pseudo_elapsed",
+        "pseudo_elapsed_untouched_during_bootstrap",
     ):
         if seed.get(key) is not True:
             failures.append(f"goLive seed lost source fact {key}")

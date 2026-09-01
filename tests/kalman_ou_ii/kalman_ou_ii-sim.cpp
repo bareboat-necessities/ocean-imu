@@ -23,7 +23,6 @@ using Eigen::Matrix3f;
 using Eigen::Quaternionf;
 
 bool add_noise = true;
-bool attitude_only = false;
 
 namespace {
 
@@ -92,8 +91,6 @@ public:
         cfg_.sigma_g = sigma_g * SIGMA_G_RESCALE;
         cfg_.sigma_m = sigma_m * SIGMA_M_RESCALE;
         cfg_.mag_delay_sec = MAG_DELAY_SEC;
-        cfg_.freeze_acc_bias_until_live = true;
-        cfg_.Racc_warmup_std = 0.5f;
         apply_env_overrides();
         load_fixed_tuning();
 
@@ -102,14 +99,7 @@ public:
 
         filter.setPeriodicAwCovarianceSync(load_periodic_aw_cov_sync());
 
-        if (attitude_only) {
-            filter.enableLinearBlock(false);
-            filter.mekf().set_initial_acc_bias(Vector3f::Zero());
-            filter.mekf().set_initial_acc_bias_std(0.0f);
-            filter.mekf().set_Q_bacc_rw(Vector3f::Zero());
-            filter.mekf().set_Racc_std(Vector3f::Constant(0.4f));
-        } else {
-            filter.enableLinearBlock(true);
+        {
             filter.enableTuner(true);
             filter.enableClamp(true);
 
@@ -451,7 +441,6 @@ public:
         if (env_int("SF_MAG_MIN_SAMPLES", vi)) cfg_.mag_min_samples = vi;
         if (env_float("SF_MAG_MIN_WINDOW_SEC", vf)) cfg_.mag_min_window_sec = vf;
 
-        if (env_float("SF_RACC_WARMUP_STD", vf)) cfg_.Racc_warmup_std = vf;
         if (env_float("SF_ONLINE_TUNE_WARMUP_SEC", vf)) cfg_.online_tune_warmup_sec = vf;
 
         // The MEKF variances the Kalman3D_Wave_OU_II constructor takes; see
@@ -467,34 +456,6 @@ public:
         if (env_float("SF_GYRO_BIAS_RW_VAR", vf)) cfg_.b0 = vf;
         if (env_float("SF_RP0_NOISE_VAR", vf)) cfg_.R_p0_noise = vf;
         if (env_float("SF_RV0_NOISE_VAR", vf)) cfg_.R_v0_noise = vf;
-
-        if (env_float("SF_BOOT_TILT_ACC_TAU", vf)) cfg_.bootstrap_tilt_obs_acc_tau_sec = vf;
-        if (env_float("SF_BOOT_GRAV_SLOW_TAU", vf)) cfg_.bootstrap_gravity_slow_tau_sec = vf;
-        if (env_float("SF_BOOT_GRAV_ALIGN_MAX_SIN", vf)) cfg_.bootstrap_gravity_align_max_sin = vf;
-        if (env_float("SF_BOOT_GRAV_HOLD_SEC", vf)) cfg_.bootstrap_gravity_hold_sec = vf;
-        if (env_float("SF_BOOT_GRAV_MIN_SEC", vf)) cfg_.bootstrap_gravity_min_sec = vf;
-        if (env_float("SF_BOOT_GRAV_TIMEOUT_SEC", vf)) cfg_.bootstrap_gravity_timeout_sec = vf;
-        if (env_float("SF_BOOT_GRAV_NORM_FRAC", vf)) cfg_.bootstrap_gravity_norm_frac = vf;
-
-        // Which estimator solves the startup attitude.  mahony_proxy is the
-        // default: the measurement-only front end runs from the first sample,
-        // the private Mahony observer supplies the tilt that gates the
-        // magnetometer and frames the world-reference average, and the MEKF is
-        // seeded with the finished solution and starts live.  staged_mekf is
-        // the matched ablation -- the previous behaviour, in which the MEKF is
-        // fed from the first sample and those same reads come back out of it
-        // while it is still warming.
-        if (const char* raw = std::getenv("W3D_STARTUP_INIT")) {
-            const std::string value = raw;
-            if (value == "mahony_proxy") {
-                cfg_.startup_init_policy = Fusion::StartupInitPolicy::MahonyProxy;
-            } else if (value == "staged_mekf") {
-                cfg_.startup_init_policy = Fusion::StartupInitPolicy::StagedMekf;
-            } else {
-                throw std::runtime_error(
-                    "W3D_STARTUP_INIT must be mahony_proxy or staged_mekf");
-            }
-        }
 
         if (env_float("SF_PROXY_START_MIN_SEC", vf)) cfg_.proxy_startup_min_sec = vf;
         if (env_float("SF_PROXY_START_TIMEOUT_SEC", vf)) cfg_.proxy_startup_timeout_sec = vf;
