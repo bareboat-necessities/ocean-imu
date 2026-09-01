@@ -96,6 +96,16 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
 
     tr = trans["S_observation_uco"]
     translation_info_lower = float(tr["information_gramian_lambda_min_lower"])
+    # For the packet-null family, the following-word translation state has
+    # norm at least its surviving a_w component.  Since the validated four-S
+    # information Gramian satisfies G_S >= lambda_S I on [v,p,S,a_w],
+    # x^T G_S x >= lambda_S ||x||^2 gives a concrete raw-coordinate quadratic
+    # credit per ||delta theta||^2.  This is deliberately not converted into
+    # the full P4 covariance/information metric here.
+    raw_info_per_theta2_lower = math.nextafter(
+        translation_info_lower * aw_next_per_theta_lower * aw_next_per_theta_lower,
+        -math.inf,
+    )
 
     # Exercise the exact same local H construction consumed by the #450 AD
     # route.  This is an audit witness that #449 is not maintaining a second
@@ -118,6 +128,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         and decay.lo > 0.0
         and aw_next_per_theta_lower > 0.0
         and translation_info_lower > 0.0
+        and raw_info_per_theta2_lower > 0.0
         and tr["aligned_firing_count"] == 4
         and shared_H_a_aw_identity
         and shared_H_m_aw_zero
@@ -141,6 +152,8 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "following_word_aw_per_theta_norm_lower": aw_next_per_theta_lower,
         "following_word_four_S_information_gramian_lambda_min_lower": translation_info_lower,
         "following_word_four_S_firing_count": tr["aligned_firing_count"],
+        "packet_null_following_word_raw_information_per_theta2_lower": raw_info_per_theta2_lower,
+        "packet_null_following_word_raw_information_bound_formula": "lambda_min(G_S)*(a_w_next/theta)^2",
         "shared_H_a_aw_identity_verified": shared_H_a_aw_identity,
         "shared_H_m_aw_zero_verified": shared_H_m_aw_zero,
         "two_word_packet_null_is_structurally_observed": structural,
@@ -197,12 +210,15 @@ def validate(d: dict) -> list[str]:
         "aw_survival_factor_to_following_word_lower",
         "following_word_aw_per_theta_norm_lower",
         "following_word_four_S_information_gramian_lambda_min_lower",
+        "packet_null_following_word_raw_information_per_theta2_lower",
     ):
         x = d.get(key)
         if not isinstance(x, (int, float)) or not math.isfinite(float(x)) or float(x) <= 0.0:
             f.append(f"{key} is not finite positive")
     if d.get("following_word_four_S_firing_count") != 4:
         f.append("following word is not the complete four-S observation")
+    if d.get("packet_null_following_word_raw_information_bound_formula") != "lambda_min(G_S)*(a_w_next/theta)^2":
+        f.append("raw packet-null information formula changed")
     return list(dict.fromkeys(f))
 
 
@@ -224,6 +240,7 @@ def main() -> int:
         "aw_survival_lower": d["aw_survival_factor_to_following_word_lower"],
         "aw_next_per_theta_lower": d["following_word_aw_per_theta_norm_lower"],
         "four_S_information_lower": d["following_word_four_S_information_gramian_lambda_min_lower"],
+        "raw_information_per_theta2_lower": d["packet_null_following_word_raw_information_per_theta2_lower"],
         "validation_failures": vf,
         "next": d["next_obligation"],
     }, indent=2, sort_keys=True))
