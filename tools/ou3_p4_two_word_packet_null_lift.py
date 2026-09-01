@@ -179,7 +179,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
             *[f"source-nodes: {x}" for x in nf],
         ],
         "next_obligation": (
-            "attach the actual source-node covariance/information factors to the 800 P2 nodes; use the shared H18 interval-AD prediction/update/reset maps to pull back the following-word four-S PSD form to the preceding vector-packet null family; combine it with the packet Joseph directional form before scalarization"
+            "attach the actual source-correlated covariance/information metric factors to the 800 P2 nodes; use the shared H18 interval-AD prediction/update/reset maps to pull back the following-word four-S PSD form to the preceding vector-packet null family; combine it with the packet Joseph directional form before scalarization"
         ),
     }
 
