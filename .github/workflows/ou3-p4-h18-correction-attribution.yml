@@ -1,0 +1,71 @@
+name: ou3-p4-h18-correction-attribution
+
+on:
+  push:
+    paths:
+      - "tools/ou3_p4_h18_correction_attribution.py"
+      - "tools/ou3_p4_h18_correction_subdivision.py"
+      - "tools/ou3_p4_h18_differential_operations.py"
+      - "tools/ou3_p4_source_node_cells.py"
+      - "tools/ou3_interval_ad.py"
+      - "tools/ou3_proof_module_state.py"
+      - "tools/ou3_proof_operating_domain.json"
+      - ".github/workflows/ou3-p4-h18-correction-attribution.yml"
+  pull_request:
+    paths:
+      - "tools/ou3_p4_h18_correction_attribution.py"
+      - "tools/ou3_p4_h18_correction_subdivision.py"
+      - "tools/ou3_p4_h18_differential_operations.py"
+      - "tools/ou3_p4_source_node_cells.py"
+      - "tools/ou3_interval_ad.py"
+      - "tools/ou3_proof_module_state.py"
+      - "tools/ou3_proof_operating_domain.json"
+      - ".github/workflows/ou3-p4-h18-correction-attribution.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ou3-p4-h18-correction-attribution-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  attribution:
+    name: H18 coarse correction failure attribution
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+      - name: Compile attribution producer
+        run: |
+          python3 -m py_compile tools/ou3_p4_h18_correction_attribution.py
+      - name: Attribute the exact-node parent failure
+        run: |
+          python3 tools/ou3_p4_h18_correction_attribution.py \
+            --source-node-index 0 \
+            --output /tmp/ou3_p4_h18_correction_attribution.json
+      - name: Enforce attributed fail-closed result
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path('/tmp/ou3_p4_h18_correction_attribution.json').read_text())
+          assert d['validation_pass'], d['validation_failures']
+          assert d['outer_angle_rad'] == 0.80
+          assert d['source_node_index'] == 0
+          assert d['full_word_samples'] == 202
+          assert d['P3_metric_constructed_for_this_diagnostic'] is False
+          assert d['per_prediction_spectral_norm_computed'] is False
+          assert d['P4_USABLE_CERTIFICATE_PROMOTED'] is False
+          if not d['parent_completed_without_correction_range_failure']:
+              f=d['first_failure']
+              assert d['first_failure_is_operation_and_step_attributed'] is True
+              assert f['operation'] in {'mandatory_S','mandatory_accelerometer','mandatory_magnetometer'}
+              assert f['step'] is not None
+              assert f['correction_norm_upper_rad'] > 6.0
+          print('parent completed:',d['parent_completed_without_correction_range_failure'])
+          print('first failure:',d['first_failure'])
+          print('maximum correction:',d['maximum_correction'])
+          print('next:',d['next_obligation'])
+          PY
