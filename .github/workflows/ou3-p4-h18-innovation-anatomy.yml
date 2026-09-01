@@ -1,0 +1,88 @@
+name: ou3-p4-h18-innovation-anatomy
+
+on:
+  push:
+    paths:
+      - "tools/ou3_interval.py"
+      - "tools/ou3_interval_linear_algebra.py"
+      - "tools/ou3_verified_spd_inverse.py"
+      - "tools/ou3_p4_h18_innovation_anatomy.py"
+      - "tools/ou3_p4_h18_correction_subdivision.py"
+      - "tools/ou3_p4_source_node_cells.py"
+      - "tools/ou3_p4_candidate_full_word.py"
+      - "tools/ou3_p5_full_h_prefix_cells.py"
+      - "tools/ou3_proof_operating_domain.json"
+      - ".github/workflows/ou3-p4-h18-innovation-anatomy.yml"
+  pull_request:
+    paths:
+      - "tools/ou3_interval.py"
+      - "tools/ou3_interval_linear_algebra.py"
+      - "tools/ou3_verified_spd_inverse.py"
+      - "tools/ou3_p4_h18_innovation_anatomy.py"
+      - "tools/ou3_p4_h18_correction_subdivision.py"
+      - "tools/ou3_p4_source_node_cells.py"
+      - "tools/ou3_p4_candidate_full_word.py"
+      - "tools/ou3_p5_full_h_prefix_cells.py"
+      - "tools/ou3_proof_operating_domain.json"
+      - ".github/workflows/ou3-p4-h18-innovation-anatomy.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ou3-p4-h18-innovation-anatomy-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  anatomy:
+    name: H18 exact-node innovation anatomy
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Compile anatomy producer
+        run: |
+          python3 -m py_compile \
+            tools/ou3_p4_h18_innovation_anatomy.py \
+            tools/ou3_verified_spd_inverse.py
+      - name: Run exact-node step-192 anatomy
+        run: |
+          python3 tools/ou3_p4_h18_innovation_anatomy.py \
+            --source-node-index 0 \
+            --output /tmp/ou3_p4_h18_innovation_anatomy.json
+      - name: Enforce diagnostic scope
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path('/tmp/ou3_p4_h18_innovation_anatomy.json').read_text())
+          assert d['validation_pass'], d['validation_failures']
+          assert d['outer_angle_rad'] == 0.80
+          assert d['source_node_index'] == 0
+          assert d['full_word_samples'] == 202
+          assert d['spectral_fallback_capture_count'] > 0
+          first=d['first_spectral_fallback']
+          assert first['preconditioned']['q_inf_upper'] > 1.0
+          assert d['physical_state_or_source_domain_shrunk'] is False
+          assert d['P4_USABLE_CERTIFICATE_PROMOTED'] is False
+          print('failure:', d['first_word_failure'])
+          print('q:', first['preconditioned']['q_inf_upper'])
+          print('limiting row:', first['preconditioned']['limiting_row'])
+          print('row sums:', first['preconditioned']['E_row_abs_sum_upper'])
+          print('radius ladder:', first['uniform_S_radius_scale_q_diagnostic'])
+          print('S midpoint/radius:', first['S_midpoint_and_radius'])
+          print('theta covariance:', first['prior_theta_covariance_block'])
+          print('aw covariance:', first['prior_aw_covariance_block'])
+          print('theta-aw cross:', first['prior_theta_aw_cross_block'])
+          print('PHt theta:', first['PHt_theta_rows'])
+          print('PHt aw:', first['PHt_aw_rows'])
+          print('H theta:', first['H_theta_columns'])
+          print('H aw:', first['H_aw_columns'])
+          print('residual:', first['residual'])
+          print('K theta:', first['K_theta_rows'])
+          print('dx theta:', first['dx_theta'])
+          print('next:', d['next_obligation'])
+          PY
