@@ -54,7 +54,7 @@ class Ou3P5FirstSStatePrefixCertificateTests(unittest.TestCase):
         self.assertEqual(b["cayley_norm_upper"], 1.0)
         self.assertGreater(b["rotation_R_minus_I_norm_upper"], 0.0)
         self.assertLess(b["rotation_R_minus_I_norm_upper"], 1.0)
-        self.assertEqual(b["latent_acceleration_error_norm_upper_mps2"], 10.0)
+        self.assertEqual(b["latent_acceleration_error_norm_upper_mps2"], 0.3 * 9.80665)
         self.assertIn("large-angle", b["required_next"])
 
 
