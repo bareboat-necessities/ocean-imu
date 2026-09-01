@@ -34,7 +34,7 @@ jobs:
         working-directory: tests/validation
         env:
           OU3_REQUIRE_CPP_PARITY: "1"
-        run: python3 -m unittest -v test_ou3_p5_source_map_parity test_ou3_interval_ad test_ou3_p4_source_path_reachability
+        run: python3 -m unittest -v test_ou3_p5_source_map_parity test_ou3_interval_ad test_ou3_p4_source_path_reachability test_ou3_p4_shared_force_gain
       - name: Existing full-state prefix tests
         working-directory: tests/validation
         run: |

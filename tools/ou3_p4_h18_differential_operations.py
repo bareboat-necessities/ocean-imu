@@ -79,16 +79,19 @@ def prediction(z: Sequence[AD.AD], F, Rstep, domain: dict, h: float,
         raise ValueError("H differential prediction requires 18 states")
     if not math.isfinite(h) or h <= 0.0:
         raise ValueError("prediction requires positive finite h")
+    wdist = float(domain["startup"][
+        "effective_deterministic_gyro_transport_disturbance_upper_rad_s"])
     if angular_rate_body is None:
+        # The domain bounds physical body rate. The estimate-corrected gyro
+        # can differ by the current bias error and declared gyro disturbance.
+        bias_norm = AD._norm_upper([x.val for x in z[3:6]])
         rate = math.nextafter(
             float(domain["normal_live"]["body_rate_norm_upper_deg_s"])
-            * math.pi / 180.0, math.inf)
+            * math.pi / 180.0 + bias_norm + wdist, math.inf)
         angular_rate_body = [box_symmetric(rate) for _ in range(3)]
     if len(angular_rate_body) != 3:
         raise ValueError("angular_rate_body must contain three intervals")
     omega = [ad_constant_interval(x) for x in angular_rate_body]
-    wdist = float(domain["startup"][
-        "effective_deterministic_gyro_transport_disturbance_upper_rad_s"])
     disturbance = ad_constant_interval(box_symmetric(wdist))
     true_step = [(-omega[i] + z[3 + i] + disturbance) * h for i in range(3)]
     estimate_inverse_step = [omega[i] * h for i in range(3)]

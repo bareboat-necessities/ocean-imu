@@ -494,9 +494,11 @@ def _predict_error(e, F):
     return out
 
 
-def _predict_c(c, Rstep, domain: dict, h: float):
+def _predict_c(c, Rstep, domain: dict, h: float, gyro_bias_error=None):
     transported = _mat_vec(Rstep, c)
     bg = float(domain["startup"]["physical_handoff_coordinate_bounds"]["gyro_bias_error_norm_upper_rad_s"])
+    if gyro_bias_error is not None:
+        bg = _norm_upper(gyro_bias_error)
     wdist = float(domain["startup"]["effective_deterministic_gyro_transport_disturbance_upper_rad_s"])
     th = up(h*(bg+wdist))
     half = up(0.5*th)
@@ -564,7 +566,7 @@ def _acc_residual(e, c, domain: dict, q_hi: float, force_norm_upper=None):
     H = _H_acc(domain, force_norm_upper)
     fhi = (float(domain["normal_live"]["specific_force_norm_upper_mps2"])
            if force_norm_upper is None else float(force_norm_upper))
-    aw_hi = max(e[i].abs_upper() for i in AW)
+    aw_hi = _norm_upper([e[i] for i in AW])
     eta = up(
         VEFF.accel_attitude_eta_per_vector_norm_upper(q_hi)*fhi
         + VEFF.accel_latent_cross_gain_upper(q_hi)*aw_hi
@@ -681,7 +683,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
             Pm = _psd_tighten(matrix_add(matrix_mul(matrix_mul(F, Pm), matrix_transpose(F)), Q))
             e = _predict_error(e, F)
             xhat = _predict_estimator_mean(xhat, F)
-            c = _predict_c(c, Rstep, domain, h)
+            c = _predict_c(c, Rstep, domain, h, [e[i] for i in BG])
             qnow = _norm_upper(c)
             max_q = max(max_q, qnow)
             if qnow >= q_chart:

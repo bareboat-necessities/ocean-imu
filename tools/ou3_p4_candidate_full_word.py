@@ -248,7 +248,7 @@ def _acc_residual(mode: str, e, c, domain: dict, q_hi: float, force_norm_upper=N
     M = _H_acc(mode, domain, force_norm_upper)
     fhi = (float(domain["normal_live"]["specific_force_norm_upper_mps2"])
            if force_norm_upper is None else float(force_norm_upper))
-    aw_hi = max(e[i].abs_upper() for i in H.AW)
+    aw_hi = H._norm_upper([e[i] for i in H.AW])
     eta = up(
         H.VEFF.accel_attitude_eta_per_vector_norm_upper(q_hi) * fhi
         + H.VEFF.accel_latent_cross_gain_upper(q_hi) * aw_hi
@@ -308,7 +308,7 @@ def _run_cell(mode: str, domain_path: Path, domain: dict, cbox, candidate_q: flo
             Pm = H._psd_tighten(H.matrix_add(H.matrix_mul(H.matrix_mul(F, Pm), H.matrix_transpose(F)), Q))
             e, ba_cap = _predict_error(mode, e, F, ba_cap)
             xhat = H._predict_estimator_mean(xhat, F)
-            c = H._predict_c(c, Rstep, domain, h)
+            c = H._predict_c(c, Rstep, domain, h, [e[i] for i in H.BG])
             qnow = H._norm_upper(c)
             max_q = max(max_q, qnow)
             if not qnow < outer_q:

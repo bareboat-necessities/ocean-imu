@@ -49,7 +49,9 @@ R_S_x_factor and R_S_y_factor (currently 0.72). Their variances use the squares
 of those factors. Both the prefix gain calculation and the P3 lower noise
 comparison now use these source values. The generic accelerometer H bound
 also follows the estimated a_w mean, rather than treating a physical truth
-force cap as an estimate cap.
+force cap as an estimate cap. Effective-input norms use the entire a_w vector,
+and attitude prediction consumes the propagated gyro-bias error rather than
+reusing the startup bound indefinitely.
 
 ## Tuner timing and unnecessary widening
 
@@ -124,3 +126,8 @@ the validated correction range [0,6] radians; A was not reached. This is an
 enclosure obstruction, not evidence of an actual six-radian filter correction.
 See runs 33567318416 and 33567318226. Later timing/convexity edits require their
 own CI result.
+
+Correct source covariance changed the reference-cell maximum gain tightening
+from the old test's assumed >1.5 to 1.4088643079177852. The regression contract
+now requires improvement (>1) and no worse bound on every cell (>=1), matching
+the lemma; the analytic supremum and fixed-cell tests remain.

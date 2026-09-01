@@ -102,6 +102,23 @@ class SourceMapParityTests(unittest.TestCase):
         self.assertGreater(f, domain()["normal_live"]["specific_force_norm_upper_mps2"])
         self.assertGreaterEqual(FULL._H_acc(domain(), f)[0][1].hi, f)
 
+    def test_prediction_consumes_current_gyro_bias_error(self):
+        c = [Interval.point(0.0) for _ in range(3)]
+        small = FULL._predict_c(c, matrix_identity(3), domain(), 0.005,
+                                [Interval.point(0.01), *c[:2]])
+        large = FULL._predict_c(c, matrix_identity(3), domain(), 0.005,
+                                [Interval.point(0.2), *c[:2]])
+        self.assertGreater(large[0].hi, 10*small[0].hi)
+
+    def test_effective_acceleration_uses_vector_norm(self):
+        e = [Interval.point(0.0) for _ in range(18)]
+        for i in FULL.AW:
+            e[i] = Interval.point(1.0)
+        c = [Interval.point(0.0) for _ in range(3)]
+        _, _, eta = FULL._acc_residual(e, c, domain(), 0.3, 0.0)
+        required = FULL.VEFF.accel_latent_cross_gain_upper(0.3)*math.sqrt(3.0)
+        self.assertGreaterEqual(eta, required)
+
     def test_horizontal_RS_squares_source_std_factor(self):
         factors = P3.source_rs_axis_std_factors()
         xy = struct.unpack("!f", struct.pack("!f", 0.72))[0]
