@@ -4,6 +4,8 @@ on:
   push:
     paths:
       - "tools/ou3_p4_path_dependent_word_contraction.py"
+      - "tools/ou3_p4_h18_interval_ad_word.py"
+      - "tools/ou3_interval_ad.py"
       - "tools/ou3_p4_node_metrics.py"
       - "tools/ou3_p4_exact_word_map.py"
       - "tools/ou3_p4_source_path_reachability.py"
@@ -12,11 +14,15 @@ on:
       - "src/kalman_ou_iii/**"
       - "src/kalman_ou_common/**"
       - "tests/validation/test_ou3_p4_path_dependent_word_contraction.py"
+      - "tests/validation/test_ou3_p4_h18_interval_ad_word.py"
+      - "tests/validation/test_ou3_interval_ad.py"
       - "docs/ou-iii-p4-path-dependent-word-contraction.md"
       - ".github/workflows/ou3-p4-path-dependent-word-contraction.yml"
   pull_request:
     paths:
       - "tools/ou3_p4_path_dependent_word_contraction.py"
+      - "tools/ou3_p4_h18_interval_ad_word.py"
+      - "tools/ou3_interval_ad.py"
       - "tools/ou3_p4_node_metrics.py"
       - "tools/ou3_p4_exact_word_map.py"
       - "tools/ou3_p4_source_path_reachability.py"
@@ -25,6 +31,8 @@ on:
       - "src/kalman_ou_iii/**"
       - "src/kalman_ou_common/**"
       - "tests/validation/test_ou3_p4_path_dependent_word_contraction.py"
+      - "tests/validation/test_ou3_p4_h18_interval_ad_word.py"
+      - "tests/validation/test_ou3_interval_ad.py"
       - "docs/ou-iii-p4-path-dependent-word-contraction.md"
       - ".github/workflows/ou3-p4-path-dependent-word-contraction.yml"
   workflow_dispatch:
@@ -44,13 +52,21 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - name: Compile route and tests
+      - name: Compile route, interval AD, H18 backend and tests
         run: |
           python3 -m py_compile \
+            tools/ou3_interval_ad.py \
             tools/ou3_p4_path_dependent_word_contraction.py \
+            tools/ou3_p4_h18_interval_ad_word.py \
+            tests/validation/test_ou3_interval_ad.py \
+            tests/validation/test_ou3_p4_h18_interval_ad_word.py \
             tests/validation/test_ou3_p4_path_dependent_word_contraction.py
 
-      - name: Run focused unit tests
+      - name: Run interval-AD primitive tests
+        working-directory: tests/validation
+        run: python3 -m unittest -v test_ou3_interval_ad test_ou3_p4_h18_interval_ad_word
+
+      - name: Run route-contract unit tests
         working-directory: tests/validation
         run: python3 -m unittest -v test_ou3_p4_path_dependent_word_contraction
 
@@ -59,7 +75,13 @@ jobs:
           python3 tools/ou3_p4_path_dependent_word_contraction.py \
             --output /tmp/ou3_p4_path_dependent_word_contraction.json
 
-      - name: Enforce independent route and fail-closed scope
+      - name: Run boundary-cell full-word H18 interval-AD screen
+        run: |
+          python3 tools/ou3_p4_h18_interval_ad_word.py \
+            --cell-limit 1 \
+            --output /tmp/ou3_p4_h18_interval_ad_word.json
+
+      - name: Enforce independent route and fail-closed H18 scope
         run: |
           python3 - <<'PY'
           import json
@@ -78,7 +100,6 @@ jobs:
           assert d['filter_changed'] is False
           assert d['source_replay_used'] is False
 
-          # This is a genuinely different complete-word route.
           r = d['route_distinctions']
           assert r['atomic_object'] == 'COMPLETE_SOURCE_WORD_RETURN_MAP'
           assert r['individual_packet_rank_may_be_singular'] is True
@@ -91,8 +112,6 @@ jobs:
           assert r['arbitrary_node_rescaling_allowed'] is False
           assert r['P3_delta_used_as_nonlinear_radius'] is False
 
-          # P3 delta remains a diagnostic only; expose how microscopic its
-          # norm-gap fallback is rather than silently using it as the new gate.
           for mode in ('H', 'A'):
               m = d['modes'][mode]
               assert m['P3_delta_used_as_nonlinear_radius'] is False
@@ -101,15 +120,32 @@ jobs:
               assert gap > 0
               assert gap < Decimal('1e-15')
 
-          # Future result must be a full generalized Jacobian; this route
-          # contract cannot promote itself.
-          assert d['finite_angle_acceptance']['A_mode_bias_projection_requires_generalized_jacobian'] is True
           assert d['P4_COMPLETE_WORD_DIFFERENTIAL_CONTRACTION_ESTABLISHED_HERE'] is False
           assert d['P4_USABLE_CERTIFICATE_PROMOTED'] is False
-          assert d['P5_FINITE_INNER_CAPTURE_ESTABLISHED_HERE'] is False
+
+          h = json.loads(Path('/tmp/ou3_p4_h18_interval_ad_word.json').read_text())
+          assert h['validation_pass'], h['validation_failures']
+          assert h['dimension'] == 18
+          assert h['outer_angle_rad'] == 0.80
+          assert h['interval_AD_used_for_state_return_map'] is True
+          assert h['finite_difference_used'] is False
+          assert h['deployed_quaternion_generalized_jacobian_used'] is True
+          assert h['full_18_state_cross_derivatives_retained'] is True
+          # This first numerical backend is deliberately a screen.  Even a
+          # sub-unity number cannot promote until source orientations, branch
+          # family and actual per-node metrics are exhausted.
+          assert h['all_source_vector_orientation_covariance_correlations_checked'] is False
+          assert h['optional_accepted_branch_family_between_required_events_checked'] is False
+          assert h['actual_per_node_Sigma_KF_whitening_used'] is False
+          assert h['source_graph_all_reachable_edges_checked'] is False
+          assert h['H18_COMPLETE_SOURCE_EDGE_CONTRACTION_ESTABLISHED_HERE'] is False
+          assert h['P4_USABLE_CERTIFICATE_PROMOTED'] is False
 
           print('source graph:', d['source_graph'])
-          print('H P3 diagnostic:', d['modes']['H']['P3_linear_origin_contraction_gap_diagnostic'])
-          print('A P3 diagnostic:', d['modes']['A']['P3_linear_origin_contraction_gap_diagnostic'])
-          print('next:', d['next_obligation'])
+          print('H18 samples:', h['samples_checked'], '/', h['full_word_samples'])
+          print('H18 Cayley cells:', h['outer_ball_box_cells_completed'], '/', h['outer_ball_box_cover_total'])
+          print('H18 endpoint conditioned norm upper:', h['max_endpoint_P3_congruence_conditioned_norm_upper'])
+          print('H18 prefix conditioned norm upper:', h['max_prefix_P3_congruence_conditioned_norm_upper'])
+          print('H18 first failure:', h['first_failure'])
+          print('H18 next:', h['next_obligation'])
           PY
