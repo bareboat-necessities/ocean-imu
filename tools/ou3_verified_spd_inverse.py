@@ -1,33 +1,16 @@
 #!/usr/bin/env python3
-"""Verified inverse enclosure for small SPD innovation matrices.
+"""Verified inverse enclosure for small certified-SPD innovation matrices.
 
-The existing fixed-pivot interval Gauss-Jordan inverse can fail when a broad
-interval family makes an intermediate pivot cross zero even though every real
-innovation covariance is positive definite.  Falling back only to ``S >= R``
-then destroys correlation and can make the Kalman-gain box enormous.
+For a source-certified symmetric positive-definite interval family ``S``, choose
+a binary64 point preconditioner ``C`` from the inverse of a midpoint matrix and
+form ``E = I-CS``.  If an outward-rounded bound ``||E||_inf < 1`` is certified,
+the Neumann series gives a rigorous inverse enclosure.
 
-This module supplies a source-independent verified alternative.  For an
-interval square matrix S, choose a binary64 point preconditioner C from the
-inverse of the midpoint matrix and form
-
-    E = I - C S.
-
-If an outward-rounded infinity-norm bound q = ||E||_inf is strictly below one,
-then I-E, C, and S are nonsingular and
-
-    S^-1 = (I-E)^-1 C
-         = C + E C + sum_{k>=2} E^k C.
-
-The first two terms are evaluated with interval arithmetic.  The remaining
-entrywise error is bounded by
-
-    q^2 ||C||_inf / (1-q).
-
-No floating-point inverse is trusted as an enclosure: C is only a fixed point
-preconditioner.  Every acceptance claim comes from outward interval arithmetic
-and the validated q<1 Neumann criterion.  The result is symmetrically
-intersected because the intended innovation matrices are symmetric; callers
-must still establish SPD/symmetry from their own source tuple.
+Symmetry is never inferred from a generic square interval box.  Callers must
+explicitly certify that their exact source family is symmetric and SPD.  Given
+that certificate, paired interval entries are intersected before the solve;
+this is rigorous because every exact source matrix has ``S_ij=S_ji``.  The same
+source certificate justifies intersecting paired inverse entries afterward.
 """
 from __future__ import annotations
 
@@ -44,7 +27,7 @@ from ou3_interval import (
 )
 from ou3_interval_linear_algebra import matrix_inverse_gauss_jordan, shape
 
-SCHEMA = 1
+SCHEMA = 2
 
 
 class VerifiedInverseFailure(RuntimeError):
@@ -55,6 +38,29 @@ def _midpoint(x: Interval) -> float:
     return float(x.lo + 0.5 * (x.hi - x.lo))
 
 
+def _intersect(a: Interval, b: Interval) -> Interval:
+    lo = max(a.lo, b.lo)
+    hi = min(a.hi, b.hi)
+    if lo > hi:
+        raise VerifiedInverseFailure("certified-symmetric paired enclosures became disjoint")
+    return Interval(lo, hi)
+
+
+def _certified_symmetric_family(S: Sequence[Sequence[Interval]], *, symmetric_certified: bool):
+    n, m = shape(S)
+    if n != m or n == 0:
+        raise ValueError("verified inverse requires a nonempty square matrix")
+    if symmetric_certified is not True:
+        raise VerifiedInverseFailure("source symmetry certificate is required")
+    out = [[S[i][j] for j in range(n)] for i in range(n)]
+    for i in range(n):
+        for j in range(i + 1, n):
+            z = _intersect(out[i][j], out[j][i])
+            out[i][j] = z
+            out[j][i] = z
+    return out
+
+
 def _point_preconditioner(S: Sequence[Sequence[Interval]]):
     n, m = shape(S)
     if n != m or n == 0:
@@ -63,32 +69,31 @@ def _point_preconditioner(S: Sequence[Sequence[Interval]]):
     try:
         Minv = matrix_inverse_gauss_jordan(M)
     except Exception as exc:
-        raise VerifiedInverseFailure(f"midpoint matrix inverse failed: {type(exc).__name__}: {exc}") from exc
-    # The midpoint inverse enclosure is used only to select a binary64 point C.
-    # Its midpoint is therefore a preconditioner, not an inverse claim.
-    C = [[Interval.point(_midpoint(Minv[i][j])) for j in range(n)] for i in range(n)]
-    return C
+        raise VerifiedInverseFailure(
+            f"midpoint matrix inverse failed: {type(exc).__name__}: {exc}"
+        ) from exc
+    return [[Interval.point(_midpoint(Minv[i][j])) for j in range(n)] for i in range(n)]
 
 
-def _intersect(a: Interval, b: Interval) -> Interval:
-    lo = max(a.lo, b.lo)
-    hi = min(a.hi, b.hi)
-    if lo > hi:
-        raise VerifiedInverseFailure("symmetric inverse enclosures became disjoint")
-    return Interval(lo, hi)
+def inverse_enclosure(
+    S: Sequence[Sequence[Interval]],
+    *,
+    symmetric_certified: bool = False,
+    spd_certified: bool = False,
+) -> tuple[list[list[Interval]], dict]:
+    """Return a verified inverse enclosure for a source-certified SPD family.
 
-
-def inverse_enclosure(S: Sequence[Sequence[Interval]]) -> tuple[list[list[Interval]], dict]:
-    """Return a verified inverse enclosure and audit metadata.
-
-    Raises ``VerifiedInverseFailure`` unless the midpoint-preconditioned Neumann
-    criterion is strict.  It does not silently fall back to a weaker bound.
+    ``symmetric_certified`` and ``spd_certified`` are proof premises supplied by
+    the source covariance construction.  This routine checks the interval
+    algebra needed for inversion but does not manufacture either premise from
+    a broad Cartesian matrix box.
     """
-    n, m = shape(S)
-    if n != m or n == 0:
-        raise ValueError("verified inverse requires a nonempty square matrix")
-    C = _point_preconditioner(S)
-    E = matrix_sub(matrix_identity(n), matrix_mul(C, S))
+    if spd_certified is not True:
+        raise VerifiedInverseFailure("source SPD certificate is required")
+    Ssym = _certified_symmetric_family(S, symmetric_certified=symmetric_certified)
+    n, _ = shape(Ssym)
+    C = _point_preconditioner(Ssym)
+    E = matrix_sub(matrix_identity(n), matrix_mul(C, Ssym))
     q = matrix_abs_row_sum_upper(E)
     if not math.isfinite(q) or not q < 1.0:
         raise VerifiedInverseFailure(f"Neumann criterion failed: ||I-CS||_inf upper={q!r}")
@@ -105,8 +110,6 @@ def inverse_enclosure(S: Sequence[Sequence[Interval]]) -> tuple[list[list[Interv
     rem = Interval(-tail, tail)
 
     X = [[C[i][j] + EC[i][j] + rem for j in range(n)] for i in range(n)]
-    # For symmetric S, S^-1 is symmetric.  Intersect paired entry enclosures to
-    # retain that exact structure without averaging or ordinary rounding.
     for i in range(n):
         for j in range(i + 1, n):
             z = _intersect(X[i][j], X[j][i])
@@ -117,6 +120,9 @@ def inverse_enclosure(S: Sequence[Sequence[Interval]]) -> tuple[list[list[Interv
         "schema": SCHEMA,
         "qualification": "OU3_VERIFIED_MIDPOINT_NEUMANN_INVERSE",
         "dimension": n,
+        "source_symmetry_certified": True,
+        "source_SPD_certified": True,
+        "paired_input_intersection_used": True,
         "neumann_q_inf_upper": q,
         "preconditioner_inf_norm_upper": cnorm,
         "tail_entry_abs_upper": tail,
