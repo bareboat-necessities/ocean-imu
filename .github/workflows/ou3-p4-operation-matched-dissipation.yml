@@ -83,7 +83,7 @@ jobs:
           python3 tools/ou3_p4_operation_matched_joseph_ledger.py \
             --output /tmp/ou3_p4_operation_matched_joseph_ledger.json
 
-      - name: Enforce directional rank, no-shrink and fail-closed theorem scope
+      - name: Enforce directional rank, signed Joseph, no-shrink and fail-closed scope
         run: |
           python3 - <<'PY'
           import json
@@ -119,24 +119,36 @@ jobs:
           assert d['legacy_sector_budget_distance_only'] is True
           assert d['per_operation_sector_invariance_is_P4_promotion_gate'] is False
 
-          # Strong route: preserve source-correlated effective coordinates.
-          assert d['accelerometer_eta_absorbed_as_effective_aw_state'] is True
+          # Strong route: exact correction-range reductions but exact signed
+          # Joseph nonlinear term.  Nothing is dropped or independently
+          # maximized.
+          assert d['accelerometer_eta_absorbed_for_state_correction_range'] is True
           assert d['accelerometer_large_aw_error_charged_as_independent_measurement_eta'] is False
+          assert d['accelerometer_finite_angle_eta_penalty_dropped_from_Joseph_identity'] is False
+          assert d['accelerometer_finite_angle_eta_independent_norm_budget_used'] is False
           assert d['magnetometer_radial_eta_changes_state'] is False
           assert d['reset_condition_number_multiplier_used'] is False
 
-          # Existing positive vector constant is attitude geometry only.  The
-          # exact rank theorem explains why a scalar full-state packet margin
-          # cannot be promoted at this point.
+          # Existing positive vector constant is attitude geometry only, and
+          # exact rank five makes an instantaneous scalar full-state packet
+          # margin an invalid target.
+          assert d['directional_packet_rank_exact'] == 5
+          assert d['instantaneous_scalar_full_state_packet_margin_valid'] is False
+          assert d['directional_PSD_word_accumulation_required'] is True
           assert d['finite_angle_vector_pair_attitude_geometry_vs_goLive_metric_lower'] > 0.0
           assert d['finite_angle_vector_pair_attitude_geometry_strict'] is True
-          assert d['full_state_directional_packet_credit_established_here'] is False
+          assert d['full_state_directional_word_credit_established_here'] is False
 
           # This PR closes the calculus/rank obligations, not the complete word.
-          assert d['strong_route_first_vector_packet_ledger_closed'] is True
+          assert d['strong_route_operation_ledger_closed'] is True
           assert d['P4_COMPLETE_WORD_DISSIPATION_ESTABLISHED_HERE'] is False
           assert d['P4_USABLE_CERTIFICATE_PROMOTED'] is False
           assert d['P5_FINITE_INNER_CAPTURE_ESTABLISHED_HERE'] is False
+
+          acc = {r['operation']: r for r in d['operation_ledger']}['accelerometer_accepted']
+          assert acc['finite_angle_eta_penalty_dropped'] is False
+          assert acc['finite_angle_eta_independently_maximized'] is False
+          assert 'eta_a^T R_a^-1 eta_a' in acc['exact_information_decrease']
 
           print('vector packet exact rank:', rank['measurement_structure']['stacked_vector_packet_rank_exact'])
           print('H/A active nullity:',
@@ -148,5 +160,5 @@ jobs:
                 d['finite_angle_vector_pair_attitude_geometry_vs_goLive_metric_lower'])
           print('conditional 25deg c diagnostic:',
                 d['conditional_25deg_consistency_constant_diagnostic'])
-          print('next:', rank['next_obligation'])
+          print('next:', d['next_obligation'])
           PY
