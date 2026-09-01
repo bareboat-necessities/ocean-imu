@@ -1,4 +1,5 @@
 from pathlib import Path
+import copy
 import math
 import sys
 import unittest
@@ -124,16 +125,41 @@ class OperationMatchedJosephLedgerTests(unittest.TestCase):
         self.assertFalse(reset["condition_number_multiplier_used"])
         self.assertEqual(reset["remaining_nonlinear_term"], "rho=z_exact-G_ext*t")
 
-    def test_vector_pair_constant_is_only_attitude_geometry_prerequisite(self):
+    def test_validator_rejects_magnetometer_radial_penalty_mutation(self):
+        d = copy.deepcopy(self.d)
+        rows = {row["operation"]: row for row in d["operation_ledger"]}
+        rows["magnetometer_accepted"]["radial_eta_independent_penalty_used"] = True
+        self.assertIn(
+            "magnetometer ledger reintroduced an independent radial eta penalty",
+            LEDGER.validate(d),
+        )
+
+    def test_vector_pair_constant_is_only_R_inverse_residual_geometry(self):
         x = self.d["finite_angle_vector_pair_attitude_geometry_vs_goLive_metric_lower"]
         self.assertTrue(math.isfinite(x))
         self.assertGreater(x, 0.0)
+        self.assertEqual(x, self.d["finite_angle_vector_pair_R_inverse_residual_geometry_lower"])
+        self.assertEqual(
+            self.d["finite_angle_vector_pair_residual_geometry_weighting"],
+            "R_INVERSE_MEASUREMENT_GEOMETRY_ONLY",
+        )
         self.assertTrue(self.d["finite_angle_vector_pair_attitude_geometry_strict"])
+        self.assertFalse(self.d["finite_angle_vector_pair_residual_geometry_used_as_Joseph_S_inverse_credit"])
+        self.assertFalse(self.d["source_correlated_Joseph_S_inverse_credit_established_here"])
         self.assertFalse(self.d["full_state_directional_word_credit_established_here"])
+
+    def test_validator_rejects_R_inverse_geometry_promoted_as_Joseph_credit(self):
+        d = dict(self.d)
+        d["finite_angle_vector_pair_residual_geometry_used_as_Joseph_S_inverse_credit"] = True
+        self.assertIn(
+            "finite_angle_vector_pair_residual_geometry_used_as_Joseph_S_inverse_credit is not false",
+            LEDGER.validate(d),
+        )
 
     def test_next_obligation_is_word_level_directional_accumulation(self):
         text = self.d["next_obligation"]
         self.assertIn("PSD directional operation forms", text)
+        self.assertIn("actual Joseph S^-1", text)
         self.assertIn("signed nonlinear eta forms", text)
         self.assertIn("18/21-state", text)
         self.assertIn("cross block", text)
