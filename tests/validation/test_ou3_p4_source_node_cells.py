@@ -34,7 +34,11 @@ class P4SourceNodeCellsTests(unittest.TestCase):
         self.assertGreater(self.d["filter_sigma_floor_intersecting_node_count"], 0)
         floor = self.d["filter_sigma_floor_mps2"]
         for n in self.d["nodes"]:
-            self.assertGreaterEqual(n["sigma_filter_committed_mps2"][0], floor)
+            raw_lo, raw_hi = n["sigma_tuner_raw_mps2"]
+            filt_lo, filt_hi = n["sigma_filter_committed_mps2"]
+            for target in (max(floor, raw_lo), max(floor, raw_hi)):
+                self.assertLessEqual(filt_lo, target)
+                self.assertGreaterEqual(filt_hi, target)
 
     def test_h18_source_cell_preserves_node_coordinates_and_tau_cadence_coupling(self):
         for i in (0, 399, 799):
