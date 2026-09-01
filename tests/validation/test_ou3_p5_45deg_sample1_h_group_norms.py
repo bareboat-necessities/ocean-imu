@@ -6,6 +6,7 @@ ROOT=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT/'tools'))
 import ou3_p5_45deg_sample1_h_group_norms as G
 import ou3_p5_45deg_first_accel_signed_source_bound_v2 as S
+import ou3_p5_45deg_first_accel_tilt_yaw_source_bound as T
 
 
 class Ou3P545DegSample1HGroupNormTests(unittest.TestCase):
@@ -13,6 +14,7 @@ class Ou3P545DegSample1HGroupNormTests(unittest.TestCase):
  def setUpClass(cls):
   cls.d=G.build(source_pieces=2)
   cls.s=S.build(source_pieces=2,tangent_cells=96)
+  cls.t=T.build(source_pieces=2,tangent_cells=96)
 
  def test_certificate_and_semantics(self):
   d=self.d
@@ -58,16 +60,34 @@ class Ou3P545DegSample1HGroupNormTests(unittest.TestCase):
         'min_den',d['minimum_signed_composition_denominator_lower'],
         'returned30',d['returned_to_30deg_P4_sector_here'])
 
+ def test_tilt_yaw_intersection_improves_signed_full_ball(self):
+  d=self.t
+  self.assertEqual(T.validate(d),[])
+  self.assertEqual(d['P5_45DEG_FIRST_ACCEL_TILT_YAW_SOURCE_BOUND'],'PASS')
+  self.assertTrue(d['two_coordinate_attitude_chart_used'])
+  self.assertFalse(d['new_tilt_assumption_added'])
+  self.assertFalse(d['P5_full_attitude_45deg_domain_tightened'])
+  self.assertFalse(d['accelerometer_claims_yaw_contraction'])
+  self.assertLess(d['certified_gravity_tangent_q_upper'],d['full_attitude_q_upper_retained'])
+  self.assertLess(d['tilt_yaw_post_update_q_upper'],d['signed_full_ball_baseline_post_update_q_upper'])
+  print('TILT_YAW_45DEG_FIRST_ACCEL',
+        'q_full',d['full_attitude_q_upper_retained'],
+        'q_tangent',d['certified_gravity_tangent_q_upper'],
+        'q_signed_full',d['signed_full_ball_baseline_post_update_q_upper'],
+        'q_tilt_yaw',d['tilt_yaw_post_update_q_upper'],
+        'factor',d['tilt_yaw_vs_signed_full_ball_improvement_factor'],
+        'returned30',d['returned_to_30deg_P4_sector_here'])
+
  def test_no_filter_or_replay_change(self):
   d=self.d
   self.assertTrue(d['source_generated_not_trajectory_fit'])
   self.assertFalse(d['source_replay_used'])
   self.assertFalse(d['filter_changed'])
-  s=self.s
-  self.assertTrue(s['source_generated_not_trajectory_fit'])
-  self.assertFalse(s['source_replay_used'])
-  self.assertFalse(s['filter_changed'])
-  self.assertFalse(s['deployed_correction_limit_increased'])
+  for s in (self.s,self.t):
+   self.assertTrue(s['source_generated_not_trajectory_fit'])
+   self.assertFalse(s['source_replay_used'])
+   self.assertFalse(s['filter_changed'])
+   self.assertFalse(s['deployed_correction_limit_increased'])
 
 
 if __name__=='__main__': unittest.main()
