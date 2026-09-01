@@ -7,11 +7,12 @@ whether that is a genuine source obstruction or ordinary interval dependency.
 It binds one exact P2 source node, propagates the same shipping H=18 covariance
 and nonlinear state maps, and bisects only that failing Cayley box.
 
-Unlike the contraction screen, this diagnostic deliberately does not compute a
-spectral norm after every prediction.  Its sole numerical question is whether
-each accepted S/accelerometer/magnetometer correction stays inside the already
-validated deployed-quaternion correction range.  Every correction is attributed
-to its exact word sample and operation, with its interval norm upper reported.
+Unlike the contraction screen, this diagnostic deliberately does not construct
+P3 metrics and does not compute spectral norms.  Its sole numerical question is
+whether each accepted S/accelerometer/magnetometer correction stays inside the
+already validated deployed-quaternion correction range.  Every correction is
+attributed to its exact word sample and operation, with its interval norm upper
+reported.
 
 No theorem domain is shrunk, no filter quantity is changed, and no successful
 subdivision result can promote P4 by itself.
@@ -23,8 +24,7 @@ import json
 import math
 from pathlib import Path
 
-from ou3_interval import Interval, matrix_add, matrix_mul, matrix_transpose
-import ou3_explicit_information_word_certificate as P3
+from ou3_interval import matrix_add, matrix_mul, matrix_transpose
 import ou3_implementation_word_language as WORDS
 import ou3_interval_ad as AD
 import ou3_p4_candidate_full_word as CAND
@@ -91,8 +91,7 @@ def _accepted(Pm, z, Hm, Rm, residual, *, step: int, operation: str):
     }
 
 
-def _run_child(path: Path, domain: dict, src: dict, cbox, samples: int, scale2) -> dict:
-    del scale2  # contraction whitening is intentionally outside this diagnostic
+def _run_child(path: Path, domain: dict, src: dict, cbox, samples: int) -> dict:
     CAND._configure_mode("H")
     F, Q, Rstep = H2._tight_transition_and_Q(src, domain)
     Pm = H2._corrected_initial_covariance(src, path)
@@ -167,8 +166,6 @@ def build(domain_path: Path = DEFAULT_DOMAIN, *, source_node_index: int = 0,
 
     sector = SECTOR.build(path)
     sf = SECTOR.validate(sector)
-    p3 = P3.build(path)
-    pf = P3.validate(p3)
     words = WORDS.build(path)
     wf = WORDS.validate(words)
     q = float(sector["design_cayley_norm_upper"])
@@ -176,14 +173,13 @@ def build(domain_path: Path = DEFAULT_DOMAIN, *, source_node_index: int = 0,
     parent = cover[0]
     children = [c for c in _split_box(parent) if CAND._norm_bounds_box(c)[0] <= q]
     samples = int(words["word_contract"]["conditional_word_language"]["word_samples_upper_at_configured_dt"])
-    scale2 = [float(x) for x in p3["modes"]["H"]["matrix_comparison"]["comparison_scale_diagonal_squared"]]
 
     rows = []
     with preserve_module_bindings():
         H._source_cell = lambda: src
         for i, child in enumerate(children):
             try:
-                row = _run_child(path, domain, src, child, samples, scale2)
+                row = _run_child(path, domain, src, child, samples)
             except Exception as exc:
                 row = {
                     "completed": False,
@@ -205,7 +201,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN, *, source_node_index: int = 0,
          for r in rows if r.get("maximum_correction")),
         default=math.inf,
     )
-    failures = [f"sector: {x}" for x in sf] + [f"P3: {x}" for x in pf] + [f"word: {x}" for x in wf]
+    failures = [f"sector: {x}" for x in sf] + [f"word: {x}" for x in wf]
 
     return {
         "schema": SCHEMA,
@@ -214,6 +210,8 @@ def build(domain_path: Path = DEFAULT_DOMAIN, *, source_node_index: int = 0,
         "source_replay_used": False,
         "filter_changed": False,
         "declared_domain_changed": False,
+        "P3_metric_constructed_for_this_diagnostic": False,
+        "spectral_norm_computed_for_this_diagnostic": False,
         "outer_angle_rad": float(sector["design_full_attitude_angle_rad"]),
         "outer_cayley_norm_upper": q,
         "source_node_index": int(source_node_index),
@@ -246,8 +244,11 @@ def validate(d: dict) -> list[str]:
     for key in ("source_generated_not_trajectory_fit", "adaptive_state_cell_subdivision_required"):
         if d.get(key) is not True:
             f.append(f"{key} is not true")
-    for key in ("source_replay_used", "filter_changed", "declared_domain_changed",
-                "source_cell_subdivision_used_for_this_test", "P4_USABLE_CERTIFICATE_PROMOTED"):
+    for key in (
+        "source_replay_used", "filter_changed", "declared_domain_changed",
+        "P3_metric_constructed_for_this_diagnostic", "spectral_norm_computed_for_this_diagnostic",
+        "source_cell_subdivision_used_for_this_test", "P4_USABLE_CERTIFICATE_PROMOTED",
+    ):
         if d.get(key) is not False:
             f.append(f"{key} is not false")
     if float(d.get("outer_angle_rad", math.nan)) != 0.80:
