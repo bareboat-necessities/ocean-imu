@@ -70,6 +70,8 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     wf = WORDS.validate(words)
     rank = RANK.build(path)
     rf = RANK.validate(rank)
+    packet_rank = int(rank["measurement_structure"]["stacked_vector_packet_rank_exact"])
+    h_active_nullity = int(rank["modes"]["H"]["stacked_vector_packet_nullity_exact_on_active_block"])
     trans = TRANS.build()
     tf = TRANS.validate(trans)
     source_nodes = SOURCE_NODES.build()
@@ -127,8 +129,8 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         and not tf
         and not nf
         and source_nodes["partition"]["states"] == 800
-        and rank["packet_rank_exact"] == 5
-        and rank["H_active_block_nullity"] == 1
+        and packet_rank == 5
+        and h_active_nullity == 1
         and aw_per_theta_lower > 0.0
         and decay.lo > 0.0
         and aw_next_per_theta_lower > 0.0
@@ -148,8 +150,8 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "shared_H18_differential_operations_used": True,
         "exact_P2_source_node_partition_used": True,
         "P2_source_node_count": source_nodes["partition"]["states"],
-        "packet_rank_exact": rank["packet_rank_exact"],
-        "packet_H_active_nullity": rank["H_active_block_nullity"],
+        "packet_rank_exact": packet_rank,
+        "packet_H_active_nullity": h_active_nullity,
         "packet_null_aw_per_theta_norm_lower_mps2_per_rad": aw_per_theta_lower,
         "PE_specific_force_norm_lower_mps2": f_min,
         "PE_vector_sine_separation_lower": sine_min,
