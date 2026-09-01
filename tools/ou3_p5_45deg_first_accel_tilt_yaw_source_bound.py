@@ -79,8 +79,6 @@ def build(domain_path: Path = DEFAULT_DOMAIN, *, source_pieces: int = 2,
         "signed_V2_post_update_q_upper": float(out["signed_source_correlated_post_update_q_upper"]),
     })
 
-    # Compare against the generic full-ball signed stage after restoring the
-    # tangent helper.  This is a comparison only; it does not alter either set.
     baseline = V2.build(path, source_pieces=source_pieces, tangent_cells=tangent_cells)
     out["signed_full_ball_baseline_post_update_q_upper"] = float(
         baseline["signed_source_correlated_post_update_q_upper"])
@@ -91,8 +89,6 @@ def build(domain_path: Path = DEFAULT_DOMAIN, *, source_pieces: int = 2,
     out["startup_intersection_improvement_factor"] = b / qnew if qnew > 0.0 else math.inf
     out["strictly_improves_generic_signed_route"] = qnew < b
 
-    # Carry both charts through the next exact source-uniform 5 ms prediction.
-    # This is still before any sample-1 S/vector correction.
     h = float(FULL._source_cell()["dt_s"])
     q1_startup = RG._q_after_first_prediction(qnew, domain, h)
     q1_generic = RG._q_after_first_prediction(b, domain, h)
@@ -163,7 +159,11 @@ def validate(d: dict) -> list[str]:
     if not (math.isfinite(factor) and factor > 1.0):
         f.append("startup sample1 improvement factor is not strict")
     dt = float(d.get("next_prediction_dt_s", -1.0))
-    if not math.isclose(dt, 0.005, rel_tol=0.0, abs_tol=math.ulp(0.005)):
+    # FULL._source_cell() deliberately carries outward-rounded source literals.
+    # Accept that certified enclosure instead of requiring exactly one binary64
+    # ULP around the decimal spelling 0.005.  Four ULPs is still <4e-18 s and
+    # cannot hide a different deployed cadence.
+    if not math.isclose(dt, 0.005, rel_tol=0.0, abs_tol=4.0 * math.ulp(0.005)):
         f.append("next prediction step is not the deployed 5 ms interval")
     if d.get("P5_DEPLOYED_STARTUP_TILT_YAW_FIRST_ACCEL_SUBROUTE") == "PASS" and f:
         f.append("PASS carries validation failures")
