@@ -10,7 +10,7 @@
     "accelerometer_vibration_guard_initial_engagement": 0.0,
     "accelerometer_vibration_guard_detector_rms_upper_mps2": 0.03,
     "accelerometer_vibration_guard_active_branch_certified": false,
-    "accelerometer_vibration_guard_note": "PR #426 armed a 14 Hz stateful accelerometer prefilter by default. The pre-existing P1-P5 source model remains exact only on the source branch where its detector stays at or below the 0.03 m/s^2 lower engagement rail and the guard starts at zero engagement, for which shipping code returns the raw accelerometer bit-for-bit. Active/transitioning guard dynamics are a separate source/hybrid proof obligation and are not promoted by this domain."
+    "accelerometer_vibration_guard_note": "PR #426 armed a 14 Hz stateful accelerometer prefilter by default. The pre-existing P1-P5 source model remains exact only on the source branch where its detector stays at or below the 0.03 m/s^2 lower engagement rail and the guard starts at zero engagement, for which shipping code returns the raw accelerometer bit-for-bit. Active/transitioning guard dynamics, impacts and slamming are separate source/hybrid proof obligations and are not promoted by this domain."
   },
   "startup": {
     "gravity_mps2": 9.80665,
@@ -58,7 +58,7 @@
       "Ts_role": "positive characteristic sea period used only as a coordinate scale unless a separate theorem bound is declared"
     },
     "additional_hard_sea_scaled_bounds_declared": false,
-    "note": "The 45 deg attitude and |delta p_i| <= 0.5 Hs conditions are entrance assumptions, not a claim that the earlier startup interval preserves them automatically. The current numerical theorem envelope additionally declares 0 < Hs <= 8.5 m so the componentwise position entrance is finite for CI; 8.5 m is the present proof/deployment envelope and widening it is a separate theorem-domain task, not an inference from replay extrema. P1 retains its conservative source handoff box except that the latent-acceleration error component is now explicitly declared as ||delta a_w|| <= 0.3 g = 2.941995 m/s^2 for startup in waves. That 0.3 g value is a deployment theorem assumption, not replay fitted and not a proof-specific retuning knob. Any theorem path that starts before P5 must propagate this entrance set through the exact startup/source dynamics rather than silently substituting it for the P1 handoff box. No additional hard sea-scaled bounds on v or S are introduced here; their sea-scaled forms, and the a_w sea-scaled form, remain conditioning coordinates for the subsequent P4/P5 search."
+    "note": "The 45 deg attitude and |delta p_i| <= 0.5 Hs conditions are entrance assumptions, not a claim that the earlier startup interval preserves them automatically. The current numerical theorem envelope additionally declares 0 < Hs <= 8.5 m so the componentwise position entrance is finite for CI; 8.5 m is the present proof/deployment envelope and widening it is a separate theorem-domain task, not an inference from replay extrema. P1 retains its conservative source handoff box except that the latent-acceleration error component is explicitly declared as ||delta a_w|| <= 0.3 g = 2.941995 m/s^2 for startup in waves."
   },
   "certificate_search": {
     "p4_complete_word_full_attitude_candidate_deg": [30.0, 25.0, 20.0, 15.0],
@@ -68,8 +68,15 @@
   },
   "normal_live": {
     "vector_pe_recurrence_window_s": 1.0,
-    "specific_force_norm_lower_mps2": 5.0,
-    "specific_force_norm_upper_mps2": 30.0,
+    "non_gravitational_cog_acceleration_norm_upper_mps2": 4.0,
+    "non_gravitational_cog_acceleration_fraction_g": 0.4078864851911713,
+    "specific_force_norm_definition": "norm of CoG accelerometer model vector a_w-g before accelerometer bias/noise; lever arm disabled in this proof branch",
+    "specific_force_bounds_derived_from_gravity_and_non_gravitational_acceleration": true,
+    "specific_force_norm_lower_mps2": 5.80665,
+    "specific_force_norm_upper_mps2": 13.80665,
+    "specific_force_norm_lower_fraction_g": 0.5921135148088287,
+    "specific_force_norm_upper_fraction_g": 1.4078864851911712,
+    "impact_slam_acceleration_in_normal_live_P1_P5_scope": false,
     "magnetic_vector_norm_lower_uT": 10.0,
     "magnetic_vector_norm_upper_uT": 200.0,
     "vector_sine_separation_lower": 0.1,
@@ -82,9 +89,9 @@
       "accepted_packet_separation_max_s": 1.0,
       "non_gravitational_specific_force_norm_upper_mps2": 4.0,
       "axial_gyro_bias_is_neutral_input": true,
-      "note": "Conditional gravity-only theorem hypothesis: before magnetic regauging, every quotient word contains two accepted accelerometer packets separated inside the declared interval and satisfying the stated non-gravitational force bound. The axial body gyro-bias is carried as a bounded detectability input rather than assigned a fictitious strict contraction."
+      "note": "Conditional gravity-only theorem hypothesis: before magnetic regauging, every quotient word contains two accepted accelerometer packets separated inside the declared interval and satisfying the same 4.0 m/s^2 non-gravitational CoG acceleration envelope."
     },
-    "pe_scope_note": "The full-heading theorem excludes free-fall/near-free-fall and magnetic fields within 5.74 deg of gravity. The 5 m/s^2 force floor and 10 uT field floor are declared deployment assumptions, not replay-derived extrema; gravity-only/yaw-quotient operation has its own explicit accepted-gravity-packet recurrence hypothesis rather than pretending heading or the gravity-parallel gyro-bias is observable. The quantitative P4 certificate also binds the deployed default with optional IMU lever-arm compensation disabled; enabling a nonzero lever arm requires extending the source-domain nonlinear remainder bound with the configured geometry. In A mode the normal-Live source node is restricted to a 0.45 m/s^2 bias-state ball, strictly inside the shipping 0.5 m/s^2 projection ball, so the very small certified P4 inner funnel never crosses the nonsmooth saturation surface. Boundary/saturated bias states remain a separate outer/hybrid recapture obligation rather than being silently treated as differentiable. The source model in this file additionally covers only the dormant/bit-exact-transparent vibration-guard branch; guard engagement and disengagement remain separate source/hybrid proof obligations and are not promoted by this domain."
+    "pe_scope_note": "The full-heading theorem is for normal ocean-wave/ship motion at the CoG, not impact/slam dynamics. Its primary physical acceleration assumption is ||a_non-grav|| <= 4.0 m/s^2 = 0.408 g. With g=9.80665 m/s^2 and lever arm disabled, triangle inequality gives the derived total CoG specific-force envelope 5.80665 <= ||a_w-g|| <= 13.80665 m/s^2 (0.592 to 1.408 g). The previous independent 30 m/s^2 = 3.06 g upper cap had no marine-physics derivation and is retired. The 10 uT magnetic floor and 0.1 vector-sine separation remain PE assumptions. Active/transitioning vibration guard, impacts/slams, nonzero lever arm, and saturated A-mode bias states remain separate hybrid/domain obligations."
   },
   "stochastic": {
     "finite_horizon_failure_probability_budget": 0.05
