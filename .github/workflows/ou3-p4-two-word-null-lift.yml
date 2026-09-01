@@ -3,7 +3,9 @@ name: ou3-p4-two-word-null-lift
 on:
   push:
     paths:
+      - "tools/ou3_interval.py"
       - "tools/ou3_interval_ad.py"
+      - "tools/ou3_proof_module_state.py"
       - "tools/ou3_p4_h18_differential_operations.py"
       - "tools/ou3_p4_two_word_packet_null_lift.py"
       - "tools/ou3_p4_directional_packet_rank.py"
@@ -19,7 +21,9 @@ on:
       - ".github/workflows/ou3-p4-two-word-null-lift.yml"
   pull_request:
     paths:
+      - "tools/ou3_interval.py"
       - "tools/ou3_interval_ad.py"
+      - "tools/ou3_proof_module_state.py"
       - "tools/ou3_p4_h18_differential_operations.py"
       - "tools/ou3_p4_two_word_packet_null_lift.py"
       - "tools/ou3_p4_directional_packet_rank.py"
