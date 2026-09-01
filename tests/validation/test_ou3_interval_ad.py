@@ -23,8 +23,12 @@ class Ou3IntervalADTests(unittest.TestCase):
         R = AD.rotation_from_cayley(c)
         for i in range(3):
             for j in range(3):
-                self.assertEqual(R[i][j].val.lo, 1.0 if i == j else 0.0)
-                self.assertEqual(R[i][j].val.hi, 1.0 if i == j else 0.0)
+                expected = 1.0 if i == j else 0.0
+                # Proof arithmetic is deliberately outward rounded, so an exact
+                # algebraic identity is tested by containment, not endpoint
+                # equality of its binary64 enclosure.
+                self.assertLessEqual(R[i][j].val.lo, expected)
+                self.assertGreaterEqual(R[i][j].val.hi, expected)
         # dR/dc_x at zero is [e_x]_x.
         self.assertLessEqual(R[1][2].der[0].lo, -1.0)
         self.assertGreaterEqual(R[1][2].der[0].hi, -1.0)
