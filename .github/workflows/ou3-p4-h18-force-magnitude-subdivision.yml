@@ -1,0 +1,88 @@
+name: ou3-p4-h18-force-magnitude-subdivision
+
+on:
+  push:
+    paths:
+      - "tools/ou3_interval.py"
+      - "tools/ou3_interval_ad.py"
+      - "tools/ou3_interval_linear_algebra.py"
+      - "tools/ou3_correlated_kalman_gain.py"
+      - "tools/ou3_p4_h18_force_magnitude_subdivision.py"
+      - "tools/ou3_p4_h18_correction_subdivision.py"
+      - "tools/ou3_p4_h18_interval_ad_word.py"
+      - "tools/ou3_p4_h18_differential_operations.py"
+      - "tools/ou3_p4_source_node_cells.py"
+      - "tools/ou3_p4_candidate_full_word.py"
+      - "tools/ou3_p5_full_h_prefix_cells.py"
+      - "tools/ou3_proof_operating_domain.json"
+      - ".github/workflows/ou3-p4-h18-force-magnitude-subdivision.yml"
+  pull_request:
+    paths:
+      - "tools/ou3_interval.py"
+      - "tools/ou3_interval_ad.py"
+      - "tools/ou3_interval_linear_algebra.py"
+      - "tools/ou3_correlated_kalman_gain.py"
+      - "tools/ou3_p4_h18_force_magnitude_subdivision.py"
+      - "tools/ou3_p4_h18_correction_subdivision.py"
+      - "tools/ou3_p4_h18_interval_ad_word.py"
+      - "tools/ou3_p4_h18_differential_operations.py"
+      - "tools/ou3_p4_source_node_cells.py"
+      - "tools/ou3_p4_candidate_full_word.py"
+      - "tools/ou3_p5_full_h_prefix_cells.py"
+      - "tools/ou3_proof_operating_domain.json"
+      - ".github/workflows/ou3-p4-h18-force-magnitude-subdivision.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ou3-p4-h18-force-magnitude-subdivision-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  force-cell:
+    name: H18 force cell ${{ matrix.force_index }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        force_index: [0, 1, 2, 3]
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Compile source subdivision
+        run: python3 -m py_compile tools/ou3_p4_h18_force_magnitude_subdivision.py
+      - name: Run one exact source-force cell
+        run: |
+          python3 tools/ou3_p4_h18_force_magnitude_subdivision.py \
+            --source-node-index 0 \
+            --force-index ${{ matrix.force_index }} \
+            --output /tmp/ou3_p4_h18_force_${{ matrix.force_index }}.json
+      - name: Enforce union-cell scope
+        run: |
+          FORCE_INDEX='${{ matrix.force_index }}' python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          i=int(os.environ['FORCE_INDEX'])
+          d=json.loads(Path(f'/tmp/ou3_p4_h18_force_{i}.json').read_text())
+          assert d['validation_pass'], d['validation_failures']
+          assert d['outer_angle_rad'] == 0.80
+          assert d['source_node_index'] == 0
+          assert d['full_word_samples'] == 202
+          assert d['force_partition_count'] == 4
+          assert d['force_partition_index'] == i
+          assert d['force_partition_union_preserves_declared_domain'] is True
+          assert d['source_force_subdivision_is_intermediate_proof_partition_only'] is True
+          assert d['physical_state_or_source_domain_shrunk'] is False
+          assert d['filter_changed'] is False
+          assert d['P4_USABLE_CERTIFICATE_PROMOTED'] is False
+          print('force cell:', i, d['force_partition_interval_mps2'])
+          print('completed:', d['word_completed_without_correction_range_failure'])
+          print('first failure:', d['first_failure'])
+          print('maximum correction:', d['maximum_correction'])
+          print('correlated fallback:', d['correlated_gain_fallback_records'])
+          print('next:', d['next_obligation'])
+          PY
