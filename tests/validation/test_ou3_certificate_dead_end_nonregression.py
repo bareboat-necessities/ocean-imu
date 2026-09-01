@@ -50,11 +50,22 @@ class OU3CertificateDeadEndNonRegressionTests(unittest.TestCase):
             "velocity_error_norm_upper_mps": 5.0,
             "position_error_norm_upper_m": 20.0,
             "integral_displacement_error_norm_upper_m_s": 300.0,
-            "latent_acceleration_error_norm_upper_mps2": 10.0,
             "accelerometer_bias_error_norm_upper_mps2": 0.5,
         }
         for key, baseline in floors.items():
             self.assertGreaterEqual(handoff[key], baseline, key)
+
+        # The latent-acceleration startup envelope is a separately reviewed
+        # physical theorem assumption.  It was corrected from the old near-1g
+        # placeholder to 0.3g for wave startup; freeze that declared value so a
+        # later proof cannot silently shrink it further just to pass a gate.
+        expected_aw = 0.3 * s["gravity_mps2"]
+        self.assertEqual(s["latent_acceleration_error_fraction_g"], 0.3)
+        self.assertEqual(handoff["latent_acceleration_error_norm_upper_mps2"], expected_aw)
+        self.assertEqual(
+            s["latent_acceleration_error_bound_role"],
+            "DECLARED_STARTUP_WAVE_ERROR_ENVELOPE_0P3G_NOT_REPLAY_FIT_OR_PROOF_RETUNING",
+        )
 
         live = d["normal_live"]
         self.assertLessEqual(live["specific_force_norm_lower_mps2"], 5.0)
@@ -78,17 +89,12 @@ class OU3CertificateDeadEndNonRegressionTests(unittest.TestCase):
         self.assertGreater(self.path["old_worst_corner_state_count"], 0)
         self.assertFalse(self.path["usable_P4_promoted"])
 
-        # The raw tuner can live below the 0.05 MEKF sigma floor after variance
-        # readiness; the two states may never be conflated again.
         self.assertTrue(self.path["raw_tuner_sigma_subfloor_states_included"])
         self.assertLess(
             self.path["raw_tuner_sigma_partition_lower"],
             self.path["filter_sigma_floor_mps2"],
         )
         self.assertTrue(self.path["filter_sigma_floor_separate_from_tuner_state"])
-
-        # Do not regain tightness by silently assuming nearest-rounded exp/powf,
-        # a nominal-only R_S horizon, or an upper bound on commit delay.
         self.assertTrue(self.path["validated_exponential_used_for_ema"])
         self.assertTrue(self.path["arbitrary_late_commit_overapproximated"])
         self.assertTrue(self.path["RS_discrepancy_slew_horizon_covered"])

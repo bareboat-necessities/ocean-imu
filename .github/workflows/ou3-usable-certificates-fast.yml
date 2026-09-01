@@ -5,6 +5,7 @@ on:
     paths:
       - "tools/ou3_p4_source_path_reachability.py"
       - "tools/ou3_p4_operation_matched_sector_certificate.py"
+      - "tools/ou3_p4_p5_entrance_search_domain.py"
       - "tools/ou3_p4_worst_translation_cell.py"
       - "tools/ou3_p4_translation_full_word_interval.py"
       - "tools/ou3_p4_translation_full_word_interval_fast.py"
@@ -32,11 +33,13 @@ on:
       - "tests/validation/test_ou3_p5_outer_sector_capture_certificate.py"
       - "tests/validation/test_ou3_certificate_dead_end_nonregression.py"
       - "docs/ou-iii-certificate-usability-envelope.md"
+      - "docs/ou-iii-p5-sea-scaled-entrance.md"
       - ".github/workflows/ou3-usable-certificates-fast.yml"
   pull_request:
     paths:
       - "tools/ou3_p4_source_path_reachability.py"
       - "tools/ou3_p4_operation_matched_sector_certificate.py"
+      - "tools/ou3_p4_p5_entrance_search_domain.py"
       - "tools/ou3_p4_worst_translation_cell.py"
       - "tools/ou3_p4_translation_full_word_interval.py"
       - "tools/ou3_p4_translation_full_word_interval_fast.py"
@@ -64,6 +67,7 @@ on:
       - "tests/validation/test_ou3_p5_outer_sector_capture_certificate.py"
       - "tests/validation/test_ou3_certificate_dead_end_nonregression.py"
       - "docs/ou-iii-certificate-usability-envelope.md"
+      - "docs/ou-iii-p5-sea-scaled-entrance.md"
       - ".github/workflows/ou3-usable-certificates-fast.yml"
   workflow_dispatch:
 
@@ -87,6 +91,7 @@ jobs:
           python3 -m py_compile \
             tools/ou3_p4_source_path_reachability.py \
             tools/ou3_p4_operation_matched_sector_certificate.py \
+            tools/ou3_p4_p5_entrance_search_domain.py \
             tools/ou3_p4_worst_translation_cell.py \
             tools/ou3_p4_translation_full_word_interval.py \
             tools/ou3_p4_translation_full_word_interval_fast.py \
@@ -120,6 +125,11 @@ jobs:
           python3 tools/ou3_p4_source_path_reachability.py \
             --output /tmp/ou3_p2_source_path.json
 
+      - name: Emit P4/P5 entrance and search-domain certificate
+        run: |
+          python3 tools/ou3_p4_p5_entrance_search_domain.py \
+            --output /tmp/ou3_p4_p5_entrance_search.json
+
       - name: Emit rigorous reused P4 translation certificate
         run: |
           python3 tools/ou3_p4_translation_full_word_rigorous.py \
@@ -148,6 +158,7 @@ jobs:
           from pathlib import Path
 
           p2 = json.loads(Path('/tmp/ou3_p2_source_path.json').read_text())
+          entrance = json.loads(Path('/tmp/ou3_p4_p5_entrance_search.json').read_text())
           tr = json.loads(Path('/tmp/ou3_p4_translation_full_word.json').read_text())
           post = json.loads(Path('/tmp/ou3_p4_post_translation.json').read_text())
           p4 = json.loads(Path('/tmp/ou3_p4_operation_sector.json').read_text())
@@ -166,6 +177,26 @@ jobs:
           assert p2['RS_discrepancy_slew_horizon_covered'] is True
           assert p2['RS_target_full_deployed_clamp_overapprox'] is True
           assert p2['RS_target_powf_tightening_used'] is False
+
+          assert entrance['P4_P5_ENTRANCE_SEARCH_DOMAIN_CERTIFICATE'] == 'PASS'
+          assert entrance['source_generated_not_trajectory_fit'] is True
+          assert entrance['source_replay_used'] is False
+          assert entrance['filter_changed'] is False
+          assert entrance['P1_conservative_handoff_box_replaced'] is False
+          assert entrance['startup_propagation_of_entrance_assumed_without_proof'] is False
+          assert entrance['additional_sea_scaled_v_S_aw_hard_bounds_invented'] is False
+          e5 = entrance['P5_entrance']
+          assert e5['attitude_representation'] == 'SO3_GEODESIC'
+          assert e5['componentwise_euler_box_interpretation'] is False
+          assert e5['gauged_full_attitude_angle_upper_deg'] == 45.0
+          assert e5['attitude_geometry']['cayley_norm_upper'] < 1.0
+          assert e5['position_truth_error_bound'] is True
+          assert e5['position_component_abs_error_upper_Hs_factor'] == 0.5
+          assert 0.86 < e5['position_norm_upper_Hs_factor'] < 0.87
+          rows = entrance['P4_complete_word_search']['candidate_rows']
+          assert [r['angle_deg'] for r in rows] == [30.0, 25.0, 20.0, 15.0]
+          assert all(r['inside_45deg_entrance'] for r in rows)
+          assert entrance['P4_complete_word_search']['search_strategy_not_theorem_assumption'] is True
 
           assert tr['P4_COMPLETE_TRANSLATION_WORST_CELL_STATUS'] == 'PASS'
           assert tr['reused_from_PR_438'] is True
@@ -204,6 +235,12 @@ jobs:
           assert p4['P4_COMPLETE_WORD_DISSIPATION_ESTABLISHED_HERE'] is False
 
           assert p5['P5_OUTER_SECTOR_CAPTURE_CERTIFICATE'] == 'PASS'
+          assert p5['P5_entrance_is_distinct_from_P4_complete_word_sector'] is True
+          assert p5['P5_entrance_set_inside_outer_geometry_sector'] is True
+          assert p5['P1_conservative_handoff_box_replaced'] is False
+          assert p5['startup_propagation_of_entrance_assumed_without_proof'] is False
+          assert p5['declared_P5_entrance']['gauged_full_attitude_angle_upper_deg'] == 45.0
+          assert p5['declared_P5_entrance']['position_component_abs_error_upper_Hs_factor'] == 0.5
           assert p5['all_source_handoff_branches_enter_outer_sector'] is True
           assert p5['N_outer_words'] == 0
           assert p5['upper_cosine_enclosure_used_for_ungauged_inclusion'] is True
@@ -211,10 +248,14 @@ jobs:
           assert p5['branches']['timeout_ungauged']['full_heading_radius_assigned'] is False
           assert p5['legacy_microscopic_inner_seed_used_as_outer_capture_target'] is False
           assert p5['legacy_uniform_transport_route_used'] is False
+          assert p5['P5_CAPTURE_TO_NARROWER_P4_COMPLETE_WORD_CANDIDATE_ESTABLISHED_HERE'] is False
           assert p5['P5_INNER_FUNNEL_FINITE_CAPTURE_ESTABLISHED_HERE'] is False
 
           print('P2 source states:', p2['partition']['states'])
           print('P2 source edges:', p2['transition_edges'])
+          print('P5 entrance q45:', e5['attitude_geometry']['cayley_norm_upper'])
+          print('P5 entrance position norm/Hs:', e5['position_norm_upper_Hs_factor'])
+          print('P4 candidate angles deg:', [r['angle_deg'] for r in rows])
           print('P4 translation H delta:', tr['modes']['H']['complete_word_translation_margin_lower'])
           print('P4 translation A delta:', tr['modes']['A']['complete_word_translation_margin_lower'])
           print('P4 post H cross budget:', post['modes']['H']['normalized_full_state_cross_block_spectral_norm_budget_lower_open'])

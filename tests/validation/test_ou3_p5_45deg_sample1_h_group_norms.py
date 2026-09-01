@@ -1,0 +1,120 @@
+import sys
+from pathlib import Path
+import unittest
+
+ROOT=Path(__file__).resolve().parents[2]
+sys.path.insert(0,str(ROOT/'tools'))
+import ou3_p5_45deg_sample1_h_group_norms as G
+import ou3_p5_45deg_first_accel_signed_source_bound_v2 as S
+import ou3_p5_45deg_first_accel_tilt_yaw_source_bound as T
+import ou3_p5_first_accel_joint_innovation_contraction as J
+
+
+class Ou3P545DegSample1HGroupNormTests(unittest.TestCase):
+ @classmethod
+ def setUpClass(cls):
+  cls.d=G.build(source_pieces=2)
+  cls.s=S.build(source_pieces=2,tangent_cells=96)
+  cls.t=T.build(source_pieces=2,tangent_cells=96)
+  cls.j=J.build(source_pieces=2)
+
+ def test_certificate_and_semantics(self):
+  d=self.d
+  self.assertEqual(G.validate(d),[])
+  self.assertEqual(d['P5_45DEG_H_SAMPLE1_GROUP_NORM_CERTIFICATE'],'PASS')
+  self.assertEqual(d['deployed_first_live_mode'],'H')
+  self.assertTrue(d['norm_balls_not_reinterpreted_as_cartesian_cubes'])
+  self.assertTrue(d['position_componentwise_half_Hs_converted_to_sqrt3_norm'])
+  self.assertTrue(d['integrated_OU_axis_isotropy_used'])
+  self.assertFalse(d['new_hard_bounds_invented'])
+
+ def test_declared_norm_bounds_are_not_sqrt3_inflated_at_entry(self):
+  i=self.d['initial_group_norm_caps']
+  self.assertAlmostEqual(i['gyro_bias'],0.01)
+  self.assertAlmostEqual(i['velocity'],5.0)
+  self.assertAlmostEqual(i['S'],300.0)
+  self.assertAlmostEqual(i['aw'],0.3*9.80665)
+  self.assertGreater(i['position'],7.3)
+  self.assertLess(i['position'],7.4)
+
+ def test_sample1_physical_norms_improve_cube_readback(self):
+  d=self.d
+  n=d['sample1_max_group_norm_caps']; b=d['old_interval_box_max_reported_group_norms']
+  for k in ('velocity','S','aw'):
+   self.assertLess(n[k],b[k],k)
+  self.assertTrue(d['rows'])
+
+ def test_signed_first_accel_bound_strictly_improves_scalar_q8_bridge(self):
+  d=self.s
+  self.assertEqual(S.validate(d),[])
+  self.assertEqual(d['P5_45DEG_FIRST_ACCEL_SIGNED_SOURCE_BOUND'],'PASS')
+  self.assertTrue(d['strictly_improves_sign_agnostic_bridge'])
+  self.assertTrue(d['inside_q8'])
+  self.assertFalse(d['favorable_correction_direction_assumed'])
+  self.assertTrue(d['ideal_first_accel_yaw_injection_exact_zero'])
+  self.assertLess(d['signed_source_correlated_post_update_q_upper'],d['sign_agnostic_scalar_post_update_q_upper'])
+  print('SIGNED_45DEG_FIRST_ACCEL',
+        'q_pre',d['pre_update_q_upper'],
+        'q_scalar',d['sign_agnostic_scalar_post_update_q_upper'],
+        'q_signed',d['signed_source_correlated_post_update_q_upper'],
+        'factor',d['q_upper_improvement_factor'],
+        'max_d',d['max_signed_decomposition_correction_norm_upper_rad'],
+        'min_den',d['minimum_signed_composition_denominator_lower'],
+        'returned30',d['returned_to_30deg_P4_sector_here'])
+
+ def test_P1_tilt_intersection_is_only_deployed_startup_subroute(self):
+  d=self.t
+  self.assertEqual(T.validate(d),[])
+  self.assertEqual(d['P5_DEPLOYED_STARTUP_TILT_YAW_FIRST_ACCEL_SUBROUTE'],'PASS')
+  self.assertTrue(d['two_coordinate_attitude_chart_used'])
+  self.assertTrue(d['source_reachable_startup_intersection_only'])
+  self.assertTrue(d['uses_additional_P1_tilt_information'])
+  self.assertTrue(d['does_not_replace_generic_P5_45deg_route'])
+  self.assertFalse(d['generic_P5_45deg_entrance_covered_here'])
+  self.assertFalse(d['new_deployment_assumption_added'])
+  self.assertFalse(d['accelerometer_claims_yaw_contraction'])
+  self.assertLess(d['certified_gravity_tangent_q_upper'],d['full_attitude_q_upper_retained'])
+  self.assertLess(d['startup_intersection_post_update_q_upper'],d['signed_full_ball_baseline_post_update_q_upper'])
+  print('STARTUP_TILT_YAW_FIRST_ACCEL',
+        'q_full',d['full_attitude_q_upper_retained'],
+        'q_tangent',d['certified_gravity_tangent_q_upper'],
+        'q_generic_signed',d['signed_full_ball_baseline_post_update_q_upper'],
+        'q_startup',d['startup_intersection_post_update_q_upper'],
+        'factor',d['startup_intersection_improvement_factor'],
+        'generic45',d['generic_P5_45deg_entrance_covered_here'])
+
+ def test_joint_attitude_aw_current_innovation_cancellation_on_generic_45deg_entrance(self):
+  d=self.j
+  self.assertEqual(J.validate(d),[])
+  self.assertEqual(d['P5_FIRST_ACCEL_JOINT_INNOVATION_CONTRACTION'],'PASS')
+  self.assertTrue(d['generic_P5_45deg_entrance_used'])
+  self.assertFalse(d['additional_P1_tilt_bound_used'])
+  self.assertTrue(d['J_aw_orthogonality_used'])
+  self.assertTrue(d['first_theta_aw_cross_covariance_exact_zero_used'])
+  self.assertTrue(d['due_S_positive_conditional_aw_Schur_lower_used'])
+  self.assertFalse(d['held_accel_bias_falsely_contracted'])
+  self.assertFalse(d['attitude_alone_claimed_contracting'])
+  self.assertFalse(d['same_linearization_remainder_claimed_as_next_physical_residual'])
+  self.assertFalse(d['quaternion_reset_composed_here'])
+  self.assertLess(d['worst_joint_current_effective_input_remainder_factor_upper'],1.0)
+  self.assertGreater(d['minimum_cell_total_remainder_improvement_factor_lower'],1.0)
+  print('JOINT_FIRST_ACCEL_CURRENT_INPUT',
+        'gamma',d['worst_joint_current_effective_input_remainder_factor_upper'],
+        'pre',d['worst_pre_update_total_effective_input_upper_mps2'],
+        'same_linearization_remainder',d['worst_same_linearization_total_remainder_upper_mps2'],
+        'min_factor',d['minimum_cell_total_remainder_improvement_factor_lower'])
+
+ def test_no_filter_or_replay_change(self):
+  d=self.d
+  self.assertTrue(d['source_generated_not_trajectory_fit'])
+  self.assertFalse(d['source_replay_used'])
+  self.assertFalse(d['filter_changed'])
+  for s in (self.s,self.t,self.j):
+   self.assertTrue(s['source_generated_not_trajectory_fit'])
+   self.assertFalse(s['source_replay_used'])
+   self.assertFalse(s['filter_changed'])
+  self.assertFalse(self.s['deployed_correction_limit_increased'])
+  self.assertFalse(self.t['deployed_correction_limit_increased'])
+
+
+if __name__=='__main__': unittest.main()

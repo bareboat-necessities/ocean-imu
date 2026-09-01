@@ -1,0 +1,59 @@
+name: ou3-p4-aw-funnel-budget
+
+on:
+  push:
+    paths:
+      - "tools/ou3_p4_candidate_aw_capture_budget.py"
+      - "tools/ou3_p4_candidate_first_accel_range.py"
+      - "tools/ou3_p4_candidate_first_accel_range_v3.py"
+      - "tools/ou3_p4_p5_entrance_search_domain.py"
+      - "tools/ou3_proof_operating_domain.json"
+      - ".github/workflows/ou3-p4-aw-funnel-budget.yml"
+  pull_request:
+    paths:
+      - "tools/ou3_p4_candidate_aw_capture_budget.py"
+      - "tools/ou3_p4_candidate_first_accel_range.py"
+      - "tools/ou3_p4_candidate_first_accel_range_v3.py"
+      - "tools/ou3_p4_p5_entrance_search_domain.py"
+      - "tools/ou3_proof_operating_domain.json"
+      - ".github/workflows/ou3-p4-aw-funnel-budget.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ou3-p4-aw-funnel-budget-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  derive:
+    name: derive P4 a_w funnel from 6rad range
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - name: Compile budget producer
+        run: python3 -m py_compile tools/ou3_p4_candidate_aw_capture_budget.py
+      - name: Derive source-complete candidate budgets
+        run: |
+          python3 tools/ou3_p4_candidate_aw_capture_budget.py \
+            --source-pieces 2 --alignment-pieces 16 --force-magnitude-pieces 4 \
+            --output /tmp/ou3_p4_aw_funnel_budget.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/ou3_p4_aw_funnel_budget.json'))
+          assert d['validation_pass'], d['validation_failures']
+          assert d['P4_AW_FUNNEL_BUDGET_CERTIFICATE']=='PASS'
+          assert d['derived_from_shipping_6rad_range_not_assumed'] is True
+          assert d['P5_FINITE_AW_CAPTURE_ESTABLISHED_HERE'] is False
+          assert d['P4_COMPLETE_WORD_DISSIPATION_ESTABLISHED_HERE'] is False
+          assert d['P4_USABLE_CERTIFICATE_PROMOTED'] is False
+          for r in d['candidate_rows']:
+              print('P4_AW_FUNNEL',r['angle_deg'],
+                    'qpred',r['post_prediction_q_upper'],
+                    'aw',r['derived_P4_aw_error_norm_upper_mps2_lower'],
+                    'capture',r['finite_P5_aw_capture_required'],
+                    'limiting',r['limiting_child'])
+          print('next',d['next_obligation'])
+          PY
