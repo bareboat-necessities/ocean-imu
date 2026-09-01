@@ -7,11 +7,14 @@ on:
       - "tools/ou3_p4_h18_differential_operations.py"
       - "tools/ou3_p4_two_word_packet_null_lift.py"
       - "tools/ou3_p4_directional_packet_rank.py"
+      - "tools/ou3_p4_source_node_cells.py"
+      - "tools/ou3_p4_source_path_reachability.py"
       - "tools/ou3_implementation_word_language.py"
       - "tools/ou3_translational_uco_ucc.py"
-      - "tools/ou3_source_domain_contract.py"
+      - "tools/ou3_source_reachable_matrix_p3.py"
       - "tools/ou3_proof_operating_domain.json"
       - "tests/validation/test_ou3_interval_ad.py"
+      - "tests/validation/test_ou3_p4_source_node_cells.py"
       - "tests/validation/test_ou3_p4_two_word_packet_null_lift.py"
       - ".github/workflows/ou3-p4-two-word-null-lift.yml"
   pull_request:
@@ -20,11 +23,14 @@ on:
       - "tools/ou3_p4_h18_differential_operations.py"
       - "tools/ou3_p4_two_word_packet_null_lift.py"
       - "tools/ou3_p4_directional_packet_rank.py"
+      - "tools/ou3_p4_source_node_cells.py"
+      - "tools/ou3_p4_source_path_reachability.py"
       - "tools/ou3_implementation_word_language.py"
       - "tools/ou3_translational_uco_ucc.py"
-      - "tools/ou3_source_domain_contract.py"
+      - "tools/ou3_source_reachable_matrix_p3.py"
       - "tools/ou3_proof_operating_domain.json"
       - "tests/validation/test_ou3_interval_ad.py"
+      - "tests/validation/test_ou3_p4_source_node_cells.py"
       - "tests/validation/test_ou3_p4_two_word_packet_null_lift.py"
       - ".github/workflows/ou3-p4-two-word-null-lift.yml"
   workflow_dispatch:
@@ -44,20 +50,23 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - name: Compile shared AD and null-lift producer
+      - name: Compile shared source, AD and null-lift producers
         run: |
           python3 -m py_compile \
             tools/ou3_interval_ad.py \
+            tools/ou3_p4_source_node_cells.py \
             tools/ou3_p4_h18_differential_operations.py \
             tools/ou3_p4_two_word_packet_null_lift.py \
             tests/validation/test_ou3_interval_ad.py \
+            tests/validation/test_ou3_p4_source_node_cells.py \
             tests/validation/test_ou3_p4_two_word_packet_null_lift.py
 
-      - name: Run shared AD and null-lift tests
+      - name: Run shared source, AD and null-lift tests
         working-directory: tests/validation
         run: |
           python3 -m unittest -v \
             test_ou3_interval_ad \
+            test_ou3_p4_source_node_cells \
             test_ou3_p4_two_word_packet_null_lift
 
       - name: Emit source-uniform two-word null lift
@@ -73,6 +82,8 @@ jobs:
 
           d = json.loads(Path('/tmp/ou3_p4_two_word_packet_null_lift.json').read_text())
           assert d['validation_pass'], d['validation_failures']
+          assert d['exact_P2_source_node_partition_used'] is True
+          assert d['P2_source_node_count'] == 800
           assert d['packet_rank_exact'] == 5
           assert d['packet_H_active_nullity'] == 1
           assert d['packet_null_aw_per_theta_norm_lower_mps2_per_rad'] > 0.0
@@ -88,8 +99,10 @@ jobs:
           assert d['full_H18_metric_directional_credit_established_here'] is False
           assert d['P4_COMPLETE_WORD_DISSIPATION_ESTABLISHED_HERE'] is False
           assert d['P4_USABLE_CERTIFICATE_PROMOTED'] is False
+          print('P2 source nodes:', d['P2_source_node_count'])
           print('packet-null aw/theta lower:', d['packet_null_aw_per_theta_norm_lower_mps2_per_rad'])
           print('one-word gap upper:', d['one_word_gap_upper_s'])
+          print('tau lower from P2 nodes:', d['tau_aw_lower_s'])
           print('a_w survival lower:', d['aw_survival_factor_to_following_word_lower'])
           print('following-word aw/theta lower:', d['following_word_aw_per_theta_norm_lower'])
           print('four-S information lower:', d['following_word_four_S_information_gramian_lambda_min_lower'])
