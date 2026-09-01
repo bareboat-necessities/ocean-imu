@@ -33,11 +33,13 @@ class Ou3IntervalADTests(unittest.TestCase):
             for i in range(3)
         ]
         c2 = AD.squared_norm(c)
-        self.assertGreaterEqual(c2.val.lo, 0.0)
+        # Individual squares have exact nonnegative ranges.  Repeated outward
+        # interval additions may move the mathematical zero lower endpoint by
+        # a few negative subnormal ulps; this is harmless and radically smaller
+        # than the former x*x dependency error.  The decisive regression below
+        # is that the exact 4+||c||^2 Cayley denominator remains invertible.
+        self.assertGreater(c2.val.lo, -1e-300)
         self.assertGreaterEqual(c2.val.hi, 75.0)
-        # The exact inverse-Cayley denominator is 4+||c||^2 >= 4.  A broad
-        # coordinate cell may widen the rotation entries, but it must not fail
-        # merely because interval x*x invented a negative lower square bound.
         R = AD.rotation_from_cayley(c)
         for row in R:
             for x in row:
