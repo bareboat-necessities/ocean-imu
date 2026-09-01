@@ -1,0 +1,109 @@
+name: ou3-p4-operation-matched-dissipation
+
+on:
+  push:
+    paths:
+      - "tools/ou3_p4_operation_matched_joseph_ledger.py"
+      - "tools/ou3_p4_operation_matched_sector_certificate.py"
+      - "tools/ou3_p4_first_accel_sector_budget.py"
+      - "tools/ou3_p4_first_accel_aw_sigma_consistency.py"
+      - "tools/ou3_p5_effective_vector_input.py"
+      - "tools/ou3_p5_exact_correction_transport.py"
+      - "tools/ou3_p5_outer_information_geometry.py"
+      - "tools/ou3_p4_p5_entrance_search_domain.py"
+      - "tools/ou3_proof_operating_domain.json"
+      - "src/kalman_ou_iii/**"
+      - "src/kalman_ou_common/**"
+      - "tests/validation/test_ou3_p4_operation_matched_joseph_ledger.py"
+      - "docs/ou-iii-certificate-usability-envelope.md"
+      - ".github/workflows/ou3-p4-operation-matched-dissipation.yml"
+  pull_request:
+    paths:
+      - "tools/ou3_p4_operation_matched_joseph_ledger.py"
+      - "tools/ou3_p4_operation_matched_sector_certificate.py"
+      - "tools/ou3_p4_first_accel_sector_budget.py"
+      - "tools/ou3_p4_first_accel_aw_sigma_consistency.py"
+      - "tools/ou3_p5_effective_vector_input.py"
+      - "tools/ou3_p5_exact_correction_transport.py"
+      - "tools/ou3_p5_outer_information_geometry.py"
+      - "tools/ou3_p4_p5_entrance_search_domain.py"
+      - "tools/ou3_proof_operating_domain.json"
+      - "src/kalman_ou_iii/**"
+      - "src/kalman_ou_common/**"
+      - "tests/validation/test_ou3_p4_operation_matched_joseph_ledger.py"
+      - "docs/ou-iii-certificate-usability-envelope.md"
+      - ".github/workflows/ou3-p4-operation-matched-dissipation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ou3-p4-operation-matched-dissipation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  strong-route-ledger:
+    name: Operation-matched Joseph directional ledger
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Compile producer and tests
+        run: |
+          python3 -m py_compile \
+            tools/ou3_p4_operation_matched_joseph_ledger.py \
+            tests/validation/test_ou3_p4_operation_matched_joseph_ledger.py
+
+      - name: Run focused unit tests
+        working-directory: tests/validation
+        run: python3 -m unittest -v test_ou3_p4_operation_matched_joseph_ledger
+
+      - name: Emit strong-route ledger
+        run: |
+          python3 tools/ou3_p4_operation_matched_joseph_ledger.py \
+            --output /tmp/ou3_p4_operation_matched_joseph_ledger.json
+
+      - name: Enforce no-shrink and fail-closed theorem scope
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          d = json.loads(Path('/tmp/ou3_p4_operation_matched_joseph_ledger.json').read_text())
+          assert d['validation_pass'], d['validation_failures']
+          assert d['declared_P5_entrance_angle_deg'] == 45.0
+          assert d['P5_45DEG_ENTRANCE_PRESERVED'] is True
+          assert d['declared_domain_changed'] is False
+          assert d['filter_changed'] is False
+          assert d['source_replay_used'] is False
+          assert d['candidate_angle_reduction_used_for_closure'] is False
+          assert d['aw_sigma_consistency_assumption_used'] is False
+
+          # Reproduce the old obstruction, but do not use it as the new gate.
+          assert d['legacy_sector_invariance_obstruction_reproduced'] is True
+          assert d['legacy_sector_budget_distance_only'] is True
+          assert d['per_operation_sector_invariance_is_P4_promotion_gate'] is False
+
+          # Strong route: preserve source-correlated effective coordinates.
+          assert d['accelerometer_eta_absorbed_as_effective_aw_state'] is True
+          assert d['accelerometer_large_aw_error_charged_as_independent_measurement_eta'] is False
+          assert d['magnetometer_radial_eta_changes_state'] is False
+          assert d['reset_condition_number_multiplier_used'] is False
+          assert d['finite_angle_vector_pair_directional_information_vs_goLive_metric_lower'] > 0.0
+
+          # This PR closes the ledger, not the complete theorem.
+          assert d['strong_route_first_vector_packet_ledger_closed'] is True
+          assert d['P4_COMPLETE_WORD_DISSIPATION_ESTABLISHED_HERE'] is False
+          assert d['P4_USABLE_CERTIFICATE_PROMOTED'] is False
+          assert d['P5_FINITE_INNER_CAPTURE_ESTABLISHED_HERE'] is False
+
+          print('45deg entrance q:', d['declared_P5_entrance_q_upper'])
+          print('outer sector q:', d['operation_matched_outer_q_upper'])
+          print('directional pair information lower:',
+                d['finite_angle_vector_pair_directional_information_vs_goLive_metric_lower'])
+          print('conditional 25deg c diagnostic:',
+                d['conditional_25deg_consistency_constant_diagnostic'])
+          print('next:', d['next_obligation'])
+          PY
