@@ -126,7 +126,7 @@ The two plots below use the same medium PM/Stokes wave case (`H_s = 1.5 m`). The
 The corresponding attitude trace from that same generated case is also retained with the gallery:
 
 <p align="center">
-  <img src="./reports/results/readme/w3d_ou3_pmstokes_medium.svg" width="72%" alt="OU-III roll pitch and yaw tracking">
+  <img src="./reports/results/readme/w3d_ou3_pmstokes_medium.svg" width="100%" alt="OU-III roll pitch and yaw tracking">
 </p>
 
 ### Bias tracking
@@ -160,7 +160,7 @@ The validation plots summarize the full paired noisy study rather than one selec
 </table>
 
 <p align="center">
-  <img src="./reports/results/ou_validation/ou_validation_transition.svg" width="82%" alt="OU-III sea-state transition validation">
+  <img src="./reports/results/ou_validation/ou_validation_transition.svg" width="100%" alt="OU-III sea-state transition validation">
 </p>
 
 ### Directional wave spectrum
@@ -168,13 +168,13 @@ The validation plots summarize the full paired noisy study rather than one selec
 The simulator is driven by directional spectral seas, not only scalar sinusoidal heave. The existing build-generated 3-D spectrum below shows the frequency-direction energy surface for the same representative medium PM/Stokes case used by the motion plots above.
 
 <p align="center">
-  <img src="./reports/results/readme/spectrum_pmstokes_medium_3d.svg" width="72%" alt="Medium PM Stokes three-dimensional directional spectrum">
+  <img src="./reports/results/readme/spectrum_pmstokes_medium_3d.svg" width="100%" alt="Medium PM Stokes three-dimensional directional spectrum">
 </p>
 
 ### Embedded target: M5Stack AtomS3R
 
 <p align="center">
-  <img src="./img/devices/AtomS3R_device.svg" width="280" alt="M5Stack AtomS3R">
+  <img src="./img/devices/AtomS3R_device.svg" width="140" alt="M5Stack AtomS3R">
 </p>
 
 The OU-III implementation is not only a desktop simulation. The repository includes an [AtomS3R marine-INS sketch](sensors/full_marine_ins/atomS3R_ins_kalman_ou3/) that runs the adaptive SeaStateFusion OU-III estimator at 200 Hz on the M5Stack AtomS3R. Keeping the embedded target visible here matters because computational feasibility, startup behavior, calibration, heading lock, and real-time estimator integration are part of the intended marine use case, not an after-the-fact port of an offline algorithm.
