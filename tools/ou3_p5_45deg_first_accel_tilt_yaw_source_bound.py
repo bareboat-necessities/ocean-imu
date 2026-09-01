@@ -1,24 +1,27 @@
 #!/usr/bin/env python3
-"""Tilt/yaw-separated signed first-accelerometer bound for the 45 deg P5 entrance.
+"""Deployed-startup tilt/yaw subroute for the 45 deg P5 capture problem.
 
-The signed-source V2 stage preserves correction direction but still lets the
-Cayley component tangent to gravity range over the entire full-attitude 45 deg
-ball.  That is source-infeasible at first Live.  The startup/heading contract
-already certifies the gravity-direction error separately, and the exact-source
-first-accelerometer producer converts it after the first prediction into
+The generic signed-source P5 stage covers every state in the declared full
+SO(3) 45 deg entrance ball.  This producer does something deliberately
+narrower and must not be confused with that generic route: it intersects the
+same 45 deg full-attitude bound with the *additional* gravity-direction bound
+already established by P1 for source-reachable deployed startup handoffs.
+
+The exact-source first-accelerometer certificate converts that startup tilt
+information after the first prediction into
 
     ||c_tangent|| <= q_tilt,
 
-while the P5 entrance independently supplies ||c||<=q_45.  The intersection is
-a two-coordinate attitude chart: large full-angle allowance may be yaw, but the
-accelerometer-observable tangent coordinate is limited by q_tilt.
+while the full attitude still satisfies ||c||<=q_45.  The resulting two-
+coordinate chart is useful when composing P1 into P5, but it does not prove
+capture for an arbitrary abstract 45 deg P5 entrance state whose tilt could use
+the whole 45 deg allowance.
 
-This wrapper feeds that existing q_tilt into the signed/source-correlated
-first-accelerometer calculation.  It does not tighten the theorem domain, add a
-new assumption, change the filter, or claim yaw contraction from the
-accelerometer.  The full q_45 radius is retained in every Cayley composition and
-in every PSD-remainder term; only the tangent coordinate uses its already
-certified source bound.
+No new deployment assumption is introduced: q_tilt is imported from P1 through
+the source-audited exact first-Live certificate.  Nevertheless it is additional
+information relative to the standalone P5 entrance, so this producer is marked
+as a startup-source subroute and is forbidden from replacing the generic 45 deg
+P5 obligation.
 """
 from __future__ import annotations
 
@@ -32,7 +35,7 @@ import ou3_p5_45deg_first_accel_signed_source_bound as V1
 import ou3_p5_45deg_first_accel_signed_source_bound_v2 as V2
 
 DEFAULT_DOMAIN = V1.DEFAULT_DOMAIN
-SCHEMA = 2
+SCHEMA = 3
 DEFAULT_TANGENT_CELLS = 96
 
 
@@ -59,33 +62,34 @@ def build(domain_path: Path = DEFAULT_DOMAIN, *, source_pieces: int = 2,
 
     out.update({
         "schema": SCHEMA,
-        "qualification": "OU3_P5_45DEG_FIRST_ACCEL_TILT_YAW_SEPARATED_SOURCE_BOUND",
+        "qualification": "OU3_P5_DEPLOYED_STARTUP_TILT_YAW_FIRST_ACCEL_SUBROUTE",
         "full_attitude_q_upper_retained": float(out["pre_update_q_upper"]),
         "certified_gravity_tangent_q_upper": q_tilt,
-        "tangent_bound_source": "ou3_p5_first_accel_exact_source_v2.post_prediction_cayley_tangent_norm_upper",
+        "tangent_bound_source": "P1 via ou3_p5_first_accel_exact_source_v2.post_prediction_cayley_tangent_norm_upper",
         "source_tilt_cosine_lower": float(exact["post_prediction_true_gravity_cosine_lower"]),
-        "P5_full_attitude_45deg_domain_tightened": False,
-        "new_tilt_assumption_added": False,
+        "source_reachable_startup_intersection_only": True,
+        "uses_additional_P1_tilt_information": True,
+        "generic_P5_45deg_entrance_covered_here": False,
+        "does_not_replace_generic_P5_45deg_route": True,
+        "new_deployment_assumption_added": False,
         "accelerometer_claims_yaw_contraction": False,
         "two_coordinate_attitude_chart_used": True,
-        "signed_V2_post_update_q_upper": float(out["signed_source_correlated_post_update_q_upper"]),
     })
-    # The V2 output above used the patched tangent cells. Compare against the
-    # original full-ball signed bound after restoring the helper.
     baseline = V2.build(path, source_pieces=source_pieces, tangent_cells=tangent_cells)
     out["signed_full_ball_baseline_post_update_q_upper"] = float(
         baseline["signed_source_correlated_post_update_q_upper"])
-    out["tilt_yaw_post_update_q_upper"] = float(out["signed_source_correlated_post_update_q_upper"])
+    out["startup_intersection_post_update_q_upper"] = float(
+        out["signed_source_correlated_post_update_q_upper"])
     b = out["signed_full_ball_baseline_post_update_q_upper"]
-    qnew = out["tilt_yaw_post_update_q_upper"]
-    out["tilt_yaw_vs_signed_full_ball_improvement_factor"] = b / qnew if qnew > 0.0 else math.inf
-    out["strictly_improves_signed_full_ball"] = qnew < b
-    out["P5_45DEG_FIRST_ACCEL_TILT_YAW_SOURCE_BOUND"] = (
+    qnew = out["startup_intersection_post_update_q_upper"]
+    out["startup_intersection_improvement_factor"] = b / qnew if qnew > 0.0 else math.inf
+    out["strictly_improves_source_reachable_startup_subroute"] = qnew < b
+    out["P5_DEPLOYED_STARTUP_TILT_YAW_FIRST_ACCEL_SUBROUTE"] = (
         "PASS" if out.get("P5_45DEG_FIRST_ACCEL_SIGNED_SOURCE_BOUND") == "PASS"
-        and out["strictly_improves_signed_full_ball"] else "NOT_ESTABLISHED"
+        and out["strictly_improves_source_reachable_startup_subroute"] else "NOT_ESTABLISHED"
     )
     out["next_obligation"] = (
-        "propagate the tilt/yaw-separated accepted and LDLT-fallback identity children to sample1; retain the certified physical H group norms and source-correlated Joseph/reset covariance, then let the first source-reachable magnetometer packet act on the yaw coordinate before testing 30deg recapture"
+        "for deployed startup composition, propagate this P1-intersected child toward magnetic yaw correction; for the standalone generic 45deg P5 entrance, keep the full-ball signed route and preserve the joint attitude-a_w Kalman correction instead of adding the P1 tilt restriction"
     )
     return out
 
@@ -95,27 +99,36 @@ def validate(d: dict) -> list[str]:
     if d.get("schema") != SCHEMA:
         f.append("schema mismatch")
     if d.get("P5_45DEG_FIRST_ACCEL_SIGNED_SOURCE_BOUND") != "PASS":
-        f.append("underlying signed source bound did not pass")
-    for k in ("two_coordinate_attitude_chart_used", "strictly_improves_signed_full_ball"):
+        f.append("underlying generic signed source bound did not pass")
+    for k in (
+        "two_coordinate_attitude_chart_used",
+        "source_reachable_startup_intersection_only",
+        "uses_additional_P1_tilt_information",
+        "does_not_replace_generic_P5_45deg_route",
+        "strictly_improves_source_reachable_startup_subroute",
+    ):
         if d.get(k) is not True:
             f.append(f"{k} is not true")
-    for k in ("P5_full_attitude_45deg_domain_tightened", "new_tilt_assumption_added",
-              "accelerometer_claims_yaw_contraction", "source_replay_used", "filter_changed",
-              "deployed_correction_limit_increased"):
+    for k in (
+        "generic_P5_45deg_entrance_covered_here",
+        "new_deployment_assumption_added",
+        "accelerometer_claims_yaw_contraction",
+        "source_replay_used", "filter_changed", "deployed_correction_limit_increased",
+    ):
         if d.get(k) is not False:
             f.append(f"{k} is not false")
     qfull = float(d.get("full_attitude_q_upper_retained", math.inf))
     qt = float(d.get("certified_gravity_tangent_q_upper", math.inf))
     qbase = float(d.get("signed_full_ball_baseline_post_update_q_upper", math.inf))
-    qnew = float(d.get("tilt_yaw_post_update_q_upper", math.inf))
+    qnew = float(d.get("startup_intersection_post_update_q_upper", math.inf))
     ctilt = float(d.get("source_tilt_cosine_lower", -math.inf))
     if not (0.0 <= qt < qfull < 1.0):
-        f.append("tilt/full two-coordinate entrance relation invalid")
+        f.append("startup tilt/full two-coordinate relation invalid")
     if not (0.0 < ctilt <= 1.0):
         f.append("source tilt cosine is invalid")
     if not (math.isfinite(qnew) and 0.0 < qnew < qbase < 8.0):
-        f.append("tilt/yaw q bound is not a strict finite improvement")
-    if d.get("P5_45DEG_FIRST_ACCEL_TILT_YAW_SOURCE_BOUND") == "PASS" and f:
+        f.append("startup-intersection q bound is not a strict finite improvement")
+    if d.get("P5_DEPLOYED_STARTUP_TILT_YAW_FIRST_ACCEL_SUBROUTE") == "PASS" and f:
         f.append("PASS carries validation failures")
     return list(dict.fromkeys(f))
 
@@ -134,14 +147,14 @@ def main() -> int:
     x.output.parent.mkdir(parents=True, exist_ok=True)
     x.output.write_text(json.dumps(d, indent=2, sort_keys=True), encoding="utf-8")
     print(json.dumps({
-        "status": d["P5_45DEG_FIRST_ACCEL_TILT_YAW_SOURCE_BOUND"],
+        "status": d["P5_DEPLOYED_STARTUP_TILT_YAW_FIRST_ACCEL_SUBROUTE"],
         "tilt_cos": d["source_tilt_cosine_lower"],
         "q_full_pre": d["full_attitude_q_upper_retained"],
         "q_tangent_pre": d["certified_gravity_tangent_q_upper"],
-        "q_signed_full_ball": d["signed_full_ball_baseline_post_update_q_upper"],
-        "q_tilt_yaw": d["tilt_yaw_post_update_q_upper"],
-        "improvement_factor": d["tilt_yaw_vs_signed_full_ball_improvement_factor"],
-        "returned30": d["returned_to_30deg_P4_sector_here"],
+        "q_generic_signed": d["signed_full_ball_baseline_post_update_q_upper"],
+        "q_startup_intersection": d["startup_intersection_post_update_q_upper"],
+        "improvement_factor": d["startup_intersection_improvement_factor"],
+        "generic_45deg_covered": d["generic_P5_45deg_entrance_covered_here"],
         "validation_failures": vf,
         "next": d["next_obligation"],
     }, indent=2, sort_keys=True))
