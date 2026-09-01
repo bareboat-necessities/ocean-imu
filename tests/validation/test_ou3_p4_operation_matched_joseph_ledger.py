@@ -18,6 +18,7 @@ class OperationMatchedJosephLedgerTests(unittest.TestCase):
         d = self.d
         self.assertEqual(LEDGER.validate(d), [])
         self.assertTrue(d["strong_route_first_vector_packet_ledger_closed"])
+        self.assertFalse(d["full_state_directional_packet_credit_established_here"])
         self.assertFalse(d["P4_COMPLETE_WORD_DISSIPATION_ESTABLISHED_HERE"])
         self.assertFalse(d["P4_USABLE_CERTIFICATE_PROMOTED"])
         self.assertFalse(d["P5_FINITE_INNER_CAPTURE_ESTABLISHED_HERE"])
@@ -49,6 +50,7 @@ class OperationMatchedJosephLedgerTests(unittest.TestCase):
         acc = ledger["accelerometer_accepted"]
         self.assertFalse(acc["large_declared_aw_error_is_measurement_eta"])
         self.assertTrue(acc["latent_aw_rotation_is_norm_preserving"])
+        self.assertFalse(acc["instantaneous_attitude_only_credit_promoted"])
         self.assertFalse(acc["sector_invariance_required"])
         self.assertIn("z_eff", acc["effective_coordinate"])
         self.assertIn("S^-1", acc["joseph_information_change_in_effective_coordinate"])
@@ -66,14 +68,16 @@ class OperationMatchedJosephLedgerTests(unittest.TestCase):
         self.assertFalse(reset["condition_number_multiplier_used"])
         self.assertEqual(reset["remaining_nonlinear_term"], "rho=z_exact-G_ext*t")
 
-    def test_vector_pair_has_strict_directional_information(self):
-        x = self.d["finite_angle_vector_pair_directional_information_vs_goLive_metric_lower"]
+    def test_vector_pair_constant_is_only_attitude_geometry_prerequisite(self):
+        x = self.d["finite_angle_vector_pair_attitude_geometry_vs_goLive_metric_lower"]
         self.assertTrue(math.isfinite(x))
         self.assertGreater(x, 0.0)
-        self.assertTrue(self.d["finite_angle_vector_pair_directional_information_strict"])
+        self.assertTrue(self.d["finite_angle_vector_pair_attitude_geometry_strict"])
+        self.assertFalse(self.d["full_state_directional_packet_credit_established_here"])
 
-    def test_next_obligation_is_full_word_not_another_angle_search(self):
+    def test_next_obligation_is_full_state_not_another_angle_search(self):
         text = self.d["next_obligation"]
+        self.assertIn("actual full-state directional packet credit", text)
         self.assertIn("18/21-state", text)
         self.assertIn("cross block", text)
         self.assertIn("Joseph information decrease", text)
