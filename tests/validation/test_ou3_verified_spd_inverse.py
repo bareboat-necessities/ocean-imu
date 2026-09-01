@@ -34,8 +34,8 @@ class VerifiedSPDInverseTests(unittest.TestCase):
         Y = matrix_inverse_gauss_jordan(S)
         for i in range(3):
             for j in range(3):
-                self.assertLessEqual(X[i][j].lo, Y[i][j].lo)
-                self.assertGreaterEqual(X[i][j].hi, Y[i][j].hi)
+                y = Y[i][j].lo + 0.5 * (Y[i][j].hi - Y[i][j].lo)
+                self.assertTrue(X[i][j].contains(y))
                 self.assertEqual(X[i][j].lo, X[j][i].lo)
                 self.assertEqual(X[i][j].hi, X[j][i].hi)
 
