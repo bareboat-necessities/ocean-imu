@@ -12,7 +12,39 @@ import ou3_p4_operation_matched_joseph_ledger as LEDGER
 class OperationMatchedJosephLedgerTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.d = LEDGER.build()
+        # The existing first-accelerometer consistency diagnostic installs V2/V3
+        # proof backends by monkey-patching shared P5 modules.  A standalone
+        # producer process exits immediately afterwards, but unittest discovery
+        # continues in the same interpreter.  Snapshot every touched shared
+        # binding so this new early ledger consumer cannot alter later P5 tests.
+        consistency = LEDGER.CONSISTENCY
+        cls._shared = {
+            "scalar_axis_structure": consistency.RG._scalar_axis_structure,
+            "transition_and_Q": consistency.FULL._transition_and_Q,
+            "initial_covariance": consistency.FULL._initial_covariance,
+            "SIGNED": consistency.FULL.SIGNED,
+            "had_initial_covariance_original": hasattr(
+                consistency.FULL, "_initial_covariance_original"),
+            "initial_covariance_original": getattr(
+                consistency.FULL, "_initial_covariance_original", None),
+        }
+        try:
+            cls.d = LEDGER.build()
+        finally:
+            cls._restore_shared_backends()
+
+    @classmethod
+    def _restore_shared_backends(cls):
+        consistency = LEDGER.CONSISTENCY
+        consistency.RG._scalar_axis_structure = cls._shared["scalar_axis_structure"]
+        consistency.FULL._transition_and_Q = cls._shared["transition_and_Q"]
+        consistency.FULL._initial_covariance = cls._shared["initial_covariance"]
+        consistency.FULL.SIGNED = cls._shared["SIGNED"]
+        if cls._shared["had_initial_covariance_original"]:
+            consistency.FULL._initial_covariance_original = cls._shared[
+                "initial_covariance_original"]
+        elif hasattr(consistency.FULL, "_initial_covariance_original"):
+            delattr(consistency.FULL, "_initial_covariance_original")
 
     def test_ledger_validates_but_does_not_promote_complete_p4(self):
         d = self.d
@@ -32,6 +64,28 @@ class OperationMatchedJosephLedgerTests(unittest.TestCase):
         self.assertFalse(d["source_replay_used"])
         self.assertFalse(d["candidate_angle_reduction_used_for_closure"])
         self.assertFalse(d["aw_sigma_consistency_assumption_used"])
+
+    def test_route_rejects_outer_angle_mutation(self):
+        d = dict(self.d)
+        d["operation_matched_outer_angle_rad"] = math.nextafter(0.80, math.inf)
+        failures = LEDGER.validate(d)
+        self.assertIn("operation-matched outer angle is not exactly 0.80 rad", failures)
+
+    def test_ledger_build_does_not_leave_shared_p5_backends_patched(self):
+        consistency = LEDGER.CONSISTENCY
+        self.assertIs(
+            consistency.RG._scalar_axis_structure,
+            self._shared["scalar_axis_structure"],
+        )
+        self.assertIs(
+            consistency.FULL._transition_and_Q,
+            self._shared["transition_and_Q"],
+        )
+        self.assertIs(
+            consistency.FULL._initial_covariance,
+            self._shared["initial_covariance"],
+        )
+        self.assertIs(consistency.FULL.SIGNED, self._shared["SIGNED"])
 
     def test_sector_invariance_failure_is_reproduced_but_not_used_as_gate(self):
         d = self.d
