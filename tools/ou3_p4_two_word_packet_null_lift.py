@@ -72,7 +72,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     rf = RANK.validate(rank)
     trans = TRANS.build()
     tf = TRANS.validate(trans)
-    source = SOURCE.build()
+    source = SOURCE.build(SOURCE.DEFAULT_HEADER.resolve())
 
     live = domain["normal_live"]
     f_min = float(live["specific_force_norm_lower_mps2"])
