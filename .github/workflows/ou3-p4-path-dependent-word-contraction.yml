@@ -1,0 +1,115 @@
+name: ou3-p4-path-dependent-word-contraction
+
+on:
+  push:
+    paths:
+      - "tools/ou3_p4_path_dependent_word_contraction.py"
+      - "tools/ou3_p4_node_metrics.py"
+      - "tools/ou3_p4_exact_word_map.py"
+      - "tools/ou3_p4_source_path_reachability.py"
+      - "tools/ou3_p4_operation_matched_sector_certificate.py"
+      - "tools/ou3_proof_operating_domain.json"
+      - "src/kalman_ou_iii/**"
+      - "src/kalman_ou_common/**"
+      - "tests/validation/test_ou3_p4_path_dependent_word_contraction.py"
+      - "docs/ou-iii-p4-path-dependent-word-contraction.md"
+      - ".github/workflows/ou3-p4-path-dependent-word-contraction.yml"
+  pull_request:
+    paths:
+      - "tools/ou3_p4_path_dependent_word_contraction.py"
+      - "tools/ou3_p4_node_metrics.py"
+      - "tools/ou3_p4_exact_word_map.py"
+      - "tools/ou3_p4_source_path_reachability.py"
+      - "tools/ou3_p4_operation_matched_sector_certificate.py"
+      - "tools/ou3_proof_operating_domain.json"
+      - "src/kalman_ou_iii/**"
+      - "src/kalman_ou_common/**"
+      - "tests/validation/test_ou3_p4_path_dependent_word_contraction.py"
+      - "docs/ou-iii-p4-path-dependent-word-contraction.md"
+      - ".github/workflows/ou3-p4-path-dependent-word-contraction.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ou3-p4-path-dependent-word-contraction-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  route-contract:
+    name: Path-dependent whole-word contraction route
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Compile route and tests
+        run: |
+          python3 -m py_compile \
+            tools/ou3_p4_path_dependent_word_contraction.py \
+            tests/validation/test_ou3_p4_path_dependent_word_contraction.py
+
+      - name: Run focused unit tests
+        working-directory: tests/validation
+        run: python3 -m unittest -v test_ou3_p4_path_dependent_word_contraction
+
+      - name: Emit route diagnostic
+        run: |
+          python3 tools/ou3_p4_path_dependent_word_contraction.py \
+            --output /tmp/ou3_p4_path_dependent_word_contraction.json
+
+      - name: Enforce independent route and fail-closed scope
+        run: |
+          python3 - <<'PY'
+          import json
+          from decimal import Decimal
+          from pathlib import Path
+
+          d = json.loads(Path('/tmp/ou3_p4_path_dependent_word_contraction.json').read_text())
+          assert d['validation_pass'], d['validation_failures']
+          assert d['route_contract_pass'] is True
+
+          # Deployment-facing domain is unchanged.
+          assert d['P5_entrance_angle_deg'] == 45.0
+          assert d['P5_45deg_entrance_preserved'] is True
+          assert d['outer_geometry_angle_rad'] == 0.80
+          assert d['declared_domain_changed'] is False
+          assert d['filter_changed'] is False
+          assert d['source_replay_used'] is False
+
+          # This is a genuinely different complete-word route.
+          r = d['route_distinctions']
+          assert r['atomic_object'] == 'COMPLETE_SOURCE_WORD_RETURN_MAP'
+          assert r['individual_packet_rank_may_be_singular'] is True
+          assert r['per_packet_full_rank_required'] is False
+          assert r['per_operation_sector_invariance_required'] is False
+          assert r['N_times_global_lipschitz_defect_used'] is False
+          assert r['translation_nontranslation_schur_split_required'] is False
+          assert r['full_18_21_state_jacobian_test_required'] is True
+          assert r['endpoint_metric_tied_to_actual_reachable_source_node'] is True
+          assert r['arbitrary_node_rescaling_allowed'] is False
+          assert r['P3_delta_used_as_nonlinear_radius'] is False
+
+          # P3 delta remains a diagnostic only; expose how microscopic its
+          # norm-gap fallback is rather than silently using it as the new gate.
+          for mode in ('H', 'A'):
+              m = d['modes'][mode]
+              assert m['P3_delta_used_as_nonlinear_radius'] is False
+              assert m['P3_delta_used_as_whole_word_jacobian_acceptance_threshold'] is False
+              gap = Decimal(m['P3_linear_origin_contraction_gap_diagnostic']['one_minus_sqrt_one_minus_delta'])
+              assert gap > 0
+              assert gap < Decimal('1e-15')
+
+          # Future result must be a full generalized Jacobian; this route
+          # contract cannot promote itself.
+          assert d['finite_angle_acceptance']['A_mode_bias_projection_requires_generalized_jacobian'] is True
+          assert d['P4_COMPLETE_WORD_DIFFERENTIAL_CONTRACTION_ESTABLISHED_HERE'] is False
+          assert d['P4_USABLE_CERTIFICATE_PROMOTED'] is False
+          assert d['P5_FINITE_INNER_CAPTURE_ESTABLISHED_HERE'] is False
+
+          print('source graph:', d['source_graph'])
+          print('H P3 diagnostic:', d['modes']['H']['P3_linear_origin_contraction_gap_diagnostic'])
+          print('A P3 diagnostic:', d['modes']['A']['P3_linear_origin_contraction_gap_diagnostic'])
+          print('next:', d['next_obligation'])
+          PY
