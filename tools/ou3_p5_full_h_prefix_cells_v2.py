@@ -173,8 +173,23 @@ def _startup_timeout_s() -> float:
     return t
 
 
+def _base_initial_covariance():
+    """Return the source-defined V1 seed even when V2 is not globally installed."""
+    original = getattr(V1, "_initial_covariance_original", None)
+    if original is not None:
+        return original
+    current = V1._initial_covariance
+    if current is _corrected_initial_covariance:
+        raise RuntimeError(
+            "V2 initial-covariance backend is half-installed: wrapper active without original seed"
+        )
+    return current
+
+
 def _corrected_initial_covariance(src: dict, domain_path: Path):
-    Pm = V1._initial_covariance_original(src, domain_path)
+    # This function is also used directly by newer scoped proof routes.  Do not
+    # require the process-global installer merely to evaluate the corrected seed.
+    Pm = _base_initial_covariance()(src, domain_path)
     proc = PROCESS.build()["source_constants"]
     qb = float(proc["gyro_bias_rw_variance_density"])
     pb0 = V1._source_pb0()
@@ -193,7 +208,7 @@ def _install_backend() -> None:
     # Preserve the unpatched seed function exactly once so repeated build() calls
     # in one unittest process do not recurse through this wrapper.
     if not hasattr(V1, "_initial_covariance_original"):
-        V1._initial_covariance_original = V1._initial_covariance
+        V1._initial_covariance_original = _base_initial_covariance()
     V1._transition_and_Q = _tight_transition_and_Q
     V1._initial_covariance = _corrected_initial_covariance
 
