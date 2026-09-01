@@ -23,6 +23,11 @@ class TwoWordPacketNullLiftTests(unittest.TestCase):
         self.assertGreater(self.d["aw_survival_factor_to_following_word_lower"], 0.0)
         self.assertGreater(self.d["following_word_aw_per_theta_norm_lower"], 0.0)
         self.assertGreater(self.d["following_word_four_S_information_gramian_lambda_min_lower"], 0.0)
+        self.assertGreater(self.d["packet_null_following_word_raw_information_per_theta2_lower"], 0.0)
+        self.assertEqual(
+            self.d["packet_null_following_word_raw_information_bound_formula"],
+            "lambda_min(G_S)*(a_w_next/theta)^2",
+        )
         self.assertFalse(self.d["raw_coordinate_product_is_final_P4_metric_margin"])
         self.assertFalse(self.d["full_H18_metric_directional_credit_established_here"])
         self.assertFalse(self.d["P4_USABLE_CERTIFICATE_PROMOTED"])
@@ -34,6 +39,16 @@ class TwoWordPacketNullLiftTests(unittest.TestCase):
             0.5 - 1e-15,
         )
         self.assertEqual(self.d["following_word_four_S_firing_count"], 4)
+
+    def test_raw_information_credit_is_derived_from_existing_four_S_gramian(self):
+        expected = (
+            self.d["following_word_four_S_information_gramian_lambda_min_lower"]
+            * self.d["following_word_aw_per_theta_norm_lower"] ** 2
+        )
+        actual = self.d["packet_null_following_word_raw_information_per_theta2_lower"]
+        self.assertGreater(actual, 0.0)
+        self.assertLessEqual(actual, expected)
+        self.assertGreater(actual, expected * (1.0 - 1e-12))
 
     def test_next_step_is_metric_pullback_not_new_domain_assumption(self):
         text = self.d["next_obligation"]
