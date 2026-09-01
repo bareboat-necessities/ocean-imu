@@ -29,8 +29,10 @@ class H18SourceNodeScreenTests(unittest.TestCase):
 
     def test_source_node_preserves_raw_vs_filter_sigma_distinction(self):
         n = self.d["P2_source_node"]
-        self.assertLess(n["sigma_tuner_raw_mps2"][0], self.d["P2_source_node"]["sigma_filter_committed_mps2"][0])
-        self.assertGreaterEqual(n["sigma_filter_committed_mps2"][0], 0.05)
+        self.assertLess(n["sigma_tuner_raw_mps2"][0], n["sigma_filter_committed_mps2"][0])
+        lo, hi = n["sigma_filter_committed_mps2"]
+        self.assertLessEqual(lo, 0.05)
+        self.assertGreaterEqual(hi, 0.05)
 
 
 if __name__ == "__main__":
