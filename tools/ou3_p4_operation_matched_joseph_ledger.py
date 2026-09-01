@@ -63,13 +63,16 @@ import ou3_p5_outer_information_geometry as OUTINFO
 REPO = Path(__file__).resolve().parents[1]
 DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
 SCHEMA = 2
+ROUTE_OUTER_ANGLE_RAD = 0.80
 
 
 def down(x: float) -> float:
+    """Round a scalar downward by one representable binary64 value."""
     return math.nextafter(float(x), -math.inf)
 
 
 def _strict_attitude_geometry_lower(outinfo: dict) -> float:
+    """Return a strict lower bound over all finite-angle attitude nodes."""
     vals = [
         float(row["exact_pair_residual_information_vs_goLive_attitude_metric_lower"])
         for row in outinfo["nodes"].values()
@@ -78,6 +81,7 @@ def _strict_attitude_geometry_lower(outinfo: dict) -> float:
 
 
 def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
+    """Build the source-bound operation ledger without promoting P4/P5."""
     path = Path(domain_path).resolve()
     domain = json.loads(path.read_text(encoding="utf-8"))
     if domain.get("trajectory_fit") is not False:
@@ -106,6 +110,8 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
 
     if entrance_deg != 45.0:
         failures.append("declared P5 entrance was shrunk from 45 deg")
+    if outer_rad != ROUTE_OUTER_ANGLE_RAD:
+        failures.append("operation-matched route outer angle is not exactly 0.80 rad")
     if consistency.get("aw_sigma_consistency_declared_in_domain") is not False:
         failures.append("strong route imported an a_w/sigma coupling assumption")
 
@@ -197,6 +203,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "declared_domain_changed": False,
         "declared_P5_entrance_angle_deg": entrance_deg,
         "declared_P5_entrance_q_upper": entrance_q,
+        "route_outer_angle_contract_rad": ROUTE_OUTER_ANGLE_RAD,
         "operation_matched_outer_angle_rad": outer_rad,
         "operation_matched_outer_q_upper": outer_q,
         "P5_45DEG_ENTRANCE_PRESERVED": entrance_deg == 45.0,
@@ -235,6 +242,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
 
 
 def validate(d: dict) -> list[str]:
+    """Validate the ledger and reject any premature theorem promotion."""
     f = list(d.get("failures", []))
     if d.get("schema") != SCHEMA:
         f.append("schema mismatch")
@@ -272,6 +280,10 @@ def validate(d: dict) -> list[str]:
             f.append(f"{key} is not false")
     if float(d.get("declared_P5_entrance_angle_deg", 0.0)) != 45.0:
         f.append("P5 entrance is not 45 deg")
+    if d.get("route_outer_angle_contract_rad") != ROUTE_OUTER_ANGLE_RAD:
+        f.append("route outer-angle contract is not exactly 0.80 rad")
+    if d.get("operation_matched_outer_angle_rad") != ROUTE_OUTER_ANGLE_RAD:
+        f.append("operation-matched outer angle is not exactly 0.80 rad")
     if d.get("directional_packet_rank_exact") != 5:
         f.append("directional vector packet rank is not five")
     x = d.get("finite_angle_vector_pair_attitude_geometry_vs_goLive_metric_lower")
@@ -300,6 +312,7 @@ def validate(d: dict) -> list[str]:
 
 
 def main() -> int:
+    """Emit the JSON ledger and return nonzero on contract failure."""
     ap = argparse.ArgumentParser()
     ap.add_argument("--domain", type=Path, default=DEFAULT_DOMAIN)
     ap.add_argument("--output", type=Path, required=True)
