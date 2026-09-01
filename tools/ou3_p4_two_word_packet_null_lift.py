@@ -74,6 +74,10 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     h_active_nullity = int(rank["modes"]["H"]["stacked_vector_packet_nullity_exact_on_active_block"])
     trans = TRANS.build()
     tf = TRANS.validate(trans)
+    # P2 source nodes are intentionally compiled-source dependent.  They encode
+    # the shipping tuner/filter partition from C++ constants and source schedule;
+    # an alternate JSON proof domain may tighten theorem state/geometry bounds
+    # but must not silently remap the deployed source machine.
     source_nodes = SOURCE_NODES.build()
     nf = SOURCE_NODES.validate(source_nodes)
 
@@ -132,6 +136,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "source_generated_not_trajectory_fit": True,
         "source_replay_used": False,
         "filter_changed": False,
+        "source_node_partition_is_compiled_shipping_source_invariant": True,
         "shared_H18_differential_operations_used": True,
         "exact_P2_source_node_partition_used": True,
         "P2_source_node_count": source_nodes["partition"]["states"],
@@ -177,6 +182,7 @@ def validate(d: dict) -> list[str]:
         f.append("wrong qualification")
     for key in (
         "source_generated_not_trajectory_fit",
+        "source_node_partition_is_compiled_shipping_source_invariant",
         "shared_H18_differential_operations_used",
         "exact_P2_source_node_partition_used",
         "shared_H_a_aw_identity_verified",
@@ -211,8 +217,15 @@ def validate(d: dict) -> list[str]:
         "packet_null_following_word_raw_information_per_theta2_lower",
     ):
         x = d.get(key)
-        if not isinstance(x, (int, float)) or not math.isfinite(float(x)) or float(x) <= 0.0:
+        if isinstance(x, bool) or not isinstance(x, (int, float)) or not math.isfinite(float(x)) or float(x) <= 0.0:
             f.append(f"{key} is not finite positive")
+    lam = d.get("following_word_four_S_information_gramian_lambda_min_lower")
+    aw = d.get("following_word_aw_per_theta_norm_lower")
+    raw = d.get("packet_null_following_word_raw_information_per_theta2_lower")
+    if all(isinstance(x, (int, float)) and not isinstance(x, bool) and math.isfinite(float(x)) for x in (lam, aw, raw)):
+        expected_raw_info = math.nextafter(float(lam) * float(aw) * float(aw), -math.inf)
+        if float(raw) > expected_raw_info:
+            f.append("raw packet-null information exceeds its declared product bound")
     if d.get("following_word_four_S_firing_count") != 4:
         f.append("following word is not the complete four-S observation")
     if d.get("packet_null_following_word_raw_information_bound_formula") != "lambda_min(G_S)*(a_w_next/theta)^2":
