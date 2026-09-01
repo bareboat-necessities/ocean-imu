@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - "tools/ou3_p4_operation_matched_joseph_ledger.py"
+      - "tools/ou3_p4_directional_packet_rank.py"
       - "tools/ou3_p4_operation_matched_sector_certificate.py"
       - "tools/ou3_p4_first_accel_sector_budget.py"
       - "tools/ou3_p4_first_accel_aw_sigma_consistency.py"
@@ -15,6 +16,7 @@ on:
       - "src/kalman_ou_iii/**"
       - "src/kalman_ou_common/**"
       - "tests/validation/test_ou3_p4_operation_matched_joseph_ledger.py"
+      - "tests/validation/test_ou3_p4_directional_packet_rank.py"
       - "tests/validation/Makefile"
       - "docs/ou-iii-certificate-usability-envelope.md"
       - "docs/ou-iii-operation-matched-joseph-ledger.md"
@@ -22,6 +24,7 @@ on:
   pull_request:
     paths:
       - "tools/ou3_p4_operation_matched_joseph_ledger.py"
+      - "tools/ou3_p4_directional_packet_rank.py"
       - "tools/ou3_p4_operation_matched_sector_certificate.py"
       - "tools/ou3_p4_first_accel_sector_budget.py"
       - "tools/ou3_p4_first_accel_aw_sigma_consistency.py"
@@ -33,6 +36,7 @@ on:
       - "src/kalman_ou_iii/**"
       - "src/kalman_ou_common/**"
       - "tests/validation/test_ou3_p4_operation_matched_joseph_ledger.py"
+      - "tests/validation/test_ou3_p4_directional_packet_rank.py"
       - "tests/validation/Makefile"
       - "docs/ou-iii-certificate-usability-envelope.md"
       - "docs/ou-iii-operation-matched-joseph-ledger.md"
@@ -54,28 +58,53 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - name: Compile producer and tests
+      - name: Compile producers and tests
         run: |
           python3 -m py_compile \
             tools/ou3_p4_operation_matched_joseph_ledger.py \
-            tests/validation/test_ou3_p4_operation_matched_joseph_ledger.py
+            tools/ou3_p4_directional_packet_rank.py \
+            tests/validation/test_ou3_p4_operation_matched_joseph_ledger.py \
+            tests/validation/test_ou3_p4_directional_packet_rank.py
 
       - name: Run focused unit tests
         working-directory: tests/validation
-        run: python3 -m unittest -v test_ou3_p4_operation_matched_joseph_ledger
+        run: |
+          python3 -m unittest -v \
+            test_ou3_p4_directional_packet_rank \
+            test_ou3_p4_operation_matched_joseph_ledger
+
+      - name: Emit directional packet rank certificate
+        run: |
+          python3 tools/ou3_p4_directional_packet_rank.py \
+            --output /tmp/ou3_p4_directional_packet_rank.json
 
       - name: Emit strong-route ledger
         run: |
           python3 tools/ou3_p4_operation_matched_joseph_ledger.py \
             --output /tmp/ou3_p4_operation_matched_joseph_ledger.json
 
-      - name: Enforce no-shrink and fail-closed theorem scope
+      - name: Enforce directional rank, no-shrink and fail-closed theorem scope
         run: |
           python3 - <<'PY'
           import json
           from pathlib import Path
 
+          rank = json.loads(Path('/tmp/ou3_p4_directional_packet_rank.json').read_text())
           d = json.loads(Path('/tmp/ou3_p4_operation_matched_joseph_ledger.json').read_text())
+
+          assert rank['validation_pass'], rank['validation_failures']
+          assert rank['measurement_structure']['accelerometer_rank_exact'] == 3
+          assert rank['measurement_structure']['magnetometer_rank_exact'] == 2
+          assert rank['measurement_structure']['stacked_vector_packet_rank_exact'] == 5
+          assert rank['modes']['H']['stacked_vector_packet_nullity_exact_on_active_block'] == 1
+          assert rank['modes']['A']['stacked_vector_packet_nullity_exact_on_active_block'] == 4
+          assert rank['instantaneous_full_state_measurement_information_positive_definite_possible'] is False
+          assert rank['instantaneous_positive_scalar_full_state_packet_margin_is_valid_target'] is False
+          assert rank['directional_PSD_operation_credit_required'] is True
+          assert rank['word_level_directional_accumulation_required'] is True
+          assert rank['P4_COMPLETE_WORD_DISSIPATION_ESTABLISHED_HERE'] is False
+          assert rank['P4_USABLE_CERTIFICATE_PROMOTED'] is False
+
           assert d['validation_pass'], d['validation_failures']
           assert d['declared_P5_entrance_angle_deg'] == 45.0
           assert d['P5_45DEG_ENTRANCE_PRESERVED'] is True
@@ -96,25 +125,28 @@ jobs:
           assert d['magnetometer_radial_eta_changes_state'] is False
           assert d['reset_condition_number_multiplier_used'] is False
 
-          # The existing vector-pair constant is an attitude-geometry
-          # prerequisite, not yet a full-state Joseph credit.
+          # Existing positive vector constant is attitude geometry only.  The
+          # exact rank theorem explains why a scalar full-state packet margin
+          # cannot be promoted at this point.
           assert d['finite_angle_vector_pair_attitude_geometry_vs_goLive_metric_lower'] > 0.0
           assert d['finite_angle_vector_pair_attitude_geometry_strict'] is True
           assert d['full_state_directional_packet_credit_established_here'] is False
 
-          # This PR closes the ledger, not the complete theorem.
+          # This PR closes the calculus/rank obligations, not the complete word.
           assert d['strong_route_first_vector_packet_ledger_closed'] is True
           assert d['P4_COMPLETE_WORD_DISSIPATION_ESTABLISHED_HERE'] is False
           assert d['P4_USABLE_CERTIFICATE_PROMOTED'] is False
           assert d['P5_FINITE_INNER_CAPTURE_ESTABLISHED_HERE'] is False
 
+          print('vector packet exact rank:', rank['measurement_structure']['stacked_vector_packet_rank_exact'])
+          print('H/A active nullity:',
+                rank['modes']['H']['stacked_vector_packet_nullity_exact_on_active_block'],
+                rank['modes']['A']['stacked_vector_packet_nullity_exact_on_active_block'])
           print('45deg entrance q:', d['declared_P5_entrance_q_upper'])
           print('outer sector q:', d['operation_matched_outer_q_upper'])
           print('attitude geometry lower:',
                 d['finite_angle_vector_pair_attitude_geometry_vs_goLive_metric_lower'])
-          print('full-state directional credit established:',
-                d['full_state_directional_packet_credit_established_here'])
           print('conditional 25deg c diagnostic:',
                 d['conditional_25deg_consistency_constant_diagnostic'])
-          print('next:', d['next_obligation'])
+          print('next:', rank['next_obligation'])
           PY
