@@ -19,28 +19,27 @@ The same residual also has the algebraically equivalent representation
 
 Both interval evaluations enclose the same exact B, so their entrywise
 intersection is rigorous and often preserves important P/H correlations before
-scalarization.  Since S >= R and R has a certified positive eigenvalue lower
-r_min, every row obeys
+scalarization.
 
-    ||(K-K0)_i||_2 <= ||B_i||_2 / r_min.
+The spectral row bounds used below require the *exact source covariance family*
+to satisfy P >= 0.  That premise is not inferred from a Cartesian interval box:
+callers must explicitly certify it from the source covariance construction.  On
+that certified family S=H P H^T+R >= R and K S K^T <= P, hence
 
-Also, ``K S K^T <= P`` implies the independent row bound
+    ||(K-K0)_i||_2 <= ||B_i||_2 / lambda_min(R),
+    ||K_i||_2       <= sqrt(P_ii / lambda_min(R)).
 
-    ||K_i||_2 <= sqrt(P_ii / r_min).
-
-The two rigorous row enclosures are intersected.  A caller performing a
-branch-and-bound may additionally supply an innovation subcell ``S_condition``;
-the returned gain is then a conditional enclosure valid for every exact source
-tuple whose innovation covariance lies in that subcell.  The caller must cover
-all admissible innovation subcells before using the union as theorem evidence.
+A caller performing branch-and-bound may additionally supply an innovation
+subcell ``S_condition``.  The result is conditional on exact source tuples whose
+innovation covariance lies in that subcell; all admissible subcells must be
+covered before theorem promotion.
 
 For Joseph-information consumers, the exact identity
 
     H K = I - R S^-1
 
-also gives ``S^-1 = R^-1 (I-HK)`` from the same rigorous K enclosure.  This is
-useful to #449 while the K enclosure itself is useful to #450's state-return
-map.  No filter parameter or theorem-domain bound is changed here.
+also gives ``S^-1 = R^-1 (I-HK)`` from the same rigorous K enclosure.  No filter
+parameter or theorem-domain bound is changed here.
 """
 from __future__ import annotations
 
@@ -94,11 +93,11 @@ def _matrix_intersection(A, B) -> IntervalMatrix:
 
 
 def _row_norm_upper(row: Sequence[Interval]) -> float:
-    s = 0.0
+    total = 0.0
     for x in row:
         a = x.abs_upper()
-        s = up(s + up(a * a))
-    return up(math.sqrt(s))
+        total = up(total + up(a * a))
+    return up(math.sqrt(total))
 
 
 def _point_gain_from_PHt_S(PHt, S) -> list[list[float]]:
@@ -110,18 +109,22 @@ def _point_gain_from_PHt_S(PHt, S) -> list[list[float]]:
     return [[_mid(x) for x in row] for row in K0box]
 
 
-def gain_enclosure(P, H, R, *, S_condition=None) -> dict:
+def gain_enclosure(P, H, R, *, S_condition=None, P_psd_certified: bool = False) -> dict:
     """Enclose K=P H^T S^-1 through its correlated gain equation.
 
-    When ``S_condition`` is supplied, the result is conditional on the exact
-    innovation covariance lying in that subcell.  The subcell must itself be
-    contained in the unconditional interval innovation box.
+    ``P_psd_certified`` must be true only when the caller has a source-level
+    proof that every exact covariance represented by ``P`` is positive
+    semidefinite.  An interval hull that itself contains indefinite matrices is
+    allowed; the premise concerns the exact source family, not every Cartesian
+    selection from the hull.
     """
     n, np = shape(P)
     m, hn = shape(H)
     rm, rp = shape(R)
     if n != np or hn != n or rm != rp or rm != m:
         raise ValueError("P/H/R dimensions are inconsistent")
+    if P_psd_certified is not True:
+        raise CorrelatedGainFailure("source covariance PSD certificate is required")
 
     r_min = symmetric_gershgorin_lower(R)
     if not (math.isfinite(r_min) and r_min > 0.0):
@@ -169,6 +172,9 @@ def gain_enclosure(P, H, R, *, S_condition=None) -> dict:
         "S": S,
         "S_unconditional": S_full,
         "innovation_condition_used": S_condition is not None,
+        "source_P_PSD_certified": True,
+        "S_ge_R_premise_from_P_PSD": True,
+        "KSKt_le_P_premise_from_P_PSD": True,
         "residual_direct": b_direct,
         "residual_factored": b_factored,
         "residual_intersection": B,
