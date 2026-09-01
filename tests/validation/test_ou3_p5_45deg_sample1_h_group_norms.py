@@ -33,7 +33,7 @@ class Ou3P545DegSample1HGroupNormTests(unittest.TestCase):
   self.assertAlmostEqual(i['gyro_bias'],0.01)
   self.assertAlmostEqual(i['velocity'],5.0)
   self.assertAlmostEqual(i['S'],300.0)
-  self.assertAlmostEqual(i['aw'],10.0)
+  self.assertAlmostEqual(i['aw'],0.3*9.80665)
   self.assertGreater(i['position'],7.3)
   self.assertLess(i['position'],7.4)
 
