@@ -25,10 +25,12 @@ left to the next source-correlated numerical stage.
 from __future__ import annotations
 
 import argparse
+import functools
 import json
 import math
 from pathlib import Path
 
+import ou3_source_domain_contract as SOURCE
 import ou3_p5_first_accel_exact_source_v2 as EXACT
 import ou3_p5_first_accel_rotation_gauge as RG
 import ou3_p5_full_h_prefix_cells as FULL
@@ -38,6 +40,20 @@ import ou3_p5_45deg_first_accel_signed_source_bound_v2 as V2
 DEFAULT_DOMAIN = V1.DEFAULT_DOMAIN
 SCHEMA = 3
 DEFAULT_TANGENT_CELLS = 96
+
+
+@functools.lru_cache(maxsize=1)
+def _deployed_prediction_dt_s() -> float:
+    """Return the deployed IMU prediction step with binary32 semantics.
+
+    ``FREQ_SMOOTHER_DT`` is ``constexpr float 1.0f / 200.0f``, so the shipping
+    cadence is the binary32 neighbour 0.004999999888241291 s, not the binary64
+    spelling of the decimal 0.005.  Reading it back from the header is what
+    makes this a check on the deployed constant rather than on a literal
+    retyped here.
+    """
+    text = SOURCE.DEFAULT_HEADER.read_text(encoding="utf-8")
+    return SOURCE.parse_const(text, "FREQ_SMOOTHER_DT")
 
 
 def build(domain_path: Path = DEFAULT_DOMAIN, *, source_pieces: int = 2,
@@ -159,11 +175,14 @@ def validate(d: dict) -> list[str]:
     if not (math.isfinite(factor) and factor > 1.0):
         f.append("startup sample1 improvement factor is not strict")
     dt = float(d.get("next_prediction_dt_s", -1.0))
-    # FULL._source_cell() deliberately carries outward-rounded source literals.
-    # Accept that certified enclosure instead of requiring exactly one binary64
-    # ULP around the decimal spelling 0.005.  Four ULPs is still <4e-18 s and
-    # cannot hide a different deployed cadence.
-    if not math.isclose(dt, 0.005, rel_tol=0.0, abs_tol=4.0 * math.ulp(0.005)):
+    # Compare against the deployed binary32 constant, not the binary64 spelling
+    # of 0.005: FREQ_SMOOTHER_DT is 1.0f/200.0f, which rounds to
+    # 0.004999999888241291 s, some 1.1e-10 s below the decimal value.  The
+    # adjacent binary32 cadences are 4.7e-10 s away, so a few binary64 ULPs of
+    # slack around the parsed constant still cannot hide a different cadence.
+    dt_deployed = _deployed_prediction_dt_s()
+    if not math.isclose(dt, dt_deployed, rel_tol=0.0,
+                        abs_tol=4.0 * math.ulp(dt_deployed)):
         f.append("next prediction step is not the deployed 5 ms interval")
     if d.get("P5_DEPLOYED_STARTUP_TILT_YAW_FIRST_ACCEL_SUBROUTE") == "PASS" and f:
         f.append("PASS carries validation failures")

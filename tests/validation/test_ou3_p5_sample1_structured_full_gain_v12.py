@@ -12,8 +12,8 @@ import ou3_p5_sample1_structured_full_gain_v12 as V12
 class StructuredFullGainV12Tests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        # Semantic/fail-closed fixture only.  V10 is intentionally not expected
-        # to close on this 4^3 grid; the workflow's 24^3 emitter is authoritative.
+        # Semantic/fail-closed fixture only; the workflow's 24^3 emitter is
+        # the authoritative V12 certificate.
         cls.d=V12.build(source_pieces=4,source_cell_index=0,p_pieces=4,tangent_pieces=4,axial_pieces=4)
 
     def test_interval_ldlt_lambda_lower_on_diagonal_spd(self):
@@ -24,10 +24,16 @@ class StructuredFullGainV12Tests(unittest.TestCase):
         self.assertGreater(lam,1.999999999999)
         self.assertLessEqual(lam,2.0)
 
-    def test_validate_fail_closed_coarse_prerequisite(self):
+    def test_validate_fail_closed_on_the_coarse_grid(self):
+        # V10 now closes on this coarse grid, so no prerequisite failure is
+        # raised here; V12's own joint cells still do not close on 4^3, and the
+        # certificate has to stay NOT_ESTABLISHED with a recorded witness
+        # instead of inheriting the parent's PASS.
         failures=V12.validate(self.d)
-        self.assertEqual(failures,["V10 prerequisite did not pass"])
+        self.assertEqual(failures,[])
         self.assertEqual(self.d["P5_SAMPLE1_PSD_S_ACTUAL_INNOVATION_V12"],"NOT_ESTABLISHED")
+        self.assertGreater(self.d["unclosed_joint_cells"],0)
+        self.assertIsNotNone(self.d["first_unclosed_joint_cell"])
 
     def test_actual_nominal_innovation_replaces_noise_only_floor(self):
         self.assertIs(self.d["actual_nominal_innovation_lambda_certified_by_interval_LDLT"],True)
