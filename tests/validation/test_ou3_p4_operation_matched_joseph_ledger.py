@@ -14,12 +14,6 @@ from ou3_proof_module_state import preserve_module_bindings
 class OperationMatchedJosephLedgerTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        # The first-accelerometer consistency diagnostic invokes historical
-        # V2/V3 proof backends that intentionally rebind process-global module
-        # functions.  The standalone producers normally exit immediately, but
-        # unittest discovery continues in one interpreter.  Use the same broad
-        # module-state scope shared with the parallel #450 route rather than a
-        # brittle list of individual monkey patches.
         consistency = LEDGER.CONSISTENCY
         cls._shared = {
             "scalar_axis_structure": consistency.RG._scalar_axis_structure,
@@ -59,18 +53,9 @@ class OperationMatchedJosephLedgerTests(unittest.TestCase):
 
     def test_ledger_build_does_not_leave_shared_p5_backends_patched(self):
         consistency = LEDGER.CONSISTENCY
-        self.assertIs(
-            consistency.RG._scalar_axis_structure,
-            self._shared["scalar_axis_structure"],
-        )
-        self.assertIs(
-            consistency.FULL._transition_and_Q,
-            self._shared["transition_and_Q"],
-        )
-        self.assertIs(
-            consistency.FULL._initial_covariance,
-            self._shared["initial_covariance"],
-        )
+        self.assertIs(consistency.RG._scalar_axis_structure, self._shared["scalar_axis_structure"])
+        self.assertIs(consistency.FULL._transition_and_Q, self._shared["transition_and_Q"])
+        self.assertIs(consistency.FULL._initial_covariance, self._shared["initial_covariance"])
         self.assertIs(consistency.FULL.SIGNED, self._shared["SIGNED"])
         self.assertEqual(
             hasattr(consistency.FULL, "_initial_covariance_original"),
@@ -131,6 +116,26 @@ class OperationMatchedJosephLedgerTests(unittest.TestCase):
         rows["magnetometer_accepted"]["radial_eta_independent_penalty_used"] = True
         self.assertIn(
             "magnetometer ledger reintroduced an independent radial eta penalty",
+            LEDGER.validate(d),
+        )
+
+    def test_validator_requires_exact_five_operation_rows(self):
+        required = [row["operation"] for row in self.d["operation_ledger"]]
+        self.assertEqual(len(required), 5)
+        for operation in required:
+            d = copy.deepcopy(self.d)
+            d["operation_ledger"] = [
+                row for row in d["operation_ledger"] if row["operation"] != operation
+            ]
+            self.assertIn(
+                "operation ledger does not contain the exact required operation set",
+                LEDGER.validate(d),
+                operation,
+            )
+        d = copy.deepcopy(self.d)
+        d["operation_ledger"].append(copy.deepcopy(d["operation_ledger"][0]))
+        self.assertIn(
+            "operation ledger does not contain the exact required operation set",
             LEDGER.validate(d),
         )
 
