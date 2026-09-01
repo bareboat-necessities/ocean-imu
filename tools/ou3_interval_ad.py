@@ -333,6 +333,15 @@ def deployed_correct_cayley(c: Sequence[AD], d: Sequence[AD]) -> list[AD]:
     return [constant(2.0, n) * x / W for x in V]
 
 
+def deployed_correct_cayley_right(c: Sequence[AD], d: Sequence[AD]) -> list[AD]:
+    """Cayley coordinates of R(c) Q(d), using the same deployed quaternion.
+
+    (R(c) Q(d))^-1 = Q(-d) R(-c). Quaternion normalization cancels
+    on both sides, including the source polynomial branch.
+    """
+    return [-x for x in deployed_correct_cayley([-x for x in c], [-x for x in d])]
+
+
 def jacobian(y: Sequence[AD]) -> list[list[Interval]]:
     """Extract the outward interval Jacobian of an AD output vector."""
     if not y:

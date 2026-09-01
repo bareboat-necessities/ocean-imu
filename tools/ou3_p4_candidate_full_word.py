@@ -234,20 +234,21 @@ def _predict_error(mode: str, e, F, ba_cap):
     return out, ba_cap
 
 
-def _H_acc(mode: str, domain: dict):
-    M = H._H_acc(domain)
+def _H_acc(mode: str, domain: dict, force_norm_upper=None):
+    M = H._H_acc(domain, force_norm_upper)
     if mode == "A":
         for ax, i in enumerate(H.BA):
             M[ax][i] = I(1.0)
     return M
 
 
-def _acc_residual(mode: str, e, c, domain: dict, q_hi: float):
+def _acc_residual(mode: str, e, c, domain: dict, q_hi: float, force_norm_upper=None):
     if mode == "H":
-        return H._acc_residual(e, c, domain, q_hi)
-    M = _H_acc(mode, domain)
-    fhi = float(domain["normal_live"]["specific_force_norm_upper_mps2"])
-    aw_hi = max(e[i].abs_upper() for i in H.AW)
+        return H._acc_residual(e, c, domain, q_hi, force_norm_upper)
+    M = _H_acc(mode, domain, force_norm_upper)
+    fhi = (float(domain["normal_live"]["specific_force_norm_upper_mps2"])
+           if force_norm_upper is None else float(force_norm_upper))
+    aw_hi = H._norm_upper([e[i] for i in H.AW])
     eta = up(
         H.VEFF.accel_attitude_eta_per_vector_norm_upper(q_hi) * fhi
         + H.VEFF.accel_latent_cross_gain_upper(q_hi) * aw_hi
@@ -284,6 +285,7 @@ def _run_cell(mode: str, domain_path: Path, domain: dict, cbox, candidate_q: flo
     F, Q, Rstep, ba_process = _transition_and_Q(mode, src, domain)
     Pm = _initial_covariance(mode, src, domain_path)
     e, ba_cap, position = _initial_error(mode, domain)
+    xhat = [I(0.0) for _ in range(H.N)]
     c = [Interval(a, b) for a, b in cbox]
     h = float(src["dt_s"])
     Tword = float(domain["normal_live"]["vector_pe_recurrence_window_s"])
@@ -305,16 +307,19 @@ def _run_cell(mode: str, domain_path: Path, domain: dict, cbox, candidate_q: flo
         try:
             Pm = H._psd_tighten(H.matrix_add(H.matrix_mul(H.matrix_mul(F, Pm), H.matrix_transpose(F)), Q))
             e, ba_cap = _predict_error(mode, e, F, ba_cap)
-            c = H._predict_c(c, Rstep, domain, h)
+            xhat = H._predict_estimator_mean(xhat, F)
+            c = H._predict_c(c, Rstep, domain, h, [e[i] for i in H.BG])
             qnow = H._norm_upper(c)
             max_q = max(max_q, qnow)
             if not qnow < outer_q:
                 raise RuntimeError(f"prediction prefix leaves operation-matched outer sector: q={qnow} >= {outer_q}")
 
             HS = H._H_S()
-            rS = [-e[12 + i] for i in range(3)]
+            rS = [-xhat[12 + i] for i in range(3)]
             Pm, e, c, Scell, Ssigned = H._measurement_branch_hull(Pm, e, c, HS, RS, rS, allow_rejected=True)
             inverse_counts[Scell["inverse_backend"]] += 1
+            xhat = H._update_estimator_mean(xhat, Scell, allow_rejected=True,
+                                             bias_limit=projection_limit)
             e, ba_cap = _update_ba_cap(mode, e, Scell, ba_cap, projection_limit)
             first_S_done = True
             last_cells["S"] = {
@@ -327,9 +332,12 @@ def _run_cell(mode: str, domain_path: Path, domain: dict, cbox, candidate_q: flo
             if not qnow < outer_q:
                 raise RuntimeError(f"S prefix leaves operation-matched outer sector: q={qnow} >= {outer_q}")
 
-            Hacc, racc, eta = _acc_residual(mode, e, c, domain, qnow)
+            Hacc, racc, eta = _acc_residual(
+                mode, e, c, domain, qnow, H._predicted_force_upper(xhat, domain))
             Pm, e, c, Acell, Asigned = H._measurement_branch_hull(Pm, e, c, Hacc, Racc, racc, allow_rejected=True)
             inverse_counts[Acell["inverse_backend"]] += 1
+            xhat = H._update_estimator_mean(xhat, Acell, allow_rejected=True,
+                                             bias_limit=projection_limit)
             e, ba_cap = _update_ba_cap(mode, e, Acell, ba_cap, projection_limit)
             last_cells["accelerometer"] = {
                 "sample": k,
@@ -345,6 +353,8 @@ def _run_cell(mode: str, domain_path: Path, domain: dict, cbox, candidate_q: flo
             Hmag, rmag, deff = H._mag_residual(c, domain, 0.0, qnow)
             Pm, e, c, Mcell, Msigned = H._measurement_branch_hull(Pm, e, c, Hmag, Rmag, rmag, allow_rejected=True)
             inverse_counts[Mcell["inverse_backend"]] += 1
+            xhat = H._update_estimator_mean(xhat, Mcell, allow_rejected=True,
+                                             bias_limit=projection_limit)
             e, ba_cap = _update_ba_cap(mode, e, Mcell, ba_cap, projection_limit)
             last_cells["magnetometer"] = {
                 "sample": k,

@@ -202,7 +202,7 @@ def _measurement_beta_upper(mode: str, sigma: Interval, rs: Interval,
     )
     sS2 = (sigma.lo * h * h * h) ** 2
     sa2 = sigma.lo * sigma.lo
-    betaS = BASE.up(sS2 / (rs.lo * rs.lo))
+    betaS = BASE.up(sS2 / BASE.rs_variance_lower(rs, sched))
     betaAcc = BASE.up(
         (fhi * fhi * qtheta + sa2 + (qba_d if mode == "A" else 0.0)) / ra
     )
@@ -384,7 +384,7 @@ def _translation_word_margin(x: Interval, sigma: Interval, rs: Interval, raw: di
         # cross terms, the magnetometer measures attitude only.
         s_firings = BASE.up(BASE.up(horizon / BASE.down(cadence_lo)) + 1.0)
         info_S = BASE.up(
-            s_firings * BASE.up(word_scales[2] * word_scales[2] / BASE.down(rs.lo * rs.lo))
+            s_firings * BASE.up(word_scales[2] * word_scales[2] / BASE.rs_variance_lower(rs, sched))
         )
         per_sample_aw = BASE.up(
             (fhi * fhi * qtheta + sigma.lo * sigma.lo + (qba_d if mode == "A" else 0.0)) / ra

@@ -284,9 +284,15 @@ def _measurement_cell(Pm, H, R, r):
 def _measurement_branch_hull(Pm, e, c, H, R, r, *, allow_rejected: bool):
     cell = _measurement_cell(Pm, H, R, r)
     dx = cell["dx"]
-    # Physical error coordinate uses the opposite injection from the estimator.
-    d = _vec_neg(dx[0:3])
-    signed = SIGNED.compose_cell(c, d)
+    # E=R_true R_hat^T and R_hat+=Q(dx) R_hat imply E+=E Q(dx)^-1.
+    # Invert a left product to reuse either validated SIGNED/QCOMP backend:
+    # (Q(dx) E^-1)^-1 = E Q(dx)^-1.
+    signed = dict(SIGNED.compose_cell(_vec_neg(c), dx[0:3]))
+    signed["c_plus"] = _vec_neg(signed["c_plus"])
+    if "a" in signed:
+        signed["a"] = _vec_neg(signed["a"])
+    signed["error_rotation_convention"] = "R_true R_hat^T"
+    signed["physical_error_correction_side"] = "right"
     c_acc = signed["c_plus"]
     e_acc = list(e)
     for i in range(3, N):
@@ -298,6 +304,36 @@ def _measurement_branch_hull(Pm, e, c, H, R, r, *, allow_rejected: bool):
     else:
         Pout, eout, cout = cell["P_accepted"], e_acc, c_acc
     return Pout, eout, cout, cell, signed
+
+
+def _predict_estimator_mean(xhat, F):
+    """Source mean at a prediction; local attitude coordinates stay reset."""
+    out = [I(0.0) for _ in range(N)]
+    for i in range(3, N):
+        for j in range(3, N):
+            out[i] = out[i] + F[i][j] * xhat[j]
+    return out
+
+
+def _update_estimator_mean(xhat, cell, *, allow_rejected: bool, bias_limit=None):
+    """Carry the estimator mean separately from its physical truth error."""
+    accepted = list(xhat)
+    for i in range(3, N):
+        accepted[i] = xhat[i] + cell["dx"][i]
+    for i in range(3):
+        accepted[i] = I(0.0)
+    if bias_limit is not None and N == 21:
+        # Euclidean projection scales each component towards zero. Retain
+        # both the unchanged interior and the projected exterior branches.
+        for i in range(18, 21):
+            accepted[i] = _intersect(hull(I(0.0), accepted[i]), _box(bias_limit))
+    return _vec_hull(xhat, accepted) if allow_rejected else accepted
+
+
+def _predicted_force_upper(xhat, domain):
+    """Bound the nominal force in H_a from the nominal a_w, not true a_w."""
+    g = float(domain["startup"]["gravity_mps2"])
+    return up(g + _norm_upper([xhat[i] for i in AW]))
 
 
 def _source_cell() -> dict:
@@ -458,9 +494,11 @@ def _predict_error(e, F):
     return out
 
 
-def _predict_c(c, Rstep, domain: dict, h: float):
+def _predict_c(c, Rstep, domain: dict, h: float, gyro_bias_error=None):
     transported = _mat_vec(Rstep, c)
     bg = float(domain["startup"]["physical_handoff_coordinate_bounds"]["gyro_bias_error_norm_upper_rad_s"])
+    if gyro_bias_error is not None:
+        bg = _norm_upper(gyro_bias_error)
     wdist = float(domain["startup"]["effective_deterministic_gyro_transport_disturbance_upper_rad_s"])
     th = up(h*(bg+wdist))
     half = up(0.5*th)
@@ -479,8 +517,9 @@ def _H_S():
     return H
 
 
-def _H_acc(domain: dict):
-    fhi = float(domain["normal_live"]["specific_force_norm_upper_mps2"])
+def _H_acc(domain: dict, force_norm_upper=None):
+    fhi = (float(domain["normal_live"]["specific_force_norm_upper_mps2"])
+           if force_norm_upper is None else float(force_norm_upper))
     H = _zero(3, N)
     # -[f]_x: structural diagonal zeros are retained.
     b = _box(fhi)
@@ -515,14 +554,19 @@ def _R_diag(std: float):
 def _R_S(src: dict):
     r = src["R_S_filter_std"].square()
     R = _zero(3, 3)
-    for i in range(3): R[i][i] = r
+    factors = src.get("R_S_axis_std_factors")
+    if factors is None:
+        factors = P3CELL.source_rs_axis_std_factors()
+    for i in range(3):
+        R[i][i] = r * I(factors[i]).square()
     return R
 
 
-def _acc_residual(e, c, domain: dict, q_hi: float):
-    H = _H_acc(domain)
-    fhi = float(domain["normal_live"]["specific_force_norm_upper_mps2"])
-    aw_hi = max(e[i].abs_upper() for i in AW)
+def _acc_residual(e, c, domain: dict, q_hi: float, force_norm_upper=None):
+    H = _H_acc(domain, force_norm_upper)
+    fhi = (float(domain["normal_live"]["specific_force_norm_upper_mps2"])
+           if force_norm_upper is None else float(force_norm_upper))
+    aw_hi = _norm_upper([e[i] for i in AW])
     eta = up(
         VEFF.accel_attitude_eta_per_vector_norm_upper(q_hi)*fhi
         + VEFF.accel_latent_cross_gain_upper(q_hi)*aw_hi
@@ -607,6 +651,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     F, Q, Rstep = _transition_and_Q(src, domain)
     Pm = _initial_covariance(src, domain_path)
     e = _initial_error(domain)
+    xhat = [I(0.0) for _ in range(N)]  # first goLive follows an untouched zero constructor mean
 
     q0 = float(heading["gauged_timeout_subbranch"]["full_attitude_cayley_norm_upper"])
     c = _vec_box(q0)
@@ -637,7 +682,8 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         try:
             Pm = _psd_tighten(matrix_add(matrix_mul(matrix_mul(F, Pm), matrix_transpose(F)), Q))
             e = _predict_error(e, F)
-            c = _predict_c(c, Rstep, domain, h)
+            xhat = _predict_estimator_mean(xhat, F)
+            c = _predict_c(c, Rstep, domain, h, [e[i] for i in BG])
             qnow = _norm_upper(c)
             max_q = max(max_q, qnow)
             if qnow >= q_chart:
@@ -647,9 +693,10 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
             # until the branch is taken.  Evaluate the due shipping map first,
             # then hull it with the identity branch.
             HS = _H_S()
-            rS = [-e[12+i] for i in range(3)]
+            rS = [-xhat[12+i] for i in range(3)]
             Pm, e, c, Scell, Ssigned = _measurement_branch_hull(Pm, e, c, HS, RS, rS, allow_rejected=True)
             inverse_counts[Scell["inverse_backend"]] += 1
+            xhat = _update_estimator_mean(xhat, Scell, allow_rejected=True)
             ds = _norm_upper(_vec_neg(Scell["dx"][0:3]))
             extrema["max_S_correction_norm_upper"] = max(extrema["max_S_correction_norm_upper"], ds)
             last_cells["S"] = {
@@ -667,9 +714,11 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
             if qnow >= q_chart:
                 raise RuntimeError(f"S prefix leaves q<={q_chart} chart: q={qnow}")
 
-            Hacc, racc, eta = _acc_residual(e, c, domain, min(q_chart, qnow))
+            Hacc, racc, eta = _acc_residual(
+                e, c, domain, min(q_chart, qnow), _predicted_force_upper(xhat, domain))
             Pm, e, c, Acell, Asigned = _measurement_branch_hull(Pm, e, c, Hacc, Racc, racc, allow_rejected=True)
             inverse_counts[Acell["inverse_backend"]] += 1
+            xhat = _update_estimator_mean(xhat, Acell, allow_rejected=True)
             da = _norm_upper(_vec_neg(Acell["dx"][0:3]))
             extrema["max_acc_correction_norm_upper"] = max(extrema["max_acc_correction_norm_upper"], da)
             extrema["max_acc_effective_aw_eta_norm_upper"] = max(extrema["max_acc_effective_aw_eta_norm_upper"], eta)
@@ -692,6 +741,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
             Hmag, rmag, deff = _mag_residual(c, domain, qlo, min(q_chart, qnow))
             Pm, e, c, Mcell, Msigned = _measurement_branch_hull(Pm, e, c, Hmag, Rmag, rmag, allow_rejected=True)
             inverse_counts[Mcell["inverse_backend"]] += 1
+            xhat = _update_estimator_mean(xhat, Mcell, allow_rejected=True)
             dm = _norm_upper(_vec_neg(Mcell["dx"][0:3]))
             extrema["max_mag_correction_norm_upper"] = max(extrema["max_mag_correction_norm_upper"], dm)
             last_cells["magnetometer"] = {
