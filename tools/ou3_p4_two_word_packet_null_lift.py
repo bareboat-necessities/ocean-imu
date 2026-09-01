@@ -35,7 +35,7 @@ from ou3_interval import Interval
 import ou3_implementation_word_language as WORDS
 import ou3_p4_directional_packet_rank as RANK
 import ou3_p4_h18_differential_operations as DOPS
-import ou3_source_domain_contract as SOURCE
+import ou3_p4_source_node_cells as SOURCE_NODES
 import ou3_translational_uco_ucc as TRANS
 import ou3_validated_transcendentals as VT
 
@@ -72,7 +72,8 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     rf = RANK.validate(rank)
     trans = TRANS.build()
     tf = TRANS.validate(trans)
-    source = SOURCE.build(SOURCE.DEFAULT_HEADER.resolve())
+    source_nodes = SOURCE_NODES.build()
+    nf = SOURCE_NODES.validate(source_nodes)
 
     live = domain["normal_live"]
     f_min = float(live["specific_force_norm_lower_mps2"])
@@ -87,10 +88,12 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     dt_hi = float(words["word_contract"]["configured_runtime"]["imu_dt_outward_interval_s"][1])
     one_word_gap_upper_s = math.nextafter(samples_upper * dt_hi, math.inf)
 
-    tau_box = source["validated_parameter_box"]["continuous_parameters"]["tau_aw_s"]
-    tau_min = float(tau_box[0])
+    # Bind the decay to the exact P2 source partition rather than a second
+    # global parameter box.  The worst one-word survival occurs at the minimum
+    # tau lower endpoint among the 800 source nodes.
+    tau_min = min(float(n["tau_s"][0]) for n in source_nodes["nodes"])
     if tau_min <= 0.0:
-        raise RuntimeError("source tau lower endpoint is not positive")
+        raise RuntimeError("P2 source-node tau lower endpoint is not positive")
     decay = _exp_minus_upper(one_word_gap_upper_s / tau_min)
     aw_next_per_theta_lower = math.nextafter(aw_per_theta_lower * decay.lo, -math.inf)
 
@@ -122,6 +125,8 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         not wf
         and not rf
         and not tf
+        and not nf
+        and source_nodes["partition"]["states"] == 800
         and rank["packet_rank_exact"] == 5
         and rank["H_active_block_nullity"] == 1
         and aw_per_theta_lower > 0.0
@@ -141,6 +146,8 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "source_replay_used": False,
         "filter_changed": False,
         "shared_H18_differential_operations_used": True,
+        "exact_P2_source_node_partition_used": True,
+        "P2_source_node_count": source_nodes["partition"]["states"],
         "packet_rank_exact": rank["packet_rank_exact"],
         "packet_H_active_nullity": rank["H_active_block_nullity"],
         "packet_null_aw_per_theta_norm_lower_mps2_per_rad": aw_per_theta_lower,
@@ -167,9 +174,10 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
             *[f"word-language: {x}" for x in wf],
             *[f"packet-rank: {x}" for x in rf],
             *[f"translation: {x}" for x in tf],
+            *[f"source-nodes: {x}" for x in nf],
         ],
         "next_obligation": (
-            "use the shared H18 interval-AD prediction/update/reset maps to pull back the following-word four-S PSD form to the preceding vector-packet null family, combine it with the packet Joseph directional form before scalarization, and evaluate the sum in the actual source-correlated covariance/information metric"
+            "attach the actual source-node covariance/information factors to the 800 P2 nodes; use the shared H18 interval-AD prediction/update/reset maps to pull back the following-word four-S PSD form to the preceding vector-packet null family; combine it with the packet Joseph directional form before scalarization"
         ),
     }
 
@@ -183,6 +191,7 @@ def validate(d: dict) -> list[str]:
     for key in (
         "source_generated_not_trajectory_fit",
         "shared_H18_differential_operations_used",
+        "exact_P2_source_node_partition_used",
         "shared_H_a_aw_identity_verified",
         "shared_H_m_aw_zero_verified",
         "two_word_packet_null_is_structurally_observed",
@@ -201,6 +210,8 @@ def validate(d: dict) -> list[str]:
     ):
         if d.get(key) is not False:
             f.append(f"{key} is not false")
+    if d.get("P2_source_node_count") != 800:
+        f.append("P2 source-node count is not 800")
     if d.get("packet_rank_exact") != 5 or d.get("packet_H_active_nullity") != 1:
         f.append("packet rank/nullity contract changed")
     for key in (
@@ -235,6 +246,7 @@ def main() -> int:
     args.output.write_text(json.dumps(d, indent=2, sort_keys=True), encoding="utf-8")
     print(json.dumps({
         "structural_lift": d["two_word_packet_null_is_structurally_observed"],
+        "P2_source_nodes": d["P2_source_node_count"],
         "aw_per_theta_lower": d["packet_null_aw_per_theta_norm_lower_mps2_per_rad"],
         "word_gap_upper_s": d["one_word_gap_upper_s"],
         "aw_survival_lower": d["aw_survival_factor_to_following_word_lower"],
