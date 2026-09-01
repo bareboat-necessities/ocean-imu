@@ -1,0 +1,62 @@
+name: ou3-p5-source-map-audit
+on:
+  push:
+    paths:
+      - "tools/ou3_interval_ad.py"
+      - "tools/ou3_p4_h18_differential_operations.py"
+      - "tools/ou3_p4_candidate_full_word.py"
+      - "tools/ou3_p5_full_h_prefix_cells.py"
+      - "tools/ou3_source_reachable_matrix_p3*.py"
+      - "tools/ou3_p5_marine_chain_audit.py"
+      - "tools/ou3_p5_timed_source_graph.py"
+      - "tests/validation/test_ou3_p5_source_map_parity.py"
+      - "tests/validation/test_ou3_p5_timed_source_graph.py"
+      - ".github/workflows/ou3-p5-source-map-audit.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ou3-p5-source-map-audit-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  source-maps:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Install compiler and Eigen for golden-source checks
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends g++ libeigen3-dev python3-numpy
+      - name: Compare proof operations with compiled shipping filter
+        working-directory: tests/validation
+        env:
+          OU3_REQUIRE_CPP_PARITY: "1"
+        run: python3 -m unittest -v test_ou3_p5_source_map_parity test_ou3_interval_ad
+      - name: Existing full-state prefix tests
+        working-directory: tests/validation
+        run: |
+          python3 -m unittest -v test_ou3_p4_candidate_full_word test_ou3_p5_full_h_prefix_cells test_ou3_p5_full_h_prefix_cells_v2 test_ou3_p5_full_h_prefix_cells_v3
+  linear-certificate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Regenerate P3 with deployed horizontal S covariance
+        run: python3 -u tools/ou3_explicit_information_word_certificate.py --output /tmp/ou3_p3.json
+      - name: Print P3 numerical summary
+        run: |
+          python3 - <<'PY'
+          import json
+          p=json.load(open('/tmp/ou3_p3.json'))
+          print('P3_AUDIT_JSON='+json.dumps(p, sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ou3-p3-source-map-audit
+          path: /tmp/ou3_p3.json
+          if-no-files-found: error

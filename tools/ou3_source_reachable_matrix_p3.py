@@ -23,6 +23,7 @@ import functools
 import json
 import math
 import re
+import struct
 from pathlib import Path
 
 from ou3_interval import (
@@ -235,6 +236,31 @@ def vector_alpha6(live: dict, vector: dict) -> float:
     return down(mu/up(1.0 + up(2.0/down(gamma*gamma))))
 
 
+def source_rs_axis_std_factors() -> list[float]:
+    """Shipping SpectralMSE r_S factors; these multiply std, not variance."""
+    text = WRAPPER.read_text(encoding="utf-8")
+    if "RSAdaptationLaw rs_law_ = RSAdaptationLaw::SpectralMSE;" not in text:
+        raise RuntimeError("R_S proof requires the configured SpectralMSE branch")
+    out = []
+    for name in ("R_S_x_factor_", "R_S_y_factor_"):
+        match = re.search(rf"float\s+{name}\s*=\s*([0-9.eE+-]+)f", text)
+        if match is None:
+            raise RuntimeError(f"cannot extract deployed {name}")
+        value = struct.unpack("!f", struct.pack("!f", float(match.group(1))))[0]
+        if not math.isfinite(value) or value <= 0.0:
+            raise RuntimeError("configured S observation must have positive covariance")
+        out.append(value)
+    return out + [1.0]
+
+
+def rs_variance_lower(rs: Interval, sched: dict) -> float:
+    """Lower covariance bound including the strongest horizontal S channel."""
+    factors = sched.get("R_S_axis_std_factors")
+    if factors is None:
+        factors = source_rs_axis_std_factors()
+    return (I(rs.lo) * I(min(factors))).square().lo
+
+
 def source_schedule() -> dict:
     text = WRAPPER.read_text(encoding="utf-8")
     for marker in (
@@ -261,6 +287,7 @@ def source_schedule() -> dict:
         "tau_target_s":[down(tlo),up(thi)],
         "tau_applied_invariant_s":[down(min(init_tau,tlo)),up(max(init_tau,thi))],
         "R_S_applied_invariant":[down(min(init_rs,c["MIN_R_S"])),up(max(init_rs,c["MAX_R_S"]))],
+        "R_S_axis_std_factors":source_rs_axis_std_factors(),
         "sigma_aw_applied_safety":[0.05,6.0],
         "pseudo_ratio":c["PSEUDO_UPDATE_TAU_RATIO_DEFAULT"],
         "pseudo_min_s":c["PSEUDO_UPDATE_PERIOD_MIN_S_DEFAULT"],
@@ -291,7 +318,8 @@ def translation_upper(tau: Interval,sigma: Interval,rs: Interval,Tpe: float,sche
     s_proc=up(qc*Tobs**7/252.0)
     # Three possibly correlated selected observations: lambda_max(R_stack)
     # is no larger than trace, hence 3*max diagonal is a valid matrix upper.
-    rstack=up(3.0*(rs.hi*rs.hi+s_nuis+s_proc))
+    rmax = (I(rs.hi) * I(max(sched.get("R_S_axis_std_factors", source_rs_axis_std_factors())))).square().hi
+    rstack=up(3.0*(rmax+s_nuis+s_proc))
     R=[[I(rstack if i==j else 0.0) for j in range(3)] for i in range(3)]
     Cspv=matrix_symmetric_hull(matrix_mul(matrix_mul(Binv,R),matrix_transpose(Binv)))
     order=(2,1,0)
@@ -374,7 +402,7 @@ def mode_cell(mode: str,x: Interval,rho_trans: float,sigma: Interval,rs: Interva
 
     # More measurements only decrease the optimal comparison covariance, so
     # include S, accel and mag even when a particular source branch omits one.
-    betaS=sS2/(rs.lo*rs.lo)
+    betaS=up(sS2/rs_variance_lower(rs,sched))
     betaAcc=(fhi*fhi*qtheta+sa2+(qba_d if mode=="A" else 0.0))/ra
     betaMag=(mhi*mhi*qtheta)/rm
     beta=up(betaS+betaAcc+betaMag)

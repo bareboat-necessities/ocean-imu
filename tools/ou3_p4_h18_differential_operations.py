@@ -62,36 +62,46 @@ def state_values(z: Sequence[AD.AD]) -> list[Interval]:
     return [x.val for x in z]
 
 
-def prediction(z: Sequence[AD.AD], F, Rstep, domain: dict, h: float) -> list[AD.AD]:
-    """Finite-angle H-mode prediction with exact 18-state cross derivatives."""
+def prediction(z: Sequence[AD.AD], F, Rstep, domain: dict, h: float,
+               *, angular_rate_body: Sequence[Interval] | None = None) -> list[AD.AD]:
+    """Propagate E=R_true R_hat^T and b_g=true-minus-estimate.
+
+    The exact finite-bias product is Q(-(omega-b_g)h) E Q(omega h).
+    Exp(Bstep*b_g) Rstep*c is only a first-order bias approximation.
+    Rstep remains in the signature for existing source-cell callers; the
+    state map obtains its attitude transport from the quaternion product.
+    F still supplies the shipping integrated-OU linear-chain transition.
+
+    This is the homogeneous discrete reference model. Physical integration,
+    measurement noise and roundoff enter the separately declared disturbance.
+    """
     if len(z) != N:
         raise ValueError("H differential prediction requires 18 states")
-    c = list(z[:3])
-    bg = list(z[3:6])
-    transported = ad_matvec_interval(Rstep, c)
-    Bstep = [[F[i][3 + j] for j in range(3)] for i in range(3)]
-    db = ad_matvec_interval(Bstep, bg)
-    wdist = float(
-        domain["startup"][
-            "effective_deterministic_gyro_transport_disturbance_upper_rad_s"
-        ]
-    )
-    extra = box_symmetric(h * wdist)
-    # Deterministic source disturbance enlarges the state value but is not an
-    # independent filter-state coordinate, so it contributes no state derivative.
-    db = [AD.AD(x.val + extra, x.der) for x in db]
-    cp = AD.deployed_correct_cayley(transported, db)
-
+    if not math.isfinite(h) or h <= 0.0:
+        raise ValueError("prediction requires positive finite h")
+    if angular_rate_body is None:
+        rate = math.nextafter(
+            float(domain["normal_live"]["body_rate_norm_upper_deg_s"])
+            * math.pi / 180.0, math.inf)
+        angular_rate_body = [box_symmetric(rate) for _ in range(3)]
+    if len(angular_rate_body) != 3:
+        raise ValueError("angular_rate_body must contain three intervals")
+    omega = [ad_constant_interval(x) for x in angular_rate_body]
+    wdist = float(domain["startup"][
+        "effective_deterministic_gyro_transport_disturbance_upper_rad_s"])
+    disturbance = ad_constant_interval(box_symmetric(wdist))
+    true_step = [(-omega[i] + z[3 + i] + disturbance) * h for i in range(3)]
+    estimate_inverse_step = [omega[i] * h for i in range(3)]
+    cp = AD.deployed_correct_cayley_right(
+        AD.deployed_correct_cayley(z[:3], true_step), estimate_inverse_step)
     out = list(z)
     out[:3] = cp
-    # H mode: gyro bias is held; v,p,S,a_w use the exact integrated-OU chain.
     for i in range(3, N):
         y = AD.constant(0.0, N)
         for j in range(3, N):
             y = y + AD.constant(F[i][j], N) * z[j]
         out[i] = y
     return out
-
 
 def accelerometer_residual(
     z: Sequence[AD.AD], force: Sequence[Interval]
@@ -115,9 +125,23 @@ def magnetometer_residual(
     return [Rm[i] - m[i] for i in range(3)]
 
 
-def S_residual(z: Sequence[AD.AD]) -> list[AD.AD]:
-    """Exact S=0 pseudo-measurement residual."""
-    return [-z[12 + i] for i in range(3)]
+def S_residual(z: Sequence[AD.AD], *,
+               truth_S: Sequence[Interval] | None = None) -> list[AD.AD]:
+    """Innovation in truth-minus-estimate coordinates: r_S=delta_S-S_true.
+
+    With zero external forcing, r_S=delta_S and the error map is
+    (I-K H_S) z. In a physical wave the S_true term must be supplied;
+    S=0 is a regularizing measurement, not an assertion that true S is zero.
+    A startup reachability calculation may instead track the estimator mean
+    and form the equivalent residual -S_hat directly.
+    """
+    if len(z) != N:
+        raise ValueError("H differential S residual requires 18 states")
+    if truth_S is None:
+        return list(z[12:15])
+    if len(truth_S) != 3:
+        raise ValueError("truth_S must contain three intervals")
+    return [z[12 + i] - ad_constant_interval(truth_S[i]) for i in range(3)]
 
 
 def zero_matrix(rows: int, cols: int):
@@ -153,8 +177,10 @@ def H_mag_canonical(mag: Sequence[Interval]):
 
 
 def accepted_update(Pm, z: Sequence[AD.AD], Hm, Rm, residual: Sequence[AD.AD]):
-    """Apply the shipping interval Joseph gain and immediate quaternion reset.
+    """Apply the shipping Joseph gain to E=R_true R_hat^T.
 
+    The estimator injects Q(dx) on the left, so E+ = E Q(dx)^-1.
+    Physical linear errors are true minus estimate and therefore subtract dx.
     The covariance cell is computed by the existing validated full-matrix
     backend.  The state correction uses the exact nonlinear residual AD map;
     attitude injection/reset is the deployed quaternion/Cayley composition.
@@ -163,7 +189,7 @@ def accepted_update(Pm, z: Sequence[AD.AD], Hm, Rm, residual: Sequence[AD.AD]):
     K = cell["K"]
     dx = ad_matvec_interval(K, residual)
     d = [-x for x in dx[:3]]
-    cp = AD.deployed_correct_cayley(z[:3], d)
+    cp = AD.deployed_correct_cayley_right(z[:3], d)
     out = list(z)
     out[:3] = cp
     for i in range(3, N):

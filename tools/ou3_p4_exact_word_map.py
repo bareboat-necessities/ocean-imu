@@ -10,7 +10,9 @@ A correction is represented in the MEKF's actual form:
     r = y - yhat,
     dx = K r,
     x <- x + dx,
-    R_e <- R_inj(dx_theta) R_e,
+    R_hat <- R_inj(dx_theta) R_hat,
+    E=R_true R_hat^T <- E R_inj(dx_theta)^T,
+    delta_x=true_x-hat_x <- delta_x-dx,
     delta_theta <- 0,
     P <- G_reset P G_reset',
 
@@ -98,7 +100,7 @@ def _mode(mode: str, dimension: int, coordinates: list[str]) -> dict:
             {
                 "name": "S_zero",
                 "branch_family": ["not_due", "due"],
-                "innovation": "r_S=-delta_S",
+                "innovation": "r_S=-S_hat=delta_S-S_true; homogeneous error map uses r_S=delta_S",
                 "gain": "full implemented K_S=P(:,S)(P_SS+R_S)^-1",
                 "accepted_map": "x+=K_S r_S; immediate deployed quaternion injection; immediate left-error covariance reset",
                 "S_to_attitude_cross_gain_retained": True,
