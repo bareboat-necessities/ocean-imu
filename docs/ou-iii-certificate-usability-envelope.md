@@ -83,6 +83,17 @@ any of the following shortcuts:
     complete-word P4 dissipation or the finite P5 inner capture is open.  A
     stage with usable geometry and an open obligation is
     `USABLE_GEOMETRY_OPEN_OBLIGATION`, never `USABLE`.
+18. Do not couple the declared `a_w` error envelope to the tuner
+    `sigma_applied` state without declaring the constant in the operating
+    domain.  The shipping tuner does track the band-limited wave-acceleration
+    RMS, but the EMA transient means no bound follows from the update law alone.
+    `ou3_p4_first_accel_aw_sigma_consistency.py` measures what such a constant
+    would have to be; it keeps `aw_sigma_consistency_declared_in_domain` false
+    and promotes nothing.
+19. Do not treat a per-operation sector-invariance failure as a proof that a
+    candidate angle is excluded from the complete-word certificate.  Invariance
+    and dissipation are different acceptance tests; a transient excursion is
+    admissible under an operation-matched information decrease.
 
 ## Quantitative outer target
 
@@ -164,6 +175,25 @@ children -- with a composition denominator that could cross zero -- to a
 complete evaluation of all 40960 with `max_d = 2.2251526515093487` rad and a
 minimum denominator of `0.6356874937572935`.  The stage is still
 `NOT_ESTABLISHED`, but for a measured reason rather than a lost enclosure.
+
+`tools/ou3_p4_first_accel_aw_sigma_consistency.py` then splits that gap into
+the part that is proof slack and the part that is a domain question.  Pairing
+the gain and the finite-angle force remainder over the same specific-force
+magnitude is an unconditional `1.026`--`1.168` tightening.  What remains is the
+free pairing between the declared `0.3 g` `a_w` error and the tuner
+`sigma_applied` state that sets the gain: the worst cell pairs a flat-sea tuner
+with the full error, `5.3691` times that cell's `sigma` upper.  Adding
+`||delta a_w|| <= c * sigma_applied` to the domain closes the first
+accelerometer operation at `c = 1.9510667819413354` (15 deg),
+`1.176786821337373` (20 deg) and `0.33380880686218` (25 deg); at 30 deg and
+wider no finite constant exists, because the residual with a perfect `a_w`
+estimate, `0.36909754878917767` rad, already exceeds the `0.27225152012902093`
+rad budget.
+
+That leaves exactly two doors: declare the coupling and narrow the candidate to
+15--20 deg, or stop testing per-operation sector invariance and charge each
+correction against its own information decrease.  The second is the change the
+route ceiling already named and the only one that adds no domain assumption.
 
 `tools/ou3_p1_p5_certificate_numbers.py` collects every stage number and
 re-applies the usability thresholds above to the recomputed values; see

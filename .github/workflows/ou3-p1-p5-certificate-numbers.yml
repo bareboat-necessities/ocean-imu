@@ -6,6 +6,7 @@ on:
       - "tools/ou3_p1_p5_certificate_numbers.py"
       - "tools/ou3_p4_shared_force_gain.py"
       - "tools/ou3_p4_first_accel_sector_budget.py"
+      - "tools/ou3_p4_first_accel_aw_sigma_consistency.py"
       - "tools/ou3_p4_30deg_signed_first_accel_sector_v3.py"
       - "tools/ou3_p4_operation_matched_sector_certificate.py"
       - "tools/ou3_p4_p5_route_ceiling_certificate.py"
@@ -19,6 +20,7 @@ on:
       - "tests/validation/test_ou3_p1_p5_certificate_numbers.py"
       - "tests/validation/test_ou3_p4_shared_force_gain.py"
       - "tests/validation/test_ou3_p4_first_accel_sector_budget.py"
+      - "tests/validation/test_ou3_p4_first_accel_aw_sigma_consistency.py"
       - "docs/ou-iii-p1-p5-certificate-numbers.md"
       - ".github/workflows/ou3-p1-p5-certificate-numbers.yml"
   pull_request:
@@ -26,6 +28,7 @@ on:
       - "tools/ou3_p1_p5_certificate_numbers.py"
       - "tools/ou3_p4_shared_force_gain.py"
       - "tools/ou3_p4_first_accel_sector_budget.py"
+      - "tools/ou3_p4_first_accel_aw_sigma_consistency.py"
       - "tools/ou3_p4_30deg_signed_first_accel_sector_v3.py"
       - "tools/ou3_p4_operation_matched_sector_certificate.py"
       - "tools/ou3_p4_p5_route_ceiling_certificate.py"
@@ -39,6 +42,7 @@ on:
       - "tests/validation/test_ou3_p1_p5_certificate_numbers.py"
       - "tests/validation/test_ou3_p4_shared_force_gain.py"
       - "tests/validation/test_ou3_p4_first_accel_sector_budget.py"
+      - "tests/validation/test_ou3_p4_first_accel_aw_sigma_consistency.py"
       - "docs/ou-iii-p1-p5-certificate-numbers.md"
       - ".github/workflows/ou3-p1-p5-certificate-numbers.yml"
   workflow_dispatch:
@@ -64,10 +68,12 @@ jobs:
             tools/ou3_p1_p5_certificate_numbers.py \
             tools/ou3_p4_shared_force_gain.py \
             tools/ou3_p4_first_accel_sector_budget.py \
+            tools/ou3_p4_first_accel_aw_sigma_consistency.py \
             tools/ou3_p4_30deg_signed_first_accel_sector_v3.py \
             tests/validation/test_ou3_p1_p5_certificate_numbers.py \
             tests/validation/test_ou3_p4_shared_force_gain.py \
-            tests/validation/test_ou3_p4_first_accel_sector_budget.py
+            tests/validation/test_ou3_p4_first_accel_sector_budget.py \
+            tests/validation/test_ou3_p4_first_accel_aw_sigma_consistency.py
 
       - name: Run report-logic, gain-lemma and budget tests
         working-directory: tests/validation
@@ -75,7 +81,8 @@ jobs:
           python3 -m unittest -v \
             test_ou3_p1_p5_certificate_numbers \
             test_ou3_p4_shared_force_gain \
-            test_ou3_p4_first_accel_sector_budget
+            test_ou3_p4_first_accel_sector_budget \
+            test_ou3_p4_first_accel_aw_sigma_consistency
 
       - name: Emit the shared-force accelerometer gain lemma
         run: |
@@ -90,6 +97,11 @@ jobs:
             --force-magnitude-pieces 4 --tangent-pieces 32 \
             --output /tmp/ou3_signed_first_accel_v3.json || rc=$?
           echo "producer_exit=$rc"
+
+      - name: Emit the a_w/sigma consistency and joint force pairing
+        run: |
+          python3 tools/ou3_p4_first_accel_aw_sigma_consistency.py \
+            --output /tmp/ou3_aw_sigma_consistency.json
 
       - name: Emit the consolidated P1-P5 certificate numbers
         run: |
@@ -106,6 +118,7 @@ jobs:
           gain = json.loads(Path('/tmp/ou3_shared_force_gain.json').read_text())
           fa = json.loads(Path('/tmp/ou3_signed_first_accel_v3.json').read_text())
           rep = json.loads(Path('/tmp/ou3_p1_p5_certificate_numbers.json').read_text())
+          cons = json.loads(Path('/tmp/ou3_aw_sigma_consistency.json').read_text())
 
           assert gain['validation_pass'], gain['validation_failures']
           assert gain['uniformly_at_least_as_tight_as_interval_gain'] is True
@@ -161,6 +174,37 @@ jobs:
           assert p5['N_outer_words'] == 0
           assert p5['N_inner_words'] is None
 
+          assert cons['validation_pass'], cons['validation_failures']
+          assert cons['aw_sigma_consistency_declared_in_domain'] is False
+          assert cons['consistency_constant_is_a_conditional_requirement_not_a_theorem'] is True
+          assert cons['joint_force_pairing_is_unconditional'] is True
+          assert cons['filter_changed'] is False
+          assert cons['P4_USABLE_CERTIFICATE_PROMOTED'] is False
+          crows = {r['angle_deg']: r for r in cons['angle_rows']}
+          # The joint force pairing may never be looser than separate bounds.
+          for r in cons['angle_rows']:
+              assert r['nuisance_joint_force_pairing_upper_rad'] <= \
+                  r['nuisance_separate_force_bounds_upper_rad']
+              assert r['joint_force_pairing_tightening_factor'] >= 1.0
+              assert r['joint_pairing_fits_inside_budget'] is False
+          # 30 deg and wider are excluded under sector invariance outright.
+          for deg in (30.0, 35.0, 40.0, 45.0):
+              r = crows[deg]
+              assert r['any_finite_constant_closes_this_angle'] is False
+              assert r['nuisance_at_zero_aw_error_rad'] > \
+                  r['sector_invariance_correction_budget_upper_rad']
+          for deg in (15.0, 20.0, 25.0):
+              r = crows[deg]
+              assert r['any_finite_constant_closes_this_angle'] is True
+              assert 0.0 < r['critical_consistency_constant'] < r['unconstrained_c_at_worst_cell']
+          assert cons['widest_angle_closed_by_a_finite_consistency_constant'] == 25.0
+
+          print('joint force tightening:', [(r['angle_deg'],
+                r['joint_force_pairing_tightening_factor']) for r in cons['angle_rows']])
+          print('required c:', [(r['angle_deg'], r['critical_consistency_constant'])
+                                for r in cons['angle_rows']])
+          print('unconstrained c at worst cell:',
+                cons['angle_rows'][0]['unconstrained_c_at_worst_cell'])
           print('P1 handoffs:', p1['normal_gauged_handoff_cayley_norm_upper'],
                 p1['timeout_gauged_handoff_cayley_norm_upper'])
           print('P2 states:', stages['P2']['headline']['partition_states'])

@@ -61,6 +61,46 @@ search, but it is not the route that closes the first accelerometer operation.
 That still needs the operation-matched information decrease and a directional
 block margin.  The producer reports a distance, never a verdict.
 
+### 30 deg is excluded under sector invariance
+
+`tools/ou3_p4_first_accel_aw_sigma_consistency.py` sharpens that measurement by
+pairing the accelerometer gain and the finite-angle force remainder over the
+same specific-force magnitude, which is an unconditional tightening of `1.026`
+to `1.168`, and then asking what the residual would be with a *perfect* `a_w`
+estimate.  At 30 deg that residual -- accelerometer bias plus finite-angle force
+remainder alone -- is `0.36909754878917767` rad against a budget of
+`0.27225152012902093` rad.
+
+So the "attempt 30 deg first" rule cannot be satisfied by the first
+accelerometer operation while sector invariance is the acceptance test, and no
+sharpening changes that.  The rule stands only under the operation-matched
+information-decrease criterion, where a transient excursion is admissible
+provided the Lyapunov level decreases.  If the certificate keeps testing
+per-operation invariance, the ladder must start at 25 deg or below.
+
+### The a_w / sigma consistency constant
+
+The same producer prices the other door.  The `a_w` covariance that sets the
+gain is the tuner state `sigma_applied` in the deployed `[0.05, 6.0] m/s^2`
+safety range; the `a_w` error is the separately declared `0.3 g` envelope.
+Nothing in the declared domain couples them, so the worst cell pairs a flat-sea
+tuner with a `2.9407694241234332 m/s^2` error -- `5.3691` times that cell's
+`sigma` upper.  Adding `||delta a_w|| <= c * sigma_applied` to the domain closes
+the first accelerometer operation at
+
+| candidate | required `c` |
+|---|---|
+| 15 deg | `1.9510667819413354` |
+| 20 deg | `1.176786821337373` |
+| 25 deg | `0.33380880686218` |
+| 30 deg and wider | no finite constant exists |
+
+Only the 15--20 deg rungs ask for something a filter plausibly satisfies (an
+error inside roughly one to two applied sigma).  Such a constant is a new
+deployment theorem assumption requiring its own justification from the tuner law
+and a bound on the EMA transient; it is not declared today, and
+`aw_sigma_consistency_declared_in_domain` stays `false`.
+
 ## Proof obligations after this change
 
 1. If the theorem starts before P5, propagate the declared 45 deg / `0.5 Hs` entrance set through the exact preceding startup/source interval; do not substitute it directly for the P1 handoff box.
