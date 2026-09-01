@@ -166,10 +166,16 @@ def validate(d: dict) -> list[str]:
                 break
         if f:
             break
-        raw = node["sigma_tuner_raw_mps2"]
-        filt = node["sigma_filter_committed_mps2"]
-        if float(filt[0]) < floor or float(filt[1]) < float(raw[1]):
-            f.append(f"node {expected_index} violates raw/filter sigma relation")
+        raw_lo, raw_hi = map(float, node["sigma_tuner_raw_mps2"])
+        filt_lo, filt_hi = map(float, node["sigma_filter_committed_mps2"])
+        target_lo = max(floor, raw_lo)
+        target_hi = max(floor, raw_hi)
+        # PATH._filter_sigma_box deliberately outward-rounds the max() image,
+        # so its lower endpoint may sit one ulp below the exact 0.05 floor.
+        # Validate containment of the exact clamped endpoints, not a one-sided
+        # binary64 comparison against the outward enclosure.
+        if not (filt_lo <= target_lo <= filt_hi and filt_lo <= target_hi <= filt_hi):
+            f.append(f"node {expected_index} violates raw/filter sigma enclosure")
             break
     return list(dict.fromkeys(f))
 
@@ -187,13 +193,16 @@ def h18_source_cell(index: int, payload: dict | None = None) -> dict:
     """Convert one P2 node to the interval source-cell schema used by H18 tools."""
     d = build() if payload is None else payload
     n = node(index, d)
+    # These bounds are already outward-rounded by the P2 partition.  Reusing
+    # them directly avoids an unnecessary second nextafter() expansion while
+    # retaining the same rigorous interval.
     return {
         "source_node_index": int(n["index"]),
         "dt_s": float(d["dt_s"]),
-        "tau_s": Interval.outward_bounds(*map(float, n["tau_s"])),
-        "sigma_aw_mps2": Interval.outward_bounds(*map(float, n["sigma_filter_committed_mps2"])),
-        "R_S_filter_std": Interval.outward_bounds(*map(float, n["R_S_filter_std"])),
-        "pseudo_period_s": Interval.outward_bounds(*map(float, n["pseudo_update_period_s"])),
+        "tau_s": Interval(*map(float, n["tau_s"])),
+        "sigma_aw_mps2": Interval(*map(float, n["sigma_filter_committed_mps2"])),
+        "R_S_filter_std": Interval(*map(float, n["R_S_filter_std"])),
+        "pseudo_period_s": Interval(*map(float, n["pseudo_update_period_s"])),
     }
 
 
