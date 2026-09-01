@@ -113,7 +113,19 @@ class AD:
         return self._other(other) / self
 
     def square(self):
-        return self * self
+        """Range-aware square with the exact derivative ``2*x*x'``.
+
+        Generic interval multiplication ``x*x`` loses the repeated-variable
+        dependency and may produce a negative lower bound when ``x`` straddles
+        zero.  That is especially damaging in Cayley/quaternion denominators,
+        where sums of squares are known nonnegative.  Preserve the exact scalar
+        square range while outward-enclosing its first derivative.
+        """
+        two = I(2.0)
+        return AD(
+            self.val.square(),
+            tuple(two * self.val * d for d in self.der),
+        )
 
 
 def constant(x, n: int) -> AD:
@@ -156,6 +168,16 @@ def dot(a: Sequence[AD], b: Sequence[AD]) -> AD:
     y = constant(0.0, a[0].n)
     for x, z in zip(a, b):
         y = y + x * z
+    return y
+
+
+def squared_norm(a: Sequence[AD]) -> AD:
+    """Return ``sum_i a_i^2`` without repeated-variable interval loss."""
+    if not a:
+        raise ValueError("AD squared_norm requires a nonempty vector")
+    y = constant(0.0, a[0].n)
+    for x in a:
+        y = y + x.square()
     return y
 
 
@@ -203,7 +225,7 @@ def rotation_from_cayley(c: Sequence[AD]) -> list[list[AD]]:
     if len(c) != 3:
         raise ValueError("Cayley AD vector must have length three")
     n = c[0].n
-    c2 = dot(c, c)
+    c2 = squared_norm(c)
     den = constant(4.0, n) + c2
     four_over = constant(4.0, n) / den
     two_over = constant(2.0, n) / den
@@ -231,8 +253,8 @@ def _norm_upper(values: Sequence[Interval]) -> float:
 
 def _small_quaternion_ad(d: Sequence[AD]) -> tuple[AD, list[AD]]:
     n = d[0].n
-    u = dot(d, d)
-    u2 = u * u
+    u = squared_norm(d)
+    u2 = u.square()
     w = constant(1.0, n) - constant(1.0 / 8.0, n) * u + constant(1.0 / 384.0, n) * u2
     k = constant(0.5, n) - constant(1.0 / 48.0, n) * u + constant(1.0 / 3840.0, n) * u2
     return w, [k * x for x in d]
