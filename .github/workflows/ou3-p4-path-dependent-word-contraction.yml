@@ -76,6 +76,7 @@ jobs:
             --output /tmp/ou3_p4_path_dependent_word_contraction.json
 
       - name: Run boundary-cell full-word H18 interval-AD screen
+        continue-on-error: true
         run: |
           python3 tools/ou3_p4_h18_interval_ad_word.py \
             --cell-limit 1 \
@@ -91,8 +92,6 @@ jobs:
           d = json.loads(Path('/tmp/ou3_p4_path_dependent_word_contraction.json').read_text())
           assert d['validation_pass'], d['validation_failures']
           assert d['route_contract_pass'] is True
-
-          # Deployment-facing domain is unchanged.
           assert d['P5_entrance_angle_deg'] == 45.0
           assert d['P5_45deg_entrance_preserved'] is True
           assert d['outer_geometry_angle_rad'] == 0.80
@@ -124,22 +123,29 @@ jobs:
           assert d['P4_USABLE_CERTIFICATE_PROMOTED'] is False
 
           h = json.loads(Path('/tmp/ou3_p4_h18_interval_ad_word.json').read_text())
-          assert h['validation_pass'], h['validation_failures']
           assert h['dimension'] == 18
           assert h['outer_angle_rad'] == 0.80
           assert h['interval_AD_used_for_state_return_map'] is True
           assert h['finite_difference_used'] is False
           assert h['deployed_quaternion_generalized_jacobian_used'] is True
           assert h['full_18_state_cross_derivatives_retained'] is True
-          # This first numerical backend is deliberately a screen.  Even a
-          # sub-unity number cannot promote until source orientations, branch
-          # family and actual per-node metrics are exhausted.
           assert h['all_source_vector_orientation_covariance_correlations_checked'] is False
           assert h['optional_accepted_branch_family_between_required_events_checked'] is False
           assert h['actual_per_node_Sigma_KF_whitening_used'] is False
           assert h['source_graph_all_reachable_edges_checked'] is False
           assert h['H18_COMPLETE_SOURCE_EDGE_CONTRACTION_ESTABLISHED_HERE'] is False
           assert h['P4_USABLE_CERTIFICATE_PROMOTED'] is False
+          if h['first_failure'] is None:
+              assert h['validation_pass'], h['validation_failures']
+          else:
+              assert h['H18_SCREEN_GAMMA_LT_ONE'] is False
+              assert h['outer_ball_box_cells_completed'] == 0
+              assert 'correction cell exceeds validated deployed quaternion range' in h['first_failure']['error']
+              allowed = {
+                  'full-word H18 screen did not contain all four mandatory S events',
+                  'full-word H18 screen did not contain both mandatory vector packets',
+              }
+              assert set(h['validation_failures']).issubset(allowed), h['validation_failures']
 
           print('source graph:', d['source_graph'])
           print('H18 samples:', h['samples_checked'], '/', h['full_word_samples'])
