@@ -70,6 +70,30 @@ any of the following shortcuts:
 14. Do not change filter gains, schedules, or estimator equations merely to make
     the proof pass.  A filter change is a separate design decision and requires
     new performance evidence.
+15. Do not evaluate a gain row `m N / (m^2 p + lambda)` as an interval quotient.
+    The specific-force magnitude `m` appears in the numerator and in the
+    denominator, so the naive quotient overstates the accelerometer gain by up
+    to the cell's magnitude ratio.  Use the exact unimodal supremum in
+    `ou3_p4_shared_force_gain.py`.
+16. Do not present the descending `30 -> 25 -> 20 -> 15` deg candidate ladder as
+    the route that closes the first accelerometer operation.  The measured
+    nuisance-over-budget ratio stays above one down to a 1 deg probe, so a
+    narrower candidate cannot close that operation by itself.
+17. Do not report `P1_P5_COMPLETE_STABILITY_PROOF_ESTABLISHED` while the
+    complete-word P4 dissipation or the finite P5 inner capture is open.  A
+    stage with usable geometry and an open obligation is
+    `USABLE_GEOMETRY_OPEN_OBLIGATION`, never `USABLE`.
+18. Do not couple the declared `a_w` error envelope to the tuner
+    `sigma_applied` state without declaring the constant in the operating
+    domain.  The shipping tuner does track the band-limited wave-acceleration
+    RMS, but the EMA transient means no bound follows from the update law alone.
+    `ou3_p4_first_accel_aw_sigma_consistency.py` measures what such a constant
+    would have to be; it keeps `aw_sigma_consistency_declared_in_domain` false
+    and promotes nothing.
+19. Do not treat a per-operation sector-invariance failure as a proof that a
+    candidate angle is excluded from the complete-word certificate.  Invariance
+    and dissipation are different acceptance tests; a transient excursion is
+    admissible under an operation-matched information decrease.
 
 ## Quantitative outer target
 
@@ -123,6 +147,57 @@ progress and the new finite-angle sector meet.
 Once that outer complete-word decrease overlaps the existing inner stochastic
 localization level, P5 can derive a finite word count from the P1/outer sector to
 that inner level without the PR #441 uniform-transport obstruction.
+
+## Measured first-accelerometer obstruction
+
+`tools/ou3_p4_first_accel_sector_budget.py` measures why the complete-word P4
+composition has not been emitted.  For each candidate angle it compares the
+**budget** -- the largest correction norm whose worst-case signed Cayley
+composition stays inside the `0.80` rad outer sector -- against the **nuisance
+term**, the shared-force-magnitude accelerometer gain applied to the effective
+`a_w` input.  The ratio falls from `5.05` at 30 deg to `2.12` at 15 deg, but the
+non-candidate limit probes show it saturating at `1.34` for a 1 deg candidate.
+The floor is source-faithful: the declared `0.3 g` latent-acceleration error
+over the lowest admitted specific force is `2.941995 / 5.0 = 0.5884`, so the
+accelerometer-implied gravity direction can be off by `0.6291` rad in the
+low-force cells regardless of the candidate angle.
+
+That producer reports a **distance and never a verdict**: the nuisance term is
+an outward bound and the `a_w` covariance endpoints feeding the gain are
+enclosure endpoints, not certified reachable points.  It does not retire the
+ladder as a diagnostic; it retires the ladder as the closing route.
+
+The complementary widening is `tools/ou3_p4_shared_force_gain.py`, which removes
+the shared specific-force-magnitude dependency from the gain rows.  It is
+uniformly between `1.17` and `1.78` tighter over the audited cells, and it moved
+the signed 30 deg first-accelerometer stage from an abort after 13 of 40960
+children -- with a composition denominator that could cross zero -- to a
+complete evaluation of all 40960 with `max_d = 2.2251526515093487` rad and a
+minimum denominator of `0.6356874937572935`.  The stage is still
+`NOT_ESTABLISHED`, but for a measured reason rather than a lost enclosure.
+
+`tools/ou3_p4_first_accel_aw_sigma_consistency.py` then splits that gap into
+the part that is proof slack and the part that is a domain question.  Pairing
+the gain and the finite-angle force remainder over the same specific-force
+magnitude is an unconditional `1.026`--`1.168` tightening.  What remains is the
+free pairing between the declared `0.3 g` `a_w` error and the tuner
+`sigma_applied` state that sets the gain: the worst cell pairs a flat-sea tuner
+with the full error, `5.3691` times that cell's `sigma` upper.  Adding
+`||delta a_w|| <= c * sigma_applied` to the domain closes the first
+accelerometer operation at `c = 1.9510667819413354` (15 deg),
+`1.176786821337373` (20 deg) and `0.33380880686218` (25 deg); at 30 deg and
+wider no finite constant exists, because the residual with a perfect `a_w`
+estimate, `0.36909754878917767` rad, already exceeds the `0.27225152012902093`
+rad budget.
+
+That leaves exactly two doors: declare the coupling and narrow the candidate to
+15--20 deg, or stop testing per-operation sector invariance and charge each
+correction against its own information decrease.  The second is the change the
+route ceiling already named and the only one that adds no domain assumption.
+
+`tools/ou3_p1_p5_certificate_numbers.py` collects every stage number and
+re-applies the usability thresholds above to the recomputed values; see
+`docs/ou-iii-p1-p5-certificate-numbers.md`.
 
 Until that composition is emitted, the truthful status is:
 

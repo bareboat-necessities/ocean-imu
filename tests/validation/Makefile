@@ -33,6 +33,11 @@ build:
 		../../tools/ou3_p4_nonlinear_word_certificate.py \
 		../../tools/ou3_p4_p5_route_ceiling_certificate.py \
 		../../tools/ou3_p4_source_path_reachability.py \
+		../../tools/ou3_p4_shared_force_gain.py \
+		../../tools/ou3_p4_30deg_signed_first_accel_sector_v3.py \
+		../../tools/ou3_p4_first_accel_sector_budget.py \
+		../../tools/ou3_p4_first_accel_aw_sigma_consistency.py \
+		../../tools/ou3_p1_p5_certificate_numbers.py \
 		../../tools/ou3_p4_operation_matched_sector_certificate.py \
 		../../tools/ou3_p4_translation_full_word_interval.py \
 		../../tools/ou3_p4_translation_full_word_interval_fast.py \
@@ -90,6 +95,10 @@ build:
 		test_ou3_p4_nonlinear_word_certificate.py \
 		test_ou3_p4_p5_route_ceiling.py \
 		test_ou3_p4_source_path_reachability.py \
+		test_ou3_p4_shared_force_gain.py \
+		test_ou3_p4_first_accel_sector_budget.py \
+		test_ou3_p4_first_accel_aw_sigma_consistency.py \
+		test_ou3_p1_p5_certificate_numbers.py \
 		test_ou3_p4_operation_matched_sector_certificate.py \
 		test_ou3_p4_translation_full_word_interval.py \
 		test_ou3_p4_translation_full_word_rigorous.py \

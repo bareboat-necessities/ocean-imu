@@ -1,0 +1,220 @@
+name: ou3-p1-p5-certificate-numbers
+
+on:
+  push:
+    paths:
+      - "tools/ou3_p1_p5_certificate_numbers.py"
+      - "tools/ou3_p4_shared_force_gain.py"
+      - "tools/ou3_p4_first_accel_sector_budget.py"
+      - "tools/ou3_p4_first_accel_aw_sigma_consistency.py"
+      - "tools/ou3_p4_30deg_signed_first_accel_sector_v3.py"
+      - "tools/ou3_p4_operation_matched_sector_certificate.py"
+      - "tools/ou3_p4_p5_route_ceiling_certificate.py"
+      - "tools/ou3_p4_source_path_reachability.py"
+      - "tools/ou3_p5_outer_sector_capture_certificate.py"
+      - "tools/ou3_startup_stability_certificate.py"
+      - "tools/ou3_proof_operating_domain.json"
+      - "src/kalman_ou_iii/**"
+      - "src/kalman_ou_common/**"
+      - "src/kalman_common/**"
+      - "tests/validation/test_ou3_p1_p5_certificate_numbers.py"
+      - "tests/validation/test_ou3_p4_shared_force_gain.py"
+      - "tests/validation/test_ou3_p4_first_accel_sector_budget.py"
+      - "tests/validation/test_ou3_p4_first_accel_aw_sigma_consistency.py"
+      - "docs/ou-iii-p1-p5-certificate-numbers.md"
+      - ".github/workflows/ou3-p1-p5-certificate-numbers.yml"
+  pull_request:
+    paths:
+      - "tools/ou3_p1_p5_certificate_numbers.py"
+      - "tools/ou3_p4_shared_force_gain.py"
+      - "tools/ou3_p4_first_accel_sector_budget.py"
+      - "tools/ou3_p4_first_accel_aw_sigma_consistency.py"
+      - "tools/ou3_p4_30deg_signed_first_accel_sector_v3.py"
+      - "tools/ou3_p4_operation_matched_sector_certificate.py"
+      - "tools/ou3_p4_p5_route_ceiling_certificate.py"
+      - "tools/ou3_p4_source_path_reachability.py"
+      - "tools/ou3_p5_outer_sector_capture_certificate.py"
+      - "tools/ou3_startup_stability_certificate.py"
+      - "tools/ou3_proof_operating_domain.json"
+      - "src/kalman_ou_iii/**"
+      - "src/kalman_ou_common/**"
+      - "src/kalman_common/**"
+      - "tests/validation/test_ou3_p1_p5_certificate_numbers.py"
+      - "tests/validation/test_ou3_p4_shared_force_gain.py"
+      - "tests/validation/test_ou3_p4_first_accel_sector_budget.py"
+      - "tests/validation/test_ou3_p4_first_accel_aw_sigma_consistency.py"
+      - "docs/ou-iii-p1-p5-certificate-numbers.md"
+      - ".github/workflows/ou3-p1-p5-certificate-numbers.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ou3-p1-p5-certificate-numbers-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  certificate-numbers:
+    name: P1-P5 certificate numbers and usability
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Compile producers and tests
+        run: |
+          python3 -m py_compile \
+            tools/ou3_p1_p5_certificate_numbers.py \
+            tools/ou3_p4_shared_force_gain.py \
+            tools/ou3_p4_first_accel_sector_budget.py \
+            tools/ou3_p4_first_accel_aw_sigma_consistency.py \
+            tools/ou3_p4_30deg_signed_first_accel_sector_v3.py \
+            tests/validation/test_ou3_p1_p5_certificate_numbers.py \
+            tests/validation/test_ou3_p4_shared_force_gain.py \
+            tests/validation/test_ou3_p4_first_accel_sector_budget.py \
+            tests/validation/test_ou3_p4_first_accel_aw_sigma_consistency.py
+
+      - name: Run report-logic, gain-lemma and budget tests
+        working-directory: tests/validation
+        run: |
+          python3 -m unittest -v \
+            test_ou3_p1_p5_certificate_numbers \
+            test_ou3_p4_shared_force_gain \
+            test_ou3_p4_first_accel_sector_budget \
+            test_ou3_p4_first_accel_aw_sigma_consistency
+
+      - name: Emit the shared-force accelerometer gain lemma
+        run: |
+          python3 tools/ou3_p4_shared_force_gain.py \
+            --output /tmp/ou3_shared_force_gain.json
+
+      - name: Emit the signed 30deg first-accelerometer sector with that gain
+        run: |
+          rc=0
+          python3 tools/ou3_p4_30deg_signed_first_accel_sector_v3.py \
+            --source-pieces 2 --alignment-pieces 16 \
+            --force-magnitude-pieces 4 --tangent-pieces 32 \
+            --output /tmp/ou3_signed_first_accel_v3.json || rc=$?
+          echo "producer_exit=$rc"
+
+      - name: Emit the a_w/sigma consistency and joint force pairing
+        run: |
+          python3 tools/ou3_p4_first_accel_aw_sigma_consistency.py \
+            --output /tmp/ou3_aw_sigma_consistency.json
+
+      - name: Emit the consolidated P1-P5 certificate numbers
+        run: |
+          python3 tools/ou3_p1_p5_certificate_numbers.py \
+            --first-accel /tmp/ou3_signed_first_accel_v3.json \
+            --output /tmp/ou3_p1_p5_certificate_numbers.json
+
+      - name: Enforce stage usability and fail-closed scope
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          gain = json.loads(Path('/tmp/ou3_shared_force_gain.json').read_text())
+          fa = json.loads(Path('/tmp/ou3_signed_first_accel_v3.json').read_text())
+          rep = json.loads(Path('/tmp/ou3_p1_p5_certificate_numbers.json').read_text())
+          cons = json.loads(Path('/tmp/ou3_aw_sigma_consistency.json').read_text())
+
+          assert gain['validation_pass'], gain['validation_failures']
+          assert gain['uniformly_at_least_as_tight_as_interval_gain'] is True
+          assert gain['minimum_observed_tightening_factor'] >= 1.0
+          assert gain['maximum_observed_tightening_factor'] > 1.5
+          assert gain['filter_changed'] is False
+          assert gain['P4_USABLE_CERTIFICATE_PROMOTED'] is False
+
+          # The shared-force gain must keep the whole 30 deg family evaluable.
+          assert fa['shared_force_magnitude_dependency_preserved'] is True
+          assert fa['naive_interval_force_magnitude_gain_used'] is False
+          assert fa['first_accelerometer_family_completely_evaluated'] is True
+          assert fa['first_failure'] is None
+          assert fa['evaluated_children'] > 40000
+          assert fa['minimum_signed_composition_denominator_lower'] > 0.5
+          assert fa['max_correction_norm_upper_rad'] < 2.65
+          assert fa['P4_COMPLETE_WORD_DISSIPATION_ESTABLISHED_HERE'] is False
+          assert fa['P4_USABLE_CERTIFICATE_PROMOTED'] is False
+          assert fa['candidate_angle_deg'] == 30.0
+          assert fa['declared_startup_aw_error_fraction_g'] == 0.3
+
+          assert rep['validation_pass'], rep['validation_failures']
+          assert rep['upstream_pass_fields_trusted_as_usability'] is False
+          assert rep['filter_changed'] is False
+          assert rep['source_replay_used'] is False
+          assert rep['all_stage_geometries_usable'] is True
+          assert rep['P1_P5_COMPLETE_STABILITY_PROOF_ESTABLISHED'] is False
+          assert set(rep['open_theorem_obligations']) == {'P4', 'P5'}
+
+          stages = {s['stage']: s for s in rep['stages']}
+          assert [s['stage'] for s in rep['stages']] == ['P1', 'P2', 'P3', 'P4', 'P5']
+          for name in ('P1', 'P2', 'P3'):
+              assert stages[name]['verdict'] == 'USABLE', name
+          for name in ('P4', 'P5'):
+              assert stages[name]['verdict'] == 'USABLE_GEOMETRY_OPEN_OBLIGATION', name
+
+          p1 = stages['P1']['headline']
+          assert p1['normal_gauged_handoff_cayley_norm_upper'] >= 0.20
+          assert p1['timeout_gauged_handoff_cayley_norm_upper'] >= 0.50
+          assert p1['declared_startup_aw_error_fraction_g'] == 0.3
+
+          p4 = stages['P4']['headline']
+          assert p4['design_full_attitude_angle_rad'] >= 0.80
+          assert p4['design_cayley_norm_upper'] < 1.0
+          budget = p4['first_accelerometer_sector_budget']
+          assert budget['shrinking_the_candidate_angle_alone_can_close_the_budget'] is False
+          assert budget['smallest_probe_nuisance_over_budget_ratio'] > 1.0
+          for row in budget['ladder']:
+              assert row['nuisance_upper_rad'] > row['budget_upper_rad']
+
+          p5 = stages['P5']['headline']
+          assert p5['declared_entrance_full_attitude_angle_deg'] == 45.0
+          assert p5['N_outer_words'] == 0
+          assert p5['N_inner_words'] is None
+
+          assert cons['validation_pass'], cons['validation_failures']
+          assert cons['aw_sigma_consistency_declared_in_domain'] is False
+          assert cons['consistency_constant_is_a_conditional_requirement_not_a_theorem'] is True
+          assert cons['joint_force_pairing_is_unconditional'] is True
+          assert cons['filter_changed'] is False
+          assert cons['P4_USABLE_CERTIFICATE_PROMOTED'] is False
+          crows = {r['angle_deg']: r for r in cons['angle_rows']}
+          # The joint force pairing may never be looser than separate bounds.
+          for r in cons['angle_rows']:
+              assert r['nuisance_joint_force_pairing_upper_rad'] <= \
+                  r['nuisance_separate_force_bounds_upper_rad']
+              assert r['joint_force_pairing_tightening_factor'] >= 1.0
+              assert r['joint_pairing_fits_inside_budget'] is False
+          # 30 deg and wider are excluded under sector invariance outright.
+          for deg in (30.0, 35.0, 40.0, 45.0):
+              r = crows[deg]
+              assert r['any_finite_constant_closes_this_angle'] is False
+              assert r['nuisance_at_zero_aw_error_rad'] > \
+                  r['sector_invariance_correction_budget_upper_rad']
+          for deg in (15.0, 20.0, 25.0):
+              r = crows[deg]
+              assert r['any_finite_constant_closes_this_angle'] is True
+              assert 0.0 < r['critical_consistency_constant'] < r['unconstrained_c_at_worst_cell']
+          assert cons['widest_angle_closed_by_a_finite_consistency_constant'] == 25.0
+
+          print('joint force tightening:', [(r['angle_deg'],
+                r['joint_force_pairing_tightening_factor']) for r in cons['angle_rows']])
+          print('required c:', [(r['angle_deg'], r['critical_consistency_constant'])
+                                for r in cons['angle_rows']])
+          print('unconstrained c at worst cell:',
+                cons['angle_rows'][0]['unconstrained_c_at_worst_cell'])
+          print('P1 handoffs:', p1['normal_gauged_handoff_cayley_norm_upper'],
+                p1['timeout_gauged_handoff_cayley_norm_upper'])
+          print('P2 states:', stages['P2']['headline']['partition_states'])
+          print('P3 margins:', stages['P3']['headline']['endpoint_information_margin_lower'])
+          print('P4 sector rad:', p4['design_full_attitude_angle_rad'])
+          print('P4 gain tightening:', gain['maximum_observed_tightening_factor'])
+          print('P4 first-accel max_d:', fa['max_correction_norm_upper_rad'])
+          print('P4 first-accel max_qplus:', fa['max_accepted_or_rejected_post_update_q_upper'])
+          print('P4 budget ladder:', [(r['angle_deg'], r['nuisance_over_budget_ratio'])
+                                      for r in budget['ladder']])
+          print('P5 entrance deg:', p5['declared_entrance_full_attitude_angle_deg'])
+          print('complete proof:', rep['P1_P5_COMPLETE_STABILITY_PROOF_ESTABLISHED'])
+          PY

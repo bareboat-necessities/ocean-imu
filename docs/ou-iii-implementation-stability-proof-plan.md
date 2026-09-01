@@ -480,6 +480,137 @@ happening in between. Three changes follow, and all three are needed:
 Until those land, `N_H_words` stays unset -- now for a proved reason rather than
 a pending computation.
 
+#### The candidate ladder is not the missing piece either
+
+The `30 -> 25 -> 20 -> 15` deg complete-word candidate ladder was introduced as a
+way to make change 3 cheap: a narrower finite-angle cell has better exact Cayley
+monotonicity and a smaller eta/information ratio, so the expensive 18/21-state
+word should be easier there. Two producers now measure what that buys on the
+operation that actually blocks the ladder, the first deployed accelerometer
+update.
+
+`tools/ou3_p4_shared_force_gain.py` first removes the one piece of pure
+dependency slack in the way. Every structured accelerometer gain row has the
+shape `m N / (m^2 p + lambda)` with the specific-force magnitude `m` in both the
+numerator and the denominator, so an ordinary interval quotient overstates it by
+up to the cell's magnitude ratio. The rows are unimodal in `m`, so the exact
+supremum is the interior value at `m* = sqrt(lambda/p)` -- `(1/2) sqrt(p/lambda)`
+for the self-`p` rows, `C / (2 sqrt(lambda p))` for the independent-`C` axial row
+-- or the larger endpoint. The lemma is uniformly between `1.17` and `1.78`
+tighter over the audited cells and never looser.
+
+That is enough to make the blocked stage measurable.
+`ou3_p4_30deg_signed_first_accel_sector_v2` aborted after `13` of `40960`
+children with `max_d = 2.6481953631664035` rad and a signed composition
+denominator of `0.038994069387713985` that could cross zero;
+`ou3_p4_30deg_signed_first_accel_sector_v3` evaluates all `40960` with
+`max_d = 2.2251526515093487` rad and a minimum denominator of
+`0.6356874937572935`. The certificate is still `NOT_ESTABLISHED` -- the worst
+post-update norm is `6.583306237863824` against an outer sector of
+`0.845586437476324` -- but the gap is now a measured number rather than a lost
+enclosure.
+
+`tools/ou3_p4_first_accel_sector_budget.py` then measures the gap directly. For
+each candidate angle it computes the **budget**, the largest correction norm
+whose worst-case signed Cayley composition with the post-prediction candidate
+norm still lands strictly inside the outer sector, and the **nuisance term**, the
+shared-force gain applied to the effective `a_w` input:
+
+| candidate | budget (rad) | nuisance (rad) | ratio |
+| --- | --- | --- | --- |
+| 15 deg | `0.5309502743982276` | `1.1270362643023522` | `2.12` |
+| 20 deg | `0.4439819969818312` | `1.1909281418846758` | `2.68` |
+| 25 deg | `0.3578622392054443` | `1.2735064196675971` | `3.56` |
+| 30 deg | `0.27225152012902093` | `1.375114933176711` | `5.05` |
+| 35 deg | `0.18677577048716126` | `1.4961948241502516` | `8.01` |
+| 40 deg | `0.10101915914914625` | `1.6373388541150944` | `16.21` |
+| 45 deg | `0.014514984270965614` | `1.7993361240597836` | `123.96` |
+
+Narrowing the candidate does help, and by a factor of `2.4` across the declared
+ladder. It does not help enough. The producer's non-candidate limit probes show
+the ratio saturating: at `1` deg the budget is `0.7815378101554163` rad and the
+nuisance term is still `1.0456598581422538` rad, a ratio of `1.34`. The reason is
+one source-faithful number that no candidate angle touches -- the declared `0.3 g`
+latent-acceleration error over the lowest admitted specific force,
+`2.941995 / 5.0 = 0.5883990000000002`, which by itself lets the
+accelerometer-implied gravity direction sit `0.6291` rad away in the low-force
+cells.
+
+Like V54, this producer reports a **distance and never a verdict**: the nuisance
+term is an outward bound and the `a_w` covariance endpoints feeding the gain are
+enclosure endpoints rather than certified reachable points, so a ratio above one
+does not prove that an admissible state leaves the sector. What it does settle is
+the search direction. Changes 1 and 2 -- the operation-matched information
+decrease and the directional block margin -- are the remaining work; the ladder
+stays a conditioning strategy for the complete-word search and is not a
+substitute for them.
+
+#### Which door the ladder is standing in front of
+
+`tools/ou3_p4_first_accel_aw_sigma_consistency.py` splits the remaining gap into
+the part that is proof slack and the part that is a declared-domain question.
+
+The slack is a second shared variable. The nuisance term is
+`||K_theta|| (a_w error + eta(q)|f| + b_a)`; the gain falls roughly like `1/|f|`
+while the finite-angle force remainder grows like `|f|`, so bounding the two
+factors separately over one force cell charges the largest gain against the
+largest force. Maximising the product over subdivided magnitudes inside the same
+cell is unconditional and worth `1.026` (15 deg) to `1.168` (45 deg).
+
+The domain question is the pairing between the `a_w` error and the `a_w`
+covariance. The covariance that sets the gain is the tuner state,
+`P_aw = sigma_applied^2` with `sigma_applied` in the deployed `[0.05, 6.0] m/s^2`
+safety range; the error is the separately declared `0.3 g` startup envelope.
+Nothing in the declared domain couples them, so the worst cell pairs a flat-sea
+tuner with a `2.9407694241234332 m/s^2` error, `5.3691` times that cell's `sigma`
+upper. The shipping tuner does couple them --
+`sigma_target_ = min(sigma_wave * sigma_coeff_, max_sigma_a_)` with
+`sigma_applied` an EMA toward that target and `sigma_wave` the estimated
+band-limited wave-acceleration RMS -- but the EMA transient means no bound
+follows from the update law alone.
+
+The producer assumes no coupling and measures the constant one would have to
+supply. Adding `||delta a_w|| <= c * sigma_applied` to the declared domain:
+
+| candidate | budget (rad) | residual at zero `a_w` error (rad) | required `c` |
+| --- | --- | --- | --- |
+| 15 deg | `0.5309502743982276` | `0.20587675702069888` | `1.9510667819413354` |
+| 20 deg | `0.4439819969818312` | `0.24791375638819854` | `1.176786821337373` |
+| 25 deg | `0.3578622392054443` | `0.30224527930294` | `0.33380880686218` |
+| 30 deg | `0.27225152012902093` | `0.36909754878917767` | none exists |
+| 35 deg | `0.18677577048716126` | `0.44876080948633734` | none exists |
+| 40 deg | `0.10101915914914625` | `0.5415985399383951` | none exists |
+| 45 deg | `0.014514984270965614` | `0.6480593087098117` | none exists |
+
+Two consequences for the plan above.
+
+**The 30 deg candidate is excluded under sector invariance.** Its residual with a
+perfect `a_w` estimate -- accelerometer bias plus finite-angle force remainder
+alone -- is already `0.36909754878917767` rad against a `0.27225152012902093` rad
+budget. No consistency statement, gain sharpening or covariance enclosure
+recovers that, for the same reason the route ceiling was independent of `kappa`.
+"Attempt 30 deg first, narrow only on failure" is therefore only viable once
+change 1 is in place; while per-operation invariance is the acceptance test, the
+ladder has to start at 25 deg or below.
+
+**Only the narrow rungs ask for a physically plausible constant.** `c = 1.95` at
+15 deg is an estimation error inside about two applied sigma; `c = 1.18` at
+20 deg is about one sigma; `c = 0.33` at 25 deg would need the latent-acceleration
+error below a third of one sigma, which is not a realistic filter property.
+
+So there are exactly two doors and they are now priced:
+
+1. declare `||delta a_w|| <= c * sigma_applied` in the operating domain with `c`
+   around `1.2`--`1.95`, justified from the tuner law and a bound on the EMA
+   transient, and take the candidate to 15--20 deg; or
+2. replace per-operation sector invariance with the operation-matched
+   information decrease and a directional block margin, under which a transient
+   excursion is admissible and the 30 deg candidate is not excluded.
+
+Door 2 is change 1 above and adds no domain assumption; door 1 is cheaper but
+narrows the certified set and needs its own physical review. The producer keeps
+`aw_sigma_consistency_declared_in_domain = false` and promotes nothing.
+
 **PASS criterion for closing P5:** every certified normal or timeout handoff lies in a validated outer H capture funnel; every source-word prefix stays safe; the outer recurrence reaches `W_*` in a finite machine-certified number of H words/time. The current certificate does **not** yet satisfy this criterion, and the route ceiling above proves the present accounting never can.
 
 ### P6 — Prove every implemented hybrid jump
