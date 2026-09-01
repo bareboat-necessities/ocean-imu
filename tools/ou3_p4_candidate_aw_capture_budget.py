@@ -1,17 +1,19 @@
 #!/usr/bin/env python3
 """Derive P4 latent-acceleration entrance budgets from the shipping update range.
 
-The finite-angle candidate search cannot simply inherit the outer/P5
-``||e_aw|| <= 10 m/s^2`` bound: even after restoring the exact orthogonal
-``J_aw`` geometry and the tangent-only innovation resolvent, the first generic
-normal-Live accelerometer correction exceeds the shipping validated 6 rad
-correction-Cayley range for every 30/25/20/15 deg attitude candidate.
+The finite-angle candidate search must distinguish the declared startup/P5
+latent-acceleration error envelope from the smaller radius, if any, actually
+required by a P4 candidate.  The deployment domain now declares
+``||e_aw|| <= 0.3 g = 2.941995 m/s^2`` for startup in waves; this is a physical
+theorem assumption, not a replay fit or proof-specific tuning knob.
 
-This producer does not choose a smaller a_w bound as a theorem assumption.
-Instead it solves the already-certified first-prefix inequality backwards for
-the largest a_w entrance norm which is sufficient for the unchanged 6 rad
-helper range, uniformly over the same source, S-pseudo phase, force-magnitude
-and yaw-alignment cells used by ``ou3_p4_candidate_first_accel_range_v3``.
+This producer independently solves the already-certified first-prefix
+inequality backwards for the largest a_w entrance norm sufficient for the
+unchanged 6 rad helper range, uniformly over the same source, S-pseudo phase,
+force-magnitude and yaw-alignment cells used by
+``ou3_p4_candidate_first_accel_range_v3``.  If the derived P4 radius contains
+the declared 0.3 g startup envelope, no separate P5 a_w-only capture is needed.
+If it is smaller, the difference remains an explicit P5 capture obligation.
 
 For a not-due S phase,
 
@@ -30,10 +32,8 @@ range requires
     K_theta * (rotation_residual + e_aw^- + b_a) <= 6.
 
 Solving that inequality with directed rounding yields a certified *lower*
-bound on the admissible A.  The minimum over all children is a derived P4
-funnel radius.  P5 keeps its 10 m/s^2 entrance and must prove finite capture
-into this radius; no capture, complete-word dissipation or usable P4 theorem is
-promoted here.
+bound on the admissible A.  No capture, complete-word dissipation or usable P4
+theorem is promoted here.
 """
 from __future__ import annotations
 
@@ -46,13 +46,14 @@ import ou3_p4_candidate_first_accel_range as BASE
 import ou3_p4_candidate_first_accel_range_v3 as V3
 import ou3_p4_p5_entrance_search_domain as ENTRANCE
 import ou3_p5_first_accel_rotation_gauge as RG
+import ou3_p5_first_accel_rotation_gauge_v3 as RG3
 import ou3_p5_first_accel_structured_gain as SG
 import ou3_p5_full_h_prefix_cells as FULL
 import ou3_p5_full_h_prefix_cells_v3 as FULL3
 import ou3_vector_uco_certificate as VECTOR
 
 DEFAULT_DOMAIN = BASE.DEFAULT_DOMAIN
-SCHEMA = 1
+SCHEMA = 2
 LIMIT = 6.0
 
 
@@ -138,6 +139,10 @@ def build(domain_path: Path = DEFAULT_DOMAIN, *, source_pieces: int = 2,
     if domain.get("configured_runtime", {}).get("imu_lever_arm_enabled") is not False:
         raise RuntimeError("P4 a_w budget requires lever arm disabled")
 
+    # The structured first-prefix proof requires the same source-preserving
+    # covariance backend as the working candidate range producer.  Installing
+    # only FULL3 loses exact axis symmetry through generic PSD boxing.
+    RG3._install_backend(path, source_pieces)
     FULL3._install_backend()
     entrance = ENTRANCE.build(path)
     vector = VECTOR.build()
@@ -156,8 +161,12 @@ def build(domain_path: Path = DEFAULT_DOMAIN, *, source_pieces: int = 2,
     tilt, yaw, eps = RG._attitude_covariance_epsilon(path, h)
     vc = vector["configured_measurement_bounds"]
     racc_var = FULL._R_diag(float(vc["acc_measurement_std_mps2"]))[0][0]
-    ba = float(domain["startup"]["physical_handoff_coordinate_bounds"]["accelerometer_bias_error_norm_upper_mps2"])
-    p5_aw = float(domain["startup"]["physical_handoff_coordinate_bounds"]["latent_acceleration_error_norm_upper_mps2"])
+    startup = domain["startup"]
+    handoff = startup["physical_handoff_coordinate_bounds"]
+    ba = float(handoff["accelerometer_bias_error_norm_upper_mps2"])
+    p5_aw = float(handoff["latent_acceleration_error_norm_upper_mps2"])
+    gravity = float(startup["gravity_mps2"])
+    aw_fraction_g = float(startup.get("latent_acceleration_error_fraction_g", math.nan))
     pnorm = _p5_position_norm_upper(domain)
 
     rows = []
@@ -177,7 +186,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN, *, source_pieces: int = 2,
                 FULL.matrix_mul(FULL.matrix_mul(F, P0), FULL.matrix_transpose(F)), Q))
             _pss, _psa, paw_pred = RG._scalar_axis_structure(Pp)
             if phase == "due":
-                paw, _ignored_old_outer_error = RG._due_paw_and_error_norm(Pp, src, 0.0, 0.0)
+                paw, _ignored_outer_error = RG._due_paw_and_error_norm(Pp, src, 0.0, 0.0)
             else:
                 paw = paw_pred
             intercept, slope, sdetail = _s_phase_affine_aw_bound(
@@ -222,6 +231,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN, *, source_pieces: int = 2,
             "evaluated_children": total,
             "derived_P4_aw_error_norm_upper_mps2_lower": budget,
             "P5_outer_aw_error_norm_upper_mps2": p5_aw,
+            "declared_startup_aw_inside_derived_P4_radius": p5_aw <= budget,
             "finite_P5_aw_capture_required": budget < p5_aw,
             "positive_funnel_radius": budget > 0.0,
             "limiting_child": limiting,
@@ -231,6 +241,8 @@ def build(domain_path: Path = DEFAULT_DOMAIN, *, source_pieces: int = 2,
     if not positive:
         failures.append("one or more P4 candidates has no positive derived a_w funnel")
     passed = not failures
+    widest_containing_startup = next(
+        (r["angle_deg"] for r in rows if r["declared_startup_aw_inside_derived_P4_radius"]), None)
     return {
         "schema": SCHEMA,
         "qualification": "OU3_P4_DERIVED_LATENT_ACCELERATION_FUNNEL_BUDGET",
@@ -240,18 +252,23 @@ def build(domain_path: Path = DEFAULT_DOMAIN, *, source_pieces: int = 2,
         "derived_from_shipping_6rad_range_not_assumed": True,
         "deployed_correction_limit_rad": LIMIT,
         "deployed_correction_limit_increased": False,
+        "source_preserving_rotation_gauge_v3_backend_used": True,
         "P5_position_half_Hs_norm_used_in_due_S_affine_bound": True,
         "P5_position_norm_upper_m": pnorm,
         "legacy_P1_position_20m_not_used_for_P4_budget": True,
         "P5_outer_aw_error_norm_upper_mps2": p5_aw,
+        "declared_startup_gravity_mps2": gravity,
+        "declared_startup_aw_error_fraction_g": aw_fraction_g,
+        "declared_startup_aw_is_exactly_0p3g": p5_aw == 0.3 * gravity and aw_fraction_g == 0.3,
         "candidate_rows": rows,
+        "widest_candidate_whose_derived_aw_radius_contains_declared_startup_deg": widest_containing_startup,
         "all_candidates_have_positive_derived_aw_funnel": positive,
         "P4_AW_FUNNEL_BUDGET_CERTIFICATE": "PASS" if passed else "NOT_ESTABLISHED",
         "P5_FINITE_AW_CAPTURE_ESTABLISHED_HERE": False,
         "P4_COMPLETE_WORD_DISSIPATION_ESTABLISHED_HERE": False,
         "P4_USABLE_CERTIFICATE_PROMOTED": False,
         "next_obligation": (
-            "prove source-complete finite P5 capture of the 10 m/s^2 outer latent-acceleration error into the widest candidate's derived a_w funnel together with the attitude/translation coordinates; then rerun the complete 18/21-state candidate word using that derived funnel rather than treating 10 m/s^2 as a P4 invariant radius"
+            "if the declared 0.3g startup a_w envelope is inside a candidate's derived radius, rerun that complete 18/21-state candidate word with the declared startup radius and the structured signed accelerometer/Joseph-reset map; otherwise prove source-complete finite P5 capture into the derived a_w radius before that word"
         ),
         "failures": list(dict.fromkeys(failures)),
     }
@@ -263,9 +280,11 @@ def validate(d: dict) -> list[str]:
         f.append("schema mismatch")
     for k in (
         "source_generated_not_trajectory_fit", "derived_from_shipping_6rad_range_not_assumed",
+        "source_preserving_rotation_gauge_v3_backend_used",
         "P5_position_half_Hs_norm_used_in_due_S_affine_bound",
         "legacy_P1_position_20m_not_used_for_P4_budget",
         "all_candidates_have_positive_derived_aw_funnel",
+        "declared_startup_aw_is_exactly_0p3g",
     ):
         if d.get(k) is not True:
             f.append(f"{k} is not true")
@@ -284,12 +303,19 @@ def validate(d: dict) -> list[str]:
     if [float(r.get("angle_deg", -1.0)) for r in rows] != [30.0, 25.0, 20.0, 15.0]:
         f.append("candidate ladder changed")
     outer = float(d.get("P5_outer_aw_error_norm_upper_mps2", -1.0))
-    if outer != 10.0:
-        f.append("P5 outer a_w radius changed")
+    gravity = float(d.get("declared_startup_gravity_mps2", -1.0))
+    if not (gravity > 0.0 and outer == 0.3 * gravity):
+        f.append("declared startup/P5 a_w radius is not frozen at 0.3g")
+    if float(d.get("declared_startup_aw_error_fraction_g", -1.0)) != 0.3:
+        f.append("declared startup a_w fraction of g changed")
     for r in rows:
         b = float(r.get("derived_P4_aw_error_norm_upper_mps2_lower", -1.0))
-        if not (math.isfinite(b) and 0.0 < b <= outer):
+        if not (math.isfinite(b) and b > 0.0):
             f.append(f"{r.get('angle_deg')}deg: invalid derived a_w funnel radius")
+        if r.get("declared_startup_aw_inside_derived_P4_radius") is not (outer <= b):
+            f.append(f"{r.get('angle_deg')}deg: startup containment flag is inconsistent")
+        if r.get("finite_P5_aw_capture_required") is not (b < outer):
+            f.append(f"{r.get('angle_deg')}deg: P5 capture flag is inconsistent")
         if r.get("limiting_child") is None:
             f.append(f"{r.get('angle_deg')}deg: missing limiting child")
         if int(r.get("evaluated_children", 0)) <= 0:
@@ -318,11 +344,14 @@ def main() -> int:
     print(json.dumps({
         "status": d["P4_AW_FUNNEL_BUDGET_CERTIFICATE"],
         "P5_outer_aw": d["P5_outer_aw_error_norm_upper_mps2"],
+        "P5_outer_aw_g": d["declared_startup_aw_error_fraction_g"],
         "P5_position_norm": d["P5_position_norm_upper_m"],
+        "widest_contains_startup": d["widest_candidate_whose_derived_aw_radius_contains_declared_startup_deg"],
         "rows": [{
             "angle_deg": r["angle_deg"],
             "qpred": r["post_prediction_q_upper"],
             "aw_funnel": r["derived_P4_aw_error_norm_upper_mps2_lower"],
+            "startup_inside": r["declared_startup_aw_inside_derived_P4_radius"],
             "capture_required": r["finite_P5_aw_capture_required"],
             "limiting_phase": (r["limiting_child"] or {}).get("pseudo_phase"),
             "limiting_K": (r["limiting_child"] or {}).get("Ktheta_norm_upper"),
