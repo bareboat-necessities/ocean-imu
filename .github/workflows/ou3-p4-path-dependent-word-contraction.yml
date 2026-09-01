@@ -3,6 +3,7 @@ name: ou3-p4-path-dependent-word-contraction
 on:
   push:
     paths:
+      - "tools/ou3_physical_force_domain.py"
       - "tools/ou3_p4_path_dependent_word_contraction.py"
       - "tools/ou3_p4_h18_interval_ad_word.py"
       - "tools/ou3_interval_ad.py"
@@ -13,6 +14,7 @@ on:
       - "tools/ou3_proof_operating_domain.json"
       - "src/kalman_ou_iii/**"
       - "src/kalman_ou_common/**"
+      - "tests/validation/test_ou3_physical_force_domain.py"
       - "tests/validation/test_ou3_p4_path_dependent_word_contraction.py"
       - "tests/validation/test_ou3_p4_h18_interval_ad_word.py"
       - "tests/validation/test_ou3_interval_ad.py"
@@ -20,6 +22,7 @@ on:
       - ".github/workflows/ou3-p4-path-dependent-word-contraction.yml"
   pull_request:
     paths:
+      - "tools/ou3_physical_force_domain.py"
       - "tools/ou3_p4_path_dependent_word_contraction.py"
       - "tools/ou3_p4_h18_interval_ad_word.py"
       - "tools/ou3_interval_ad.py"
@@ -30,6 +33,7 @@ on:
       - "tools/ou3_proof_operating_domain.json"
       - "src/kalman_ou_iii/**"
       - "src/kalman_ou_common/**"
+      - "tests/validation/test_ou3_physical_force_domain.py"
       - "tests/validation/test_ou3_p4_path_dependent_word_contraction.py"
       - "tests/validation/test_ou3_p4_h18_interval_ad_word.py"
       - "tests/validation/test_ou3_interval_ad.py"
@@ -51,24 +55,37 @@ jobs:
     timeout-minutes: 90
     steps:
       - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
 
-      - name: Compile route, interval AD, H18 backend and tests
+      - name: Compile route, marine force gate, interval AD, H18 backend and tests
         run: |
           python3 -m py_compile \
+            tools/ou3_physical_force_domain.py \
             tools/ou3_interval_ad.py \
             tools/ou3_p4_path_dependent_word_contraction.py \
             tools/ou3_p4_h18_interval_ad_word.py \
+            tests/validation/test_ou3_physical_force_domain.py \
             tests/validation/test_ou3_interval_ad.py \
             tests/validation/test_ou3_p4_h18_interval_ad_word.py \
             tests/validation/test_ou3_p4_path_dependent_word_contraction.py
 
-      - name: Run interval-AD primitive tests
+      - name: Run marine force-domain and interval-AD primitive tests
         working-directory: tests/validation
-        run: python3 -m unittest -v test_ou3_interval_ad test_ou3_p4_h18_interval_ad_word
+        run: |
+          python3 -m unittest -v \
+            test_ou3_physical_force_domain \
+            test_ou3_interval_ad \
+            test_ou3_p4_h18_interval_ad_word
 
       - name: Run route-contract unit tests
         working-directory: tests/validation
         run: python3 -m unittest -v test_ou3_p4_path_dependent_word_contraction
+
+      - name: Emit marine physical-force certificate
+        run: |
+          python3 tools/ou3_physical_force_domain.py \
+            --output /tmp/ou3_physical_force_domain.json
 
       - name: Emit route diagnostic
         run: |
@@ -82,12 +99,21 @@ jobs:
             --cell-limit 1 \
             --output /tmp/ou3_p4_h18_interval_ad_word.json
 
-      - name: Enforce independent route and fail-closed H18 scope
+      - name: Enforce marine force domain, independent route and fail-closed H18 scope
         run: |
           python3 - <<'PY'
           import json
           from decimal import Decimal
           from pathlib import Path
+
+          force = json.loads(Path('/tmp/ou3_physical_force_domain.json').read_text())
+          assert force['validation_pass'], force['validation_failures']
+          assert force['non_gravitational_cog_acceleration_norm_upper_mps2'] == 4.0
+          assert abs(force['derived_specific_force_norm_lower_mps2'] - 5.80665) < 1e-12
+          assert abs(force['derived_specific_force_norm_upper_mps2'] - 13.80665) < 1e-12
+          assert force['old_independent_30_mps2_cap_used'] is False
+          assert force['impact_slam_in_scope'] is False
+          assert force['lever_arm_enabled'] is False
 
           d = json.loads(Path('/tmp/ou3_p4_path_dependent_word_contraction.json').read_text())
           assert d['validation_pass'], d['validation_failures']
@@ -147,6 +173,8 @@ jobs:
               }
               assert set(h['validation_failures']).issubset(allowed), h['validation_failures']
 
+          print('marine non-grav CoG accel max:', force['non_gravitational_cog_acceleration_norm_upper_mps2'])
+          print('marine total specific-force envelope:', force['derived_specific_force_norm_lower_mps2'], force['derived_specific_force_norm_upper_mps2'])
           print('source graph:', d['source_graph'])
           print('H18 samples:', h['samples_checked'], '/', h['full_word_samples'])
           print('H18 Cayley cells:', h['outer_ball_box_cells_completed'], '/', h['outer_ball_box_cover_total'])
