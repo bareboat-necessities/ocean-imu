@@ -8,12 +8,19 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools"))
 
 import ou3_p4_path_dependent_word_contraction as ROUTE
+from ou3_proof_module_state import preserve_module_bindings
 
 
 class PathDependentWordContractionTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.d = ROUTE.build()
+        # Some route prerequisites call historical V2/V3 proof producers whose
+        # validated backends are installed by rebinding process-global ou3_*
+        # module functions.  Keep those changes local to this calculation so
+        # later P5 tests see the source-defined backends.  This is the same
+        # isolation primitive used by the parallel #449 route.
+        with preserve_module_bindings():
+            cls.d = ROUTE.build()
         cls.assertions = ROUTE.validate(cls.d)
 
     def test_route_validates_but_does_not_promote_p4(self):
