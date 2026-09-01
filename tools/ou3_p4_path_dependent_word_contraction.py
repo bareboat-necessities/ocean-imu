@@ -8,31 +8,27 @@ map and asks for a direct differential contraction certificate
     J_w(x)^T M_h J_w(x) <= gamma^2 M_g,   gamma < 1,
 
 for every reachable source-word edge g->h and every state in the declared
-finite-angle domain.  M_g and M_h are the source covariance-information metrics
-already bound to P3, with one mode-global normalization; the endpoint metric is
-therefore selected by the actual reachable source node rather than by an
-independent worst-case choice.
+finite-angle domain.  M_g and M_h are source covariance-information metrics
+with one mode-global normalization; the endpoint metric is selected by the
+actual reachable source node rather than by an independent worst-case choice.
 
-The route is intentionally different from the legacy P4 accounting:
+The route deliberately does not require individual packet full rank,
+per-operation sector invariance, an N-times-global Lipschitz remainder, or a
+translation/nontranslation Schur split.  The tiny source-uniform P3 delta is a
+linear-origin strictness diagnostic only, never a nonlinear radius.
 
-* no individual accelerometer/magnetometer packet must be full rank;
-* no accepted correction must preserve the outer attitude sector by itself;
-* no N-times-global-Lipschitz remainder is accumulated;
-* no translation/nontranslation Schur split is required by the acceptance test;
-* the tiny source-uniform P3 delta is retained only as a strict linear-origin
-  fallback, not converted into a physical nonlinear radius or defect budget.
-
-The future numerical backend must outward-enclose the full 18/21-state
+A future numerical producer must outward-enclose the full H=18/A=21
 Jacobian/generalized Jacobian of the exact shipping complete-word return map,
-including every sequential quaternion reset and the A-mode accelerometer-bias
-projection.  This module certifies the route, records the current quantitative
-geometry/source graph, and validates the schema of a future Jacobian result.  It
-does not fabricate such a result and never promotes P4 by itself.
+including sequential quaternion resets and the A-mode accelerometer-bias
+projection.  Candidate metadata is accepted only when it is bound to the exact
+proof-operating-domain file and the exact 0.80-rad outer geometry.  This route
+contract never promotes P4 by accepting metadata alone.
 """
 from __future__ import annotations
 
 import argparse
 from decimal import Decimal, getcontext
+import hashlib
 import json
 import math
 from pathlib import Path
@@ -51,11 +47,7 @@ JACOBIAN_QUALIFICATION = "OU3_P4_OUTWARD_COMPLETE_WORD_GENERALIZED_JACOBIAN"
 
 
 def _decimal_linear_gap(delta: float) -> dict:
-    """Return a high-precision view of 1-sqrt(1-delta).
-
-    Binary64 rounds sqrt(1-delta) to one for the present P3 delta.  The decimal
-    diagnostic makes the scale visible without using it as the nonlinear route.
-    """
+    """Return a high-precision view of 1-sqrt(1-delta)."""
     d = Decimal(str(float(delta)))
     if not (Decimal(0) < d < Decimal(1)):
         raise ValueError("strict delta in (0,1) required")
@@ -100,9 +92,8 @@ def _mode_route(mode: str, metric: dict) -> dict:
 def _candidate_status(candidate: dict | None, route: dict) -> dict:
     """Validate only the metadata contract of a future rigorous Jacobian result.
 
-    The actual interval matrices must be produced and validated by their own
-    numerical producer.  This consumer therefore marks an input as
-    CONTRACT_ACCEPTED, never as final P4 promotion.
+    The actual matrices must be owned and promoted by their numerical producer.
+    This consumer may return CONTRACT_ACCEPTED but never establishes P4.
     """
     if candidate is None:
         return {
@@ -129,6 +120,26 @@ def _candidate_status(candidate: dict | None, route: dict) -> dict:
         reasons.append("Jacobian certificate reintroduced N-times-global-defect accounting")
     if candidate.get("P3_delta_used_as_nonlinear_radius") is not False:
         reasons.append("Jacobian certificate reintroduced P3 delta as nonlinear radius")
+
+    # Bind an accepted candidate to the exact physical/full-state theorem domain.
+    # The content hash covers every startup/live/full-state bound in the declared
+    # operating-domain JSON; the explicit angle/q fields make the finite-angle
+    # coverage human-auditable and reject a rigorous result on a smaller ball.
+    if candidate.get("proof_operating_domain_sha256") != route.get("proof_operating_domain_sha256"):
+        reasons.append("candidate proof-operating-domain hash does not match route domain")
+    candidate_angle = candidate.get("certified_outer_angle_rad")
+    if isinstance(candidate_angle, bool) or not isinstance(candidate_angle, (int, float)) \
+            or not math.isfinite(float(candidate_angle)) \
+            or float(candidate_angle) != float(route["outer_geometry_angle_rad"]):
+        reasons.append("candidate outer-angle domain is not exactly the required 0.80 rad")
+    candidate_q = candidate.get("certified_outer_cayley_norm_upper")
+    if isinstance(candidate_q, bool) or not isinstance(candidate_q, (int, float)) \
+            or not math.isfinite(float(candidate_q)) \
+            or float(candidate_q) < float(route["outer_geometry_cayley_norm_upper"]):
+        reasons.append("candidate Cayley domain does not cover the required outer ball")
+    if candidate.get("full_state_domain_exact_match") is not True:
+        reasons.append("candidate does not declare an exact full-state theorem-domain match")
+
     if int(candidate.get("source_partition_state_count", -1)) != int(route["source_graph"]["partition_state_count"]):
         reasons.append("source partition state count mismatch")
     if int(candidate.get("source_transition_edge_count", -1)) != int(route["source_graph"]["transition_edge_count"]):
@@ -156,7 +167,8 @@ def _candidate_status(candidate: dict | None, route: dict) -> dict:
             reasons.append(f"{mode}: full-state Jacobian cross terms were dropped")
             strict = False
         gamma = row.get("max_whitened_generalized_jacobian_norm_upper")
-        if not isinstance(gamma, (int, float)) or not math.isfinite(float(gamma)) or not (0.0 <= float(gamma) < 1.0):
+        if isinstance(gamma, bool) or not isinstance(gamma, (int, float)) \
+                or not math.isfinite(float(gamma)) or not (0.0 <= float(gamma) < 1.0):
             reasons.append(f"{mode}: strict whole-word contraction gamma is not certified below one")
             strict = False
         if mode == "A" and row.get("accelerometer_bias_projection_generalized_jacobian_included") is not True:
@@ -175,7 +187,8 @@ def _candidate_status(candidate: dict | None, route: dict) -> dict:
 def build(domain_path: Path = DEFAULT_DOMAIN, jacobian_candidate: dict | None = None) -> dict:
     """Build the independent whole-word differential-contraction route."""
     path = Path(domain_path).resolve()
-    domain = json.loads(path.read_text(encoding="utf-8"))
+    raw_domain = path.read_bytes()
+    domain = json.loads(raw_domain.decode("utf-8"))
     if domain.get("trajectory_fit") is not False:
         raise RuntimeError("path-dependent P4 route must not be trajectory fitted")
 
@@ -212,6 +225,13 @@ def build(domain_path: Path = DEFAULT_DOMAIN, jacobian_candidate: dict | None = 
         "source_replay_used": False,
         "filter_changed": False,
         "declared_domain_changed": False,
+        "proof_operating_domain_sha256": hashlib.sha256(raw_domain).hexdigest(),
+        "candidate_domain_contract": {
+            "proof_operating_domain_hash_exact_match_required": True,
+            "full_state_domain_exact_match_required": True,
+            "certified_outer_angle_rad_required": DESIGN_OUTER_RAD,
+            "certified_outer_cayley_norm_must_cover": q_outer,
+        },
         "P5_entrance_angle_deg": entrance_deg,
         "P5_45deg_entrance_preserved": entrance_deg == P5_ENTRANCE_DEG,
         "outer_geometry_angle_rad": outer,
@@ -263,7 +283,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN, jacobian_candidate: dict | None = 
     route["route_contract_pass"] = not failures
     route["next_obligation"] = (
         "build the full source-reachable 18/21-state generalized-Jacobian enclosure of the exact one-word return map, "
-        "whiten each edge with the actual source-node information metrics, and directly certify the worst edge norm below one over the 0.80-rad domain; "
+        "whiten each edge with the actual source-node information metrics, and directly certify the worst edge norm below one over the exact 0.80-rad/full-state domain; "
         "do not scalarize packet defects before composing the word"
     )
     return route
@@ -274,15 +294,27 @@ def validate(d: dict) -> list[str]:
     f = list(d.get("failures", []))
     if d.get("schema") != SCHEMA:
         f.append("schema mismatch")
-    for key in ("source_generated_not_trajectory_fit", "P5_45deg_entrance_preserved",
-                "outer_geometry_exact_0p80_rad_required", "route_contract_pass"):
+    for key in (
+        "source_generated_not_trajectory_fit", "P5_45deg_entrance_preserved",
+        "outer_geometry_exact_0p80_rad_required", "route_contract_pass",
+    ):
         if d.get(key) is not True:
             f.append(f"{key} is not true")
-    for key in ("source_replay_used", "filter_changed", "declared_domain_changed",
-                "P4_COMPLETE_WORD_DIFFERENTIAL_CONTRACTION_ESTABLISHED_HERE",
-                "P4_USABLE_CERTIFICATE_PROMOTED", "P5_FINITE_INNER_CAPTURE_ESTABLISHED_HERE"):
+    for key in (
+        "source_replay_used", "filter_changed", "declared_domain_changed",
+        "P4_COMPLETE_WORD_DIFFERENTIAL_CONTRACTION_ESTABLISHED_HERE",
+        "P4_USABLE_CERTIFICATE_PROMOTED", "P5_FINITE_INNER_CAPTURE_ESTABLISHED_HERE",
+    ):
         if d.get(key) is not False:
             f.append(f"{key} is not false")
+    domain_hash = d.get("proof_operating_domain_sha256")
+    if not isinstance(domain_hash, str) or len(domain_hash) != 64:
+        f.append("proof operating-domain hash is missing")
+    contract = d.get("candidate_domain_contract", {})
+    if contract.get("proof_operating_domain_hash_exact_match_required") is not True:
+        f.append("candidate domain hash is not required")
+    if contract.get("full_state_domain_exact_match_required") is not True:
+        f.append("candidate full-state domain exact match is not required")
     if float(d.get("P5_entrance_angle_deg", 0.0)) != P5_ENTRANCE_DEG:
         f.append("P5 entrance angle changed")
     if float(d.get("outer_geometry_angle_rad", math.nan)) != DESIGN_OUTER_RAD:
@@ -303,14 +335,18 @@ def validate(d: dict) -> list[str]:
         f.append("route relies on unqualified powf/sqrtf path tightening")
 
     distinctions = d.get("route_distinctions", {})
-    for key in ("individual_packet_rank_may_be_singular", "complete_full_state_jacobian_test_required" if False else "full_18_21_state_jacobian_test_required",
-                "source_node_dependent_metric_switching", "endpoint_metric_tied_to_actual_reachable_source_node",
-                "P3_delta_used_only_as_linear_origin_strictness_fallback"):
+    for key in (
+        "individual_packet_rank_may_be_singular", "full_18_21_state_jacobian_test_required",
+        "source_node_dependent_metric_switching", "endpoint_metric_tied_to_actual_reachable_source_node",
+        "P3_delta_used_only_as_linear_origin_strictness_fallback",
+    ):
         if distinctions.get(key) is not True:
             f.append(f"route distinction {key} is not true")
-    for key in ("per_packet_full_rank_required", "per_operation_sector_invariance_required",
-                "N_times_global_lipschitz_defect_used", "translation_nontranslation_schur_split_required",
-                "arbitrary_node_rescaling_allowed", "P3_delta_used_as_nonlinear_radius"):
+    for key in (
+        "per_packet_full_rank_required", "per_operation_sector_invariance_required",
+        "N_times_global_lipschitz_defect_used", "translation_nontranslation_schur_split_required",
+        "arbitrary_node_rescaling_allowed", "P3_delta_used_as_nonlinear_radius",
+    ):
         if distinctions.get(key) is not False:
             f.append(f"route distinction {key} is not false")
 
@@ -329,7 +365,7 @@ def validate(d: dict) -> list[str]:
         if row.get("translation_nontranslation_schur_split_required") is not False:
             f.append(f"{mode}: route reintroduced Schur split")
         delta = row.get("P3_linear_origin_margin_lower")
-        if not isinstance(delta, (int, float)) or not (0.0 < float(delta) < 1.0):
+        if not isinstance(delta, (int, float)) or isinstance(delta, bool) or not (0.0 < float(delta) < 1.0):
             f.append(f"{mode}: missing strict P3 origin margin")
 
     finite = d.get("finite_angle_acceptance", {})
@@ -342,8 +378,6 @@ def validate(d: dict) -> list[str]:
     if finite.get("active_vibration_guard_remains_separate_hybrid_source_obligation") is not True:
         f.append("active vibration guard is not fail-closed")
 
-    # An accepted metadata candidate is still not sufficient to promote P4 in
-    # this route-contract producer; the actual matrix producer owns promotion.
     if d.get("P4_USABLE_CERTIFICATE_PROMOTED") is not False:
         f.append("route contract prematurely promoted P4")
     return list(dict.fromkeys(f))
