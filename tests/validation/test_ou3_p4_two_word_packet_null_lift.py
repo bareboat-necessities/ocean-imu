@@ -1,4 +1,6 @@
+from copy import deepcopy
 from pathlib import Path
+import math
 import sys
 import unittest
 
@@ -18,6 +20,7 @@ class TwoWordPacketNullLiftTests(unittest.TestCase):
     def test_structural_null_lift_is_source_uniform_and_fail_closed(self):
         self.assertEqual(LIFT.validate(self.d), [])
         self.assertTrue(self.d["two_word_packet_null_is_structurally_observed"])
+        self.assertTrue(self.d["source_node_partition_is_compiled_shipping_source_invariant"])
         self.assertTrue(self.d["shared_H18_differential_operations_used"])
         self.assertGreater(self.d["packet_null_aw_per_theta_norm_lower_mps2_per_rad"], 0.0)
         self.assertGreater(self.d["aw_survival_factor_to_following_word_lower"], 0.0)
@@ -48,6 +51,16 @@ class TwoWordPacketNullLiftTests(unittest.TestCase):
         self.assertGreater(actual, 0.0)
         self.assertLessEqual(actual, expected)
         self.assertGreater(actual, expected * (1.0 - 1e-12))
+
+    def test_validator_rejects_raw_information_above_declared_product(self):
+        d = deepcopy(self.d)
+        lam = d["following_word_four_S_information_gramian_lambda_min_lower"]
+        aw = d["following_word_aw_per_theta_norm_lower"]
+        d["packet_null_following_word_raw_information_per_theta2_lower"] = math.nextafter(
+            lam * aw * aw, math.inf
+        )
+        failures = LIFT.validate(d)
+        self.assertTrue(any("exceeds its declared product" in x for x in failures))
 
     def test_next_step_is_metric_pullback_not_new_domain_assumption(self):
         text = self.d["next_obligation"]
