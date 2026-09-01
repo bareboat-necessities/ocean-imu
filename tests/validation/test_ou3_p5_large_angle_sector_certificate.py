@@ -6,16 +6,19 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools"))
 
 import ou3_p5_large_angle_sector_certificate as SECTOR
+import ou3_physical_force_domain as FORCE
 
 
 class Ou3P5LargeAngleSectorCertificateTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.d = SECTOR.build()
+        cls.force = FORCE.build()
 
     def test_actual_source_correlated_tuple_is_used(self):
         d = self.d
         self.assertEqual(SECTOR.validate(d), [])
+        self.assertEqual(FORCE.validate(self.force), [])
         self.assertTrue(d["source_correlated_covariance_gain_tuple"])
         self.assertTrue(d["validated_interval_Kalman_gain_used"])
         self.assertTrue(d["exact_deployed_quaternion_backend_used"])
@@ -24,7 +27,7 @@ class Ou3P5LargeAngleSectorCertificateTests(unittest.TestCase):
         self.assertFalse(d["source_replay_used"])
         self.assertFalse(d["filter_changed"])
 
-    def test_counterexample_lies_inside_both_gauged_nodes(self):
+    def test_counterexample_lies_inside_both_gauged_nodes_and_current_marine_force_domain(self):
         w = self.d["validated_counterexample"]
         self.assertTrue(w["source_admissible"])
         self.assertEqual(w["xi_norm"], 0.0)
@@ -32,8 +35,15 @@ class Ou3P5LargeAngleSectorCertificateTests(unittest.TestCase):
         self.assertLess(q, w["normal_gauged_q_upper"])
         self.assertLess(q, w["timeout_gauged_q_upper"])
         self.assertGreaterEqual(w["magnetic_sine_separation"], 0.1)
-        self.assertGreaterEqual(w["specific_force_norm_mps2"], 5.0)
-        self.assertLessEqual(w["specific_force_norm_mps2"], 30.0)
+        self.assertGreaterEqual(
+            w["specific_force_norm_mps2"],
+            self.force["derived_specific_force_norm_lower_mps2"],
+        )
+        self.assertLessEqual(
+            w["specific_force_norm_mps2"],
+            self.force["derived_specific_force_norm_upper_mps2"],
+        )
+        self.assertFalse(self.force["old_independent_30_mps2_cap_used"])
 
     def test_raw_VR_positive_alpha_sector_is_strictly_disproved(self):
         d = self.d

@@ -1,0 +1,70 @@
+name: ou3-p4-source-node-p3-bridge
+
+on:
+  push:
+    paths:
+      - "tools/ou3_interval.py"
+      - "tools/ou3_p4_source_node_p3_bridge.py"
+      - "tools/ou3_p4_source_node_cells.py"
+      - "tools/ou3_p4_source_path_reachability.py"
+      - "tools/ou3_source_reachable_matrix_p3.py"
+      - "tools/ou3_source_reachable_matrix_p3_direct.py"
+      - "tools/ou3_proof_module_state.py"
+      - "tools/ou3_proof_operating_domain.json"
+      - ".github/workflows/ou3-p4-source-node-p3-bridge.yml"
+  pull_request:
+    paths:
+      - "tools/ou3_interval.py"
+      - "tools/ou3_p4_source_node_p3_bridge.py"
+      - "tools/ou3_p4_source_node_cells.py"
+      - "tools/ou3_p4_source_path_reachability.py"
+      - "tools/ou3_source_reachable_matrix_p3.py"
+      - "tools/ou3_source_reachable_matrix_p3_direct.py"
+      - "tools/ou3_proof_module_state.py"
+      - "tools/ou3_proof_operating_domain.json"
+      - ".github/workflows/ou3-p4-source-node-p3-bridge.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ou3-p4-source-node-p3-bridge-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  bridge:
+    name: Exact P2 node zero direct-P3 bridge
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Compile bridge producer
+        run: python3 -m py_compile tools/ou3_p4_source_node_p3_bridge.py
+      - name: Evaluate exact P2 node zero
+        run: |
+          python3 tools/ou3_p4_source_node_p3_bridge.py \
+            --source-node-index 0 \
+            --output /tmp/ou3_p4_source_node_p3_bridge.json
+      - name: Enforce source-faithful intermediate scope
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path('/tmp/ou3_p4_source_node_p3_bridge.json').read_text())
+          assert d['validation_pass'], d['validation_failures']
+          assert d['P2_source_node_count'] == 800
+          assert d['source_node_index'] == 0
+          assert d['P3_x_subdivision_is_validation_only_not_domain_shrink'] is True
+          assert d['modes']['H']['relative_Riccati_injection_margin_lower'] > 0.0
+          assert d['modes']['A']['relative_Riccati_injection_margin_lower'] > 0.0
+          assert d['actual_source_node_Sigma_KF_materialized_here'] is False
+          assert d['actual_source_node_information_metric_materialized_here'] is False
+          assert d['P4_USABLE_CERTIFICATE_PROMOTED'] is False
+          print('x=h/tau:',d['x_h_over_tau_from_exact_node'])
+          print('H subcells/delta:',d['modes']['H']['validated_x_subcell_count'],d['modes']['H']['relative_Riccati_injection_margin_lower'])
+          print('A subcells/delta:',d['modes']['A']['validated_x_subcell_count'],d['modes']['A']['relative_Riccati_injection_margin_lower'])
+          print('next:',d['next_obligation'])
+          PY

@@ -1,0 +1,40 @@
+name: ou3-verified-spd-inverse
+
+on:
+  push:
+    paths:
+      - "tools/ou3_interval.py"
+      - "tools/ou3_interval_linear_algebra.py"
+      - "tools/ou3_verified_spd_inverse.py"
+      - "tests/validation/test_ou3_verified_spd_inverse.py"
+      - ".github/workflows/ou3-verified-spd-inverse.yml"
+  pull_request:
+    paths:
+      - "tools/ou3_interval.py"
+      - "tools/ou3_interval_linear_algebra.py"
+      - "tools/ou3_verified_spd_inverse.py"
+      - "tests/validation/test_ou3_verified_spd_inverse.py"
+      - ".github/workflows/ou3-verified-spd-inverse.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ou3-verified-spd-inverse-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verified-inverse:
+    name: Verified midpoint-Neumann SPD inverse
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Compile proof primitive and tests
+        run: |
+          python3 -m py_compile \
+            tools/ou3_verified_spd_inverse.py \
+            tests/validation/test_ou3_verified_spd_inverse.py
+      - name: Run proof primitive tests
+        working-directory: tests/validation
+        run: python3 -m unittest -v test_ou3_verified_spd_inverse
