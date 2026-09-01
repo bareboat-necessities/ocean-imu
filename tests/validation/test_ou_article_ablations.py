@@ -2,6 +2,7 @@
 
 import csv
 import math
+import re
 import unittest
 from pathlib import Path
 
@@ -466,6 +467,45 @@ class OuArticleVibrationGuardContractTests(unittest.TestCase):
         self.assertIn("mekf_->measurement_update_acc_only(acc_in, tempC);", filt)
         self.assertNotIn("measurement_update_acc_only(acc,", filt)
 
+    def test_every_estimator_family_carries_the_same_guard(self):
+        """OU-II and TFG inherit the defect, so they inherit the remedy.
+
+        The rectification mechanism is in the attitude loop, which all three
+        families build the same way: one private Mahony observer levelling from
+        the accelerometer, feeding a MEKF that reads the same accelerometer.
+        The degradation study measures all three degrading, so a guard armed in
+        only one of them would leave the other two shipping the defect.
+        """
+
+        for family, path, mekf, gravity in (
+            ("OU-II",
+             ROOT / "src" / "kalman_ou_ii" / "SeaStateFusionFilter_OU_II.h",
+             "mekf_->measurement_update_acc_only(acc_in, tempC);",
+             "vertical_accel_comp_.update(dt, gyro, acc_in, g_std);"),
+            ("TFG",
+             ROOT / "src" / "kalman_tfg" / "SeaStateFusionFilter_TFG.h",
+             "mekf_.measurement_update_acc_only(acc_in, tempC);",
+             "vertical_complementary_.update(dt, gyro, acc_in, cfg_.gravity_magnitude);"),
+        ):
+            with self.subTest(family=family):
+                filt = path.read_text(encoding="utf-8")
+                # Same corner, same cascade, same covariance gain as OU-III.
+                for name, value in (("ACC_VIBRATION_GUARD_HZ_DEFAULT", "14.0f"),
+                                    ("ACC_VIBRATION_GUARD_POLES_DEFAULT", "2"),
+                                    ("ACC_VIBRATION_RACC_GAIN_DEFAULT", "0.75f")):
+                    self.assertRegex(filt, rf"constexpr \S+ +{name} +=  *{re.escape(value)};")
+                # Armed rather than merely available.
+                self.assertIn("setAccelVibrationGuard(", filt)
+                self.assertIn("setAccelVibrationRaccGain(", filt)
+                # Driven by the guard's own gated excess, which is what keeps
+                # it inert on a quiet installation.
+                self.assertIn("accel_guard_.excessRms()", filt)
+                # One conditioning point ahead of the whole attitude loop.
+                self.assertIn("accel_guard_.step(acc, dt);", filt)
+                self.assertIn(gravity, filt)
+                self.assertIn(mekf, filt)
+                self.assertNotIn("measurement_update_acc_only(acc,", filt)
+
     def test_covariance_inflation_helps_where_the_guard_leaves_most(self):
         """The arm exists to attack what conditioning cannot reach."""
 
@@ -487,16 +527,19 @@ class OuArticleVibrationGuardContractTests(unittest.TestCase):
                 self.assertLessEqual(both_pitch, guard_pitch * 1.05, condition)
 
     def test_degradation_study_pins_the_guard_off(self):
-        """It is the unguarded comparison, and OU-III now arms the guard.
+        """It is the unguarded comparison, and all three families arm the guard.
 
-        Without this the degradation study would silently measure a guarded
-        OU-III against an unguarded OU-II and TFG.
+        Without this the degradation study would silently measure the shipped
+        guarded configuration and report it as the damage the guard exists to
+        undo.
         """
 
         tool = (ROOT / "tools" / "engine_noise_degradation.py").read_text(
             encoding="utf-8"
         )
-        self.assertIn('"OU_III_ACC_GUARD_HZ": "0"', tool)
+        for prefix in ("OU_II", "OU_III", "TFG"):
+            with self.subTest(prefix=prefix):
+                self.assertIn(f'"{prefix}_ACC_GUARD_HZ": "0"', tool)
 
         mitigation = (ROOT / "tools" / "ou3_engine_noise_mitigation.py").read_text(
             encoding="utf-8"
