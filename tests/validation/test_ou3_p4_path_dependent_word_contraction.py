@@ -14,14 +14,48 @@ from ou3_proof_module_state import preserve_module_bindings
 class PathDependentWordContractionTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        # Some route prerequisites call historical V2/V3 proof producers whose
-        # validated backends are installed by rebinding process-global ou3_*
-        # module functions.  Keep those changes local to this calculation so
-        # later P5 tests see the source-defined backends.  This is the same
-        # isolation primitive used by the parallel #449 route.
         with preserve_module_bindings():
             cls.d = ROUTE.build()
         cls.assertions = ROUTE.validate(cls.d)
+
+    def _good_candidate(self):
+        route = self.d
+        g = route["source_graph"]
+        return {
+            "qualification": ROUTE.JACOBIAN_QUALIFICATION,
+            "source_only": True,
+            "trajectory_replay_used": False,
+            "outward_validated": True,
+            "exact_shipping_complete_word_map": True,
+            "per_operation_sector_invariance_required": False,
+            "N_times_global_defect_used": False,
+            "P3_delta_used_as_nonlinear_radius": False,
+            "proof_operating_domain_sha256": route["proof_operating_domain_sha256"],
+            "certified_outer_angle_rad": route["outer_geometry_angle_rad"],
+            "certified_outer_cayley_norm_upper": route["outer_geometry_cayley_norm_upper"],
+            "full_state_domain_exact_match": True,
+            "source_partition_state_count": g["partition_state_count"],
+            "source_transition_edge_count": g["transition_edge_count"],
+            "recurrent_state_count": g["recurrent_state_count"],
+            "all_required_reachable_word_edges_checked": True,
+            "sequential_reset_jacobians_included": True,
+            "accepted_rejected_not_due_branches_covered": True,
+            "modes": {
+                "H": {
+                    "dimension": 18,
+                    "endpoint_metric_uses_actual_reachable_source_node": True,
+                    "full_state_cross_terms_retained": True,
+                    "max_whitened_generalized_jacobian_norm_upper": 0.97,
+                },
+                "A": {
+                    "dimension": 21,
+                    "endpoint_metric_uses_actual_reachable_source_node": True,
+                    "full_state_cross_terms_retained": True,
+                    "max_whitened_generalized_jacobian_norm_upper": 0.98,
+                    "accelerometer_bias_projection_generalized_jacobian_included": True,
+                },
+            },
+        }
 
     def test_route_validates_but_does_not_promote_p4(self):
         d = self.d
@@ -40,6 +74,15 @@ class PathDependentWordContractionTests(unittest.TestCase):
         self.assertFalse(d["declared_domain_changed"])
         self.assertFalse(d["filter_changed"])
         self.assertFalse(d["source_replay_used"])
+
+    def test_candidate_is_bound_to_exact_full_state_and_outer_domain(self):
+        d = self.d
+        self.assertEqual(len(d["proof_operating_domain_sha256"]), 64)
+        c = d["candidate_domain_contract"]
+        self.assertTrue(c["proof_operating_domain_hash_exact_match_required"])
+        self.assertTrue(c["full_state_domain_exact_match_required"])
+        self.assertEqual(c["certified_outer_angle_rad_required"], 0.80)
+        self.assertEqual(c["certified_outer_cayley_norm_must_cover"], d["outer_geometry_cayley_norm_upper"])
 
     def test_complete_word_is_atomic_and_old_scalar_routes_are_not_required(self):
         r = self.d["route_distinctions"]
@@ -86,47 +129,41 @@ class PathDependentWordContractionTests(unittest.TestCase):
         self.assertFalse(g["RS_target_powf_tightening_used"])
 
     def test_future_jacobian_contract_accepts_only_strict_full_state_source_result(self):
-        route = self.d
-        g = route["source_graph"]
-        good = {
-            "qualification": ROUTE.JACOBIAN_QUALIFICATION,
-            "source_only": True,
-            "trajectory_replay_used": False,
-            "outward_validated": True,
-            "exact_shipping_complete_word_map": True,
-            "per_operation_sector_invariance_required": False,
-            "N_times_global_defect_used": False,
-            "P3_delta_used_as_nonlinear_radius": False,
-            "source_partition_state_count": g["partition_state_count"],
-            "source_transition_edge_count": g["transition_edge_count"],
-            "recurrent_state_count": g["recurrent_state_count"],
-            "all_required_reachable_word_edges_checked": True,
-            "sequential_reset_jacobians_included": True,
-            "accepted_rejected_not_due_branches_covered": True,
-            "modes": {
-                "H": {
-                    "dimension": 18,
-                    "endpoint_metric_uses_actual_reachable_source_node": True,
-                    "full_state_cross_terms_retained": True,
-                    "max_whitened_generalized_jacobian_norm_upper": 0.97,
-                },
-                "A": {
-                    "dimension": 21,
-                    "endpoint_metric_uses_actual_reachable_source_node": True,
-                    "full_state_cross_terms_retained": True,
-                    "max_whitened_generalized_jacobian_norm_upper": 0.98,
-                    "accelerometer_bias_projection_generalized_jacobian_included": True,
-                },
-            },
-        }
-        status = ROUTE._candidate_status(good, route)
+        good = self._good_candidate()
+        status = ROUTE._candidate_status(good, self.d)
         self.assertTrue(status["contract_accepted"])
         self.assertTrue(status["all_modes_strict"])
         self.assertEqual(status["reasons"], [])
 
         bad = deepcopy(good)
         bad["modes"]["H"]["max_whitened_generalized_jacobian_norm_upper"] = 1.0
-        status = ROUTE._candidate_status(bad, route)
+        status = ROUTE._candidate_status(bad, self.d)
+        self.assertFalse(status["contract_accepted"])
+        self.assertTrue(any("H:" in x for x in status["reasons"]))
+
+    def test_future_candidate_on_smaller_or_different_domain_is_rejected(self):
+        bad = self._good_candidate()
+        bad["certified_outer_angle_rad"] = 0.70
+        status = ROUTE._candidate_status(bad, self.d)
+        self.assertFalse(status["contract_accepted"])
+        self.assertTrue(any("outer-angle" in x for x in status["reasons"]))
+
+        bad = self._good_candidate()
+        bad["proof_operating_domain_sha256"] = "0" * 64
+        status = ROUTE._candidate_status(bad, self.d)
+        self.assertFalse(status["contract_accepted"])
+        self.assertTrue(any("domain hash" in x for x in status["reasons"]))
+
+        bad = self._good_candidate()
+        bad["full_state_domain_exact_match"] = False
+        status = ROUTE._candidate_status(bad, self.d)
+        self.assertFalse(status["contract_accepted"])
+        self.assertTrue(any("full-state theorem-domain" in x for x in status["reasons"]))
+
+    def test_boolean_gamma_is_rejected_not_interpreted_as_zero(self):
+        bad = self._good_candidate()
+        bad["modes"]["H"]["max_whitened_generalized_jacobian_norm_upper"] = False
+        status = ROUTE._candidate_status(bad, self.d)
         self.assertFalse(status["contract_accepted"])
         self.assertTrue(any("H:" in x for x in status["reasons"]))
 
