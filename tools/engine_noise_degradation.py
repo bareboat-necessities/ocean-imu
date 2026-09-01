@@ -302,13 +302,16 @@ def invoke(binary: Path, input_path: Path, setting: Setting,
             # Every gate in this study was fitted to a vibration-free input, so
             # collect the metrics instead of stopping on the first failure.
             "W3D_COLLECT_ALL_GATES": "1",
-            # OU-III now arms its front-end vibration guard by default.  This
-            # study is the controlled comparison that motivates it, across three
-            # families of which only one has a guard, so it pins the guard off
-            # and keeps measuring the unconditioned measurement path.  What the
-            # default actually does is tools/ou3_engine_noise_mitigation.py.
-            # OU-II and TFG ignore the variable.
+            # All three families now arm the front-end vibration guard by
+            # default.  This study is the controlled comparison that motivates
+            # it, so it pins the guard off in every family and keeps measuring
+            # the unconditioned measurement path.  What the default actually
+            # does is tools/ou3_engine_noise_mitigation.py.  Each simulator
+            # ignores the prefixes that are not its own, so setting all three
+            # here keeps one env block for one protocol.
+            "OU_II_ACC_GUARD_HZ": "0",
             "OU_III_ACC_GUARD_HZ": "0",
+            "TFG_ACC_GUARD_HZ": "0",
         }
     )
     env.update(setting.env())

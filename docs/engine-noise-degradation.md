@@ -99,10 +99,11 @@ startup, and regularization.  456 replays run across five arms and a common
 engine-off baseline.
 
 This study is the controlled comparison that *motivates* the mitigation below,
-across three families of which only one has a guard, so it sets
-`OU_III_ACC_GUARD_HZ=0` throughout and keeps measuring the unconditioned
-measurement path.  What the shipped default actually does is the subject of
-`tools/ou3_engine_noise_mitigation.py`.
+so it sets `OU_II_ACC_GUARD_HZ=0`, `OU_III_ACC_GUARD_HZ=0` and
+`TFG_ACC_GUARD_HZ=0` throughout and keeps measuring the unconditioned
+measurement path in every family.  What the shipped default actually does is
+the subject of `tools/ou3_engine_noise_mitigation.py` and of the cross-family
+table at the end of the mitigation section.
 
 
 | Arm | What varies | Held fixed |
@@ -255,16 +256,20 @@ Matplotlib is unavailable.
 
 ## Mitigation: the front-end vibration guard
 
-`src/tuner/AccelVibrationGuard.h`, wired into
-`SeaStateFusionFilter_OU_III::updateCore_`, acts on the attribution above: the
-damage comes from out-of-band power in one sensor, its size follows how much of
-that power survives to the sample, and the wave band it must be separated from
-is a decade below it.  So the fix is to keep the vibration out of the
-measurement path rather than to change the estimator.
+`src/tuner/AccelVibrationGuard.h` acts on the attribution above: the damage
+comes from out-of-band power in one sensor, its size follows how much of that
+power survives to the sample, and the wave band it must be separated from is a
+decade below it.  So the fix is to keep the vibration out of the measurement
+path rather than to change the estimator.
 
-The guard sits at the single point where raw measurements arrive, so the Mahony
-proxy, the MEKF, and the tilt watchdog all read the same conditioned
-accelerometer.
+It is wired into all three families, at the single point in each where raw
+measurements arrive — `SeaStateFusionFilter_OU_II::updateCore_`,
+`SeaStateFusionFilter_OU_III::updateCore_` and
+`SeaStateFusionFilter_TFG::update` — so in each of them the Mahony proxy, the
+MEKF, and the attitude re-lock all read the same conditioned accelerometer.
+The corner, the cascade length, the detector and the covariance gain are the
+same numbers everywhere; the sweeps below were run on OU-III, and the
+cross-family result is at the end of this section.
 
 **Conditioning.** A two-pole one-pole cascade at 14 Hz, in the empty spectrum
 between the wave band and the machinery band.
@@ -415,25 +420,73 @@ over a 100:1 range of wave amplitude it varies by 0.02 %, which the unit test
 pins.  A big sea cannot look like machinery to it, and a near-still one cannot
 lower the bar.  This is what makes arming it by default safe.
 
+### All three families carry it
+
+The rectification mechanism is in the attitude loop, and OU-II, OU-III and TFG
+build that loop the same way: one private Mahony observer levelling from the
+accelerometer, feeding a MEKF that reads the same accelerometer.  Nothing in
+the defect depends on the translational state structure, which is the only
+thing the three disagree about, so the guard is armed in all three at the same
+operating point rather than fitted separately per family.
+
+Re-running the pooled protocol above — eight stationary records, 900 s scoring
+window, the same 2400 rpm nominal cruise condition — with the guard and the
+covariance arm both on:
+
+| Family | Engine off | 2400 rpm, guard off | 2400 rpm, guard+R | Residual |
+| --- | ---: | ---: | ---: | ---: |
+| OU-II | 0.642 | 3.363 (5.2x) | 0.657 | 1.024x |
+| OU-III | 0.522 | 4.232 (8.1x) | 0.577 | 1.104x |
+| TFG | 0.745 | 14.026 (18.8x) | 0.785 | 1.055x |
+
+Pooled 3-D displacement RMS in metres; the residual is the guarded cruise error
+against that family's own engine-off baseline.  Yaw RMS falls from 58.59 to
+2.00 deg on OU-II, 45.38 to 1.84 on OU-III and 74.35 to 2.83 on TFG.
+
+```
+python3 tools/engine_noise_guard_families.py --data-dir <wave-csv-dir>
+```
+
+That tool checks itself before it reports: the engine-off and unguarded-cruise
+columns must come back equal to `engine_noise_summary.csv` above, or the two
+studies are not on the same protocol and the comparison is void.  It also
+confirms what makes arming safe — the engine-off replay is bit-identical
+guarded and unguarded, in all three families.
+
+TFG had the most to lose — 18.8x its baseline unguarded against OU-III's 8.1x —
+and gains the most: a 17.9x reduction in pooled error at cruise, against 7.3x
+for OU-III and 5.1x for OU-II.  All three land within 6 % of their own
+engine-off baseline, so the ordering between the families at cruise is the
+ordering they have with the engine off, which is what the guard was for.  What
+remains is not the same in each: the group delay it costs is the same 22.7 ms
+everywhere, but what that delay is worth depends on the family's own error, so
+the residual is not expected to be equal across the three.
+
 ### Configuration
 
-The guard is **armed by default**: the OU-III filter constructor sets
-`ACC_VIBRATION_GUARD_HZ_DEFAULT = 14 Hz` with two poles.  Arming it is free
-because it is gated on its own detector, so there is no quiet-water case to
-trade away.
+The guard is **armed by default** in every family: each filter sets
+`ACC_VIBRATION_GUARD_HZ_DEFAULT = 14 Hz` with two poles and
+`ACC_VIBRATION_RACC_GAIN_DEFAULT = 0.75`.  Arming it is free because it is
+gated on its own detector, so there is no quiet-water case to trade away.
 
 | Variable | Default | Meaning |
 | --- | ---: | --- |
-| `OU_III_ACC_GUARD_HZ` | 14 | conditioning corner; **0 removes the guard entirely** |
-| `OU_III_ACC_GUARD_POLES` | 2 | conditioning cascade length |
-| `OU_III_ACC_GUARD_RACC_GAIN` | 0.75 | covariance inflation gain; 0 disables |
-| `OU_III_ACC_GUARD_ENGAGE_LO` / `_HI` / `_TAU` | 0.03 / 0.08 / 5 | detector engagement band |
+| `<F>_ACC_GUARD_HZ` | 14 | conditioning corner; **0 removes the guard entirely** |
+| `<F>_ACC_GUARD_POLES` | 2 | conditioning cascade length |
+| `<F>_ACC_GUARD_RACC_GAIN` | 0.75 | covariance inflation gain; 0 disables |
+| `<F>_ACC_GUARD_ENGAGE_LO` / `_HI` / `_TAU` | 0.03 / 0.08 / 5 | detector engagement band |
 
-In code: `SeaStateFusionFilter_OU_III::setAccelVibrationGuard(cutoff_hz, poles)`,
-with `AccelVibrationGuard::setEngagement()` and `setDetectHz()` for the
-detector.  `accelVibrationRms()` and `accelVibrationGuardEngagement()` read
-back the health signal.  The simulator prints an `ACC_GUARD` line per record
-when a cutoff is configured.
+`<F>` is `OU_II`, `OU_III` or `TFG` for the matching simulator.  TFG also
+carries the first three as `Config` fields (`acc_vibration_guard_hz`,
+`acc_vibration_guard_poles`, `acc_vibration_racc_gain`), since that is how the
+rest of its front end is configured.
+
+In code: `setAccelVibrationGuard(cutoff_hz, poles)` and
+`setAccelVibrationRaccGain(gain)` on any of the three filters, with
+`setAccelVibrationEngagement()` for the detector band and
+`AccelVibrationGuard::setDetectHz()` for its corner.  `accelVibrationRms()` and
+`accelVibrationGuardEngagement()` read back the health signal.  Each simulator
+prints an `ACC_GUARD` line per record when a cutoff is configured.
 
 The engagement thresholds are absolute levels referenced to the accelerometer
 white noise this repository injects (1.51e-3 g per axis).  A noisier part
