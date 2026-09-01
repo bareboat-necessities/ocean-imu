@@ -94,7 +94,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     failures += [f"sector-budget: {x}" for x in SECTOR_BUDGET.validate(old_budget)]
     failures += [f"aw-sigma-consistency: {x}" for x in CONSISTENCY.validate(consistency)]
 
-    entrance_deg = float(entrance["P5_entrance"]["attitude_geometry"]["angle_deg"])
+    entrance_deg = float(entrance["P5_entrance"]["attitude_geometry"]["full_attitude_angle_deg"])
     entrance_q = float(entrance["P5_entrance"]["attitude_geometry"]["cayley_norm_upper"])
     outer_rad = float(sector["design_full_attitude_angle_rad"])
     outer_q = float(sector["design_cayley_norm_upper"])
