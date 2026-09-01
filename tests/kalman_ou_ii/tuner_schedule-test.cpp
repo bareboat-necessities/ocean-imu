@@ -33,7 +33,6 @@ int main() {
     const Eigen::Vector3f acc(0.0f, 0.0f, -g_std);
     f.initialize_from_acc(acc);
     f.startup_stage_ = Filter::StartupStage::Live;
-    f.mekf_->set_linear_block_enabled(true);
     f.time_ = 1.0;
     f.last_adapt_time_sec_ = 0.0;
     f.adapt_every_secs_ = 0.05f;

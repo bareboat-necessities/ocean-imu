@@ -175,37 +175,7 @@ class Kalman3D_Wave_OU_II {
         }
     }
 
-    // Enable/disable propagation & drift-correction of linear states [v,p,a_w].
-    // When disabled, the filter behaves like a pure attitude/bias MEKF:
-    //  • [v,p,a_w] are frozen (no process, no pseudo-measurements),
-    //  • attitude & biases still propagate and accept accel/mag updates.
-    void set_linear_block_enabled(bool on) {
-        if (linear_block_enabled_ && !on) {
-            // Just disabled: decouple base (A) from linear (L)
-            zero_AL_cross_cov_once_();
-
-            // Also decouple accel bias from the linear block
-            // if we consider those part of the "A" subsystem when linear is off.
-            if constexpr (with_accel_bias) {
-                Pext.template block<9,3>(OFF_V, OFF_BA).setZero();
-                Pext.template block<3,9>(OFF_BA, OFF_V).setZero();
-            }
-            // keep cadence sane
-            pseudo_update_elapsed_s_ = T(0);
-        } else if (!linear_block_enabled_ && on) {
-            reset_aw_covariance_to_stationary();
-            pseudo_update_elapsed_s_ = T(0);
-        }
-        linear_block_enabled_ = on;
-    }
-    bool linear_block_enabled() const      { return linear_block_enabled_; }
     bool acc_bias_updates_enabled() const  { return acc_bias_updates_enabled_; }
-
-    void set_warmup_mode(bool on) {
-        set_linear_block_enabled(!on);                 // off during warmup
-        set_acc_bias_updates_enabled(!on);             // freeze BA during warmup
-        if (on) clear_imu_lever_arm();                 // optional: safest during warmup
-    }
 
     void set_acc_bias_updates_enabled(bool en) {
         if (acc_bias_updates_enabled_ == en) return;
@@ -681,7 +651,6 @@ class Kalman3D_Wave_OU_II {
     T pseudo_update_elapsed_s_ = T(0);
     T pseudo_update_period_s_ = T(0.015);
 
-    bool linear_block_enabled_ = true;
     bool acc_bias_updates_enabled_ = true;
 
     // false is the default/proof-compatible policy. true restores the old
@@ -745,7 +714,7 @@ class Kalman3D_Wave_OU_II {
     // Sigma_aw_stat - P_awaw^-. Negative directions are deliberately ignored:
     // uncertainty may be added here, never deleted.
     EIGEN_STRONG_INLINE void apply_pending_aw_covariance_inflation_() {
-        if (!aw_covariance_floor_pending_ || !linear_block_enabled_) return;
+        if (!aw_covariance_floor_pending_) return;
         aw_covariance_floor_pending_ = false;
 
         Matrix3 P_aw = Pext.template block<3,3>(OFF_AW, OFF_AW);
@@ -943,11 +912,6 @@ class Kalman3D_Wave_OU_II {
         constexpr int NL = 9; // [v,p,a_w]
         Pext.template block<NA,NL>(0, OFF_V).setZero();
         Pext.template block<NL,NA>(OFF_V, 0).setZero();
-    }
-
-    EIGEN_STRONG_INLINE void freeze_linear_rows_(MatrixNX3& M) const {
-        // Linear block is [v,p,a_w] = 9 states starting at OFF_V
-        M.template block<9,3>(OFF_V, 0).setZero();
     }
 
     EIGEN_STRONG_INLINE void freeze_acc_bias_rows_(MatrixNX3& M) const {
@@ -1784,86 +1748,84 @@ void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::time_update(
     Matrix9& F_LL = F_LL_scratch_; F_LL.setZero();
     Matrix9& Q_LL = Q_LL_scratch_; Q_LL.setZero();
 
-    if (linear_block_enabled_) {
-        // Build F_LL per axis
+    // Build F_LL per axis
+    for (int axis = 0; axis < 3; ++axis) {
+        const T tau = std::max(T(1e-6), tau_aw);
+
+        Eigen::Matrix<T,3,3> Phi_axis;
+        PhiAxis3x1_analytic(tau, Ts, Phi_axis);
+
+        const int idx[3] = {0,3,6}; // [v,p,a] offsets
+        for (int i = 0; i < 3; ++i)
+            for (int j = 0; j < 3; ++j)
+                F_LL(idx[i] + axis, idx[j] + axis) = Phi_axis(i,j);
+    }
+
+    // Build Q_LL
+    if (aw_process_correlated_) {
+        // Correlated vector-OU with shared tau: Q_LL = (Σ ⊗ Qaxis_unit)
+        // written directly in group-first order: [v(3), p(3), a(3)].
+        Eigen::Matrix<T,3,3> Qaxis_unit;
+        QdAxis3x1_analytic(tau_aw, Ts, T(1), Qaxis_unit);
+        Qaxis_unit = T(0.5) * (Qaxis_unit + Qaxis_unit.transpose()); // hygiene
+
+        // SPD, symmetric copy of Σ_aw (3x3)
+        const Matrix3 Sig = T(0.5) * (Sigma_aw_stat + Sigma_aw_stat.transpose());
+
+        Q_LL.setZero();
+        const int goff[3] = {0, 3, 6}; // v, p, a
+
+        for (int g = 0; g < 3; ++g) {
+            for (int h = 0; h < 3; ++h) {
+                Q_LL.template block<3,3>(goff[g], goff[h]).noalias()
+                    = Sig * Qaxis_unit(g,h);
+            }
+        }
+        Q_LL = T(0.5) * (Q_LL + Q_LL.transpose());
+    } else {
+        // Independent axes (no cross-correlation) — per-axis Qd on the diagonal
+        const int idx[3] = {0,3,6};
         for (int axis = 0; axis < 3; ++axis) {
-            const T tau = std::max(T(1e-6), tau_aw);
-
-            Eigen::Matrix<T,3,3> Phi_axis;
-            PhiAxis3x1_analytic(tau, Ts, Phi_axis);
-
-            const int idx[3] = {0,3,6}; // [v,p,a] offsets
+            const T tau    = std::max(T(1e-6), tau_aw);
+            const T sigma2 = Sigma_aw_stat(axis, axis);
+            Eigen::Matrix<T,3,3> Qd_axis;
+            QdAxis3x1_analytic(tau, Ts, sigma2, Qd_axis);
             for (int i = 0; i < 3; ++i)
                 for (int j = 0; j < 3; ++j)
-                    F_LL(idx[i] + axis, idx[j] + axis) = Phi_axis(i,j);
+                    Q_LL(idx[i] + axis, idx[j] + axis) = Qd_axis(i,j);
         }
-
-        // Build Q_LL
-        if (aw_process_correlated_) {
-            // Correlated vector-OU with shared tau: Q_LL = (Σ ⊗ Qaxis_unit)
-            // written directly in group-first order: [v(3), p(3), a(3)].
-            Eigen::Matrix<T,3,3> Qaxis_unit;
-            QdAxis3x1_analytic(tau_aw, Ts, T(1), Qaxis_unit);
-            Qaxis_unit = T(0.5) * (Qaxis_unit + Qaxis_unit.transpose()); // hygiene
-
-            // SPD, symmetric copy of Σ_aw (3x3)
-            const Matrix3 Sig = T(0.5) * (Sigma_aw_stat + Sigma_aw_stat.transpose());
-
-            Q_LL.setZero();
-            const int goff[3] = {0, 3, 6}; // v, p, a
-
-            for (int g = 0; g < 3; ++g) {
-                for (int h = 0; h < 3; ++h) {
-                    Q_LL.template block<3,3>(goff[g], goff[h]).noalias()
-                        = Sig * Qaxis_unit(g,h);
-                }
-            }
-            Q_LL = T(0.5) * (Q_LL + Q_LL.transpose());
-        } else {
-            // Independent axes (no cross-correlation) — per-axis Qd on the diagonal
-            const int idx[3] = {0,3,6};
-            for (int axis = 0; axis < 3; ++axis) {
-                const T tau    = std::max(T(1e-6), tau_aw);
-                const T sigma2 = Sigma_aw_stat(axis, axis);
-                Eigen::Matrix<T,3,3> Qd_axis;
-                QdAxis3x1_analytic(tau, Ts, sigma2, Qd_axis);
-                for (int i = 0; i < 3; ++i)
-                    for (int j = 0; j < 3; ++j)
-                        Q_LL(idx[i] + axis, idx[j] + axis) = Qd_axis(i,j);
-            }
-            Q_LL = T(0.5) * (Q_LL + Q_LL.transpose());
-        }
-
-        // Mean propagation for [v,p,a_w]
-        Vector9& x_lin_prev = x_lin_prev_scratch_;
-        x_lin_prev.template segment<3>(0)  = xext.template segment<3>(OFF_V);
-        x_lin_prev.template segment<3>(3)  = xext.template segment<3>(OFF_P);
-        x_lin_prev.template segment<3>(6)  = xext.template segment<3>(OFF_AW);
-
-        Vector9& x_lin_next = x_lin_next_scratch_;
-        x_lin_next.noalias() = F_LL * x_lin_prev;
-        xext.template segment<3>(OFF_V)  = x_lin_next.template segment<3>(0);
-        xext.template segment<3>(OFF_P)  = x_lin_next.template segment<3>(3);
-        xext.template segment<3>(OFF_AW) = x_lin_next.template segment<3>(6);
-
-        // Covariance propagation (blockwise)
-        constexpr int NA = BASE_N;
-        constexpr int NL = 9;
-
-        // LL block
-        Matrix9& tmpLL = tmpLL_scratch_;
-        tmpLL.noalias() = F_LL * Pext.template block<NL,NL>(OFF_V,OFF_V);
-        Pext.template block<NL,NL>(OFF_V,OFF_V).noalias() = tmpLL * F_LL.transpose();
-        Pext.template block<NL,NL>(OFF_V,OFF_V).noalias() += Q_LL;
-
-        // AL block (cross-covariance)
-        MatrixBaseN9& tmpAL = tmpAL_scratch_;
-        tmpAL.noalias() = F_AA * Pext.template block<NA,NL>(0,OFF_V);
-        Pext.template block<NA,NL>(0,OFF_V).noalias() = tmpAL * F_LL.transpose();
-
-        // Keep symmetry: P_LA = P_ALᵀ
-        Pext.template block<NL,NA>(OFF_V,0) = Pext.template block<NA,NL>(0,OFF_V).transpose();
+        Q_LL = T(0.5) * (Q_LL + Q_LL.transpose());
     }
+
+    // Mean propagation for [v,p,a_w]
+    Vector9& x_lin_prev = x_lin_prev_scratch_;
+    x_lin_prev.template segment<3>(0)  = xext.template segment<3>(OFF_V);
+    x_lin_prev.template segment<3>(3)  = xext.template segment<3>(OFF_P);
+    x_lin_prev.template segment<3>(6)  = xext.template segment<3>(OFF_AW);
+
+    Vector9& x_lin_next = x_lin_next_scratch_;
+    x_lin_next.noalias() = F_LL * x_lin_prev;
+    xext.template segment<3>(OFF_V)  = x_lin_next.template segment<3>(0);
+    xext.template segment<3>(OFF_P)  = x_lin_next.template segment<3>(3);
+    xext.template segment<3>(OFF_AW) = x_lin_next.template segment<3>(6);
+
+    // Covariance propagation (blockwise)
+    constexpr int NA = BASE_N;
+    constexpr int NL = 9;
+
+    // LL block
+    Matrix9& tmpLL = tmpLL_scratch_;
+    tmpLL.noalias() = F_LL * Pext.template block<NL,NL>(OFF_V,OFF_V);
+    Pext.template block<NL,NL>(OFF_V,OFF_V).noalias() = tmpLL * F_LL.transpose();
+    Pext.template block<NL,NL>(OFF_V,OFF_V).noalias() += Q_LL;
+
+    // AL block (cross-covariance)
+    MatrixBaseN9& tmpAL = tmpAL_scratch_;
+    tmpAL.noalias() = F_AA * Pext.template block<NA,NL>(0,OFF_V);
+    Pext.template block<NA,NL>(0,OFF_V).noalias() = tmpAL * F_LL.transpose();
+
+    // Keep symmetry: P_LA = P_ALᵀ
+    Pext.template block<NL,NA>(OFF_V,0) = Pext.template block<NA,NL>(0,OFF_V).transpose();
 
     // Optional residual accel-bias OU and cross terms (F_BB = phi_b I)
     if constexpr (with_accel_bias) {
@@ -1884,28 +1846,21 @@ void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::time_update(
         }
         Pext.template block<NB,NB>(OFF_BA,OFF_BA) = P_BB;
 
-        constexpr int NA = BASE_N;
         Eigen::Matrix<T,NA,NB> tmpAB = F_AA * Pext.template block<NA,NB>(0,OFF_BA);
         tmpAB *= phi_b;
         Pext.template block<NA,NB>(0,OFF_BA) = tmpAB;
         Pext.template block<NB,NA>(OFF_BA,0) = tmpAB.transpose();
 
-        if (linear_block_enabled_) {
-            constexpr int NL = 9;
-            Eigen::Matrix<T,NL,NB> tmpLB = F_LL * Pext.template block<NL,NB>(OFF_V,OFF_BA);
-            tmpLB *= phi_b;
-            Pext.template block<NL,NB>(OFF_V,OFF_BA) = tmpLB;
-            Pext.template block<NB,NL>(OFF_BA,OFF_V) = tmpLB.transpose();
-        }
+        Eigen::Matrix<T,NL,NB> tmpLB = F_LL * Pext.template block<NL,NB>(OFF_V,OFF_BA);
+        tmpLB *= phi_b;
+        Pext.template block<NL,NB>(OFF_V,OFF_BA) = tmpLB;
+        Pext.template block<NB,NL>(OFF_BA,OFF_V) = tmpLB.transpose();
     }
 
-    if (linear_block_enabled_) {
-        apply_pending_aw_covariance_inflation_();
-    }
+    apply_pending_aw_covariance_inflation_();
     symmetrize_Pext_();   // Symmetry hygiene
 
-    if (linear_block_enabled_ &&
-        ocean_imu::kalman::ou_detail::periodic_update_due(Ts, pseudo_update_period_s_, pseudo_update_elapsed_s_)) {
+    if (ocean_imu::kalman::ou_detail::periodic_update_due(Ts, pseudo_update_period_s_, pseudo_update_elapsed_s_)) {
         Vector3 sigma_p0;
         sigma_p0.x() = std::sqrt(std::max(T(0), R_p0(0,0)));
         sigma_p0.y() = std::sqrt(std::max(T(0), R_p0(1,1)));
@@ -1918,8 +1873,6 @@ void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::time_update(
 
         measurement_update_position_pseudo(Vector3::Zero(), sigma_p0);
         measurement_update_velocity_pseudo(Vector3::Zero(), sigma_v0);
-    } else if (!linear_block_enabled_) {
-        pseudo_update_elapsed_s_ = T(0);
     }
 }
 
@@ -1986,14 +1939,8 @@ void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::measurement_update
     }
 
     // Predicted specific force
-    Vector3 f_pred;
-    if (linear_block_enabled_) {
-        const Vector3 aw = xext.template segment<3>(OFF_AW);
-        f_pred = R_wb() * (aw - g_world) + lever + ba_term;
-    } else {
-        // linear block disabled → marginalize aw in S, mean uses gravity only
-        f_pred = R_wb() * (Vector3::Zero() - g_world) + lever + ba_term;
-    }
+    const Vector3 aw = xext.template segment<3>(OFF_AW);
+    const Vector3 f_pred = R_wb() * (aw - g_world) + lever + ba_term;
 
     const Vector3 f_meas = acc_meas;
     const Vector3 r = f_meas - f_pred;
@@ -2001,20 +1948,9 @@ void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::measurement_update
     last_acc_diag_.r = r;
 
     // Jacobians from linearization at CoG-only part (lever-arm is attitude-independent)
-    Matrix3 J_att;
-    Matrix3 J_aw;
-
-    if (linear_block_enabled_) {
-        const Vector3 aw = xext.template segment<3>(OFF_AW);
-        const Vector3 f_cog_b = R_wb() * (aw - g_world);
-        J_att = -skew_symmetric_matrix(f_cog_b);
-        J_aw  =  R_wb();
-    } else {
-        // gravity-only linearization
-        const Vector3 f_grav_b = R_wb() * (Vector3::Zero() - g_world);
-        J_att = -skew_symmetric_matrix(f_grav_b);
-        J_aw.setZero(); // no aw Jacobian when linear is OFF
-    }
+    const Vector3 f_cog_b = R_wb() * (aw - g_world);
+    const Matrix3 J_att = -skew_symmetric_matrix(f_cog_b);
+    const Matrix3 J_aw  =  R_wb();
 
     // Innovation covariance S = C P Cᵀ + Racc (3×3)
     Matrix3& S_mat = S_scratch_;
@@ -2027,19 +1963,13 @@ void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::measurement_update
         const Matrix3 P_th_th = Pext.template block<3,3>(OFF_TH, OFF_TH);
         S_mat.noalias() += J_att * P_th_th * J_att.transpose();
 
-        if (linear_block_enabled_) {
-            // normal full model terms
+        {
             const Matrix3 P_th_aw = Pext.template block<3,3>(OFF_TH, off_aw);
             const Matrix3 P_aw_aw = Pext.template block<3,3>(off_aw,  off_aw);
 
             S_mat.noalias() += J_att * P_th_aw * J_aw.transpose();
             S_mat.noalias() += J_aw  * P_th_aw.transpose() * J_att.transpose();
             S_mat.noalias() += J_aw  * P_aw_aw * J_aw.transpose();
-        } else {
-            // Option A: marginalize aw as extra measurement noise
-            // Use stationary covariance (recommended), not the frozen P_aw_aw.
-            const Matrix3 Sig_aw = T(0.5) * (Sigma_aw_stat + Sigma_aw_stat.transpose());
-            S_mat.noalias() += R_wb() * Sig_aw * R_wb().transpose();
         }
         if constexpr (with_accel_bias) {
             const Matrix3 P_ba_ba = Pext.template block<3,3>(off_ba, off_ba);
@@ -2051,7 +1981,7 @@ void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::measurement_update
                 S_mat.noalias() += P_th_ba.transpose() * J_att.transpose();
                 S_mat.noalias() += P_ba_ba;
 
-                if (linear_block_enabled_) {
+                {
                     const Matrix3 P_aw_ba = Pext.template block<3,3>(off_aw, off_ba);
                     S_mat.noalias() += J_aw * P_aw_ba;
                     S_mat.noalias() += P_aw_ba.transpose() * J_aw.transpose();
@@ -2065,7 +1995,7 @@ void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::measurement_update
                 S_mat.noalias() += J_att * P_th_ba;
                 S_mat.noalias() += P_th_ba.transpose() * J_att.transpose();
 
-                if (linear_block_enabled_) {
+                {
                     const Matrix3 P_aw_ba = Pext.template block<3,3>(off_aw, off_ba);
                     S_mat.noalias() += J_aw * P_aw_ba;
                     S_mat.noalias() += P_aw_ba.transpose() * J_aw.transpose();
@@ -2084,7 +2014,7 @@ void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::measurement_update
                 S_mat.noalias() += J_bg  * P_th_bg.transpose() * J_att.transpose();
                 S_mat.noalias() += J_bg  * P_bg_bg * J_bg.transpose();
 
-                if (linear_block_enabled_) {
+                {
                     const Matrix3 P_aw_bg = Pext.template block<3,3>(OFF_AW, OFF_BG);
                     S_mat.noalias() += J_aw * P_aw_bg * J_bg.transpose();
                     S_mat.noalias() += J_bg * P_aw_bg.transpose() * J_aw.transpose();
@@ -2107,7 +2037,7 @@ void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::measurement_update
         const auto P_all_th = Pext.template block<NX,3>(0, OFF_TH);
         PCt.noalias() += P_all_th * J_att.transpose();
 
-        if (linear_block_enabled_) {
+        {
             const auto P_all_aw = Pext.template block<NX,3>(0, OFF_AW);
             PCt.noalias() += P_all_aw * J_aw.transpose();
         }
@@ -2123,9 +2053,6 @@ void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::measurement_update
                 PCt.noalias() += P_all_bg * J_bg.transpose();
             }
         }
-    }
-    if (!linear_block_enabled_) {
-        freeze_linear_rows_(PCt);
     }
     if constexpr (with_accel_bias) {
         if (!use_ba) freeze_acc_bias_rows_(PCt);
@@ -2146,9 +2073,6 @@ void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::measurement_update
     MatrixNX3& K = K_scratch_;
     K.noalias() = PCt * ldlt.solve(Matrix3::Identity());
 
-    if (!linear_block_enabled_) {
-        freeze_linear_rows_(K);
-    }
     if constexpr (with_accel_bias) {
         if (!use_ba) freeze_acc_bias_rows_(K);
     }
@@ -2203,9 +2127,6 @@ void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::measurement_update
     PCt.setZero();
     PCt.noalias() += Pext.template block<NX,3>(0,0) * J_att.transpose();
 
-    if (!linear_block_enabled_) {
-        freeze_linear_rows_(PCt);
-    }
     if constexpr (with_accel_bias) {
         if (!acc_bias_updates_enabled_) {
             freeze_acc_bias_rows_(PCt);
@@ -2225,9 +2146,6 @@ void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::measurement_update
     MatrixNX3& K = K_scratch_;
     K.noalias() = PCt * ldlt.solve(Matrix3::Identity());
 
-    if (!linear_block_enabled_) {
-        freeze_linear_rows_(K);
-    }
     if constexpr (with_accel_bias) {
         if (!acc_bias_updates_enabled_) {
             freeze_acc_bias_rows_(K);
@@ -2342,8 +2260,6 @@ template<typename T, bool with_gyro_bias, bool with_accel_bias>
 void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::measurement_update_position_pseudo(
     const Vector3& p_meas, const Vector3& sigma_meas)
 {
-    if (!linear_block_enabled_) return;
-
     constexpr int off_P = OFF_P; // position block
 
     // Predicted position (world, NED)
@@ -2396,8 +2312,6 @@ template<typename T, bool with_gyro_bias, bool with_accel_bias>
 void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::measurement_update_velocity_pseudo(
     const Vector3& v_meas, const Vector3& sigma_meas)
 {
-    if (!linear_block_enabled_) return;
-
     constexpr int off_V = OFF_V; // velocity block
 
     const Vector3 v_pred = xext.template segment<3>(off_V);
@@ -2440,8 +2354,6 @@ template<typename T, bool with_gyro_bias, bool with_accel_bias>
 void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::measurement_update_vert_velocity_pseudo(
     T vz_meas, T sigma_meas)
 {
-    if (!linear_block_enabled_) return;
-
     constexpr int idx_vz = OFF_V + 2; // z (down) axis in NED
 
     if (!std::isfinite(vz_meas)) {

@@ -1,35 +1,26 @@
-// Pins the contract of the two startup-attitude policies.
+// Pins the contract of the Mahony-proxy startup.
 //
-// StagedMekf feeds the MEKF from the first sample and lets it learn its own
-// tilt while it runs degraded -- linear block off, accelerometer bias frozen,
-// Racc inflated -- and the wrapper reads that attitude back to gate the
-// magnetometer and to frame the magnetic world-reference average. Those reads
-// are what MahonyProxy removes: the measurement-only front end runs from the
-// first sample without the MEKF, the private Mahony observer supplies the
-// tilt, and the MEKF is seeded with the finished solution and goes live in one
-// step, never occupying the degraded configuration at all.
+// The measurement-only front end runs from the first sample without the MEKF,
+// the private Mahony observer supplies the tilt that gates the magnetometer and
+// frames the magnetic world-reference average, and the MEKF is seeded with the
+// finished solution and goes live in one step. It never runs in a degraded
+// warmup configuration, so nothing it does before the handoff can reach the
+// seed.
 //
-// The facts fixed here are the ones that make that substitution sound:
+// The facts fixed here are the ones that make that sound:
 //
-// 1. MahonyProxy is the deployed default, set on the wrapper that can actually
-//    perform the handoff, while the inner filter keeps the staged behaviour so
-//    that driving it directly still brings it live on its own. The flag really
-//    does restore the old path rather than merely renaming it.
-//
-// 2. The front end is genuinely independent of the MEKF. Driving a filter with
+// 1. The front end is genuinely independent of the MEKF. Driving a filter with
 //    updateFrontEnd() and driving an identical one with updateTime() must
 //    leave every front-end output bit-for-bit equal, because no consumer in
 //    that chain reads a filter state. This is what allows the operating point
 //    to converge before the MEKF has run a single sample.
 //
-// 3. Under MahonyProxy the MEKF really is held: its attitude and linear states
-//    must be untouched until the handoff, so nothing it does during the
-//    bootstrap can reach the seed.
+// 2. The MEKF really is held: its attitude and linear states must be untouched
+//    until the handoff.
 //
-// 4. The handoff installs the proxy attitude and goes straight to Live,
-//    skipping the staged warmup, with the linear block on.
+// 3. The handoff installs the proxy attitude and goes straight to Live.
 //
-// 5. The startup observer's tilt has no static error under a constant gyro
+// 4. The startup observer's tilt has no static error under a constant gyro
 //    bias. This is the one place its tuning differs from the vertical
 //    channel's, and it is not cosmetic: the vertical channel can leave the
 //    integral term at zero because everything downstream of it is high-passed,
@@ -49,7 +40,6 @@ namespace {
 
 using Filter = SeaStateFusionFilter_OU_III<TrackerType::KALMANF>;
 using Wrapper = SeaStateFusion_OU_III<TrackerType::KALMANF>;
-using Policy = Filter::StartupInitPolicy;
 using Stage  = Filter::StartupStage;
 
 using WrapperConfig = Wrapper::Config;
@@ -109,31 +99,12 @@ void sample(int k, Eigen::Vector3f& gyro, Eigen::Vector3f& acc) {
                           -G + heave);
 }
 
-void bring_up(Filter& f, Policy policy) {
+void bring_up(Filter& f) {
     f.setWithMag(false);
-    f.setStartupInitPolicy(policy);
     f.setOnlineTuneWarmupSec(5.0f);
     f.initialize(Eigen::Vector3f::Constant(0.0148f),
                  Eigen::Vector3f::Constant(0.00157f),
                  Eigen::Vector3f::Constant(0.25f));
-}
-
-// The deployed default is the proxy policy, and it is set where the handoff
-// can actually be performed. The inner filter keeps StagedMekf so that driving
-// it directly still brings it live on its own, with nothing above it to hand
-// over the attitude.
-bool test_defaults_are_split_by_who_can_hand_over() {
-    bool ok = true;
-
-    Wrapper::Config cfg;
-    ok &= check(cfg.startup_init_policy == Policy::MahonyProxy,
-                "MahonyProxy must be the deployed default");
-
-    Filter f;
-    ok &= check(f.startupInitPolicy() == Policy::StagedMekf,
-                "a directly driven filter must still go live on its own");
-
-    return ok;
 }
 
 // The front end reads no filter state, so withholding the MEKF cannot change
@@ -143,20 +114,35 @@ bool test_front_end_is_independent_of_the_mekf() {
     bool ok = true;
 
     Filter driven, held;
-    bring_up(driven, Policy::MahonyProxy);
-    bring_up(held, Policy::MahonyProxy);
+    bring_up(driven);
+    bring_up(held);
 
     Eigen::Vector3f gyro, acc;
     sample(0, gyro, acc);
     driven.initialize_from_acc(acc);
     held.initialize_from_acc(acc);
 
+    // "driven" follows the deployed sequence -- front end, handoff, then the
+    // MEKF taking every sample -- while "held" never starts the MEKF at all.
     constexpr int STEPS = 200 * 400;
     for (int k = 0; k < STEPS; ++k) {
         sample(k, gyro, acc);
-        driven.updateTime(DT, gyro, acc);
+
+        if (driven.isAdaptiveLive()) {
+            driven.updateTime(DT, gyro, acc);
+        } else {
+            driven.updateFrontEnd(DT, gyro, acc);
+            if (driven.isTunerReady()) {
+                driven.goLive(driven.startupProxyQuat(), 0.035f, 1.5708f);
+            }
+        }
+
         held.updateFrontEnd(DT, gyro, acc);
     }
+
+    ok &= check(driven.isAdaptiveLive(),
+                "the driven filter must actually be running its MEKF, or this "
+                "test proves nothing");
 
     ok &= check(driven.getFreqHz() == held.getFreqHz(),
                 "tracker frequency must not depend on the MEKF running");
@@ -217,11 +203,11 @@ bool test_heading_frame_ignores_yaw() {
 
 // Nothing the MEKF does during the bootstrap may reach the seed, so it must
 // not be running at all.
-bool test_proxy_policy_holds_the_mekf() {
+bool test_bootstrap_holds_the_mekf() {
     bool ok = true;
 
     Filter f;
-    bring_up(f, Policy::MahonyProxy);
+    bring_up(f);
 
     Eigen::Vector3f gyro, acc;
     sample(0, gyro, acc);
@@ -260,43 +246,10 @@ bool test_proxy_policy_holds_the_mekf() {
     f.goLive(q_seed, 0.035f, 1.5708f);
 
     ok &= check(f.isAdaptiveLive(), "goLive must put the filter in Live");
-    ok &= check(f.mekf().linear_block_enabled(),
-                "the linear block must be on once the filter is live");
 
     const Eigen::Quaternionf q_after = f.mekf().quaternion_boat();
     ok &= check(std::fabs(q_seed.normalized().dot(q_after)) > 1.0f - 1e-5f,
                 "the live attitude must be the one the bootstrap handed over");
-
-    return ok;
-}
-
-// The flag has to restore the old path, not just rename it.
-bool test_staged_policy_still_warms_the_mekf() {
-    bool ok = true;
-
-    Filter f;
-    bring_up(f, Policy::StagedMekf);
-
-    Eigen::Vector3f gyro, acc;
-    sample(0, gyro, acc);
-    f.initialize_from_acc(acc);
-
-    const Eigen::Quaternionf q0 = f.mekf().quaternion_boat();
-
-    constexpr int STEPS = 200 * 400;
-    for (int k = 0; k < STEPS; ++k) {
-        sample(k, gyro, acc);
-        f.updateTime(DT, gyro, acc);
-    }
-
-    ok &= check(f.isAdaptiveLive(),
-                "the staged policy must reach Live on its own");
-    ok &= check(f.getStartupStage() != Stage::TunerReady,
-                "the staged policy must never occupy TunerReady");
-
-    const Eigen::Quaternionf q1 = f.mekf().quaternion_boat();
-    ok &= check(std::fabs(q0.dot(q1)) < 1.0f - 1e-6f,
-                "the staged policy must let the MEKF propagate its own attitude");
 
     return ok;
 }
@@ -319,7 +272,7 @@ bool test_startup_proxy_rejects_gyro_bias() {
     // Settled tilt of a startup proxy at the given gains.
     auto settled_tilt_deg = [&](float two_kp, float two_ki) {
         Filter f;
-        bring_up(f, Policy::MahonyProxy);
+        bring_up(f);
         f.setStartupProxyGains(two_kp, two_ki);
 
         Eigen::Vector3f gyro, acc;
@@ -392,7 +345,7 @@ bool test_refinement_frame_is_exogenous() {
     // provisional reference; with a 5000 s bias correlation time that is not
     // recoverable once it happens.
     Filter f;
-    bring_up(f, Policy::MahonyProxy);
+    bring_up(f);
     ok &= check(!f.accBiasHeld(), "no hold until a caller asks for one");
     f.setAccBiasHold(true);
     ok &= check(f.accBiasHeld(), "the hold must latch");
@@ -423,6 +376,15 @@ bool test_startup_gate_certifies_the_aligned_branch() {
     bool ok = true;
 
     WrapperConfig cfg;
+
+    // runStartupGravityInit() is shared startup machinery; the OU wrappers no
+    // longer carry a configuration for it, so drive it on its own constants.
+    constexpr float BOOT_TILT_ACC_TAU_SEC  = 2.15f;
+    constexpr float BOOT_GRAV_SLOW_TAU_SEC = 6.0f;
+    constexpr float BOOT_GRAV_HOLD_SEC     = 2.0f;
+    constexpr float BOOT_GRAV_MIN_SEC      = 6.87f;
+    constexpr float BOOT_GRAV_TIMEOUT_SEC  = 15.0f;
+    constexpr float BOOT_GRAV_NORM_FRAC    = 0.22f;
 
     const Eigen::Vector3f acc_level(0.0f, 0.0f, -G);
 
@@ -472,13 +434,13 @@ bool test_startup_gate_certifies_the_aligned_branch() {
                          float elapsed) {
         return seastate::common::runStartupGravityInit(
             gyro, acc, DT, elapsed, G,
-            cfg.bootstrap_tilt_obs_acc_tau_sec,
-            cfg.bootstrap_gravity_slow_tau_sec,
-            cfg.bootstrap_gravity_align_max_sin,
-            cfg.bootstrap_gravity_hold_sec,
-            cfg.bootstrap_gravity_min_sec,
-            cfg.bootstrap_gravity_timeout_sec,
-            cfg.bootstrap_gravity_norm_frac,
+            BOOT_TILT_ACC_TAU_SEC,
+            BOOT_GRAV_SLOW_TAU_SEC,
+            cfg.mag_gravity_align_max_sin,
+            BOOT_GRAV_HOLD_SEC,
+            BOOT_GRAV_MIN_SEC,
+            BOOT_GRAV_TIMEOUT_SEC,
+            BOOT_GRAV_NORM_FRAC,
             obs, slow, good_sec,
             [&](const Eigen::Vector3f& acc_init) {
                 seed = acc_init;
@@ -504,7 +466,7 @@ bool test_startup_gate_certifies_the_aligned_branch() {
                   acc_heavy, t);
     }
 
-    ok &= check(t > cfg.bootstrap_gravity_timeout_sec,
+    ok &= check(t > BOOT_GRAV_TIMEOUT_SEC,
                 "the antipodal interval must outlast the bootstrap timeout");
     ok &= check(!fired,
                 "a timed-out bootstrap must not seed an antipodal attitude");
@@ -535,11 +497,9 @@ bool test_startup_gate_certifies_the_aligned_branch() {
 
 int main() {
     bool ok = true;
-    ok &= test_defaults_are_split_by_who_can_hand_over();
     ok &= test_front_end_is_independent_of_the_mekf();
     ok &= test_heading_frame_ignores_yaw();
-    ok &= test_proxy_policy_holds_the_mekf();
-    ok &= test_staged_policy_still_warms_the_mekf();
+    ok &= test_bootstrap_holds_the_mekf();
     ok &= test_startup_proxy_rejects_gyro_bias();
     ok &= test_refinement_frame_is_exogenous();
     ok &= test_startup_gate_certifies_the_aligned_branch();

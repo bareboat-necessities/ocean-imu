@@ -59,7 +59,7 @@ The nominal operating point is preserved exactly: the wrapper's initial applied
 
 ### 3. Startup: the Mahony proxy owns tilt and magnetic acquisition
 
-`StartupInitPolicy::MahonyProxy` is the new default on the wrapper. The
+The Mahony proxy is the only startup path the wrapper has. The
 measurement-only front end — proxy, frequency tracker, wave-period estimator,
 sigma band, auto-tuner, wave-direction stage — runs from the first sample
 through `updateFrontEnd()` with the MEKF untouched; the private Mahony observer
@@ -67,11 +67,12 @@ supplies the tilt that gates the magnetometer and frames the world-reference
 average; and `goLive()` seeds the MEKF with the finished attitude so it starts
 live in one step and never occupies the staged warmup.
 
-`StagedMekf` restores the previous path and is the matched ablation
-(`W3D_STARTUP_INIT=staged_mekf`). The inner filter still defaults to
-`StagedMekf`, because only something above it can perform the handoff and a
-filter driven directly through `updateTime()` would otherwise park at
-`TunerReady` forever.
+The staged-MEKF path this replaced has since been removed from the OU
+wrappers, along with `W3D_STARTUP_INIT`; the numbers it produced are recorded
+in `docs/ou-iii-startup-init.md`, and `SeaStateFusionFilter_TFG` still carries
+both paths for anyone re-running the comparison. The inner filter now parks at
+`TunerReady` until something above it calls `goLive()`, which is why
+`updateTime()` is documented as post-handoff only.
 
 Three parts of this were not optional:
 
@@ -357,7 +358,7 @@ that establish it.
 | `mag_hi_apply_fraction` | 1.0 | shrinkage on top of the ridge |
 | `mag_hi_slew_tau_sec` | 45 | how fast the applied offset moves |
 
-Simulator env overrides: `W3D_STARTUP_INIT`, `W3D_PSEUDO_CADENCE`,
+Simulator env overrides: `W3D_PSEUDO_CADENCE`,
 `SF_PROXY_START_MIN_SEC`, `SF_PROXY_START_TIMEOUT_SEC`, `SF_PROXY_MAG_SETTLE_SEC`,
 `SF_MAG_REFINE`, `SF_MAG_REFINE_START_SEC`, `SF_MAG_REFINE_WINDOW_SEC`,
 `SF_PROXY_TILT_SIGMA`, `SF_PROXY_YAW_SIGMA`, `SF_ACC_BIAS_UNLOCK_MAG_UPDATES`,
@@ -375,12 +376,12 @@ make -C tests/kalman_ou_ii build
 # deployed default, eight scored records
 W3D_WRITE_TIMESERIES=0 W3D_COLLECT_ALL_GATES=1 ./kalman_ou_ii-sim
 
-# the two ablations that still decompose the change
-W3D_STARTUP_INIT=staged_mekf W3D_PSEUDO_CADENCE=fixed ./kalman_ou_ii-sim   # sigma band only
-W3D_STARTUP_INIT=staged_mekf ./kalman_ou_ii-sim                            # + tau cadence
+# the cadence ablation that still decomposes the change
+W3D_PSEUDO_CADENCE=fixed ./kalman_ou_ii-sim                                # sigma band only
 
-# the legacy broadband arm (W3D_TUNING_BAND=acceleration) was removed with the
-# tracker-driven operating point; the simulator now rejects that variable.
+# the staged-startup arm (W3D_STARTUP_INIT=staged_mekf) went with the staged
+# MEKF warmup, and the legacy broadband arm (W3D_TUNING_BAND=acceleration) with
+# the tracker-driven operating point; the simulator rejects both variables.
 ```
 
 The ensemble figures above come from replaying each configuration under

@@ -478,8 +478,6 @@ private:
   }
 
   void resetFusion_() {
-    constexpr bool WANT_LINEAR_BLOCK = true;
-
     constexpr float IMU_TUNE_REF_HZ = 200.0f;
     constexpr float MAG_TUNE_REF_HZ = 25.0f;
 
@@ -504,9 +502,6 @@ private:
     fcfg.with_mag = true;
     fcfg.online_tune_warmup_sec = ONLINE_TUNE_WARMUP_SEC;
 
-    fcfg.freeze_acc_bias_until_live = true;
-    fcfg.Racc_warmup_std = 0.18f;
-
     fcfg.sigma_a = sigma_a;
     fcfg.sigma_g = sigma_g;
     fcfg.sigma_m = sigma_m;
@@ -519,7 +514,6 @@ private:
     fusion_.begin(fcfg);
 
     auto& ff = fusion_.raw();
-    ff.enableLinearBlock(WANT_LINEAR_BLOCK);
     ff.enableTuner(true);
     ff.setWithMag(true);
     // The tuner coefficients (P_factor, tau, sigma, r_p0, r_v0, r_p0 XY) are

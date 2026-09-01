@@ -34,8 +34,8 @@ SOURCE_PATTERNS = {
     ),
     "sync_marks_pending": re.compile(r"aw_covariance_floor_pending_\s*=\s*true\s*;"),
     "prediction_applies_pending_sync": re.compile(
-        r"if\s*\(linear_block_enabled_\)\s*\{\s*"
-        r"apply_pending_aw_covariance_inflation_\(\)\s*;\s*\}", re.S
+        r"apply_pending_aw_covariance_inflation_\(\)\s*;\s*"
+        r"symmetrize_Pext_\(\)\s*;", re.S
     ),
     "delta_is_target_minus_current": re.compile(
         r"Matrix3\s+Delta\s*=\s*aw_covariance_floor_target_\s*-\s*P_aw\s*;"

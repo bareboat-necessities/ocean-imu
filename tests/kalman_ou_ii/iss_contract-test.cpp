@@ -120,7 +120,6 @@ int main() {
     // Verify the residual accelerometer-bias block really contracts when its
     // OU propagation is active.  A shorter test tau makes the contraction
     // numerically visible while exercising the same source path.
-    f.mekf_->set_linear_block_enabled(false);
     f.mekf_->set_acc_bias_updates_enabled(true);
     f.mekf_->set_acc_bias_time_constant(2.0f);
     const Eigen::Vector3f b0(0.20f, -0.10f, 0.05f);
@@ -137,8 +136,6 @@ int main() {
     f.enterLive_();
     if (!f.mekf_->acc_bias_updates_enabled_)
         return fail("post-unlock Live state did not enable accel-bias OU propagation");
-    if (!f.mekf_->linear_block_enabled())
-        return fail("default Live state did not enable the OU-II linear block");
 
     std::cout << "OU-II ISS proof contract passed\n";
     return 0;

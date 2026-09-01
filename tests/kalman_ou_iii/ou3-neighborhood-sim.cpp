@@ -143,8 +143,6 @@ public:
         cfg.sigma_g = sigma_g * kSigmaGRescale;
         cfg.sigma_m = sigma_m * kSigmaMRescale;
         cfg.mag_delay_sec = MAG_DELAY_SEC;
-        cfg.freeze_acc_bias_until_live = true;
-        cfg.Racc_warmup_std = 0.5f;
 
         nominal_.begin(cfg);
         perturbed_.begin(cfg);
@@ -253,7 +251,6 @@ private:
         auto& filter = f.raw();
         filter.setPeriodicAwCovarianceSync(true);
         filter.setAwCovarianceSyncCongruent(false);
-        filter.enableLinearBlock(true);
         filter.enableTuner(true);
         filter.enableClamp(true);
     }
@@ -261,7 +258,7 @@ private:
     bool source_ready(const Fusion& f) const
     {
         const auto& m = f.raw().mekf();
-        if (!f.isLive() || !m.linear_block_enabled()) return false;
+        if (!f.isLive()) return false;
         const bool active = m.acc_bias_updates_enabled();
         return requested_mode_ == (active ? "A" : "H");
     }
@@ -365,7 +362,6 @@ private:
         const auto& p = pf.mekf();
         const bool flags =
             nominal_.isLive() == perturbed_.isLive()
-            && n.linear_block_enabled() == p.linear_block_enabled()
             && n.acc_bias_updates_enabled() == p.acc_bias_updates_enabled()
             && nominal_.hasMagNorthLock() == perturbed_.hasMagNorthLock()
             && nominal_.hasRefinedMagReference() == perturbed_.hasRefinedMagReference();

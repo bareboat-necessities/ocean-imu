@@ -415,42 +415,9 @@ public:
 
     enum class StartupStage {
         Cold,        // just booted or just had a big tilt reset
-        TunerWarm,   // MEKF + freq running, tuner collecting stats
+        TunerWarm,   // front end running, tuner collecting stats
         TunerReady,  // tuner trusted, MEKF still held by an external bootstrap
-        Live         // tuner is trusted; full adaptation & extras allowed
-    };
-
-    // Who solves the attitude the filter starts from.
-    //
-    // StagedMekf is the original behaviour: the MEKF is fed from the first
-    // sample and learns its own tilt while running degraded -- linear block
-    // off, accelerometer bias frozen, Racc inflated -- and the caller reads
-    // *that* attitude back to gate the magnetometer and to build the frame the
-    // magnetic world reference is averaged in.  Those reads are the problem.
-    // The reference and the yaw gauge are locked once, so whatever tilt error
-    // the warming MEKF has at that moment becomes a standing attitude and
-    // heading bias, and it is exactly the moment the MEKF is least able to
-    // level: the linear block that absorbs orbital acceleration is switched
-    // off, so its accelerometer update is fighting the waves with no state to
-    // put them in.
-    //
-    // MahonyProxy takes those jobs away from the MEKF and gives them to the
-    // private Mahony observer this filter already runs (see
-    // VerticalAccelComplementary).  That observer is a pure function of the raw
-    // gyro and accelerometer, and its correction corner sits an order of
-    // magnitude below the wave band, so it rejects the orbital specific force
-    // by construction rather than chasing it.  The measurement-only front end
-    // -- proxy, frequency tracker, wave-period estimator, sigma band, tuner --
-    // runs from the first sample without the MEKF, so by the time the tilt has
-    // settled and the magnetometer has gauged north, the operating point is
-    // converged too.  The MEKF is then seeded with that attitude and goes Live
-    // directly, never occupying the degraded warmup configuration at all.
-    //
-    // See docs/ou-iii-startup-init.md for the measured comparison, including
-    // the one metric that moves the wrong way.
-    enum class StartupInitPolicy {
-        StagedMekf,   // legacy: MEKF learns its own tilt while warming
-        MahonyProxy,  // default: proxy owns tilt + mag learning, MEKF starts Live
+        Live         // MEKF owns the attitude; full adaptation & extras allowed
     };
 
     explicit SeaStateFusionFilter_OU_III(bool with_mag = true)
@@ -473,20 +440,12 @@ public:
     StartupStage getStartupStage() const noexcept { return startup_stage_; }
     bool isAdaptiveLive() const noexcept { return startup_stage_ == StartupStage::Live; }
 
-    // The operating point is trustworthy.  Under StagedMekf this coincides
-    // with going Live; under MahonyProxy it is reached first, while the MEKF
-    // is still held, and it is one of the conditions the caller waits on
-    // before handing the attitude over.
+    // The operating point is trustworthy.  It is reached while the MEKF is
+    // still held, and it is one of the conditions the caller waits on before
+    // handing the attitude over.
     bool isTunerReady() const noexcept {
         return startup_stage_ == StartupStage::TunerReady ||
                startup_stage_ == StartupStage::Live;
-    }
-
-    void setStartupInitPolicy(StartupInitPolicy policy) noexcept {
-        startup_init_policy_ = policy;
-    }
-    StartupInitPolicy startupInitPolicy() const noexcept {
-        return startup_init_policy_;
     }
 
     void initialize(const Eigen::Vector3f& sigma_a,
@@ -520,7 +479,16 @@ public:
         }
     }
 
-    // Time update (IMU integration + frequency tracking)
+    // Time update (IMU integration + frequency tracking).
+    //
+    // This drives the MEKF, so it belongs after the handoff.  The filter has no
+    // degraded warmup configuration any more -- the linear block, the
+    // accelerometer covariance and the bias gate are the live ones from the
+    // first sample it sees -- so a caller that starts here instead of at
+    // updateFrontEnd() is asking a fully configured wave filter to converge
+    // from an unknown attitude on an untuned operating point.  Run
+    // updateFrontEnd() until isTunerReady(), hand the proxy attitude over with
+    // goLive(), then call this.  Both wrappers in this file do exactly that.
     void updateTime(float dt, const Eigen::Vector3f& gyro, const Eigen::Vector3f& acc,
                     float tempC = 35.0f)
     {
@@ -886,7 +854,7 @@ public:
         }
 
         // We can "unlock" once mag has had a few updates, but we DO NOT
-        // enable accel-bias learning or restore Racc unless we're already Live.
+        // enable accel-bias learning unless we're already Live.
         if (accel_bias_locked_ &&
             startup_stage_ == StartupStage::Live &&
             mag_updates_applied_ >= mag_updates_to_unlock_ &&
@@ -895,19 +863,10 @@ public:
         {
             accel_bias_locked_ = false;
 
-            // Only allow accel bias to start learning once the system is Live
-            // and no external hold is in force.
-            if (freeze_acc_bias_until_live_ && startup_stage_ == StartupStage::Live &&
-                !acc_bias_hold_) {
+            // Only allow accel bias to start learning once no external hold is
+            // in force.
+            if (!acc_bias_hold_) {
                 mekf_->set_acc_bias_updates_enabled(true);
-
-                // Restore nominal Racc only when bias learning is allowed.
-                if (warmup_Racc_active_) {
-                    if (Racc_nominal_.allFinite() && Racc_nominal_.maxCoeff() > 0.0f) {
-                        mekf_->set_Racc_std(Racc_nominal_);
-                        warmup_Racc_active_ = false;
-                    }
-                }
             }
         }
     }
@@ -971,9 +930,7 @@ public:
                     RS_target_ *= scale;
                 }
 
-                if (enable_linear_block_) {
-                    apply_RS_tune_();
-                }
+                apply_RS_tune_();
             }
         }
     }
@@ -1065,7 +1022,7 @@ public:
         if (!mekf_) return;
         if (flag) apply_pseudo_update_cadence_();
         else mekf_->set_pseudo_update_period_s(pseudo_update_fixed_period_s_);
-        if (startup_stage_ == StartupStage::Live && enable_linear_block_) {
+        if (startup_stage_ == StartupStage::Live) {
             apply_RS_tune_();
         }
     }
@@ -1075,7 +1032,7 @@ public:
         pseudo_update_tau_ratio_ = ratio;
         if (tau_scaled_pseudo_cadence_) {
             apply_pseudo_update_cadence_();
-            if (startup_stage_ == StartupStage::Live && enable_linear_block_) {
+            if (startup_stage_ == StartupStage::Live) {
                 apply_RS_tune_();
             }
         }
@@ -1087,7 +1044,7 @@ public:
         pseudo_update_period_max_s_ = max_s;
         if (tau_scaled_pseudo_cadence_) {
             apply_pseudo_update_cadence_();
-            if (startup_stage_ == StartupStage::Live && enable_linear_block_) {
+            if (startup_stage_ == StartupStage::Live) {
                 apply_RS_tune_();
             }
         }
@@ -1097,7 +1054,7 @@ public:
     // active covariance is refreshed here so ablations switch cleanly.
     void setRSLaw(RSAdaptationLaw law) {
         rs_law_ = law;
-        if (mekf_ && startup_stage_ == StartupStage::Live && enable_linear_block_) {
+        if (mekf_ && startup_stage_ == StartupStage::Live) {
             apply_RS_tune_();
         }
     }
@@ -1170,7 +1127,7 @@ public:
         freeze_ou_channel_ = false;
         freeze_RS_channel_ = false;
         apply_ou_tune_(true);
-        if (startup_stage_ == StartupStage::Live && enable_linear_block_) {
+        if (startup_stage_ == StartupStage::Live) {
             apply_RS_tune_();
         }
         return true;
@@ -1229,7 +1186,7 @@ public:
                 : RS;
             RS_target_ = frozen_RS_;
             tune_.RS_applied = RS_target_;
-            if (startup_stage_ == StartupStage::Live && enable_linear_block_) {
+            if (startup_stage_ == StartupStage::Live) {
                 apply_RS_tune_();
             }
         }
@@ -1238,15 +1195,6 @@ public:
 
     bool frozenOUChannel() const noexcept { return freeze_ou_channel_; }
     bool frozenRSChannel() const noexcept { return freeze_RS_channel_; }
-
-    // Enable/disable use of the extended linear block [v,p,S,a_w] in Kalman3D_Wave_OU_III.
-    void enableLinearBlock(bool flag = true) {
-        enable_linear_block_ = flag;
-        if (mekf_) {
-            const bool on_now = flag && (startup_stage_ == StartupStage::Live);
-            mekf_->set_linear_block_enabled(on_now);
-        }
-    }
 
     void setFreqBounds(float min_hz, float max_hz) {
         if (!std::isfinite(min_hz) || !std::isfinite(max_hz)) return;
@@ -1339,8 +1287,6 @@ public:
         }
     }
 
-    void setFreezeAccBiasUntilLive(bool en) { freeze_acc_bias_until_live_ = en; }
-
     // Magnetometer updates that must land after going live before the
     // accelerometer-bias gate opens.  The bias is only weakly observable in
     // waves, so this is a real tuning knob rather than a formality; exposed so
@@ -1377,8 +1323,6 @@ public:
         }
     }
     bool accBiasHeld() const noexcept { return acc_bias_hold_; }
-
-    void setWarmupRaccStd(float r) { if (std::isfinite(r) && r > 0.0f) Racc_warmup_std_ = r; }
 
     // For SeaStateFusionFilter_OU_III to restore Racc automatically
     void setNominalRaccStd(const Eigen::Vector3f& r) { Racc_nominal_ = r; }
@@ -1534,7 +1478,7 @@ private:
     void apply_pending_online_tune_() {
         if (!online_tune_apply_pending_ || !mekf_) return;
         apply_ou_tune_(false);
-        if (startup_stage_ == StartupStage::Live && enable_linear_block_) {
+        if (startup_stage_ == StartupStage::Live) {
             apply_RS_tune_();
         }
         online_tune_apply_pending_ = false;
@@ -1785,15 +1729,11 @@ private:
           case StartupStage::TunerWarm:
               if (!tuner_.isFreqReady()) return;
               if (tuner_.isReady()) {
-                  if (startup_init_policy_ == StartupInitPolicy::MahonyProxy) {
-                      // The operating point is trusted, but the attitude is
-                      // not this filter's to decide.  Park here and let the
-                      // bootstrap call goLive() once it has tilt and north.
-                      startup_stage_   = StartupStage::TunerReady;
-                      startup_stage_t_ = 0.0f;
-                  } else {
-                      enterLive_();
-                  }
+                  // The operating point is trusted, but the attitude is not
+                  // this filter's to decide.  Park here and let the bootstrap
+                  // call goLive() once it has tilt and north.
+                  startup_stage_   = StartupStage::TunerReady;
+                  startup_stage_t_ = 0.0f;
               }
               break;
 
@@ -1970,26 +1910,18 @@ private:
         startup_stage_t_ = 0.0f;
 
         if (!mekf_) return;
-        mekf_->set_linear_block_enabled(false);
 
         accel_bias_locked_   = with_mag_;
         mag_updates_applied_ = 0;
         first_mag_update_time_  = NAN;
 
-        if (freeze_acc_bias_until_live_) {
-            mekf_->set_acc_bias_updates_enabled(false);
-            mekf_->set_Racc_std(Eigen::Vector3f::Constant(Racc_warmup_std_));
-            warmup_Racc_active_ = true;
-        }
+        mekf_->set_acc_bias_updates_enabled(false);
     }
 
-    // The accelerometer sigma the startup and stage logic wants, before any
-    // vibration inflation.  Returns a zero vector when it is not known, which
-    // is the signal to leave the commanded covariance alone.
+    // The accelerometer sigma the stage logic wants, before any vibration
+    // inflation.  Returns a zero vector when it is not known, which is the
+    // signal to leave the commanded covariance alone.
     Eigen::Vector3f racc_base_std_() const {
-        if (warmup_Racc_active_ && Racc_warmup_std_ > 0.0f) {
-            return Eigen::Vector3f::Constant(Racc_warmup_std_);
-        }
         if (Racc_nominal_.allFinite() && Racc_nominal_.minCoeff() > 0.0f) {
             return Racc_nominal_;
         }
@@ -2028,37 +1960,29 @@ private:
 
         if (!mekf_) return;
         apply_ou_tune_(true);
-        mekf_->set_linear_block_enabled(enable_linear_block_);
 
-        if (freeze_acc_bias_until_live_) {
-            const bool allow_bias = !accel_bias_locked_ && !acc_bias_hold_;
-            mekf_->set_acc_bias_updates_enabled(allow_bias);
+        // The linear block has been carried through the bootstrap without ever
+        // being propagated -- the MEKF is not driven until now -- so its a_w
+        // marginal is still the construction seed and its cross-covariances are
+        // stale.  Seat the marginal on the operating point the tuner just
+        // committed and drop the cross terms before the first prediction.
+        mekf_->reset_aw_covariance_to_stationary();
 
-            if (warmup_Racc_active_ &&
-                Racc_nominal_.allFinite() &&
-                Racc_nominal_.maxCoeff() > 0.0f)
-            {
-                mekf_->set_Racc_std(Racc_nominal_);
-            }
-            warmup_Racc_active_ = false;
-        }
+        const bool allow_bias = !accel_bias_locked_ && !acc_bias_hold_;
+        mekf_->set_acc_bias_updates_enabled(allow_bias);
 
-        if (enable_linear_block_) apply_RS_tune_();
+        apply_RS_tune_();
     }
 
     StartupStage startup_stage_    = StartupStage::Cold;
     float        startup_stage_t_  = 0.0f;
 
-    // Warmup behavior
-    bool  freeze_acc_bias_until_live_ = true;
     // Vibration-aware measurement covariance, armed in the constructor at
     // ACC_VIBRATION_RACC_GAIN_DEFAULT and inert until the guard sees machinery.
     float racc_vibration_gain_        = 0.0f;
     bool  racc_inflated_              = false;
     Eigen::Vector3f racc_effective_   = Eigen::Vector3f::Zero();
 
-    float Racc_warmup_std_            = 0.6f;
-    bool  warmup_Racc_active_         = false;
     Eigen::Vector3f Racc_nominal_     = Eigen::Vector3f::Constant(0.0f);
 
     bool accel_bias_locked_ = true;
@@ -2066,15 +1990,6 @@ private:
     static constexpr int MAG_UPDATES_TO_UNLOCK = 250;
     int  mag_updates_to_unlock_ = MAG_UPDATES_TO_UNLOCK;
     bool acc_bias_hold_ = false;
-
-    // StagedMekf here, MahonyProxy in SeaStateFusion_OU_III::Config, and the
-    // asymmetry is deliberate.  Only something outside this class can perform
-    // the handoff, so a filter driven directly through updateTime() with no
-    // bootstrap above it would park at TunerReady forever if it defaulted to
-    // the proxy policy.  This class's standalone contract -- feed it and it
-    // becomes live on its own -- is therefore left exactly as it was, and the
-    // policy is chosen by the wrapper that is actually able to honour it.
-    StartupInitPolicy startup_init_policy_ = StartupInitPolicy::StagedMekf;
 
     bool   with_mag_;
     double time_;
@@ -2100,8 +2015,6 @@ private:
     float frozen_tau_s_ = NAN;
     float frozen_sigma_a_ = NAN;
     float frozen_RS_ = NAN;
-
-    bool enable_linear_block_ = true;
 
     // Covariance-inflation policy; see setPeriodicAwCovarianceSync.
     bool   periodic_aw_cov_sync_ = true;
@@ -2311,25 +2224,8 @@ class SeaStateFusion_OU_III {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-    using StartupInitPolicy =
-        typename SeaStateFusionFilter_OU_III<trackerT>::StartupInitPolicy;
-
     struct Config {
         bool with_mag = true;
-
-        bool enable_linear_block = true;
-        bool require_mag_lock_for_linear_block = false;
-
-        // Who solves the startup attitude; see StartupInitPolicy.
-        //
-        // MahonyProxy is the default.  The measurement-only front end runs
-        // from the first sample, the private Mahony observer supplies the tilt
-        // that gates the magnetometer and frames the world-reference average,
-        // and the MEKF is seeded with the finished solution and starts live.
-        // StagedMekf restores the previous staged behaviour, in which the MEKF
-        // is fed from the first sample and those same reads come back out of
-        // it while it is still warming.
-        StartupInitPolicy startup_init_policy = StartupInitPolicy::MahonyProxy;
 
         // Earliest and latest the proxy bootstrap may hand over.
         //
@@ -2386,18 +2282,15 @@ public:
         float mag_delay_sec          = MAG_DELAY_SEC;
         float online_tune_warmup_sec = 10.0f;
 
-        bool  freeze_acc_bias_until_live = true;
-        float Racc_warmup_std = 0.5f;
-
         // Magnetometer updates that must land after the filter goes live
         // before the accelerometer-bias gate opens.
         //
         // Accelerometer bias and a tilt error are only weakly separable in
         // waves -- a roll error tips gravity into body Y and reads as a Y bias
         // -- so opening this gate while the attitude is still settling lets the
-        // bias absorb the error and hold it.  Under the proxy policy the filter
-        // reaches live far earlier than it used to, which moves this gate
-        // earlier in absolute terms unless it is set to account for that.
+        // bias absorb the error and hold it.  The proxy bootstrap reaches live
+        // far earlier than a staged warmup would, which moves this gate earlier
+        // in absolute terms unless it is set to account for that.
         int acc_bias_unlock_mag_updates = 250;
 
         Eigen::Vector3f sigma_a = Eigen::Vector3f(0.2f, 0.2f, 0.2f);
@@ -2410,10 +2303,9 @@ public:
         // defaults; docs/ou-iii-qmekf-variances.md is the sweep that gauged
         // them.  The values here reproduce those defaults exactly.
         //
-        //   Pq0      initial attitude-error variance, rad^2.  Under the
-        //            default MahonyProxy startup the handoff overwrites the
-        //            attitude block, so this reaches the filter only under
-        //            StagedMekf.
+        //   Pq0      initial attitude-error variance, rad^2.  The proxy
+        //            handoff overwrites the attitude block, so this only ever
+        //            seeds the covariance the handoff replaces.
         //   Pb0      initial gyro-bias variance, (rad/s)^2.
         //   b0       gyro-bias random-walk variance density, (rad/s)^2/s.
         //   R_S_noise  initial integral pseudo-measurement variance, (m*s)^2.
@@ -2550,15 +2442,6 @@ public:
         float mag_acc_norm_rel_soft        = 0.22f;
         float mag_gyro_soft_dps            = 45.0f;
 
-        // Bootstrap tilt observer for dynamic motion in waves.
-        float bootstrap_tilt_obs_acc_tau_sec  = 2.15f; // accel correction time constant
-        float bootstrap_gravity_slow_tau_sec  = 6.0f; // slow gravity reference LPF
-        float bootstrap_gravity_align_max_sin = 0.070f; // sin(deg)
-        float bootstrap_gravity_hold_sec      = 2.0f;
-        float bootstrap_gravity_min_sec       = 6.87f;
-        float bootstrap_gravity_timeout_sec   = 15.0f;
-        float bootstrap_gravity_norm_frac     = 0.22f; // downweight accel when |a| departs from g
-
         bool enable_displacement_detrend = false;
         bool use_custom_displacement_detrend_cfg = false;
         AdaptiveWaveDetrender3D::Config displacement_detrend_cfg{};
@@ -2568,7 +2451,7 @@ public:
         cfg_ = cfg;
 
         begun_ = true;
-        stage_ = Stage::Uninitialized;
+        stage_ = Stage::Bootstrap;
         t_ = 0.0f;
 
         gravity_gate_acc_world_lpf_.reset();
@@ -2622,8 +2505,6 @@ public:
         mag_world_ref_uT_.setZero();
         mag_world_ref_valid_ = false;
 
-        resetTiltInit_();
-
         last_acc_body_ned_.setZero();
         last_gyro_body_ned_.setZero();
         have_last_imu_ = false;
@@ -2637,16 +2518,12 @@ public:
         live_time_sec_           = NAN;
 
         impl_.setWithMag(cfg_.with_mag);
-        impl_.setStartupInitPolicy(cfg_.startup_init_policy);
-        impl_.setFreezeAccBiasUntilLive(cfg_.freeze_acc_bias_until_live);
         impl_.setMagUpdatesToUnlockAccBias(cfg_.acc_bias_unlock_mag_updates);
 
         // The provisional reference is deliberately cheap and early, so the
         // accelerometer bias must not be allowed to fit itself to it; see
         // SeaStateFusionFilter_OU_III::setAccBiasHold().
-        impl_.setAccBiasHold(usingProxyInit_() && cfg_.with_mag &&
-                             cfg_.mag_refine_enabled);
-        impl_.setWarmupRaccStd(cfg_.Racc_warmup_std);
+        impl_.setAccBiasHold(cfg_.with_mag && cfg_.mag_refine_enabled);
         impl_.setMagDelaySec(0.0f); // outer wrapper owns mag delay
         impl_.setOnlineTuneWarmupSec(cfg_.online_tune_warmup_sec);
         impl_.setSigmaWaveBandRatios(cfg_.sigma_band_low_ratio,
@@ -2658,8 +2535,6 @@ public:
                              cfg_.Pq0, cfg_.Pb0, cfg_.b0, cfg_.R_S_noise,
                              cfg_.gravity_magnitude);
         last_impl_startup_stage_ = impl_.getStartupStage();
-
-        syncLinearBlockGate_();
 
         impl_.setNominalRaccStd(cfg_.sigma_a);
 
@@ -2688,161 +2563,131 @@ public:
 
         t_ += dt;
 
-        const bool proxy_init = usingProxyInit_();
-
-        // Under the proxy policy the gravity-lock bootstrap is the Mahony
-        // observer inside the front end, which runs from the first sample, so
-        // there is no phase in which the wrapper withholds IMU data.
-        if (!proxy_init && stage_ == Stage::Uninitialized) {
-            const bool tilt_ready = seastate::common::runStartupGravityInit(
-                gyro_body_ned,
-                acc_body_ned,
-                dt,
-                t_,
-                g_std,
-                cfg_.bootstrap_tilt_obs_acc_tau_sec,
-                cfg_.bootstrap_gravity_slow_tau_sec,
-                cfg_.bootstrap_gravity_align_max_sin,
-                cfg_.bootstrap_gravity_hold_sec,
-                cfg_.bootstrap_gravity_min_sec,
-                cfg_.bootstrap_gravity_timeout_sec,
-                cfg_.bootstrap_gravity_norm_frac,
-                bootstrap_tilt_obs_,
-                bootstrap_gravity_slow_lpf_,
-                bootstrap_gravity_good_sec_,
-                [this](const Eigen::Vector3f& acc_init) {
-                    impl_.initialize_from_acc(acc_init);
-                });
-
-            if (tilt_ready) {
-                stage_ = Stage::Warming;
-            }
-        }
-
         last_acc_body_ned_  = acc_body_ned;
         last_gyro_body_ned_ = gyro_body_ned;
         have_last_imu_      = true;
 
-        if (proxy_init || stage_ != Stage::Uninitialized) {
-            if (proxy_init && stage_ != Stage::Live) {
-                // Bootstrap: front end only, MEKF held.
-                impl_.updateFrontEnd(dt, gyro_body_ned, acc_body_ned);
-            } else {
-                impl_.updateTime(dt, gyro_body_ned, acc_body_ned, tempC);
+        // The gravity-lock bootstrap is the Mahony observer inside the front
+        // end, which runs from the first sample, so there is no phase in which
+        // the wrapper withholds IMU data.
+        if (stage_ != Stage::Live) {
+            // Bootstrap: front end only, MEKF held.
+            impl_.updateFrontEnd(dt, gyro_body_ned, acc_body_ned);
+        } else {
+            impl_.updateTime(dt, gyro_body_ned, acc_body_ned, tempC);
+        }
+
+        // Whose tilt the magnetometer gate is judged against.  Before handoff
+        // this is the observer's, so the gate measures the attitude that will
+        // actually frame the magnetic reference rather than one the MEKF is
+        // still converging toward.
+        //
+        // The residual is taken in that attitude's own world frame rather
+        // than in the body frame.  A body-frame average of the specific
+        // force is not gravity under way: the hull rolls and pitches
+        // through the window, so the orbital term the average is there to
+        // remove is smeared across it instead of cancelling.  What the
+        // body-frame gate then reports is the sea state, not the levelling
+        // error -- on the 8.5 m reference record its residual sits between
+        // 0.03 and 0.45 for the whole run against a 0.075 threshold, so
+        // the gate simply never closes and startup falls through to its
+        // timeout.  Rotating first fixes the frame the average is taken
+        // in, orbital acceleration is zero mean there, and the residual
+        // becomes the tilt error it was always meant to be: on that same
+        // record it settles below 0.05 within about twenty seconds.
+        gravity_gate_acc_world_lpf_.step(
+            seastate::common::accWorldFromBody(
+                attitudeReferenceQuat_(),
+                acc_body_ned),
+            dt,
+            cfg_.mag_gravity_align_world_tau_sec);
+
+        const Eigen::Vector3f acc_gate_world_lp =
+            gravity_gate_acc_world_lpf_.state;
+
+        gravity_gate_world_elapsed_sec_ += dt;
+
+        const bool gate_average_warm =
+            gravity_gate_world_elapsed_sec_ >=
+                cfg_.mag_gravity_align_world_warmup_sec;
+
+        const float align_sin =
+            gate_average_warm
+                ? seastate::common::gravityAlignResidualSinWorld(
+                      acc_gate_world_lp)
+                : 1.0f;
+
+        // The sine residual is the same at an angle and at its supplement,
+        // so it accepts an attitude flipped through 180 deg just as
+        // readily as the right one.  The branch is the sign of the world
+        // down component, and the gate has to carry it: this gate is what
+        // certifies the tilt that frames the magnetic reference and that
+        // is handed to the MEKF.
+        //
+        // The branch is deliberately not held behind the warmup.  It is
+        // the one part of the certificate an unaveraged sample can answer
+        // -- a specific force pointing down in the world frame is a
+        // filter that has been seeded upside down, not a wave -- and the
+        // handoff timeout is gated on it, so withholding it early would
+        // let a stalled startup sit unbranched rather than fail closed.
+        const bool aligned_branch =
+            seastate::common::gravityAlignedBranchWorld(
+                acc_gate_world_lp);
+
+        mag_gravity_aligned_branch_ = aligned_branch;
+
+        const float gyro_dps =
+            gyro_body_ned.norm() * 57.295779513f;
+
+        const bool extreme_motion =
+            !std::isfinite(gyro_dps) ||
+            (gyro_dps > cfg_.mag_extreme_gyro_dps);
+
+        const bool gravity_good_now =
+            std::isfinite(align_sin) &&
+            (align_sin <= cfg_.mag_gravity_align_max_sin) &&
+            aligned_branch &&
+            !extreme_motion;
+
+        if (gravity_good_now) {
+            mag_gravity_good_sec_ += dt;
+            if (mag_gravity_good_sec_ > 10.0f) {
+                mag_gravity_good_sec_ = 10.0f;
             }
+        } else {
+            mag_gravity_good_sec_ =
+                std::max(0.0f, mag_gravity_good_sec_ - 2.0f * dt);
+        }
 
-            // Whose tilt the magnetometer gate is judged against.  Under the
-            // proxy policy this is the observer's before handoff, so the gate
-            // measures the attitude that will actually frame the magnetic
-            // reference rather than one the MEKF is still converging toward.
-            //
-            // The residual is taken in that attitude's own world frame rather
-            // than in the body frame.  A body-frame average of the specific
-            // force is not gravity under way: the hull rolls and pitches
-            // through the window, so the orbital term the average is there to
-            // remove is smeared across it instead of cancelling.  What the
-            // body-frame gate then reports is the sea state, not the levelling
-            // error -- on the 8.5 m reference record its residual sits between
-            // 0.03 and 0.45 for the whole run against a 0.075 threshold, so
-            // the gate simply never closes and startup falls through to its
-            // timeout.  Rotating first fixes the frame the average is taken
-            // in, orbital acceleration is zero mean there, and the residual
-            // becomes the tilt error it was always meant to be: on that same
-            // record it settles below 0.05 within about twenty seconds.
-            gravity_gate_acc_world_lpf_.step(
-                seastate::common::accWorldFromBody(
-                    attitudeReferenceQuat_(),
-                    acc_body_ned),
-                dt,
-                cfg_.mag_gravity_align_world_tau_sec);
+        const Eigen::Vector3f pos_ned_m = impl_.mekf().get_position();
 
-            const Eigen::Vector3f acc_gate_world_lp =
-                gravity_gate_acc_world_lpf_.state;
+        displacement_up_m_ =
+            Eigen::Vector3f(
+                pos_ned_m.x(),
+                pos_ned_m.y(),
+                -pos_ned_m.z());
 
-            gravity_gate_world_elapsed_sec_ += dt;
+        if (cfg_.enable_displacement_detrend) {
+            const float wave_hz = impl_.getFreqHz();
 
-            const bool gate_average_warm =
-                gravity_gate_world_elapsed_sec_ >=
-                    cfg_.mag_gravity_align_world_warmup_sec;
+            const bool ext_freq_valid =
+                isLive() &&
+                std::isfinite(wave_hz) &&
+                (wave_hz >= displacement_detrender_.config().min_wave_freq_hz) &&
+                (wave_hz <= displacement_detrender_.config().max_wave_freq_hz);
 
-            const float align_sin =
-                gate_average_warm
-                    ? seastate::common::gravityAlignResidualSinWorld(
-                          acc_gate_world_lp)
-                    : 1.0f;
-
-            // The sine residual is the same at an angle and at its supplement,
-            // so it accepts an attitude flipped through 180 deg just as
-            // readily as the right one.  The branch is the sign of the world
-            // down component, and the gate has to carry it: this gate is what
-            // certifies the tilt that frames the magnetic reference and that
-            // is handed to the MEKF.
-            //
-            // The branch is deliberately not held behind the warmup.  It is
-            // the one part of the certificate an unaveraged sample can answer
-            // -- a specific force pointing down in the world frame is a
-            // filter that has been seeded upside down, not a wave -- and the
-            // handoff timeout is gated on it, so withholding it early would
-            // let a stalled startup sit unbranched rather than fail closed.
-            const bool aligned_branch =
-                seastate::common::gravityAlignedBranchWorld(
-                    acc_gate_world_lp);
-
-            mag_gravity_aligned_branch_ = aligned_branch;
-
-            const float gyro_dps =
-                gyro_body_ned.norm() * 57.295779513f;
-
-            const bool extreme_motion =
-                !std::isfinite(gyro_dps) ||
-                (gyro_dps > cfg_.mag_extreme_gyro_dps);
-
-            const bool gravity_good_now =
-                std::isfinite(align_sin) &&
-                (align_sin <= cfg_.mag_gravity_align_max_sin) &&
-                aligned_branch &&
-                !extreme_motion;
-
-            if (gravity_good_now) {
-                mag_gravity_good_sec_ += dt;
-                if (mag_gravity_good_sec_ > 10.0f) {
-                    mag_gravity_good_sec_ = 10.0f;
-                }
-            } else {
-                mag_gravity_good_sec_ =
-                    std::max(0.0f, mag_gravity_good_sec_ - 2.0f * dt);
-            }
-
-            const Eigen::Vector3f pos_ned_m = impl_.mekf().get_position();
-
-            displacement_up_m_ =
-                Eigen::Vector3f(
-                    pos_ned_m.x(),
-                    pos_ned_m.y(),
-                    -pos_ned_m.z());
-
-            if (cfg_.enable_displacement_detrend) {
-                const float wave_hz = impl_.getFreqHz();
-
-                const bool ext_freq_valid =
-                    isLive() &&
-                    std::isfinite(wave_hz) &&
-                    (wave_hz >= displacement_detrender_.config().min_wave_freq_hz) &&
-                    (wave_hz <= displacement_detrender_.config().max_wave_freq_hz);
-
-                displacement_det_out_ =
-                    displacement_detrender_.update(
-                        displacement_up_m_,
-                        dt,
-                        wave_hz,
-                        ext_freq_valid);
-            } else {
-                displacement_det_out_ = AdaptiveWaveDetrender3D::Output{};
-                displacement_det_out_.input = displacement_up_m_;
-                displacement_det_out_.baseline_slow = Eigen::Vector3f::Zero();
-                displacement_det_out_.wave_raw = displacement_up_m_;
-                displacement_det_out_.wave_clean = displacement_up_m_;
-            }
+            displacement_det_out_ =
+                displacement_detrender_.update(
+                    displacement_up_m_,
+                    dt,
+                    wave_hz,
+                    ext_freq_valid);
+        } else {
+            displacement_det_out_ = AdaptiveWaveDetrender3D::Output{};
+            displacement_det_out_.input = displacement_up_m_;
+            displacement_det_out_.baseline_slow = Eigen::Vector3f::Zero();
+            displacement_det_out_.wave_raw = displacement_up_m_;
+            displacement_det_out_.wave_clean = displacement_up_m_;
         }
 
         const auto cur_stage = impl_.getStartupStage();
@@ -2861,12 +2706,8 @@ public:
 
                 last_mag_tilt_frame_yaw_rad_ = NAN;
                 last_mag_startup_yaw_correction_rad_ = NAN;
-                
-                syncLinearBlockGate_();
 
                 if (stage_ != Stage::Live) {
-                    stage_ = Stage::Warming;
-
                     displacement_up_m_.setZero();
                     displacement_det_out_ = AdaptiveWaveDetrender3D::Output{};
 
@@ -2879,27 +2720,17 @@ public:
             last_impl_startup_stage_ = cur_stage;
         }
 
-        if (proxy_init) {
-            if (stage_ != Stage::Live) {
-                maybeHandOffToMekf_();
-            }
-        } else if (stage_ == Stage::Warming && impl_.isAdaptiveLive()) {
-            stage_ = Stage::Live;
-            live_time_sec_ = t_;
+        if (stage_ != Stage::Live) {
+            maybeHandOffToMekf_();
         }
-
-        // Re-apply gate every update.
-        // Inner impl only enables the actual MEKF linear block when its own stage is Live.
-        syncLinearBlockGate_();
     }
 
     void updateMag(const Eigen::Vector3f& mag_body_ned) {
         if (!begun_ || !cfg_.with_mag) return;
-        // Under the proxy policy there is no withheld stage to wait out: the
-        // observer has been levelling since the first sample, and learning
-        // north before the MEKF starts is the entire point.  The quality gate
-        // below still decides when accumulation may begin.
-        if (!usingProxyInit_() && stage_ == Stage::Uninitialized) return;
+        // There is no withheld stage to wait out: the observer has been
+        // levelling since the first sample, and learning north before the MEKF
+        // starts is the entire point.  The quality gate below still decides
+        // when accumulation may begin.
         if (t_ < cfg_.mag_delay_sec) return;
 
         // Ahead of every gate below, and deliberately.  The continuous
@@ -2913,19 +2744,14 @@ public:
         // the tilt-fallback timer cannot start running and then wave the
         // accumulation through on an attitude that is still converging.
         //
-        // What this window does *not* fix is the standing yaw error, which the
-        // proxy policy leaves about 2 percent worse than the staged one
-        // (1.795 -> 1.839 deg mean over the reference records).  That residual
-        // is a property of the learned reference vector rather than of the
-        // one-time gauge: seeding the handoff with a yaw variance from 5 deg
-        // to 90 deg moves the scored yaw by under 1e-4 deg, so the filter is
-        // not converging to the gauge, it is converging to the reference.
-        // Improving it further means re-learning that reference in the live
-        // MEKF's own tilt frame once it has converged, which is a runtime
-        // re-acquisition rather than an initialization change and is
-        // deliberately not attempted here.
-        if (usingProxyInit_() && !mag_ref_set_ &&
-            t_ < cfg_.proxy_mag_settle_sec) {
+        // What this window does *not* fix is the standing yaw error.  That
+        // residual is a property of the learned reference vector rather than of
+        // the one-time gauge: seeding the handoff with a yaw variance from
+        // 5 deg to 90 deg moves the scored yaw by under 1e-4 deg, so the filter
+        // is not converging to the gauge, it is converging to the reference.
+        // maybeRefineMagReference_() is what re-learns it, in the live MEKF's
+        // own tilt frame once it has converged.
+        if (!mag_ref_set_ && t_ < cfg_.proxy_mag_settle_sec) {
             return;
         }
 
@@ -2963,11 +2789,7 @@ public:
                 // so its tilt is wrong by a wave-correlated angle that the
                 // averaging window is too short to cancel.
                 //
-                // Which estimator supplies that tilt is the substance of the
-                // startup policy.  StagedMekf reads it back out of the warming
-                // MEKF, whose accelerometer update is at that moment fighting
-                // the orbital acceleration with its linear block switched off.
-                // MahonyProxy reads the private observer instead, which is
+                // The tilt comes from the private Mahony observer, which is
                 // gyro-propagated through the wave band and corrected below it.
                 // The reference and the yaw gauge are locked exactly once, so
                 // whichever tilt error survives this window is a standing bias
@@ -3020,7 +2842,7 @@ public:
                             // instead and composed with the proxy tilt there,
                             // so the filter's very first attitude already has
                             // north in it.
-                            if (usingProxyInit_() && stage_ != Stage::Live) {
+                            if (stage_ != Stage::Live) {
                                 pending_yaw_abs_rad_ = yaw_abs_rad;
 
                                 last_mag_tilt_frame_yaw_rad_ =
@@ -3057,7 +2879,6 @@ public:
 
                         mag_ref_set_ = true;
                         mag_north_lock_time_sec_ = t_;
-                        syncLinearBlockGate_();
                     }
                 }
             }
@@ -3068,7 +2889,7 @@ public:
 
         // Magnetometer corrections go to the MEKF only once it owns the
         // attitude.  Before handoff its state is not the one being solved.
-        if (mag_ref_set_ && (!usingProxyInit_() || stage_ == Stage::Live)) {
+        if (mag_ref_set_ && stage_ == Stage::Live) {
             impl_.updateMag(mag_body_ned - mag_hard_iron_body_uT_);
         }
     }
@@ -3122,11 +2943,11 @@ public:
 
     // Best available boat attitude, BODY -> WORLD (NED).
     //
-    // Under the proxy policy the MEKF holds its initial quaternion until the
-    // handoff, so reading it directly during the bootstrap would report a
-    // level identity attitude rather than the platform's.  The bootstrap
-    // observer's solution is what is actually known at that point, and it is
-    // what this returns; after handoff both policies return the MEKF's.
+    // The MEKF holds its initial quaternion until the handoff, so reading it
+    // directly during the bootstrap would report a level identity attitude
+    // rather than the platform's.  The bootstrap observer's solution is what
+    // is actually known at that point, and it is what this returns; after
+    // handoff this returns the MEKF's.
     //
     // Heading is only meaningful once hasMagNorthLock() is true (or the build
     // has no magnetometer); before that the bootstrap yaw is arbitrary.  The
@@ -3185,9 +3006,8 @@ public:
 
 private:
     enum class Stage {
-        Uninitialized,
-        Warming,
-        Live
+        Bootstrap,   // proxy owns the attitude, MEKF held
+        Live         // MEKF owns the attitude
     };
 
     struct Vec3LPF {
@@ -3219,20 +3039,13 @@ private:
         }
     };
 
-    using StartupTiltObserver = seastate::common::StartupTiltObserver;
-
-    bool usingProxyInit_() const noexcept {
-        return cfg_.startup_init_policy == StartupInitPolicy::MahonyProxy;
-    }
-
     // The attitude the startup machinery judges and frames things against.
     //
-    // Once the MEKF is live it is the answer under either policy -- it has the
-    // magnetometer, the linear block and the bias states, and the proxy has
-    // none of them.  Before that, under the proxy policy, the MEKF has nothing
-    // to say and the observer does.
+    // Once the MEKF is live it is the answer -- it has the magnetometer, the
+    // linear block and the bias states, and the proxy has none of them.
+    // Before that the MEKF has nothing to say and the observer does.
     Eigen::Quaternionf attitudeReferenceQuat_() const {
-        if (usingProxyInit_() && stage_ != Stage::Live) {
+        if (stage_ != Stage::Live) {
             return impl_.startupProxyQuat();
         }
         return impl_.mekf().quaternion_boat();
@@ -3260,7 +3073,6 @@ private:
     // not be shown data with its own answer already subtracted.
     void accumulateContinuousHardIron_(const Eigen::Vector3f& mag_body_ned) {
         if (!cfg_.mag_continuous_hard_iron) return;
-        if (!usingProxyInit_()) return;
         if (!impl_.startupProxyInitialized()) return;
 
         const float dt_mag =
@@ -3302,7 +3114,6 @@ private:
     // moderate seas while the offset correction itself costs none of it.
     void maybeApplyContinuousHardIron_() {
         if (!cfg_.mag_continuous_hard_iron) return;
-        if (!usingProxyInit_()) return;
         if (!mag_ref_set_ || stage_ != Stage::Live) return;
         if (cfg_.mag_refine_enabled && !mag_refine_done_) return;
         if (!mag_world_ref_valid_) return;
@@ -3380,10 +3191,6 @@ private:
     // correction, it happens once, and it lands well before the scored window
     // opens.
     void maybeRefineMagReference_(const Eigen::Vector3f& mag_body_ned) {
-        // Second-stage acquisition belongs to the proxy policy.  StagedMekf is
-        // the ablation against the previous behaviour and has to stay exactly
-        // that, so it keeps its single locked reference.
-        if (!usingProxyInit_()) return;
         if (!cfg_.mag_refine_enabled) return;
         if (mag_refine_done_) return;
         if (!mag_ref_set_) return;
@@ -3551,34 +3358,6 @@ private:
         stage_ = Stage::Live;
         live_time_sec_ = t_;
         last_impl_startup_stage_ = impl_.getStartupStage();
-
-        syncLinearBlockGate_();
-    }
-
-    void resetTiltInit_() {
-        bootstrap_tilt_obs_.reset();
-        bootstrap_gravity_slow_lpf_.reset();
-        bootstrap_gravity_good_sec_ = 0.0f;
-    }
-
-    bool linearBlockAllowed_() const {
-        if (!cfg_.enable_linear_block) {
-            return false;
-        }
-    
-        if (!cfg_.with_mag) {
-            return true;
-        }
-    
-        if (!cfg_.require_mag_lock_for_linear_block) {
-            return true;
-        }
-    
-        return mag_ref_set_;
-    }
-    
-    void syncLinearBlockGate_() {
-        impl_.enableLinearBlock(linearBlockAllowed_());
     }
 
     static float wrapPi_(float a)
@@ -3700,7 +3479,7 @@ private:
 
     bool begun_ = false;
 
-    Stage stage_ = Stage::Uninitialized;
+    Stage stage_ = Stage::Bootstrap;
     float t_ = 0.0f;
 
     typename SeaStateFusionFilter_OU_III<trackerT>::StartupStage last_impl_startup_stage_ =
@@ -3751,7 +3530,4 @@ private:
     bool    mag_gravity_aligned_branch_ = false;
     float   mag_init_eligible_t0_ = NAN;
 
-    StartupTiltObserver bootstrap_tilt_obs_{};
-    Vec3LPF             bootstrap_gravity_slow_lpf_{};
-    float               bootstrap_gravity_good_sec_ = 0.0f;
 };

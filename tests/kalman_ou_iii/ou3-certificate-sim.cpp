@@ -110,8 +110,6 @@ public:
         cfg.sigma_g = sigma_g * kSigmaGRescale;
         cfg.sigma_m = sigma_m * kSigmaMRescale;
         cfg.mag_delay_sec = MAG_DELAY_SEC;
-        cfg.freeze_acc_bias_until_live = true;
-        cfg.Racc_warmup_std = 0.5f;
 
         fusion_.begin(cfg);
         auto& filter = fusion_.raw();
@@ -119,7 +117,6 @@ public:
         // observes the shipping estimator; it does not retune it to pass.
         filter.setPeriodicAwCovarianceSync(true);
         filter.setAwCovarianceSyncCongruent(false);
-        filter.enableLinearBlock(true);
         filter.enableTuner(true);
         filter.enableClamp(true);
 
@@ -207,7 +204,6 @@ public:
         xlin0.segment<3>(9) = mekf.get_world_accel();
 
         const bool live_pre = fusion_.isLive();
-        const bool linear_pre = mekf.linear_block_enabled();
         const bool active_pre = mekf.acc_bias_updates_enabled();
         const bool lock_pre = fusion_.hasMagNorthLock();
         const bool refine_pre = fusion_.hasRefinedMagReference();
@@ -218,8 +214,8 @@ public:
         const Eigen::Matrix3f Q_bacc_pre = mekf.Q_bacc_;
 
         float pseudo_elapsed_copy = mekf.pseudo_update_elapsed_s_;
-        const bool pseudo_due = linear_pre
-            && ocean_imu::kalman::ou_detail::periodic_update_due(
+        const bool pseudo_due =
+            ocean_imu::kalman::ou_detail::periodic_update_due(
                 dt, mekf.pseudo_update_period_s_, pseudo_elapsed_copy);
         if (pseudo_due) {
             ++pseudo_since_trace_;
@@ -229,12 +225,11 @@ public:
         fusion_.update(dt, gyr_meas_ned, acc_meas_ned, temperature_c);
 
         const bool live_post = fusion_.isLive();
-        const bool linear_post = mekf.linear_block_enabled();
         const bool active_post = mekf.acc_bias_updates_enabled();
         const bool lock_post = fusion_.hasMagNorthLock();
         const bool refine_post = fusion_.hasRefinedMagReference();
 
-        if (live_pre != live_post || linear_pre != linear_post
+        if (live_pre != live_post
                 || active_pre != active_post || lock_pre != lock_post
                 || refine_pre != refine_post) {
             map_valid_ = false;
@@ -245,14 +240,14 @@ public:
         // the exact matrices the MEKF just used in time_update().
         Matrix21f A = Matrix21f::Identity();
         A.block<6,6>(0,0) = mekf.F_AA_scratch_;
-        if (linear_pre) A.block<12,12>(kOffV,kOffV) = mekf.F_LL_scratch_;
+        A.block<12,12>(kOffV,kOffV) = mekf.F_LL_scratch_;
         const float tau_b = std::max(1e-3f, tau_b_pre);
         const float phi_b = active_pre ? std::exp(-dt / tau_b) : 1.0f;
         A.block<3,3>(kOffBa,kOffBa) = phi_b * Eigen::Matrix3f::Identity();
 
         Matrix21f Q = Matrix21f::Zero();
         Q.block<6,6>(0,0) = mekf.Q_AA_scratch_;
-        if (linear_pre) Q.block<12,12>(kOffV,kOffV) = mekf.Q_LL_scratch_;
+        Q.block<12,12>(kOffV,kOffV) = mekf.Q_LL_scratch_;
         if (active_pre) {
             const float qd_scale = -0.5f * tau_b * std::expm1(-2.0f * dt / tau_b);
             Q.block<3,3>(kOffBa,kOffBa) = Q_bacc_pre * qd_scale;
@@ -265,7 +260,7 @@ public:
         // applied inside prediction. Reproduce it exactly because it changes
         // the subsequent S=0 gain, although it does not itself change the
         // deterministic error-state transition A.
-        if (pending_aw_floor && linear_pre) {
+        if (pending_aw_floor) {
             Eigen::Matrix3f Delta = aw_floor_target - Pcur.block<3,3>(kOffAw,kOffAw);
             Delta = 0.5f * (Delta + Delta.transpose());
             Eigen::SelfAdjointEigenSolver<Eigen::Matrix3f> es(Delta);
@@ -280,10 +275,9 @@ public:
         }
 
         Matrix21f sample_map = A;
-        Vector12f xlin_pred = xlin0;
-        if (linear_pre) xlin_pred = mekf.F_LL_scratch_ * xlin0;
+        const Vector12f xlin_pred = mekf.F_LL_scratch_ * xlin0;
 
-        if (pseudo_due && linear_pre) {
+        if (pseudo_due) {
             Matrix3x21f Hs = Matrix3x21f::Zero();
             Hs.block<3,3>(0,kOffS) = Eigen::Matrix3f::Identity();
             Matrix21x3f PCt = Pcur.block<kNX,3>(0,kOffS);
@@ -315,7 +309,7 @@ public:
         // accelerometer correction (the last MEKF measurement in update()).
         // Recover H from the exact pre-accelerometer covariance and PCt=P H^T;
         // this avoids reimplementing the nonlinear measurement Jacobian.
-        if (ad.accepted && live_pre && live_post && linear_pre && linear_post) {
+        if (ad.accepted && live_pre && live_post) {
             const Matrix21x3f PCt = mekf.PCt_scratch_;
             const Matrix21x3f K = mekf.K_scratch_;
             Eigen::LDLT<Matrix21f> ldlt(Pcur);
@@ -335,7 +329,7 @@ public:
             }
         }
 
-        if (!(live_pre && live_post && linear_pre && linear_post)) map_valid_ = false;
+        if (!(live_pre && live_post)) map_valid_ = false;
         map_accum_ = sample_map * map_accum_;
 
         time_s_ += dt;
@@ -426,7 +420,7 @@ private:
         map_start_tau_ = filter.getTauApplied();
         map_start_sigma_ = filter.getSigmaApplied();
         map_start_rs_ = filter.getRSApplied();
-        map_valid_ = map_start_live_ && mekf.linear_block_enabled();
+        map_valid_ = map_start_live_;
         map_hybrid_jump_ = false;
         map_linearization_residual_ = 0.0f;
         map_accum_.setIdentity();
@@ -499,7 +493,7 @@ private:
 
         trace_ << time_s_
                << ',' << (fusion_.isLive() ? 1 : 0)
-               << ',' << (mekf.linear_block_enabled() ? 1 : 0)
+               << ",1"   // linear block: always on
                << ',' << (mekf.acc_bias_updates_enabled() ? 1 : 0)
                << ',' << (fusion_.hasMagNorthLock() ? 1 : 0)
                << ',' << (fusion_.hasRefinedMagReference() ? 1 : 0)
