@@ -1,0 +1,100 @@
+name: ou3-p4-h18-innovation-psd-subdivision
+
+on:
+  push:
+    paths:
+      - "tools/ou3_interval.py"
+      - "tools/ou3_interval_ad.py"
+      - "tools/ou3_interval_linear_algebra.py"
+      - "tools/ou3_verified_spd_inverse.py"
+      - "tools/ou3_correlated_kalman_gain.py"
+      - "tools/ou3_p4_h18_innovation_psd_subdivision.py"
+      - "tools/ou3_p4_h18_correction_subdivision.py"
+      - "tools/ou3_p4_h18_differential_operations.py"
+      - "tools/ou3_p4_source_node_cells.py"
+      - "tools/ou3_p4_candidate_full_word.py"
+      - "tools/ou3_p5_full_h_prefix_cells.py"
+      - "tools/ou3_proof_operating_domain.json"
+      - "tests/validation/test_ou3_correlated_kalman_gain.py"
+      - ".github/workflows/ou3-p4-h18-innovation-psd-subdivision.yml"
+  pull_request:
+    paths:
+      - "tools/ou3_interval.py"
+      - "tools/ou3_interval_ad.py"
+      - "tools/ou3_interval_linear_algebra.py"
+      - "tools/ou3_verified_spd_inverse.py"
+      - "tools/ou3_correlated_kalman_gain.py"
+      - "tools/ou3_p4_h18_innovation_psd_subdivision.py"
+      - "tools/ou3_p4_h18_correction_subdivision.py"
+      - "tools/ou3_p4_h18_differential_operations.py"
+      - "tools/ou3_p4_source_node_cells.py"
+      - "tools/ou3_p4_candidate_full_word.py"
+      - "tools/ou3_p5_full_h_prefix_cells.py"
+      - "tools/ou3_proof_operating_domain.json"
+      - "tests/validation/test_ou3_correlated_kalman_gain.py"
+      - ".github/workflows/ou3-p4-h18-innovation-psd-subdivision.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ou3-p4-h18-innovation-psd-subdivision-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  subdivision:
+    name: H18 PSD-aware innovation subdivision
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Compile shared solvers and subdivision
+        run: |
+          python3 -m py_compile \
+            tools/ou3_verified_spd_inverse.py \
+            tools/ou3_correlated_kalman_gain.py \
+            tools/ou3_p4_h18_innovation_psd_subdivision.py \
+            tests/validation/test_ou3_correlated_kalman_gain.py
+      - name: Run shared correlated-gain tests
+        working-directory: tests/validation
+        run: python3 -m unittest -v test_ou3_correlated_kalman_gain
+      - name: Run exact-node PSD-aware innovation subdivision
+        run: |
+          python3 tools/ou3_p4_h18_innovation_psd_subdivision.py \
+            --source-node-index 0 \
+            --output /tmp/ou3_p4_h18_innovation_psd_subdivision.json
+      - name: Enforce full intermediate partition and fail-closed scope
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path('/tmp/ou3_p4_h18_innovation_psd_subdivision.json').read_text())
+          assert d['validation_pass'], d['validation_failures']
+          assert d['outer_angle_rad'] == 0.80
+          assert d['source_node_index'] == 0
+          assert d['full_word_samples'] == 202
+          assert d['innovation_subdivision_coordinates'] == ['S00','S11','S01=S10']
+          assert d['pieces_per_coordinate'] == 4
+          assert d['cartesian_cell_count'] == 64
+          assert d['PSD_compatible_cells_retained'] > 0
+          assert d['PSD_impossible_cells_pruned'] + d['PSD_compatible_cells_retained'] == 64
+          assert d['innovation_subdivision_is_intermediate_proof_partition_only'] is True
+          assert d['physical_state_or_source_domain_shrunk'] is False
+          assert d['filter_changed'] is False
+          assert d['P4_USABLE_CERTIFICATE_PROMOTED'] is False
+          print('cells/pruned/retained:', d['cartesian_cell_count'], d['PSD_impossible_cells_pruned'], d['PSD_compatible_cells_retained'])
+          print('inverse ok/fail:', d['verified_inverse_cells'], d['unverified_inverse_cells'])
+          print('all inverses:', d['all_PSD_compatible_cells_have_verified_inverse'])
+          print('max q:', d['verified_inverse_max_q_inf_upper'])
+          print('direct <=6:', d['direct_gain_cells_with_correction_at_most_6rad'])
+          print('correlated <=6:', d['correlated_gain_cells_with_correction_at_most_6rad'])
+          print('energy <=6:', d['energy_bound_cells_with_correction_at_most_6rad'])
+          print('max direct correction:', d['max_direct_theta_correction_norm_upper_rad'])
+          print('max correlated correction:', d['max_correlated_theta_correction_norm_upper_rad'])
+          print('max energy correction:', d['max_theta_energy_correction_norm_upper_rad'])
+          print('theta P lambda upper:', d['theta_covariance_gershgorin_lambda_upper'])
+          print('next:', d['next_obligation'])
+          PY
