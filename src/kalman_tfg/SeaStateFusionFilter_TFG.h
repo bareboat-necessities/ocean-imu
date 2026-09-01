@@ -37,6 +37,7 @@
 
 #include "kalman_common/SeaStateFusionFilterCommon.h"
 #include "kalman_tfg/Kalman3D_Wave_TFG.h"
+#include "tuner/AccelVibrationGuard.h"
 #include "tuner/AdaptiveWaveBandPass.h"
 #include "tuner/ContinuousMagHardIronEstimator.h"
 #include "tuner/MagAutoTuner.h"
@@ -63,6 +64,51 @@ constexpr float TFG_NOMINAL_DT = 1.0f / 200.0f;
 constexpr float R_S_ACCEL_NOISE_DENSITY_DEFAULT =
     0.0148f * 0.0148f * TFG_NOMINAL_DT;
 constexpr float R_S_MSE_COEFF_DEFAULT = 0.0538f;
+
+// Front-end accelerometer vibration guard, armed by default, at deployed
+// OU-III's operating point.
+//
+// docs/engine-noise-degradation.md is the measurement.  Machinery vibration
+// rectifies into a standing tilt error and from there into a displacement
+// offset, and at a routine cruise condition that costs a factor of eight in
+// pooled 3-D error; the guard holds every engine condition swept inside a
+// factor of 1.6 of the engine-off baseline.
+//
+// The defect is in the attitude loop, not in the translational state: the
+// accelerometer is both the gravity reference and the wave measurement, the
+// attitude correction wobbles at the vibration frequencies, and the
+// nonlinearity of the measurement model rectifies that wobble into a static
+// tilt.  TFG levels from the same private Mahony observer at the same gains
+// and feeds the same accelerometer to its own MEKF, so it inherits both the
+// defect and the remedy, and the front end stays at coefficient parity with
+// OU-III by carrying the same corner.
+//
+// Arming it costs nothing when there is no machinery, because the guard is
+// gated on its own detector and returns its input unchanged below the lower
+// rail.  Across the eight stationary records the clean detector reading is
+// 0.00796 to 0.00805 m/s^2 against a 0.03 rail, and the replays are
+// bit-identical to the unguarded ones.
+//
+// Two poles at 14 Hz sits in the gap between the wave band and the lowest
+// crank order a small auxiliary diesel puts on the hull, and costs 22.7 ms of
+// group delay at full engagement.  Set the cutoff to zero to remove the guard
+// entirely and restore the unconditioned measurement path.
+constexpr float ACC_VIBRATION_GUARD_HZ_DEFAULT    = 14.0f;
+constexpr int   ACC_VIBRATION_GUARD_POLES_DEFAULT = 2;
+
+// Vibration-aware accelerometer measurement covariance, on by default.
+//
+// Conditioning removes the machinery the guard can reach; what survives its
+// stopband still arrives as measurement error the MEKF does not know about.
+// This raises the commanded accelerometer sigma by the guard's own gated
+// excess, so the covariance and the measurement describe the same conditions.
+// 0.75 is the displacement optimum of the OU-III sweep, with margin below the
+// point where de-weighting the only wave measurement there is starts to cost
+// more than the vibration does.
+//
+// Zero disables it.  Like the guard, it is driven by a gated excess that is
+// identically zero on a quiet installation, so it is bit-transparent there.
+constexpr float ACC_VIBRATION_RACC_GAIN_DEFAULT = 0.75f;
 
 enum class RSAdaptationLaw : uint8_t {
     LegacyCubic = 0,
@@ -156,6 +202,15 @@ public:
         float mag_hi_apply_fraction           = 1.0f;
         float mag_hi_slew_tau_sec             = 45.0f;
 
+        // Front-end accelerometer vibration guard and the vibration-aware
+        // accelerometer covariance it drives; see the defaults above.  A zero
+        // cutoff removes the guard and restores the unconditioned measurement
+        // path exactly, and a zero gain leaves the commanded covariance to the
+        // stage logic alone.
+        float acc_vibration_guard_hz    = ACC_VIBRATION_GUARD_HZ_DEFAULT;
+        int   acc_vibration_guard_poles = ACC_VIBRATION_GUARD_POLES_DEFAULT;
+        float acc_vibration_racc_gain   = ACC_VIBRATION_RACC_GAIN_DEFAULT;
+
         bool  wave_band_tuning      = true;
         float sigma_band_low_ratio  = SIGMA_BAND_LOW_RATIO_DEFAULT;
         float sigma_band_high_ratio = SIGMA_BAND_HIGH_RATIO_DEFAULT;
@@ -177,6 +232,11 @@ public:
         wave_period_.reset();
         vertical_complementary_.setGains(cfg.proxy_two_kp, cfg.proxy_two_ki);
         vertical_complementary_.reset();
+        setAccelVibrationGuard(cfg.acc_vibration_guard_hz, cfg.acc_vibration_guard_poles);
+        setAccelVibrationRaccGain(cfg.acc_vibration_racc_gain);
+        accel_guard_.reset();
+        racc_inflated_ = false;
+        racc_effective_.setZero();
         sigma_wave_band_.setRatios(cfg.sigma_band_low_ratio, cfg.sigma_band_high_ratio);
         sigma_wave_band_.setLimitsHz(cfg.sigma_band_min_hz, cfg.sigma_band_max_hz);
         sigma_wave_band_.reset();
@@ -202,7 +262,26 @@ public:
         applyPendingTune_();
         elapsed_sec_ += dt;
 
-        vertical_complementary_.update(dt, gyro, acc, cfg_.gravity_magnitude);
+        // Strip out-of-band accelerometer vibration before the attitude path
+        // reads it.  This is the one place raw measurements enter, so
+        // filtering here is what keeps the guard's effect describable: the
+        // proxy, the MEKF and the staged bootstrap all see the same
+        // conditioned signal, and no part of the attitude loop can be left on
+        // a different version of the accelerometer.
+        //
+        // The magnetic gravity gate and the tilt frame the magnetometer is
+        // acquired in stay on the raw signal, as they do in deployed OU-III,
+        // where the guard sits inside the fusion filter and those live in the
+        // wrapper above it.  Both average the specific force over ten seconds
+        // or more, so the machinery band is already far below their corner;
+        // keeping them raw costs nothing and keeps the front end at signal
+        // parity with OU-III rather than only coefficient parity.
+        //
+        // Armed by default, and transparent below its detector's lower rail,
+        // in which case acc_in is acc unchanged.
+        const Vector3f acc_in = accel_guard_.step(acc, dt);
+
+        vertical_complementary_.update(dt, gyro, acc_in, cfg_.gravity_magnitude);
         last_acc_body_ = acc;
         last_gyro_body_ = gyro;
         have_last_imu_ = true;
@@ -225,14 +304,20 @@ public:
             if (cfg_.startup_init_policy == StartupInitPolicy::MahonyProxy) {
                 tryProxyHandoff_();
             } else {
-                stagedColdStep_(gyro, acc, dt);
+                stagedColdStep_(gyro, acc_in, dt);
             }
             return;
         }
 
+        // Tell the MEKF how much it should trust that sample before it uses
+        // it, so the covariance and the measurement describe the same
+        // conditions.  A no-op unless a gain is set and the guard sees
+        // machinery.
+        applyRaccVibrationInflation_();
+
         periodicAwCovSyncTick_(dt);
         mekf_.time_update(gyro, dt);
-        mekf_.measurement_update_acc_only(acc, tempC);
+        mekf_.measurement_update_acc_only(acc_in, tempC);
 
         pseudo_elapsed_ += dt;
         if (pseudo_elapsed_ >= pseudo_period_sec_) {
@@ -289,6 +374,78 @@ public:
     [[nodiscard]] float pseudoUpdatePeriodSec() const noexcept { return pseudo_period_sec_; }
     [[nodiscard]] bool handoffTimedOut() const noexcept { return handoff_timed_out_; }
     [[nodiscard]] float getRSFilterInput() const noexcept { return RS_filter_input_; }
+
+    // Out-of-band accelerometer guard, ahead of the proxy and the MEKF.
+    //
+    // The cutoff sits in the gap between the wave band and the machinery band
+    // and stops vibration reaching the attitude loop, where it rectifies into a
+    // standing tilt error.  Armed by default; pass zero to remove it and
+    // restore the unconditioned measurement path exactly.  The cost is group
+    // delay, accelVibrationGuardDelaySec(), which appears in displacement as
+    // amplitude * 2 pi f * delay -- so prefer the highest corner that removes
+    // the machinery, not the lowest corner that fits above the waves.
+    void setAccelVibrationGuard(float cutoff_hz, int poles = ACC_VIBRATION_GUARD_POLES_DEFAULT) {
+        accel_guard_.setPoles(poles);
+        accel_guard_.setCutoffHz(cutoff_hz);
+    }
+
+    // Engagement band of the guard's detector.  Exposed mainly so a study can
+    // force the guard on over a quiet input and separate the delay it costs
+    // from the vibration it removes.
+    void setAccelVibrationEngagement(float lo_mps2, float hi_mps2,
+                                     float slew_tau_sec) noexcept {
+        accel_guard_.setEngagement(lo_mps2, hi_mps2, slew_tau_sec);
+    }
+
+    [[nodiscard]] float accelVibrationGuardDelaySec() const noexcept {
+        return accel_guard_.groupDelaySec();
+    }
+
+    // Vibration-aware accelerometer measurement covariance.
+    //
+    // The guard removes the machinery it can, but what survives its stopband
+    // still reaches the MEKF as measurement error the filter does not know
+    // about.  This tells it: the commanded accelerometer standard deviation
+    // becomes sqrt(sigma_base^2 + (gain * excess)^2), where excess is the
+    // guard's detector reading above its engagement floor.
+    //
+    // Zero disables it and leaves the commanded covariance exactly as the
+    // startup and stage logic set it.  Because the drive is the guard's own
+    // gated excess, it is identically zero on a quiet installation, so an
+    // enabled gain is still bit-transparent there.
+    void setAccelVibrationRaccGain(float gain) noexcept {
+        if (std::isfinite(gain) && gain >= 0.0f) racc_vibration_gain_ = gain;
+    }
+
+    [[nodiscard]] float accelVibrationRaccGain() const noexcept {
+        return racc_vibration_gain_;
+    }
+
+    // Accelerometer sigma currently commanded to the MEKF, m/s^2 per axis.
+    [[nodiscard]] Vector3f accelVibrationRaccStd() const noexcept {
+        return racc_effective_;
+    }
+
+    [[nodiscard]] float accelVibrationGuardCutoffHz() const noexcept {
+        return accel_guard_.cutoffHz();
+    }
+
+    [[nodiscard]] int accelVibrationGuardPoles() const noexcept {
+        return accel_guard_.poles();
+    }
+
+    // How far the guard is currently engaged, in [0, 1].  Zero means the
+    // measurement path is the unconditioned one.
+    [[nodiscard]] float accelVibrationGuardEngagement() const noexcept {
+        return accel_guard_.engagement();
+    }
+
+    // Smoothed RMS of the out-of-band content the guard is removing, m/s^2.
+    // Zero when the guard is disabled, so it reads as a health signal only
+    // where it is actually measuring something.
+    [[nodiscard]] float accelVibrationRms() const noexcept {
+        return accel_guard_.removedRms();
+    }
 
     void setAdaptEverySecs(float s) { if (s >= 0.0f && std::isfinite(s)) adapt_every_secs_ = s; }
     void setTauScaledPseudoCadence(bool on) { tau_scaled_pseudo_cadence_ = on; applyPseudoCadence_(); }
@@ -472,6 +629,47 @@ private:
         mekf_.set_linear_block_enabled(false);
         if (cfg_.freeze_acc_bias_until_live) mekf_.set_acc_bias_updates_enabled(false);
         mekf_.set_Racc_std(Vector3f::Constant(cfg_.Racc_warmup_std));
+        warmup_Racc_active_ = true;
+        racc_inflated_ = false;
+    }
+
+    // The accelerometer sigma the startup and stage logic wants, before any
+    // vibration inflation.  Returns a zero vector when it is not known, which
+    // is the signal to leave the commanded covariance alone.
+    [[nodiscard]] Vector3f raccBaseStd_() const {
+        if (warmup_Racc_active_ && cfg_.Racc_warmup_std > 0.0f) {
+            return Vector3f::Constant(cfg_.Racc_warmup_std);
+        }
+        if (Racc_nominal_.allFinite() && Racc_nominal_.minCoeff() > 0.0f) {
+            return Racc_nominal_;
+        }
+        return Vector3f::Zero();
+    }
+
+    void applyRaccVibrationInflation_() {
+        if (!(racc_vibration_gain_ > 0.0f)) return;
+
+        const Vector3f base = raccBaseStd_();
+        if (!(base.minCoeff() > 0.0f)) return;
+
+        const float excess = accel_guard_.excessRms();
+        if (!(excess > 0.0f)) {
+            // Hand the base back once on the way down, then stay quiet, so a
+            // dormant guard leaves the stage logic's covariance untouched.
+            if (racc_inflated_) {
+                mekf_.set_Racc_std(base);
+                racc_effective_ = base;
+                racc_inflated_ = false;
+            }
+            return;
+        }
+
+        const float added = racc_vibration_gain_ * excess;
+        const Vector3f effective =
+            (base.array().square() + added * added).sqrt().matrix();
+        mekf_.set_Racc_std(effective);
+        racc_effective_ = effective;
+        racc_inflated_ = true;
     }
 
     void enterLive_() {
@@ -482,6 +680,8 @@ private:
         mekf_.set_acc_bias_updates_enabled(false);
         maybeUnlockAccBias_();
         mekf_.set_Racc_std(Racc_nominal_);
+        warmup_Racc_active_ = false;
+        racc_inflated_ = false;
         commitTune_();
         mekf_.reset_aw_covariance_to_stationary();
     }
@@ -1001,6 +1201,17 @@ private:
     bool freeze_ou_channel_ = false;
     bool freeze_RS_channel_ = false;
     Vector3f Racc_nominal_{Vector3f::Constant(0.5f)};
+    bool     warmup_Racc_active_ = false;
+
+    // Armed in begin() at ACC_VIBRATION_GUARD_HZ_DEFAULT, and dormant until
+    // its own detector sees machinery, so an unconditioned replay is
+    // bit-identical to a guarded one.
+    seastate::tuner::AccelVibrationGuard accel_guard_{};
+    // Vibration-aware measurement covariance, armed in begin() at
+    // ACC_VIBRATION_RACC_GAIN_DEFAULT and inert until the guard sees machinery.
+    float    racc_vibration_gain_ = 0.0f;
+    bool     racc_inflated_ = false;
+    Vector3f racc_effective_{Vector3f::Zero()};
 
     float elapsed_sec_ = 0.0f;
     float live_sec_ = 0.0f;

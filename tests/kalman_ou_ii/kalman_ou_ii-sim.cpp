@@ -219,6 +219,32 @@ public:
                 filter.setAccNoiseFloorSigma(v);
             }
 
+            // Out-of-band accelerometer guard ahead of the proxy and the
+            // MEKF.  Armed by default at the deployed corner; these override
+            // it, and a zero cutoff removes it entirely.
+            {
+                float guard_hz = 0.0f;
+                int guard_poles = ACC_VIBRATION_GUARD_POLES_DEFAULT;
+                env_int("OU_II_ACC_GUARD_POLES", guard_poles);
+                if (env_float("OU_II_ACC_GUARD_HZ", guard_hz)) {
+                    filter.setAccelVibrationGuard(guard_hz, guard_poles);
+                }
+                float racc_gain = 0.0f;
+                if (env_float("OU_II_ACC_GUARD_RACC_GAIN", racc_gain)) {
+                    filter.setAccelVibrationRaccGain(racc_gain);
+                }
+                float engage_lo = 0.0f, engage_hi = 0.0f, engage_tau = 0.0f;
+                const bool lo_set = env_float("OU_II_ACC_GUARD_ENGAGE_LO", engage_lo);
+                const bool hi_set = env_float("OU_II_ACC_GUARD_ENGAGE_HI", engage_hi);
+                const bool tau_set = env_float("OU_II_ACC_GUARD_ENGAGE_TAU", engage_tau);
+                if (lo_set || hi_set || tau_set) {
+                    filter.setAccelVibrationEngagement(
+                        lo_set ? engage_lo : -1.0f,
+                        hi_set ? engage_hi : -1.0f,
+                        tau_set ? engage_tau : -1.0f);
+                }
+            }
+
             if (env_float("OU_ADAPT_TAU_SEC", v)) {
                 filter.setAdaptationTimeConstants(v);
             }
@@ -526,6 +552,23 @@ public:
             }
             fixed_tuning_applied_ = true;
         }
+    }
+
+    // Vibration-guard telemetry, so a replay can say whether the guard engaged
+    // and how much out-of-band accelerometer content it was seeing.  The shared
+    // runner owns the adapter, so end-of-record is the destructor; silent
+    // unless a cutoff was configured, which keeps an unguarded run unchanged.
+    ~FusionAdapter_OU_II() override {
+        const auto& filter = fusion_.raw();
+        if (!(filter.accelVibrationGuardCutoffHz() > 0.0f)) return;
+        std::cout << "ACC_GUARD cutoff_hz=" << filter.accelVibrationGuardCutoffHz()
+                  << " poles=" << filter.accelVibrationGuardPoles()
+                  << " engagement=" << filter.accelVibrationGuardEngagement()
+                  << " out_of_band_rms_mps2=" << filter.accelVibrationRms()
+                  << " delay_sec=" << filter.accelVibrationGuardDelaySec()
+                  << " racc_gain=" << filter.accelVibrationRaccGain()
+                  << " racc_std_mps2=" << filter.accelVibrationRaccStd().x()
+                  << "\n";
     }
 
     FilterSnapshot snapshot() const override {
