@@ -1,0 +1,104 @@
+name: ou3-p4-h18-source-node-screen
+
+on:
+  push:
+    paths:
+      - "tools/ou3_interval_ad.py"
+      - "tools/ou3_p4_h18_differential_operations.py"
+      - "tools/ou3_p4_h18_interval_ad_word.py"
+      - "tools/ou3_p4_h18_shared_word_screen.py"
+      - "tools/ou3_p4_h18_source_node_screen.py"
+      - "tools/ou3_p4_source_node_cells.py"
+      - "tools/ou3_p4_source_path_reachability.py"
+      - "tools/ou3_source_reachable_matrix_p3.py"
+      - "tests/validation/test_ou3_interval_ad.py"
+      - "tests/validation/test_ou3_p4_source_node_cells.py"
+      - "tests/validation/test_ou3_p4_h18_source_node_screen.py"
+      - ".github/workflows/ou3-p4-h18-source-node-screen.yml"
+  pull_request:
+    paths:
+      - "tools/ou3_interval_ad.py"
+      - "tools/ou3_p4_h18_differential_operations.py"
+      - "tools/ou3_p4_h18_interval_ad_word.py"
+      - "tools/ou3_p4_h18_shared_word_screen.py"
+      - "tools/ou3_p4_h18_source_node_screen.py"
+      - "tools/ou3_p4_source_node_cells.py"
+      - "tools/ou3_p4_source_path_reachability.py"
+      - "tools/ou3_source_reachable_matrix_p3.py"
+      - "tests/validation/test_ou3_interval_ad.py"
+      - "tests/validation/test_ou3_p4_source_node_cells.py"
+      - "tests/validation/test_ou3_p4_h18_source_node_screen.py"
+      - ".github/workflows/ou3-p4-h18-source-node-screen.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ou3-p4-h18-source-node-screen-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  source-node-screen:
+    name: H18 exact P2 source-node whole-word screen
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Compile exact-node H18 backend
+        run: |
+          python3 -m py_compile \
+            tools/ou3_interval_ad.py \
+            tools/ou3_p4_source_node_cells.py \
+            tools/ou3_p4_h18_differential_operations.py \
+            tools/ou3_p4_h18_interval_ad_word.py \
+            tools/ou3_p4_h18_shared_word_screen.py \
+            tools/ou3_p4_h18_source_node_screen.py \
+            tests/validation/test_ou3_interval_ad.py \
+            tests/validation/test_ou3_p4_source_node_cells.py \
+            tests/validation/test_ou3_p4_h18_source_node_screen.py
+
+      - name: Run shared primitive and exact-node binding tests
+        working-directory: tests/validation
+        run: |
+          python3 -m unittest -v \
+            test_ou3_interval_ad \
+            test_ou3_p4_source_node_cells \
+            test_ou3_p4_h18_source_node_screen
+
+      - name: Run complete word on exact P2 node zero
+        run: |
+          python3 tools/ou3_p4_h18_source_node_screen.py \
+            --source-node-index 0 \
+            --cell-limit 1 \
+            --output /tmp/ou3_p4_h18_source_node_screen.json
+
+      - name: Require real numerical execution and fail-closed scope
+        run: |
+          python3 - <<'PY'
+          import json, math
+          from pathlib import Path
+
+          d = json.loads(Path('/tmp/ou3_p4_h18_source_node_screen.json').read_text())
+          assert d['validation_pass'], d['validation_failures']
+          assert d['exact_P2_source_node_cell_used'] is True
+          assert d['P2_source_node_count_available'] == 800
+          assert d['P2_source_node_index'] == 0
+          assert d['shared_H18_differential_operations_used'] is True
+          assert d['full_word_horizon_checked'] is True
+          assert d['outer_ball_box_cells_requested'] == 1
+          assert d['outer_ball_box_cells_completed'] == 1, d['first_failure']
+          assert d['first_failure'] is None
+          assert math.isfinite(d['max_endpoint_P3_congruence_conditioned_norm_upper'])
+          assert math.isfinite(d['max_prefix_P3_congruence_conditioned_norm_upper'])
+          assert d['all_P2_source_nodes_checked'] is False
+          assert d['actual_per_node_Sigma_KF_whitening_used'] is False
+          assert d['P4_USABLE_CERTIFICATE_PROMOTED'] is False
+          print('source node:', d['P2_source_node_index'], d['P2_source_node'])
+          print('endpoint conditioned norm:', d['max_endpoint_P3_congruence_conditioned_norm_upper'])
+          print('prefix conditioned norm:', d['max_prefix_P3_congruence_conditioned_norm_upper'])
+          print('endpoint blocks:', d['screen_cells'][0]['endpoint_block_norms_conditioned'])
+          print('worst prefix:', d['screen_cells'][0]['worst_prefix'])
+          print('next:', d['next_obligation'])
+          PY
