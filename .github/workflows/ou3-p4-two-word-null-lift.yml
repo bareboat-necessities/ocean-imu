@@ -79,6 +79,8 @@ jobs:
           assert d['aw_survival_factor_to_following_word_lower'] > 0.0
           assert d['following_word_aw_per_theta_norm_lower'] > 0.0
           assert d['following_word_four_S_information_gramian_lambda_min_lower'] > 0.0
+          assert d['packet_null_following_word_raw_information_per_theta2_lower'] > 0.0
+          assert d['packet_null_following_word_raw_information_bound_formula'] == 'lambda_min(G_S)*(a_w_next/theta)^2'
           assert d['following_word_four_S_firing_count'] == 4
           assert d['two_word_packet_null_is_structurally_observed'] is True
           assert d['shared_H18_differential_operations_used'] is True
@@ -91,5 +93,6 @@ jobs:
           print('a_w survival lower:', d['aw_survival_factor_to_following_word_lower'])
           print('following-word aw/theta lower:', d['following_word_aw_per_theta_norm_lower'])
           print('four-S information lower:', d['following_word_four_S_information_gramian_lambda_min_lower'])
+          print('raw information/theta^2 lower:', d['packet_null_following_word_raw_information_per_theta2_lower'])
           print('next:', d['next_obligation'])
           PY
