@@ -60,23 +60,26 @@ class Ou3P545DegSample1HGroupNormTests(unittest.TestCase):
         'min_den',d['minimum_signed_composition_denominator_lower'],
         'returned30',d['returned_to_30deg_P4_sector_here'])
 
- def test_tilt_yaw_intersection_improves_signed_full_ball(self):
+ def test_P1_tilt_intersection_is_only_deployed_startup_subroute(self):
   d=self.t
   self.assertEqual(T.validate(d),[])
-  self.assertEqual(d['P5_45DEG_FIRST_ACCEL_TILT_YAW_SOURCE_BOUND'],'PASS')
+  self.assertEqual(d['P5_DEPLOYED_STARTUP_TILT_YAW_FIRST_ACCEL_SUBROUTE'],'PASS')
   self.assertTrue(d['two_coordinate_attitude_chart_used'])
-  self.assertFalse(d['new_tilt_assumption_added'])
-  self.assertFalse(d['P5_full_attitude_45deg_domain_tightened'])
+  self.assertTrue(d['source_reachable_startup_intersection_only'])
+  self.assertTrue(d['uses_additional_P1_tilt_information'])
+  self.assertTrue(d['does_not_replace_generic_P5_45deg_route'])
+  self.assertFalse(d['generic_P5_45deg_entrance_covered_here'])
+  self.assertFalse(d['new_deployment_assumption_added'])
   self.assertFalse(d['accelerometer_claims_yaw_contraction'])
   self.assertLess(d['certified_gravity_tangent_q_upper'],d['full_attitude_q_upper_retained'])
-  self.assertLess(d['tilt_yaw_post_update_q_upper'],d['signed_full_ball_baseline_post_update_q_upper'])
-  print('TILT_YAW_45DEG_FIRST_ACCEL',
+  self.assertLess(d['startup_intersection_post_update_q_upper'],d['signed_full_ball_baseline_post_update_q_upper'])
+  print('STARTUP_TILT_YAW_FIRST_ACCEL',
         'q_full',d['full_attitude_q_upper_retained'],
         'q_tangent',d['certified_gravity_tangent_q_upper'],
-        'q_signed_full',d['signed_full_ball_baseline_post_update_q_upper'],
-        'q_tilt_yaw',d['tilt_yaw_post_update_q_upper'],
-        'factor',d['tilt_yaw_vs_signed_full_ball_improvement_factor'],
-        'returned30',d['returned_to_30deg_P4_sector_here'])
+        'q_generic_signed',d['signed_full_ball_baseline_post_update_q_upper'],
+        'q_startup',d['startup_intersection_post_update_q_upper'],
+        'factor',d['startup_intersection_improvement_factor'],
+        'generic45',d['generic_P5_45deg_entrance_covered_here'])
 
  def test_no_filter_or_replay_change(self):
   d=self.d
