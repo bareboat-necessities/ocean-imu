@@ -55,8 +55,8 @@ Table~\ref{tab:engine-noise-cruise} replays the eight stationary records
 through each family with the engine off and at the nominal cruise condition.
 This is the comparison that motivates the remedy of
 Sec.~\ref{sec:engine-noise-guard}, so it holds all three families in the same
-unconditioned configuration: OU--III's front-end guard, which ships armed, is
-switched off throughout this subsection and switched on again there.
+unconditioned configuration: the front-end guard, which ships armed in every
+family, is switched off throughout this subsection and switched on again there.
 All three degrade by a large factor.  OU--III's pooled 3-D displacement RMS
 goes from \SI{0.522}{m} to \SI{4.232}{m}, a factor of \num{8.1}; vertical RMS
 goes from \SI{0.179}{m} to \SI{0.828}{m}.  OU--II degrades by \num{5.2} and
@@ -339,6 +339,17 @@ residual cannot go to one while the guard is engaged; and no front-end filter
 helps with machinery whose orders reach into the wave band, because there is
 nothing there to separate them from the sea.  The \SI{800}{rpm} row is that
 limit showing itself early.
+
+Nothing in the mechanism depends on the translational state structure, which is
+the only thing the three families disagree about: all three level from the same
+private Mahony observer and feed the same accelerometer to a MEKF, and
+Table~\ref{tab:engine-noise-cruise} measures all three degrading.  The guard is
+therefore armed in all three at the operating point fitted here rather than
+refitted per family.  Over the same eight records at the nominal cruise
+condition it takes OU--II from \SI{3.363}{m} to \SI{0.657}{m} and TFG from
+\SI{14.026}{m} to \SI{0.785}{m}, residuals of \num{1.02} and \num{1.06}
+against their own engine-off baselines; the engine-off replays are bit-identical
+in each, exactly as they are for OU--III.
 
 \subsubsection{Scope}
 
