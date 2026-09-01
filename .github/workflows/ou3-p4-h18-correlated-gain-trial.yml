@@ -1,0 +1,86 @@
+name: ou3-p4-h18-correlated-gain-trial
+
+on:
+  push:
+    paths:
+      - "tools/ou3_interval.py"
+      - "tools/ou3_interval_ad.py"
+      - "tools/ou3_interval_linear_algebra.py"
+      - "tools/ou3_correlated_kalman_gain.py"
+      - "tools/ou3_p4_h18_correlated_gain_trial.py"
+      - "tools/ou3_p4_h18_correction_subdivision.py"
+      - "tools/ou3_p4_h18_differential_operations.py"
+      - "tools/ou3_p4_source_node_cells.py"
+      - "tools/ou3_p4_candidate_full_word.py"
+      - "tools/ou3_p5_full_h_prefix_cells.py"
+      - "tools/ou3_proof_operating_domain.json"
+      - "tests/validation/test_ou3_correlated_kalman_gain.py"
+      - ".github/workflows/ou3-p4-h18-correlated-gain-trial.yml"
+  pull_request:
+    paths:
+      - "tools/ou3_interval.py"
+      - "tools/ou3_interval_ad.py"
+      - "tools/ou3_interval_linear_algebra.py"
+      - "tools/ou3_correlated_kalman_gain.py"
+      - "tools/ou3_p4_h18_correlated_gain_trial.py"
+      - "tools/ou3_p4_h18_correction_subdivision.py"
+      - "tools/ou3_p4_h18_differential_operations.py"
+      - "tools/ou3_p4_source_node_cells.py"
+      - "tools/ou3_p4_candidate_full_word.py"
+      - "tools/ou3_p5_full_h_prefix_cells.py"
+      - "tools/ou3_proof_operating_domain.json"
+      - "tests/validation/test_ou3_correlated_kalman_gain.py"
+      - ".github/workflows/ou3-p4-h18-correlated-gain-trial.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ou3-p4-h18-correlated-gain-trial-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  trial:
+    name: H18 correlated-gain full-word trial
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Compile shared gain and trial
+        run: |
+          python3 -m py_compile \
+            tools/ou3_correlated_kalman_gain.py \
+            tools/ou3_p4_h18_correlated_gain_trial.py \
+            tests/validation/test_ou3_correlated_kalman_gain.py
+      - name: Run shared primitive tests
+        working-directory: tests/validation
+        run: python3 -m unittest -v test_ou3_correlated_kalman_gain
+      - name: Run exact-node full-word correlated-gain trial
+        run: |
+          python3 tools/ou3_p4_h18_correlated_gain_trial.py \
+            --source-node-index 0 \
+            --output /tmp/ou3_p4_h18_correlated_gain_trial.json
+      - name: Enforce diagnostic scope
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path('/tmp/ou3_p4_h18_correlated_gain_trial.json').read_text())
+          assert d['validation_pass'], d['validation_failures']
+          assert d['outer_angle_rad'] == 0.80
+          assert d['source_node_index'] == 0
+          assert d['full_word_samples'] == 202
+          assert d['correlated_gain_attempt_count'] > 0
+          assert d['shipping_filter_changed'] is False
+          assert d['physical_state_or_source_domain_shrunk'] is False
+          assert d['P4_USABLE_CERTIFICATE_PROMOTED'] is False
+          print('attempts:', d['correlated_gain_attempt_count'])
+          print('completed:', d['word_completed_without_correction_range_failure'])
+          print('first failure:', d['first_failure'])
+          print('maximum correction:', d['maximum_correction'])
+          print('records:', d['correlated_gain_records'])
+          print('next:', d['next_obligation'])
+          PY
