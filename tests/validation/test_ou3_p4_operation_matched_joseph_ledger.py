@@ -7,16 +7,18 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools"))
 
 import ou3_p4_operation_matched_joseph_ledger as LEDGER
+from ou3_proof_module_state import preserve_module_bindings
 
 
 class OperationMatchedJosephLedgerTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        # The existing first-accelerometer consistency diagnostic installs V2/V3
-        # proof backends by monkey-patching shared P5 modules.  A standalone
-        # producer process exits immediately afterwards, but unittest discovery
-        # continues in the same interpreter.  Snapshot every touched shared
-        # binding so this new early ledger consumer cannot alter later P5 tests.
+        # The first-accelerometer consistency diagnostic invokes historical
+        # V2/V3 proof backends that intentionally rebind process-global module
+        # functions.  The standalone producers normally exit immediately, but
+        # unittest discovery continues in one interpreter.  Use the same broad
+        # module-state scope shared with the parallel #450 route rather than a
+        # brittle list of individual monkey patches.
         consistency = LEDGER.CONSISTENCY
         cls._shared = {
             "scalar_axis_structure": consistency.RG._scalar_axis_structure,
@@ -25,26 +27,9 @@ class OperationMatchedJosephLedgerTests(unittest.TestCase):
             "SIGNED": consistency.FULL.SIGNED,
             "had_initial_covariance_original": hasattr(
                 consistency.FULL, "_initial_covariance_original"),
-            "initial_covariance_original": getattr(
-                consistency.FULL, "_initial_covariance_original", None),
         }
-        try:
+        with preserve_module_bindings():
             cls.d = LEDGER.build()
-        finally:
-            cls._restore_shared_backends()
-
-    @classmethod
-    def _restore_shared_backends(cls):
-        consistency = LEDGER.CONSISTENCY
-        consistency.RG._scalar_axis_structure = cls._shared["scalar_axis_structure"]
-        consistency.FULL._transition_and_Q = cls._shared["transition_and_Q"]
-        consistency.FULL._initial_covariance = cls._shared["initial_covariance"]
-        consistency.FULL.SIGNED = cls._shared["SIGNED"]
-        if cls._shared["had_initial_covariance_original"]:
-            consistency.FULL._initial_covariance_original = cls._shared[
-                "initial_covariance_original"]
-        elif hasattr(consistency.FULL, "_initial_covariance_original"):
-            delattr(consistency.FULL, "_initial_covariance_original")
 
     def test_ledger_validates_but_does_not_promote_complete_p4(self):
         d = self.d
@@ -86,6 +71,10 @@ class OperationMatchedJosephLedgerTests(unittest.TestCase):
             self._shared["initial_covariance"],
         )
         self.assertIs(consistency.FULL.SIGNED, self._shared["SIGNED"])
+        self.assertEqual(
+            hasattr(consistency.FULL, "_initial_covariance_original"),
+            self._shared["had_initial_covariance_original"],
+        )
 
     def test_sector_invariance_failure_is_reproduced_but_not_used_as_gate(self):
         d = self.d
