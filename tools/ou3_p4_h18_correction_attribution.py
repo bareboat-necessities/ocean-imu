@@ -54,7 +54,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN, *, source_node_index: int = 0) -> 
     with preserve_module_bindings():
         H._source_cell = lambda: src
         try:
-            row = SUB._run_child(path, domain, src, parent, samples, [])
+            row = SUB._run_child(path, domain, src, parent, samples)
         except Exception as exc:
             row = {
                 "completed": False,
