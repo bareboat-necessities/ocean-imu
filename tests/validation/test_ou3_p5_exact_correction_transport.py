@@ -42,7 +42,12 @@ class Ou3P5ExactCorrectionTransportTests(unittest.TestCase):
         self.assertGreater(normal["cayley_composition_denominator_lower"], 0.0)
         self.assertGreater(timeout["cayley_composition_denominator_lower"], 0.0)
         self.assertGreater(normal["cayley_composition_denominator_lower"], timeout["cayley_composition_denominator_lower"])
-        self.assertLess(timeout["injected_cayley_norm_upper"], 3.0)
+        # The deployed correction limit is a bound on the axis-angle correction
+        # ||d||, not on its Cayley image 2*tan(||d||/2), which can exceed 3
+        # well before ||d|| reaches the validated 3-rad helper limit.  Chart
+        # safety is the strict composition-denominator test above.
+        self.assertTrue(math.isfinite(timeout["injected_cayley_norm_upper"]))
+        self.assertGreater(timeout["injected_cayley_norm_upper"], 0.0)
 
     def test_deployed_axis_angle_cayley_bound_is_finite_and_not_linearized(self):
         row = T.correction_cayley_norm_bounds(1.0)

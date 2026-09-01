@@ -1,0 +1,235 @@
+name: ou3-p4-frontier-combined
+
+on:
+  pull_request:
+    paths:
+      - 'tools/ou3_p4_frontier_combined_certificate.py'
+      - 'tools/ou3_p4_frontier_margin_diagnostic.py'
+      - 'tools/ou3_p4_full_word_dissipation_route.py'
+      - 'tools/ou3_p4_translation_full_word_design.py'
+      - 'tools/ou3_p4_translation_full_word_interval.py'
+      - 'tools/ou3_p4_translation_full_word_interval_fast.py'
+      - 'tools/ou3_p4_source_path_reachability.py'
+      - 'tools/ou3_p4_post_translation_bottleneck.py'
+      - 'tools/ou3_p4_reachable_full_state_bridge.py'
+      - 'tools/ou3_p4_usable_status.py'
+      - 'tools/ou3_p4_direct_word_contraction_certificate.py'
+      - 'tools/ou3_p4_exact_correction_structure_certificate.py'
+      - 'tools/ou3_p4_thirdgen_combined_certificate.py'
+      - 'tools/ou3_p4_nextgen_*.py'
+      - 'tools/ou3_p4_nonlinear_word_certificate.py'
+      - 'tools/ou3_source_reachable_matrix_p3*.py'
+      - 'tools/ou3_explicit_information_word_certificate.py'
+      - 'tools/ou3_p3_word_algebra.py'
+      - 'tools/ou3_p4_exact_word_map.py'
+      - 'tools/ou3_proof_operating_domain.json'
+      - 'tests/validation/test_ou3_p4_frontier_combined_certificate.py'
+      - 'tests/validation/test_ou3_p4_frontier_margin_diagnostic.py'
+      - 'tests/validation/test_ou3_p4_full_word_dissipation_route.py'
+      - 'tests/validation/test_ou3_p4_translation_full_word_design.py'
+      - 'tests/validation/test_ou3_p4_translation_full_word_interval.py'
+      - 'tests/validation/test_ou3_p4_source_path_reachability.py'
+      - 'tests/validation/test_ou3_p4_post_translation_bottleneck.py'
+      - 'tests/validation/test_ou3_p4_reachable_full_state_bridge.py'
+      - 'tests/validation/test_ou3_p4_usable_status.py'
+      - '.github/workflows/ou3-p4-frontier-combined.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: ou3-p4-frontier-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Kept only as a regression reference.  This route is explicitly obsolete and
+  # must not make the replacement full-word certificate red.
+  frontier-baseline:
+    continue-on-error: true
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install numerical dependency
+        run: |
+          sudo apt-get update
+          sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends python3-numpy
+      - name: Compile obsolete baseline route
+        run: |
+          python3 -m py_compile \
+            tools/ou3_p4_frontier_combined_certificate.py \
+            tools/ou3_p4_frontier_margin_diagnostic.py \
+            tools/ou3_p4_full_word_dissipation_route.py \
+            tests/validation/test_ou3_p4_frontier_combined_certificate.py \
+            tests/validation/test_ou3_p4_frontier_margin_diagnostic.py \
+            tests/validation/test_ou3_p4_full_word_dissipation_route.py
+      - name: Test obsolete baseline regression
+        working-directory: tests/validation
+        run: |
+          python3 -m unittest -v \
+            test_ou3_p4_frontier_combined_certificate \
+            test_ou3_p4_frontier_margin_diagnostic \
+            test_ou3_p4_full_word_dissipation_route
+      - name: Emit old frontier as non-gating regression baseline
+        run: |
+          python3 tools/ou3_p4_frontier_combined_certificate.py --output /tmp/p4-frontier.json
+          python3 tools/ou3_p4_frontier_margin_diagnostic.py --output /tmp/p4-margin-diagnostic.json
+          python3 tools/ou3_p4_full_word_dissipation_route.py --output /tmp/p4-full-word-route.json
+
+  full-word-translation:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install numerical dependency
+        run: |
+          sudo apt-get update
+          sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends python3-numpy
+      - name: Compile replacement P4 backends
+        run: |
+          python3 -m py_compile \
+            tools/ou3_p4_translation_full_word_design.py \
+            tools/ou3_p4_translation_full_word_interval.py \
+            tools/ou3_p4_translation_full_word_interval_fast.py \
+            tools/ou3_p4_source_path_reachability.py \
+            tools/ou3_p4_post_translation_bottleneck.py \
+            tools/ou3_p4_reachable_full_state_bridge.py \
+            tools/ou3_p4_usable_status.py \
+            tests/validation/test_ou3_p4_translation_full_word_design.py \
+            tests/validation/test_ou3_p4_translation_full_word_interval.py \
+            tests/validation/test_ou3_p4_post_translation_bottleneck.py \
+            tests/validation/test_ou3_p4_reachable_full_state_bridge.py \
+            tests/validation/test_ou3_p4_usable_status.py
+      - name: Test fail-closed bridge and status gates
+        working-directory: tests/validation
+        run: |
+          python3 -m unittest -v \
+            test_ou3_p4_reachable_full_state_bridge \
+            test_ou3_p4_usable_status
+      - name: Validate declared one-second complete-word translation
+        run: |
+          python3 tools/ou3_p4_translation_full_word_interval_fast.py --output /tmp/p4-translation-full-word-interval.json
+          python3 - <<'PY'
+          import json
+          p=json.load(open('/tmp/p4-translation-full-word-interval.json'))
+          print('P4_COMPLETE_TRANSLATION_WORST_CELL_STATUS:',p['P4_COMPLETE_TRANSLATION_WORST_CELL_STATUS'])
+          for mode in ('H','A'):
+              r=p['modes'][mode]
+              print(f"P4_FULL_WORD_VALIDATED {mode} delta={r['complete_word_translation_margin_lower']:.17e} old={r['old_single_seed_translation_margin_lower']:.17e} factor={r['margin_widening_factor_lower']:.17e} dyadic_bits={r['dyadic_loewner_bits']}")
+          PY
+      - name: Diagnose post-translation full-state bottleneck
+        run: |
+          python3 tools/ou3_p4_post_translation_bottleneck.py \
+            --translation /tmp/p4-translation-full-word-interval.json \
+            --output /tmp/p4-post-translation-bottleneck.json
+          python3 - <<'PY'
+          import json
+          p=json.load(open('/tmp/p4-post-translation-bottleneck.json'))
+          for mode in ('H','A'):
+              r=p['modes'][mode]
+              print(
+                  f"P4_POST_TRANSLATION {mode} "
+                  f"translation={r['validated_complete_word_translation_margin_lower']:.17e} "
+                  f"nontranslation={r['existing_direct_nontranslation_margin_lower']:.17e} "
+                  f"diagnostic={r['diagnostic_blockwise_margin_lower']:.17e} "
+                  f"factor_vs_old={r['diagnostic_widening_vs_old_full_margin_lower']:.17e} "
+                  f"limiting={r['post_translation_limiting_block']}"
+              )
+          PY
+      - name: Build reachable-path full-state cross-block target
+        run: |
+          python3 tools/ou3_p4_source_path_reachability.py --output /tmp/p4-source-path.json
+          python3 tools/ou3_p4_reachable_full_state_bridge.py \
+            --translation /tmp/p4-translation-full-word-interval.json \
+            --bottleneck /tmp/p4-post-translation-bottleneck.json \
+            --path /tmp/p4-source-path.json \
+            --output /tmp/p4-reachable-full-state-bridge.json
+          python3 - <<'PY'
+          import json
+          p=json.load(open('/tmp/p4-reachable-full-state-bridge.json'))
+          print(
+              'P4_REACHABLE_FULL_STATE_GRAPH',
+              'reachable=',p['reachable_state_count'],
+              'recurrent=',p['recurrent_state_count'],
+              'scc=',p['source_graph_strongly_connected_components'],
+              'old_worst_recurrent=',p['old_worst_corner_recurrent'],
+          )
+          for mode in ('H','A'):
+              r=p['modes'][mode]
+              print(
+                  f"P4_REACHABLE_FULL_STATE_TARGET {mode} "
+                  f"translation={r['validated_translation_margin_lower']:.17e} "
+                  f"nontranslation={r['direct_nontranslation_margin_lower']:.17e} "
+                  f"cross_block_norm_lt={r['normalized_cross_block_spectral_norm_budget_upper_open']:.17e}"
+              )
+          PY
+      - name: Probe longer design horizons
+        run: |
+          python3 tools/ou3_p4_translation_full_word_design.py --output /tmp/p4-translation-full-word-design.json
+          python3 - <<'PY'
+          import json
+          p=json.load(open('/tmp/p4-translation-full-word-design.json'))
+          for mode in ('H','A'):
+              for horizon,row in p['modes'][mode]['horizons'].items():
+                  w=row['worst_grid_point']
+                  print(f"P4_FULL_WORD_DESIGN {mode} T={horizon}s delta_design={w['translation_complete_word_generalized_margin_design']:.17e} factor_vs_seed={row['design_worst_to_old_margin_ratio']:.17e}")
+          PY
+      - name: Emit fail-closed usable-certificate status
+        run: |
+          python3 tools/ou3_p4_usable_status.py \
+            --translation /tmp/p4-translation-full-word-interval.json \
+            --design /tmp/p4-translation-full-word-design.json \
+            --path /tmp/p4-source-path.json \
+            --output /tmp/p4-usable-status.json
+
+  # The declared theorem recurrence window is 1.0 s.  Keep 2 s as a useful
+  # enclosure diagnostic, but do not let it gate the valid one-word result.
+  full-word-translation-2s:
+    continue-on-error: true
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install numerical dependency
+        run: |
+          sudo apt-get update
+          sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends python3-numpy
+      - name: Diagnostic two-second complete-word translation on recurrent worst cell
+        run: |
+          python3 tools/ou3_p4_translation_full_word_interval_fast.py \
+            --horizon-s 2.0 \
+            --output /tmp/p4-translation-full-word-2s.json
+          python3 - <<'PY'
+          import json
+          p=json.load(open('/tmp/p4-translation-full-word-2s.json'))
+          print('P4_COMPLETE_TRANSLATION_2S_STATUS:',p['P4_COMPLETE_TRANSLATION_WORST_CELL_STATUS'])
+          for mode in ('H','A'):
+              r=p['modes'][mode]
+              print(
+                  f"P4_FULL_WORD_VALIDATED_2S {mode} "
+                  f"delta={r['complete_word_translation_margin_lower']:.17e} "
+                  f"factor_vs_seed={r['margin_widening_factor_lower']:.17e} "
+                  f"tau_leaves={r['tau_leaf_count']} "
+                  f"dyadic_bits={r['dyadic_loewner_bits']}"
+              )
+          PY
+
+  source-path-reachability:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+      - name: Compile source-path backend
+        run: |
+          python3 -m py_compile \
+            tools/ou3_p4_source_path_reachability.py \
+            tests/validation/test_ou3_p4_source_path_reachability.py
+      - name: Validate source-dynamic path graph
+        working-directory: tests/validation
+        run: python3 -m unittest -v test_ou3_p4_source_path_reachability
+      - name: Emit old-worst-corner residence result
+        run: |
+          python3 tools/ou3_p4_source_path_reachability.py --output /tmp/p4-source-path.json
+          python3 - <<'PY'
+          import json
+          p=json.load(open('/tmp/p4-source-path.json'))
+          print('P4_SOURCE_PATH_GRAPH:',p['partition'])
+          print('P4_SOURCE_PATH_EDGES:',p['transition_edges'])
+          print('P4_OLD_WORST_CORNER_STATES:',p['old_worst_corner_state_count'])
+          print('P4_OLD_WORST_CORNER_INTERNAL_CYCLE:',p['old_worst_corner_has_internal_recurrent_cycle'])
+          print('P4_OLD_WORST_CORNER_MAX_RESIDENCE_S:',p['old_worst_corner_max_residence_s_upper'])
+          PY
