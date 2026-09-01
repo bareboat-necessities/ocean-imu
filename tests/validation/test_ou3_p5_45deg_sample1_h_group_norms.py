@@ -7,6 +7,7 @@ sys.path.insert(0,str(ROOT/'tools'))
 import ou3_p5_45deg_sample1_h_group_norms as G
 import ou3_p5_45deg_first_accel_signed_source_bound_v2 as S
 import ou3_p5_45deg_first_accel_tilt_yaw_source_bound as T
+import ou3_p5_first_accel_joint_innovation_contraction as J
 
 
 class Ou3P545DegSample1HGroupNormTests(unittest.TestCase):
@@ -15,6 +16,7 @@ class Ou3P545DegSample1HGroupNormTests(unittest.TestCase):
   cls.d=G.build(source_pieces=2)
   cls.s=S.build(source_pieces=2,tangent_cells=96)
   cls.t=T.build(source_pieces=2,tangent_cells=96)
+  cls.j=J.build(source_pieces=2)
 
  def test_certificate_and_semantics(self):
   d=self.d
@@ -81,16 +83,36 @@ class Ou3P545DegSample1HGroupNormTests(unittest.TestCase):
         'factor',d['startup_intersection_improvement_factor'],
         'generic45',d['generic_P5_45deg_entrance_covered_here'])
 
+ def test_joint_attitude_aw_innovation_contraction_on_generic_45deg_entrance(self):
+  d=self.j
+  self.assertEqual(J.validate(d),[])
+  self.assertEqual(d['P5_FIRST_ACCEL_JOINT_INNOVATION_CONTRACTION'],'PASS')
+  self.assertTrue(d['generic_P5_45deg_entrance_used'])
+  self.assertFalse(d['additional_P1_tilt_bound_used'])
+  self.assertTrue(d['J_aw_orthogonality_used'])
+  self.assertTrue(d['first_theta_aw_cross_covariance_exact_zero_used'])
+  self.assertFalse(d['held_accel_bias_falsely_contracted'])
+  self.assertFalse(d['attitude_alone_claimed_contracting'])
+  self.assertLess(d['worst_joint_state_residual_contraction_factor_upper'],1.0)
+  self.assertLess(d['worst_post_state_correction_total_effective_residual_upper_mps2'],
+                  d['worst_pre_update_total_effective_residual_upper_mps2'])
+  print('JOINT_FIRST_ACCEL_INNOVATION',
+        'gamma',d['worst_joint_state_residual_contraction_factor_upper'],
+        'pre',d['worst_pre_update_total_effective_residual_upper_mps2'],
+        'post',d['worst_post_state_correction_total_effective_residual_upper_mps2'],
+        'factor',d['total_effective_residual_improvement_factor_lower'])
+
  def test_no_filter_or_replay_change(self):
   d=self.d
   self.assertTrue(d['source_generated_not_trajectory_fit'])
   self.assertFalse(d['source_replay_used'])
   self.assertFalse(d['filter_changed'])
-  for s in (self.s,self.t):
+  for s in (self.s,self.t,self.j):
    self.assertTrue(s['source_generated_not_trajectory_fit'])
    self.assertFalse(s['source_replay_used'])
    self.assertFalse(s['filter_changed'])
-   self.assertFalse(s['deployed_correction_limit_increased'])
+  self.assertFalse(self.s['deployed_correction_limit_increased'])
+  self.assertFalse(self.t['deployed_correction_limit_increased'])
 
 
 if __name__=='__main__': unittest.main()
