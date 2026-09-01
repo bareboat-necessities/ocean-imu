@@ -27,23 +27,23 @@ import json
 import math
 from pathlib import Path
 
-import ou3_p4_candidate_first_accel_exact_source as FIRST
+import ou3_p5_first_accel_exact_source_v2 as EXACT
 import ou3_p5_45deg_first_accel_signed_source_bound as V1
 import ou3_p5_45deg_first_accel_signed_source_bound_v2 as V2
 
 DEFAULT_DOMAIN = V1.DEFAULT_DOMAIN
-SCHEMA = 1
+SCHEMA = 2
 DEFAULT_TANGENT_CELLS = 96
 
 
 def build(domain_path: Path = DEFAULT_DOMAIN, *, source_pieces: int = 2,
           tangent_cells: int = DEFAULT_TANGENT_CELLS) -> dict:
     path = Path(domain_path).resolve()
-    first = FIRST.build(path, source_pieces=source_pieces)
-    ff = FIRST.validate(first)
-    if ff:
-        raise RuntimeError(f"exact-source first-accelerometer prerequisite failed: {ff}")
-    q_tilt = float(first["post_prediction_cayley_tangent_norm_upper"])
+    exact = EXACT.build(path, source_pieces=source_pieces)
+    ef = EXACT.validate(exact)
+    if ef:
+        raise RuntimeError(f"exact-source first-accelerometer prerequisite failed: {ef}")
+    q_tilt = float(exact["post_prediction_cayley_tangent_norm_upper"])
     if not (math.isfinite(q_tilt) and q_tilt >= 0.0):
         raise RuntimeError("certified post-prediction tangent Cayley bound is invalid")
 
@@ -62,15 +62,16 @@ def build(domain_path: Path = DEFAULT_DOMAIN, *, source_pieces: int = 2,
         "qualification": "OU3_P5_45DEG_FIRST_ACCEL_TILT_YAW_SEPARATED_SOURCE_BOUND",
         "full_attitude_q_upper_retained": float(out["pre_update_q_upper"]),
         "certified_gravity_tangent_q_upper": q_tilt,
-        "tangent_bound_source": "ou3_p5_first_accel_exact_source.post_prediction_cayley_tangent_norm_upper",
+        "tangent_bound_source": "ou3_p5_first_accel_exact_source_v2.post_prediction_cayley_tangent_norm_upper",
+        "source_tilt_cosine_lower": float(exact["post_prediction_true_gravity_cosine_lower"]),
         "P5_full_attitude_45deg_domain_tightened": False,
         "new_tilt_assumption_added": False,
         "accelerometer_claims_yaw_contraction": False,
         "two_coordinate_attitude_chart_used": True,
         "signed_V2_post_update_q_upper": float(out["signed_source_correlated_post_update_q_upper"]),
     })
-    # The V2 output already used the patched tangent cells, so compare against
-    # the old signed V2 by running it once more after restoring the helper.
+    # The V2 output above used the patched tangent cells. Compare against the
+    # original full-ball signed bound after restoring the helper.
     baseline = V2.build(path, source_pieces=source_pieces, tangent_cells=tangent_cells)
     out["signed_full_ball_baseline_post_update_q_upper"] = float(
         baseline["signed_source_correlated_post_update_q_upper"])
@@ -107,8 +108,11 @@ def validate(d: dict) -> list[str]:
     qt = float(d.get("certified_gravity_tangent_q_upper", math.inf))
     qbase = float(d.get("signed_full_ball_baseline_post_update_q_upper", math.inf))
     qnew = float(d.get("tilt_yaw_post_update_q_upper", math.inf))
+    ctilt = float(d.get("source_tilt_cosine_lower", -math.inf))
     if not (0.0 <= qt < qfull < 1.0):
         f.append("tilt/full two-coordinate entrance relation invalid")
+    if not (0.0 < ctilt <= 1.0):
+        f.append("source tilt cosine is invalid")
     if not (math.isfinite(qnew) and 0.0 < qnew < qbase < 8.0):
         f.append("tilt/yaw q bound is not a strict finite improvement")
     if d.get("P5_45DEG_FIRST_ACCEL_TILT_YAW_SOURCE_BOUND") == "PASS" and f:
@@ -131,6 +135,7 @@ def main() -> int:
     x.output.write_text(json.dumps(d, indent=2, sort_keys=True), encoding="utf-8")
     print(json.dumps({
         "status": d["P5_45DEG_FIRST_ACCEL_TILT_YAW_SOURCE_BOUND"],
+        "tilt_cos": d["source_tilt_cosine_lower"],
         "q_full_pre": d["full_attitude_q_upper_retained"],
         "q_tangent_pre": d["certified_gravity_tangent_q_upper"],
         "q_signed_full_ball": d["signed_full_ball_baseline_post_update_q_upper"],
