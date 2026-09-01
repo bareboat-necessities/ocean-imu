@@ -7,6 +7,7 @@ on:
       - "tools/ou3_interval_ad.py"
       - "tools/ou3_interval_linear_algebra.py"
       - "tools/ou3_correlated_kalman_gain.py"
+      - "tools/ou3_physical_force_domain.py"
       - "tools/ou3_p4_h18_force_magnitude_subdivision.py"
       - "tools/ou3_p4_h18_correction_subdivision.py"
       - "tools/ou3_p4_h18_interval_ad_word.py"
@@ -22,6 +23,7 @@ on:
       - "tools/ou3_interval_ad.py"
       - "tools/ou3_interval_linear_algebra.py"
       - "tools/ou3_correlated_kalman_gain.py"
+      - "tools/ou3_physical_force_domain.py"
       - "tools/ou3_p4_h18_force_magnitude_subdivision.py"
       - "tools/ou3_p4_h18_correction_subdivision.py"
       - "tools/ou3_p4_h18_interval_ad_word.py"
@@ -42,7 +44,7 @@ concurrency:
 
 jobs:
   force-cell:
-    name: H18 force cell ${{ matrix.force_index }}
+    name: H18 marine-force cell ${{ matrix.force_index }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
     strategy:
@@ -53,21 +55,28 @@ jobs:
       - uses: actions/checkout@v6
         with:
           persist-credentials: false
-      - name: Compile source subdivision
-        run: python3 -m py_compile tools/ou3_p4_h18_force_magnitude_subdivision.py
+      - name: Compile source subdivision and physical-domain gate
+        run: |
+          python3 -m py_compile \
+            tools/ou3_physical_force_domain.py \
+            tools/ou3_p4_h18_force_magnitude_subdivision.py
       - name: Run one exact source-force cell
         run: |
           python3 tools/ou3_p4_h18_force_magnitude_subdivision.py \
             --source-node-index 0 \
             --force-index ${{ matrix.force_index }} \
             --output /tmp/ou3_p4_h18_force_${{ matrix.force_index }}.json
-      - name: Enforce union-cell scope
+      - name: Enforce marine-envelope union-cell scope
         run: |
           FORCE_INDEX='${{ matrix.force_index }}' python3 - <<'PY'
-          import json, os
+          import json, os, sys
           from pathlib import Path
+          sys.path.insert(0, 'tools')
+          import ou3_physical_force_domain as FORCE
           i=int(os.environ['FORCE_INDEX'])
           d=json.loads(Path(f'/tmp/ou3_p4_h18_force_{i}.json').read_text())
+          physical=FORCE.build()
+          assert FORCE.validate(physical) == [], FORCE.validate(physical)
           assert d['validation_pass'], d['validation_failures']
           assert d['outer_angle_rad'] == 0.80
           assert d['source_node_index'] == 0
@@ -75,10 +84,17 @@ jobs:
           assert d['force_partition_count'] == 4
           assert d['force_partition_index'] == i
           assert d['force_partition_union_preserves_declared_domain'] is True
+          lo,hi=d['declared_force_magnitude_interval_mps2']
+          assert abs(lo-physical['derived_specific_force_norm_lower_mps2']) < 1e-12
+          assert abs(hi-physical['derived_specific_force_norm_upper_mps2']) < 1e-12
+          assert physical['old_independent_30_mps2_cap_used'] is False
+          assert physical['impact_slam_in_scope'] is False
+          assert hi < 2.0*physical['gravity_mps2']
           assert d['source_force_subdivision_is_intermediate_proof_partition_only'] is True
           assert d['physical_state_or_source_domain_shrunk'] is False
           assert d['filter_changed'] is False
           assert d['P4_USABLE_CERTIFICATE_PROMOTED'] is False
+          print('marine total-force envelope:', [lo,hi])
           print('force cell:', i, d['force_partition_interval_mps2'])
           print('completed:', d['word_completed_without_correction_range_failure'])
           print('first failure:', d['first_failure'])
