@@ -18,6 +18,7 @@ import ou3_interval_ad as AD
 import ou3_p4_h18_differential_operations as OPS
 import ou3_p5_full_h_prefix_cells as FULL
 import ou3_source_reachable_matrix_p3 as P3
+import ou3_p4_source_path_reachability as PATH
 
 
 def state(values=None):
@@ -34,6 +35,7 @@ def domain():
 def s_update():
     z = state({0: 0.4, 12: 1.0})
     P = matrix_identity(18)
+    P[0][0] = Interval.point(2.0)
     P[1][12] = P[12][1] = Interval.point(0.01)
     return OPS.accepted_update(
         P, z, FULL._H_S(), matrix_identity(3), OPS.S_residual(z))
@@ -138,8 +140,9 @@ CPP = r"""
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
 #define private public
-#include "kalman_ou_iii/Kalman3D_Wave_OU_III.h"
+#include "kalman_ou_iii/SeaStateFusionFilter_OU_III.h"
 #undef private
+const float g_std = 9.80665f;
 using F = Kalman3D_Wave_OU_III<double,true,false>;
 using V = Eigen::Vector3d;
 using Q = Eigen::Quaterniond;
@@ -159,8 +162,27 @@ void print_c(const char* name, Q q) {
 int main() {
     std::cout << std::setprecision(17);
     {
+        SeaStateFusionFilter_OU_III<TrackerType::KALMANF> wrapper(false);
+        // Call the actual source EMA/staging function. The time increment and
+        // pending-consumption order are those in updateCore_.
+        std::vector<int> staged, committed;
+        for (int k=1; k<=64; ++k) {
+            if (wrapper.online_tune_apply_pending_) committed.push_back(k);
+            wrapper.online_tune_apply_pending_=false;
+            wrapper.time_ += 0.005f;
+            wrapper.adapt_mekf(0.005f,1.0f,0.1f,1.0f,2.0f);
+            if (wrapper.online_tune_apply_pending_) staged.push_back(k);
+        }
+        std::cout << "staged_samples";
+        for (int k:staged) std::cout << " " << k;
+        std::cout << "\ncommitted_samples";
+        for (int k:committed) std::cout << " " << k;
+        std::cout << "\n";
+    }
+    {
         F f=make_filter();
         f.xext(12)=-1.0;
+        f.Pext(0,0)=2.0;
         f.Pext(1,12)=f.Pext(12,1)=0.01;
         Q truth(1,0.2,0,0); truth.normalize();
         f.applyIntegralZeroPseudoMeas();
@@ -239,6 +261,7 @@ class CompiledFilterParityTests(unittest.TestCase):
     def test_prefix_correction_matches_actual_filter(self):
         z=state({0:0.4,12:1.0})
         P=matrix_identity(18)
+        P[0][0]=Interval.point(2.0)
         P[1][12]=P[12][1]=Interval.point(0.01)
         _,_,c,_,_=FULL._measurement_branch_hull(
             P,[x.val for x in z],[x.val for x in z[:3]],
@@ -256,6 +279,23 @@ class CompiledFilterParityTests(unittest.TestCase):
             angular_rate_body=[Interval.point(x) for x in (0.2,-0.3,0.1)])
         for i,value in enumerate(self.golden["predict_c"]):
             self.encloses(out[i].val,value)
+
+    def test_tuner_staging_clock_matches_actual_filter(self):
+        now, last, pending = 0.0, 0.0, False
+        staged, committed = [], []
+        commit = PATH._constants()["commit"]
+        for k in range(1, 65):
+            out = PATH.source_clock_step(now, last, pending, 0.005, commit_s=commit)
+            if out["commit_previous_candidate_before_sample"]:
+                committed.append(k)
+            pending = out["stage_updated_candidate_for_next_sample"]
+            if pending:
+                staged.append(k)
+            now, last = out["time_s"], out["last_stage_s"]
+        self.assertEqual(staged, self.golden["staged_samples"])
+        self.assertEqual(committed, self.golden["committed_samples"])
+        self.assertEqual(staged[:1], [21])
+        self.assertEqual(committed[:1], [22])
 
     def test_forced_S_matches_actual_filter(self):
         z=state({12:3.0})

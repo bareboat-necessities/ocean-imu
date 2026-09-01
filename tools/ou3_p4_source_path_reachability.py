@@ -169,25 +169,66 @@ def _rs_target_box(c):
     return (down(c["min_RS"]), up(c["max_RS"]))
 
 
-def _ema_image(x, target, horizon, min_elapsed):
-    """Conservative image after any elapsed time >= ``min_elapsed``.
+def _ema_image(x, target, horizon, min_elapsed, *, max_elapsed=None):
+    """Convex EMA image, retaining the dependence between a and 1-a.
 
-    For a positive first-order EMA, the total old-state weight is in
-    [0, exp(-min_elapsed/h_max)].  Allowing zero covers an arbitrarily late
-    commit.  Variable targets inside one target box remain inside its convex
-    hull, so the interval affine image is source-complete.
+    The default still includes arbitrarily late commits. A finite upper bound
+    is ONLY for a separately time-labelled transition, never inferred from the
+    commit threshold. The target may vary anywhere in its box during the step.
     """
     h = _iv(horizon)
-    if not h.lo > 0.0:
-        raise RuntimeError("invalid EMA horizon")
+    if not (h.lo > 0.0 and math.isfinite(min_elapsed) and min_elapsed >= 0.0):
+        raise RuntimeError("invalid EMA horizon or elapsed time")
+    if max_elapsed is not None and not (
+        math.isfinite(max_elapsed) and max_elapsed >= min_elapsed
+    ):
+        raise RuntimeError("invalid upper elapsed time")
     exponent = -(I(min_elapsed) / I(h.hi))
     if exponent.lo < -VT.MAX_ABS_ARGUMENT or exponent.hi > 0.0:
         raise RuntimeError("EMA exponent left validated exponential range")
-    a_hi = VT.exp_interval(exponent).hi
-    a = Interval(0.0, up(a_hi))
-    one_minus_a = I(1.0) - a
-    image = a * _iv(x) + one_minus_a * _iv(target)
-    return image.as_list()
+    a_hi = min(1.0, VT.exp_interval(exponent).hi)
+    a_lo = 0.0
+    if max_elapsed is not None:
+        exponent_lo = -(I(max_elapsed) / I(h.lo))
+        if exponent_lo.lo < -VT.MAX_ABS_ARGUMENT:
+            raise RuntimeError("bounded EMA exponent left validated range")
+        a_lo = max(0.0, VT.exp_interval(exponent_lo).lo)
+    # Multi-affine extrema occur at vertices. Independently evaluating the
+    # interval a*x + (1-a)*target would lose convexity and even allow a positive
+    # constant target/state to move towards zero or double its value.
+    vertices = [
+        Interval.point(a)*Interval.point(v)
+        + (Interval.point(1.0)-Interval.point(a))*Interval.point(t)
+        for a in (a_lo, a_hi) for v in x for t in target
+    ]
+    return [min(v.lo for v in vertices), max(v.hi for v in vertices)]
+
+
+def source_clock_step(time_s, last_stage_s, pending, dt, *, commit_s=None):
+    """One valid source sample; binary32 dt and binary64 clock, strict >.
+
+    Return whether the old pending candidate is committed before this sample
+    and whether the new candidate is staged for the NEXT sample. Keep time and
+    last_stage separately: replacing subtraction with an elapsed-time counter
+    is not equivalent at finite precision. No maximum delay is assumed.
+    """
+    step = _f32(dt)
+    commit = _constants()["commit"] if commit_s is None else _f32(commit_s)
+    time_s, last_stage_s = float(time_s), float(last_stage_s)
+    if not (math.isfinite(step) and step > 0 and math.isfinite(time_s)
+            and math.isfinite(last_stage_s) and last_stage_s <= time_s
+            and math.isfinite(commit) and commit > 0):
+        raise ValueError("invalid source clock state")
+    now = time_s + step
+    if not math.isfinite(now):
+        raise ValueError("source clock overflow")
+    stage_next = now - last_stage_s > commit
+    return {
+        "time_s": now,
+        "last_stage_s": now if stage_next else last_stage_s,
+        "commit_previous_candidate_before_sample": bool(pending),
+        "stage_updated_candidate_for_next_sample": stage_next,
+    }
 
 
 def _filter_sigma_box(raw_sigma):

@@ -8,9 +8,9 @@ on:
       - "tools/ou3_p5_full_h_prefix_cells.py"
       - "tools/ou3_source_reachable_matrix_p3*.py"
       - "tools/ou3_p5_marine_chain_audit.py"
-      - "tools/ou3_p5_timed_source_graph.py"
+      - "tools/ou3_p4_source_path_reachability.py"
       - "tests/validation/test_ou3_p5_source_map_parity.py"
-      - "tests/validation/test_ou3_p5_timed_source_graph.py"
+      - "tests/validation/test_ou3_p4_source_path_reachability.py"
       - ".github/workflows/ou3-p5-source-map-audit.yml"
   workflow_dispatch:
 permissions:
@@ -34,7 +34,7 @@ jobs:
         working-directory: tests/validation
         env:
           OU3_REQUIRE_CPP_PARITY: "1"
-        run: python3 -m unittest -v test_ou3_p5_source_map_parity test_ou3_interval_ad
+        run: python3 -m unittest -v test_ou3_p5_source_map_parity test_ou3_interval_ad test_ou3_p4_source_path_reachability
       - name: Existing full-state prefix tests
         working-directory: tests/validation
         run: |
@@ -60,3 +60,33 @@ jobs:
           name: ou3-p3-source-map-audit
           path: /tmp/ou3_p3.json
           if-no-files-found: error
+  chain-report:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Recompute P1 through P5 status and physical bounds
+        run: python3 -u tools/ou3_p1_p5_certificate_numbers.py --output /tmp/ou3_p1_p5.json
+      - name: Print complete chain report
+        run: cat /tmp/ou3_p1_p5.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ou3-p1-p5-marine-audit
+          path: /tmp/ou3_p1_p5.json
+          if-no-files-found: error
+  required-build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Install test dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends g++ make libeigen3-dev unzip curl python3-numpy python3-scipy python3-pandas python3-matplotlib
+      - name: Repository required validation
+        run: make all

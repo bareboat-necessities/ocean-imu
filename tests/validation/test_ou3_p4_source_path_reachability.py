@@ -53,6 +53,25 @@ class P2SourcePathReachabilityTests(unittest.TestCase):
         self.assertLessEqual(image[0], 2.0)
         self.assertGreaterEqual(image[1], 2.2)
 
+    def test_convex_image_does_not_invent_constant_state_motion(self):
+        lo, hi = R._ema_image((3.0, 3.0), (3.0, 3.0), (0.5, 1.0), 0.1)
+        self.assertLessEqual(lo, 3.0)
+        self.assertGreaterEqual(hi, 3.0)
+        self.assertGreater(lo, 3.0-1e-13)
+        self.assertLess(hi, 3.0+1e-13)
+
+    def test_time_label_excludes_instantaneous_target_jump(self):
+        lo, hi = R._ema_image((1.0, 1.0), (2.0, 2.0), (1.0, 1.0),
+                             0.005, max_elapsed=0.005)
+        self.assertGreater(lo, 1.0049)
+        self.assertLess(hi, 1.0051)
+        late = R._ema_image((1.0, 1.0), (2.0, 2.0), (1.0, 1.0), 0.005)
+        self.assertGreaterEqual(late[1], 2.0)
+
+    def test_invalid_time_label_fails(self):
+        with self.assertRaises(RuntimeError):
+            R._ema_image((1, 2), (2, 3), (1, 2), 0.1, max_elapsed=0.005)
+
     def test_old_worst_corner_is_explicit(self):
         self.assertGreater(self.d["old_worst_corner_state_count"], 0)
         self.assertGreaterEqual(self.d["old_worst_corner_states_in_any_recurrent_SCC"], 0)

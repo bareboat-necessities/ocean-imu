@@ -649,7 +649,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     F, Q, Rstep = _transition_and_Q(src, domain)
     Pm = _initial_covariance(src, domain_path)
     e = _initial_error(domain)
-    xhat = [I(0.0) for _ in range(N)]  # source goLive resets the linear mean
+    xhat = [I(0.0) for _ in range(N)]  # first goLive follows an untouched zero constructor mean
 
     q0 = float(heading["gauged_timeout_subbranch"]["full_attitude_cayley_norm_upper"])
     c = _vec_box(q0)
