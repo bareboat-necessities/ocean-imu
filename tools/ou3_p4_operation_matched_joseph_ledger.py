@@ -35,6 +35,12 @@ eta=0 exactly.  Rejected/not-due branches are identities.  Quaternion reset is
 an exact covariance congruence with ||G^-1||_2=1; the explicit Cayley reset
 defect rho remains in the nonlinear return map.
 
+The finite-angle vector-pair producer supplies a useful R^-1-weighted residual
+geometry constant.  That constant is **not** a Joseph information-decrease
+constant: Joseph uses S^-1 with S=H P H^T+R.  This ledger therefore records the
+R^-1 constant only as a strict geometry prerequisite and explicitly blocks its
+use as directional Joseph credit until S is bounded from the same source tuple.
+
 A separate structural-rank certificate proves that the same-sample vector
 packet has exact rank five on the measurement-active block.  Therefore a
 strictly positive scalar full-state packet margin is algebraically impossible;
@@ -42,8 +48,8 @@ directional forms must be transported and accumulated over the complete word.
 
 This producer closes the proof-calculus contract, not the 18/21-state numerical
 word.  It fails closed against entrance shrinkage, undeclared a_w/sigma
-coupling, per-operation sector-invariance promotion, discarded eta terms, and
-premature scalarization of directional information.
+coupling, per-operation sector-invariance promotion, discarded eta terms,
+R^-1/S^-1 confusion, and premature scalarization of directional information.
 """
 from __future__ import annotations
 
@@ -72,7 +78,7 @@ def down(x: float) -> float:
 
 
 def _strict_attitude_geometry_lower(outinfo: dict) -> float:
-    """Return a strict lower bound over all finite-angle attitude nodes."""
+    """Return the strict R^-1 residual-geometry lower over finite-angle nodes."""
     vals = [
         float(row["exact_pair_residual_information_vs_goLive_attitude_metric_lower"])
         for row in outinfo["nodes"].values()
@@ -225,7 +231,11 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "instantaneous_scalar_full_state_packet_margin_valid": False,
         "directional_PSD_word_accumulation_required": True,
         "finite_angle_vector_pair_attitude_geometry_vs_goLive_metric_lower": attitude_geometry_lower,
+        "finite_angle_vector_pair_R_inverse_residual_geometry_lower": attitude_geometry_lower,
+        "finite_angle_vector_pair_residual_geometry_weighting": "R_INVERSE_MEASUREMENT_GEOMETRY_ONLY",
         "finite_angle_vector_pair_attitude_geometry_strict": attitude_geometry_lower > 0.0,
+        "finite_angle_vector_pair_residual_geometry_used_as_Joseph_S_inverse_credit": False,
+        "source_correlated_Joseph_S_inverse_credit_established_here": False,
         "full_state_directional_word_credit_established_here": False,
         "operation_ledger": operation_ledger,
         "strong_route_operation_ledger_closed": not failures,
@@ -233,9 +243,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "P4_USABLE_CERTIFICATE_PROMOTED": False,
         "P5_FINITE_INNER_CAPTURE_ESTABLISHED_HERE": False,
         "next_obligation": (
-            "build source-correlated PSD directional operation forms and signed nonlinear eta forms, transport them through prediction and exact reset, "
-            "accumulate them over recurrent complete H/A words before scalarization, and simultaneously outward-enclose the full 18/21-state "
-            "translation/nontranslation cross block; transient attitude-sector excursions are allowed when the complete-word Lyapunov level decreases"
+            "build source-correlated PSD directional operation forms using the actual Joseph S^-1 from the same H,P,R,K,S source tuple, keep the signed nonlinear eta forms, transport them through prediction and exact reset, accumulate them over recurrent complete H/A words before scalarization, and simultaneously outward-enclose the full 18/21-state translation/nontranslation cross block; transient attitude-sector excursions are allowed when the complete-word Lyapunov level decreases"
         ),
         "failures": failures,
     }
@@ -271,6 +279,8 @@ def validate(d: dict) -> list[str]:
         "magnetometer_radial_eta_changes_state",
         "reset_condition_number_multiplier_used",
         "instantaneous_scalar_full_state_packet_margin_valid",
+        "finite_angle_vector_pair_residual_geometry_used_as_Joseph_S_inverse_credit",
+        "source_correlated_Joseph_S_inverse_credit_established_here",
         "full_state_directional_word_credit_established_here",
         "P4_COMPLETE_WORD_DISSIPATION_ESTABLISHED_HERE",
         "P4_USABLE_CERTIFICATE_PROMOTED",
@@ -289,6 +299,10 @@ def validate(d: dict) -> list[str]:
     x = d.get("finite_angle_vector_pair_attitude_geometry_vs_goLive_metric_lower")
     if not isinstance(x, (int, float)) or not math.isfinite(float(x)) or float(x) <= 0.0:
         f.append("attitude-geometry vector-pair lower is invalid")
+    if d.get("finite_angle_vector_pair_R_inverse_residual_geometry_lower") != x:
+        f.append("R^-1 residual-geometry diagnostic drifted")
+    if d.get("finite_angle_vector_pair_residual_geometry_weighting") != "R_INVERSE_MEASUREMENT_GEOMETRY_ONLY":
+        f.append("finite-angle residual geometry weighting is not explicitly R^-1 only")
 
     ledger = {row.get("operation"): row for row in d.get("operation_ledger", [])}
     acc = ledger.get("accelerometer_accepted", {})
@@ -304,6 +318,10 @@ def validate(d: dict) -> list[str]:
         f.append("accelerometer ledger promoted an attitude-only credit")
     if "eta_a^T R_a^-1 eta_a" not in str(acc.get("exact_information_decrease", "")):
         f.append("accelerometer ledger lost signed Joseph eta penalty")
+
+    mag = ledger.get("magnetometer_accepted", {})
+    if mag.get("radial_eta_independent_penalty_used") is not False:
+        f.append("magnetometer ledger reintroduced an independent radial eta penalty")
 
     reset = ledger.get("quaternion_injection_and_left_error_reset", {})
     if float(reset.get("reset_inverse_operator_norm_upper", math.inf)) != 1.0:
@@ -329,7 +347,8 @@ def main() -> int:
         "outer_rad": d["operation_matched_outer_angle_rad"],
         "packet_rank": d["directional_packet_rank_exact"],
         "instantaneous_scalar_margin_valid": d["instantaneous_scalar_full_state_packet_margin_valid"],
-        "attitude_geometry_lower": d["finite_angle_vector_pair_attitude_geometry_vs_goLive_metric_lower"],
+        "R_inverse_residual_geometry_lower": d["finite_angle_vector_pair_R_inverse_residual_geometry_lower"],
+        "Joseph_S_inverse_credit_established": d["source_correlated_Joseph_S_inverse_credit_established_here"],
         "finite_angle_eta_penalty_dropped": d["accelerometer_finite_angle_eta_penalty_dropped_from_Joseph_identity"],
         "P4_promoted": d["P4_USABLE_CERTIFICATE_PROMOTED"],
         "next_obligation": d["next_obligation"],
