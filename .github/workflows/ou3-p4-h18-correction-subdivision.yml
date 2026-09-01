@@ -1,0 +1,91 @@
+name: ou3-p4-h18-correction-subdivision
+
+on:
+  push:
+    paths:
+      - "tools/ou3_interval.py"
+      - "tools/ou3_interval_ad.py"
+      - "tools/ou3_proof_module_state.py"
+      - "tools/ou3_p4_candidate_full_word.py"
+      - "tools/ou3_p4_h18_differential_operations.py"
+      - "tools/ou3_p4_h18_interval_ad_word.py"
+      - "tools/ou3_p4_h18_correction_subdivision.py"
+      - "tools/ou3_p4_source_node_cells.py"
+      - "tools/ou3_p4_source_path_reachability.py"
+      - "tools/ou3_p5_full_h_prefix_cells.py"
+      - "tools/ou3_p5_full_h_prefix_cells_v2.py"
+      - "tools/ou3_proof_operating_domain.json"
+      - ".github/workflows/ou3-p4-h18-correction-subdivision.yml"
+  pull_request:
+    paths:
+      - "tools/ou3_interval.py"
+      - "tools/ou3_interval_ad.py"
+      - "tools/ou3_proof_module_state.py"
+      - "tools/ou3_p4_candidate_full_word.py"
+      - "tools/ou3_p4_h18_differential_operations.py"
+      - "tools/ou3_p4_h18_interval_ad_word.py"
+      - "tools/ou3_p4_h18_correction_subdivision.py"
+      - "tools/ou3_p4_source_node_cells.py"
+      - "tools/ou3_p4_source_path_reachability.py"
+      - "tools/ou3_p5_full_h_prefix_cells.py"
+      - "tools/ou3_p5_full_h_prefix_cells_v2.py"
+      - "tools/ou3_proof_operating_domain.json"
+      - ".github/workflows/ou3-p4-h18-correction-subdivision.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ou3-p4-h18-correction-subdivision-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  correction-subdivision:
+    name: H18 failing-cell correction subdivision
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Compile correction subdivision producer
+        run: |
+          python3 -m py_compile \
+            tools/ou3_p4_h18_correction_subdivision.py
+
+      - name: Subdivide the first failing outer-ball cell on exact P2 node zero
+        run: |
+          python3 tools/ou3_p4_h18_correction_subdivision.py \
+            --source-node-index 0 \
+            --depth 1 \
+            --output /tmp/ou3_p4_h18_correction_subdivision.json
+
+      - name: Enforce attributed fail-closed diagnostic
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          d = json.loads(Path('/tmp/ou3_p4_h18_correction_subdivision.json').read_text())
+          assert d['validation_pass'], d['validation_failures']
+          assert d['outer_angle_rad'] == 0.80
+          assert d['source_node_index'] == 0
+          assert d['full_word_samples'] == 202
+          assert d['children_intersecting_outer_ball'] > 1
+          assert d['adaptive_state_cell_subdivision_required'] is True
+          assert d['source_cell_subdivision_used_for_this_test'] is False
+          assert d['P4_USABLE_CERTIFICATE_PROMOTED'] is False
+          for row in d['child_results']:
+              failure = row['first_failure']
+              if failure is not None:
+                  assert failure['operation'] in {
+                      'mandatory_S', 'mandatory_accelerometer', 'mandatory_magnetometer'
+                  }, failure
+                  assert failure['step'] is not None
+                  assert failure['correction_norm_upper_rad'] > 6.0
+          print('children:', d['children_completed_without_correction_range_failure'], '/', d['children_intersecting_outer_ball'])
+          print('all correction ranges closed:', d['all_children_completed_without_correction_range_failure'])
+          print('maximum correction norm upper:', d['maximum_correction_norm_upper_rad'])
+          print('attributed failures:', d['attributed_failures'])
+          print('next:', d['next_obligation'])
+          PY
