@@ -83,7 +83,7 @@ class Ou3P545DegSample1HGroupNormTests(unittest.TestCase):
         'factor',d['startup_intersection_improvement_factor'],
         'generic45',d['generic_P5_45deg_entrance_covered_here'])
 
- def test_joint_attitude_aw_innovation_contraction_on_generic_45deg_entrance(self):
+ def test_joint_attitude_aw_current_innovation_cancellation_on_generic_45deg_entrance(self):
   d=self.j
   self.assertEqual(J.validate(d),[])
   self.assertEqual(d['P5_FIRST_ACCEL_JOINT_INNOVATION_CONTRACTION'],'PASS')
@@ -91,16 +91,18 @@ class Ou3P545DegSample1HGroupNormTests(unittest.TestCase):
   self.assertFalse(d['additional_P1_tilt_bound_used'])
   self.assertTrue(d['J_aw_orthogonality_used'])
   self.assertTrue(d['first_theta_aw_cross_covariance_exact_zero_used'])
+  self.assertTrue(d['due_S_positive_conditional_aw_Schur_lower_used'])
   self.assertFalse(d['held_accel_bias_falsely_contracted'])
   self.assertFalse(d['attitude_alone_claimed_contracting'])
-  self.assertLess(d['worst_joint_state_residual_contraction_factor_upper'],1.0)
-  self.assertLess(d['worst_post_state_correction_total_effective_residual_upper_mps2'],
-                  d['worst_pre_update_total_effective_residual_upper_mps2'])
-  print('JOINT_FIRST_ACCEL_INNOVATION',
-        'gamma',d['worst_joint_state_residual_contraction_factor_upper'],
-        'pre',d['worst_pre_update_total_effective_residual_upper_mps2'],
-        'post',d['worst_post_state_correction_total_effective_residual_upper_mps2'],
-        'factor',d['total_effective_residual_improvement_factor_lower'])
+  self.assertFalse(d['same_linearization_remainder_claimed_as_next_physical_residual'])
+  self.assertFalse(d['quaternion_reset_composed_here'])
+  self.assertLess(d['worst_joint_current_effective_input_remainder_factor_upper'],1.0)
+  self.assertGreater(d['minimum_cell_total_remainder_improvement_factor_lower'],1.0)
+  print('JOINT_FIRST_ACCEL_CURRENT_INPUT',
+        'gamma',d['worst_joint_current_effective_input_remainder_factor_upper'],
+        'pre',d['worst_pre_update_total_effective_input_upper_mps2'],
+        'same_linearization_remainder',d['worst_same_linearization_total_remainder_upper_mps2'],
+        'min_factor',d['minimum_cell_total_remainder_improvement_factor_lower'])
 
  def test_no_filter_or_replay_change(self):
   d=self.d
