@@ -304,7 +304,26 @@ def validate(d: dict) -> list[str]:
     if d.get("finite_angle_vector_pair_residual_geometry_weighting") != "R_INVERSE_MEASUREMENT_GEOMETRY_ONLY":
         f.append("finite-angle residual geometry weighting is not explicitly R^-1 only")
 
-    ledger = {row.get("operation"): row for row in d.get("operation_ledger", [])}
+    rows = d.get("operation_ledger", [])
+    required_operations = {
+        "S_zero_accepted",
+        "accelerometer_accepted",
+        "magnetometer_accepted",
+        "measurement_rejected_or_not_due",
+        "quaternion_injection_and_left_error_reset",
+    }
+    operation_names = [row.get("operation") for row in rows if isinstance(row, dict)]
+    if len(rows) != len(required_operations) or len(operation_names) != len(rows) \
+            or set(operation_names) != required_operations or len(set(operation_names)) != len(operation_names):
+        f.append("operation ledger does not contain the exact required operation set")
+    ledger = {row.get("operation"): row for row in rows if isinstance(row, dict)}
+
+    s_zero = ledger.get("S_zero_accepted", {})
+    if s_zero.get("nonlinear_eta") != "IDENTICALLY_ZERO":
+        f.append("S-zero ledger lost exact zero nonlinear eta")
+    if s_zero.get("exact_information_decrease") != "y^T S^-1 y":
+        f.append("S-zero ledger lost exact Joseph information decrease")
+
     acc = ledger.get("accelerometer_accepted", {})
     if acc.get("large_declared_aw_error_is_measurement_eta") is not False:
         f.append("accelerometer ledger reclassified a_w state error as measurement eta")
@@ -322,6 +341,10 @@ def validate(d: dict) -> list[str]:
     mag = ledger.get("magnetometer_accepted", {})
     if mag.get("radial_eta_independent_penalty_used") is not False:
         f.append("magnetometer ledger reintroduced an independent radial eta penalty")
+
+    rejected = ledger.get("measurement_rejected_or_not_due", {})
+    if rejected.get("state_covariance_map") != "IDENTITY" or rejected.get("information_change") != "ZERO":
+        f.append("rejected/not-due ledger is not the exact identity/zero-information branch")
 
     reset = ledger.get("quaternion_injection_and_left_error_reset", {})
     if float(reset.get("reset_inverse_operator_norm_upper", math.inf)) != 1.0:
