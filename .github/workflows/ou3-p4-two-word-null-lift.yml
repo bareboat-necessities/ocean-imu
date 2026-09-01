@@ -6,6 +6,10 @@ on:
       - "tools/ou3_interval.py"
       - "tools/ou3_interval_ad.py"
       - "tools/ou3_proof_module_state.py"
+      - "tools/ou3_validated_transcendentals.py"
+      - "tools/ou3_p4_group_algebra.py"
+      - "tools/ou3_p5_deployed_quaternion_cayley_cell.py"
+      - "tools/ou3_p5_full_h_prefix_cells.py"
       - "tools/ou3_p4_h18_differential_operations.py"
       - "tools/ou3_p4_two_word_packet_null_lift.py"
       - "tools/ou3_p4_directional_packet_rank.py"
@@ -17,6 +21,7 @@ on:
       - "tools/ou3_proof_operating_domain.json"
       - "tests/validation/test_ou3_interval_ad.py"
       - "tests/validation/test_ou3_p4_source_node_cells.py"
+      - "tests/validation/test_ou3_p4_directional_packet_rank.py"
       - "tests/validation/test_ou3_p4_two_word_packet_null_lift.py"
       - ".github/workflows/ou3-p4-two-word-null-lift.yml"
   pull_request:
@@ -24,6 +29,10 @@ on:
       - "tools/ou3_interval.py"
       - "tools/ou3_interval_ad.py"
       - "tools/ou3_proof_module_state.py"
+      - "tools/ou3_validated_transcendentals.py"
+      - "tools/ou3_p4_group_algebra.py"
+      - "tools/ou3_p5_deployed_quaternion_cayley_cell.py"
+      - "tools/ou3_p5_full_h_prefix_cells.py"
       - "tools/ou3_p4_h18_differential_operations.py"
       - "tools/ou3_p4_two_word_packet_null_lift.py"
       - "tools/ou3_p4_directional_packet_rank.py"
@@ -35,6 +44,7 @@ on:
       - "tools/ou3_proof_operating_domain.json"
       - "tests/validation/test_ou3_interval_ad.py"
       - "tests/validation/test_ou3_p4_source_node_cells.py"
+      - "tests/validation/test_ou3_p4_directional_packet_rank.py"
       - "tests/validation/test_ou3_p4_two_word_packet_null_lift.py"
       - ".github/workflows/ou3-p4-two-word-null-lift.yml"
   workflow_dispatch:
@@ -53,6 +63,8 @@ jobs:
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
 
       - name: Compile shared source, AD and null-lift producers
         run: |
@@ -60,17 +72,20 @@ jobs:
             tools/ou3_interval_ad.py \
             tools/ou3_p4_source_node_cells.py \
             tools/ou3_p4_h18_differential_operations.py \
+            tools/ou3_p4_directional_packet_rank.py \
             tools/ou3_p4_two_word_packet_null_lift.py \
             tests/validation/test_ou3_interval_ad.py \
             tests/validation/test_ou3_p4_source_node_cells.py \
+            tests/validation/test_ou3_p4_directional_packet_rank.py \
             tests/validation/test_ou3_p4_two_word_packet_null_lift.py
 
-      - name: Run shared source, AD and null-lift tests
+      - name: Run shared source, rank, AD and null-lift tests
         working-directory: tests/validation
         run: |
           python3 -m unittest -v \
             test_ou3_interval_ad \
             test_ou3_p4_source_node_cells \
+            test_ou3_p4_directional_packet_rank \
             test_ou3_p4_two_word_packet_null_lift
 
       - name: Emit source-uniform two-word null lift
@@ -86,6 +101,7 @@ jobs:
 
           d = json.loads(Path('/tmp/ou3_p4_two_word_packet_null_lift.json').read_text())
           assert d['validation_pass'], d['validation_failures']
+          assert d['source_node_partition_is_compiled_shipping_source_invariant'] is True
           assert d['exact_P2_source_node_partition_used'] is True
           assert d['P2_source_node_count'] == 800
           assert d['packet_rank_exact'] == 5
