@@ -18,6 +18,32 @@ class Ou3IntervalADTests(unittest.TestCase):
         self.assertLessEqual(y.der[0].lo, 11.0 / 9.0)
         self.assertGreaterEqual(y.der[0].hi, 11.0 / 9.0)
 
+    def test_square_preserves_nonnegative_range_across_zero(self):
+        x = AD.independent(Interval.outward_bounds(-3.0, 2.0), 0, 1)
+        y = x.square()
+        self.assertGreaterEqual(y.val.lo, 0.0)
+        self.assertLessEqual(y.val.lo, 0.0)
+        self.assertGreaterEqual(y.val.hi, 9.0)
+        self.assertLessEqual(y.der[0].lo, -6.0)
+        self.assertGreaterEqual(y.der[0].hi, 4.0)
+
+    def test_squared_norm_and_wide_cayley_denominator_do_not_spuriously_cross_zero(self):
+        c = [
+            AD.independent(Interval.outward_bounds(-5.0, 5.0), i, 3)
+            for i in range(3)
+        ]
+        c2 = AD.squared_norm(c)
+        self.assertGreaterEqual(c2.val.lo, 0.0)
+        self.assertGreaterEqual(c2.val.hi, 75.0)
+        # The exact inverse-Cayley denominator is 4+||c||^2 >= 4.  A broad
+        # coordinate cell may widen the rotation entries, but it must not fail
+        # merely because interval x*x invented a negative lower square bound.
+        R = AD.rotation_from_cayley(c)
+        for row in R:
+            for x in row:
+                self.assertTrue(math.isfinite(x.val.lo))
+                self.assertTrue(math.isfinite(x.val.hi))
+
     def test_cayley_rotation_is_identity_and_has_correct_local_generator(self):
         c = [AD.independent(Interval.point(0.0), i, 3) for i in range(3)]
         R = AD.rotation_from_cayley(c)
