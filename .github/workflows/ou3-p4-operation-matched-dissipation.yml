@@ -3,6 +3,7 @@ name: ou3-p4-operation-matched-dissipation
 on:
   push:
     paths:
+      - "tools/ou3_physical_force_domain.py"
       - "tools/ou3_p4_operation_matched_joseph_ledger.py"
       - "tools/ou3_p4_directional_packet_rank.py"
       - "tools/ou3_p4_operation_matched_sector_certificate.py"
@@ -15,6 +16,7 @@ on:
       - "tools/ou3_proof_operating_domain.json"
       - "src/kalman_ou_iii/**"
       - "src/kalman_ou_common/**"
+      - "tests/validation/test_ou3_physical_force_domain.py"
       - "tests/validation/test_ou3_p4_operation_matched_joseph_ledger.py"
       - "tests/validation/test_ou3_p4_directional_packet_rank.py"
       - "tests/validation/Makefile"
@@ -23,6 +25,7 @@ on:
       - ".github/workflows/ou3-p4-operation-matched-dissipation.yml"
   pull_request:
     paths:
+      - "tools/ou3_physical_force_domain.py"
       - "tools/ou3_p4_operation_matched_joseph_ledger.py"
       - "tools/ou3_p4_directional_packet_rank.py"
       - "tools/ou3_p4_operation_matched_sector_certificate.py"
@@ -35,6 +38,7 @@ on:
       - "tools/ou3_proof_operating_domain.json"
       - "src/kalman_ou_iii/**"
       - "src/kalman_ou_common/**"
+      - "tests/validation/test_ou3_physical_force_domain.py"
       - "tests/validation/test_ou3_p4_operation_matched_joseph_ledger.py"
       - "tests/validation/test_ou3_p4_directional_packet_rank.py"
       - "tests/validation/Makefile"
@@ -63,8 +67,10 @@ jobs:
       - name: Compile producers and tests
         run: |
           python3 -m py_compile \
+            tools/ou3_physical_force_domain.py \
             tools/ou3_p4_operation_matched_joseph_ledger.py \
             tools/ou3_p4_directional_packet_rank.py \
+            tests/validation/test_ou3_physical_force_domain.py \
             tests/validation/test_ou3_p4_operation_matched_joseph_ledger.py \
             tests/validation/test_ou3_p4_directional_packet_rank.py
 
@@ -72,8 +78,14 @@ jobs:
         working-directory: tests/validation
         run: |
           python3 -m unittest -v \
+            test_ou3_physical_force_domain \
             test_ou3_p4_directional_packet_rank \
             test_ou3_p4_operation_matched_joseph_ledger
+
+      - name: Emit marine physical-force certificate
+        run: |
+          python3 tools/ou3_physical_force_domain.py \
+            --output /tmp/ou3_physical_force_domain.json
 
       - name: Emit directional packet rank certificate
         run: |
@@ -85,14 +97,23 @@ jobs:
           python3 tools/ou3_p4_operation_matched_joseph_ledger.py \
             --output /tmp/ou3_p4_operation_matched_joseph_ledger.json
 
-      - name: Enforce directional rank, signed Joseph, no-shrink and fail-closed scope
+      - name: Enforce marine force domain, directional rank, signed Joseph and fail-closed scope
         run: |
           python3 - <<'PY'
           import json
           from pathlib import Path
 
+          force = json.loads(Path('/tmp/ou3_physical_force_domain.json').read_text())
           rank = json.loads(Path('/tmp/ou3_p4_directional_packet_rank.json').read_text())
           d = json.loads(Path('/tmp/ou3_p4_operation_matched_joseph_ledger.json').read_text())
+
+          assert force['validation_pass'], force['validation_failures']
+          assert force['non_gravitational_cog_acceleration_norm_upper_mps2'] == 4.0
+          assert abs(force['derived_specific_force_norm_lower_mps2'] - 5.80665) < 1e-12
+          assert abs(force['derived_specific_force_norm_upper_mps2'] - 13.80665) < 1e-12
+          assert force['old_independent_30_mps2_cap_used'] is False
+          assert force['impact_slam_in_scope'] is False
+          assert force['lever_arm_enabled'] is False
 
           assert rank['validation_pass'], rank['validation_failures']
           assert rank['measurement_structure']['accelerometer_rank_exact'] == 3
@@ -148,6 +169,8 @@ jobs:
           assert acc['finite_angle_eta_independently_maximized'] is False
           assert 'eta_a^T R_a^-1 eta_a' in acc['exact_information_decrease']
 
+          print('marine non-grav CoG accel max:', force['non_gravitational_cog_acceleration_norm_upper_mps2'])
+          print('marine total specific-force envelope:', force['derived_specific_force_norm_lower_mps2'], force['derived_specific_force_norm_upper_mps2'])
           print('vector packet exact rank:', rank['measurement_structure']['stacked_vector_packet_rank_exact'])
           print('H/A active nullity:', rank['modes']['H']['stacked_vector_packet_nullity_exact_on_active_block'], rank['modes']['A']['stacked_vector_packet_nullity_exact_on_active_block'])
           print('45deg entrance q:', d['declared_P5_entrance_q_upper'])
