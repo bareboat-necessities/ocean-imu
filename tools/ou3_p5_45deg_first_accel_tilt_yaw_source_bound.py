@@ -162,7 +162,8 @@ def validate(d: dict) -> list[str]:
     factor = float(d.get("startup_sample1_vs_generic_signed_improvement_factor", 0.0))
     if not (math.isfinite(factor) and factor > 1.0):
         f.append("startup sample1 improvement factor is not strict")
-    if float(d.get("next_prediction_dt_s", -1.0)) != 0.005:
+    dt = float(d.get("next_prediction_dt_s", -1.0))
+    if not math.isclose(dt, 0.005, rel_tol=0.0, abs_tol=math.ulp(0.005)):
         f.append("next prediction step is not the deployed 5 ms interval")
     if d.get("P5_DEPLOYED_STARTUP_TILT_YAW_FIRST_ACCEL_SUBROUTE") == "PASS" and f:
         f.append("PASS carries validation failures")
