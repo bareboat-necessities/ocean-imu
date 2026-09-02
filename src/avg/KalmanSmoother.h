@@ -1,6 +1,8 @@
 #ifndef KalmanSmoother_h
 #define KalmanSmoother_h
 
+#include <cmath>
+
 /*
    A one dimensional Kalman filter implementation - a single variable smoother filter
 
@@ -54,21 +56,17 @@ typedef struct kalman_smoother_vars {
   double x; // value
 } KalmanSmootherVars;
 
-void kalman_smoother_init(KalmanSmootherVars* s, double process_noise, double sensor_noise, double estimated_error);
-void kalman_smoother_set_initial(KalmanSmootherVars* s, double intial_value);
-double kalman_smoother_update(KalmanSmootherVars* s, double measurement);
-
-void kalman_smoother_init(KalmanSmootherVars* s, double process_noise, double sensor_noise, double estimated_error) {
+inline void kalman_smoother_init(KalmanSmootherVars* s, double process_noise, double sensor_noise, double estimated_error) {
   s->q = process_noise;
   s->r = sensor_noise;
   s->p = estimated_error;
 }
 
-void kalman_smoother_set_initial(KalmanSmootherVars* s, double initial_value) {
+inline void kalman_smoother_set_initial(KalmanSmootherVars* s, double initial_value) {
   s->x = initial_value;
 }
 
-double kalman_smoother_update(KalmanSmootherVars* s, double measurement) {
+inline double kalman_smoother_update(KalmanSmootherVars* s, double measurement) {
   // measurement update
   s->k = s->p / (s->p + s->r);
   double current_estimate = s->x + s->k * (measurement - s->x);
