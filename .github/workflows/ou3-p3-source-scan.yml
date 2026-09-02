@@ -77,3 +77,27 @@ jobs:
           name: ou3-p3-source-cell-scan
           path: /tmp/ou3_p3_source_cell_scan.json
           retention-days: 7
+
+  source-indexed-metric-scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Compile finite-speed source metric diagnostic
+        run: |
+          python3 -m py_compile tools/ou3_p3_source_indexed_metric_scan.py
+
+      - name: Scan source-indexed metric switching on finite-stage graph
+        run: |
+          python3 tools/ou3_p3_source_indexed_metric_scan.py \
+            --output /tmp/ou3_p3_source_indexed_metric_scan.json
+
+      - name: Upload source-indexed metric diagnostic
+        uses: actions/upload-artifact@v6
+        with:
+          name: ou3-p3-source-indexed-metric-scan
+          path: /tmp/ou3_p3_source_indexed_metric_scan.json
+          retention-days: 7
