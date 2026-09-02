@@ -110,11 +110,12 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Compile current P4 sector route
+      - name: Compile retained P4 sector route
         run: |
           python3 -m py_compile \
             tools/ou3_p4_cayley_sector_certificate.py \
             tools/ou3_p4_vector_remainder_sector.py \
+            tools/ou3_p4_effective_vector_inputs.py \
             tools/ou3_p4_source_word_timing.py \
             tools/ou3_p4_signed_joseph_sector_inputs.py
 
@@ -124,6 +125,24 @@ jobs:
             --output /tmp/ou3_p4_cayley_sector.json
           python3 tools/ou3_p4_vector_remainder_sector.py \
             --output /tmp/ou3_p4_vector_remainder.json
+          python3 tools/ou3_p4_effective_vector_inputs.py \
+            --output /tmp/ou3_p4_effective_vector_inputs.json
+
+      - name: Print exact effective-input widening
+        if: always()
+        run: |
+          if [ -f /tmp/ou3_p4_effective_vector_inputs.json ]; then
+            python3 - <<'PY'
+          import json
+          d = json.load(open('/tmp/ou3_p4_effective_vector_inputs.json'))
+          print('pass', d.get('validation_pass'))
+          print('q_upper', d.get('cayley_radius_upper'))
+          print('mag_radial_null', d.get('mag_radial_residual_gain_null_exact'))
+          print('mag_tangent_defect', d.get('mag_effective_coordinate_tangent_defect_factor_upper'))
+          print('acc_eta_in_aw_range', d.get('acc_eta_in_aw_measurement_range_exact'))
+          print('acc_effective_aw_input_norm', d.get('acc_effective_aw_input_norm_upper_mps2'))
+          PY
+          fi
 
       - name: Upload P4 sector primitives
         if: always()
@@ -133,6 +152,7 @@ jobs:
           path: |
             /tmp/ou3_p4_cayley_sector.json
             /tmp/ou3_p4_vector_remainder.json
+            /tmp/ou3_p4_effective_vector_inputs.json
           if-no-files-found: warn
           retention-days: 7
 
@@ -145,37 +165,39 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Build global signed-Joseph nonlinear budget forms
+      - name: Build retained same-metric P3 to P4 composition contract
         run: |
           python3 tools/ou3_p4_signed_joseph_sector_inputs.py \
             --output /tmp/ou3_p4_signed_joseph_sector_inputs.json
 
-      - name: Print H/A optimized nonlinear charges
+      - name: Print H/A effective-input composition inputs
         if: always()
         run: |
           if [ -f /tmp/ou3_p4_signed_joseph_sector_inputs.json ]; then
             python3 - <<'PY'
           import json
           d = json.load(open('/tmp/ou3_p4_signed_joseph_sector_inputs.json'))
-          print('P3', d.get('P3_ESTABLISHED'), 'P4', d.get('P4_COMPLETE_WORD_DISSIPATION_ESTABLISHED'))
+          print('P3', d.get('P3_ESTABLISHED'))
+          print('composition_prerequisites', d.get('P4_COMPOSITION_PREREQUISITES_ESTABLISHED'))
+          print('P4', d.get('P4_COMPLETE_WORD_DISSIPATION_ESTABLISHED'))
+          print('same_metric', d.get('same_information_metric_retained'))
+          print('standalone_eta_active', d.get('standalone_vector_eta_penalty_active'))
           for mode in ('H', 'A'):
               m = d.get('modes', {}).get(mode, {})
-              y = m.get('optimized_accelerometer_young', {})
-              e = m.get('normalized_eps1', {})
               print(mode,
                     'linear_delta', m.get('P3_relative_Riccati_injection_margin_lower'),
-                    'mag_metric_charge', e.get('mag_theta_charge_upper'),
-                    'acc_eps_star', y.get('epsilon_star'),
-                    'acc_minimax_metric_charge', y.get('minimax_metric_charge_upper'))
+                    'mag_tangent_defect', m.get('mag_effective_coordinate_tangent_defect_factor_upper'),
+                    'acc_force_factor', m.get('acc_force_remainder_factor_upper'),
+                    'acc_aw_factor', m.get('acc_aw_rotation_factor_upper'))
           print('next:', d.get('next_obligation'))
           PY
           fi
 
-      - name: Upload P4 signed-Joseph composition inputs
+      - name: Upload P4 effective-input composition contract
         if: always()
         uses: actions/upload-artifact@v6
         with:
-          name: ou3-p4-signed-joseph-inputs
+          name: ou3-p4-effective-input-composition
           path: /tmp/ou3_p4_signed_joseph_sector_inputs.json
           if-no-files-found: warn
           retention-days: 7
