@@ -24,6 +24,11 @@ class OU3CertificateDeadEndNonRegressionTests(unittest.TestCase):
     ceiling.  PR #438 supplied valuable complete-word translation machinery but
     also demonstrated that a widened translation block is only partial evidence
     until the complete full-state cross coupling and nonlinear return map close.
+
+    The normal-Live force guard here tracks the declared marine acceleration
+    envelope rather than the retired standalone 5 and 30 m/s^2 accelerometer
+    rails; those rails are now derived from it (see
+    ``tools/ou3_physical_force_domain.py``).
     """
 
     @classmethod
@@ -68,7 +73,27 @@ class OU3CertificateDeadEndNonRegressionTests(unittest.TestCase):
         )
 
         live = d["normal_live"]
-        self.assertLessEqual(live["specific_force_norm_lower_mps2"], 5.0)
+        # The normal-Live accelerometer envelope is no longer a pair of
+        # independently declared magnitude rails.  The declared physical
+        # assumption is the CoG non-gravitational acceleration bound, and with
+        # the lever arm disabled the force rails are its triangle-inequality
+        # consequence g-a_max <= ||f|| <= g+a_max.  Freeze the acceleration
+        # bound itself -- the knob that actually sizes the domain -- and require
+        # both rails to stay exactly derived from it, so neither the floor can
+        # be raised nor the ceiling lowered on its own to pass a gate.
+        self.assertIs(
+            live["specific_force_bounds_derived_from_gravity_and_non_gravitational_acceleration"],
+            True,
+        )
+        self.assertIs(live["impact_slam_acceleration_in_normal_live_P1_P5_scope"], False)
+        a_max = live["non_gravitational_cog_acceleration_norm_upper_mps2"]
+        self.assertGreaterEqual(a_max, 4.0)
+        self.assertAlmostEqual(
+            live["specific_force_norm_lower_mps2"], s["gravity_mps2"] - a_max, places=12
+        )
+        self.assertAlmostEqual(
+            live["specific_force_norm_upper_mps2"], s["gravity_mps2"] + a_max, places=12
+        )
         self.assertLessEqual(live["magnetic_vector_norm_lower_uT"], 10.0)
         self.assertLessEqual(live["vector_sine_separation_lower"], 0.1)
         self.assertGreaterEqual(live["body_rate_norm_upper_deg_s"], 30.0)
