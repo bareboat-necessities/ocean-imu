@@ -104,6 +104,32 @@ jobs:
             /tmp/ou3_p3_canonical_gate.json
           retention-days: 7
 
+  correlated-segment-transfer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Compile correlated full-matrix segment transfer
+        run: |
+          python3 -m py_compile \
+            tools/ou3_p3_correlated_translation_segment.py \
+            tests/validation/test_ou3_p3_correlated_translation_segment.py
+      - name: Test P2 V1 full-matrix segment semantics
+        working-directory: tests/validation
+        run: python3 -m unittest -v test_ou3_p3_correlated_translation_segment
+      - name: Emit representative correlated segment certificate
+        run: |
+          python3 tools/ou3_p3_correlated_translation_segment.py \
+            --output /tmp/ou3_p3_correlated_translation_segment.json
+      - name: Upload correlated segment primitive
+        uses: actions/upload-artifact@v6
+        with:
+          name: ou3-p3-correlated-full-matrix-segment
+          path: /tmp/ou3_p3_correlated_translation_segment.json
+          retention-days: 7
+
   e3-p3:
     runs-on: ubuntu-latest
     timeout-minutes: 45
