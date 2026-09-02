@@ -19,6 +19,10 @@ on:
       - ".github/workflows/ou3-p3-source-scan.yml"
   workflow_dispatch:
 
+concurrency:
+  group: ou3-p3-source-scan-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
@@ -31,11 +35,13 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Compile frozen P2 to P3 and canonical P3 interfaces
+      - name: Compile frozen P2 correlation and canonical P3 interfaces
         run: |
           python3 -m py_compile \
+            tools/ou3_p2_correlation_path_memory.py \
             tools/ou3_p2_p3_correlation_interface.py \
             tools/ou3_p3_canonical_gate.py \
+            tests/validation/test_ou3_p2_correlation_path_memory.py \
             tests/validation/test_ou3_p2_p3_correlation_interface.py \
             tests/validation/test_ou3_p3_canonical_gate.py
 
@@ -43,8 +49,14 @@ jobs:
         working-directory: tests/validation
         run: |
           python3 -m unittest -v \
+            test_ou3_p2_correlation_path_memory \
             test_ou3_p2_p3_correlation_interface \
             test_ou3_p3_canonical_gate
+
+      - name: Emit P2 correlation path-memory certificate
+        run: |
+          python3 tools/ou3_p2_correlation_path_memory.py \
+            --output /tmp/ou3_p2_correlation_path_memory.json
 
       - name: Emit P2 to P3 interface status
         run: |
@@ -56,22 +68,27 @@ jobs:
           python3 tools/ou3_p3_canonical_gate.py \
             --output /tmp/ou3_p3_canonical_gate.json
 
-      - name: Enforce current fail-closed theorem state
+      - name: Enforce refined P2 ready and canonical P3 still blocked
         run: |
           python3 - <<'PY'
           import json
+          corr=json.load(open('/tmp/ou3_p2_correlation_path_memory.json'))
           p2=json.load(open('/tmp/ou3_p2_p3_correlation_interface.json'))
           p3=json.load(open('/tmp/ou3_p3_canonical_gate.json'))
+          assert corr['validation_pass'], corr['validation_failures']
+          assert corr['P2_CORRELATION_INTERFACE_CERTIFICATE'] == 'PASS'
           assert p2['validation_pass'], p2['validation_failures']
           assert p3['validation_pass'], p3['validation_failures']
           assert p2['P2_source_timing_certificate_pass'] is True
-          assert p2['P2_CORRELATION_INTERFACE_READY'] is False
-          assert p2['P2_READY_FOR_CANONICAL_P3'] is False
+          assert p2['P2_CORRELATION_INTERFACE_READY'] is True
+          assert p2['P2_READY_FOR_CANONICAL_P3'] is True
           assert p3['P3_CANONICAL_PASS'] is False
           assert p3['P4_MAY_CONSUME_P3'] is False
           assert p3['useful_gate'] == 1e-18
+          assert any('has not consumed' in r for r in p3['P3_CANONICAL_FAIL_REASONS'])
           print('P2 timing:', p2['P2_source_timing_certificate_pass'])
           print('P2 correlation:', p2['P2_CORRELATION_INTERFACE_READY'])
+          print('P2 correlation version:', p2['correlation_interface_version'])
           print('canonical P3:', p3['P3_CANONICAL_PASS'])
           print('P3 margin:', p3['worst_H_A_margin'])
           print('blocked by:', p3['P3_CANONICAL_FAIL_REASONS'])
@@ -82,6 +99,7 @@ jobs:
         with:
           name: ou3-p2-p3-canonical-interface
           path: |
+            /tmp/ou3_p2_correlation_path_memory.json
             /tmp/ou3_p2_p3_correlation_interface.json
             /tmp/ou3_p3_canonical_gate.json
           retention-days: 7
@@ -93,52 +111,19 @@ jobs:
       - uses: actions/checkout@v6
         with:
           persist-credentials: false
-
       - name: Compile e3 P3 sharpening
         run: |
-          python3 -m py_compile \
-            tools/ou3_p3_gramian_e3.py \
-            tools/ou3_p3_e3_postmeasurement_certificate.py \
-            tests/validation/test_ou3_p3_gramian_e3.py
-
+          python3 -m py_compile tools/ou3_p3_gramian_e3.py tools/ou3_p3_e3_postmeasurement_certificate.py tests/validation/test_ou3_p3_gramian_e3.py
       - name: Test e3 Gramian spectral bound
         working-directory: tests/validation
         run: python3 -m unittest -v test_ou3_p3_gramian_e3
-
       - name: Certify source-uniform e3 P3 candidate
-        run: |
-          python3 tools/ou3_p3_e3_postmeasurement_certificate.py \
-            --output /tmp/ou3_p3_e3_postmeasurement_certificate.json
-
+        run: python3 tools/ou3_p3_e3_postmeasurement_certificate.py --output /tmp/ou3_p3_e3_postmeasurement_certificate.json
       - name: Upload e3 P3 candidate
         uses: actions/upload-artifact@v6
         with:
           name: ou3-p3-e3-postmeasurement-candidate
           path: /tmp/ou3_p3_e3_postmeasurement_certificate.json
-          retention-days: 7
-
-  source-cell-scan:
-    runs-on: ubuntu-latest
-    timeout-minutes: 45
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          persist-credentials: false
-
-      - name: Compile all-source-cell P3 diagnostic
-        run: |
-          python3 -m py_compile tools/ou3_p3_source_cell_scan.py
-
-      - name: Scan all retained P2 source cells
-        run: |
-          python3 tools/ou3_p3_source_cell_scan.py \
-            --output /tmp/ou3_p3_source_cell_scan.json
-
-      - name: Upload P3 source-cell diagnostic
-        uses: actions/upload-artifact@v6
-        with:
-          name: ou3-p3-source-cell-scan-diagnostic
-          path: /tmp/ou3_p3_source_cell_scan.json
           retention-days: 7
 
   source-indexed-metric-scan:
@@ -148,16 +133,8 @@ jobs:
       - uses: actions/checkout@v6
         with:
           persist-credentials: false
-
-      - name: Compile finite-speed source metric diagnostic
-        run: |
-          python3 -m py_compile tools/ou3_p3_source_indexed_metric_scan.py
-
       - name: Scan source-indexed translation metric switching
-        run: |
-          python3 tools/ou3_p3_source_indexed_metric_scan.py \
-            --output /tmp/ou3_p3_source_indexed_metric_scan.json
-
+        run: python3 tools/ou3_p3_source_indexed_metric_scan.py --output /tmp/ou3_p3_source_indexed_metric_scan.json
       - name: Upload source-indexed metric diagnostic
         uses: actions/upload-artifact@v6
         with:
@@ -172,16 +149,8 @@ jobs:
       - uses: actions/checkout@v6
         with:
           persist-credentials: false
-
-      - name: Compile recent source-cone diagnostic
-        run: |
-          python3 -m py_compile tools/ou3_p3_recent_source_cones.py
-
-      - name: Scan recent backward cones on the finite-speed source graph
-        run: |
-          python3 tools/ou3_p3_recent_source_cones.py \
-            --output /tmp/ou3_p3_recent_source_cones.json
-
+      - name: Scan recent backward cones from P2 correlation interface
+        run: python3 tools/ou3_p3_recent_source_cones.py --output /tmp/ou3_p3_recent_source_cones.json
       - name: Upload recent source-cone diagnostic
         uses: actions/upload-artifact@v6
         with:
@@ -196,16 +165,8 @@ jobs:
       - uses: actions/checkout@v6
         with:
           persist-credentials: false
-
-      - name: Compile frozen-source full-matrix diagnostic
-        run: |
-          python3 -m py_compile tools/ou3_p3_frozen_full_matrix_translation.py
-
       - name: Evaluate 800 frozen source cells with full translation matrix
-        run: |
-          python3 tools/ou3_p3_frozen_full_matrix_translation.py \
-            --output /tmp/ou3_p3_frozen_full_matrix_translation.json
-
+        run: python3 tools/ou3_p3_frozen_full_matrix_translation.py --output /tmp/ou3_p3_frozen_full_matrix_translation.json
       - name: Upload frozen-source matrix diagnostic
         uses: actions/upload-artifact@v6
         with:
