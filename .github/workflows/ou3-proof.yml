@@ -51,10 +51,10 @@ jobs:
             test_ou3_vector_uco_certificate \
             test_ou3_verified_spd_inverse
 
-      - name: Validate phased terminal source reduction
+      - name: Validate source-complete P4 word timing decomposition
         run: |
-          python3 tools/ou3_p4_terminal_source_equivalence.py \
-            --output /tmp/ou3_terminal_source_equivalence.json
+          python3 tools/ou3_p4_source_word_timing.py \
+            --output /tmp/ou3_p4_source_word_timing.json
 
   p3-metric:
     runs-on: ubuntu-latest
@@ -119,13 +119,24 @@ jobs:
       - name: Compile active P4 route
         run: |
           python3 -m py_compile \
+            tools/ou3_p4_cayley_sector_certificate.py \
+            tools/ou3_p4_vector_remainder_sector.py \
+            tools/ou3_p4_source_word_timing.py \
             tools/ou3_p4_joint_word_dissipation_design.py \
             tools/ou3_p4_joint_word_postprediction_design.py \
             tools/ou3_p4_augmented_complete_word_design.py \
             tools/ou3_p4_augmented_complete_word_design_v5.py \
             tools/ou3_p4_covariance_primitives.py
 
-      - name: Run current augmented complete-word P4 producer
+      - name: Certify usable 0.8 rad nonlinear geometry
+        run: |
+          python3 tools/ou3_p4_cayley_sector_certificate.py \
+            --output /tmp/ou3_p4_cayley_sector.json
+          python3 tools/ou3_p4_vector_remainder_sector.py \
+            --output /tmp/ou3_p4_vector_remainder.json
+
+      - name: Run old long-prefix P4 diagnostic
+        continue-on-error: true
         run: |
           python3 tools/ou3_p4_augmented_complete_word_design_v5.py \
             --source-node-index 0 \
@@ -133,7 +144,7 @@ jobs:
             --epsilon 0.5 \
             --output /tmp/ou3_p4_complete_word.json
 
-      - name: Print current P4 design result
+      - name: Print old P4 diagnostic result
         if: always()
         run: |
           if [ -f /tmp/ou3_p4_complete_word.json ]; then
