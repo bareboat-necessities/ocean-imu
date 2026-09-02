@@ -239,7 +239,7 @@ class WorkflowContractTests(unittest.TestCase):
 
     def test_main_pdf_build_uses_post_evidence_head_and_compiles_ou_iii(self):
         workflow = BUILD_WORKFLOW.read_text(encoding="utf-8")
-        stage = _job_block(workflow, "build", "ou-tuning")
+        stage = _job_block(workflow, "build", "release")
         self.assertIn("needs: [ou-evidence, classify]", stage)
         self.assertIn("kalman_ou_iii", _inline_sequence(stage, "dir"))
         self.assertIn(
@@ -251,7 +251,7 @@ class WorkflowContractTests(unittest.TestCase):
 
     def test_main_pdf_build_requires_successful_evidence(self):
         workflow = BUILD_WORKFLOW.read_text(encoding="utf-8")
-        stage = _job_block(workflow, "build", "ou-tuning")
+        stage = _job_block(workflow, "build", "release")
         condition = _compact(_folded_scalar(stage, "if"))
         self.assertEqual(
             condition,

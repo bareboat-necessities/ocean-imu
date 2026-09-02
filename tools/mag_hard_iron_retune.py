@@ -9,10 +9,10 @@ the attitude solution the estimator's answer is applied to.  This tool
 re-measures the knobs one factor at a time, and then over the shortlist of
 joint settings the one-factor pass suggests.
 
-Scoring follows `tools/mag_gate_study.py`: absolute yaw is dominated by the
-per-draw hard-iron offset, which no setting of these knobs can touch, so every
-number is a change relative to the shipped configuration *within* a draw, and
-draws are pooled only after that normalization.
+Absolute yaw is dominated by the per-draw hard-iron offset, which no setting
+of these knobs can touch, so every number is a change relative to the shipped
+configuration *within* a draw, and draws are pooled only after that
+normalization.
 
 Two seed axes matter here and they are not interchangeable:
 

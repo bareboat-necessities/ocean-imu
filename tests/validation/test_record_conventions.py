@@ -1,15 +1,12 @@
 """Conventions of the shipped wave records, asserted rather than assumed.
 
-Two of them were never written down, and both mattered:
+The generator azimuth in a record name is the direction the waves come *from*,
+so travel-sense scoring has to compare against ``azimuth + 180``.  That was
+never written down and it mattered.  The test needs a record and skips when the
+simulation data has not been fetched.
 
-* the generator azimuth in a record name is the direction the waves come
-  *from*, so travel-sense scoring has to compare against ``azimuth + 180``;
-* the heading-rotation transform used for the travel-sense gauge experiment
-  must leave the world-frame specific force and the body-frame angular rate
-  untouched, otherwise it changes the physics instead of the point of view.
-
-The first test needs a record and skips when the simulation data has not been
-fetched; the second is self-contained.
+The second contract here is the Python mirror of the deployed fixed-tuning
+operating point, pinned against the shipping headers.
 """
 
 import sys
@@ -20,8 +17,6 @@ import numpy as np
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT / "tools"))
-
-import rotate_record_heading as rotate  # noqa: E402
 
 SAMPLE_RATE_HZ = 200.0
 ANALYSIS_SECONDS = 400.0
@@ -84,68 +79,6 @@ class GeneratorAzimuthConventionTests(unittest.TestCase):
                     f"{path.name}: propagation-to direction {travel_deg:.1f} deg is not "
                     f"azimuth + 180 = {expected_deg:.1f} deg",
                 )
-
-
-class HeadingRotationTests(unittest.TestCase):
-    def _trajectory(self, count=64):
-        rng = np.random.default_rng(20260803)
-        angles = rng.normal(scale=0.15, size=(count, 3))
-        half = angles * 0.5
-        cos, sin = np.cos(half), np.sin(half)
-        quaternions = np.stack(
-            (
-                cos[:, 0] * cos[:, 1] * cos[:, 2] + sin[:, 0] * sin[:, 1] * sin[:, 2],
-                sin[:, 0] * cos[:, 1] * cos[:, 2] - cos[:, 0] * sin[:, 1] * sin[:, 2],
-                cos[:, 0] * sin[:, 1] * cos[:, 2] + sin[:, 0] * cos[:, 1] * sin[:, 2],
-                cos[:, 0] * cos[:, 1] * sin[:, 2] - sin[:, 0] * sin[:, 1] * cos[:, 2],
-            ),
-            axis=-1,
-        )
-        quaternions /= np.linalg.norm(quaternions, axis=1, keepdims=True)
-        return quaternions, rng.normal(scale=2.0, size=(count, 3))
-
-    def test_world_specific_force_is_preserved(self):
-        q_world_to_body, body_force = self._trajectory()
-        q_body_to_world = rotate.quaternion_conjugate(q_world_to_body)
-        world_before = rotate.quaternion_rotate(q_body_to_world, body_force)
-
-        for heading_deg in (45.0, 90.0, 180.0, -120.0):
-            with self.subTest(heading_deg=heading_deg):
-                half = np.deg2rad(heading_deg) * 0.5
-                q_heading = np.tile(
-                    np.array([np.cos(half), 0.0, 0.0, np.sin(half)]),
-                    (len(q_world_to_body), 1),
-                )
-                q_body_to_world_new = rotate.quaternion_multiply(q_heading, q_body_to_world)
-                q_world_to_body_new = rotate.quaternion_conjugate(q_body_to_world_new)
-                body_force_new = rotate.quaternion_rotate(q_world_to_body_new, world_before)
-                world_after = rotate.quaternion_rotate(q_body_to_world_new, body_force_new)
-                self.assertLess(float(np.abs(world_after - world_before).max()), 1e-9)
-
-    def test_heading_rotation_is_a_rotation_about_the_world_vertical(self):
-        q_world_to_body, _ = self._trajectory(count=8)
-        q_body_to_world = rotate.quaternion_conjugate(q_world_to_body)
-        vertical = np.tile(np.array([0.0, 0.0, 1.0]), (len(q_body_to_world), 1))
-        bow = rotate.quaternion_rotate(q_body_to_world, np.tile(np.array([1.0, 0.0, 0.0]), (len(q_body_to_world), 1)))
-
-        half = np.deg2rad(90.0) * 0.5
-        q_heading = np.tile(np.array([np.cos(half), 0.0, 0.0, np.sin(half)]), (len(q_body_to_world), 1))
-        q_body_to_world_new = rotate.quaternion_multiply(q_heading, q_body_to_world)
-        bow_new = rotate.quaternion_rotate(
-            q_body_to_world_new, np.tile(np.array([1.0, 0.0, 0.0]), (len(q_body_to_world), 1))
-        )
-
-        # The vertical component of the bow axis is untouched and the horizontal
-        # part turns by exactly the requested angle.
-        self.assertLess(float(np.abs(bow_new[:, 2] - bow[:, 2]).max()), 1e-9)
-        turned = np.degrees(
-            np.arctan2(bow_new[:, 1], bow_new[:, 0]) - np.arctan2(bow[:, 1], bow[:, 0])
-        )
-        turned = (turned + 180.0) % 360.0 - 180.0
-        self.assertLess(float(np.abs(turned - 90.0).max()), 1e-6)
-        self.assertLess(
-            float(np.abs(np.einsum("ij,ij->i", vertical, vertical) - 1.0).max()), 1e-12
-        )
 
 
 class DeployedLawMirrorTests(unittest.TestCase):
