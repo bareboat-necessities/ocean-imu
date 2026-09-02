@@ -38,11 +38,11 @@ import ou3_full_process_ucc as PROCESS
 import ou3_implementation_word_language as WORDS
 import ou3_interval_ad as AD
 import ou3_p4_candidate_full_word as CAND
+import ou3_p4_covariance_primitives as COV
+import ou3_p4_golive_covariance as GOLIVE
 import ou3_p4_joint_word_dissipation_design as D
 import ou3_p4_joint_word_postprediction_design as POST
 import ou3_p4_source_node_cells as NODES
-import ou3_p5_full_h_prefix_cells as H
-import ou3_p5_go_live_covariance_stage as GOLIVE
 import ou3_vector_uco_certificate as VECTOR
 
 DEFAULT_DOMAIN = POST.DEFAULT_DOMAIN
@@ -59,7 +59,7 @@ def _zero_rate_transition_process(mode: str, src: dict, domain: dict):
     F, Q, _Rstep, ba_meta = CAND._transition_and_Q(mode, src, domain)
     h = float(src["dt_s"])
 
-    R0, B0 = H._rotation_step_box(0.0, h)
+    R0, B0 = COV.rotation_step_box(0.0, h)
     for i in range(3):
         for j in range(3):
             F[i][j] = R0[i][j]
@@ -79,7 +79,7 @@ def _zero_rate_transition_process(mode: str, src: dict, domain: dict):
         Q[ax][3 + ax] = Interval.outward_bounds(qtb, qtb)
         Q[3 + ax][ax] = Q[ax][3 + ax]
         Q[3 + ax][3 + ax] = Interval.outward_bounds(qbb, qbb)
-    return F, H._psd_tighten(Q), ba_meta
+    return F, COV.psd_tighten(Q), ba_meta
 
 
 def _gauged_golive_covariance(mode: str, src: dict, path: Path):
@@ -96,8 +96,8 @@ def _gauged_golive_covariance(mode: str, src: dict, path: Path):
 
     # Bootstrap withholds MEKF time_update(), so gyro-bias covariance remains
     # the isotropic constructor seed at goLive.  Use the source value already
-    # parsed by the prefix backend rather than the stale startup-RW upper box.
-    pbg = float(H._source_pb0())
+    # parsed by the covariance backend rather than the stale startup-RW upper box.
+    pbg = float(COV.source_pb0())
     for i in range(3, 6):
         P[i][i] = Interval.outward_bounds(pbg, pbg)
 
@@ -120,7 +120,7 @@ def _gauged_golive_covariance(mode: str, src: dict, path: Path):
         v = Interval.outward_bounds(s * s, s * s)
         for i in range(18, 21):
             P[i][i] = v
-    return H._psd_tighten(P)
+    return COV.psd_tighten(P)
 
 
 def _mode(mode: str, path: Path, domain: dict, source_node_index: int, cbox):
@@ -129,7 +129,7 @@ def _mode(mode: str, path: Path, domain: dict, source_node_index: int, cbox):
     src = NODES.h18_source_cell(source_node_index, NODES.build())
     F, Q, _ba_meta = _zero_rate_transition_process(mode, src, domain)
     Ppre = _gauged_golive_covariance(mode, src, path)
-    Pm = H._psd_tighten(matrix_add(matrix_mul(matrix_mul(F, Ppre), matrix_transpose(F)), Q))
+    Pm = COV.psd_tighten(matrix_add(matrix_mul(matrix_mul(F, Ppre), matrix_transpose(F)), Q))
 
     zpre = D._initial_ad(mode, domain, cbox)
     z = POST._rebase_postprediction(D._prediction(mode, zpre, F))
@@ -138,9 +138,9 @@ def _mode(mode: str, path: Path, domain: dict, source_node_index: int, cbox):
     force, mag = D._canonical_vectors(domain)
     Ha, Hm, Hs = D._H_acc(mode, force, n), D._H_mag(mag, n), D._H_S(n)
     vc = VECTOR.build()["configured_measurement_bounds"]
-    Racc = H._R_diag(float(vc["acc_measurement_std_mps2"]))
-    Rmag = H._R_diag(float(vc["mag_measurement_std_uT"]))
-    RS = H._R_S(src)
+    Racc = COV.R_diag(float(vc["acc_measurement_std_mps2"]))
+    Rmag = COV.R_diag(float(vc["mag_measurement_std_uT"]))
+    RS = COV.R_S(src)
     h = float(src["dt_s"])
     words = WORDS.build(path)
     samples = int(words["word_contract"]["conditional_word_language"]["word_samples_upper_at_configured_dt"])
@@ -168,7 +168,7 @@ def _mode(mode: str, path: Path, domain: dict, source_node_index: int, cbox):
             signed_word = D._form_add(signed_word, dform)
             ops.append({"step": k, "kind": "mag", **meta})
 
-        Pm = H._psd_tighten(matrix_add(matrix_mul(matrix_mul(F, Pm), matrix_transpose(F)), Q))
+        Pm = COV.psd_tighten(matrix_add(matrix_mul(matrix_mul(F, Pm), matrix_transpose(F)), Q))
         z = D._prediction(mode, z, F)
 
     mu = D._generalized_margin(signed_word, Mupper)
