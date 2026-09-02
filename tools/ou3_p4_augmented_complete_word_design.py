@@ -47,12 +47,12 @@ from ou3_interval import Interval, matrix_add, matrix_mul, matrix_transpose
 import ou3_interval_ad as AD
 import ou3_p4_augmented_covariance_ad as AUG
 import ou3_p4_cell_affine_joseph as AFF
+import ou3_p4_golive_covariance as COV
 import ou3_p4_joint_word_dissipation_design as D
 import ou3_p4_joint_word_postprediction_design as POST
 import ou3_p4_joint_word_gauge_design as G
 import ou3_p4_joint_word_gauge_design_v2 as G2
 import ou3_p4_source_node_cells as NODES
-import ou3_p5_full_h_prefix_cells as H
 import ou3_vector_uco_certificate as VECTOR
 import ou3_implementation_word_language as WORDS
 
@@ -83,7 +83,7 @@ def _state_update(z, dx):
 
 
 def _predict_value_cov(P, F, Q):
-    return H._psd_tighten(matrix_add(matrix_mul(matrix_mul(F, P), matrix_transpose(F)), Q))
+    return COV._psd_tighten(matrix_add(matrix_mul(matrix_mul(F, P), matrix_transpose(F)), Q))
 
 
 def _add_form(A, B):
@@ -117,10 +117,10 @@ def _measurement(mode, kind, Pad, z, Pcenter, zcenter, Hm, Rm,
     # covariance with respect to the original word-entry error.  H/R are fixed
     # within this source branch; source enumeration is a separate discrete axis.
     cell = AUG.measurement_and_reset(
-        Pad, Hm, Rm, residual, value_tighten=H._psd_tighten
+        Pad, Hm, Rm, residual, value_tighten=COV._psd_tighten
     )
     ccell = AUG.measurement_and_reset(
-        Pcenter, Hm, Rm, center_residual, value_tighten=H._psd_tighten
+        Pcenter, Hm, Rm, center_residual, value_tighten=COV._psd_tighten
     )
     dform, beta, bmeta = _finite_cell_terms(
         residual, eta, center_residual, entry_center,
@@ -172,9 +172,9 @@ def _mode(mode: str, path: Path, domain: dict, source_node_index: int,
     force, mag = D._canonical_vectors(domain)
     Ha, Hm, Hs = D._H_acc(mode, force, n), D._H_mag(mag, n), D._H_S(n)
     vc = VECTOR.build()["configured_measurement_bounds"]
-    Racc = H._R_diag(float(vc["acc_measurement_std_mps2"]))
-    Rmag = H._R_diag(float(vc["mag_measurement_std_uT"]))
-    RS = H._R_S(src)
+    Racc = COV._R_diag(float(vc["acc_measurement_std_mps2"]))
+    Rmag = COV._R_diag(float(vc["mag_measurement_std_uT"]))
+    RS = COV._R_S(src)
     h = float(src["dt_s"])
     words = WORDS.build(path)
     samples = int(words["word_contract"]["conditional_word_language"]["word_samples_upper_at_configured_dt"])
@@ -215,8 +215,8 @@ def _mode(mode: str, path: Path, domain: dict, source_node_index: int,
             ops.append({"step": k, **meta})
 
         # Meet the next tile on the same post-prediction boundary class.
-        Pad = AUG.predict(Pad, F, Q, value_tighten=H._psd_tighten)
-        Pcenter = AUG.predict(Pcenter, F, Q, value_tighten=H._psd_tighten)
+        Pad = AUG.predict(Pad, F, Q, value_tighten=COV._psd_tighten)
+        Pcenter = AUG.predict(Pcenter, F, Q, value_tighten=COV._psd_tighten)
         z = D._prediction(mode, z, F)
         zcenter = D._prediction(mode, zcenter, F)
 
