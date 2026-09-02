@@ -8,9 +8,10 @@ ROOT = Path(__file__).resolve().parents[2]
 # Current source-generated certificate/status producers only.
 PRODUCERS = [
     ROOT / "tools" / "ou3_p2_clock_phase_tuner_graph.py",
-    ROOT / "tools" / "ou3_p4_augmented_complete_word_design_v5.py",
-    ROOT / "tools" / "ou3_p4_terminal_cluster_p2_reduction.py",
-    ROOT / "tools" / "ou3_p4_terminal_source_equivalence.py",
+    ROOT / "tools" / "ou3_p3_scaled_process.py",
+    ROOT / "tools" / "ou3_p4_cayley_sector_certificate.py",
+    ROOT / "tools" / "ou3_p4_source_word_timing.py",
+    ROOT / "tools" / "ou3_p4_vector_remainder_sector.py",
 ]
 
 FORBIDDEN_RESULT_KEYS = {
