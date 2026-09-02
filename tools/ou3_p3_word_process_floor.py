@@ -19,9 +19,12 @@ only a conditioning transform; the resulting upper information matrix is
 pulled back to the original word-scaled coordinates before use.
 
 For every concrete X in an interval, Q_scaled(X)=X B(X) >= X_lo B(X) in
-Loewner order because B(X) is positive definite.  We validate the congruenced
-interval family before inversion, so the returned matrix is a rigorous upper
-bound on Q_scaled(X)^-1.
+Loewner order because B(X) is positive definite.  A coarse interval B(X) can
+lose positive definiteness through dependency even though every concrete
+matrix is SPD.  The trusted interface therefore *subdivides X until the
+conditioned family passes interval LDL^T*, then inverts each certified subcell.
+A wide X range is represented by the union of those subcells; no coarse inverse
+is asserted when its enclosure is not certifiable.
 
 Attitude / gyro bias
 ====================
@@ -57,6 +60,7 @@ import ou3_p3_scaled_process as SCALED
 
 F = Fraction
 WORD_EXACT_SERIES_MAX_X = 2.5
+DEFAULT_INFORMATION_SPLIT_DEPTH = 14
 
 
 def down(x: float) -> float:
@@ -95,8 +99,8 @@ def _large_word_normalized_matrix(x: Interval):
     range, but its exact coefficient cancellation and range-reduced Lagrange
     remainder are not tied to that endpoint.  We reuse those audited scalar
     routines here and set a separate word-horizon cap.  Any interval that loses
-    definiteness is rejected/subdivided by the consumer rather than silently
-    widened into a proof.
+    definiteness is rejected/subdivided rather than silently widened into a
+    proof.
     """
     if not (SCALED.BRANCH_X <= x.lo <= x.hi <= WORD_EXACT_SERIES_MAX_X):
         raise ValueError("word exact-series interval outside [0.01,2.5]")
@@ -125,7 +129,15 @@ def word_normalized_matrix(x: Interval):
 
 
 def translation_information_upper(x: Interval):
-    """Upper bound on Q_scaled(X)^-1, or ``None`` if the interval is too wide."""
+    """Return a dominating information matrix on one certifiable X subcell.
+
+    For each concrete X in ``x``, ``Q_scaled(X) >= x.lo*B(X)``.  We enclose the
+    inverse family of that lower matrix after the exact rational congruence, so
+    the returned interval matrix is sufficient to upper-bound the normalized
+    process information.  ``None`` means only that this *coarse subcell* lost a
+    validated LDLT/inverse enclosure; callers must subdivide rather than infer a
+    loss of process excitation.
+    """
     B = word_normalized_matrix(x)
     xlo = I(x.lo)
     Qlo = matrix_symmetric_hull([[xlo * B[i][j] for j in range(4)] for i in range(4)])
@@ -136,8 +148,46 @@ def translation_information_upper(x: Interval):
         inv = matrix_inverse_gauss_jordan(conditioned)
     except Exception:
         return None
-    info = matrix_symmetric_hull(matrix_mul(matrix_mul(CT, inv), C))
-    return info
+    return matrix_symmetric_hull(matrix_mul(matrix_mul(CT, inv), C))
+
+
+def translation_information_cover(
+    x: Interval, *, max_depth: int = DEFAULT_INFORMATION_SPLIT_DEPTH
+):
+    """Cover ``x`` by certifiable information subcells.
+
+    The split point is only a partition boundary, not a numerical theorem
+    quantity, so an ordinary finite binary64 midpoint is sufficient.  The two
+    closed children overlap at that midpoint and therefore cover the complete
+    real interval with no gap.  Failure at ``max_depth`` is fail-closed.
+    """
+    if not (0.0 < x.lo <= x.hi <= WORD_EXACT_SERIES_MAX_X):
+        raise ValueError("translation information cover outside audited X range")
+
+    out = []
+
+    def rec(cell: Interval, depth: int) -> None:
+        info = translation_information_upper(cell)
+        if info is not None:
+            out.append((cell, info))
+            return
+        if depth >= max_depth:
+            raise RuntimeError(
+                f"cannot certify word translation information cell {cell.as_list()} "
+                f"within split depth {max_depth}"
+            )
+        mid = math.sqrt(cell.lo * cell.hi)
+        if not (cell.lo < mid < cell.hi):
+            mid = 0.5 * (cell.lo + cell.hi)
+        if not (cell.lo < mid < cell.hi):
+            raise RuntimeError(f"word translation information cell cannot be split: {cell.as_list()}")
+        rec(Interval(cell.lo, mid), depth + 1)
+        rec(Interval(mid, cell.hi), depth + 1)
+
+    rec(x, 0)
+    if not out:
+        raise RuntimeError("translation information cover is empty")
+    return out
 
 
 def translation_margin_from_information(
