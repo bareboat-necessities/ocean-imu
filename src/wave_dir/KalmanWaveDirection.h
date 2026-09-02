@@ -395,7 +395,7 @@ private:
 
 #ifdef KALMAN_WAVE_DIRECTION_TEST
 
-inline void KalmanWaveDirection_test_signal(
+void KalmanWaveDirection_test_signal(
     float t,
     float freq_hz,
     float& ax,
@@ -413,7 +413,7 @@ inline void KalmanWaveDirection_test_signal(
   ay = carrier * axis.y() + noise(generator);
 }
 
-inline void KalmanWaveDirection_test_1() {
+void KalmanWaveDirection_test_1() {
   const float delta_t = 0.02f;
   const float freq_hz = 0.5f;
   const float omega =
