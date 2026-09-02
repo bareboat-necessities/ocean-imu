@@ -42,6 +42,7 @@ jobs:
             test_ou3_full_process_ucc \
             test_ou3_implementation_word_language \
             test_ou3_p3_scaled_process \
+            test_ou3_p3_tau_decay_budget \
             test_ou3_p3_ltv_translation_ucc_probe \
             test_ou3_p4_sample_clock_source_refinement \
             test_ou3_p4_source_node_cells \
@@ -120,8 +121,16 @@ jobs:
       - name: Compile LTV translation process probe
         run: |
           python3 -m py_compile \
+            tools/ou3_p3_tau_decay_budget.py \
             tools/ou3_p3_ltv_translation_ucc_probe.py \
+            tests/validation/test_ou3_p3_tau_decay_budget.py \
             tests/validation/test_ou3_p3_ltv_translation_ucc_probe.py
+
+      - name: Certify clock-phase tau decay budgets
+        run: |
+          python3 tools/ou3_p3_tau_decay_budget.py \
+            --window-samples 50 100 150 200 250 300 \
+            --output /tmp/ou3_p3_tau_decay_budget.json
 
       - name: Probe source-uniform time-varying translation process floor
         run: |
@@ -133,7 +142,9 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: ou3-p3-ltv-translation-ucc-probe
-          path: /tmp/ou3_p3_ltv_translation_ucc_probe.json
+          path: |
+            /tmp/ou3_p3_tau_decay_budget.json
+            /tmp/ou3_p3_ltv_translation_ucc_probe.json
           retention-days: 7
 
   p4-sector:
