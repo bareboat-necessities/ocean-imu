@@ -86,8 +86,7 @@
      T_S > T_0.
 
   4. STARTUP: THE PROXY OWNS TILT AND MAGNETIC LEARNING.  See
-     SeaStateFusion_OU_II::maybeHandOffToMekf_() and
-     docs/ou-iii-startup-init.md.
+     SeaStateFusion_OU_II::maybeHandOffToMekf_().
 
   Features
   • Modular tracker selection via TrackerPolicy template
@@ -173,8 +172,8 @@ constexpr float MAX_TUNE_FREQ_HZ = 1.5f;
 // never worse than a factor of two off; the estimator replaces it after about
 // 50 s in any case.  It is the same constant SeaStateFusionFilter_TFG has always
 // used for this, which is where the value comes from rather than a fit.
-// Sensitivity to it is measured in docs/ou-sigma-horizon.md: sweeping it over
-// 0.1-0.4 Hz leaves every scored 900 s metric unchanged to four decimal places
+// Sensitivity to it was measured by sweeping it over 0.1-0.4 Hz, which leaves
+// every scored 900 s metric unchanged to four decimal places
 // in both families, because the estimator has replaced it 250 s before the
 // window opens.
 constexpr float TUNE_FREQ_PRIOR_HZ = 0.2f;
@@ -223,14 +222,12 @@ constexpr float ADAPT_EVERY_SECS               = 0.1f;
 // tau_target.  Measured on the versioned records against synthesized sea-state
 // transitions: the error during a transition falls monotonically as these
 // shorten, the stationary worst-record vertical error rises monotonically, and
-// 3.0 is where the two cross at an acceptable cost for both channels.  See
-// docs/ou-ema-adaptation-tuning.md.
+// 3.0 is where the two cross at an acceptable cost for both channels.
 constexpr float ADAPT_R_p0_MULT            = 3.0f;   // dimensionless
 constexpr float ADAPT_R_v0_MULT            = 3.0f;   // dimensionless
 // Discrepancy, in natural-log units of the target-to-applied ratio, above
 // which the smoothing horizon of either drift-correction channel shortens.
-// Zero keeps the plain proportional horizon; see
-// docs/ou-ema-adaptation-tuning.md.
+// Zero keeps the plain proportional horizon.
 constexpr float ADAPT_R_SLEW_LOG           = 0.0f;   // ln units
 constexpr float ONLINE_TUNE_WARMUP_SEC     = 5.0f;
 constexpr float MAG_DELAY_SEC              = 7.0f;
@@ -397,7 +394,7 @@ enum class PseudoAdaptationLaw : uint8_t {
 // reference spectra at their measured OU-II operating points and solving
 // Eq. (wp-opt) record by record gives C_P ~ 0.112, so the default is an
 // analytical prediction rather than a fitted number.  See
-// tools/ou2_dual_mse_coefficients.py and docs/ou-ii-dual-mse-adaptation.md.
+// tools/ou2_dual_mse_coefficients.py.
 constexpr float R_PSEUDO_MSE_COEFF_DEFAULT = 0.1116f;
 
 // Channel ratio C_P/C_V of the PhysicalMSE law.  This is the corollary the
@@ -434,9 +431,8 @@ constexpr float R_PSEUDO_MSE_RATIO_DEFAULT = 0.4611f;
 // floor the tuner subtracts as non-wave energy, at 0.12 m/s^2 -- eight times
 // the bench 0.0148 m/s^2.  Referring the law to it moves the schedule by
 // (0.12/0.0148)^(1/5) = 1.52, and the eight-record scale sweep puts the
-// complete-MEKF vertical optimum within 3 % of exactly that; see
-// docs/ou-ii-dual-mse-adaptation.md.  So the analytical C_P is deployed as
-// derived, and this constant is what changed.
+// complete-MEKF vertical optimum within 3 % of exactly that.  So the
+// analytical C_P is deployed as derived, and this constant is what changed.
 //
 // It is a separate knob rather than a live read of acc_noise_floor_sigma_, so
 // that the sweep axis stays clean and so that q stays sea-state independent,
@@ -1259,7 +1255,7 @@ public:
     // horizon follows the sea state instead of being pinned to one second
     // count.  r_p0 ~ sigma_aw * tau^2 and r_v0 ~ sigma_aw * tau amplify a tau
     // error by different powers, so the two channels need not share a
-    // multiplier; see docs/ou-ema-adaptation-tuning.md.
+    // multiplier.
     void setR_p0_AdaptMult(float m) {
         if (std::isfinite(m) && m > 0.0f) adapt_R_p0_mult_ = m;
     }
@@ -1427,7 +1423,7 @@ public:
     // sigma_a averaging horizon, in periods of the tuning frequency, and its
     // absolute clamps in seconds.  The horizon moved with the operating point
     // when tuning moved to the wave band -- the same K is now 5-17 s instead of
-    // about 4 -- so it is a tuning surface; docs/ou-sigma-horizon.md measures it.
+    // about 4 -- so it is a tuning surface.
     void setSigmaVarianceKPeriods(float k) { tuner_.setKPeriods(k); }
     float getSigmaVarianceKPeriods() const noexcept { return tuner_.getKPeriods(); }
     void setSigmaVarianceHorizonBounds(float min_s, float max_s) {
@@ -1994,8 +1990,7 @@ private:
     // 0.03 percentage points, and 1.0 is what shipped.
     //
     // Nothing between 0.31 and 1.0 was scored at that time.  Swept there over
-    // the eight scored records and three IMU seed triplets
-    // (tools/ou_low_sea_error_study.py xy --family OU_II), 3D displacement RMS
+    // the eight scored records and three IMU seed triplets, 3D displacement RMS
     // has an interior minimum at 0.65 -- -3.56 percent against 1, with the same
     // sign in all 24 record x seed cells -- and 0.8 and 0.55 bracket it at
     // -2.95 and -2.80.  Vertical is unchanged at -0.01 percent.  That is the
@@ -2010,7 +2005,6 @@ private:
     // difference does not matter: measured on the same 24 cells, 0.72 scores
     // -3.50 percent of 3D RMS against 1 where 0.65 scores -3.56, so the shared
     // constant gives up six hundredths of a point.
-    // See docs/ou-horizontal-anisotropy-per-axis-split.md.
     float R_p0_x_factor_ = 0.72f;
     float R_p0_y_factor_ = 0.72f;
     float P_factor_       = 1.5f;
@@ -2080,7 +2074,7 @@ private:
     // 0.70: it is the largest position coefficient at which no record's mean
     // vertical error degrades -- seven of the eight improve and the eighth is
     // 1.0003 of the shipped one -- and at 0.70 three records lose, two of them
-    // by half a percent.  See docs/ou-ii-pseudo-variance-tuning.md.
+    // by half a percent.
     // c_p and c_v of the Empirical law.  Retained under PhysicalMSE so that
     // switching laws at runtime restores the calibrated empirical schedule.
     float R_p0_coeff_  = 0.65f;
@@ -2185,8 +2179,8 @@ public:
         // The remaining MEKF variances the Kalman3D_Wave_OU_II constructor
         // takes.  They were reachable only through initialize_ext(), which
         // this wrapper never called, so every deployment ran on the header
-        // defaults; docs/ou-iii-qmekf-variances.md is the sweep that gauged
-        // the same seven for OU-III, and this family carries r_p0 and r_v0
+        // defaults, which the OU-III MEKF-variance sweep gauged for the same
+        // seven, and this family carries r_p0 and r_v0
         // where that one carries r_S.  The values here reproduce those
         // defaults exactly.
         //

@@ -99,8 +99,8 @@ class FusionAdapter_TFG final : public IW3dFusionAdapter {
 public:
     // TFG's own MEKF sensor variances, as multiples of the ones the shared
     // harness hands every family (2.8x injected accel white, 2.0x gyro, 1.2x
-    // mag).  Set by the sweep in docs/tfg-qmekf-variances.md; 1.0 here means
-    // the harness value is used unchanged.
+    // mag).  Set by TFG's own MEKF-variance sweep; 1.0 here means the harness
+    // value is used unchanged.
     static constexpr float SIGMA_A_RESCALE = 1.0f;
     static constexpr float SIGMA_G_RESCALE = 1.0f;
     static constexpr float SIGMA_M_RESCALE = 1.0f;
@@ -116,7 +116,7 @@ public:
         cfg.gyro_noise_density = sigma_g.x() * SIGMA_G_RESCALE;
         cfg.sigma_m = sigma_m * SIGMA_M_RESCALE;
 
-        // The MEKF variances, swept in docs/tfg-qmekf-variances.md.  The three
+        // The MEKF variances, swept for this family.  The three
         // sensor sigmas are scale factors on the deployed point above, so a
         // scale of 1 leaves it in place; the other two are absolute.
         if (float v = 0.0f; env_float("SF_SIGMA_A_SCALE", v)) cfg.sigma_a *= v;
@@ -389,7 +389,7 @@ void process_one(const std::string& filename,
         the two is a change to W3dFailureLimits and to every family that uses
         it, and is deliberately not made here.
 
-        RE-DERIVED FOR S_factor 1.20 -> 1.00, docs/tfg-adaptation-refit.md.
+        RE-DERIVED FOR S_factor 1.20 -> 1.00.
         The horizontal stationary acceleration prior now matches what the
         records put there (horizontal magnitude 0.997 of vertical, measured on
         all eight).  Six bars move by well under a percent and one of them --
@@ -450,13 +450,13 @@ void process_one(const std::string& filename,
     // of that motion.  An error at 164 percent of the true bias means the
     // error already exceeds the thing being estimated, which was true before
     // this change and is true after it.
-    // Re-derived for the SpectralMSE default and the OU-III front-end parity,
-    // docs/tfg-spectral-mse-ou3-parity.md.  That change moved every gated
+    // Re-derived for the SpectralMSE default and the OU-III front-end parity.
+    // That change moved every gated
     // quantity and only the tfg-validation workflow's copy of the bars was
     // re-gauged with it; this block was left on the pre-parity set, so
     // `run_tests.sh` has failed on the last record ever since -- 20.0469
     // against a bar of 19.64.  The two gates now carry the same seven numbers,
-    // all from tools/ou_regauge_gates.py --family tfg.
+    // all from the same re-gauge of this family.
     //
     //   channel          worst    this bar   margin   previous bar
     //   Z RMS  jonswap    4.6736   4.698      0.52%    4.812

@@ -27,8 +27,7 @@ inline constexpr float kDynamicEmaTimeScaleMaxSec = 6.0f;
 // ceiling now binds on the largest of the eight seas and only on that channel.
 // Every other deployed horizon (about 0.12..12.7 s, the slowest being the
 // OU-II/TFG drift smoother) is still comfortably interior.  Treat a change to
-// K_periods or to this ceiling as a retune that needs a re-gauge, not a tweak;
-// see docs/adaptive-ema-safety-clamps.md.
+// K_periods or to this ceiling as a retune that needs a re-gauge, not a tweak.
 inline constexpr float kDynamicEmaHorizonMinSec = 0.05f;
 inline constexpr float kDynamicEmaHorizonMaxSec = 30.0f;
 

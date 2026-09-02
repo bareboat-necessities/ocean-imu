@@ -775,8 +775,7 @@ def tuning_point_from_pilot(family: str, metrics: Mapping[str, Any]) -> TuningPo
     if family == "OU_II":
         # PhysicalMSE, the deployed law.  sigma is the OU prior sigma_aw, so
         # divide c_sigma back out to recover the physical band RMS the
-        # distortion penalty depends on, exactly as OU-III does below.  See
-        # docs/ou-ii-dual-mse-adaptation.md.
+        # distortion penalty depends on, exactly as OU-III does below.
         T_S = min(max(OU_II_PSEUDO_TAU_RATIO * tau,
                       OU_II_PSEUDO_PERIOD_BOUNDS_S[0]),
                   OU_II_PSEUDO_PERIOD_BOUNDS_S[1])
@@ -792,7 +791,7 @@ def tuning_point_from_pilot(family: str, metrics: Mapping[str, Any]) -> TuningPo
         return TuningPoint(tau, sigma, R_p0_std_m=R_p0, R_v0_std_mps=R_v0)
     # SpectralMSE, the deployed law.  sigma here is the OU prior sigma_aw, so
     # divide c_sigma back out to recover the physical band RMS the distortion
-    # penalty depends on.  See docs/ou-iii-rs-amplitude-retune.md.
+    # penalty depends on.
     T_S = min(max(OU_III_PSEUDO_TAU_RATIO * tau, OU_III_PSEUDO_PERIOD_BOUNDS_S[0]),
               OU_III_PSEUDO_PERIOD_BOUNDS_S[1])
     sigma_aB = max(sigma / OU_III_SIGMA_COEFF, 1e-6)

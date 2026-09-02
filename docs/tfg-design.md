@@ -595,8 +595,7 @@ All five were later re-swept paired over three IMU seed triplets per record
 rather than on one realization, which confirmed four of them and took
 `S_factor` the rest of the way down, from 1.20 to **1.00** — the horizontal
 acceleration magnitude the eight records actually contain is 0.997 of the
-vertical one. The table above is what this change set;
-[`docs/tfg-adaptation-refit.md`](tfg-adaptation-refit.md) carries the current
+vertical one. The table above is what this change set produced: the current
 values, the measurement and the yaw sentinel it moved.
 
 Four more were swept and left at OU-III's values because the eight-record result

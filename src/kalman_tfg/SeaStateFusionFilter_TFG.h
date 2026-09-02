@@ -1172,8 +1172,7 @@ private:
     // So the horizontal anisotropy is NOT a shared constant across the three
     // families: the two OU wrappers want a tighter horizontal anchor than
     // vertical and TFG wants a looser one.  Do not carry 0.72 here without
-    // re-running that sweep; see
-    // docs/ou-horizontal-anisotropy-per-axis-split.md.
+    // re-running that sweep.
     float tau_coeff_ = 1.0f;
     float sigma_coeff_ = 1.0f;
     float R_S_coeff_ = 0.28f;

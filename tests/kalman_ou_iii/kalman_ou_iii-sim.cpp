@@ -52,8 +52,8 @@ public:
     // harness hands every family.  The harness builds each as a fixed multiple
     // of the white noise it injects -- 2.8x on accel, 2.0x on gyro, 1.2x on
     // mag -- and those multiples had never been swept for any family.
-    // docs/ou-iii-qmekf-variances.md is the sweep; it moves all three, and the
-    // gyro one is much the largest effect.
+    // A dedicated MEKF-variance sweep moves all three, and the gyro one is
+    // much the largest effect.
     //
     // sigma_g is a units correction, not a fit.  The harness multiplies a
     // *per-sample* gyro standard deviation at 200 Hz, but
@@ -400,7 +400,7 @@ public:
         // of 1 therefore leaves the deployed constant in place, and the value
         // the sweep reports is directly the inflation multiplier it prefers.
         // The remaining four are absolute and go through the Config fields
-        // added for them.  See docs/ou-iii-qmekf-variances.md.
+        // added for them.
         if (env_float("SF_SIGMA_A_SCALE", vf)) cfg_.sigma_a *= vf;
         if (env_float("SF_SIGMA_G_SCALE", vf)) cfg_.sigma_g *= vf;
         if (env_float("SF_SIGMA_M_SCALE", vf)) cfg_.sigma_m *= vf;
@@ -726,7 +726,7 @@ private:
 // true bias there under any of these configurations.  It moved from 108.9 to
 // 95.3 because holding accelerometer-bias learning until the magnetic
 // reference is refined stops the bias absorbing the provisional reference's
-// tilt error; see docs/ou-iii-startup-init.md.
+// tilt error.
 // Re-derived once more for the continuous hard-iron correction, which moved
 // three of the seven.  Yaw is the point of that change and drops by half, so
 // its limit comes down with it or it stops being a sentinel.  The two that go
@@ -755,9 +755,8 @@ private:
 // The binding records move by 2.8e-5 (yaw) to 3.6e-4 (3D bias) relative between
 // a native cascadelake build and an -march=x86-64 one, so the thinnest of these
 // margins is 15 times the spread and most are hundreds.  Both builds pass all
-// seven.  docs/quality-gate-regauge.md carries that measurement and the command
-// that redoes it, which is the check to repeat before cutting any of these
-// finer.
+// seven.  Repeating that cross-build comparison is the check to run before
+// cutting any of these finer.
 //
 // Re-derived once more for S_factor = 1.  Taking the horizontal stationary
 // acceleration scale from 1.87 to the records' own value moved every gated
@@ -779,7 +778,7 @@ private:
 // rather than a measure of yaw quality.  Paired across those seeds and all
 // eight records, S_factor = 1 lowers yaw RMS by 3.2 percent pooled and on all
 // four JONSWAP records -- the deployed default-seed draw happens to be one of
-// the few that moves the other way.  reports/results/ou_anisotropy carries
+// the few that moves the other way.  The paired anisotropy sweep measured
 // both.  The three bias and displacement gates that come down are real gains
 // and are cut to the rule like the rest.
 //
@@ -810,14 +809,13 @@ private:
 // fitted with the magnetometer are not measuring the IMU-only filter, and
 // scoring it against them would fail it on a channel nobody fitted for it.
 //
-// All nine limits are what tools/ou_regauge_gates.py prints for the filter
-// that ships, and all nine hold on an -march=x86-64 rebuild as well as on a
-// native one -- the thinnest margin-to-drift ratio in this family is 169x, on
-// pitch.  docs/quality-gate-regauge.md carries that measurement and the
-// command that redoes it, which is the check to repeat before cutting any of
-// these finer.
+// All nine limits are the re-gauged bars for the filter that ships, and all
+// nine hold on an -march=x86-64 rebuild as well as on a native one -- the
+// thinnest margin-to-drift ratio in this family is 169x, on pitch.  Repeating
+// that cross-build comparison is the check to run before cutting any of these
+// finer.
 // Re-derived once more, for one gate only, when the tuning frequency stopped
-// reading the acceleration-band frequency tracker (docs/ou-sigma-horizon.md).
+// reading the acceleration-band frequency tracker.
 // The change is invisible in displacement -- pooled vertical and 3D RMS both
 // move by 0.00% -- but pitch on pmstokes H4.0 goes 0.2200 -> 0.2218 at the
 // default seed, which is 0.83% and therefore past the half-percent this gate
@@ -827,12 +825,11 @@ private:
 // one the yaw paragraph above makes.  Paired over five IMU seeds and all eight
 // records the pitch ratio is 0.9999 with a 95% interval of [0.9989, 1.0010]:
 // no systematic effect at a resolution ten times finer than the move on this
-// one record.  tools/ou_sigma_horizon_study.py --axis source --seeds 5
-// reproduces it.  Only pitch is re-cut; the other eight limits are untouched
+// one record.  Only pitch is re-cut; the other eight limits are untouched
 // because nothing this change did moved them.
 //
 // Then all nine at once, and all nine downward, when the MEKF sensor
-// variances were swept for the first time (docs/ou-iii-qmekf-variances.md).
+// variances were swept for the first time.
 // The gyro term of that sweep is a units correction -- the harness was
 // handing a per-sample standard deviation to an argument the filter
 // integrates as a noise density -- so the filter that ships now is a
@@ -853,8 +850,8 @@ private:
 // largest single move any of these bars has made.
 //
 // Then all nine again when the r_S smoothing horizon was re-measured against
-// a sea-state transition fast enough to lag -- ADAPT_RS_MULT 3.0 -> 1.5, see
-// docs/ou-ema-adaptation-tuning.md.  The bars in this paragraph are that
+// a sea-state transition fast enough to lag -- ADAPT_RS_MULT 3.0 -> 1.5.
+// The bars in this paragraph are that
 // change measured on its own, against the tree it was developed on; it and the
 // hard-iron re-tune below met in a merge, and the block that ships is
 // re-derived from both together at the end.  Eight of the nine move down, so
@@ -876,9 +873,8 @@ private:
 // 0.9998 [0.9996, 1.0000] and 0.9997 [0.9994, 1.0000], i.e. attitude improves
 // on average while this one record moves inside its own scatter.  Yaw, acc Z
 // bias and acc 3D bias move up by 0.1% or less on their binding record and
-// are re-cut for the same reason.  Everything here is what
-// tools/ou_regauge_gates.py prints for the filter as it now stands, cut to
-// the same rule as every line above it.
+// are re-cut for the same reason.  Everything here is re-gauged for the
+// filter as it now stands, cut to the same rule as every line above it.
 //
 // Then all nine again for the continuous hard-iron re-tune, which cut the
 // estimator's absolute ridge floor from 4e-3 to 5e-4 (see
@@ -934,8 +930,8 @@ private:
 // showed, and combining them moves nothing beyond the fourth digit either
 // paragraph did not predict.
 //
-// All nine are what tools/ou_regauge_gates.py prints for the filter that
-// ships, cut to the same rule as every line above.
+// All nine are re-gauged for the filter that ships, cut to the same rule as
+// every line above.
 //
 // Then a tenth bar, which is not a re-cut but a bar that was missing.  The 3D
 // bias limit was one number covering the accelerometer and the gyro, and it
@@ -950,7 +946,7 @@ private:
 // Re-derived after the shared period-statistics retune adopted
 // (K_T, K_log, K_sigma) = (4, 0.05, 4). The deterministic protocol is
 // unchanged: default seeds, eight reference records, trailing 900 s. Applying
-// tools/ou_regauge_gates.py's half-percent/four-significant-digit rule gives:
+// the same half-percent/four-significant-digit rule gives:
 //
 //   Z %Hs JONSWAP    4.527  -> 4.489   worst 4.46644  (JONSWAP H0.27)
 //   Z %Hs PM-Stokes  4.509  -> 4.462   worst 4.43916  (PM-Stokes H0.27)
@@ -966,8 +962,8 @@ private:
 // This is a full re-gauge, not a one-off relaxation of the binding PM-Stokes
 // 3D bar: six limits tighten, one is unchanged, and only three rise.
 //
-// Then all ten again when the startup gravity gate moved into the world frame
-// (docs/ou-startup-gravity-gate.md).  The gate is what certifies the tilt the
+// Then all ten again when the startup gravity gate moved into the world
+// frame.  The gate is what certifies the tilt the
 // magnetic reference is framed in and the MEKF is seeded with, and in waves it
 // was measuring the sea rather than the levelling error, so it only closed by
 // luck: time to a live filter ran 22 s in the calm records and 72 to 150 s in
@@ -997,7 +993,7 @@ private:
 // 95%.  Seven of the ten bars come down, the gyro-bias aggregate by 16%.
 //
 // Re-cut again for R_S_xy_factor 1 -> 0.72 (the horizontal integral-regularizer
-// retune, docs/ou-iii-horizontal-anisotropy-retune.md).  Against the bars
+// retune).  Against the bars
 // immediately above, only pitch fails: 0.1965 -> 0.1996 on pmstokes H4.0,
 // +1.6% on a bar carrying half a percent.  Every other bar holds, and the two
 // 3D bars come down hard because 3D RMS is what the retune buys -- JONSWAP

@@ -129,8 +129,8 @@ constexpr float MAX_TUNE_FREQ_HZ = 1.5f;
 // never worse than a factor of two off; the estimator replaces it after about
 // 50 s in any case.  It is the same constant SeaStateFusionFilter_TFG has always
 // used for this, which is where the value comes from rather than a fit.
-// Sensitivity to it is measured in docs/ou-sigma-horizon.md: sweeping it over
-// 0.1-0.4 Hz leaves every scored 900 s metric unchanged to four decimal places
+// Sensitivity to it was measured by sweeping it over 0.1-0.4 Hz, which leaves
+// every scored 900 s metric unchanged to four decimal places
 // in both families, because the estimator has replaced it 250 s before the
 // window opens.
 constexpr float TUNE_FREQ_PRIOR_HZ = 0.2f;
@@ -187,11 +187,11 @@ constexpr float ADAPT_EVERY_SECS           = 0.1f;
 // actually lag it -- it sits at 1.5, and 1.5 also wins on the stationary
 // ensemble, on attitude and on the accelerometer bias.  r_S ~ tau^3 amplifies
 // tau noise by the third power, which is why this stays above the horizon a
-// tau^1 channel would want.  See docs/ou-ema-adaptation-tuning.md.
+// tau^1 channel would want.
 constexpr float ADAPT_RS_MULT              = 1.5f;   // dimensionless
 // Discrepancy, in natural-log units of the r_S target-to-applied ratio, above
 // which the smoothing horizon shortens.  Zero keeps the plain proportional
-// horizon; see docs/ou-ema-adaptation-tuning.md.
+// horizon.
 constexpr float ADAPT_RS_SLEW_LOG          = 0.0f;   // ln units
 constexpr float ONLINE_TUNE_WARMUP_SEC     = 5.0f;
 constexpr float MAG_DELAY_SEC              = 7.0f;
@@ -306,14 +306,12 @@ constexpr float PSEUDO_UPDATE_PERIOD_MAX_S_DEFAULT = 0.25f;
 // StrongRiccati laws coincide there.  R_S_COEFF_ANALYTICAL_REFERENCE is that
 // value for kappa = 0.3627.  The applied C_R comes from a complete-MEKF sweep
 // against it, because the scalar reduction omits attitude/gravity leakage,
-// residual bias, three-axis covariance coupling and the cadence clamps; see
-// tools/ou_rs_amplitude_retune_sweep.py and
-// docs/ou-iii-rs-amplitude-retune.md.
+// residual bias, three-axis covariance coupling and the cadence clamps.
 //
 // The amplitude tilt of the Riccati laws spans the removed multiplier as a
 // one-parameter family: p = 0 is the deployed schedule and p = 1 restores the
-// sigma_aw factor, so tools/ou_rs_law_ablation.py still measures exactly that
-// one degree of freedom.  The non-Cubic laws exist for that ablation, not as
+// sigma_aw factor, so that ablation still measures exactly that one degree of
+// freedom.  The non-Cubic laws exist for it, not as
 // candidate defaults.
 //   SpectralMSE      the bias-variance law.  The three above all answer "what
 //                    r_S holds a chosen normalized pole?"; none answers "what
@@ -386,7 +384,7 @@ constexpr float R_S_ACCEL_NOISE_DENSITY_DEFAULT = 0.0148f * 0.0148f * FREQ_SMOOT
 // to the StrongRiccati law -- the cubic base and the pole-placement law are two
 // spellings of the same schedule, and C_R is the spelling that names the corner
 // directly.  Quoted here as the reference the calibration sweep is measured
-// against, not as the applied value; see docs/ou-iii-rs-amplitude-retune.md.
+// against, not as the applied value.
 constexpr float R_S_COEFF_ANALYTICAL_REFERENCE = 17.112f;
 
 // Coefficient C_J of the SpectralMSE law,
@@ -396,7 +394,7 @@ constexpr float R_S_COEFF_ANALYTICAL_REFERENCE = 17.112f;
 // the eight reference spectra and solving the exact balance record by record
 // gives C_J ~ 0.054, so the default is an analytical prediction rather than a
 // fitted number; the sweep is what decides whether it is the complete-MEKF
-// optimum.  See docs/ou-iii-rs-amplitude-retune.md.
+// optimum.
 constexpr float R_S_MSE_COEFF_DEFAULT = 0.0538f;
 
 struct TuneState {
@@ -1252,8 +1250,7 @@ public:
     // constant is mult * tau_target, so the horizon follows the sea state
     // instead of being pinned to one second count.  r_S ~ sigma_aw * tau^3
     // amplifies a tau error by the third power, which is what sets the
-    // multiplier apart from the tau/sigma one; see
-    // docs/ou-ema-adaptation-tuning.md.
+    // multiplier apart from the tau/sigma one.
     void setRSAdaptMult(float m) {
         if (std::isfinite(m) && m > 0.0f) adapt_RS_mult_ = m;
     }
@@ -1417,7 +1414,7 @@ public:
     // sigma_a averaging horizon, in periods of the tuning frequency, and its
     // absolute clamps in seconds.  The horizon moved with the operating point
     // when tuning moved to the wave band -- the same K is now 5-17 s instead of
-    // about 4 -- so it is a tuning surface; docs/ou-sigma-horizon.md measures it.
+    // about 4 -- so it is a tuning surface.
     void setSigmaVarianceKPeriods(float k) { tuner_.setKPeriods(k); }
     float getSigmaVarianceKPeriods() const noexcept { return tuner_.getKPeriods(); }
     void setSigmaVarianceHorizonBounds(float min_s, float max_s) {
@@ -2074,8 +2071,8 @@ private:
     // stronger horizontal corner and further tightening lost.  S_factor is now
     // 1, so that implicit tightening is gone, and the interval is open again.
     //
-    // Swept there over the eight scored records and three IMU seed triplets
-    // (tools/ou_low_sea_error_study.py xy), 3D displacement RMS has an interior
+    // Swept there over the eight scored records and three IMU seed triplets,
+    // 3D displacement RMS has an interior
     // minimum at 0.72: -3.33 percent against 1, with the same sign in all 24
     // record x seed cells, and 0.8 and 0.6 bracketing it at -2.90 and -2.72.
     // Both horizontal axes gain there -- x by 1.1 percent and y by 7.8 percent,
@@ -2088,23 +2085,21 @@ private:
     // horizontal trade; attitude moves under a half percent in either
     // direction.  0.72 sits below the reduced-model reference of 0.86 -- the
     // per-axis MSE optimum (q_h/q_z)^(1/14) (m_h/m_z)^(3/7) evaluated on the
-    // records by tools/ou_axis_rs_optimum.py, with m_h/m_z = 1/2 from the
+    // records, with m_h/m_z = 1/2 from the
     // deep-water orbit -- for the reason the C_R calibration also sits off its
     // analytical reference: the scalar reduction omits the tilt-leakage and
     // residual-bias drift the horizontal channels actually reject.
-    // See docs/ou-iii-horizontal-anisotropy-retune.md.
     //
     // The two axes are separate knobs because the same measurement says they
-    // do not want the same number: tools/ou_axis_rs_optimum.py puts the
-    // per-axis MSE optimum at 1.004 (x) and 0.685 (y) on these records, and it
+    // do not want the same number: the per-axis MSE optimum is 1.004 (x) and
+    // 0.685 (y) on these records, and it
     // was the single scalar's inability to serve both that stopped the sweep
     // at 0.72 rather than at the pooled minimum.  They are equal by default
     // because that x/y split is a property of the record set -- every record is
     // generated at +/-30 degrees, so world x carries three times the horizontal
     // displacement world y does -- and not of the sea.  A deployment that knows
     // its own heading relative to the dominant sea can use that; one that does
-    // not must leave them equal.  See
-    // docs/ou-horizontal-anisotropy-per-axis-split.md.
+    // not must leave them equal.
     float R_S_x_factor_ = 0.72f;
     float R_S_y_factor_ = 0.72f;
     // Horizontal stationary acceleration scale relative to the vertical one.
@@ -2112,7 +2107,7 @@ private:
     // re-measured against the records, which put it at 0.81 (x) and 0.55 (y)
     // of vertical per axis -- 0.99 combined, as deep-water theory requires.
     // Swept at the deployed isotropic r_S over the eight scored records and
-    // five seeds (tools/ou_anisotropy_ablation.py), 3D displacement RMS has a
+    // five seeds, 3D displacement RMS has a
     // flat minimum exactly at 1: -1.28 percent pooled against 1.87, -7.7
     // percent on JONSWAP Hs = 8.5 m and -2.5 percent on Hs = 4.0 m with every
     // seed agreeing, PM-Stokes flat to 0.15 percent, vertical unchanged at
@@ -2124,8 +2119,7 @@ private:
     // an isotropic r_S is what the similarity law sigma_S ~ sigma_aw tau^3
     // asks for.  Closing that gap the other way -- keeping 1.87 and setting
     // the R_S horizontal factors to match -- was measured and is 13.7 percent
-    // worse; see
-    // docs/ou-iii-anisotropy-consistency.md.
+    // worse.
     float S_factor_      = 1.0f;
 
     TrackingPolicy                  tracker_policy_{};
@@ -2202,9 +2196,7 @@ private:
     // with the old law.  The deterministic sweep prefers ~0.32, but that
     // preference does not survive the multi-seed protocol and costs 0.027 deg
     // of pitch; the band-matching prediction c_sigma = F_OU^(-1/2) ~ 1.80 is
-    // significantly worse on the vertical endpoint, if only by 0.037 %Hs.  See
-    // docs/ou-iii-rs-amplitude-retune.md and
-    // tools/ou_rs_amplitude_retune_sweep.py.
+    // significantly worse on the vertical endpoint, if only by 0.037 %Hs.
     float R_S_coeff_    = R_S_COEFF_ANALYTICAL_REFERENCE;
     float tau_coeff_    = 1.0f;
     float sigma_coeff_  = 0.9f;
@@ -2300,8 +2292,8 @@ public:
         // The remaining MEKF variances the Kalman3D_Wave_OU_III constructor
         // takes.  They were reachable only through initialize_ext(), which
         // this wrapper never called, so every deployment ran on the header
-        // defaults; docs/ou-iii-qmekf-variances.md is the sweep that gauged
-        // them.  The values here reproduce those defaults exactly.
+        // defaults, which a dedicated MEKF-variance sweep gauged.  The values
+        // here reproduce those defaults exactly.
         //
         //   Pq0      initial attitude-error variance, rad^2.  The proxy
         //            handoff overwrites the attitude block, so this only ever
