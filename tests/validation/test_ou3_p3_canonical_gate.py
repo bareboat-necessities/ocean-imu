@@ -22,13 +22,15 @@ class CanonicalP3GateTests(unittest.TestCase):
         self.assertTrue(self.d["only_this_module_may_promote_P3_for_P4"])
         self.assertEqual(self.d["useful_gate"], 1.0e-18)
 
-    def test_current_state_cannot_promote_without_refined_p2_interface(self):
+    def test_refined_p2_is_ready_but_current_p3_has_not_consumed_it(self):
         self.assertTrue(self.d["P2_interface"]["timing_pass"])
-        self.assertFalse(self.d["P2_interface"]["correlation_ready"])
-        self.assertFalse(self.d["P2_interface"]["ready_for_canonical_P3"])
+        self.assertTrue(self.d["P2_interface"]["correlation_ready"])
+        self.assertTrue(self.d["P2_interface"]["ready_for_canonical_P3"])
         self.assertFalse(self.d["P3_CANONICAL_PASS"])
         self.assertFalse(self.d["P4_MAY_CONSUME_P3"])
-        self.assertTrue(any("P2" in x for x in self.d["P3_CANONICAL_FAIL_REASONS"]))
+        reasons = self.d["P3_CANONICAL_FAIL_REASONS"]
+        self.assertTrue(any("has not consumed" in x for x in reasons))
+        self.assertTrue(any("source-history" in x for x in reasons))
 
     def test_both_H_and_A_margins_are_part_of_same_verdict(self):
         self.assertIn("H", self.d["mode_margins"])
@@ -40,6 +42,7 @@ class CanonicalP3GateTests(unittest.TestCase):
     def test_prerequisite_success_cannot_be_relabelled_as_canonical_pass(self):
         self.assertFalse(self.d["P3_CANONICAL_PASS"])
         required = self.d["required_properties"]
+        self.assertTrue(required["same_source_history_for_process_covariance_measurement"])
         self.assertTrue(required["time_varying_tuner_over_word"])
         self.assertTrue(required["interleaved_accelerometer_and_S_measurements"])
         self.assertTrue(required["H_mode"])
