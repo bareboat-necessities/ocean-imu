@@ -9,11 +9,13 @@ LTV certificate currently combines:
 * the process floor, either with the existing source-global sigma/tau floor or
   with the same endpoint cell held static.
 
+The scan consumes the rigorous e3 Gramian spectral conversion rather than the
+older det/trace^3 loss, so cells reported below the useful gate are source/
+covariance bottlenecks rather than artifacts of that obsolete spectral bound.
 The first scan is still conservative in the process floor but not source-path
 complete because the covariance ceiling is endpoint-static.  The second scan is
-only a localization diagnostic.  Their purpose is to identify which source
-coordinates must retain path dependence before the next certificate is built.
-No replay values, theorem-gate changes, or filter changes are used.
+only a localization diagnostic.  No replay values, theorem-gate changes, or
+filter changes are used.
 """
 from __future__ import annotations
 
@@ -23,6 +25,7 @@ import math
 from pathlib import Path
 
 from ou3_interval import Interval
+import ou3_p3_gramian_e3 as E3
 import ou3_p3_ltv_translation_ucc_probe as LTV
 import ou3_p3_tau_decay_budget as DECAY
 import ou3_p4_source_node_cells as NODES
@@ -31,7 +34,7 @@ import ou3_source_reachable_matrix_p3 as BASE
 
 REPO = Path(__file__).resolve().parents[1]
 DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
-SCHEMA = 1
+SCHEMA = 2
 CANDIDATES = (0.25, 0.5, 0.75, 1.0, 1.25, 1.5)
 
 
@@ -44,7 +47,7 @@ def _best(
 ) -> dict:
     rows = []
     for H in CANDIDATES:
-        row = LTV.ltv_relative_process_floor(
+        old = LTV.ltv_relative_process_floor(
             upper,
             H,
             global_tau_bounds[0],
@@ -52,8 +55,8 @@ def _best(
             sigma_min,
             decay_exponent_upper=decay_cache[(tau_index, H)],
         )
-        row["clock_phase_decay_exponent_upper"] = decay_cache[(tau_index, H)]
-        rows.append(row)
+        old["clock_phase_decay_exponent_upper"] = decay_cache[(tau_index, H)]
+        rows.append(E3.sharpen_probe(old, upper))
     return max(rows, key=lambda x: float(x["relative_process_floor_lower"]))
 
 
@@ -62,7 +65,7 @@ def _best_static(
 ) -> dict:
     rows = []
     for H in CANDIDATES:
-        row = LTV.ltv_relative_process_floor(
+        old = LTV.ltv_relative_process_floor(
             upper,
             H,
             tau_bounds[0],
@@ -70,7 +73,7 @@ def _best_static(
             sigma_min,
             decay_exponent_upper=math.nextafter(H / tau_bounds[0], math.inf),
         )
-        rows.append(row)
+        rows.append(E3.sharpen_probe(old, upper))
     return max(rows, key=lambda x: float(x["relative_process_floor_lower"]))
 
 
@@ -165,11 +168,13 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
 
     return {
         "schema": SCHEMA,
-        "qualification": "OU3_P3_ALL_SOURCE_CELL_LOCALIZATION_SCAN",
+        "qualification": "OU3_P3_ALL_SOURCE_CELL_E3_LOCALIZATION_SCAN",
         "source_only": True,
         "trajectory_replay_used": False,
         "filter_changed": False,
         "diagnostic_only": True,
+        "gramian_spectral_route": "DET_OVER_E3_HADAMARD",
+        "trace_cubed_spectral_route_used": False,
         "P3_PROMOTED": False,
         "useful_gate": BASE.MIN_USEFUL_DELTA,
         "source_cells_scanned": len(rows),
@@ -197,14 +202,21 @@ def validate(d: dict) -> list[str]:
     f = list(d.get("failures", []))
     if d.get("schema") != SCHEMA:
         f.append("schema mismatch")
-    if d.get("qualification") != "OU3_P3_ALL_SOURCE_CELL_LOCALIZATION_SCAN":
+    if d.get("qualification") != "OU3_P3_ALL_SOURCE_CELL_E3_LOCALIZATION_SCAN":
         f.append("wrong qualification")
     for key in ("source_only", "diagnostic_only"):
         if d.get(key) is not True:
             f.append(f"{key} is not true")
-    for key in ("trajectory_replay_used", "filter_changed", "P3_PROMOTED"):
+    for key in (
+        "trajectory_replay_used",
+        "filter_changed",
+        "trace_cubed_spectral_route_used",
+        "P3_PROMOTED",
+    ):
         if d.get(key) is not False:
             f.append(f"{key} is not false")
+    if d.get("gramian_spectral_route") != "DET_OVER_E3_HADAMARD":
+        f.append("e3 Gramian spectral route missing")
     if int(d.get("source_cells_scanned", 0)) != NODES.EXPECTED_STATES:
         f.append("did not scan all 800 source cells")
     if int(d.get("distinct_tau_decay_problems", 0)) != 10 * len(CANDIDATES):
