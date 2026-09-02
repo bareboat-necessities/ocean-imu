@@ -80,7 +80,7 @@ jobs:
 
   source-indexed-metric-scan:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v6
         with:
@@ -90,7 +90,7 @@ jobs:
         run: |
           python3 -m py_compile tools/ou3_p3_source_indexed_metric_scan.py
 
-      - name: Scan source-indexed metric switching on finite-stage graph
+      - name: Scan source-indexed translation metric switching
         run: |
           python3 tools/ou3_p3_source_indexed_metric_scan.py \
             --output /tmp/ou3_p3_source_indexed_metric_scan.json
@@ -124,4 +124,28 @@ jobs:
         with:
           name: ou3-p3-recent-source-cones
           path: /tmp/ou3_p3_recent_source_cones.json
+          retention-days: 7
+
+  frozen-full-matrix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Compile frozen-source full-matrix certificate
+        run: |
+          python3 -m py_compile tools/ou3_p3_frozen_full_matrix_translation.py
+
+      - name: Certify 800 frozen source cells with full translation matrix
+        run: |
+          python3 tools/ou3_p3_frozen_full_matrix_translation.py \
+            --output /tmp/ou3_p3_frozen_full_matrix_translation.json
+
+      - name: Upload frozen-source matrix certificate
+        uses: actions/upload-artifact@v6
+        with:
+          name: ou3-p3-frozen-full-matrix-translation
+          path: /tmp/ou3_p3_frozen_full_matrix_translation.json
           retention-days: 7
