@@ -40,8 +40,13 @@ import math
 from typing import Iterable, Sequence
 
 from ou3_interval import Interval, hull
-import ou3_p5_deployed_quaternion_cayley_cell as QCOMP
-import ou3_p4_group_algebra as GROUP
+import ou3_validated_transcendentals as VT
+
+# Branch boundary and validated range of the shipping correction
+# quaternion.  Both were carried by retired proof modules; the values
+# and the enclosure below are unchanged.
+SERIES_BRANCH_NORM = 1.0e-2
+MAX_CORRECTION_NORM = 6.0
 
 
 def I(x: float) -> Interval:
@@ -262,24 +267,31 @@ def _small_quaternion_ad(d: Sequence[AD]) -> tuple[AD, list[AD]]:
 
 def _axis_quaternion_ad(d: Sequence[AD], norm_upper: float) -> tuple[AD, list[AD]]:
     """Axis-angle quaternion AD using rigorous radial derivative bounds."""
-    vals = [x.val for x in d]
-    q = QCOMP._axis_homogeneous(vals, norm_upper)
-    if q is None:
+    hi = float(norm_upper)
+    if hi < SERIES_BRANCH_NORM:
         raise RuntimeError("axis quaternion requested outside axis branch")
-    wv, vv = q
+    if not (math.isfinite(hi) and hi <= MAX_CORRECTION_NORM):
+        raise ValueError(
+            f"deployed correction norm upper outside validated range [0,{MAX_CORRECTION_NORM:g}]"
+        )
+    # The axis branch starts at 1e-2.  For hi<=6 the half-angle is <=3<pi, so
+    # cos decreases and sinc decreases throughout this complete branch
+    # interval, and the homogeneous vector coefficient is k=0.5*sinc(r/2).
+    half_lo = 0.5 * SERIES_BRANCH_NORM
+    half_hi = 0.5 * hi
+    clo = VT.cos_point(half_hi)
+    chi = VT.cos_point(half_lo)
+    wv = Interval(clo.lo, chi.hi)
+    k_val = I(0.5) * VT.sinc_interval(Interval(half_lo, half_hi))
+    vv = [k_val * x.val for x in d]
+
     n = d[0].n
     # w_u and k_u are non-positive on r/2 in [0,3].  The interval integral
     # bounds are global on the promoted correction range and include r->0.
     w_u = Interval(-1.0 / 8.0, 0.0)
     k_u = Interval(-1.0 / 48.0, 0.0)
-    # k itself is needed for dv/dd.  QCOMP returns v=k*d but division by a
-    # component cell would be unsafe; use the source-wide coefficient range.
-    half_lo = 0.5 * GROUP.SERIES_BRANCH_NORM
-    half_hi = 0.5 * float(norm_upper)
-    # sinc is positive and decreasing on [0,3].  QCOMP already validates this
-    # range; its homogeneous vector coefficient is k=0.5*sinc(r/2).
-    import ou3_validated_transcendentals as VT
-    k_val = I(0.5) * VT.sinc_interval(Interval(half_lo, half_hi))
+    # k itself is needed for dv/dd; division by a component cell would be
+    # unsafe, so the source-wide coefficient range above is used directly.
 
     du = []
     for j in range(n):
@@ -303,15 +315,15 @@ def deployed_quaternion_ad(d: Sequence[AD]) -> tuple[AD, list[AD], float]:
         raise ValueError("deployed correction AD requires a three-vector")
     vals = [x.val for x in d]
     dn = _norm_upper(vals)
-    if dn > QCOMP.MAX_CORRECTION_NORM:
+    if dn > MAX_CORRECTION_NORM:
         raise ValueError("correction cell exceeds validated deployed quaternion range")
     parts: list[tuple[AD, list[AD]]] = []
     # The component box may include small-branch points whenever its norm upper
     # reaches the origin; the algebraic polynomial enclosure is valid on the
     # strict-small intersection and using the full component box only widens it.
     parts.append(_small_quaternion_ad(d))
-    if dn >= GROUP.SERIES_BRANCH_NORM:
-        parts.append(_axis_quaternion_ad(d, max(dn, GROUP.SERIES_BRANCH_NORM)))
+    if dn >= SERIES_BRANCH_NORM:
+        parts.append(_axis_quaternion_ad(d, max(dn, SERIES_BRANCH_NORM)))
     if len(parts) == 1:
         return parts[0][0], parts[0][1], dn
     w = hull_ad(*(p[0] for p in parts))

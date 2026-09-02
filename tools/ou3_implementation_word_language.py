@@ -218,7 +218,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     if domain.get("trajectory_fit") is not False:
         raise RuntimeError("proof domain must not be trajectory fitted")
     live = domain["normal_live"]
-    source = SOURCE.build()
+    source = SOURCE.build(SOURCE.DEFAULT_HEADER.resolve())
     trans = TRANS.build()
     vector = VECTOR.build()
     pe = vector["operating_envelope"]

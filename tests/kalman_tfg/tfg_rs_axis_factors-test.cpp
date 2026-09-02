@@ -9,7 +9,7 @@
 // regularization are independently overridable. The default stays (1.15, 1.15,
 // 1.0): unlike OU-II and OU-III, which both retuned their horizontal
 // regularizer down to 0.72, TFG measures 1.15 as its own interior minimum and
-// moves the other way. See docs/ou-horizontal-anisotropy-per-axis-split.md.
+// moves the other way.
 namespace {
 
 using Fusion = ocean_imu::tfg::SeaStateFusionFilter_TFG<>;

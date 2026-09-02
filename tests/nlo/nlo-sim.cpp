@@ -54,8 +54,7 @@ static constexpr int RMS_WINDOW_SEC_LABEL = static_cast<int>(RMS_WINDOW_SEC);
 // rule; 7.26 and 7.13 give it back.  This observer is also the most
 // reproducible of the set -- rebuilding at -march=x86-64 instead of the host's
 // native cascadelake moves the scored Z by 1.5e-6 relative, so these margins
-// are four thousand times the spread they have to survive.  See
-// docs/quality-gate-regauge.md.
+// are four thousand times the spread they have to survive.
 static constexpr W3dFailureLimits FAIL_LIMITS{
     .err_limit_percent_z_jonswap   = 7.26f,   // was 7.3, worst 7.2143 (jonswap H8.5)
     .err_limit_percent_z_pmstokes  = 7.13f,   // was 7.2, worst 7.0865 (pmstokes H8.5)

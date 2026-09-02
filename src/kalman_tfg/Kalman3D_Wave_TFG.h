@@ -135,7 +135,7 @@ class Kalman3D_Wave_TFG {
     }
 
     // The seed is an argument so it can be swept; the default is the value
-    // this filter has always used.  See docs/tfg-qmekf-variances.md.
+    // this filter has always used.
     void initialize_identity(T initial_covariance = T(1e-4)) {
         X_ = Group::Identity();
         P_.setIdentity();

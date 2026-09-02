@@ -506,7 +506,7 @@ The horizontal accelerometer bias absorbs part of the heading motion, and it is
 the least observable quantity in the set — an error above 90% of the true bias
 means the error is larger than the thing being estimated, which was true before
 this change and is true after it. Displacement does not move. Four of OU-II's
-seven gates were re-derived accordingly; see `docs/quality-gate-regauge.md`.
+seven gates were re-derived accordingly.
 
 With `SF_MAG_CONT_HI=0` the filter reproduces its pre-correction self to within
 2.6e-4 relative, which is the same order as rebuilding it at a different

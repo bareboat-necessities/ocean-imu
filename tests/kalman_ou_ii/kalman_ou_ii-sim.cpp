@@ -52,7 +52,7 @@ public:
     // harness hands every family.  The harness builds each as a fixed multiple
     // of the white noise it injects -- 2.8x on accel, 2.0x on gyro, 1.2x on
     // mag -- and those multiples had never been swept for any family.
-    // docs/ou-ii-qmekf-variances.md is the sweep.
+    // A dedicated MEKF-variance sweep gauged them.
     //
     // sigma_g is a units correction, not a fit, and it is the same one OU-III
     // carries: the harness multiplies a *per-sample* gyro standard deviation
@@ -444,7 +444,7 @@ public:
         if (env_float("SF_ONLINE_TUNE_WARMUP_SEC", vf)) cfg_.online_tune_warmup_sec = vf;
 
         // The MEKF variances the Kalman3D_Wave_OU_II constructor takes; see
-        // the SIGMA_*_RESCALE block above and docs/ou-ii-qmekf-variances.md.
+        // the SIGMA_*_RESCALE block above.
         // The three sensor sigmas are swept as scale factors on the deployed
         // point, so a scale of 1 leaves it in place.
         if (env_float("SF_SIGMA_A_SCALE", vf)) cfg_.sigma_a *= vf;
@@ -704,8 +704,7 @@ private:
 // were shortened from 5 to 3 wave-period-halves.  The binding record moves from
 // pmstokes H0.27 to jonswap H1.5, where the horizontal accelerometer bias is
 // already unobservable -- the error exceeds the true bias with either horizon
-// -- and the displacement error on that record is unchanged.  See
-// docs/ou-ema-adaptation-tuning.md.
+// -- and the displacement error on that record is unchanged.
 //
 // bias_3d_percent re-derived once more when the frequency tracker moved onto
 // the complementary-levelled vertical acceleration.  It is the only sentinel
@@ -784,7 +783,7 @@ private:
 //
 // SF_MAG_CONT_HI=0 is the matched ablation and reproduces the pre-correction
 // filter to within 2.6e-4 relative, which is the noise a rebuild of this
-// family produces anyway; see docs/quality-gate-regauge.md.  It exceeds the
+// family produces anyway.  It exceeds the
 // yaw gate, as it should -- these are fitted to the filter that ships.  Score
 // it with W3D_COLLECT_ALL_GATES.
 // Then cut to the rule, which the tenth-quantum was not delivering on the two
@@ -803,9 +802,8 @@ private:
 // for this family rather than against the rule alone: the binding records move
 // by 9.4e-5, 1.7e-4 and 3.0e-4 relative between a native and an -march=x86-64
 // build, so the smallest of the three margins is still 21 times the spread it
-// has to survive.  docs/quality-gate-regauge.md carries that measurement and
-// the command that redoes it, which is the check to repeat before cutting any
-// of these finer.
+// has to survive.  Repeating that cross-build comparison is the check to run
+// before cutting any of these finer.
 //
 // Then tightened twice more, with the filter standing still for both -- the
 // same two passes OU-III took, since the two families are gated by one rule
@@ -838,18 +836,17 @@ private:
 // worst-case pitch and gains on roll -- and it is a fact about the filter, not
 // about the gates, which is why the gates decline to score it.
 //
-// All nine limits are what tools/ou_regauge_gates.py --family ou_ii prints for
-// the filter that ships.  They are checked against this family's own build
+// All nine limits are the re-gauged bars for the filter that ships.  They are
+// checked against this family's own build
 // drift rather than against the rule alone, and this family is the noisier of
 // the two: the binding records move by 8.0e-6 to 5.6e-4 relative between a
 // native and an -march=x86-64 build, and both builds pass all nine.  The
 // thinnest margin-to-drift ratio in the set is pitch at 9.3x -- the tightest
 // anywhere in the five families, and the first bar to re-measure rather than
-// re-cut if a rebuild ever breaches it.  docs/quality-gate-regauge.md carries
-// that measurement and the command that redoes it.
+// re-cut if a rebuild ever breaches it.
 //
-// Re-derived for the (r_p0, r_v0) coefficient re-fit,
-// docs/ou-ii-pseudo-variance-tuning.md.  Every one of the nine still passed on
+// Re-derived for the (r_p0, r_v0) coefficient re-fit.
+// Every one of the nine still passed on
 // its previous value, so this pass is the rule following a filter that moved,
 // not a breach being papered over -- but pitch had come down to 0.0001 deg of
 // margin against a channel whose measured -march rebuild drift is about 2e-4
@@ -885,7 +882,7 @@ private:
 // observable quantity scored here, with an error above 90 percent of the true
 // bias on the binding record under every configuration this family has shipped.
 // Then all nine at once, and all nine downward, when the MEKF sensor
-// variances were swept for the first time (docs/ou-ii-qmekf-variances.md).
+// variances were swept for the first time.
 // The gyro term of that sweep is a units correction -- the harness was
 // handing a per-sample standard deviation to an argument the filter
 // integrates as a noise density -- so the filter that ships now is a
@@ -903,11 +900,11 @@ private:
 //   acc Z bias %     5.324  -> 4.802    worst 5.2969 -> 4.7776
 //   acc 3D bias %    94.47  -> 92.35    worst 93.9911 -> 91.8873
 //
-// Everything here is what tools/ou_regauge_gates.py prints for the filter as
-// it now stands, cut to the same rule as every line above it.
+// Everything here is re-gauged for the filter as it now stands, cut to the
+// same rule as every line above it.
 //
-// Then all nine again for the deployed physical-MSE pseudo-measurement law
-// (docs/ou-ii-dual-mse-adaptation.md).  This is the first regauge in a while
+// Then all nine again for the deployed physical-MSE pseudo-measurement law.
+// This is the first regauge in a while
 // where bars move in both directions, and the split is the change's own shape
 // rather than realization noise:
 //
@@ -940,8 +937,8 @@ private:
 // moves 1.6 percent on a channel the paired comparison puts at
 // +0.0004 +/- 0.0004 deg, i.e. detectable and not meaningful.
 //
-// Everything here is what tools/ou_regauge_gates.py prints for the filter as
-// it now stands, cut to the same rule as every line above it.
+// Everything here is re-gauged for the filter as it now stands, cut to the
+// same rule as every line above it.
 //
 // Then for the continuous hard-iron re-tune, which cut the estimator's
 // absolute ridge floor from 4e-3 to 5e-4.  OU-II takes that calibration
@@ -967,10 +964,9 @@ private:
 // because a sentinel is fitted to what the filter produces.
 //
 // Everything else moves in the third digit or better and is re-cut to the
-// rule.  All nine are what tools/ou_regauge_gates.py prints for the filter
-// that ships.
+// rule.  All nine are re-gauged for the filter that ships.
 // Then all nine again when the startup gravity gate moved into the world
-// frame (docs/ou-startup-gravity-gate.md).  The gate is what certifies the
+// frame.  The gate is what certifies the
 // tilt the magnetic reference is framed in and the MEKF is seeded with, and
 // in waves it was measuring the sea rather than the levelling error, so it
 // only closed by luck: time to a live filter ran 22 s in the calm records and
@@ -999,8 +995,8 @@ private:
 // down, one of them (the accelerometer bias aggregate) by 9%.
 //
 // Re-cut for R_p0_x_factor = R_p0_y_factor 1 -> 0.72, the horizontal
-// position-regularizer retune that came with the per-axis split; see
-// docs/ou-horizontal-anisotropy-per-axis-split.md.  Every bar holds or comes
+// position-regularizer retune that came with the per-axis split.  Every bar
+// holds or comes
 // down, and the two the retune aims at come down hard: 3D JONSWAP
 // 17.18 -> 15.54 and PM-Stokes 17.94 -> 16.62, 9.6% and 7.4% tighter.  Nothing
 // here is a loosening.
