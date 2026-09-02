@@ -23,7 +23,7 @@ permissions:
   contents: read
 
 jobs:
-  current-proof:
+  source-foundation:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -56,6 +56,23 @@ jobs:
           python3 tools/ou3_p4_terminal_source_equivalence.py \
             --output /tmp/ou3_terminal_source_equivalence.json
 
+  p4-design:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Compile active P4 route
+        run: |
+          python3 -m py_compile \
+            tools/ou3_p4_joint_word_dissipation_design.py \
+            tools/ou3_p4_joint_word_postprediction_design.py \
+            tools/ou3_p4_augmented_complete_word_design.py \
+            tools/ou3_p4_augmented_complete_word_design_v5.py \
+            tools/ou3_p4_covariance_primitives.py
+
       - name: Run current augmented complete-word P4 producer
         run: |
           python3 tools/ou3_p4_augmented_complete_word_design_v5.py \
@@ -79,6 +96,7 @@ jobs:
                     'mu', m.get('signed_word_generalized_margin_design'),
                     'rho', m.get('rho_homogeneous_design_upper'),
                     'beta', m.get('beta_measurement_design_upper'),
-                    'operations', m.get('operation_count'))
+                    'operations', m.get('operation_count'),
+                    'first_measurement_step', m.get('first_measurement_step'))
           PY
           fi
