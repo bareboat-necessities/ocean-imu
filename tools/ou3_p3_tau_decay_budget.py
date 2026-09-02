@@ -25,6 +25,7 @@ This is source evidence, not a P3 promotion by itself.
 from __future__ import annotations
 
 import argparse
+import functools
 import json
 import math
 from pathlib import Path
@@ -37,8 +38,10 @@ DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
 SCHEMA = 1
 
 
+@functools.lru_cache(maxsize=4)
 def _tau_projection(domain_path: Path = DEFAULT_DOMAIN):
-    domain = json.loads(Path(domain_path).read_text(encoding="utf-8"))
+    domain_path = Path(domain_path).resolve()
+    domain = json.loads(domain_path.read_text(encoding="utf-8"))
     if domain.get("trajectory_fit") is not False:
         raise RuntimeError("tau decay budget must not be trajectory fitted")
     c = PATH._constants()
@@ -51,7 +54,7 @@ def _tau_projection(domain_path: Path = DEFAULT_DOMAIN):
     tau, _sigma, _rs, freq = SAMPLE._partition(c)
 
     labelled = [[set() for _ in gaps] for _ in tau]
-    for fi, f in enumerate(freq):
+    for f in freq:
         target = PATH._tau_target(f, c)
         horizon = PATH._tau_sigma_horizon(f, c)
         for gi, gap in enumerate(gaps):
@@ -73,10 +76,12 @@ def _lambda_upper(cell) -> float:
     return math.nextafter(1.0 / lo, math.inf)
 
 
+@functools.lru_cache(maxsize=512)
 def decay_budget(endpoint_tau_index: int, window_samples: int,
                  domain_path: Path = DEFAULT_DOMAIN) -> dict:
     """Maximum source-compatible decay exponent for an arbitrary endpoint phase."""
-    c, clock, tau, gaps, labelled = _tau_projection(Path(domain_path).resolve())
+    domain_path = Path(domain_path).resolve()
+    _c, clock, tau, gaps, labelled = _tau_projection(domain_path)
     e = int(endpoint_tau_index)
     N = int(window_samples)
     if not 0 <= e < len(tau):
@@ -158,7 +163,8 @@ def decay_budget(endpoint_tau_index: int, window_samples: int,
 
 
 def build(domain_path: Path = DEFAULT_DOMAIN, window_samples=(50, 100, 200, 300)) -> dict:
-    c, clock, tau, gaps, labelled = _tau_projection(Path(domain_path).resolve())
+    domain_path = Path(domain_path).resolve()
+    _c, clock, tau, gaps, labelled = _tau_projection(domain_path)
     rows = {}
     for N in map(int, window_samples):
         rows[str(N)] = [decay_budget(i, N, domain_path) for i in range(len(tau))]
