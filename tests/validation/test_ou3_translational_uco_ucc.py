@@ -16,7 +16,6 @@ def load(name):
 
 
 mod = load("ou3_translational_uco_ucc")
-spread = load("ou3_translational_spread_uco")
 
 
 class TranslationalUcoUccTests(unittest.TestCase):
@@ -53,25 +52,6 @@ class TranslationalUcoUccTests(unittest.TestCase):
         self.assertGreaterEqual(s["aligned_window_s"], 3.0 * s["pseudo_gap_max_s"])
         self.assertEqual(s["aligned_firing_count"], 4)
 
-    def test_spread_search_selects_best_validated_information_bound(self):
-        # Deployment theorem currently declares a 1 s recurring-PE word.
-        d = spread.build(1.0, mod.DEFAULT_HEADER)
-        self.assertEqual(spread.validate(d), [])
-        self.assertGreaterEqual(d["admissible_q_max"], 1)
-        self.assertGreaterEqual(d["best"]["q"], 1)
-        self.assertLessEqual(d["best"]["q"], d["admissible_q_max"])
-        self.assertGreater(d["best"]["information_gramian_lambda_min_lower"], 0.0)
-        self.assertGreaterEqual(d["information_widening_factor_vs_adjacent_lower"], 1.0)
-        self.assertFalse(d["three_S_detectability_used_for_this_UCO"])
-
-    def test_spread_search_never_worse_than_adjacent_for_longer_word(self):
-        d = spread.build(4.0, mod.DEFAULT_HEADER)
-        self.assertEqual(spread.validate(d), [])
-        self.assertGreaterEqual(
-            d["best"]["information_gramian_lambda_min_lower"],
-            d["adjacent_q1"]["information_gramian_lambda_min_lower"],
-        )
-
     def test_wide_exp_reduction_contains_libm_reference_for_diagnostics(self):
         I = mod.Interval.outward_bounds(38.25, 38.25)
         E = mod._exp_negative_wide(I)
@@ -80,12 +60,17 @@ class TranslationalUcoUccTests(unittest.TestCase):
         self.assertGreaterEqual(E.hi, ref)
         self.assertGreater(E.lo, 0.0)
 
-    def test_certificate_does_not_use_replay_modules(self):
-        for filename in ("ou3_translational_uco_ucc.py", "ou3_translational_spread_uco.py"):
-            text = (ROOT / "tools" / filename).read_text()
-            for forbidden in ("ou3_exact_replay", "ou3_numerical_certificate", "ou_sweep_common",
-                              "path_metrics.npz", "neighborhood_radius_search"):
-                self.assertNotIn(forbidden, text)
+    def test_certificate_does_not_use_retired_replay_routes(self):
+        text = (ROOT / "tools" / "ou3_translational_uco_ucc.py").read_text()
+        for forbidden in (
+            "ou3_exact_replay",
+            "ou3_numerical_certificate",
+            "ou_sweep_common",
+            "path_metrics.npz",
+            "neighborhood_radius_search",
+            "ou3_translational_spread_uco",
+        ):
+            self.assertNotIn(forbidden, text)
 
 
 if __name__ == "__main__":
