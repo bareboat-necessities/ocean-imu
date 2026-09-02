@@ -28,7 +28,9 @@ Checks: >
   -cert-msc32-c,
   -cert-msc51-cpp,
   -performance-enum-size,
-  -performance-inefficient-vector-operation
+  -performance-inefficient-vector-operation,
+  -bugprone-exception-escape,
+  -clang-analyzer-optin.performance.Padding
 
 # Only diagnose our own headers. Eigen and the Arduino cores are third-party
 # and would otherwise dominate the output.
@@ -76,6 +78,17 @@ CheckOptions:
 #
 #   performance-inefficient-vector-operation
 #     One `push_back` in a loop in a test driver. Not a defect.
+#
+#   bugprone-exception-escape
+#     Fires on `main` in two test drivers. A test binary that dies on an
+#     unexpected exception is behaving correctly; wrapping main in a
+#     try/catch to satisfy the check would hide the failure.
+#
+#   clang-analyzer-optin.performance.Padding
+#     Emits a sixty-field "optimal field order" for the OU filter classes.
+#     Reordering members of a filter whose layout is fixed by the frozen
+#     replay closure is not on the table, and the advice is a micro-
+#     optimization on a class instantiated a handful of times.
 #
 #   misc-no-recursion
 #     Reports the mutually-recursive parameter setters in
