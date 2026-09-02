@@ -64,10 +64,31 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Run source-uniform P3 matrix certificate
+      - name: Validate dependency-preserving scaled OU process
         run: |
-          python3 tools/ou3_source_reachable_matrix_p3.py \
-            --output /tmp/ou3_p3_matrix.json
+          python3 tools/ou3_p3_scaled_process.py \
+            --output /tmp/ou3_p3_scaled_process.json
+
+      - name: Run source-uniform P3 matrix certificate with retained dependency
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          import sys
+          sys.path.insert(0, 'tools')
+          import ou3_source_reachable_matrix_p3 as P3
+          import ou3_p3_scaled_process as SP
+          P3.split_x_cell = SP.split_x_cell
+          d = P3.build(P3.DEFAULT_DOMAIN)
+          f = P3.validate(d)
+          out = dict(d)
+          out['dependency_preserving_scaled_process_backend'] = True
+          out['validation_pass'] = not f
+          out['validation_failures'] = f
+          Path('/tmp/ou3_p3_matrix.json').write_text(json.dumps(out, indent=2, sort_keys=True))
+          print(json.dumps({'status': d.get('continuous_linear_information_certificate'), 'failures': f}, indent=2))
+          raise SystemExit(0 if not f else 2)
+          PY
 
       - name: Print P3 nonlinear budget inputs
         if: always()
