@@ -16,6 +16,7 @@ from pathlib import Path
 
 from ou3_interval import Interval
 import ou3_full_process_ucc as PROCESS
+import ou3_p4_covariance_primitives as COV
 import ou3_p4_joint_word_gauge_design as G
 
 DEFAULT_DOMAIN = G.DEFAULT_DOMAIN
@@ -31,7 +32,7 @@ def corrected_zero_rate_transition_process(mode: str, src: dict, domain: dict):
         z = Interval.outward_bounds(qtb, qtb)
         Q[ax][3 + ax] = z
         Q[3 + ax][ax] = z
-    Q = G.H._psd_tighten(Q)
+    Q = COV.psd_tighten(Q)
     return F, Q, meta
 
 
