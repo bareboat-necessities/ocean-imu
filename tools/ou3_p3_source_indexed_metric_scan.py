@@ -1,30 +1,26 @@
 #!/usr/bin/env python3
-"""Diagnostic source-indexed P3 metric scan on the finite-speed tuner graph.
+"""Fast source-indexed translation-metric scan on the finite-speed tuner graph.
 
 The source-complete P3 route must not collapse the 800 physical tuner cells to
 one covariance box merely because long-horizon ancestor reachability eventually
-becomes complete.  A switched/multiple-metric certificate may instead attach a
-metric to each source cell and prove every *admissible finite-speed transition*
-from the start metric into the destination metric.
+becomes complete.  A switched/multiple-metric construction may attach a metric
+to each source cell and prove every admissible finite-speed transition from the
+start enclosure into the destination enclosure.
 
-This producer is deliberately only a design diagnostic.  It builds a static
-exact-node P3 comparison at all 800 physical cells, then measures how those
-candidate diagonal covariance geometries change across the retained 13..26
-sample staged/committed source graph.  The static node comparisons freeze the
-source parameters inside the word and therefore are NOT a source-complete P3
-certificate.  Likewise, diagonal covariance dominators are metric-design seeds,
-not the full Kalman information matrices required for promotion.
+This producer is deliberately only a design diagnostic.  It computes, for each
+physical source node, the retained finite-memory translation covariance
+dominator in [v,p,S,a_w] and the corresponding dimensionless similarity seed
+obtained with D_h=diag(sigma*h,sigma*h^2,sigma*h^3,sigma).  It then measures
+how these seeds change across the retained 13..26-sample committed-source graph.
 
-The useful outputs are:
+Unlike the earlier version of this diagnostic, it does not call the expensive
+scaled-process proof inside every H/A source cell.  That process proof depends
+primarily on tau and is not needed to answer the metric-switching question.  The
+all-cell e3 scan remains the separate process-headroom diagnostic.
 
-* the static exact-node P3 margin distribution, which quantifies the headroom
-  available before switched-source costs are paid;
-* directed edge ratios between source-indexed covariance seeds;
-* the largest tau/sigma/R_S partition jumps actually admitted by the finite
-  staging graph.
-
-No replay, operating-domain shrink, filter change, or theorem-gate relaxation is
-used here.
+No replay, operating-domain shrink, powf/sqrtf target tightening, filter change,
+or theorem-gate relaxation is used.  These diagonal seeds are not the final
+18/21-state information matrices and cannot promote P3/P4/P5.
 """
 from __future__ import annotations
 
@@ -34,84 +30,71 @@ import math
 from pathlib import Path
 
 from ou3_interval import Interval
-import ou3_p3_scaled_process as SCALED
 import ou3_p4_sample_clock_source_refinement as CLOCK
 import ou3_p4_source_node_cells as NODES
 import ou3_source_reachable_matrix_p3 as BASE
 
 REPO = Path(__file__).resolve().parents[1]
 DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
-SCHEMA = 1
+SCHEMA = 2
 
 
-def _node_seed(mode: str, node: dict, domain: dict, vector: dict, process: dict,
-               sched: dict, alpha6: float) -> dict:
+def _node_seed(node: dict, domain: dict, sched: dict) -> dict:
     h = float(sched["dt_s"])
-    tau_lo, tau_hi = map(float, node["tau_s"])
-    x = Interval.outward_bounds(BASE.down(h / tau_hi), BASE.up(h / tau_lo))
+    tau = Interval(*map(float, node["tau_s"]))
     sigma = Interval(*map(float, node["sigma_filter_committed_mps2"]))
     rs = Interval(*map(float, node["R_S_filter_std"]))
+    Tpe = BASE.pos(domain["normal_live"]["vector_pe_recurrence_window_s"], "PE recurrence")
+    upper, timing = BASE.translation_upper(tau, sigma, rs, Tpe, sched)
+    upper = [float(x) for x in upper]
 
-    rows = []
-    for xcell, rho_x in SCALED.split_x_cell(x):
-        rows.append(
-            BASE.mode_cell(
-                mode,
-                xcell,
-                rho_x,
-                sigma,
-                rs,
-                domain["normal_live"],
-                vector,
-                process,
-                sched,
-                alpha6,
-            )
-        )
-    if not rows:
-        raise RuntimeError("static source node produced no x cells")
-
-    dim = len(rows[0]["Sigma_diagonal_upper"])
-    upper = [max(float(r["Sigma_diagonal_upper"][k]) for r in rows) for k in range(dim)]
-    scales = [min(float(r["comparison_scale_diagonal_squared"][k]) for r in rows) for k in range(dim)]
-    if any(not (math.isfinite(x) and x > 0.0) for x in upper + scales):
-        raise RuntimeError("static node seed lost finite positivity")
-    normalized = [u / s for u, s in zip(upper, scales)]
-    margin = min(float(r["relative_Riccati_injection_margin_lower"]) for r in rows)
+    # A covariance upper is divided by the smallest scale square to remain an
+    # upper bound in the dimensionless similarity coordinates throughout the
+    # source cell.  This is only a diagonal metric-design seed.
+    scales = [
+        sigma.lo * h,
+        sigma.lo * h * h,
+        sigma.lo * h * h * h,
+        sigma.lo,
+    ]
+    scales2 = [x * x for x in scales]
+    normalized = [BASE.up(u / BASE.down(s)) for u, s in zip(upper, scales2)]
+    if any(not (math.isfinite(x) and x > 0.0) for x in upper + normalized):
+        raise RuntimeError("translation metric seed lost finite positivity")
     return {
-        "mode": mode,
-        "dimension": dim,
-        "static_frozen_source_only": True,
-        "P3_PROMOTABLE": False,
-        "relative_Riccati_injection_margin_lower": margin,
-        "useful_gate": BASE.MIN_USEFUL_DELTA,
-        "useful_static_node": margin >= BASE.MIN_USEFUL_DELTA,
-        "Sigma_diagonal_upper_seed": upper,
-        "comparison_scale_diagonal_squared_lower_seed": scales,
-        "Sigma_over_scale_diagonal_upper_seed": normalized,
-        "x_subcells": len(rows),
+        "Sigma_translation_diagonal_upper": upper,
+        "Sigma_over_Dh2_diagonal_upper": normalized,
+        "word_horizon_s_lower": float(timing["word_horizon_s_lower"]),
+        "word_horizon_s_upper": float(timing["word_horizon_s_upper"]),
     }
 
 
-def _directed_ratio(a: list[float], b: list[float]) -> float:
-    """max diagonal ratio for W_b/W_a when M_i = diag(1/a_i)."""
-    return max(float(x) / float(y) for x, y in zip(a, b))
+def _directed_ratio(start: list[float], end: list[float]) -> float:
+    """Metric-switch factor M_end <= r M_start for M_i=diag(1/U_i).
+
+    Since M_end/M_start=U_start/U_end coordinatewise, return max U_start/U_end.
+    """
+    return max(BASE.up(float(a) / BASE.down(float(b))) for a, b in zip(start, end))
 
 
 def _summary(values: list[float]) -> dict:
     if not values:
         raise RuntimeError("empty switching-factor population")
-    x = sorted(values)
+    x = sorted(float(v) for v in values)
+
     def q(p: float) -> float:
         i = min(len(x) - 1, max(0, int(math.ceil(p * len(x))) - 1))
         return float(x[i])
+
     return {
         "count": len(x),
-        "min": float(x[0]),
+        "min": x[0],
         "p50": q(0.50),
         "p90": q(0.90),
         "p99": q(0.99),
-        "max": float(x[-1]),
+        "max": x[-1],
+        "count_le_1p01": sum(v <= 1.01 for v in x),
+        "count_le_1p05": sum(v <= 1.05 for v in x),
         "count_le_1p25": sum(v <= 1.25 for v in x),
         "count_le_2": sum(v <= 2.0 for v in x),
         "count_le_4": sum(v <= 4.0 for v in x),
@@ -135,98 +118,91 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     if gf:
         raise RuntimeError(f"finite-speed source graph failed: {gf}")
 
-    vector = BASE.VECTOR.build()
-    process = BASE.PROCESS.build()
     sched = BASE.source_schedule()
-    alpha6 = BASE.vector_alpha6(domain["normal_live"], vector)
-
-    seeds = {"H": [], "A": []}
-    for node in nodes_payload["nodes"]:
-        for mode in ("H", "A"):
-            seeds[mode].append(
-                _node_seed(mode, node, domain, vector, process, sched, alpha6)
-            )
-
+    nodes = nodes_payload["nodes"]
+    seeds = [_node_seed(node, domain, sched) for node in nodes]
     graph = graph_payload["graph"]
     if len(graph) != NODES.EXPECTED_STATES:
         raise RuntimeError("finite-speed graph/source-node cardinality mismatch")
 
-    edge_rows = []
-    ratio_pop = {
-        "H_covariance_seed": [], "A_covariance_seed": [],
-        "H_normalized_seed": [], "A_normalized_seed": [],
-    }
+    cov_ratios: list[float] = []
+    norm_ratios: list[float] = []
     max_partition_jump = {"tau_index": 0, "sigma_raw_index": 0, "R_S_index": 0}
-    worst = {k: None for k in ratio_pop}
+    worst_cov = None
+    worst_norm = None
+    edge_count = 0
 
-    nodes = nodes_payload["nodes"]
     for i, outs in enumerate(graph):
         ni = nodes[i]
-        for j in outs:
+        for j0 in outs:
+            j = int(j0)
             nj = nodes[j]
+            edge_count += 1
             for key in max_partition_jump:
                 max_partition_jump[key] = max(
                     max_partition_jump[key], abs(int(ni[key]) - int(nj[key]))
                 )
-            row = {"start": i, "end": int(j)}
-            for mode in ("H", "A"):
-                si, sj = seeds[mode][i], seeds[mode][j]
-                cov = _directed_ratio(
-                    si["Sigma_diagonal_upper_seed"],
-                    sj["Sigma_diagonal_upper_seed"],
-                )
-                norm = _directed_ratio(
-                    si["Sigma_over_scale_diagonal_upper_seed"],
-                    sj["Sigma_over_scale_diagonal_upper_seed"],
-                )
-                ck = f"{mode}_covariance_seed"
-                nk = f"{mode}_normalized_seed"
-                ratio_pop[ck].append(cov)
-                ratio_pop[nk].append(norm)
-                row[ck] = cov
-                row[nk] = norm
-                if worst[ck] is None or cov > worst[ck]["ratio"]:
-                    worst[ck] = {"ratio": cov, "start": i, "end": int(j)}
-                if worst[nk] is None or norm > worst[nk]["ratio"]:
-                    worst[nk] = {"ratio": norm, "start": i, "end": int(j)}
-            edge_rows.append(row)
+            cov = _directed_ratio(
+                seeds[i]["Sigma_translation_diagonal_upper"],
+                seeds[j]["Sigma_translation_diagonal_upper"],
+            )
+            norm = _directed_ratio(
+                seeds[i]["Sigma_over_Dh2_diagonal_upper"],
+                seeds[j]["Sigma_over_Dh2_diagonal_upper"],
+            )
+            cov_ratios.append(cov)
+            norm_ratios.append(norm)
+            if worst_cov is None or cov > worst_cov["ratio"]:
+                worst_cov = {"ratio": cov, "start": i, "end": j}
+            if worst_norm is None or norm > worst_norm["ratio"]:
+                worst_norm = {"ratio": norm, "start": i, "end": j}
 
-    static_summary = {}
-    for mode in ("H", "A"):
-        margins = [float(s["relative_Riccati_injection_margin_lower"]) for s in seeds[mode]]
-        static_summary[mode] = {
-            "useful_nodes": sum(m >= BASE.MIN_USEFUL_DELTA for m in margins),
-            "worst_margin": min(margins),
-            "best_margin": max(margins),
-            "margin_distribution": _summary(margins),
-        }
+    # Also expose how broad the node seed family itself is.  This is the loss
+    # paid by the current global covariance box before any source-transition
+    # correlation is retained.
+    coordinate_global_spread = []
+    coordinate_normalized_spread = []
+    for k in range(4):
+        vals = [s["Sigma_translation_diagonal_upper"][k] for s in seeds]
+        nvals = [s["Sigma_over_Dh2_diagonal_upper"][k] for s in seeds]
+        coordinate_global_spread.append(BASE.up(max(vals) / BASE.down(min(vals))))
+        coordinate_normalized_spread.append(BASE.up(max(nvals) / BASE.down(min(nvals))))
 
     return {
         "schema": SCHEMA,
-        "qualification": "OU3_P3_FINITE_SPEED_SOURCE_INDEXED_METRIC_DESIGN_SCAN",
+        "qualification": "OU3_P3_FINITE_SPEED_SOURCE_INDEXED_TRANSLATION_METRIC_DESIGN_SCAN",
         "source_only": True,
         "trajectory_replay_used": False,
         "filter_changed": False,
         "declared_domain_changed": False,
         "diagnostic_only": True,
-        "static_frozen_source_seed_is_not_source_complete": True,
-        "diagonal_seed_is_not_full_information_metric": True,
+        "translation_diagonal_seed_is_not_full_information_metric": True,
+        "scaled_process_recomputed_per_source_node": False,
+        "powf_sqrtf_target_tightening_used": False,
         "P3_PROMOTED": False,
-        "useful_gate": BASE.MIN_USEFUL_DELTA,
+        "P4_PROMOTED": False,
         "source_states": len(nodes),
-        "finite_speed_transition_edges": len(edge_rows),
+        "finite_speed_transition_edges": edge_count,
         "base_untimed_transition_edges": int(graph_payload["base_transition_edges"]),
         "finite_speed_graph_all_to_all": bool(graph_payload["source_graph_all_to_all"]),
         "clock_gap_samples": [
             int(graph_payload["finite_stage_gap_lower_samples"]),
             int(graph_payload["finite_stage_gap_upper_samples"]),
         ],
+        "state_order": ["v", "p", "S", "a_w"],
         "max_partition_index_jump_per_finite_stage": max_partition_jump,
-        "static_node_seed_summary": static_summary,
-        "directed_metric_switch_summary": {k: _summary(v) for k, v in ratio_pop.items()},
-        "worst_directed_metric_switch_edges": worst,
+        "global_node_covariance_spread_by_coordinate": coordinate_global_spread,
+        "global_node_normalized_spread_by_coordinate": coordinate_normalized_spread,
+        "directed_metric_switch_summary": {
+            "physical_covariance_seed": _summary(cov_ratios),
+            "dimensionless_Dh_seed": _summary(norm_ratios),
+        },
+        "worst_directed_metric_switch_edges": {
+            "physical_covariance_seed": worst_cov,
+            "dimensionless_Dh_seed": worst_norm,
+        },
         "next_obligation": (
-            "replace static diagonal seeds by source-indexed invariant covariance/information enclosures and prove every finite-speed source edge maps the start enclosure into the destination enclosure; only then consume the switched metric in P3/P4"
+            "construct source-indexed invariant covariance/information enclosures on the staged/committed automaton and prove every finite-speed source edge maps the start enclosure into the destination enclosure; these diagonal translation seeds only measure how much source-switch geometry must be absorbed"
         ),
         "failures": [],
     }
@@ -236,18 +212,18 @@ def validate(d: dict) -> list[str]:
     f = list(d.get("failures", []))
     if d.get("schema") != SCHEMA:
         f.append("schema mismatch")
-    if d.get("qualification") != "OU3_P3_FINITE_SPEED_SOURCE_INDEXED_METRIC_DESIGN_SCAN":
+    if d.get("qualification") != "OU3_P3_FINITE_SPEED_SOURCE_INDEXED_TRANSLATION_METRIC_DESIGN_SCAN":
         f.append("wrong qualification")
     for key in (
         "source_only", "diagnostic_only",
-        "static_frozen_source_seed_is_not_source_complete",
-        "diagonal_seed_is_not_full_information_metric",
+        "translation_diagonal_seed_is_not_full_information_metric",
     ):
         if d.get(key) is not True:
             f.append(f"{key} is not true")
     for key in (
         "trajectory_replay_used", "filter_changed", "declared_domain_changed",
-        "P3_PROMOTED", "finite_speed_graph_all_to_all",
+        "scaled_process_recomputed_per_source_node", "powf_sqrtf_target_tightening_used",
+        "P3_PROMOTED", "P4_PROMOTED", "finite_speed_graph_all_to_all",
     ):
         if d.get(key) is not False:
             f.append(f"{key} is not false")
@@ -259,16 +235,10 @@ def validate(d: dict) -> list[str]:
         f.append("finite-speed graph did not reduce untimed relation")
     if d.get("clock_gap_samples") != [13, 26]:
         f.append("retained finite source clock changed")
-    for mode in ("H", "A"):
-        s = d.get("static_node_seed_summary", {}).get(mode, {})
-        if int(s.get("useful_nodes", -1)) < 0:
-            f.append(f"{mode}: missing useful static-node count")
-        for key in ("worst_margin", "best_margin"):
-            x = s.get(key)
-            if not isinstance(x, (int, float)) or not (math.isfinite(float(x)) and float(x) > 0.0):
-                f.append(f"{mode}: invalid {key}")
-    for key, s in d.get("directed_metric_switch_summary", {}).items():
-        x = s.get("max")
+    if d.get("state_order") != ["v", "p", "S", "a_w"]:
+        f.append("translation state order changed")
+    for key, row in d.get("directed_metric_switch_summary", {}).items():
+        x = row.get("max")
         if not isinstance(x, (int, float)) or not (math.isfinite(float(x)) and float(x) > 0.0):
             f.append(f"{key}: invalid switching-factor maximum")
     return list(dict.fromkeys(f))
@@ -289,7 +259,8 @@ def main() -> int:
         "source_states": d["source_states"],
         "finite_speed_transition_edges": d["finite_speed_transition_edges"],
         "max_partition_index_jump_per_finite_stage": d["max_partition_index_jump_per_finite_stage"],
-        "static_node_seed_summary": d["static_node_seed_summary"],
+        "global_node_covariance_spread_by_coordinate": d["global_node_covariance_spread_by_coordinate"],
+        "global_node_normalized_spread_by_coordinate": d["global_node_normalized_spread_by_coordinate"],
         "directed_metric_switch_summary": d["directed_metric_switch_summary"],
         "worst_directed_metric_switch_edges": d["worst_directed_metric_switch_edges"],
         "validation_failures": vf,
