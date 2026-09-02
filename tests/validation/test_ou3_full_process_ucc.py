@@ -1,5 +1,4 @@
 import importlib.util
-import math
 from pathlib import Path
 import sys
 import unittest

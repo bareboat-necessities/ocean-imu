@@ -105,3 +105,9 @@ doc/**/*.out
 doc/**/*.pdf
 doc/**/*.synctex.gz
 doc/**/*.toc
+
+# Quality-gate outputs (tools/quality_gates.sh)
+reports/coverage/
+*.gcda
+*.gcno
+*.gcov

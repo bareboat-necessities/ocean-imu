@@ -99,7 +99,9 @@ def run_one(job: tuple[str, str, int], window_s: int) -> dict:
         line = next(l for l in proc.stdout.splitlines()
                     if l.startswith("VALIDATION_METRICS"))
     except StopIteration:
-        raise SystemExit(f"no metrics from {arm} {record} seed={seed}:\n{proc.stdout[-2000:]}")
+        raise SystemExit(
+            f"no metrics from {arm} {record} seed={seed}:\n{proc.stdout[-2000:]}"
+        ) from None
     parts = record.split("_")
     row = {"arm": arm, "record": f"{parts[2]}_{parts[3]}", "seed": seed,
            "gate": "PASS" if "QUALITY_GATE: PASS=1" in proc.stdout else "FAIL"}

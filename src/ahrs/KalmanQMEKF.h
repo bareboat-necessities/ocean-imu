@@ -111,10 +111,13 @@ class EIGEN_ALIGN_MAX QuaternionMEKF {
 
 template <typename T, bool with_bias>
 QuaternionMEKF<T, with_bias>::QuaternionMEKF(Vector3 const& sigma_a, Vector3 const& sigma_g, Vector3 const& sigma_m, T Pq0, T Pb0, T b0)
-  : Q(initialize_Q(sigma_g, b0)),
-  Racc(sigma_a.array().square().matrix().asDiagonal()),
+  // Order must match the declaration order of these members (Racc, Rmag, R, Q);
+  // the compiler initializes in declaration order regardless of what is written
+  // here, so a mismatch silently misleads the next person to add a dependency.
+  : Racc(sigma_a.array().square().matrix().asDiagonal()),
   Rmag(sigma_m.array().square().matrix().asDiagonal()),
-  R((Vector6() << sigma_a, sigma_m).finished().array().square().matrix().asDiagonal()) {
+  R((Vector6() << sigma_a, sigma_m).finished().array().square().matrix().asDiagonal()),
+  Q(initialize_Q(sigma_g, b0)) {
 
   qref.setIdentity();
   x.setZero();

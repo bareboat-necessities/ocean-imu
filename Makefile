@@ -1,4 +1,4 @@
-.PHONY: all build test clean fetch-sim-data ensure-sim-data run-tests
+.PHONY: all build test clean fetch-sim-data ensure-sim-data run-tests quality-gates
 
 REPO_ROOT := $(patsubst %/,%,$(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
 
@@ -35,6 +35,11 @@ build:
 
 test: ensure-sim-data
 	@$(MAKE) -C "$(REPO_ROOT)" run-tests
+
+# Sanitizer, static-analysis and coverage layer. Run one gate with
+# `tools/quality_gates.sh <gate>`; see docs/quality-gates.md.
+quality-gates:
+	@"$(REPO_ROOT)/tools/quality_gates.sh" all
 
 clean:
 	@set -e; \

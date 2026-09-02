@@ -231,8 +231,8 @@ def main():
 
         print(f"### {args.sim}: continuous hard-iron retune, axis={args.axis}, "
               f"{len(seeds)} draws x {len(records())} records")
-        print(f"### yaw RMS (deg), mean over records, per draw; "
-              f"d% is the within-draw change, pooled")
+        print("### yaw RMS (deg), mean over records, per draw; "
+              "d% is the within-draw change, pooled")
         hdr = f"{'config':28s}" + "".join(
             f"{(seed_var.split('_')[1].lower() + ' ' + (s or 'dflt')):>11s}" for s in seeds)
         print(hdr + f"{'yaw d%':>8s}{'ywmx d%':>8s}{'roll d%':>8s}"

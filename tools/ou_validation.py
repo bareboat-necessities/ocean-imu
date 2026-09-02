@@ -1222,7 +1222,8 @@ def paired_effect_rows(
         for family in sorted({str(row["family"]) for row in adaptive}):
             family_adaptive = [row for row in adaptive if row["family"] == family]
 
-            def mode_rows(mode: str, family: str = family) -> list[Mapping[str, Any]]:
+            def mode_rows(mode: str, family: str = family,
+                          scenario: str = scenario) -> list[Mapping[str, Any]]:
                 return [
                     row for row in rows
                     if row["scenario"] == scenario

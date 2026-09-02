@@ -37,7 +37,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import math
-from typing import Iterable, Sequence
+from typing import Sequence
 
 from ou3_interval import Interval, hull
 import ou3_validated_transcendentals as VT

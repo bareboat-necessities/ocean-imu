@@ -1,0 +1,30 @@
+# cppcheck suppressions for ocean-imu.
+# Each entry is a measured false positive or a deliberate decision, not a way
+# to quiet a real finding. Re-check them when the cppcheck version moves.
+# NB: cppcheck rejects a bare "#" line, so blank lines separate the blocks.
+
+# cppcheck does not model `requires` expressions, so it reads an
+# `if constexpr (requires { ... })` detection chain as a run of identical
+# conditions after an early exit. Every arm tests a different member.
+identicalConditionAfterEarlyExit:src/util/W3dSimCommon.h
+
+# ImuCalBlobV2 is a fixed-layout binary record written to NVS and read back on
+# the next boot. Zeroing it with memset is intentional: the all-zero bit
+# pattern is the blob's documented "empty" state, and IEEE-754 reads those bits
+# as +0.0f on every target this library builds for.
+memsetClassFloat:src/AtomS3R/AtomS3R_ImuCalWizard.h
+
+# Reported against a host-only test helper whose std::string defaults name the
+# output-file suffix. It is called once per simulation run, and the file is
+# part of the frozen OU replay dependency closure (see docs/quality-gates.md),
+# so the copy is both irrelevant and not ours to remove.
+passedByValue:src/util/W3dSimCommon.h
+
+# Headers deliberately reach for Arduino/M5Unified/Eigen umbrella headers that
+# are not on the host include path.
+missingInclude
+missingIncludeSystem
+
+# This is a library: most of src/ is called by downstream sketches, not by
+# anything inside the repository.
+unusedFunction
