@@ -86,10 +86,10 @@ def _measurement(mode, kind, Pad, z, Pcenter, zcenter, Hm, Rm,
                  residual, center_residual, eta, entry_box, entry_center,
                  signed_word, beta_total, epsilon):
     cell = AUG.measurement_and_reset(
-        Pad, Hm, Rm, residual, value_tighten=M.H._psd_tighten
+        Pad, Hm, Rm, residual, value_tighten=M.COV.psd_tighten
     )
     ccell = AUG.measurement_and_reset(
-        Pcenter, Hm, Rm, center_residual, value_tighten=M.H._psd_tighten
+        Pcenter, Hm, Rm, center_residual, value_tighten=M.COV.psd_tighten
     )
     dform, beta, bmeta = M._finite_cell_terms(
         residual, eta, center_residual, entry_center,
@@ -173,9 +173,9 @@ def _mode(mode: str, path: Path, domain: dict, source_node_index: int,
     force, mag = M.D._canonical_vectors(domain)
     Ha, Hm, Hs = M.D._H_acc(mode, force, n), M.D._H_mag(mag, n), M.D._H_S(n)
     vc = M.VECTOR.build()["configured_measurement_bounds"]
-    Racc = M.H._R_diag(float(vc["acc_measurement_std_mps2"]))
-    Rmag = M.H._R_diag(float(vc["mag_measurement_std_uT"]))
-    RS = M.H._R_S(src)
+    Racc = M.COV.R_diag(float(vc["acc_measurement_std_mps2"]))
+    Rmag = M.COV.R_diag(float(vc["mag_measurement_std_uT"]))
+    RS = M.COV.R_S(src)
     h = float(src["dt_s"])
     words = M.WORDS.build(path)
     samples = int(words["word_contract"]["conditional_word_language"]["word_samples_upper_at_configured_dt"])
@@ -236,8 +236,8 @@ def _mode(mode: str, path: Path, domain: dict, source_node_index: int,
             )
             ops.append({"step": k, **meta})
 
-        Praw = M.AUG.predict(Pad, F, Q, value_tighten=M.H._psd_tighten)
-        Pc = M.AUG.predict(Pcenter, F, Q, value_tighten=M.H._psd_tighten)
+        Praw = M.AUG.predict(Pad, F, Q, value_tighten=M.COV.psd_tighten)
+        Pc = M.AUG.predict(Pcenter, F, Q, value_tighten=M.COV.psd_tighten)
         zraw = M.D._prediction(mode, z, F)
         zc = M.D._prediction(mode, zcenter, F)
         Pad = REC.recondition_matrix(Praw, Pc, entry_box, entry_center)
