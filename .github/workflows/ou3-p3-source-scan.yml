@@ -5,7 +5,7 @@ on:
     paths:
       - "tools/ou3_*.py"
       - "tools/ou3_proof_operating_domain.json"
-      - "tests/validation/test_ou3_p3_*.py"
+      - "tests/validation/test_ou3_*.py"
       - "src/kalman_ou_iii/**"
       - "src/tuner/**"
       - ".github/workflows/ou3-p3-source-scan.yml"
@@ -13,7 +13,7 @@ on:
     paths:
       - "tools/ou3_*.py"
       - "tools/ou3_proof_operating_domain.json"
-      - "tests/validation/test_ou3_p3_*.py"
+      - "tests/validation/test_ou3_*.py"
       - "src/kalman_ou_iii/**"
       - "src/tuner/**"
       - ".github/workflows/ou3-p3-source-scan.yml"
@@ -23,6 +23,69 @@ permissions:
   contents: read
 
 jobs:
+  canonical-interface:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Compile frozen P2 to P3 and canonical P3 interfaces
+        run: |
+          python3 -m py_compile \
+            tools/ou3_p2_p3_correlation_interface.py \
+            tools/ou3_p3_canonical_gate.py \
+            tests/validation/test_ou3_p2_p3_correlation_interface.py \
+            tests/validation/test_ou3_p3_canonical_gate.py
+
+      - name: Test frozen theorem interfaces
+        working-directory: tests/validation
+        run: |
+          python3 -m unittest -v \
+            test_ou3_p2_p3_correlation_interface \
+            test_ou3_p3_canonical_gate
+
+      - name: Emit P2 to P3 interface status
+        run: |
+          python3 tools/ou3_p2_p3_correlation_interface.py \
+            --output /tmp/ou3_p2_p3_correlation_interface.json
+
+      - name: Emit canonical P3 verdict
+        run: |
+          python3 tools/ou3_p3_canonical_gate.py \
+            --output /tmp/ou3_p3_canonical_gate.json
+
+      - name: Enforce current fail-closed theorem state
+        run: |
+          python3 - <<'PY'
+          import json
+          p2=json.load(open('/tmp/ou3_p2_p3_correlation_interface.json'))
+          p3=json.load(open('/tmp/ou3_p3_canonical_gate.json'))
+          assert p2['validation_pass'], p2['validation_failures']
+          assert p3['validation_pass'], p3['validation_failures']
+          assert p2['P2_source_timing_certificate_pass'] is True
+          assert p2['P2_CORRELATION_INTERFACE_READY'] is False
+          assert p2['P2_READY_FOR_CANONICAL_P3'] is False
+          assert p3['P3_CANONICAL_PASS'] is False
+          assert p3['P4_MAY_CONSUME_P3'] is False
+          assert p3['useful_gate'] == 1e-18
+          print('P2 timing:', p2['P2_source_timing_certificate_pass'])
+          print('P2 correlation:', p2['P2_CORRELATION_INTERFACE_READY'])
+          print('canonical P3:', p3['P3_CANONICAL_PASS'])
+          print('P3 margin:', p3['worst_H_A_margin'])
+          print('blocked by:', p3['P3_CANONICAL_FAIL_REASONS'])
+          PY
+
+      - name: Upload theorem-interface status
+        uses: actions/upload-artifact@v6
+        with:
+          name: ou3-p2-p3-canonical-interface
+          path: |
+            /tmp/ou3_p2_p3_correlation_interface.json
+            /tmp/ou3_p3_canonical_gate.json
+          retention-days: 7
+
   e3-p3:
     runs-on: ubuntu-latest
     timeout-minutes: 45
@@ -47,10 +110,10 @@ jobs:
           python3 tools/ou3_p3_e3_postmeasurement_certificate.py \
             --output /tmp/ou3_p3_e3_postmeasurement_certificate.json
 
-      - name: Upload e3 P3 certificate
+      - name: Upload e3 P3 candidate
         uses: actions/upload-artifact@v6
         with:
-          name: ou3-p3-e3-postmeasurement
+          name: ou3-p3-e3-postmeasurement-candidate
           path: /tmp/ou3_p3_e3_postmeasurement_certificate.json
           retention-days: 7
 
@@ -74,7 +137,7 @@ jobs:
       - name: Upload P3 source-cell diagnostic
         uses: actions/upload-artifact@v6
         with:
-          name: ou3-p3-source-cell-scan
+          name: ou3-p3-source-cell-scan-diagnostic
           path: /tmp/ou3_p3_source_cell_scan.json
           retention-days: 7
 
@@ -98,7 +161,7 @@ jobs:
       - name: Upload source-indexed metric diagnostic
         uses: actions/upload-artifact@v6
         with:
-          name: ou3-p3-source-indexed-metric-scan
+          name: ou3-p3-source-indexed-metric-scan-diagnostic
           path: /tmp/ou3_p3_source_indexed_metric_scan.json
           retention-days: 7
 
@@ -122,7 +185,7 @@ jobs:
       - name: Upload recent source-cone diagnostic
         uses: actions/upload-artifact@v6
         with:
-          name: ou3-p3-recent-source-cones
+          name: ou3-p3-recent-source-cones-diagnostic
           path: /tmp/ou3_p3_recent_source_cones.json
           retention-days: 7
 
@@ -134,18 +197,18 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Compile frozen-source full-matrix certificate
+      - name: Compile frozen-source full-matrix diagnostic
         run: |
           python3 -m py_compile tools/ou3_p3_frozen_full_matrix_translation.py
 
-      - name: Certify 800 frozen source cells with full translation matrix
+      - name: Evaluate 800 frozen source cells with full translation matrix
         run: |
           python3 tools/ou3_p3_frozen_full_matrix_translation.py \
             --output /tmp/ou3_p3_frozen_full_matrix_translation.json
 
-      - name: Upload frozen-source matrix certificate
+      - name: Upload frozen-source matrix diagnostic
         uses: actions/upload-artifact@v6
         with:
-          name: ou3-p3-frozen-full-matrix-translation
+          name: ou3-p3-frozen-full-matrix-translation-diagnostic
           path: /tmp/ou3_p3_frozen_full_matrix_translation.json
           retention-days: 7
