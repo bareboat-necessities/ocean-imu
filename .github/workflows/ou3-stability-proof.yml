@@ -1,0 +1,92 @@
+name: ou3-stability-proof
+
+on:
+  push:
+    paths:
+      - "tools/ou3_p2_*.py"
+      - "tools/ou3_p4_*.py"
+      - "tools/ou3_source_*.py"
+      - "tools/ou3_full_process_ucc.py"
+      - "tools/ou3_implementation_*.py"
+      - "tools/ou3_interval*.py"
+      - "tools/ou3_validated_transcendentals.py"
+      - "tools/ou3_vector_uco_certificate.py"
+      - "tools/ou3_verified_spd_inverse.py"
+      - "tools/ou3_proof_operating_domain.json"
+      - "src/kalman_ou_iii/**"
+      - "src/kalman_ou_common/**"
+      - "tests/validation/test_ou3_*.py"
+      - ".github/workflows/ou3-stability-proof.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  source-route:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Compile current source-route producers
+        run: |
+          python3 -m py_compile \
+            tools/ou3_p2_clock_phase_tuner_graph.py \
+            tools/ou3_p4_source_node_cells.py \
+            tools/ou3_p4_terminal_cluster_p2_reduction.py \
+            tools/ou3_p4_terminal_source_equivalence.py
+      - name: Validate terminal source reduction
+        run: |
+          python3 tools/ou3_p4_terminal_source_equivalence.py \
+            --output /tmp/ou3-terminal-source.json
+
+  first-accel:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        mode: [H, A]
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Validate first-accelerometer outer cover
+        run: |
+          python3 tools/ou3_p4_joint_first_accel_cover_v3.py \
+            --mode ${{ matrix.mode }} \
+            --source-node-index 0 \
+            --max-depth 10 \
+            --max-cells 5000 \
+            --output /tmp/ou3-first-accel-${{ matrix.mode }}.json
+
+  complete-word:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Validate current augmented complete-word design
+        run: |
+          python3 tools/ou3_p4_augmented_complete_word_design_v5.py \
+            --source-node-index 0 \
+            --attitude-halfwidth-factor 0.03125 \
+            --epsilon 0.5 \
+            --output /tmp/ou3-augmented-word.json
+
+  primitives:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Validate retained proof primitives
+        working-directory: tests/validation
+        run: |
+          python3 test_ou3_verified_spd_inverse.py
+          python3 test_ou3_p4_group_algebra.py
+          python3 test_ou3_interval_ad.py
