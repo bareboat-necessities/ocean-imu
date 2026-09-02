@@ -42,9 +42,6 @@ from typing import Iterable, Sequence
 from ou3_interval import Interval, hull
 import ou3_validated_transcendentals as VT
 
-# Branch boundary and validated range of the shipping correction
-# quaternion.  Both were carried by retired proof modules; the values
-# and the enclosure below are unchanged.
 SERIES_BRANCH_NORM = 1.0e-2
 MAX_CORRECTION_NORM = 6.0
 
@@ -274,9 +271,7 @@ def _axis_quaternion_ad(d: Sequence[AD], norm_upper: float) -> tuple[AD, list[AD
         raise ValueError(
             f"deployed correction norm upper outside validated range [0,{MAX_CORRECTION_NORM:g}]"
         )
-    # The axis branch starts at 1e-2.  For hi<=6 the half-angle is <=3<pi, so
-    # cos decreases and sinc decreases throughout this complete branch
-    # interval, and the homogeneous vector coefficient is k=0.5*sinc(r/2).
+
     half_lo = 0.5 * SERIES_BRANCH_NORM
     half_hi = 0.5 * hi
     clo = VT.cos_point(half_hi)
@@ -286,13 +281,10 @@ def _axis_quaternion_ad(d: Sequence[AD], norm_upper: float) -> tuple[AD, list[AD
     vv = [k_val * x.val for x in d]
 
     n = d[0].n
-    # w_u and k_u are non-positive on r/2 in [0,3].  The interval integral
-    # bounds are global on the promoted correction range and include r->0.
+    # w_u and k_u are non-positive on r/2 in [0,3].  These global derivative
+    # bounds include r->0 and avoid differentiating sqrt(u) at the origin.
     w_u = Interval(-1.0 / 8.0, 0.0)
     k_u = Interval(-1.0 / 48.0, 0.0)
-    # k itself is needed for dv/dd; division by a component cell would be
-    # unsafe, so the source-wide coefficient range above is used directly.
-
     du = []
     for j in range(n):
         y = I(0.0)

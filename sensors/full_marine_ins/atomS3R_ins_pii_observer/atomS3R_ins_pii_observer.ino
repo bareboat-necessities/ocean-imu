@@ -504,6 +504,17 @@ class FusionApp {
     fusion_.configure(cfg);
     fusion_.reset();
 
+    // IMU installation lever arm (off-CoG) correction: not available here.
+    //
+    // An IMU mounted away from the vessel centre of gravity measures
+    // a_imu = a_cog + (alpha x r) + omega x (omega x r) for a body-fixed offset
+    // r, which leaks roll/pitch motion into the heave channel.  The PII
+    // observer takes no lever-arm input, so this sketch has nothing to set and
+    // implicitly assumes r = 0 (IMU at the CoG) -- mount it as close to the CoG
+    // as the boat allows.  The OU-II / OU-III sketches in this same directory
+    // do expose the knob (Kalman3D_Wave_OU_*::set_imu_lever_arm_body), and show
+    // it set explicitly to zero with instructions for entering a real offset.
+
     rot_inited_ = false;
     rot_dpm_filt_ = 0.0f;
     gyro_bias_ok_ = false;

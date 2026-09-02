@@ -76,6 +76,47 @@ static constexpr float ROT_BIAS_TAU_S       = 5.0f;
 static constexpr float ROT_STILL_G_TOL_FRAC = 0.12f;
 static constexpr float ROT_STILL_GYRO_RAD_S = 0.15f;
 
+// ---------------------------------------------------------------------------
+// IMU installation lever arm (IMU position relative to the vessel centre of
+// gravity), in BODY-NED metres:  x = forward (towards the bow),
+//                                y = starboard,
+//                                z = down.
+//
+// A rigidly mounted IMU that does not sit exactly on the CoG does not measure
+// the CoG motion.  For a body-fixed offset r it measures
+//
+//     a_imu = a_cog + (alpha x r) + omega x (omega x r)
+//
+// i.e. the CoG specific force plus a tangential term (alpha = angular
+// acceleration) and a centripetal term (omega = angular rate).  Both terms are
+// deterministic and both are correlated with attitude, so an IMU bolted a few
+// decimetres away from the CoG leaks roll/pitch motion into the same
+// acceleration channel this filter integrates into heave, and biases the
+// attitude estimate that rides on it.
+//
+// The filter can subtract that term itself, but only if it is told r.  It is
+// left at ZERO here, which is also the filter's own default: a zero lever arm
+// means "IMU is at the CoG", the correction is switched off completely, and
+// the device behaves exactly as it did before this knob was exposed.  The call
+// is written out explicitly in resetFusion_() so the adjustment point is
+// visible rather than implied.
+//
+// To adjust for a real installation, measure the offset on the boat as
+// (IMU position - CoG position) along the three axes above and enter it here.
+// Example: an IMU 1.20 m forward of, 0.15 m to starboard of and 0.30 m ABOVE
+// the CoG (z is positive DOWN, so "above" is negative):
+//
+//     static constexpr float IMU_LEVER_ARM_X_M =  1.20f;
+//     static constexpr float IMU_LEVER_ARM_Y_M =  0.15f;
+//     static constexpr float IMU_LEVER_ARM_Z_M = -0.30f;
+//
+// A few centimetres of accuracy is plenty; a wrong sign is worse than leaving
+// the correction off, because it doubles the term instead of removing it.
+// ---------------------------------------------------------------------------
+static constexpr float IMU_LEVER_ARM_X_M = 0.0f;  // + forward (towards bow)
+static constexpr float IMU_LEVER_ARM_Y_M = 0.0f;  // + starboard
+static constexpr float IMU_LEVER_ARM_Z_M = 0.0f;  // + down
+
 using namespace atoms3r_ical;
 using Vector3f = Eigen::Vector3f;
 
@@ -526,6 +567,22 @@ private:
     ff.setAccNoiseFloorSigma(ACC_NOISE_FLOOR_SIGMA_DEFAULT);
     ff.enableClamp(true);
     ff.setFreqInputCutoffHz(6.0f);
+
+    // IMU installation lever-arm (off-CoG) correction.
+    //
+    // Set explicitly on every reset: fusion_.begin() builds a fresh MEKF, and
+    // the lever arm lives in that MEKF, so it has to be re-applied here rather
+    // than once at boot.
+    //
+    // The vector below is zero by default, which tells the filter the IMU sits
+    // on the centre of gravity and turns the correction off (identical to
+    // ff.mekf().clear_imu_lever_arm()).  Edit IMU_LEVER_ARM_*_M near the top of
+    // this sketch to enter the real installation offset -- nothing else has to
+    // change here.  Related knob, if the correction is enabled and the gyro is
+    // noisy: ff.mekf().set_alpha_smoothing_tau(seconds) low-passes the angular
+    // acceleration the tangential term is built from (0 = off).
+    ff.mekf().set_imu_lever_arm_body(
+        Vector3f(IMU_LEVER_ARM_X_M, IMU_LEVER_ARM_Y_M, IMU_LEVER_ARM_Z_M));
 
     rot_inited_   = false;
     rot_dpm_filt_ = 0.0f;
