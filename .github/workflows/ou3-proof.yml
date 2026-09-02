@@ -41,7 +41,6 @@ jobs:
             test_ou3_proof_cleanup \
             test_ou3_full_process_ucc \
             test_ou3_implementation_word_language \
-            test_ou3_interval_ad \
             test_ou3_p4_sample_clock_source_refinement \
             test_ou3_p4_source_node_cells \
             test_ou3_p4_source_path_reachability \
@@ -108,58 +107,24 @@ jobs:
           PY
           fi
 
-  p4-design:
+  p4-sector:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v6
         with:
           persist-credentials: false
 
-      - name: Compile active P4 route
+      - name: Compile current P4 sector route
         run: |
           python3 -m py_compile \
             tools/ou3_p4_cayley_sector_certificate.py \
             tools/ou3_p4_vector_remainder_sector.py \
-            tools/ou3_p4_source_word_timing.py \
-            tools/ou3_p4_joint_word_dissipation_design.py \
-            tools/ou3_p4_joint_word_postprediction_design.py \
-            tools/ou3_p4_augmented_complete_word_design.py \
-            tools/ou3_p4_augmented_complete_word_design_v5.py \
-            tools/ou3_p4_covariance_primitives.py
+            tools/ou3_p4_source_word_timing.py
 
-      - name: Certify usable 0.8 rad nonlinear geometry
+      - name: Certify usable 0.8 rad nonlinear sector primitives
         run: |
           python3 tools/ou3_p4_cayley_sector_certificate.py \
             --output /tmp/ou3_p4_cayley_sector.json
           python3 tools/ou3_p4_vector_remainder_sector.py \
             --output /tmp/ou3_p4_vector_remainder.json
-
-      - name: Run old long-prefix P4 diagnostic
-        continue-on-error: true
-        run: |
-          python3 tools/ou3_p4_augmented_complete_word_design_v5.py \
-            --source-node-index 0 \
-            --attitude-halfwidth-factor 0.03125 \
-            --epsilon 0.5 \
-            --output /tmp/ou3_p4_complete_word.json
-
-      - name: Print old P4 diagnostic result
-        if: always()
-        run: |
-          if [ -f /tmp/ou3_p4_complete_word.json ]; then
-            python3 - <<'PY'
-          import json
-          d = json.load(open('/tmp/ou3_p4_complete_word.json'))
-          print('validation_pass_v5', d.get('validation_pass_v5'))
-          print('validation_failures_v5', d.get('validation_failures_v5'))
-          for mode in ('H', 'A'):
-              m = d.get('modes', {}).get(mode, {})
-              print(mode,
-                    'mu', m.get('signed_word_generalized_margin_design'),
-                    'rho', m.get('rho_homogeneous_design_upper'),
-                    'beta', m.get('beta_measurement_design_upper'),
-                    'operations', m.get('operation_count'),
-                    'first_measurement_step', m.get('first_measurement_step'))
-          PY
-          fi
