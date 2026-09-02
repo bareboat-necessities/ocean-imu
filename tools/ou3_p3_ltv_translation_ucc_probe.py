@@ -8,22 +8,28 @@ response columns and taking consecutive column differences turns their
 determinant into a positive polynomial-Vandermonde integral.  Restoring the
 column factors leaves one source decay integral, hence
 
-    |det K(s0..s3)| >= V(s0..s3) exp(-int lambda)/12.
+    |det K(s0..s3)| >= V(s0..s3) exp(-int lambda)/12,
 
-The four-subinterval Andreief construction therefore gives
+and the four-subinterval Andreief construction gives
 
     det G_unit >= (2025/144)(H/7)^16 exp(-2 int lambda).
 
-The decay integral is not replaced by the Cartesian H/tau_min bound in the
-active probe.  :mod:`ou3_p3_tau_decay_budget` upper-bounds it over the retained
-13..26-sample staged tuner path, including arbitrary endpoint phase and the
-infinite-time frozen-clock branch.  q_c(t) is still bounded globally below by
-2 sigma_min^2/tau_max, so the process intensity remains source-uniform.
+The active decay bound comes from the retained 13..26-sample staged tuner path,
+not from the Cartesian H/tau_min shortcut.  Process intensity is bounded by the
+source-uniform q_c(t)>=2 sigma_min^2/tau_max.
 
-The Gramian is normalized directly by the endpoint P3 directional translation
-covariance dominator diag(Uv,Up,US,Ua).  This is a diagnostic only: that
-endpoint covariance upper is not yet a changing-parameter path covariance
-certificate, and interleaved measurement attenuation is not yet enclosed.
+Two comparisons are emitted:
+
+* exact-node endpoint-static covariance uppers for nodes 0 and 729 remain only
+  diagnostics, to preserve continuity with the earlier whole-word experiment;
+* the active premeasurement comparison uses
+  :mod:`ou3_p3_source_uniform_translation_covariance`, a changing-parameter
+  finite-memory covariance upper valid on the complete invariant source box,
+  and scans all ten endpoint tau cells through the clock-phase decay budget.
+
+That second result is source complete for the covariance upper and process
+floor.  It still stops before interleaved accelerometer/S measurement
+attenuation, so it cannot promote P3 by itself.
 """
 from __future__ import annotations
 
@@ -34,6 +40,7 @@ from pathlib import Path
 
 from ou3_interval import Interval
 import ou3_p3_scaled_process as SCALED
+import ou3_p3_source_uniform_translation_covariance as COV
 import ou3_p3_tau_decay_budget as DECAY
 import ou3_p4_source_node_cells as NODES
 import ou3_source_reachable_matrix_p3 as BASE
@@ -41,7 +48,7 @@ import ou3_translational_uco_ucc as TRANS
 
 REPO = Path(__file__).resolve().parents[1]
 DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
-SCHEMA = 3
+SCHEMA = 4
 
 
 def point(x: float) -> Interval:
@@ -118,6 +125,7 @@ def ltv_relative_process_floor(upper: list[float], horizon_s: float,
 
 def _mode_node(mode: str, node: dict, domain: dict, candidates: list[float],
                sigma_floor: float, domain_path: Path) -> dict:
+    """Historical exact-node diagnostic; not the active source-complete route."""
     live = domain["normal_live"]
     vector = BASE.VECTOR.build()
     process = BASE.PROCESS.build()
@@ -170,6 +178,53 @@ def _mode_node(mode: str, node: dict, domain: dict, candidates: list[float],
     }
 
 
+def _source_complete_translation(path: Path, candidates: list[float], sigma_floor: float) -> dict:
+    cov = COV.build(path)
+    cf = COV.validate(cov)
+    if cf:
+        raise RuntimeError(f"source-uniform translation covariance upper failed: {cf}")
+    upper = [float(x) for x in cov["Sigma_translation_diagonal_upper"]]
+    word_lo = float(cov["timing"]["word_horizon_s_lower"])
+    sched = BASE.source_schedule()
+    h = float(sched["dt_s"])
+    tau_lo, tau_hi = map(float, sched["tau_applied_invariant_s"])
+    hs = [H for H in candidates if H <= word_lo]
+    if not hs:
+        raise RuntimeError("no LTV horizon fits source-uniform covariance word")
+
+    endpoint_rows = []
+    for tau_index in range(10):
+        probes = []
+        for H in hs:
+            samples = max(1, int(math.ceil(H / h)))
+            budget = DECAY.decay_budget(tau_index, samples, path)
+            row = ltv_relative_process_floor(
+                upper, H, tau_lo, tau_hi, sigma_floor,
+                decay_exponent_upper=float(budget["decay_exponent_upper"]),
+            )
+            row["clock_phase_decay_budget"] = budget
+            probes.append(row)
+        best = max(probes, key=lambda d: d["relative_process_floor_lower"])
+        endpoint_rows.append({
+            "endpoint_tau_index": tau_index,
+            "best": best,
+            "candidates": probes,
+        })
+    worst = min(endpoint_rows, key=lambda r: r["best"]["relative_process_floor_lower"])
+    rho = float(worst["best"]["relative_process_floor_lower"])
+    return {
+        "covariance_upper": cov,
+        "endpoint_tau_cells_scanned": 10,
+        "endpoint_rows": endpoint_rows,
+        "worst_endpoint": worst,
+        "relative_premeasurement_process_floor_lower": rho,
+        "useful_gate": BASE.MIN_USEFUL_DELTA,
+        "premeasurement_floor_above_useful_gate": rho >= BASE.MIN_USEFUL_DELTA,
+        "source_complete_covariance_upper_consumed": True,
+        "source_complete_process_floor_before_measurements": True,
+    }
+
+
 def build(domain_path: Path = DEFAULT_DOMAIN, source_node_indices=(0, 729)) -> dict:
     path = Path(domain_path).resolve()
     domain = json.loads(path.read_text(encoding="utf-8"))
@@ -181,10 +236,12 @@ def build(domain_path: Path = DEFAULT_DOMAIN, source_node_indices=(0, 729)) -> d
         raise RuntimeError(f"P2 source nodes invalid: {failures}")
     sigma_floor = float(nodes["filter_sigma_floor_mps2"])
     candidates = [0.25, 0.5, 0.75, 1.0, 1.25, 1.5]
-    results = {}
+
+    source_complete = _source_complete_translation(path, candidates, sigma_floor)
+    diagnostics = {}
     for index in source_node_indices:
         node = NODES.node(int(index), nodes)
-        results[str(index)] = {
+        diagnostics[str(index)] = {
             "source_node": node,
             "H": _mode_node("H", node, domain, candidates, sigma_floor, path),
             "A": _mode_node("A", node, domain, candidates, sigma_floor, path),
@@ -198,16 +255,19 @@ def build(domain_path: Path = DEFAULT_DOMAIN, source_node_indices=(0, 729)) -> d
         "arbitrary_time_varying_tau_inside_window_covered": True,
         "tau_variation_uses_clock_phase_path_budget": True,
         "arbitrary_time_varying_sigma_inside_window_covered_by_qc_min": True,
+        "source_complete_covariance_upper_consumed": True,
+        "source_complete_process_floor_before_measurements": True,
         "frozen_parameter_Q_Nh_identity_used": False,
-        "endpoint_covariance_upper_source_path_complete_here": False,
         "endpoint_covariance_condition_number_conversion_used": False,
         "interleaved_measurement_attenuation_enclosed_here": False,
         "P3_PROMOTED": False,
         "candidate_horizons_s": candidates,
-        "nodes": results,
+        "source_complete_translation": source_complete,
+        "diagnostic_exact_nodes": diagnostics,
         "next_obligation": (
-            "replace the diagnostic endpoint-static covariance upper with a changing-parameter source-path covariance upper and "
-            "enclose interleaved normal-Live measurement attenuation; only then may canonical P3 be promoted"
+            "enclose the interleaved accelerometer and S=0 measurement attenuation of the source-complete LTV process floor; "
+            "if that post-measurement floor remains above the unchanged useful gate, combine it with the existing attitude/gyro-bias "
+            "and active accelerometer-bias blocks to promote canonical P3"
         ),
     }
 
@@ -221,25 +281,38 @@ def validate(d: dict) -> list[str]:
         "validated_exponential_arithmetic", "arbitrary_time_varying_tau_inside_window_covered",
         "tau_variation_uses_clock_phase_path_budget",
         "arbitrary_time_varying_sigma_inside_window_covered_by_qc_min",
+        "source_complete_covariance_upper_consumed",
+        "source_complete_process_floor_before_measurements",
     ):
         if d.get(key) is not True:
             f.append(f"{key} is not true")
     for key in (
-        "frozen_parameter_Q_Nh_identity_used", "endpoint_covariance_upper_source_path_complete_here",
-        "endpoint_covariance_condition_number_conversion_used",
+        "frozen_parameter_Q_Nh_identity_used", "endpoint_covariance_condition_number_conversion_used",
         "interleaved_measurement_attenuation_enclosed_here", "P3_PROMOTED",
     ):
         if d.get(key) is not False:
             f.append(f"{key} is not false")
-    for node, row in d.get("nodes", {}).items():
+
+    sc = d.get("source_complete_translation", {})
+    rho = sc.get("relative_premeasurement_process_floor_lower")
+    if not isinstance(rho, (int, float)) or not (math.isfinite(float(rho)) and float(rho) > 0.0):
+        f.append("source-complete translation LTV floor is not strict")
+    if sc.get("source_complete_covariance_upper_consumed") is not True:
+        f.append("source-complete covariance upper was not consumed")
+    if sc.get("source_complete_process_floor_before_measurements") is not True:
+        f.append("source-complete premeasurement process floor missing")
+    if int(sc.get("endpoint_tau_cells_scanned", 0)) != 10:
+        f.append("source-complete LTV scan did not cover ten tau cells")
+    best = sc.get("worst_endpoint", {}).get("best", {})
+    if best.get("decay_route") != "CLOCK_PHASE_TAU_PATH_BUDGET":
+        f.append("source-complete worst endpoint did not use clock-phase decay budget")
+
+    for node, row in d.get("diagnostic_exact_nodes", {}).items():
         for mode in ("H", "A"):
-            rho = row.get(mode, {}).get("relative_premeasurement_process_floor_lower")
-            if not isinstance(rho, (int, float)) or not (math.isfinite(float(rho)) and float(rho) > 0.0):
-                f.append(f"node {node} {mode}: LTV floor is not strict")
-            best = row.get(mode, {}).get("worst_x_subcell", {}).get("best", {})
-            if best.get("decay_route") != "CLOCK_PHASE_TAU_PATH_BUDGET":
-                f.append(f"node {node} {mode}: clock-phase decay budget not used")
-    return f
+            x = row.get(mode, {}).get("relative_premeasurement_process_floor_lower")
+            if not isinstance(x, (int, float)) or not (math.isfinite(float(x)) and float(x) > 0.0):
+                f.append(f"diagnostic node {node} {mode}: LTV floor is not strict")
+    return list(dict.fromkeys(f))
 
 
 def main() -> int:
@@ -254,18 +327,29 @@ def main() -> int:
     d["validation_failures"] = vf
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(d, indent=2, sort_keys=True), encoding="utf-8")
-    summary = {}
-    for node, row in d["nodes"].items():
-        summary[node] = {
+    sc = d["source_complete_translation"]
+    summary = {
+        "source_complete_translation": {
+            "rho_premeasurement": sc["relative_premeasurement_process_floor_lower"],
+            "useful": sc["premeasurement_floor_above_useful_gate"],
+            "worst_tau_index": sc["worst_endpoint"]["endpoint_tau_index"],
+            "best_horizon_s_at_worst": sc["worst_endpoint"]["best"]["horizon_s"],
+            "decay_exponent_upper": sc["worst_endpoint"]["best"]["decay_exponent_upper"],
+            "Sigma_translation_diagonal_upper": sc["covariance_upper"]["Sigma_translation_diagonal_upper"],
+        },
+        "diagnostic_nodes": {},
+        "validation_failures": vf,
+    }
+    for node, row in d["diagnostic_exact_nodes"].items():
+        summary["diagnostic_nodes"][node] = {
             mode: {
                 "rho_premeasurement": row[mode]["relative_premeasurement_process_floor_lower"],
                 "useful": row[mode]["premeasurement_floor_above_useful_gate"],
                 "best_horizon_s": row[mode]["worst_x_subcell"]["best"]["horizon_s"],
-                "decay_exponent_upper": row[mode]["worst_x_subcell"]["best"]["decay_exponent_upper"],
             }
             for mode in ("H", "A")
         }
-    print(json.dumps({"validation_failures": vf, "nodes": summary}, indent=2, sort_keys=True))
+    print(json.dumps(summary, indent=2, sort_keys=True))
     return 0 if not vf else 2
 
 
