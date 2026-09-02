@@ -15,25 +15,24 @@ For four process-input times s0<s1<s2<s3, multiply each endpoint response
 column by exp(-Lambda(si)), Lambda(t)=int_0^t lambda.  After consecutive column
 subtractions the determinant is an integral of the positive polynomial
 Vandermonde against exp(-Lambda).  Restoring the four column factors cancels
-all but at most one endpoint-to-start decay interval, giving the same robust
-bound as the constant-lambda calculation,
+all but at most one endpoint-to-start decay interval, giving
 
     |det K(s0..s3)| >= V(s0..s3) exp(-lambda_max H) / 12.
 
-Thus the existing four-subinterval Andreief construction remains valid for
+Therefore the four-subinterval Andreief construction remains valid for
 arbitrary measurable lambda(t) in the declared source box:
 
     det G_unit >= (2025/144) (H/7)^16 exp(-2 lambda_max H).
 
 Because q_c(t)>=2 sigma_min^2/tau_max, the actual process Gramian dominates
-q_c,min G_unit.  The calculation is normalized directly by the endpoint P3
-translation covariance dominator diag(Uv,Up,US,Ua), avoiding a global covariance
-condition-number conversion.
+q_c,min G_unit.  The Gramian is normalized directly by the endpoint P3
+translation covariance dominator diag(Uv,Up,US,Ua), so no global covariance
+condition-number conversion is inserted.
 
 This is intentionally a *pre-measurement* process-floor probe.  Interleaved
 accelerometer/S updates can reduce the floor and must be enclosed separately
-before P3 promotion.  A positive/useful result here therefore establishes only
-that time-varying controllability itself is not the remaining bottleneck.
+before P3 promotion.  A useful result here establishes only that time-varying
+controllability itself is not the remaining bottleneck.
 """
 from __future__ import annotations
 
@@ -46,18 +45,15 @@ from ou3_interval import Interval
 import ou3_p3_scaled_process as SCALED
 import ou3_p4_source_node_cells as NODES
 import ou3_source_reachable_matrix_p3 as BASE
+import ou3_translational_uco_ucc as TRANS
 
 REPO = Path(__file__).resolve().parents[1]
 DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
-SCHEMA = 1
+SCHEMA = 2
 
 
-def down(x: float) -> float:
-    return math.nextafter(float(x), -math.inf)
-
-
-def up(x: float) -> float:
-    return math.nextafter(float(x), math.inf)
+def point(x: float) -> Interval:
+    return Interval.outward_bounds(float(x), float(x))
 
 
 def ltv_relative_process_floor(upper: list[float], horizon_s: float,
@@ -70,43 +66,56 @@ def ltv_relative_process_floor(upper: list[float], horizon_s: float,
     if not (H > 0.0 and 0.0 < tau_min <= tau_max and sigma_min > 0.0):
         raise ValueError("positive LTV source bounds required")
 
-    lam_max = up(1.0 / tau_min)
-    qc_min = down(2.0 * sigma_min * sigma_min / tau_max)
-    width = down(H / 7.0)
-    det_unit = down(
-        (2025.0 / 144.0) * (width ** 16) * math.exp(-up(2.0 * lam_max * H))
-    )
-    if not det_unit > 0.0:
+    Hiv = point(H)
+    lam = point(1.0) / point(tau_min)
+    decay = TRANS._exp_negative_wide(lam * Hiv)
+    decay2_lower = point(decay.lo).square().lo
+    width = Hiv / point(7.0)
+    det_unit = (
+        point(2025.0 / 144.0)
+        * TRANS._pow_nonnegative(width, 16)
+        * point(decay2_lower)
+    ).lo
+    qc_min = (point(2.0) * point(sigma_min).square() / point(tau_max)).lo
+    if not (det_unit > 0.0 and qc_min > 0.0):
         return {"relative_process_floor_lower": 0.0}
 
     Uv, Up, US, Ua = map(float, upper)
-    det_normalized = down(det_unit / up(up(Uv * Up) * up(US * Ua)))
+    product_U = point(Uv) * point(Up) * point(US) * point(Ua)
+    det_normalized = (point(det_unit) / product_U).lo
 
     # Integral response bounds valid for arbitrary nonnegative lambda(t):
     # |a|<=1, |v|<=r, |p|<=r^2/2, |S|<=r^3/6.
-    trace_normalized = up(
-        H / Ua
-        + (H ** 3) / (3.0 * Uv)
-        + (H ** 5) / (20.0 * Up)
-        + (H ** 7) / (252.0 * US)
-    )
+    H3 = TRANS._pow_nonnegative(Hiv, 3)
+    H5 = TRANS._pow_nonnegative(Hiv, 5)
+    H7 = TRANS._pow_nonnegative(Hiv, 7)
+    trace_normalized = (
+        Hiv / point(Ua)
+        + H3 / point(3.0 * Uv)
+        + H5 / point(20.0 * Up)
+        + H7 / point(252.0 * US)
+    ).hi
     if not (det_normalized > 0.0 and trace_normalized > 0.0):
         return {"relative_process_floor_lower": 0.0}
-    gram_lambda = down(det_normalized / up(trace_normalized ** 3))
-    rho = down(qc_min * gram_lambda)
+    gram_lambda = (point(det_normalized) / point(trace_normalized).cube()).lo
+    rho = (point(qc_min) * point(gram_lambda)).lo
     return {
         "horizon_s": H,
-        "lambda_max_per_s_upper": lam_max,
+        "lambda_max_per_s_upper": lam.hi,
+        "exp_minus_lambda_max_H_lower": decay.lo,
         "q_c_min_lower": qc_min,
         "unit_gramian_det_lower": det_unit,
         "Sigma_normalized_gramian_det_lower": det_normalized,
         "Sigma_normalized_gramian_trace_upper": trace_normalized,
         "Sigma_normalized_unit_gramian_lambda_min_lower": gram_lambda,
         "relative_process_floor_lower": rho,
+        "validated_interval_arithmetic": True,
+        "validated_exponential_arithmetic": True,
     }
 
 
-def _mode_node(mode: str, node: dict, domain: dict, candidates: list[float]) -> dict:
+def _mode_node(mode: str, node: dict, domain: dict, candidates: list[float],
+               sigma_floor: float) -> dict:
     live = domain["normal_live"]
     vector = BASE.VECTOR.build()
     process = BASE.PROCESS.build()
@@ -119,7 +128,6 @@ def _mode_node(mode: str, node: dict, domain: dict, candidates: list[float]) -> 
     alpha6 = BASE.vector_alpha6(live, vector)
 
     global_tau_lo, global_tau_hi = map(float, sched["tau_applied_invariant_s"])
-    sigma_min = float(NODES.build()["filter_sigma_floor_mps2"])
     rows = []
     for xcell, rho_x in SCALED.split_x_cell(x):
         raw = BASE.mode_cell(mode, xcell, rho_x, sigma, rs, live, vector, process, sched, alpha6)
@@ -134,7 +142,7 @@ def _mode_node(mode: str, node: dict, domain: dict, candidates: list[float]) -> 
         if not hs:
             raise RuntimeError("no LTV probe horizon fits the certified P3 word")
         probes = [
-            ltv_relative_process_floor(upper, H, global_tau_lo, global_tau_hi, sigma_min)
+            ltv_relative_process_floor(upper, H, global_tau_lo, global_tau_hi, sigma_floor)
             for H in hs
         ]
         best = max(probes, key=lambda d: d["relative_process_floor_lower"])
@@ -166,6 +174,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN, source_node_indices=(0, 729)) -> d
     nf = NODES.validate(nodes)
     if nf:
         raise RuntimeError(f"P2 source nodes invalid: {nf}")
+    sigma_floor = float(nodes["filter_sigma_floor_mps2"])
 
     candidates = [0.25, 0.5, 0.75, 1.0, 1.25, 1.5]
     results = {}
@@ -173,14 +182,16 @@ def build(domain_path: Path = DEFAULT_DOMAIN, source_node_indices=(0, 729)) -> d
         node = NODES.node(int(index), nodes)
         results[str(index)] = {
             "source_node": node,
-            "H": _mode_node("H", node, domain, candidates),
-            "A": _mode_node("A", node, domain, candidates),
+            "H": _mode_node("H", node, domain, candidates, sigma_floor),
+            "A": _mode_node("A", node, domain, candidates, sigma_floor),
         }
 
     return {
         "schema": SCHEMA,
         "qualification": "OU3_P3_SOURCE_UNIFORM_LTV_TRANSLATION_PROCESS_FLOOR_PROBE",
         "source_generated_not_trajectory_fit": True,
+        "validated_interval_arithmetic": True,
+        "validated_exponential_arithmetic": True,
         "arbitrary_time_varying_tau_inside_window_covered": True,
         "arbitrary_time_varying_sigma_inside_window_covered_by_qc_min": True,
         "frozen_parameter_Q_Nh_identity_used": False,
@@ -202,6 +213,8 @@ def validate(d: dict) -> list[str]:
         f.append("schema mismatch")
     for key in (
         "source_generated_not_trajectory_fit",
+        "validated_interval_arithmetic",
+        "validated_exponential_arithmetic",
         "arbitrary_time_varying_tau_inside_window_covered",
         "arbitrary_time_varying_sigma_inside_window_covered_by_qc_min",
     ):
