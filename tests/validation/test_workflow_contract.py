@@ -165,6 +165,59 @@ class WorkflowContractTests(unittest.TestCase):
         self.assertLess(rebase, fingerprint)
         self.assertLess(fingerprint, validate)
 
+    def test_commit_job_validates_against_the_regenerated_commit(self):
+        """The bundles are made at github.sha, so the gate must see that tree.
+
+        `regenerate` and `combine` check out this run's commit, and the
+        freshness gate in tools/ou_evidence_provenance.py stamps replay
+        provenance only when the bundle's recorded git_commit equals HEAD.
+        Checking out the moving branch name here made the gate compare the
+        bundle against whatever had landed since and refuse, both when the
+        branch advanced mid-run and on any re-run of this job.
+        """
+        workflow = WORKFLOW.read_text(encoding="utf-8")
+        commit = workflow.index("  commit:")
+        checkout = workflow.index("- name: Checkout", commit)
+        skip = workflow.index("- name: Skip when this commit's evidence", commit)
+        stage = workflow[checkout:skip]
+
+        self.assertIn("ref: ${{ github.sha }}", stage)
+        self.assertNotIn("ref: ${{ github.ref_name }}", stage)
+        # The push retry rebases onto the branch tip, which needs real history.
+        self.assertIn("fetch-depth: 0", stage)
+
+    def test_republishing_an_already_committed_evidence_commit_is_a_no_op(self):
+        """A re-run of `commit` must not try to publish the same evidence twice."""
+        workflow = WORKFLOW.read_text(encoding="utf-8")
+        commit = workflow.index("  commit:")
+        skip = workflow.index("- name: Skip when this commit's evidence", commit)
+        install = workflow.index("- name: Install dependencies", skip)
+        guard = workflow[skip:install]
+
+        self.assertIn("id: published", guard)
+        self.assertIn("replay_provenance", guard)
+        self.assertIn('echo "already=true" >> "$GITHUB_OUTPUT"', guard)
+
+        # Every step that validates, stamps, or publishes must be gated on it,
+        # so the skip cannot leave a half-applied bundle behind.
+        gated = (
+            "Install dependencies",
+            "Reuse fingerprinted simulation data",
+            "Unpack fingerprinted simulation data",
+            "Download regenerated bundles",
+            "Place bundles and mirror the manuscript copies",
+            "Check the manuscript against the regenerated evidence",
+            "Record replay and results fingerprints",
+            "Verify final evidence fingerprints",
+            "Commit the regenerated evidence",
+        )
+        rest = workflow[install:]
+        for name in gated:
+            with self.subTest(step=name):
+                start = rest.index(f"- name: {name}")
+                head = rest[start : start + 400]
+                self.assertIn("if: steps.published.outputs.already != 'true'", head)
+
     def test_failure_message_cannot_run_after_a_push(self):
         workflow = WORKFLOW.read_text(encoding="utf-8")
         self.assertNotIn("The regenerated bundle is committed, but", workflow)
