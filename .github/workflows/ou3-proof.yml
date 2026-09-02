@@ -68,26 +68,10 @@ jobs:
           python3 tools/ou3_p3_scaled_process.py \
             --output /tmp/ou3_p3_scaled_process.json
 
-      - name: Run source-uniform P3 matrix certificate with retained dependency
+      - name: Run canonical source-uniform P3 matrix certificate
         run: |
-          python3 - <<'PY'
-          import json
-          from pathlib import Path
-          import sys
-          sys.path.insert(0, 'tools')
-          import ou3_source_reachable_matrix_p3 as P3
-          import ou3_p3_scaled_process as SP
-          P3.split_x_cell = SP.split_x_cell
-          d = P3.build(P3.DEFAULT_DOMAIN)
-          f = P3.validate(d)
-          out = dict(d)
-          out['dependency_preserving_scaled_process_backend'] = True
-          out['validation_pass'] = not f
-          out['validation_failures'] = f
-          Path('/tmp/ou3_p3_matrix.json').write_text(json.dumps(out, indent=2, sort_keys=True))
-          print(json.dumps({'status': d.get('continuous_linear_information_certificate'), 'failures': f}, indent=2))
-          raise SystemExit(0 if not f else 2)
-          PY
+          python3 tools/ou3_p3_source_uniform_certificate.py \
+            --output /tmp/ou3_p3_matrix.json
 
       - name: Print P3 nonlinear budget inputs
         if: always()
@@ -96,7 +80,7 @@ jobs:
             python3 - <<'PY'
           import json
           d = json.load(open('/tmp/ou3_p3_matrix.json'))
-          print('P3', d.get('continuous_linear_information_certificate'))
+          print('P3', d.get('P3_LINEAR_CERTIFICATE_ESTABLISHED'))
           for mode in ('H', 'A'):
               m = d.get('modes', {}).get(mode, {})
               print(mode,
@@ -106,6 +90,17 @@ jobs:
                     'Omega_min', m.get('word_noise_Omega_lambda_min_lower'))
           PY
           fi
+
+      - name: Upload reproducible P3 certificate
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: ou3-p3-source-uniform
+          path: |
+            /tmp/ou3_p3_scaled_process.json
+            /tmp/ou3_p3_matrix.json
+          if-no-files-found: warn
+          retention-days: 7
 
   p4-sector:
     runs-on: ubuntu-latest
@@ -120,7 +115,8 @@ jobs:
           python3 -m py_compile \
             tools/ou3_p4_cayley_sector_certificate.py \
             tools/ou3_p4_vector_remainder_sector.py \
-            tools/ou3_p4_source_word_timing.py
+            tools/ou3_p4_source_word_timing.py \
+            tools/ou3_p4_signed_joseph_sector_inputs.py
 
       - name: Certify usable 0.8 rad nonlinear sector primitives
         run: |
@@ -128,3 +124,58 @@ jobs:
             --output /tmp/ou3_p4_cayley_sector.json
           python3 tools/ou3_p4_vector_remainder_sector.py \
             --output /tmp/ou3_p4_vector_remainder.json
+
+      - name: Upload P4 sector primitives
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: ou3-p4-sector-primitives
+          path: |
+            /tmp/ou3_p4_cayley_sector.json
+            /tmp/ou3_p4_vector_remainder.json
+          if-no-files-found: warn
+          retention-days: 7
+
+  p4-composition-inputs:
+    needs: [source-foundation, p3-metric, p4-sector]
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Build global signed-Joseph nonlinear budget forms
+        run: |
+          python3 tools/ou3_p4_signed_joseph_sector_inputs.py \
+            --output /tmp/ou3_p4_signed_joseph_sector_inputs.json
+
+      - name: Print H/A optimized nonlinear charges
+        if: always()
+        run: |
+          if [ -f /tmp/ou3_p4_signed_joseph_sector_inputs.json ]; then
+            python3 - <<'PY'
+          import json
+          d = json.load(open('/tmp/ou3_p4_signed_joseph_sector_inputs.json'))
+          print('P3', d.get('P3_ESTABLISHED'), 'P4', d.get('P4_COMPLETE_WORD_DISSIPATION_ESTABLISHED'))
+          for mode in ('H', 'A'):
+              m = d.get('modes', {}).get(mode, {})
+              y = m.get('optimized_accelerometer_young', {})
+              e = m.get('normalized_eps1', {})
+              print(mode,
+                    'linear_delta', m.get('P3_relative_Riccati_injection_margin_lower'),
+                    'mag_metric_charge', e.get('mag_theta_charge_upper'),
+                    'acc_eps_star', y.get('epsilon_star'),
+                    'acc_minimax_metric_charge', y.get('minimax_metric_charge_upper'))
+          print('next:', d.get('next_obligation'))
+          PY
+          fi
+
+      - name: Upload P4 signed-Joseph composition inputs
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: ou3-p4-signed-joseph-inputs
+          path: /tmp/ou3_p4_signed_joseph_sector_inputs.json
+          if-no-files-found: warn
+          retention-days: 7
