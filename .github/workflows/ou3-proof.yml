@@ -44,6 +44,7 @@ jobs:
             test_ou3_p4_effective_vector_inputs \
             test_ou3_p4_effective_word_transport \
             test_ou3_p4_joseph_directional_weight \
+            test_ou3_p4_initial_directional_packet_certificate \
             test_ou3_p4_sample_clock_source_refinement \
             test_ou3_p4_source_node_cells \
             test_ou3_p4_source_path_reachability \
@@ -122,7 +123,8 @@ jobs:
             tools/ou3_p4_source_word_timing.py \
             tools/ou3_p4_signed_joseph_sector_inputs.py \
             tools/ou3_p4_effective_word_transport.py \
-            tools/ou3_p4_joseph_directional_weight.py
+            tools/ou3_p4_joseph_directional_weight.py \
+            tools/ou3_p4_initial_directional_packet_certificate.py
 
       - name: Certify usable 0.8 rad nonlinear sector primitives
         run: |
@@ -134,6 +136,8 @@ jobs:
             --output /tmp/ou3_p4_effective_vector_inputs.json
           python3 tools/ou3_p4_joseph_directional_weight.py \
             --output /tmp/ou3_p4_joseph_directional_weight.json
+          python3 tools/ou3_p4_initial_directional_packet_certificate.py \
+            --output /tmp/ou3_p4_initial_directional_packet.json
 
       - name: Print exact effective-input and Joseph directional widening
         if: always()
@@ -162,6 +166,17 @@ jobs:
                         'mag', m.get('magnetometer', {}).get('joseph_vs_R_inverse_directional_attenuation_lower'),
                         'S', m.get('S_zero', {}).get('joseph_vs_R_inverse_directional_attenuation_lower'))
               print('Joseph next:', d.get('next_obligation'))
+          p = Path('/tmp/ou3_p4_initial_directional_packet.json')
+          if p.exists():
+              d = json.loads(p.read_text())
+              print('initial directional packet pass', d.get('validation_pass'))
+              for mode in ('H', 'A'):
+                  m = d.get('modes', {}).get(mode, {})
+                  print(mode,
+                        'P3 alpha6', m.get('P3_R_inverse_vector_gyro_bias_alpha6_lower'),
+                        'sector alpha6', m.get('finite_angle_R_inverse_directional_alpha6_lower'),
+                        'Joseph sector alpha6', m.get('initial_finite_angle_Joseph_directional_alpha6_lower'))
+              print('initial packet next:', d.get('next_obligation'))
           PY
 
       - name: Upload P4 sector primitives
@@ -174,6 +189,7 @@ jobs:
             /tmp/ou3_p4_vector_remainder.json
             /tmp/ou3_p4_effective_vector_inputs.json
             /tmp/ou3_p4_joseph_directional_weight.json
+            /tmp/ou3_p4_initial_directional_packet.json
           if-no-files-found: warn
           retention-days: 7
 
