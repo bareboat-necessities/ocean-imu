@@ -5,6 +5,7 @@ on:
     paths:
       - "tools/ou3_*.py"
       - "tools/ou3_proof_operating_domain.json"
+      - "tests/validation/test_ou3_p3_*.py"
       - "src/kalman_ou_iii/**"
       - "src/tuner/**"
       - ".github/workflows/ou3-p3-source-scan.yml"
@@ -12,6 +13,7 @@ on:
     paths:
       - "tools/ou3_*.py"
       - "tools/ou3_proof_operating_domain.json"
+      - "tests/validation/test_ou3_p3_*.py"
       - "src/kalman_ou_iii/**"
       - "src/tuner/**"
       - ".github/workflows/ou3-p3-source-scan.yml"
@@ -21,6 +23,37 @@ permissions:
   contents: read
 
 jobs:
+  e3-p3:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Compile e3 P3 sharpening
+        run: |
+          python3 -m py_compile \
+            tools/ou3_p3_gramian_e3.py \
+            tools/ou3_p3_e3_postmeasurement_certificate.py \
+            tests/validation/test_ou3_p3_gramian_e3.py
+
+      - name: Test e3 Gramian spectral bound
+        working-directory: tests/validation
+        run: python3 -m unittest -v test_ou3_p3_gramian_e3
+
+      - name: Certify source-uniform e3 P3 candidate
+        run: |
+          python3 tools/ou3_p3_e3_postmeasurement_certificate.py \
+            --output /tmp/ou3_p3_e3_postmeasurement_certificate.json
+
+      - name: Upload e3 P3 certificate
+        uses: actions/upload-artifact@v6
+        with:
+          name: ou3-p3-e3-postmeasurement
+          path: /tmp/ou3_p3_e3_postmeasurement_certificate.json
+          retention-days: 7
+
   source-cell-scan:
     runs-on: ubuntu-latest
     timeout-minutes: 45
