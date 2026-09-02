@@ -1,0 +1,75 @@
+name: ou3-proof
+
+on:
+  push:
+    paths:
+      - "tools/ou3_*.py"
+      - "tools/ou3_proof_operating_domain.json"
+      - "tests/validation/test_ou3_*.py"
+      - "src/kalman_ou_iii/**"
+      - "src/kalman_ou_common/**"
+      - ".github/workflows/ou3-proof.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  current-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Compile current proof tooling
+        run: make -C tests/validation build
+
+      - name: Run current proof primitive tests
+        working-directory: tests/validation
+        run: |
+          python3 -m unittest -v \
+            test_ou3_full_process_ucc \
+            test_ou3_implementation_word_language \
+            test_ou3_interval_ad \
+            test_ou3_p4_sample_clock_source_refinement \
+            test_ou3_p4_source_node_cells \
+            test_ou3_p4_source_path_reachability \
+            test_ou3_source_domain_contract \
+            test_ou3_translational_uco_ucc \
+            test_ou3_validated_transcendentals \
+            test_ou3_vector_uco_certificate \
+            test_ou3_verified_spd_inverse
+
+      - name: Validate phased terminal source reduction
+        run: |
+          python3 tools/ou3_p4_terminal_source_equivalence.py \
+            --output /tmp/ou3_terminal_source_equivalence.json
+
+      - name: Run current augmented complete-word P4 producer
+        run: |
+          python3 tools/ou3_p4_augmented_complete_word_design_v5.py \
+            --source-node-index 0 \
+            --attitude-halfwidth-factor 0.03125 \
+            --epsilon 0.5 \
+            --output /tmp/ou3_p4_complete_word.json
+
+      - name: Print current P4 design result
+        if: always()
+        run: |
+          if [ -f /tmp/ou3_p4_complete_word.json ]; then
+            python3 - <<'PY'
+          import json
+          d = json.load(open('/tmp/ou3_p4_complete_word.json'))
+          print('validation_pass_v5', d.get('validation_pass_v5'))
+          print('validation_failures_v5', d.get('validation_failures_v5'))
+          for mode in ('H', 'A'):
+              m = d.get('modes', {}).get(mode, {})
+              print(mode,
+                    'mu', m.get('signed_word_generalized_margin_design'),
+                    'rho', m.get('rho_homogeneous_design_upper'),
+                    'beta', m.get('beta_measurement_design_upper'),
+                    'operations', m.get('operation_count'))
+          PY
+          fi
