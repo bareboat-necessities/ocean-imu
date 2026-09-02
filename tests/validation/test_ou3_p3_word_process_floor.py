@@ -11,23 +11,33 @@ import ou3_p3_word_process_floor as W
 
 
 class P3WordProcessFloorTests(unittest.TestCase):
-    def test_translation_information_is_positive_on_word_scale(self):
+    def test_translation_information_cover_closes_word_scale_intervals(self):
         for lo, hi in ((0.05, 0.051), (0.5, 0.505), (2.0, 2.01)):
             with self.subTest(x=(lo, hi)):
-                info = W.translation_information_upper(Interval.outward_bounds(lo, hi))
-                self.assertIsNotNone(info)
-                self.assertTrue(symmetric_positive_definite_ldlt(info)[0])
+                cover = W.translation_information_cover(
+                    Interval.outward_bounds(lo, hi), max_depth=14
+                )
+                self.assertGreater(len(cover), 0)
+                self.assertLessEqual(cover[0][0].lo, lo)
+                self.assertGreaterEqual(cover[-1][0].hi, hi)
+                for cell, info in cover:
+                    self.assertLessEqual(cell.lo, cell.hi)
+                    self.assertIsNotNone(info)
 
-    def test_translation_margin_is_strict(self):
-        info = W.translation_information_upper(Interval.outward_bounds(0.5, 0.501))
-        self.assertIsNotNone(info)
-        delta = W.translation_margin_from_information(
-            info,
-            [2.0, 3.0, 4.0, 1.5],
-            [0.0, 0.0, 0.1, 0.2],
+    def test_translation_margin_is_strict_on_every_cover_cell(self):
+        cover = W.translation_information_cover(
+            Interval.outward_bounds(0.5, 0.501), max_depth=14
         )
-        self.assertTrue(math.isfinite(delta))
-        self.assertGreater(delta, 0.0)
+        margins = [
+            W.translation_margin_from_information(
+                info,
+                [2.0, 3.0, 4.0, 1.5],
+                [0.0, 0.0, 0.1, 0.2],
+            )
+            for _cell, info in cover
+        ]
+        self.assertTrue(margins)
+        self.assertTrue(all(math.isfinite(x) and x > 0.0 for x in margins))
 
     def test_attitude_bias_doubling_floor_is_spd(self):
         Omega = W.attitude_bias_word_noise(0.5, 0.01, 7, 2.0)
