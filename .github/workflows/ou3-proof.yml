@@ -41,6 +41,7 @@ jobs:
             test_ou3_proof_cleanup \
             test_ou3_full_process_ucc \
             test_ou3_implementation_word_language \
+            test_ou3_p4_effective_vector_inputs \
             test_ou3_p4_sample_clock_source_refinement \
             test_ou3_p4_source_node_cells \
             test_ou3_p4_source_path_reachability \
