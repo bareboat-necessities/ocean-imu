@@ -1,0 +1,52 @@
+name: ou3-p4-terminal-cluster-p2-reduction
+
+on:
+  push:
+    paths:
+      - "tools/ou3_p2_clock_phase_tuner_graph.py"
+      - "tools/ou3_p4_terminal_cluster_p2_reduction.py"
+      - "tools/ou3_implementation_word_language.py"
+      - ".github/workflows/ou3-p4-terminal-cluster-p2-reduction.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  terminal-p2-reduction:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Compile
+        run: |
+          python3 -m py_compile \
+            tools/ou3_p2_clock_phase_tuner_graph.py \
+            tools/ou3_p4_terminal_cluster_p2_reduction.py
+      - name: Build and validate reduction
+        run: |
+          python3 tools/ou3_p4_terminal_cluster_p2_reduction.py \
+            --output /tmp/ou3_p4_terminal_cluster_p2_reduction.json
+      - name: Contract
+        run: |
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/ou3_p4_terminal_cluster_p2_reduction.json'))
+          assert d['validation_pass'] is True, d['validation_failures']
+          assert d['cluster_span_strictly_below_minimum_stage_gap'] is True
+          assert d['maximum_stage_boundaries_inside_cluster'] == 1
+          assert d['maximum_applied_tuple_changes_inside_cluster'] == 1
+          assert d['second_order_P2_successor_needed_inside_cluster'] is False
+          assert d['reachable_pair_correlation_retained'] is True
+          assert d['clock_phase_retained'] is True
+          assert d['arbitrary_cartesian_tuner_switching_used'] is False
+          assert d['ready_for_terminal_nonlinear_source_enumeration'] is True
+          assert d['P4_COMPLETE_WORD_DISSIPATION_ESTABLISHED_HERE'] is False
+          print('terminal_span', d['terminal_cluster_span_intervals'])
+          print('minimum_stage_gap', d['minimum_finite_stage_gap_valid_samples'])
+          print('reachable_pairs', d['reachable_stage_pair_states'])
+          print('schedule_shapes_upper', d['including_no_boundary_schedule_shapes_upper'])
+          print('reduced_pair_phase_cases_upper', d['reduced_pair_phase_cases_upper'])
+          PY
