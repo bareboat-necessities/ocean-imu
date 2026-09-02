@@ -9,6 +9,14 @@ on:
       - "src/kalman_ou_iii/**"
       - "src/kalman_ou_common/**"
       - ".github/workflows/ou3-proof.yml"
+  pull_request:
+    paths:
+      - "tools/ou3_*.py"
+      - "tools/ou3_proof_operating_domain.json"
+      - "tests/validation/test_ou3_*.py"
+      - "src/kalman_ou_iii/**"
+      - "src/kalman_ou_common/**"
+      - ".github/workflows/ou3-proof.yml"
   workflow_dispatch:
 
 permissions:
