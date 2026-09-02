@@ -21,7 +21,7 @@ class Ou3ProofCleanupTest(unittest.TestCase):
                 offenders.append(f"retired reference: {path.name}")
         self.assertEqual([], offenders, "\n".join(offenders))
 
-    def test_no_superseded_p4_fixed_schedule_routes_remain(self):
+    def test_no_superseded_p4_fixed_schedule_or_finite_cell_routes_remain(self):
         retired_names = {
             "ou3_p4_terminal_cluster_p2_reduction.py",
             "ou3_p4_terminal_source_equivalence.py",
@@ -31,6 +31,9 @@ class Ou3ProofCleanupTest(unittest.TestCase):
             "ou3_p4_joint_word_gauge_design_v2.py",
             "ou3_p4_augmented_complete_word_design.py",
             "ou3_p4_augmented_complete_word_design_v5.py",
+            "ou3_p4_cell_affine_joseph.py",
+            "ou3_p4_augmented_covariance_ad.py",
+            "ou3_p4_mean_value_reconditioning.py",
         }
         retired_modules = {name[:-3] for name in retired_names}
         offenders = []
