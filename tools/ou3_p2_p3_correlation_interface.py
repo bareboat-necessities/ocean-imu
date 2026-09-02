@@ -1,120 +1,44 @@
 #!/usr/bin/env python3
-"""Frozen P2 -> P3 correlation interface for the OU-III theorem chain.
+"""Frozen P2 -> P3 theorem interface for OU-III.
 
-P2 has two distinct responsibilities:
+P2 is deliberately split into two layers:
 
-1. source/timing admissibility -- shipping EMA, staging/commit clock, physical
-   tuner ranges and finite-stage timing; and
-2. correlation/path memory -- enough joint history that P3 cannot combine a
-   process lower bound, covariance upper bound and measurement R_S bound from
-   mutually incompatible source histories.
+* source/timing admissibility from the existing EMA/staging/clock model; and
+* the frozen correlated stage-transfer interface exported by
+  :mod:`ou3_p2_correlation_path_memory`.
 
-The existing 800-cell physical quotient is retained as a useful source-state
-partition, but endpoint membership alone is explicitly insufficient for P3.
-This module freezes the contract that any future P2 correlation certificate
-must satisfy before canonical P3 may consume it.
-
-No numerical P3 margin is established here.  In particular, metadata or a
-source graph alone cannot make this interface ready.
+The physical 800-cell partition remains useful, but endpoint membership alone is
+not sufficient for P3.  Canonical P3 must consume the versioned pair-state
+correlation interface and must propagate process, covariance and measurement
+bounds from the same admissible source history.
 """
 from __future__ import annotations
 
 import argparse
 import json
-import math
 from pathlib import Path
 
+import ou3_p2_correlation_path_memory as CORR
 import ou3_p2_clock_phase_tuner_graph as PHASED
 import ou3_p4_sample_clock_source_refinement as CLOCK
-import ou3_p4_source_node_cells as NODES
 
 REPO = Path(__file__).resolve().parents[1]
 DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
-SCHEMA = 1
+SCHEMA = 2
 QUALIFICATION = "OU3_P2_TO_P3_CORRELATION_INTERFACE"
-CANDIDATE_QUALIFICATION = "OU3_P2_SOURCE_HISTORY_CORRELATION_CERTIFICATE"
-
-_REQUIRED_CORRELATED_QUANTITIES = (
-    "tau_applied",
-    "sigma_aw_applied",
-    "R_S_applied",
-    "process_excitation_lower",
-    "covariance_upper",
-    "measurement_R_S_lower",
-)
-
-
-def _candidate_status(candidate: dict | None, *, physical_states: int,
-                      staged_pair_states: int) -> dict:
-    if candidate is None:
-        return {
-            "provided": False,
-            "contract_accepted": False,
-            "reasons": ["no P2 source-history correlation certificate supplied"],
-        }
-
-    reasons: list[str] = []
-    if candidate.get("qualification") != CANDIDATE_QUALIFICATION:
-        reasons.append("wrong correlation-certificate qualification")
-    for key in (
-        "source_only",
-        "exact_shipping_EMA_semantics",
-        "exact_staging_commit_semantics",
-        "clock_phase_retained",
-        "staged_tuple_retained",
-        "committed_tuple_retained",
-        "EMA_candidate_memory_retained",
-        "all_admissible_source_paths_covered",
-        "same_history_used_for_process_covariance_and_measurement_bounds",
-        "joint_tau_sigma_RS_correlation_retained",
-        "source_conditioned_covariance_upper_available",
-        "source_conditioned_process_lower_available",
-        "source_conditioned_measurement_R_S_lower_available",
-        "full_P3_word_horizon_covered",
-        "frozen_clock_branch_covered",
-    ):
-        if candidate.get(key) is not True:
-            reasons.append(f"{key} is not true")
-    for key in (
-        "trajectory_replay_used",
-        "filter_changed",
-        "declared_domain_changed",
-        "independent_cartesian_extrema_combination_allowed",
-        "endpoint_only_800_state_quotient_used_as_complete_history",
-    ):
-        if candidate.get(key) is not False:
-            reasons.append(f"{key} is not false")
-
-    if int(candidate.get("physical_source_states", -1)) != int(physical_states):
-        reasons.append("physical source-state count mismatch")
-    if int(candidate.get("stage_boundary_pair_states", -1)) != int(staged_pair_states):
-        reasons.append("staged/committed pair-state count mismatch")
-
-    quantities = candidate.get("correlated_quantities", [])
-    if not isinstance(quantities, list) or any(q not in quantities for q in _REQUIRED_CORRELATED_QUANTITIES):
-        reasons.append("required correlated quantity set is incomplete")
-
-    horizon = candidate.get("certified_history_horizon_s")
-    if isinstance(horizon, bool) or not isinstance(horizon, (int, float)) or not math.isfinite(float(horizon)) or float(horizon) <= 0.0:
-        reasons.append("missing positive certified source-history horizon")
-
-    return {
-        "provided": True,
-        "contract_accepted": not reasons,
-        "reasons": reasons,
-    }
 
 
 def build(domain_path: Path = DEFAULT_DOMAIN, candidate: dict | None = None) -> dict:
+    # candidate is retained only for API compatibility with the first draft of
+    # this interface.  Promotion is now tied to the repository-owned, versioned
+    # CORR certificate rather than caller-supplied metadata.
+    if candidate is not None:
+        raise ValueError("external P2 correlation metadata is not accepted; use the versioned repository certificate")
+
     path = Path(domain_path).resolve()
     domain = json.loads(path.read_text(encoding="utf-8"))
     if domain.get("trajectory_fit") is not False:
         raise RuntimeError("P2->P3 interface must not be trajectory fitted")
-
-    nodes = NODES.build()
-    nf = NODES.validate(nodes)
-    if nf:
-        raise RuntimeError(f"P2 physical source partition failed: {nf}")
 
     clock = CLOCK.build(path)
     cf = CLOCK.validate(clock)
@@ -126,19 +50,16 @@ def build(domain_path: Path = DEFAULT_DOMAIN, candidate: dict | None = None) -> 
     if pf:
         raise RuntimeError(f"P2 staged/committed source graph failed: {pf}")
 
-    physical_states = int(nodes["partition"]["states"])
-    pair_states = int(phased["stage_boundary_pair_states"])
-    status = _candidate_status(
-        candidate,
-        physical_states=physical_states,
-        staged_pair_states=pair_states,
-    )
+    corr = CORR.build(path)
+    rf = CORR.validate(corr)
+    if rf:
+        raise RuntimeError(f"P2 correlation path-memory certificate failed: {rf}")
 
     timing_pass = (
         clock.get("P2_SAMPLE_CLOCK_REFINEMENT_CERTIFICATE") == "PASS"
         and phased.get("P2_PHASED_SOURCE_GRAPH_CERTIFICATE") == "PASS"
     )
-    correlation_ready = bool(status["contract_accepted"])
+    correlation_ready = corr.get("P2_CORRELATION_INTERFACE_CERTIFICATE") == "PASS"
 
     return {
         "schema": SCHEMA,
@@ -148,24 +69,27 @@ def build(domain_path: Path = DEFAULT_DOMAIN, candidate: dict | None = None) -> 
         "declared_domain_changed": False,
         "P2_source_timing_mathematics_retained": True,
         "P2_source_timing_certificate_pass": timing_pass,
-        "physical_800_state_partition_retained": physical_states == 800,
-        "physical_source_states": physical_states,
-        "stage_boundary_pair_states": pair_states,
-        "clock_gap_samples": phased["clock_phase_gap_alphabet_samples"],
-        "staged_committed_memory_available": True,
-        "EMA_candidate_memory_available": bool(phased["EMA_candidate_memory_retained_across_commits"]),
+        "physical_800_state_partition_retained": int(corr["physical_source_states"]) == 800,
+        "physical_source_states": int(corr["physical_source_states"]),
+        "stage_boundary_pair_states": int(corr["stage_boundary_pair_states"]),
+        "clock_gap_samples": list(corr["clock_gap_alphabet_samples"]),
         "endpoint_only_800_state_quotient_sufficient_for_P3": False,
         "long_horizon_endpoint_ancestry_may_be_complete": True,
         "independent_cartesian_tau_sigma_RS_extrema_forbidden": True,
         "P3_must_use_one_common_source_history_for_all_bounds": True,
-        "required_correlated_quantities": list(_REQUIRED_CORRELATED_QUANTITIES),
-        "correlation_candidate": status,
+        "correlation_interface_version": corr["interface_version"],
+        "correlation_interface_qualification": corr["qualification"],
+        "correlation_pair_shift_rule": corr["transition_rule"],
+        "correlation_segment_statistics": corr["segment_sufficient_statistics"],
+        "correlation_consumer_contract": corr["consumer_contract"],
         "P2_CORRELATION_INTERFACE_READY": correlation_ready,
         "P2_READY_FOR_CANONICAL_P3": timing_pass and correlation_ready,
+        "P3_must_declare_correlation_interface_consumed": True,
+        "P3_required_correlation_interface_version": CORR.INTERFACE_VERSION,
         "P3_PROMOTED_HERE": False,
         "P4_PROMOTED_HERE": False,
         "next_obligation": (
-            "construct a source-only history-conditioned enclosure over the retained staged/committed/clock automaton that supplies process excitation, covariance and measurement R_S bounds from the same admissible history; do not replace it by endpoint-only ancestry or independent Cartesian extrema"
+            "make the canonical P3 covariance/information propagation consume this exact versioned pair-state source-history interface; process lower, covariance upper and measurement R_S bounds must be propagated from one common legal history before any scalar extremization"
         ),
     }
 
@@ -181,10 +105,11 @@ def validate(d: dict) -> list[str]:
         "P2_source_timing_mathematics_retained",
         "P2_source_timing_certificate_pass",
         "physical_800_state_partition_retained",
-        "staged_committed_memory_available",
-        "EMA_candidate_memory_available",
         "independent_cartesian_tau_sigma_RS_extrema_forbidden",
         "P3_must_use_one_common_source_history_for_all_bounds",
+        "P2_CORRELATION_INTERFACE_READY",
+        "P2_READY_FOR_CANONICAL_P3",
+        "P3_must_declare_correlation_interface_consumed",
     ):
         if d.get(key) is not True:
             f.append(f"{key} is not true")
@@ -201,25 +126,26 @@ def validate(d: dict) -> list[str]:
         f.append("physical P2 source partition changed")
     if d.get("clock_gap_samples") != list(range(13, 27)):
         f.append("finite P2 clock alphabet changed")
-    candidate_ok = bool(d.get("correlation_candidate", {}).get("contract_accepted"))
-    if d.get("P2_CORRELATION_INTERFACE_READY") is not candidate_ok:
-        f.append("P2 correlation-ready flag does not match candidate contract")
-    expected_ready = bool(d.get("P2_source_timing_certificate_pass")) and candidate_ok
-    if d.get("P2_READY_FOR_CANONICAL_P3") is not expected_ready:
-        f.append("P2 canonical-P3 readiness flag is inconsistent")
+    if d.get("correlation_interface_version") != CORR.INTERFACE_VERSION:
+        f.append("P2 correlation interface version mismatch")
+    if d.get("P3_required_correlation_interface_version") != CORR.INTERFACE_VERSION:
+        f.append("canonical P3 correlation version requirement drifted")
+    c = d.get("correlation_consumer_contract", {})
+    if c.get("correlated_quantities_must_come_from_same_segment_node") is not True:
+        f.append("same-segment source correlation requirement lost")
+    if c.get("independent_tau_sigma_R_S_extremization_before_propagation") != "FORBIDDEN":
+        f.append("independent source extrema became allowed")
+    if c.get("global_800_ancestor_hull_as_P3_covariance_information_input") != "FORBIDDEN":
+        f.append("flat 800-node ancestor hull became allowed for P3")
     return list(dict.fromkeys(f))
 
 
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--domain", type=Path, default=DEFAULT_DOMAIN)
-    ap.add_argument("--candidate", type=Path)
     ap.add_argument("--output", type=Path, required=True)
     args = ap.parse_args()
-    candidate = None
-    if args.candidate is not None:
-        candidate = json.loads(args.candidate.read_text(encoding="utf-8"))
-    d = build(args.domain, candidate)
+    d = build(args.domain)
     vf = validate(d)
     d["validation_pass"] = not vf
     d["validation_failures"] = vf
@@ -228,8 +154,8 @@ def main() -> int:
     print(json.dumps({
         "timing_pass": d["P2_source_timing_certificate_pass"],
         "correlation_ready": d["P2_CORRELATION_INTERFACE_READY"],
+        "correlation_version": d["correlation_interface_version"],
         "ready_for_canonical_P3": d["P2_READY_FOR_CANONICAL_P3"],
-        "candidate_reasons": d["correlation_candidate"]["reasons"],
         "validation_failures": vf,
     }, indent=2, sort_keys=True))
     return 0 if not vf else 2
