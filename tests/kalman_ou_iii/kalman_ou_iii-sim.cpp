@@ -778,7 +778,7 @@ private:
 // rather than a measure of yaw quality.  Paired across those seeds and all
 // eight records, S_factor = 1 lowers yaw RMS by 3.2 percent pooled and on all
 // four JONSWAP records -- the deployed default-seed draw happens to be one of
-// the few that moves the other way.  reports/results/ou_anisotropy carries
+// the few that moves the other way.  The paired anisotropy sweep measured
 // both.  The three bias and displacement gates that come down are real gains
 // and are cut to the rule like the rest.
 //
