@@ -1,6 +1,6 @@
 {
   "algorithm": "sha256-framed-v1",
-  "replay_fingerprint": "82e1329e453934de8d1bb04c59e4ce10a08d5bb75451d542fa44385fb8e87699",
+  "replay_fingerprint": "a21fc4e9e0def695d2d10b907dd946ac1d61ec8e0f9bcb013345818f2c57d9c7",
   "results_file_count": 139,
   "results_files": [
     {
@@ -301,7 +301,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness.json",
-      "sha256": "5e92f55b2d7ffb28f138cf0b81ae3c1e2316639bc1e4330ae21970171c7014b8"
+      "sha256": "b324ff1f24e6c0a2365f82b3c3602071403c130c52a8cb06550bab4f4c7ee2c9"
     },
     {
       "kind": "file",
@@ -311,12 +311,12 @@
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_manifest.json",
-      "sha256": "b92f2dbf86a321eed94658ee18943b1c5d65f414d563fe696961ec0548fd1221"
+      "sha256": "1838ac3023b0aff773fee429e0f618f5126fbd8012a8e2814d8ab10ff34a2020"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_paired_effects.csv",
-      "sha256": "b49fc6669621e8dfd246df0ccc371e925d83e069804e1cb45a9d3dc93f45680c"
+      "sha256": "ff748a2675ab4abb04801dbc35b4d77b3fe6b85ffc56fbcd0ff2cabe6f9b47f0"
     },
     {
       "kind": "file",
@@ -326,22 +326,22 @@
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_raw.csv",
-      "sha256": "62f6fd5189749063c08e2c8a98e135918da219ecea688be4da343a6d6c62b956"
+      "sha256": "c8736a8039c633dd76caeb1ec32f1d844c88c6fe5eff365dc177baa64ed2e2ac"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_sensitivity.svg",
-      "sha256": "b29f13dd2a631079ad4d1ac4ee0a7a3318000402111b6ae0465ec94fc441c9d0"
+      "sha256": "394cf12d8e00ef085fa3119a7148d1027741b470378534d38d083733df66b02a"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_stress.svg",
-      "sha256": "e740385a56dd724f23a5ef2a93c7d305cc916c751305ad0728d7859e46dc7dd8"
+      "sha256": "3a95f36b12e8d52e52420642822f7157de5a65da66759174736cfe269e40c3ec"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_summary.csv",
-      "sha256": "d7729e2393f5f6bb57379d5ca0532f9243d76c7bb5035ab70cebd26e4feea5f1"
+      "sha256": "6755ffbd61a0373c6756f38e758dd5e57c1986e367e1b979adf5d9e792f7f6f1"
     },
     {
       "kind": "file",
@@ -556,22 +556,22 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation.json",
-      "sha256": "98d83b98ac42e39778b8470d66fc8ac0e0bcb518d70c7f4063cfec3fdadf7d76"
+      "sha256": "57e0abd9a37889e4eff189fc52c6331feb763a3dcc98577339104d77b84497a7"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_attitude.svg",
-      "sha256": "7c6c386734e377e9a22199b788aed33ed4bdb7c00ec8941b3a2b7331218f8e1f"
+      "sha256": "24bbe309971d5c762694c9a6809206ee1f42fdf6fcc5a3e9b43fb5ec2bd1995c"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_covsync.svg",
-      "sha256": "8fd427ed26c6895272a257302bd4c8084dbcadaaa8a1a35b90afc525efe892ff"
+      "sha256": "ba39ec1b8187641292d6cd88d6823f8f572bd285bc3ba9bc4cee21327f246c41"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_displacement.svg",
-      "sha256": "beaa0c637524f953fdc49fb37b75b65884831d15f353aa2b1fd390a39648b5ca"
+      "sha256": "fcd6c6176a7395f2c09e307fcae89b28def2fbf2f2abda9514e569bd2d88e609"
     },
     {
       "kind": "file",
@@ -581,12 +581,12 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_manifest.json",
-      "sha256": "eafc565809c2d26514e3f6438f8bd4aec51300cb8488d2e2c362fffda16eeade"
+      "sha256": "88a00fd62d04c4dc68b2f135d007706de5b978b0d3f90a84fb19b13e5597c51a"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_paired_effects.csv",
-      "sha256": "35da5fa9e7fa5e2c9cb4dfe7a19cb9f369b38ff8e9e796835bd2611bcea59b57"
+      "sha256": "9bd85a028bd311f7707a06ed005a940303481b46f9b57dad13c71900ac4b6279"
     },
     {
       "kind": "file",
@@ -596,12 +596,12 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_raw.csv",
-      "sha256": "d687254ecabd2b97dccf095eb3933958d84993cf19fcdde6f09af9ca89d2d2f6"
+      "sha256": "432c1d200c8c832f66ecc31a7022a842f842996d4fd98e34e82c0ec30ac6aebd"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_summary.csv",
-      "sha256": "6799cf700e1b3807123bba5815890987fa49fe57835f8f0ff1bdb66da4e074dd"
+      "sha256": "785022f7e05fa8b1670834b012f39113dc3aa4a762b6b2765460dba36cb977e0"
     },
     {
       "kind": "file",
@@ -626,7 +626,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_vertical.svg",
-      "sha256": "bd84ef66615a65d9468daef1cf2671e66b409fad0091f0eac1952911861ad782"
+      "sha256": "18993a92cb4cb651f7bc9490dd2f65b0a5cfca6f1c5de64675c4fa1e9a349f67"
     },
     {
       "kind": "file",
@@ -699,13 +699,13 @@
       "sha256": "27537c8895cf78c1bf92c9d0d4d8b45cbd323585f02c5de12982f1616bdcab55"
     }
   ],
-  "results_fingerprint": "e46fefd6be12e6f6a4f06352aa5188f950ef26abbc59efcb4d3f8f0b9c498cf6",
+  "results_fingerprint": "dab9c5fd06eb5d3cc200f1c9b0de0a3c5d516133ad2c6ef0bf5c35b5e211d224",
   "schema_version": 3,
   "simulation_data": {
     "file": "sim-data-files.zip",
     "sha256": "55cad13e6b928e9e4d9540adbedfa0189a8feb57febac41b4561bfb68986dcff"
   },
-  "tracked_replay_file_count": 638,
+  "tracked_replay_file_count": 503,
   "tracked_replay_files": [
     {
       "mode": "100644",
@@ -725,7 +725,7 @@
     {
       "mode": "100644",
       "path": ".github/workflows/ou-validation.yml",
-      "sha256": "a2ef7d0bf28af3f66deae283f5ca7be4c36721f48859fb443864633456b7e098"
+      "sha256": "2b3fe50a0e24817f60f5acc09c71348a3db8d43ed6fa800ac381326a9564dcf9"
     },
     {
       "mode": "100644",
@@ -804,11 +804,6 @@
     },
     {
       "mode": "100644",
-      "path": ".github/workflows/ou3-p5-rotation-gauge-fast.yml",
-      "sha256": "1e632761a9b14a0023de6bfb760f8ade61b4c1cc7d3f1c099e5a427c1a68cb85"
-    },
-    {
-      "mode": "100644",
       "path": ".github/workflows/ou3-p5-source-map-audit.yml",
       "sha256": "ed122823c9a7dd308f4a88fa77824c6aac5bc24f345d16108f382768d75a584e"
     },
@@ -816,71 +811,6 @@
       "mode": "100644",
       "path": ".github/workflows/ou3-p5-subdivision-fast.yml",
       "sha256": "80cf97a88088e226e7d8692fcbfa571b7a92173ed9ab27c220b5ab64e8e73c22"
-    },
-    {
-      "mode": "100644",
-      "path": ".github/workflows/ou3-p5-v39-isolated-exact-psd-current-subbox-fast.yml",
-      "sha256": "9beaa2fca7b549d9b4a628b1300bbc4614b1c1eecce930a5c5b3fb269783bb72"
-    },
-    {
-      "mode": "100644",
-      "path": ".github/workflows/ou3-p5-v40-exact-joseph-components-fast.yml",
-      "sha256": "34c6ecda0b479bd0df412bf3b4edc7f9049f0933e4c27dfdd0794aaff802fc77"
-    },
-    {
-      "mode": "100644",
-      "path": ".github/workflows/ou3-p5-v41-full-source-cell0-q8-fast.yml",
-      "sha256": "be6e8b1a628038c61d8fd6ce67acb25cbe3f21120b3334b65fdf868df4de264e"
-    },
-    {
-      "mode": "100644",
-      "path": ".github/workflows/ou3-p5-v42-adaptive-directional-current-fast.yml",
-      "sha256": "061053a394e8aa4941cd019932ef1d9b565c59efe59d48fd32893847e6f7f25d"
-    },
-    {
-      "mode": "100644",
-      "path": ".github/workflows/ou3-p5-v44-split-signed-first-survivor-fast.yml",
-      "sha256": "9ba6fcf8faf17800e58916d03e50519750b3b868327180f96096c5d66c532515"
-    },
-    {
-      "mode": "100644",
-      "path": ".github/workflows/ou3-p5-v45-authoritative-first-survivor-fast.yml",
-      "sha256": "9a081c66417d8cfe472e47eb591c6d0bb66425bc33e0091700df0bd87f2dc506"
-    },
-    {
-      "mode": "100644",
-      "path": ".github/workflows/ou3-p5-v48-authoritative-componentwise-yz-fast.yml",
-      "sha256": "808a9fa058f28ed4818300c01f425b244db664e7dda5568ab25bab4d77d24ce0"
-    },
-    {
-      "mode": "100644",
-      "path": ".github/workflows/ou3-p5-v49-authoritative-yz-deltac-decomposition-fast.yml",
-      "sha256": "43f83d33137f5c7695d50a2536c4890e1fbea42c2a06470e209e5e55046c2d35"
-    },
-    {
-      "mode": "100644",
-      "path": ".github/workflows/ou3-p5-v50-zero-perturbation-barrier-fast.yml",
-      "sha256": "d8c73b140ba24391463b1f8796050ad6459434afedbd27d5c5dc098bf3aea5a8"
-    },
-    {
-      "mode": "100644",
-      "path": ".github/workflows/ou3-p5-v51-exact-monotone-source-gain-fast.yml",
-      "sha256": "f329e2b8bc078913019796cb348cbb05da7cb8aee101b5d03b3ac06156889cd5"
-    },
-    {
-      "mode": "100644",
-      "path": ".github/workflows/ou3-p5-v52-exact-monotone-cover-lift-fast.yml",
-      "sha256": "9347796b6172b3cacc1d1f9a4d1804ea22b6f7501f37564c773cf06d743f9ccd"
-    },
-    {
-      "mode": "100644",
-      "path": ".github/workflows/ou3-p5-v53-exact-monotone-q8-cover-fast.yml",
-      "sha256": "c469da50c502fc4e8e40e7e6763cc9743b56f7514e59efdac323aa0e06386837"
-    },
-    {
-      "mode": "100644",
-      "path": ".github/workflows/ou3-p5-v54-open-cell-correction-budget-fast.yml",
-      "sha256": "f9a4a40d30cb269e9645da757219523d50fa5d3c806e0a3ed0b562c6557c4056"
     },
     {
       "mode": "100644",
@@ -2204,306 +2134,6 @@
     },
     {
       "mode": "100644",
-      "path": "tests/validation/test_ou3_p5_sample1_authoritative_componentwise_yz_v48.py",
-      "sha256": "965e43adbe3104039cb70497437cfebeb222c33352a25d08c17736f229b851a9"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/validation/test_ou3_p5_sample1_authoritative_yz_deltac_decomposition_v49.py",
-      "sha256": "eb267c0b0c02767d9d93ee0ea0f829754b8ed6ad22bf55bce0f0554d36548f80"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/validation/test_ou3_p5_sample1_current_exact_residual_subdivision_v23.py",
-      "sha256": "3451f68a67657cf0aa67ecd93051293d5788639c5c56c5e93a139b7a19b37cd2"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/validation/test_ou3_p5_sample1_directional_innovation_row_lift_v34.py",
-      "sha256": "af9e9e94c79cef1d2adb09225ef6d398b1038758d234b75c66378258a94c45da"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/validation/test_ou3_p5_sample1_directional_v12d_remainder_v29.py",
-      "sha256": "cbc34be0b55cda9c05e77616555ed692c7379afb4a14f8aff8caa991f5a6676b"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/validation/test_ou3_p5_sample1_effective_input_correction_v21.py",
-      "sha256": "1dc4fc3e9dc24119085dbb5d72ae0c4a7f195806efd8feb397b52354769642c1"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/validation/test_ou3_p5_sample1_effective_input_correction_v21b.py",
-      "sha256": "0d3d87000faec59985d8d1c51e3ba6f163f23249c9c35db6763d84b716b91a4d"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/validation/test_ou3_p5_sample1_entry.py",
-      "sha256": "fcc25b08dae11391111ce31718ad18ac48197cc1fcfcbbda257bccb71f763ef2"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/validation/test_ou3_p5_sample1_entry_v3.py",
-      "sha256": "716b21443e8aa303f1817a9e0404f0654d3b8e847176935629804dd8faea4a85"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/validation/test_ou3_p5_sample1_exact_monotone_cover_lift_v52.py",
-      "sha256": "a35247696ea67ab1feef2c6eee5c2a9fa96447d3073999874963adfad228c230"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/validation/test_ou3_p5_sample1_exact_monotone_q8_cover_v53.py",
-      "sha256": "82ec663e56ec753a30ebabeeeac92b28c80d14919cba1235860bf478e7c347e7"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/validation/test_ou3_p5_sample1_exact_monotone_source_gain_v51.py",
-      "sha256": "8b9600e2486681a9926bec8ff00b45c44ceb0e2ce1d0b882e8eb96d17bfdb644"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/validation/test_ou3_p5_sample1_exact_nonlinear_residual_v22.py",
-      "sha256": "d347e3f9a4c009de97707a57d19eb032dc9350b4b6c63067ee0ffc1f51b0da13"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/validation/test_ou3_p5_sample1_exact_theta_x_deltac_lift_v32.py",
-      "sha256": "90301888edc80bd63e2aa066d324b90fcf1c7e1de02566906f9b09ba2cc16911"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/validation/test_ou3_p5_sample1_exact_theta_yz_gain_rows_lift_v33.py",
-      "sha256": "829d2d307adb053fbafcdbd07e44204bc254ca1b28770ca527400dbbdab4c973"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/validation/test_ou3_p5_sample1_first_psd_exact_correction_geometry_v38.py",
-      "sha256": "66f296dd145364967d4883ae1beabdcd7b135f7288ccfee4f0c3641eb1192321"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/validation/test_ou3_p5_sample1_first_psd_exact_joseph_components_v40.py",
-      "sha256": "b674e60201e788f3ebd41e5b4b9b809140c1e76c25d73690d680898f4164d82b"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/validation/test_ou3_p5_sample1_first_psd_offdiagonal_cone_v36.py",
-      "sha256": "2cf9c1e8bebc4735d3cc0aed7842f7cce85ee638e399c4cc5dfa75cba8f00bd7"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/validation/test_ou3_p5_sample1_open_cell_correction_budget_v54.py",
-      "sha256": "9f87937f9ba28ccf54bf1a0db6c4ec28ae3fcbb87c8b3b153b1bcbf840c9d957"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/validation/test_ou3_p5_sample1_prefix.py",
-      "sha256": "783c1d06ab62f331142a027c6f935d2b8c686b1c572b182d7fad3a3d07e6c836"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/validation/test_ou3_p5_sample1_prefix_v2.py",
-      "sha256": "8ac40f665204cb2915d72ca10d590a6a8b6e07771e40d4719772915a9daf0a4e"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/validation/test_ou3_p5_sample1_reset_perp_scalar_channel.py",
-      "sha256": "964a258953df29e84a8bf3dbac9def46fbf518a660a52965c0ec426206cb559b"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/validation/test_ou3_p5_sample1_rotation_gauge_refinement.py",
-      "sha256": "eb7147b18d551cb6ebd78533c55bfc3fe12fad4642b9c154a1f2a9622f56fd32"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/validation/test_ou3_p5_sample1_rotation_gauge_refinement_v2.py",
-      "sha256": "a6ffad313a01a495d0800521880663c12606eeb43c1664ab7c8fe5e7bfebba51"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/validation/test_ou3_p5_sample1_signed_cayley_q8_gate.py",
-      "sha256": "823016ef286ab8e96ab5fe906d6d6ff35b27b7be69430930df827b37fac738e4"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/validation/test_ou3_p5_sample1_signed_cayley_q8_v14.py",
-      "sha256": "473748a230e46eaf6a6b34da0859925075036510276809035d986ae65da843cf"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/validation/test_ou3_p5_sample1_signed_cayley_q8_v14b.py",
-      "sha256": "20bcdff7c9362edc63a9b747342389ba8fa09eab5f7ac88113077e6ad3a9ba00"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/validation/test_ou3_p5_sample1_signed_cayley_q8_v14c.py",
-      "sha256": "1029eaeaf71a7166afad980e58536e927c89d1f40a08ba28df7d323403ebf0a4"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/validation/test_ou3_p5_sample1_signed_cayley_q8_v14d.py",
-      "sha256": "3cc2fd8bece185f2ed018520fe034c8582ce6582181acb78f4f667195b3b2b1b"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/validation/test_ou3_p5_sample1_signed_cayley_q8_v15.py",
-      "sha256": "a31b2fb4150e4682a02f6d4791cf22343eb55cfc8cf1e8fc9908464d3b67d7fe"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/validation/test_ou3_p5_sample1_signed_cayley_q8_v16.py",
-      "sha256": "53e70341c5f6ee4eee78c115beb88a70ec920bcb6a1478a148989178c08402c8"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/validation/test_ou3_p5_sample1_signed_cayley_q8_v17.py",
-      "sha256": "a9bf858588d60e6cdeeeb56969848ecdc6d448345886d860ab99d6850ead2fb1"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/validation/test_ou3_p5_sample1_signed_cayley_q8_v18.py",
-      "sha256": "61f8b6ae4d3a9cf96d498755a81bb65556bf2333dc6ceebe2677a944e0015fa7"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/validation/test_ou3_p5_sample1_signed_cayley_q8_v18b.py",
-      "sha256": "64dc2e86e4a74a3572a46f05ef86e8c1462aa2ac3731b3f408ac98fdee2f1f6b"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/validation/test_ou3_p5_sample1_signed_post_first_aw_components_v27.py",
-      "sha256": "2d87328558bf7757f95d7224d20abe6b8ed146ca012260f861483137dd9c5cc6"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/validation/test_ou3_p5_sample1_signed_radial_subcells_v13.py",
-      "sha256": "ae628faaccd604a9d46c918071b92e4e52dd7ba7332bc6198bdea549a5c2ef32"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/validation/test_ou3_p5_sample1_signed_radial_subcells_v13d.py",
-      "sha256": "b542267214b274b0e07d62e6b456c011f8f651ed2e8183daa5ce4313da3fe7d0"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/validation/test_ou3_p5_sample1_signed_radial_subcells_v13e.py",
-      "sha256": "b885942da50c871a1d4eb787c0fe58a822dffc70de558ff4d913ffab11e70f99"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/validation/test_ou3_p5_sample1_source_phase_manifest.py",
-      "sha256": "52b9f9a2abf625f8227f5589b0f83d961b0bf23652497e47df678d1d0faea55a"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/validation/test_ou3_p5_sample1_split_gravity_signed_components_v28.py",
-      "sha256": "b5a1e7d1406a8e4557a63a5700bd15d168489d00a9aa3700148617debd407402"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/validation/test_ou3_p5_sample1_structured_full_gain_v10.py",
-      "sha256": "68c8ef0539589b9ea073cfde7e9c01ee8b1b2564b64829ef75c13cce00cf5ce6"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/validation/test_ou3_p5_sample1_structured_full_gain_v11.py",
-      "sha256": "62fc8bd00cf8108c90975dd9604602d33181bae37bf4c440237487a67fd76d9e"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/validation/test_ou3_p5_sample1_structured_full_gain_v12.py",
-      "sha256": "3a1319def585fb9ec160f213d50d875f0f38250048fffc9922eb00ce40edffa1"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/validation/test_ou3_p5_sample1_structured_full_gain_v12c.py",
-      "sha256": "dbfc9ff9450010a9da4f0d295ec47238adc16e6b60483eff00b2ca09cbfe19c3"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/validation/test_ou3_p5_sample1_structured_full_gain_v12d.py",
-      "sha256": "2cad1102eb68cb0ca93dcd0239b2a56487ee7a6f9938b8d8a7a96bef6f61abf0"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/validation/test_ou3_p5_sample1_structured_full_gain_v4.py",
-      "sha256": "7caf86e76e4669bb716d594ee2476be0108c62e7fc21cd1f639d17d36f6ce4da"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/validation/test_ou3_p5_sample1_structured_full_gain_v5.py",
-      "sha256": "8b76e6cb6c1bd73989385bbb2c3d81c257eaf2e5f8a4c5b1f3ca47b9643cd53b"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/validation/test_ou3_p5_sample1_structured_full_gain_v6.py",
-      "sha256": "19aad3fa1fd0f4bdec281125c6989383707015a4ac056e217450eeffb816f003"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/validation/test_ou3_p5_sample1_structured_full_gain_v7.py",
-      "sha256": "3a0152b80ee080bba4c94951d81ce9fa70c4567d42d7890bed15694daebcbbdc"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/validation/test_ou3_p5_sample1_structured_full_gain_v8.py",
-      "sha256": "f540b8afef88b7910a1c1eb1ec7fbb61f83ad778b6ea36eb54ee5cdf1dec6905"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/validation/test_ou3_p5_sample1_structured_full_gain_v9.py",
-      "sha256": "a91bedb48c4706a9ea8eb40dd58e2704186f6c09e15578fc65771fbd816bffb5"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/validation/test_ou3_p5_sample1_theta_x_gain_perturbation_v30.py",
-      "sha256": "1dfc4303d9289759c081da3d6c1c267f8605d36b144237e76cd3f07da1db76e7"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/validation/test_ou3_p5_sample1_v12d_witness_perturbation_decomposition_v35.py",
-      "sha256": "13a5939b38c2783256e858ecd275eda5c651e5bce50e2584b7cb76785de10f56"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/validation/test_ou3_p5_sample1_v30_current_subbox_lift_v31.py",
-      "sha256": "001e342c49c3f43734fb6b11925aac9820e8d936b2893fe8e7b4a5e01830da63"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/validation/test_ou3_p5_sample1_v38_exact_psd_current_subbox_lift_v39.py",
-      "sha256": "d57cd10e5cd99086ba2c4c6ad14bb8a44e42a76c667775dc5cfc2ffd1870283c"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/validation/test_ou3_p5_sample1_v40_full_source_cell0_q8_lift_v41.py",
-      "sha256": "4eb68053058a6fcb287074af8dd5b95db6c5bc2f8ad6af6aa806ec32b6333536"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/validation/test_ou3_p5_sample1_v40_split_signed_first_survivor_v44.py",
-      "sha256": "f0ec3bbcee1cad2fef8edc8a42bb2200cd4113b3b5f1c5906829f7c517a809f4"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/validation/test_ou3_p5_sample1_v41_adaptive_directional_current_v42.py",
-      "sha256": "1350605512698b73330823623d880779c8ca7d3fd971831bae6edd3709feeb57"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/validation/test_ou3_p5_sample1_v41_authoritative_split_signed_v45.py",
-      "sha256": "3170b85a40ed0185214416c31e905f61d4c6aa8539004d7316a6ca64527d3064"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/validation/test_ou3_p5_sample1_zero_perturbation_barrier_v50.py",
-      "sha256": "c6dd706914b41dff26b58889650905009506af5a1d48479e5f33ca6cabf5cd3f"
-    },
-    {
-      "mode": "100644",
       "path": "tests/validation/test_ou3_p5_signed_cayley_cell.py",
       "sha256": "1db3eb5ba30238f68c06692e228d7fdac9d2cebdb59469e455210607ab9b318f"
     },
@@ -2730,7 +2360,7 @@
     {
       "mode": "100644",
       "path": "tests/validation/test_workflow_contract.py",
-      "sha256": "f896799ccb9b15ad79013a18e43763874227b4013f6d95397529c5801a81b49f"
+      "sha256": "a903300626c327f4351ae90beb60986833f880ebcfed49c2654a2cb848d04e96"
     },
     {
       "mode": "100644",
@@ -3359,313 +2989,8 @@
     },
     {
       "mode": "100644",
-      "path": "tools/ou3_p5_sample1_authoritative_componentwise_yz_v48.py",
-      "sha256": "51a310575cef78366c9e3dc1331bb18eb54810e45f93cc450e6a7549c0fdc380"
-    },
-    {
-      "mode": "100644",
-      "path": "tools/ou3_p5_sample1_authoritative_yz_deltac_decomposition_v49.py",
-      "sha256": "abe2ea94312d016998504a841ece6e2ee209583f1c1f0637ae0d5b6f00a14f19"
-    },
-    {
-      "mode": "100644",
-      "path": "tools/ou3_p5_sample1_current_exact_residual_subdivision_v23.py",
-      "sha256": "b74afe46bcb846020fddf4e6411691c4b19fe66cef0eef849d644107c6d903ff"
-    },
-    {
-      "mode": "100644",
-      "path": "tools/ou3_p5_sample1_directional_innovation_row_lift_v34.py",
-      "sha256": "95e693d7827e6562d71986e0337e071d0f2dcd68920e89ada5acb9c0d4b64840"
-    },
-    {
-      "mode": "100644",
-      "path": "tools/ou3_p5_sample1_directional_v12d_remainder_v29.py",
-      "sha256": "38f61d79f71060252ae5055701b8d2187e91dde12dc5a54004a00c0432c6d917"
-    },
-    {
-      "mode": "100644",
-      "path": "tools/ou3_p5_sample1_effective_input_correction_v21.py",
-      "sha256": "8a2e109ca4cc28d8a66152961b97b59fb79f460bc7286d2d901a658e3b3426ab"
-    },
-    {
-      "mode": "100644",
-      "path": "tools/ou3_p5_sample1_effective_input_correction_v21b.py",
-      "sha256": "b705220768df1fdf3068d31064296de4f08b244a67b308763ef7686cd37fdd65"
-    },
-    {
-      "mode": "100644",
-      "path": "tools/ou3_p5_sample1_entry.py",
-      "sha256": "8cb2d6659496a1099fe6fa9c645fcfdec78ea69ff4f310396d75ee400057d579"
-    },
-    {
-      "mode": "100644",
-      "path": "tools/ou3_p5_sample1_entry_v3.py",
-      "sha256": "34270b7b4e0f324bedbc3f442440772196e86eca2f9bb403b0cbbcd00db7d3b9"
-    },
-    {
-      "mode": "100644",
-      "path": "tools/ou3_p5_sample1_exact_monotone_cover_lift_v52.py",
-      "sha256": "3d4edccaad77df410c9821c4ad85a590c7da4c38f15329ee37335fcd0bc21032"
-    },
-    {
-      "mode": "100644",
-      "path": "tools/ou3_p5_sample1_exact_monotone_q8_cover_v53.py",
-      "sha256": "98f7bb0fa0c2bd9a2602965d4351754bed03c32b63b1cd1b99ebfede0674fbb1"
-    },
-    {
-      "mode": "100644",
-      "path": "tools/ou3_p5_sample1_exact_monotone_source_gain_v51.py",
-      "sha256": "7d281946287cfa59ebae90d0daf224a51caba3b1becea1e60b6b74c15ab2c8b9"
-    },
-    {
-      "mode": "100644",
-      "path": "tools/ou3_p5_sample1_exact_nonlinear_residual_v22.py",
-      "sha256": "b083ebaeeab4a8d24837000b74c33b44dc3c2a05a4df6a1b294a840587df1809"
-    },
-    {
-      "mode": "100644",
-      "path": "tools/ou3_p5_sample1_exact_theta_x_deltac_lift_v32.py",
-      "sha256": "3659f779ca4d5fe6f2c08acfefdcfe9efe2b7c05fcd4131a6a81a30d202253fd"
-    },
-    {
-      "mode": "100644",
-      "path": "tools/ou3_p5_sample1_exact_theta_yz_gain_rows_lift_v33.py",
-      "sha256": "1497247b6b832f8e63ad35701d1b9654d620731fda19f87d7e2cb8c93f8364b4"
-    },
-    {
-      "mode": "100644",
-      "path": "tools/ou3_p5_sample1_first_psd_exact_correction_geometry_v38.py",
-      "sha256": "625895657bf7ff693e6e48eb354a504d463294291140e1146fd876b32e4faf75"
-    },
-    {
-      "mode": "100644",
-      "path": "tools/ou3_p5_sample1_first_psd_exact_joseph_components_v40.py",
-      "sha256": "c074924e94c9e4121308322774495cdcbf25e1df84ecdceb190868ff037a2cc2"
-    },
-    {
-      "mode": "100644",
-      "path": "tools/ou3_p5_sample1_first_psd_offdiagonal_cone_v36.py",
-      "sha256": "42f760e14036eb4833d79b89d8ee46187bcce507cb6903935bb6303f8f97d0f9"
-    },
-    {
-      "mode": "100644",
-      "path": "tools/ou3_p5_sample1_open_cell_correction_budget_v54.py",
-      "sha256": "6c3297937b2ece4241ebfcbfdcb97a78dc66c62ca1018c127dc73a65008e8f8b"
-    },
-    {
-      "mode": "100644",
-      "path": "tools/ou3_p5_sample1_prefix.py",
-      "sha256": "9718005d4f4b357d03f5d55e99739d1c15aced6f87c3b5cb8ccb9344d131f330"
-    },
-    {
-      "mode": "100644",
-      "path": "tools/ou3_p5_sample1_prefix_v2.py",
-      "sha256": "6f133797d02e5638f4db280a48af66742ceadd20db034b3a5f8043a1d784aeba"
-    },
-    {
-      "mode": "100644",
-      "path": "tools/ou3_p5_sample1_reset_perp_scalar_channel.py",
-      "sha256": "378d3559562580065213dec2131afb48df56a26d1f3ee4e38743ebcadfe4179d"
-    },
-    {
-      "mode": "100644",
-      "path": "tools/ou3_p5_sample1_rotation_gauge_refinement.py",
-      "sha256": "836d1ad13ccc83585c28ebd2a1b9e3f7ff303a3a708f9589a54efd07639ee6e4"
-    },
-    {
-      "mode": "100644",
-      "path": "tools/ou3_p5_sample1_rotation_gauge_refinement_v2.py",
-      "sha256": "2a297f20bf3e1eaf909cb5a4f30d0f06f79e37479123dc64ecf7e54135b61aeb"
-    },
-    {
-      "mode": "100644",
-      "path": "tools/ou3_p5_sample1_signed_cayley_q8_gate.py",
-      "sha256": "d2229489bf578a1c5ea48ceb0c404dd6890f27664b3ffc1e505179604eaf8124"
-    },
-    {
-      "mode": "100644",
-      "path": "tools/ou3_p5_sample1_signed_cayley_q8_v14.py",
-      "sha256": "45a1ebe3366f0a2222247dbca8e5b15a06f4422a84e7a67dd0d013503eda81c5"
-    },
-    {
-      "mode": "100644",
-      "path": "tools/ou3_p5_sample1_signed_cayley_q8_v14b.py",
-      "sha256": "d7ef421cda97a000bdb2af361cf31eef4751bcad649703d7fb0d2e9eefe371a5"
-    },
-    {
-      "mode": "100644",
-      "path": "tools/ou3_p5_sample1_signed_cayley_q8_v14c.py",
-      "sha256": "2e924f42a274d476b420e2a5ecc25b844bb37ecf2feb0e4d68b2dde2aabdeb05"
-    },
-    {
-      "mode": "100644",
-      "path": "tools/ou3_p5_sample1_signed_cayley_q8_v14d.py",
-      "sha256": "f97357c35f438b8e735091e4b21b693e5fba928d2e2fa919d50e46f30bb83cd8"
-    },
-    {
-      "mode": "100644",
-      "path": "tools/ou3_p5_sample1_signed_cayley_q8_v15.py",
-      "sha256": "4c3c92d4b0e1c249d19684dfbdeea5fc1a79e19a1d44861a353028372f3d6e90"
-    },
-    {
-      "mode": "100644",
-      "path": "tools/ou3_p5_sample1_signed_cayley_q8_v16.py",
-      "sha256": "4c583baae9ac7d3842b4bccc61916b2eb27b27b6f98c4ee02c0de1723ea64a8e"
-    },
-    {
-      "mode": "100644",
-      "path": "tools/ou3_p5_sample1_signed_cayley_q8_v17.py",
-      "sha256": "ab46c42a0e9e56c7826d88f57965ae6b89530260824d711d8f395e393b3e1354"
-    },
-    {
-      "mode": "100644",
-      "path": "tools/ou3_p5_sample1_signed_cayley_q8_v18.py",
-      "sha256": "e334e379902a781cf0b6faa47ea25a4889387a3e2a09b4f02f2f55ab25e3bd5f"
-    },
-    {
-      "mode": "100644",
-      "path": "tools/ou3_p5_sample1_signed_cayley_q8_v18b.py",
-      "sha256": "077df25b46ccb44838414aa5c5d3afb0f162d004aef2d7c0f76466e6f912506c"
-    },
-    {
-      "mode": "100644",
-      "path": "tools/ou3_p5_sample1_signed_post_first_aw_components_v27.py",
-      "sha256": "f5fc281de358d2bec6171c42a57e5cc3f805f1f3055e55d479cd5709d41b8ba5"
-    },
-    {
-      "mode": "100644",
-      "path": "tools/ou3_p5_sample1_signed_radial_subcells_v13.py",
-      "sha256": "26fafcd82f3aaf507a7a503d5ddada7ae6aa43a373f2f6028e7bbec838621aea"
-    },
-    {
-      "mode": "100644",
-      "path": "tools/ou3_p5_sample1_signed_radial_subcells_v13d.py",
-      "sha256": "f8f31e96f95714cf7c9c753f3867fc35e24250471d93ffa9a0d78ae62ce3abcf"
-    },
-    {
-      "mode": "100644",
-      "path": "tools/ou3_p5_sample1_signed_radial_subcells_v13e.py",
-      "sha256": "b396f17f8c412e2779560413dcff5004c9f8c880a2da7ffa7c4a8fe9a631279a"
-    },
-    {
-      "mode": "100644",
-      "path": "tools/ou3_p5_sample1_source_phase_manifest.py",
-      "sha256": "316f07a039bde7dfd4b6ea0d3956cf083e3928a10b75a935adec80f02fe4a404"
-    },
-    {
-      "mode": "100644",
-      "path": "tools/ou3_p5_sample1_split_gravity_signed_components_v28.py",
-      "sha256": "8d23245c470eb04a90f50c168985a147bf4b5e3555ee452d2e68eb5ce13cb008"
-    },
-    {
-      "mode": "100644",
-      "path": "tools/ou3_p5_sample1_structured_full_gain_v10.py",
-      "sha256": "f4d8b15cc93d7d1c8ab530f9a35243230c40e937fab199e7a6d0add014bda0df"
-    },
-    {
-      "mode": "100644",
-      "path": "tools/ou3_p5_sample1_structured_full_gain_v11.py",
-      "sha256": "2b3058c41f87b81c1201b77e9fcdd2314e7a64a7a28df9e8bfed15fc9736382b"
-    },
-    {
-      "mode": "100644",
-      "path": "tools/ou3_p5_sample1_structured_full_gain_v12.py",
-      "sha256": "92080f3d2ea4921368527a6ecafd79e7fc8978530d68593b80887af917cf2fa8"
-    },
-    {
-      "mode": "100644",
-      "path": "tools/ou3_p5_sample1_structured_full_gain_v12c.py",
-      "sha256": "eb615b5bcdcd8236622079add8b7a5535ca46543d5b3761e238a67cfaecdd907"
-    },
-    {
-      "mode": "100644",
-      "path": "tools/ou3_p5_sample1_structured_full_gain_v12d.py",
-      "sha256": "ecdbcf0d92e86ae358939987fc352c0fb11396d01ebc79f224b3f6c2af63d58b"
-    },
-    {
-      "mode": "100644",
-      "path": "tools/ou3_p5_sample1_structured_full_gain_v4.py",
-      "sha256": "71759f2f99f44093187cad2b01372463f8013059efdbd5956de6cff91dcf00b0"
-    },
-    {
-      "mode": "100644",
-      "path": "tools/ou3_p5_sample1_structured_full_gain_v5.py",
-      "sha256": "c231fc39a3c060c915c93e58247a3bc8c1d7b989e2591d098e2970a9ddea8cd4"
-    },
-    {
-      "mode": "100644",
-      "path": "tools/ou3_p5_sample1_structured_full_gain_v6.py",
-      "sha256": "deb5fc245c3e6806fc5a4c653cf226c2c0d2cf60dbdb0bbbe805f8c6e0d12153"
-    },
-    {
-      "mode": "100644",
-      "path": "tools/ou3_p5_sample1_structured_full_gain_v7.py",
-      "sha256": "b374cd2ace2f8b90dfd542fb2481eaa161d1e671dc4a24876153c600c228bf3b"
-    },
-    {
-      "mode": "100644",
-      "path": "tools/ou3_p5_sample1_structured_full_gain_v8.py",
-      "sha256": "9dfa8e5affec273b3fbf4794e3da2a3f3282f1128965a329f01bc87c130fbcf7"
-    },
-    {
-      "mode": "100644",
-      "path": "tools/ou3_p5_sample1_structured_full_gain_v9.py",
-      "sha256": "2fde562c581b9fc2adc4e186ae997a777dc6bd6ad4f7acf1a0564a832fb17251"
-    },
-    {
-      "mode": "100644",
-      "path": "tools/ou3_p5_sample1_theta_x_gain_perturbation_v30.py",
-      "sha256": "95d9f282061351f3244b06a8c13c0c61666cd262e8f93ec07c37f78013fc879f"
-    },
-    {
-      "mode": "100644",
-      "path": "tools/ou3_p5_sample1_v12d_witness_perturbation_decomposition_v35.py",
-      "sha256": "9b3bcf6392087587b23c276c631ee77ebc09910e4b487e9a1723395b9d6a13b6"
-    },
-    {
-      "mode": "100644",
-      "path": "tools/ou3_p5_sample1_v30_current_subbox_lift_v31.py",
-      "sha256": "0d4d7bdb3076849175b74f98adcbc034105c246324c4a9a1bcd7dddd5b6db073"
-    },
-    {
-      "mode": "100644",
-      "path": "tools/ou3_p5_sample1_v38_exact_psd_current_subbox_lift_v39.py",
-      "sha256": "ceb3cfe41c5592343fa4e74f6dff55f248c4370b4b7915865aa943854f78fee6"
-    },
-    {
-      "mode": "100644",
-      "path": "tools/ou3_p5_sample1_v40_full_source_cell0_q8_lift_v41.py",
-      "sha256": "f8b344d98e871effffc7579f5520a98dbc0c1e03481b5e1352455ab6bfbd6ad3"
-    },
-    {
-      "mode": "100644",
-      "path": "tools/ou3_p5_sample1_v40_split_signed_first_survivor_v44.py",
-      "sha256": "941faf2cc86d04c1288802b81c1a86c6b887bf16a1b1ac59c7721f105a0b16c2"
-    },
-    {
-      "mode": "100644",
-      "path": "tools/ou3_p5_sample1_v41_adaptive_directional_current_v42.py",
-      "sha256": "5ce096c105a6fa3a722a9235465e341c95a16b863a35095967af3be9db20a556"
-    },
-    {
-      "mode": "100644",
-      "path": "tools/ou3_p5_sample1_v41_authoritative_split_signed_v45.py",
-      "sha256": "e67f8095dbda5febb04f7415fc2bddf4f0d966a72f9ebe5450b25ebc52361f95"
-    },
-    {
-      "mode": "100644",
-      "path": "tools/ou3_p5_sample1_zero_perturbation_barrier_v50.py",
-      "sha256": "d13ef368c56201f6decbd7a2329d07dbf1ba1effef84656a8d6161bc91630381"
-    },
-    {
-      "mode": "100644",
       "path": "tools/ou3_p5_signed_cayley_cell.py",
       "sha256": "e06346f4399aa31b7a18311193c2497b5002a30bd9b5318adf5d12ed6fa0b75a"
-    },
-    {
-      "mode": "100644",
-      "path": "tools/ou3_p5_signed_full_angle_trig.py",
-      "sha256": "6427259ed52763285bb131cce3f9c8ce3c36dcb5db210479801a18b6cc88ba49"
     },
     {
       "mode": "100644",
