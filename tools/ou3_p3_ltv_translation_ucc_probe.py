@@ -6,20 +6,24 @@ S'=p, p'=v, v'=a_w, a_w'=-lambda(t)a_w+sqrt(q_c(t))w.  No frozen tuner
 parameter is assumed.  Applying the integrating factor to four endpoint
 response columns and taking consecutive column differences turns their
 determinant into a positive polynomial-Vandermonde integral.  Restoring the
-column factors cancels every source-dependent exponential except at most one
-endpoint-to-start interval, hence for arbitrary measurable
-lambda(t)<=lambda_max,
+column factors leaves one source decay integral, hence
 
-    |det K(s0..s3)| >= V(s0..s3) exp(-lambda_max H)/12.
+    |det K(s0..s3)| >= V(s0..s3) exp(-int lambda)/12.
 
-The existing four-subinterval Andreief construction therefore remains valid:
+The four-subinterval Andreief construction therefore gives
 
-    det G_unit >= (2025/144)(H/7)^16 exp(-2 lambda_max H).
+    det G_unit >= (2025/144)(H/7)^16 exp(-2 int lambda).
 
-With q_c(t)>=2 sigma_min^2/tau_max this gives a source-uniform process Gramian
-lower.  We normalize it directly by the endpoint P3 directional covariance
-dominator diag(Uv,Up,US,Ua).  This producer deliberately stops before
-interleaved measurement attenuation, so it cannot promote P3 by itself.
+The decay integral is not replaced by the Cartesian H/tau_min bound in the
+active probe.  :mod:`ou3_p3_tau_decay_budget` upper-bounds it over the retained
+13..26-sample staged tuner path, including arbitrary endpoint phase and the
+infinite-time frozen-clock branch.  q_c(t) is still bounded globally below by
+2 sigma_min^2/tau_max, so the process intensity remains source-uniform.
+
+The Gramian is normalized directly by the endpoint P3 directional translation
+covariance dominator diag(Uv,Up,US,Ua).  This is a diagnostic only: that
+endpoint covariance upper is not yet a changing-parameter path covariance
+certificate, and interleaved measurement attenuation is not yet enclosed.
 """
 from __future__ import annotations
 
@@ -30,13 +34,14 @@ from pathlib import Path
 
 from ou3_interval import Interval
 import ou3_p3_scaled_process as SCALED
+import ou3_p3_tau_decay_budget as DECAY
 import ou3_p4_source_node_cells as NODES
 import ou3_source_reachable_matrix_p3 as BASE
 import ou3_translational_uco_ucc as TRANS
 
 REPO = Path(__file__).resolve().parents[1]
 DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
-SCHEMA = 2
+SCHEMA = 3
 
 
 def point(x: float) -> Interval:
@@ -45,7 +50,8 @@ def point(x: float) -> Interval:
 
 def ltv_relative_process_floor(upper: list[float], horizon_s: float,
                                tau_min: float, tau_max: float,
-                               sigma_min: float) -> dict:
+                               sigma_min: float, *,
+                               decay_exponent_upper: float | None = None) -> dict:
     """Return rho such that W_process >= rho*diag(upper) on [v,p,S,a_w]."""
     if len(upper) != 4 or any(not (math.isfinite(float(v)) and float(v) > 0.0) for v in upper):
         raise ValueError("four finite positive translation covariance uppers required")
@@ -53,9 +59,17 @@ def ltv_relative_process_floor(upper: list[float], horizon_s: float,
     if not (H > 0.0 and 0.0 < tau_min <= tau_max and sigma_min > 0.0):
         raise ValueError("positive LTV source bounds required")
 
+    if decay_exponent_upper is None:
+        decay_exponent_upper = math.nextafter(H / tau_min, math.inf)
+        decay_route = "GLOBAL_H_OVER_TAU_MIN_FALLBACK"
+    else:
+        decay_exponent_upper = float(decay_exponent_upper)
+        decay_route = "CLOCK_PHASE_TAU_PATH_BUDGET"
+    if not (math.isfinite(decay_exponent_upper) and decay_exponent_upper > 0.0):
+        raise ValueError("positive finite decay exponent required")
+
     Hiv = point(H)
-    lam = point(1.0) / point(tau_min)
-    decay = TRANS._exp_negative_wide(lam * Hiv)
+    decay = TRANS._exp_negative_wide(point(decay_exponent_upper))
     decay2_lower = point(decay.lo).square().lo
     width = Hiv / point(7.0)
     det_unit = (
@@ -88,8 +102,9 @@ def ltv_relative_process_floor(upper: list[float], horizon_s: float,
     rho = (point(qc_min) * point(gram_lambda)).lo
     return {
         "horizon_s": H,
-        "lambda_max_per_s_upper": lam.hi,
-        "exp_minus_lambda_max_H_lower": decay.lo,
+        "decay_route": decay_route,
+        "decay_exponent_upper": decay_exponent_upper,
+        "exp_minus_decay_lower": decay.lo,
         "q_c_min_lower": qc_min,
         "unit_gramian_det_lower": det_unit,
         "Sigma_normalized_gramian_det_lower": det_normalized,
@@ -102,7 +117,7 @@ def ltv_relative_process_floor(upper: list[float], horizon_s: float,
 
 
 def _mode_node(mode: str, node: dict, domain: dict, candidates: list[float],
-               sigma_floor: float) -> dict:
+               sigma_floor: float, domain_path: Path) -> dict:
     live = domain["normal_live"]
     vector = BASE.VECTOR.build()
     process = BASE.PROCESS.build()
@@ -114,6 +129,7 @@ def _mode_node(mode: str, node: dict, domain: dict, candidates: list[float],
     rs = Interval(*map(float, node["R_S_filter_std"]))
     alpha6 = BASE.vector_alpha6(live, vector)
     global_tau_lo, global_tau_hi = map(float, sched["tau_applied_invariant_s"])
+    endpoint_tau_index = int(node["tau_index"])
 
     rows = []
     for xcell, rho_x in SCALED.split_x_cell(x):
@@ -123,15 +139,22 @@ def _mode_node(mode: str, node: dict, domain: dict, candidates: list[float],
         hs = [H for H in candidates if H <= word_lo]
         if not hs:
             raise RuntimeError("no LTV probe horizon fits the certified P3 word")
-        probes = [
-            ltv_relative_process_floor(upper, H, global_tau_lo, global_tau_hi, sigma_floor)
-            for H in hs
-        ]
+        probes = []
+        for H in hs:
+            samples = max(1, int(math.ceil(H / h)))
+            budget = DECAY.decay_budget(endpoint_tau_index, samples, domain_path)
+            row = ltv_relative_process_floor(
+                upper, H, global_tau_lo, global_tau_hi, sigma_floor,
+                decay_exponent_upper=float(budget["decay_exponent_upper"]),
+            )
+            row["clock_phase_decay_budget"] = budget
+            probes.append(row)
         best = max(probes, key=lambda d: d["relative_process_floor_lower"])
         rows.append({
             "x_h_over_tau": xcell.as_list(),
             "word_horizon_s_lower": word_lo,
             "Sigma_translation_diagonal_upper": upper,
+            "endpoint_tau_index": endpoint_tau_index,
             "best": best,
             "candidates": probes,
         })
@@ -163,26 +186,28 @@ def build(domain_path: Path = DEFAULT_DOMAIN, source_node_indices=(0, 729)) -> d
         node = NODES.node(int(index), nodes)
         results[str(index)] = {
             "source_node": node,
-            "H": _mode_node("H", node, domain, candidates, sigma_floor),
-            "A": _mode_node("A", node, domain, candidates, sigma_floor),
+            "H": _mode_node("H", node, domain, candidates, sigma_floor, path),
+            "A": _mode_node("A", node, domain, candidates, sigma_floor, path),
         }
     return {
         "schema": SCHEMA,
-        "qualification": "OU3_P3_SOURCE_UNIFORM_LTV_TRANSLATION_PROCESS_FLOOR_PROBE",
+        "qualification": "OU3_P3_CLOCK_PHASE_LTV_TRANSLATION_PROCESS_FLOOR_PROBE",
         "source_generated_not_trajectory_fit": True,
         "validated_interval_arithmetic": True,
         "validated_exponential_arithmetic": True,
         "arbitrary_time_varying_tau_inside_window_covered": True,
+        "tau_variation_uses_clock_phase_path_budget": True,
         "arbitrary_time_varying_sigma_inside_window_covered_by_qc_min": True,
         "frozen_parameter_Q_Nh_identity_used": False,
+        "endpoint_covariance_upper_source_path_complete_here": False,
         "endpoint_covariance_condition_number_conversion_used": False,
         "interleaved_measurement_attenuation_enclosed_here": False,
         "P3_PROMOTED": False,
         "candidate_horizons_s": candidates,
         "nodes": results,
         "next_obligation": (
-            "enclose interleaved normal-Live measurement attenuation of the LTV process floor; "
-            "only the resulting post-measurement H/A comparison may replace canonical P3"
+            "replace the diagnostic endpoint-static covariance upper with a changing-parameter source-path covariance upper and "
+            "enclose interleaved normal-Live measurement attenuation; only then may canonical P3 be promoted"
         ),
     }
 
@@ -194,12 +219,14 @@ def validate(d: dict) -> list[str]:
     for key in (
         "source_generated_not_trajectory_fit", "validated_interval_arithmetic",
         "validated_exponential_arithmetic", "arbitrary_time_varying_tau_inside_window_covered",
+        "tau_variation_uses_clock_phase_path_budget",
         "arbitrary_time_varying_sigma_inside_window_covered_by_qc_min",
     ):
         if d.get(key) is not True:
             f.append(f"{key} is not true")
     for key in (
-        "frozen_parameter_Q_Nh_identity_used", "endpoint_covariance_condition_number_conversion_used",
+        "frozen_parameter_Q_Nh_identity_used", "endpoint_covariance_upper_source_path_complete_here",
+        "endpoint_covariance_condition_number_conversion_used",
         "interleaved_measurement_attenuation_enclosed_here", "P3_PROMOTED",
     ):
         if d.get(key) is not False:
@@ -209,6 +236,9 @@ def validate(d: dict) -> list[str]:
             rho = row.get(mode, {}).get("relative_premeasurement_process_floor_lower")
             if not isinstance(rho, (int, float)) or not (math.isfinite(float(rho)) and float(rho) > 0.0):
                 f.append(f"node {node} {mode}: LTV floor is not strict")
+            best = row.get(mode, {}).get("worst_x_subcell", {}).get("best", {})
+            if best.get("decay_route") != "CLOCK_PHASE_TAU_PATH_BUDGET":
+                f.append(f"node {node} {mode}: clock-phase decay budget not used")
     return f
 
 
@@ -231,6 +261,7 @@ def main() -> int:
                 "rho_premeasurement": row[mode]["relative_premeasurement_process_floor_lower"],
                 "useful": row[mode]["premeasurement_floor_above_useful_gate"],
                 "best_horizon_s": row[mode]["worst_x_subcell"]["best"]["horizon_s"],
+                "decay_exponent_upper": row[mode]["worst_x_subcell"]["best"]["decay_exponent_upper"],
             }
             for mode in ("H", "A")
         }
