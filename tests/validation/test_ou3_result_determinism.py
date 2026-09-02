@@ -5,12 +5,16 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
 
-# Current source-generated certificate/status producers only.
+# Current source-generated certificate/status producers only.  Keep this list
+# aligned with the retained proof route: deleted fixed-schedule/terminal-cluster
+# experiments are not current producers and must not be resurrected merely to
+# satisfy the determinism audit.
 PRODUCERS = [
     ROOT / "tools" / "ou3_p2_clock_phase_tuner_graph.py",
-    ROOT / "tools" / "ou3_p4_augmented_complete_word_design_v5.py",
-    ROOT / "tools" / "ou3_p4_terminal_cluster_p2_reduction.py",
-    ROOT / "tools" / "ou3_p4_terminal_source_equivalence.py",
+    ROOT / "tools" / "ou3_p4_sample_clock_source_refinement.py",
+    ROOT / "tools" / "ou3_p3_source_uniform_certificate.py",
+    ROOT / "tools" / "ou3_p3_source_node_word_probe.py",
+    ROOT / "tools" / "ou3_p4_effective_word_transport.py",
 ]
 
 FORBIDDEN_RESULT_KEYS = {
