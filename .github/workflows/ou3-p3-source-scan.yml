@@ -173,3 +173,23 @@ jobs:
           name: ou3-p3-frozen-full-matrix-translation-diagnostic
           path: /tmp/ou3_p3_frozen_full_matrix_translation.json
           retention-days: 7
+
+  frozen-matrix-horizon-sweep:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Compile frozen full-matrix horizon sweep
+        run: python3 -m py_compile tools/ou3_p3_frozen_full_matrix_horizon_sweep.py
+      - name: Find shortest tested useful full-matrix history
+        run: |
+          python3 tools/ou3_p3_frozen_full_matrix_horizon_sweep.py \
+            --output /tmp/ou3_p3_frozen_full_matrix_horizon_sweep.json
+      - name: Upload frozen full-matrix history diagnostic
+        uses: actions/upload-artifact@v6
+        with:
+          name: ou3-p3-frozen-full-matrix-history-diagnostic
+          path: /tmp/ou3_p3_frozen_full_matrix_horizon_sweep.json
+          retention-days: 7
