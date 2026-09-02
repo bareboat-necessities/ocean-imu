@@ -8,6 +8,7 @@ TOOLS = ROOT / "tools"
 if str(TOOLS) not in sys.path:
     sys.path.insert(0, str(TOOLS))
 
+import ou3_p2_correlation_path_memory as CORR
 import ou3_p2_p3_correlation_interface as I
 
 
@@ -23,33 +24,24 @@ class P2P3CorrelationInterfaceTests(unittest.TestCase):
         self.assertTrue(self.d["physical_800_state_partition_retained"])
         self.assertFalse(self.d["endpoint_only_800_state_quotient_sufficient_for_P3"])
 
-    def test_current_interface_is_deliberately_not_ready_without_correlation_certificate(self):
-        self.assertFalse(self.d["correlation_candidate"]["provided"])
-        self.assertFalse(self.d["P2_CORRELATION_INTERFACE_READY"])
-        self.assertFalse(self.d["P2_READY_FOR_CANONICAL_P3"])
+    def test_versioned_path_memory_makes_refined_p2_ready(self):
+        self.assertTrue(self.d["P2_CORRELATION_INTERFACE_READY"])
+        self.assertTrue(self.d["P2_READY_FOR_CANONICAL_P3"])
+        self.assertEqual(self.d["correlation_interface_version"], CORR.INTERFACE_VERSION)
+        self.assertEqual(self.d["P3_required_correlation_interface_version"], CORR.INTERFACE_VERSION)
         self.assertFalse(self.d["P3_PROMOTED_HERE"])
 
     def test_same_history_contract_forbids_cartesian_extrema(self):
         self.assertTrue(self.d["independent_cartesian_tau_sigma_RS_extrema_forbidden"])
         self.assertTrue(self.d["P3_must_use_one_common_source_history_for_all_bounds"])
-        required = set(self.d["required_correlated_quantities"])
-        for name in (
-            "tau_applied", "sigma_aw_applied", "R_S_applied",
-            "process_excitation_lower", "covariance_upper", "measurement_R_S_lower",
-        ):
-            self.assertIn(name, required)
+        contract = self.d["correlation_consumer_contract"]
+        self.assertTrue(contract["correlated_quantities_must_come_from_same_segment_node"])
+        self.assertEqual(contract["independent_tau_sigma_R_S_extremization_before_propagation"], "FORBIDDEN")
+        self.assertEqual(contract["global_800_ancestor_hull_as_P3_covariance_information_input"], "FORBIDDEN")
 
-    def test_metadata_only_candidate_cannot_pass(self):
-        fake = {
-            "qualification": I.CANDIDATE_QUALIFICATION,
-            "source_only": True,
-            "physical_source_states": 800,
-            "stage_boundary_pair_states": self.d["stage_boundary_pair_states"],
-        }
-        x = I.build(candidate=fake)
-        self.assertFalse(x["P2_CORRELATION_INTERFACE_READY"])
-        self.assertFalse(x["P2_READY_FOR_CANONICAL_P3"])
-        self.assertTrue(x["correlation_candidate"]["reasons"])
+    def test_external_metadata_cannot_replace_repository_certificate(self):
+        with self.assertRaises(ValueError):
+            I.build(candidate={"qualification": "fake"})
 
 
 if __name__ == "__main__":
