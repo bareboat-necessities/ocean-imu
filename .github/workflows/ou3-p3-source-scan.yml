@@ -101,3 +101,27 @@ jobs:
           name: ou3-p3-source-indexed-metric-scan
           path: /tmp/ou3_p3_source_indexed_metric_scan.json
           retention-days: 7
+
+  recent-source-cones:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Compile recent source-cone diagnostic
+        run: |
+          python3 -m py_compile tools/ou3_p3_recent_source_cones.py
+
+      - name: Scan recent backward cones on the finite-speed source graph
+        run: |
+          python3 tools/ou3_p3_recent_source_cones.py \
+            --output /tmp/ou3_p3_recent_source_cones.json
+
+      - name: Upload recent source-cone diagnostic
+        uses: actions/upload-artifact@v6
+        with:
+          name: ou3-p3-recent-source-cones
+          path: /tmp/ou3_p3_recent_source_cones.json
+          retention-days: 7
