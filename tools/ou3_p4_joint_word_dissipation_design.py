@@ -45,10 +45,9 @@ from ou3_interval import (
 import ou3_interval_ad as AD
 import ou3_implementation_word_language as WORDS
 import ou3_p4_candidate_full_word as CAND
+import ou3_p4_covariance_primitives as COV
 import ou3_p4_joint_joseph as JJ
 import ou3_p4_source_node_cells as NODES
-import ou3_p5_full_h_prefix_cells as H
-import ou3_p5_full_h_prefix_cells_v2 as H2
 import ou3_verified_spd_inverse as VINV
 import ou3_vector_uco_certificate as VECTOR
 
@@ -250,13 +249,13 @@ def _ad_joint_update(Pm, z, Hm, Rm, residual, eta):
     signed = _signed_form(residual, eta, Sinv, Rm)
 
     # Covariance update uses the same verified S inverse but never forms K.
-    Pj = JJ.posterior_covariance(Pm, PHt, Sinv, psd_tighten=H._psd_tighten)
+    Pj = JJ.posterior_covariance(Pm, PHt, Sinv, psd_tighten=COV.psd_tighten)
     d = [-q for q in dx[:3]]
     out = list(z)
     out[:3] = AD.deployed_correct_cayley_right(z[:3], d)
     for i in range(3, len(z)):
         out[i] = z[i] - dx[i]
-    Pout = H._reset_covariance(Pj, [q.val for q in dx[:3]])
+    Pout = COV.reset_covariance(Pj, [q.val for q in dx[:3]])
     return Pout, out, signed, {
         "inverse_q_inf_upper": meta["neumann_q_inf_upper"],
         "correction_theta_norm_upper": AD._norm_upper([q.val for q in dx[:3]]),
@@ -293,9 +292,9 @@ def _mode(mode: str, path: Path, domain: dict, source_node_index: int, cbox):
     force, mag = _canonical_vectors(domain)
     Ha, Hm, Hs = _H_acc(mode, force, n), _H_mag(mag, n), _H_S(n)
     vc = VECTOR.build()["configured_measurement_bounds"]
-    Racc = H._R_diag(float(vc["acc_measurement_std_mps2"]))
-    Rmag = H._R_diag(float(vc["mag_measurement_std_uT"]))
-    RS = H._R_S(src)
+    Racc = COV.R_diag(float(vc["acc_measurement_std_mps2"]))
+    Rmag = COV.R_diag(float(vc["mag_measurement_std_uT"]))
+    RS = COV.R_S(src)
     h = float(src["dt_s"])
     samples = int(WORDS.build(path)["word_contract"]["conditional_word_language"]["word_samples_upper_at_configured_dt"])
     schedule = _schedule(path, samples, h)
@@ -303,7 +302,7 @@ def _mode(mode: str, path: Path, domain: dict, source_node_index: int, cbox):
     ops = []
 
     for k in range(samples):
-        Pm = H._psd_tighten(matrix_add(matrix_mul(matrix_mul(F, Pm), matrix_transpose(F)), Q))
+        Pm = COV.psd_tighten(matrix_add(matrix_mul(matrix_mul(F, Pm), matrix_transpose(F)), Q))
         z = _prediction(mode, z, F)
 
         if k in schedule["S_steps"]:
