@@ -1,34 +1,32 @@
 #!/usr/bin/env python3
-"""Global nonlinear budget inputs for the source-complete OU-III P4 word.
+"""Retained P3 -> broad-sector P4 composition contract for OU-III.
 
-This producer is the bridge between the repaired linear P3 certificate and the
-new 0.8-rad nonlinear sector.  It intentionally does *not* replay a fixed word
-or accumulate interval-AD remainders.  Instead it converts the exact global
-vector-remainder identities into diagonal homogeneous quadratic forms that a
-source-complete signed-Joseph word inequality can subtract operation by
-operation.
+This producer deliberately stops one step before theorem promotion.  It binds
+four already-certified ingredients that the complete H/A nonlinear word must
+use together:
 
-For one accepted magnetometer update,
+* the dependency-preserving source-uniform P3 information metric;
+* the global 0.8-rad Cayley chart/geometry certificate;
+* source-complete timing, with uncertain S=0 firings left inside linear P3;
+* the exact effective-vector-input identities for accelerometer/magnetometer.
 
-    eta_m^T R_m^-1 eta_m
-        <= s^2 m_max^2 / r_m * ||c||^2.
+The active route does **not** subtract an independently boxed
+``eta^T R^-1 eta`` from the translation-limited scalar P3 gap.  The magnetic
+radial residual is in the exact Kalman-gain nullspace and the accelerometer
+finite-angle remainder is exactly representable through the source a_w
+measurement column.  Consequently the remaining numerical obligation is a
+source-correlated word calculation carrying P,H,R,S,r, the effective vector
+input, covariance recursion, quaternion injection and immediate reset in one
+jointly reachable tuple.
 
-For one accepted accelerometer update, Young's inequality gives
+Likewise this module does not insert a global covariance condition-number
+conversion between P3 and P4.  P4 must use the same node metric
 
-    eta_a^T R_a^-1 eta_a
-        <= A(eps) ||c||^2 + B(eps) ||a_w||^2,
+    M_i = s_m Sigma_i^-1
 
-with the exact A-mode accelerometer-bias coefficient equal to zero.  The
-coefficients are emitted directly in H/A state order.  When normalized by a
-diagonal covariance upper bound, the optimal Young parameter is available in
-closed form: eps*=B0/A0 and the minimized max-coordinate charge is A0+B0.
-That optimization is a proof algebra improvement, not a fitted parameter.
-
-The remaining P4 obligation is now narrow and explicit: construct a rigorous
-source-complete lower form for the *positive* residual-information terms
-r^T S^-1 r over all accepted vector branches and show that, after subtracting
-these emitted eta forms, the complete H/A word has a strict generalized margin.
-Until that matrix inequality is certified, P4 is not promoted.
+with all attitude-linear cross terms retained.  A complete P4 producer may
+promote only after it proves a strict H/A generalized word margin and prefix
+safety over the entire declared 0.8-rad entrance sector.
 """
 from __future__ import annotations
 
@@ -39,122 +37,103 @@ from pathlib import Path
 
 import ou3_p3_source_uniform_certificate as P3
 import ou3_p4_cayley_sector_certificate as CAYLEY
+import ou3_p4_effective_vector_inputs as EFFECTIVE
 import ou3_p4_source_word_timing as TIMING
-import ou3_p4_vector_remainder_sector as REM
-import ou3_vector_uco_certificate as VECTOR
 
 REPO = Path(__file__).resolve().parents[1]
 DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
-SCHEMA = 1
+SCHEMA = 2
 
 
-def down(x: float) -> float:
-    return math.nextafter(float(x), -math.inf)
-
-
-def up(x: float) -> float:
-    return math.nextafter(float(x), math.inf)
-
-
-def _positive(x, label: str) -> float:
+def _finite_positive(x, label: str) -> float:
     y = float(x)
     if not math.isfinite(y) or y <= 0.0:
         raise RuntimeError(f"{label} must be finite positive, got {x!r}")
     return y
 
 
-def _penalty_diagonal(mode: str, theta_coeff: float, aw_coeff: float) -> list[float]:
-    n = 18 if mode == "H" else 21
-    out = [0.0] * n
-    for i in range(3):
-        out[i] = up(theta_coeff)
-    for i in range(15, 18):
-        out[i] = up(aw_coeff)
-    return out
+def _slice_positive(values, sl: slice, label: str) -> dict:
+    xs = [float(x) for x in values[sl]]
+    if not xs or any(not math.isfinite(x) or x <= 0.0 for x in xs):
+        raise RuntimeError(f"{label} must contain finite positive entries")
+    return {"min": min(xs), "max": max(xs), "values": xs}
 
 
-def _mode(mode: str, p3: dict, domain: dict, rem: dict, vector: dict) -> dict:
+def _mode(mode: str, p3: dict, effective: dict) -> dict:
     m = p3["modes"][mode]
-    sigma = list(m["Sigma_diagonal_upper"])
     n = 18 if mode == "H" else 21
-    if len(sigma) != n:
-        raise RuntimeError(f"{mode} P3 directional Sigma dimension mismatch")
-
-    live = domain["normal_live"]
-    vc = vector["configured_measurement_bounds"]
-    fhi = _positive(live["specific_force_norm_upper_mps2"], "specific-force upper")
-    mhi = _positive(live["magnetic_vector_norm_upper_uT"], "magnetic upper")
-    ra = _positive(vc["acc_measurement_variance_upper"], "accelerometer variance")
-    rm = _positive(vc["mag_measurement_variance_upper"], "magnetometer variance")
-
-    mag_geom = _positive(
-        rem["mag_eta_squared_over_linear_rotation_squared_upper"],
-        "mag remainder coefficient",
+    delta = _finite_positive(
+        m["relative_Riccati_injection_margin_lower"], f"{mode} P3 delta"
     )
-    acc_att_geom = _positive(
-        rem["acc_eta_force_rotation_quadratic_coefficient_upper"],
-        "accelerometer attitude remainder coefficient",
-    )
-    acc_aw_geom = _positive(
-        rem["acc_eta_aw_quadratic_coefficient_upper"],
-        "accelerometer aw remainder coefficient",
-    )
+    sigma_diag = list(m["Sigma_diagonal_upper"])
+    scale2 = list(m["comparison_scale_diagonal_squared"])
+    if len(sigma_diag) != n or len(scale2) != n:
+        raise RuntimeError(f"{mode} P3 directional metric dimension mismatch")
 
-    mag_theta = up(mag_geom * up(fhi * 0.0 + mhi * mhi) / rm)
-    acc_theta = up(acc_att_geom * up(fhi * fhi) / ra)
-    acc_aw = up(acc_aw_geom / ra)
-
-    # Normalize the diagonal eta form by the retained P3 directional Sigma
-    # upper.  This is useful for choosing Young epsilon and sizing the later
-    # signed lower form.  It is not, by itself, a word contraction statement.
-    ptheta = up(max(float(x) for x in sigma[0:3]))
-    paw = up(max(float(x) for x in sigma[15:18]))
-    mag_metric_charge = up(mag_theta * ptheta)
-    acc_att_metric_charge = up(acc_theta * ptheta)
-    acc_aw_metric_charge = up(acc_aw * paw)
-
-    # For generic Young epsilon, normalized terms have the form
-    # A0(1+eps), B0(1+1/eps).  Their minimax optimum is eps=B0/A0 and the
-    # common upper value is A0+B0.  The current REM certificate was emitted at
-    # eps=1, so also provide the geometry-independent optimized coefficients
-    # directly from s^2.
-    s2 = _positive(rem["sin_half_angle_squared_upper"], "sin^2 half-angle")
-    A0 = up(s2 * up(fhi * fhi) * ptheta / ra)
-    B0 = up(up(4.0 * s2) * paw / ra)
-    eps_star = up(B0 / A0) if A0 > 0.0 else math.inf
-    acc_minimax_metric_charge = up(A0 + B0)
-    acc_theta_opt = up((1.0 + eps_star) * s2 * up(fhi * fhi) / ra)
-    acc_aw_opt = up((1.0 + 1.0 / eps_star) * up(4.0 * s2) / ra)
+    # These are reported as directional inputs only.  They are intentionally
+    # not collapsed to max(Sigma)/min(Sigma), because that would reintroduce
+    # the translation-dominated condition-number loss the broad-sector route
+    # is designed to avoid.
+    directional = {
+        "attitude_comparison_scale_squared": _slice_positive(
+            scale2, slice(0, 3), f"{mode} attitude comparison scale"
+        ),
+        "aw_comparison_scale_squared": _slice_positive(
+            scale2, slice(15, 18), f"{mode} aw comparison scale"
+        ),
+        "attitude_Sigma_diagonal_upper": _slice_positive(
+            sigma_diag, slice(0, 3), f"{mode} attitude Sigma upper"
+        ),
+        "aw_Sigma_diagonal_upper": _slice_positive(
+            sigma_diag, slice(15, 18), f"{mode} aw Sigma upper"
+        ),
+    }
+    if mode == "A":
+        directional["accelerometer_bias_comparison_scale_squared"] = _slice_positive(
+            scale2, slice(18, 21), "A accelerometer-bias comparison scale"
+        )
+        directional["accelerometer_bias_Sigma_diagonal_upper"] = _slice_positive(
+            sigma_diag, slice(18, 21), "A accelerometer-bias Sigma upper"
+        )
 
     return {
         "dimension": n,
-        "P3_relative_Riccati_injection_margin_lower": m[
-            "relative_Riccati_injection_margin_lower"
+        "P3_relative_Riccati_injection_margin_lower": delta,
+        "P3_prefix_information_gain_upper": m["prefix_information_gain_upper"],
+        "P3_Sigma_lambda_min_lower": m["Sigma_lambda_min_lower"],
+        "P3_Sigma_lambda_max_upper": m["Sigma_lambda_max_upper"],
+        "P3_word_noise_Omega_lambda_min_lower": m[
+            "word_noise_Omega_lambda_min_lower"
         ],
-        "P3_linear_rho_upper": up(1.0 - float(m["relative_Riccati_injection_margin_lower"])),
-        "P3_Sigma_diagonal_upper": sigma,
-        "mag_eta_penalty_diagonal_per_accepted_update": _penalty_diagonal(
-            mode, mag_theta, 0.0
-        ),
-        "acc_eta_penalty_diagonal_per_accepted_update_eps1": _penalty_diagonal(
-            mode, acc_theta, acc_aw
-        ),
-        "accelerometer_bias_eta_coefficient": 0.0,
-        "accelerometer_bias_cancels_exactly": True,
-        "normalized_eps1": {
-            "mag_theta_charge_upper": mag_metric_charge,
-            "acc_theta_charge_upper": acc_att_metric_charge,
-            "acc_aw_charge_upper": acc_aw_metric_charge,
-        },
-        "optimized_accelerometer_young": {
-            "epsilon_star": eps_star,
-            "attitude_coefficient_upper": acc_theta_opt,
-            "aw_coefficient_upper": acc_aw_opt,
-            "minimax_metric_charge_upper": acc_minimax_metric_charge,
-            "derivation": "eps*=B0/A0; min max(A0(1+eps),B0(1+1/eps))=A0+B0",
-            "trajectory_fitted": False,
-        },
-        "positive_residual_information_lower_form_built_here": False,
+        "directional_same_metric_inputs": directional,
+        "mag_radial_residual_gain_null_exact": effective[
+            "mag_radial_residual_gain_null_exact"
+        ],
+        "mag_effective_coordinate_nonexpansive_factor_upper": effective[
+            "mag_effective_coordinate_nonexpansive_factor_upper"
+        ],
+        "mag_effective_coordinate_tangent_defect_factor_upper": effective[
+            "mag_effective_coordinate_tangent_defect_factor_upper"
+        ],
+        "acc_eta_in_aw_measurement_range_exact": effective[
+            "acc_eta_in_aw_measurement_range_exact"
+        ],
+        "acc_effective_aw_input_isometry_exact": effective[
+            "acc_effective_aw_input_isometry_exact"
+        ],
+        "acc_force_remainder_factor_upper": effective[
+            "acc_force_remainder_factor_upper"
+        ],
+        "acc_aw_rotation_factor_upper": effective[
+            "acc_aw_rotation_factor_upper"
+        ],
+        "acc_effective_aw_input_norm_upper_mps2": effective[
+            "acc_effective_aw_input_norm_upper_mps2"
+        ],
+        "accelerometer_bias_standalone_nonlinear_penalty": 0.0,
+        "standalone_vector_eta_penalty_active": False,
+        "condition_number_conversion_inserted_between_P3_and_P4": False,
+        "positive_source_correlated_word_form_built_here": False,
         "signed_word_generalized_margin_lower": None,
         "rho_full_nonlinear_word_upper": None,
         "P4_PROMOTED": False,
@@ -163,32 +142,28 @@ def _mode(mode: str, p3: dict, domain: dict, rem: dict, vector: dict) -> dict:
 
 def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     path = Path(domain_path).resolve()
-    domain = json.loads(path.read_text(encoding="utf-8"))
     p3 = P3.build(path)
     p3f = P3.validate(p3)
     cayley = CAYLEY.build(path)
     cf = CAYLEY.validate(cayley)
-    rem = REM.build(path, outer_angle_rad=float(cayley["outer_angle_rad"]), young_epsilon=1.0)
-    rf = REM.validate(rem)
     timing = TIMING.build(path)
     tf = TIMING.validate(timing)
-    vector = VECTOR.build()
-    vf = VECTOR.validate(vector)
+    effective = EFFECTIVE.build(path, float(cayley["outer_angle_rad"]))
+    ef = EFFECTIVE.validate(effective)
 
     failures = [f"P3: {x}" for x in p3f]
     failures += [f"Cayley: {x}" for x in cf]
-    failures += [f"remainder: {x}" for x in rf]
     failures += [f"timing: {x}" for x in tf]
-    failures += [f"vector: {x}" for x in vf]
+    failures += [f"effective-input: {x}" for x in ef]
 
     modes = {}
     if not failures:
-        for mode in ("H", "A"):
-            modes[mode] = _mode(mode, p3, domain, rem, vector)
+        modes = {mode: _mode(mode, p3, effective) for mode in ("H", "A")}
 
+    ready = not failures
     return {
         "schema": SCHEMA,
-        "qualification": "OU3_P4_GLOBAL_SIGNED_JOSEPH_SECTOR_INPUTS",
+        "qualification": "OU3_P4_EFFECTIVE_INPUT_SIGNED_JOSEPH_COMPOSITION_CONTRACT",
         "source_generated_not_trajectory_fit": True,
         "trajectory_replay_used": False,
         "filter_changed": False,
@@ -196,25 +171,44 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "declared_filter_entrance_covered": cayley.get(
             "declared_filter_entrance_covered"
         ),
+        "cayley_radius_upper": cayley.get("cayley_radius_upper"),
         "exact_vector_information_retention_factor_lower": cayley.get(
             "exact_vector_information_retention_factor_lower"
         ),
         "S_timing_consumed_by_linear_P3": timing.get(
             "S_timing_consumed_by_linear_P3_translation_UCO"
         ),
-        "S_nonlinear_eta_identically_zero": timing.get("S_nonlinear_eta_identically_zero"),
+        "S_nonlinear_eta_identically_zero": timing.get(
+            "S_nonlinear_eta_identically_zero"
+        ),
+        "effective_vector_input_certificate": {
+            "qualification": effective.get("qualification"),
+            "mag_radial_residual_gain_null_exact": effective.get(
+                "mag_radial_residual_gain_null_exact"
+            ),
+            "acc_eta_in_aw_measurement_range_exact": effective.get(
+                "acc_eta_in_aw_measurement_range_exact"
+            ),
+            "standalone_vector_eta_penalty_retired_from_active_word_route": effective.get(
+                "standalone_vector_eta_penalty_retired_from_active_word_route"
+            ),
+        },
         "modes": modes,
-        "global_packet_count_times_defect_used_for_promotion": False,
+        "P3_ESTABLISHED": not p3f,
+        "P4_COMPOSITION_PREREQUISITES_ESTABLISHED": ready,
+        "full_source_correlated_word_form_remaining": True,
+        "same_information_metric_retained": True,
+        "condition_number_conversion_inserted_between_P3_and_P4": False,
+        "standalone_vector_eta_penalty_active": False,
         "fixed_terminal_schedule_used": False,
         "interval_AD_long_prefix_used": False,
-        "signed_word_information_lower_form_remaining": True,
-        "P3_ESTABLISHED": not p3f,
         "P4_COMPLETE_WORD_DISSIPATION_ESTABLISHED": False,
         "P5_FINITE_CAPTURE_ESTABLISHED": False,
         "next_obligation": (
-            "build the source-complete positive residual-information lower form for all accepted "
-            "vector branches, subtract the emitted homogeneous eta forms in the same H/A metric, "
-            "and certify a strict generalized margin mu>0 (rho=1-mu<1) over theta<=0.8 rad"
+            "propagate each source-complete H/A vector word with jointly reachable P,H,R,S,r, "
+            "the exact magnetic effective coordinate and accelerometer a_w effective input, "
+            "including immediate quaternion injection/reset and prefix safety; certify a strict "
+            "generalized endpoint margin mu>0 (rho<1) in M_i=s_m Sigma_i^-1 over theta<=0.8 rad"
         ),
         "failures": failures,
     }
@@ -229,15 +223,18 @@ def validate(d: dict) -> list[str]:
         "declared_filter_entrance_covered",
         "S_timing_consumed_by_linear_P3",
         "S_nonlinear_eta_identically_zero",
-        "signed_word_information_lower_form_remaining",
         "P3_ESTABLISHED",
+        "P4_COMPOSITION_PREREQUISITES_ESTABLISHED",
+        "full_source_correlated_word_form_remaining",
+        "same_information_metric_retained",
     ):
         if d.get(key) is not True:
             failures.append(f"{key} is not true")
     for key in (
         "trajectory_replay_used",
         "filter_changed",
-        "global_packet_count_times_defect_used_for_promotion",
+        "condition_number_conversion_inserted_between_P3_and_P4",
+        "standalone_vector_eta_penalty_active",
         "fixed_terminal_schedule_used",
         "interval_AD_long_prefix_used",
         "P4_COMPLETE_WORD_DISSIPATION_ESTABLISHED",
@@ -245,17 +242,28 @@ def validate(d: dict) -> list[str]:
     ):
         if d.get(key) is not False:
             failures.append(f"{key} is not false")
+    ev = d.get("effective_vector_input_certificate", {})
+    if ev.get("mag_radial_residual_gain_null_exact") is not True:
+        failures.append("magnetic radial-null identity missing")
+    if ev.get("acc_eta_in_aw_measurement_range_exact") is not True:
+        failures.append("accelerometer effective a_w identity missing")
+    if ev.get("standalone_vector_eta_penalty_retired_from_active_word_route") is not True:
+        failures.append("standalone vector eta penalty was not retired")
     for mode in ("H", "A"):
         m = d.get("modes", {}).get(mode, {})
-        if m.get("accelerometer_bias_cancels_exactly") is not True:
-            failures.append(f"{mode} accelerometer-bias cancellation missing")
-        q = m.get("optimized_accelerometer_young", {}).get("minimax_metric_charge_upper")
-        if not isinstance(q, (int, float)) or not math.isfinite(float(q)) or float(q) <= 0.0:
-            failures.append(f"{mode} optimized accelerometer charge invalid")
-        if m.get("positive_residual_information_lower_form_built_here") is not False:
-            failures.append(f"{mode} falsely claims residual-information lower form")
+        if m.get("P3_prefix_information_gain_upper") != 1.0:
+            failures.append(f"{mode} P3 prefix gain changed")
+        if m.get("standalone_vector_eta_penalty_active") is not False:
+            failures.append(f"{mode} standalone eta penalty became active")
+        if m.get("condition_number_conversion_inserted_between_P3_and_P4") is not False:
+            failures.append(f"{mode} condition-number conversion inserted")
+        if m.get("positive_source_correlated_word_form_built_here") is not False:
+            failures.append(f"{mode} falsely claims complete word form")
         if m.get("P4_PROMOTED") is not False:
             failures.append(f"{mode} falsely promotes P4")
+        q = m.get("mag_effective_coordinate_tangent_defect_factor_upper")
+        if not isinstance(q, (int, float)) or not math.isfinite(float(q)) or not (0.0 <= float(q) < 1.0):
+            failures.append(f"{mode} magnetic tangent defect bound invalid")
     return list(dict.fromkeys(failures))
 
 
@@ -272,6 +280,7 @@ def main() -> int:
     args.output.write_text(json.dumps(d, indent=2, sort_keys=True), encoding="utf-8")
     print(json.dumps({
         "P3": d["P3_ESTABLISHED"],
+        "composition_prerequisites": d["P4_COMPOSITION_PREREQUISITES_ESTABLISHED"],
         "outer_angle_rad": d["outer_angle_rad"],
         "H": d.get("modes", {}).get("H"),
         "A": d.get("modes", {}).get("A"),
