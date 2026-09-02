@@ -50,9 +50,9 @@ import ou3_full_process_ucc as PROCESS
 import ou3_implementation_word_language as WORDS
 import ou3_interval_ad as AD
 import ou3_p4_candidate_full_word as CAND
+import ou3_p4_covariance_primitives as COV
 import ou3_p4_joint_word_dissipation_design as D
 import ou3_p4_source_node_cells as NODES
-import ou3_p5_full_h_prefix_cells as H
 import ou3_vector_uco_certificate as VECTOR
 
 REPO = Path(__file__).resolve().parents[1]
@@ -110,7 +110,7 @@ def _mode(mode: str, path: Path, domain: dict, source_node_index: int, cbox):
     # Build the physical source covariance family, then move the tile boundary
     # through one real prediction.  We never invert the broad goLive box.
     Ppre = CAND._initial_covariance(mode, src, path)
-    Pm = H._psd_tighten(
+    Pm = COV.psd_tighten(
         matrix_add(matrix_mul(matrix_mul(F, Ppre), matrix_transpose(F)), Q)
     )
 
@@ -121,9 +121,9 @@ def _mode(mode: str, path: Path, domain: dict, source_node_index: int, cbox):
     force, mag = D._canonical_vectors(domain)
     Ha, Hm, Hs = D._H_acc(mode, force, n), D._H_mag(mag, n), D._H_S(n)
     vc = VECTOR.build()["configured_measurement_bounds"]
-    Racc = H._R_diag(float(vc["acc_measurement_std_mps2"]))
-    Rmag = H._R_diag(float(vc["mag_measurement_std_uT"]))
-    RS = H._R_S(src)
+    Racc = COV.R_diag(float(vc["acc_measurement_std_mps2"]))
+    Rmag = COV.R_diag(float(vc["mag_measurement_std_uT"]))
+    RS = COV.R_S(src)
     h = float(src["dt_s"])
     words = WORDS.build(path)
     samples = int(words["word_contract"]["conditional_word_language"]["word_samples_upper_at_configured_dt"])
@@ -160,7 +160,7 @@ def _mode(mode: str, path: Path, domain: dict, source_node_index: int, cbox):
         # Advance to the next post-prediction boundary, including after the
         # final measurement sample.  The state derivatives remain expressed in
         # the original post-prediction word-entry coordinates.
-        Pm = H._psd_tighten(
+        Pm = COV.psd_tighten(
             matrix_add(matrix_mul(matrix_mul(F, Pm), matrix_transpose(F)), Q)
         )
         z = D._prediction(mode, z, F)
