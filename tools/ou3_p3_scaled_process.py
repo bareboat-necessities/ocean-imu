@@ -15,12 +15,14 @@ Two source branches must be mirrored:
 * x < 1e-2: the shipping polynomial covariance branch.  Its scaled matrix has
   an exact common positive factor x; we evaluate the algebraically cancelled
   polynomial B(x) in scaled_Q=x*B(x).
-* x >= 1e-2: the shipping exponential branch.  Near the branch point direct
-  interval evaluation suffers catastrophic cancellation.  We therefore expand
-  the *exact exponential formula* as one correlated Taylor series, cancel its
-  exact leading powers symbolically with Fraction arithmetic, bound the full
-  exponential remainder, and again evaluate scaled_Q=x*B(x).  Farther from the
-  threshold the ordinary validated exponential expression is retained.
+* x >= 1e-2: the shipping exponential branch.  Direct interval evaluation can
+  suffer catastrophic cancellation throughout the configured x range.  We
+  therefore expand the *exact exponential formula* as one correlated Taylor
+  series, cancel its exact leading powers symbolically with Fraction arithmetic,
+  and bound the full exponential remainder.  The trusted exp primitive is
+  range-reduced when a Lagrange multiplier exceeds its |x|<=1/2 audit range,
+  so the correlated branch rigorously covers the complete deployed x=h/tau
+  interval through x=0.25 (including the outward-rounded endpoint).
 
 No trajectory values, floating eigensolvers, or ordinary floating inverses are
 used as proof enclosures.
@@ -37,7 +39,12 @@ from ou3_interval import Interval, symmetric_positive_definite_ldlt
 import ou3_validated_transcendentals as VT
 
 BRANCH_X = 1.0e-2
-NEAR_EXACT_SERIES_MAX_X = 5.0e-2
+# Configured h/tau reaches exactly 0.005/0.02 = 0.25.  Keep the correlated
+# exact-series backend active through the one-ulp outward enclosure of that
+# endpoint rather than handing a microscopic boundary sliver back to the
+# cancellation-prone direct exponential expression.
+DEPLOYED_X_MAX = 0.005 / 0.02
+NEAR_EXACT_SERIES_MAX_X = math.nextafter(DEPLOYED_X_MAX, math.inf)
 NEAR_EXACT_SERIES_ORDER = 30
 SCHEMA = 2
 F = Fraction
@@ -133,11 +140,41 @@ def _series_coefficient(name: str, n: int) -> Fraction:
     return c
 
 
+def _validated_exp_upper_fraction(q: Fraction) -> Fraction:
+    """Rigorous rational upper bound for exp(q), q>=0, by range reduction.
+
+    :mod:`ou3_validated_transcendentals` audits exp only on |x|<=1/2.  Divide q
+    by a power of two until an upward-rounded binary64 representative lies in
+    that trusted range, evaluate it there, then square the *upper* endpoint the
+    same number of times.  All post-evaluation squaring is exact Fraction
+    arithmetic, so the result remains an upper enclosure of exp(q).
+    """
+    if q < 0:
+        raise ValueError("nonnegative exponential majorant required")
+    scale = 1
+    while True:
+        z = q / F(scale)
+        zf = float(z)
+        if F.from_float(zf) < z:
+            zf = math.nextafter(zf, math.inf)
+        if math.isfinite(zf) and zf <= VT.MAX_ABS_ARGUMENT:
+            break
+        scale *= 2
+    upper = F.from_float(VT.exp_point(zf).hi)
+    s = scale
+    while s > 1:
+        upper *= upper
+        s //= 2
+    return upper
+
+
 def _exp_tail_bound(rate: int, xmax: Fraction, order: int) -> Fraction:
-    """Lagrange bound for exp(-rate*x), using exp(rate*x)<=2 on this range."""
-    if rate*xmax > F(1,2):
-        raise RuntimeError("near-threshold exact-series exponential bound left audited range")
-    return F(2) * (rate*xmax)**(order+1) / F(math.factorial(order+1))
+    """Lagrange remainder bound for exp(-rate*x) on 0<=x<=xmax."""
+    if rate < 0 or xmax < 0 or order < 0:
+        raise ValueError("invalid exponential remainder arguments")
+    q = F(rate) * xmax
+    majorant = _validated_exp_upper_fraction(q)
+    return majorant * q**(order+1) / F(math.factorial(order+1))
 
 
 def _near_exact_normalized_entry(name: str, x: Interval) -> Interval:
@@ -162,7 +199,7 @@ def _near_exact_normalized_entry(name: str, x: Interval) -> Interval:
         for j,pj in pcoeffs:
             M=N-j
             if M<0:
-                tail_num += abs(pj)*xmax**j*F(2)
+                tail_num += abs(pj)*xmax**j*_validated_exp_upper_fraction(F(rate)*xmax)
             else:
                 tail_num += abs(pj)*xmax**j*_exp_tail_bound(rate,xmax,M)
     tail_B=tail_num/(xmin**(p+1))
@@ -237,7 +274,7 @@ def certified_cell_rho(x: Interval) -> float:
         left=Interval(x.lo,math.nextafter(BRANCH_X,-math.inf))
         right=Interval(BRANCH_X,x.hi)
         return min(certified_cell_rho(left),certified_cell_rho(right))
-    # Exact branch cell crossing the near-series/direct-expression boundary.
+    # Exact branch cell crossing the correlated-series/direct-expression boundary.
     left=Interval(x.lo,math.nextafter(NEAR_EXACT_SERIES_MAX_X,-math.inf))
     right=Interval(NEAR_EXACT_SERIES_MAX_X,x.hi)
     return min(certified_cell_rho(left),certified_cell_rho(right))
@@ -283,9 +320,12 @@ def main():
         "source_small_branch_algebraically_identical":True,
         "source_exact_branch_algebraically_identical":True,
         "near_branch_exact_exponential_remainder_bounded":True,
+        "full_deployed_exact_branch_uses_correlated_series": a.x_hi <= DEPLOYED_X_MAX,
+        "validated_exponential_remainder_range_reduction_used":True,
         "common_positive_x_factor_preserved_before_LDLT":True,
         "ordinary_floating_eigensolver_used":False,
         "x_range":[a.x_lo,a.x_hi],
+        "deployed_x_max":DEPLOYED_X_MAX,
         "near_exact_series_max_x":NEAR_EXACT_SERIES_MAX_X,
         "near_exact_series_order":NEAR_EXACT_SERIES_ORDER,
         "certified_subcells":len(pieces),
