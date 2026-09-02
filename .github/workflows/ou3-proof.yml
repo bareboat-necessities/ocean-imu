@@ -41,11 +41,15 @@ jobs:
             test_ou3_proof_cleanup \
             test_ou3_full_process_ucc \
             test_ou3_implementation_word_language \
+            test_ou3_p2_correlation_path_memory \
+            test_ou3_p2_p3_correlation_interface \
+            test_ou3_p3_canonical_gate \
             test_ou3_p3_scaled_process \
             test_ou3_p3_tau_decay_budget \
             test_ou3_p3_source_uniform_translation_covariance \
             test_ou3_p3_ltv_translation_ucc_probe \
             test_ou3_p3_ltv_postmeasurement_certificate \
+            test_ou3_p3_correlated_translation_segment \
             test_ou3_p4_sample_clock_source_refinement \
             test_ou3_p4_source_node_cells \
             test_ou3_p4_source_path_reachability \
@@ -60,7 +64,76 @@ jobs:
           python3 tools/ou3_p4_source_word_timing.py \
             --output /tmp/ou3_p4_source_word_timing.json
 
-  p3-metric:
+  p2-correlation-interface:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Certify P2 timing plus path-memory interface
+        run: |
+          python3 tools/ou3_p2_correlation_path_memory.py \
+            --output /tmp/ou3_p2_correlation_path_memory.json
+          python3 tools/ou3_p2_p3_correlation_interface.py \
+            --output /tmp/ou3_p2_p3_correlation_interface.json
+
+      - name: Enforce refined P2 theorem interface
+        run: |
+          python3 - <<'PY'
+          import json
+          corr=json.load(open('/tmp/ou3_p2_correlation_path_memory.json'))
+          p2=json.load(open('/tmp/ou3_p2_p3_correlation_interface.json'))
+          assert corr['validation_pass'], corr['validation_failures']
+          assert corr['P2_CORRELATION_INTERFACE_CERTIFICATE'] == 'PASS'
+          assert p2['validation_pass'], p2['validation_failures']
+          assert p2['P2_source_timing_certificate_pass'] is True
+          assert p2['P2_CORRELATION_INTERFACE_READY'] is True
+          assert p2['P2_READY_FOR_CANONICAL_P3'] is True
+          assert p2['endpoint_only_800_state_quotient_sufficient_for_P3'] is False
+          assert p2['independent_cartesian_tau_sigma_RS_extrema_forbidden'] is True
+          print('P2 timing PASS')
+          print('P2 correlation PASS', p2['correlation_interface_version'])
+          PY
+
+  canonical-p3:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Emit the only canonical P3 verdict
+        run: |
+          python3 tools/ou3_p3_canonical_gate.py \
+            --output /tmp/ou3_p3_canonical_gate.json
+
+      - name: Report theorem-stage status without relabelling prerequisites
+        run: |
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/ou3_p3_canonical_gate.json'))
+          assert d['validation_pass'], d['validation_failures']
+          assert d['useful_gate'] == 1e-18
+          print('P3_CANONICAL_PASS', d['P3_CANONICAL_PASS'])
+          print('worst_H_A_margin', d['worst_H_A_margin'])
+          print('fail_reasons', d['P3_CANONICAL_FAIL_REASONS'])
+          print('P4_MAY_CONSUME_P3', d['P4_MAY_CONSUME_P3'])
+          # A mathematically valid fail-closed certificate is not a CI error.
+          # P4 remains blocked until the single canonical flag becomes true.
+          assert d['P4_MAY_CONSUME_P3'] is d['P3_CANONICAL_PASS']
+          PY
+
+      - name: Upload canonical P3 status
+        uses: actions/upload-artifact@v6
+        with:
+          name: ou3-p3-canonical-theorem-status
+          path: /tmp/ou3_p3_canonical_gate.json
+          retention-days: 7
+
+  legacy-cartesian-p3-diagnostic:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -68,12 +141,12 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Validate dependency-preserving scaled OU process
+      - name: Validate dependency-preserving scaled OU process primitive
         run: |
           python3 tools/ou3_p3_scaled_process.py \
             --output /tmp/ou3_p3_scaled_process.json
 
-      - name: Run source-uniform P3 matrix certificate with retained dependency
+      - name: Run legacy Cartesian source-cell matrix comparison as diagnostic
         run: |
           python3 - <<'PY'
           import json
@@ -87,32 +160,27 @@ jobs:
           f = P3.validate(d)
           out = dict(d)
           out['dependency_preserving_scaled_process_backend'] = True
-          out['validation_pass'] = not f
+          out['canonical_P3_route'] = False
+          out['diagnostic_only'] = True
           out['validation_failures'] = f
-          Path('/tmp/ou3_p3_matrix.json').write_text(json.dumps(out, indent=2, sort_keys=True))
-          print(json.dumps({'status': d.get('continuous_linear_information_certificate'), 'failures': f}, indent=2))
-          raise SystemExit(0 if not f else 2)
-          PY
-
-      - name: Print P3 nonlinear budget inputs
-        if: always()
-        run: |
-          if [ -f /tmp/ou3_p3_matrix.json ]; then
-            python3 - <<'PY'
-          import json
-          d = json.load(open('/tmp/ou3_p3_matrix.json'))
-          print('P3', d.get('continuous_linear_information_certificate'))
+          Path('/tmp/ou3_p3_legacy_cartesian_diagnostic.json').write_text(json.dumps(out, indent=2, sort_keys=True))
+          print('LEGACY/CARTESIAN DIAGNOSTIC ONLY')
+          print('local status', d.get('continuous_linear_information_certificate'))
+          print('local validation findings', f)
           for mode in ('H', 'A'):
-              m = d.get('modes', {}).get(mode, {})
-              print(mode,
-                    'delta', m.get('relative_Riccati_injection_margin_lower'),
-                    'Sigma_min', m.get('Sigma_lambda_min_lower'),
-                    'Sigma_max', m.get('Sigma_lambda_max_upper'),
-                    'Omega_min', m.get('word_noise_Omega_lambda_min_lower'))
+              m=d.get('modes',{}).get(mode,{})
+              print(mode, 'delta', m.get('relative_Riccati_injection_margin_lower'))
+          # This route is intentionally not allowed to determine canonical P3 CI.
           PY
-          fi
 
-  p3-ltv-probe:
+      - name: Upload legacy Cartesian diagnostic
+        uses: actions/upload-artifact@v6
+        with:
+          name: ou3-p3-legacy-cartesian-diagnostic
+          path: /tmp/ou3_p3_legacy_cartesian_diagnostic.json
+          retention-days: 7
+
+  p3-ltv-candidate:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
@@ -120,7 +188,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Compile LTV P3 route
+      - name: Compile retained LTV P3 candidate route
         run: |
           python3 -m py_compile \
             tools/ou3_p3_tau_decay_budget.py \
@@ -138,7 +206,7 @@ jobs:
             --window-samples 50 100 150 200 250 300 \
             --output /tmp/ou3_p3_tau_decay_budget.json
 
-      - name: Certify source-uniform translation covariance upper
+      - name: Certify source-uniform translation covariance upper diagnostic
         run: |
           python3 tools/ou3_p3_source_uniform_translation_covariance.py \
             --output /tmp/ou3_p3_source_uniform_translation_covariance.json
@@ -149,15 +217,15 @@ jobs:
             --nodes 0 729 \
             --output /tmp/ou3_p3_ltv_translation_ucc_probe.json
 
-      - name: Certify lifted post-measurement H/A P3 candidate
+      - name: Build lifted post-measurement H/A candidate
         run: |
           python3 tools/ou3_p3_ltv_postmeasurement_certificate.py \
             --output /tmp/ou3_p3_ltv_postmeasurement_certificate.json
 
-      - name: Upload LTV P3 route
+      - name: Upload retained LTV candidate route
         uses: actions/upload-artifact@v6
         with:
-          name: ou3-p3-ltv-postmeasurement
+          name: ou3-p3-ltv-postmeasurement-candidate
           path: |
             /tmp/ou3_p3_tau_decay_budget.json
             /tmp/ou3_p3_source_uniform_translation_covariance.json
@@ -165,7 +233,7 @@ jobs:
             /tmp/ou3_p3_ltv_postmeasurement_certificate.json
           retention-days: 7
 
-  p4-sector:
+  p4-sector-prerequisites:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -173,7 +241,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Compile current P4 sector route
+      - name: Compile current P4 sector prerequisites
         run: |
           python3 -m py_compile \
             tools/ou3_p4_cayley_sector_certificate.py \
@@ -186,3 +254,17 @@ jobs:
             --output /tmp/ou3_p4_cayley_sector.json
           python3 tools/ou3_p4_vector_remainder_sector.py \
             --output /tmp/ou3_p4_vector_remainder.json
+
+      - name: State P4 consumption gate
+        run: |
+          python3 - <<'PY'
+          import sys
+          sys.path.insert(0,'tools')
+          import ou3_p3_canonical_gate as G
+          d=G.build()
+          assert G.validate(d) == []
+          print('P4 sector prerequisites are independent PASS-like primitives.')
+          print('P4_MAY_CONSUME_P3', d['P4_MAY_CONSUME_P3'])
+          if not d['P4_MAY_CONSUME_P3']:
+              print('P4 theorem closure remains blocked by canonical P3; sector PASS is not P4 PASS.')
+          PY
