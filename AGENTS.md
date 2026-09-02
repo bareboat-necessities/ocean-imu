@@ -36,3 +36,12 @@ Before finishing:
 - keep diffs small
 - avoid unrelated formatting churn
 - summarize exactly what changed and why
+
+## Making PR
+
+While preparing PRs make sure you do not leave dangling and obsolete
+tests, .md files, tools, .py files and data files. Everything that PR
+makes obsolete should be clean up before making PR ready.
+Do not keep all historical context in .md files. It creates unnecessary bloat.
+Documentation should state current behavior. It doesn't need to explain what
+PR changed. What PR changed belongs to PR meta, but not to the committed files.
