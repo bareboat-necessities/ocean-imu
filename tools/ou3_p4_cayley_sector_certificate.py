@@ -48,6 +48,7 @@ REPO = Path(__file__).resolve().parents[1]
 DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
 SCHEMA = 1
 DEFAULT_OUTER_ANGLE_RAD = 0.80
+PI_UP = math.nextafter(math.pi, math.inf)
 
 
 def I(x: float) -> Interval:
@@ -67,9 +68,9 @@ def build(domain_path: Path=DEFAULT_DOMAIN, outer_angle_rad: float=DEFAULT_OUTER
     theta=float(outer_angle_rad)
     if not (0.0 < theta < math.pi):
         raise ValueError("outer Cayley angle must lie in (0,pi)")
-    half=I(0.5*theta)
-    s=VT.sin_interval(half)
-    c=VT.cos_interval(half)
+    half=0.5*theta
+    s=VT.sin_point(half)
+    c=VT.cos_point(half)
     if c.lo <= 0.0:
         raise RuntimeError("outer Cayley sector reaches chart antipode")
     q=(I(2.0)*s/c)
@@ -85,8 +86,8 @@ def build(domain_path: Path=DEFAULT_DOMAIN, outer_angle_rad: float=DEFAULT_OUTER
     chart_minus_identity=up(s.hi)  # ||A-I||_2 = sin(theta/2)
 
     entrance_deg=float(domain["initial_filter_entrance"]["attitude"]["full_attitude_error_upper_deg"])
-    entrance_rad=up(entrance_deg*math.pi/180.0)
-    covers_entrance=entrance_rad <= theta
+    entrance_rad_upper=up(entrance_deg*PI_UP/180.0)
+    covers_entrance=entrance_rad_upper <= theta
     usable=bool(
         covers_entrance and chart_min >= 0.80 and info_factor >= 0.64
         and q_upper < 1.0
@@ -98,8 +99,9 @@ def build(domain_path: Path=DEFAULT_DOMAIN, outer_angle_rad: float=DEFAULT_OUTER
         "trajectory_replay_used":False,
         "filter_changed":False,
         "outer_angle_rad":theta,
-        "outer_angle_deg":theta*180.0/math.pi,
+        "outer_angle_deg_display":theta*180.0/math.pi,
         "declared_filter_entrance_attitude_deg":entrance_deg,
+        "declared_filter_entrance_attitude_rad_upper":entrance_rad_upper,
         "declared_filter_entrance_covered":covers_entrance,
         "cayley_radius_upper":q_upper,
         "chart_antipode_excluded":q_upper < math.inf and theta < math.pi,
