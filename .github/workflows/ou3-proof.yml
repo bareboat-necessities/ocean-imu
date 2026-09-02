@@ -43,6 +43,7 @@ jobs:
             test_ou3_implementation_word_language \
             test_ou3_p4_effective_vector_inputs \
             test_ou3_p4_effective_word_transport \
+            test_ou3_p4_joseph_directional_weight \
             test_ou3_p4_sample_clock_source_refinement \
             test_ou3_p4_source_node_cells \
             test_ou3_p4_source_path_reachability \
@@ -120,7 +121,8 @@ jobs:
             tools/ou3_p4_effective_vector_inputs.py \
             tools/ou3_p4_source_word_timing.py \
             tools/ou3_p4_signed_joseph_sector_inputs.py \
-            tools/ou3_p4_effective_word_transport.py
+            tools/ou3_p4_effective_word_transport.py \
+            tools/ou3_p4_joseph_directional_weight.py
 
       - name: Certify usable 0.8 rad nonlinear sector primitives
         run: |
@@ -130,22 +132,37 @@ jobs:
             --output /tmp/ou3_p4_vector_remainder.json
           python3 tools/ou3_p4_effective_vector_inputs.py \
             --output /tmp/ou3_p4_effective_vector_inputs.json
+          python3 tools/ou3_p4_joseph_directional_weight.py \
+            --output /tmp/ou3_p4_joseph_directional_weight.json
 
-      - name: Print exact effective-input widening
+      - name: Print exact effective-input and Joseph directional widening
         if: always()
         run: |
-          if [ -f /tmp/ou3_p4_effective_vector_inputs.json ]; then
-            python3 - <<'PY'
+          python3 - <<'PY'
           import json
-          d = json.load(open('/tmp/ou3_p4_effective_vector_inputs.json'))
-          print('pass', d.get('validation_pass'))
-          print('q_upper', d.get('cayley_radius_upper'))
-          print('mag_radial_null', d.get('mag_radial_residual_gain_null_exact'))
-          print('mag_tangent_defect', d.get('mag_effective_coordinate_tangent_defect_factor_upper'))
-          print('acc_eta_in_aw_range', d.get('acc_eta_in_aw_measurement_range_exact'))
-          print('acc_effective_aw_input_norm', d.get('acc_effective_aw_input_norm_upper_mps2'))
+          from pathlib import Path
+          p = Path('/tmp/ou3_p4_effective_vector_inputs.json')
+          if p.exists():
+              d = json.loads(p.read_text())
+              print('pass', d.get('validation_pass'))
+              print('q_upper', d.get('cayley_radius_upper'))
+              print('mag_radial_null', d.get('mag_radial_residual_gain_null_exact'))
+              print('mag_tangent_defect', d.get('mag_effective_coordinate_tangent_defect_factor_upper'))
+              print('acc_eta_in_aw_range', d.get('acc_eta_in_aw_measurement_range_exact'))
+              print('acc_effective_aw_input_norm', d.get('acc_effective_aw_input_norm_upper_mps2'))
+          p = Path('/tmp/ou3_p4_joseph_directional_weight.json')
+          if p.exists():
+              d = json.loads(p.read_text())
+              print('Joseph bridge pass', d.get('validation_pass'))
+              for mode in ('H', 'A'):
+                  m = d.get('modes', {}).get(mode, {})
+                  print(mode,
+                        'initial min attenuation', m.get('minimum_initial_directional_attenuation_lower'),
+                        'acc', m.get('accelerometer', {}).get('joseph_vs_R_inverse_directional_attenuation_lower'),
+                        'mag', m.get('magnetometer', {}).get('joseph_vs_R_inverse_directional_attenuation_lower'),
+                        'S', m.get('S_zero', {}).get('joseph_vs_R_inverse_directional_attenuation_lower'))
+              print('Joseph next:', d.get('next_obligation'))
           PY
-          fi
 
       - name: Upload P4 sector primitives
         if: always()
@@ -156,6 +173,7 @@ jobs:
             /tmp/ou3_p4_cayley_sector.json
             /tmp/ou3_p4_vector_remainder.json
             /tmp/ou3_p4_effective_vector_inputs.json
+            /tmp/ou3_p4_joseph_directional_weight.json
           if-no-files-found: warn
           retention-days: 7
 
