@@ -1,20 +1,18 @@
 #!/usr/bin/env python3
 """Single canonical P3 theorem-interface gate for OU-III.
 
-No prerequisite, exact-node probe, premeasurement result, or source-uniform
-Cartesian over-approximation is allowed to call itself canonical P3 PASS.
-Canonical P3 requires all of the following simultaneously:
+Canonical P3 PASS means exactly:
 
-* a validated refined P2->P3 correlation certificate;
-* source-generated, non-replay bounds;
-* time-varying tuner/source coverage over the P3 word;
-* interleaved accelerometer and S=0 measurement coverage;
-* both H and A fixed-dimensional modes; and
-* worst H/A relative Riccati injection margin >= 1e-18.
+* the refined, versioned P2 source-history correlation interface is valid;
+* the P3 producer explicitly consumes that exact interface version;
+* process lower, covariance upper and measurement R_S bounds come from one
+  common admissible source history rather than independent Cartesian extrema;
+* tuner/source variation over the word and interleaved measurements are covered;
+* both H and A modes pass; and
+* worst H/A relative Riccati injection margin is >= 1e-18.
 
-This module is the sole promotion gate.  Producers may emit useful diagnostics
-or candidates, but P4 must consume P3_CANONICAL_PASS rather than their local
-PASS-like flags.
+No prerequisite or diagnostic may substitute for this verdict.  P4 must consume
+P3_CANONICAL_PASS, not producer-local PASS-like flags.
 """
 from __future__ import annotations
 
@@ -29,7 +27,7 @@ import ou3_source_reachable_matrix_p3 as BASE
 
 REPO = Path(__file__).resolve().parents[1]
 DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
-SCHEMA = 1
+SCHEMA = 2
 QUALIFICATION = "OU3_P3_CANONICAL_THEOREM_INTERFACE"
 
 
@@ -43,10 +41,21 @@ def build(domain_path: Path = DEFAULT_DOMAIN,
         raise RuntimeError(f"P2->P3 interface invalid: {p2f}")
 
     cand = CANDIDATE.build(path) if p3_candidate is None else p3_candidate
-
     reasons: list[str] = []
+
     if p2.get("P2_READY_FOR_CANONICAL_P3") is not True:
         reasons.append("refined P2 source-history correlation interface is not ready")
+
+    required_version = p2.get("P3_required_correlation_interface_version")
+    if cand.get("P2_correlation_interface_consumed") is not True:
+        reasons.append("P3 candidate has not consumed the refined P2 source-history interface")
+    if cand.get("P2_correlation_interface_version") != required_version:
+        reasons.append("P3 candidate is not bound to the required P2 correlation-interface version")
+    if cand.get("process_covariance_measurement_bounds_same_source_history") is not True:
+        reasons.append("P3 candidate does not propagate process/covariance/measurement bounds from one source history")
+    if cand.get("independent_cartesian_tau_sigma_RS_extrema_used") is not False:
+        reasons.append("P3 candidate still permits independent Cartesian tau/sigma/R_S extrema")
+
     if cand.get("source_generated_not_trajectory_fit") is not True:
         reasons.append("P3 candidate is not source generated")
     if cand.get("trajectory_replay_used") is not False:
@@ -59,10 +68,6 @@ def build(domain_path: Path = DEFAULT_DOMAIN,
         reasons.append("P3 candidate is not bound to dormant vibration-guard branch")
     if cand.get("same_lifted_measurement_attenuation_as_retained_route") is not True:
         reasons.append("P3 candidate does not cover the retained interleaved measurement lift")
-
-    # The current e3 producer obtains its process lower through the LTV source
-    # route, so this is the explicit time-varying-source requirement.  Future
-    # candidates must preserve an equivalent positive declaration.
     if cand.get("retained_LTV_determinant_consumed") is not True:
         reasons.append("P3 candidate does not cover time-varying tuner/source process excitation")
 
@@ -90,6 +95,8 @@ def build(domain_path: Path = DEFAULT_DOMAIN,
         "useful_gate": gate,
         "required_properties": {
             "refined_P2_source_history_correlation": True,
+            "exact_P2_correlation_interface_version_consumed": required_version,
+            "same_source_history_for_process_covariance_measurement": True,
             "source_generated_not_replay": True,
             "time_varying_tuner_over_word": True,
             "interleaved_accelerometer_and_S_measurements": True,
@@ -100,9 +107,11 @@ def build(domain_path: Path = DEFAULT_DOMAIN,
         "P2_interface": {
             "timing_pass": p2["P2_source_timing_certificate_pass"],
             "correlation_ready": p2["P2_CORRELATION_INTERFACE_READY"],
+            "correlation_version": p2["correlation_interface_version"],
             "ready_for_canonical_P3": p2["P2_READY_FOR_CANONICAL_P3"],
         },
         "candidate_qualification": cand.get("qualification"),
+        "candidate_declared_P2_correlation_version": cand.get("P2_correlation_interface_version"),
         "mode_margins": mode_margins,
         "worst_H_A_margin": worst,
         "P3_CANONICAL_PASS": passed,
@@ -112,7 +121,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN,
         "next_obligation": (
             "freeze P3 and feed this exact canonical metric/interface to P4"
             if passed
-            else "repair only the listed P2->P3 correlation or fixed P3 numerical obligations; do not redefine the canonical P3 theorem interface"
+            else "make the fixed P3 producer consume the frozen P2 correlation interface and improve only its source-faithful numerical bounds until the unchanged 1e-18 gate passes; do not redefine P3"
         ),
     }
 
@@ -137,25 +146,29 @@ def validate(d: dict) -> list[str]:
         f.append("P4 consumption gate differs from canonical P3 result")
     if d.get("P5_MAY_CONSUME_P4") is not False:
         f.append("P5 was enabled by the P3 gate")
+    p2 = d.get("P2_interface", {})
+    if p2.get("timing_pass") is not True or p2.get("correlation_ready") is not True:
+        f.append("canonical gate did not receive valid P2 timing/correlation interfaces")
+    if not isinstance(p2.get("correlation_version"), str) or not p2["correlation_version"]:
+        f.append("canonical gate lost P2 correlation interface version")
     return list(dict.fromkeys(f))
 
 
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--domain", type=Path, default=DEFAULT_DOMAIN)
-    ap.add_argument("--p2-correlation-candidate", type=Path)
     ap.add_argument("--p3-candidate", type=Path)
     ap.add_argument("--output", type=Path, required=True)
     args = ap.parse_args()
-    p2c = json.loads(args.p2_correlation_candidate.read_text(encoding="utf-8")) if args.p2_correlation_candidate else None
     p3c = json.loads(args.p3_candidate.read_text(encoding="utf-8")) if args.p3_candidate else None
-    d = build(args.domain, p2c, p3c)
+    d = build(args.domain, None, p3c)
     vf = validate(d)
     d["validation_pass"] = not vf
     d["validation_failures"] = vf
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(d, indent=2, sort_keys=True), encoding="utf-8")
     print(json.dumps({
+        "P2_correlation_version": d["P2_interface"]["correlation_version"],
         "P3_CANONICAL_PASS": d["P3_CANONICAL_PASS"],
         "worst_H_A_margin": d["worst_H_A_margin"],
         "fail_reasons": d["P3_CANONICAL_FAIL_REASONS"],
