@@ -258,7 +258,6 @@ src/                 core algorithms and reusable components
   lie/               Lie group operations the TFG filter is built on
   nmea/              NMEA parsing/helpers
   pii_observer/      observer/filter components
-  spectrum/          spectral charts
   tuner/             auto-tuning helpers
   util/              shared support code
   wave_dir/          wave direction estimation
