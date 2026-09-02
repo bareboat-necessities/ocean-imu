@@ -1372,7 +1372,7 @@ public:
         const float tau   = smoothed ? tune_.tau_applied   : tau_target_;
         const float sigma = smoothed ? tune_.sigma_applied : sigma_target_;
         if (!std::isfinite(sigma) || !std::isfinite(tau)) return NAN;
-        constexpr float C_HS = 2.0f * std::sqrt(2.0f) / (std::numbers::pi_v<float> * std::numbers::pi_v<float>);
+        constexpr float C_HS = 2.0f * std::numbers::sqrt2_v<float> / (std::numbers::pi_v<float> * std::numbers::pi_v<float>);
         return C_HS * sigma * tau * tau / 2.0f;
     }
 
@@ -1380,7 +1380,7 @@ public:
         const float tau   = smoothed ? tune_.tau_applied   : tau_target_;
         const float sigma = smoothed ? tune_.sigma_applied : sigma_target_;
         if (!(tau > 1e-6f) || !std::isfinite(tau) || !std::isfinite(sigma)) return NAN;
-        constexpr float K = std::sqrt(2.0f) / std::numbers::pi_v<float>;
+        constexpr float K = std::numbers::sqrt2_v<float> / std::numbers::pi_v<float>;
         const float v_env = K * sigma * tau;
         return std::isfinite(v_env) ? v_env : NAN;
     }
