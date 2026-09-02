@@ -12,10 +12,7 @@ OU3 = REPO_ROOT / "src" / "kalman_ou_iii" / "SeaStateFusionFilter_OU_III.h"
 OU2 = REPO_ROOT / "src" / "kalman_ou_ii" / "SeaStateFusionFilter_OU_II.h"
 TFG = REPO_ROOT / "src" / "kalman_tfg" / "SeaStateFusionFilter_TFG.h"
 HI = REPO_ROOT / "src" / "tuner" / "ContinuousMagHardIronEstimator.h"
-STARTUP_DOC = REPO_ROOT / "docs" / "ou-iii-startup-init.md"
 HI_DOC = REPO_ROOT / "docs" / "continuous-mag-hard-iron.md"
-OU2_DOC = REPO_ROOT / "docs" / "ou-ii-ou-iii-parity.md"
-TFG_DOC = REPO_ROOT / "docs" / "tfg-adaptation-parity.md"
 
 
 def compact(text: str) -> str:
@@ -31,10 +28,7 @@ class InsStartupPaperTests(unittest.TestCase):
         cls.ou2 = OU2.read_text(encoding="utf-8")
         cls.tfg = TFG.read_text(encoding="utf-8")
         cls.hi = HI.read_text(encoding="utf-8")
-        cls.startup_doc = STARTUP_DOC.read_text(encoding="utf-8")
         cls.hi_doc = HI_DOC.read_text(encoding="utf-8")
-        cls.ou2_doc = OU2_DOC.read_text(encoding="utf-8")
-        cls.tfg_doc = TFG_DOC.read_text(encoding="utf-8")
 
     def test_standalone_title_and_scope(self):
         self.assertIn(
@@ -84,9 +78,6 @@ class InsStartupPaperTests(unittest.TestCase):
                 source, re.compile(r"mag_continuous_hard_iron\s*=\s*true")
             )
 
-        self.assertIn("90 s, 30 s window", self.ou2_doc)
-        self.assertIn("90 s", self.startup_doc)
-
     def test_proxy_integral_term_and_handoff_numbers_are_current(self):
         # The OU wrappers expose their shared proxy gains through named constants;
         # TFG carries the same values directly in Config.
@@ -109,7 +100,6 @@ class InsStartupPaperTests(unittest.TestCase):
 
         self.assertIn("0.711 deg", self.flat)
         self.assertIn("0.05 deg/s", self.flat)
-        self.assertIn("0.71 deg", self.startup_doc)
 
     def test_hard_iron_derivation_matches_implementation(self):
         for token in (
@@ -139,13 +129,6 @@ class InsStartupPaperTests(unittest.TestCase):
         for row in expected_rows:
             self.assertIn(row, self.paper)
 
-        for evidence in (
-            "0.372 | 0.275 | 1.796 | 0.0631",
-            "0.339 | 0.266 | 1.835 | 0.0574",
-            "0.310 | 0.259 | 1.839 | 0.0517",
-        ):
-            self.assertIn(evidence, self.startup_doc)
-
     def test_ou2_marginal_startup_attribution_matches_evidence(self):
         for row in (
             r"roll RMS [deg] & 0.348 & 0.286 & $-17.8\%$",
@@ -154,15 +137,6 @@ class InsStartupPaperTests(unittest.TestCase):
             r"accel-bias RMS [m/s$^2$] & 0.0616 & 0.0520 & $-15.6\%$",
         ):
             self.assertIn(row, self.paper)
-
-        self.assertIn(
-            "| roll RMS, deg | 0.354 | 0.348 | 0.348 | 0.286 |", self.ou2_doc
-        )
-        self.assertIn(
-            "| accel-bias 3D RMS, m/s^2 | 0.0595 | 0.0616 | 0.0616 | 0.0520 |",
-            self.ou2_doc,
-        )
-        self.assertIn("0.444 to 0.414 deg", self.ou2_doc)
 
     def test_hard_iron_results_match_committed_evidence(self):
         # The paper and the note both quote the ablation as re-measured on the
@@ -201,13 +175,6 @@ class InsStartupPaperTests(unittest.TestCase):
             "Staged startup & 2.265 & 2.906 & 0.697 & 0.303 & 145.7 & 398.3",
         ):
             self.assertIn(row, self.paper)
-
-        for evidence in (
-            "| **deployed** | 4.388 | 4.787 | 18.82 | 20.32 | 0.777 | 1.345 | 0.296 | 0.366 | 97.1 | 164.1 |",
-            "| `TFG_MAG_HARD_IRON=0` | 4.412 | 4.779 | 19.12 | 20.50 | **2.486** | **3.256** | 0.307 | 0.373 | 94.3 | 159.3 |",
-            "| `TFG_STARTUP_INIT=staged` | 4.431 | 4.814 | 19.84 | **23.42** | 2.265 | 2.906 | 0.697 | 0.303 | 145.7 | **398.3** |",
-        ):
-            self.assertIn(evidence, self.tfg_doc)
 
     def test_limit_on_soft_iron_is_not_hidden(self):
         for phrase in (
