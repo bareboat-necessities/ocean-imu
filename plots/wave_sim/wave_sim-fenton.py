@@ -1,7 +1,6 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 import matplotlib as mpl
-import numpy as np
 
 # Configure matplotlib to use LaTeX fonts and export PGF
 mpl.use("pgf")

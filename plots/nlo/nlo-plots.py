@@ -8,7 +8,6 @@ from pathlib import Path
 import pandas as pd
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-import numpy as np
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 from plot_sampling import BASE_SAMPLE_RATE_HZ, get_decimation_step

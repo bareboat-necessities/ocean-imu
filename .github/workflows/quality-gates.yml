@@ -1,0 +1,114 @@
+name: quality-gates
+
+# Sanitizer, static-analysis and coverage layer.
+#
+# Every job here shells out to tools/quality_gates.sh, so a red gate on a PR is
+# reproducible locally with the single command named in the job. See
+# docs/quality-gates.md for what each gate covers and what it deliberately does
+# not.
+#
+# These gates are about defects. They do not enforce formatting, and they do not
+# touch the OU evidence tree — the replay dependency closure is frozen, and
+# tests/validation owns it.
+
+on:
+  pull_request:
+    paths:
+      - "src/**"
+      - "tests/**"
+      - "tools/**"
+      - "plots/**"
+      - ".clang-tidy"
+      - "ruff.toml"
+      - ".github/workflows/quality-gates.yml"
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: quality-gates-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  warnings:
+    name: warnings (-Wall -Wextra -Wpedantic -Werror)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install Eigen
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq libeigen3-dev
+      - name: Compile every host translation unit with warnings as errors
+        run: tools/quality_gates.sh warnings
+
+  static-analysis:
+    name: ${{ matrix.gate }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    # clang-tidy reports but does not block. Two `constexpr float x = std::sqrt(...)`
+    # initializers in src/kalman_ou_ii/SeaStateFusionFilter_OU_II.h and its OU-III
+    # counterpart are a GCC extension that clang rejects outright, so every TU
+    # including them fails to parse. Both files are in the frozen replay
+    # dependency closure, so the two-line fix needs an evidence regeneration to
+    # land. Drop this line once it does — see docs/quality-gates.md.
+    continue-on-error: ${{ matrix.gate == 'clang-tidy' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        gate: [cppcheck, clang-tidy, python]
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install Eigen
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq libeigen3-dev
+      - name: Install cppcheck
+        if: matrix.gate == 'cppcheck'
+        run: sudo apt-get install -y -qq cppcheck
+      - name: Install clang-tidy
+        if: matrix.gate == 'clang-tidy'
+        run: sudo apt-get install -y -qq clang-tidy
+      - name: Install ruff
+        if: matrix.gate == 'python'
+        run: pipx install ruff
+      - name: Run ${{ matrix.gate }}
+        run: tools/quality_gates.sh ${{ matrix.gate }}
+
+  sanitizers:
+    name: sanitizers (ASan + UBSan)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install Eigen
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq libeigen3-dev
+      - name: Fetch simulation data
+        run: make ensure-sim-data
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Run unit-test suites under ASan + UBSan
+        run: tools/quality_gates.sh sanitizers
+
+  coverage:
+    name: coverage
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install Eigen
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq libeigen3-dev
+      - name: Install gcovr
+        run: pipx install gcovr
+      - name: Fetch simulation data
+        run: make ensure-sim-data
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Generate coverage report
+        run: tools/quality_gates.sh coverage
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v6
+        with:
+          name: coverage-report
+          path: reports/coverage/**
+          if-no-files-found: warn

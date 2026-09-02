@@ -46,7 +46,9 @@ import math
 from pathlib import Path
 import re
 
-import ou3_source_domain_contract as SOURCE
+# Imported for its side effect: the contract module validates the source
+# domain at import time.
+import ou3_source_domain_contract as SOURCE  # noqa: F401
 
 REPO = Path(__file__).resolve().parents[1]
 WRAPPER = REPO / "src" / "kalman_ou_iii" / "SeaStateFusionFilter_OU_III.h"

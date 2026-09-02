@@ -87,7 +87,7 @@ def _exp_negative_wide(x: Interval) -> Interval:
     return y
 
 
-def build(header: Path = DEFAULT_HEADER.resolve()) -> dict:
+def build(header: Path = DEFAULT_HEADER) -> dict:
     header = header.resolve()
     source = SOURCE.build(header)
     box = source["validated_parameter_box"]

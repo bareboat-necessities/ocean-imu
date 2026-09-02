@@ -17,7 +17,7 @@ class ModelMismatchAblationTests(unittest.TestCase):
     def test_summary_covers_all_three_families_and_reference_normalization(self):
         rows = []
         for family in mma.FAMILIES:
-            for index, record in enumerate(mma.RECORDS):
+            for index, _record in enumerate(mma.RECORDS):
                 base = float(index + 1)
                 row = {
                     "family": family,

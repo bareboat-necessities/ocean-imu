@@ -410,7 +410,6 @@ jobs:
           extra-arduino-cli-args: >-
             --warnings default
             --library ${{ github.workspace }}
-            --build-property compiler.libraries.ldflags=-Wl,--allow-multiple-definition
           set-build-path: true
 
       - name: Make merged MCU binaries (${{ matrix.ino_dir }})

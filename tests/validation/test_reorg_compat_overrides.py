@@ -8,7 +8,9 @@ table, carried unevaluated appendices, or used one exact novelty sentence.
 import re
 from pathlib import Path
 
-import test_ou_validation as core
+# Imported for its side effect: loading the core module makes the manuscript
+# TestCase classes available for the overrides applied below.
+import test_ou_validation as core  # noqa: F401
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]

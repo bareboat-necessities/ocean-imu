@@ -1,0 +1,97 @@
+# Static analysis for the ocean-imu C++ sources.
+#
+# Scope: defect-finding checks only. Style and readability checks are
+# deliberately absent — this codebase has its own conventions, and a gate that
+# argues about them is a gate people learn to ignore.
+#
+# Run it the way CI does:
+#   tools/quality_gates.sh clang-tidy
+#
+# Every disabled check below was disabled against a measured finding count on
+# this tree, not on principle.
+Checks: >
+  bugprone-*,
+  cert-*,
+  performance-*,
+  portability-*,
+  misc-*,
+  -bugprone-easily-swappable-parameters,
+  -bugprone-narrowing-conversions,
+  -misc-const-correctness,
+  -misc-include-cleaner,
+  -misc-non-private-member-variables-in-classes,
+  -misc-use-anonymous-namespace,
+  -misc-no-recursion,
+  -cert-dcl21-cpp,
+  -cert-err58-cpp,
+  -cert-err33-c,
+  -cert-msc32-c,
+  -cert-msc51-cpp,
+  -performance-enum-size,
+  -performance-inefficient-vector-operation,
+  -bugprone-exception-escape,
+  -clang-analyzer-optin.performance.Padding
+
+# Only diagnose our own headers. Eigen and the Arduino cores are third-party
+# and would otherwise dominate the output.
+HeaderFilterRegex: '(^|/)src/[^/]+/[^/]+\.h$'
+
+WarningsAsErrors: '*'
+
+CheckOptions:
+  # The filter estimators legitimately carry wide state structs.
+  - key: bugprone-exception-escape.IgnoredExceptions
+    value: ''
+
+# Notes on the disabled checks, so the next person does not have to re-measure:
+#
+#   misc-const-correctness
+#     30 of 31 findings on a five-TU sample. It wants a `const` on nearly every
+#     local in the numeric code. Pure churn against frozen replay files.
+#
+#   bugprone-easily-swappable-parameters
+#     Fires on essentially every (x, y, z) and (roll, pitch, yaw) signature in
+#     an IMU library. The parameters are swappable because the mathematics is.
+#
+#   bugprone-narrowing-conversions
+#     float/double mixing is pervasive and deliberate: the estimators run in
+#     float on the MCU and double in the host sims.
+#
+#   misc-include-cleaner
+#     Wants every transitively-used symbol included directly, which fights the
+#     Arduino/Eigen umbrella-header convention this library is built on.
+#
+#   cert-err33-c
+#     All three findings were ignored return values from `fprintf(stderr, ...)`
+#     and `snprintf` into a fixed buffer. Checking those is not the convention
+#     anywhere in this tree, or in most C++.
+#
+#   cert-msc32-c / cert-msc51-cpp
+#     "RNG seeded with a constant value will generate a predictable sequence."
+#     That is the point. The simulations must replay bit-for-bit; a
+#     nondeterministic seed would break the OU evidence contract outright.
+#
+#   performance-enum-size
+#     Wants uint8_t base types on eleven enums. Several are fields of
+#     ImuCalBlobV2, a persisted binary blob — narrowing them would silently
+#     change the on-flash layout and invalidate every stored calibration.
+#
+#   performance-inefficient-vector-operation
+#     One `push_back` in a loop in a test driver. Not a defect.
+#
+#   bugprone-exception-escape
+#     Fires on `main` in two test drivers. A test binary that dies on an
+#     unexpected exception is behaving correctly; wrapping main in a
+#     try/catch to satisfy the check would hide the failure.
+#
+#   clang-analyzer-optin.performance.Padding
+#     Emits a sixty-field "optimal field order" for the OU filter classes.
+#     Reordering members of a filter whose layout is fixed by the frozen
+#     replay closure is not on the table, and the advice is a micro-
+#     optimization on a class instantiated a handful of times.
+#
+#   misc-no-recursion
+#     Reports the mutually-recursive parameter setters in
+#     Kalman3D_Wave_OU_II.h, which re-derive each other's cached terms by
+#     design. It is a structural observation, not a defect, and the file is
+#     inside the frozen replay closure in any case.

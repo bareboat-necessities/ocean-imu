@@ -5,6 +5,7 @@
 
 #include <deque>
 #include <cmath>
+#include <stdint.h>
 
 typedef struct Sample {
   float value;
@@ -27,9 +28,7 @@ typedef struct min_max_lemire {
 /**
  * Running min max
  */
-void min_max_lemire_update(MinMaxLemire* minMax, Sample sample, uint32_t window_size_micro_sec);
-
-void min_max_lemire_update(MinMaxLemire* minMax, Sample sample, uint32_t window_size_micro_sec) {
+inline void min_max_lemire_update(MinMaxLemire* minMax, Sample sample, uint32_t window_size_micro_sec) {
   mono_wedge::max_wedge_update(minMax->max_wedge, sample);
   // Get rid of old samples outside our rolling range
   while (sample.timeMicroSec - minMax->max_wedge.front().timeMicroSec > window_size_micro_sec) {

@@ -1,0 +1,46 @@
+# Python linting for tools/, tests/validation/ and plots/.
+#
+# Run it the way CI does:
+#   tools/quality_gates.sh python
+#
+# The rule set is deliberately narrow: defects, not formatting. The Python here
+# is numerical proof and plotting code written to read like the mathematics it
+# implements, and a formatter would fight that. `black --check` currently wants
+# to reformat 120 of 122 files, which is exactly the kind of diff that buries a
+# real finding.
+
+target-version = "py311"
+line-length = 120
+
+exclude = [
+    "third_party",
+    ".git",
+    "__pycache__",
+]
+
+[lint]
+# F  — pyflakes: undefined names, unused imports, f-string mistakes. Real bugs.
+# E9 — syntax and IO errors.
+# B  — flake8-bugbear: mutable default args, loop-variable capture, and other
+#      constructs that are legal but almost always wrong.
+select = ["F", "E9", "B"]
+
+ignore = [
+    # `I` is the identity matrix and `l` is a level index. In linear-algebra
+    # code these are the correct names; renaming them to satisfy a style rule
+    # would make the source harder to check against the papers it implements.
+    "E741",
+    "E743",
+    # numpy/zip pairs in this code are index-aligned arrays built together a
+    # few lines earlier; `strict=` on all 56 call sites would be ceremony, not
+    # a check. Revisit if a length mismatch ever actually ships.
+    "B905",
+    # `from ou_* import *` is the established pattern for pulling a study's
+    # parameter block into its driver. Flagging every use of those names is
+    # noise until the star imports themselves are reworked.
+    "F405",
+]
+
+[lint.per-file-ignores]
+# Study drivers re-export their parameter blocks by design.
+"tools/ou_robustness.py" = ["F403"]
