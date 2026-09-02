@@ -23,7 +23,7 @@ permissions:
   contents: read
 
 jobs:
-  current-proof:
+  source-foundation:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -38,9 +38,9 @@ jobs:
         working-directory: tests/validation
         run: |
           python3 -m unittest -v \
+            test_ou3_proof_cleanup \
             test_ou3_full_process_ucc \
             test_ou3_implementation_word_language \
-            test_ou3_interval_ad \
             test_ou3_p4_sample_clock_source_refinement \
             test_ou3_p4_source_node_cells \
             test_ou3_p4_source_path_reachability \
@@ -50,34 +50,81 @@ jobs:
             test_ou3_vector_uco_certificate \
             test_ou3_verified_spd_inverse
 
-      - name: Validate phased terminal source reduction
+      - name: Validate source-complete P4 word timing decomposition
         run: |
-          python3 tools/ou3_p4_terminal_source_equivalence.py \
-            --output /tmp/ou3_terminal_source_equivalence.json
+          python3 tools/ou3_p4_source_word_timing.py \
+            --output /tmp/ou3_p4_source_word_timing.json
 
-      - name: Run current augmented complete-word P4 producer
+  p3-metric:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Validate dependency-preserving scaled OU process
         run: |
-          python3 tools/ou3_p4_augmented_complete_word_design_v5.py \
-            --source-node-index 0 \
-            --attitude-halfwidth-factor 0.03125 \
-            --epsilon 0.5 \
-            --output /tmp/ou3_p4_complete_word.json
+          python3 tools/ou3_p3_scaled_process.py \
+            --output /tmp/ou3_p3_scaled_process.json
 
-      - name: Print current P4 design result
+      - name: Run source-uniform P3 matrix certificate with retained dependency
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          import sys
+          sys.path.insert(0, 'tools')
+          import ou3_source_reachable_matrix_p3 as P3
+          import ou3_p3_scaled_process as SP
+          P3.split_x_cell = SP.split_x_cell
+          d = P3.build(P3.DEFAULT_DOMAIN)
+          f = P3.validate(d)
+          out = dict(d)
+          out['dependency_preserving_scaled_process_backend'] = True
+          out['validation_pass'] = not f
+          out['validation_failures'] = f
+          Path('/tmp/ou3_p3_matrix.json').write_text(json.dumps(out, indent=2, sort_keys=True))
+          print(json.dumps({'status': d.get('continuous_linear_information_certificate'), 'failures': f}, indent=2))
+          raise SystemExit(0 if not f else 2)
+          PY
+
+      - name: Print P3 nonlinear budget inputs
         if: always()
         run: |
-          if [ -f /tmp/ou3_p4_complete_word.json ]; then
+          if [ -f /tmp/ou3_p3_matrix.json ]; then
             python3 - <<'PY'
           import json
-          d = json.load(open('/tmp/ou3_p4_complete_word.json'))
-          print('validation_pass_v5', d.get('validation_pass_v5'))
-          print('validation_failures_v5', d.get('validation_failures_v5'))
+          d = json.load(open('/tmp/ou3_p3_matrix.json'))
+          print('P3', d.get('continuous_linear_information_certificate'))
           for mode in ('H', 'A'):
               m = d.get('modes', {}).get(mode, {})
               print(mode,
-                    'mu', m.get('signed_word_generalized_margin_design'),
-                    'rho', m.get('rho_homogeneous_design_upper'),
-                    'beta', m.get('beta_measurement_design_upper'),
-                    'operations', m.get('operation_count'))
+                    'delta', m.get('relative_Riccati_injection_margin_lower'),
+                    'Sigma_min', m.get('Sigma_lambda_min_lower'),
+                    'Sigma_max', m.get('Sigma_lambda_max_upper'),
+                    'Omega_min', m.get('word_noise_Omega_lambda_min_lower'))
           PY
           fi
+
+  p4-sector:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Compile current P4 sector route
+        run: |
+          python3 -m py_compile \
+            tools/ou3_p4_cayley_sector_certificate.py \
+            tools/ou3_p4_vector_remainder_sector.py \
+            tools/ou3_p4_source_word_timing.py
+
+      - name: Certify usable 0.8 rad nonlinear sector primitives
+        run: |
+          python3 tools/ou3_p4_cayley_sector_certificate.py \
+            --output /tmp/ou3_p4_cayley_sector.json
+          python3 tools/ou3_p4_vector_remainder_sector.py \
+            --output /tmp/ou3_p4_vector_remainder.json
