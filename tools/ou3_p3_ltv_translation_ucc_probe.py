@@ -1,38 +1,25 @@
 #!/usr/bin/env python3
 """Source-uniform time-varying translation process-floor probe for OU-III P3.
 
-This module asks one narrow question before canonical P3 is changed: does the
-translation process inject enough *directional* covariance over a finite suffix
-when tau/sigma may vary arbitrarily inside the source word?
+For one translation axis ordered [S,p,v,a_w], normal-Live dynamics are
+S'=p, p'=v, v'=a_w, a_w'=-lambda(t)a_w+sqrt(q_c(t))w.  No frozen tuner
+parameter is assumed.  Applying the integrating factor to four endpoint
+response columns and taking consecutive column differences turns their
+determinant into a positive polynomial-Vandermonde integral.  Restoring the
+column factors cancels every source-dependent exponential except at most one
+endpoint-to-start interval, hence for arbitrary measurable
+lambda(t)<=lambda_max,
 
-The one-axis normal-Live translation chain, ordered [S,p,v,a_w], is
+    |det K(s0..s3)| >= V(s0..s3) exp(-lambda_max H)/12.
 
-    S' = p,  p' = v,  v' = a_w,
-    a_w' = -lambda(t) a_w + sqrt(q_c(t)) w,
+The existing four-subinterval Andreief construction therefore remains valid:
 
-with lambda(t)=1/tau(t).  No frozen-parameter assumption is used below.
-For four process-input times s0<s1<s2<s3, multiply each endpoint response
-column by exp(-Lambda(si)), Lambda(t)=int_0^t lambda.  After consecutive column
-subtractions the determinant is an integral of the positive polynomial
-Vandermonde against exp(-Lambda).  Restoring the four column factors cancels
-all but at most one endpoint-to-start decay interval, giving
+    det G_unit >= (2025/144)(H/7)^16 exp(-2 lambda_max H).
 
-    |det K(s0..s3)| >= V(s0..s3) exp(-lambda_max H) / 12.
-
-Therefore the four-subinterval Andreief construction remains valid for
-arbitrary measurable lambda(t) in the declared source box:
-
-    det G_unit >= (2025/144) (H/7)^16 exp(-2 lambda_max H).
-
-Because q_c(t)>=2 sigma_min^2/tau_max, the actual process Gramian dominates
-q_c,min G_unit.  The Gramian is normalized directly by the endpoint P3
-translation covariance dominator diag(Uv,Up,US,Ua), so no global covariance
-condition-number conversion is inserted.
-
-This is intentionally a *pre-measurement* process-floor probe.  Interleaved
-accelerometer/S updates can reduce the floor and must be enclosed separately
-before P3 promotion.  A useful result here establishes only that time-varying
-controllability itself is not the remaining bottleneck.
+With q_c(t)>=2 sigma_min^2/tau_max this gives a source-uniform process Gramian
+lower.  We normalize it directly by the endpoint P3 directional covariance
+dominator diag(Uv,Up,US,Ua).  This producer deliberately stops before
+interleaved measurement attenuation, so it cannot promote P3 by itself.
 """
 from __future__ import annotations
 
@@ -59,7 +46,7 @@ def point(x: float) -> Interval:
 def ltv_relative_process_floor(upper: list[float], horizon_s: float,
                                tau_min: float, tau_max: float,
                                sigma_min: float) -> dict:
-    """Return rho with W_process >= rho*diag(upper) on [v,p,S,a_w]."""
+    """Return rho such that W_process >= rho*diag(upper) on [v,p,S,a_w]."""
     if len(upper) != 4 or any(not (math.isfinite(float(v)) and float(v) > 0.0) for v in upper):
         raise ValueError("four finite positive translation covariance uppers required")
     H = float(horizon_s)
@@ -84,8 +71,7 @@ def ltv_relative_process_floor(upper: list[float], horizon_s: float,
     product_U = point(Uv) * point(Up) * point(US) * point(Ua)
     det_normalized = (point(det_unit) / product_U).lo
 
-    # Integral response bounds valid for arbitrary nonnegative lambda(t):
-    # |a|<=1, |v|<=r, |p|<=r^2/2, |S|<=r^3/6.
+    # Arbitrary nonnegative lambda only shortens these endpoint responses.
     H3 = TRANS._pow_nonnegative(Hiv, 3)
     H5 = TRANS._pow_nonnegative(Hiv, 5)
     H7 = TRANS._pow_nonnegative(Hiv, 7)
@@ -95,9 +81,10 @@ def ltv_relative_process_floor(upper: list[float], horizon_s: float,
         + H5 / point(20.0 * Up)
         + H7 / point(252.0 * US)
     ).hi
+    trace3 = TRANS._pow_nonnegative(point(trace_normalized), 3)
     if not (det_normalized > 0.0 and trace_normalized > 0.0):
         return {"relative_process_floor_lower": 0.0}
-    gram_lambda = (point(det_normalized) / point(trace_normalized).cube()).lo
+    gram_lambda = (point(det_normalized) / trace3).lo
     rho = (point(qc_min) * point(gram_lambda)).lo
     return {
         "horizon_s": H,
@@ -126,17 +113,12 @@ def _mode_node(mode: str, node: dict, domain: dict, candidates: list[float],
     sigma = Interval(*map(float, node["sigma_filter_committed_mps2"]))
     rs = Interval(*map(float, node["R_S_filter_std"]))
     alpha6 = BASE.vector_alpha6(live, vector)
-
     global_tau_lo, global_tau_hi = map(float, sched["tau_applied_invariant_s"])
+
     rows = []
     for xcell, rho_x in SCALED.split_x_cell(x):
         raw = BASE.mode_cell(mode, xcell, rho_x, sigma, rs, live, vector, process, sched, alpha6)
-        upper = [
-            float(raw["Sigma_diagonal_upper"][6]),
-            float(raw["Sigma_diagonal_upper"][9]),
-            float(raw["Sigma_diagonal_upper"][12]),
-            float(raw["Sigma_diagonal_upper"][15]),
-        ]
+        upper = [float(raw["Sigma_diagonal_upper"][i]) for i in (6, 9, 12, 15)]
         word_lo = float(raw["word_horizon_s_lower"])
         hs = [H for H in candidates if H <= word_lo]
         if not hs:
@@ -171,11 +153,10 @@ def build(domain_path: Path = DEFAULT_DOMAIN, source_node_indices=(0, 729)) -> d
     if domain.get("trajectory_fit") is not False:
         raise RuntimeError("LTV UCC probe must not be trajectory fitted")
     nodes = NODES.build()
-    nf = NODES.validate(nodes)
-    if nf:
-        raise RuntimeError(f"P2 source nodes invalid: {nf}")
+    failures = NODES.validate(nodes)
+    if failures:
+        raise RuntimeError(f"P2 source nodes invalid: {failures}")
     sigma_floor = float(nodes["filter_sigma_floor_mps2"])
-
     candidates = [0.25, 0.5, 0.75, 1.0, 1.25, 1.5]
     results = {}
     for index in source_node_indices:
@@ -185,7 +166,6 @@ def build(domain_path: Path = DEFAULT_DOMAIN, source_node_indices=(0, 729)) -> d
             "H": _mode_node("H", node, domain, candidates, sigma_floor),
             "A": _mode_node("A", node, domain, candidates, sigma_floor),
         }
-
     return {
         "schema": SCHEMA,
         "qualification": "OU3_P3_SOURCE_UNIFORM_LTV_TRANSLATION_PROCESS_FLOOR_PROBE",
@@ -201,8 +181,8 @@ def build(domain_path: Path = DEFAULT_DOMAIN, source_node_indices=(0, 729)) -> d
         "candidate_horizons_s": candidates,
         "nodes": results,
         "next_obligation": (
-            "enclose the interleaved normal-Live measurement attenuation of this LTV process floor; "
-            "only the resulting post-measurement source-uniform H/A comparison may replace canonical P3"
+            "enclose interleaved normal-Live measurement attenuation of the LTV process floor; "
+            "only the resulting post-measurement H/A comparison may replace canonical P3"
         ),
     }
 
@@ -212,19 +192,15 @@ def validate(d: dict) -> list[str]:
     if d.get("schema") != SCHEMA:
         f.append("schema mismatch")
     for key in (
-        "source_generated_not_trajectory_fit",
-        "validated_interval_arithmetic",
-        "validated_exponential_arithmetic",
-        "arbitrary_time_varying_tau_inside_window_covered",
+        "source_generated_not_trajectory_fit", "validated_interval_arithmetic",
+        "validated_exponential_arithmetic", "arbitrary_time_varying_tau_inside_window_covered",
         "arbitrary_time_varying_sigma_inside_window_covered_by_qc_min",
     ):
         if d.get(key) is not True:
             f.append(f"{key} is not true")
     for key in (
-        "frozen_parameter_Q_Nh_identity_used",
-        "endpoint_covariance_condition_number_conversion_used",
-        "interleaved_measurement_attenuation_enclosed_here",
-        "P3_PROMOTED",
+        "frozen_parameter_Q_Nh_identity_used", "endpoint_covariance_condition_number_conversion_used",
+        "interleaved_measurement_attenuation_enclosed_here", "P3_PROMOTED",
     ):
         if d.get(key) is not False:
             f.append(f"{key} is not false")
