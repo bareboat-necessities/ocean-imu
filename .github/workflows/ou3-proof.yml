@@ -56,6 +56,37 @@ jobs:
           python3 tools/ou3_p4_terminal_source_equivalence.py \
             --output /tmp/ou3_terminal_source_equivalence.json
 
+  p3-metric:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Run source-uniform P3 matrix certificate
+        run: |
+          python3 tools/ou3_source_reachable_matrix_p3.py \
+            --output /tmp/ou3_p3_matrix.json
+
+      - name: Print P3 nonlinear budget inputs
+        if: always()
+        run: |
+          if [ -f /tmp/ou3_p3_matrix.json ]; then
+            python3 - <<'PY'
+          import json
+          d = json.load(open('/tmp/ou3_p3_matrix.json'))
+          print('P3', d.get('continuous_linear_information_certificate'))
+          for mode in ('H', 'A'):
+              m = d.get('modes', {}).get(mode, {})
+              print(mode,
+                    'delta', m.get('relative_Riccati_injection_margin_lower'),
+                    'Sigma_min', m.get('Sigma_lambda_min_lower'),
+                    'Sigma_max', m.get('Sigma_lambda_max_upper'),
+                    'Omega_min', m.get('word_noise_Omega_lambda_min_lower'))
+          PY
+          fi
+
   p4-design:
     runs-on: ubuntu-latest
     timeout-minutes: 60
