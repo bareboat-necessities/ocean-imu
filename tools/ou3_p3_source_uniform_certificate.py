@@ -34,13 +34,18 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
 
     # The old local splitter in MATRIX is intentionally not a proof dependency.
     # Bind the repaired, dependency-preserving process primitive before MATRIX
-    # constructs any x=h/tau source cell.
+    # constructs any x=h/tau source cell.  MATRIX memoizes by domain path, so
+    # clear that implementation-detail cache both before and after the scoped
+    # binding; otherwise an earlier caller in the same Python process could
+    # silently supply a certificate built with the retired arithmetic.
     original = MATRIX.split_x_cell
+    MATRIX._build_cached.cache_clear()
     MATRIX.split_x_cell = SCALED.split_x_cell
     try:
         matrix = MATRIX.build(path)
     finally:
         MATRIX.split_x_cell = original
+        MATRIX._build_cached.cache_clear()
 
     failures = MATRIX.validate(matrix)
     modes = {}
@@ -73,6 +78,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
             "source_generated_not_trajectory_fit"
         ) is True,
         "dependency_preserving_scaled_process_backend": True,
+        "matrix_cache_isolated_from_caller_state": True,
         "scaled_process_qualification": "FACTORED_SOURCE_BRANCH_WITH_CORRELATED_EXACT_EXPONENTIAL_SERIES",
         "matrix_certificate": matrix,
         "modes": modes,
@@ -91,6 +97,8 @@ def validate(d: dict) -> list[str]:
         failures.append("P3 source-generation flag missing")
     if d.get("dependency_preserving_scaled_process_backend") is not True:
         failures.append("repaired scaled-process backend is not bound")
+    if d.get("matrix_cache_isolated_from_caller_state") is not True:
+        failures.append("P3 matrix cache isolation flag missing")
     if d.get("P3_LINEAR_CERTIFICATE_ESTABLISHED") is not True:
         failures.append("P3 linear certificate not established")
     if d.get("P4_NONLINEAR_WORD_ESTABLISHED_HERE") is not False:
