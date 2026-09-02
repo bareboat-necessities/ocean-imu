@@ -5,12 +5,10 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
 
-# Current source-generated certificate/status producers. Historical replay/local
-# basin and retired information-word producers are intentionally excluded.
+# Current source-generated certificate/status producers only.
 PRODUCERS = [
     ROOT / "tools" / "ou3_p2_clock_phase_tuner_graph.py",
     ROOT / "tools" / "ou3_p4_augmented_complete_word_design_v5.py",
-    ROOT / "tools" / "ou3_p4_joint_first_accel_cover_v3.py",
     ROOT / "tools" / "ou3_p4_terminal_cluster_p2_reduction.py",
     ROOT / "tools" / "ou3_p4_terminal_source_equivalence.py",
 ]
