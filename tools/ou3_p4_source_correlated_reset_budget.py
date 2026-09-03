@@ -170,7 +170,9 @@ def reset_row_at_energy(
 
     sqrtW = sqrt_up(W)
     q_energy = sqrt_up(mul_up(utheta, W))
-    q = min(qc, q_energy)
+    if q_energy > qc:
+        raise ValueError("funnel energy exceeds candidate Cayley radius")
+    q = q_energy
     delta = mul_up(kappa, sqrtW)
     if delta > RESET_CORRECTION_UTILITY_MAX_RAD:
         raise RuntimeError("correction radius exceeds validated exact-reset utility range")
