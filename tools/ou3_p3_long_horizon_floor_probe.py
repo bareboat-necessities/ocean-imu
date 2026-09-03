@@ -15,6 +15,14 @@ source-uniform covariance-word sample target used by the P2-V1 history quotient.
 At selected horizons it recomputes the same relative injection margin against
 ``HIST.endpoint_phase_upper`` used by canonical P3.
 
+The fixed source/x interval does not change inside this experiment.  Rebuilding
+its transition matrix, process covariance and physical measurement variances at
+every one of hundreds of samples is therefore pure repeated arithmetic, not a
+proof obligation.  The probe precomputes those immutable objects once per x
+subcell, checks the first prepared step bit-for-bit against ``SEG.one_step``,
+and then iterates the identical interval/Loewner algebra.  No enclosure is
+cached across changing covariance arguments.
+
 The fixed-source construction is deliberately only a diagnostic.  A favorable
 result means that a source-varying full-word lower should be built over the
 exact P2-V1 path language.  An unfavorable result rejects the zero-reset
@@ -28,6 +36,7 @@ import json
 import math
 from pathlib import Path
 
+from ou3_interval import Interval
 import ou3_p2_correlation_path_memory as CORR
 import ou3_p3_correlated_translation_segment as SEG
 import ou3_p3_frozen_full_matrix_translation as FROZEN
@@ -47,6 +56,54 @@ def _copy_matrix(P):
     return [[P[i][j] for j in range(4)] for i in range(4)]
 
 
+def _same_interval_matrix(A, B) -> bool:
+    if len(A) != len(B):
+        return False
+    return all(
+        len(A[i]) == len(B[i])
+        and all(
+            float(A[i][j].lo) == float(B[i][j].lo)
+            and float(A[i][j].hi) == float(B[i][j].hi)
+            for j in range(len(A[i]))
+        )
+        for i in range(len(A))
+    )
+
+
+def _prepare_step_kernel(node: dict, x: Interval, h: float) -> dict:
+    """Precompute only source/x objects that SEG.one_step recomputes verbatim."""
+    sigma = Interval(*map(float, node["sigma_filter_committed_mps2"]))
+    sigma2_lower = BASE.down(sigma.lo * sigma.lo)
+    if not sigma2_lower > 0.0:
+        raise RuntimeError("source-cell sigma lower lost positivity")
+    Fm = FROZEN._transition(x)
+    Ft = FROZEN._transpose(Fm)
+    Qz = SEG._scale(FROZEN._scaled_Q(x), SEG._point(sigma2_lower))
+    R_aw, R_S_z = SEG._physical_measurement_variances(node, h)
+    return {
+        "F": Fm,
+        "Ft": Ft,
+        "Qz": Qz,
+        "R_aw": float(R_aw),
+        "R_S_z": float(R_S_z),
+    }
+
+
+def _prepared_one_step(P, kernel: dict):
+    """Exact SEG.one_step algebra with immutable source/x terms precomputed."""
+    L0, _ = SEG._common_point_lower(P)
+    prediction_interval = FROZEN._sym(
+        FROZEN._add(
+            FROZEN._mul(FROZEN._mul(kernel["F"], L0), kernel["Ft"]),
+            kernel["Qz"],
+        )
+    )
+    pred, _ = SEG._common_point_lower(prediction_interval)
+    post_aw, _ = SEG._point_measurement_lower(pred, 3, kernel["R_aw"])
+    post_s, _ = SEG._point_measurement_lower(post_aw, 2, kernel["R_S_z"])
+    return post_s
+
+
 def _physical_diagonal_ratios(Pz, h: float, upper: list[float]) -> list[float]:
     if len(upper) != 4:
         raise ValueError("four translation covariance upper entries required")
@@ -56,9 +113,6 @@ def _physical_diagonal_ratios(Pz, h: float, upper: list[float]) -> list[float]:
         u = float(upper[i])
         if not (math.isfinite(u) and u > 0.0):
             raise ValueError("positive finite translation covariance upper required")
-        # Pz is a rigorous interval lower.  Use the lower diagonal endpoint and
-        # directed rounding for a diagnostic ratio that cannot overstate the
-        # available per-coordinate margin.
         physical_lo = BASE.down(BASE.down(d[i] * d[i]) * float(Pz[i][i].lo))
         out.append(BASE.down(max(0.0, physical_lo) / u))
     return out
@@ -102,13 +156,28 @@ def probe_source(source_node: int = DEFAULT_SOURCE_NODE,
         raise RuntimeError("probe source emitted no x subcells")
 
     zero = FROZEN._mat_zero()
-    states = [_copy_matrix(zero) for _ in xcells]
+    kernels = [_prepare_step_kernel(node, x, h) for x in xcells]
+    prepared_equivalence_checked = 0
+    states = []
+    # This exact endpoint comparison makes the cache a performance transform,
+    # not a second numerical route.  The expensive source/x terms are then
+    # reused; every covariance-dependent collapse/update is still recomputed.
+    for x, kernel in zip(xcells, kernels):
+        direct = SEG.one_step(zero, node, x, h)
+        prepared = _prepared_one_step(zero, kernel)
+        if not _same_interval_matrix(direct, prepared):
+            raise RuntimeError("prepared long-horizon kernel changed SEG.one_step enclosure")
+        prepared_equivalence_checked += 1
+        states.append(prepared)
+
     rows = []
     horizon_set = set(horizons)
+    if 1 in horizon_set:
+        raise RuntimeError("probe horizons unexpectedly include the precomputed first sample")
 
-    for sample in range(1, target_samples + 1):
-        for j, x in enumerate(xcells):
-            states[j] = SEG.one_step(states[j], node, x, h)
+    for sample in range(2, target_samples + 1):
+        for j, kernel in enumerate(kernels):
+            states[j] = _prepared_one_step(states[j], kernel)
         if sample not in horizon_set:
             continue
 
@@ -188,7 +257,10 @@ def probe_source(source_node: int = DEFAULT_SOURCE_NODE,
         "x_subcells": len(xcells),
         "zero_start_used_once_at_word_start": True,
         "zero_reset_at_each_13_26_sample_segment_used": False,
-        "same_validated_SEG_one_step_used": True,
+        "prepared_source_x_kernel_used": True,
+        "prepared_kernel_changes_covariance_enclosure": False,
+        "prepared_kernel_exact_SEG_one_step_equivalence_subcells": prepared_equivalence_checked,
+        "same_validated_SEG_one_step_algebra_used": True,
         "strongest_translation_measurements_every_sample_retained": True,
         "same_history_Sigma_upper_used": True,
         "Sigma_translation_diagonal_upper_envelope": upper,
@@ -221,7 +293,8 @@ def validate(d: dict) -> list[str]:
         "P2_correlation_interface_consumed",
         "fixed_source_diagnostic_only",
         "zero_start_used_once_at_word_start",
-        "same_validated_SEG_one_step_used",
+        "prepared_source_x_kernel_used",
+        "same_validated_SEG_one_step_algebra_used",
         "strongest_translation_measurements_every_sample_retained",
         "same_history_Sigma_upper_used",
     ):
@@ -237,9 +310,12 @@ def validate(d: dict) -> list[str]:
         "P4_PROMOTED",
         "P5_PROMOTED",
         "zero_reset_at_each_13_26_sample_segment_used",
+        "prepared_kernel_changes_covariance_enclosure",
     ):
         if d.get(key) is not False:
             f.append(f"{key} is not false")
+    if int(d.get("prepared_kernel_exact_SEG_one_step_equivalence_subcells", 0)) != int(d.get("x_subcells", -1)):
+        f.append("prepared kernel was not checked against SEG.one_step on every x subcell")
     if float(d.get("canonical_useful_gate", math.nan)) != 1.0e-18:
         f.append("canonical useful gate changed")
     if d.get("P2_correlation_interface_version") != CORR.INTERFACE_VERSION:
