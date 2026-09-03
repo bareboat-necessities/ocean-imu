@@ -8,47 +8,32 @@ on:
   workflow_dispatch:
     inputs:
       dry_run:
-        description: 'List the cleanup actions that would be performed without deleting anything'
+        description: 'List cleanup actions without deleting anything'
         type: boolean
         default: false
       min_age_minutes:
-        description: 'Only delete runs/logs whose final state is at least this old'
+        description: 'Minimum age for cancelled/skipped run deletion'
         type: string
         default: '60'
       max_deletions:
-        description: 'Safety cap per cleanup class on runs/log sets deleted in one pass'
+        description: 'Safety cap per cleanup class on runs deleted in one pass'
         type: string
         default: '5000'
 
-# Cancelled and skipped runs carry no verdict: a cancelled run was voided
-# before it finished and a skipped one never executed. They accumulate in the
-# Actions history and bury the runs that do carry results (success, failure,
-# timed_out, ...), which are the record this project relies on. The first pass
-# removes that residue. Note that the API deletes whole runs, not individual
-# jobs, so a run is removed only when the run's own conclusion is cancelled or
-# skipped.
+# Cleanup policy:
 #
-# Carrying no verdict is not the same as carrying nothing. A cancelled run is
-# the only evidence that its workflow was triggered at all, and deleting it
-# also removes its check from the pull request. Sweeping every cancelled run
-# therefore erased the newest one for branches under active development and
-# made a superseded run look like a workflow GitHub had never started - the
-# focused pull-request workflows appeared to be dropped at random while the
-# push workflows, which are cancelled less often, looked fine. The pass now
-# keeps the newest cancelled/skipped run of each workflow on each branch.
+# 1. Cancelled/skipped runs have no verdict. Keep the newest such run for each
+#    workflow+branch pair, then delete older ones after the minimum-age guard.
+#    This preserves evidence that focused PR workflows were actually triggered.
 #
-# Failed runs do carry a verdict, so their run/check records are retained.
-# Their log payload is independently deletable, however. A second pass keeps
-# logs for the 15 most recently updated failed runs repository-wide and deletes
-# only the logs from older failed runs. This preserves recent diagnostics and
-# all failure history while bounding accumulated failure-log storage.
+# 2. Failed runs do have a verdict, but hundreds of old failures make Actions
+#    history unusable. Keep exactly the 15 most recently updated failed runs
+#    repository-wide and delete older failed runs in full. Deleting the run
+#    also deletes its job logs. Pull-request failures are included.
 #
-# This repository generates cancelled runs quickly: cancel-in-progress voids a
-# whole batch on every push, and pushes here land faster than the focused
-# workflows finish. The pass is therefore parallel and the cap is set well
-# above a week's production rate, or the backlog never shrinks. Because the
-# pass runs weekly rather than hourly, anything it leaves behind waits a week,
-# so the cap has real headroom rather than a nominal one.
+# The failed-run pass deliberately has no age guard: "keep 15" is the retention
+# rule. A state re-check immediately before deletion protects a run that was
+# manually re-run after candidate selection.
 permissions:
   contents: read
 
@@ -61,12 +46,10 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     permissions:
-      # Deleting workflow runs or their logs requires write access to Actions.
-      # Nothing in this workflow touches repository contents.
       actions: write
 
     steps:
-      - name: Delete cancelled and skipped workflow runs
+      - name: Delete old cancelled and skipped workflow runs
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
@@ -79,27 +62,23 @@ jobs:
           set -euo pipefail
 
           case "$MIN_AGE_MINUTES" in
-            ''|*[!0-9]*) echo "min_age_minutes must be a non-negative integer" >&2; exit 1 ;;
+            ''|*[!0-9]*)
+              echo "min_age_minutes must be a non-negative integer" >&2
+              exit 1
+              ;;
           esac
           case "$MAX_DELETIONS" in
-            ''|*[!0-9]*|0) echo "max_deletions must be a positive integer" >&2; exit 1 ;;
+            ''|*[!0-9]*|0)
+              echo "max_deletions must be a positive integer" >&2
+              exit 1
+              ;;
           esac
 
-          # Runs that reached their final state very recently are left alone:
-          # they may still be under inspection, and the next pass will pick
-          # them up anyway.
           cutoff="$(date -u -d "-${MIN_AGE_MINUTES} minutes" +%Y-%m-%dT%H:%M:%SZ)"
-          echo "Repository:       $REPO"
-          echo "Deleting runs in conclusion cancelled/skipped older than $cutoff"
-          echo "Safety cap:       $MAX_DELETIONS deletions"
-          echo "Dry run:          $DRY_RUN"
-
           candidates="$(mktemp)"
+          keep="$(mktemp)"
+          selected="$(mktemp)"
 
-          # The API's `status` filter accepts conclusion values, so each pass
-          # asks the server for one conclusion only. The jq filter then
-          # re-checks the run's own fields, so a server-side filter change
-          # can never widen what this job deletes.
           for conclusion in cancelled skipped; do
             gh api \
               -H "Accept: application/vnd.github+json" \
@@ -118,66 +97,49 @@ jobs:
               ' >> "$candidates"
           done
 
-          # Pagination can hand back the same run twice when runs finish
-          # mid-listing, and the newest-per-branch pass below must not see a
-          # run more than once.
           sort -u "$candidates" -o "$candidates"
 
-          # A cancelled run carries no *result*, but it is still the record
-          # that the workflow was triggered. Deleting the newest one for a
-          # branch also removes its check from the pull request, so a run
-          # that was merely superseded by the next push becomes
-          # indistinguishable from a workflow that GitHub never started -
-          # which reads as CI silently dropping the focused pull-request
-          # workflows. This repository pushes far faster than those
-          # workflows run, so that is the common case, not a rare one.
-          #
-          # Keep the most recent cancelled/skipped run of each workflow on
-          # each branch and sweep everything behind it. That bounds what is
-          # retained at one run per workflow per branch while leaving every
-          # pull request able to show that its focused workflow did fire.
-          keep="$(mktemp)"
+          # Retain the newest cancelled/skipped run per workflow+branch.
           sort -t"$(printf '\t')" -k5,5 -k6,6 -k7,7r "$candidates" \
             | awk -F'\t' '!seen[$5 FS $6]++ { print $1 }' > "$keep"
 
-          # Apply the age window, exclude this very run and the newest run
-          # per workflow and branch, and cap the batch.
-          selected="$(mktemp)"
-          awk -F'\t' -v cutoff="$cutoff" -v self="$SELF_RUN_ID" -v cap="$MAX_DELETIONS" '
-            NR == FNR { keep[$1] = 1; next }
-            $1 != self && !($1 in keep) && $3 < cutoff && n < cap { print; n++ }
-          ' "$keep" "$candidates" > "$selected"
+          awk -F'\t' \
+            -v cutoff="$cutoff" \
+            -v self="$SELF_RUN_ID" \
+            -v cap="$MAX_DELETIONS" '
+              NR == FNR { keep[$1] = 1; next }
+              $1 != self && !($1 in keep) && $3 < cutoff && n < cap {
+                print
+                n++
+              }
+            ' "$keep" "$candidates" > "$selected"
 
           total_candidates="$(wc -l < "$candidates" | tr -d ' ')"
           total_kept="$(wc -l < "$keep" | tr -d ' ')"
           total_selected="$(wc -l < "$selected" | tr -d ' ')"
+
           echo "Cancelled/skipped runs found: $total_candidates"
-          echo "Newest per workflow/branch:   $total_kept (retained)"
-          echo "Eligible for deletion now:    $total_selected"
+          echo "Newest per workflow/branch retained: $total_kept"
+          echo "Eligible for deletion: $total_selected"
 
           if [ "$total_selected" -eq 0 ]; then
-            echo "Nothing to clean up."
             {
-              echo "### Actions history cleanup"
+              echo "### Cancelled/skipped cleanup"
               echo
-              echo "- Cancelled/skipped runs found: \`$total_candidates\`"
+              echo "- Found: \`$total_candidates\`"
               echo "- Retained as newest per workflow/branch: \`$total_kept\`"
-              echo "- Nothing eligible this pass"
+              echo "- Deleted: \`0\`"
             } >> "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
 
-          echo "Selected, by workflow and conclusion:"
-          awk -F'\t' '{ printf "  %s\t%s\n", $2, $4 }' "$selected" \
-            | sort | uniq -c | sort -rn
-
           if [ "$DRY_RUN" = "true" ]; then
-            echo "Dry run - the runs above would be deleted:"
+            echo "Dry run - cancelled/skipped runs that would be deleted:"
             awk -F'\t' '{ printf "  %s  %s  run %s  (%s)\n", $2, $3, $1, $4 }' "$selected"
             {
-              echo "### Actions history cleanup (dry run)"
+              echo "### Cancelled/skipped cleanup (dry run)"
               echo
-              echo "- Cancelled/skipped runs found: \`$total_candidates\`"
+              echo "- Found: \`$total_candidates\`"
               echo "- Retained as newest per workflow/branch: \`$total_kept\`"
               echo "- Would delete: \`$total_selected\`"
             } >> "$GITHUB_STEP_SUMMARY"
@@ -188,14 +150,11 @@ jobs:
           worker="$(mktemp)"
           export RESULTS="$results"
 
-          # One run per worker invocation. Each worker re-reads the run
-          # immediately before deleting it, so a run that has since been
-          # re-run (back to in_progress) is left alone even though the
-          # listing above saw it as cancelled.
           cat > "$worker" <<'WORKER'
           #!/usr/bin/env bash
           set -uo pipefail
           id="$1"
+
           state="$(gh api "repos/${REPO}/actions/runs/${id}" \
             --jq '"\(.status)/\(.conclusion)"' </dev/null 2>/dev/null || true)"
           case "$state" in
@@ -205,9 +164,7 @@ jobs:
               exit 0
               ;;
           esac
-          # Transient 5xx from the Actions API is common on long passes.
-          # Retry before giving up; anything still failing is left for the
-          # next pass rather than failing the whole job.
+
           for attempt in 1 2 3; do
             if gh api --method DELETE "repos/${REPO}/actions/runs/${id}" \
                 --silent </dev/null 2>/dev/null; then
@@ -216,6 +173,7 @@ jobs:
             fi
             sleep "$attempt"
           done
+
           printf 'FAIL\t%s\n' "$id" >> "$RESULTS"
           exit 0
           WORKER
@@ -227,141 +185,130 @@ jobs:
           left="$(grep -c '^SKIP' "$results" || true)"
           failed="$(grep -c '^FAIL' "$results" || true)"
 
-          echo "Deleted: $deleted   Left in place: $left   Failed: $failed"
-          if [ "$left" -gt 0 ]; then
-            echo "Left in place because their state changed:"
-            grep '^SKIP' "$results" | awk -F'\t' '{ printf "  run %s is now %s\n", $2, $3 }'
-          fi
-          if [ "$failed" -gt 0 ]; then
-            echo "Failed to delete (will be retried next pass):"
-            grep '^FAIL' "$results" | awk -F'\t' '{ printf "  run %s\n", $2 }'
-          fi
-
           {
-            echo "### Actions history cleanup"
+            echo "### Cancelled/skipped cleanup"
             echo
-            echo "- Cancelled/skipped runs found: \`$total_candidates\`"
+            echo "- Found: \`$total_candidates\`"
             echo "- Retained as newest per workflow/branch: \`$total_kept\`"
-            echo "- Eligible this pass: \`$total_selected\`"
+            echo "- Eligible: \`$total_selected\`"
             echo "- Deleted: \`$deleted\`"
             echo "- Left in place (state changed): \`$left\`"
             echo "- Failed, retried next pass: \`$failed\`"
           } >> "$GITHUB_STEP_SUMMARY"
 
-          # A few transient failures are expected and self-heal on the next
-          # pass, so they must not turn the run red. Only a pass that deleted
-          # nothing at all points at a real problem (permissions, token).
           if [ "$failed" -gt 0 ] && [ "$deleted" -eq 0 ]; then
-            echo "Every deletion failed - check the actions: write permission" >&2
+            echo "Every cancelled/skipped deletion failed - check actions: write permission" >&2
             exit 1
           fi
           if [ "$failed" -gt 0 ]; then
-            echo "::warning::$failed run(s) could not be deleted; retrying next pass"
+            echo "::warning::$failed cancelled/skipped run(s) could not be deleted"
           fi
 
-      - name: Delete logs from old failed workflow runs
+      - name: Keep only the 15 newest failed workflow runs
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
-          SELF_RUN_ID: ${{ github.run_id }}
           DRY_RUN: ${{ inputs.dry_run || false }}
-          MIN_AGE_MINUTES: ${{ inputs.min_age_minutes || '60' }}
           MAX_DELETIONS: ${{ inputs.max_deletions || '5000' }}
-          FAILED_LOGS_TO_KEEP: '15'
+          FAILED_RUNS_TO_KEEP: '15'
           PARALLELISM: '8'
         run: |
           set -euo pipefail
 
-          case "$MIN_AGE_MINUTES" in
-            ''|*[!0-9]*) echo "min_age_minutes must be a non-negative integer" >&2; exit 1 ;;
-          esac
           case "$MAX_DELETIONS" in
-            ''|*[!0-9]*|0) echo "max_deletions must be a positive integer" >&2; exit 1 ;;
+            ''|*[!0-9]*|0)
+              echo "max_deletions must be a positive integer" >&2
+              exit 1
+              ;;
           esac
-          case "$FAILED_LOGS_TO_KEEP" in
-            ''|*[!0-9]*) echo "FAILED_LOGS_TO_KEEP must be a non-negative integer" >&2; exit 1 ;;
+          case "$FAILED_RUNS_TO_KEEP" in
+            ''|*[!0-9]*)
+              echo "FAILED_RUNS_TO_KEEP must be a non-negative integer" >&2
+              exit 1
+              ;;
           esac
-
-          cutoff="$(date -u -d "-${MIN_AGE_MINUTES} minutes" +%Y-%m-%dT%H:%M:%SZ)"
-          echo "Repository:              $REPO"
-          echo "Failed-run logs retained: $FAILED_LOGS_TO_KEEP newest failed runs"
-          echo "Deleting older failed-run logs last updated before $cutoff"
-          echo "Safety cap:              $MAX_DELETIONS log deletions"
-          echo "Dry run:                 $DRY_RUN"
 
           candidates="$(mktemp)"
           ordered="$(mktemp)"
           selected="$(mktemp)"
 
-          # The run-level logs endpoint deletes all job logs for one workflow
-          # run while preserving the run itself. Restrict the listing and jq
-          # check to completed/failure so no other conclusion can be touched.
+          # Do NOT set exclude_pull_requests=true here. The retention policy is
+          # repository-wide and includes push, pull_request, workflow_dispatch,
+          # schedule, and all other failed workflow runs.
           gh api \
             -H "Accept: application/vnd.github+json" \
             --method GET \
             --paginate \
             --field per_page=100 \
             --field status=failure \
-            --field exclude_pull_requests=true \
             "repos/${REPO}/actions/runs" \
             --jq '
               .workflow_runs[]
               | select(.status == "completed")
               | select(.conclusion == "failure")
-              | [.id, .updated_at, .name, .created_at, .run_attempt] | @tsv
+              | [.id, .updated_at, .name, .created_at, .run_attempt,
+                 (.event // "-"), (.head_branch // "-")] | @tsv
             ' > "$candidates"
 
-          # Pagination may duplicate a run if the collection changes while
-          # being read. De-duplicate, then order by the time the run last
-          # changed. updated_at intentionally protects a newly re-run failure
-          # even when its original created_at is old.
           sort -u "$candidates" -o "$candidates"
-          sort -t"$(printf '\t')" -k2,2r "$candidates" > "$ordered"
 
-          # The first 15 failed runs keep their logs unconditionally. Only
-          # older entries can pass the age gate and batch cap.
+          # Newest failed run first. updated_at makes a newly failed rerun recent;
+          # created_at/id give deterministic tie breakers.
+          LC_ALL=C sort -t"$(printf '\t')" \
+            -k2,2r -k4,4r -k1,1nr \
+            "$candidates" > "$ordered"
+
+          # Retention is count-based, not age-based: keep the first 15 and
+          # delete every older failed run, subject only to the safety cap.
           awk -F'\t' \
-            -v keep="$FAILED_LOGS_TO_KEEP" \
-            -v cutoff="$cutoff" \
-            -v self="$SELF_RUN_ID" \
+            -v keep="$FAILED_RUNS_TO_KEEP" \
             -v cap="$MAX_DELETIONS" '
-              NR > keep && $1 != self && $2 < cutoff && n < cap { print; n++ }
+              NR > keep && n < cap {
+                print
+                n++
+              }
             ' "$ordered" > "$selected"
 
           total_failed="$(wc -l < "$ordered" | tr -d ' ')"
-          if [ "$total_failed" -lt "$FAILED_LOGS_TO_KEEP" ]; then
+          if [ "$total_failed" -lt "$FAILED_RUNS_TO_KEEP" ]; then
             retained="$total_failed"
           else
-            retained="$FAILED_LOGS_TO_KEEP"
+            retained="$FAILED_RUNS_TO_KEEP"
           fi
           total_selected="$(wc -l < "$selected" | tr -d ' ')"
+          excess=$((total_failed - retained))
 
-          echo "Failed runs found:          $total_failed"
+          echo "Failed workflow runs found: $total_failed"
           echo "Newest failed runs retained: $retained"
-          echo "Older log sets eligible:     $total_selected"
+          echo "Older failed runs above retention: $excess"
+          echo "Selected for deletion this pass: $total_selected"
+          echo "Safety cap: $MAX_DELETIONS"
 
           if [ "$total_selected" -eq 0 ]; then
             {
-              echo "### Failed-run log cleanup"
+              echo "### Failed-run retention"
               echo
               echo "- Failed runs found: \`$total_failed\`"
-              echo "- Newest failed-run logs retained: \`$retained\`"
-              echo "- Nothing eligible this pass"
+              echo "- Newest failed runs retained: \`$retained\`"
+              echo "- Deleted: \`0\`"
             } >> "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
 
-          echo "Selected failed runs whose logs will be deleted:"
-          awk -F'\t' '{ printf "  %s  run %s  attempt %s  (%s)\n", $2, $1, $5, $3 }' "$selected"
+          echo "Selected old failed runs:"
+          awk -F'\t' '{
+            printf "  %s  run %s  attempt %s  event %s  branch %s  (%s)\n",
+                   $2, $1, $5, $6, $7, $3
+          }' "$selected"
 
           if [ "$DRY_RUN" = "true" ]; then
             {
-              echo "### Failed-run log cleanup (dry run)"
+              echo "### Failed-run retention (dry run)"
               echo
               echo "- Failed runs found: \`$total_failed\`"
-              echo "- Newest failed-run logs retained: \`$retained\`"
-              echo "- Would delete log sets: \`$total_selected\`"
-              echo "- Failed run/check records remain intact"
+              echo "- Newest failed runs retained: \`$retained\`"
+              echo "- Would delete whole failed runs: \`$total_selected\`"
+              echo "- Deleting a run also removes its job logs"
             } >> "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
@@ -370,13 +317,13 @@ jobs:
           worker="$(mktemp)"
           export RESULTS="$results"
 
-          # Re-check immediately before deletion. A manual re-run can move an
-          # old failed run back to queued/in_progress after the listing above;
-          # in that case its logs are left alone until a later cleanup pass.
           cat > "$worker" <<'WORKER'
           #!/usr/bin/env bash
           set -uo pipefail
           id="$1"
+
+          # A manual rerun can move an old failure back to queued/in_progress
+          # after selection. Never delete it unless it is still completed/failure.
           state="$(gh api "repos/${REPO}/actions/runs/${id}" \
             --jq '"\(.status)/\(.conclusion)"' </dev/null 2>/dev/null || true)"
           if [ "$state" != "completed/failure" ]; then
@@ -385,13 +332,14 @@ jobs:
           fi
 
           for attempt in 1 2 3; do
-            if gh api --method DELETE "repos/${REPO}/actions/runs/${id}/logs" \
+            if gh api --method DELETE "repos/${REPO}/actions/runs/${id}" \
                 --silent </dev/null 2>/dev/null; then
               printf 'OK\t%s\n' "$id" >> "$RESULTS"
               exit 0
             fi
             sleep "$attempt"
           done
+
           printf 'FAIL\t%s\n' "$id" >> "$RESULTS"
           exit 0
           WORKER
@@ -403,32 +351,25 @@ jobs:
           left="$(grep -c '^SKIP' "$results" || true)"
           failed="$(grep -c '^FAIL' "$results" || true)"
 
-          echo "Log sets deleted: $deleted   Left in place: $left   Failed: $failed"
-          if [ "$left" -gt 0 ]; then
-            echo "Left in place because their state changed:"
-            grep '^SKIP' "$results" | awk -F'\t' '{ printf "  run %s is now %s\n", $2, $3 }'
-          fi
-          if [ "$failed" -gt 0 ]; then
-            echo "Failed to delete logs (will be retried next pass):"
-            grep '^FAIL' "$results" | awk -F'\t' '{ printf "  run %s\n", $2 }'
-          fi
+          echo "Failed runs deleted: $deleted"
+          echo "Left in place because state changed: $left"
+          echo "Deletion failures: $failed"
 
           {
-            echo "### Failed-run log cleanup"
+            echo "### Failed-run retention"
             echo
-            echo "- Failed runs found: \`$total_failed\`"
-            echo "- Newest failed-run logs retained: \`$retained\`"
-            echo "- Eligible log sets this pass: \`$total_selected\`"
-            echo "- Log sets deleted: \`$deleted\`"
+            echo "- Failed runs found before cleanup: \`$total_failed\`"
+            echo "- Newest failed runs retained: \`$retained\`"
+            echo "- Eligible old failed runs: \`$total_selected\`"
+            echo "- Whole failed runs deleted: \`$deleted\`"
             echo "- Left in place (state changed): \`$left\`"
             echo "- Failed, retried next pass: \`$failed\`"
-            echo "- Failed run/check records remain intact"
           } >> "$GITHUB_STEP_SUMMARY"
 
           if [ "$failed" -gt 0 ] && [ "$deleted" -eq 0 ]; then
-            echo "Every failed-run log deletion failed - check actions: write permission" >&2
+            echo "Every failed-run deletion failed - check actions: write permission" >&2
             exit 1
           fi
           if [ "$failed" -gt 0 ]; then
-            echo "::warning::$failed failed-run log set(s) could not be deleted; retrying next pass"
+            echo "::warning::$failed old failed run(s) could not be deleted"
           fi
