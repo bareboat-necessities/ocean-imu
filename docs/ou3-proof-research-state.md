@@ -113,6 +113,60 @@ a lower bound -- but the segment floor may be a lossy proxy for the true relativ
 injection margin, and that is a candidate explanation for `delta` landing near
 1e-18.
 
+## Measured: the margin deficit is about 9 orders, and neither enclosure nor scalarization explains it
+
+`delta` was computed directly against the real `Sigma_upper` from
+`HIST.endpoint_phase_upper`, at phase 0, for three source nodes. The target is
+identical across them:
+
+`Sigma_upper (v,p,S,a_w) = [1.119e9, 3.970e9, 7.179e9, 1.109e3]`
+
+| node | delta with `rho*I` (global rho 8.69e-8) | delta with the true anisotropic segment floor | gain | binding group |
+| --- | --- | --- | --- | --- |
+| 0 | 1.890285e-31 | 1.610690e-27 | 8.5e3 | S |
+| 137 | 1.890285e-31 | 1.518656e-27 | 8.0e3 | S |
+| 729 | 1.890285e-31 | 1.607829e-28 | 8.5e2 | S |
+
+The canonical gate is `1e-18`. The current isotropic floor is **13 orders**
+short; repairing it to the full anisotropic floor still leaves **9 orders**.
+
+Two consequences.
+
+First, the isotropic `rho*I` collapse is a real defect worth about 8.5e3, but it
+is not the limiter. An earlier estimate in this ledger put the gain at ~5e6 from
+the anisotropy ratio `lambda_max/lambda_min ~ 4e6`; that was wrong. `delta`
+comes from a matrix PSD binary search, not the diagonal bracket: for node 0 the
+S per-group ratio `d_i^2 Pz_ii/upper_i` is 9.2e-24 while the certified `delta`
+is 1.6e-27, about 5700 times lower.
+
+Second, and more important: **no enclosure or scalarization work can close a 9
+order gap.** Taylor models, tighter collapses, finer subdivision and the
+sigma/R_S cost reduction are all worth factors of 10^3 or less against a deficit
+of 10^9. They should not be pursued as a route to the gate.
+
+### Where the deficit plausibly comes from
+
+The S group binds everywhere, and its ratio is a tiny floor over a very large
+ceiling. `Sigma_upper` for S is `7.18e9 (m.s)^2`, a standard deviation near
+85000 m.s, against a declared entrance box of 300 m.s -- the ceiling is the
+same-history covariance propagated over the word, some 8e4 times the entrance.
+The floor is `h^6 * Pz[2][2] = 1.5625e-14 * 4.25 = 6.6e-14`.
+
+`common_boundary_floor` discards all older process covariance and restarts every
+segment from `P = 0`, which is what makes the segment bound easy to state. For a
+triple-integrated OU state the accumulated floor grows steeply in horizon; over
+the 635 sample word versus a 13 sample segment that is roughly
+`(635/13)^7 ~ 1.4e12`, the right order to cover a 10^9 deficit. This is the same
+conservatism that makes the S=0 pseudo-measurement inert over a segment.
+
+Hypothesis to test before any further enclosure work: the zero-start
+per-segment floor, not its enclosure, is what costs the margin. The falsifiable
+version is to propagate a floor across a horizon long enough to contain the
+four-`S` spread and recompute `delta` against the same `Sigma_upper`. If
+`delta` moves by orders, the segment formulation is the limiter and the fix is
+structural. If it does not, the theorem formulation itself is marginal and
+should be reconsidered rather than re-enclosed.
+
 ## Master P3 quantity
 
 The new backend is relevant only if it produces the complete-segment matrix lower used by canonical P3:
