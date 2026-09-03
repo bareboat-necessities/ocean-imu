@@ -60,6 +60,7 @@ from ou3_interval import Interval, symmetric_positive_definite_ldlt
 import ou3_p2_correlation_path_memory as CORR
 import ou3_p3_correlated_translation_segment as SEG
 import ou3_p3_frozen_full_matrix_translation as FROZEN
+import ou3_p3_scaled_process as SCALED
 import ou3_p3_p2_v1_history_frontier as HIST
 import ou3_source_reachable_matrix_p3 as BASE
 
@@ -136,7 +137,7 @@ def common_boundary_floor(domain_path: Path = DEFAULT_DOMAIN) -> dict:
             images = SEG.segment_images(zero, s, int(gap), rt, path)
             local = math.inf
             for row in images:
-                rho = FROZEN.certified_rho(row["posterior"])
+                rho = SCALED.certified_rho(row["posterior"])
                 if not rho > 0.0:
                     raise RuntimeError(
                         f"one-complete-segment selected covariance lost strict SPD at source {s}, gap {gap}"
@@ -192,7 +193,7 @@ def phase_row(source_node: int, phase_samples: int, fr: dict, boundary: dict,
     h = float(fr["rt"]["clock"]["dt_binary32_s"])
     images = _phase_images_cached(t, r, rho, path)
     deltas = [_certified_delta(P, h, upper) for P in images]
-    phase_rhos = [FROZEN.certified_rho(P) for P in images]
+    phase_rhos = [SCALED.certified_rho(P) for P in images]
     delta = min(deltas) if deltas else 0.0
     phase_rho = min(phase_rhos) if phase_rhos else 0.0
     return {
