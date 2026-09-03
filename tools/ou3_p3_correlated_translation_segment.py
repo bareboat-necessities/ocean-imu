@@ -117,21 +117,8 @@ def _node_x_subcells(node: dict, h: float, count: int = X_SUBCELLS):
     return FROZEN._split_x(xlo, xhi, count)
 
 
-def _common_point_lower(A):
-    """Return point L with A_real >= L for every symmetric A_real in A.
-
-    ``A`` is first symmetrically hulled.  For each entry choose a binary64
-    center c_ij inside its interval and an outward radius r_ij.  Because the
-    represented matrices are symmetric,
-
-        ||A_real-C||_2 <= ||A_real-C||_inf
-                         <= max_i sum_j r_ij = eps.
-
-    Hence C-eps I is a common Loewner lower.  The diagonal subtraction is
-    rounded toward -infinity.  This construction intentionally trades a small
-    amount of sharpness for a non-recursive, independently auditable PSD/order
-    argument.
-    """
+def _center_and_radius(A):
+    """Symmetric binary64 center/radius decomposition of an interval matrix."""
     A = FROZEN._sym(A)
     n = len(A)
     if n == 0 or any(len(row) != n for row in A):
@@ -155,16 +142,93 @@ def _common_point_lower(A):
             r = BASE.up(max(radius[i][j], radius[j][i]))
             radius[i][j] = r
             radius[j][i] = r
+    return center, radius, n
+
+
+def _absolute_row_sum_epsilon(radius, n: int) -> float:
     eps = 0.0
     for i in range(n):
         row = 0.0
         for j in range(n):
             row = BASE.up(row + radius[i][j])
         eps = max(eps, row)
-    eps = BASE.up(eps)
+    return BASE.up(eps)
+
+
+def _scaled_row_sum_epsilon(radius, scale, n: int) -> float:
+    """max_i sum_j r_ij/(d_i d_j), rounded toward +infinity.
+
+    The denominator is rounded toward zero so the quotient stays an upper
+    bound.  A denominator that underflows leaves no usable relative scaling.
+    """
+    eps = 0.0
+    for i in range(n):
+        row = 0.0
+        for j in range(n):
+            denom = BASE.down(scale[i] * scale[j])
+            if not denom > 0.0:
+                raise ArithmeticError("relative Loewner scaling underflowed")
+            row = BASE.up(row + BASE.up(radius[i][j] / denom))
+        eps = max(eps, row)
+    return BASE.up(eps)
+
+
+def _common_point_lower(A):
+    """Return point L with A_real >= L for every symmetric A_real in A.
+
+    ``A`` is first symmetrically hulled.  For each entry choose a binary64
+    center c_ij inside its interval and an outward radius r_ij, so every
+    represented symmetric A_real satisfies A_real=C+E with |E_ij|<=r_ij.
+
+    For any positive diagonal D=diag(d_i),
+
+        ||D^-1 E D^-1||_2 <= ||D^-1 E D^-1||_inf
+                          <= max_i sum_j r_ij/(d_i d_j) = eps_D,
+
+    hence D^-1 E D^-1 >= -eps_D I and therefore
+
+        A_real >= C - eps_D D^2.
+
+    The translation states are v/h, p/h^2, S/h^3 and a_w, whose certified
+    covariance magnitudes differ by many orders.  A single absolute shift
+    (D=I) is dominated by the largest block and destroys strict positivity of
+    the smallest one, so the shift is taken in the natural relative scaling
+    d_i=sqrt(c_ii) whenever the center diagonal is strictly positive.  Then
+    the correction is exactly the relative shave
+
+        L_ii = c_ii (1-eps_D),   L_ij = c_ij  (i!=j),
+
+    which respects the dynamic range instead of flattening it.  D=I is
+    retained as the fallback whenever some center diagonal is nonpositive,
+    where no relative scaling exists.  Both branches are non-recursive and
+    independently auditable, and the diagonal subtraction is rounded toward
+    -infinity.
+    """
+    center, radius, n = _center_and_radius(A)
+    scale = []
+    relative = True
+    for i in range(n):
+        if center[i][i] <= 0.0:
+            relative = False
+            break
+        scale.append(BASE.down(math.sqrt(center[i][i])))
+        if not scale[-1] > 0.0:
+            relative = False
+            break
+
+    if relative:
+        try:
+            eps = _scaled_row_sum_epsilon(radius, scale, n)
+            shift = [BASE.up(eps * BASE.up(scale[i] * scale[i])) for i in range(n)]
+        except ArithmeticError:
+            relative = False
+    if not relative:
+        eps = _absolute_row_sum_epsilon(radius, n)
+        shift = [eps] * n
+
     L = [[_point(center[i][j]) for j in range(n)] for i in range(n)]
     for i in range(n):
-        L[i][i] = _point(BASE.down(center[i][i] - eps))
+        L[i][i] = _point(BASE.down(center[i][i] - shift[i]))
     return FROZEN._sym(L), eps
 
 
