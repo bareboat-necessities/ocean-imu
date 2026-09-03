@@ -20,6 +20,20 @@ class FourMaxGlobalLabelWitnessTests(unittest.TestCase):
     def test_global_mask_is_all_four_coordinates(self):
         self.assertEqual(M.FULL_MASK, 0b1111)
 
+    def test_min_gap_successors_keeps_cheapest_exact_support(self):
+        rt = {
+            "nodes": [{}, {}],
+            "gaps": [13, 14],
+            "labelled_successors": [
+                [{1}, {0, 1}],
+                [{1}, {0}],
+            ],
+        }
+        self.assertEqual(
+            M.min_gap_successors(rt),
+            [((0, 14), (1, 13)), ((0, 14), (1, 13))],
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
