@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import json
 import math
 import sys
 import unittest
@@ -10,6 +11,7 @@ if str(TOOLS) not in sys.path:
     sys.path.insert(0, str(TOOLS))
 
 from ou3_interval import symmetric_positive_definite_ldlt
+import ou3_p3_long_horizon_floor_probe as PROBE
 import ou3_p3_p2_v1_stage_phase_translation as P
 import ou3_source_reachable_matrix_p3 as BASE
 
@@ -63,6 +65,37 @@ class P2V1StagePhaseTranslationTests(unittest.TestCase):
         # form a complete fresh constant-source segment on their own.
         self.assertLess(P.FROZEN_FRESH_HISTORY_SAMPLES, max(P.PHASES) + 1)
         self.assertEqual(max(P.FROZEN_TRANSIENT_SAMPLES) + 1, P.FROZEN_FRESH_HISTORY_SAMPLES)
+
+    def test_long_horizon_zero_start_hypothesis_is_measured_not_tuned(self):
+        # This is the one falsifiable experiment requested by the PR #473
+        # research ledger.  It does not assert that the probe reaches 1e-18;
+        # either outcome is useful.  The assertions are only proof hygiene:
+        # exact frozen source binding, unchanged canonical gate, exact full-word
+        # horizon, same-history upper, and no theorem promotion.
+        d = PROBE.build(source_node=137)
+        self.assertEqual(PROBE.validate(d), [])
+        self.assertEqual(d["source_node"], 137)
+        self.assertEqual(d["canonical_useful_gate"], 1.0e-18)
+        self.assertFalse(d["canonical_gate_changed"])
+        self.assertFalse(d["source_complete_full_word_lower_established"])
+        self.assertFalse(d["P3_PROMOTED"])
+        self.assertFalse(d["P4_PROMOTED"])
+        self.assertFalse(d["P5_PROMOTED"])
+        self.assertEqual(
+            d["horizons"][-1]["samples"],
+            d["full_word_target"]["target_samples"],
+        )
+        print("P3_LONG_HORIZON_STRUCTURAL_PROBE " + json.dumps({
+            "source_node": d["source_node"],
+            "Sigma_upper": d["Sigma_translation_diagonal_upper_envelope"],
+            "horizons": d["horizons"],
+            "reference_segment_margin_lower": d["reference_segment_margin_lower"],
+            "full_word_margin_lower": d["full_word_margin_lower"],
+            "margin_growth_factor_lower": d["margin_growth_factor_lower"],
+            "margin_growth_orders_log10": d["margin_growth_orders_log10"],
+            "classification": d["classification"],
+            "next_obligation": d["next_obligation"],
+        }, sort_keys=True))
 
 
 if __name__ == "__main__":
