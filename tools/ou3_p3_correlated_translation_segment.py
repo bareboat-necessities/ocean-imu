@@ -28,8 +28,8 @@ flatten source histories and cannot promote P3/P4/P5 by itself.
 from __future__ import annotations
 
 import argparse
+import functools
 import json
-import math
 from pathlib import Path
 
 from ou3_interval import Interval, symmetric_positive_definite_ldlt
@@ -39,7 +39,7 @@ import ou3_source_reachable_matrix_p3 as BASE
 
 REPO = Path(__file__).resolve().parents[1]
 DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
-SCHEMA = 1
+SCHEMA = 2
 X_SUBCELLS = 4
 
 
@@ -51,12 +51,21 @@ def _scale(A, s: Interval):
     return [[s * A[i][j] for j in range(len(A[0]))] for i in range(len(A))]
 
 
-def _physical_measurement_variances(node: dict, h: float) -> tuple[float, float]:
+@functools.lru_cache(maxsize=1)
+def _acc_measurement_variance() -> float:
     vc = BASE.VECTOR.build()["configured_measurement_bounds"]
-    R_aw = BASE.down(BASE.pos(vc["acc_measurement_std_mps2"], "acc std") ** 2)
+    return BASE.down(BASE.pos(vc["acc_measurement_std_mps2"], "acc std") ** 2)
+
+
+@functools.lru_cache(maxsize=1)
+def _strongest_S_axis_factor() -> float:
+    return float(min(BASE.source_rs_axis_std_factors()))
+
+
+def _physical_measurement_variances(node: dict, h: float) -> tuple[float, float]:
+    R_aw = _acc_measurement_variance()
     rs = Interval(*map(float, node["R_S_filter_std"]))
-    axis_factor = min(BASE.source_rs_axis_std_factors())
-    rS = BASE.down(rs.lo * axis_factor)
+    rS = BASE.down(rs.lo * _strongest_S_axis_factor())
     # z_S=S/h^3, hence H_z=[0,0,h^3,0] for the physical S measurement.
     # Equivalently use coordinate z_S with R_z=R_S/h^6.
     R_S_z = BASE.down(BASE.down(rS * rS) / BASE.up(h ** 6))
@@ -166,6 +175,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN,
         "tau_sigma_R_S_same_source_cell_per_segment": True,
         "full_4x4_translation_matrix_retained": True,
         "strongest_translation_measurements_every_sample": True,
+        "fixed_measurement_constants_cached": True,
         "gap_alphabet_samples": list(rt["gaps"]),
         "representative_rows": rows,
         "P3_PROMOTED": False,
@@ -188,6 +198,7 @@ def validate(d: dict) -> list[str]:
         "tau_sigma_R_S_same_source_cell_per_segment",
         "full_4x4_translation_matrix_retained",
         "strongest_translation_measurements_every_sample",
+        "fixed_measurement_constants_cached",
     ):
         if d.get(key) is not True:
             f.append(f"{key} is not true")
