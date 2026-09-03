@@ -30,6 +30,13 @@ retain arbitrary PSD cross covariance through the safe marginal bound
 
     H P H' <= ( |f| sqrt(U_theta) + sqrt(U_aw) [+ sqrt(U_ba)] )^2 I.
 
+The a_w and b_a covariance terms still belong in S because they are genuine
+linear measurement directions.  They no longer create nonlinear eta: the
+active remainder primitive uses the exact block-orthogonal co-rotated a_w
+coordinate, in which accelerometer eta is pure attitude rotation.  Thus the
+a_w uncertainty can weaken Joseph information through S without being charged a
+second time as a nonlinear R^-1 penalty.
+
 For magnetometer only the attitude marginal enters.  We scan every one of the
 800 P2 source endpoints and both retained phase envelopes (stage-boundary and
 positive phase), in H=18 and A=21 modes.
@@ -54,7 +61,7 @@ import ou3_vector_uco_certificate as VECTOR
 
 REPO = Path(__file__).resolve().parents[1]
 DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
-SCHEMA = 1
+SCHEMA = 2
 MODES = ("H", "A")
 PHASE_ENVELOPES = (
     ("stage_boundary_0", "boundary_history_envelope"),
@@ -119,6 +126,7 @@ def _innovation_bounds(env: dict, mode: str, fmax: float, mmax: float,
     # For a PSD joint covariance with marginal ceilings U_i I, every cross
     # covariance is bounded by sqrt(U_i U_j).  Therefore the measurement-space
     # covariance is dominated by the square of the sum of block operator radii.
+    # The co-rotated a_w coordinate is orthogonal, so U_aw is unchanged.
     acc_radius = add_up(mul_up(fmax, sqrt_up(utheta)), sqrt_up(uaw))
     if mode == "A":
         acc_radius = add_up(acc_radius, sqrt_up(uba))
@@ -154,6 +162,12 @@ def evaluate(metric: dict, cayley: dict, remainder: dict, vector: dict,
         failures.append("metric attachment reintroduced Cartesian tuner extrema")
     if metric.get("finite_source_nodes") != 800:
         failures.append("metric attachment does not cover 800 source endpoints")
+    if remainder.get("accelerometer_corotated_aw_coordinate_used") is not True:
+        failures.append("signed-Joseph audit lost co-rotated a_w coordinate")
+    if remainder.get("accelerometer_corotated_aw_Joseph_congruence_exact") is not True:
+        failures.append("co-rotated a_w coordinate is not Joseph-congruence exact")
+    if float(remainder.get("acc_eta_aw_quadratic_coefficient_upper", math.nan)) != 0.0:
+        failures.append("active accelerometer remainder still charges nonlinear a_w eta")
 
     live = domain["normal_live"]
     fmax = _positive(live["specific_force_norm_upper_mps2"], "specific-force upper")
@@ -162,8 +176,11 @@ def evaluate(metric: dict, cayley: dict, remainder: dict, vector: dict,
 
     q = _positive(cayley["cayley_radius_upper"], "Cayley radius")
     eta_over_y2 = up(mul_up(q, q) / 4.0)
-    rot_minus_I = _positive(remainder["rotation_minus_identity_norm_upper"], "rotation-I norm")
-    aw_eta_Rinv_coeff = up(mul_up(rot_minus_I, rot_minus_I) / rv["acc_lower"])
+    aw_eta_Rinv_coeff = 0.0
+    legacy_aw = float(
+        remainder.get("legacy_original_coordinate_diagnostic", {})
+        .get("aw_quadratic_coefficient_upper", math.nan)
+    )
 
     rows = []
     worst = {
@@ -237,13 +254,16 @@ def evaluate(metric: dict, cayley: dict, remainder: dict, vector: dict,
         "outer_angle_rad": float(cayley["outer_angle_rad"]),
         "cayley_radius_upper": q,
         "exact_pure_rotation_eta_squared_over_exact_residual_squared_upper": eta_over_y2,
+        "accelerometer_corotated_aw_coordinate_used": True,
+        "accelerometer_aw_eta_eliminated_by_exact_orthogonal_congruence": True,
         "accelerometer_aw_eta_Rinv_quadratic_coefficient_upper": aw_eta_Rinv_coeff,
+        "legacy_original_coordinate_aw_eta_quadratic_coefficient_upper": legacy_aw,
+        "aw_covariance_still_retained_in_innovation_S": True,
         "finite_source_phase_mode_classes_scanned": len(rows),
         "expected_source_phase_mode_classes": expected,
         "worst_by_mode": worst,
         "per_operation_scalar_signed_rotation_credit_positive_everywhere": local_scalar,
         "directional_signed_forms_must_survive_to_word_scalarization": not local_scalar,
-        "accelerometer_aw_remainder_requires_joint_directional_word_accounting": True,
         "complete_H18_A21_word_established_here": False,
         "P4_USABLE_CERTIFICATE_PROMOTED": False,
         "rows": rows,
@@ -271,15 +291,26 @@ def validate(d: dict) -> list[str]:
         f.append("schema mismatch")
     if d.get("qualification") != "OU3_P4_SOURCE_CORRELATED_SIGNED_JOSEPH_FEASIBILITY_AUDIT":
         f.append("wrong qualification")
-    for key in ("source_generated_not_trajectory_fit", "same_history_P3_metric_consumed",
-                "accelerometer_aw_remainder_requires_joint_directional_word_accounting"):
+    for key in (
+        "source_generated_not_trajectory_fit", "same_history_P3_metric_consumed",
+        "accelerometer_corotated_aw_coordinate_used",
+        "accelerometer_aw_eta_eliminated_by_exact_orthogonal_congruence",
+        "aw_covariance_still_retained_in_innovation_S",
+    ):
         if d.get(key) is not True:
             f.append(f"{key} is not true")
-    for key in ("trajectory_replay_used", "filter_changed", "declared_domain_changed",
-                "independent_cartesian_tau_sigma_R_S_extrema_used",
-                "complete_H18_A21_word_established_here", "P4_USABLE_CERTIFICATE_PROMOTED"):
+    for key in (
+        "trajectory_replay_used", "filter_changed", "declared_domain_changed",
+        "independent_cartesian_tau_sigma_R_S_extrema_used",
+        "complete_H18_A21_word_established_here", "P4_USABLE_CERTIFICATE_PROMOTED",
+    ):
         if d.get(key) is not False:
             f.append(f"{key} is not false")
+    if d.get("accelerometer_aw_eta_Rinv_quadratic_coefficient_upper") != 0.0:
+        f.append("signed-Joseph audit reintroduced a nonlinear a_w eta penalty")
+    legacy = d.get("legacy_original_coordinate_aw_eta_quadratic_coefficient_upper")
+    if not isinstance(legacy, (int, float)) or isinstance(legacy, bool) or not math.isfinite(float(legacy)) or float(legacy) <= 0.0:
+        f.append("legacy original-coordinate a_w diagnostic is not finite positive")
     if int(d.get("finite_source_phase_mode_classes_scanned", 0)) != 800 * 2 * 2:
         f.append("signed-Joseph audit did not cover all 800 x 2 x H/A classes")
     if d.get("directional_signed_forms_must_survive_to_word_scalarization") is not (
@@ -288,10 +319,12 @@ def validate(d: dict) -> list[str]:
         f.append("directional/scalarization verdict is inconsistent")
     for mode in MODES:
         row = d.get("worst_by_mode", {}).get(mode, {})
-        for key in ("accelerometer_force_rotation_signed_fraction_lower",
-                    "magnetometer_rotation_signed_fraction_lower",
-                    "accelerometer_innovation_retention_lower",
-                    "magnetometer_innovation_retention_lower"):
+        for key in (
+            "accelerometer_force_rotation_signed_fraction_lower",
+            "magnetometer_rotation_signed_fraction_lower",
+            "accelerometer_innovation_retention_lower",
+            "magnetometer_innovation_retention_lower",
+        ):
             x = row.get(key)
             if not isinstance(x, (int, float)) or isinstance(x, bool) or not math.isfinite(float(x)):
                 f.append(f"{mode}: {key} is not finite")
@@ -313,6 +346,7 @@ def main() -> int:
     a.output.write_text(json.dumps(d, indent=2, sort_keys=True), encoding="utf-8")
     print(json.dumps({
         "eta2_over_y2_upper": d.get("exact_pure_rotation_eta_squared_over_exact_residual_squared_upper"),
+        "aw_eta_Rinv_coefficient": d.get("accelerometer_aw_eta_Rinv_quadratic_coefficient_upper"),
         "H": d.get("worst_by_mode", {}).get("H"),
         "A": d.get("worst_by_mode", {}).get("A"),
         "local_scalar_signed_credit_everywhere": d.get("per_operation_scalar_signed_rotation_credit_positive_everywhere"),
