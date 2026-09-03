@@ -309,6 +309,54 @@ state that limitation explicitly, and a cheap direct check of the innovation
 sign convention against each shipping update is worth adding independently of
 the P3/P4 work.
 
+## The translation ceiling credits 3 of about 211 S firings
+
+Raised as a challenge: `R_S` is the filter's major stabilizing force by design,
+so why does this ledger read as though it degrades the bound? The challenge is
+right and the earlier framing was wrong.
+
+| | S observations per word |
+| --- | --- |
+| proof covariance ceiling (`integrator_inverse`, 3x3, "three possibly correlated selected observations") | **3** |
+| proof observability route (`FOUR_S_SPREAD_COMPLETE_V_P_S_AW_UCO`, `aligned_firing_count`) | **4** |
+| shipping filter at the default `pseudo_update_period_s_ = 0.015` | **~211** |
+| shipping filter at the worst admissible cadence 0.25 s | 13 |
+| shipping filter at the fastest cadence 5 ms | 634 |
+
+`translation_upper` bounds the translation covariance by inverting a
+three-point integrator observation over a 0.765 s spread. The filter applies the
+`S = 0` pseudo-measurement roughly 211 times across the 3.17 s word. So the
+ceiling discards about 98 percent of the stabilizing information and then
+reports the resulting ill-conditioned inverse as the filter's covariance.
+
+Two earlier statements in this ledger were true of that model and false as
+statements about the filter, and are withdrawn as framing:
+
+* "the `S=0` pseudo-measurement is inert" -- true over a 65 ms segment carrying
+  0 to 4 firings, and says nothing about `R_S` over a word;
+* "even the tightest `R_S` leaves a 1444 m/s ceiling" -- that is the ceiling of
+  the three-point inversion, not of the filter.
+
+Widening the observation baseline does not rescue it. Sweeping the spread:
+
+| Tpe | spacing | Tword | Sigma_upper v | v std |
+| --- | --- | --- | --- | --- |
+| 1.0 | 1.00 | 3.17 | 1.119e9 | 33459 m/s |
+| 2.0 | 2.00 | 6.17 | 1.669e7 | **4085 m/s** |
+| 4.0 | 4.00 | 12.17 | 2.836e7 | 5325 m/s |
+| 8.0 | 8.00 | 24.17 | 5.492e8 | 23440 m/s |
+
+The optimum near `Tpe = 2` is 67x better than the deployed configuration but
+still three orders beyond any boat, because a longer word accumulates more
+process noise. **The limiter is the firing count, not the baseline.**
+
+This relocates the 9 order deficit again, and this time onto something that is
+a modelling choice rather than a property of the filter. It is not the
+enclosure, not the isotropic collapse (8.5e3), and not domain realism
+(about 3 orders). Crediting the S firings the filter actually performs is the
+first thing to try, and nothing else in this ledger should be attempted before
+it.
+
 ## Master P3 quantity
 
 The new backend is relevant only if it produces the complete-segment matrix lower used by canonical P3:
