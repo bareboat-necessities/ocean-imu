@@ -27,11 +27,9 @@ from __future__ import annotations
 import argparse
 import heapq
 import json
-import math
 from pathlib import Path
 
 import ou3_p2_correlation_path_memory as CORR
-import ou3_p3_matched_history_cost_frontier as COST
 import ou3_p3_p2_v1_history_frontier as HIST
 import ou3_source_reachable_matrix_p3 as BASE
 
@@ -53,6 +51,29 @@ def source_max_mask(rank: tuple[int, int, int, int], global_rank: tuple[int, int
     return sum((1 << j) for j in range(4) if int(rank[j]) == int(global_rank[j]))
 
 
+def min_gap_successors(rt: dict) -> list[tuple[tuple[int, int], ...]]:
+    """Return each exact P2 source edge with its cheapest certified supporting gap."""
+    gaps = tuple(map(int, rt["gaps"]))
+    labelled = rt["labelled_successors"]
+    out: list[tuple[tuple[int, int], ...]] = []
+    for s in range(len(rt["nodes"])):
+        best: dict[int, int] = {}
+        for gi, gap in enumerate(gaps):
+            for t0 in labelled[s][gi]:
+                t = int(t0)
+                old = best.get(t)
+                if old is None or gap < old:
+                    best[t] = gap
+        if not best:
+            raise RuntimeError(f"P2 source {s} has no finite-clock successor")
+        row = tuple(sorted((t, g) for t, g in best.items()))
+        for t, gap in row:
+            if t not in labelled[s][gaps.index(gap)]:
+                raise RuntimeError("minimum-gap edge is not an exact labelled P2 transition")
+        out.append(row)
+    return out
+
+
 def shortest_global_label_witness(rt: dict, ranks: list[tuple[int, int, int, int]],
                                   target_samples: int) -> dict:
     """Find the minimum-cost legal source history attaining all four global maxima.
@@ -68,7 +89,7 @@ def shortest_global_label_witness(rt: dict, ranks: list[tuple[int, int, int, int
     N = int(target_samples)
     if N <= 0:
         raise ValueError("positive target sample count required")
-    edges = COST.min_gap_successors(rt)
+    edges = min_gap_successors(rt)
     starts = HIST._start_nodes(rt)
     if not starts:
         raise RuntimeError("P2 V1 has no legal staged start source")
@@ -220,7 +241,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
             "replace the four independent path maxima in the covariance upper by a time-ordered/segmented source-history representation; "
             "do not run another covariance lower against the global four-max envelope"
             if reachable else
-            "finish the finite-cost matched-history frontier and compute grouped matched lower/upper margins"
+            "reconsider the source-history quotient because the expected collapse witness disappeared"
         ),
         "failures": [],
     }
