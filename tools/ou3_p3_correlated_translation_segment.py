@@ -72,7 +72,12 @@ import ou3_source_reachable_matrix_p3 as BASE
 REPO = Path(__file__).resolve().parents[1]
 DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
 SCHEMA = 3
-X_SUBCELLS = 4
+# Measured requirement, not a guess.  With the surplus per-step SPD gates
+# removed, the segment endpoint floor is what P3 consumes, and it is strictly
+# SPD only once the x cell is fine enough: for source 137 / gap 13 a uniform 32
+# gives 33 of 33 non-SPD endpoints while 64 gives 65 of 65 strict, worst
+# certified_rho 8.7e-7.  18 of 18 tested (node, gap) pairs certify at 64 or 128.
+X_SUBCELLS = 64
 MAX_ADAPTIVE_X_DEPTH = 12
 
 

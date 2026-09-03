@@ -45,7 +45,7 @@ class CorrelatedTranslationSegmentTests(unittest.TestCase):
 
     def test_zero_start_segment_is_strict_full_matrix(self):
         rt = CORR.runtime()
-        rows = S.segment_images(F._mat_zero(), 137, 13, rt, x_subcells=2)
+        rows = S.segment_images(F._mat_zero(), 137, 13, rt, x_subcells=S.X_SUBCELLS)
         self.assertGreater(len(rows), 0)
         for row in rows:
             P = row["posterior"]
@@ -65,7 +65,7 @@ class CorrelatedTranslationSegmentTests(unittest.TestCase):
         t = CORR.successors(s, gap, rt)[0]
         tr = CORR.transition(c, s, gap, t, rt)
         self.assertEqual(tr["following_segment_applied_node"], s)
-        rows = S.segment_images(F._mat_zero(), s, gap, rt, x_subcells=1)
+        rows = S.segment_images(F._mat_zero(), s, gap, rt, x_subcells=S.X_SUBCELLS)
         self.assertGreater(len(rows), 0)
         self.assertTrue(all(r["posterior_is_common_Loewner_lower"] for r in rows))
         self.assertTrue(all(symmetric_positive_definite_ldlt(r["posterior"])[0] for r in rows))
