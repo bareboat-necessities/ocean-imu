@@ -18,15 +18,14 @@ actually attained somewhere on that same history is conservative:
 * sigma(t)^2 <= max_path sigma^2 for nuisance/initial-wave terms; and
 * every S measurement covariance is <= the path maximum R_S variance.
 
-This preserves history correlation without requiring the full source trajectory
-as an explicit theorem state.  A future source-complete P3 producer may retain a
-Pareto set / invariant enclosure of these sufficient statistics, but it must
-not independently maximize them across unrelated histories before comparison
-with the process lower.
+The summarized source history MUST cover the complete covariance-observability
+word produced by these same statistics.  A short history is rejected rather
+than silently extrapolated.  This preserves history correlation without using
+replay values or independently mixing global source extrema.
 
 This module validates the single-history sufficient-statistic theorem and emits
-representative legal histories.  It does not yet enumerate all source histories
-and cannot promote P3/P4/P5 by itself.
+representative legal full-word histories.  It does not yet enumerate all source
+histories and cannot promote P3/P4/P5 by itself.
 """
 from __future__ import annotations
 
@@ -41,16 +40,10 @@ import ou3_source_reachable_matrix_p3 as BASE
 
 REPO = Path(__file__).resolve().parents[1]
 DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
-SCHEMA = 1
+SCHEMA = 2
 
 
 def _path_segments(start_pair: tuple[int, int], transitions: list[tuple[int, int]], rt) -> list[dict]:
-    """Validate a V1 pair-shift history and return its applied segment kernels.
-
-    ``transitions`` contains ``(gap, next_staged_node)`` records.  If the
-    current pair is (c,s), the following segment uses source s, then the pair
-    shifts to (s,t).
-    """
     c, s = map(int, start_pair)
     if not CORR.legal_pair(c, s, rt):
         raise ValueError("start pair is not reachable in P2 V1")
@@ -106,8 +99,8 @@ def summarize_segments(segments: list[dict], sched: dict) -> dict:
     }
 
 
-def translation_upper_from_summary(summary: dict, Tpe: float, sched: dict) -> tuple[list[float], dict]:
-    """Evaluate the retained translation covariance theorem from path stats."""
+def translation_upper_from_summary(summary: dict, Tpe: float, sched: dict,
+                                   *, require_history_cover: bool = True) -> tuple[list[float], dict]:
     if summary.get("all_statistics_from_one_legal_P2_history") is not True:
         raise ValueError("same-history source summary required")
     if summary.get("independent_global_source_extrema_used") is not False:
@@ -126,8 +119,14 @@ def translation_upper_from_summary(summary: dict, Tpe: float, sched: dict) -> tu
     spacing = BASE.up(max(Tpe, 2.0 * gap))
     Tobs = BASE.up(2.0 * spacing + gap)
     Tword = BASE.up(Tobs + Tpe)
-    Binv = BASE.integrator_inverse(gap, spacing)
+    history_lo = float(summary["history_duration_s"][0])
+    history_covers_word = history_lo >= Tword
+    if require_history_cover and not history_covers_word:
+        raise ValueError(
+            f"same-history source summary covers only {history_lo:.17g}s but covariance word requires {Tword:.17g}s"
+        )
 
+    Binv = BASE.integrator_inverse(gap, spacing)
     s_nuis = BASE.up(sigma2 * (Tobs ** 3 / 6.0) ** 2)
     s_proc = BASE.up(qc * Tobs ** 7 / 252.0)
     rstack = BASE.up(3.0 * (rmax + s_nuis + s_proc))
@@ -153,10 +152,6 @@ def translation_upper_from_summary(summary: dict, Tpe: float, sched: dict) -> tu
     total = BASE.up(sum(roots))
     noise = [BASE.up(r * total) for r in roots]
 
-    # Lower word length uses the fastest cadence actually admitted on the same
-    # history.  It is emitted for consumers that need to ensure a selected
-    # suffix fits inside the source word; canonical P3 may also retain the
-    # stronger global implementation-language lower if desired.
     gap_lo = BASE.down(cadence[0] + h)
     spacing_lo = BASE.down(max(Tpe, 2.0 * gap_lo))
     Tword_lo = BASE.down(BASE.down(2.0 * spacing_lo + gap_lo) + Tpe)
@@ -166,6 +161,8 @@ def translation_upper_from_summary(summary: dict, Tpe: float, sched: dict) -> tu
         "gap_s_upper": gap,
         "word_horizon_s_upper": Tword,
         "word_horizon_s_lower": Tword_lo,
+        "summarized_history_duration_lower_s": history_lo,
+        "summarized_history_covers_covariance_word": history_covers_word,
         "sigma_squared_upper_from_same_history": sigma2,
         "q_c_upper_from_same_history": qc,
         "S_measurement_variance_upper_from_same_history": rmax,
@@ -203,12 +200,15 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     sched = BASE.source_schedule()
     Tpe = BASE.pos(domain["normal_live"]["vector_pe_recurrence_window_s"], "PE recurrence")
 
+    # Each representative history has a lower physical duration above the
+    # largest deployed ~3.17 s covariance word before it is accepted.
+    cases = ((0,50,13),(137,31,21),(729,25,26),(799,31,21))
     rows = []
-    for seed, length, gap in ((0,4,13),(137,8,21),(729,12,26),(799,16,21)):
+    for seed, length, gap in cases:
         start, trans = _representative_history(rt, seed, length, gap)
         segments = _path_segments(start, trans, rt)
         summary = summarize_segments(segments, sched)
-        upper, timing = translation_upper_from_summary(summary, Tpe, sched)
+        upper, timing = translation_upper_from_summary(summary, Tpe, sched, require_history_cover=True)
         rows.append({
             "start_pair": list(start),
             "transition_count": len(trans),
@@ -231,12 +231,16 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "independent_cartesian_tau_sigma_R_S_extrema_used": False,
         "retained_translation_observability_theorem_reused": True,
         "monotone_path_maxima_only": True,
+        "full_covariance_word_history_required": True,
+        "all_representative_histories_cover_their_covariance_word": all(
+            row["timing"]["summarized_history_covers_covariance_word"] for row in rows
+        ),
         "full_source_history_family_enumerated": False,
         "representative_rows": rows,
         "P3_PROMOTED": False,
         "P4_PROMOTED": False,
         "next_obligation": (
-            "propagate a Pareto/invariant enclosure of these same-history sufficient statistics over all P2 V1 histories needed by the canonical P3 word, and pair each history class with the full-matrix selected-process lower before taking a worst-case ratio"
+            "propagate a Pareto/invariant enclosure of these same-history sufficient statistics over all P2 V1 histories covering the canonical covariance word, and pair each history class with the recent full-matrix selected-process lower before taking a worst-case ratio"
         ),
         "failures": [],
     }
@@ -252,7 +256,8 @@ def validate(d: dict) -> list[str]:
         "source_only", "P2_correlation_interface_consumed",
         "same_history_sufficient_statistics_used",
         "retained_translation_observability_theorem_reused",
-        "monotone_path_maxima_only",
+        "monotone_path_maxima_only", "full_covariance_word_history_required",
+        "all_representative_histories_cover_their_covariance_word",
     ):
         if d.get(key) is not True:
             f.append(f"{key} is not true")
@@ -274,6 +279,8 @@ def validate(d: dict) -> list[str]:
             f.append("representative row lost same-history statistics")
         if s.get("independent_global_source_extrema_used") is not False:
             f.append("representative row used independent global source extrema")
+        if row.get("timing", {}).get("summarized_history_covers_covariance_word") is not True:
+            f.append("representative source history does not cover covariance word")
         u = row.get("Sigma_translation_diagonal_upper", [])
         if len(u) != 4 or any(not (isinstance(x,(int,float)) and math.isfinite(float(x)) and float(x)>0.0) for x in u):
             f.append("representative row has invalid translation covariance upper")
@@ -294,6 +301,7 @@ def main() -> int:
     print(json.dumps({
         "P2_correlation_interface_version": d["P2_correlation_interface_version"],
         "representative_histories": len(d["representative_rows"]),
+        "all_cover_word": d["all_representative_histories_cover_their_covariance_word"],
         "validation_failures": vf,
     }, indent=2, sort_keys=True))
     return 0 if not vf else 2
