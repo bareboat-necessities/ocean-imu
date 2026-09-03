@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - "tools/ou3_p2_correlation_path_memory.py"
+      - "tools/ou3_p2_clock_phase_tuner_graph.py"
       - "tools/ou3_p3_correlated_translation_segment.py"
       - "tools/ou3_p3_correlated_translation_covariance_upper.py"
       - "tools/ou3_p3_p2_v1_history_frontier.py"
@@ -18,6 +19,7 @@ on:
   pull_request:
     paths:
       - "tools/ou3_p2_correlation_path_memory.py"
+      - "tools/ou3_p2_clock_phase_tuner_graph.py"
       - "tools/ou3_p3_correlated_translation_segment.py"
       - "tools/ou3_p3_correlated_translation_covariance_upper.py"
       - "tools/ou3_p3_p2_v1_history_frontier.py"
@@ -55,7 +57,7 @@ jobs:
             tests/validation/test_ou3_p3_p2_v1_history_frontier.py \
             tests/validation/test_ou3_p3_p2_v1_stage_phase_translation.py
 
-      - name: Test Pareto quotient and full-matrix gate primitives
+      - name: Test Pareto quotient, finite phase, frozen-hold and full-matrix gate primitives
         working-directory: tests/validation
         run: |
           python3 -m unittest -v \
@@ -97,6 +99,8 @@ jobs:
           assert p['process_covariance_measurement_bounds_same_source_history'] is True
           assert p['independent_cartesian_tau_sigma_R_S_extrema_used'] is False
           assert p['endpoint_phase_count'] == 800 * 26
+          assert p['frozen_clock_absorbing_hold_branch_included'] is True
+          assert p['frozen_clock_branch']['clock_stagnation_verified'] is True
           assert p['useful_gate'] == 1e-18
           assert p['P3_CANONICAL_PROMOTED'] is False
 
@@ -108,8 +112,10 @@ jobs:
               'boundary_floor': p['boundary_floor'],
               'endpoint_phase_count': p['endpoint_phase_count'],
               'endpoint_phase_useful_count': p['endpoint_phase_useful_count'],
+              'worst_finite_translation_margin_lower': p['worst_finite_translation_margin_lower'],
+              'worst_finite_translation_endpoint_phase': p['worst_finite_translation_endpoint_phase'],
+              'frozen_clock_branch': p['frozen_clock_branch'],
               'worst_translation_margin_lower': p['worst_translation_margin_lower'],
-              'worst_translation_endpoint_phase': p['worst_translation_endpoint_phase'],
               'translation_established': p['P3_TRANSLATION_CERTIFICATE_ESTABLISHED'],
               'canonical_P3_promoted': p['P3_CANONICAL_PROMOTED'],
           }, indent=2, sort_keys=True))

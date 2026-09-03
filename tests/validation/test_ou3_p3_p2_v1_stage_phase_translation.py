@@ -15,8 +15,10 @@ import ou3_source_reachable_matrix_p3 as BASE
 
 
 class P2V1StagePhaseTranslationTests(unittest.TestCase):
-    def test_phase_cover_is_exact_preboundary_set(self):
+    def test_finite_phase_cover_and_frozen_tail_cut_are_exact(self):
         self.assertEqual(P.PHASES, tuple(range(26)))
+        self.assertEqual(P.FROZEN_FRESH_HISTORY_SAMPLES, 13)
+        self.assertEqual(P.FROZEN_TRANSIENT_SAMPLES, tuple(range(1, 13)))
         self.assertEqual(BASE.MIN_USEFUL_DELTA, 1.0e-18)
 
     def test_identity_floor_is_strict_spd(self):
@@ -47,6 +49,13 @@ class P2V1StagePhaseTranslationTests(unittest.TestCase):
         self.assertGreater(A[3][3].lo, 0.0)
         self.assertLess(A[2][2].hi, A[1][1].hi)
         self.assertLess(A[1][1].hi, A[0][0].hi)
+
+    def test_thirteen_sample_tail_argument_is_a_fresh_window(self):
+        # The frozen-clock reduction must not accidentally depend on the 26
+        # finite-stage phase bound.  After 13 held samples, the last 13 samples
+        # form a complete fresh constant-source segment on their own.
+        self.assertLess(P.FROZEN_FRESH_HISTORY_SAMPLES, max(P.PHASES) + 1)
+        self.assertEqual(max(P.FROZEN_TRANSIENT_SAMPLES) + 1, P.FROZEN_FRESH_HISTORY_SAMPLES)
 
 
 if __name__ == "__main__":
