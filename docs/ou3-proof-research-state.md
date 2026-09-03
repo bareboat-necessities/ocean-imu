@@ -46,6 +46,73 @@ Therefore the rejected mechanism is now broader than the original `C-eps I` step
 
 Canonical P3 still has not reached translation/H/A margin calculation, so none of these diagnostic values are P3 theorem margins.
 
+## Endpoint-only certification succeeds; the rejection was against the wrong quantity
+
+The dead-end call on recursive interval covariance boxes was measured against
+the **intermediate per-step** SPD demand, where the first uncertain prediction
+has `lambda_min ~= 3.4e-10` and about four more binary levels would be needed.
+The theorem does not impose that demand; `common_boundary_floor` certifies the
+**segment endpoint**, where `lambda_min ~= 2e-5`, about 5.9e4 times larger.
+Against the endpoint quantity the existing machinery succeeds.
+
+Measured at 64 uniform x subcells with the intermediate gates removed, 18 of 18
+tested (node, gap) pairs certify a strictly positive endpoint floor:
+
+| node (tau,sigma,R_S) | gap 13 | gap 20 | gap 26 |
+| --- | --- | --- | --- |
+| 0 (0,0,0) | 64 / 9.50e-7 | 64 / 1.18e-5 | 64 / 2.00e-5 |
+| 137 (1,5,7) | 64 / 8.74e-7 | 64 / 9.04e-6 | 64 / 1.58e-5 |
+| 399 (4,7,9) | 64 / 7.75e-5 | 128 / 4.72e-4 | 128 / 4.93e-4 |
+| 555 (6,7,5) | 64 / 8.43e-5 | 128 / 3.70e-4 | 128 / 4.05e-4 |
+| 729 (9,0,9) | 64 / 8.69e-8 | 64 / 5.47e-7 | 128 / - |
+| 799 (9,7,9) | 64 / 6.08e-5 | 64 / 7.14e-5 | 128 / 2.68e-4 |
+
+Subdivision now has the scaling argument it previously lacked: halving the cell
+width flipped 33/33 failing to 65/65 passing, and the endpoint margin improves
+roughly linearly in width. This is a different quantity from the rejected one,
+not a third refinement of it.
+
+**The blocker is now cost, not feasibility.** `common_boundary_floor` is 800
+nodes x 14 gaps = 11200 segment scans; at the observed 2 s to 33 s each the full
+run extrapolates to about 103 h against a 120 minute CI budget.
+
+The floor is provably monotone in the sigma and R_S cell index, so node
+`(tau,0,0)` dominates its whole tau cell and the scan collapses to 10 nodes:
+
+- `Q` scales as `sigma_lo^2` and the Riccati map is Loewner monotone in `Q`;
+- `d/dR [P - Pe(e'Pe+R)^-1 e'P] = Pe(e'Pe+R)^-2 e'P >= 0`.
+
+This is domination among actual reachable nodes within one tau cell, not the
+Cartesian tau/sigma/R_S extrema rejected above. Measured: for tau=1 the sigma
+sweep gives 8.74e-7 for indices 0..5 (identical, because the committed filter
+sigma is clamped at the 0.05 floor and the code uses `sigma.lo`), 2.47e-5 at
+index 6 and 6.75e-5 at index 7. Reducing 800 nodes to 10 brings the estimate to
+roughly 25-77 min, which fits the budget only just, and the dominating nodes are
+the slow ones.
+
+## The S=0 pseudo-measurement is inert over a segment
+
+Across a 23-decade override sweep at node 80 the S update is live and strong
+when `R_S_z` is small -- at `1e-4` it collapses `P[2][2]` from 4.277 to 8.95e-5
+and moves the floor from 2.83e-5 to 4.62e-6 -- but it saturates by `R_S_z ~ 1e6`
+and the deployed value is `7.46e11`, six orders past saturation. The control
+sweep confirms the accelerometer update is in its active region and is doing the
+work. So this is a real regime fact, not a defect.
+
+The reason is the zero start: after 13 samples `P[2][2] = 4.277` in `z_S = S/h^3`
+units, i.e. an `S` standard deviation of `2.6e-7 m.s`, against a pseudo
+measurement standard deviation of `0.108 m.s`, a factor of 4.2e5. A triple
+integral accumulates little uncertainty in 65 ms.
+
+Consequence to test, not yet a claim: P3 translation observability is the
+four-`S` spread argument over a 0.765 s window inside the 3.17 s word, but
+`common_boundary_floor` builds its floor from a zero start over a single 13-26
+sample segment and therefore never sees that mechanism. The bound stays valid --
+`rs.lo` is the strongest measurement in the cell, which is the correct choice for
+a lower bound -- but the segment floor may be a lossy proxy for the true relative
+injection margin, and that is a candidate explanation for `delta` landing near
+1e-18.
+
 ## Master P3 quantity
 
 The new backend is relevant only if it produces the complete-segment matrix lower used by canonical P3:
