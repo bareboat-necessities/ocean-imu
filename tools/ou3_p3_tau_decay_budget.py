@@ -3,23 +3,29 @@
 
 A source-uniform LTV controllability bound needs exp(-int lambda dt), with
 lambda=1/tau.  Replacing that integral by H/tau_min is valid but unnecessarily
-forgets the deployed tuner slew.  The complete 800-node source graph is not
-needed for this scalar: lambda depends only on the ten-cell tau projection.
+forgets the deployed tuner slew.
 
-This producer rebuilds exactly that projection from the retained 13..26-sample
-staging model.  For each endpoint tau cell and requested window length N IMU
-samples it computes an upper bound on
+This producer is now an explicit *scalar projection consumer* of the frozen P2
+correlation/path-memory interface.  It first takes the exact gap-labelled
+800-state correlated relation exported by :mod:`ou3_p2_correlation_path_memory`
+and only then projects that relation to the ten tau cells.  Sigma and R_S are
+therefore discarded only after P2 has established which complete tuple
+transitions are legal.
 
-    integral_window dt / tau(t).
+That projection is valid for this one scalar because lambda=1/tau depends on no
+other tuner coordinate: unioning paths that share a tau cell can only add tau
+histories, so maximizing the decay exponent remains an upper bound.  This
+exception does NOT authorize P3 covariance/information consumers to form
+independent tau/sigma/R_S extrema; those must retain the P2 pair state or a
+separately certified sufficient quotient.
 
-The DP uses complete stage segments.  An arbitrary physical window may start and
-end inside segments, so it is covered by extending to the preceding and next
-stage boundary.  The resulting full-segment cover contains at most two extra
-maximum-gap segments.  Maximizing over all compatible projected paths therefore
-upper-bounds the actual integral.  The infinite-time floating-clock stagnation
-branch is included separately as an exact constant-tau hold candidate.
+For each endpoint tau cell and requested window length N IMU samples this DP
+computes an upper bound on integral dt/tau(t).  Complete stage segments are
+used.  An arbitrary physical window may start and end inside segments, so it is
+covered by extending to the preceding and next stage boundary; at most two
+extra maximum-gap segments are needed.  The infinite-time floating-clock
+stagnation branch is included separately as an exact constant-tau hold.
 
-Projecting away sigma and R_S only adds tau paths; it cannot remove a real one.
 This is source evidence, not a P3 promotion by itself.
 """
 from __future__ import annotations
@@ -30,12 +36,11 @@ import json
 import math
 from pathlib import Path
 
-import ou3_p4_sample_clock_source_refinement as SAMPLE
-import ou3_p4_source_path_reachability as PATH
+import ou3_p2_correlation_path_memory as CORR
 
 REPO = Path(__file__).resolve().parents[1]
 DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
-SCHEMA = 1
+SCHEMA = 2
 
 
 @functools.lru_cache(maxsize=4)
@@ -44,29 +49,40 @@ def _tau_projection(domain_path: Path = DEFAULT_DOMAIN):
     domain = json.loads(domain_path.read_text(encoding="utf-8"))
     if domain.get("trajectory_fit") is not False:
         raise RuntimeError("tau decay budget must not be trajectory fitted")
-    c = PATH._constants()
-    clock = SAMPLE._clock_certificate(c)
-    dt = float(clock["dt_binary32_s"])
-    gaps = list(range(
-        int(clock["finite_stage_spacing_valid_samples_lower"]),
-        int(clock["finite_stage_spacing_valid_samples_upper"]) + 1,
-    ))
-    tau, _sigma, _rs, freq = SAMPLE._partition(c)
 
+    rt = CORR.runtime(domain_path)
+    nodes = rt["nodes"]
+    gaps = list(rt["gaps"])
+    clock = dict(rt["clock"])
+    if gaps != list(range(13, 27)):
+        raise RuntimeError("retained P2 correlation clock alphabet changed")
+
+    # Materialize the exact ten tau cells from the frozen P2 node partition.
+    tau = [None] * 10
+    for node in nodes:
+        ti = int(node["tau_index"])
+        cell = tuple(map(float, node["tau_s"]))
+        if tau[ti] is None:
+            tau[ti] = cell
+        elif tau[ti] != cell:
+            raise RuntimeError("one P2 tau index maps to multiple tau cells")
+    if any(x is None for x in tau):
+        raise RuntimeError("P2 correlation interface does not cover ten tau cells")
+
+    # Project only AFTER the full tuple transition has been certified.  This
+    # union may add tau paths when sigma/R_S distinctions are erased, but cannot
+    # remove a real path.  That monotonicity is exactly what this scalar maximum
+    # needs and is the permitted projection exception in the P2 interface.
     labelled = [[set() for _ in gaps] for _ in tau]
-    for f in freq:
-        target = PATH._tau_target(f, c)
-        horizon = PATH._tau_sigma_horizon(f, c)
-        for gi, gap in enumerate(gaps):
-            for ti, cell in enumerate(tau):
-                image = SAMPLE._ema_samples(cell, target, horizon, dt, gap)
-                labelled[ti][gi].update(PATH._matching(tau, image))
+    for s, node in enumerate(nodes):
+        tsi = int(node["tau_index"])
+        for gi, _gap in enumerate(gaps):
+            for t in rt["labelled_successors"][s][gi]:
+                labelled[tsi][gi].add(int(nodes[int(t)]["tau_index"]))
 
-    if len(tau) != 10 or gaps != list(range(13, 27)):
-        raise RuntimeError("retained tau source projection changed")
-    if any(not labelled[s][gi] for s in range(len(tau)) for gi in range(len(gaps))):
-        raise RuntimeError("tau projection has a dead finite-clock transition")
-    return c, clock, tau, gaps, labelled
+    if len(tau) != 10 or any(not labelled[s][gi] for s in range(10) for gi in range(len(gaps))):
+        raise RuntimeError("tau projection of frozen P2 correlation interface has a dead transition")
+    return CORR.INTERFACE_VERSION, clock, tau, gaps, labelled
 
 
 def _lambda_upper(cell) -> float:
@@ -81,7 +97,7 @@ def decay_budget(endpoint_tau_index: int, window_samples: int,
                  domain_path: Path = DEFAULT_DOMAIN) -> dict:
     """Maximum source-compatible decay exponent for an arbitrary endpoint phase."""
     domain_path = Path(domain_path).resolve()
-    _c, clock, tau, gaps, labelled = _tau_projection(domain_path)
+    interface_version, clock, tau, gaps, labelled = _tau_projection(domain_path)
     e = int(endpoint_tau_index)
     N = int(window_samples)
     if not 0 <= e < len(tau):
@@ -96,7 +112,7 @@ def decay_budget(endpoint_tau_index: int, window_samples: int,
 
     # dp[n][s] is the largest exponent of any complete-segment path containing
     # exactly n applied samples and ending at the stage boundary whose next
-    # applied tuple is s.  A proof window may begin from any source state.
+    # applied tau quotient is s.  A proof window may begin from any source state.
     neg = -math.inf
     dp = [[neg] * len(tau) for _ in range(cap + 1)]
     for s in range(len(tau)):
@@ -146,6 +162,7 @@ def decay_budget(endpoint_tau_index: int, window_samples: int,
         raise RuntimeError("failed to produce positive tau decay budget")
 
     return {
+        "P2_correlation_interface_version": interface_version,
         "endpoint_tau_index": e,
         "endpoint_tau_s": [float(tau[e][0]), float(tau[e][1])],
         "window_samples": N,
@@ -158,13 +175,16 @@ def decay_budget(endpoint_tau_index: int, window_samples: int,
         "finite_clock_final_gap_samples": finite_final_gap,
         "frozen_clock_decay_exponent_upper": frozen,
         "decay_exponent_upper": budget,
+        "projection_role": "TAU_ONLY_SCALAR_MAXIMUM",
+        "projection_permitted_by_P2_contract": True,
+        "sigma_RS_projection_only_adds_paths": True,
         "exp_minus_decay_lower_role": "evaluate with validated exponential backend in consumer",
     }
 
 
 def build(domain_path: Path = DEFAULT_DOMAIN, window_samples=(50, 100, 200, 300)) -> dict:
     domain_path = Path(domain_path).resolve()
-    _c, clock, tau, gaps, labelled = _tau_projection(domain_path)
+    interface_version, clock, tau, gaps, labelled = _tau_projection(domain_path)
     rows = {}
     for N in map(int, window_samples):
         rows[str(N)] = [decay_budget(i, N, domain_path) for i in range(len(tau))]
@@ -177,10 +197,15 @@ def build(domain_path: Path = DEFAULT_DOMAIN, window_samples=(50, 100, 200, 300)
         failures.append("tau projection has dead transition")
     return {
         "schema": SCHEMA,
-        "qualification": "OU3_P3_CLOCK_PHASE_TAU_DECAY_BUDGET",
+        "qualification": "OU3_P3_CLOCK_PHASE_TAU_DECAY_BUDGET_FROM_P2_CORRELATION_INTERFACE",
         "source_only": True,
         "trajectory_replay_used": False,
         "filter_changed": False,
+        "P2_correlation_interface_version": interface_version,
+        "P2_correlation_interface_consumed": True,
+        "flat_800_node_ancestor_hull_consumed": False,
+        "projection_role": "TAU_ONLY_SCALAR_MAXIMUM",
+        "projection_permitted_by_P2_contract": True,
         "physical_tau_cells": len(tau),
         "clock_phase_gap_alphabet_samples": gaps,
         "clock": clock,
@@ -197,15 +222,23 @@ def validate(d: dict) -> list[str]:
     f = list(d.get("failures", []))
     if d.get("schema") != SCHEMA:
         f.append("schema mismatch")
+    if d.get("qualification") != "OU3_P3_CLOCK_PHASE_TAU_DECAY_BUDGET_FROM_P2_CORRELATION_INTERFACE":
+        f.append("wrong qualification")
     for key in (
-        "source_only", "arbitrary_window_phase_covered_by_full_segment_extension",
+        "source_only", "P2_correlation_interface_consumed",
+        "projection_permitted_by_P2_contract",
+        "arbitrary_window_phase_covered_by_full_segment_extension",
         "frozen_clock_hold_branch_covered", "sigma_RS_projection_only_adds_paths",
     ):
         if d.get(key) is not True:
             f.append(f"{key} is not true")
-    for key in ("trajectory_replay_used", "filter_changed", "P3_PROMOTED"):
+    for key in ("trajectory_replay_used", "filter_changed", "flat_800_node_ancestor_hull_consumed", "P3_PROMOTED"):
         if d.get(key) is not False:
             f.append(f"{key} is not false")
+    if d.get("P2_correlation_interface_version") != CORR.INTERFACE_VERSION:
+        f.append("P3 tau projection is not bound to the frozen P2 correlation interface")
+    if d.get("projection_role") != "TAU_ONLY_SCALAR_MAXIMUM":
+        f.append("tau projection role changed")
     if d.get("physical_tau_cells") != 10:
         f.append("tau partition changed")
     if d.get("clock_phase_gap_alphabet_samples") != list(range(13, 27)):
@@ -218,6 +251,9 @@ def validate(d: dict) -> list[str]:
             x = row.get("decay_exponent_upper")
             if not isinstance(x, (int, float)) or not (math.isfinite(float(x)) and float(x) > 0.0):
                 f.append("invalid decay exponent")
+                break
+            if row.get("P2_correlation_interface_version") != CORR.INTERFACE_VERSION:
+                f.append("window row lost P2 correlation interface binding")
                 break
     return list(dict.fromkeys(f))
 
@@ -241,7 +277,11 @@ def main() -> int:
             "tau9": rows[9]["decay_exponent_upper"],
             "max": max(r["decay_exponent_upper"] for r in rows),
         }
-    print(json.dumps({"validation_failures": vf, "summary": summary}, indent=2, sort_keys=True))
+    print(json.dumps({
+        "P2_correlation_interface_version": d["P2_correlation_interface_version"],
+        "validation_failures": vf,
+        "summary": summary,
+    }, indent=2, sort_keys=True))
     return 0 if not vf else 2
 
 
