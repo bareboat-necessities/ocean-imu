@@ -3,6 +3,8 @@ name: ou3-p3-whole-word-probe
 on:
   pull_request:
     paths:
+      - "tools/ou3_p3_matched_history_cost_frontier.py"
+      - "tests/validation/test_ou3_p3_matched_history_cost_frontier.py"
       - "tools/ou3_p3_matched_history_label_frontier.py"
       - "tests/validation/test_ou3_p3_matched_history_label_frontier.py"
       - "tools/ou3_p3_whole_word_horizon_probe.py"
@@ -20,7 +22,7 @@ permissions:
   contents: read
 
 jobs:
-  matched-history-label-frontier:
+  matched-history-cost-frontier:
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
@@ -28,39 +30,43 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Compile matched-history frontier producer
+      - name: Compile finite-cost matched-history producer
         run: |
           python3 -m py_compile \
-            tools/ou3_p3_matched_history_label_frontier.py \
-            tests/validation/test_ou3_p3_matched_history_label_frontier.py
+            tools/ou3_p3_matched_history_cost_frontier.py \
+            tests/validation/test_ou3_p3_matched_history_cost_frontier.py
 
-      - name: Test matched-history quotient invariants
+      - name: Test finite-cost quotient invariants
         working-directory: tests/validation
-        run: python3 -m unittest -v test_ou3_p3_matched_history_label_frontier
+        run: python3 -m unittest -v test_ou3_p3_matched_history_cost_frontier
 
-      - name: Build 49-segment adverse-label frontier
+      - name: Build 635-sample minimum-cost adverse frontier
         run: |
-          python3 tools/ou3_p3_matched_history_label_frontier.py \
-            --output /tmp/ou3_p3_matched_history_label_frontier.json
+          python3 tools/ou3_p3_matched_history_cost_frontier.py \
+            --output /tmp/ou3_p3_matched_history_cost_frontier.json
 
-      - name: Enforce non-promotion and finite-word coverage
+      - name: Enforce non-promotion and finite-word contract
         run: |
           python3 - <<'PY'
           import json
-          d=json.load(open('/tmp/ou3_p3_matched_history_label_frontier.json'))
+          d=json.load(open('/tmp/ou3_p3_matched_history_cost_frontier.json'))
           assert d['validation_pass'], d['validation_failures']
           assert d['target_samples'] == 635
-          assert d['minimum_gap_samples'] == 13
-          assert d['maximum_complete_segments'] == 49
-          assert d['minimum_49_segment_history_duration_s'] > d['global_covariance_word_upper_s']
-          assert d['global_pareto_adverse_labels'] > 0
-          assert d['same_tau_covariance_lower_dominators_verified'] is True
+          assert d['exact_gap_labelled_successors_consumed'] is True
+          assert d['minimum_supporting_gap_per_source_edge_used'] is True
+          assert d['minimum_gap_replacement_preserves_source_sequence_and_can_only_reduce_cost'] is True
+          assert d['finite_word_sample_budget_retained'] is True
+          assert d['cost_adverse_dominance_continuation_safe'] is True
+          assert d['terminal_endpoint_rank_included_before_global_reduction'] is True
           assert d['global_cartesian_source_extrema_used'] is False
+          assert d['global_pareto_adverse_labels'] > 0
           assert d['matched_margin_computed'] is False
           assert d['P3_PROMOTED'] is False
           assert d['P4_PROMOTED'] is False
           assert d['P5_PROMOTED'] is False
-          print('ENDPOINT_LABELS', d['endpoint_pareto_labels_after_49_segments'])
+          print('MIN_GAP_SOURCE_EDGES', d['min_gap_source_edges'])
+          print('PROCESSED_ENTRIES', d['processed_cost_frontier_entries'])
+          print('MAX_FRONTIER_PER_SOURCE', d['maximum_frontier_entries_at_one_source'])
           print('GLOBAL_LABELS', d['global_pareto_adverse_labels'])
           for row in d['matched_history_classes']:
               print('MATCHED_CLASS', row['adverse_label'],
@@ -70,9 +76,9 @@ jobs:
           print('NEXT', d['next_obligation'])
           PY
 
-      - name: Upload matched-history frontier artifact
+      - name: Upload finite-cost matched-history artifact
         uses: actions/upload-artifact@v6
         with:
-          name: ou3-p3-matched-history-label-frontier
-          path: /tmp/ou3_p3_matched_history_label_frontier.json
+          name: ou3-p3-matched-history-cost-frontier
+          path: /tmp/ou3_p3_matched_history_cost_frontier.json
           retention-days: 7
