@@ -22,18 +22,21 @@ on:
 
 # Cleanup policy:
 #
-# 1. Cancelled/skipped runs have no verdict. Keep the newest such run for each
-#    workflow+branch pair, then delete older ones after the minimum-age guard.
-#    This preserves evidence that focused PR workflows were actually triggered.
+# 1. Failed runs: keep exactly the 15 most recently updated failed runs
+#    repository-wide and delete every older failed run, including pull-request
+#    runs. This pass runs first.
 #
-# 2. Failed runs do have a verdict, but hundreds of old failures make Actions
-#    history unusable. Keep exactly the 15 most recently updated failed runs
-#    repository-wide and delete older failed runs in full. Deleting the run
-#    also deletes its job logs. Pull-request failures are included.
+# 2. Cancelled/skipped runs: keep the newest such run for each workflow+branch
+#    pair, then delete older runs after the minimum-age guard.
 #
-# The failed-run pass deliberately has no age guard: "keep 15" is the retention
-# rule. A state re-check immediately before deletion protects a run that was
-# manually re-run after candidate selection.
+# GitHub caps a workflow-run search that uses status=... at 1,000 results. Both
+# cleanup passes therefore re-query after each deletion batch until the
+# retention policy is actually satisfied or max_deletions is exhausted.
+#
+# Deletion is intentionally performed without a separate per-run verification
+# GET. A previous version swallowed GET failures and misreported hundreds of
+# undeleted runs as "state changed". DELETE failures are now retried and treated
+# as real failures; the failed-run pass also verifies the final repository count.
 permissions:
   contents: read
 
@@ -49,6 +52,193 @@ jobs:
       actions: write
 
     steps:
+      - name: Keep only the 15 newest failed workflow runs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          DRY_RUN: ${{ inputs.dry_run || false }}
+          MAX_DELETIONS: ${{ inputs.max_deletions || '5000' }}
+          FAILED_RUNS_TO_KEEP: '15'
+          PARALLELISM: '4'
+        run: |
+          set -euo pipefail
+
+          case "$MAX_DELETIONS" in
+            ''|*[!0-9]*|0)
+              echo "max_deletions must be a positive integer" >&2
+              exit 1
+              ;;
+          esac
+          case "$FAILED_RUNS_TO_KEEP" in
+            ''|*[!0-9]*)
+              echo "FAILED_RUNS_TO_KEEP must be a non-negative integer" >&2
+              exit 1
+              ;;
+          esac
+
+          list_failed() {
+            local out="$1"
+            : > "$out"
+            gh api \
+              -H "Accept: application/vnd.github+json" \
+              --method GET \
+              --paginate \
+              --field per_page=100 \
+              --field status=failure \
+              "repos/${REPO}/actions/runs" \
+              --jq '
+                .workflow_runs[]
+                | select(.status == "completed")
+                | select(.conclusion == "failure")
+                | [.id, .updated_at, .name, .created_at, .run_attempt,
+                   (.event // "-"), (.head_branch // "-")] | @tsv
+              ' > "$out"
+            sort -u "$out" -o "$out"
+          }
+
+          failed_total_count() {
+            gh api \
+              -H "Accept: application/vnd.github+json" \
+              --method GET \
+              --field per_page=1 \
+              --field status=failure \
+              "repos/${REPO}/actions/runs" \
+              --jq '.total_count'
+          }
+
+          candidates="$(mktemp)"
+          ordered="$(mktemp)"
+          selected="$(mktemp)"
+          results="$(mktemp)"
+          worker="$(mktemp)"
+          export RESULTS="$results"
+
+          cat > "$worker" <<'WORKER'
+          #!/usr/bin/env bash
+          set -uo pipefail
+          id="$1"
+          err="$(mktemp)"
+
+          for attempt in 1 2 3 4 5; do
+            : > "$err"
+            if gh api --method DELETE "repos/${REPO}/actions/runs/${id}" \
+                --silent </dev/null 2>"$err"; then
+              printf 'OK\t%s\n' "$id" >> "$RESULTS"
+              rm -f "$err"
+              exit 0
+            fi
+
+            # A concurrent manual deletion is already the desired outcome.
+            if grep -q 'HTTP 404' "$err"; then
+              printf 'OK\t%s\n' "$id" >> "$RESULTS"
+              rm -f "$err"
+              exit 0
+            fi
+
+            sleep $((attempt * 3))
+          done
+
+          message="$(tr '\n' ' ' < "$err" | cut -c1-240)"
+          printf 'FAIL\t%s\t%s\n' "$id" "$message" >> "$RESULTS"
+          rm -f "$err"
+          exit 0
+          WORKER
+          chmod +x "$worker"
+
+          initial_total="$(failed_total_count)"
+          echo "Failed workflow runs before cleanup: $initial_total"
+
+          if [ "$DRY_RUN" = "true" ]; then
+            if [ "$initial_total" -gt "$FAILED_RUNS_TO_KEEP" ]; then
+              would_delete=$((initial_total - FAILED_RUNS_TO_KEEP))
+              if [ "$would_delete" -gt "$MAX_DELETIONS" ]; then
+                would_delete="$MAX_DELETIONS"
+              fi
+            else
+              would_delete=0
+            fi
+
+            {
+              echo "### Failed-run retention (dry run)"
+              echo
+              echo "- Failed runs found: \`$initial_total\`"
+              echo "- Newest failed runs retained: \`$FAILED_RUNS_TO_KEEP\` (or all if fewer exist)"
+              echo "- Would delete whole failed runs this pass: \`$would_delete\`"
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          budget="$MAX_DELETIONS"
+          deleted_total=0
+          failed_attempts=0
+          pass=0
+
+          while [ "$budget" -gt 0 ]; do
+            pass=$((pass + 1))
+            list_failed "$candidates"
+            LC_ALL=C sort -t"$(printf '\t')" \
+              -k2,2r -k4,4r -k1,1nr \
+              "$candidates" > "$ordered"
+
+            visible="$(wc -l < "$ordered" | tr -d ' ')"
+            total="$(failed_total_count)"
+            echo "Failed pass $pass: API total=$total, visible in capped search=$visible"
+
+            if [ "$total" -le "$FAILED_RUNS_TO_KEEP" ]; then
+              break
+            fi
+
+            awk -F'\t' \
+              -v keep="$FAILED_RUNS_TO_KEEP" \
+              -v cap="$budget" '
+                NR > keep && n < cap {
+                  print
+                  n++
+                }
+              ' "$ordered" > "$selected"
+
+            selected_count="$(wc -l < "$selected" | tr -d ' ')"
+            if [ "$selected_count" -eq 0 ]; then
+              echo "Failed-run cleanup made no selectable progress while $total failures remain" >&2
+              exit 1
+            fi
+
+            : > "$results"
+            cut -f1 "$selected" | xargs -r -P "$PARALLELISM" -n 1 "$worker"
+
+            deleted_this="$(grep -c '^OK' "$results" || true)"
+            failed_this="$(grep -c '^FAIL' "$results" || true)"
+            deleted_total=$((deleted_total + deleted_this))
+            failed_attempts=$((failed_attempts + failed_this))
+            budget=$((budget - deleted_this))
+
+            echo "Failed pass $pass: selected=$selected_count deleted=$deleted_this failed=$failed_this budget_left=$budget"
+
+            if [ "$failed_this" -gt 0 ]; then
+              grep '^FAIL' "$results" | sed 's/^/::warning::/' || true
+            fi
+            if [ "$deleted_this" -eq 0 ]; then
+              echo "Failed-run cleanup made zero deletion progress; refusing to report success" >&2
+              exit 1
+            fi
+          done
+
+          final_total="$(failed_total_count)"
+          {
+            echo "### Failed-run retention"
+            echo
+            echo "- Failed runs before cleanup: \`$initial_total\`"
+            echo "- Whole failed runs deleted: \`$deleted_total\`"
+            echo "- Failed deletion attempts after retries: \`$failed_attempts\`"
+            echo "- Failed runs after cleanup: \`$final_total\`"
+            echo "- Required maximum: \`$FAILED_RUNS_TO_KEEP\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          if [ "$final_total" -gt "$FAILED_RUNS_TO_KEEP" ]; then
+            echo "Retention invariant not met: $final_total failed runs remain; expected at most $FAILED_RUNS_TO_KEEP" >&2
+            exit 1
+          fi
+
       - name: Delete old cancelled and skipped workflow runs
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -57,7 +247,7 @@ jobs:
           DRY_RUN: ${{ inputs.dry_run || false }}
           MIN_AGE_MINUTES: ${{ inputs.min_age_minutes || '60' }}
           MAX_DELETIONS: ${{ inputs.max_deletions || '5000' }}
-          PARALLELISM: '8'
+          PARALLELISM: '4'
         run: |
           set -euo pipefail
 
@@ -75,77 +265,45 @@ jobs:
           esac
 
           cutoff="$(date -u -d "-${MIN_AGE_MINUTES} minutes" +%Y-%m-%dT%H:%M:%SZ)"
-          candidates="$(mktemp)"
-          keep="$(mktemp)"
-          selected="$(mktemp)"
 
-          for conclusion in cancelled skipped; do
+          list_cancelled_skipped() {
+            local out="$1"
+            : > "$out"
+            for conclusion in cancelled skipped; do
+              gh api \
+                -H "Accept: application/vnd.github+json" \
+                --method GET \
+                --paginate \
+                --field per_page=100 \
+                --field status="$conclusion" \
+                --field exclude_pull_requests=true \
+                "repos/${REPO}/actions/runs" \
+                --jq '
+                  .workflow_runs[]
+                  | select(.status == "completed")
+                  | select(.conclusion == "cancelled" or .conclusion == "skipped")
+                  | [.id, .conclusion, .updated_at, .name,
+                     .workflow_id, (.head_branch // "-"), .created_at] | @tsv
+                ' >> "$out"
+            done
+            sort -u "$out" -o "$out"
+          }
+
+          status_total_count() {
+            local conclusion="$1"
             gh api \
               -H "Accept: application/vnd.github+json" \
               --method GET \
-              --paginate \
-              --field per_page=100 \
+              --field per_page=1 \
               --field status="$conclusion" \
               --field exclude_pull_requests=true \
               "repos/${REPO}/actions/runs" \
-              --jq '
-                .workflow_runs[]
-                | select(.status == "completed")
-                | select(.conclusion == "cancelled" or .conclusion == "skipped")
-                | [.id, .conclusion, .updated_at, .name,
-                   .workflow_id, (.head_branch // "-"), .created_at] | @tsv
-              ' >> "$candidates"
-          done
+              --jq '.total_count'
+          }
 
-          sort -u "$candidates" -o "$candidates"
-
-          # Retain the newest cancelled/skipped run per workflow+branch.
-          sort -t"$(printf '\t')" -k5,5 -k6,6 -k7,7r "$candidates" \
-            | awk -F'\t' '!seen[$5 FS $6]++ { print $1 }' > "$keep"
-
-          awk -F'\t' \
-            -v cutoff="$cutoff" \
-            -v self="$SELF_RUN_ID" \
-            -v cap="$MAX_DELETIONS" '
-              NR == FNR { keep[$1] = 1; next }
-              $1 != self && !($1 in keep) && $3 < cutoff && n < cap {
-                print
-                n++
-              }
-            ' "$keep" "$candidates" > "$selected"
-
-          total_candidates="$(wc -l < "$candidates" | tr -d ' ')"
-          total_kept="$(wc -l < "$keep" | tr -d ' ')"
-          total_selected="$(wc -l < "$selected" | tr -d ' ')"
-
-          echo "Cancelled/skipped runs found: $total_candidates"
-          echo "Newest per workflow/branch retained: $total_kept"
-          echo "Eligible for deletion: $total_selected"
-
-          if [ "$total_selected" -eq 0 ]; then
-            {
-              echo "### Cancelled/skipped cleanup"
-              echo
-              echo "- Found: \`$total_candidates\`"
-              echo "- Retained as newest per workflow/branch: \`$total_kept\`"
-              echo "- Deleted: \`0\`"
-            } >> "$GITHUB_STEP_SUMMARY"
-            exit 0
-          fi
-
-          if [ "$DRY_RUN" = "true" ]; then
-            echo "Dry run - cancelled/skipped runs that would be deleted:"
-            awk -F'\t' '{ printf "  %s  %s  run %s  (%s)\n", $2, $3, $1, $4 }' "$selected"
-            {
-              echo "### Cancelled/skipped cleanup (dry run)"
-              echo
-              echo "- Found: \`$total_candidates\`"
-              echo "- Retained as newest per workflow/branch: \`$total_kept\`"
-              echo "- Would delete: \`$total_selected\`"
-            } >> "$GITHUB_STEP_SUMMARY"
-            exit 0
-          fi
-
+          candidates="$(mktemp)"
+          keep="$(mktemp)"
+          selected="$(mktemp)"
           results="$(mktemp)"
           worker="$(mktemp)"
           export RESULTS="$results"
@@ -154,222 +312,146 @@ jobs:
           #!/usr/bin/env bash
           set -uo pipefail
           id="$1"
+          err="$(mktemp)"
 
-          state="$(gh api "repos/${REPO}/actions/runs/${id}" \
-            --jq '"\(.status)/\(.conclusion)"' </dev/null 2>/dev/null || true)"
-          case "$state" in
-            completed/cancelled|completed/skipped) ;;
-            *)
-              printf 'SKIP\t%s\t%s\n' "$id" "${state:-unknown}" >> "$RESULTS"
-              exit 0
-              ;;
-          esac
-
-          for attempt in 1 2 3; do
+          for attempt in 1 2 3 4 5; do
+            : > "$err"
             if gh api --method DELETE "repos/${REPO}/actions/runs/${id}" \
-                --silent </dev/null 2>/dev/null; then
+                --silent </dev/null 2>"$err"; then
               printf 'OK\t%s\n' "$id" >> "$RESULTS"
+              rm -f "$err"
               exit 0
             fi
-            sleep "$attempt"
+
+            if grep -q 'HTTP 404' "$err"; then
+              printf 'OK\t%s\n' "$id" >> "$RESULTS"
+              rm -f "$err"
+              exit 0
+            fi
+
+            sleep $((attempt * 3))
           done
 
-          printf 'FAIL\t%s\n' "$id" >> "$RESULTS"
+          message="$(tr '\n' ' ' < "$err" | cut -c1-240)"
+          printf 'FAIL\t%s\t%s\n' "$id" "$message" >> "$RESULTS"
+          rm -f "$err"
           exit 0
           WORKER
           chmod +x "$worker"
 
-          cut -f1 "$selected" | xargs -r -P "$PARALLELISM" -n 1 "$worker"
+          initial_cancelled="$(status_total_count cancelled)"
+          initial_skipped="$(status_total_count skipped)"
+          echo "Cancelled runs before cleanup: $initial_cancelled"
+          echo "Skipped runs before cleanup: $initial_skipped"
 
-          deleted="$(grep -c '^OK' "$results" || true)"
-          left="$(grep -c '^SKIP' "$results" || true)"
-          failed="$(grep -c '^FAIL' "$results" || true)"
+          budget="$MAX_DELETIONS"
+          deleted_total=0
+          failed_attempts=0
+          pass=0
+
+          while [ "$budget" -gt 0 ]; do
+            pass=$((pass + 1))
+            list_cancelled_skipped "$candidates"
+
+            # Retain the newest visible cancelled/skipped run per workflow+branch.
+            # Re-querying after every batch makes runs hidden by GitHub's 1,000
+            # result search cap surface on later passes. Previously retained runs
+            # stay visible, so they continue to protect their workflow+branch pair.
+            sort -t"$(printf '\t')" -k5,5 -k6,6 -k7,7r "$candidates" \
+              | awk -F'\t' '!seen[$5 FS $6]++ { print $1 }' > "$keep"
+
+            awk -F'\t' \
+              -v cutoff="$cutoff" \
+              -v self="$SELF_RUN_ID" \
+              -v cap="$budget" '
+                NR == FNR { keep[$1] = 1; next }
+                $1 != self && !($1 in keep) && $3 < cutoff && n < cap {
+                  print
+                  n++
+                }
+              ' "$keep" "$candidates" > "$selected"
+
+            visible="$(wc -l < "$candidates" | tr -d ' ')"
+            selected_count="$(wc -l < "$selected" | tr -d ' ')"
+            current_cancelled="$(status_total_count cancelled)"
+            current_skipped="$(status_total_count skipped)"
+            echo "Cancelled/skipped pass $pass: totals=$current_cancelled/$current_skipped visible=$visible selected=$selected_count"
+
+            if [ "$selected_count" -eq 0 ]; then
+              # If a status still exceeds 1,000, GitHub may still be hiding older
+              # runs behind the search cap. Do not claim success in that case.
+              if [ "$current_cancelled" -gt 1000 ] || [ "$current_skipped" -gt 1000 ]; then
+                echo "Cancelled/skipped cleanup is still blocked by GitHub's 1,000-result search cap" >&2
+                exit 1
+              fi
+              break
+            fi
+
+            if [ "$DRY_RUN" = "true" ]; then
+              {
+                echo "### Cancelled/skipped cleanup (dry run)"
+                echo
+                echo "- Cancelled runs found: \`$current_cancelled\`"
+                echo "- Skipped runs found: \`$current_skipped\`"
+                echo "- Visible old runs eligible now: \`$selected_count\`"
+                echo "- The real run re-queries after each batch to drain results hidden beyond GitHub's 1,000-result cap."
+              } >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+
+            : > "$results"
+            cut -f1 "$selected" | xargs -r -P "$PARALLELISM" -n 1 "$worker"
+
+            deleted_this="$(grep -c '^OK' "$results" || true)"
+            failed_this="$(grep -c '^FAIL' "$results" || true)"
+            deleted_total=$((deleted_total + deleted_this))
+            failed_attempts=$((failed_attempts + failed_this))
+            budget=$((budget - deleted_this))
+
+            echo "Cancelled/skipped pass $pass: deleted=$deleted_this failed=$failed_this budget_left=$budget"
+
+            if [ "$failed_this" -gt 0 ]; then
+              grep '^FAIL' "$results" | sed 's/^/::warning::/' || true
+            fi
+            if [ "$deleted_this" -eq 0 ]; then
+              echo "Cancelled/skipped cleanup made zero deletion progress; refusing to report success" >&2
+              exit 1
+            fi
+          done
+
+          final_cancelled="$(status_total_count cancelled)"
+          final_skipped="$(status_total_count skipped)"
+
+          # Re-evaluate the visible set one last time. When counts are <= 1,000,
+          # this is the complete repository-wide set for each status.
+          list_cancelled_skipped "$candidates"
+          sort -t"$(printf '\t')" -k5,5 -k6,6 -k7,7r "$candidates" \
+            | awk -F'\t' '!seen[$5 FS $6]++ { print $1 }' > "$keep"
+          awk -F'\t' \
+            -v cutoff="$cutoff" \
+            -v self="$SELF_RUN_ID" '
+              NR == FNR { keep[$1] = 1; next }
+              $1 != self && !($1 in keep) && $3 < cutoff { print }
+            ' "$keep" "$candidates" > "$selected"
+          final_eligible="$(wc -l < "$selected" | tr -d ' ')"
 
           {
             echo "### Cancelled/skipped cleanup"
             echo
-            echo "- Found: \`$total_candidates\`"
-            echo "- Retained as newest per workflow/branch: \`$total_kept\`"
-            echo "- Eligible: \`$total_selected\`"
-            echo "- Deleted: \`$deleted\`"
-            echo "- Left in place (state changed): \`$left\`"
-            echo "- Failed, retried next pass: \`$failed\`"
+            echo "- Cancelled runs before cleanup: \`$initial_cancelled\`"
+            echo "- Skipped runs before cleanup: \`$initial_skipped\`"
+            echo "- Whole runs deleted: \`$deleted_total\`"
+            echo "- Failed deletion attempts after retries: \`$failed_attempts\`"
+            echo "- Cancelled runs after cleanup: \`$final_cancelled\`"
+            echo "- Skipped runs after cleanup: \`$final_skipped\`"
+            echo "- Remaining old non-retained runs eligible for deletion: \`$final_eligible\`"
           } >> "$GITHUB_STEP_SUMMARY"
 
-          if [ "$failed" -gt 0 ] && [ "$deleted" -eq 0 ]; then
-            echo "Every cancelled/skipped deletion failed - check actions: write permission" >&2
+          if [ "$final_cancelled" -gt 1000 ] || [ "$final_skipped" -gt 1000 ]; then
+            echo "Cannot prove cancelled/skipped cleanup complete while a status still exceeds GitHub's 1,000-result search cap" >&2
             exit 1
           fi
-          if [ "$failed" -gt 0 ]; then
-            echo "::warning::$failed cancelled/skipped run(s) could not be deleted"
-          fi
-
-      - name: Keep only the 15 newest failed workflow runs
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REPO: ${{ github.repository }}
-          DRY_RUN: ${{ inputs.dry_run || false }}
-          MAX_DELETIONS: ${{ inputs.max_deletions || '5000' }}
-          FAILED_RUNS_TO_KEEP: '15'
-          PARALLELISM: '8'
-        run: |
-          set -euo pipefail
-
-          case "$MAX_DELETIONS" in
-            ''|*[!0-9]*|0)
-              echo "max_deletions must be a positive integer" >&2
-              exit 1
-              ;;
-          esac
-          case "$FAILED_RUNS_TO_KEEP" in
-            ''|*[!0-9]*)
-              echo "FAILED_RUNS_TO_KEEP must be a non-negative integer" >&2
-              exit 1
-              ;;
-          esac
-
-          candidates="$(mktemp)"
-          ordered="$(mktemp)"
-          selected="$(mktemp)"
-
-          # Do NOT set exclude_pull_requests=true here. The retention policy is
-          # repository-wide and includes push, pull_request, workflow_dispatch,
-          # schedule, and all other failed workflow runs.
-          gh api \
-            -H "Accept: application/vnd.github+json" \
-            --method GET \
-            --paginate \
-            --field per_page=100 \
-            --field status=failure \
-            "repos/${REPO}/actions/runs" \
-            --jq '
-              .workflow_runs[]
-              | select(.status == "completed")
-              | select(.conclusion == "failure")
-              | [.id, .updated_at, .name, .created_at, .run_attempt,
-                 (.event // "-"), (.head_branch // "-")] | @tsv
-            ' > "$candidates"
-
-          sort -u "$candidates" -o "$candidates"
-
-          # Newest failed run first. updated_at makes a newly failed rerun recent;
-          # created_at/id give deterministic tie breakers.
-          LC_ALL=C sort -t"$(printf '\t')" \
-            -k2,2r -k4,4r -k1,1nr \
-            "$candidates" > "$ordered"
-
-          # Retention is count-based, not age-based: keep the first 15 and
-          # delete every older failed run, subject only to the safety cap.
-          awk -F'\t' \
-            -v keep="$FAILED_RUNS_TO_KEEP" \
-            -v cap="$MAX_DELETIONS" '
-              NR > keep && n < cap {
-                print
-                n++
-              }
-            ' "$ordered" > "$selected"
-
-          total_failed="$(wc -l < "$ordered" | tr -d ' ')"
-          if [ "$total_failed" -lt "$FAILED_RUNS_TO_KEEP" ]; then
-            retained="$total_failed"
-          else
-            retained="$FAILED_RUNS_TO_KEEP"
-          fi
-          total_selected="$(wc -l < "$selected" | tr -d ' ')"
-          excess=$((total_failed - retained))
-
-          echo "Failed workflow runs found: $total_failed"
-          echo "Newest failed runs retained: $retained"
-          echo "Older failed runs above retention: $excess"
-          echo "Selected for deletion this pass: $total_selected"
-          echo "Safety cap: $MAX_DELETIONS"
-
-          if [ "$total_selected" -eq 0 ]; then
-            {
-              echo "### Failed-run retention"
-              echo
-              echo "- Failed runs found: \`$total_failed\`"
-              echo "- Newest failed runs retained: \`$retained\`"
-              echo "- Deleted: \`0\`"
-            } >> "$GITHUB_STEP_SUMMARY"
-            exit 0
-          fi
-
-          echo "Selected old failed runs:"
-          awk -F'\t' '{
-            printf "  %s  run %s  attempt %s  event %s  branch %s  (%s)\n",
-                   $2, $1, $5, $6, $7, $3
-          }' "$selected"
-
-          if [ "$DRY_RUN" = "true" ]; then
-            {
-              echo "### Failed-run retention (dry run)"
-              echo
-              echo "- Failed runs found: \`$total_failed\`"
-              echo "- Newest failed runs retained: \`$retained\`"
-              echo "- Would delete whole failed runs: \`$total_selected\`"
-              echo "- Deleting a run also removes its job logs"
-            } >> "$GITHUB_STEP_SUMMARY"
-            exit 0
-          fi
-
-          results="$(mktemp)"
-          worker="$(mktemp)"
-          export RESULTS="$results"
-
-          cat > "$worker" <<'WORKER'
-          #!/usr/bin/env bash
-          set -uo pipefail
-          id="$1"
-
-          # A manual rerun can move an old failure back to queued/in_progress
-          # after selection. Never delete it unless it is still completed/failure.
-          state="$(gh api "repos/${REPO}/actions/runs/${id}" \
-            --jq '"\(.status)/\(.conclusion)"' </dev/null 2>/dev/null || true)"
-          if [ "$state" != "completed/failure" ]; then
-            printf 'SKIP\t%s\t%s\n' "$id" "${state:-unknown}" >> "$RESULTS"
-            exit 0
-          fi
-
-          for attempt in 1 2 3; do
-            if gh api --method DELETE "repos/${REPO}/actions/runs/${id}" \
-                --silent </dev/null 2>/dev/null; then
-              printf 'OK\t%s\n' "$id" >> "$RESULTS"
-              exit 0
-            fi
-            sleep "$attempt"
-          done
-
-          printf 'FAIL\t%s\n' "$id" >> "$RESULTS"
-          exit 0
-          WORKER
-          chmod +x "$worker"
-
-          cut -f1 "$selected" | xargs -r -P "$PARALLELISM" -n 1 "$worker"
-
-          deleted="$(grep -c '^OK' "$results" || true)"
-          left="$(grep -c '^SKIP' "$results" || true)"
-          failed="$(grep -c '^FAIL' "$results" || true)"
-
-          echo "Failed runs deleted: $deleted"
-          echo "Left in place because state changed: $left"
-          echo "Deletion failures: $failed"
-
-          {
-            echo "### Failed-run retention"
-            echo
-            echo "- Failed runs found before cleanup: \`$total_failed\`"
-            echo "- Newest failed runs retained: \`$retained\`"
-            echo "- Eligible old failed runs: \`$total_selected\`"
-            echo "- Whole failed runs deleted: \`$deleted\`"
-            echo "- Left in place (state changed): \`$left\`"
-            echo "- Failed, retried next pass: \`$failed\`"
-          } >> "$GITHUB_STEP_SUMMARY"
-
-          if [ "$failed" -gt 0 ] && [ "$deleted" -eq 0 ]; then
-            echo "Every failed-run deletion failed - check actions: write permission" >&2
+          if [ "$final_eligible" -gt 0 ]; then
+            echo "Cancelled/skipped cleanup invariant not met: $final_eligible eligible old runs remain" >&2
             exit 1
-          fi
-          if [ "$failed" -gt 0 ]; then
-            echo "::warning::$failed old failed run(s) could not be deleted"
           fi
