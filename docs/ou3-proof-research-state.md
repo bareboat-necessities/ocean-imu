@@ -1,89 +1,109 @@
 # OU-III proof research state
 
-This is the current research ledger required by the root `AGENTS.md`. Replace stale state rather than accumulating PR history.
+This is the short current-state ledger required by the root `AGENTS.md`. Replace stale research history rather than accumulating it here.
 
-## State
+## Current hypothesis
 
-**REPLAN AFTER PR #475 — the four-max “same-history” covariance upper is now rejected.**
+Canonical P3 is still open. P4 remains blocked by P3 and P5 remains blocked by P4. The canonical usefulness gate stays exactly `delta >= 1e-18`; the deployed filter and declared operating domain are unchanged.
 
-Canonical P3 still has no theorem PASS. P4 remains blocked by P3 and P5 remains blocked by P4. The canonical usefulness gate remains exactly `delta >= 1e-18`; the deployed filter, declared operating domain and P2 V1 source language are unchanged.
+The old P3 architecture is now rejected in two independent ways:
 
-PR #475 correctly identified the first structural defect: P3 compared a zero-start 13–26-sample translation floor (65–130 ms) with a 3.02–3.17 s covariance-word upper. At the point cell `(tau=12 s, sigma=6, R_S=400)`, crediting the deployed S cadence in the upper alone leaves about 6.66 orders to the gate, whereas making the floor whole-word too gives the non-certified point diagnostic `delta ~= 3.79e-4`, binding on `p`. This remains the feasibility signal, not a certificate.
+1. its covariance floor and ceiling lived on different horizons; and
+2. its covariance ceiling discarded source order into four path maxima and assumed a finite S=0 pseudo-observation gap that the current P2->P3 source quotient does not prove.
 
-PR #476 then tested whether the existing same-history upper could preserve enough source correlation while the floor was lengthened. It cannot. The upper summarizes a source history by four independent path maxima:
+The replacement P3 must use a whole-word covariance comparison and must preserve enough tuner/scheduler memory to justify whatever S-information recurrence it uses.
 
-1. maximum pseudo-update cadence;
-2. maximum `sigma^2`;
-3. maximum `q_c = 2 sigma^2/tau`;
-4. maximum S-measurement variance.
+## Evidence
 
-A legal P2 V1 path attains the **full global adverse label `[9,3,39,9]` in only 101 samples = 0.505 s**, far inside the 635-sample covariance word:
+### Ordered covariance mechanism is large enough
 
-`729 --16--> 568 --16--> 407 --18--> 246 --25--> 85 --13--> 74 --13--> 63`.
+The exact legal P2 path
 
-The supporting gaps are exact P2 V1 labelled transitions. Once the four maxima are attained, max-update is absorbing and the finite-clock graph has no dead continuation, so this history extends across the complete word while retaining the global label. Therefore the global four-max label is not merely a Cartesian artifact: it is an **actual legal history label**.
+`729 --16--> 568 --16--> 407 --18--> 246 --25--> 85 --13--> 74 --13--> 63`
 
-### Failure classification
+reaches the full old four-max adverse label `[9,3,39,9]` in 101 samples. Therefore exact elapsed/Pareto/frontier enumeration cannot repair an upper that still feeds those four independent maxima to the old formula.
 
-**The four independent path maxima are not a sufficient source-correlation quotient for the covariance upper.**
+A non-promoting 635-sample point Riccati diagnostic that retains source order and the shipping pseudo-timer semantics starts from the same old covariance ceiling and obtains standard deviations
 
-Any exact-elapsed, Pareto, minimum-cost or endpoint refinement that feeds the same four maxima into `translation_upper_from_summary` must eventually admit the actual global label above. Improving enumeration cannot fix the loss because the loss occurs when time order and residence duration are discarded.
+- old four-max ceiling: `[3.3454e4, 6.3004e4, 8.4732e4, 3.3302e1]`;
+- ordered legal history: `[1.25985, 1.17849, 0.55534, 0.85421]`.
 
-This is separate from the original horizon mismatch. The required P3 repair now has two structural parts:
+The variance reductions are about `7.05e8`, `2.86e9`, `2.33e10`, and `1.52e3`. This is feasibility evidence only, but it confirms that time ordering and repeated S updates are the missing mechanism rather than a small enclosure improvement.
 
-- a whole-word covariance lower valid for every admissible PSD initial covariance and legal source history;
-- a **time-ordered, duration-aware covariance upper** that does not replace a brief visit to each adverse source by holding every adverse statistic for the whole word.
+### Existing finite S-gap premise is false for the current proof language
 
-### Measured falsifications on PR #476
+Shipping `set_pseudo_update_period_s()` reduces the retained pseudo elapsed time with `fmod(elapsed,new_period)`. The tuner commits the current smoothed tau on its finite source clock, and every commit reapplies the tau-scaled pseudo period.
 
-- A rigorous-but-overconservative global whole-word lower projection gave arbitrary-phase `delta >= 1.3872e-27` against the old global upper. This is still about nine orders below the gate and is rejected as the canonical architecture because it pairs small-tau/frequent-S lower behavior with the large-tau/sparse-S global ceiling. The old probe also has an ulp-level metric reconstruction defect (`_metric_lower` divided by a nominal scale while the canonical gate multiplies by an outward interval square), so it is retained only as falsification evidence and must not be promoted.
-- A 49-segment gap-forgotten source frontier collapsed to one label `[9,3,39,9]`, admitting all 800 physical source nodes and reproducing the global upper. Rejected.
-- A finite-cost adverse frontier was attempted next, but its implementation did not produce a target-crossing terminal class. It is superseded by the exact 16-mask witness above; fixing the enumerator cannot repair a four-max summary whose global label is already legally reachable in 0.505 s.
+The P2 clock certificate admits exact stage gaps `13..26` samples over the full binary64 lifetime. Node 720 has an exact gap-13 self edge. Inside that one P2 source cell,
+
+- tau cell: `[8.3859254253, 12.0] s`;
+- pseudo-period cell: `[0.1143535210, 0.1636363529] s`;
+- `tau_low = 9.5333347321 s` -> `T_S = 0.1300000101 s`;
+- `tau_high = 11.0 s` -> `T_S = 0.1499999911 s`.
+
+The exact binary32 scheduler transcription has a repeatable `H,H,L,H,L,H,...` reset cycle with **zero S firings over all 635 samples**. CI run `33815085697` validates the exact gap-13 self edge, both tau/period values inside the same P2 cell, the repeatable no-fire cycle, and zero firings.
+
+Therefore the old upper premise
+
+`S observation gap <= max(pseudo period) + h`
+
+is **not a theorem of `OU3_P2_CORRELATED_STAGE_TRANSFER_V1`**. Any P3 upper that uses that premise is invalid, irrespective of how tightly the covariance algebra is enclosed.
+
+This result does **not** yet prove that the full deployed WavePeriodEstimator + tau EMA can realize the no-fire cycle. The current P2 quotient deliberately forgets within-cell tau evolution and upstream estimator memory. That distinction is the next research question.
+
+## Failure classification / critic pass
+
+**Failure type:** proof-method / source-abstraction failure.
+
+**Invalidated strategy:** infer a finite S-packet gap from the maximum tau-coupled pseudo period while allowing source changes represented only by the current coarse P2 cell/pair state.
+
+**Not invalidated:** the deployed filter, the declared physical operating envelope, the whole-word covariance feasibility signal, covariance monotonicity, or the possibility of proving P3 with a stronger source/scheduler representation.
+
+**Current limiter:** guaranteed translation observability/information in the presence of source-dependent pseudo-period changes and retained timer phase.
+
+Strongest reason to abandon the current architecture: the missing variable is not another covariance norm; it is an actual hybrid state (`pseudo_update_elapsed_s_`) whose reset map depends on the continuously evolving tau. Forgetting that state can manufacture a legal proof word with no S observations at all.
+
+## Alternatives
+
+1. **Shipping source + timer reachability.** Lift the P2 interface with the tau-EMA state (or a certified sufficient quotient) and pseudo timer phase, then propagate cumulative S information/covariance in time order. This keeps the theorem source complete and directly attacks the missing state.
+2. **Finite-initialization / multiword covariance theorem.** Stop requiring every covariance word to wash out arbitrary initial covariance. Start from the actual certified finite filter initialization and prove bounded covariance using cumulative information over multiple words, allowing individual zero-S words. This changes the covariance theorem architecture, not the filter or domain.
+3. **Derive estimator regularity from shipping code.** Prove a rate/dwell/total-variation property for the WavePeriodEstimator -> SeaStateAutoTuner -> tau EMA chain strong enough to exclude timer-reset starvation, then reuse a simpler scheduler quotient. This is acceptable only if derived from implementation and the existing physical source envelope; adding an artificial regularity assumption to make P3 pass is forbidden.
+4. **Information-form recurrence instead of packet-gap selection.** Bound the complete ordered information contribution of whatever S packets actually occur rather than selecting three observations separated by a prescribed gap. This may combine naturally with either (1) or (2) and avoids making `max period + h` the controlling lemma.
 
 ## Next falsifiable experiment
 
-**Build a time-ordered, cadence-aware covariance-upper diagnostic on legal P2 V1 words. Do not run another covariance lower against the four-max envelope.**
+**Test whether the shipping tau EMA itself can realize the scheduler reset cycle under the presently admitted tuning-frequency input family.**
 
-The diagnostic must preserve, in order:
+Use the exact binary32 tau update, dynamic EMA horizon, 13-sample certified source clock, tau->pseudo-period map, `fmod` period setter, and `periodic_update_due` semantics. Search for legal tuning frequencies whose 13-sample EMA images alternate between two applied tau values around the critical reset period while producing no S firing from a post-fire timer state.
 
-- source-local `tau`, `sigma`, `q_c` and `R_S` coupling;
-- duration of each applied source segment;
-- the actual S pseudo-measurement scheduler state across source commits. Shipping `set_pseudo_update_period_s()` applies `elapsed = fmod(elapsed, new_period)`, so fixed-cell firing counts such as 19 at `tau=12 s` and 602 at `tau=0.333 s` cannot simply be pasted onto a changing-source word;
-- the complete 635-sample covariance-word horizon and canonical 0–25-sample terminal phase.
+Interpretation:
 
-The first diagnostic is non-promoting. It should compare the old four-max upper with an ordered upper on the explicit 101-sample global-label witness extended to the covariance word. This is deliberately the adversarial history that defeats the current summary. If the ordered upper drops by the expected orders of magnitude, implement a source-complete finite-state/monotone quotient of that ordered upper. If it does not, reconsider the covariance-upper theorem representation rather than tune parameters or enclosures.
+- **cycle realizable:** coarse tau partitioning is not the root cause. The proof needs upstream WavePeriodEstimator/source regularity or a scheduler-aware theorem that tolerates such cycles; do not build a finer 800-state-style partition and call it closure.
+- **cycle not realizable with tau EMA:** refine the P2/P3 interface to retain the tau-EMA relation and timer phase; the current cell quotient is the sole starvation source.
 
-A safe upper construction may start from a finite covariance/observability bound and propagate source-ordered Riccati prediction plus guaranteed S updates using monotonicity. Do **not** use a naive independent-observation `1/N` information gain: process-noise correlations and the source-varying scheduler must remain covered.
+This experiment is diagnostic only. It cannot promote P3/P4/P5.
 
 ## Retained facts
 
-- Canonical P3 gate remains exactly `1e-18`.
-- `OU3_P2_CORRELATED_STAGE_TRANSFER_V1` remains the source-language authority. Legal stage-boundary transitions are `(c,s) --g--> (s,t)`, `g in 13..26`; the following segment uses source `s`.
-- The physical source partition remains 800 states. Arbitrary Cartesian tuner switching is forbidden.
-- Same-tau `(sigma_index=0, R_S_index=0)` source nodes remain valid covariance-lower dominators within their tau cell by Riccati monotonicity in process `Q` and measurement `R`. This does not justify collapsing tau or the ordered history.
-- Starting a covariance lower from `P=0` is valid below every admissible PSD initial covariance by Riccati monotonicity; the difficulty is retaining a useful lower over the whole legal word, not validity of the zero start.
-- Endpoint-only segment SPD certification remains feasible. Intermediate per-step strict SPD was surplus and is not a theorem obligation.
-- H=18 and A=21 full-state branches are both still required after translation P3 closes.
-- Existing exact Joseph, Cayley, co-rotated accelerometer and reset identities remain structural facts only; they do not authorize P4 promotion.
-- Current proof scope remains zero/disabled lever arm and dormant/transparent vibration-guard branch, with no replay fitting or operating-domain shrink for PASS.
-- P4 is blocked until canonical P3 passes. P5 is blocked until canonical P4 proves strict whole-word contraction and must ultimately prove finite capture from the declared 45-degree entrance into the inner funnel.
+- Canonical P3 usefulness threshold is exactly `1e-18`.
+- `OU3_P2_CORRELATED_STAGE_TRANSFER_V1` remains the current source authority, but it is now known to be insufficient for any P3 lemma requiring a finite S firing gap.
+- Physical P2 partition remains 800 states; arbitrary Cartesian tau/sigma/R_S switching remains forbidden.
+- Whole-word lower construction is still required; `P=0` is a valid covariance lower start by Riccati monotonicity.
+- H=18 and A=21 both remain required after translation P3 closes.
+- No replay fitting, operating-domain shrink, gate tuning, or deployed-filter change is allowed for proof convenience.
+- Lever arm remains disabled and the vibration guard remains on its dormant/transparent proof branch.
+- P4 cannot promote before canonical P3; P5 cannot promote before strict canonical P4 contraction and must ultimately prove finite capture from the declared 45-degree entrance into the inner funnel.
 
 ## DEAD_ENDS / SHELVED
 
-Do not resume these as a route to the P3 gate unless a new mathematical fact invalidates the rejection:
+Do not resume these without a new mathematical fact:
 
 - fixed-source 635-sample lower as a theorem proof;
-- global whole-word lower against the global four-max upper;
-- 49-step gap-forgotten source superset;
-- exact-elapsed/Pareto/minimum-cost enumeration **with the same four path maxima**;
-- independent Cartesian `tau/sigma/R_S` extrema;
-- recursive natural interval covariance boxes that forget the repeated scalar source parameter;
-- blind deeper subdivision, Taylor-model/enclosure tightening, or isotropic `rho I` repair as a substitute for the structural horizon/upper fix;
-- sigma/R_S coefficient or canonical-gate tuning;
+- global whole-word lower against the old global four-max upper;
+- 49-step gap-forgotten frontier;
+- exact-elapsed/Pareto/minimum-cost enumeration while retaining the same four path maxima;
+- independent Cartesian tau/sigma/R_S extrema;
+- any covariance upper using `gap <= cadence_max + h` directly from the present P2 quotient;
+- blind subdivision, scalar-norm tightening, or deeper search as a substitute for source/timer memory;
+- sigma/R_S coefficient, filter, domain, or canonical-gate tuning;
 - additional P4 micro-certificates before P3 has a real margin.
-
-Sound but shelved items such as univariate Taylor models, tighter Loewner enclosures and the anisotropic floor may be revisited only after the ordered covariance upper exists and a real remaining P3 deficit is measured.
-
-## P4 / P5 sequencing
-
-Before any new P4 theorem producer, obtain the canonical P3 numerical verdict with the ordered whole-word translation comparison and both H/A joins. If P3 passes, run the non-promoting complete-word P4 contraction diagnostic first. Only a clear source-complete contraction result justifies rebuilding the rigorous P4 certificate. P5 then proves finite startup-to-inner-funnel capture; outer-sector entry alone is not P5 closure.
