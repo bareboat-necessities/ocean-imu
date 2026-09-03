@@ -5,6 +5,8 @@ on:
     paths:
       - "tools/ou3_p3_four_max_global_label_witness.py"
       - "tests/validation/test_ou3_p3_four_max_global_label_witness.py"
+      - "tools/ou3_p3_ordered_witness_covariance_diagnostic.py"
+      - "tests/validation/test_ou3_p3_ordered_witness_covariance_diagnostic.py"
       - "tools/ou3_p3_matched_history_cost_frontier.py"
       - "tests/validation/test_ou3_p3_matched_history_cost_frontier.py"
       - ".github/workflows/ou3-p3-whole-word-probe.yml"
@@ -20,7 +22,7 @@ permissions:
   contents: read
 
 jobs:
-  four-max-global-label-witness:
+  ordered-four-max-witness-diagnostic:
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
@@ -28,27 +30,30 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Compile global-label witness
+      - name: Compile witness and ordered diagnostic
         run: |
           python3 -m py_compile \
             tools/ou3_p3_four_max_global_label_witness.py \
+            tools/ou3_p3_ordered_witness_covariance_diagnostic.py \
             tools/ou3_p3_matched_history_cost_frontier.py \
             tests/validation/test_ou3_p3_four_max_global_label_witness.py \
+            tests/validation/test_ou3_p3_ordered_witness_covariance_diagnostic.py \
             tests/validation/test_ou3_p3_matched_history_cost_frontier.py
 
-      - name: Test source-cost and witness invariants
+      - name: Test source-cost, witness, scheduler, and extension invariants
         working-directory: tests/validation
         run: |
           python3 -m unittest -v \
             test_ou3_p3_matched_history_cost_frontier \
-            test_ou3_p3_four_max_global_label_witness
+            test_ou3_p3_four_max_global_label_witness \
+            test_ou3_p3_ordered_witness_covariance_diagnostic
 
       - name: Find shortest legal global four-max label witness
         run: |
           python3 tools/ou3_p3_four_max_global_label_witness.py \
             --output /tmp/ou3_p3_four_max_global_label_witness.json
 
-      - name: Enforce non-promotion and frozen source contract
+      - name: Enforce four-max collapse witness contract
         run: |
           python3 - <<'PY'
           import json
@@ -59,22 +64,60 @@ jobs:
           assert d['minimum_supporting_gap_per_source_edge_used'] is True
           assert d['minimum_gap_replacement_preserves_source_sequence_and_can_only_reduce_cost'] is True
           assert d['label_update_order_matches_HIST_frontier_runtime'] is True
+          assert d['global_label_reachable_within_word'] is True
           assert d['matched_margin_computed'] is False
           assert d['P3_PROMOTED'] is False
           assert d['P4_PROMOTED'] is False
           assert d['P5_PROMOTED'] is False
           print('GLOBAL_LABEL', d['global_adverse_rank_label'])
-          print('GLOBAL_LABEL_REACHABLE', d['global_label_reachable_within_word'])
           print('MINIMUM_COST_SAMPLES', d['global_label_minimum_cost_samples'])
           print('CLASSIFICATION', d['classification'])
           for row in d['global_label_witness_path']:
               print('WITNESS_EDGE', row)
+          PY
+
+      - name: Run ordered source and pseudo-scheduler point diagnostic
+        run: |
+          python3 tools/ou3_p3_ordered_witness_covariance_diagnostic.py \
+            --output /tmp/ou3_p3_ordered_witness_covariance_diagnostic.json
+
+      - name: Enforce ordered diagnostic non-promotion contract
+        run: |
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/ou3_p3_ordered_witness_covariance_diagnostic.json'))
+          assert d['validation_pass'], d['validation_failures']
+          assert d['target_samples'] == 635
+          assert d['four_max_witness_minimum_samples'] <= 635
+          assert d['exact_witness_source_order_retained'] is True
+          assert d['exact_gap_labelled_legal_extension_used'] is True
+          assert d['pseudo_period_change_uses_fmod_semantics'] is True
+          assert d['periodic_update_due_shipping_semantics_transcribed'] is True
+          assert d['accelerometer_measurement_updates_credited'] is False
+          assert d['interval_certificate'] is False
+          assert d['uniform_covariance_upper_certificate'] is False
+          assert d['P3_PROMOTED'] is False
+          assert d['P4_PROMOTED'] is False
+          assert d['P5_PROMOTED'] is False
+          print('OLD_UPPER_STD', d['old_four_max_upper_std'])
+          print('ORDERED_STD', d['ordered_phase_envelope_std'])
+          print('ORDERED_VARIANCE_GAIN', d['old_upper_to_ordered_variance_gain'])
+          print('SYNTHETIC_STD', d['synthetic_phase_envelope_std'])
+          print('SYNTHETIC_VARIANCE_GAIN', d['old_upper_to_synthetic_variance_gain'])
+          print('SYNTHETIC_PARAMS', d['synthetic_four_max_parameters'])
           print('NEXT', d['next_obligation'])
           PY
 
-      - name: Upload global-label witness artifact
+      - name: Upload four-max witness artifact
         uses: actions/upload-artifact@v6
         with:
           name: ou3-p3-four-max-global-label-witness
           path: /tmp/ou3_p3_four_max_global_label_witness.json
+          retention-days: 7
+
+      - name: Upload ordered witness covariance diagnostic artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: ou3-p3-ordered-witness-covariance-diagnostic
+          path: /tmp/ou3_p3_ordered_witness_covariance_diagnostic.json
           retention-days: 7
