@@ -13,6 +13,13 @@ geometry gives
     ||y_R||^2 >= a_R ||h_R||^2,       a_R=4/(4+q^2),
     ||eta_R||^2 <= s^2 ||h_R||^2,     s=sin(theta/2).
 
+The current Cayley certificate exposes ``a_R`` as
+``chart_sigma_min_lower``: for c=q u, the exact residual-to-linear-tangent
+amplitude ratio is cos(theta/2), hence its squared ratio is
+cos^2(theta/2)=4/(4+q^2).  This is deliberately *not* the separate
+``exact_vector_information_retention_factor_lower=cos^4(theta/2)`` used for the
+Jacobian information bound.
+
 Thus on the pure rotational tangent direction
 
     y' S^-1 y - eta' R^-1 eta
@@ -51,7 +58,7 @@ import ou3_p4_signed_joseph_feasibility as AUDIT
 
 REPO = Path(__file__).resolve().parents[1]
 DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
-SCHEMA = 1
+SCHEMA = 2
 MODES = ("H", "A")
 
 
@@ -79,11 +86,18 @@ def evaluate(audit: dict, cayley: dict, remainder: dict, mag: dict) -> dict:
     if failures:
         return {"schema": SCHEMA, "failures": failures}
 
-    aR = float(cayley["exact_vector_residual_norm_factor_lower"])
+    # For the exact vector residual r=(R-I)v versus h=[c]xv, the *squared*
+    # norm retention is cos^2(theta/2)=4/(4+q^2).  The Cayley producer's
+    # chart_sigma_min_lower is exactly that scalar.  Do not use its cos^4
+    # Jacobian-information factor here.
+    aR = float(cayley["chart_sigma_min_lower"])
+    jacobian_info = float(cayley["exact_vector_information_retention_factor_lower"])
     s2 = float(remainder["acc_eta_force_rotation_quadratic_coefficient_upper"])
     A = float(mag["effective_tangent_coordinate_gain_lower"])
     beta = float(mag["effective_vs_linear_tangent_defect_ratio_upper"])
-    if not (0.0 < aR <= 1.0 and 0.0 <= s2 < 1.0 and 0.0 < A <= 1.0 and 0.0 <= beta < 1.0):
+    if not (0.0 < aR <= 1.0 and 0.0 < jacobian_info <= aR <= 1.0):
+        failures.append("Cayley residual/information retention factors invalid")
+    if not (0.0 <= s2 < 1.0 and 0.0 < A <= 1.0 and 0.0 <= beta < 1.0):
         failures.append("finite-angle tangent coefficients invalid")
 
     A2_lo = mul_down(A, A)
@@ -146,6 +160,7 @@ def evaluate(audit: dict, cayley: dict, remainder: dict, mag: dict) -> dict:
         "linear_tangent_form_interface_matches_P3": True,
         "outer_angle_rad": float(cayley["outer_angle_rad"]),
         "accelerometer_exact_residual_vs_tangent_norm_squared_lower": aR,
+        "cayley_jacobian_information_retention_factor_lower_not_used_for_residual": jacobian_info,
         "accelerometer_eta_vs_tangent_norm_squared_upper": s2,
         "magnetometer_effective_tangent_gain_lower": A,
         "magnetometer_effective_tangent_gain_squared_lower": A2_lo,
@@ -198,6 +213,12 @@ def validate(d: dict) -> list[str]:
             f.append(f"{key} is not false")
     if int(d.get("source_phase_mode_classes_scanned", 0)) != 800 * 2 * 2:
         f.append("directional coefficient audit did not cover 800 x 2 x H/A")
+    residual = d.get("accelerometer_exact_residual_vs_tangent_norm_squared_lower")
+    jac = d.get("cayley_jacobian_information_retention_factor_lower_not_used_for_residual")
+    if not isinstance(residual, (int, float)) or not (0.0 < float(residual) <= 1.0):
+        f.append("invalid accelerometer exact-residual retention factor")
+    if not isinstance(jac, (int, float)) or not (0.0 < float(jac) <= float(residual or 0.0)):
+        f.append("invalid separated Cayley Jacobian-information factor")
     positive = True
     for mode in MODES:
         row = d.get("worst_by_mode", {}).get(mode, {})
