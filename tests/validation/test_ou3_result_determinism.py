@@ -17,8 +17,10 @@ PRODUCERS = [
     ROOT / "tools" / "ou3_p3_canonical_gate.py",
     ROOT / "tools" / "ou3_p4_p3_metric_attachment.py",
     ROOT / "tools" / "ou3_p4_cayley_sector_certificate.py",
+    ROOT / "tools" / "ou3_p4_accelerometer_corotated_aw.py",
     ROOT / "tools" / "ou3_p4_source_word_timing.py",
     ROOT / "tools" / "ou3_p4_vector_remainder_sector.py",
+    ROOT / "tools" / "ou3_p4_signed_joseph_feasibility.py",
     ROOT / "tools" / "ou3_p4_canonical_gate.py",
 ]
 
