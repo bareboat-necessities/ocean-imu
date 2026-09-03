@@ -93,42 +93,86 @@ but is not the limiter.
 ### What it does not invalidate
 
 * the `1e-18` canonical gate;
-* same-history P2-V1 source correlation and the envelope machinery, which is not
-  what broke;
+* ~~same-history P2-V1 source correlation and the envelope machinery, which is
+  not what broke~~ -- **withdrawn.** PR #476 showed the four-max summary admits
+  the full global adverse label `[9,3,39,9]` after only 101 samples, far inside
+  the 635-sample word, so at whole-word horizon the same-history *upper*
+  degenerates to the global one. Verified independently here: all six
+  transitions of `729 --16--> 568 --16--> 407 --18--> 246 --25--> 85 --13--> 74
+  --13--> 63` are legal P2 V1 edges. The source *language* stands; the four-max
+  quotient built on it does not;
 * the H/A attitude and bias floors, which are separate from translation;
 * the exact Joseph, Cayley, co-rotated accelerometer and reset identities;
 * the endpoint-only SPD result, which remains correct and is not the limiter.
 
 ### Next falsifiable experiment
 
-Extend the certified translation floor from one segment to a whole word, so that
-both sides of the master inequality are whole-word quantities, and credit the
-deployed `S` cadence in the ceiling at the same time.
+The horizon fix has two structural parts. PR #476 owns the second; this ledger
+entry owns the first.
 
-Requirements:
+1. **whole-word covariance lower**, valid for every admissible PSD initial
+   covariance and every legal source history;
+2. **time-ordered, duration-aware covariance upper** -- #476's lane, because the
+   four-max quotient it replaces is what broke.
 
-- the whole-word floor must be a valid **lower** bound over every admissible
-  source history and every admissible initial covariance, not a point recursion
-  -- this is the hard part, and is plausibly why the floor is a single zero-start
-  segment today;
-- keep the same-history P2-V1 envelope ordering, which is not what broke;
-- credit the `S` cadence per cell, using each cell's own `T_S` and word length;
-- report the floor, `Sigma_upper`, the recomputed `delta` and the binding channel.
+The lower must be certified over *mixed* legal words, not one source held for a
+word. The single-cell dwell measured below is a feasibility signal for it, not a
+substitute: it says the geometry has room, and says nothing about whether a
+finite-state or monotone argument can quantify over legal histories.
 
-**Predicted:** with both sides whole-word at the binding cell, `delta` reaches
-roughly `1e-4` to `1e-3` -- the point diagnostic gives 3.79e-4, binding on `p` --
-clearing the `1e-18` gate by about 14 orders.
-**Falsified if** a uniform whole-word floor cannot be certified over admissible
-histories, or if certifying it costs so much of the floor that `delta` stays
-below `1e-18`. Either outcome moves suspicion to the theorem formulation rather
-than to the bounds.
+**Predicted:** a whole-word lower certified over mixed legal words retains a
+`delta` within about two orders of the worst single-cell dwell, so above `1e-10`.
+**Falsified if** quantifying over mixed words costs more than that, in which case
+the loss is in the history quotient rather than the horizon, and the suspicion
+moves back to the source-correlation representation.
 
-Caveat: every number in this section is an mpmath point diagnostic at one tuner
-cell, with `P0`-independence checked at 40 and 55 decimal digits. None of it is a
-certificate. A rigorous replacement must hold uniformly over source-reachable
-cells and initial covariances, which is strictly more than a point recursion.
+## Whole-word lower feasibility (measured)
 
-Do not resume any shelved item before this experiment reports a number.
+`tools/ou3_p3_whole_word_lower_feasibility.py`, non-promoting point diagnostic.
+Canonical `delta` is same-history matched -- `phase_row` pairs node `t`'s floor
+image with `endpoint_phase_upper(t, ...)`, that same node's own upper, and then
+minimises over nodes. The analogue measured is, per source configuration, the
+horizon-matched ratio between the whole word propagated from `P = 0` and the same
+word propagated from a large initial covariance.
+
+Over all 800 physical source nodes at their adverse corner (slowest cadence,
+largest `sigma`, weakest `S`), holding each for the full 635-sample word:
+
+| | value |
+| --- | --- |
+| worst single-cell dwell | **3.51e-8** at node 729 (`tau = 12 s`, `sigma = 0.05`, `R_S = 400`, 19 firings, binds on `p`) |
+| clears the `1e-18` gate by | **10.55 orders** |
+| independent mpmath `dps=30` sweep | 3.50347e-08, agreeing to 0.24 percent |
+| best node | about 1.0 (node 390) |
+
+On #476's own adversarial witness extended to the word, the ordered ratio is
+2.00e-3 at the slowest-cadence corner and 3.88e-3 at the fastest, so the choice
+of `tau` within a cell is worth about 2x, not orders. Ordering *helps*: the worst
+fixed-source cell in that witness gives 3.5e-8 while the mixed word gives 2.0e-3,
+because a mixed word necessarily visits faster-cadence cells that fire `S` more
+often. The adversary for a lower is therefore dwelling, not mixing.
+
+**Scheduler correction to this ledger's own earlier numbers.** The cadence is
+tau-scaled *and* `set_pseudo_update_period_s` applies
+`elapsed = fmod(elapsed, new_period)` on every source commit, so the fixed-cell
+counts recorded above (19 at `tau = 12 s`, 602 at `tau = 0.333 s`) do not
+transfer to a changing-source word. The witness word fires **106** times at the
+fastest corner and **76** at the slowest -- neither equals any single cell's
+count. Fixed-cell counts remain valid only for a word spent entirely in one cell.
+
+**Numerical limits, surfaced rather than tuned away.** `P0 = infinity` is not
+representable in double precision, and two walls bracket the usable range: below
+the lower wall the word has not forgotten `P0`; above the upper wall the
+covariance-form update loses the endpoint to cancellation, the tell being that
+the endpoint *decreases* as `P0` grows, which the monotone Riccati map forbids.
+The gap between the walls moves across cells by about eight orders -- the
+accepted probe scale ranges 1e6 to 1e15 over the 800 nodes -- so no fixed probe
+pair serves all of them. The probe escalates relative to each word's own
+zero-start covariance until two consecutive probes agree, and reports the
+accepted scale and achieved spread per row.
+
+Not a certificate: point diagnostic at one corner per cell, double precision,
+`quantifies_over_legal_histories: false`, `certifies_theorem_stage: false`.
 
 ## Failure classification (historical, both blockers now cleared)
 
