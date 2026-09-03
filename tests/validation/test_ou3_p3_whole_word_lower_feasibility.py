@@ -1,0 +1,108 @@
+from pathlib import Path
+import math
+import sys
+import unittest
+
+TOOLS = Path(__file__).resolve().parents[2] / "tools"
+sys.path.insert(0, str(TOOLS))
+
+import ou3_p3_whole_word_lower_feasibility as F
+
+
+class SchedulerSemantics(unittest.TestCase):
+    """The diagnostic is only meaningful if it reproduces the shipping scheduler."""
+
+    def test_cadence_is_tau_scaled_and_clamped(self):
+        self.assertAlmostEqual(F.cadence_s(1.1), 0.015, places=6)
+        # Both safety clamps are reachable from the declared tau envelope ends.
+        self.assertEqual(F.cadence_s(1.0e-6), F.PSEUDO_MIN_S)
+        self.assertEqual(F.cadence_s(1.0e6), F.PSEUDO_MAX_S)
+
+    def test_periodic_update_due_retains_remainder_and_never_fires_at_zero(self):
+        period, elapsed, fires = 0.02, 0.0, 0
+        for _ in range(100):
+            due, elapsed = F.periodic_update_due(F.DT_S, period, elapsed)
+            fires += int(due)
+            self.assertTrue(0.0 <= elapsed < period)
+        # DT_S is the binary32 5 ms, marginally below 0.005, so 100 samples
+        # span just under 0.5 s and yield 24 firings against a 20 ms period,
+        # not 25.  The remainder is retained rather than reset each time.
+        self.assertEqual(fires, 24)
+        due, _ = F.periodic_update_due(F.DT_S, 0.02, 0.0)
+        self.assertFalse(due)
+
+    def test_commit_period_rebases_the_timer(self):
+        # set_pseudo_update_period_s applies elapsed = fmod(elapsed, new_period),
+        # so a pending timer cannot survive a source commit unchanged.
+        self.assertAlmostEqual(F.commit_period(0.13, 0.05), 0.03, places=12)
+        self.assertEqual(F.commit_period(0.0, 0.05), 0.0)
+        with self.assertRaises(RuntimeError):
+            F.commit_period(float("nan"), 0.05)
+
+
+class WordPropagation(unittest.TestCase):
+    def test_zero_start_word_is_positive_and_covers_the_horizon(self):
+        segs = [(1.1, 0.5, 10.0, F.WORD_SAMPLES)]
+        P, fires, used = F.run_word(segs, [0.0, 0.0, 0.0, 0.0])
+        self.assertEqual(used, F.WORD_SAMPLES)
+        self.assertGreater(fires, 0)
+        for i in range(4):
+            self.assertTrue(math.isfinite(P[i][i]) and P[i][i] > 0.0)
+
+    def test_zero_start_stays_below_a_seeded_start(self):
+        # Riccati monotonicity in the initial covariance: P0 = 0 is a valid
+        # lower below every admissible PSD initial covariance.
+        segs = [(1.1, 0.5, 10.0, F.WORD_SAMPLES)]
+        lo, _, _ = F.run_word(segs, [0.0, 0.0, 0.0, 0.0])
+        hi, _, _ = F.run_word(segs, [1.0e6, 1.0e6, 1.0e6, 0.25])
+        for i in range(4):
+            self.assertLessEqual(lo[i][i], hi[i][i] * (1.0 + 1.0e-9))
+
+    def test_a_changing_source_word_does_not_reuse_a_fixed_cell_firing_count(self):
+        # The tau-scaled cadence and the fmod rebase mean a mixed word's firing
+        # count is not any single cell's count.
+        fixed_slow = F.run_word([(12.0, 0.05, 400.0, F.WORD_SAMPLES)], [0.0] * 4)[1]
+        fixed_fast = F.run_word([(0.3333, 0.05, 400.0, F.WORD_SAMPLES)], [0.0] * 4)[1]
+        mixed = F.run_word(
+            [(12.0, 0.05, 400.0, 100), (0.3333, 0.05, 400.0, 100)] * 4, [0.0] * 4)[1]
+        self.assertNotEqual(mixed, fixed_slow)
+        self.assertNotEqual(mixed, fixed_fast)
+        self.assertLess(fixed_slow, mixed)
+        self.assertLess(mixed, fixed_fast)
+
+
+class DiagnosticContract(unittest.TestCase):
+    def test_build_is_non_promoting_and_validates(self):
+        d = F.build(stride=211)
+        self.assertEqual(validate_ok(d), [])
+        self.assertTrue(d["non_promoting"])
+        self.assertFalse(d["certifies_theorem_stage"])
+        self.assertFalse(d["interval_certified"])
+        self.assertFalse(d["quantifies_over_legal_histories"])
+        self.assertEqual(d["canonical_gate"], 1.0e-18)
+        self.assertEqual(d["word_samples"], 635)
+
+    def test_validate_rejects_a_promoted_or_gate_moved_artifact(self):
+        d = F.build(stride=211)
+        for key, bad in (("non_promoting", False),
+                         ("certifies_theorem_stage", True),
+                         ("interval_certified", True),
+                         ("canonical_gate", 1.0e-12)):
+            broken = dict(d)
+            broken[key] = bad
+            self.assertTrue(F.validate(broken),
+                            f"validate() accepted a tampered {key}")
+
+    def test_every_row_forgets_its_initial_covariance(self):
+        d = F.build(stride=211)
+        for r in d["rows"]:
+            self.assertTrue(r["P0_independent"],
+                            f"node {r['source_node']} spread {r['P0_probe_relative_spread']}")
+
+
+def validate_ok(d):
+    return F.validate(d)
+
+
+if __name__ == "__main__":
+    unittest.main()
