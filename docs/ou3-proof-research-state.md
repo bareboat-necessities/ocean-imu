@@ -167,6 +167,48 @@ four-`S` spread and recompute `delta` against the same `Sigma_upper`. If
 structural. If it does not, the theorem formulation itself is marginal and
 should be reconsidered rather than re-enclosed.
 
+## Physical-reality check on the delta comparison target
+
+`Sigma_upper` is the ceiling `delta` is measured against. In physical units it
+is far outside anything a marine IMU in ocean waves can reach:
+
+| channel | std(Sigma_upper) | declared entrance box | ratio |
+| --- | --- | --- | --- |
+| v | 33459 m/s | 5 m/s | 6691x |
+| p | 63000 m | 20 m | 3150x |
+| S | 84730 m.s | 300 m.s | 282x |
+| a_w | 33.3 m/s^2 (3.4 g) | 2.94 m/s^2 | 11x |
+
+A covariance ceiling asserting 33 km/s of velocity uncertainty and 63 km of
+position uncertainty describes a diverging filter, not this one. It is a
+bounding looseness, not a physical claim.
+
+Substituting the declared physical box as the ceiling moves the binding S ratio
+from 9.25e-24 to 7.38e-19 and the matrix `delta` from 1.61e-27 to about
+1.28e-22. So the 9 order deficit decomposes as roughly **5 orders from the loose
+ceiling and 4 orders structural**, the latter being the segment/word horizon
+mismatch: a 65 ms zero-start segment accumulates 2.6e-7 m.s of `S` uncertainty,
+which against any realistic `S` ceiling is intrinsically near 1e-18 at best.
+
+`Sigma_upper` may not simply be replaced by the entrance box -- `delta` is a
+relative Riccati injection margin and the ceiling must stay a valid upper bound
+on the filter covariance, not on the error. But tightening that bound so it
+reflects covariance the filter can actually reach is worth about 5 orders,
+which exceeds every enclosure avenue combined and is not currently being
+pursued by any recorded plan.
+
+Conditions that are already correctly excluded, so they are not the problem:
+impacts and slams out of normal-Live scope, lever arm disabled, vibration guard
+dormant and transparent, non-gravitational CoG acceleration 4.0 m/s^2 = 0.41 g.
+
+Entrance realism: the declared attitude entrance is 45 deg and the canonical P4
+gate hard-requires 0.8 rad = 45.8 deg, while the operating domain's own search
+list is `[30, 25, 20, 15]` deg. A vessel starting on flat water has about 1 deg
+of tilt error; the 45 deg figure is really a heading assumption, and the domain
+separately declares a 10 deg internal heading gauge error. The frozen gate
+therefore forces the widest and least realistic sector against the domain's own
+stated intent.
+
 ## Master P3 quantity
 
 The new backend is relevant only if it produces the complete-segment matrix lower used by canonical P3:
