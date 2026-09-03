@@ -16,7 +16,6 @@ import argparse
 import functools
 import json
 import math
-import sys
 from pathlib import Path
 
 from ou3_interval import Interval
@@ -25,6 +24,7 @@ import ou3_p3_correlated_translation_covariance_upper as CUPPER
 import ou3_p3_four_max_global_label_witness as WIT
 import ou3_p3_p2_v1_history_frontier as HIST
 import ou3_p3_frozen_full_matrix_translation as FROZEN
+import ou3_p3_pseudo_scheduler_starvation_witness as TIMER
 import ou3_source_reachable_matrix_p3 as BASE
 
 REPO = Path(__file__).resolve().parents[1]
@@ -82,21 +82,13 @@ def _meas(P, k, R):
 
 
 def _set_period(elapsed, period):
-    y = math.fmod(float(elapsed), float(period))
-    if not (math.isfinite(y) and 0.0 <= y < period):
-        raise RuntimeError("invalid fmod pseudo-timer state")
-    return y
+    """Use the exact binary32 setter transcription shared with the scheduler witness."""
+    return TIMER._set_period(elapsed, period)
 
 
 def _due(dt, period, elapsed):
-    total = elapsed + dt
-    tol = 16.0 * sys.float_info.epsilon * max(1.0, period)
-    if total + tol < period:
-        return False, total
-    y = math.fmod(total, period) if total >= period else 0.0
-    if not (math.isfinite(y) and 0.0 <= y < period):
-        y = 0.0
-    return True, y
+    """Use the exact binary32 `periodic_update_due<float>` transcription."""
+    return TIMER._due(dt, period, elapsed)
 
 
 def _corner(node, axis_hi):
@@ -107,7 +99,7 @@ def _corner(node, axis_hi):
         "sigma": sigma,
         "qc": 2.0 * sigma * sigma / tau,
         "Rstd": float(node["R_S_filter_std"][1]) * axis_hi,
-        "period": float(node["pseudo_update_period_s"][1]),
+        "period": TIMER._f32(node["pseudo_update_period_s"][1]),
         "node": int(node["index"]),
     }
 
@@ -201,13 +193,13 @@ def _synthetic(s):
     return {
         "tau": 2.0 * sig2 / qc, "sigma": math.sqrt(sig2), "qc": qc,
         "Rstd": math.sqrt(float(s["S_measurement_variance_upper"])),
-        "period": float(s["pseudo_update_cadence_s"][1]), "node": None,
+        "period": TIMER._f32(s["pseudo_update_cadence_s"][1]), "node": None,
     }
 
 
 def _run_ordered(P0, segs, rt, axis_hi, h, phase):
     p0 = _corner(rt["nodes"][segs[0][0]], axis_hi)
-    elapsed = min(phase * p0["period"], math.nextafter(p0["period"], 0.0))
+    elapsed = _set_period(phase * p0["period"], p0["period"])
     P, fires, prev, trace = [row[:] for row in P0], 0, None, []
     for s, used, support, t, complete in segs:
         p = _corner(rt["nodes"][s], axis_hi)
@@ -227,7 +219,7 @@ def _run_ordered(P0, segs, rt, axis_hi, h, phase):
 
 
 def _run_fixed(P0, p, N, h, phase):
-    elapsed = _set_period(min(phase * p["period"], math.nextafter(p["period"], 0.0)), p["period"])
+    elapsed = _set_period(phase * p["period"], p["period"])
     P, fires = [row[:] for row in P0], 0
     for _ in range(N):
         P, elapsed, fire = _step(P, p, h, elapsed); fires += int(fire)
@@ -244,7 +236,7 @@ def build(domain_path=DEFAULT_DOMAIN):
     domain = json.loads(path.read_text())
     if domain.get("trajectory_fit") is not False:
         raise RuntimeError("diagnostic must not be trajectory fitted")
-    rt = CORR.runtime(path); sched = BASE.source_schedule(); h = float(rt["clock"]["dt_binary32_s"])
+    rt = CORR.runtime(path); sched = BASE.source_schedule(); h = TIMER._f32(rt["clock"]["dt_binary32_s"])
     target = HIST._global_word_target(domain, sched, h); N = int(target["target_samples"])
     summary, rank, stats = _summary(rt, sched, target)
     witness = WIT.shortest_global_label_witness(rt, stats["node_ranks"], N)
@@ -265,6 +257,7 @@ def build(domain_path=DEFAULT_DOMAIN):
         "P2_correlation_interface_consumed": True, "P2_correlation_interface_version": CORR.INTERFACE_VERSION,
         "exact_witness_source_order_retained": True, "exact_gap_labelled_legal_extension_used": True,
         "pseudo_period_change_uses_fmod_semantics": True, "periodic_update_due_shipping_semantics_transcribed": True,
+        "pseudo_scheduler_numeric_type": "binary32/float",
         "accelerometer_measurement_updates_credited": False, "source_cells_use_one_real_upper_corner": True,
         "interval_certificate": False, "uniform_covariance_upper_certificate": False,
         "target_samples": N, "dt_s": h, "four_max_global_rank": rank,
@@ -294,6 +287,7 @@ def validate(d):
               "accelerometer_measurement_updates_credited", "interval_certificate", "uniform_covariance_upper_certificate",
               "matched_margin_computed", "P3_PROMOTED", "P4_PROMOTED", "P5_PROMOTED"):
         if d.get(k) is not False: f.append(f"{k} is not false")
+    if d.get("pseudo_scheduler_numeric_type") != "binary32/float": f.append("ordered diagnostic is not using shipping float scheduler arithmetic")
     if d.get("P2_correlation_interface_version") != CORR.INTERFACE_VERSION: f.append("lost P2 V1 binding")
     if int(d.get("target_samples", 0)) != 635 or int(d.get("four_max_witness_minimum_samples", 9999)) > 635: f.append("word/witness contract changed")
     for k in ("old_four_max_upper_diagonal", "ordered_phase_envelope_diagonal", "synthetic_phase_envelope_diagonal"):
