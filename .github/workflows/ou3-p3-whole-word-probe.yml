@@ -3,6 +3,8 @@ name: ou3-p3-whole-word-probe
 on:
   pull_request:
     paths:
+      - "tools/ou3_p3_matched_history_label_frontier.py"
+      - "tests/validation/test_ou3_p3_matched_history_label_frontier.py"
       - "tools/ou3_p3_whole_word_horizon_probe.py"
       - "tests/validation/test_ou3_p3_whole_word_horizon_probe.py"
       - ".github/workflows/ou3-p3-whole-word-probe.yml"
@@ -18,7 +20,7 @@ permissions:
   contents: read
 
 jobs:
-  whole-word-horizon-probe:
+  matched-history-label-frontier:
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
@@ -26,48 +28,51 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Compile horizon-matched P3 producer
+      - name: Compile matched-history frontier producer
         run: |
           python3 -m py_compile \
-            tools/ou3_p3_whole_word_horizon_probe.py \
-            tests/validation/test_ou3_p3_whole_word_horizon_probe.py
+            tools/ou3_p3_matched_history_label_frontier.py \
+            tests/validation/test_ou3_p3_matched_history_label_frontier.py
 
-      - name: Test structural invariants
+      - name: Test matched-history quotient invariants
         working-directory: tests/validation
-        run: python3 -m unittest -v test_ou3_p3_whole_word_horizon_probe
+        run: python3 -m unittest -v test_ou3_p3_matched_history_label_frontier
 
-      - name: Run source-complete whole-word floor probe
+      - name: Build 49-segment adverse-label frontier
         run: |
-          python3 tools/ou3_p3_whole_word_horizon_probe.py \
-            --output /tmp/ou3_p3_whole_word_horizon_probe.json
+          python3 tools/ou3_p3_matched_history_label_frontier.py \
+            --output /tmp/ou3_p3_matched_history_label_frontier.json
 
-      - name: Enforce non-promotion and frozen theorem contract
+      - name: Enforce non-promotion and finite-word coverage
         run: |
           python3 - <<'PY'
           import json
-          d=json.load(open('/tmp/ou3_p3_whole_word_horizon_probe.json'))
+          d=json.load(open('/tmp/ou3_p3_matched_history_label_frontier.json'))
           assert d['validation_pass'], d['validation_failures']
-          assert d['canonical_useful_gate'] == 1e-18
-          assert d['canonical_gate_changed'] is False
-          assert d['filter_changed'] is False
-          assert d['declared_domain_changed'] is False
-          assert d['trajectory_replay_used'] is False
+          assert d['target_samples'] == 635
+          assert d['minimum_gap_samples'] == 13
+          assert d['maximum_complete_segments'] == 49
+          assert d['minimum_49_segment_history_duration_s'] > d['global_covariance_word_upper_s']
+          assert d['global_pareto_adverse_labels'] > 0
+          assert d['same_tau_covariance_lower_dominators_verified'] is True
+          assert d['global_cartesian_source_extrema_used'] is False
+          assert d['matched_margin_computed'] is False
           assert d['P3_PROMOTED'] is False
           assert d['P4_PROMOTED'] is False
           assert d['P5_PROMOTED'] is False
-          assert d['guaranteed_complete_segments'] == 23
-          assert d['lower_projection_can_only_add_source_paths'] is True
-          assert d['lower_projection_can_only_reduce_covariance'] is True
-          print('WHOLE_WORD_MARGIN', d['whole_word_arbitrary_phase_margin_lower'])
-          print('USEFUL_AT_FROZEN_GATE', d['structural_probe_useful_at_frozen_gate'])
-          print('CLASSIFICATION', d['classification'])
-          print('LIMITING_TRANSFER', d['whole_word_arbitrary_phase_limiting_transfer'])
+          print('ENDPOINT_LABELS', d['endpoint_pareto_labels_after_49_segments'])
+          print('GLOBAL_LABELS', d['global_pareto_adverse_labels'])
+          for row in d['matched_history_classes']:
+              print('MATCHED_CLASS', row['adverse_label'],
+                    'allowed_nodes=', row['allowed_physical_source_nodes'],
+                    'tau_dominators=', row['same_tau_covariance_lower_dominator_nodes'],
+                    'upper=', row['Sigma_translation_diagonal_upper'])
           print('NEXT', d['next_obligation'])
           PY
 
-      - name: Upload whole-word structural artifact
+      - name: Upload matched-history frontier artifact
         uses: actions/upload-artifact@v6
         with:
-          name: ou3-p3-whole-word-horizon-probe
-          path: /tmp/ou3_p3_whole_word_horizon_probe.json
+          name: ou3-p3-matched-history-label-frontier
+          path: /tmp/ou3_p3_matched_history_label_frontier.json
           retention-days: 7
