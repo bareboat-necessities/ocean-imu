@@ -209,6 +209,63 @@ separately declares a 10 deg internal heading gauge error. The frozen gate
 therefore forces the widest and least realistic sector against the domain's own
 stated intent.
 
+## Whole-chain physical-realism audit
+
+Checked every declared bound against a marine IMU in ocean waves, and traced
+what each costs. `Sigma_upper` is reproduced exactly by
+`BASE.translation_upper` at the full declared tuner ranges, so that function is
+the source.
+
+**Correctly excluded already, not the problem:** impacts and slams out of
+normal-Live scope, lever arm disabled, vibration guard dormant and transparent,
+non-gravitational CoG acceleration 4.0 m/s^2 = 0.41 g.
+
+**Rotation rate is realistic.** `body_rate_norm_upper_deg_s = 30`. A 30 degree
+roll at a 6 s period gives a 31 deg/s peak, so the bound sits at genuine
+heavy-sea motion rather than being inflated.
+
+**The tuner cells are unphysical but nearly free.** `sigma_aw` reaches
+6.0 m/s^2 = 0.61 g and `tau` falls to 0.333 s, i.e. 0.61 g of process noise
+decorrelating in a third of a second. That is vibration, which the domain
+excludes elsewhere, and it exceeds the domain's own 0.41 g acceleration
+envelope. Cost of restricting to a physics-consistent `tau >= 3 s`,
+`sigma <= 4 m/s^2`: `a_w` improves 4.04x, and v, p, S improve by 1.002x. So the
+unphysical corner is not what inflates the translation ceiling.
+
+**`R_S` upper drives the ceiling, but tightening it is not enough.**
+`Sigma_upper` scales as `R_S,max^2` through the four-`S` inversion:
+
+| rs.hi | Sigma_upper v | std |
+| --- | --- | --- |
+| 0.15 | 2.086e6 | 1444 m/s |
+| 100 | 7.190e7 | 8480 m/s |
+| 400 (declared) | 1.119e9 | 33459 m/s |
+
+The declared 400 costs 538x on v, p and S. But even the tightest possible S
+measurement leaves a 1444 m/s velocity ceiling, still three orders beyond any
+boat. **The ill-conditioning is intrinsic to inverting the triple integrator
+v -> p -> S over a roughly 0.8 s observation span**, not a consequence of any
+tuner or domain choice.
+
+### Deficit accounting on the binding S channel
+
+| lever | worth | delta after |
+| --- | --- | --- |
+| current | - | 1.89e-31 |
+| repair the isotropic `rho*I` collapse | 8.5e3 | 1.6e-27 |
+| tightest `R_S` | 538 | ~8.7e-25 |
+| both | 4.6e6 | ~4e-25 |
+| **canonical gate** | | **1e-18** |
+
+Every realism lever pulled together still leaves about **7 orders**. Physical
+realism accounts for roughly 3 of the 9 order deficit; the remainder is
+formulation. Do not spend further effort on domain realism as a route to the
+gate.
+
+The two structural items that remain are the intrinsically ill-conditioned
+four-`S` triple-integrator observability route, and the zero-start 65 ms segment
+floor compared against a whole-word ceiling.
+
 ## Master P3 quantity
 
 The new backend is relevant only if it produces the complete-segment matrix lower used by canonical P3:
