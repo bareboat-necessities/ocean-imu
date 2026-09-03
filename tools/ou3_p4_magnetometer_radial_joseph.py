@@ -101,8 +101,9 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     q = float(cayley["cayley_radius_upper"])
     if not (math.isfinite(q) and 0.0 < q < 1.0):
         failures.append("invalid 0.8-rad Cayley radius")
+    q2_lo = down(q*q) if math.isfinite(q) else math.inf
     q2_hi = up(q*q) if math.isfinite(q) else math.inf
-    den_lo = down(math.sqrt(down(4.0 + q2_hi))) if q > 0.0 else 2.0
+    den_lo = down(math.sqrt(down(4.0 + q2_lo))) if q > 0.0 else 2.0
     if not den_lo > 0.0:
         failures.append("effective tangent denominator lost positivity")
         gain_lo = 0.0
