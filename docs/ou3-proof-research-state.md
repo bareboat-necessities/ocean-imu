@@ -201,13 +201,15 @@ Conditions that are already correctly excluded, so they are not the problem:
 impacts and slams out of normal-Live scope, lever arm disabled, vibration guard
 dormant and transparent, non-gravitational CoG acceleration 4.0 m/s^2 = 0.41 g.
 
-Entrance realism: the declared attitude entrance is 45 deg and the canonical P4
-gate hard-requires 0.8 rad = 45.8 deg, while the operating domain's own search
-list is `[30, 25, 20, 15]` deg. A vessel starting on flat water has about 1 deg
-of tilt error; the 45 deg figure is really a heading assumption, and the domain
-separately declares a 10 deg internal heading gauge error. The frozen gate
-therefore forces the widest and least realistic sector against the domain's own
-stated intent.
+Entrance realism: the 45 deg attitude entrance is **defensible, not inflated**.
+The filter initialises with a flat-sea estimate while the vessel is already
+under way in waves, so the initial attitude error is the true wave-induced
+attitude, not a small number. A 30 deg roll in heavy seas against a zero
+estimate is already a 30 deg tilt error before heading error is counted, and the
+domain separately declares a 10 deg internal heading gauge error. An earlier
+revision of this file claimed a vessel starts within about 1 deg of tilt; that
+answered the wrong question -- it described the sea being flat rather than the
+filter's initial estimate being flat -- and is withdrawn.
 
 ## Whole-chain physical-realism audit
 
@@ -219,6 +221,14 @@ the source.
 **Correctly excluded already, not the problem:** impacts and slams out of
 normal-Live scope, lever arm disabled, vibration guard dormant and transparent,
 non-gravitational CoG acceleration 4.0 m/s^2 = 0.41 g.
+
+**Attitude entrance is realistic.** The filter initialises with a flat-sea
+estimate while the vessel is already under way in waves, so the 45 deg entrance
+is the true wave-induced attitude error, not an inflated margin. The canonical
+P4 gate's 0.8 rad requirement binds a candidate to the outer sector prerequisite
+it consumes; the domain's `[30, 25, 20, 15]` list is the inner attitude cell and
+is explicitly separate (`p4_outer_geometry_sector_remains_separate: true`).
+There is no conflict between them.
 
 **Rotation rate is realistic.** `body_rate_norm_upper_deg_s = 30`. A 30 degree
 roll at a 6 s period gives a 31 deg/s peak, so the bound sits at genuine
@@ -320,15 +330,6 @@ Qualitatively different alternatives:
   then removed: a rigorous certificate before the non-promoting `rho_w`
   diagnostic is the wrong order. Resurrect only after the diagnostic reports
   `rho_w` clearly below 1.
-
-## Open contract inconsistency
-
-`tools/ou3_p4_canonical_gate.py` requires a candidate's `outer_angle_rad` to
-equal `0.8` exactly, bound to the Cayley and remainder artifacts, while the
-operating domain declares a P4 certificate search over
-`p4_complete_word_full_attitude_candidate_deg = [30, 25, 20, 15]`. If the
-0.8-rad formulation is later abandoned for a narrower cell, the gate rejects
-every candidate on that list. Resolve before relying on the search list.
 
 ## Verified theorem steps
 
