@@ -5,13 +5,21 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
 
-# Current source-generated certificate/status producers only.
+# Current source-generated certificate/status producers only.  Keep this list in
+# sync with the canonical ou3-proof route; a producer may be fail-closed/status
+# only and still belongs here if its JSON is carried into the theorem chain.
 PRODUCERS = [
     ROOT / "tools" / "ou3_p2_clock_phase_tuner_graph.py",
     ROOT / "tools" / "ou3_p3_scaled_process.py",
+    ROOT / "tools" / "ou3_p3_p2_v1_history_frontier.py",
+    ROOT / "tools" / "ou3_p3_p2_v1_stage_phase_translation.py",
+    ROOT / "tools" / "ou3_p3_p2_v1_full_state_join.py",
+    ROOT / "tools" / "ou3_p3_canonical_gate.py",
+    ROOT / "tools" / "ou3_p4_p3_metric_attachment.py",
     ROOT / "tools" / "ou3_p4_cayley_sector_certificate.py",
     ROOT / "tools" / "ou3_p4_source_word_timing.py",
     ROOT / "tools" / "ou3_p4_vector_remainder_sector.py",
+    ROOT / "tools" / "ou3_p4_canonical_gate.py",
 ]
 
 FORBIDDEN_RESULT_KEYS = {
