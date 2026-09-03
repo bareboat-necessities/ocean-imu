@@ -269,7 +269,9 @@ family to be source complete; recurring vector PE and optimized four-$S$
 complete translation qualification to occur in each tile; exact shipping
 operation order and immediate resets; outward-rounded continuous bounds; full
 attitude--linear information cross terms; safe prefixes; $W_{*,m}>0$; and
-$\mu_{W,m}>0$. Monte Carlo and dense trajectory sampling are diagnostics only
-and may falsify a claimed level but cannot establish one. The construction
+$\mu_{W,m}>0$. Because $\delta_m$ lies far below binary64 epsilon, the strict
+gap $\delta_m/2$ is the reported quantity and the companion $\rho_m$ upper is
+never allowed to round that gap away. Monte Carlo and dense trajectory sampling
+are diagnostics only and may falsify a claimed level but cannot establish one. The construction
 changes neither the estimator nor the adaptation law and is the sole
 quantitative normal-Live certificate path.

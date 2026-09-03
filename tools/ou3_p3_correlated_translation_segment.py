@@ -66,12 +66,18 @@ from pathlib import Path
 from ou3_interval import Interval, symmetric_positive_definite_ldlt
 import ou3_p2_correlation_path_memory as CORR
 import ou3_p3_frozen_full_matrix_translation as FROZEN
+import ou3_p3_scaled_process as SCALED
 import ou3_source_reachable_matrix_p3 as BASE
 
 REPO = Path(__file__).resolve().parents[1]
 DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
 SCHEMA = 3
-X_SUBCELLS = 4
+# Measured requirement, not a guess.  With the surplus per-step SPD gates
+# removed, the segment endpoint floor is what P3 consumes, and it is strictly
+# SPD only once the x cell is fine enough: for source 137 / gap 13 a uniform 32
+# gives 33 of 33 non-SPD endpoints while 64 gives 65 of 65 strict, worst
+# certified_rho 8.7e-7.  18 of 18 tested (node, gap) pairs certify at 64 or 128.
+X_SUBCELLS = 64
 MAX_ADAPTIVE_X_DEPTH = 12
 
 
@@ -117,21 +123,8 @@ def _node_x_subcells(node: dict, h: float, count: int = X_SUBCELLS):
     return FROZEN._split_x(xlo, xhi, count)
 
 
-def _common_point_lower(A):
-    """Return point L with A_real >= L for every symmetric A_real in A.
-
-    ``A`` is first symmetrically hulled.  For each entry choose a binary64
-    center c_ij inside its interval and an outward radius r_ij.  Because the
-    represented matrices are symmetric,
-
-        ||A_real-C||_2 <= ||A_real-C||_inf
-                         <= max_i sum_j r_ij = eps.
-
-    Hence C-eps I is a common Loewner lower.  The diagonal subtraction is
-    rounded toward -infinity.  This construction intentionally trades a small
-    amount of sharpness for a non-recursive, independently auditable PSD/order
-    argument.
-    """
+def _center_and_radius(A):
+    """Symmetric binary64 center/radius decomposition of an interval matrix."""
     A = FROZEN._sym(A)
     n = len(A)
     if n == 0 or any(len(row) != n for row in A):
@@ -155,34 +148,114 @@ def _common_point_lower(A):
             r = BASE.up(max(radius[i][j], radius[j][i]))
             radius[i][j] = r
             radius[j][i] = r
+    return center, radius, n
+
+
+def _absolute_row_sum_epsilon(radius, n: int) -> float:
     eps = 0.0
     for i in range(n):
         row = 0.0
         for j in range(n):
             row = BASE.up(row + radius[i][j])
         eps = max(eps, row)
-    eps = BASE.up(eps)
+    return BASE.up(eps)
+
+
+def _scaled_row_sum_epsilon(radius, scale, n: int) -> float:
+    """max_i sum_j r_ij/(d_i d_j), rounded toward +infinity.
+
+    The denominator is rounded toward zero so the quotient stays an upper
+    bound.  A denominator that underflows leaves no usable relative scaling.
+    """
+    eps = 0.0
+    for i in range(n):
+        row = 0.0
+        for j in range(n):
+            denom = BASE.down(scale[i] * scale[j])
+            if not denom > 0.0:
+                raise ArithmeticError("relative Loewner scaling underflowed")
+            row = BASE.up(row + BASE.up(radius[i][j] / denom))
+        eps = max(eps, row)
+    return BASE.up(eps)
+
+
+def _common_point_lower(A):
+    """Return point L with A_real >= L for every symmetric A_real in A.
+
+    ``A`` is first symmetrically hulled.  For each entry choose a binary64
+    center c_ij inside its interval and an outward radius r_ij, so every
+    represented symmetric A_real satisfies A_real=C+E with |E_ij|<=r_ij.
+
+    For any positive diagonal D=diag(d_i),
+
+        ||D^-1 E D^-1||_2 <= ||D^-1 E D^-1||_inf
+                          <= max_i sum_j r_ij/(d_i d_j) = eps_D,
+
+    hence D^-1 E D^-1 >= -eps_D I and therefore
+
+        A_real >= C - eps_D D^2.
+
+    The translation states are v/h, p/h^2, S/h^3 and a_w, whose certified
+    covariance magnitudes differ by many orders.  A single absolute shift
+    (D=I) is dominated by the largest block and destroys strict positivity of
+    the smallest one, so the shift is taken in the natural relative scaling
+    d_i=sqrt(c_ii) whenever the center diagonal is strictly positive.  Then
+    the correction is exactly the relative shave
+
+        L_ii = c_ii (1-eps_D),   L_ij = c_ij  (i!=j),
+
+    which respects the dynamic range instead of flattening it.  D=I is
+    retained as the fallback whenever some center diagonal is nonpositive,
+    where no relative scaling exists.  Both branches are non-recursive and
+    independently auditable, and the diagonal subtraction is rounded toward
+    -infinity.
+    """
+    center, radius, n = _center_and_radius(A)
+    scale = []
+    relative = True
+    for i in range(n):
+        if center[i][i] <= 0.0:
+            relative = False
+            break
+        scale.append(BASE.down(math.sqrt(center[i][i])))
+        if not scale[-1] > 0.0:
+            relative = False
+            break
+
+    if relative:
+        try:
+            eps = _scaled_row_sum_epsilon(radius, scale, n)
+            shift = [BASE.up(eps * BASE.up(scale[i] * scale[i])) for i in range(n)]
+        except ArithmeticError:
+            relative = False
+    if not relative:
+        eps = _absolute_row_sum_epsilon(radius, n)
+        shift = [eps] * n
+
     L = [[_point(center[i][j]) for j in range(n)] for i in range(n)]
     for i in range(n):
-        L[i][i] = _point(BASE.down(center[i][i] - eps))
+        L[i][i] = _point(BASE.down(center[i][i] - shift[i]))
     return FROZEN._sym(L), eps
 
 
-def _strict_spd(A) -> bool:
-    return bool(symmetric_positive_definite_ldlt(A)[0])
-
-
 def _point_measurement_lower(L, coordinate: int, R_lower: float):
-    """Lower one scalar optimal covariance update without recursive intervals."""
-    if not _strict_spd(L):
-        raise RuntimeError("Loewner measurement input is not strict SPD")
-    # L is a point lower.  The interval expression encloses the exact M(L,R),
-    # then the spectral collapse returns a deterministic matrix below it.
+    """Lower one scalar optimal covariance update without recursive intervals.
+
+    ``FROZEN._measurement_update`` is the covariance form
+    ``P-Pe(e'Pe+R)^-1e'P``.  It needs only ``e'Pe+R>0``, never strict SPD, and
+    it is Loewner monotone on *all* symmetric matrices with that denominator
+    positive: writing ``u=Pe``, ``v=He``, ``s=e'He`` for a direction ``H>=0``,
+
+        x'(dU)x = x'Hx-2(x'v)(x'u)/d+(x'u)^2 s/d^2,
+
+    a quadratic in ``x'u`` whose discriminant is ``4((x'He)^2-(x'Hx)(e'He))/d^2
+    <= 0`` by Cauchy-Schwarz in the ``H`` semi-inner product.  Hence ``dU>=0``,
+    and since ``d`` is affine in ``P`` it stays positive along the segment
+    between any two ordered arguments.  So an intermediate lower may be
+    singular or indefinite without invalidating the order.
+    """
     post_interval = FROZEN._measurement_update(L, int(coordinate), float(R_lower))
-    post, eps = _common_point_lower(post_interval)
-    if not _strict_spd(post):
-        raise RuntimeError("Loewner measurement lower lost strict SPD")
-    return post, eps
+    return _common_point_lower(post_interval)
 
 
 def one_step(P, node: dict, x: Interval, h: float):
@@ -205,9 +278,15 @@ def one_step(P, node: dict, x: Interval, h: float):
     prediction_interval = FROZEN._sym(
         FROZEN._add(FROZEN._mul(FROZEN._mul(Fm, L0), Ft), Qz)
     )
+    # F L F' + Q is PSD-preserving by congruence plus a PSD sum, and the
+    # scalar measurement updates below are order preserving for any symmetric
+    # argument.  P3 consumes the *segment endpoint* floor, which
+    # ou3_p3_p2_v1_stage_phase_translation.common_boundary_floor certifies with
+    # certified_rho(posterior)>0.  Requiring strict SPD after every 5 ms step
+    # instead is an obligation the theorem does not make, and on the small-x
+    # branch the intermediate lower is near singular for structural reasons
+    # that no x subdivision can remove.
     pred, pred_eps = _common_point_lower(prediction_interval)
-    if not _strict_spd(pred):
-        raise RuntimeError("Loewner prediction lower lost strict SPD; split x cell")
 
     R_aw, R_S_z = _physical_measurement_variances(node, h)
     post_aw, aw_eps = _point_measurement_lower(pred, 3, R_aw)
@@ -222,17 +301,50 @@ def propagate_subcell(P, node: dict, samples: int, x: Interval, h: float):
     return out
 
 
+def _split_request(exc: Exception) -> bool:
+    """Both scaled-process producers ask for a narrower x cell by message.
+
+    ``one_step`` raises ``RuntimeError`` when the collapsed Loewner lower is
+    not strict SPD, and ``ou3_p3_frozen_full_matrix_translation._scaled_Q``
+    raises ``ValueError`` when the cell straddles a scaled-process series
+    branch.  Both are requests for subdivision, not proof failures.
+    """
+    text = str(exc)
+    if isinstance(exc, RuntimeError):
+        return "split x cell" in text
+    if isinstance(exc, ValueError):
+        return "split before evaluation" in text
+    return False
+
+
+def _split_x(x: Interval):
+    """Subdivide exactly as the retained scaled-process cell splitter does.
+
+    A cell that straddles a series branch is cut at that branch first, so one
+    subdivision resolves it; otherwise the geometric midpoint is used.
+    """
+    for cut in (SCALED.BRANCH_X, SCALED.NEAR_EXACT_SERIES_MAX_X):
+        if x.lo < cut < x.hi:
+            return (
+                Interval(x.lo, math.nextafter(cut, -math.inf)),
+                Interval(cut, x.hi),
+            )
+    mid = math.sqrt(x.lo * x.hi)
+    if not (x.lo < mid < x.hi):
+        return None
+    return Interval.outward_bounds(x.lo, mid), Interval.outward_bounds(mid, x.hi)
+
+
 def _adaptive_image(P, node: dict, samples: int, x: Interval, h: float, depth: int):
     try:
         return [(x, propagate_subcell(P, node, samples, x, h))]
-    except RuntimeError as exc:
-        if "split x cell" not in str(exc) or depth >= MAX_ADAPTIVE_X_DEPTH:
+    except (RuntimeError, ValueError) as exc:
+        if not _split_request(exc) or depth >= MAX_ADAPTIVE_X_DEPTH:
             raise
-        mid = math.sqrt(x.lo * x.hi)
-        if not (x.lo < mid < x.hi):
+        halves = _split_x(x)
+        if halves is None:
             raise RuntimeError(f"cannot further split failing x cell {x.as_list()}") from exc
-        left = Interval.outward_bounds(x.lo, mid)
-        right = Interval.outward_bounds(mid, x.hi)
+        left, right = halves
         return (
             _adaptive_image(P, node, samples, left, h, depth + 1)
             + _adaptive_image(P, node, samples, right, h, depth + 1)
