@@ -106,3 +106,41 @@ def validate_ok(d):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class AdversarialDescent(unittest.TestCase):
+    """Single-cell dwell is not the adversary; the search must be able to say so."""
+
+    def test_descent_finds_a_cheaper_legal_word_and_reports_convergence(self):
+        # 0 -> {0,1}, 1 -> {0,1}, 2 unreachable. Node 1 scores lower.
+        graph = {0: {0, 1}, 1: {0, 1}}
+        score = {0: 1.0, 1: 0.5}
+
+        def successors(n):
+            return graph[n]
+
+        def ratio_fn(seq):
+            return min(score[n] for n in seq)
+
+        out = F.adversarial_descent([0, 0, 0], successors, ratio_fn)
+        self.assertTrue(out["converged"])
+        self.assertLess(out["ratio"], 1.0)
+        self.assertTrue(out["swaps"])
+        # Every retained word must stay legal under the injected graph.
+        for a, b in zip(out["word"], out["word"][1:]):
+            self.assertIn(b, successors(a))
+
+    def test_descent_respects_legality_and_can_find_nothing(self):
+        # A graph with only self-loops admits no swap at all.
+        graph = {0: {0}, 1: {1}}
+        out = F.adversarial_descent([0, 0, 0], lambda n: graph[n], lambda s: 1.0)
+        self.assertTrue(out["converged"])
+        self.assertEqual(out["swaps"], [])
+        self.assertEqual(out["word"], [0, 0, 0])
+
+    def test_history_is_non_increasing(self):
+        graph = {0: {0, 1, 2}, 1: {0, 1, 2}, 2: {0, 1, 2}}
+        score = {0: 1.0, 1: 0.7, 2: 0.4}
+        out = F.adversarial_descent([0, 0, 0], lambda n: graph[n],
+                                    lambda s: min(score[n] for n in s))
+        self.assertEqual(out["history"], sorted(out["history"], reverse=True))

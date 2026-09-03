@@ -122,9 +122,10 @@ finite-state or monotone argument can quantify over legal histories.
 
 **Predicted:** a whole-word lower certified over mixed legal words retains a
 `delta` within about two orders of the worst single-cell dwell, so above `1e-10`.
-**Falsified if** quantifying over mixed words costs more than that, in which case
-the loss is in the history quotient rather than the horizon, and the suspicion
-moves back to the source-correlation representation.
+**Result: survives** -- greedy adversarial descent reaches 2.97e-8, a factor of
+1.184 below the dwell. The remaining obligation is a *global* argument over legal
+words rather than a local search: a finite-state or monotone quotient that bounds
+every legal word, not the best one a greedy descent can find.
 
 ## Whole-word lower feasibility (measured)
 
@@ -141,9 +142,38 @@ largest `sigma`, weakest `S`), holding each for the full 635-sample word:
 | | value |
 | --- | --- |
 | worst single-cell dwell | **3.51e-8** at node 729 (`tau = 12 s`, `sigma = 0.05`, `R_S = 400`, 19 firings, binds on `p`) |
-| clears the `1e-18` gate by | **10.55 orders** |
+| worst *mixed* legal word found | **2.97e-8** (greedy local search, 1.184x below the dwell) |
+| clears the `1e-18` gate by | **10.47 orders** |
 | independent mpmath `dps=30` sweep | 3.50347e-08, agreeing to 0.24 percent |
 | best node | about 1.0 (node 390) |
+
+**Dwelling is not the adversary -- hypothesis falsified.** This ledger predicted
+that mixing could only help a lower, because a mixed word necessarily visits
+faster-cadence cells. False. Greedy single-swap descent from the pure dwell at
+node 729 converged after four improving swaps:
+
+| round | swap | ratio |
+| --- | --- | --- |
+| 0 | pure dwell at 729 | 3.51191e-08 |
+| 1 | position 18 to node 649 | 3.14549e-08 |
+| 2 | position 17 to node 569 | 3.12656e-08 |
+| 3 | position 11 to node 649 | 2.96665e-08 |
+| 4 | position 24 to node 798 | 2.96635e-08 |
+| 5 | no legal single swap improves | converged |
+
+The worst legal word found uses four sources -- 569, 649, 729, 798, all high-`tau`
+high-`R_S` cells -- and is **1.184x** below the pure dwell, still clearing the
+gate by **10.47 orders**. So the recorded prediction (mixed words stay within
+about two orders, above `1e-10`) **survives**, while the stronger claim that the
+dwell *is* the adversary does not. Treat the dwell as a proxy good to about 20
+percent, not as the worst case.
+
+Two limits on that search. It is greedy single-swap and returns a **local**
+minimum, not the global worst legal word. And the legality constraint is far
+tighter than the self-loop result suggests: every one of the 800 nodes self-loops
+on all 14 gaps, so every dwell is a legal word, but only **75 of 3995**
+single-segment substitutions around a 729 dwell are legal, because `729 -> cand
+-> 729` usually is not.
 
 On #476's own adversarial witness extended to the word, the ordered ratio is
 2.00e-3 at the slowest-cadence corner and 3.88e-3 at the fastest, so the choice

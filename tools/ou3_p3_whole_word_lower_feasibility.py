@@ -261,6 +261,50 @@ def _adverse_corner(node) -> tuple:
             float(node["R_S_filter_std"][1]))
 
 
+def adversarial_descent(seq, successors, ratio_fn, *, max_rounds: int = 8):
+    """Greedy single-swap descent toward the worst legal word.
+
+    ``successors(node)`` returns the legal successor set at the fixed gap and
+    ``ratio_fn(seq)`` scores a word.  Both are injected so this is testable
+    without building the P2 V1 runtime.
+
+    Single-cell dwell is *not* the adversary: mixing can beat it.  This finds by
+    how much.  It is a local search and returns a local minimum, never a proof of
+    the global worst legal word.
+    """
+    cur = list(seq)
+    best = ratio_fn(cur)
+    history = [best]
+    swaps = []
+    for _ in range(int(max_rounds)):
+        found = None
+        for pos in range(len(cur)):
+            prev = cur[pos - 1] if pos > 0 else None
+            nxt = cur[pos + 1] if pos + 1 < len(cur) else None
+            for cand in successors(prev) if prev is not None else range_of(cur):
+                if cand == cur[pos]:
+                    continue
+                if nxt is not None and nxt not in successors(cand):
+                    continue
+                trial = list(cur)
+                trial[pos] = cand
+                r = ratio_fn(trial)
+                if r < best * (1.0 - 1.0e-12):
+                    best, found = r, (pos, cand)
+        if found is None:
+            return {"word": cur, "ratio": best, "history": history,
+                    "swaps": swaps, "converged": True}
+        cur[found[0]] = found[1]
+        history.append(best)
+        swaps.append({"position": found[0], "node": found[1], "ratio": best})
+    return {"word": cur, "ratio": best, "history": history,
+            "swaps": swaps, "converged": False}
+
+
+def range_of(seq):
+    return sorted(set(seq))
+
+
 def build(domain_path: Path = DEFAULT_DOMAIN, *, stride: int = 1) -> dict:
     nodes = NODES.build()["nodes"]
     rows = []
