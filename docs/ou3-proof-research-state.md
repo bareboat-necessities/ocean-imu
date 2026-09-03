@@ -6,87 +6,96 @@ This is the short current-state ledger required by the root `AGENTS.md`. Replace
 
 Canonical P3 is still open. P4 remains blocked by P3 and P5 remains blocked by P4. The canonical usefulness gate stays exactly `delta >= 1e-18`; the deployed filter and declared operating domain are unchanged.
 
-The old P3 architecture is now rejected in two independent ways:
+The old P3 architecture is rejected for three independent reasons:
 
-1. its covariance floor and ceiling lived on different horizons; and
-2. its covariance ceiling discarded source order into four path maxima and assumed a finite S=0 pseudo-observation gap that the current P2->P3 source quotient does not prove.
+1. its covariance floor and ceiling lived on different horizons;
+2. its covariance ceiling collapsed source order into four path maxima; and
+3. its finite S=0 observation-gap lemma is not implied by the shipping source/timer dynamics retained so far.
 
-The replacement P3 must use a whole-word covariance comparison and must preserve enough tuner/scheduler memory to justify whatever S-information recurrence it uses.
+A replacement P3 must be whole-word and time ordered. Before constructing another covariance upper, it must establish a valid source-complete recurrence of S information, or explicitly prove a theorem architecture that remains useful without such recurrence.
 
 ## Evidence
 
-### Ordered covariance mechanism is large enough
+### Four path maxima are not a sufficient history quotient
 
 The exact legal P2 path
 
 `729 --16--> 568 --16--> 407 --18--> 246 --25--> 85 --13--> 74 --13--> 63`
 
-reaches the full old four-max adverse label `[9,3,39,9]` in 101 samples. Therefore exact elapsed/Pareto/frontier enumeration cannot repair an upper that still feeds those four independent maxima to the old formula.
+reaches the full old adverse label `[9,3,39,9]` in 101 samples. Therefore exact elapsed/Pareto/frontier enumeration cannot repair an upper that still feeds those four independent maxima to the old formula. Time order/residence duration is the missing information.
 
-A non-promoting 635-sample point Riccati diagnostic that retains source order and the shipping pseudo-timer semantics starts from the same old covariance ceiling and obtains standard deviations
+A non-promoting 635-sample point Riccati diagnostic retaining the legal source order and pseudo scheduler reduces the old translation ceiling by roughly `1e9`, `1e9`, `1e10`, and `1e3` in variance across `[v,p,S,a_w]`. This is feasibility evidence only; it shows that ordered propagation has ample numerical headroom if a valid scheduler/source theorem can be supplied.
 
-- old four-max ceiling: `[3.3454e4, 6.3004e4, 8.4732e4, 3.3302e1]`;
-- ordered legal history: `[1.25985, 1.17849, 0.55534, 0.85421]`.
+### The current P2 quotient admits complete S starvation
 
-The variance reductions are about `7.05e8`, `2.86e9`, `2.33e10`, and `1.52e3`. This is feasibility evidence only, but it confirms that time ordering and repeated S updates are the missing mechanism rather than a small enclosure improvement.
+Shipping `set_pseudo_update_period_s()` performs `elapsed = fmod(elapsed,new_period)` before the current sample's pseudo-update test. The P2 clock certificate admits exact stage gaps `13..26` samples over the full binary64 lifetime.
 
-### Existing finite S-gap premise is false for the current proof language
-
-Shipping `set_pseudo_update_period_s()` reduces the retained pseudo elapsed time with `fmod(elapsed,new_period)`. The tuner commits the current smoothed tau on its finite source clock, and every commit reapplies the tau-scaled pseudo period.
-
-The P2 clock certificate admits exact stage gaps `13..26` samples over the full binary64 lifetime. Node 720 has an exact gap-13 self edge. Inside that one P2 source cell,
-
-- tau cell: `[8.3859254253, 12.0] s`;
-- pseudo-period cell: `[0.1143535210, 0.1636363529] s`;
-- `tau_low = 9.5333347321 s` -> `T_S = 0.1300000101 s`;
-- `tau_high = 11.0 s` -> `T_S = 0.1499999911 s`.
-
-The exact binary32 scheduler transcription has a repeatable `H,H,L,H,L,H,...` reset cycle with **zero S firings over all 635 samples**. CI run `33815085697` validates the exact gap-13 self edge, both tau/period values inside the same P2 cell, the repeatable no-fire cycle, and zero firings.
-
-Therefore the old upper premise
+CI run `33815085697` certifies that P2 node 720 has an exact gap-13 self edge and that the current P2 quotient admits a repeatable 635-sample word with zero S firings. Hence
 
 `S observation gap <= max(pseudo period) + h`
 
-is **not a theorem of `OU3_P2_CORRELATED_STAGE_TRANSFER_V1`**. Any P3 upper that uses that premise is invalid, irrespective of how tightly the covariance algebra is enclosed.
+is not a theorem of `OU3_P2_CORRELATED_STAGE_TRANSFER_V1`.
 
-This result does **not** yet prove that the full deployed WavePeriodEstimator + tau EMA can realize the no-fire cycle. The current P2 quotient deliberately forgets within-cell tau evolution and upstream estimator memory. That distinction is the next research question.
+### The starvation resonance survives the shipping tau EMA
+
+CI run `33818178464`, artifact `ou3-p3-tau-ema-scheduler-cycle-diagnostic` (`9917480639`), validates an exact binary32 tau-EMA/timer cycle with:
+
+- source node `720`;
+- exact source-clock gap `13` samples;
+- `tau_low = 9.533334732055664 s`;
+- `tau_high = 9.533475875854492 s`;
+- tau separation only `1.41143798828125e-4 s`;
+- `T_S,low = 0.1300000101327896 s`;
+- `T_S,high = 0.13000193238258362 s`;
+- period separation `1.9222497940063477e-6 s`;
+- scheduler tolerance `1.9073486328125e-6 s`;
+- exact tau targets `9.528149604797363 / 9.538650512695312 s`;
+- exact legal tuning frequencies `0.05247608572244644 / 0.05241831764578819 Hz`;
+- zero S firings over all 635 samples.
+
+The high and low tau/period values lie inside the same P2 source cell. The required frequency inputs lie inside the shipping `[0.05,1.5] Hz` effective tuning bounds. The 13-sample tau images and frequency-to-target round trips are exact at binary32 precision.
+
+This does **not** yet prove that the full `WavePeriodEstimator` can synthesize the frequency sequence from an admissible physical acceleration history. It does prove that the tau EMA is not the missing regularizer and that tau-cell subdivision alone cannot establish S recurrence.
 
 ## Failure classification / critic pass
 
-**Failure type:** proof-method / source-abstraction failure.
+**Failure type:** proof-method / incomplete source-state abstraction.
 
-**Invalidated strategy:** infer a finite S-packet gap from the maximum tau-coupled pseudo period while allowing source changes represented only by the current coarse P2 cell/pair state.
+**Newly invalidated strategy:** refine only the P2 tau partition or retain the continuous tau EMA while still treating its tuning-frequency input as an arbitrary legal bounded source. The real timer reset resonance survives that refinement.
 
-**Not invalidated:** the deployed filter, the declared physical operating envelope, the whole-word covariance feasibility signal, covariance monotonicity, or the possibility of proving P3 with a stronger source/scheduler representation.
+**Not invalidated:** the deployed filter, the physical operating envelope, the ordered-covariance feasibility signal, or a proof that derives stronger source regularity from the actual upstream estimator dynamics.
 
-**Current limiter:** guaranteed translation observability/information in the presence of source-dependent pseudo-period changes and retained timer phase.
+**Current limiter:** prove enough regularity of the complete `WavePeriodEstimator -> SeaStateAutoTuner -> tau EMA -> pseudo timer` chain to exclude indefinite S starvation, or demonstrate that the theorem must explicitly tolerate such zero-S intervals.
 
-Strongest reason to abandon the current architecture: the missing variable is not another covariance norm; it is an actual hybrid state (`pseudo_update_elapsed_s_`) whose reset map depends on the continuously evolving tau. Forgetting that state can manufacture a legal proof word with no S observations at all.
+Strongest reason to abandon another tau-only construction: the destructive reset requires only a `1.92 us` pseudo-period change and a `0.141 ms` tau change. Those are already exactly realizable through the shipping tau EMA. More tau subdivisions do not remove the mechanism.
 
 ## Alternatives
 
-1. **Shipping source + timer reachability.** Lift the P2 interface with the tau-EMA state (or a certified sufficient quotient) and pseudo timer phase, then propagate cumulative S information/covariance in time order. This keeps the theorem source complete and directly attacks the missing state.
-2. **Finite-initialization / multiword covariance theorem.** Stop requiring every covariance word to wash out arbitrary initial covariance. Start from the actual certified finite filter initialization and prove bounded covariance using cumulative information over multiple words, allowing individual zero-S words. This changes the covariance theorem architecture, not the filter or domain.
-3. **Derive estimator regularity from shipping code.** Prove a rate/dwell/total-variation property for the WavePeriodEstimator -> SeaStateAutoTuner -> tau EMA chain strong enough to exclude timer-reset starvation, then reuse a simpler scheduler quotient. This is acceptable only if derived from implementation and the existing physical source envelope; adding an artificial regularity assumption to make P3 pass is forbidden.
-4. **Information-form recurrence instead of packet-gap selection.** Bound the complete ordered information contribution of whatever S packets actually occur rather than selecting three observations separated by a prescribed gap. This may combine naturally with either (1) or (2) and avoids making `max period + h` the controlling lemma.
+1. **Derive upstream estimator regularity from shipping code.** Lift the canonical log-period state and, if necessary, its slow moment states until a rate/dwell/total-variation theorem excludes the reset cycle. Any constraint must be derived from implementation plus the existing physical source envelope; adding a convenient external regularity assumption is forbidden.
+2. **Full source/timer reachability.** Carry the necessary `WavePeriodEstimator`/tau/timer states and propagate cumulative S information directly instead of proving a scalar packet-gap lemma. This is more expensive but does not discard the hybrid state that caused the failure.
+3. **Finite-initialization / multiword covariance theorem.** Allow individual zero-S words and prove bounded covariance from the actual finite initialization plus later cumulative information. This helps only if the full implementation still guarantees recurrent S information; it cannot repair a genuinely indefinite starvation execution.
+4. **Separate mathematical estimator stability from machine-lifetime clock liveness only if justified.** The 13-sample source-clock regime occurs at an extreme binary64 absolute-time exponent, while normal-age spacing is 21 samples. A deployment-lifetime theorem would have to be explicit and independently justified; silently replacing the all-lifetime shipping clock by nominal timing would be an operating-domain reduction and is not allowed.
 
 ## Next falsifiable experiment
 
-**Test whether the shipping tau EMA itself can realize the scheduler reset cycle under the presently admitted tuning-frequency input family.**
+**Lift one layer upstream into the exact binary32 canonical log-period smoother.**
 
-Use the exact binary32 tau update, dynamic EMA horizon, 13-sample certified source clock, tau->pseudo-period map, `fmod` period setter, and `periodic_update_due` semantics. Search for legal tuning frequencies whose 13-sample EMA images alternate between two applied tau values around the critical reset period while producing no S firing from a post-fire timer state.
+Construct the coupled state
+
+`(log_period_sec_, tau_applied, pseudo_update_elapsed)`
+
+under the certified 13-sample source clock. Treat the valid raw moment-ratio period as the input, transcribe the shipping log-period horizon/update exactly, and search for a periodic no-S cycle whose resulting tuning frequency drives the already-certified tau/timer resonance.
 
 Interpretation:
 
-- **cycle realizable:** coarse tau partitioning is not the root cause. The proof needs upstream WavePeriodEstimator/source regularity or a scheduler-aware theorem that tolerates such cycles; do not build a finer 800-state-style partition and call it closure.
-- **cycle not realizable with tau EMA:** refine the P2/P3 interface to retain the tau-EMA relation and timer phase; the current cell quotient is the sole starvation source.
+- **cycle exists:** the canonical period smoother also fails to exclude starvation; the next and only remaining implementation regularizer is the slow positive second-moment/filter state inside `WavePeriodEstimator`.
+- **cycle does not exist:** certify the log-period state as the missing source regularity and build the P3 scheduler/information quotient around it.
 
-This experiment is diagnostic only. It cannot promote P3/P4/P5.
+This remains diagnostic only and cannot promote P3/P4/P5.
 
 ## Retained facts
 
 - Canonical P3 usefulness threshold is exactly `1e-18`.
-- `OU3_P2_CORRELATED_STAGE_TRANSFER_V1` remains the current source authority, but it is now known to be insufficient for any P3 lemma requiring a finite S firing gap.
 - Physical P2 partition remains 800 states; arbitrary Cartesian tau/sigma/R_S switching remains forbidden.
 - Whole-word lower construction is still required; `P=0` is a valid covariance lower start by Riccati monotonicity.
 - H=18 and A=21 both remain required after translation P3 closes.
@@ -104,6 +113,7 @@ Do not resume these without a new mathematical fact:
 - exact-elapsed/Pareto/minimum-cost enumeration while retaining the same four path maxima;
 - independent Cartesian tau/sigma/R_S extrema;
 - any covariance upper using `gap <= cadence_max + h` directly from the present P2 quotient;
+- tau-cell subdivision or tau-EMA state alone as a proof of S recurrence;
 - blind subdivision, scalar-norm tightening, or deeper search as a substitute for source/timer memory;
 - sigma/R_S coefficient, filter, domain, or canonical-gate tuning;
 - additional P4 micro-certificates before P3 has a real margin.
