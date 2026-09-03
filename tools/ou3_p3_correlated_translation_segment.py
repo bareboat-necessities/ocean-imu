@@ -66,6 +66,7 @@ from pathlib import Path
 from ou3_interval import Interval, symmetric_positive_definite_ldlt
 import ou3_p2_correlation_path_memory as CORR
 import ou3_p3_frozen_full_matrix_translation as FROZEN
+import ou3_p3_scaled_process as SCALED
 import ou3_source_reachable_matrix_p3 as BASE
 
 REPO = Path(__file__).resolve().parents[1]
@@ -286,17 +287,50 @@ def propagate_subcell(P, node: dict, samples: int, x: Interval, h: float):
     return out
 
 
+def _split_request(exc: Exception) -> bool:
+    """Both scaled-process producers ask for a narrower x cell by message.
+
+    ``one_step`` raises ``RuntimeError`` when the collapsed Loewner lower is
+    not strict SPD, and ``ou3_p3_frozen_full_matrix_translation._scaled_Q``
+    raises ``ValueError`` when the cell straddles a scaled-process series
+    branch.  Both are requests for subdivision, not proof failures.
+    """
+    text = str(exc)
+    if isinstance(exc, RuntimeError):
+        return "split x cell" in text
+    if isinstance(exc, ValueError):
+        return "split before evaluation" in text
+    return False
+
+
+def _split_x(x: Interval):
+    """Subdivide exactly as the retained scaled-process cell splitter does.
+
+    A cell that straddles a series branch is cut at that branch first, so one
+    subdivision resolves it; otherwise the geometric midpoint is used.
+    """
+    for cut in (SCALED.BRANCH_X, SCALED.NEAR_EXACT_SERIES_MAX_X):
+        if x.lo < cut < x.hi:
+            return (
+                Interval(x.lo, math.nextafter(cut, -math.inf)),
+                Interval(cut, x.hi),
+            )
+    mid = math.sqrt(x.lo * x.hi)
+    if not (x.lo < mid < x.hi):
+        return None
+    return Interval.outward_bounds(x.lo, mid), Interval.outward_bounds(mid, x.hi)
+
+
 def _adaptive_image(P, node: dict, samples: int, x: Interval, h: float, depth: int):
     try:
         return [(x, propagate_subcell(P, node, samples, x, h))]
-    except RuntimeError as exc:
-        if "split x cell" not in str(exc) or depth >= MAX_ADAPTIVE_X_DEPTH:
+    except (RuntimeError, ValueError) as exc:
+        if not _split_request(exc) or depth >= MAX_ADAPTIVE_X_DEPTH:
             raise
-        mid = math.sqrt(x.lo * x.hi)
-        if not (x.lo < mid < x.hi):
+        halves = _split_x(x)
+        if halves is None:
             raise RuntimeError(f"cannot further split failing x cell {x.as_list()}") from exc
-        left = Interval.outward_bounds(x.lo, mid)
-        right = Interval.outward_bounds(mid, x.hi)
+        left, right = halves
         return (
             _adaptive_image(P, node, samples, left, h, depth + 1)
             + _adaptive_image(P, node, samples, right, h, depth + 1)
