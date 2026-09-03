@@ -4,17 +4,140 @@ This file is the current research ledger required by the root `AGENTS.md`. Keep 
 
 ## State
 
-**REPLAN COMPLETE — NEXT EXECUTION AUTHORIZED**
+**REPLAN. Both the prior plan and its first replacement are superseded.**
 
-Current PR research question: make canonical P3 reach one rigorous numerical PASS/FAIL verdict at the unchanged `1e-18` gate; only if P3 passes, run one non-promoting structure-exact P4 complete-word feasibility diagnostic. P5 is out of scope.
+Research question: **make the segment floor and the covariance ceiling refer to
+the same horizon.** `delta` is certified through
+`D_h L_segment D_h' - delta * diag(Sigma_upper) >= 0`, where `L_segment` is a
+zero-start floor over one 13--26 sample segment (65--130 ms) and `Sigma_upper` is
+a whole-word ceiling over 3.02--3.17 s. Those are quantities of different
+horizons, and on the binding `S` channel the mismatch is worth about 21 orders.
+Everything else queued -- univariate Taylor models, tighter Loewner enclosures,
+deeper subdivision, the isotropic-floor repair, the sigma/R_S cost reduction --
+stays **shelved**.
 
-## Failure classification
+### Measured, at the cell that binds the ceiling (tau = 12 s, sigma = 6, R_S = 400)
 
-The current canonical run is **not a numerical P3 theorem FAIL**. It is blocked earlier by a translation-covariance enclosure/conditioning failure:
+| step | S-channel value | `delta` | vs gate |
+| --- | --- | --- | --- |
+| today: 130 ms zero-start floor vs 3-point whole-word ceiling | floor 1.37e-20, ceiling 7.17e9 | 1.90e-30 | 11.7 orders short |
+| credit the real `S` cadence in the ceiling only | ceiling 6.18e4 | 2.21e-25 | **6.66 orders short** |
+| make the floor a whole-word quantity too | floor 41.2 | 3.79e-4 | clears by 14.6 orders |
 
-`Loewner prediction lower lost strict SPD; split x cell`
+`delta` here is evaluated at the measured phase-0 identity floor
+`rho = 8.742479e-07` (node 80 / gap 13), not the canonical minimum over phases,
+x-subcells and all 800 nodes, which is 1.89e-31. Use the ratios, not the
+absolute values.
 
-The previously identified `x=0.01` branch-partition defect is already fixed on the live PR branch: branch clamping is now applied only to the actual boundary subcell. It was an implementation defect and is not the remaining mathematical limiter.
+The `S` channel binds `delta` in both of the first two rows: its per-channel
+bracket is 1.90e-30, against 1.96e-20 for `v` and 1.60e-09 for `a_w`. `a_w` is
+21 orders slack, so nothing that only improves `a_w` can move `delta` at all.
+
+In the third row the binding channel **moves to `p`**, because a whole-word floor
+lifts the three integrator channels to within a factor of a few thousand of the
+ceiling and `p` is the tightest of them: floor/ceiling is 6.48e-4 on `v`,
+**3.79e-4 on `p`**, 6.66e-4 on `S` and 3.88e-1 on `a_w`. `delta` is the minimum
+over channels, so it is 3.79e-4. Expect the binding channel to change again once
+these become rigorous uniform bounds rather than point recursions.
+
+At this cell one 130 ms segment carries **zero** `S` firings. The floor is
+therefore a pure free-integration quantity while the ceiling it is compared
+against is a whole-word one.
+
+### Why the previous replan was wrong
+
+The prior version of this section claimed the ceiling was "12 to 13 orders
+looser than the covariance the filter settles at" and predicted that crediting
+the `S` cadence would raise `delta` by 12 orders and clear the gate. **Both
+claims are withdrawn.** They came from comparing a Riccati fixed point computed
+at one cell (tau = 3, sigma = 1, `rs.lo`) against `33459 m/s`, which is the
+ceiling's maximum over the *whole* tuner range (attained at tau = 12, sigma = 6,
+`rs.hi`). Mixing cells inflated the ratio by about eight orders.
+
+Compared at matched cells the ceiling looseness is real but far smaller:
+
+| cell (tau, sigma, R_S) | N firings in the word | 3-point v ceiling | N-firing v ceiling | variance gain |
+| --- | --- | --- | --- | --- |
+| 12, 6, 400 (**binds**) | 19 | 33434 m/s | 256.7 m/s | 1.70e4 |
+| 12, 6, 0.15 | 19 | 875 m/s | 1.377 m/s | 4.04e5 |
+| 1.1, 1, 400 | 201 | 5358 m/s | 83.3 m/s | 4.14e3 |
+| 0.333, 6, 0.15 | 602 | 189.9 m/s | 1.609 m/s | 1.39e4 |
+
+Over all matched cells the gain ranges 1.08e3 to 3.31e8 in variance, and at the
+binding cell it is 1.70e4 on `v`, 2.59e4 on `p`, 1.16e5 on `S`. That is worth
+5.06 orders on `delta` -- real, but it leaves 6.66.
+
+The firing count was also wrong. The deployed cadence is tau-scaled,
+`T_S = clamp(PSEUDO_UPDATE_TAU_RATIO_DEFAULT * tau, 0.005, 0.25)` with the ratio
+`0.015 / 1.1`, and the word length is `2*max(1, 2*(T_S+h)) + (T_S+h) + 1`. The
+two move together, so a word carries **19 firings at tau = 12 s and 602 at
+tau = 0.333 s**; "about 211 per 3.17 s word" combined the longest word with a
+different cell's cadence. `periodic_update_due` accumulates `dt` and does not
+fire at `t = 0`, so these counts are `floor(T_word / T_S)`.
+
+### Failure classification
+
+**Proof-method failure: a horizon mismatch between the two sides of the master
+inequality.** The previous entry called it a ceiling-only failure; that was
+measured wrong and is corrected above. The ceiling is genuinely loose (5 orders)
+but is not the limiter.
+
+### What this invalidates
+
+* `translation_upper`'s three-point inversion as the ceiling -- still true, now
+  quantified at 5.06 orders rather than 12;
+* the claim that fixing the ceiling alone reaches the gate;
+* the earlier conclusion that "domain realism is not a route to the gate", which
+  was measured against the mis-stated ceiling and is not evidence either way.
+
+### What it does not invalidate
+
+* the `1e-18` canonical gate;
+* same-history P2-V1 source correlation and the envelope machinery, which is not
+  what broke;
+* the H/A attitude and bias floors, which are separate from translation;
+* the exact Joseph, Cayley, co-rotated accelerometer and reset identities;
+* the endpoint-only SPD result, which remains correct and is not the limiter.
+
+### Next falsifiable experiment
+
+Extend the certified translation floor from one segment to a whole word, so that
+both sides of the master inequality are whole-word quantities, and credit the
+deployed `S` cadence in the ceiling at the same time.
+
+Requirements:
+
+- the whole-word floor must be a valid **lower** bound over every admissible
+  source history and every admissible initial covariance, not a point recursion
+  -- this is the hard part, and is plausibly why the floor is a single zero-start
+  segment today;
+- keep the same-history P2-V1 envelope ordering, which is not what broke;
+- credit the `S` cadence per cell, using each cell's own `T_S` and word length;
+- report the floor, `Sigma_upper`, the recomputed `delta` and the binding channel.
+
+**Predicted:** with both sides whole-word at the binding cell, `delta` reaches
+roughly `1e-4` to `1e-3` -- the point diagnostic gives 3.79e-4, binding on `p` --
+clearing the `1e-18` gate by about 14 orders.
+**Falsified if** a uniform whole-word floor cannot be certified over admissible
+histories, or if certifying it costs so much of the floor that `delta` stays
+below `1e-18`. Either outcome moves suspicion to the theorem formulation rather
+than to the bounds.
+
+Caveat: every number in this section is an mpmath point diagnostic at one tuner
+cell, with `P0`-independence checked at 40 and 55 decimal digits. None of it is a
+certificate. A rigorous replacement must hold uniformly over source-reachable
+cells and initial covariances, which is strictly more than a point recursion.
+
+Do not resume any shelved item before this experiment reports a number.
+
+## Failure classification (historical, both blockers now cleared)
+
+The canonical run was blocked by `Loewner prediction lower lost strict SPD; split
+x cell`, and separately by the `x=0.01` branch-partition defect. Both are
+resolved: the branch clamping was an implementation defect, and the strict-SPD
+demand was surplus -- the theorem certifies the segment endpoint, not every 5 ms
+prediction. Neither was the mathematical limiter. See the State section for the
+one that is.
 
 ## Evidence
 
@@ -90,7 +213,12 @@ index 6 and 6.75e-5 at index 7. Reducing 800 nodes to 10 brings the estimate to
 roughly 25-77 min, which fits the budget only just, and the dominating nodes are
 the slow ones.
 
-## The S=0 pseudo-measurement is inert over a segment
+## The S=0 pseudo-measurement is inert over a *segment* (framing superseded)
+
+Retained as a measurement. The conclusion drawn from it at the time was wrong:
+inertness over 65 ms says nothing about `R_S` over a word, where the filter
+fires it 19 to 602 times depending on the cell. See the State section. That
+horizon difference is itself the current research question.
 
 Across a 23-decade override sweep at node 80 the S update is live and strong
 when `R_S_z` is small -- at `1e-4` it collapses `P[2][2]` from 4.277 to 8.95e-5
@@ -113,7 +241,10 @@ a lower bound -- but the segment floor may be a lossy proxy for the true relativ
 injection margin, and that is a candidate explanation for `delta` landing near
 1e-18.
 
-## Measured: the margin deficit is about 9 orders, and neither enclosure nor scalarization explains it
+## Measured: the margin deficit is about 9 orders (cause since identified)
+
+The measurements below stand. The open question they left -- what does explain
+the deficit -- is answered by the covariance ceiling; see the State section.
 
 `delta` was computed directly against the real `Sigma_upper` from
 `HIST.endpoint_phase_upper`, at phase 0, for three source nodes. The target is
@@ -142,7 +273,10 @@ is 1.6e-27, about 5700 times lower.
 Second, and more important: **no enclosure or scalarization work can close a 9
 order gap.** Taylor models, tighter collapses, finer subdivision and the
 sigma/R_S cost reduction are all worth factors of 10^3 or less against a deficit
-of 10^9. They should not be pursued as a route to the gate.
+of 10^9. They should not be pursued as a route to the gate. The cause was
+subsequently identified as a horizon mismatch between the segment floor and the
+whole-word ceiling; the ceiling itself is 5.06 orders loose. See the State
+section.
 
 ### Where the deficit plausibly comes from
 
@@ -166,6 +300,208 @@ four-`S` spread and recompute `delta` against the same `Sigma_upper`. If
 `delta` moves by orders, the segment formulation is the limiter and the fix is
 structural. If it does not, the theorem formulation itself is marginal and
 should be reconsidered rather than re-enclosed.
+
+## Physical-reality check on the delta comparison target
+
+`Sigma_upper` is the ceiling `delta` is measured against. In physical units it
+is far outside anything a marine IMU in ocean waves can reach:
+
+| channel | std(Sigma_upper) | declared entrance box | ratio |
+| --- | --- | --- | --- |
+| v | 33459 m/s | 5 m/s | 6691x |
+| p | 63000 m | 20 m | 3150x |
+| S | 84730 m.s | 300 m.s | 282x |
+| a_w | 33.3 m/s^2 (3.4 g) | 2.94 m/s^2 | 11x |
+
+A covariance ceiling asserting 33 km/s of velocity uncertainty and 63 km of
+position uncertainty describes a diverging filter, not this one. It is a
+bounding looseness, not a physical claim.
+
+Substituting the declared physical box as the ceiling moves the binding S ratio
+from 9.25e-24 to 7.38e-19 and the matrix `delta` from 1.61e-27 to about
+1.28e-22. So the 9 order deficit decomposes as roughly **5 orders from the loose
+ceiling and 4 orders structural**, the latter being the segment/word horizon
+mismatch: a 65 ms zero-start segment accumulates 2.6e-7 m.s of `S` uncertainty,
+which against any realistic `S` ceiling is intrinsically near 1e-18 at best.
+
+`Sigma_upper` may not simply be replaced by the entrance box -- `delta` is a
+relative Riccati injection margin and the ceiling must stay a valid upper bound
+on the filter covariance, not on the error. But tightening that bound so it
+reflects covariance the filter can actually reach is worth about 5 orders,
+which exceeds every enclosure avenue combined and is not currently being
+pursued by any recorded plan.
+
+Conditions that are already correctly excluded, so they are not the problem:
+impacts and slams out of normal-Live scope, lever arm disabled, vibration guard
+dormant and transparent, non-gravitational CoG acceleration 4.0 m/s^2 = 0.41 g.
+
+Entrance realism: the 45 deg attitude entrance is **defensible, not inflated**.
+The filter initialises with a flat-sea estimate while the vessel is already
+under way in waves, so the initial attitude error is the true wave-induced
+attitude, not a small number. A 30 deg roll in heavy seas against a zero
+estimate is already a 30 deg tilt error before heading error is counted, and the
+domain separately declares a 10 deg internal heading gauge error. An earlier
+revision of this file claimed a vessel starts within about 1 deg of tilt; that
+answered the wrong question -- it described the sea being flat rather than the
+filter's initial estimate being flat -- and is withdrawn.
+
+## Whole-chain physical-realism audit
+
+Checked every declared bound against a marine IMU in ocean waves, and traced
+what each costs. `Sigma_upper` is reproduced exactly by
+`BASE.translation_upper` at the full declared tuner ranges, so that function is
+the source.
+
+**Correctly excluded already, not the problem:** impacts and slams out of
+normal-Live scope, lever arm disabled, vibration guard dormant and transparent,
+non-gravitational CoG acceleration 4.0 m/s^2 = 0.41 g.
+
+**Attitude entrance is realistic.** The filter initialises with a flat-sea
+estimate while the vessel is already under way in waves, so the 45 deg entrance
+is the true wave-induced attitude error, not an inflated margin. The canonical
+P4 gate's 0.8 rad requirement binds a candidate to the outer sector prerequisite
+it consumes; the domain's `[30, 25, 20, 15]` list is the inner attitude cell and
+is explicitly separate (`p4_outer_geometry_sector_remains_separate: true`).
+There is no conflict between them.
+
+**Rotation rate is realistic.** `body_rate_norm_upper_deg_s = 30`. A 20 degree
+roll amplitude at a 5 s period peaks at `20 * 2pi / 5 = 25 deg/s`, so the bound
+sits just above genuine heavy-sea motion rather than being inflated. (An earlier
+version of this line used a 30 degree roll at 6 s, which peaks at 31.4 deg/s and
+so exceeds the declared bound; that example was wrong, not the bound.)
+
+**The tuner cells are unphysical but nearly free.** `sigma_aw` reaches
+6.0 m/s^2 = 0.61 g and `tau` falls to 0.333 s, i.e. 0.61 g of process noise
+decorrelating in a third of a second. That is vibration, which the domain
+excludes elsewhere, and it exceeds the domain's own 0.41 g acceleration
+envelope. Cost of restricting to a physics-consistent `tau >= 3 s`,
+`sigma <= 4 m/s^2`: `a_w` improves 4.04x, and v, p, S improve by 1.002x. So the
+unphysical corner is not what inflates the translation ceiling.
+
+**`R_S` upper drives the ceiling, but tightening it is not enough.**
+`Sigma_upper` scales as `R_S,max^2` through the four-`S` inversion:
+
+| rs.hi | Sigma_upper v | std |
+| --- | --- | --- |
+| 0.15 | 2.086e6 | 1444 m/s |
+| 100 | 7.190e7 | 8480 m/s |
+| 400 (declared) | 1.119e9 | 33459 m/s |
+
+The declared 400 costs 538x on v, p and S. But even the **lowest declared `R_S`
+upper** (0.15; no physical lower bound is established here) leaves a 1444 m/s
+velocity ceiling *in `translation_upper`* -- a statement about the three-point
+proof ceiling, not about the filter, whose settled velocity error is millimetres
+per second. **The ill-conditioning is intrinsic to inverting the triple
+integrator v -> p -> S from three points over a roughly 0.8 s observation
+span**, not a consequence of any tuner or domain choice.
+
+### Deficit accounting on the binding S channel
+
+| lever | worth | delta after |
+| --- | --- | --- |
+| current | - | 1.89e-31 |
+| repair the isotropic `rho*I` collapse | 8.5e3 | 1.6e-27 |
+| tightest `R_S` | 538 | ~8.7e-25 |
+| both | 4.6e6 | ~4e-25 |
+| **canonical gate** | | **1e-18** |
+
+Every realism lever pulled together still leaves about **7 orders**. Physical
+realism accounts for roughly 3 of the 9 order deficit; the remainder is
+formulation. **This conclusion is withdrawn**: it was measured against the
+three-point-inversion ceiling, which measurement now puts at 5.06 orders loose,
+so it is not evidence about a correct ceiling. Re-evaluate domain realism only
+after the floor and ceiling refer to the same horizon.
+
+The two structural items that remain are the intrinsically ill-conditioned
+four-`S` triple-integrator observability route, and the zero-start 65 ms segment
+floor compared against a whole-word ceiling.
+
+## The certified chain cannot detect a state-correction sign error
+
+Checked in response to a direct challenge on the third-integral correction
+sign. The sign is **correct** in both places:
+
+* shipping `applyIntegralZeroPseudoMeas` sets `r = -xext.segment<3>(off_S)`,
+  i.e. innovation toward the target `S = 0`, and `gain_from_ldlt3_` computes
+  `K = P C' S^-1` with no sign flip, so `dS = K_S r ~ -P_SS S_mat^-1 S` is a
+  negative multiple of `S` and pulls it to zero;
+* the proof's `_transition` matches the shipping `Phi` exactly once mapped into
+  `z = [v/h, p/h^2, S/h^3, a_w]`: rows `[1,0,0,k1]`, `[1,1,0,k2]`,
+  `[0.5,1,1,k3]` with `k2 -> 1/2` and `k3 -> 1/6` as `x -> 0`, the triple
+  integrator Taylor coefficients. All integration couplings are positive; the
+  only negative entries are structural zeros outward-rounded to `-5e-324`.
+
+**But the check that found this is one the proof chain cannot perform.** The
+covariance update `P - P C'(C P C' + R)^-1 C P` does not reference the
+innovation `r` at all. Had `r` carried the wrong sign, the filter would drive
+`S` away from zero and diverge, while every P3 certificate passed identically:
+the segment floor, `Sigma_upper` and `delta` would all be unchanged.
+
+The source-marker contracts do not close the gap either. They pin the update
+*shape* -- `xext.noalias() += K * r;` and `joseph_update3_(K, S_mat, PCt);` --
+but nothing anywhere checks how `r` is defined.
+
+P4 would catch it, since it bounds the actual nonlinear state map `F_w`. P4 has
+never been reached because P3 blocks. So today **nothing in the certified chain
+verifies that the mean correction is stabilizing**; P1-P3 certify covariance
+behaviour only. Any future claim that the deployed filter is certified should
+state that limitation explicitly, and a cheap direct check of the innovation
+sign convention against each shipping update is worth adding independently of
+the P3/P4 work.
+
+## The translation ceiling credits 3 of the 19 to 602 S firings in a word
+
+Raised as a challenge: `R_S` is the filter's major stabilizing force by design,
+so why does this ledger read as though it degrades the bound? The challenge is
+right and the earlier framing was wrong.
+
+| | S observations per word |
+| --- | --- |
+| proof covariance ceiling (`integrator_inverse`, 3x3, "three possibly correlated selected observations") | **3** |
+| proof observability route (`FOUR_S_SPREAD_COMPLETE_V_P_S_AW_UCO`, `aligned_firing_count`) | **4** |
+| shipping filter at tau = 12 s, `T_S = 0.164 s` (the cell that **binds** the ceiling) | **19** |
+| shipping filter at tau = 1.1 s, `T_S = 0.015 s` | 201 |
+| shipping filter at tau = 0.333 s, `T_S = 0.005 s` (clamped floor) | 602 |
+
+The cadence is tau-scaled and the word length depends on the same tau, so the
+count is `floor(T_word / T_S)` evaluated **within one cell**; it is never valid
+to take the word from one cell and the cadence from another.
+
+`translation_upper` bounds the translation covariance by inverting a
+three-point integrator observation. The filter applies the `S = 0`
+pseudo-measurement `floor(T_word / T_S)` times across the word -- 19 at
+tau = 12 s, 602 at tau = 0.333 s. A count ratio is not an information metric, so
+this ledger states the consequence in covariance instead: at matched cells, a
+ceiling that credits every firing is 1.08e3 to 3.31e8 times smaller in variance
+than the three-point one, and 1.70e4 times smaller at the cell that binds.
+
+Two earlier statements in this ledger were true of that model and false as
+statements about the filter, and are withdrawn as framing:
+
+* "the `S=0` pseudo-measurement is inert" -- true over a 65 ms segment carrying
+  0 to 4 firings, and says nothing about `R_S` over a word;
+* "even the tightest `R_S` leaves a 1444 m/s ceiling" -- that is the ceiling of
+  the three-point inversion, not of the filter.
+
+Widening the observation baseline does not rescue it. Sweeping the spread:
+
+| Tpe | spacing | Tword | Sigma_upper v | v std |
+| --- | --- | --- | --- | --- |
+| 1.0 | 1.00 | 3.17 | 1.119e9 | 33459 m/s |
+| 2.0 | 2.00 | 6.17 | 1.669e7 | **4085 m/s** |
+| 4.0 | 4.00 | 12.17 | 2.836e7 | 5325 m/s |
+| 8.0 | 8.00 | 24.17 | 5.492e8 | 23440 m/s |
+
+The optimum near `Tpe = 2` is 67x better than the deployed configuration but
+still three orders beyond any boat, because a longer word accumulates more
+process noise. **The limiter is the firing count, not the baseline.**
+
+This relocates the 9 order deficit again, and this time onto something that is
+a modelling choice rather than a property of the filter. It is not the
+enclosure, not the isotropic collapse (8.5e3), and not domain realism
+(about 3 orders). Crediting the S firings the filter actually performs is the
+first thing to try, and nothing else in this ledger should be attempted before
+it.
 
 ## Master P3 quantity
 
@@ -205,7 +541,7 @@ Qualitatively different alternatives:
 3. **Analytic complete-segment Gramian/Riccati lower in a different information/covariance representation.** Avoid intervalizing the covariance recursion itself. Note before attempting this: the natural candidate `P_k >= (G_c^-1 + G_o)^-1`, with `G_c` the reachability and `G_o` the observability Gramian, is **false** for segments started from `P_0 = 0` -- 223/352 violations on integrator-chain systems. The information-form derivation needs a finite `Y_0 = P_0^-1`, which a zero-start segment does not provide. A correct analytic lower has to come from the closed-loop reachability sum, whose transitions depend on the gains.
 4. **Different Lyapunov representation** if the complete-segment covariance map remains unsuitable.
 
-**Selection:** pursue (1) once. It directly attacks the failed dependency mechanism, and the point map is smooth with generalized source-137 ratio `P(x)` versus the low-`x` endpoint close to `1 ... 1.08`, so a centered model should be proving a relative statement near unity rather than recovering five orders of lost SPD margin. If this Taylor-model attempt fails after one mathematically motivated refinement, freeze it and move to (3), not another interval subdivision variant.
+**Selection (historical, superseded -- do not execute):** pursue (1) once. It directly attacks the failed dependency mechanism, and the point map is smooth with generalized source-137 ratio `P(x)` versus the low-`x` endpoint close to `1 ... 1.08`, so a centered model should be proving a relative statement near unity rather than recovering five orders of lost SPD margin. If this Taylor-model attempt fails after one mathematically motivated refinement, freeze it and move to (3), not another interval subdivision variant.
 
 ## DEAD_ENDS
 
@@ -216,20 +552,21 @@ Qualitatively different alternatives:
 - **REJECTED: post-hoc complete-segment normalization of natural interval Riccati boxes.** Dependency has already exploded before normalization.
 - **REJECTED: natural-interval derivative/monotonicity recursion.** It shares the same dependency loss.
 - **REJECTED for #471: additional P4 micro-certificates before complete-word feasibility.**
+- **REJECTED: `translation_upper`'s three-point integrator inversion as the
+  covariance ceiling.** It credits three `S` observations where the filter
+  applies 19 to 602 per word, and at matched cells is 1.08e3 to 3.31e8 looser in
+  variance (1.70e4 at the binding cell), worth 5.06 orders on `delta`. Real, but
+  not the limiter -- see the State section.
+- **SHELVED, not rejected:** univariate Taylor model, tighter Loewner
+  enclosures, deeper subdivision, the isotropic `rho*I` repair (worth 8.5e3) and
+  the sigma/R_S cost reduction (worth 80x). All are sound but each is worth 10^4
+  or less against a 10^12 ceiling error. Revisit only after the ceiling is
+  fixed and a real `delta` exists.
 - **PARKED: rigorous H=18/A=21 complete-word dissipation producer.** Written and
   unit-tested at commit `4d68493` (`tools/ou3_p4_complete_word_dissipation.py`),
   then removed: a rigorous certificate before the non-promoting `rho_w`
   diagnostic is the wrong order. Resurrect only after the diagnostic reports
   `rho_w` clearly below 1.
-
-## Open contract inconsistency
-
-`tools/ou3_p4_canonical_gate.py` requires a candidate's `outer_angle_rad` to
-equal `0.8` exactly, bound to the Cayley and remainder artifacts, while the
-operating domain declares a P4 certificate search over
-`p4_complete_word_full_attitude_candidate_deg = [30, 25, 20, 15]`. If the
-0.8-rad formulation is later abandoned for a narrower cell, the gate rejects
-every candidate on that list. Resolve before relying on the search list.
 
 ## Verified theorem steps
 
@@ -287,16 +624,15 @@ A rejected route may be resurrected only after recording the new mathematical fa
 
 ## Next falsifiable experiment
 
-Build a **source-137 / gap-13 diagnostic-only univariate centered Taylor model** for the complete segment in `x=h/tau`.
+**The single current experiment is stated in the State section** (make the floor
+and the ceiling whole-word quantities, and credit the `S` cadence). It is not
+repeated here, so that this ledger carries exactly one next action.
 
-Requirements:
+The previously selected univariate centered Taylor model, and the
+ceiling-only Riccati bound that briefly replaced it, are both **shelved**. The
+Taylor model addresses enclosure dependency, which measurement shows is not the
+limiter; the ceiling-only bound was measured at 5.06 orders, which leaves 6.66.
 
-- carry the single normalized scalar source coordinate symbolically through all 13 predictions and both scalar measurement updates per sample;
-- use the existing validated transition/process series and outward remainder bounds;
-- use a verified reciprocal expansion for innovation denominators rather than natural interval division;
-- compare the final matrix against a high-precision point reference by congruence/generalized eigenvalue;
-- report polynomial order, remainder norm, certified relative `alpha`, limiting direction, and number of structural branch splits.
-
-**Predicted success criterion:** point diagnostics suggest the exact generalized relative floor is near 1 across source 137, so the first rigorous model should certify a clearly positive `alpha` with only the required `x=0.01` analytic-branch split and modest model order. If it cannot do that, one refinement of model order/remainder formulation is allowed; a second failure triggers architecture review and the analytic segment Gramian/Riccati alternative.
-
-Before any new P4 proof producer, first obtain the canonical P3 numeric verdict. If P3 passes, the only P4 work allowed in #471 is the non-promoting high-precision complete-word ratio diagnostic `rho_w = V_after(F_w(x)) / V_before(x)` required by the PR scope.
+Before any new P4 proof producer, first obtain the canonical P3 numeric verdict.
+If P3 passes, the only P4 work allowed is the non-promoting high-precision
+complete-word ratio diagnostic `rho_w = V_after(F_w(x)) / V_before(x)`.
