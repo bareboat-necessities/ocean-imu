@@ -32,12 +32,15 @@ form
 For c=q u the exact Cayley formula gives
 
     d = A c_perp - B alpha (c_perp x v_hat),
-    A=4/(4+q^2), B=2/(4+q^2), alpha=c'v_hat,
+    A=4/(4+q^2), B=2/(4+q^2), alpha=c'v_hat.
 
-and therefore
+The two terms are orthogonal, so over ||c||<=q_o
 
-    ||d|| <= 2/sqrt(4+q^2) ||c_perp||,
-    ||d-c_perp|| <= q/sqrt(4+q^2) ||c_perp||.
+    A_o ||c_perp|| <= ||d|| <= 2/sqrt(4+q_o^2) ||c_perp||,
+    ||d-c_perp|| <= q_o/sqrt(4+q_o^2) ||c_perp||,
+
+with A_o=4/(4+q_o^2).  The lower gain is what a directional P4 accumulator
+needs to compare exact finite-angle tangent information to the P3 linear packet.
 
 This primitive is source-bound and valid over the retained 0.8-rad Cayley
 sector.  It supplies an exact directional operation reduction; it does not
@@ -58,7 +61,7 @@ DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
 MEKF = REPO / "src" / "kalman_ou_iii" / "Kalman3D_Wave_OU_III.h"
 SIM = REPO / "src" / "util" / "W3dSimCommon.h"
 CERT_SIM = REPO / "tests" / "kalman_ou_iii" / "ou3-certificate-sim.cpp"
-SCHEMA = 1
+SCHEMA = 2
 
 
 def down(x: float) -> float:
@@ -98,17 +101,20 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     q = float(cayley["cayley_radius_upper"])
     if not (math.isfinite(q) and 0.0 < q < 1.0):
         failures.append("invalid 0.8-rad Cayley radius")
-    den_lo = down(math.sqrt(down(4.0 + down(q*q)))) if q > 0.0 else 2.0
+    q2_hi = up(q*q) if math.isfinite(q) else math.inf
+    den_lo = down(math.sqrt(down(4.0 + q2_hi))) if q > 0.0 else 2.0
     if not den_lo > 0.0:
         failures.append("effective tangent denominator lost positivity")
-        gain = math.inf
+        gain_lo = 0.0
+        gain_hi = math.inf
         defect = math.inf
     else:
-        gain = min(1.0, up(2.0 / den_lo))
+        gain_lo = down(4.0 / up(4.0 + q2_hi))
+        gain_hi = min(1.0, up(2.0 / den_lo))
         defect = up(q / den_lo)
 
-    if not (0.0 < gain <= 1.0):
-        failures.append("effective tangent coordinate is not nonexpansive")
+    if not (0.0 < gain_lo <= gain_hi <= 1.0):
+        failures.append("effective tangent coordinate gain bounds invalid")
     if not (0.0 <= defect < 1.0):
         failures.append("effective tangent defect ratio reached one")
 
@@ -136,7 +142,8 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "effective_coordinate_formula": (
             "d_m=A c_perp-B alpha(c_perp x v_hat), A=4/(4+q^2), B=2/(4+q^2)"
         ),
-        "effective_tangent_coordinate_gain_upper": gain,
+        "effective_tangent_coordinate_gain_lower": gain_lo,
+        "effective_tangent_coordinate_gain_upper": gain_hi,
         "effective_vs_linear_tangent_defect_ratio_upper": defect,
         "outer_angle_rad": float(cayley["outer_angle_rad"]),
         "outer_sector_covered": float(cayley["outer_angle_rad"]) >= 0.80,
@@ -171,10 +178,15 @@ def validate(d: dict) -> list[str]:
     ):
         if d.get(key) is not False:
             f.append(f"{key} is not false")
-    gain = d.get("effective_tangent_coordinate_gain_upper")
+    lo = d.get("effective_tangent_coordinate_gain_lower")
+    hi = d.get("effective_tangent_coordinate_gain_upper")
     defect = d.get("effective_vs_linear_tangent_defect_ratio_upper")
-    if not isinstance(gain, (int, float)) or isinstance(gain, bool) or not (0.0 < float(gain) <= 1.0):
-        f.append("invalid effective tangent gain")
+    if not isinstance(lo, (int, float)) or isinstance(lo, bool) or not (0.0 < float(lo) <= 1.0):
+        f.append("invalid effective tangent gain lower")
+    if not isinstance(hi, (int, float)) or isinstance(hi, bool) or not (0.0 < float(hi) <= 1.0):
+        f.append("invalid effective tangent gain upper")
+    if isinstance(lo, (int, float)) and isinstance(hi, (int, float)) and float(lo) > float(hi):
+        f.append("effective tangent gain interval inverted")
     if not isinstance(defect, (int, float)) or isinstance(defect, bool) or not (0.0 <= float(defect) < 1.0):
         f.append("invalid effective tangent defect ratio")
     if float(d.get("outer_angle_rad", 0.0)) < 0.80:
@@ -196,6 +208,7 @@ def main() -> int:
     print(json.dumps({
         "status": "PASS" if not vf else "FAIL",
         "outer_angle_rad": d["outer_angle_rad"],
+        "effective_gain_lower": d["effective_tangent_coordinate_gain_lower"],
         "effective_gain_upper": d["effective_tangent_coordinate_gain_upper"],
         "effective_defect_ratio_upper": d["effective_vs_linear_tangent_defect_ratio_upper"],
         "radial_Joseph_cancelled": d["radial_Joseph_energy_cancellation_exact"],
