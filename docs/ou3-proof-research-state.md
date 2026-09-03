@@ -4,9 +4,87 @@ This file is the current research ledger required by the root `AGENTS.md`. Keep 
 
 ## State
 
-**REPLAN COMPLETE — NEXT EXECUTION AUTHORIZED**
+**REPLAN. The prior plan is superseded and should not be executed.**
 
-Current PR research question: make canonical P3 reach one rigorous numerical PASS/FAIL verdict at the unchanged `1e-18` gate; only if P3 passes, run one non-promoting structure-exact P4 complete-word feasibility diagnostic. P5 is out of scope.
+Research question: replace the translation covariance ceiling with one that
+credits the `S = 0` pseudo-measurement the filter actually applies, then obtain a
+canonical P3 verdict. Everything previously queued -- univariate Taylor models,
+tighter Loewner enclosures, deeper subdivision, the isotropic-floor repair, the
+sigma/R_S cost reduction -- is **shelved**, because all of it operates downstream
+of a ceiling that is 12 to 13 orders loose.
+
+### Why the prior plan was wrong
+
+`translation_upper` bounds the translation covariance by inverting a
+**three-point** integrator observation over a 0.765 s spread. The deployed filter
+applies the `S = 0` pseudo-measurement about **211 times** per 3.17 s word at its
+default 0.015 s period, and at least 13 times at the worst admissible cadence.
+`R_S` is the filter's principal stabilizing mechanism and the bound credits
+roughly two percent of it.
+
+Iterating the true Riccati recursion to its fixed point at the real cadence
+(tau = 3 s, sigma = 1.0 m/s^2, `rs.lo` strength) gives the covariance the filter
+actually settles at, against the ceiling the proof uses:
+
+| channel | filter steady state | proof ceiling | ratio (variance) |
+| --- | --- | --- | --- |
+| v | 5.3 mm/s | 33459 m/s | 4.0e13 |
+| p | 1.6 cm | 63004 m | 1.6e13 |
+| S | 3.1 cm.s | 84732 m.s | 7.5e12 |
+| a_w | 2.7 cm/s^2 | 33.3 m/s^2 | 1.6e6 |
+
+The margin deficit is 9 orders. The ceiling looseness alone is 12 to 13 and so
+over-covers it. Millimetres per second and centimetres are exactly what a marine
+INS with a zero-integral constraint should produce: the estimator is healthy and
+the bound is not bounding it.
+
+### Failure classification
+
+**Proof-method failure, not enclosure, conditioning, or implementation.** The
+quantitative backbone bounds a differently instrumented system -- one that sees
+three `S` observations -- and reports the result as this filter's covariance.
+
+### What this invalidates
+
+* `translation_upper`'s three-point inversion as the source of `Sigma_upper`;
+* the four-`S` spread route as the *quantitative* covariance backbone (it may
+  still serve as a qualitative observability argument);
+* every downstream effort listed above, none of which can recover 9 orders;
+* the earlier conclusion that "domain realism is not a route to the gate" --
+  that was measured against the broken ceiling and is not evidence about a
+  correct one.
+
+### What it does not invalidate
+
+* the `1e-18` canonical gate;
+* same-history P2-V1 source correlation and the envelope machinery around the
+  per-history bound, which is not what broke;
+* the H/A attitude and bias floors, which are separate from translation;
+* the exact Joseph, Cayley, co-rotated accelerometer and reset identities;
+* the endpoint-only SPD result, which remains correct and is now simply not the
+  limiter.
+
+### Master inequality placement
+
+`delta` is certified through
+`D_h L_segment D_h' - delta * diag(Sigma_upper) >= 0`. `Sigma_upper` is the
+denominator. A ceiling 12 to 13 orders loose suppresses `delta` by the same
+factor, which is why no numerator work has moved it.
+
+### Next falsifiable experiment
+
+Replace the per-history translation covariance upper with a Riccati-based bound
+that credits the actual `S` cadence, keeping the same-history envelope machinery
+unchanged around it. A uniformly detectable system has a uniformly bounded
+Riccati solution; the bound must hold over the source-reachable tuner cells, so
+it is a uniform bound over those cells rather than a single fixed point.
+
+**Predicted:** `delta` rises by 12 orders or more from 1.9e-31, crossing the
+`1e-18` gate with margin. **Falsified if** a legitimate uniform Riccati ceiling
+still leaves `delta` below the gate, in which case the theorem formulation, not
+the bound, is what needs revisiting.
+
+Do not resume any shelved item before this experiment reports a number.
 
 ## Failure classification
 
@@ -406,6 +484,16 @@ Qualitatively different alternatives:
 - **REJECTED: post-hoc complete-segment normalization of natural interval Riccati boxes.** Dependency has already exploded before normalization.
 - **REJECTED: natural-interval derivative/monotonicity recursion.** It shares the same dependency loss.
 - **REJECTED for #471: additional P4 micro-certificates before complete-word feasibility.**
+- **REJECTED: `translation_upper`'s three-point integrator inversion as the
+  covariance ceiling.** It credits three `S` observations where the filter
+  applies about 211 per word, and is 12 to 13 orders looser than the covariance
+  the filter actually settles at. Every downstream numerator improvement was
+  measured against it and is therefore uninformative.
+- **SHELVED, not rejected:** univariate Taylor model, tighter Loewner
+  enclosures, deeper subdivision, the isotropic `rho*I` repair (worth 8.5e3) and
+  the sigma/R_S cost reduction (worth 80x). All are sound but each is worth 10^4
+  or less against a 10^12 ceiling error. Revisit only after the ceiling is
+  fixed and a real `delta` exists.
 - **PARKED: rigorous H=18/A=21 complete-word dissipation producer.** Written and
   unit-tested at commit `4d68493` (`tools/ou3_p4_complete_word_dissipation.py`),
   then removed: a rigorous certificate before the non-promoting `rho_w`
