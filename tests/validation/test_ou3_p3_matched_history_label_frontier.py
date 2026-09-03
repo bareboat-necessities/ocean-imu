@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
+from pathlib import Path
+import sys
 import unittest
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "tools"))
 
 import ou3_p3_matched_history_label_frontier as M
 
