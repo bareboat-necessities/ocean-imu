@@ -30,11 +30,7 @@ Research Studies:
 
 - [Wave Direction](https://github.com/bareboat-necessities/ocean-imu/releases/download/vTest/kalman-wave-dir.pdf)
 
-- [Filters Stability](https://github.com/bareboat-necessities/ocean-imu/releases/download/vTest/pseudo-meas-stability.pdf)
-
 - [Filters Startup](https://github.com/bareboat-necessities/ocean-imu/releases/download/vTest/ins-startup.pdf)
-
-- [Filters Adaptation](https://github.com/bareboat-necessities/ocean-imu/releases/download/vTest/adaptive-integral-state-regularization.pdf)
 
 - [GNSS Fusion](https://github.com/bareboat-necessities/ocean-imu/releases/download/vTest/kalman-gnss-fusion.pdf)
 
