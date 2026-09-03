@@ -276,6 +276,39 @@ The two structural items that remain are the intrinsically ill-conditioned
 four-`S` triple-integrator observability route, and the zero-start 65 ms segment
 floor compared against a whole-word ceiling.
 
+## The certified chain cannot detect a state-correction sign error
+
+Checked in response to a direct challenge on the third-integral correction
+sign. The sign is **correct** in both places:
+
+* shipping `applyIntegralZeroPseudoMeas` sets `r = -xext.segment<3>(off_S)`,
+  i.e. innovation toward the target `S = 0`, and `gain_from_ldlt3_` computes
+  `K = P C' S^-1` with no sign flip, so `dS = K_S r ~ -P_SS S_mat^-1 S` is a
+  negative multiple of `S` and pulls it to zero;
+* the proof's `_transition` matches the shipping `Phi` exactly once mapped into
+  `z = [v/h, p/h^2, S/h^3, a_w]`: rows `[1,0,0,k1]`, `[1,1,0,k2]`,
+  `[0.5,1,1,k3]` with `k2 -> 1/2` and `k3 -> 1/6` as `x -> 0`, the triple
+  integrator Taylor coefficients. All integration couplings are positive; the
+  only negative entries are structural zeros outward-rounded to `-5e-324`.
+
+**But the check that found this is one the proof chain cannot perform.** The
+covariance update `P - P C'(C P C' + R)^-1 C P` does not reference the
+innovation `r` at all. Had `r` carried the wrong sign, the filter would drive
+`S` away from zero and diverge, while every P3 certificate passed identically:
+the segment floor, `Sigma_upper` and `delta` would all be unchanged.
+
+The source-marker contracts do not close the gap either. They pin the update
+*shape* -- `xext.noalias() += K * r;` and `joseph_update3_(K, S_mat, PCt);` --
+but nothing anywhere checks how `r` is defined.
+
+P4 would catch it, since it bounds the actual nonlinear state map `F_w`. P4 has
+never been reached because P3 blocks. So today **nothing in the certified chain
+verifies that the mean correction is stabilizing**; P1-P3 certify covariance
+behaviour only. Any future claim that the deployed filter is certified should
+state that limitation explicitly, and a cheap direct check of the innovation
+sign convention against each shipping update is worth adding independently of
+the P3/P4 work.
+
 ## Master P3 quantity
 
 The new backend is relevant only if it produces the complete-segment matrix lower used by canonical P3:
