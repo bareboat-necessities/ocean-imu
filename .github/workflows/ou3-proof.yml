@@ -57,6 +57,7 @@ jobs:
             test_ou3_p3_correlated_translation_segment \
             test_ou3_p4_accelerometer_corotated_aw \
             test_ou3_p4_canonical_gate \
+            test_ou3_p4_complete_word_dissipation \
             test_ou3_p4_p3_metric_attachment \
             test_ou3_p4_signed_joseph_feasibility \
             test_ou3_p4_sample_clock_source_refinement \
@@ -259,6 +260,7 @@ jobs:
             tools/ou3_p4_source_word_timing.py \
             tools/ou3_p4_p3_metric_attachment.py \
             tools/ou3_p4_signed_joseph_feasibility.py \
+            tools/ou3_p4_complete_word_dissipation.py \
             tools/ou3_p4_canonical_gate.py
 
       - name: Certify usable 0.8 rad nonlinear sector primitives and canonical word timing
@@ -330,4 +332,116 @@ jobs:
             /tmp/ou3_p4_vector_remainder.json
             /tmp/ou3_p4_source_word_timing.json
             /tmp/ou3_p4_signed_joseph_feasibility.json
+          retention-days: 7
+
+  canonical-p4:
+    needs: [canonical-p3, p4-sector-prerequisites]
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Compile complete-word producer and canonical P4 gate
+        run: |
+          python3 -m py_compile \
+            tools/ou3_p4_source_path_reachability.py \
+            tools/ou3_p4_source_node_cells.py \
+            tools/ou3_p4_sample_clock_source_refinement.py \
+            tools/ou3_p4_complete_word_dissipation.py \
+            tools/ou3_p4_canonical_gate.py \
+            tests/validation/test_ou3_p4_complete_word_dissipation.py
+
+      - name: Test complete-word dissipation contract
+        working-directory: tests/validation
+        run: |
+          python3 -m unittest -v \
+            test_ou3_p4_complete_word_dissipation \
+            test_ou3_p4_canonical_gate
+
+      - name: Download canonical P3 verdict and P4 metric handoff
+        uses: actions/download-artifact@v6
+        with:
+          name: ou3-p3-canonical-theorem-status
+          path: /tmp
+
+      - name: Download P4 sector prerequisites
+        uses: actions/download-artifact@v6
+        with:
+          name: ou3-p4-sector-prerequisites
+          path: /tmp
+
+      - name: Materialize the finite-speed committed source graph
+        run: |
+          python3 tools/ou3_p4_source_path_reachability.py \
+            --output /tmp/ou3_p4_source_path_reachability.json
+          python3 tools/ou3_p4_source_node_cells.py \
+            --output /tmp/ou3_p4_source_node_cells.json
+          python3 tools/ou3_p4_sample_clock_source_refinement.py \
+            --output /tmp/ou3_p4_sample_clock_source_refinement.json
+
+      - name: Build the source-complete H=18/A=21 nonlinear whole-word candidate
+        run: |
+          python3 tools/ou3_p4_complete_word_dissipation.py \
+            --p3 /tmp/ou3_p3_canonical_gate.json \
+            --metric /tmp/ou3_p4_p3_metric_attachment.json \
+            --timing /tmp/ou3_p4_source_word_timing.json \
+            --clock /tmp/ou3_p4_sample_clock_source_refinement.json \
+            --audit /tmp/ou3_p4_signed_joseph_feasibility.json \
+            --cayley /tmp/ou3_p4_cayley_sector.json \
+            --remainder /tmp/ou3_p4_vector_remainder.json \
+            --output /tmp/ou3_p4_complete_word_dissipation.json
+
+      - name: Decide canonical P4 from the unique frozen gate
+        run: |
+          python3 tools/ou3_p4_canonical_gate.py \
+            --p3 /tmp/ou3_p3_canonical_gate.json \
+            --cayley /tmp/ou3_p4_cayley_sector.json \
+            --remainder /tmp/ou3_p4_vector_remainder.json \
+            --timing /tmp/ou3_p4_source_word_timing.json \
+            --path /tmp/ou3_p4_source_path_reachability.json \
+            --nodes /tmp/ou3_p4_source_node_cells.json \
+            --clock /tmp/ou3_p4_sample_clock_source_refinement.json \
+            --candidate /tmp/ou3_p4_complete_word_dissipation.json \
+            --output /tmp/ou3_p4_canonical_gate.json
+
+      - name: Enforce canonical P4 closure
+        run: |
+          python3 - <<'PY'
+          import json
+          cand=json.load(open('/tmp/ou3_p4_complete_word_dissipation.json'))
+          gate=json.load(open('/tmp/ou3_p4_canonical_gate.json'))
+          assert cand['validation_pass'], cand['validation_failures']
+          assert cand['P4_COMPLETE_WORD_DISSIPATION_ESTABLISHED'], cand['unmet_theorem_obligations']
+          assert cand['P4_USABLE_CERTIFICATE_PROMOTED'] is False
+          assert cand['H_dimension'] == 18 and cand['A_dimension'] == 21
+          assert gate['validation_pass'], gate['validation_failures']
+          assert gate['P4_CANONICAL_PASS'], gate['P4_CANONICAL_FAIL_REASONS']
+          assert gate['P5_MAY_CONSUME_P4'] is True
+          assert gate['P5_FINITE_CAPTURE_ESTABLISHED_HERE'] is False
+          for mode in ('H','A'):
+              gap=gate['one_minus_rho_lower'][mode]
+              assert isinstance(gap,float) and gap>0.0, (mode, gap)
+          print(json.dumps({
+              'B_m': {m: cand['modes'][m]['word_defect_gain_B_m_upper'] for m in ('H','A')},
+              'W_star': cand['inner_level_W_star_lower'],
+              'theta_star_rad': cand['inner_attitude_radius_theta_star_lower_rad'],
+              'mu_W': cand['direct_word_margin_mu_W_lower'],
+              'one_minus_rho_lower': gate['one_minus_rho_lower'],
+              'rho_upper': gate['rho_upper'],
+              'P4_CANONICAL_PASS': gate['P4_CANONICAL_PASS'],
+          }, indent=2, sort_keys=True))
+          PY
+
+      - name: Upload canonical P4 certificate
+        uses: actions/upload-artifact@v6
+        with:
+          name: ou3-p4-canonical-complete-word
+          path: |
+            /tmp/ou3_p4_source_path_reachability.json
+            /tmp/ou3_p4_source_node_cells.json
+            /tmp/ou3_p4_sample_clock_source_refinement.json
+            /tmp/ou3_p4_complete_word_dissipation.json
+            /tmp/ou3_p4_canonical_gate.json
           retention-days: 7

@@ -27,6 +27,15 @@ weights w_i, the exact residual Jacobian is J_i=-[R v_i]x A. Therefore
       = A' R (sum w_i [v_i]x'[v_i]x) R' A
       >= sigma_min(A)^2 * lambda_min(G_v) I.
 
+Decomposing v into components parallel and perpendicular to c also gives the
+exact residual identity
+
+    ||(R(c)-I)v||^2 = k ||[c]x v||^2,   k = 4/(4+||c||^2) = sigma_min(A),
+
+because the two surviving terms 4/(4+||c||^2)[c]x v and 2/(4+||c||^2)[c]x^2 v
+are orthogonal.  That factor is exported as the exact residual-norm factor used
+by the signed finite-angle vector coefficients.
+
 This is a source-independent nonlinear geometry statement: body-frame gauge,
 vector magnitudes and vector separation enter only through the same vector
 Gramian G_v already certified by the PE producer. It does NOT by itself prove
@@ -108,6 +117,8 @@ def build(domain_path: Path=DEFAULT_DOMAIN, outer_angle_rad: float=DEFAULT_OUTER
         "cayley_spatial_differential_formula":"A=4/(4+||c||^2)*(I+[c]x/2)",
         "chart_sigma_min_lower":chart_min,
         "chart_sigma_max_upper":chart_max,
+        "exact_vector_residual_norm_factor_lower":chart_min,
+        "exact_vector_residual_norm_identity":"||(R(c)-I)v||^2=k*||[c]x v||^2, k=4/(4+||c||^2)",
         "exact_vector_information_retention_factor_lower":info_factor,
         "vector_information_relation":"G_exact(c)>=retention_factor*lambda_min(G_vector)*I",
         "rotation_minus_identity_norm_upper":rotation_minus_identity,
@@ -126,7 +137,7 @@ def validate(d):
         if d.get(k) is not True: f.append(f"{k} is not true")
     for k in ("trajectory_replay_used","filter_changed","ordinary_float_eigensolver_used","full_18_21_state_Joseph_word_established_here","signed_EKF_remainder_charged_here"):
         if d.get(k) is not False: f.append(f"{k} is not false")
-    for k in ("chart_sigma_min_lower","chart_sigma_max_upper","exact_vector_information_retention_factor_lower"):
+    for k in ("chart_sigma_min_lower","chart_sigma_max_upper","exact_vector_residual_norm_factor_lower","exact_vector_information_retention_factor_lower"):
         x=d.get(k)
         if not isinstance(x,(int,float)) or not math.isfinite(float(x)) or float(x)<=0.0:
             f.append(f"{k} is not finite positive")
@@ -134,6 +145,8 @@ def validate(d):
         f.append("Cayley sector conditioning is below usable 0.80 floor")
     if float(d.get("exact_vector_information_retention_factor_lower",0.0)) < 0.64:
         f.append("exact vector information retention is below usable 0.64 floor")
+    if d.get("exact_vector_residual_norm_factor_lower")!=d.get("chart_sigma_min_lower"):
+        f.append("exact vector residual-norm factor is not the exact chart minimum singular value")
     return f
 
 

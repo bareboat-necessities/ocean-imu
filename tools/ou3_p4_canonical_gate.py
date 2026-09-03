@@ -17,6 +17,16 @@ This module does not create a contraction estimate.  It freezes the theorem
 boundary so that sector primitives, source diagnostics, or a linear P3 PASS can
 never be relabeled as P4.  A future numerical/analytic complete-word producer
 must satisfy this interface without changing the definition.
+
+Strictness representation.  ``rho<1`` is a semantic obligation, not a claim
+that ``rho`` is representable below one in binary64.  The certified source-word
+margin is far below binary64 epsilon, so ``1-delta/2`` rounds back to exactly
+one.  A producer may therefore carry the strict gap exactly in
+``one_minus_rho_{H,A}_lower``; the gate then requires that gap to be finite
+positive and requires the reported ``rho_{H,A}_upper`` to be consistent with
+it.  A producer that omits the gap must still show strictness inside the float
+itself, exactly as before.  Either way the gate accepts only a strictly
+dissipative complete word.
 """
 from __future__ import annotations
 
@@ -241,7 +251,10 @@ def _check_candidate(
 ) -> dict:
     if cand is None:
         reasons.append("complete H=18/A=21 nonlinear whole-word dissipation candidate is missing")
-        return {"H": None, "A": None}
+        return {
+            "rho_upper": {"H": None, "A": None},
+            "one_minus_rho_lower": {"H": None, "A": None},
+        }
 
     label = "Complete-word candidate"
     if cand.get("qualification") != CANDIDATE_QUALIFICATION:
@@ -296,24 +309,40 @@ def _check_candidate(
         reasons.append(f"{label}: sample-clock edge family differs from the certified source graph")
 
     rhos: dict[str, float | None] = {}
+    gaps: dict[str, float | None] = {}
     for mode in ("H", "A"):
         key = f"rho_{mode}_upper"
+        gap_key = f"one_minus_rho_{mode}_lower"
         rho = cand.get(key)
-        if not _finite_number(rho) or not 0.0 <= float(rho) < 1.0:
-            reasons.append(f"{label}: {key} is missing or is not strictly below 1")
-            rhos[mode] = None
+        gap = cand.get(gap_key)
+        rhos[mode] = float(rho) if _finite_number(rho) else None
+        gaps[mode] = None
+        if gap is None:
+            # No exact strict gap supplied: strictness must be visible in the
+            # reported float itself, exactly as for a representable rho.
+            if rhos[mode] is None or not 0.0 <= rhos[mode] < 1.0:
+                reasons.append(f"{label}: {key} is missing or is not strictly below 1")
+            else:
+                gaps[mode] = 1.0 - rhos[mode]
         else:
-            rhos[mode] = float(rho)
+            if rhos[mode] is None or not 0.0 <= rhos[mode] <= 1.0:
+                reasons.append(f"{label}: {key} is missing or is outside [0,1]")
+            if not _finite_number(gap) or not 0.0 < float(gap) <= 1.0:
+                reasons.append(f"{label}: {gap_key} is not a finite positive strict gap")
+            else:
+                gaps[mode] = float(gap)
+                if rhos[mode] is not None and rhos[mode] > math.nextafter(1.0 - float(gap), math.inf):
+                    reasons.append(f"{label}: {key} is inconsistent with the exact strict gap")
         margin_key = f"strict_dissipation_margin_{mode}_lower"
         margin = cand.get(margin_key)
         if not _finite_number(margin) or float(margin) <= 0.0:
             reasons.append(f"{label}: {margin_key} is not finite positive")
-        elif rhos[mode] is not None and float(margin) > 1.0 - float(rhos[mode]):
+        elif gaps[mode] is not None and float(margin) > gaps[mode]:
             reasons.append(f"{label}: {margin_key} exceeds 1-rho_{mode}")
 
     if cand.get("P4_COMPLETE_WORD_DISSIPATION_ESTABLISHED") is not True:
         reasons.append(f"{label}: producer does not explicitly establish complete-word dissipation")
-    return rhos
+    return {"rho_upper": rhos, "one_minus_rho_lower": gaps}
 
 
 def build(
@@ -334,7 +363,7 @@ def build(
     _check_path(path, reasons)
     _check_nodes(nodes, reasons)
     _check_clock(clock, reasons)
-    rhos = _check_candidate(candidate, p3, cayley, remainder, timing, clock, reasons)
+    contraction = _check_candidate(candidate, p3, cayley, remainder, timing, clock, reasons)
 
     passed = not reasons
     return {
@@ -352,7 +381,9 @@ def build(
         "sample_clock_transition_edges": clock.get("transition_edges"),
         "source_word_horizon_s": timing.get("word_horizon_s"),
         "candidate_qualification": None if candidate is None else candidate.get("qualification"),
-        "rho_upper": rhos,
+        "rho_upper": contraction["rho_upper"],
+        "one_minus_rho_lower": contraction["one_minus_rho_lower"],
+        "strict_gap_may_be_below_binary64_epsilon": True,
         "P4_CANONICAL_PASS": passed,
         "P4_CANONICAL_FAIL_REASONS": reasons,
         "P5_MAY_CONSUME_P4": passed,
@@ -392,6 +423,13 @@ def validate(d: dict) -> list[str]:
         f.append("P5 consumption gate differs from canonical P4 result")
     if d.get("P5_FINITE_CAPTURE_ESTABLISHED_HERE") is not False:
         f.append("P4 gate prematurely established P5 finite capture")
+    if d.get("strict_gap_may_be_below_binary64_epsilon") is not True:
+        f.append("P4 strict-gap representation contract changed")
+    gaps = d.get("one_minus_rho_lower")
+    if not isinstance(gaps, dict) or set(gaps) != {"H", "A"}:
+        f.append("P4 strict gaps are malformed")
+    elif expected and any(not _finite_number(x) or float(x) <= 0.0 for x in gaps.values()):
+        f.append("P4 passed without a finite positive strict gap in both modes")
     return list(dict.fromkeys(f))
 
 
@@ -432,6 +470,7 @@ def main() -> int:
         "P3_worst_H_A_margin": d["P3_worst_H_A_margin"],
         "candidate_qualification": d["candidate_qualification"],
         "rho_upper": d["rho_upper"],
+        "one_minus_rho_lower": d["one_minus_rho_lower"],
         "P4_CANONICAL_PASS": d["P4_CANONICAL_PASS"],
         "P4_CANONICAL_FAIL_REASONS": d["P4_CANONICAL_FAIL_REASONS"],
         "P5_MAY_CONSUME_P4": d["P5_MAY_CONSUME_P4"],
