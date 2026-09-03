@@ -57,6 +57,7 @@ jobs:
             test_ou3_p3_correlated_translation_segment \
             test_ou3_p4_canonical_gate \
             test_ou3_p4_p3_metric_attachment \
+            test_ou3_p4_signed_joseph_feasibility \
             test_ou3_p4_sample_clock_source_refinement \
             test_ou3_p4_source_node_cells \
             test_ou3_p4_source_path_reachability \
@@ -248,13 +249,14 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Compile current P4 sector prerequisites and canonical gate
+      - name: Compile current P4 sector prerequisites, signed audit, and canonical gate
         run: |
           python3 -m py_compile \
             tools/ou3_p4_cayley_sector_certificate.py \
             tools/ou3_p4_vector_remainder_sector.py \
             tools/ou3_p4_source_word_timing.py \
             tools/ou3_p4_p3_metric_attachment.py \
+            tools/ou3_p4_signed_joseph_feasibility.py \
             tools/ou3_p4_canonical_gate.py
 
       - name: Certify usable 0.8 rad nonlinear sector primitives and canonical word timing
@@ -272,6 +274,12 @@ jobs:
           name: ou3-p3-canonical-theorem-status
           path: /tmp
 
+      - name: Audit source-correlated signed Joseph vector credit
+        run: |
+          python3 tools/ou3_p4_signed_joseph_feasibility.py \
+            --metric /tmp/ou3_p4_p3_metric_attachment.json \
+            --output /tmp/ou3_p4_signed_joseph_feasibility.json
+
       - name: State P4 consumption gate from canonical artifact
         run: |
           python3 - <<'PY'
@@ -279,17 +287,34 @@ jobs:
           d=json.load(open('/tmp/ou3_p3_canonical_gate.json'))
           m=json.load(open('/tmp/ou3_p4_p3_metric_attachment.json'))
           timing=json.load(open('/tmp/ou3_p4_source_word_timing.json'))
+          audit=json.load(open('/tmp/ou3_p4_signed_joseph_feasibility.json'))
           assert d['validation_pass'], d['validation_failures']
           assert m['validation_pass'], m['validation_failures']
           assert timing['validation_pass'], timing['validation_failures']
+          assert audit['validation_pass'], audit['validation_failures']
           assert m['finite_source_phase_classes'] == 800 * 26
+          assert audit['finite_source_phase_mode_classes_scanned'] == 800 * 2 * 2
           assert timing['P4_word_horizon_bound_to_canonical_P3_covariance_word'] is True
           print('P3_CANONICAL_PASS', d['P3_CANONICAL_PASS'])
           print('P4_MAY_CONSUME_P3', d['P4_MAY_CONSUME_P3'])
           print('P4_WORD_HORIZON_S', timing['word_horizon_s'])
           print('P4_METRIC_SOURCE_PHASE_CLASSES', m['finite_source_phase_classes'])
+          print('SIGNED_JOSEPH_H', audit['worst_by_mode']['H'])
+          print('SIGNED_JOSEPH_A', audit['worst_by_mode']['A'])
+          print('DIRECTIONAL_WORD_REQUIRED', audit['directional_signed_forms_must_survive_to_word_scalarization'])
           if not d['P4_MAY_CONSUME_P3']:
-              print('P4 theorem closure remains blocked by canonical P3; sector/metric PASS is not P4 PASS.')
+              print('P4 theorem closure remains blocked by canonical P3; sector/metric/audit results are not P4 PASS.')
           else:
               print('Canonical P3 and its exact source-phase metric are available to the nonlinear whole-word P4 route.')
           PY
+
+      - name: Upload P4 sector and signed-Joseph diagnostic artifacts
+        uses: actions/upload-artifact@v6
+        with:
+          name: ou3-p4-sector-prerequisites
+          path: |
+            /tmp/ou3_p4_cayley_sector.json
+            /tmp/ou3_p4_vector_remainder.json
+            /tmp/ou3_p4_source_word_timing.json
+            /tmp/ou3_p4_signed_joseph_feasibility.json
+          retention-days: 7
