@@ -29,38 +29,36 @@ have to re-derive them.
 | warnings | 1 real finding (`-Wreorder` in `KalmanQMEKF.h`) | 52 TUs clean |
 | sanitizers | never run | 6 suites, 0 ASan / 0 UBSan / 0 leak findings |
 | cppcheck | 5 findings — 3 false positives, 2 in frozen files | clean |
-| clang-tidy | 18 findings, 16 of them noise | 2 blockers, see below |
+| clang-tidy | 18 findings, 16 of them noise | blocking; former parse blockers fixed |
 | python | 96 ruff findings across 122 files | clean |
 | coverage | no tooling | 65.6% lines from the six sanitizer dirs |
 
 The codebase was in much better shape than the absence of tooling suggested.
 The warnings gate cost exactly one real fix to turn on.
 
-## The one thing that is not green
+## Resolved clang frontend blocker
 
-`clang-tidy` is **non-blocking** (`continue-on-error`) for one specific reason:
+`clang-tidy` was initially non-blocking because the OU-II and OU-III fusion
+headers contained `constexpr` initializers using `std::sqrt(2.0f)`. GCC accepted
+that as an extension, while the clang frontend rejected every translation unit
+that included either header.
 
-```
-src/kalman_ou_ii/SeaStateFusionFilter_OU_II.h:1375: error: constexpr variable
-  'C_HS' must be initialized by a constant expression
-```
+That blocker is gone. The replay-closure regeneration changed both headers to
+the portable C++20 spelling `std::numbers::sqrt2_v<float>` and verified that the
+filters compile under both `g++` and `clang++`. The relevant expressions now
+look like:
 
-`std::sqrt` in a `constexpr` initializer is a GCC extension. Clang rejects it,
-and clang-tidy uses the clang frontend, so any translation unit that includes
-`SeaStateFusionFilter_OU_II.h` or `_OU_III.h` fails to parse. That is also why
-this library does not currently build with clang at all.
-
-The fix is two lines per file — `std::sqrt(2.0f)` → `std::numbers::sqrt2_v<float>`,
-which is bitwise identical (`0x3FB504F3`) and so changes no numerical result:
-
-```diff
--        constexpr float K = std::sqrt(2.0f) / std::numbers::pi_v<float>;
-+        constexpr float K = std::numbers::sqrt2_v<float> / std::numbers::pi_v<float>;
+```cpp
+constexpr float C_HS =
+    2.0f * std::numbers::sqrt2_v<float> /
+    (std::numbers::pi_v<float> * std::numbers::pi_v<float>);
+constexpr float K =
+    std::numbers::sqrt2_v<float> / std::numbers::pi_v<float>;
 ```
 
-It is not applied here because both files are in the frozen replay dependency
-closure (below). Once it lands with an evidence regeneration, drop the
-`continue-on-error` from the `clang-tidy` matrix entry.
+There is therefore no remaining reason to suppress the clang-tidy job at the
+workflow level. `clang-tidy` is a normal blocking static-analysis gate: any
+current parse error or configured diagnostic fails CI.
 
 ## The frozen replay closure
 
@@ -82,8 +80,8 @@ Practical consequences:
 
 - `tools/quality_gates.sh` has no `--fix` mode. Adding one would need a frozen
   path filter first.
-- Three suppressions in `tools/cppcheck-suppressions.txt` and the clang-tidy
-  blocker above exist because the finding is inside the closure.
+- Three suppressions in `tools/cppcheck-suppressions.txt` remain for findings in
+  the frozen closure; the former clang frontend blocker has been resolved.
 - Changing compiler flags in `tests/kalman_ou_ii/Makefile` or
   `tests/kalman_ou_iii/Makefile` invalidates the evidence too. That is why the
   warnings gate compiles its own translation units instead of adding flags to

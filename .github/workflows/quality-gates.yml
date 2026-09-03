@@ -48,13 +48,6 @@ jobs:
     name: ${{ matrix.gate }}
     runs-on: ubuntu-24.04
     timeout-minutes: 30
-    # clang-tidy reports but does not block. Two `constexpr float x = std::sqrt(...)`
-    # initializers in src/kalman_ou_ii/SeaStateFusionFilter_OU_II.h and its OU-III
-    # counterpart are a GCC extension that clang rejects outright, so every TU
-    # including them fails to parse. Both files are in the frozen replay
-    # dependency closure, so the two-line fix needs an evidence regeneration to
-    # land. Drop this line once it does — see docs/quality-gates.md.
-    continue-on-error: ${{ matrix.gate == 'clang-tidy' }}
     strategy:
       fail-fast: false
       matrix:
