@@ -21,7 +21,6 @@ PRODUCERS = [
     ROOT / "tools" / "ou3_p4_source_word_timing.py",
     ROOT / "tools" / "ou3_p4_vector_remainder_sector.py",
     ROOT / "tools" / "ou3_p4_signed_joseph_feasibility.py",
-    ROOT / "tools" / "ou3_p4_complete_word_dissipation.py",
     ROOT / "tools" / "ou3_p4_canonical_gate.py",
 ]
 

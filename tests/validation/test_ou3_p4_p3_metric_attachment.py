@@ -8,6 +8,7 @@ sys.path.insert(0, str(TOOLS))
 
 import ou3_p4_p3_metric_attachment as M
 import ou3_p4_signed_joseph_feasibility as J
+import ou3_p4_source_correlated_reset_budget as R
 
 
 class Ou3P4P3MetricAttachmentTests(unittest.TestCase):
@@ -110,10 +111,65 @@ class Ou3P4P3MetricAttachmentTests(unittest.TestCase):
         self.assertGreater(J.down(0.25 - eta_over_y2), 0.0)
         self.assertLess(J.down(0.10 - eta_over_y2), 0.0)
 
+    def test_reset_correction_bound_is_homogeneous_in_metric_energy(self):
+        base = R.correction_gain_per_sqrt_energy(
+            theta_covariance_upper=4.0,
+            vector_norm_upper=3.0,
+            measurement_variance_lower=2.0,
+            eta_tangent_squared_coefficient_upper=0.0,
+        )
+        nonlinear = R.correction_gain_per_sqrt_energy(
+            theta_covariance_upper=4.0,
+            vector_norm_upper=3.0,
+            measurement_variance_lower=2.0,
+            eta_tangent_squared_coefficient_upper=0.1,
+        )
+        self.assertGreaterEqual(base["attitude_correction_norm_per_sqrt_metric_energy_upper"], 2.0)
+        self.assertLess(base["attitude_correction_norm_per_sqrt_metric_energy_upper"], 2.000001)
+        self.assertGreater(
+            nonlinear["attitude_correction_norm_per_sqrt_metric_energy_upper"],
+            base["attitude_correction_norm_per_sqrt_metric_energy_upper"],
+        )
+
+    def test_exact_reset_fraction_shrinks_with_metric_funnel(self):
+        large = R.reset_row_at_energy(
+            W=0.1,
+            candidate_q_upper=0.5,
+            theta_covariance_upper=0.01,
+            theta_information_upper=100.0,
+            correction_gain=0.1,
+        )
+        small = R.reset_row_at_energy(
+            W=0.01,
+            candidate_q_upper=0.5,
+            theta_covariance_upper=0.01,
+            theta_information_upper=100.0,
+            correction_gain=0.1,
+        )
+        self.assertEqual(large["reset_inverse_operator_norm_upper"], 1.0)
+        self.assertEqual(small["reset_inverse_operator_norm_upper"], 1.0)
+        self.assertGreater(large["cayley_composition_denominator_lower"], 0.0)
+        self.assertGreater(small["cayley_composition_denominator_lower"], 0.0)
+        self.assertLess(
+            small["reset_metric_amplitude_fraction_upper"],
+            large["reset_metric_amplitude_fraction_upper"],
+        )
+
+    def test_reset_budget_rejects_energy_outside_candidate_cayley_funnel(self):
+        with self.assertRaises(ValueError):
+            R.reset_row_at_energy(
+                W=1.0,
+                candidate_q_upper=0.1,
+                theta_covariance_upper=1.0,
+                theta_information_upper=1.0,
+                correction_gain=0.1,
+            )
+
     def test_metric_module_has_no_theorem_promotion_shortcut(self):
         self.assertEqual(M.JOIN_FACTOR, 0.5)
         self.assertEqual(M.PHASES, tuple(range(26)))
         self.assertEqual(M.BASE.MIN_USEFUL_DELTA, 1.0e-18)
+        self.assertFalse(R.RESET.build()["source_correlated_correction_norm_bound_supplied_here"])
 
 
 if __name__ == "__main__":

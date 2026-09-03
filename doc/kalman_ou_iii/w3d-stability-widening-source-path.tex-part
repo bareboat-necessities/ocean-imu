@@ -258,11 +258,7 @@ Positive one-sample changes of $W_i$ are allowed inside a word.
 
 \subsubsection{Verification contract}
 
-The deployed complete-word producer evaluates this estimate from the certified
-P3 metric attachment, the exact Cayley/remainder sector primitives, the exact
-Joseph--quaternion--reset transport and the finite-speed committed sample-clock
-source graph; the unique canonical P4 gate is the only module that turns its
-output into a P4 verdict. The certificate reports, for both $H$ and $A$,
+The deployed P4 certificate reports, for both $H$ and $A$,
 \begin{equation}
  \boxed{\{\mathscr G_{{\rm src},m},\mathscr W_{{\rm src},m},s_m,
  m_-,m_+,\theta_{*,m},W_{*,m},B_m,\mu_{W,m}\}.}
@@ -276,7 +272,6 @@ attitude--linear information cross terms; safe prefixes; $W_{*,m}>0$; and
 $\mu_{W,m}>0$. Because $\delta_m$ lies far below binary64 epsilon, the strict
 gap $\delta_m/2$ is the reported quantity and the companion $\rho_m$ upper is
 never allowed to round that gap away. Monte Carlo and dense trajectory sampling
-are diagnostics only
-and may falsify a claimed level but cannot establish one. The construction
+are diagnostics only and may falsify a claimed level but cannot establish one. The construction
 changes neither the estimator nor the adaptation law and is the sole
 quantitative normal-Live certificate path.

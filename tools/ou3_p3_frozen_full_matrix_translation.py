@@ -114,13 +114,7 @@ def _ipow(x: Interval, n: int) -> Interval:
 
 
 def _normalized_integral_series(x: Interval, m: int) -> Interval:
-    """Enclose sum_{n>=0} (-1)^n x^n/(n+m)! for m=1,2,3.
-
-    These are respectively (1-e^-x)/x, (x+e^-x-1)/x^2 and
-    (x^2/2-x+1-e^-x)/x^3.  The deployed source cells have x<=0.015, so a
-    short exact-rational series plus a geometric factorial tail is tight and
-    avoids cancellation.
-    """
+    """Enclose sum_{n>=0} (-1)^n x^n/(n+m)! for m=1,2,3."""
     if m not in (1, 2, 3) or not (0.0 < x.lo <= x.hi < 0.05):
         raise ValueError("transition series outside audited small-x range")
     y = I(0.0)
@@ -160,7 +154,6 @@ def _scaled_Q(x: Interval):
 
 
 def _measurement_update(P, coordinate: int, R: float):
-    """Natural interval enclosure of P-Pe(e'Pe+R)^-1e'P for one scalar row."""
     den = P[coordinate][coordinate] + I(R)
     if den.lo <= 0.0:
         raise RuntimeError("measurement innovation denominator lost positivity")
@@ -178,7 +171,6 @@ def _split_x(lo: float, hi: float, count: int):
         cuts.add(SCALED.BRANCH_X)
     base = sorted(cuts)
     out = []
-    # Geometric refinement on each branch piece.
     total_log = math.log(hi / lo)
     for a, b in zip(base, base[1:]):
         n = max(1, int(math.ceil(count * math.log(b / a) / total_log))) if total_log > 0 else 1
@@ -190,10 +182,9 @@ def _split_x(lo: float, hi: float, count: int):
         for k in range(n):
             aa = math.nextafter(edges[k], -math.inf) if k else a
             bb = math.nextafter(edges[k + 1], math.inf) if k + 1 < n else b
-            # Do not let outward rounding cross the exact-series branch.
-            if b == SCALED.BRANCH_X:
+            if b == SCALED.BRANCH_X and k + 1 == n:
                 bb = math.nextafter(SCALED.BRANCH_X, -math.inf)
-            if a == SCALED.BRANCH_X:
+            if a == SCALED.BRANCH_X and k == 0:
                 aa = SCALED.BRANCH_X
             out.append(Interval(aa, bb))
     return out
@@ -275,18 +266,12 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         upper = [float(x) for x in upper]
         if float(timing["word_horizon_s_lower"]) + 1e-15 < HORIZON_S:
             raise RuntimeError("chosen frozen suffix exceeds certified P3 word")
-
-        # In normalized coordinates larger sigma means smaller measurement noise
-        # and therefore a smaller selected-process posterior.  Use sigma.hi to
-        # make both measurements maximally informative.  Physical comparison at
-        # the end uses sigma.lo, also conservative.
         R_aw_norm = BASE.down(ra / BASE.up(sigma.hi * sigma.hi))
         rS = BASE.down(rs.lo * axis_factor)
         denomS = BASE.up(sigma.hi * sigma.hi * h ** 6)
         R_S_norm = BASE.down(BASE.down(rS * rS) / denomS)
         if not (R_aw_norm > 0.0 and R_S_norm > 0.0):
             raise RuntimeError("normalized measurement noise lost positivity")
-
         xlo = BASE.down(h / tau.hi)
         xhi = BASE.up(h / tau.lo)
         subrows = []
@@ -388,9 +373,6 @@ def validate(d: dict) -> list[str]:
         f.append("invalid interval-closed count")
     if not 0 <= int(d.get("useful_gate_pass_cells", -1)) <= NODES.EXPECTED_STATES:
         f.append("invalid useful-cell count")
-    # A diagnostic remains valid even if some cells do not close: that result
-    # chooses the next subdivision/refinement.  Never turn a numerical miss into
-    # a validation failure or a false theorem promotion.
     return list(dict.fromkeys(f))
 
 

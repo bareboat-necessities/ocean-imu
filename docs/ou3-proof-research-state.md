@@ -1,57 +1,119 @@
 # OU-III proof research state
 
-Read this before modifying `tools/ou3_*.py` or the OU-III proof documents.
-The working protocol is in `AGENTS.md`, section "OU-III Proof Research
-Protocol". This file is the research state, not a changelog: it records what is
-currently believed, what has been ruled out, and what experiment comes next.
+This file is the current research ledger required by the root `AGENTS.md`. Keep it short and replace stale state rather than accumulating PR history.
 
-## Immutable goal
+## State
 
-For both fixed-dimension modes (H=18, A=21), on the declared operating domain,
-establish or falsify
+**REPLAN COMPLETE — NEXT EXECUTION AUTHORIZED**
 
-    sup_w rho_w < 1,     rho_w = V_after(F_w(x)) / V_before(x)
+Current PR research question: make canonical P3 reach one rigorous numerical PASS/FAIL verdict at the unchanged `1e-18` gate; only if P3 passes, run one non-promoting structure-exact P4 complete-word feasibility diagnostic. P5 is out of scope.
 
-over the source-complete word family. Every construction below is a hypothesis
-about how to reach that, never part of the goal.
+## Failure classification
 
-## Current limiter
+The current canonical run is **not a numerical P3 theorem FAIL**. It is blocked earlier by a translation-covariance enclosure/conditioning failure:
 
-Canonical P3 cannot emit an artifact. `ou3_p3_p2_v1_stage_phase_translation`
-aborts inside `common_boundary_floor`, which calls
-`ou3_p3_correlated_translation_segment.segment_images`. That producer
-propagates a covariance *lower* bound sample by sample and requires strict SPD
-after every 5 ms step; on the small-x (large-tau) branch the intermediate lower
-is genuinely near-singular in the S direction, and the adaptive x splitter
-exhausts its depth without recovering.
+`Loewner prediction lower lost strict SPD; split x cell`
 
-Because P3 emits nothing, no real H/A margin exists, and therefore no P4
-verdict is meaningful yet.
+The previously identified `x=0.01` branch-partition defect is already fixed on the live PR branch: branch clamping is now applied only to the actual boundary subcell. It was an implementation defect and is not the remaining mathematical limiter.
 
 ## Evidence
 
-* The enclosure is **not** the binding constraint. Instrumented on node 137 /
-  gap 13 with the congruence-scaled collapse: per-step `eps_D` is 5.3e-16 to
-  1.9e-5 against correlation `lambda_min` 1.33e-3 to 1.48e-3 -- two to thirteen
-  orders of margin, strict SPD true at every recorded step.
-* Subdivision does not converge. The final traceback recurses down the left
-  (small-x) branch to `MAX_ADAPTIVE_X_DEPTH` and still fails. Subdivision
-  reduces interval dependency width; the near-singularity is structural, so the
-  quantity that fails does not scale with cell width.
-* `ou3_p3_frozen_full_matrix_translation._measurement_update` is in covariance
-  form, `P - P e (e'Pe + R)^-1 e'P`. It requires only `P_cc + R > 0`, never
-  strict SPD. Randomised checks: the update is monotone with a PSD lower
-  (0/694 violations) and with an indefinite lower (0/4484). `F L F' + Q` stays
-  PSD for singular `L` by congruence.
-* That sibling producer already checks SPD only at `step in (1, steps)`.
-  The segment producer is stricter than its own sibling, and nothing in the P3
-  theorem requires per-step strict SPD -- P3 consumes the segment *endpoint*
-  floor.
+For source node 137 / gap 13, the first uncertain prediction on the widest initial small-`x` cell has diagnostic center `lambda_min ~= 3.405e-10`, absolute row-radius `eps ~= 1.142e-5`, and `eps/lambda_min ~= 3.35e4`. Existing binary subdivision improves that ratio by about 2x per level, but at depth 12 it is still about `8.26`; roughly four additional binary levels would be needed merely to make this first 5-ms prediction plausible. That is not a viable source-complete architecture.
+
+The theorem-relevant 13-sample point covariance is much healthier. On source 137 its diagnostic `lambda_min` is about `2.02e-5 ... 2.83e-5` across the tau endpoints. Across the ten physical tau cells, using the actual low-sigma/strongest-`R_S` source in each cell, the 13-sample point floor remains strict; the longest-tau cell still has `lambda_min ~= 1.20e-6`.
+
+Point diagnostics also show the 13-sample covariance increasing in Loewner order as `x=h/tau` increases on all ten tau cells: a 101-point grid produced positive minimum eigenvalue increments, with the smallest observed increment about `4.3e-9`. This is feasibility evidence only, not a proof of monotonicity.
+
+Two segment-level interval experiments have now failed:
+
+1. **Post-hoc congruence normalization of the old natural interval Riccati recursion.** Dependency has already exploded before normalization. Even with 256 tau subcells, the normalized common lower remains strongly non-SPD (worst diagnostic normalized `lambda_min - eps` about `-80`).
+2. **Natural-interval derivative/monotonicity propagation.** Propagating `P(x)` and `dP/dx` as ordinary interval boxes inherits the same recursive dependency loss; subdivision improves widths but does not produce a usable derivative-SPD certificate.
+
+A third, independent experiment confirms the same conclusion from the opposite
+direction. `one_step` imposed three strict-SPD obligations per sample (after the
+prediction and after each scalar measurement update), 39 per 13-sample subcell,
+where the theorem makes one: P3 consumes the segment endpoint floor, certified
+downstream by `common_boundary_floor` via `certified_rho(posterior) > 0`.
+Removing the 38 surplus obligations collapses the adaptive split tree and drops
+the segment module from 1191 s to 434 s, and the failures stop being
+`split x cell` exceptions. But the propagated endpoint lower is then **not SPD**
+on the same cells, while the point diagnostics above put the true 13-sample
+`lambda_min` at `2.02e-5 ... 2.83e-5`. So the per-step SPD demand was never the
+limiter, and the collapse architecture loses the entire floor between the true
+value and the propagated lower.
+
+Therefore the rejected mechanism is now broader than the original `C-eps I` step: **recursive natural interval covariance boxes that forget the repeated scalar source parameter at every Riccati operation are frozen as a dead end.**
+
+Canonical P3 still has not reached translation/H/A margin calculation, so none of these diagnostic values are P3 theorem margins.
+
+## Master P3 quantity
+
+The new backend is relevant only if it produces the complete-segment matrix lower used by canonical P3:
+
+`P_segment(x) >= L_segment > 0`.
+
+That lower enters the existing translation gate directly through
+
+`D_h L_segment D_h^T - delta * Sigma_upper > 0`,
+
+which is what `_certified_delta` tests before the H/A precision join. Improving unrelated one-step quantities is not useful unless it sharpens this complete-segment comparison.
+
+## What the failures invalidate
+
+- A useful absolute point Loewner lower after every uncertain 5-ms prediction.
+- Blindly increasing `MAX_ADAPTIVE_X_DEPTH`.
+- Post-hoc normalization of a covariance interval after natural Riccati dependency has already exploded.
+- Natural-interval `P,dP/dx` recursion as a monotonicity proof engine.
+
+## What the failures do not invalidate
+
+- The `1e-18` canonical P3 usefulness threshold.
+- The same-history P2-V1 source language.
+- Existence of a rigorous complete 13--26-sample translation floor.
+- H=18/A=21 full-state joining, which has not yet received a translation margin from this backend.
+- P4 feasibility or infeasibility, because P4 remains blocked by canonical P3.
+
+## Critic pass and alternatives
+
+Assume the interval covariance recursion architecture is wrong. Its strongest defect is loss of the fact that the entire segment depends on **one repeated scalar** `x=h/tau`. Ordinary interval arithmetic replaces that one-dimensional curve by a new Cartesian matrix box after every operation.
+
+Qualitatively different alternatives:
+
+1. **Univariate centered Taylor-model / polynomial enclosure of the complete 13-sample Riccati map.** Preserve the same scalar symbol through all prediction and measurement operations and bound only a final remainder.
+2. **Verified polynomial collocation/Bernstein or Chebyshev enclosure of each complete-segment matrix entry.** Again preserve one-dimensional dependence rather than recursively hulling matrices.
+3. **Analytic complete-segment Gramian/Riccati lower in a different information/covariance representation.** Avoid intervalizing the covariance recursion itself. Note before attempting this: the natural candidate `P_k >= (G_c^-1 + G_o)^-1`, with `G_c` the reachability and `G_o` the observability Gramian, is **false** for segments started from `P_0 = 0` -- 223/352 violations on integrator-chain systems. The information-form derivation needs a finite `Y_0 = P_0^-1`, which a zero-start segment does not provide. A correct analytic lower has to come from the closed-loop reachability sum, whose transitions depend on the gains.
+4. **Different Lyapunov representation** if the complete-segment covariance map remains unsuitable.
+
+**Selection:** pursue (1) once. It directly attacks the failed dependency mechanism, and the point map is smooth with generalized source-137 ratio `P(x)` versus the low-`x` endpoint close to `1 ... 1.08`, so a centered model should be proving a relative statement near unity rather than recovering five orders of lost SPD margin. If this Taylor-model attempt fails after one mathematically motivated refinement, freeze it and move to (3), not another interval subdivision variant.
+
+## DEAD_ENDS
+
+- **REJECTED: endpoint-only 800-node P2 ancestry.** It loses staged/committed path memory.
+- **REJECTED: independent Cartesian `tau/sigma/R_S` extrema.** They destroy source-history correlation.
+- **REJECTED: recursive absolute entrywise Loewner point lower plus deeper subdivision.** Tractable depth is insufficient.
+- **REJECTED: one-step congruence normalization as the primary architecture.** It improves conditioning but still solves an unnecessary one-step property.
+- **REJECTED: post-hoc complete-segment normalization of natural interval Riccati boxes.** Dependency has already exploded before normalization.
+- **REJECTED: natural-interval derivative/monotonicity recursion.** It shares the same dependency loss.
+- **REJECTED for #471: additional P4 micro-certificates before complete-word feasibility.**
+- **PARKED: rigorous H=18/A=21 complete-word dissipation producer.** Written and
+  unit-tested at commit `4d68493` (`tools/ou3_p4_complete_word_dissipation.py`),
+  then removed: a rigorous certificate before the non-promoting `rho_w`
+  diagnostic is the wrong order. Resurrect only after the diagnostic reports
+  `rho_w` clearly below 1.
+
+## Open contract inconsistency
+
+`tools/ou3_p4_canonical_gate.py` requires a candidate's `outer_angle_rad` to
+equal `0.8` exactly, bound to the Cayley and remainder artifacts, while the
+operating domain declares a P4 certificate search over
+`p4_complete_word_full_attitude_candidate_deg = [30, 25, 20, 15]`. If the
+0.8-rad formulation is later abandoned for a narrower cell, the gate rejects
+every candidate on that list. Resolve before relying on the search list.
 
 ## Verified theorem steps
 
-Randomised verification against the repo's own `symmetric_positive_definite_ldlt`.
-All hold; none of these are suspect.
+Randomised verification against `ou3_interval.symmetric_positive_definite_ldlt`.
+All hold, so none of these are suspect as sources of the P3 blockage.
 
 | Step | Result |
 | --- | --- |
@@ -61,98 +123,59 @@ All hold; none of these are suspect.
 | `J <= n blockdiag(J_ii)` for PSD J | 0 violations |
 | `K_theta S K_theta' <= P_theta_theta` | 0/1200 |
 | `Phi_s' Sigma_s^-1 Phi_s <= Sigma_0^-1` | 0/1200 |
-| `(1-3d/8)^2 <= 1-d/2` | holds for all d <= 16/9 |
+| `(1-3d/8)^2 <= 1-d/2` | holds for all `d <= 16/9` |
 
-Gap in the stated hypotheses: prefix nonexpansiveness needs `Phi_s` invertible.
-It is, via the Joseph form and invertible OU prediction, but the document does
-not say so.
+Prefix nonexpansiveness needs `Phi_s` invertible. It is, via the Joseph form and
+invertible OU prediction, but the source-path document does not state it.
 
-## Available relaxations (not yet applied)
+## Available relaxations, not yet warranted
 
-None of these change `rho = 1 - delta/2`; they only enlarge the certified
-funnel `W_*`. Apply only when a real `delta` exists to work with.
+These enlarge the certified P4 funnel `W_*` only; none changes
+`rho = 1 - delta/2`, which is set entirely by the P3 margin. Do not spend
+effort on them before a real `delta` exists.
 
-* `lambda_max(Sigma) <= sum_g U_g` instead of `n_g max_g U_g` (verified, 0
-  violations). With `U_S ~ 9e4` dominating: 9.04e4 vs 6.3e5, i.e. 7x.
-* Attitude corrections need only the attitude marginal:
-  `|dtheta| <= sqrt(U_theta / lambda_min(R)) |y|`, so sqrt(0.25) replaces
-  sqrt(9e4) -- 600x on the correction gain.
-* Sharp Cayley remainder `q^2(q+2)/(4+q^2)` is uniformly 0.805x the `(3/4)q^2`
-  bound.
-* The `4` in `B_m = 4 N_op sqrt(m_+) C / m_-` comes from a `W_s <= 4 W_0`
-  bootstrap; prefix nonexpansiveness gives `W_s <= (1+d/8)^2 W_0 <= 1.27 W_0`,
-  so 2 suffices.
+- `lambda_max(Sigma) <= sum_g U_g` instead of `n_g max_g U_g`. With `U_S ~ 9e4`
+  dominating this is 9.04e4 against 6.3e5, about 7x.
+- Attitude corrections need only the attitude marginal,
+  `|dtheta| <= sqrt(U_theta/lambda_min(R)) |y|`, so `sqrt(0.25)` replaces
+  `sqrt(9e4)` -- about 600x on the correction gain.
+- The sharp Cayley remainder `q^2(q+2)/(4+q^2)` is uniformly `0.805x` the
+  `(3/4)q^2` bound.
+- The `4` in `B_m = 4 N_op sqrt(m_+) C / m_-` comes from a `W_s <= 4 W_0`
+  bootstrap; prefix nonexpansiveness gives `W_s <= (1+d/8)^2 W_0 <= 1.27 W_0`.
 
-## Dead ends
+A rejected route may be resurrected only after recording the new mathematical fact that invalidates its rejection.
 
-A rejected route may not be resurrected without stating which new mathematical
-fact invalidates its rejection.
+## Retained facts
 
-* **REJECTED -- recursive absolute Loewner point lower.** One absolute shift
-  `eps = max_i sum_j r_ij` subtracted from every diagonal. The translation
-  states span many orders (`v/h, p/h^2, S/h^3, a_w`), so the shift is set by
-  the largest block and drives the smallest negative. Subdivision cannot fix it
-  because the shift does not scale with cell width.
-* **REJECTED -- congruence-scaled collapse as the fix for the same mechanism.**
-  `A >= C - eps_D D^2` with `D = diag(sqrt(c_ii))` is correct and measurably
-  good (see Evidence), and it did fix one of three failing tests. It did not
-  fix the mechanism: 2 of 4 segment tests still error. Second failure of the
-  same mechanism, so per the two-strike rule per-step-strict-SPD forward
-  propagation is frozen. The code is retained because it is strictly better
-  than the absolute form, but it is no longer load-bearing.
-* **REJECTED -- `P_k >= (G_c^-1 + G_o)^-1`** as a segment endpoint floor
-  (reachability and observability Gramians). Disproved numerically: 223/352
-  violations on integrator-chain systems started from `P_0 = 0`. The
-  information-form derivation needs a finite `Y_0`, which `P_0 = 0` does not
-  provide. Recorded because it is superficially plausible and was nearly
-  implemented.
-* **REJECTED -- increasing `MAX_ADAPTIVE_X_DEPTH`.** The failing quantity does
-  not scale with cell width, so no depth suffices.
-
-## Retained
-
-* Same-history P2-V1 source correlation.
-* The exact Joseph information identity.
-* The exact Cayley lift, residual identity and remainder sector at 0.8 rad.
-* The covariance-form scalar measurement update and its monotonicity.
-* Prefix nonexpansiveness in matched source information metrics.
-
-## Known contract inconsistency
-
-`tools/ou3_p4_canonical_gate.py` requires the candidate's `outer_angle_rad` to
-equal 0.8 exactly, bound to the Cayley and remainder artifacts. The operating
-domain declares a P4 certificate search over
-`p4_complete_word_full_attitude_candidate_deg = [30, 25, 20, 15]`. If the
-0.8-rad formulation is abandoned in favour of a narrower cell, the gate rejects
-every candidate on that list. Resolve before relying on the search list.
-
-## Out of order
-
-`tools/ou3_p4_complete_word_dissipation.py` is a rigorous complete-word
-producer written before any high-precision feasibility diagnostic of `rho_w`
-existed. Under the protocol the diagnostic comes first. It is gated behind
-canonical P3 in CI so it cannot produce a false PASS, but it must not be
-treated as justified work until a diagnostic shows `rho_w < 1`.
+- The scalar covariance-form measurement update `P - Pe(e'Pe+R)^-1e'P` requires
+  only `e'Pe+R > 0`, never strict SPD, and is Loewner monotone on **all**
+  symmetric arguments with that denominator positive. For `H >= 0`,
+  `x'(dU)x = x'Hx - 2(x'He)(x'Pe)/d + (x'Pe)^2(e'He)/d^2` is a quadratic in
+  `x'Pe` whose discriminant is `4((x'He)^2 - (x'Hx)(e'He))/d^2 <= 0` by
+  Cauchy-Schwarz in the `H` semi-inner product, so `dU >= 0`; `d` is affine in
+  `P` so it stays positive between ordered arguments. Any backend may therefore
+  carry singular or indefinite intermediates without invalidating the order.
+- Canonical P3 useful gate remains exactly `1e-18`.
+- `OU3_P2_CORRELATED_STAGE_TRANSFER_V1` and same-history source correlation are retained.
+- Both H=18 and A=21 remain required.
+- Zero/disabled lever arm and dormant/transparent vibration-guard branch remain the current proof scope.
+- No replay fitting, operating-domain shrink for PASS, or deployed-filter change is permitted.
+- Existing exact Joseph, co-rotated accelerometer, reset, and finite-angle identities remain structural facts only; they do not authorize P4 promotion.
+- P4 is blocked until canonical P3 passes; P5 is blocked until canonical P4 strictly contracts.
 
 ## Next falsifiable experiment
 
-Three qualitatively different alternatives to per-step-strict-SPD forward
-propagation, to be compared before any is implemented:
+Build a **source-137 / gap-13 diagnostic-only univariate centered Taylor model** for the complete segment in `x=h/tau`.
 
-1. **Endpoint-only SPD.** Keep forward propagation but drop the intermediate
-   strict-SPD gates, carrying a PSD (possibly singular) lower and requiring
-   strict SPD only at the segment endpoint. Justified by the covariance-form
-   monotonicity above. Prediction: the split tree collapses and the run gets
-   *faster*. If it does not, the diagnosis is wrong and this is abandoned, not
-   deepened.
-2. **Verified generalized-eigenvalue formulation.** Certify
-   `P_endpoint >= rho_z D_h^2` directly as a generalized eigenvalue problem
-   against the target floor, rather than propagating a matrix lower bound.
-   Never forms an intermediate lower, so per-step conditioning cannot arise.
-3. **Different Lyapunov representation.** Certify the endpoint floor in the
-   `z = [v/h, p/h^2, S/h^3, a_w]` scaled coordinate with the floor built into
-   the metric, so the quantity being propagated is dimensionless and the
-   dynamic range that breaks the entrywise collapse is removed by construction.
+Requirements:
 
-Before P4 resumes: a non-promoting, structure-exact, high-precision `rho_w`
-diagnostic, interpreted by the thresholds in `AGENTS.md`.
+- carry the single normalized scalar source coordinate symbolically through all 13 predictions and both scalar measurement updates per sample;
+- use the existing validated transition/process series and outward remainder bounds;
+- use a verified reciprocal expansion for innovation denominators rather than natural interval division;
+- compare the final matrix against a high-precision point reference by congruence/generalized eigenvalue;
+- report polynomial order, remainder norm, certified relative `alpha`, limiting direction, and number of structural branch splits.
+
+**Predicted success criterion:** point diagnostics suggest the exact generalized relative floor is near 1 across source 137, so the first rigorous model should certify a clearly positive `alpha` with only the required `x=0.01` analytic-branch split and modest model order. If it cannot do that, one refinement of model order/remainder formulation is allowed; a second failure triggers architecture review and the analytic segment Gramian/Riccati alternative.
+
+Before any new P4 proof producer, first obtain the canonical P3 numeric verdict. If P3 passes, the only P4 work allowed in #471 is the non-promoting high-precision complete-word ratio diagnostic `rho_w = V_after(F_w(x)) / V_before(x)` required by the PR scope.
