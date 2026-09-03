@@ -51,44 +51,71 @@ from __future__ import annotations
 import argparse
 import json
 import math
-import sys
+import struct
 from pathlib import Path
 
 import ou3_p4_source_node_cells as NODES
+import ou3_source_reachable_matrix_p3 as BASE
 
 REPO = Path(__file__).resolve().parents[1]
 DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
 SCHEMA = 1
 
-DT_S = 0.004999999888241291
 WORD_SAMPLES = 635
-PSEUDO_RATIO = 0.015 / 1.1
-PSEUDO_MIN_S = DT_S
-PSEUDO_MAX_S = 0.25
 CHANNELS = ("v", "p", "S", "a_w")
 GATE = 1.0e-18
 
+# Scheduler constants are parsed from the shipping header rather than restated
+# here.  A hand-written PSEUDO_RATIO of 0.015/1.1 is *not* the deployed value:
+# the C++ constant is a constexpr float quotient, f32(f32(0.015)/f32(1.1)) =
+# 0.013636362738907337, against the double 0.013636363636363634.  The two differ
+# in the eighth digit, which moves the pseudo period by about 1.5e-8 s -- enough
+# to decide S-firing starvation, whose margin is of order the binary32 scheduler
+# tolerance 1.9e-6.
+_SCHED = BASE.source_schedule()
+DT_S = float(_SCHED["dt_s"])
+PSEUDO_RATIO = float(_SCHED["pseudo_ratio"])
+PSEUDO_MIN_S = float(_SCHED["pseudo_min_s"])
+PSEUDO_MAX_S = float(_SCHED["pseudo_max_s"])
+
+
+BINARY32_EPS = 2.0 ** -23
+
+
+def f32(x: float) -> float:
+    """Round to binary32.
+
+    The deployed MEKF is ``Kalman3D_Wave_OU_III<float>``, so every scheduler
+    quantity below is single precision.  This is not a cosmetic detail: the
+    ``periodic_update_due`` tolerance is ``16 * eps``, which is 1.9e-6 in
+    binary32 against 3.6e-15 in double, and S-firing starvation depends on that
+    tolerance being comparable to the separation between two pseudo periods
+    inside one source cell.  A double-precision transcription cannot represent
+    the starvation at all and therefore is not conservative.
+    """
+    return struct.unpack("f", struct.pack("f", x))[0]
+
 
 def cadence_s(tau: float) -> float:
-    """Deployed ``pseudo_update_period_for_`` including both safety clamps."""
-    return min(max(PSEUDO_RATIO * float(tau), PSEUDO_MIN_S), PSEUDO_MAX_S)
+    """Deployed ``pseudo_update_period_for_`` in binary32, including both clamps."""
+    return f32(min(max(f32(f32(PSEUDO_RATIO) * f32(tau)), PSEUDO_MIN_S), PSEUDO_MAX_S))
 
 
 def periodic_update_due(dt: float, period: float, elapsed: float):
-    """Exact port of ``ou_detail::periodic_update_due``."""
-    total = elapsed + dt
-    tol = 16.0 * sys.float_info.epsilon * max(1.0, period)
-    if total + tol < period:
+    """Exact binary32 port of ``ou_detail::periodic_update_due``."""
+    total = f32(elapsed + dt)
+    tol = f32(16.0 * BINARY32_EPS * max(1.0, period))
+    if f32(total + tol) < period:
         return False, total
-    e = math.fmod(total, period) if total >= period else 0.0
+    e = f32(math.fmod(total, period)) if total >= period else 0.0
     if not (e >= 0.0) or not math.isfinite(e) or e >= period:
         e = 0.0
     return True, e
 
 
 def commit_period(elapsed: float, period: float) -> float:
-    """Exact port of ``set_pseudo_update_period_s``'s timer rebase."""
-    e = math.fmod(float(elapsed), float(period))
+    """Exact binary32 port of ``set_pseudo_update_period_s``'s timer rebase."""
+    e = f32(math.fmod(f32(elapsed), f32(period)))
     if not (math.isfinite(e) and 0.0 <= e < period):
         raise RuntimeError("invalid fmod pseudo-timer state")
     return e
@@ -305,6 +332,40 @@ def range_of(seq):
     return sorted(set(seq))
 
 
+def starvation_probe(tau_low: float, tau_high: float, sigma: float, rs_std: float,
+                     *, gap: int = 13) -> dict:
+    """Check whether alternating two applied ``tau`` values starves the S update.
+
+    PR #476 found that alternating two applied ``tau`` values *inside one source
+    cell* can drive the S firing count to zero across the whole covariance word:
+    each stage boundary rebases the timer by ``fmod`` against a slightly
+    different period, and when the two periods differ by about the binary32
+    scheduler tolerance (1.9e-6) the accumulated remainder never crosses.  A word
+    with no S firing never forgets its initial covariance, so **no
+    P0-independent whole-word lower exists for it**.
+
+    This verifies a supplied witness pair; it does not search for one.  Finding
+    which cells admit a resonant pair needs the tau-EMA reachability argument,
+    which is #476's lane.  The pair is not near the cell endpoints -- #476's
+    witness separates the two taus by 1.4e-4 s inside a cell spanning 3.6 s -- so
+    a sweep that holds one corner per cell cannot see this and is therefore not
+    conservative.
+    """
+    n = math.ceil(WORD_SAMPLES / int(gap))
+    segs = [((tau_low if i % 2 == 0 else tau_high), sigma, rs_std, int(gap))
+            for i in range(n)]
+    _, fires, used = run_word(segs, [0.0, 0.0, 0.0, 0.0])
+    out = {"gap_samples": int(gap), "S_firings": fires, "samples": used,
+           "starved": fires == 0,
+           "period_low": cadence_s(tau_low), "period_high": cadence_s(tau_high)}
+    if fires == 0:
+        r = _ratio(segs, sigma)
+        out["ratio"] = r["ratio"]
+        out["P0_independent"] = r["P0_independent"]
+        out["P0_probe_relative_spread"] = r["P0_probe_relative_spread"]
+    return out
+
+
 def build(domain_path: Path = DEFAULT_DOMAIN, *, stride: int = 1) -> dict:
     nodes = NODES.build()["nodes"]
     rows = []
@@ -335,6 +396,12 @@ def build(domain_path: Path = DEFAULT_DOMAIN, *, stride: int = 1) -> dict:
         "worst": worst,
         "worst_ratio": None if worst is None else worst["ratio"],
         "worst_clears_canonical_gate": bool(worst is not None and worst["ratio"] > GATE),
+        # A cell that can starve S for a whole word admits a legal word that
+        # never forgets its initial covariance.  For such a word no
+        # P0-independent whole-word lower exists at all, so the dwell figures
+        # above are conditional on S firing, which PR #476 showed is not a
+        # theorem of the current P2 quotient.
+        "dwell_result_conditional_on_S_firing": True,
         "rows": rows,
     }
 

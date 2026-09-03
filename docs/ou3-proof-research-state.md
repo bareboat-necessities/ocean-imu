@@ -127,7 +127,42 @@ finite-state or monotone argument can quantify over legal histories.
 words rather than a local search: a finite-state or monotone quotient that bounds
 every legal word, not the best one a greedy descent can find.
 
-## Whole-word lower feasibility (measured)
+## The whole-word lower result is conditional on S firing, which is not a theorem
+
+**PR #476 is ahead of this line of work and its result supersedes the headline
+below.** #476 certified that alternating two applied `tau` values *inside one
+source cell* drives the `S` firing count to **zero** across a whole 635-sample
+word. Reproduced here exactly, using the shipping binary32 scheduler:
+
+| word at node 720's cell, gap 13 | S firings |
+| --- | --- |
+| `tau` held at 9.533334732055664 | 24 |
+| `tau` held at 9.533475875854492 | 24 |
+| **alternating the two, same cell** | **0** |
+
+The two periods are 0.1300000101327896 and 0.13000193238258362, differing by
+1.92e-6 against a binary32 scheduler tolerance of 1.91e-6. Each stage boundary
+rebases the timer by `fmod` against the other period and the remainder never
+crosses.
+
+A word with no `S` firing never forgets its initial covariance. Measured on that
+word: `P0_independent = False` with a probe spread of 0.999, so the reported
+ratio 3.11e-17 is a finite-probe artifact and the true value tends to zero as
+`P0` grows. **No `P0`-independent whole-word lower exists for that word**, so the
+dwell figures below hold only under the assumption that `S` fires at all -- an
+assumption #476 showed is not implied by the current P2 quotient.
+
+**Two defects this exposed in the diagnostic here, both fixed.** The scheduler
+was transcribed in double precision, but the deployed MEKF is
+`Kalman3D_Wave_OU_III<float>`; the `periodic_update_due` tolerance is 1.9e-6 in
+binary32 against 3.6e-15 in double, and a double transcription cannot represent
+the starvation at all. And `PSEUDO_RATIO` was hand-written as `0.015/1.1`, while
+the C++ constant is a `constexpr float` quotient
+`f32(f32(0.015)/f32(1.1)) = 0.013636362738907337`; the two differ in the eighth
+digit, moving the period by 1.5e-8 s, which is decisive at this tolerance. The
+schedule constants are now parsed from the shipping header instead of restated.
+
+## Whole-word lower feasibility, conditional on S firing (measured)
 
 `tools/ou3_p3_whole_word_lower_feasibility.py`, non-promoting point diagnostic.
 Canonical `delta` is same-history matched -- `phase_row` pairs node `t`'s floor
@@ -143,6 +178,7 @@ largest `sigma`, weakest `S`), holding each for the full 635-sample word:
 | --- | --- |
 | worst single-cell dwell | **3.51e-8** at node 729 (`tau = 12 s`, `sigma = 0.05`, `R_S = 400`, 19 firings, binds on `p`) |
 | worst *mixed* legal word found | **2.97e-8** (greedy local search, 1.184x below the dwell) |
+| **S-starved legal word (#476)** | **no P0-independent lower exists** -- the word never forgets `P0` |
 | clears the `1e-18` gate by | **10.47 orders** |
 | independent mpmath `dps=30` sweep | 3.50347e-08, agreeing to 0.24 percent |
 | best node | about 1.0 (node 390) |

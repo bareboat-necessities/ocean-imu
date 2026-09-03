@@ -24,17 +24,23 @@ class SchedulerSemantics(unittest.TestCase):
             due, elapsed = F.periodic_update_due(F.DT_S, period, elapsed)
             fires += int(due)
             self.assertTrue(0.0 <= elapsed < period)
-        # DT_S is the binary32 5 ms, marginally below 0.005, so 100 samples
-        # span just under 0.5 s and yield 24 firings against a 20 ms period,
-        # not 25.  The remainder is retained rather than reset each time.
-        self.assertEqual(fires, 24)
+        # DT_S is the binary32 5 ms, marginally below 0.005, so 100 samples span
+        # just under 0.5 s.  The scheduler is binary32, where the tolerance is
+        # 16 * 2**-23 = 1.9e-6 rather than the 3.6e-15 of double, and that
+        # tolerance absorbs the shortfall: the 100th sample fires, giving 25.
+        # In a double-precision transcription the same word yields 24.  The
+        # difference is not cosmetic -- it is the same tolerance that decides
+        # S-firing starvation.
+        self.assertEqual(fires, 25)
         due, _ = F.periodic_update_due(F.DT_S, 0.02, 0.0)
         self.assertFalse(due)
 
     def test_commit_period_rebases_the_timer(self):
         # set_pseudo_update_period_s applies elapsed = fmod(elapsed, new_period),
         # so a pending timer cannot survive a source commit unchanged.
-        self.assertAlmostEqual(F.commit_period(0.13, 0.05), 0.03, places=12)
+        # Binary32: fmod(f32(0.13), f32(0.05)) is 0.0299999937, not 0.03.
+        self.assertAlmostEqual(F.commit_period(0.13, 0.05), 0.03, places=7)
+        self.assertEqual(F.commit_period(0.13, 0.05), F.f32(F.commit_period(0.13, 0.05)))
         self.assertEqual(F.commit_period(0.0, 0.05), 0.0)
         with self.assertRaises(RuntimeError):
             F.commit_period(float("nan"), 0.05)
@@ -144,3 +150,36 @@ class AdversarialDescent(unittest.TestCase):
         out = F.adversarial_descent([0, 0, 0], lambda n: graph[n],
                                     lambda s: min(score[n] for n in s))
         self.assertEqual(out["history"], sorted(out["history"], reverse=True))
+
+
+class StarvationWitness(unittest.TestCase):
+    """PR #476's zero-S word must be reproducible, or this tool is not conservative."""
+
+    # Certified in #476's artifact ou3-p3-tau-ema-scheduler-cycle-diagnostic.
+    TAU_LOW = 9.533334732055664
+    TAU_HIGH = 9.533475875854492
+    T_S_LOW = 0.1300000101327896
+    T_S_HIGH = 0.13000193238258362
+
+    def test_cadence_matches_the_certified_binary32_periods(self):
+        # A double-precision 0.015/1.1 ratio misses these by ~1.5e-8 s, which is
+        # enough to decide starvation against a 1.9e-6 tolerance.
+        self.assertEqual(F.cadence_s(self.TAU_LOW), self.T_S_LOW)
+        self.assertEqual(F.cadence_s(self.TAU_HIGH), self.T_S_HIGH)
+
+    def test_alternating_tau_starves_S_while_holding_it_does_not(self):
+        held = F.starvation_probe(self.TAU_LOW, self.TAU_LOW, 0.05, 400.0, gap=13)
+        self.assertFalse(held["starved"])
+        self.assertGreater(held["S_firings"], 0)
+        alt = F.starvation_probe(self.TAU_LOW, self.TAU_HIGH, 0.05, 400.0, gap=13)
+        self.assertTrue(alt["starved"])
+        self.assertEqual(alt["S_firings"], 0)
+
+    def test_a_starved_word_never_forgets_its_initial_covariance(self):
+        alt = F.starvation_probe(self.TAU_LOW, self.TAU_HIGH, 0.05, 400.0, gap=13)
+        self.assertFalse(alt["P0_independent"])
+        self.assertGreater(alt["P0_probe_relative_spread"], 0.5)
+
+    def test_build_records_that_the_dwell_result_is_conditional(self):
+        d = F.build(stride=401)
+        self.assertTrue(d["dwell_result_conditional_on_S_firing"])
