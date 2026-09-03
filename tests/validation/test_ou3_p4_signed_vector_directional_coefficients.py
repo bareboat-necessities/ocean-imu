@@ -22,7 +22,8 @@ class Ou3P4SignedVectorDirectionalCoefficientsTests(unittest.TestCase):
             })
         audit = {"expected_source_phase_mode_classes": 3200, "rows": rows}
         cayley = {
-            "exact_vector_residual_norm_factor_lower": 0.8,
+            "chart_sigma_min_lower": 0.8,
+            "exact_vector_information_retention_factor_lower": 0.64,
             "outer_angle_rad": 0.8,
         }
         remainder = {"acc_eta_force_rotation_quadratic_coefficient_upper": 0.1}
