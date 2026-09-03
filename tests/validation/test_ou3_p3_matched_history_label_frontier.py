@@ -43,6 +43,12 @@ class MatchedHistoryLabelFrontierTests(unittest.TestCase):
         out = M._step(front, rt, ranks)
         self.assertEqual(out, {1: {(1, 2, 3, 4)}})
 
+    def test_global_reduction_includes_terminal_source_before_forgetting_endpoint(self):
+        ranks = [(1, 2, 3, 4), (4, 3, 2, 1)]
+        front = {1: {(1, 2, 3, 4)}}
+        out = M._global_reduce_with_terminal_source(front, ranks)
+        self.assertEqual(out, {(4, 3, 3, 4)})
+
 
 if __name__ == "__main__":
     unittest.main()
