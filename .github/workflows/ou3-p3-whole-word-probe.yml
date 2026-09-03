@@ -7,6 +7,8 @@ on:
       - "tests/validation/test_ou3_p3_four_max_global_label_witness.py"
       - "tools/ou3_p3_ordered_witness_covariance_diagnostic.py"
       - "tests/validation/test_ou3_p3_ordered_witness_covariance_diagnostic.py"
+      - "tools/ou3_p3_pseudo_scheduler_starvation_witness.py"
+      - "tests/validation/test_ou3_p3_pseudo_scheduler_starvation_witness.py"
       - "tools/ou3_p3_matched_history_cost_frontier.py"
       - "tests/validation/test_ou3_p3_matched_history_cost_frontier.py"
       - ".github/workflows/ou3-p3-whole-word-probe.yml"
@@ -30,14 +32,16 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Compile witness and ordered diagnostic
+      - name: Compile witness and ordered diagnostics
         run: |
           python3 -m py_compile \
             tools/ou3_p3_four_max_global_label_witness.py \
             tools/ou3_p3_ordered_witness_covariance_diagnostic.py \
+            tools/ou3_p3_pseudo_scheduler_starvation_witness.py \
             tools/ou3_p3_matched_history_cost_frontier.py \
             tests/validation/test_ou3_p3_four_max_global_label_witness.py \
             tests/validation/test_ou3_p3_ordered_witness_covariance_diagnostic.py \
+            tests/validation/test_ou3_p3_pseudo_scheduler_starvation_witness.py \
             tests/validation/test_ou3_p3_matched_history_cost_frontier.py
 
       - name: Test source-cost, witness, scheduler, and extension invariants
@@ -46,7 +50,8 @@ jobs:
           python3 -m unittest -v \
             test_ou3_p3_matched_history_cost_frontier \
             test_ou3_p3_four_max_global_label_witness \
-            test_ou3_p3_ordered_witness_covariance_diagnostic
+            test_ou3_p3_ordered_witness_covariance_diagnostic \
+            test_ou3_p3_pseudo_scheduler_starvation_witness
 
       - name: Find shortest legal global four-max label witness
         run: |
@@ -108,6 +113,39 @@ jobs:
           print('NEXT', d['next_obligation'])
           PY
 
+      - name: Run P2-quotient pseudo-scheduler starvation witness
+        run: |
+          python3 tools/ou3_p3_pseudo_scheduler_starvation_witness.py \
+            --output /tmp/ou3_p3_pseudo_scheduler_starvation_witness.json
+
+      - name: Enforce scheduler-witness falsification contract
+        run: |
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/ou3_p3_pseudo_scheduler_starvation_witness.json'))
+          assert d['validation_pass'], d['validation_failures']
+          assert d['target_samples'] == 635
+          assert d['exact_gap_samples'] == 13
+          assert d['exact_gap_self_edge'] is True
+          assert d['both_periods_and_taus_inside_same_P2_source_cell'] is True
+          assert d['repeatable_two_segment_no_fire_cycle'] is True
+          assert d['pseudo_firings_in_target_word'] == 0
+          assert d['finite_gap_theorem_from_period_max_alone'] is False
+          assert d['deployed_filter_starvation_claimed'] is False
+          assert d['proof_language_starvation_witness'] is True
+          assert d['P3_PROMOTED'] is False
+          assert d['P4_PROMOTED'] is False
+          assert d['P5_PROMOTED'] is False
+          print('CLASSIFICATION', d['classification'])
+          print('SOURCE_NODE', d['source_node'])
+          print('TAU_CELL', d['source_tau_cell_s'])
+          print('PERIOD_CELL', d['source_pseudo_period_cell_s'])
+          print('TAU_LOW_HIGH', d['tau_low_binary32_s'], d['tau_high_binary32_s'])
+          print('PERIOD_LOW_HIGH', d['period_low_binary32_s'], d['period_high_binary32_s'])
+          print('PSEUDO_FIRINGS', d['pseudo_firings_in_target_word'])
+          print('NEXT', d['next_obligation'])
+          PY
+
       - name: Upload four-max witness artifact
         uses: actions/upload-artifact@v6
         with:
@@ -120,4 +158,11 @@ jobs:
         with:
           name: ou3-p3-ordered-witness-covariance-diagnostic
           path: /tmp/ou3_p3_ordered_witness_covariance_diagnostic.json
+          retention-days: 7
+
+      - name: Upload pseudo-scheduler starvation witness artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: ou3-p3-pseudo-scheduler-starvation-witness
+          path: /tmp/ou3_p3_pseudo_scheduler_starvation_witness.json
           retention-days: 7
