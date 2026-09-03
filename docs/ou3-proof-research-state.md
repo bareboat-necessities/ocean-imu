@@ -22,16 +22,23 @@ stays **shelved**.
 | --- | --- | --- | --- |
 | today: 130 ms zero-start floor vs 3-point whole-word ceiling | floor 1.37e-20, ceiling 7.17e9 | 1.90e-30 | 11.7 orders short |
 | credit the real `S` cadence in the ceiling only | ceiling 6.18e4 | 2.21e-25 | **6.66 orders short** |
-| make the floor a whole-word quantity too | floor 41.2 | ~6.7e-4 | clears |
+| make the floor a whole-word quantity too | floor 41.2 | 3.79e-4 | clears by 14.6 orders |
 
 `delta` here is evaluated at the measured phase-0 identity floor
 `rho = 8.742479e-07` (node 80 / gap 13), not the canonical minimum over phases,
 x-subcells and all 800 nodes, which is 1.89e-31. Use the ratios, not the
 absolute values.
 
-The `S` channel binds `delta` before and after: its per-channel bracket is
-1.90e-30, against 1.96e-20 for `v` and 1.60e-09 for `a_w`. `a_w` is 21 orders
-slack, so nothing that only improves `a_w` can move `delta` at all.
+The `S` channel binds `delta` in both of the first two rows: its per-channel
+bracket is 1.90e-30, against 1.96e-20 for `v` and 1.60e-09 for `a_w`. `a_w` is
+21 orders slack, so nothing that only improves `a_w` can move `delta` at all.
+
+In the third row the binding channel **moves to `p`**, because a whole-word floor
+lifts the three integrator channels to within a factor of a few thousand of the
+ceiling and `p` is the tightest of them: floor/ceiling is 6.48e-4 on `v`,
+**3.79e-4 on `p`**, 6.66e-4 on `S` and 3.88e-1 on `a_w`. `delta` is the minimum
+over channels, so it is 3.79e-4. Expect the binding channel to change again once
+these become rigorous uniform bounds rather than point recursions.
 
 At this cell one 130 ms segment carries **zero** `S` firings. The floor is
 therefore a pure free-integration quantity while the ceiling it is compared
@@ -109,7 +116,8 @@ Requirements:
 - report the floor, `Sigma_upper`, the recomputed `delta` and the binding channel.
 
 **Predicted:** with both sides whole-word at the binding cell, `delta` reaches
-roughly `1e-4` to `1e-3`, clearing the `1e-18` gate by more than ten orders.
+roughly `1e-4` to `1e-3` -- the point diagnostic gives 3.79e-4, binding on `p` --
+clearing the `1e-18` gate by about 14 orders.
 **Falsified if** a uniform whole-word floor cannot be certified over admissible
 histories, or if certifying it costs so much of the floor that `delta` stays
 below `1e-18`. Either outcome moves suspicion to the theorem formulation rather
