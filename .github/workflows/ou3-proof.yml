@@ -19,6 +19,10 @@ on:
       - ".github/workflows/ou3-proof.yml"
   workflow_dispatch:
 
+concurrency:
+  group: ou3-proof-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
