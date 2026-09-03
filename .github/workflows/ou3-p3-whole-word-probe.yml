@@ -1,4 +1,4 @@
-name: ou3-p3-whole-word-probe
+name: ou3-p3-ordered-scheduler-diagnostics
 
 on:
   pull_request:
@@ -11,9 +11,8 @@ on:
       - "tests/validation/test_ou3_p3_pseudo_scheduler_starvation_witness.py"
       - "tools/ou3_p3_tau_ema_scheduler_cycle_diagnostic.py"
       - "tests/validation/test_ou3_p3_tau_ema_scheduler_cycle_diagnostic.py"
-      - "tools/ou3_p3_matched_history_cost_frontier.py"
-      - "tests/validation/test_ou3_p3_matched_history_cost_frontier.py"
       - ".github/workflows/ou3-p3-whole-word-probe.yml"
+      - "tools/ou3_interval.py"
       - "tools/ou3_p2_*.py"
       - "tools/ou3_p3_*.py"
       - "tools/ou3_source_reachable_matrix_p3.py"
@@ -27,7 +26,7 @@ permissions:
   contents: read
 
 jobs:
-  ordered-four-max-witness-diagnostic:
+  ordered-scheduler-diagnostics:
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
@@ -35,25 +34,22 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Compile witness and ordered diagnostics
+      - name: Compile live P3 structural diagnostics
         run: |
           python3 -m py_compile \
             tools/ou3_p3_four_max_global_label_witness.py \
             tools/ou3_p3_ordered_witness_covariance_diagnostic.py \
             tools/ou3_p3_pseudo_scheduler_starvation_witness.py \
             tools/ou3_p3_tau_ema_scheduler_cycle_diagnostic.py \
-            tools/ou3_p3_matched_history_cost_frontier.py \
             tests/validation/test_ou3_p3_four_max_global_label_witness.py \
             tests/validation/test_ou3_p3_ordered_witness_covariance_diagnostic.py \
             tests/validation/test_ou3_p3_pseudo_scheduler_starvation_witness.py \
-            tests/validation/test_ou3_p3_tau_ema_scheduler_cycle_diagnostic.py \
-            tests/validation/test_ou3_p3_matched_history_cost_frontier.py
+            tests/validation/test_ou3_p3_tau_ema_scheduler_cycle_diagnostic.py
 
-      - name: Test source-cost, witness, scheduler, tau-EMA, and extension invariants
+      - name: Test witness, scheduler, tau-EMA, and extension invariants
         working-directory: tests/validation
         run: |
           python3 -m unittest -v \
-            test_ou3_p3_matched_history_cost_frontier \
             test_ou3_p3_four_max_global_label_witness \
             test_ou3_p3_ordered_witness_covariance_diagnostic \
             test_ou3_p3_pseudo_scheduler_starvation_witness \
