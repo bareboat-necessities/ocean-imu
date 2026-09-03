@@ -55,6 +55,7 @@ jobs:
             test_ou3_p3_ltv_translation_ucc_probe \
             test_ou3_p3_ltv_postmeasurement_certificate \
             test_ou3_p3_correlated_translation_segment \
+            test_ou3_p4_accelerometer_corotated_aw \
             test_ou3_p4_canonical_gate \
             test_ou3_p4_p3_metric_attachment \
             test_ou3_p4_signed_joseph_feasibility \
@@ -186,7 +187,7 @@ jobs:
               json.dumps(d, indent=2, sort_keys=True), encoding='utf-8')
 
           # This reuses HIST.frontier_runtime and the already-built translation
-          # artifact in the same Python process.  It is a P4 handoff object,
+          # artifact in the same Python process. It is a P4 handoff object,
           # never a second P3 route or promotion authority.
           m = M.build(translation_candidate=t, full_state_candidate=j)
           mf = M.validate(m)
@@ -249,10 +250,11 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Compile current P4 sector prerequisites, signed audit, and canonical gate
+      - name: Compile current P4 sector prerequisites, exact accelerometer coordinate, signed audit, and canonical gate
         run: |
           python3 -m py_compile \
             tools/ou3_p4_cayley_sector_certificate.py \
+            tools/ou3_p4_accelerometer_corotated_aw.py \
             tools/ou3_p4_vector_remainder_sector.py \
             tools/ou3_p4_source_word_timing.py \
             tools/ou3_p4_p3_metric_attachment.py \
@@ -263,6 +265,8 @@ jobs:
         run: |
           python3 tools/ou3_p4_cayley_sector_certificate.py \
             --output /tmp/ou3_p4_cayley_sector.json
+          python3 tools/ou3_p4_accelerometer_corotated_aw.py \
+            --output /tmp/ou3_p4_accelerometer_corotated_aw.json
           python3 tools/ou3_p4_vector_remainder_sector.py \
             --output /tmp/ou3_p4_vector_remainder.json
           python3 tools/ou3_p4_source_word_timing.py \
@@ -287,18 +291,26 @@ jobs:
           d=json.load(open('/tmp/ou3_p3_canonical_gate.json'))
           m=json.load(open('/tmp/ou3_p4_p3_metric_attachment.json'))
           timing=json.load(open('/tmp/ou3_p4_source_word_timing.json'))
+          corot=json.load(open('/tmp/ou3_p4_accelerometer_corotated_aw.json'))
+          rem=json.load(open('/tmp/ou3_p4_vector_remainder.json'))
           audit=json.load(open('/tmp/ou3_p4_signed_joseph_feasibility.json'))
           assert d['validation_pass'], d['validation_failures']
           assert m['validation_pass'], m['validation_failures']
           assert timing['validation_pass'], timing['validation_failures']
+          assert corot['validation_pass'], corot['validation_failures']
+          assert rem['validation_pass'], rem['validation_failures']
           assert audit['validation_pass'], audit['validation_failures']
           assert m['finite_source_phase_classes'] == 800 * 26
           assert audit['finite_source_phase_mode_classes_scanned'] == 800 * 2 * 2
           assert timing['P4_word_horizon_bound_to_canonical_P3_covariance_word'] is True
+          assert corot['latent_aw_nonlinear_eta_coefficient'] == 0.0
+          assert rem['acc_eta_aw_quadratic_coefficient_upper'] == 0.0
+          assert audit['accelerometer_aw_eta_Rinv_quadratic_coefficient_upper'] == 0.0
           print('P3_CANONICAL_PASS', d['P3_CANONICAL_PASS'])
           print('P4_MAY_CONSUME_P3', d['P4_MAY_CONSUME_P3'])
           print('P4_WORD_HORIZON_S', timing['word_horizon_s'])
           print('P4_METRIC_SOURCE_PHASE_CLASSES', m['finite_source_phase_classes'])
+          print('ACCEL_AW_NONLINEAR_ETA_COEFFICIENT', rem['acc_eta_aw_quadratic_coefficient_upper'])
           print('SIGNED_JOSEPH_H', audit['worst_by_mode']['H'])
           print('SIGNED_JOSEPH_A', audit['worst_by_mode']['A'])
           print('DIRECTIONAL_WORD_REQUIRED', audit['directional_signed_forms_must_survive_to_word_scalarization'])
@@ -314,6 +326,7 @@ jobs:
           name: ou3-p4-sector-prerequisites
           path: |
             /tmp/ou3_p4_cayley_sector.json
+            /tmp/ou3_p4_accelerometer_corotated_aw.json
             /tmp/ou3_p4_vector_remainder.json
             /tmp/ou3_p4_source_word_timing.json
             /tmp/ou3_p4_signed_joseph_feasibility.json
