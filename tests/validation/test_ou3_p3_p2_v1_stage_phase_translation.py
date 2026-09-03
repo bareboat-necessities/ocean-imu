@@ -25,8 +25,15 @@ class P2V1StagePhaseTranslationTests(unittest.TestCase):
         M = P._identity_floor(0.25)
         ok, _ = symmetric_positive_definite_ldlt(M)
         self.assertTrue(ok)
-        self.assertEqual(M[0][0].lo, 0.25)
-        self.assertEqual(M[0][1].lo, 0.0)
+        # A point interval is deliberately expanded outward by one ULP.  Do
+        # not require the rigorous lower endpoint to round back to the nominal
+        # decimal value exactly.
+        self.assertEqual(M[0][0].lo, math.nextafter(0.25, -math.inf))
+        self.assertEqual(M[0][0].hi, math.nextafter(0.25, math.inf))
+        self.assertLessEqual(M[0][0].lo, 0.25)
+        self.assertGreaterEqual(M[0][0].hi, 0.25)
+        self.assertLessEqual(M[0][1].lo, 0.0)
+        self.assertGreaterEqual(M[0][1].hi, 0.0)
 
     def test_certified_delta_matches_simple_diagonal_case(self):
         M = P._identity_floor(1.0)
