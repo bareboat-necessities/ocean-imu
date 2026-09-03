@@ -3,12 +3,10 @@ name: ou3-p3-whole-word-probe
 on:
   pull_request:
     paths:
+      - "tools/ou3_p3_four_max_global_label_witness.py"
+      - "tests/validation/test_ou3_p3_four_max_global_label_witness.py"
       - "tools/ou3_p3_matched_history_cost_frontier.py"
       - "tests/validation/test_ou3_p3_matched_history_cost_frontier.py"
-      - "tools/ou3_p3_matched_history_label_frontier.py"
-      - "tests/validation/test_ou3_p3_matched_history_label_frontier.py"
-      - "tools/ou3_p3_whole_word_horizon_probe.py"
-      - "tests/validation/test_ou3_p3_whole_word_horizon_probe.py"
       - ".github/workflows/ou3-p3-whole-word-probe.yml"
       - "tools/ou3_p2_*.py"
       - "tools/ou3_p3_*.py"
@@ -22,7 +20,7 @@ permissions:
   contents: read
 
 jobs:
-  matched-history-cost-frontier:
+  four-max-global-label-witness:
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
@@ -30,55 +28,53 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Compile finite-cost matched-history producer
+      - name: Compile global-label witness
         run: |
           python3 -m py_compile \
+            tools/ou3_p3_four_max_global_label_witness.py \
             tools/ou3_p3_matched_history_cost_frontier.py \
+            tests/validation/test_ou3_p3_four_max_global_label_witness.py \
             tests/validation/test_ou3_p3_matched_history_cost_frontier.py
 
-      - name: Test finite-cost quotient invariants
+      - name: Test source-cost and witness invariants
         working-directory: tests/validation
-        run: python3 -m unittest -v test_ou3_p3_matched_history_cost_frontier
-
-      - name: Build 635-sample minimum-cost adverse frontier
         run: |
-          python3 tools/ou3_p3_matched_history_cost_frontier.py \
-            --output /tmp/ou3_p3_matched_history_cost_frontier.json
+          python3 -m unittest -v \
+            test_ou3_p3_matched_history_cost_frontier \
+            test_ou3_p3_four_max_global_label_witness
 
-      - name: Enforce non-promotion and finite-word contract
+      - name: Find shortest legal global four-max label witness
+        run: |
+          python3 tools/ou3_p3_four_max_global_label_witness.py \
+            --output /tmp/ou3_p3_four_max_global_label_witness.json
+
+      - name: Enforce non-promotion and frozen source contract
         run: |
           python3 - <<'PY'
           import json
-          d=json.load(open('/tmp/ou3_p3_matched_history_cost_frontier.json'))
+          d=json.load(open('/tmp/ou3_p3_four_max_global_label_witness.json'))
           assert d['validation_pass'], d['validation_failures']
           assert d['target_samples'] == 635
           assert d['exact_gap_labelled_successors_consumed'] is True
           assert d['minimum_supporting_gap_per_source_edge_used'] is True
           assert d['minimum_gap_replacement_preserves_source_sequence_and_can_only_reduce_cost'] is True
-          assert d['finite_word_sample_budget_retained'] is True
-          assert d['cost_adverse_dominance_continuation_safe'] is True
-          assert d['terminal_endpoint_rank_included_before_global_reduction'] is True
-          assert d['global_cartesian_source_extrema_used'] is False
-          assert d['global_pareto_adverse_labels'] > 0
+          assert d['label_update_order_matches_HIST_frontier_runtime'] is True
           assert d['matched_margin_computed'] is False
           assert d['P3_PROMOTED'] is False
           assert d['P4_PROMOTED'] is False
           assert d['P5_PROMOTED'] is False
-          print('MIN_GAP_SOURCE_EDGES', d['min_gap_source_edges'])
-          print('PROCESSED_ENTRIES', d['processed_cost_frontier_entries'])
-          print('MAX_FRONTIER_PER_SOURCE', d['maximum_frontier_entries_at_one_source'])
-          print('GLOBAL_LABELS', d['global_pareto_adverse_labels'])
-          for row in d['matched_history_classes']:
-              print('MATCHED_CLASS', row['adverse_label'],
-                    'allowed_nodes=', row['allowed_physical_source_nodes'],
-                    'tau_dominators=', row['same_tau_covariance_lower_dominator_nodes'],
-                    'upper=', row['Sigma_translation_diagonal_upper'])
+          print('GLOBAL_LABEL', d['global_adverse_rank_label'])
+          print('GLOBAL_LABEL_REACHABLE', d['global_label_reachable_within_word'])
+          print('MINIMUM_COST_SAMPLES', d['global_label_minimum_cost_samples'])
+          print('CLASSIFICATION', d['classification'])
+          for row in d['global_label_witness_path']:
+              print('WITNESS_EDGE', row)
           print('NEXT', d['next_obligation'])
           PY
 
-      - name: Upload finite-cost matched-history artifact
+      - name: Upload global-label witness artifact
         uses: actions/upload-artifact@v6
         with:
-          name: ou3-p3-matched-history-cost-frontier
-          path: /tmp/ou3_p3_matched_history_cost_frontier.json
+          name: ou3-p3-four-max-global-label-witness
+          path: /tmp/ou3_p3_four_max_global_label_witness.json
           retention-days: 7
