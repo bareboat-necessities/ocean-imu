@@ -44,6 +44,7 @@ jobs:
             test_ou3_p2_correlation_path_memory \
             test_ou3_p2_p3_correlation_interface \
             test_ou3_p3_canonical_gate \
+            test_ou3_p3_p2_v1_full_state_join \
             test_ou3_p3_scaled_process \
             test_ou3_p3_tau_decay_budget \
             test_ou3_p3_source_uniform_translation_covariance \
@@ -99,38 +100,114 @@ jobs:
 
   canonical-p3:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 120
     steps:
       - uses: actions/checkout@v6
         with:
           persist-credentials: false
 
-      - name: Emit the only canonical P3 verdict
+      - name: Compile source-complete canonical P3 route
         run: |
-          python3 tools/ou3_p3_canonical_gate.py \
-            --output /tmp/ou3_p3_canonical_gate.json
+          python3 -m py_compile \
+            tools/ou3_p3_p2_v1_history_frontier.py \
+            tools/ou3_p3_p2_v1_stage_phase_translation.py \
+            tools/ou3_p3_p2_v1_full_state_join.py \
+            tools/ou3_p3_canonical_gate.py \
+            tests/validation/test_ou3_p3_p2_v1_history_frontier.py \
+            tests/validation/test_ou3_p3_p2_v1_stage_phase_translation.py \
+            tests/validation/test_ou3_p3_p2_v1_full_state_join.py \
+            tests/validation/test_ou3_p3_canonical_gate.py
 
-      - name: Report theorem-stage status without relabelling prerequisites
+      - name: Test exact-history and precision-join contracts
+        working-directory: tests/validation
+        run: |
+          python3 -m unittest -v \
+            test_ou3_p3_p2_v1_history_frontier \
+            test_ou3_p3_p2_v1_stage_phase_translation \
+            test_ou3_p3_p2_v1_full_state_join
+
+      - name: Build source-complete H/A candidate and emit unique canonical P3 verdict
         run: |
           python3 - <<'PY'
           import json
-          d=json.load(open('/tmp/ou3_p3_canonical_gate.json'))
-          assert d['validation_pass'], d['validation_failures']
+          import sys
+          from pathlib import Path
+          sys.path.insert(0, 'tools')
+          import ou3_p3_p2_v1_history_frontier as H
+          import ou3_p3_p2_v1_stage_phase_translation as T
+          import ou3_p3_p2_v1_full_state_join as J
+          import ou3_p3_canonical_gate as G
+
+          h = H.build()
+          hf = H.validate(h)
+          h['validation_pass'] = not hf
+          h['validation_failures'] = hf
+          if hf:
+              raise SystemExit(f'history quotient validation failed: {hf}')
+          Path('/tmp/ou3_p3_p2_v1_history_frontier.json').write_text(
+              json.dumps(h, indent=2, sort_keys=True), encoding='utf-8')
+
+          t = T.build()
+          tf = T.validate(t)
+          t['validation_pass'] = not tf
+          t['validation_failures'] = tf
+          if tf:
+              raise SystemExit(f'translation candidate validation failed: {tf}')
+          Path('/tmp/ou3_p3_p2_v1_stage_phase_translation.json').write_text(
+              json.dumps(t, indent=2, sort_keys=True), encoding='utf-8')
+
+          j = J.build(translation_candidate=t)
+          jf = J.validate(j)
+          j['validation_pass'] = not jf
+          j['validation_failures'] = jf
+          if jf:
+              raise SystemExit(f'full-state join validation failed: {jf}')
+          Path('/tmp/ou3_p3_p2_v1_full_state_join.json').write_text(
+              json.dumps(j, indent=2, sort_keys=True), encoding='utf-8')
+
+          d = G.build(p3_candidate=j)
+          df = G.validate(d)
+          d['validation_pass'] = not df
+          d['validation_failures'] = df
+          if df:
+              raise SystemExit(f'canonical P3 gate validation failed: {df}')
+          Path('/tmp/ou3_p3_canonical_gate.json').write_text(
+              json.dumps(d, indent=2, sort_keys=True), encoding='utf-8')
+
+          assert h['P2_correlation_interface_consumed'] is True
+          assert h['raw_tuner_cartesian_extrema_used'] is False
+          assert t['endpoint_phase_count'] == 800 * 26
+          assert t['frozen_clock_absorbing_hold_branch_included'] is True
+          assert j['process_covariance_measurement_bounds_same_source_history'] is True
+          assert j['translation_whole_word_lift_charged_again'] is False
+          assert j['precision_block_join_factor'] == 0.5
           assert d['useful_gate'] == 1e-18
-          print('P3_CANONICAL_PASS', d['P3_CANONICAL_PASS'])
-          print('worst_H_A_margin', d['worst_H_A_margin'])
-          print('fail_reasons', d['P3_CANONICAL_FAIL_REASONS'])
-          print('P4_MAY_CONSUME_P3', d['P4_MAY_CONSUME_P3'])
-          # A mathematically valid fail-closed certificate is not a CI error.
-          # P4 remains blocked until the single canonical flag becomes true.
           assert d['P4_MAY_CONSUME_P3'] is d['P3_CANONICAL_PASS']
+
+          print(json.dumps({
+              'history_target': h['global_word_target'],
+              'terminal_pareto_labels': h['terminal_pareto_labels'],
+              'translation_margin': t['worst_translation_margin_lower'],
+              'translation_established': t['P3_TRANSLATION_CERTIFICATE_ESTABLISHED'],
+              'H_margin': j['modes']['H']['relative_Riccati_injection_margin_lower'],
+              'A_margin': j['modes']['A']['relative_Riccati_injection_margin_lower'],
+              'producer_numeric_pass': j['P3_PRODUCER_NUMERIC_PASS'],
+              'P3_CANONICAL_PASS': d['P3_CANONICAL_PASS'],
+              'canonical_worst_H_A': d['worst_H_A_margin'],
+              'fail_reasons': d['P3_CANONICAL_FAIL_REASONS'],
+              'P4_MAY_CONSUME_P3': d['P4_MAY_CONSUME_P3'],
+          }, indent=2, sort_keys=True))
           PY
 
-      - name: Upload canonical P3 status
+      - name: Upload canonical P3 proof artifacts
         uses: actions/upload-artifact@v6
         with:
           name: ou3-p3-canonical-theorem-status
-          path: /tmp/ou3_p3_canonical_gate.json
+          path: |
+            /tmp/ou3_p3_p2_v1_history_frontier.json
+            /tmp/ou3_p3_p2_v1_stage_phase_translation.json
+            /tmp/ou3_p3_p2_v1_full_state_join.json
+            /tmp/ou3_p3_canonical_gate.json
           retention-days: 7
 
   legacy-cartesian-p3-diagnostic:
@@ -170,7 +247,6 @@ jobs:
           for mode in ('H', 'A'):
               m=d.get('modes',{}).get(mode,{})
               print(mode, 'delta', m.get('relative_Riccati_injection_margin_lower'))
-          # This route is intentionally not allowed to determine canonical P3 CI.
           PY
 
       - name: Upload legacy Cartesian diagnostic
@@ -234,6 +310,7 @@ jobs:
           retention-days: 7
 
   p4-sector-prerequisites:
+    needs: canonical-p3
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -255,16 +332,22 @@ jobs:
           python3 tools/ou3_p4_vector_remainder_sector.py \
             --output /tmp/ou3_p4_vector_remainder.json
 
-      - name: State P4 consumption gate
+      - name: Download unique canonical P3 verdict
+        uses: actions/download-artifact@v6
+        with:
+          name: ou3-p3-canonical-theorem-status
+          path: /tmp
+
+      - name: State P4 consumption gate from canonical artifact
         run: |
           python3 - <<'PY'
-          import sys
-          sys.path.insert(0,'tools')
-          import ou3_p3_canonical_gate as G
-          d=G.build()
-          assert G.validate(d) == []
-          print('P4 sector prerequisites are independent PASS-like primitives.')
+          import json
+          d=json.load(open('/tmp/ou3_p3_canonical_gate.json'))
+          assert d['validation_pass'], d['validation_failures']
+          print('P3_CANONICAL_PASS', d['P3_CANONICAL_PASS'])
           print('P4_MAY_CONSUME_P3', d['P4_MAY_CONSUME_P3'])
           if not d['P4_MAY_CONSUME_P3']:
               print('P4 theorem closure remains blocked by canonical P3; sector PASS is not P4 PASS.')
+          else:
+              print('Canonical P3 is available to the retained whole-word P4 route.')
           PY
