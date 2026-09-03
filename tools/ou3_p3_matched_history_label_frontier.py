@@ -18,10 +18,13 @@ can only increase the four adverse maxima used by the retained covariance upper:
 We therefore propagate exactly 49 steps on the *union-successor* P2 V1 graph,
 ignoring the particular 13..26 gap label.  Ignoring the gap can only add source
 paths.  At each current source we retain the componentwise Pareto-maximal adverse
-labels.  Finally we Pareto-reduce across endpoints as well.  Proving a matched
-lower/upper margin for every emitted global label is sufficient for every legal
-shorter full-word history, because a more-adverse label has a no-smaller upper
-and admits a no-smaller source set for the covariance lower.
+labels.  Before endpoint identities are forgotten, the final endpoint source is
+also folded into every label; this covers the 0..25-sample terminal phase.  Only
+then are labels Pareto-reduced globally across endpoints.
+
+Proving a matched lower/upper margin for every emitted global label is sufficient
+for every legal shorter full-word history: a more-adverse label has a no-smaller
+upper and admits a no-smaller source set for the covariance lower.
 
 For each emitted label this module also identifies the physical source nodes
 whose four statistics lie below the label.  Within each represented tau cell the
@@ -66,7 +69,6 @@ def maximum_complete_segments(target_samples: int, minimum_gap_samples: int) -> 
 def _reduce(labels) -> set[tuple[int, int, int, int]]:
     """Return the componentwise Pareto-maximal adverse labels."""
     out: set[tuple[int, int, int, int]] = set()
-    # Adverse-first ordering usually makes the retained frontier small early.
     for label in sorted(set(tuple(map(int, x)) for x in labels), reverse=True):
         HIST.pareto_insert(out, label)
     return out
@@ -84,8 +86,28 @@ def _step(front: dict[int, set[tuple[int, int, int, int]]], rt: dict,
     return {t: _reduce(labels) for t, labels in candidates.items() if labels}
 
 
+def _global_reduce_with_terminal_source(
+    front: dict[int, set[tuple[int, int, int, int]]],
+    ranks: list[tuple[int, int, int, int]],
+) -> set[tuple[int, int, int, int]]:
+    """Fold the terminal source into each label, then forget endpoint identity.
+
+    `_step` records the source applied over the segment that leads to endpoint
+    `t`; it intentionally does not record `t` itself.  The canonical P3 phase
+    alphabet includes 0..25 samples after a stage boundary, however, so `t` may
+    be the applied source during the terminal phase.  Updating before the global
+    reduction is therefore required for a source-complete upper/lower class.
+    """
+    return _reduce(
+        HIST.update_label(label, ranks[int(t)])
+        for t, labels in front.items()
+        for label in labels
+    )
+
+
 def _allowed_nodes(label: tuple[int, int, int, int],
                    ranks: list[tuple[int, int, int, int]]) -> list[int]:
+    """Return every physical source whose adverse statistics fit under label."""
     q = tuple(map(int, label))
     return [
         i for i, r in enumerate(ranks)
@@ -95,7 +117,7 @@ def _allowed_nodes(label: tuple[int, int, int, int],
 
 def _tau_dominators(label: tuple[int, int, int, int], rt: dict,
                     ranks: list[tuple[int, int, int, int]]) -> tuple[list[int], list[int]]:
-    """Return admitted physical nodes and the same-tau min-(sigma,R_S) dominators."""
+    """Return admitted physical nodes and same-tau min-(sigma,R_S) dominators."""
     allowed = _allowed_nodes(label, ranks)
     if not allowed:
         raise RuntimeError("adverse label admits no physical P2 source node")
@@ -127,12 +149,13 @@ def _tau_dominators(label: tuple[int, int, int, int], rt: dict,
 
 
 def _summary(label: tuple[int, int, int, int], stats: dict, target: dict) -> dict:
-    """Build the retained covariance-upper summary directly from one adverse label."""
+    """Build retained covariance-upper sufficient statistics from one label."""
     fr = {"stats": stats, "target": target}
     return HIST.label_summary(label, fr)
 
 
 def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
+    """Build the non-promoting 49-segment matched-history source quotient."""
     path = Path(domain_path).resolve()
     domain = json.loads(path.read_text(encoding="utf-8"))
     if domain.get("trajectory_fit") is not False:
@@ -173,7 +196,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
             "maximum_labels_at_one_endpoint": max(len(v) for v in front.values()),
         })
 
-    global_front = _reduce(label for labels in front.values() for label in labels)
+    global_front = _global_reduce_with_terminal_source(front, ranks)
     if not global_front:
         raise RuntimeError("49-segment global adverse frontier is empty")
 
@@ -213,6 +236,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "union_successor_graph_used": True,
         "finite_clock_no_dead_states_required": True,
         "shorter_histories_covered_by_adverse_49_segment_extension": True,
+        "terminal_endpoint_rank_included_before_global_reduction": True,
         "endpoint_identity_forgotten_only_after_global_adverse_dominance": True,
         "global_cartesian_source_extrema_used": False,
         "target_samples": int(target["target_samples"]),
@@ -240,6 +264,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
 
 
 def validate(d: dict) -> list[str]:
+    """Fail closed if the structural matched-history contract changes."""
     f = list(d.get("failures", []))
     if d.get("schema") != SCHEMA:
         f.append("schema mismatch")
@@ -250,6 +275,7 @@ def validate(d: dict) -> list[str]:
         "exact_gap_labels_forgotten_only_by_source_superset",
         "union_successor_graph_used", "finite_clock_no_dead_states_required",
         "shorter_histories_covered_by_adverse_49_segment_extension",
+        "terminal_endpoint_rank_included_before_global_reduction",
         "endpoint_identity_forgotten_only_after_global_adverse_dominance",
         "same_tau_covariance_lower_dominators_verified",
     ):
@@ -287,6 +313,7 @@ def validate(d: dict) -> list[str]:
 
 
 def main() -> int:
+    """Write the auditable non-promoting frontier artifact."""
     ap = argparse.ArgumentParser()
     ap.add_argument("--domain", type=Path, default=DEFAULT_DOMAIN)
     ap.add_argument("--output", type=Path, required=True)
