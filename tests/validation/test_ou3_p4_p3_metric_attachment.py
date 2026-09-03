@@ -155,6 +155,16 @@ class Ou3P4P3MetricAttachmentTests(unittest.TestCase):
             large["reset_metric_amplitude_fraction_upper"],
         )
 
+    def test_reset_budget_rejects_energy_outside_candidate_cayley_funnel(self):
+        with self.assertRaises(ValueError):
+            R.reset_row_at_energy(
+                W=1.0,
+                candidate_q_upper=0.1,
+                theta_covariance_upper=1.0,
+                theta_information_upper=1.0,
+                correction_gain=0.1,
+            )
+
     def test_metric_module_has_no_theorem_promotion_shortcut(self):
         self.assertEqual(M.JOIN_FACTOR, 0.5)
         self.assertEqual(M.PHASES, tuple(range(26)))
