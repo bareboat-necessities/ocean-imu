@@ -1,0 +1,73 @@
+name: ou3-p3-whole-word-probe
+
+on:
+  pull_request:
+    paths:
+      - "tools/ou3_p3_whole_word_horizon_probe.py"
+      - "tests/validation/test_ou3_p3_whole_word_horizon_probe.py"
+      - ".github/workflows/ou3-p3-whole-word-probe.yml"
+      - "tools/ou3_p2_*.py"
+      - "tools/ou3_p3_*.py"
+      - "tools/ou3_source_reachable_matrix_p3.py"
+      - "tools/ou3_proof_operating_domain.json"
+      - "src/kalman_ou_iii/**"
+      - "src/kalman_ou_common/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  whole-word-horizon-probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Compile horizon-matched P3 producer
+        run: |
+          python3 -m py_compile \
+            tools/ou3_p3_whole_word_horizon_probe.py \
+            tests/validation/test_ou3_p3_whole_word_horizon_probe.py
+
+      - name: Test structural invariants
+        working-directory: tests/validation
+        run: python3 -m unittest -v test_ou3_p3_whole_word_horizon_probe
+
+      - name: Run source-complete whole-word floor probe
+        run: |
+          python3 tools/ou3_p3_whole_word_horizon_probe.py \
+            --output /tmp/ou3_p3_whole_word_horizon_probe.json
+
+      - name: Enforce non-promotion and frozen theorem contract
+        run: |
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/ou3_p3_whole_word_horizon_probe.json'))
+          assert d['validation_pass'], d['validation_failures']
+          assert d['canonical_useful_gate'] == 1e-18
+          assert d['canonical_gate_changed'] is False
+          assert d['filter_changed'] is False
+          assert d['declared_domain_changed'] is False
+          assert d['trajectory_replay_used'] is False
+          assert d['P3_PROMOTED'] is False
+          assert d['P4_PROMOTED'] is False
+          assert d['P5_PROMOTED'] is False
+          assert d['guaranteed_complete_segments'] == 23
+          assert d['lower_projection_can_only_add_source_paths'] is True
+          assert d['lower_projection_can_only_reduce_covariance'] is True
+          print('WHOLE_WORD_MARGIN', d['whole_word_arbitrary_phase_margin_lower'])
+          print('USEFUL_AT_FROZEN_GATE', d['structural_probe_useful_at_frozen_gate'])
+          print('CLASSIFICATION', d['classification'])
+          print('LIMITING_TRANSFER', d['whole_word_arbitrary_phase_limiting_transfer'])
+          print('NEXT', d['next_obligation'])
+          PY
+
+      - name: Upload whole-word structural artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: ou3-p3-whole-word-horizon-probe
+          path: /tmp/ou3_p3_whole_word_horizon_probe.json
+          retention-days: 7
