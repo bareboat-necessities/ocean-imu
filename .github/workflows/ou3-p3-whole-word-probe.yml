@@ -9,6 +9,8 @@ on:
       - "tests/validation/test_ou3_p3_ordered_witness_covariance_diagnostic.py"
       - "tools/ou3_p3_pseudo_scheduler_starvation_witness.py"
       - "tests/validation/test_ou3_p3_pseudo_scheduler_starvation_witness.py"
+      - "tools/ou3_p3_tau_ema_scheduler_cycle_diagnostic.py"
+      - "tests/validation/test_ou3_p3_tau_ema_scheduler_cycle_diagnostic.py"
       - "tools/ou3_p3_matched_history_cost_frontier.py"
       - "tests/validation/test_ou3_p3_matched_history_cost_frontier.py"
       - ".github/workflows/ou3-p3-whole-word-probe.yml"
@@ -18,6 +20,7 @@ on:
       - "tools/ou3_proof_operating_domain.json"
       - "src/kalman_ou_iii/**"
       - "src/kalman_ou_common/**"
+      - "src/tuner/**"
   workflow_dispatch:
 
 permissions:
@@ -38,20 +41,23 @@ jobs:
             tools/ou3_p3_four_max_global_label_witness.py \
             tools/ou3_p3_ordered_witness_covariance_diagnostic.py \
             tools/ou3_p3_pseudo_scheduler_starvation_witness.py \
+            tools/ou3_p3_tau_ema_scheduler_cycle_diagnostic.py \
             tools/ou3_p3_matched_history_cost_frontier.py \
             tests/validation/test_ou3_p3_four_max_global_label_witness.py \
             tests/validation/test_ou3_p3_ordered_witness_covariance_diagnostic.py \
             tests/validation/test_ou3_p3_pseudo_scheduler_starvation_witness.py \
+            tests/validation/test_ou3_p3_tau_ema_scheduler_cycle_diagnostic.py \
             tests/validation/test_ou3_p3_matched_history_cost_frontier.py
 
-      - name: Test source-cost, witness, scheduler, and extension invariants
+      - name: Test source-cost, witness, scheduler, tau-EMA, and extension invariants
         working-directory: tests/validation
         run: |
           python3 -m unittest -v \
             test_ou3_p3_matched_history_cost_frontier \
             test_ou3_p3_four_max_global_label_witness \
             test_ou3_p3_ordered_witness_covariance_diagnostic \
-            test_ou3_p3_pseudo_scheduler_starvation_witness
+            test_ou3_p3_pseudo_scheduler_starvation_witness \
+            test_ou3_p3_tau_ema_scheduler_cycle_diagnostic
 
       - name: Find shortest legal global four-max label witness
         run: |
@@ -146,6 +152,43 @@ jobs:
           print('NEXT', d['next_obligation'])
           PY
 
+      - name: Run tau-EMA scheduler cycle diagnostic
+        run: |
+          python3 tools/ou3_p3_tau_ema_scheduler_cycle_diagnostic.py \
+            --scheduler-witness /tmp/ou3_p3_pseudo_scheduler_starvation_witness.json \
+            --output /tmp/ou3_p3_tau_ema_scheduler_cycle_diagnostic.json
+
+      - name: Enforce tau-EMA cycle non-promotion contract
+        run: |
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/ou3_p3_tau_ema_scheduler_cycle_diagnostic.json'))
+          assert d['validation_pass'], d['validation_failures']
+          assert d['target_samples'] == 635
+          assert d['exact_stage_gap_samples'] == 13
+          assert d['exact_gap_self_edge'] is True
+          assert d['continuous_tau_channel_cycle_found'] is True
+          assert d['both_tau_period_values_inside_same_P2_cell'] is True
+          assert d['all_required_frequencies_inside_shipping_bounds'] is True
+          assert d['gap_step_tau_low_to_high_exact'] is True
+          assert d['gap_step_tau_high_to_low_exact'] is True
+          assert d['pseudo_firings_in_target_word'] == 0
+          assert d['full_WavePeriodEstimator_realizability_proved'] is False
+          assert d['deployed_filter_starvation_claimed'] is False
+          assert d['interval_certificate'] is False
+          assert d['P3_PROMOTED'] is False
+          assert d['P4_PROMOTED'] is False
+          assert d['P5_PROMOTED'] is False
+          print('CLASSIFICATION', d['classification'])
+          print('TAU_LOW_HIGH', d['tau_low_binary32_s'], d['tau_high_binary32_s'])
+          print('TAU_SEPARATION', d['tau_separation_s'])
+          print('PERIOD_LOW_HIGH', d['period_low_binary32_s'], d['period_high_binary32_s'])
+          print('TARGETS', d['tau_target_down_binary32_s'], d['tau_target_up_binary32_s'])
+          print('FREQUENCIES', d['frequency_for_down_target_hz'], d['frequency_for_up_target_hz'])
+          print('PSEUDO_FIRINGS', d['pseudo_firings_in_target_word'])
+          print('NEXT', d['next_obligation'])
+          PY
+
       - name: Upload four-max witness artifact
         uses: actions/upload-artifact@v6
         with:
@@ -165,4 +208,11 @@ jobs:
         with:
           name: ou3-p3-pseudo-scheduler-starvation-witness
           path: /tmp/ou3_p3_pseudo_scheduler_starvation_witness.json
+          retention-days: 7
+
+      - name: Upload tau-EMA scheduler cycle diagnostic artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: ou3-p3-tau-ema-scheduler-cycle-diagnostic
+          path: /tmp/ou3_p3_tau_ema_scheduler_cycle_diagnostic.json
           retention-days: 7
