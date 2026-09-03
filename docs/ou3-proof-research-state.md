@@ -86,13 +86,14 @@ the bound, is what needs revisiting.
 
 Do not resume any shelved item before this experiment reports a number.
 
-## Failure classification
+## Failure classification (historical, both blockers now cleared)
 
-The current canonical run is **not a numerical P3 theorem FAIL**. It is blocked earlier by a translation-covariance enclosure/conditioning failure:
-
-`Loewner prediction lower lost strict SPD; split x cell`
-
-The previously identified `x=0.01` branch-partition defect is already fixed on the live PR branch: branch clamping is now applied only to the actual boundary subcell. It was an implementation defect and is not the remaining mathematical limiter.
+The canonical run was blocked by `Loewner prediction lower lost strict SPD; split
+x cell`, and separately by the `x=0.01` branch-partition defect. Both are
+resolved: the branch clamping was an implementation defect, and the strict-SPD
+demand was surplus -- the theorem certifies the segment endpoint, not every 5 ms
+prediction. Neither was the mathematical limiter. See the State section for the
+one that is.
 
 ## Evidence
 
@@ -168,7 +169,11 @@ index 6 and 6.75e-5 at index 7. Reducing 800 nodes to 10 brings the estimate to
 roughly 25-77 min, which fits the budget only just, and the dominating nodes are
 the slow ones.
 
-## The S=0 pseudo-measurement is inert over a segment
+## The S=0 pseudo-measurement is inert over a *segment* (framing superseded)
+
+Retained as a measurement. The conclusion drawn from it at the time was wrong:
+inertness over 65 ms says nothing about `R_S` over a word, where the filter
+fires it about 211 times. See the State section.
 
 Across a 23-decade override sweep at node 80 the S update is live and strong
 when `R_S_z` is small -- at `1e-4` it collapses `P[2][2]` from 4.277 to 8.95e-5
@@ -191,7 +196,10 @@ a lower bound -- but the segment floor may be a lossy proxy for the true relativ
 injection margin, and that is a candidate explanation for `delta` landing near
 1e-18.
 
-## Measured: the margin deficit is about 9 orders, and neither enclosure nor scalarization explains it
+## Measured: the margin deficit is about 9 orders (cause since identified)
+
+The measurements below stand. The open question they left -- what does explain
+the deficit -- is answered by the covariance ceiling; see the State section.
 
 `delta` was computed directly against the real `Sigma_upper` from
 `HIST.endpoint_phase_upper`, at phase 0, for three source nodes. The target is
@@ -220,7 +228,9 @@ is 1.6e-27, about 5700 times lower.
 Second, and more important: **no enclosure or scalarization work can close a 9
 order gap.** Taylor models, tighter collapses, finer subdivision and the
 sigma/R_S cost reduction are all worth factors of 10^3 or less against a deficit
-of 10^9. They should not be pursued as a route to the gate.
+of 10^9. They should not be pursued as a route to the gate. The cause was
+subsequently identified as the covariance ceiling, which is 12 to 13 orders
+loose; see the State section.
 
 ### Where the deficit plausibly comes from
 
@@ -347,8 +357,10 @@ tuner or domain choice.
 
 Every realism lever pulled together still leaves about **7 orders**. Physical
 realism accounts for roughly 3 of the 9 order deficit; the remainder is
-formulation. Do not spend further effort on domain realism as a route to the
-gate.
+formulation. **This conclusion is withdrawn**: it was measured against the
+three-point-inversion ceiling, which is 12 to 13 orders loose, so it is not
+evidence about a correct ceiling. Re-evaluate domain realism only after the
+ceiling is fixed.
 
 The two structural items that remain are the intrinsically ill-conditioned
 four-`S` triple-integrator observability route, and the zero-start 65 ms segment
@@ -556,16 +568,30 @@ A rejected route may be resurrected only after recording the new mathematical fa
 
 ## Next falsifiable experiment
 
-Build a **source-137 / gap-13 diagnostic-only univariate centered Taylor model** for the complete segment in `x=h/tau`.
+Replace the per-history translation covariance upper with a Riccati-based bound
+that credits the `S` cadence the filter actually runs, keeping the same-history
+envelope machinery unchanged around it.
 
 Requirements:
 
-- carry the single normalized scalar source coordinate symbolically through all 13 predictions and both scalar measurement updates per sample;
-- use the existing validated transition/process series and outward remainder bounds;
-- use a verified reciprocal expansion for innovation denominators rather than natural interval division;
-- compare the final matrix against a high-precision point reference by congruence/generalized eigenvalue;
-- report polynomial order, remainder norm, certified relative `alpha`, limiting direction, and number of structural branch splits.
+- credit the deployed `S = 0` pseudo-measurement cadence rather than three
+  selected observations;
+- hold uniformly over the source-reachable `tau`, `sigma` and `R_S` cells and
+  over admissible initial covariance, not at a single fixed point;
+- preserve the same-history P2-V1 envelope ordering, which is not what broke;
+- report the resulting `Sigma_upper` per channel, the recomputed `delta`, and the
+  binding group.
 
-**Predicted success criterion:** point diagnostics suggest the exact generalized relative floor is near 1 across source 137, so the first rigorous model should certify a clearly positive `alpha` with only the required `x=0.01` analytic-branch split and modest model order. If it cannot do that, one refinement of model order/remainder formulation is allowed; a second failure triggers architecture review and the analytic segment Gramian/Riccati alternative.
+**Predicted:** `delta` rises by 12 orders or more from 1.9e-31 and crosses the
+`1e-18` gate with margin, since the present ceiling is 12 to 13 orders looser
+than the covariance the filter settles at. **Falsified if** a legitimate uniform
+Riccati ceiling still leaves `delta` short, which would move suspicion from the
+bound to the theorem formulation.
 
-Before any new P4 proof producer, first obtain the canonical P3 numeric verdict. If P3 passes, the only P4 work allowed in #471 is the non-promoting high-precision complete-word ratio diagnostic `rho_w = V_after(F_w(x)) / V_before(x)` required by the PR scope.
+The previously selected univariate centered Taylor model is **shelved**, not
+rejected. It addresses enclosure dependency, which measurement has shown is not
+the limiter. Revisit only if the corrected ceiling exposes an enclosure problem.
+
+Before any new P4 proof producer, first obtain the canonical P3 numeric verdict.
+If P3 passes, the only P4 work allowed is the non-promoting high-precision
+complete-word ratio diagnostic `rho_w = V_after(F_w(x)) / V_before(x)`.
