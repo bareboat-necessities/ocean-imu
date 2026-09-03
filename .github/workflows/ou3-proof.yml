@@ -120,6 +120,7 @@ jobs:
             tools/ou3_p3_p2_v1_history_frontier.py \
             tools/ou3_p3_p2_v1_stage_phase_translation.py \
             tools/ou3_p3_p2_v1_full_state_join.py \
+            tools/ou3_p3_long_horizon_floor_probe.py \
             tools/ou3_p3_canonical_gate.py \
             tools/ou3_p4_p3_metric_attachment.py \
             tests/validation/test_ou3_p3_p2_v1_history_frontier.py \
@@ -147,6 +148,7 @@ jobs:
           import ou3_p3_p2_v1_history_frontier as H
           import ou3_p3_p2_v1_stage_phase_translation as T
           import ou3_p3_p2_v1_full_state_join as J
+          import ou3_p3_long_horizon_floor_probe as PROBE
           import ou3_p3_canonical_gate as G
           import ou3_p4_p3_metric_attachment as M
 
@@ -158,6 +160,18 @@ jobs:
               raise SystemExit(f'history quotient validation failed: {hf}')
           Path('/tmp/ou3_p3_p2_v1_history_frontier.json').write_text(
               json.dumps(h, indent=2, sort_keys=True), encoding='utf-8')
+
+          # H.build() has already populated H.frontier_runtime in this process.
+          # The structural probe therefore reuses the exact same-history P2
+          # quotient instead of paying for an independent second construction.
+          probe = PROBE.build(source_node=137)
+          probef = PROBE.validate(probe)
+          probe['validation_pass'] = not probef
+          probe['validation_failures'] = probef
+          if probef:
+              raise SystemExit(f'long-horizon structural probe validation failed: {probef}')
+          Path('/tmp/ou3_p3_long_horizon_floor_probe.json').write_text(
+              json.dumps(probe, indent=2, sort_keys=True), encoding='utf-8')
 
           t = T.build()
           tf = T.validate(t)
@@ -200,6 +214,12 @@ jobs:
 
           assert h['P2_correlation_interface_consumed'] is True
           assert h['raw_tuner_cartesian_extrema_used'] is False
+          assert probe['canonical_useful_gate'] == 1e-18
+          assert probe['canonical_gate_changed'] is False
+          assert probe['source_complete_full_word_lower_established'] is False
+          assert probe['P3_PROMOTED'] is False
+          assert probe['P4_PROMOTED'] is False
+          assert probe['P5_PROMOTED'] is False
           assert t['endpoint_phase_count'] == 800 * 26
           assert t['frozen_clock_absorbing_hold_branch_included'] is True
           assert j['process_covariance_measurement_bounds_same_source_history'] is True
@@ -212,6 +232,17 @@ jobs:
           assert m['precision_block_join_factor'] == 0.5
           assert m['P4_USABLE_CERTIFICATE_PROMOTED'] is False
 
+          print('P3_LONG_HORIZON_STRUCTURAL_PROBE ' + json.dumps({
+              'source_node': probe['source_node'],
+              'Sigma_upper': probe['Sigma_translation_diagonal_upper_envelope'],
+              'horizons': probe['horizons'],
+              'reference_segment_margin_lower': probe['reference_segment_margin_lower'],
+              'full_word_margin_lower': probe['full_word_margin_lower'],
+              'margin_growth_factor_lower': probe['margin_growth_factor_lower'],
+              'margin_growth_orders_log10': probe['margin_growth_orders_log10'],
+              'classification': probe['classification'],
+              'next_obligation': probe['next_obligation'],
+          }, sort_keys=True))
           print(json.dumps({
               'history_target': h['global_word_target'],
               'terminal_pareto_labels': h['terminal_pareto_labels'],
@@ -235,6 +266,7 @@ jobs:
           name: ou3-p3-canonical-theorem-status
           path: |
             /tmp/ou3_p3_p2_v1_history_frontier.json
+            /tmp/ou3_p3_long_horizon_floor_probe.json
             /tmp/ou3_p3_p2_v1_stage_phase_translation.json
             /tmp/ou3_p3_p2_v1_full_state_join.json
             /tmp/ou3_p3_canonical_gate.json
