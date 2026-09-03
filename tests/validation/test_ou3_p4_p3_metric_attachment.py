@@ -7,6 +7,7 @@ TOOLS = Path(__file__).resolve().parents[2] / "tools"
 sys.path.insert(0, str(TOOLS))
 
 import ou3_p4_p3_metric_attachment as M
+import ou3_p4_signed_joseph_feasibility as J
 
 
 class Ou3P4P3MetricAttachmentTests(unittest.TestCase):
@@ -80,6 +81,34 @@ class Ou3P4P3MetricAttachmentTests(unittest.TestCase):
         self.assertLessEqual(lower["S"], 0.5 * delta * upper[2])
         self.assertLessEqual(lower["a_w"], 0.5 * delta * upper[3])
         self.assertTrue(all(x > 0.0 for x in lower.values()))
+
+    def test_signed_joseph_accelerometer_bound_retains_psd_cross_covariance(self):
+        env = {
+            "translation_covariance_upper_groups": {"a_w": 9.0},
+            "H_bias_covariance_upper": {
+                "theta_covariance_upper": 4.0,
+                "accel_bias_covariance_upper": None,
+            },
+            "A_bias_covariance_upper": {
+                "theta_covariance_upper": 4.0,
+                "accel_bias_covariance_upper": 16.0,
+            },
+        }
+        rv = {"acc_upper": 1.0, "mag_upper": 1.0}
+        h = J._innovation_bounds(env, "H", fmax=2.0, mmax=3.0, rv=rv)
+        a = J._innovation_bounds(env, "A", fmax=2.0, mmax=3.0, rv=rv)
+        # Arbitrary PSD cross blocks are retained through
+        # (|f|sqrt(Utheta)+sqrt(Uaw)[+sqrt(Uba)])^2.
+        self.assertGreaterEqual(h["accelerometer_state_innovation_covariance_upper"], 49.0)
+        self.assertGreaterEqual(a["accelerometer_state_innovation_covariance_upper"], 121.0)
+        self.assertGreaterEqual(h["magnetometer_state_innovation_covariance_upper"], 36.0)
+        self.assertGreater(a["accelerometer_S_lambda_max_upper"], h["accelerometer_S_lambda_max_upper"])
+
+    def test_signed_joseph_local_scalar_criterion_has_correct_sign(self):
+        q = 0.8
+        eta_over_y2 = J.up(J.mul_up(q, q) / 4.0)
+        self.assertGreater(J.down(0.25 - eta_over_y2), 0.0)
+        self.assertLess(J.down(0.10 - eta_over_y2), 0.0)
 
     def test_metric_module_has_no_theorem_promotion_shortcut(self):
         self.assertEqual(M.JOIN_FACTOR, 0.5)
