@@ -172,9 +172,9 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     fires, boundaries, endpoint = _simulate_word(h, high, low)
 
     # Verify the two-segment reset cycle itself, independent of the 635-sample
-    # truncation.  Starting immediately after an L reset, one L segment and one
-    # H segment must reproduce the L-reset input exactly at binary32 precision.
-    e0 = _set_period(_f32(2.0 * GAP * h), low)
+    # truncation.  `low` is the actual binary32 timer reached by 26 repeated
+    # additions under H; using 26*h here would be a different float operation.
+    e0 = _set_period(low, low)
     ok1, e1, _ = _accumulate_no_fire(e0, low, h, GAP)
     e1 = _set_period(e1, high)
     ok2, e2, _ = _accumulate_no_fire(e1, high, h, GAP)
