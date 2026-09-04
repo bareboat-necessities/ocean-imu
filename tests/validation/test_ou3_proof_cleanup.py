@@ -45,13 +45,32 @@ class Ou3ProofCleanupTest(unittest.TestCase):
                     offenders.append(f"retired reference {module}: {path.name}")
         self.assertEqual([], offenders, "\n".join(offenders))
 
-    def test_no_completed_one_off_proof_workflows_remain(self):
+    def test_no_superseded_p3_route_selection_diagnostics_remain(self):
+        retired_names = {
+            "ou3_p3_four_max_global_label_witness.py",
+            "ou3_p3_ordered_witness_covariance_diagnostic.py",
+        }
+        retired_modules = {name[:-3] for name in retired_names}
+        offenders = []
+        for name in sorted(retired_names):
+            if (TOOLS / name).exists():
+                offenders.append(f"retired filename: {name}")
+        for path in sorted(TOOLS.glob("ou3_*.py")):
+            text = path.read_text(encoding="utf-8")
+            for module in sorted(retired_modules):
+                if module in text:
+                    offenders.append(f"retired reference {module}: {path.name}")
+        self.assertEqual([], offenders, "\n".join(offenders))
+
+    def test_no_retired_extra_proof_workflows_remain(self):
         retired = {
             "ou3-p3-sync-combined-caps-once.yml",
+            "ou3-p3-whole-word-probe.yml",
             "ou3-p4-new-clamps-proof.yml",
+            "ou3-sea0.yml",
         }
         offenders = [name for name in sorted(retired) if (WORKFLOWS / name).exists()]
-        self.assertEqual([], offenders, "retired one-off workflows returned")
+        self.assertEqual([], offenders, "retired extra proof workflows returned")
 
 
 if __name__ == "__main__":
