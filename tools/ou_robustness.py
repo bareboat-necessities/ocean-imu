@@ -22,13 +22,22 @@ _ORIGINAL_SCALED_TUNING_POINT = _core.scaled_tuning_point
 _ORIGINAL_WRITE_SENSITIVITY_PLOT = _core.write_sensitivity_plot
 _ORIGINAL_WRITE_PUBLICATION_TABLE = _core.write_publication_table
 _ORIGINAL_CODE_SOURCE_PATHS = tuple(_core.CODE_SOURCE_PATHS)
+_ORIGINAL_SIGMA_AW_BOUNDS_MPS2 = tuple(_core.SIGMA_AW_BOUNDS_MPS2)
+_ORIGINAL_R_S_BOUNDS_MS = tuple(_core.R_S_BOUNDS_MS)
 
-# The source uses T_S = clip((0.015/1.1) tau, 0.005, 0.25) at the default
+# Current shipping bounds.  The legacy core retains the historical envelope so
+# archived bundles can still be restated, while this current-study wrapper must
+# follow SeaStateFusionFilter_OU_III.h exactly.
+TAU_BOUNDS_S = (0.02, 12.0)
+SIGMA_AW_BOUNDS_MPS2 = (1e-9, 4.0)
+R_S_BOUNDS_MS = (0.15, 100.0)
+
+# The source uses T_S = clip((0.015/1.1) tau, 0.005, 0.15) at the default
 # 200-Hz schedule. Keep the exact cadence in the coupled tau perturbation so
 # the study remains correct when a scale crosses a cadence clamp.
 _PSEUDO_TAU_RATIO = 0.015 / 1.1
 _PSEUDO_MIN_S = 0.005
-_PSEUDO_MAX_S = 0.25
+_PSEUDO_MAX_S = 0.15
 
 
 def _pseudo_period(tau_s: float) -> float:
@@ -221,6 +230,8 @@ def _activate_current_study() -> None:
     _core.scaled_tuning_point = scaled_tuning_point
     _core.write_sensitivity_plot = write_sensitivity_plot
     _core.write_publication_table = write_publication_table
+    _core.SIGMA_AW_BOUNDS_MPS2 = SIGMA_AW_BOUNDS_MPS2
+    _core.R_S_BOUNDS_MS = R_S_BOUNDS_MS
     paths = [Path(__file__).resolve(), Path(_core.__file__).resolve()]
     for item in _ORIGINAL_CODE_SOURCE_PATHS:
         resolved = Path(item).resolve()
@@ -234,7 +245,35 @@ def _activate_legacy_study() -> None:
     _core.scaled_tuning_point = _ORIGINAL_SCALED_TUNING_POINT
     _core.write_sensitivity_plot = _ORIGINAL_WRITE_SENSITIVITY_PLOT
     _core.write_publication_table = _ORIGINAL_WRITE_PUBLICATION_TABLE
+    _core.SIGMA_AW_BOUNDS_MPS2 = _ORIGINAL_SIGMA_AW_BOUNDS_MPS2
+    _core.R_S_BOUNDS_MS = _ORIGINAL_R_S_BOUNDS_MS
     _core.CODE_SOURCE_PATHS = _ORIGINAL_CODE_SOURCE_PATHS
+
+
+def _snapshot_core_study_state() -> tuple[Any, Any, Any, tuple[float, float], tuple[float, float], tuple[Any, ...]]:
+    """Capture mutable core bindings so nested/restated studies are side-effect free."""
+    return (
+        _core.scaled_tuning_point,
+        _core.write_sensitivity_plot,
+        _core.write_publication_table,
+        tuple(_core.SIGMA_AW_BOUNDS_MPS2),
+        tuple(_core.R_S_BOUNDS_MS),
+        tuple(_core.CODE_SOURCE_PATHS),
+    )
+
+
+def _restore_core_study_state(state: tuple[Any, Any, Any, tuple[float, float], tuple[float, float], tuple[Any, ...]]) -> None:
+    (
+        _core.scaled_tuning_point,
+        _core.write_sensitivity_plot,
+        _core.write_publication_table,
+        sigma_bounds,
+        rs_bounds,
+        source_paths,
+    ) = state
+    _core.SIGMA_AW_BOUNDS_MPS2 = sigma_bounds
+    _core.R_S_BOUNDS_MS = rs_bounds
+    _core.CODE_SOURCE_PATHS = source_paths
 
 
 def _rows_use_current_spectral_mse(rows: Sequence[Mapping[str, Any]]) -> bool:
@@ -294,7 +333,7 @@ def restat_bundle(
     bootstrap_resamples: int,
     stats_seed: int,
 ) -> int:
-    """Restate using the coupling that produced the archived replay rows."""
+    """Restate using the archived coupling without leaking core study state."""
     with source.open(encoding="utf-8") as stream:
         bundle = json.load(stream)
     rows = bundle.get("raw_runs", [])
@@ -308,16 +347,21 @@ def restat_bundle(
             bootstrap_resamples=bootstrap_resamples,
             stats_seed=stats_seed,
         )
-    if _rows_use_current_spectral_mse(rows):
-        _activate_current_study()
-    else:
-        _activate_legacy_study()
-    return _core.restat_bundle(
-        source,
-        output_dir,
-        bootstrap_resamples=bootstrap_resamples,
-        stats_seed=stats_seed,
-    )
+
+    prior_state = _snapshot_core_study_state()
+    try:
+        if _rows_use_current_spectral_mse(rows):
+            _activate_current_study()
+        else:
+            _activate_legacy_study()
+        return _core.restat_bundle(
+            source,
+            output_dir,
+            bootstrap_resamples=bootstrap_resamples,
+            stats_seed=stats_seed,
+        )
+    finally:
+        _restore_core_study_state(prior_state)
 
 
 def main(argv: list[str] | None = None) -> int:

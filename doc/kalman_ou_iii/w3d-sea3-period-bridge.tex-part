@@ -1,0 +1,108 @@
+\subsection{Peak-period to zero-crossing-period bridge}
+\label{sec:sea3-tp-tz-bridge}
+
+The spectral sea family above is parameterized by the physically conventional
+peak periods $T_{p,r}$, but the deployed tuner does \emph{not} estimate a peak
+period.  Its measurement-derived canonical period state is the zero-crossing/
+moment period $T_z$ produced by \texttt{WavePeriodEstimator}.  These quantities
+must therefore remain distinct in the certificate.
+
+For a scalar spectrum $\Phi(\omega)$ with angular-frequency moments
+\begin{equation}
+ m_j[\Phi]:=\int_0^\infty \omega^j\Phi(\omega)\,d\omega,
+ \label{eq:sea3-spectral-moments}
+\end{equation}
+the corresponding ideal zero-crossing period is
+\begin{equation}
+ \boxed{T_z[\Phi]=2\pi\sqrt{\frac{m_0[\Phi]}{m_2[\Phi]}}.}
+ \label{eq:sea3-tz-moment}
+\end{equation}
+For a multimodal sea the spectral moments add before this ratio is formed;
+periods are not averaged independently.  If the normalized partition energies
+are
+\begin{equation}
+ w_r=\frac{H_r^2}{\sum_j H_j^2},
+\end{equation}
+then the zero-crossing periods of uncorrelated component elevation spectra obey
+the exact mixture identity
+\begin{equation}
+ \boxed{
+ \frac{1}{T_{z,\mathrm{mix}}^2}
+ =\sum_r\frac{w_r}{T_{z,r}^2}.
+ }
+ \label{eq:sea3-multimodal-tz}
+\end{equation}
+Thus $T_{z,\mathrm{mix}}$ lies between the active component extrema, but it is
+not an arithmetic average of their periods.  Consequently two partitions with
+the same $T_p$ but different $\gamma$, energy share, direction, or vessel
+response need not induce the same tuner period.
+
+The first replay-free SEA0 spectral subcertificate,
+\texttt{ou3\_sea3\_spectral\_moment\_bridge.json}, isolates the frequency-shape
+part of this bridge before any vessel response is applied.  On its provisional
+JONSWAP shape screen $1\le\gamma\le7$ with the standard piecewise peak widths
+$0.07/0.09$, the PM boundary $\gamma=1$ is analytical:
+\begin{equation}
+ \boxed{
+ \left.\frac{T_{z,\eta}}{T_p}\right|_{\gamma=1}
+ =\left(\frac54\pi\right)^{-1/4}
+ =0.710370680986\ldots .
+ }
+ \label{eq:sea3-pm-tz-tp}
+\end{equation}
+A 240-cell floating-point continuum screen, with conservative quadrature and
+analytical tail pads, currently encloses the \emph{surface-elevation} ratio as
+\begin{equation}
+ 0.70911959\lesssim\frac{T_{z,\eta}}{T_p}\lesssim0.82908369.
+ \label{eq:sea3-jonswap-tz-tp-screen}
+\end{equation}
+This numerical interval is deliberately non-promoting: its quadrature has not
+yet been replaced by validated interval integration.  The exact PM identity and
+Eq.~\eqref{eq:sea3-multimodal-tz} are analytical; the continuum endpoints are
+only a feasibility screen for the next SEA0 construction.
+
+SEA0 must therefore certify a relation
+\begin{equation}
+ \boxed{
+ (\lambda,x^s)\in\widehat{\mathcal S}_{\rm SEA3}
+ \Longrightarrow
+ T_z^{\rm src}\in\mathcal T_z(\lambda,x^s),
+ }
+ \label{eq:sea3-tp-tz-relation}
+\end{equation}
+using the same directional response of
+Eq.~\eqref{eq:sea3-matrix-spectrum} and the exact deployed period-source path.
+For an analytical spectral enclosure, Eq.~\eqref{eq:sea3-tz-moment} supplies
+the moment bridge; for the final source certificate the leaky filters, finite
+moment EMAs, log-period state, initialization, and clamps are propagated
+explicitly.  Thus neither the surface quantity $T_{z,\eta}$ nor a bound on
+$T_{p,r}$ alone is substituted for a bound on the shipping tuner state.
+
+The period-source path also has a startup branch that is part of the theorem
+language rather than a nuisance transient to be discarded.  Until
+\texttt{WavePeriodEstimator::getFrequencyHz()} is finite, shipping code supplies
+the fixed $0.2$ Hz prior.  The tuner consumes that source before the current
+sample advances the WavePeriodEstimator, so the first newly finite estimator
+frequency can affect the tuner no earlier than the following valid sample.
+Takeover uses the first finite positive value and does not wait for
+\texttt{WavePeriodEstimator::isReady()}.  Therefore the final SEA0/P2 bridge
+must enclose both the prior-driven and estimator-driven branches and their
+one-sample takeover edge.
+
+The same qualification is essential for acceleration variance.  The ideal
+JONSWAP high-frequency elevation tail is proportional to $\omega^{-5}$, whereas
+specific acceleration multiplies elevation power by $\omega^4$.  An unbounded
+idealized acceleration second moment would therefore contain an asymptotic
+$\int d\omega/\omega$ term and is not a finite certificate quantity.  The
+heuristic scaling $\sigma_{a}T_p^2/H_s=O(1)$ becomes usable only after the
+certified vessel/IMU response and the deployed finite wave band are included.
+SEA0 must bound that response-weighted, band-limited statistic; it must not use
+an unbanded JONSWAP acceleration variance as a theorem assumption.
+
+The current $0.03$--$1.2$ Hz range is consequently a bound on the
+\emph{committed tuning-frequency channel}, not an asserted $T_p$ range for the
+physical sea.  The SEA3 P2 refinement may use a tighter $T_z/T_p$ relation only
+after SEA0 has certified it over the declared JONSWAP/PM mixture and directional
+response family and propagated it through the exact prior/estimator source
+state.  This response-plus-estimator bridge is a SEA0 promotion gate, not an
+optional tightening of the later P2/P3 search.

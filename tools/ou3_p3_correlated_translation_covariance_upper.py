@@ -48,7 +48,6 @@ import json
 import math
 from pathlib import Path
 
-from ou3_interval import Interval
 import ou3_p2_correlation_path_memory as CORR
 import ou3_source_reachable_matrix_p3 as BASE
 

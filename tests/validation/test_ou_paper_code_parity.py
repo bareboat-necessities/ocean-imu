@@ -46,8 +46,8 @@ class OUPaperCodeParityTests(unittest.TestCase):
     def test_ou3_state_and_process_match_21_state_core(self):
         self.assertIn("static constexpr int EXT_ADD = 12", self.ou3_core)
         self.assertIn("static constexpr int OFF_S   = BASE_N + 6", self.ou3_core)
-        self.assertIn("static constexpr int OFF_AW  = BASE_N + 9", self.ou3_core)
         self.assertIn("BASE_N + 12", self.ou3_core)
+        self.assertIn("static constexpr int OFF_AW  = BASE_N + 9", self.ou3_core)
 
         self.assertIn("N_X=21", self.ou3_state)
         for token in (
@@ -90,7 +90,7 @@ class OUPaperCodeParityTests(unittest.TestCase):
         self.assertIn("float tau_var_max_sec = 60.0f;", self.tuner)
         self.assertIn("There is no second EWMA of the already-smoothed variance", self.ou3_obs)
         self.assertIn(r"$K_{\mathrm{periods}}=4$", self.ou3_obs)
-        self.assertIn(r"\SI{30}{s} guard therefore binds on the largest", self.ou3_obs)
+        self.assertIn(r"\SI{35}{s} guard leaves the largest reference", self.ou3_obs)
 
     def test_wave_period_ewmas_match_log_period_source_exactly(self):
         for token in (
@@ -117,9 +117,9 @@ class OUPaperCodeParityTests(unittest.TestCase):
         self.assertIn("kDynamicEmaTimeScaleMinSec = 0.5f", self.limits)
         self.assertIn("kDynamicEmaTimeScaleMaxSec = 6.0f", self.limits)
         self.assertIn("kDynamicEmaHorizonMinSec = 0.05f", self.limits)
-        self.assertIn("kDynamicEmaHorizonMaxSec = 30.0f", self.limits)
+        self.assertIn("kDynamicEmaHorizonMaxSec = 35.0f", self.limits)
         self.assertIn("$[\\SI{0.5}{s},\\SI{6}{s}]$", self.ou3_impl)
-        self.assertIn("$[\\SI{0.05}{s},\\SI{30}{s}]$", self.ou3_impl)
+        self.assertIn("$[\\SI{0.05}{s},\\SI{35}{s}]$", self.ou3_impl)
 
     def test_ou3_candidate_emas_and_activation_hold_match_source(self):
         for token in (
@@ -170,12 +170,12 @@ class OUPaperCodeParityTests(unittest.TestCase):
             "PSEUDO_UPDATE_PERIOD_NOMINAL_S = 0.015f",
             "PSEUDO_UPDATE_TAU_NOMINAL_S = 1.1f",
             "PSEUDO_UPDATE_PERIOD_MIN_S_DEFAULT = FREQ_SMOOTHER_DT",
-            "PSEUDO_UPDATE_PERIOD_MAX_S_DEFAULT = 0.25f",
+            "PSEUDO_UPDATE_PERIOD_MAX_S_DEFAULT = 0.15f",
         ):
             self.assertIn(token, self.ou3_wrap)
         self.assertIn(r"c_T=\frac{\SI{15}{ms}}{\SI{1.1}{s}}", self.ou3_impl)
         self.assertIn(r"T_{S,\min}=\SI{5}{ms}", self.ou3_impl)
-        self.assertIn(r"T_{S,\max}=\SI{250}{ms}", self.ou3_impl)
+        self.assertIn(r"T_{S,\max}=\SI{150}{ms}", self.ou3_impl)
         self.assertIn(r"\tau_b=\SI{5000}{s}", self.ou3_impl)
         self.assertIn("float online_tune_warmup_sec = 10.0f;", self.ou3_wrap)
         self.assertIn("impl_.setOnlineTuneWarmupSec(cfg_.online_tune_warmup_sec);", self.ou3_wrap)

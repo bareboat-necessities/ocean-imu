@@ -1,0 +1,101 @@
+{
+  "P2_promoted_from_this_artifact": false,
+  "P3_promoted_from_this_artifact": false,
+  "P4_promoted_from_this_artifact": false,
+  "P5_promoted_from_this_artifact": false,
+  "SEA0_full_certificate_promoted": false,
+  "analytical_lemmas": {
+    "arithmetic_period_average_used": false,
+    "band_or_directional_response_required_for_acceleration_moments": true,
+    "multimodal_identity_example": {
+      "H_r_m": [
+        3.0,
+        4.0,
+        0.0
+      ],
+      "Tz_mix_s": 6.933752452815,
+      "Tz_r_s": [
+        5.0,
+        10.0,
+        7.0
+      ],
+      "lies_between_active_component_periods": true
+    },
+    "multimodal_period_between_component_extrema": true,
+    "multimodal_zero_crossing_identity": "1/Tz_mix^2 = sum_r w_r/Tz_r^2, w_r = H_r^2/sum_j H_j^2",
+    "pm_gamma_1_exact_Tz_over_Tp": 0.710370680986,
+    "pm_identity": "Tz/Tp = ((5/4)*pi)^(-1/4)",
+    "unbanded_acceleration_tail_reason": "JONSWAP S_eta ~ omega^-5, so omega^4*S_eta ~ omega^-1",
+    "unbanded_surface_acceleration_variance_finite": false
+  },
+  "declared_operating_domain_shrunk": false,
+  "filter_changed": false,
+  "gamma_continuum_screen": {
+    "gamma_cells": 240,
+    "limiting_gamma_cell_for_lower": [
+      1.0,
+      1.025
+    ],
+    "limiting_gamma_cell_for_upper": [
+      6.975,
+      7.0
+    ],
+    "method": "240 gamma cells; pointwise gamma monotonicity; log-space composite Simpson endpoint moments; conservative quadrature and analytical tail pads",
+    "point_checks": {
+      "gamma_1_PM": [
+        0.710370547374,
+        0.710372523925
+      ],
+      "gamma_3p3": [
+        0.777395726537,
+        0.777400778986
+      ],
+      "gamma_7": [
+        0.828490266327,
+        0.828498953818
+      ]
+    },
+    "promotion_use": false,
+    "quadrature": {
+      "absolute_pad_per_moment": 5e-08,
+      "interval_arithmetic_used_for_quadrature": false,
+      "lower_and_upper_tails_bounded_analytically": true,
+      "simpson_panels": 16384,
+      "x_interval": [
+        0.1,
+        512.0
+      ]
+    },
+    "reason_not_promoted": "floating quadrature is padded but not a validated interval integration proof",
+    "surface_elevation_Tz_over_Tp_outer": [
+      0.709119591169,
+      0.829083684991
+    ]
+  },
+  "next_obligation": "certify the directional vessel/IMU response and deployed band, then propagate the resulting response-weighted moments through the exact WavePeriodEstimator before using a Tz/Tp restriction to prune the P2 source language",
+  "proof_status": "mixed_analytic_and_non_promoting_numerical_screen",
+  "qualification": "OU3_SEA0_SURFACE_SPECTRAL_MOMENT_SUBCERTIFICATE",
+  "schema_version": "OU3_SEA3_SPECTRAL_MOMENT_BRIDGE_V1",
+  "sea_family": {
+    "declared_gamma_interval": [
+      1.0,
+      7.0
+    ],
+    "jonswap_sigma_above_peak": 0.09,
+    "jonswap_sigma_below_peak": 0.07,
+    "m_max": 3,
+    "partition_energy_coordinate": "m0_r = H_r^2 / 16",
+    "partition_frequency_shape": "JONSWAP_with_PM_at_gamma_1",
+    "total_energy_coupling": "H_s^2 = sum_r H_r^2"
+  },
+  "trajectory_replay_used": false,
+  "tuner_bridge_contract": {
+    "directional_vessel_IMU_RAO_required": true,
+    "exact_WavePeriodEstimator_front_end_required": true,
+    "finite_EMA_and_log_period_state_required": true,
+    "mixture_moments_must_be_formed_before_period_ratio": true,
+    "surface_elevation_Tz_may_be_substituted_for_tuner_Tz": false
+  },
+  "validation_failures": [],
+  "validation_pass": true
+}

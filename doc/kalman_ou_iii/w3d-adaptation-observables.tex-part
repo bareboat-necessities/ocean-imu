@@ -64,7 +64,7 @@ T_{\mathrm{eff}}&=2T_{\mathrm{sea,var}},\\
 \tau_{\mathrm{var,req}}&=\clip\!\left(K_{\mathrm{periods}}T_{\mathrm{eff}},
  \SI{0.3}{s},\SI{60}{s}\right),\\
 \tau_{\mathrm{var}}&=\clip\!\left(\tau_{\mathrm{var,req}},
- \SI{0.05}{s},\SI{30}{s}\right),\\
+ \SI{0.05}{s},\SI{35}{s}\right),\\
 \alpha_{\mathrm{var}}&=1-e^{-\Delta t/\tau_{\mathrm{var}}}.
 \end{aligned}
 \label{eq:sigma-variance-horizon}
@@ -72,8 +72,8 @@ T_{\mathrm{eff}}&=2T_{\mathrm{sea,var}},\\
 The implementation uses $K_{\mathrm{periods}}=4$, shared by all three filter
 families.  Across the eight scored seas $T_z$ spans about
 \SIrange{2.3}{8.4}{s}, so the requested horizon spans about
-\SIrange{9}{34}{s}; the final \SI{30}{s} guard therefore binds on the largest
-sea.  This is an implemented saturation, not an asymptotic approximation.
+\SIrange{9}{34}{s}; the final \SI{35}{s} guard leaves the largest reference
+sea interior.  This is an implementation guard, not an asymptotic approximation.
 
 The band-limited first and second raw moments are maintained by two identically
 weighted, debiased exponential accumulators.  For either raw moment $u_k$ the
@@ -203,7 +203,7 @@ update
 \begin{aligned}
 \ell_k&:=\log T_{z,k},\\
 \tau_{\ell,k}&=\clip\!\left(0.05e^{\ell_{k-1}},
- \SI{0.05}{s},\SI{30}{s}\right),\\
+ \SI{0.05}{s},\SI{35}{s}\right),\\
 \alpha_{\ell,k}&=1-e^{-\Delta t/\tau_{\ell,k}},\\
 \ell_k&=\ell_{k-1}
  +\alpha_{\ell,k}\left(\log \widehat T_{z,\mathrm{raw},k}-\ell_{k-1}\right).

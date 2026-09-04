@@ -50,10 +50,10 @@ c_{\mathrm{adapt}}=0.40.
 \end{equation}
 Before forming this horizon, the source guards the estimated sea-time base in
 $[\SI{0.5}{s},\SI{6}{s}]$; the realized EMA horizon is then guarded in
-$[\SI{0.05}{s},\SI{30}{s}]$.  For this common $\tau/\sigma_{aw}$ channel the
+$[\SI{0.05}{s},\SI{35}{s}]$.  For this common $\tau/\sigma_{aw}$ channel the
 reference seas remain comfortably inside both limits.  The acceleration-moment
-channel has its own requested horizon and does reach the universal \SI{30}{s}
-ceiling on the largest reference sea, as described in
+channel has its own requested horizon and remains below the universal
+\SI{35}{s} ceiling on the reference family, as described in
 Sec.~\ref{sec:adaptation-physical-sigma}.
 
 The regularizer candidate is smoothed separately,
@@ -72,7 +72,7 @@ The regularizer candidate is smoothed separately,
 where the measured default is $m_{r_S}=1.5$ and the deployed discrepancy-based
 horizon-shortening term is disabled.  Hence the source uses the proportional
 $1.5\tau_\star$ horizon followed by the same
-$[\SI{0.05}{s},\SI{30}{s}]$ guard.  Every valid physical sample contributes to
+$[\SI{0.05}{s},\SI{35}{s}]$ guard.  Every valid physical sample contributes to
 the wave-period statistics, acceleration statistics, and all adaptive candidate
 EMAs.
 
@@ -103,7 +103,7 @@ T_S=\clip(c_T\tau_{\mathrm{appl}},T_{S,\min},T_{S,\max}),
 c_T=\frac{\SI{15}{ms}}{\SI{1.1}{s}},
 \label{eq:engineering-pseudo-cadence-implementation}
 \end{equation}
-with $T_{S,\min}=\SI{5}{ms}$ and $T_{S,\max}=\SI{250}{ms}$.  For the deployed
+with $T_{S,\min}=\SI{5}{ms}$ and $T_{S,\max}=\SI{150}{ms}$.  For the deployed
 SpectralMSE law, the $T_S^{-1/2}$ dependence is already contained in the target,
 so the filter receives
 \begin{equation}
@@ -139,22 +139,22 @@ Bound or gate & Default & Bound or gate & Default \\
 \midrule
 IMU period $h$ & \SI{0.005}{s}
 & wave-period high-pass corner $\lambda/2\pi$ & \SI{0.02}{Hz} \\
-tuning-frequency floor & \SI{0.03}{Hz}
+tuning-frequency bounds & $[0.03,1.2]$ Hz
 & OU time scale $[\tau_{\min},\tau_{\max}]$ & $[0.02,12.0]$ s \\
-stationary scale ceiling $\sigma_{aw,\max}$ & \SI{6.0}{m.s^{-2}}
+stationary scale ceiling $\sigma_{aw,\max}$ & \SI{4.0}{m.s^{-2}}
 & tuner variance-channel noise floor & \SI{0.12}{m.s^{-2}} \\
 SpectralMSE sensor standard deviation $\sqrt{R_a}$ & \SI{0.0148}{m.s^{-2}}
 & residual accelerometer-bias OU & $\tau_b=\SI{5000}{s}$ \\
-base integral scale $[r_{S,\min},r_{S,\max}]$ & $[0.15,400]$ m\,s
+base integral scale $[r_{S,\min},r_{S,\max}]$ & $[0.15,100]$ m\,s
 & default coefficients $(c_\tau,c_\sigma,C_J)$ & $(1.0,0.9,0.0538)$ \\
 candidate EMA sampling / common EMA horizon & every valid sample / $0.40T_{\mathrm{sea}}$
 & $r_S$ smoothing horizon & $1.5\tau_\star$ \\
 wave-period moment EWMA & $\clip(4T_z,[20,180]\,\mathrm{s})$
 & log-period smoothing horizon & $0.05T_z=0.10T_{\mathrm{sea}}$ \\
 acceleration-variance horizon & $4T_{\mathrm{eff}}$ before clamps
-& dynamic time-base / EMA-horizon guards & $[0.5,6]$ s / $[0.05,30]$ s \\
+& dynamic time-base / EMA-horizon guards & $[0.5,6]$ s / $[0.05,35]$ s \\
 tuner-local variance request bounds & $[0.3,60]$ s
-& pseudo-update period bounds & $[5,250]$ ms \\
+& pseudo-update period bounds & $[5,150]$ ms \\
 parameter activation cadence & approximately $0.1$ s
 & covariance-maintenance cadence & approximately $0.1$ s \\
 online tuning warmup / magnetometer delay & $10/7$ s

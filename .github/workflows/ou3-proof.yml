@@ -4,18 +4,20 @@ on:
   push:
     paths:
       - "tools/ou3_*.py"
-      - "tools/ou3_proof_operating_domain.json"
+      - "tools/ou3_*.json"
       - "tests/validation/test_ou3_*.py"
       - "src/kalman_ou_iii/**"
       - "src/kalman_ou_common/**"
+      - "src/tuner/**"
       - ".github/workflows/ou3-proof.yml"
   pull_request:
     paths:
       - "tools/ou3_*.py"
-      - "tools/ou3_proof_operating_domain.json"
+      - "tools/ou3_*.json"
       - "tests/validation/test_ou3_*.py"
       - "src/kalman_ou_iii/**"
       - "src/kalman_ou_common/**"
+      - "src/tuner/**"
       - ".github/workflows/ou3-proof.yml"
   workflow_dispatch:
 
@@ -55,6 +57,8 @@ jobs:
             test_ou3_p3_ltv_translation_ucc_probe \
             test_ou3_p3_ltv_postmeasurement_certificate \
             test_ou3_p3_correlated_translation_segment \
+            test_ou3_p3_correlated_translation_covariance_upper \
+            test_ou3_p3_pseudo_scheduler_progress_certificate \
             test_ou3_p4_accelerometer_corotated_aw \
             test_ou3_p4_canonical_gate \
             test_ou3_p4_p3_metric_attachment \
@@ -68,10 +72,84 @@ jobs:
             test_ou3_vector_uco_certificate \
             test_ou3_verified_spd_inverse
 
+      - name: Certify pseudo-scheduler progress
+        run: |
+          python3 tools/ou3_p3_pseudo_scheduler_progress_certificate.py \
+            --output /tmp/ou3_p3_pseudo_scheduler_progress.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/ou3_p3_pseudo_scheduler_progress.json'))
+          assert d['validation_pass'], d['validation_failures']
+          assert d['core_progress_helper_markers_present'] is True
+          assert d['ou3_setter_progress_markers_present'] is True
+          assert d['legacy_setter_fmod_progress_reset_absent'] is True
+          assert d['shipping_scheduler_numeric_type'] == 'binary32/float'
+          assert d['fixed_max_period_first_fire_samples'] == 30
+          assert d['certified_uniform_max_gap_samples'] == 30
+          assert d['uniform_gap_within_translation_upper_bound'] is True
+          assert d['former_635_sample_zero_fire_cycle_broken'] is True
+          assert d['former_starvation_cycle_worst_gap_samples'] <= 30
+          assert d['scheduler_recurrence_certificate'] is True
+          assert d['P3_PROMOTED'] is False
+          print('SCHEDULER_GAP_SAMPLES', d['certified_uniform_max_gap_samples'])
+          print('SCHEDULER_GAP_S', d['certified_uniform_max_gap_s'])
+          PY
+
       - name: Validate source-complete P4 word timing decomposition
         run: |
           python3 tools/ou3_p4_source_word_timing.py \
             --output /tmp/ou3_p4_source_word_timing.json
+
+  sea0:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Compile retained SEA0 subcertificate tooling
+        run: |
+          python3 -m py_compile \
+            tools/ou3_sea3_spectral_moment_bridge.py \
+            tools/ou3_sea3_wave_period_frontend.py \
+            tests/validation/test_ou3_sea3_spectral_moment_bridge.py \
+            tests/validation/test_ou3_sea3_wave_period_frontend.py
+
+      - name: Certify retained SEA0 subcertificates
+        run: |
+          python3 tools/ou3_sea3_spectral_moment_bridge.py --check
+          python3 -m unittest -v \
+            tests.validation.test_ou3_sea3_spectral_moment_bridge \
+            tests.validation.test_ou3_sea3_wave_period_frontend
+          python3 tools/ou3_sea3_spectral_moment_bridge.py \
+            --output /tmp/ou3_sea3_spectral_moment_bridge.json
+          python3 tools/ou3_sea3_wave_period_frontend.py \
+            --output /tmp/ou3_sea3_wave_period_frontend.json
+          python3 - <<'PY'
+          import json
+          spectral=json.load(open('/tmp/ou3_sea3_spectral_moment_bridge.json'))
+          frontend=json.load(open('/tmp/ou3_sea3_wave_period_frontend.json'))
+          assert spectral['validation_pass']
+          assert spectral['SEA0_full_certificate_promoted'] is False
+          assert spectral['trajectory_replay_used'] is False
+          assert spectral['tuner_bridge_contract']['surface_elevation_Tz_may_be_substituted_for_tuner_Tz'] is False
+          assert frontend['validation_pass']
+          assert frontend['SEA0_full_certificate_promoted'] is False
+          assert frontend['P2_promoted_from_this_artifact'] is False
+          assert frontend['interpretation']['discrete_frontend_warping_is_current_limiter'] is False
+          print('SEA0 spectral Tz/Tp screen', spectral['gamma_continuum_screen']['surface_elevation_Tz_over_Tp_outer'])
+          print('SEA0 front-end period warp', frontend['validated_intervals']['period_hat_over_period'])
+          PY
+
+      - name: Upload retained SEA0 subcertificates
+        uses: actions/upload-artifact@v6
+        with:
+          name: ou3-sea0-subcertificates
+          path: |
+            /tmp/ou3_sea3_spectral_moment_bridge.json
+            /tmp/ou3_sea3_wave_period_frontend.json
+          retention-days: 7
 
   p2-correlation-interface:
     runs-on: ubuntu-latest
@@ -186,9 +264,6 @@ jobs:
           Path('/tmp/ou3_p3_canonical_gate.json').write_text(
               json.dumps(d, indent=2, sort_keys=True), encoding='utf-8')
 
-          # This reuses HIST.frontier_runtime and the already-built translation
-          # artifact in the same Python process. It is a P4 handoff object,
-          # never a second P3 route or promotion authority.
           m = M.build(translation_candidate=t, full_state_candidate=j)
           mf = M.validate(m)
           m['validation_pass'] = not mf

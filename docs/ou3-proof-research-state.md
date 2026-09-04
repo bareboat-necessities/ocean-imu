@@ -1,113 +1,155 @@
 # OU-III proof research state
 
-This is the short current-state ledger required by the root `AGENTS.md`. Replace stale research history rather than accumulating it here.
+This file is the current proof ledger. It records only the active theorem, completed certificate facts, open obligations, and the next falsifiable step. Historical routes belong in Git history, not here.
 
-## Current hypothesis
+## Active theorem
 
-Canonical P3 is still open. P4 remains blocked by P3 and P5 remains blocked by P4. The canonical usefulness gate stays exactly `delta >= 1e-18`; the declared physical operating domain is unchanged.
+The target is **uniform regional practical stability with finite capture for perturbations of physically admissible multimodal directional sea states**.
 
-PR #476 established that the current pseudo scheduler can erase already-earned elapsed time when tau changes its period:
+The sea class has fixed dimension with
 
-`set_pseudo_update_period_s(): elapsed <- fmod(elapsed,new_period)`.
+`M_max = 3`
 
-That is now the sharper limiter. Before lifting more upstream tuner state, test a progress-preserving period-retarget rule that never discards an owed S update. If the new period is already behind the retained elapsed time, park elapsed immediately below the new deadline so the next valid sample services the update; otherwise leave elapsed unchanged.
+and directional spectrum
 
-This is an implementation correction, not proof tuning. If adopted, all proof/evidence affected by the scheduler change must be rerun. No P3/P4/P5 promotion is permitted merely from the correction.
+`E(omega,theta) = sum_{r=1}^3 S_J(omega; H_r,T_p,r,gamma_r) D_r(theta; beta_r,s_r)`.
 
-## Controlling inequality
+Inactive partitions use `H_r = 0`; PM is the `gamma_r = 1` boundary; modal energies obey
 
-For the deployed float scheduler, `h = 0.004999999888241291 s` and the largest tau-scaled pseudo period is about `T_S,max = 0.16363635 s`.
+`H_s^2 = sum_r H_r^2`.
 
-With progress preserved across period changes, the worst no-fire execution is simply the largest fixed period: period increases cannot remove elapsed credit, while a period decrease below the retained elapsed credit makes the next sample due. Exact binary32 `periodic_update_due<float>` reaches the largest period on sample 33 from zero elapsed.
+The theorem covers one-, two-, and three-system seas, including wind sea + swell and crossing seas. It does **not** prove stability for every arbitrary bounded acceleration sequence.
 
-Therefore the candidate source-independent liveness contract is
+The physical peak periods `T_p,r` are not identified with the deployed tuner period. The shipping `WavePeriodEstimator` produces a zero-crossing/moment period after its own leaky front end and finite-memory statistics. For multimodal seas, spectral moments combine before the period ratio is formed.
 
-`N_S,max = 33 samples`,  i.e.  `T_gap,max <= 33 h ~= 0.165 s`.
+The source language to be certified is
 
-This is the master quantity to validate before rebuilding any covariance certificate. It is stronger and simpler than carrying the complete `WavePeriodEstimator -> tuner -> tau` state merely to prevent timer-reset starvation.
+`L_actual_sea subset Lhat_SEA3 subset L_current_source`,
 
-## Evidence retained from #476
+where `L_current_source` is the existing implementation-correlated P2 language. SEA3 refines that language; it does not redefine the frozen P2 contract.
 
-### Four path maxima are not a sufficient covariance-history quotient
+Because multiple active spectral partitions need not be commensurate, the stability object is a finite **sea window**, not a common wave cycle. The required nonlinear endpoint inequality is
 
-The exact legal P2 path
+`V_{k+N_W} <= rho V_k + gamma_s D_s,k + gamma_n D_n,k`, `rho < 1`,
 
-`729 --16--> 568 --16--> 407 --18--> 246 --25--> 85 --13--> 74 --13--> 63`
+and P4 must also certify a uniform within-window prefix bound
 
-reaches the full old adverse label `[9,3,39,9]` in 101 samples. Any covariance upper that keeps only those four path maxima loses the time order/residence duration needed by P3.
+`V_{k+l} <= kappa_V V_k + kappa_s D_s,k + kappa_n D_n,k`, `0 <= l < N_W`.
 
-A non-promoting ordered 635-sample Riccati diagnostic reduced the old translation ceiling by roughly `1e9`, `1e9`, `1e10`, and `1e3` in variance across `[v,p,S,a_w]`. Ordered propagation therefore has ample numerical headroom once the scheduler contract is valid.
+The prefix inequality is required for the theorem's full-sample practical-ISS claim; chart/source containment alone is insufficient.
 
-### The old fmod retarget rule admits exact starvation
+## Current proof architecture
 
-The P2 clock language contains a legal gap-13 self edge. PR #476 certified an exact binary32 tau-EMA/timer execution inside one P2 source cell with:
+1. **SEA0 — directional sea admissibility.** Physical three-partition parameter/rate domain, directional vessel/IMU response, finite-band moment enclosure, source-generated oscillator/IQC enclosure, and exact estimator/tuner source dynamics.
+2. **P1 — operating branch.** Startup/Normal-Live/hybrid assumptions, including no rejected accelerometer branch in declared Normal Live.
+3. **P2 — SEA3 reachable language.** Preserve sea phase/frequency continuity, direction/cross-axis correlation, modal-energy coupling, prior/period-estimator source mode, tuner memory, stage/commit history, and pseudo-scheduler phase. Prove both language inclusions.
+4. **P3 — finite-window linear certificate.** H=18 and A=21 information/covariance bounds and strict canonical contraction on the same SEA3 histories. The canonical usefulness threshold remains exactly `1e-18`.
+5. **P4 — nonlinear lifted dissipation.** Prove endpoint contraction, quantitative prefix gain, and an invariant inner funnel for exact shipping complete words.
+6. **P5 — finite capture.** Prove entry from the declared 45-degree entrance into the P4 funnel, then compose consecutive SEA3 windows.
 
-- `tau_low = 9.533334732055664 s`;
-- `tau_high = 9.533475875854492 s`;
-- `T_S,low = 0.1300000101327896 s`;
-- `T_S,high = 0.13000193238258362 s`;
-- legal tuning frequencies `0.05247608572244644 / 0.05241831764578819 Hz`;
-- zero S firings over 635 samples.
+The existing arbitrary implementation-source P2/P3 route remains a stronger diagnostic envelope and is not relabeled as the SEA3 theorem.
 
-Current-head CI also repeated that result with the tau EMA exponential evaluated through float `expf`, so the counterexample is not an artifact of Python binary64 `math.exp`.
+## Shipping theorem envelope
 
-### Absolute-time source-clock aging is not the right repair
+Current source/parity values used by the proof are:
 
-The dangerous source-clock gaps `13..16` arise only near binary64 uptime exponent 45 (about 1.11 million years), while normal-age spacing is 21 samples. That explains why deployed simulations never encounter the resonance, but silently imposing a deployment-lifetime bound would weaken the all-time theorem and is not accepted as the proof repair.
+- `imu_dt = 0.005 s`;
+- `0.03 <= f_tune <= 1.2 Hz`;
+- `0.02 <= tau <= 12 s`;
+- `sigma_aw <= 4 m/s^2`;
+- `0.15 <= R_S <= 100`;
+- `0.005 <= T_S <= 0.150 s`;
+- dynamic EMA horizon `<= 35 s`;
+- every valid Normal-Live IMU sample executes the accelerometer update;
+- accelerometer rejection is outside the declared Normal-Live theorem branch;
+- lever arm remains disabled;
+- the accelerometer vibration guard is restricted to its dormant/transparent proof branch.
 
-More importantly, nominal 21-sample commits do not by themselves create a source-independent liveness theorem while the setter may still erase elapsed progress. The timer retarget semantics, not another source partition, is the direct object to fix or certify.
+The pseudo-update scheduler uses the progress-preserving retarget helper. The retained scheduler certificate gives a maximum 30-sample recurrence at the 150 ms ceiling; the former starvation/fmod route is obsolete.
 
-## Failure classification / critic pass
+## Completed SEA0 subcertificates
 
-**Failure type:** implementation-level hybrid scheduler liveness defect exposed by the proof.
+### Spectral-moment bridge
 
-**Invalidated approaches:**
+`tools/ou3_sea3_spectral_moment_bridge.py` is replay free and non-promoting.
 
-- infer `S-gap <= cadence_max + h` while period changes use `fmod`;
-- repair the defect only by finer tau/source partitions;
-- replace the exact all-time source clock by nominal-age timing;
-- lift `WavePeriodEstimator` state before testing whether the timer itself can be made source-independent.
+Established analytical facts:
 
-**Current limiter:** establish and validate a progress-preserving period-retarget contract, then rebuild the ordered covariance upper against that actual shipping scheduler.
+- PM (`gamma = 1`) surface-elevation period ratio
+  `Tz/Tp = ((5/4)*pi)^(-1/4) = 0.710370680986...`;
+- for uncorrelated normalized partitions,
+  `1/Tz_mix^2 = sum_r w_r/Tz_r^2`,
+  with `w_r = H_r^2 / sum_j H_j^2`;
+- ideal unbanded JONSWAP acceleration variance is not a finite theorem quantity because `S_eta ~ omega^-5` while acceleration weighting gives `omega^4 S_eta ~ omega^-1`.
 
-## Alternatives
+The current padded numerical JONSWAP shape screen over `1 <= gamma <= 7` gives
 
-1. **Progress-preserving scheduler retarget (selected next experiment).** Preserve elapsed credit when the period changes; if the new deadline has already passed, make the next sample due. Validate the 33-sample source-independent gap and rerun filter evidence.
-2. **Full upstream source/timer reachability.** Keep the existing `fmod` behavior and lift `WavePeriodEstimator`, tuner, tau and timer state until starvation is excluded. This is much larger and remains the fallback if the scheduler correction materially harms filter behavior.
-3. **Finite-initialization / multiword covariance theorem.** Allow zero-S words and prove boundedness from actual initialization plus later information. This is unattractive while the current timer admits an indefinite exact no-S cycle.
+`0.709119591169 <= Tz_eta/Tp <= 0.829083684991`.
 
-## Next falsifiable experiment
+That continuum result is a feasibility screen, not an interval-integration promotion and not a P2 pruning certificate.
 
-Implement only the period-retarget semantic correction and test three obligations:
+### WavePeriodEstimator front end and startup causality
 
-1. elapsed below the new period is preserved exactly;
-2. a shortened period that is already overdue causes an S update on the next valid sample rather than discarding elapsed time;
-3. arbitrary legal period changes cannot extend the binary32 no-fire run beyond 33 samples, and the former 635-sample tau-EMA starvation witness is broken.
+`tools/ou3_sea3_wave_period_frontend.py` is replay free and non-promoting.
 
-Then run the ordinary OU-III validation/evidence suite. If scored behavior changes materially, abandon or redesign the correction rather than tuning around it. If behavior remains acceptable, replace the obsolete starvation probes by a scheduler-progress certificate and resume the ordered whole-word P3 covariance construction.
+Completed facts:
 
-## Retained facts
+- validated steady single-frequency discrete front-end period distortion is below about 59 ppm over the committed 5 ms / 0.03--1.2 Hz channel;
+- before `WavePeriodEstimator::getFrequencyHz()` is finite, the tuner uses fixed `TUNE_FREQ_PRIOR_HZ = 0.2 Hz`;
+- `update_tuner(..., tuner_frequency_hz_())` executes before the current sample calls `wave_period_.update(...)`;
+- a newly finite WavePeriodEstimator value can therefore affect the tuner no earlier than the following valid sample;
+- takeover uses the first finite positive estimator frequency and does **not** wait for `WavePeriodEstimator::isReady()`;
+- filter `TunerReady` is based on `SeaStateAutoTuner` readiness, not WavePeriodEstimator readiness;
+- with the default `0.02 Hz` leak corner, no WavePeriodEstimator moment can be accepted before `6/lambda ~= 47.75 s`; this is a lower bound on first possible finite period, not an exact readiness time.
 
-- Canonical P3 usefulness threshold is exactly `1e-18`.
-- Physical P2 tuner partition remains 800 states; arbitrary Cartesian tau/sigma/R_S switching remains forbidden.
-- Whole-word lower construction is still required; `P=0` remains a valid covariance lower start by Riccati monotonicity.
-- H=18 and A=21 both remain required after translation P3 closes.
-- No replay fitting, operating-domain shrink, gate tuning, or parameter tuning is allowed to make the proof pass.
-- A deployed-filter change is acceptable only when it corrects an independently identified implementation defect and is followed by renewed evidence/proof validation; it cannot be credited as proof closure by itself.
-- Lever arm remains disabled and the vibration guard remains on its dormant/transparent proof branch.
-- P4 cannot promote before canonical P3; P5 cannot promote before strict canonical P4 contraction and must ultimately prove finite capture from the declared 45-degree entrance into the inner funnel.
+Therefore P1/P2 must retain two frequency-source modes — fixed prior and estimator-driven — plus the one-sample takeover edge. `TunerReady` must not be interpreted as a settled sea-period estimate.
 
-## DEAD_ENDS / SHELVED
+## Current certificate status
 
-Do not resume these without a new mathematical fact:
+- **SEA0:** partial. Spectral shape/moment bridge and estimator startup/front-end subcertificates exist. Directional response, finite-band multimodal moments, hard finite-window sea enclosure, and full finite-memory estimator/tuner reachability remain open.
+- **P1:** existing operating-domain assumptions retained; SEA3-specific binding must include the prior/estimator source split above.
+- **P2:** current implementation-correlated interface remains valid; SEA3-to-P2 inclusion is not yet proved.
+- **P3:** existing canonical implementation-source route remains diagnostic. No SEA3 H/A finite-window contraction margin is promoted yet.
+- **P4:** no SEA3 nonlinear endpoint/prefix certificate is promoted yet.
+- **P5:** no SEA3 finite-capture certificate is promoted yet.
 
-- fixed-source 635-sample lower as a theorem proof;
-- global whole-word lower against the old global four-max upper;
-- 49-step gap-forgotten frontier;
-- exact-elapsed/Pareto/minimum-cost enumeration while retaining the same four path maxima;
-- independent Cartesian tau/sigma/R_S extrema;
-- any covariance upper using `gap <= cadence_max + h` with the old `fmod` retarget rule;
-- tau-cell subdivision or tau EMA alone as a proof of S recurrence;
-- silently replacing all-time clock semantics by nominal deployment timing;
-- blind subdivision, scalar-norm tightening, coefficient tuning, domain shrink, or gate tuning;
-- additional P4 micro-certificates before P3 has a real margin.
+No new SEA0 artifact promotes P2, P3, P4, or P5.
+
+## Current blocker
+
+The immediate missing soundness link is the **directional vessel/IMU response over the deployed finite wave band**.
+
+That response must preserve directional/cross-axis coupling and turn the three-partition spectrum into bounded response-weighted elevation/velocity/acceleration moments. Those moments must then be propagated through the already-certified fixed-prior/estimator source split, finite WavePeriodEstimator moments/log-period state, exact variance/tau/sigma/R_S adaptation, stage/commit logic, and pseudo scheduler.
+
+Until that construction exists, the physical sea spectrum cannot soundly prune the existing 800-state P2 tuner language.
+
+A Gaussian directional spectrum alone is not an infinite-time deterministic pointwise bound. The deterministic theorem needs a hard finite-window oscillator/IQC enclosure; a stochastic sea-realization statement is a later corollary.
+
+## Next proof increment
+
+Start from current `main` after this theorem/SEA0-foundation increment is merged.
+
+1. Declare and justify a provisional three-partition directional JONSWAP/PM parameter and rate domain.
+2. Define a conservative directional vessel/IMU response family over the deployed finite band.
+3. Compute response-weighted matrix spectral moments while preserving cross-axis/directional coupling.
+4. Propagate them through the retained fixed-prior/estimator source split and finite WavePeriodEstimator/log-period dynamics.
+5. Drive the exact shipping variance/tau/sigma/R_S adaptation, stage/commit logic, and pseudo scheduler.
+6. Mechanically prove `Lhat_SEA3 subset L_current_source`.
+7. Only after that inclusion passes, run high-precision complete-window H/A feasibility diagnostics with minimal enclosure pessimism.
+8. Report worst H/A ratio, limiting sea parameters/directions/phase state, maximizing error direction, operation-by-operation margin consumption, and distance to `rho = 1`.
+
+Interpretation rule: clear `rho < 1` justifies rigorous SEA3 enclosure work; near-one requires theorem/metric review; `rho > 1` falsifies the proposed SEA3 contraction formulation rather than authorizing blind subdivision.
+
+## Retired / forbidden proof shortcuts
+
+Do not reintroduce without a new mathematical reason:
+
+- independent Cartesian `tau/sigma/R_S` extrema;
+- arbitrary per-sample acceleration boxes as the intended marine theorem source;
+- replay-selected sea/source words as a certificate domain;
+- equating `T_p` with deployed `T_z` or averaging modal periods;
+- unbanded JONSWAP acceleration variance;
+- treating `TunerReady` as WavePeriodEstimator readiness;
+- common-period/Floquet reasoning that assumes three modal peaks are commensurate;
+- blind subdivision, scalar-norm tightening, gate tuning, operating-domain shrink, or deployed-filter tuning to obtain a pass;
+- parallel fallback P3/P4 workflows or diagnostic producers after their result has been absorbed into the canonical path.
