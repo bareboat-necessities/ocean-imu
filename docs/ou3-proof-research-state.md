@@ -127,6 +127,52 @@ finite-state or monotone argument can quantify over legal histories.
 words rather than a local search: a finite-state or monotone quotient that bounds
 every legal word, not the best one a greedy descent can find.
 
+## No clamp change can make canonical P3 pass
+
+Measured directly against `translation_upper`, since the canonical floor does not
+depend on the clamps. Canonical today is 11.72 orders short.
+
+| clamp change | worst upper `S` | `delta` | still short by | gain |
+| --- | --- | --- | --- | --- |
+| none (today) | 7.171e+09 | 1.905e-30 | 11.72 | -- |
+| `MAX_TUNE_FREQ_HZ` 1.5 -> 1.2 | 7.171e+09 | 1.905e-30 | 11.72 | **0.00** |
+| `MAX_SIGMA_A` 6 -> 4 | 7.168e+09 | 1.906e-30 | 11.72 | **0.00** |
+| `MAX_R_S` 400 -> 100 | 4.528e+08 | 3.017e-29 | 10.52 | 1.20 |
+| `PSEUDO_UPDATE_PERIOD_MAX` 0.25 -> 0.15 | 3.442e+09 | 3.968e-30 | 11.40 | 0.32 |
+| **all four (#478)** | 2.160e+08 | 6.324e-29 | **10.20** | 1.52 |
+
+And driving the dominant lever to absurdity does not help either -- `MAX_R_S`
+**saturates**:
+
+| `MAX_R_S` | `delta` | short by |
+| --- | --- | --- |
+| 100 | 3.017e-29 | 10.52 |
+| 10 | 1.456e-27 | 8.84 |
+| 1 | 2.761e-27 | 8.56 |
+| 0.15 (the minimum of its own range) | 2.786e-27 | **8.56** |
+
+**Taking `R_S` to the bottom of its declared range still leaves 8.56 orders.**
+
+### Why it saturates, and what that means
+
+`translation_upper` builds `rstack = 3 (rmax + s_nuis + s_proc)`. As `R_S` falls,
+`rmax` vanishes and the **process** corruption terms `s_nuis` and `s_proc`
+dominate. They do not depend on `R_S` at all, so the ceiling floors out.
+
+`translation_upper` is limited by process corruption, not by measurement noise.
+That is the same fact that made endpoint referencing worth 2.9 orders while
+crediting more observations was worth only 1.2: shortening the span over which
+process noise corrupts each observation is what pays, not strengthening the
+measurement.
+
+**Consequence for #478.** Its clamp tightening is worth 1.52 orders on the
+canonical margin and does not make P3 pass, so it has to be justified as
+theorem-envelope hygiene on its own merits rather than as a route to P3. Two of
+its four clamp moves -- `MAX_TUNE_FREQ_HZ` and `MAX_SIGMA_A` -- buy **nothing**
+here, 0.00 orders each.
+
+**Consequence generally: stop looking at clamps.** The deficit is structural.
+
 ## The closed-form route CANNOT be fed to the canonical gate as it stands
 
 The chain exists on paper: `ou3_p3_p2_v1_full_state_join.build()` accepts a
