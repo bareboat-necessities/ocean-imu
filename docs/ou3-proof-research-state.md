@@ -127,6 +127,40 @@ finite-state or monotone argument can quantify over legal histories.
 words rather than a local search: a finite-state or monotone quotient that bounds
 every legal word, not the best one a greedy descent can find.
 
+## What canonical wiring actually requires: both sides, not one
+
+Swapping the closed-form ceiling into the canonical producer alone does **not**
+reach the gate. The canonical floor is the limiter once the ceiling is repaired:
+
+| floor | ceiling | `delta` | vs `1e-18` |
+| --- | --- | --- | --- |
+| canonical | canonical (today) | 1.905e-30 | short by 11.72 |
+| canonical | closed form | 1.859e-25 | **short by 6.73** |
+| closed form | canonical | 4.419e-14 | clears by 4.65 |
+| closed form | closed form | 4.311e-09 | clears by 9.63 |
+
+So this is not a matter of plugging a better `Sigma_upper` into
+`phase_row`. The canonical floor is a stepwise zero-start segment quantity
+(1.366e-20 on `S`) and the closed-form floor is an information-form endpoint
+quantity (3.169e-04); they are different constructions and only the matched pair
+clears. Replacing both is a change to the producer's core rather than wiring
+into it, and it needs the canonical gate to render the verdict, not this module.
+
+### Floor premise verified on both measurement channels
+
+The floor rests on the other channels having no direct translation dependence.
+Checked in the source, not argued:
+
+* `measurement_update_acc_only` builds its innovation covariance from `OFF_TH`,
+  `OFF_AW`, `OFF_BA` and `OFF_BG` only;
+* `measurement_update_mag_only` (lines 2122-2198) references only
+  `P_th_th = Pext.block<3,3>(0,0)`. The `OFF_AW`/`OFF_BA` uses just below it
+  belong to `accelerometer_measurement_func`, which starts at 2199, not to the
+  magnetometer.
+
+Neither has `v`, `p` or `S` columns, so both reach translation solely through the
+cross-covariance with `a_w`, which is the channel the floor already accounts for.
+
 ## Mixed-source words are covered without enumeration
 
 The per-node rows pair one node's ceiling with its own floor, which is what
