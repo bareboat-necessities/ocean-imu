@@ -7,6 +7,8 @@ on:
       - "tests/validation/test_ou3_p3_four_max_global_label_witness.py"
       - "tools/ou3_p3_pseudo_scheduler_progress_certificate.py"
       - "tests/validation/test_ou3_p3_pseudo_scheduler_progress_certificate.py"
+      - "tools/ou3_p3_correlated_translation_covariance_upper.py"
+      - "tests/validation/test_ou3_p3_correlated_translation_covariance_upper.py"
       - "tools/ou3_p3_ordered_witness_covariance_diagnostic.py"
       - "tests/validation/test_ou3_p3_ordered_witness_covariance_diagnostic.py"
       - ".github/workflows/ou3-p3-whole-word-probe.yml"
@@ -33,22 +35,25 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Compile live P3 scheduler and ordered diagnostics
+      - name: Compile live P3 scheduler, endpoint upper, and ordered diagnostics
         run: |
           python3 -m py_compile \
             tools/ou3_p3_four_max_global_label_witness.py \
             tools/ou3_p3_pseudo_scheduler_progress_certificate.py \
+            tools/ou3_p3_correlated_translation_covariance_upper.py \
             tools/ou3_p3_ordered_witness_covariance_diagnostic.py \
             tests/validation/test_ou3_p3_four_max_global_label_witness.py \
             tests/validation/test_ou3_p3_pseudo_scheduler_progress_certificate.py \
+            tests/validation/test_ou3_p3_correlated_translation_covariance_upper.py \
             tests/validation/test_ou3_p3_ordered_witness_covariance_diagnostic.py
 
-      - name: Test witness, scheduler progress, and ordered extension invariants
+      - name: Test witness, scheduler progress, endpoint upper, and ordered extension invariants
         working-directory: tests/validation
         run: |
           python3 -m unittest -v \
             test_ou3_p3_four_max_global_label_witness \
             test_ou3_p3_pseudo_scheduler_progress_certificate \
+            test_ou3_p3_correlated_translation_covariance_upper \
             test_ou3_p3_ordered_witness_covariance_diagnostic
 
       - name: Certify progress-preserving pseudo-scheduler recurrence
@@ -82,6 +87,34 @@ jobs:
           print('TRANSLATION_BOUND_S', d['translation_upper_cadence_plus_h_s'])
           print('FORMER_CYCLE_FIRINGS', d['former_starvation_cycle_pseudo_firings'])
           print('FORMER_CYCLE_WORST_GAP', d['former_starvation_cycle_worst_gap_samples'])
+          PY
+
+      - name: Certify endpoint-referenced same-history covariance upper
+        run: |
+          python3 tools/ou3_p3_correlated_translation_covariance_upper.py \
+            --output /tmp/ou3_p3_correlated_translation_covariance_upper.json
+
+      - name: Enforce endpoint covariance-upper contract
+        run: |
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/ou3_p3_correlated_translation_covariance_upper.json'))
+          assert d['validation_pass'], d['validation_failures']
+          assert d['same_history_sufficient_statistics_used'] is True
+          assert d['independent_cartesian_tau_sigma_R_S_extrema_used'] is False
+          assert d['endpoint_referenced_translation_observability_used'] is True
+          assert d['post_reconstruction_forward_propagation_used'] is False
+          assert d['full_word_process_noise_dominator_retained'] is True
+          assert d['progress_preserving_scheduler_required_for_gap_bound'] is True
+          assert d['all_representative_histories_cover_their_covariance_word'] is True
+          assert d['P3_PROMOTED'] is False
+          assert d['P4_PROMOTED'] is False
+          for r in d['representative_rows']:
+              assert r['timing']['translation_reference'] == 'word_endpoint'
+              assert r['timing']['endpoint_referenced_observability'] is True
+              assert r['timing']['forward_propagation_after_endpoint_reconstruction'] is False
+          print('ENDPOINT_UPPER_ROWS', [r['Sigma_translation_diagonal_upper'] for r in d['representative_rows']])
+          print('ENDPOINT_WORDS', [r['timing']['word_horizon_s_upper'] for r in d['representative_rows']])
           PY
 
       - name: Find shortest legal global four-max label witness
@@ -143,6 +176,14 @@ jobs:
         with:
           name: ou3-p3-pseudo-scheduler-progress-certificate
           path: /tmp/ou3_p3_pseudo_scheduler_progress_certificate.json
+          retention-days: 7
+
+      - name: Upload endpoint covariance upper artifact
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: ou3-p3-endpoint-covariance-upper
+          path: /tmp/ou3_p3_correlated_translation_covariance_upper.json
           retention-days: 7
 
       - name: Upload four-max witness artifact
