@@ -1,8 +1,8 @@
 {
   "analysis_pipeline_files": {
     "tools/ou_validation.py": {
-      "bytes": 158937,
-      "sha256": "c9285c048bed8a12cc088cdd4f472f3773903a45eebbf62f012d0134f0d13d97"
+      "bytes": 158989,
+      "sha256": "4ee4902afb9910d5305e4973f5d7902b5fd844492e6f92920c50eaddae6af715"
     }
   },
   "build_environment": {
@@ -20,7 +20,7 @@
     },
     "numpy": "1.26.4",
     "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
-    "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]"
+    "python": "3.12.3 (main, Jul 15 2026, 23:46:41) [GCC 13.3.0]"
   },
   "command": [
     "/usr/bin/python3",
@@ -39,9 +39,9 @@
     "OU_II": {
       "nonstationary_endpoint_H4_0_Tp11_4": {
         "RS_ms": null,
-        "R_p0_std_m": 5.018312092178356,
-        "R_v0_std_mps": 2.599504462936422,
-        "sigma_a_mps2": 0.68073976,
+        "R_p0_std_m": 4.9590012875005005,
+        "R_v0_std_mps": 2.568781243928034,
+        "sigma_a_mps2": 0.670697689,
         "tau_s": 4.1867013
       },
       "stationary_jonswap_H0_270_L14_047_A30_00_P60_00": {
@@ -60,16 +60,16 @@
       },
       "stationary_jonswap_H4_000_L112_766_A30_00_P30_00": {
         "RS_ms": null,
-        "R_p0_std_m": 5.869123927525176,
-        "R_v0_std_mps": 3.459415772805547,
-        "sigma_a_mps2": 1.12520075,
+        "R_p0_std_m": 5.863677762124102,
+        "R_v0_std_mps": 3.4562056598956077,
+        "sigma_a_mps2": 1.12389576,
         "tau_s": 3.67938638
       },
       "stationary_jonswap_H8_500_L202_839_A_30_00_P72_00": {
         "RS_ms": null,
-        "R_p0_std_m": 9.196176819746391,
-        "R_v0_std_mps": 4.7640132409066664,
-        "sigma_a_mps2": 1.45168018,
+        "R_p0_std_m": 9.087030859643468,
+        "R_v0_std_mps": 4.707470961510158,
+        "sigma_a_mps2": 1.43017542,
         "tau_s": 4.18638563
       },
       "stationary_pmstokes_H0_270_L14_047_A30_00_P60_00": {
@@ -95,18 +95,18 @@
       },
       "stationary_pmstokes_H8_500_L202_839_A_30_00_P72_00": {
         "RS_ms": null,
-        "R_p0_std_m": 9.212696477099561,
-        "R_v0_std_mps": 4.678033102848454,
-        "sigma_a_mps2": 1.38742208,
+        "R_p0_std_m": 9.232036723476899,
+        "R_v0_std_mps": 4.687853714326899,
+        "sigma_a_mps2": 1.39106381,
         "tau_s": 4.27098799
       }
     },
     "OU_III": {
       "nonstationary_endpoint_H4_0_Tp11_4": {
-        "RS_ms": 9.946645503101418,
+        "RS_ms": 9.820840714992963,
         "R_p0_std_m": null,
         "R_v0_std_mps": null,
-        "sigma_a_mps2": 0.720855474,
+        "sigma_a_mps2": 0.710229814,
         "tau_s": 4.18643522
       },
       "stationary_jonswap_H0_270_L14_047_A30_00_P60_00": {
@@ -124,17 +124,17 @@
         "tau_s": 2.06921124
       },
       "stationary_jonswap_H4_000_L112_766_A30_00_P30_00": {
-        "RS_ms": 10.474013211933555,
+        "RS_ms": 10.46360458180942,
         "R_p0_std_m": null,
         "R_v0_std_mps": null,
-        "sigma_a_mps2": 1.19159365,
+        "sigma_a_mps2": 1.19021225,
         "tau_s": 3.67805982
       },
       "stationary_jonswap_H8_500_L202_839_A_30_00_P72_00": {
-        "RS_ms": 19.03169291251052,
+        "RS_ms": 18.789976849429408,
         "R_p0_std_m": null,
         "R_v0_std_mps": null,
-        "sigma_a_mps2": 1.53716588,
+        "sigma_a_mps2": 1.51441312,
         "tau_s": 4.18613911
       },
       "stationary_pmstokes_H0_270_L14_047_A30_00_P60_00": {
@@ -159,17 +159,17 @@
         "tau_s": 3.55198002
       },
       "stationary_pmstokes_H8_500_L202_839_A_30_00_P72_00": {
-        "RS_ms": 19.42384361151685,
+        "RS_ms": 19.467891106867803,
         "R_p0_std_m": null,
         "R_v0_std_mps": null,
-        "sigma_a_mps2": 1.46881187,
+        "sigma_a_mps2": 1.47269857,
         "tau_s": 4.27189016
       }
     }
   },
-  "git_branch": "claude/remove-obsolete-study-files-btq5bp",
-  "git_commit": "652074c96e2b07b82f1246faeaf4b7b84ae89fbc",
-  "git_diff_stat": "reports/results/ou_validation/ou_validation.json   | 23973 +++++++++----------\n .../ou_validation/ou_validation_attitude.svg       |   712 +-\n .../ou_validation/ou_validation_covsync.svg        |   610 +-\n .../ou_validation/ou_validation_displacement.svg   |   280 +-\n .../results/ou_validation/ou_validation_macros.tex |     2 +-\n .../ou_validation/ou_validation_paired_effects.csv |  1660 +-\n .../ou_validation/ou_validation_publication.tex    |     2 +-\n .../results/ou_validation/ou_validation_raw.csv    |   222 +-\n .../ou_validation/ou_validation_summary.csv        |  1610 +-\n .../ou_validation/ou_validation_transition.csv     | 15374 ++++++------\n .../ou_validation/ou_validation_transition.svg     | 10118 ++++----\n .../ou_validation/ou_validation_vertical.svg       |   670 +-\n 12 files changed, 27618 insertions(+), 27615 deletions(-)",
+  "git_branch": "main",
+  "git_commit": "7890c081b24219c125d9abdfabdaa18fb9dad95d",
+  "git_diff_stat": "reports/results/ou_validation/ou_validation.json   | 87963 +++++++++----------\n .../ou_validation/ou_validation_attitude.svg       |   712 +-\n .../ou_validation/ou_validation_covsync.svg        |   728 +-\n .../ou_validation/ou_validation_displacement.svg   |   686 +-\n .../results/ou_validation/ou_validation_macros.tex |   112 +-\n .../ou_validation/ou_validation_paired_effects.csv |  4288 +-\n .../ou_validation/ou_validation_publication.tex    |    36 +-\n .../results/ou_validation/ou_validation_raw.csv    |  1446 +-\n .../ou_validation/ou_validation_summary.csv        |  4514 +-\n .../results/ou_validation/ou_validation_table.tex  |    22 +-\n .../ou_validation/ou_validation_transition.csv     | 22594 ++---\n .../ou_validation/ou_validation_transition.svg     | 22147 +++--\n .../ou_validation/ou_validation_tuning_points.tex  |     8 +-\n .../ou_validation/ou_validation_vertical.svg       |   704 +-\n 14 files changed, 72976 insertions(+), 72984 deletions(-)",
   "implementation_files": {
     "src/ahrs/FrameConversions.h": {
       "bytes": 18427,
@@ -208,28 +208,28 @@
       "sha256": "18729d2a13fa4779da0d4a32aca1dbc2ca3431192ba5eeb5fe275f3245737ec5"
     },
     "src/kalman_common/SeaStateFusionFilterCommon.h": {
-      "bytes": 16581,
-      "sha256": "60e0c2c8e5df3ffaf0ee5e4b4a7361e804404b39077df1ec3bd6219f0bfc2d23"
+      "bytes": 16674,
+      "sha256": "f76b6266ab4f403d2cce61058a79f1fdb5bb55aab1355c62ce2adaf516d7ea9f"
     },
     "src/kalman_ou_common/KalmanOUCoreMath.h": {
-      "bytes": 15755,
-      "sha256": "4298c6fb6636ed3e91897257ed384fedc6143ee8e66a7c564459006d14075e2b"
+      "bytes": 16343,
+      "sha256": "609e630d78747792e596a6d6e0b165fce2a47c000e31989e3781861a1a1ad8de"
     },
     "src/kalman_ou_ii/Kalman3D_Wave_OU_II.h": {
-      "bytes": 93456,
-      "sha256": "8a25937650e343781beefc3a0493b73c44815c4250385900b94bf9dbb758e77c"
+      "bytes": 93457,
+      "sha256": "4f9889044de5875e04d68ca689a316c1d060e8015b6334b38b3569187de34882"
     },
     "src/kalman_ou_ii/SeaStateFusionFilter_OU_II.h": {
-      "bytes": 153407,
-      "sha256": "e361573d14843d47a2b78de517fe464a330cf059c461d31451f842b31917c99e"
+      "bytes": 153433,
+      "sha256": "3bc8d7cbde90d8d895548e76ecc32c7decafb657c7e286703618c753f9005287"
     },
     "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h": {
-      "bytes": 94965,
-      "sha256": "65ffe4239821bdccd5f26353325137a7947cfb97282274eef9a27c307bdfeb8f"
+      "bytes": 95087,
+      "sha256": "277e54284cfe838dfcd361f39b76f7503cfa0771296f547bad7945187f66b878"
     },
     "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": {
-      "bytes": 162271,
-      "sha256": "09495ead993e35e7bb2eb62718206cdf2357a051b1dcc96d341d254173b12935"
+      "bytes": 162355,
+      "sha256": "ab42455c7510c5d9f753363c9ac874a52e24f2bc893f1e6a4f55e0bed16f42c5"
     },
     "src/tuner/AccelVibrationGuard.h": {
       "bytes": 12356,
@@ -248,8 +248,8 @@
       "sha256": "3f454b9507bf52c7ed44b2e16082f0bc37640bc0bf8193ad59b2ee9781c691f3"
     },
     "src/tuner/SeaStateAdaptationLimits.h": {
-      "bytes": 2293,
-      "sha256": "c58a0f6d8819b2525775de88b5dab4f7204ab2117703e1e205bd387c05563224"
+      "bytes": 2279,
+      "sha256": "91129a09c6fe328380410fee927936eeab19d695428328d7825aed06ca082abb"
     },
     "src/tuner/SeaStateAutoTuner.h": {
       "bytes": 6209,
@@ -268,20 +268,20 @@
       "sha256": "6f2cde3f0ddba64504977f55adf55d6d8f1268e53cac2a869eb5bd1e559959d8"
     },
     "src/util/W3dSimCommon.cpp": {
-      "bytes": 100623,
-      "sha256": "e505949554b9ac8d5e218ac11993ab22bc0b98bf88f6e15b842a3477def22ac5"
+      "bytes": 100631,
+      "sha256": "29ec8d53d7eb8fbe1f0dea5e46f9e9dcea0c5c17f69ef346b88d6be0204014f0"
     },
     "src/util/W3dSimCommon.h": {
-      "bytes": 34310,
-      "sha256": "71ae918cb9b03e25615f2c2daaea51a9ec62434ea02deeb50cf537a80a6c967a"
+      "bytes": 34318,
+      "sha256": "b94813617759408893b4d282bc72998cf9f14c4568a2ce7dac0f356e990052b2"
     },
     "src/util/WaveFilesSupport.h": {
       "bytes": 13244,
       "sha256": "e46bccb68c72d841ed3adbd9b9aa0b24348804d71120a0ee3af775cdc9c98128"
     },
     "src/wave_dir/KalmanWaveDirection.h": {
-      "bytes": 15178,
-      "sha256": "1ad6a373b318c06436da0941be5b9c8e13b7c09c5338cd8057b95120c70736f6"
+      "bytes": 15192,
+      "sha256": "222ef72064fbd057ec2f9c5df18b3afade92cd9f9d92f823f83824ba577199ff"
     },
     "src/wave_dir/WaveDirectionDetector.h": {
       "bytes": 11595,
@@ -436,7 +436,7 @@
     },
     "wave_phase_method": "common random phase on the 0.02-1.60 Hz world-velocity and Euler spectra; displacement and acceleration analytically derived from velocity; body IMU and quaternion reconstructed"
   },
-  "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
+  "python": "3.12.3 (main, Jul 15 2026, 23:46:41) [GCC 13.3.0]",
   "replay_provenance": {
     "environment": {
       "compiler": {
@@ -453,10 +453,10 @@
       },
       "numpy": "1.26.4",
       "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
-      "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]"
+      "python": "3.12.3 (main, Jul 15 2026, 23:46:41) [GCC 13.3.0]"
     },
-    "generated_at": "2026-09-02T18:57:07+00:00",
-    "git_commit": "652074c96e2b07b82f1246faeaf4b7b84ae89fbc",
+    "generated_at": "2026-09-04T16:36:57+00:00",
+    "git_commit": "7890c081b24219c125d9abdfabdaa18fb9dad95d",
     "implementation_files": {
       "src/ahrs/FrameConversions.h": {
         "sha256": "7d402b7a283a21df7c739ca6d3a15782fec68eeedf745949a18cff807458d78d",
@@ -495,28 +495,28 @@
         "size_bytes": 13561
       },
       "src/kalman_common/SeaStateFusionFilterCommon.h": {
-        "sha256": "60e0c2c8e5df3ffaf0ee5e4b4a7361e804404b39077df1ec3bd6219f0bfc2d23",
-        "size_bytes": 16581
+        "sha256": "f76b6266ab4f403d2cce61058a79f1fdb5bb55aab1355c62ce2adaf516d7ea9f",
+        "size_bytes": 16674
       },
       "src/kalman_ou_common/KalmanOUCoreMath.h": {
-        "sha256": "4298c6fb6636ed3e91897257ed384fedc6143ee8e66a7c564459006d14075e2b",
-        "size_bytes": 15755
+        "sha256": "609e630d78747792e596a6d6e0b165fce2a47c000e31989e3781861a1a1ad8de",
+        "size_bytes": 16343
       },
       "src/kalman_ou_ii/Kalman3D_Wave_OU_II.h": {
-        "sha256": "8a25937650e343781beefc3a0493b73c44815c4250385900b94bf9dbb758e77c",
-        "size_bytes": 93456
+        "sha256": "4f9889044de5875e04d68ca689a316c1d060e8015b6334b38b3569187de34882",
+        "size_bytes": 93457
       },
       "src/kalman_ou_ii/SeaStateFusionFilter_OU_II.h": {
-        "sha256": "e361573d14843d47a2b78de517fe464a330cf059c461d31451f842b31917c99e",
-        "size_bytes": 153407
+        "sha256": "3bc8d7cbde90d8d895548e76ecc32c7decafb657c7e286703618c753f9005287",
+        "size_bytes": 153433
       },
       "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h": {
-        "sha256": "65ffe4239821bdccd5f26353325137a7947cfb97282274eef9a27c307bdfeb8f",
-        "size_bytes": 94965
+        "sha256": "277e54284cfe838dfcd361f39b76f7503cfa0771296f547bad7945187f66b878",
+        "size_bytes": 95087
       },
       "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": {
-        "sha256": "09495ead993e35e7bb2eb62718206cdf2357a051b1dcc96d341d254173b12935",
-        "size_bytes": 162271
+        "sha256": "ab42455c7510c5d9f753363c9ac874a52e24f2bc893f1e6a4f55e0bed16f42c5",
+        "size_bytes": 162355
       },
       "src/tuner/AccelVibrationGuard.h": {
         "sha256": "09ec79b607a4c7e2cc7961930813a3c0cf66d6f82c7bddde4b7dc4084a01398e",
@@ -535,8 +535,8 @@
         "size_bytes": 22706
       },
       "src/tuner/SeaStateAdaptationLimits.h": {
-        "sha256": "c58a0f6d8819b2525775de88b5dab4f7204ab2117703e1e205bd387c05563224",
-        "size_bytes": 2293
+        "sha256": "91129a09c6fe328380410fee927936eeab19d695428328d7825aed06ca082abb",
+        "size_bytes": 2279
       },
       "src/tuner/SeaStateAutoTuner.h": {
         "sha256": "00eab99b6806323836277b7986047a51c7631945f0494b6d95c2999edd49172e",
@@ -555,20 +555,20 @@
         "size_bytes": 10594
       },
       "src/util/W3dSimCommon.cpp": {
-        "sha256": "e505949554b9ac8d5e218ac11993ab22bc0b98bf88f6e15b842a3477def22ac5",
-        "size_bytes": 100623
+        "sha256": "29ec8d53d7eb8fbe1f0dea5e46f9e9dcea0c5c17f69ef346b88d6be0204014f0",
+        "size_bytes": 100631
       },
       "src/util/W3dSimCommon.h": {
-        "sha256": "71ae918cb9b03e25615f2c2daaea51a9ec62434ea02deeb50cf537a80a6c967a",
-        "size_bytes": 34310
+        "sha256": "b94813617759408893b4d282bc72998cf9f14c4568a2ce7dac0f356e990052b2",
+        "size_bytes": 34318
       },
       "src/util/WaveFilesSupport.h": {
         "sha256": "e46bccb68c72d841ed3adbd9b9aa0b24348804d71120a0ee3af775cdc9c98128",
         "size_bytes": 13244
       },
       "src/wave_dir/KalmanWaveDirection.h": {
-        "sha256": "1ad6a373b318c06436da0941be5b9c8e13b7c09c5338cd8057b95120c70736f6",
-        "size_bytes": 15178
+        "sha256": "222ef72064fbd057ec2f9c5df18b3afade92cd9f9d92f823f83824ba577199ff",
+        "size_bytes": 15192
       },
       "src/wave_dir/WaveDirectionDetector.h": {
         "sha256": "4c80e90daf9279280e165529177e0a7056184cd04086e1b8c9ac5b91fa961a8b",
@@ -630,71 +630,71 @@
       }
     },
     "raw_rows_schema": "normalized statistical replay rows; deterministic simulator gate columns excluded",
-    "raw_rows_sha256": "7669288bdae415ec90a538280e3d9ad1ec0e32d7831336707e6333e35ed2d62d",
-    "raw_rows_size_bytes": 568018,
+    "raw_rows_sha256": "68df7d8245d1c89fc2240529113eca0c8aaa71ec4f7e080ba35d5f05f8c32e5f",
+    "raw_rows_size_bytes": 568019,
     "workflow_run": {
       "job": "commit",
       "run_attempt": "1",
-      "run_id": "33664294598",
-      "workflow": "ou-full-evidence-branch"
+      "run_id": "33888901848",
+      "workflow": "build"
     }
   },
   "result_files": {
     "ou_validation.json": {
-      "bytes": 4824629,
-      "sha256": "60b19464216469b82f599541adb9cda45ef9d31b2cd4fdc11d053c172af6b229"
+      "bytes": 4824994,
+      "sha256": "0d6f2d33bda44db7e2efd990b9ead427cfe871d27e6c242d8e2d9c22e7ea1851"
     },
     "ou_validation_attitude.svg": {
-      "bytes": 83506,
-      "sha256": "42b74419ffd75950fdf584000fa800dd8f3eb92495cd813db454e94113ca6a62"
+      "bytes": 83514,
+      "sha256": "e0342bb223adbb574841c3b6b33ef83f8d56f6e3833c41aecaef12c0df90e2a8"
     },
     "ou_validation_covsync.svg": {
-      "bytes": 93473,
-      "sha256": "3d361736b59ccc2ff60a4646b005810e09f7cd62aaa598696f382caf7acea273"
+      "bytes": 93463,
+      "sha256": "78844620eb8903deed8f6e6f1660c65d5945dffec62b97c02b05d73131c4d502"
     },
     "ou_validation_displacement.svg": {
-      "bytes": 79874,
-      "sha256": "5b4a2b414e4d901592403996354bdf64b8c3bbec05d981478a8746e8ba17f5c4"
+      "bytes": 79875,
+      "sha256": "c49d469a448f7375699677b315212bf51c07a8d8a153ab4574e76eefccfac232"
     },
     "ou_validation_macros.tex": {
       "bytes": 10605,
-      "sha256": "3d70906b8dbc698bfe06a86f01e116d4aaab1a4674163200b984bf1e2ce95e94"
+      "sha256": "f45a939918cbd64f75c484388a7fab892d990d06c6bd80a7d0b0410a1f55e95c"
     },
     "ou_validation_paired_effects.csv": {
-      "bytes": 640507,
-      "sha256": "f4232bcab80e1a73ce1e49044ef71cd71c990332b053a85466c44d4d26b81cc2"
+      "bytes": 640702,
+      "sha256": "1f179c257c32bc8b62a331af42e59f6bf10e7ae303ebfc46916efa22532c6018"
     },
     "ou_validation_publication.tex": {
       "bytes": 13890,
-      "sha256": "8b114e50d10d231e8389da02fe702e895a26485143f79adba41eb53a234c9861"
+      "sha256": "0cbdddacbcfb91c4a5cf3cbbc6c791d8747555c6f6e075da72763d807ad7d9a6"
     },
     "ou_validation_raw.csv": {
-      "bytes": 568018,
-      "sha256": "7669288bdae415ec90a538280e3d9ad1ec0e32d7831336707e6333e35ed2d62d"
+      "bytes": 568019,
+      "sha256": "68df7d8245d1c89fc2240529113eca0c8aaa71ec4f7e080ba35d5f05f8c32e5f"
     },
     "ou_validation_summary.csv": {
-      "bytes": 710746,
-      "sha256": "e501f84d6e368c89dc163fe37ef342dd8f9a0dc862782f980a335ec93a220982"
+      "bytes": 710905,
+      "sha256": "defc6ddf238990dbba4df92ef894f45bf75663529665fd2eb8118fc723f76d54"
     },
     "ou_validation_table.tex": {
-      "bytes": 15647,
-      "sha256": "06b016b64ad9ffe61e788693ad2b09575235f79c8aa8a5ee0a6b39a36f93b7da"
+      "bytes": 15645,
+      "sha256": "2c71106bec70624b2bc1401c14d14e1c9b7d94041559103288298208e52abbe2"
     },
     "ou_validation_transition.csv": {
-      "bytes": 1267824,
-      "sha256": "66e46f3a10e1ff288945f6d04f3140357c5c10383e7803369d240d2c4d9c966c"
+      "bytes": 1267279,
+      "sha256": "d46c27e55372bc391c0ad3dda12e5b3d09df6797bed36e638cceffc19b3d1b6f"
     },
     "ou_validation_transition.svg": {
-      "bytes": 343867,
-      "sha256": "bfdb66bb2dbfd196403ea8011b99cd50d8f9ea03af6a143a47235bc9db5d078a"
+      "bytes": 343655,
+      "sha256": "84b96cc1e7bb70032368e6a5b6b36ed583130f5010fe34ed1687532da9289331"
     },
     "ou_validation_tuning_points.tex": {
       "bytes": 2123,
-      "sha256": "81d95bb6c675f4852f02f3d8afa4986dde62fd1df7223643634335f0fe43f6ef"
+      "sha256": "7db35356f2bbca6254485ec536d6f50017e624950681619c5f9348eee0e63a23"
     },
     "ou_validation_vertical.svg": {
-      "bytes": 82910,
-      "sha256": "aa4e01681e796a5fcb7697de38c052c5d00f077a60be0272d5241cd76b8735e5"
+      "bytes": 82906,
+      "sha256": "5cb74618f779e5caa8d266f957a09d21f2ea69ad522a5ef9a4e58a815eb4455c"
     }
   },
   "schema_version": 2,
@@ -734,25 +734,25 @@
   },
   "stationary_normalized_aggregate": {
     "OU_II": {
-      "bootstrap_ci95_high": 6.52229420045,
-      "bootstrap_ci95_low": 6.305107101256251,
-      "mean": 6.414452802749999,
+      "bootstrap_ci95_high": 6.5226618449624985,
+      "bootstrap_ci95_low": 6.3053904550625,
+      "mean": 6.41479206075,
       "n": 10,
-      "std": 0.18423150205257194
+      "std": 0.18434970295738748
     },
     "OU_III": {
-      "bootstrap_ci95_high": 4.704892982525,
-      "bootstrap_ci95_low": 4.6023532506,
-      "mean": 4.654550170249999,
+      "bootstrap_ci95_high": 4.705249572318751,
+      "bootstrap_ci95_low": 4.603018963925,
+      "mean": 4.655036514500001,
       "n": 10,
-      "std": 0.08821305850429619
+      "std": 0.08810375212079495
     },
     "OU_III_minus_OU_II": {
-      "bootstrap_ci95_high": -1.6737685421062496,
-      "bootstrap_ci95_low": -1.8536226476500002,
-      "cohen_dz": -11.334751167608882,
-      "hedges_gz": -10.358544496794071,
-      "mean_paired_difference": -1.7599026325,
+      "bootstrap_ci95_high": -1.6736133641,
+      "bootstrap_ci95_low": -1.8536431213562499,
+      "cohen_dz": -11.337172180630281,
+      "hedges_gz": -10.36075699980703,
+      "mean_paired_difference": -1.7597555462499996,
       "n_pairs": 10,
       "randomization_exact": true,
       "randomization_p_value": 0.001953125,
@@ -761,18 +761,18 @@
       "sign_p_value": 0.001953125,
       "sign_positive": 0,
       "sign_zero": 0,
-      "standard_error": 0.049099452617276086,
-      "std_paired_difference": 0.15526610213810804,
-      "t_ci95_high": -1.648831954072358,
-      "t_ci95_low": -1.870973310927642,
+      "standard_error": 0.04908486492576497,
+      "std_paired_difference": 0.15521997180712901,
+      "t_ci95_high": -1.6487178674731982,
+      "t_ci95_low": -1.8707932250268011,
       "t_critical_value": 2.2621571627982036,
-      "t_p_value": 5.06710501687042e-11,
-      "t_statistic": -35.84363040089702
+      "t_p_value": 5.0574362387044385e-11,
+      "t_statistic": -35.851286316289574
     }
   },
   "transition_diagnostic": {
     "decimation": 20,
-    "disp_z_pct_hs": 4.72308111,
+    "disp_z_pct_hs": 4.72380114,
     "family": "OU_III",
     "imu_noise_seed": 101,
     "initialization_seed": 1009,

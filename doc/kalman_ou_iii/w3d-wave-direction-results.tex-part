@@ -99,11 +99,11 @@ OU--III performance claim for this paper.
     JONSWAP     & 0.27 & $13.79\pm0.97$ & $15.19\pm0.94$ \\
     JONSWAP     & 1.50 & $12.03\pm0.53$ & $19.45\pm1.98$ \\
     JONSWAP     & 4.00 & $11.44\pm0.55$ & $23.92\pm1.90$ \\
-    JONSWAP     & 8.50 & $11.28\pm0.40$ & $27.04\pm2.30$ \\
+    JONSWAP     & 8.50 & $11.28\pm0.40$ & $27.00\pm2.34$ \\
     \addlinespace
     PM--Stokes  & 0.27 & $14.35\pm1.10$ & $14.43\pm1.28$ \\
     PM--Stokes  & 1.50 & $12.37\pm0.64$ & $15.09\pm0.74$ \\
-    PM--Stokes  & 4.00 & $12.10\pm0.79$ & $15.94\pm1.19$ \\
+    PM--Stokes  & 4.00 & $12.10\pm0.79$ & $15.94\pm1.18$ \\
     PM--Stokes  & 8.50 & $12.31\pm0.82$ & $16.63\pm1.24$ \\
     \bottomrule
   \end{tabular}
