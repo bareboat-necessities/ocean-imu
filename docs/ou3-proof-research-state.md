@@ -127,6 +127,37 @@ finite-state or monotone argument can quantify over legal histories.
 words rather than a local search: a finite-state or monotone quotient that bounds
 every legal word, not the best one a greedy descent can find.
 
+## Closed-form margin re-run under PR #478's clamp values
+
+Applied #478's clamps to a scratch copy of the source, re-ran the full 800-node
+tool, then restored `src/` (verified clean).
+
+| | main clamps | #478 clamps | gain |
+| --- | --- | --- | --- |
+| per-node worst | 1.505e-05 | **2.802e-04** | 1.27 orders |
+| mixed-word, all legal words | 3.809e-09 | **7.979e-08** | 1.32 orders |
+
+800/800 nodes validated in both runs. Under #478's clamps the per-node margin
+clears the `1e-18` gate by **14.45 orders** and the mixed-word bound by **10.90
+orders**. The binding node moves from 780 to 790 and the max S gap falls from 33
+to 31 samples.
+
+### `MAX_SIGMA_A` does not reach the proof tooling at all
+
+`ou3_source_reachable_matrix_p3.py:291` hardcodes
+`"sigma_aw_applied_safety": [0.05, 6.0]` instead of parsing `MAX_SIGMA_A` from
+the shipping header. So:
+
+* #478's `MAX_SIGMA_A` 6 -> 4 change is **invisible** to the proof chain, which
+  is part of why it measures at 0.00 orders;
+* the "#478 clamps" run above still used `sigma` up to 6.0, so it is conservative
+  -- the true figure under those clamps is slightly better than reported here;
+* it is a source-of-truth gap of exactly the kind that produced the
+  `PSEUDO_RATIO` defect recorded earlier in this ledger, where a hand-written
+  constant silently disagreed with the shipping one.
+
+Worth fixing on its own merits, independently of whether #478 lands.
+
 ## No clamp change can make canonical P3 pass
 
 Measured directly against `translation_upper`, since the canonical floor does not
