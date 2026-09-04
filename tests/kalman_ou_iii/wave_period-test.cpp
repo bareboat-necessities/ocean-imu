@@ -34,6 +34,61 @@ bool reciprocal_contract(const WavePeriodEstimator& estimator) {
            std::abs(T * f - 1.0f) < 2e-6f;
 }
 
+
+// Startup uses the same estimator state as steady operation.  The moments may
+// begin learning after 3/lambda, but the period is not allowed to drive Live
+// until 4/lambda and at least one estimated cycle of moment history.  Strict
+// isReady() remains a later 6/lambda + weight diagnostic.
+bool test_startup_usable_gate_precedes_strict_ready() {
+    constexpr float prior_period = 1.0f / 0.2f;
+    for (float period : {2.3f, 8.4f}) {
+        WavePeriodEstimator estimator;
+        const float omega = kTwoPi / period;
+
+        auto drive_until = [&](float end_sec, float start_sec) {
+            const int first = static_cast<int>(start_sec / kDt);
+            const int last = static_cast<int>(end_sec / kDt);
+            for (int i = first; i < last; ++i) {
+                const float t = static_cast<float>(i) * kDt;
+                estimator.update(kDt, -omega * omega * std::sin(omega * t));
+            }
+        };
+
+        drive_until(30.0f, 0.0f);
+        if (!check(!estimator.hasUsablePeriod(),
+                   "wave period became startup-usable before the 4/lambda gate")) return false;
+        if (!check(!estimator.isReady(),
+                   "strict period readiness cleared during early startup")) return false;
+
+        drive_until(45.0f, 30.0f);
+        if (!check(estimator.hasUsablePeriod(),
+                   "measured period did not become startup-usable by 45 s")) return false;
+        if (!check(!estimator.isReady(),
+                   "strict readiness must remain below 6/lambda at 45 s")) return false;
+
+        const float measured = estimator.getPeriodSec();
+        if (!check(std::isfinite(measured),
+                   "startup-usable period is not finite")) return false;
+        if (!check(std::abs(measured - period) < std::abs(prior_period - period),
+                   "startup-usable period is not better than the 0.2 Hz prior")) {
+            std::fprintf(stderr, "  period %.2f measured %.3f prior %.3f\n",
+                         period, measured, prior_period);
+            return false;
+        }
+    }
+
+    WavePeriodEstimator reset_case;
+    const float omega = kTwoPi / 6.0f;
+    for (int i = 0; i < static_cast<int>(45.0f / kDt); ++i) {
+        const float t = static_cast<float>(i) * kDt;
+        reset_case.update(kDt, -omega * omega * std::sin(omega * t));
+    }
+    if (!check(reset_case.hasUsablePeriod(), "reset case never became startup-usable")) return false;
+    reset_case.reset();
+    return check(!reset_case.hasUsablePeriod() && !reset_case.isReady(),
+                 "reset left startup usability/readiness asserted");
+}
+
 // Single sinusoid: acceleration -omega^2 A sin(omega t) belongs to elevation
 // A sin(omega t), so T_z is exactly the sinusoid period.
 bool test_monochromatic() {
@@ -299,6 +354,7 @@ bool test_no_signal_stays_unready() {
 } // namespace
 
 int main() {
+    if (!test_startup_usable_gate_precedes_strict_ready()) return 1;
     if (!test_monochromatic()) return 1;
     if (!test_broadband_tracks_sea_state()) return 1;
     if (!test_moment_horizon_uses_canonical_period()) return 1;

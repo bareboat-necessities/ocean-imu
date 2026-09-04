@@ -25,11 +25,10 @@
     "online_tune_warmup_sec": 10.0,
     "tune_frequency_prior_hz": 0.2,
     "wave_period_estimator_high_pass_hz": 0.02,
-    "wave_period_estimator_integrator_settle_time_definition": "6/lambda, lambda=2*pi*high_pass_hz",
     "tuner_ready_requires_wave_period_estimator_ready": false,
-    "live_entry_may_precede_wave_period_estimator_first_valid_period": true,
-    "tuning_frequency_source_before_first_valid_wave_period": "fixed TUNE_FREQ_PRIOR_HZ",
-    "tuning_frequency_takeover_condition": "first finite positive WavePeriodEstimator frequency; does not wait for WavePeriodEstimator::isReady()",
+    "live_entry_may_precede_wave_period_estimator_first_valid_period": false,
+    "tuning_frequency_source_before_first_valid_wave_period": "fixed TUNE_FREQ_PRIOR_HZ until WavePeriodEstimator::hasUsablePeriod()",
+    "tuning_frequency_takeover_condition": "WavePeriodEstimator::hasUsablePeriod(); does not wait for WavePeriodEstimator::isReady()",
     "physical_handoff_coordinate_bounds": {
       "gyro_bias_error_norm_upper_rad_s": 0.01,
       "velocity_error_norm_upper_mps": 5.0,
@@ -39,7 +38,12 @@
       "accelerometer_bias_error_norm_upper_mps2": 0.5
     },
     "latent_acceleration_error_bound_role": "DECLARED_STARTUP_WAVE_ERROR_ENVELOPE_0P3G_NOT_REPLAY_FIT_OR_PROOF_RETUNING",
-    "latent_acceleration_error_fraction_g": 0.3
+    "latent_acceleration_error_fraction_g": 0.3,
+    "wave_period_estimator_moment_start_time_definition": "3/lambda, lambda=2*pi*high_pass_hz",
+    "wave_period_estimator_usable_time_floor_definition": "4/lambda plus at least one current estimated period of accumulated moment history",
+    "wave_period_estimator_strict_ready_time_floor_definition": "6/lambda plus debiased moment weight > 0.5",
+    "tuner_ready_requires_wave_period_estimator_usable": true,
+    "live_entry_requires_wave_period_estimator_usable": true
   },
   "initial_filter_entrance": {
     "scope": "DECLARED_ERROR_SET_PRESENTED_TO_P5_CAPTURE",
@@ -62,7 +66,7 @@
       "position": "delta_p / Hs",
       "velocity": "delta_v * Ts / Hs",
       "integral_displacement": "delta_S / (Hs * Ts)",
-      "latent_acceleration": "delta_a_w * Ts² / Hs",
+      "latent_acceleration": "delta_a_w * Ts\u00b2 / Hs",
       "Ts_role": "positive characteristic sea period used only as a coordinate scale unless a separate theorem bound is declared"
     },
     "additional_hard_sea_scaled_bounds_declared": false,

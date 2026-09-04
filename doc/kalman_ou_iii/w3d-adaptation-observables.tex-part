@@ -220,5 +220,5 @@ Thus the numerical horizon equals $0.05T_z=0.10T_{\mathrm{sea}}$, but the
 implemented state is log period, not a bounded EMA of $1/T_z$.  This smoother
 uses the universal final horizon guard only; the separate
 $[\SI{0.5}{s},\SI{6}{s}]$ dynamic time-base guard is applied later when a
-consumer turns the estimated sea time into its own EMA horizon.  Before the
-first valid period, the scheduler uses the fixed bounded wave-band prior.
+consumer turns the estimated sea time into its own EMA horizon.  Before the period state passes the startup-usable gate, the scheduler uses the
+fixed bounded wave-band prior; strict diagnostic readiness remains separate.
