@@ -151,15 +151,30 @@ Let
 
 `W(omega)=omega^4/(omega^2+lambda^2)^4`.
 
-For **any** nonnegative input specific-force spectrum with finite weighted
-moments,
+For any nonnegative input specific-force spectrum whose weighted moments
+satisfy
+
+`0 < int W S_a < infinity`,
+
+`int omega^2 W S_a < infinity`,
+
+the identity is
 
 `sigma_v^2/sigma_eta^2 - lambda^2 = int omega^2 W S_a / int W S_a`.
 
+A finite, strictly positive weighted denominator is a precondition of the
+identity rather than an aside: the producer records it as
+`weighted_denominator_finite_and_strictly_positive_required` and the validator
+rejects an artifact that drops it. Source parity is pinned to the exact
+shipping recurrence *and* to the order in which the two high-pass stages, their
+previous-sample states, and the two leaky integrations are updated, so a
+reordered estimator cannot inherit the transfer relation.
+
 Thus the leak subtraction is exactly a weighted mean-square-frequency identity;
 it is not a narrow-band or single-sinusoid approximation. This does not replace
-the still-open exact discrete finite-EWMA/log-period transient enclosure and is
-not itself a P2-pruning certificate.
+the still-open exact discrete finite-EWMA/log-period transient enclosure, is not
+itself a P2-pruning certificate, and does not identify the discrete estimator
+with its continuous-time steady state.
 
 ### Robust directional RAO envelope family
 
@@ -218,10 +233,13 @@ PM is used only because its normalization is closed form; this is **not** a
 PM-only theorem and no claim is made that `gamma=1` is the worst JONSWAP
 member.
 
-Using only positive spectral mass on `x=f/f_p in [1,3]`, the certificate obtains
-an outward-rounded lower bound on acceleration mean square that is strictly
-larger than `4^2`. Therefore the complete independent outer product cannot be
-promoted into P1.
+Using only positive spectral mass on `x=f/f_p in [1,9]`, the certificate obtains
+an outward-rounded lower bound on acceleration mean square of about
+`21.49 m^2/s^4`, i.e. an RMS lower bound of about `4.64 m/s^2`, strictly larger
+than the `4^2` cap. The witness parameters are additionally certified to be
+finite and to lie inside the declared RAO parameter ranges, so the refutation
+rests on an admitted family member rather than an out-of-family extreme.
+Therefore the complete independent outer product cannot be promoted into P1.
 
 The correct physical theorem domain is consequently a **coupled SEA3 set**:
 sea and RAO parameters are not independently maximized, and a physical pair is
@@ -247,6 +265,11 @@ P2.
 The result is deliberately **non-pruning** and still contains all 800 current P2
 physical tuner cells. That is sound right inclusion, not yet a source
 reachability reduction.
+
+The inclusion artifact records the exact RAO parameter box it consumed as an
+independent snapshot of the response-enclosure box, and the validator requires
+structural equality between the two. A stale or substituted box is therefore
+rejected rather than inherited.
 
 ## Current certificate status
 
@@ -324,6 +347,8 @@ Do not reintroduce:
 - an independent Cartesian product of sea extremes and RAO-envelope extremes
   as if it automatically satisfied P1;
 - independent Cartesian `tau/sigma/R_S` extrema;
+- an aliased rather than snapshotted record of the RAO parameter box consumed
+  by the P2 inclusion, which makes the box-equality check vacuous;
 - replay-selected sea/source words as a certificate domain;
 - equating physical `T_p` with deployed `T_z` or averaging modal periods;
 - unbanded JONSWAP surface-acceleration variance;

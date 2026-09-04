@@ -29,6 +29,7 @@ full-P2 fail is only inconclusive until SEA3-specific source pruning is built.
 from __future__ import annotations
 
 import argparse
+import copy
 import json
 import math
 from pathlib import Path
@@ -307,6 +308,11 @@ def _inclusion_from_p2(response: dict, frontend: dict, p2: dict, repo: Path = RE
     if bridge["all_shipping_bridge_markers_present"] is not True:
         raise RuntimeError("shipping SEA3->P2 clamp/staging bridge changed")
 
+    # Snapshot, not an alias. `validate` re-checks the consumed box against the
+    # response-enclosure box; sharing one dict would make that check compare an
+    # object with itself and pass for any substituted box.
+    consumed_box = copy.deepcopy(response["rao_envelope_parameter_box"])
+
     c = PATH._constants()
     tau_lo = max(c["min_tau"], c["tau_coeff"] * 0.5 / c["max_freq"])
     projected = {
@@ -343,7 +349,7 @@ def _inclusion_from_p2(response: dict, frontend: dict, p2: dict, repo: Path = RE
         "projected_source_domain": projected,
         "fixed_prior_frequency_hz": prior_iv,
         "fixed_prior_covered_by_P2_frequency_alphabet": prior_covered,
-        "RAO_parameter_box_consumed": response["rao_envelope_parameter_box"],
+        "RAO_parameter_box_consumed": consumed_box,
         "single_RAO_selected_for_inclusion": False,
         "estimator_frequency_is_clamped_before_tau_target": True,
         "sigma_variance_history_need_not_be_independently_bounded_for_right_inclusion": True,
