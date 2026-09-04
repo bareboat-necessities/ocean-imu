@@ -30,7 +30,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Compile and test SEA3 directional bridge
+      - name: Compile and test uniform SEA3 RAO-family bridge
         run: |
           python3 -m py_compile \
             tools/ou3_sea3_directional_p2_ha_feasibility.py \
@@ -38,7 +38,7 @@ jobs:
           python3 -m unittest -v \
             tests.validation.test_ou3_sea3_directional_p2_ha_feasibility
 
-      - name: Build directional response enclosure and SEA3-to-P2 inclusion
+      - name: Build uniform directional response enclosure and SEA3-to-P2 inclusion
         run: |
           python3 tools/ou3_sea3_directional_p2_ha_feasibility.py \
             --output /tmp/ou3_sea3_directional_p2_ha_feasibility.json
@@ -48,14 +48,21 @@ jobs:
           assert d['validation_pass'], d['validation_failures']
           r=d['response_enclosure']
           p=d['p2_inclusion']
-          assert r['response_hypothesis_status'] == 'PROVISIONAL_NOT_DATA_DERIVED'
+          assert r['response_hypothesis_status'] == 'UNIFORM_PARAMETRIC_FAMILY'
           assert r['physical_SEA0_promoted'] is False
+          assert r['single_nominal_RAO_used'] is False
+          assert r['finite_RAO_grid_used'] is False
+          assert r['fixed_numeric_RAO_gain_cap_used'] is False
+          assert r['rao_family_quantifier']['gain'] == 'for every finite G >= 0'
+          assert r['rao_family_quantifier']['phase'] == 'arbitrary complex phase'
+          assert r['finite_band_moments_established_for_every_finite_G'] is True
           assert r['directional_cross_axis_coupling']['rank_one_complex_outer_product_retained_before_outer_bound'] is True
           assert p['SEA3_TO_P2_INCLUSION_CERTIFICATE'] == 'PASS'
           assert p['Lhat_SEA3_subset_L_current_source'] is True
           assert p['P2_pruned_by_SEA3'] is False
-          assert p['provisional_directional_response_gain_used_for_inclusion'] is False
-          print('response accel trace/Hs^2 upper', r['matrix_moment_trace_upper_per_Hs2']['acceleration'][1])
+          assert p['single_RAO_or_gain_selected_for_inclusion'] is False
+          print('normalized response accel trace/(G^2 Hs^2) upper', r['normalized_trace_upper_per_G2_Hs2']['acceleration'][1])
+          print('RAO gain quantifier', r['rao_family_quantifier']['gain'])
           print('SEA3 -> P2', p['SEA3_TO_P2_INCLUSION_CERTIFICATE'])
           print('P2 states', p['P2_physical_source_states'])
           PY
@@ -93,7 +100,7 @@ jobs:
             --p3-candidate /tmp/ou3_p3_p2_v1_full_state_join.json \
             --output /tmp/ou3_p3_canonical_gate.json
 
-      - name: Attach H/A feasibility to the SEA3 inclusion chain
+      - name: Attach H/A feasibility to the uniform RAO-family inclusion chain
         run: |
           python3 tools/ou3_sea3_directional_p2_ha_feasibility.py \
             --inclusion-candidate sea3-inclusion/ou3_sea3_directional_p2_ha_feasibility.json \
@@ -105,6 +112,8 @@ jobs:
           d=json.load(open('/tmp/ou3_sea3_directional_p2_ha_final.json'))
           assert d['validation_pass'], d['validation_failures']
           h=d['ha_feasibility']
+          assert h['uniform_over_entire_RAO_family'] is True
+          assert h['unchanged_useful_gate'] == 1e-18
           assert h['SEA3_HA_FEASIBILITY'] in (
               'PASS_BY_P2_SUPERSET',
               'INCONCLUSIVE_REQUIRES_SEA3_NARROWING',
@@ -114,7 +123,7 @@ jobs:
           print('H margin', h['H_relative_Riccati_injection_margin_lower'])
           print('A margin', h['A_relative_Riccati_injection_margin_lower'])
           print('full-P2 worst H/A', h['full_P2_canonical_worst_H_A_margin'])
-          print('SEA3 H/A feasibility', h['SEA3_HA_FEASIBILITY'])
+          print('SEA3 H/A feasibility over all finite RAOs', h['SEA3_HA_FEASIBILITY'])
           PY
 
       - name: Upload SEA3 H/A feasibility artifacts
