@@ -21,22 +21,24 @@ class PseudoSchedulerProgressCertificateTests(unittest.TestCase):
         fire, _ = P._due(dt, period, armed)
         self.assertTrue(fire)
 
-    def test_fixed_max_period_fires_on_sample_33(self):
+    def test_fixed_max_period_fires_on_deployed_bound(self):
         sched = P.BASE.source_schedule()
         tau_hi = float(sched["tau_applied_invariant_s"][1])
         period = P._period_from_tau(tau_hi, sched)
         sample, _ = P._first_fire_from_zero(P._f32(sched["dt_s"]), period)
-        self.assertEqual(sample, 33)
+        self.assertEqual(sample, P.DEPLOYED_MAX_GAP_SAMPLES)
+        self.assertEqual(sample, 30)
 
     def test_former_635_sample_starvation_cycle_is_broken(self):
         sched = P.BASE.source_schedule()
         fires, worst, _ = P._replay_former_starvation(P._f32(sched["dt_s"]))
         self.assertGreater(len(fires), 0)
-        self.assertLessEqual(worst, 33)
+        self.assertLessEqual(worst, P.DEPLOYED_MAX_GAP_SAMPLES)
 
     def test_full_certificate_validates(self):
         d = P.build()
         self.assertEqual(P.validate(d), [])
+        self.assertEqual(d["certified_uniform_max_gap_samples"], P.DEPLOYED_MAX_GAP_SAMPLES)
         self.assertTrue(d["scheduler_recurrence_certificate"])
         self.assertFalse(d["P3_PROMOTED"])
 
