@@ -18,9 +18,48 @@ the corresponding ideal zero-crossing period is
  \label{eq:sea3-tz-moment}
 \end{equation}
 For a multimodal sea the spectral moments add before this ratio is formed;
-periods are not averaged independently.  Consequently two partitions with the
-same $T_p$ but different $\gamma$, energy share, direction, or vessel response
-need not induce the same tuner period.
+periods are not averaged independently.  If the normalized partition energies
+are
+\begin{equation}
+ w_r=\frac{H_r^2}{\sum_j H_j^2},
+\end{equation}
+then the zero-crossing periods of the component elevation spectra obey the exact
+mixture identity
+\begin{equation}
+ \boxed{
+ \frac{1}{T_{z,\mathrm{mix}}^2}
+ =\sum_r\frac{w_r}{T_{z,r}^2}.
+ }
+ \label{eq:sea3-multimodal-tz}
+\end{equation}
+Thus $T_{z,\mathrm{mix}}$ lies between the active component extrema, but it is
+not an arithmetic average of their periods.  Consequently two partitions with
+the same $T_p$ but different $\gamma$, energy share, direction, or vessel
+response need not induce the same tuner period.
+
+The first replay-free SEA0 spectral subcertificate,
+\texttt{ou3\_sea3\_spectral\_moment\_bridge.json}, isolates the frequency-shape
+part of this bridge before any vessel response is applied.  On its provisional
+JONSWAP shape screen $1\le\gamma\le7$ with the standard piecewise peak widths
+$0.07/0.09$, the PM boundary $\gamma=1$ is analytical:
+\begin{equation}
+ \boxed{
+ \left.\frac{T_{z,\eta}}{T_p}\right|_{\gamma=1}
+ =\left(\frac54\pi\right)^{-1/4}
+ =0.710370680986\ldots .
+ }
+ \label{eq:sea3-pm-tz-tp}
+\end{equation}
+A 240-cell floating-point continuum screen, with conservative quadrature and
+analytical tail pads, currently encloses the \emph{surface-elevation} ratio as
+\begin{equation}
+ 0.70911959\lesssim\frac{T_{z,\eta}}{T_p}\lesssim0.82908369.
+ \label{eq:sea3-jonswap-tz-tp-screen}
+\end{equation}
+This numerical interval is deliberately non-promoting: its quadrature has not
+yet been replaced by validated interval integration.  The exact PM identity and
+Eq.~\eqref{eq:sea3-multimodal-tz} are analytical; the continuum endpoints are
+only a feasibility screen for the next SEA0 construction.
 
 SEA0 must therefore certify a relation
 \begin{equation}
@@ -36,8 +75,9 @@ Eq.~\eqref{eq:sea3-matrix-spectrum} and the exact deployed
 WavePeriodEstimator front end.  For an analytical spectral enclosure,
 Eq.~\eqref{eq:sea3-tz-moment} supplies the moment bridge; for the final source
 certificate the leaky filters, finite EMAs, log-period state, initialization,
-and clamps are propagated explicitly.  Thus a bound on $T_{p,r}$ alone is never
-substituted for a bound on the tuner state.
+and clamps are propagated explicitly.  Thus neither the surface quantity
+$T_{z,\eta}$ nor a bound on $T_{p,r}$ alone is substituted for a bound on the
+shipping tuner state.
 
 The same qualification is essential for acceleration variance.  The ideal
 JONSWAP high-frequency elevation tail is proportional to $\omega^{-5}$, whereas
@@ -53,5 +93,6 @@ The $0.03$--$1.2$ Hz numbers quoted in the screening estimates are therefore
 bounds on the \emph{committed tuning-frequency channel}, not an asserted
 $T_p$ range for the physical sea.  The SEA3 P2 refinement may use a tighter
 $T_z/T_p$ relation only after SEA0 has certified it over the declared
-JONSWAP/PM mixture and directional response family.  This certified bridge is
-a SEA0 promotion gate, not an optional tightening of the later P2/P3 search.
+JONSWAP/PM mixture and directional response family and propagated it through
+the exact estimator state.  This response-plus-estimator bridge is a SEA0
+promotion gate, not an optional tightening of the later P2/P3 search.
