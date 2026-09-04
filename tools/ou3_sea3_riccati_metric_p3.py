@@ -25,10 +25,11 @@ and hence
     V_+ <= (1-delta) V.
 
 This file is the *gate*, not a second proof route.  It consumes the quantitative
-result from ``ou3_sea3_riccati_tube.py`` and promotes P3 if and only if both H18
-and A21 margins meet the unchanged 1e-18 useful-margin gate.  No 800-state P2
-graph, P2-V1 history frontier, terminal source/phase metric attachment, or
-source-history enumeration may substitute for that verdict.
+result from the canonical SEA3 Riccati tube (with the algebraically factored
+small-x numerical backend) and promotes P3 if and only if both H18 and A21
+margins meet the unchanged 1e-18 useful-margin gate.  No 800-state P2 graph,
+P2-V1 history frontier, terminal source/phase metric attachment, or source-
+history enumeration may substitute for that verdict.
 """
 from __future__ import annotations
 
@@ -38,7 +39,7 @@ import math
 from pathlib import Path
 
 import ou3_sea3_dynamic_source_certificate as DYNAMIC
-import ou3_sea3_riccati_tube as TUBE
+import ou3_sea3_riccati_tube_factored as TUBE
 
 REPO = Path(__file__).resolve().parents[1]
 DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
@@ -260,7 +261,7 @@ def main() -> int:
         "--tube",
         type=Path,
         default=None,
-        help="consume an already-built ou3_sea3_riccati_tube JSON artifact",
+        help="consume an already-built canonical SEA3 Riccati-tube JSON artifact",
     )
     ap.add_argument("--output", type=Path, required=True)
     args = ap.parse_args()
