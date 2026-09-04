@@ -127,7 +127,73 @@ finite-state or monotone argument can quantify over legal histories.
 words rather than a local search: a finite-state or monotone quotient that bounds
 every legal word, not the best one a greedy descent can find.
 
-## Why the certificate cannot be built as specified, and what does build
+## How to advance: P2's tau model is over-approximate, and that is the whole blocker
+
+Starvation is not a physical regime. It is an artifact of the P2 quotient letting
+`tau` jump anywhere inside a cell at every stage boundary, which the deployed
+chain cannot do.
+
+**Starvation is bit-exact.** Perturbing the resonant `tau` sequence by a single
+binary32 ulp at 24 of the 49 stages restores `S` firing, and the magnitude of the
+perturbation is irrelevant -- 1 ulp and 256 ulps break exactly the same 24
+positions. Only *which* stage is perturbed matters.
+
+**The deployed chain rate-limits `tau` by about 2.5 orders more than the
+resonance can tolerate.** Starvation needs the tuning frequency to alternate by
+1.1015e-3 relative every 13 samples = 65 ms, between #476's certified pair
+`0.05241831764578819` and `0.05247608572244644` Hz. But the deployed
+`WavePeriodEstimator` carries an exponentially weighted moment state with a
+horizon of **at least 20 s** (`min_horizon_sec = 20.0`,
+`moment_horizon_periods = 4.0`, up to `max_horizon_sec = 180.0`), plus a
+canonical log-period smoothing state on top:
+
+| estimator horizon | reachable fraction in one 65 ms stage | required moment-ratio swing |
+| --- | --- | --- |
+| 20 s (fastest allowed) | 3.24e-3 | 33.9 percent |
+| 40 s | 1.62e-3 | 67.8 percent |
+| 90 s | 7.22e-4 | 152.6 percent |
+| 180 s | 3.61e-4 | 305.1 percent |
+
+Even at the fastest allowed horizon the output moves only 3.2e-3 of the way to a
+new input per stage, so driving the required alternation demands a **34 percent
+relative swing in the moment ratio itself, every 65 ms, in exact antiphase, for
+49 consecutive stages, landing on binary32-exact values at each one**. The moment
+ratio is a ratio of spectral moments of wave acceleration and moves on wave
+timescales. Downstream of it the tuner EMA adds its own limit,
+`alpha = 1 - exp(-dt/adapt_sec) <= 0.095` per sample from the
+`adapt_sec >= 0.05 s` clamp.
+
+This is not a proof that the estimator cannot produce it, and it is not claimed
+as one. It is a measured statement that the deployed chain low-passes the
+required alternation by about 2.5 orders.
+
+### The route that needs no weakening
+
+1. Carry the deployed **`tau` slew limit** into the P2 source model as a parsed
+   source fact, exactly as the cadence ratio and clamps already are -- not a
+   domain shrink, because it is a property of the shipping code rather than a
+   restriction on the sea state.
+2. A slew-limited `tau` cannot hold the bit-exact 2-cycle, so zero-`S` words leave
+   the legal set.
+3. Every remaining legal word then has at least 19 `S` firings, so the `S`
+   observability Gramian is nonsingular and **a `P0`-free `Sigma_upper` exists
+   again**.
+4. The whole-word lower feasibility result below then applies as stated:
+   `delta ~ 3e-8`, clearing the `1e-18` gate by 10.5 orders.
+
+This keeps P3 uniform in initial covariance and needs no new declared entrance
+bound. It is preferred over the `P0`-bounded fallback recorded below, which
+remains available and clears by 12.7 orders but weakens what P3 asserts.
+
+**Next falsifiable experiment:** derive the per-stage `tau` slew bound from the
+estimator horizon and tuner EMA, add it to the P2 transition relation, and re-run
+the four-max witness and the starvation witness against it. **Predicted:** the
+resonant 2-cycle becomes illegal while #476's `[9,3,39,9]` label witness stays
+legal, since that one needs only ordinary cell-to-cell motion. **Falsified if**
+the slew bound is loose enough to still admit the 2-cycle, in which case the
+`P0`-bounded fallback is the remaining route.
+
+## Why a P0-free certificate cannot be built on the current legal word set
 
 `translation_upper` takes **no initial covariance**: it is `P0`-free by
 construction, which is exactly why it inverts a three-point observability
