@@ -1,107 +1,147 @@
 # OU-III SEA3 directional response -> P2 -> H/A increment
 
-This increment starts exactly from `main` merge `14104e0fc86797b1ed8b130b8eaee2937a0082ab`
-after PR #481 and keeps the frozen P2/P3 theorem interfaces unchanged.
+This increment starts exactly from `main` merge
+`14104e0fc86797b1ed8b130b8eaee2937a0082ab` after PR #481 and keeps the
+frozen P2/P3 theorem interfaces unchanged.
 
-## 1. Uniform directional RAO family
+## 1. The RAO object is a continuum, not one hull
 
-The response enclosure is not a nominal-hull calculation and does not select a
-single numerical gain.  Let `h(omega,theta)` be the complex CoG translational
-projection of a finite six-DOF vessel response operator, with the theorem's
-zero-lever-arm branch retained.  The measured translational acceleration obeys
-
-```
-a_hat(omega,theta) = omega^2 h(omega,theta) eta_hat(omega,theta).
-```
-
-Define
+The response proof does not use a nominal vessel, one RAO trace, or a finite
+catalogue of RAOs.  Let `h(f,theta)` be the complex three-axis CoG
+translational projection of a finite six-DOF linear vessel response operator on
+the theorem's zero-lever-arm branch.  The wave-induced CoG acceleration is
 
 ```
-G = ess sup_(omega,theta) ||h(omega,theta)||_2.
+a_hat(f,theta) = -(2*pi*f)^2 h(f,theta) eta_hat(f,theta).
 ```
 
-The certificate quantifies over **every finite `G >= 0`**, arbitrary complex
-phase, arbitrary frequency dependence inside the deployed 0.01--6 Hz response
-band, arbitrary heading dependence, and arbitrary cross-axis coupling.  No
-representative RAO, finite RAO grid, or fixed gain cap is used.
+The certified deployment family is the continuum
 
-The proof retains `h h*` as a positive-semidefinite matrix before taking the
-outer Loewner/trace bound.  With normalized directional density and
-`sum_r H_r^2 = H_s^2`, the family satisfies, uniformly,
+```
+||h(f,theta)||_2 <= G min(1,(f_c/f)^p),  f > 0,
+0 <= G <= 4,
+0.03 <= f_c <= 1.2 Hz,
+p >= 2.
+```
+
+Inside that envelope the phase is arbitrary, the response can vary arbitrarily
+with frequency and heading, and all cross-axis coupling allowed by the PSD
+outer-product relation is retained.  A six-DOF parent RAO is allowed.  On the
+current zero-lever-arm proof branch its rotational part does not manufacture a
+translational lever-arm acceleration; rotational motion is still subject to the
+separate P1 Normal-Live body-rate/attitude source bounds.
+
+`G <= 4` is a 12.04 dB bound on the norm of the *whole three-axis CoG
+translational response vector*, not one selected response value.  The 1.2 Hz
+upper response corner is the deployed wave-tuning safety ceiling.  The assumed
+second-order-or-faster high-frequency roll-off is deliberately weak compared
+with ordinary linear monohull response models, but is the physical property
+needed to avoid treating the unbanded JONSWAP/PM acceleration tail as if a hull
+responded with constant gain forever.  Jensen, Mansour & Olsen, *Ocean
+Engineering* 31 (2004) 61--85, doi:10.1016/S0029-8018(03)00108-2, is the
+engineering reference for using a principal-dimension/operating-profile RAO
+family rather than one identified hull.  It is not cited as a universal proof
+that every vessel satisfies this deployment envelope.
+
+## 2. One worst envelope certifies the entire RAO range
+
+The proof retains `h h*` as a positive-semidefinite matrix before taking an
+outer trace bound.  With normalized directional density and
+`sum_r H_r^2 = H_s^2`, any member of the family satisfies
 
 ```
 tr M_disp <= G^2 H_s^2 / 16,
-tr M_vel  <= omega_hi^2 G^2 H_s^2 / 16,
-tr M_acc  <= omega_hi^4 G^2 H_s^2 / 16.
+tr M_vel  <= (2*pi*f_c)^2 G^2 H_s^2 / 16,
+tr M_acc  <= (2*pi*f_c)^4 G^2 H_s^2 / 16.
 ```
 
-These are symbolic `G^2` inequalities.  Evaluating them at a particular gain is
-only an evaluation of the already-proved family theorem, not a proof grid.
+For `p >= 2`, all three right sides increase monotonically with `G` and `f_c`;
+`p=2` is the worst high-frequency member.  Therefore the single *set envelope
+corner*
 
-This right-side response theorem does not infer an infinite-time deterministic
-pointwise acceleration bound from a Gaussian sea spectrum.  A deployment
-sea/RAO pair must separately satisfy the declared P1 Normal-Live hard response
-and finite-window source conditions.  That is the remaining physical
-`L_actual_sea subset Lhat_SEA3` obligation, not a hidden RAO cap.
+```
+G = 4,  f_c = 1.2 Hz,  p = 2
+```
 
-## 2. SEA3-to-P2 inclusion for the whole RAO family
+proves every RAO in the full continuous parameter box.  This is robust-set
+verification, not verification of one representative RAO.
 
-The right inclusion is independent of the value of `G`.  The shipping path
-clamps the period-derived tuning frequency and the resulting `tau`, `sigma_aw`,
-and `R_S` targets before the samplewise EMA, staging, one-sample pending apply,
-and finite 13--26-sample stage clock represented by the existing P2 source
-graph.
+The roll-off also removes the old artificial dependence on the 6 Hz sigma-band
+endpoint.  For acceleration, the worst pointwise spectral multiplier is set by
+`f_c`, because above the corner the `f^4` acceleration weighting is cancelled
+by the squared `f^-2` response roll-off.  Relative to a flat `G=4` response all
+the way to 6 Hz, the acceleration-moment coefficient is tightened by
+approximately
 
-Therefore, for every Normal-Live SEA3 realization generated by any finite RAO
-in the family,
+```
+(6 / 1.2)^4 = 625.
+```
+
+This statement is analytical.  No finite frequency grid or RAO grid is used to
+establish it.
+
+## 3. SEA3-to-P2 inclusion over the whole range
+
+The right inclusion does not depend on selecting a particular member of the
+RAO family.  The shipping path clamps the period-derived tuning frequency and
+the resulting `tau`, `sigma_aw`, and `R_S` targets before the samplewise EMA,
+staging, one-sample pending apply, and finite 13--26-sample stage clock carried
+by the existing P2 source graph.
+
+Hence every Normal-Live SEA3 realization generated by any admitted RAO satisfies
 
 ```
 Lhat_SEA3 subset L_current_source.
 ```
 
-The certificate is deliberately non-pruning: it proves sound inclusion into the
-current 800-state P2 source partition without claiming that any P2 cell has yet
-been eliminated.  No RAO gain is selected in this inclusion argument.
+The present certificate is deliberately non-pruning: it proves sound inclusion
+in the existing 800-state P2 language without claiming that response physics
+has yet removed a P2 cell.  That distinction matters.  A robust RAO range is
+now part of the theorem, but finite-memory WavePeriodEstimator/variance/tuner
+reachability is still required before the response family can be used for
+source-history pruning.
 
-## 3. H/A feasibility
+## 4. H/A feasibility
 
-The H/A check consumes the unchanged source-complete P2-V1 translation route,
+The H/A check remains the unchanged source-complete P2-V1 translation route,
 the 18-state H / 21-state A precision-block join, and the unique canonical P3
-gate.  The canonical usefulness threshold remains exactly `1e-18`.
+gate.  Its usefulness threshold remains exactly `1e-18`.
 
-Because the SEA3 language for every finite RAO is a subset of the full P2
-language:
+Because every SEA3 RAO execution is inside the full P2 language:
 
 * if canonical P3 passes uniformly on full P2, the same H/A certificate holds
-  for the **entire quantified RAO family** by set inclusion;
-* if full-P2 P3 fails, SEA3 is only inconclusive, not disproved, because a later
-  response/finite-memory construction may prune source histories and increase
-  the margin.
+  for the **entire RAO parameter box** by set inclusion;
+* if full-P2 P3 fails, SEA3 is only inconclusive, not disproved, because
+  response/finite-memory reachability can still remove impossible source
+  histories and increase the margin.
 
 No P3/P4 threshold, filter constant, or operating-domain bound is changed by
 this bridge.
 
-## CI artifacts
+## 5. Physical boundary that is still open
 
-`.github/workflows/ou3-sea3-directional.yml` produces:
+The RAO-envelope theorem is a response-family certificate, not a claim that a
+Gaussian directional spectrum supplies an infinite-time deterministic
+pointwise acceleration bound.  SEA0 still has to close the left inclusion
 
-* `ou3-sea3-directional-p2-inclusion` -- the uniform complex RAO-family matrix
-  enclosure plus the mechanical SEA3-to-P2 certificate;
-* `ou3-sea3-directional-ha-feasibility` -- the frozen full-P2 H/A candidate,
-  unique canonical P3 verdict, and the resulting uniform SEA3 inheritance or
-  inconclusive status.
+```
+L_actual_sea subset Lhat_SEA3
+```
 
-CI explicitly rejects a nominal RAO, finite RAO grid, fixed numerical RAO gain
-cap, or any change to the `1e-18` H/A gate.
+by constructing a replay-free hard finite-window oscillator/IQC (or equivalent)
+sea realization enclosure and showing that the admitted physical sea/vessel
+population lies inside the declared RAO envelope and the existing P1
+Normal-Live hard source branch.
 
-## What remains after this increment
+If full-P2 H/A is green, no RAO-specific P2 pruning is needed to establish P3
+for this SEA3 subset.  If it is not green, the next step is to propagate the
+response-weighted WavePeriodEstimator/log-period/variance/tuner memory and
+recompute H/A on the resulting SEA3-reachable history language.
 
-The right inclusion and, conditional on the canonical full-P2 result, H/A
-inheritance are uniform over the full finite RAO family.  The remaining SEA0
-work is the left physical inclusion: construct a hard finite-window
-oscillator/IQC sea realization enclosure and show which physical sea/RAO pairs
-satisfy the existing Normal-Live hard source bounds.  If full-P2 H/A is already
-green, no RAO-specific P2 pruning is required for P3; if it is not, then the
-finite WavePeriodEstimator/log-period/variance/tuner state must be propagated to
-obtain a narrower SEA3 history language before rerunning the same H/A theorem
-interface.
+## 6. CI contract
+
+The canonical OU-III proof workflow must reject any regression to a nominal
+RAO, a finite sampled RAO catalogue, independent Cartesian response boxes, a
+roll-off weaker than `p=2`, or a changed `1e-18` H/A gate.  The dedicated
+branch-only response workflow is temporary scaffolding and is removed once
+these checks are wired into `.github/workflows/ou3-proof.yml`.
