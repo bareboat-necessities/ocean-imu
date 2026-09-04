@@ -22,13 +22,22 @@ _ORIGINAL_SCALED_TUNING_POINT = _core.scaled_tuning_point
 _ORIGINAL_WRITE_SENSITIVITY_PLOT = _core.write_sensitivity_plot
 _ORIGINAL_WRITE_PUBLICATION_TABLE = _core.write_publication_table
 _ORIGINAL_CODE_SOURCE_PATHS = tuple(_core.CODE_SOURCE_PATHS)
+_ORIGINAL_SIGMA_AW_BOUNDS_MPS2 = tuple(_core.SIGMA_AW_BOUNDS_MPS2)
+_ORIGINAL_R_S_BOUNDS_MS = tuple(_core.R_S_BOUNDS_MS)
 
-# The source uses T_S = clip((0.015/1.1) tau, 0.005, 0.25) at the default
+# Current shipping bounds.  The legacy core retains the historical envelope so
+# archived bundles can still be restated, while this current-study wrapper must
+# follow SeaStateFusionFilter_OU_III.h exactly.
+TAU_BOUNDS_S = (0.02, 12.0)
+SIGMA_AW_BOUNDS_MPS2 = (1e-9, 4.0)
+R_S_BOUNDS_MS = (0.15, 100.0)
+
+# The source uses T_S = clip((0.015/1.1) tau, 0.005, 0.15) at the default
 # 200-Hz schedule. Keep the exact cadence in the coupled tau perturbation so
 # the study remains correct when a scale crosses a cadence clamp.
 _PSEUDO_TAU_RATIO = 0.015 / 1.1
 _PSEUDO_MIN_S = 0.005
-_PSEUDO_MAX_S = 0.25
+_PSEUDO_MAX_S = 0.15
 
 
 def _pseudo_period(tau_s: float) -> float:
@@ -221,6 +230,8 @@ def _activate_current_study() -> None:
     _core.scaled_tuning_point = scaled_tuning_point
     _core.write_sensitivity_plot = write_sensitivity_plot
     _core.write_publication_table = write_publication_table
+    _core.SIGMA_AW_BOUNDS_MPS2 = SIGMA_AW_BOUNDS_MPS2
+    _core.R_S_BOUNDS_MS = R_S_BOUNDS_MS
     paths = [Path(__file__).resolve(), Path(_core.__file__).resolve()]
     for item in _ORIGINAL_CODE_SOURCE_PATHS:
         resolved = Path(item).resolve()
@@ -234,6 +245,8 @@ def _activate_legacy_study() -> None:
     _core.scaled_tuning_point = _ORIGINAL_SCALED_TUNING_POINT
     _core.write_sensitivity_plot = _ORIGINAL_WRITE_SENSITIVITY_PLOT
     _core.write_publication_table = _ORIGINAL_WRITE_PUBLICATION_TABLE
+    _core.SIGMA_AW_BOUNDS_MPS2 = _ORIGINAL_SIGMA_AW_BOUNDS_MPS2
+    _core.R_S_BOUNDS_MS = _ORIGINAL_R_S_BOUNDS_MS
     _core.CODE_SOURCE_PATHS = _ORIGINAL_CODE_SOURCE_PATHS
 
 
