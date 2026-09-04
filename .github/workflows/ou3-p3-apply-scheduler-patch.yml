@@ -37,14 +37,16 @@ jobs:
             tools/ou3_p3_four_max_global_label_witness.py \
             tools/ou3_p3_pseudo_scheduler_progress_certificate.py \
             tools/ou3_p3_ordered_witness_covariance_diagnostic.py \
+            tests/validation/test_ou3_p3_correlated_translation_covariance_upper.py \
             tests/validation/test_ou3_p3_four_max_global_label_witness.py \
             tests/validation/test_ou3_p3_pseudo_scheduler_progress_certificate.py \
             tests/validation/test_ou3_p3_ordered_witness_covariance_diagnostic.py
 
-      - name: Run scheduler and ordered diagnostic unit tests
+      - name: Run scheduler, same-history, and ordered diagnostic unit tests
         working-directory: tests/validation
         run: |
           python3 -m unittest -v \
+            test_ou3_p3_correlated_translation_covariance_upper \
             test_ou3_p3_four_max_global_label_witness \
             test_ou3_p3_pseudo_scheduler_progress_certificate \
             test_ou3_p3_ordered_witness_covariance_diagnostic
@@ -74,6 +76,12 @@ jobs:
         run: |
           python3 tools/ou3_p3_correlated_translation_covariance_upper.py \
             --output /tmp/ou3_p3_correlated_translation_covariance_upper.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/ou3_p3_correlated_translation_covariance_upper.json'))
+          assert d['validation_pass'], d['validation_failures']
+          assert d['progress_preserving_scheduler_required_for_gap_bound'] is True
+          PY
 
       - name: Run ordered point diagnostic
         run: |
@@ -102,6 +110,7 @@ jobs:
           git add -A \
             tools/ou3_source_reachable_matrix_p3.py \
             tools/ou3_p3_correlated_translation_covariance_upper.py \
+            tests/validation/test_ou3_p3_correlated_translation_covariance_upper.py \
             tools/ou3_p3_ordered_witness_covariance_diagnostic.py \
             tests/validation/test_ou3_p3_ordered_witness_covariance_diagnostic.py \
             tools/ou3_p3_pseudo_scheduler_starvation_witness.py \
