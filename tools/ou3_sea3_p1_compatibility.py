@@ -22,6 +22,8 @@ On [1,3], x^-1>=1/3 and exp(-(5/4)x^-4)>=exp(-5/4), hence the integral is at
 least (2/3)exp(-5/4).  At the steepness boundary the Tp factors cancel.  The
 only transcendental needed is exp(-5/4)=exp(-5/16)^4, evaluated with the
 repository validated rational-Taylor exponential and outward interval products.
+All non-dyadic rational constants used in the lower bound are also outward
+enclosed before multiplication/division.
 
 Because gamma=1 belongs to the declared JONSWAP interval gamma in [1,7], one
 counterexample at that boundary is sufficient to refute soundness of the full
@@ -46,6 +48,11 @@ SCHEMA = 1
 QUALIFICATION = "OU3_SEA3_COUPLED_SEA_RAO_P1_COMPATIBILITY"
 
 
+def _outward_point(x: float) -> Interval:
+    """One-ulp outward interval around a finite binary64 value."""
+    return Interval.outward_bounds(float(x), float(x))
+
+
 def exp_minus_five_quarters() -> Interval:
     """Validated exp(-5/4) from four products of exp(-5/16)."""
     e = VT.exp_point(-5.0 / 16.0)
@@ -54,15 +61,20 @@ def exp_minus_five_quarters() -> Interval:
 
 def witness_mean_square_lower(gravity: float, gain: float = 4.0) -> float:
     """Validated lower bound on witness non-gravitational acceleration variance."""
-    sp = Interval.point(1.0 / 15.0)
-    g = Interval.outward_bounds(gravity, gravity)
+    # Exact mathematical constants are enclosed by one-ulp intervals around
+    # their nearest binary64 values.  4 and gain=4 are exactly representable.
+    sp = _outward_point(1.0 / 15.0)
+    g = _outward_point(gravity)
     G = Interval.point(gain)
-    pi = Interval.outward_bounds(math.pi, math.pi)
+    pi = _outward_point(math.pi)
+    two_thirds = _outward_point(2.0 / 3.0)
+    one_fifth = _outward_point(1.0 / 5.0)
+
     # J >= (2/3) exp(-5/4), and the gamma=1 JONSWAP/PM I0 = 1/5 exactly.
-    J = Interval.point(2.0 / 3.0) * exp_minus_five_quarters()
+    J = two_thirds * exp_minus_five_quarters()
     val = sp.square() * g.square() * G.square() * pi.square()
     val = val / Interval.point(4.0)
-    val = val * J / Interval.point(0.2)
+    val = val * J / one_fifth
     return val.lo
 
 
@@ -113,6 +125,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN, rao_path: Path = DEFAULT_RAO) -> d
             "validated_acceleration_mean_square_lower_m2_s4": ms_lo,
             "validated_acceleration_RMS_lower_mps2": rms_lo,
             "P1_cap_squared_upper_m2_s4": cap2_hi,
+            "all_nondyadic_witness_constants_outward_enclosed": True,
         },
         "independent_cartesian_sea_x_RAO_domain_is_P1_sound": not refuted,
         "cartesian_product_refuted_by_analytical_witness": refuted,
@@ -147,6 +160,8 @@ def validate(d: dict) -> list[str]:
         f.append("witness lost JONSWAP gamma=1 boundary identity")
     if w.get("witness_is_inside_declared_JONSWAP_gamma_interval_1_to_7") is not True:
         f.append("witness left declared JONSWAP gamma family")
+    if w.get("all_nondyadic_witness_constants_outward_enclosed") is not True:
+        f.append("witness rational/transcendental enclosure contract weakened")
     if not float(w.get("validated_acceleration_mean_square_lower_m2_s4", 0.0)) > float(w.get("P1_cap_squared_upper_m2_s4", math.inf)):
         f.append("witness lower bound no longer exceeds P1 cap squared")
     c = d.get("coupled_domain_contract", {})
