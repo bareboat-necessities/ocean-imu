@@ -115,7 +115,7 @@ public:
 
         s.tvg.k1 = float(cs.tvg.k1);
         s.tvg.k2 = float(cs.tvg.k2);
-        s.tvg.kI = float(cs.tvg.kI);
+        s.tvg.k_integral = float(cs.tvg.k_integral);
         s.tvg.vartheta = float(cs.tvg.vartheta);
         s.tvg.theta = float(cs.tvg.theta);
         s.tvg.p0z_hat = float(cs.tvg.p0z_hat);
@@ -322,7 +322,7 @@ static void print_tvg_nlo_vertical_summary(const TvgNloSimulationRunResult& resu
 
     std::cout << "tvg_k1=" << d.k1
               << ", tvg_k2=" << d.k2
-              << ", tvg_kI=" << d.kI
+              << ", tvg_kI=" << d.k_integral
               << ", tvg_vartheta=" << d.vartheta << "\n";
 
     std::cout << "tvg_theta=" << d.theta

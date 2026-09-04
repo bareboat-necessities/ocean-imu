@@ -289,7 +289,7 @@ struct FilterSnapshot {
 struct TvgNloTelemetry {
     float k1 = NAN;
     float k2 = NAN;
-    float kI = NAN;
+    float k_integral = NAN;
     float vartheta = NAN;
     float theta = NAN;
     float p0z_hat = NAN;

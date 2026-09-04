@@ -82,7 +82,7 @@ public:
     struct Telemetry {
         R k1 = std::numeric_limits<R>::quiet_NaN();
         R k2 = std::numeric_limits<R>::quiet_NaN();
-        R kI = std::numeric_limits<R>::quiet_NaN();
+        R k_integral = std::numeric_limits<R>::quiet_NaN();
         R vartheta = std::numeric_limits<R>::quiet_NaN();
         R p0z_hat = std::numeric_limits<R>::quiet_NaN();
 
@@ -698,7 +698,7 @@ public:
 
         s.tvg.k1 = filter_.gainK1();
         s.tvg.k2 = filter_.gainK2();
-        s.tvg.kI = filter_.gainKI();
+        s.tvg.k_integral = filter_.gainKI();
         s.tvg.vartheta = filter_.gainVartheta();
         s.tvg.p0z_hat = filter_.integratedVerticalPositionState();
 
