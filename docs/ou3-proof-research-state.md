@@ -127,7 +127,61 @@ finite-state or monotone argument can quantify over legal histories.
 words rather than a local search: a finite-state or monotone quotient that bounds
 every legal word, not the best one a greedy descent can find.
 
-## Step 2 computes but its floor is NOT yet justified -- do not build on it
+## Step 2: a floor justified against the other measurement channels
+
+The defect in the first attempt -- a floor that ignored accelerometer information
+and so could be violated by the truth -- is closed by a structural argument
+rather than by a tighter number.
+
+**The accelerometer cannot drive v, p, S below their initial uncertainty.** Its
+measurement Jacobian has zero columns for `v`, `p`, `S`: the innovation
+covariance in `measurement_update_acc_only` references only `OFF_TH`, `OFF_AW`,
+`OFF_BA` and `OFF_BG`. It touches the translation states purely through the
+cross-covariance with `a_w`. And in the limiting case where `a_w` is known
+*exactly* for the whole word, `v(T) = v(0) + int a_w` still carries `v(0)`'s
+uncertainty, and likewise for `p` and `S`. The same holds for the magnetometer,
+which informs attitude only.
+
+So a floor safe against every other channel credits the `S` observations at their
+**full** strength and keeps the raw shipping prior:
+
+* `R_eff = rmax`, with **no** process inflation -- perfect `a_w` knowledge is the
+  most informative case, hence the smallest and therefore most conservative
+  floor;
+* the raw shipping `P0` rather than a propagated one, since propagation only adds
+  process noise and so only reduces information: `Y0_propagated <= Y0`, giving
+  `(Y0 + G)^-1 <= (Y0' + G)^-1 <= truth`.
+
+The ceiling keeps the pessimistic process-inflated `R_eff`. The two now differ by
+a real mechanism instead of by a shared term, and the tell-tale `delta ~ 0.999`
+is gone:
+
+| tau | sigma | N | ceiling S | floor S | delta |
+| --- | --- | --- | --- | --- | --- |
+| 0.417 | 0.05 | 558 | 0.02041 | 0.01909 | 0.4744 |
+| 0.417 | 4.0 | 558 | 0.03286 | 0.01909 | 0.003259 |
+| 3.0 | 0.05 | 77 | 0.2369 | 0.2331 | 0.9169 |
+| 6.0 | 4.0 | 38 | 50.37 | 23.54 | 0.0004839 |
+| 12.0 | 4.0 | 21 | 61.70 | 26.97 | **0.0002803** |
+
+**Worst `delta` = 2.80e-4, clearing the `1e-18` gate by 14.45 orders**, binding on
+`v` at `tau = 12`, `sigma = 4`, `R_S = 100`. Both inversions validate in interval
+arithmetic at all 15 cells.
+
+### What is still missing before this is a certificate
+
+* 15 cells, not the 800-node source partition;
+* single-source dwell words, not mixed legal words;
+* not run through the canonical P3 producer or its gate, which remain the
+  promotion authority;
+* the magnetometer argument is stated from the same structure but only the
+  accelerometer Jacobian was checked in the source.
+
+The construction is now closed-form on both sides, so none of these are blocked
+by the interval wall. They are enumeration and plumbing rather than open
+questions.
+
+## Superseded first attempt: a floor that shared the ceiling's Gramian
 
 Closed-form floor from the same Gramian as the ceiling: information adds, so
 `Y_end <= Y0_propagated + G` and hence `P_end >= (Y0' + G)^-1`, with `P0` a
