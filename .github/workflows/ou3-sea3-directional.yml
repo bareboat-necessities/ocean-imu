@@ -5,6 +5,7 @@ on:
     paths:
       - "tools/ou3_sea3_*.py"
       - "tools/ou3_sea3_*.json"
+      - "tools/ou3_proof_operating_domain.json"
       - "tools/ou3_p2_*.py"
       - "tools/ou3_p3_*.py"
       - "tools/ou3_p4_source_path_reachability.py"
