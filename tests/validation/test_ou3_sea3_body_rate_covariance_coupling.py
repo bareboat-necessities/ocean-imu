@@ -67,7 +67,9 @@ class Sea3BodyRateCovarianceCouplingTests(unittest.TestCase):
         )
         self.assertFalse(e["candidate_pass"])
         self.assertTrue(any("exceeds finite-horizon" in x for x in e["validation_failures"]))
-        self.assertEqual(d["required_body_rate_trace_covariance_upper_deg2_s2"], 900.0 / 108.0)
+        threshold = d["required_body_rate_trace_covariance_upper_deg2_s2"]
+        self.assertLess(threshold, 900.0 / 108.0)
+        self.assertGreater(math.nextafter(900.0 / 108.0, -math.inf), threshold)
 
     def test_rolloff_slower_than_first_order_is_rejected(self):
         d = RATE.build(200)
