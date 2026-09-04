@@ -1,0 +1,122 @@
+name: ou3-tighten-envelope-once
+
+on:
+  push:
+    branches:
+      - codex/ou3-tighten-proof-envelope-sep3
+    paths:
+      - ".github/workflows/ou3-tighten-envelope-once.yml"
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  retarget-envelope:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Apply requested implementation and theorem caps
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def replace_exact(path, old, new):
+              p = Path(path)
+              text = p.read_text()
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f"{path}: expected exactly one occurrence of {old!r}, got {count}")
+              p.write_text(text.replace(old, new))
+
+          f = "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h"
+          replace_exact(f,
+              "// not a tuning surface.  1.5 Hz is a 0.67 s zero-crossing period, shorter than\n// any sea a hull responds to.\nconstexpr float MAX_TUNE_FREQ_HZ = 1.5f;",
+              "// not a tuning surface.  1.2 Hz is a 0.83 s zero-crossing period, shorter than\n// any sea a hull responds to while reducing the theorem-only high-frequency tail.\nconstexpr float MAX_TUNE_FREQ_HZ = 1.2f;")
+          replace_exact(f,
+              "constexpr float MAX_SIGMA_A = 6.0f;",
+              "constexpr float MAX_SIGMA_A = 4.0f;")
+          replace_exact(f,
+              "constexpr float MAX_R_S     = 400.0f;",
+              "constexpr float MAX_R_S     = 100.0f;")
+          replace_exact(f,
+              "// A pseudo update cannot occur more often than the nominal 200 Hz IMU schedule.\n// The upper guard is inactive over the current tau <= 12 s operating envelope.\nconstexpr float PSEUDO_UPDATE_PERIOD_MIN_S_DEFAULT = FREQ_SMOOTHER_DT;\nconstexpr float PSEUDO_UPDATE_PERIOD_MAX_S_DEFAULT = 0.25f;",
+              "// A pseudo update cannot occur more often than the nominal 200 Hz IMU schedule.\n// Cap the slow end at 150 ms so the Live theorem has a tighter guaranteed S-update recurrence.\nconstexpr float PSEUDO_UPDATE_PERIOD_MIN_S_DEFAULT = FREQ_SMOOTHER_DT;\nconstexpr float PSEUDO_UPDATE_PERIOD_MAX_S_DEFAULT = 0.15f;")
+
+          a = "src/tuner/SeaStateAdaptationLimits.h"
+          replace_exact(a,
+              "// K_periods to 4 that horizon requests 4*T_z, about 33.6 s there, so the 30 s\n// ceiling now binds on the largest of the eight seas and only on that channel.\n// Every other deployed horizon (about 0.12..12.7 s, the slowest being the\n// OU-II/TFG drift smoother) is still comfortably interior.  Treat a change to\n// K_periods or to this ceiling as a retune that needs a re-gauge, not a tweak.\ninline constexpr float kDynamicEmaHorizonMinSec = 0.05f;\ninline constexpr float kDynamicEmaHorizonMaxSec = 30.0f;",
+              "// K_periods to 4 that horizon requests 4*T_z, about 33.6 s there.  A 35 s\n// ceiling therefore leaves the largest of the eight reference seas interior\n// while retaining a finite guard against a nearly frozen adaptation.\n// Every other deployed horizon (about 0.12..12.7 s, the slowest being the\n// OU-II/TFG drift smoother) remains comfortably interior.  Treat a change to\n// K_periods or to this ceiling as a retune that needs a re-gauge, not a tweak.\ninline constexpr float kDynamicEmaHorizonMinSec = 0.05f;\ninline constexpr float kDynamicEmaHorizonMaxSec = 35.0f;")
+
+          t = "doc/kalman_ou_iii/w3d-iss-stability.tex-part"
+          replace_exact(t,
+              " 0<r_-&\\le r_{S,k}\\le r_+<\\infty,&\n 0<T_{S,-}&\\le T_{S,k}\\le T_{S,+}<\\infty,\n \\label{eq:iss-source-bounds}\n\\end{align}\nand uniformly positive accepted measurement covariances.",
+              " 0<\\sigma_{aw,k}^{\\rm proc}&\\le \\sigma_{aw,+}^{\\rm proc}<\\infty,&\n 0<r_-&\\le r_{S,k}\\le r_+<\\infty,\\\\\n 0<T_{S,-}&\\le T_{S,k}\\le T_{S,+}<\\infty.\n \\label{eq:iss-source-bounds}\n\\end{align}\nFor the deployed source family used by the machine certificate, the source\nclamps are $f_{\\rm tune}\\le\\SI{1.2}{Hz}$,\n$\\sigma_{aw,+}^{\\rm proc}=\\SI{4}{m/s^2}$, $r_+=\\SI{100}{m.s}$, and\n$T_{S,+}=\\SI{0.15}{s}$.  The dynamically selected EMA horizon is separately\nclamped at $\\SI{35}{s}$.  These are implementation-enforced theorem-domain\nbounds rather than replay-fitted extrema.  Accepted measurement covariances\nremain uniformly positive.")
+
+          # Fail if the old declarations survived anywhere in the source/proof surface.
+          needles = [
+              "MAX_TUNE_FREQ_HZ = 1.5f",
+              "MAX_SIGMA_A = 6.0f",
+              "MAX_R_S     = 400.0f",
+              "PSEUDO_UPDATE_PERIOD_MAX_S_DEFAULT = 0.25f",
+              "kDynamicEmaHorizonMaxSec = 30.0f",
+          ]
+          roots = [Path("src"), Path("tools"), Path("tests"), Path("doc/kalman_ou_iii")]
+          for needle in needles:
+              hits = []
+              for root in roots:
+                  for p in root.rglob("*"):
+                      if p.is_file():
+                          try:
+                              txt = p.read_text()
+                          except UnicodeDecodeError:
+                              continue
+                          if needle in txt:
+                              hits.append(str(p))
+              if hits:
+                  raise SystemExit(f"stale cap {needle!r} remains in: {hits}")
+          PY
+
+          git diff --check
+          git diff -- src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h src/tuner/SeaStateAdaptationLimits.h doc/kalman_ou_iii/w3d-iss-stability.tex-part
+
+      - name: Commit requested caps
+        id: commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h \
+                  src/tuner/SeaStateAdaptationLimits.h \
+                  doc/kalman_ou_iii/w3d-iss-stability.tex-part
+          git commit -m "OU-III: tighten deployed proof envelope caps"
+          git push origin HEAD:${GITHUB_REF_NAME}
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Dispatch full simulation validation
+        if: steps.commit.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run ou-validation.yml --ref "${GITHUB_REF_NAME}" -f validation_mode=full
+
+      - name: Dispatch proof certificate build
+        if: steps.commit.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run ou3-proof.yml --ref "${GITHUB_REF_NAME}"
+
+      - name: Dispatch broad build
+        if: steps.commit.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run build.yml --ref "${GITHUB_REF_NAME}"
