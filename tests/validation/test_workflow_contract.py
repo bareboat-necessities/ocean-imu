@@ -6,6 +6,8 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 WORKFLOW = REPO_ROOT / ".github" / "workflows" / "ou-validation.yml"
 BRANCH_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "ou-full-evidence-branch.yml"
 BUILD_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "build.yml"
+PROOF_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "ou3-proof.yml"
+VALIDATION_MAKEFILE = REPO_ROOT / "tests" / "validation" / "Makefile"
 
 
 def _mapping_child_keys(text, section):
@@ -73,7 +75,7 @@ class WorkflowContractTests(unittest.TestCase):
 
         self.assertLess(check, commit)
         gate = workflow[check:commit]
-        self.assertIn("make -C tests/validation test", gate)
+        self.assertIn("make -C tests/validation evidence-test", gate)
         self.assertNotIn("continue-on-error", gate)
 
     def test_validation_publication_is_aligned_before_bundle_upload(self):
@@ -103,7 +105,7 @@ class WorkflowContractTests(unittest.TestCase):
         self.assertIn("replay_required=false", gate)
         self.assertIn("replay_required=true", gate)
         self.assertIn("complete results tree", gate)
-        self.assertIn("make -C tests/validation test", gate)
+        self.assertIn("make -C tests/validation evidence-test", gate)
 
         regen_header = workflow[regenerate:workflow.index("    runs-on:", regenerate)]
         self.assertIn("needs: fingerprint", regen_header)
@@ -161,9 +163,53 @@ class WorkflowContractTests(unittest.TestCase):
 
         rebase = loop.index("git pull --rebase")
         fingerprint = loop.index("tools/ou_replay_fingerprint.py")
-        validate = loop.index("make -C tests/validation test")
+        validate = loop.index("make -C tests/validation evidence-test")
         self.assertLess(rebase, fingerprint)
         self.assertLess(fingerprint, validate)
+
+    def test_evidence_gate_is_the_suite_without_the_proof_searches(self):
+        """What the publication gate runs, and why it is not the whole suite.
+
+        The staged OU-III proof searches are three quarters of an hour of
+        interval arithmetic and read source and tooling only: no bundle this
+        repository publishes can move their verdict. Running them inside the
+        twenty-minute commit job is what killed it mid-suite on every main push
+        from 2026-09-03 on, leaving the branch with unpublished evidence and
+        skipping the document build behind it. ou3-proof.yml owns them and
+        budgets hours; `test` still runs everything for a local full pass and
+        for the pull-request smoke gate.
+        """
+        makefile = VALIDATION_MAKEFILE.read_text(encoding="utf-8")
+        self.assertIn(
+            "PROOF_SEARCH_TESTS := $(wildcard test_ou3_p2_*.py test_ou3_p3_*.py "
+            "test_ou3_p4_*.py test_ou3_p5_*.py)",
+            makefile,
+        )
+        self.assertIn(
+            "EVIDENCE_TESTS := $(filter-out $(PROOF_SEARCH_TESTS),"
+            "$(wildcard test_*.py))",
+            makefile,
+        )
+        self.assertIn("evidence-test: evidence-contract", makefile)
+        self.assertIn("test: evidence-contract", makefile)
+        self.assertIn("python3 -m unittest discover -v -p 'test_*.py'", makefile)
+
+        # Most of the skipped modules are named in the proof workflow. The few
+        # that are not stay covered because the pull-request smoke gate runs
+        # the whole suite, so nothing here drops out of CI entirely.
+        proof = PROOF_WORKFLOW.read_text(encoding="utf-8")
+        directory = REPO_ROOT / "tests" / "validation"
+        skipped = sorted(
+            path.stem
+            for prefix in ("p2", "p3", "p4", "p5")
+            for path in directory.glob(f"test_ou3_{prefix}_*.py")
+        )
+        self.assertTrue(skipped)
+        self.assertTrue(any(name in proof for name in skipped))
+
+        workflow = WORKFLOW.read_text(encoding="utf-8")
+        smoke = workflow[workflow.index("  validate:"):workflow.index("  fingerprint:")]
+        self.assertIn("make -C tests/validation test", smoke)
 
     def test_commit_job_validates_against_the_regenerated_commit(self):
         """The bundles are made at github.sha, so the gate must see that tree.

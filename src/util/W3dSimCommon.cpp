@@ -1013,7 +1013,7 @@ static void write_tvg_nlo_csv_row(std::ofstream& ofs, const TvgNloFilterSnapshot
 
     ofs << "," << d.k1
         << "," << d.k2
-        << "," << d.kI
+        << "," << d.k_integral
         << "," << d.vartheta
         << "," << d.theta
         << "," << d.p0z_hat

@@ -1942,7 +1942,7 @@ void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::measurement_update
     const Vector3 aw = xext.template segment<3>(OFF_AW);
     const Vector3 f_pred = R_wb() * (aw - g_world) + lever + ba_term;
 
-    const Vector3 f_meas = acc_meas;
+    const Vector3& f_meas = acc_meas;
     const Vector3 r = f_meas - f_pred;
 
     last_acc_diag_.r = r;

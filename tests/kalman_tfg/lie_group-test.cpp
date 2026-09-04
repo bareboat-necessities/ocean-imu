@@ -35,6 +35,7 @@
 #include <iostream>
 #include <random>
 #include <string>
+#include <string_view>
 
 namespace lie = ocean_imu::lie;
 
@@ -48,6 +49,17 @@ bool check(bool condition, const std::string& message) {
         ++failures;
     }
     return condition;
+}
+
+// Message builder for the per-angle loops below. Joining the tag, the failure
+// text and the angle with operator+ at the call site allocates an intermediate
+// string per message inside a loop, which is what
+// performance-inefficient-string-concatenation objects to.
+std::string tagged(const std::string& tag, std::string_view what, std::string_view at) {
+    std::string message;
+    message.reserve(tag.size() + what.size() + at.size());
+    message.append(tag).append(what).append(at);
+    return message;
 }
 
 template<typename T>
@@ -145,34 +157,34 @@ void test_so3(Sampler& s, T tol, const std::string& tag) {
 
         // Exp lands in SO(3).
         check(mat_close<T,3,3>(Matrix3(R * R.transpose()), Matrix3::Identity(), tol),
-              tag + ": Exp is not orthogonal" + at);
+              tagged(tag, ": Exp is not orthogonal", at));
         check(close<T>(R.determinant(), T(1), tol),
-              tag + ": Exp determinant != 1" + at);
+              tagged(tag, ": Exp determinant != 1", at));
 
         // Exp/Log round trip. Near pi the axis sign is ambiguous, so compare
         // through the rotation rather than through the vector.
         const Vector3 phi_back = lie::Log<T>(R);
         check(mat_close<T,3,3>(lie::Exp<T>(phi_back), R, tol),
-              tag + ": Exp/Log round trip" + at);
+              tagged(tag, ": Exp/Log round trip", at));
         if (angle < 3.0) {
             check(mat_close<T,3,1>(phi_back, phi, tol * T(10)),
-                  tag + ": Log did not recover the rotation vector" + at);
+                  tagged(tag, ": Log did not recover the rotation vector", at));
         }
 
         // J_l J_l^-1 = I.
         const Matrix3 Jl  = lie::left_jacobian<T>(phi);
         const Matrix3 Jli = lie::inv_left_jacobian<T>(phi);
         check(mat_close<T,3,3>(Matrix3(Jl * Jli), Matrix3::Identity(), tol * T(10)),
-              tag + ": J_l J_l^-1 != I" + at);
+              tagged(tag, ": J_l J_l^-1 != I", at));
 
         // J_r(phi) = J_l(-phi) = Exp(-phi) J_l(phi). This identity is what the
         // bias block of the group exponential rests on.
         check(mat_close<T,3,3>(lie::left_jacobian<T>(Vector3(-phi)),
                                Matrix3(lie::Exp<T>(Vector3(-phi)) * Jl), tol * T(10)),
-              tag + ": J_l(-phi) != Exp(-phi) J_l(phi)" + at);
+              tagged(tag, ": J_l(-phi) != Exp(-phi) J_l(phi)", at));
         check(mat_close<T,3,3>(lie::right_jacobian<T>(phi),
                                lie::left_jacobian<T>(Vector3(-phi)), tol),
-              tag + ": right_jacobian != J_l(-phi)" + at);
+              tagged(tag, ": right_jacobian != J_l(-phi)", at));
     }
 }
 
@@ -260,7 +272,7 @@ void test_exp_log(Sampler& s, typename Group::Scalar tol, const std::string& tag
         const Group g = Group::Exp_G(xi);
         const typename Group::Tangent back = Group::Log_G(g);
         if (!check(mat_close<T,Group::NX,1>(back, xi, tol * T(10)),
-                   tag + ": Exp_G/Log_G round trip" + at)) {
+                   tagged(tag, ": Exp_G/Log_G round trip", at))) {
             report(back, xi, "xi");
         }
 
@@ -271,7 +283,7 @@ void test_exp_log(Sampler& s, typename Group::Scalar tol, const std::string& tag
         check(mat_close<T,3,3>(h_back.R, h.R, tol) &&
               mat_close<T,3,Group::kWorldCols>(h_back.X, h.X, tol * T(10)) &&
               mat_close<T,3,Group::kBiasCols>(h_back.B, h.B, tol * T(10)),
-              tag + ": Log_G/Exp_G round trip" + at);
+              tagged(tag, ": Log_G/Exp_G round trip", at));
     }
 
     typename Group::Tangent zero;
@@ -589,12 +601,12 @@ void test_branch_seam(T tol, const std::string& tag) {
         const std::string at = " at angle " + std::to_string(static_cast<double>(angle));
 
         if (!check(mat_close<T,3,3>(lie::Exp<T>(phi), down(reference_exp(phi_ld)), tol),
-                   tag + ": Exp disagrees with the closed form" + at)) {
+                   tagged(tag, ": Exp disagrees with the closed form", at))) {
             report(lie::Exp<T>(phi), down(reference_exp(phi_ld)), "Exp");
         }
         if (!check(mat_close<T,3,3>(lie::left_jacobian<T>(phi),
                                     down(reference_left_jacobian(phi_ld)), tol),
-                   tag + ": left_jacobian disagrees with the closed form" + at)) {
+                   tagged(tag, ": left_jacobian disagrees with the closed form", at))) {
             report(lie::left_jacobian<T>(phi), down(reference_left_jacobian(phi_ld)), "J_l");
         }
         // The cotangent form is genuinely singular at t = 0; there the Taylor
@@ -602,7 +614,7 @@ void test_branch_seam(T tol, const std::string& tag) {
         if (angle > LD(1e-8)) {
             if (!check(mat_close<T,3,3>(lie::inv_left_jacobian<T>(phi),
                                         down(reference_inv_left_jacobian(phi_ld)), tol),
-                       tag + ": inv_left_jacobian disagrees with the closed form" + at)) {
+                       tagged(tag, ": inv_left_jacobian disagrees with the closed form", at))) {
                 report(lie::inv_left_jacobian<T>(phi),
                        down(reference_inv_left_jacobian(phi_ld)), "J_l^-1");
             }
@@ -610,7 +622,7 @@ void test_branch_seam(T tol, const std::string& tag) {
         check(mat_close<T,3,3>(
                   Matrix3(lie::left_jacobian<T>(phi) * lie::inv_left_jacobian<T>(phi)),
                   Matrix3::Identity(), tol * T(10)),
-              tag + ": J_l J_l^-1 != I" + at);
+              tagged(tag, ": J_l J_l^-1 != I", at));
     }
 }
 

@@ -79,7 +79,8 @@ void test_full_gyro_and_bias_covariance() {
             Matrix3 B = Matrix3::Zero();
             for (int j = 0; j < 4; ++j)
                 B.noalias() += Prem(i,j) * (lie::skew<T>(Vector3(Xt.col(j))) * Rt);
-            M[static_cast<std::size_t>(k)].template block<3,3>(3*i,0) = B;
+            M[static_cast<std::size_t>(k)]
+                .template block<3,3>(3*static_cast<Eigen::Index>(i),0) = B;
         }
     }
     WorldMap tail = WorldMap::Zero();
