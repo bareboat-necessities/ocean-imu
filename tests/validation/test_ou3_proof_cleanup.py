@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Contracts for the flattened OU-III proof-tool tree."""
+"""Contracts for the flattened OU-III proof-tool and workflow trees."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -8,6 +8,7 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
 TOOLS = ROOT / "tools"
+WORKFLOWS = ROOT / ".github" / "workflows"
 
 
 class Ou3ProofCleanupTest(unittest.TestCase):
@@ -43,6 +44,14 @@ class Ou3ProofCleanupTest(unittest.TestCase):
                 if module in text:
                     offenders.append(f"retired reference {module}: {path.name}")
         self.assertEqual([], offenders, "\n".join(offenders))
+
+    def test_no_completed_one_off_proof_workflows_remain(self):
+        retired = {
+            "ou3-p3-sync-combined-caps-once.yml",
+            "ou3-p4-new-clamps-proof.yml",
+        }
+        offenders = [name for name in sorted(retired) if (WORKFLOWS / name).exists()]
+        self.assertEqual([], offenders, "retired one-off workflows returned")
 
 
 if __name__ == "__main__":
