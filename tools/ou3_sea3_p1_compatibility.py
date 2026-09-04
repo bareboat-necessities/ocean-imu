@@ -1,17 +1,20 @@
 #!/usr/bin/env python3
 """Replay-free SEA3 sea/RAO compatibility with the hard Normal-Live P1 branch.
 
-The physical sea box and the robust RAO envelope may not be combined as an
-independent Cartesian product under the existing hard condition
+The physical JONSWAP sea family and the robust RAO envelope may not be combined
+as an independent Cartesian product under the existing hard condition
 ||a_non-grav(t)||_2 <= 4 m/s^2.  This module gives an analytical counterexample
 inside the declared sets and therefore forces the intended theorem domain to be
 a coupled sea-response set.
 
-Witness: one PM partition (gamma=1), Tp=8 s, on the DNV peak-steepness boundary,
-and the admitted response-envelope member G=4, fc=1.2 Hz, p=2.  For x=f/fp in
-[1,3], f<=0.375 Hz<fc, so that member may have |h|=G throughout the interval.
-For the normalized PM spectrum q(x)=x^-5 exp(-(5/4)x^-4), I0=int q dx=1/5,
-the acceleration variance contains
+Witness: one JONSWAP partition on its PM boundary (gamma=1), Tp=8 s, on the DNV
+peak-steepness boundary, and the admitted response-envelope member G=4,
+fc=1.2 Hz, p=2.  PM is not a different sea model here: it is exactly the
+gamma=1 member of the declared JONSWAP family.  Using that boundary member is
+convenient because its normalization is closed form.  For x=f/fp in [1,3],
+f<=0.375 Hz<fc, so that member may have |h|=G throughout the interval.  For the
+normalized gamma=1 JONSWAP/PM spectrum
+q(x)=x^-5 exp(-(5/4)x^-4), I0=int q dx=1/5, the acceleration variance contains
 
   m0 G^2 wp^4 / I0 * int_1^3 x^-1 exp(-(5/4)x^-4) dx.
 
@@ -19,6 +22,11 @@ On [1,3], x^-1>=1/3 and exp(-(5/4)x^-4)>=exp(-5/4), hence the integral is at
 least (2/3)exp(-5/4).  At the steepness boundary the Tp factors cancel.  The
 only transcendental needed is exp(-5/4)=exp(-5/16)^4, evaluated with the
 repository validated rational-Taylor exponential and outward interval products.
+
+Because gamma=1 belongs to the declared JONSWAP interval gamma in [1,7], one
+counterexample at that boundary is sufficient to refute soundness of the full
+independent Cartesian product.  No claim is made that gamma=1 is the worst
+JONSWAP member.
 """
 from __future__ import annotations
 
@@ -50,7 +58,7 @@ def witness_mean_square_lower(gravity: float, gain: float = 4.0) -> float:
     g = Interval.outward_bounds(gravity, gravity)
     G = Interval.point(gain)
     pi = Interval.outward_bounds(math.pi, math.pi)
-    # J >= (2/3) exp(-5/4), and PM I0 = 1/5 exactly.
+    # J >= (2/3) exp(-5/4), and the gamma=1 JONSWAP/PM I0 = 1/5 exactly.
     J = Interval.point(2.0 / 3.0) * exp_minus_five_quarters()
     val = sp.square() * g.square() * G.square() * pi.square()
     val = val / Interval.point(4.0)
@@ -74,7 +82,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN, rao_path: Path = DEFAULT_RAO) -> d
     tp = 8.0
     hs = down(PHYS.significant_height_limit_from_peak_steepness(tp, gravity))
     if not PHYS.partition_admissible(hs, tp, gravity):
-        raise RuntimeError("PM witness is outside physical steepness domain")
+        raise RuntimeError("gamma=1 JONSWAP witness is outside physical steepness domain")
     fp = 1.0 / tp
     witness_hi_hz = 3.0 * fp
     if not witness_hi_hz < 1.2:
@@ -90,7 +98,10 @@ def build(domain_path: Path = DEFAULT_DOMAIN, rao_path: Path = DEFAULT_RAO) -> d
         "trajectory_replay_used": False,
         "filter_changed": False,
         "witness": {
-            "sea": "one PM partition on DNV Tp<=8 s peak-steepness boundary",
+            "sea": "one JONSWAP partition at gamma=1 (PM boundary) on DNV Tp<=8 s peak-steepness boundary",
+            "declared_JONSWAP_gamma": 1.0,
+            "PM_is_JONSWAP_gamma_1_boundary": True,
+            "witness_is_inside_declared_JONSWAP_gamma_interval_1_to_7": True,
             "T_p_s": tp,
             "H_s_m": hs,
             "RAO_gain": 4.0,
@@ -115,7 +126,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN, rao_path: Path = DEFAULT_RAO) -> d
         "finite_window_realization_certificate_closed": False,
         "L_actual_sea_subset_Lhat_SEA3_closed": False,
         "next_obligation": (
-            "construct a hard finite-window oscillator/IQC realization enclosure on the coupled sea-RAO set; only response trajectories satisfying every existing P1 Normal-Live hard source bound may enter the left inclusion"
+            "construct a hard finite-window oscillator/IQC realization enclosure on the coupled JONSWAP-sea/RAO set; only response trajectories satisfying every existing P1 Normal-Live hard source bound may enter the left inclusion"
         ),
     }
 
@@ -132,6 +143,10 @@ def validate(d: dict) -> list[str]:
     if d.get("coupled_SEA3_domain_required") is not True:
         f.append("coupled SEA3 domain requirement disappeared")
     w = d.get("witness", {})
+    if w.get("PM_is_JONSWAP_gamma_1_boundary") is not True:
+        f.append("witness lost JONSWAP gamma=1 boundary identity")
+    if w.get("witness_is_inside_declared_JONSWAP_gamma_interval_1_to_7") is not True:
+        f.append("witness left declared JONSWAP gamma family")
     if not float(w.get("validated_acceleration_mean_square_lower_m2_s4", 0.0)) > float(w.get("P1_cap_squared_upper_m2_s4", math.inf)):
         f.append("witness lower bound no longer exceeds P1 cap squared")
     c = d.get("coupled_domain_contract", {})
@@ -157,6 +172,7 @@ def main() -> int:
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(d, indent=2, sort_keys=True), encoding="utf-8")
     print(json.dumps({
+        "JONSWAP_gamma": d["witness"]["declared_JONSWAP_gamma"],
         "mean_square_lower": d["witness"]["validated_acceleration_mean_square_lower_m2_s4"],
         "RMS_lower": d["witness"]["validated_acceleration_RMS_lower_mps2"],
         "P1_cap_squared_upper": d["witness"]["P1_cap_squared_upper_m2_s4"],
