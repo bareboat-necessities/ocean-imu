@@ -1,0 +1,46 @@
+\subsection{Peak-period to zero-crossing-period bridge}
+\label{sec:sea3-tp-tz-bridge}
+
+The spectral sea family above is parameterized by the physically conventional
+peak periods $T_{p,r}$, but the deployed tuner does \emph{not} estimate a peak
+period.  Its canonical period state is the zero-crossing/moment period
+$T_z$ produced by \texttt{WavePeriodEstimator}.  These quantities must therefore
+remain distinct in the certificate.
+
+For a scalar spectrum $\Phi(\omega)$ with angular-frequency moments
+\begin{equation}
+ m_j[\Phi]:=\int_0^\infty \omega^j\Phi(\omega)\,d\omega,
+ \label{eq:sea3-spectral-moments}
+\end{equation}
+the corresponding ideal zero-crossing period is
+\begin{equation}
+ \boxed{T_z[\Phi]=2\pi\sqrt{\frac{m_0[\Phi]}{m_2[\Phi]}}.}
+ \label{eq:sea3-tz-moment}
+\end{equation}
+For a multimodal sea the spectral moments add before this ratio is formed;
+periods are not averaged independently.  Consequently two partitions with the
+same $T_p$ but different $\gamma$, energy share, direction, or vessel response
+need not induce the same tuner period.
+
+SEA0 must therefore certify a relation
+\begin{equation}
+ \boxed{
+ (\lambda,x^s)\in\widehat{\mathcal S}_{\rm SEA3}
+ \Longrightarrow
+ T_z^{\rm src}\in\mathcal T_z(\lambda,x^s),
+ }
+ \label{eq:sea3-tp-tz-relation}
+\end{equation}
+using the same directional response of
+Eq.~\eqref{eq:sea3-matrix-spectrum} and the exact deployed
+WavePeriodEstimator front end.  For an analytical spectral enclosure,
+Eq.~\eqref{eq:sea3-tz-moment} supplies the moment bridge; for the final source
+certificate the leaky filters, finite EMAs, log-period state, initialization,
+and clamps are propagated explicitly.  Thus a bound on $T_{p,r}$ alone is never
+substituted for a bound on the tuner state.
+
+The $0.03$--$1.2$ Hz numbers quoted in the screening estimates are therefore
+bounds on the \emph{committed tuning-frequency channel}, not an asserted
+$T_p$ range for the physical sea.  The SEA3 P2 refinement may use a tighter
+$T_z/T_p$ relation only after SEA0 has certified it over the declared
+JONSWAP/PM mixture and directional response family.
