@@ -127,6 +127,49 @@ finite-state or monotone argument can quantify over legal histories.
 words rather than a local search: a finite-state or monotone quotient that bounds
 every legal word, not the best one a greedy descent can find.
 
+## PR #478 supersedes the starvation work here and hands Step 2 its input
+
+#478 repairs `set_pseudo_update_period_s` so a cadence retarget preserves
+already-earned service credit instead of reducing elapsed time modulo the new
+period:
+
+```
+if (elapsed < period) return elapsed;          // preserve
+return std::nextafter(period, T(0));           // park just below the deadline
+```
+
+Verified here against this branch's own starvation witness, which #478's change
+kills outright:
+
+| retarget semantics | S firings over 635 samples |
+| --- | --- |
+| old `fmod` | **0** |
+| new progress-preserving | **24**, worst gap 27 |
+
+and the source-independent 33-sample bound reproduces exactly: the largest
+deployed period 0.16363635659217834 s over `h` is 32.727, so 33 samples, attained
+at `tau = 12`.
+
+**Consequences for this branch.**
+
+* The `tau` slew argument recorded below, and Step 0 of the plan built on it, are
+  **obsolete**. #478 makes S recurrence a property of the implementation rather
+  than something to be argued from the estimator's moment horizon. That is a
+  better outcome than the argument it replaces.
+* This branch concluded "no filter changes are warranted" on the evidence that
+  the firing rate is nominal under realistic jitter and starvation is
+  unreachable in practice. That was defensible but **it was the weaker call**:
+  #478 removes the latent fragility instead of arguing it is unreachable, and
+  gets a positive recurrence certificate for it.
+* `tools/ou3_p3_whole_word_lower_feasibility.py` mirrors the **old** `fmod`
+  retarget, and its four `StarvationWitness` tests assert that starvation
+  happens. Both must be re-pointed when #478 lands, or they will pin behaviour
+  the shipping code no longer has.
+
+**What Step 2 gains.** The closed-form floor needs a rigorous bound on the time
+since the last S firing. #478 certifies exactly that, source-independently, at
+**33 samples = 0.165 s**. Step 2 no longer has to derive it.
+
 ## Step 1 SUCCEEDS: an interval-certified closed-form ceiling exists
 
 The first rigorous object in this line of work. Closed form, so the stepwise
