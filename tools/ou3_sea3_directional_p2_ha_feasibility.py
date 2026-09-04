@@ -2,15 +2,15 @@
 """SEA3 directional RAO-family -> P2 inclusion -> H/A feasibility bridge.
 
 This producer certifies a continuum of vessel response operators, not a nominal
-hull and not a sampled RAO catalogue.  The CoG translational projection h of an
+hull and not a sampled RAO catalogue. The CoG translational projection h of an
 arbitrary finite six-DOF linear RAO is admitted whenever
 
     ||h(f,theta)||_2 <= G min(1, (f_c/f)^p),  f > 0,
 
-for any G, f_c and p in the declared compact/one-sided parameter family.  Phase,
-heading dependence and cross-axis coupling are otherwise arbitrary.  The
+for any G, f_c and p in the declared compact/one-sided parameter family. Phase,
+heading dependence and cross-axis coupling are otherwise arbitrary. The
 moment proof is monotone in G and f_c and worst at p=2, so certifying the single
-*envelope corner* (G_max, f_c,max, p_min) certifies every RAO below it.  That
+*envelope corner* (G_max, f_c,max, p_min) certifies every RAO below it. That
 corner is a set bound, not a representative RAO.
 
 The p>=2 roll-off is important: it cancels the omega^4 acceleration weighting
@@ -19,9 +19,12 @@ pretending the JONSWAP/PM tail is hard-truncated at 6 Hz.
 
 The right SEA3 -> P2 inclusion remains independent of the response-envelope
 numbers because shipping clamps the tuner targets before the exact EMA/staging
-language represented by P2.  If canonical full-P2 H/A passes, that stronger
-certificate transfers to every member of the SEA3 RAO family.  A full-P2 fail
-is only inconclusive until SEA3-specific source pruning is constructed.
+language represented by P2. The inclusion artifact nevertheless records the
+exact RAO parameter box it consumed, and validation requires byte-for-byte
+structural equality with the response-enclosure box so a stale or substituted
+box cannot be silently inherited. If canonical full-P2 H/A passes, that
+stronger certificate transfers to every member of the SEA3 RAO family. A
+full-P2 fail is only inconclusive until SEA3-specific source pruning is built.
 """
 from __future__ import annotations
 
@@ -44,7 +47,7 @@ SCHEMA = 3
 QUALIFICATION = "OU3_SEA3_RAO_ENVELOPE_FAMILY_P2_HA_FEASIBILITY"
 RESPONSE_SCHEMA = "OU3_SEA3_DIRECTIONAL_RESPONSE_DOMAIN_V3"
 
-# Decimal enclosure of mathematical pi.  Endpoints deliberately straddle pi by
+# Decimal enclosure of mathematical pi. Endpoints deliberately straddle pi by
 # much more than one binary64 ulp; nextafter widens once more below.
 PI_LO = 3.141592653589793
 PI_HI = 3.141592653589794
@@ -115,17 +118,7 @@ def _load_response_domain(path: Path = DEFAULT_RESPONSE_DOMAIN) -> dict:
 
 
 def _member_moment_coefficients(gain: float, corner_hz: float, power: float) -> dict[str, list[float]]:
-    """Outward c_q in tr(M_q) <= c_q H_s^2 for one envelope member.
-
-    With m0=H_s^2/16 and ||h||<=G min(1,(f_c/f)^p), p>=2,
-
-      max ||h||^2                         <= G^2,
-      max (2*pi*f)^2 ||h||^2             <= (2*pi*f_c)^2 G^2,
-      max (2*pi*f)^4 ||h||^2             <= (2*pi*f_c)^4 G^2.
-
-    The last inequality is why p>=2 is sufficient for an unbanded acceleration
-    moment even though an unbanded JONSWAP surface-acceleration moment diverges.
-    """
+    """Outward c_q in tr(M_q) <= c_q H_s^2 for one envelope member."""
     g = float(gain)
     fc = float(corner_hz)
     p = float(power)
@@ -200,9 +193,6 @@ def directional_response_enclosure(
     pmin = float(r["high_frequency_rolloff_power_min"])
     worst = _member_moment_coefficients(gr[1], fr[1], pmin)
 
-    # Diagnostic only: compare with the discarded flat-gain-at-6-Hz outer
-    # corner.  The theorem does not use the 6-Hz endpoint for acceleration once
-    # the physical response roll-off is retained.
     omega_6 = up(2.0 * PI_HI * declared_band[1])
     flat_disp = up(up(gr[1] * gr[1]) / 16.0)
     flat_acc = up(flat_disp * omega_6**4)
@@ -488,6 +478,8 @@ def validate(d: dict) -> list[str]:
         f.append("non-pruning inclusion incorrectly claims P2 pruning")
     if p.get("single_RAO_selected_for_inclusion") is not False:
         f.append("P2 inclusion selected one RAO")
+    if p.get("RAO_parameter_box_consumed") != box:
+        f.append("P2 inclusion consumed a different RAO parameter box")
     if p.get("shipping_bridge", {}).get("all_shipping_bridge_markers_present") is not True:
         f.append("shipping clamp/staging bridge markers missing")
     if d.get("P3_promoted_by_this_artifact") is not False:
