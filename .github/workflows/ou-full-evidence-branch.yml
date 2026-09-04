@@ -16,6 +16,7 @@ on:
 # prevents ordinary development pushes from duplicating the same ~1,150
 # simulator replays while still allowing an explicit pre-merge regeneration
 # when one is useful.
+# PR #478 full-evidence rerun requested after absorbing PR #479.
 concurrency:
   group: ou-full-evidence-branch-${{ github.ref }}
   cancel-in-progress: true
