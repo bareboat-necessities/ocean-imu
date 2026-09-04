@@ -79,9 +79,17 @@ class Ou3ProofCleanupTest(unittest.TestCase):
             "ou3-p3-whole-word-probe.yml",
             "ou3-p4-new-clamps-proof.yml",
             "ou3-sea0.yml",
+            "ou3-sea3-directional.yml",
         }
         offenders = [name for name in sorted(retired) if (WORKFLOWS / name).exists()]
         self.assertEqual([], offenders, "retired extra proof workflows returned")
+
+    def test_sea3_directional_bridge_is_bound_to_canonical_source_contract(self):
+        source_contract_test = (VALIDATION / "test_ou3_source_domain_contract.py").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("sea3.build_inclusion()", source_contract_test)
+        self.assertIn("SEA3_TO_P2_INCLUSION_CERTIFICATE", source_contract_test)
 
     def test_master_paper_includes_retained_sea3_theorem_parts(self):
         paper = (OU3_DOC / "kalman_ou-w3d.tex").read_text(encoding="utf-8")

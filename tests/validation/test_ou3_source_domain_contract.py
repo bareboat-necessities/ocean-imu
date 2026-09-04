@@ -1,3 +1,4 @@
+import copy
 import importlib.util
 import math
 from pathlib import Path
@@ -12,6 +13,11 @@ spec = importlib.util.spec_from_file_location(
 )
 mod = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(mod)
+
+import ou3_sea3_directional_p2_ha_feasibility as sea3  # noqa: E402
+import ou3_sea3_p1_compatibility as sea3_p1  # noqa: E402
+import ou3_sea3_physical_admissibility as sea3_phys  # noqa: E402
+import ou3_sea3_wave_period_spectral_identity as sea3_period_identity  # noqa: E402
 
 
 def f32(value):
@@ -93,6 +99,100 @@ class SourceDomainContractTests(unittest.TestCase):
             },
         )
         self.assertEqual(d["periodic_aw_covariance_sync_proof"]["required_mode"], "PSD_NONEXPANSIVE")
+
+    def test_sea3_physical_height_period_coupling_is_part_of_the_source_contract(self):
+        d = sea3_phys.build()
+        self.assertEqual(sea3_phys.validate(d), [])
+        self.assertTrue(
+            d["three_partition_contract"]["independent_H_r_and_T_p_rectangular_extrema_forbidden"]
+        )
+        self.assertTrue(
+            d["three_partition_contract"]["independent_three_partition_H_maxima_forbidden"]
+        )
+        self.assertEqual(d["repository_total_Hs_upper_m"], 8.5)
+        self.assertFalse(d["left_language_inclusion_closed"])
+
+    def test_sea3_cartesian_sea_x_rao_domain_is_rejected_before_p1(self):
+        d = sea3_p1.build()
+        self.assertEqual(sea3_p1.validate(d), [])
+        self.assertTrue(d["cartesian_product_refuted_by_analytical_witness"])
+        self.assertTrue(d["coupled_SEA3_domain_required"])
+        self.assertFalse(d["independent_cartesian_sea_x_RAO_domain_is_P1_sound"])
+        w = d["witness"]
+        self.assertTrue(w["PM_is_JONSWAP_gamma_1_boundary"])
+        self.assertTrue(w["witness_is_inside_declared_JONSWAP_gamma_interval_1_to_7"])
+        self.assertTrue(w["RAO_parameter_bounds_finite"])
+        self.assertTrue(w["witness_is_inside_declared_RAO_parameter_ranges"])
+        self.assertTrue(w["all_nondyadic_witness_constants_outward_enclosed"])
+        self.assertEqual(w["x_interval"], [1.0, 9.0])
+        self.assertGreater(
+            w["validated_acceleration_mean_square_lower_m2_s4"],
+            w["P1_cap_squared_upper_m2_s4"],
+        )
+        self.assertGreater(w["validated_acceleration_RMS_lower_mps2"], 4.5)
+        self.assertTrue(
+            d["coupled_domain_contract"]["finite_window_deterministic_response_certificate_required"]
+        )
+        self.assertFalse(d["finite_window_realization_certificate_closed"])
+        self.assertFalse(d["L_actual_sea_subset_Lhat_SEA3_closed"])
+
+    def test_wave_period_leak_subtraction_is_exact_for_admissible_steady_spectra(self):
+        d = sea3_period_identity.build()
+        self.assertEqual(sea3_period_identity.validate(d), [])
+        self.assertEqual(set(d["source_parity"]), set(sea3_period_identity.SOURCE_PARITY_KEYS))
+        self.assertTrue(all(d["source_parity"].values()))
+        ident = d["continuous_time_steady_state_identity"]
+        self.assertTrue(ident["input_spectrum_nonnegative"])
+        self.assertTrue(ident["weighted_denominator_finite_and_strictly_positive_required"])
+        self.assertTrue(ident["weighted_second_moment_finite_required"])
+        self.assertTrue(ident["holds_for_any_input_spectrum_satisfying_these_preconditions"])
+        self.assertFalse(ident["narrow_band_approximation"])
+        self.assertFalse(ident["single_sinusoid_approximation"])
+        self.assertFalse(d["single_frequency_assumption_used"])
+        self.assertFalse(d["single_RAO_used"])
+        self.assertFalse(d["finite_RAO_grid_used"])
+        self.assertFalse(d["promotion"]["SEA0_full_certificate_promoted"])
+        self.assertFalse(d["promotion"]["P2_pruning_promoted"])
+        self.assertFalse(d["promotion"]["finite_EWMA_transient_enclosed"])
+        self.assertFalse(d["promotion"]["discrete_estimator_identified_with_continuous_steady_state"])
+
+    def test_wave_period_identity_validator_rejects_overclaims(self):
+        d = sea3_period_identity.build()
+        bad = copy.deepcopy(d)
+        bad["single_RAO_used"] = True
+        bad["promotion"]["discrete_estimator_identified_with_continuous_steady_state"] = True
+        bad["continuous_time_steady_state_identity"]["weighted_denominator_finite_and_strictly_positive_required"] = False
+        failures = sea3_period_identity.validate(bad)
+        self.assertTrue(any("single_RAO_used" in x for x in failures))
+        self.assertTrue(any("discrete_estimator_identified" in x for x in failures))
+        self.assertTrue(any("weighted_denominator" in x for x in failures))
+
+    def test_sea3_rao_family_right_inclusion_is_part_of_the_canonical_source_contract(self):
+        """`ou3-proof` executes this file, so the RAO bridge has no side workflow."""
+        d = sea3.build_inclusion()
+        self.assertEqual(sea3.validate(d), [])
+
+        r = d["response_enclosure"]
+        self.assertTrue(r["single_worst_envelope_proves_entire_parameter_box_by_monotonicity"])
+        self.assertFalse(r["single_nominal_RAO_used"])
+        self.assertFalse(r["finite_RAO_grid_used"])
+        self.assertTrue(r["uniform_moment_theorem"]["unbanded_acceleration_moment_finite"])
+        self.assertGreater(r["acceleration_moment_tightening_vs_flat_6Hz_corner_lower"], 624.0)
+
+        p = d["p2_inclusion"]
+        self.assertEqual(p["SEA3_TO_P2_INCLUSION_CERTIFICATE"], "PASS")
+        self.assertTrue(p["Lhat_SEA3_subset_L_current_source"])
+        self.assertFalse(p["single_RAO_selected_for_inclusion"])
+        self.assertFalse(p["P2_pruned_by_SEA3"])
+        self.assertEqual(p["P2_physical_source_states"], 800)
+        self.assertEqual(p["RAO_parameter_box_consumed"], r["rao_envelope_parameter_box"])
+
+    def test_sea3_validator_rejects_mismatched_consumed_rao_box(self):
+        d = sea3.build_inclusion()
+        bad = copy.deepcopy(d)
+        bad["p2_inclusion"]["RAO_parameter_box_consumed"]["peak_translation_gain"] = [0.0, 3.0]
+        failures = sea3.validate(bad)
+        self.assertIn("P2 inclusion consumed a different RAO parameter box", failures)
 
 
 if __name__ == "__main__":
