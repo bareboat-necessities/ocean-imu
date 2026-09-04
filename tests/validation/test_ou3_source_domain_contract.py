@@ -28,7 +28,7 @@ class SourceDomainContractTests(unittest.TestCase):
         self.assertFalse(d["outward_rounded"])
         self.assertEqual(d["implementation_scalar_semantics"]["type"], "IEEE754_BINARY32")
         self.assertEqual(d["continuous_parameters"]["tau_aw_s"], [f32(0.02), f32(12.0)])
-        self.assertEqual(d["continuous_parameters"]["sigma_aw_mps2"], [f32(0.05), f32(6.0)])
+        self.assertEqual(d["continuous_parameters"]["sigma_aw_mps2"], [f32(0.05), f32(4.0)])
         self.assertEqual(set(d["discrete_source_branches"]["mode"]), {"H", "A"})
 
     def test_constexpr_arithmetic_rounds_as_binary32_after_each_operation(self):
