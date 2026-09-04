@@ -18,14 +18,28 @@ actually attained somewhere on that same history is conservative:
 * sigma(t)^2 <= max_path sigma^2 for nuisance/initial-wave terms; and
 * every S measurement covariance is <= the path maximum R_S variance.
 
+The three selected S observations are referenced to the covariance-word
+endpoint.  If ell is the lag from that endpoint, the deterministic integrator
+part is
+
+    S(T-ell) = S(T) - ell p(T) + 0.5 ell^2 v(T) + disturbance.
+
+Thus the same interval observability matrix used for forward times applies up
+to the diagonal sign transform diag(1,-1,1) on [S,p,v].  The reconstructed
+[v,p,S] covariance is already an endpoint covariance and MUST NOT be propagated
+forward through the word again.  The full-word process/noise diagonal dominator
+is intentionally retained unchanged, so this removes only the artificial
+reference-time propagation loss and does not weaken the source or noise bounds.
+
 The summarized source history MUST cover the complete covariance-observability
 word produced by these same statistics.  A short history is rejected rather
 than silently extrapolated.  This preserves history correlation without using
 replay values or independently mixing global source extrema.
 
 This module validates the single-history sufficient-statistic theorem and emits
-representative legal full-word histories.  It does not yet enumerate all source
-histories and cannot promote P3/P4/P5 by itself.
+representative legal full-word histories.  It does not by itself promote P3;
+the source-complete history frontier and canonical H/A join remain the promotion
+authority.
 """
 from __future__ import annotations
 
@@ -130,22 +144,43 @@ def translation_upper_from_summary(summary: dict, Tpe: float, sched: dict,
             f"same-history source summary covers only {history_lo:.17g}s but covariance word requires {Tword:.17g}s"
         )
 
+    # The selected observations lie in endpoint-lag windows
+    # [0,g], [spacing,spacing+g], [2 spacing,2 spacing+g].  The existing
+    # integrator inverse is for [1,+ell,0.5 ell^2] in [S,p,v] order.  Endpoint
+    # referencing changes only the p sign, so conjugating by diag(1,-1,1)
+    # gives the exact [1,-ell,0.5 ell^2] endpoint matrix inverse covariance.
     Binv = BASE.integrator_inverse(gap, spacing)
     s_nuis = BASE.up(sigma2 * (Tobs ** 3 / 6.0) ** 2)
     s_proc = BASE.up(qc * Tobs ** 7 / 252.0)
     rstack = BASE.up(3.0 * (rmax + s_nuis + s_proc))
     R = [[BASE.I(rstack if i == j else 0.0) for j in range(3)] for i in range(3)]
-    Cspv = BASE.matrix_symmetric_hull(BASE.matrix_mul(BASE.matrix_mul(Binv, R), BASE.matrix_transpose(Binv)))
-    order = (2, 1, 0)
-    Cvps = [[Cspv[order[i]][order[j]] for j in range(3)] for i in range(3)]
-    t = Interval.outward_bounds(0.0, Tword)
-    F = [
-        [BASE.I(1), BASE.I(0), BASE.I(0)],
-        [t, BASE.I(1), BASE.I(0)],
-        [BASE.I(0.5) * t.square(), t, BASE.I(1)],
+    Cspv_forward_sign = BASE.matrix_symmetric_hull(
+        BASE.matrix_mul(BASE.matrix_mul(Binv, R), BASE.matrix_transpose(Binv))
+    )
+    sign = [
+        [BASE.I(1 if i == j and i != 1 else (-1 if i == j else 0)) for j in range(3)]
+        for i in range(3)
     ]
-    Cend = BASE.matrix_symmetric_hull(BASE.matrix_mul(BASE.matrix_mul(F, Cvps), BASE.matrix_transpose(F)))
-    u = BASE.diagonal_dominator(Cend)
+    Cspv_endpoint = BASE.matrix_symmetric_hull(
+        BASE.matrix_mul(
+            BASE.matrix_mul(sign, Cspv_forward_sign),
+            BASE.matrix_transpose(sign),
+        )
+    )
+    order = (2, 1, 0)
+    Cvps_endpoint = [
+        [Cspv_endpoint[order[i]][order[j]] for j in range(3)]
+        for i in range(3)
+    ]
+
+    # This is the key theorem correction: Cvps_endpoint already bounds the
+    # endpoint [v,p,S] estimation error.  Propagating it by Phi(Tword) would
+    # estimate a different, future state and pays the integrator powers twice.
+    u = BASE.diagonal_dominator(Cvps_endpoint)
+
+    # Retain the previous full-word process/noise Loewner dominator unchanged.
+    # This deliberately leaves substantial slack; the present change removes
+    # only the artificial post-reconstruction propagation.
     variances = [
         BASE.up(sigma2 * Tword * Tword + qc * Tword ** 3 / 3.0),
         BASE.up(sigma2 * Tword ** 4 / 4.0 + qc * Tword ** 5 / 20.0),
@@ -163,6 +198,7 @@ def translation_upper_from_summary(summary: dict, Tpe: float, sched: dict,
     return [BASE.up(u[i] + noise[i]) for i in range(3)] + [noise[3]], {
         "cadence_s": cadence,
         "gap_s_upper": gap,
+        "observation_span_s_upper": Tobs,
         "word_horizon_s_upper": Tword,
         "word_horizon_s_lower": Tword_lo,
         "summarized_history_duration_lower_s": history_lo,
@@ -170,6 +206,11 @@ def translation_upper_from_summary(summary: dict, Tpe: float, sched: dict,
         "sigma_squared_upper_from_same_history": sigma2,
         "q_c_upper_from_same_history": qc,
         "S_measurement_variance_upper_from_same_history": rmax,
+        "translation_reference": "word_endpoint",
+        "endpoint_referenced_observability": True,
+        "endpoint_p_sign_similarity_applied": True,
+        "forward_propagation_after_endpoint_reconstruction": False,
+        "full_word_process_noise_dominator_retained": True,
     }
 
 
@@ -205,7 +246,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     Tpe = BASE.pos(domain["normal_live"]["vector_pe_recurrence_window_s"], "PE recurrence")
 
     # Each representative history has a lower physical duration above the
-    # largest deployed ~3.17 s covariance word before it is accepted.
+    # largest deployed covariance word before it is accepted.
     cases = ((0,50,13),(137,31,21),(729,25,26),(799,31,21))
     rows = []
     for seed, length, gap in cases:
@@ -234,6 +275,9 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "same_history_sufficient_statistics_used": True,
         "independent_cartesian_tau_sigma_R_S_extrema_used": False,
         "retained_translation_observability_theorem_reused": True,
+        "endpoint_referenced_translation_observability_used": True,
+        "post_reconstruction_forward_propagation_used": False,
+        "full_word_process_noise_dominator_retained": True,
         "progress_preserving_scheduler_required_for_gap_bound": True,
         "monotone_path_maxima_only": True,
         "full_covariance_word_history_required": True,
@@ -245,7 +289,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "P3_PROMOTED": False,
         "P4_PROMOTED": False,
         "next_obligation": (
-            "propagate a Pareto/invariant enclosure of these same-history sufficient statistics over all P2 V1 histories covering the canonical covariance word, and pair each history class with the recent full-matrix selected-process lower before taking a worst-case ratio"
+            "consume this endpoint-referenced upper over the exact P2 V1 history frontier and pair every endpoint/phase class with the full-matrix selected-process lower at the unchanged 1e-18 gate"
         ),
         "failures": [],
     }
@@ -261,6 +305,8 @@ def validate(d: dict) -> list[str]:
         "source_only", "P2_correlation_interface_consumed",
         "same_history_sufficient_statistics_used",
         "retained_translation_observability_theorem_reused",
+        "endpoint_referenced_translation_observability_used",
+        "full_word_process_noise_dominator_retained",
         "progress_preserving_scheduler_required_for_gap_bound",
         "monotone_path_maxima_only", "full_covariance_word_history_required",
         "all_representative_histories_cover_their_covariance_word",
@@ -270,6 +316,7 @@ def validate(d: dict) -> list[str]:
     for key in (
         "trajectory_replay_used", "filter_changed", "declared_domain_changed",
         "independent_cartesian_tau_sigma_R_S_extrema_used",
+        "post_reconstruction_forward_propagation_used",
         "full_source_history_family_enumerated", "P3_PROMOTED", "P4_PROMOTED",
     ):
         if d.get(key) is not False:
@@ -285,8 +332,13 @@ def validate(d: dict) -> list[str]:
             f.append("representative row lost same-history statistics")
         if s.get("independent_global_source_extrema_used") is not False:
             f.append("representative row used independent global source extrema")
-        if row.get("timing", {}).get("summarized_history_covers_covariance_word") is not True:
+        timing = row.get("timing", {})
+        if timing.get("summarized_history_covers_covariance_word") is not True:
             f.append("representative source history does not cover covariance word")
+        if timing.get("endpoint_referenced_observability") is not True:
+            f.append("representative row lost endpoint observability reference")
+        if timing.get("forward_propagation_after_endpoint_reconstruction") is not False:
+            f.append("representative row reintroduced post-reconstruction propagation")
         u = row.get("Sigma_translation_diagonal_upper", [])
         if len(u) != 4 or any(not (isinstance(x,(int,float)) and math.isfinite(float(x)) and float(x)>0.0) for x in u):
             f.append("representative row has invalid translation covariance upper")
@@ -308,6 +360,7 @@ def main() -> int:
         "P2_correlation_interface_version": d["P2_correlation_interface_version"],
         "representative_histories": len(d["representative_rows"]),
         "all_cover_word": d["all_representative_histories_cover_their_covariance_word"],
+        "endpoint_referenced": d["endpoint_referenced_translation_observability_used"],
         "validation_failures": vf,
     }, indent=2, sort_keys=True))
     return 0 if not vf else 2
