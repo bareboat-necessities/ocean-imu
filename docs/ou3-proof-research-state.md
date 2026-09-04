@@ -127,6 +127,43 @@ finite-state or monotone argument can quantify over legal histories.
 words rather than a local search: a finite-state or monotone quotient that bounds
 every legal word, not the best one a greedy descent can find.
 
+## Step 2 computes but its floor is NOT yet justified -- do not build on it
+
+Closed-form floor from the same Gramian as the ceiling: information adds, so
+`Y_end <= Y0_propagated + G` and hence `P_end >= (Y0' + G)^-1`, with `P0` a
+shipping constant so `Y0` is bounded. No recursion, so the interval wall does not
+apply, and both inversions validate at all 15 cells.
+
+| tau | sigma | N | ceiling S | floor S | delta | vs `1e-18` |
+| --- | --- | --- | --- | --- | --- | --- |
+| 0.417 | 0.05 | 558 | 0.02041 | 0.02041 | **0.99947** | +18.0 |
+| 3.0 | 1.0 | 77 | 3.102 | 2.781 | 0.6639 | +17.8 |
+| 6.0 | 1.0 | 38 | 34.27 | 18.63 | 0.01436 | +16.2 |
+| 12.0 | 0.05 | 21 | 25.61 | 15.55 | **0.001683** | +15.2 |
+
+Worst `delta` 1.68e-3, nominally clearing the gate by 15.23 orders.
+
+**That number should not be trusted, and `delta ~ 0.999` at low `tau` is why.** A
+floor and a ceiling that agree to 0.05 percent are not two independent bounds --
+they are one construction differenced against itself. The floor here is the
+ceiling's own Gramian minus a prior term, so the agreement is an artifact of
+sharing `G`, not evidence that the covariance is pinned.
+
+**The concrete defect:** `G` counts only `S` observations. The deployed filter
+also runs accelerometer updates, which inform `v`, `p` and `S` through `a_w` and
+the cross-covariances. Extra information means smaller covariance, so the true
+`P` can fall **below** this floor, and a lower bound that the truth can violate
+is not a lower bound. The canonical floor starts from `P = 0` precisely to be
+safe against every information source, which is why it is 1.366e-20 and not
+this.
+
+So Step 2 is **not** done. What the computation does establish is narrower and
+still useful: the closed-form route survives interval arithmetic on both sides,
+and if a floor can be justified that credits the S observations at all, the
+geometry has ample room. Fixing it means bounding the information the other
+measurement channels can contribute, which is the real Step 2 and is not
+attempted here.
+
 ## Stacked deficit accounting after PR #478
 
 Re-ran the ceiling under #478's tightened safety clamps. All figures are the
