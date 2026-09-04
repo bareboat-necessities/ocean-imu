@@ -1,26 +1,15 @@
 #!/usr/bin/env python3
 """SEA3 directional-response -> P2 inclusion -> H/A feasibility bridge.
 
-This is the first compositional bridge from the three-mode directional sea
-language to the frozen implementation-correlated P2 language.
+The response-moment statement is conditional on an explicit provisional
+vessel/IMU response-norm hypothesis because the repository has no owned hull
+RAO.  The SEA3 -> P2 statement is stronger and independent of that numerical
+hypothesis: the shipping code clamps the period-derived tuning frequency, tau,
+sigma and R_S before the exact EMA/stage/commit language already represented by
+P2.  This closes non-pruning inclusion into the broad P2 language.
 
-There are deliberately two different statements here:
-
-1. A directional vessel/IMU response *moment enclosure* is constructed under an
-   explicit provisional uniform response-norm hypothesis.  The repository does
-   not currently contain an owned hull/IMU RAO, so that hypothesis is not
-   silently promoted to a physical theorem fact.
-2. SEA3 -> P2 inclusion does not need that provisional numerical response gain.
-   The shipping tuner clamps the period-derived frequency, tau, sigma and R_S
-   before the same sample-by-sample EMA/staging schedule already over-approximated
-   by P2.  Hence every finite normal-Live SEA3 source realization projects into
-   the current broad P2 source language.  This proves non-pruning inclusion; it
-   does *not* claim that SEA3 has yet narrowed the 800-state P2 quotient.
-
-Once the inclusion artifact exists, an already-computed canonical full-P2 H/A
-candidate can be attached.  A uniform P2 PASS is inherited by its SEA3 subset.
-A full-P2 FAIL is only inconclusive for SEA3 and must never be used to declare a
-SEA3 failure: the narrower SEA3 language may still have a useful H/A margin.
+If a canonical full-P2 H/A result is attached, PASS transfers to the SEA3
+subset.  FAIL does not: it is only inconclusive until SEA3 actually prunes P2.
 """
 from __future__ import annotations
 
@@ -39,8 +28,6 @@ import ou3_source_domain_contract as SOURCE
 REPO = Path(__file__).resolve().parents[1]
 DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
 DEFAULT_RESPONSE_DOMAIN = REPO / "tools" / "ou3_sea3_directional_response_domain.json"
-WRAPPER = REPO / "src" / "kalman_ou_iii" / "SeaStateFusionFilter_OU_III.h"
-TUNER = REPO / "src" / "tuner" / "SeaStateAutoTuner.h"
 SCHEMA = 1
 QUALIFICATION = "OU3_SEA3_DIRECTIONAL_RESPONSE_P2_HA_FEASIBILITY"
 
@@ -62,16 +49,16 @@ def _load_response_domain(path: Path = DEFAULT_RESPONSE_DOMAIN) -> dict:
     if d.get("schema_version") != "OU3_SEA3_DIRECTIONAL_RESPONSE_DOMAIN_V1":
         raise RuntimeError("unexpected SEA3 directional response-domain schema")
     if int(d.get("sea_modes_max", 0)) != 3:
-        raise RuntimeError("SEA3 directional response domain must retain M_max=3")
-    response = d.get("response_contract", {})
-    gain = float(response.get("response_vector_2_norm_upper", math.nan))
+        raise RuntimeError("SEA3 response domain must retain M_max=3")
+    r = d.get("response_contract", {})
+    gain = float(r.get("response_vector_2_norm_upper", math.nan))
+    band = r.get("finite_response_band_hz")
     if not math.isfinite(gain) or gain <= 0.0:
         raise RuntimeError("provisional response gain must be finite and positive")
-    band = response.get("finite_response_band_hz")
     if not isinstance(band, list) or len(band) != 2:
         raise RuntimeError("response domain lost finite frequency band")
-    flo, fhi = map(float, band)
-    if not (math.isfinite(flo) and math.isfinite(fhi) and 0.0 < flo < fhi):
+    lo, hi = map(float, band)
+    if not (math.isfinite(lo) and math.isfinite(hi) and 0.0 < lo < hi):
         raise RuntimeError("invalid directional response band")
     return d
 
@@ -80,22 +67,19 @@ def directional_response_enclosure(
     repo: Path = REPO,
     response_domain_path: Path = DEFAULT_RESPONSE_DOMAIN,
 ) -> dict:
-    """Return a finite matrix-moment enclosure conditional on the response cap.
+    """Finite PSD matrix-moment enclosure under the provisional response cap.
 
-    For each directional component retain the complex rank-one outer product
-    h h*.  If ||h||_2 <= G and the directional density is normalized, then the
-    response spectral matrix is PSD and
+    Retain h(omega,theta) h* before taking an outer bound.  With ||h||_2 <= G,
+    normalized direction density, and sum H_r^2 = H_s^2,
 
-        tr M_a <= G^2 omega_hi^4 m0 = G^2 omega_hi^4 H_s^2 / 16.
+        tr M_a <= G^2 omega_hi^4 H_s^2 / 16.
 
-    The same argument gives displacement/velocity moment coefficients.  This is
-    deliberately a matrix/PSD bound rather than three independently selectable
-    Cartesian boxes, so cross-axis coupling is not erased before the outer
-    enclosure is taken.
+    Thus cross-axis coupling is retained structurally instead of replacing the
+    response by three independently selectable Cartesian boxes.
     """
     repo = Path(repo).resolve()
     cfg = _load_response_domain(Path(response_domain_path).resolve())
-    response = cfg["response_contract"]
+    r = cfg["response_contract"]
     wrapper = (repo / "src" / "kalman_ou_iii" / "SeaStateFusionFilter_OU_III.h").read_text(
         encoding="utf-8"
     )
@@ -103,25 +87,22 @@ def directional_response_enclosure(
         _source_const(wrapper, "SIGMA_BAND_MIN_HZ_DEFAULT"),
         _source_const(wrapper, "SIGMA_BAND_MAX_HZ_DEFAULT"),
     ]
-    declared_band = list(map(float, response["finite_response_band_hz"]))
-    band_parity = all(
+    declared_band = list(map(float, r["finite_response_band_hz"]))
+    parity = all(
         math.isclose(a, b, rel_tol=0.0, abs_tol=1.0e-12)
         for a, b in zip(deployed_band, declared_band)
     )
-    if not band_parity:
+    if not parity:
         raise RuntimeError(
-            f"directional response band {declared_band} drifted from shipping sigma band {deployed_band}"
+            f"response band {declared_band} drifted from shipping sigma band {deployed_band}"
         )
 
-    gain = float(response["response_vector_2_norm_upper"])
+    gain = float(r["response_vector_2_norm_upper"])
     omega_lo = 2.0 * math.pi * declared_band[0]
     omega_hi = 2.0 * math.pi * declared_band[1]
-    # m0 = H_s^2/16 for the sum of the three height partitions.  These are
-    # coefficients multiplying H_s^2, not a claim about any chosen H_s cap.
     disp = gain * gain / 16.0
     vel = disp * omega_hi * omega_hi
     acc = vel * omega_hi * omega_hi
-
     return {
         "qualification": "OU3_SEA3_PROVISIONAL_DIRECTIONAL_RESPONSE_MOMENT_ENCLOSURE",
         "sea_modes_max": 3,
@@ -132,12 +113,12 @@ def directional_response_enclosure(
         ),
         "physical_SEA0_promoted": False,
         "response_hypothesis_status": "PROVISIONAL_NOT_DATA_DERIVED",
-        "response_definition": response["definition"],
+        "response_definition": r["definition"],
         "response_vector_2_norm_upper": gain,
         "response_gain_db_upper": 20.0 * math.log10(gain),
         "finite_response_band_hz": declared_band,
         "shipping_sigma_band_hz": deployed_band,
-        "response_frequency_band_source_parity": band_parity,
+        "response_frequency_band_source_parity": parity,
         "directional_cross_axis_coupling": {
             "rank_one_complex_outer_product_retained_before_outer_bound": True,
             "response_spectral_matrix_PSD": True,
@@ -153,13 +134,12 @@ def directional_response_enclosure(
         "finite_band_moments_established_conditionally": True,
         "numerical_response_gain_is_allowed_to_prune_P2": False,
         "remaining_physical_obligation": (
-            "replace or explicitly accept the provisional uniform response-norm hypothesis with a repository-owned vessel/IMU response model; then tighten the PSD matrix moments instead of promoting this feasibility cap as measured hull physics"
+            "replace or explicitly accept the provisional response-norm hypothesis with a repository-owned vessel/IMU response model before physical SEA0 promotion"
         ),
     }
 
 
 def source_bridge_contract(repo: Path = REPO) -> dict:
-    """Audit the exact shipping clamps and sample-order markers used by inclusion."""
     repo = Path(repo).resolve()
     wrapper = (repo / "src" / "kalman_ou_iii" / "SeaStateFusionFilter_OU_III.h").read_text(
         encoding="utf-8"
@@ -183,8 +163,8 @@ def source_bridge_contract(repo: Path = REPO) -> dict:
         "internal_frequency_clamp": "f_eff = std::max(f_min_hz, std::min(f_max_hz, f_eff));",
         "nonnegative_variance": "return std::max(0.0f, A_sq.get() - mu * mu);",
     }
-    wm = {k: v in wrapper for k, v in wrapper_markers.items()}
-    tm = {k: v in tuner for k, v in tuner_markers.items()}
+    wm = {k: marker in wrapper for k, marker in wrapper_markers.items()}
+    tm = {k: marker in tuner for k, marker in tuner_markers.items()}
     return {
         "wrapper_markers": wm,
         "tuner_markers": tm,
@@ -196,21 +176,21 @@ def _inclusion_from_p2(
     response: dict,
     frontend: dict,
     p2: dict,
-    domain_path: Path,
     repo: Path = REPO,
 ) -> dict:
     pf = P2I.validate(p2)
+    ff = FRONT.validate(frontend)
     if pf:
         raise RuntimeError(f"P2 correlation interface invalid: {pf}")
-    ff = FRONT.validate(frontend)
     if ff:
         raise RuntimeError(f"wave-period front-end invalid: {ff}")
     if response.get("response_frequency_band_source_parity") is not True:
-        raise RuntimeError("directional response band lost source parity")
+        raise RuntimeError("response band lost shipping parity")
 
     bridge = source_bridge_contract(repo)
     if bridge["all_shipping_bridge_markers_present"] is not True:
-        raise RuntimeError("shipping SEA3->tuner clamp/staging bridge changed")
+        raise RuntimeError("shipping SEA3->P2 clamp/staging bridge changed")
+
     c = PATH._constants()
     tau_lo = max(c["min_tau"], c["tau_coeff"] * 0.5 / c["max_freq"])
     projected = {
@@ -221,8 +201,11 @@ def _inclusion_from_p2(
         "R_S_m_s": [down(c["min_RS"]), up(c["max_RS"])],
         "stage_gap_valid_samples": list(p2["clock_gap_samples"]),
     }
-    prior = float(frontend["source_constants"]["tune_freq_prior_hz"])
-    prior_covered = c["min_freq"] <= prior <= c["max_freq"]
+    prior_iv = list(map(float, frontend["declared_inputs"]["fixed_tuning_frequency_prior_hz"]))
+    prior_covered = (
+        len(prior_iv) == 2
+        and c["min_freq"] <= prior_iv[0] <= prior_iv[1] <= c["max_freq"]
+    )
     gap_covered = list(p2["clock_gap_samples"]) == list(range(13, 27))
     passed = (
         p2.get("P2_READY_FOR_CANONICAL_P3") is True
@@ -242,13 +225,13 @@ def _inclusion_from_p2(
         "P2_physical_source_states": int(p2["physical_source_states"]),
         "P2_clock_gap_samples": list(p2["clock_gap_samples"]),
         "projected_source_domain": projected,
-        "fixed_prior_frequency_hz": prior,
+        "fixed_prior_frequency_hz": prior_iv,
         "fixed_prior_covered_by_P2_frequency_alphabet": prior_covered,
         "estimator_frequency_is_clamped_before_tau_target": True,
         "sigma_variance_history_need_not_be_independently_bounded_for_inclusion": True,
         "R_S_transcendental_target_need_not_be_independently_bounded_for_inclusion": True,
         "reason_clamps_are_sufficient": (
-            "P2 already over-approximates arbitrary in-range target cells sample by sample, while the shipping wrapper clamps f_tune/tau/sigma/R_S before the exact EMA/stage/commit schedule represented by P2"
+            "P2 already over-approximates arbitrary in-range target cells sample by sample; shipping clamps f_tune/tau/sigma/R_S before the exact EMA/stage/commit schedule represented by P2"
         ),
         "provisional_directional_response_gain_used_for_inclusion": False,
         "finite_window_Gaussian_amplitude_bound_used_for_inclusion": False,
@@ -258,10 +241,10 @@ def _inclusion_from_p2(
         "SEA3_TO_P2_INCLUSION_CERTIFICATE": "PASS" if passed else "FAIL",
         "physical_SEA0_promoted_here": False,
         "interpretation": (
-            "This closes the compositional inclusion into the existing broad P2 source language. It intentionally does not yet remove any of the 800 P2 cells. The response/IQ finite-window work is needed for source-faithful pruning, not for this superset inclusion."
+            "This closes compositional inclusion into the existing broad P2 language but intentionally removes none of its 800 cells. Response/IQ finite-window work is needed for pruning, not for this superset inclusion."
         ),
         "next_obligation": (
-            "replace/accept the provisional response model and carry finite response-weighted estimator/log-period state far enough to prune the P2 input alphabet; then recompute H/A on that narrower SEA3 history language"
+            "replace/accept the provisional response model and carry finite response-weighted estimator/log-period state far enough to prune P2; then recompute H/A on the narrower SEA3 history language"
         ),
     }
 
@@ -273,11 +256,10 @@ def build_inclusion(
     repo: Path = REPO,
 ) -> dict:
     repo = Path(repo).resolve()
-    domain_path = Path(domain_path).resolve()
     response = directional_response_enclosure(repo, response_domain_path)
     frontend = FRONT.build(repo)
-    p2 = P2I.build(domain_path) if p2_candidate is None else p2_candidate
-    inclusion = _inclusion_from_p2(response, frontend, p2, domain_path, repo)
+    p2 = P2I.build(Path(domain_path).resolve()) if p2_candidate is None else p2_candidate
+    inclusion = _inclusion_from_p2(response, frontend, p2, repo)
     return {
         "schema": SCHEMA,
         "qualification": QUALIFICATION,
@@ -315,21 +297,21 @@ def _ha_inheritance(inclusion: dict, ha: dict, canonical: dict) -> dict:
         "SEA3_HA_feasible_by_existing_uniform_certificate": inherited,
         "P3_promoted_here": False,
         "next_obligation": (
-            "the existing uniform P2 H/A certificate already covers SEA3; continue with physical-response acceptance and downstream P4/P5 obligations"
+            "existing uniform P2 H/A already covers SEA3; continue physical-response acceptance and downstream P4/P5 obligations"
             if inherited
-            else "use the response/finite-estimator construction to prune P2 source histories and rerun the same frozen H/A theorem interface on the SEA3 subset"
+            else "prune P2 source histories with the response/finite-estimator construction and rerun the same frozen H/A theorem interface"
         ),
     }
 
 
 def attach_ha_feasibility(payload: dict, ha: dict, canonical: dict) -> dict:
-    failures = validate(payload)
-    if failures:
-        raise RuntimeError(f"SEA3 inclusion artifact invalid before H/A attachment: {failures}")
+    vf = validate(payload)
+    if vf:
+        raise RuntimeError(f"SEA3 inclusion invalid before H/A attachment: {vf}")
     hf = HA.validate(ha)
+    cf = P3G.validate(canonical)
     if hf:
         raise RuntimeError(f"H/A producer artifact invalid: {hf}")
-    cf = P3G.validate(canonical)
     if cf:
         raise RuntimeError(f"canonical P3 artifact invalid: {cf}")
     out = dict(payload)
@@ -365,9 +347,9 @@ def validate(d: dict) -> list[str]:
     if p.get("shipping_bridge", {}).get("all_shipping_bridge_markers_present") is not True:
         f.append("shipping clamp/staging bridge markers missing")
     if d.get("P3_promoted_by_this_artifact") is not False:
-        f.append("SEA3 feasibility bridge promoted P3")
+        f.append("SEA3 bridge promoted P3")
     if d.get("P4_promoted_by_this_artifact") is not False:
-        f.append("SEA3 feasibility bridge promoted P4")
+        f.append("SEA3 bridge promoted P4")
     ha = d.get("ha_feasibility")
     if ha is not None:
         expected = (
@@ -376,8 +358,8 @@ def validate(d: dict) -> list[str]:
         )
         if ha.get("SEA3_HA_feasible_by_existing_uniform_certificate") is not expected:
             f.append("H/A inherited feasibility flag is inconsistent")
-        expected_status = "PASS_BY_P2_SUPERSET" if expected else "INCONCLUSIVE_REQUIRES_SEA3_NARROWING"
-        if ha.get("SEA3_HA_FEASIBILITY") != expected_status:
+        status = "PASS_BY_P2_SUPERSET" if expected else "INCONCLUSIVE_REQUIRES_SEA3_NARROWING"
+        if ha.get("SEA3_HA_FEASIBILITY") != status:
             f.append("H/A feasibility status is inconsistent")
         if ha.get("uniform_P2_FAIL_implies_SEA3_FAIL") is not False:
             f.append("full-P2 failure was incorrectly promoted to SEA3 failure")
@@ -395,34 +377,34 @@ def main() -> int:
     ap.add_argument("--canonical-candidate", type=Path)
     ap.add_argument("--output", type=Path, required=True)
     args = ap.parse_args()
-
     if (args.ha_candidate is None) != (args.canonical_candidate is None):
         raise SystemExit("--ha-candidate and --canonical-candidate must be supplied together")
 
-    if args.inclusion_candidate:
-        d = json.loads(args.inclusion_candidate.read_text(encoding="utf-8"))
-    else:
-        d = build_inclusion(args.domain, args.response_domain)
-
+    d = (
+        json.loads(args.inclusion_candidate.read_text(encoding="utf-8"))
+        if args.inclusion_candidate
+        else build_inclusion(args.domain, args.response_domain)
+    )
     if args.ha_candidate:
-        ha = json.loads(args.ha_candidate.read_text(encoding="utf-8"))
-        canonical = json.loads(args.canonical_candidate.read_text(encoding="utf-8"))
-        d = attach_ha_feasibility(d, ha, canonical)
+        d = attach_ha_feasibility(
+            d,
+            json.loads(args.ha_candidate.read_text(encoding="utf-8")),
+            json.loads(args.canonical_candidate.read_text(encoding="utf-8")),
+        )
 
     vf = validate(d)
     d["validation_pass"] = not vf
     d["validation_failures"] = vf
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(d, indent=2, sort_keys=True), encoding="utf-8")
-    summary = {
+    print(json.dumps({
         "response_status": d["response_enclosure"]["response_hypothesis_status"],
         "response_accel_trace_upper_per_Hs2": d["response_enclosure"]["matrix_moment_trace_upper_per_Hs2"]["acceleration"],
         "SEA3_TO_P2_INCLUSION_CERTIFICATE": d["p2_inclusion"]["SEA3_TO_P2_INCLUSION_CERTIFICATE"],
         "P2_pruned": d["p2_inclusion"]["P2_pruned_by_SEA3"],
         "ha_feasibility": None if d["ha_feasibility"] is None else d["ha_feasibility"]["SEA3_HA_FEASIBILITY"],
         "validation_failures": vf,
-    }
-    print(json.dumps(summary, indent=2, sort_keys=True))
+    }, indent=2, sort_keys=True))
     return 0 if not vf else 2
 
 
