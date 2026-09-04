@@ -42,6 +42,8 @@ import ou3_vector_uco_certificate as VECTOR
 
 REPO = Path(__file__).resolve().parents[1]
 WRAPPER = REPO / "src" / "kalman_ou_iii" / "SeaStateFusionFilter_OU_III.h"
+MEKF = REPO / "src" / "kalman_ou_iii" / "Kalman3D_Wave_OU_III.h"
+CORE_MATH = REPO / "src" / "kalman_ou_common" / "KalmanOUCoreMath.h"
 DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
 SCHEMA = 4
 BRANCH_X = 1.0e-2
@@ -263,6 +265,8 @@ def rs_variance_lower(rs: Interval, sched: dict) -> float:
 
 def source_schedule() -> dict:
     text = WRAPPER.read_text(encoding="utf-8")
+    mekf_text = MEKF.read_text(encoding="utf-8")
+    core_text = CORE_MATH.read_text(encoding="utf-8")
     for marker in (
         "RSAdaptationLaw rs_law_ = RSAdaptationLaw::SpectralMSE;",
         "apply_pseudo_update_cadence_();",
@@ -271,6 +275,21 @@ def source_schedule() -> dict:
     ):
         if marker not in text:
             raise RuntimeError(f"missing deployed schedule semantic: {marker}")
+    for marker in (
+        "retarget_period_elapsed_progress_preserving(",
+        "pseudo_update_elapsed_s_, new_period",
+        "pseudo_update_period_s_ = new_period;",
+    ):
+        if marker not in mekf_text:
+            raise RuntimeError(f"missing progress-preserving OU-III scheduler semantic: {marker}")
+    for marker in (
+        "if (elapsed < period) return elapsed;",
+        "return std::nextafter(period, T(0));",
+    ):
+        if marker not in core_text:
+            raise RuntimeError(f"missing progress-preserving scheduler helper semantic: {marker}")
+    if "std::fmod(pseudo_update_elapsed_s_, pseudo_update_period_s_)" in mekf_text:
+        raise RuntimeError("legacy pseudo-period setter still discards elapsed service credit")
     names = (
         "MIN_TUNE_FREQ_HZ","MAX_TUNE_FREQ_HZ","MIN_TAU_S","MAX_TAU_S",
         "MIN_R_S","MAX_R_S","PSEUDO_UPDATE_TAU_RATIO_DEFAULT",
@@ -293,6 +312,7 @@ def source_schedule() -> dict:
         "pseudo_min_s":c["PSEUDO_UPDATE_PERIOD_MIN_S_DEFAULT"],
         "pseudo_max_s":c["PSEUDO_UPDATE_PERIOD_MAX_S_DEFAULT"],
         "dt_s":c["FREQ_SMOOTHER_DT"],
+        "pseudo_period_retarget_progress_preserving":True,
         "proof_kind":"SOURCE_REACHABLE_INVARIANT_CELL_OVERAPPROXIMATION",
         "note":"tau target comes from the deployed wave-band law; cadence is coupled to applied tau in every cell; R_S is retained as a source state cell instead of mixing its global lower and upper extrema in one inequality",
     }
@@ -307,6 +327,8 @@ def cadence_bounds(tau: Interval,sched: dict) -> list[float]:
 
 def translation_upper(tau: Interval,sigma: Interval,rs: Interval,Tpe: float,sched: dict) -> tuple[list[float],dict]:
     h=sched["dt_s"]
+    if sched.get("pseudo_period_retarget_progress_preserving") is not True:
+        raise RuntimeError("finite S-observation gap requires progress-preserving pseudo-period retargeting")
     cadence=cadence_bounds(tau,sched)
     gap=up(cadence[1]+h)
     spacing=up(max(Tpe,2.0*gap))
