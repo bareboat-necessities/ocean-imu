@@ -34,13 +34,12 @@ separate P1 Normal-Live body-rate/attitude source bounds.
 `G <= 4` is a 12.04 dB bound on the norm of the *whole three-axis CoG
 translational response vector*, not one selected response value.  The 1.2 Hz
 upper response corner is the deployed wave-tuning safety ceiling.  The assumed
-second-order-or-faster high-frequency roll-off is deliberately weak compared
-with ordinary linear monohull response models, but is the physical property
-needed to avoid treating the unbanded JONSWAP/PM acceleration tail as if a hull
+second-order-or-faster high-frequency roll-off is the physical property needed
+to avoid treating the unbanded JONSWAP/PM acceleration tail as if a hull
 responded with constant gain forever.  Jensen, Mansour & Olsen, *Ocean
-Engineering* 31 (2004) 61--85, doi:10.1016/S0029-8018(03)00108-2, is the
-engineering reference for using a principal-dimension/operating-profile RAO
-family rather than one identified hull.  It is not cited as a universal proof
+Engineering* 31 (2004) 61--85, doi:10.1016/S0029-8018(03)00108-2, is retained
+as engineering motivation for using a principal-dimension/operating-profile RAO
+family rather than one identified hull.  It is not treated as a universal proof
 that every vessel satisfies this deployment envelope.
 
 ## 2. One worst envelope certifies the entire RAO range
@@ -80,7 +79,39 @@ approximately
 This statement is analytical.  No finite frequency grid or RAO grid is used to
 establish it.
 
-## 3. SEA3-to-P2 inclusion over the whole range
+## 3. Physical sea parameters are coupled, not a rectangular worst-case box
+
+`tools/ou3_sea3_physical_admissibility.py` adds a replay-free SEA0 parameter
+subcertificate so the three sea partitions cannot independently choose maximum
+height and minimum period.
+
+It uses the DNVGL-RP-C205 peak-steepness recommendation
+
+```
+S_p = 2*pi*H/(g*T_p^2),
+S_p <= 1/15                 for T_p <= 8 s,
+S_p <= 1/25                 for T_p >= 15 s,
+```
+
+with linear interpolation of `S_p` on `8 < T_p < 15 s` when no better
+site-specific source is available.  For SEA3 we apply this criterion separately
+to each active partition as an explicit conservative theorem-design choice,
+then retain the exact multimodal energy coupling
+
+```
+H_s^2 = sum_r H_r^2,
+H_s <= 8.5 m.
+```
+
+The DNV document supplies the single-sea peak-steepness recommendation.  The
+partitionwise multimodal extension is ours and is labelled as such; it is not
+misattributed to DNV.
+
+This subcertificate deliberately does **not** promote SEA0.  A compact physical
+`T_p` range (or equivalent compact frequency parametrization), sea-parameter
+rate bounds, and a hard finite-window realization enclosure are still open.
+
+## 4. SEA3-to-P2 inclusion over the whole range
 
 The right inclusion does not depend on selecting a particular member of the
 RAO family.  The shipping path clamps the period-derived tuning frequency and
@@ -96,12 +127,11 @@ Lhat_SEA3 subset L_current_source.
 
 The present certificate is deliberately non-pruning: it proves sound inclusion
 in the existing 800-state P2 language without claiming that response physics
-has yet removed a P2 cell.  That distinction matters.  A robust RAO range is
-now part of the theorem, but finite-memory WavePeriodEstimator/variance/tuner
-reachability is still required before the response family can be used for
-source-history pruning.
+has yet removed a P2 cell.  A robust RAO range is now part of the theorem, but
+finite-memory WavePeriodEstimator/variance/tuner reachability is still required
+before the response family can be used for source-history pruning.
 
-## 4. H/A feasibility
+## 5. H/A feasibility
 
 The H/A check remains the unchanged source-complete P2-V1 translation route,
 the 18-state H / 21-state A precision-block join, and the unique canonical P3
@@ -118,11 +148,12 @@ Because every SEA3 RAO execution is inside the full P2 language:
 No P3/P4 threshold, filter constant, or operating-domain bound is changed by
 this bridge.
 
-## 5. Physical boundary that is still open
+## 6. Physical boundary that is still open
 
-The RAO-envelope theorem is a response-family certificate, not a claim that a
-Gaussian directional spectrum supplies an infinite-time deterministic
-pointwise acceleration bound.  SEA0 still has to close the left inclusion
+The RAO-envelope and peak-steepness results are parameter-family certificates,
+not a claim that a Gaussian directional spectrum supplies an infinite-time
+deterministic pointwise acceleration bound.  SEA0 still has to close the left
+inclusion
 
 ```
 L_actual_sea subset Lhat_SEA3
@@ -138,10 +169,14 @@ for this SEA3 subset.  If it is not green, the next step is to propagate the
 response-weighted WavePeriodEstimator/log-period/variance/tuner memory and
 recompute H/A on the resulting SEA3-reachable history language.
 
-## 6. CI contract
+## 7. CI contract
 
-The canonical OU-III proof workflow must reject any regression to a nominal
-RAO, a finite sampled RAO catalogue, independent Cartesian response boxes, a
-roll-off weaker than `p=2`, or a changed `1e-18` H/A gate.  The dedicated
-branch-only response workflow is temporary scaffolding and is removed once
-these checks are wired into `.github/workflows/ou3-proof.yml`.
+There is one OU-III proof workflow: `.github/workflows/ou3-proof.yml`.  The RAO
+family and physical sea admissibility checks are bound into the canonical
+source-domain test already run there.  The retired dedicated
+`ou3-sea3-directional.yml` workflow is forbidden by the proof-cleanup contract.
+
+CI rejects regression to a nominal RAO, a finite sampled RAO catalogue,
+independent Cartesian response boxes, response roll-off weaker than `p=2`,
+independent maximum `H_r/T_p,r` corners, three independently maximized partition
+heights, or a changed `1e-18` H/A gate.
