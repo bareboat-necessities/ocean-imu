@@ -1384,6 +1384,7 @@ public:
     // Zero-crossing wave period [s] from the independent accelerometer-only
     // estimator; NaN until it settles.
     inline float getWavePeriodSec() const noexcept { return wave_period_.getPeriodSec(); }
+    inline bool wavePeriodUsable() const noexcept { return wave_period_.hasUsablePeriod(); }
     inline bool wavePeriodReady() const noexcept { return wave_period_.isReady(); }
 
     // Select which vertical acceleration drives the wave-period estimator.
@@ -1670,8 +1671,9 @@ private:
 
             case StartupStage::TunerWarm:
                 if (!tuner_.isFreqReady()) return;
-                if (tuner_.isReady()) {
-                    // The operating point is trusted, but the attitude is not
+                if (tuner_.isReady() && wave_period_.hasUsablePeriod()) {
+                    // The operating point and measured wave period are trusted,
+                    // but the attitude is not
                     // this filter's to decide.  Park here and let the bootstrap
                     // call goLive() once it has tilt and north.
                     startup_stage_   = StartupStage::TunerReady;
@@ -1799,16 +1801,17 @@ private:
     // quantity and nothing else; the acceleration-band tracker never reaches
     // it, at any instant of the run.
     //
-    // The estimator's own value is taken as soon as it exists rather than at
-    // isReady(): the readiness gate wants a settled *statistic*, and it does
-    // not clear until 60-85 s into a run, whereas a value that has survived the
-    // integrator settling transient is already a far better wave-band estimate
-    // than a constant.  Before that the fixed wave-band prior stands in.  Both
-    // are exogenous, so the schedule is a pure function of the measurements at
-    // every instant of the run rather than only after the gate clears.
+    // The fixed wave-band prior is used only until the existing period
+    // estimator's own startup-usable gate clears.  That gate is earlier than
+    // strict isReady(), but it still requires four leak time constants and at
+    // least one estimated cycle of the same moment/log-period state.  There is
+    // no second startup estimator and no estimator handoff.
     float tuner_frequency_hz_() const {
         const float wave_hz = wave_period_.getFrequencyHz();
-        if (std::isfinite(wave_hz) && wave_hz > 0.0f) return wave_hz;
+        if (wave_period_.hasUsablePeriod() &&
+            std::isfinite(wave_hz) && wave_hz > 0.0f) {
+            return wave_hz;
+        }
         return tune_freq_prior_hz_;
     }
 

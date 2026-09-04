@@ -127,11 +127,13 @@ window realization or left language inclusion.
 ### WavePeriodEstimator front end and startup causality
 
 `tools/ou3_sea3_wave_period_frontend.py` remains replay free and non-promoting.
-It source-certifies the fixed 0.2 Hz prior, prior-to-first-finite-estimator
-handoff, one-sample tuner/period-estimator ordering edge, and the fact that
-filter `TunerReady` is not WavePeriodEstimator readiness. Its single-frequency
-discrete front-end certificate keeps period warping below about 59 ppm on the
-committed 5 ms / 0.03--1.2 Hz channel.
+It source-certifies the fixed 0.2 Hz prior, the same estimator's `3/lambda`
+moment-start, `4/lambda` plus one-period startup-usable gate, strict
+`6/lambda` readiness floor, and the one-sample tuner/period-estimator ordering
+edge. OU-II, OU-III, and TFG now require that startup-usable measured period
+before Live entry while keeping `WavePeriodEstimator::isReady()` as the stricter
+diagnostic state. Its single-frequency discrete front-end certificate keeps
+period warping below about 59 ppm on the committed 5 ms / 0.03--1.2 Hz channel.
 
 ### Exact arbitrary-spectrum leak identity
 

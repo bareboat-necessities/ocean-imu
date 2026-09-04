@@ -133,17 +133,20 @@ The deployed measurement-only adaptation path remains inside the source:
  (\tau_k,\sigma_{aw,k},R_{S,k},T_{S,k}),
  \label{eq:sea3-tuner-chain}
 \end{equation}
-including the exact stage/commit and pseudo-update scheduler state.  Before the
-WavePeriodEstimator has produced a finite positive frequency, shipping code
-uses the fixed $0.2$ Hz tuning prior.  The tuner update for sample $k$ executes
-before the current sample advances the WavePeriodEstimator, so a newly finite
-period estimate can affect the tuner no earlier than the following valid
-sample.  Takeover uses the first finite positive estimator value and does
-\emph{not} wait for \texttt{WavePeriodEstimator::isReady()}.  Conversely,
-filter \texttt{TunerReady} is based on the SeaStateAutoTuner's own readiness and
-may therefore occur while the fixed-prior branch is still active.  SEA3/P2 must
-retain these as distinct source modes rather than treating Live entry as proof
-that the sea-period statistic has settled.
+including the exact stage/commit and pseudo-update scheduler state.  Shipping
+code uses the fixed $0.2$ Hz tuning prior until the existing
+WavePeriodEstimator reports \texttt{hasUsablePeriod()}.  The same estimator
+starts its moment statistics after $3/\lambda$, may qualify startup use no
+earlier than $4/\lambda$, and additionally requires at least one current
+estimated period of moment history.  Its stricter \texttt{isReady()} diagnostic
+still requires at least $6/\lambda$ and the existing debiased-moment weight.
+The tuner update for sample $k$ executes before the current sample advances the
+WavePeriodEstimator, so a newly usable period estimate can affect the tuner no
+earlier than the following valid sample.  Filter \texttt{TunerReady} and Live
+entry require this startup-usable measured period, but do \emph{not} wait for
+\texttt{WavePeriodEstimator::isReady()}.  SEA3/P2 must retain the prior-driven
+and startup-usable estimator-driven source modes and their one-sample takeover
+edge.
 
 Denote the tuner memory by $z^t_k$ and scheduler/hybrid source memory by $q_k$.
 The augmented exogenous state is therefore
@@ -372,19 +375,27 @@ promotion and may not prune P2.
 The WavePeriodEstimator front-end subcertificate validates the implemented
 steady sinusoidal transfer over the committed 5 ms, 0.03--1.2 Hz channel.  Its
 period distortion is below about 59 ppm, so discrete front-end warping is not
-the current limiter.  More importantly for startup, the source default
-high-pass/leak corner is 0.02 Hz, hence the estimator cannot accept moment
-statistics before
+the current limiter.  For startup the source default high-pass/leak corner is
+0.02 Hz.  The same canonical estimator now begins its existing moment
+statistics at
 \begin{equation}
- t_{\rm settle}=\frac{6}{2\pi(0.02)}\approx47.75\ {\rm s}.
+ t_{\rm mom}=\frac{3}{2\pi(0.02)}\approx23.87\ {\rm s},
 \end{equation}
-This is only a lower bound on the first possible finite period: a valid moment
-ratio can appear later.  The shipping outer wrapper uses a 10 s online-tuner
-warmup and the tuner itself has its own frequency/variance readiness, so
-\texttt{TunerReady} and even Live handoff can precede this period-estimator
-settling bound.  The SEA3 source language must therefore preserve the fixed
-0.2 Hz prior branch, estimator-driven branch, and their one-sample causal
-takeover edge.
+while startup use is forbidden before
+\begin{equation}
+ t_{\rm usable,min}=\frac{4}{2\pi(0.02)}\approx31.83\ {\rm s}
+\end{equation}
+and also requires at least one current estimated period of accumulated moment
+history.  Strict \texttt{isReady()} remains forbidden before
+\begin{equation}
+ t_{\rm ready,min}=\frac{6}{2\pi(0.02)}\approx47.75\ {\rm s}
+\end{equation}
+plus its existing $w>0.5$ condition.  The shipping outer wrappers keep the
+fixed 0.2 Hz prior until \texttt{hasUsablePeriod()} clears; \texttt{TunerReady}
+and Live therefore cannot precede the measured-period startup gate, while the
+stricter settled diagnostic may clear later.  The SEA3 source language must
+preserve the fixed-prior branch, startup-usable estimator branch, and their
+one-sample causal takeover edge.
 
 The tightened 150 ms pseudo-update ceiling still gives a maximum nominal
 30-sample $S=0$ recurrence, now certified by the retained scheduler primitive.

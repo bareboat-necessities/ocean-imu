@@ -75,6 +75,7 @@ public:
         elapsed_sec_ = 0.0f;
         raw_period_sec_ = NAN;
         log_period_sec_ = NAN;
+        usable_period_ = false;
         last_moment_horizon_sec_ = min_horizon_sec_;
         last_log_horizon_sec_ = 0.0f;
     }
@@ -128,10 +129,14 @@ public:
 
         elapsed_sec_ += dt_sec;
 
-        // Hold the integrators for a few leak time constants before believing
-        // their statistics; the startup transient is pure bias otherwise.
-        const float settle_sec = 6.0f / lambda_;
-        if (elapsed_sec_ < settle_sec) return;
+        // Keep one estimator and one canonical moment/log-period state, but
+        // distinguish early startup qualification from the stricter settled
+        // diagnostic.  After three leak time constants the deterministic
+        // integrator transient is about exp(-3) ~= 5%, so begin the existing
+        // moment statistics there.  Live entry is not allowed yet: the same
+        // state must also survive the usable gate below.
+        const float moment_start_sec = 3.0f / lambda_;
+        if (elapsed_sec_ < moment_start_sec) return;
 
         const float horizon = moment_horizon_sec_();
         last_moment_horizon_sec_ = horizon;
@@ -166,6 +171,7 @@ public:
 
         raw_period_sec_ = raw_period;
         update_log_period_(dt_sec, raw_period);
+        update_usable_period_();
     }
 
     // Canonical zero-crossing period [s].  It is positive by construction and
@@ -184,8 +190,18 @@ public:
     // controlled ablations only.
     float getRawPeriodSec() const { return raw_period_sec_; }
 
+    // Earlier startup qualification from the same canonical estimator state.
+    // No second period estimator or handoff exists.  Require four leak time
+    // constants (exp(-4) ~= 1.8% deterministic transient) and at least one
+    // current estimated period of accumulated moment history.  This lets the
+    // filter enter Live on a measured sea period while retaining isReady() as
+    // the stricter settled-statistic diagnostic.
+    bool hasUsablePeriod() const { return usable_period_; }
+
     bool isReady() const {
-        return std::isfinite(log_period_sec_) && weight_ > 0.5f;
+        const float settled_floor_sec = 6.0f / lambda_;
+        return std::isfinite(log_period_sec_) &&
+               elapsed_sec_ >= settled_floor_sec && weight_ > 0.5f;
     }
 
     // Elevation standard deviation of the band-limited proxy [m].  Not used for
@@ -205,6 +221,20 @@ private:
     float moment_horizon_sec_() const {
         const float requested = moment_horizon_periods_ * period_for_horizon_sec_();
         return std::min(max_horizon_sec_, std::max(min_horizon_sec_, requested));
+    }
+
+    void update_usable_period_() {
+        if (usable_period_) return;
+        const float period = getPeriodSec();
+        if (!(std::isfinite(period) && period > 0.0f)) return;
+        const float moment_start_sec = 3.0f / lambda_;
+        const float usable_floor_sec = 4.0f / lambda_;
+        const float moment_history_sec = elapsed_sec_ - moment_start_sec;
+        if (elapsed_sec_ >= usable_floor_sec && moment_history_sec >= period) {
+            // One-way startup takeover: once the measured period has qualified,
+            // later estimator motion must never fall back to the fixed prior.
+            usable_period_ = true;
+        }
     }
 
     void update_log_period_(float dt_sec, float raw_period_sec) {
@@ -253,6 +283,7 @@ private:
     float elapsed_sec_ = 0.0f;
     float raw_period_sec_ = NAN;
     float log_period_sec_ = NAN;
+    bool usable_period_ = false;
     float last_moment_horizon_sec_ = 0.0f;
     float last_log_horizon_sec_ = 0.0f;
 };
