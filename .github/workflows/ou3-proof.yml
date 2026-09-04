@@ -113,23 +113,30 @@ jobs:
           python3 -m py_compile \
             tools/ou3_sea3_spectral_moment_bridge.py \
             tools/ou3_sea3_wave_period_frontend.py \
+            tools/ou3_sea3_directional_response_moments.py \
             tests/validation/test_ou3_sea3_spectral_moment_bridge.py \
-            tests/validation/test_ou3_sea3_wave_period_frontend.py
+            tests/validation/test_ou3_sea3_wave_period_frontend.py \
+            tests/validation/test_ou3_sea3_directional_response_moments.py
 
       - name: Certify retained SEA0 subcertificates
         run: |
           python3 tools/ou3_sea3_spectral_moment_bridge.py --check
+          python3 tools/ou3_sea3_directional_response_moments.py --check
           python3 -m unittest -v \
             tests.validation.test_ou3_sea3_spectral_moment_bridge \
-            tests.validation.test_ou3_sea3_wave_period_frontend
+            tests.validation.test_ou3_sea3_wave_period_frontend \
+            tests.validation.test_ou3_sea3_directional_response_moments
           python3 tools/ou3_sea3_spectral_moment_bridge.py \
             --output /tmp/ou3_sea3_spectral_moment_bridge.json
           python3 tools/ou3_sea3_wave_period_frontend.py \
             --output /tmp/ou3_sea3_wave_period_frontend.json
+          python3 tools/ou3_sea3_directional_response_moments.py \
+            --output /tmp/ou3_sea3_directional_response_moments.json
           python3 - <<'PY'
           import json
           spectral=json.load(open('/tmp/ou3_sea3_spectral_moment_bridge.json'))
           frontend=json.load(open('/tmp/ou3_sea3_wave_period_frontend.json'))
+          response=json.load(open('/tmp/ou3_sea3_directional_response_moments.json'))
           assert spectral['validation_pass']
           assert spectral['SEA0_full_certificate_promoted'] is False
           assert spectral['trajectory_replay_used'] is False
@@ -138,8 +145,24 @@ jobs:
           assert frontend['SEA0_full_certificate_promoted'] is False
           assert frontend['P2_promoted_from_this_artifact'] is False
           assert frontend['interpretation']['discrete_frontend_warping_is_current_limiter'] is False
+          assert response['validation_pass'], response['validation_failures']
+          assert response['SEA0_full_certificate_promoted'] is False
+          assert response['P2_promoted_from_this_artifact'] is False
+          assert response['trajectory_replay_used'] is False
+          assert response['filter_changed'] is False
+          assert response['declared_operating_domain_shrunk'] is False
+          assert response['sea3_source_language_included_in_frozen_p2_contract'] is False
+          assert response['alias_obligation']['sampling_alone_band_limits_the_sea'] is False
+          assert response['alias_obligation']['response_rolloff_is_mandatory'] is True
+          assert response['matrix_moments']['per_axis_scalarization_valid'] is False
+          assert response['deployed_period_channel']['inside_committed_tuning_channel'] is True
+          assert response['deployed_sigma_channel']['sigma_aw_coordinate_stays_inside_declared_interval'] is True
+          assert response['deployed_sigma_channel']['worst_admissible_sigma_aw_ms2'] <= 4.0
           print('SEA0 spectral Tz/Tp screen', spectral['gamma_continuum_screen']['surface_elevation_Tz_over_Tp_outer'])
           print('SEA0 front-end period warp', frontend['validated_intervals']['period_hat_over_period'])
+          print('SEA0 deployed Tz/Tp screen', response['deployed_period_channel']['deployed_Tz_over_Tp'])
+          print('SEA0 worst admissible sigma_a', response['deployed_sigma_channel']['worst_admissible_sigma_a_ms2'])
+          print('SEA0 sigma clamp rail reachable', response['deployed_sigma_channel']['clamp_rail_reachable_from_declared_sea_domain'])
           PY
 
       - name: Upload retained SEA0 subcertificates
@@ -149,6 +172,7 @@ jobs:
           path: |
             /tmp/ou3_sea3_spectral_moment_bridge.json
             /tmp/ou3_sea3_wave_period_frontend.json
+            /tmp/ou3_sea3_directional_response_moments.json
           retention-days: 7
 
   p2-correlation-interface:

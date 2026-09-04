@@ -1,0 +1,156 @@
+\subsection{Directional vessel/IMU response and response-weighted moments}
+\label{sec:sea3-directional-response}
+
+Equation~\eqref{eq:sea3-matrix-spectrum} declares the matrix source spectrum
+$\Phi_u$ but leaves the response family $G_{\rm imu}$ open.  This subsection
+fixes that family, records what the deployed source path actually integrates
+against it, and reports the two obligations that the construction exposes.  The
+replay-free artifact is
+\texttt{ou3\_sea3\_directional\_response\_moments.json}.
+
+\paragraph{Response envelope, not a vessel.}
+No particular hull is assumed.  With the lever arm disabled, angular motion
+produces no specific force at the IMU, so only translational response enters,
+and the admissible family is bounded componentwise by
+\begin{equation}
+ \bigl|G_{{\rm imu},j}(\omega,\vartheta)\bigr|
+ \le
+ \rho(\omega)\,\omega^{2}\,u_j(\vartheta),
+ \qquad
+ u(\vartheta)=\bigl[1,\ |\cos\vartheta|,\ |\sin\vartheta|\bigr]^{\!\top},
+ \label{eq:sea3-response-envelope}
+\end{equation}
+where $\rho$ compares the levelled vessel/IMU acceleration amplitude with the
+undisturbed surface orbital acceleration of the same wave,
+\begin{equation}
+ \boxed{
+ \rho(\omega)=\rho_{\max}\min\!\left\{1,\ \left(\frac{\omega_L}{\omega}\right)^{p}\right\},
+ \qquad
+ \omega_L=\sqrt{g\,k_L},\quad k_L=\frac{2\pi}{L_{\rm ref}} .
+ }
+ \label{eq:sea3-rho}
+\end{equation}
+The roll-off is the finite-waterline Froude--Krylov length averaging: a hull of
+waterline $L_{\rm ref}$ cannot follow waves much shorter than $L_{\rm ref}$.
+The artifact declares $\rho_{\max}=2$, $p=1$ and $L_{\rm ref}=4$ m; a
+\emph{shorter} reference hull raises $\omega_L$ and therefore assumes less.
+
+Because the envelope bounds only moduli, it dominates every member of the
+family in the quadratic-form sense: for $|G_j|\le m_j$ and any complex $v$,
+\begin{equation}
+ \boxed{
+ v^{*}\Phi_u v\le|v|^{\top}M|v|,
+ \qquad
+ M=\int m\,m^{\top}E\,d\vartheta,
+ \qquad
+ \lambda_{\max}(\Phi_u)\le\lambda_{\max}(M).
+ }
+ \label{eq:sea3-modulus-majorant}
+\end{equation}
+Since $E=\sum_r S_r(\omega)D_r(\vartheta)$, every response-weighted moment
+factorizes into scalar frequency integrals times constant directional Gram
+matrices $Q_r=\int D_r\,u\,u^{\top}d\vartheta$.  Those Gram matrices are not
+diagonal --- normalized off-diagonal entries reach $0.998$ --- and they are
+strongly direction dependent: a head sea loads the surge axis
+($Q_{22}=0.81$ against $Q_{33}=0.19$) and a beam sea reverses that.  Per-axis
+scalarization of the source is therefore invalid, as
+Sec.~\ref{sec:sea3-stability-target} requires.
+
+\paragraph{The deployed period is a high-passed moment period.}
+\texttt{WavePeriodEstimator} forms two shared high-pass stages and two leaky
+integrations at the same corner $\lambda=2\pi\cdot0.02$ rad/s, then inverts
+$\omega^2=(\sigma_v/\sigma_\eta)^2-\lambda^2$.  In continuous-time steady state
+that inversion is not a narrow-band approximation but an identity.  Writing
+$S_{\rm up}$ for the levelled specific-force spectrum and
+\begin{equation}
+ d\mu(\omega)=\frac{\omega^{4}\,S_{\rm up}(\omega)}{(\omega^{2}+\lambda^{2})^{4}}\,d\omega
+ =\rho(\omega)^{2}\left(\frac{\omega^{2}}{\omega^{2}+\lambda^{2}}\right)^{4}S_\eta(\omega)\,d\omega,
+ \label{eq:sea3-proxy-measure}
+\end{equation}
+one gets $\sigma_v^2=\int(\omega^2+\lambda^2)\,d\mu$ and
+$\sigma_\eta^2=\int d\mu$, hence
+\begin{equation}
+ \boxed{\omega_{\rm est}^{2}=\mathbb E_{\mu}\bigl[\omega^{2}\bigr]
+ \quad\text{exactly, for any input spectrum.}}
+ \label{eq:sea3-leak-inversion}
+\end{equation}
+The deployed $T_z$ is thus the moment period of the true elevation spectrum
+after a \emph{fourth-order} high-pass at $\lambda$ and the response weight
+$\rho^2$ --- not the surface $T_{z,\eta}$ of
+Eq.~\eqref{eq:sea3-jonswap-tz-tp-screen}.  The two weights pull opposite ways:
+the high-pass shortens the reported period on long swell, the response roll-off
+lengthens it on short chop.
+
+Equation~\eqref{eq:sea3-leak-inversion} also collapses the enclosure.  For a
+multimodal sea $\mu=\sum_r\mu_r$, so $\omega_{\rm est}^2$ is a convex
+combination of the per-partition values and the extremes of the whole
+three-partition class are attained on one-partition seas.  A two-parameter
+$(T_p,\gamma)$ screen therefore covers the fifteen-parameter family, giving
+\begin{equation}
+ 0.6564\lesssim\frac{T_z^{\rm src}}{T_p}\lesssim0.8861,
+ \qquad
+ 0.924\lesssim\frac{T_z^{\rm src}}{T_{z,\eta}}\lesssim1.115 ,
+ \label{eq:sea3-deployed-tz-screen}
+\end{equation}
+strictly wider on both sides than the surface screen, and an induced tuning
+channel of $0.064$--$0.505$ Hz that stays inside the committed $0.03$--$1.2$ Hz
+band.
+
+\paragraph{Obligation 1: sampling supplies no band limit.}
+The chain runs at $h=5$ ms, so what it observes is the folded spectrum.  With a
+flat response the specific-force density behaves as $A/\omega$, every decade
+above Nyquist folds in the same power $A\ln 10$, and the total diverges: at the
+worst admissible partition, three unmodelled decades already fold in
+$83$ m$^2$/s$^4$, i.e.\ $9.1$ m/s$^2$, more than the entire clamp interval.
+Under Eq.~\eqref{eq:sea3-rho} with $p=1$ the same fold is
+$2.4\times10^{-4}$ m$^2$/s$^4$.  A certified roll-off is consequently a
+mandatory SEA0 assumption, and the moment ladder it supports is exactly the one
+the deployed path needs: proxy elevation/velocity and band-passed acceleration
+moments are finite for any $p\ge0$, the raw acceleration moment requires $p>0$,
+and an acceleration moment of order $n$ requires $n<2p$.
+
+\paragraph{Obligation 2: the $\sigma$ clamp rail is reachable.}
+Shipping code commits
+\begin{equation}
+ \sigma_{aw}=\min\bigl\{c_\sigma\,\sigma_a,\ \sigma_a^{\max}\bigr\},
+ \qquad c_\sigma=0.9,\quad \sigma_a^{\max}=4\ \mathrm{m/s^2},
+ \label{eq:sea3-sigma-clamp}
+\end{equation}
+so the source coordinate is contained in its declared interval by saturation:
+no sea can violate it.  The live question is whether an admissible sea reaches
+the rail, which happens at
+$\sigma_a\ge\sigma_a^{\max}/c_\sigma=4.444$ m/s$^2$.
+
+Imposing breaking-steepness admissibility on each partition \emph{and} on the
+combined sea, and maximizing the band-passed deviation over every band
+reference the shipping code can present --- the reference is not always the
+sea's own period, since the startup branch runs the fixed $0.2$ Hz prior and
+the estimator lags afterwards --- the worst admissible sea found is a crossing
+sea of a $4.6$ s wind system ($1.83$ m) on a $10.9$ s swell ($8.18$ m),
+$H_s=8.38$ m, giving
+\begin{equation}
+ \sigma_a^{\rm worst}\approx4.66\ \mathrm{m/s^2}
+ \quad>\quad
+ 4.444\ \mathrm{m/s^2}.
+ \label{eq:sea3-sigma-rail}
+\end{equation}
+The rail is therefore a live cell of the SEA3 source language, not a dormant
+branch, and on it $\sigma_{aw}$ is constant: the sea-to-source map is not
+injective there, so SEA3 cannot prune the P2 language on that cell.  Which
+band reference reaches it is itself informative.  At each sea's own deployed
+period the maximum is only $3.91$ m/s$^2$, and at the fixed startup prior it is
+$4.06$ m/s$^2$; neither saturates.  The rail is reached at intermediate
+references such as $0.258$ Hz --- that is, on the estimator-lag branch between
+the two frequency-source modes the startup subcertificate established, not in
+either mode at rest.
+
+Putting the rail out of reach would need $\rho_{\max}\le1.91$ or a steepness
+ceiling of $0.0954$.  Both are declarations about the physics and would have to
+be certified as such; neither the gate, the filter, nor the operating domain
+may be moved to obtain them.
+
+All numerical intervals above come from fixed-grid quadrature with analytical
+tail pads rather than validated interval integration, and the deployed channels
+are still evaluated in continuous-time steady state rather than through the
+exact discrete moment EMAs, log-period state and \texttt{AdaptiveWaveBandPass}
+recursion.  They are screening enclosures and promote nothing.

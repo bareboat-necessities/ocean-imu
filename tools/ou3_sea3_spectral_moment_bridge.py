@@ -131,6 +131,16 @@ def _ratio_interval_for_gamma_cell(
     return math.sqrt(m0_lo / m2_hi), math.sqrt(m0_hi / m2_lo)
 
 
+def jonswap_dimensionless_shape(x: float, gamma: float) -> float:
+    """Nondimensional JONSWAP elevation shape at x = omega/omega_p.
+
+    This is the single shape definition shared by every SEA0 artifact so that
+    no downstream construction can silently adopt a different peak-width or
+    peak-enhancement convention.
+    """
+    return _dimensionless_integrand(x, gamma, 0)
+
+
 def mixture_zero_crossing_period(
     heights: list[float],
     periods: list[float],

@@ -1,0 +1,420 @@
+{
+  "P2_promoted_from_this_artifact": false,
+  "P3_promoted_from_this_artifact": false,
+  "P4_promoted_from_this_artifact": false,
+  "P5_promoted_from_this_artifact": false,
+  "SEA0_full_certificate_promoted": false,
+  "alias_obligation": {
+    "asymptotic_acceleration_constant_m2s3": 3.0212817304782957,
+    "flat_response_exceeds_sigma_clamp_within_decades": true,
+    "flat_response_folded_power_3_decades_m2s4": 83.48109929201493,
+    "flat_response_folded_power_6_decades_m2s4": 166.96219858402986,
+    "flat_response_folded_power_is_divergent": true,
+    "flat_response_folded_sigma_3_decades_ms2": 9.136799181990098,
+    "folded_power_with_declared_rolloff_m2s4": 0.00023577756076198917,
+    "folded_sigma_with_declared_rolloff_ms2": 0.015355050008449635,
+    "nyquist_rad_s": 628.3185307179587,
+    "response_rolloff_is_mandatory": true,
+    "sampling_alone_band_limits_the_sea": false,
+    "worst_cell": {
+      "Hs_m": 0.49225584550468454,
+      "Tp_s": 2.5,
+      "gamma": 1.0
+    }
+  },
+  "analytical_lemmas": {
+    "deployed_period_is_high_passed": "d mu = rho^2 (omega^2/(omega^2+lambda^2))^4 S_eta d omega, so the deployed Tz is the moment period of a fourth-order high-passed, response-weighted elevation spectrum",
+    "exact_leak_inversion": "omega_est^2 = (sigma_v/sigma_eta)^2 - lambda^2 = E_mu[omega^2] with d mu = |G_eta|^2 S_up d omega; exact for any spectrum",
+    "leak_inversion_is_not_narrow_band": true,
+    "mixture_convexity": "omega_est^2 is a convex combination over partitions, so the extreme deployed periods of the SEA3 class occur at one-partition seas",
+    "modulus_majorant": "for |G_j| <= m_j, v^H Phi_u v <= |v|^T M |v| with M = int m m^T E dtheta, hence lambda_max(Phi_u) <= lambda_max(M)",
+    "sampling_alone_removes_acceleration_divergence": false,
+    "theta_factorization": "E = sum_r S_r(omega) D_r(theta) makes every response-weighted moment a sum of scalar frequency integrals times constant directional Gram matrices Q_r(beta_r,s_r)",
+    "unbanded_surface_acceleration_variance_finite": false
+  },
+  "declared_operating_domain_shrunk": false,
+  "declared_sea_domain": {
+    "Hs_max_m": 8.5,
+    "Tp_s": [
+      2.5,
+      20.0
+    ],
+    "beta_rad": [
+      -3.141592653589793,
+      3.141592653589793
+    ],
+    "covers_eight_reference_seas": true,
+    "gamma": [
+      1.0,
+      7.0
+    ],
+    "m_max": 3,
+    "significant_steepness_max": 0.1,
+    "spreading_exponent_s": [
+      1.0,
+      25.0
+    ],
+    "steepness_is_physical_admissibility_not_proof_clamp": true
+  },
+  "deployed_period_channel": {
+    "deployed_Tz_over_Tp": [
+      0.6564120937140285,
+      0.886099084295975
+    ],
+    "deployed_Tz_s": [
+      1.9799051777487504,
+      15.531229171521836
+    ],
+    "deployed_over_surface_Tz": [
+      0.9240416465374822,
+      1.1148574849472703
+    ],
+    "extremes_valid_for_three_partition_class": true,
+    "induced_tuner_frequency_hz": [
+      0.0643864042540565,
+      0.5050746930906304
+    ],
+    "inside_committed_tuning_channel": true,
+    "limiting_cell_for_lower_ratio": [
+      19.999999999999996,
+      1.0
+    ],
+    "limiting_cell_for_upper_ratio": [
+      2.5,
+      7.0
+    ],
+    "promotion_use": false,
+    "reason": "mixture convexity of the mu-weighted mean square frequency",
+    "scan": {
+      "Tp_values": 25,
+      "gamma_values": 7
+    }
+  },
+  "deployed_sigma_channel": {
+    "absolute_band_ceiling_reachable_in_committed_channel": false,
+    "band_corners_at_channel_ceiling_hz": [
+      0.6,
+      4.8
+    ],
+    "clamp_rail_reachable_at_settled_band_reference": false,
+    "clamp_rail_reachable_at_startup_prior": false,
+    "clamp_rail_reachable_from_declared_sea_domain": true,
+    "multimodal_number_is_a_witness_search_not_an_optimum": true,
+    "multimodal_screen_limiting_cell": {
+      "f_ref_hz": 0.2580217103166003,
+      "first_partition": [
+        4.585020216023356,
+        2.0,
+        1.8281358532298482
+      ],
+      "mixture_Hs_m": 8.377832050930422,
+      "mixture_surface_Tz_s": 7.331072824034388,
+      "second_partition": [
+        10.905077326652577,
+        2.0,
+        8.17593965093509
+      ]
+    },
+    "multimodal_screen_max_sigma_a_ms2": 4.660051883571802,
+    "per_partition_and_mixture_steepness_both_imposed": true,
+    "promotion_use": false,
+    "rail_makes_sea_to_source_map_non_injective": true,
+    "rho_max_below_which_the_rail_is_unreachable": 1.9074656486605037,
+    "rho_max_used": 2.0,
+    "self_consistent_is_a_diagnostic_not_a_bound": true,
+    "self_consistent_limiting_cell": {
+      "Tp_s": 10.000000000000002,
+      "deployed_Tz_s": 7.007510247606906,
+      "f_ref_hz": 0.1427040367641994,
+      "gamma": 1.0,
+      "steepness_height_cap_m": 7.876093522190964
+    },
+    "self_consistent_max_sigma_a_ms2": 3.9053112984875225,
+    "sigma_a_saturating_the_clamp_ms2": 4.444444444444445,
+    "sigma_a_scales_linearly_in_rho_max": true,
+    "sigma_a_scales_linearly_in_steepness_ceiling": true,
+    "sigma_aw_clamp_ms2": 4.0,
+    "sigma_aw_coordinate_stays_inside_declared_interval": true,
+    "sigma_aw_map": "sigma_aw = min(0.9 * sigma_a, 4 m/s^2)",
+    "single_partition_limiting_cell": {
+      "Tp_s": 10.000000000000002,
+      "band_corners_hz": [
+        0.12901085515830016,
+        1.0320868412664013
+      ],
+      "f_ref_hz": 0.2580217103166003,
+      "gamma": 1.0,
+      "steepness_height_cap_m": 7.876093522190964,
+      "surface_Tz_s": 7.103706810033503
+    },
+    "single_partition_max_sigma_a_ms2": 4.0795911120134045,
+    "single_partition_maximum_is_exhaustive_on_grid": true,
+    "startup_prior_hz": 0.2,
+    "startup_prior_limiting_cell": {
+      "Tp_s": 10.000000000000002,
+      "gamma": 1.0,
+      "steepness_height_cap_m": 7.876093522190964
+    },
+    "startup_prior_max_sigma_a_ms2": 4.056495032193191,
+    "steepness_below_which_the_rail_is_unreachable": 0.09537328243302519,
+    "worst_admissible_sigma_a_ms2": 4.660051883571802,
+    "worst_admissible_sigma_aw_ms2": 4.0
+  },
+  "filter_changed": false,
+  "limiting_quantity": "reachability of the sigma_aw clamp rail from the declared directional sea domain, where the sea-to-source map stops being injective and SEA3 can no longer prune the P2 language",
+  "matrix_moments": {
+    "directional_gram_cases": [
+      {
+        "beta_deg": 90.0,
+        "directional_gram": [
+          [
+            0.9999999999999997,
+            0.21808363172573927,
+            0.9615384617800457
+          ],
+          [
+            0.21808363172573927,
+            0.07264957264957264,
+            0.20192929096967385
+          ],
+          [
+            0.9615384617800457,
+            0.20192929096967385,
+            0.9273504273504263
+          ]
+        ],
+        "label": "beam_swell_narrow",
+        "mass": 0.9999999999999997,
+        "max_normalized_offdiagonal": 0.9984923057213013,
+        "spread_s": 25.0
+      },
+      {
+        "beta_deg": 45.0,
+        "directional_gram": [
+          [
+            0.9999999999999998,
+            0.6366197724477962,
+            0.6366197724477963
+          ],
+          [
+            0.6366197724477962,
+            0.5000000000000002,
+            0.31830988682554434
+          ],
+          [
+            0.6366197724477963,
+            0.3183098868255443,
+            0.5000000000000001
+          ]
+        ],
+        "label": "bow_quarter_broad",
+        "mass": 0.9999999999999998,
+        "max_normalized_offdiagonal": 0.9003163162705471,
+        "spread_s": 1.0
+      },
+      {
+        "beta_deg": 0.0,
+        "directional_gram": [
+          [
+            1.0000000000000002,
+            0.8890331009714421,
+            0.36019609522164936
+          ],
+          [
+            0.8890331009714421,
+            0.8111111111111106,
+            0.28829757865883227
+          ],
+          [
+            0.36019609522164936,
+            0.2882975786588322,
+            0.18888888888888897
+          ]
+        ],
+        "label": "head_sea_typical",
+        "mass": 1.0000000000000002,
+        "max_normalized_offdiagonal": 0.9871377394560337,
+        "spread_s": 8.0
+      }
+    ],
+    "example_acceleration_matrix_moment_m2s4": [
+      [
+        6.045512362651276,
+        5.082640033903385,
+        2.586418226450719
+      ],
+      [
+        5.082640033903385,
+        4.496273735430284,
+        1.8887145244638515
+      ],
+      [
+        2.586418226450719,
+        1.8887145244638515,
+        1.549238627220988
+      ]
+    ],
+    "example_proxy_elevation_matrix_moment_m2": [
+      [
+        2.5226718304389326,
+        2.1413689793801285,
+        1.0561572639457026
+      ],
+      [
+        2.1413689793801285,
+        1.9034757910036073,
+        0.7846664723651592
+      ],
+      [
+        1.0561572639457026,
+        0.7846664723651591,
+        0.6191960394353242
+      ]
+    ],
+    "example_sea": [
+      [
+        3.0,
+        8.0,
+        3.3,
+        20.0,
+        8.0
+      ],
+      [
+        1.5,
+        13.0,
+        1.0,
+        200.0,
+        25.0
+      ]
+    ],
+    "factorization": "M = sum_r (int omega-weighted rho^2 omega^4 S_r) Q_r",
+    "finiteness_ladder": {
+      "acceleration_moment_of_order_n": "finite iff n < 2p",
+      "band_passed_acceleration_moment": "finite for any rolloff p >= 0",
+      "deployed_path_requires_orders_above_zero": false,
+      "proxy_elevation_and_velocity_moments": "finite for any rolloff p >= 0",
+      "raw_acceleration_moment": "finite iff p > 0"
+    },
+    "per_axis_scalarization_valid": false,
+    "promotion_use": false,
+    "worst_normalized_offdiagonal": 0.9984923057213013
+  },
+  "mixture_convexity_check": {
+    "cases": [
+      {
+        "inside_component_extremes": true,
+        "mixture_deployed_Tz_s": 3.4032708473768145,
+        "partitions": [
+          [
+            3.0,
+            4.0,
+            1.0
+          ],
+          [
+            2.0,
+            9.0,
+            3.3
+          ],
+          [
+            0.0,
+            12.0,
+            1.0
+          ]
+        ],
+        "single_partition_deployed_Tz_s": [
+          2.970834905294499,
+          6.9413615004334694
+        ]
+      },
+      {
+        "inside_component_extremes": true,
+        "mixture_deployed_Tz_s": 5.309162245016755,
+        "partitions": [
+          [
+            1.0,
+            3.0,
+            7.0
+          ],
+          [
+            2.5,
+            14.0,
+            1.0
+          ],
+          [
+            1.5,
+            6.5,
+            2.0
+          ]
+        ],
+        "single_partition_deployed_Tz_s": [
+          2.609310584899184,
+          9.577888465628506,
+          4.89118096857642
+        ]
+      },
+      {
+        "inside_component_extremes": true,
+        "mixture_deployed_Tz_s": 1.990331995590281,
+        "partitions": [
+          [
+            4.0,
+            2.5,
+            1.0
+          ],
+          [
+            0.5,
+            20.0,
+            1.0
+          ],
+          [
+            0.0,
+            5.0,
+            1.0
+          ]
+        ],
+        "single_partition_deployed_Tz_s": [
+          1.9799051777487504,
+          13.12824187428057
+        ]
+      }
+    ],
+    "identity": "omega_est^2 = sum_r c_r E_{mu_r}[omega^2] / sum_r c_r",
+    "worst_relative_excess": 0.0
+  },
+  "next_obligation": "decide the sigma clamp rail: either certify a sharper vessel/IMU response envelope that puts it out of reach, or carry the saturated non-injective cell explicitly in the SEA3 P2 language; then replace the continuous-time steady-state channel weights by the exact discrete WavePeriodEstimator moment EMAs, log-period state and AdaptiveWaveBandPass recursion",
+  "proof_status": "mixed_analytic_and_non_promoting_numerical_screen",
+  "quadrature": {
+    "high_frequency_tail_bounded_analytically": true,
+    "interval_arithmetic_used_for_quadrature": false,
+    "low_frequency_tail_reason": "exp(-1.25 (omega_p/omega)^4) underflows below the grid floor",
+    "omega_interval_rad_s": [
+      0.001,
+      100000.0
+    ],
+    "omega_simpson_panels": 3072,
+    "theta_simpson_panels": 512
+  },
+  "qualification": "OU3_SEA0_DIRECTIONAL_RESPONSE_MOMENT_SUBCERTIFICATE",
+  "reason_not_promoted": "fixed-grid quadrature with analytical pads is a screening enclosure, not validated interval integration; the deployed channels are also still evaluated in continuous-time steady state rather than through the exact discrete EMA and log-period state",
+  "response_family": {
+    "envelope": "|G_j(omega,theta)| <= rho(omega) omega^2 u_j(theta)",
+    "lever_arm_enabled": false,
+    "mechanism": "finite-waterline Froude-Krylov length averaging",
+    "reference_waterline_m": 4.0,
+    "rho_max": 2.0,
+    "rolloff_corner_hz": 0.6246552694631126,
+    "rolloff_corner_rad_s": 3.9248248111429342,
+    "rolloff_exponent_p": 1.0,
+    "single_vessel_assumed": false,
+    "u_of_theta": [
+      "1",
+      "|cos theta|",
+      "|sin theta|"
+    ]
+  },
+  "schema_version": "OU3_SEA3_DIRECTIONAL_RESPONSE_MOMENTS_V1",
+  "sea3_source_language_included_in_frozen_p2_contract": false,
+  "trajectory_replay_used": false,
+  "validation_failures": [],
+  "validation_pass": true
+}

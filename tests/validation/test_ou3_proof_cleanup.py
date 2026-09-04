@@ -87,9 +87,14 @@ class Ou3ProofCleanupTest(unittest.TestCase):
         paper = (OU3_DOC / "kalman_ou-w3d.tex").read_text(encoding="utf-8")
         self.assertIn(r"\input{w3d-sea3-stability-theorem.tex-part}", paper)
         self.assertIn(r"\input{w3d-sea3-period-bridge.tex-part}", paper)
+        self.assertIn(r"\input{w3d-sea3-directional-response.tex-part}", paper)
         self.assertLess(
             paper.index(r"\input{w3d-sea3-stability-theorem.tex-part}"),
             paper.index(r"\input{w3d-sea3-period-bridge.tex-part}"),
+        )
+        self.assertLess(
+            paper.index(r"\input{w3d-sea3-period-bridge.tex-part}"),
+            paper.index(r"\input{w3d-sea3-directional-response.tex-part}"),
         )
 
 
