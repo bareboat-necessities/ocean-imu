@@ -121,6 +121,33 @@ class OUPaperCodeParityTests(unittest.TestCase):
         self.assertIn("$[\\SI{0.5}{s},\\SI{6}{s}]$", self.ou3_impl)
         self.assertIn("$[\\SI{0.05}{s},\\SI{35}{s}]$", self.ou3_impl)
 
+    def test_ou3_iss_source_clamp_family_matches_the_header(self):
+        """The ISS section names the clamp family the machine certificate assumes.
+
+        Those clamps are the theorem's domain, not decoration: a retune that
+        moves a header constant without moving this paragraph leaves the
+        certificate quoting an envelope the implementation no longer enforces.
+        The same numbers are pinned on the C++ side by
+        tests/kalman_ou_iii/iss_contract-test.cpp.
+        """
+        for token in (
+            "MAX_TUNE_FREQ_HZ = 1.2f",
+            "MAX_SIGMA_A = 4.0f",
+            "MAX_R_S     = 100.0f",
+            "PSEUDO_UPDATE_PERIOD_MAX_S_DEFAULT = 0.15f",
+        ):
+            self.assertIn(token, self.ou3_wrap)
+        self.assertIn("kDynamicEmaHorizonMaxSec = 35.0f", self.limits)
+
+        for token in (
+            r"f_{\rm tune}\le\SI{1.2}{Hz}",
+            r"\sigma_{aw,k}^{\rm proc}\le\SI{4}{m/s^2}",
+            r"r_{S,k}\le\SI{100}{m.s}",
+            r"T_{S,k}\le\SI{0.15}{s}",
+            r"clamped at $\SI{35}{s}$",
+        ):
+            self.assertIn(token, self.ou3_iss)
+
     def test_ou3_candidate_emas_and_activation_hold_match_source(self):
         for token in (
             "ADAPT_TAU_SEA_PERIODS          = 0.40f",

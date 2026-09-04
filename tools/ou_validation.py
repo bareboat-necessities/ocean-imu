@@ -742,14 +742,14 @@ def run_simulator(
 OU_III_RS_MSE_COEFF = 0.0538
 OU_III_RS_QEFF = 2.0 * (0.0148 ** 2) * (1.0 / 200.0)
 OU_III_PSEUDO_TAU_RATIO = 0.015 / 1.1
-OU_III_PSEUDO_PERIOD_BOUNDS_S = (1.0 / 200.0, 0.25)
+OU_III_PSEUDO_PERIOD_BOUNDS_S = (1.0 / 200.0, 0.15)
 OU_III_SIGMA_COEFF = 0.9
 OU_III_RS_COEFF = 17.112
 # sqrt(R_a): the accelerometer measurement-noise standard deviation the OU-III
 # base schedule uses as its acceleration scale.  Mirrors
 # R_S_ACCEL_NOISE_DENSITY_DEFAULT / FREQ_SMOOTHER_DT.
 OU_III_RS_ACCEL_SIGMA_MPS2 = 0.0148
-OU_III_RS_BOUNDS_MS = (0.15, 400.0)
+OU_III_RS_BOUNDS_MS = (0.15, 100.0)
 # The deployed OU-II law is PhysicalMSE:
 #     r_p = C_P q_eff^(1/10) sigma_a,B^(4/5) tau^(12/5) / sqrt(T_S),
 #     r_v = r_p / (C_P/C_V * tau),
