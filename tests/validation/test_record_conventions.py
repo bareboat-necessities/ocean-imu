@@ -185,6 +185,35 @@ class DeployedLawMirrorTests(unittest.TestCase):
             places=6,
         )
 
+    def test_pseudo_update_cadence_bounds_match_the_filter_clamps(self):
+        """T_S sits under a square root in both laws, so its clamps are load bearing.
+
+        The mirror clips the pseudo-update period itself, so a ceiling that
+        drifts from the header silently moves r_S on every tau long enough to
+        reach it -- above 11 s for OU-III.  The two families carry the ceiling
+        independently, so pin both.
+        """
+        import ou_validation as validation
+
+        for bounds, header in (
+            (validation.OU_III_PSEUDO_PERIOD_BOUNDS_S, self.HEADER),
+            (validation.OU_II_PSEUDO_PERIOD_BOUNDS_S, self.HEADER_OU_II),
+        ):
+            with self.subTest(header=header.name):
+                # The floor is the IMU schedule itself, written as a rate.
+                rate = self._value_from(
+                    header, r"FREQ_SMOOTHER_DT\s*=\s*1\.0f\s*/\s*([0-9.]+)f"
+                )
+                self.assertAlmostEqual(bounds[0], 1.0 / rate, places=9)
+                self.assertAlmostEqual(
+                    bounds[1],
+                    self._value_from(
+                        header,
+                        r"PSEUDO_UPDATE_PERIOD_MAX_S_DEFAULT\s*=\s*([0-9.]+)f",
+                    ),
+                    places=6,
+                )
+
     def test_ou_ii_coefficients_match_the_filter_defaults(self):
         """OU-II's mirror has the same failure mode and had no test.
 
