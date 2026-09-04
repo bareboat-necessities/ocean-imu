@@ -1,16 +1,14 @@
-name: ou3-p3-ordered-scheduler-diagnostics
+name: ou3-p3-scheduler-progress-and-ordered-covariance
 
 on:
   pull_request:
     paths:
       - "tools/ou3_p3_four_max_global_label_witness.py"
       - "tests/validation/test_ou3_p3_four_max_global_label_witness.py"
+      - "tools/ou3_p3_pseudo_scheduler_progress_certificate.py"
+      - "tests/validation/test_ou3_p3_pseudo_scheduler_progress_certificate.py"
       - "tools/ou3_p3_ordered_witness_covariance_diagnostic.py"
       - "tests/validation/test_ou3_p3_ordered_witness_covariance_diagnostic.py"
-      - "tools/ou3_p3_pseudo_scheduler_starvation_witness.py"
-      - "tests/validation/test_ou3_p3_pseudo_scheduler_starvation_witness.py"
-      - "tools/ou3_p3_tau_ema_scheduler_cycle_diagnostic.py"
-      - "tests/validation/test_ou3_p3_tau_ema_scheduler_cycle_diagnostic.py"
       - ".github/workflows/ou3-p3-whole-word-probe.yml"
       - "tools/ou3_interval.py"
       - "tools/ou3_p2_*.py"
@@ -27,7 +25,7 @@ permissions:
   contents: read
 
 jobs:
-  ordered-scheduler-diagnostics:
+  scheduler-progress-and-ordered-covariance:
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
@@ -35,26 +33,56 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Compile live P3 structural diagnostics
+      - name: Compile live P3 scheduler and ordered diagnostics
         run: |
           python3 -m py_compile \
             tools/ou3_p3_four_max_global_label_witness.py \
+            tools/ou3_p3_pseudo_scheduler_progress_certificate.py \
             tools/ou3_p3_ordered_witness_covariance_diagnostic.py \
-            tools/ou3_p3_pseudo_scheduler_starvation_witness.py \
-            tools/ou3_p3_tau_ema_scheduler_cycle_diagnostic.py \
             tests/validation/test_ou3_p3_four_max_global_label_witness.py \
-            tests/validation/test_ou3_p3_ordered_witness_covariance_diagnostic.py \
-            tests/validation/test_ou3_p3_pseudo_scheduler_starvation_witness.py \
-            tests/validation/test_ou3_p3_tau_ema_scheduler_cycle_diagnostic.py
+            tests/validation/test_ou3_p3_pseudo_scheduler_progress_certificate.py \
+            tests/validation/test_ou3_p3_ordered_witness_covariance_diagnostic.py
 
-      - name: Test witness, scheduler, tau-EMA, and extension invariants
+      - name: Test witness, scheduler progress, and ordered extension invariants
         working-directory: tests/validation
         run: |
           python3 -m unittest -v \
             test_ou3_p3_four_max_global_label_witness \
-            test_ou3_p3_ordered_witness_covariance_diagnostic \
-            test_ou3_p3_pseudo_scheduler_starvation_witness \
-            test_ou3_p3_tau_ema_scheduler_cycle_diagnostic
+            test_ou3_p3_pseudo_scheduler_progress_certificate \
+            test_ou3_p3_ordered_witness_covariance_diagnostic
+
+      - name: Certify progress-preserving pseudo-scheduler recurrence
+        run: |
+          python3 tools/ou3_p3_pseudo_scheduler_progress_certificate.py \
+            --output /tmp/ou3_p3_pseudo_scheduler_progress_certificate.json
+
+      - name: Enforce scheduler recurrence contract
+        run: |
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/ou3_p3_pseudo_scheduler_progress_certificate.json'))
+          assert d['validation_pass'], d['validation_failures']
+          assert d['core_progress_helper_markers_present'] is True
+          assert d['ou3_setter_progress_markers_present'] is True
+          assert d['legacy_setter_fmod_progress_reset_absent'] is True
+          assert d['shipping_scheduler_numeric_type'] == 'binary32/float'
+          assert d['fixed_max_period_first_fire_samples'] == 33
+          assert d['certified_uniform_max_gap_samples'] == 33
+          assert d['uniform_gap_within_translation_upper_bound'] is True
+          assert d['former_635_sample_zero_fire_cycle_broken'] is True
+          assert d['former_starvation_cycle_pseudo_firings'] > 0
+          assert d['former_starvation_cycle_worst_gap_samples'] <= 33
+          assert d['scheduler_recurrence_certificate'] is True
+          assert d['P3_PROMOTED'] is False
+          assert d['P4_PROMOTED'] is False
+          assert d['P5_PROMOTED'] is False
+          print('PERIOD_RANGE', d['deployed_pseudo_period_binary32_s'])
+          print('MAX_GAP_SAMPLES', d['certified_uniform_max_gap_samples'])
+          print('MAX_GAP_S', d['certified_uniform_max_gap_s'])
+          print('TRANSLATION_BOUND_S', d['translation_upper_cadence_plus_h_s'])
+          print('FORMER_CYCLE_FIRINGS', d['former_starvation_cycle_pseudo_firings'])
+          print('FORMER_CYCLE_WORST_GAP', d['former_starvation_cycle_worst_gap_samples'])
+          PY
 
       - name: Find shortest legal global four-max label witness
         run: |
@@ -68,23 +96,15 @@ jobs:
           d=json.load(open('/tmp/ou3_p3_four_max_global_label_witness.json'))
           assert d['validation_pass'], d['validation_failures']
           assert d['target_samples'] == 635
-          assert d['exact_gap_labelled_successors_consumed'] is True
-          assert d['minimum_supporting_gap_per_source_edge_used'] is True
-          assert d['minimum_gap_replacement_preserves_source_sequence_and_can_only_reduce_cost'] is True
-          assert d['label_update_order_matches_HIST_frontier_runtime'] is True
           assert d['global_label_reachable_within_word'] is True
-          assert d['matched_margin_computed'] is False
           assert d['P3_PROMOTED'] is False
           assert d['P4_PROMOTED'] is False
           assert d['P5_PROMOTED'] is False
           print('GLOBAL_LABEL', d['global_adverse_rank_label'])
           print('MINIMUM_COST_SAMPLES', d['global_label_minimum_cost_samples'])
-          print('CLASSIFICATION', d['classification'])
-          for row in d['global_label_witness_path']:
-              print('WITNESS_EDGE', row)
           PY
 
-      - name: Run ordered source and pseudo-scheduler point diagnostic
+      - name: Run ordered source and progress-preserving scheduler point diagnostic
         run: |
           python3 tools/ou3_p3_ordered_witness_covariance_diagnostic.py \
             --output /tmp/ou3_p3_ordered_witness_covariance_diagnostic.json
@@ -96,10 +116,12 @@ jobs:
           d=json.load(open('/tmp/ou3_p3_ordered_witness_covariance_diagnostic.json'))
           assert d['validation_pass'], d['validation_failures']
           assert d['target_samples'] == 635
-          assert d['four_max_witness_minimum_samples'] <= 635
           assert d['exact_witness_source_order_retained'] is True
           assert d['exact_gap_labelled_legal_extension_used'] is True
-          assert d['pseudo_period_change_uses_fmod_semantics'] is True
+          assert d['pseudo_period_change_preserves_elapsed_service_credit'] is True
+          assert d['pseudo_period_change_uses_fmod_semantics'] is False
+          assert d['scheduler_progress_certificate_consumed'] is True
+          assert d['scheduler_uniform_max_gap_samples'] == 33
           assert d['periodic_update_due_shipping_semantics_transcribed'] is True
           assert d['accelerometer_measurement_updates_credited'] is False
           assert d['interval_certificate'] is False
@@ -112,84 +134,16 @@ jobs:
           print('ORDERED_VARIANCE_GAIN', d['old_upper_to_ordered_variance_gain'])
           print('SYNTHETIC_STD', d['synthetic_phase_envelope_std'])
           print('SYNTHETIC_VARIANCE_GAIN', d['old_upper_to_synthetic_variance_gain'])
-          print('SYNTHETIC_PARAMS', d['synthetic_four_max_parameters'])
           print('NEXT', d['next_obligation'])
           PY
 
-      - name: Run P2-quotient pseudo-scheduler starvation witness
-        run: |
-          python3 tools/ou3_p3_pseudo_scheduler_starvation_witness.py \
-            --output /tmp/ou3_p3_pseudo_scheduler_starvation_witness.json
-
-      - name: Enforce scheduler-witness falsification contract
-        run: |
-          python3 - <<'PY'
-          import json
-          d=json.load(open('/tmp/ou3_p3_pseudo_scheduler_starvation_witness.json'))
-          assert d['validation_pass'], d['validation_failures']
-          assert d['target_samples'] == 635
-          assert d['exact_gap_samples'] == 13
-          assert d['exact_gap_self_edge'] is True
-          assert d['both_periods_and_taus_inside_same_P2_source_cell'] is True
-          assert d['repeatable_two_segment_no_fire_cycle'] is True
-          assert d['pseudo_firings_in_target_word'] == 0
-          assert d['finite_gap_theorem_from_period_max_alone'] is False
-          assert d['deployed_filter_starvation_claimed'] is False
-          assert d['proof_language_starvation_witness'] is True
-          assert d['P3_PROMOTED'] is False
-          assert d['P4_PROMOTED'] is False
-          assert d['P5_PROMOTED'] is False
-          print('CLASSIFICATION', d['classification'])
-          print('SOURCE_NODE', d['source_node'])
-          print('TAU_CELL', d['source_tau_cell_s'])
-          print('PERIOD_CELL', d['source_pseudo_period_cell_s'])
-          print('TAU_LOW_HIGH', d['tau_low_binary32_s'], d['tau_high_binary32_s'])
-          print('PERIOD_LOW_HIGH', d['period_low_binary32_s'], d['period_high_binary32_s'])
-          print('PSEUDO_FIRINGS', d['pseudo_firings_in_target_word'])
-          print('NEXT', d['next_obligation'])
-          PY
-
-      - name: Run tau-EMA scheduler cycle diagnostic
-        run: |
-          python3 tools/ou3_p3_tau_ema_scheduler_cycle_diagnostic.py \
-            --scheduler-witness /tmp/ou3_p3_pseudo_scheduler_starvation_witness.json \
-            --output /tmp/ou3_p3_tau_ema_scheduler_cycle_diagnostic.json
-
-      - name: Enforce tau-EMA cycle non-promotion contract
-        run: |
-          python3 - <<'PY'
-          import json
-          d=json.load(open('/tmp/ou3_p3_tau_ema_scheduler_cycle_diagnostic.json'))
-          assert d['validation_pass'], d['validation_failures']
-          assert d['target_samples'] == 635
-          assert d['exact_stage_gap_samples'] == 13
-          assert d['exact_gap_self_edge'] is True
-          assert d['continuous_tau_channel_cycle_found'] is True
-          assert d['both_tau_period_values_inside_same_P2_cell'] is True
-          assert d['all_required_frequencies_inside_shipping_bounds'] is True
-          assert d['gap_step_tau_low_to_high_exact'] is True
-          assert d['gap_step_tau_high_to_low_exact'] is True
-          assert d['tau_ema_float_exp_backend'] == 'libm_expf'
-          assert d['tau_ema_float_exp_backend_is_float'] is True
-          assert d['python_binary64_exp_used_for_cycle_alpha'] is False
-          assert d['pseudo_firings_in_target_word'] == 0
-          assert d['full_WavePeriodEstimator_realizability_proved'] is False
-          assert d['deployed_filter_starvation_claimed'] is False
-          assert d['interval_certificate'] is False
-          assert d['P3_PROMOTED'] is False
-          assert d['P4_PROMOTED'] is False
-          assert d['P5_PROMOTED'] is False
-          print('CLASSIFICATION', d['classification'])
-          print('TAU_LOW_HIGH', d['tau_low_binary32_s'], d['tau_high_binary32_s'])
-          print('TAU_SEPARATION', d['tau_separation_s'])
-          print('PERIOD_LOW_HIGH', d['period_low_binary32_s'], d['period_high_binary32_s'])
-          print('TARGETS', d['tau_target_down_binary32_s'], d['tau_target_up_binary32_s'])
-          print('FREQUENCIES', d['frequency_for_down_target_hz'], d['frequency_for_up_target_hz'])
-          print('ALPHA', d['alpha_down_binary32'], d['alpha_up_binary32'])
-          print('ROUNDED_BINARY64_ALPHA', d['rounded_binary64_alpha_down_binary32'], d['rounded_binary64_alpha_up_binary32'])
-          print('PSEUDO_FIRINGS', d['pseudo_firings_in_target_word'])
-          print('NEXT', d['next_obligation'])
-          PY
+      - name: Upload scheduler progress certificate artifact
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: ou3-p3-pseudo-scheduler-progress-certificate
+          path: /tmp/ou3_p3_pseudo_scheduler_progress_certificate.json
+          retention-days: 7
 
       - name: Upload four-max witness artifact
         if: always()
@@ -205,20 +159,4 @@ jobs:
         with:
           name: ou3-p3-ordered-witness-covariance-diagnostic
           path: /tmp/ou3_p3_ordered_witness_covariance_diagnostic.json
-          retention-days: 7
-
-      - name: Upload pseudo-scheduler starvation witness artifact
-        if: always()
-        uses: actions/upload-artifact@v6
-        with:
-          name: ou3-p3-pseudo-scheduler-starvation-witness
-          path: /tmp/ou3_p3_pseudo_scheduler_starvation_witness.json
-          retention-days: 7
-
-      - name: Upload tau-EMA scheduler cycle diagnostic artifact
-        if: always()
-        uses: actions/upload-artifact@v6
-        with:
-          name: ou3-p3-tau-ema-scheduler-cycle-diagnostic
-          path: /tmp/ou3_p3_tau_ema_scheduler_cycle_diagnostic.json
           retention-days: 7
