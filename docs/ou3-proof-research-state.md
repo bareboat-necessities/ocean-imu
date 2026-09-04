@@ -127,6 +127,52 @@ finite-state or monotone argument can quantify over legal histories.
 words rather than a local search: a finite-state or monotone quotient that bounds
 every legal word, not the best one a greedy descent can find.
 
+## Stacked deficit accounting after PR #478
+
+Re-ran the ceiling under #478's tightened safety clamps. All figures are the
+binding `S` channel against the canonical segment floor 1.366e-20.
+
+| step | `S` ceiling (variance) | `delta` | orders short of `1e-18` |
+| --- | --- | --- | --- |
+| canonical today: 3-point, start-referenced, old clamps | 7.171e+09 | 1.91e-30 | **11.72** |
+| + endpoint referencing (#478's fix, and independently step 1 here) | 5.324e+07 | 2.57e-28 | 9.59 |
+| + N-point Gramian instead of 3-point (step 1 here) | 7.350e+04 | 1.86e-25 | 6.73 |
+| + #478's tightened safety clamps | 3.807e+03 | 3.59e-24 | **5.45** |
+
+**6.27 orders recovered; 5.45 remain, and they must come from the floor.** The
+earlier figure of 8.6 predates both #478's clamps and the ceiling work.
+
+### What #478's clamps change
+
+| constant | old | new | effect here |
+| --- | --- | --- | --- |
+| `MAX_TUNE_FREQ_HZ` | 1.5 | 1.2 | `tau` floor rises 0.3333 -> 0.4167 s |
+| `MAX_SIGMA_A` | 6.0 | 4.0 | less process noise at the corner |
+| `MAX_R_S` | 400 | 100 | 16x stronger worst-case `S` measurement |
+| `PSEUDO_UPDATE_PERIOD_MAX_S` | 0.25 | 0.15 | max S gap 33 -> 31 samples |
+| `kDynamicEmaHorizonMaxSec` | 30 | 35 | loosened, leaves the largest reference sea interior |
+
+Worth **1.29 orders** on the worst endpoint `S` ceiling on its own, taking it
+from 271.1 to 61.70 m.s. These are safety limits that no reference record
+approaches, so this is a theorem-envelope tightening rather than a deployed
+behaviour change -- but that claim is #478's to carry, and re-running the
+deterministic sim against it is still outstanding here.
+
+This ledger recorded the same corner as "unphysical but nearly free", measured at
+4x on `a_w` and 1.002x on v/p/S. That measurement was taken against the
+**broken** ceiling, where 1.29 orders was worth nothing against a 12.7-order
+deficit. Against the repaired ceiling it is a fifth of what remains. **The
+conclusion "not worth pursuing" was an artifact of the ceiling error**, and is
+withdrawn.
+
+### Endpoint referencing was found independently on both sides
+
+#478's covariance upper now states that the reconstructed `[v,p,S]` covariance
+"is already an endpoint covariance and MUST NOT be propagated forward through the
+word again". That is the same fix as step 1 here, reached separately. #478 keeps
+three selected observations; the N-point Gramian is worth a further 2.86 orders
+on top of it.
+
 ## PR #478 supersedes the starvation work here and hands Step 2 its input
 
 #478 repairs `set_pseudo_update_period_s` so a cadence retarget preserves
