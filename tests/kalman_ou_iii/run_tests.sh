@@ -16,3 +16,4 @@
 ./iss_contract-test
 ./rs_law-test
 ./startup_init-test
+./innovation_sign-test

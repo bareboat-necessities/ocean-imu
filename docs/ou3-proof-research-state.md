@@ -552,12 +552,27 @@ The source-marker contracts do not close the gap either. They pin the update
 but nothing anywhere checks how `r` is defined.
 
 P4 would catch it, since it bounds the actual nonlinear state map `F_w`. P4 has
-never been reached because P3 blocks. So today **nothing in the certified chain
-verifies that the mean correction is stabilizing**; P1-P3 certify covariance
-behaviour only. Any future claim that the deployed filter is certified should
-state that limitation explicitly, and a cheap direct check of the innovation
-sign convention against each shipping update is worth adding independently of
-the P3/P4 work.
+never been reached because P3 blocks. So the certified chain does not verify
+that the mean correction is stabilizing; P1-P3 certify covariance behaviour only,
+and any claim that the deployed filter is certified should state that limitation.
+
+**Closed by direct test**, independently of the P3/P4 work:
+`tests/kalman_ou_iii/innovation_sign-test.cpp` pins that every shipping OU-III
+measurement update corrects the state *toward* its measurement. The invariant is
+sign-sensitive and gain-free: a correct linear Kalman update makes the posterior
+a convex combination of prior and measurement, so the corrected component lies in
+`[x-, z)` and can never move away from `z`. Covered: the `S = 0` integral
+pseudo-measurement, the position, velocity and vertical-velocity pseudo-updates,
+and the accelerometer attitude correction.
+
+The test was validated by negative control -- flipping the innovation sign in
+each of the four linear updates in turn, rebuilding, and confirming each flip is
+caught. Note the test Makefiles track the `.cpp` only, so a header edit needs
+`make -B`; without it the first negative-control pass silently ran a stale binary
+and reported four false passes. This does not affect CI, which builds clean.
+
+This closes the *sign* gap only. It does not make P1-P3 certify the mean, and it
+is not a substitute for P4.
 
 ## The translation ceiling credits 3 of the 19 to 602 S firings in a word
 
