@@ -116,9 +116,9 @@ constexpr float MIN_TUNE_FREQ_HZ = 0.03f;
 // read from the wave band, setFreqBounds() is a wave-direction knob and must
 // not move the OU operating point.  Neither bound binds on any reference
 // record -- the wave band spans 0.12 to 0.40 Hz -- so this is a safety limit,
-// not a tuning surface.  1.5 Hz is a 0.67 s zero-crossing period, shorter than
-// any sea a hull responds to.
-constexpr float MAX_TUNE_FREQ_HZ = 1.5f;
+// not a tuning surface.  1.2 Hz is a 0.83 s zero-crossing period, shorter than
+// any sea a hull responds to while reducing the theorem-only high-frequency tail.
+constexpr float MAX_TUNE_FREQ_HZ = 1.2f;
 
 // Wave-band tuning frequency used before WavePeriodEstimator has a value.
 //
@@ -149,7 +149,7 @@ constexpr float MIN_TAU_S   = 0.02f;
 // 3.0 s ceiling was reached at H_s = 8.5 m, which clipped the operating point
 // exactly where the filter was losing.
 constexpr float MAX_TAU_S   = 12.0f;
-constexpr float MAX_SIGMA_A = 6.0f;
+constexpr float MAX_SIGMA_A = 4.0f;
 // The old 0.4 floor was not a safety limit in practice, it was the binding
 // constraint on every low-motion sea.  The schedule asks for 0.24 m*s at the
 // calibrated H_s = 0.27 m point, so the floor clipped it and pinned both
@@ -165,7 +165,7 @@ constexpr float MIN_R_S     = 0.15f;
 // r_S ~ sqrt(R_a) tau^3 inherits that range.  The old 35 m*s ceiling was the
 // binding constraint at H_s = 8.5 m: the calibrated fixed-oracle point sat at
 // 34.66 and the error was still falling monotonically against it.
-constexpr float MAX_R_S     = 400.0f;
+constexpr float MAX_R_S     = 100.0f;
 
 // Legacy fixed-second horizon is retained for ablation/backward compatibility.
 // A positive sea-period multiplier makes the common tau/sigma EMA self-similar:
@@ -268,9 +268,9 @@ constexpr float PSEUDO_UPDATE_TAU_NOMINAL_S = 1.1f;
 constexpr float PSEUDO_UPDATE_TAU_RATIO_DEFAULT =
     PSEUDO_UPDATE_PERIOD_NOMINAL_S / PSEUDO_UPDATE_TAU_NOMINAL_S;
 // A pseudo update cannot occur more often than the nominal 200 Hz IMU schedule.
-// The upper guard is inactive over the current tau <= 12 s operating envelope.
+// The 150 ms upper guard tightens the Live theorem's guaranteed S-update recurrence.
 constexpr float PSEUDO_UPDATE_PERIOD_MIN_S_DEFAULT = FREQ_SMOOTHER_DT;
-constexpr float PSEUDO_UPDATE_PERIOD_MAX_S_DEFAULT = 0.25f;
+constexpr float PSEUDO_UPDATE_PERIOD_MAX_S_DEFAULT = 0.15f;
 
 // Integral-regularizer adaptation laws.  All three place the drift-band
 // regularization pole of the reduced Riccati model; they differ in which

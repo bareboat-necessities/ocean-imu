@@ -23,13 +23,13 @@ inline constexpr float kDynamicEmaTimeScaleMaxSec = 6.0f;
 // This ceiling used to be inactive on every calibration sea: the longest
 // deployed horizon was the sigma_a variance EMA at 2*T_z, i.e. about 16.8 s on
 // the largest reference sea.  Since the period-statistics retune raised
-// K_periods to 4 that horizon requests 4*T_z, about 33.6 s there, so the 30 s
-// ceiling now binds on the largest of the eight seas and only on that channel.
+// K_periods to 4 that horizon requests 4*T_z, about 33.6 s there.  The 35 s
+// ceiling leaves the largest of the eight reference seas interior.
 // Every other deployed horizon (about 0.12..12.7 s, the slowest being the
 // OU-II/TFG drift smoother) is still comfortably interior.  Treat a change to
 // K_periods or to this ceiling as a retune that needs a re-gauge, not a tweak.
 inline constexpr float kDynamicEmaHorizonMinSec = 0.05f;
-inline constexpr float kDynamicEmaHorizonMaxSec = 30.0f;
+inline constexpr float kDynamicEmaHorizonMaxSec = 35.0f;
 
 inline float clampDynamicEmaTimeScaleSec(float sec) noexcept {
     if (!(std::isfinite(sec) && sec > 0.0f)) return kDynamicEmaTimeScaleMaxSec;

@@ -118,7 +118,13 @@ The bounds used below are
  0<T_{S,-}&\le T_{S,k}\le T_{S,+}<\infty,
  \label{eq:iss-source-bounds}
 \end{align}
-and uniformly positive accepted measurement covariances.  The deployed
+For the deployed source family used by the machine certificate, the source
+clamps are $f_{\rm tune}\le\SI{1.2}{Hz}$,
+$\sigma_{aw,k}^{\rm proc}\le\SI{4}{m/s^2}$, $r_{S,k}\le\SI{100}{m.s}$, and
+$T_{S,k}\le\SI{0.15}{s}$.  The dynamically selected EMA horizon is separately
+clamped at $\SI{35}{s}$.  These are implementation-enforced theorem-domain
+bounds rather than replay-fitted extrema, together with uniformly positive
+accepted measurement covariances.  The deployed
 MEKF process channel uses
 \begin{equation}
  \sigma_{aw,k}^{\rm proc}
