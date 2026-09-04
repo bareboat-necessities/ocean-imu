@@ -1,39 +1,34 @@
 #!/usr/bin/env python3
-"""Canonical P3 architecture: moving Riccati-covariance Lyapunov metric.
+"""Canonical P3 gate: quantitative SEA3 moving-Riccati certificate.
 
-The old canonical route enumerated long histories of a broad 800-state tuner
-abstraction and then attached a worst-case covariance envelope to each terminal
-source/phase class.  That proves a stronger switching theorem than the SEA3
-deployment theorem and manufactures the wall we are trying to remove.
+The canonical linear theorem uses the actual shipping Riccati covariance as the
+parameter-dependent Lyapunov metric
 
-For the exact linearized KF error recursion over any recurrent word,
+    V_k(e) = e^T P_k^{-1} e.
+
+For one recurrent linearized word,
 
     e_+ = Phi e,
-    P_+ = Phi P Phi' + Omega,
+    P_+ = Phi P Phi^T + Omega.
 
-where P is the *shipping Riccati covariance* and Omega is the covariance injected
-through process noise and the actual Joseph measurement operations.  With
+The quantitative SEA3 Riccati-tube producer certifies a source-uniform upper
+bound on P_+ and a source-uniform lower comparison
 
-    V(e,P) = e' P^{-1} e
+    Omega >= delta P_+.
 
-and a certified comparison Omega >= delta P_+, 0 < delta <= 1,
+Therefore
 
-    Phi P Phi' <= (1-delta) P_+
+    Phi P Phi^T <= (1-delta) P_+
 
-implies directly
+and hence
 
     V_+ <= (1-delta) V.
 
-P may vary with every SEA3-driven tuner update: it is the metric state, not a
-fixed matrix that must survive arbitrary parameter jumps.  Therefore there is
-no separate dM/dt penalty and no source-word history enumeration.  Uniform UCO,
-UCC and the rate-bounded SEA3 adaptive-state tube are the ingredients needed to
-certify a positive source-uniform delta.
-
-This producer makes that architecture canonical and fail-closed.  Until the
-validated Riccati tube P <= P_bar and word injection Omega >= Omega_bar are
-closed numerically for H18 and A21, P3 remains OPEN; no legacy P2 history result
-may substitute for it.
+This file is the *gate*, not a second proof route.  It consumes the quantitative
+result from ``ou3_sea3_riccati_tube.py`` and promotes P3 if and only if both H18
+and A21 margins meet the unchanged 1e-18 useful-margin gate.  No 800-state P2
+graph, P2-V1 history frontier, terminal source/phase metric attachment, or
+source-history enumeration may substitute for that verdict.
 """
 from __future__ import annotations
 
@@ -43,13 +38,11 @@ import math
 from pathlib import Path
 
 import ou3_sea3_dynamic_source_certificate as DYNAMIC
-import ou3_translational_uco_ucc as TRANS
-import ou3_vector_uco_certificate as VECTOR
-import ou3_full_process_ucc as PROCESS
+import ou3_sea3_riccati_tube as TUBE
 
 REPO = Path(__file__).resolve().parents[1]
 DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
-SCHEMA = 1
+SCHEMA = 2
 QUALIFICATION = "OU3_SEA3_MOVING_RICCATI_METRIC_P3"
 USEFUL_GATE = 1.0e-18
 
@@ -57,52 +50,83 @@ USEFUL_GATE = 1.0e-18
 def _positive(x, label: str) -> float:
     y = float(x)
     if not (math.isfinite(y) and y > 0.0):
-        raise RuntimeError(f"{label} must be finite positive")
+        raise RuntimeError(f"{label} must be finite positive, got {x!r}")
     return y
 
 
-def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
+def _load_tube(domain_path: Path, tube_path: Path | None) -> dict:
+    if tube_path is None:
+        tube = TUBE.build(domain_path)
+    else:
+        tube = json.loads(Path(tube_path).read_text(encoding="utf-8"))
+    failures = TUBE.validate(tube)
+    if failures:
+        raise RuntimeError(f"quantitative moving-Riccati tube failed validation: {failures}")
+    if float(tube.get("useful_gate", math.nan)) != USEFUL_GATE:
+        raise RuntimeError("quantitative tube changed the canonical 1e-18 useful-margin gate")
+    return tube
+
+
+def build(
+    domain_path: Path = DEFAULT_DOMAIN,
+    tube_path: Path | None = None,
+) -> dict:
     path = Path(domain_path).resolve()
+
     dynamic = DYNAMIC.build(path)
     df = DYNAMIC.validate(dynamic)
-    trans = TRANS.build(TRANS.DEFAULT_HEADER)
-    tf = TRANS.validate(trans)
-    vector = VECTOR.build()
-    vf = VECTOR.validate(vector)
-    process = PROCESS.build()
-    pf = PROCESS.validate(process)
-    failures = [f"dynamic: {x}" for x in df]
-    failures += [f"translation: {x}" for x in tf]
-    failures += [f"vector: {x}" for x in vf]
-    failures += [f"process: {x}" for x in pf]
-    if failures:
-        raise RuntimeError(f"moving-Riccati prerequisites failed: {failures}")
+    if df:
+        raise RuntimeError(f"SEA3 dynamic source prerequisite failed: {df}")
 
-    qH = _positive(process["modes"]["H"]["prediction_Q_lambda_min_lower"], "H process UCC")
-    qA = _positive(process["modes"]["A"]["prediction_Q_lambda_min_lower"], "A process UCC")
-    alpha6 = _positive(vector["gyro_bias_two_packet"]["alpha_6_information_lower"], "vector UCO")
-    s_info = _positive(trans["integrator_detectability"]["information_gramian_lambda_min_lower"], "translation detectability")
-    aw_alpha = _positive(trans["integrator_detectability"]["stable_aw_alpha_upper"], "a_w stability")
-    pe_window = _positive(dynamic["normal_live_contract"]["vector_PE_recurrence_window_s"], "PE window")
+    tube = _load_tube(path, tube_path)
 
-    # The architecture proof is exact, but the quantitative delta still needs a
-    # validated full-state Riccati tube for the time-varying H/A systems.  Keep
-    # the stage open rather than recycling a terminal-history covariance hull.
     modes = {}
-    for mode, dim, q in (("H", 18, qH), ("A", 21, qA)):
+    for mode, dim in (("H", 18), ("A", 21)):
+        trow = tube["modes"][mode]
+        delta = _positive(
+            trow["relative_Riccati_injection_margin_lower"],
+            f"{mode} relative Riccati injection margin",
+        )
+        margin_pass = delta >= USEFUL_GATE
+        if bool(trow.get("useful_margin_pass")) != margin_pass:
+            raise RuntimeError(
+                f"{mode} tube useful-margin verdict is inconsistent with delta={delta!r}"
+            )
+
+        # Do not rely on a binary64 representation of 1-delta for strictness:
+        # at the 1e-18 gate, 1-delta rounds to 1.0.  The certified contraction
+        # is represented by its positive gap delta and the exact formula.
         modes[mode] = {
             "dimension": dim,
-            "prediction_process_UCC_lower": q,
-            "vector_information_UCO_lower": alpha6,
-            "translation_information_detectability_lower": s_info,
-            "stable_aw_alpha_upper": aw_alpha,
-            "riccati_covariance_upper_bound_closed": False,
-            "word_injection_comparison_closed": False,
-            "relative_Riccati_injection_margin_lower": None,
-            "contraction_factor_upper": None,
+            "riccati_covariance_upper_bound_closed": True,
+            "word_injection_comparison_closed": True,
+            "Pbar_lambda_max_trace_upper": _positive(
+                trow["Pbar_lambda_max_trace_upper"], f"{mode} Pbar trace upper"
+            ),
+            "relative_Riccati_injection_margin_lower": delta,
+            "contraction_gap_lower": delta,
+            "contraction_factor_upper_formula": "1-relative_Riccati_injection_margin_lower",
             "useful_margin_gate": USEFUL_GATE,
-            "pass": False,
+            "pass": margin_pass,
+            "worst_current_source_cell": trow["worst_current_source_cell"],
         }
+
+    canonical_pass = all(modes[m]["pass"] for m in ("H", "A"))
+    tube_pass = bool(tube["RICCATI_TUBE_PASS"])
+    if tube_pass != canonical_pass:
+        raise RuntimeError(
+            "quantitative tube aggregate verdict disagrees with H/A canonical margin checks"
+        )
+
+    fail_reasons = []
+    if not canonical_pass:
+        for mode in ("H", "A"):
+            if not modes[mode]["pass"]:
+                fail_reasons.append(
+                    f"{mode} relative Riccati injection margin "
+                    f"{modes[mode]['relative_Riccati_injection_margin_lower']:.17g} "
+                    f"is below useful gate {USEFUL_GATE:.17g}"
+                )
 
     return {
         "schema": SCHEMA,
@@ -113,6 +137,11 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "filter_changed": False,
         "declared_domain_shrunk": False,
         "SEA3_dynamic_source_consumed": True,
+        "quantitative_Riccati_tube_consumed": True,
+        "quantitative_Riccati_tube_pass": tube_pass,
+        "current_source_interval_cover_only": bool(tube["current_source_interval_cover_only"]),
+        "source_history_graph_consumed": False,
+        "predecessor_path_enumeration_consumed": False,
         "old_P2_800_state_graph_consumed": False,
         "old_P2_V1_history_frontier_consumed": False,
         "old_terminal_source_phase_metric_attachment_consumed": False,
@@ -127,32 +156,26 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
             "Lyapunov_contraction": "V_plus <= (1-delta) V",
         },
         "recurrent_word_contract": {
-            "vector_PE_window_s": pe_window,
+            "vector_PE_window_s": dynamic["normal_live_contract"][
+                "vector_PE_recurrence_window_s"
+            ],
             "accelerometer_each_valid_live_sample": dynamic["normal_live_contract"][
                 "accelerometer_update_required_each_valid_sample"
             ],
             "adaptive_state_rate_bounded": True,
             "adaptive_state": dynamic["adaptive_state"],
         },
-        "prerequisite_constants": {
-            "vector_alpha6_information_lower": alpha6,
-            "translation_detectability_information_lower": s_info,
-            "stable_aw_alpha_upper": aw_alpha,
-            "H_prediction_Q_lambda_min_lower": qH,
-            "A_prediction_Q_lambda_min_lower": qA,
-        },
+        "cell_cover": tube["cell_cover"],
         "modes": modes,
         "useful_gate": USEFUL_GATE,
         "P3_FOUNDATION_PASS": True,
-        "P3_CANONICAL_PASS": False,
-        "P4_MAY_CONSUME_P3": False,
-        "P3_CANONICAL_FAIL_REASONS": [
-            "validated time-varying H18/A21 Riccati covariance tube P <= P_bar not yet emitted",
-            "source-uniform word comparison Omega >= delta P_plus not yet emitted",
-        ],
+        "P3_CANONICAL_PASS": canonical_pass,
+        "P4_MAY_CONSUME_P3": canonical_pass,
+        "P3_CANONICAL_FAIL_REASONS": fail_reasons,
         "next_obligation": (
-            "bound the shipping time-varying Riccati covariance directly over the compact SEA3 dynamic source tube, "
-            "then certify delta_H and delta_A from Omega >= delta P_plus; do not enumerate source histories"
+            "P3 is quantitatively closed; proceed to nonlinear moving-Riccati P4 on the full 0.8-rad sector"
+            if canonical_pass
+            else "tighten only the SEA3 dynamic-state/finite-memory Riccati bounds that limit the reported H/A margin; do not reintroduce source histories"
         ),
     }
 
@@ -163,45 +186,85 @@ def validate(d: dict) -> list[str]:
         f.append("schema/qualification mismatch")
     if d.get("canonical_P3_architecture") != "MOVING_SHIPPING_RICCATI_COVARIANCE_METRIC":
         f.append("wrong canonical P3 architecture")
+
     for key in (
-        "source_generated_not_trajectory_fit", "SEA3_dynamic_source_consumed",
-        "metric_change_handled_by_exact_Riccati_recursion", "P3_FOUNDATION_PASS",
+        "source_generated_not_trajectory_fit",
+        "SEA3_dynamic_source_consumed",
+        "quantitative_Riccati_tube_consumed",
+        "current_source_interval_cover_only",
+        "metric_change_handled_by_exact_Riccati_recursion",
+        "P3_FOUNDATION_PASS",
     ):
         if d.get(key) is not True:
             f.append(f"{key} is not true")
+
     for key in (
-        "trajectory_replay_used", "filter_changed", "declared_domain_shrunk",
-        "old_P2_800_state_graph_consumed", "old_P2_V1_history_frontier_consumed",
+        "trajectory_replay_used",
+        "filter_changed",
+        "declared_domain_shrunk",
+        "source_history_graph_consumed",
+        "predecessor_path_enumeration_consumed",
+        "old_P2_800_state_graph_consumed",
+        "old_P2_V1_history_frontier_consumed",
         "old_terminal_source_phase_metric_attachment_consumed",
-        "metric_derivative_or_jump_penalty_required", "P3_CANONICAL_PASS",
-        "P4_MAY_CONSUME_P3",
+        "metric_derivative_or_jump_penalty_required",
     ):
         if d.get(key) is not False:
             f.append(f"{key} is not false")
+
     if float(d.get("useful_gate", math.nan)) != USEFUL_GATE:
         f.append("P3 useful gate changed")
-    if not d.get("P3_CANONICAL_FAIL_REASONS"):
-        f.append("open P3 route does not name remaining obligations")
+    if int(d.get("cell_cover", {}).get("history_depth", -1)) != 0:
+        f.append("canonical P3 reintroduced source-history depth")
+
+    expected_pass = True
     for mode in ("H", "A"):
         row = d.get("modes", {}).get(mode, {})
-        if row.get("pass") is not False:
-            f.append(f"{mode} falsely promoted")
-        for key in (
-            "prediction_process_UCC_lower", "vector_information_UCO_lower",
-            "translation_information_detectability_lower", "stable_aw_alpha_upper",
-        ):
-            x = row.get(key)
-            if not isinstance(x, (int, float)) or not math.isfinite(float(x)) or float(x) <= 0.0:
-                f.append(f"{mode}.{key} is not finite positive")
+        delta = row.get("relative_Riccati_injection_margin_lower")
+        if not isinstance(delta, (int, float)) or not math.isfinite(float(delta)) or float(delta) <= 0.0:
+            f.append(f"{mode} Riccati margin is not finite positive")
+            expected_pass = False
+            continue
+        mode_expected = float(delta) >= USEFUL_GATE
+        expected_pass = expected_pass and mode_expected
+        if row.get("riccati_covariance_upper_bound_closed") is not True:
+            f.append(f"{mode} covariance upper bound not closed")
+        if row.get("word_injection_comparison_closed") is not True:
+            f.append(f"{mode} word injection comparison not closed")
+        if row.get("pass") is not mode_expected:
+            f.append(f"{mode} P3 verdict disagrees with quantitative margin")
+        pbar = row.get("Pbar_lambda_max_trace_upper")
+        if not isinstance(pbar, (int, float)) or not math.isfinite(float(pbar)) or float(pbar) <= 0.0:
+            f.append(f"{mode} Pbar trace upper is not finite positive")
+
+    if d.get("quantitative_Riccati_tube_pass") is not expected_pass:
+        f.append("tube aggregate verdict disagrees with H/A margins")
+    if d.get("P3_CANONICAL_PASS") is not expected_pass:
+        f.append("canonical P3 verdict is not the quantitative H/A verdict")
+    if d.get("P4_MAY_CONSUME_P3") is not expected_pass:
+        f.append("P4 handoff does not follow canonical P3 verdict")
+
+    reasons = d.get("P3_CANONICAL_FAIL_REASONS", [])
+    if expected_pass and reasons:
+        f.append("passing P3 still reports failure reasons")
+    if not expected_pass and not reasons:
+        f.append("failing P3 does not name limiting margin")
+
     return list(dict.fromkeys(f))
 
 
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--domain", type=Path, default=DEFAULT_DOMAIN)
+    ap.add_argument(
+        "--tube",
+        type=Path,
+        default=None,
+        help="consume an already-built ou3_sea3_riccati_tube JSON artifact",
+    )
     ap.add_argument("--output", type=Path, required=True)
     args = ap.parse_args()
-    d = build(args.domain)
+    d = build(args.domain, args.tube)
     vf = validate(d)
     d["validation_pass"] = not vf
     d["validation_failures"] = vf
@@ -209,8 +272,11 @@ def main() -> int:
     args.output.write_text(json.dumps(d, indent=2, sort_keys=True), encoding="utf-8")
     print(json.dumps({
         "architecture": d["canonical_P3_architecture"],
-        "foundation_pass": d["P3_FOUNDATION_PASS"],
+        "tube_pass": d["quantitative_Riccati_tube_pass"],
+        "H_delta": d["modes"]["H"]["relative_Riccati_injection_margin_lower"],
+        "A_delta": d["modes"]["A"]["relative_Riccati_injection_margin_lower"],
         "P3_CANONICAL_PASS": d["P3_CANONICAL_PASS"],
+        "P4_MAY_CONSUME_P3": d["P4_MAY_CONSUME_P3"],
         "fail_reasons": d["P3_CANONICAL_FAIL_REASONS"],
         "validation_failures": vf,
     }, indent=2, sort_keys=True))
