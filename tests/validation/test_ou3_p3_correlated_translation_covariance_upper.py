@@ -35,6 +35,15 @@ class CorrelatedTranslationCovarianceUpperTests(unittest.TestCase):
         self.assertGreater(summary["sigma_squared_upper"], 0.0)
         self.assertGreater(summary["S_measurement_variance_upper"], 0.0)
 
+    def test_gap_theorem_fails_closed_without_progress_preserving_retarget(self):
+        rt = CORR.runtime()
+        start, trans = U._representative_history(rt, 137, 3, 21)
+        summary = U.summarize_segments(U._path_segments(start, trans, rt), BASE.source_schedule())
+        sched = dict(BASE.source_schedule())
+        sched["pseudo_period_retarget_progress_preserving"] = False
+        with self.assertRaisesRegex(RuntimeError, "progress-preserving"):
+            U.translation_upper_from_summary(summary, 1.0, sched, require_history_cover=False)
+
     def test_constant_history_reduces_to_same_monotone_source_quantities(self):
         rt = CORR.runtime()
         # Frozen-clock-like comparison uses repeated same-cell segment kernels;
