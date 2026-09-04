@@ -23,12 +23,20 @@ class Sea3MovingRiccatiP4Test(unittest.TestCase):
         self.assertFalse(self.d["old_group_isotropic_P3_P4_metric_assumed"])
         self.assertGreaterEqual(self.d["outer_angle_rad"], 0.80)
 
-    def test_p4_remains_blocked_until_real_p3_and_nonlinear_margin_close(self):
-        self.assertFalse(self.d["P3_CANONICAL_PASS_consumed"])
+    def test_p4_consumes_real_p3_and_only_reports_live_blockers(self):
+        self.assertIsInstance(self.d["P3_CANONICAL_PASS_consumed"], bool)
+        self.assertGreater(self.d["P3_H_delta_consumed"], 0.0)
+        self.assertGreater(self.d["P3_A_delta_consumed"], 0.0)
         self.assertFalse(self.d["P4_CANONICAL_PASS"])
         self.assertFalse(self.d["P5_MAY_START"])
         self.assertTrue(self.d["exact_vector_accelerometer_congruence_rebind_pending"])
         self.assertTrue(self.d["P4_CANONICAL_FAIL_REASONS"])
+
+        reasons = " ".join(self.d["P4_CANONICAL_FAIL_REASONS"]).lower()
+        if self.d["P3_CANONICAL_PASS_consumed"]:
+            self.assertNotIn("p3 h/a quantitative margin", reasons)
+        else:
+            self.assertIn("p3 h/a quantitative margin", reasons)
 
 
 if __name__ == "__main__":
