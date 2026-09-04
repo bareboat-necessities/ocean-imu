@@ -20,11 +20,14 @@ class Sea3MovingRiccatiP4Test(unittest.TestCase):
         )
         self.assertFalse(self.d["old_800_endpoint_signed_Joseph_scan_consumed"])
         self.assertFalse(self.d["old_terminal_source_phase_metric_attachment_consumed"])
+        self.assertFalse(self.d["old_group_isotropic_P3_P4_metric_assumed"])
+        self.assertGreaterEqual(self.d["outer_angle_rad"], 0.80)
 
     def test_p4_remains_blocked_until_real_p3_and_nonlinear_margin_close(self):
         self.assertFalse(self.d["P3_CANONICAL_PASS_consumed"])
         self.assertFalse(self.d["P4_CANONICAL_PASS"])
         self.assertFalse(self.d["P5_MAY_START"])
+        self.assertTrue(self.d["exact_vector_accelerometer_congruence_rebind_pending"])
         self.assertTrue(self.d["P4_CANONICAL_FAIL_REASONS"])
 
 
