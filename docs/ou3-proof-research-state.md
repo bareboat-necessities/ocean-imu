@@ -127,7 +127,38 @@ finite-state or monotone argument can quantify over legal histories.
 words rather than a local search: a finite-state or monotone quotient that bounds
 every legal word, not the best one a greedy descent can find.
 
-## NO CERTIFICATE EXISTS. Everything in this ledger below is a diagnostic.
+## Step 1 SUCCEEDS: an interval-certified closed-form ceiling exists
+
+The first rigorous object in this line of work. Closed form, so the stepwise
+interval wall recorded below does not apply, and it **inverts cleanly in interval
+arithmetic at every cell tested** -- the 3x3 determinant never straddles zero.
+
+Construction: the S observations constrain the state at the **word endpoint**
+directly, each through the backward map `[(t_k - T_w)^2/2, (t_k - T_w), 1]` with
+its own process-corruption inflation, giving `G = sum_k h_k h_k' / R_eff,k` and
+`P_end <= G^-1`. No recursion, no `P0`.
+
+| construction | worst-case gain on the binding `S` channel |
+| --- | --- |
+| start-referenced, matching `translation_upper` | 1.24 orders |
+| **endpoint-referenced** | **4.10 orders** (up to 8.28) |
+
+**Endpoint-referencing is worth 2.9 orders on its own.** That is the more useful
+finding: `translation_upper`'s looseness is not mainly its three-point count. It
+builds the bound at word *start* and then free-runs the estimate through `F` for
+a whole word, and that free-running amplification dominates everything else. Two
+earlier comparisons in this ledger overstated the benefit of crediting the
+cadence because they compared unequal quantities -- bare `R_S` against
+`translation_upper`'s process-inflated `rstack`, and an at-start covariance
+against an at-endpoint one. Both are corrected here.
+
+**Where this leaves the deficit:** 12.7 orders needed, 4.10 delivered by the
+ceiling. **8.6 orders must come from the floor**, which is Step 2 and is not yet
+attempted. Step 1 retires the constructive risk on the ceiling only; it is not a
+P3 verdict, has not been run through the canonical producer, and quantifies over
+15 cells rather than 800.
+
+## NO CERTIFICATE EXISTS YET. Everything else in this ledger is a diagnostic.
 
 Stated plainly because the distinction was blurred: canonical P3 has never
 produced a passing artifact, and nothing in this branch is interval-certified.
