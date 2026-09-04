@@ -10,6 +10,7 @@ ROOT = Path(__file__).resolve().parents[2]
 TOOLS = ROOT / "tools"
 WORKFLOWS = ROOT / ".github" / "workflows"
 VALIDATION = ROOT / "tests" / "validation"
+OU3_DOC = ROOT / "doc" / "kalman_ou_iii"
 
 
 class Ou3ProofCleanupTest(unittest.TestCase):
@@ -81,6 +82,15 @@ class Ou3ProofCleanupTest(unittest.TestCase):
         }
         offenders = [name for name in sorted(retired) if (WORKFLOWS / name).exists()]
         self.assertEqual([], offenders, "retired extra proof workflows returned")
+
+    def test_master_paper_includes_retained_sea3_theorem_parts(self):
+        paper = (OU3_DOC / "kalman_ou-w3d.tex").read_text(encoding="utf-8")
+        self.assertIn(r"\input{w3d-sea3-stability-theorem.tex-part}", paper)
+        self.assertIn(r"\input{w3d-sea3-period-bridge.tex-part}", paper)
+        self.assertLess(
+            paper.index(r"\input{w3d-sea3-stability-theorem.tex-part}"),
+            paper.index(r"\input{w3d-sea3-period-bridge.tex-part}"),
+        )
 
 
 if __name__ == "__main__":
