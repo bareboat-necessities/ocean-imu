@@ -104,7 +104,7 @@ jobs:
 
       - name: Build quantitative source-uniform moving-Riccati tube
         run: |
-          python3 tools/ou3_sea3_riccati_tube.py \
+          python3 tools/ou3_sea3_riccati_tube_factored.py \
             --output /tmp/ou3_sea3_riccati_tube.json
           python3 - <<'PY'
           import json
