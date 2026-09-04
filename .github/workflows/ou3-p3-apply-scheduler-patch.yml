@@ -22,7 +22,7 @@ jobs:
           ref: codex/ou3-p3-source-clock-recurrence
           fetch-depth: 0
 
-      - name: Apply canonical P3 scheduler binding
+      - name: Apply all P3 scheduler bindings
         run: python3 tools/ou3_apply_scheduler_progress_proof_patch.py
 
       - name: Apply scheduler proof cleanup
@@ -32,6 +32,8 @@ jobs:
         run: |
           python3 -m py_compile \
             tools/ou3_source_reachable_matrix_p3.py \
+            tools/ou3_p3_correlated_translation_covariance_upper.py \
+            tools/ou3_p3_p2_v1_history_frontier.py \
             tools/ou3_p3_four_max_global_label_witness.py \
             tools/ou3_p3_pseudo_scheduler_progress_certificate.py \
             tools/ou3_p3_ordered_witness_covariance_diagnostic.py \
@@ -68,6 +70,11 @@ jobs:
           assert d['P5_PROMOTED'] is False
           PY
 
+      - name: Exercise canonical same-history covariance upper
+        run: |
+          python3 tools/ou3_p3_correlated_translation_covariance_upper.py \
+            --output /tmp/ou3_p3_correlated_translation_covariance_upper.json
+
       - name: Run ordered point diagnostic
         run: |
           python3 tools/ou3_p3_ordered_witness_covariance_diagnostic.py \
@@ -94,6 +101,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A \
             tools/ou3_source_reachable_matrix_p3.py \
+            tools/ou3_p3_correlated_translation_covariance_upper.py \
             tools/ou3_p3_ordered_witness_covariance_diagnostic.py \
             tests/validation/test_ou3_p3_ordered_witness_covariance_diagnostic.py \
             tools/ou3_p3_pseudo_scheduler_starvation_witness.py \
