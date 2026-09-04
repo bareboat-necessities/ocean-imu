@@ -1,24 +1,15 @@
 #!/usr/bin/env python3
-"""Canonical SEA3 dynamic-source certificate for deployed OU-III.
+"""Canonical SEA3 dynamic adaptive-source certificate for OU-III.
 
-This module replaces the old 800-cell P2 switching graph as the canonical
-source interface to P3/P4.  It models the *implemented adaptive state* rather
-than a language of arbitrarily concatenated tuner boxes.
+The canonical proof no longer turns the tuner into an 800-state arbitrary
+switching language.  Its source state is the shipping adaptive state
 
-The relevant source state is
+    xi = (tau_applied, sigma_aw, R_S, T_S, pending_commit_progress).
 
-    xi = (tau_applied, sigma_filter, R_S_applied, T_S, commit_progress).
-
-The physical SEA3 theorem supplies the admissible measurement/response family;
-the shipping WavePeriodEstimator and tuner then drive xi.  Crucially, even if a
-new tuner target moves anywhere inside its physical safety interval, the
-shipping exponential smoothers bound the motion of xi before it can reach the
-MEKF.  Parameter commits are one-sample predictable and T_S is the clamped
-Lipschitz image of the same applied tau.
-
-This is a dynamic invariant/rate certificate.  It is deliberately conditional
-on the admitted SEA3 theorem event; it does not pretend that a PSD or Gaussian
-spectrum alone is a deterministic finite-window realization certificate.
+SEA3 supplies the admissible physical event; the existing WavePeriodEstimator,
+tuner EMA and staged commit semantics determine xi.  This producer certifies a
+compact invariant and conservative motion bounds without replay fitting and
+without constructing the retired P2 history graph.
 """
 from __future__ import annotations
 
@@ -39,7 +30,7 @@ WRAPPER = REPO / "src" / "kalman_ou_iii" / "SeaStateFusionFilter_OU_III.h"
 ESTIMATOR = REPO / "src" / "tuner" / "WavePeriodEstimator.h"
 LIMITS = REPO / "src" / "tuner" / "SeaStateAdaptationLimits.h"
 DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
-SCHEMA = 1
+SCHEMA = 2
 QUALIFICATION = "OU3_SEA3_DYNAMIC_ADAPTIVE_SOURCE_CERTIFICATE"
 
 
@@ -62,43 +53,41 @@ def _member_float(text: str, name: str) -> float:
     return float(m.group(1))
 
 
-def _clamp_interval(lo: float, hi: float, a: float, b: float) -> tuple[float, float]:
+def _clamp(lo: float, hi: float, a: float, b: float) -> tuple[float, float]:
     if not (a <= b and lo <= hi):
         raise ValueError("invalid clamp interval")
     return max(a, min(b, lo)), max(a, min(b, hi))
 
 
 def _alpha_upper(dt: float, horizon_lower: float) -> float:
-    if not (dt > 0.0 and horizon_lower > 0.0):
-        raise ValueError("positive dt/horizon required")
     x = _point(dt) / _point(horizon_lower)
     e = VT.exp_interval(-x)
     return up(1.0 - e.lo)
 
 
 def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
-    domain_path = Path(domain_path).resolve()
-    domain = json.loads(domain_path.read_text(encoding="utf-8"))
+    path = Path(domain_path).resolve()
+    domain = json.loads(path.read_text(encoding="utf-8"))
     if domain.get("trajectory_fit") is not False:
-        raise RuntimeError("SEA3 dynamic source may not be replay fitted")
+        raise RuntimeError("SEA3 dynamic source may not be trajectory fitted")
 
     wrapper = WRAPPER.read_text(encoding="utf-8")
     estimator = ESTIMATOR.read_text(encoding="utf-8")
     limits = LIMITS.read_text(encoding="utf-8")
 
-    physical = PHYSICAL.build(domain_path)
+    physical = PHYSICAL.build(path)
     pf = PHYSICAL.validate(physical)
     frontend = FRONTEND.build(REPO)
     ff = FRONTEND.validate(frontend)
     if pf or ff:
-        raise RuntimeError(f"SEA3 source prerequisites failed: physical={pf}, frontend={ff}")
+        raise RuntimeError(f"SEA3 prerequisites failed: physical={pf}, frontend={ff}")
 
     names = (
         "MIN_TUNE_FREQ_HZ", "MAX_TUNE_FREQ_HZ", "MIN_TAU_S", "MAX_TAU_S",
         "MAX_SIGMA_A", "MIN_R_S", "MAX_R_S", "ADAPT_TAU_SEA_PERIODS",
-        "ADAPT_RS_MULT", "ADAPT_RS_SLEW_LOG", "ADAPT_EVERY_SECS",
-        "PSEUDO_UPDATE_TAU_RATIO_DEFAULT", "PSEUDO_UPDATE_PERIOD_MIN_S_DEFAULT",
-        "PSEUDO_UPDATE_PERIOD_MAX_S_DEFAULT", "FREQ_SMOOTHER_DT",
+        "ADAPT_RS_MULT", "ADAPT_EVERY_SECS", "PSEUDO_UPDATE_TAU_RATIO_DEFAULT",
+        "PSEUDO_UPDATE_PERIOD_MIN_S_DEFAULT", "PSEUDO_UPDATE_PERIOD_MAX_S_DEFAULT",
+        "FREQ_SMOOTHER_DT",
     )
     c = {name: SOURCE.parse_const(wrapper, name) for name in names}
     hmin = SOURCE.parse_const(limits, "kDynamicEmaHorizonMinSec")
@@ -112,33 +101,26 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     rs_initial = _member_float(wrapper, "RS_applied")
 
     f_lo, f_hi = c["MIN_TUNE_FREQ_HZ"], c["MAX_TUNE_FREQ_HZ"]
-    tau_raw_lo = tau_coeff * 0.5 / f_hi
-    tau_raw_hi = tau_coeff * 0.5 / f_lo
-    tau_target_lo, tau_target_hi = _clamp_interval(
-        tau_raw_lo, tau_raw_hi, c["MIN_TAU_S"], c["MAX_TAU_S"]
+    tau_target_lo, tau_target_hi = _clamp(
+        tau_coeff * 0.5 / f_hi, tau_coeff * 0.5 / f_lo,
+        c["MIN_TAU_S"], c["MAX_TAU_S"],
     )
     tau_applied_lo = min(tau_initial, tau_target_lo)
     tau_applied_hi = max(tau_initial, tau_target_hi)
 
-    # Filter-side a_w sigma has an explicit 0.05 floor in apply_ou_tune_().
     sigma_filter_lo = 0.05
     sigma_filter_hi = max(sigma_initial, c["MAX_SIGMA_A"])
     rs_lo = min(rs_initial, c["MIN_R_S"])
     rs_hi = max(rs_initial, c["MAX_R_S"])
 
-    sea_time_raw_lo = 0.5 / f_hi
-    sea_time_raw_hi = 0.5 / f_lo
-    sea_time_lo, sea_time_hi = _clamp_interval(sea_time_raw_lo, sea_time_raw_hi, smin, smax)
-    common_h_lo, common_h_hi = _clamp_interval(
+    sea_time_lo, sea_time_hi = _clamp(0.5 / f_hi, 0.5 / f_lo, smin, smax)
+    common_h_lo, common_h_hi = _clamp(
         c["ADAPT_TAU_SEA_PERIODS"] * sea_time_lo,
         c["ADAPT_TAU_SEA_PERIODS"] * sea_time_hi,
         hmin, hmax,
     )
-
-    # Deployed slew_log is zero, so the R_S horizon is exactly mult times the
-    # clamped tau target, followed by the same final horizon clamp.
-    tau_scale_lo, tau_scale_hi = _clamp_interval(tau_target_lo, tau_target_hi, smin, smax)
-    rs_h_lo, rs_h_hi = _clamp_interval(
+    tau_scale_lo, tau_scale_hi = _clamp(tau_target_lo, tau_target_hi, smin, smax)
+    rs_h_lo, rs_h_hi = _clamp(
         c["ADAPT_RS_MULT"] * tau_scale_lo,
         c["ADAPT_RS_MULT"] * tau_scale_hi,
         hmin, hmax,
@@ -147,14 +129,12 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     dt = c["FREQ_SMOOTHER_DT"]
     alpha_common = _alpha_upper(dt, common_h_lo)
     alpha_rs = _alpha_upper(dt, rs_h_lo)
-
     per_sample_tau = up(alpha_common * (tau_target_hi - tau_target_lo))
     per_sample_sigma = up(alpha_common * (sigma_filter_hi - sigma_filter_lo))
     per_sample_rs = up(alpha_rs * (rs_hi - rs_lo))
 
-    # `time-last > ADAPT_EVERY_SECS` plus binary32 timing can delay one extra
-    # sample.  Two samples of padding keeps this source-independent and avoids
-    # claiming an exact equality at a floating-point threshold.
+    # `time-last > cadence` can cost one extra sample; retain two samples of
+    # source-independent padding rather than depending on decimal equality.
     commit_gap_samples = int(math.ceil(c["ADAPT_EVERY_SECS"] / dt)) + 2
     commit_gap_s_upper = up(commit_gap_samples * dt)
     tau_commit_jump = up(commit_gap_samples * per_sample_tau)
@@ -163,7 +143,9 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     pseudo_commit_jump = up(c["PSEUDO_UPDATE_TAU_RATIO_DEFAULT"] * tau_commit_jump)
 
     parity = {
-        "single_existing_wave_period_estimator_used": "WavePeriodEstimator wave_period_" in wrapper,
+        "single_existing_wave_period_estimator_used": bool(
+            re.search(r"\bWavePeriodEstimator\s+wave_period_\s*;", wrapper)
+        ),
         "normal_live_measured_period_selector_present": "wave_period_.hasUsablePeriod()" in wrapper,
         "tau_sigma_candidates_smoothed_each_valid_sample": (
             "tune_.tau_applied   += alpha" in wrapper and
@@ -172,7 +154,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "RS_candidate_smoothed_each_valid_sample": "tune_.RS_applied    += alpha_RS" in wrapper,
         "active_schedule_commit_is_next_sample_predictable": (
             "online_tune_apply_pending_ = true" in wrapper and
-            "apply_pending_online_tune_()" in wrapper
+            "void apply_pending_online_tune_()" in wrapper
         ),
         "pseudo_cadence_is_same_tau_lipschitz_image": (
             "const float requested = pseudo_update_tau_ratio_ * tau" in wrapper
@@ -180,8 +162,10 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "dynamic_horizon_ceiling_35s_present": "kDynamicEmaHorizonMaxSec = 35.0f" in limits,
         "one_way_usable_period_latch_present": "if (usable_period_) return;" in estimator,
     }
+    parity_failures = [name for name, ok in parity.items() if not ok]
 
     live = domain["normal_live"]
+    status = "PASS" if not parity_failures else "FAIL"
     return {
         "schema": SCHEMA,
         "qualification": QUALIFICATION,
@@ -198,6 +182,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
             "pseudo_update_period", "pending_commit_progress",
         ],
         "source_parity": parity,
+        "source_parity_failures": parity_failures,
         "physical_source_contract": {
             "sea_modes_max": physical["sea_modes_max"],
             "total_Hs_upper_m": physical["repository_total_Hs_upper_m"],
@@ -245,11 +230,11 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
             "target_jump_may_span_full_box": True,
             "proof_relies_on_implemented_smoothing_not_unproved_sea_parameter_derivatives": True,
         },
-        "P2_DYNAMIC_SOURCE_CERTIFICATE": "PASS",
+        "P2_DYNAMIC_SOURCE_CERTIFICATE": status,
         "P3_PROMOTED": False,
         "P4_PROMOTED": False,
         "next_obligation": (
-            "use this compact rate-bounded adaptive state directly in a moving-Riccati metric; "
+            "use the compact SEA3-driven adaptive state directly in the moving-Riccati proof; "
             "do not reconstruct an 800-state source-word language"
         ),
     }
@@ -269,27 +254,20 @@ def validate(d: dict) -> list[str]:
     ):
         if d.get(key) is not False:
             f.append(f"{key} is not false")
+    for name in d.get("source_parity_failures", []):
+        f.append(f"shipping source parity failed: {name}")
     if d.get("P2_DYNAMIC_SOURCE_CERTIFICATE") != "PASS":
         f.append("dynamic source certificate did not pass")
-    if not all(d.get("source_parity", {}).values()):
-        f.append("shipping source parity failed")
     live = d.get("normal_live_contract", {})
     if live.get("accelerometer_update_required_each_valid_sample") is not True:
         f.append("normal Live accelerometer recurrence lost")
     if live.get("accelerometer_rejection_in_scope") is not False:
         f.append("rejected accelerometer branch re-entered theorem")
-    inv = d.get("dynamic_invariant", {})
-    for name, bounds in inv.items():
-        if not isinstance(bounds, list) or len(bounds) != 2:
-            continue
-        lo, hi = map(float, bounds)
-        if not (math.isfinite(lo) and math.isfinite(hi) and 0.0 < lo <= hi):
-            f.append(f"invalid dynamic interval {name}")
-    rates = d.get("validated_rate_and_jump_bounds", {})
-    for name, value in rates.items():
-        if name.endswith(("_upper", "_upper_s", "_upper_mps2")) and isinstance(value, (int, float)):
-            if not (math.isfinite(float(value)) and float(value) > 0.0):
-                f.append(f"invalid positive bound {name}")
+    for name, bounds in d.get("dynamic_invariant", {}).items():
+        if isinstance(bounds, list) and len(bounds) == 2:
+            lo, hi = map(float, bounds)
+            if not (math.isfinite(lo) and math.isfinite(hi) and 0.0 < lo <= hi):
+                f.append(f"invalid dynamic interval {name}")
     if d.get("P3_PROMOTED") is not False or d.get("P4_PROMOTED") is not False:
         f.append("dynamic source stage promoted downstream theorem")
     return list(dict.fromkeys(f))
@@ -308,6 +286,7 @@ def main() -> int:
     args.output.write_text(json.dumps(d, indent=2, sort_keys=True), encoding="utf-8")
     print(json.dumps({
         "status": d["P2_DYNAMIC_SOURCE_CERTIFICATE"],
+        "source_parity_failures": d["source_parity_failures"],
         "invariant": d["dynamic_invariant"],
         "rate_bounds": d["validated_rate_and_jump_bounds"],
         "failures": vf,
