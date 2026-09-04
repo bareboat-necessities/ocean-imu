@@ -13,6 +13,8 @@ spec = importlib.util.spec_from_file_location(
 mod = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(mod)
 
+import ou3_sea3_directional_p2_ha_feasibility as sea3  # noqa: E402
+
 
 def f32(value):
     return struct.unpack(">f", struct.pack(">f", float(value)))[0]
@@ -93,6 +95,25 @@ class SourceDomainContractTests(unittest.TestCase):
             },
         )
         self.assertEqual(d["periodic_aw_covariance_sync_proof"]["required_mode"], "PSD_NONEXPANSIVE")
+
+    def test_sea3_rao_family_right_inclusion_is_part_of_the_canonical_source_contract(self):
+        """`ou3-proof` executes this file, so the RAO bridge has no side workflow."""
+        d = sea3.build_inclusion()
+        self.assertEqual(sea3.validate(d), [])
+
+        r = d["response_enclosure"]
+        self.assertTrue(r["single_worst_envelope_proves_entire_parameter_box_by_monotonicity"])
+        self.assertFalse(r["single_nominal_RAO_used"])
+        self.assertFalse(r["finite_RAO_grid_used"])
+        self.assertTrue(r["uniform_moment_theorem"]["unbanded_acceleration_moment_finite"])
+        self.assertGreater(r["acceleration_moment_tightening_vs_flat_6Hz_corner_lower"], 624.0)
+
+        p = d["p2_inclusion"]
+        self.assertEqual(p["SEA3_TO_P2_INCLUSION_CERTIFICATE"], "PASS")
+        self.assertTrue(p["Lhat_SEA3_subset_L_current_source"])
+        self.assertFalse(p["single_RAO_selected_for_inclusion"])
+        self.assertFalse(p["P2_pruned_by_SEA3"])
+        self.assertEqual(p["P2_physical_source_states"], 800)
 
 
 if __name__ == "__main__":
