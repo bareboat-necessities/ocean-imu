@@ -291,7 +291,7 @@ def source_schedule() -> dict:
     if "std::fmod(pseudo_update_elapsed_s_, pseudo_update_period_s_)" in mekf_text:
         raise RuntimeError("legacy pseudo-period setter still discards elapsed service credit")
     names = (
-        "MIN_TUNE_FREQ_HZ","MAX_TUNE_FREQ_HZ","MIN_TAU_S","MAX_TAU_S",
+        "MIN_TUNE_FREQ_HZ","MAX_TUNE_FREQ_HZ","MIN_TAU_S","MAX_TAU_S","MAX_SIGMA_A",
         "MIN_R_S","MAX_R_S","PSEUDO_UPDATE_TAU_RATIO_DEFAULT",
         "PSEUDO_UPDATE_PERIOD_MIN_S_DEFAULT","PSEUDO_UPDATE_PERIOD_MAX_S_DEFAULT",
         "FREQ_SMOOTHER_DT",
@@ -307,7 +307,7 @@ def source_schedule() -> dict:
         "tau_applied_invariant_s":[down(min(init_tau,tlo)),up(max(init_tau,thi))],
         "R_S_applied_invariant":[down(min(init_rs,c["MIN_R_S"])),up(max(init_rs,c["MAX_R_S"]))],
         "R_S_axis_std_factors":source_rs_axis_std_factors(),
-        "sigma_aw_applied_safety":[0.05,6.0],
+        "sigma_aw_applied_safety":[0.05,c["MAX_SIGMA_A"]],
         "pseudo_ratio":c["PSEUDO_UPDATE_TAU_RATIO_DEFAULT"],
         "pseudo_min_s":c["PSEUDO_UPDATE_PERIOD_MIN_S_DEFAULT"],
         "pseudo_max_s":c["PSEUDO_UPDATE_PERIOD_MAX_S_DEFAULT"],
@@ -469,7 +469,8 @@ def _build_cached(domain_name: str) -> dict:
     xcells=[]
     for cell in interval_cells(edges):
         xcells.extend(split_x_cell(cell))
-    sigmas=interval_cells(geom_edges(0.05,6.0,5))
+    sigma_lo,sigma_hi=sched["sigma_aw_applied_safety"]
+    sigmas=interval_cells(geom_edges(sigma_lo,sigma_hi,5))
     rs_lo,rs_hi=sched["R_S_applied_invariant"]
     rss=interval_cells(geom_edges(rs_lo,rs_hi,8))
     worst={"H":None,"A":None}
