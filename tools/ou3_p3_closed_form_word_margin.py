@@ -176,12 +176,57 @@ def node_margin(node: dict, k: dict) -> dict:
             "binding_channel": CHANNELS[idx]}
 
 
+def mixed_word_margin(k: dict) -> dict:
+    """Margin valid for every legal word, including source-changing ones.
+
+    The per-node rows pair one node's ceiling with its own floor, which is what
+    canonical ``delta`` does but says nothing about a word that changes source
+    mid-flight.  This bound needs no enumeration, by two monotonicity arguments:
+
+    * **Ceiling.** The certified S recurrence puts an observation in every
+      max-gap window, so the worst a legal word can do is place them as late as
+      possible in each -- exactly the max-cadence dwell.  Any other word has at
+      least as many observations, at least as close to the endpoint, hence a
+      larger Gramian and a smaller ceiling.
+    * **Floor.** No word can carry more than one S observation per sample, and
+      the min-cadence dwell already attains that, since the cadence clamps to
+      ``h`` there.  It is therefore the most informative case and yields the
+      smallest floor.
+
+    Pairing the two is cross-worst, so it is strictly more pessimistic than the
+    per-node pairing and strictly more general.
+    """
+    sched = BASE.source_schedule()
+    tau_lo, tau_hi = sched["tau_applied_invariant_s"]
+    sig_lo, sig_hi = sched["sigma_aw_applied_safety"]
+    Gc, n_ceil = _gramian(tau_hi, sig_hi, k["max_rs"], k, inflate=True)
+    Gf, n_floor = _gramian(tau_lo, sig_lo, k["min_rs"], k, inflate=False)
+    if Gc is None or Gf is None:
+        return {"validated": False, "reason": "fewer than three S observations"}
+    for a, v0 in enumerate((SIGMA_V0 ** 2, SIGMA_P0 ** 2, SIGMA_S0 ** 2)):
+        Gf[a][a] = Gf[a][a] + _I(1.0 / v0)
+    Ci, Fi = _inv3(Gc), _inv3(Gf)
+    if Ci is None or Fi is None:
+        return {"validated": False, "reason": "interval inversion not validated"}
+    ratios = [abs(Fi[i][i].lo) / abs(Ci[i][i].hi) for i in range(3)]
+    idx = ratios.index(min(ratios))
+    h = float(sched["dt_s"])
+    return {"validated": True, "tau_ceiling": tau_hi, "tau_floor": tau_lo,
+            "R_S_ceiling": k["max_rs"], "R_S_floor": k["min_rs"],
+            "S_observations_ceiling": n_ceil, "S_observations_floor": n_floor,
+            "max_S_gap_samples": math.ceil(cadence_s(tau_hi, k) / h),
+            "channel_ratios": ratios, "margin": ratios[idx],
+            "binding_channel": CHANNELS[idx],
+            "covers_source_changing_words": True}
+
+
 def build(domain_path: Path = DEFAULT_DOMAIN, *, stride: int = 1) -> dict:
     k = _consts()
     nodes = NODES.build()["nodes"]
     rows = [node_margin(n, k) for n in nodes[::max(1, int(stride))]]
     ok = [r for r in rows if r.get("validated")]
     worst = min(ok, key=lambda r: r["margin"]) if ok else None
+    mixed = mixed_word_margin(k)
     return {
         "schema": SCHEMA,
         "qualification": "OU3_P3_CLOSED_FORM_WHOLE_WORD_TRANSLATION_MARGIN",
@@ -199,6 +244,9 @@ def build(domain_path: Path = DEFAULT_DOMAIN, *, stride: int = 1) -> dict:
         "worst": worst,
         "worst_margin": None if worst is None else worst["margin"],
         "worst_clears_canonical_gate": bool(worst and worst["margin"] > GATE),
+        "mixed_word_margin": mixed,
+        "mixed_word_clears_canonical_gate": bool(mixed.get("validated")
+                                                 and mixed["margin"] > GATE),
         "rows": rows,
     }
 
@@ -225,6 +273,13 @@ def validate(d: dict) -> list[str]:
             break
     if not d.get("rows"):
         f.append("no source nodes evaluated")
+    m = d.get("mixed_word_margin") or {}
+    if not m.get("validated"):
+        f.append(f"mixed-word bound did not validate: {m.get('reason')}")
+    elif not (math.isfinite(m["margin"]) and m["margin"] > 0.0):
+        f.append("mixed-word margin is not positive finite")
+    elif m.get("covers_source_changing_words") is not True:
+        f.append("mixed-word bound no longer claims to cover source-changing words")
     return list(dict.fromkeys(f))
 
 

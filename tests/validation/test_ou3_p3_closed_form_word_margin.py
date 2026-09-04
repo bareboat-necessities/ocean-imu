@@ -90,3 +90,36 @@ class NonPromotion(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class MixedWordBound(unittest.TestCase):
+    """The per-node rows say nothing about words that change source mid-flight."""
+
+    def test_mixed_word_bound_is_more_pessimistic_than_per_node(self):
+        k = M._consts()
+        mixed = M.mixed_word_margin(k)
+        self.assertTrue(mixed["validated"], mixed.get("reason"))
+        d = M.build(stride=401)
+        # Cross-worst pairing must not come out better than same-history pairing.
+        self.assertLessEqual(mixed["margin"], d["worst_margin"] * (1.0 + 1e-9))
+
+    def test_ceiling_takes_fewest_observations_and_floor_the_most(self):
+        k = M._consts()
+        m = M.mixed_word_margin(k)
+        self.assertLess(m["S_observations_ceiling"], m["S_observations_floor"])
+        self.assertGreater(m["tau_ceiling"], m["tau_floor"])
+        self.assertGreater(m["R_S_ceiling"], m["R_S_floor"])
+
+    def test_floor_attains_one_observation_per_sample(self):
+        k = M._consts()
+        m = M.mixed_word_margin(k)
+        # No legal word can beat one S observation per sample; the floor must
+        # already sit at that limit or the bound is not conservative.
+        self.assertEqual(m["S_observations_floor"], M.WORD_SAMPLES)
+
+    def test_validate_rejects_a_dropped_mixed_word_claim(self):
+        d = M.build(stride=401)
+        t = dict(d)
+        t["mixed_word_margin"] = dict(d["mixed_word_margin"])
+        t["mixed_word_margin"]["covers_source_changing_words"] = False
+        self.assertTrue(M.validate(t))

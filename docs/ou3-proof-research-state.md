@@ -127,7 +127,44 @@ finite-state or monotone argument can quantify over legal histories.
 words rather than a local search: a finite-state or monotone quotient that bounds
 every legal word, not the best one a greedy descent can find.
 
-## Closed-form whole-word margin: 800/800 nodes, interval-certified
+## Mixed-source words are covered without enumeration
+
+The per-node rows pair one node's ceiling with its own floor, which is what
+canonical `delta` does but says nothing about a word that changes source
+mid-flight. Two monotonicity arguments close that without enumerating words:
+
+* **Ceiling.** The certified S recurrence puts an observation in every max-gap
+  window, so the worst a legal word can do is place them as late as possible in
+  each -- exactly the max-cadence dwell. Any other legal word has at least as
+  many observations, at least as close to the endpoint, hence a larger Gramian
+  and a smaller ceiling.
+* **Floor.** No word can carry more than one S observation per sample, and the
+  min-cadence dwell already attains that, since the cadence clamps to `h` there.
+  It is the most informative case and yields the smallest floor.
+
+| | ceiling | floor |
+| --- | --- | --- |
+| `tau` | 12.0 | 0.3333 |
+| `R_S` | 400 | 0.15 |
+| S observations | 19 | 635 (one per sample, the hard limit) |
+
+| channel | floor (var) | ceiling (var) | ratio |
+| --- | --- | --- | --- |
+| v | 2.510e-04 | 6.589e+04 | **3.809e-09** |
+| p | 6.727e-04 | 1.664e+05 | 4.043e-09 |
+| S | 3.169e-04 | 7.350e+04 | 4.311e-09 |
+
+**Mixed-word margin 3.81e-09, valid for every legal word, clearing the `1e-18`
+gate by 9.58 orders.** Binds on `v`. Strictly more pessimistic than the per-node
+1.505e-05 because it pairs cross-worst, and strictly more general.
+
+Four further tests pin it: the cross-worst pairing must not come out better than
+the same-history one, the ceiling must take the fewest observations while the
+floor takes the most, the floor must sit exactly at one observation per sample
+or it is not conservative, and `validate()` must reject a dropped
+source-changing claim.
+
+## Per-node margin: 800/800 nodes, interval-certified
 
 `tools/ou3_p3_closed_form_word_margin.py`. Both sides of the P3 comparison built
 in closed form from one endpoint-referenced observability Gramian, so neither
