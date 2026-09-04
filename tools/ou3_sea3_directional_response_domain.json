@@ -1,0 +1,27 @@
+{
+  "schema_version": "OU3_SEA3_DIRECTIONAL_RESPONSE_DOMAIN_V1",
+  "qualification": "PROVISIONAL_DIRECTIONAL_RESPONSE_HYPOTHESIS_NOT_HULL_RAO_DATA",
+  "sea_modes_max": 3,
+  "directional_spectrum_contract": {
+    "component_spectra": "JONSWAP_or_PM",
+    "directional_density": "nonnegative_normalized",
+    "mean_direction_rad": [-3.141592653589793, 3.141592653589793],
+    "spreading_parameter": "nonnegative_finite",
+    "significant_height_partition": "sum_r H_r^2 = H_s^2"
+  },
+  "response_contract": {
+    "definition": "a_hat(omega,theta)=omega^2 h(omega,theta) eta_hat(omega,theta)",
+    "response_vector_dimension": 3,
+    "response_vector_2_norm_upper": 4.0,
+    "finite_response_band_hz": [0.01, 6.0],
+    "cross_axis_outer_product_retained": true,
+    "independent_cartesian_axis_boxes_used": false,
+    "gain_cap_rationale": "The 4.0 gain (12.04 dB) is a deliberately loose feasibility hypothesis, not a measured or identified hull RAO. It is used only to make the finite-band response-moment coefficient explicit; the SEA3-to-P2 inclusion certificate is required to be independent of this numerical gain. Replace this cap with a repository-owned vessel/IMU response model or accepted deployment hypothesis before physical SEA0 promotion."
+  },
+  "provenance": {
+    "repository_owned_hull_RAO_present": false,
+    "measured_vessel_response_used": false,
+    "trajectory_fit_used": false,
+    "physical_SEA0_promotable_from_this_domain": false
+  }
+}
