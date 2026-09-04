@@ -15,6 +15,7 @@ mod = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(mod)
 
 import ou3_sea3_directional_p2_ha_feasibility as sea3  # noqa: E402
+import ou3_sea3_finite_window_response_admission as sea3_window  # noqa: E402
 import ou3_sea3_p1_compatibility as sea3_p1  # noqa: E402
 import ou3_sea3_physical_admissibility as sea3_phys  # noqa: E402
 import ou3_sea3_wave_period_spectral_identity as sea3_period_identity  # noqa: E402
@@ -136,6 +137,51 @@ class SourceDomainContractTests(unittest.TestCase):
         self.assertFalse(d["finite_window_realization_certificate_closed"])
         self.assertFalse(d["L_actual_sea_subset_Lhat_SEA3_closed"])
 
+    def test_sea3_finite_window_admission_interface_is_exact_and_nonpromoting(self):
+        d = sea3_window.build_contract()
+        self.assertEqual(sea3_window.validate(d), [])
+        self.assertTrue(d["finite_window_admission_predicate_defined"])
+        self.assertFalse(d["gaussian_spectrum_alone_can_admit_window"])
+        self.assertFalse(d["RMS_or_PSD_moment_alone_can_admit_window"])
+        self.assertFalse(d["finite_window_realization_producer_closed"])
+        self.assertFalse(d["L_actual_sea_subset_Lhat_SEA3_closed"])
+        self.assertEqual(
+            d["normal_live_caps"]["non_gravitational_cog_acceleration_norm_upper_mps2"],
+            4.0,
+        )
+        self.assertEqual(d["normal_live_caps"]["body_rate_norm_upper_deg_s"], 30.0)
+
+    def test_sea3_finite_window_admission_rejects_psd_only_and_accepts_validated_pathwise_bounds(self):
+        contract = sea3_window.build_contract()
+        base = {
+            "validated_arithmetic": True,
+            "outward_rounded": True,
+            "post_rao_response_enclosed": True,
+            "all_valid_imu_samples_covered": True,
+            "trajectory_replay_used": False,
+            "gaussian_spectrum_only": False,
+            "rms_or_psd_only": False,
+            "response_parameter_box_sha256": contract["response_parameter_box_sha256"],
+            "window_samples": 200,
+            "post_rao_cog_acceleration_norm_upper_mps2": 3.9,
+            "body_rate_norm_upper_deg_s": 29.0,
+        }
+        accepted = sea3_window.evaluate_window(base)
+        self.assertTrue(accepted["window_admitted_to_Lhat_SEA3"])
+        self.assertFalse(accepted["global_left_inclusion_promoted_by_this_decision"])
+
+        psd_only = copy.deepcopy(base)
+        psd_only["rms_or_psd_only"] = True
+        rejected = sea3_window.evaluate_window(psd_only)
+        self.assertFalse(rejected["window_admitted_to_Lhat_SEA3"])
+        self.assertTrue(any("RMS/PSD" in x for x in rejected["validation_failures"]))
+
+        over_cap = copy.deepcopy(base)
+        over_cap["post_rao_cog_acceleration_norm_upper_mps2"] = math.nextafter(4.0, math.inf)
+        rejected = sea3_window.evaluate_window(over_cap)
+        self.assertFalse(rejected["window_admitted_to_Lhat_SEA3"])
+        self.assertTrue(any("exceeds Normal-Live P1 cap" in x for x in rejected["validation_failures"]))
+
     def test_wave_period_leak_subtraction_is_exact_for_admissible_steady_spectra(self):
         d = sea3_period_identity.build()
         self.assertEqual(sea3_period_identity.validate(d), [])
@@ -190,6 +236,12 @@ class SourceDomainContractTests(unittest.TestCase):
     def test_sea3_validator_rejects_mismatched_consumed_rao_box(self):
         d = sea3.build_inclusion()
         bad = copy.deepcopy(d)
+        # build_inclusion() intentionally reuses the response-box object in memory.
+        # Detach the consumed copy here to emulate a serialized/stale candidate
+        # artifact, which is the mismatch the validator is required to reject.
+        bad["p2_inclusion"]["RAO_parameter_box_consumed"] = copy.deepcopy(
+            bad["p2_inclusion"]["RAO_parameter_box_consumed"]
+        )
         bad["p2_inclusion"]["RAO_parameter_box_consumed"]["peak_translation_gain"] = [0.0, 3.0]
         failures = sea3.validate(bad)
         self.assertIn("P2 inclusion consumed a different RAO parameter box", failures)
