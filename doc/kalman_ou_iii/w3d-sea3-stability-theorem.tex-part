@@ -191,7 +191,7 @@ Let $M(\zeta)\succ0$ be the source-indexed information metric and write
 \end{equation}
 in local error coordinates, with the exact Cayley lift of
 Sec.~\ref{sec:stability-widening-source-path} used for finite attitude error.
-The key nonlinear certificate is the window-wise inequality
+The key nonlinear endpoint certificate is the window-wise inequality
 \begin{equation}
  \boxed{
  V_{k+N_W}
@@ -203,9 +203,27 @@ The key nonlinear certificate is the window-wise inequality
  }
  \label{eq:sea3-window-dissipation}
 \end{equation}
-where $D_{s,k}$ and $D_{n,k}$ are hard finite-window energies of model mismatch
-and measurement/process perturbations.  No one-sample decrease of $V$ is
-required; growth inside an oscillation is allowed.
+where $D_{s,k}$ and $D_{n,k}$ are hard energies over the window beginning at
+$k$.  No one-sample decrease of $V$ is required; growth inside an oscillation
+is allowed.
+
+Endpoint contraction alone is not sufficient for a full-sample ISS claim.
+P4 must additionally certify a uniform prefix-gain inequality: there exist
+finite nonnegative constants $\kappa_V,\kappa_s,\kappa_n$ such that for every
+admissible SEA3 window and every $0\le\ell<N_W$,
+\begin{equation}
+ \boxed{
+ V_{k+\ell}
+ \le
+ \kappa_V V_k
+ +\kappa_sD_{s,k}
+ +\kappa_nD_{n,k}.
+ }
+ \label{eq:sea3-prefix-gain}
+\end{equation}
+The full-window energies may be used on the right because they dominate their
+prefix restrictions.  This quantitative bound is separate from, and stronger
+than, merely proving that all prefixes stay inside the Cayley/source domain.
 
 \subsection{Main conditional stability theorem}
 
@@ -227,10 +245,10 @@ exact deployed period-source mode, tuner, parameter-EMA, stage/commit, and
 pseudo-update scheduler history.
 \item P3 supplies bounded positive source metrics and a strict finite-window
 linear information/contraction margin on every SEA3-complete window.
-\item P4 verifies Eq.~\eqref{eq:sea3-window-dissipation} for the exact nonlinear
-shipping word map on an invariant inner funnel
-$\mathcal F_{\rm inner}$, with every prefix inside its declared chart/source
-domain.
+\item P4 verifies both Eqs.~\eqref{eq:sea3-window-dissipation} and
+\eqref{eq:sea3-prefix-gain} for the exact nonlinear shipping word map on an
+invariant inner funnel $\mathcal F_{\rm inner}$, with every prefix inside its
+declared chart/source domain.
 \item P5 proves that every admitted 45-degree entrance state reaches
 $\mathcal F_{\rm inner}$ in at most $K_{\rm cap}$ samples while respecting the
 hybrid obligations.
@@ -245,12 +263,33 @@ Then for the capture time $k_c$ and every integer $m\ge0$,
  +
  \sum_{j=0}^{m-1}
  \rho^{m-1-j}
- \left(\gamma_sD_{s,j}+\gamma_nD_{n,j}\right).
+ \left(
+ \gamma_sD_{s,k_c+jN_W}
+ +\gamma_nD_{n,k_c+jN_W}
+ \right).
  }
  \label{eq:sea3-practical-iss-sum}
 \end{equation}
-If $D_{s,j}\le\overline D_s$ and
-$D_{n,j}\le\overline D_n$, then
+For every $0\le\ell<N_W$, combining this endpoint estimate with
+Eq.~\eqref{eq:sea3-prefix-gain} gives the explicit intermediate-sample bound
+\begin{align}
+ V_{k_c+mN_W+\ell}
+ &\le
+ \kappa_V\rho^mV_{k_c} \nonumber\\
+ &\quad +\kappa_V
+ \sum_{j=0}^{m-1}
+ \rho^{m-1-j}
+ \left(
+ \gamma_sD_{s,k_c+jN_W}
+ +\gamma_nD_{n,k_c+jN_W}
+ \right) \nonumber\\
+ &\quad +\kappa_sD_{s,k_c+mN_W}
+ +\kappa_nD_{n,k_c+mN_W}.
+ \label{eq:sea3-practical-iss-prefix}
+\end{align}
+If every post-capture sea window satisfies
+$D_{s,k_c+jN_W}\le\overline D_s$ and
+$D_{n,k_c+jN_W}\le\overline D_n$, then
 \begin{equation}
  \boxed{
  \limsup_{m\to\infty}V_{k_c+mN_W}
@@ -259,19 +298,36 @@ $D_{n,j}\le\overline D_n$, then
  }
  \label{eq:sea3-practical-ultimate}
 \end{equation}
-Consequently, uniform metric lower and prefix bounds give a regional practical
-ISS bound on the full error between window endpoints.  When both perturbation
-energies vanish, the inner error converges exponentially in lifted sea windows.
+and Eq.~\eqref{eq:sea3-practical-iss-prefix} yields the full-sample bound
+\begin{equation}
+ \boxed{
+ \limsup_{k\to\infty}V_k
+ \le
+ \kappa_V
+ \frac{\gamma_s\overline D_s+\gamma_n\overline D_n}{1-\rho}
+ +\kappa_s\overline D_s+\kappa_n\overline D_n.
+ }
+ \label{eq:sea3-practical-ultimate-full}
+\end{equation}
+Uniform upper/lower bounds on $M(\zeta)$ then convert these energy inequalities
+to a regional practical ISS bound on the error norm.  When both perturbation
+energies vanish, the inner error converges exponentially at sea-window
+endpoints and Eq.~\eqref{eq:sea3-prefix-gain} carries that convergence between
+endpoints.
 \end{theorem}
 
 \begin{proof}
 P5 gives a finite $k_c$ with the state in the P4 invariant funnel.
 Equation~\eqref{eq:sea3-window-dissipation} can then be iterated on consecutive
 SEA3-complete windows because P2/SEA0 preserve source completeness and P4
-preserves the funnel.  Summing the resulting geometric series gives
-Eqs.~\eqref{eq:sea3-practical-iss-sum} and
-\eqref{eq:sea3-practical-ultimate}.  The P3/P4 uniform metric and prefix bounds
-convert endpoint energy to an error norm at all intermediate samples.
+preserves the funnel.  Iteration gives
+Eq.~\eqref{eq:sea3-practical-iss-sum} with disturbance energies indexed at the
+actual post-capture window starts.  Applying the certified prefix inequality to
+the window beginning at $k_c+mN_W$ gives
+Eq.~\eqref{eq:sea3-practical-iss-prefix}.  Bounded disturbance energies and the
+geometric series give Eqs.~\eqref{eq:sea3-practical-ultimate} and
+\eqref{eq:sea3-practical-ultimate-full}; uniform metric equivalence then gives
+the corresponding error-norm statement.
 \end{proof}
 
 The theorem is called \emph{regional} because the present entrance set is
