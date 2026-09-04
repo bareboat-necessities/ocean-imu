@@ -1,0 +1,161 @@
+name: ou3-absorb-479-once
+
+on:
+  push:
+    branches:
+      - codex/ou3-p3-source-clock-recurrence
+    paths:
+      - ".github/workflows/ou3-absorb-479-once.yml"
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  absorb-479:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Apply PR 479 envelope and Normal-Live theorem changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import json, re
+
+          def sub_once(path, pattern, repl, flags=0):
+              p = Path(path)
+              text = p.read_text()
+              out, n = re.subn(pattern, repl, text, count=1, flags=flags)
+              if n != 1:
+                  raise SystemExit(f"{path}: expected exactly one match for {pattern!r}, got {n}")
+              p.write_text(out)
+
+          # Shipping caps. Keep all existing P3 scheduler semantics from PR 478 intact.
+          h = 'src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h'
+          sub_once(h, r'constexpr float MAX_TUNE_FREQ_HZ = [0-9.]+f;', 'constexpr float MAX_TUNE_FREQ_HZ = 1.2f;')
+          sub_once(h, r'constexpr float MAX_SIGMA_A = [0-9.]+f;', 'constexpr float MAX_SIGMA_A = 4.0f;')
+          sub_once(h, r'constexpr float MAX_R_S\s*=\s*[0-9.]+f;', 'constexpr float MAX_R_S     = 100.0f;')
+          sub_once(h, r'constexpr float PSEUDO_UPDATE_PERIOD_MAX_S_DEFAULT = [0-9.]+f;', 'constexpr float PSEUDO_UPDATE_PERIOD_MAX_S_DEFAULT = 0.15f;')
+          p = Path(h); t = p.read_text()
+          t = t.replace('1.5 Hz is a 0.67 s zero-crossing period, shorter than\n// any sea a hull responds to.',
+                        '1.2 Hz is a 0.83 s zero-crossing period, shorter than\n// any sea a hull responds to while reducing the theorem-only high-frequency tail.')
+          t = t.replace('// The upper guard is inactive over the current tau <= 12 s operating envelope.',
+                        "// The 150 ms upper guard tightens the Live theorem's guaranteed S-update recurrence.")
+          p.write_text(t)
+
+          a = 'src/tuner/SeaStateAdaptationLimits.h'
+          sub_once(a, r'inline constexpr float kDynamicEmaHorizonMaxSec = [0-9.]+f;',
+                   'inline constexpr float kDynamicEmaHorizonMaxSec = 35.0f;')
+          p = Path(a); t = p.read_text()
+          t = t.replace('// K_periods to 4 that horizon requests 4*T_z, about 33.6 s there, so the 30 s\n// ceiling now binds on the largest of the eight seas and only on that channel.',
+                        '// K_periods to 4 that horizon requests 4*T_z, about 33.6 s there.  The 35 s\n// ceiling leaves the largest of the eight reference seas interior.')
+          p.write_text(t)
+
+          w = 'tools/ou3_implementation_word_language.py'
+          p = Path(w); t = p.read_text()
+          old = '        "arbitrary_rejections_between_required_pe_events_allowed": True,'
+          if old in t:
+              t = t.replace(old,
+                  '        "accelerometer_rejections_between_required_pe_events_allowed": False,\n'
+                  '        "magnetometer_rejections_between_required_pe_events_allowed": True,', 1)
+          elif '"accelerometer_rejections_between_required_pe_events_allowed": False' not in t:
+              raise SystemExit('word language: PE rejection fields not found')
+          t = t.replace('            "accelerometer_gate": ["accepted", "rejected"],',
+                        '            "accelerometer_gate": ["accepted"],', 1)
+          oldv = ('    if word.get("source_branch_language", {}).get("joint_source_reachability_required") is not True:\n'
+                  '        failures.append("joint source reachability is not required")')
+          newv = ('    source_lang = word.get("source_branch_language", {})\n'
+                  '    if source_lang.get("joint_source_reachability_required") is not True:\n'
+                  '        failures.append("joint source reachability is not required")\n'
+                  '    if source_lang.get("accelerometer_gate") != ["accepted"]:\n'
+                  '        failures.append("Normal-Live language admits rejected accelerometer updates")\n'
+                  '    pe = word.get("vector_persistent_excitation", {})\n'
+                  '    if pe.get("accelerometer_rejections_between_required_pe_events_allowed") is not False:\n'
+                  '        failures.append("accelerometer rejection remains admissible between PE events")')
+          if oldv in t:
+              t = t.replace(oldv, newv, 1)
+          elif 'Normal-Live language admits rejected accelerometer updates' not in t:
+              raise SystemExit('word language: validation insertion point not found')
+          p.write_text(t)
+
+          dpath = Path('tools/ou3_proof_operating_domain.json')
+          d = json.loads(dpath.read_text())
+          live = d['normal_live']
+          live['accelerometer_update_required_each_valid_imu_sample_after_live_entry'] = True
+          live['accelerometer_rejection_in_normal_live_scope'] = False
+          live['accelerometer_update_scope_note'] = (
+              'After entry into Normal Live, every valid IMU sample executes the accelerometer Kalman update. '
+              'The certified source language therefore contains no rejected/missing accelerometer branch; '
+              'numerical innovation-factorization failure is outside the normal theorem domain. '
+              'Magnetometer timing and rejection remain asynchronous.'
+          )
+          dpath.write_text(json.dumps(d, indent=2) + '\n')
+
+          tex = Path('doc/kalman_ou_iii/w3d-iss-stability.tex-part')
+          t = tex.read_text()
+          if 'f_{\\rm tune}\\le\\SI{1.2}{Hz}' not in t:
+              marker = 'and uniformly positive accepted measurement covariances.  The deployed\n'
+              insert = ('For the deployed source family used by the machine certificate, the source\n'
+                        'clamps are $f_{\\rm tune}\\le\\SI{1.2}{Hz}$,\n'
+                        '$\\sigma_{aw,k}^{\\rm proc}\\le\\SI{4}{m/s^2}$, $r_{S,k}\\le\\SI{100}{m.s}$, and\n'
+                        '$T_{S,k}\\le\\SI{0.15}{s}$.  The dynamically selected EMA horizon is separately\n'
+                        'clamped at $\\SI{35}{s}$.  These are implementation-enforced theorem-domain\n'
+                        'bounds rather than replay-fitted extrema, together with uniformly positive\n'
+                        'accepted measurement covariances.  The deployed\n')
+              if marker not in t: raise SystemExit('theorem cap insertion marker not found')
+              t = t.replace(marker, insert, 1)
+          old = ('Accepted accelerometer and magnetometer update sets\n'
+                 '$\\mathcal A_{k,N}$ and $\\mathcal M_{k,N}$ need not coincide.  After the\n')
+          new = ('After entry into normal Live mode, every valid IMU sample executes the\n'
+                 'accelerometer Kalman update, so the certified Live source language has no\n'
+                 'rejected or missing accelerometer branch. Equivalently,\n'
+                 '$\\mathcal A_{k,N}$ contains every valid physical sample in the window.\n'
+                 'Magnetometer updates remain asynchronous and may be not-due or rejected, so\n'
+                 '$\\mathcal M_{k,N}$ need not coincide with $\\mathcal A_{k,N}$. After the\n')
+          if old in t:
+              t = t.replace(old, new, 1)
+          elif 'certified Live source language has no' not in t:
+              raise SystemExit('theorem accelerometer paragraph not found')
+          tex.write_text(t)
+          PY
+
+          git diff --check
+          python3 -m py_compile tools/ou3_implementation_word_language.py
+          python3 tools/ou3_implementation_word_language.py --output /tmp/ou3-word-language.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/ou3-word-language.json'))
+          s=d['word_contract']['source_branch_language']
+          pe=d['word_contract']['vector_persistent_excitation']
+          assert s['accelerometer_gate'] == ['accepted']
+          assert pe['accelerometer_rejections_between_required_pe_events_allowed'] is False
+          PY
+
+      - name: Commit combined PR state and remove helper
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/ou3-absorb-479-once.yml
+          git add src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h \
+                  src/tuner/SeaStateAdaptationLimits.h \
+                  tools/ou3_implementation_word_language.py \
+                  tools/ou3_proof_operating_domain.json \
+                  doc/kalman_ou_iii/w3d-iss-stability.tex-part
+          git commit -m "OU-III: absorb tightened Live proof envelope"
+          git push origin HEAD:${GITHUB_REF_NAME}
+
+      - name: Dispatch full validation and proof
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          gh workflow run ou-validation.yml --ref "${GITHUB_REF_NAME}" -f validation_mode=full
+          gh workflow run ou3-proof.yml --ref "${GITHUB_REF_NAME}"
+          gh workflow run build.yml --ref "${GITHUB_REF_NAME}"
