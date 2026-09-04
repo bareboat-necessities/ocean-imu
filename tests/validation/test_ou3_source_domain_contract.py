@@ -16,6 +16,7 @@ spec.loader.exec_module(mod)
 import ou3_sea3_directional_p2_ha_feasibility as sea3  # noqa: E402
 import ou3_sea3_p1_compatibility as sea3_p1  # noqa: E402
 import ou3_sea3_physical_admissibility as sea3_phys  # noqa: E402
+import ou3_sea3_wave_period_spectral_identity as sea3_period_identity  # noqa: E402
 
 
 def f32(value):
@@ -116,6 +117,9 @@ class SourceDomainContractTests(unittest.TestCase):
         self.assertTrue(d["cartesian_product_refuted_by_analytical_witness"])
         self.assertTrue(d["coupled_SEA3_domain_required"])
         self.assertFalse(d["independent_cartesian_sea_x_RAO_domain_is_P1_sound"])
+        self.assertTrue(d["witness"]["PM_is_JONSWAP_gamma_1_boundary"])
+        self.assertTrue(d["witness"]["witness_is_inside_declared_JONSWAP_gamma_interval_1_to_7"])
+        self.assertTrue(d["witness"]["all_nondyadic_witness_constants_outward_enclosed"])
         self.assertGreater(
             d["witness"]["validated_acceleration_mean_square_lower_m2_s4"],
             d["witness"]["P1_cap_squared_upper_m2_s4"],
@@ -126,6 +130,20 @@ class SourceDomainContractTests(unittest.TestCase):
         )
         self.assertFalse(d["finite_window_realization_certificate_closed"])
         self.assertFalse(d["L_actual_sea_subset_Lhat_SEA3_closed"])
+
+    def test_wave_period_leak_subtraction_is_exact_for_arbitrary_steady_spectrum(self):
+        d = sea3_period_identity.build()
+        self.assertEqual(sea3_period_identity.validate(d), [])
+        self.assertTrue(all(d["source_parity"].values()))
+        ident = d["continuous_time_steady_state_identity"]
+        self.assertTrue(
+            ident["holds_for_any_nonnegative_input_spectrum_with_finite_weighted_moments"]
+        )
+        self.assertFalse(ident["narrow_band_approximation"])
+        self.assertFalse(ident["single_sinusoid_approximation"])
+        self.assertFalse(d["promotion"]["SEA0_full_certificate_promoted"])
+        self.assertFalse(d["promotion"]["P2_pruning_promoted"])
+        self.assertFalse(d["promotion"]["finite_EWMA_transient_enclosed"])
 
     def test_sea3_rao_family_right_inclusion_is_part_of_the_canonical_source_contract(self):
         """`ou3-proof` executes this file, so the RAO bridge has no side workflow."""
