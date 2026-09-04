@@ -4,7 +4,7 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools"))
-import ou3_sea3_riccati_tube as mod  # noqa: E402
+import ou3_sea3_riccati_tube_factored as mod  # noqa: E402
 
 
 class Sea3RiccatiTubeTest(unittest.TestCase):
