@@ -74,8 +74,8 @@ int main() {
         return fail("default PSD a_w covariance synchronization was disabled");
 
     if (!near(MIN_TAU_S, 0.02f) || !near(MAX_TAU_S, 12.0f) ||
-        !near(MAX_SIGMA_A, 6.0f) ||
-        !near(MIN_R_S, 0.15f) || !near(MAX_R_S, 400.0f) ||
+        !near(MAX_SIGMA_A, 4.0f) ||
+        !near(MIN_R_S, 0.15f) || !near(MAX_R_S, 100.0f) ||
         !near(ACC_NOISE_FLOOR_SIGMA_DEFAULT, 0.12f)) {
         return fail("OU-III wrapper clamps changed");
     }
@@ -108,7 +108,7 @@ int main() {
     }
 
     if (!near(PSEUDO_UPDATE_PERIOD_MIN_S_DEFAULT, 0.005f) ||
-        !near(PSEUDO_UPDATE_PERIOD_MAX_S_DEFAULT, 0.25f) ||
+        !near(PSEUDO_UPDATE_PERIOD_MAX_S_DEFAULT, 0.15f) ||
         !near(PSEUDO_UPDATE_TAU_RATIO_DEFAULT, 0.015f / 1.1f)) {
         return fail("OU-III pseudo-update cadence constants changed");
     }
@@ -121,8 +121,14 @@ int main() {
         std::min(std::max(PSEUDO_UPDATE_TAU_RATIO_DEFAULT * MAX_TAU_S,
                           PSEUDO_UPDATE_PERIOD_MIN_S_DEFAULT),
                  PSEUDO_UPDATE_PERIOD_MAX_S_DEFAULT);
-    if (!near(TS_at_tau_min, 0.005f) || TS_at_tau_max > 0.165f ||
-        TS_at_tau_max < 0.160f) {
+    // Both ends of the tau interval now saturate. The floor always did at
+    // tau_min; the ceiling does at tau_max, where the ratio alone asks for
+    // 163.6 ms and the 150 ms guard cuts it back. The guaranteed S-update
+    // recurrence the Live theorem quotes is therefore exactly [5, 150] ms.
+    if (!near(TS_at_tau_min, PSEUDO_UPDATE_PERIOD_MIN_S_DEFAULT) ||
+        !near(TS_at_tau_min, 0.005f) ||
+        !near(TS_at_tau_max, PSEUDO_UPDATE_PERIOD_MAX_S_DEFAULT) ||
+        !near(TS_at_tau_max, 0.15f)) {
         return fail("configured pseudo-update period left its bounded interval");
     }
 
