@@ -127,7 +127,45 @@ finite-state or monotone argument can quantify over legal histories.
 words rather than a local search: a finite-state or monotone quotient that bounds
 every legal word, not the best one a greedy descent can find.
 
-## Step 2: a floor justified against the other measurement channels
+## Closed-form whole-word margin: 800/800 nodes, interval-certified
+
+`tools/ou3_p3_closed_form_word_margin.py`. Both sides of the P3 comparison built
+in closed form from one endpoint-referenced observability Gramian, so neither
+steps a Riccati recursion -- which is what makes it survive interval arithmetic
+where three previous attempts died between 343 and 503 of 635 samples.
+
+| | value |
+| --- | --- |
+| source nodes evaluated / validated | **800 / 800** |
+| worst margin | **1.505e-05** |
+| clears the `1e-18` gate by | **13.18 orders** |
+| binding node / channel | 780 (`tau` in [8.386, 12.0]) on `v` |
+| S observations, ceiling / floor | 19 / 27 |
+
+Run under **current main's** clamps, `MAX_R_S = 400`, not #478's tightened ones,
+so the result does not depend on that PR landing. #478's clamps would improve it
+by a further 1.29 orders.
+
+Within each source cell the two sides take opposite endpoints -- the ceiling the
+fewest observations and weakest S measurement, the floor the most and strongest
+-- so both hold for every parameter value the cell admits. `R_S` comes from the
+deployed clamped SpectralMSE law rather than the free P2 cell range, and `P0`
+from the shipping constructor.
+
+Nine tests pin the contracts: cadence and `R_S` agree with the repo's own source
+parser and respect both clamps, the Gramian grows with observation count, the
+uninflated floor Gramian dominates the inflated ceiling one, floor never exceeds
+ceiling on any channel, a singular Gramian is reported rather than silently
+inverted, and `validate()` catches tampering with the gate or any
+non-promotion flag.
+
+**This is a margin, not a P3 verdict.** The canonical producer and gate remain
+the promotion authority; the artifact carries `certifies_theorem_stage: false`
+and cannot set a theorem flag. What remains between this and a certificate is
+the canonical producer wiring and mixed-source words, neither of which is
+blocked by the interval wall now that both sides are closed form.
+
+## How the floor is justified against the other measurement channels
 
 The defect in the first attempt -- a floor that ignored accelerometer information
 and so could be violated by the truth -- is closed by a structural argument
