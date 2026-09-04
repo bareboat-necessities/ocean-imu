@@ -11,15 +11,15 @@ Witness: one JONSWAP partition on its PM boundary (gamma=1), Tp=8 s, on the DNV
 peak-steepness boundary, and the admitted response-envelope member G=4,
 fc=1.2 Hz, p=2.  PM is not a different sea model here: it is exactly the
 gamma=1 member of the declared JONSWAP family.  Using that boundary member is
-convenient because its normalization is closed form.  For x=f/fp in [1,3],
-f<=0.375 Hz<fc, so that member may have |h|=G throughout the interval.  For the
-normalized gamma=1 JONSWAP/PM spectrum
+convenient because its normalization is closed form.  For x=f/fp in [1,9],
+f<=1.125 Hz<fc, so that envelope member may have |h|=G throughout the interval.
+For the normalized gamma=1 JONSWAP/PM spectrum
 q(x)=x^-5 exp(-(5/4)x^-4), I0=int q dx=1/5, the acceleration variance contains
 
-  m0 G^2 wp^4 / I0 * int_1^3 x^-1 exp(-(5/4)x^-4) dx.
+  m0 G^2 wp^4 / I0 * int_1^9 x^-1 exp(-(5/4)x^-4) dx.
 
-On [1,3], x^-1>=1/3 and exp(-(5/4)x^-4)>=exp(-5/4), hence the integral is at
-least (2/3)exp(-5/4).  At the steepness boundary the Tp factors cancel.  The
+On [1,9], x^-1>=1/9 and exp(-(5/4)x^-4)>=exp(-5/4), hence the integral is at
+least (8/9)exp(-5/4).  At the steepness boundary the Tp factors cancel.  The
 only transcendental needed is exp(-5/4)=exp(-5/16)^4, evaluated with the
 repository validated rational-Taylor exponential and outward interval products.
 All non-dyadic rational constants used in the lower bound are also outward
@@ -27,7 +27,7 @@ enclosed before multiplication/division.
 
 Because gamma=1 belongs to the declared JONSWAP interval gamma in [1,7], one
 counterexample at that boundary is sufficient to refute soundness of the full
-independent Cartesian product.  No claim is made that gamma=1 is the worst
+independent Cartesian product. No claim is made that gamma=1 is the worst
 JONSWAP member.
 """
 from __future__ import annotations
@@ -62,16 +62,16 @@ def exp_minus_five_quarters() -> Interval:
 def witness_mean_square_lower(gravity: float, gain: float = 4.0) -> float:
     """Validated lower bound on witness non-gravitational acceleration variance."""
     # Exact mathematical constants are enclosed by one-ulp intervals around
-    # their nearest binary64 values.  4 and gain=4 are exactly representable.
+    # their nearest binary64 values. 4 and gain=4 are exactly representable.
     sp = _outward_point(1.0 / 15.0)
     g = _outward_point(gravity)
     G = Interval.point(gain)
     pi = _outward_point(math.pi)
-    two_thirds = _outward_point(2.0 / 3.0)
+    eight_ninths = _outward_point(8.0 / 9.0)
     one_fifth = _outward_point(1.0 / 5.0)
 
-    # J >= (2/3) exp(-5/4), and the gamma=1 JONSWAP/PM I0 = 1/5 exactly.
-    J = two_thirds * exp_minus_five_quarters()
+    # J >= (8/9) exp(-5/4), and the gamma=1 JONSWAP/PM I0 = 1/5 exactly.
+    J = eight_ninths * exp_minus_five_quarters()
     val = sp.square() * g.square() * G.square() * pi.square()
     val = val / Interval.point(4.0)
     val = val * J / one_fifth
@@ -96,7 +96,8 @@ def build(domain_path: Path = DEFAULT_DOMAIN, rao_path: Path = DEFAULT_RAO) -> d
     if not PHYS.partition_admissible(hs, tp, gravity):
         raise RuntimeError("gamma=1 JONSWAP witness is outside physical steepness domain")
     fp = 1.0 / tp
-    witness_hi_hz = 3.0 * fp
+    witness_x_hi = 9.0
+    witness_hi_hz = witness_x_hi * fp
     if not witness_hi_hz < 1.2:
         raise RuntimeError("witness frequency interval left flat RAO branch")
 
@@ -119,7 +120,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN, rao_path: Path = DEFAULT_RAO) -> d
             "RAO_gain": 4.0,
             "RAO_corner_hz": 1.2,
             "RAO_rolloff_power": 2.0,
-            "x_interval": [1.0, 3.0],
+            "x_interval": [1.0, witness_x_hi],
             "frequency_interval_hz": [fp, witness_hi_hz],
             "validated_exp_minus_5_over_4": exp_minus_five_quarters().as_list(),
             "validated_acceleration_mean_square_lower_m2_s4": ms_lo,
@@ -162,8 +163,12 @@ def validate(d: dict) -> list[str]:
         f.append("witness left declared JONSWAP gamma family")
     if w.get("all_nondyadic_witness_constants_outward_enclosed") is not True:
         f.append("witness rational/transcendental enclosure contract weakened")
+    if list(w.get("x_interval", [])) != [1.0, 9.0]:
+        f.append("strengthened spectral witness interval changed")
     if not float(w.get("validated_acceleration_mean_square_lower_m2_s4", 0.0)) > float(w.get("P1_cap_squared_upper_m2_s4", math.inf)):
         f.append("witness lower bound no longer exceeds P1 cap squared")
+    if not float(w.get("validated_acceleration_RMS_lower_mps2", 0.0)) > 4.5:
+        f.append("witness proof margin fell below retained >4.5 m/s^2 lower bound")
     c = d.get("coupled_domain_contract", {})
     if c.get("finite_window_deterministic_response_certificate_required") is not True:
         f.append("finite-window response obligation disappeared")
