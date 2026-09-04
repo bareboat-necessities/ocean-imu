@@ -12,7 +12,7 @@ observability/covariance argument with those path statistics.
 For a source-varying history, replacing the time-varying coefficients by maxima
 actually attained somewhere on that same history is conservative:
 
-* every S-observation gap is bounded by the path maximum cadence plus one sample;
+* with progress-preserving pseudo-period retargeting, every S-observation gap is bounded by the path maximum cadence plus one sample;
 * q_c(t) <= max_path q_c, so process covariance is bounded by the constant
   intensity maximum over the same interval;
 * sigma(t)^2 <= max_path sigma^2 for nuisance/initial-wave terms; and
@@ -105,6 +105,10 @@ def translation_upper_from_summary(summary: dict, Tpe: float, sched: dict,
         raise ValueError("same-history source summary required")
     if summary.get("independent_global_source_extrema_used") is not False:
         raise ValueError("independent global source extrema are forbidden")
+    if sched.get("pseudo_period_retarget_progress_preserving") is not True:
+        raise RuntimeError(
+            "same-history finite S-observation gap requires progress-preserving pseudo-period retargeting"
+        )
 
     h = float(sched["dt_s"])
     cadence = list(map(float, summary["pseudo_update_cadence_s"]))
@@ -230,6 +234,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "same_history_sufficient_statistics_used": True,
         "independent_cartesian_tau_sigma_R_S_extrema_used": False,
         "retained_translation_observability_theorem_reused": True,
+        "progress_preserving_scheduler_required_for_gap_bound": True,
         "monotone_path_maxima_only": True,
         "full_covariance_word_history_required": True,
         "all_representative_histories_cover_their_covariance_word": all(
@@ -256,6 +261,7 @@ def validate(d: dict) -> list[str]:
         "source_only", "P2_correlation_interface_consumed",
         "same_history_sufficient_statistics_used",
         "retained_translation_observability_theorem_reused",
+        "progress_preserving_scheduler_required_for_gap_bound",
         "monotone_path_maxima_only", "full_covariance_word_history_required",
         "all_representative_histories_cover_their_covariance_word",
     ):

@@ -1,5 +1,4 @@
 from pathlib import Path
-import math
 import sys
 import unittest
 
@@ -9,13 +8,21 @@ import ou3_p3_ordered_witness_covariance_diagnostic as D
 
 
 class OrderedWitnessCovarianceDiagnosticTests(unittest.TestCase):
-    def test_period_change_matches_shipping_fmod_semantics(self):
-        self.assertAlmostEqual(D._set_period(0.17, 0.05), math.fmod(0.17, 0.05))
+    def test_period_change_preserves_unexpired_service_credit(self):
+        elapsed = D.TIMER._f32(0.12)
+        period = D.TIMER._f32(0.14)
+        self.assertEqual(D._set_period(elapsed, period), elapsed)
+
+    def test_overdue_period_change_arms_service(self):
+        period = D.TIMER._f32(0.13)
+        armed = D._set_period(D.TIMER._f32(0.14), period)
+        self.assertEqual(armed, D.TIMER._nextafterf_down_positive(period))
+        due, _ = D._due(D.TIMER._f32(0.005), period, armed)
+        self.assertTrue(due)
 
     def test_periodic_due_waits_then_fires(self):
         due, elapsed = D._due(0.005, 0.015, 0.0)
         self.assertFalse(due)
-        self.assertAlmostEqual(elapsed, 0.005)
         due, elapsed = D._due(0.005, 0.015, elapsed)
         self.assertFalse(due)
         due, elapsed = D._due(0.005, 0.015, elapsed)

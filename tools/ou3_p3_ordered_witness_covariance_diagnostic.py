@@ -24,7 +24,7 @@ import ou3_p3_correlated_translation_covariance_upper as CUPPER
 import ou3_p3_four_max_global_label_witness as WIT
 import ou3_p3_p2_v1_history_frontier as HIST
 import ou3_p3_frozen_full_matrix_translation as FROZEN
-import ou3_p3_pseudo_scheduler_starvation_witness as TIMER
+import ou3_p3_pseudo_scheduler_progress_certificate as TIMER
 import ou3_source_reachable_matrix_p3 as BASE
 
 REPO = Path(__file__).resolve().parents[1]
@@ -82,8 +82,8 @@ def _meas(P, k, R):
 
 
 def _set_period(elapsed, period):
-    """Use the exact binary32 setter transcription shared with the scheduler witness."""
-    return TIMER._set_period(elapsed, period)
+    """Use the exact binary32 progress-preserving shipping retarget."""
+    return TIMER._retarget(elapsed, period)
 
 
 def _due(dt, period, elapsed):
@@ -237,6 +237,10 @@ def build(domain_path=DEFAULT_DOMAIN):
     if domain.get("trajectory_fit") is not False:
         raise RuntimeError("diagnostic must not be trajectory fitted")
     rt = CORR.runtime(path); sched = BASE.source_schedule(); h = TIMER._f32(rt["clock"]["dt_binary32_s"])
+    progress = TIMER.build(path)
+    progress_failures = TIMER.validate(progress)
+    if progress_failures:
+        raise RuntimeError(f"scheduler progress prerequisite failed: {progress_failures}")
     target = HIST._global_word_target(domain, sched, h); N = int(target["target_samples"])
     summary, rank, stats = _summary(rt, sched, target)
     witness = WIT.shortest_global_label_witness(rt, stats["node_ranks"], N)
@@ -256,7 +260,10 @@ def build(domain_path=DEFAULT_DOMAIN):
         "declared_domain_changed": False, "canonical_gate_changed": False,
         "P2_correlation_interface_consumed": True, "P2_correlation_interface_version": CORR.INTERFACE_VERSION,
         "exact_witness_source_order_retained": True, "exact_gap_labelled_legal_extension_used": True,
-        "pseudo_period_change_uses_fmod_semantics": True, "periodic_update_due_shipping_semantics_transcribed": True,
+        "pseudo_period_change_preserves_elapsed_service_credit": True, "pseudo_period_change_uses_fmod_semantics": False,
+        "periodic_update_due_shipping_semantics_transcribed": True,
+        "scheduler_progress_certificate_consumed": True,
+        "scheduler_uniform_max_gap_samples": int(progress["certified_uniform_max_gap_samples"]),
         "pseudo_scheduler_numeric_type": "binary32/float",
         "accelerometer_measurement_updates_credited": False, "source_cells_use_one_real_upper_corner": True,
         "interval_certificate": False, "uniform_covariance_upper_certificate": False,
@@ -271,7 +278,7 @@ def build(domain_path=DEFAULT_DOMAIN):
         "synthetic_phase_envelope_std": [math.sqrt(x) for x in se], "old_upper_to_synthetic_variance_gain": sg,
         "classification": "ORDERED_POINT_DIAGNOSTIC_COMPLETE_DO_NOT_PROMOTE",
         "matched_margin_computed": False, "P3_PROMOTED": False, "P4_PROMOTED": False, "P5_PROMOTED": False,
-        "next_obligation": "select a certified time-ordered covariance-upper quotient carrying source order and pseudo-scheduler phase; do not promote from this point diagnostic",
+        "next_obligation": "rerun the canonical source-reachable P3 covariance closure under the certified progress-preserving S recurrence; do not promote from this point diagnostic",
         "failures": [],
     }
 
@@ -280,14 +287,17 @@ def validate(d):
     f = list(d.get("failures", []))
     if d.get("schema") != SCHEMA or d.get("qualification") != "OU3_P3_ORDERED_FOUR_MAX_WITNESS_POINT_DIAGNOSTIC": f.append("schema/qualification mismatch")
     for k in ("diagnostic_only", "P2_correlation_interface_consumed", "exact_witness_source_order_retained",
-              "exact_gap_labelled_legal_extension_used", "pseudo_period_change_uses_fmod_semantics",
-              "periodic_update_due_shipping_semantics_transcribed", "source_cells_use_one_real_upper_corner"):
+              "exact_gap_labelled_legal_extension_used", "pseudo_period_change_preserves_elapsed_service_credit",
+              "periodic_update_due_shipping_semantics_transcribed", "scheduler_progress_certificate_consumed",
+              "source_cells_use_one_real_upper_corner"):
         if d.get(k) is not True: f.append(f"{k} is not true")
     for k in ("trajectory_replay_used", "filter_changed", "declared_domain_changed", "canonical_gate_changed",
-              "accelerometer_measurement_updates_credited", "interval_certificate", "uniform_covariance_upper_certificate",
-              "matched_margin_computed", "P3_PROMOTED", "P4_PROMOTED", "P5_PROMOTED"):
+              "pseudo_period_change_uses_fmod_semantics", "accelerometer_measurement_updates_credited",
+              "interval_certificate", "uniform_covariance_upper_certificate", "matched_margin_computed",
+              "P3_PROMOTED", "P4_PROMOTED", "P5_PROMOTED"):
         if d.get(k) is not False: f.append(f"{k} is not false")
     if d.get("pseudo_scheduler_numeric_type") != "binary32/float": f.append("ordered diagnostic is not using shipping float scheduler arithmetic")
+    if int(d.get("scheduler_uniform_max_gap_samples", 0)) != 33: f.append("ordered diagnostic lost the 33-sample scheduler recurrence")
     if d.get("P2_correlation_interface_version") != CORR.INTERFACE_VERSION: f.append("lost P2 V1 binding")
     if int(d.get("target_samples", 0)) != 635 or int(d.get("four_max_witness_minimum_samples", 9999)) > 635: f.append("word/witness contract changed")
     for k in ("old_four_max_upper_diagonal", "ordered_phase_envelope_diagonal", "synthetic_phase_envelope_diagonal"):
