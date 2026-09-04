@@ -21,6 +21,16 @@ class Sea3RiccatiTubeTest(unittest.TestCase):
         self.assertFalse(self.d["P2_800_state_partition_consumed"])
         self.assertEqual(self.d["cell_cover"]["history_depth"], 0)
 
+    def test_endpoint_referenced_translation_ceiling_is_canonical(self):
+        timing = self.d["covariance_memory"]
+        self.assertTrue(self.d["endpoint_referenced_translation_covariance"])
+        self.assertFalse(self.d["post_reconstruction_forward_propagation_used"])
+        self.assertEqual(timing["translation_reference"], "word_endpoint")
+        self.assertTrue(timing["endpoint_referenced_observability"])
+        self.assertTrue(timing["endpoint_p_sign_similarity_applied"])
+        self.assertFalse(timing["forward_propagation_after_endpoint_reconstruction"])
+        self.assertTrue(timing["full_word_process_noise_dominator_retained"])
+
     def test_margins_are_real_positive_comparisons(self):
         self.assertEqual(self.d["useful_gate"], 1e-18)
         for mode in ("H", "A"):
