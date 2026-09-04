@@ -317,7 +317,7 @@ jobs:
         run: |
           mkdir -p plots/kalman_ou_ii
           unzip -o sim-data-files.zip -d plots/kalman_ou_ii >/dev/null
-          make -C tests/validation test
+          make -C tests/validation evidence-test
 
   # Evidence regeneration is sharded: the full validation study is roughly
   # 840 twenty-minute simulator replays and robustness another ~310. It runs
@@ -529,7 +529,12 @@ jobs:
     needs: combine
     if: inputs.validation_mode == 'full'
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    # The contract run below is the long step here, and it grows with the
+    # evidence suite. Twenty minutes stopped covering it: the job was killed
+    # mid-suite on every main push from 2026-09-03 on, which left the branch
+    # with unpublished evidence and skipped the whole document build behind it.
+    # Sized for the suite plus the apt install and the retrying push.
+    timeout-minutes: 45
     permissions:
       contents: write
     steps:
@@ -667,9 +672,14 @@ jobs:
       # Run every sync/contract step first. Only then hash reports/results, so
       # the recorded results fingerprint describes the exact tree that will be
       # committed rather than a pre-validation intermediate tree.
+      #
+      # `evidence-test` is the whole suite minus the staged OU-III proof
+      # searches, which read source and tooling only and cannot be moved by a
+      # regenerated bundle. ou3-proof.yml owns those and gives them the hours
+      # they need; publishing evidence behind them is what timed this job out.
       - name: Check the manuscript against the regenerated evidence
         if: steps.published.outputs.already != 'true'
-        run: make -C tests/validation test
+        run: make -C tests/validation evidence-test
 
       - name: Record replay and results fingerprints
         if: steps.published.outputs.already != 'true'
@@ -716,6 +726,6 @@ jobs:
             python3 tools/ou_replay_fingerprint.py \
               --simulation-zip sim-data-files.zip \
               --check reports/ou_evidence_fingerprint.json
-            make -C tests/validation test
+            make -C tests/validation evidence-test
           done
           exit 1

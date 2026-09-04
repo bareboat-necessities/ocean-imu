@@ -1,4 +1,13 @@
-.PHONY: build publication-sync evidence-contract test clean
+.PHONY: build publication-sync evidence-contract test evidence-test clean
+
+# The staged OU-III proof searches. Each of these modules is minutes of
+# interval arithmetic and the set is around three quarters of an hour, which is
+# why ou3-proof.yml runs them in jobs that budget one to two hours each. They
+# read source and tooling only: no bundle this repository publishes can change
+# their verdict. `evidence-test` therefore leaves them to the workflow that
+# owns them, and runs every contract that does depend on the evidence tree.
+PROOF_SEARCH_TESTS := $(wildcard test_ou3_p2_*.py test_ou3_p3_*.py test_ou3_p4_*.py test_ou3_p5_*.py)
+EVIDENCE_TESTS := $(filter-out $(PROOF_SEARCH_TESTS),$(wildcard test_*.py))
 
 build:
 	python3 -m py_compile ../../tools/*.py test_*.py
@@ -14,6 +23,9 @@ evidence-contract: publication-sync
 
 test: evidence-contract
 	python3 -m unittest discover -v -p 'test_*.py'
+
+evidence-test: evidence-contract
+	python3 -m unittest -v $(EVIDENCE_TESTS:.py=)
 
 clean:
 	rm -rf __pycache__ ../../tools/__pycache__
