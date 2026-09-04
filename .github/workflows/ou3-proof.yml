@@ -66,6 +66,7 @@ jobs:
             test_ou3_p4_sample_clock_source_refinement \
             test_ou3_p4_source_node_cells \
             test_ou3_p4_source_path_reachability \
+            test_ou3_sea3_body_rate_covariance_coupling \
             test_ou3_source_domain_contract \
             test_ou3_translational_uco_ucc \
             test_ou3_validated_transcendentals \
