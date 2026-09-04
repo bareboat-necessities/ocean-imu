@@ -72,14 +72,15 @@ class P2SourcePathReachabilityTests(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             R._ema_image((1, 2), (2, 3), (1, 2), 0.1, max_elapsed=0.005)
 
-    def test_old_worst_corner_is_explicit(self):
-        self.assertGreater(self.d["old_worst_corner_state_count"], 0)
-        self.assertGreaterEqual(self.d["old_worst_corner_states_in_any_recurrent_SCC"], 0)
-        self.assertLessEqual(
-            self.d["old_worst_corner_states_in_any_recurrent_SCC"],
-            self.d["old_worst_corner_state_count"],
+    def test_legacy_worst_corner_is_excluded_by_tightened_shipping_rs_clamp(self):
+        self.assertEqual(self.d["old_worst_corner_state_count"], 0)
+        self.assertEqual(self.d["old_worst_corner_states_in_any_recurrent_SCC"], 0)
+        self.assertFalse(self.d["old_worst_corner_has_internal_recurrent_cycle"])
+        self.assertTrue(self.d["old_worst_corner_excluded_by_shipping_clamps"])
+        self.assertLess(
+            R._constants()["max_RS"],
+            self.d["old_worst_corner_definition"]["R_S_filter_std"][0],
         )
-        self.assertIn(self.d["old_worst_corner_has_internal_recurrent_cycle"], (True, False))
 
     def test_mutations_of_source_completeness_fail_validation(self):
         mutations = (
@@ -90,6 +91,7 @@ class P2SourcePathReachabilityTests(unittest.TestCase):
             ("RS_discrepancy_slew_horizon_covered", False),
             ("RS_target_full_deployed_clamp_overapprox", False),
             ("RS_target_powf_tightening_used", True),
+            ("old_worst_corner_excluded_by_shipping_clamps", False),
         )
         for key, value in mutations:
             with self.subTest(key=key):
