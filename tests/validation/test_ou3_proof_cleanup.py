@@ -47,6 +47,34 @@ class Ou3ProofCleanupTest(unittest.TestCase):
                     offenders.append(f"retired reference {module}: {path.name}")
         self.assertEqual([], offenders, "\n".join(offenders))
 
+    def test_no_retired_history_graph_or_endpoint_attachment_files_remain(self):
+        retired_tools = {
+            "ou3_p3_p2_v1_history_frontier.py",
+            "ou3_p3_p2_v1_stage_phase_translation.py",
+            "ou3_p3_p2_v1_full_state_join.py",
+            "ou3_p3_canonical_gate.py",
+            "ou3_p4_p3_metric_attachment.py",
+            "ou3_p4_accelerometer_corotated_aw.py",
+            "ou3_p4_vector_remainder_sector.py",
+            "ou3_p4_signed_joseph_feasibility.py",
+            "ou3_p4_signed_vector_directional_coefficients.py",
+            "ou3_p4_source_correlated_reset_budget.py",
+            "ou3_p4_source_path_reachability.py",
+            "ou3_p4_source_node_cells.py",
+            "ou3_p4_sample_clock_source_refinement.py",
+            "ou3_p4_source_word_timing.py",
+            "ou3_p4_canonical_gate.py",
+        }
+        offenders = []
+        for name in sorted(retired_tools):
+            tool = TOOLS / name
+            test = VALIDATION / f"test_{name}"
+            if tool.exists():
+                offenders.append(f"retired tool: {tool.relative_to(ROOT)}")
+            if test.exists():
+                offenders.append(f"retired test: {test.relative_to(ROOT)}")
+        self.assertEqual([], offenders, "\n".join(offenders))
+
     def test_no_superseded_p3_route_selection_diagnostics_remain(self):
         retired_names = {
             "ou3_p3_four_max_global_label_witness.py",
@@ -84,13 +112,6 @@ class Ou3ProofCleanupTest(unittest.TestCase):
         offenders = [name for name in sorted(retired) if (WORKFLOWS / name).exists()]
         self.assertEqual([], offenders, "retired extra proof workflows returned")
 
-    def test_sea3_directional_bridge_is_bound_to_canonical_source_contract(self):
-        source_contract_test = (VALIDATION / "test_ou3_source_domain_contract.py").read_text(
-            encoding="utf-8"
-        )
-        self.assertIn("sea3.build_inclusion()", source_contract_test)
-        self.assertIn("SEA3_TO_P2_INCLUSION_CERTIFICATE", source_contract_test)
-
     def test_master_paper_includes_retained_sea3_theorem_parts(self):
         paper = (OU3_DOC / "kalman_ou-w3d.tex").read_text(encoding="utf-8")
         self.assertIn(r"\input{w3d-sea3-stability-theorem.tex-part}", paper)
@@ -99,6 +120,31 @@ class Ou3ProofCleanupTest(unittest.TestCase):
             paper.index(r"\input{w3d-sea3-stability-theorem.tex-part}"),
             paper.index(r"\input{w3d-sea3-period-bridge.tex-part}"),
         )
+
+    def test_canonical_workflow_does_not_execute_old_p2_inclusion_or_history_route(self):
+        workflow = (WORKFLOWS / "ou3-proof.yml").read_text(encoding="utf-8")
+        retired = (
+            "test_ou3_source_domain_contract",
+            "ou3_sea3_directional_p2_ha_feasibility",
+            "SEA3_TO_P2_INCLUSION_CERTIFICATE",
+            "ou3_p3_p2_v1_history_frontier",
+            "ou3_p3_p2_v1_stage_phase_translation",
+            "ou3_p3_p2_v1_full_state_join",
+            "ou3_p4_p3_metric_attachment",
+            "ou3_p4_signed_joseph_feasibility",
+            "800 * 26",
+        )
+        offenders = [name for name in retired if name in workflow]
+        self.assertEqual([], offenders, "old P2/history/endpoint proof route is still canonical")
+
+    def test_canonical_workflow_uses_sea3_dynamic_riccati_route(self):
+        workflow = (WORKFLOWS / "ou3-proof.yml").read_text(encoding="utf-8")
+        for module in (
+            "ou3_sea3_dynamic_source_certificate",
+            "ou3_sea3_riccati_metric_p3",
+            "ou3_sea3_riccati_metric_p4",
+        ):
+            self.assertIn(module, workflow)
 
 
 if __name__ == "__main__":

@@ -31,128 +31,27 @@ permissions:
 jobs:
   source-foundation:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          persist-credentials: false
-
-      - name: Compile current proof tooling
-        run: make -C tests/validation build
-
-      - name: Run current proof primitive tests
-        working-directory: tests/validation
-        run: |
-          python3 -m unittest -v \
-            test_ou3_proof_cleanup \
-            test_ou3_full_process_ucc \
-            test_ou3_implementation_word_language \
-            test_ou3_p2_correlation_path_memory \
-            test_ou3_p2_p3_correlation_interface \
-            test_ou3_p3_canonical_gate \
-            test_ou3_p3_p2_v1_full_state_join \
-            test_ou3_p3_scaled_process \
-            test_ou3_p3_tau_decay_budget \
-            test_ou3_p3_source_uniform_translation_covariance \
-            test_ou3_p3_ltv_translation_ucc_probe \
-            test_ou3_p3_ltv_postmeasurement_certificate \
-            test_ou3_p3_correlated_translation_segment \
-            test_ou3_p3_correlated_translation_covariance_upper \
-            test_ou3_p3_pseudo_scheduler_progress_certificate \
-            test_ou3_p4_accelerometer_corotated_aw \
-            test_ou3_p4_canonical_gate \
-            test_ou3_p4_p3_metric_attachment \
-            test_ou3_p4_signed_joseph_feasibility \
-            test_ou3_p4_sample_clock_source_refinement \
-            test_ou3_p4_source_node_cells \
-            test_ou3_p4_source_path_reachability \
-            test_ou3_sea3_body_rate_covariance_coupling \
-            test_ou3_source_domain_contract \
-            test_ou3_translational_uco_ucc \
-            test_ou3_validated_transcendentals \
-            test_ou3_vector_uco_certificate \
-            test_ou3_verified_spd_inverse
-
-      - name: Certify pseudo-scheduler progress
-        run: |
-          python3 tools/ou3_p3_pseudo_scheduler_progress_certificate.py \
-            --output /tmp/ou3_p3_pseudo_scheduler_progress.json
-          python3 - <<'PY'
-          import json
-          d=json.load(open('/tmp/ou3_p3_pseudo_scheduler_progress.json'))
-          assert d['validation_pass'], d['validation_failures']
-          assert d['core_progress_helper_markers_present'] is True
-          assert d['ou3_setter_progress_markers_present'] is True
-          assert d['legacy_setter_fmod_progress_reset_absent'] is True
-          assert d['shipping_scheduler_numeric_type'] == 'binary32/float'
-          assert d['fixed_max_period_first_fire_samples'] == 30
-          assert d['certified_uniform_max_gap_samples'] == 30
-          assert d['uniform_gap_within_translation_upper_bound'] is True
-          assert d['former_635_sample_zero_fire_cycle_broken'] is True
-          assert d['former_starvation_cycle_worst_gap_samples'] <= 30
-          assert d['scheduler_recurrence_certificate'] is True
-          assert d['P3_PROMOTED'] is False
-          print('SCHEDULER_GAP_SAMPLES', d['certified_uniform_max_gap_samples'])
-          print('SCHEDULER_GAP_S', d['certified_uniform_max_gap_s'])
-          PY
-
-      - name: Validate source-complete P4 word timing decomposition
-        run: |
-          python3 tools/ou3_p4_source_word_timing.py \
-            --output /tmp/ou3_p4_source_word_timing.json
-
-  sea0:
-    runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v6
         with:
           persist-credentials: false
 
-      - name: Compile retained SEA0 subcertificate tooling
-        run: |
-          python3 -m py_compile \
-            tools/ou3_sea3_spectral_moment_bridge.py \
-            tools/ou3_sea3_wave_period_frontend.py \
-            tests/validation/test_ou3_sea3_spectral_moment_bridge.py \
-            tests/validation/test_ou3_sea3_wave_period_frontend.py
+      - name: Compile proof tooling
+        run: make -C tests/validation build
 
-      - name: Certify retained SEA0 subcertificates
+      - name: Enforce new canonical architecture and retained local linear primitives
+        working-directory: tests/validation
         run: |
-          python3 tools/ou3_sea3_spectral_moment_bridge.py --check
           python3 -m unittest -v \
-            tests.validation.test_ou3_sea3_spectral_moment_bridge \
-            tests.validation.test_ou3_sea3_wave_period_frontend
-          python3 tools/ou3_sea3_spectral_moment_bridge.py \
-            --output /tmp/ou3_sea3_spectral_moment_bridge.json
-          python3 tools/ou3_sea3_wave_period_frontend.py \
-            --output /tmp/ou3_sea3_wave_period_frontend.json
-          python3 - <<'PY'
-          import json
-          spectral=json.load(open('/tmp/ou3_sea3_spectral_moment_bridge.json'))
-          frontend=json.load(open('/tmp/ou3_sea3_wave_period_frontend.json'))
-          assert spectral['validation_pass']
-          assert spectral['SEA0_full_certificate_promoted'] is False
-          assert spectral['trajectory_replay_used'] is False
-          assert spectral['tuner_bridge_contract']['surface_elevation_Tz_may_be_substituted_for_tuner_Tz'] is False
-          assert frontend['validation_pass']
-          assert frontend['SEA0_full_certificate_promoted'] is False
-          assert frontend['P2_promoted_from_this_artifact'] is False
-          assert frontend['interpretation']['discrete_frontend_warping_is_current_limiter'] is False
-          print('SEA0 spectral Tz/Tp screen', spectral['gamma_continuum_screen']['surface_elevation_Tz_over_Tp_outer'])
-          print('SEA0 front-end period warp', frontend['validated_intervals']['period_hat_over_period'])
-          PY
+            test_ou3_proof_cleanup \
+            test_ou3_translational_uco_ucc \
+            test_ou3_full_process_ucc \
+            test_ou3_vector_uco_certificate \
+            test_ou3_p3_pseudo_scheduler_progress_certificate
 
-      - name: Upload retained SEA0 subcertificates
-        uses: actions/upload-artifact@v6
-        with:
-          name: ou3-sea0-subcertificates
-          path: |
-            /tmp/ou3_sea3_spectral_moment_bridge.json
-            /tmp/ou3_sea3_wave_period_frontend.json
-          retention-days: 7
-
-  p2-correlation-interface:
+  sea3-dynamic-source:
+    needs: source-foundation
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -160,250 +59,153 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Certify P2 timing plus path-memory interface
+      - name: Validate retained SEA3 physical/front-end prerequisites
         run: |
-          python3 tools/ou3_p2_correlation_path_memory.py \
-            --output /tmp/ou3_p2_correlation_path_memory.json
-          python3 tools/ou3_p2_p3_correlation_interface.py \
-            --output /tmp/ou3_p2_p3_correlation_interface.json
+          python3 tools/ou3_sea3_spectral_moment_bridge.py --check
+          python3 tools/ou3_sea3_wave_period_frontend.py \
+            --output /tmp/ou3_sea3_wave_period_frontend.json
 
-      - name: Enforce refined P2 theorem interface
+      - name: Certify dynamic SEA3 adaptive source state
         run: |
+          python3 tools/ou3_sea3_dynamic_source_certificate.py \
+            --output /tmp/ou3_sea3_dynamic_source_certificate.json
           python3 - <<'PY'
           import json
-          corr=json.load(open('/tmp/ou3_p2_correlation_path_memory.json'))
-          p2=json.load(open('/tmp/ou3_p2_p3_correlation_interface.json'))
-          assert corr['validation_pass'], corr['validation_failures']
-          assert corr['P2_CORRELATION_INTERFACE_CERTIFICATE'] == 'PASS'
-          assert p2['validation_pass'], p2['validation_failures']
-          assert p2['P2_source_timing_certificate_pass'] is True
-          assert p2['P2_CORRELATION_INTERFACE_READY'] is True
-          assert p2['P2_READY_FOR_CANONICAL_P3'] is True
-          assert p2['endpoint_only_800_state_quotient_sufficient_for_P3'] is False
-          assert p2['independent_cartesian_tau_sigma_RS_extrema_forbidden'] is True
-          print('P2 timing PASS')
-          print('P2 correlation PASS', p2['correlation_interface_version'])
+          d=json.load(open('/tmp/ou3_sea3_dynamic_source_certificate.json'))
+          assert d['validation_pass'], d['validation_failures']
+          assert d['P2_DYNAMIC_SOURCE_CERTIFICATE'] == 'PASS'
+          assert d['old_P2_800_state_graph_consumed'] is False
+          assert d['old_P2_history_word_enumeration_consumed'] is False
+          print('DYNAMIC_SOURCE_INVARIANT', d['dynamic_invariant'])
+          print('DYNAMIC_SOURCE_RATES', d['validated_rate_and_jump_bounds'])
           PY
 
-  canonical-p3:
-    runs-on: ubuntu-latest
-    timeout-minutes: 120
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          persist-credentials: false
-
-      - name: Compile source-complete canonical P3 route and P4 metric handoff
-        run: |
-          python3 -m py_compile \
-            tools/ou3_p3_p2_v1_history_frontier.py \
-            tools/ou3_p3_p2_v1_stage_phase_translation.py \
-            tools/ou3_p3_p2_v1_full_state_join.py \
-            tools/ou3_p3_canonical_gate.py \
-            tools/ou3_p4_p3_metric_attachment.py \
-            tests/validation/test_ou3_p3_p2_v1_history_frontier.py \
-            tests/validation/test_ou3_p3_p2_v1_stage_phase_translation.py \
-            tests/validation/test_ou3_p3_p2_v1_full_state_join.py \
-            tests/validation/test_ou3_p3_canonical_gate.py \
-            tests/validation/test_ou3_p4_p3_metric_attachment.py
-
-      - name: Test exact-history, precision-join, and P4 metric contracts
+      - name: Test dynamic-source contract
         working-directory: tests/validation
-        run: |
-          python3 -m unittest -v \
-            test_ou3_p3_p2_v1_history_frontier \
-            test_ou3_p3_p2_v1_stage_phase_translation \
-            test_ou3_p3_p2_v1_full_state_join \
-            test_ou3_p4_p3_metric_attachment
+        run: python3 -m unittest -v test_ou3_sea3_dynamic_source_certificate
 
-      - name: Build source-complete H/A candidate, P4 metric attachment, and unique canonical P3 verdict
-        run: |
-          python3 - <<'PY'
-          import json
-          import sys
-          from pathlib import Path
-          sys.path.insert(0, 'tools')
-          import ou3_p3_p2_v1_history_frontier as H
-          import ou3_p3_p2_v1_stage_phase_translation as T
-          import ou3_p3_p2_v1_full_state_join as J
-          import ou3_p3_canonical_gate as G
-          import ou3_p4_p3_metric_attachment as M
-
-          h = H.build()
-          hf = H.validate(h)
-          h['validation_pass'] = not hf
-          h['validation_failures'] = hf
-          if hf:
-              raise SystemExit(f'history quotient validation failed: {hf}')
-          Path('/tmp/ou3_p3_p2_v1_history_frontier.json').write_text(
-              json.dumps(h, indent=2, sort_keys=True), encoding='utf-8')
-
-          t = T.build()
-          tf = T.validate(t)
-          t['validation_pass'] = not tf
-          t['validation_failures'] = tf
-          if tf:
-              raise SystemExit(f'translation candidate validation failed: {tf}')
-          Path('/tmp/ou3_p3_p2_v1_stage_phase_translation.json').write_text(
-              json.dumps(t, indent=2, sort_keys=True), encoding='utf-8')
-
-          j = J.build(translation_candidate=t)
-          jf = J.validate(j)
-          j['validation_pass'] = not jf
-          j['validation_failures'] = jf
-          if jf:
-              raise SystemExit(f'full-state join validation failed: {jf}')
-          Path('/tmp/ou3_p3_p2_v1_full_state_join.json').write_text(
-              json.dumps(j, indent=2, sort_keys=True), encoding='utf-8')
-
-          d = G.build(p3_candidate=j)
-          df = G.validate(d)
-          d['validation_pass'] = not df
-          d['validation_failures'] = df
-          if df:
-              raise SystemExit(f'canonical P3 gate validation failed: {df}')
-          Path('/tmp/ou3_p3_canonical_gate.json').write_text(
-              json.dumps(d, indent=2, sort_keys=True), encoding='utf-8')
-
-          m = M.build(translation_candidate=t, full_state_candidate=j)
-          mf = M.validate(m)
-          m['validation_pass'] = not mf
-          m['validation_failures'] = mf
-          if mf:
-              raise SystemExit(f'P4 P3-metric attachment validation failed: {mf}')
-          Path('/tmp/ou3_p4_p3_metric_attachment.json').write_text(
-              json.dumps(m, indent=2, sort_keys=True), encoding='utf-8')
-
-          assert h['P2_correlation_interface_consumed'] is True
-          assert h['raw_tuner_cartesian_extrema_used'] is False
-          assert t['endpoint_phase_count'] == 800 * 26
-          assert t['frozen_clock_absorbing_hold_branch_included'] is True
-          assert j['process_covariance_measurement_bounds_same_source_history'] is True
-          assert j['translation_whole_word_lift_charged_again'] is False
-          assert j['precision_block_join_factor'] == 0.5
-          assert d['useful_gate'] == 1e-18
-          assert d['P4_MAY_CONSUME_P3'] is d['P3_CANONICAL_PASS']
-          assert m['finite_source_phase_classes'] == 800 * 26
-          assert m['full_word_frontier_digest_sha256'] == t['full_word_frontier_digest_sha256']
-          assert m['precision_block_join_factor'] == 0.5
-          assert m['P4_USABLE_CERTIFICATE_PROMOTED'] is False
-
-          print(json.dumps({
-              'history_target': h['global_word_target'],
-              'terminal_pareto_labels': h['terminal_pareto_labels'],
-              'translation_margin': t['worst_translation_margin_lower'],
-              'translation_established': t['P3_TRANSLATION_CERTIFICATE_ESTABLISHED'],
-              'H_margin': j['modes']['H']['relative_Riccati_injection_margin_lower'],
-              'A_margin': j['modes']['A']['relative_Riccati_injection_margin_lower'],
-              'producer_numeric_pass': j['P3_PRODUCER_NUMERIC_PASS'],
-              'P3_CANONICAL_PASS': d['P3_CANONICAL_PASS'],
-              'canonical_worst_H_A': d['worst_H_A_margin'],
-              'fail_reasons': d['P3_CANONICAL_FAIL_REASONS'],
-              'P4_MAY_CONSUME_P3': d['P4_MAY_CONSUME_P3'],
-              'P4_metric_source_phase_classes': m['finite_source_phase_classes'],
-              'P4_metric_global_information_upper': m['global_source_phase_information_metric_upper_group_diagonal'],
-          }, indent=2, sort_keys=True))
-          PY
-
-      - name: Upload canonical P3 proof and P4 metric-handoff artifacts
+      - name: Upload dynamic source artifact
         uses: actions/upload-artifact@v6
         with:
-          name: ou3-p3-canonical-theorem-status
+          name: ou3-sea3-dynamic-source
           path: |
-            /tmp/ou3_p3_p2_v1_history_frontier.json
-            /tmp/ou3_p3_p2_v1_stage_phase_translation.json
-            /tmp/ou3_p3_p2_v1_full_state_join.json
-            /tmp/ou3_p3_canonical_gate.json
-            /tmp/ou3_p4_p3_metric_attachment.json
+            /tmp/ou3_sea3_wave_period_frontend.json
+            /tmp/ou3_sea3_dynamic_source_certificate.json
           retention-days: 7
 
-  p4-sector-prerequisites:
-    needs: canonical-p3
+  riccati-p3:
+    needs: sea3-dynamic-source
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v6
         with:
           persist-credentials: false
 
-      - name: Compile current P4 sector prerequisites, exact accelerometer coordinate, signed audit, and canonical gate
+      - name: Build quantitative source-uniform moving-Riccati tube
         run: |
-          python3 -m py_compile \
-            tools/ou3_p4_cayley_sector_certificate.py \
-            tools/ou3_p4_accelerometer_corotated_aw.py \
-            tools/ou3_p4_vector_remainder_sector.py \
-            tools/ou3_p4_source_word_timing.py \
-            tools/ou3_p4_p3_metric_attachment.py \
-            tools/ou3_p4_signed_joseph_feasibility.py \
-            tools/ou3_p4_canonical_gate.py
-
-      - name: Certify usable 0.8 rad nonlinear sector primitives and canonical word timing
-        run: |
-          python3 tools/ou3_p4_cayley_sector_certificate.py \
-            --output /tmp/ou3_p4_cayley_sector.json
-          python3 tools/ou3_p4_accelerometer_corotated_aw.py \
-            --output /tmp/ou3_p4_accelerometer_corotated_aw.json
-          python3 tools/ou3_p4_vector_remainder_sector.py \
-            --output /tmp/ou3_p4_vector_remainder.json
-          python3 tools/ou3_p4_source_word_timing.py \
-            --output /tmp/ou3_p4_source_word_timing.json
-
-      - name: Download unique canonical P3 verdict and P4 metric handoff
-        uses: actions/download-artifact@v6
-        with:
-          name: ou3-p3-canonical-theorem-status
-          path: /tmp
-
-      - name: Audit source-correlated signed Joseph vector credit
-        run: |
-          python3 tools/ou3_p4_signed_joseph_feasibility.py \
-            --metric /tmp/ou3_p4_p3_metric_attachment.json \
-            --output /tmp/ou3_p4_signed_joseph_feasibility.json
-
-      - name: State P4 consumption gate from canonical artifact
-        run: |
+          python3 tools/ou3_sea3_riccati_tube_factored.py \
+            --output /tmp/ou3_sea3_riccati_tube.json
           python3 - <<'PY'
           import json
-          d=json.load(open('/tmp/ou3_p3_canonical_gate.json'))
-          m=json.load(open('/tmp/ou3_p4_p3_metric_attachment.json'))
-          timing=json.load(open('/tmp/ou3_p4_source_word_timing.json'))
-          corot=json.load(open('/tmp/ou3_p4_accelerometer_corotated_aw.json'))
-          rem=json.load(open('/tmp/ou3_p4_vector_remainder.json'))
-          audit=json.load(open('/tmp/ou3_p4_signed_joseph_feasibility.json'))
+          d=json.load(open('/tmp/ou3_sea3_riccati_tube.json'))
           assert d['validation_pass'], d['validation_failures']
-          assert m['validation_pass'], m['validation_failures']
-          assert timing['validation_pass'], timing['validation_failures']
-          assert corot['validation_pass'], corot['validation_failures']
-          assert rem['validation_pass'], rem['validation_failures']
-          assert audit['validation_pass'], audit['validation_failures']
-          assert m['finite_source_phase_classes'] == 800 * 26
-          assert audit['finite_source_phase_mode_classes_scanned'] == 800 * 2 * 2
-          assert timing['P4_word_horizon_bound_to_canonical_P3_covariance_word'] is True
-          assert corot['latent_aw_nonlinear_eta_coefficient'] == 0.0
-          assert rem['acc_eta_aw_quadratic_coefficient_upper'] == 0.0
-          assert audit['accelerometer_aw_eta_Rinv_quadratic_coefficient_upper'] == 0.0
-          print('P3_CANONICAL_PASS', d['P3_CANONICAL_PASS'])
-          print('P4_MAY_CONSUME_P3', d['P4_MAY_CONSUME_P3'])
-          print('P4_WORD_HORIZON_S', timing['word_horizon_s'])
-          print('P4_METRIC_SOURCE_PHASE_CLASSES', m['finite_source_phase_classes'])
-          print('ACCEL_AW_NONLINEAR_ETA_COEFFICIENT', rem['acc_eta_aw_quadratic_coefficient_upper'])
-          print('SIGNED_JOSEPH_H', audit['worst_by_mode']['H'])
-          print('SIGNED_JOSEPH_A', audit['worst_by_mode']['A'])
-          print('DIRECTIONAL_WORD_REQUIRED', audit['directional_signed_forms_must_survive_to_word_scalarization'])
-          if not d['P4_MAY_CONSUME_P3']:
-              print('P4 theorem closure remains blocked by canonical P3; sector/metric/audit results are not P4 PASS.')
-          else:
-              print('Canonical P3 and its exact source-phase metric are available to the nonlinear whole-word P4 route.')
+          assert d['source_history_graph_consumed'] is False
+          assert d['predecessor_path_enumeration_consumed'] is False
+          assert d['P2_800_state_partition_consumed'] is False
+          assert d['cell_cover']['history_depth'] == 0
+          print('RICCATI_TUBE_PASS', d['RICCATI_TUBE_PASS'])
+          print('H_DELTA', d['modes']['H']['relative_Riccati_injection_margin_lower'])
+          print('A_DELTA', d['modes']['A']['relative_Riccati_injection_margin_lower'])
+          print('CURRENT_SOURCE_CELLS', d['cell_cover']['joint_current_source_cells'])
           PY
 
-      - name: Upload P4 sector and signed-Joseph diagnostic artifacts
+      - name: Test quantitative Riccati-tube contract
+        working-directory: tests/validation
+        run: python3 -m unittest -v test_ou3_sea3_riccati_tube
+
+      - name: Build and enforce canonical moving-Riccati P3 gate
+        run: |
+          python3 tools/ou3_sea3_riccati_metric_p3.py \
+            --tube /tmp/ou3_sea3_riccati_tube.json \
+            --output /tmp/ou3_sea3_riccati_metric_p3.json
+          python3 - <<'PY'
+          import json
+          tube=json.load(open('/tmp/ou3_sea3_riccati_tube.json'))
+          d=json.load(open('/tmp/ou3_sea3_riccati_metric_p3.json'))
+          assert d['validation_pass'], d['validation_failures']
+          assert d['P3_FOUNDATION_PASS'] is True
+          assert d['old_P2_800_state_graph_consumed'] is False
+          assert d['old_P2_V1_history_frontier_consumed'] is False
+          assert d['source_history_graph_consumed'] is False
+          assert d['predecessor_path_enumeration_consumed'] is False
+          assert d['useful_gate'] == 1e-18
+          assert d['quantitative_Riccati_tube_pass'] == tube['RICCATI_TUBE_PASS']
+          assert d['P3_CANONICAL_PASS'] == tube['RICCATI_TUBE_PASS']
+          assert d['P4_MAY_CONSUME_P3'] == d['P3_CANONICAL_PASS']
+          print('P3_H_DELTA', d['modes']['H']['relative_Riccati_injection_margin_lower'])
+          print('P3_A_DELTA', d['modes']['A']['relative_Riccati_injection_margin_lower'])
+          print('P3_CANONICAL_PASS', d['P3_CANONICAL_PASS'])
+          print('P3_FAIL_REASONS', d['P3_CANONICAL_FAIL_REASONS'])
+          if not d['P3_CANONICAL_PASS']:
+              raise SystemExit('canonical moving-Riccati P3 FAIL: ' + '; '.join(d['P3_CANONICAL_FAIL_REASONS']))
+          PY
+
+      - name: Test moving-Riccati P3 contract
+        working-directory: tests/validation
+        run: python3 -m unittest -v test_ou3_sea3_riccati_metric_p3
+
+      - name: Upload canonical moving-Riccati P3 artifacts
+        if: always()
         uses: actions/upload-artifact@v6
         with:
-          name: ou3-p4-sector-prerequisites
+          name: ou3-p3-moving-riccati
           path: |
-            /tmp/ou3_p4_cayley_sector.json
-            /tmp/ou3_p4_accelerometer_corotated_aw.json
-            /tmp/ou3_p4_vector_remainder.json
-            /tmp/ou3_p4_source_word_timing.json
-            /tmp/ou3_p4_signed_joseph_feasibility.json
+            /tmp/ou3_sea3_riccati_tube.json
+            /tmp/ou3_sea3_riccati_metric_p3.json
+          retention-days: 7
+
+  riccati-p4:
+    needs: riccati-p3
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Validate retained 0.8-rad geometry independently of retired P4 metric route
+        run: |
+          python3 tools/ou3_p4_cayley_sector_certificate.py \
+            --output /tmp/ou3_p4_cayley_sector_certificate.json
+
+      - name: Build canonical nonlinear moving-Riccati P4 foundation
+        run: |
+          python3 tools/ou3_sea3_riccati_metric_p4.py \
+            --output /tmp/ou3_sea3_riccati_metric_p4.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/ou3_sea3_riccati_metric_p4.json'))
+          assert d['validation_pass'], d['validation_failures']
+          assert d['P3_CANONICAL_PASS_consumed'] is True
+          assert d['old_800_endpoint_signed_Joseph_scan_consumed'] is False
+          assert d['old_terminal_source_phase_metric_attachment_consumed'] is False
+          assert d['old_group_isotropic_P3_P4_metric_assumed'] is False
+          print('P3_H_DELTA_CONSUMED', d['P3_H_delta_consumed'])
+          print('P3_A_DELTA_CONSUMED', d['P3_A_delta_consumed'])
+          print('P4_CANONICAL_PASS', d['P4_CANONICAL_PASS'])
+          print('P4_OPEN_OBLIGATIONS', d['P4_CANONICAL_FAIL_REASONS'])
+          PY
+
+      - name: Test moving-Riccati P4 contract
+        working-directory: tests/validation
+        run: python3 -m unittest -v test_ou3_sea3_riccati_metric_p4
+
+      - name: Upload canonical P4 architecture artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: ou3-p4-moving-riccati
+          path: |
+            /tmp/ou3_p4_cayley_sector_certificate.json
+            /tmp/ou3_sea3_riccati_metric_p4.json
           retention-days: 7
