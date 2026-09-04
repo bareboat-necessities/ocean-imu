@@ -127,6 +127,65 @@ finite-state or monotone argument can quantify over legal histories.
 words rather than a local search: a finite-state or monotone quotient that bounds
 every legal word, not the best one a greedy descent can find.
 
+## Why the certificate cannot be built as specified, and what does build
+
+`translation_upper` takes **no initial covariance**: it is `P0`-free by
+construction, which is exactly why it inverts a three-point observability
+Gramian and is four orders loose. The looseness buys `P0`-independence.
+
+PR #476 certified, and this branch reproduced exactly, that **zero-`S` words are
+legal**. The proof domain has no GNSS -- `position_error_norm_upper_m` and
+`velocity_error_norm_upper_mps` are *entrance* bounds, not measurements -- so
+over a proof word the only translation measurement is `S = 0`. On a zero-`S`
+word, `v -> p -> S` is therefore a pure integrator chain **with no output at
+all**: structurally unobservable, covariance unbounded above as `P0` grows.
+
+**So no finite `P0`-free `Sigma_upper` exists over the current legal word set.**
+No amount of tightening, subdivision, ordering or enclosure work produces one;
+an unobservable state cannot be bounded without bounding where it started. This
+is why the whole-word lower result below is conditional, and it is a structural
+obstruction rather than a numerical one.
+
+### Measured: a P0-bounded formulation clears the gate by 12.7 orders
+
+Dropping `P0`-freedom and bounding the admissible initial covariance by the
+domain's declared entrance set -- velocity 5.0 m/s, position component
+`0.5*Hs <= 4.25` m, `||delta a_w|| <= 0.3 g` -- on the **starved** word itself:
+
+| assumed `S` entrance | `delta` | vs `1e-18` |
+| --- | --- | --- |
+| 13.5 m.s (`p_component * T_word`) | 4.86e-6 | clears by **12.69 orders** |
+| 63.5 m.s (`p_norm * T_word`, looser) | 1.16e-6 | clears by 12.06 orders |
+
+The worst single-cell dwell gives 4.10e-6, so starvation costs essentially
+nothing once `P0` is bounded. **The obstruction is the `P0`-freedom requirement,
+not the starvation.**
+
+The domain declares no entrance bound on `S`, the third integral, which is the
+channel that binds `delta`. That bound is **not load-bearing** and was not
+invented to make the proof close: the gate survives until an assumed `S`
+entrance of about `1e8 m.s`, against a physically meaningful 10--60 m.s, so
+there are six-plus orders of slack in the assumption itself.
+
+| assumed `S` entrance std | `delta` | |
+| --- | --- | --- |
+| 1e3 m.s | 5.87e-9 | clears by 9.77 orders |
+| 1e5 m.s | 5.87e-13 | clears by 5.77 orders |
+| 1e7 m.s | 5.87e-17 | clears by 1.77 orders |
+| 1e9 m.s | 5.87e-21 | **fails** by 2.23 orders |
+
+### What this costs
+
+A `P0`-bounded `Sigma_upper` is **weaker** than the present one: the theorem
+becomes conditional on the declared entrance set rather than uniform in initial
+covariance, and that must be stated wherever the result is claimed. It is not
+ad hoc -- P1 already hands off through that entrance box and P5 must prove
+capture into it -- but it is a real change to what P3 asserts, and it is a
+specification decision rather than something a proof tool may adopt on its own.
+
+Not a certificate: double-precision point diagnostic on two words, not interval
+arithmetic, and it does not quantify over all legal words.
+
 ## The whole-word lower result is conditional on S firing, which is not a theorem
 
 **PR #476 is ahead of this line of work and its result supersedes the headline
