@@ -33,72 +33,54 @@ jobs:
                   raise SystemExit(f"{path}: expected exactly one occurrence of {old!r}, found {text.count(old)}")
               p.write_text(text.replace(old, new, 1))
 
-          # The common source schedule must consume the shipping sigma cap rather
-          # than retaining the superseded 6 m/s^2 proof family.
           path = 'tools/ou3_source_reachable_matrix_p3.py'
           replace_once(
               path,
               '        "MIN_TUNE_FREQ_HZ","MAX_TUNE_FREQ_HZ","MIN_TAU_S","MAX_TAU_S",\n        "MIN_R_S","MAX_R_S","PSEUDO_UPDATE_TAU_RATIO_DEFAULT",',
               '        "MIN_TUNE_FREQ_HZ","MAX_TUNE_FREQ_HZ","MIN_TAU_S","MAX_TAU_S",\n        "MAX_SIGMA_A","MIN_R_S","MAX_R_S","PSEUDO_UPDATE_TAU_RATIO_DEFAULT",')
-          replace_once(
-              path,
-              '        "sigma_aw_applied_safety":[0.05,6.0],',
-              '        "sigma_aw_applied_safety":[0.05,up(c["MAX_SIGMA_A"])],')
-          replace_once(
-              path,
-              '    sigmas=interval_cells(geom_edges(0.05,6.0,5))',
-              '    sigma_lo,sigma_hi=sched["sigma_aw_applied_safety"]\n    sigmas=interval_cells(geom_edges(sigma_lo,sigma_hi,5))')
+          replace_once(path, '        "sigma_aw_applied_safety":[0.05,6.0],',
+                             '        "sigma_aw_applied_safety":[0.05,up(c["MAX_SIGMA_A"])],')
+          replace_once(path, '    sigmas=interval_cells(geom_edges(0.05,6.0,5))',
+                             '    sigma_lo,sigma_hi=sched["sigma_aw_applied_safety"]\n    sigmas=interval_cells(geom_edges(sigma_lo,sigma_hi,5))')
 
-          # Scheduler recurrence changed from 33 to 30 samples because the
-          # shipping pseudo-period ceiling is now 150 ms. Keep the proof theorem
-          # generic, while the tests pin the current implementation value.
           path = 'tools/ou3_p3_pseudo_scheduler_progress_certificate.py'
-          replace_once(
-              path,
+          replace_once(path,
               '        "classification": "SOURCE_INDEPENDENT_33_SAMPLE_S_RECURRENCE_CERTIFIED",',
               '        "classification": f"SOURCE_INDEPENDENT_{fixed_fire}_SAMPLE_S_RECURRENCE_CERTIFIED",')
           old = '''    if int(d.get("fixed_max_period_first_fire_samples", 0)) != 33:\n        f.append("largest deployed period no longer fires on sample 33")\n    if int(d.get("certified_uniform_max_gap_samples", 0)) != 33:\n        f.append("uniform scheduler gap is not 33 samples")'''
           new = '''    fixed_fire = int(d.get("fixed_max_period_first_fire_samples", 0))\n    uniform_gap = int(d.get("certified_uniform_max_gap_samples", 0))\n    if fixed_fire <= 0:\n        f.append("largest deployed period has no finite firing sample")\n    if uniform_gap != fixed_fire:\n        f.append("uniform scheduler gap does not match fixed maximum-period deadline")'''
           replace_once(path, old, new)
-          replace_once(
-              path,
+          replace_once(path,
               '    if int(d.get("former_starvation_cycle_worst_gap_samples", 9999)) > 33:\n        f.append("former starvation replay exceeds certified 33-sample gap")',
               '    if int(d.get("former_starvation_cycle_worst_gap_samples", 9999)) > uniform_gap:\n        f.append("former starvation replay exceeds certified uniform gap")')
-          replace_once(
-              path,
+          replace_once(path,
               '    if d.get("classification") != "SOURCE_INDEPENDENT_33_SAMPLE_S_RECURRENCE_CERTIFIED":\n        f.append("unexpected scheduler classification")',
               '    if d.get("classification") != f"SOURCE_INDEPENDENT_{uniform_gap}_SAMPLE_S_RECURRENCE_CERTIFIED":\n        f.append("unexpected scheduler classification")')
           p = Path(path)
-          text = p.read_text().replace('fires by sample\n33 from zero elapsed.', 'fires by sample\n30 from zero elapsed.', 1)
-          p.write_text(text)
+          p.write_text(p.read_text().replace('fires by sample\n33 from zero elapsed.', 'fires by sample\n30 from zero elapsed.', 1))
 
-          # Unit tests pin the actual 150 ms shipping cap / binary32 result.
           path = 'tests/validation/test_ou3_p3_pseudo_scheduler_progress_certificate.py'
           replace_once(path, '    def test_fixed_max_period_fires_on_sample_33(self):',
                              '    def test_fixed_max_period_fires_on_sample_30(self):')
           replace_once(path, '        self.assertEqual(sample, 33)', '        self.assertEqual(sample, 30)')
           replace_once(path, '        self.assertLessEqual(worst, 33)', '        self.assertLessEqual(worst, 30)')
 
-          # Ordered diagnostic consumes the scheduler certificate; do not freeze
-          # yesterday's gap in a second theorem implementation.
           path = 'tools/ou3_p3_ordered_witness_covariance_diagnostic.py'
-          replace_once(
-              path,
+          replace_once(path,
               '    if int(d.get("scheduler_uniform_max_gap_samples", 0)) != 33: f.append("ordered diagnostic lost the 33-sample scheduler recurrence")',
               '    expected_gap = int(TIMER.build()["certified_uniform_max_gap_samples"])\n    if int(d.get("scheduler_uniform_max_gap_samples", 0)) != expected_gap: f.append("ordered diagnostic lost the certified scheduler recurrence")')
 
-          # Native regression follows the shipping 150 ms ceiling exactly.
           path = 'tests/kalman_ou_iii/kalman_ou_common-test.cpp'
           replace_once(path, '// The largest deployed tau-coupled pseudo period fires on sample 33 from\n',
                              '// The largest deployed tau-coupled pseudo period fires on sample 30 from\n')
-          replace_once(path, '    const float max_deployed_period = 0.16363636f;',
-                             '    const float max_deployed_period = 0.15f;')
-          replace_once(path, '    if (!check(first_fire == 33,\n               "largest deployed pseudo period no longer fires on sample 33")) return false;',
-                             '    if (!check(first_fire == 30,\n               "largest deployed pseudo period no longer fires on sample 30")) return false;')
-          replace_once(path, '    if (!check(worst_gap <= 33, "former starvation cycle exceeds 33-sample gap")) return false;',
-                             '    if (!check(worst_gap <= 30, "former starvation cycle exceeds 30-sample gap")) return false;')
+          replace_once(path, '    const float max_deployed_period = 0.16363636f;', '    const float max_deployed_period = 0.15f;')
+          replace_once(path,
+              '    if (!check(first_fire == 33,\n               "largest deployed pseudo period no longer fires on sample 33")) return false;',
+              '    if (!check(first_fire == 30,\n               "largest deployed pseudo period no longer fires on sample 30")) return false;')
+          replace_once(path,
+              '    if (!check(worst_gap <= 33, "former starvation cycle exceeds 33-sample gap")) return false;',
+              '    if (!check(worst_gap <= 30, "former starvation cycle exceeds 30-sample gap")) return false;')
 
-          # Structural workflow enforces the current shipping result.
           path = '.github/workflows/ou3-p3-whole-word-probe.yml'
           p = Path(path)
           text = p.read_text()
@@ -160,6 +142,7 @@ jobs:
             tests/kalman_ou_iii/kalman_ou_common-test.cpp \
             .github/workflows/ou3-p3-whole-word-probe.yml
           git commit -m "P3: bind proof contracts to tightened shipping caps"
+          git pull --rebase origin "${GITHUB_REF_NAME}"
           git push origin HEAD:${GITHUB_REF_NAME}
 
       - name: Dispatch combined-head proof and build
