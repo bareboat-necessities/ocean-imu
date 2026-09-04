@@ -3,9 +3,9 @@
 
 The spectral sea family above is parameterized by the physically conventional
 peak periods $T_{p,r}$, but the deployed tuner does \emph{not} estimate a peak
-period.  Its canonical period state is the zero-crossing/moment period
-$T_z$ produced by \texttt{WavePeriodEstimator}.  These quantities must therefore
-remain distinct in the certificate.
+period.  Its measurement-derived canonical period state is the zero-crossing/
+moment period $T_z$ produced by \texttt{WavePeriodEstimator}.  These quantities
+must therefore remain distinct in the certificate.
 
 For a scalar spectrum $\Phi(\omega)$ with angular-frequency moments
 \begin{equation}
@@ -23,8 +23,8 @@ are
 \begin{equation}
  w_r=\frac{H_r^2}{\sum_j H_j^2},
 \end{equation}
-then the zero-crossing periods of the component elevation spectra obey the exact
-mixture identity
+then the zero-crossing periods of uncorrelated component elevation spectra obey
+the exact mixture identity
 \begin{equation}
  \boxed{
  \frac{1}{T_{z,\mathrm{mix}}^2}
@@ -71,13 +71,23 @@ SEA0 must therefore certify a relation
  \label{eq:sea3-tp-tz-relation}
 \end{equation}
 using the same directional response of
-Eq.~\eqref{eq:sea3-matrix-spectrum} and the exact deployed
-WavePeriodEstimator front end.  For an analytical spectral enclosure,
-Eq.~\eqref{eq:sea3-tz-moment} supplies the moment bridge; for the final source
-certificate the leaky filters, finite EMAs, log-period state, initialization,
-and clamps are propagated explicitly.  Thus neither the surface quantity
-$T_{z,\eta}$ nor a bound on $T_{p,r}$ alone is substituted for a bound on the
-shipping tuner state.
+Eq.~\eqref{eq:sea3-matrix-spectrum} and the exact deployed period-source path.
+For an analytical spectral enclosure, Eq.~\eqref{eq:sea3-tz-moment} supplies
+the moment bridge; for the final source certificate the leaky filters, finite
+moment EMAs, log-period state, initialization, and clamps are propagated
+explicitly.  Thus neither the surface quantity $T_{z,\eta}$ nor a bound on
+$T_{p,r}$ alone is substituted for a bound on the shipping tuner state.
+
+The period-source path also has a startup branch that is part of the theorem
+language rather than a nuisance transient to be discarded.  Until
+\texttt{WavePeriodEstimator::getFrequencyHz()} is finite, shipping code supplies
+the fixed $0.2$ Hz prior.  The tuner consumes that source before the current
+sample advances the WavePeriodEstimator, so the first newly finite estimator
+frequency can affect the tuner no earlier than the following valid sample.
+Takeover uses the first finite positive value and does not wait for
+\texttt{WavePeriodEstimator::isReady()}.  Therefore the final SEA0/P2 bridge
+must enclose both the prior-driven and estimator-driven branches and their
+one-sample takeover edge.
 
 The same qualification is essential for acceleration variance.  The ideal
 JONSWAP high-frequency elevation tail is proportional to $\omega^{-5}$, whereas
@@ -89,10 +99,10 @@ certified vessel/IMU response and the deployed finite wave band are included.
 SEA0 must bound that response-weighted, band-limited statistic; it must not use
 an unbanded JONSWAP acceleration variance as a theorem assumption.
 
-The $0.03$--$1.2$ Hz numbers quoted in the screening estimates are therefore
-bounds on the \emph{committed tuning-frequency channel}, not an asserted
-$T_p$ range for the physical sea.  The SEA3 P2 refinement may use a tighter
-$T_z/T_p$ relation only after SEA0 has certified it over the declared
-JONSWAP/PM mixture and directional response family and propagated it through
-the exact estimator state.  This response-plus-estimator bridge is a SEA0
-promotion gate, not an optional tightening of the later P2/P3 search.
+The current $0.03$--$1.2$ Hz range is consequently a bound on the
+\emph{committed tuning-frequency channel}, not an asserted $T_p$ range for the
+physical sea.  The SEA3 P2 refinement may use a tighter $T_z/T_p$ relation only
+after SEA0 has certified it over the declared JONSWAP/PM mixture and directional
+response family and propagated it through the exact prior/estimator source
+state.  This response-plus-estimator bridge is a SEA0 promotion gate, not an
+optional tightening of the later P2/P3 search.
