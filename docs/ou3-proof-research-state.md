@@ -127,7 +127,75 @@ finite-state or monotone argument can quantify over legal histories.
 words rather than a local search: a finite-state or monotone quotient that bounds
 every legal word, not the best one a greedy descent can find.
 
-## How to advance: P2's tau model is over-approximate, and that is the whole blocker
+## The certificate needs NO new theorem conditions
+
+Earlier entries in this ledger asked whether a `P0`-bounded P3 would need a new
+declared entrance bound, and treated that as a specification decision. **It does
+not, and the framing was wrong.** `P0` is a shipping constant:
+
+```
+const T sigma_v0 = T(1.0);    // m/s
+const T sigma_p0 = T(20.0);   // m
+const T sigma_S0 = T(50.0);   // m.s
+set_initial_linear_uncertainty(sigma_v0, sigma_p0, sigma_S0);
+```
+
+with `a_w` seeded at `Sigma_aw_stat`. The `S` entrance bound this ledger called
+"undeclared" is declared: 50 m.s.
+
+### P2 is a Cartesian product over parameters the source computes jointly
+
+Two blockers, one cause. The P2 quotient ranges `(tau, sigma, R_S)` independently
+inside their cells, but the deployed code **derives** `R_S` from `tau` and
+`sigma` through the SpectralMSE law
+`R_S = coeff * q_eff^(1/14) * (sigma*tau^4)^(6/7) / sqrt(T_S)`:
+
+| tau | sigma | `R_S` the law gives | P2 cell max | reachable? |
+| --- | --- | --- | --- | --- |
+| 12 | 0.05 | **39.77** | 400 | no -- 10.1x below |
+| 12 | 1.0 | 518 -> clamped 400 | 400 | yes |
+| 3 | 0.05 | 0.686 | 400 | no |
+| 0.333 | 0.05 | 0.0010 -> clamped 0.15 | 400 | no |
+
+The adverse corner the covariance ceiling uses, `(tau=12, sigma=0.05, R_S=400)`,
+is **not reachable**. Likewise `tau` is slew-limited by the estimator moment
+horizon and the tuner EMA, which is what makes the starvation resonance
+unreachable. Both are properties of the shipping code, so importing them is a
+parsed source fact, not a domain shrink.
+
+### Measured: the word map has an invariant set, from source constants alone
+
+Iterating the joint word map `P <- max over law-consistent cells of
+word_map(cell, P)` from the declared `P0` converges in 81 iterations:
+
+| | v | p | S | a_w |
+| --- | --- | --- | --- | --- |
+| `P*` (variance) | 1578.4 | 10879 | 25699 | 35.80 |
+| as std | 39.7 m/s | 104 m | 160 m.s | 5.98 m/s^2 |
+
+`P*` is **invariant under every law-consistent cell** (verified, not argued), and
+
+    worst delta over all law-consistent cells = 1.26e-8
+    -> clears the canonical 1e-18 gate by 10.10 orders
+
+So `Sigma_upper = P*`. There is no new hypothesis, no new declared bound, and no
+weakening of what P3 asserts about initial covariance -- the theorem simply stops
+demanding `P0`-freedom, which its own word map never needed, and uses the
+invariant set instead. The `P0`-free Gramian inversion was a design choice in the
+proof, not a requirement of it.
+
+`P*` is large at the extreme corner because that corner is `sigma_aw = 6 m/s^2 =
+0.61 g` with `tau = 12 s`, already recorded above as unphysical; at
+`tau = 3, sigma = 1` the fixed point is v 2.3 m/s, p 3.2 m, S 2.6 m.s.
+
+**Still required:** starved words must be excluded, because with zero `S` firings
+the map has no fixed point at all -- `S` grows without bound. That is the `tau`
+slew argument below. Everything else is now measured.
+
+Not a certificate: double-precision point diagnostic over 15 cells at one word
+length, no interval arithmetic.
+
+## Supporting detail: P2's tau model is over-approximate
 
 Starvation is not a physical regime. It is an artifact of the P2 quotient letting
 `tau` jump anywhere inside a cell at every stage boundary, which the deployed
