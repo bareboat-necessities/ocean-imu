@@ -9,6 +9,7 @@ import unittest
 ROOT = Path(__file__).resolve().parents[2]
 TOOLS = ROOT / "tools"
 WORKFLOWS = ROOT / ".github" / "workflows"
+VALIDATION = ROOT / "tests" / "validation"
 
 
 class Ou3ProofCleanupTest(unittest.TestCase):
@@ -61,6 +62,15 @@ class Ou3ProofCleanupTest(unittest.TestCase):
                 if module in text:
                     offenders.append(f"retired reference {module}: {path.name}")
         self.assertEqual([], offenders, "\n".join(offenders))
+
+    def test_no_superseded_sea3_sizing_scaffolding_remains(self):
+        retired = {
+            TOOLS / "ou3_sea3_initial_estimates.py",
+            TOOLS / "ou3_sea3_initial_estimates.json",
+            VALIDATION / "test_ou3_sea3_initial_estimates.py",
+        }
+        offenders = [str(path.relative_to(ROOT)) for path in sorted(retired) if path.exists()]
+        self.assertEqual([], offenders, "retired SEA3 sizing scaffolding returned")
 
     def test_no_retired_extra_proof_workflows_remain(self):
         retired = {
