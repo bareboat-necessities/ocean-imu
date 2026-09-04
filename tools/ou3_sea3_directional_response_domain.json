@@ -1,6 +1,6 @@
 {
-  "schema_version": "OU3_SEA3_DIRECTIONAL_RESPONSE_DOMAIN_V2",
-  "qualification": "UNIFORM_COMPLEX_DIRECTIONAL_RAO_FAMILY",
+  "schema_version": "OU3_SEA3_DIRECTIONAL_RESPONSE_DOMAIN_V3",
+  "qualification": "UNIFORM_COMPLEX_DIRECTIONAL_RAO_ENVELOPE_FAMILY",
   "sea_modes_max": 3,
   "directional_spectrum_contract": {
     "component_spectra": "JONSWAP_or_PM",
@@ -9,24 +9,39 @@
     "spreading_parameter": "nonnegative_finite",
     "significant_height_partition": "sum_r H_r^2 = H_s^2"
   },
-  "reasonable_RAO_range_definition": "All finite linear vessel/CoG response operators on the deployed response band, with arbitrary complex phase, frequency dependence, heading dependence, and cross-axis coupling, provided the resulting execution remains inside the separately declared P1 Normal-Live hard response/source branch. No representative hull, nominal RAO, or discrete RAO catalog is selected.",
+  "reasonable_RAO_range_definition": "All finite linear six-DOF vessel response operators whose zero-lever-arm CoG translational projection h(f,theta) lies below the declared continuum envelope ||h||_2 <= G min(1,(f_c/f)^p), with G in [0,4], f_c in [0.03,1.2] Hz, p>=2, arbitrary complex phase, arbitrary frequency/heading variation below that envelope, and arbitrary cross-axis coupling. Rotational response remains arbitrary subject to the separately declared P1 Normal-Live body-rate/attitude source bounds. This is a broad deployment envelope, not one nominal hull and not a finite RAO catalog.",
   "response_contract": {
-    "definition": "a_hat(omega,theta)=omega^2 h(omega,theta) eta_hat(omega,theta)",
+    "definition": "a_hat(f,theta)=-(2*pi*f)^2 h(f,theta) eta_hat(f,theta)",
     "response_vector_dimension": 3,
     "six_dof_parent_RAO_allowed": true,
-    "zero_lever_arm_translation_projection": "h is the CoG translational projection of an arbitrary finite six-DOF parent RAO; rotational response is handled by the attitude/measurement theorem blocks and is not converted into a fictitious translational lever-arm term",
-    "gain_parameter_definition": "G = ess sup_(omega,theta) ||h(omega,theta)||_2",
-    "gain_quantifier": "for every finite G >= 0",
-    "fixed_numeric_RAO_gain_cap_used": false,
+    "zero_lever_arm_translation_projection": "h is the CoG translational projection of the parent six-DOF RAO. On the theorem's zero-lever-arm branch, rotational motion does not create a fictitious translational lever-arm acceleration.",
+    "envelope_definition": "||h(f,theta)||_2 <= G * min(1,(f_c/f)^p) for f>0",
+    "peak_translation_gain_range": [0.0, 4.0],
+    "rolloff_corner_hz_range": [0.03, 1.2],
+    "high_frequency_rolloff_power_min": 2.0,
+    "worst_envelope_member": {
+      "peak_translation_gain": 4.0,
+      "rolloff_corner_hz": 1.2,
+      "high_frequency_rolloff_power": 2.0
+    },
+    "worst_member_dominates_entire_parameter_box": true,
+    "single_nominal_RAO_used": false,
+    "finite_RAO_grid_used": false,
     "phase_quantifier": "arbitrary complex phase",
-    "arbitrary_frequency_dependence_within_band": true,
+    "arbitrary_frequency_dependence_below_envelope": true,
     "arbitrary_directional_dependence": true,
     "arbitrary_cross_axis_coupling_subject_to_PSD": true,
-    "finite_response_band_hz": [0.009999999776482582, 6.0],
-    "finite_response_band_source_note": "The lower endpoint is the exact binary32 value of the deployed 0.01f source literal; the physical label remains 0.01 Hz.",
-    "cross_axis_outer_product_retained": true,
-    "independent_cartesian_axis_boxes_used": false,
-    "uniform_moment_theorem": "For every finite G, tr(M_disp)<=G^2 H_s^2/16, tr(M_vel)<=omega_hi^2 G^2 H_s^2/16, tr(M_acc)<=omega_hi^4 G^2 H_s^2/16. The proof is algebraic in G; no RAO grid is sampled."
+    "shipping_sigma_band_hz": [0.009999999776482582, 6.0],
+    "shipping_sigma_band_source_note": "The lower endpoint is the exact binary32 value of the deployed 0.01f source literal; the physical label remains 0.01 Hz.",
+    "unbanded_acceleration_moment_is_finite_from_response_rolloff": true,
+    "uniform_moment_theorem": "For every member of the continuum parameter box and every admissible directional spectrum, tr(M_disp)<=G^2 H_s^2/16, tr(M_vel)<=(2*pi*f_c)^2 G^2 H_s^2/16, and tr(M_acc)<=(2*pi*f_c)^4 G^2 H_s^2/16. Because these bounds are monotone in G and f_c and p>=2, the single envelope corner (G_max,f_c_max,p_min) proves the whole RAO range; it is not a representative RAO."
+  },
+  "engineering_basis": {
+    "status": "DECLARED_BROAD_DEPLOYMENT_ENVELOPE_NOT_HULL_IDENTIFICATION",
+    "high_frequency_rolloff_reason": "Linear monohull RAO models attenuate sufficiently short waves; the theorem assumes the deliberately weak second-order-or-faster magnitude rolloff needed to make acceleration response moments finite.",
+    "gain_upper_rationale": "G<=4 is a 12.04 dB bound on the norm of the full three-axis CoG translational response vector, allowing substantial resonance while remaining a finite robust deployment envelope.",
+    "rolloff_corner_rationale": "The upper corner is the deployed 1.2 Hz wave-tuning safety ceiling; source comments identify 0.83 s as shorter than a sea a hull is intended to respond to. Lower response corners are included automatically.",
+    "external_reference": "Jensen, Mansour & Olsen, Ocean Engineering 31 (2004) 61-85, doi:10.1016/S0029-8018(03)00108-2, gives closed-form monohull heave/pitch/roll response functions from principal dimensions and operational profile; it motivates using a response family rather than one identified hull but is not treated as a proof that every vessel satisfies this deployment envelope."
   },
   "provenance": {
     "repository_owned_hull_RAO_required_for_family_theorem": false,
