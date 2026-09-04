@@ -55,10 +55,9 @@ jobs:
 
           t = "doc/kalman_ou_iii/w3d-iss-stability.tex-part"
           replace_exact(t,
-              " 0<r_-&\\le r_{S,k}\\le r_+<\\infty,&\n 0<T_{S,-}&\\le T_{S,k}\\le T_{S,+}<\\infty,\n \\label{eq:iss-source-bounds}\n\\end{align}\nand uniformly positive accepted measurement covariances.",
-              " 0<\\sigma_{aw,k}^{\\rm proc}&\\le \\sigma_{aw,+}^{\\rm proc}<\\infty,&\n 0<r_-&\\le r_{S,k}\\le r_+<\\infty,\\\\\n 0<T_{S,-}&\\le T_{S,k}\\le T_{S,+}<\\infty.\n \\label{eq:iss-source-bounds}\n\\end{align}\nFor the deployed source family used by the machine certificate, the source\nclamps are $f_{\\rm tune}\\le\\SI{1.2}{Hz}$,\n$\\sigma_{aw,+}^{\\rm proc}=\\SI{4}{m/s^2}$, $r_+=\\SI{100}{m.s}$, and\n$T_{S,+}=\\SI{0.15}{s}$.  The dynamically selected EMA horizon is separately\nclamped at $\\SI{35}{s}$.  These are implementation-enforced theorem-domain\nbounds rather than replay-fitted extrema.  Accepted measurement covariances\nremain uniformly positive.")
+              "and uniformly positive accepted measurement covariances.",
+              "For the deployed source family used by the machine certificate, the source\nclamps are $f_{\\rm tune}\\le\\SI{1.2}{Hz}$,\n$\\sigma_{aw,k}^{\\rm proc}\\le\\SI{4}{m/s^2}$, $r_{S,k}\\le\\SI{100}{m.s}$, and\n$T_{S,k}\\le\\SI{0.15}{s}$.  The dynamically selected EMA horizon is separately\nclamped at $\\SI{35}{s}$.  These are implementation-enforced theorem-domain\nbounds rather than replay-fitted extrema, together with uniformly positive\naccepted measurement covariances.")
 
-          # Fail if the old declarations survived anywhere in the source/proof surface.
           needles = [
               "MAX_TUNE_FREQ_HZ = 1.5f",
               "MAX_SIGMA_A = 6.0f",
