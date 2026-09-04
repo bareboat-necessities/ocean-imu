@@ -39,6 +39,16 @@ certificate the leaky filters, finite EMAs, log-period state, initialization,
 and clamps are propagated explicitly.  Thus a bound on $T_{p,r}$ alone is never
 substituted for a bound on the tuner state.
 
+The same qualification is essential for acceleration variance.  The ideal
+JONSWAP high-frequency elevation tail is proportional to $\omega^{-5}$, whereas
+specific acceleration multiplies elevation power by $\omega^4$.  An unbounded
+idealized acceleration second moment would therefore contain an asymptotic
+$\int d\omega/\omega$ term and is not a finite certificate quantity.  The
+heuristic scaling $\sigma_{a}T_p^2/H_s=O(1)$ becomes usable only after the
+certified vessel/IMU response and the deployed finite wave band are included.
+SEA0 must bound that response-weighted, band-limited statistic; it must not use
+an unbanded JONSWAP acceleration variance as a theorem assumption.
+
 The $0.03$--$1.2$ Hz numbers quoted in the screening estimates are therefore
 bounds on the \emph{committed tuning-frequency channel}, not an asserted
 $T_p$ range for the physical sea.  The SEA3 P2 refinement may use a tighter
