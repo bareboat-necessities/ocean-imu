@@ -14,6 +14,7 @@ mod = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(mod)
 
 import ou3_sea3_directional_p2_ha_feasibility as sea3  # noqa: E402
+import ou3_sea3_p1_compatibility as sea3_p1  # noqa: E402
 import ou3_sea3_physical_admissibility as sea3_phys  # noqa: E402
 
 
@@ -108,6 +109,23 @@ class SourceDomainContractTests(unittest.TestCase):
         )
         self.assertEqual(d["repository_total_Hs_upper_m"], 8.5)
         self.assertFalse(d["left_language_inclusion_closed"])
+
+    def test_sea3_cartesian_sea_x_rao_domain_is_rejected_before_p1(self):
+        d = sea3_p1.build()
+        self.assertEqual(sea3_p1.validate(d), [])
+        self.assertTrue(d["cartesian_product_refuted_by_analytical_witness"])
+        self.assertTrue(d["coupled_SEA3_domain_required"])
+        self.assertFalse(d["independent_cartesian_sea_x_RAO_domain_is_P1_sound"])
+        self.assertGreater(
+            d["witness"]["validated_acceleration_mean_square_lower_m2_s4"],
+            d["witness"]["P1_cap_squared_upper_m2_s4"],
+        )
+        self.assertGreater(d["witness"]["validated_acceleration_RMS_lower_mps2"], 4.0)
+        self.assertTrue(
+            d["coupled_domain_contract"]["finite_window_deterministic_response_certificate_required"]
+        )
+        self.assertFalse(d["finite_window_realization_certificate_closed"])
+        self.assertFalse(d["L_actual_sea_subset_Lhat_SEA3_closed"])
 
     def test_sea3_rao_family_right_inclusion_is_part_of_the_canonical_source_contract(self):
         """`ou3-proof` executes this file, so the RAO bridge has no side workflow."""
