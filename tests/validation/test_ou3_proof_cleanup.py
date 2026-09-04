@@ -100,6 +100,28 @@ class Ou3ProofCleanupTest(unittest.TestCase):
             paper.index(r"\input{w3d-sea3-period-bridge.tex-part}"),
         )
 
+    def test_canonical_workflow_has_retired_full_p2_history_route(self):
+        workflow = (WORKFLOWS / "ou3-proof.yml").read_text(encoding="utf-8")
+        retired = (
+            "ou3_p3_p2_v1_history_frontier",
+            "ou3_p3_p2_v1_stage_phase_translation",
+            "ou3_p3_p2_v1_full_state_join",
+            "ou3_p4_p3_metric_attachment",
+            "ou3_p4_signed_joseph_feasibility",
+            "800 * 26",
+        )
+        offenders = [name for name in retired if name in workflow]
+        self.assertEqual([], offenders, "old history/endpoint proof route is still canonical")
+
+    def test_canonical_workflow_uses_sea3_dynamic_riccati_route(self):
+        workflow = (WORKFLOWS / "ou3-proof.yml").read_text(encoding="utf-8")
+        for module in (
+            "ou3_sea3_dynamic_source_certificate",
+            "ou3_sea3_riccati_metric_p3",
+            "ou3_sea3_riccati_metric_p4",
+        ):
+            self.assertIn(module, workflow)
+
 
 if __name__ == "__main__":
     unittest.main()
