@@ -1,6 +1,6 @@
 {
-  "schema_version": "OU3_SEA3_DIRECTIONAL_RESPONSE_DOMAIN_V1",
-  "qualification": "PROVISIONAL_DIRECTIONAL_RESPONSE_HYPOTHESIS_NOT_HULL_RAO_DATA",
+  "schema_version": "OU3_SEA3_DIRECTIONAL_RESPONSE_DOMAIN_V2",
+  "qualification": "UNIFORM_COMPLEX_DIRECTIONAL_RAO_FAMILY",
   "sea_modes_max": 3,
   "directional_spectrum_contract": {
     "component_spectra": "JONSWAP_or_PM",
@@ -9,20 +9,31 @@
     "spreading_parameter": "nonnegative_finite",
     "significant_height_partition": "sum_r H_r^2 = H_s^2"
   },
+  "reasonable_RAO_range_definition": "All finite linear vessel/CoG response operators on the deployed response band, with arbitrary complex phase, frequency dependence, heading dependence, and cross-axis coupling, provided the resulting execution remains inside the separately declared P1 Normal-Live hard response/source branch. No representative hull, nominal RAO, or discrete RAO catalog is selected.",
   "response_contract": {
     "definition": "a_hat(omega,theta)=omega^2 h(omega,theta) eta_hat(omega,theta)",
     "response_vector_dimension": 3,
-    "response_vector_2_norm_upper": 4.0,
+    "six_dof_parent_RAO_allowed": true,
+    "zero_lever_arm_translation_projection": "h is the CoG translational projection of an arbitrary finite six-DOF parent RAO; rotational response is handled by the attitude/measurement theorem blocks and is not converted into a fictitious translational lever-arm term",
+    "gain_parameter_definition": "G = ess sup_(omega,theta) ||h(omega,theta)||_2",
+    "gain_quantifier": "for every finite G >= 0",
+    "fixed_numeric_RAO_gain_cap_used": false,
+    "phase_quantifier": "arbitrary complex phase",
+    "arbitrary_frequency_dependence_within_band": true,
+    "arbitrary_directional_dependence": true,
+    "arbitrary_cross_axis_coupling_subject_to_PSD": true,
     "finite_response_band_hz": [0.009999999776482582, 6.0],
     "finite_response_band_source_note": "The lower endpoint is the exact binary32 value of the deployed 0.01f source literal; the physical label remains 0.01 Hz.",
     "cross_axis_outer_product_retained": true,
     "independent_cartesian_axis_boxes_used": false,
-    "gain_cap_rationale": "The 4.0 gain (12.04 dB) is a deliberately loose feasibility hypothesis, not a measured or identified hull RAO. It is used only to make the finite-band response-moment coefficient explicit; the SEA3-to-P2 inclusion certificate is required to be independent of this numerical gain. Replace this cap with a repository-owned vessel/IMU response model or accepted deployment hypothesis before physical SEA0 promotion."
+    "uniform_moment_theorem": "For every finite G, tr(M_disp)<=G^2 H_s^2/16, tr(M_vel)<=omega_hi^2 G^2 H_s^2/16, tr(M_acc)<=omega_hi^4 G^2 H_s^2/16. The proof is algebraic in G; no RAO grid is sampled."
   },
   "provenance": {
-    "repository_owned_hull_RAO_present": false,
+    "repository_owned_hull_RAO_required_for_family_theorem": false,
     "measured_vessel_response_used": false,
     "trajectory_fit_used": false,
-    "physical_SEA0_promotable_from_this_domain": false
+    "single_nominal_RAO_used": false,
+    "finite_RAO_grid_used": false,
+    "physical_SEA0_promotable_from_this_domain_alone": false
   }
 }
