@@ -47,6 +47,34 @@ class Ou3ProofCleanupTest(unittest.TestCase):
                     offenders.append(f"retired reference {module}: {path.name}")
         self.assertEqual([], offenders, "\n".join(offenders))
 
+    def test_no_retired_history_graph_or_endpoint_attachment_files_remain(self):
+        retired_tools = {
+            "ou3_p3_p2_v1_history_frontier.py",
+            "ou3_p3_p2_v1_stage_phase_translation.py",
+            "ou3_p3_p2_v1_full_state_join.py",
+            "ou3_p3_canonical_gate.py",
+            "ou3_p4_p3_metric_attachment.py",
+            "ou3_p4_accelerometer_corotated_aw.py",
+            "ou3_p4_vector_remainder_sector.py",
+            "ou3_p4_signed_joseph_feasibility.py",
+            "ou3_p4_signed_vector_directional_coefficients.py",
+            "ou3_p4_source_correlated_reset_budget.py",
+            "ou3_p4_source_path_reachability.py",
+            "ou3_p4_source_node_cells.py",
+            "ou3_p4_sample_clock_source_refinement.py",
+            "ou3_p4_source_word_timing.py",
+            "ou3_p4_canonical_gate.py",
+        }
+        offenders = []
+        for name in sorted(retired_tools):
+            tool = TOOLS / name
+            test = VALIDATION / f"test_{name}"
+            if tool.exists():
+                offenders.append(f"retired tool: {tool.relative_to(ROOT)}")
+            if test.exists():
+                offenders.append(f"retired test: {test.relative_to(ROOT)}")
+        self.assertEqual([], offenders, "\n".join(offenders))
+
     def test_no_superseded_p3_route_selection_diagnostics_remain(self):
         retired_names = {
             "ou3_p3_four_max_global_label_witness.py",
