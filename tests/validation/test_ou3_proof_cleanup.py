@@ -84,13 +84,6 @@ class Ou3ProofCleanupTest(unittest.TestCase):
         offenders = [name for name in sorted(retired) if (WORKFLOWS / name).exists()]
         self.assertEqual([], offenders, "retired extra proof workflows returned")
 
-    def test_sea3_directional_bridge_is_bound_to_canonical_source_contract(self):
-        source_contract_test = (VALIDATION / "test_ou3_source_domain_contract.py").read_text(
-            encoding="utf-8"
-        )
-        self.assertIn("sea3.build_inclusion()", source_contract_test)
-        self.assertIn("SEA3_TO_P2_INCLUSION_CERTIFICATE", source_contract_test)
-
     def test_master_paper_includes_retained_sea3_theorem_parts(self):
         paper = (OU3_DOC / "kalman_ou-w3d.tex").read_text(encoding="utf-8")
         self.assertIn(r"\input{w3d-sea3-stability-theorem.tex-part}", paper)
@@ -100,9 +93,12 @@ class Ou3ProofCleanupTest(unittest.TestCase):
             paper.index(r"\input{w3d-sea3-period-bridge.tex-part}"),
         )
 
-    def test_canonical_workflow_has_retired_full_p2_history_route(self):
+    def test_canonical_workflow_does_not_execute_old_p2_inclusion_or_history_route(self):
         workflow = (WORKFLOWS / "ou3-proof.yml").read_text(encoding="utf-8")
         retired = (
+            "test_ou3_source_domain_contract",
+            "ou3_sea3_directional_p2_ha_feasibility",
+            "SEA3_TO_P2_INCLUSION_CERTIFICATE",
             "ou3_p3_p2_v1_history_frontier",
             "ou3_p3_p2_v1_stage_phase_translation",
             "ou3_p3_p2_v1_full_state_join",
@@ -111,7 +107,7 @@ class Ou3ProofCleanupTest(unittest.TestCase):
             "800 * 26",
         )
         offenders = [name for name in retired if name in workflow]
-        self.assertEqual([], offenders, "old history/endpoint proof route is still canonical")
+        self.assertEqual([], offenders, "old P2/history/endpoint proof route is still canonical")
 
     def test_canonical_workflow_uses_sea3_dynamic_riccati_route(self):
         workflow = (WORKFLOWS / "ou3-proof.yml").read_text(encoding="utf-8")

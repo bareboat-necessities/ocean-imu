@@ -31,7 +31,7 @@ permissions:
 jobs:
   source-foundation:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v6
         with:
@@ -40,12 +40,11 @@ jobs:
       - name: Compile proof tooling
         run: make -C tests/validation build
 
-      - name: Enforce canonical proof architecture and retained linear primitives
+      - name: Enforce new canonical architecture and retained local linear primitives
         working-directory: tests/validation
         run: |
           python3 -m unittest -v \
             test_ou3_proof_cleanup \
-            test_ou3_source_domain_contract \
             test_ou3_translational_uco_ucc \
             test_ou3_full_process_ucc \
             test_ou3_vector_uco_certificate \
