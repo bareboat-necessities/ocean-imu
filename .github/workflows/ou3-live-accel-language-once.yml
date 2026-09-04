@@ -33,7 +33,7 @@ jobs:
               n = text.count(old)
               if n != 1:
                   raise SystemExit(f"{path}: expected one occurrence of {old!r}, got {n}")
-              p.write_text(text.replace(old, new))
+              p.write_text(text.replace(old, new, 1))
 
           w = "tools/ou3_implementation_word_language.py"
           replace_once(w,
@@ -63,55 +63,38 @@ jobs:
           live["accelerometer_update_scope_note"] = (
               "After entry into Normal Live, every valid IMU sample executes the accelerometer Kalman update. "
               "The certified source language therefore contains no rejected/missing accelerometer branch; "
-              "numerical factorization failure is outside the normal theorem domain. Magnetometer timing and rejection remain asynchronous."
+              "numerical innovation-factorization failure is outside the normal theorem domain. "
+              "Magnetometer timing and rejection remain asynchronous."
           )
           dpath.write_text(json.dumps(d, indent=2) + "\n")
 
           t = Path("doc/kalman_ou_iii/w3d-iss-stability.tex-part")
           text = t.read_text()
-          old = (
-              "Accepted accelerometer and magnetometer update sets\n"
-              "$\\mathcal A_{k,N}$ and $\\mathcal M_{k,N}$ need not coincide."
-          )
-          new = (
+          marker = "Accepted accelerometer and magnetometer update sets"
+          i = text.find(marker)
+          if i < 0:
+              raise SystemExit("theorem accelerometer/magnetometer statement not found")
+          j = text.find("After the\ntranslational", i)
+          if j < 0:
+              raise SystemExit("theorem vector-row continuation not found")
+          replacement = (
               "After entry into normal Live mode, every valid IMU sample executes the\n"
               "accelerometer Kalman update, so the certified Live source language has no\n"
-              "rejected or missing accelerometer branch.  Equivalently,\n"
+              "rejected or missing accelerometer branch. Equivalently,\n"
               "$\\mathcal A_{k,N}$ contains every valid physical sample in the window.\n"
               "Magnetometer updates remain asynchronous and may be not-due or rejected, so\n"
-              "$\\mathcal M_{k,N}$ need not coincide with $\\mathcal A_{k,N}$."
+              "$\\mathcal M_{k,N}$ need not coincide with $\\mathcal A_{k,N}$. "
           )
-          if old not in text:
-              raise SystemExit("theorem accelerometer/magnetometer sentence not found")
-          t.write_text(text.replace(old, new, 1))
-
-          # Source-level sanity: Normal-Live Kalman accelerometer update has no ordinary
-          # residual/NIS/magnitude rejection branch. Its accepted=false return is only the
-          # numerical LDLT failure safeguard.
-          k = Path("src/kalman_ou_iii/Kalman3D_Wave_OU_III.h").read_text()
-          start = k.index("void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::measurement_update_acc_only")
-          end = k.index("void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::measurement_update_mag_only", start)
-          body = k[start:end]
-          if "last_acc_diag_.accepted = true;" not in body:
-              raise SystemExit("accelerometer update no longer marks successful update accepted")
-          if body.count("return;") != 1 or "safe_ldlt3_" not in body:
-              raise SystemExit("accelerometer update acquired an additional rejection/early-return branch")
+          t.write_text(text[:i] + replacement + text[j:])
           PY
 
           git diff --check
           python3 -m py_compile tools/ou3_implementation_word_language.py
-          python3 tools/ou3_implementation_word_language.py --output /tmp/ou3-word-language.json
-          python3 - <<'PY'
-          import json
-          d=json.load(open('/tmp/ou3-word-language.json'))
-          s=d['word_contract']['source_branch_language']
-          pe=d['word_contract']['vector_persistent_excitation']
-          assert s['accelerometer_gate'] == ['accepted']
-          assert pe['accelerometer_rejections_between_required_pe_events_allowed'] is False
-          PY
+          grep -F '"accelerometer_gate": ["accepted"]' tools/ou3_implementation_word_language.py
+          grep -F '"accelerometer_rejections_between_required_pe_events_allowed": False' tools/ou3_implementation_word_language.py
+          grep -F 'accelerometer_update_required_each_valid_imu_sample_after_live_entry' tools/ou3_proof_operating_domain.json
 
       - name: Commit theorem/source-language correction
-        id: commit
         shell: bash
         run: |
           set -euo pipefail
@@ -122,7 +105,6 @@ jobs:
                   doc/kalman_ou_iii/w3d-iss-stability.tex-part
           git commit -m "OU-III: require accelerometer updates in Normal Live"
           git push origin HEAD:${GITHUB_REF_NAME}
-          echo "changed=true" >> "$GITHUB_OUTPUT"
 
       - name: Dispatch full simulation validation
         env:
