@@ -7,6 +7,7 @@ on:
     paths:
       - ".github/workflows/ou3-p3-apply-scheduler-patch.yml"
       - "tools/ou3_apply_scheduler_progress_proof_patch.py"
+      - "tools/ou3_apply_scheduler_progress_cleanup.py"
 
 permissions:
   contents: write
@@ -14,6 +15,7 @@ permissions:
 jobs:
   apply:
     runs-on: ubuntu-latest
+    timeout-minutes: 120
     steps:
       - uses: actions/checkout@v6
         with:
@@ -23,26 +25,81 @@ jobs:
       - name: Apply canonical P3 scheduler binding
         run: python3 tools/ou3_apply_scheduler_progress_proof_patch.py
 
+      - name: Apply scheduler proof cleanup
+        run: python3 tools/ou3_apply_scheduler_progress_cleanup.py
+
       - name: Compile scheduler proof producers
         run: |
           python3 -m py_compile \
             tools/ou3_source_reachable_matrix_p3.py \
+            tools/ou3_p3_four_max_global_label_witness.py \
             tools/ou3_p3_pseudo_scheduler_progress_certificate.py \
-            tests/validation/test_ou3_p3_pseudo_scheduler_progress_certificate.py
+            tools/ou3_p3_ordered_witness_covariance_diagnostic.py \
+            tests/validation/test_ou3_p3_four_max_global_label_witness.py \
+            tests/validation/test_ou3_p3_pseudo_scheduler_progress_certificate.py \
+            tests/validation/test_ou3_p3_ordered_witness_covariance_diagnostic.py
 
-      - name: Run scheduler progress certificate tests
+      - name: Run scheduler and ordered diagnostic unit tests
         working-directory: tests/validation
-        run: python3 -m unittest -v test_ou3_p3_pseudo_scheduler_progress_certificate
+        run: |
+          python3 -m unittest -v \
+            test_ou3_p3_four_max_global_label_witness \
+            test_ou3_p3_pseudo_scheduler_progress_certificate \
+            test_ou3_p3_ordered_witness_covariance_diagnostic
 
       - name: Run scheduler progress certificate
         run: |
           python3 tools/ou3_p3_pseudo_scheduler_progress_certificate.py \
             --output /tmp/ou3_p3_pseudo_scheduler_progress_certificate.json
 
-      - name: Commit canonical proof binding
+      - name: Enforce scheduler progress certificate
+        run: |
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/ou3_p3_pseudo_scheduler_progress_certificate.json'))
+          assert d['validation_pass'], d['validation_failures']
+          assert d['fixed_max_period_first_fire_samples'] == 33
+          assert d['certified_uniform_max_gap_samples'] == 33
+          assert d['former_635_sample_zero_fire_cycle_broken'] is True
+          assert d['former_starvation_cycle_pseudo_firings'] > 0
+          assert d['uniform_gap_within_translation_upper_bound'] is True
+          assert d['P3_PROMOTED'] is False
+          assert d['P4_PROMOTED'] is False
+          assert d['P5_PROMOTED'] is False
+          PY
+
+      - name: Run ordered point diagnostic
+        run: |
+          python3 tools/ou3_p3_ordered_witness_covariance_diagnostic.py \
+            --output /tmp/ou3_p3_ordered_witness_covariance_diagnostic.json
+
+      - name: Enforce ordered progress semantics
+        run: |
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/ou3_p3_ordered_witness_covariance_diagnostic.json'))
+          assert d['validation_pass'], d['validation_failures']
+          assert d['pseudo_period_change_preserves_elapsed_service_credit'] is True
+          assert d['pseudo_period_change_uses_fmod_semantics'] is False
+          assert d['scheduler_progress_certificate_consumed'] is True
+          assert d['scheduler_uniform_max_gap_samples'] == 33
+          assert d['P3_PROMOTED'] is False
+          assert d['P4_PROMOTED'] is False
+          assert d['P5_PROMOTED'] is False
+          PY
+
+      - name: Commit canonical scheduler proof maintenance
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add tools/ou3_source_reachable_matrix_p3.py
-          git commit -m "proof: bind P3 gap to progress-preserving scheduler"
+          git add -A \
+            tools/ou3_source_reachable_matrix_p3.py \
+            tools/ou3_p3_ordered_witness_covariance_diagnostic.py \
+            tests/validation/test_ou3_p3_ordered_witness_covariance_diagnostic.py \
+            tools/ou3_p3_pseudo_scheduler_starvation_witness.py \
+            tests/validation/test_ou3_p3_pseudo_scheduler_starvation_witness.py \
+            tools/ou3_p3_tau_ema_scheduler_cycle_diagnostic.py \
+            tests/validation/test_ou3_p3_tau_ema_scheduler_cycle_diagnostic.py \
+            .github/workflows/ou3-p3-whole-word-probe.yml
+          git commit -m "proof: restore source-independent S recurrence"
           git push origin HEAD:codex/ou3-p3-source-clock-recurrence
