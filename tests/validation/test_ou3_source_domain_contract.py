@@ -14,6 +14,7 @@ mod = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(mod)
 
 import ou3_sea3_directional_p2_ha_feasibility as sea3  # noqa: E402
+import ou3_sea3_physical_admissibility as sea3_phys  # noqa: E402
 
 
 def f32(value):
@@ -95,6 +96,18 @@ class SourceDomainContractTests(unittest.TestCase):
             },
         )
         self.assertEqual(d["periodic_aw_covariance_sync_proof"]["required_mode"], "PSD_NONEXPANSIVE")
+
+    def test_sea3_physical_height_period_coupling_is_part_of_the_source_contract(self):
+        d = sea3_phys.build()
+        self.assertEqual(sea3_phys.validate(d), [])
+        self.assertTrue(
+            d["three_partition_contract"]["independent_H_r_and_T_p_rectangular_extrema_forbidden"]
+        )
+        self.assertTrue(
+            d["three_partition_contract"]["independent_three_partition_H_maxima_forbidden"]
+        )
+        self.assertEqual(d["repository_total_Hs_upper_m"], 8.5)
+        self.assertFalse(d["left_language_inclusion_closed"])
 
     def test_sea3_rao_family_right_inclusion_is_part_of_the_canonical_source_contract(self):
         """`ou3-proof` executes this file, so the RAO bridge has no side workflow."""
