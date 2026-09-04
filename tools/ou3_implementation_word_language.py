@@ -148,7 +148,8 @@ def _word_contract(domain: dict, source: dict, trans: dict, vector: dict) -> dic
         ),
         "accelerometer_required_at_both_vector_times": True,
         "two_consecutive_accepted_magnetic_packets_required": True,
-        "arbitrary_rejections_between_required_pe_events_allowed": True,
+        "accelerometer_rejections_between_required_pe_events_allowed": False,
+        "magnetometer_rejections_between_required_pe_events_allowed": True,
         "hypothesis_origin": "DEPLOYMENT_THEOREM_ASSUMPTION_NOT_TRAJECTORY_FIT",
     })
     best = (spread or {}).get("best", {})
@@ -166,7 +167,7 @@ def _word_contract(domain: dict, source: dict, trans: dict, vector: dict) -> dic
             "dimension_change_multiplied_as_square_word": False,
         },
         "source_branch_language": {
-            "accelerometer_gate": ["accepted", "rejected"],
+            "accelerometer_gate": ["accepted"],
             "magnetometer_gate": ["not_due", "accepted", "rejected"],
             "S_zero_pseudo": ["not_due", "due"],
             "aw_covariance_sync": ["not_due", "due_psd_increment"],
@@ -305,8 +306,14 @@ def validate(d: dict) -> list[str]:
         failures.append("three-S detectability became a promotion fallback")
     if cw.get("one_sample_decrease_required") is not False:
         failures.append("one-sample contraction requirement reintroduced")
-    if word.get("source_branch_language", {}).get("joint_source_reachability_required") is not True:
+    source_lang = word.get("source_branch_language", {})
+    if source_lang.get("joint_source_reachability_required") is not True:
         failures.append("joint source reachability is not required")
+    if source_lang.get("accelerometer_gate") != ["accepted"]:
+        failures.append("Normal-Live language admits rejected accelerometer updates")
+    pe = word.get("vector_persistent_excitation", {})
+    if pe.get("accelerometer_rejections_between_required_pe_events_allowed") is not False:
+        failures.append("accelerometer rejection remains admissible between PE events")
     if d.get("pass") is not True:
         failures.append("word-language producer failed")
     if d.get("continuous_word_enclosed") is not False or d.get("nonlinear_word_enclosed") is not False:
