@@ -24,11 +24,16 @@ discarding source semantics:
    to a covariance upper first; only then are those covariance results enveloped
    for one current source endpoint.
 
-3. Tiny certified eigenvalue/margin scales are found from a rigorous positive
-   determinant/trace seed and then refined geometrically. Each accepted trial is
-   still certified with the same outward interval LDL^T predicate. This changes
-   only the search strategy; no matrix inequality, source cell, gate or
-   arithmetic trust boundary is relaxed.
+3. The canonical theorem only needs a certified lower large enough to survive
+   the fixed 1/2 precision-block join and the unchanged 1e-18 useful gate. For
+   each translation source/phase cell we therefore first test one conservative
+   4e-18 lower with the same outward interval LDL^T predicate. If that strict
+   test passes, no near-maximal eigenvalue search is needed for that cell. Cells
+   that do not pass the gate-directed trial fall back to the existing rigorous
+   determinant/trace seed plus geometric refinement. The auxiliary z-coordinate
+   identity floor used only to start the frozen-clock branch uses the rigorous
+   determinant/trace lower directly. No source cell, matrix inequality, gate,
+   arithmetic trust boundary, or theorem conclusion is relaxed.
 
 From a boundary lower ``rho_b I`` we propagate the full 4x4 interval covariance
 through 0..25 samples of the current staged source node in the fixed physical
@@ -77,6 +82,12 @@ PHASES = tuple(range(26))
 FROZEN_FRESH_HISTORY_SAMPLES = 13
 FROZEN_TRANSIENT_SAMPLES = tuple(range(1, FROZEN_FRESH_HISTORY_SAMPLES))
 LOG_MARGIN_REFINEMENT_STEPS = 20
+# The full H/A precision join multiplies the weakest conditional block by 1/2.
+# A certified translation lower near 4e-18 therefore leaves roughly a factor of
+# two above the frozen 1e-18 canonical gate even after outward downward rounding.
+GATE_DIRECTED_TRANSLATION_LOWER = math.nextafter(
+    4.0 * float(BASE.MIN_USEFUL_DELTA), math.inf
+)
 
 
 def I(x: float) -> Interval:
@@ -209,6 +220,24 @@ def _certified_delta(Pz, h: float, upper: list[float]) -> float:
     return _certified_identity_floor(_normalized_physical_matrix(Pz, h, upper))
 
 
+def _certified_delta_for_gate(Pz, h: float, upper: list[float]) -> float:
+    """Certify a join-safe translation lower with one SPD test when possible.
+
+    Canonical P3 uses the translation result only through a fixed 1/2 precision
+    join and the frozen 1e-18 gate. A near-maximal per-cell eigenvalue lower is
+    therefore unnecessary when the same interval predicate already proves a
+    conservative lower comfortably above 2e-18. The exact/refined route remains
+    the fail-closed fallback for any cell that does not pass this trial.
+    """
+    if len(upper) != 4 or any(not (math.isfinite(float(x)) and float(x) > 0.0) for x in upper):
+        raise ValueError("positive finite translation covariance upper required")
+    A = _normalized_physical_matrix(Pz, h, upper)
+    target = float(GATE_DIRECTED_TRANSLATION_LOWER)
+    if symmetric_positive_definite_ldlt(_minus_identity(A, target))[0]:
+        return BASE.down(target)
+    return _certified_identity_floor(A)
+
+
 @functools.lru_cache(maxsize=4)
 def common_boundary_floor(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     """Worst complete-segment floor over all sources and the full gap alphabet.
@@ -311,8 +340,11 @@ def phase_row(source_node: int, phase_samples: int, fr: dict, boundary: dict,
     path = Path(fr["path"]).resolve()
     h = float(fr["rt"]["clock"]["dt_binary32_s"])
     images = _phase_sequence_cached(t, rho, path)[r]
-    deltas = [_certified_delta(P, h, upper) for P in images]
-    phase_rhos = [_certified_identity_floor(P) for P in images]
+    deltas = [_certified_delta_for_gate(P, h, upper) for P in images]
+    # This auxiliary floor is used only to seed the frozen-clock branch. The
+    # determinant/trace theorem is already a strict certified eigenvalue lower,
+    # so refining it toward the maximal floor for all 20,800 cells is needless.
+    phase_rhos = [_det_trace_seed(P) for P in images]
     delta = min(deltas) if deltas else 0.0
     phase_rho = min(phase_rhos) if phase_rhos else 0.0
     return {
@@ -379,7 +411,7 @@ def _frozen_clock_branch(fr: dict, finite_rows: list[dict],
         for k in FROZEN_TRANSIENT_SAMPLES:
             for j, x in enumerate(xcells):
                 states[j] = SEG.one_step(states[j], node, x, h)
-            delta = min(_certified_delta(P, h, upper) for P in states)
+            delta = min(_certified_delta_for_gate(P, h, upper) for P in states)
             transient_rows += 1
             row = {
                 "kind": "frozen_clock_transient",
@@ -399,7 +431,7 @@ def _frozen_clock_branch(fr: dict, finite_rows: list[dict],
             zero, t, FROZEN_FRESH_HISTORY_SAMPLES, rt, path
         )
         tail_delta = min(
-            _certified_delta(row["posterior"], h, upper)
+            _certified_delta_for_gate(row["posterior"], h, upper)
             for row in tail_images
         )
         tail_nodes += 1
@@ -503,6 +535,9 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "one_complete_segment_common_boundary_floor_used": True,
         "minimum_gap_monotonicity_reduction_used": True,
         "validated_log_scale_margin_search_used": True,
+        "gate_directed_translation_margin_fast_path_used": True,
+        "gate_directed_translation_margin_trial_lower": BASE.down(GATE_DIRECTED_TRANSLATION_LOWER),
+        "phase_identity_floor_det_trace_seed_used": True,
         "older_process_covariance_discarded_at_each_boundary": True,
         "Riccati_order_monotonicity_used": True,
         "all_finite_clock_sample_phases_covered": True,
