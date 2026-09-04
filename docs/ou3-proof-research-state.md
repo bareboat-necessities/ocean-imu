@@ -127,7 +127,60 @@ finite-state or monotone argument can quantify over legal histories.
 words rather than a local search: a finite-state or monotone quotient that bounds
 every legal word, not the best one a greedy descent can find.
 
-## What canonical wiring actually requires: both sides, not one
+## The closed-form route CANNOT be fed to the canonical gate as it stands
+
+The chain exists on paper: `ou3_p3_p2_v1_full_state_join.build()` accepts a
+`translation_candidate`, and `ou3_p3_canonical_gate.build()` accepts a
+`p3_candidate`, so a parallel path could in principle let the **gate** render the
+verdict rather than this ledger asserting one. It cannot, and the reason is worth
+recording precisely.
+
+`TRANS.validate` requires 16 flags true. Audited against the closed-form
+construction, **6 can be claimed honestly, 1 is partial, and 9 cannot**:
+
+| can claim | cannot claim |
+| --- | --- |
+| `source_only` | `full_word_history_sufficient_quotient_consumed` |
+| `zero_lever_arm_branch` | `process_covariance_measurement_bounds_same_source_history` |
+| `dormant_transparent_vibration_guard_branch` | `same_history_covariance_evaluated_before_uniform_endpoint_envelope` |
+| `Riccati_order_monotonicity_used` | `full_4x4_translation_matrix_retained_inside_source_segments` |
+| `strongest_accelerometer_and_S_measurements_applied_every_sample` | `one_complete_segment_common_boundary_floor_used` |
+| `magnetometer_translation_jacobian_zero_on_declared_branch` | `older_process_covariance_discarded_at_each_boundary` |
+| | `all_finite_clock_sample_phases_covered` |
+| | `phase_26_is_next_stage_boundary_when_clock_advances` |
+| | `frozen_clock_absorbing_hold_branch_included` |
+
+plus the structural demands that `phase_samples == list(range(26))`,
+`endpoint_phase_count == 800*26`, and `boundary_floor` carry
+`all_800_sources_checked` with a strict `rho_z_identity_lower`.
+
+**The nine are not deficiencies in the closed-form bound. They describe the
+stepwise segment/phase architecture that it deliberately replaces.** There are no
+segment boundaries to discard covariance at, no 0..25 phase sweep because
+endpoint referencing removes that degree of freedom, and no same-history quotient
+because the mixed-word bound is deliberately cross-worst -- which is *stronger*,
+covering every legal word rather than one history at a time.
+
+Two are real scope limits rather than architecture mismatches, and should not be
+glossed with the rest: the construction is 3x3 on `(v, p, S)` and does not carry
+`a_w`, and the frozen-clock absorbing hold is not modelled.
+
+### Consequence
+
+Feeding the gate would require either setting flags that do not describe the
+construction, which is fabrication and is not an option, or revising the
+translation-candidate contract so it admits a closed-form architecture. The
+second is a proof-architecture decision for the project, not something this
+branch should do unilaterally: those flags encode real conservatism guarantees,
+and `older_process_covariance_discarded_at_each_boundary` in particular is a
+safety property whose closed-form analogue has to be argued, not dropped.
+
+**So this branch cannot produce a P3 verdict, and should not pretend the
+remaining work is plumbing.** What it can offer is a measured alternative
+construction with its own conservatism argument, for the project to accept or
+reject on the merits.
+
+## What replacing the canonical pair requires: both sides, not one
 
 Swapping the closed-form ceiling into the canonical producer alone does **not**
 reach the gate. The canonical floor is the limiter once the ceiling is repaired:
