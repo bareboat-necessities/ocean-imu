@@ -26,6 +26,7 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import struct
 from pathlib import Path
 
 import ou3_p4_source_path_reachability as PATH
@@ -36,6 +37,10 @@ DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
 ESTIMATOR = REPO / "src" / "tuner" / "WavePeriodEstimator.h"
 SCHEMA = 1
 QUALIFICATION = "OU3_P2_LIVE_ENTRY_WAVE_PERIOD_HANDOFF"
+
+
+def _f32(x: float) -> float:
+    return struct.unpack("!f", struct.pack("!f", float(x)))[0]
 
 
 def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
@@ -71,9 +76,14 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     f_max = float(constants["max_freq"])
     prior = float(domain["startup"]["tune_frequency_prior_hz"])
     screened = list(map(float, front["declared_inputs"]["screened_tuning_frequency_hz"]))
-    screened_contains_graph_clamp = (
+    # FRONT encloses the decimal source literals as reals, while the P2 graph
+    # deliberately models their binary32 runtime values.  Rounding the two
+    # FRONT range endpoints to binary32 must therefore reproduce the exact P2
+    # clamp endpoints.
+    screened_matches_graph_clamp = (
         len(screened) == 2
-        and screened[0] <= f_min <= f_max <= screened[1]
+        and _f32(screened[0]) == f_min
+        and _f32(screened[1]) == f_max
     )
     prior_inside_graph_numeric_range = f_min <= prior <= f_max
 
@@ -113,8 +123,8 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         failures.append("first-usable one-sample takeover edge disappeared")
     if fixed_prior_selector_reachable_in_normal_live:
         failures.append("fixed-prior selector branch remains reachable in Normal Live")
-    if not screened_contains_graph_clamp:
-        failures.append("SEA0 screened frequency interval no longer contains P2 clamp")
+    if not screened_matches_graph_clamp:
+        failures.append("SEA0 screened frequency interval no longer matches P2 float32 clamp")
     if not prior_inside_graph_numeric_range:
         failures.append("fixed startup prior left the P2 numeric frequency range")
     if not strict_ready_not_required:
@@ -156,7 +166,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
             "committed/staged state at the Live boundary"
         ),
         "existing_p2_full_frequency_range_is_conservative_for_future_live_staging":
-            screened_contains_graph_clamp,
+            screened_matches_graph_clamp,
         "strict_isReady_remains_diagnostic_only_for_live_entry": strict_ready_not_required,
         "P2_LIVE_ENTRY_WAVE_PERIOD_HANDOFF_CERTIFICATE":
             "PASS" if not failures else "FAIL",
