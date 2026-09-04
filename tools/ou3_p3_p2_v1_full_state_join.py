@@ -28,10 +28,14 @@ This avoids multiplying the new translation result by the retained lifted
 translation attenuation again.
 
 The attitude/bias covariance ceilings are evaluated from each legal P2-V1
-Pareto history first.  They depend on the same-history maximum pseudo cadence
-(through the word horizon) and maximum q_c.  Only after evaluating each legal
-history are the physical covariance results enveloped.  No Cartesian
-(tau,sigma,R_S) extrema are reintroduced.
+Pareto history first.  They retain the full covariance-word history for source
+correlation, while the post-vector-PE propagation is bounded only over the final
+certified PE recurrence window.  The declared word language says every
+normal-Live interval of that duration contains a complete two-packet vector-PE
+event, so choosing the final recurrence interval places the end of a certified
+PE event at most one recurrence window before the word endpoint.  Only after
+evaluating each legal history are the physical covariance results enveloped.
+No Cartesian (tau,sigma,R_S) extrema are reintroduced.
 
 This is a canonical-P3 candidate, not an alternate definition: the unique
 canonical gate still decides PASS from the frozen source/history, measurement,
@@ -55,6 +59,10 @@ DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
 KALMAN = REPO / "src" / "kalman_ou_iii" / "Kalman3D_Wave_OU_III.h"
 SCHEMA = 1
 JOIN_FACTOR = 0.5
+PE_RECURRENCE_QUANTIFIER = (
+    "every normal-Live interval of this duration contains at least one certified "
+    "two-packet vector-PE event"
+)
 
 
 def I(x: float) -> Interval:
@@ -79,16 +87,39 @@ def _source_contract(domain: dict) -> None:
             raise RuntimeError(f"shipping measurement source marker changed: {marker}")
 
 
-def _common_blocks(domain: dict) -> dict:
+def _common_blocks(domain: dict, domain_path: Path = DEFAULT_DOMAIN) -> dict:
     live = domain["normal_live"]
     vector = BASE.VECTOR.build()
     process = BASE.PROCESS.build()
+    words = BASE.WORDS.build(Path(domain_path).resolve())
     for label, failures in (
         ("vector", BASE.VECTOR.validate(vector)),
         ("process", BASE.PROCESS.validate(process)),
+        ("word-language", BASE.WORDS.validate(words)),
     ):
         if failures:
             raise RuntimeError(f"{label} prerequisite failed: {failures}")
+
+    word = words.get("word_contract", {})
+    if words.get("source_complete_relative_to_declared_theorem_hypotheses") is not True:
+        raise RuntimeError("H/A final-window bound requires source-complete declared word language")
+    if word.get("conditional_word_language", {}).get("ready") is not True:
+        raise RuntimeError("H/A final-window bound requires ready conditional word language")
+    pe = word.get("vector_persistent_excitation", {})
+    if pe.get("recurrence_quantifier") != PE_RECURRENCE_QUANTIFIER:
+        raise RuntimeError("vector-PE recurrence quantifier no longer covers every normal-Live interval")
+    if pe.get("hypothesis_origin") != "DEPLOYMENT_THEOREM_ASSUMPTION_NOT_TRAJECTORY_FIT":
+        raise RuntimeError("vector-PE recurrence is no longer a declared deployment theorem hypothesis")
+    if pe.get("accelerometer_required_at_both_vector_times") is not True:
+        raise RuntimeError("vector-PE event no longer requires both accelerometer packets")
+    if pe.get("two_consecutive_accepted_magnetic_packets_required") is not True:
+        raise RuntimeError("vector-PE event no longer requires the certified magnetic pair")
+
+    recurrence = BASE.pos(pe.get("recurrence_window_s"), "vector PE recurrence window")
+    declared_recurrence = BASE.pos(live.get("vector_pe_recurrence_window_s"), "declared PE recurrence")
+    if recurrence != declared_recurrence:
+        raise RuntimeError("word-language PE recurrence no longer matches the declared proof domain")
+
     sched = BASE.source_schedule()
     alpha6 = BASE.pos(BASE.vector_alpha6(live, vector), "declared alpha6")
     return {
@@ -97,6 +128,9 @@ def _common_blocks(domain: dict) -> dict:
         "process": process,
         "sched": sched,
         "alpha6": alpha6,
+        "word_language": words,
+        "final_pe_recurrence_s": recurrence,
+        "vector_PE_recurrence_quantifier_consumed": True,
     }
 
 
@@ -127,6 +161,8 @@ def _history_bias_upper(summary: dict, mode: str, domain: dict, blocks: dict) ->
         raise RuntimeError("H/A covariance upper requires one legal P2 history")
     if summary.get("independent_global_source_extrema_used") is not False:
         raise RuntimeError("H/A covariance upper forbids independent global source extrema")
+    if blocks.get("vector_PE_recurrence_quantifier_consumed") is not True:
+        raise RuntimeError("H/A covariance upper requires the every-interval PE recurrence theorem")
     live = blocks["live"]
     vector = blocks["vector"]
     process = blocks["process"]
@@ -148,9 +184,7 @@ def _history_bias_upper(summary: dict, mode: str, domain: dict, blocks: dict) ->
     pair = BASE.pos(vector["operating_envelope"]["packet_gap_s"][1], "vector packet gap")
     qc = float(word["q_c_upper"])
 
-    # This is the retained source-reachable attitude/bias covariance ceiling,
-    # but with q_c and T taken from one legal history rather than a Cartesian
-    # source cell/global box.
+    # Post-PE covariance at the end of the selected certified vector pair.
     qab = BASE.up(3.0 * (qg * pair + qb * (pair + pair ** 3 / 3.0)))
     whitened = BASE.up(
         (fhi * fhi / ra + mhi * mhi / rm) * qab
@@ -159,9 +193,19 @@ def _history_bias_upper(summary: dict, mode: str, domain: dict, blocks: dict) ->
         + (6.0 * pba) / ra
     )
     u0 = BASE.up((1.0 + whitened) / alpha6)
-    T = float(word["word_horizon_s_upper"])
-    uab_prop = BASE.up(6.0 * (qg * T + qb * (T + T ** 3 / 3.0)))
-    utheta = BASE.up(2.0 * (1.0 + T * T) * u0 + uab_prop)
+
+    # The deployment theorem guarantees a complete certified PE event in every
+    # normal-Live interval of length Tpe.  Select the event in the final such
+    # interval ending at the covariance-word endpoint.  Its second packet is
+    # therefore no more than Tpe before the endpoint.  Propagating u0 over the
+    # whole ~3.17 s covariance word charged time before the selected PE event
+    # and was not required by the recurrence theorem.
+    Tpost = BASE.up(float(blocks["final_pe_recurrence_s"]))
+    Tword = float(word["word_horizon_s_upper"])
+    if not (math.isfinite(Tpost) and 0.0 < Tpost <= Tword):
+        raise RuntimeError("final vector-PE recurrence window does not fit inside covariance word")
+    uab_prop = BASE.up(6.0 * (qg * Tpost + qb * (Tpost + Tpost ** 3 / 3.0)))
+    utheta = BASE.up(2.0 * (1.0 + Tpost * Tpost) * u0 + uab_prop)
     ubg = BASE.up(2.0 * u0 + uab_prop)
     return {
         "mode": mode,
@@ -170,6 +214,11 @@ def _history_bias_upper(summary: dict, mode: str, domain: dict, blocks: dict) ->
         "accel_bias_covariance_upper": pba if mode == "A" else None,
         "word": word,
         "same_history_q_c_and_cadence_used": True,
+        "post_vector_PE_to_endpoint_horizon_s_upper": Tpost,
+        "whole_word_horizon_s_upper": Tword,
+        "final_PE_selected_from_recurrence_window": True,
+        "whole_word_horizon_used_for_post_PE_propagation": False,
+        "vector_PE_recurrence_quantifier_consumed": True,
     }
 
 
@@ -247,6 +296,8 @@ def _uniform_bias_upper(mode: str, domain: dict, blocks: dict, fr: dict) -> dict
     rows = 0
     limiting_theta = None
     limiting_bg = None
+    limiting_theta_bound = None
+    limiting_bg_bound = None
     for endpoint in fr["endpoint_nodes"]:
         for positive in (False, True):
             labels = _mapped_labels(fr, int(endpoint), positive)
@@ -259,9 +310,11 @@ def _uniform_bias_upper(mode: str, domain: dict, blocks: dict, fr: dict) -> dict
                 if u["theta_covariance_upper"] > max_theta:
                     max_theta = float(u["theta_covariance_upper"])
                     limiting_theta = {"endpoint": int(endpoint), "positive_phase": positive, "label": list(label)}
+                    limiting_theta_bound = u
                 if u["gyro_bias_covariance_upper"] > max_bg:
                     max_bg = float(u["gyro_bias_covariance_upper"])
                     limiting_bg = {"endpoint": int(endpoint), "positive_phase": positive, "label": list(label)}
+                    limiting_bg_bound = u
                 if mode == "A":
                     max_ba = max(max_ba, float(u["accel_bias_covariance_upper"]))
     if not (max_theta > 0.0 and max_bg > 0.0 and (mode == "H" or max_ba > 0.0)):
@@ -274,8 +327,12 @@ def _uniform_bias_upper(mode: str, domain: dict, blocks: dict, fr: dict) -> dict
         "accel_bias_covariance_upper": None if mode == "H" else max_ba,
         "limiting_theta_history": limiting_theta,
         "limiting_gyro_bias_history": limiting_bg,
+        "limiting_theta_bound": limiting_theta_bound,
+        "limiting_gyro_bias_bound": limiting_bg_bound,
         "same_history_evaluated_before_uniform_envelope": True,
         "raw_tuner_cartesian_extrema_used": False,
+        "final_PE_selected_from_recurrence_window": True,
+        "whole_word_horizon_used_for_post_PE_propagation": False,
     }
 
 
@@ -332,7 +389,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN, translation_candidate: dict | None
         raise RuntimeError("translation candidate lost frozen P2 V1 binding")
 
     fr = HIST.frontier_runtime(path)
-    blocks = _common_blocks(domain)
+    blocks = _common_blocks(domain, path)
     modes = {m: _mode_join(m, translation, domain, blocks, fr) for m in ("H", "A")}
     worst = min(float(modes[m]["relative_Riccati_injection_margin_lower"]) for m in ("H", "A"))
     passed = all(modes[m]["useful_margin_established"] for m in ("H", "A"))
@@ -362,6 +419,10 @@ def build(domain_path: Path = DEFAULT_DOMAIN, translation_candidate: dict | None
         "precision_block_inequality": "J <= 2 diag(J_TT,J_BB) => J^-1 >= 0.5 diag(J_TT^-1,J_BB^-1)",
         "precision_block_join_factor": JOIN_FACTOR,
         "same_history_bias_upper_evaluated_before_uniform_envelope": True,
+        "vector_PE_word_language_certificate_consumed": True,
+        "final_vector_PE_recurrence_window_used_for_attitude_bias_propagation": True,
+        "whole_covariance_word_used_for_post_PE_propagation": False,
+        "final_vector_PE_recurrence_window_s": float(blocks["final_pe_recurrence_s"]),
         "useful_gate": BASE.MIN_USEFUL_DELTA,
         "translation_subcertificate_established": translation.get("P3_TRANSLATION_CERTIFICATE_ESTABLISHED") is True,
         "translation_worst_margin_lower": float(translation["worst_translation_margin_lower"]),
@@ -394,6 +455,8 @@ def validate(d: dict) -> list[str]:
         "translation_full_matrix_samplewise_measurements_consumed",
         "attitude_bias_fresh_final_prediction_modes_used", "conditional_precision_block_theorem_used",
         "same_history_bias_upper_evaluated_before_uniform_envelope",
+        "vector_PE_word_language_certificate_consumed",
+        "final_vector_PE_recurrence_window_used_for_attitude_bias_propagation",
     ):
         if d.get(key) is not True:
             f.append(f"{key} is not true")
@@ -401,7 +464,9 @@ def validate(d: dict) -> list[str]:
         "trajectory_replay_used", "filter_changed", "declared_domain_changed",
         "independent_cartesian_tau_sigma_RS_extrema_used",
         "independent_cartesian_tau_sigma_R_S_extrema_used",
-        "translation_whole_word_lift_charged_again", "P3_CANONICAL_PROMOTED", "P4_PROMOTED",
+        "translation_whole_word_lift_charged_again",
+        "whole_covariance_word_used_for_post_PE_propagation",
+        "P3_CANONICAL_PROMOTED", "P4_PROMOTED",
     ):
         if d.get(key) is not False:
             f.append(f"{key} is not false")
@@ -411,6 +476,9 @@ def validate(d: dict) -> list[str]:
         f.append("precision-block join factor changed")
     if float(d.get("useful_gate", math.nan)) != 1.0e-18:
         f.append("full-state P3 useful gate changed")
+    recurrence = d.get("final_vector_PE_recurrence_window_s")
+    if not isinstance(recurrence, (int, float)) or isinstance(recurrence, bool) or not math.isfinite(float(recurrence)) or float(recurrence) <= 0.0:
+        f.append("invalid final vector-PE recurrence window")
     modes = d.get("modes", {})
     numeric_pass = True
     for mode in ("H", "A"):
@@ -420,6 +488,11 @@ def validate(d: dict) -> list[str]:
             f.append(f"{mode}: invalid full-state margin")
             numeric_pass = False
             continue
+        upper = row.get("same_history_bias_covariance_upper", {})
+        if upper.get("final_PE_selected_from_recurrence_window") is not True:
+            f.append(f"{mode}: final PE recurrence window not used")
+        if upper.get("whole_word_horizon_used_for_post_PE_propagation") is not False:
+            f.append(f"{mode}: whole-word post-PE propagation reintroduced")
         expected = float(delta) >= BASE.MIN_USEFUL_DELTA
         if row.get("useful_margin_established") is not expected:
             f.append(f"{mode}: useful flag does not match unchanged gate")
