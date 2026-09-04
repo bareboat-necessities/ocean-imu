@@ -37,14 +37,40 @@ if text.count(old) != 1:
 text = text.replace(old, new, 1)
 p.write_text(text, encoding="utf-8")
 
-# Same-history upper used by the actual canonical P2-V1 history frontier.  It
+# Same-history upper used by the actual canonical P2-V1 history frontier. It
 # must fail closed on the same implementation contract; otherwise canonical P3
 # could keep using cadence_max+h after a future setter regression.
 p = Path("tools/ou3_p3_correlated_translation_covariance_upper.py")
 text = p.read_text(encoding="utf-8")
+old = '''* every S-observation gap is bounded by the path maximum cadence plus one sample;\n'''
+new = '''* with progress-preserving pseudo-period retargeting, every S-observation gap is bounded by the path maximum cadence plus one sample;\n'''
+if text.count(old) != 1:
+    raise SystemExit(f"same-history doc anchor count={text.count(old)}")
+text = text.replace(old, new, 1)
 old = '''    if summary.get("independent_global_source_extrema_used") is not False:\n        raise ValueError("independent global source extrema are forbidden")\n\n    h = float(sched["dt_s"])\n'''
 new = '''    if summary.get("independent_global_source_extrema_used") is not False:\n        raise ValueError("independent global source extrema are forbidden")\n    if sched.get("pseudo_period_retarget_progress_preserving") is not True:\n        raise RuntimeError(\n            "same-history finite S-observation gap requires progress-preserving pseudo-period retargeting"\n        )\n\n    h = float(sched["dt_s"])\n'''
 if text.count(old) != 1:
     raise SystemExit(f"same-history upper schedule anchor count={text.count(old)}")
 text = text.replace(old, new, 1)
+old = '''        "retained_translation_observability_theorem_reused": True,\n        "monotone_path_maxima_only": True,\n'''
+new = '''        "retained_translation_observability_theorem_reused": True,\n        "progress_preserving_scheduler_required_for_gap_bound": True,\n        "monotone_path_maxima_only": True,\n'''
+if text.count(old) != 1:
+    raise SystemExit(f"same-history build flag anchor count={text.count(old)}")
+text = text.replace(old, new, 1)
+old = '''        "same_history_sufficient_statistics_used",\n        "retained_translation_observability_theorem_reused",\n        "monotone_path_maxima_only", "full_covariance_word_history_required",\n'''
+new = '''        "same_history_sufficient_statistics_used",\n        "retained_translation_observability_theorem_reused",\n        "progress_preserving_scheduler_required_for_gap_bound",\n        "monotone_path_maxima_only", "full_covariance_word_history_required",\n'''
+if text.count(old) != 1:
+    raise SystemExit(f"same-history validate flag anchor count={text.count(old)}")
+text = text.replace(old, new, 1)
+p.write_text(text, encoding="utf-8")
+
+# Regression: deleting the schedule contract must make the same-history theorem
+# refuse to produce a finite observation-gap upper.
+p = Path("tests/validation/test_ou3_p3_correlated_translation_covariance_upper.py")
+text = p.read_text(encoding="utf-8")
+anchor = '''    def test_constant_history_reduces_to_same_monotone_source_quantities(self):\n'''
+block = '''    def test_gap_theorem_fails_closed_without_progress_preserving_retarget(self):\n        rt = CORR.runtime()\n        start, trans = U._representative_history(rt, 137, 3, 21)\n        summary = U.summarize_segments(U._path_segments(start, trans, rt), BASE.source_schedule())\n        sched = dict(BASE.source_schedule())\n        sched["pseudo_period_retarget_progress_preserving"] = False\n        with self.assertRaisesRegex(RuntimeError, "progress-preserving"):\n            U.translation_upper_from_summary(summary, 1.0, sched, require_history_cover=False)\n\n    def test_constant_history_reduces_to_same_monotone_source_quantities(self):\n'''
+if text.count(anchor) != 1:
+    raise SystemExit(f"same-history test anchor count={text.count(anchor)}")
+text = text.replace(anchor, block, 1)
 p.write_text(text, encoding="utf-8")
