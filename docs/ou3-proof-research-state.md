@@ -127,7 +127,56 @@ finite-state or monotone argument can quantify over legal histories.
 words rather than a local search: a finite-state or monotone quotient that bounds
 every legal word, not the best one a greedy descent can find.
 
-## The certificate needs NO new theorem conditions
+## NO CERTIFICATE EXISTS. Everything in this ledger below is a diagnostic.
+
+Stated plainly because the distinction was blurred: canonical P3 has never
+produced a passing artifact, and nothing in this branch is interval-certified.
+Every number recorded here is a double-precision or mpmath **point** evaluation,
+at 15 of 800 cells, at one word length. The artifacts say so themselves --
+`certifies_theorem_stage: false`, `interval_certified: false`,
+`quantifies_over_legal_histories: false`. They are useful for locating the
+limiter and for killing wrong hypotheses. They are not proof of anything.
+
+### Attempted and FALSIFIED: validated invariant upper by interval Riccati
+
+The natural rigorous construction was tried and does not work. The idea was
+sound: the Riccati word map is Loewner monotone, so certifying
+`D - W_c(D) >= 0` at the single box corner `D` certifies the whole box, meaning
+no covariance *box* need be propagated and only rounding accumulates.
+
+It still dies. Propagating the corner through one 635-sample word in interval
+arithmetic loses positivity of the measurement denominator partway through, even
+in **Joseph form** -- the covariance form dies within a few steps, since it
+subtracts two nearly equal large quantities whenever `R` is small against
+`P[S][S]`.
+
+| `x = h/tau` cell width | samples survived of 635 |
+| --- | --- |
+| 1.796e-04 (full cell) | 343 |
+| 2.806e-06 (64 subcells) | 434 |
+| 4.384e-08 (4096 subcells) | 503 |
+
+Narrowing `x` by 4096x buys 160 of the 292 missing steps, about 35 steps per 8x
+narrowing. Reaching 635 needs roughly `1e7` subcells against a budget already
+strained at 64. **This is the third independent time this project has hit the
+same wall**, and it is the same one already frozen in DEAD_ENDS as "recursive
+natural interval covariance boxes that forget the repeated scalar source
+parameter at every Riccati operation". Evaluating at a single corner does not
+escape it, because the transition itself is interval-valued through the `tau`
+cell.
+
+**Consequence: a rigorous whole-word upper cannot be built by stepwise interval
+propagation.** It has to be closed-form. The tractable candidate is an
+`N`-point observability-Gramian inversion -- structurally what
+`translation_upper` already does with three points, evaluated instead over all
+`N` firings the cadence actually delivers. That construction has no stepwise
+recursion, so the dependency wall above does not apply to it. Measured worth of
+crediting the real cadence, from the point diagnostics: 5.06 orders.
+
+The probe was removed rather than retained, matching how #476 handled its own
+falsified probes.
+
+## Point diagnostics: the certificate needs no new theorem conditions
 
 Earlier entries in this ledger asked whether a `P0`-bounded P3 would need a new
 declared entrance bound, and treated that as a specification decision. **It does
