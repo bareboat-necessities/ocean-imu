@@ -116,7 +116,6 @@ jobs:
             tools/ou3_p3_pseudo_scheduler_starvation_witness.py \
             tests/validation/test_ou3_p3_pseudo_scheduler_starvation_witness.py \
             tools/ou3_p3_tau_ema_scheduler_cycle_diagnostic.py \
-            tests/validation/test_ou3_p3_tau_ema_scheduler_cycle_diagnostic.py \
-            .github/workflows/ou3-p3-whole-word-probe.yml
+            tests/validation/test_ou3_p3_tau_ema_scheduler_cycle_diagnostic.py
           git commit -m "proof: restore source-independent S recurrence"
           git push origin HEAD:codex/ou3-p3-source-clock-recurrence
