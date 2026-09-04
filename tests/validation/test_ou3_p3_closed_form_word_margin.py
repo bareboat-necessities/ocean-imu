@@ -1,5 +1,4 @@
 """Contracts for the closed-form whole-word translation margin."""
-import math
 import sys
 import unittest
 from pathlib import Path
