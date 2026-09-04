@@ -327,7 +327,8 @@ public:
 
         if (stage_ == StartupStage::TunerWarm) {
             live_sec_ += dt;
-            if (live_sec_ >= cfg_.online_tune_warmup_sec && wave_period_.isReady()) {
+            if (live_sec_ >= cfg_.online_tune_warmup_sec &&
+                wave_period_.hasUsablePeriod()) {
                 enterLive_();
             }
         } else {
@@ -369,7 +370,8 @@ public:
     [[nodiscard]] const ContinuousMagHardIronEstimator& magContinuousHardIron() const noexcept { return mag_hi_estimator_; }
     [[nodiscard]] StartupInitPolicy startupInitPolicy() const noexcept { return cfg_.startup_init_policy; }
     [[nodiscard]] bool isTunerReady() const noexcept {
-        return wave_period_.isReady() && tuner_warm_sec_ >= cfg_.online_tune_warmup_sec;
+        return wave_period_.hasUsablePeriod() &&
+               tuner_warm_sec_ >= cfg_.online_tune_warmup_sec;
     }
     [[nodiscard]] float pseudoUpdatePeriodSec() const noexcept { return pseudo_period_sec_; }
     [[nodiscard]] bool handoffTimedOut() const noexcept { return handoff_timed_out_; }
@@ -560,6 +562,7 @@ public:
     [[nodiscard]] float getSigmaTarget()  const noexcept { return sigma_target_; }
     [[nodiscard]] float getRSTarget()     const noexcept { return RS_target_; }
     [[nodiscard]] float getWavePeriodSec() const noexcept { return wave_period_.getPeriodSec(); }
+    [[nodiscard]] bool  wavePeriodUsable() const noexcept { return wave_period_.hasUsablePeriod(); }
     [[nodiscard]] bool  wavePeriodReady() const noexcept { return wave_period_.isReady(); }
     [[nodiscard]] float getAccelVariance() const noexcept { return tuner_.getAccelVariance(); }
     [[nodiscard]] Eigen::Quaternionf quaternion() const { return mekf_.quaternion(); }
@@ -705,7 +708,8 @@ private:
 
     [[nodiscard]] float wavePeriodFrequencyOrPrior_() const noexcept {
         const float f = wave_period_.getFrequencyHz();
-        return (std::isfinite(f) && f > 0.0f) ? f : kTuneFreqPriorHz;
+        return (wave_period_.hasUsablePeriod() && std::isfinite(f) && f > 0.0f)
+            ? f : kTuneFreqPriorHz;
     }
 
     [[nodiscard]] float pseudoUpdatePeriodFor_(float tau) const noexcept {

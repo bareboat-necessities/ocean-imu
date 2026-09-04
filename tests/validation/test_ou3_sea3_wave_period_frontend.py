@@ -17,7 +17,7 @@ class Sea3WavePeriodFrontendTest(unittest.TestCase):
         self.assertEqual(failures, [])
         self.assertEqual(
             payload["schema_version"],
-            "OU3_SEA3_WAVE_PERIOD_FRONTEND_V2",
+            "OU3_SEA3_WAVE_PERIOD_FRONTEND_V3",
         )
         self.assertTrue(all(payload["source_parity"].values()))
         self.assertTrue(all(payload["operating_domain_parity"].values()))
@@ -49,18 +49,28 @@ class Sea3WavePeriodFrontendTest(unittest.TestCase):
     def test_prior_and_estimator_takeover_are_separate_source_modes(self) -> None:
         payload = frontend.build(ROOT)
         startup = payload["startup_source_language"]
-        settle_lo, settle_hi = payload["validated_intervals"][
-            "wave_period_integrator_settle_lower_bound_s"
+        moment_lo, moment_hi = payload["validated_intervals"][
+            "wave_period_moment_start_lower_bound_s"
+        ]
+        usable_lo, usable_hi = payload["validated_intervals"][
+            "wave_period_startup_usable_floor_s"
+        ]
+        strict_lo, strict_hi = payload["validated_intervals"][
+            "wave_period_strict_ready_floor_s"
         ]
 
+        self.assertTrue(startup["tuner_ready_requires_wave_period_estimator_usable"])
         self.assertFalse(startup["tuner_ready_requires_wave_period_estimator_ready"])
-        self.assertTrue(startup["live_entry_may_precede_wave_period_estimator_first_valid_period"])
+        self.assertTrue(startup["live_entry_requires_wave_period_estimator_usable"])
+        self.assertFalse(startup["live_entry_may_precede_wave_period_estimator_first_valid_period"])
+        self.assertTrue(startup["wave_period_takeover_waits_for_hasUsablePeriod"])
+        self.assertTrue(startup["wave_period_startup_takeover_is_one_way_latched"])
         self.assertFalse(startup["wave_period_takeover_waits_for_isReady"])
         self.assertTrue(startup["tuner_consumes_previous_sample_wave_period_state"])
         self.assertTrue(startup["current_sample_wave_period_update_occurs_after_tuner_update"])
         self.assertTrue(
             startup[
-                "first_newly_finite_wave_period_can_affect_tuner_no_earlier_than_next_valid_sample"
+                "first_newly_usable_wave_period_can_affect_tuner_no_earlier_than_next_valid_sample"
             ]
         )
         self.assertTrue(
@@ -68,8 +78,12 @@ class Sea3WavePeriodFrontendTest(unittest.TestCase):
                 "first_valid_tuner_update_can_satisfy_debiased_variance_ready_threshold"
             ]
         )
-        self.assertGreater(settle_lo, 47.0)
-        self.assertLess(settle_hi, 49.0)
+        self.assertGreater(moment_lo, 23.0)
+        self.assertLess(moment_hi, 25.0)
+        self.assertGreater(usable_lo, 31.0)
+        self.assertLess(usable_hi, 33.0)
+        self.assertGreater(strict_lo, 47.0)
+        self.assertLess(strict_hi, 49.0)
 
     def test_remaining_estimator_obligations_are_explicit(self) -> None:
         payload = frontend.build(ROOT)

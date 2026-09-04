@@ -79,15 +79,17 @@ explicitly.  Thus neither the surface quantity $T_{z,\eta}$ nor a bound on
 $T_{p,r}$ alone is substituted for a bound on the shipping tuner state.
 
 The period-source path also has a startup branch that is part of the theorem
-language rather than a nuisance transient to be discarded.  Until
-\texttt{WavePeriodEstimator::getFrequencyHz()} is finite, shipping code supplies
-the fixed $0.2$ Hz prior.  The tuner consumes that source before the current
-sample advances the WavePeriodEstimator, so the first newly finite estimator
-frequency can affect the tuner no earlier than the following valid sample.
-Takeover uses the first finite positive value and does not wait for
-\texttt{WavePeriodEstimator::isReady()}.  Therefore the final SEA0/P2 bridge
-must enclose both the prior-driven and estimator-driven branches and their
-one-sample takeover edge.
+language rather than a nuisance transient to be discarded.  Shipping code
+supplies the fixed $0.2$ Hz prior until the same WavePeriodEstimator state
+satisfies \texttt{hasUsablePeriod()}: moments start after $3/\lambda$, startup
+use is forbidden before $4/\lambda$, and at least one current estimated period
+of moment history is required.  The stricter \texttt{isReady()} diagnostic
+retains its $6/\lambda$ floor and debiased-weight test.  The tuner consumes the
+period source before the current sample advances the WavePeriodEstimator, so
+the first newly usable estimator frequency can affect the tuner no earlier
+than the following valid sample.  Therefore the final SEA0/P2 bridge must
+enclose both the prior-driven and startup-usable estimator-driven branches and
+their one-sample takeover edge.
 
 The same qualification is essential for acceleration variance.  The ideal
 JONSWAP high-frequency elevation tail is proportional to $\omega^{-5}$, whereas

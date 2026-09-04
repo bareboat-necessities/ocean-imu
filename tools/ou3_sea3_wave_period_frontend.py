@@ -29,13 +29,14 @@ interval arithmetic; ordinary libm sin/exp are not used in the enclosure.
 
 The startup result is deliberately structural rather than replay-derived.
 Shipping update order calls update_tuner(..., tuner_frequency_hz_()) before the
-current sample updates WavePeriodEstimator.  Until getFrequencyHz() is finite,
-tuner_frequency_hz_() returns the fixed TUNE_FREQ_PRIOR_HZ; once a finite
-positive estimator value exists, the following valid sample can consume it.
-This takeover does not wait for WavePeriodEstimator::isReady().  Conversely the
-filter's TunerReady stage is based on SeaStateAutoTuner readiness and can occur
-while the period estimator is still inside its mandatory 6/lambda integrator
-settling interval.
+current sample updates WavePeriodEstimator.  Until WavePeriodEstimator::hasUsablePeriod() is true,
+tuner_frequency_hz_() returns the fixed TUNE_FREQ_PRIOR_HZ.  The same estimator
+starts its existing moment statistics after 3/lambda, qualifies startup use no
+earlier than 4/lambda and one estimated cycle of moment history, and retains
+isReady() as the stricter 6/lambda plus weight diagnostic.  The tuner consumes
+the previous sample's period state, so the first newly usable estimate can
+affect the tuner only on the following valid sample.  TunerReady/Live require
+the startup-usable period but do not wait for WavePeriodEstimator::isReady().
 
 This is not the full SEA0 T_p -> tuner-T_z certificate.  It does not enclose a
 multimodal response spectrum, finite EW moment transients after estimator
@@ -55,7 +56,7 @@ from ou3_interval import Interval
 import ou3_validated_transcendentals as VT
 
 
-SCHEMA_VERSION = "OU3_SEA3_WAVE_PERIOD_FRONTEND_V2"
+SCHEMA_VERSION = "OU3_SEA3_WAVE_PERIOD_FRONTEND_V3"
 REPO = Path(__file__).resolve().parents[1]
 DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
 FILTER = REPO / "src" / "kalman_ou_iii" / "SeaStateFusionFilter_OU_III.h"
@@ -69,6 +70,8 @@ LIMITS = REPO / "src" / "tuner" / "SeaStateAdaptationLimits.h"
 PI = Interval.outward_bounds(3.141592653589793, 3.141592653589794)
 ONE = Interval.point(1.0)
 TWO = Interval.point(2.0)
+THREE = Interval.point(3.0)
+FOUR = Interval.point(4.0)
 SIX = Interval.point(6.0)
 
 
@@ -123,11 +126,13 @@ def _source_recurrence_parity(text: str) -> dict[str, bool]:
         ),
         "variance_ratio": "const float ratio_sq = velocity_var / elevation_var;",
         "leak_subtraction": "const float omega_sq = ratio_sq - lambda_ * lambda_;",
-        "integrator_settle_gate": "const float settle_sec = 6.0f / lambda_;",
-        "integrator_settle_return": "if (elapsed_sec_ < settle_sec) return;",
-        "period_ready_gate": (
-            "return std::isfinite(log_period_sec_) && weight_ > 0.5f;"
-        ),
+        "moment_start_gate": "const float moment_start_sec = 3.0f / lambda_;",
+        "moment_start_return": "if (elapsed_sec_ < moment_start_sec) return;",
+        "usable_floor_gate": "const float usable_floor_sec = 4.0f / lambda_;",
+        "usable_cycle_history_gate": "moment_history_sec >= period",
+        "usable_takeover_latches": "usable_period_ = true;",
+        "strict_ready_floor_gate": "const float settled_floor_sec = 6.0f / lambda_;",
+        "strict_ready_weight_gate": "elapsed_sec_ >= settled_floor_sec && weight_ > 0.5f",
     }
     compact = " ".join(text.split())
     return {
@@ -165,8 +170,8 @@ def _source_startup_parity(filter_text: str, tuner_text: str) -> dict[str, bool]
         "selector_reads_wave_period_frequency": (
             "const float wave_hz = wave_period_.getFrequencyHz();"
         ),
-        "selector_accepts_first_finite_positive_frequency": (
-            "if (std::isfinite(wave_hz) && wave_hz > 0.0f) return wave_hz;"
+        "selector_requires_startup_usable_period": (
+            "if (wave_period_.hasUsablePeriod() && std::isfinite(wave_hz) && wave_hz > 0.0f)"
         ),
         "selector_falls_back_to_fixed_prior": "return tune_freq_prior_hz_;",
         "outer_config_forwards_tuner_warmup": (
@@ -175,17 +180,20 @@ def _source_startup_parity(filter_text: str, tuner_text: str) -> dict[str, bool]
         "tunerwarm_checks_tuner_frequency_ready": (
             "if (!tuner_.isFreqReady()) return;"
         ),
-        "tunerwarm_checks_tuner_ready": "if (tuner_.isReady()) {",
+        "tunerwarm_checks_tuner_and_period_usable": (
+            "if (tuner_.isReady() && wave_period_.hasUsablePeriod()) {"
+        ),
     }
     out = {
         key: " ".join(fragment.split()) in compact_filter
         for key, fragment in required_filter.items()
     }
-    out["selector_does_not_wait_for_wave_period_isReady"] = (
-        bool(selector) and "isReady" not in selector
+    out["selector_uses_hasUsablePeriod_not_isReady"] = (
+        bool(selector) and "hasUsablePeriod" in selector and "isReady" not in selector
     )
-    out["tunerwarm_does_not_wait_for_wave_period_isReady"] = (
-        bool(stage) and "wave_period_.isReady" not in stage
+    out["tunerwarm_uses_hasUsablePeriod_not_isReady"] = (
+        bool(stage) and "wave_period_.hasUsablePeriod" in stage and
+        "wave_period_.isReady" not in stage
     )
     out["tuner_update_precedes_current_sample_wave_period_update"] = (
         tuner_pos >= 0 and period_pos >= 0 and tuner_pos < period_pos
@@ -255,10 +263,14 @@ def build(repo_root: Path = REPO) -> dict[str, Any]:
     omega_hat_over_omega = leak_factor * sample_factor
     period_hat_over_period = omega_hat_over_omega.reciprocal()
 
-    # No WavePeriodEstimator moment can be accepted before 6/lambda.  This is a
-    # lower bound on first possible finite period, not a claim that a valid
-    # variance ratio must exist exactly at that instant.
-    estimator_settle = SIX / lam
+    # One canonical estimator, three source-visible startup milestones.
+    # Moments begin after 3/lambda, startup use is forbidden before 4/lambda,
+    # and strict isReady() remains forbidden before 6/lambda.  hasUsablePeriod()
+    # additionally requires one current estimated period of moment history; the
+    # 4/lambda interval below is therefore a hard floor, not an exact takeover time.
+    moment_start = THREE / lam
+    usable_floor = FOUR / lam
+    strict_ready_floor = SIX / lam
 
     # SeaStateAutoTuner's first debiased moment update starts from zero weight.
     # The dynamic horizon is never above the source max, so this is a uniform
@@ -283,13 +295,19 @@ def build(repo_root: Path = REPO) -> dict[str, Any]:
             float(startup_domain.get("wave_period_estimator_high_pass_hz", float("nan")))
             == hp_value
         ),
-        "domain_does_not_equate_tuner_and_period_readiness": (
+        "domain_requires_startup_usable_period_for_tuner_ready": (
+            startup_domain.get("tuner_ready_requires_wave_period_estimator_usable")
+            is True
+        ),
+        "domain_does_not_equate_usable_with_strict_readiness": (
             startup_domain.get("tuner_ready_requires_wave_period_estimator_ready")
             is False
         ),
-        "domain_admits_live_before_first_period": (
-            startup_domain.get("live_entry_may_precede_wave_period_estimator_first_valid_period")
-            is True
+        "domain_requires_usable_period_before_live": (
+            startup_domain.get("live_entry_requires_wave_period_estimator_usable")
+            is True and startup_domain.get(
+                "live_entry_may_precede_wave_period_estimator_first_valid_period"
+            ) is False
         ),
     }
 
@@ -334,7 +352,9 @@ def build(repo_root: Path = REPO) -> dict[str, Any]:
             "sampled_sinc_factor": sample_factor.as_list(),
             "omega_hat_over_omega": omega_hat_over_omega.as_list(),
             "period_hat_over_period": period_hat_over_period.as_list(),
-            "wave_period_integrator_settle_lower_bound_s": estimator_settle.as_list(),
+            "wave_period_moment_start_lower_bound_s": moment_start.as_list(),
+            "wave_period_startup_usable_floor_s": usable_floor.as_list(),
+            "wave_period_strict_ready_floor_s": strict_ready_floor.as_list(),
             "first_tuner_debiased_weight_increment_lower": (
                 first_tuner_weight_lower.as_list()
             ),
@@ -343,23 +363,28 @@ def build(repo_root: Path = REPO) -> dict[str, Any]:
         },
         "startup_source_language": {
             "frequency_modes": [
-                "fixed_prior_until_first_finite_positive_wave_period_frequency",
-                "wave_period_estimator_after_takeover",
+                "fixed_prior_until_wave_period_startup_usable",
+                "wave_period_estimator_after_startup_usable_takeover",
             ],
+            "tuner_ready_requires_wave_period_estimator_usable": True,
             "tuner_ready_requires_wave_period_estimator_ready": False,
-            "live_entry_may_precede_wave_period_estimator_first_valid_period": True,
+            "live_entry_requires_wave_period_estimator_usable": True,
+            "live_entry_may_precede_wave_period_estimator_first_valid_period": False,
+            "wave_period_takeover_waits_for_hasUsablePeriod": True,
+            "wave_period_startup_takeover_is_one_way_latched": True,
             "wave_period_takeover_waits_for_isReady": False,
             "tuner_consumes_previous_sample_wave_period_state": True,
             "current_sample_wave_period_update_occurs_after_tuner_update": True,
-            "first_newly_finite_wave_period_can_affect_tuner_no_earlier_than_next_valid_sample": True,
+            "first_newly_usable_wave_period_can_affect_tuner_no_earlier_than_next_valid_sample": True,
             "first_valid_tuner_update_can_satisfy_debiased_variance_ready_threshold": (
                 first_tuner_weight_lower.lo > 1.0e-6
             ),
-            "wave_period_integrator_settle_is_lower_bound_not_readiness_time": True,
+            "wave_period_usable_floor_is_lower_bound_not_exact_takeover_time": True,
+            "strict_ready_remains_later_than_startup_usable": True,
             "required_P2_consequence": (
-                "SEA3 source language must carry prior-frequency and estimator-frequency "
-                "branches plus the one-sample takeover edge; TunerReady cannot be used "
-                "as a proxy for settled sea-period state"
+                "SEA3 source language must carry prior-frequency and startup-usable "
+                "estimator-frequency branches plus the one-sample takeover edge; "
+                "TunerReady implies hasUsablePeriod but not strict isReady"
             ),
         },
         "interpretation": {
@@ -404,25 +429,39 @@ def validate(payload: dict[str, Any]) -> list[str]:
     intervals = payload.get("validated_intervals", {})
     ratio = intervals.get("omega_hat_over_omega", [])
     period = intervals.get("period_hat_over_period", [])
-    settle = intervals.get("wave_period_integrator_settle_lower_bound_s", [])
+    moment_start = intervals.get("wave_period_moment_start_lower_bound_s", [])
+    usable_floor = intervals.get("wave_period_startup_usable_floor_s", [])
+    strict_floor = intervals.get("wave_period_strict_ready_floor_s", [])
     first_weight = intervals.get("first_tuner_debiased_weight_increment_lower", [])
     if len(ratio) != 2 or not (0.99 < float(ratio[0]) <= float(ratio[1]) <= 1.001):
         failures.append("unexpected frequency-warping enclosure")
     if len(period) != 2 or not (0.999 < float(period[0]) <= float(period[1]) < 1.001):
         failures.append("unexpected period-warping enclosure")
-    if len(settle) != 2 or not (47.0 < float(settle[0]) <= float(settle[1]) < 49.0):
-        failures.append("unexpected WavePeriodEstimator settle lower bound")
+    if len(moment_start) != 2 or not (23.0 < float(moment_start[0]) <= float(moment_start[1]) < 25.0):
+        failures.append("unexpected WavePeriodEstimator moment-start lower bound")
+    if len(usable_floor) != 2 or not (31.0 < float(usable_floor[0]) <= float(usable_floor[1]) < 33.0):
+        failures.append("unexpected WavePeriodEstimator startup-usable floor")
+    if len(strict_floor) != 2 or not (47.0 < float(strict_floor[0]) <= float(strict_floor[1]) < 49.0):
+        failures.append("unexpected WavePeriodEstimator strict-ready floor")
     if len(first_weight) != 2 or not (float(first_weight[0]) > 1.0e-6):
         failures.append("first tuner moment update no longer clears readiness threshold")
     if intervals.get("validated_transcendentals_used") is not True:
         failures.append("validated transcendental layer not used")
     startup = payload.get("startup_source_language", {})
+    if startup.get("tuner_ready_requires_wave_period_estimator_usable") is not True:
+        failures.append("TunerReady no longer requires WavePeriodEstimator::hasUsablePeriod")
     if startup.get("tuner_ready_requires_wave_period_estimator_ready") is not False:
-        failures.append("TunerReady was incorrectly tied to WavePeriodEstimator::isReady")
-    if startup.get("live_entry_may_precede_wave_period_estimator_first_valid_period") is not True:
-        failures.append("startup prior branch was incorrectly removed")
+        failures.append("TunerReady was incorrectly tied to strict WavePeriodEstimator::isReady")
+    if startup.get("live_entry_requires_wave_period_estimator_usable") is not True:
+        failures.append("Live entry no longer requires a startup-usable measured period")
+    if startup.get("live_entry_may_precede_wave_period_estimator_first_valid_period") is not False:
+        failures.append("Live entry may again precede the measured period")
+    if startup.get("wave_period_takeover_waits_for_hasUsablePeriod") is not True:
+        failures.append("wave-period takeover no longer waits for hasUsablePeriod")
+    if startup.get("wave_period_startup_takeover_is_one_way_latched") is not True:
+        failures.append("wave-period startup takeover is no longer one-way latched")
     if startup.get("wave_period_takeover_waits_for_isReady") is not False:
-        failures.append("wave-period takeover must use first finite value, not isReady")
+        failures.append("wave-period takeover must not wait for strict isReady")
     if startup.get("tuner_consumes_previous_sample_wave_period_state") is not True:
         failures.append("one-sample tuner/period causal order was lost")
     if startup.get(
