@@ -301,6 +301,18 @@ inline void regularize_psd_if_needed(Eigen::Matrix<T,N,N>& S) {
     S = T(0.5) * (S + S.transpose());
 }
 
+// Retarget a periodic scheduler without discarding elapsed service credit.
+// If the new deadline has already passed, park immediately below it so the
+// next valid sample services the owed update through periodic_update_due().
+// Otherwise preserve elapsed bit-for-bit.
+template<typename T>
+inline T retarget_period_elapsed_progress_preserving(T elapsed, T period) {
+    if (!(period > T(0)) || !std::isfinite(period)) return T(0);
+    if (!(elapsed >= T(0)) || !std::isfinite(elapsed)) return T(0);
+    if (elapsed < period) return elapsed;
+    return std::nextafter(period, T(0));
+}
+
 template<typename T>
 inline bool periodic_update_due(T dt, T period, T& elapsed) {
     if (!(dt > T(0)) || !std::isfinite(dt) || !(period > T(0)) || !std::isfinite(period)) return false;
