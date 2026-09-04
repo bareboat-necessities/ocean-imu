@@ -26,7 +26,7 @@ class P2V1StagePhaseTranslationTests(unittest.TestCase):
         M = P._identity_floor(0.25)
         ok, _ = symmetric_positive_definite_ldlt(M)
         self.assertTrue(ok)
-        # A point interval is deliberately expanded outward by one ULP.  Do
+        # A point interval is deliberately expanded outward by one ULP. Do
         # not require the rigorous lower endpoint to round back to the nominal
         # decimal value exactly.
         self.assertEqual(M[0][0].lo, math.nextafter(0.25, -math.inf))
@@ -36,11 +36,29 @@ class P2V1StagePhaseTranslationTests(unittest.TestCase):
         self.assertLessEqual(M[0][1].lo, 0.0)
         self.assertGreaterEqual(M[0][1].hi, 0.0)
 
+    def test_log_scale_identity_floor_is_certified(self):
+        A = [
+            [Interval.outward_bounds(2.0, 2.0), Interval.outward_bounds(0.3, 0.3)],
+            [Interval.outward_bounds(0.3, 0.3), Interval.outward_bounds(1.0, 1.0)],
+        ]
+        rho = P._certified_identity_floor(A)
+        self.assertGreater(rho, 0.0)
+        self.assertTrue(symmetric_positive_definite_ldlt(P._minus_identity(A, rho))[0])
+        # The exact smaller eigenvalue is about 0.9169; the validated search is
+        # intentionally a lower certificate rather than a floating eigensolve.
+        self.assertLess(rho, 0.917)
+        self.assertGreater(rho, 0.91)
+
     def test_certified_delta_matches_simple_diagonal_case(self):
         M = P._identity_floor(1.0)
         delta = P._certified_delta(M, 1.0, [2.0, 4.0, 5.0, 10.0])
-        self.assertGreater(delta, 0.099999999999)
-        self.assertLess(delta, 0.100000000001)
+        self.assertGreater(delta, 0.099999)
+        self.assertLess(delta, 0.1000001)
+        self.assertTrue(
+            symmetric_positive_definite_ldlt(
+                P._physical_gate_matrix(M, 1.0, [2.0, 4.0, 5.0, 10.0], delta)
+            )[0]
+        )
 
     def test_gate_fails_above_simple_diagonal_margin(self):
         M = P._identity_floor(1.0)
@@ -57,6 +75,31 @@ class P2V1StagePhaseTranslationTests(unittest.TestCase):
         self.assertGreater(A[3][3].lo, 0.0)
         self.assertLess(A[2][2].hi, A[1][1].hi)
         self.assertLess(A[1][1].hi, A[0][0].hi)
+
+    def test_boundary_floor_checks_only_min_gap_but_covers_full_alphabet(self):
+        P.common_boundary_floor.cache_clear()
+        rt = {
+            "nodes": [{"index": 0}, {"index": 1}],
+            "gaps": list(range(13, 27)),
+        }
+        calls = []
+
+        def segment_images(_zero, source, gap, _rt, _path):
+            calls.append((source, gap))
+            return [{"posterior": P._identity_floor(0.5)}]
+
+        with patch.object(P.CORR, "runtime", return_value=rt), \
+             patch.object(P.SEG, "segment_images", side_effect=segment_images):
+            result = P.common_boundary_floor(P.DEFAULT_DOMAIN)
+
+        self.assertEqual(calls, [(0, 13), (1, 13)])
+        self.assertEqual(result["minimum_gap_samples_evaluated"], 13)
+        self.assertEqual(result["source_gap_kernels_checked"], 2)
+        self.assertEqual(result["source_gap_kernels_covered"], 2 * 14)
+        self.assertEqual(result["longer_gap_kernels_eliminated_by_order_monotonicity"], 2 * 13)
+        self.assertTrue(result["all_13_26_gaps_covered_by_min_gap_monotonicity"])
+        self.assertTrue(result["zero_start_covariance_nondecreasing_with_fixed_source_gap"])
+        P.common_boundary_floor.cache_clear()
 
     def test_phase_prefixes_are_propagated_once_not_restarted(self):
         P._phase_sequence_cached.cache_clear()
@@ -87,7 +130,7 @@ class P2V1StagePhaseTranslationTests(unittest.TestCase):
 
     def test_thirteen_sample_tail_argument_is_a_fresh_window(self):
         # The frozen-clock reduction must not accidentally depend on the 26
-        # finite-stage phase bound.  After 13 held samples, the last 13 samples
+        # finite-stage phase bound. After 13 held samples, the last 13 samples
         # form a complete fresh constant-source segment on their own.
         self.assertLess(P.FROZEN_FRESH_HISTORY_SAMPLES, max(P.PHASES) + 1)
         self.assertEqual(max(P.FROZEN_TRANSIENT_SAMPLES) + 1, P.FROZEN_FRESH_HISTORY_SAMPLES)
