@@ -2,28 +2,30 @@
 """Numerically stable backend for the canonical SEA3 moving-Riccati tube.
 
 This is not a second theorem route.  It delegates the complete tube construction
-and validation to ``ou3_sea3_riccati_tube`` and replaces one algebraically
-identical numerical primitive: the scaled integrated-OU process covariance on
-the implementation's small-x branch.
+and validation to ``ou3_sea3_riccati_tube`` and replaces only the numerical
+evaluation order of the scaled integrated-OU process covariance.
 
-The original implementation first encloses Qbar(x) and then divides interval
-entries by powers of the *same* interval x to form
+For the implementation's small-x branch, powers of x are cancelled
+symbolically before interval evaluation.  For the exact branch used at
+x >= 0.01, the same closed-form expressions are expanded about x=0 using exact
+rational coefficients through order 24 and a validated exponential Taylor
+remainder.  On the deployed proof domain x=h/tau <= about 0.012 this removes
+catastrophic interval cancellation while rigorously enclosing the same exact
+formula.
 
-    D^-1 Q D^-T,  D=diag(sigma*h, sigma*h^2, sigma*h^3, sigma).
-
-At the long-tau edge x=h/tau ~= 4.17e-4, that introduces avoidable interval
-dependency and can lose positive definiteness even after deep subdivision.
-Here each small-x series is divided by x^k symbolically first, leaving a direct
-polynomial with leading order x.  The polynomial is exactly the same truncated
-Maclaurin branch already audited in the canonical producer; only its interval
-evaluation order changes.
+The source contracts, covariance ceiling, Joseph comparison, H/A aggregation,
+1e-18 gate and zero-history-depth current-source cover all remain the canonical
+BASE implementation.
 """
 from __future__ import annotations
+
+from fractions import Fraction
+from math import factorial
 
 import ou3_sea3_riccati_tube as BASE
 
 
-_BASE_STEP_SCALED_Q = BASE.step_scaled_q
+N_EXACT = 24
 
 
 def _p(x, terms):
@@ -54,15 +56,125 @@ def _small_scaled_q_factored(x):
     ]
 
 
+# Each exact Qbar entry has form
+#   c2 exp(-2x) + A(x) exp(-x) + P(x).
+# The final integer is the power x^k removed by BASE's scaled coordinate.
+# Coefficients are exact rationals, so the cancellations through degree k are
+# checked symbolically rather than inferred from floating point.
+_EXACT = {
+    "vv": (Fraction(-1), [Fraction(4)], {0:Fraction(-3),1:Fraction(2)}, 2),
+    "vp": (Fraction(1), [Fraction(-2),Fraction(2)], {0:Fraction(1),1:Fraction(-2),2:Fraction(1)}, 3),
+    "vS": (Fraction(-1), [Fraction(4),Fraction(0),Fraction(1)], {0:Fraction(-3),1:Fraction(2),2:Fraction(-1),3:Fraction(1,3)}, 4),
+    "va": (Fraction(1), [Fraction(-2)], {0:Fraction(1)}, 1),
+    "pp": (Fraction(-1), [Fraction(0),Fraction(-4)], {0:Fraction(1),1:Fraction(2),2:Fraction(-2),3:Fraction(2,3)}, 4),
+    "pS": (Fraction(1), [Fraction(-2),Fraction(2),Fraction(-1)], {0:Fraction(1),1:Fraction(-2),2:Fraction(2),3:Fraction(-1),4:Fraction(1,4)}, 5),
+    "pa": (Fraction(-1), [Fraction(0),Fraction(-2)], {0:Fraction(1)}, 2),
+    "SS": (Fraction(-1), [Fraction(4),Fraction(0),Fraction(2)], {0:Fraction(-3),1:Fraction(2),2:Fraction(-2),3:Fraction(4,3),4:Fraction(-1,2),5:Fraction(1,10)}, 6),
+    "Sa": (Fraction(1), [Fraction(-2),Fraction(0),Fraction(-1)], {0:Fraction(1)}, 3),
+    "aa": (Fraction(-1), [], {0:Fraction(1)}, 0),
+}
+
+
+def _exact_coefficients(c2, a, poly, nmax=N_EXACT):
+    coeff = []
+    for n in range(nmax + 1):
+        c = c2 * Fraction((-2) ** n, factorial(n))
+        for j, aj in enumerate(a):
+            if n >= j:
+                c += aj * Fraction((-1) ** (n - j), factorial(n - j))
+        c += poly.get(n, Fraction(0))
+        coeff.append(c)
+    return coeff
+
+
+def _exact_scaled_entry(x, spec):
+    c2, a, poly, k = spec
+    coeff = _exact_coefficients(c2, a, poly)
+    if any(coeff[n] != 0 for n in range(k + 1)):
+        raise RuntimeError("exact OU scaled-series cancellation identity failed")
+
+    terms = [
+        (n - k, float(coeff[n]))
+        for n in range(k + 1, N_EXACT + 1)
+        if coeff[n] != 0
+    ]
+    y = _p(x, terms)
+
+    # Rigorous remainder of the exact exponential representation.  All exact-
+    # branch cells in this proof satisfy 0 < x <= 0.012..., well inside the
+    # validated exponential backend's audited argument range.
+    X = BASE.Interval.outward_bounds(0.0, x.hi)
+    X2 = BASE.Interval.outward_bounds(0.0, 2.0 * x.hi)
+    exp1 = BASE.VT.exp_interval(X)
+    exp2 = BASE.VT.exp_interval(X2)
+
+    rem = BASE.I(0.0)
+    if c2:
+        rem = rem + (
+            BASE.I(abs(float(c2))) * exp2 * BASE.ipow(X2, N_EXACT + 1)
+            / BASE.I(float(factorial(N_EXACT + 1)))
+        )
+    xN1 = BASE.ipow(X, N_EXACT + 1)
+    for j, aj in enumerate(a):
+        if not aj:
+            continue
+        rem = rem + (
+            BASE.I(abs(float(aj))) * exp1 * xN1
+            / BASE.I(float(factorial(N_EXACT - j + 1)))
+        )
+
+    denom = BASE.ipow(BASE.I(x.lo), k).lo if k else 1.0
+    if not (denom > 0.0):
+        raise RuntimeError("exact OU scaled-series denominator lost positivity")
+    r = BASE.up(rem.hi / denom)
+    return y + BASE.Interval.outward_bounds(-r, r)
+
+
+def _exact_scaled_q_stable(x):
+    vv = _exact_scaled_entry(x, _EXACT["vv"])
+    vp = _exact_scaled_entry(x, _EXACT["vp"])
+    vS = _exact_scaled_entry(x, _EXACT["vS"])
+    va = _exact_scaled_entry(x, _EXACT["va"])
+    pp = _exact_scaled_entry(x, _EXACT["pp"])
+    pS = _exact_scaled_entry(x, _EXACT["pS"])
+    pa = _exact_scaled_entry(x, _EXACT["pa"])
+    SS = _exact_scaled_entry(x, _EXACT["SS"])
+    Sa = _exact_scaled_entry(x, _EXACT["Sa"])
+    aa = _exact_scaled_entry(x, _EXACT["aa"])
+    return [
+        [vv, vp, vS, va],
+        [vp, pp, pS, pa],
+        [vS, pS, SS, Sa],
+        [va, pa, Sa, aa],
+    ]
+
+
 def step_scaled_q(x):
     if x.hi < BASE.BRANCH_X:
         return _small_scaled_q_factored(x)
-    return _BASE_STEP_SCALED_Q(x)
+    if x.lo >= BASE.BRANCH_X:
+        return _exact_scaled_q_stable(x)
+
+    # Outward cells touching the source branch threshold must cover both actual
+    # C++ branches.  Evaluate them separately with the stable algebra and hull.
+    left_hi = BASE.math.nextafter(BASE.BRANCH_X, -BASE.math.inf)
+    families = []
+    if x.lo <= left_hi:
+        families.append(
+            _small_scaled_q_factored(BASE.Interval.outward_bounds(x.lo, left_hi))
+        )
+    if x.hi >= BASE.BRANCH_X:
+        families.append(
+            _exact_scaled_q_stable(BASE.Interval.outward_bounds(BASE.BRANCH_X, x.hi))
+        )
+    return [
+        [BASE.hull(*(A[i][j] for A in families)) for j in range(4)]
+        for i in range(4)
+    ]
 
 
 # Patch only the numerical primitive used by BASE.build/split_x_cell.  All
-# source contracts, cell construction, covariance ceilings, Joseph comparison,
-# H/A aggregation, validation, and CLI semantics remain BASE's implementation.
+# theorem/source semantics remain BASE's implementation.
 BASE.step_scaled_q = step_scaled_q
 
 SCHEMA = BASE.SCHEMA
