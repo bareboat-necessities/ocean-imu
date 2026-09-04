@@ -15,6 +15,7 @@ on:
       - "tools/ou3_interval.py"
       - "tools/ou3_p2_*.py"
       - "tools/ou3_p3_*.py"
+      - "tools/ou3_p4_*.py"
       - "tools/ou3_source_reachable_matrix_p3.py"
       - "tools/ou3_proof_operating_domain.json"
       - "src/kalman_ou_iii/**"
@@ -168,6 +169,9 @@ jobs:
           assert d['all_required_frequencies_inside_shipping_bounds'] is True
           assert d['gap_step_tau_low_to_high_exact'] is True
           assert d['gap_step_tau_high_to_low_exact'] is True
+          assert d['tau_ema_float_exp_backend'] == 'libm_expf'
+          assert d['tau_ema_float_exp_backend_is_float'] is True
+          assert d['python_binary64_exp_used_for_cycle_alpha'] is False
           assert d['pseudo_firings_in_target_word'] == 0
           assert d['full_WavePeriodEstimator_realizability_proved'] is False
           assert d['deployed_filter_starvation_claimed'] is False
@@ -181,11 +185,14 @@ jobs:
           print('PERIOD_LOW_HIGH', d['period_low_binary32_s'], d['period_high_binary32_s'])
           print('TARGETS', d['tau_target_down_binary32_s'], d['tau_target_up_binary32_s'])
           print('FREQUENCIES', d['frequency_for_down_target_hz'], d['frequency_for_up_target_hz'])
+          print('ALPHA', d['alpha_down_binary32'], d['alpha_up_binary32'])
+          print('ROUNDED_BINARY64_ALPHA', d['rounded_binary64_alpha_down_binary32'], d['rounded_binary64_alpha_up_binary32'])
           print('PSEUDO_FIRINGS', d['pseudo_firings_in_target_word'])
           print('NEXT', d['next_obligation'])
           PY
 
       - name: Upload four-max witness artifact
+        if: always()
         uses: actions/upload-artifact@v6
         with:
           name: ou3-p3-four-max-global-label-witness
@@ -193,6 +200,7 @@ jobs:
           retention-days: 7
 
       - name: Upload ordered witness covariance diagnostic artifact
+        if: always()
         uses: actions/upload-artifact@v6
         with:
           name: ou3-p3-ordered-witness-covariance-diagnostic
@@ -200,6 +208,7 @@ jobs:
           retention-days: 7
 
       - name: Upload pseudo-scheduler starvation witness artifact
+        if: always()
         uses: actions/upload-artifact@v6
         with:
           name: ou3-p3-pseudo-scheduler-starvation-witness
@@ -207,6 +216,7 @@ jobs:
           retention-days: 7
 
       - name: Upload tau-EMA scheduler cycle diagnostic artifact
+        if: always()
         uses: actions/upload-artifact@v6
         with:
           name: ou3-p3-tau-ema-scheduler-cycle-diagnostic
