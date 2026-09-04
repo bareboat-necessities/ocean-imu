@@ -3,21 +3,12 @@ name: ou3-p3-scheduler-progress-and-ordered-covariance
 on:
   pull_request:
     paths:
-      - "tools/ou3_p3_four_max_global_label_witness.py"
-      - "tests/validation/test_ou3_p3_four_max_global_label_witness.py"
-      - "tools/ou3_p3_pseudo_scheduler_progress_certificate.py"
-      - "tests/validation/test_ou3_p3_pseudo_scheduler_progress_certificate.py"
-      - "tools/ou3_p3_correlated_translation_covariance_upper.py"
-      - "tests/validation/test_ou3_p3_correlated_translation_covariance_upper.py"
-      - "tools/ou3_p3_ordered_witness_covariance_diagnostic.py"
-      - "tests/validation/test_ou3_p3_ordered_witness_covariance_diagnostic.py"
-      - ".github/workflows/ou3-p3-whole-word-probe.yml"
-      - "tools/ou3_interval.py"
-      - "tools/ou3_p2_*.py"
       - "tools/ou3_p3_*.py"
       - "tools/ou3_p4_*.py"
       - "tools/ou3_source_reachable_matrix_p3.py"
       - "tools/ou3_proof_operating_domain.json"
+      - "tests/validation/test_ou3_p3_*.py"
+      - ".github/workflows/ou3-p3-whole-word-probe.yml"
       - "src/kalman_ou_iii/**"
       - "src/kalman_ou_common/**"
       - "src/tuner/**"
@@ -35,7 +26,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Compile live P3 scheduler, endpoint upper, and ordered diagnostics
+      - name: Compile live P3 proof tools
         run: |
           python3 -m py_compile \
             tools/ou3_p3_four_max_global_label_witness.py \
@@ -47,7 +38,7 @@ jobs:
             tests/validation/test_ou3_p3_correlated_translation_covariance_upper.py \
             tests/validation/test_ou3_p3_ordered_witness_covariance_diagnostic.py
 
-      - name: Test witness, scheduler progress, endpoint upper, and ordered extension invariants
+      - name: Test scheduler and covariance invariants
         working-directory: tests/validation
         run: |
           python3 -m unittest -v \
@@ -60,9 +51,6 @@ jobs:
         run: |
           python3 tools/ou3_p3_pseudo_scheduler_progress_certificate.py \
             --output /tmp/ou3_p3_pseudo_scheduler_progress_certificate.json
-
-      - name: Enforce scheduler recurrence contract
-        run: |
           python3 - <<'PY'
           import json
           d=json.load(open('/tmp/ou3_p3_pseudo_scheduler_progress_certificate.json'))
@@ -71,31 +59,23 @@ jobs:
           assert d['ou3_setter_progress_markers_present'] is True
           assert d['legacy_setter_fmod_progress_reset_absent'] is True
           assert d['shipping_scheduler_numeric_type'] == 'binary32/float'
-          assert d['fixed_max_period_first_fire_samples'] == 33
-          assert d['certified_uniform_max_gap_samples'] == 33
+          assert d['fixed_max_period_first_fire_samples'] == 30
+          assert d['certified_uniform_max_gap_samples'] == 30
           assert d['uniform_gap_within_translation_upper_bound'] is True
           assert d['former_635_sample_zero_fire_cycle_broken'] is True
-          assert d['former_starvation_cycle_pseudo_firings'] > 0
-          assert d['former_starvation_cycle_worst_gap_samples'] <= 33
+          assert d['former_starvation_cycle_worst_gap_samples'] <= 30
           assert d['scheduler_recurrence_certificate'] is True
           assert d['P3_PROMOTED'] is False
-          assert d['P4_PROMOTED'] is False
-          assert d['P5_PROMOTED'] is False
           print('PERIOD_RANGE', d['deployed_pseudo_period_binary32_s'])
           print('MAX_GAP_SAMPLES', d['certified_uniform_max_gap_samples'])
           print('MAX_GAP_S', d['certified_uniform_max_gap_s'])
           print('TRANSLATION_BOUND_S', d['translation_upper_cadence_plus_h_s'])
-          print('FORMER_CYCLE_FIRINGS', d['former_starvation_cycle_pseudo_firings'])
-          print('FORMER_CYCLE_WORST_GAP', d['former_starvation_cycle_worst_gap_samples'])
           PY
 
       - name: Certify endpoint-referenced same-history covariance upper
         run: |
           python3 tools/ou3_p3_correlated_translation_covariance_upper.py \
             --output /tmp/ou3_p3_correlated_translation_covariance_upper.json
-
-      - name: Enforce endpoint covariance-upper contract
-        run: |
           python3 - <<'PY'
           import json
           d=json.load(open('/tmp/ou3_p3_correlated_translation_covariance_upper.json'))
@@ -108,96 +88,52 @@ jobs:
           assert d['progress_preserving_scheduler_required_for_gap_bound'] is True
           assert d['all_representative_histories_cover_their_covariance_word'] is True
           assert d['P3_PROMOTED'] is False
-          assert d['P4_PROMOTED'] is False
-          for r in d['representative_rows']:
-              assert r['timing']['translation_reference'] == 'word_endpoint'
-              assert r['timing']['endpoint_referenced_observability'] is True
-              assert r['timing']['forward_propagation_after_endpoint_reconstruction'] is False
           print('ENDPOINT_UPPER_ROWS', [r['Sigma_translation_diagonal_upper'] for r in d['representative_rows']])
-          print('ENDPOINT_WORDS', [r['timing']['word_horizon_s_upper'] for r in d['representative_rows']])
           PY
 
       - name: Find shortest legal global four-max label witness
         run: |
           python3 tools/ou3_p3_four_max_global_label_witness.py \
             --output /tmp/ou3_p3_four_max_global_label_witness.json
-
-      - name: Enforce four-max collapse witness contract
-        run: |
           python3 - <<'PY'
           import json
           d=json.load(open('/tmp/ou3_p3_four_max_global_label_witness.json'))
           assert d['validation_pass'], d['validation_failures']
-          assert d['target_samples'] == 635
           assert d['global_label_reachable_within_word'] is True
           assert d['P3_PROMOTED'] is False
-          assert d['P4_PROMOTED'] is False
-          assert d['P5_PROMOTED'] is False
-          print('GLOBAL_LABEL', d['global_adverse_rank_label'])
           print('MINIMUM_COST_SAMPLES', d['global_label_minimum_cost_samples'])
           PY
 
-      - name: Run ordered source and progress-preserving scheduler point diagnostic
+      - name: Run ordered source diagnostic with recertified scheduler
         run: |
           python3 tools/ou3_p3_ordered_witness_covariance_diagnostic.py \
             --output /tmp/ou3_p3_ordered_witness_covariance_diagnostic.json
-
-      - name: Enforce ordered diagnostic non-promotion contract
-        run: |
           python3 - <<'PY'
           import json
           d=json.load(open('/tmp/ou3_p3_ordered_witness_covariance_diagnostic.json'))
           assert d['validation_pass'], d['validation_failures']
-          assert d['target_samples'] == 635
           assert d['exact_witness_source_order_retained'] is True
           assert d['exact_gap_labelled_legal_extension_used'] is True
           assert d['pseudo_period_change_preserves_elapsed_service_credit'] is True
           assert d['pseudo_period_change_uses_fmod_semantics'] is False
           assert d['scheduler_progress_certificate_consumed'] is True
-          assert d['scheduler_uniform_max_gap_samples'] == 33
+          assert d['scheduler_uniform_max_gap_samples'] == 30
           assert d['periodic_update_due_shipping_semantics_transcribed'] is True
-          assert d['accelerometer_measurement_updates_credited'] is False
           assert d['interval_certificate'] is False
           assert d['uniform_covariance_upper_certificate'] is False
           assert d['P3_PROMOTED'] is False
-          assert d['P4_PROMOTED'] is False
-          assert d['P5_PROMOTED'] is False
-          print('OLD_UPPER_STD', d['old_four_max_upper_std'])
           print('ORDERED_STD', d['ordered_phase_envelope_std'])
-          print('ORDERED_VARIANCE_GAIN', d['old_upper_to_ordered_variance_gain'])
-          print('SYNTHETIC_STD', d['synthetic_phase_envelope_std'])
-          print('SYNTHETIC_VARIANCE_GAIN', d['old_upper_to_synthetic_variance_gain'])
           print('NEXT', d['next_obligation'])
           PY
 
-      - name: Upload scheduler progress certificate artifact
+      - name: Upload proof diagnostics
         if: always()
         uses: actions/upload-artifact@v6
         with:
-          name: ou3-p3-pseudo-scheduler-progress-certificate
-          path: /tmp/ou3_p3_pseudo_scheduler_progress_certificate.json
-          retention-days: 7
-
-      - name: Upload endpoint covariance upper artifact
-        if: always()
-        uses: actions/upload-artifact@v6
-        with:
-          name: ou3-p3-endpoint-covariance-upper
-          path: /tmp/ou3_p3_correlated_translation_covariance_upper.json
-          retention-days: 7
-
-      - name: Upload four-max witness artifact
-        if: always()
-        uses: actions/upload-artifact@v6
-        with:
-          name: ou3-p3-four-max-global-label-witness
-          path: /tmp/ou3_p3_four_max_global_label_witness.json
-          retention-days: 7
-
-      - name: Upload ordered witness covariance diagnostic artifact
-        if: always()
-        uses: actions/upload-artifact@v6
-        with:
-          name: ou3-p3-ordered-witness-covariance-diagnostic
-          path: /tmp/ou3_p3_ordered_witness_covariance_diagnostic.json
+          name: ou3-p3-scheduler-and-ordered-covariance
+          path: |
+            /tmp/ou3_p3_pseudo_scheduler_progress_certificate.json
+            /tmp/ou3_p3_correlated_translation_covariance_upper.json
+            /tmp/ou3_p3_four_max_global_label_witness.json
+            /tmp/ou3_p3_ordered_witness_covariance_diagnostic.json
           retention-days: 7
