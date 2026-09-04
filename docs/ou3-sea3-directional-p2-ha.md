@@ -131,6 +131,12 @@ has yet removed a P2 cell.  A robust RAO range is now part of the theorem, but
 finite-memory WavePeriodEstimator/variance/tuner reachability is still required
 before the response family can be used for source-history pruning.
 
+The inclusion artifact nevertheless records the exact RAO parameter box it
+consumed as an independent snapshot of the response-enclosure box, that is of
+the declared continuum of section 1, and validation requires structural
+equality between the two.  A stale or substituted box is therefore rejected
+rather than inherited.
+
 ## 5. H/A feasibility
 
 The H/A check remains the unchanged source-complete P2-V1 translation route,
@@ -179,4 +185,5 @@ source-domain test already run there.  The retired dedicated
 CI rejects regression to a nominal RAO, a finite sampled RAO catalogue,
 independent Cartesian response boxes, response roll-off weaker than `p=2`,
 independent maximum `H_r/T_p,r` corners, three independently maximized partition
-heights, or a changed `1e-18` H/A gate.
+heights, a P2 inclusion that consumed a different RAO parameter box than the
+certified response enclosure, or a changed `1e-18` H/A gate.
