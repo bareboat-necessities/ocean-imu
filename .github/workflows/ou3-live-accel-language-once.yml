@@ -1,0 +1,140 @@
+name: ou3-live-accel-language-once
+
+on:
+  push:
+    branches:
+      - codex/ou3-tighten-proof-envelope-sep3
+    paths:
+      - ".github/workflows/ou3-live-accel-language-once.yml"
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  enforce-live-accel-language:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Remove rejected accelerometer branch from Normal-Live proof language
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import json
+
+          def replace_once(path, old, new):
+              p = Path(path)
+              text = p.read_text()
+              n = text.count(old)
+              if n != 1:
+                  raise SystemExit(f"{path}: expected one occurrence of {old!r}, got {n}")
+              p.write_text(text.replace(old, new))
+
+          w = "tools/ou3_implementation_word_language.py"
+          replace_once(w,
+              '        "arbitrary_rejections_between_required_pe_events_allowed": True,',
+              '        "accelerometer_rejections_between_required_pe_events_allowed": False,\n'
+              '        "magnetometer_rejections_between_required_pe_events_allowed": True,')
+          replace_once(w,
+              '            "accelerometer_gate": ["accepted", "rejected"],',
+              '            "accelerometer_gate": ["accepted"],')
+          replace_once(w,
+              '    if word.get("source_branch_language", {}).get("joint_source_reachability_required") is not True:\n'
+              '        failures.append("joint source reachability is not required")',
+              '    source_lang = word.get("source_branch_language", {})\n'
+              '    if source_lang.get("joint_source_reachability_required") is not True:\n'
+              '        failures.append("joint source reachability is not required")\n'
+              '    if source_lang.get("accelerometer_gate") != ["accepted"]:\n'
+              '        failures.append("Normal-Live language admits rejected accelerometer updates")\n'
+              '    pe = word.get("vector_persistent_excitation", {})\n'
+              '    if pe.get("accelerometer_rejections_between_required_pe_events_allowed") is not False:\n'
+              '        failures.append("accelerometer rejection remains admissible between PE events")')
+
+          dpath = Path("tools/ou3_proof_operating_domain.json")
+          d = json.loads(dpath.read_text())
+          live = d["normal_live"]
+          live["accelerometer_update_required_each_valid_imu_sample_after_live_entry"] = True
+          live["accelerometer_rejection_in_normal_live_scope"] = False
+          live["accelerometer_update_scope_note"] = (
+              "After entry into Normal Live, every valid IMU sample executes the accelerometer Kalman update. "
+              "The certified source language therefore contains no rejected/missing accelerometer branch; "
+              "numerical factorization failure is outside the normal theorem domain. Magnetometer timing and rejection remain asynchronous."
+          )
+          dpath.write_text(json.dumps(d, indent=2) + "\n")
+
+          t = Path("doc/kalman_ou_iii/w3d-iss-stability.tex-part")
+          text = t.read_text()
+          old = (
+              "Accepted accelerometer and magnetometer update sets\n"
+              "$\\mathcal A_{k,N}$ and $\\mathcal M_{k,N}$ need not coincide."
+          )
+          new = (
+              "After entry into normal Live mode, every valid IMU sample executes the\n"
+              "accelerometer Kalman update, so the certified Live source language has no\n"
+              "rejected or missing accelerometer branch.  Equivalently,\n"
+              "$\\mathcal A_{k,N}$ contains every valid physical sample in the window.\n"
+              "Magnetometer updates remain asynchronous and may be not-due or rejected, so\n"
+              "$\\mathcal M_{k,N}$ need not coincide with $\\mathcal A_{k,N}$."
+          )
+          if old not in text:
+              raise SystemExit("theorem accelerometer/magnetometer sentence not found")
+          t.write_text(text.replace(old, new, 1))
+
+          # Source-level sanity: Normal-Live Kalman accelerometer update has no ordinary
+          # residual/NIS/magnitude rejection branch. Its accepted=false return is only the
+          # numerical LDLT failure safeguard.
+          k = Path("src/kalman_ou_iii/Kalman3D_Wave_OU_III.h").read_text()
+          start = k.index("void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::measurement_update_acc_only")
+          end = k.index("void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::measurement_update_mag_only", start)
+          body = k[start:end]
+          if "last_acc_diag_.accepted = true;" not in body:
+              raise SystemExit("accelerometer update no longer marks successful update accepted")
+          if body.count("return;") != 1 or "safe_ldlt3_" not in body:
+              raise SystemExit("accelerometer update acquired an additional rejection/early-return branch")
+          PY
+
+          git diff --check
+          python3 -m py_compile tools/ou3_implementation_word_language.py
+          python3 tools/ou3_implementation_word_language.py --output /tmp/ou3-word-language.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/ou3-word-language.json'))
+          s=d['word_contract']['source_branch_language']
+          pe=d['word_contract']['vector_persistent_excitation']
+          assert s['accelerometer_gate'] == ['accepted']
+          assert pe['accelerometer_rejections_between_required_pe_events_allowed'] is False
+          PY
+
+      - name: Commit theorem/source-language correction
+        id: commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add tools/ou3_implementation_word_language.py \
+                  tools/ou3_proof_operating_domain.json \
+                  doc/kalman_ou_iii/w3d-iss-stability.tex-part
+          git commit -m "OU-III: require accelerometer updates in Normal Live"
+          git push origin HEAD:${GITHUB_REF_NAME}
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Dispatch full simulation validation
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run ou-validation.yml --ref "${GITHUB_REF_NAME}" -f validation_mode=full
+
+      - name: Dispatch proof certificate build
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run ou3-proof.yml --ref "${GITHUB_REF_NAME}"
+
+      - name: Dispatch broad build
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run build.yml --ref "${GITHUB_REF_NAME}"
