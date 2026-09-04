@@ -232,8 +232,11 @@ class Kalman3D_Wave_OU_III {
 
     void set_pseudo_update_period_s(T period_s) {
         if (!(period_s > T(0)) || !std::isfinite(period_s)) return;
-        pseudo_update_period_s_ = std::max(T(1e-4), period_s);
-        pseudo_update_elapsed_s_ = std::fmod(pseudo_update_elapsed_s_, pseudo_update_period_s_);
+        const T new_period = std::max(T(1e-4), period_s);
+        pseudo_update_elapsed_s_ =
+            ocean_imu::kalman::ou_detail::retarget_period_elapsed_progress_preserving(
+                pseudo_update_elapsed_s_, new_period);
+        pseudo_update_period_s_ = new_period;
     }
 
     [[nodiscard]] T get_pseudo_update_period_s() const { return pseudo_update_period_s_; }

@@ -40,6 +40,11 @@ class FullStatePrecisionJoinTests(unittest.TestCase):
     def test_conditional_bias_floor_is_strict_and_source_independent(self):
         domain = J.json.loads(J.DEFAULT_DOMAIN.read_text(encoding="utf-8"))
         blocks = J._common_blocks(domain)
+        self.assertTrue(blocks["vector_PE_recurrence_quantifier_consumed"])
+        self.assertEqual(
+            blocks["final_pe_recurrence_s"],
+            float(domain["normal_live"]["vector_pe_recurrence_window_s"]),
+        )
         for mode in ("H", "A"):
             row = J._conditional_bias_floor(mode, domain, blocks)
             self.assertGreater(row["conditional_measurement_attenuation_lower"], 0.0)
@@ -51,6 +56,30 @@ class FullStatePrecisionJoinTests(unittest.TestCase):
                 self.assertGreater(row["accel_bias_conditional_posterior_lower"], 0.0)
             else:
                 self.assertIsNone(row["accel_bias_conditional_posterior_lower"])
+
+    def test_history_bias_upper_uses_final_pe_window_not_whole_word(self):
+        domain = J.json.loads(J.DEFAULT_DOMAIN.read_text(encoding="utf-8"))
+        blocks = J._common_blocks(domain)
+        summary = {
+            "all_statistics_from_one_legal_P2_history": True,
+            "independent_global_source_extrema_used": False,
+            "history_duration_s": [10.0, 10.0],
+            "pseudo_update_cadence_s": [0.1, 0.1],
+            "q_c_upper": 1.0,
+        }
+        for mode in ("H", "A"):
+            row = J._history_bias_upper(summary, mode, domain, blocks)
+            self.assertTrue(row["final_PE_selected_from_recurrence_window"])
+            self.assertFalse(row["whole_word_horizon_used_for_post_PE_propagation"])
+            self.assertTrue(row["vector_PE_recurrence_quantifier_consumed"])
+            self.assertEqual(
+                row["post_vector_PE_to_endpoint_horizon_s_upper"],
+                J.BASE.up(blocks["final_pe_recurrence_s"]),
+            )
+            self.assertLess(
+                row["post_vector_PE_to_endpoint_horizon_s_upper"],
+                row["whole_word_horizon_s_upper"],
+            )
 
     def test_validation_is_fail_closed_on_numeric_flags(self):
         d = {
@@ -76,13 +105,29 @@ class FullStatePrecisionJoinTests(unittest.TestCase):
             "attitude_bias_fresh_final_prediction_modes_used": True,
             "conditional_precision_block_theorem_used": True,
             "same_history_bias_upper_evaluated_before_uniform_envelope": True,
+            "vector_PE_word_language_certificate_consumed": True,
+            "final_vector_PE_recurrence_window_used_for_attitude_bias_propagation": True,
+            "whole_covariance_word_used_for_post_PE_propagation": False,
+            "final_vector_PE_recurrence_window_s": 1.0,
             "precision_block_join_factor": 0.5,
             "useful_gate": 1.0e-18,
             "modes": {
-                "H": {"relative_Riccati_injection_margin_lower": 2.0e-18,
-                      "useful_margin_established": True},
-                "A": {"relative_Riccati_injection_margin_lower": 3.0e-18,
-                      "useful_margin_established": True},
+                "H": {
+                    "relative_Riccati_injection_margin_lower": 2.0e-18,
+                    "useful_margin_established": True,
+                    "same_history_bias_covariance_upper": {
+                        "final_PE_selected_from_recurrence_window": True,
+                        "whole_word_horizon_used_for_post_PE_propagation": False,
+                    },
+                },
+                "A": {
+                    "relative_Riccati_injection_margin_lower": 3.0e-18,
+                    "useful_margin_established": True,
+                    "same_history_bias_covariance_upper": {
+                        "final_PE_selected_from_recurrence_window": True,
+                        "whole_word_horizon_used_for_post_PE_propagation": False,
+                    },
+                },
             },
             "P3_PRODUCER_NUMERIC_PASS": True,
             "P3_CANONICAL_PROMOTED": False,
@@ -93,6 +138,12 @@ class FullStatePrecisionJoinTests(unittest.TestCase):
         d["P3_PRODUCER_NUMERIC_PASS"] = False
         self.assertIn(
             "producer numeric pass flag does not match H/A margins",
+            J.validate(d),
+        )
+        d["P3_PRODUCER_NUMERIC_PASS"] = True
+        d["whole_covariance_word_used_for_post_PE_propagation"] = True
+        self.assertIn(
+            "whole_covariance_word_used_for_post_PE_propagation is not false",
             J.validate(d),
         )
 

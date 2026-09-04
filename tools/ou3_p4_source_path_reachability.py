@@ -362,16 +362,24 @@ def build(domain_path=DEFAULT_DOMAIN):
         if len(cc) > 1 or (cc and cc[0] in graph[cc[0]]):
             recurrent.update(cc)
 
-    # Historic weak P3 cell remains explicit.  Compare against the *filter*
-    # sigma box, not the raw tuner sigma state, because P3 sees the 0.05 floor.
+    # Keep the historic weak-P3 cell as a diagnostic definition.  It used the
+    # old high-R_S source region [149.2, 400].  The tightened shipping clamp is
+    # now MAX_R_S=100, so the correct source-complete outcome is that this
+    # legacy region is absent, not that the graph must artificially retain it.
+    legacy_sigma_box = (0.05, 0.13025855423486765)
+    legacy_rs_box = (149.21548743644342, 400.0)
+    legacy_x_box = (0.00041666665735344083, 0.0004837652693428343)
     bad = []
     for q, (t, s_raw, r) in enumerate(states):
         x = (down(c["dt"] / t[1]), up(c["dt"] / t[0]))
         s_filter = _filter_sigma_box(s_raw)
-        if (_overlap(s_filter, (0.05, 0.13025855423486765))
-                and _overlap(r, (149.21548743644342, 400.0))
-                and _overlap(x, (0.00041666665735344083, 0.0004837652693428343))):
+        if (_overlap(s_filter, legacy_sigma_box)
+                and _overlap(r, legacy_rs_box)
+                and _overlap(x, legacy_x_box)):
             bad.append(q)
+    legacy_excluded_by_shipping_clamps = (
+        not bad and c["max_RS"] < legacy_rs_box[0]
+    )
     bad_cycle = _induced_cycle(gl, bad)
     steps = _longest_bad_residence(gl, bad)
 
@@ -404,11 +412,17 @@ def build(domain_path=DEFAULT_DOMAIN):
         "transition_edges": sum(map(len, gl)),
         "strongly_connected_components": len(comps),
         "recurrent_states": len(recurrent),
+        "old_worst_corner_definition": {
+            "filter_sigma_mps2": list(legacy_sigma_box),
+            "R_S_filter_std": list(legacy_rs_box),
+            "x_h_over_tau": list(legacy_x_box),
+        },
         "old_worst_corner_state_count": len(bad),
         "old_worst_corner_states_in_any_recurrent_SCC": sum(q in recurrent for q in bad),
         "old_worst_corner_has_internal_recurrent_cycle": bad_cycle,
         "old_worst_corner_max_consecutive_commit_steps_upper": steps,
         "old_worst_corner_max_residence_s_upper": None if steps is None else up(steps * min_elapsed),
+        "old_worst_corner_excluded_by_shipping_clamps": legacy_excluded_by_shipping_clamps,
         "path_graph_ready": True,
         "P2_SOURCE_PATH_CERTIFICATE": "PASS",
         "usable_P4_promoted": False,
@@ -454,8 +468,13 @@ def validate(d):
         failures.append("empty path graph")
     if d.get("usable_P4_promoted") is not False:
         failures.append("reachability prematurely promoted P4")
-    if int(d.get("old_worst_corner_state_count", 0)) <= 0:
-        failures.append("old worst corner not represented")
+
+    legacy_count = int(d.get("old_worst_corner_state_count", 0))
+    legacy_excluded = d.get("old_worst_corner_excluded_by_shipping_clamps") is True
+    if legacy_count <= 0 and not legacy_excluded:
+        failures.append("legacy worst corner is neither represented nor excluded by shipping clamps")
+    if legacy_count > 0 and legacy_excluded:
+        failures.append("legacy worst corner cannot be both represented and clamp-excluded")
     return list(dict.fromkeys(failures))
 
 
@@ -476,6 +495,7 @@ def main():
             "old_worst_corner_states_in_any_recurrent_SCC",
             "old_worst_corner_has_internal_recurrent_cycle",
             "old_worst_corner_max_residence_s_upper",
+            "old_worst_corner_excluded_by_shipping_clamps",
             "P2_SOURCE_PATH_CERTIFICATE", "failures",
         )
     }, indent=2, sort_keys=True))

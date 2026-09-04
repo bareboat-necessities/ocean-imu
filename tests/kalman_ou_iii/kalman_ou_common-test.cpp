@@ -171,6 +171,75 @@ bool test_noise_units_and_period() {
     return true;
 }
 
+bool test_period_retarget_progress() {
+    // An unexpired deadline preserves accumulated service credit exactly.
+    const float old_elapsed = 0.12f;
+    const float longer_period = 0.14f;
+    const float kept = detail::retarget_period_elapsed_progress_preserving(
+        old_elapsed, longer_period);
+    if (!check(kept == old_elapsed,
+               "period retarget discarded unexpired elapsed credit")) return false;
+
+    // A shortened deadline that is already overdue must not modulo the credit
+    // away. Park immediately below the new deadline so the next sample fires.
+    const float shorter_period = 0.13f;
+    const float armed = detail::retarget_period_elapsed_progress_preserving(
+        longer_period, shorter_period);
+    if (!check(armed == std::nextafter(shorter_period, 0.0f),
+               "overdue period retarget did not arm next-sample service")) return false;
+    float due_elapsed = armed;
+    if (!check(detail::periodic_update_due(0.005f, shorter_period, due_elapsed),
+               "overdue retarget was not serviced on the next valid sample")) return false;
+
+    // The largest deployed tau-coupled pseudo period fires on sample 33 from
+    // zero elapsed under the exact float scheduler. This is the source-
+    // independent worst case once retargets preserve progress.
+    const float max_deployed_period = 0.16363636f;
+    float elapsed = 0.0f;
+    int first_fire = 0;
+    for (int sample = 1; sample <= 64; ++sample) {
+        elapsed = detail::retarget_period_elapsed_progress_preserving(
+            elapsed, max_deployed_period);
+        if (detail::periodic_update_due(0.005f, max_deployed_period, elapsed)) {
+            first_fire = sample;
+            break;
+        }
+    }
+    if (!check(first_fire == 33,
+               "largest deployed pseudo period no longer fires on sample 33")) return false;
+
+    // Replay the former H,H,L,H,L,... 13-sample starvation timing. The new
+    // retarget rule must produce updates rather than allowing a 635-sample
+    // no-fire execution.
+    constexpr float low = 0.1300000101327896f;
+    constexpr float high = 0.13000193238258362f;
+    elapsed = 0.0f;
+    int fires = 0;
+    int since_fire = 0;
+    int worst_gap = 0;
+    int samples = 0;
+    int segment = 0;
+    while (samples < 635) {
+        const float period = (segment < 2 || (segment % 2) == 1) ? high : low;
+        elapsed = detail::retarget_period_elapsed_progress_preserving(elapsed, period);
+        const int used = std::min(13, 635 - samples);
+        for (int k = 0; k < used; ++k) {
+            ++samples;
+            ++since_fire;
+            if (detail::periodic_update_due(0.005f, period, elapsed)) {
+                ++fires;
+                worst_gap = std::max(worst_gap, since_fire);
+                since_fire = 0;
+            }
+        }
+        ++segment;
+    }
+    worst_gap = std::max(worst_gap, since_fire);
+    if (!check(fires > 0, "former starvation cycle still has zero pseudo updates")) return false;
+    if (!check(worst_gap <= 33, "former starvation cycle exceeds 33-sample gap")) return false;
+    return true;
+}
+
 // The congruent a_w re-alignment must reach the stationary marginal without
 // changing how a_w correlates with the rest of the state, and without pushing
 // the joint covariance out of the positive semi-definite cone. Overwriting the
@@ -263,6 +332,7 @@ int main() {
     if (!test_ou_covariance()) return 1;
     if (!test_stationary_setters()) return 1;
     if (!test_noise_units_and_period()) return 1;
+    if (!test_period_retarget_progress()) return 1;
     if (!test_aw_covariance_sync()) return 1;
     if (!test_attitude_helpers()) return 1;
     return 0;

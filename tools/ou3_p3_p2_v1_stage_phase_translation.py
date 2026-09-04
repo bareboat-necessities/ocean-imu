@@ -163,22 +163,38 @@ def common_boundary_floor(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     }
 
 
-@functools.lru_cache(maxsize=8192)
-def _phase_images_cached(source_node: int, phase_samples: int,
-                         rho_key: float, domain_path: Path = DEFAULT_DOMAIN):
+@functools.lru_cache(maxsize=1024)
+def _phase_sequence_cached(source_node: int, rho_key: float,
+                           domain_path: Path = DEFAULT_DOMAIN):
+    """Propagate all finite-clock prefixes once for one source/x partition.
+
+    The previous phase cache restarted from the same boundary for every phase,
+    so one x subcell performed 1+...+25=325 one-step recursions.  During a
+    staged source segment both the source node and the x subcell are fixed, so
+    the r-sample state is exactly the prefix of the (r+1)-sample state.  Build
+    the same recursion once through sample 25 and retain every prefix.  No
+    enclosure, source partition, measurement assumption, or theorem inequality
+    changes here.
+    """
     path = Path(domain_path).resolve()
     rt = CORR.runtime(path)
     t = int(source_node)
-    r = int(phase_samples)
     h = float(rt["clock"]["dt_binary32_s"])
     P0 = _identity_floor(float(rho_key))
-    if r == 0:
-        return (P0,)
     node = rt["nodes"][t]
-    return tuple(
-        SEG.propagate_subcell(P0, node, r, x, h)
-        for x in SEG._node_x_subcells(node, h, SEG.X_SUBCELLS)
-    )
+    xcells = SEG._node_x_subcells(node, h, SEG.X_SUBCELLS)
+    phases = [(P0,)]
+    states = [
+        [[P0[i][j] for j in range(4)] for i in range(4)]
+        for _ in xcells
+    ]
+    for _sample in range(1, max(PHASES) + 1):
+        states = [
+            SEG.one_step(states[j], node, x, h)
+            for j, x in enumerate(xcells)
+        ]
+        phases.append(tuple(states))
+    return tuple(phases)
 
 
 def phase_row(source_node: int, phase_samples: int, fr: dict, boundary: dict,
@@ -191,7 +207,7 @@ def phase_row(source_node: int, phase_samples: int, fr: dict, boundary: dict,
     rho = float(boundary["rho_z_identity_lower"])
     path = Path(fr["path"]).resolve()
     h = float(fr["rt"]["clock"]["dt_binary32_s"])
-    images = _phase_images_cached(t, r, rho, path)
+    images = _phase_sequence_cached(t, rho, path)[r]
     deltas = [_certified_delta(P, h, upper) for P in images]
     phase_rhos = [SCALED.certified_rho(P) for P in images]
     delta = min(deltas) if deltas else 0.0
@@ -387,6 +403,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "all_finite_clock_sample_phases_covered": True,
         "phase_samples": list(PHASES),
         "phase_26_is_next_stage_boundary_when_clock_advances": True,
+        "finite_phase_prefixes_propagated_once_per_source_x_cell": True,
         "frozen_clock_absorbing_hold_branch_included": True,
         "frozen_clock_branch": frozen,
         "strongest_accelerometer_and_S_measurements_applied_every_sample": True,
@@ -431,6 +448,7 @@ def validate(d: dict) -> list[str]:
         "older_process_covariance_discarded_at_each_boundary", "Riccati_order_monotonicity_used",
         "all_finite_clock_sample_phases_covered",
         "phase_26_is_next_stage_boundary_when_clock_advances",
+        "finite_phase_prefixes_propagated_once_per_source_x_cell",
         "frozen_clock_absorbing_hold_branch_included",
         "strongest_accelerometer_and_S_measurements_applied_every_sample",
         "magnetometer_translation_jacobian_zero_on_declared_branch",

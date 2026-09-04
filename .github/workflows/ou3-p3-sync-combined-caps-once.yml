@@ -1,0 +1,156 @@
+name: ou3-p3-sync-combined-caps-once
+
+on:
+  push:
+    branches:
+      - codex/ou3-p3-source-clock-recurrence
+    paths:
+      - ".github/workflows/ou3-p3-sync-combined-caps-once.yml"
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  sync-proof-contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Bind proof contracts to shipping caps
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path, old, new):
+              p = Path(path)
+              text = p.read_text()
+              if text.count(old) != 1:
+                  raise SystemExit(f"{path}: expected exactly one occurrence of {old!r}, found {text.count(old)}")
+              p.write_text(text.replace(old, new, 1))
+
+          path = 'tools/ou3_source_reachable_matrix_p3.py'
+          replace_once(
+              path,
+              '        "MIN_TUNE_FREQ_HZ","MAX_TUNE_FREQ_HZ","MIN_TAU_S","MAX_TAU_S",\n        "MIN_R_S","MAX_R_S","PSEUDO_UPDATE_TAU_RATIO_DEFAULT",',
+              '        "MIN_TUNE_FREQ_HZ","MAX_TUNE_FREQ_HZ","MIN_TAU_S","MAX_TAU_S",\n        "MAX_SIGMA_A","MIN_R_S","MAX_R_S","PSEUDO_UPDATE_TAU_RATIO_DEFAULT",')
+          replace_once(path, '        "sigma_aw_applied_safety":[0.05,6.0],',
+                             '        "sigma_aw_applied_safety":[0.05,up(c["MAX_SIGMA_A"])],')
+          replace_once(path, '    sigmas=interval_cells(geom_edges(0.05,6.0,5))',
+                             '    sigma_lo,sigma_hi=sched["sigma_aw_applied_safety"]\n    sigmas=interval_cells(geom_edges(sigma_lo,sigma_hi,5))')
+
+          path = 'tools/ou3_p3_pseudo_scheduler_progress_certificate.py'
+          replace_once(path,
+              '        "classification": "SOURCE_INDEPENDENT_33_SAMPLE_S_RECURRENCE_CERTIFIED",',
+              '        "classification": f"SOURCE_INDEPENDENT_{fixed_fire}_SAMPLE_S_RECURRENCE_CERTIFIED",')
+          old = '''    if int(d.get("fixed_max_period_first_fire_samples", 0)) != 33:\n        f.append("largest deployed period no longer fires on sample 33")\n    if int(d.get("certified_uniform_max_gap_samples", 0)) != 33:\n        f.append("uniform scheduler gap is not 33 samples")'''
+          new = '''    fixed_fire = int(d.get("fixed_max_period_first_fire_samples", 0))\n    uniform_gap = int(d.get("certified_uniform_max_gap_samples", 0))\n    if fixed_fire <= 0:\n        f.append("largest deployed period has no finite firing sample")\n    if uniform_gap != fixed_fire:\n        f.append("uniform scheduler gap does not match fixed maximum-period deadline")'''
+          replace_once(path, old, new)
+          replace_once(path,
+              '    if int(d.get("former_starvation_cycle_worst_gap_samples", 9999)) > 33:\n        f.append("former starvation replay exceeds certified 33-sample gap")',
+              '    if int(d.get("former_starvation_cycle_worst_gap_samples", 9999)) > uniform_gap:\n        f.append("former starvation replay exceeds certified uniform gap")')
+          replace_once(path,
+              '    if d.get("classification") != "SOURCE_INDEPENDENT_33_SAMPLE_S_RECURRENCE_CERTIFIED":\n        f.append("unexpected scheduler classification")',
+              '    if d.get("classification") != f"SOURCE_INDEPENDENT_{uniform_gap}_SAMPLE_S_RECURRENCE_CERTIFIED":\n        f.append("unexpected scheduler classification")')
+          p = Path(path)
+          p.write_text(p.read_text().replace('fires by sample\n33 from zero elapsed.', 'fires by sample\n30 from zero elapsed.', 1))
+
+          path = 'tests/validation/test_ou3_p3_pseudo_scheduler_progress_certificate.py'
+          replace_once(path, '    def test_fixed_max_period_fires_on_sample_33(self):',
+                             '    def test_fixed_max_period_fires_on_sample_30(self):')
+          replace_once(path, '        self.assertEqual(sample, 33)', '        self.assertEqual(sample, 30)')
+          replace_once(path, '        self.assertLessEqual(worst, 33)', '        self.assertLessEqual(worst, 30)')
+
+          path = 'tools/ou3_p3_ordered_witness_covariance_diagnostic.py'
+          replace_once(path,
+              '    if int(d.get("scheduler_uniform_max_gap_samples", 0)) != 33: f.append("ordered diagnostic lost the 33-sample scheduler recurrence")',
+              '    expected_gap = int(TIMER.build()["certified_uniform_max_gap_samples"])\n    if int(d.get("scheduler_uniform_max_gap_samples", 0)) != expected_gap: f.append("ordered diagnostic lost the certified scheduler recurrence")')
+
+          path = 'tests/kalman_ou_iii/kalman_ou_common-test.cpp'
+          replace_once(path, '// The largest deployed tau-coupled pseudo period fires on sample 33 from\n',
+                             '// The largest deployed tau-coupled pseudo period fires on sample 30 from\n')
+          replace_once(path, '    const float max_deployed_period = 0.16363636f;', '    const float max_deployed_period = 0.15f;')
+          replace_once(path,
+              '    if (!check(first_fire == 33,\n               "largest deployed pseudo period no longer fires on sample 33")) return false;',
+              '    if (!check(first_fire == 30,\n               "largest deployed pseudo period no longer fires on sample 30")) return false;')
+          replace_once(path,
+              '    if (!check(worst_gap <= 33, "former starvation cycle exceeds 33-sample gap")) return false;',
+              '    if (!check(worst_gap <= 30, "former starvation cycle exceeds 30-sample gap")) return false;')
+
+          path = '.github/workflows/ou3-p3-whole-word-probe.yml'
+          p = Path(path)
+          text = p.read_text()
+          text = text.replace("assert d['fixed_max_period_first_fire_samples'] == 33", "assert d['fixed_max_period_first_fire_samples'] == 30")
+          text = text.replace("assert d['certified_uniform_max_gap_samples'] == 33", "assert d['certified_uniform_max_gap_samples'] == 30")
+          text = text.replace("assert d['former_starvation_cycle_worst_gap_samples'] <= 33", "assert d['former_starvation_cycle_worst_gap_samples'] <= 30")
+          text = text.replace("assert d['scheduler_uniform_max_gap_samples'] == 33", "assert d['scheduler_uniform_max_gap_samples'] == 30")
+          p.write_text(text)
+          PY
+
+          git diff --check
+          python3 -m py_compile \
+            tools/ou3_source_reachable_matrix_p3.py \
+            tools/ou3_p3_pseudo_scheduler_progress_certificate.py \
+            tools/ou3_p3_ordered_witness_covariance_diagnostic.py \
+            tests/validation/test_ou3_p3_pseudo_scheduler_progress_certificate.py
+          cd tests/validation
+          python3 -m unittest -v test_ou3_p3_pseudo_scheduler_progress_certificate
+          cd ../..
+          python3 tools/ou3_p3_pseudo_scheduler_progress_certificate.py --output /tmp/scheduler.json
+          python3 - <<'PY'
+          import json, sys
+          sys.path.insert(0, 'tools')
+          import ou3_source_reachable_matrix_p3 as P3
+          d=json.load(open('/tmp/scheduler.json'))
+          assert d['validation_pass'], d['validation_failures']
+          assert d['deployed_pseudo_period_binary32_s'][1] <= 0.15000001
+          assert d['fixed_max_period_first_fire_samples'] == 30
+          assert d['certified_uniform_max_gap_samples'] == 30
+          s=P3.source_schedule()
+          assert s['sigma_aw_applied_safety'][1] <= 4.000000000000001
+          assert s['R_S_applied_invariant'][1] <= 100.0000000000001
+          assert s['pseudo_max_s'] <= 0.1500000000000001
+          print('SHIPPING_SIGMA_CAP', s['sigma_aw_applied_safety'])
+          print('SHIPPING_RS_CAP', s['R_S_applied_invariant'])
+          print('SHIPPING_PSEUDO_CAP', s['pseudo_max_s'])
+          print('SCHEDULER_GAP_SAMPLES', d['certified_uniform_max_gap_samples'])
+          PY
+
+      - name: Run native scheduler regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          make -C tests/kalman_ou_iii kalman_ou_common-test
+          ./tests/kalman_ou_iii/kalman_ou_common-test
+
+      - name: Commit proof-cap consistency and remove helper
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/ou3-p3-sync-combined-caps-once.yml
+          git add \
+            tools/ou3_source_reachable_matrix_p3.py \
+            tools/ou3_p3_pseudo_scheduler_progress_certificate.py \
+            tools/ou3_p3_ordered_witness_covariance_diagnostic.py \
+            tests/validation/test_ou3_p3_pseudo_scheduler_progress_certificate.py \
+            tests/kalman_ou_iii/kalman_ou_common-test.cpp \
+            .github/workflows/ou3-p3-whole-word-probe.yml
+          git commit -m "P3: bind proof contracts to tightened shipping caps"
+          git pull --rebase origin "${GITHUB_REF_NAME}"
+          git push origin HEAD:${GITHUB_REF_NAME}
+
+      - name: Dispatch combined-head proof and build
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh workflow run ou3-proof.yml --ref "${GITHUB_REF_NAME}"
+          gh workflow run ou3-p3-whole-word-probe.yml --ref "${GITHUB_REF_NAME}"
+          gh workflow run build.yml --ref "${GITHUB_REF_NAME}"
