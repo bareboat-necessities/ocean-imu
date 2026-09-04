@@ -1,0 +1,143 @@
+name: ou3-p3-apply-scheduler-patch
+
+on:
+  push:
+    branches:
+      - codex/ou3-p3-source-clock-recurrence
+    paths:
+      - ".github/workflows/ou3-p3-apply-scheduler-patch.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: codex/ou3-p3-source-clock-recurrence
+          fetch-depth: 0
+
+      - name: Apply exact scheduler progress patch
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          common = Path('src/kalman_ou_common/KalmanOUCoreMath.h')
+          text = common.read_text()
+          needle = '''template<typename T>\ninline bool periodic_update_due(T dt, T period, T& elapsed) {\n'''
+          insert = '''// Retarget a periodic scheduler without discarding elapsed service credit.\n// If the new deadline has already passed, park immediately below it so the\n// next valid sample services the owed update through periodic_update_due().\n// Otherwise preserve elapsed bit-for-bit.\ntemplate<typename T>\ninline T retarget_period_elapsed_progress_preserving(T elapsed, T period) {\n    if (!(period > T(0)) || !std::isfinite(period)) return T(0);\n    if (!(elapsed >= T(0)) || !std::isfinite(elapsed)) return T(0);\n    if (elapsed < period) return elapsed;\n    return std::nextafter(period, T(0));\n}\n\ntemplate<typename T>\ninline bool periodic_update_due(T dt, T period, T& elapsed) {\n'''
+          if text.count(needle) != 1:
+              raise SystemExit(f'common helper insertion anchor count={text.count(needle)}')
+          common.write_text(text.replace(needle, insert, 1))
+
+          filt = Path('src/kalman_ou_iii/Kalman3D_Wave_OU_III.h')
+          text = filt.read_text()
+          old = '''    void set_pseudo_update_period_s(T period_s) {\n        if (!(period_s > T(0)) || !std::isfinite(period_s)) return;\n        pseudo_update_period_s_ = std::max(T(1e-4), period_s);\n        pseudo_update_elapsed_s_ = std::fmod(pseudo_update_elapsed_s_, pseudo_update_period_s_);\n    }\n'''
+          new = '''    void set_pseudo_update_period_s(T period_s) {\n        if (!(period_s > T(0)) || !std::isfinite(period_s)) return;\n        const T new_period = std::max(T(1e-4), period_s);\n        pseudo_update_elapsed_s_ =\n            ocean_imu::kalman::ou_detail::retarget_period_elapsed_progress_preserving(\n                pseudo_update_elapsed_s_, new_period);\n        pseudo_update_period_s_ = new_period;\n    }\n'''
+          if text.count(old) != 1:
+              raise SystemExit(f'OU-III setter anchor count={text.count(old)}')
+          filt.write_text(text.replace(old, new, 1))
+
+          test = Path('tests/kalman_ou_iii/kalman_ou_common-test.cpp')
+          text = test.read_text()
+          anchor = '''// The congruent a_w re-alignment must reach the stationary marginal without\n'''
+          block = r'''bool test_period_retarget_progress() {
+    // An unexpired deadline preserves accumulated service credit exactly.
+    const float old_elapsed = 0.12f;
+    const float longer_period = 0.14f;
+    const float kept = detail::retarget_period_elapsed_progress_preserving(
+        old_elapsed, longer_period);
+    if (!check(kept == old_elapsed,
+               "period retarget discarded unexpired elapsed credit")) return false;
+
+    // A shortened deadline that is already overdue must not modulo the credit
+    // away. Park immediately below the new deadline so the next sample fires.
+    const float shorter_period = 0.13f;
+    const float armed = detail::retarget_period_elapsed_progress_preserving(
+        longer_period, shorter_period);
+    if (!check(armed == std::nextafter(shorter_period, 0.0f),
+               "overdue period retarget did not arm next-sample service")) return false;
+    float due_elapsed = armed;
+    if (!check(detail::periodic_update_due(0.005f, shorter_period, due_elapsed),
+               "overdue retarget was not serviced on the next valid sample")) return false;
+
+    // The largest deployed tau-coupled pseudo period fires on sample 33 from
+    // zero elapsed under the exact float scheduler. This is the source-
+    // independent worst case once retargets preserve progress.
+    const float max_deployed_period = 0.16363636f;
+    float elapsed = 0.0f;
+    int first_fire = 0;
+    for (int sample = 1; sample <= 64; ++sample) {
+        elapsed = detail::retarget_period_elapsed_progress_preserving(
+            elapsed, max_deployed_period);
+        if (detail::periodic_update_due(0.005f, max_deployed_period, elapsed)) {
+            first_fire = sample;
+            break;
+        }
+    }
+    if (!check(first_fire == 33,
+               "largest deployed pseudo period no longer fires on sample 33")) return false;
+
+    // Replay the former H,H,L,H,L,... 13-sample starvation timing. The new
+    // retarget rule must produce updates rather than allowing a 635-sample
+    // no-fire execution.
+    constexpr float low = 0.1300000101327896f;
+    constexpr float high = 0.13000193238258362f;
+    elapsed = 0.0f;
+    int fires = 0;
+    int since_fire = 0;
+    int worst_gap = 0;
+    int samples = 0;
+    int segment = 0;
+    while (samples < 635) {
+        const float period = (segment < 2 || (segment % 2) == 1) ? high : low;
+        elapsed = detail::retarget_period_elapsed_progress_preserving(elapsed, period);
+        const int used = std::min(13, 635 - samples);
+        for (int k = 0; k < used; ++k) {
+            ++samples;
+            ++since_fire;
+            if (detail::periodic_update_due(0.005f, period, elapsed)) {
+                ++fires;
+                worst_gap = std::max(worst_gap, since_fire);
+                since_fire = 0;
+            }
+        }
+        ++segment;
+    }
+    worst_gap = std::max(worst_gap, since_fire);
+    if (!check(fires > 0, "former starvation cycle still has zero pseudo updates")) return false;
+    if (!check(worst_gap <= 33, "former starvation cycle exceeds 33-sample gap")) return false;
+    return true;
+}
+
+// The congruent a_w re-alignment must reach the stationary marginal without
+'''
+          if text.count(anchor) != 1:
+              raise SystemExit(f'test insertion anchor count={text.count(anchor)}')
+          text = text.replace(anchor, block, 1)
+          main_anchor = '''    if (!test_noise_units_and_period()) return 1;\n'''
+          main_new = main_anchor + '''    if (!test_period_retarget_progress()) return 1;\n'''
+          if text.count(main_anchor) != 1:
+              raise SystemExit(f'test main anchor count={text.count(main_anchor)}')
+          test.write_text(text.replace(main_anchor, main_new, 1))
+          PY
+
+      - name: Compile focused common scheduler test
+        working-directory: tests/kalman_ou_iii
+        run: make kalman_ou_common-test
+
+      - name: Run focused common scheduler test
+        working-directory: tests/kalman_ou_iii
+        run: ./kalman_ou_common-test
+
+      - name: Commit source and regression changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/kalman_ou_common/KalmanOUCoreMath.h \
+                  src/kalman_ou_iii/Kalman3D_Wave_OU_III.h \
+                  tests/kalman_ou_iii/kalman_ou_common-test.cpp
+          git commit -m "fix: preserve pseudo scheduler progress on retarget"
+          git push origin HEAD:codex/ou3-p3-source-clock-recurrence
