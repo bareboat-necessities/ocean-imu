@@ -16,8 +16,9 @@ Consequently a retarget that does not immediately force service cannot decrease
 elapsed time.  Because all deployed pseudo periods are below one second, the
 ``periodic_update_due`` tolerance is period independent on the whole operating
 range.  The latest possible non-firing deadline is therefore the largest
-shipping period.  Exact binary32 replay of that fixed worst case fires by sample
-33 from zero elapsed.  Any post-fire residual only advances the next service.
+shipping period.  With the deployed 150 ms clamp, exact binary32 replay of that
+fixed worst case fires by sample 30 from zero elapsed.  Any post-fire residual
+only advances the next service.
 
 This certificate restores the finite S-observation-gap premise used by the
 translation covariance upper.  It does not promote P3/P4/P5 by itself.
@@ -42,6 +43,7 @@ TARGET_SAMPLES = 635
 OLD_GAP = 13
 OLD_LOW = 0.1300000101327896
 OLD_HIGH = 0.13000193238258362
+DEPLOYED_MAX_GAP_SAMPLES = 30
 
 
 def _f32(x: float) -> float:
@@ -156,8 +158,6 @@ def _implementation_contract() -> dict:
 
 
 def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
-    # Keep the canonical domain dependency explicit even though the scheduler
-    # recurrence itself is source independent.
     domain = json.loads(Path(domain_path).resolve().read_text(encoding="utf-8"))
     if domain.get("trajectory_fit") is not False:
         raise RuntimeError("scheduler proof domain must not be trajectory fitted")
@@ -218,7 +218,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "P3_PROMOTED": False,
         "P4_PROMOTED": False,
         "P5_PROMOTED": False,
-        "classification": "SOURCE_INDEPENDENT_33_SAMPLE_S_RECURRENCE_CERTIFIED",
+        "classification": f"SOURCE_INDEPENDENT_{fixed_fire}_SAMPLE_S_RECURRENCE_CERTIFIED",
         "next_obligation": (
             "rerun the canonical source-reachable P3 covariance upper with this implementation-bound "
             "recurrence premise; this scheduler certificate alone does not promote P3"
@@ -256,17 +256,17 @@ def validate(d: dict) -> list[str]:
             f.append(f"{key} is not false")
     if d.get("shipping_scheduler_numeric_type") != "binary32/float":
         f.append("scheduler arithmetic is not bound to binary32")
-    if int(d.get("fixed_max_period_first_fire_samples", 0)) != 33:
-        f.append("largest deployed period no longer fires on sample 33")
-    if int(d.get("certified_uniform_max_gap_samples", 0)) != 33:
-        f.append("uniform scheduler gap is not 33 samples")
+    if int(d.get("fixed_max_period_first_fire_samples", 0)) != DEPLOYED_MAX_GAP_SAMPLES:
+        f.append(f"largest deployed period no longer fires on sample {DEPLOYED_MAX_GAP_SAMPLES}")
+    if int(d.get("certified_uniform_max_gap_samples", 0)) != DEPLOYED_MAX_GAP_SAMPLES:
+        f.append(f"uniform scheduler gap is not {DEPLOYED_MAX_GAP_SAMPLES} samples")
     if int(d.get("former_starvation_cycle_target_samples", 0)) != TARGET_SAMPLES:
         f.append("former starvation replay length changed")
     if int(d.get("former_starvation_cycle_pseudo_firings", 0)) <= 0:
         f.append("former starvation replay still has zero S firings")
-    if int(d.get("former_starvation_cycle_worst_gap_samples", 9999)) > 33:
-        f.append("former starvation replay exceeds certified 33-sample gap")
-    if d.get("classification") != "SOURCE_INDEPENDENT_33_SAMPLE_S_RECURRENCE_CERTIFIED":
+    if int(d.get("former_starvation_cycle_worst_gap_samples", 9999)) > DEPLOYED_MAX_GAP_SAMPLES:
+        f.append(f"former starvation replay exceeds certified {DEPLOYED_MAX_GAP_SAMPLES}-sample gap")
+    if d.get("classification") != f"SOURCE_INDEPENDENT_{DEPLOYED_MAX_GAP_SAMPLES}_SAMPLE_S_RECURRENCE_CERTIFIED":
         f.append("unexpected scheduler classification")
     return list(dict.fromkeys(f))
 
