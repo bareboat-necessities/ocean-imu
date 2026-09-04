@@ -22,6 +22,14 @@
     "mahony_chart_theta_star_deg": 60.0,
     "mahony_cross_term_delta_s": 5.0,
     "internal_heading_gauge_error_upper_rad": 0.17453292519943295,
+    "online_tune_warmup_sec": 10.0,
+    "tune_frequency_prior_hz": 0.2,
+    "wave_period_estimator_high_pass_hz": 0.02,
+    "wave_period_estimator_integrator_settle_time_definition": "6/lambda, lambda=2*pi*high_pass_hz",
+    "tuner_ready_requires_wave_period_estimator_ready": false,
+    "live_entry_may_precede_wave_period_estimator_first_valid_period": true,
+    "tuning_frequency_source_before_first_valid_wave_period": "fixed TUNE_FREQ_PRIOR_HZ",
+    "tuning_frequency_takeover_condition": "first finite positive WavePeriodEstimator frequency; does not wait for WavePeriodEstimator::isReady()",
     "physical_handoff_coordinate_bounds": {
       "gyro_bias_error_norm_upper_rad_s": 0.01,
       "velocity_error_norm_upper_mps": 5.0,
@@ -54,7 +62,7 @@
       "position": "delta_p / Hs",
       "velocity": "delta_v * Ts / Hs",
       "integral_displacement": "delta_S / (Hs * Ts)",
-      "latent_acceleration": "delta_a_w * Ts^2 / Hs",
+      "latent_acceleration": "delta_a_w * Ts² / Hs",
       "Ts_role": "positive characteristic sea period used only as a coordinate scale unless a separate theorem bound is declared"
     },
     "additional_hard_sea_scaled_bounds_declared": false,
