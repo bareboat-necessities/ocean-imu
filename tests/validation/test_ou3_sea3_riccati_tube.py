@@ -33,8 +33,9 @@ class Sea3RiccatiTubeTest(unittest.TestCase):
             self.assertGreater(row["Pbar_lambda_max_trace_upper"], 0.0)
 
     def test_cross_covariances_are_paid_by_trace_bound(self):
-        self.assertIn("trace", self.d["PSD_cross_covariance_handling"])
-        self.assertNotIn("max-diagonal shortcut", self.d["PSD_cross_covariance_handling"].lower().replace("no ", ""))
+        text = self.d["PSD_cross_covariance_handling"].lower()
+        self.assertIn("trace", text)
+        self.assertIn("no max-diagonal shortcut", text)
 
 
 if __name__ == "__main__":
