@@ -15,12 +15,17 @@ only the shipping float tau channel:
     tau += alpha * (tau_target - tau)
     alpha = 1 - exp(-dt / clamp(0.40 * clamp(T_sea,0.5,6),0.05,30))
 
-with tau_target = 0.5/f_tune for the configured tau coefficient.  It searches
-binary32 tuning frequencies whose 13-sample EMA images alternate between two
-adjacent applied-tau values around the scheduler reset period.  The high period
-is chosen only one scheduler-tolerance margin above the low reset period, so
-this is a much sharper test than jumping between distant values inside one P2
-cell.
+with tau_target = 0.5/f_tune for the configured tau coefficient.  The float
+exponential is evaluated through the platform libm ``expf`` entry point rather
+than Python's binary64 ``math.exp``.  This matches the precision class of the
+C++ ``std::exp(float)`` overload used by the deployed source and avoids making
+an exact-image claim from a binary64 transcendental followed by a float cast.
+
+It searches binary32 tuning frequencies whose 13-sample EMA images alternate
+between two adjacent applied-tau values around the scheduler reset period.  The
+high period is chosen only one scheduler-tolerance margin above the low reset
+period, so this is a much sharper test than jumping between distant values
+inside one P2 cell.
 
 A positive result means the starvation mechanism is not removed merely by
 remembering continuous tau EMA motion inside the current cell.  It is still not
@@ -31,6 +36,8 @@ regularity is the next obligation.
 from __future__ import annotations
 
 import argparse
+import ctypes
+import ctypes.util
 import json
 import math
 import re
@@ -47,6 +54,12 @@ AUTO_TUNER = REPO / "src" / "tuner" / "SeaStateAutoTuner.h"
 SCHEMA = 1
 TARGET_SAMPLES = 635
 GAP = 13
+
+_LIBM_NAME = ctypes.util.find_library("m")
+_LIBM = ctypes.CDLL(_LIBM_NAME) if _LIBM_NAME else ctypes.CDLL(None)
+_EXPF = _LIBM.expf
+_EXPF.argtypes = [ctypes.c_float]
+_EXPF.restype = ctypes.c_float
 
 
 def _f32(x: float) -> float:
@@ -65,6 +78,12 @@ def _next_f32(x: float) -> float:
     if not (math.isfinite(x) and x >= 0.0):
         raise ValueError("positive finite float required")
     return _from_bits(_bits(x) + 1)
+
+
+def _expf(x: float) -> float:
+    """Evaluate the float exponential through libm expf."""
+    y = float(_EXPF(ctypes.c_float(_f32(x))))
+    return _f32(y)
 
 
 def _literal_member(text: str, name: str) -> float:
@@ -102,7 +121,7 @@ def _tau_ema_step(tau: float, tau_target: float, c: dict) -> tuple[float, float,
     horizon = _f32(min(max(horizon, _f32(c["horizon_min"])), _f32(c["horizon_max"])))
     dt = _f32(c["dt"])
     arg = _f32(-_f32(dt / horizon))
-    alpha = _f32(_f32(1.0) - _f32(math.exp(arg)))
+    alpha = _f32(_f32(1.0) - _expf(arg))
     nxt = _f32(x + _f32(alpha * _f32(target - x)))
     return nxt, alpha, horizon
 
@@ -292,6 +311,11 @@ def build(domain_path: Path = DEFAULT_DOMAIN, scheduler_witness: Path | None = N
     flo, fhi = _effective_frequency_bounds(c)
     legal_freqs = all(flo <= f <= fhi for f in (freq_up, freq_down, freq_hold))
 
+    _, alpha_up, horizon_up = _tau_ema_step(tau_low, target_up, c)
+    _, alpha_down, horizon_down = _tau_ema_step(tau_high, target_down, c)
+    rounded64_up = _f32(_f32(1.0) - _f32(math.exp(_f32(-_f32(h / horizon_up)))))
+    rounded64_down = _f32(_f32(1.0) - _f32(math.exp(_f32(-_f32(h / horizon_down)))))
+
     return {
         "schema": SCHEMA,
         "qualification": "OU3_P3_TAU_EMA_PSEUDO_SCHEDULER_CYCLE_DIAGNOSTIC",
@@ -329,6 +353,13 @@ def build(domain_path: Path = DEFAULT_DOMAIN, scheduler_witness: Path | None = N
         "gap_step_tau_high_to_low_exact": _tau_ema_samples(tau_high, target_down, c) == tau_low,
         "gap_step_tau_high_hold_exact": _tau_ema_samples(tau_high, tau_high, c) == tau_high,
         "tau_ema_dynamic_horizon_transcribed": True,
+        "tau_ema_float_exp_backend": "libm_expf",
+        "tau_ema_float_exp_backend_is_float": True,
+        "python_binary64_exp_used_for_cycle_alpha": False,
+        "alpha_up_binary32": alpha_up,
+        "alpha_down_binary32": alpha_down,
+        "rounded_binary64_alpha_up_binary32": rounded64_up,
+        "rounded_binary64_alpha_down_binary32": rounded64_down,
         "pseudo_period_fmod_and_due_transcribed": True,
         "target_samples": TARGET_SAMPLES,
         "pseudo_firings_in_target_word": len(fires),
@@ -349,7 +380,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN, scheduler_witness: Path | None = N
             else "TAU_EMA_CYCLE_NOT_FOUND"
         ),
         "next_obligation": (
-            "the starvation mechanism survives the shipping tau EMA under legal tuning-frequency inputs; "
+            "the starvation mechanism survives the shipping float tau EMA under legal tuning-frequency inputs; "
             "do not repair P3 by tau-cell subdivision alone. Either derive an upstream WavePeriodEstimator/source-regularity theorem "
             "that excludes this frequency sequence, or formulate P3 with explicit scheduler/tuner information recurrence."
         ),
@@ -370,17 +401,21 @@ def validate(d: dict) -> list[str]:
         "frequency_roundtrip_to_hold_target_exact",
         "gap_step_tau_low_to_high_exact", "gap_step_tau_high_to_low_exact",
         "gap_step_tau_high_hold_exact", "tau_ema_dynamic_horizon_transcribed",
+        "tau_ema_float_exp_backend_is_float",
         "pseudo_period_fmod_and_due_transcribed", "continuous_tau_channel_cycle_found",
     ):
         if d.get(key) is not True:
             f.append(f"{key} is not true")
     for key in (
         "trajectory_replay_used", "filter_changed", "declared_domain_changed",
+        "python_binary64_exp_used_for_cycle_alpha",
         "full_WavePeriodEstimator_realizability_proved", "deployed_filter_starvation_claimed",
         "interval_certificate", "P3_PROMOTED", "P4_PROMOTED", "P5_PROMOTED",
     ):
         if d.get(key) is not False:
             f.append(f"{key} is not false")
+    if d.get("tau_ema_float_exp_backend") != "libm_expf":
+        f.append("tau EMA float exponential backend changed")
     if int(d.get("exact_stage_gap_samples", 0)) != GAP:
         f.append("stage gap changed")
     if int(d.get("target_samples", 0)) != TARGET_SAMPLES:
@@ -410,6 +445,8 @@ def main() -> int:
         "period_low_high_s": [d["period_low_binary32_s"], d["period_high_binary32_s"]],
         "tau_targets_s": [d["tau_target_down_binary32_s"], d["tau_target_up_binary32_s"]],
         "target_frequencies_hz": [d["frequency_for_down_target_hz"], d["frequency_for_up_target_hz"]],
+        "alpha_binary32": [d["alpha_down_binary32"], d["alpha_up_binary32"]],
+        "rounded_binary64_alpha_binary32": [d["rounded_binary64_alpha_down_binary32"], d["rounded_binary64_alpha_up_binary32"]],
         "pseudo_firings": d["pseudo_firings_in_target_word"],
         "validation_failures": vf,
         "next": d["next_obligation"],
