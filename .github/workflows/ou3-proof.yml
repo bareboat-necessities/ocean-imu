@@ -102,7 +102,29 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Build canonical moving-Riccati P3 foundation
+      - name: Build quantitative source-uniform moving-Riccati tube
+        run: |
+          python3 tools/ou3_sea3_riccati_tube.py \
+            --output /tmp/ou3_sea3_riccati_tube.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/ou3_sea3_riccati_tube.json'))
+          assert d['validation_pass'], d['validation_failures']
+          assert d['source_history_graph_consumed'] is False
+          assert d['predecessor_path_enumeration_consumed'] is False
+          assert d['P2_800_state_partition_consumed'] is False
+          assert d['cell_cover']['history_depth'] == 0
+          print('RICCATI_TUBE_PASS', d['RICCATI_TUBE_PASS'])
+          print('H_DELTA', d['modes']['H']['relative_Riccati_injection_margin_lower'])
+          print('A_DELTA', d['modes']['A']['relative_Riccati_injection_margin_lower'])
+          print('CURRENT_SOURCE_CELLS', d['cell_cover']['joint_current_source_cells'])
+          PY
+
+      - name: Test quantitative Riccati-tube contract
+        working-directory: tests/validation
+        run: python3 -m unittest -v test_ou3_sea3_riccati_tube
+
+      - name: Build canonical moving-Riccati P3 gate
         run: |
           python3 tools/ou3_sea3_riccati_metric_p3.py \
             --output /tmp/ou3_sea3_riccati_metric_p3.json
@@ -122,11 +144,13 @@ jobs:
         working-directory: tests/validation
         run: python3 -m unittest -v test_ou3_sea3_riccati_metric_p3
 
-      - name: Upload canonical P3 architecture artifact
+      - name: Upload canonical moving-Riccati P3 artifacts
         uses: actions/upload-artifact@v6
         with:
           name: ou3-p3-moving-riccati
-          path: /tmp/ou3_sea3_riccati_metric_p3.json
+          path: |
+            /tmp/ou3_sea3_riccati_tube.json
+            /tmp/ou3_sea3_riccati_metric_p3.json
           retention-days: 7
 
   riccati-p4:
