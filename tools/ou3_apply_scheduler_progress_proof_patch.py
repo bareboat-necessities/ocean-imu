@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""Temporary branch helper: bind the canonical P3 schedule to scheduler progress."""
+"""Temporary branch helper: bind every retained P3 gap theorem to scheduler progress."""
 from pathlib import Path
 
+# Canonical source schedule and source-uniform translation upper.
 p = Path("tools/ou3_source_reachable_matrix_p3.py")
 text = p.read_text(encoding="utf-8")
 
@@ -34,5 +35,16 @@ new = '''def translation_upper(tau: Interval,sigma: Interval,rs: Interval,Tpe: f
 if text.count(old) != 1:
     raise SystemExit(f"translation upper anchor count={text.count(old)}")
 text = text.replace(old, new, 1)
+p.write_text(text, encoding="utf-8")
 
+# Same-history upper used by the actual canonical P2-V1 history frontier.  It
+# must fail closed on the same implementation contract; otherwise canonical P3
+# could keep using cadence_max+h after a future setter regression.
+p = Path("tools/ou3_p3_correlated_translation_covariance_upper.py")
+text = p.read_text(encoding="utf-8")
+old = '''    if summary.get("independent_global_source_extrema_used") is not False:\n        raise ValueError("independent global source extrema are forbidden")\n\n    h = float(sched["dt_s"])\n'''
+new = '''    if summary.get("independent_global_source_extrema_used") is not False:\n        raise ValueError("independent global source extrema are forbidden")\n    if sched.get("pseudo_period_retarget_progress_preserving") is not True:\n        raise RuntimeError(\n            "same-history finite S-observation gap requires progress-preserving pseudo-period retargeting"\n        )\n\n    h = float(sched["dt_s"])\n'''
+if text.count(old) != 1:
+    raise SystemExit(f"same-history upper schedule anchor count={text.count(old)}")
+text = text.replace(old, new, 1)
 p.write_text(text, encoding="utf-8")
