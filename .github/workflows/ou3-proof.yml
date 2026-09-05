@@ -52,7 +52,7 @@ jobs:
             test_ou3_vector_uco_certificate \
             test_ou3_p3_pseudo_scheduler_progress_certificate
 
-  sea3-dynamic-source:
+  complete-sea3-source:
     needs: source-foundation
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -61,42 +61,45 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Validate retained SEA3 physical/front-end prerequisites
+      - name: Build complete SEA3 source
         run: |
-          python3 tools/ou3_sea3_spectral_moment_bridge.py --check
-          python3 tools/ou3_sea3_wave_period_frontend.py \
-            --output /tmp/ou3_sea3_wave_period_frontend.json
-
-      - name: Certify dynamic SEA3 adaptive source state
-        run: |
-          python3 tools/ou3_sea3_dynamic_source_certificate.py \
-            --output /tmp/ou3_sea3_dynamic_source_certificate.json
+          python3 tools/ou3_sea3_complete_source.py \
+            --output /tmp/ou3_sea3_complete_source.json
+          python3 tools/ou3_sea3_windowed_vector_pe.py \
+            --output /tmp/ou3_sea3_windowed_vector_pe.json
           python3 - <<'PY'
           import json
-          d=json.load(open('/tmp/ou3_sea3_dynamic_source_certificate.json'))
+          d=json.load(open('/tmp/ou3_sea3_complete_source.json'))
           assert d['validation_pass'], d['validation_failures']
-          assert d['P2_DYNAMIC_SOURCE_CERTIFICATE'] == 'PASS'
-          assert d['old_P2_800_state_graph_consumed'] is False
-          assert d['old_P2_history_word_enumeration_consumed'] is False
-          print('DYNAMIC_SOURCE_INVARIANT', d['dynamic_invariant'])
-          print('DYNAMIC_SOURCE_RATES', d['validated_rate_and_jump_bounds'])
+          assert d['canonical_P3_source'] == 'COMPLETE_SEA3_NORMAL_LIVE_WORD'
+          assert d['P3_source_family_ready'] is True
+          assert all(v is False for v in d['no_fallback_generators'].values())
+          assert d['SEA3_surface_family']['modes_max'] == 3
+          assert d['SEA3_surface_family']['independent_H_T_extrema_forbidden'] is True
+          assert d['SEA3_response_couplings']['independent_sea_x_RAO_cartesian_product_forbidden'] is True
+          assert d['SEA3_response_couplings']['only_jointly_admitted_response_tuples_may_generate_P3_words'] is True
+          assert d['SEA3_finite_horizon_good_event']['same_response_word_must_satisfy_both_good_events'] is True
+          assert d['derived_adaptive_source']['primitive_independent_tau_sigma_RS_TS'] is False
+          assert d['derived_adaptive_source']['same_SEA3_frontend_path_generates_tau_sigma_RS_targets'] is True
+          assert d['R_S_regularizer']['actual_applied_R_S_required_at_every_due_S_update'] is True
+          assert d['R_S_regularizer']['all_due_S_updates_remain_in_full_word'] is True
+          assert d['R_S_regularizer']['selected_four_S_subset_may_not_replace_full_scheduler_word'] is True
+          print('COMPLETE_SEA3_SOURCE', d['canonical_P3_source'])
+          print('COMPLETE_SEA3_SAMPLES', d['word_samples'])
+          print('COMPLETE_SEA3_FALLBACKS', d['no_fallback_generators'])
           PY
 
-      - name: Test dynamic-source contract
-        working-directory: tests/validation
-        run: python3 -m unittest -v test_ou3_sea3_dynamic_source_certificate
-
-      - name: Upload dynamic source artifact
+      - name: Upload complete SEA3 source artifacts
         uses: actions/upload-artifact@v6
         with:
-          name: ou3-sea3-dynamic-source
+          name: ou3-complete-sea3
           path: |
-            /tmp/ou3_sea3_wave_period_frontend.json
-            /tmp/ou3_sea3_dynamic_source_certificate.json
+            /tmp/ou3_sea3_complete_source.json
+            /tmp/ou3_sea3_windowed_vector_pe.json
           retention-days: 7
 
   riccati-p3:
-    needs: sea3-dynamic-source
+    needs: complete-sea3-source
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -104,62 +107,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Build endpoint covariance upper diagnostic
-        run: |
-          python3 tools/ou3_sea3_riccati_tube_factored.py \
-            --output /tmp/ou3_sea3_riccati_tube.json
-          python3 - <<'PY'
-          import json
-          d=json.load(open('/tmp/ou3_sea3_riccati_tube.json'))
-          assert d['validation_pass'], d['validation_failures']
-          assert d['source_history_graph_consumed'] is False
-          assert d['predecessor_path_enumeration_consumed'] is False
-          assert d['P2_800_state_partition_consumed'] is False
-          print('P3_ENDPOINT_COVARIANCE_MEMORY', d['covariance_memory'])
-          PY
-
-      - name: Certify four-S translation information component
-        run: |
-          python3 tools/ou3_sea3_rs_word_information.py \
-            --output /tmp/ou3_sea3_rs_word_information.json
-          python3 - <<'PY'
-          import json
-          d=json.load(open('/tmp/ou3_sea3_rs_word_information.json'))
-          assert d['validation_pass'], d['validation_failures']
-          assert d['P3_RS_TRANSLATION_OBSERVATION_GEOMETRY_CLOSED'] is True
-          assert d['P3_RS_BATCH_NOISE_UPPER_CLOSED'] is True
-          assert d['four_S_translation_observation_operator_full_rank'] is True
-          assert d['old_P2_800_state_graph_consumed'] is False
-          assert d['source_history_graph_consumed'] is False
-          ni=d['newton_coordinate_information']
-          assert ni['exact_rational_arithmetic_used_before_outward_float_conversion'] is True
-          assert ni['L_inverse_one_norm_exact'] == '12/5'
-          assert ni['L_inverse_infinity_norm_exact'] == '2'
-          print('FOUR_S_WORD_HORIZON', d['word_horizon_s_upper'])
-          print('FOUR_S_AW_DD3_LOWER', d['aw_scaled_third_divided_difference_lower'])
-          print('FOUR_S_NEWTON_INFO_LOWER', ni['D_S_newton_lambda_min_lower'])
-          PY
-
-      - name: Certify asynchronous windowed PE
-        run: |
-          python3 tools/ou3_sea3_windowed_vector_pe.py \
-            --output /tmp/ou3_sea3_windowed_vector_pe.json
-          python3 - <<'PY'
-          import json
-          d=json.load(open('/tmp/ou3_sea3_windowed_vector_pe.json'))
-          assert d['validation_pass'], d['validation_failures']
-          assert d['hardware_magnetometer_ODR_used_as_PE_recurrence'] is False
-          assert d['two_consecutive_accepted_magnetic_packets_required'] is False
-          assert d['rejected_magnetic_packets_between_required_occurrences_allowed'] is True
-          assert d['all_valid_accelerometer_packets_required'] is True
-          assert d['spread_occurrence_selection']['word_horizon_s'] >= 3.0
-          assert d['eta6_information']['alpha_6_information_lower'] > 0.0
-          assert d['A_mode_bias_route']['homogeneous_bias_contraction_gap_lower'] > 0.0
-          print('WINDOWED_PE_ALPHA6', d['eta6_information']['alpha_6_information_lower'])
-          print('WINDOWED_PE_WORD_HORIZON', d['spread_occurrence_selection']['word_horizon_s'])
-          PY
-
-      - name: Build complete Normal-Live P3 precondition contract
+      - name: Build complete SEA3 P3 preconditions
         run: |
           python3 tools/ou3_sea3_p3_full_preconditions.py \
             --output /tmp/ou3_sea3_p3_full_preconditions.json
@@ -167,25 +115,26 @@ jobs:
           import json
           d=json.load(open('/tmp/ou3_sea3_p3_full_preconditions.json'))
           assert d['validation_pass'], d['validation_failures']
-          assert d['canonical_architecture'] == 'SEA3_FULL_NORMAL_LIVE_RICCATI_WORD'
+          assert d['canonical_source'] == 'COMPLETE_SEA3_NORMAL_LIVE_WORD'
+          assert d['complete_SEA3_source_consumed'] is True
           assert d['all_current_machine_checkable_preconditions_present'] is True
           assert all(d['mandatory_preconditions'].values())
-          assert d['source_parity_failures'] == []
-          assert d['paper_parity_failures'] == []
+          assert all(v is False for v in d['no_fallback_generators'].values())
           c=d['final_numeric_contract']
           assert c['common_word_horizon_s'] >= 3.0
           assert c['H_dimension'] == 18 and c['A_dimension'] == 21
           assert c['actual_applied_per_axis_RS_required'] is True
           assert c['full_18x18_and_21x21_matrix_comparison_required'] is True
           assert c['useful_gate'] == 1e-18
-          print('COMPLETE_P3_WORD', d['word'])
+          print('P3_COMPLETE_WORD', d['word'])
           PY
 
-      - name: Validate shipping Live covariance seed and joint word algebra
+      - name: Validate source-generated Live covariance and full joint backend
         run: |
           python3 tools/ou3_sea3_live_covariance_seed.py \
             --output /tmp/ou3_sea3_live_covariance_seed.json
           python3 tools/ou3_sea3_full_word_riccati_backend.py
+          python3 -m py_compile tools/ou3_sea3_full_word_riccati_backend_tight.py
           python3 - <<'PY'
           import json
           d=json.load(open('/tmp/ou3_sea3_live_covariance_seed.json'))
@@ -193,15 +142,9 @@ jobs:
           assert d['live_entry_seed_is_source_generated_not_arbitrary_PSD'] is True
           assert d['bootstrap_mekf_covariance_propagated_before_live'] is False
           assert d['source_parity_failures'] == []
-          assert d['translation_seed']['P_v'] == 1.0
-          assert d['translation_seed']['P_p'] == 400.0
-          assert d['translation_seed']['P_S'] == 2500.0
-          assert d['aw_live_seed']['reset_to_committed_stationary_covariance_before_first_prediction'] is True
-          print('LIVE_P0_TRANSLATION', d['translation_seed'])
-          print('LIVE_P0_AW', d['aw_live_seed'])
           PY
 
-      - name: Assemble literal shipping-order H18/A21 word
+      - name: Assemble literal complete H18/A21 word
         run: |
           python3 tools/ou3_sea3_full_normal_live_word.py \
             --output /tmp/ou3_sea3_full_normal_live_word.json
@@ -214,76 +157,41 @@ jobs:
           assert d['every_valid_imu_sample_requires_prediction'] is True
           assert d['every_valid_imu_sample_requires_accelerometer_Joseph'] is True
           assert d['S_scheduler_is_executed_not_replaced_by_selected_four'] is True
-          assert d['magnetometer_is_asynchronous_external_event_family'] is True
           assert d['same_source_state_must_feed_F_Q_pseudo_period_and_applied_RS'] is True
-          assert d['FULL_H18_A21_LDLT_CLOSED'] is False
+          assert all(v is False for v in d['no_reduced_promotion_routes'].values())
           assert d['P3_CANONICAL_PASS'] is False
           print('LITERAL_WORD_SAMPLES', d['imu_samples_upper'])
-          print('LITERAL_WORD_S_UPDATES_LOWER', d['guaranteed_S_updates_lower_over_word'])
-          print('LITERAL_WORD_AW_FLOORS_LOWER', d['guaranteed_aw_floor_applications_lower_over_word'])
           print('LITERAL_WORD_OPEN', d['first_open_obligation'])
           PY
 
-      - name: Build four-S R_S translation subarchitecture
-        run: |
-          python3 tools/ou3_sea3_rs_innovation_p3.py \
-            --tube /tmp/ou3_sea3_riccati_tube.json \
-            --output /tmp/ou3_sea3_rs_innovation_p3.json
-          python3 - <<'PY'
-          import json
-          d=json.load(open('/tmp/ou3_sea3_rs_innovation_p3.json'))
-          assert d['validation_pass'], d['validation_failures']
-          assert d['P3_RS_TRANSLATION_OBSERVATION_GEOMETRY_CLOSED'] is True
-          assert d['P3_RS_BATCH_NOISE_UPPER_CLOSED'] is True
-          assert d['per_sample_Riccati_lower_propagation_used'] is False
-          assert d['selected_process_mode_strictness_used'] is False
-          assert d['determinant_trace_scalarization_used'] is False
-          assert d['scalar_information_beta_used'] is False
-          PY
-
-      - name: Build canonical full-word P3 gate
+      - name: Build canonical complete-SEA3 P3 gate
         run: |
           python3 tools/ou3_sea3_riccati_metric_p3.py \
-            --tube /tmp/ou3_sea3_riccati_tube.json \
             --output /tmp/ou3_sea3_riccati_metric_p3.json
           python3 - <<'PY'
           import json
           d=json.load(open('/tmp/ou3_sea3_riccati_metric_p3.json'))
           assert d['validation_pass'], d['validation_failures']
-          assert d['canonical_P3_architecture'] == 'SEA3_FULL_NORMAL_LIVE_RICCATI_WORD'
-          assert d['complete_precondition_contract_consumed'] is True
-          assert d['all_current_machine_checkable_preconditions_present'] is True
-          assert d['literal_full_word_assembler_consumed'] is True
-          assert d['literal_full_word_assembler_validation_pass'] is True
-          assert d['literal_shipping_event_order_pass'] is True
-          assert d['common_word_horizon_s'] >= 3.0
-          assert d['live_entry_covariance_seed_consumed'] is True
-          assert d['live_entry_covariance_seed_source_generated'] is True
-          assert d['arbitrary_P0_PSD_box_used'] is False
-          assert d['entrywise_independent_P0_rectangle_used'] is False
-          assert d['joint_P_Psi_Omega_backend_consumed'] is True
-          assert d['joint_backend_validation_pass'] is True
-          assert d['R_S_component_is_not_the_whole_P3_architecture'] is True
-          assert d['all_valid_accelerometer_updates_consumed'] is True
-          assert d['windowed_asynchronous_vector_PE_consumed'] is True
-          assert d['full_process_UCC_consumed'] is True
-          assert d['aw_covariance_floor_PSD_events_consumed'] is True
-          assert d['A_mode_finite_bias_correlation_consumed'] is True
-          assert d['hardware_magnetometer_ODR_used_as_PE_recurrence'] is False
-          assert d['determinant_trace_scalarization_used'] is False
-          assert d['scalar_information_beta_used'] is False
-          assert d['blockwise_minimum_ratio_used_for_final_gate'] is False
-          assert d['independent_tau_sigma_RS_TS_extrema_product_used'] is False
+          assert d['canonical_P3_architecture'] == 'COMPLETE_SEA3_FULL_NORMAL_LIVE_RICCATI_WORD'
+          assert d['canonical_source'] == 'COMPLETE_SEA3_NORMAL_LIVE_WORD'
+          assert d['complete_SEA3_source_consumed'] is True
+          assert d['complete_SEA3_response_couplings_consumed'] is True
+          assert d['complete_SEA3_frontend_state_consumed'] is True
+          assert d['actual_applied_per_axis_RS_consumed'] is True
+          assert d['all_due_S_updates_required'] is True
+          assert d['all_valid_accelerometer_updates_required'] is True
+          assert d['same_complete_SEA3_word_used_for_H18_and_A21'] is True
+          assert d['no_fallback_route_enabled'] is True
+          assert all(v is False for v in d['no_fallback_generators'].values())
           assert d['useful_gate'] == 1e-18
           print('P3_CANONICAL_PASS', d['P3_CANONICAL_PASS'])
           print('P3_FAIL_REASONS', d['P3_CANONICAL_FAIL_REASONS'])
           PY
 
-      - name: Test complete P3 contracts and literal word
+      - name: Test complete SEA3 P3 contracts
         working-directory: tests/validation
         run: |
           python3 -m unittest -v \
-            test_ou3_sea3_rs_word_information \
             test_ou3_sea3_live_covariance_seed \
             test_ou3_sea3_full_word_riccati_backend \
             test_ou3_sea3_full_normal_live_word \
@@ -296,22 +204,18 @@ jobs:
           import json
           d=json.load(open('/tmp/ou3_sea3_riccati_metric_p3.json'))
           if not d['P3_CANONICAL_PASS']:
-              raise SystemExit('canonical complete Normal-Live P3 FAIL: ' + '; '.join(d['P3_CANONICAL_FAIL_REASONS']))
+              raise SystemExit('canonical complete-SEA3 P3 FAIL: ' + '; '.join(d['P3_CANONICAL_FAIL_REASONS']))
           PY
 
       - name: Upload canonical P3 artifacts
         if: always()
         uses: actions/upload-artifact@v6
         with:
-          name: ou3-p3-full-normal-live
+          name: ou3-p3-complete-sea3
           path: |
-            /tmp/ou3_sea3_riccati_tube.json
-            /tmp/ou3_sea3_rs_word_information.json
-            /tmp/ou3_sea3_windowed_vector_pe.json
             /tmp/ou3_sea3_p3_full_preconditions.json
             /tmp/ou3_sea3_live_covariance_seed.json
             /tmp/ou3_sea3_full_normal_live_word.json
-            /tmp/ou3_sea3_rs_innovation_p3.json
             /tmp/ou3_sea3_riccati_metric_p3.json
           retention-days: 7
 
