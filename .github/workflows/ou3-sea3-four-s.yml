@@ -1,0 +1,54 @@
+name: ou3-sea3-four-s
+
+on:
+  pull_request:
+    paths:
+      - "tools/ou3_*.py"
+      - "tests/validation/test_ou3_*.py"
+      - ".github/workflows/ou3-sea3-four-s.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  four-s:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Build complete SEA3 four-S translation information
+        run: |
+          python3 tools/ou3_sea3_four_s_translation_information.py --output /tmp/ou3_sea3_four_s.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/ou3_sea3_four_s.json'))
+          assert d['validation_pass'], d['validation_failures']
+          assert d['canonical_source'] == 'COMPLETE_SEA3_NORMAL_LIVE_WORD'
+          assert d['component_of_complete_SEA3_full_word'] is True
+          assert d['P3_architecture_replaced'] is False
+          assert d['source_family_replaced'] is False
+          assert d['selected_four_S_events_replace_full_scheduler_word'] is False
+          assert d['all_due_S_updates_remain_in_literal_word'] is True
+          assert d['actual_applied_SpectralMSE_R_S_consumed'] is True
+          assert d['instantaneous_R_S_target_substituted_for_applied_R_S'] is False
+          assert d['time_varying_tau_allowed_inside_selected_subword'] is True
+          assert d['dimensionless_translation_state'] == ['S','g*p','g^2*v','g^3*a_w']
+          ni=d['newton_coordinate_information']
+          assert ni['full_4x4_matrix_inequality_closed'] is True
+          assert ni['determinant_used_for_information_lower'] is False
+          print('FOUR_S_GAP', d['uniform_S_gap_s_upper'])
+          print('FOUR_S_WINDOWS', d['four_S_windows_s'])
+          print('FOUR_S_RS_BASE', d['R_S_applied_base_std'])
+          print('FOUR_S_D_NEWTON', ni['D_S_newton_lambda_min_lower'])
+          PY
+      - name: Test four-S complete SEA3 contract
+        working-directory: tests/validation
+        run: python3 -m unittest -v test_ou3_sea3_four_s_translation_information
+      - uses: actions/upload-artifact@v6
+        with:
+          name: ou3-sea3-four-s
+          path: /tmp/ou3_sea3_four_s.json
+          retention-days: 7
