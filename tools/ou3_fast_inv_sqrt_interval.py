@@ -20,7 +20,6 @@ import argparse
 import json
 import math
 from pathlib import Path
-import struct
 
 from ou3_interval import Interval, hull
 import ou3_binary32_interval as F32
