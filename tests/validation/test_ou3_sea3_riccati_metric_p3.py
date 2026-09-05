@@ -1,4 +1,5 @@
 from pathlib import Path
+import math
 import sys
 import unittest
 
@@ -64,7 +65,11 @@ class Sea3FullNormalLiveP3Test(unittest.TestCase):
         spread = self.pe["spread_occurrence_selection"]
         self.assertEqual(spread["first_occurrence_window_s"], [0.0, 1.0])
         self.assertEqual(spread["second_occurrence_window_s"], [2.0, 3.0])
-        self.assertGreaterEqual(spread["separation_lower_s"], 1.0)
+        # The proof producer rounds the lower separation outward, so the exact
+        # source value 1 s is represented by the next binary64 below 1.
+        self.assertGreaterEqual(
+            spread["separation_lower_s"], math.nextafter(1.0, -math.inf)
+        )
         self.assertGreaterEqual(spread["word_horizon_s"], 3.0)
 
     def test_a_mode_uses_declared_finite_bias_correlation(self):
