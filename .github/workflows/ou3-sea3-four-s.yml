@@ -27,7 +27,7 @@ jobs:
           python3 tools/ou3_sea3_h18_information_composition.py --output /tmp/ou3_sea3_h18_information.json
           python3 tools/ou3_sea3_h18_prior_free_completion.py --output /tmp/ou3_sea3_h18_prior_free_completion.json
           python3 tools/ou3_sea3_a21_detectability_completion.py --output /tmp/ou3_sea3_a21_detectability_completion.json
-          python3 tools/ou3_sea3_a21_prior_free_completion.py --output /tmp/ou3_sea3_a21_prior_free_completion.json
+          python3 tools/ou3_sea3_a21_prior_free_completion.py --output /tmp/ou3_sea3_a21_mixed_completion_status.json
           python3 - <<'PY'
           import json, sys
           sys.path.insert(0, 'tools')
@@ -40,7 +40,7 @@ jobs:
           h=json.load(open('/tmp/ou3_sea3_h18_information.json'))
           hp=json.load(open('/tmp/ou3_sea3_h18_prior_free_completion.json'))
           a=json.load(open('/tmp/ou3_sea3_a21_detectability_completion.json'))
-          ap=json.load(open('/tmp/ou3_sea3_a21_prior_free_completion.json'))
+          ap=json.load(open('/tmp/ou3_sea3_a21_mixed_completion_status.json'))
           assert d['validation_pass'], d['validation_failures']
           assert t['validation_pass'], t['validation_failures']
           assert pm['validation_pass'], pm['validation_failures']
@@ -80,6 +80,9 @@ jobs:
           assert h['selected_four_S_events_replace_complete_word'] is False
           assert h['actual_applied_SpectralMSE_R_S_consumed'] is True
           assert h['tight_four_S_measurement_covariance_structure_consumed'] is True
+          assert h['directional_four_S_inverse_row_bound_used'] is True
+          assert h['accelerometer_cross_touches_only_aw_translation_coordinate'] is True
+          assert h['directional_information_strictly_improves_legacy_scalarized_bound'] is True
           assert h['triangular_information_composition']['full_18x18_matrix_information_lower_closed'] is True
           assert h['H18_information_useful_gate_pass'] is True
           assert h['triangular_information_composition']['D_H18_lambda_min_lower'] >= 1.0e-18
@@ -95,12 +98,14 @@ jobs:
           assert a['A21_detectability_asymptotic_word_energy_gap_lower'] >= 1.0e-18
           assert ap['paper_active_bias_route'] == 'ETA6_PLUS_FINITE_RESIDUAL_BIAS_CORRELATION'
           assert ap['eta9_point_packet_shortcut_used'] is False
-          assert ap['full_21x21_Omega_minus_delta_P_LDLT_closed'] is True
-          assert ap['A21_prior_free_completion_closed'] is True
-          assert ap['full_21x21_interval_LDLT_used'] is True
-          assert ap['event_algebra_preserves_margin_after_closure'] is True
-          assert ap['useful_gate'] == 1.0e-18
-          assert ap['worst_full_A21_LDLT_pivot_lower'] > 0.0
+          assert ap['finite_tau_detectability_does_not_imply_full_A21_information_inverse'] is True
+          assert ap['full_A21_D_inverse_available'] is False
+          assert ap['full_A21_prior_free_D_inverse_identity_used'] is False
+          assert ap['invalid_append_Qba_to_H18_full_D_completion_rejected'] is True
+          assert ap['full_21x21_Omega_minus_delta_P_LDLT_closed'] is False
+          assert ap['A21_prior_free_completion_closed'] is False
+          assert ap['stable_bias_prior_process_domination']['delta_times_ratio_is_small'] is True
+          assert ap['stable_bias_prior_process_domination']['same_congruence_preserves_tag_domination_after_first_prediction'] is True
           pe=PE.build(); assert not PE.validate(pe)
           proc=PROC.build(); assert not PROC.validate(proc)
           live=LIVE.build(); assert not LIVE.validate(live)
@@ -115,6 +120,7 @@ jobs:
           print('FOUR_S_BATCH_REQUIRED', pm['batch_required_information_ratio'])
           print('PE_ALPHA6', pe['eta6_information']['alpha_6_information_lower'])
           print('H18_INFORMATION_LOWER', h['triangular_information_composition']['D_H18_lambda_min_lower'])
+          print('H18_INFORMATION_LEGACY_SCALAR', h['triangular_information_composition']['legacy_scalarized_D_H18_lambda_min_lower_diagnostic'])
           print('H18_USEFUL_GATE_PASS', h['H18_information_useful_gate_pass'])
           print('H18_CROSS_NORM_SQ_UPPER', h['accelerometer_translation_cross_norm_squared_upper'])
           print('H18_PRIOR_FREE_PBAR_TRACE', hp['same_word_diffuse_prior_covariance_upper']['Pbar_trace_upper'])
@@ -123,10 +129,9 @@ jobs:
           print('H18_PRIOR_FREE_WORST_PIVOT', hp['worst_full_H18_LDLT_pivot_lower'])
           print('A21_DETECTABILITY_GAP', a['A21_detectability_asymptotic_word_energy_gap_lower'])
           print('A21_BIAS_ENERGY_GAP', a['bias_homogeneous_energy_gap_lower'])
-          print('A21_PRIOR_FREE_PBAR_TRACE', ap['same_word_diffuse_prior_covariance_upper']['Pbar_trace_upper'])
-          print('A21_PRIOR_FREE_PENALTY', ap['delta_squared_over_four_penalty_physical'])
-          print('A21_PRIOR_FREE_X_CELLS', ap['x_cells_certified'])
-          print('A21_PRIOR_FREE_WORST_PIVOT', ap['worst_full_A21_LDLT_pivot_lower'])
+          print('A21_INVALID_FULL_D_ROUTE_REJECTED', ap['invalid_append_Qba_to_H18_full_D_completion_rejected'])
+          print('A21_BIAS_PRIOR_PROCESS_RATIO', ap['stable_bias_prior_process_domination']['ratio_c_b_upper'])
+          print('A21_DELTA_TIMES_BIAS_RATIO', ap['stable_bias_prior_process_domination']['delta_times_ratio_upper'])
           print('A21_FULL_RICCATI_MATRIX_CLOSED', ap['full_21x21_Omega_minus_delta_P_LDLT_closed'])
           print('A_BIAS_CONTRACTION_GAP', pe['A_mode_bias_route']['homogeneous_bias_contraction_gap_lower'])
           print('PROCESS_H_Q_MIN_DIAGNOSTIC', proc['modes']['H']['prediction_Q_lambda_min_lower'])
@@ -156,5 +161,5 @@ jobs:
             /tmp/ou3_sea3_h18_information.json
             /tmp/ou3_sea3_h18_prior_free_completion.json
             /tmp/ou3_sea3_a21_detectability_completion.json
-            /tmp/ou3_sea3_a21_prior_free_completion.json
+            /tmp/ou3_sea3_a21_mixed_completion_status.json
           retention-days: 7
