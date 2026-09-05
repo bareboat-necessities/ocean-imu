@@ -176,7 +176,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     # is checked jointly.  The second moves all compact coordinates while
     # remaining inside the same coupled theorem endpoint set.
     lam0 = (
-        CompactPartition(3.0, 0.2 / 1.2, 1.0, 0.10, 0.25),
+        CompactPartition(3.0, 0.15 / 1.15, 1.0, 0.10, 0.25),
         CompactPartition(2.0, 0.1 / 1.1, 3.3, 0.65, 0.50),
         CompactPartition(0.0, 1.0, 7.0, 1.0, 1.0),
     )
