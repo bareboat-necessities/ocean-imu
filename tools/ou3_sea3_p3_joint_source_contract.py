@@ -1,23 +1,23 @@
 #!/usr/bin/env python3
-"""Canonical source-coupling guard for the OU-III SEA3/R_S P3 proof.
+"""Fail-closed source-coupling guard for the canonical OU-III SEA3/R_S P3 proof.
 
-This file is not a second P3 estimator or certificate architecture.  It is a
-fail-closed contract for the *one* canonical SEA3/R_S innovation proof.
+This is not another P3 estimator.  It protects the single canonical
+SEA3/R_S innovation proof from losing the correlations supplied by the
+shipping adaptive source.
 
-The canonical quantitative word may not form independent extrema products of
-``tau``, ``sigma_aw``, ``R_S`` and ``T_S``.  They are components of one
-shipping adaptive source state
+The quantitative word must carry one source state
 
-    xi_k = (tau_k, sigma_k, R_S,k, T_S,k, scheduler_progress_k),
+    xi_k = (tau_k, sigma_k, R_S,k, T_S,k, scheduler_progress_k)
 
-and the same xi_k must feed the transition, process covariance, pseudo cadence
-and pseudo-measurement covariance at sample k.
+and the same xi_k must feed F_k, Q_k, pseudo timing and pseudo covariance.
+Independent extrema products of tau, sigma_aw, R_S and T_S are forbidden in
+the canonical gate.  A rectangular full-box calculation may exist only as a
+diagnostic and may not reject the canonical architecture.
 
-The contract deliberately distinguishes proved coupling from attractive but
-unfinished SEA3 facts.  In particular, the physical sea/RAO acceleration
-covariance predicate exists, but the repository currently marks the actual
-vessel pairing as unqualified; canonical P3 therefore may not silently use
-that stronger sigma/period relation until it is promoted.
+The guard also distinguishes already-certified SEA3 facts from attractive but
+unfinished ones.  It intentionally does not import the older directional/P2
+proof stack merely to inspect promotion metadata: that would make a guard
+against the retired history graph depend on the graph itself.
 """
 from __future__ import annotations
 
@@ -26,16 +26,52 @@ import json
 from pathlib import Path
 
 import ou3_p3_pseudo_scheduler_progress_certificate as SCHED
-import ou3_sea3_acceleration_covariance_coupling as ACCCOUP
 import ou3_sea3_dynamic_source_certificate as DYNAMIC
 import ou3_sea3_physical_admissibility as PHYSICAL
-import ou3_source_reachable_matrix_p3 as BASE
 
 REPO = Path(__file__).resolve().parents[1]
+WRAPPER = REPO / "src" / "kalman_ou_iii" / "SeaStateFusionFilter_OU_III.h"
+ACCCOUP_PATH = REPO / "tools" / "ou3_sea3_acceleration_covariance_coupling.py"
 DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
-DEFAULT_RESPONSE = REPO / "tools" / "ou3_sea3_directional_response_domain.json"
-SCHEMA = 1
+SCHEMA = 2
 QUALIFICATION = "OU3_SEA3_P3_JOINT_SOURCE_COUPLING_CONTRACT"
+
+
+def _axis_factors() -> list[float]:
+    import re
+    text = WRAPPER.read_text(encoding="utf-8")
+    out: list[float] = []
+    for name in ("R_S_x_factor_", "R_S_y_factor_"):
+        m = re.search(rf"float\s+{name}\s*=\s*([0-9.eE+-]+)f", text)
+        if not m:
+            raise RuntimeError(f"cannot extract deployed {name}")
+        v = float(m.group(1))
+        if not (v > 0.0):
+            raise RuntimeError(f"invalid deployed {name}")
+        out.append(v)
+    return out + [1.0]
+
+
+def _unfinished_acceleration_coupling_metadata() -> dict:
+    """Read only fail-closed promotion markers; never import the retired P2 stack."""
+    text = ACCCOUP_PATH.read_text(encoding="utf-8")
+    required = (
+        '"physical_vessel_pairing_qualified": False',
+        '"P3_promoted": False',
+        '"deterministic_left_inclusion_closed": False',
+    )
+    missing = [m for m in required if m not in text]
+    if missing:
+        raise RuntimeError(
+            "SEA3 acceleration-coupling promotion metadata changed; inspect before P3 use: "
+            + ", ".join(missing)
+        )
+    return {
+        "physical_vessel_pairing_qualified": False,
+        "P3_promoted": False,
+        "deterministic_left_inclusion_closed": False,
+        "metadata_read_without_importing_directional_P2_stack": True,
+    }
 
 
 def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
@@ -55,23 +91,9 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         if failures:
             raise RuntimeError(f"{label} prerequisite failed: {failures}")
 
-    sched = BASE.source_schedule()
     rates = dynamic["validated_rate_and_jump_bounds"]
     inv = dynamic["dynamic_invariant"]
-
-    # The acceleration-covariance SEA3 predicate is useful, but its own
-    # artifact currently refuses promotion until a vessel/RAO pairing is
-    # qualified.  Record that state so the P3 proof cannot accidentally treat
-    # the conditional predicate as a proved applied sigma/tau invariant.
-    acc = ACCCOUP.build(
-        samples=max(1, int(round(1.0 / float(rates["dt_s"])))),
-        domain_path=path,
-        response_domain_path=DEFAULT_RESPONSE,
-        repo=REPO,
-    )
-    af = ACCCOUP.validate(acc)
-    if af:
-        raise RuntimeError(f"SEA3 acceleration coupling prerequisite invalid: {af}")
+    accmeta = _unfinished_acceleration_coupling_metadata()
 
     return {
         "schema": SCHEMA,
@@ -97,9 +119,10 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "old_P2_800_state_graph_consumed": False,
         "source_history_graph_consumed": False,
         "predecessor_path_enumeration_consumed": False,
+        "retired_directional_P2_stack_imported_by_joint_guard": False,
         "proved_source_couplings": {
             "tau_target_from_wave_band_frequency": True,
-            "tau_target_s": dynamic["dynamic_invariant"]["tau_target_s"],
+            "tau_target_s": inv["tau_target_s"],
             "tau_applied_s": inv["tau_applied_s"],
             "tau_sigma_share_same_sample_EMA_alpha": True,
             "tau_sigma_common_EMA_horizon_s": inv["common_tau_sigma_horizon_s"],
@@ -111,12 +134,10 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
             "R_S_EMA_horizon_s": inv["R_S_horizon_s"],
             "R_S_active_commit_jump_bound": rates["R_S_active_abs_jump_per_commit_upper"],
             "pseudo_period_is_clamped_monotone_function_of_applied_tau": True,
-            "pseudo_scheduler_progress_preserving": bool(
-                scheduler["scheduler_recurrence_certificate"]
-            ),
+            "pseudo_scheduler_progress_preserving": bool(scheduler["scheduler_recurrence_certificate"]),
             "pseudo_uniform_max_gap_s": scheduler["certified_uniform_max_gap_s"],
             "process_intensity_uses_same_sigma_tau": "q_c = 2*sigma_aw^2/tau",
-            "R_S_axis_std_factors": sched["R_S_axis_std_factors"],
+            "R_S_axis_std_factors": _axis_factors(),
             "normal_live_accelerometer_every_valid_sample": bool(
                 dynamic["normal_live_contract"]["accelerometer_update_required_each_valid_sample"]
             ),
@@ -142,10 +163,13 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
                 physical["left_language_inclusion_closed"]
             ),
             "sea_RAO_acceleration_pairing_qualified": bool(
-                acc["physical_vessel_pairing_qualified"]
+                accmeta["physical_vessel_pairing_qualified"]
             ),
             "sea_RAO_acceleration_coupling_may_be_used_as_hard_P3_pruning": bool(
-                acc["P3_promoted"]
+                accmeta["P3_promoted"]
+            ),
+            "sea_RAO_acceleration_left_inclusion_closed": bool(
+                accmeta["deterministic_left_inclusion_closed"]
             ),
         },
         "R_S_corrective_force_requirements": {
@@ -153,6 +177,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
             "retain_per_axis_R_S_factors": True,
             "retain_full_P_column_S_cross_covariance_action": True,
             "credit_guaranteed_recurrent_S_updates_as_measurement_dissipation": True,
+            "credit_additional_guaranteed_S_updates_as_positive_information_when_used": True,
             "do_not_replace_R_S_correction_by_process_strictness": True,
             "do_not_use_global_R_S_100_at_every_firing_in_final_canonical_matrix_if_joint_source_enclosure_is_available": True,
         },
@@ -180,6 +205,7 @@ def validate(d: dict) -> list[str]:
         "old_P2_800_state_graph_consumed",
         "source_history_graph_consumed",
         "predecessor_path_enumeration_consumed",
+        "retired_directional_P2_stack_imported_by_joint_guard",
         "P3_promoted",
         "P4_promoted",
     ):
@@ -207,6 +233,7 @@ def validate(d: dict) -> list[str]:
         "physical_SEA3_left_language_inclusion_closed",
         "sea_RAO_acceleration_pairing_qualified",
         "sea_RAO_acceleration_coupling_may_be_used_as_hard_P3_pruning",
+        "sea_RAO_acceleration_left_inclusion_closed",
     ):
         if notyet.get(key) is not False:
             f.append(f"unfinished SEA3 coupling was incorrectly promoted: {key}")
@@ -216,6 +243,7 @@ def validate(d: dict) -> list[str]:
         "retain_per_axis_R_S_factors",
         "retain_full_P_column_S_cross_covariance_action",
         "credit_guaranteed_recurrent_S_updates_as_measurement_dissipation",
+        "credit_additional_guaranteed_S_updates_as_positive_information_when_used",
         "do_not_replace_R_S_correction_by_process_strictness",
         "do_not_use_global_R_S_100_at_every_firing_in_final_canonical_matrix_if_joint_source_enclosure_is_available",
     ):
