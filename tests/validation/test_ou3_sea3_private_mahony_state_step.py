@@ -36,8 +36,27 @@ class Sea3PrivateMahonyStateStepTest(unittest.TestCase):
         self.assertTrue(d["declared_domain_live_entry_upper_bound_closed"])
         self.assertEqual(d["declared_domain_live_entry_upper_bound_s"], 150.0)
         self.assertFalse(d["unconditional_live_entry_upper_bound_closed"])
-        self.assertFalse(d["live_entry_private_observer_invariant_closed"])
-        self.assertIn("<=150 s declared-domain startup horizon", d["next_obligation"])
+
+    def test_reset_to_live_invariant_is_same_history_not_independent_box(self):
+        d = mod.build()
+        self.assertTrue(d["live_entry_private_observer_invariant_closed"])
+        inv = d["private_observer_live_entry_invariant"]
+        self.assertEqual(
+            inv["representation"],
+            "CORRELATED_QUATERNION_NORM_CHART_PLUS_RESET_DERIVED_KI_MEMORY",
+        )
+        self.assertFalse(inv["independent_quaternion_or_integral_box"])
+        self.assertTrue(inv["reset_zero_integral_memory_consumed"])
+        self.assertTrue(inv["same_SEA3_history_required"])
+        self.assertTrue(inv["source_history_correlation_retained"])
+        self.assertTrue(inv["raw_quaternion_guard_inductive"])
+        self.assertTrue(inv["raw_quaternion_stays_positive_normal_finite"])
+        self.assertTrue(inv["finite"])
+        self.assertEqual(inv["startup_horizon_s"], 150.0)
+        self.assertGreater(inv["integral_feedback_component_abs_upper_rad_s"], 0.0)
+        self.assertLess(inv["raw_quaternion_norm2_upper"], inv["raw_quaternion_norm2_guard"][1])
+        self.assertGreater(inv["raw_quaternion_norm2_lower"], inv["raw_quaternion_norm2_guard"][0])
+        self.assertIn("Mahony -> WPE -> tuner/scheduler", d["next_obligation"])
 
     def test_point_step_is_finite_but_cannot_promote(self):
         d = mod.build()
