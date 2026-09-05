@@ -104,7 +104,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Build endpoint covariance upper
+      - name: Build endpoint covariance upper diagnostic
         run: |
           python3 tools/ou3_sea3_riccati_tube_factored.py \
             --output /tmp/ou3_sea3_riccati_tube.json
@@ -201,6 +201,29 @@ jobs:
           print('LIVE_P0_AW', d['aw_live_seed'])
           PY
 
+      - name: Assemble literal shipping-order H18/A21 word
+        run: |
+          python3 tools/ou3_sea3_full_normal_live_word.py \
+            --output /tmp/ou3_sea3_full_normal_live_word.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/ou3_sea3_full_normal_live_word.json'))
+          assert d['validation_pass'], d['validation_failures']
+          assert d['canonical_architecture'] == 'SEA3_FULL_NORMAL_LIVE_RICCATI_WORD'
+          assert d['shipping_event_order_parity_pass'] is True
+          assert d['every_valid_imu_sample_requires_prediction'] is True
+          assert d['every_valid_imu_sample_requires_accelerometer_Joseph'] is True
+          assert d['S_scheduler_is_executed_not_replaced_by_selected_four'] is True
+          assert d['magnetometer_is_asynchronous_external_event_family'] is True
+          assert d['same_source_state_must_feed_F_Q_pseudo_period_and_applied_RS'] is True
+          assert d['FULL_H18_A21_LDLT_CLOSED'] is False
+          assert d['P3_CANONICAL_PASS'] is False
+          print('LITERAL_WORD_SAMPLES', d['imu_samples_upper'])
+          print('LITERAL_WORD_S_UPDATES_LOWER', d['guaranteed_S_updates_lower_over_word'])
+          print('LITERAL_WORD_AW_FLOORS_LOWER', d['guaranteed_aw_floor_applications_lower_over_word'])
+          print('LITERAL_WORD_OPEN', d['first_open_obligation'])
+          PY
+
       - name: Build four-S R_S translation subarchitecture
         run: |
           python3 tools/ou3_sea3_rs_innovation_p3.py \
@@ -230,6 +253,9 @@ jobs:
           assert d['canonical_P3_architecture'] == 'SEA3_FULL_NORMAL_LIVE_RICCATI_WORD'
           assert d['complete_precondition_contract_consumed'] is True
           assert d['all_current_machine_checkable_preconditions_present'] is True
+          assert d['literal_full_word_assembler_consumed'] is True
+          assert d['literal_full_word_assembler_validation_pass'] is True
+          assert d['literal_shipping_event_order_pass'] is True
           assert d['common_word_horizon_s'] >= 3.0
           assert d['live_entry_covariance_seed_consumed'] is True
           assert d['live_entry_covariance_seed_source_generated'] is True
@@ -253,14 +279,16 @@ jobs:
           print('P3_FAIL_REASONS', d['P3_CANONICAL_FAIL_REASONS'])
           PY
 
-      - name: Test complete P3 contracts
+      - name: Test complete P3 contracts and literal word
         working-directory: tests/validation
         run: |
           python3 -m unittest -v \
             test_ou3_sea3_rs_word_information \
             test_ou3_sea3_live_covariance_seed \
             test_ou3_sea3_full_word_riccati_backend \
-            test_ou3_sea3_riccati_metric_p3
+            test_ou3_sea3_full_normal_live_word \
+            test_ou3_sea3_riccati_metric_p3 \
+            test_ou3_sea3_riccati_metric_p3_promotion_state
 
       - name: Enforce canonical P3 quantitative closure
         run: |
@@ -282,6 +310,7 @@ jobs:
             /tmp/ou3_sea3_windowed_vector_pe.json
             /tmp/ou3_sea3_p3_full_preconditions.json
             /tmp/ou3_sea3_live_covariance_seed.json
+            /tmp/ou3_sea3_full_normal_live_word.json
             /tmp/ou3_sea3_rs_innovation_p3.json
             /tmp/ou3_sea3_riccati_metric_p3.json
           retention-days: 7
