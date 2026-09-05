@@ -13,7 +13,15 @@ import ou3_sea3_hard_finite_window_source as SEA0
 class Sea3HardFiniteWindowSourceTest(unittest.TestCase):
     def _candidate(self):
         transitions = []
+        zero3 = [[0.0, 0.0], [0.0, 0.0], [0.0, 0.0]]
+        eye3 = [
+            [[1.0, 1.0], [0.0, 0.0], [0.0, 0.0]],
+            [[0.0, 0.0], [1.0, 1.0], [0.0, 0.0]],
+            [[0.0, 0.0], [0.0, 0.0], [1.0, 1.0]],
+        ]
         for k in range(SEA0.SAMPLES):
+            tr = f"tr-{k}"
+            resp = f"resp-{k}"
             transitions.append({
                 "k": k,
                 "source_identity": "sea3-root",
@@ -21,10 +29,23 @@ class Sea3HardFiniteWindowSourceTest(unittest.TestCase):
                 "xs_out_id": f"xs-{k+1}",
                 "lambda_in_id": f"lambda-{k}",
                 "lambda_out_id": f"lambda-{k+1}",
-                "source_transition_witness_id": f"tr-{k}",
-                "joint_response_witness_id": f"resp-{k}",
-                "joint_physical_output": {},
-                "source_events": {},
+                "source_transition_witness_id": tr,
+                "joint_response_witness_id": resp,
+                "joint_physical_output": {
+                    "source_transition_witness_id": tr,
+                    "joint_response_witness_id": resp,
+                    "gyro_measurement_interval": zero3,
+                    "omega_body_corrected_interval": zero3,
+                    "specific_force_body_interval": zero3,
+                    "f_cog_body_interval": zero3,
+                    "R_wb_interval": eye3,
+                },
+                "source_events": {
+                    "source_transition_witness_id": tr,
+                    "magnetometer_events_after_imu": [],
+                    "aw_covariance_floor_requested": False,
+                    "S_zero_due": False,
+                },
             })
         return {
             "schema": SEA0.SCHEMA,
@@ -58,6 +79,8 @@ class Sea3HardFiniteWindowSourceTest(unittest.TestCase):
             "provider_generated_source_family": True,
             "front_end_entry_witness_id": "frontend-entry",
             "live_covariance_seed_witness_id": "live-seed",
+            "front_end_entry": {},
+            "live_covariance_seed": {},
             "transitions": transitions,
         }
 
@@ -66,6 +89,8 @@ class Sea3HardFiniteWindowSourceTest(unittest.TestCase):
         self.assertEqual(SEA0.validate_status(d), [])
         self.assertTrue(d["SEA3_parameter_domain_compact"])
         self.assertTrue(d["compact_transition_relation_is_theorem_domain"])
+        self.assertTrue(d["executor_payload_contract"]["raw_gyro_and_corrected_rate_are_distinct_coordinates"])
+        self.assertFalse(d["executor_payload_contract"]["precomputed_aw_covariance_floor_increment_allowed"])
         self.assertFalse(d["provider_implementation_closed"])
         self.assertFalse(d["source_reachable_event_family_materialized"])
         self.assertFalse(d["P3_promoted"])
@@ -98,6 +123,31 @@ class Sea3HardFiniteWindowSourceTest(unittest.TestCase):
                 d["transitions"][137][field] = "not-the-predecessor"
                 failures = SEA0.validate_candidate_structure(d)
                 self.assertTrue(any(expected in x for x in failures), failures)
+
+    def test_detached_physical_or_event_witness_is_rejected(self):
+        d = self._candidate()
+        d["transitions"][9]["joint_physical_output"]["source_transition_witness_id"] = "other"
+        failures = SEA0.validate_candidate_structure(d)
+        self.assertTrue(any("physical output detached" in x for x in failures), failures)
+
+        d = self._candidate()
+        d["transitions"][9]["source_events"]["source_transition_witness_id"] = "other"
+        failures = SEA0.validate_candidate_structure(d)
+        self.assertTrue(any("source events detached" in x for x in failures), failures)
+
+    def test_precomputed_covariance_floor_increment_is_rejected(self):
+        d = self._candidate()
+        d["transitions"][11]["source_events"]["aw_covariance_floor_increment"] = [[0.0]]
+        failures = SEA0.validate_candidate_structure(d)
+        self.assertTrue(any("illegally serializes" in x for x in failures), failures)
+
+    def test_raw_gyro_and_corrected_rate_are_both_required(self):
+        for key in ("gyro_measurement_interval", "omega_body_corrected_interval"):
+            with self.subTest(key=key):
+                d = self._candidate()
+                del d["transitions"][3]["joint_physical_output"][key]
+                failures = SEA0.validate_candidate_structure(d)
+                self.assertTrue(any(key in x for x in failures), failures)
 
     def test_wrong_window_length_is_rejected(self):
         d = self._candidate()
