@@ -65,6 +65,8 @@ jobs:
             tools/ou3_sea3_tuner_scheduler_step.py \
             tools/ou3_sea3_wpe_state_step.py \
             tools/ou3_sea3_private_mahony_state_step.py \
+            tools/ou3_sea3_private_mahony_live_invariant.py \
+            tools/ou3_sea3_frontend_state_step.py \
             tools/ou3_binary32_interval.py \
             tools/ou3_fast_inv_sqrt_interval.py \
             tools/ou3_validated_log.py \
@@ -84,6 +86,10 @@ jobs:
             --output /tmp/ou3_fast_inv_sqrt_interval.json
           python3 tools/ou3_sea3_private_mahony_state_step.py \
             --output /tmp/ou3_sea3_private_mahony_state_step.json
+          python3 tools/ou3_sea3_private_mahony_live_invariant.py \
+            --output /tmp/ou3_sea3_private_mahony_live_invariant.json
+          python3 tools/ou3_sea3_frontend_state_step.py \
+            --output /tmp/ou3_sea3_frontend_state_step.json
           python3 - <<'PY'
           import json
           d=json.load(open('/tmp/ou3_sea3_complete_source.json'))
@@ -190,6 +196,22 @@ jobs:
           assert m['complete_SEA3_family_materialized_here'] is False
           assert m['P3_promoted'] is False
 
+          ml=json.load(open('/tmp/ou3_sea3_private_mahony_live_invariant.json'))
+          assert ml['validation_pass'], ml['validation_failures']
+          assert ml['continuous_all_live_PI_invariant_closed'] is True
+          assert ml['initial_set_inside_invariant'] is True
+          assert ml['invariant_strictly_inside_60deg_chart'] is True
+          assert ml['boundary_validation']['strict_inward_margin_lower'] > 0.0
+          assert ml['source_generator'] is False
+          assert ml['shipping_binary32_discrete_invariant_closed'] is False
+          assert ml['P3_promoted'] is False
+
+          fe=json.load(open('/tmp/ou3_sea3_frontend_state_step.json'))
+          assert fe['validation_pass'], fe['validation_failures']
+          assert fe['shipping_source_parity_pass'] is True
+          assert fe['same_SEA3_sample_drives_Mahony_tuner_WPE'] is True
+          assert fe['P3_promoted'] is False
+
           print('SEA3_SAMPLES', d['word_samples'])
           print('SEA3_DYNAMIC_REALIZATION', dyn)
           print('SEA3_RESPONSE_COUPLINGS', c)
@@ -200,6 +222,8 @@ jobs:
           print('SEA3_TUNER_STEP', t['smoke'])
           print('SEA3_WPE_STEP', w['smoke'])
           print('SEA3_PRIVATE_MAHONY', m['private_observer_live_entry_invariant'])
+          print('SEA3_PRIVATE_MAHONY_ALL_LIVE', ml['boundary_validation'])
+          print('SEA3_FRONTEND', fe['shipping_source_parity'])
           PY
 
       - name: Test SEA3 source and prediction contracts
@@ -217,6 +241,8 @@ jobs:
             test_ou3_sea3_tuner_scheduler_step \
             test_ou3_sea3_wpe_state_step \
             test_ou3_sea3_private_mahony_state_step \
+            test_ou3_sea3_private_mahony_live_invariant \
+            test_ou3_sea3_frontend_state_step \
             test_ou3_sea3_rs_full_word_contract \
             test_ou3_sea3_p3_source_semantics \
             test_ou3_sea3_full_word_source_identity \
@@ -233,4 +259,6 @@ jobs:
             /tmp/ou3_sea3_wpe_state_step.json
             /tmp/ou3_fast_inv_sqrt_interval.json
             /tmp/ou3_sea3_private_mahony_state_step.json
+            /tmp/ou3_sea3_private_mahony_live_invariant.json
+            /tmp/ou3_sea3_frontend_state_step.json
           retention-days: 7
