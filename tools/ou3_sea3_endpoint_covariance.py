@@ -9,19 +9,33 @@ The finite-memory S=0 observation argument reconstructs the error state at the
 Therefore the existing forward-time integrator observation matrix differs only
 by the sign similarity ``diag(1,-1,1)`` on ``[S,p,v]``.  Once that similarity
 is applied, the reconstructed ``[v,p,S]`` covariance already lives at the word
-endpoint and must not be propagated by another full word.  Doing so pays the
-integrator powers twice and is not a property of the shipping Riccati filter.
+endpoint and must not be propagated by another full word.
 
-This helper deliberately keeps every #489 source-side choice intact:
+The S-observation and vector-PE memories are also endpoint-referenced memories,
+not serial phases of an execution.  A uniform S firing-gap upper ``g`` lets us
+select one firing from each of the disjoint lag windows
+
+    [0,g], [2g,3g], [4g,5g].
+
+Those windows are separated by at least ``g`` for every legal choice, which is
+exactly what the outward interval Vandermonde inverse needs.  Consequently the
+translation observation memory is only ``5g``; it does not need the 1 s vector
+PE recurrence as artificial spacing between S packets.  The vector pair and the
+three S packets may live in overlapping backward windows ending at the same
+Riccati endpoint, so the common covariance memory is ``max(5g,T_PE)``, not their
+sum.  Cross-block covariance is still paid by the existing trace/diagonal
+Loewner dominators.
+
+This helper deliberately keeps the #489 source-side architecture intact:
 
 * the global SEA3 dynamic invariant, not a P2 history graph;
 * the progress-preserving pseudo-update recurrence bound;
 * the same nuisance/process and R_S upper bounds;
-* the same full-word diagonal process/noise dominator; and
+* the same full-memory diagonal process/noise dominator; and
 * arbitrary time variation of the adaptive source inside the memory window.
 
-Only the covariance reference time is corrected.  No filter constant, theorem
-domain, usefulness gate, or source/history assumption changes.
+No filter constant, theorem domain, usefulness gate, or source-history
+assumption changes.
 """
 from __future__ import annotations
 
@@ -33,7 +47,7 @@ QUALIFICATION = "OU3_SEA3_ENDPOINT_REFERENCED_TRANSLATION_COVARIANCE"
 
 def global_translation_upper(dynamic: dict, live: dict,
                              axis_factors: list[float]) -> tuple[list[float], dict]:
-    """Return the #489 global ceiling with endpoint-referenced S observability."""
+    """Return the source-uniform endpoint covariance ceiling without serial memory."""
     inv = dynamic["dynamic_invariant"]
     rates = dynamic["validated_rate_and_jump_bounds"]
     h = BASE.pos(rates["dt_s"], "dt")
@@ -43,10 +57,19 @@ def global_translation_upper(dynamic: dict, live: dict,
     cadence_hi = BASE.pos(inv["pseudo_update_period_s"][1], "pseudo cadence upper")
     Tpe = BASE.pos(live["vector_pe_recurrence_window_s"], "PE recurrence")
 
+    # The scheduler can miss a newly reached deadline by at most one configured
+    # sample.  With max firing gap g, every lag interval of width g contains an
+    # S packet.  Choosing three width-g intervals at 0, 2g and 4g guarantees
+    # pairwise lag separation >=g without importing the unrelated vector-PE
+    # recurrence into the translation observability matrix.
     gap = BASE.up(cadence_hi + h)
-    spacing = BASE.up(max(Tpe, 2.0 * gap))
-    Tobs = BASE.up(2.0 * spacing + gap)
-    Tword = BASE.up(Tobs + Tpe)
+    spacing = BASE.up(2.0 * gap)
+    Tobs = BASE.up(2.0 * spacing + gap)  # 5g
+
+    # Both certificates reconstruct the *same endpoint*.  Their backward
+    # evidence windows can overlap; serializing them paid a non-existent extra
+    # T_PE interval.  The common full-state covariance memory is their union.
+    Tword = BASE.up(max(Tobs, Tpe))
 
     Binv = BASE.integrator_inverse(gap, spacing)
     qc_hi = BASE.up(2.0 * sigma_hi * sigma_hi / tau_lo)
@@ -86,9 +109,8 @@ def global_translation_upper(dynamic: dict, live: dict,
     ]
     u = BASE.diagonal_dominator(Cvps_endpoint)
 
-    # Retain #489's full-word process/noise Loewner dominator unchanged.  This
-    # is intentionally conservative; the present theorem correction removes
-    # only the artificial second deterministic propagation of the estimator.
+    # Retain #489's source-uniform process/noise Loewner dominator, now over
+    # the actual common backward memory rather than a serial concatenation.
     variances = [
         BASE.up(sigma_hi * sigma_hi * Tword * Tword + qc_hi * Tword ** 3 / 3.0),
         BASE.up(sigma_hi * sigma_hi * Tword ** 4 / 4.0 + qc_hi * Tword ** 5 / 20.0),
@@ -102,7 +124,9 @@ def global_translation_upper(dynamic: dict, live: dict,
 
     return upper, {
         "pseudo_gap_s_upper": gap,
+        "S_observation_window_spacing_s": spacing,
         "observation_window_s_upper": Tobs,
+        "vector_PE_window_s_upper": Tpe,
         "covariance_memory_window_s_upper": Tword,
         "q_c_global_upper": qc_hi,
         "source_motion_inside_window_allowed": True,
@@ -110,6 +134,10 @@ def global_translation_upper(dynamic: dict, live: dict,
         "endpoint_referenced_observability": True,
         "endpoint_p_sign_similarity_applied": True,
         "forward_propagation_after_endpoint_reconstruction": False,
+        "S_observation_spacing_uses_vector_PE": False,
+        "S_observation_window_layout": "[0,g],[2g,3g],[4g,5g]",
+        "S_and_vector_PE_memories_overlap_at_endpoint": True,
+        "covariance_memory_is_max_not_sum": True,
         "full_word_process_noise_dominator_retained": True,
         "qualification": QUALIFICATION,
     }
