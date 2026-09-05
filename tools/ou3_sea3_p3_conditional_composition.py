@@ -74,6 +74,9 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     h_q = float(process["modes"]["H"]["prediction_Q_lambda_min_lower"])
     a_q = float(process["modes"]["A"]["prediction_Q_lambda_min_lower"])
     ba_gap = float(pe["A_mode_bias_route"]["homogeneous_bias_contraction_gap_lower"])
+    hard_left_inclusion = bool(
+        shaping["executable_ingredients"]["complete_SEA3_left_inclusion_closed"]
+    )
 
     return {
         "schema": SCHEMA,
@@ -89,9 +92,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         ),
         "global_physical_left_inclusion_required_before_conditional_P3_math": False,
         "global_physical_left_inclusion_required_before_full_deployment_theorem": True,
-        "hard_shaping_physical_left_inclusion_currently_closed": bool(
-            shaping["complete_SEA3_physical_left_inclusion_closed"]
-        ),
+        "hard_shaping_physical_left_inclusion_currently_closed": hard_left_inclusion,
         "source_family_replaced": False,
         "gaussian_good_event_used_as_source": False,
         "spectral_moments_used_as_source": False,
