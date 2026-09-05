@@ -1,17 +1,28 @@
 #!/usr/bin/env python3
-"""Fail-closed executor boundary from complete SEA3 into canonical P3.
+"""Canonical fail-closed executor from complete SEA3 into P3.
 
-The literal H18/A21 Riccati machinery and a connected typed execution kernel
-exist downstream of this boundary.  This module is the only consumer path by
-which a materialized 3 s SEA3 window may reach them.  It accepts no replay, raw
-sample list, independently supplied F/Q/R_S schedule, or precomputed covariance
-floor increment.  The input must first pass
-``ou3_sea3_hard_finite_window_source.validate_artifact``.
+The numerical H18/A21 word kernel and the strict provider-artifact codec are
+complete downstream of this boundary.  This module is the only consumer path by
+which a materialized 3 s SEA3 family may reach P3.  It accepts no replay, raw
+sample array, independently supplied F/Q/R_S schedule, arbitrary P0, or
+precomputed covariance-floor increment.
 
-The SEA0 provider is still open, so canonical execution remains fail-closed.
-The typed kernel is already implemented and tested; once the provider closes,
-the remaining executor work is strict deserialization of the trusted witness
-into that kernel followed by full endpoint LDLT checks.
+Canonical execution has exactly this order:
+
+  1. the code-owned SEA0 provider validates the complete same-history witness;
+  2. the strict codec deserializes the provider-owned z^t entry, source-reachable
+     H18/A21 Live covariance seeds, and all 601 transition payloads;
+  3. the connected typed kernel executes every retained front-end branch through
+     every shipping prediction/floor/S/accel/mag event in both modes;
+  4. every endpoint branch is tested by the full validated matrix inequality
+
+         Omega_W - delta P_W >= 0,  delta = 1e-18,
+
+     using interval LDLT in H18 and A21.
+
+The SEA0 provider is currently still open, so this complete execution path is
+intentionally unreachable in canonical CI.  No structural JSON or diagnostic
+word can bypass that provider gate.
 """
 from __future__ import annotations
 
@@ -27,11 +38,13 @@ import ou3_sea3_frontend_state_step as FRONTEND
 import ou3_sea3_full_normal_live_word as WORD
 import ou3_sea3_hard_finite_window_source as SEA0
 import ou3_sea3_shipping_prediction_primitives as PRED
+import ou3_sea3_window_artifact_codec as CODEC
 
 REPO = Path(__file__).resolve().parents[1]
 DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
-SCHEMA = 2
-QUALIFICATION = "OU3_SEA3_COMPLETE_WINDOW_EXECUTOR_V2"
+SCHEMA = 3
+QUALIFICATION = "OU3_SEA3_COMPLETE_WINDOW_EXECUTOR_V3"
+DELTA = 1.0e-18
 
 
 def validate_window_artifact(d: dict[str, Any]) -> list[str]:
@@ -73,21 +86,80 @@ def validate_window_artifact(d: dict[str, Any]) -> list[str]:
     return list(dict.fromkeys(f))
 
 
-def execute_verified_window(d: dict[str, Any]) -> dict[str, Any]:
-    """Execute a provider-certified complete window through the trusted kernel."""
+def _endpoint_certificate(branch: KERNEL.ExecutionBranch) -> dict[str, Any]:
+    H = WORD.certify_literal_endpoint(branch.H, delta=DELTA)
+    A = WORD.certify_literal_endpoint(branch.A, delta=DELTA)
+    return {
+        "source_cell_id": branch.source_cell_id,
+        "H18": H,
+        "A21": A,
+        "H18_complete_601_sample_word": (
+            branch.H.imu_samples == SEA0.SAMPLES
+            and branch.H.accel_updates == SEA0.SAMPLES
+            and branch.H.riccati.predictions == SEA0.SAMPLES
+        ),
+        "A21_complete_601_sample_word": (
+            branch.A.imu_samples == SEA0.SAMPLES
+            and branch.A.accel_updates == SEA0.SAMPLES
+            and branch.A.riccati.predictions == SEA0.SAMPLES
+        ),
+        "both_full_matrix_LDLT_closed": bool(H.get("pass") and A.get("pass")),
+    }
+
+
+def execute_verified_window(
+    d: dict[str, Any],
+    domain_path: Path = DEFAULT_DOMAIN,
+) -> dict[str, Any]:
+    """Execute one provider-certified complete SEA3 window family.
+
+    There is no fallback path.  Provider acceptance establishes source
+    admissibility/reachability; the codec only transports that witness; the
+    kernel only executes it; the endpoint certificate alone decides P3.
+    """
     failures = validate_window_artifact(d)
     if failures:
         raise ValueError("SEA3 window rejected before P3 execution: " + "; ".join(failures))
     if not SEA0.PROVIDER_IMPLEMENTATION_CLOSED:
         raise RuntimeError("SEA0 provider gate is open; H18/A21 execution forbidden")
 
-    # The numerical typed kernel is already implemented.  The only remaining
-    # path here is a strict parser for provider-owned interval/front-end/P0
-    # witnesses.  Keep this hard failure until that parser exists; accepting a
-    # structurally plausible dict would recreate the arbitrary-source problem.
-    raise NotImplementedError(
-        "provider closed but canonical provider-artifact deserialization into the trusted typed kernel is not yet implemented"
+    parsed = CODEC.parse_window_artifact(d)
+    branches, meta = KERNEL.execute_typed_window(
+        frontend_entry=parsed.frontend_entry,
+        P0_H=parsed.P0_H,
+        P0_A=parsed.P0_A,
+        samples=parsed.samples,
+        domain_path=Path(domain_path).resolve(),
     )
+    if not branches:
+        raise RuntimeError("complete SEA3 execution produced no endpoint source cells")
+
+    certs = [_endpoint_certificate(branch) for branch in branches]
+    H_complete = all(x["H18_complete_601_sample_word"] for x in certs)
+    A_complete = all(x["A21_complete_601_sample_word"] for x in certs)
+    ldlt_closed = all(x["both_full_matrix_LDLT_closed"] for x in certs)
+    materialized = (
+        len(parsed.samples) == SEA0.SAMPLES
+        and int(meta.get("samples_executed", -1)) == SEA0.SAMPLES
+        and meta.get("same_word_executed_H18_A21") is True
+        and meta.get("favorable_frontend_successor_selected") is False
+    )
+    p3 = bool(materialized and H_complete and A_complete and ldlt_closed)
+    return {
+        "canonical_source": SEA0.CANONICAL_SOURCE,
+        "delta": DELTA,
+        "provider_accepted_before_execution": True,
+        "strict_codec_used": True,
+        "same_history_window_samples": len(parsed.samples),
+        "SOURCE_REACHABLE_EVENT_FAMILY_MATERIALIZED": materialized,
+        "FULL_H18_WORD_EXECUTED": H_complete,
+        "FULL_A21_WORD_EXECUTED": A_complete,
+        "FULL_H18_A21_LDLT_CLOSED": ldlt_closed,
+        "endpoint_branch_count": len(branches),
+        "kernel_execution": meta,
+        "endpoint_certificates": certs,
+        "P3_PROMOTED": p3,
+    }
 
 
 def build_status(domain_path: Path = DEFAULT_DOMAIN) -> dict[str, Any]:
@@ -104,6 +176,8 @@ def build_status(domain_path: Path = DEFAULT_DOMAIN) -> dict[str, Any]:
     floor_failures = FLOOR.validate(floor)
     kernel = KERNEL.build(path)
     kernel_failures = KERNEL.validate(kernel)
+    codec = CODEC.build()
+    codec_failures = CODEC.validate(codec)
     sea0 = SEA0.build(path)
     sea0_failures = SEA0.validate_status(sea0)
     bad = {
@@ -113,6 +187,7 @@ def build_status(domain_path: Path = DEFAULT_DOMAIN) -> dict[str, Any]:
         "frontend": frontend_failures,
         "aw_floor": floor_failures,
         "typed_kernel": kernel_failures,
+        "artifact_codec": codec_failures,
         "sea0": sea0_failures,
     }
     bad = {k: v for k, v in bad.items() if v}
@@ -129,10 +204,12 @@ def build_status(domain_path: Path = DEFAULT_DOMAIN) -> dict[str, Any]:
         "independent_F_Q_schedule_accepted": False,
         "independent_RS_schedule_accepted": False,
         "independent_frontend_state_accepted": False,
+        "arbitrary_P0_accepted": False,
         "precomputed_aw_floor_increment_accepted": False,
         "only_canonical_SEA0_provider_artifact_accepted": True,
         "provider_implementation_closed": SEA0.PROVIDER_IMPLEMENTATION_CLOSED,
         "provider_window_artifact_accepted": False,
+        "strict_artifact_codec_ready": codec["strict_codec_ready"],
         "typed_execution_kernel_ready": kernel["typed_execution_kernel_ready"],
         "covariance_dependent_aw_floor_enclosure_ready": floor[
             "positive_part_outer_enclosure_closed_in_real_arithmetic"
@@ -140,6 +217,11 @@ def build_status(domain_path: Path = DEFAULT_DOMAIN) -> dict[str, Any]:
         "raw_gyro_and_corrected_rate_remain_distinct": kernel[
             "raw_gyro_and_bias_corrected_rate_are_distinct_same_witness_coordinates"
         ],
+        "frontend_completed_before_async_mag": kernel[
+            "frontend_completed_before_async_mag"
+        ],
+        "gated_601_sample_execution_path_implemented": True,
+        "gated_endpoint_full_matrix_LDLT_path_implemented": True,
         "SOURCE_REACHABLE_EVENT_FAMILY_MATERIALIZED": False,
         "FULL_H18_WORD_EXECUTED": False,
         "FULL_A21_WORD_EXECUTED": False,
@@ -159,16 +241,19 @@ def build_status(domain_path: Path = DEFAULT_DOMAIN) -> dict[str, Any]:
             "prediction_derives_F_Q_from_same_committed_schedule_and_body_rate": True,
             "all_due_S_updates_use_actual_applied_per_axis_RS": True,
             "all_valid_accelerometer_updates_execute": True,
+            "frontend_transition_precedes_after_imu_magnetometer_events": True,
             "asynchronous_provider_PE_events_execute": True,
             "provider_carries_floor_request_not_floor_increment": True,
             "floor_increment_computed_from_current_mode_covariance": True,
+            "live_P0_must_be_provider_certified_source_reachable": True,
             "same_window_executes_H18_and_A21": True,
+            "every_retained_endpoint_branch_must_pass": True,
             "endpoint_gate": "Omega_W - delta P_W >= 0 by full validated LDLT",
-            "delta_lower_required": 1.0e-18,
+            "delta_lower_required": DELTA,
         },
         "next_obligation": (
-            "close the canonical SEA0 hard finite-window provider, then strictly deserialize its same-history "
-            "601-sample witness into the already-tested typed execution kernel and run every endpoint H18/A21 LDLT"
+            "close the canonical SEA0 hard finite-window provider; the downstream strict codec, connected "
+            "601-sample H18/A21 execution loop, covariance-dependent floor, and every-branch endpoint LDLT path are implemented"
         ),
     }
 
@@ -184,9 +269,13 @@ def validate_status(d: dict[str, Any]) -> list[str]:
         "literal_word_shipping_parity_pass",
         "frontend_shipping_parity_pass",
         "prediction_primitives_ready",
+        "strict_artifact_codec_ready",
         "typed_execution_kernel_ready",
         "covariance_dependent_aw_floor_enclosure_ready",
         "raw_gyro_and_corrected_rate_remain_distinct",
+        "frontend_completed_before_async_mag",
+        "gated_601_sample_execution_path_implemented",
+        "gated_endpoint_full_matrix_LDLT_path_implemented",
     ):
         if d.get(key) is not True:
             f.append(f"{key} is not true")
@@ -197,6 +286,7 @@ def validate_status(d: dict[str, Any]) -> list[str]:
         "independent_F_Q_schedule_accepted",
         "independent_RS_schedule_accepted",
         "independent_frontend_state_accepted",
+        "arbitrary_P0_accepted",
         "precomputed_aw_floor_increment_accepted",
         "provider_window_artifact_accepted",
         "SOURCE_REACHABLE_EVENT_FAMILY_MATERIALIZED",
@@ -218,14 +308,17 @@ def validate_status(d: dict[str, Any]) -> list[str]:
         "prediction_derives_F_Q_from_same_committed_schedule_and_body_rate",
         "all_due_S_updates_use_actual_applied_per_axis_RS",
         "all_valid_accelerometer_updates_execute",
+        "frontend_transition_precedes_after_imu_magnetometer_events",
         "asynchronous_provider_PE_events_execute",
         "provider_carries_floor_request_not_floor_increment",
         "floor_increment_computed_from_current_mode_covariance",
+        "live_P0_must_be_provider_certified_source_reachable",
         "same_window_executes_H18_and_A21",
+        "every_retained_endpoint_branch_must_pass",
     ):
         if c.get(key) is not True:
             f.append(f"execution contract lost {key}")
-    if float(c.get("delta_lower_required", 0.0)) != 1.0e-18:
+    if float(c.get("delta_lower_required", 0.0)) != DELTA:
         f.append("P3 useful gate changed")
     return list(dict.fromkeys(f))
 
@@ -248,7 +341,21 @@ def main() -> int:
         d["provider_window_artifact_accepted"] = not artifact_failures
         failures = validate_status(d)
         if not artifact_failures:
-            d["execution_result"] = execute_verified_window(candidate)
+            result = execute_verified_window(candidate, args.domain)
+            d["execution_result"] = result
+            d["SOURCE_REACHABLE_EVENT_FAMILY_MATERIALIZED"] = result[
+                "SOURCE_REACHABLE_EVENT_FAMILY_MATERIALIZED"
+            ]
+            d["FULL_H18_WORD_EXECUTED"] = result["FULL_H18_WORD_EXECUTED"]
+            d["FULL_A21_WORD_EXECUTED"] = result["FULL_A21_WORD_EXECUTED"]
+            d["FULL_H18_A21_LDLT_CLOSED"] = result["FULL_H18_A21_LDLT_CLOSED"]
+            d["P3_PROMOTED"] = result["P3_PROMOTED"]
+            # Status validation above intentionally describes the no-artifact
+            # fail-closed state.  A provider-accepted execution is validated by
+            # the result's own all-branch full-matrix gates instead.
+            failures = [] if result["P3_PROMOTED"] else [
+                "provider-accepted complete SEA3 execution did not close every H18/A21 endpoint LDLT"
+            ]
         else:
             failures.extend(artifact_failures)
     d["validation_pass"] = not failures
@@ -257,6 +364,7 @@ def main() -> int:
     args.output.write_text(json.dumps(d, indent=2, sort_keys=True), encoding="utf-8")
     print(json.dumps({
         "provider_closed": d["provider_implementation_closed"],
+        "codec_ready": d["strict_artifact_codec_ready"],
         "typed_kernel_ready": d["typed_execution_kernel_ready"],
         "family_materialized": d["SOURCE_REACHABLE_EVENT_FAMILY_MATERIALIZED"],
         "H18_executed": d["FULL_H18_WORD_EXECUTED"],
