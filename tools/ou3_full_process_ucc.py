@@ -103,6 +103,7 @@ def _constants() -> dict:
     wrapper = WRAPPER.read_text(encoding="utf-8")
 
     sigma_g = _config_vec3(wrapper, "sigma_g")
+    sigma_g_lower = min(sigma_g)
     b0 = _config_scalar(wrapper, "b0")
     q_ba = _f32(_one(
         r"Q_bacc_\s*=\s*Matrix3::Identity\(\)\s*\*\s*T\(([0-9.eE+-]+)\)",
@@ -139,7 +140,11 @@ def _constants() -> dict:
 
     return {
         "gyro_noise_density_rad_sqrt_s_per_axis": sigma_g,
-        "gyro_noise_density_rad_sqrt_s_lower": min(sigma_g),
+        "gyro_noise_density_rad_sqrt_s_lower": sigma_g_lower,
+        # Compatibility scalar for retained diagnostics that need a single
+        # source-uniform density.  It is definitionally the certified minimum
+        # of the per-axis shipping Config values; it is not a new bound.
+        "gyro_noise_density_rad_sqrt_s": sigma_g_lower,
         "gyro_bias_rw_variance_density": b0,
         "accel_bias_process_variance_density": q_ba,
         "accel_bias_tau_s": tau_ba,
@@ -252,10 +257,15 @@ def validate(d: dict) -> list[str]:
         failures.append("W3dSimCommon entered shipping process UCC")
     if constants.get("ou3_certificate_sim_consumed") is not False:
         failures.append("ou3-certificate-sim entered shipping process UCC")
-    if constants.get("gyro_noise_density_rad_sqrt_s_per_axis") != [
-        _f32(0.01), _f32(0.01), _f32(0.01)
-    ]:
+    expected_sigma = [_f32(0.01), _f32(0.01), _f32(0.01)]
+    if constants.get("gyro_noise_density_rad_sqrt_s_per_axis") != expected_sigma:
         failures.append("shipping Config gyro noise changed")
+    if constants.get("gyro_noise_density_rad_sqrt_s_lower") != min(expected_sigma):
+        failures.append("shipping Config gyro noise lower changed")
+    if constants.get("gyro_noise_density_rad_sqrt_s") != constants.get(
+        "gyro_noise_density_rad_sqrt_s_lower"
+    ):
+        failures.append("compatibility gyro-density scalar drifted from certified lower")
     if not all(constants.get("source_parity", {}).values()):
         failures.append("shipping process source parity failed")
     for mode in ("H", "A"):
