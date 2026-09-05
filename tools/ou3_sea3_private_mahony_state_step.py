@@ -12,10 +12,15 @@ The arithmetic follows ``Mahony_AHRS<float>::update`` and
 validated enclosure of the actual Lomont ``0x5f375a86`` fast inverse square
 root and all explicit basic operations are outward rounded to binary32.
 
-Live-entry compactness is intentionally not claimed here. Shipping uses
-``two_ki=0.02`` and ``TunerReady`` may wait indefinitely for external
-bootstrap, so a finite startup-duration box would be unsound. The missing bound
-must be a SEA3-reachable invariant of this same observer state.
+The low-level implementation can remain in ``TunerReady`` while an external
+bootstrap decides when to call ``goLive``.  The deployed outer
+``SeaStateFusion_OU_III`` wrapper is stricter: it owns the bootstrap and has a
+configured timeout path.  With current defaults the magnetic acquisition
+fallback is 60 s and the startup timeout is 150 s, so 150 s dominates.  That is
+*not yet* an unconditional Live-entry bound, because the timeout path still
+requires the world-frame gravity-aligned branch.  P3 therefore remains
+fail-closed until that branch is certified on the same SEA3 startup path and
+the reset-zero Mahony state is propagated to the resulting Live entry.
 """
 from __future__ import annotations
 
@@ -23,6 +28,7 @@ import argparse
 from dataclasses import dataclass
 import json
 from pathlib import Path
+import re
 
 from ou3_interval import Interval
 import ou3_binary32_interval as F32
@@ -32,8 +38,9 @@ REPO = Path(__file__).resolve().parents[1]
 VERTICAL = REPO / "src" / "tuner" / "VerticalAccelComplementary.h"
 MAHONY = REPO / "src" / "ahrs" / "Mahony_AHRS.h"
 WRAPPER = REPO / "src" / "kalman_ou_iii" / "SeaStateFusionFilter_OU_III.h"
-SCHEMA = 1
-QUALIFICATION = "OU3_SEA3_PRIVATE_MAHONY_LIVE_INTERVAL_STEP"
+COMMON = REPO / "src" / "kalman_common" / "SeaStateFusionFilterCommon.h"
+SCHEMA = 2
+QUALIFICATION = "OU3_SEA3_PRIVATE_MAHONY_LIVE_INTERVAL_STEP_V2"
 
 
 @dataclass(frozen=True)
@@ -57,6 +64,13 @@ class Vec3:
 
 def I(x: float) -> Interval:
     return F32.point(x)
+
+
+def _config_float(text: str, name: str) -> float:
+    m = re.search(rf"float\s+{re.escape(name)}\s*=\s*([0-9.eE+-]+)f\s*;", text)
+    if not m:
+        raise RuntimeError(f"cannot extract deployed Config::{name}")
+    return float(m.group(1))
 
 
 def _add4(a: Interval, b: Interval, c: Interval, d: Interval) -> Interval:
@@ -181,6 +195,15 @@ def build() -> dict:
     vertical = VERTICAL.read_text(encoding="utf-8")
     mahony = MAHONY.read_text(encoding="utf-8")
     wrapper = WRAPPER.read_text(encoding="utf-8")
+    common = COMMON.read_text(encoding="utf-8")
+
+    proxy_timeout = _config_float(wrapper, "proxy_startup_timeout_sec")
+    proxy_mag_settle = _config_float(wrapper, "proxy_mag_settle_sec")
+    mag_window = _config_float(wrapper, "mag_min_window_sec")
+    mag_fallback = _config_float(wrapper, "mag_tilt_fallback_sec")
+    mag_deadline = proxy_mag_settle + 2.0 * max(mag_window, 1.0) + mag_fallback
+    deployed_timeout = max(proxy_timeout, mag_deadline)
+
     parity = {
         "wrapper_updates_private_observer_before_vertical_read": (
             "vertical_accel_comp_.update(dt, gyro, acc_in, g_std);" in wrapper
@@ -208,9 +231,25 @@ def build() -> dict:
         "gain_change_does_not_reset_integral_state": (
             "Sets gains only. Does NOT reset quaternion or integral states." in mahony
         ),
-        "tuner_ready_external_hold_exists": (
+        "low_level_tuner_ready_waits_for_external_go_live": (
             "TunerReady,  // tuner trusted, MEKF still held by an external bootstrap" in wrapper
             and "call goLive() once it has tilt and north" in wrapper
+        ),
+        "deployed_outer_wrapper_owns_handoff": (
+            "void maybeHandOffToMekf_()" in wrapper
+            and "impl_.goLive(q_seed," in wrapper
+            and "stage_ = Stage::Live;" in wrapper
+        ),
+        "deployed_outer_wrapper_timeout_formula": (
+            "std::max(cfg_.proxy_startup_timeout_sec, mag_acquire_deadline)" in wrapper
+        ),
+        "timeout_still_requires_gravity_aligned_branch": (
+            "const bool ready_by_timeout" in wrapper
+            and "(t_ >= timeout_sec)" in wrapper
+            and "mag_gravity_aligned_branch_;" in wrapper
+        ),
+        "gravity_aligned_branch_is_world_z_sign": (
+            "return acc_world_lp.z() < 0.0f;" in common
         ),
     }
     smoke = _point_smoke()
@@ -228,13 +267,19 @@ def build() -> dict:
         "ideal_inverse_sqrt_substituted": False,
         "point_smoke_only_not_P3": True, "smoke": smoke,
         "live_entry_integral_state_starts_from_reset_zero": True,
-        "TunerReady_wait_has_finite_upper_bound": False,
+        "low_level_TunerReady_can_wait_for_external_bootstrap": True,
+        "deployed_outer_wrapper_has_timeout_logic": True,
+        "deployed_proxy_startup_timeout_s": proxy_timeout,
+        "deployed_mag_acquire_deadline_s": mag_deadline,
+        "deployed_timeout_s": deployed_timeout,
+        "timeout_path_requires_gravity_aligned_branch": True,
+        "unconditional_live_entry_upper_bound_closed": False,
         "live_entry_private_observer_invariant_closed": False,
         "compiler_reassociation_or_FMA_closed": False,
         "complete_SEA3_family_materialized_here": False,
         "P3_promoted": False,
         "next_obligation": (
-            "prove a compact SEA3-reachable invariant for the persistent private Mahony quaternion/integral-feedback state across the unbounded TunerReady hold, then feed that same state through this per-sample map into WPE; do not substitute an independent q/integral/vertical-acceleration box"
+            "prove on the same complete SEA3 reset-to-startup path that the world-frame gravity branch acc_world_lp.z<0 is retained or re-entered by the deployed 150 s timeout, then propagate the reset-zero Mahony quaternion/integral-feedback state to that Live entry and feed its vertical output into WPE; do not substitute an independent q/integral/vertical-acceleration box"
         ),
     }
 
@@ -248,13 +293,22 @@ def validate(d: dict) -> list[str]:
         "shipping_source_parity_pass", "source_order_binary32_one_sample_map_closed",
         "actual_fast_inverse_sqrt_used", "point_smoke_only_not_P3",
         "live_entry_integral_state_starts_from_reset_zero",
+        "low_level_TunerReady_can_wait_for_external_bootstrap",
+        "deployed_outer_wrapper_has_timeout_logic",
+        "timeout_path_requires_gravity_aligned_branch",
     ):
         if d.get(key) is not True:
             failures.append(f"{key} is not true")
+    if d.get("deployed_proxy_startup_timeout_s") != 150.0:
+        failures.append("unexpected deployed proxy startup timeout")
+    if d.get("deployed_mag_acquire_deadline_s") != 60.0:
+        failures.append("unexpected deployed magnetic acquisition deadline")
+    if d.get("deployed_timeout_s") != 150.0:
+        failures.append("unexpected deployed startup timeout")
     for key in (
         "source_generator", "trajectory_replay_used", "independent_vertical_acceleration_source",
         "independent_quaternion_or_integral_box_promotable", "ideal_inverse_sqrt_substituted",
-        "TunerReady_wait_has_finite_upper_bound", "live_entry_private_observer_invariant_closed",
+        "unconditional_live_entry_upper_bound_closed", "live_entry_private_observer_invariant_closed",
         "compiler_reassociation_or_FMA_closed", "complete_SEA3_family_materialized_here", "P3_promoted",
     ):
         if d.get(key) is not False:
@@ -275,6 +329,12 @@ def main() -> int:
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(d, indent=2, sort_keys=True), encoding="utf-8")
     print(json.dumps({"parity": d["shipping_source_parity"], "smoke": d["smoke"],
+                      "startup": {
+                          "proxy_timeout_s": d["deployed_proxy_startup_timeout_s"],
+                          "mag_deadline_s": d["deployed_mag_acquire_deadline_s"],
+                          "deployed_timeout_s": d["deployed_timeout_s"],
+                          "requires_aligned_branch": d["timeout_path_requires_gravity_aligned_branch"],
+                      },
                       "next_obligation": d["next_obligation"], "failures": failures},
                      indent=2, sort_keys=True))
     return 0 if not failures else 2
