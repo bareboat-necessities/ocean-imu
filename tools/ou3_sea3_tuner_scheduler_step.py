@@ -1,34 +1,16 @@
 #!/usr/bin/env python3
-"""Exact interval step for the SEA3-owned OU-III tuner/scheduler state.
+"""Validated SEA3-owned OU-III tuner/scheduler state transition.
 
-This module is not a source generator.  It advances the ``z^t,q`` portion of
-one already-admitted complete SEA3 source state.  Its inputs ``a_vertical`` and
-``f_wave`` are therefore required to come from the *same* SEA3 Mahony/WavePeriod
-state; callers may not replace them by an independent box when promoting P3.
-
-Closed here:
-
-* AdaptiveWaveBandPass sample and unit-white-noise covariance recurrence;
-* SeaStateAutoTuner debiased acceleration moments;
-* deployed tau/sigma targets and clamps;
-* deployed SpectralMSE R_S target, including realized pseudo period T_S(tau);
-* common tau/sigma and R_S candidate EMAs;
-* next-sample pending-commit semantics;
-* committed tau/sigma/R_S -> actual per-axis R_S and pseudo cadence.
-
-The current filter schedule is deliberately separated from the candidate: a
-sample first uses the previously committed schedule; only after the current
-measurement is processed does this step advance the candidate and possibly arm
-a commit for the *next* sample.
-
-The remaining upstream obligations are explicit: validated propagation of the
-same SEA3 private-Mahony and WavePeriodEstimator states and the phase-continuous
-sea/RAO realization.  This module cannot promote P3 by itself.
+This module advances the shipping front-end/adaptation state of one already
+admitted SEA3 realization.  It is not a source generator: ``a_vertical`` and
+``f_wave_previous_wpe`` must come from the same SEA3 private-Mahony/WPE path.
+The current measurement can move the candidate only; a staged candidate is
+committed at the beginning of the following physical sample.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
 import argparse
+from dataclasses import dataclass
 import json
 import math
 from pathlib import Path
@@ -47,9 +29,8 @@ SCHEMA = 1
 QUALIFICATION = "OU3_SEA3_TUNER_SCHEDULER_INTERVAL_STEP"
 
 PI = Interval.outward_bounds(3.141592653589793, 3.141592653589794)
-TWO = Interval.point(2.0)
 ONE = Interval.point(1.0)
-ZERO = Interval.point(0.0)
+TWO = Interval.point(2.0)
 
 
 def I(x: float) -> Interval:
@@ -59,74 +40,64 @@ def I(x: float) -> Interval:
 def ipow(x: Interval, n: int) -> Interval:
     if n < 0:
         raise ValueError("nonnegative integer power required")
-    y = Interval.point(1.0)
+    out = Interval.point(1.0)
     for _ in range(n):
-        y = y * x
-    return y
+        out = out * x
+    return out
 
 
 def clamp_interval(x: Interval, lo: float, hi: float) -> Interval:
     if not (math.isfinite(lo) and math.isfinite(hi) and lo <= hi):
         raise ValueError("finite ordered clamp required")
-    return Interval(max(float(lo), min(float(hi), x.lo)),
-                    max(float(lo), min(float(hi), x.hi)))
+    return Interval(max(lo, min(hi, x.lo)), max(lo, min(hi, x.hi)))
 
 
 def max_interval(x: Interval, c: float) -> Interval:
-    return Interval(max(x.lo, float(c)), max(x.hi, float(c)))
+    return Interval(max(x.lo, c), max(x.hi, c))
 
 
 def min_interval(x: Interval, c: float) -> Interval:
-    return Interval(min(x.lo, float(c)), min(x.hi, float(c)))
+    return Interval(min(x.lo, c), min(x.hi, c))
 
 
-def wide_exp(x: Interval) -> Interval:
-    """Validated exp for finite intervals by halving into VT's audited range."""
+def _wide_exp(x: Interval) -> Interval:
     if not (math.isfinite(x.lo) and math.isfinite(x.hi)):
         raise ValueError("finite exponential interval required")
     scale = 1
-    m = max(abs(x.lo), abs(x.hi))
-    while m / scale > VT.MAX_ABS_ARGUMENT:
+    magnitude = max(abs(x.lo), abs(x.hi))
+    while magnitude / scale > VT.MAX_ABS_ARGUMENT:
         scale *= 2
-    y = VT.exp_interval(x / I(float(scale)))
-    s = scale
-    while s > 1:
-        y = y.square()
-        s //= 2
-    return y
+    out = VT.exp_interval(x / I(float(scale)))
+    while scale > 1:
+        out = out.square()
+        scale //= 2
+    return out
 
 
-def _point_power_bounds(y: float, q: int) -> Interval:
-    return ipow(Interval.point(y), q)
+def _point_power(x: float, n: int) -> Interval:
+    return ipow(Interval.point(x), n)
 
 
 def rational_power_positive(x: Interval, p: int, q: int) -> Interval:
-    """Validated x**(p/q) for 0 < x and small positive integers p,q.
-
-    ``math.pow`` is used only to seed an ulp search.  The returned endpoints are
-    accepted only after outward interval multiplication proves y_lo**q <= x_lo**p
-    and y_hi**q >= x_hi**p.  Thus libm is not trusted for the enclosure claim.
-    """
+    """Validate x**(p/q); libm is used only to seed an ulp search."""
     if x.lo <= 0.0 or p <= 0 or q <= 0:
         raise ValueError("positive interval and exponents required")
     xp = ipow(x, p)
-
-    yl = math.pow(x.lo, p / q)
+    lo = math.pow(x.lo, p / q)
     for _ in range(4096):
-        if _point_power_bounds(yl, q).hi <= xp.lo:
+        if _point_power(lo, q).hi <= xp.lo:
             break
-        yl = math.nextafter(yl, -math.inf)
+        lo = math.nextafter(lo, -math.inf)
     else:
-        raise RuntimeError("could not validate rational-power lower endpoint")
-
-    yh = math.pow(x.hi, p / q)
+        raise RuntimeError("could not certify rational-power lower endpoint")
+    hi = math.pow(x.hi, p / q)
     for _ in range(4096):
-        if _point_power_bounds(yh, q).lo >= xp.hi:
+        if _point_power(hi, q).lo >= xp.hi:
             break
-        yh = math.nextafter(yh, math.inf)
+        hi = math.nextafter(hi, math.inf)
     else:
-        raise RuntimeError("could not validate rational-power upper endpoint")
-    return Interval(yl, yh)
+        raise RuntimeError("could not certify rational-power upper endpoint")
+    return Interval(lo, hi)
 
 
 def sqrt_interval(x: Interval) -> Interval:
@@ -216,7 +187,7 @@ class Constants:
 
 
 def _member(text: str, name: str) -> float:
-    m = re.search(rf"\b{name}\s*=\s*([0-9.eE+-]+)f\b", text)
+    m = re.search(rf"\b{re.escape(name)}\s*=\s*([0-9.eE+-]+)f\b", text)
     if not m:
         raise RuntimeError(f"cannot extract shipping member {name}")
     return float(m.group(1))
@@ -235,20 +206,18 @@ def constants() -> Constants:
         "PSEUDO_UPDATE_PERIOD_MIN_S_DEFAULT", "PSEUDO_UPDATE_PERIOD_MAX_S_DEFAULT",
         "R_S_MSE_COEFF_DEFAULT", "R_S_ACCEL_NOISE_DENSITY_DEFAULT",
     )
-    c = {n: float(SOURCE.parse_const(w, n)) for n in names}
+    c = {name: float(SOURCE.parse_const(w, name)) for name in names}
     return Constants(
         dt=c["FREQ_SMOOTHER_DT"],
-        tune_freq_min=c["MIN_TUNE_FREQ_HZ"],
-        tune_freq_max=c["MAX_TUNE_FREQ_HZ"],
-        tau_min=c["MIN_TAU_S"], tau_max=c["MAX_TAU_S"],
-        sigma_max=c["MAX_SIGMA_A"], rs_min=c["MIN_R_S"], rs_max=c["MAX_R_S"],
+        tune_freq_min=c["MIN_TUNE_FREQ_HZ"], tune_freq_max=c["MAX_TUNE_FREQ_HZ"],
+        tau_min=c["MIN_TAU_S"], tau_max=c["MAX_TAU_S"], sigma_max=c["MAX_SIGMA_A"],
+        rs_min=c["MIN_R_S"], rs_max=c["MAX_R_S"],
         tau_coeff=_member(w, "tau_coeff_"), sigma_coeff=_member(w, "sigma_coeff_"),
         adapt_tau_sea_periods=c["ADAPT_TAU_SEA_PERIODS"],
         adapt_rs_mult=c["ADAPT_RS_MULT"], adapt_every_s=c["ADAPT_EVERY_SECS"],
         band_low_ratio=c["SIGMA_BAND_LOW_RATIO_DEFAULT"],
         band_high_ratio=c["SIGMA_BAND_HIGH_RATIO_DEFAULT"],
-        band_min_hz=c["SIGMA_BAND_MIN_HZ_DEFAULT"],
-        band_max_hz=c["SIGMA_BAND_MAX_HZ_DEFAULT"],
+        band_min_hz=c["SIGMA_BAND_MIN_HZ_DEFAULT"], band_max_hz=c["SIGMA_BAND_MAX_HZ_DEFAULT"],
         acc_noise_floor_sigma=c["ACC_NOISE_FLOOR_SIGMA_DEFAULT"],
         pseudo_ratio=c["PSEUDO_UPDATE_TAU_RATIO_DEFAULT"],
         pseudo_min_s=c["PSEUDO_UPDATE_PERIOD_MIN_S_DEFAULT"],
@@ -268,7 +237,6 @@ def pseudo_period(tau: Interval, c: Constants) -> Interval:
 
 
 def active_rs_std_xyz(active: ActiveSchedule, c: Constants) -> list[Interval]:
-    # SpectralMSE receives no extra cadence normalization.
     rs = clamp_interval(active.rs_base, c.rs_min, c.rs_max)
     return [I(c.rs_x_factor) * rs, I(c.rs_y_factor) * rs, rs]
 
@@ -282,89 +250,83 @@ def band_step(state: BandState, x: Interval, f_ref: Interval, c: Constants) -> B
     high = Interval(max(high.lo, 1.05 * low.lo), max(high.hi, 1.05 * low.hi))
     high = min_interval(high, upper_limit)
     if not high.lo > low.hi:
-        # Correlated f_ref makes the concrete branch valid, but a broad interval
-        # may lose that relation. Fail closed instead of fabricating coefficients.
         raise RuntimeError("band-corner interval lost high>low correlation; split SEA3 frequency cell")
 
     k = TWO * PI * I(c.dt)
     alpha_l = ONE - VT.exp_interval(-(k * low))
     alpha_h = ONE - VT.exp_interval(-(k * high))
-    ql = ONE - alpha_l
-    qh = ONE - alpha_h
-
+    ql, qh = ONE - alpha_l, ONE - alpha_h
     low_new = ql * state.lowpass_low + alpha_l * x
-    high_passed = ql * (x - state.lowpass_low)
-    band_new = qh * state.band + alpha_h * high_passed
+    band_new = qh * state.band + alpha_h * ql * (x - state.lowpass_low)
 
-    a00 = ql
-    a10 = -(alpha_h * ql)
-    a11 = qh
-    b0 = alpha_l
-    b1 = alpha_h * ql
+    a00, a10, a11 = ql, -(alpha_h * ql), qh
+    b0, b1 = alpha_l, alpha_h * ql
     p00 = a00.square() * state.p00 + b0.square()
     p01 = a00 * (a10 * state.p00 + a11 * state.p01) + b0 * b1
-    p11 = a10.square() * state.p00 + I(2.0) * a10 * a11 * state.p01 + a11.square() * state.p11 + b1.square()
+    p11 = (
+        a10.square() * state.p00 + I(2.0) * a10 * a11 * state.p01
+        + a11.square() * state.p11 + b1.square()
+    )
     return BandState(low_new, band_new, max_interval(p00, 0.0), p01, max_interval(p11, 0.0), True)
 
 
 def moment_step(state: MomentState, accel_band: Interval, f_wave: Interval, c: Constants) -> MomentState:
     f = clamp_interval(f_wave, 0.05, 5.0)
     sea_time = clamp_interval(I(0.5) / f, c.dynamic_scale_min_s, c.dynamic_scale_max_s)
-    # Shipping K_periods default is 4.0.
     requested = clamp_interval(I(4.0) * (I(2.0) * sea_time), 0.3, 60.0)
     horizon = clamp_interval(requested, max(c.dynamic_horizon_min_s, c.dt), c.dynamic_horizon_max_s)
     alpha = ONE - VT.exp_interval(-(I(c.dt) / horizon))
     oma = ONE - alpha
-    mw = oma * state.mean_weight + alpha
-    sw = oma * state.sq_weight + alpha
-    mv = oma * state.mean_value + alpha * accel_band
-    sv = oma * state.sq_value + alpha * accel_band.square()
-    return MomentState(mv, mw, sv, sw, f)
+    return MomentState(
+        oma * state.mean_value + alpha * accel_band,
+        oma * state.mean_weight + alpha,
+        oma * state.sq_value + alpha * accel_band.square(),
+        oma * state.sq_weight + alpha,
+        f,
+    )
 
 
 def acceleration_variance(state: MomentState) -> Interval:
     if not (state.mean_weight.lo > 1e-6 and state.sq_weight.lo > 1e-6):
-        raise RuntimeError("Live tuner moment weight lower must exceed readiness threshold")
-    mu = state.mean_value / state.mean_weight
-    raw2 = state.sq_value / state.sq_weight
-    return max_interval(raw2 - mu.square(), 0.0)
+        raise RuntimeError("Live tuner moment weights must exceed readiness threshold")
+    mean = state.mean_value / state.mean_weight
+    return max_interval(state.sq_value / state.sq_weight - mean.square(), 0.0)
 
 
 def spectral_mse_rs_target(tau: Interval, sigma: Interval, c: Constants) -> Interval:
     ts = pseudo_period(tau, c)
-    sigma_aB = max_interval(sigma / I(c.sigma_coeff), 1e-6)
-    u = sigma_aB * tau.square().square()
-    u67 = rational_power_positive(u, 6, 7)
-    qeff14 = rational_power_positive(I(2.0 * c.rs_accel_noise_density), 1, 14)
-    return I(c.rs_mse_coeff) * qeff14 * u67 / sqrt_interval(ts)
+    sigma_ab = max_interval(sigma / I(c.sigma_coeff), 1e-6)
+    u67 = rational_power_positive(sigma_ab * tau.square().square(), 6, 7)
+    q14 = rational_power_positive(I(2.0 * c.rs_accel_noise_density), 1, 14)
+    return I(c.rs_mse_coeff) * q14 * u67 / sqrt_interval(ts)
 
 
 def targets(state: TunerState, c: Constants) -> CandidateState:
     f = clamp_interval(state.moments.frequency_hz, c.tune_freq_min, c.tune_freq_max)
     tau = clamp_interval(I(c.tau_coeff * 0.5) / f, c.tau_min, c.tau_max)
-
-    var_total = acceleration_variance(state.moments)
     noise_sigma = I(c.acc_noise_floor_sigma) * sqrt_interval(max_interval(state.band.p11, 1e-30))
-    var_wave = max_interval(var_total - noise_sigma.square(), 0.0)
-    var_wave = max_interval(var_wave, 1e-6)
-    sigma_wave = sqrt_interval(var_wave)
-    sigma = min_interval(I(c.sigma_coeff) * sigma_wave, c.sigma_max)
+    var_wave = max_interval(acceleration_variance(state.moments) - noise_sigma.square(), 0.0)
+    sigma = min_interval(I(c.sigma_coeff) * sqrt_interval(max_interval(var_wave, 1e-6)), c.sigma_max)
     rs = clamp_interval(spectral_mse_rs_target(tau, sigma, c), c.rs_min, c.rs_max)
     return CandidateState(tau, sigma, rs)
 
 
 def candidate_ema(old: CandidateState, target: CandidateState, f_tune: Interval, c: Constants) -> CandidateState:
-    sea_time = clamp_interval(I(0.5) / clamp_interval(f_tune, c.tune_freq_min, c.tune_freq_max),
-                              c.dynamic_scale_min_s, c.dynamic_scale_max_s)
-    common_h = clamp_interval(I(c.adapt_tau_sea_periods) * sea_time,
-                              max(c.dynamic_horizon_min_s, c.dt), c.dynamic_horizon_max_s)
+    sea_time = clamp_interval(
+        I(0.5) / clamp_interval(f_tune, c.tune_freq_min, c.tune_freq_max),
+        c.dynamic_scale_min_s, c.dynamic_scale_max_s,
+    )
+    common_h = clamp_interval(
+        I(c.adapt_tau_sea_periods) * sea_time,
+        max(c.dynamic_horizon_min_s, c.dt), c.dynamic_horizon_max_s,
+    )
     alpha = ONE - VT.exp_interval(-(I(c.dt) / common_h))
 
-    # Deployed ADAPT_RS_SLEW_LOG is exactly zero, so adaptiveSmoothingHorizonSec
-    # reduces to mult*clamp(tau_target) plus the final horizon clamp.
     rs_scale = clamp_interval(target.tau, c.dynamic_scale_min_s, c.dynamic_scale_max_s)
-    rs_h = clamp_interval(I(c.adapt_rs_mult) * rs_scale,
-                          max(c.dynamic_horizon_min_s, c.dt), c.dynamic_horizon_max_s)
+    rs_h = clamp_interval(
+        I(c.adapt_rs_mult) * rs_scale,
+        max(c.dynamic_horizon_min_s, c.dt), c.dynamic_horizon_max_s,
+    )
     alpha_rs = ONE - VT.exp_interval(-(I(c.dt) / rs_h))
     return CandidateState(
         old.tau + alpha * (target.tau - old.tau),
@@ -374,13 +336,16 @@ def candidate_ema(old: CandidateState, target: CandidateState, f_tune: Interval,
 
 
 def commit_if_pending(state: TunerState, c: Constants) -> TunerState:
-    """Beginning-of-sample commit; candidate becomes the active schedule."""
     if not state.scheduler.pending_commit:
         return state
-    active = ActiveSchedule(state.candidate.tau, state.candidate.sigma,
-                            state.candidate.rs, pseudo_period(state.candidate.tau, c))
-    return TunerState(state.band, state.moments, state.candidate, active,
-                      SchedulerState(state.scheduler.since_last_commit_stage_s, False))
+    active = ActiveSchedule(
+        state.candidate.tau, state.candidate.sigma, state.candidate.rs,
+        pseudo_period(state.candidate.tau, c),
+    )
+    return TunerState(
+        state.band, state.moments, state.candidate, active,
+        SchedulerState(state.scheduler.since_last_commit_stage_s, False),
+    )
 
 
 def advance_after_measurement(
@@ -390,37 +355,23 @@ def advance_after_measurement(
     f_wave_previous_wpe: Interval,
     c: Constants | None = None,
 ) -> list[TunerState]:
-    """Advance tuner/candidate after the current Kalman accelerometer update.
-
-    Returns one or two successors. Two occur only when the interval phase of the
-    0.1 s stage timer straddles the strict shipping predicate ``elapsed > 0.1``;
-    a complete SEA3 family executor must retain both branches rather than choose
-    a favorable event timing.
-    """
+    """Advance candidate after the current Kalman update, splitting timer boundary."""
     c = c or constants()
     if f_wave_previous_wpe.lo <= 0.0:
         raise ValueError("same-word previous WPE frequency must stay positive")
-
-    f_for_band = state.moments.frequency_hz
-    band = band_step(state.band, a_vertical, f_for_band, c)
+    band = band_step(state.band, a_vertical, state.moments.frequency_hz, c)
     moments = moment_step(state.moments, band.band, f_wave_previous_wpe, c)
     provisional = TunerState(band, moments, state.candidate, state.active, state.scheduler)
-    t = targets(provisional, c)
-    candidate = candidate_ema(state.candidate, t, moments.frequency_hz, c)
-
+    candidate = candidate_ema(state.candidate, targets(provisional, c), moments.frequency_hz, c)
     elapsed = state.scheduler.since_last_commit_stage_s + I(c.dt)
-    base = TunerState(band, moments, candidate, state.active,
-                      SchedulerState(elapsed, False))
+    base = TunerState(band, moments, candidate, state.active, SchedulerState(elapsed, False))
     if elapsed.lo > c.adapt_every_s:
-        return [TunerState(band, moments, candidate, state.active,
-                           SchedulerState(I(0.0), True))]
+        return [TunerState(band, moments, candidate, state.active, SchedulerState(I(0.0), True))]
     if elapsed.hi <= c.adapt_every_s:
         return [base]
-    # Strict boundary is source-event branching, not numerical uncertainty to discard.
     return [
         base,
-        TunerState(band, moments, candidate, state.active,
-                   SchedulerState(I(0.0), True)),
+        TunerState(band, moments, candidate, state.active, SchedulerState(I(0.0), True)),
     ]
 
 
@@ -432,33 +383,47 @@ def build() -> dict:
     parity = {
         "band_state_equations": "band_ = q_high * band_prev + alpha_high * high_passed;" in b,
         "band_noise_covariance_state": "p11_new" in b and "whiteNoiseVarianceGain" in b,
-        "debiased_moment_state": "A_mean.update(accel, alpha_var);" in t and "A_sq.update(accel * accel, alpha_var);" in t,
+        "debiased_moment_state": (
+            "A_mean.update(accel, alpha_var);" in t and "A_sq.update(accel * accel, alpha_var);" in t
+        ),
         "tau_target_shipping_formula": "float tau_raw = tau_coeff_ * 0.5f / f_tune;" in w,
-        "spectral_mse_deployed": "RSAdaptationLaw rs_law_ = RSAdaptationLaw::SpectralMSE;" in w,
+        "spectral_mse_deployed": bool(re.search(
+            r"\bRSAdaptationLaw\s+rs_law_\s*=\s*RSAdaptationLaw::SpectralMSE\s*;", w
+        )),
         "spectral_mse_realized_TS": "const float TS = pseudo_update_period_for_(tau);" in w,
-        "candidate_each_sample": "tune_.tau_applied   += alpha" in w and "tune_.RS_applied    += alpha_RS" in w,
-        "next_sample_commit": "void apply_pending_online_tune_()" in w and "online_tune_apply_pending_ = true;" in w,
-        "strict_stage_timer": "time_ - last_adapt_time_sec_ > adapt_every_secs_" in w,
-        "deployed_rs_slew_disabled": "float adapt_RS_slew_log_ = ADAPT_RS_SLEW_LOG" in w and "ADAPT_RS_SLEW_LOG          = 0.0f" in w,
-        "spectral_mse_no_extra_cadence_scale": "if (rs_law_ != RSAdaptationLaw::Cubic) return 1.0f;" in w,
+        "candidate_each_sample": (
+            "tune_.tau_applied   += alpha" in w and "tune_.RS_applied    += alpha_RS" in w
+        ),
+        "next_sample_commit": (
+            "void apply_pending_online_tune_()" in w and "online_tune_apply_pending_ = true;" in w
+        ),
+        "strict_stage_timer": bool(re.search(
+            r"time_\s*-\s*last_adapt_time_sec_\s*>\s*adapt_every_secs_", w
+        )),
+        "deployed_rs_slew_disabled": (
+            bool(re.search(r"\bADAPT_RS_SLEW_LOG\s*=\s*0\.0f\b", w))
+            and bool(re.search(r"\badapt_RS_slew_log_\s*=\s*ADAPT_RS_SLEW_LOG\s*;", w))
+        ),
+        "spectral_mse_no_extra_cadence_scale": bool(re.search(
+            r"if\s*\(rs_law_\s*!=\s*RSAdaptationLaw::Cubic\)\s*return\s+1\.0f\s*;", w
+        )),
     }
 
-    # Point smoke at a settled Live source state. This exercises arithmetic only;
-    # it is not a theorem word and cannot promote P3.
     f = I(0.2)
-    st = TunerState(
+    active = ActiveSchedule(I(1.1), I(0.5), I(2.0), pseudo_period(I(1.1), c))
+    state = TunerState(
         BandState(I(0.0), I(0.1), I(0.2), I(0.0), I(0.1), True),
         MomentState(I(0.0), I(0.5), I(0.1), I(0.5), f),
         CandidateState(I(1.1), I(0.5), I(2.0)),
-        ActiveSchedule(I(1.1), I(0.5), I(2.0), pseudo_period(I(1.1), c)),
+        active,
         SchedulerState(I(0.05), False),
     )
-    succ = advance_after_measurement(st, a_vertical=I(0.2), f_wave_previous_wpe=f, c=c)
+    successors = advance_after_measurement(state, a_vertical=I(0.2), f_wave_previous_wpe=f, c=c)
     smoke = {
-        "successors": len(succ),
-        "target_rs_positive": all(x.candidate.rs.lo > 0.0 for x in succ),
-        "active_schedule_unchanged_until_next_sample": all(x.active == st.active for x in succ),
-        "actual_rs_std_xyz": [x.as_list() for x in active_rs_std_xyz(st.active, c)],
+        "successors": len(successors),
+        "target_rs_positive": all(x.candidate.rs.lo > 0.0 for x in successors),
+        "active_schedule_unchanged_until_next_sample": all(x.active == active for x in successors),
+        "actual_rs_std_xyz": [x.as_list() for x in active_rs_std_xyz(active, c)],
     }
     return {
         "schema": SCHEMA,
@@ -480,35 +445,34 @@ def build() -> dict:
         "complete_SEA3_family_materialized_here": False,
         "P3_promoted": False,
         "next_obligation": (
-            "connect this closed tuner/scheduler recurrence to the same validated SEA3 Mahony/WavePeriod state and phase-continuous sea/RAO realization; no independent f_wave or a_vertical source may be substituted"
+            "connect this recurrence to the same validated SEA3 Mahony/WPE and phase-continuous sea realization"
         ),
     }
 
 
 def validate(d: dict) -> list[str]:
-    f: list[str] = []
+    failures: list[str] = []
     if d.get("schema") != SCHEMA or d.get("qualification") != QUALIFICATION:
-        f.append("schema/qualification mismatch")
+        failures.append("schema/qualification mismatch")
     for key in (
         "requires_same_SEA3_Mahony_and_WPE_state", "same_state_generates_tau_sigma_RS_TS",
         "candidate_commit_is_next_sample_predictable", "scheduler_boundary_is_split_not_selected",
-        "spectral_MSE_actual_RS_retained", "shipping_source_parity_pass",
-        "tuner_scheduler_step_closed",
+        "spectral_MSE_actual_RS_retained", "shipping_source_parity_pass", "tuner_scheduler_step_closed",
     ):
         if d.get(key) is not True:
-            f.append(f"{key} is not true")
+            failures.append(f"{key} is not true")
     for key in (
         "source_generator", "trajectory_replay_used", "independent_frequency_or_acceleration_box_promotable",
         "Mahony_step_closed_here", "WavePeriodEstimator_step_closed_here",
         "complete_SEA3_family_materialized_here", "P3_promoted",
     ):
         if d.get(key) is not False:
-            f.append(f"{key} is not false")
+            failures.append(f"{key} is not false")
     if not all(d.get("shipping_source_parity", {}).values()):
-        f.append("shipping source parity failed")
+        failures.append("shipping source parity failed")
     if d.get("smoke", {}).get("active_schedule_unchanged_until_next_sample") is not True:
-        f.append("current measurement leaked into current active schedule")
-    return list(dict.fromkeys(f))
+        failures.append("current measurement leaked into current active schedule")
+    return list(dict.fromkeys(failures))
 
 
 def main() -> int:
@@ -523,7 +487,8 @@ def main() -> int:
     args.output.write_text(json.dumps(d, indent=2, sort_keys=True), encoding="utf-8")
     print(json.dumps({
         "qualification": d["qualification"],
-        "parity": d["shipping_source_parity_pass"],
+        "parity": d["shipping_source_parity"],
+        "parity_pass": d["shipping_source_parity_pass"],
         "smoke": d["smoke"],
         "failures": failures,
     }, indent=2, sort_keys=True))
