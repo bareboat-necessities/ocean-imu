@@ -32,13 +32,27 @@ class Sea3ConditionalP3CompositionTest(unittest.TestCase):
         self.assertFalse(self.d["four_S_selected_events_replace_complete_word"])
         self.assertFalse(self.d["source_family_replaced"])
 
-    def test_open_numeric_obligations_are_not_falsely_promoted(self):
+    def test_H18_and_A21_theorem_subobligations_are_now_closed(self):
         self.assertTrue(self.d["H18_full_information_matrix_lower_closed"])
-        self.assertGreater(self.d["H18_information_lambda_min_lower"], 0.0)
+        self.assertTrue(self.d["H18_prior_free_completion_closed"])
+        self.assertTrue(self.d["H18_full_18x18_interval_LDLT_closed"])
+        self.assertGreater(self.d["H18_worst_LDLT_pivot_lower"], 0.0)
         self.assertTrue(self.d["A21_finite_bias_correlation_route_consumed"])
         self.assertFalse(self.d["A21_uses_eta9_packet_shortcut"])
-        self.assertFalse(self.d["H18_prior_free_completion_closed"])
-        self.assertFalse(self.d["A21_detectability_completion_closed"])
+        self.assertTrue(self.d["A21_detectability_completion_closed"])
+        self.assertTrue(self.d["A21_paper_UES_hypotheses_closed"])
+        self.assertGreaterEqual(
+            self.d["A21_detectability_asymptotic_word_energy_gap_lower"],
+            1.0e-18,
+        )
+        self.assertTrue(self.d["P3_math_subobligations_H18_and_A21_detectability_closed"])
+
+    def test_only_canonical_A21_Riccati_bridge_remains_fail_closed(self):
+        self.assertFalse(self.d["A21_full_21x21_Riccati_bridge_closed"])
+        self.assertEqual(
+            "FORMAL_A21_RICCATI_WORD_EQUIVALENCE_OR_FULL_21X21_BRIDGE",
+            self.d["P3_remaining_canonical_obligation"],
+        )
         self.assertFalse(self.d["P3_CANONICAL_PASS"])
         self.assertFalse(self.d["P4_MAY_CONSUME_P3"])
 
