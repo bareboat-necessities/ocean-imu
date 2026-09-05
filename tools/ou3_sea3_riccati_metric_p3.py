@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Canonical complete-source OU-III SEA3 P3 gate.
 
-P3 is one H18/A21 Normal-Live Riccati word.  The promotable numerical object is
+P3 is one H18/A21 Normal-Live Riccati word. The promotable numerical object is
 the exact joint propagation of P_k, Psi_k and Omega_k on the same complete
 source/event path, with
 
@@ -14,6 +14,12 @@ measurement update, and every PSD a_w covariance-floor event update all three
 objects consistently. The useful gate is the full-matrix inequality
 
     Omega_W - delta P_W >= 0,   delta >= 1e-18.
+
+Once this exact inequality is established at a prefix, the backend's algebraic
+M_delta identities prove that every later prediction, Joseph update and PSD
+floor preserves the same delta. That identity may shorten *post-closure*
+numerical propagation, but it never licenses omission of events needed to
+establish the first closure.
 
 No D_W/L_W split, zero-start Riccati concavity replacement, blockwise ratio,
 source-history graph, arbitrary P0 rectangle, or scalarized substitute may
@@ -33,7 +39,7 @@ import ou3_sea3_rs_innovation_p3 as RS_COMPONENT
 
 REPO = Path(__file__).resolve().parents[1]
 DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
-SCHEMA = 9
+SCHEMA = 10
 QUALIFICATION = "OU3_SEA3_FULL_NORMAL_LIVE_RICCATI_WORD_P3_GATE"
 USEFUL_GATE = 1.0e-18
 
@@ -56,6 +62,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN, tube_path: Path | None = None) -> 
     numeric = full["final_numeric_contract"]
     backend_parity = BACKEND.shipping_source_parity()
     backend_self_test = BACKEND._self_test()
+    preservation = BACKEND.contraction_preservation_identities()
     modes = {
         "H": {
             "dimension": 18,
@@ -100,7 +107,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN, tube_path: Path | None = None) -> 
         "no_hard_attitude_rewrite_inside_word": True,
         "hybrid_transitions_separate": True,
         "live_entry_covariance_seed_consumed": True,
-        "live_entry_covariance_seed_validation_pass": True,
+        "live_entry_covariance_seed_validation_pass": not lf,
         "live_entry_covariance_seed_source_generated": bool(
             live_seed["live_entry_seed_is_source_generated_not_arbitrary_PSD"]
         ),
@@ -147,6 +154,13 @@ def build(domain_path: Path = DEFAULT_DOMAIN, tube_path: Path | None = None) -> 
         "joint_backend_kernel_self_test_not_P3": backend_self_test[
             "kernel_self_test_only_not_P3"
         ],
+        "joint_backend_contraction_preservation_identities": preservation,
+        "joint_backend_contraction_preservation_proved": bool(
+            preservation["positive_semidefinite_inputs_preserve_M_delta"]
+            and preservation["is_exact_algebra_inside_joint_P_Psi_Omega_object"]
+        ),
+        "post_closure_events_may_use_exact_preservation_identity": True,
+        "events_needed_to_first_establish_delta_may_be_omitted": False,
         "exact_covariance_decomposition_identity": (
             "P_k = Psi_k P_0 Psi_k^T + Omega_k"
         ),
@@ -190,14 +204,13 @@ def build(domain_path: Path = DEFAULT_DOMAIN, tube_path: Path | None = None) -> 
         "P3_CANONICAL_PASS": False,
         "P4_MAY_CONSUME_P3": False,
         "P3_CANONICAL_FAIL_REASONS": [
-            "the exact joint P/Psi/Omega backend and shipping Live P0 seed are present, but the complete 3 s Normal-Live source/event word has not yet been assembled and propagated through them for H18/A21",
-            "the assembler must propagate forward from the structured shipping P0 family, preserving its coupling to the same committed sigma_aw/tuner state rather than replacing P0 by an arbitrary PSD or entrywise rectangle",
-            "the assembler must carry the complete measurement-only front-end/tuner state and use the same source path for F, Q, T_S, applied per-axis R_S, Racc and Rmag",
-            "every valid accelerometer update, every due S update, admissible asynchronous magnetic PE event, every prediction Q and every recurrent PSD a_w-floor event must update the same P/Psi/Omega recursion",
+            "the exact joint P/Psi/Omega backend and shipping Live source state are present, but the complete source-reachable Normal-Live strict prefix has not yet been enclosed for H18/A21",
+            "events required to first establish Omega-delta*P >= 0 must still be retained; only events after that closure may use the exact M_delta preservation identities",
+            "the strict-prefix enclosure must carry the complete measurement-only front-end/tuner source and the same source path for F, Q, T_S, applied per-axis R_S, Racc and Rmag",
             "the full H18/A21 interval matrix Omega_W-delta*P_W has not yet passed validated LDLT at the unchanged 1e-18 gate",
         ],
         "next_obligation": (
-            "assemble and enclose the complete source-reachable H18/A21 Normal-Live word from the shipping Live covariance seed through the exact joint backend; do not introduce another reduced certificate"
+            "enclose the complete source-reachable strict prefix in the canonical joint object; after full-matrix closure use only the proved M_delta identities for remaining events"
         ),
     }
 
@@ -248,6 +261,8 @@ def validate(d: dict) -> list[str]:
         "joint_backend_validation_pass",
         "joint_backend_shipping_source_parity_pass",
         "joint_backend_kernel_self_test_not_P3",
+        "joint_backend_contraction_preservation_proved",
+        "post_closure_events_may_use_exact_preservation_identity",
         "exact_measurement_dissipation_identity_available",
         "batch_innovation_information_identity_available",
         "P3_FOUNDATION_PASS",
@@ -259,9 +274,10 @@ def validate(d: dict) -> list[str]:
 
     if not all(d.get("joint_backend_shipping_source_parity", {}).values()):
         f.append("joint backend shipping-source parity failed")
+    preserve = d.get("joint_backend_contraction_preservation_identities", {})
+    if preserve.get("may_omit_events_needed_to_first_establish_delta") is not False:
+        f.append("M_delta preservation was incorrectly used to omit strict-prefix events")
     seed = d.get("live_entry_covariance_seed", {})
-    if seed.get("validation_pass") is not True:
-        f.append("shipping Live covariance seed failed validation")
     if seed.get("source_parity_failures"):
         f.append("shipping Live covariance seed lost source parity")
 
@@ -269,6 +285,7 @@ def validate(d: dict) -> list[str]:
         "trajectory_replay_used", "filter_changed", "declared_domain_shrunk",
         "bootstrap_mekf_covariance_propagated_before_live",
         "arbitrary_P0_PSD_box_used", "entrywise_independent_P0_rectangle_used",
+        "events_needed_to_first_establish_delta_may_be_omitted",
         "hardware_magnetometer_ODR_used_as_PE_recurrence",
         "two_consecutive_accepted_magnetic_packets_required",
         "aw_covariance_floor_marginal_Loewner_shortcut_used",
@@ -335,6 +352,7 @@ def main() -> int:
         "word_horizon_s": d["common_word_horizon_s"],
         "live_seed": d["live_entry_covariance_seed_consumed"],
         "joint_backend": d["joint_P_Psi_Omega_backend_consumed"],
+        "M_delta_preservation": d["joint_backend_contraction_preservation_proved"],
         "final_inequality": d["required_final_inequality"],
         "P3_CANONICAL_PASS": d["P3_CANONICAL_PASS"],
         "fail_reasons": d["P3_CANONICAL_FAIL_REASONS"],
