@@ -7,6 +7,7 @@ on:
       - 'tools/ou3_sea3_full_normal_live_execution_cli.py'
       - 'tools/ou3_sea3_full_normal_live_word.py'
       - 'tools/ou3_sea3_full_word_riccati_backend.py'
+      - 'tools/ou3_interval_linear_algebra.py'
       - 'tools/ou3_p3_scaled_process.py'
       - 'tools/ou3_p3_pseudo_scheduler_progress_certificate.py'
       - 'tools/ou3_proof_operating_domain.json'
@@ -31,7 +32,8 @@ jobs:
             tools/ou3_sea3_full_normal_live_execution.py \
             tools/ou3_sea3_full_normal_live_execution_cli.py \
             tools/ou3_sea3_full_normal_live_word.py \
-            tools/ou3_sea3_full_word_riccati_backend.py
+            tools/ou3_sea3_full_word_riccati_backend.py \
+            tools/ou3_interval_linear_algebra.py
 
       - name: Execute complete 3 s H18/A21 words
         run: |
