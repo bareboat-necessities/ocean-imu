@@ -205,9 +205,7 @@ jobs:
 
       - name: Test R_S/SEA3 P3 contracts
         working-directory: tests/validation
-        run: python3 -m unittest -v \
-          test_ou3_sea3_rs_word_information \
-          test_ou3_sea3_riccati_metric_p3
+        run: python3 -m unittest -v test_ou3_sea3_rs_word_information test_ou3_sea3_riccati_metric_p3
 
       - name: Enforce canonical P3 quantitative closure
         run: |
