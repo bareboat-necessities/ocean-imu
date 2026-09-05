@@ -55,7 +55,10 @@ def _shape(A: Sequence[Sequence[Interval]]) -> tuple[int, int]:
 
 
 def _zero3() -> IntervalMatrix:
-    z = I(0.0)
+    # Zero is an exact algebraic constant here.  Widening it would turn the
+    # strict-negative positive-part branch into a tiny signed interval instead
+    # of the exact matrix Pi_+(D)=0.
+    z = Interval.point(0.0)
     return [[z for _ in range(3)] for _ in range(3)]
 
 
