@@ -61,14 +61,18 @@ jobs:
           assert d['retired_P2_stack_consumed'] is False
           assert d['SEA3_surface_family']['modes_max'] == 3
           assert d['SEA3_surface_family']['gamma_interval'] == [1.0, 7.0]
-          c=d['SEA3_coupled_domain']
+          assert all(v is False for v in d['no_fallback_generators'].values())
+          c=d['SEA3_response_couplings']
           assert c['independent_sea_x_RAO_cartesian_product_forbidden'] is True
-          assert c['cartesian_worst_corner_may_generate_P3_word'] is False
-          assert c['only_tuples_satisfying_both_response_couplings_may_generate_P3_word'] is True
+          assert c['same_H_s_partition_energy_enters_translation_and_rotation_conditions'] is True
+          assert c['only_jointly_admitted_response_tuples_may_generate_P3_words'] is True
           a=d['derived_adaptive_source']
           assert a['primitive_independent_tau_sigma_RS_TS'] is False
-          assert a['dynamic_rectangular_invariant_may_generate_P3_words'] is False
-          assert a['dynamic_rectangular_target_jump_full_box_may_generate_P3_words'] is False
+          assert a['same_SEA3_frontend_path_generates_tau_sigma_RS_targets'] is True
+          assert a['same_candidate_snapshot_commits_tau_sigma_RS'] is True
+          assert a['T_S_is_function_of_same_committed_tau'] is True
+          assert a['Q_uses_same_committed_tau_sigma'] is True
+          assert a['rate_bounds_are_constraints_on_SEA3_derived_path_not_a_word_generator'] is True
           r=d['R_S_regularizer']
           assert r['source_parity_failures'] == []
           assert r['deployed_law'] == 'SpectralMSE'
@@ -76,10 +80,12 @@ jobs:
           assert r['axis_std_factors'] == [0.72,0.72,1.0]
           assert r['extra_information_rate_rescale'] == 1.0
           assert r['all_due_S_updates_remain_in_full_word'] is True
+          assert r['selected_four_S_subset_may_not_replace_full_scheduler_word'] is True
           assert r['R_S_may_not_be_replaced_by_process_strictness'] is True
           print('SEA3_SAMPLES', d['word_samples'])
-          print('SEA3_COUPLED_DOMAIN', c)
+          print('SEA3_RESPONSE_COUPLINGS', c)
           print('SEA3_FINITE_HORIZON', d['SEA3_finite_horizon_good_event'])
+          print('SEA3_FALLBACKS', d['no_fallback_generators'])
           print('SEA3_RS', r)
           PY
 
