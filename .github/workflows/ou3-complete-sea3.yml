@@ -169,7 +169,13 @@ jobs:
           assert m['requires_same_SEA3_gyro_and_specific_force'] is True
           assert m['requires_same_SEA3_private_observer_state'] is True
           assert m['actual_fast_inverse_sqrt_used'] is True
-          assert m['TunerReady_wait_has_finite_upper_bound'] is False
+          assert m['low_level_TunerReady_can_wait_for_external_bootstrap'] is True
+          assert m['deployed_outer_wrapper_has_timeout_logic'] is True
+          assert m['deployed_proxy_startup_timeout_s'] == 150.0
+          assert m['deployed_mag_acquire_deadline_s'] == 60.0
+          assert m['deployed_timeout_s'] == 150.0
+          assert m['timeout_path_requires_gravity_aligned_branch'] is True
+          assert m['unconditional_live_entry_upper_bound_closed'] is False
           assert m['live_entry_private_observer_invariant_closed'] is False
           assert m['complete_SEA3_family_materialized_here'] is False
           assert m['P3_promoted'] is False
