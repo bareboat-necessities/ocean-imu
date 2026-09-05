@@ -18,13 +18,18 @@ The asynchronous vector-PE certificate supplies
     A^T A >= alpha6 I6
 
 for the eta6 columns after the translational a_w contribution is retained in
-its own block.  The complete-SEA3 four-S certificate supplies
+its own block.  The corrected complete-SEA3 four-S certificate supplies
 
     B^T B >= dS I12
 
-for the translation columns, using actual applied SpectralMSE R_S.  The only
-cross block in the selected accelerometer rows is the a_w column.  For the two
-required PE occurrences its whitened norm is bounded by
+for the physical translation coordinates, using actual applied SpectralMSE
+R_S.  Its covariance tightening uses the independence of configured S
+measurement noise between selected updates while retaining a four-record trace
+bound for correlated process nuisance.  It therefore does not replace the
+complete SEA3 source or change the estimator.
+
+The only cross block in the selected accelerometer rows is the a_w column.  For
+the two required PE occurrences its whitened norm is bounded by
 
     ||C||^2 <= 2 / (Racc_min * g^6),
 
@@ -42,10 +47,10 @@ rigorous full-matrix bound
 
     D_H18 >= alpha6*dS/(alpha6+||C||^2+dS) I18.
 
-All omitted valid accelerometer, magnetometer and S updates contribute PSD
-information and can only improve this lower bound.  No independent SEA3 source
-extrema are multiplied to create a word: g, Racc, alpha6 and dS are certified
-properties of the same admitted complete-SEA3/Normal-Live word.
+This scalar 2x2 calculation is only an analytic lower for the coupled 18x18
+quadratic form; it is not a blockwise contraction ratio and does not promote
+P3.  All omitted valid accelerometer, magnetometer and S updates contribute PSD
+information and can only improve this lower bound.
 """
 from __future__ import annotations
 
@@ -56,13 +61,14 @@ from pathlib import Path
 
 from ou3_interval import down, up
 import ou3_sea3_complete_source as COMPLETE
-import ou3_sea3_four_s_translation_information as FOUR_S
+import ou3_sea3_four_s_translation_information_tight as FOUR_S
 import ou3_sea3_windowed_vector_pe as PE
 
 REPO = Path(__file__).resolve().parents[1]
 DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
 SCHEMA = 1
 QUALIFICATION = "OU3_COMPLETE_SEA3_H18_FULL_INFORMATION_COMPOSITION"
+USEFUL_GATE = 1.0e-18
 
 
 def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
@@ -84,7 +90,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         raise RuntimeError("four-S lemma is not bound to the same complete SEA3 source")
 
     alpha6 = float(pe["eta6_information"]["alpha_6_information_lower"])
-    dS = float(four["newton_coordinate_information"]["D_S_newton_lambda_min_lower"])
+    dS = float(four["newton_coordinate_information"]["D_S_physical_lambda_min_lower"])
     g = float(four["uniform_S_gap_s_upper"])
     racc_var = float(pe["measurement_runtime"]["accelerometer_variance_upper"])
     if not (alpha6 > 0.0 and dS > 0.0 and g > 0.0 and racc_var > 0.0):
@@ -108,6 +114,8 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "selected_four_S_events_replace_complete_word": False,
         "all_due_S_updates_remain_in_literal_word": True,
         "actual_applied_SpectralMSE_R_S_consumed": True,
+        "tight_four_S_measurement_covariance_structure_consumed": True,
+        "four_S_process_cross_record_trace_bound_retained": True,
         "same_complete_SEA3_word_supplies_PE_and_translation_information": True,
         "H18_state_coordinates": {
             "eta6": ["delta_theta", "delta_b_g"],
@@ -121,6 +129,8 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "accelerometer_variance_upper": racc_var,
         "selected_PE_accelerometer_occurrences": 2,
         "accelerometer_translation_cross_norm_squared_upper": cross_norm_sq_upper,
+        "useful_gate": USEFUL_GATE,
+        "H18_information_useful_gate_pass": information_lower >= USEFUL_GATE,
         "triangular_information_composition": {
             "form": "||Au+Cv||^2+||Bv||^2",
             "A_transpose_A_lower": alpha6,
@@ -137,9 +147,9 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "scalar_information_beta_used": False,
         "P3_promoted": False,
         "next_obligation": (
-            "combine this full H18 measurement-information lower with the same complete-word "
-            "prior-free process completion, then extend the composition to A21 using the "
-            "certified finite accelerometer-bias correlation-time contraction"
+            "if the corrected H18 information clears the useful gate, carry it into the same-word "
+            "prior-free full-matrix completion; then extend to A21 using finite accelerometer-bias "
+            "correlation without changing the complete SEA3 source"
         ),
     }
 
@@ -154,6 +164,8 @@ def validate(d: dict) -> list[str]:
         "component_of_complete_SEA3_full_word",
         "all_due_S_updates_remain_in_literal_word",
         "actual_applied_SpectralMSE_R_S_consumed",
+        "tight_four_S_measurement_covariance_structure_consumed",
+        "four_S_process_cross_record_trace_bound_retained",
         "same_complete_SEA3_word_supplies_PE_and_translation_information",
         "omitted_shipping_measurement_rows_are_PSD_information_only",
     ):
@@ -169,6 +181,8 @@ def validate(d: dict) -> list[str]:
     ):
         if d.get(key) is not False:
             f.append(f"{key} is not false")
+    if float(d.get("useful_gate", math.nan)) != USEFUL_GATE:
+        f.append("useful gate changed")
     c = d.get("triangular_information_composition", {})
     if c.get("full_18x18_matrix_information_lower_closed") is not True:
         f.append("H18 full matrix information lower is not closed")
@@ -198,6 +212,7 @@ def main() -> int:
         "four_S_translation": d["translation_information_lower"],
         "cross_norm_sq_upper": d["accelerometer_translation_cross_norm_squared_upper"],
         "H18_information_lambda_min_lower": d["triangular_information_composition"]["D_H18_lambda_min_lower"],
+        "H18_information_useful_gate_pass": d["H18_information_useful_gate_pass"],
         "failures": failures,
     }, indent=2, sort_keys=True))
     return 0 if not failures else 2
