@@ -89,6 +89,14 @@ class Sea3HardFiniteWindowSourceTest(unittest.TestCase):
         self.assertEqual(SEA0.validate_status(d), [])
         self.assertTrue(d["SEA3_parameter_domain_compact"])
         self.assertTrue(d["compact_transition_relation_is_theorem_domain"])
+        ingredients = d["executable_provider_ingredients"]
+        self.assertTrue(ingredients["machine_readable_R_lambda_closed"])
+        self.assertFalse(ingredients["hard_shaping_state_or_excitation_bound_closed"])
+        self.assertFalse(ingredients["joint_translational_rotational_shaping_closed"])
+        rlambda = d["R_lambda_certificate"]
+        self.assertTrue(rlambda["actual_rate_bounded_R_lambda_subset_Rhat"])
+        self.assertFalse(rlambda["rate_constants_fitted_or_invented"])
+        self.assertFalse(rlambda["fixed_lambda_word_used"])
         self.assertTrue(d["executor_payload_contract"]["raw_gyro_and_corrected_rate_are_distinct_coordinates"])
         self.assertFalse(d["executor_payload_contract"]["precomputed_aw_covariance_floor_increment_allowed"])
         self.assertFalse(d["provider_implementation_closed"])
