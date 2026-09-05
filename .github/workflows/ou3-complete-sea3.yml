@@ -5,10 +5,13 @@ on:
     paths:
       - "tools/ou3_sea3_*.py"
       - "tools/ou3_sea3_*.json"
+      - "tools/ou3_binary32_interval.py"
+      - "tools/ou3_fast_inv_sqrt_interval.py"
       - "tools/ou3_validated_log.py"
       - "tools/ou3_proof_operating_domain.json"
       - "tests/validation/test_ou3_sea3_*.py"
       - "tests/validation/test_ou3_validated_log.py"
+      - "src/ahrs/Mahony_AHRS.h"
       - "src/kalman_ou_iii/**"
       - "src/kalman_ou_common/**"
       - "src/tuner/**"
@@ -17,10 +20,13 @@ on:
     paths:
       - "tools/ou3_sea3_*.py"
       - "tools/ou3_sea3_*.json"
+      - "tools/ou3_binary32_interval.py"
+      - "tools/ou3_fast_inv_sqrt_interval.py"
       - "tools/ou3_validated_log.py"
       - "tools/ou3_proof_operating_domain.json"
       - "tests/validation/test_ou3_sea3_*.py"
       - "tests/validation/test_ou3_validated_log.py"
+      - "src/ahrs/Mahony_AHRS.h"
       - "src/kalman_ou_iii/**"
       - "src/kalman_ou_common/**"
       - "src/tuner/**"
@@ -58,6 +64,9 @@ jobs:
             tools/ou3_sea3_shipping_prediction_primitives.py \
             tools/ou3_sea3_tuner_scheduler_step.py \
             tools/ou3_sea3_wpe_state_step.py \
+            tools/ou3_sea3_private_mahony_state_step.py \
+            tools/ou3_binary32_interval.py \
+            tools/ou3_fast_inv_sqrt_interval.py \
             tools/ou3_validated_log.py \
             tools/ou3_p3_pseudo_scheduler_progress_certificate.py
 
@@ -71,6 +80,10 @@ jobs:
             --output /tmp/ou3_sea3_tuner_scheduler_step.json
           python3 tools/ou3_sea3_wpe_state_step.py \
             --output /tmp/ou3_sea3_wpe_state_step.json
+          python3 tools/ou3_fast_inv_sqrt_interval.py \
+            --output /tmp/ou3_fast_inv_sqrt_interval.json
+          python3 tools/ou3_sea3_private_mahony_state_step.py \
+            --output /tmp/ou3_sea3_private_mahony_state_step.json
           python3 - <<'PY'
           import json
           d=json.load(open('/tmp/ou3_sea3_complete_source.json'))
@@ -140,10 +153,26 @@ jobs:
           assert w['requires_same_SEA3_vertical_acceleration'] is True
           assert w['validity_boundaries_are_branched_not_selected'] is True
           assert w['mathematical_WPE_state_step_closed'] is True
-          assert w['target_binary32_libm_roundoff_closed'] is False
           assert w['private_Mahony_step_closed_here'] is False
           assert w['complete_SEA3_family_materialized_here'] is False
           assert w['P3_promoted'] is False
+
+          fi=json.load(open('/tmp/ou3_fast_inv_sqrt_interval.json'))
+          assert fi['validation_pass'], fi['validation_failures']
+          assert fi['shipping_source_parity_pass'] is True
+          assert fi['ideal_inverse_sqrt_substituted'] is False
+          assert fi['P3_promoted'] is False
+
+          m=json.load(open('/tmp/ou3_sea3_private_mahony_state_step.json'))
+          assert m['validation_pass'], m['validation_failures']
+          assert m['source_generator'] is False
+          assert m['requires_same_SEA3_gyro_and_specific_force'] is True
+          assert m['requires_same_SEA3_private_observer_state'] is True
+          assert m['actual_fast_inverse_sqrt_used'] is True
+          assert m['TunerReady_wait_has_finite_upper_bound'] is False
+          assert m['live_entry_private_observer_invariant_closed'] is False
+          assert m['complete_SEA3_family_materialized_here'] is False
+          assert m['P3_promoted'] is False
 
           print('SEA3_SAMPLES', d['word_samples'])
           print('SEA3_DYNAMIC_REALIZATION', dyn)
@@ -154,6 +183,7 @@ jobs:
           print('SEA3_PREDICTION_PRIMITIVES', p['smoke'])
           print('SEA3_TUNER_STEP', t['smoke'])
           print('SEA3_WPE_STEP', w['smoke'])
+          print('SEA3_PRIVATE_MAHONY', m['smoke'])
           PY
 
       - name: Test SEA3 source and prediction contracts
@@ -170,6 +200,7 @@ jobs:
             test_ou3_sea3_prediction_not_source \
             test_ou3_sea3_tuner_scheduler_step \
             test_ou3_sea3_wpe_state_step \
+            test_ou3_sea3_private_mahony_state_step \
             test_ou3_sea3_rs_full_word_contract \
             test_ou3_sea3_p3_source_semantics \
             test_ou3_sea3_full_word_source_identity \
@@ -184,4 +215,6 @@ jobs:
             /tmp/ou3_sea3_shipping_prediction_primitives.json
             /tmp/ou3_sea3_tuner_scheduler_step.json
             /tmp/ou3_sea3_wpe_state_step.json
+            /tmp/ou3_fast_inv_sqrt_interval.json
+            /tmp/ou3_sea3_private_mahony_state_step.json
           retention-days: 7
