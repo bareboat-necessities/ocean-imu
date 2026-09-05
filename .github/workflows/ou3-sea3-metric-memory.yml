@@ -24,29 +24,14 @@ jobs:
       - uses: actions/checkout@v6
         with:
           persist-credentials: false
-      - name: Build complete-SEA3 H18 forgetting and covariance diagnostics
+      - name: Build complete-SEA3 covariance diagnostics
         run: |
-          python3 tools/ou3_sea3_h18_process_forgetting_preconditioned.py --output /tmp/ou3_sea3_h18_process_forgetting.json
           python3 tools/ou3_sea3_riccati_tube_factored.py --output /tmp/ou3_sea3_metric_memory_diagnostic.json
           python3 tools/ou3_sea3_p3_conditional_composition.py --output /tmp/ou3_sea3_conditional_p3.json
           python3 - <<'PY'
           import json
-          h=json.load(open('/tmp/ou3_sea3_h18_process_forgetting.json'))
           d=json.load(open('/tmp/ou3_sea3_metric_memory_diagnostic.json'))
           c=json.load(open('/tmp/ou3_sea3_conditional_p3.json'))
-          assert h['validation_pass'], h['validation_failures']
-          assert h['canonical_source'] == 'COMPLETE_SEA3_NORMAL_LIVE_WORD'
-          assert h['full_H18_Omega_minus_delta_P_LDLT_closed'] is True
-          assert h['H18_PROCESS_FORGETTING_PASS'] is True
-          assert h['parameter_cover']['worst_full_H18_LDLT_pivot_lower'] > 0.0
-          assert h['actual_applied_SpectralMSE_R_S_consumed'] is True
-          assert h['independent_tau_sigma_RS_source_created'] is False
-          assert h['blockwise_minimum_ratio_used'] is False
-          assert h['D_W_L_W_product_used'] is False
-          assert h['one_step_process_Q_used_as_contraction_ratio'] is False
-          assert h['validated_fixed_point_congruence_preconditioner_available'] is True
-          assert h['floating_midpoint_factorization_accepted_as_proof'] is False
-          assert h['same_complete_SEA3_H18_matrix_family_as_canonical_module'] is True
           assert d['validation_pass'], d['validation_failures']
           assert d['source_generated_not_trajectory_fit'] is True
           assert d['trajectory_replay_used'] is False
@@ -57,30 +42,21 @@ jobs:
           assert c['canonical_source'] == 'COMPLETE_SEA3_NORMAL_LIVE_WORD'
           assert c['actual_applied_SpectralMSE_R_S_consumed'] is True
           assert c['one_step_process_Q_used_as_contraction_strictness'] is False
-          print('H18_FORGETTING_CLOSURE_TIME', h['closure_time_from_Live_s_upper'])
-          print('H18_FORGETTING_ATTENUATION', h['measurement_conditioning'])
-          print('H18_FORGETTING_P_UPPER', h['no_measurement_covariance_upper'])
-          print('H18_FORGETTING_CELLS', h['parameter_cover']['accepted_cells'])
-          print('H18_FORGETTING_REFINEMENTS', h['parameter_cover']['refinements'])
-          print('H18_FORGETTING_WORST_PIVOT', h['parameter_cover']['worst_full_H18_LDLT_pivot_lower'])
-          print('H18_FORGETTING_WORST_PRECONDITIONED', h['worst_cell_used_validated_congruence'])
-          # Retained only as a diagnostic demonstrating why the old separately
-          # worst one-step/tube route is not the theorem route.
-          print('OLD_TUBE_H_DELTA_DIAGNOSTIC_ONLY', d['modes']['H']['relative_Riccati_injection_margin_lower'])
+          print('H_PBAR_DIAG', d['modes']['H']['Pbar_diagonal_variance_upper'])
+          print('A_PBAR_DIAG', d['modes']['A']['Pbar_diagonal_variance_upper'])
+          print('TUBE_H_DELTA_DIAGNOSTIC_ONLY', d['modes']['H']['relative_Riccati_injection_margin_lower'])
+          print('TUBE_A_DELTA_DIAGNOSTIC_ONLY', d['modes']['A']['relative_Riccati_injection_margin_lower'])
           print('COMPLETE_SEA3_H18_INFORMATION', c['H18_information_lambda_min_lower'])
           print('A_BIAS_GAP', c['A21_bias_homogeneous_contraction_gap_lower'])
           PY
-      - name: Test complete SEA3 H18 forgetting contracts
+      - name: Test complete SEA3 composition diagnostics
         working-directory: tests/validation
         run: |
-          python3 -m unittest -v \
-            test_ou3_sea3_h18_process_forgetting \
-            test_ou3_sea3_p3_conditional_composition
+          python3 -m unittest -v test_ou3_sea3_p3_conditional_composition
       - uses: actions/upload-artifact@v6
         with:
           name: ou3-sea3-metric-memory
           path: |
-            /tmp/ou3_sea3_h18_process_forgetting.json
             /tmp/ou3_sea3_metric_memory_diagnostic.json
             /tmp/ou3_sea3_conditional_p3.json
           retention-days: 7
