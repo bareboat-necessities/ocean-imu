@@ -5,6 +5,7 @@ import unittest
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools"))
 import ou3_sea3_p3_joint_source_contract as joint  # noqa: E402
+import ou3_sea3_rs_tau_lag_envelope as lag  # noqa: E402
 import ou3_sea3_riccati_metric_p3 as mod  # noqa: E402
 
 
@@ -13,6 +14,7 @@ class Sea3RsInnovationP3Test(unittest.TestCase):
     def setUpClass(cls):
         cls.d = mod.build()
         cls.j = joint.build()
+        cls.lag = lag.build()
 
     def test_architecture_uses_four_s_rs_word_as_translation_strictness(self):
         self.assertEqual(mod.validate(self.d), [])
@@ -77,6 +79,25 @@ class Sea3RsInnovationP3Test(unittest.TestCase):
             ]
         )
 
+    def test_low_dimensional_rs_tau_lag_is_certified_without_history_graph(self):
+        self.assertEqual(lag.validate(self.lag), [])
+        self.assertTrue(self.lag["source_generated_not_trajectory_fit"])
+        self.assertFalse(self.lag["old_P2_800_state_graph_consumed"])
+        self.assertFalse(self.lag["source_history_graph_consumed"])
+        self.assertFalse(self.lag["predecessor_path_enumeration_consumed"])
+        self.assertTrue(self.lag["candidate_snapshot_commit_preserves_invariant"])
+        self.assertTrue(
+            self.lag["SpectralMSE_fractional_power_removed_by_14th_power_identity"]
+        )
+        self.assertFalse(self.lag["ordinary_libm_fractional_power_used_in_pass_decision"])
+        self.assertTrue(self.lag["target_lower_curve"]["pass"])
+        self.assertTrue(self.lag["applied_invariant_lower_curve"]["pass"])
+        self.assertTrue(self.lag["applied_invariant_lower_curve"]["initial_state_inside"])
+        self.assertGreater(
+            self.lag["applied_invariant_lower_curve"]["R_at_tau_max_lower"],
+            self.lag["R_S_hard_floor"],
+        )
+
     def test_rs_corrective_force_cannot_be_scalarized_away(self):
         req = self.j["R_S_corrective_force_requirements"]
         self.assertTrue(req["use_actual_applied_R_S_on_selected_pseudo_updates"])
@@ -110,6 +131,9 @@ class Sea3RsInnovationP3Test(unittest.TestCase):
         self.assertFalse(self.j["source_history_graph_consumed"])
         self.assertFalse(self.j["predecessor_path_enumeration_consumed"])
         self.assertFalse(self.j["old_P2_800_state_graph_consumed"])
+        self.assertFalse(self.lag["source_history_graph_consumed"])
+        self.assertFalse(self.lag["predecessor_path_enumeration_consumed"])
+        self.assertFalse(self.lag["old_P2_800_state_graph_consumed"])
         self.assertEqual(self.d["useful_gate"], 1e-18)
 
     def test_gate_fails_closed_until_lw_and_full_matrix_composition(self):
