@@ -4,11 +4,17 @@
 P3 may promote only one same-mode H18/A21 word that carries the complete
 measurement-only front end, adaptive candidate/commit source, scheduler,
 measurement covariances, process matrices, covariance-floor events, vector PE,
-and declared Normal-Live physical bounds.  Source defaults are followed through
+and declared Normal-Live physical bounds. Source defaults are followed through
 the actual wrapper override chain; an inner default is never substituted for a
 value overwritten by the deployed outer Config.
 
-The final numerical object is the joint (P,Psi,Omega) Riccati word.  Reduced
+The configured 200 Hz runtime is bound to the source with the source contract's
+outward enclosure of the deployed binary32 ``FREQ_SMOOTHER_DT`` value. A JSON
+decimal 0.005 and the deployed C++ float are therefore compared as real values
+through that enclosure, not by requiring their Python binary64 representations
+to be bit-identical.
+
+The final numerical object is the joint (P,Psi,Omega) Riccati word. Reduced
 information/covariance products are useful diagnostics/components only and may
 not promote P3.
 """
@@ -37,7 +43,7 @@ VERTICAL = REPO / "src" / "tuner" / "VerticalAccelComplementary.h"
 BANDPASS = REPO / "src" / "tuner" / "AdaptiveWaveBandPass.h"
 AUTOTUNER = REPO / "src" / "tuner" / "SeaStateAutoTuner.h"
 PAPER = REPO / "doc" / "kalman_ou_iii" / "w3d-iss-stability.tex-part"
-SCHEMA = 4
+SCHEMA = 5
 QUALIFICATION = "OU3_SEA3_P3_COMPLETE_NORMAL_LIVE_PRECONDITION_CONTRACT"
 USEFUL_GATE = 1.0e-18
 
@@ -219,6 +225,19 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     samples = int(math.ceil(horizon / dt)) + 1
     hybrid = list(source["hybrid_obligations"])
 
+    source_runtime = source["configured_runtime_assumption"]
+    source_dt = float(source_runtime["imu_dt_s"])
+    source_dt_interval = [float(x) for x in source_runtime["imu_dt_outward_interval_s"]]
+    configured_dt_matches_source = source_dt_interval[0] <= dt <= source_dt_interval[1]
+    dt_binding = {
+        "declared_runtime_dt_s": dt,
+        "source_binary32_dt_s": source_dt,
+        "source_outward_interval_s": source_dt_interval,
+        "declared_runtime_contained_in_source_outward_interval": configured_dt_matches_source,
+        "comparison_is_real_enclosure_not_binary64_bit_equality": True,
+        "source_constant": source_runtime["imu_dt_source_constant"],
+    }
+
     startup_runtime = {
         "inner_filter_default_warmup_s": inner_warmup,
         "outer_config_default_warmup_s": outer_warmup,
@@ -258,10 +277,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     }
 
     mandatory = {
-        "configured_runtime_dt_matches_source": math.isclose(
-            float(source["configured_runtime_assumption"]["imu_dt_s"]), dt,
-            rel_tol=0.0, abs_tol=0.0,
-        ),
+        "configured_runtime_dt_matches_source": configured_dt_matches_source,
         "outer_warmup_override_chain_retained": startup_runtime["outer_overrides_inner"],
         "configured_warmup_matches_effective_outer_default": math.isclose(
             domain_warmup, outer_warmup, rel_tol=0.0, abs_tol=0.0
@@ -410,6 +426,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "front_end_state_parity_failures": front_end_failures,
         "paper_parity": paper_parity,
         "paper_parity_failures": paper_failures,
+        "configured_runtime_dt_binding": dt_binding,
         "startup_runtime": startup_runtime,
         "measurement_runtime": measurement_runtime,
         "front_end_state_manifest": front_end_manifest,
@@ -431,6 +448,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
                 "validated_rate_and_jump_bounds"
             ]["active_commit_gap_s_upper"],
             "full_process_modes": process["modes"],
+            "configured_runtime_dt_binding": dt_binding,
             "startup_runtime": startup_runtime,
             "measurement_runtime": measurement_runtime,
             "front_end_state_manifest": front_end_manifest,
@@ -475,6 +493,14 @@ def validate(d: dict) -> list[str]:
     f.extend(f"source parity failed: {x}" for x in d.get("source_parity_failures", []))
     f.extend(f"front-end parity failed: {x}" for x in d.get("front_end_state_parity_failures", []))
     f.extend(f"paper parity failed: {x}" for x in d.get("paper_parity_failures", []))
+
+    dtb = d.get("configured_runtime_dt_binding", {})
+    if dtb.get("declared_runtime_contained_in_source_outward_interval") is not True:
+        f.append("configured runtime dt is outside deployed source binary32 enclosure")
+    if dtb.get("comparison_is_real_enclosure_not_binary64_bit_equality") is not True:
+        f.append("configured runtime dt reverted to representation equality")
+    if dtb.get("source_constant") != "FREQ_SMOOTHER_DT":
+        f.append("configured runtime dt source constant changed")
 
     startup_runtime = d.get("startup_runtime", {})
     if float(startup_runtime.get("inner_filter_default_warmup_s", math.nan)) != 5.0:
@@ -551,6 +577,7 @@ def main() -> int:
     print(json.dumps({
         "architecture": d["canonical_architecture"],
         "word_horizon_s": d["word"]["horizon_s"],
+        "configured_runtime_dt_binding": d["configured_runtime_dt_binding"],
         "startup_runtime": d["startup_runtime"],
         "all_preconditions": d["all_current_machine_checkable_preconditions_present"],
         "measurement_runtime": d["measurement_runtime"],
