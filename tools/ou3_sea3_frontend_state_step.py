@@ -35,8 +35,8 @@ import ou3_validated_log as VLOG
 
 REPO = Path(__file__).resolve().parents[1]
 WRAPPER = REPO / "src" / "kalman_ou_iii" / "SeaStateFusionFilter_OU_III.h"
-SCHEMA = 1
-QUALIFICATION = "OU3_SEA3_COMPOSITE_FRONTEND_STATE_STEP"
+SCHEMA = 2
+QUALIFICATION = "OU3_SEA3_COMPOSITE_FRONTEND_STATE_STEP_V2"
 
 
 @dataclass(frozen=True)
@@ -74,7 +74,7 @@ def advance(
     """Advance one same-history SEA3 front-end sample in shipping order."""
     tc = tuner_constants or TUNER.constants()
     wc = wpe_constants or WPE.constants(tc.dt)
-    if abs(tc.dt - wc.dt) > 0.0:
+    if tc.dt != wc.dt:
         raise ValueError("tuner and WPE dt must be the same shipping sample period")
     if not state.wpe.usable_period:
         raise ValueError("canonical Normal-Live front-end state requires usable WPE")
@@ -109,9 +109,13 @@ def advance(
         c=tc,
     )
 
-    # The same vertical sample then advances WavePeriodEstimator.
+    # Default Complementary WPE input returns the same private-Mahony vertical
+    # sample. Only then does the WPE state advance.
     wpe_successors = WPE.advance(state.wpe, a_vertical=a_vertical, c=wc)
 
+    # These products are successor branches of the same already-admitted SEA3
+    # cell, not a Cartesian source generator. Future propagation may split a
+    # cell further if branch-history correlation is needed for closure.
     out: list[Successor] = []
     for tuner_next in tuner_successors:
         for wpe_next in wpe_successors:
@@ -139,8 +143,8 @@ def _point_state() -> FrontEndState:
                           TUNER.I(0.5), f),
         TUNER.CandidateState(TUNER.I(1.1), TUNER.I(0.5), TUNER.I(2.0)),
         active,
-        # Force the smoke through the pending-commit edge. The candidate equals
-        # active at this point, so the current schedule remains transparent.
+        # Exercise the beginning-of-next-sample commit edge. Candidate equals
+        # active, making the expected current schedule easy to check exactly.
         TUNER.SchedulerState(TUNER.I(0.05), True),
     )
     wpe = WPE.WPEState(
@@ -172,6 +176,11 @@ def build() -> dict:
         "private_Mahony_before_vertical_read": 0 <= p_mahony < p_vertical,
         "same_vertical_symbol_feeds_tuner": p_tuner > p_vertical,
         "tuner_executes_before_WPE_update": 0 <= p_tuner < p_wpe,
+        "default_WPE_input_is_private_complementary": (
+            "WavePeriodInputSource wave_period_input_ = WavePeriodInputSource::Complementary;" in text
+            and "const float a_comp = vertical_accel_comp_.verticalAccelUpMs2();" in text
+            and "case WavePeriodInputSource::Complementary:" in text
+        ),
         "tuner_frequency_accessor_reads_WPE": (
             "const float wave_hz = wave_period_.getFrequencyHz();" in text
             and "if (wave_period_.hasUsablePeriod()" in text
@@ -208,7 +217,7 @@ def build() -> dict:
         "current_active_schedule_is_premeasurement_commit": all(
             x.active_schedule_for_current_riccati_sample == old_active for x in succ
         ),
-        "same_vertical_interval_reaches_tuner_and_WPE_state": all(
+        "same_vertical_interval_reaches_WPE_state": all(
             x.state.wpe.accel_prev == x.vertical_acceleration_current_sample for x in succ
         ),
         "actual_rs_xyz_positive": all(
@@ -217,10 +226,13 @@ def build() -> dict:
         ),
     }
 
-    components = {
-        "private_Mahony": MAHONY.build(),
-        "WPE": WPE.build(),
-        "tuner_scheduler": TUNER.build(),
+    mahony_component = MAHONY.build()
+    wpe_component = WPE.build()
+    tuner_component = TUNER.build()
+    component_validation = {
+        "private_Mahony": MAHONY.validate(mahony_component),
+        "WPE": WPE.validate(wpe_component),
+        "tuner_scheduler": TUNER.validate(tuner_component),
     }
     return {
         "schema": SCHEMA,
@@ -238,17 +250,17 @@ def build() -> dict:
         "shipping_source_parity": parity,
         "shipping_source_parity_pass": all(parity.values()),
         "private_Mahony_live_entry_invariant_consumed":
-            components["private_Mahony"].get("live_entry_private_observer_invariant_closed") is True,
+            mahony_component.get("live_entry_private_observer_invariant_closed") is True,
         "current_Riccati_schedule_exported_before_current_measurement": True,
         "actual_applied_per_axis_RS_exported_from_same_active_schedule": True,
         "tuner_consumes_previous_WPE_state": True,
         "same_current_vertical_acceleration_consumed_by_tuner_and_WPE": True,
+        "successor_branch_product_is_not_a_source_generator": True,
+        "future_cell_split_required_if_branch_history_correlation_matters": True,
         "WPE_validity_branches_retained": True,
         "timer_boundary_branches_retained": True,
-        "component_validation_pass": {
-            name: not module.get("validation_failures", [])
-            for name, module in components.items()
-        },
+        "component_validation_failures": component_validation,
+        "component_validation_pass": all(not v for v in component_validation.values()),
         "target_binary32_WPE_libm_roundoff_closed": False,
         "complete_SEA3_family_materialized_here": False,
         "P3_promoted": False,
@@ -271,14 +283,15 @@ def validate(d: dict) -> list[str]:
         "actual_applied_per_axis_RS_exported_from_same_active_schedule",
         "tuner_consumes_previous_WPE_state",
         "same_current_vertical_acceleration_consumed_by_tuner_and_WPE",
+        "successor_branch_product_is_not_a_source_generator",
+        "future_cell_split_required_if_branch_history_correlation_matters",
         "WPE_validity_branches_retained", "timer_boundary_branches_retained",
+        "component_validation_pass",
     ):
         if d.get(key) is not True:
             failures.append(f"{key} is not true")
     if not all(d.get("shipping_source_parity", {}).values()):
         failures.append("shipping source order/parity failed")
-    if not all(d.get("component_validation_pass", {}).values()):
-        failures.append("a component recurrence failed validation")
     for key in (
         "source_generator", "trajectory_replay_used",
         "independent_vertical_acceleration_input_allowed",
@@ -293,8 +306,7 @@ def validate(d: dict) -> list[str]:
     for key in (
         "finite_vertical", "tuner_uses_exact_previous_WPE_interval",
         "current_active_schedule_is_premeasurement_commit",
-        "same_vertical_interval_reaches_tuner_and_WPE_state",
-        "actual_rs_xyz_positive",
+        "same_vertical_interval_reaches_WPE_state", "actual_rs_xyz_positive",
     ):
         if smoke.get(key) is not True:
             failures.append(f"smoke {key} is not true")
@@ -316,6 +328,7 @@ def main() -> int:
     print(json.dumps({
         "shipping_order": d["shipping_order"],
         "parity": d["shipping_source_parity"],
+        "component_failures": d["component_validation_failures"],
         "smoke": d["smoke"],
         "failures": failures,
     }, indent=2, sort_keys=True))
