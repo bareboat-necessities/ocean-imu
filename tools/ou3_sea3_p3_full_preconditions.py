@@ -125,7 +125,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
             "On the implemented compact ranges" in paper
             and "source state machine" in paper
             and "strict source-reachable family" in paper
-            and "not an arbitrary Cartesian product" in paper
+            and "arbitrary Cartesian product" in paper
         ),
         "augmented_SEA3_source_state": (
             "\\vartheta_k=(\\tau_k,\\sigma_{aw,k},r_{S,k},T_{S,k})" in paper
