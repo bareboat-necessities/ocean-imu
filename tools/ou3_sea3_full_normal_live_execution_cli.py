@@ -8,6 +8,7 @@ from pathlib import Path
 
 import ou3_sea3_full_normal_live_execution as EXEC
 import ou3_sea3_full_normal_live_word as WORD
+import ou3_sea3_full_word_riccati_backend_tight as TIGHT
 
 
 def validate_execution(d: dict) -> list[str]:
@@ -45,7 +46,13 @@ def validate_execution(d: dict) -> list[str]:
     return failures
 
 
-def _install_failure_locator() -> dict[str, int]:
+def _install_tight_backend_and_failure_locator() -> dict[str, int]:
+    # Same exact P/Psi/Omega backend and Kalman gain; only redundant validated
+    # identities are intersected to stop natural-interval wrapping from erasing
+    # the corrective power of recurrent R_S measurements.
+    WORD.BACKEND = TIGHT
+    EXEC.BACKEND = TIGHT
+
     counts = {"H": 0, "A": 0}
     orig_imu = WORD.apply_imu_sample
     orig_mag = WORD.apply_magnetometer
@@ -79,9 +86,11 @@ def main() -> int:
     ap.add_argument("--domain", type=Path, default=WORD.DEFAULT_DOMAIN)
     ap.add_argument("--output", type=Path, required=True)
     args = ap.parse_args()
-    _install_failure_locator()
+    _install_tight_backend_and_failure_locator()
     manifest = WORD.build(args.domain)
     d = EXEC.build_execution(WORD, float(manifest["word_horizon_s"]))
+    d["dependency_tight_joint_backend_used"] = True
+    d["R_S_correction_retained_by_Joseph_Schur_intersection"] = True
     failures = validate_execution(d)
     d["validation_pass"] = not failures
     d["validation_failures"] = failures
