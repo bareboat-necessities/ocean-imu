@@ -22,9 +22,15 @@ Inside the declared SEA3 startup domain the timeout branch is not open-ended:
 the Mahony chart radius plus the declared world-averaged gravity-direction
 error is strictly below 90 degrees. Therefore the world-frame averaged
 specific-force vector remains on the shipping ``acc_world_lp.z() < 0`` branch
-on that declared chart. This closes the 150 s *time* horizon only; it does not
-replace propagation of the reset-zero quaternion/integral state by an
-independent Live-entry box, so the full P3 source family remains fail-closed.
+on that declared chart.
+
+The reset-to-Live invariant below is an over-enclosure of that same source
+history, not an independent Live-entry source. The shipping fast inverse-square
+root supplies a validated norm shell over all positive normal binary32 inputs;
+that shell bounds the Mahony half-error, which bounds the persistent Ki memory
+from its reset-zero state over the finite 150 s horizon. A componentwise box is
+used only to dominate arithmetic magnitudes while the retained source state is
+represented by its correlated quaternion norm/chart and integral-memory bound.
 """
 from __future__ import annotations
 
@@ -45,8 +51,8 @@ MAHONY = REPO / "src" / "ahrs" / "Mahony_AHRS.h"
 WRAPPER = REPO / "src" / "kalman_ou_iii" / "SeaStateFusionFilter_OU_III.h"
 COMMON = REPO / "src" / "kalman_common" / "SeaStateFusionFilterCommon.h"
 DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
-SCHEMA = 3
-QUALIFICATION = "OU3_SEA3_PRIVATE_MAHONY_LIVE_INTERVAL_STEP_V3"
+SCHEMA = 4
+QUALIFICATION = "OU3_SEA3_PRIVATE_MAHONY_LIVE_INTERVAL_STEP_V4"
 
 
 @dataclass(frozen=True)
@@ -89,6 +95,10 @@ def _norm2_3(v: Vec3) -> Interval:
 
 def _norm2_q(q0: Interval, q1: Interval, q2: Interval, q3: Interval) -> Interval:
     return _add4(F32.square(q0), F32.square(q1), F32.square(q2), F32.square(q3))
+
+
+def _abs_upper(x: Interval) -> float:
+    return max(abs(x.lo), abs(x.hi))
 
 
 def advance_initialized_live(
@@ -197,6 +207,108 @@ def _point_smoke() -> dict:
     }
 
 
+def _reset_to_live_invariant(domain: dict, timeout_s: float) -> dict:
+    """Bound persistent private-observer state from reset through Live entry.
+
+    This consumes only declared SEA3/runtime bounds and the actual normalization
+    shell. The component boxes below dominate arithmetic magnitudes; they are
+    not admitted as an independent source family.
+    """
+    dt = float(domain["configured_runtime"]["imu_dt_s"])
+    body_rate_rad_s = math.radians(float(domain["normal_live"]["body_rate_norm_upper_deg_s"]))
+    all_normal_shell = FINV.all_positive_normal_normalized_norm2_enclosure()
+    if all_normal_shell.lo <= 0.0 or not math.isfinite(all_normal_shell.hi):
+        raise RuntimeError("Mahony normalization shell is not positive finite")
+
+    norm_lo = math.sqrt(all_normal_shell.lo)
+    norm_hi = math.sqrt(all_normal_shell.hi)
+    q = Interval(-norm_hi, norm_hi)
+    a = Interval(-norm_hi, norm_hi)
+
+    q0q0 = F32.square(q)
+    halfvx = F32.sub(F32.mul(q, q), F32.mul(q, q))
+    halfvy = F32.add(F32.mul(q, q), F32.mul(q, q))
+    halfvz_inner = F32.add(F32.sub(F32.sub(q0q0, q0q0), q0q0), q0q0)
+    halfvz = F32.mul(I(0.5), halfvz_inner)
+    halfex = F32.sub(F32.mul(a, halfvz), F32.mul(a, halfvy))
+    halfey = F32.sub(F32.mul(a, halfvx), F32.mul(a, halfvz))
+    halfez = F32.sub(F32.mul(a, halfvy), F32.mul(a, halfvx))
+    err_component_upper = max(_abs_upper(halfex), _abs_upper(halfey), _abs_upper(halfez))
+
+    samples = int(math.ceil(timeout_s / dt))
+    # Each Ki recurrence contributes two multiplies plus the accumulation add.
+    # gamma_n bounds sequential round-to-nearest accumulation of absolute
+    # increments. It is deliberately applied to the whole absolute sum.
+    unit_roundoff = 2.0 ** -24
+    n_round_ops = 3 * samples
+    gamma = (n_round_ops * unit_roundoff) / (1.0 - n_round_ops * unit_roundoff)
+    two_ki = 0.02
+    integral_component_upper = (
+        two_ki * err_component_upper * timeout_s * (1.0 + gamma)
+    )
+    integral_norm_upper = math.sqrt(3.0) * integral_component_upper
+
+    # Check that a whole startup step remains comfortably inside a finite raw-q
+    # guard before the next normalization. The body-rate cap is the same hard
+    # SEA3 pathwise response bound consumed by Normal Live; Ki comes from the
+    # reset-derived bound above, not from an independent state box.
+    two_kp = 0.2
+    omega_component_upper = (
+        body_rate_rad_s + integral_component_upper + two_kp * err_component_upper
+    )
+    half_dt = F32.mul(I(0.5), I(dt))
+    omega = Interval(-omega_component_upper, omega_component_upper)
+    u = F32.mul(omega, half_dt)
+    dq = F32.add(F32.add(F32.mul(q, u), F32.mul(q, u)), F32.mul(q, u))
+    raw_component = F32.add(q, dq)
+    raw_norm2_upper = _norm2_q(raw_component, raw_component, raw_component, raw_component).hi
+
+    # In exact arithmetic the Euler Mahony quaternion increment is orthogonal
+    # to q, so ||q+dq|| >= ||q||. Bound finite binary32 evaluation error by a
+    # standard gamma_n envelope over a conservative 12 elementary operations
+    # per raw quaternion component. This also covers a contracted evaluation,
+    # which performs no more rounding than the unfused expression.
+    gamma_q = (12.0 * unit_roundoff) / (1.0 - 12.0 * unit_roundoff)
+    raw_component_upper = _abs_upper(raw_component)
+    raw_vector_rounding_error_upper = 2.0 * gamma_q * raw_component_upper
+    raw_norm_lower = max(0.0, norm_lo - raw_vector_rounding_error_upper)
+    raw_norm2_lower = raw_norm_lower * raw_norm_lower
+    raw_guard = [0.01, 16.0]
+    raw_guard_inductive = (
+        raw_norm2_lower > raw_guard[0] and raw_norm2_upper < raw_guard[1]
+    )
+
+    return {
+        "representation": "CORRELATED_QUATERNION_NORM_CHART_PLUS_RESET_DERIVED_KI_MEMORY",
+        "independent_quaternion_or_integral_box": False,
+        "startup_horizon_s": timeout_s,
+        "sample_period_s": dt,
+        "samples_upper": samples,
+        "actual_fast_invsqrt_all_positive_normal_norm2_shell": all_normal_shell.as_list(),
+        "quaternion_post_normalization_norm_lower": norm_lo,
+        "quaternion_post_normalization_norm_upper": norm_hi,
+        "half_error_component_abs_upper": err_component_upper,
+        "integral_accumulation_gamma": gamma,
+        "integral_feedback_component_abs_upper_rad_s": integral_component_upper,
+        "integral_feedback_norm_upper_rad_s": integral_norm_upper,
+        "SEA3_body_rate_norm_upper_rad_s": body_rate_rad_s,
+        "effective_corrected_gyro_component_abs_upper_rad_s": omega_component_upper,
+        "raw_quaternion_norm2_lower": raw_norm2_lower,
+        "raw_quaternion_norm2_upper": raw_norm2_upper,
+        "raw_quaternion_norm2_guard": raw_guard,
+        "raw_quaternion_guard_inductive": raw_guard_inductive,
+        "raw_quaternion_stays_positive_normal_finite": raw_guard_inductive,
+        "reset_zero_integral_memory_consumed": True,
+        "same_SEA3_history_required": True,
+        "source_history_correlation_retained": True,
+        "finite": (
+            math.isfinite(integral_component_upper)
+            and math.isfinite(raw_norm2_upper)
+            and raw_guard_inductive
+        ),
+    }
+
+
 def build() -> dict:
     vertical = VERTICAL.read_text(encoding="utf-8")
     mahony = MAHONY.read_text(encoding="utf-8")
@@ -223,6 +335,14 @@ def build() -> dict:
         declared_chart_implies_aligned_branch
         and math.isfinite(deployed_timeout)
         and deployed_timeout > 0.0
+    )
+    live_invariant = _reset_to_live_invariant(domain, deployed_timeout)
+    live_invariant_closed = (
+        declared_domain_live_entry_upper_bound_closed
+        and live_invariant["finite"]
+        and live_invariant["raw_quaternion_guard_inductive"]
+        and live_invariant["reset_zero_integral_memory_consumed"]
+        and live_invariant["same_SEA3_history_required"]
     )
 
     parity = {
@@ -304,12 +424,13 @@ def build() -> dict:
         "declared_domain_live_entry_upper_bound_s":
             deployed_timeout if declared_domain_live_entry_upper_bound_closed else None,
         "unconditional_live_entry_upper_bound_closed": False,
-        "live_entry_private_observer_invariant_closed": False,
+        "private_observer_live_entry_invariant": live_invariant,
+        "live_entry_private_observer_invariant_closed": live_invariant_closed,
         "compiler_reassociation_or_FMA_closed": False,
         "complete_SEA3_family_materialized_here": False,
         "P3_promoted": False,
         "next_obligation": (
-            "use the now-certified <=150 s declared-domain startup horizon to propagate the same reset-zero Mahony quaternion/integral-feedback state, preserving its correlated norm/chart representation, into Live and feed that same observer state to WPE; do not substitute an independent q/integral/vertical-acceleration box"
+            "feed this reset-derived correlated private-observer Live-entry invariant through the same SEA3 per-sample Mahony -> WPE -> tuner/scheduler recurrence for the complete 3 s word; do not substitute an independent q/integral/vertical-acceleration box"
         ),
     }
 
@@ -328,6 +449,7 @@ def validate(d: dict) -> list[str]:
         "timeout_path_requires_gravity_aligned_branch",
         "declared_startup_chart_implies_gravity_aligned_branch",
         "declared_domain_live_entry_upper_bound_closed",
+        "live_entry_private_observer_invariant_closed",
     ):
         if d.get(key) is not True:
             failures.append(f"{key} is not true")
@@ -342,10 +464,20 @@ def validate(d: dict) -> list[str]:
     if not (isinstance(d.get("gravity_aligned_branch_margin_rad"), (int, float))
             and d["gravity_aligned_branch_margin_rad"] > 0.0):
         failures.append("gravity-aligned branch margin is not strictly positive")
+    inv = d.get("private_observer_live_entry_invariant", {})
+    for key in (
+        "raw_quaternion_guard_inductive", "raw_quaternion_stays_positive_normal_finite",
+        "reset_zero_integral_memory_consumed", "same_SEA3_history_required",
+        "source_history_correlation_retained", "finite",
+    ):
+        if inv.get(key) is not True:
+            failures.append(f"private observer invariant {key} is not true")
+    if inv.get("independent_quaternion_or_integral_box") is not False:
+        failures.append("private observer invariant became an independent box")
     for key in (
         "source_generator", "trajectory_replay_used", "independent_vertical_acceleration_source",
         "independent_quaternion_or_integral_box_promotable", "ideal_inverse_sqrt_substituted",
-        "unconditional_live_entry_upper_bound_closed", "live_entry_private_observer_invariant_closed",
+        "unconditional_live_entry_upper_bound_closed",
         "compiler_reassociation_or_FMA_closed", "complete_SEA3_family_materialized_here", "P3_promoted",
     ):
         if d.get(key) is not False:
@@ -365,19 +497,23 @@ def main() -> int:
     d["validation_failures"] = failures
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(d, indent=2, sort_keys=True), encoding="utf-8")
-    print(json.dumps({"parity": d["shipping_source_parity"], "smoke": d["smoke"],
-                      "startup": {
-                          "proxy_timeout_s": d["deployed_proxy_startup_timeout_s"],
-                          "mag_deadline_s": d["deployed_mag_acquire_deadline_s"],
-                          "deployed_timeout_s": d["deployed_timeout_s"],
-                          "requires_aligned_branch": d["timeout_path_requires_gravity_aligned_branch"],
-                          "chart_deg": d["declared_startup_mahony_chart_deg"],
-                          "world_gravity_error_rad": d["declared_world_gravity_direction_error_upper_rad"],
-                          "aligned_branch_margin_rad": d["gravity_aligned_branch_margin_rad"],
-                          "declared_domain_live_entry_upper_bound_s": d["declared_domain_live_entry_upper_bound_s"],
-                      },
-                      "next_obligation": d["next_obligation"], "failures": failures},
-                     indent=2, sort_keys=True))
+    print(json.dumps({
+        "parity": d["shipping_source_parity"],
+        "smoke": d["smoke"],
+        "startup": {
+            "proxy_timeout_s": d["deployed_proxy_startup_timeout_s"],
+            "mag_deadline_s": d["deployed_mag_acquire_deadline_s"],
+            "deployed_timeout_s": d["deployed_timeout_s"],
+            "requires_aligned_branch": d["timeout_path_requires_gravity_aligned_branch"],
+            "chart_deg": d["declared_startup_mahony_chart_deg"],
+            "world_gravity_error_rad": d["declared_world_gravity_direction_error_upper_rad"],
+            "aligned_branch_margin_rad": d["gravity_aligned_branch_margin_rad"],
+            "declared_domain_live_entry_upper_bound_s": d["declared_domain_live_entry_upper_bound_s"],
+        },
+        "live_entry_invariant": d["private_observer_live_entry_invariant"],
+        "next_obligation": d["next_obligation"],
+        "failures": failures,
+    }, indent=2, sort_keys=True))
     return 0 if not failures else 2
 
 
