@@ -10,10 +10,12 @@ magnetometer ODR, rejected magnetic packets, or short outages between the
 required occurrences.
 
 The measurement covariances in this certificate are extracted directly from
-the *shipping outer Config* used by the complete P3 word: sigma_a=(0.2,0.2,0.2)
-m/s^2 and sigma_m=(0.3,0.3,0.3) uT on the configured deployment. Historical
-certificate-simulation rescale constants are deliberately not consumed here.
-This keeps the PE information and the Riccati word on one deployment.
+the *shipping outer Config* used by the complete P3 word.  Source literals such
+as 0.2f and 0.3f are first rounded exactly as C++ binary32 values and only then
+squared with outward interval arithmetic.  Treating their decimal spellings as
+binary64 before squaring is forbidden because it can make a variance upper
+slightly nonconservative. Historical certificate-simulation rescale constants
+are deliberately not consumed here.
 
 At each required occurrence the declared specific-force and magnetic norms and
 the sine separation give a strict attitude-information lower. The two separated
@@ -34,6 +36,7 @@ import json
 import math
 from pathlib import Path
 import re
+import struct
 
 import ou3_full_process_ucc as PROCESS
 import ou3_validated_transcendentals as VT
@@ -43,7 +46,7 @@ REPO = Path(__file__).resolve().parents[1]
 DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
 PAPER = REPO / "doc" / "kalman_ou_iii" / "w3d-iss-stability.tex-part"
 WRAPPER = REPO / "src" / "kalman_ou_iii" / "SeaStateFusionFilter_OU_III.h"
-SCHEMA = 2
+SCHEMA = 3
 QUALIFICATION = "OU3_SEA3_WINDOWED_ASYNCHRONOUS_VECTOR_PE"
 GYRO_BIAS_TIME_SCALE_S = 1.0
 
@@ -56,6 +59,14 @@ def up(x: float) -> float:
     return math.nextafter(float(x), math.inf)
 
 
+def binary32(x: float) -> float:
+    """Return the exact real value represented by C++/IEEE binary32 rounding."""
+    y = float(x)
+    if not math.isfinite(y):
+        raise ValueError("binary32 source value must be finite")
+    return struct.unpack("!f", struct.pack("!f", y))[0]
+
+
 def _vec3_default(text: str, name: str) -> list[float]:
     m = re.search(
         rf"Eigen::Vector3f\s+{re.escape(name)}\s*=\s*Eigen::Vector3f\(\s*"
@@ -64,10 +75,15 @@ def _vec3_default(text: str, name: str) -> list[float]:
     )
     if not m:
         raise RuntimeError(f"cannot extract shipping Config {name}")
-    out = [float(m.group(i)) for i in range(1, 4)]
+    out = [binary32(float(m.group(i))) for i in range(1, 4)]
     if any(not (math.isfinite(x) and x > 0.0) for x in out):
         raise RuntimeError(f"shipping Config {name} is not positive finite")
     return out
+
+
+def _variance_upper(std_xyz: list[float]) -> float:
+    """Outward upper variance after exact binary32 source conversion."""
+    return max(Interval.point(x).square().hi for x in std_xyz)
 
 
 def _exp_negative_wide(x: float) -> Interval:
@@ -99,8 +115,8 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     wrapper = WRAPPER.read_text(encoding="utf-8")
     sigma_a = _vec3_default(wrapper, "sigma_a")
     sigma_m = _vec3_default(wrapper, "sigma_m")
-    ra = up(max(x * x for x in sigma_a))
-    rm = up(max(x * x for x in sigma_m))
+    ra = _variance_upper(sigma_a)
+    rm = _variance_upper(sigma_m)
     if not (ra > 0.0 and rm > 0.0):
         raise RuntimeError("shipping measurement variance upper lost positivity")
 
@@ -183,6 +199,8 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "two_consecutive_accepted_magnetic_packets_required": False,
         "historical_certificate_sim_measurement_rescale_consumed": False,
         "shipping_outer_Config_measurement_covariances_consumed": True,
+        "source_literals_converted_to_binary32_before_variance": True,
+        "variance_bounds_outward_after_binary32_conversion": True,
         "rejected_magnetic_packets_between_required_occurrences_allowed": True,
         "all_valid_accelerometer_packets_required": bool(
             live["accelerometer_update_required_each_valid_imu_sample_after_live_entry"]
@@ -191,7 +209,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
             live["accelerometer_rejection_in_normal_live_scope"]
         ),
         "measurement_runtime": {
-            "source": "SeaStateFusion_OU_III::Config defaults",
+            "source": "SeaStateFusion_OU_III::Config binary32 defaults",
             "accelerometer_std_mps2": sigma_a,
             "accelerometer_variance_upper": ra,
             "magnetometer_std_uT": sigma_m,
@@ -231,7 +249,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "pass": passed,
         "P3_promoted": False,
         "next_obligation": (
-            "compose this shipping-covariance eta6 information, finite A-mode bias contraction, all accepted accelerometer updates, recurrent S=0 information, process UCC, covariance-floor events, and the joint SEA3 adaptive source in the same full word"
+            "compose this binary32-shipping-covariance eta6 information, finite A-mode bias contraction, all accepted accelerometer updates, recurrent S=0 information, process UCC, covariance-floor events, and the same phase-continuous SEA3 adaptive source in the full word"
         ),
     }
 
@@ -244,6 +262,8 @@ def validate(d: dict) -> list[str]:
         "paper_windowed_PE_semantics_consumed",
         "asynchronous_magnetometer_semantics_consumed",
         "shipping_outer_Config_measurement_covariances_consumed",
+        "source_literals_converted_to_binary32_before_variance",
+        "variance_bounds_outward_after_binary32_conversion",
         "rejected_magnetic_packets_between_required_occurrences_allowed",
         "all_valid_accelerometer_packets_required",
         "pass",
@@ -261,10 +281,16 @@ def validate(d: dict) -> list[str]:
         if d.get(key) is not False:
             f.append(f"{key} is not false")
     meas = d.get("measurement_runtime", {})
-    if meas.get("accelerometer_std_mps2") != [0.2, 0.2, 0.2]:
-        f.append("asynchronous PE lost shipping accelerometer covariance")
-    if meas.get("magnetometer_std_uT") != [0.3, 0.3, 0.3]:
-        f.append("asynchronous PE lost shipping magnetometer covariance")
+    expected_a = [binary32(0.2)] * 3
+    expected_m = [binary32(0.3)] * 3
+    if meas.get("accelerometer_std_mps2") != expected_a:
+        f.append("asynchronous PE lost shipping binary32 accelerometer covariance")
+    if meas.get("magnetometer_std_uT") != expected_m:
+        f.append("asynchronous PE lost shipping binary32 magnetometer covariance")
+    if not float(meas.get("accelerometer_variance_upper", 0.0)) >= binary32(0.2) ** 2:
+        f.append("accelerometer variance upper does not contain binary32 source variance")
+    if not float(meas.get("magnetometer_variance_upper", 0.0)) >= binary32(0.3) ** 2:
+        f.append("magnetometer variance upper does not contain binary32 source variance")
     alpha = d.get("eta6_information", {}).get("alpha_6_information_lower")
     if not isinstance(alpha, (int, float)) or not (
         math.isfinite(float(alpha)) and float(alpha) > 0.0
