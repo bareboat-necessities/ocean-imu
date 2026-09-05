@@ -64,29 +64,34 @@ HARD_SHAPING_STATE_OR_EXCITATION_BOUND_CLOSED = all((
 ))
 
 
+def _normalized_text(text: str) -> str:
+    return " ".join(text.split())
+
+
 def build() -> dict:
     theorem = THEOREM.read_text(encoding="utf-8")
+    theorem_flat = _normalized_text(theorem)
     complete = COMPLETE_SOURCE.read_text(encoding="utf-8")
 
     theorem_has_shaping_system = (
         "x^s_{k+1}&=A_s" in theorem
         and "u^s_k&=C_s" in theorem
-        and "oscillator/shaping state or an equivalent hard finite-window" in theorem
+        and "oscillator/shaping state or an equivalent hard finite-window" in theorem_flat
     )
     theorem_has_explicit_hard_realization_set = (
         "\\mathcal X^s_{\\rm SEA3}(\\lambda_{0:N_W})" in theorem
         and "eq:sea3-hard-realization-set" in theorem
-        and "does not reopen SEA3 compactness" in theorem
-        and "machine-readable outward representation" in theorem
+        and "does not reopen SEA3 compactness" in theorem_flat
+        and "machine-readable outward representation" in theorem_flat
     )
     theorem_separates_probabilistic_corollary = (
-        "A probabilistic statement for random sea realizations is a later corollary" in theorem
-        and "no\ninfinite-time pointwise bound is inferred merely from a Gaussian spectrum" in theorem
+        "A probabilistic statement for random sea realizations is a later corollary" in theorem_flat
+        and "no infinite-time pointwise bound is inferred merely from a Gaussian spectrum" in theorem_flat
     )
     theorem_rejects_finite_or_statistical_surrogates = (
-        "neither a Gaussian confidence event" in theorem
-        and "spectral moments alone" in theorem
-        and "finite seeded harmonic" in theorem
+        "neither a Gaussian confidence event" in theorem_flat
+        and "spectral moments alone" in theorem_flat
+        and "finite seeded harmonic" in theorem_flat
     )
     source_rejects_gaussian_generator = (
         '"used_to_generate_P3_source_words": False' in complete
