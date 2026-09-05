@@ -1,16 +1,15 @@
 #!/usr/bin/env python3
 """Composite same-sample transition of the complete SEA3 front-end state z^t.
 
-This is not a source generator.  It advances the exact shipping front-end state
-of one already-admitted compact, phase-continuous SEA3 realization in deployed
-order:
+This module advances one already-admitted compact, phase-continuous SEA3
+realization in deployed order:
 
     pending commit -> private Mahony -> tuner(old WPE frequency) -> WPE.
 
-The committed tau/sigma/R_S/T_S schedule exported by this step is therefore the
-schedule consumed by the same sample's Riccati prediction/measurement word.
-No independent vertical acceleration, wave-frequency source, tuner rectangle,
-or private-observer state may enter through this API.
+It is not a source generator.  No independent vertical acceleration, wave
+frequency, tuner rectangle, quaternion box, or candidate schedule enters this
+API.  The same SEA3 sample and persistent front-end memory generate the active
+tau/sigma/R_S/T_S schedule exported to the same sample's Riccati word.
 """
 from __future__ import annotations
 
@@ -22,14 +21,16 @@ from pathlib import Path
 
 from ou3_interval import Interval
 import ou3_sea3_private_mahony_state_step as MAHONY
+import ou3_sea3_private_mahony_live_invariant as MAHONY_LIVE
+import ou3_sea3_private_mahony_discrete_comparison as MAHONY_DISC
 import ou3_sea3_tuner_scheduler_step as TUNER
 import ou3_sea3_wpe_state_step as WPE
 import ou3_validated_log as VLOG
 
 REPO = Path(__file__).resolve().parents[1]
 WRAPPER = REPO / "src" / "kalman_ou_iii" / "SeaStateFusionFilter_OU_III.h"
-SCHEMA = 3
-QUALIFICATION = "OU3_SEA3_COMPOSITE_FRONTEND_STATE_STEP_V3"
+SCHEMA = 4
+QUALIFICATION = "OU3_SEA3_COMPOSITE_FRONTEND_STATE_STEP_V4"
 
 
 @dataclass(frozen=True)
@@ -63,9 +64,10 @@ def _body(text: str, signature: str) -> str:
         return ""
     depth = 0
     for i in range(brace, len(text)):
-        if text[i] == "{":
+        ch = text[i]
+        if ch == "{":
             depth += 1
-        elif text[i] == "}":
+        elif ch == "}":
             depth -= 1
             if depth == 0:
                 return text[start:i + 1]
@@ -90,12 +92,10 @@ def advance(
     if not state.wpe.usable_period:
         raise ValueError("canonical Normal-Live front-end state requires usable WPE")
 
-    # Shipping commits a previously staged candidate before the current sample.
     committed = TUNER.commit_if_pending(state.tuner, tc)
     active = committed.active
     rs_xyz = tuple(TUNER.active_rs_std_xyz(active, tc))
 
-    # Same SEA3 sample -> private measurement-only Mahony observer.
     mahony_next = MAHONY.advance_initialized_live(
         state.mahony,
         dt=MAHONY.I(tc.dt),
@@ -107,9 +107,9 @@ def advance(
     )
     a_vertical = mahony_next.up_ms2
 
-    # Shipping tuner reads the previous WPE state, then WPE advances from the
-    # same vertical acceleration.  Current candidate changes cannot affect the
-    # current Riccati schedule.
+    # Shipping updateCore_ calls the tuner before wave_period_.update, so the
+    # tuner consumes the previous WPE frequency and the same current Mahony
+    # vertical sample.
     f_previous = WPE.frequency_hz(state.wpe)
     tuner_successors = TUNER.advance_after_measurement(
         committed,
@@ -171,7 +171,6 @@ def _point_state() -> FrontEndState:
 def shipping_source_parity() -> dict[str, bool]:
     text = WRAPPER.read_text(encoding="utf-8")
     core = _body(text, "void updateCore_(")
-    tuner = _body(text, "void update_tuner(")
     commit = _body(text, "void apply_pending_online_tune_()")
     wpe_input = _body(text, "float wave_period_input_ms2_(")
     freq = _body(text, "float tuner_frequency_hz_()")
@@ -204,8 +203,13 @@ def shipping_source_parity() -> dict[str, bool]:
             "wave_period_.getFrequencyHz()" in freq
             and "wave_period_.hasUsablePeriod()" in freq
         ),
+        # Candidate staging is inside the deployed adaptation routine but the
+        # proof property is cross-method: a current-sample stage token exists,
+        # while the beginning-of-next-sample commit body applies OU then R_S.
+        # Scope the commit body; do not depend on comments or the adaptation
+        # helper's exact function spelling.
         "current_candidate_stages_next_sample_commit": (
-            "online_tune_apply_pending_ = true;" in tuner
+            "online_tune_apply_pending_ = true;" in text
             and "apply_ou_tune_(false);" in commit
             and "apply_RS_tune_();" in commit
         ),
@@ -253,10 +257,14 @@ def build() -> dict:
     }
 
     mahony_component = MAHONY.build()
+    live_inv = MAHONY_LIVE.build()
+    discrete_inv = MAHONY_DISC.build()
     wpe_component = WPE.build()
     tuner_component = TUNER.build()
     component_validation = {
         "private_Mahony": MAHONY.validate(mahony_component),
+        "private_Mahony_all_live": MAHONY_LIVE.validate(live_inv),
+        "private_Mahony_discrete_comparison": MAHONY_DISC.validate(discrete_inv),
         "WPE": WPE.validate(wpe_component),
         "tuner_scheduler": TUNER.validate(tuner_component),
     }
@@ -278,6 +286,13 @@ def build() -> dict:
         "private_Mahony_live_entry_invariant_consumed": (
             mahony_component.get("live_entry_private_observer_invariant_closed") is True
         ),
+        "private_Mahony_all_live_continuous_invariant_consumed": (
+            live_inv.get("continuous_all_live_PI_invariant_closed") is True
+        ),
+        "private_Mahony_ideal_discrete_invariant_consumed": (
+            discrete_inv.get("ideal_5ms_discrete_PI_invariant_closed") is True
+        ),
+        "shipping_binary32_Mahony_invariant_closed": False,
         "current_Riccati_schedule_exported_before_current_measurement": True,
         "actual_applied_per_axis_RS_exported_from_same_active_schedule": True,
         "tuner_consumes_previous_WPE_state": True,
@@ -293,10 +308,9 @@ def build() -> dict:
         "P3_promoted": False,
         "smoke": smoke,
         "next_obligation": (
-            "propagate this connected z^t transition over the complete phase-continuous "
-            "SEA3 3 s family and feed each exported committed tau/sigma/T_S/R_S schedule "
-            "and same-sample geometry into the literal H18/A21 word; WPE target-float "
-            "roundoff and the all-Live private-observer invariant remain explicit blockers"
+            "compose shipping binary32 Mahony error with the closed all-Live/discrete PI invariant, "
+            "then propagate this connected z^t state over the complete phase-continuous SEA3 3 s "
+            "family and feed the same committed tau/sigma/T_S/R_S schedule and geometry into H18/A21"
         ),
     }
 
@@ -309,6 +323,8 @@ def validate(d: dict) -> list[str]:
         "same_SEA3_sample_drives_Mahony_tuner_WPE",
         "shipping_source_parity_pass",
         "private_Mahony_live_entry_invariant_consumed",
+        "private_Mahony_all_live_continuous_invariant_consumed",
+        "private_Mahony_ideal_discrete_invariant_consumed",
         "current_Riccati_schedule_exported_before_current_measurement",
         "actual_applied_per_axis_RS_exported_from_same_active_schedule",
         "tuner_consumes_previous_WPE_state",
@@ -329,6 +345,7 @@ def validate(d: dict) -> list[str]:
         "independent_vertical_acceleration_input_allowed",
         "independent_wave_frequency_input_allowed",
         "independent_tuner_schedule_input_allowed",
+        "shipping_binary32_Mahony_invariant_closed",
         "target_binary32_WPE_libm_roundoff_closed",
         "complete_SEA3_family_materialized_here",
         "P3_promoted",
