@@ -47,13 +47,14 @@ from typing import Any
 
 import ou3_sea3_complete_source as COMPLETE
 import ou3_sea3_directional_response_family as RESPONSE
+import ou3_sea3_hard_shaping_state as SHAPING
 import ou3_sea3_physical_admissibility as PHYSICAL
 import ou3_sea3_rlambda_transition as RLAMBDA
 
 REPO = Path(__file__).resolve().parents[1]
 DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
-SCHEMA = 3
-QUALIFICATION = "OU3_SEA3_HARD_FINITE_WINDOW_REALIZATION_V3"
+SCHEMA = 4
+QUALIFICATION = "OU3_SEA3_HARD_FINITE_WINDOW_REALIZATION_V4"
 CANONICAL_SOURCE = "COMPLETE_SEA3_NORMAL_LIVE_WORD"
 HORIZON_S = 3.0
 DT_S = 0.005
@@ -61,7 +62,9 @@ SAMPLES = 601
 
 # These gates describe executable proof machinery, not SEA3 set compactness.
 MACHINE_READABLE_R_LAMBDA_CLOSED = True
-HARD_SHAPING_STATE_OR_EXCITATION_BOUND_CLOSED = False
+HARD_SHAPING_STATE_OR_EXCITATION_BOUND_CLOSED = (
+    SHAPING.HARD_SHAPING_STATE_OR_EXCITATION_BOUND_CLOSED
+)
 JOINT_TRANSLATIONAL_ROTATIONAL_SHAPING_CLOSED = False
 PROVIDER_IMPLEMENTATION_CLOSED = (
     MACHINE_READABLE_R_LAMBDA_CLOSED
@@ -233,11 +236,13 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict[str, Any]:
     physical = PHYSICAL.build(path)
     response = RESPONSE.directional_response_enclosure(REPO)
     rlambda = RLAMBDA.build(path)
+    shaping = SHAPING.build()
     prerequisite_failures = {
         "complete": COMPLETE.validate(complete),
         "physical": PHYSICAL.validate(physical),
         "response": RESPONSE.validate(response),
         "R_lambda": RLAMBDA.validate(rlambda),
+        "hard_shaping": SHAPING.validate(shaping),
     }
     prerequisite_failures = {k: v for k, v in prerequisite_failures.items() if v}
     if prerequisite_failures:
@@ -273,6 +278,26 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict[str, Any]:
             ],
             "coupled_peak_steepness_retained": rlambda[
                 "coupled_peak_steepness_retained"
+            ],
+        },
+        "hard_shaping_certificate": {
+            "qualification": shaping["qualification"],
+            "SEA3_parameter_domain_compact": shaping["SEA3_parameter_domain_compact"],
+            "compactness_is_not_an_open_obligation": shaping[
+                "compactness_is_not_an_open_obligation"
+            ],
+            "hard_shaping_state_or_excitation_bound_closed": shaping[
+                "hard_shaping_state_or_excitation_bound_closed"
+            ],
+            "executable_ingredients": shaping["executable_ingredients"],
+            "power_spectrum_alone_is_hard_pathwise_bound": shaping[
+                "power_spectrum_alone_is_hard_pathwise_bound"
+            ],
+            "gaussian_good_event_may_close_xs": shaping[
+                "gaussian_good_event_may_close_xs"
+            ],
+            "seeded_128_frequency_generator_may_close_xs": shaping[
+                "seeded_128_frequency_generator_may_close_xs"
             ],
         },
         "allowed_finite_window_representations": [
@@ -344,6 +369,20 @@ def validate_status(d: dict[str, Any]) -> list[str]:
     for key in ("rate_constants_fitted_or_invented", "fixed_lambda_word_used"):
         if rc.get(key) is not False:
             f.append(f"R_lambda certificate reintroduced {key}")
+    shaping = d.get("hard_shaping_certificate", {})
+    if shaping.get("SEA3_parameter_domain_compact") is not True:
+        f.append("hard shaping certificate reopened SEA3 compactness")
+    if shaping.get("compactness_is_not_an_open_obligation") is not True:
+        f.append("hard shaping certificate labels compactness open")
+    if shaping.get("hard_shaping_state_or_excitation_bound_closed") is not HARD_SHAPING_STATE_OR_EXCITATION_BOUND_CLOSED:
+        f.append("hard shaping gate mismatch")
+    for key in (
+        "power_spectrum_alone_is_hard_pathwise_bound",
+        "gaussian_good_event_may_close_xs",
+        "seeded_128_frequency_generator_may_close_xs",
+    ):
+        if shaping.get(key) is not False:
+            f.append(f"hard shaping certificate reintroduced forbidden closure {key}")
     contract = d.get("executor_payload_contract", {})
     if contract.get("raw_gyro_and_corrected_rate_are_distinct_coordinates") is not True:
         f.append("executor payload collapsed raw gyro and corrected body rate")
