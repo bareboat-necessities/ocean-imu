@@ -2,14 +2,17 @@
 """Fail-closed complete-precondition contract for canonical OU-III SEA3 P3.
 
 A numerical P3 result may promote only one common Normal-Live H18/A21 word
-that consumes all already-established source, scheduler, measurement, process,
-and mode preconditions.  This file intentionally proves no reduced surrogate.
+that consumes the complete source/front-end/scheduler/measurement/process/mode
+state.  Algebraic elimination is allowed only after the eliminated state has a
+proved exact relation inside the same word.  No reduced replacement certificate
+may promote P3.
 """
 from __future__ import annotations
 
 import argparse
 import json
 import math
+import re
 from pathlib import Path
 
 import ou3_full_process_ucc as PROCESS
@@ -18,15 +21,38 @@ import ou3_sea3_dynamic_source_certificate as DYNAMIC
 import ou3_sea3_physical_admissibility as PHYSICAL
 import ou3_sea3_rs_word_information as RSWORD
 import ou3_sea3_windowed_vector_pe as WINDOWPE
+import ou3_source_domain_contract as SOURCE
 
 REPO = Path(__file__).resolve().parents[1]
 DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
 WRAPPER = REPO / "src" / "kalman_ou_iii" / "SeaStateFusionFilter_OU_III.h"
 MEKF = REPO / "src" / "kalman_ou_iii" / "Kalman3D_Wave_OU_III.h"
+WAVE_PERIOD = REPO / "src" / "tuner" / "WavePeriodEstimator.h"
+VERTICAL = REPO / "src" / "tuner" / "VerticalAccelComplementary.h"
+BANDPASS = REPO / "src" / "tuner" / "AdaptiveWaveBandPass.h"
+AUTOTUNER = REPO / "src" / "tuner" / "SeaStateAutoTuner.h"
 PAPER = REPO / "doc" / "kalman_ou_iii" / "w3d-iss-stability.tex-part"
-SCHEMA = 2
+SCHEMA = 3
 QUALIFICATION = "OU3_SEA3_P3_COMPLETE_NORMAL_LIVE_PRECONDITION_CONTRACT"
 USEFUL_GATE = 1.0e-18
+
+
+def _vec3_default(text: str, name: str) -> list[float]:
+    m = re.search(
+        rf"Eigen::Vector3f\s+{re.escape(name)}\s*=\s*Eigen::Vector3f\(\s*"
+        r"([0-9.eE+-]+)f\s*,\s*([0-9.eE+-]+)f\s*,\s*([0-9.eE+-]+)f\s*\)",
+        text,
+    )
+    if not m:
+        raise RuntimeError(f"cannot extract configured {name}")
+    out = [float(m.group(i)) for i in range(1, 4)]
+    if any(not (math.isfinite(x) and x > 0.0) for x in out):
+        raise RuntimeError(f"configured {name} is not strictly positive")
+    return out
+
+
+def _all(text: str, markers: tuple[str, ...]) -> bool:
+    return all(marker in text for marker in markers)
 
 
 def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
@@ -36,6 +62,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         raise RuntimeError("canonical P3 domain may not be trajectory fitted")
     live = domain["normal_live"]
     runtime = domain["configured_runtime"]
+    startup = domain["startup"]
 
     dynamic = DYNAMIC.build(path)
     sched = SCHED.build(path)
@@ -43,6 +70,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     physical = PHYSICAL.build(path)
     rsword = RSWORD.build(path)
     pe = WINDOWPE.build(path)
+    source = SOURCE.build(SOURCE.DEFAULT_HEADER.resolve())
     checks = {
         "dynamic": DYNAMIC.validate(dynamic),
         "scheduler": SCHED.validate(sched),
@@ -57,10 +85,20 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
 
     wrapper = WRAPPER.read_text(encoding="utf-8")
     mekf = MEKF.read_text(encoding="utf-8")
+    wave_period = WAVE_PERIOD.read_text(encoding="utf-8")
+    vertical = VERTICAL.read_text(encoding="utf-8")
+    bandpass = BANDPASS.read_text(encoding="utf-8")
+    autotuner = AUTOTUNER.read_text(encoding="utf-8")
     paper = PAPER.read_text(encoding="utf-8")
 
     floor_pos = mekf.find("apply_pending_aw_covariance_inflation_();")
     s_pos = mekf.find("applyIntegralZeroPseudoMeas();", floor_pos)
+
+    sigma_a_cfg = _vec3_default(wrapper, "sigma_a")
+    sigma_m_cfg = _vec3_default(wrapper, "sigma_m")
+    Racc_diag = [x * x for x in sigma_a_cfg]
+    Rmag_diag = [x * x for x in sigma_m_cfg]
+
     source_parity = {
         "candidate_tau_each_valid_sample": "tune_.tau_applied   += alpha" in wrapper,
         "candidate_sigma_each_valid_sample": "tune_.sigma_applied += alpha" in wrapper,
@@ -76,8 +114,78 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "accelerometer_aw_jacobian": "const Matrix3 J_aw  =  R_wb();" in mekf,
         "accelerometer_bias_jacobian_active": "PCt.noalias() += P_all_ba; // J_ba = I" in mekf,
         "full_Joseph_covariance_update": "joseph_update3_(K, S_mat, PCt);" in mekf,
+        "Racc_from_configured_std": "Racc(sigma_a.array().square().matrix().asDiagonal())" in mekf,
+        "Rmag_from_configured_std": "Rmag(sigma_m.array().square().matrix().asDiagonal())" in mekf,
+        "runtime_Racc_setter_is_variance_from_std": (
+            "Racc = sigma_acc.array().square().matrix().asDiagonal();" in mekf
+        ),
+        "runtime_Rmag_setter_is_variance_from_std": (
+            "Rmag = sigma_mag.array().square().matrix().asDiagonal();" in mekf
+        ),
+        "dormant_vibration_branch_restores_nominal_Racc": _all(
+            wrapper,
+            (
+                "if (!(excess > 0.0f))",
+                "mekf_->set_Racc_std(base);",
+                "racc_effective_ = base;",
+            ),
+        ),
+        "magnetic_world_reference_is_explicit_state": _all(
+            wrapper,
+            ("void setMagWorldRef_", "mag_world_ref_uT_", "mag_world_ref_valid_"),
+        ) and "void set_mag_world_ref(const Vector3& B_world)" in mekf,
+        "accelerometer_factorization_failure_is_explicit_rejection": _all(
+            mekf,
+            ("if (!safe_ldlt3_(S_mat, ldlt, Racc.norm()))", "last_acc_diag_.accepted = false;"),
+        ),
+        "magnetometer_factorization_failure_is_explicit_rejection": _all(
+            mekf,
+            ("if (!safe_ldlt3_(S_mat, ldlt, Rmag.norm()))", "last_mag_diag_.accepted = false;"),
+        ),
+        "H_A_mode_switch_is_explicit": "void set_acc_bias_updates_enabled(bool en)" in mekf,
+        "pseudo_scheduler_progress_state_is_explicit": "pseudo_update_elapsed_s_" in mekf,
+        "aw_floor_pending_state_is_explicit": "aw_covariance_floor_pending_" in mekf,
     }
     source_failures = [k for k, ok in source_parity.items() if not ok]
+
+    front_end_state_parity = {
+        "vertical_measurement_only_observer_state": _all(
+            vertical, ("ahrs_", "elapsed_sec_", "up_ms2_", "verticalAccelUpMs2()")
+        ),
+        "wave_period_leaky_integrator_state": _all(
+            wave_period,
+            (
+                "high_pass_1_",
+                "high_pass_2_",
+                "velocity_",
+                "elevation_",
+                "velocity_mean_",
+                "velocity_sq_",
+                "elevation_mean_",
+                "elevation_sq_",
+                "weight_",
+                "log_period_sec_",
+            ),
+        ),
+        "wave_period_one_way_usable_latch": "if (usable_period_) return;" in wave_period,
+        "adaptive_bandpass_filter_state": _all(
+            bandpass, ("lowpass_low_", "band_", "p00_", "p01_", "p11_")
+        ),
+        "acceleration_moment_state": _all(
+            autotuner, ("A_mean", "A_sq", "frequency_hz", "tau_var_sec")
+        ),
+        "acceleration_variance_uses_same_weighted_first_second_moments": _all(
+            autotuner, ("A_mean.update(accel, alpha_var);", "A_sq.update(accel * accel, alpha_var);")
+        ),
+        "canonical_period_feeds_tuner_without_second_frequency_smoother": _all(
+            autotuner,
+            (
+                "frequency smoothing no longer occurs here",
+                "frequency_hz = f_eff;",
+            ),
+        ),
+    }
+    front_end_failures = [k for k, ok in front_end_state_parity.items() if not ok]
 
     paper_parity = {
         "source_reachable_schedule": "strict source-reachable family" in paper,
@@ -85,10 +193,22 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "windowed_eta6_PE": "\\alpha_6\\mat I_6\\preceq" in paper,
         "windowed_eta9_PE": "\\alpha_9\\mat I_9\\preceq" in paper,
         "asynchronous_PE": "finite-window asynchronous conditions" in paper,
-        "mag_rejections_allowed_if_information_coercive": "rejected samples, and short outages are admissible" in paper,
+        "mag_rejections_allowed_if_information_coercive": (
+            "rejected samples, and short outages are admissible" in paper
+        ),
         "finite_bias_correlation_route": "finite residual-bias correlation time" in paper,
+        "positive_accepted_measurement_covariances": "positive accepted measurement covariances" in paper,
+        "no_hard_attitude_rewrite_inside_live_word": (
+            "no hard attitude rewrite inside a normal-Live interval" in paper
+        ),
+        "full_state_block_composition": "block-lower-triangular observation operator" in paper,
     }
     paper_failures = [k for k, ok in paper_parity.items() if not ok]
+
+    source_runtime = source["configured_runtime_assumption"]
+    source_warmup = float(source["timing_constants_s"]["online_tune_warmup"])
+    domain_warmup = float(startup["online_tune_warmup_sec"])
+    hybrid = list(source["hybrid_obligations"])
 
     pe_horizon = float(pe["spread_occurrence_selection"]["word_horizon_s"])
     s_horizon = float(rsword["word_horizon_s_upper"])
@@ -96,26 +216,106 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     dt = float(runtime["imu_dt_s"])
     word_samples = int(math.ceil(word_horizon / dt)) + 1
 
+    dynamic_parity = dynamic["source_parity"]
+    rs_source = rsword["source_parity"]
+    joint_schedule_bound = (
+        dynamic_parity["tau_sigma_candidates_smoothed_each_valid_sample"]
+        and dynamic_parity["RS_candidate_smoothed_each_valid_sample"]
+        and dynamic_parity["active_schedule_commit_is_next_sample_predictable"]
+        and dynamic_parity["pseudo_cadence_is_same_tau_lipschitz_image"]
+        and rs_source["spectral_mse_uses_realized_pseudo_period"]
+        and rs_source["applied_tau_and_RS_have_distinct_emas"]
+    )
+    per_axis_rs_bound = (
+        len(rsword["R_S_axis_std_factors"]) == 3
+        and all(float(x) > 0.0 for x in rsword["R_S_axis_std_factors"])
+    )
+
+    measurement_runtime = {
+        "accelerometer_std_mps2": sigma_a_cfg,
+        "accelerometer_variance_diag": Racc_diag,
+        "magnetometer_std_uT": sigma_m_cfg,
+        "magnetometer_variance_diag": Rmag_diag,
+        "configured_defaults_source_bound": True,
+        "external_constructor_override_is_outside_this_configured_certificate": True,
+        "dormant_vibration_guard_preserves_accelerometer_covariance": source_parity[
+            "dormant_vibration_branch_restores_nominal_Racc"
+        ],
+    }
+
+    front_end_state = {
+        "vertical_leveling": ["Mahony observer state", "elapsed_sec", "vertical_accel_up"],
+        "wave_period": [
+            "high_pass_1", "high_pass_2", "velocity", "elevation",
+            "velocity_mean", "velocity_sq", "elevation_mean", "elevation_sq",
+            "weight", "raw_period", "log_period", "usable_period_latch",
+        ],
+        "wave_band": ["lowpass_low", "band", "p00", "p01", "p11"],
+        "acceleration_statistics": ["A_mean(value,weight)", "A_sq(value,weight)", "frequency", "variance_horizon"],
+        "candidate_tuner": list(dynamic["adaptive_state"]),
+        "active_schedule": ["tau", "sigma_aw", "R_S", "pseudo_period", "commit_phase"],
+        "scheduler": ["pseudo_update_elapsed"],
+        "covariance_floor": ["aw_covariance_floor_pending", "aw_covariance_floor_target"],
+        "magnetic_gauge": ["mag_world_ref", "mag_world_ref_valid", "source-generated refinement state"],
+    }
+
     mandatory = {
+        "configured_runtime_dt_matches_source": math.isclose(
+            float(source_runtime["imu_dt_s"]), dt, rel_tol=0.0, abs_tol=0.0
+        ),
+        "online_tune_warmup_matches_source": math.isclose(
+            source_warmup, domain_warmup, rel_tol=0.0, abs_tol=0.0
+        ),
         "runtime_zero_lever_arm": runtime["imu_lever_arm_enabled"] is False,
-        "runtime_dormant_transparent_vibration_guard": runtime[
-            "accelerometer_vibration_guard_proof_branch"
-        ] == "dormant_transparent",
+        "runtime_dormant_transparent_vibration_guard": (
+            runtime["accelerometer_vibration_guard_proof_branch"] == "dormant_transparent"
+        ),
+        "configured_measurement_covariances_positive": (
+            min(Racc_diag) > 0.0 and min(Rmag_diag) > 0.0
+            and source_parity["Racc_from_configured_std"]
+            and source_parity["Rmag_from_configured_std"]
+        ),
         "all_valid_accelerometer_updates_accepted": (
             live["accelerometer_update_required_each_valid_imu_sample_after_live_entry"] is True
             and live["accelerometer_rejection_in_normal_live_scope"] is False
         ),
+        "accelerometer_factorization_failure_excluded_by_theorem_domain": (
+            source_parity["accelerometer_factorization_failure_is_explicit_rejection"]
+            and live["accelerometer_rejection_in_normal_live_scope"] is False
+        ),
         "joint_SEA3_adaptive_state": dynamic["P2_DYNAMIC_SOURCE_CERTIFICATE"] == "PASS",
+        "complete_front_end_generator_state_retained": not front_end_failures,
         "source_commit_phase_retained": "pending_commit_progress" in dynamic["adaptive_state"],
         "pseudo_scheduler_progress_and_recurrence": sched["scheduler_recurrence_certificate"] is True,
-        "applied_RS_and_tau_sigma_not_independent": True,
-        "per_axis_RS_factors_retained": True,
-        "four_S_information_retained": rsword["P3_RS_TRANSLATION_OBSERVATION_GEOMETRY_CLOSED"] is True,
+        "applied_RS_and_tau_sigma_not_independent": joint_schedule_bound,
+        "per_axis_RS_factors_retained": per_axis_rs_bound,
+        "measurement_covariances_retained_in_every_update": all(
+            source_parity[k] for k in (
+                "Racc_from_configured_std", "Rmag_from_configured_std",
+                "runtime_Racc_setter_is_variance_from_std",
+                "runtime_Rmag_setter_is_variance_from_std",
+            )
+        ),
+        "magnetic_reference_path_retained_not_frozen": (
+            source_parity["magnetic_world_reference_is_explicit_state"]
+            and "magnetic_gauge" in source["discrete_source_branches"]
+        ),
+        "no_hard_attitude_rewrite_inside_same_mode_word": (
+            paper_parity["no_hard_attitude_rewrite_inside_live_word"]
+            and "tilt_reset" in hybrid and "tilt_relock" in hybrid
+        ),
+        "dimension_changing_H_to_A_transition_separate": (
+            "held_to_active" in hybrid and source_parity["H_A_mode_switch_is_explicit"]
+        ),
+        "four_S_information_retained": (
+            rsword["P3_RS_TRANSLATION_OBSERVATION_GEOMETRY_CLOSED"] is True
+            and rsword["P3_RS_TRANSLATION_INFORMATION_MATRIX_CLOSED"] is True
+        ),
         "full_process_UCC_retained": process["full_process_ucc_pass"] is True,
         "aw_covariance_floor_events_retained": all(source_parity[k] for k in (
             "periodic_aw_floor_tick", "aw_floor_default_is_PSD_increment",
             "aw_floor_applied_inside_prediction", "aw_floor_adds_PSD_increment",
-            "S_update_runs_after_floor_in_prediction",
+            "S_update_runs_after_floor_in_prediction", "aw_floor_pending_state_is_explicit",
         )),
         "full_accelerometer_cross_block_information_retained": all(source_parity[k] for k in (
             "accelerometer_attitude_jacobian", "accelerometer_aw_jacobian",
@@ -144,6 +344,9 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "SEA3_height_period_partition_coupling_retained": physical["three_partition_contract"][
             "independent_H_r_and_T_p_rectangular_extrema_forbidden"
         ] is True,
+        "stochastic_failure_budget_retained_as_forcing_not_pruning": (
+            0.0 < float(domain["stochastic"]["finite_horizon_failure_probability_budget"]) < 1.0
+        ),
     }
 
     numeric = {
@@ -153,7 +356,9 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "A_dimension": 21,
         "one_common_event_word_required_for_H_and_A": True,
         "same_joint_source_path_feeds_F_Q_TS_RS": True,
+        "same_front_end_state_path_generates_all_tuner_targets": True,
         "same_event_word_contains_accel_S_PE_and_aw_floor": True,
+        "same_runtime_measurement_covariances_used_in_Riccati_updates": True,
         "every_valid_accelerometer_update_must_be_applied": True,
         "every_due_S_update_must_be_applied": True,
         "actual_applied_per_axis_RS_required": True,
@@ -161,14 +366,34 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "aw_floor_must_be_added_as_actual_PSD_event_not_marginal_Loewner_shortcut": True,
         "A_mode_bias_must_use_finite_tau_or_eta9_information": True,
         "full_18x18_and_21x21_matrix_comparison_required": True,
+        "joint_P_Psi_Omega_propagation_required": True,
+        "exact_decomposition_identity_required": "P_k = Psi_k P_0 Psi_k^T + Omega_k",
+        "prediction_recursion_required": (
+            "P-=F P F^T+Q; Psi-=F Psi; Omega-=F Omega F^T+Q"
+        ),
+        "joseph_measurement_recursion_required": (
+            "A=I-KH; P+=A P- A^T+K R K^T; Psi+=A Psi-; "
+            "Omega+=A Omega- A^T+K R K^T"
+        ),
+        "aw_floor_recursion_required": (
+            "P+=P+E_aw Delta E_aw^T; Psi unchanged; Omega+=Omega+E_aw Delta E_aw^T"
+        ),
+        "required_final_inequality": "Omega_W - delta * P_W >= 0 on full H18/A21 coordinates",
+        "moving_metric_equivalence": (
+            "Omega_W >= delta P_W iff Psi_W^T P_W^-1 Psi_W <= (1-delta) P_0^-1"
+        ),
+        "D_W_L_W_split_for_final_gate_forbidden": True,
+        "zero_start_Riccati_concavity_replacement_forbidden": True,
         "blockwise_minimum_ratio_for_final_gate_forbidden": True,
         "determinant_trace_scalarization_for_final_gate_forbidden": True,
         "scalar_information_beta_for_final_gate_forbidden": True,
         "independent_tau_sigma_RS_TS_extrema_product_forbidden": True,
         "hardware_magnetometer_ODR_as_PE_recurrence_forbidden": True,
         "old_P2_graph_or_predecessor_enumeration_forbidden": True,
+        "hard_attitude_rewrite_inside_word_forbidden": True,
+        "front_end_state_freezing_to_replay_value_forbidden": True,
+        "stochastic_noise_realization_used_as_homogeneous_pruning": False,
         "useful_gate": USEFUL_GATE,
-        "required_final_inequality": "D_W - delta * L_W^{-1} >= 0 on full H18/A21 coordinates",
     }
 
     return {
@@ -179,12 +404,18 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "R_S_is_credited_but_not_used_as_a_substitute_for_other_preconditions": True,
         "process_UCC_is_credited_but_not_used_as_a_substitute_for_measurement_preconditions": True,
         "windowed_PE_is_credited_but_not_used_as_a_substitute_for_translation_preconditions": True,
+        "D_W_L_W_split_is_not_canonical_final_gate": True,
         "mandatory_preconditions": mandatory,
         "all_current_machine_checkable_preconditions_present": all(mandatory.values()),
         "source_parity": source_parity,
         "source_parity_failures": source_failures,
+        "front_end_state_parity": front_end_state_parity,
+        "front_end_state_parity_failures": front_end_failures,
         "paper_parity": paper_parity,
         "paper_parity_failures": paper_failures,
+        "measurement_runtime": measurement_runtime,
+        "front_end_state_manifest": front_end_state,
+        "hybrid_obligations": hybrid,
         "word": {
             "horizon_s": word_horizon,
             "samples_upper": word_samples,
@@ -192,11 +423,26 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
             "four_S_subcertificate": {
                 "minimum_word_horizon_s": s_horizon,
                 "scheduler_gap_s": sched["certified_uniform_max_gap_s"],
+                "newton_information_matrix_lower": rsword[
+                    "newton_coordinate_information_matrix_lower"
+                ],
             },
             "aw_covariance_floor_gap_s_upper": dynamic[
                 "validated_rate_and_jump_bounds"
             ]["active_commit_gap_s_upper"],
             "full_process_modes": process["modes"],
+            "measurement_runtime": measurement_runtime,
+            "front_end_state_manifest": front_end_state,
+            "same_mode_hybrid_exclusions": [
+                "held_to_active", "tilt_reset", "tilt_relock", "cooldown_reentry"
+            ],
+            "magnetic_reference_treatment": (
+                "retain source-generated reference/vector path in H_k; gauge variation is ISS forcing, "
+                "not a frozen replay constant"
+            ),
+            "stochastic_treatment": (
+                "configured R matrices stay in covariance recursion; realization noise belongs to ISS forcing"
+            ),
         },
         "final_numeric_contract": numeric,
         "physical_SEA3_scope": {
@@ -208,7 +454,8 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "P3_promoted": False,
         "P4_may_consume": False,
         "next_obligation": (
-            "build one validated full H18/A21 Riccati/information word satisfying final_numeric_contract; do not introduce a reduced replacement certificate"
+            "propagate the exact joint (P,Psi,Omega) H18/A21 Normal-Live word with the complete "
+            "front-end/source/event state; no D_W/L_W split or other reduced replacement may promote P3"
         ),
     }
 
@@ -225,6 +472,7 @@ def validate(d: dict) -> list[str]:
         "R_S_is_credited_but_not_used_as_a_substitute_for_other_preconditions",
         "process_UCC_is_credited_but_not_used_as_a_substitute_for_measurement_preconditions",
         "windowed_PE_is_credited_but_not_used_as_a_substitute_for_translation_preconditions",
+        "D_W_L_W_split_is_not_canonical_final_gate",
         "all_current_machine_checkable_preconditions_present",
     ):
         if d.get(key) is not True:
@@ -233,12 +481,16 @@ def validate(d: dict) -> list[str]:
         if ok is not True:
             f.append(f"mandatory precondition missing: {name}")
     f.extend(f"source parity failed: {x}" for x in d.get("source_parity_failures", []))
+    f.extend(f"front-end parity failed: {x}" for x in d.get("front_end_state_parity_failures", []))
     f.extend(f"paper parity failed: {x}" for x in d.get("paper_parity_failures", []))
+
     c = d.get("final_numeric_contract", {})
-    for key in (
+    required_true = (
         "one_common_event_word_required_for_H_and_A",
         "same_joint_source_path_feeds_F_Q_TS_RS",
+        "same_front_end_state_path_generates_all_tuner_targets",
         "same_event_word_contains_accel_S_PE_and_aw_floor",
+        "same_runtime_measurement_covariances_used_in_Riccati_updates",
         "every_valid_accelerometer_update_must_be_applied",
         "every_due_S_update_must_be_applied",
         "actual_applied_per_axis_RS_required",
@@ -246,19 +498,38 @@ def validate(d: dict) -> list[str]:
         "aw_floor_must_be_added_as_actual_PSD_event_not_marginal_Loewner_shortcut",
         "A_mode_bias_must_use_finite_tau_or_eta9_information",
         "full_18x18_and_21x21_matrix_comparison_required",
+        "joint_P_Psi_Omega_propagation_required",
+        "D_W_L_W_split_for_final_gate_forbidden",
+        "zero_start_Riccati_concavity_replacement_forbidden",
         "blockwise_minimum_ratio_for_final_gate_forbidden",
         "determinant_trace_scalarization_for_final_gate_forbidden",
         "scalar_information_beta_for_final_gate_forbidden",
         "independent_tau_sigma_RS_TS_extrema_product_forbidden",
         "hardware_magnetometer_ODR_as_PE_recurrence_forbidden",
         "old_P2_graph_or_predecessor_enumeration_forbidden",
-    ):
+        "hard_attitude_rewrite_inside_word_forbidden",
+        "front_end_state_freezing_to_replay_value_forbidden",
+    )
+    for key in required_true:
         if c.get(key) is not True:
             f.append(f"final numeric contract lost {key}")
+    if c.get("stochastic_noise_realization_used_as_homogeneous_pruning") is not False:
+        f.append("stochastic realization entered homogeneous pruning")
+    if c.get("required_final_inequality") != (
+        "Omega_W - delta * P_W >= 0 on full H18/A21 coordinates"
+    ):
+        f.append("canonical full-word contraction inequality changed")
     if float(c.get("useful_gate", math.nan)) != USEFUL_GATE:
         f.append("useful gate changed")
     if int(c.get("H_dimension", 0)) != 18 or int(c.get("A_dimension", 0)) != 21:
         f.append("full H/A dimensions changed")
+
+    meas = d.get("measurement_runtime", {})
+    if min(map(float, meas.get("accelerometer_std_mps2", [0.0]))) <= 0.0:
+        f.append("configured accelerometer covariance is not positive")
+    if min(map(float, meas.get("magnetometer_std_uT", [0.0]))) <= 0.0:
+        f.append("configured magnetometer covariance is not positive")
+
     phys = d.get("physical_SEA3_scope", {})
     if phys.get("global_finite_window_realization_left_inclusion_closed") is not False:
         f.append("global physical SEA3 left inclusion was falsely promoted")
@@ -284,6 +555,8 @@ def main() -> int:
         "architecture": d["canonical_architecture"],
         "word_horizon_s": d["word"]["horizon_s"],
         "all_preconditions": d["all_current_machine_checkable_preconditions_present"],
+        "measurement_runtime": d["measurement_runtime"],
+        "final_inequality": d["final_numeric_contract"]["required_final_inequality"],
         "failures": failures,
     }, indent=2, sort_keys=True))
     return 0 if not failures else 2
