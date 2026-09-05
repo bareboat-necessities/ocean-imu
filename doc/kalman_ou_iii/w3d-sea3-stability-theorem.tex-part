@@ -97,8 +97,32 @@ dynamic constraint,
  u^s_k&=C_s(\lambda_k)x^s_k,
  \label{eq:sea3-shaping-system}
 \end{align}
-with the oscillatory blocks preserving phase continuity.  For an individual
-undamped oscillator, for example,
+with the oscillatory blocks preserving phase continuity.  The compact SEA3
+theorem domain includes this deterministic realization coordinate; over a
+finite sea window we write it as the coupled history set
+\begin{equation}
+ \boxed{
+ (x^s_{0:N_W},w_{0:N_W-1})
+ \in
+ \mathcal X^s_{\rm SEA3}(\lambda_{0:N_W}),
+ \qquad
+ \mathcal X^s_{\rm SEA3}(\lambda_{0:N_W})\ \text{compact}.
+ }
+ \label{eq:sea3-hard-realization-set}
+\end{equation}
+Equation~\eqref{eq:sea3-hard-realization-set} is not an independent disturbance
+box and does not reopen SEA3 compactness.  It makes explicit the
+phase/driver coordinate already carried by $x^s$ in the complete SEA3 source.
+SEA0 must provide a machine-readable outward representation of this coupled
+set, its phase-continuous transition, and the left inclusion of the physical
+SEA3 realization family into that representation.  The statistical spectrum
+of Eq.~\eqref{eq:sea3-directional-spectrum} constrains the sea family but does
+not, by itself, supply a deterministic pathwise bound for
+$\mathcal X^s_{\rm SEA3}$.  Consequently, neither a Gaussian confidence event,
+spectral moments alone, a replay record, nor a finite seeded harmonic
+approximation may replace Eq.~\eqref{eq:sea3-hard-realization-set} in SEA0/P3.
+
+For an individual undamped oscillator, for example,
 \begin{equation}
  \begin{bmatrix}q_{c,k+1}\\q_{s,k+1}\end{bmatrix}
  =
@@ -238,8 +262,9 @@ Assume the following hold for both fixed-dimensional Normal-Live modes.
 \begin{enumerate}[label=(\roman*),leftmargin=2.1em]
 \item SEA0 supplies a sound outward enclosure of the three-partition
 directional sea class of Eqs.~\eqref{eq:sea3-directional-spectrum}--
-\eqref{eq:sea3-shaping-system}, its declared rate-bounded parameter evolution,
-and its directional vessel/IMU response.
+\eqref{eq:sea3-shaping-system}, including the compact hard realization set of
+Eq.~\eqref{eq:sea3-hard-realization-set}, its declared rate-bounded parameter
+evolution, and its directional vessel/IMU response.
 \item P1 places the execution in the declared Normal-Live operating branch,
 including the current no-accelerometer-rejection condition and the declared
 startup prior/estimator source split.
@@ -358,52 +383,3 @@ Normal-Live accelerometer rejection & not admitted\\
 \end{tabular}
 \end{center}
 These are source-parity values, not fitted sea parameters.
-
-\subsection{Retained SEA0 subcertificates and temporal structure}
-
-Two replay-free, non-promoting SEA0 subcertificates are retained at this
-revision.  The spectral-moment bridge fixes the PM anchor and multimodal moment
-composition, and records why a response-weighted finite band is required before
-acceleration moments are finite.  Its current padded JONSWAP shape screen over
-$1\le\gamma\le7$ gives
-\begin{equation}
- 0.709119591169\le T_{z,\eta}/T_p\le0.829083684991,
-\end{equation}
-but this numerical continuum screen is not yet an interval-integration
-promotion and may not prune P2.
-
-The WavePeriodEstimator front-end subcertificate validates the implemented
-steady sinusoidal transfer over the committed 5 ms, 0.03--1.2 Hz channel.  Its
-period distortion is below about 59 ppm, so discrete front-end warping is not
-the current limiter.  For startup the source default high-pass/leak corner is
-0.02 Hz.  The same canonical estimator now begins its existing moment
-statistics at
-\begin{equation}
- t_{\rm mom}=\frac{3}{2\pi(0.02)}\approx23.87\ {\rm s},
-\end{equation}
-while startup use is forbidden before
-\begin{equation}
- t_{\rm usable,min}=\frac{4}{2\pi(0.02)}\approx31.83\ {\rm s}
-\end{equation}
-and also requires at least one current estimated period of accumulated moment
-history.  Strict \texttt{isReady()} remains forbidden before
-\begin{equation}
- t_{\rm ready,min}=\frac{6}{2\pi(0.02)}\approx47.75\ {\rm s}
-\end{equation}
-plus its existing $w>0.5$ condition.  The shipping outer wrappers keep the
-fixed 0.2 Hz prior until \texttt{hasUsablePeriod()} clears; \texttt{TunerReady}
-and Live therefore cannot precede the measured-period startup gate, while the
-stricter settled diagnostic may clear later.  The SEA3 source language must
-preserve the fixed-prior branch, startup-usable estimator branch, and their
-one-sample causal takeover edge.
-
-The tightened 150 ms pseudo-update ceiling still gives a maximum nominal
-30-sample $S=0$ recurrence, now certified by the retained scheduler primitive.
-No separate sizing helper or diagnostic workflow is required for these facts;
-they are consumed by the canonical \texttt{ou3-proof.yml} route.
-
-The remaining SEA0 promotion obligation is the directional vessel/IMU response
-and finite-band multimodal moment enclosure, followed by finite moment/log-period
-dynamics after estimator takeover and the sound SEA3-to-P2 language inclusion.
-Those steps are intentionally left for the next proof increment rather than
-adding another fallback proof route here.
