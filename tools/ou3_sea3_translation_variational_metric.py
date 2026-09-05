@@ -51,7 +51,7 @@ duality gives
 
 All matrix inversion and SPD decisions are outward-rounded interval operations.
 No determinant/trace scalarization, scalar information beta, floating
- eigensolver, source history graph or trajectory replay is used.
+eigensolver, source history graph or trajectory replay is used.
 """
 from __future__ import annotations
 
@@ -66,13 +66,11 @@ from ou3_interval import (
     Interval,
     matrix_add,
     matrix_mul,
-    matrix_transpose,
     symmetric_positive_definite_ldlt,
 )
 from ou3_interval_linear_algebra import matrix_inverse_gauss_jordan, matrix_symmetric_hull
 import ou3_sea3_dynamic_source_certificate as DYNAMIC
 import ou3_sea3_rs_tau_lag_envelope as LAG
-import ou3_source_reachable_matrix_p3 as BASE
 import ou3_vector_uco_certificate as VECTOR
 
 REPO = Path(__file__).resolve().parents[1]
@@ -100,6 +98,13 @@ def I(x: float) -> Interval:
 
 def IF(q: Fraction) -> Interval:
     return Interval.outward_bounds(float(q), float(q))
+
+
+def ipow(x: Interval, n: int) -> Interval:
+    y = Interval.point(1.0)
+    for _ in range(int(n)):
+        y = y * x
+    return y
 
 
 def _zero_fraction_matrix(n: int) -> list[list[Fraction]]:
@@ -164,7 +169,6 @@ def _poly_integral_gram(kind: str) -> list[list[Fraction]]:
 def _discrete_measurement_grams(samples: int) -> tuple[list[list[Fraction]], list[list[Fraction]]]:
     A = _zero_fraction_matrix(4)
     S = _zero_fraction_matrix(4)
-    N = F(samples)
     for k in range(1, samples + 1):
         u = F(k, samples)
         _outer_add(A, _b_row(u))
@@ -277,7 +281,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         raise RuntimeError("S pseudo variance lower lost positivity")
     # Physical S(t)=H^3*sbar(u); admit one stronger pseudo measurement at every
     # IMU sample.  H^6 converts the normalized exact sum to physical units.
-    m_s = _scale(ms, (H ** 6) / I(rs_var_lower))
+    m_s = _scale(ms, ipow(H, 6) / I(rs_var_lower))
 
     m_y = matrix_symmetric_hull(matrix_add(matrix_add(m_process, m_acc), m_s))
     ok_m, piv_m = symmetric_positive_definite_ldlt(m_y)
@@ -286,8 +290,8 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
 
     # y = D^-1 x, D=diag(H^3,H^2,H,1), x=[S,p,v,a].
     dinv = _diag([
-        I(1.0) / (H ** 3),
-        I(1.0) / (H ** 2),
+        I(1.0) / ipow(H, 3),
+        I(1.0) / ipow(H, 2),
         I(1.0) / H,
         I(1.0),
     ])
