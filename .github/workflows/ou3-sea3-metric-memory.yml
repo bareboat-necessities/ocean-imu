@@ -26,7 +26,7 @@ jobs:
           persist-credentials: false
       - name: Build complete-SEA3 H18 forgetting and covariance diagnostics
         run: |
-          python3 tools/ou3_sea3_h18_process_forgetting.py --output /tmp/ou3_sea3_h18_process_forgetting.json
+          python3 tools/ou3_sea3_h18_process_forgetting_preconditioned.py --output /tmp/ou3_sea3_h18_process_forgetting.json
           python3 tools/ou3_sea3_riccati_tube_factored.py --output /tmp/ou3_sea3_metric_memory_diagnostic.json
           python3 tools/ou3_sea3_p3_conditional_composition.py --output /tmp/ou3_sea3_conditional_p3.json
           python3 - <<'PY'
@@ -44,6 +44,9 @@ jobs:
           assert h['blockwise_minimum_ratio_used'] is False
           assert h['D_W_L_W_product_used'] is False
           assert h['one_step_process_Q_used_as_contraction_ratio'] is False
+          assert h['validated_fixed_point_congruence_preconditioner_available'] is True
+          assert h['floating_midpoint_factorization_accepted_as_proof'] is False
+          assert h['same_complete_SEA3_H18_matrix_family_as_canonical_module'] is True
           assert d['validation_pass'], d['validation_failures']
           assert d['source_generated_not_trajectory_fit'] is True
           assert d['trajectory_replay_used'] is False
@@ -60,6 +63,7 @@ jobs:
           print('H18_FORGETTING_CELLS', h['parameter_cover']['accepted_cells'])
           print('H18_FORGETTING_REFINEMENTS', h['parameter_cover']['refinements'])
           print('H18_FORGETTING_WORST_PIVOT', h['parameter_cover']['worst_full_H18_LDLT_pivot_lower'])
+          print('H18_FORGETTING_WORST_PRECONDITIONED', h['worst_cell_used_validated_congruence'])
           # Retained only as a diagnostic demonstrating why the old separately
           # worst one-step/tube route is not the theorem route.
           print('OLD_TUBE_H_DELTA_DIAGNOSTIC_ONLY', d['modes']['H']['relative_Riccati_injection_margin_lower'])
