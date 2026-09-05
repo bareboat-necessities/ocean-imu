@@ -6,64 +6,43 @@ one-sample process-noise injection.  For every exact linear Kalman measurement
 update with prior error e-, innovation r=H e-, innovation covariance
 S=H P- H' + R, posterior covariance P+, and homogeneous posterior error e+,
 
-    V- - V+ = r' S^-1 r,
-    V=e' P^-1 e.
+    V- - V+ = r' S^-1 r,          V=e' P^-1 e.
 
-Prediction is non-expansive because
+Prediction is non-expansive because P-=F P+ F'+Q with Q>=0.  Hence over a
+recurrent word the accumulated sequential-innovation energy is a strictness
+candidate.  The innovations are the block-Cholesky whitening of the complete
+batch record, so the correction information is
 
-    P- = F P+ F' + Q,  Q>=0.
+    D_W = O_W' Sigma_Y^-1 O_W.
 
-Hence over a recurrent word
+Translation now uses the strongest cleanly decoupled mechanism available in the
+shipping filter: four separated S=0 pseudo updates.  The dedicated
+``ou3_sea3_rs_word_information`` certificate proves that these four S rows are
+full rank on [v,p,S,a_w] even when tau varies arbitrarily inside the word.  The
+proof uses c'''(t)=exp(-int 1/tau)>0 for the a_w->S response and a third divided
+difference, not a frozen source word.  Thus translation strictness can be built
+from R_S correction alone; accelerometer information is no longer required to
+repair a fourth translation direction.
 
-    V_0 - V_W >= sum_i r_i' S_i^-1 r_i.
+This is important for the full H/A proof because accelerometer residuals couple
+attitude, a_w and active b_a.  Keeping the translation block on S=0 observations
+leaves accelerometer/magnetometer PE available for the genuinely coupled
+attitude/bias block instead of pretending the accelerometer observes a_w in
+isolation.
 
-The sequential innovations are the block-Cholesky whitening of the complete
-batch measurement record.  Therefore the summed correction energy equals
+The deployed SpectralMSE *target* couples tau, sigma and realized T_S, but the
+applied R_S state has its own EMA.  Canonical P3 therefore never substitutes the
+instantaneous target law for active R_S.  The four-S certificate currently uses
+the safe applied R_S ceiling and the exact source-independent scheduler
+recurrence.  A future SEA3 lag/reachability theorem may tighten that bound, but
+P3 does not depend on such an unproved tightening.
 
-    e_0' D_W e_0,
-    D_W = O_W' Sigma_Y^-1 O_W,
-
-where O_W is the finite-word observation operator from the initial error and
-Sigma_Y is the joint covariance of process/measurement nuisance in that word.
-This formulation eliminates gain-history enumeration completely.
-
-R_S is central.  The S=0 update has H_S selecting the integral-displacement
-state and innovation covariance P_SS+R_S.  The shipping Joseph update uses the
-whole cross-covariance P(:,S), so one S correction acts on the entire correlated
-[v,p,S,a_w] chain and can also nudge attitude through cross-covariance.  SEA3
-supplies the recurrence and the source coupling needed to quantify that effect.
-
-The proof must NOT replace the adaptive source by independent Cartesian extrema.
-The shipping schedule couples
-
-  * tau to the measured wave period,
-  * T_S to tau through the bounded tau-scaled pseudo cadence,
-  * r_S to the selected law evaluated at the same tau/sigma/T_S operating point,
-  * the Cubic law to C_R*sqrt(R_a)*tau^3 with cadence information-rate matching,
-  * other Riccati/MSE laws to their explicit same-operating-point formulas.
-
-Thus pathological combinations such as maximum r_S with unrelated minimum
-process/sea scale are inadmissible unless the actual SEA3+tuner dynamics permit
-them.  This is the main place where SEA3 strengthens the stability certificate.
-
-Quantitative P3 will certify two full matrices over one recurrent word:
-
-  L_W  <= P_0                       (UCC covariance lower),
-  D_W  <=/=> correction information (lower bound on O' Sigma_Y^-1 O).
-
-The useful contraction gate is the full-matrix inequality
-
-    D_W >= delta * L_W^-1,     delta >= 1e-18,
-
-which implies D_W >= delta P_0^-1 and therefore
-
-    V_W <= (1-delta) V_0.
-
-UCC is retained only to scale the moving covariance metric.  Strictness comes
-from recurrent measurement correction, principally S=0 plus vector/accelerometer
-information.  No determinant/trace scalarization, per-sample SPD lower, selected
-process-mode posterior attenuation, source-history graph, or predecessor path
-is canonical.
+Process UCC is retained only to provide a finite-memory covariance lower L_W in
+the same observation/divided-difference coordinates.  The final useful gate is
+one full H18/A21 matrix comparison at delta>=1e-18.  No one-step strictness,
+per-sample SPD lower, commit-word propagation, determinant/trace eigenvalue
+scalarization, scalar information beta, source-history graph, or predecessor
+path is canonical.
 """
 from __future__ import annotations
 
@@ -76,12 +55,13 @@ import ou3_full_process_ucc as PROCESS
 import ou3_sea3_dynamic_source_certificate as DYNAMIC
 import ou3_sea3_physical_admissibility as PHYSICAL
 import ou3_sea3_riccati_tube_factored as TUBE
+import ou3_sea3_rs_word_information as RSWORD
 import ou3_translational_uco_ucc as TRANS
 import ou3_vector_uco_certificate as VECTOR
 
 REPO = Path(__file__).resolve().parents[1]
 DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
-SCHEMA = 1
+SCHEMA = 2
 QUALIFICATION = "OU3_SEA3_RS_INNOVATION_DISSIPATION_P3_ARCHITECTURE"
 USEFUL_GATE = 1.0e-18
 
@@ -97,12 +77,14 @@ def build(domain_path: Path = DEFAULT_DOMAIN, tube_path: Path | None = None) -> 
     vector = VECTOR.build()
     process = PROCESS.build()
     trans = TRANS.build(TRANS.DEFAULT_HEADER)
+    rsword = RSWORD.build(path)
     prereq = (
         [f"dynamic: {x}" for x in DYNAMIC.validate(dynamic)]
         + [f"physical: {x}" for x in PHYSICAL.validate(physical)]
         + [f"vector: {x}" for x in VECTOR.validate(vector)]
         + [f"process: {x}" for x in PROCESS.validate(process)]
         + [f"translation: {x}" for x in TRANS.validate(trans)]
+        + [f"R_S word: {x}" for x in RSWORD.validate(rsword)]
     )
     if prereq:
         raise RuntimeError(f"P3 prerequisites failed: {prereq}")
@@ -162,32 +144,45 @@ def build(domain_path: Path = DEFAULT_DOMAIN, tube_path: Path | None = None) -> 
             "sigma_aw_filter_mps2": inv["sigma_aw_filter_mps2"],
             "R_S_applied_base": inv["R_S_applied"],
             "pseudo_update_period_s": inv["pseudo_update_period_s"],
-            "same_operating_point_required_for_tau_sigma_RS_TS": True,
-            "independent_extrema_product_forbidden": True,
+            "tau_and_active_pseudo_cadence_source_coupled": True,
+            "SpectralMSE_target_tau_sigma_TS_coupled": True,
+            "applied_RS_has_separate_EMA": True,
+            "instantaneous_target_formula_substituted_for_applied_RS": False,
+            "independent_applied_state_extrema_used_only_when_required_for_safe_bound": True,
             "physical_height_period_rectangular_extrema_forbidden": physical[
                 "three_partition_contract"
             ]["independent_H_r_and_T_p_rectangular_extrema_forbidden"],
-            "R_S_law_role": (
-                "consume the shipping selected R_S law and cadence normalization at the same SEA3/tuner operating point; "
-                "do not use max R_S independently of tau/sigma/T_S"
-            ),
+            "future_RS_tightening_requires_lag_reachability_theorem": True,
         },
         "translation_correction_word": {
-            "endpoint_lag_windows": timing.get("S_observation_window_layout", "[0,g],[2g,3g],[4g,5g]"),
-            "pseudo_gap_s_upper": timing["pseudo_gap_s_upper"],
-            "three_separated_S_observations_reconstruct_v_p_S": True,
-            "stable_aw_plus_accelerometer_closes_fourth_translation_direction": True,
-            "full_matrix_weighted_observability_required": True,
+            "mechanism": "FOUR_SEPARATED_S_ZERO_INNOVATIONS",
+            "selected_windows_s": rsword["four_S_windows"],
+            "word_horizon_s_upper": rsword["word_horizon_s_upper"],
+            "dimensionless_state": rsword["dimensionless_state"],
+            "time_varying_tau_allowed_inside_word": True,
+            "four_S_observation_operator_full_rank": rsword[
+                "four_S_translation_observation_operator_full_rank"
+            ],
+            "aw_third_divided_difference_lower": rsword[
+                "aw_scaled_third_divided_difference_lower"
+            ],
+            "rank_witness_det_lower_not_gate": rsword[
+                "scaled_observation_determinant_abs_lower_rank_witness_only"
+            ],
+            "selected_S_record_noise": rsword["selected_S_record_noise"],
+            "accelerometer_needed_to_close_translation": False,
+            "full_matrix_observation_coordinate_comparison_required": True,
         },
         "attitude_bias_correction_word": {
             "vector_PE_information_lower": vector["gyro_bias_two_packet"]["alpha_6_information_lower"],
-            "accelerometer_and_magnetometer_information_used_as_correction": True,
+            "accelerometer_and_magnetometer_information_reserved_for_coupled_attitude_bias_block": True,
             "process_UCC_used_only_for_metric_lower_not_as_primary_strictness": True,
         },
         "metric_scaling": {
             "process_UCC_covariance_lower_required": True,
             "translation_UCC_available": bool(trans["process_ucc"]["pass"]),
             "full_process_UCC_available": True,
+            "preferred_translation_coordinates": "four-S observation/divided-difference coordinates",
             "target_inequality": "D_W >= delta * L_W^-1",
             "consequence": "P_0 >= L_W => D_W >= delta P_0^-1 => V_W <= (1-delta)V_0",
         },
@@ -195,13 +190,17 @@ def build(domain_path: Path = DEFAULT_DOMAIN, tube_path: Path | None = None) -> 
         "covariance_memory": timing,
         "useful_gate": USEFUL_GATE,
         "P3_ARCHITECTURE_READY": True,
+        "P3_RS_TRANSLATION_OBSERVATION_GEOMETRY_CLOSED": bool(
+            rsword["P3_RS_TRANSLATION_OBSERVATION_GEOMETRY_CLOSED"]
+        ),
+        "P3_RS_BATCH_NOISE_UPPER_CLOSED": bool(rsword["P3_RS_BATCH_NOISE_UPPER_CLOSED"]),
         "P3_RS_WEIGHTED_WORD_INFORMATION_CLOSED": False,
         "P3_UCC_METRIC_LOWER_CLOSED": False,
         "P3_FULL_MATRIX_COMPARISON_CLOSED": False,
         "P3_CANONICAL_PASS": False,
         "P4_MAY_CONSUME_P3": False,
         "next_obligation": (
-            "derive the SEA3-coupled R_S/T_S weighted batch innovation matrix D_W and the UCC covariance lower L_W, then run one full-matrix D_W >= delta L_W^-1 gate; no alternative P3 architecture is permitted"
+            "build the finite-memory translation covariance lower directly in the four-S observation/divided-difference coordinates, then compose the independent vector-PE attitude/gyro-bias block and A-mode bias block into one H18/A21 full-matrix gate"
         ),
     }
 
@@ -223,6 +222,8 @@ def validate(d: dict) -> list[str]:
         "vector_PE_recurrence_consumed",
         "endpoint_covariance_upper_retained_for_boundedness_and_P4",
         "P3_ARCHITECTURE_READY",
+        "P3_RS_TRANSLATION_OBSERVATION_GEOMETRY_CLOSED",
+        "P3_RS_BATCH_NOISE_UPPER_CLOSED",
     ):
         if d.get(key) is not True:
             f.append(f"{key} is not true")
@@ -241,13 +242,21 @@ def validate(d: dict) -> list[str]:
     if float(d.get("useful_gate", math.nan)) != USEFUL_GATE:
         f.append("useful gate changed")
     c = d.get("SEA3_coupled_schedule_contract", {})
-    if c.get("same_operating_point_required_for_tau_sigma_RS_TS") is not True:
-        f.append("tau/sigma/R_S/T_S coupling lost")
-    if c.get("independent_extrema_product_forbidden") is not True:
-        f.append("independent SEA3/tuner extrema reintroduced")
+    if c.get("tau_and_active_pseudo_cadence_source_coupled") is not True:
+        f.append("tau/pseudo cadence coupling lost")
+    if c.get("SpectralMSE_target_tau_sigma_TS_coupled") is not True:
+        f.append("SpectralMSE target coupling lost")
+    if c.get("applied_RS_has_separate_EMA") is not True:
+        f.append("applied R_S lag distinction lost")
+    if c.get("instantaneous_target_formula_substituted_for_applied_RS") is not False:
+        f.append("instantaneous target was substituted for applied R_S")
     t = d.get("translation_correction_word", {})
-    if t.get("three_separated_S_observations_reconstruct_v_p_S") is not True:
-        f.append("three-S translation correction structure lost")
+    if t.get("mechanism") != "FOUR_SEPARATED_S_ZERO_INNOVATIONS":
+        f.append("translation is not using the four-S R_S word")
+    if t.get("four_S_observation_operator_full_rank") is not True:
+        f.append("four-S translation rank did not close")
+    if t.get("accelerometer_needed_to_close_translation") is not False:
+        f.append("accelerometer was incorrectly made necessary for translation rank")
     return list(dict.fromkeys(f))
 
 
@@ -266,7 +275,8 @@ def main() -> int:
     print(json.dumps({
         "architecture": d["canonical_P3_architecture"],
         "R_S_primary": d["R_S_is_primary_translation_correction_mechanism"],
-        "SEA3_coupling": d["SEA3_coupled_schedule_contract"],
+        "four_S_translation_rank": d["translation_correction_word"]["four_S_observation_operator_full_rank"],
+        "S_record_information_scalar_lower": d["translation_correction_word"]["selected_S_record_noise"]["Sigma_S_inverse_scalar_lower"],
         "P3_CANONICAL_PASS": d["P3_CANONICAL_PASS"],
         "next_obligation": d["next_obligation"],
         "validation_failures": failures,
