@@ -30,7 +30,12 @@ class Sea3CompleteSourceP3Test(unittest.TestCase):
         self.assertEqual(self.d["canonical_source"], "COMPLETE_SEA3_NORMAL_LIVE_WORD")
         self.assertTrue(self.d["complete_SEA3_source_consumed"])
         self.assertTrue(self.d["complete_SEA3_response_couplings_consumed"])
-        self.assertTrue(self.d["complete_SEA3_finite_horizon_good_event_consumed"])
+        self.assertTrue(self.d["complete_SEA3_compact_parameter_domain_consumed"])
+        self.assertTrue(self.d["complete_SEA3_compact_transition_relation_consumed"])
+        self.assertTrue(self.d["complete_SEA3_phase_continuous_realization_required"])
+        self.assertTrue(self.d["same_xs_lambda_drives_entire_word"])
+        self.assertTrue(self.d["stochastic_forcing_does_not_generate_source_words"])
+        self.assertTrue(self.d["stochastic_forcing_does_not_prune_homogeneous_family"])
         self.assertTrue(self.d["complete_SEA3_frontend_state_consumed"])
         self.assertTrue(self.d["complete_SEA3_adaptive_state_consumed"])
         self.assertTrue(self.d["same_complete_SEA3_word_used_for_H18_and_A21"])
@@ -40,15 +45,29 @@ class Sea3CompleteSourceP3Test(unittest.TestCase):
         sea = self.c["SEA3_surface_family"]
         self.assertEqual(sea["modes_max"], 3)
         self.assertEqual(sea["gamma_interval"], [1.0, 7.0])
+        self.assertTrue(sea["parameter_domain_compact"])
+        self.assertTrue(sea["compact_transition_relation_is_theorem_domain"])
         self.assertTrue(sea["independent_H_T_extrema_forbidden"])
         self.assertTrue(sea["independent_partition_height_maxima_forbidden"])
+
+        dynamic = self.c["SEA3_dynamic_realization"]
+        self.assertTrue(dynamic["phase_continuous"])
+        self.assertTrue(
+            dynamic["same_realization_drives_translation_rotation_frontend_tuner_geometry"]
+        )
+        self.assertFalse(dynamic["probabilistic_event_may_substitute_for_realization"])
+        self.assertFalse(dynamic["arbitrary_bounded_input_may_substitute_for_realization"])
+
         response = self.c["SEA3_response_couplings"]
         self.assertTrue(response["independent_sea_x_RAO_cartesian_product_forbidden"])
         self.assertTrue(response["same_H_s_partition_energy_enters_translation_and_rotation_conditions"])
-        self.assertTrue(response["only_jointly_admitted_response_tuples_may_generate_P3_words"])
-        finite = self.c["SEA3_finite_horizon_good_event"]
-        self.assertTrue(finite["combined_within_budget"])
-        self.assertTrue(finite["same_response_word_must_satisfy_both_good_events"])
+        self.assertTrue(response["only_same_phase_continuous_SEA3_realization_may_generate_P3_words"])
+        self.assertTrue(response["moment_or_probability_bound_may_not_generate_P3_word"])
+
+        stochastic = self.c["stochastic_forcing_corollary"]
+        self.assertFalse(stochastic["used_to_generate_P3_source_words"])
+        self.assertFalse(stochastic["used_to_prune_homogeneous_P3_family"])
+        self.assertTrue(stochastic["configured_Racc_Rmag_remain_in_every_covariance_update"])
 
     def test_tuner_and_rs_are_derived_from_same_sea3_word(self):
         a = self.c["derived_adaptive_source"]
