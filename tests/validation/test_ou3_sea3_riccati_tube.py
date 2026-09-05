@@ -42,6 +42,11 @@ class Sea3RiccatiTubeTest(unittest.TestCase):
         self.assertTrue(timing["S_and_vector_PE_memories_overlap_at_endpoint"])
         self.assertTrue(timing["covariance_memory_is_max_not_sum"])
         self.assertEqual(timing["S_observation_window_layout"], "[0,g],[2g,3g],[4g,5g]")
+        self.assertEqual(
+            timing["S_observation_inverse_route"],
+            "OUTWARD_CLOSED_FORM_LAGRANGE_VANDERMONDE",
+        )
+        self.assertFalse(timing["generic_interval_gauss_jordan_used_for_S_observation"])
         self.assertGreaterEqual(spacing, 2.0 * g)
         self.assertGreaterEqual(tobs, 5.0 * g)
         self.assertLess(tobs, 5.0 * g + 1e-12)
