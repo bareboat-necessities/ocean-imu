@@ -1,0 +1,65 @@
+name: ou3-full-word-exec
+
+on:
+  pull_request:
+    paths:
+      - 'tools/ou3_sea3_full_normal_live_execution.py'
+      - 'tools/ou3_sea3_full_normal_live_execution_cli.py'
+      - 'tools/ou3_sea3_full_normal_live_word.py'
+      - 'tools/ou3_sea3_full_word_riccati_backend.py'
+      - 'tools/ou3_p3_scaled_process.py'
+      - 'tools/ou3_p3_pseudo_scheduler_progress_certificate.py'
+      - 'tools/ou3_proof_operating_domain.json'
+      - '.github/workflows/ou3-full-word-exec.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  execute-full-word:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Compile literal execution tooling
+        run: |
+          python3 -m py_compile \
+            tools/ou3_sea3_full_normal_live_execution.py \
+            tools/ou3_sea3_full_normal_live_execution_cli.py \
+            tools/ou3_sea3_full_normal_live_word.py \
+            tools/ou3_sea3_full_word_riccati_backend.py
+
+      - name: Execute complete 3 s H18/A21 words
+        run: |
+          python3 tools/ou3_sea3_full_normal_live_execution_cli.py \
+            --output /tmp/ou3_full_word_execution.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/ou3_full_word_execution.json'))
+          assert d['validation_pass'], d['validation_failures']
+          assert d['both_modes_exact_joint_backend_executed'] is True
+          assert d['H18']['complete_3s_word_executed'] is True
+          assert d['A21']['complete_3s_word_executed'] is True
+          assert d['H18']['predictions'] == d['H18']['accelerometer_updates']
+          assert d['A21']['predictions'] == d['A21']['accelerometer_updates']
+          assert d['H18']['S_zero_updates'] > 0 and d['A21']['S_zero_updates'] > 0
+          assert d['H18']['aw_floor_applications'] > 0 and d['A21']['aw_floor_applications'] > 0
+          assert d['H18']['magnetometer_updates'] == 2 and d['A21']['magnetometer_updates'] == 2
+          assert d['SOURCE_REACHABLE_EVENT_FAMILY_MATERIALIZED'] is False
+          assert d['FULL_H18_A21_LDLT_CLOSED'] is False
+          assert d['P3_CANONICAL_PASS'] is False
+          print('H18_ENDPOINT', d['H18']['point_endpoint_contraction'])
+          print('A21_ENDPOINT', d['A21']['point_endpoint_contraction'])
+          PY
+
+      - name: Upload literal execution artifact
+        uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: ou3-full-word-execution
+          path: /tmp/ou3_full_word_execution.json
+          retention-days: 7
