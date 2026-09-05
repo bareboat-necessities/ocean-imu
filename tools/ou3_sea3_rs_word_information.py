@@ -55,6 +55,7 @@ this component, but may not replace applied R_S by its target.
 from __future__ import annotations
 
 import argparse
+from fractions import Fraction
 import json
 import math
 import re
@@ -119,82 +120,82 @@ def _validated_exp_negative_lower(x: float) -> tuple[float, dict]:
     }
 
 
-def _safe_add(a: float, b: float) -> float:
-    return up(float(a) + float(b))
-
-
-def _safe_mul(a: float, b: float) -> float:
-    return up(float(a) * float(b))
-
-
-def _safe_recip_pos(x: float) -> float:
-    if not (math.isfinite(x) and x > 0.0):
-        raise ValueError("positive finite denominator required")
-    return up(1.0 / float(x))
-
-
 def _newton_inverse_norm_certificate() -> dict:
     """Bound L^-1 from the guaranteed scaled timing gaps.
 
-    For nested nodes u0<u1<u2<u3, rows of T=L^-1 are divided-difference
-    coefficients.  Only minimum pair gaps are needed for an absolute-sum upper.
-    The four timing windows give
+    The separated scaled windows give exact rational gap floors
 
       d01>=1, d02>=3, d03>=5, d12>=1, d13>=3, d23>=1.
+
+    The absolute row/column sums of the divided-difference inverse are therefore
+    evaluated in exact rational arithmetic first.  We outward-round only once
+    when converting the exact rational bounds to binary64.  This avoids turning
+    the exact 2 and 12/5 bounds into larger numbers through repeated floating
+    outward additions.
     """
-    d01, d02, d03 = 1.0, 3.0, 5.0
-    d12, d13, d23 = 1.0, 3.0, 1.0
+    d01, d02, d03 = Fraction(1), Fraction(3), Fraction(5)
+    d12, d13, d23 = Fraction(1), Fraction(3), Fraction(1)
 
-    # Absolute coefficients in T=L^-1.
-    r0 = 1.0
-    r1 = _safe_mul(2.0, _safe_recip_pos(d01))
-    r2 = 0.0
-    for den in (d01 * d02, d01 * d12, d02 * d12):
-        r2 = _safe_add(r2, _safe_recip_pos(den))
-    r3 = 0.0
-    for den in (
-        d01 * d02 * d03,
-        d01 * d12 * d13,
-        d02 * d12 * d23,
-        d03 * d13 * d23,
-    ):
-        r3 = _safe_add(r3, _safe_recip_pos(den))
-    inf_norm = up(max(r0, r1, r2, r3))
+    r0 = Fraction(1)
+    r1 = Fraction(2, 1) / d01
+    r2 = sum((
+        Fraction(1, 1) / (d01 * d02),
+        Fraction(1, 1) / (d01 * d12),
+        Fraction(1, 1) / (d02 * d12),
+    ), Fraction(0))
+    r3 = sum((
+        Fraction(1, 1) / (d01 * d02 * d03),
+        Fraction(1, 1) / (d01 * d12 * d13),
+        Fraction(1, 1) / (d02 * d12 * d23),
+        Fraction(1, 1) / (d03 * d13 * d23),
+    ), Fraction(0))
+    inf_exact = max(r0, r1, r2, r3)
 
-    c0 = 1.0
-    for den in (d01, d01 * d02, d01 * d02 * d03):
-        c0 = _safe_add(c0, _safe_recip_pos(den))
-    c1 = 0.0
-    for den in (d01, d01 * d12, d01 * d12 * d13):
-        c1 = _safe_add(c1, _safe_recip_pos(den))
-    c2 = _safe_add(
-        _safe_recip_pos(d02 * d12),
-        _safe_recip_pos(d02 * d12 * d23),
-    )
-    c3 = _safe_recip_pos(d03 * d13 * d23)
-    one_norm = up(max(c0, c1, c2, c3))
+    c0 = sum((
+        Fraction(1),
+        Fraction(1, 1) / d01,
+        Fraction(1, 1) / (d01 * d02),
+        Fraction(1, 1) / (d01 * d02 * d03),
+    ), Fraction(0))
+    c1 = sum((
+        Fraction(1, 1) / d01,
+        Fraction(1, 1) / (d01 * d12),
+        Fraction(1, 1) / (d01 * d12 * d13),
+    ), Fraction(0))
+    c2 = sum((
+        Fraction(1, 1) / (d02 * d12),
+        Fraction(1, 1) / (d02 * d12 * d23),
+    ), Fraction(0))
+    c3 = Fraction(1, 1) / (d03 * d13 * d23)
+    one_exact = max(c0, c1, c2, c3)
 
-    # sqrt(||T||_1 ||T||_inf) <= max(||T||_1,||T||_inf), so no unvalidated
-    # square root is needed in the proof path.
-    spectral_norm_upper = up(max(one_norm, inf_norm))
-    lambda_LtL_lower = down(1.0 / up(spectral_norm_upper * spectral_norm_upper))
+    spectral_exact = max(one_exact, inf_exact)
+    inf_norm = up(float(inf_exact))
+    one_norm = up(float(one_exact))
+    spectral_norm_upper = up(float(spectral_exact))
+    lambda_exact = Fraction(1, 1) / (spectral_exact * spectral_exact)
+    lambda_LtL_lower = down(float(lambda_exact))
     if not lambda_LtL_lower > 0.0:
         raise RuntimeError("Newton evaluation matrix lost a strict conditioning lower")
 
     return {
         "scaled_pair_gap_lower": {
-            "u1-u0": d01,
-            "u2-u0": d02,
-            "u3-u0": d03,
-            "u2-u1": d12,
-            "u3-u1": d13,
-            "u3-u2": d23,
+            "u1-u0": float(d01),
+            "u2-u0": float(d02),
+            "u3-u0": float(d03),
+            "u2-u1": float(d12),
+            "u3-u1": float(d13),
+            "u3-u2": float(d23),
         },
+        "L_inverse_infinity_norm_exact": str(inf_exact),
+        "L_inverse_one_norm_exact": str(one_exact),
         "L_inverse_infinity_norm_upper": inf_norm,
         "L_inverse_one_norm_upper": one_norm,
         "L_inverse_spectral_norm_upper": spectral_norm_upper,
+        "L_transpose_L_lambda_min_exact": str(lambda_exact),
         "L_transpose_L_lambda_min_lower": lambda_LtL_lower,
-        "derivation": "lambda_min(L^T L)=1/||L^-1||_2^2; ||.||_2<=max(||.||_1,||.||_inf)",
+        "derivation": "exact rational divided-difference row/column sums; lambda_min(L^T L)=1/||L^-1||_2^2; ||.||_2<=max(||.||_1,||.||_inf)",
+        "exact_rational_arithmetic_used_before_outward_float_conversion": True,
         "ordinary_floating_eigensolver_used": False,
         "determinant_trace_scalarization_used": False,
     }
@@ -353,7 +354,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "P3_RS_TRANSLATION_INFORMATION_MATRIX_CLOSED": True,
         "P3_PROMOTED": False,
         "next_obligation": (
-            "bound the finite-memory translation covariance lower in the same path-dependent Newton/divided-difference coordinates, then include this block in the complete 3 s H18/A21 Normal-Live word"
+            "include this four-S matrix component in the complete source-reachable joint P/Psi/Omega H18/A21 Normal-Live word; do not form a separate information/covariance final ratio"
         ),
     }
 
@@ -404,16 +405,22 @@ def validate(d: dict) -> list[str]:
     ni = d.get("newton_coordinate_information", {})
     if ni.get("full_4x4_matrix_inequality_closed") is not True:
         f.append("Newton-coordinate information matrix did not close")
+    if ni.get("exact_rational_arithmetic_used_before_outward_float_conversion") is not True:
+        f.append("Newton norm certificate did not use exact rational arithmetic")
     if ni.get("determinant_used_for_information_lower") is not False:
         f.append("determinant re-entered information conditioning")
     if ni.get("frobenius_singular_value_conversion_used") is not False:
         f.append("Frobenius singular-value conversion re-entered information conditioning")
     if ni.get("scalar_information_beta_used") is not False:
         f.append("scalar information beta re-entered four-S component")
-    if float(ni.get("L_inverse_one_norm_upper", math.inf)) > up(12.0 / 5.0):
-        f.append("Newton inverse one-norm bound weakened unexpectedly")
-    if float(ni.get("L_inverse_infinity_norm_upper", math.inf)) > up(2.0):
-        f.append("Newton inverse infinity-norm bound weakened unexpectedly")
+    if ni.get("L_inverse_one_norm_exact") != "12/5":
+        f.append("Newton inverse exact one-norm bound changed")
+    if ni.get("L_inverse_infinity_norm_exact") != "2":
+        f.append("Newton inverse exact infinity-norm bound changed")
+    if float(ni.get("L_inverse_one_norm_upper", math.inf)) > up(float(Fraction(12, 5))):
+        f.append("Newton inverse one-norm outward bound weakened unexpectedly")
+    if float(ni.get("L_inverse_infinity_norm_upper", math.inf)) > up(float(Fraction(2, 1))):
+        f.append("Newton inverse infinity-norm outward bound weakened unexpectedly")
     if float(ni.get("D_S_newton_lambda_min_lower", 0.0)) <= 0.0:
         f.append("Newton-coordinate information lower is not strict")
     lag = d.get("SEA3_target_vs_applied_RS_contract", {})
