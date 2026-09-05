@@ -23,6 +23,12 @@ class HardShapingStateContractTest(unittest.TestCase):
         self.assertTrue(d["theorem_separates_probabilistic_random_sea_corollary"])
         self.assertTrue(d["complete_source_rejects_gaussian_word_generator"])
         self.assertEqual(d["hard_realization_set_symbol"], "X^s_SEA3(lambda_{0:N_W})")
+        phase = d["continuum_phase_certificate"]
+        self.assertTrue(phase["continuum_phase_coordinate_set_closed"])
+        self.assertTrue(phase["phase_continuous_propagation_closed"])
+        self.assertFalse(phase["finite_frequency_grid_used"])
+        self.assertFalse(phase["finite_direction_grid_used"])
+        self.assertFalse(phase["phase_reset_on_lambda_transition_allowed"])
         self.assertFalse(d["hard_shaping_state_or_excitation_bound_closed"])
         self.assertFalse(d["complete_SEA3_family_materialized_here"])
         self.assertFalse(d["P3_promoted"])
@@ -40,13 +46,14 @@ class HardShapingStateContractTest(unittest.TestCase):
         ):
             self.assertFalse(d[key], key)
 
-    def test_every_executable_ingredient_remains_code_owned_false(self) -> None:
+    def test_phase_is_closed_but_driver_and_output_remain_open(self) -> None:
         d = SHAPING.build()
         self.assertEqual(
             d["executable_ingredients"],
             {
-                "hard_compact_phase_or_driver_set_closed": False,
-                "phase_continuous_propagation_closed": False,
+                "continuum_phase_coordinate_set_closed": True,
+                "phase_continuous_propagation_closed": True,
+                "hard_spectral_driver_set_closed": False,
                 "complete_SEA3_left_inclusion_closed": False,
                 "joint_source_output_map_closed": False,
             },
