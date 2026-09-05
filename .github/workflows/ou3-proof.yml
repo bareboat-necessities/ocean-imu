@@ -9,6 +9,7 @@ on:
       - "src/kalman_ou_iii/**"
       - "src/kalman_ou_common/**"
       - "src/tuner/**"
+      - "doc/kalman_ou_iii/w3d-iss-stability.tex-part"
       - ".github/workflows/ou3-proof.yml"
   pull_request:
     paths:
@@ -18,6 +19,7 @@ on:
       - "src/kalman_ou_iii/**"
       - "src/kalman_ou_common/**"
       - "src/tuner/**"
+      - "doc/kalman_ou_iii/w3d-iss-stability.tex-part"
       - ".github/workflows/ou3-proof.yml"
   workflow_dispatch:
 
@@ -40,7 +42,7 @@ jobs:
       - name: Compile proof tooling
         run: make -C tests/validation build
 
-      - name: Enforce new canonical architecture and retained local linear primitives
+      - name: Enforce retained local linear primitives
         working-directory: tests/validation
         run: |
           python3 -m unittest -v \
@@ -50,7 +52,7 @@ jobs:
             test_ou3_vector_uco_certificate \
             test_ou3_p3_pseudo_scheduler_progress_certificate
 
-  sea3-dynamic-source:
+  complete-sea3-source:
     needs: source-foundation
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -59,42 +61,45 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Validate retained SEA3 physical/front-end prerequisites
+      - name: Build complete SEA3 source
         run: |
-          python3 tools/ou3_sea3_spectral_moment_bridge.py --check
-          python3 tools/ou3_sea3_wave_period_frontend.py \
-            --output /tmp/ou3_sea3_wave_period_frontend.json
-
-      - name: Certify dynamic SEA3 adaptive source state
-        run: |
-          python3 tools/ou3_sea3_dynamic_source_certificate.py \
-            --output /tmp/ou3_sea3_dynamic_source_certificate.json
+          python3 tools/ou3_sea3_complete_source.py \
+            --output /tmp/ou3_sea3_complete_source.json
+          python3 tools/ou3_sea3_windowed_vector_pe.py \
+            --output /tmp/ou3_sea3_windowed_vector_pe.json
           python3 - <<'PY'
           import json
-          d=json.load(open('/tmp/ou3_sea3_dynamic_source_certificate.json'))
+          d=json.load(open('/tmp/ou3_sea3_complete_source.json'))
           assert d['validation_pass'], d['validation_failures']
-          assert d['P2_DYNAMIC_SOURCE_CERTIFICATE'] == 'PASS'
-          assert d['old_P2_800_state_graph_consumed'] is False
-          assert d['old_P2_history_word_enumeration_consumed'] is False
-          print('DYNAMIC_SOURCE_INVARIANT', d['dynamic_invariant'])
-          print('DYNAMIC_SOURCE_RATES', d['validated_rate_and_jump_bounds'])
+          assert d['canonical_P3_source'] == 'COMPLETE_SEA3_NORMAL_LIVE_WORD'
+          assert d['P3_source_family_ready'] is True
+          assert all(v is False for v in d['no_fallback_generators'].values())
+          assert d['SEA3_surface_family']['modes_max'] == 3
+          assert d['SEA3_surface_family']['independent_H_T_extrema_forbidden'] is True
+          assert d['SEA3_response_couplings']['independent_sea_x_RAO_cartesian_product_forbidden'] is True
+          assert d['SEA3_response_couplings']['only_jointly_admitted_response_tuples_may_generate_P3_words'] is True
+          assert d['SEA3_finite_horizon_good_event']['same_response_word_must_satisfy_both_good_events'] is True
+          assert d['derived_adaptive_source']['primitive_independent_tau_sigma_RS_TS'] is False
+          assert d['derived_adaptive_source']['same_SEA3_frontend_path_generates_tau_sigma_RS_targets'] is True
+          assert d['R_S_regularizer']['actual_applied_R_S_required_at_every_due_S_update'] is True
+          assert d['R_S_regularizer']['all_due_S_updates_remain_in_full_word'] is True
+          assert d['R_S_regularizer']['selected_four_S_subset_may_not_replace_full_scheduler_word'] is True
+          print('COMPLETE_SEA3_SOURCE', d['canonical_P3_source'])
+          print('COMPLETE_SEA3_SAMPLES', d['word_samples'])
+          print('COMPLETE_SEA3_FALLBACKS', d['no_fallback_generators'])
           PY
 
-      - name: Test dynamic-source contract
-        working-directory: tests/validation
-        run: python3 -m unittest -v test_ou3_sea3_dynamic_source_certificate
-
-      - name: Upload dynamic source artifact
+      - name: Upload complete SEA3 source artifacts
         uses: actions/upload-artifact@v6
         with:
-          name: ou3-sea3-dynamic-source
+          name: ou3-complete-sea3
           path: |
-            /tmp/ou3_sea3_wave_period_frontend.json
-            /tmp/ou3_sea3_dynamic_source_certificate.json
+            /tmp/ou3_sea3_complete_source.json
+            /tmp/ou3_sea3_windowed_vector_pe.json
           retention-days: 7
 
   riccati-p3:
-    needs: sea3-dynamic-source
+    needs: complete-sea3-source
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -102,66 +107,115 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Build quantitative source-uniform moving-Riccati tube
+      - name: Build complete SEA3 P3 preconditions
         run: |
-          python3 tools/ou3_sea3_riccati_tube_factored.py \
-            --output /tmp/ou3_sea3_riccati_tube.json
+          python3 tools/ou3_sea3_p3_full_preconditions.py \
+            --output /tmp/ou3_sea3_p3_full_preconditions.json
           python3 - <<'PY'
           import json
-          d=json.load(open('/tmp/ou3_sea3_riccati_tube.json'))
+          d=json.load(open('/tmp/ou3_sea3_p3_full_preconditions.json'))
           assert d['validation_pass'], d['validation_failures']
-          assert d['source_history_graph_consumed'] is False
-          assert d['predecessor_path_enumeration_consumed'] is False
-          assert d['P2_800_state_partition_consumed'] is False
-          assert d['cell_cover']['history_depth'] == 0
-          print('RICCATI_TUBE_PASS', d['RICCATI_TUBE_PASS'])
-          print('H_DELTA', d['modes']['H']['relative_Riccati_injection_margin_lower'])
-          print('A_DELTA', d['modes']['A']['relative_Riccati_injection_margin_lower'])
-          print('CURRENT_SOURCE_CELLS', d['cell_cover']['joint_current_source_cells'])
+          assert d['canonical_source'] == 'COMPLETE_SEA3_NORMAL_LIVE_WORD'
+          assert d['complete_SEA3_source_consumed'] is True
+          assert d['all_current_machine_checkable_preconditions_present'] is True
+          assert all(d['mandatory_preconditions'].values())
+          assert all(v is False for v in d['no_fallback_generators'].values())
+          c=d['final_numeric_contract']
+          assert c['common_word_horizon_s'] >= 3.0
+          assert c['H_dimension'] == 18 and c['A_dimension'] == 21
+          assert c['actual_applied_per_axis_RS_required'] is True
+          assert c['full_18x18_and_21x21_matrix_comparison_required'] is True
+          assert c['useful_gate'] == 1e-18
+          print('P3_COMPLETE_WORD', d['word'])
           PY
 
-      - name: Test quantitative Riccati-tube contract
-        working-directory: tests/validation
-        run: python3 -m unittest -v test_ou3_sea3_riccati_tube
+      - name: Validate source-generated Live covariance and full joint backend
+        run: |
+          python3 tools/ou3_sea3_live_covariance_seed.py \
+            --output /tmp/ou3_sea3_live_covariance_seed.json
+          python3 tools/ou3_sea3_full_word_riccati_backend.py
+          python3 -m py_compile tools/ou3_sea3_full_word_riccati_backend_tight.py
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/ou3_sea3_live_covariance_seed.json'))
+          assert d['validation_pass'], d['validation_failures']
+          assert d['live_entry_seed_is_source_generated_not_arbitrary_PSD'] is True
+          assert d['bootstrap_mekf_covariance_propagated_before_live'] is False
+          assert d['source_parity_failures'] == []
+          PY
 
-      - name: Build and enforce canonical moving-Riccati P3 gate
+      - name: Assemble literal complete H18/A21 word
+        run: |
+          python3 tools/ou3_sea3_full_normal_live_word.py \
+            --output /tmp/ou3_sea3_full_normal_live_word.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/ou3_sea3_full_normal_live_word.json'))
+          assert d['validation_pass'], d['validation_failures']
+          assert d['canonical_architecture'] == 'SEA3_FULL_NORMAL_LIVE_RICCATI_WORD'
+          assert d['shipping_event_order_parity_pass'] is True
+          assert d['every_valid_imu_sample_requires_prediction'] is True
+          assert d['every_valid_imu_sample_requires_accelerometer_Joseph'] is True
+          assert d['S_scheduler_is_executed_not_replaced_by_selected_four'] is True
+          assert d['same_source_state_must_feed_F_Q_pseudo_period_and_applied_RS'] is True
+          assert all(v is False for v in d['no_reduced_promotion_routes'].values())
+          assert d['P3_CANONICAL_PASS'] is False
+          print('LITERAL_WORD_SAMPLES', d['imu_samples_upper'])
+          print('LITERAL_WORD_OPEN', d['first_open_obligation'])
+          PY
+
+      - name: Build canonical complete-SEA3 P3 gate
         run: |
           python3 tools/ou3_sea3_riccati_metric_p3.py \
-            --tube /tmp/ou3_sea3_riccati_tube.json \
             --output /tmp/ou3_sea3_riccati_metric_p3.json
           python3 - <<'PY'
           import json
-          tube=json.load(open('/tmp/ou3_sea3_riccati_tube.json'))
           d=json.load(open('/tmp/ou3_sea3_riccati_metric_p3.json'))
           assert d['validation_pass'], d['validation_failures']
-          assert d['P3_FOUNDATION_PASS'] is True
-          assert d['old_P2_800_state_graph_consumed'] is False
-          assert d['old_P2_V1_history_frontier_consumed'] is False
-          assert d['source_history_graph_consumed'] is False
-          assert d['predecessor_path_enumeration_consumed'] is False
+          assert d['canonical_P3_architecture'] == 'COMPLETE_SEA3_FULL_NORMAL_LIVE_RICCATI_WORD'
+          assert d['canonical_source'] == 'COMPLETE_SEA3_NORMAL_LIVE_WORD'
+          assert d['complete_SEA3_source_consumed'] is True
+          assert d['complete_SEA3_response_couplings_consumed'] is True
+          assert d['complete_SEA3_frontend_state_consumed'] is True
+          assert d['actual_applied_per_axis_RS_consumed'] is True
+          assert d['all_due_S_updates_required'] is True
+          assert d['all_valid_accelerometer_updates_required'] is True
+          assert d['same_complete_SEA3_word_used_for_H18_and_A21'] is True
+          assert d['no_fallback_route_enabled'] is True
+          assert all(v is False for v in d['no_fallback_generators'].values())
           assert d['useful_gate'] == 1e-18
-          assert d['quantitative_Riccati_tube_pass'] == tube['RICCATI_TUBE_PASS']
-          assert d['P3_CANONICAL_PASS'] == tube['RICCATI_TUBE_PASS']
-          assert d['P4_MAY_CONSUME_P3'] == d['P3_CANONICAL_PASS']
-          print('P3_H_DELTA', d['modes']['H']['relative_Riccati_injection_margin_lower'])
-          print('P3_A_DELTA', d['modes']['A']['relative_Riccati_injection_margin_lower'])
           print('P3_CANONICAL_PASS', d['P3_CANONICAL_PASS'])
           print('P3_FAIL_REASONS', d['P3_CANONICAL_FAIL_REASONS'])
-          if not d['P3_CANONICAL_PASS']:
-              raise SystemExit('canonical moving-Riccati P3 FAIL: ' + '; '.join(d['P3_CANONICAL_FAIL_REASONS']))
           PY
 
-      - name: Test moving-Riccati P3 contract
+      - name: Test complete SEA3 P3 contracts
         working-directory: tests/validation
-        run: python3 -m unittest -v test_ou3_sea3_riccati_metric_p3
+        run: |
+          python3 -m unittest -v \
+            test_ou3_sea3_live_covariance_seed \
+            test_ou3_sea3_full_word_riccati_backend \
+            test_ou3_sea3_full_normal_live_word \
+            test_ou3_sea3_riccati_metric_p3 \
+            test_ou3_sea3_riccati_metric_p3_promotion_state
 
-      - name: Upload canonical moving-Riccati P3 artifacts
+      - name: Enforce canonical P3 quantitative closure
+        run: |
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/ou3_sea3_riccati_metric_p3.json'))
+          if not d['P3_CANONICAL_PASS']:
+              raise SystemExit('canonical complete-SEA3 P3 FAIL: ' + '; '.join(d['P3_CANONICAL_FAIL_REASONS']))
+          PY
+
+      - name: Upload canonical P3 artifacts
         if: always()
         uses: actions/upload-artifact@v6
         with:
-          name: ou3-p3-moving-riccati
+          name: ou3-p3-complete-sea3
           path: |
-            /tmp/ou3_sea3_riccati_tube.json
+            /tmp/ou3_sea3_p3_full_preconditions.json
+            /tmp/ou3_sea3_live_covariance_seed.json
+            /tmp/ou3_sea3_full_normal_live_word.json
             /tmp/ou3_sea3_riccati_metric_p3.json
           retention-days: 7
 
@@ -174,7 +228,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Validate retained 0.8-rad geometry independently of retired P4 metric route
+      - name: Validate retained 0.8-rad geometry
         run: |
           python3 tools/ou3_p4_cayley_sector_certificate.py \
             --output /tmp/ou3_p4_cayley_sector_certificate.json
@@ -183,19 +237,6 @@ jobs:
         run: |
           python3 tools/ou3_sea3_riccati_metric_p4.py \
             --output /tmp/ou3_sea3_riccati_metric_p4.json
-          python3 - <<'PY'
-          import json
-          d=json.load(open('/tmp/ou3_sea3_riccati_metric_p4.json'))
-          assert d['validation_pass'], d['validation_failures']
-          assert d['P3_CANONICAL_PASS_consumed'] is True
-          assert d['old_800_endpoint_signed_Joseph_scan_consumed'] is False
-          assert d['old_terminal_source_phase_metric_attachment_consumed'] is False
-          assert d['old_group_isotropic_P3_P4_metric_assumed'] is False
-          print('P3_H_DELTA_CONSUMED', d['P3_H_delta_consumed'])
-          print('P3_A_DELTA_CONSUMED', d['P3_A_delta_consumed'])
-          print('P4_CANONICAL_PASS', d['P4_CANONICAL_PASS'])
-          print('P4_OPEN_OBLIGATIONS', d['P4_CANONICAL_FAIL_REASONS'])
-          PY
 
       - name: Test moving-Riccati P4 contract
         working-directory: tests/validation

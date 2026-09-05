@@ -21,6 +21,41 @@ class Sea3RiccatiTubeTest(unittest.TestCase):
         self.assertFalse(self.d["P2_800_state_partition_consumed"])
         self.assertEqual(self.d["cell_cover"]["history_depth"], 0)
 
+    def test_endpoint_referenced_translation_ceiling_is_canonical(self):
+        timing = self.d["covariance_memory"]
+        self.assertTrue(self.d["endpoint_referenced_translation_covariance"])
+        self.assertFalse(self.d["post_reconstruction_forward_propagation_used"])
+        self.assertEqual(timing["translation_reference"], "word_endpoint")
+        self.assertTrue(timing["endpoint_referenced_observability"])
+        self.assertTrue(timing["endpoint_p_sign_similarity_applied"])
+        self.assertFalse(timing["forward_propagation_after_endpoint_reconstruction"])
+        self.assertTrue(timing["full_word_process_noise_dominator_retained"])
+
+    def test_endpoint_memories_overlap_instead_of_serializing_PE(self):
+        timing = self.d["covariance_memory"]
+        g = timing["pseudo_gap_s_upper"]
+        spacing = timing["S_observation_window_spacing_s"]
+        tobs = timing["observation_window_s_upper"]
+        tpe = timing["vector_PE_window_s_upper"]
+        word = timing["covariance_memory_window_s_upper"]
+        self.assertFalse(timing["S_observation_spacing_uses_vector_PE"])
+        self.assertTrue(timing["S_and_vector_PE_memories_overlap_at_endpoint"])
+        self.assertTrue(timing["covariance_memory_is_max_not_sum"])
+        self.assertEqual(timing["S_observation_window_layout"], "[0,g],[2g,3g],[4g,5g]")
+        self.assertEqual(
+            timing["S_observation_inverse_route"],
+            "OUTWARD_CLOSED_FORM_LAGRANGE_VANDERMONDE",
+        )
+        self.assertFalse(timing["generic_interval_gauss_jordan_used_for_S_observation"])
+        self.assertGreaterEqual(spacing, 2.0 * g)
+        self.assertGreaterEqual(tobs, 5.0 * g)
+        self.assertLess(tobs, 5.0 * g + 1e-12)
+        self.assertGreaterEqual(word, max(tobs, tpe))
+        self.assertLess(word, max(tobs, tpe) + 1e-12)
+        # With the deployed 150 ms cadence guard, the translation memory is
+        # strictly shorter than the retained 1 s vector-PE recurrence.
+        self.assertLess(tobs, tpe)
+
     def test_margins_are_real_positive_comparisons(self):
         self.assertEqual(self.d["useful_gate"], 1e-18)
         for mode in ("H", "A"):

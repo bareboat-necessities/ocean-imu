@@ -10,7 +10,14 @@
     "accelerometer_vibration_guard_initial_engagement": 0.0,
     "accelerometer_vibration_guard_detector_rms_upper_mps2": 0.03,
     "accelerometer_vibration_guard_active_branch_certified": false,
-    "accelerometer_vibration_guard_note": "PR #426 armed a 14 Hz stateful accelerometer prefilter by default. The pre-existing P1-P5 source model remains exact only on the source branch where its detector stays at or below the 0.03 m/s^2 lower engagement rail and the guard starts at zero engagement, for which shipping code returns the raw accelerometer bit-for-bit. Active/transitioning guard dynamics, impacts and slamming are separate source/hybrid proof obligations and are not promoted by this domain."
+    "accelerometer_vibration_guard_note": "PR #426 armed a 14 Hz stateful accelerometer prefilter by default. The pre-existing P1-P5 source model remains exact only on the source branch where its detector stays at or below the 0.03 m/s^2 lower engagement rail and the guard starts at zero engagement, for which shipping code returns the raw accelerometer bit-for-bit. Active/transitioning guard dynamics, impacts and slamming are separate source/hybrid proof obligations and are not promoted by this domain.",
+    "measurement_noise_std": {
+      "accelerometer_mps2": [0.2, 0.2, 0.2],
+      "magnetometer_uT": [0.3, 0.3, 0.3],
+      "source": "SeaStateFusion_OU_III::Config defaults passed to Kalman3D_Wave_OU_III constructor",
+      "accelerometer_vibration_guard_dormant_branch_preserves_nominal_Racc": true,
+      "external_runtime_override_outside_this_configured_certificate": true
+    }
   },
   "startup": {
     "gravity_mps2": 9.80665,
@@ -23,6 +30,7 @@
     "mahony_cross_term_delta_s": 5.0,
     "internal_heading_gauge_error_upper_rad": 0.17453292519943295,
     "online_tune_warmup_sec": 10.0,
+    "online_tune_warmup_source": "outer SeaStateFusion_OU_III::Config default forwarded by setOnlineTuneWarmupSec; overrides inner ONLINE_TUNE_WARMUP_SEC=5 s",
     "tune_frequency_prior_hz": 0.2,
     "wave_period_estimator_high_pass_hz": 0.02,
     "tuner_ready_requires_wave_period_estimator_ready": false,
@@ -66,19 +74,14 @@
       "position": "delta_p / Hs",
       "velocity": "delta_v * Ts / Hs",
       "integral_displacement": "delta_S / (Hs * Ts)",
-      "latent_acceleration": "delta_a_w * Ts\u00b2 / Hs",
+      "latent_acceleration": "delta_a_w * Ts² / Hs",
       "Ts_role": "positive characteristic sea period used only as a coordinate scale unless a separate theorem bound is declared"
     },
     "additional_hard_sea_scaled_bounds_declared": false,
     "note": "The 45 deg attitude and |delta p_i| <= 0.5 Hs conditions are entrance assumptions, not a claim that the earlier startup interval preserves them automatically. The current numerical theorem envelope additionally declares 0 < Hs <= 8.5 m so the componentwise position entrance is finite for CI; 8.5 m is the present proof/deployment envelope and widening it is a separate theorem-domain task, not an inference from replay extrema. P1 retains its conservative source handoff box except that the latent-acceleration error component is explicitly declared as ||delta a_w|| <= 0.3 g = 2.941995 m/s^2 for startup in waves."
   },
   "certificate_search": {
-    "p4_complete_word_full_attitude_candidate_deg": [
-      30.0,
-      25.0,
-      20.0,
-      15.0
-    ],
+    "p4_complete_word_full_attitude_candidate_deg": [30.0, 25.0, 20.0, 15.0],
     "p4_candidate_selection_rule": "USE_WIDEST_SOURCE_COMPLETE_FINITE_ANGLE_CELL_THAT_CLOSES_FULL_STATE_DISSIPATION",
     "p4_outer_geometry_sector_remains_separate": true,
     "search_strategy_not_theorem_assumption": true
@@ -111,9 +114,14 @@
     "pe_scope_note": "The full-heading theorem is for normal ocean-wave/ship motion at the CoG, not impact/slam dynamics. Its primary physical acceleration assumption is ||a_non-grav|| <= 4.0 m/s^2 = 0.408 g. With g=9.80665 m/s^2 and lever arm disabled, triangle inequality gives the derived total CoG specific-force envelope 5.80665 <= ||a_w-g|| <= 13.80665 m/s^2 (0.592 to 1.408 g). The previous independent 30 m/s^2 = 3.06 g upper cap had no marine-physics derivation and is retired. The 10 uT magnetic floor and 0.1 vector-sine separation remain PE assumptions. Active/transitioning vibration guard, impacts/slams, nonzero lever arm, and saturated A-mode bias states remain separate hybrid/domain obligations.",
     "accelerometer_update_required_each_valid_imu_sample_after_live_entry": true,
     "accelerometer_rejection_in_normal_live_scope": false,
-    "accelerometer_update_scope_note": "After entry into Normal Live, every valid IMU sample executes the accelerometer Kalman update. The certified source language therefore contains no rejected/missing accelerometer branch; numerical innovation-factorization failure is outside the normal theorem domain. Magnetometer timing and rejection remain asynchronous."
+    "accelerometer_update_scope_note": "After entry into Normal Live, every valid IMU sample executes the accelerometer Kalman update. The certified source language therefore contains no rejected/missing accelerometer branch; numerical innovation-factorization failure is outside the normal theorem domain. Magnetometer timing and rejection remain asynchronous.",
+    "hard_attitude_rewrite_inside_word": false,
+    "hybrid_events_inside_same_mode_word": [],
+    "hybrid_events_separate_from_P3_word": ["startup_handoff", "held_to_active", "magnetic_lock", "magnetic_regauge_refinement", "tilt_reset", "tilt_relock", "cooldown_reentry"],
+    "magnetic_reference_handling": "source-generated world-reference/gauge variation is retained in the time-varying measurement vector or ISS forcing; it is not frozen to a replay value"
   },
   "stochastic": {
-    "finite_horizon_failure_probability_budget": 0.05
+    "finite_horizon_failure_probability_budget": 0.05,
+    "role_in_P3": "noise realizations are ISS/finite-horizon forcing, not homogeneous-matrix pruning; configured Racc/Rmag remain in every Kalman covariance update"
   }
 }
