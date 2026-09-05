@@ -32,9 +32,14 @@ DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
 SCHEMA = 1
 QUALIFICATION = "OU3_SEA3_PRIVATE_MAHONY_DISCRETE_PI_COMPARISON_V1"
 
-# Simple rational-safe uppers for the transformed operator/input norms.  Their
-# validity is checked below from interval algebra; they are not fitted values.
-N_FROBENIUS_UPPER = 0.151
+# Rational-safe uppers for the transformed operator/input norms.  The
+# Frobenius interval is evaluated over the whole sector at once, so entry-wise
+# interval dependency makes its enclosure slightly wider than the correlated
+# endpoint value (whose true maximum is below 0.150).  0.152 covers that
+# outward interval hull and still leaves more than an order of magnitude of
+# the 5 ms inward metric margin.  These are theorem calculations, not fitted
+# trajectory values.
+N_FROBENIUS_UPPER = 0.152
 RB_R_NORM_UPPER = 0.116
 RB_G_NORM_UPPER = 1.0
 RB_B_NORM_UPPER = 12.78
