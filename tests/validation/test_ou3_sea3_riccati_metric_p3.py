@@ -6,6 +6,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools"))
 import ou3_sea3_p3_joint_source_contract as joint  # noqa: E402
 import ou3_sea3_rs_tau_lag_envelope as lag  # noqa: E402
+import ou3_sea3_translation_variational_metric as metric  # noqa: E402
 import ou3_sea3_riccati_metric_p3 as mod  # noqa: E402
 
 
@@ -15,6 +16,7 @@ class Sea3RsInnovationP3Test(unittest.TestCase):
         cls.d = mod.build()
         cls.j = joint.build()
         cls.lag = lag.build()
+        cls.metric = metric.build()
 
     def test_architecture_uses_four_s_rs_word_as_translation_strictness(self):
         self.assertEqual(mod.validate(self.d), [])
@@ -98,6 +100,27 @@ class Sea3RsInnovationP3Test(unittest.TestCase):
             self.lag["R_S_hard_floor"],
         )
 
+    def test_translation_metric_floor_is_full_matrix_and_source_uniform(self):
+        self.assertEqual(metric.validate(self.metric), [])
+        self.assertTrue(self.metric["P3_TRANSLATION_VARIATIONAL_METRIC_LOWER_CLOSED"])
+        self.assertEqual(self.metric["finite_memory_horizon_s"], 2.0)
+        self.assertEqual(self.metric["finite_memory_samples"], 400)
+        self.assertEqual(self.metric["state_order"], ["S", "p", "v", "a_w"])
+        self.assertTrue(self.metric["arbitrary_time_varying_tau_inside_memory"])
+        self.assertTrue(self.metric["exact_rational_path_matrices"])
+        self.assertTrue(self.metric["validated_interval_matrix_arithmetic"])
+        self.assertTrue(
+            self.metric["OU_action_matrix_bound"]["cross_coefficient_not_scalarized"]
+        )
+        self.assertTrue(
+            self.metric["measurement_conditioning"]["normal_live_accelerometer_every_sample"]
+        )
+        self.assertTrue(
+            self.metric["measurement_conditioning"]["R_S_tau_lag_certificate_consumed"]
+        )
+        self.assertFalse(self.metric["P3_FULL_MATRIX_COMPARISON_CLOSED"])
+        self.assertFalse(self.metric["P3_PROMOTED"])
+
     def test_rs_corrective_force_cannot_be_scalarized_away(self):
         req = self.j["R_S_corrective_force_requirements"]
         self.assertTrue(req["use_actual_applied_R_S_on_selected_pseudo_updates"])
@@ -134,6 +157,13 @@ class Sea3RsInnovationP3Test(unittest.TestCase):
         self.assertFalse(self.lag["source_history_graph_consumed"])
         self.assertFalse(self.lag["predecessor_path_enumeration_consumed"])
         self.assertFalse(self.lag["old_P2_800_state_graph_consumed"])
+        self.assertFalse(self.metric["source_history_graph_consumed"])
+        self.assertFalse(self.metric["predecessor_path_enumeration_consumed"])
+        self.assertFalse(self.metric["old_P2_800_state_graph_consumed"])
+        self.assertFalse(self.metric["determinant_trace_scalarization_used"])
+        self.assertFalse(self.metric["scalar_information_beta_used"])
+        self.assertFalse(self.metric["per_sample_Riccati_lower_propagation_used"])
+        self.assertFalse(self.metric["ordinary_floating_eigensolver_used"])
         self.assertEqual(self.d["useful_gate"], 1e-18)
 
     def test_gate_fails_closed_until_lw_and_full_matrix_composition(self):
