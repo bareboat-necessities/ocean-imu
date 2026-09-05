@@ -17,14 +17,20 @@ select one firing from each of the disjoint lag windows
 
     [0,g], [2g,3g], [4g,5g].
 
-Those windows are separated by at least ``g`` for every legal choice, which is
-exactly what the outward interval Vandermonde inverse needs.  Consequently the
-translation observation memory is only ``5g``; it does not need the 1 s vector
-PE recurrence as artificial spacing between S packets.  The vector pair and the
-three S packets may live in overlapping backward windows ending at the same
-Riccati endpoint, so the common covariance memory is ``max(5g,T_PE)``, not their
-sum.  Cross-block covariance is still paid by the existing trace/diagonal
-Loewner dominators.
+Those windows are separated by at least ``g`` for every legal choice.  The
+inverse of the resulting quadratic Vandermonde matrix is evaluated here from
+its exact Lagrange formula.  This matters for interval arithmetic: generic
+Gauss-Jordan elimination forgets that repeated occurrences of the same lag are
+dependent and can create a false zero-crossing pivot even though the three lag
+windows are strictly ordered.  The closed-form rational expression preserves
+that ordering and is outward evaluated using the repository Interval layer.
+
+Consequently the translation observation memory is only ``5g``; it does not
+need the 1 s vector PE recurrence as artificial spacing between S packets.  The
+vector pair and the three S packets may live in overlapping backward windows
+ending at the same Riccati endpoint, so the common covariance memory is
+``max(5g,T_PE)``, not their sum.  Cross-block covariance is still paid by the
+existing trace/diagonal Loewner dominators.
 
 This helper deliberately keeps the #489 source-side architecture intact:
 
@@ -43,6 +49,45 @@ import ou3_sea3_riccati_tube as BASE
 
 
 QUALIFICATION = "OU3_SEA3_ENDPOINT_REFERENCED_TRANSLATION_COVARIANCE"
+
+
+def _endpoint_window_integrator_inverse(gap: float):
+    """Outward inverse for rows ``[1,t,t^2/2]`` on the three guaranteed windows.
+
+    Let V have rows ``[1,t,t^2]``.  Its inverse is the coefficient matrix of
+    the three Lagrange polynomials.  Since the physical observation matrix is
+    ``B = V diag(1,1,1/2)``, ``B^-1 = diag(1,1,2) V^-1``.  Evaluating that
+    identity directly avoids the dependency loss of interval elimination.
+    """
+    g = BASE.pos(gap, "gap")
+    t0 = BASE.Interval.outward_bounds(0.0, g)
+    t1 = BASE.Interval.outward_bounds(2.0 * g, 3.0 * g)
+    t2 = BASE.Interval.outward_bounds(4.0 * g, 5.0 * g)
+
+    d0 = (t0 - t1) * (t0 - t2)
+    d1 = (t1 - t0) * (t1 - t2)
+    d2 = (t2 - t0) * (t2 - t1)
+    for i, d in enumerate((d0, d1, d2)):
+        if d.lo <= 0.0 <= d.hi:
+            raise RuntimeError(f"endpoint Vandermonde denominator {i} lost separation")
+
+    return [
+        [
+            (t1 * t2) / d0,
+            (t0 * t2) / d1,
+            (t0 * t1) / d2,
+        ],
+        [
+            -(t1 + t2) / d0,
+            -(t0 + t2) / d1,
+            -(t0 + t1) / d2,
+        ],
+        [
+            BASE.I(2.0) / d0,
+            BASE.I(2.0) / d1,
+            BASE.I(2.0) / d2,
+        ],
+    ]
 
 
 def global_translation_upper(dynamic: dict, live: dict,
@@ -71,7 +116,7 @@ def global_translation_upper(dynamic: dict, live: dict,
     # T_PE interval.  The common full-state covariance memory is their union.
     Tword = BASE.up(max(Tobs, Tpe))
 
-    Binv = BASE.integrator_inverse(gap, spacing)
+    Binv = _endpoint_window_integrator_inverse(gap)
     qc_hi = BASE.up(2.0 * sigma_hi * sigma_hi / tau_lo)
     s_nuis = BASE.up(sigma_hi * sigma_hi * (Tobs ** 3 / 6.0) ** 2)
     s_proc = BASE.up(qc_hi * Tobs ** 7 / 252.0)
@@ -82,10 +127,10 @@ def global_translation_upper(dynamic: dict, live: dict,
         for i in range(3)
     ]
 
-    # BASE.integrator_inverse is for rows [1,+ell,0.5 ell^2] in [S,p,v].
-    # Endpoint lags require [1,-ell,0.5 ell^2], which is exactly the sign
-    # similarity below.  No subsequent Phi(Tword) propagation is admissible:
-    # this covariance already refers to x(T).
+    # The closed-form inverse above is for rows [1,+ell,0.5 ell^2] in
+    # [S,p,v].  Endpoint lags require [1,-ell,0.5 ell^2], which is exactly the
+    # sign similarity below.  No subsequent Phi(Tword) propagation is
+    # admissible: this covariance already refers to x(T).
     Cspv_forward_sign = BASE.matrix_symmetric_hull(
         BASE.matrix_mul(BASE.matrix_mul(Binv, R), BASE.matrix_transpose(Binv))
     )
@@ -136,6 +181,8 @@ def global_translation_upper(dynamic: dict, live: dict,
         "forward_propagation_after_endpoint_reconstruction": False,
         "S_observation_spacing_uses_vector_PE": False,
         "S_observation_window_layout": "[0,g],[2g,3g],[4g,5g]",
+        "S_observation_inverse_route": "OUTWARD_CLOSED_FORM_LAGRANGE_VANDERMONDE",
+        "generic_interval_gauss_jordan_used_for_S_observation": False,
         "S_and_vector_PE_memories_overlap_at_endpoint": True,
         "covariance_memory_is_max_not_sum": True,
         "full_word_process_noise_dominator_retained": True,
