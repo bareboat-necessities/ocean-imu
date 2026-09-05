@@ -27,10 +27,12 @@ jobs:
       - name: Build source-uniform finite-memory covariance geometry
         run: |
           python3 tools/ou3_sea3_riccati_tube_factored.py --output /tmp/ou3_sea3_metric_memory.json
+          python3 tools/ou3_sea3_word_process_memory.py --output /tmp/ou3_sea3_word_process_memory.json
           python3 tools/ou3_sea3_p3_conditional_composition.py --output /tmp/ou3_sea3_conditional_p3.json
           python3 - <<'PY'
           import json
           d=json.load(open('/tmp/ou3_sea3_metric_memory.json'))
+          q=json.load(open('/tmp/ou3_sea3_word_process_memory.json'))
           c=json.load(open('/tmp/ou3_sea3_conditional_p3.json'))
           assert d['validation_pass'], d['validation_failures']
           assert d['source_generated_not_trajectory_fit'] is True
@@ -41,13 +43,18 @@ jobs:
           assert d['time_varying_source_allowed_inside_covariance_memory_window'] is True
           assert d['endpoint_referenced_translation_covariance'] is True
           assert d['post_reconstruction_forward_propagation_used'] is False
+          assert q['validation_pass'], q['validation_failures']
+          assert q['canonical_source'] == 'COMPLETE_SEA3_NORMAL_LIVE_WORD'
+          assert q['component_of_complete_SEA3_full_word'] is True
+          assert q['one_step_full_state_Q_used_as_contraction_ratio'] is False
+          assert q['actual_R_S_information_replaced_by_process_strictness'] is False
+          assert q['actual_applied_SpectralMSE_R_S_must_be_composed_separately'] is True
           assert c['validation_pass'], c['validation_failures']
           assert c['canonical_source'] == 'COMPLETE_SEA3_NORMAL_LIVE_WORD'
           assert c['actual_applied_SpectralMSE_R_S_consumed'] is True
           assert c['one_step_process_Q_used_as_contraction_strictness'] is False
-          # The tube's own current-sample delta is diagnostic only here.  It
-          # must not promote canonical P3; only its finite-memory Pbar geometry
-          # is consumed by the complete-word R_S composition.
+          # The tube's own current-sample delta remains diagnostic only.  The
+          # process-memory lemma is likewise not a promotion route by itself.
           print('MEMORY_TIMING', d['covariance_memory'])
           print('H_PBAR_DIAG', d['modes']['H']['Pbar_diagonal_variance_upper'])
           print('A_PBAR_DIAG', d['modes']['A']['Pbar_diagonal_variance_upper'])
@@ -55,16 +62,25 @@ jobs:
           print('A_PBAR_TRACE', d['modes']['A']['Pbar_lambda_max_trace_upper'])
           print('TUBE_H_DELTA_DIAGNOSTIC_ONLY', d['modes']['H']['relative_Riccati_injection_margin_lower'])
           print('TUBE_A_DELTA_DIAGNOSTIC_ONLY', d['modes']['A']['relative_Riccati_injection_margin_lower'])
+          print('PROCESS_MEMORY_HORIZON', q['guaranteed_constant_active_process_horizon_s'])
+          print('PROCESS_MEMORY_X', q['integrated_OU_x_interval'])
+          print('PROCESS_MEMORY_RHO', q['integrated_OU_scaled_lambda_min_lower'])
+          print('PROCESS_MEMORY_H', q['modes']['H']['pre_measurement_process_memory_lambda_min_lower'])
+          print('PROCESS_MEMORY_A', q['modes']['A']['pre_measurement_process_memory_lambda_min_lower'])
           print('COMPLETE_SEA3_H18_INFORMATION', c['H18_information_lambda_min_lower'])
           print('A_BIAS_GAP', c['A21_bias_homogeneous_contraction_gap_lower'])
           PY
-      - name: Test conditional complete SEA3 composition
+      - name: Test complete SEA3 metric-memory lemmas
         working-directory: tests/validation
-        run: python3 -m unittest -v test_ou3_sea3_p3_conditional_composition
+        run: |
+          python3 -m unittest -v \
+            test_ou3_sea3_word_process_memory \
+            test_ou3_sea3_p3_conditional_composition
       - uses: actions/upload-artifact@v6
         with:
           name: ou3-sea3-metric-memory
           path: |
             /tmp/ou3_sea3_metric_memory.json
+            /tmp/ou3_sea3_word_process_memory.json
             /tmp/ou3_sea3_conditional_p3.json
           retention-days: 7
