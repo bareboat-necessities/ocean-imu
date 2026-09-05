@@ -6,7 +6,7 @@ import unittest
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools"))
 
-import ou3_sea3_h18_process_forgetting as mod  # noqa: E402
+import ou3_sea3_h18_process_forgetting_preconditioned as mod  # noqa: E402
 
 
 class Sea3H18ProcessForgettingTest(unittest.TestCase):
@@ -31,6 +31,12 @@ class Sea3H18ProcessForgettingTest(unittest.TestCase):
         self.assertTrue(math.isfinite(pivot))
         self.assertGreater(pivot, 0.0)
         self.assertGreater(self.d["parameter_cover"]["accepted_cells"], 0)
+
+    def test_validated_congruence_is_numerical_tightening_only(self):
+        self.assertTrue(self.d["validated_fixed_point_congruence_preconditioner_available"])
+        self.assertTrue(self.d["same_complete_SEA3_H18_matrix_family_as_canonical_module"])
+        self.assertFalse(self.d["floating_midpoint_factorization_accepted_as_proof"])
+        self.assertGreaterEqual(self.d["adaptive_refinement_depth"], 5)
 
     def test_measurement_conditioning_retains_applied_spectral_mse_rs(self):
         m = self.d["measurement_conditioning"]
