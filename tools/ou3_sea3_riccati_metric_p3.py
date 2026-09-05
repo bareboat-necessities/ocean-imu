@@ -2,22 +2,18 @@
 """Canonical complete-source OU-III SEA3 P3 gate.
 
 P3 is one H18/A21 Normal-Live Riccati word.  The promotable numerical object is
-not a product of separately worst information/covariance certificates.  It is
-the exact joint propagation of
-
-    P_k, Psi_k, Omega_k
-
-on the same source/event path, with
+the exact joint propagation of P_k, Psi_k and Omega_k on the same complete
+source/event path, with
 
     P_k = Psi_k P_0 Psi_k^T + Omega_k.
 
+The canonical algebra is implemented by ``ou3_sea3_full_word_riccati_backend``.
 Prediction, every accepted/due Joseph measurement update, and every PSD a_w
-covariance-floor event update all three objects consistently.  The useful
-contraction gate is the full-matrix inequality
+covariance-floor event update all three objects consistently.  The useful gate
+is the full-matrix inequality
 
-    Omega_W - delta P_W >= 0,   delta >= 1e-18,
+    Omega_W - delta P_W >= 0,   delta >= 1e-18.
 
-which is equivalent to moving-metric contraction of the homogeneous transition.
 No D_W/L_W split, zero-start Riccati concavity replacement, blockwise ratio,
 source-history graph, or scalarized substitute may promote P3.
 """
@@ -28,12 +24,13 @@ import json
 import math
 from pathlib import Path
 
+import ou3_sea3_full_word_riccati_backend as BACKEND
 import ou3_sea3_p3_full_preconditions as FULL
 import ou3_sea3_rs_innovation_p3 as RS_COMPONENT
 
 REPO = Path(__file__).resolve().parents[1]
 DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
-SCHEMA = 7
+SCHEMA = 8
 QUALIFICATION = "OU3_SEA3_FULL_NORMAL_LIVE_RICCATI_WORD_P3_GATE"
 USEFUL_GATE = 1.0e-18
 
@@ -44,12 +41,16 @@ def build(domain_path: Path = DEFAULT_DOMAIN, tube_path: Path | None = None) -> 
     ff = FULL.validate(full)
     rs = RS_COMPONENT.build(path, tube_path)
     rf = RS_COMPONENT.validate(rs)
-    if ff or rf:
+    bf = BACKEND.validate_backend()
+    if ff or rf or bf:
         raise RuntimeError(
-            f"canonical P3 prerequisites failed: full={ff}, four_S_component={rf}"
+            "canonical P3 prerequisites failed: "
+            f"full={ff}, four_S_component={rf}, joint_backend={bf}"
         )
 
     numeric = full["final_numeric_contract"]
+    backend_parity = BACKEND.shipping_source_parity()
+    backend_self_test = BACKEND._self_test()
     modes = {
         "H": {
             "dimension": 18,
@@ -123,6 +124,13 @@ def build(domain_path: Path = DEFAULT_DOMAIN, tube_path: Path | None = None) -> 
         "global_physical_SEA3_left_inclusion_claimed": False,
         "stochastic_noise_realization_used_as_homogeneous_pruning": False,
         "joint_P_Psi_Omega_word_required": True,
+        "joint_P_Psi_Omega_backend_consumed": True,
+        "joint_backend_validation_pass": True,
+        "joint_backend_shipping_source_parity": backend_parity,
+        "joint_backend_shipping_source_parity_pass": all(backend_parity.values()),
+        "joint_backend_kernel_self_test_not_P3": backend_self_test[
+            "kernel_self_test_only_not_P3"
+        ],
         "exact_covariance_decomposition_identity": (
             "P_k = Psi_k P_0 Psi_k^T + Omega_k"
         ),
@@ -166,14 +174,13 @@ def build(domain_path: Path = DEFAULT_DOMAIN, tube_path: Path | None = None) -> 
         "P3_CANONICAL_PASS": False,
         "P4_MAY_CONSUME_P3": False,
         "P3_CANONICAL_FAIL_REASONS": [
-            "the complete 3 s Normal-Live event word has not yet been propagated as one joint (P,Psi,Omega) H18/A21 object",
-            "the final word must carry the complete measurement-only front-end/tuner source state and use the same source path for F, Q, T_S, applied per-axis R_S, Racc and Rmag",
+            "the exact joint P/Psi/Omega backend is present, but the complete 3 s Normal-Live source/event word has not yet been assembled and propagated through it for H18/A21",
+            "the assembler must carry the complete measurement-only front-end/tuner state and use the same source path for F, Q, T_S, applied per-axis R_S, Racc and Rmag",
             "every valid accelerometer update, every due S update, admissible asynchronous magnetic PE event, every prediction Q and every recurrent PSD a_w-floor event must update the same P/Psi/Omega recursion",
             "the full H18/A21 interval matrix Omega_W-delta*P_W has not yet passed validated LDLT at the unchanged 1e-18 gate",
         ],
         "next_obligation": (
-            "implement the complete joint P/Psi/Omega Normal-Live word only; "
-            "do not close P3 through a separately bounded information/covariance product"
+            "assemble the complete source-reachable H18/A21 Normal-Live word into the exact joint backend; do not introduce another reduced certificate"
         ),
     }
 
@@ -217,6 +224,10 @@ def validate(d: dict) -> list[str]:
         "A_mode_finite_bias_correlation_consumed",
         "SEA3_height_period_partition_coupling_consumed",
         "joint_P_Psi_Omega_word_required",
+        "joint_P_Psi_Omega_backend_consumed",
+        "joint_backend_validation_pass",
+        "joint_backend_shipping_source_parity_pass",
+        "joint_backend_kernel_self_test_not_P3",
         "exact_measurement_dissipation_identity_available",
         "batch_innovation_information_identity_available",
         "P3_FOUNDATION_PASS",
@@ -225,6 +236,9 @@ def validate(d: dict) -> list[str]:
     for key in required_true:
         if d.get(key) is not True:
             f.append(f"{key} is not true")
+
+    if not all(d.get("joint_backend_shipping_source_parity", {}).values()):
+        f.append("joint backend shipping-source parity failed")
 
     required_false = (
         "trajectory_replay_used", "filter_changed", "declared_domain_shrunk",
@@ -292,6 +306,7 @@ def main() -> int:
     print(json.dumps({
         "architecture": d["canonical_P3_architecture"],
         "word_horizon_s": d["common_word_horizon_s"],
+        "joint_backend": d["joint_P_Psi_Omega_backend_consumed"],
         "final_inequality": d["required_final_inequality"],
         "P3_CANONICAL_PASS": d["P3_CANONICAL_PASS"],
         "fail_reasons": d["P3_CANONICAL_FAIL_REASONS"],
