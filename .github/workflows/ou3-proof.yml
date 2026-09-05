@@ -124,6 +124,27 @@ jobs:
         working-directory: tests/validation
         run: python3 -m unittest -v test_ou3_sea3_riccati_tube
 
+      - name: Diagnose source-history-free finite-word translation lower
+        run: |
+          python3 tools/ou3_sea3_finite_word_translation.py \
+            --tube /tmp/ou3_sea3_riccati_tube.json \
+            --output /tmp/ou3_sea3_finite_word_translation.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/ou3_sea3_finite_word_translation.json'))
+          assert d['validation_pass'], d['validation_failures']
+          assert d['source_history_graph_consumed'] is False
+          assert d['predecessor_path_enumeration_consumed'] is False
+          assert d['old_P2_800_state_graph_consumed'] is False
+          assert d['global_source_interval_reselected_independently_each_step'] is True
+          assert d['useful_gate'] == 1e-18
+          print('FINITE_WORD_TRANSLATION_X', d['global_x_h_over_tau'])
+          print('FINITE_WORD_TRANSLATION_DELTA', d['relative_word_injection_floor_lower'])
+          print('FINITE_WORD_TRANSLATION_PASS', d['pass'])
+          print('FINITE_WORD_TRANSLATION_DIAG', d['endpoint_common_lower_diagonal_z'])
+          print('FINITE_WORD_TRANSLATION_PROFILE', d['numerical_profile'])
+          PY
+
       - name: Build and enforce canonical moving-Riccati P3 gate
         run: |
           python3 tools/ou3_sea3_riccati_metric_p3.py \
@@ -162,6 +183,7 @@ jobs:
           name: ou3-p3-moving-riccati
           path: |
             /tmp/ou3_sea3_riccati_tube.json
+            /tmp/ou3_sea3_finite_word_translation.json
             /tmp/ou3_sea3_riccati_metric_p3.json
           retention-days: 7
 
