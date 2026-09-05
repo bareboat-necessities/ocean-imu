@@ -40,7 +40,7 @@ jobs:
       - name: Compile proof tooling
         run: make -C tests/validation build
 
-      - name: Enforce new canonical architecture and retained local linear primitives
+      - name: Enforce retained local linear primitives
         working-directory: tests/validation
         run: |
           python3 -m unittest -v \
@@ -102,7 +102,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Build quantitative source-uniform moving-Riccati tube
+      - name: Build endpoint covariance upper
         run: |
           python3 tools/ou3_sea3_riccati_tube_factored.py \
             --output /tmp/ou3_sea3_riccati_tube.json
@@ -114,78 +114,81 @@ jobs:
           assert d['predecessor_path_enumeration_consumed'] is False
           assert d['P2_800_state_partition_consumed'] is False
           assert d['cell_cover']['history_depth'] == 0
-          print('RICCATI_TUBE_PASS', d['RICCATI_TUBE_PASS'])
-          print('H_DELTA', d['modes']['H']['relative_Riccati_injection_margin_lower'])
-          print('A_DELTA', d['modes']['A']['relative_Riccati_injection_margin_lower'])
-          print('CURRENT_SOURCE_CELLS', d['cell_cover']['joint_current_source_cells'])
+          print('P3_ENDPOINT_COVARIANCE_MEMORY', d['covariance_memory'])
+          print('H_PBAR_TRACE_UPPER', d['modes']['H']['Pbar_lambda_max_trace_upper'])
+          print('A_PBAR_TRACE_UPPER', d['modes']['A']['Pbar_lambda_max_trace_upper'])
+          print('OBSOLETE_ONE_STEP_DELTA_H_DIAGNOSTIC_ONLY', d['modes']['H']['relative_Riccati_injection_margin_lower'])
           PY
 
-      - name: Test quantitative Riccati-tube contract
+      - name: Test endpoint covariance-upper contract
         working-directory: tests/validation
         run: python3 -m unittest -v test_ou3_sea3_riccati_tube
 
-      - name: Diagnose source-history-free finite-word translation lower
+      - name: Build canonical lifted finite-word architecture
         run: |
-          python3 tools/ou3_sea3_finite_word_translation_v2.py \
+          python3 tools/ou3_sea3_lifted_word_p3.py \
             --tube /tmp/ou3_sea3_riccati_tube.json \
-            --output /tmp/ou3_sea3_finite_word_translation.json
+            --output /tmp/ou3_sea3_lifted_word_p3.json
           python3 - <<'PY'
           import json
-          d=json.load(open('/tmp/ou3_sea3_finite_word_translation.json'))
+          d=json.load(open('/tmp/ou3_sea3_lifted_word_p3.json'))
           assert d['validation_pass'], d['validation_failures']
+          assert d['P3_ARCHITECTURE_READY'] is True
           assert d['source_history_graph_consumed'] is False
-          assert d['predecessor_path_enumeration_consumed'] is False
-          assert d['old_P2_800_state_graph_consumed'] is False
-          assert d['history_depth'] == 0
-          assert d['global_source_interval_reselected_independently_each_step'] is True
+          assert d['per_sample_Riccati_lower_propagation_used'] is False
+          assert d['per_sample_SPD_lower_required'] is False
+          assert d['commit_aligned_source_word_consumed'] is False
+          assert d['determinant_trace_scalarization_used'] is False
+          assert d['scalar_information_beta_used'] is False
           assert d['useful_gate'] == 1e-18
-          print('FINITE_WORD_TRANSLATION_X', d['global_x_h_over_tau'])
-          print('FINITE_WORD_TRANSLATION_CELLS', d['instantaneous_x_cells'])
-          print('FINITE_WORD_TRANSLATION_DELTA', d['relative_word_injection_floor_lower'])
-          print('FINITE_WORD_TRANSLATION_PASS', d['pass'])
-          print('FINITE_WORD_TRANSLATION_DIAG', d['endpoint_common_lower_diagonal_z'])
-          print('FINITE_WORD_TRANSLATION_PROFILE', d['numerical_profile'])
+          print('P3_ARCHITECTURE', d['canonical_P3_architecture'])
+          print('P3_WORD_HORIZON_S', d['word_horizon_s'])
+          print('P3_H_SELECTED_MODES', d['modes']['H']['selected_process_mode_dimension'])
+          print('P3_A_SELECTED_MODES', d['modes']['A']['selected_process_mode_dimension'])
+          print('P3_NEXT_OBLIGATION', d['next_obligation'])
           PY
 
-      - name: Build and enforce canonical moving-Riccati P3 gate
+      - name: Build canonical P3 gate
         run: |
           python3 tools/ou3_sea3_riccati_metric_p3.py \
             --tube /tmp/ou3_sea3_riccati_tube.json \
             --output /tmp/ou3_sea3_riccati_metric_p3.json
           python3 - <<'PY'
           import json
-          tube=json.load(open('/tmp/ou3_sea3_riccati_tube.json'))
           d=json.load(open('/tmp/ou3_sea3_riccati_metric_p3.json'))
           assert d['validation_pass'], d['validation_failures']
-          assert d['P3_FOUNDATION_PASS'] is True
-          assert d['old_P2_800_state_graph_consumed'] is False
-          assert d['old_P2_V1_history_frontier_consumed'] is False
-          assert d['source_history_graph_consumed'] is False
-          assert d['predecessor_path_enumeration_consumed'] is False
+          assert d['P3_ARCHITECTURE_READY'] is True
+          assert d['one_sample_strict_Riccati_margin_consumed'] is False
+          assert d['commit_aligned_source_word_consumed'] is False
+          assert d['per_sample_SPD_lower_required'] is False
+          assert d['determinant_trace_scalarization_used'] is False
+          assert d['scalar_information_beta_used'] is False
           assert d['useful_gate'] == 1e-18
-          assert d['quantitative_Riccati_tube_pass'] == tube['RICCATI_TUBE_PASS']
-          assert d['P3_CANONICAL_PASS'] == tube['RICCATI_TUBE_PASS']
-          assert d['P4_MAY_CONSUME_P3'] == d['P3_CANONICAL_PASS']
-          print('P3_H_DELTA', d['modes']['H']['relative_Riccati_injection_margin_lower'])
-          print('P3_A_DELTA', d['modes']['A']['relative_Riccati_injection_margin_lower'])
           print('P3_CANONICAL_PASS', d['P3_CANONICAL_PASS'])
           print('P3_FAIL_REASONS', d['P3_CANONICAL_FAIL_REASONS'])
-          if not d['P3_CANONICAL_PASS']:
-              raise SystemExit('canonical moving-Riccati P3 FAIL: ' + '; '.join(d['P3_CANONICAL_FAIL_REASONS']))
           PY
 
-      - name: Test moving-Riccati P3 contract
+      - name: Test lifted P3 contract
         working-directory: tests/validation
         run: python3 -m unittest -v test_ou3_sea3_riccati_metric_p3
 
-      - name: Upload canonical moving-Riccati P3 artifacts
+      - name: Enforce canonical P3 quantitative closure
+        run: |
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/ou3_sea3_riccati_metric_p3.json'))
+          if not d['P3_CANONICAL_PASS']:
+              raise SystemExit('canonical lifted finite-word P3 FAIL: ' + '; '.join(d['P3_CANONICAL_FAIL_REASONS']))
+          PY
+
+      - name: Upload canonical P3 artifacts
         if: always()
         uses: actions/upload-artifact@v6
         with:
-          name: ou3-p3-moving-riccati
+          name: ou3-p3-lifted-word
           path: |
             /tmp/ou3_sea3_riccati_tube.json
-            /tmp/ou3_sea3_finite_word_translation.json
+            /tmp/ou3_sea3_lifted_word_p3.json
             /tmp/ou3_sea3_riccati_metric_p3.json
           retention-days: 7
 
