@@ -126,7 +126,7 @@ jobs:
 
       - name: Diagnose source-history-free finite-word translation lower
         run: |
-          python3 tools/ou3_sea3_finite_word_translation.py \
+          python3 tools/ou3_sea3_finite_word_translation_v2.py \
             --tube /tmp/ou3_sea3_riccati_tube.json \
             --output /tmp/ou3_sea3_finite_word_translation.json
           python3 - <<'PY'
@@ -136,9 +136,11 @@ jobs:
           assert d['source_history_graph_consumed'] is False
           assert d['predecessor_path_enumeration_consumed'] is False
           assert d['old_P2_800_state_graph_consumed'] is False
+          assert d['history_depth'] == 0
           assert d['global_source_interval_reselected_independently_each_step'] is True
           assert d['useful_gate'] == 1e-18
           print('FINITE_WORD_TRANSLATION_X', d['global_x_h_over_tau'])
+          print('FINITE_WORD_TRANSLATION_CELLS', d['instantaneous_x_cells'])
           print('FINITE_WORD_TRANSLATION_DELTA', d['relative_word_injection_floor_lower'])
           print('FINITE_WORD_TRANSLATION_PASS', d['pass'])
           print('FINITE_WORD_TRANSLATION_DIAG', d['endpoint_common_lower_diagonal_z'])
