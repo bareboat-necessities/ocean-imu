@@ -18,39 +18,54 @@ The asynchronous vector-PE certificate supplies
     A^T A >= alpha6 I6
 
 for the eta6 columns after the translational a_w contribution is retained in
-its own block.  The corrected complete-SEA3 four-S certificate supplies
-
-    B^T B >= dS I12
-
-for the physical translation coordinates, using actual applied SpectralMSE
-R_S.  Its covariance tightening uses the independence of configured S
-measurement noise between selected updates while retaining a four-record trace
-bound for correlated process nuisance.  It therefore does not replace the
+its own block.  The corrected complete-SEA3 four-S certificate supplies the
+physical translation observation inverse row bounds using actual applied
+SpectralMSE R_S.  Its covariance tightening uses the independence of configured
+S measurement noise between selected updates while retaining a four-record
+trace bound for correlated process nuisance.  It therefore does not replace the
 complete SEA3 source or change the estimator.
 
-The only cross block in the selected accelerometer rows is the a_w column.  For
-the two required PE occurrences its whitened norm is bounded by
+The earlier composition collapsed the complete four-S block to one scalar dS
+before paying the accelerometer cross.  That is unnecessarily destructive:
+the only translation column present in the selected accelerometer PE rows is
+``a_w``.  The four-S physical inverse already gives separate rigorous row-l1
+bounds r_i for [S,gp,g^2v,g^3a_w].  If y=M z then
 
-    ||C||^2 <= 2 / (Racc_min * g^6),
+    |z_i| <= r_i ||y||_infinity <= r_i ||y||_2,
+
+so, summing the four coordinate inequalities,
+
+    ||M z||_2^2 >= (1/4) sum_i z_i^2/r_i^2.
+
+With Sigma_Y <= lambda_Y I this proves the directional information matrix
+
+    M^T Sigma_Y^-1 M >= diag_i(1/(4 lambda_Y r_i^2)).
+
+This is a Loewner matrix lower obtained from the same four actual S records;
+it is not a blockwise contraction ratio.  In particular the a_w direction is
+much stronger than the weakest translation direction.
+
+The only cross block in the selected vector rows is the a_w column.  For the
+two required PE occurrences its whitened norm is bounded by
+
+    ||C_aw||^2 <= 2 / (Racc_min * g^6),
 
 because the body/world rotation and the time-varying OU attenuation have norm
-at most one.  Magnetometer rows have no translation columns.
+at most one.  Magnetometer rows have no translation columns.  Therefore for
+u=eta6 and w=g^3 a_w,
 
-Hence for all u,v,
+  ||A u + C_aw w||^2 + d_aw ||w||^2
+    >= lambda_c (||u||^2+||w||^2),
 
-  ||A u + C v||^2 + ||B v||^2
-    >= (sqrt(alpha6)||u|| - ||C||||v||)^2 + dS||v||^2.
+where
 
-The 2x2 scalar quadratic has determinant alpha6*dS and trace
-alpha6+||C||^2+dS, so the complete selected-record information obeys the
-rigorous full-matrix bound
+  lambda_c >= alpha6*d_aw/(alpha6+||C_aw||^2+d_aw).
 
-    D_H18 >= alpha6*dS/(alpha6+||C||^2+dS) I18.
-
-This scalar 2x2 calculation is only an analytic lower for the coupled 18x18
-quadratic form; it is not a blockwise contraction ratio and does not promote
-P3.  All omitted valid accelerometer, magnetometer and S updates contribute PSD
-information and can only improve this lower bound.
+The remaining S,gp,g^2v directions do not enter C_aw and retain their own
+directional four-S lower.  The full 18-state information lower is the minimum
+of lambda_c and those three directional entries.  All omitted valid
+accelerometer, magnetometer and S updates contribute PSD information and can
+only improve the bound.
 """
 from __future__ import annotations
 
@@ -66,9 +81,29 @@ import ou3_sea3_windowed_vector_pe as PE
 
 REPO = Path(__file__).resolve().parents[1]
 DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
-SCHEMA = 1
-QUALIFICATION = "OU3_COMPLETE_SEA3_H18_FULL_INFORMATION_COMPOSITION"
+SCHEMA = 2
+QUALIFICATION = "OU3_COMPLETE_SEA3_H18_DIRECTIONAL_INFORMATION_COMPOSITION"
 USEFUL_GATE = 1.0e-18
+
+
+def _directional_translation_information(four: dict) -> dict[str, float]:
+    noise = four["selected_S_record_noise"]
+    lam = float(noise["four_record_covariance_lambda_max_upper"])
+    rows = four["newton_coordinate_information"]["physical_state_recovery"][
+        "physical_state_inverse_raw_record_row_l1_upper"
+    ]
+    order = ("S", "g*p", "g^2*v", "g^3*a_w")
+    if not (math.isfinite(lam) and lam > 0.0):
+        raise RuntimeError("four-S record covariance upper is not finite positive")
+    out: dict[str, float] = {}
+    for name in order:
+        r = float(rows[name])
+        if not (math.isfinite(r) and r > 0.0):
+            raise RuntimeError(f"invalid four-S physical inverse row bound {name}")
+        out[name] = down(1.0 / up(4.0 * up(lam * up(r * r))))
+        if not (math.isfinite(out[name]) and out[name] > 0.0):
+            raise RuntimeError(f"directional four-S information lost positivity for {name}")
+    return out
 
 
 def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
@@ -90,20 +125,31 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         raise RuntimeError("four-S lemma is not bound to the same complete SEA3 source")
 
     alpha6 = float(pe["eta6_information"]["alpha_6_information_lower"])
-    dS = float(four["newton_coordinate_information"]["D_S_physical_lambda_min_lower"])
+    scalar_dS = float(four["newton_coordinate_information"]["D_S_physical_lambda_min_lower"])
+    directional = _directional_translation_information(four)
     g = float(four["uniform_S_gap_s_upper"])
     racc_var = float(pe["measurement_runtime"]["accelerometer_variance_upper"])
-    if not (alpha6 > 0.0 and dS > 0.0 and g > 0.0 and racc_var > 0.0):
+    if not (alpha6 > 0.0 and scalar_dS > 0.0 and g > 0.0 and racc_var > 0.0):
         raise RuntimeError("H18 information inputs lost strict positivity")
 
     # The PE witness uses two required accelerometer occurrences.  In the z
     # coordinates a_w = z_aw/g^3.  R_wb and OU homogeneous attenuation have
     # operator norm <=1, so each whitened a_w block has norm <=1/(sqrt(Ra)g^3).
     cross_norm_sq_upper = up(2.0 / (racc_var * (g ** 6)))
-    trace_upper = up(alpha6 + dS + cross_norm_sq_upper)
-    information_lower = down((alpha6 * dS) / trace_upper)
+    d_aw = float(directional["g^3*a_w"])
+    coupled_trace_upper = up(alpha6 + d_aw + cross_norm_sq_upper)
+    coupled_eta_aw_lower = down((alpha6 * d_aw) / coupled_trace_upper)
+    non_aw_lower = min(
+        float(directional["S"]),
+        float(directional["g*p"]),
+        float(directional["g^2*v"]),
+    )
+    information_lower = down(min(coupled_eta_aw_lower, non_aw_lower))
     if not (math.isfinite(information_lower) and information_lower > 0.0):
-        raise RuntimeError("H18 full information lower is not strict")
+        raise RuntimeError("H18 full directional information lower is not strict")
+
+    old_trace_upper = up(alpha6 + scalar_dS + cross_norm_sq_upper)
+    old_scalar_lower = down((alpha6 * scalar_dS) / old_trace_upper)
 
     return {
         "schema": SCHEMA,
@@ -123,33 +169,44 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
             "dimension": 18,
         },
         "eta6_information_lower": alpha6,
-        "translation_information_lower": dS,
+        "translation_information_lower": scalar_dS,
         "translation_information_source": four["qualification"],
+        "directional_translation_information_lower": directional,
+        "directional_four_S_inverse_row_bound_used": True,
+        "four_coordinate_sum_factor": 4.0,
         "uniform_S_gap_s_upper": g,
         "accelerometer_variance_upper": racc_var,
         "selected_PE_accelerometer_occurrences": 2,
         "accelerometer_translation_cross_norm_squared_upper": cross_norm_sq_upper,
+        "accelerometer_cross_touches_only_aw_translation_coordinate": True,
         "useful_gate": USEFUL_GATE,
         "H18_information_useful_gate_pass": information_lower >= USEFUL_GATE,
         "triangular_information_composition": {
-            "form": "||Au+Cv||^2+||Bv||^2",
+            "form": "directional four-S regularizer plus ||A eta6 + C_aw z_aw||^2",
             "A_transpose_A_lower": alpha6,
-            "B_transpose_B_lower": dS,
-            "C_spectral_norm_squared_upper": cross_norm_sq_upper,
-            "scalar_2x2_determinant_lower": down(alpha6 * dS),
-            "scalar_2x2_trace_upper": trace_upper,
+            "legacy_scalar_B_transpose_B_lower_diagnostic": scalar_dS,
+            "directional_B_transpose_B_diagonal_lower": directional,
+            "aw_direction_information_lower": d_aw,
+            "C_aw_spectral_norm_squared_upper": cross_norm_sq_upper,
+            "coupled_eta6_aw_scalar_2x2_determinant_lower": down(alpha6 * d_aw),
+            "coupled_eta6_aw_scalar_2x2_trace_upper": coupled_trace_upper,
+            "coupled_eta6_aw_lambda_min_lower": coupled_eta_aw_lower,
+            "non_aw_translation_lambda_min_lower": non_aw_lower,
             "D_H18_lambda_min_lower": information_lower,
+            "legacy_scalarized_D_H18_lambda_min_lower_diagnostic": old_scalar_lower,
             "full_18x18_matrix_information_lower_closed": True,
         },
+        "directional_information_strictly_improves_legacy_scalarized_bound": (
+            information_lower > old_scalar_lower
+        ),
         "omitted_shipping_measurement_rows_are_PSD_information_only": True,
         "determinant_trace_scalarization_of_18x18_matrix_used": False,
         "blockwise_minimum_ratio_used": False,
         "scalar_information_beta_used": False,
         "P3_promoted": False,
         "next_obligation": (
-            "if the corrected H18 information clears the useful gate, carry it into the same-word "
-            "prior-free full-matrix completion; then extend to A21 using finite accelerometer-bias "
-            "correlation without changing the complete SEA3 source"
+            "use the directional eta6/a_w information headroom in the finite-bias A21 Riccati "
+            "completion while keeping the same complete SEA3 source and 1e-18 gate"
         ),
     }
 
@@ -167,6 +224,9 @@ def validate(d: dict) -> list[str]:
         "tight_four_S_measurement_covariance_structure_consumed",
         "four_S_process_cross_record_trace_bound_retained",
         "same_complete_SEA3_word_supplies_PE_and_translation_information",
+        "directional_four_S_inverse_row_bound_used",
+        "accelerometer_cross_touches_only_aw_translation_coordinate",
+        "directional_information_strictly_improves_legacy_scalarized_bound",
         "omitted_shipping_measurement_rows_are_PSD_information_only",
     ):
         if d.get(key) is not True:
@@ -183,16 +243,27 @@ def validate(d: dict) -> list[str]:
             f.append(f"{key} is not false")
     if float(d.get("useful_gate", math.nan)) != USEFUL_GATE:
         f.append("useful gate changed")
+    directional = d.get("directional_translation_information_lower", {})
+    for key in ("S", "g*p", "g^2*v", "g^3*a_w"):
+        x = directional.get(key)
+        if not isinstance(x, (int, float)) or not (math.isfinite(float(x)) and float(x) > 0.0):
+            f.append(f"invalid directional translation information {key}")
     c = d.get("triangular_information_composition", {})
     if c.get("full_18x18_matrix_information_lower_closed") is not True:
         f.append("H18 full matrix information lower is not closed")
     for key in (
-        "A_transpose_A_lower", "B_transpose_B_lower",
-        "scalar_2x2_determinant_lower", "D_H18_lambda_min_lower",
+        "A_transpose_A_lower", "aw_direction_information_lower",
+        "coupled_eta6_aw_scalar_2x2_determinant_lower",
+        "coupled_eta6_aw_lambda_min_lower", "non_aw_translation_lambda_min_lower",
+        "D_H18_lambda_min_lower",
     ):
         x = c.get(key)
         if not isinstance(x, (int, float)) or not (math.isfinite(float(x)) and float(x) > 0.0):
             f.append(f"invalid positive quantitative field {key}")
+    old = c.get("legacy_scalarized_D_H18_lambda_min_lower_diagnostic")
+    new = c.get("D_H18_lambda_min_lower")
+    if not isinstance(old, (int, float)) or not isinstance(new, (int, float)) or not float(new) > float(old):
+        f.append("directional H18 information did not improve legacy scalar bound")
     return list(dict.fromkeys(f))
 
 
@@ -207,11 +278,14 @@ def main() -> int:
     d["validation_failures"] = failures
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(d, indent=2, sort_keys=True), encoding="utf-8")
+    c = d["triangular_information_composition"]
     print(json.dumps({
         "alpha6": d["eta6_information_lower"],
-        "four_S_translation": d["translation_information_lower"],
-        "cross_norm_sq_upper": d["accelerometer_translation_cross_norm_squared_upper"],
-        "H18_information_lambda_min_lower": d["triangular_information_composition"]["D_H18_lambda_min_lower"],
+        "directional_translation": d["directional_translation_information_lower"],
+        "aw_cross_norm_sq_upper": d["accelerometer_translation_cross_norm_squared_upper"],
+        "legacy_H18_information_lower": c["legacy_scalarized_D_H18_lambda_min_lower_diagnostic"],
+        "directional_H18_information_lower": c["D_H18_lambda_min_lower"],
+        "improvement_factor": c["D_H18_lambda_min_lower"] / c["legacy_scalarized_D_H18_lambda_min_lower_diagnostic"],
         "H18_information_useful_gate_pass": d["H18_information_useful_gate_pass"],
         "failures": failures,
     }, indent=2, sort_keys=True))
