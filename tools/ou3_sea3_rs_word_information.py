@@ -1,52 +1,56 @@
 #!/usr/bin/env python3
-"""SEA3 recurrent R_S word certificate for the OU-III translation block.
+"""SEA3 recurrent R_S four-S translation information certificate.
 
-This producer closes the source-history-free *geometry* and nuisance-covariance
-part of the canonical P3 correction word.  It deliberately does not recurse a
-Riccati covariance lower and it does not replace the applied R_S state by the
-instantaneous SpectralMSE target.
+This is one mandatory component of the complete Normal-Live H18/A21 P3 word.
+It does not promote P3 by itself.
 
-Let g be the certified source-independent maximum S=0 recurrence gap.  Select
+Let g be the certified source-independent maximum S=0 recurrence gap. Select
 one actual pseudo update from each disjoint window
 
     [0,g], [2g,3g], [4g,5g], [6g,7g].
 
-For one translation axis x=[v,p,S,a_w] at the word start, the homogeneous
-S-observation at time t is
+For one translation axis and scaled time u=t/g,
 
-    S(t) = S + t p + t^2 v/2 + c(t) a_w,
+    S(u) = S0 + u (g p0) + u^2/2 (g^2 v0) + cbar(u) (g^3 a0),
+    cbar'''(u) = exp(-int_0^{g u} 1/tau(s) ds) > 0.
 
-where for arbitrary time-varying lambda(t)=1/tau(t)
+The third divided difference therefore has a source-uniform positive lower for
+arbitrary legal time-varying tau.  The determinant is retained only as a rank
+witness.
 
-    c'''(t) = exp(-int_0^t lambda(s) ds) > 0.
+The stronger quantitative step in this version uses Newton divided-difference
+coordinates instead of determinant/Frobenius scalarization.  If z is the vector
+of nested divided differences of the four homogeneous S values, the raw record
+vector is
 
-Scale u=t/g and cbar(u)=c(gu)/g^3.  Then cbar'''(u)=c'''(gu).  The third divided
-difference over four distinct u values is therefore bounded below by
+    y = L(u0,u1,u2,u3) z,
 
-    cbar[u1,u2,u3,u4] >= exp(-7g/tau_min)/6.
+where L is the lower-triangular Newton evaluation matrix.  Its inverse is the
+ordinary divided-difference table.  The guaranteed timing gaps imply validated
+bounds
 
-The polynomial columns [1,u,u^2/2] have zero third divided difference.  Hence
-the four S rows are full rank on [S,g p,g^2 v,g^3 a_w] for *every* legal
-source path, without freezing tau or enumerating source predecessors.
+    ||L^-1||_inf <= 2,
+    ||L^-1||_1   <= 12/5,
 
-The same four selected measurements have a source-uniform nuisance covariance
-upper.  Measurement variance uses the actually applied R_S safety ceiling; OU
-process disturbance is bounded by dropping damping, so
+hence ||L^-1||_2 <= 12/5 and
 
-    Var[Delta S_process(t)] <= q_c,max t^7/252,
-    q_c,max = 2 sigma_max^2/tau_min.
+    L^T L >= (25/144) I.
 
-Trace then gives a safe lambda_max bound on the complete 4x4 selected S-record
-noise covariance.  This is intentionally conservative but preserves the
-important structure: recurrent R_S correction itself makes translation
-observable.  The final H18/A21 P3 gate will combine this observation-space
-certificate with a finite-memory covariance lower in the same coordinates.
+The selected raw-record covariance satisfies Sigma_Y <= lambda_Y I from the
+already certified applied-R_S/process upper, so in Newton coordinates
 
-The deployed default R_S law is SpectralMSE and its target is evaluated at the
-same target tau/sigma/T_S point.  Applied R_S, however, has its own EMA.  This
-producer records that distinction explicitly: target-law similarity is a valid
-source fact, but it is not substituted for the applied R_S state until a
-separate lag/reachability theorem proves that tightening.
+    D_S,z = L^T Sigma_Y^-1 L
+          >= (1/lambda_Y) L^T L
+          >= d_N I,
+
+with d_N>0.  This is a genuine 4x4 matrix inequality in the divided-difference
+coordinates; no determinant/trace eigenvalue conversion and no scalar
+information-beta attenuation is used.
+
+Applied R_S remains distinct from the instantaneous SpectralMSE target.  The
+current safe record-noise upper uses the applied R_S safety ceiling; the final
+complete word must carry the actual joint adaptive source path and may tighten
+this component, but may not replace applied R_S by its target.
 """
 from __future__ import annotations
 
@@ -64,13 +68,13 @@ import ou3_validated_transcendentals as VT
 REPO = Path(__file__).resolve().parents[1]
 WRAPPER = REPO / "src" / "kalman_ou_iii" / "SeaStateFusionFilter_OU_III.h"
 DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
-SCHEMA = 1
-QUALIFICATION = "OU3_SEA3_RS_FOUR_S_TRANSLATION_WORD_V1"
+SCHEMA = 2
+QUALIFICATION = "OU3_SEA3_RS_FOUR_S_TRANSLATION_WORD_V2"
 WINDOW_MULTIPLIERS = ((0.0, 1.0), (2.0, 3.0), (4.0, 5.0), (6.0, 7.0))
 
 
 def _axis_factors(text: str) -> list[float]:
-    out = []
+    out: list[float] = []
     for name in ("R_S_x_factor_", "R_S_y_factor_"):
         m = re.search(rf"float\s+{re.escape(name)}\s*=\s*([0-9.eE+-]+)f", text)
         if not m:
@@ -83,14 +87,6 @@ def _axis_factors(text: str) -> list[float]:
 
 
 def _validated_exp_negative_lower(x: float) -> tuple[float, dict]:
-    """Validated lower bound on exp(-x) for arbitrary finite x>=0.
-
-    ``VT.exp_point`` intentionally accepts only |argument|<=0.5.  Split a
-    larger positive exponent into n equal outward-up pieces, each <=0.5.  Since
-    n*step >= x, exp(-n*step) <= exp(-x); multiplying the validated interval
-    factors therefore gives a rigorous lower bound without ordinary libm in
-    the proof decision.
-    """
     x = float(x)
     if not (math.isfinite(x) and x >= 0.0):
         raise ValueError("finite nonnegative exponential magnitude required")
@@ -99,10 +95,11 @@ def _validated_exp_negative_lower(x: float) -> tuple[float, dict]:
             "method": "VALIDATED_EXP_POINT_PRODUCT",
             "pieces": 0,
             "piece_exponent_upper": 0.0,
+            "ordinary_libm_exp_used": False,
         }
     n = max(1, int(math.ceil(2.0 * x)))
     step = up(x / float(n))
-    while step > 0.5:
+    while step > VT.MAX_ABS_ARGUMENT:
         n += 1
         step = up(x / float(n))
     factor = VT.exp_point(-step)
@@ -119,6 +116,87 @@ def _validated_exp_negative_lower(x: float) -> tuple[float, dict]:
         "covered_exponent_lower": x,
         "product_exponent_upper": up(n * step),
         "ordinary_libm_exp_used": False,
+    }
+
+
+def _safe_add(a: float, b: float) -> float:
+    return up(float(a) + float(b))
+
+
+def _safe_mul(a: float, b: float) -> float:
+    return up(float(a) * float(b))
+
+
+def _safe_recip_pos(x: float) -> float:
+    if not (math.isfinite(x) and x > 0.0):
+        raise ValueError("positive finite denominator required")
+    return up(1.0 / float(x))
+
+
+def _newton_inverse_norm_certificate() -> dict:
+    """Bound L^-1 from the guaranteed scaled timing gaps.
+
+    For nested nodes u0<u1<u2<u3, rows of T=L^-1 are divided-difference
+    coefficients.  Only minimum pair gaps are needed for an absolute-sum upper.
+    The four timing windows give
+
+      d01>=1, d02>=3, d03>=5, d12>=1, d13>=3, d23>=1.
+    """
+    d01, d02, d03 = 1.0, 3.0, 5.0
+    d12, d13, d23 = 1.0, 3.0, 1.0
+
+    # Absolute coefficients in T=L^-1.
+    r0 = 1.0
+    r1 = _safe_mul(2.0, _safe_recip_pos(d01))
+    r2 = 0.0
+    for den in (d01 * d02, d01 * d12, d02 * d12):
+        r2 = _safe_add(r2, _safe_recip_pos(den))
+    r3 = 0.0
+    for den in (
+        d01 * d02 * d03,
+        d01 * d12 * d13,
+        d02 * d12 * d23,
+        d03 * d13 * d23,
+    ):
+        r3 = _safe_add(r3, _safe_recip_pos(den))
+    inf_norm = up(max(r0, r1, r2, r3))
+
+    c0 = 1.0
+    for den in (d01, d01 * d02, d01 * d02 * d03):
+        c0 = _safe_add(c0, _safe_recip_pos(den))
+    c1 = 0.0
+    for den in (d01, d01 * d12, d01 * d12 * d13):
+        c1 = _safe_add(c1, _safe_recip_pos(den))
+    c2 = _safe_add(
+        _safe_recip_pos(d02 * d12),
+        _safe_recip_pos(d02 * d12 * d23),
+    )
+    c3 = _safe_recip_pos(d03 * d13 * d23)
+    one_norm = up(max(c0, c1, c2, c3))
+
+    # sqrt(||T||_1 ||T||_inf) <= max(||T||_1,||T||_inf), so no unvalidated
+    # square root is needed in the proof path.
+    spectral_norm_upper = up(max(one_norm, inf_norm))
+    lambda_LtL_lower = down(1.0 / up(spectral_norm_upper * spectral_norm_upper))
+    if not lambda_LtL_lower > 0.0:
+        raise RuntimeError("Newton evaluation matrix lost a strict conditioning lower")
+
+    return {
+        "scaled_pair_gap_lower": {
+            "u1-u0": d01,
+            "u2-u0": d02,
+            "u3-u0": d03,
+            "u2-u1": d12,
+            "u3-u1": d13,
+            "u3-u2": d23,
+        },
+        "L_inverse_infinity_norm_upper": inf_norm,
+        "L_inverse_one_norm_upper": one_norm,
+        "L_inverse_spectral_norm_upper": spectral_norm_upper,
+        "L_transpose_L_lambda_min_lower": lambda_LtL_lower,
+        "derivation": "lambda_min(L^T L)=1/||L^-1||_2^2; ||.||_2<=max(||.||_1,||.||_inf)",
+        "ordinary_floating_eigensolver_used": False,
+        "determinant_trace_scalarization_used": False,
     }
 
 
@@ -180,13 +258,15 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     a_response_lower, exp_certificate = _validated_exp_negative_lower(decay_exponent)
     third_dd_lower = down(a_response_lower / 6.0)
 
+    # Rank witness only.  It is no longer used to turn the observation matrix
+    # into a smallest-eigenvalue lower.
     vandermonde_sep_product_lower = 45.0
     scaled_observation_det_lower = down(
         0.5 * vandermonde_sep_product_lower * third_dd_lower
     )
 
     qc_max = up(2.0 * sigma_hi * sigma_hi / tau_lo)
-    T7 = T ** 7
+    T7 = up(T ** 7)
     process_S_var_upper = up(qc_max * T7 / 252.0)
     axis_std_upper = [up(rs_hi * f) for f in factors]
     axis_var_upper = [up(x * x) for x in axis_std_upper]
@@ -194,6 +274,14 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     per_record_var_upper = up(worst_measurement_var + process_S_var_upper)
     stack_lambda_max_upper = up(4.0 * per_record_var_upper)
     stack_information_scalar_lower = down(1.0 / stack_lambda_max_upper)
+
+    newton = _newton_inverse_norm_certificate()
+    newton_info_lower = down(
+        stack_information_scalar_lower
+        * float(newton["L_transpose_L_lambda_min_lower"])
+    )
+    if not (math.isfinite(newton_info_lower) and newton_info_lower > 0.0):
+        raise RuntimeError("four-S Newton-coordinate information lower is not strict")
 
     return {
         "schema": SCHEMA,
@@ -220,6 +308,9 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
             "S(t)=S0+t*p0+0.5*t^2*v0+c(t)*a_w0, c'''(t)=exp(-int_0^t 1/tau(s) ds)"
         ),
         "dimensionless_state": ["S", "g*p", "g^2*v", "g^3*a_w"],
+        "newton_divided_difference_state": [
+            "S(u0)", "S[u0,u1]", "S[u0,u1,u2]", "S[u0,u1,u2,u3]"
+        ],
         "aw_decay_exponent_upper": decay_exponent,
         "validated_exponential_lower_certificate": exp_certificate,
         "aw_homogeneous_response_lower": a_response_lower,
@@ -238,19 +329,31 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
             "process_damping_dropped_for_upper_bound": True,
             "cross_record_process_correlation_covered_by_trace_bound": True,
         },
+        "newton_coordinate_information": {
+            **newton,
+            "raw_record_inverse_covariance_scalar_lower": stack_information_scalar_lower,
+            "D_S_newton_matrix_lower": (
+                f"D_S,z >= {newton_info_lower:.17g} * I_4"
+            ),
+            "D_S_newton_lambda_min_lower": newton_info_lower,
+            "full_4x4_matrix_inequality_closed": True,
+            "determinant_used_for_information_lower": False,
+            "frobenius_singular_value_conversion_used": False,
+            "scalar_information_beta_used": False,
+        },
         "SEA3_target_vs_applied_RS_contract": {
             "SpectralMSE_target_same_tau_sigma_TS_point": True,
             "applied_RS_has_separate_EMA": True,
             "instantaneous_target_formula_substituted_for_applied_RS": False,
             "active_applied_RS_safety_ceiling_used_here": True,
-            "future_tightening_requires_explicit_lag_or_reachability_theorem": True,
+            "complete_word_still_requires_same_joint_source_path": True,
         },
         "P3_RS_TRANSLATION_OBSERVATION_GEOMETRY_CLOSED": True,
         "P3_RS_BATCH_NOISE_UPPER_CLOSED": True,
-        "P3_RS_TRANSLATION_INFORMATION_MATRIX_CLOSED": False,
+        "P3_RS_TRANSLATION_INFORMATION_MATRIX_CLOSED": True,
         "P3_PROMOTED": False,
         "next_obligation": (
-            "construct the finite-memory UCC covariance lower in the same four-S divided-difference/observation coordinates and compare it directly with this S-record noise bound; then add the independent vector-PE attitude/gyro-bias block and A-mode bias coupling"
+            "bound the finite-memory translation covariance lower in the same path-dependent Newton/divided-difference coordinates, then include this block in the complete 3 s H18/A21 Normal-Live word"
         ),
     }
 
@@ -267,14 +370,14 @@ def validate(d: dict) -> list[str]:
         "four_S_translation_observation_operator_full_rank",
         "P3_RS_TRANSLATION_OBSERVATION_GEOMETRY_CLOSED",
         "P3_RS_BATCH_NOISE_UPPER_CLOSED",
+        "P3_RS_TRANSLATION_INFORMATION_MATRIX_CLOSED",
     ):
         if d.get(key) is not True:
             f.append(f"{key} is not true")
     for key in (
         "trajectory_replay_used", "filter_changed", "declared_domain_shrunk",
         "old_P2_800_state_graph_consumed", "source_history_graph_consumed",
-        "predecessor_path_enumeration_consumed",
-        "P3_RS_TRANSLATION_INFORMATION_MATRIX_CLOSED", "P3_PROMOTED",
+        "predecessor_path_enumeration_consumed", "P3_PROMOTED",
     ):
         if d.get(key) is not False:
             f.append(f"{key} is not false")
@@ -287,7 +390,7 @@ def validate(d: dict) -> list[str]:
         f.append("wide exponential did not use validated product construction")
     if expc.get("ordinary_libm_exp_used") is not False:
         f.append("ordinary libm exponential entered the rank proof")
-    if float(expc.get("piece_exponent_upper", math.inf)) > 0.5:
+    if float(expc.get("piece_exponent_upper", math.inf)) > VT.MAX_ABS_ARGUMENT:
         f.append("validated exponential product used an unaudited piece")
     if float(d.get("aw_scaled_third_divided_difference_lower", 0.0)) <= 0.0:
         f.append("a_w divided-difference rank floor is not strict")
@@ -298,6 +401,21 @@ def validate(d: dict) -> list[str]:
         f.append("selected S-record covariance upper is invalid")
     if float(noise.get("Sigma_S_inverse_scalar_lower", 0.0)) <= 0.0:
         f.append("selected S-record information scalar is invalid")
+    ni = d.get("newton_coordinate_information", {})
+    if ni.get("full_4x4_matrix_inequality_closed") is not True:
+        f.append("Newton-coordinate information matrix did not close")
+    if ni.get("determinant_used_for_information_lower") is not False:
+        f.append("determinant re-entered information conditioning")
+    if ni.get("frobenius_singular_value_conversion_used") is not False:
+        f.append("Frobenius singular-value conversion re-entered information conditioning")
+    if ni.get("scalar_information_beta_used") is not False:
+        f.append("scalar information beta re-entered four-S component")
+    if float(ni.get("L_inverse_one_norm_upper", math.inf)) > up(12.0 / 5.0):
+        f.append("Newton inverse one-norm bound weakened unexpectedly")
+    if float(ni.get("L_inverse_infinity_norm_upper", math.inf)) > up(2.0):
+        f.append("Newton inverse infinity-norm bound weakened unexpectedly")
+    if float(ni.get("D_S_newton_lambda_min_lower", 0.0)) <= 0.0:
+        f.append("Newton-coordinate information lower is not strict")
     lag = d.get("SEA3_target_vs_applied_RS_contract", {})
     if lag.get("SpectralMSE_target_same_tau_sigma_TS_point") is not True:
         f.append("SpectralMSE target coupling disappeared")
@@ -319,15 +437,15 @@ def main() -> int:
     d["validation_failures"] = failures
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(d, indent=2, sort_keys=True), encoding="utf-8")
+    ni = d["newton_coordinate_information"]
     print(json.dumps({
-        "four_S_full_rank": d["four_S_translation_observation_operator_full_rank"],
-        "word_horizon_s_upper": d["word_horizon_s_upper"],
-        "decay_exponent_upper": d["aw_decay_exponent_upper"],
-        "validated_exp_pieces": d["validated_exponential_lower_certificate"]["pieces"],
-        "third_divided_difference_lower": d["aw_scaled_third_divided_difference_lower"],
-        "rank_witness_det_lower": d["scaled_observation_determinant_abs_lower_rank_witness_only"],
-        "S_record_noise_lambda_max_upper": d["selected_S_record_noise"]["four_record_covariance_lambda_max_trace_upper"],
-        "S_record_information_scalar_lower": d["selected_S_record_noise"]["Sigma_S_inverse_scalar_lower"],
+        "qualification": d["qualification"],
+        "word_horizon_s": d["word_horizon_s_upper"],
+        "aw_dd3_lower": d["aw_scaled_third_divided_difference_lower"],
+        "Linv_1_upper": ni["L_inverse_one_norm_upper"],
+        "Linv_inf_upper": ni["L_inverse_infinity_norm_upper"],
+        "LtL_lambda_lower": ni["L_transpose_L_lambda_min_lower"],
+        "D_S_newton_lambda_lower": ni["D_S_newton_lambda_min_lower"],
         "validation_failures": failures,
     }, indent=2, sort_keys=True))
     return 0 if not failures else 2
