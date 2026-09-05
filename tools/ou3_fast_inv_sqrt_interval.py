@@ -7,11 +7,11 @@ For positive binary32 input ``number`` the shipping code performs
     y = reinterpret_float(i)
     y = y * (1.5f - number * 0.5f * y * y)
 
-The positive binary32 bit encoding is numerically ordered.  On any contiguous
+The positive binary32 bit encoding is numerically ordered. On any contiguous
 input-bit cell, the magic-integer map is monotone in the opposite direction, so
-its exact y0 range is obtained from the two bit endpoints.  We partition the
+its exact y0 range is obtained from the two bit endpoints. We partition the
 input lattice, propagate each cell through outward binary32 operations, and
-hull the results.  This encloses the actual source algorithm; no ideal reciprocal
+hull the results. This encloses the actual source algorithm; no ideal reciprocal
 square root or empirical relative-error constant is substituted.
 """
 from __future__ import annotations
@@ -35,7 +35,6 @@ def _shipping_point(number: float) -> float:
     x = F32.f32(number)
     bits = F32.f32_bits(x)
     y = F32.f32_from_bits(MAGIC - (bits >> 1))
-    # Force the source's left-associated binary32 arithmetic.
     t = F32.f32(F32.f32(F32.f32(x * F32.f32(0.5)) * y) * y)
     y = F32.f32(y * F32.f32(F32.f32(1.5) - t))
     return y
@@ -54,8 +53,6 @@ def enclosure(number: Interval, *, max_cells: int = 512) -> Interval:
     while start <= bhi:
         end = min(bhi, start + stride - 1)
         x = Interval(float(F32.f32_from_bits(start)), float(F32.f32_from_bits(end)))
-
-        # MAGIC-(bits>>1) decreases as positive input bits increase.
         y_lo_bits = MAGIC - (end >> 1)
         y_hi_bits = MAGIC - (start >> 1)
         y0_lo = F32.f32_from_bits(y_lo_bits)
@@ -63,7 +60,6 @@ def enclosure(number: Interval, *, max_cells: int = 512) -> Interval:
         if not (0.0 < y0_lo <= y0_hi and math.isfinite(y0_hi)):
             raise RuntimeError("fast-invsqrt initial bit image left positive finite range")
         y0 = Interval(float(y0_lo), float(y0_hi))
-
         product = F32.mul(F32.mul(F32.mul(x, half), y0), y0)
         correction = F32.sub(one_half, product)
         pieces.append(F32.mul(y0, correction))
@@ -81,10 +77,21 @@ def build() -> dict:
     }
     samples = (1.0e-6, 0.01, 1.0, 9.80665 * 9.80665, 400.0)
     checks = []
-    for x in samples:
-        out = enclosure(Interval.outward_bounds(x, x), max_cells=32)
+    for requested in samples:
+        # invSqrt<float> is called with a binary32 value. An infinitesimal
+        # binary64 interval around an arbitrary decimal may contain no float
+        # lattice point and therefore is not a possible shipping call state.
+        # Quantize at the call boundary first, then certify that exact float.
+        x = F32.f32(requested)
+        out = enclosure(F32.point(x), max_cells=32)
         actual = _shipping_point(x)
-        checks.append({"input": x, "actual": actual, "enclosure": out.as_list(), "contains": out.contains(actual)})
+        checks.append({
+            "requested_input": requested,
+            "shipping_binary32_input": x,
+            "actual": actual,
+            "enclosure": out.as_list(),
+            "contains": out.contains(actual),
+        })
     return {
         "schema": SCHEMA,
         "qualification": QUALIFICATION,
@@ -93,6 +100,7 @@ def build() -> dict:
         "positive_binary32_bit_order_used": True,
         "magic_map_endpoint_monotonicity_used": True,
         "newton_step_binary32_outward": True,
+        "self_test_inputs_quantized_at_shipping_float_boundary": True,
         "ideal_inverse_sqrt_substituted": False,
         "sample_checks": checks,
         "sample_checks_pass": all(x["contains"] for x in checks),
@@ -108,7 +116,7 @@ def validate(d: dict) -> list[str]:
     for key in (
         "shipping_source_parity_pass", "positive_binary32_bit_order_used",
         "magic_map_endpoint_monotonicity_used", "newton_step_binary32_outward",
-        "sample_checks_pass",
+        "self_test_inputs_quantized_at_shipping_float_boundary", "sample_checks_pass",
     ):
         if d.get(key) is not True:
             failures.append(f"{key} is not true")
