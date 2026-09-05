@@ -25,6 +25,7 @@ jobs:
           python3 tools/ou3_sea3_four_s_translation_information_tight.py --output /tmp/ou3_sea3_four_s_tight.json
           python3 tools/ou3_sea3_four_s_live_prior_metric.py --output /tmp/ou3_sea3_four_s_live_prior_metric.json
           python3 tools/ou3_sea3_h18_information_composition.py --output /tmp/ou3_sea3_h18_information.json
+          python3 tools/ou3_sea3_h18_prior_free_completion.py --output /tmp/ou3_sea3_h18_prior_free_completion.json
           python3 - <<'PY'
           import json, sys
           sys.path.insert(0, 'tools')
@@ -35,13 +36,16 @@ jobs:
           t=json.load(open('/tmp/ou3_sea3_four_s_tight.json'))
           pm=json.load(open('/tmp/ou3_sea3_four_s_live_prior_metric.json'))
           h=json.load(open('/tmp/ou3_sea3_h18_information.json'))
+          hp=json.load(open('/tmp/ou3_sea3_h18_prior_free_completion.json'))
           assert d['validation_pass'], d['validation_failures']
           assert t['validation_pass'], t['validation_failures']
           assert pm['validation_pass'], pm['validation_failures']
           assert h['validation_pass'], h['validation_failures']
+          assert hp['validation_pass'], hp['validation_failures']
           assert d['canonical_source'] == 'COMPLETE_SEA3_NORMAL_LIVE_WORD'
           assert t['canonical_source'] == d['canonical_source']
           assert pm['canonical_source'] == d['canonical_source']
+          assert hp['canonical_source'] == d['canonical_source']
           assert d['component_of_complete_SEA3_full_word'] is True
           assert d['P3_architecture_replaced'] is False
           assert d['source_family_replaced'] is False
@@ -71,6 +75,12 @@ jobs:
           assert h['triangular_information_composition']['full_18x18_matrix_information_lower_closed'] is True
           assert h['H18_information_useful_gate_pass'] is True
           assert h['triangular_information_composition']['D_H18_lambda_min_lower'] >= 1.0e-18
+          assert hp['full_H18_prior_free_matrix_condition_closed'] is True
+          assert hp['H18_prior_free_completion_closed'] is True
+          assert hp['full_18x18_interval_LDLT_used'] is True
+          assert hp['event_algebra_preserves_margin_after_closure'] is True
+          assert hp['useful_gate'] == 1.0e-18
+          assert hp['worst_full_H18_LDLT_pivot_lower'] > 0.0
           pe=PE.build(); assert not PE.validate(pe)
           proc=PROC.build(); assert not PROC.validate(proc)
           live=LIVE.build(); assert not LIVE.validate(live)
@@ -87,6 +97,10 @@ jobs:
           print('H18_INFORMATION_LOWER', h['triangular_information_composition']['D_H18_lambda_min_lower'])
           print('H18_USEFUL_GATE_PASS', h['H18_information_useful_gate_pass'])
           print('H18_CROSS_NORM_SQ_UPPER', h['accelerometer_translation_cross_norm_squared_upper'])
+          print('H18_PRIOR_FREE_PBAR_TRACE', hp['same_word_diffuse_prior_covariance_upper']['Pbar_trace_upper'])
+          print('H18_PRIOR_FREE_PENALTY', hp['delta_squared_over_four_penalty_physical'])
+          print('H18_PRIOR_FREE_X_CELLS', hp['x_cells_certified'])
+          print('H18_PRIOR_FREE_WORST_PIVOT', hp['worst_full_H18_LDLT_pivot_lower'])
           print('A_BIAS_CONTRACTION_GAP', pe['A_mode_bias_route']['homogeneous_bias_contraction_gap_lower'])
           print('PROCESS_H_Q_MIN_DIAGNOSTIC', proc['modes']['H']['prediction_Q_lambda_min_lower'])
           print('PROCESS_A_Q_MIN_DIAGNOSTIC', proc['modes']['A']['prediction_Q_lambda_min_lower'])
@@ -101,7 +115,8 @@ jobs:
           python3 -m unittest -v \
             test_ou3_sea3_four_s_translation_information \
             test_ou3_sea3_four_s_live_prior_metric \
-            test_ou3_sea3_h18_information_composition
+            test_ou3_sea3_h18_information_composition \
+            test_ou3_sea3_h18_prior_free_completion
       - uses: actions/upload-artifact@v6
         with:
           name: ou3-sea3-four-s
@@ -110,4 +125,5 @@ jobs:
             /tmp/ou3_sea3_four_s_tight.json
             /tmp/ou3_sea3_four_s_live_prior_metric.json
             /tmp/ou3_sea3_h18_information.json
+            /tmp/ou3_sea3_h18_prior_free_completion.json
           retention-days: 7
