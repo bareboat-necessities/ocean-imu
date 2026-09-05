@@ -30,9 +30,16 @@ any of them as a compactness failure:
 * hard shaping-state/excitation (or equivalent hard-window IQC) propagation;
 * joint translational/rotational response from that same shaping history.
 
-``PROVIDER_IMPLEMENTATION_CLOSED`` is code-owned and remains false until those
-obligations are implemented and validated.  An input JSON cannot self-assert
-its way into P3.
+The transition payload is also the sole bridge to the connected H18/A21
+executor.  Raw gyro measurement and MEKF bias-corrected body rate are distinct
+coordinates of the same source transition witness.  The source may request an
+a_w covariance-floor synchronization, but it may not serialize the numerical
+floor increment: shipping computes Pi_+(Sigma_aw-P_awaw^-) from each mode's
+current Riccati covariance after prediction.
+
+``PROVIDER_IMPLEMENTATION_CLOSED`` is code-owned and remains false until the
+three SEA0 obligations are implemented and validated.  An input JSON cannot
+self-assert its way into P3.
 """
 from __future__ import annotations
 
@@ -48,8 +55,8 @@ import ou3_sea3_physical_admissibility as PHYSICAL
 
 REPO = Path(__file__).resolve().parents[1]
 DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
-SCHEMA = 2
-QUALIFICATION = "OU3_SEA3_HARD_FINITE_WINDOW_REALIZATION_V2"
+SCHEMA = 3
+QUALIFICATION = "OU3_SEA3_HARD_FINITE_WINDOW_REALIZATION_V3"
 CANONICAL_SOURCE = "COMPLETE_SEA3_NORMAL_LIVE_WORD"
 HORIZON_S = 3.0
 DT_S = 0.005
@@ -92,6 +99,57 @@ _REQUIRED_TRUE_FLAGS = (
     "covariance_floor_events_retained",
 )
 
+_PHYSICAL_FIELDS = (
+    "gyro_measurement_interval",
+    "omega_body_corrected_interval",
+    "specific_force_body_interval",
+    "f_cog_body_interval",
+    "R_wb_interval",
+)
+
+_EVENT_FIELDS = (
+    "magnetometer_events_after_imu",
+    "aw_covariance_floor_requested",
+    "S_zero_due",
+)
+
+
+def _payload_failures(k: int, sample: dict[str, Any]) -> list[str]:
+    f: list[str] = []
+    transition_id = sample.get("source_transition_witness_id")
+    response_id = sample.get("joint_response_witness_id")
+    physical = sample.get("joint_physical_output")
+    events = sample.get("source_events")
+
+    if not isinstance(physical, dict):
+        f.append(f"sample {k} missing joint_physical_output")
+    else:
+        for key in _PHYSICAL_FIELDS:
+            if key not in physical:
+                f.append(f"sample {k} missing physical field {key}")
+        if physical.get("source_transition_witness_id") != transition_id:
+            f.append(f"sample {k} physical output detached from source transition witness")
+        if physical.get("joint_response_witness_id") != response_id:
+            f.append(f"sample {k} physical output detached from joint response witness")
+
+    if not isinstance(events, dict):
+        f.append(f"sample {k} missing source_events")
+    else:
+        for key in _EVENT_FIELDS:
+            if key not in events:
+                f.append(f"sample {k} missing source event field {key}")
+        if events.get("source_transition_witness_id") != transition_id:
+            f.append(f"sample {k} source events detached from source transition witness")
+        if not isinstance(events.get("aw_covariance_floor_requested"), bool):
+            f.append(f"sample {k} a_w floor request is not boolean")
+        if not isinstance(events.get("S_zero_due"), bool):
+            f.append(f"sample {k} S_zero_due is not boolean")
+        if not isinstance(events.get("magnetometer_events_after_imu"), list):
+            f.append(f"sample {k} magnetometer event family is not a list")
+        if "aw_covariance_floor_increment" in events:
+            f.append(f"sample {k} illegally serializes covariance-dependent a_w floor increment")
+    return f
+
 
 def _continuity_failures(samples: Any) -> list[str]:
     f: list[str] = []
@@ -123,9 +181,7 @@ def _continuity_failures(samples: Any) -> list[str]:
                 f.append(f"sample {k} broke x^s phase continuity")
             if previous.get("lambda_out_id") != sample.get("lambda_in_id"):
                 f.append(f"sample {k} broke lambda transition continuity")
-        for key in ("joint_physical_output", "source_events"):
-            if not isinstance(sample.get(key), dict):
-                f.append(f"sample {k} missing {key}")
+        f.extend(_payload_failures(k, sample))
         previous = sample
     return f
 
@@ -158,6 +214,10 @@ def validate_candidate_structure(d: dict[str, Any]) -> list[str]:
         f.append("missing same-history front-end entry witness")
     if d.get("live_covariance_seed_witness_id") in (None, ""):
         f.append("missing same-history Live covariance seed witness")
+    if not isinstance(d.get("front_end_entry"), dict):
+        f.append("missing provider-certified front_end_entry payload")
+    if not isinstance(d.get("live_covariance_seed"), dict):
+        f.append("missing provider-certified live_covariance_seed payload")
     f.extend(_continuity_failures(d.get("transitions")))
     return list(dict.fromkeys(f))
 
@@ -203,6 +263,14 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict[str, Any]:
         "window_horizon_s": HORIZON_S,
         "sample_period_s": DT_S,
         "complete_window_samples": SAMPLES,
+        "executor_payload_contract": {
+            "physical_fields": list(_PHYSICAL_FIELDS),
+            "event_fields": list(_EVENT_FIELDS),
+            "raw_gyro_and_corrected_rate_are_distinct_coordinates": True,
+            "payloads_must_repeat_same_transition_witness_id": True,
+            "physical_payload_must_repeat_same_joint_response_witness_id": True,
+            "precomputed_aw_covariance_floor_increment_allowed": False,
+        },
         "executable_provider_ingredients": executable,
         "provider_implementation_closed": PROVIDER_IMPLEMENTATION_CLOSED,
         "finite_window_realization_certificate_closed": False,
@@ -244,6 +312,15 @@ def validate_status(d: dict[str, Any]) -> list[str]:
     ):
         if d.get(key) is not True:
             f.append(f"{key} is not true")
+    contract = d.get("executor_payload_contract", {})
+    if contract.get("raw_gyro_and_corrected_rate_are_distinct_coordinates") is not True:
+        f.append("executor payload collapsed raw gyro and corrected body rate")
+    if contract.get("payloads_must_repeat_same_transition_witness_id") is not True:
+        f.append("executor payload lost transition-witness identity")
+    if contract.get("physical_payload_must_repeat_same_joint_response_witness_id") is not True:
+        f.append("physical payload lost joint-response identity")
+    if contract.get("precomputed_aw_covariance_floor_increment_allowed") is not False:
+        f.append("executor payload permits precomputed covariance-floor increment")
     ingredients = d.get("executable_provider_ingredients", {})
     expected = {
         "machine_readable_R_lambda_closed": MACHINE_READABLE_R_LAMBDA_CLOSED,
