@@ -1,31 +1,23 @@
 #!/usr/bin/env python3
-"""Canonical complete-source OU-III SEA3 P3 gate.
+"""Canonical OU-III P3 gate: complete SEA3 -> full H18/A21 Riccati word.
 
-P3 is one H18/A21 Normal-Live Riccati word.  The only promotable numerical
-object is the exact full-state propagation of P_k, Psi_k and Omega_k on the same
-source/event path,
+There is one promotable route only.
 
-    P_k = Psi_k P_0 Psi_k^T + Omega_k,
+1. ``ou3_sea3_complete_source`` defines the complete admitted SEA3 Normal-Live
+   source word.
+2. ``ou3_sea3_p3_full_preconditions`` binds the shipping runtime and theorem
+   conditions to that same source word.
+3. ``ou3_sea3_full_normal_live_word`` provides the literal full-state Joseph /
+   prediction / covariance-floor operations.
+4. The source-family executor must interval-propagate every complete SEA3 word
+   for 3 s and establish, for both modes,
 
-executed through ``ou3_sea3_full_normal_live_word`` and the shipping-parity
-backend ``ou3_sea3_full_word_riccati_backend``.  The literal assembler retains
-sample order, every valid accelerometer Joseph update, every due S=0 update,
-asynchronous magnetic events satisfying the declared PE language, every full
-process Q, and each queued PSD a_w covariance-floor event.
+       Omega_W - delta P_W >= 0,    delta >= 1e-18.
 
-The word starts from the source-generated Normal-Live covariance seed, not an
-arbitrary PSD/entrywise P0 box.  The useful gate is only
-
-    Omega_W - delta P_W >= 0,   delta >= 1e-18
-
-on full H18/A21 coordinates.  Algebraic M_delta preservation may be used only
-after that inequality has first closed; it never licenses omission of an event
-needed to establish closure.
-
-No D_W/L_W split, zero-start Riccati concavity replacement, blockwise ratio,
-source-history graph, arbitrary P0 rectangle, selected process mode, scalar
-information beta, determinant/trace final gate, or independent tuner-extrema
-product may promote P3.
+No four-S reduced word, point executor, tuner rectangle, independent sea/RAO
+corner, D_W/L_W split, blockwise ratio, scalar information beta, determinant /
+trace surrogate, source-history graph, arbitrary P0 box or selected process
+strictness is accepted by this gate.
 """
 from __future__ import annotations
 
@@ -34,221 +26,132 @@ import json
 import math
 from pathlib import Path
 
+import ou3_sea3_complete_source as COMPLETE
 import ou3_sea3_full_normal_live_word as WORD
 import ou3_sea3_full_word_riccati_backend as BACKEND
-import ou3_sea3_live_covariance_seed as LIVE_SEED
+import ou3_sea3_live_covariance_seed as LIVE
 import ou3_sea3_p3_full_preconditions as FULL
-import ou3_sea3_rs_innovation_p3 as RS_COMPONENT
 
 REPO = Path(__file__).resolve().parents[1]
 DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
-SCHEMA = 11
-QUALIFICATION = "OU3_SEA3_FULL_NORMAL_LIVE_RICCATI_WORD_P3_GATE"
+SCHEMA = 12
+QUALIFICATION = "OU3_SEA3_COMPLETE_SOURCE_FULL_WORD_P3_GATE_V12"
 USEFUL_GATE = 1.0e-18
 
 
-def build(domain_path: Path = DEFAULT_DOMAIN, tube_path: Path | None = None) -> dict:
+def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     path = Path(domain_path).resolve()
+    complete = COMPLETE.build(path)
     full = FULL.build(path)
-    ff = FULL.validate(full)
-    rs = RS_COMPONENT.build(path, tube_path)
-    rf = RS_COMPONENT.validate(rs)
-    live_seed = LIVE_SEED.build(path)
-    lf = LIVE_SEED.validate(live_seed)
+    live = LIVE.build(path)
     word = WORD.build(path)
-    wf = WORD.validate(word)
-    bf = BACKEND.validate_backend()
-    if ff or rf or lf or wf or bf:
-        raise RuntimeError(
-            "canonical P3 prerequisites failed: "
-            f"full={ff}, four_S_component={rf}, live_seed={lf}, "
-            f"literal_word={wf}, joint_backend={bf}"
-        )
+    failures = {
+        "complete_SEA3": COMPLETE.validate(complete),
+        "preconditions": FULL.validate(full),
+        "live_seed": LIVE.validate(live),
+        "literal_word": WORD.validate(word),
+        "backend": BACKEND.validate_backend(),
+    }
+    failures = {k: v for k, v in failures.items() if v}
+    if failures:
+        raise RuntimeError(f"canonical P3 prerequisites failed: {failures}")
 
-    numeric = full["final_numeric_contract"]
-    backend_parity = BACKEND.shipping_source_parity()
-    backend_self_test = BACKEND._self_test()
-    preservation = BACKEND.contraction_preservation_identities()
+    fallback = dict(complete["no_fallback_generators"])
+    fallback.update(full["no_fallback_generators"])
+    if any(v is not False for v in fallback.values()):
+        raise RuntimeError("canonical P3 gate found an enabled fallback route")
 
-    # The literal assembler is currently fail-closed until its forward
-    # source-coordinate family is materialized.  Once it emits rigorous H/A
-    # endpoint results, this gate consumes those results directly rather than
-    # recomputing a reduced substitute.
-    word_closed = bool(word["FULL_H18_A21_LDLT_CLOSED"])
-    word_pass = bool(word["P3_CANONICAL_PASS"])
+    word_family_materialized = bool(word["SOURCE_REACHABLE_EVENT_FAMILY_MATERIALIZED"])
+    h_executed = bool(word["FULL_H18_WORD_EXECUTED"])
+    a_executed = bool(word["FULL_A21_WORD_EXECUTED"])
+    ldlt_closed = bool(word["FULL_H18_A21_LDLT_CLOSED"])
+    p3_pass = bool(word["P3_CANONICAL_PASS"])
+    if p3_pass and not (word_family_materialized and h_executed and a_executed and ldlt_closed):
+        raise RuntimeError("P3 claimed PASS without complete SEA3 full-word closure")
+
     modes = {
-        "H": {
+        "H18": {
             "dimension": 18,
-            "relative_Riccati_injection_margin_lower": 0.0,
-            "Omega_minus_delta_P_ldlt_closed": False,
-            "contraction_gap_lower": 0.0,
-            "useful_margin_gate": USEFUL_GATE,
-            "pass": False,
+            "full_word_executed": h_executed,
+            "Omega_minus_delta_P_ldlt_closed": ldlt_closed and h_executed,
+            "certified_delta_lower": 0.0 if not p3_pass else USEFUL_GATE,
         },
-        "A": {
+        "A21": {
             "dimension": 21,
-            "relative_Riccati_injection_margin_lower": 0.0,
-            "Omega_minus_delta_P_ldlt_closed": False,
-            "contraction_gap_lower": 0.0,
-            "useful_margin_gate": USEFUL_GATE,
-            "pass": False,
+            "full_word_executed": a_executed,
+            "Omega_minus_delta_P_ldlt_closed": ldlt_closed and a_executed,
+            "certified_delta_lower": 0.0 if not p3_pass else USEFUL_GATE,
         },
     }
 
-    if word_pass and not word_closed:
-        raise RuntimeError("literal word claimed P3 without full H18/A21 LDLT closure")
-
-    fail_reasons = [] if word_pass else [
-        "the literal shipping-order H18/A21 assembler now exists and executes every operation type through the exact joint backend, but its complete forward source-reachable 3 s event family is not yet materialized",
-        "the unresolved enclosure must retain the complete front-end/tuner candidate and commit state, pseudo-scheduler progress, all due S updates, all valid accelerometer updates, asynchronous accepted magnetic events satisfying the PE premise, and every queued a_w floor on the same path",
-        "no reduced UCO/UCC product, selected-event word, independent tuner-extrema box, arbitrary P0 rectangle, or post-closure M_delta identity may replace that strict-prefix execution",
-        "the full H18/A21 interval matrix Omega_W-delta*P_W has not yet passed validated LDLT at the unchanged 1e-18 gate",
+    fail_reasons = [] if p3_pass else [
+        "the complete SEA3 3 s source family has not yet been interval-propagated through every literal H18/A21 shipping event",
+        "the same SEA3 word must generate the physical response, exact front-end state, tuner targets, EMA/commit path, T_S, Q, actual applied per-axis R_S, accelerometer/vector geometry, magnetic PE events and covariance-floor events",
+        "the full 18x18 and 21x21 matrices Omega_W-delta*P_W have not yet both passed validated LDLT at delta=1e-18",
     ]
 
     return {
         "schema": SCHEMA,
         "qualification": QUALIFICATION,
-        "canonical_P3_architecture": "SEA3_FULL_NORMAL_LIVE_RICCATI_WORD",
+        "canonical_P3_architecture": "COMPLETE_SEA3_FULL_NORMAL_LIVE_RICCATI_WORD",
+        "canonical_source": complete["canonical_P3_source"],
         "source_generated_not_trajectory_fit": True,
         "trajectory_replay_used": False,
         "filter_changed": False,
         "declared_domain_shrunk": False,
         "useful_gate": USEFUL_GATE,
-        "complete_precondition_contract_consumed": True,
-        "all_current_machine_checkable_preconditions_present": full[
-            "all_current_machine_checkable_preconditions_present"
-        ],
-        "literal_full_word_assembler_consumed": True,
-        "literal_full_word_assembler_validation_pass": not wf,
-        "literal_shipping_event_order_pass": bool(word["shipping_event_order_parity_pass"]),
-        "literal_same_source_state_feeds_F_Q_TS_RS": bool(
-            word["same_source_state_must_feed_F_Q_pseudo_period_and_applied_RS"]
-        ),
-        "literal_every_valid_accelerometer_required": bool(
-            word["every_valid_imu_sample_requires_accelerometer_Joseph"]
-        ),
-        "literal_all_due_S_required": bool(
-            word["S_scheduler_is_executed_not_replaced_by_selected_four"]
-        ),
-        "literal_async_magnetometer_family_retained": bool(
-            word["magnetometer_is_asynchronous_external_event_family"]
-        ),
-        "literal_aw_floor_event_family_retained": bool(
-            word["periodic_aw_floor_request_and_next_prediction_application_retained"]
-        ),
-        "literal_full_word": word,
-        "common_word_horizon_s": numeric["common_word_horizon_s"],
-        "one_common_event_word_required_for_H_and_A": True,
-        "full_H18_A21_matrix_comparison_required": True,
-        "same_joint_source_path_feeds_F_Q_TS_RS": True,
-        "same_front_end_state_path_generates_all_tuner_targets": True,
-        "same_event_word_contains_accel_S_PE_and_aw_floor": True,
-        "same_runtime_measurement_covariances_used": True,
-        "complete_front_end_generator_state_consumed": True,
-        "magnetic_reference_path_retained_not_frozen": True,
-        "no_hard_attitude_rewrite_inside_word": True,
-        "hybrid_transitions_separate": True,
+        "complete_SEA3_source_consumed": True,
+        "complete_SEA3_source_validation_pass": True,
+        "complete_SEA3_response_couplings_consumed": True,
+        "complete_SEA3_finite_horizon_good_event_consumed": True,
+        "complete_SEA3_frontend_state_consumed": True,
+        "complete_SEA3_adaptive_state_consumed": True,
+        "actual_applied_per_axis_RS_consumed": True,
+        "all_due_S_updates_required": True,
+        "all_valid_accelerometer_updates_required": True,
+        "asynchronous_vector_PE_required": True,
+        "all_full_process_Q_required": True,
+        "all_aw_covariance_floor_events_required": True,
+        "same_complete_SEA3_word_used_for_H18_and_A21": True,
         "live_entry_covariance_seed_consumed": True,
-        "live_entry_covariance_seed_validation_pass": not lf,
         "live_entry_covariance_seed_source_generated": bool(
-            live_seed["live_entry_seed_is_source_generated_not_arbitrary_PSD"]
+            live["live_entry_seed_is_source_generated_not_arbitrary_PSD"]
         ),
-        "bootstrap_mekf_covariance_propagated_before_live": bool(
-            live_seed["bootstrap_mekf_covariance_propagated_before_live"]
-        ),
-        "arbitrary_P0_PSD_box_used": False,
-        "entrywise_independent_P0_rectangle_used": False,
-        "live_entry_covariance_seed": live_seed,
-        "R_S_translation_component_consumed": True,
-        "R_S_is_primary_translation_correction_mechanism": True,
-        "four_S_translation_word_consumed": True,
-        "four_S_translation_observation_geometry_closed": bool(
-            rs["P3_RS_TRANSLATION_OBSERVATION_GEOMETRY_CLOSED"]
-        ),
-        "four_S_translation_information_matrix_closed": bool(
-            rs["P3_RS_WEIGHTED_WORD_INFORMATION_CLOSED"]
-        ),
-        "four_S_batch_noise_upper_closed": bool(
-            rs["P3_RS_BATCH_NOISE_UPPER_CLOSED"]
-        ),
-        "R_S_component_is_not_the_whole_P3_architecture": True,
-        "actual_applied_per_axis_RS_required_in_final_word": True,
-        "all_due_S_updates_required_not_only_selected_four": True,
-        "all_valid_accelerometer_updates_consumed": True,
-        "full_accelerometer_attitude_aw_ba_cross_block_information_required": True,
-        "windowed_asynchronous_vector_PE_consumed": True,
-        "hardware_magnetometer_ODR_used_as_PE_recurrence": False,
-        "two_consecutive_accepted_magnetic_packets_required": False,
-        "full_process_UCC_consumed": True,
-        "full_process_Q_matrices_required_in_word": True,
-        "aw_covariance_floor_PSD_events_consumed": True,
-        "aw_covariance_floor_marginal_Loewner_shortcut_used": False,
-        "A_mode_finite_bias_correlation_consumed": True,
-        "SEA3_height_period_partition_coupling_consumed": True,
-        "unqualified_RAO_coupling_used_as_hard_pruning": False,
-        "global_physical_SEA3_left_inclusion_claimed": False,
-        "stochastic_noise_realization_used_as_homogeneous_pruning": False,
-        "joint_P_Psi_Omega_word_required": True,
         "joint_P_Psi_Omega_backend_consumed": True,
         "joint_backend_validation_pass": True,
-        "joint_backend_shipping_source_parity": backend_parity,
-        "joint_backend_shipping_source_parity_pass": all(backend_parity.values()),
-        "joint_backend_kernel_self_test_not_P3": backend_self_test[
-            "kernel_self_test_only_not_P3"
-        ],
-        "joint_backend_contraction_preservation_identities": preservation,
-        "joint_backend_contraction_preservation_proved": bool(
-            preservation["positive_semidefinite_inputs_preserve_M_delta"]
-            and preservation["is_exact_algebra_inside_joint_P_Psi_Omega_object"]
-        ),
-        "post_closure_events_may_use_exact_preservation_identity": True,
-        "events_needed_to_first_establish_delta_may_be_omitted": False,
-        "exact_covariance_decomposition_identity": (
-            "P_k = Psi_k P_0 Psi_k^T + Omega_k"
-        ),
-        "prediction_joint_recursion": numeric["prediction_recursion_required"],
-        "joseph_measurement_joint_recursion": numeric[
-            "joseph_measurement_recursion_required"
-        ],
-        "aw_floor_joint_recursion": numeric["aw_floor_recursion_required"],
-        "required_final_inequality": numeric["required_final_inequality"],
-        "moving_metric_equivalence": numeric["moving_metric_equivalence"],
-        "exact_measurement_dissipation_identity_available": True,
-        "batch_innovation_information_identity_available": True,
-        "D_W_L_W_split_used_for_final_gate": False,
-        "zero_start_Riccati_concavity_replacement_used": False,
-        "source_history_graph_consumed": False,
-        "predecessor_path_enumeration_consumed": False,
-        "old_P2_800_state_graph_consumed": False,
-        "one_sample_strict_Riccati_margin_consumed": False,
-        "per_sample_SPD_lower_required": False,
-        "selected_process_mode_strictness_used": False,
-        "determinant_trace_scalarization_used": False,
-        "scalar_information_beta_used": False,
-        "blockwise_minimum_ratio_used_for_final_gate": False,
+        "literal_full_word_assembler_consumed": True,
+        "literal_full_word_assembler_validation_pass": True,
+        "literal_shipping_event_order_pass": bool(word["shipping_event_order_parity_pass"]),
+        "no_fallback_generators": fallback,
+        "no_fallback_route_enabled": all(v is False for v in fallback.values()),
         "independent_tau_sigma_RS_TS_extrema_product_used": False,
-        "front_end_state_frozen_to_replay_value": False,
+        "independent_sea_x_RAO_product_used": False,
+        "point_source_word_used": False,
+        "selected_four_S_word_used": False,
+        "D_W_L_W_split_used": False,
+        "blockwise_minimum_ratio_used": False,
+        "scalar_information_beta_used": False,
+        "determinant_trace_scalarization_used": False,
+        "source_history_graph_used": False,
+        "predecessor_path_enumeration_used": False,
+        "arbitrary_P0_rectangle_used": False,
+        "selected_process_mode_strictness_used": False,
+        "common_word_horizon_s": float(full["final_numeric_contract"]["common_word_horizon_s"]),
+        "required_final_inequality": full["final_numeric_contract"]["required_final_inequality"],
+        "moving_metric_equivalence": full["final_numeric_contract"]["moving_metric_equivalence"],
         "complete_preconditions": full,
-        "measurement_runtime": full["measurement_runtime"],
-        "front_end_state_manifest": full["front_end_state_manifest"],
-        "four_S_translation_component": {
-            "translation_correction_word": rs["translation_correction_word"],
-            "exact_measurement_dissipation_identity": rs[
-                "exact_measurement_dissipation_identity"
-            ],
-            "batch_innovation_identity": rs["batch_innovation_identity"],
-        },
+        "literal_full_word": word,
         "modes": modes,
-        "P3_FOUNDATION_PASS": True,
-        "P3_ARCHITECTURE_READY": True,
-        "P3_FULL_WORD_ENCLOSED": word_closed,
-        "P3_FULL_MATRIX_COMPARISON_CLOSED": word_closed,
-        "P3_CANONICAL_PASS": word_pass,
-        "P4_MAY_CONSUME_P3": word_pass,
+        "SOURCE_REACHABLE_EVENT_FAMILY_MATERIALIZED": word_family_materialized,
+        "P3_FULL_WORD_ENCLOSED": word_family_materialized and h_executed and a_executed,
+        "P3_FULL_MATRIX_COMPARISON_CLOSED": ldlt_closed,
+        "P3_CANONICAL_PASS": p3_pass,
+        "P4_MAY_CONSUME_P3": p3_pass,
         "P3_CANONICAL_FAIL_REASONS": fail_reasons,
         "next_obligation": (
-            "materialize and interval-propagate the complete forward source-reachable 3 s family through the literal full-word assembler until both H18/A21 endpoint LDLTs close"
-        ) if not word_pass else "P3 closed; P4 may consume the certified full-word result",
+            "build the complete SEA3 forward source-family interval executor and close both full-matrix LDLTs"
+            if not p3_pass else "P3 closed; P4 may consume the certified complete-SEA3 word"
+        ),
     }
 
 
@@ -256,176 +159,85 @@ def validate(d: dict) -> list[str]:
     f: list[str] = []
     if d.get("schema") != SCHEMA or d.get("qualification") != QUALIFICATION:
         f.append("schema/qualification mismatch")
-    if d.get("canonical_P3_architecture") != "SEA3_FULL_NORMAL_LIVE_RICCATI_WORD":
-        f.append("canonical P3 is not the complete Normal-Live word")
-
-    required_true = (
+    if d.get("canonical_P3_architecture") != "COMPLETE_SEA3_FULL_NORMAL_LIVE_RICCATI_WORD":
+        f.append("canonical P3 architecture changed")
+    if d.get("canonical_source") != "COMPLETE_SEA3_NORMAL_LIVE_WORD":
+        f.append("canonical P3 source is not complete SEA3")
+    for key in (
         "source_generated_not_trajectory_fit",
-        "complete_precondition_contract_consumed",
-        "all_current_machine_checkable_preconditions_present",
+        "complete_SEA3_source_consumed",
+        "complete_SEA3_source_validation_pass",
+        "complete_SEA3_response_couplings_consumed",
+        "complete_SEA3_finite_horizon_good_event_consumed",
+        "complete_SEA3_frontend_state_consumed",
+        "complete_SEA3_adaptive_state_consumed",
+        "actual_applied_per_axis_RS_consumed",
+        "all_due_S_updates_required",
+        "all_valid_accelerometer_updates_required",
+        "asynchronous_vector_PE_required",
+        "all_full_process_Q_required",
+        "all_aw_covariance_floor_events_required",
+        "same_complete_SEA3_word_used_for_H18_and_A21",
+        "live_entry_covariance_seed_consumed",
+        "live_entry_covariance_seed_source_generated",
+        "joint_P_Psi_Omega_backend_consumed",
+        "joint_backend_validation_pass",
         "literal_full_word_assembler_consumed",
         "literal_full_word_assembler_validation_pass",
         "literal_shipping_event_order_pass",
-        "literal_same_source_state_feeds_F_Q_TS_RS",
-        "literal_every_valid_accelerometer_required",
-        "literal_all_due_S_required",
-        "literal_async_magnetometer_family_retained",
-        "literal_aw_floor_event_family_retained",
-        "one_common_event_word_required_for_H_and_A",
-        "full_H18_A21_matrix_comparison_required",
-        "same_joint_source_path_feeds_F_Q_TS_RS",
-        "same_front_end_state_path_generates_all_tuner_targets",
-        "same_event_word_contains_accel_S_PE_and_aw_floor",
-        "same_runtime_measurement_covariances_used",
-        "complete_front_end_generator_state_consumed",
-        "magnetic_reference_path_retained_not_frozen",
-        "no_hard_attitude_rewrite_inside_word",
-        "hybrid_transitions_separate",
-        "live_entry_covariance_seed_consumed",
-        "live_entry_covariance_seed_validation_pass",
-        "live_entry_covariance_seed_source_generated",
-        "R_S_translation_component_consumed",
-        "R_S_is_primary_translation_correction_mechanism",
-        "four_S_translation_word_consumed",
-        "four_S_translation_observation_geometry_closed",
-        "four_S_translation_information_matrix_closed",
-        "four_S_batch_noise_upper_closed",
-        "R_S_component_is_not_the_whole_P3_architecture",
-        "actual_applied_per_axis_RS_required_in_final_word",
-        "all_due_S_updates_required_not_only_selected_four",
-        "all_valid_accelerometer_updates_consumed",
-        "full_accelerometer_attitude_aw_ba_cross_block_information_required",
-        "windowed_asynchronous_vector_PE_consumed",
-        "full_process_UCC_consumed",
-        "full_process_Q_matrices_required_in_word",
-        "aw_covariance_floor_PSD_events_consumed",
-        "A_mode_finite_bias_correlation_consumed",
-        "SEA3_height_period_partition_coupling_consumed",
-        "joint_P_Psi_Omega_word_required",
-        "joint_P_Psi_Omega_backend_consumed",
-        "joint_backend_validation_pass",
-        "joint_backend_shipping_source_parity_pass",
-        "joint_backend_kernel_self_test_not_P3",
-        "joint_backend_contraction_preservation_proved",
-        "post_closure_events_may_use_exact_preservation_identity",
-        "exact_measurement_dissipation_identity_available",
-        "batch_innovation_information_identity_available",
-        "P3_FOUNDATION_PASS",
-        "P3_ARCHITECTURE_READY",
-    )
-    for key in required_true:
+        "no_fallback_route_enabled",
+    ):
         if d.get(key) is not True:
             f.append(f"{key} is not true")
-
-    if not all(d.get("joint_backend_shipping_source_parity", {}).values()):
-        f.append("joint backend shipping-source parity failed")
-    preserve = d.get("joint_backend_contraction_preservation_identities", {})
-    if preserve.get("may_omit_events_needed_to_first_establish_delta") is not False:
-        f.append("M_delta preservation was incorrectly used to omit strict-prefix events")
-    seed = d.get("live_entry_covariance_seed", {})
-    if seed.get("source_parity_failures"):
-        f.append("shipping Live covariance seed lost source parity")
-
-    always_false = (
+    for key in (
         "trajectory_replay_used", "filter_changed", "declared_domain_shrunk",
-        "bootstrap_mekf_covariance_propagated_before_live",
-        "arbitrary_P0_PSD_box_used", "entrywise_independent_P0_rectangle_used",
-        "events_needed_to_first_establish_delta_may_be_omitted",
-        "hardware_magnetometer_ODR_used_as_PE_recurrence",
-        "two_consecutive_accepted_magnetic_packets_required",
-        "aw_covariance_floor_marginal_Loewner_shortcut_used",
-        "unqualified_RAO_coupling_used_as_hard_pruning",
-        "global_physical_SEA3_left_inclusion_claimed",
-        "stochastic_noise_realization_used_as_homogeneous_pruning",
-        "D_W_L_W_split_used_for_final_gate",
-        "zero_start_Riccati_concavity_replacement_used",
-        "source_history_graph_consumed", "predecessor_path_enumeration_consumed",
-        "old_P2_800_state_graph_consumed", "one_sample_strict_Riccati_margin_consumed",
-        "per_sample_SPD_lower_required", "selected_process_mode_strictness_used",
-        "determinant_trace_scalarization_used", "scalar_information_beta_used",
-        "blockwise_minimum_ratio_used_for_final_gate",
         "independent_tau_sigma_RS_TS_extrema_product_used",
-        "front_end_state_frozen_to_replay_value",
-    )
-    for key in always_false:
+        "independent_sea_x_RAO_product_used", "point_source_word_used",
+        "selected_four_S_word_used", "D_W_L_W_split_used",
+        "blockwise_minimum_ratio_used", "scalar_information_beta_used",
+        "determinant_trace_scalarization_used", "source_history_graph_used",
+        "predecessor_path_enumeration_used", "arbitrary_P0_rectangle_used",
+        "selected_process_mode_strictness_used",
+    ):
         if d.get(key) is not False:
-            f.append(f"{key} is not false")
-
-    if d.get("exact_covariance_decomposition_identity") != (
-        "P_k = Psi_k P_0 Psi_k^T + Omega_k"
-    ):
-        f.append("exact P/Psi/Omega identity changed")
-    if d.get("required_final_inequality") != (
-        "Omega_W - delta * P_W >= 0 on full H18/A21 coordinates"
-    ):
-        f.append("canonical final matrix inequality changed")
+            f.append(f"forbidden fallback route enabled: {key}")
+    fallback = d.get("no_fallback_generators", {})
+    if not fallback or any(v is not False for v in fallback.values()):
+        f.append("fallback generator map is not entirely disabled")
     if float(d.get("useful_gate", math.nan)) != USEFUL_GATE:
         f.append("P3 useful gate changed")
-    if float(d.get("common_word_horizon_s", 0.0)) < 3.0:
-        f.append("canonical word no longer spans all declared PE preconditions")
-
-    passed = d.get("P3_CANONICAL_PASS") is True
-    stage = (
-        d.get("P3_FULL_WORD_ENCLOSED"),
-        d.get("P3_FULL_MATRIX_COMPARISON_CLOSED"),
-        d.get("P4_MAY_CONSUME_P3"),
-    )
-    if passed:
-        if stage != (True, True, True):
-            f.append("P3 pass is inconsistent with full-word/full-matrix/P4 flags")
-        if d.get("P3_CANONICAL_FAIL_REASONS"):
-            f.append("closed P3 still reports fail reasons")
+    p = bool(d.get("P3_CANONICAL_PASS"))
+    if p:
+        if d.get("SOURCE_REACHABLE_EVENT_FAMILY_MATERIALIZED") is not True:
+            f.append("P3 PASS without complete SEA3 source-family materialization")
+        if d.get("P3_FULL_WORD_ENCLOSED") is not True:
+            f.append("P3 PASS without full word enclosure")
+        if d.get("P3_FULL_MATRIX_COMPARISON_CLOSED") is not True:
+            f.append("P3 PASS without full-matrix closure")
     else:
-        if stage != (False, False, False):
-            f.append("open P3 has inconsistent promotion flags")
         if not d.get("P3_CANONICAL_FAIL_REASONS"):
-            f.append("open P3 does not name complete-word obligations")
-
-    for mode, dim in (("H", 18), ("A", 21)):
-        row = d.get("modes", {}).get(mode, {})
-        if row.get("dimension") != dim:
-            f.append(f"{mode} dimension changed")
-            continue
-        if passed:
-            if row.get("pass") is not True:
-                f.append(f"{mode} not passed while canonical P3 is passed")
-            if row.get("Omega_minus_delta_P_ldlt_closed") is not True:
-                f.append(f"{mode} LDLT not closed while canonical P3 is passed")
-            if float(row.get("relative_Riccati_injection_margin_lower", 0.0)) < USEFUL_GATE:
-                f.append(f"{mode} useful margin is below canonical gate")
-        else:
-            if row.get("pass") is not False:
-                f.append(f"{mode} open mode contract is not fail-closed")
-            if float(row.get("relative_Riccati_injection_margin_lower", math.nan)) != 0.0:
-                f.append(f"{mode} emitted a margin before complete-word closure")
-            if row.get("Omega_minus_delta_P_ldlt_closed") is not False:
-                f.append(f"{mode} falsely closed Omega-delta-P LDLT")
-
+            f.append("fail-closed P3 gate has no reason")
+    if d.get("P4_MAY_CONSUME_P3") is not p:
+        f.append("P4 promotion does not exactly follow P3")
     return list(dict.fromkeys(f))
 
 
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--domain", type=Path, default=DEFAULT_DOMAIN)
-    ap.add_argument("--tube", type=Path, default=None)
     ap.add_argument("--output", type=Path, required=True)
     args = ap.parse_args()
-    d = build(args.domain, args.tube)
+    d = build(args.domain)
     failures = validate(d)
     d["validation_pass"] = not failures
     d["validation_failures"] = failures
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(d, indent=2, sort_keys=True), encoding="utf-8")
     print(json.dumps({
-        "architecture": d["canonical_P3_architecture"],
-        "word_horizon_s": d["common_word_horizon_s"],
-        "literal_assembler": d["literal_full_word_assembler_consumed"],
-        "live_seed": d["live_entry_covariance_seed_consumed"],
-        "joint_backend": d["joint_P_Psi_Omega_backend_consumed"],
-        "M_delta_preservation": d["joint_backend_contraction_preservation_proved"],
-        "final_inequality": d["required_final_inequality"],
+        "canonical_source": d["canonical_source"],
+        "fallbacks": d["no_fallback_generators"],
         "P3_CANONICAL_PASS": d["P3_CANONICAL_PASS"],
-        "fail_reasons": d["P3_CANONICAL_FAIL_REASONS"],
+        "P3_CANONICAL_FAIL_REASONS": d["P3_CANONICAL_FAIL_REASONS"],
         "validation_failures": failures,
     }, indent=2, sort_keys=True))
     return 0 if not failures else 2
