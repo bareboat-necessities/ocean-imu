@@ -45,10 +45,11 @@ import math
 from pathlib import Path
 
 from ou3_interval import Interval, symmetric_positive_definite_ldlt
-import ou3_p3_scaled_process as SCALED
 import ou3_sea3_dynamic_source_certificate as DYNAMIC
+import ou3_sea3_riccati_tube as TUBE_BASE
 import ou3_sea3_riccati_tube_factored as TUBE
 import ou3_validated_transcendentals as VT
+import ou3_vector_uco_certificate as VECTOR
 
 REPO = Path(__file__).resolve().parents[1]
 DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
@@ -149,24 +150,6 @@ def _transition(x: Interval):
         [I(0.5), I(1.0), I(1.0), k3],
         [I(0.0), I(0.0), I(0.0), e],
     ]
-
-
-def _scaled_process(x: Interval):
-    """Shipping Q in z coordinates, before the common sigma^2 factor."""
-    if x.hi < SCALED.BRANCH_X:
-        B = SCALED.small_normalized_matrix(x)
-        return _sym([[x * B[i][j] for j in range(4)] for i in range(4)])
-    if x.lo >= SCALED.BRANCH_X and x.hi <= SCALED.NEAR_EXACT_SERIES_MAX_X:
-        B = SCALED.near_exact_normalized_matrix(x)
-        return _sym([[x * B[i][j] for j in range(4)] for i in range(4)])
-    if x.lo < SCALED.BRANCH_X <= x.hi:
-        left = Interval(x.lo, math.nextafter(SCALED.BRANCH_X, -math.inf))
-        right = Interval(SCALED.BRANCH_X, x.hi)
-        families = [_scaled_process(left), _scaled_process(right)]
-        return [[Interval(min(A[i][j].lo for A in families),
-                          max(A[i][j].hi for A in families))
-                 for j in range(4)] for i in range(4)]
-    raise ValueError("SEA3 x interval outside audited scaled-process range")
 
 
 def _center_radius(A):
@@ -315,11 +298,14 @@ def build(domain_path: Path = DEFAULT_DOMAIN, tube_path: Path | None = None) -> 
 
     F = _transition(x)
     Ft = _transpose(F)
-    Q = _scale(_scaled_process(x), down(sigma_lo * sigma_lo))
+    Q = _scale(TUBE.step_scaled_q(x), down(sigma_lo * sigma_lo))
 
-    vc = tube["measurement_source"]
-    R_aw = down(float(vc["acc_measurement_std_mps2"]) ** 2)
-    axis_factor = min(map(float, tube["source_bounds"]["R_S_axis_std_factors"]))
+    vector = VECTOR.build()
+    vf = VECTOR.validate(vector)
+    if vf:
+        raise RuntimeError(f"vector measurement prerequisite failed: {vf}")
+    R_aw = down(float(vector["configured_measurement_bounds"]["acc_measurement_std_mps2"]) ** 2)
+    axis_factor = min(map(float, TUBE_BASE._axis_factors()))
     rs_lo = float(inv["R_S_applied"][0])
     rS = down(rs_lo * axis_factor)
     R_S_z = down(down(rS * rS) / up(h ** 6))
@@ -340,13 +326,12 @@ def build(domain_path: Path = DEFAULT_DOMAIN, tube_path: Path | None = None) -> 
         P, eps, route = _measurement_lower(P, 3, R_aw)
         max_measurement_eps = max(max_measurement_eps, eps)
         relative_measurement_shaves += int(route == "RELATIVE_DIAGONAL")
-        # Hypothetical S=0 every sample is stronger than every shipping pseudo
-        # schedule and therefore produces a valid lower covariance.
         P, eps, route = _measurement_lower(P, 2, R_S_z)
         max_measurement_eps = max(max_measurement_eps, eps)
         relative_measurement_shaves += int(route == "RELATIVE_DIAGONAL")
 
-    upper = list(map(float, tube["covariance_upper"]["translation_diagonal_variance_upper"]))
+    pdiag = list(map(float, tube["modes"]["H"]["Pbar_diagonal_variance_upper"]))
+    upper = [pdiag[6], pdiag[9], pdiag[12], pdiag[15]]
     dscale = [h, h * h, h * h * h, 1.0]
     upper_z = [up(upper[i] / down(dscale[i] * dscale[i])) for i in range(4)]
     rho = _generalized_rho(P, upper_z)
