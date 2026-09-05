@@ -1,47 +1,52 @@
 #!/usr/bin/env python3
 """Complete-SEA3 four-S information in the shipping Live covariance metric.
 
-This is a sharpening of the existing actual-applied-SpectralMSE-R_S four-S
-lemma, not a new source or reduced word.  The selected four S=0 firings remain
-actual members of ``COMPLETE_SEA3_NORMAL_LIVE_WORD`` and every other shipping
-event remains in the complete word.
+This sharpens the existing actual-applied-SpectralMSE-R_S four-S lemma without
+creating another source, word, estimator or contraction architecture.  The four
+selected S=0 firings are actual members of ``COMPLETE_SEA3_NORMAL_LIVE_WORD``;
+every other due S update and every other shipping event remains in the literal
+complete word.
 
-The prior-free batch identity for one fixed-dimensional word gives the exact
-sufficient condition
+For the exact prior-free batch factorization, a sufficient endpoint condition is
 
-    (1-delta) D >= delta P0^-1.
+    (1-delta) D >= delta P0^-1,
 
-Equivalently, with the shipping Live prior metric,
+or, equivalently,
 
     P0^(1/2) D P0^(1/2) >= delta/(1-delta) I.
 
-The retained four-S proof already bounds the inverse of the raw-record
-observation matrix for the scaled translation state
+The existing four-S proof factors the raw-record observation map as
+
+    y --T_dd--> q --R^-1--> z,
+
+where q are Newton divided differences and
 
     z = [S, g p, g^2 v, g^3 a_w].
 
-Instead of first discarding the Live covariance geometry and replacing the
-observation Gramian by a Euclidean scalar, weight those same inverse rows by
-the exact shipping Live standard deviations.  If r_i bounds the l1 norm of row
-i of M^-1 and s_i is the corresponding Live standard deviation, then
+Thus
 
-    ||Pz^-1/2 M^-1||_2^2
-      <= ||Pz^-1/2 M^-1||_F^2
-      <= sum_i (r_i/s_i)^2.
+    (M Pz^(1/2))^-1 = Pz^-1/2 R^-1 T_dd.
 
-Together with the tight selected-record covariance bound Sigma_Y <= rho I,
-this proves
+Keeping that factorization is substantially tighter than first collapsing every
+row of M^-1 to a separate l1 bound.  The triangular Newton recovery gives
+explicit coefficient bounds for R^-1, while the exact-rational four-S producer
+already gives one- and infinity-norm bounds for T_dd.  We therefore certify
+
+    ||Pz^-1/2 R^-1 T_dd||_2^2
+      <= ||Pz^-1/2 R^-1||_F^2 ||T_dd||_2^2
+      <= F_R^2 ||T_dd||_1 ||T_dd||_inf.
+
+Together with the tight selected-record covariance bound ``Sigma_Y <= rho I``,
 
     lambda_min(Pz^1/2 D_S Pz^1/2)
-      >= 1 / (rho * sum_i (r_i/s_i)^2).
+      >= 1 / (rho F_R^2 ||T_dd||_1 ||T_dd||_inf).
 
-The Live S,p,v seed is fixed by shipping initialization.  The Live a_w block is
-reset to the same committed stationary covariance before the first prediction;
-the theorem family admits sigma_aw >= 0.05 m/s^2, so the smallest prior metric
-uses that lower endpoint.  This is a uniform bound over the complete admitted
-SEA3 family.  No independent tau/sigma/R_S rectangle is generated here; the
-upstream four-S covariance bound remains the same source-uniform nuisance bound
-and the metric is taken from the same shipping Live seed.
+The Live S,p,v variances are the shipping constructor values.  At Live entry the
+a_w covariance is reset to the same committed stationary covariance used by the
+word, and the admitted family has sigma_aw >= 0.05 m/s^2; therefore the smallest
+Live prior metric uses 0.05.  The upstream four-S nuisance covariance remains
+uniform over arbitrary legal time-varying SEA3 tau/sigma and actual applied
+SpectralMSE R_S.  No independent parameter box is introduced here.
 """
 from __future__ import annotations
 
@@ -56,9 +61,16 @@ import ou3_sea3_four_s_translation_information_tight as FOUR
 import ou3_sea3_live_covariance_seed as LIVE
 
 DEFAULT_DOMAIN = FOUR.DEFAULT_DOMAIN
-SCHEMA = 1
+SCHEMA = 2
 QUALIFICATION = "OU3_COMPLETE_SEA3_FOUR_S_SHIPPING_LIVE_PRIOR_METRIC"
 USEFUL_GATE = 1.0e-18
+
+
+def _sum_squares_upper(values: list[float]) -> float:
+    total = 0.0
+    for x in values:
+        total = up(total + up(x * x))
+    return total
 
 
 def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
@@ -93,19 +105,59 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     if any(not (math.isfinite(x) and x > 0.0) for x in stds):
         raise RuntimeError("shipping Live prior metric lost positivity")
 
-    recovery = four["newton_coordinate_information"]["physical_state_recovery"]
-    row_map = recovery["physical_state_inverse_raw_record_row_l1_upper"]
-    rows = [float(row_map[name]) for name in ("S", "g*p", "g^2*v", "g^3*a_w")]
-    if any(not (math.isfinite(x) and x > 0.0) for x in rows):
-        raise RuntimeError("four-S physical inverse row bound lost positivity")
+    ni = four["newton_coordinate_information"]
+    recovery = ni["physical_state_recovery"]
+    d3 = float(recovery["third_divided_difference_lower"])
+    deriv = recovery["derivative_upper_bounds"]
+    c0 = float(deriv["c_u0"])
+    c01 = float(deriv["c_first_divided_difference"])
+    c012 = float(deriv["c_second_divided_difference"])
+    windows = four["scaled_u_windows"]
+    u0 = float(windows[0][1])
+    u1 = float(windows[1][1])
+    if not all(math.isfinite(x) and x > 0.0 for x in (d3, c0, c01, c012, u0, u1)):
+        raise RuntimeError("Newton recovery bounds lost positivity")
+    u01 = up(u0 + u1)
+    u0u1 = up(u0 * u1)
 
-    weighted_inverse_frob_sq = 0.0
-    terms = []
-    for name, row, std in zip(("S", "g*p", "g^2*v", "g^3*a_w"), rows, stds):
-        term = up((row / std) ** 2)
-        weighted_inverse_frob_sq = up(weighted_inverse_frob_sq + term)
-        terms.append({"state": name, "inverse_row_l1_upper": row, "Live_std_lower": std, "weighted_square_upper": term})
-    metric_observation_gram_lower = down(1.0 / weighted_inverse_frob_sq)
+    # Exact triangular inverse structure in q coordinates:
+    # A = q3/d3
+    # V = 2 q2 - 2 c012 q3/d3
+    # P = q1 -(u0+u1)q2 + ((u0+u1)c012-c01)q3/d3
+    # S = q0-u0 q1+u0*u1 q2 +(u0*c01-u0*u1*c012-c0)q3/d3.
+    # Signs/cancellations are not assumed in the interval upper; only the
+    # triangular sparsity is retained.
+    Rinv_rows = [
+        [1.0, u0, u0u1, up((up(u0 * c01) + up(u0u1 * c012) + c0) / d3)],
+        [0.0, 1.0, u01, up((up(u01 * c012) + c01) / d3)],
+        [0.0, 0.0, 2.0, up(2.0 * c012 / d3)],
+        [0.0, 0.0, 0.0, up(1.0 / d3)],
+    ]
+
+    weighted_rows = []
+    weighted_Rinv_frob_sq = 0.0
+    names = ["S", "g*p", "g^2*v", "g^3*a_w"]
+    for name, row, std in zip(names, Rinv_rows, stds):
+        scaled = [up(abs(x) / std) for x in row]
+        row_sq = _sum_squares_upper(scaled)
+        weighted_Rinv_frob_sq = up(weighted_Rinv_frob_sq + row_sq)
+        weighted_rows.append({
+            "state": name,
+            "R_inverse_q_coefficient_abs_upper": row,
+            "Live_std_lower": std,
+            "Pz_inverse_half_R_inverse_row_abs_upper": scaled,
+            "row_squared_norm_upper": row_sq,
+        })
+
+    Tdd_one = float(ni["L_inverse_one_norm_upper"])
+    Tdd_inf = float(ni["L_inverse_infinity_norm_upper"])
+    if not (math.isfinite(Tdd_one) and Tdd_one > 0.0 and math.isfinite(Tdd_inf) and Tdd_inf > 0.0):
+        raise RuntimeError("raw-record to Newton norm bound invalid")
+    Tdd_spectral_sq_upper = up(Tdd_one * Tdd_inf)
+    weighted_full_inverse_spectral_sq_upper = up(
+        weighted_Rinv_frob_sq * Tdd_spectral_sq_upper
+    )
+    metric_observation_gram_lower = down(1.0 / weighted_full_inverse_spectral_sq_upper)
 
     rho = float(four["selected_S_record_noise"]["four_record_covariance_lambda_max_upper"])
     if not (math.isfinite(rho) and rho > 0.0):
@@ -126,10 +178,15 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "shipping_Live_covariance_seed_consumed": True,
         "Live_aw_reset_to_same_committed_stationary_covariance_consumed": True,
         "minimum_Live_aw_std_mps2": saw_min,
-        "scaled_translation_state": ["S", "g*p", "g^2*v", "g^3*a_w"],
+        "scaled_translation_state": names,
         "scaled_Live_std_lower": stds,
-        "weighted_inverse_row_terms": terms,
-        "weighted_inverse_frobenius_squared_upper": weighted_inverse_frob_sq,
+        "triangular_Newton_recovery_retained": True,
+        "weighted_R_inverse_rows": weighted_rows,
+        "weighted_R_inverse_frobenius_squared_upper": weighted_Rinv_frob_sq,
+        "raw_record_to_Newton_one_norm_upper": Tdd_one,
+        "raw_record_to_Newton_infinity_norm_upper": Tdd_inf,
+        "raw_record_to_Newton_spectral_norm_squared_upper": Tdd_spectral_sq_upper,
+        "weighted_full_inverse_spectral_norm_squared_upper": weighted_full_inverse_spectral_sq_upper,
         "prior_metric_observation_gram_lambda_min_lower": metric_observation_gram_lower,
         "selected_record_covariance_lambda_max_upper": rho,
         "translation_Live_prior_metric_information_lambda_min_lower": prior_metric_information_lower,
@@ -145,9 +202,9 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "independent_tau_sigma_RS_source_created": False,
         "P3_promoted": False,
         "next_obligation": (
-            "retain the accelerometer attitude-a_w row structure and combine this strong translation Live-prior metric "
-            "with the eta6 PE information in one H18 prior-metric matrix; then extend the same construction through "
-            "the shipping H-to-A accelerometer-bias release"
+            "retain the accelerometer attitude-a_w row structure and combine this translation Live-prior metric "
+            "with eta6 PE in one H18 prior-metric matrix, including process nuisance in the selected vector records; "
+            "then extend the same batch construction through the shipping H-to-A accelerometer-bias release"
         ),
     }
 
@@ -165,6 +222,7 @@ def validate(d: dict) -> list[str]:
         "same_tight_four_S_record_covariance_consumed",
         "shipping_Live_covariance_seed_consumed",
         "Live_aw_reset_to_same_committed_stationary_covariance_consumed",
+        "triangular_Newton_recovery_retained",
         "translation_batch_prior_condition_pass",
     ):
         if d.get(key) is not True:
@@ -191,6 +249,8 @@ def validate(d: dict) -> list[str]:
         f.append("translation Live-prior information does not clear batch condition")
     if float(d.get("useful_gate", math.nan)) != USEFUL_GATE:
         f.append("useful gate changed")
+    if float(d.get("weighted_full_inverse_spectral_norm_squared_upper", math.inf)) <= 0.0:
+        f.append("weighted inverse spectral upper invalid")
     return list(dict.fromkeys(f))
 
 
@@ -207,7 +267,8 @@ def main() -> int:
     args.output.write_text(json.dumps(d, indent=2, sort_keys=True), encoding="utf-8")
     print(json.dumps({
         "scaled_Live_std_lower": d["scaled_Live_std_lower"],
-        "weighted_inverse_frobenius_squared_upper": d["weighted_inverse_frobenius_squared_upper"],
+        "weighted_R_inverse_frobenius_squared_upper": d["weighted_R_inverse_frobenius_squared_upper"],
+        "Tdd_spectral_norm_squared_upper": d["raw_record_to_Newton_spectral_norm_squared_upper"],
         "metric_observation_gram_lower": d["prior_metric_observation_gram_lambda_min_lower"],
         "record_covariance_upper": d["selected_record_covariance_lambda_max_upper"],
         "translation_prior_metric_information_lower": d["translation_Live_prior_metric_information_lambda_min_lower"],
