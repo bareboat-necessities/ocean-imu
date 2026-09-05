@@ -22,6 +22,7 @@ jobs:
       - name: Build complete SEA3 four-S translation information
         run: |
           python3 tools/ou3_sea3_four_s_translation_information.py --output /tmp/ou3_sea3_four_s.json
+          python3 tools/ou3_sea3_h18_information_composition.py --output /tmp/ou3_sea3_h18_information.json
           python3 - <<'PY'
           import json, sys
           sys.path.insert(0, 'tools')
@@ -29,7 +30,9 @@ jobs:
           import ou3_full_process_ucc as PROC
           import ou3_sea3_live_covariance_seed as LIVE
           d=json.load(open('/tmp/ou3_sea3_four_s.json'))
+          h=json.load(open('/tmp/ou3_sea3_h18_information.json'))
           assert d['validation_pass'], d['validation_failures']
+          assert h['validation_pass'], h['validation_failures']
           assert d['canonical_source'] == 'COMPLETE_SEA3_NORMAL_LIVE_WORD'
           assert d['component_of_complete_SEA3_full_word'] is True
           assert d['P3_architecture_replaced'] is False
@@ -43,6 +46,10 @@ jobs:
           ni=d['newton_coordinate_information']
           assert ni['full_4x4_matrix_inequality_closed'] is True
           assert ni['determinant_used_for_information_lower'] is False
+          assert h['component_of_complete_SEA3_full_word'] is True
+          assert h['selected_four_S_events_replace_complete_word'] is False
+          assert h['actual_applied_SpectralMSE_R_S_consumed'] is True
+          assert h['triangular_information_composition']['full_18x18_matrix_information_lower_closed'] is True
           pe=PE.build(); assert not PE.validate(pe)
           proc=PROC.build(); assert not PROC.validate(proc)
           live=LIVE.build(); assert not LIVE.validate(live)
@@ -51,6 +58,8 @@ jobs:
           print('FOUR_S_RS_BASE', d['R_S_applied_base_std'])
           print('FOUR_S_D_NEWTON', ni['D_S_newton_lambda_min_lower'])
           print('PE_ALPHA6', pe['eta6_information']['alpha_6_information_lower'])
+          print('H18_INFORMATION_LOWER', h['triangular_information_composition']['D_H18_lambda_min_lower'])
+          print('H18_CROSS_NORM_SQ_UPPER', h['accelerometer_translation_cross_norm_squared_upper'])
           print('A_BIAS_CONTRACTION_GAP', pe['A_mode_bias_route']['homogeneous_bias_contraction_gap_lower'])
           print('PROCESS_H_Q_MIN', proc['modes']['H']['prediction_Q_lambda_min_lower'])
           print('PROCESS_A_Q_MIN', proc['modes']['A']['prediction_Q_lambda_min_lower'])
@@ -59,11 +68,16 @@ jobs:
           print('LIVE_AW_SEED', live['aw_live_seed'])
           print('LIVE_ATTITUDE_SEED', live['full_heading_gauged_live_attitude_seed'])
           PY
-      - name: Test four-S complete SEA3 contract
+      - name: Test complete SEA3 information contracts
         working-directory: tests/validation
-        run: python3 -m unittest -v test_ou3_sea3_four_s_translation_information
+        run: |
+          python3 -m unittest -v \
+            test_ou3_sea3_four_s_translation_information \
+            test_ou3_sea3_h18_information_composition
       - uses: actions/upload-artifact@v6
         with:
           name: ou3-sea3-four-s
-          path: /tmp/ou3_sea3_four_s.json
+          path: |
+            /tmp/ou3_sea3_four_s.json
+            /tmp/ou3_sea3_h18_information.json
           retention-days: 7
