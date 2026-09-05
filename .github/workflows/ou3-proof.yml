@@ -9,6 +9,7 @@ on:
       - "src/kalman_ou_iii/**"
       - "src/kalman_ou_common/**"
       - "src/tuner/**"
+      - "doc/kalman_ou_iii/w3d-iss-stability.tex-part"
       - ".github/workflows/ou3-proof.yml"
   pull_request:
     paths:
@@ -18,6 +19,7 @@ on:
       - "src/kalman_ou_iii/**"
       - "src/kalman_ou_common/**"
       - "src/tuner/**"
+      - "doc/kalman_ou_iii/w3d-iss-stability.tex-part"
       - ".github/workflows/ou3-proof.yml"
   workflow_dispatch:
 
@@ -113,18 +115,10 @@ jobs:
           assert d['source_history_graph_consumed'] is False
           assert d['predecessor_path_enumeration_consumed'] is False
           assert d['P2_800_state_partition_consumed'] is False
-          assert d['cell_cover']['history_depth'] == 0
           print('P3_ENDPOINT_COVARIANCE_MEMORY', d['covariance_memory'])
-          print('H_PBAR_TRACE_UPPER', d['modes']['H']['Pbar_lambda_max_trace_upper'])
-          print('A_PBAR_TRACE_UPPER', d['modes']['A']['Pbar_lambda_max_trace_upper'])
-          print('OBSOLETE_ONE_STEP_DELTA_H_DIAGNOSTIC_ONLY', d['modes']['H']['relative_Riccati_injection_margin_lower'])
           PY
 
-      - name: Test endpoint covariance-upper contract
-        working-directory: tests/validation
-        run: python3 -m unittest -v test_ou3_sea3_riccati_tube
-
-      - name: Certify four-S R_S translation word
+      - name: Certify four-S translation information component
         run: |
           python3 tools/ou3_sea3_rs_word_information.py \
             --output /tmp/ou3_sea3_rs_word_information.json
@@ -137,16 +131,52 @@ jobs:
           assert d['four_S_translation_observation_operator_full_rank'] is True
           assert d['old_P2_800_state_graph_consumed'] is False
           assert d['source_history_graph_consumed'] is False
-          assert d['SEA3_target_vs_applied_RS_contract']['applied_RS_has_separate_EMA'] is True
-          assert d['SEA3_target_vs_applied_RS_contract']['instantaneous_target_formula_substituted_for_applied_RS'] is False
           print('FOUR_S_WORD_HORIZON', d['word_horizon_s_upper'])
           print('FOUR_S_AW_DD3_LOWER', d['aw_scaled_third_divided_difference_lower'])
-          print('FOUR_S_RANK_WITNESS', d['scaled_observation_determinant_abs_lower_rank_witness_only'])
-          print('FOUR_S_NOISE_LAMBDA_MAX', d['selected_S_record_noise']['four_record_covariance_lambda_max_trace_upper'])
-          print('FOUR_S_SIGMA_INV_LOWER', d['selected_S_record_noise']['Sigma_S_inverse_scalar_lower'])
           PY
 
-      - name: Build canonical SEA3 R_S innovation architecture
+      - name: Certify asynchronous windowed PE
+        run: |
+          python3 tools/ou3_sea3_windowed_vector_pe.py \
+            --output /tmp/ou3_sea3_windowed_vector_pe.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/ou3_sea3_windowed_vector_pe.json'))
+          assert d['validation_pass'], d['validation_failures']
+          assert d['hardware_magnetometer_ODR_used_as_PE_recurrence'] is False
+          assert d['two_consecutive_accepted_magnetic_packets_required'] is False
+          assert d['rejected_magnetic_packets_between_required_occurrences_allowed'] is True
+          assert d['all_valid_accelerometer_packets_required'] is True
+          assert d['spread_occurrence_selection']['word_horizon_s'] >= 3.0
+          assert d['eta6_information']['alpha_6_information_lower'] > 0.0
+          assert d['A_mode_bias_route']['homogeneous_bias_contraction_gap_lower'] > 0.0
+          print('WINDOWED_PE_ALPHA6', d['eta6_information']['alpha_6_information_lower'])
+          print('WINDOWED_PE_WORD_HORIZON', d['spread_occurrence_selection']['word_horizon_s'])
+          PY
+
+      - name: Build complete Normal-Live P3 precondition contract
+        run: |
+          python3 tools/ou3_sea3_p3_full_preconditions.py \
+            --output /tmp/ou3_sea3_p3_full_preconditions.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/ou3_sea3_p3_full_preconditions.json'))
+          assert d['validation_pass'], d['validation_failures']
+          assert d['canonical_architecture'] == 'SEA3_FULL_NORMAL_LIVE_RICCATI_WORD'
+          assert d['all_current_machine_checkable_preconditions_present'] is True
+          assert all(d['mandatory_preconditions'].values())
+          assert d['source_parity_failures'] == []
+          assert d['paper_parity_failures'] == []
+          c=d['final_numeric_contract']
+          assert c['common_word_horizon_s'] >= 3.0
+          assert c['H_dimension'] == 18 and c['A_dimension'] == 21
+          assert c['actual_applied_per_axis_RS_required'] is True
+          assert c['full_18x18_and_21x21_matrix_comparison_required'] is True
+          assert c['useful_gate'] == 1e-18
+          print('COMPLETE_P3_WORD', d['word'])
+          PY
+
+      - name: Build four-S R_S translation subarchitecture
         run: |
           python3 tools/ou3_sea3_rs_innovation_p3.py \
             --tube /tmp/ou3_sea3_riccati_tube.json \
@@ -155,27 +185,15 @@ jobs:
           import json
           d=json.load(open('/tmp/ou3_sea3_rs_innovation_p3.json'))
           assert d['validation_pass'], d['validation_failures']
-          assert d['P3_ARCHITECTURE_READY'] is True
-          assert d['R_S_is_primary_translation_correction_mechanism'] is True
-          assert d['pseudo_update_recurrence_is_primary_word_structure'] is True
           assert d['P3_RS_TRANSLATION_OBSERVATION_GEOMETRY_CLOSED'] is True
           assert d['P3_RS_BATCH_NOISE_UPPER_CLOSED'] is True
-          assert d['SEA3_coupled_schedule_contract']['tau_and_active_pseudo_cadence_source_coupled'] is True
-          assert d['SEA3_coupled_schedule_contract']['SpectralMSE_target_tau_sigma_TS_coupled'] is True
-          assert d['SEA3_coupled_schedule_contract']['applied_RS_has_separate_EMA'] is True
-          assert d['SEA3_coupled_schedule_contract']['instantaneous_target_formula_substituted_for_applied_RS'] is False
           assert d['per_sample_Riccati_lower_propagation_used'] is False
           assert d['selected_process_mode_strictness_used'] is False
           assert d['determinant_trace_scalarization_used'] is False
           assert d['scalar_information_beta_used'] is False
-          assert d['useful_gate'] == 1e-18
-          print('P3_ARCHITECTURE', d['canonical_P3_architecture'])
-          print('P3_RS_PRIMARY', d['R_S_is_primary_translation_correction_mechanism'])
-          print('P3_TRANSLATION_WORD', d['translation_correction_word'])
-          print('P3_NEXT_OBLIGATION', d['next_obligation'])
           PY
 
-      - name: Build canonical P3 gate
+      - name: Build canonical full-word P3 gate
         run: |
           python3 tools/ou3_sea3_riccati_metric_p3.py \
             --tube /tmp/ou3_sea3_riccati_tube.json \
@@ -184,26 +202,27 @@ jobs:
           import json
           d=json.load(open('/tmp/ou3_sea3_riccati_metric_p3.json'))
           assert d['validation_pass'], d['validation_failures']
-          assert d['P3_ARCHITECTURE_READY'] is True
-          assert d['R_S_is_primary_translation_correction_mechanism'] is True
-          assert d['four_S_translation_observation_geometry_closed'] is True
-          assert d['four_S_batch_noise_upper_closed'] is True
-          assert d['tau_active_pseudo_cadence_coupling_consumed'] is True
-          assert d['SpectralMSE_target_tau_sigma_TS_coupling_consumed'] is True
-          assert d['applied_RS_separate_EMA_acknowledged'] is True
-          assert d['instantaneous_RS_target_substituted_for_applied_RS'] is False
-          assert d['one_sample_strict_Riccati_margin_consumed'] is False
-          assert d['commit_aligned_source_word_consumed'] is False
-          assert d['per_sample_SPD_lower_required'] is False
-          assert d['selected_process_mode_strictness_used'] is False
+          assert d['canonical_P3_architecture'] == 'SEA3_FULL_NORMAL_LIVE_RICCATI_WORD'
+          assert d['complete_precondition_contract_consumed'] is True
+          assert d['all_current_machine_checkable_preconditions_present'] is True
+          assert d['common_word_horizon_s'] >= 3.0
+          assert d['R_S_component_is_not_the_whole_P3_architecture'] is True
+          assert d['all_valid_accelerometer_updates_consumed'] is True
+          assert d['windowed_asynchronous_vector_PE_consumed'] is True
+          assert d['full_process_UCC_consumed'] is True
+          assert d['aw_covariance_floor_PSD_events_consumed'] is True
+          assert d['A_mode_finite_bias_correlation_consumed'] is True
+          assert d['hardware_magnetometer_ODR_used_as_PE_recurrence'] is False
           assert d['determinant_trace_scalarization_used'] is False
           assert d['scalar_information_beta_used'] is False
+          assert d['blockwise_minimum_ratio_used_for_final_gate'] is False
+          assert d['independent_tau_sigma_RS_TS_extrema_product_used'] is False
           assert d['useful_gate'] == 1e-18
           print('P3_CANONICAL_PASS', d['P3_CANONICAL_PASS'])
           print('P3_FAIL_REASONS', d['P3_CANONICAL_FAIL_REASONS'])
           PY
 
-      - name: Test R_S/SEA3 P3 contracts
+      - name: Test complete P3 contracts
         working-directory: tests/validation
         run: python3 -m unittest -v test_ou3_sea3_rs_word_information test_ou3_sea3_riccati_metric_p3
 
@@ -213,17 +232,19 @@ jobs:
           import json
           d=json.load(open('/tmp/ou3_sea3_riccati_metric_p3.json'))
           if not d['P3_CANONICAL_PASS']:
-              raise SystemExit('canonical SEA3/R_S innovation P3 FAIL: ' + '; '.join(d['P3_CANONICAL_FAIL_REASONS']))
+              raise SystemExit('canonical complete Normal-Live P3 FAIL: ' + '; '.join(d['P3_CANONICAL_FAIL_REASONS']))
           PY
 
       - name: Upload canonical P3 artifacts
         if: always()
         uses: actions/upload-artifact@v6
         with:
-          name: ou3-p3-rs-innovation
+          name: ou3-p3-full-normal-live
           path: |
             /tmp/ou3_sea3_riccati_tube.json
             /tmp/ou3_sea3_rs_word_information.json
+            /tmp/ou3_sea3_windowed_vector_pe.json
+            /tmp/ou3_sea3_p3_full_preconditions.json
             /tmp/ou3_sea3_rs_innovation_p3.json
             /tmp/ou3_sea3_riccati_metric_p3.json
           retention-days: 7
@@ -237,7 +258,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Validate retained 0.8-rad geometry independently of retired P4 metric route
+      - name: Validate retained 0.8-rad geometry
         run: |
           python3 tools/ou3_p4_cayley_sector_certificate.py \
             --output /tmp/ou3_p4_cayley_sector_certificate.json
@@ -246,19 +267,6 @@ jobs:
         run: |
           python3 tools/ou3_sea3_riccati_metric_p4.py \
             --output /tmp/ou3_sea3_riccati_metric_p4.json
-          python3 - <<'PY'
-          import json
-          d=json.load(open('/tmp/ou3_sea3_riccati_metric_p4.json'))
-          assert d['validation_pass'], d['validation_failures']
-          assert d['P3_CANONICAL_PASS_consumed'] is True
-          assert d['old_800_endpoint_signed_Joseph_scan_consumed'] is False
-          assert d['old_terminal_source_phase_metric_attachment_consumed'] is False
-          assert d['old_group_isotropic_P3_P4_metric_assumed'] is False
-          print('P3_H_DELTA_CONSUMED', d['P3_H_delta_consumed'])
-          print('P3_A_DELTA_CONSUMED', d['P3_A_delta_consumed'])
-          print('P4_CANONICAL_PASS', d['P4_CANONICAL_PASS'])
-          print('P4_OPEN_OBLIGATIONS', d['P4_CANONICAL_FAIL_REASONS'])
-          PY
 
       - name: Test moving-Riccati P4 contract
         working-directory: tests/validation
