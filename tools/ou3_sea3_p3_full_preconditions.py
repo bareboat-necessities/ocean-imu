@@ -1,14 +1,17 @@
 #!/usr/bin/env python3
 """Complete SEA3 Normal-Live preconditions for canonical OU-III P3.
 
-This contract has no alternate source model.  It consumes
-``ou3_sea3_complete_source`` and the shipping full-process/vector-PE/runtime
-contracts, and it describes the one literal 3 s H18/A21 word that P3 must
-interval-propagate.
+This contract has no alternate source model.  It consumes the compact,
+phase-continuous ``ou3_sea3_complete_source`` state zeta=(x^s,lambda,z^t,q),
+the sole hard finite-window SEA0 provider, and the shipping full-process/vector-
+PE/runtime contracts.  It describes the one literal 3 s H18/A21 word that P3
+must interval-propagate.
 
-Reduced four-S words, tuner rectangles, point schedules, independent SEA/RAO
-corners, arbitrary P0 boxes, source-history graphs and blockwise contraction
-surrogates are not prerequisites and cannot promote P3.
+Stochastic finite-horizon events are forcing/corollary material only and cannot
+generate or prune the homogeneous source family. Reduced four-S words, tuner
+rectangles, point schedules, independent SEA/RAO corners, arbitrary bounded
+input sources, arbitrary P0 boxes, source-history graphs and blockwise
+contraction surrogates are not prerequisites and cannot promote P3.
 """
 from __future__ import annotations
 
@@ -20,15 +23,17 @@ from pathlib import Path
 
 import ou3_full_process_ucc as PROCESS
 import ou3_sea3_complete_source as COMPLETE
+import ou3_sea3_hard_finite_window_source as SEA0
 import ou3_sea3_windowed_vector_pe as PE
+from ou3_interval import Interval
 
 REPO = Path(__file__).resolve().parents[1]
 DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
 WRAPPER = REPO / "src" / "kalman_ou_iii" / "SeaStateFusionFilter_OU_III.h"
 MEKF = REPO / "src" / "kalman_ou_iii" / "Kalman3D_Wave_OU_III.h"
 PAPER = REPO / "doc" / "kalman_ou_iii" / "w3d-iss-stability.tex-part"
-SCHEMA = 7
-QUALIFICATION = "OU3_SEA3_COMPLETE_SOURCE_P3_PRECONDITIONS_V7"
+SCHEMA = 9
+QUALIFICATION = "OU3_SEA3_COMPLETE_SOURCE_P3_PRECONDITIONS_V9"
 USEFUL_GATE = 1.0e-18
 
 
@@ -40,10 +45,14 @@ def _vec3_default(text: str, name: str) -> list[float]:
     )
     if not m:
         raise RuntimeError(f"cannot extract shipping Config {name}")
-    out = [float(m.group(i)) for i in range(1, 4)]
+    out = [PE.binary32(float(m.group(i))) for i in range(1, 4)]
     if any(not (math.isfinite(x) and x > 0.0) for x in out):
         raise RuntimeError(f"shipping Config {name} is not positive finite")
     return out
+
+
+def _variance_diag(std_xyz: list[float]) -> list[float]:
+    return [Interval.point(x).square().hi for x in std_xyz]
 
 
 def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
@@ -53,10 +62,12 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         raise RuntimeError("canonical P3 may not be trajectory fitted")
 
     complete = COMPLETE.build(path)
+    sea0 = SEA0.build(path)
     process = PROCESS.build()
     pe = PE.build(path)
     bad = {
         "complete_SEA3": COMPLETE.validate(complete),
+        "SEA0_hard_window_provider": SEA0.validate_status(sea0),
         "full_process": PROCESS.validate(process),
         "windowed_PE": PE.validate(pe),
     }
@@ -102,12 +113,30 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     }
     source_failures = [k for k, v in source_parity.items() if not v]
 
+    # These are semantic paper checks, not magic-token checks.  The paper writes
+    # the compact SEA3 source through the implemented compact ranges, the
+    # source state machine, the measurement-only front-end candidate, and the
+    # sample-and-hold schedule.  Requiring an internal Python identifier such as
+    # ``zeta`` or ``R_lambda`` to appear verbatim in TeX made equivalent theorem
+    # text fail CI and did not strengthen the proof.
     paper_markers = {
         "strict_source_reachable_family": "strict source-reachable family" in paper,
         "finite_window_asynchronous_PE": "finite-window asynchronous conditions" in paper,
         "recurrent_S_regularizer": "Translational information from the integral regularizer" in paper,
         "full_H18_state": "\\vct e_H" in paper and "\\mathbb R^{18}" in paper,
         "full_A21_state": "\\vct e_A" in paper and "\\mathbb R^{21}" in paper,
+        "compact_SEA3_transition_relation": (
+            "On the implemented compact ranges" in paper
+            and "source state machine" in paper
+            and "strict source-reachable family" in paper
+            and "arbitrary Cartesian product" in paper
+        ),
+        "augmented_SEA3_source_state": (
+            "\\vartheta_k=(\\tau_k,\\sigma_{aw,k},r_{S,k},T_{S,k})" in paper
+            and "measurement-only\nfront end maintains a separate candidate tuple" in paper
+            and "activation timer" in paper
+            and "hold/commit\nmap, and the source state machine" in paper
+        ),
     }
     paper_failures = [k for k, v in paper_markers.items() if not v]
 
@@ -124,11 +153,15 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
 
     measurement_runtime = {
         "accelerometer_std_mps2": sigma_a,
-        "accelerometer_variance_diag": [x * x for x in sigma_a],
+        "accelerometer_variance_diag": _variance_diag(sigma_a),
         "magnetometer_std_uT": sigma_m,
-        "magnetometer_variance_diag": [x * x for x in sigma_m],
+        "magnetometer_variance_diag": _variance_diag(sigma_m),
         "configured_defaults_source_bound": True,
-        "same_runtime_covariances_used_by_PE_and_full_word": True,
+        "source_literals_converted_to_binary32_before_variance": True,
+        "same_runtime_covariances_used_by_PE_and_full_word": (
+            sigma_a == pe["measurement_runtime"]["accelerometer_std_mps2"]
+            and sigma_m == pe["measurement_runtime"]["magnetometer_std_uT"]
+        ),
     }
 
     front_end_state_manifest = complete["source_coordinates"]["front_end_state"]
@@ -141,11 +174,46 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "selected_process_mode_gate": False,
     })
 
+    sea = complete["SEA3_surface_family"]
+    realization = complete["SEA3_dynamic_realization"]
+    stochastic = complete["stochastic_forcing_corollary"]
+    provider_ingredients = sea0["executable_provider_ingredients"]
+    shaping = sea0["hard_shaping_certificate"]
     mandatory = {
         "complete_SEA3_source_consumed": True,
+        "complete_SEA3_source_contract_ready": bool(complete["P3_source_contract_ready"]),
         "complete_SEA3_no_fallback_generators": all(v is False for v in no_fallback.values()),
+        "SEA0_hard_window_provider_contract_consumed": True,
+        "SEA0_machine_readable_R_lambda_closed": bool(
+            provider_ingredients["machine_readable_R_lambda_closed"]
+        ),
+        "SEA0_explicit_hard_realization_set_consumed": bool(
+            shaping["SEA3_parameter_domain_compact"]
+            and shaping["compactness_is_not_an_open_obligation"]
+        ),
+        "compact_SEA3_parameter_domain_consumed": bool(sea["parameter_domain_compact"]),
+        "compact_SEA3_transition_relation_consumed": bool(
+            sea["compact_transition_relation_is_theorem_domain"]
+        ),
+        "phase_continuous_SEA3_realization_required": bool(realization["phase_continuous"]),
+        "same_xs_lambda_drives_entire_source_word": bool(
+            realization["same_realization_drives_translation_rotation_frontend_tuner_geometry"]
+        ),
+        "hard_pathwise_SEA3_conditions_retained": bool(
+            realization["hard_pathwise_acceleration_and_body_rate_conditions_retained"]
+        ),
+        "stochastic_event_not_source_generator": (
+            stochastic["used_to_generate_P3_source_words"] is False
+        ),
+        "stochastic_event_not_homogeneous_pruner": (
+            stochastic["used_to_prune_homogeneous_P3_family"] is False
+        ),
         "full_process_UCC_consumed": True,
         "windowed_asynchronous_vector_PE_consumed": True,
+        "PE_uses_binary32_shipping_covariances": bool(
+            pe["source_literals_converted_to_binary32_before_variance"]
+            and pe["variance_bounds_outward_after_binary32_conversion"]
+        ),
         "all_valid_accelerometer_updates_required": bool(
             complete["Normal_Live_nonsea_conditions"]["all_valid_accelerometer_updates_required"]
         ),
@@ -162,6 +230,25 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "live_H18_and_A21_full_matrix_gate_required": True,
     }
 
+    sea0_execution_status = {
+        "hard_realization_set_symbol": shaping.get(
+            "hard_realization_set_symbol", "X^s_SEA3(lambda_{0:N_W})"
+        ),
+        "machine_readable_R_lambda_closed": bool(
+            provider_ingredients["machine_readable_R_lambda_closed"]
+        ),
+        "hard_shaping_state_or_excitation_bound_closed": bool(
+            provider_ingredients["hard_shaping_state_or_excitation_bound_closed"]
+        ),
+        "joint_translational_rotational_shaping_closed": bool(
+            provider_ingredients["joint_translational_rotational_shaping_closed"]
+        ),
+        "provider_implementation_closed": bool(sea0["provider_implementation_closed"]),
+        "source_reachable_event_family_materialized": bool(
+            sea0["source_reachable_event_family_materialized"]
+        ),
+    }
+
     return {
         "schema": SCHEMA,
         "qualification": QUALIFICATION,
@@ -172,6 +259,11 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "declared_domain_shrunk": False,
         "complete_SEA3_source_consumed": True,
         "complete_SEA3_source": complete,
+        "SEA0_hard_window_provider": sea0,
+        "SEA0_execution_status": sea0_execution_status,
+        "complete_SEA3_source_family_materialized": bool(
+            sea0["source_reachable_event_family_materialized"]
+        ),
         "no_fallback_generators": no_fallback,
         "source_parity": source_parity,
         "source_parity_failures": source_failures,
@@ -194,6 +286,8 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
             "H_dimension": 18,
             "A_dimension": 21,
             "same_complete_SEA3_event_word_for_H_and_A": True,
+            "source_state": "zeta=(x^s,lambda,z^t,q)",
+            "hard_realization_set": sea0_execution_status["hard_realization_set_symbol"],
             "every_valid_IMU_sample": "prediction -> queued aw floor -> every due S=0 -> accelerometer Joseph -> frontend/tuner update/staging",
             "magnetometer_events": "asynchronous accepted events satisfying the SEA3/Normal-Live PE premise",
         },
@@ -212,7 +306,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         },
         "P3_promoted": False,
         "next_obligation": (
-            "interval-propagate the complete SEA3 source family through every event of the literal H18/A21 word and validate Omega_W-delta*P_W by full-matrix LDLT"
+            "materialize the complete compact X^s_SEA3(lambda_{0:N_W}) history through the sole SEA0 provider, including its same-history joint translational/rotational response, then execute every event of the literal H18/A21 word and validate Omega_W-delta*P_W by full-matrix LDLT"
         ),
     }
 
@@ -229,6 +323,21 @@ def validate(d: dict) -> list[str]:
     ):
         if d.get(key) is not True:
             f.append(f"{key} is not true")
+    sea0 = d.get("SEA0_execution_status", {})
+    if sea0.get("hard_realization_set_symbol") != "X^s_SEA3(lambda_{0:N_W})":
+        f.append("P3 preconditions lost the complete SEA3 hard realization set")
+    if sea0.get("machine_readable_R_lambda_closed") is not True:
+        f.append("P3 preconditions lost machine-readable R_lambda closure")
+    for key in (
+        "hard_shaping_state_or_excitation_bound_closed",
+        "joint_translational_rotational_shaping_closed",
+        "provider_implementation_closed",
+        "source_reachable_event_family_materialized",
+    ):
+        if sea0.get(key) is not False:
+            f.append(f"SEA0 execution status falsely closes {key}")
+    if d.get("complete_SEA3_source_family_materialized") is not False:
+        f.append("precondition scaffold falsely claims SEA3 family materialization")
     for key in ("trajectory_replay_used", "filter_changed", "declared_domain_shrunk", "P3_promoted"):
         if d.get(key) is not False:
             f.append(f"{key} is not false")
@@ -242,6 +351,11 @@ def validate(d: dict) -> list[str]:
     mandatory = d.get("mandatory_preconditions", {})
     if not mandatory or not all(mandatory.values()):
         f.append("one or more complete SEA3 mandatory preconditions are absent")
+    runtime = d.get("measurement_runtime", {})
+    if runtime.get("source_literals_converted_to_binary32_before_variance") is not True:
+        f.append("P3 runtime covariance lost binary32 source conversion")
+    if runtime.get("same_runtime_covariances_used_by_PE_and_full_word") is not True:
+        f.append("PE/full-word measurement covariance parity failed")
     final = d.get("final_numeric_contract", {})
     if float(final.get("useful_gate", math.nan)) != USEFUL_GATE:
         f.append("P3 useful gate changed")
@@ -249,6 +363,8 @@ def validate(d: dict) -> list[str]:
         f.append("actual per-axis R_S requirement disappeared")
     if final.get("full_18x18_and_21x21_matrix_comparison_required") is not True:
         f.append("full H/A matrix comparison requirement disappeared")
+    if final.get("required_final_inequality") != "Omega_W - delta*P_W >= 0 on full H18 and A21":
+        f.append("canonical full-matrix P3 inequality changed")
     return list(dict.fromkeys(f))
 
 
@@ -265,6 +381,7 @@ def main() -> int:
     args.output.write_text(json.dumps(d, indent=2, sort_keys=True), encoding="utf-8")
     print(json.dumps({
         "canonical_source": d["canonical_source"],
+        "SEA0_execution_status": d["SEA0_execution_status"],
         "word": d["word"],
         "mandatory": d["mandatory_preconditions"],
         "fallbacks": d["no_fallback_generators"],

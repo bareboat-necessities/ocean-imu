@@ -3,21 +3,25 @@
 
 There is one promotable route only.
 
-1. ``ou3_sea3_complete_source`` defines the complete admitted SEA3 Normal-Live
-   source word.
+1. ``ou3_sea3_complete_source`` defines the compact, phase-continuous admitted
+   SEA3 Normal-Live source word zeta=(x^s,lambda,z^t,q).
 2. ``ou3_sea3_p3_full_preconditions`` binds the shipping runtime and theorem
    conditions to that same source word.
 3. ``ou3_sea3_full_normal_live_word`` provides the literal full-state Joseph /
    prediction / covariance-floor operations.
-4. The source-family executor must interval-propagate every complete SEA3 word
-   for 3 s and establish, for both modes,
+4. The SEA3 source-family executor must interval-propagate every complete SEA3
+   word for 3 s and establish, for both modes,
 
        Omega_W - delta P_W >= 0,    delta >= 1e-18.
 
+A stochastic finite-horizon concentration event is not a source generator and
+cannot prune the homogeneous P3 family; stochastic sensor/model perturbations
+remain forcing while configured Racc/Rmag remain in the Riccati word.
+
 No four-S reduced word, point executor, tuner rectangle, independent sea/RAO
-corner, D_W/L_W split, blockwise ratio, scalar information beta, determinant /
-trace surrogate, source-history graph, arbitrary P0 box or selected process
-strictness is accepted by this gate.
+corner, arbitrary bounded-input source, D_W/L_W split, blockwise ratio, scalar
+information beta, determinant/trace surrogate, source-history graph, arbitrary
+P0 box or selected process strictness is accepted by this gate.
 """
 from __future__ import annotations
 
@@ -34,8 +38,8 @@ import ou3_sea3_p3_full_preconditions as FULL
 
 REPO = Path(__file__).resolve().parents[1]
 DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
-SCHEMA = 12
-QUALIFICATION = "OU3_SEA3_COMPLETE_SOURCE_FULL_WORD_P3_GATE_V12"
+SCHEMA = 13
+QUALIFICATION = "OU3_SEA3_COMPLETE_SOURCE_FULL_WORD_P3_GATE_V13"
 USEFUL_GATE = 1.0e-18
 
 
@@ -61,6 +65,10 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     if any(v is not False for v in fallback.values()):
         raise RuntimeError("canonical P3 gate found an enabled fallback route")
 
+    sea = complete["SEA3_surface_family"]
+    realization = complete["SEA3_dynamic_realization"]
+    stochastic = complete["stochastic_forcing_corollary"]
+
     word_family_materialized = bool(word["SOURCE_REACHABLE_EVENT_FAMILY_MATERIALIZED"])
     h_executed = bool(word["FULL_H18_WORD_EXECUTED"])
     a_executed = bool(word["FULL_A21_WORD_EXECUTED"])
@@ -85,8 +93,8 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     }
 
     fail_reasons = [] if p3_pass else [
-        "the complete SEA3 3 s source family has not yet been interval-propagated through every literal H18/A21 shipping event",
-        "the same SEA3 word must generate the physical response, exact front-end state, tuner targets, EMA/commit path, T_S, Q, actual applied per-axis R_S, accelerometer/vector geometry, magnetic PE events and covariance-floor events",
+        "the compact phase-continuous SEA3 3 s source family has not yet been interval-propagated through every literal H18/A21 shipping event",
+        "the same SEA3 zeta=(x^s,lambda,z^t,q) word must generate physical response, exact front-end state, tuner targets, EMA/commit path, T_S, Q, actual applied per-axis R_S, accelerometer/vector geometry, magnetic PE events and covariance-floor events",
         "the full 18x18 and 21x21 matrices Omega_W-delta*P_W have not yet both passed validated LDLT at delta=1e-18",
     ]
 
@@ -103,7 +111,30 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "complete_SEA3_source_consumed": True,
         "complete_SEA3_source_validation_pass": True,
         "complete_SEA3_response_couplings_consumed": True,
-        "complete_SEA3_finite_horizon_good_event_consumed": True,
+        "complete_SEA3_compact_parameter_domain_consumed": bool(
+            sea["parameter_domain_compact"]
+        ),
+        "complete_SEA3_compact_transition_relation_consumed": bool(
+            sea["compact_transition_relation_is_theorem_domain"]
+        ),
+        "complete_SEA3_phase_continuous_realization_required": bool(
+            realization["phase_continuous"]
+        ),
+        "same_xs_lambda_drives_entire_word": bool(
+            realization["same_realization_drives_translation_rotation_frontend_tuner_geometry"]
+        ),
+        "hard_pathwise_SEA3_conditions_retained": bool(
+            realization["hard_pathwise_acceleration_and_body_rate_conditions_retained"]
+        ),
+        "stochastic_forcing_does_not_generate_source_words": (
+            stochastic["used_to_generate_P3_source_words"] is False
+        ),
+        "stochastic_forcing_does_not_prune_homogeneous_family": (
+            stochastic["used_to_prune_homogeneous_P3_family"] is False
+        ),
+        "configured_measurement_covariance_retained_under_stochastic_forcing": bool(
+            stochastic["configured_Racc_Rmag_remain_in_every_covariance_update"]
+        ),
         "complete_SEA3_frontend_state_consumed": True,
         "complete_SEA3_adaptive_state_consumed": True,
         "actual_applied_per_axis_RS_consumed": True,
@@ -128,6 +159,9 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "independent_sea_x_RAO_product_used": False,
         "point_source_word_used": False,
         "selected_four_S_word_used": False,
+        "gaussian_good_event_source_used": False,
+        "spectral_moment_only_source_used": False,
+        "arbitrary_bounded_input_source_used": False,
         "D_W_L_W_split_used": False,
         "blockwise_minimum_ratio_used": False,
         "scalar_information_beta_used": False,
@@ -149,7 +183,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "P4_MAY_CONSUME_P3": p3_pass,
         "P3_CANONICAL_FAIL_REASONS": fail_reasons,
         "next_obligation": (
-            "build the complete SEA3 forward source-family interval executor and close both full-matrix LDLTs"
+            "execute the compact phase-continuous SEA3 forward family itself and close both full-matrix LDLTs"
             if not p3_pass else "P3 closed; P4 may consume the certified complete-SEA3 word"
         ),
     }
@@ -168,7 +202,14 @@ def validate(d: dict) -> list[str]:
         "complete_SEA3_source_consumed",
         "complete_SEA3_source_validation_pass",
         "complete_SEA3_response_couplings_consumed",
-        "complete_SEA3_finite_horizon_good_event_consumed",
+        "complete_SEA3_compact_parameter_domain_consumed",
+        "complete_SEA3_compact_transition_relation_consumed",
+        "complete_SEA3_phase_continuous_realization_required",
+        "same_xs_lambda_drives_entire_word",
+        "hard_pathwise_SEA3_conditions_retained",
+        "stochastic_forcing_does_not_generate_source_words",
+        "stochastic_forcing_does_not_prune_homogeneous_family",
+        "configured_measurement_covariance_retained_under_stochastic_forcing",
         "complete_SEA3_frontend_state_consumed",
         "complete_SEA3_adaptive_state_consumed",
         "actual_applied_per_axis_RS_consumed",
@@ -193,11 +234,12 @@ def validate(d: dict) -> list[str]:
         "trajectory_replay_used", "filter_changed", "declared_domain_shrunk",
         "independent_tau_sigma_RS_TS_extrema_product_used",
         "independent_sea_x_RAO_product_used", "point_source_word_used",
-        "selected_four_S_word_used", "D_W_L_W_split_used",
-        "blockwise_minimum_ratio_used", "scalar_information_beta_used",
-        "determinant_trace_scalarization_used", "source_history_graph_used",
-        "predecessor_path_enumeration_used", "arbitrary_P0_rectangle_used",
-        "selected_process_mode_strictness_used",
+        "selected_four_S_word_used", "gaussian_good_event_source_used",
+        "spectral_moment_only_source_used", "arbitrary_bounded_input_source_used",
+        "D_W_L_W_split_used", "blockwise_minimum_ratio_used",
+        "scalar_information_beta_used", "determinant_trace_scalarization_used",
+        "source_history_graph_used", "predecessor_path_enumeration_used",
+        "arbitrary_P0_rectangle_used", "selected_process_mode_strictness_used",
     ):
         if d.get(key) is not False:
             f.append(f"forbidden fallback route enabled: {key}")

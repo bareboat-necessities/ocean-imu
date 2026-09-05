@@ -9,51 +9,97 @@ perturbations of physically admissible multimodal directional JONSWAP SEA3 sea
 states**. P3 is the recurrent finite-window linear certificate, P4 is nonlinear
 finite-window dissipation, and P5 is finite capture.
 
+SEA3 is the compact theorem-domain sea family. Compactness is not an open
+obligation and may not be replaced by an independent rectangular sea/source
+box. The canonical exogenous state is the complete phase-continuous
+
+`zeta_k = (x^s_k, lambda_k, z^t_k, q_k)`.
+
+The same `x^s/lambda` history must generate physical translation and rotation,
+the private measurement-only Mahony/WavePeriodEstimator front end, tuner
+candidate state, staged/committed `tau/sigma/R_S`, pseudo cadence, every
+shipping `F,Q`, every due `S=0` update with the actual applied per-axis `R_S`,
+every valid accelerometer update, asynchronous vector-PE events, covariance
+floor events, and the H18/A21 recursions.
+
+## Canonical SEA0 status
+
+The executable finite-window provider currently has three required ingredients:
+
+1. **machine-readable coupled `R_lambda`: CLOSED.** The implementation uses a
+   conservative coupled outer transition relation containing the theorem's
+   tighter unknown rate-bounded relation. It retains partition-energy and
+   steepness coupling and invents no numerical transition rates.
+2. **hard phase-continuous `x^s` shaping/excitation representation: OPEN.** The
+   continuous JONSWAP/PM PSD is not, by itself, a deterministic pathwise bound.
+   A Gaussian good event, spectral moments, replay, the seeded 128-frequency
+   simulator, a finite RAO grid, or an arbitrary bounded-input box cannot close
+   this ingredient.
+3. **joint translational/rotational response from that same `x^s/lambda`
+   history: OPEN.** The continuum directional RAO envelope remains a theorem
+   response family, not an independently combinable source generator.
+
+`tools/ou3_sea3_hard_shaping_state.py` owns the fail-closed second ingredient,
+and `tools/ou3_sea3_hard_finite_window_source.py` consumes it directly. A
+provider JSON cannot self-assert either open ingredient.
+
+The upstream `oceanography-waves-lib` v1.1.3 JONSWAP simulator uses a seeded
+128-frequency harmonic approximation with sampled directions and second-order
+Stokes pairs. It remains useful for falsification and diagnostics, but it is not
+the complete continuum SEA3 source and cannot promote SEA0/P3.
+
 ## Canonical P3 architecture
 
-Canonical P3 is now one **complete Normal-Live H18/A21 Riccati word**. No single
+Canonical P3 is one **complete Normal-Live H18/A21 Riccati word**. No single
 mechanism is allowed to stand in for the rest of the theorem preconditions.
 
-The common word is currently at least 3 s long. That horizon is chosen from the
+The common word is at least 3 s long. That horizon is chosen from the
 intersection of the already-declared preconditions: the 1 s vector-PE recurrence
 allows one required occurrence in `[0,1]` and a second in `[2,3]`; the same word
 contains many source-guaranteed S=0 firings, every valid accelerometer update,
-repeated process injection, recurrent PSD a_w covariance-floor events, and the
+repeated process injection, recurrent PSD `a_w` covariance-floor events, and the
 finite A-mode residual-bias contraction.
 
-The final gate remains
+The final gate is
 
-`D_W - delta L_W^-1 >= 0`, `delta >= 1e-18`,
+`Omega_W - delta P_W >= 0`, `delta >= 1e-18`,
 
-on the complete H18 and A21 coordinates using validated outward matrix
-arithmetic. The useful gate is unchanged.
+on the complete H18 and A21 coordinates using validated outward full-matrix
+LDLT. No determinant/trace scalarization, blockwise minimum ratio, scalar beta,
+or reduced-coordinate proxy may set the canonical pass flag.
 
-### Measurement dissipation
+### Homogeneous measurement dissipation
 
-For every exact linear Kalman measurement update,
+For the homogeneous/noiseless error map of an exact linear Kalman correction,
+with the configured measurement covariance retained in the Riccati update,
 
-`V^- - V^+ = r^T S_innov^-1 r`, `V=e^T P^-1 e`.
+`V^- - V^+ = r_h^T S_innov^-1 r_h`, `V=e^T P^-1 e`, `r_h=H e^-`.
 
-Prediction is non-expansive in the shipping moving covariance metric because the
-process covariance is PSD. Over the complete recurrent word, sequential
-innovations are the block-Cholesky whitening of the batch record, so the
-correction information is accumulated rather than reduced to a scalar loss.
+This identity is not a statement that a realized noisy measurement contributes
+that exact deterministic decrement; measurement noise belongs to the forcing
+term in the practical-stability theorem. Canonical P3 uses the homogeneous word
+while retaining the deployed `R_acc`, `R_mag`, and actual adaptive `R_S` in the
+covariance/information recursion.
+
+Prediction is non-expansive in the shipping moving covariance metric when the
+shipping process covariance contribution is PSD. Over the complete recurrent
+word, sequential homogeneous innovations are accumulated by the full matrix
+recursion rather than reduced to a scalar information loss.
 
 ### R_S / S=0 contribution
 
-R_S remains the strongest direct translation correction and must be credited as
-such. Four separated source-guaranteed S=0 firings give full rank on
-`[v,p,S,a_w]` for arbitrary legal time-varying tau through the divided-difference
-identity. The proof retains the full `P(:,S)` covariance action and the deployed
-per-axis R_S factors.
+`R_S` remains the strongest direct translation correction and must be credited
+as such. Four separated source-guaranteed `S=0` firings provide a useful
+full-rank translation subcertificate for arbitrary legal time-varying `tau`, but
+that selected four-update result is only a mandatory component, never the P3
+architecture by itself.
 
-This four-S certificate is a **mandatory component**, not the P3 architecture by
-itself. The final word must use the actual applied R_S generated by the same
-adaptive source path as tau, sigma and T_S. SpectralMSE couples the *target*
-`(tau,sigma,T_S,R_S_target)` operating point, while applied R_S has its own EMA.
-The target formula may not be substituted for applied R_S, and independent
-`tau x sigma x R_S x T_S` extrema may not be multiplied together as a canonical
-source word.
+The full word must use the actual applied `R_S` generated by the same adaptive
+source path as `tau`, `sigma`, and `T_S`. SpectralMSE couples the target
+`(tau,sigma,T_S,R_S_target)` operating point, while applied `R_S` has its own
+EMA. The target formula may not be substituted for applied `R_S`, and
+independent `tau x sigma x R_S x T_S` extrema may not be multiplied together as
+a canonical source word.
 
 ### Windowed vector PE
 
@@ -81,21 +127,21 @@ it does not invent a pointwise eta9 packet shortcut.
 The full word must simultaneously consume:
 
 - the source-reachable adaptive state and held/commit phase;
-- the same joint source path in `F_k`, `Q_k`, pseudo cadence and applied R_S;
+- the same joint source path in `F_k`, `Q_k`, pseudo cadence and applied `R_S`;
 - full process UCC for attitude/gyro bias, translation, and active bias;
 - every valid Normal-Live accelerometer correction, with no rejection branch;
-- the full accelerometer Jacobian coupling attitude, a_w and active b_a;
-- every due S=0 update and its actual per-axis applied R_S;
-- recurrent default PSD a_w covariance-floor increments at their real event times;
+- the full accelerometer Jacobian coupling attitude, `a_w` and active `b_a`;
+- every due `S=0` update and its actual per-axis applied `R_S`;
+- recurrent default PSD `a_w` covariance-floor increments at their real event times;
 - zero lever arm and the dormant-transparent vibration-guard proof branch;
 - declared force, magnetic, body-rate, active-bias and projection bounds;
 - proved SEA3 partition-energy and height/period coupling whenever physical sea
   variables enter the enclosure.
 
-The global physical SEA3 finite-window realization / vessel-RAO left inclusion is
-still a separate open theorem. It is not used as unqualified hard pruning. P3 is
-therefore conditional on an admitted Normal-Live SEA3 word until that physical
-left-inclusion result is closed.
+The hard complete-SEA3 finite-window realization and the same-history continuum
+vessel-response left inclusion must close before the source-reachable 601-sample
+family may be materialized. P3 therefore remains fail-closed; no admitted point
+word or replay may stand in for this family.
 
 ## Routes explicitly retired
 
@@ -104,24 +150,35 @@ Canonical P3 must not use any of the following as a promotion route:
 - one-sample strict Riccati process injection;
 - per-sample SPD covariance lower requirements;
 - a translation-only variational/least-action replacement certificate;
-- a low-dimensional R_S/tau lag envelope as a substitute for the joint source;
+- a low-dimensional `R_S/tau` lag envelope as a substitute for the joint source;
 - hardware magnetometer ODR as the PE recurrence assumption;
 - selected-process-mode strictness in place of the full word;
 - determinant/trace eigenvalue scalarization;
 - scalar information-beta attenuation;
 - blockwise minimum ratios for the final H/A gate;
 - independent tuner extrema products;
+- independent SEA x RAO Cartesian products;
+- replay, Gaussian good events, spectral-moment-only words, or arbitrary bounded-input words;
+- fixed-lambda or point words;
+- the selected four-S word as a replacement for the full scheduler word;
 - the retired 800-state P2 graph or predecessor/source-history enumeration.
 
 The endpoint covariance upper remains useful for boundedness and later nonlinear
-work. The old one-step `~2.12e-35` quantity remains diagnostic only.
+work. Historical tiny one-step/tube margins remain diagnostic only and are not
+the current canonical failure mechanism.
 
 ## Current quantitative obligation
 
-The remaining P3 task is singular: build and validate **one complete 3 s H18/A21
-Riccati-information word** satisfying `tools/ou3_sea3_p3_full_preconditions.py`.
-It must preserve the complete event ordering and all mandatory preconditions
-above, then emit the two full matrices needed for the unchanged `1e-18` gate.
+The immediate obligation is SEA0 execution, not a different P3 inequality:
+complete the code-owned hard phase-continuous `x^s` representation (or equivalent
+hard finite-window dynamic constraint) for the already-compact SEA3 theorem
+domain, then generate the joint translational/rotational response from that same
+history over all 601 samples. Once that provider closes, execute the exact
+front-end/tuner/scheduler/shipping event word in both H18 and A21 and test
+
+`Omega_W - delta P_W >= 0`, `delta >= 1e-18`
+
+with validated full-matrix LDLT in both modes.
 
 P4 remains blocked until that complete P3 passes. P5 remains blocked until P4
 closes.

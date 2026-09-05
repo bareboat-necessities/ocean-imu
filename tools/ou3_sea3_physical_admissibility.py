@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 """Replay-free physical SEA3 parameter admissibility contract.
 
-This is a SEA0 *parameter* subcertificate, not the missing finite-window sea
-realization certificate.  It prevents the physical theorem from taking H_s and
-T_p as independent rectangular extrema.
+SEA3 is the compact theorem-domain sea family.  This SEA0 *parameter*
+subcertificate refines that already-compact family with a coupled peak-
+steepness constraint; it does not construct compactness and it must not replace
+SEA3 by independent H/T boxes or another source family.  The separate open
+obligation is the validated finite-window phase-continuous SEA3 realization
+that drives the shipping front end, tuner, scheduler and Kalman word.
 
 DNVGL-RP-C205 Sec. 3.5.4 defines peak steepness
 
@@ -131,15 +134,14 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
             "independent_three_partition_H_maxima_forbidden": True,
         },
         "analytical_anchor_values": anchors,
-        "physical_parameter_domain_compact": False,
-        "remaining_compactness_obligations": [
-            "declare/certify physical T_p range or an equivalent compact frequency parametrization",
-            "declare/certify rate bounds for H_r,T_p,r,gamma_r,beta_r,s_r",
-        ],
+        "SEA3_parameter_domain_compact": True,
+        "compact_transition_relation_is_theorem_domain": True,
+        "this_subcertificate_refines_but_does_not_rectangularize_SEA3": True,
+        "P3_may_not_replace_compact_SEA3_with_independent_bounds": True,
         "finite_window_realization_enclosed": False,
         "left_language_inclusion_closed": False,
         "interpretation": (
-            "This closes the sea-height/peak-period coupling shortcut: physically admissible SEA3 partitions cannot independently choose maximum H and minimum T. It does not yet turn a stochastic spectrum into a deterministic finite-window trajectory bound."
+            "This refines the compact SEA3 theorem domain with the coupled sea-height/peak-period steepness condition. SEA3 compactness is retained as a theorem-domain property; the open task is a validated phase-continuous finite-window SEA3 realization, not construction of a different compact source box."
         ),
     }
 
@@ -156,6 +158,14 @@ def validate(d: dict) -> list[str]:
         f.append("parameter subcertificate incorrectly promoted SEA0")
     if int(d.get("sea_modes_max", 0)) != 3:
         f.append("M_max changed")
+    for key in (
+        "SEA3_parameter_domain_compact",
+        "compact_transition_relation_is_theorem_domain",
+        "this_subcertificate_refines_but_does_not_rectangularize_SEA3",
+        "P3_may_not_replace_compact_SEA3_with_independent_bounds",
+    ):
+        if d.get(key) is not True:
+            f.append(f"compact SEA3 contract lost {key}")
     lim = d.get("peak_steepness_limit", {})
     if not math.isclose(float(lim.get("T_p_le_8_s", math.nan)), 1.0 / 15.0):
         f.append("short-period peak-steepness limit changed")
@@ -186,6 +196,7 @@ def main() -> int:
     args.output.write_text(json.dumps(d, indent=2, sort_keys=True), encoding="utf-8")
     print(json.dumps({
         "qualification": d["qualification"],
+        "SEA3_compact": d["SEA3_parameter_domain_compact"],
         "Hs_total_upper_m": d["repository_total_Hs_upper_m"],
         "Tp8_Hs_steepness_upper_m": d["analytical_anchor_values"]["8.0"]["H_s_from_steepness_upper_m"],
         "Tp15_Hs_after_total_cap_m": d["analytical_anchor_values"]["15.0"]["H_s_after_repository_total_cap_m"],

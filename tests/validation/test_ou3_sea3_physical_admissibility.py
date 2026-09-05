@@ -54,13 +54,16 @@ class Sea3PhysicalAdmissibilityTest(unittest.TestCase):
         self.assertTrue(c["independent_three_partition_H_maxima_forbidden"])
         self.assertEqual(c["total_Hs_upper_m"], 8.5)
 
-    def test_parameter_subcertificate_does_not_fake_left_inclusion(self) -> None:
+    def test_parameter_subcertificate_retains_compact_sea3_without_faking_realization(self) -> None:
         d = phys.build()
+        self.assertEqual(phys.validate(d), [])
         self.assertFalse(d["SEA0_full_certificate_promoted"])
-        self.assertFalse(d["physical_parameter_domain_compact"])
+        self.assertTrue(d["SEA3_parameter_domain_compact"])
+        self.assertTrue(d["compact_transition_relation_is_theorem_domain"])
+        self.assertTrue(d["this_subcertificate_refines_but_does_not_rectangularize_SEA3"])
+        self.assertTrue(d["P3_may_not_replace_compact_SEA3_with_independent_bounds"])
         self.assertFalse(d["finite_window_realization_enclosed"])
         self.assertFalse(d["left_language_inclusion_closed"])
-        self.assertIn("T_p range", d["remaining_compactness_obligations"][0])
         self.assertTrue(
             d["external_basis"]["multimodal_partition_extension_is_our_conservative_theorem_choice"]
         )
