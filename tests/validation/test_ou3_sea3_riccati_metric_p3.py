@@ -12,7 +12,7 @@ class Sea3RsInnovationP3Test(unittest.TestCase):
     def setUpClass(cls):
         cls.d = mod.build()
 
-    def test_architecture_uses_rs_and_sea3_as_primary_strictness(self):
+    def test_architecture_uses_four_s_rs_word_as_translation_strictness(self):
         self.assertEqual(mod.validate(self.d), [])
         self.assertEqual(
             self.d["canonical_P3_architecture"],
@@ -20,10 +20,24 @@ class Sea3RsInnovationP3Test(unittest.TestCase):
         )
         self.assertTrue(self.d["R_S_is_primary_translation_correction_mechanism"])
         self.assertTrue(self.d["pseudo_update_recurrence_is_primary_word_structure"])
-        self.assertTrue(self.d["SEA3_physical_parameter_coupling_consumed"])
-        self.assertTrue(self.d["same_operating_point_tau_sigma_RS_TS_required"])
-        self.assertTrue(self.d["independent_source_extrema_product_forbidden"])
+        self.assertTrue(self.d["four_S_translation_word_consumed"])
+        self.assertTrue(self.d["four_S_translation_observation_geometry_closed"])
+        self.assertTrue(self.d["four_S_batch_noise_upper_closed"])
+        self.assertEqual(
+            self.d["translation_correction_word"]["mechanism"],
+            "FOUR_SEPARATED_S_ZERO_INNOVATIONS",
+        )
+        self.assertFalse(
+            self.d["translation_correction_word"]["accelerometer_needed_to_close_translation"]
+        )
         self.assertEqual(self.d["strictness_location"], "RECURRENT_SEA3_MEASUREMENT_WORD")
+
+    def test_target_and_applied_rs_are_not_conflated(self):
+        self.assertTrue(self.d["tau_active_pseudo_cadence_coupling_consumed"])
+        self.assertTrue(self.d["SpectralMSE_target_tau_sigma_TS_coupling_consumed"])
+        self.assertTrue(self.d["applied_RS_separate_EMA_acknowledged"])
+        self.assertFalse(self.d["instantaneous_RS_target_substituted_for_applied_RS"])
+        self.assertTrue(self.d["safe_applied_RS_invariant_used_until_lag_theorem"])
 
     def test_exact_innovation_identity_is_canonical(self):
         self.assertTrue(self.d["exact_measurement_dissipation_identity_consumed"])
@@ -44,7 +58,9 @@ class Sea3RsInnovationP3Test(unittest.TestCase):
         self.assertFalse(self.d["scalar_information_beta_used"])
         self.assertEqual(self.d["useful_gate"], 1e-18)
 
-    def test_gate_fails_closed_until_dw_lw_matrix_comparison(self):
+    def test_gate_fails_closed_until_lw_and_full_matrix_composition(self):
+        self.assertTrue(self.d["P3_RS_TRANSLATION_OBSERVATION_GEOMETRY_CLOSED"])
+        self.assertTrue(self.d["P3_RS_BATCH_NOISE_UPPER_CLOSED"])
         self.assertFalse(self.d["P3_RS_WEIGHTED_WORD_INFORMATION_CLOSED"])
         self.assertFalse(self.d["P3_UCC_METRIC_LOWER_CLOSED"])
         self.assertFalse(self.d["P3_FULL_MATRIX_COMPARISON_CLOSED"])
