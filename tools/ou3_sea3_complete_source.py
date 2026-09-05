@@ -3,18 +3,20 @@
 
 There is exactly one promotable source family: complete admitted SEA3 Normal
 Live.  No point word, tuner rectangle, independent sea/RAO product, selected
-four-S word, predecessor graph, or independent tau/sigma/R_S/T_S box is an
-alternate source.
+four-S word, predecessor graph, Gaussian good-event source, or independent
+tau/sigma/R_S/T_S box is an alternate source.
 
 A canonical source word carries, simultaneously,
 
-* up to three JONSWAP/PM directional partitions;
+* the compact three-partition JONSWAP/PM directional sea state;
 * exact partition-energy coupling H_s^2 = sum_r H_r^2;
 * per-partition H_r/T_p,r peak-steepness admissibility;
-* gamma, mean direction and directional spreading;
-* one continuum complex translational RAO satisfying the declared SEA3 family;
-* one rotational response satisfying the body-rate SEA3 coupling;
-* the finite-horizon Gaussian good-event condition on the same response word;
+* gamma, mean direction and directional spreading and the compact SEA3
+  transition relation;
+* a phase-continuous SEA3 oscillator/shaping state x^s and the same admitted
+  translational and rotational vessel-response state;
+* the resulting pathwise CoG acceleration/body-rate sequence satisfying the
+  declared Normal-Live SEA3 conditions;
 * the exact shipping measurement-only vertical, WavePeriodEstimator, band-pass,
   moment, tuner-EMA, staged-commit and pseudo-scheduler states;
 * the resulting committed tau, sigma_aw and R_S; and
@@ -27,11 +29,14 @@ At every due S=0 update the full-state Joseph recursion uses the actual committe
 SpectralMSE R_S from that same source word, including the deployed per-axis
 standard-deviation factors [0.72, 0.72, 1].
 
-This file defines the conditional theorem source set.  It does not claim that
-all real vessels lie in the declared SEA3 response family; that deployment left
-inclusion remains a separate physical qualification obligation.  But every word
-used by P3 must satisfy the complete SEA3 conditions below.  There is no broader
-fallback source.
+The finite-horizon stochastic calculation retained below is diagnostic/corollary
+material only.  It cannot generate, prune, or promote the homogeneous P3 source
+family; configured Racc/Rmag and hard SEA3 source conditions stay in the word.
+
+This file defines the conditional theorem source contract.  It does not claim
+that the complete 3 s phase-continuous family has already been interval-
+materialized.  P3 remains fail-closed until that SEA3 family itself executes the
+literal H18/A21 word and the final full-matrix gate closes.
 """
 from __future__ import annotations
 
@@ -55,8 +60,8 @@ REPO = Path(__file__).resolve().parents[1]
 DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
 DEFAULT_RESPONSE_DOMAIN = REPO / "tools" / "ou3_sea3_directional_response_domain.json"
 WRAPPER = REPO / "src" / "kalman_ou_iii" / "SeaStateFusionFilter_OU_III.h"
-SCHEMA = 2
-QUALIFICATION = "OU3_SEA3_COMPLETE_NORMAL_LIVE_SOURCE_V2"
+SCHEMA = 3
+QUALIFICATION = "OU3_SEA3_COMPLETE_NORMAL_LIVE_SOURCE_V3"
 DIM = 3
 
 
@@ -71,6 +76,7 @@ def _exp_minus_integer(t: int) -> Interval:
 
 
 def _select_tail_exponent(samples: int, budget: float) -> dict:
+    """Non-promoting stochastic diagnostic used only for a later corollary."""
     if not isinstance(samples, int) or isinstance(samples, bool) or samples <= 0:
         raise ValueError("samples must be positive")
     blo = down(float(budget))
@@ -169,6 +175,8 @@ def build(
     if samples * dt_cpp < 3.0:
         samples += 1
 
+    # Retained only for a later finite-horizon stochastic forcing corollary.
+    # It must not generate or prune the homogeneous SEA3 Riccati source family.
     total_budget = float(domain["stochastic"]["finite_horizon_failure_probability_budget"])
     per_event_budget = down(total_budget / 2.0)
     acc_tail = _select_tail_exponent(samples, per_event_budget)
@@ -204,12 +212,17 @@ def build(
             "2*pi*H_r/(g*T_p_r^2) <= S_p,max(T_p_r)",
             "gamma_r in declared JONSWAP interval",
             "directional density nonnegative and normalized",
+            "lambda_{k+1} in compact R_lambda(lambda_k)",
+        ],
+        "phase_continuous_sea_state": [
+            "x^s oscillator/shaping state",
+            "lambda compact SEA3 parameter state",
         ],
         "translational_response": ["G", "f_c", "p", "complex h(f,theta)"],
         "rotational_response": ["K_rot", "f_c_rot", "q_rot", "complex r(f,theta)"],
         "finite_window_response_state": [
-            "post-RAO CoG acceleration process",
-            "post-RAO body-rate process",
+            "post-RAO CoG acceleration process from the same x^s/lambda word",
+            "post-RAO body-rate process from the same x^s/lambda word",
         ],
         "front_end_state": [
             "vertical observer state",
@@ -242,7 +255,19 @@ def build(
         "predecessor_path_generator": False,
         "arbitrary_P0_generator": False,
         "trajectory_replay_generator": False,
+        "gaussian_good_event_source_generator": False,
+        "spectral_moment_only_source_generator": False,
+        "arbitrary_bounded_input_source_generator": False,
     }
+
+    source_contract_ready = (
+        not rs_failures
+        and physical["SEA3_parameter_domain_compact"] is True
+        and physical["compact_transition_relation_is_theorem_domain"] is True
+        and bool(p1compat["coupled_SEA3_domain_required"])
+        and all(frontend["source_parity"].values())
+        and all(v is False for v in no_fallback.values())
+    )
 
     return {
         "schema": SCHEMA,
@@ -260,6 +285,10 @@ def build(
         "word_samples": samples,
         "SEA3_surface_family": {
             "modes_max": int(sea["m_max"]),
+            "parameter_domain_compact": bool(physical["SEA3_parameter_domain_compact"]),
+            "compact_transition_relation_is_theorem_domain": bool(
+                physical["compact_transition_relation_is_theorem_domain"]
+            ),
             "partition_spectrum": sea["partition_frequency_shape"],
             "gamma_interval": sea["declared_gamma_interval"],
             "directional_density": directional["directional_density"],
@@ -274,33 +303,47 @@ def build(
             "independent_H_T_extrema_forbidden": True,
             "independent_partition_height_maxima_forbidden": True,
         },
+        "SEA3_dynamic_realization": {
+            "phase_continuous": True,
+            "sea_parameter_state": "lambda=(H_r,T_p_r,gamma_r,beta_r,s_r)_{r=1..3}",
+            "shaping_state": "x^s",
+            "compact_transition_relation": "lambda_{k+1} in R_lambda(lambda_k)",
+            "augmented_source_state": "zeta=(x^s,lambda,z^t,q)",
+            "same_realization_drives_translation_rotation_frontend_tuner_geometry": True,
+            "hard_pathwise_acceleration_and_body_rate_conditions_retained": True,
+            "finite_window_family_materialized": False,
+            "probabilistic_event_may_substitute_for_realization": False,
+            "arbitrary_bounded_input_may_substitute_for_realization": False,
+        },
         "SEA3_translational_response_family": response,
         "SEA3_response_couplings": {
             "independent_sea_x_RAO_cartesian_product_forbidden": bool(
                 p1compat["coupled_SEA3_domain_required"]
             ),
-            "translational_acceleration_condition": (
-                "pi^4*H_s^2*G^2*f_c^4 <= acceleration_trace_threshold"
+            "pathwise_non_gravitational_cog_acceleration_norm_upper_mps2": float(
+                live["non_gravitational_cog_acceleration_norm_upper_mps2"]
             ),
-            "acceleration_trace_threshold_m2_s4": acc_trace_threshold,
-            "rotational_body_rate_condition": (
-                "8100*H_s^2*K_rot^2*f_c_rot^2 <= body_rate_trace_threshold and q_rot>=1"
+            "pathwise_body_rate_norm_upper_deg_s": float(
+                live["body_rate_norm_upper_deg_s"]
             ),
-            "body_rate_trace_threshold_deg2_s2": rate_trace_threshold,
             "same_H_s_partition_energy_enters_translation_and_rotation_conditions": True,
-            "only_jointly_admitted_response_tuples_may_generate_P3_words": True,
+            "only_same_phase_continuous_SEA3_realization_may_generate_P3_words": True,
+            "moment_or_probability_bound_may_not_generate_P3_word": True,
         },
-        "SEA3_finite_horizon_good_event": {
-            "centered_Gaussian_response_required": True,
-            "temporal_independence_required": False,
-            "cross_axis_independence_required": False,
+        "stochastic_forcing_corollary": {
+            "role_in_P3": domain["stochastic"]["role_in_P3"],
+            "used_to_generate_P3_source_words": False,
+            "used_to_prune_homogeneous_P3_family": False,
+            "configured_Racc_Rmag_remain_in_every_covariance_update": True,
+            "centered_Gaussian_response_diagnostic": True,
             "samples": samples,
             "total_failure_budget": total_budget,
             "acceleration_tail": acc_tail,
             "body_rate_tail": rate_tail,
+            "acceleration_trace_threshold_diagnostic_m2_s4": acc_trace_threshold,
+            "body_rate_trace_threshold_diagnostic_deg2_s2": rate_trace_threshold,
             "combined_failure_probability_upper": combined_failure,
             "combined_within_budget": combined_failure <= down(total_budget),
-            "same_response_word_must_satisfy_both_good_events": True,
         },
         "SEA3_period_and_frontend": {
             "steady_response_weighted_period_identity": period_id[
@@ -360,17 +403,13 @@ def build(
                 live["hard_attitude_rewrite_inside_word"]
             ),
         },
-        "P3_source_family_ready": (
-            not rs_failures
-            and combined_failure <= down(total_budget)
-            and bool(p1compat["coupled_SEA3_domain_required"])
-            and all(frontend["source_parity"].values())
-            and all(v is False for v in no_fallback.values())
-        ),
+        "P3_source_contract_ready": source_contract_ready,
+        "P3_source_family_materialized": False,
         "P3_promoted": False,
         "next_obligation": (
-            "interval-propagate this complete SEA3 source coordinate set through every "
-            "shipping front-end/tuner/commit/scheduler event and the full H18/A21 Joseph/Riccati word"
+            "materialize the phase-continuous compact SEA3 3 s family itself, propagate the same "
+            "x^s/lambda/front-end/tuner/scheduler/vector state through every shipping event, and "
+            "execute the full H18/A21 Joseph/Riccati word"
         ),
     }
 
@@ -383,14 +422,14 @@ def validate(d: dict) -> list[str]:
         f.append("canonical P3 source is not complete SEA3")
     for key in (
         "theorem_conditional_on_admitted_complete_SEA3_word",
-        "P3_source_family_ready",
+        "P3_source_contract_ready",
     ):
         if d.get(key) is not True:
             f.append(f"{key} is not true")
     for key in (
         "trajectory_replay_used", "filter_changed", "declared_filter_domain_shrunk",
         "global_physical_deployment_left_inclusion_closed_here", "retired_P2_stack_consumed",
-        "P3_promoted",
+        "P3_source_family_materialized", "P3_promoted",
     ):
         if d.get(key) is not False:
             f.append(f"{key} is not false")
@@ -402,21 +441,45 @@ def validate(d: dict) -> list[str]:
     sea = d.get("SEA3_surface_family", {})
     if sea.get("modes_max") != 3 or sea.get("gamma_interval") != [1.0, 7.0]:
         f.append("SEA3 surface family changed")
-    if sea.get("independent_H_T_extrema_forbidden") is not True:
-        f.append("SEA3 H/T Cartesian product re-entered")
+    for key in (
+        "parameter_domain_compact",
+        "compact_transition_relation_is_theorem_domain",
+        "independent_H_T_extrema_forbidden",
+        "independent_partition_height_maxima_forbidden",
+    ):
+        if sea.get(key) is not True:
+            f.append(f"SEA3 surface family lost {key}")
+    realization = d.get("SEA3_dynamic_realization", {})
+    for key in (
+        "phase_continuous",
+        "same_realization_drives_translation_rotation_frontend_tuner_geometry",
+        "hard_pathwise_acceleration_and_body_rate_conditions_retained",
+    ):
+        if realization.get(key) is not True:
+            f.append(f"SEA3 dynamic realization lost {key}")
+    for key in (
+        "finite_window_family_materialized",
+        "probabilistic_event_may_substitute_for_realization",
+        "arbitrary_bounded_input_may_substitute_for_realization",
+    ):
+        if realization.get(key) is not False:
+            f.append(f"SEA3 dynamic realization open/forbidden flag {key} changed")
     coupled = d.get("SEA3_response_couplings", {})
     for key in (
         "independent_sea_x_RAO_cartesian_product_forbidden",
         "same_H_s_partition_energy_enters_translation_and_rotation_conditions",
-        "only_jointly_admitted_response_tuples_may_generate_P3_words",
+        "only_same_phase_continuous_SEA3_realization_may_generate_P3_words",
+        "moment_or_probability_bound_may_not_generate_P3_word",
     ):
         if coupled.get(key) is not True:
             f.append(f"SEA3 response coupling lost {key}")
-    finite = d.get("SEA3_finite_horizon_good_event", {})
-    if finite.get("combined_within_budget") is not True:
-        f.append("SEA3 finite-horizon good-event budget does not close")
-    if finite.get("same_response_word_must_satisfy_both_good_events") is not True:
-        f.append("acceleration/body-rate good events were split into independent words")
+    stochastic = d.get("stochastic_forcing_corollary", {})
+    if stochastic.get("used_to_generate_P3_source_words") is not False:
+        f.append("stochastic good event re-entered as P3 source generator")
+    if stochastic.get("used_to_prune_homogeneous_P3_family") is not False:
+        f.append("stochastic good event re-entered homogeneous P3 pruning")
+    if stochastic.get("configured_Racc_Rmag_remain_in_every_covariance_update") is not True:
+        f.append("stochastic corollary changed configured measurement covariance")
     adapt = d.get("derived_adaptive_source", {})
     for key in (
         "same_SEA3_frontend_path_generates_tau_sigma_RS_targets",
@@ -464,11 +527,13 @@ def main() -> int:
     print(json.dumps({
         "source": d["canonical_P3_source"],
         "samples": d["word_samples"],
+        "SEA3_dynamic_realization": d["SEA3_dynamic_realization"],
         "no_fallback_generators": d["no_fallback_generators"],
         "response_couplings": d["SEA3_response_couplings"],
-        "finite_horizon": d["SEA3_finite_horizon_good_event"],
+        "stochastic_forcing_corollary": d["stochastic_forcing_corollary"],
         "R_S": d["R_S_regularizer"],
-        "P3_source_family_ready": d["P3_source_family_ready"],
+        "P3_source_contract_ready": d["P3_source_contract_ready"],
+        "P3_source_family_materialized": d["P3_source_family_materialized"],
         "failures": failures,
     }, indent=2, sort_keys=True))
     return 0 if not failures else 2
