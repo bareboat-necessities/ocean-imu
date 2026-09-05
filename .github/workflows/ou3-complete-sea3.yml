@@ -160,6 +160,8 @@ jobs:
           fi=json.load(open('/tmp/ou3_fast_inv_sqrt_interval.json'))
           assert fi['validation_pass'], fi['validation_failures']
           assert fi['shipping_source_parity_pass'] is True
+          assert fi['all_positive_normal_binary32_normalization_shell_enclosed'] is True
+          assert fi['normalization_shell_checks_pass'] is True
           assert fi['ideal_inverse_sqrt_substituted'] is False
           assert fi['P3_promoted'] is False
 
@@ -175,8 +177,16 @@ jobs:
           assert m['deployed_mag_acquire_deadline_s'] == 60.0
           assert m['deployed_timeout_s'] == 150.0
           assert m['timeout_path_requires_gravity_aligned_branch'] is True
+          assert m['declared_startup_chart_implies_gravity_aligned_branch'] is True
+          assert m['declared_domain_live_entry_upper_bound_closed'] is True
+          assert m['declared_domain_live_entry_upper_bound_s'] == 150.0
           assert m['unconditional_live_entry_upper_bound_closed'] is False
-          assert m['live_entry_private_observer_invariant_closed'] is False
+          assert m['live_entry_private_observer_invariant_closed'] is True
+          mi=m['private_observer_live_entry_invariant']
+          assert mi['independent_quaternion_or_integral_box'] is False
+          assert mi['raw_quaternion_guard_inductive'] is True
+          assert mi['reset_zero_integral_memory_consumed'] is True
+          assert mi['same_SEA3_history_required'] is True
           assert m['complete_SEA3_family_materialized_here'] is False
           assert m['P3_promoted'] is False
 
@@ -189,7 +199,7 @@ jobs:
           print('SEA3_PREDICTION_PRIMITIVES', p['smoke'])
           print('SEA3_TUNER_STEP', t['smoke'])
           print('SEA3_WPE_STEP', w['smoke'])
-          print('SEA3_PRIVATE_MAHONY', m['smoke'])
+          print('SEA3_PRIVATE_MAHONY', m['private_observer_live_entry_invariant'])
           PY
 
       - name: Test SEA3 source and prediction contracts
