@@ -1,19 +1,17 @@
 #!/usr/bin/env python3
 """Fail-closed executor boundary from complete SEA3 into canonical P3.
 
-The literal H18/A21 Riccati machinery already exists.  This module is the only
-consumer boundary through which a materialized 3 s SEA3 window may reach it.
-It accepts no raw sample list, no replay path and no independently supplied
-F/Q/R_S schedule.  The input must first pass
-``ou3_sea3_hard_finite_window_source.validate_artifact``; that trusted provider
-owns the phase-continuous x^s/lambda construction and the joint physical/event
-outputs.
+The literal H18/A21 Riccati machinery and a connected typed execution kernel
+exist downstream of this boundary.  This module is the only consumer path by
+which a materialized 3 s SEA3 window may reach them.  It accepts no replay, raw
+sample list, independently supplied F/Q/R_S schedule, or precomputed covariance
+floor increment.  The input must first pass
+``ou3_sea3_hard_finite_window_source.validate_artifact``.
 
-At the current revision the SEA0 finite-window provider is intentionally open,
-so this executor remains fail-closed and does not execute H18/A21.  The purpose
-of the module is to make the remaining obligation singular and auditable: once
-the validated SEA0 provider closes, its exact same-history artifact is consumed
-here and nowhere else.
+The SEA0 provider is still open, so canonical execution remains fail-closed.
+The typed kernel is already implemented and tested; once the provider closes,
+the remaining executor work is strict deserialization of the trusted witness
+into that kernel followed by full endpoint LDLT checks.
 """
 from __future__ import annotations
 
@@ -22,7 +20,9 @@ import json
 from pathlib import Path
 from typing import Any
 
+import ou3_sea3_aw_covariance_floor as FLOOR
 import ou3_sea3_complete_source as SOURCE
+import ou3_sea3_complete_window_execution_kernel as KERNEL
 import ou3_sea3_frontend_state_step as FRONTEND
 import ou3_sea3_full_normal_live_word as WORD
 import ou3_sea3_hard_finite_window_source as SEA0
@@ -30,16 +30,13 @@ import ou3_sea3_shipping_prediction_primitives as PRED
 
 REPO = Path(__file__).resolve().parents[1]
 DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
-SCHEMA = 1
-QUALIFICATION = "OU3_SEA3_COMPLETE_WINDOW_EXECUTOR_V1"
+SCHEMA = 2
+QUALIFICATION = "OU3_SEA3_COMPLETE_WINDOW_EXECUTOR_V2"
 
 
 def validate_window_artifact(d: dict[str, Any]) -> list[str]:
-    """Delegate source validity to the canonical SEA0 provider and add executor checks."""
+    """Delegate source validity to SEA0 and enforce the exact executor payload."""
     f = list(SEA0.validate_artifact(d))
-    # These are execution-interface requirements, not alternate source bounds.
-    # Every per-sample physical/event payload remains subordinate to the same
-    # provider transition witness.
     transitions = d.get("transitions")
     if isinstance(transitions, list):
         for k, sample in enumerate(transitions):
@@ -49,7 +46,8 @@ def validate_window_artifact(d: dict[str, Any]) -> list[str]:
             events = sample.get("source_events")
             if isinstance(physical, dict):
                 for key in (
-                    "omega_body_interval",
+                    "gyro_measurement_interval",
+                    "omega_body_corrected_interval",
                     "specific_force_body_interval",
                     "f_cog_body_interval",
                     "R_wb_interval",
@@ -58,14 +56,16 @@ def validate_window_artifact(d: dict[str, Any]) -> list[str]:
                         f.append(f"sample {k} missing executor physical field {key}")
             if isinstance(events, dict):
                 for key in (
-                    "magnetometer_events",
-                    "aw_covariance_floor_event",
+                    "magnetometer_events_after_imu",
+                    "aw_covariance_floor_requested",
+                    "S_zero_due",
                 ):
                     if key not in events:
                         f.append(f"sample {k} missing executor event field {key}")
-    # Entry state must come from the same pre-window SEA3 history.  The provider
-    # witness IDs are intentionally opaque here; the trusted provider validates
-    # their mathematics and continuity.
+                if "aw_covariance_floor_increment" in events:
+                    f.append(
+                        f"sample {k} illegally serializes covariance-dependent a_w floor increment"
+                    )
     if not isinstance(d.get("front_end_entry"), dict):
         f.append("missing provider-certified front_end_entry")
     if not isinstance(d.get("live_covariance_seed"), dict):
@@ -74,45 +74,45 @@ def validate_window_artifact(d: dict[str, Any]) -> list[str]:
 
 
 def execute_verified_window(d: dict[str, Any]) -> dict[str, Any]:
-    """Execute a provider-certified complete window.
-
-    This function is deliberately unreachable until SEA0's mathematical
-    provider gate closes.  It is not allowed to accept a structurally plausible
-    artifact and then hope that downstream Riccati contraction filters out an
-    invalid sea history.
-    """
+    """Execute a provider-certified complete window through the trusted kernel."""
     failures = validate_window_artifact(d)
     if failures:
         raise ValueError("SEA3 window rejected before P3 execution: " + "; ".join(failures))
     if not SEA0.PROVIDER_IMPLEMENTATION_CLOSED:
         raise RuntimeError("SEA0 provider gate is open; H18/A21 execution forbidden")
 
-    # When the provider implementation closes, this branch will parse the
-    # provider-certified front-end entry, derive every current schedule through
-    # FRONTEND, obtain every F/Q through PRED, and call WORD.apply_imu_sample /
-    # WORD.apply_magnetometer for both H18 and A21.  Keeping this assertion here
-    # prevents a future implementation from bypassing the provider gate.
+    # The numerical typed kernel is already implemented.  The only remaining
+    # path here is a strict parser for provider-owned interval/front-end/P0
+    # witnesses.  Keep this hard failure until that parser exists; accepting a
+    # structurally plausible dict would recreate the arbitrary-source problem.
     raise NotImplementedError(
-        "provider closed but complete provider-artifact deserialization/execution is not yet implemented"
+        "provider closed but canonical provider-artifact deserialization into the trusted typed kernel is not yet implemented"
     )
 
 
 def build_status(domain_path: Path = DEFAULT_DOMAIN) -> dict[str, Any]:
-    source = SOURCE.build(Path(domain_path).resolve())
+    path = Path(domain_path).resolve()
+    source = SOURCE.build(path)
     source_failures = SOURCE.validate(source)
-    word = WORD.build(Path(domain_path).resolve())
+    word = WORD.build(path)
     word_failures = WORD.validate(word)
     pred = PRED.build()
     pred_failures = PRED.validate(pred)
     frontend = FRONTEND.build()
     frontend_failures = FRONTEND.validate(frontend)
-    sea0 = SEA0.build(Path(domain_path).resolve())
+    floor = FLOOR.build()
+    floor_failures = FLOOR.validate(floor)
+    kernel = KERNEL.build(path)
+    kernel_failures = KERNEL.validate(kernel)
+    sea0 = SEA0.build(path)
     sea0_failures = SEA0.validate_status(sea0)
     bad = {
         "source": source_failures,
         "word": word_failures,
         "prediction": pred_failures,
         "frontend": frontend_failures,
+        "aw_floor": floor_failures,
+        "typed_kernel": kernel_failures,
         "sea0": sea0_failures,
     }
     bad = {k: v for k, v in bad.items() if v}
@@ -129,9 +129,17 @@ def build_status(domain_path: Path = DEFAULT_DOMAIN) -> dict[str, Any]:
         "independent_F_Q_schedule_accepted": False,
         "independent_RS_schedule_accepted": False,
         "independent_frontend_state_accepted": False,
+        "precomputed_aw_floor_increment_accepted": False,
         "only_canonical_SEA0_provider_artifact_accepted": True,
         "provider_implementation_closed": SEA0.PROVIDER_IMPLEMENTATION_CLOSED,
         "provider_window_artifact_accepted": False,
+        "typed_execution_kernel_ready": kernel["typed_execution_kernel_ready"],
+        "covariance_dependent_aw_floor_enclosure_ready": floor[
+            "positive_part_outer_enclosure_closed_in_real_arithmetic"
+        ],
+        "raw_gyro_and_corrected_rate_remain_distinct": kernel[
+            "raw_gyro_and_bias_corrected_rate_are_distinct_same_witness_coordinates"
+        ],
         "SOURCE_REACHABLE_EVENT_FAMILY_MATERIALIZED": False,
         "FULL_H18_WORD_EXECUTED": False,
         "FULL_A21_WORD_EXECUTED": False,
@@ -145,19 +153,22 @@ def build_status(domain_path: Path = DEFAULT_DOMAIN) -> dict[str, Any]:
         "complete_window_samples": SEA0.SAMPLES,
         "execution_contract": {
             "same_provider_transition_drives_physical_and_frontend": True,
+            "raw_gyro_measurement_feeds_private_Mahony": True,
+            "bias_corrected_body_rate_feeds_MEKF_prediction": True,
             "frontend_derives_committed_tau_sigma_RS_TS": True,
             "prediction_derives_F_Q_from_same_committed_schedule_and_body_rate": True,
             "all_due_S_updates_use_actual_applied_per_axis_RS": True,
             "all_valid_accelerometer_updates_execute": True,
             "asynchronous_provider_PE_events_execute": True,
-            "provider_covariance_floor_events_execute": True,
+            "provider_carries_floor_request_not_floor_increment": True,
+            "floor_increment_computed_from_current_mode_covariance": True,
             "same_window_executes_H18_and_A21": True,
             "endpoint_gate": "Omega_W - delta P_W >= 0 by full validated LDLT",
             "delta_lower_required": 1.0e-18,
         },
         "next_obligation": (
-            "close the canonical SEA0 hard finite-window provider; then implement the now-gated artifact "
-            "deserialization loop that advances FRONTEND/PRED/WORD for every one of the 601 same-history samples"
+            "close the canonical SEA0 hard finite-window provider, then strictly deserialize its same-history "
+            "601-sample witness into the already-tested typed execution kernel and run every endpoint H18/A21 LDLT"
         ),
     }
 
@@ -173,6 +184,9 @@ def validate_status(d: dict[str, Any]) -> list[str]:
         "literal_word_shipping_parity_pass",
         "frontend_shipping_parity_pass",
         "prediction_primitives_ready",
+        "typed_execution_kernel_ready",
+        "covariance_dependent_aw_floor_enclosure_ready",
+        "raw_gyro_and_corrected_rate_remain_distinct",
     ):
         if d.get(key) is not True:
             f.append(f"{key} is not true")
@@ -183,6 +197,7 @@ def validate_status(d: dict[str, Any]) -> list[str]:
         "independent_F_Q_schedule_accepted",
         "independent_RS_schedule_accepted",
         "independent_frontend_state_accepted",
+        "precomputed_aw_floor_increment_accepted",
         "provider_window_artifact_accepted",
         "SOURCE_REACHABLE_EVENT_FAMILY_MATERIALIZED",
         "FULL_H18_WORD_EXECUTED",
@@ -197,12 +212,15 @@ def validate_status(d: dict[str, Any]) -> list[str]:
     c = d.get("execution_contract", {})
     for key in (
         "same_provider_transition_drives_physical_and_frontend",
+        "raw_gyro_measurement_feeds_private_Mahony",
+        "bias_corrected_body_rate_feeds_MEKF_prediction",
         "frontend_derives_committed_tau_sigma_RS_TS",
         "prediction_derives_F_Q_from_same_committed_schedule_and_body_rate",
         "all_due_S_updates_use_actual_applied_per_axis_RS",
         "all_valid_accelerometer_updates_execute",
         "asynchronous_provider_PE_events_execute",
-        "provider_covariance_floor_events_execute",
+        "provider_carries_floor_request_not_floor_increment",
+        "floor_increment_computed_from_current_mode_covariance",
         "same_window_executes_H18_and_A21",
     ):
         if c.get(key) is not True:
@@ -230,7 +248,6 @@ def main() -> int:
         d["provider_window_artifact_accepted"] = not artifact_failures
         failures = validate_status(d)
         if not artifact_failures:
-            # This is unreachable while the provider code-owned gate is open.
             d["execution_result"] = execute_verified_window(candidate)
         else:
             failures.extend(artifact_failures)
@@ -240,6 +257,7 @@ def main() -> int:
     args.output.write_text(json.dumps(d, indent=2, sort_keys=True), encoding="utf-8")
     print(json.dumps({
         "provider_closed": d["provider_implementation_closed"],
+        "typed_kernel_ready": d["typed_execution_kernel_ready"],
         "family_materialized": d["SOURCE_REACHABLE_EVENT_FAMILY_MATERIALIZED"],
         "H18_executed": d["FULL_H18_WORD_EXECUTED"],
         "A21_executed": d["FULL_A21_WORD_EXECUTED"],
