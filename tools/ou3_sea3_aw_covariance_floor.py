@@ -84,7 +84,7 @@ def _frobenius_upper(A: Sequence[Sequence[Interval]]) -> float:
     total = 0.0
     for row in A:
         for x in row:
-            a = max(abs(float(x.lo)), abs(float(x.hi)))
+            a = x.abs_upper()
             total = math.nextafter(total + math.nextafter(a * a, math.inf), math.inf)
     r = math.sqrt(total)
     return math.nextafter(r, math.inf)
@@ -99,14 +99,14 @@ def positive_part_enclosure(
         raise ValueError("a_w floor requires two 3x3 matrices")
     D = matrix_symmetric_hull(_sub(target_sigma, P_awaw_minus))
 
-    pos = symmetric_positive_definite_ldlt(D)
-    if pos["pass"]:
+    pos_pass, _ = symmetric_positive_definite_ldlt(D)
+    if pos_pass:
         # Every point matrix is strictly PD, hence Pi_+(D)=D.
         return D, "strict_positive_definite_exact"
 
     negD = matrix_symmetric_hull(_neg(D))
-    neg = symmetric_positive_definite_ldlt(negD)
-    if neg["pass"]:
+    neg_pass, _ = symmetric_positive_definite_ldlt(negD)
+    if neg_pass:
         # Every point matrix is strictly ND, hence Pi_+(D)=0.
         return _zero3(), "strict_negative_definite_exact_zero"
 
