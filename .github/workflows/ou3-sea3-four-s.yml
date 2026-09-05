@@ -23,6 +23,7 @@ jobs:
         run: |
           python3 tools/ou3_sea3_four_s_translation_information.py --output /tmp/ou3_sea3_four_s.json
           python3 tools/ou3_sea3_four_s_translation_information_tight.py --output /tmp/ou3_sea3_four_s_tight.json
+          python3 tools/ou3_sea3_four_s_live_prior_metric.py --output /tmp/ou3_sea3_four_s_live_prior_metric.json
           python3 tools/ou3_sea3_h18_information_composition.py --output /tmp/ou3_sea3_h18_information.json
           python3 - <<'PY'
           import json, sys
@@ -32,12 +33,15 @@ jobs:
           import ou3_sea3_live_covariance_seed as LIVE
           d=json.load(open('/tmp/ou3_sea3_four_s.json'))
           t=json.load(open('/tmp/ou3_sea3_four_s_tight.json'))
+          pm=json.load(open('/tmp/ou3_sea3_four_s_live_prior_metric.json'))
           h=json.load(open('/tmp/ou3_sea3_h18_information.json'))
           assert d['validation_pass'], d['validation_failures']
           assert t['validation_pass'], t['validation_failures']
+          assert pm['validation_pass'], pm['validation_failures']
           assert h['validation_pass'], h['validation_failures']
           assert d['canonical_source'] == 'COMPLETE_SEA3_NORMAL_LIVE_WORD'
           assert t['canonical_source'] == d['canonical_source']
+          assert pm['canonical_source'] == d['canonical_source']
           assert d['component_of_complete_SEA3_full_word'] is True
           assert d['P3_architecture_replaced'] is False
           assert d['source_family_replaced'] is False
@@ -56,6 +60,10 @@ jobs:
           assert t['selected_S_record_noise']['measurement_noise_not_multiplied_by_record_count'] is True
           assert t['selected_S_record_noise']['process_cross_record_correlation_still_covered_by_trace_bound'] is True
           assert nti['D_S_physical_lambda_min_lower'] > ni['D_S_physical_lambda_min_lower']
+          assert pm['shipping_Live_covariance_seed_consumed'] is True
+          assert pm['actual_applied_SpectralMSE_R_S_consumed'] is True
+          assert pm['translation_batch_prior_condition_pass'] is True
+          assert pm['translation_Live_prior_metric_information_lambda_min_lower'] >= pm['batch_required_information_ratio']
           assert h['component_of_complete_SEA3_full_word'] is True
           assert h['selected_four_S_events_replace_complete_word'] is False
           assert h['actual_applied_SpectralMSE_R_S_consumed'] is True
@@ -73,6 +81,8 @@ jobs:
           print('FOUR_S_D_TIGHT', nti['D_S_physical_lambda_min_lower'])
           print('FOUR_S_COV_BASE', d['selected_S_record_noise']['four_record_covariance_lambda_max_upper'])
           print('FOUR_S_COV_TIGHT', t['selected_S_record_noise']['four_record_covariance_lambda_max_upper'])
+          print('FOUR_S_LIVE_PRIOR_METRIC', pm['translation_Live_prior_metric_information_lambda_min_lower'])
+          print('FOUR_S_BATCH_REQUIRED', pm['batch_required_information_ratio'])
           print('PE_ALPHA6', pe['eta6_information']['alpha_6_information_lower'])
           print('H18_INFORMATION_LOWER', h['triangular_information_composition']['D_H18_lambda_min_lower'])
           print('H18_USEFUL_GATE_PASS', h['H18_information_useful_gate_pass'])
@@ -90,6 +100,7 @@ jobs:
         run: |
           python3 -m unittest -v \
             test_ou3_sea3_four_s_translation_information \
+            test_ou3_sea3_four_s_live_prior_metric \
             test_ou3_sea3_h18_information_composition
       - uses: actions/upload-artifact@v6
         with:
@@ -97,5 +108,6 @@ jobs:
           path: |
             /tmp/ou3_sea3_four_s.json
             /tmp/ou3_sea3_four_s_tight.json
+            /tmp/ou3_sea3_four_s_live_prior_metric.json
             /tmp/ou3_sea3_h18_information.json
           retention-days: 7
