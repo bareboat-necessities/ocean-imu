@@ -124,6 +124,28 @@ jobs:
         working-directory: tests/validation
         run: python3 -m unittest -v test_ou3_sea3_riccati_tube
 
+      - name: Certify four-S R_S translation word
+        run: |
+          python3 tools/ou3_sea3_rs_word_information.py \
+            --output /tmp/ou3_sea3_rs_word_information.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/ou3_sea3_rs_word_information.json'))
+          assert d['validation_pass'], d['validation_failures']
+          assert d['P3_RS_TRANSLATION_OBSERVATION_GEOMETRY_CLOSED'] is True
+          assert d['P3_RS_BATCH_NOISE_UPPER_CLOSED'] is True
+          assert d['four_S_translation_observation_operator_full_rank'] is True
+          assert d['old_P2_800_state_graph_consumed'] is False
+          assert d['source_history_graph_consumed'] is False
+          assert d['SEA3_target_vs_applied_RS_contract']['applied_RS_has_separate_EMA'] is True
+          assert d['SEA3_target_vs_applied_RS_contract']['instantaneous_target_formula_substituted_for_applied_RS'] is False
+          print('FOUR_S_WORD_HORIZON', d['word_horizon_s_upper'])
+          print('FOUR_S_AW_DD3_LOWER', d['aw_scaled_third_divided_difference_lower'])
+          print('FOUR_S_RANK_WITNESS', d['scaled_observation_determinant_abs_lower_rank_witness_only'])
+          print('FOUR_S_NOISE_LAMBDA_MAX', d['selected_S_record_noise']['four_record_covariance_lambda_max_trace_upper'])
+          print('FOUR_S_SIGMA_INV_LOWER', d['selected_S_record_noise']['Sigma_S_inverse_scalar_lower'])
+          PY
+
       - name: Build canonical SEA3 R_S innovation architecture
         run: |
           python3 tools/ou3_sea3_rs_innovation_p3.py \
@@ -136,9 +158,12 @@ jobs:
           assert d['P3_ARCHITECTURE_READY'] is True
           assert d['R_S_is_primary_translation_correction_mechanism'] is True
           assert d['pseudo_update_recurrence_is_primary_word_structure'] is True
-          assert d['SEA3_physical_parameter_coupling_consumed'] is True
-          assert d['SEA3_coupled_schedule_contract']['same_operating_point_required_for_tau_sigma_RS_TS'] is True
-          assert d['SEA3_coupled_schedule_contract']['independent_extrema_product_forbidden'] is True
+          assert d['P3_RS_TRANSLATION_OBSERVATION_GEOMETRY_CLOSED'] is True
+          assert d['P3_RS_BATCH_NOISE_UPPER_CLOSED'] is True
+          assert d['SEA3_coupled_schedule_contract']['tau_and_active_pseudo_cadence_source_coupled'] is True
+          assert d['SEA3_coupled_schedule_contract']['SpectralMSE_target_tau_sigma_TS_coupled'] is True
+          assert d['SEA3_coupled_schedule_contract']['applied_RS_has_separate_EMA'] is True
+          assert d['SEA3_coupled_schedule_contract']['instantaneous_target_formula_substituted_for_applied_RS'] is False
           assert d['per_sample_Riccati_lower_propagation_used'] is False
           assert d['selected_process_mode_strictness_used'] is False
           assert d['determinant_trace_scalarization_used'] is False
@@ -146,7 +171,6 @@ jobs:
           assert d['useful_gate'] == 1e-18
           print('P3_ARCHITECTURE', d['canonical_P3_architecture'])
           print('P3_RS_PRIMARY', d['R_S_is_primary_translation_correction_mechanism'])
-          print('P3_RS_SEA3_COUPLING', d['SEA3_coupled_schedule_contract'])
           print('P3_TRANSLATION_WORD', d['translation_correction_word'])
           print('P3_NEXT_OBLIGATION', d['next_obligation'])
           PY
@@ -162,8 +186,12 @@ jobs:
           assert d['validation_pass'], d['validation_failures']
           assert d['P3_ARCHITECTURE_READY'] is True
           assert d['R_S_is_primary_translation_correction_mechanism'] is True
-          assert d['same_operating_point_tau_sigma_RS_TS_required'] is True
-          assert d['independent_source_extrema_product_forbidden'] is True
+          assert d['four_S_translation_observation_geometry_closed'] is True
+          assert d['four_S_batch_noise_upper_closed'] is True
+          assert d['tau_active_pseudo_cadence_coupling_consumed'] is True
+          assert d['SpectralMSE_target_tau_sigma_TS_coupling_consumed'] is True
+          assert d['applied_RS_separate_EMA_acknowledged'] is True
+          assert d['instantaneous_RS_target_substituted_for_applied_RS'] is False
           assert d['one_sample_strict_Riccati_margin_consumed'] is False
           assert d['commit_aligned_source_word_consumed'] is False
           assert d['per_sample_SPD_lower_required'] is False
@@ -175,9 +203,11 @@ jobs:
           print('P3_FAIL_REASONS', d['P3_CANONICAL_FAIL_REASONS'])
           PY
 
-      - name: Test R_S/SEA3 P3 contract
+      - name: Test R_S/SEA3 P3 contracts
         working-directory: tests/validation
-        run: python3 -m unittest -v test_ou3_sea3_riccati_metric_p3
+        run: python3 -m unittest -v \
+          test_ou3_sea3_rs_word_information \
+          test_ou3_sea3_riccati_metric_p3
 
       - name: Enforce canonical P3 quantitative closure
         run: |
@@ -195,6 +225,7 @@ jobs:
           name: ou3-p3-rs-innovation
           path: |
             /tmp/ou3_sea3_riccati_tube.json
+            /tmp/ou3_sea3_rs_word_information.json
             /tmp/ou3_sea3_rs_innovation_p3.json
             /tmp/ou3_sea3_riccati_metric_p3.json
           retention-days: 7
