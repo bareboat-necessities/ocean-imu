@@ -6,18 +6,22 @@ on:
       - "tools/ou3_sea3_hard_finite_window_source.py"
       - "tools/ou3_sea3_complete_window_executor.py"
       - "tools/ou3_sea3_response_regularity_moment.py"
+      - "tools/ou3_sea3_aw_covariance_floor.py"
       - "tests/validation/test_ou3_sea3_hard_finite_window_source.py"
       - "tests/validation/test_ou3_sea3_complete_window_executor.py"
       - "tests/validation/test_ou3_sea3_response_regularity_moment.py"
+      - "tests/validation/test_ou3_sea3_aw_covariance_floor.py"
       - ".github/workflows/ou3-sea3-window-contract.yml"
   pull_request:
     paths:
       - "tools/ou3_sea3_hard_finite_window_source.py"
       - "tools/ou3_sea3_complete_window_executor.py"
       - "tools/ou3_sea3_response_regularity_moment.py"
+      - "tools/ou3_sea3_aw_covariance_floor.py"
       - "tests/validation/test_ou3_sea3_hard_finite_window_source.py"
       - "tests/validation/test_ou3_sea3_complete_window_executor.py"
       - "tests/validation/test_ou3_sea3_response_regularity_moment.py"
+      - "tests/validation/test_ou3_sea3_aw_covariance_floor.py"
       - ".github/workflows/ou3-sea3-window-contract.yml"
   workflow_dispatch:
 
@@ -43,9 +47,11 @@ jobs:
             tools/ou3_sea3_hard_finite_window_source.py \
             tools/ou3_sea3_complete_window_executor.py \
             tools/ou3_sea3_response_regularity_moment.py \
+            tools/ou3_sea3_aw_covariance_floor.py \
             tests/validation/test_ou3_sea3_hard_finite_window_source.py \
             tests/validation/test_ou3_sea3_complete_window_executor.py \
-            tests/validation/test_ou3_sea3_response_regularity_moment.py
+            tests/validation/test_ou3_sea3_response_regularity_moment.py \
+            tests/validation/test_ou3_sea3_aw_covariance_floor.py
 
       - name: Build fail-closed provider and executor status
         run: |
@@ -55,11 +61,14 @@ jobs:
             --output /tmp/ou3_sea3_complete_window_executor.json
           python3 tools/ou3_sea3_response_regularity_moment.py \
             --output /tmp/ou3_sea3_response_regularity_moment.json
+          python3 tools/ou3_sea3_aw_covariance_floor.py \
+            --output /tmp/ou3_sea3_aw_covariance_floor.json
           python3 - <<'PY'
           import json
           s=json.load(open('/tmp/ou3_sea3_hard_finite_window_source.json'))
           e=json.load(open('/tmp/ou3_sea3_complete_window_executor.json'))
           r=json.load(open('/tmp/ou3_sea3_response_regularity_moment.json'))
+          f=json.load(open('/tmp/ou3_sea3_aw_covariance_floor.json'))
           assert s['validation_pass'], s['validation_failures']
           assert s['SEA3_parameter_domain_compact'] is True
           assert s['compact_transition_relation_is_theorem_domain'] is True
@@ -78,6 +87,12 @@ jobs:
           assert r['hard_finite_window_source_materialized'] is False
           assert r['may_substitute_for_hard_window_IQC'] is False
           assert r['P3_promoted'] is False
+          assert f['validation_pass'], f['validation_failures']
+          assert f['floor_request_is_source_event'] is True
+          assert f['floor_increment_is_source_coordinate'] is False
+          assert f['floor_increment_depends_on_current_mode_Riccati_covariance'] is True
+          assert f['same_source_request_may_produce_different_H18_A21_increment'] is True
+          assert f['P3_promoted'] is False
           assert e['validation_pass'], e['validation_failures']
           assert e['only_canonical_SEA0_provider_artifact_accepted'] is True
           assert e['raw_sample_array_accepted'] is False
@@ -91,6 +106,7 @@ jobs:
           assert e['P3_PROMOTED'] is False
           print('SEA0_WINDOW_PROVIDER', s['next_obligation'])
           print('SEA3_REGULARITY_BOUNDS', r['bounds'])
+          print('SEA3_AW_FLOOR', f['smoke'])
           print('SEA3_WINDOW_EXECUTOR', e['next_obligation'])
           PY
 
@@ -100,7 +116,8 @@ jobs:
           python3 -m unittest -v \
             test_ou3_sea3_hard_finite_window_source \
             test_ou3_sea3_complete_window_executor \
-            test_ou3_sea3_response_regularity_moment
+            test_ou3_sea3_response_regularity_moment \
+            test_ou3_sea3_aw_covariance_floor
 
       - name: Upload boundary status
         uses: actions/upload-artifact@v6
@@ -110,4 +127,5 @@ jobs:
             /tmp/ou3_sea3_hard_finite_window_source.json
             /tmp/ou3_sea3_complete_window_executor.json
             /tmp/ou3_sea3_response_regularity_moment.json
+            /tmp/ou3_sea3_aw_covariance_floor.json
           retention-days: 7
