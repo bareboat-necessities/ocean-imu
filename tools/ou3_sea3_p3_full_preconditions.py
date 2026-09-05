@@ -8,11 +8,14 @@ and declared Normal-Live physical bounds. Source defaults are followed through
 the actual wrapper override chain; an inner default is never substituted for a
 value overwritten by the deployed outer Config.
 
-The configured 200 Hz runtime is bound to the source with the source contract's
-outward enclosure of the deployed binary32 ``FREQ_SMOOTHER_DT`` value. A JSON
-decimal 0.005 and the deployed C++ float are therefore compared as real values
-through that enclosure, not by requiring their Python binary64 representations
-to be bit-identical.
+The configured 200 Hz runtime is bound to the source through the *effective
+shipping float argument*. The deployment configuration writes decimal 0.005,
+but ``updateTime`` accepts ``float``; that decimal is converted to IEEE-754
+binary32 before the filter sees it. The same binary32 semantics are used by the
+source contract for ``FREQ_SMOOTHER_DT``. We therefore compare the converted
+runtime argument against the outward enclosure of the deployed source constant,
+not the Python binary64 representation of the JSON decimal and not a widened
+tolerance interval.
 
 The final numerical object is the joint (P,Psi,Omega) Riccati word. Reduced
 information/covariance products are useful diagnostics/components only and may
@@ -24,6 +27,7 @@ import argparse
 import json
 import math
 import re
+import struct
 from pathlib import Path
 
 import ou3_full_process_ucc as PROCESS
@@ -43,7 +47,7 @@ VERTICAL = REPO / "src" / "tuner" / "VerticalAccelComplementary.h"
 BANDPASS = REPO / "src" / "tuner" / "AdaptiveWaveBandPass.h"
 AUTOTUNER = REPO / "src" / "tuner" / "SeaStateAutoTuner.h"
 PAPER = REPO / "doc" / "kalman_ou_iii" / "w3d-iss-stability.tex-part"
-SCHEMA = 5
+SCHEMA = 6
 QUALIFICATION = "OU3_SEA3_P3_COMPLETE_NORMAL_LIVE_PRECONDITION_CONTRACT"
 USEFUL_GATE = 1.0e-18
 
@@ -70,6 +74,11 @@ def _config_scalar_default(text: str, name: str) -> float:
     if not math.isfinite(value):
         raise RuntimeError(f"outer Config default {name} is non-finite")
     return value
+
+
+def _float32_argument(value: float) -> float:
+    """Return the exact binary32 value seen by a C++ float API argument."""
+    return struct.unpack("!f", struct.pack("!f", float(value)))[0]
 
 
 def _all(text: str, markers: tuple[str, ...]) -> bool:
@@ -221,20 +230,26 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     pe_horizon = float(pe["spread_occurrence_selection"]["word_horizon_s"])
     s_horizon = float(rsword["word_horizon_s_upper"])
     horizon = max(pe_horizon, s_horizon)
-    dt = float(runtime["imu_dt_s"])
-    samples = int(math.ceil(horizon / dt)) + 1
+    dt_declared = float(runtime["imu_dt_s"])
+    dt_effective = _float32_argument(dt_declared)
+    samples = int(math.ceil(horizon / dt_effective)) + 1
     hybrid = list(source["hybrid_obligations"])
 
     source_runtime = source["configured_runtime_assumption"]
     source_dt = float(source_runtime["imu_dt_s"])
     source_dt_interval = [float(x) for x in source_runtime["imu_dt_outward_interval_s"]]
-    configured_dt_matches_source = source_dt_interval[0] <= dt <= source_dt_interval[1]
+    configured_dt_matches_source = (
+        source_dt_interval[0] <= dt_effective <= source_dt_interval[1]
+    )
     dt_binding = {
-        "declared_runtime_dt_s": dt,
+        "declared_runtime_decimal_dt_s": dt_declared,
+        "effective_Cpp_float_argument_dt_s": dt_effective,
         "source_binary32_dt_s": source_dt,
         "source_outward_interval_s": source_dt_interval,
-        "declared_runtime_contained_in_source_outward_interval": configured_dt_matches_source,
-        "comparison_is_real_enclosure_not_binary64_bit_equality": True,
+        "effective_float_argument_contained_in_source_outward_interval": configured_dt_matches_source,
+        "effective_float_argument_equals_source_binary32": dt_effective == source_dt,
+        "comparison_uses_Cpp_float_argument_semantics": True,
+        "no_tolerance_or_interval_widening_added": True,
         "source_constant": source_runtime["imu_dt_source_constant"],
     }
 
@@ -495,10 +510,14 @@ def validate(d: dict) -> list[str]:
     f.extend(f"paper parity failed: {x}" for x in d.get("paper_parity_failures", []))
 
     dtb = d.get("configured_runtime_dt_binding", {})
-    if dtb.get("declared_runtime_contained_in_source_outward_interval") is not True:
-        f.append("configured runtime dt is outside deployed source binary32 enclosure")
-    if dtb.get("comparison_is_real_enclosure_not_binary64_bit_equality") is not True:
-        f.append("configured runtime dt reverted to representation equality")
+    if dtb.get("effective_float_argument_contained_in_source_outward_interval") is not True:
+        f.append("configured runtime float dt is outside deployed source binary32 enclosure")
+    if dtb.get("effective_float_argument_equals_source_binary32") is not True:
+        f.append("configured runtime float dt does not equal source FREQ_SMOOTHER_DT")
+    if dtb.get("comparison_uses_Cpp_float_argument_semantics") is not True:
+        f.append("configured runtime dt is not checked with C++ float argument semantics")
+    if dtb.get("no_tolerance_or_interval_widening_added") is not True:
+        f.append("configured runtime dt parity added a tolerance/widening shortcut")
     if dtb.get("source_constant") != "FREQ_SMOOTHER_DT":
         f.append("configured runtime dt source constant changed")
 
