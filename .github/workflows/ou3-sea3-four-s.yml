@@ -22,6 +22,7 @@ jobs:
       - name: Build complete SEA3 four-S translation information
         run: |
           python3 tools/ou3_sea3_four_s_translation_information.py --output /tmp/ou3_sea3_four_s.json
+          python3 tools/ou3_sea3_four_s_translation_information_tight.py --output /tmp/ou3_sea3_four_s_tight.json
           python3 tools/ou3_sea3_h18_information_composition.py --output /tmp/ou3_sea3_h18_information.json
           python3 - <<'PY'
           import json, sys
@@ -30,10 +31,13 @@ jobs:
           import ou3_full_process_ucc as PROC
           import ou3_sea3_live_covariance_seed as LIVE
           d=json.load(open('/tmp/ou3_sea3_four_s.json'))
+          t=json.load(open('/tmp/ou3_sea3_four_s_tight.json'))
           h=json.load(open('/tmp/ou3_sea3_h18_information.json'))
           assert d['validation_pass'], d['validation_failures']
+          assert t['validation_pass'], t['validation_failures']
           assert h['validation_pass'], h['validation_failures']
           assert d['canonical_source'] == 'COMPLETE_SEA3_NORMAL_LIVE_WORD'
+          assert t['canonical_source'] == d['canonical_source']
           assert d['component_of_complete_SEA3_full_word'] is True
           assert d['P3_architecture_replaced'] is False
           assert d['source_family_replaced'] is False
@@ -44,25 +48,38 @@ jobs:
           assert d['time_varying_tau_allowed_inside_selected_subword'] is True
           assert d['dimensionless_translation_state'] == ['S','g*p','g^2*v','g^3*a_w']
           ni=d['newton_coordinate_information']
+          nti=t['newton_coordinate_information']
           assert ni['full_4x4_matrix_inequality_closed'] is True
+          assert ni['third_divided_difference_lower_enters_quantitative_bound'] is True
           assert ni['determinant_used_for_information_lower'] is False
+          assert t['same_complete_SEA3_component_sharpened'] is True
+          assert t['selected_S_record_noise']['measurement_noise_not_multiplied_by_record_count'] is True
+          assert t['selected_S_record_noise']['process_cross_record_correlation_still_covered_by_trace_bound'] is True
+          assert nti['D_S_physical_lambda_min_lower'] > ni['D_S_physical_lambda_min_lower']
           assert h['component_of_complete_SEA3_full_word'] is True
           assert h['selected_four_S_events_replace_complete_word'] is False
           assert h['actual_applied_SpectralMSE_R_S_consumed'] is True
+          assert h['tight_four_S_measurement_covariance_structure_consumed'] is True
           assert h['triangular_information_composition']['full_18x18_matrix_information_lower_closed'] is True
+          assert h['H18_information_useful_gate_pass'] is True
+          assert h['triangular_information_composition']['D_H18_lambda_min_lower'] >= 1.0e-18
           pe=PE.build(); assert not PE.validate(pe)
           proc=PROC.build(); assert not PROC.validate(proc)
           live=LIVE.build(); assert not LIVE.validate(live)
           print('FOUR_S_GAP', d['uniform_S_gap_s_upper'])
           print('FOUR_S_WINDOWS', d['four_S_windows_s'])
           print('FOUR_S_RS_BASE', d['R_S_applied_base_std'])
-          print('FOUR_S_D_NEWTON', ni['D_S_newton_lambda_min_lower'])
+          print('FOUR_S_D_CORRECTED_BASE', ni['D_S_physical_lambda_min_lower'])
+          print('FOUR_S_D_TIGHT', nti['D_S_physical_lambda_min_lower'])
+          print('FOUR_S_COV_BASE', d['selected_S_record_noise']['four_record_covariance_lambda_max_upper'])
+          print('FOUR_S_COV_TIGHT', t['selected_S_record_noise']['four_record_covariance_lambda_max_upper'])
           print('PE_ALPHA6', pe['eta6_information']['alpha_6_information_lower'])
           print('H18_INFORMATION_LOWER', h['triangular_information_composition']['D_H18_lambda_min_lower'])
+          print('H18_USEFUL_GATE_PASS', h['H18_information_useful_gate_pass'])
           print('H18_CROSS_NORM_SQ_UPPER', h['accelerometer_translation_cross_norm_squared_upper'])
           print('A_BIAS_CONTRACTION_GAP', pe['A_mode_bias_route']['homogeneous_bias_contraction_gap_lower'])
-          print('PROCESS_H_Q_MIN', proc['modes']['H']['prediction_Q_lambda_min_lower'])
-          print('PROCESS_A_Q_MIN', proc['modes']['A']['prediction_Q_lambda_min_lower'])
+          print('PROCESS_H_Q_MIN_DIAGNOSTIC', proc['modes']['H']['prediction_Q_lambda_min_lower'])
+          print('PROCESS_A_Q_MIN_DIAGNOSTIC', proc['modes']['A']['prediction_Q_lambda_min_lower'])
           print('LIVE_CONSTRUCTOR', live['constructor'])
           print('LIVE_TRANSLATION_SEED', live['translation_seed'])
           print('LIVE_AW_SEED', live['aw_live_seed'])
@@ -79,5 +96,6 @@ jobs:
           name: ou3-sea3-four-s
           path: |
             /tmp/ou3_sea3_four_s.json
+            /tmp/ou3_sea3_four_s_tight.json
             /tmp/ou3_sea3_h18_information.json
           retention-days: 7
