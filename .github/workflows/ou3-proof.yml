@@ -124,27 +124,30 @@ jobs:
         working-directory: tests/validation
         run: python3 -m unittest -v test_ou3_sea3_riccati_tube
 
-      - name: Build canonical lifted finite-word architecture
+      - name: Build canonical SEA3 R_S innovation architecture
         run: |
-          python3 tools/ou3_sea3_lifted_word_p3.py \
+          python3 tools/ou3_sea3_rs_innovation_p3.py \
             --tube /tmp/ou3_sea3_riccati_tube.json \
-            --output /tmp/ou3_sea3_lifted_word_p3.json
+            --output /tmp/ou3_sea3_rs_innovation_p3.json
           python3 - <<'PY'
           import json
-          d=json.load(open('/tmp/ou3_sea3_lifted_word_p3.json'))
+          d=json.load(open('/tmp/ou3_sea3_rs_innovation_p3.json'))
           assert d['validation_pass'], d['validation_failures']
           assert d['P3_ARCHITECTURE_READY'] is True
-          assert d['source_history_graph_consumed'] is False
+          assert d['R_S_is_primary_translation_correction_mechanism'] is True
+          assert d['pseudo_update_recurrence_is_primary_word_structure'] is True
+          assert d['SEA3_physical_parameter_coupling_consumed'] is True
+          assert d['SEA3_coupled_schedule_contract']['same_operating_point_required_for_tau_sigma_RS_TS'] is True
+          assert d['SEA3_coupled_schedule_contract']['independent_extrema_product_forbidden'] is True
           assert d['per_sample_Riccati_lower_propagation_used'] is False
-          assert d['per_sample_SPD_lower_required'] is False
-          assert d['commit_aligned_source_word_consumed'] is False
+          assert d['selected_process_mode_strictness_used'] is False
           assert d['determinant_trace_scalarization_used'] is False
           assert d['scalar_information_beta_used'] is False
           assert d['useful_gate'] == 1e-18
           print('P3_ARCHITECTURE', d['canonical_P3_architecture'])
-          print('P3_WORD_HORIZON_S', d['word_horizon_s'])
-          print('P3_H_SELECTED_MODES', d['modes']['H']['selected_process_mode_dimension'])
-          print('P3_A_SELECTED_MODES', d['modes']['A']['selected_process_mode_dimension'])
+          print('P3_RS_PRIMARY', d['R_S_is_primary_translation_correction_mechanism'])
+          print('P3_RS_SEA3_COUPLING', d['SEA3_coupled_schedule_contract'])
+          print('P3_TRANSLATION_WORD', d['translation_correction_word'])
           print('P3_NEXT_OBLIGATION', d['next_obligation'])
           PY
 
@@ -158,9 +161,13 @@ jobs:
           d=json.load(open('/tmp/ou3_sea3_riccati_metric_p3.json'))
           assert d['validation_pass'], d['validation_failures']
           assert d['P3_ARCHITECTURE_READY'] is True
+          assert d['R_S_is_primary_translation_correction_mechanism'] is True
+          assert d['same_operating_point_tau_sigma_RS_TS_required'] is True
+          assert d['independent_source_extrema_product_forbidden'] is True
           assert d['one_sample_strict_Riccati_margin_consumed'] is False
           assert d['commit_aligned_source_word_consumed'] is False
           assert d['per_sample_SPD_lower_required'] is False
+          assert d['selected_process_mode_strictness_used'] is False
           assert d['determinant_trace_scalarization_used'] is False
           assert d['scalar_information_beta_used'] is False
           assert d['useful_gate'] == 1e-18
@@ -168,7 +175,7 @@ jobs:
           print('P3_FAIL_REASONS', d['P3_CANONICAL_FAIL_REASONS'])
           PY
 
-      - name: Test lifted P3 contract
+      - name: Test R_S/SEA3 P3 contract
         working-directory: tests/validation
         run: python3 -m unittest -v test_ou3_sea3_riccati_metric_p3
 
@@ -178,17 +185,17 @@ jobs:
           import json
           d=json.load(open('/tmp/ou3_sea3_riccati_metric_p3.json'))
           if not d['P3_CANONICAL_PASS']:
-              raise SystemExit('canonical lifted finite-word P3 FAIL: ' + '; '.join(d['P3_CANONICAL_FAIL_REASONS']))
+              raise SystemExit('canonical SEA3/R_S innovation P3 FAIL: ' + '; '.join(d['P3_CANONICAL_FAIL_REASONS']))
           PY
 
       - name: Upload canonical P3 artifacts
         if: always()
         uses: actions/upload-artifact@v6
         with:
-          name: ou3-p3-lifted-word
+          name: ou3-p3-rs-innovation
           path: |
             /tmp/ou3_sea3_riccati_tube.json
-            /tmp/ou3_sea3_lifted_word_p3.json
+            /tmp/ou3_sea3_rs_innovation_p3.json
             /tmp/ou3_sea3_riccati_metric_p3.json
           retention-days: 7
 
