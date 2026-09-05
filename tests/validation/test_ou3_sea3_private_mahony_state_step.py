@@ -5,6 +5,7 @@ import unittest
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools"))
 
+import ou3_sea3_frontend_state_step as frontend  # noqa: E402
 import ou3_sea3_private_mahony_state_step as mod  # noqa: E402
 
 
@@ -57,6 +58,23 @@ class Sea3PrivateMahonyStateStepTest(unittest.TestCase):
         self.assertLess(inv["raw_quaternion_norm2_upper"], inv["raw_quaternion_norm2_guard"][1])
         self.assertGreater(inv["raw_quaternion_norm2_lower"], inv["raw_quaternion_norm2_guard"][0])
         self.assertIn("Mahony -> WPE -> tuner/scheduler", d["next_obligation"])
+
+    def test_connected_frontend_transition_is_same_sea3_path(self):
+        d = frontend.build()
+        self.assertEqual(frontend.validate(d), [])
+        self.assertTrue(d["shipping_source_parity_pass"])
+        self.assertTrue(d["same_SEA3_sample_drives_Mahony_tuner_WPE"])
+        self.assertTrue(d["private_Mahony_live_entry_invariant_consumed"])
+        self.assertTrue(d["current_Riccati_schedule_exported_before_current_measurement"])
+        self.assertTrue(d["actual_applied_per_axis_RS_exported_from_same_active_schedule"])
+        self.assertTrue(d["tuner_consumes_previous_WPE_state"])
+        self.assertTrue(d["same_current_vertical_acceleration_consumed_by_tuner_and_WPE"])
+        self.assertFalse(d["source_generator"])
+        self.assertFalse(d["independent_vertical_acceleration_input_allowed"])
+        self.assertFalse(d["independent_wave_frequency_input_allowed"])
+        self.assertFalse(d["independent_tuner_schedule_input_allowed"])
+        self.assertFalse(d["complete_SEA3_family_materialized_here"])
+        self.assertFalse(d["P3_promoted"])
 
     def test_point_step_is_finite_but_cannot_promote(self):
         d = mod.build()
