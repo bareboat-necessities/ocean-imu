@@ -5,10 +5,12 @@ on:
     paths:
       - "tools/ou3_sea3_hard_finite_window_source.py"
       - "tools/ou3_sea3_complete_window_executor.py"
+      - "tools/ou3_sea3_complete_window_execution_kernel.py"
       - "tools/ou3_sea3_response_regularity_moment.py"
       - "tools/ou3_sea3_aw_covariance_floor.py"
       - "tests/validation/test_ou3_sea3_hard_finite_window_source.py"
       - "tests/validation/test_ou3_sea3_complete_window_executor.py"
+      - "tests/validation/test_ou3_sea3_complete_window_execution_kernel.py"
       - "tests/validation/test_ou3_sea3_response_regularity_moment.py"
       - "tests/validation/test_ou3_sea3_aw_covariance_floor.py"
       - ".github/workflows/ou3-sea3-window-contract.yml"
@@ -16,10 +18,12 @@ on:
     paths:
       - "tools/ou3_sea3_hard_finite_window_source.py"
       - "tools/ou3_sea3_complete_window_executor.py"
+      - "tools/ou3_sea3_complete_window_execution_kernel.py"
       - "tools/ou3_sea3_response_regularity_moment.py"
       - "tools/ou3_sea3_aw_covariance_floor.py"
       - "tests/validation/test_ou3_sea3_hard_finite_window_source.py"
       - "tests/validation/test_ou3_sea3_complete_window_executor.py"
+      - "tests/validation/test_ou3_sea3_complete_window_execution_kernel.py"
       - "tests/validation/test_ou3_sea3_response_regularity_moment.py"
       - "tests/validation/test_ou3_sea3_aw_covariance_floor.py"
       - ".github/workflows/ou3-sea3-window-contract.yml"
@@ -46,10 +50,12 @@ jobs:
           python3 -m py_compile \
             tools/ou3_sea3_hard_finite_window_source.py \
             tools/ou3_sea3_complete_window_executor.py \
+            tools/ou3_sea3_complete_window_execution_kernel.py \
             tools/ou3_sea3_response_regularity_moment.py \
             tools/ou3_sea3_aw_covariance_floor.py \
             tests/validation/test_ou3_sea3_hard_finite_window_source.py \
             tests/validation/test_ou3_sea3_complete_window_executor.py \
+            tests/validation/test_ou3_sea3_complete_window_execution_kernel.py \
             tests/validation/test_ou3_sea3_response_regularity_moment.py \
             tests/validation/test_ou3_sea3_aw_covariance_floor.py
 
@@ -59,6 +65,8 @@ jobs:
             --output /tmp/ou3_sea3_hard_finite_window_source.json
           python3 tools/ou3_sea3_complete_window_executor.py \
             --output /tmp/ou3_sea3_complete_window_executor.json
+          python3 tools/ou3_sea3_complete_window_execution_kernel.py \
+            --output /tmp/ou3_sea3_complete_window_execution_kernel.json
           python3 tools/ou3_sea3_response_regularity_moment.py \
             --output /tmp/ou3_sea3_response_regularity_moment.json
           python3 tools/ou3_sea3_aw_covariance_floor.py \
@@ -67,6 +75,7 @@ jobs:
           import json
           s=json.load(open('/tmp/ou3_sea3_hard_finite_window_source.json'))
           e=json.load(open('/tmp/ou3_sea3_complete_window_executor.json'))
+          k=json.load(open('/tmp/ou3_sea3_complete_window_execution_kernel.json'))
           r=json.load(open('/tmp/ou3_sea3_response_regularity_moment.json'))
           f=json.load(open('/tmp/ou3_sea3_aw_covariance_floor.json'))
           assert s['validation_pass'], s['validation_failures']
@@ -93,6 +102,12 @@ jobs:
           assert f['floor_increment_depends_on_current_mode_Riccati_covariance'] is True
           assert f['same_source_request_may_produce_different_H18_A21_increment'] is True
           assert f['P3_promoted'] is False
+          assert k['validation_pass'], k['validation_failures']
+          assert k['typed_execution_kernel_ready'] is True
+          assert k['raw_gyro_and_bias_corrected_rate_are_distinct_same_witness_coordinates'] is True
+          assert k['covariance_floor_increment_computed_from_current_mode_P'] is True
+          assert k['front_end_branch_splits_retained'] is True
+          assert k['P3_promoted'] is False
           assert e['validation_pass'], e['validation_failures']
           assert e['only_canonical_SEA0_provider_artifact_accepted'] is True
           assert e['raw_sample_array_accepted'] is False
@@ -107,6 +122,7 @@ jobs:
           print('SEA0_WINDOW_PROVIDER', s['next_obligation'])
           print('SEA3_REGULARITY_BOUNDS', r['bounds'])
           print('SEA3_AW_FLOOR', f['smoke'])
+          print('SEA3_TYPED_KERNEL', k['smoke'])
           print('SEA3_WINDOW_EXECUTOR', e['next_obligation'])
           PY
 
@@ -116,6 +132,7 @@ jobs:
           python3 -m unittest -v \
             test_ou3_sea3_hard_finite_window_source \
             test_ou3_sea3_complete_window_executor \
+            test_ou3_sea3_complete_window_execution_kernel \
             test_ou3_sea3_response_regularity_moment \
             test_ou3_sea3_aw_covariance_floor
 
@@ -126,6 +143,7 @@ jobs:
           path: |
             /tmp/ou3_sea3_hard_finite_window_source.json
             /tmp/ou3_sea3_complete_window_executor.json
+            /tmp/ou3_sea3_complete_window_execution_kernel.json
             /tmp/ou3_sea3_response_regularity_moment.json
             /tmp/ou3_sea3_aw_covariance_floor.json
           retention-days: 7
