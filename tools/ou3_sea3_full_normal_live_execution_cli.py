@@ -45,11 +45,41 @@ def validate_execution(d: dict) -> list[str]:
     return failures
 
 
+def _install_failure_locator() -> dict[str, int]:
+    counts = {"H": 0, "A": 0}
+    orig_imu = WORD.apply_imu_sample
+    orig_mag = WORD.apply_magnetometer
+
+    def located_imu(w, *args, **kwargs):
+        counts[w.mode] += 1
+        try:
+            return orig_imu(w, *args, **kwargs)
+        except Exception as exc:
+            raise RuntimeError(
+                f"literal full-word failure mode={w.mode} sample={counts[w.mode]} "
+                f"event=imu/prediction-floor-S-accelerometer: {exc}"
+            ) from exc
+
+    def located_mag(w, *args, **kwargs):
+        try:
+            return orig_mag(w, *args, **kwargs)
+        except Exception as exc:
+            raise RuntimeError(
+                f"literal full-word failure mode={w.mode} sample={counts[w.mode]} "
+                f"event=magnetometer: {exc}"
+            ) from exc
+
+    WORD.apply_imu_sample = located_imu
+    WORD.apply_magnetometer = located_mag
+    return counts
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--domain", type=Path, default=WORD.DEFAULT_DOMAIN)
     ap.add_argument("--output", type=Path, required=True)
     args = ap.parse_args()
+    _install_failure_locator()
     manifest = WORD.build(args.domain)
     d = EXEC.build_execution(WORD, float(manifest["word_horizon_s"]))
     failures = validate_execution(d)
