@@ -424,7 +424,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
                 "minimum_word_horizon_s": s_horizon,
                 "scheduler_gap_s": sched["certified_uniform_max_gap_s"],
                 "newton_information_matrix_lower": rsword[
-                    "newton_coordinate_information_matrix_lower"
+                    "newton_coordinate_information"
                 ],
             },
             "aw_covariance_floor_gap_s_upper": dynamic[
