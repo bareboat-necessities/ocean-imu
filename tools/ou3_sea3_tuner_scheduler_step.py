@@ -33,9 +33,8 @@ import json
 import math
 from pathlib import Path
 import re
-from typing import Iterable
 
-from ou3_interval import Interval, down, up
+from ou3_interval import Interval
 import ou3_source_domain_contract as SOURCE
 import ou3_validated_transcendentals as VT
 
