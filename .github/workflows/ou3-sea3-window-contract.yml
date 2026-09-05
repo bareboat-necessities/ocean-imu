@@ -5,15 +5,19 @@ on:
     paths:
       - "tools/ou3_sea3_hard_finite_window_source.py"
       - "tools/ou3_sea3_complete_window_executor.py"
+      - "tools/ou3_sea3_response_regularity_moment.py"
       - "tests/validation/test_ou3_sea3_hard_finite_window_source.py"
       - "tests/validation/test_ou3_sea3_complete_window_executor.py"
+      - "tests/validation/test_ou3_sea3_response_regularity_moment.py"
       - ".github/workflows/ou3-sea3-window-contract.yml"
   pull_request:
     paths:
       - "tools/ou3_sea3_hard_finite_window_source.py"
       - "tools/ou3_sea3_complete_window_executor.py"
+      - "tools/ou3_sea3_response_regularity_moment.py"
       - "tests/validation/test_ou3_sea3_hard_finite_window_source.py"
       - "tests/validation/test_ou3_sea3_complete_window_executor.py"
+      - "tests/validation/test_ou3_sea3_response_regularity_moment.py"
       - ".github/workflows/ou3-sea3-window-contract.yml"
   workflow_dispatch:
 
@@ -38,8 +42,10 @@ jobs:
           python3 -m py_compile \
             tools/ou3_sea3_hard_finite_window_source.py \
             tools/ou3_sea3_complete_window_executor.py \
+            tools/ou3_sea3_response_regularity_moment.py \
             tests/validation/test_ou3_sea3_hard_finite_window_source.py \
-            tests/validation/test_ou3_sea3_complete_window_executor.py
+            tests/validation/test_ou3_sea3_complete_window_executor.py \
+            tests/validation/test_ou3_sea3_response_regularity_moment.py
 
       - name: Build fail-closed provider and executor status
         run: |
@@ -47,16 +53,31 @@ jobs:
             --output /tmp/ou3_sea3_hard_finite_window_source.json
           python3 tools/ou3_sea3_complete_window_executor.py \
             --output /tmp/ou3_sea3_complete_window_executor.json
+          python3 tools/ou3_sea3_response_regularity_moment.py \
+            --output /tmp/ou3_sea3_response_regularity_moment.json
           python3 - <<'PY'
           import json
           s=json.load(open('/tmp/ou3_sea3_hard_finite_window_source.json'))
           e=json.load(open('/tmp/ou3_sea3_complete_window_executor.json'))
+          r=json.load(open('/tmp/ou3_sea3_response_regularity_moment.json'))
           assert s['validation_pass'], s['validation_failures']
           assert s['SEA3_parameter_domain_compact'] is True
           assert s['compact_transition_relation_is_theorem_domain'] is True
+          assert s['compactness_is_not_an_open_obligation'] is True
+          assert s['executable_provider_ingredients'] == {
+            'machine_readable_R_lambda_closed': False,
+            'hard_shaping_state_or_excitation_bound_closed': False,
+            'joint_translational_rotational_shaping_closed': False,
+          }
           assert s['provider_implementation_closed'] is False
           assert s['source_reachable_event_family_materialized'] is False
           assert s['P3_promoted'] is False
+          assert r['validation_pass'], r['validation_failures']
+          assert r['SEA3_parameter_domain_compact'] is True
+          assert r['same_continuum_RAO_family_consumed'] is True
+          assert r['hard_finite_window_source_materialized'] is False
+          assert r['may_substitute_for_hard_window_IQC'] is False
+          assert r['P3_promoted'] is False
           assert e['validation_pass'], e['validation_failures']
           assert e['only_canonical_SEA0_provider_artifact_accepted'] is True
           assert e['raw_sample_array_accepted'] is False
@@ -69,6 +90,7 @@ jobs:
           assert e['execution_contract']['delta_lower_required'] == 1e-18
           assert e['P3_PROMOTED'] is False
           print('SEA0_WINDOW_PROVIDER', s['next_obligation'])
+          print('SEA3_REGULARITY_BOUNDS', r['bounds'])
           print('SEA3_WINDOW_EXECUTOR', e['next_obligation'])
           PY
 
@@ -77,7 +99,8 @@ jobs:
         run: |
           python3 -m unittest -v \
             test_ou3_sea3_hard_finite_window_source \
-            test_ou3_sea3_complete_window_executor
+            test_ou3_sea3_complete_window_executor \
+            test_ou3_sea3_response_regularity_moment
 
       - name: Upload boundary status
         uses: actions/upload-artifact@v6
@@ -86,4 +109,5 @@ jobs:
           path: |
             /tmp/ou3_sea3_hard_finite_window_source.json
             /tmp/ou3_sea3_complete_window_executor.json
+            /tmp/ou3_sea3_response_regularity_moment.json
           retention-days: 7
