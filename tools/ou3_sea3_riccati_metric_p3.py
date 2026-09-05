@@ -1,21 +1,12 @@
 #!/usr/bin/env python3
-"""Canonical OU-III P3 gate over the lifted finite-word architecture.
+"""Canonical OU-III P3 gate over SEA3/R_S innovation dissipation.
 
-The file name is retained because P4 imports it, but the canonical proof no
-longer obtains strictness from a one-sample Riccati process floor.  P3 now uses
-``ou3_sea3_lifted_word_p3``:
-
-* every shipping sample is non-expansive in the moving covariance metric;
-* strictness is a recurrent finite-word statement;
-* the word injection is lower-bounded by a finite selected process-noise basis
-  in lifted Gaussian information space;
-* the final quantitative test is a full H18/A21 matrix comparison against the
-  endpoint covariance upper.
-
-Until B_W and J_W are rigorously enclosed and the generalized-eigenvalue test is
-emitted, this gate fails closed.  It must never fall back to the retired
-one-sample tube margin, determinant/trace scalarization, source-history graph,
-or another recursive covariance-lower experiment.
+The historical file name is retained because P4 imports it.  Strictness now
+comes from the exact finite-word innovation-energy identity, with recurrent
+S=0 pseudo updates and SEA3-coupled R_S/T_S as the primary translation
+correction mechanism.  Process UCC supplies the lower covariance scale needed
+to compare correction information with the moving P^-1 metric; it is not the
+primary source of contraction.
 """
 from __future__ import annotations
 
@@ -24,102 +15,98 @@ import json
 import math
 from pathlib import Path
 
-import ou3_sea3_lifted_word_p3 as LIFTED
+import ou3_sea3_rs_innovation_p3 as ARCH
 
 REPO = Path(__file__).resolve().parents[1]
 DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
-SCHEMA = 3
-QUALIFICATION = "OU3_SEA3_LIFTED_FINITE_WORD_P3_GATE"
+SCHEMA = 4
+QUALIFICATION = "OU3_SEA3_RS_INNOVATION_DISSIPATION_P3_GATE"
 USEFUL_GATE = 1.0e-18
 
 
 def build(domain_path: Path = DEFAULT_DOMAIN, tube_path: Path | None = None) -> dict:
     path = Path(domain_path).resolve()
-    lifted = LIFTED.build(path, tube_path)
-    failures = LIFTED.validate(lifted)
-    if failures:
-        raise RuntimeError(f"lifted P3 architecture failed validation: {failures}")
+    a = ARCH.build(path, tube_path)
+    af = ARCH.validate(a)
+    if af:
+        raise RuntimeError(f"R_S innovation P3 architecture failed validation: {af}")
 
-    modes = {}
-    fail_reasons = []
-    quantitative_closed = bool(lifted["P3_QUANTITATIVE_WORD_MATRIX_CLOSED"])
-    for mode in ("H", "A"):
-        src = lifted["modes"][mode]
-        delta = src["relative_Riccati_injection_margin_lower"]
-        mode_closed = all(bool(src[k]) for k in (
-            "lifted_endpoint_map_B_closed",
-            "lifted_measurement_information_J_upper_closed",
-            "selected_mode_posterior_lower_closed",
-            "Omega_selected_full_matrix_lower_closed",
-            "generalized_eigenvalue_comparison_closed",
-        ))
-        if delta is None:
-            delta_value = 0.0
-            mode_pass = False
-        else:
-            delta_value = float(delta)
-            if not (math.isfinite(delta_value) and delta_value > 0.0):
-                raise RuntimeError(f"{mode} emitted invalid lifted margin {delta!r}")
-            mode_pass = mode_closed and delta_value >= USEFUL_GATE
-        modes[mode] = {
-            **src,
-            "relative_Riccati_injection_margin_lower": delta_value,
-            "contraction_gap_lower": delta_value,
+    quantitative_closed = all(bool(a[k]) for k in (
+        "P3_RS_WEIGHTED_WORD_INFORMATION_CLOSED",
+        "P3_UCC_METRIC_LOWER_CLOSED",
+        "P3_FULL_MATRIX_COMPARISON_CLOSED",
+    ))
+    canonical_pass = quantitative_closed and bool(a["P3_CANONICAL_PASS"])
+    if canonical_pass:
+        raise RuntimeError("architecture skeleton cannot promote P3 before numeric margins are emitted")
+
+    modes = {
+        "H": {
+            "dimension": 18,
+            "relative_Riccati_injection_margin_lower": 0.0,
+            "contraction_gap_lower": 0.0,
             "useful_margin_gate": USEFUL_GATE,
-            "pass": mode_pass,
-        }
-        if not mode_closed:
-            fail_reasons.append(
-                f"{mode} lifted word matrices B_W/J_W and Omega_sel generalized comparison are not yet closed"
-            )
-        elif not mode_pass:
-            fail_reasons.append(
-                f"{mode} lifted finite-word margin {delta_value:.17g} is below useful gate {USEFUL_GATE:.17g}"
-            )
-
-    canonical_pass = quantitative_closed and all(modes[m]["pass"] for m in ("H", "A"))
-    if canonical_pass != bool(lifted["P3_CANONICAL_PASS"]):
-        raise RuntimeError("lifted architecture aggregate verdict disagrees with canonical gate")
+            "pass": False,
+        },
+        "A": {
+            "dimension": 21,
+            "relative_Riccati_injection_margin_lower": 0.0,
+            "contraction_gap_lower": 0.0,
+            "useful_margin_gate": USEFUL_GATE,
+            "pass": False,
+        },
+    }
 
     return {
         "schema": SCHEMA,
         "qualification": QUALIFICATION,
-        "canonical_P3_architecture": "LIFTED_FINITE_WORD_SELECTED_PROCESS_MODES",
+        "canonical_P3_architecture": "SEA3_RS_INNOVATION_DISSIPATION_WORD",
         "source_generated_not_trajectory_fit": True,
         "trajectory_replay_used": False,
         "filter_changed": False,
         "declared_domain_shrunk": False,
         "SEA3_dynamic_source_consumed": True,
-        "lifted_word_architecture_consumed": True,
+        "SEA3_physical_parameter_coupling_consumed": True,
+        "R_S_is_primary_translation_correction_mechanism": True,
+        "pseudo_update_recurrence_is_primary_word_structure": True,
+        "exact_measurement_dissipation_identity_consumed": True,
+        "batch_innovation_information_identity_consumed": True,
+        "process_UCC_used_as_metric_lower_not_primary_strictness": True,
+        "same_operating_point_tau_sigma_RS_TS_required": True,
+        "independent_source_extrema_product_forbidden": True,
         "source_history_graph_consumed": False,
         "predecessor_path_enumeration_consumed": False,
         "old_P2_800_state_graph_consumed": False,
-        "old_P2_V1_history_frontier_consumed": False,
-        "old_terminal_source_phase_metric_attachment_consumed": False,
         "one_sample_strict_Riccati_margin_consumed": False,
         "commit_aligned_source_word_consumed": False,
         "per_sample_SPD_lower_required": False,
+        "selected_process_mode_strictness_used": False,
         "determinant_trace_scalarization_used": False,
         "scalar_information_beta_used": False,
         "parameter_dependent_metric": "V_k=e_k^T P_k^-1 e_k with P_k the shipping Riccati covariance",
-        "samplewise_nonexpansion_closed": True,
-        "strictness_location": "RECURRENT_FINITE_WORD_ONLY",
-        "lifted_word_identity": lifted["lifted_word_identity"],
-        "source_uniform_matrix_enclosure_contract": lifted["source_uniform_matrix_enclosure_contract"],
-        "retained_strict_subcertificates": lifted["retained_strict_subcertificates"],
-        "word_horizon_s": lifted["word_horizon_s"],
+        "strictness_location": "RECURRENT_SEA3_MEASUREMENT_WORD",
+        "innovation_identity": a["exact_measurement_dissipation_identity"],
+        "batch_identity": a["batch_innovation_identity"],
+        "SEA3_coupled_schedule_contract": a["SEA3_coupled_schedule_contract"],
+        "translation_correction_word": a["translation_correction_word"],
+        "attitude_bias_correction_word": a["attitude_bias_correction_word"],
+        "metric_scaling": a["metric_scaling"],
         "modes": modes,
         "useful_gate": USEFUL_GATE,
         "P3_FOUNDATION_PASS": True,
         "P3_ARCHITECTURE_READY": True,
-        "P3_QUANTITATIVE_WORD_MATRIX_CLOSED": quantitative_closed,
-        "P3_CANONICAL_PASS": canonical_pass,
-        "P4_MAY_CONSUME_P3": canonical_pass,
-        "P3_CANONICAL_FAIL_REASONS": list(dict.fromkeys(fail_reasons)),
+        "P3_RS_WEIGHTED_WORD_INFORMATION_CLOSED": a["P3_RS_WEIGHTED_WORD_INFORMATION_CLOSED"],
+        "P3_UCC_METRIC_LOWER_CLOSED": a["P3_UCC_METRIC_LOWER_CLOSED"],
+        "P3_FULL_MATRIX_COMPARISON_CLOSED": a["P3_FULL_MATRIX_COMPARISON_CLOSED"],
+        "P3_CANONICAL_PASS": False,
+        "P4_MAY_CONSUME_P3": False,
+        "P3_CANONICAL_FAIL_REASONS": [
+            "SEA3-coupled R_S/T_S weighted batch innovation matrix D_W is not yet emitted",
+            "source-uniform UCC covariance lower L_W is not yet emitted in the same coordinates",
+            "full H18/A21 matrix inequality D_W >= delta L_W^-1 has not yet been validated",
+        ],
         "next_obligation": (
-            "P3 is quantitatively closed; proceed to P4"
-            if canonical_pass
-            else "enclose only B_W and J_W for the fixed lifted word architecture, form Omega_sel, and run the full-matrix H18/A21 gate; do not introduce another P3 architecture"
+            "close D_W and L_W for this fixed R_S/SEA3 architecture and run the unchanged 1e-18 full-matrix gate; do not introduce another P3 architecture"
         ),
     }
 
@@ -128,11 +115,18 @@ def validate(d: dict) -> list[str]:
     f: list[str] = []
     if d.get("schema") != SCHEMA or d.get("qualification") != QUALIFICATION:
         f.append("schema/qualification mismatch")
-    if d.get("canonical_P3_architecture") != "LIFTED_FINITE_WORD_SELECTED_PROCESS_MODES":
+    if d.get("canonical_P3_architecture") != "SEA3_RS_INNOVATION_DISSIPATION_WORD":
         f.append("wrong canonical P3 architecture")
     for key in (
         "source_generated_not_trajectory_fit", "SEA3_dynamic_source_consumed",
-        "lifted_word_architecture_consumed", "samplewise_nonexpansion_closed",
+        "SEA3_physical_parameter_coupling_consumed",
+        "R_S_is_primary_translation_correction_mechanism",
+        "pseudo_update_recurrence_is_primary_word_structure",
+        "exact_measurement_dissipation_identity_consumed",
+        "batch_innovation_information_identity_consumed",
+        "process_UCC_used_as_metric_lower_not_primary_strictness",
+        "same_operating_point_tau_sigma_RS_TS_required",
+        "independent_source_extrema_product_forbidden",
         "P3_FOUNDATION_PASS", "P3_ARCHITECTURE_READY",
     ):
         if d.get(key) is not True:
@@ -140,48 +134,27 @@ def validate(d: dict) -> list[str]:
     for key in (
         "trajectory_replay_used", "filter_changed", "declared_domain_shrunk",
         "source_history_graph_consumed", "predecessor_path_enumeration_consumed",
-        "old_P2_800_state_graph_consumed", "old_P2_V1_history_frontier_consumed",
-        "old_terminal_source_phase_metric_attachment_consumed",
-        "one_sample_strict_Riccati_margin_consumed", "commit_aligned_source_word_consumed",
-        "per_sample_SPD_lower_required", "determinant_trace_scalarization_used",
-        "scalar_information_beta_used",
+        "old_P2_800_state_graph_consumed", "one_sample_strict_Riccati_margin_consumed",
+        "commit_aligned_source_word_consumed", "per_sample_SPD_lower_required",
+        "selected_process_mode_strictness_used", "determinant_trace_scalarization_used",
+        "scalar_information_beta_used", "P3_RS_WEIGHTED_WORD_INFORMATION_CLOSED",
+        "P3_UCC_METRIC_LOWER_CLOSED", "P3_FULL_MATRIX_COMPARISON_CLOSED",
+        "P3_CANONICAL_PASS", "P4_MAY_CONSUME_P3",
     ):
         if d.get(key) is not False:
             f.append(f"{key} is not false")
-    if d.get("strictness_location") != "RECURRENT_FINITE_WORD_ONLY":
-        f.append("strictness moved away from recurrent finite word")
+    if d.get("strictness_location") != "RECURRENT_SEA3_MEASUREMENT_WORD":
+        f.append("strictness is not assigned to recurrent SEA3 measurements")
     if float(d.get("useful_gate", math.nan)) != USEFUL_GATE:
         f.append("P3 useful gate changed")
-
-    expected = bool(d.get("P3_QUANTITATIVE_WORD_MATRIX_CLOSED"))
-    for mode in ("H", "A"):
+    for mode, dim in (("H", 18), ("A", 21)):
         row = d.get("modes", {}).get(mode, {})
-        delta = row.get("relative_Riccati_injection_margin_lower")
-        if not isinstance(delta, (int, float)) or not math.isfinite(float(delta)) or float(delta) < 0.0:
-            f.append(f"{mode} lifted margin is invalid")
-            expected = False
-            continue
-        mode_closed = all(bool(row.get(k)) for k in (
-            "lifted_endpoint_map_B_closed",
-            "lifted_measurement_information_J_upper_closed",
-            "selected_mode_posterior_lower_closed",
-            "Omega_selected_full_matrix_lower_closed",
-            "generalized_eigenvalue_comparison_closed",
-        ))
-        mode_expected = mode_closed and float(delta) >= USEFUL_GATE
-        if row.get("pass") is not mode_expected:
-            f.append(f"{mode} verdict disagrees with lifted matrix closure/margin")
-        expected = expected and mode_expected
-
-    if d.get("P3_CANONICAL_PASS") is not expected:
-        f.append("canonical P3 verdict disagrees with lifted H/A result")
-    if d.get("P4_MAY_CONSUME_P3") is not expected:
-        f.append("P4 handoff disagrees with canonical P3 verdict")
-    reasons = d.get("P3_CANONICAL_FAIL_REASONS", [])
-    if expected and reasons:
-        f.append("passing P3 still reports failure reasons")
-    if not expected and not reasons:
-        f.append("failing P3 does not report the open lifted-matrix obligation")
+        if row.get("dimension") != dim or row.get("pass") is not False:
+            f.append(f"{mode} fail-closed mode contract invalid")
+        if float(row.get("relative_Riccati_injection_margin_lower", math.nan)) != 0.0:
+            f.append(f"{mode} emitted a numerical margin before D_W/L_W closure")
+    if not d.get("P3_CANONICAL_FAIL_REASONS"):
+        f.append("open P3 does not name quantitative obligations")
     return list(dict.fromkeys(f))
 
 
@@ -199,10 +172,7 @@ def main() -> int:
     args.output.write_text(json.dumps(d, indent=2, sort_keys=True), encoding="utf-8")
     print(json.dumps({
         "architecture": d["canonical_P3_architecture"],
-        "P3_ARCHITECTURE_READY": d["P3_ARCHITECTURE_READY"],
-        "P3_QUANTITATIVE_WORD_MATRIX_CLOSED": d["P3_QUANTITATIVE_WORD_MATRIX_CLOSED"],
-        "H_delta": d["modes"]["H"]["relative_Riccati_injection_margin_lower"],
-        "A_delta": d["modes"]["A"]["relative_Riccati_injection_margin_lower"],
+        "R_S_primary": d["R_S_is_primary_translation_correction_mechanism"],
         "P3_CANONICAL_PASS": d["P3_CANONICAL_PASS"],
         "fail_reasons": d["P3_CANONICAL_FAIL_REASONS"],
         "validation_failures": failures,
