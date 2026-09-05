@@ -95,9 +95,6 @@ def joseph_measurement(
     Pj = matrix_symmetric_hull(
         matrix_add(matrix_mul(matrix_mul(A, Pm), At), KRKt)
     )
-    # Exact covariance-form Kalman update.  H P is PHt^T because P is
-    # symmetric; retaining PHt from the same prior also avoids an extra natural
-    # interval multiplication before the strongest R_S correction.
     Ps = matrix_symmetric_hull(
         matrix_sub(Pm, matrix_mul(K, matrix_transpose(PHt)))
     )
@@ -132,14 +129,12 @@ def joseph_measurement(
     }
 
 
-# Everything else is the canonical backend unchanged.
 initialize = BASE.initialize
 initialize_prior_free = BASE.initialize_prior_free
 predict = BASE.predict
 prior_free_predict = BASE.prior_free_predict
 prior_free_measurement = BASE.prior_free_measurement
 add_psd_floor = BASE.add_psd_floor
-prior_free_add_psd_floor = BASE.prior_free_add_psd_floor
 certify_contraction = BASE.certify_contraction
 decomposition_identity_enclosed = BASE.decomposition_identity_enclosed
 decomposition_residual = BASE.decomposition_residual
