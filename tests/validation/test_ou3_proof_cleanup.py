@@ -79,6 +79,11 @@ class Ou3ProofCleanupTest(unittest.TestCase):
         retired_names = {
             "ou3_p3_four_max_global_label_witness.py",
             "ou3_p3_ordered_witness_covariance_diagnostic.py",
+            "ou3_sea3_rs_word_information.py",
+            "ou3_sea3_rs_innovation_p3.py",
+            "ou3_sea3_p3_joint_source_contract.py",
+            "ou3_sea3_full_normal_live_execution.py",
+            "ou3_sea3_full_normal_live_execution_cli.py",
         }
         retired_modules = {name[:-3] for name in retired_names}
         offenders = []
@@ -108,6 +113,7 @@ class Ou3ProofCleanupTest(unittest.TestCase):
             "ou3-p4-new-clamps-proof.yml",
             "ou3-sea0.yml",
             "ou3-sea3-directional.yml",
+            "ou3-full-word-exec.yml",
         }
         offenders = [name for name in sorted(retired) if (WORKFLOWS / name).exists()]
         self.assertEqual([], offenders, "retired extra proof workflows returned")
@@ -121,7 +127,7 @@ class Ou3ProofCleanupTest(unittest.TestCase):
             paper.index(r"\input{w3d-sea3-period-bridge.tex-part}"),
         )
 
-    def test_canonical_workflow_does_not_execute_old_p2_inclusion_or_history_route(self):
+    def test_canonical_workflow_does_not_execute_old_p2_or_fallback_routes(self):
         workflow = (WORKFLOWS / "ou3-proof.yml").read_text(encoding="utf-8")
         retired = (
             "test_ou3_source_domain_contract",
@@ -132,19 +138,28 @@ class Ou3ProofCleanupTest(unittest.TestCase):
             "ou3_p3_p2_v1_full_state_join",
             "ou3_p4_p3_metric_attachment",
             "ou3_p4_signed_joseph_feasibility",
+            "ou3_sea3_dynamic_source_certificate.py --output",
+            "ou3_sea3_rs_word_information",
+            "ou3_sea3_rs_innovation_p3",
+            "ou3_sea3_p3_joint_source_contract",
+            "ou3_sea3_full_normal_live_execution",
             "800 * 26",
         )
         offenders = [name for name in retired if name in workflow]
-        self.assertEqual([], offenders, "old P2/history/endpoint proof route is still canonical")
+        self.assertEqual([], offenders, "old P2/history/reduced fallback route is still canonical")
 
-    def test_canonical_workflow_uses_sea3_dynamic_riccati_route(self):
+    def test_canonical_workflow_uses_complete_sea3_full_riccati_route(self):
         workflow = (WORKFLOWS / "ou3-proof.yml").read_text(encoding="utf-8")
         for module in (
-            "ou3_sea3_dynamic_source_certificate",
+            "ou3_sea3_complete_source",
+            "ou3_sea3_p3_full_preconditions",
+            "ou3_sea3_full_normal_live_word",
             "ou3_sea3_riccati_metric_p3",
             "ou3_sea3_riccati_metric_p4",
         ):
             self.assertIn(module, workflow)
+        self.assertIn("COMPLETE_SEA3_NORMAL_LIVE_WORD", workflow)
+        self.assertIn("all(v is False for v in d['no_fallback_generators'].values())", workflow)
 
 
 if __name__ == "__main__":
