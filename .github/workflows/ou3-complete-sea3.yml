@@ -6,7 +6,9 @@ on:
       - "tools/ou3_sea3_*.py"
       - "tools/ou3_sea3_*.json"
       - "tools/ou3_proof_operating_domain.json"
+      - "tests/validation/test_ou3_sea3_*.py"
       - "src/kalman_ou_iii/**"
+      - "src/kalman_ou_common/**"
       - "src/tuner/**"
       - ".github/workflows/ou3-complete-sea3.yml"
   pull_request:
@@ -14,7 +16,9 @@ on:
       - "tools/ou3_sea3_*.py"
       - "tools/ou3_sea3_*.json"
       - "tools/ou3_proof_operating_domain.json"
+      - "tests/validation/test_ou3_sea3_*.py"
       - "src/kalman_ou_iii/**"
+      - "src/kalman_ou_common/**"
       - "src/tuner/**"
       - ".github/workflows/ou3-complete-sea3.yml"
   workflow_dispatch:
@@ -46,26 +50,46 @@ jobs:
             tools/ou3_sea3_spectral_moment_bridge.py \
             tools/ou3_sea3_wave_period_frontend.py \
             tools/ou3_sea3_dynamic_source_certificate.py \
+            tools/ou3_sea3_windowed_vector_pe.py \
+            tools/ou3_sea3_shipping_prediction_primitives.py \
             tools/ou3_p3_pseudo_scheduler_progress_certificate.py
 
-      - name: Build complete SEA3 Normal-Live source
+      - name: Build compact phase-continuous SEA3 source contract
         run: |
           python3 tools/ou3_sea3_complete_source.py \
             --output /tmp/ou3_sea3_complete_source.json
+          python3 tools/ou3_sea3_shipping_prediction_primitives.py \
+            --output /tmp/ou3_sea3_shipping_prediction_primitives.json
           python3 - <<'PY'
           import json
           d=json.load(open('/tmp/ou3_sea3_complete_source.json'))
           assert d['validation_pass'], d['validation_failures']
           assert d['canonical_P3_source'] == 'COMPLETE_SEA3_NORMAL_LIVE_WORD'
-          assert d['P3_source_family_ready'] is True
+          assert d['P3_source_contract_ready'] is True
+          assert d['P3_source_family_materialized'] is False
           assert d['retired_P2_stack_consumed'] is False
-          assert d['SEA3_surface_family']['modes_max'] == 3
-          assert d['SEA3_surface_family']['gamma_interval'] == [1.0, 7.0]
+          sea=d['SEA3_surface_family']
+          assert sea['modes_max'] == 3
+          assert sea['gamma_interval'] == [1.0, 7.0]
+          assert sea['parameter_domain_compact'] is True
+          assert sea['compact_transition_relation_is_theorem_domain'] is True
+          assert sea['independent_H_T_extrema_forbidden'] is True
           assert all(v is False for v in d['no_fallback_generators'].values())
+          dyn=d['SEA3_dynamic_realization']
+          assert dyn['phase_continuous'] is True
+          assert dyn['same_realization_drives_translation_rotation_frontend_tuner_geometry'] is True
+          assert dyn['finite_window_family_materialized'] is False
+          assert dyn['probabilistic_event_may_substitute_for_realization'] is False
+          assert dyn['arbitrary_bounded_input_may_substitute_for_realization'] is False
           c=d['SEA3_response_couplings']
           assert c['independent_sea_x_RAO_cartesian_product_forbidden'] is True
           assert c['same_H_s_partition_energy_enters_translation_and_rotation_conditions'] is True
-          assert c['only_jointly_admitted_response_tuples_may_generate_P3_words'] is True
+          assert c['only_same_phase_continuous_SEA3_realization_may_generate_P3_words'] is True
+          assert c['moment_or_probability_bound_may_not_generate_P3_word'] is True
+          s=d['stochastic_forcing_corollary']
+          assert s['used_to_generate_P3_source_words'] is False
+          assert s['used_to_prune_homogeneous_P3_family'] is False
+          assert s['configured_Racc_Rmag_remain_in_every_covariance_update'] is True
           a=d['derived_adaptive_source']
           assert a['primitive_independent_tau_sigma_RS_TS'] is False
           assert a['same_SEA3_frontend_path_generates_tau_sigma_RS_targets'] is True
@@ -82,16 +106,44 @@ jobs:
           assert r['all_due_S_updates_remain_in_full_word'] is True
           assert r['selected_four_S_subset_may_not_replace_full_scheduler_word'] is True
           assert r['R_S_may_not_be_replaced_by_process_strictness'] is True
+
+          p=json.load(open('/tmp/ou3_sea3_shipping_prediction_primitives.json'))
+          assert p['validation_pass'], p['validation_failures']
+          assert p['validated_matrix_primitives_ready'] is True
+          assert p['source_domain_created_here'] is False
+          assert p['consumes_only_SEA3_derived_sample_coordinates'] is True
+          assert p['P3_promoted'] is False
+
           print('SEA3_SAMPLES', d['word_samples'])
+          print('SEA3_DYNAMIC_REALIZATION', dyn)
           print('SEA3_RESPONSE_COUPLINGS', c)
-          print('SEA3_FINITE_HORIZON', d['SEA3_finite_horizon_good_event'])
+          print('SEA3_STOCHASTIC_FORCING_ONLY', s)
           print('SEA3_FALLBACKS', d['no_fallback_generators'])
           print('SEA3_RS', r)
+          print('SEA3_PREDICTION_PRIMITIVES', p['smoke'])
           PY
+
+      - name: Test SEA3 source and prediction contracts
+        working-directory: tests/validation
+        run: |
+          python3 -m unittest -v \
+            test_ou3_sea3_physical_admissibility \
+            test_ou3_sea3_complete_source \
+            test_ou3_sea3_compact_domain \
+            test_ou3_sea3_no_stochastic_source \
+            test_ou3_sea3_windowed_vector_pe_binary32 \
+            test_ou3_sea3_shipping_prediction_primitives \
+            test_ou3_sea3_prediction_not_source \
+            test_ou3_sea3_rs_full_word_contract \
+            test_ou3_sea3_p3_source_semantics \
+            test_ou3_sea3_full_word_source_identity \
+            test_ou3_sea3_source_family_fail_closed
 
       - name: Upload complete SEA3 source artifact
         uses: actions/upload-artifact@v6
         with:
           name: ou3-complete-sea3-source
-          path: /tmp/ou3_sea3_complete_source.json
+          path: |
+            /tmp/ou3_sea3_complete_source.json
+            /tmp/ou3_sea3_shipping_prediction_primitives.json
           retention-days: 7
