@@ -5,8 +5,10 @@ on:
     paths:
       - "tools/ou3_sea3_*.py"
       - "tools/ou3_sea3_*.json"
+      - "tools/ou3_validated_log.py"
       - "tools/ou3_proof_operating_domain.json"
       - "tests/validation/test_ou3_sea3_*.py"
+      - "tests/validation/test_ou3_validated_log.py"
       - "src/kalman_ou_iii/**"
       - "src/kalman_ou_common/**"
       - "src/tuner/**"
@@ -15,8 +17,10 @@ on:
     paths:
       - "tools/ou3_sea3_*.py"
       - "tools/ou3_sea3_*.json"
+      - "tools/ou3_validated_log.py"
       - "tools/ou3_proof_operating_domain.json"
       - "tests/validation/test_ou3_sea3_*.py"
+      - "tests/validation/test_ou3_validated_log.py"
       - "src/kalman_ou_iii/**"
       - "src/kalman_ou_common/**"
       - "src/tuner/**"
@@ -52,6 +56,9 @@ jobs:
             tools/ou3_sea3_dynamic_source_certificate.py \
             tools/ou3_sea3_windowed_vector_pe.py \
             tools/ou3_sea3_shipping_prediction_primitives.py \
+            tools/ou3_sea3_tuner_scheduler_step.py \
+            tools/ou3_sea3_wpe_state_step.py \
+            tools/ou3_validated_log.py \
             tools/ou3_p3_pseudo_scheduler_progress_certificate.py
 
       - name: Build compact phase-continuous SEA3 source contract
@@ -60,6 +67,10 @@ jobs:
             --output /tmp/ou3_sea3_complete_source.json
           python3 tools/ou3_sea3_shipping_prediction_primitives.py \
             --output /tmp/ou3_sea3_shipping_prediction_primitives.json
+          python3 tools/ou3_sea3_tuner_scheduler_step.py \
+            --output /tmp/ou3_sea3_tuner_scheduler_step.json
+          python3 tools/ou3_sea3_wpe_state_step.py \
+            --output /tmp/ou3_sea3_wpe_state_step.json
           python3 - <<'PY'
           import json
           d=json.load(open('/tmp/ou3_sea3_complete_source.json'))
@@ -114,6 +125,26 @@ jobs:
           assert p['consumes_only_SEA3_derived_sample_coordinates'] is True
           assert p['P3_promoted'] is False
 
+          t=json.load(open('/tmp/ou3_sea3_tuner_scheduler_step.json'))
+          assert t['validation_pass'], t['validation_failures']
+          assert t['source_generator'] is False
+          assert t['requires_same_SEA3_Mahony_and_WPE_state'] is True
+          assert t['same_state_generates_tau_sigma_RS_TS'] is True
+          assert t['spectral_MSE_actual_RS_retained'] is True
+          assert t['complete_SEA3_family_materialized_here'] is False
+          assert t['P3_promoted'] is False
+
+          w=json.load(open('/tmp/ou3_sea3_wpe_state_step.json'))
+          assert w['validation_pass'], w['validation_failures']
+          assert w['source_generator'] is False
+          assert w['requires_same_SEA3_vertical_acceleration'] is True
+          assert w['validity_boundaries_are_branched_not_selected'] is True
+          assert w['mathematical_WPE_state_step_closed'] is True
+          assert w['target_binary32_libm_roundoff_closed'] is False
+          assert w['private_Mahony_step_closed_here'] is False
+          assert w['complete_SEA3_family_materialized_here'] is False
+          assert w['P3_promoted'] is False
+
           print('SEA3_SAMPLES', d['word_samples'])
           print('SEA3_DYNAMIC_REALIZATION', dyn)
           print('SEA3_RESPONSE_COUPLINGS', c)
@@ -121,12 +152,15 @@ jobs:
           print('SEA3_FALLBACKS', d['no_fallback_generators'])
           print('SEA3_RS', r)
           print('SEA3_PREDICTION_PRIMITIVES', p['smoke'])
+          print('SEA3_TUNER_STEP', t['smoke'])
+          print('SEA3_WPE_STEP', w['smoke'])
           PY
 
       - name: Test SEA3 source and prediction contracts
         working-directory: tests/validation
         run: |
           python3 -m unittest -v \
+            test_ou3_validated_log \
             test_ou3_sea3_physical_admissibility \
             test_ou3_sea3_complete_source \
             test_ou3_sea3_compact_domain \
@@ -134,6 +168,8 @@ jobs:
             test_ou3_sea3_windowed_vector_pe_binary32 \
             test_ou3_sea3_shipping_prediction_primitives \
             test_ou3_sea3_prediction_not_source \
+            test_ou3_sea3_tuner_scheduler_step \
+            test_ou3_sea3_wpe_state_step \
             test_ou3_sea3_rs_full_word_contract \
             test_ou3_sea3_p3_source_semantics \
             test_ou3_sea3_full_word_source_identity \
@@ -146,4 +182,6 @@ jobs:
           path: |
             /tmp/ou3_sea3_complete_source.json
             /tmp/ou3_sea3_shipping_prediction_primitives.json
+            /tmp/ou3_sea3_tuner_scheduler_step.json
+            /tmp/ou3_sea3_wpe_state_step.json
           retention-days: 7
