@@ -13,20 +13,25 @@ validated enclosure of the actual Lomont ``0x5f375a86`` fast inverse square
 root and all explicit basic operations are outward rounded to binary32.
 
 The low-level implementation can remain in ``TunerReady`` while an external
-bootstrap decides when to call ``goLive``.  The deployed outer
+bootstrap decides when to call ``goLive``. The deployed outer
 ``SeaStateFusion_OU_III`` wrapper is stricter: it owns the bootstrap and has a
-configured timeout path.  With current defaults the magnetic acquisition
-fallback is 60 s and the startup timeout is 150 s, so 150 s dominates.  That is
-*not yet* an unconditional Live-entry bound, because the timeout path still
-requires the world-frame gravity-aligned branch.  P3 therefore remains
-fail-closed until that branch is certified on the same SEA3 startup path and
-the reset-zero Mahony state is propagated to the resulting Live entry.
+configured timeout path. With current defaults the magnetic acquisition
+fallback is 60 s and the startup timeout is 150 s, so 150 s dominates.
+
+Inside the declared SEA3 startup domain the timeout branch is not open-ended:
+the Mahony chart radius plus the declared world-averaged gravity-direction
+error is strictly below 90 degrees. Therefore the world-frame averaged
+specific-force vector remains on the shipping ``acc_world_lp.z() < 0`` branch
+on that declared chart. This closes the 150 s *time* horizon only; it does not
+replace propagation of the reset-zero quaternion/integral state by an
+independent Live-entry box, so the full P3 source family remains fail-closed.
 """
 from __future__ import annotations
 
 import argparse
 from dataclasses import dataclass
 import json
+import math
 from pathlib import Path
 import re
 
@@ -39,8 +44,9 @@ VERTICAL = REPO / "src" / "tuner" / "VerticalAccelComplementary.h"
 MAHONY = REPO / "src" / "ahrs" / "Mahony_AHRS.h"
 WRAPPER = REPO / "src" / "kalman_ou_iii" / "SeaStateFusionFilter_OU_III.h"
 COMMON = REPO / "src" / "kalman_common" / "SeaStateFusionFilterCommon.h"
-SCHEMA = 2
-QUALIFICATION = "OU3_SEA3_PRIVATE_MAHONY_LIVE_INTERVAL_STEP_V2"
+DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
+SCHEMA = 3
+QUALIFICATION = "OU3_SEA3_PRIVATE_MAHONY_LIVE_INTERVAL_STEP_V3"
 
 
 @dataclass(frozen=True)
@@ -196,6 +202,8 @@ def build() -> dict:
     mahony = MAHONY.read_text(encoding="utf-8")
     wrapper = WRAPPER.read_text(encoding="utf-8")
     common = COMMON.read_text(encoding="utf-8")
+    domain = json.loads(DOMAIN.read_text(encoding="utf-8"))
+    startup = domain["startup"]
 
     proxy_timeout = _config_float(wrapper, "proxy_startup_timeout_sec")
     proxy_mag_settle = _config_float(wrapper, "proxy_mag_settle_sec")
@@ -203,6 +211,19 @@ def build() -> dict:
     mag_fallback = _config_float(wrapper, "mag_tilt_fallback_sec")
     mag_deadline = proxy_mag_settle + 2.0 * max(mag_window, 1.0) + mag_fallback
     deployed_timeout = max(proxy_timeout, mag_deadline)
+
+    chart_deg = float(startup["mahony_chart_theta_star_deg"])
+    chart_rad = math.radians(chart_deg)
+    world_gravity_error_rad = float(
+        startup["world_averaged_gravity_direction_error_upper_rad"]
+    )
+    branch_margin_rad = 0.5 * math.pi - chart_rad - world_gravity_error_rad
+    declared_chart_implies_aligned_branch = branch_margin_rad > 0.0
+    declared_domain_live_entry_upper_bound_closed = (
+        declared_chart_implies_aligned_branch
+        and math.isfinite(deployed_timeout)
+        and deployed_timeout > 0.0
+    )
 
     parity = {
         "wrapper_updates_private_observer_before_vertical_read": (
@@ -273,13 +294,22 @@ def build() -> dict:
         "deployed_mag_acquire_deadline_s": mag_deadline,
         "deployed_timeout_s": deployed_timeout,
         "timeout_path_requires_gravity_aligned_branch": True,
+        "declared_startup_mahony_chart_deg": chart_deg,
+        "declared_world_gravity_direction_error_upper_rad": world_gravity_error_rad,
+        "gravity_aligned_branch_margin_rad": branch_margin_rad,
+        "declared_startup_chart_implies_gravity_aligned_branch":
+            declared_chart_implies_aligned_branch,
+        "declared_domain_live_entry_upper_bound_closed":
+            declared_domain_live_entry_upper_bound_closed,
+        "declared_domain_live_entry_upper_bound_s":
+            deployed_timeout if declared_domain_live_entry_upper_bound_closed else None,
         "unconditional_live_entry_upper_bound_closed": False,
         "live_entry_private_observer_invariant_closed": False,
         "compiler_reassociation_or_FMA_closed": False,
         "complete_SEA3_family_materialized_here": False,
         "P3_promoted": False,
         "next_obligation": (
-            "prove on the same complete SEA3 reset-to-startup path that the world-frame gravity branch acc_world_lp.z<0 is retained or re-entered by the deployed 150 s timeout, then propagate the reset-zero Mahony quaternion/integral-feedback state to that Live entry and feed its vertical output into WPE; do not substitute an independent q/integral/vertical-acceleration box"
+            "use the now-certified <=150 s declared-domain startup horizon to propagate the same reset-zero Mahony quaternion/integral-feedback state, preserving its correlated norm/chart representation, into Live and feed that same observer state to WPE; do not substitute an independent q/integral/vertical-acceleration box"
         ),
     }
 
@@ -296,6 +326,8 @@ def validate(d: dict) -> list[str]:
         "low_level_TunerReady_can_wait_for_external_bootstrap",
         "deployed_outer_wrapper_has_timeout_logic",
         "timeout_path_requires_gravity_aligned_branch",
+        "declared_startup_chart_implies_gravity_aligned_branch",
+        "declared_domain_live_entry_upper_bound_closed",
     ):
         if d.get(key) is not True:
             failures.append(f"{key} is not true")
@@ -305,6 +337,11 @@ def validate(d: dict) -> list[str]:
         failures.append("unexpected deployed magnetic acquisition deadline")
     if d.get("deployed_timeout_s") != 150.0:
         failures.append("unexpected deployed startup timeout")
+    if d.get("declared_domain_live_entry_upper_bound_s") != 150.0:
+        failures.append("declared-domain Live-entry bound is not 150 s")
+    if not (isinstance(d.get("gravity_aligned_branch_margin_rad"), (int, float))
+            and d["gravity_aligned_branch_margin_rad"] > 0.0):
+        failures.append("gravity-aligned branch margin is not strictly positive")
     for key in (
         "source_generator", "trajectory_replay_used", "independent_vertical_acceleration_source",
         "independent_quaternion_or_integral_box_promotable", "ideal_inverse_sqrt_substituted",
@@ -334,6 +371,10 @@ def main() -> int:
                           "mag_deadline_s": d["deployed_mag_acquire_deadline_s"],
                           "deployed_timeout_s": d["deployed_timeout_s"],
                           "requires_aligned_branch": d["timeout_path_requires_gravity_aligned_branch"],
+                          "chart_deg": d["declared_startup_mahony_chart_deg"],
+                          "world_gravity_error_rad": d["declared_world_gravity_direction_error_upper_rad"],
+                          "aligned_branch_margin_rad": d["gravity_aligned_branch_margin_rad"],
+                          "declared_domain_live_entry_upper_bound_s": d["declared_domain_live_entry_upper_bound_s"],
                       },
                       "next_obligation": d["next_obligation"], "failures": failures},
                      indent=2, sort_keys=True))
