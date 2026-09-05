@@ -131,8 +131,13 @@ jobs:
           assert d['four_S_translation_observation_operator_full_rank'] is True
           assert d['old_P2_800_state_graph_consumed'] is False
           assert d['source_history_graph_consumed'] is False
+          ni=d['newton_coordinate_information']
+          assert ni['exact_rational_arithmetic_used_before_outward_float_conversion'] is True
+          assert ni['L_inverse_one_norm_exact'] == '12/5'
+          assert ni['L_inverse_infinity_norm_exact'] == '2'
           print('FOUR_S_WORD_HORIZON', d['word_horizon_s_upper'])
           print('FOUR_S_AW_DD3_LOWER', d['aw_scaled_third_divided_difference_lower'])
+          print('FOUR_S_NEWTON_INFO_LOWER', ni['D_S_newton_lambda_min_lower'])
           PY
 
       - name: Certify asynchronous windowed PE
@@ -176,6 +181,26 @@ jobs:
           print('COMPLETE_P3_WORD', d['word'])
           PY
 
+      - name: Validate shipping Live covariance seed and joint word algebra
+        run: |
+          python3 tools/ou3_sea3_live_covariance_seed.py \
+            --output /tmp/ou3_sea3_live_covariance_seed.json
+          python3 tools/ou3_sea3_full_word_riccati_backend.py
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/ou3_sea3_live_covariance_seed.json'))
+          assert d['validation_pass'], d['validation_failures']
+          assert d['live_entry_seed_is_source_generated_not_arbitrary_PSD'] is True
+          assert d['bootstrap_mekf_covariance_propagated_before_live'] is False
+          assert d['source_parity_failures'] == []
+          assert d['translation_seed']['P_v'] == 1.0
+          assert d['translation_seed']['P_p'] == 400.0
+          assert d['translation_seed']['P_S'] == 2500.0
+          assert d['aw_live_seed']['reset_to_committed_stationary_covariance_before_first_prediction'] is True
+          print('LIVE_P0_TRANSLATION', d['translation_seed'])
+          print('LIVE_P0_AW', d['aw_live_seed'])
+          PY
+
       - name: Build four-S R_S translation subarchitecture
         run: |
           python3 tools/ou3_sea3_rs_innovation_p3.py \
@@ -206,6 +231,12 @@ jobs:
           assert d['complete_precondition_contract_consumed'] is True
           assert d['all_current_machine_checkable_preconditions_present'] is True
           assert d['common_word_horizon_s'] >= 3.0
+          assert d['live_entry_covariance_seed_consumed'] is True
+          assert d['live_entry_covariance_seed_source_generated'] is True
+          assert d['arbitrary_P0_PSD_box_used'] is False
+          assert d['entrywise_independent_P0_rectangle_used'] is False
+          assert d['joint_P_Psi_Omega_backend_consumed'] is True
+          assert d['joint_backend_validation_pass'] is True
           assert d['R_S_component_is_not_the_whole_P3_architecture'] is True
           assert d['all_valid_accelerometer_updates_consumed'] is True
           assert d['windowed_asynchronous_vector_PE_consumed'] is True
@@ -224,7 +255,12 @@ jobs:
 
       - name: Test complete P3 contracts
         working-directory: tests/validation
-        run: python3 -m unittest -v test_ou3_sea3_rs_word_information test_ou3_sea3_riccati_metric_p3
+        run: |
+          python3 -m unittest -v \
+            test_ou3_sea3_rs_word_information \
+            test_ou3_sea3_live_covariance_seed \
+            test_ou3_sea3_full_word_riccati_backend \
+            test_ou3_sea3_riccati_metric_p3
 
       - name: Enforce canonical P3 quantitative closure
         run: |
@@ -245,6 +281,7 @@ jobs:
             /tmp/ou3_sea3_rs_word_information.json
             /tmp/ou3_sea3_windowed_vector_pe.json
             /tmp/ou3_sea3_p3_full_preconditions.json
+            /tmp/ou3_sea3_live_covariance_seed.json
             /tmp/ou3_sea3_rs_innovation_p3.json
             /tmp/ou3_sea3_riccati_metric_p3.json
           retention-days: 7
