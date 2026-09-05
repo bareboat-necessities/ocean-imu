@@ -1,29 +1,31 @@
 #!/usr/bin/env python3
 """Canonical complete-source OU-III SEA3 P3 gate.
 
-P3 is one H18/A21 Normal-Live Riccati word. The promotable numerical object is
-the exact joint propagation of P_k, Psi_k and Omega_k on the same complete
-source/event path, with
+P3 is one H18/A21 Normal-Live Riccati word.  The only promotable numerical
+object is the exact full-state propagation of P_k, Psi_k and Omega_k on the same
+source/event path,
 
-    P_k = Psi_k P_0 Psi_k^T + Omega_k.
+    P_k = Psi_k P_0 Psi_k^T + Omega_k,
 
-The canonical algebra is implemented by ``ou3_sea3_full_word_riccati_backend``.
-The word starts from the shipping source-generated Normal-Live covariance seed,
-not an arbitrary PSD/entrywise P0 box. Prediction, every accepted/due Joseph
-measurement update, and every PSD a_w covariance-floor event update all three
-objects consistently. The useful gate is the full-matrix inequality
+executed through ``ou3_sea3_full_normal_live_word`` and the shipping-parity
+backend ``ou3_sea3_full_word_riccati_backend``.  The literal assembler retains
+sample order, every valid accelerometer Joseph update, every due S=0 update,
+asynchronous magnetic events satisfying the declared PE language, every full
+process Q, and each queued PSD a_w covariance-floor event.
 
-    Omega_W - delta P_W >= 0,   delta >= 1e-18.
+The word starts from the source-generated Normal-Live covariance seed, not an
+arbitrary PSD/entrywise P0 box.  The useful gate is only
 
-Once this exact inequality is established at a prefix, the backend's algebraic
-M_delta identities prove that every later prediction, Joseph update and PSD
-floor preserves the same delta. That identity may shorten *post-closure*
-numerical propagation, but it never licenses omission of events needed to
-establish the first closure.
+    Omega_W - delta P_W >= 0,   delta >= 1e-18
+
+on full H18/A21 coordinates.  Algebraic M_delta preservation may be used only
+after that inequality has first closed; it never licenses omission of an event
+needed to establish closure.
 
 No D_W/L_W split, zero-start Riccati concavity replacement, blockwise ratio,
-source-history graph, arbitrary P0 rectangle, or scalarized substitute may
-promote P3.
+source-history graph, arbitrary P0 rectangle, selected process mode, scalar
+information beta, determinant/trace final gate, or independent tuner-extrema
+product may promote P3.
 """
 from __future__ import annotations
 
@@ -32,6 +34,7 @@ import json
 import math
 from pathlib import Path
 
+import ou3_sea3_full_normal_live_word as WORD
 import ou3_sea3_full_word_riccati_backend as BACKEND
 import ou3_sea3_live_covariance_seed as LIVE_SEED
 import ou3_sea3_p3_full_preconditions as FULL
@@ -39,7 +42,7 @@ import ou3_sea3_rs_innovation_p3 as RS_COMPONENT
 
 REPO = Path(__file__).resolve().parents[1]
 DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
-SCHEMA = 10
+SCHEMA = 11
 QUALIFICATION = "OU3_SEA3_FULL_NORMAL_LIVE_RICCATI_WORD_P3_GATE"
 USEFUL_GATE = 1.0e-18
 
@@ -52,17 +55,27 @@ def build(domain_path: Path = DEFAULT_DOMAIN, tube_path: Path | None = None) -> 
     rf = RS_COMPONENT.validate(rs)
     live_seed = LIVE_SEED.build(path)
     lf = LIVE_SEED.validate(live_seed)
+    word = WORD.build(path)
+    wf = WORD.validate(word)
     bf = BACKEND.validate_backend()
-    if ff or rf or lf or bf:
+    if ff or rf or lf or wf or bf:
         raise RuntimeError(
             "canonical P3 prerequisites failed: "
-            f"full={ff}, four_S_component={rf}, live_seed={lf}, joint_backend={bf}"
+            f"full={ff}, four_S_component={rf}, live_seed={lf}, "
+            f"literal_word={wf}, joint_backend={bf}"
         )
 
     numeric = full["final_numeric_contract"]
     backend_parity = BACKEND.shipping_source_parity()
     backend_self_test = BACKEND._self_test()
     preservation = BACKEND.contraction_preservation_identities()
+
+    # The literal assembler is currently fail-closed until its forward
+    # source-coordinate family is materialized.  Once it emits rigorous H/A
+    # endpoint results, this gate consumes those results directly rather than
+    # recomputing a reduced substitute.
+    word_closed = bool(word["FULL_H18_A21_LDLT_CLOSED"])
+    word_pass = bool(word["P3_CANONICAL_PASS"])
     modes = {
         "H": {
             "dimension": 18,
@@ -82,6 +95,16 @@ def build(domain_path: Path = DEFAULT_DOMAIN, tube_path: Path | None = None) -> 
         },
     }
 
+    if word_pass and not word_closed:
+        raise RuntimeError("literal word claimed P3 without full H18/A21 LDLT closure")
+
+    fail_reasons = [] if word_pass else [
+        "the literal shipping-order H18/A21 assembler now exists and executes every operation type through the exact joint backend, but its complete forward source-reachable 3 s event family is not yet materialized",
+        "the unresolved enclosure must retain the complete front-end/tuner candidate and commit state, pseudo-scheduler progress, all due S updates, all valid accelerometer updates, asynchronous accepted magnetic events satisfying the PE premise, and every queued a_w floor on the same path",
+        "no reduced UCO/UCC product, selected-event word, independent tuner-extrema box, arbitrary P0 rectangle, or post-closure M_delta identity may replace that strict-prefix execution",
+        "the full H18/A21 interval matrix Omega_W-delta*P_W has not yet passed validated LDLT at the unchanged 1e-18 gate",
+    ]
+
     return {
         "schema": SCHEMA,
         "qualification": QUALIFICATION,
@@ -95,6 +118,25 @@ def build(domain_path: Path = DEFAULT_DOMAIN, tube_path: Path | None = None) -> 
         "all_current_machine_checkable_preconditions_present": full[
             "all_current_machine_checkable_preconditions_present"
         ],
+        "literal_full_word_assembler_consumed": True,
+        "literal_full_word_assembler_validation_pass": not wf,
+        "literal_shipping_event_order_pass": bool(word["shipping_event_order_parity_pass"]),
+        "literal_same_source_state_feeds_F_Q_TS_RS": bool(
+            word["same_source_state_must_feed_F_Q_pseudo_period_and_applied_RS"]
+        ),
+        "literal_every_valid_accelerometer_required": bool(
+            word["every_valid_imu_sample_requires_accelerometer_Joseph"]
+        ),
+        "literal_all_due_S_required": bool(
+            word["S_scheduler_is_executed_not_replaced_by_selected_four"]
+        ),
+        "literal_async_magnetometer_family_retained": bool(
+            word["magnetometer_is_asynchronous_external_event_family"]
+        ),
+        "literal_aw_floor_event_family_retained": bool(
+            word["periodic_aw_floor_request_and_next_prediction_application_retained"]
+        ),
+        "literal_full_word": word,
         "common_word_horizon_s": numeric["common_word_horizon_s"],
         "one_common_event_word_required_for_H_and_A": True,
         "full_H18_A21_matrix_comparison_required": True,
@@ -199,19 +241,14 @@ def build(domain_path: Path = DEFAULT_DOMAIN, tube_path: Path | None = None) -> 
         "modes": modes,
         "P3_FOUNDATION_PASS": True,
         "P3_ARCHITECTURE_READY": True,
-        "P3_FULL_WORD_ENCLOSED": False,
-        "P3_FULL_MATRIX_COMPARISON_CLOSED": False,
-        "P3_CANONICAL_PASS": False,
-        "P4_MAY_CONSUME_P3": False,
-        "P3_CANONICAL_FAIL_REASONS": [
-            "the exact joint P/Psi/Omega backend and shipping Live source state are present, but the complete source-reachable Normal-Live strict prefix has not yet been enclosed for H18/A21",
-            "events required to first establish Omega-delta*P >= 0 must still be retained; only events after that closure may use the exact M_delta preservation identities",
-            "the strict-prefix enclosure must carry the complete measurement-only front-end/tuner source and the same source path for F, Q, T_S, applied per-axis R_S, Racc and Rmag",
-            "the full H18/A21 interval matrix Omega_W-delta*P_W has not yet passed validated LDLT at the unchanged 1e-18 gate",
-        ],
+        "P3_FULL_WORD_ENCLOSED": word_closed,
+        "P3_FULL_MATRIX_COMPARISON_CLOSED": word_closed,
+        "P3_CANONICAL_PASS": word_pass,
+        "P4_MAY_CONSUME_P3": word_pass,
+        "P3_CANONICAL_FAIL_REASONS": fail_reasons,
         "next_obligation": (
-            "enclose the complete source-reachable strict prefix in the canonical joint object; after full-matrix closure use only the proved M_delta identities for remaining events"
-        ),
+            "materialize and interval-propagate the complete forward source-reachable 3 s family through the literal full-word assembler until both H18/A21 endpoint LDLTs close"
+        ) if not word_pass else "P3 closed; P4 may consume the certified full-word result",
     }
 
 
@@ -226,6 +263,14 @@ def validate(d: dict) -> list[str]:
         "source_generated_not_trajectory_fit",
         "complete_precondition_contract_consumed",
         "all_current_machine_checkable_preconditions_present",
+        "literal_full_word_assembler_consumed",
+        "literal_full_word_assembler_validation_pass",
+        "literal_shipping_event_order_pass",
+        "literal_same_source_state_feeds_F_Q_TS_RS",
+        "literal_every_valid_accelerometer_required",
+        "literal_all_due_S_required",
+        "literal_async_magnetometer_family_retained",
+        "literal_aw_floor_event_family_retained",
         "one_common_event_word_required_for_H_and_A",
         "full_H18_A21_matrix_comparison_required",
         "same_joint_source_path_feeds_F_Q_TS_RS",
@@ -281,7 +326,7 @@ def validate(d: dict) -> list[str]:
     if seed.get("source_parity_failures"):
         f.append("shipping Live covariance seed lost source parity")
 
-    required_false = (
+    always_false = (
         "trajectory_replay_used", "filter_changed", "declared_domain_shrunk",
         "bootstrap_mekf_covariance_propagated_before_live",
         "arbitrary_P0_PSD_box_used", "entrywise_independent_P0_rectangle_used",
@@ -301,10 +346,8 @@ def validate(d: dict) -> list[str]:
         "blockwise_minimum_ratio_used_for_final_gate",
         "independent_tau_sigma_RS_TS_extrema_product_used",
         "front_end_state_frozen_to_replay_value",
-        "P3_FULL_WORD_ENCLOSED", "P3_FULL_MATRIX_COMPARISON_CLOSED",
-        "P3_CANONICAL_PASS", "P4_MAY_CONSUME_P3",
     )
-    for key in required_false:
+    for key in always_false:
         if d.get(key) is not False:
             f.append(f"{key} is not false")
 
@@ -321,17 +364,43 @@ def validate(d: dict) -> list[str]:
     if float(d.get("common_word_horizon_s", 0.0)) < 3.0:
         f.append("canonical word no longer spans all declared PE preconditions")
 
+    passed = d.get("P3_CANONICAL_PASS") is True
+    stage = (
+        d.get("P3_FULL_WORD_ENCLOSED"),
+        d.get("P3_FULL_MATRIX_COMPARISON_CLOSED"),
+        d.get("P4_MAY_CONSUME_P3"),
+    )
+    if passed:
+        if stage != (True, True, True):
+            f.append("P3 pass is inconsistent with full-word/full-matrix/P4 flags")
+        if d.get("P3_CANONICAL_FAIL_REASONS"):
+            f.append("closed P3 still reports fail reasons")
+    else:
+        if stage != (False, False, False):
+            f.append("open P3 has inconsistent promotion flags")
+        if not d.get("P3_CANONICAL_FAIL_REASONS"):
+            f.append("open P3 does not name complete-word obligations")
+
     for mode, dim in (("H", 18), ("A", 21)):
         row = d.get("modes", {}).get(mode, {})
-        if row.get("dimension") != dim or row.get("pass") is not False:
-            f.append(f"{mode} fail-closed mode contract invalid")
-        if float(row.get("relative_Riccati_injection_margin_lower", math.nan)) != 0.0:
-            f.append(f"{mode} emitted a margin before complete-word closure")
-        if row.get("Omega_minus_delta_P_ldlt_closed") is not False:
-            f.append(f"{mode} falsely closed Omega-delta-P LDLT")
+        if row.get("dimension") != dim:
+            f.append(f"{mode} dimension changed")
+            continue
+        if passed:
+            if row.get("pass") is not True:
+                f.append(f"{mode} not passed while canonical P3 is passed")
+            if row.get("Omega_minus_delta_P_ldlt_closed") is not True:
+                f.append(f"{mode} LDLT not closed while canonical P3 is passed")
+            if float(row.get("relative_Riccati_injection_margin_lower", 0.0)) < USEFUL_GATE:
+                f.append(f"{mode} useful margin is below canonical gate")
+        else:
+            if row.get("pass") is not False:
+                f.append(f"{mode} open mode contract is not fail-closed")
+            if float(row.get("relative_Riccati_injection_margin_lower", math.nan)) != 0.0:
+                f.append(f"{mode} emitted a margin before complete-word closure")
+            if row.get("Omega_minus_delta_P_ldlt_closed") is not False:
+                f.append(f"{mode} falsely closed Omega-delta-P LDLT")
 
-    if not d.get("P3_CANONICAL_FAIL_REASONS"):
-        f.append("open P3 does not name complete-word obligations")
     return list(dict.fromkeys(f))
 
 
@@ -350,6 +419,7 @@ def main() -> int:
     print(json.dumps({
         "architecture": d["canonical_P3_architecture"],
         "word_horizon_s": d["common_word_horizon_s"],
+        "literal_assembler": d["literal_full_word_assembler_consumed"],
         "live_seed": d["live_entry_covariance_seed_consumed"],
         "joint_backend": d["joint_P_Psi_Omega_backend_consumed"],
         "M_delta_preservation": d["joint_backend_contraction_preservation_proved"],
