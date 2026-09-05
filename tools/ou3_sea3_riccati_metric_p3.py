@@ -8,14 +8,16 @@ source/event path, with
     P_k = Psi_k P_0 Psi_k^T + Omega_k.
 
 The canonical algebra is implemented by ``ou3_sea3_full_word_riccati_backend``.
-Prediction, every accepted/due Joseph measurement update, and every PSD a_w
-covariance-floor event update all three objects consistently.  The useful gate
-is the full-matrix inequality
+The word starts from the shipping source-generated Normal-Live covariance seed,
+not an arbitrary PSD/entrywise P0 box. Prediction, every accepted/due Joseph
+measurement update, and every PSD a_w covariance-floor event update all three
+objects consistently. The useful gate is the full-matrix inequality
 
     Omega_W - delta P_W >= 0,   delta >= 1e-18.
 
 No D_W/L_W split, zero-start Riccati concavity replacement, blockwise ratio,
-source-history graph, or scalarized substitute may promote P3.
+source-history graph, arbitrary P0 rectangle, or scalarized substitute may
+promote P3.
 """
 from __future__ import annotations
 
@@ -25,12 +27,13 @@ import math
 from pathlib import Path
 
 import ou3_sea3_full_word_riccati_backend as BACKEND
+import ou3_sea3_live_covariance_seed as LIVE_SEED
 import ou3_sea3_p3_full_preconditions as FULL
 import ou3_sea3_rs_innovation_p3 as RS_COMPONENT
 
 REPO = Path(__file__).resolve().parents[1]
 DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
-SCHEMA = 8
+SCHEMA = 9
 QUALIFICATION = "OU3_SEA3_FULL_NORMAL_LIVE_RICCATI_WORD_P3_GATE"
 USEFUL_GATE = 1.0e-18
 
@@ -41,11 +44,13 @@ def build(domain_path: Path = DEFAULT_DOMAIN, tube_path: Path | None = None) -> 
     ff = FULL.validate(full)
     rs = RS_COMPONENT.build(path, tube_path)
     rf = RS_COMPONENT.validate(rs)
+    live_seed = LIVE_SEED.build(path)
+    lf = LIVE_SEED.validate(live_seed)
     bf = BACKEND.validate_backend()
-    if ff or rf or bf:
+    if ff or rf or lf or bf:
         raise RuntimeError(
             "canonical P3 prerequisites failed: "
-            f"full={ff}, four_S_component={rf}, joint_backend={bf}"
+            f"full={ff}, four_S_component={rf}, live_seed={lf}, joint_backend={bf}"
         )
 
     numeric = full["final_numeric_contract"]
@@ -94,6 +99,17 @@ def build(domain_path: Path = DEFAULT_DOMAIN, tube_path: Path | None = None) -> 
         "magnetic_reference_path_retained_not_frozen": True,
         "no_hard_attitude_rewrite_inside_word": True,
         "hybrid_transitions_separate": True,
+        "live_entry_covariance_seed_consumed": True,
+        "live_entry_covariance_seed_validation_pass": True,
+        "live_entry_covariance_seed_source_generated": bool(
+            live_seed["live_entry_seed_is_source_generated_not_arbitrary_PSD"]
+        ),
+        "bootstrap_mekf_covariance_propagated_before_live": bool(
+            live_seed["bootstrap_mekf_covariance_propagated_before_live"]
+        ),
+        "arbitrary_P0_PSD_box_used": False,
+        "entrywise_independent_P0_rectangle_used": False,
+        "live_entry_covariance_seed": live_seed,
         "R_S_translation_component_consumed": True,
         "R_S_is_primary_translation_correction_mechanism": True,
         "four_S_translation_word_consumed": True,
@@ -174,13 +190,14 @@ def build(domain_path: Path = DEFAULT_DOMAIN, tube_path: Path | None = None) -> 
         "P3_CANONICAL_PASS": False,
         "P4_MAY_CONSUME_P3": False,
         "P3_CANONICAL_FAIL_REASONS": [
-            "the exact joint P/Psi/Omega backend is present, but the complete 3 s Normal-Live source/event word has not yet been assembled and propagated through it for H18/A21",
+            "the exact joint P/Psi/Omega backend and shipping Live P0 seed are present, but the complete 3 s Normal-Live source/event word has not yet been assembled and propagated through them for H18/A21",
+            "the assembler must propagate forward from the structured shipping P0 family, preserving its coupling to the same committed sigma_aw/tuner state rather than replacing P0 by an arbitrary PSD or entrywise rectangle",
             "the assembler must carry the complete measurement-only front-end/tuner state and use the same source path for F, Q, T_S, applied per-axis R_S, Racc and Rmag",
             "every valid accelerometer update, every due S update, admissible asynchronous magnetic PE event, every prediction Q and every recurrent PSD a_w-floor event must update the same P/Psi/Omega recursion",
             "the full H18/A21 interval matrix Omega_W-delta*P_W has not yet passed validated LDLT at the unchanged 1e-18 gate",
         ],
         "next_obligation": (
-            "assemble the complete source-reachable H18/A21 Normal-Live word into the exact joint backend; do not introduce another reduced certificate"
+            "assemble and enclose the complete source-reachable H18/A21 Normal-Live word from the shipping Live covariance seed through the exact joint backend; do not introduce another reduced certificate"
         ),
     }
 
@@ -206,6 +223,9 @@ def validate(d: dict) -> list[str]:
         "magnetic_reference_path_retained_not_frozen",
         "no_hard_attitude_rewrite_inside_word",
         "hybrid_transitions_separate",
+        "live_entry_covariance_seed_consumed",
+        "live_entry_covariance_seed_validation_pass",
+        "live_entry_covariance_seed_source_generated",
         "R_S_translation_component_consumed",
         "R_S_is_primary_translation_correction_mechanism",
         "four_S_translation_word_consumed",
@@ -239,9 +259,16 @@ def validate(d: dict) -> list[str]:
 
     if not all(d.get("joint_backend_shipping_source_parity", {}).values()):
         f.append("joint backend shipping-source parity failed")
+    seed = d.get("live_entry_covariance_seed", {})
+    if seed.get("validation_pass") is not True:
+        f.append("shipping Live covariance seed failed validation")
+    if seed.get("source_parity_failures"):
+        f.append("shipping Live covariance seed lost source parity")
 
     required_false = (
         "trajectory_replay_used", "filter_changed", "declared_domain_shrunk",
+        "bootstrap_mekf_covariance_propagated_before_live",
+        "arbitrary_P0_PSD_box_used", "entrywise_independent_P0_rectangle_used",
         "hardware_magnetometer_ODR_used_as_PE_recurrence",
         "two_consecutive_accepted_magnetic_packets_required",
         "aw_covariance_floor_marginal_Loewner_shortcut_used",
@@ -306,6 +333,7 @@ def main() -> int:
     print(json.dumps({
         "architecture": d["canonical_P3_architecture"],
         "word_horizon_s": d["common_word_horizon_s"],
+        "live_seed": d["live_entry_covariance_seed_consumed"],
         "joint_backend": d["joint_P_Psi_Omega_backend_consumed"],
         "final_inequality": d["required_final_inequality"],
         "P3_CANONICAL_PASS": d["P3_CANONICAL_PASS"],
