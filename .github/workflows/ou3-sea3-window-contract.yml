@@ -3,6 +3,7 @@ name: ou3-sea3-window-contract
 on:
   push:
     paths:
+      - "tools/ou3_sea3_continuum_phase_state.py"
       - "tools/ou3_sea3_hard_shaping_state.py"
       - "tools/ou3_sea3_hard_finite_window_source.py"
       - "tools/ou3_sea3_rlambda_transition.py"
@@ -11,6 +12,7 @@ on:
       - "tools/ou3_sea3_window_artifact_codec.py"
       - "tools/ou3_sea3_response_regularity_moment.py"
       - "tools/ou3_sea3_aw_covariance_floor.py"
+      - "tests/validation/test_ou3_sea3_continuum_phase_state.py"
       - "tests/validation/test_ou3_sea3_hard_shaping_state.py"
       - "tests/validation/test_ou3_sea3_hard_finite_window_source.py"
       - "tests/validation/test_ou3_sea3_rlambda_transition.py"
@@ -23,6 +25,7 @@ on:
       - ".github/workflows/ou3-sea3-window-contract.yml"
   pull_request:
     paths:
+      - "tools/ou3_sea3_continuum_phase_state.py"
       - "tools/ou3_sea3_hard_shaping_state.py"
       - "tools/ou3_sea3_hard_finite_window_source.py"
       - "tools/ou3_sea3_rlambda_transition.py"
@@ -31,6 +34,7 @@ on:
       - "tools/ou3_sea3_window_artifact_codec.py"
       - "tools/ou3_sea3_response_regularity_moment.py"
       - "tools/ou3_sea3_aw_covariance_floor.py"
+      - "tests/validation/test_ou3_sea3_continuum_phase_state.py"
       - "tests/validation/test_ou3_sea3_hard_shaping_state.py"
       - "tests/validation/test_ou3_sea3_hard_finite_window_source.py"
       - "tests/validation/test_ou3_sea3_rlambda_transition.py"
@@ -62,6 +66,7 @@ jobs:
       - name: Compile provider and executor boundary
         run: |
           python3 -m py_compile \
+            tools/ou3_sea3_continuum_phase_state.py \
             tools/ou3_sea3_hard_shaping_state.py \
             tools/ou3_sea3_hard_finite_window_source.py \
             tools/ou3_sea3_rlambda_transition.py \
@@ -70,6 +75,7 @@ jobs:
             tools/ou3_sea3_window_artifact_codec.py \
             tools/ou3_sea3_response_regularity_moment.py \
             tools/ou3_sea3_aw_covariance_floor.py \
+            tests/validation/test_ou3_sea3_continuum_phase_state.py \
             tests/validation/test_ou3_sea3_hard_shaping_state.py \
             tests/validation/test_ou3_sea3_hard_finite_window_source.py \
             tests/validation/test_ou3_sea3_rlambda_transition.py \
@@ -83,6 +89,8 @@ jobs:
         run: |
           python3 tools/ou3_sea3_rlambda_transition.py \
             --output /tmp/ou3_sea3_rlambda_transition.json
+          python3 tools/ou3_sea3_continuum_phase_state.py \
+            --output /tmp/ou3_sea3_continuum_phase_state.json
           python3 tools/ou3_sea3_hard_shaping_state.py \
             --output /tmp/ou3_sea3_hard_shaping_state.json
           python3 tools/ou3_sea3_hard_finite_window_source.py \
@@ -100,6 +108,7 @@ jobs:
           python3 - <<'PY'
           import json
           l=json.load(open('/tmp/ou3_sea3_rlambda_transition.json'))
+          p=json.load(open('/tmp/ou3_sea3_continuum_phase_state.json'))
           h=json.load(open('/tmp/ou3_sea3_hard_shaping_state.json'))
           s=json.load(open('/tmp/ou3_sea3_hard_finite_window_source.json'))
           e=json.load(open('/tmp/ou3_sea3_complete_window_executor.json'))
@@ -115,9 +124,27 @@ jobs:
           assert l['hard_shaping_state_materialized_here'] is False
           assert l['joint_response_materialized_here'] is False
           assert l['P3_promoted'] is False
+          assert p['validation_pass'], p['validation_failures']
+          assert p['continuum_index_set_retained'] is True
+          assert p['continuum_phase_coordinate_set_closed'] is True
+          assert p['phase_continuous_propagation_closed'] is True
+          assert p['finite_frequency_grid_used'] is False
+          assert p['finite_direction_grid_used'] is False
+          assert p['seeded_phase_realization_used'] is False
+          assert p['phase_reset_on_lambda_transition_allowed'] is False
+          assert p['hard_spectral_driver_set_closed'] is False
+          assert p['P3_promoted'] is False
           assert h['validation_pass'], h['validation_failures']
           assert h['SEA3_parameter_domain_compact'] is True
           assert h['compactness_is_not_an_open_obligation'] is True
+          assert h['executable_ingredients'] == {
+            'continuum_phase_coordinate_set_closed': True,
+            'phase_continuous_propagation_closed': True,
+            'hard_spectral_driver_set_closed': False,
+            'complete_SEA3_left_inclusion_closed': False,
+            'joint_source_output_map_closed': False,
+          }
+          assert h['continuum_phase_certificate']['qualification'] == p['qualification']
           assert h['hard_shaping_state_or_excitation_bound_closed'] is False
           assert h['power_spectrum_alone_is_hard_pathwise_bound'] is False
           assert h['gaussian_good_event_may_close_xs'] is False
@@ -187,6 +214,7 @@ jobs:
           assert e['execution_contract']['delta_lower_required'] == 1e-18
           assert e['P3_PROMOTED'] is False
           print('SEA3_RLAMBDA', l['outer_relation'])
+          print('SEA3_CONTINUUM_PHASE', p['next_obligation'])
           print('SEA3_HARD_SHAPING', h['next_obligation'])
           print('SEA0_WINDOW_PROVIDER', s['next_obligation'])
           print('SEA3_REGULARITY_BOUNDS', r['bounds'])
@@ -200,6 +228,7 @@ jobs:
         working-directory: tests/validation
         run: |
           python3 -m unittest -v \
+            test_ou3_sea3_continuum_phase_state \
             test_ou3_sea3_hard_shaping_state \
             test_ou3_sea3_hard_finite_window_source \
             test_ou3_sea3_rlambda_transition \
@@ -215,6 +244,7 @@ jobs:
           name: ou3-sea3-window-contract
           path: |
             /tmp/ou3_sea3_rlambda_transition.json
+            /tmp/ou3_sea3_continuum_phase_state.json
             /tmp/ou3_sea3_hard_shaping_state.json
             /tmp/ou3_sea3_hard_finite_window_source.json
             /tmp/ou3_sea3_complete_window_executor.json
