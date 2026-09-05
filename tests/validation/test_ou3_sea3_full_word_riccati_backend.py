@@ -71,6 +71,25 @@ class Sea3FullWordRiccatiBackendTest(unittest.TestCase):
         self.assertTrue(t["all_event_identities_enclosed"])
         self.assertTrue(t["kernel_identity_test_only_not_P3"])
 
+    def test_prior_free_factorization_is_the_same_word_not_a_zero_start_shortcut(self):
+        ids = mod.prior_free_batch_identities()
+        self.assertEqual(ids["state"], "(D,T,Qc)")
+        self.assertTrue(ids["D_and_Qc_built_from_same_event_word"])
+        self.assertTrue(ids["works_for_every_SPD_P0_when_full_matrix_condition_passes"])
+        self.assertFalse(ids["zero_start_Riccati_concavity_used"])
+        self.assertFalse(ids["P0_dependent_covariance_floor_may_be_treated_as_independent"])
+
+    def test_prior_free_endpoint_reconstructs_direct_P_Psi_Omega(self):
+        t = mod._prior_free_self_test()
+        self.assertTrue(t["direct_vs_batch_P_identity_enclosed"])
+        self.assertTrue(t["direct_vs_batch_Psi_identity_enclosed"])
+        self.assertTrue(t["direct_vs_batch_Omega_identity_enclosed"])
+        self.assertTrue(t["all_endpoint_identities_enclosed"])
+        self.assertTrue(t["uniform_prior_completion"]["pass"])
+        self.assertTrue(t["uniform_prior_completion"]["works_for_every_SPD_P0"])
+        self.assertFalse(t["uniform_prior_completion"]["zero_start_Riccati_concavity_used"])
+        self.assertTrue(t["kernel_identity_test_only_not_P3"])
+
     def test_only_full_matrix_omega_minus_delta_p_gate_is_exposed(self):
         state = mod.initialize(matrix_point([
             [2.0, 0.0],
@@ -94,6 +113,7 @@ class Sea3FullWordRiccatiBackendTest(unittest.TestCase):
         self.assertTrue(test["kernel_self_test_only_not_P3"])
         self.assertTrue(test["shipping_source_parity_pass"])
         self.assertTrue(test["contraction_preservation"]["all_event_identities_enclosed"])
+        self.assertTrue(test["prior_free_batch"]["all_endpoint_identities_enclosed"])
 
 
 if __name__ == "__main__":
