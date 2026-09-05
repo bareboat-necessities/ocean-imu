@@ -72,13 +72,26 @@ jobs:
           d=json.load(open('/tmp/ou3_sea3_complete_source.json'))
           assert d['validation_pass'], d['validation_failures']
           assert d['canonical_P3_source'] == 'COMPLETE_SEA3_NORMAL_LIVE_WORD'
-          assert d['P3_source_family_ready'] is True
+          assert d['P3_source_contract_ready'] is True
+          assert d['P3_source_family_materialized'] is False
           assert all(v is False for v in d['no_fallback_generators'].values())
-          assert d['SEA3_surface_family']['modes_max'] == 3
-          assert d['SEA3_surface_family']['independent_H_T_extrema_forbidden'] is True
-          assert d['SEA3_response_couplings']['independent_sea_x_RAO_cartesian_product_forbidden'] is True
-          assert d['SEA3_response_couplings']['only_jointly_admitted_response_tuples_may_generate_P3_words'] is True
-          assert d['SEA3_finite_horizon_good_event']['same_response_word_must_satisfy_both_good_events'] is True
+          sea=d['SEA3_surface_family']
+          assert sea['modes_max'] == 3
+          assert sea['parameter_domain_compact'] is True
+          assert sea['compact_transition_relation_is_theorem_domain'] is True
+          assert sea['independent_H_T_extrema_forbidden'] is True
+          dyn=d['SEA3_dynamic_realization']
+          assert dyn['phase_continuous'] is True
+          assert dyn['same_realization_drives_translation_rotation_frontend_tuner_geometry'] is True
+          assert dyn['finite_window_family_materialized'] is False
+          assert dyn['probabilistic_event_may_substitute_for_realization'] is False
+          coupling=d['SEA3_response_couplings']
+          assert coupling['independent_sea_x_RAO_cartesian_product_forbidden'] is True
+          assert coupling['only_same_phase_continuous_SEA3_realization_may_generate_P3_words'] is True
+          assert coupling['moment_or_probability_bound_may_not_generate_P3_word'] is True
+          stochastic=d['stochastic_forcing_corollary']
+          assert stochastic['used_to_generate_P3_source_words'] is False
+          assert stochastic['used_to_prune_homogeneous_P3_family'] is False
           assert d['derived_adaptive_source']['primitive_independent_tau_sigma_RS_TS'] is False
           assert d['derived_adaptive_source']['same_SEA3_frontend_path_generates_tau_sigma_RS_targets'] is True
           assert d['R_S_regularizer']['actual_applied_R_S_required_at_every_due_S_update'] is True
@@ -117,9 +130,12 @@ jobs:
           assert d['validation_pass'], d['validation_failures']
           assert d['canonical_source'] == 'COMPLETE_SEA3_NORMAL_LIVE_WORD'
           assert d['complete_SEA3_source_consumed'] is True
+          assert d['complete_SEA3_source_family_materialized'] is False
           assert d['all_current_machine_checkable_preconditions_present'] is True
           assert all(d['mandatory_preconditions'].values())
           assert all(v is False for v in d['no_fallback_generators'].values())
+          assert d['measurement_runtime']['source_literals_converted_to_binary32_before_variance'] is True
+          assert d['measurement_runtime']['same_runtime_covariances_used_by_PE_and_full_word'] is True
           c=d['final_numeric_contract']
           assert c['common_word_horizon_s'] >= 3.0
           assert c['H_dimension'] == 18 and c['A_dimension'] == 21
@@ -129,14 +145,22 @@ jobs:
           print('P3_COMPLETE_WORD', d['word'])
           PY
 
-      - name: Validate source-generated Live covariance and full joint backend
+      - name: Validate shipping prediction matrices, Live covariance and full joint backend
         run: |
+          python3 tools/ou3_sea3_shipping_prediction_primitives.py \
+            --output /tmp/ou3_sea3_shipping_prediction_primitives.json
           python3 tools/ou3_sea3_live_covariance_seed.py \
             --output /tmp/ou3_sea3_live_covariance_seed.json
           python3 tools/ou3_sea3_full_word_riccati_backend.py
           python3 -m py_compile tools/ou3_sea3_full_word_riccati_backend_tight.py
           python3 - <<'PY'
           import json
+          p=json.load(open('/tmp/ou3_sea3_shipping_prediction_primitives.json'))
+          assert p['validation_pass'], p['validation_failures']
+          assert p['validated_matrix_primitives_ready'] is True
+          assert p['consumes_only_SEA3_derived_sample_coordinates'] is True
+          assert p['source_domain_created_here'] is False
+          assert p['P3_promoted'] is False
           d=json.load(open('/tmp/ou3_sea3_live_covariance_seed.json'))
           assert d['validation_pass'], d['validation_failures']
           assert d['live_entry_seed_is_source_generated_not_arbitrary_PSD'] is True
@@ -176,6 +200,12 @@ jobs:
           assert d['canonical_source'] == 'COMPLETE_SEA3_NORMAL_LIVE_WORD'
           assert d['complete_SEA3_source_consumed'] is True
           assert d['complete_SEA3_response_couplings_consumed'] is True
+          assert d['complete_SEA3_compact_parameter_domain_consumed'] is True
+          assert d['complete_SEA3_compact_transition_relation_consumed'] is True
+          assert d['complete_SEA3_phase_continuous_realization_required'] is True
+          assert d['same_xs_lambda_drives_entire_word'] is True
+          assert d['stochastic_forcing_does_not_generate_source_words'] is True
+          assert d['stochastic_forcing_does_not_prune_homogeneous_family'] is True
           assert d['complete_SEA3_frontend_state_consumed'] is True
           assert d['actual_applied_per_axis_RS_consumed'] is True
           assert d['all_due_S_updates_required'] is True
@@ -192,6 +222,8 @@ jobs:
         working-directory: tests/validation
         run: |
           python3 -m unittest -v \
+            test_ou3_sea3_physical_admissibility \
+            test_ou3_sea3_shipping_prediction_primitives \
             test_ou3_sea3_live_covariance_seed \
             test_ou3_sea3_full_word_riccati_backend \
             test_ou3_sea3_full_normal_live_word \
@@ -214,6 +246,7 @@ jobs:
           name: ou3-p3-complete-sea3
           path: |
             /tmp/ou3_sea3_p3_full_preconditions.json
+            /tmp/ou3_sea3_shipping_prediction_primitives.json
             /tmp/ou3_sea3_live_covariance_seed.json
             /tmp/ou3_sea3_full_normal_live_word.json
             /tmp/ou3_sea3_riccati_metric_p3.json
