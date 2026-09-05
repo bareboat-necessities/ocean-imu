@@ -10,8 +10,9 @@ word-start covariances.  The canonical JSON boundary remains gated in
 For every valid IMU sample the kernel preserves shipping order:
 
   committed schedule -> H/A prediction -> requested covariance-dependent
-  a_w floor -> every due S=0 update -> accelerometer Joseph -> asynchronous
-  magnetic Joseph events -> front-end/tuner/WPE successor.
+  a_w floor -> every due S=0 update -> accelerometer Joseph -> exact
+  measurement-only Mahony/tuner/WPE transition -> asynchronous magnetic
+  Joseph events occurring after that IMU updateCore_ call.
 
 The private Mahony consumes the raw gyro measurement.  The MEKF prediction
 consumes the bias-corrected body rate.  They are distinct coordinates of the
@@ -19,7 +20,7 @@ same provider transition witness; this module never equates them or introduces
 an independent gyro-bias bound.
 
 Front-end interval branch splits are retained.  No favorable successor is
-selected.  Each successor receives a deep copy of the same post-measurement H
+selected.  Each successor receives a deep copy of the same post-magnetometer H
 and A Riccati states and continues as a separate source cell.
 """
 from __future__ import annotations
@@ -44,8 +45,8 @@ import ou3_sea3_private_mahony_state_step as MAHONY
 
 REPO = Path(__file__).resolve().parents[1]
 DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
-SCHEMA = 1
-QUALIFICATION = "OU3_SEA3_TRUSTED_TYPED_COMPLETE_WINDOW_EXECUTION_KERNEL"
+SCHEMA = 2
+QUALIFICATION = "OU3_SEA3_TRUSTED_TYPED_COMPLETE_WINDOW_EXECUTION_KERNEL_V2"
 
 
 @dataclass(frozen=True)
@@ -162,14 +163,14 @@ def _prediction(
     return WORD.pack_prediction(mode, Faa, Qaa, Fll, Qll)
 
 
-def _apply_one_mode_sample(
+def _apply_one_mode_imu_core(
     word: WORD.LiteralWordState,
     sample: SampleCoordinates,
     active: TUNER.ActiveSchedule,
     rs_xyz: Sequence[Interval],
     c: KernelConstants,
 ) -> str | None:
-    """Apply current Riccati events; return covariance-floor enclosure branch."""
+    """Apply prediction/floor/S/accel; async mag is applied after front-end."""
     F, Q = _prediction(word.mode, sample, active, c)
     # Prediction is executed here rather than through WORD.apply_imu_sample
     # because the shipping covariance floor depends on the just-predicted P.
@@ -202,9 +203,6 @@ def _apply_one_mode_sample(
     word.accel_updates += 1
     word.imu_samples += 1
     word.event_log.append("accelerometer")
-
-    for event in sample.magnetometer_events_after_imu:
-        WORD.apply_magnetometer(word, m_body=event.m_body, Rmag=c.Rmag)
     return floor_case
 
 
@@ -222,9 +220,13 @@ def advance_branch(
 
     H_post = copy.deepcopy(branch.H)
     A_post = copy.deepcopy(branch.A)
-    floor_H = _apply_one_mode_sample(H_post, sample, active, rs_xyz, constants)
-    floor_A = _apply_one_mode_sample(A_post, sample, active, rs_xyz, constants)
+    floor_H = _apply_one_mode_imu_core(H_post, sample, active, rs_xyz, constants)
+    floor_A = _apply_one_mode_imu_core(A_post, sample, active, rs_xyz, constants)
 
+    # Shipping updateCore_ completes the private measurement-only
+    # Mahony/tuner/WPE transition after the accelerometer correction.  Magnetic
+    # updates are external calls, so events declared "after_imu" are applied
+    # only after this front-end successor family has been formed.
     frontend_successors = FRONTEND.advance(
         branch.frontend,
         FRONTEND.Sample(sample.gyro_measurement, sample.specific_force),
@@ -235,13 +237,18 @@ def advance_branch(
     )
     if not frontend_successors:
         raise RuntimeError("complete front-end transition produced no successor")
-
-    out: list[ExecutionBranch] = []
-    for i, succ in enumerate(frontend_successors):
+    for succ in frontend_successors:
         if succ.active_schedule_for_current_riccati_sample != active:
             raise RuntimeError("front-end current active schedule disagrees with Riccati schedule")
         if tuple(succ.actual_rs_std_xyz_for_current_riccati_sample) != rs_xyz:
             raise RuntimeError("front-end actual R_S disagrees with Riccati R_S")
+
+    for event in sample.magnetometer_events_after_imu:
+        WORD.apply_magnetometer(H_post, m_body=event.m_body, Rmag=constants.Rmag)
+        WORD.apply_magnetometer(A_post, m_body=event.m_body, Rmag=constants.Rmag)
+
+    out: list[ExecutionBranch] = []
+    for i, succ in enumerate(frontend_successors):
         out.append(ExecutionBranch(
             frontend=succ.state,
             H=copy.deepcopy(H_post),
@@ -254,6 +261,7 @@ def advance_branch(
         "A_floor_case": floor_A,
         "same_active_schedule_verified": True,
         "same_actual_RS_verified": True,
+        "frontend_completed_before_async_mag": True,
     }
 
 
@@ -281,6 +289,7 @@ def execute_typed_window(
     )]
     floor_cases: dict[str, int] = {}
     max_branches = 1
+    all_frontend_before_mag = True
     for k, sample in enumerate(samples):
         next_branches: list[ExecutionBranch] = []
         for j, branch in enumerate(branches):
@@ -291,6 +300,9 @@ def execute_typed_window(
                 next_cell_prefix=f"k{k}:parent{j}",
             )
             next_branches.extend(successors)
+            all_frontend_before_mag = all_frontend_before_mag and bool(
+                meta["frontend_completed_before_async_mag"]
+            )
             for key in ("H_floor_case", "A_floor_case"):
                 case = meta[key]
                 if case is not None:
@@ -308,6 +320,7 @@ def execute_typed_window(
         "max_branch_count": max_branches,
         "floor_cases": floor_cases,
         "same_word_executed_H18_A21": True,
+        "frontend_completed_before_async_mag": all_frontend_before_mag,
         "favorable_frontend_successor_selected": False,
         "kernel_self_test_only_not_P3": True,
     }
@@ -358,6 +371,11 @@ def _smoke(domain_path: Path = DEFAULT_DOMAIN) -> dict:
             and b.A.mag_updates == 1 and b.A.aw_floor_applications == 1
             for b in branches
         ),
+        "all_endpoint_event_logs_have_mag_after_accel": all(
+            b.H.event_log.index("magnetometer") > b.H.event_log.index("accelerometer")
+            and b.A.event_log.index("magnetometer") > b.A.event_log.index("accelerometer")
+            for b in branches
+        ),
         "decomposition_identity_H_enclosed": all(
             WORD.BACKEND.decomposition_identity_enclosed(b.H.riccati) for b in branches
         ),
@@ -385,6 +403,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "covariance_floor_increment_computed_from_current_mode_P": True,
         "H18_A21_floor_increments_not_forced_equal": True,
         "front_end_branch_splits_retained": True,
+        "frontend_completed_before_async_mag": True,
         "favorable_front_end_branch_selection_allowed": False,
         "typed_execution_kernel_ready": True,
         "canonical_provider_gate_bypassed_by_this_status": False,
@@ -409,6 +428,7 @@ def validate(d: dict) -> list[str]:
         "covariance_floor_increment_computed_from_current_mode_P",
         "H18_A21_floor_increments_not_forced_equal",
         "front_end_branch_splits_retained",
+        "frontend_completed_before_async_mag",
         "typed_execution_kernel_ready",
     ):
         if d.get(key) is not True:
@@ -423,8 +443,10 @@ def validate(d: dict) -> list[str]:
     s = d.get("smoke", {})
     for key in (
         "same_word_executed_H18_A21",
+        "frontend_completed_before_async_mag",
         "all_endpoint_H_events_present",
         "all_endpoint_A_events_present",
+        "all_endpoint_event_logs_have_mag_after_accel",
         "decomposition_identity_H_enclosed",
         "decomposition_identity_A_enclosed",
     ):
