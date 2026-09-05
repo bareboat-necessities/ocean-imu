@@ -56,7 +56,7 @@ import math
 import re
 from pathlib import Path
 
-from ou3_interval import down, up
+from ou3_interval import Interval, down, up
 import ou3_p3_pseudo_scheduler_progress_certificate as SCHED
 import ou3_sea3_dynamic_source_certificate as DYNAMIC
 import ou3_validated_transcendentals as VT
@@ -76,10 +76,50 @@ def _axis_factors(text: str) -> list[float]:
         if not m:
             raise RuntimeError(f"cannot extract {name}")
         out.append(float(m.group(1)))
-    out.append(1.0)  # z uses the base standard deviation directly
+    out.append(1.0)
     if any(not (math.isfinite(x) and x > 0.0) for x in out):
         raise RuntimeError("invalid R_S axis factors")
     return out
+
+
+def _validated_exp_negative_lower(x: float) -> tuple[float, dict]:
+    """Validated lower bound on exp(-x) for arbitrary finite x>=0.
+
+    ``VT.exp_point`` intentionally accepts only |argument|<=0.5.  Split a
+    larger positive exponent into n equal outward-up pieces, each <=0.5.  Since
+    n*step >= x, exp(-n*step) <= exp(-x); multiplying the validated interval
+    factors therefore gives a rigorous lower bound without ordinary libm in
+    the proof decision.
+    """
+    x = float(x)
+    if not (math.isfinite(x) and x >= 0.0):
+        raise ValueError("finite nonnegative exponential magnitude required")
+    if x == 0.0:
+        return 1.0, {
+            "method": "VALIDATED_EXP_POINT_PRODUCT",
+            "pieces": 0,
+            "piece_exponent_upper": 0.0,
+        }
+    n = max(1, int(math.ceil(2.0 * x)))
+    step = up(x / float(n))
+    while step > 0.5:
+        n += 1
+        step = up(x / float(n))
+    factor = VT.exp_point(-step)
+    product = Interval.point(1.0)
+    for _ in range(n):
+        product = product * factor
+    lo = down(product.lo)
+    if not (math.isfinite(lo) and lo > 0.0):
+        raise RuntimeError("validated exponential product lost strict positivity")
+    return lo, {
+        "method": "VALIDATED_EXP_POINT_PRODUCT",
+        "pieces": n,
+        "piece_exponent_upper": step,
+        "covered_exponent_lower": x,
+        "product_exponent_upper": up(n * step),
+        "ordinary_libm_exp_used": False,
+    }
 
 
 def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
@@ -136,24 +176,15 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         raise RuntimeError("invalid certified S recurrence gap")
     T = up(7.0 * g)
 
-    # lambda(t)<=1/tau_min.  Use the validated exponential backend so the rank
-    # witness does not depend on ordinary libm rounding.
     decay_exponent = up(T / tau_lo)
-    decay = VT.exp_point(-decay_exponent)
-    a_response_lower = down(decay.lo)
+    a_response_lower, exp_certificate = _validated_exp_negative_lower(decay_exponent)
     third_dd_lower = down(a_response_lower / 6.0)
 
-    # In u=t/g, the four windows are [0,1],[2,3],[4,5],[6,7].  Their pairwise
-    # minimum separations are 1,3,5,1,3,1, so the Vandermonde product is >=45.
-    # The determinant is recorded only as a full-rank witness.  It is NOT used
-    # as a determinant/trace eigenvalue scalarization in the P3 quantitative gate.
     vandermonde_sep_product_lower = 45.0
     scaled_observation_det_lower = down(
         0.5 * vandermonde_sep_product_lower * third_dd_lower
     )
 
-    # Selected S-record nuisance covariance.  The process-noise upper drops OU
-    # damping, hence remains valid for arbitrary legal time-varying tau/sigma.
     qc_max = up(2.0 * sigma_hi * sigma_hi / tau_lo)
     T7 = T ** 7
     process_S_var_upper = up(qc_max * T7 / 252.0)
@@ -189,6 +220,8 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
             "S(t)=S0+t*p0+0.5*t^2*v0+c(t)*a_w0, c'''(t)=exp(-int_0^t 1/tau(s) ds)"
         ),
         "dimensionless_state": ["S", "g*p", "g^2*v", "g^3*a_w"],
+        "aw_decay_exponent_upper": decay_exponent,
+        "validated_exponential_lower_certificate": exp_certificate,
         "aw_homogeneous_response_lower": a_response_lower,
         "aw_scaled_third_divided_difference_lower": third_dd_lower,
         "scaled_time_vandermonde_separation_product_lower": vandermonde_sep_product_lower,
@@ -249,6 +282,13 @@ def validate(d: dict) -> list[str]:
         f.append("shipping R_S source parity failed")
     if len(d.get("four_S_windows", [])) != 4:
         f.append("four separated S windows missing")
+    expc = d.get("validated_exponential_lower_certificate", {})
+    if expc.get("method") != "VALIDATED_EXP_POINT_PRODUCT":
+        f.append("wide exponential did not use validated product construction")
+    if expc.get("ordinary_libm_exp_used") is not False:
+        f.append("ordinary libm exponential entered the rank proof")
+    if float(expc.get("piece_exponent_upper", math.inf)) > 0.5:
+        f.append("validated exponential product used an unaudited piece")
     if float(d.get("aw_scaled_third_divided_difference_lower", 0.0)) <= 0.0:
         f.append("a_w divided-difference rank floor is not strict")
     if float(d.get("scaled_observation_determinant_abs_lower_rank_witness_only", 0.0)) <= 0.0:
@@ -282,6 +322,8 @@ def main() -> int:
     print(json.dumps({
         "four_S_full_rank": d["four_S_translation_observation_operator_full_rank"],
         "word_horizon_s_upper": d["word_horizon_s_upper"],
+        "decay_exponent_upper": d["aw_decay_exponent_upper"],
+        "validated_exp_pieces": d["validated_exponential_lower_certificate"]["pieces"],
         "third_divided_difference_lower": d["aw_scaled_third_divided_difference_lower"],
         "rank_witness_det_lower": d["scaled_observation_determinant_abs_lower_rank_witness_only"],
         "S_record_noise_lambda_max_upper": d["selected_S_record_noise"]["four_record_covariance_lambda_max_trace_upper"],
