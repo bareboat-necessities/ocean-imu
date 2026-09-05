@@ -1,11 +1,19 @@
 #!/usr/bin/env python3
-"""CLI/validation wrapper for the literal 3 s H18/A21 execution engine."""
+"""CLI/validation wrapper for the literal 3 s H18/A21 execution engine.
+
+The executable word is hard-gated by ``ou3_sea3_complete_source``.  The broad
+adaptive-state rectangles are never accepted as a replacement source family.
+A point execution remains an arithmetic/event-order smoke test only and cannot
+promote P3; uniform promotion requires the same literal loop over a validated
+cover of the complete admitted SEA3 source.
+"""
 from __future__ import annotations
 
 import argparse
 import json
 from pathlib import Path
 
+import ou3_sea3_complete_source as COMPLETE
 import ou3_sea3_full_normal_live_execution as EXEC
 import ou3_sea3_full_normal_live_word as WORD
 import ou3_sea3_full_word_riccati_backend_tight as TIGHT
@@ -15,6 +23,18 @@ def validate_execution(d: dict) -> list[str]:
     failures: list[str] = []
     if d.get("canonical_architecture") != "SEA3_FULL_NORMAL_LIVE_RICCATI_WORD":
         failures.append("execution witness detached from canonical architecture")
+    if d.get("canonical_source") != "COMPLETE_SEA3_NORMAL_LIVE_WORD":
+        failures.append("literal execution is not gated by the complete SEA3 source")
+    if d.get("complete_SEA3_source_validation_pass") is not True:
+        failures.append("complete SEA3 source prerequisite did not validate")
+    if d.get("complete_SEA3_source_family_ready") is not True:
+        failures.append("complete SEA3 source family is not ready")
+    if d.get("dynamic_rectangle_used_as_word_generator") is not False:
+        failures.append("dynamic tuner rectangle was used as a word generator")
+    if d.get("independent_tau_sigma_RS_TS_used_as_source") is not False:
+        failures.append("independent tuner coordinates re-entered literal execution")
+    if d.get("actual_applied_RS_required_at_every_due_S_update") is not True:
+        failures.append("actual applied R_S requirement disappeared")
     for mode in ("H18", "A21"):
         row = d.get(mode, {})
         if row.get("complete_3s_word_executed") is not True:
@@ -86,9 +106,31 @@ def main() -> int:
     ap.add_argument("--domain", type=Path, default=WORD.DEFAULT_DOMAIN)
     ap.add_argument("--output", type=Path, required=True)
     args = ap.parse_args()
+
+    sea3 = COMPLETE.build(args.domain)
+    sea3_failures = COMPLETE.validate(sea3)
+    if sea3_failures:
+        raise RuntimeError(f"complete SEA3 source prerequisite failed: {sea3_failures}")
+    if sea3["P3_source_family_ready"] is not True:
+        raise RuntimeError("complete SEA3 source family is not ready")
+    if sea3["derived_adaptive_source"]["dynamic_rectangular_invariant_may_generate_P3_words"] is not False:
+        raise RuntimeError("refusing literal word generated from dynamic tuner rectangle")
+
     _install_tight_backend_and_failure_locator()
     manifest = WORD.build(args.domain)
     d = EXEC.build_execution(WORD, float(manifest["word_horizon_s"]))
+    d["canonical_source"] = sea3["canonical_P3_source"]
+    d["complete_SEA3_source_validation_pass"] = True
+    d["complete_SEA3_source_family_ready"] = True
+    d["complete_SEA3_word_samples"] = sea3["word_samples"]
+    d["complete_SEA3_coupled_domain"] = sea3["SEA3_coupled_domain"]
+    d["complete_SEA3_finite_horizon_good_event"] = sea3["SEA3_finite_horizon_good_event"]
+    d["complete_SEA3_RS_regularizer"] = sea3["R_S_regularizer"]
+    d["dynamic_rectangle_used_as_word_generator"] = False
+    d["independent_tau_sigma_RS_TS_used_as_source"] = False
+    d["actual_applied_RS_required_at_every_due_S_update"] = bool(
+        sea3["R_S_regularizer"]["actual_applied_R_S_required_at_every_due_S_update"]
+    )
     d["dependency_tight_joint_backend_used"] = True
     d["R_S_correction_retained_by_Joseph_Schur_intersection"] = True
     failures = validate_execution(d)
@@ -97,6 +139,8 @@ def main() -> int:
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(d, indent=2, sort_keys=True), encoding="utf-8")
     print(json.dumps({
+        "canonical_source": d["canonical_source"],
+        "complete_SEA3_samples": d["complete_SEA3_word_samples"],
         "H18": {k: d["H18"][k] for k in (
             "samples_executed", "S_zero_updates", "magnetometer_updates",
             "aw_floor_applications", "complete_3s_word_executed")},
