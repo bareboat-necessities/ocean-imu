@@ -18,13 +18,21 @@ spectral moments alone, arbitrary per-sample boxes, a fixed-lambda word, a
 finite RAO grid, or an independently selected tuner schedule cannot satisfy
 this provider.
 
-At this revision the mathematical SEA0 finite-window provider is deliberately
-fail-closed: the repository has the continuum SEA3/RAO set and moment theorems,
-but no validated oscillator/IQC (or equivalent hard-window) producer yet.
-Consequently :func:`validate_artifact` cannot promote a claimed JSON artifact
-merely because it asserts that it is valid.  ``PROVIDER_IMPLEMENTATION_CLOSED``
-will become true only when the actual validated finite-window construction is
-implemented in this module (or in a directly imported trusted producer).
+SEA3 compactness is already a theorem-domain fact.  The open obligation here is
+strictly machine execution: the repository does not yet encode a validated
+finite-window realization of the theorem's compact transition relation and
+shaping state.  In particular, the current continuum RAO producer is a set/
+moment theorem, not an x^s trajectory generator.  This module therefore keeps
+three separate executable-provider obligations visible without reinterpreting
+any of them as a compactness failure:
+
+* machine-readable validated realization of R_lambda over the 601 samples;
+* hard shaping-state/excitation (or equivalent hard-window IQC) propagation;
+* joint translational/rotational response from that same shaping history.
+
+``PROVIDER_IMPLEMENTATION_CLOSED`` is code-owned and remains false until those
+obligations are implemented and validated.  An input JSON cannot self-assert
+its way into P3.
 """
 from __future__ import annotations
 
@@ -40,16 +48,22 @@ import ou3_sea3_physical_admissibility as PHYSICAL
 
 REPO = Path(__file__).resolve().parents[1]
 DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
-SCHEMA = 1
-QUALIFICATION = "OU3_SEA3_HARD_FINITE_WINDOW_REALIZATION_V1"
+SCHEMA = 2
+QUALIFICATION = "OU3_SEA3_HARD_FINITE_WINDOW_REALIZATION_V2"
 CANONICAL_SOURCE = "COMPLETE_SEA3_NORMAL_LIVE_WORD"
 HORIZON_S = 3.0
 DT_S = 0.005
 SAMPLES = 601
 
-# This is intentionally a code-owned gate, not a field trusted from an input
-# JSON.  Do not flip it from a structural test or from replay evidence.
-PROVIDER_IMPLEMENTATION_CLOSED = False
+# These gates describe executable proof machinery, not SEA3 set compactness.
+MACHINE_READABLE_R_LAMBDA_CLOSED = False
+HARD_SHAPING_STATE_OR_EXCITATION_BOUND_CLOSED = False
+JOINT_TRANSLATIONAL_ROTATIONAL_SHAPING_CLOSED = False
+PROVIDER_IMPLEMENTATION_CLOSED = (
+    MACHINE_READABLE_R_LAMBDA_CLOSED
+    and HARD_SHAPING_STATE_OR_EXCITATION_BOUND_CLOSED
+    and JOINT_TRANSLATIONAL_ROTATIONAL_SHAPING_CLOSED
+)
 
 _FORBIDDEN_TRUE_FLAGS = (
     "trajectory_replay_used",
@@ -109,9 +123,6 @@ def _continuity_failures(samples: Any) -> list[str]:
                 f.append(f"sample {k} broke x^s phase continuity")
             if previous.get("lambda_out_id") != sample.get("lambda_in_id"):
                 f.append(f"sample {k} broke lambda transition continuity")
-        # Physical/frontend/event payloads are required to be outputs of the
-        # *same* transition witness.  They are not accepted as free top-level
-        # arrays by the executor.
         for key in ("joint_physical_output", "source_events"):
             if not isinstance(sample.get(key), dict):
                 f.append(f"sample {k} missing {key}")
@@ -120,12 +131,7 @@ def _continuity_failures(samples: Any) -> list[str]:
 
 
 def validate_candidate_structure(d: dict[str, Any]) -> list[str]:
-    """Validate artifact shape and anti-shortcut semantics, but not SEA0 math.
-
-    This function is useful for developing the provider.  P3 executors MUST use
-    :func:`validate_artifact`, which additionally requires the code-owned
-    mathematical provider gate to be closed.
-    """
+    """Validate artifact shape and anti-shortcut semantics, but not SEA0 math."""
     f: list[str] = []
     if d.get("schema") != SCHEMA or d.get("qualification") != QUALIFICATION:
         f.append("schema/qualification mismatch")
@@ -159,9 +165,6 @@ def validate_candidate_structure(d: dict[str, Any]) -> list[str]:
 def validate_artifact(d: dict[str, Any]) -> list[str]:
     """Canonical P3 acceptance gate for a finite SEA3 window artifact."""
     f = validate_candidate_structure(d)
-    # Never trust an artifact's self-declared validation bit.  Until the actual
-    # validated SEA0 finite-window producer is implemented, every candidate is
-    # rejected here even if its structure is perfect.
     if not PROVIDER_IMPLEMENTATION_CLOSED:
         f.append("validated SEA0 hard finite-window provider is not implemented")
     return list(dict.fromkeys(f))
@@ -171,7 +174,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict[str, Any]:
     path = Path(domain_path).resolve()
     complete = COMPLETE.build(path)
     physical = PHYSICAL.build(path)
-    response = RESPONSE.build(REPO)
+    response = RESPONSE.directional_response_enclosure(REPO)
     prerequisite_failures = {
         "complete": COMPLETE.validate(complete),
         "physical": PHYSICAL.validate(physical),
@@ -180,12 +183,19 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict[str, Any]:
     prerequisite_failures = {k: v for k, v in prerequisite_failures.items() if v}
     if prerequisite_failures:
         raise RuntimeError(f"SEA3 hard-window prerequisites failed: {prerequisite_failures}")
+
+    executable = {
+        "machine_readable_R_lambda_closed": MACHINE_READABLE_R_LAMBDA_CLOSED,
+        "hard_shaping_state_or_excitation_bound_closed": HARD_SHAPING_STATE_OR_EXCITATION_BOUND_CLOSED,
+        "joint_translational_rotational_shaping_closed": JOINT_TRANSLATIONAL_ROTATIONAL_SHAPING_CLOSED,
+    }
     return {
         "schema": SCHEMA,
         "qualification": QUALIFICATION,
         "canonical_source": CANONICAL_SOURCE,
         "SEA3_parameter_domain_compact": True,
         "compact_transition_relation_is_theorem_domain": True,
+        "compactness_is_not_an_open_obligation": True,
         "allowed_finite_window_representations": [
             "oscillator_shaping_state",
             "equivalent_hard_finite_window_constraint",
@@ -193,9 +203,12 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict[str, Any]:
         "window_horizon_s": HORIZON_S,
         "sample_period_s": DT_S,
         "complete_window_samples": SAMPLES,
+        "executable_provider_ingredients": executable,
         "provider_implementation_closed": PROVIDER_IMPLEMENTATION_CLOSED,
         "finite_window_realization_certificate_closed": False,
         "source_reachable_event_family_materialized": False,
+        "continuum_RAO_set_theorem_retained": True,
+        "continuum_RAO_set_theorem_is_not_finite_window_generator": True,
         "trajectory_replay_used": False,
         "gaussian_good_event_used": False,
         "spectral_moment_only_source_used": False,
@@ -209,9 +222,9 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict[str, Any]:
         "selected_four_S_word_used": False,
         "P3_promoted": False,
         "next_obligation": (
-            "implement a validated oscillator/shaping or equivalent hard finite-window SEA3 construction "
-            "for the full continuum directional sea/RAO family, preserving one x^s/lambda history through "
-            "all 601 samples and all physical/front-end/event outputs"
+            "machine-execute the already-compact SEA3 theorem domain: encode and validate R_lambda, "
+            "a hard x^s shaping-state/excitation or equivalent hard-window constraint, and the joint "
+            "translational/rotational response from that same phase-continuous history over all 601 samples"
         ),
     }
 
@@ -222,10 +235,23 @@ def validate_status(d: dict[str, Any]) -> list[str]:
         f.append("schema/qualification mismatch")
     if d.get("canonical_source") != CANONICAL_SOURCE:
         f.append("canonical source mismatch")
-    if d.get("SEA3_parameter_domain_compact") is not True:
-        f.append("SEA3 compactness lost")
-    if d.get("compact_transition_relation_is_theorem_domain") is not True:
-        f.append("SEA3 transition relation lost")
+    for key in (
+        "SEA3_parameter_domain_compact",
+        "compact_transition_relation_is_theorem_domain",
+        "compactness_is_not_an_open_obligation",
+        "continuum_RAO_set_theorem_retained",
+        "continuum_RAO_set_theorem_is_not_finite_window_generator",
+    ):
+        if d.get(key) is not True:
+            f.append(f"{key} is not true")
+    ingredients = d.get("executable_provider_ingredients", {})
+    expected = {
+        "machine_readable_R_lambda_closed": MACHINE_READABLE_R_LAMBDA_CLOSED,
+        "hard_shaping_state_or_excitation_bound_closed": HARD_SHAPING_STATE_OR_EXCITATION_BOUND_CLOSED,
+        "joint_translational_rotational_shaping_closed": JOINT_TRANSLATIONAL_ROTATIONAL_SHAPING_CLOSED,
+    }
+    if ingredients != expected:
+        f.append("executable provider ingredient gates drifted")
     if d.get("provider_implementation_closed") is not PROVIDER_IMPLEMENTATION_CLOSED:
         f.append("provider gate mismatch")
     for key in (
@@ -253,6 +279,9 @@ def main() -> int:
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(d, indent=2, sort_keys=True), encoding="utf-8")
     print(json.dumps({
+        "SEA3_compact": d["SEA3_parameter_domain_compact"],
+        "compactness_open": not d["compactness_is_not_an_open_obligation"],
+        "executable_provider_ingredients": d["executable_provider_ingredients"],
         "provider_closed": d["provider_implementation_closed"],
         "family_materialized": d["source_reachable_event_family_materialized"],
         "next_obligation": d["next_obligation"],
