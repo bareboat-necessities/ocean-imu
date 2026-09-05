@@ -1,0 +1,70 @@
+name: ou3-sea3-metric-memory
+
+on:
+  pull_request:
+    paths:
+      - "tools/ou3_sea3_*.py"
+      - "tools/ou3_full_process_ucc.py"
+      - "tools/ou3_translational_uco_ucc.py"
+      - "tools/ou3_source_domain_contract.py"
+      - "tests/validation/test_ou3_sea3_*.py"
+      - "tools/ou3_proof_operating_domain.json"
+      - "src/kalman_ou_iii/**"
+      - ".github/workflows/ou3-sea3-metric-memory.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  metric-memory:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Build source-uniform finite-memory covariance geometry
+        run: |
+          python3 tools/ou3_sea3_riccati_tube_factored.py --output /tmp/ou3_sea3_metric_memory.json
+          python3 tools/ou3_sea3_p3_conditional_composition.py --output /tmp/ou3_sea3_conditional_p3.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/ou3_sea3_metric_memory.json'))
+          c=json.load(open('/tmp/ou3_sea3_conditional_p3.json'))
+          assert d['validation_pass'], d['validation_failures']
+          assert d['source_generated_not_trajectory_fit'] is True
+          assert d['trajectory_replay_used'] is False
+          assert d['source_history_graph_consumed'] is False
+          assert d['predecessor_path_enumeration_consumed'] is False
+          assert d['P2_800_state_partition_consumed'] is False
+          assert d['time_varying_source_allowed_inside_covariance_memory_window'] is True
+          assert d['endpoint_referenced_translation_covariance'] is True
+          assert d['post_reconstruction_forward_propagation_used'] is False
+          assert c['validation_pass'], c['validation_failures']
+          assert c['canonical_source'] == 'COMPLETE_SEA3_NORMAL_LIVE_WORD'
+          assert c['actual_applied_SpectralMSE_R_S_consumed'] is True
+          assert c['one_step_process_Q_used_as_contraction_strictness'] is False
+          # The tube's own current-sample delta is diagnostic only here.  It
+          # must not promote canonical P3; only its finite-memory Pbar geometry
+          # is consumed by the complete-word R_S composition.
+          print('MEMORY_TIMING', d['covariance_memory'])
+          print('H_PBAR_DIAG', d['modes']['H']['Pbar_diagonal_variance_upper'])
+          print('A_PBAR_DIAG', d['modes']['A']['Pbar_diagonal_variance_upper'])
+          print('H_PBAR_TRACE', d['modes']['H']['Pbar_lambda_max_trace_upper'])
+          print('A_PBAR_TRACE', d['modes']['A']['Pbar_lambda_max_trace_upper'])
+          print('TUBE_H_DELTA_DIAGNOSTIC_ONLY', d['modes']['H']['relative_Riccati_injection_margin_lower'])
+          print('TUBE_A_DELTA_DIAGNOSTIC_ONLY', d['modes']['A']['relative_Riccati_injection_margin_lower'])
+          print('COMPLETE_SEA3_H18_INFORMATION', c['H18_information_lambda_min_lower'])
+          print('A_BIAS_GAP', c['A21_bias_homogeneous_contraction_gap_lower'])
+          PY
+      - name: Test conditional complete SEA3 composition
+        working-directory: tests/validation
+        run: python3 -m unittest -v test_ou3_sea3_p3_conditional_composition
+      - uses: actions/upload-artifact@v6
+        with:
+          name: ou3-sea3-metric-memory
+          path: |
+            /tmp/ou3_sea3_metric_memory.json
+            /tmp/ou3_sea3_conditional_p3.json
+          retention-days: 7
