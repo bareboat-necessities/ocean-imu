@@ -21,12 +21,18 @@ class Sea3PrivateMahonyStateStepTest(unittest.TestCase):
         self.assertFalse(d["independent_quaternion_or_integral_box_promotable"])
         self.assertFalse(d["P3_promoted"])
 
-    def test_unbounded_tuner_ready_hold_is_not_replaced_by_startup_time_box(self):
+    def test_deployed_wrapper_timeout_is_not_mistaken_for_unconditional_entry(self):
         d = mod.build()
         self.assertTrue(d["live_entry_integral_state_starts_from_reset_zero"])
-        self.assertFalse(d["TunerReady_wait_has_finite_upper_bound"])
+        self.assertTrue(d["low_level_TunerReady_can_wait_for_external_bootstrap"])
+        self.assertTrue(d["deployed_outer_wrapper_has_timeout_logic"])
+        self.assertEqual(d["deployed_proxy_startup_timeout_s"], 150.0)
+        self.assertEqual(d["deployed_mag_acquire_deadline_s"], 60.0)
+        self.assertEqual(d["deployed_timeout_s"], 150.0)
+        self.assertTrue(d["timeout_path_requires_gravity_aligned_branch"])
+        self.assertFalse(d["unconditional_live_entry_upper_bound_closed"])
         self.assertFalse(d["live_entry_private_observer_invariant_closed"])
-        self.assertIn("unbounded TunerReady hold", d["next_obligation"])
+        self.assertIn("world-frame gravity branch", d["next_obligation"])
 
     def test_point_step_is_finite_but_cannot_promote(self):
         d = mod.build()
