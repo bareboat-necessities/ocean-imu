@@ -100,7 +100,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN, tube_path: Path | None = None) -> 
             rs["P3_RS_TRANSLATION_OBSERVATION_GEOMETRY_CLOSED"]
         ),
         "four_S_translation_information_matrix_closed": bool(
-            rs["P3_RS_TRANSLATION_INFORMATION_MATRIX_CLOSED"]
+            rs["P3_RS_WEIGHTED_WORD_INFORMATION_CLOSED"]
         ),
         "four_S_batch_noise_upper_closed": bool(
             rs["P3_RS_BATCH_NOISE_UPPER_CLOSED"]
