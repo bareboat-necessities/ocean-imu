@@ -77,6 +77,9 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     hard_left_inclusion = bool(
         shaping["executable_ingredients"]["complete_SEA3_left_inclusion_closed"]
     )
+    reset = event["left_error_covariance_reset"]
+    preservation = event["full_matrix_preservation"]
+    summary = event["summary"]
 
     return {
         "schema": SCHEMA,
@@ -116,10 +119,16 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "one_step_process_Q_used_as_contraction_strictness": False,
         "exact_complete_word_event_algebra_consumed": True,
         "event_algebra_covers_immediate_left_error_reset": bool(
-            event["reset"]["generalized_information_margin_congruence_invariant"]
+            reset["nonsingular_for_every_finite_injection"]
+            and reset["is_congruence_not_process_noise"]
         ),
         "event_algebra_preserves_first_established_full_matrix_margin": bool(
-            event["strict_margin_preservation"]["covers_every_operation_class"]
+            preservation["B_positive_semidefinite"]
+            and preservation["applies_to_every_fixed_dimensional_shipping_covariance_operation"]
+            and preservation["if_M_delta_PSD_before_event_then_after_event"]
+            and summary[
+                "event_algebra_closes_complete_fixed_dimensional_suffix_once_full_matrix_margin_is_established"
+            ]
         ),
         "useful_gate": USEFUL_GATE,
         "H18_prior_free_completion_closed": False,
