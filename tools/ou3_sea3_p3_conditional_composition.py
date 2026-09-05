@@ -77,9 +77,8 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     hard_left_inclusion = bool(
         shaping["executable_ingredients"]["complete_SEA3_left_inclusion_closed"]
     )
-    reset = event["left_error_covariance_reset"]
-    preservation = event["full_matrix_preservation"]
-    summary = event["summary"]
+    reset = event["left_error_reset"]
+    preservation = event["full_matrix_margin_preservation"]
 
     return {
         "schema": SCHEMA,
@@ -119,16 +118,18 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "one_step_process_Q_used_as_contraction_strictness": False,
         "exact_complete_word_event_algebra_consumed": True,
         "event_algebra_covers_immediate_left_error_reset": bool(
-            reset["nonsingular_for_every_finite_injection"]
-            and reset["is_congruence_not_process_noise"]
+            reset["same_full_matrix_margin_preserved_by_congruence"]
+            and reset["determinant_lower"] == 1.0
+            and reset["small_angle_needed_for_nonsingularity"] is False
         ),
         "event_algebra_preserves_first_established_full_matrix_margin": bool(
-            preservation["B_positive_semidefinite"]
-            and preservation["applies_to_every_fixed_dimensional_shipping_covariance_operation"]
-            and preservation["if_M_delta_PSD_before_event_then_after_event"]
-            and summary[
-                "event_algebra_closes_complete_fixed_dimensional_suffix_once_full_matrix_margin_is_established"
-            ]
+            preservation["covers_prediction"]
+            and preservation["covers_every_due_S_update"]
+            and preservation["covers_every_Normal_Live_accelerometer_update"]
+            and preservation["covers_asynchronous_magnetometer_update"]
+            and preservation["covers_immediate_left_error_reset"]
+            and preservation["covers_aw_covariance_floor"]
+            and preservation["covers_not_due_or_rejected_identity_branches"]
         ),
         "useful_gate": USEFUL_GATE,
         "H18_prior_free_completion_closed": False,
