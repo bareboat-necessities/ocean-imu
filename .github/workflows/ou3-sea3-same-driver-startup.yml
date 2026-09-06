@@ -5,14 +5,12 @@ on:
     paths:
       - "tools/stability/ou3_sea3_continuum_driver_gram.py"
       - "tools/stability/ou3_sea3_fixed_history_source_core.py"
-      - "tools/stability/ou3_sea3_fixed_history_prehistory.py"
       - "tests/kalman_ou_iii/ou3-sea3-same-driver-startup-test.cpp"
       - ".github/workflows/ou3-sea3-same-driver-startup.yml"
   pull_request:
     paths:
       - "tools/stability/ou3_sea3_continuum_driver_gram.py"
       - "tools/stability/ou3_sea3_fixed_history_source_core.py"
-      - "tools/stability/ou3_sea3_fixed_history_prehistory.py"
       - "tests/kalman_ou_iii/ou3-sea3-same-driver-startup-test.cpp"
       - ".github/workflows/ou3-sea3-same-driver-startup.yml"
   workflow_dispatch:
@@ -36,27 +34,36 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq libeigen3-dev
-      - name: Build exact continuum same-driver prehistory
+      - name: Build canonical continuum prehistory without changing source
         run: |
           set -euo pipefail
-          python3 tools/stability/ou3_sea3_fixed_history_prehistory.py \
-            --output /tmp/ou3_sea3_fixed_history_prehistory.json
+          python3 tools/stability/ou3_sea3_fixed_history_source_core.py \
+            --output /tmp/ou3_sea3_fixed_history_source_core.json
           python3 - <<'PY'
-          import json
-          d=json.load(open('/tmp/ou3_sea3_fixed_history_prehistory.json'))
+          import json, sys
+          sys.path.insert(0, 'tools/stability')
+          import ou3_sea3_fixed_history_source_core as core
+          d=json.load(open('/tmp/ou3_sea3_fixed_history_source_core.json'))
           assert d['validation_pass'], d['validation_failures']
-          assert d['same_driver_field_as_word'] is True
+          assert d['canonical_source'] == 'COMPLETE_SEA3_NORMAL_LIVE_WORD'
+          assert d['source_membership']['membership_is_analytic_Hilbert_norm_not_quadrature'] is True
+          assert d['source_membership']['same_driver_field_prehistory_and_window'] is True
+          assert d['same_history_phase_contract']['phase_reset_at_live_entry'] is False
+          assert d['same_history_phase_contract']['word_start_source_time_s'] == 60.0
           assert d['trajectory_replay_used'] is False
           assert d['finite_harmonic_source_used'] is False
-          assert d['independent_startup_signal_used'] is False
+          n=int(round(core.PREHISTORY_S/core.DT))
           with open('/tmp/ou3_same_driver_accel.txt','w') as f:
-              for row in d['prehistory']:
-                  f.write(f"{row['f_cog_vertical_acceleration_mps2']:.17g}\n")
+              for k in range(n):
+                  # This evaluates the very same analytic continuum coefficient
+                  # field used by the 601-sample word at absolute source time t.
+                  y=core.acceleration_at_time(k*core.DT, panels=2048)
+                  f.write(f'{y:.17g}\n')
+          assert n == 12000
           PY
       - name: Compile unchanged shipping frontend bridge
         run: |
           g++ -O2 -std=c++20 -Wall -Wextra -Werror \
-            -DEIGEN_NON_ARDUINO \
             -Isrc -I/usr/include/eigen3 \
             tests/kalman_ou_iii/ou3-sea3-same-driver-startup-test.cpp \
             tests/kalman_ou_iii/W3dSimCommon.cpp \
@@ -69,6 +76,7 @@ jobs:
           python3 - <<'PY'
           import json
           d=json.load(open('/tmp/ou3_sea3_same_driver_startup.json'))
+          assert d['same_driver_samples'] == 12000
           assert d['tuner_ready'] is True
           assert d['wave_period_usable'] is True
           assert d['startup_proxy_initialized'] is True
@@ -77,9 +85,11 @@ jobs:
           assert d['first_tuner_ready_sample'] >= 0
           PY
       - uses: actions/upload-artifact@v6
+        if: always()
         with:
           name: ou3-sea3-same-driver-startup
           path: |
-            /tmp/ou3_sea3_fixed_history_prehistory.json
+            /tmp/ou3_sea3_fixed_history_source_core.json
             /tmp/ou3_sea3_same_driver_startup.json
+          if-no-files-found: warn
           retention-days: 7
