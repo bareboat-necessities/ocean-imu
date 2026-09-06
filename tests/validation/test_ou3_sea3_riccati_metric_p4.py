@@ -4,6 +4,7 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools"))
+import ou3_p4_complete_sea3_finite_angle_information as finfo  # noqa: E402
 import ou3_p4_moving_metric_rebind as rebind  # noqa: E402
 import ou3_sea3_riccati_metric_p4 as mod  # noqa: E402
 
@@ -13,6 +14,13 @@ class Sea3MovingRiccatiP4Test(unittest.TestCase):
     def setUpClass(cls):
         cls.d = mod.build()
         cls.r = rebind.build()
+        cls.i = finfo.build()
+        # Keep the quantitative continuation visible in the P4 CI log while
+        # the signed-Joseph word is being closed.
+        print("P4_FINITE_ANGLE_CELLS", [
+            (x["attitude_angle_deg"], x["full_H18_information_lambda_min_lower"])
+            for x in cls.i["candidate_cells"]
+        ])
 
     def test_p4_uses_same_moving_metric_and_not_800_endpoint_scan(self):
         self.assertEqual(mod.validate(self.d), [])
@@ -37,6 +45,20 @@ class Sea3MovingRiccatiP4Test(unittest.TestCase):
         self.assertTrue(self.r["left_error_reset_exact_metric_isometry"])
         self.assertFalse(self.r["group_isotropic_metric_attachment_used"])
         self.assertFalse(self.r["endpoint_source_word_scan_used"])
+
+    def test_complete_sea3_finite_angle_information_is_a_p4_prerequisite(self):
+        self.assertEqual(finfo.validate(self.i), [])
+        self.assertEqual(self.i["canonical_source"], "COMPLETE_SEA3_NORMAL_LIVE_WORD")
+        self.assertTrue(self.i["P3_frozen_not_modified"])
+        self.assertTrue(self.i["actual_applied_SpectralMSE_R_S_consumed_through_frozen_H18_information"])
+        self.assertTrue(self.i["all_due_S_updates_remain_in_complete_word"])
+        self.assertTrue(self.i["all_valid_accelerometer_updates_remain_in_complete_word"])
+        self.assertFalse(self.i["selected_PE_or_four_S_replace_complete_word"])
+        self.assertFalse(self.i["ordinary_libm_trigonometric_used_in_pass_decision"])
+        self.assertTrue(self.i["validated_transcendental_backend_used"])
+        self.assertEqual(self.i["widest_information_cell_deg"], 30.0)
+        self.assertTrue(self.i["information_headroom_closed"])
+        self.assertFalse(self.i["P4_promoted_here"])
 
     def test_only_live_blocker_is_finite_nonlinear_remainder(self):
         self.assertGreaterEqual(self.d["P3_H_delta_consumed"], 1.0e-18)
