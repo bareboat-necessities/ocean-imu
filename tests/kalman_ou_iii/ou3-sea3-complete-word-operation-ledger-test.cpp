@@ -54,8 +54,10 @@ Mat21 joseph_from_pct(const Mat21& P,
     return 0.5f * (out + out.transpose());
 }
 
-double relative_matrix_difference(const Mat21& a, const Mat21& b) {
-    return static_cast<double>((a - b).norm()) /
+template<typename DerivedA, typename DerivedB>
+double relative_matrix_difference(const Eigen::MatrixBase<DerivedA>& a,
+                                  const Eigen::MatrixBase<DerivedB>& b) {
+    return static_cast<double>((a.derived() - b.derived()).norm()) /
            std::max(1.0e-12, static_cast<double>(b.norm()));
 }
 
@@ -363,8 +365,7 @@ void emit_ledger(std::ostream& os, const Ledger& L, const char* label,
     os << '}';
 }
 
-Ledger run_H(const Vec21& direction, double nonlinear_rho, bool continue_A) {
-    (void)nonlinear_rho;
+Ledger run_H(const Vec21& direction, bool continue_A) {
     auto f = prepare_mode('H');
     Ledger L;
     L.dim = 18;
@@ -397,6 +398,36 @@ Ledger run_A(const Vec21& direction) {
     return L;
 }
 
+double nonlinear_connected_HA(const Vec21& direction) {
+    auto nominal = prepare_mode('H');
+    auto pert = prepare_mode('H');
+    require_same_schedule(*nominal, *pert);
+    const Eigen::MatrixXf P0 = covariance_mode(*nominal, 18);
+    Eigen::VectorXf d18(18);
+    d18 = direction.head<18>();
+    inject(*pert, d18);
+    const double V0 = energy(physical_increment(*pert, *nominal, 18), P0);
+    if (!(std::isfinite(V0) && V0 > 0.0))
+        throw std::runtime_error("invalid connected nonlinear initial energy");
+
+    EventCounts cn, cp;
+    run_H(*nominal, cn);
+    run_H(*pert, cp);
+    require_same_schedule(*nominal, *pert);
+    release_H_to_A(*nominal);
+    release_H_to_A(*pert);
+    require_same_schedule(*nominal, *pert);
+    run_A(*nominal, cn);
+    run_A(*pert, cp);
+    require_same_schedule(*nominal, *pert);
+
+    const Eigen::MatrixXf P1 = covariance_mode(*nominal, 21);
+    const double V1 = energy(physical_increment(*pert, *nominal, 21), P1);
+    if (!(std::isfinite(V1) && V1 >= 0.0))
+        throw std::runtime_error("invalid connected nonlinear final energy");
+    return V1 / V0;
+}
+
 } // namespace
 
 int main(int argc, char** argv) {
@@ -423,8 +454,9 @@ int main(int argc, char** argv) {
         if (!(std::isfinite(hrho) && hrho >= 0.0 && std::isfinite(arho) && arho >= 0.0))
             throw std::runtime_error("invalid nonlinear rho reference");
 
-        const Ledger H = run_H(hdir, hrho, false);
-        const Ledger HA = run_H(hdir, hrho, true);
+        const double harho = nonlinear_connected_HA(hdir);
+        const Ledger H = run_H(hdir, false);
+        const Ledger HA = run_H(hdir, true);
         const Ledger A = run_A(adir);
 
         std::cout << '{';
@@ -440,7 +472,7 @@ int main(int argc, char** argv) {
         std::cout << "\"tangent_ledger_only\":true,";
         std::cout << "\"P4_promoted\":false,";
         std::cout << "\"H18\":"; emit_ledger(std::cout, H, "H18_worst_nonlinear_direction", hrho); std::cout << ',';
-        std::cout << "\"H18_release_A21_connected\":"; emit_ledger(std::cout, HA, "H18_direction_connected_through_release_and_A21", hrho); std::cout << ',';
+        std::cout << "\"H18_release_A21_connected\":"; emit_ledger(std::cout, HA, "H18_direction_connected_through_release_and_A21", harho); std::cout << ',';
         std::cout << "\"A21\":"; emit_ledger(std::cout, A, "A21_worst_nonlinear_direction", arho);
         std::cout << "}\n";
         return 0;
