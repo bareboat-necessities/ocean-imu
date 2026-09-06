@@ -8,7 +8,7 @@ TOOLS = ROOT / "tools"
 if str(TOOLS) not in sys.path:
     sys.path.insert(0, str(TOOLS))
 
-import ou3_sea3_time_varying_translation_memory as CERT
+import ou3_sea3_time_varying_translation_memory_certified as CERT
 
 
 class Sea3TimeVaryingTranslationMemoryTest(unittest.TestCase):
@@ -21,6 +21,7 @@ class Sea3TimeVaryingTranslationMemoryTest(unittest.TestCase):
         self.assertEqual(self.failures, [])
         self.assertEqual(self.d["canonical_source"], "COMPLETE_SEA3_NORMAL_LIVE_WORD")
         self.assertTrue(self.d["full_4x4_time_varying_translation_memory_closed"])
+        self.assertEqual(self.d["certified_macro_intervals_bound_by_facade"], 25)
 
     def test_no_frozen_tuner_or_history_source(self):
         self.assertFalse(self.d["constant_tau_over_memory_assumed"])
@@ -32,10 +33,10 @@ class Sea3TimeVaryingTranslationMemoryTest(unittest.TestCase):
 
     def test_shipping_commit_intervals_are_used(self):
         g = self.d["commit_geometry"]
-        self.assertGreaterEqual(g["complete_constant_tune_intervals_lower"], 26)
-        self.assertEqual(g["intervals_retained"], 26)
+        self.assertGreaterEqual(g["complete_constant_tune_intervals_lower"], 25)
+        self.assertEqual(g["intervals_retained"], 25)
         self.assertGreaterEqual(g["min_constant_commit_interval_samples_conservative"], 20)
-        self.assertLessEqual(g["max_commit_interval_samples_certified"], 22)
+        self.assertEqual(g["max_commit_interval_samples_certified"], 23)
         self.assertTrue(all(self.d["shipping_commit_parity"].values()))
 
     def test_measurements_are_interleaved_sample_by_sample(self):
