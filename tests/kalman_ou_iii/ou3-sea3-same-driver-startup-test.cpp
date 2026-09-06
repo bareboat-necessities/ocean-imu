@@ -3,14 +3,16 @@
 // The mathematical source is tools/stability/ou3_sea3_fixed_history_source_core.py:
 // one continuum Hilbert-ball coefficient field, one admissible SEA3 partition,
 // one admissible continuum RAO member, no replay, no finite harmonic source,
-// and no phase reseed.  Simpson nodes below evaluate the continuum integral;
-// they are not source modes.
+// and no phase reseed. Simpson nodes below evaluate that continuum integral;
+// they are not source modes. Keep every constant and transfer factor aligned
+// with the Python source-core definition.
 
 #include <algorithm>
 #include <cmath>
 #include <cstdlib>
 #include <iomanip>
 #include <iostream>
+#include <limits>
 #include <vector>
 
 #include <Eigen/Dense>
@@ -19,11 +21,12 @@
 const float g_std = 9.80665f;
 
 namespace {
+constexpr double PI = 3.141592653589793238462643383279502884;
 constexpr double H = 1.5;
 constexpr double TP = 6.0;
 constexpr double GAMMA = 3.3;
-constexpr double FMIN = 0.02;
-constexpr double FMAX = 2.0;
+constexpr double FMIN = (1.0 / TP) / 64.0;
+constexpr double FMAX = (1.0 / TP) * 256.0;
 constexpr double RAO_G = 1.0;
 constexpr double RAO_FC = 0.5;
 constexpr double DRIVER_CENTER = 1.0 / TP;
@@ -35,22 +38,23 @@ constexpr int WORD_SAMPLES = 601;
 constexpr int COARSE_PANELS = 1024;
 constexpr int FINE_PANELS = 2048;
 
-struct SpectrumNorm {
-    double scale{};
-};
+struct SpectrumNorm { double scale{}; };
 
 double unscaled_jonswap(double f) {
     const double fp = 1.0 / TP;
-    const double sigma = (f <= fp) ? 0.07 : 0.09;
-    const double expo = std::exp(-0.5 * std::pow((f - fp) / (sigma * fp), 2));
-    return std::pow(f, -5.0) * std::exp(-1.25 * std::pow(fp / f, 4.0))
-         * std::pow(GAMMA, expo);
+    const double x = f / fp;
+    const double sigma = (x <= 1.0) ? 0.07 : 0.09;
+    const double peak = std::exp(-((x - 1.0) * (x - 1.0)) /
+                                 (2.0 * sigma * sigma));
+    return std::pow(f, -5.0) * std::exp(-1.25 * std::pow(x, -4.0))
+         * std::pow(GAMMA, peak);
 }
 
 double simpson(const std::vector<double>& y, double h) {
     if (y.size() < 3 || (y.size() % 2) == 0) std::abort();
     double s = y.front() + y.back();
-    for (std::size_t i = 1; i + 1 < y.size(); ++i) s += (i % 2 ? 4.0 : 2.0) * y[i];
+    for (std::size_t i = 1; i + 1 < y.size(); ++i)
+        s += (i % 2 ? 4.0 : 2.0) * y[i];
     return h * s / 3.0;
 }
 
@@ -71,7 +75,8 @@ double driver_norm_c(int panels) {
     std::vector<double> vals(static_cast<std::size_t>(panels)+1);
     for (int i=0;i<=panels;++i) {
         const double f = std::exp(u0+i*du);
-        vals[static_cast<std::size_t>(i)] = std::exp(-std::pow((f-DRIVER_CENTER)/DRIVER_SIGMA,2))*f;
+        vals[static_cast<std::size_t>(i)] =
+            std::exp(-std::pow((f-DRIVER_CENTER)/DRIVER_SIGMA,2))*f;
     }
     const double norm2=simpson(vals,du);
     return 1.0/std::sqrt(norm2);
@@ -84,8 +89,12 @@ double source_accel(double t, int panels, double scale, double c) {
         const double f = std::exp(u0+i*du);
         const double S = scale*unscaled_jonswap(f);
         const double h = RAO_G*std::min(1.0,std::pow(RAO_FC/f,2.0));
-        const double a = DRIVER_BETA*c*std::exp(-0.5*std::pow((f-DRIVER_CENTER)/DRIVER_SIGMA,2));
-        vals[static_cast<std::size_t>(i)] = h*std::sqrt(S)*a*std::cos(2.0*M_PI*f*t)*f;
+        const double omega = 2.0*PI*f;
+        const double acceleration_transfer = -(omega*omega)*h;
+        const double a = DRIVER_BETA*c*
+            std::exp(-0.5*std::pow((f-DRIVER_CENTER)/DRIVER_SIGMA,2));
+        vals[static_cast<std::size_t>(i)] =
+            acceleration_transfer*std::sqrt(S)*a*std::cos(omega*t)*f;
     }
     return simpson(vals,du);
 }
@@ -125,7 +134,8 @@ int main() {
                  Eigen::Vector3f::Constant(0.00157f),
                  Eigen::Vector3f::Constant(0.3f));
     const Eigen::Vector3f gyro=Eigen::Vector3f::Zero();
-    f.initialize_from_acc(specific_force_from_source(source_accel(0.0,FINE_PANELS,fine_norm.scale,fine_c)));
+    f.initialize_from_acc(specific_force_from_source(
+        source_accel(0.0,FINE_PANELS,fine_norm.scale,fine_c)));
 
     int first_ready=-1;
     double max_abs=0.0;
@@ -152,22 +162,23 @@ int main() {
     const float sigma_live=f.getSigmaApplied();
     const float rs_live=f.getRSApplied();
     const float period_live=f.getWavePeriodSec();
-    if(!finite_positive(tau_live)||!finite_positive(sigma_live)||!finite_positive(rs_live)||!finite_positive(period_live)){
+    if(!finite_positive(tau_live)||!finite_positive(sigma_live)||
+       !finite_positive(rs_live)||!finite_positive(period_live)){
         std::cerr << "shipping tuner schedule invalid at Live entry\n";
         return 1;
     }
 
-    // Real shipping handoff at the declared t=60 s boundary.  This is the H
-    // (ungauged-yaw) startup mode; the A21 release remains a separate hybrid
-    // event in the complete word, exactly as required by the proof ledger.
+    // Real shipping handoff at the declared t=60 s boundary. This is the H
+    // (ungauged-yaw) startup mode; A21 release remains a separate hybrid event
+    // in the complete word.
     f.goLive(f.startupProxyQuat(),0.035f,1.5708f);
     if(!f.isAdaptiveLive()) {
         std::cerr << "real goLive handoff failed\n";
         return 1;
     }
     const auto P0=f.mekf().covariance_full();
-    if(!P0.allFinite() || P0.selfadjointView<Eigen::Lower>().ldlt().info()!=Eigen::Success ||
-       P0.selfadjointView<Eigen::Lower>().ldlt().vectorD().minCoeff()<=0.0f){
+    const auto ldlt=P0.selfadjointView<Eigen::Lower>().ldlt();
+    if(!P0.allFinite() || ldlt.info()!=Eigen::Success || ldlt.vectorD().minCoeff()<=0.0f){
         std::cerr << "shipping Live covariance seed not SPD\n";
         return 1;
     }
