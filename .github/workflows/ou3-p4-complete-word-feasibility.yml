@@ -4,10 +4,12 @@ on:
   push:
     paths:
       - "tools/stability/ou3_p4_complete_sea3_word_feasibility.py"
+      - "tools/stability/ou3_p4_nonlinear_same_history_feasibility.py"
       - "tools/stability/ou3_p4_complete_sea3_measurement_linearizing_aw_coordinate.py"
       - "tools/stability/ou3_p4_complete_sea3_accelerometer_operation_coordinate.py"
       - "tools/stability/ou3_p4_moving_metric_rebind.py"
       - "tools/stability/ou3_sea3_riccati_metric_p4.py"
+      - "tools/stability/ou3_proof_operating_domain.json"
       - "tests/kalman_ou_iii/ou3-certificate-sim.cpp"
       - "tests/kalman_ou_iii/ou3-information-certificate-sim.cpp"
       - "tests/kalman_ou_iii/ou3-neighborhood-sim.cpp"
@@ -18,10 +20,12 @@ on:
   pull_request:
     paths:
       - "tools/stability/ou3_p4_complete_sea3_word_feasibility.py"
+      - "tools/stability/ou3_p4_nonlinear_same_history_feasibility.py"
       - "tools/stability/ou3_p4_complete_sea3_measurement_linearizing_aw_coordinate.py"
       - "tools/stability/ou3_p4_complete_sea3_accelerometer_operation_coordinate.py"
       - "tools/stability/ou3_p4_moving_metric_rebind.py"
       - "tools/stability/ou3_sea3_riccati_metric_p4.py"
+      - "tools/stability/ou3_proof_operating_domain.json"
       - "tests/kalman_ou_iii/ou3-certificate-sim.cpp"
       - "tests/kalman_ou_iii/ou3-information-certificate-sim.cpp"
       - "tests/kalman_ou_iii/ou3-neighborhood-sim.cpp"
@@ -41,7 +45,7 @@ permissions:
 jobs:
   complete-word-feasibility:
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v6
         with:
@@ -106,6 +110,45 @@ jobs:
                     'direction_group_norms=',w['maximizing_direction']['group_euclidean_norms'])
           PY
 
+      - name: Execute finite nonlinear same-history perturbations on the same complete SEA3 word
+        run: |
+          python3 tools/stability/ou3_p4_nonlinear_same_history_feasibility.py \
+            --linear-json /tmp/ou3_p4_complete_word_feasibility.json \
+            --domain tools/stability/ou3_proof_operating_domain.json \
+            --sim tests/kalman_ou_iii/ou3-neighborhood-sim \
+            --input tests/kalman_ou_iii/wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv \
+            --output-dir /tmp/ou3_p4_nonlinear_cases \
+            --output /tmp/ou3_p4_nonlinear_same_history_feasibility.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/ou3_p4_nonlinear_same_history_feasibility.json'))
+          assert d['canonical_source'] == 'COMPLETE_SEA3_NORMAL_LIVE_WORD'
+          assert d['point_same_history_diagnostic_only'] is True
+          assert d['P4_promoted'] is False
+          assert d['same_actual_applied_RS_history_required'] is True
+          assert d['packet_count_remainder_budget_used'] is False
+          assert d['selected_S_subset_used'] is False
+          for mode in ('H18','A21'):
+              m=d['modes'][mode]
+              assert m['same_history_cases'] > 0
+              print('OU3_P4_NONLINEAR', mode,
+                    'linear_rho=',m['rho_linear_worst_word'],
+                    'worst_same_history_rho=',m['worst_same_history_nonlinear_rho'],
+                    'largest_same_history_scale=',m['largest_same_history_scale'],
+                    'declared_scale_limit=',m['declared_scale_limit'],
+                    'limiter=',m['declared_scale_limit_detail']['limiting_constraint'],
+                    'all_same_history_contract=',m['strict_contraction_on_all_same_history_cases'])
+              for c in m['cases']:
+                  print('OU3_P4_NONLINEAR_CASE', mode,
+                        'scale=',c['scale'],
+                        'source_match=',c.get('source_match'),
+                        'rho=',c.get('rho_nonlinear'),
+                        'distance=',c.get('distance_to_one'),
+                        'theta0_deg=',c.get('initial_theta_rad',0.0)*180.0/3.141592653589793,
+                        'RS0=',c.get('nominal_RS_start'),
+                        'RS1=',c.get('nominal_RS_end'))
+          PY
+
       - name: Upload non-promoting feasibility evidence
         uses: actions/upload-artifact@v6
         with:
@@ -113,4 +156,6 @@ jobs:
           path: |
             /tmp/ou3_p4_complete_word_feasibility.json
             /tmp/ou3_p4_complete_word_trace.csv
+            /tmp/ou3_p4_nonlinear_same_history_feasibility.json
+            /tmp/ou3_p4_nonlinear_cases/*.csv
           retention-days: 7
