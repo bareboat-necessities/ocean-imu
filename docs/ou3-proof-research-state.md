@@ -91,7 +91,7 @@ With u=A Phi and b=G^-1 xi, the exact signed Joseph/reset ledger is
 
 Retain the FULL posterior precision P_J^-1, including all cross terms. The
 pure e_eta bound alone does not bound epsilon_aw. The nominal specific-force
-bound used by the invariant-coordinate helper is now derived from the existing
+bound used by the invariant-coordinate helper is derived from the existing
 SEA3 true-force ceiling plus the declared `delta_a_w` error ceiling; the old
 physical-force-only reuse is forbidden.
 
@@ -110,22 +110,60 @@ Loewner bound or the appropriate conditional-covariance Schur complement.
 The correction helper therefore emits no purported global energy balls,
 source-uniform ceilings, or posterior inverse-metric floors.
 
-## Failure analysis and rejected uses
+## Failure analysis, dead ends, and architecture review
 
-Classification: **proof-method/attachment gap**, plus implementation/contract
-errors; this is not a counterexample to the complete SEA3 theorem or frozen P3.
+Classification: **proof-method/attachment gap plus point-diagnostic
+implementation defects**; neither diagnostic failure is a counterexample to
+the complete SEA3 theorem or frozen P3.
 
-The first exact operation-ledger run is an **implementation defect in the point
-diagnostic**, not a theorem or P4 counterexample. Both H18 and A21 entered the
-correct worst complete word, but the ledger halted at accelerometer covariance
-reconstruction before the endpoint. H18 recorded only 43 predictions and 42
-accelerometer updates before failure. The ledger snapshotted the pending a_w
-floor, applied R_S and pseudo cadence before the wrapper's staged tuner commit,
-whereas shipping commits the previous sample's pending tune before the current
-Riccati prediction. That invalidates the assumption that the pre-wrapper
-snapshot is the current-sample Riccati schedule. It does not invalidate the
-measured complete-word linear ratios, frozen P3, the exact full-shift algebra,
-or the requirement to retain every actual-R_S S event.
+The first exact operation-ledger run halted at an accelerometer covariance
+reconstruction after only 43 H18 predictions. The cause was a pre-commit
+snapshot: the ledger read the pending a_w floor, applied R_S and pseudo cadence
+before the wrapper's staged tuner commit, whereas shipping commits the previous
+sample's pending tune before the current Riccati prediction. After moving the
+host-only snapshot to that exact shipping boundary, the ledger executes the
+full word in both modes: 600 predictions, 600 accelerometer updates, the exact
+selected S/vector counts, 28 covariance-floor events, and zero telescoping
+error.
+
+The repaired point ledger gives
+
+- H18: `rho=0.999863862991`, with 137 due S updates and 75 vector events;
+- A21: `rho=0.9958766098`, with 108 due S updates and 75 vector events.
+
+The old point-map scan gives H18 `0.9998645113825368`, agreeing within about
+`6.5e-7`, but A21 `0.9958291821145342`, differing by about `4.74e-5`.
+Inspection shows the supposedly independent exact-map observer has the **same
+pre-commit snapshot defect**: it reads R_S, pseudo cadence, pending floor and
+A21 bias-process parameters before `fusion_.update()`, whose first shipping
+action is the staged commit. Its covariance endpoints are shipping-real, but
+its reconstructed sample map can use stale current-sample schedule data.
+Therefore the old `OU3MAP3` point trace is not an admissible independent
+reference across tuner-commit samples.
+
+**DEAD END:** duplicated host observers that independently reconstruct the
+current-sample schedule before calling the wrapper. The same mechanism failed
+twice; do not repair it by maintaining two parallel copies of the schedule
+logic.
+
+Architecture alternatives considered after the second strike:
+
+1. Apply the same staged-commit patch to the old exact-map observer. This is the
+   smallest diff but preserves two duplicated current-sample schedule models
+   and therefore shares the failed mechanism.
+2. Make the corrected **single shipping operation observer** the sole point-map
+   source. It propagates the full 21x21 deterministic map and records block
+   boundary shipping covariances while using the same exact current-sample
+   schedule boundary as its signed event ledger. This removes the duplicate
+   schedule model and directly serves the master complete-word ratio.
+3. Reconstruct each current sample only after shipping from scratch matrices
+   and covariance deltas. This avoids private staged-commit access, but the
+   pending covariance-floor request has already been consumed and would need
+   additional production-adjacent instrumentation.
+
+Choose alternative 2. The old point-map observer may remain for unrelated
+legacy diagnostics, but it must not be the reference for this P4 feasibility
+experiment.
 
 Invalidated proof claims remain: pure e_eta transport dropping
 `(Q_aw-I)delta_a_w`; zero-cost combination of H0 with the H_u covariance/gain;
@@ -137,9 +175,10 @@ reset-radius closure has been withdrawn, not repaired by a smaller domain.
 
 Retained: the exact residual algebra, individual congruence identities, pure
 vector Cayley identities, magnetometer radial cancellation, the full
-per-operation correction inequality, the genuine complete-word linear
-feasibility ratios, and the frozen complete-word P3 result. The 30-degree
-information-headroom calculation is not signed-word dissipation.
+per-operation correction inequality, the repaired single-estimator event
+ledger, actual shipping covariance endpoints, and the frozen complete-word P3
+result. The 30-degree information-headroom calculation is not signed-word
+dissipation.
 
 Do not revive replay fitting, arbitrary bounded-input/source boxes, independent
 `tau x sigma x R_S x T_S` or sea x RAO products, endpoint/history graphs,
@@ -153,32 +192,39 @@ inequality being demonstrated.
 The controlling object is `rho_W=V_after(F_W(x))/V_before(x)` on the actual
 complete H18/A21 word, not positivity of an isolated lemma.
 
-First repair only the single-estimator operation ledger: consume the wrapper's
-staged current-sample commit exactly once before the diagnostic snapshots its
-Riccati schedule, then let the normal wrapper call see no pending commit. Make
-an internal ledger failure return nonzero. The repaired point diagnostic must
-show exactly 600 predictions and 600 accelerometer updates in both H18/A21,
-match the selected due-S and vector counts, telescope its signed event deltas,
-and reproduce the independent complete-word linear rho within numerical
-roundoff. If that self-check fails, stop and analyze the mismatch; do not build
-the nonlinear enclosure on top of it.
+Extend the corrected single shipping operation observer with a scan mode that
+propagates the full 21x21 map and records its own P0/P1 covariance at every
+600-sample block boundary. Preserve the existing `OU3MAP3`/`OU3COV1` binary
+contract if practical so the current generalized-eigenvalue analyzer can be
+reused. Run the genuine same-history source, select the worst legal H18/A21
+blocks from that one observer, then replay each maximizing direction through
+the same observer's event ledger. Require, for each mode:
 
-After that check passes, compare three genuinely different P4 treatments:
-(1) retain shipping coordinates and accumulate the exact signed full
-residual/Joseph/reset form; (2) evaluate corrected full-Phi nonlinear storage
-with all mixed transport and uniform metric-comparison obligations; (3)
-eliminate the coupled a_w direction only in the full-word Schur form while
-retaining all actual-R_S S events. The existing interval-AD primitive is
-appropriate only if the point experiment justifies a full-word Jacobian/
-transport enclosure; do not fall back to packetwise scalar remainder sums.
+- 600 predictions and 600 accelerometer updates;
+- exact due-S and vector event counts;
+- exact telescoping of event `delta_V`;
+- identical actual-R_S anisotropy/history;
+- event-ledger rho and block-map generalized rho agreeing to numerical
+  roundoff.
 
-Before further interval refinement, keep the complete-word feasibility test
-non-promoting and same-history. Report both H18/A21 worst ratios, source/phase,
-maximizing error direction, operation-by-operation margin consumption, and
-distance to rho=1. A point sample is a falsification/feasibility diagnostic,
-never universal source coverage. Do not silently replace a missing source
-realization with independent bounded sequences. Follow
-`EXECUTE -> FAILURE ANALYSIS -> REPLAN -> EXECUTE`.
+If that self-check fails, stop and analyze the mismatch. Do not build a
+nonlinear enclosure on top of inconsistent point-map machinery.
+
+Only after the single-observer point experiment passes should the three P4
+treatments be compared: (1) unchanged shipping coordinates with the exact
+signed full residual/Joseph/reset word; (2) corrected full-Phi nonlinear
+storage with all mixed transport and uniform metric comparison; (3) full-word
+Schur elimination of the coupled a_w direction while retaining every actual-R_S
+S event. The existing interval-AD primitive is appropriate only if this point
+experiment justifies a complete-word Jacobian/transport enclosure; do not fall
+back to packetwise scalar remainder sums.
+
+Keep the complete-word feasibility test non-promoting and same-history. Report
+both H18/A21 worst ratios, source/phase, maximizing error direction,
+operation-by-operation margin consumption, and distance to rho=1. A point
+sample is a falsification/feasibility diagnostic, never universal source
+coverage. Do not silently replace a missing source realization with independent
+bounded sequences. Follow `EXECUTE -> FAILURE ANALYSIS -> REPLAN -> EXECUTE`.
 
 Only a strict complete-word result may authorize enclosure of the nonlinear
 transport, selection of the widest certified candidate, and then P5 finite
