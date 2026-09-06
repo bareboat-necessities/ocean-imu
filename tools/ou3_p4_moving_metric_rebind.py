@@ -34,7 +34,6 @@ therefore apply unchanged to H18 and A21.
 """
 from __future__ import annotations
 
-import math
 from pathlib import Path
 
 from ou3_interval import (
@@ -58,11 +57,6 @@ QUALIFICATION = "OU3_P4_EXACT_MOVING_COVARIANCE_METRIC_REBIND"
 
 def I(x: float) -> Interval:
     return Interval.outward_bounds(float(x), float(x))
-
-
-def _zero(n: int, m: int):
-    z = I(0.0)
-    return [[z for _ in range(m)] for _ in range(n)]
 
 
 def _spd(A) -> bool:
@@ -92,11 +86,9 @@ def _joseph_smoke() -> dict:
     )
     Pplus_inv = matrix_inverse_gauss_jordan(Pplus)
 
-    # P^-1 - A^T P+^-1 A >= 0.
     lin_slack = matrix_symmetric_hull(
         matrix_sub(Pinv, matrix_mul(matrix_mul(At, Pplus_inv), A))
     )
-    # R^-1 - K^T P+^-1 K >= 0.
     inj_slack = matrix_symmetric_hull(
         matrix_sub(
             matrix_inverse_gauss_jordan(R),
@@ -115,7 +107,6 @@ def _congruence_smoke() -> dict:
     Pp = matrix_symmetric_hull(matrix_mul(matrix_mul(G, P), matrix_transpose(G)))
     Pinv = matrix_inverse_gauss_jordan(P)
     Ppinv = matrix_inverse_gauss_jordan(Pp)
-    # Matrix form of exact metric equality: G^T (GPG^T)^-1 G = P^-1.
     image = matrix_mul(matrix_mul(matrix_transpose(G), Ppinv), G)
     diff = matrix_sub(image, Pinv)
     equality_enclosed = all(x.lo <= 0.0 <= x.hi for row in diff for x in row)
