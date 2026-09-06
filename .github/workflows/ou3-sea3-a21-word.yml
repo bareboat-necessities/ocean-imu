@@ -6,8 +6,12 @@ on:
       - "tools/ou3_sea3_a21_prior_free_completion.py"
       - "tools/ou3_sea3_a21_detectability_completion.py"
       - "tools/ou3_sea3_h18_prior_free_completion.py"
+      - "tools/ou3_sea3_live_covariance_seed.py"
       - "tools/ou3_sea3_full_word_event_algebra.py"
       - "tools/ou3_full_process_ucc.py"
+      - "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h"
+      - "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h"
+      - "src/tuner/MagAutoTuner.h"
       - "tests/validation/test_ou3_sea3_a21_prior_free_completion.py"
       - ".github/workflows/ou3-sea3-a21-word.yml"
   workflow_dispatch:
@@ -27,7 +31,7 @@ jobs:
       - uses: actions/checkout@v6
         with:
           persist-credentials: false
-      - name: Build canonical complete SEA3 A21 prior-free matrix
+      - name: Build canonical complete SEA3 H18-to-A21 hybrid matrix
         run: |
           python3 tools/ou3_sea3_a21_prior_free_completion.py --output /tmp/ou3_sea3_a21_word.json
           python3 - <<'PY'
@@ -35,23 +39,33 @@ jobs:
           d=json.load(open('/tmp/ou3_sea3_a21_word.json'))
           assert d['validation_pass'], d['validation_failures']
           assert d['canonical_source'] == 'COMPLETE_SEA3_NORMAL_LIVE_WORD'
-          assert d['A21_prior_free_completion_closed'] is True
-          assert d['full_21x21_Omega_minus_delta_P_LDLT_closed'] is True
-          assert d['full_21x21_interval_LDLT_used'] is True
-          assert d['worst_full_A21_LDLT_pivot_lower'] > 0.0
-          assert d['finite_full_A21_linear_estimator_constructed'] is True
-          assert d['finite_full_A21_estimator_implies_D_strictly_positive'] is True
-          assert d['full_A21_prior_free_D_inverse_identity_used'] is True
-          assert d['eta9_point_packet_shortcut_used'] is False
-          assert d['old_one_step_Euclidean_Q_min_used'] is False
           assert d['useful_gate'] == 1.0e-18
-          print('A21_TRACE_UPPER', d['A21_diffuse_prior_covariance_upper']['full_A21_trace_upper'])
-          print('A21_DELTA2_PENALTY', d['delta_squared_over_four_penalty_physical'])
-          print('A21_X_CELLS', d['x_cells_certified'])
-          print('A21_WORST_PIVOT', d['worst_full_A21_LDLT_pivot_lower'])
+          assert d['H18_full_matrix_margin_inherited_before_release'] is True
+          assert d['H18_full_18x18_interval_LDLT_consumed'] is True
+          assert d['H18_word_finishes_before_A_release'] is True
+          assert d['shipping_H_mode_minimum_duration_before_A_release_s'] >= d['canonical_H18_word_horizon_s']
+          assert d['held_ba_cross_covariances_zero_at_release'] is True
+          assert d['first_active_prediction_block_diagonal_from_zero_release_cross_covariance'] is True
+          assert d['first_active_ba_M_delta_margin_lower'] > 0.0
+          assert d['full_21x21_Omega_minus_delta_P_closed'] is True
+          assert d['A21_prior_free_completion_closed'] is True
+          assert d['exact_direct_sum_full_matrix_hybrid_proof_used'] is True
+          assert d['blockwise_minimum_contraction_used'] is False
+          assert d['full_A21_prior_free_D_inverse_identity_used'] is False
+          assert d['finite_full_A21_linear_estimator_constructed'] is False
+          assert d['eta9_point_packet_shortcut_used'] is False
+          assert d['old_one_step_Euclidean_full_state_Q_min_used'] is False
+          assert d['accelerometer_rejection_after_certified_Normal_Live_allowed'] is False
+          assert d['prediction_source_parity_failures'] == []
+          print('A21_HOLD_S', d['shipping_H_mode_minimum_duration_before_A_release_s'])
+          print('A21_H18_WORD_S', d['canonical_H18_word_horizon_s'])
+          print('A21_P_BA_RELEASE', d['held_ba_covariance_variance_at_release'])
+          print('A21_Q_BA_LOWER', d['shipping_active_ba_Q_lambda_min_lower'])
+          print('A21_DELTA_P_BA_UPPER', d['delta_times_release_ba_variance_upper'])
+          print('A21_BA_MARGIN_LOWER', d['first_active_ba_M_delta_margin_lower'])
           print('A21_CLOSED', d['A21_prior_free_completion_closed'])
           PY
-      - name: Test canonical complete SEA3 A21 matrix
+      - name: Test canonical complete SEA3 A21 hybrid matrix
         working-directory: tests/validation
         run: python3 -m unittest -v test_ou3_sea3_a21_prior_free_completion
       - uses: actions/upload-artifact@v6
