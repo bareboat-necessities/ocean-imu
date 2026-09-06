@@ -69,14 +69,38 @@ angle. The residual rewrite and metric congruence are individually valid;
 combining them as an unchanged shipping Joseph operation is not established.
 The corresponding helper status `shipping_Joseph_binding_closed` is false.
 
-The measurement-linearizing shift `Phi_aw=u_aw+e_eta`, with
-`e_eta=R_hat^T((E-I)-[c]_x)f_hat`, is a trial-coordinate construction. Its formal
-Joseph identity does not make its nonlinear transport free. In
-`xi=rho+E_aw(e_plus-e_minus)`, rho must include the *full* physical-to-operation
-coordinate mismatch, not only the quaternion reset remainder. The invariant
-triangular gravity-column rewrite has the same attachment obligation. A
-physical specific-force bound does not automatically bound nominal f_hat;
-the nominal-force/nominal-a_w bound remains conditional.
+The corrected measurement-linearizing coordinate uses the ORIGINAL shipping
+H,P,K,S and the full shift, not a mixture of auxiliary H0 and congruent H_u:
+
+    epsilon_aw=(Q_aw-I)delta_a_w+e_eta,
+    e_eta=R_hat^T((E-I)-[c]_x)f_hat,
+    Phi(z)=z+E_aw epsilon_aw,
+    y=H Phi(z).
+
+This pointwise identity does not make Phi-storage isometric to the original
+physical-error storage. For d=K y, t=z-d, z_plus=G t+rho, and A=I-KH, the
+correct complete shift transport is
+
+    xi=rho+E_aw(epsilon_plus-epsilon_minus),
+    epsilon_mixed_plus-epsilon_mixed_minus
+      =(Q_plus-Q_minus)delta_a_w-(Q_plus-I)d_aw.
+
+With u=A Phi and b=G^-1 xi, the exact signed Joseph/reset ledger is
+
+    V_plus-V_minus=-J+2 u^T P_J^-1 b+b^T P_J^-1 b.
+
+Retain the FULL posterior precision P_J^-1, including all cross terms. The
+pure e_eta bound alone does not bound epsilon_aw. A physical specific-force
+bound does not automatically bound nominal f_hat: the nominal-force/nominal-a_w
+bounds remain explicitly conditional, not certified from physical SEA3 alone.
+
+The true-minus-estimated rotation error after left quaternion injection obeys
+E_plus=E E_correction^-1. Its Cayley numerator is c-a+0.5 a cross c and its
+denominator is 1+0.25 a dot c, against the reset target G(d)(c-d).
+Exact-rational tests in both 18 and 21 dimensions with correlated covariance
+check the full-shift identity, signed energy ledger, and the failure of the
+old pure-shift transport. These fixtures are operation tests, NOT legal SEA3
+word generators, universal source coverage, or nonlinear word certificates.
 
 Exact covariance congruence is a metric isometry. It is not a Euclidean
 covariance upper: `G=I+[d]_x/2` can enlarge transverse covariance. Likewise a
@@ -90,7 +114,8 @@ source-uniform ceilings, or posterior inverse-metric floors.
 Classification: **proof-method/attachment gap**, plus implementation/contract
 errors; this is not a counterexample to the complete SEA3 theorem or frozen P3.
 
-Invalidated claims: zero-cost combination of H0 with the H_u covariance/gain;
+Invalidated claims: pure e_eta transport dropping (Q_aw-I)delta_a_w;
+zero-cost combination of H0 with the H_u covariance/gain;
 prediction-only covariance ceilings through nonorthogonal resets; reusing an
 H18 nonlinear ceiling in A21 without transport; selecting the minimum posterior
 floor from the cell minimizing a different scalar ratio; and reading inverse
@@ -116,8 +141,8 @@ complete H18/A21 word, not positivity of an isolated lemma.
 
 First choose between three genuinely different treatments: (1) retain shipping
 coordinates and accumulate the exact signed full residual/Joseph/reset form;
-(2) construct a genuine nonlinear chart with consistent transformed H,K,P and
-all chart-transport defects; (3) eliminate the coupled a_w direction only in
+(2) evaluate the corrected full-Phi nonlinear storage with all mixed
+transport and uniform metric-comparison obligations; (3) eliminate the coupled a_w direction only in
 the full-word Schur form, retaining all actual-R_S S events. Start with (1) as
 the unchanged-shipping reference against which the others must be checked.
 
@@ -145,7 +170,8 @@ Entry points in that directory: `ou3_sea3_riccati_metric_p3.py` is the frozen
 conditional gate; `ou3_sea3_riccati_metric_p4.py` is the non-promoted canonical
 P4 status. The `ou3_p4_complete_sea3_*coordinate.py` helpers contain the trial
 coordinate algebra. `ou3_p4_complete_sea3_correction_information_bound.py`
-contains only the exact operation identity and explicit open obligations.
+contains the exact operation identity, full-posterior precision evaluator,
+and explicit open obligations; candidate metric-energy radii remain null.
 `ou3_p4_exact_reset_transport.py` owns the parameterized reset remainder.
 
 Run `make -C tests/validation build`, the source-foundation unittest command in
@@ -156,3 +182,12 @@ from the stability theorem. Fresh validation/robustness replay evidence is
 still required for the changed source inherited from main; never hand-edit
 provenance hashes. The opt-in `ou-full-evidence-branch.yml` workflow owns a full
 branch refresh. No filter or pitch-gate edit is part of this handoff.
+
+## Next conversation / PR boundary
+
+After PR #493 is merged, create a new PR from current main and continue the
+complete-word feasibility experiment above. Keep P3 frozen and P4/P5 open.
+`tests/validation/test_ou3_p4_coordinate_transport_algebra.py` locks the exact
+full-shift, reset, and correlated-precision corrections. The full source-
+correlated H18/A21 transport and storage comparison are still the decisive
+obligations; green algebra/architecture tests do not close them.

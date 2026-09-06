@@ -34,9 +34,11 @@ The only nonlinear reset mismatch is rho.  If a is the Cayley vector of the
 *deployed correction quaternion*, then a is parallel to d and exact Cayley
 composition gives
 
-    c+ = (a+c+0.5 a x c)/(1-0.25 a'c).
+    E_plus=E E_correction^-1,
+    c+ = (c-a+0.5 a x c)/(1+0.25 a'c).
 
-Against the homogeneous reset target G(d)(c+d), for |c|<=q, |d|<=delta and
+Here c is true-minus-estimated and d=K y is the injected estimate correction.
+Against the homogeneous reset target G(d)(c-d), for |c|<=q, |d|<=delta and
 D=1-|a|q/4>0,
 
     |rho_theta| <= [ |a-d|(1+q/2)

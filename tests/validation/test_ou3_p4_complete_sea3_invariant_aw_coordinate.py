@@ -47,7 +47,7 @@ class CompleteSea3InvariantAwCoordinateTests(unittest.TestCase):
         self.assertTrue(self.d["transformed_attitude_column_depends_only_on_gravity"])
         self.assertTrue(self.d["wave_acceleration_attitude_cross_term_is_linear_coordinate_coupling"])
         exact = self.d["exact_finite_angle_coordinate"]
-        self.assertTrue(exact["nonlinear_displacement_is_exactly_existing_e_eta"])
+        self.assertTrue(exact["nonlinear_displacement_is_full_aw_shift"])
         self.assertTrue(exact["first_order_wave_attitude_term_removed_from_remainder"])
         self.assertIn("R_hat*g", exact["exact_residual"])
 
