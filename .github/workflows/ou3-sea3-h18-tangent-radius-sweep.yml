@@ -1,0 +1,76 @@
+name: ou3-sea3-h18-tangent-radius-sweep
+on:
+  push:
+    branches: [codex/ou3-complete-sea3-shipping-feasibility]
+    paths:
+      - tests/kalman_ou_iii/ou3-sea3-h18-tangent-radius-sweep-test.cpp
+      - tests/kalman_ou_iii/ou3-sea3-complete-word-feasibility-test.cpp
+      - tools/stability/ou3_sea3_validated_continuum_member.py
+      - tools/stability/ou3_sea3_complete_word_feasibility_trace.py
+      - src/kalman_ou_iii/**
+      - src/tuner/**
+      - src/ahrs/**
+      - .github/workflows/ou3-sea3-h18-tangent-radius-sweep.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  h18-tangent-radius-sweep:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install Eigen
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libeigen3-dev
+      - name: Generate the same validated continuum SEA3 trace
+        run: |
+          set -euo pipefail
+          python3 tools/stability/ou3_sea3_complete_word_feasibility_trace.py \
+            --output /tmp/sea3-complete-word-float-trace.json \
+            --shipping-input /tmp/sea3-complete-word-specific-force-z.txt
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/sea3-complete-word-float-trace.json'))
+          assert d['validation_pass'], d['validation_failures']
+          assert d['canonical_source']=='COMPLETE_SEA3_NORMAL_LIVE_WORD'
+          assert d['same_continuum_member_across_startup_H_release_A'] is True
+          assert d['all_intervals_round_to_unique_binary32'] is True
+          assert d['trajectory_replay_used'] is False
+          assert d['finite_harmonic_source_used'] is False
+          assert d['independent_tuner_schedule_used'] is False
+          assert d['independent_RS_schedule_used'] is False
+          PY
+      - name: Compile H18 tangent-radius consistency sweep
+        run: |
+          g++ -O3 -std=c++20 -Wall -Wextra -Wpedantic -Werror -Wno-unused-function \
+            -DEIGEN_NON_ARDUINO -I./src -isystem /usr/include/eigen3 \
+            tests/kalman_ou_iii/ou3-sea3-h18-tangent-radius-sweep-test.cpp \
+            -o /tmp/ou3-sea3-h18-tangent-radius-sweep
+      - name: Execute H18 zero-radius consistency sweep
+        run: |
+          /tmp/ou3-sea3-h18-tangent-radius-sweep /tmp/sea3-complete-word-specific-force-z.txt \
+            | tee /tmp/ou3-sea3-h18-tangent-radius-sweep.json
+          python3 - <<'PY'
+          import json, math
+          d=json.load(open('/tmp/ou3-sea3-h18-tangent-radius-sweep.json'))
+          assert d['canonical_source']=='COMPLETE_SEA3_NORMAL_LIVE_WORD'
+          assert d['same_shipping_H18_word'] is True
+          assert d['trajectory_replay_used'] is False
+          assert d['finite_harmonic_source_used'] is False
+          assert d['P3_changed'] is False
+          assert d['P4_promoted'] is False
+          assert [round(r['radius'],6) for r in d['rows']] == [0.1,0.03,0.01,0.003,0.001]
+          assert all(r['imu_samples']==601 and r['mag_events']>=31 for r in d['rows'])
+          assert all(math.isfinite(r['rho']) and r['rho']>=0 for r in d['rows'])
+          PY
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: ou3-sea3-h18-tangent-radius-sweep
+          path: |
+            /tmp/sea3-complete-word-float-trace.json
+            /tmp/sea3-complete-word-specific-force-z.txt
+            /tmp/ou3-sea3-h18-tangent-radius-sweep.json
+          retention-days: 7
