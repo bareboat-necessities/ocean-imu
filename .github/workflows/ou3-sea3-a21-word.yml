@@ -14,6 +14,10 @@ on:
       - ".github/workflows/ou3-sea3-a21-word.yml"
   workflow_dispatch:
 
+concurrency:
+  group: ou3-sea3-a21-word-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
