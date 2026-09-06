@@ -5,7 +5,6 @@
 // one admissible continuum RAO member, no replay, no finite harmonic source,
 // and no phase reseed.  Simpson nodes below evaluate the continuum integral;
 // they are not source modes.
-#define EIGEN_NON_ARDUINO
 
 #include <algorithm>
 #include <cmath>
@@ -20,173 +19,186 @@
 const float g_std = 9.80665f;
 
 namespace {
-using Filter = SeaStateFusionFilter_OU_III<TrackerType::KALMANF>;
-constexpr double PI = 3.141592653589793238462643383279502884;
+constexpr double H = 1.5;
+constexpr double TP = 6.0;
+constexpr double GAMMA = 3.3;
+constexpr double FMIN = 0.02;
+constexpr double FMAX = 2.0;
+constexpr double RAO_G = 1.0;
+constexpr double RAO_FC = 0.5;
+constexpr double DRIVER_CENTER = 1.0 / TP;
+constexpr double DRIVER_SIGMA = 0.005;
+constexpr double DRIVER_BETA = 0.5;
 constexpr double DT = 0.005;
 constexpr double PREHISTORY_S = 60.0;
-constexpr double TP_S = 6.0;
-constexpr double H_M = 1.5;
-constexpr double GAMMA = 3.3;
-constexpr double FC_HZ = 0.5;
-constexpr double DRIVER_CENTER_HZ = 1.0 / TP_S;
-constexpr double DRIVER_SIGMA_HZ = 0.005;
-constexpr double DRIVER_BETA = 0.5;
-constexpr double SIGMA_LO = 0.07;
-constexpr double SIGMA_HI = 0.09;
-constexpr double PM_EXPONENT = 1.25;
+constexpr int WORD_SAMPLES = 601;
+constexpr int COARSE_PANELS = 1024;
+constexpr int FINE_PANELS = 2048;
 
-struct ContinuumPacket {
-    std::vector<double> omega;
-    std::vector<double> coeff;
-
-    static double shape(double f) {
-        if (!(f > 0.0)) return 0.0;
-        const double fp = 1.0 / TP_S;
-        const double x = f / fp;
-        const double sigma = x <= 1.0 ? SIGMA_LO : SIGMA_HI;
-        const double peak = std::exp(-((x - 1.0) * (x - 1.0)) /
-                                     (2.0 * sigma * sigma));
-        return std::pow(f, -5.0) * std::exp(-PM_EXPONENT * std::pow(x, -4.0)) *
-               std::pow(GAMMA, peak);
-    }
-    static double driverRaw(double f) {
-        const double z = (f - DRIVER_CENTER_HZ) / DRIVER_SIGMA_HZ;
-        return std::exp(-0.5 * z * z);
-    }
-    static double rao(double f) {
-        return f <= FC_HZ ? 1.0 : std::pow(FC_HZ / f, 2.0);
-    }
-
-    explicit ContinuumPacket(int panels) {
-        if (panels <= 0 || panels % 2) std::abort();
-        const double lo = (1.0 / TP_S) / 64.0;
-        const double hi = (1.0 / TP_S) * 256.0;
-        const double a = std::log(lo), b = std::log(hi);
-        const double h = (b - a) / static_cast<double>(panels);
-        std::vector<double> f, measure;
-        f.reserve(static_cast<std::size_t>(panels + 1));
-        measure.reserve(static_cast<std::size_t>(panels + 1));
-        double raw_spectrum = 0.0, raw_driver_norm2 = 0.0;
-        for (int i = 0; i <= panels; ++i) {
-            const double fi = std::exp(a + static_cast<double>(i) * h);
-            const double sw = (i == 0 || i == panels) ? 1.0 : ((i % 2) ? 4.0 : 2.0);
-            const double m = (h / 3.0) * sw * fi;
-            f.push_back(fi); measure.push_back(m);
-            raw_spectrum += m * shape(fi);
-            raw_driver_norm2 += m * driverRaw(fi) * driverRaw(fi);
-        }
-        const double spectrum_scale = (H_M * H_M / 16.0) / raw_spectrum;
-        const double driver_c = 1.0 / std::sqrt(raw_driver_norm2);
-        omega.resize(f.size()); coeff.resize(f.size());
-        for (std::size_t i = 0; i < f.size(); ++i) {
-            omega[i] = 2.0 * PI * f[i];
-            const double acc_transfer = -(omega[i] * omega[i]) * rao(f[i]);
-            coeff[i] = measure[i] * std::sqrt(std::max(0.0, spectrum_scale * shape(f[i]))) *
-                       (DRIVER_BETA * driver_c * driverRaw(f[i])) * acc_transfer;
-        }
-    }
-    double acceleration(double t) const {
-        double s = 0.0;
-        for (std::size_t i = 0; i < coeff.size(); ++i) s += coeff[i] * std::cos(omega[i] * t);
-        return s;
-    }
+struct SpectrumNorm {
+    double scale{};
 };
 
-bool require(bool cond, const char* message) {
-    if (!cond) std::cerr << "FAIL: " << message << '\n';
-    return cond;
+double unscaled_jonswap(double f) {
+    const double fp = 1.0 / TP;
+    const double sigma = (f <= fp) ? 0.07 : 0.09;
+    const double expo = std::exp(-0.5 * std::pow((f - fp) / (sigma * fp), 2));
+    return std::pow(f, -5.0) * std::exp(-1.25 * std::pow(fp / f, 4.0))
+         * std::pow(GAMMA, expo);
 }
+
+double simpson(const std::vector<double>& y, double h) {
+    if (y.size() < 3 || (y.size() % 2) == 0) std::abort();
+    double s = y.front() + y.back();
+    for (std::size_t i = 1; i + 1 < y.size(); ++i) s += (i % 2 ? 4.0 : 2.0) * y[i];
+    return h * s / 3.0;
 }
+
+SpectrumNorm spectrum_norm(int panels) {
+    if ((panels % 2) != 0) std::abort();
+    const double u0 = std::log(FMIN), u1 = std::log(FMAX), du = (u1-u0)/panels;
+    std::vector<double> vals(static_cast<std::size_t>(panels)+1);
+    for (int i=0;i<=panels;++i) {
+        const double f = std::exp(u0 + i*du);
+        vals[static_cast<std::size_t>(i)] = unscaled_jonswap(f)*f;
+    }
+    const double integral = simpson(vals,du);
+    return { (H*H/16.0)/integral };
+}
+
+double driver_norm_c(int panels) {
+    const double u0 = std::log(FMIN), u1 = std::log(FMAX), du = (u1-u0)/panels;
+    std::vector<double> vals(static_cast<std::size_t>(panels)+1);
+    for (int i=0;i<=panels;++i) {
+        const double f = std::exp(u0+i*du);
+        vals[static_cast<std::size_t>(i)] = std::exp(-std::pow((f-DRIVER_CENTER)/DRIVER_SIGMA,2))*f;
+    }
+    const double norm2=simpson(vals,du);
+    return 1.0/std::sqrt(norm2);
+}
+
+double source_accel(double t, int panels, double scale, double c) {
+    const double u0 = std::log(FMIN), u1 = std::log(FMAX), du = (u1-u0)/panels;
+    std::vector<double> vals(static_cast<std::size_t>(panels)+1);
+    for (int i=0;i<=panels;++i) {
+        const double f = std::exp(u0+i*du);
+        const double S = scale*unscaled_jonswap(f);
+        const double h = RAO_G*std::min(1.0,std::pow(RAO_FC/f,2.0));
+        const double a = DRIVER_BETA*c*std::exp(-0.5*std::pow((f-DRIVER_CENTER)/DRIVER_SIGMA,2));
+        vals[static_cast<std::size_t>(i)] = h*std::sqrt(S)*a*std::cos(2.0*M_PI*f*t)*f;
+    }
+    return simpson(vals,du);
+}
+
+Eigen::Vector3f specific_force_from_source(double a_z) {
+    return Eigen::Vector3f(0.0f,0.0f,static_cast<float>(-g_std+a_z));
+}
+
+bool finite_positive(float x) { return std::isfinite(x) && x > 0.0f; }
+} // namespace
 
 int main() {
-    bool ok = true;
-    ContinuumPacket coarse(1024), fine(2048);
+    const auto coarse_norm=spectrum_norm(COARSE_PANELS);
+    const auto fine_norm=spectrum_norm(FINE_PANELS);
+    const double coarse_c=driver_norm_c(COARSE_PANELS);
+    const double fine_c=driver_norm_c(FINE_PANELS);
 
-    double max_delta = 0.0, max_word_abs = 0.0;
-    for (int k = 0; k <= 600; k += 10) {
-        const double t = PREHISTORY_S + static_cast<double>(k) * DT;
-        const double a = coarse.acceleration(t), b = fine.acceleration(t);
-        max_delta = std::max(max_delta, std::fabs(a - b));
-        max_word_abs = std::max(max_word_abs, std::fabs(b));
+    double peak=0.0, max_delta=0.0;
+    for(int k=0;k<WORD_SAMPLES;++k){
+        const double t=PREHISTORY_S+k*DT;
+        const double yc=source_accel(t,COARSE_PANELS,coarse_norm.scale,coarse_c);
+        const double yf=source_accel(t,FINE_PANELS,fine_norm.scale,fine_c);
+        peak=std::max(peak,std::abs(yf));
+        max_delta=std::max(max_delta,std::abs(yf-yc));
     }
-    const double quadrature_rel = max_delta / std::max(max_word_abs, 1e-30);
-    ok &= require(quadrature_rel < 2e-4, "continuum quadrature did not converge");
-
-    Filter filter(false);
-    filter.setWithMag(false);
-    filter.setOnlineTuneWarmupSec(10.0f);
-    filter.initialize(Eigen::Vector3f::Constant(0.2f),
-                      Eigen::Vector3f::Constant(0.00157f),
-                      Eigen::Vector3f::Constant(0.3f));
-    const Eigen::Vector3f gyro = Eigen::Vector3f::Zero();
-
-    double first_ready_s = -1.0;
-    double max_prehistory_abs = 0.0;
-    const int pre_steps = static_cast<int>(PREHISTORY_S / DT);
-    for (int k = 0; k < pre_steps; ++k) {
-        const double t = static_cast<double>(k) * DT;
-        const float az = static_cast<float>(fine.acceleration(t));
-        max_prehistory_abs = std::max(max_prehistory_abs, std::fabs(static_cast<double>(az)));
-        filter.updateFrontEnd(static_cast<float>(DT), gyro,
-                              Eigen::Vector3f(0.0f, 0.0f, -g_std + az));
-        if (first_ready_s < 0.0 && filter.isTunerReady())
-            first_ready_s = (static_cast<double>(k) + 1.0) * DT;
+    const double quadrature_relative=max_delta/std::max(peak,1e-15);
+    if (!(quadrature_relative < 2.0e-4)) {
+        std::cerr << "continuum evaluation did not converge tightly enough\n";
+        return 1;
     }
 
-    ok &= require(first_ready_s > 0.0 && first_ready_s < PREHISTORY_S,
-                  "same-history source did not reach TunerReady before handoff");
-    ok &= require(filter.wavePeriodUsable(), "WPE is not usable at same-history handoff");
-    ok &= require(filter.startupProxyInitialized(), "startup proxy is not initialized");
-    ok &= require(filter.accelVibrationGuardEngagement() == 0.0f,
-                  "vibration guard must remain dormant-transparent");
-    ok &= require(max_prehistory_abs <= 4.0,
-                  "same-history source exceeded Normal-Live acceleration cap");
+    using Filter=SeaStateFusionFilter_OU_III<TrackerType::KALMANF>;
+    Filter f(false);
+    f.setWithMag(false);
+    f.setOnlineTuneWarmupSec(10.0f);
+    f.initialize(Eigen::Vector3f::Constant(0.2f),
+                 Eigen::Vector3f::Constant(0.00157f),
+                 Eigen::Vector3f::Constant(0.3f));
+    const Eigen::Vector3f gyro=Eigen::Vector3f::Zero();
+    f.initialize_from_acc(specific_force_from_source(source_accel(0.0,FINE_PANELS,fine_norm.scale,fine_c)));
 
-    const double period = filter.getWavePeriodSec();
-    const double tau = filter.getTauApplied();
-    const double sigma = filter.getSigmaApplied();
-    const double rs_entry = filter.getRSApplied();
-    ok &= require(std::isfinite(period) && period > 0.0, "invalid measured period");
-    ok &= require(std::isfinite(tau) && tau > 0.0, "invalid applied tau");
-    ok &= require(std::isfinite(sigma) && sigma > 0.0, "invalid applied sigma");
-    ok &= require(std::isfinite(rs_entry) && rs_entry > 0.0, "invalid applied R_S");
-
-    filter.goLive(filter.startupProxyQuat(), 0.035f, 1.5708f);
-    ok &= require(filter.isAdaptiveLive(), "shipping goLive did not enter Live");
-    const auto P0 = filter.mekf().covariance_full();
-    Eigen::SelfAdjointEigenSolver<decltype(P0)> es(P0);
-    ok &= require(P0.allFinite() && es.info() == Eigen::Success && es.eigenvalues().minCoeff() > 0.0f,
-                  "shipping A21 Live covariance seed is not SPD");
-
-    double min_rs = rs_entry, max_rs = rs_entry;
-    std::size_t rs_change_count = 0;
-    double previous_rs = rs_entry;
-    for (int k = 0; k < 601; ++k) {
-        const double t = PREHISTORY_S + static_cast<double>(k) * DT;
-        const float az = static_cast<float>(fine.acceleration(t));
-        filter.updateTime(static_cast<float>(DT), gyro,
-                          Eigen::Vector3f(0.0f, 0.0f, -g_std + az));
-        const double rs = filter.getRSApplied();
-        min_rs = std::min(min_rs, rs); max_rs = std::max(max_rs, rs);
-        if (std::fabs(rs - previous_rs) > 1e-9 * std::max(1.0, std::fabs(previous_rs))) ++rs_change_count;
-        previous_rs = rs;
+    int first_ready=-1;
+    double max_abs=0.0;
+    float max_guard=0.0f;
+    const int pre_samples=static_cast<int>(std::llround(PREHISTORY_S/DT));
+    for(int k=0;k<pre_samples;++k){
+        const double t=k*DT;
+        const double y=source_accel(t,FINE_PANELS,fine_norm.scale,fine_c);
+        max_abs=std::max(max_abs,std::abs(y));
+        f.updateFrontEnd(static_cast<float>(DT),gyro,specific_force_from_source(y));
+        max_guard=std::max(max_guard,f.accelVibrationGuardEngagement());
+        if(first_ready<0 && f.isTunerReady()) first_ready=k;
     }
-    ok &= require(std::isfinite(min_rs) && min_rs > 0.0 && std::isfinite(max_rs),
-                  "applied R_S became invalid in the 601-sample word");
+    if(first_ready<0 || !f.isTunerReady() || !f.wavePeriodUsable() || !f.startupProxyInitialized()) {
+        std::cerr << "same continuum SEA3 history did not reach real shipping TunerReady before Live entry\n";
+        return 1;
+    }
+    if(max_guard!=0.0f || max_abs>4.0) {
+        std::cerr << "legal point left declared dormant-guard/acceleration branch\n";
+        return 1;
+    }
 
-    std::cout << std::setprecision(17)
-              << "SEA3_SAME_DRIVER_STARTUP"
-              << " first_ready_s=" << first_ready_s
-              << " period_s=" << period
-              << " tau=" << tau
-              << " sigma=" << sigma
-              << " RS_entry=" << rs_entry
-              << " RS_word_min=" << min_rs
-              << " RS_word_max=" << max_rs
-              << " RS_change_count=" << rs_change_count
-              << " P0_min_eig=" << es.eigenvalues().minCoeff()
-              << " quadrature_rel=" << quadrature_rel
-              << " max_source_accel=" << std::max(max_prehistory_abs, max_word_abs)
-              << '\n';
-    return ok ? 0 : 1;
+    const float tau_live=f.getTauApplied();
+    const float sigma_live=f.getSigmaApplied();
+    const float rs_live=f.getRSApplied();
+    const float period_live=f.getWavePeriodSec();
+    if(!finite_positive(tau_live)||!finite_positive(sigma_live)||!finite_positive(rs_live)||!finite_positive(period_live)){
+        std::cerr << "shipping tuner schedule invalid at Live entry\n";
+        return 1;
+    }
+
+    // Real shipping handoff at the declared t=60 s boundary.  This is the H
+    // (ungauged-yaw) startup mode; the A21 release remains a separate hybrid
+    // event in the complete word, exactly as required by the proof ledger.
+    f.goLive(f.startupProxyQuat(),0.035f,1.5708f);
+    if(!f.isAdaptiveLive()) {
+        std::cerr << "real goLive handoff failed\n";
+        return 1;
+    }
+    const auto P0=f.mekf().covariance_full();
+    if(!P0.allFinite() || P0.selfadjointView<Eigen::Lower>().ldlt().info()!=Eigen::Success ||
+       P0.selfadjointView<Eigen::Lower>().ldlt().vectorD().minCoeff()<=0.0f){
+        std::cerr << "shipping Live covariance seed not SPD\n";
+        return 1;
+    }
+
+    float rs_min=std::numeric_limits<float>::infinity();
+    float rs_max=0.0f;
+    for(int k=0;k<WORD_SAMPLES;++k){
+        const double t=PREHISTORY_S+k*DT;
+        const double y=source_accel(t,FINE_PANELS,fine_norm.scale,fine_c);
+        max_abs=std::max(max_abs,std::abs(y));
+        f.updateTime(static_cast<float>(DT),gyro,specific_force_from_source(y),true);
+        const float rs=f.getRSApplied();
+        rs_min=std::min(rs_min,rs);
+        rs_max=std::max(rs_max,rs);
+    }
+    if(!finite_positive(rs_min)||!finite_positive(rs_max)||max_abs>4.0){
+        std::cerr << "same-history Live continuation invalid\n";
+        return 1;
+    }
+
+    std::cout<<std::setprecision(10)
+             <<"COMPLETE_SEA3_SAME_DRIVER_STARTUP_PASS"
+             <<" first_ready_s="<<(first_ready+1)*DT
+             <<" wave_period_s="<<period_live
+             <<" tau_s="<<tau_live
+             <<" sigma_mps2="<<sigma_live
+             <<" RS_entry="<<rs_live
+             <<" RS_word_min="<<rs_min
+             <<" RS_word_max="<<rs_max
+             <<" max_abs_accel="<<max_abs
+             <<" quadrature_rel="<<quadrature_relative
+             <<"\n";
+    return 0;
 }
