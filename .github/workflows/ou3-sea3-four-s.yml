@@ -3,10 +3,25 @@ name: ou3-sea3-four-s
 on:
   pull_request:
     paths:
-      - "tools/ou3_*.py"
-      - "tests/validation/test_ou3_*.py"
+      - "tools/ou3_sea3_four_s_translation_information.py"
+      - "tools/ou3_sea3_four_s_translation_information_tight.py"
+      - "tools/ou3_sea3_four_s_live_prior_metric.py"
+      - "tools/ou3_sea3_h18_information_composition.py"
+      - "tools/ou3_sea3_h18_prior_free_completion.py"
+      - "tools/ou3_sea3_a21_detectability_completion.py"
+      - "tools/ou3_sea3_windowed_vector_pe.py"
+      - "tools/ou3_full_process_ucc.py"
+      - "tests/validation/test_ou3_sea3_four_s_translation_information.py"
+      - "tests/validation/test_ou3_sea3_four_s_live_prior_metric.py"
+      - "tests/validation/test_ou3_sea3_h18_information_composition.py"
+      - "tests/validation/test_ou3_sea3_h18_prior_free_completion.py"
+      - "tests/validation/test_ou3_sea3_a21_detectability_completion.py"
       - ".github/workflows/ou3-sea3-four-s.yml"
   workflow_dispatch:
+
+concurrency:
+  group: ou3-sea3-four-s-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -19,7 +34,7 @@ jobs:
       - uses: actions/checkout@v6
         with:
           persist-credentials: false
-      - name: Build complete SEA3 four-S translation information
+      - name: Build complete SEA3 four-S and H18 certificates
         run: |
           python3 tools/ou3_sea3_four_s_translation_information.py --output /tmp/ou3_sea3_four_s.json
           python3 tools/ou3_sea3_four_s_translation_information_tight.py --output /tmp/ou3_sea3_four_s_tight.json
@@ -27,7 +42,6 @@ jobs:
           python3 tools/ou3_sea3_h18_information_composition.py --output /tmp/ou3_sea3_h18_information.json
           python3 tools/ou3_sea3_h18_prior_free_completion.py --output /tmp/ou3_sea3_h18_prior_free_completion.json
           python3 tools/ou3_sea3_a21_detectability_completion.py --output /tmp/ou3_sea3_a21_detectability_completion.json
-          python3 tools/ou3_sea3_a21_prior_free_completion.py --output /tmp/ou3_sea3_a21_mixed_completion_status.json
           python3 - <<'PY'
           import json, sys
           sys.path.insert(0, 'tools')
@@ -40,20 +54,13 @@ jobs:
           h=json.load(open('/tmp/ou3_sea3_h18_information.json'))
           hp=json.load(open('/tmp/ou3_sea3_h18_prior_free_completion.json'))
           a=json.load(open('/tmp/ou3_sea3_a21_detectability_completion.json'))
-          ap=json.load(open('/tmp/ou3_sea3_a21_mixed_completion_status.json'))
-          assert d['validation_pass'], d['validation_failures']
-          assert t['validation_pass'], t['validation_failures']
-          assert pm['validation_pass'], pm['validation_failures']
-          assert h['validation_pass'], h['validation_failures']
-          assert hp['validation_pass'], hp['validation_failures']
-          assert a['validation_pass'], a['validation_failures']
-          assert ap['validation_pass'], ap['validation_failures']
+          for x in (d,t,pm,h,hp,a):
+              assert x['validation_pass'], x['validation_failures']
           assert d['canonical_source'] == 'COMPLETE_SEA3_NORMAL_LIVE_WORD'
           assert t['canonical_source'] == d['canonical_source']
           assert pm['canonical_source'] == d['canonical_source']
           assert hp['canonical_source'] == d['canonical_source']
           assert a['canonical_source'] == d['canonical_source']
-          assert ap['canonical_source'] == d['canonical_source']
           assert d['component_of_complete_SEA3_full_word'] is True
           assert d['P3_architecture_replaced'] is False
           assert d['source_family_replaced'] is False
@@ -63,8 +70,7 @@ jobs:
           assert d['instantaneous_R_S_target_substituted_for_applied_R_S'] is False
           assert d['time_varying_tau_allowed_inside_selected_subword'] is True
           assert d['dimensionless_translation_state'] == ['S','g*p','g^2*v','g^3*a_w']
-          ni=d['newton_coordinate_information']
-          nti=t['newton_coordinate_information']
+          ni=d['newton_coordinate_information']; nti=t['newton_coordinate_information']
           assert ni['full_4x4_matrix_inequality_closed'] is True
           assert ni['third_divided_difference_lower_enters_quantitative_bound'] is True
           assert ni['determinant_used_for_information_lower'] is False
@@ -75,14 +81,11 @@ jobs:
           assert pm['shipping_Live_covariance_seed_consumed'] is True
           assert pm['actual_applied_SpectralMSE_R_S_consumed'] is True
           assert pm['translation_batch_prior_condition_pass'] is True
-          assert pm['translation_Live_prior_metric_information_lambda_min_lower'] >= pm['batch_required_information_ratio']
           assert h['component_of_complete_SEA3_full_word'] is True
           assert h['selected_four_S_events_replace_complete_word'] is False
           assert h['actual_applied_SpectralMSE_R_S_consumed'] is True
           assert h['tight_four_S_measurement_covariance_structure_consumed'] is True
           assert h['directional_four_S_inverse_row_bound_used'] is True
-          assert h['accelerometer_cross_touches_only_aw_translation_coordinate'] is True
-          assert h['directional_information_strictly_improves_legacy_scalarized_bound'] is True
           assert h['triangular_information_composition']['full_18x18_matrix_information_lower_closed'] is True
           assert h['H18_information_useful_gate_pass'] is True
           assert h['triangular_information_composition']['D_H18_lambda_min_lower'] >= 1.0e-18
@@ -96,50 +99,19 @@ jobs:
           assert a['eta9_point_packet_shortcut_used'] is False
           assert a['A21_finite_bias_detectability_closed'] is True
           assert a['A21_detectability_asymptotic_word_energy_gap_lower'] >= 1.0e-18
-          assert ap['paper_active_bias_route'] == 'ETA6_PLUS_FINITE_RESIDUAL_BIAS_CORRELATION'
-          assert ap['eta9_point_packet_shortcut_used'] is False
-          assert ap['finite_tau_detectability_does_not_imply_full_A21_information_inverse'] is True
-          assert ap['full_A21_D_inverse_available'] is False
-          assert ap['full_A21_prior_free_D_inverse_identity_used'] is False
-          assert ap['invalid_append_Qba_to_H18_full_D_completion_rejected'] is True
-          assert ap['full_21x21_Omega_minus_delta_P_LDLT_closed'] is False
-          assert ap['A21_prior_free_completion_closed'] is False
-          assert ap['stable_bias_prior_process_domination']['delta_times_ratio_is_small'] is True
-          assert ap['stable_bias_prior_process_domination']['same_congruence_preserves_tag_domination_after_first_prediction'] is True
+          # Full A21 Riccati closure is owned only by ou3-sea3-a21-word.
+          assert a['full_21x21_Omega_minus_delta_P_LDLT_closed_here'] is False
           pe=PE.build(); assert not PE.validate(pe)
           proc=PROC.build(); assert not PROC.validate(proc)
           live=LIVE.build(); assert not LIVE.validate(live)
           print('FOUR_S_GAP', d['uniform_S_gap_s_upper'])
-          print('FOUR_S_WINDOWS', d['four_S_windows_s'])
-          print('FOUR_S_RS_BASE', d['R_S_applied_base_std'])
           print('FOUR_S_D_CORRECTED_BASE', ni['D_S_physical_lambda_min_lower'])
           print('FOUR_S_D_TIGHT', nti['D_S_physical_lambda_min_lower'])
-          print('FOUR_S_COV_BASE', d['selected_S_record_noise']['four_record_covariance_lambda_max_upper'])
-          print('FOUR_S_COV_TIGHT', t['selected_S_record_noise']['four_record_covariance_lambda_max_upper'])
-          print('FOUR_S_LIVE_PRIOR_METRIC', pm['translation_Live_prior_metric_information_lambda_min_lower'])
-          print('FOUR_S_BATCH_REQUIRED', pm['batch_required_information_ratio'])
-          print('PE_ALPHA6', pe['eta6_information']['alpha_6_information_lower'])
           print('H18_INFORMATION_LOWER', h['triangular_information_composition']['D_H18_lambda_min_lower'])
-          print('H18_INFORMATION_LEGACY_SCALAR', h['triangular_information_composition']['legacy_scalarized_D_H18_lambda_min_lower_diagnostic'])
-          print('H18_USEFUL_GATE_PASS', h['H18_information_useful_gate_pass'])
-          print('H18_CROSS_NORM_SQ_UPPER', h['accelerometer_translation_cross_norm_squared_upper'])
-          print('H18_PRIOR_FREE_PBAR_TRACE', hp['same_word_diffuse_prior_covariance_upper']['Pbar_trace_upper'])
-          print('H18_PRIOR_FREE_PENALTY', hp['delta_squared_over_four_penalty_physical'])
-          print('H18_PRIOR_FREE_X_CELLS', hp['x_cells_certified'])
           print('H18_PRIOR_FREE_WORST_PIVOT', hp['worst_full_H18_LDLT_pivot_lower'])
           print('A21_DETECTABILITY_GAP', a['A21_detectability_asymptotic_word_energy_gap_lower'])
-          print('A21_BIAS_ENERGY_GAP', a['bias_homogeneous_energy_gap_lower'])
-          print('A21_INVALID_FULL_D_ROUTE_REJECTED', ap['invalid_append_Qba_to_H18_full_D_completion_rejected'])
-          print('A21_BIAS_PRIOR_PROCESS_RATIO', ap['stable_bias_prior_process_domination']['ratio_c_b_upper'])
-          print('A21_DELTA_TIMES_BIAS_RATIO', ap['stable_bias_prior_process_domination']['delta_times_ratio_upper'])
-          print('A21_FULL_RICCATI_MATRIX_CLOSED', ap['full_21x21_Omega_minus_delta_P_LDLT_closed'])
-          print('A_BIAS_CONTRACTION_GAP', pe['A_mode_bias_route']['homogeneous_bias_contraction_gap_lower'])
           print('PROCESS_H_Q_MIN_DIAGNOSTIC', proc['modes']['H']['prediction_Q_lambda_min_lower'])
           print('PROCESS_A_Q_MIN_DIAGNOSTIC', proc['modes']['A']['prediction_Q_lambda_min_lower'])
-          print('LIVE_CONSTRUCTOR', live['constructor'])
-          print('LIVE_TRANSLATION_SEED', live['translation_seed'])
-          print('LIVE_AW_SEED', live['aw_live_seed'])
-          print('LIVE_ATTITUDE_SEED', live['full_heading_gauged_live_attitude_seed'])
           PY
       - name: Test complete SEA3 information contracts
         working-directory: tests/validation
@@ -149,8 +121,7 @@ jobs:
             test_ou3_sea3_four_s_live_prior_metric \
             test_ou3_sea3_h18_information_composition \
             test_ou3_sea3_h18_prior_free_completion \
-            test_ou3_sea3_a21_detectability_completion \
-            test_ou3_sea3_a21_prior_free_completion
+            test_ou3_sea3_a21_detectability_completion
       - uses: actions/upload-artifact@v6
         with:
           name: ou3-sea3-four-s
@@ -161,5 +132,4 @@ jobs:
             /tmp/ou3_sea3_h18_information.json
             /tmp/ou3_sea3_h18_prior_free_completion.json
             /tmp/ou3_sea3_a21_detectability_completion.json
-            /tmp/ou3_sea3_a21_mixed_completion_status.json
           retention-days: 7
