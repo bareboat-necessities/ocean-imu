@@ -9,10 +9,19 @@ same-history set as soon as Live/mode/acceptance/tuner/pseudo-period histories
 differ.  In particular, the nominal and perturbed filters must retain the same
 actual applied ``R_S`` sequence.
 
+The nonlinear endpoint is the exact timestamp of the selected 600-sample
+shipping word, not an independently rounded wall-clock horizon.  This matters
+late in a float-time replay: at about 1195 s, 599 float increments plus a
+half-dt tolerance can already cross a nominal 3.000 s wall-clock threshold.
+The diagnostic therefore consumes the linear word's literal t0/t1 and rejects
+any nonlinear case that does not land on that same endpoint.
+
 The scales are restricted by the already-declared startup/error envelope and
 the widest P4 attitude candidate; this script does not widen the theorem domain.
-A rho >= 1 finding is reported, never hidden by changing source language,
-retuning the filter, or replacing due S updates.
+Both signs of the limiting linear direction are exercised, including small
+radii needed to distinguish a true nonlinear loss from a first-variation or
+coordinate mismatch.  A rho >= 1 finding is reported, never hidden by changing
+source language, retuning the filter, or replacing due S updates.
 """
 from __future__ import annotations
 
@@ -92,18 +101,28 @@ def max_scale_in_declared_envelope(direction: list[float], mode: str, domain: di
 
 
 def choose_scales(max_scale: float) -> list[float]:
-    base = [0.125, 0.25, 0.5, 1.0, 2.0, 4.0, 8.0, 16.0, 32.0]
-    out = [x for x in base if x <= max_scale * (1.0 + 1e-12)]
-    if not out or max_scale > out[-1] * (1.0 + 1e-6):
-        out.append(max_scale)
+    # The previous first radius (0.125) was too large to diagnose H18's
+    # 1.35e-4 linear margin.  Retain it and the larger envelope probes, but add
+    # dyadic small radii and both signs.  Avoid ultra-small float perturbations
+    # where subtraction of two float-state trajectories dominates the signal.
+    magnitudes = [
+        0.015625, 0.03125, 0.0625, 0.125, 0.25, 0.5,
+        1.0, 2.0, 4.0, 8.0, 16.0, 32.0,
+    ]
+    mags = [x for x in magnitudes if x <= max_scale * (1.0 + 1e-12)]
+    if not mags or max_scale > mags[-1] * (1.0 + 1e-6):
+        mags.append(max_scale)
     uniq: list[float] = []
-    for x in out:
+    for x in mags:
         if not uniq or abs(x - uniq[-1]) > 1e-6 * max(1.0, abs(x)):
             uniq.append(x)
-    return uniq
+    out: list[float] = []
+    for x in uniq:
+        out.extend((-x, x))
+    return out
 
 
-def read_trace(path: Path) -> dict:
+def read_trace(path: Path, expected_t1: float) -> dict:
     with path.open(newline="", encoding="utf-8") as f:
         rows = list(csv.DictReader(f))
     if len(rows) < 2:
@@ -115,8 +134,14 @@ def read_trace(path: Path) -> dict:
     last = endpoints[-1]
     injection_cov = float(first["covariance_rel_fro"])
     covariance_identical_at_injection = math.isfinite(injection_cov) and injection_cov <= 2.0e-7
+    endpoint_time = float(last["time_s"])
+    endpoint_matches_complete_word = (
+        math.isfinite(endpoint_time)
+        and abs(endpoint_time - expected_t1) <= 2.0e-6
+    )
     source_match = (
         covariance_identical_at_injection
+        and endpoint_matches_complete_word
         and all(int(r["source_match"]) == 1 for r in rows)
     )
     w0 = float(first["W_nominal"])
@@ -127,6 +152,11 @@ def read_trace(path: Path) -> dict:
         "source_match": source_match,
         "covariance_identical_at_injection": covariance_identical_at_injection,
         "injection_covariance_rel_fro": injection_cov,
+        "endpoint_matches_complete_word": endpoint_matches_complete_word,
+        "expected_endpoint_time_s": expected_t1,
+        "endpoint_time_s": endpoint_time,
+        "endpoint_time_error_s": endpoint_time - expected_t1,
+        "endpoint_time_from_injection_s": float(last["time_from_injection_s"]),
         "W0_nominal_metric": w0,
         "W1_nominal_metric": w1,
         "rho_nonlinear": rho,
@@ -144,17 +174,30 @@ def read_trace(path: Path) -> dict:
     }
 
 
-def run_case(sim: Path, input_path: Path, mode: str, t0: float, direction: list[float], scale: float, out_dir: Path) -> dict:
+def run_case(
+    sim: Path,
+    input_path: Path,
+    mode: str,
+    t0: float,
+    t1: float,
+    direction: list[float],
+    scale: float,
+    out_dir: Path,
+) -> dict:
     delta = [scale * x for x in direction]
     if mode == "H18":
         delta[18:21] = [0.0, 0.0, 0.0]
-    trace = out_dir / f"nonlinear_{mode}_scale_{scale:.12g}.csv"
+    tag = f"{scale:+.12g}".replace("+", "p").replace("-", "m")
+    trace = out_dir / f"nonlinear_{mode}_scale_{tag}.csv"
+    exact_horizon = t1 - t0
+    if not (math.isfinite(exact_horizon) and exact_horizon > 0.0):
+        raise RuntimeError(f"invalid complete-word horizon for {mode}: {exact_horizon}")
     env = os.environ.copy()
     env.update({
         "OU3_NEIGHBOR_TRACE": str(trace),
         "OU3_NEIGHBOR_DELTA": ",".join(f"{x:.17g}" for x in delta),
         "OU3_NEIGHBOR_INJECT_TIME_S": f"{t0:.17g}",
-        "OU3_NEIGHBOR_HORIZON_S": "3.0",
+        "OU3_NEIGHBOR_HORIZON_S": f"{exact_horizon:.17g}",
         "OU3_NEIGHBOR_MODE": "H" if mode == "H18" else "A",
         "OU3_NEIGHBOR_TRACE_STRIDE": "10",
         "W3D_WRITE_TIMESERIES": "0",
@@ -171,7 +214,10 @@ def run_case(sim: Path, input_path: Path, mode: str, t0: float, direction: list[
     result = {
         "mode": mode,
         "scale": scale,
+        "absolute_scale": abs(scale),
         "requested_injection_s": t0,
+        "expected_endpoint_s": t1,
+        "requested_exact_word_horizon_s": exact_horizon,
         "delta": delta,
         "delta_group_norms": {name: group_norm(delta, name) for name in GROUPS},
         "returncode": cp.returncode,
@@ -179,11 +225,12 @@ def run_case(sim: Path, input_path: Path, mode: str, t0: float, direction: list[
         "trace": str(trace),
     }
     if cp.returncode == 0 and trace.exists():
-        result.update(read_trace(trace))
+        result.update(read_trace(trace, t1))
     else:
         result.update({
             "source_match": False,
             "covariance_identical_at_injection": False,
+            "endpoint_matches_complete_word": False,
             "rho_nonlinear": None,
             "distance_to_one": None,
         })
@@ -217,9 +264,11 @@ def main() -> int:
         "filter_changed": False,
         "declared_domain_changed": False,
         "same_shipping_covariance_at_injection_required": True,
+        "same_complete_word_endpoint_required": True,
         "same_actual_applied_RS_history_required": True,
         "same_accelerometer_acceptance_history_required": True,
         "same_vector_acceptance_history_required": True,
+        "both_signs_of_limiting_direction_tested": True,
         "packet_count_remainder_budget_used": False,
         "selected_S_subset_used": False,
         "input": str(args.input),
@@ -231,16 +280,23 @@ def main() -> int:
         direction = [float(x) for x in worst["maximizing_direction"]["components"]]
         max_scale, limit = max_scale_in_declared_envelope(direction, mode, domain, args.input)
         scales = choose_scales(max_scale)
+        t0 = float(worst["t0"])
+        t1 = float(worst["t1"])
         cases = [
-            run_case(args.sim.resolve(), args.input.resolve(), mode, float(worst["t0"]), direction, s, args.output_dir.resolve())
+            run_case(
+                args.sim.resolve(), args.input.resolve(), mode,
+                t0, t1, direction, s, args.output_dir.resolve(),
+            )
             for s in scales
         ]
         valid = [c for c in cases if finite_case(c)]
+        smallest = min(valid, key=lambda c: abs(float(c["scale"]))) if valid else None
         report["modes"][mode] = {
             "rho_linear_worst_word": float(worst["rho_linear"]),
             "linear_distance_to_one": float(worst["distance_to_one"]),
-            "word_t0": float(worst["t0"]),
-            "word_t1": float(worst["t1"]),
+            "word_t0": t0,
+            "word_t1": t1,
+            "word_horizon_s_from_shipping_timestamps": t1 - t0,
             "S_update_count": int(worst["S_update_count"]),
             "acc_count": int(worst["acc_count"]),
             "mag_count": int(worst["mag_count"]),
@@ -251,7 +307,13 @@ def main() -> int:
             "cases": cases,
             "same_history_cases": len(valid),
             "worst_same_history_nonlinear_rho": max((float(c["rho_nonlinear"]) for c in valid), default=None),
-            "largest_same_history_scale": max((float(c["scale"]) for c in valid), default=None),
+            "largest_same_history_absolute_scale": max((abs(float(c["scale"])) for c in valid), default=None),
+            "smallest_same_history_absolute_scale": abs(float(smallest["scale"])) if smallest else None,
+            "smallest_scale_rho": float(smallest["rho_nonlinear"]) if smallest else None,
+            "smallest_scale_minus_linear_rho": (
+                float(smallest["rho_nonlinear"]) - float(worst["rho_linear"])
+                if smallest else None
+            ),
             "strict_contraction_on_all_same_history_cases": bool(valid) and all(float(c["rho_nonlinear"]) < 1.0 for c in valid),
         }
 
@@ -263,7 +325,10 @@ def main() -> int:
             "scale_limit": report["modes"][mode]["declared_scale_limit"],
             "limiter": report["modes"][mode]["declared_scale_limit_detail"]["limiting_constraint"],
             "same_history_cases": report["modes"][mode]["same_history_cases"],
-            "largest_same_history_scale": report["modes"][mode]["largest_same_history_scale"],
+            "largest_same_history_absolute_scale": report["modes"][mode]["largest_same_history_absolute_scale"],
+            "smallest_same_history_absolute_scale": report["modes"][mode]["smallest_same_history_absolute_scale"],
+            "smallest_scale_rho": report["modes"][mode]["smallest_scale_rho"],
+            "smallest_scale_minus_linear_rho": report["modes"][mode]["smallest_scale_minus_linear_rho"],
             "worst_nonlinear_rho": report["modes"][mode]["worst_same_history_nonlinear_rho"],
             "all_contract": report["modes"][mode]["strict_contraction_on_all_same_history_cases"],
         }
