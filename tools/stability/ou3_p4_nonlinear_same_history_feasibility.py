@@ -96,7 +96,6 @@ def choose_scales(max_scale: float) -> list[float]:
     out = [x for x in base if x <= max_scale * (1.0 + 1e-12)]
     if not out or max_scale > out[-1] * (1.0 + 1e-6):
         out.append(max_scale)
-    # Avoid a near-duplicate terminal value.
     uniq: list[float] = []
     for x in out:
         if not uniq or abs(x - uniq[-1]) > 1e-6 * max(1.0, abs(x)):
@@ -114,17 +113,24 @@ def read_trace(path: Path) -> dict:
     if not endpoints:
         raise RuntimeError(f"nonlinear trace has no endpoint: {path}")
     last = endpoints[-1]
-    source_match = all(int(r["source_match"]) == 1 for r in rows)
+    injection_cov = float(first["covariance_rel_fro"])
+    covariance_identical_at_injection = math.isfinite(injection_cov) and injection_cov <= 2.0e-7
+    source_match = (
+        covariance_identical_at_injection
+        and all(int(r["source_match"]) == 1 for r in rows)
+    )
     w0 = float(first["W_nominal"])
     w1 = float(last["W_nominal"])
-    rho = w1 / w0 if w0 > 0.0 and math.isfinite(w0) and math.isfinite(w1) else math.nan
+    rho = w1 / w0 if w0 > 0.0 and math.isfinite(w0) and math.isfinite(w1) else None
     return {
         "rows": len(rows),
         "source_match": source_match,
+        "covariance_identical_at_injection": covariance_identical_at_injection,
+        "injection_covariance_rel_fro": injection_cov,
         "W0_nominal_metric": w0,
         "W1_nominal_metric": w1,
         "rho_nonlinear": rho,
-        "distance_to_one": 1.0 - rho if math.isfinite(rho) else math.nan,
+        "distance_to_one": 1.0 - rho if rho is not None else None,
         "initial_theta_rad": float(first["theta_rad"]),
         "endpoint_theta_rad": float(last["theta_rad"]),
         "endpoint_error_norm": float(last["error_norm"]),
@@ -175,8 +181,18 @@ def run_case(sim: Path, input_path: Path, mode: str, t0: float, direction: list[
     if cp.returncode == 0 and trace.exists():
         result.update(read_trace(trace))
     else:
-        result.update({"source_match": False, "rho_nonlinear": math.nan})
+        result.update({
+            "source_match": False,
+            "covariance_identical_at_injection": False,
+            "rho_nonlinear": None,
+            "distance_to_one": None,
+        })
     return result
+
+
+def finite_case(c: dict) -> bool:
+    rho = c.get("rho_nonlinear")
+    return c.get("source_match") is True and isinstance(rho, (int, float)) and math.isfinite(float(rho))
 
 
 def main() -> int:
@@ -200,6 +216,7 @@ def main() -> int:
         "P4_promoted": False,
         "filter_changed": False,
         "declared_domain_changed": False,
+        "same_shipping_covariance_at_injection_required": True,
         "same_actual_applied_RS_history_required": True,
         "same_accelerometer_acceptance_history_required": True,
         "same_vector_acceptance_history_required": True,
@@ -214,8 +231,11 @@ def main() -> int:
         direction = [float(x) for x in worst["maximizing_direction"]["components"]]
         max_scale, limit = max_scale_in_declared_envelope(direction, mode, domain, args.input)
         scales = choose_scales(max_scale)
-        cases = [run_case(args.sim.resolve(), args.input.resolve(), mode, float(worst["t0"]), direction, s, args.output_dir.resolve()) for s in scales]
-        valid = [c for c in cases if c.get("source_match") is True and math.isfinite(float(c.get("rho_nonlinear", math.nan)))]
+        cases = [
+            run_case(args.sim.resolve(), args.input.resolve(), mode, float(worst["t0"]), direction, s, args.output_dir.resolve())
+            for s in scales
+        ]
+        valid = [c for c in cases if finite_case(c)]
         report["modes"][mode] = {
             "rho_linear_worst_word": float(worst["rho_linear"]),
             "linear_distance_to_one": float(worst["distance_to_one"]),
@@ -249,8 +269,6 @@ def main() -> int:
         }
         for mode in ("H18", "A21")
     }, indent=2, sort_keys=True))
-    # Harness success requires at least one legal same-history nonlinear case in
-    # each mode.  A rho>=1 result remains a reported mathematical finding.
     return 0 if all(report["modes"][m]["same_history_cases"] > 0 for m in ("H18", "A21")) else 2
 
 
