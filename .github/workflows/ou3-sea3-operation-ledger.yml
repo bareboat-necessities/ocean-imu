@@ -1,0 +1,183 @@
+name: ou3-sea3-operation-ledger
+
+on:
+  push:
+    branches: [codex/ou3-complete-sea3-shipping-feasibility]
+    paths:
+      - tests/kalman_ou_iii/ou3-sea3-complete-word-feasibility-test.cpp
+      - tests/kalman_ou_iii/ou3-sea3-complete-word-operation-ledger-test.cpp
+      - tools/stability/ou3_sea3_complete_word_feasibility_trace.py
+      - tools/stability/ou3_sea3_validated_continuum_member.py
+      - src/kalman_ou_iii/**
+      - src/tuner/**
+      - src/ahrs/**
+      - .github/workflows/ou3-sea3-operation-ledger.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  complete-sea3-operation-ledger:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install Eigen
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libeigen3-dev
+
+      - name: Generate the same admitted continuum SEA3 history
+        run: |
+          set -euo pipefail
+          python3 tools/stability/ou3_sea3_complete_word_feasibility_trace.py \
+            --output /tmp/sea3-complete-word-float-trace.json \
+            --shipping-input /tmp/sea3-complete-word-specific-force-z.txt
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/sea3-complete-word-float-trace.json'))
+          assert d['validation_pass'], d['validation_failures']
+          assert d['canonical_source']=='COMPLETE_SEA3_NORMAL_LIVE_WORD'
+          assert d['same_continuum_member_across_startup_H_release_A'] is True
+          assert d['all_intervals_round_to_unique_binary32'] is True
+          assert d['trajectory_replay_used'] is False
+          assert d['finite_harmonic_source_used'] is False
+          assert d['independent_tuner_schedule_used'] is False
+          assert d['independent_RS_schedule_used'] is False
+          PY
+
+      - name: Compile nonlinear complete-word scanner and operation ledger
+        run: |
+          set -euo pipefail
+          g++ -O3 -std=c++20 -Wall -Wextra -Wpedantic -Werror -Wno-unused-function \
+            -DEIGEN_NON_ARDUINO -I./src -isystem /usr/include/eigen3 \
+            tests/kalman_ou_iii/ou3-sea3-complete-word-feasibility-test.cpp \
+            -o /tmp/ou3-sea3-complete-word-feasibility
+          g++ -O3 -std=c++20 -Wall -Wextra -Wpedantic -Werror -Wno-unused-function \
+            -DEIGEN_NON_ARDUINO -I./src -isystem /usr/include/eigen3 \
+            tests/kalman_ou_iii/ou3-sea3-complete-word-operation-ledger-test.cpp \
+            -o /tmp/ou3-sea3-complete-word-operation-ledger
+
+      - name: Measure nonlinear worst directions on the admitted point
+        run: |
+          set -euo pipefail
+          /tmp/ou3-sea3-complete-word-feasibility \
+            /tmp/sea3-complete-word-specific-force-z.txt \
+            | tee /tmp/ou3-sea3-complete-word-feasibility.json
+          python3 - <<'PY'
+          import json,math
+          d=json.load(open('/tmp/ou3-sea3-complete-word-feasibility.json'))
+          assert d['canonical_source']=='COMPLETE_SEA3_NORMAL_LIVE_WORD'
+          assert d['same_continuum_source_across_H_release_A'] is True
+          assert d['trajectory_replay_used'] is False
+          assert d['finite_harmonic_source_used'] is False
+          assert d['independent_schedule_used'] is False
+          assert d['shipping_coordinates_used'] is True
+          assert d['P3_delta_changed'] is False and d['P4_promoted'] is False
+          assert len(d['H18_worst_tested']['direction'])==18
+          assert len(d['A21_worst_tested']['direction'])==21
+          assert math.isfinite(d['H18_worst_tested']['rho'])
+          assert math.isfinite(d['A21_worst_tested']['rho'])
+          PY
+
+      - name: Execute ordered shipping event ledger
+        run: |
+          set -euo pipefail
+          H_DIR=$(python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/ou3-sea3-complete-word-feasibility.json'))
+          print(','.join(format(x,'.17g') for x in d['H18_worst_tested']['direction']))
+          PY
+          )
+          H_RHO=$(python3 - <<'PY'
+          import json
+          print(format(json.load(open('/tmp/ou3-sea3-complete-word-feasibility.json'))['H18_worst_tested']['rho'],'.17g'))
+          PY
+          )
+          A_DIR=$(python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/ou3-sea3-complete-word-feasibility.json'))
+          print(','.join(format(x,'.17g') for x in d['A21_worst_tested']['direction']))
+          PY
+          )
+          A_RHO=$(python3 - <<'PY'
+          import json
+          print(format(json.load(open('/tmp/ou3-sea3-complete-word-feasibility.json'))['A21_worst_tested']['rho'],'.17g'))
+          PY
+          )
+          /tmp/ou3-sea3-complete-word-operation-ledger \
+            /tmp/sea3-complete-word-specific-force-z.txt \
+            "$H_DIR" "$H_RHO" "$A_DIR" "$A_RHO" \
+            | tee /tmp/ou3-sea3-operation-ledger.json
+
+      - name: Validate non-promoting ledger provenance and telescoping
+        run: |
+          python3 - <<'PY'
+          import json,math
+          d=json.load(open('/tmp/ou3-sea3-operation-ledger.json'))
+          assert d['qualification']=='OU3_COMPLETE_SEA3_NONPROMOTING_OPERATION_LEDGER_V1'
+          assert d['canonical_source']=='COMPLETE_SEA3_NORMAL_LIVE_WORD'
+          assert d['same_validated_continuum_member'] is True
+          assert d['pending_tune_consumed_at_shipping_boundary'] is True
+          assert d['actual_committed_per_axis_RS_observed'] is True
+          assert d['trajectory_replay_used'] is False
+          assert d['finite_harmonic_source_used'] is False
+          assert d['independent_F_Q_schedule_used'] is False
+          assert d['independent_RS_schedule_used'] is False
+          assert d['tangent_ledger_only'] is True
+          assert d['P4_promoted'] is False
+
+          H=d['H18']; HA=d['H18_release_A21_connected']; A=d['A21']
+          assert H['imu_samples']==601 and A['imu_samples']==601 and HA['imu_samples']==1202
+          assert H['dimension_final']==18 and A['dimension_final']==21 and HA['dimension_final']==21
+          assert H['H18_to_A21_lift']['count']==0
+          assert A['H18_to_A21_lift']['count']==0
+          assert HA['H18_to_A21_lift']['count']==1
+          for r in (H,A):
+              assert r['vector_due']>=300
+              assert r['vector_accepted']==r['vector_due']
+              assert r['vector_rejected']==0
+              assert r['accelerometer']['count']==601
+              assert r['prediction']['count']==601
+              assert r['S_zero']['count']>0
+              assert r['rs_schedule_changes']>0
+              assert all(math.isfinite(x) and x>0 for x in r['RS_std_min_xyz'])
+              assert all(math.isfinite(x) and x>0 for x in r['RS_std_max_xyz'])
+              assert math.isfinite(r['tangent_rho']) and r['tangent_rho']>=0
+              assert math.isfinite(r['nonlinear_rho_reference']) and r['nonlinear_rho_reference']>=0
+              assert math.isfinite(r['tangent_minus_nonlinear_rho'])
+              assert r['covariance_reconstruction_residual_max']<=2.0e-4
+              assert abs(r['telescope_error']) <= 1.0e-5*max(1.0,abs(r['V0']))
+          assert HA['vector_due']>=600
+          assert HA['vector_accepted']==HA['vector_due']
+          assert HA['vector_rejected']==0
+          assert HA['accelerometer']['count']==1202
+          assert HA['prediction']['count']==1202
+          assert HA['S_zero']['count']>0
+          assert HA['rs_schedule_changes']>0
+          assert math.isfinite(HA['tangent_rho']) and HA['tangent_rho']>=0
+          assert math.isfinite(HA['nonlinear_rho_reference']) and HA['nonlinear_rho_reference']>=0
+          assert math.isfinite(HA['tangent_minus_nonlinear_rho'])
+          assert HA['covariance_reconstruction_residual_max']<=2.0e-4
+          assert abs(HA['telescope_error']) <= 1.0e-5*max(1.0,abs(HA['V0']))
+          print('H18 nonlinear/tangent', H['nonlinear_rho_reference'], H['tangent_rho'])
+          print('A21 nonlinear/tangent', A['nonlinear_rho_reference'], A['tangent_rho'])
+          print('H->A connected nonlinear/tangent', HA['nonlinear_rho_reference'], HA['tangent_rho'])
+          print('H18 signed deltas', {k:H[k]['sum_deltaV'] for k in ('prediction','aw_floor','S_zero','accelerometer','vector')})
+          print('A21 signed deltas', {k:A[k]['sum_deltaV'] for k in ('prediction','aw_floor','S_zero','accelerometer','vector')})
+          print('RS H min/max', H['RS_std_min_xyz'], H['RS_std_max_xyz'])
+          print('RS A min/max', A['RS_std_min_xyz'], A['RS_std_max_xyz'])
+          PY
+
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: ou3-sea3-operation-ledger
+          path: |
+            /tmp/sea3-complete-word-float-trace.json
+            /tmp/sea3-complete-word-specific-force-z.txt
+            /tmp/ou3-sea3-complete-word-feasibility.json
+            /tmp/ou3-sea3-operation-ledger.json
+          retention-days: 7
