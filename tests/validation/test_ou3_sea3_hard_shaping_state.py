@@ -39,8 +39,23 @@ class HardShapingStateContractTest(unittest.TestCase):
         self.assertFalse(behavior["validated_membership_or_separation_oracle_closed"])
         self.assertFalse(behavior["validated_correlated_outer_enclosure_closed"])
         self.assertFalse(d["hard_shaping_state_or_excitation_bound_closed"])
+        self.assertFalse(d["conditional_SEA3_source_output_closed"])
+        self.assertFalse(d["deployment_left_inclusion_closed"])
         self.assertFalse(d["complete_SEA3_family_materialized_here"])
         self.assertFalse(d["P3_promoted"])
+
+    def test_conditional_execution_does_not_require_deployment_left_inclusion(self) -> None:
+        d = SHAPING.build()
+        self.assertFalse(d["conditional_execution_requires_deployment_left_inclusion"])
+        self.assertFalse(SHAPING.COMPLETE_SEA3_LEFT_INCLUSION_CLOSED)
+        self.assertFalse(SHAPING.DEPLOYMENT_LEFT_INCLUSION_CLOSED)
+        # The conditional gate remains fail-closed for the actual missing
+        # driver and same-history source-output obligations; this separation
+        # therefore cannot create a witness or promote P3/P4 by itself.
+        self.assertFalse(SHAPING.HARD_SPECTRAL_DRIVER_SET_CLOSED)
+        self.assertFalse(SHAPING.JOINT_SOURCE_OUTPUT_MAP_CLOSED)
+        self.assertFalse(SHAPING.HARD_SHAPING_STATE_OR_EXCITATION_BOUND_CLOSED)
+        self.assertFalse(SHAPING.CONDITIONAL_SEA3_SOURCE_OUTPUT_CLOSED)
 
     def test_forbidden_surrogates_cannot_close_xs(self) -> None:
         d = SHAPING.build()
@@ -55,7 +70,7 @@ class HardShapingStateContractTest(unittest.TestCase):
         ):
             self.assertFalse(d[key], key)
 
-    def test_phase_is_closed_but_driver_and_output_remain_open(self) -> None:
+    def test_phase_is_closed_but_driver_output_and_deployment_remain_open(self) -> None:
         d = SHAPING.build()
         self.assertEqual(
             d["executable_ingredients"],
@@ -67,6 +82,9 @@ class HardShapingStateContractTest(unittest.TestCase):
                 "joint_source_output_map_closed": False,
             },
         )
+        self.assertFalse(d["hard_shaping_state_or_excitation_bound_closed"])
+        self.assertFalse(d["conditional_SEA3_source_output_closed"])
+        self.assertFalse(d["deployment_left_inclusion_closed"])
 
 
 if __name__ == "__main__":
