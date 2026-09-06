@@ -16,6 +16,7 @@ import ou3_sea3_full_word_reset_congruence as RESET
 
 SCHEMA=1
 QUALIFICATION="OU3_SEA3_LITERAL_FULL_NORMAL_LIVE_WORD_WITH_SHIPPING_RESETS"
+CANONICAL_SOURCE="COMPLETE_SEA3_NORMAL_LIVE_WORD"
 DEFAULT_DOMAIN=BASE.DEFAULT_DOMAIN
 
 # Re-export the exact matrix packers/state type so this remains one literal API.
@@ -77,6 +78,9 @@ def build(domain_path:Path=DEFAULT_DOMAIN):
     if bf or rf: raise RuntimeError(f"reset-complete literal prerequisites: base={bf}, reset={rf}")
     H=_self_test("H"); A=_self_test("A"); parity=RESET.source_parity()
     out=dict(b); out["schema"]=SCHEMA; out["qualification"]=QUALIFICATION; out["base_qualification"]=b["qualification"]
+    # BASE is the literal complete-SEA3 word facade; this tag records that source
+    # identity for downstream composition and does not create or replace a source.
+    out["canonical_source"]=CANONICAL_SOURCE
     out["shipping_reset_source_parity"]=parity; out["shipping_reset_source_parity_pass"]=all(parity.values())
     out["reset_injection_supplied_by_same_source_word"]=True; out["reset_small_angle_bound_required"]=False
     out["S_Joseph_immediately_followed_by_left_reset"]=True; out["accelerometer_Joseph_immediately_followed_by_left_reset"]=True; out["magnetometer_Joseph_immediately_followed_by_left_reset"]=True
@@ -87,6 +91,7 @@ def build(domain_path:Path=DEFAULT_DOMAIN):
 def validate(d):
     probe=dict(d); probe["schema"]=BASE.SCHEMA; probe["qualification"]=d.get("base_qualification"); f=BASE.validate(probe)
     if d.get("schema")!=SCHEMA or d.get("qualification")!=QUALIFICATION: f.append("facade schema/qualification")
+    if d.get("canonical_source")!=CANONICAL_SOURCE: f.append("canonical source")
     for k in ("shipping_reset_source_parity_pass","reset_injection_supplied_by_same_source_word","S_Joseph_immediately_followed_by_left_reset","accelerometer_Joseph_immediately_followed_by_left_reset","magnetometer_Joseph_immediately_followed_by_left_reset","literal_reset_execution_complete"):
         if d.get(k) is not True: f.append(k)
     if d.get("reset_small_angle_bound_required") is not False: f.append("reset small-angle gate introduced")
@@ -96,5 +101,5 @@ def validate(d):
     return list(dict.fromkeys(f))
 
 def main():
-    d=build(); f=validate(d); print(json.dumps({"qualification":d["qualification"],"H_log":d["H_reset_execution_self_test"]["event_log"],"A_log":d["A_reset_execution_self_test"]["event_log"],"failures":f},indent=2)); return 0 if not f else 2
+    d=build(); f=validate(d); print(json.dumps({"qualification":d["qualification"],"canonical_source":d["canonical_source"],"H_log":d["H_reset_execution_self_test"]["event_log"],"A_log":d["A_reset_execution_self_test"]["event_log"],"failures":f},indent=2)); return 0 if not f else 2
 if __name__=="__main__": raise SystemExit(main())
