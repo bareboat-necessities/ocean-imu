@@ -4,87 +4,53 @@ on:
     branches: [codex/ou3-complete-sea3-shipping-feasibility]
     paths: [.github/workflows/ou3-feasibility-session.yml]
 permissions:
-  contents: write
+  contents: read
   actions: write
 jobs:
-  prepare-and-verify:
+  verify-and-dispatch:
     runs-on: ubuntu-latest
     timeout-minutes: 120
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       GH_REPO: ${{ github.repository }}
       BRANCH: codex/ou3-complete-sea3-shipping-feasibility
+      VERIFIED_TREE: 6bfdd646a28f50b246f0440e7ad89dc4cdaa4454
     steps:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
-      - name: Apply the hash-verified reviewed patch
-        env:
-          PATCH_B64: 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
+      - name: Verify the connector-published clean checkpoint
+        id: checkpoint
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD^)" = 7c99f68d76dc51185179d0b81b07d3aa710bf82e
-          test "$(git ls-remote origin refs/heads/$BRANCH | cut -f1)" = "$GITHUB_SHA"
-          python3 - <<'PY'
-          import base64, gzip, hashlib, os, pathlib, subprocess
-          patch = gzip.decompress(base64.b64decode(os.environ['PATCH_B64'], validate=True))
-          assert hashlib.sha256(patch).hexdigest() == 'f3742cb865c6c3ca75eb99db18935838b2415dae4094fa4d440643878a31a031'
-          pathlib.Path('/tmp/contract.patch').write_bytes(patch)
-          subprocess.run(['git', 'apply', '--check', '/tmp/contract.patch'], check=True)
-          subprocess.run(['git', 'apply', '--index', '/tmp/contract.patch'], check=True)
-          expected = {
-            '.github/workflows/ou3-proof.yml': '7ed7d4eb7860bfefa82f2e96ddc03bf5032f95d8',
-            'docs/ou3-proof-research-state.md': 'fa90aaffdb13f188d06c83db644ad9f241dda6e1',
-            'tests/validation/Makefile': '79ee3e88ee2c33d78fa995b1dfa8aa725305bfee',
-            'tests/validation/test_ou3_proof_cleanup.py': '19520228e8ec89452525d13ad2aba6611cf7f207',
-            'tests/validation/test_ou3_sea3_full_word_source_identity.py': '845d7531d60170c15bbb41c64ef00bc458df776f',
-            'tests/validation/test_ou3_sea3_p3_source_semantics.py': '6fbf724e8ac8ea152884b1d45e79d31b26215814',
-            'tests/validation/test_ou3_sea3_riccati_metric_p4.py': '77077b54fd1086d1a53924e4057a86c0f4ab16b6',
-            'tests/validation/test_ou3_sea3_source_family_fail_closed.py': '5a629d59c75da30850fc0daf51917170dca99730',
-            'tools/stability/ou3_p4_complete_sea3_accelerometer_operation_coordinate.py': '9b1b134466f47c9a0b45597ac709f98da65cdeee',
-            'tools/stability/ou3_p4_moving_metric_rebind.py': '436e97bd7aa73f1b9495fd17522f2e1398c4d5e3',
-            'tools/stability/ou3_sea3_riccati_metric_p4.py': 'c928643044da89be142331745df03914ebc79481',
-          }
-          changed = subprocess.check_output(['git', 'diff', '--cached', '--name-only'], text=True).splitlines()
-          assert set(changed) == set(expected), changed
-          for path, digest in expected.items():
-              assert subprocess.check_output(['git', 'hash-object', path], text=True).strip() == digest, path
-          PY
-          git rm .github/workflows/ou3-feasibility-session.yml
-          git diff --cached --check
-          test "$(git rev-parse HEAD:src)" = 53a10a7c02b1a0de4cef5ebab6e13e81909c4cdd
-          git diff --exit-code 59ae933ad34f2412fcaddf8c7b804ed43932dd11 -- src tools/stability/ou3_sea3_riccati_metric_p3.py tools/stability/ou3_proof_operating_domain.json tools/stability/ou3_sea3_directional_response_domain.json tools/stability/ou3_sea3_spectral_moment_bridge.json
-      - name: Validate the reviewed contracts before publication
-        run: |
-          set -euo pipefail
-          make -C tests/validation build
-          python3 -m unittest -v tests.validation.test_ou3_proof_cleanup tests.validation.test_ou3_stability_package_integrity tests.validation.test_ou3_p4_coordinate_transport_algebra tests.validation.test_ou3_p4_complete_sea3_correction_information_bound
-          python3 -m unittest discover -s tests/validation -p 'test_ou3_p4_*.py' -v
-          pipx install ruff
-          tools/quality_gates.sh python
-      - name: Publish the clean branch tree without merging
-        id: publish
-        run: |
-          set -euo pipefail
-          test "$(git ls-remote origin refs/heads/$BRANCH | cut -f1)" = "$GITHUB_SHA"
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git commit -m 'Separate structural P4 covariance identities from nonlinear closure and repair CI ownership'
-          test "$(git rev-parse HEAD:src)" = 53a10a7c02b1a0de4cef5ebab6e13e81909c4cdd
-          git push origin HEAD:refs/heads/$BRANCH
-          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          prepared=''
+          for attempt in $(seq 1 120); do
+            git fetch --quiet origin "$BRANCH"
+            candidate=$(git rev-parse FETCH_HEAD)
+            if test "$(git rev-parse "$candidate^{tree}")" = "$VERIFIED_TREE"; then
+              prepared=$candidate
+              break
+            fi
+            sleep 5
+          done
+          test -n "$prepared"
+          git merge-base --is-ancestor "$GITHUB_SHA" "$prepared"
+          test "$(git rev-parse "$prepared:src")" = 53a10a7c02b1a0de4cef5ebab6e13e81909c4cdd
+          ! git cat-file -e "$prepared:.github/workflows/ou3-feasibility-session.yml" 2>/dev/null
+          git diff --exit-code 59ae933ad34f2412fcaddf8c7b804ed43932dd11 "$prepared" -- src tools/stability/ou3_sea3_riccati_metric_p3.py tools/stability/ou3_proof_operating_domain.json tools/stability/ou3_sea3_directional_response_domain.json tools/stability/ou3_sea3_spectral_moment_bridge.json
+          echo "sha=$prepared" >> "$GITHUB_OUTPUT"
+          echo "CLEAN_VERIFIED_HEAD=$prepared"
           mkdir -p /tmp/ou3-receipt
-          git rev-parse HEAD HEAD^{tree} HEAD:src > /tmp/ou3-receipt/source-identity.txt
-          git diff --stat 59ae933ad34f2412fcaddf8c7b804ed43932dd11 HEAD > /tmp/ou3-receipt/changes.txt
-          git archive --format=tar.gz HEAD > /tmp/ou3-receipt/source.tar.gz
+          git rev-parse "$prepared" "$prepared^{tree}" "$prepared:src" > /tmp/ou3-receipt/source-identity.txt
+          git archive --format=tar.gz "$prepared" > /tmp/ou3-receipt/source.tar.gz
       - uses: actions/upload-artifact@v4
         with:
           name: ou3-verified-contract-checkpoint
           path: /tmp/ou3-receipt
           retention-days: 2
-      - name: Run the genuine full branch evidence workflow on the clean tree
+      - name: Run genuine full branch evidence on the clean checkpoint
         env:
-          PREPARED_SHA: ${{ steps.publish.outputs.sha }}
+          PREPARED_SHA: ${{ steps.checkpoint.outputs.sha }}
         run: |
           set -euo pipefail
           test "$(git ls-remote origin refs/heads/$BRANCH | cut -f1)" = "$PREPARED_SHA"
@@ -98,19 +64,19 @@ jobs:
           test -n "$run_id"
           echo "FULL_EVIDENCE_RUN=$run_id"
           gh run watch "$run_id" --exit-status --interval 30
-      - name: Dispatch final checks against the genuinely published evidence head
+      - name: Dispatch final CI on the published evidence head
         env:
-          PREPARED_SHA: ${{ steps.publish.outputs.sha }}
+          PREPARED_SHA: ${{ steps.checkpoint.outputs.sha }}
         run: |
           set -euo pipefail
-          git fetch origin "$BRANCH"
+          git fetch --quiet origin "$BRANCH"
           published=$(git rev-parse FETCH_HEAD)
           git merge-base --is-ancestor "$PREPARED_SHA" "$published"
           git diff --name-only "$PREPARED_SHA" "$published" > /tmp/evidence-paths.txt
           while IFS= read -r path; do
             case "$path" in reports/results/*|reports/ou_evidence_fingerprint.json|doc/kalman_ou_iii/*|'') ;; *) echo "Unexpected concurrent change: $path"; exit 1;; esac
           done < /tmp/evidence-paths.txt
-          test "$(git rev-parse "$published":src)" = 53a10a7c02b1a0de4cef5ebab6e13e81909c4cdd
+          test "$(git rev-parse "$published:src")" = 53a10a7c02b1a0de4cef5ebab6e13e81909c4cdd
           for workflow in ou3-proof.yml quality-gates.yml build.yml; do
             test "$(git ls-remote origin refs/heads/$BRANCH | cut -f1)" = "$published"
             gh workflow run "$workflow" --ref "$BRANCH"
