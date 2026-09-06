@@ -126,7 +126,9 @@ jobs:
           assert d['point_same_history_diagnostic_only'] is True
           assert d['P4_promoted'] is False
           assert d['same_shipping_covariance_at_injection_required'] is True
+          assert d['same_complete_word_endpoint_required'] is True
           assert d['same_actual_applied_RS_history_required'] is True
+          assert d['both_signs_of_limiting_direction_tested'] is True
           assert d['packet_count_remainder_budget_used'] is False
           assert d['selected_S_subset_used'] is False
           for mode in ('H18','A21'):
@@ -135,7 +137,10 @@ jobs:
               print('OU3_P4_NONLINEAR', mode,
                     'linear_rho=',m['rho_linear_worst_word'],
                     'worst_same_history_rho=',m['worst_same_history_nonlinear_rho'],
-                    'largest_same_history_scale=',m['largest_same_history_scale'],
+                    'largest_same_history_absolute_scale=',m['largest_same_history_absolute_scale'],
+                    'smallest_same_history_absolute_scale=',m['smallest_same_history_absolute_scale'],
+                    'smallest_scale_rho=',m['smallest_scale_rho'],
+                    'smallest_scale_minus_linear_rho=',m['smallest_scale_minus_linear_rho'],
                     'declared_scale_limit=',m['declared_scale_limit'],
                     'limiter=',m['declared_scale_limit_detail']['limiting_constraint'],
                     'all_same_history_contract=',m['strict_contraction_on_all_same_history_cases'])
@@ -144,6 +149,8 @@ jobs:
                         'scale=',c['scale'],
                         'source_match=',c.get('source_match'),
                         'same_P0=',c.get('covariance_identical_at_injection'),
+                        'same_endpoint=',c.get('endpoint_matches_complete_word'),
+                        'endpoint_error_s=',c.get('endpoint_time_error_s'),
                         'rho=',c.get('rho_nonlinear'),
                         'distance=',c.get('distance_to_one'),
                         'theta0_deg=',c.get('initial_theta_rad',0.0)*180.0/3.141592653589793,
@@ -152,6 +159,7 @@ jobs:
           PY
 
       - name: Upload non-promoting feasibility evidence
+        if: always()
         uses: actions/upload-artifact@v6
         with:
           name: ou3-p4-complete-word-feasibility
