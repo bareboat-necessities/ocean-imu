@@ -16,3 +16,4 @@
 ./iss_contract-test
 ./rs_law-test
 ./startup_init-test
+./sea3_same_history_startup-test
