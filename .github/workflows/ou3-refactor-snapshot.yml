@@ -1,0 +1,23 @@
+name: ou3-refactor-snapshot
+
+on:
+  push:
+    branches:
+      - codex/ou3-p4-p5-complete-sea3-after-492
+
+permissions:
+  contents: read
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+      - name: Package exact branch checkout
+        run: |
+          tar --exclude=.git -czf /tmp/ocean-imu-refactor-snapshot.tgz .
+      - uses: actions/upload-artifact@v6
+        with:
+          name: ocean-imu-refactor-snapshot
+          path: /tmp/ocean-imu-refactor-snapshot.tgz
+          retention-days: 1
