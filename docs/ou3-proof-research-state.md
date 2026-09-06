@@ -90,9 +90,10 @@ With u=A Phi and b=G^-1 xi, the exact signed Joseph/reset ledger is
     V_plus-V_minus=-J+2 u^T P_J^-1 b+b^T P_J^-1 b.
 
 Retain the FULL posterior precision P_J^-1, including all cross terms. The
-pure e_eta bound alone does not bound epsilon_aw. A physical specific-force
-bound does not automatically bound nominal f_hat: the nominal-force/nominal-a_w
-bounds remain explicitly conditional, not certified from physical SEA3 alone.
+pure e_eta bound alone does not bound epsilon_aw. The nominal specific-force
+bound used by the invariant-coordinate helper is now derived from the existing
+SEA3 true-force ceiling plus the declared `delta_a_w` error ceiling; the old
+physical-force-only reuse is forbidden.
 
 The true-minus-estimated rotation error after left quaternion injection obeys
 E_plus=E E_correction^-1. Its Cayley numerator is c-a+0.5 a cross c and its
@@ -114,8 +115,20 @@ source-uniform ceilings, or posterior inverse-metric floors.
 Classification: **proof-method/attachment gap**, plus implementation/contract
 errors; this is not a counterexample to the complete SEA3 theorem or frozen P3.
 
-Invalidated claims: pure e_eta transport dropping (Q_aw-I)delta_a_w;
-zero-cost combination of H0 with the H_u covariance/gain;
+The first exact operation-ledger run is an **implementation defect in the point
+diagnostic**, not a theorem or P4 counterexample. Both H18 and A21 entered the
+correct worst complete word, but the ledger halted at accelerometer covariance
+reconstruction before the endpoint. H18 recorded only 43 predictions and 42
+accelerometer updates before failure. The ledger snapshotted the pending a_w
+floor, applied R_S and pseudo cadence before the wrapper's staged tuner commit,
+whereas shipping commits the previous sample's pending tune before the current
+Riccati prediction. That invalidates the assumption that the pre-wrapper
+snapshot is the current-sample Riccati schedule. It does not invalidate the
+measured complete-word linear ratios, frozen P3, the exact full-shift algebra,
+or the requirement to retain every actual-R_S S event.
+
+Invalidated proof claims remain: pure e_eta transport dropping
+`(Q_aw-I)delta_a_w`; zero-cost combination of H0 with the H_u covariance/gain;
 prediction-only covariance ceilings through nonorthogonal resets; reusing an
 H18 nonlinear ceiling in A21 without transport; selecting the minimum posterior
 floor from the cell minimizing a different scalar ratio; and reading inverse
@@ -124,8 +137,9 @@ reset-radius closure has been withdrawn, not repaired by a smaller domain.
 
 Retained: the exact residual algebra, individual congruence identities, pure
 vector Cayley identities, magnetometer radial cancellation, the full
-per-operation correction inequality, and the frozen complete-word P3 result.
-The 30-degree information-headroom calculation is not signed-word dissipation.
+per-operation correction inequality, the genuine complete-word linear
+feasibility ratios, and the frozen complete-word P3 result. The 30-degree
+information-headroom calculation is not signed-word dissipation.
 
 Do not revive replay fitting, arbitrary bounded-input/source boxes, independent
 `tau x sigma x R_S x T_S` or sea x RAO products, endpoint/history graphs,
@@ -139,20 +153,32 @@ inequality being demonstrated.
 The controlling object is `rho_W=V_after(F_W(x))/V_before(x)` on the actual
 complete H18/A21 word, not positivity of an isolated lemma.
 
-First choose between three genuinely different treatments: (1) retain shipping
-coordinates and accumulate the exact signed full residual/Joseph/reset form;
-(2) evaluate the corrected full-Phi nonlinear storage with all mixed
-transport and uniform metric-comparison obligations; (3) eliminate the coupled a_w direction only in
-the full-word Schur form, retaining all actual-R_S S events. Start with (1) as
-the unchanged-shipping reference against which the others must be checked.
+First repair only the single-estimator operation ledger: consume the wrapper's
+staged current-sample commit exactly once before the diagnostic snapshots its
+Riccati schedule, then let the normal wrapper call see no pending commit. Make
+an internal ledger failure return nonzero. The repaired point diagnostic must
+show exactly 600 predictions and 600 accelerometer updates in both H18/A21,
+match the selected due-S and vector counts, telescope its signed event deltas,
+and reproduce the independent complete-word linear rho within numerical
+roundoff. If that self-check fails, stop and analyze the mismatch; do not build
+the nonlinear enclosure on top of it.
 
-Before further interval refinement, run a non-promoting high-precision
-complete-word feasibility test on legal same-history SEA3 realizations. Report
-both H18/A21 worst ratios, source/phase, maximizing error direction,
-operation-by-operation margin consumption, and distance to rho=1. A point
-sample is a falsification/feasibility diagnostic, never universal source
-coverage. Do not silently replace a missing source realization with independent
-bounded sequences. Follow `EXECUTE -> FAILURE ANALYSIS -> REPLAN -> EXECUTE`.
+After that check passes, compare three genuinely different P4 treatments:
+(1) retain shipping coordinates and accumulate the exact signed full
+residual/Joseph/reset form; (2) evaluate corrected full-Phi nonlinear storage
+with all mixed transport and uniform metric-comparison obligations; (3)
+eliminate the coupled a_w direction only in the full-word Schur form while
+retaining all actual-R_S S events. The existing interval-AD primitive is
+appropriate only if the point experiment justifies a full-word Jacobian/
+transport enclosure; do not fall back to packetwise scalar remainder sums.
+
+Before further interval refinement, keep the complete-word feasibility test
+non-promoting and same-history. Report both H18/A21 worst ratios, source/phase,
+maximizing error direction, operation-by-operation margin consumption, and
+distance to rho=1. A point sample is a falsification/feasibility diagnostic,
+never universal source coverage. Do not silently replace a missing source
+realization with independent bounded sequences. Follow
+`EXECUTE -> FAILURE ANALYSIS -> REPLAN -> EXECUTE`.
 
 Only a strict complete-word result may authorize enclosure of the nonlinear
 transport, selection of the widest certified candidate, and then P5 finite
@@ -185,9 +211,9 @@ branch refresh. No filter or pitch-gate edit is part of this handoff.
 
 ## Next conversation / PR boundary
 
-After PR #493 is merged, create a new PR from current main and continue the
-complete-word feasibility experiment above. Keep P3 frozen and P4/P5 open.
-`tests/validation/test_ou3_p4_coordinate_transport_algebra.py` locks the exact
-full-shift, reset, and correlated-precision corrections. The full source-
-correlated H18/A21 transport and storage comparison are still the decisive
-obligations; green algebra/architecture tests do not close them.
+PR #496 is the complete-word P4 feasibility/closure continuation from the
+merged #494 handoff. Keep P3 frozen and P4/P5 open until the actual nonlinear
+word inequality closes. `tests/validation/test_ou3_p4_coordinate_transport_algebra.py`
+locks the exact full-shift, reset, and correlated-precision corrections. The
+full source-correlated H18/A21 transport and storage comparison remain the
+decisive obligations; green algebra/architecture tests do not close them.
