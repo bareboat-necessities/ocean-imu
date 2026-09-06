@@ -13,110 +13,94 @@ VALIDATION_MAKEFILE = REPO_ROOT / "tests" / "validation" / "Makefile"
 ROOT_MAKEFILE = REPO_ROOT / "Makefile"
 
 
+def _job(text: str, name: str, next_name: str | None = None) -> str:
+    start = text.index(f"\n  {name}:\n")
+    if next_name is not None:
+        end = text.index(f"\n  {next_name}:\n", start + 1)
+        return text[start:end]
+    return text[start:]
+
+
 class WorkflowContractTests(unittest.TestCase):
-    def test_validation_workflow_is_smoke_only_and_does_not_commit(self):
-        """Standalone validation stays smoke-only; reusable main owns evidence."""
+    def test_validation_workflow_separates_smoke_from_full_publication(self):
         text = WORKFLOW.read_text(encoding="utf-8")
-        self.assertIn("python3-matplotlib", text)
-        self.assertIn("libeigen3-dev", text)
-        self.assertIn("build-for-validation", text)
-        self.assertIn("python3 tools/ou_validation.py --repetitions 1", text)
-        self.assertIn("python3 tools/ou_robustness.py --repetitions 1", text)
-        self.assertIn("--output /tmp/ou_study.json", text)
-        self.assertIn("--generated-dir /tmp/ou_generated", text)
-        self.assertIn("python3 tools/ou_rs_law_ablation.py", text)
-        self.assertIn("--output /tmp/ou_rs_law_ablation.json", text)
-        self.assertIn("--generated-dir /tmp/ou_rs_law_generated", text)
-        self.assertIn("--refactor-study-json /tmp/ou_refactor.json", text)
-        self.assertIn("--bootstrap-resamples 200", text)
-        self.assertIn("--snapshots-dir /tmp/ou_snapshots", text)
-        self.assertIn("--output-dir /tmp/ou_detrending", text)
-        self.assertIn("make -C tests/validation test", text)
-        self.assertIn("name: ou-validation-smoke", text)
-        self.assertNotIn("git pull --rebase", text)
-        self.assertNotIn("push:\n", text)
         self.assertIn("workflow_call:", text)
-        self.assertIn("validation_mode:", text)
-        self.assertIn("default: smoke", text)
         self.assertIn("workflow_dispatch:", text)
-        self.assertIn("if: inputs.validation_mode == 'full'", text)
+        self.assertIn("default: smoke", text)
         self.assertIn("permissions:\n  contents: read", text)
-        self.assertIn("contents: write", text)
+        validate = _job(text, "validate", "fingerprint")
+        self.assertIn("if: inputs.validation_mode != 'full'", validate)
+        self.assertIn("make -C tests/validation test", validate)
+        self.assertIn("--mode smoke", validate)
+        self.assertNotIn("git push", validate)
+        fingerprint = _job(text, "fingerprint", "regenerate")
+        self.assertIn("if: inputs.validation_mode == 'full'", fingerprint)
+        commit = _job(text, "commit")
+        self.assertIn("permissions:\n      contents: write", commit)
+        self.assertIn("git push origin HEAD:refs/heads/${{ github.ref_name }}", commit)
 
-    def test_main_build_owns_full_validation_artifacts(self):
+    def test_main_build_requires_full_evidence_before_main_build(self):
         build = BUILD_WORKFLOW.read_text(encoding="utf-8")
-        workflow = WORKFLOW.read_text(encoding="utf-8")
         self.assertIn("ou-evidence:", build)
-        self.assertIn("uses: ./.github/workflows/ou-validation.yml", build)
-        self.assertIn("validation_mode: ${{ github.ref == 'refs/heads/main' && 'full' || 'smoke' }}", build)
-        self.assertIn("stage an equivalent fresh bundle before the test prerequisite", build)
-        self.assertIn("python3 tools/ou_validation.py --repetitions 10", workflow)
-        self.assertIn("python3 tools/ou_robustness.py --repetitions 10", workflow)
-        self.assertIn("--bootstrap-resamples 10000", workflow)
-        self.assertIn("--no-figures", workflow)
-        self.assertIn("--benchmark-only", workflow)
-        self.assertIn("--refresh-only", workflow)
-        self.assertIn("--from-json", workflow)
-        self.assertIn("--combine-shards", workflow)
-        self.assertIn("--shard-index ${{ matrix.shard }}", workflow)
-        self.assertIn("shard: [0, 1, 2]", workflow)
-        self.assertIn("--snapshot-prefix matrix_", workflow)
-        self.assertIn("--snapshot-refactor-study-json", workflow)
-        self.assertIn("name: ou-validation-full", workflow)
-        self.assertIn("name: ou-robustness-full", workflow)
-        self.assertIn("gh artifact", workflow)
-        self.assertIn("git push origin HEAD:${GITHUB_REF_NAME}", workflow)
-        self.assertIn("generated-evidence-${{ github.ref }}", workflow)
-        self.assertIn("--from-json reports/results/ou_validation/ou_validation.json", workflow)
-        self.assertIn("--from-json reports/results/ou_robustness/ou_robustness.json", workflow)
-        self.assertIn("matrix_ou_refactor.json", workflow)
-        self.assertIn("matrix_ou_detrending.json", workflow)
-        self.assertIn("matrix_sigma_ablation.csv", workflow)
-        self.assertIn("Record replay and results fingerprints", workflow)
-        self.assertIn("--write reports/ou_evidence_fingerprint.json", workflow)
-        self.assertIn("--check reports/ou_evidence_fingerprint.json", workflow)
-        self.assertIn("git add reports/results/ou_validation reports/results/ou_robustness reports/ou_evidence_fingerprint.json", workflow)
+        evidence = _job(build, "ou-evidence", "build")
+        self.assertIn("if: github.ref == 'refs/heads/main'", evidence)
+        self.assertIn("uses: ./.github/workflows/ou-validation.yml", evidence)
+        self.assertIn("validation_mode: full", evidence)
+        build_job = _job(build, "build", "release")
+        self.assertIn("needs: [ou-evidence, classify]", build_job)
+        self.assertIn("needs['ou-evidence'].result == 'success'", build_job)
+        self.assertIn("github.ref != 'refs/heads/main'", build_job)
+        self.assertIn("refs/heads/main", build_job)
 
-    def test_full_evidence_jobs_reuse_the_fingerprinted_simulation_archive(self):
-        workflow = WORKFLOW.read_text(encoding="utf-8")
-        # Only the fingerprint job may resolve a release archive. Replay shards,
-        # combine and commit must consume those exact uploaded archive bytes.
-        self.assertEqual(workflow.count("- name: Download versioned simulation data"), 1)
-        self.assertEqual(workflow.count("/releases/tags/simulation"), 1)
-        self.assertIn("name: ou-fingerprinted-simulation-data", workflow)
-        self.assertGreaterEqual(workflow.count("- name: Reuse fingerprinted simulation data"), 3)
-        self.assertGreaterEqual(workflow.count("gh artifact download --repo"), 5)
-
-    def test_validation_workflow_combines_each_study_on_its_own_runner(self):
-        workflow = WORKFLOW.read_text(encoding="utf-8")
-        combine_job = workflow.split("\n  combine:\n", 1)[1].split("\n  commit:\n", 1)[0]
-        self.assertIn("study: [validation, robustness]", combine_job)
-        self.assertIn('"ou-${{ matrix.study }}-shard-*"', combine_job)
-        self.assertNotIn('--name "ou-*-shard-*"', combine_job)
-        self.assertIn("name: ou-${{ matrix.study }}-full", combine_job)
-
-    def test_evidence_commit_materializes_provenance_before_running_tests(self):
+    def test_full_evidence_reuses_one_fingerprinted_archive(self):
         text = WORKFLOW.read_text(encoding="utf-8")
-        commit_job = text.split("\n  commit:\n", 1)[1].split("\n  validate:\n", 1)[0]
-        self.assertIn("make -C tests/validation evidence-test", commit_job)
-        self.assertIn("Skip when this commit's evidence is already published", commit_job)
-        self.assertIn("if git log --format=%s", commit_job)
-        self.assertIn("replay_commit", commit_job)
-        makefile = VALIDATION_MAKEFILE.read_text(encoding="utf-8")
-        self.assertIn("evidence-test: build evidence-contract", makefile)
-        self.assertIn("evidence-contract: publication-sync", makefile)
-        self.assertIn("ou_evidence_contract.py --auto", makefile)
-        self.assertIn("ou_publication_sync.py --sync", makefile)
-        self.assertIn("ou_evidence_contract.py --check", makefile)
+        fingerprint = _job(text, "fingerprint", "regenerate")
+        regenerate = _job(text, "regenerate", "combine")
+        combine = _job(text, "combine", "commit")
+        commit = _job(text, "commit")
 
-    def test_evidence_gate_is_partitioned_from_expensive_proof_search(self):
-        """What the publication gate runs, and why it is not the whole suite.
+        # Smoke has its own download, but the full path resolves the release
+        # only in fingerprint and reuses those exact uploaded bytes thereafter.
+        self.assertEqual(fingerprint.count("Download versioned simulation data"), 1)
+        self.assertIn("name: ou-fingerprinted-simulation-data", fingerprint)
+        for section in (regenerate, combine, commit):
+            self.assertIn("Reuse fingerprinted simulation data", section)
+            self.assertNotIn("gh release download", section)
+        self.assertIn("--simulation-zip sim-data-files.zip", fingerprint)
+        self.assertIn("--simulation-zip sim-data-files.zip", commit)
 
-        Full make test remains the development/CI target, but publishing an
-        unchanged evidence bundle must not also rerun half-hour interval word
-        searches. Dedicated proof CI owns those tests. Keep this contract near
-        the workflow rather than scattering ad-hoc -k/-p lists across YAML.
-        """
+    def test_full_evidence_shards_and_combines_each_study_without_cross_mix(self):
+        text = WORKFLOW.read_text(encoding="utf-8")
+        regenerate = _job(text, "regenerate", "combine")
+        combine = _job(text, "combine", "commit")
+        self.assertIn("study: [validation, robustness]", regenerate)
+        self.assertIn("shard: [0, 1, 2]", regenerate)
+        self.assertIn("--shard-count ${{ env.SHARD_COUNT }}", regenerate)
+        self.assertIn("--shard-index ${{ matrix.shard }}", regenerate)
+        self.assertIn("name: ou-${{ matrix.study }}-shard-${{ matrix.shard }}", regenerate)
+        self.assertIn("study: [validation, robustness]", combine)
+        self.assertIn("pattern: ou-${{ matrix.study }}-shard-*", combine)
+        self.assertIn("name: ou-${{ matrix.study }}-full", combine)
+        self.assertNotIn("pattern: ou-*-shard-*", combine)
+
+    def test_publication_is_verified_before_fingerprint_commit_and_push(self):
+        text = WORKFLOW.read_text(encoding="utf-8")
+        commit = _job(text, "commit")
+        self.assertIn("ref: ${{ github.sha }}", commit)
+        self.assertIn("Skip when this commit's evidence is already published", commit)
+        self.assertIn("replay_provenance", commit)
+        self.assertIn("Place bundles and mirror the manuscript copies", commit)
+        self.assertIn("make -C tests/validation evidence-test", commit)
+        self.assertIn("--write reports/ou_evidence_fingerprint.json", commit)
+        self.assertIn("--check reports/ou_evidence_fingerprint.json", commit)
+        self.assertIn("git add reports/results/ou_validation reports/results/ou_robustness", commit)
+        self.assertIn("git push origin HEAD:refs/heads/${{ github.ref_name }}", commit)
+        self.assertLess(commit.index("make -C tests/validation evidence-test"),
+                        commit.index("--write reports/ou_evidence_fingerprint.json"))
+        self.assertLess(commit.index("--check reports/ou_evidence_fingerprint.json"),
+                        commit.index("git add reports/results/ou_validation"))
+
+    def test_evidence_gate_and_proof_gate_are_disjoint_and_complete(self):
         makefile = VALIDATION_MAKEFILE.read_text(encoding="utf-8")
         self.assertIn(
             "PROOF_SEARCH_TESTS := $(wildcard test_ou3_p2_*.py test_ou3_p3_*.py "
@@ -127,159 +111,110 @@ class WorkflowContractTests(unittest.TestCase):
             "EVIDENCE_TESTS := $(filter-out $(PROOF_SEARCH_TESTS),$(wildcard test_*.py))",
             makefile,
         )
-        self.assertIn("python3 -m unittest -v $(EVIDENCE_TESTS:.py=)", makefile)
-        self.assertIn("test: build evidence-contract", makefile)
+        self.assertIn("evidence-test: evidence-contract", makefile)
+        self.assertIn("proof-test: build", makefile)
+        self.assertIn("test: evidence-contract", makefile)
         self.assertIn("python3 -m unittest discover -v -p 'test_*.py'", makefile)
 
-        # Most of the skipped modules are named in the proof workflow. Some
-        # low-level primitives also run in source-foundation; none is skipped
-        # from the ordinary full test target.
-        proof = PROOF_WORKFLOW.read_text(encoding="utf-8")
-        skipped = [
-            "test_ou3_p2_correlation_path_memory",
-            "test_ou3_p3_correlated_translation_covariance_upper",
-            "test_ou3_p3_correlated_translation_segment",
-            "test_ou3_p3_ltv_postmeasurement_certificate",
-            "test_ou3_p3_ltv_translation_ucc_probe",
-            "test_ou3_p3_source_uniform_translation_covariance",
-        ]
-        # This is intentionally a best-effort declaration check. The full suite
-        # continues to run every module, while dedicated proof CI names the
-        # expensive certificate obligations it owns.
-        self.assertTrue(any(module in proof for module in skipped))
-        workflow = WORKFLOW.read_text(encoding="utf-8")
-        evidence_test_job = workflow.split("\n  commit:\n", 1)[1].split("\n  validate:\n", 1)[0]
-        self.assertNotIn("make -C tests/validation test", evidence_test_job)
-        self.assertIn("make -C tests/validation evidence-test", evidence_test_job)
-
-    def test_main_build_keeps_compile_and_run_shards(self):
-        text = BUILD_WORKFLOW.read_text(encoding="utf-8")
-        self.assertIn("Build test executables only", text)
-        self.assertIn("${{ matrix.test_dir }} build", text)
-        self.assertIn("Run precompiled test shard", text)
-        self.assertIn("SKIP_EVIDENCE_CONTRACT=1", text)
-        self.assertIn("Enforce evidence provenance before validation shard tests", text)
-        self.assertIn("Regenerate OU-III motion diagnostics from this commit", text)
-        self.assertIn("python3 tools/ou3_motion_evidence.py", text)
-        self.assertIn("--repo . --generated-dir doc/kalman_ou_iii --rooted-relative-paths", text)
-        self.assertIn("motion diagnostics stayed fresh but OU replay dependencies changed", text)
-        self.assertIn("--rebind-cached-snapshots", text)
-        self.assertNotIn("make -C tests/validation evidence-contract", text)
-        self.assertIn("collect-results:", text)
-        self.assertIn("Download test results", text)
-        self.assertIn("Download the exact test source checkout", text)
-        self.assertIn("Require verified source archive provenance", text)
-        self.assertIn("source-metadata", text)
-        self.assertIn("--fail-fast", text)
-        self.assertIn("source_archive_provenance.py verify-extracted", text)
-        self.assertIn("source_archive_provenance.py create", text)
-        self.assertIn("source_archive_provenance.py require-clean", text)
-        self.assertIn("Required generated result is absent from the source worktree", text)
-        self.assertNotIn('cp -f "results/$f"', text)
-        self.assertIn("Collect OU-III multi-seed artifacts produced by test shards", text)
-        self.assertNotIn("Rebuild OU-III article ablation panels from validated sources", text)
-        self.assertNotIn("Rebuild OU-III matched-law R_S panels from validated sources", text)
-        self.assertNotIn("Rebuild OU-III multi-seed evidence from validated sources", text)
-
-    def test_main_build_preserves_matching_materialized_evidence_for_papers(self):
-        text = BUILD_WORKFLOW.read_text(encoding="utf-8")
-        collect = text.split("\n  collect-results:\n", 1)[1].split("\n  build-MCU:\n", 1)[0]
-        artifact_restore = collect.index('for snapshot in /tmp/ou-final-evidence')
-        materialized_check = collect.index('python3 tools/ou_evidence_contract.py --check')
-        historical_refresh = collect.index('MIGRATE=(--auto --migrate-from-history')
-        self.assertLess(artifact_restore, materialized_check)
-        self.assertLess(materialized_check, historical_refresh)
-        self.assertIn('publication already emitted by this run', collect)
-        self.assertIn('if (( replay_materialized == 0 )); then', collect)
-
-    def test_main_build_downloads_test_results_without_evidence_bundle_collisions(self):
-        text = BUILD_WORKFLOW.read_text(encoding="utf-8")
-        collect = text.split("\n  collect-results:\n", 1)[1].split("\n  build-MCU:\n", 1)[0]
-        self.assertIn('mapfile -t RESULT_ARTIFACTS', collect)
-        self.assertIn('select(startswith("result-"))', collect)
-        self.assertIn('artifact_args+=(--name "$artifact")', collect)
-        self.assertIn('gh artifact download', collect)
-        self.assertIn('"${artifact_args[@]}" --dir /tmp/results', collect)
-
-    def test_compile_check_verifies_the_fingerprint_used_by_papers(self):
-        makefile = VALIDATION_MAKEFILE.read_text(encoding="utf-8")
-        self.assertIn("ou_evidence_contract.py --auto", makefile)
-        self.assertIn("ou_publication_sync.py --sync", makefile)
-        self.assertIn("ou_evidence_contract.py --check", makefile)
-        text = TFG_WORKFLOW.read_text(encoding="utf-8")
-        self.assertIn("command: make -C tests/validation test", text)
-        self.assertIn('"doc/kalman_ou_iii/ou3_*.svg"', text)
-        self.assertIn('"doc/kalman_ou_iii/ou3_*generated.tex-part"', text)
-        self.assertIn('"doc/kalman_ou_iii/*tuning*generated.tex-part"', text)
-
-    def test_main_only_jobs_remain_main_only(self):
-        text = BUILD_WORKFLOW.read_text(encoding="utf-8")
-        self.assertIn("if: github.ref == 'refs/heads/main'", text)
-        self.assertIn("Publish Release", text)
-        self.assertIn("make-release:", text)
-
-    def test_tfg_validation_avoids_old_fingerprint_stamping(self):
-        text = TFG_WORKFLOW.read_text(encoding="utf-8")
-        self.assertIn("make -C tests/validation test", text)
-        self.assertNotIn("generated/", text)
-        self.assertNotIn("ou_replay_fingerprint.py --write", text)
-        self.assertNotIn("kalman_ou2.hpp", text)
-        self.assertNotIn("kalman_ou3.hpp", text)
-
-    def test_main_only_math_typesetting_uses_main(self):
-        text = BUILD_WORKFLOW.read_text(encoding="utf-8")
-        self.assertIn("make-papers:", text)
-        papers = text.split("\n  make-papers:\n", 1)[1].split("\n  make-release:\n", 1)[0]
-        self.assertIn("github.ref == 'refs/heads/main'", papers)
-        self.assertIn("[build, run-tests, ou-evidence, collect-results]", papers)
-        self.assertIn("Download the exact test source checkout", papers)
-        self.assertIn("Copy in the recorded source checkout", papers)
-        self.assertIn("source_archive_provenance.py verify-extracted", papers)
-        self.assertIn("type: Float64x2", papers)
-
-    def test_branches_still_receive_smoke_validation(self):
-        text = BUILD_WORKFLOW.read_text(encoding="utf-8")
-        self.assertIn("uses: ./.github/workflows/ou-validation.yml", text)
-        self.assertIn("validation_mode: ${{ github.ref == 'refs/heads/main' && 'full' || 'smoke' }}", text)
-        self.assertIn("name: classify latest push", text)
-        self.assertIn("needs.classify.outputs.replay_inputs_changed == 'true'", text)
-        self.assertIn("no broad build needed for proof/docs-only push", text)
-
-    def test_smoke_validation_skips_simulations_for_proof_and_doc_pushes(self):
-        text = WORKFLOW.read_text(encoding="utf-8")
-        self.assertIn("name: classify latest push", text)
-        self.assertIn("git diff --name-only \"$BASE\" \"$HEAD\"", text)
-        self.assertIn("src/*|tests/*|Makefile|.github/workflows/build.yml|.github/workflows/ou-validation.yml", text)
-        self.assertIn("tools/ou3_*|tools/stability/*", text)
-        self.assertIn("name: no simulation smoke needed", text)
-        self.assertIn("proof-only/doc-only changes do not launch simulator smoke jobs", text)
-        self.assertIn("concurrency:\n  group: ou-validation-${{ github.ref }}", text)
-        self.assertIn("cancel-in-progress: true", text)
-
-    def test_root_make_all_reuses_single_sim_archive_download(self):
-        text = ROOT_MAKEFILE.read_text(encoding="utf-8")
-        self.assertIn("if [ -n \"$$missing\" ]; then", text)
-        self.assertIn("for d in $$missing; do", text)
-        self.assertIn("Found existing", text)
-
-
-    def test_resolved_partition_retains_every_proof_and_evidence_module(self):
-        directory = REPO_ROOT / "tests" / "validation"
         result = subprocess.run(
             ["make", "--no-print-directory", "-s", "print-test-partition"],
-            cwd=directory, check=True, capture_output=True, text=True, timeout=30,
+            cwd=REPO_ROOT / "tests" / "validation",
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=30,
         )
         rows = dict(line.split("=", 1) for line in result.stdout.splitlines())
         self.assertEqual(set(rows), {"EVIDENCE", "PROOF"})
         groups = {key: value.split() for key, value in rows.items()}
-        all_modules = {p.stem for p in directory.glob("test_*.py")}
-        proof = {p.stem for prefix in ("p2", "p3", "p4", "p5", "sea3")
-                 for p in directory.glob(f"test_ou3_{prefix}_*.py")}
-        self.assertTrue(proof)
-        self.assertEqual(set(groups["PROOF"]), proof)
-        self.assertEqual(set(groups["EVIDENCE"]), all_modules - proof)
-        for group in groups.values():
-            self.assertEqual(len(group), len(set(group)))
+        all_modules = {p.stem for p in (REPO_ROOT / "tests" / "validation").glob("test_*.py")}
+        expected_proof = {
+            p.stem
+            for prefix in ("p2", "p3", "p4", "p5", "sea3")
+            for p in (REPO_ROOT / "tests" / "validation").glob(f"test_ou3_{prefix}_*.py")
+        }
+        self.assertTrue(expected_proof)
+        self.assertEqual(set(groups["PROOF"]), expected_proof)
+        self.assertEqual(set(groups["EVIDENCE"]), all_modules - expected_proof)
+        self.assertFalse(set(groups["PROOF"]) & set(groups["EVIDENCE"]))
+        for modules in groups.values():
+            self.assertEqual(len(modules), len(set(modules)))
+
+    def test_canonical_proof_workflow_owns_all_expensive_proof_modules(self):
+        proof = PROOF_WORKFLOW.read_text(encoding="utf-8")
+        self.assertIn("make -C tests/validation proof-test", proof)
+        self.assertIn("PROOF_TEST_SHARD_INDEX=${{ matrix.shard }}", proof)
+        self.assertIn("PROOF_TEST_SHARD_COUNT=6", proof)
+        self.assertIn("shard: [0, 1, 2, 3, 4, 5]", proof)
+        self.assertIn('"tests/validation/Makefile"', proof)
+
+    def test_build_keeps_current_matrix_and_runs_real_tests_and_documents(self):
+        text = BUILD_WORKFLOW.read_text(encoding="utf-8")
+        build = _job(text, "build", "release")
+        self.assertIn(
+            "dir: [wave_sim, freq, spectrum, ahrs, pii_observer, kalman_ou_ii, "
+            "kalman_ou_iii, kalman_tfg, imu_calibrate, detrend, nlo]",
+            build,
+        )
+        self.assertIn("make build", build)
+        self.assertIn("./run_tests.sh", build)
+        self.assertIn("tools/ou_sim_table.py", build)
+        self.assertIn("tools/tfg_sim_table.py", build)
+        self.assertIn("Compile LaTeX document", build)
+        self.assertIn("Upload PDF artifacts", build)
+
+    def test_build_proof_only_classifier_keeps_complete_sea3_paths_focused(self):
+        text = BUILD_WORKFLOW.read_text(encoding="utf-8")
+        classify = _job(text, "classify", "ou-evidence")
+        self.assertIn("git diff --name-only \"$BEFORE\" \"$AFTER\"", classify)
+        self.assertIn(".github/workflows/ou3-complete-sea3.yml", classify)
+        self.assertIn("tools/stability/ou3_*.py", classify)
+        self.assertIn("tests/validation/test_ou3_sea3_*.py", classify)
+        self.assertIn('echo "run_build=false"', classify)
+        self.assertIn("refs/heads/main", classify)
+
+    def test_validation_classifier_skips_proof_only_simulation_smoke(self):
+        text = WORKFLOW.read_text(encoding="utf-8")
+        classify = _job(text, "classify", "proof_only_skip")
+        self.assertIn("git diff --name-only \"$BEFORE\" \"$AFTER\"", classify)
+        self.assertIn("tools/stability/ou3_*.py", classify)
+        self.assertIn('echo "run_smoke=false"', classify)
+        skip = _job(text, "proof_only_skip", "validate")
+        self.assertIn("no simulation smoke needed", skip)
+        self.assertIn("focused proof tests cover it", skip)
+        self.assertIn("cancel-in-progress: true", text)
+
+    def test_tfg_validation_does_not_mutate_ou_evidence_or_restamp_fingerprints(self):
+        text = TFG_WORKFLOW.read_text(encoding="utf-8")
+        self.assertIn("Build TFG tests", text)
+        self.assertIn("Run TFG mathematical unit tests", text)
+        self.assertIn("Checkout exact pre-PR baseline", text)
+        self.assertIn("Run SpectralMSE TFG arm", text)
+        self.assertIn("Run pre-PR main baseline arm", text)
+        self.assertNotIn("ou_replay_fingerprint.py --write", text)
+        self.assertNotIn("git push", text)
+        self.assertNotIn("reports/results/ou_validation", text)
+        self.assertNotIn("reports/results/ou_robustness", text)
+
+    def test_root_make_all_fetches_sim_archive_only_when_missing(self):
+        text = ROOT_MAKEFILE.read_text(encoding="utf-8")
+        self.assertIn("all: build test", text)
+        self.assertIn("test: ensure-sim-data", text)
+        self.assertIn("fetch-sim-data:", text)
+        self.assertIn('curl -fL "$(SIM_DATA_URL)" -o "$(SIM_DATA_ZIP)"', text)
+        self.assertIn("ensure-sim-data:", text)
+        self.assertIn('if [ ! -f "$(SIM_DATA_CHECK_FILE)" ]; then', text)
+        self.assertIn('$(MAKE) -C "$(REPO_ROOT)" fetch-sim-data', text)
+        self.assertEqual(text.count('curl -fL "$(SIM_DATA_URL)"'), 1)
+
+    def test_validation_makefile_materializes_and_checks_evidence_without_hash_editing(self):
+        makefile = VALIDATION_MAKEFILE.read_text(encoding="utf-8")
+        self.assertIn("publication-sync: build", makefile)
+        self.assertIn("ou_publication_sync.py", makefile)
+        self.assertIn("evidence-contract: publication-sync", makefile)
+        self.assertIn("ou_evidence_contract.py --auto", makefile)
+        self.assertNotIn("sed -i", makefile)
+        self.assertNotIn("reports/ou_evidence_fingerprint.json", makefile)
 
 
 if __name__ == "__main__":
