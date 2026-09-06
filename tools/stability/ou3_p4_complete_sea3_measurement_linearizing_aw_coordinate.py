@@ -35,8 +35,20 @@ u=A phi and b=G^-1 xi the signed ledger is
     V_plus-V_minus=-J+2 u^T P_J^-1 b+b^T P_J^-1 b.
 
 The same full inverse, including all cross terms, must be used for both
-terms; a marginal covariance lower bound cannot replace it. Source transition,
-prediction, hybrid events and the complete H18/A21 word remain obligations.
+terms; a marginal covariance lower bound cannot replace it.
+
+For a physical prediction z_plus=F z+rho_p, the corresponding identity is
+
+    Phi_plus=F Phi+xi_p,
+    xi_p=rho_p+E_aw epsilon_plus-F E_aw epsilon_minus.
+
+The last term includes v,p,S components: F E_aw is not E_aw. Those components
+are precisely part of the coupling to the retained S=0/R_S regularizer. For a
+source-only step use its actual map; for H18->A21 use the actual rectangular
+lift J and separate covariance/initialization operation, not an H18 ceiling.
+The evaluator below performs only this algebra. Same-history source admission,
+physical defects, covariance/hybrid binding and complete-word dissipation are
+not established by it.
 Candidate bounds below bound ONLY e_eta, not epsilon_aw. No promotion occurs.
 """
 from __future__ import annotations
@@ -46,7 +58,9 @@ import json
 import math
 from pathlib import Path
 
-from ou3_interval import up
+from ou3_interval import (
+    Interval, IntervalMatrix, matrix_add, matrix_mul, matrix_sub, up,
+)
 import ou3_p4_complete_sea3_accelerometer_operation_coordinate as ACC
 import ou3_p4_complete_sea3_vector_remainder_geometry as GEOM
 import ou3_p4_exact_reset_transport as RESET
@@ -56,6 +70,47 @@ REPO = Path(__file__).resolve().parents[2]
 DEFAULT_DOMAIN = REPO / "tools" / "stability" / "ou3_proof_operating_domain.json"
 SCHEMA = 2
 QUALIFICATION = "OU3_P4_COMPLETE_SEA3_MEASUREMENT_LINEARIZING_AW_COORDINATE_V2"
+
+
+def evaluate_full_shift_transport(
+    linear_map: IntervalMatrix,
+    physical_defect: IntervalMatrix,
+    epsilon_before: IntervalMatrix,
+    epsilon_after: IntervalMatrix,
+) -> IntervalMatrix:
+    """Transport the full shift through one supplied physical operation.
+
+    For z_after=L z_before+r, this returns
+    xi=r+E_aw,out epsilon_after-L E_aw,in epsilon_before.
+    For correction/reset, z_before here is t=z-d and Phi_before is A Phi;
+    L=G. For prediction L=F, NOT G or I. The v,p,S rows of F E_aw must
+    survive. An H18-to-A21 lift is rectangular and must be supplied literally.
+
+    Both shifts include (Q_aw-I) delta_a_w. The supplied map/defect/shifts
+    must come from the SAME physical event. Shape checks establish neither
+    that provenance nor SEA3 membership, and this routine emits no certificate.
+    Covariance transport and actual applied R_S belong to the unchanged word.
+    """
+    n_out = len(linear_map)
+    n_in = len(linear_map[0]) if linear_map else 0
+    if (n_out, n_in) not in ((18, 18), (21, 21), (21, 18)):
+        raise ValueError("linear_map must be H18, A21, or the 21x18 H-to-A lift")
+    for name, value, rows, cols in (
+        ("linear_map", linear_map, n_out, n_in),
+        ("physical_defect", physical_defect, n_out, 1),
+        ("epsilon_before", epsilon_before, 3, 1),
+        ("epsilon_after", epsilon_after, 3, 1),
+    ):
+        if len(value) != rows or any(len(row) != cols for row in value):
+            raise ValueError(f"{name} must have shape {rows}x{cols}")
+        if any(not isinstance(x, Interval) or not (math.isfinite(x.lo) and math.isfinite(x.hi))
+               or x.lo > x.hi for row in value for x in row):
+            raise ValueError(f"{name} must contain finite intervals")
+    before = [[Interval.point(0.0)] for _ in range(n_in)]
+    after = [[Interval.point(0.0)] for _ in range(n_out)]
+    before[15:18] = [row[:] for row in epsilon_before]
+    after[15:18] = [row[:] for row in epsilon_after]
+    return matrix_add(physical_defect, matrix_sub(after, matrix_mul(linear_map, before)))
 
 
 def _candidate(row: dict, force_upper: float) -> dict:
@@ -171,6 +226,21 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
             "reset_covariance_congruence_exact": not RESET.validate(reset) and bool(reset["exact_reset_congruence_identity"]),
             "G_inverse_operator_norm_exact": float(reset["reset_inverse_operator_norm_upper"]),
         },
+        "prediction_shift_transport": {
+            "physical_map": "z_plus=F*z+rho_p",
+            "phi_plus": "F*Phi+xi_p",
+            "xi_p": "rho_p+E_aw*epsilon_plus-F*E_aw*epsilon_minus",
+            "full_v_p_S_aw_prediction_columns_required": True,
+            "reset_only_shift_difference_valid_for_prediction": False,
+            "source_uniform_prediction_defect_closed": False,
+        },
+        "hybrid_shift_transport": {
+            "physical_map": "z_A_plus=J_HA*z_H+rho_HA",
+            "xi_HA": "rho_HA+E_aw_A*epsilon_A_plus-J_HA*E_aw_H*epsilon_H_minus",
+            "actual_rectangular_lift_and_covariance_seed_required": True,
+            "H18_ceiling_reused_for_A21": False,
+            "source_uniform_hybrid_defect_closed": False,
+        },
         "source_indexed_shift_must_persist_across_complete_word": True,
         "packetwise_shift_reset_to_zero_allowed": False,
         "complete_SEA3_source_transition_must_drive_e_plus_minus": True,
@@ -254,6 +324,20 @@ def validate(d: dict) -> list[str]:
         f.append("reset covariance congruence is not exact")
     if float(tr.get("G_inverse_operator_norm_exact", math.inf)) != 1.0:
         f.append("reset inverse norm changed")
+    prediction = d.get("prediction_shift_transport", {})
+    if prediction.get("xi_p") != "rho_p+E_aw*epsilon_plus-F*E_aw*epsilon_minus":
+        f.append("prediction dropped the full F E_aw shift transport")
+    if prediction.get("full_v_p_S_aw_prediction_columns_required") is not True:
+        f.append("prediction lost its coupling into the S regularizer")
+    for key in ("reset_only_shift_difference_valid_for_prediction", "source_uniform_prediction_defect_closed"):
+        if prediction.get(key) is not False:
+            f.append(f"prediction {key} is not false")
+    hybrid = d.get("hybrid_shift_transport", {})
+    if hybrid.get("actual_rectangular_lift_and_covariance_seed_required") is not True:
+        f.append("hybrid transport detached from its actual lift/covariance seed")
+    for key in ("H18_ceiling_reused_for_A21", "source_uniform_hybrid_defect_closed"):
+        if hybrid.get(key) is not False:
+            f.append(f"hybrid {key} is not false")
     rows = d.get("candidate_cells", [])
     if [r.get("attitude_angle_deg") for r in rows] != [30.0, 25.0, 20.0, 15.0]:
         f.append("candidate finite-angle cells changed")

@@ -79,11 +79,23 @@ H,P,K,S and the full shift, not a mixture of auxiliary H0 and congruent H_u:
 
 This pointwise identity does not make Phi-storage isometric to the original
 physical-error storage. For d=K y, t=z-d, z_plus=G t+rho, and A=I-KH, the
-correct complete shift transport is
+correct measurement/reset shift transport is
 
     xi=rho+E_aw(epsilon_plus-epsilon_minus),
     epsilon_mixed_plus-epsilon_mixed_minus
       =(Q_plus-Q_minus)delta_a_w-(Q_plus-I)d_aw.
+
+Prediction is different. For the physical map `z_plus=F z+rho_p`, retain
+
+    Phi_plus=F Phi+xi_p,
+    xi_p=rho_p+E_aw epsilon_plus-F E_aw epsilon_minus.
+
+`F E_aw` has nonzero v,p,S as well as a_w rows. Substituting the reset-only
+shift difference loses the path into the S=0 regularizer. The supplied full
+physical defect must include source/model and chart terms; it is not declared
+zero by the transport evaluator. Source-only events use their actual map, and
+H18->A21 uses the actual rectangular lift and separate covariance/seed operation.
+No H18 covariance ceiling is transferred to A21 by this identity.
 
 With u=A Phi and b=G^-1 xi, the exact signed Joseph/reset ledger is
 
@@ -134,6 +146,29 @@ ratios, or packet-count-times-worst-remainder bounds. No new micro-certificate
 should be added without its place and quantitative effect in the master word
 inequality being demonstrated.
 
+## Complete-word feasibility admission: current limiter
+
+The numerical experiment has not yet executed an admitted SEA3 word. The
+tracked JSON inputs contain no 601-transition numerical witness with its
+same-history frontend entry and Live covariance seed. The retained
+`ou3_sea3_complete_window_executor.py` rejects materialization while the
+code-owned hard-window provider is open. H18/A21 rho, maximizing direction,
+source/phase and signed word margins therefore remain **unmeasured**, not PASS
+and not evidence that rho exceeds one.
+
+Classification: an executable source-admission gap, not a counterexample to
+conditional P3 or to nonlinear stability. This does not make global physical
+SEA0 left inclusion a prerequisite for testing one independently validated
+legal point. It does prohibit self-asserting provider closure or treating an
+algebra fixture, replay or unrelated bounded sequence as that point.
+
+The operation regressions verify full prediction/reset/lift shift transport
+and the information identity for each supplied S covariance. They are not the
+required feasibility experiment and authorize no new proof-bound module.
+The strongest critic objection remains: additional coordinate identities do
+not demonstrate a complete-word margin. The next executable result must be a
+legal same-history word and its signed margin, not another claimed radius.
+
 ## Next falsifiable experiment
 
 The controlling object is `rho_W=V_after(F_W(x))/V_before(x)` on the actual
@@ -183,10 +218,11 @@ still required for the changed source inherited from main; never hand-edit
 provenance hashes. The opt-in `ou-full-evidence-branch.yml` workflow owns a full
 branch refresh. No filter or pitch-gate edit is part of this handoff.
 
-## Next conversation / PR boundary
+## Continuation boundary
 
-After PR #493 is merged, create a new PR from current main and continue the
-complete-word feasibility experiment above. Keep P3 frozen and P4/P5 open.
+Continue the complete-word feasibility experiment above from the reviewed
+branch/checkpoint, preserving newer main changes. Keep P3 frozen and P4/P5 open.
+Do not merge without explicit authorization.
 `tests/validation/test_ou3_p4_coordinate_transport_algebra.py` locks the exact
 full-shift, reset, and correlated-precision corrections. The full source-
 correlated H18/A21 transport and storage comparison are still the decisive
