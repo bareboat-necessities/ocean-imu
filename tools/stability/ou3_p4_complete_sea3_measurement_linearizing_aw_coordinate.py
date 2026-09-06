@@ -1,70 +1,43 @@
 #!/usr/bin/env python3
-"""Measurement-linearizing a_w coordinate for complete-SEA3 OU-III P4.
+"""Exact full a_w shift and correction/reset transport for OU-III P4.
 
-This lemma removes the misleading standalone accelerometer ``eta`` charge
-without changing the filter or replacing the complete SEA3 source.
+In original physical coordinates z=(c,...,da[,db_a]), let C=[c]x,
+E=R_true R_hat^T, Q=R_hat^T E R_hat, and f=R_hat(a_hat-g). Define
 
-Work in the pointwise residual-rewriting coordinate defined by
-``ou3_p4_complete_sea3_accelerometer_operation_coordinate``.  There
+    e_eta=R_hat^T ((E-I)-C)f,
+    epsilon_aw=(Q-I)da+e_eta,
+    phi=Phi(z)=z+E_aw epsilon_aw.
 
-    r_a = (E-I) f_hat + R_hat u_aw + db_a,
-    h_a = [c]x f_hat + R_hat u_aw + db_a,
-    eta = ((E-I)-[c]x) f_hat.
+Then y=H phi is the exact accelerometer residual with the ORIGINAL shipping
+H,P,R,K,S. The pure finite-angle shift e_eta alone is insufficient: the
+mixed wave-error shift (Q-I)da must also be retained.
 
-Because the shipping a_w column is the orthogonal matrix R_hat, define
+For A=I-KH, the Joseph identity is exactly
 
-    e_eta(c,zeta) = R_hat^T eta(c,zeta),
-    Phi_aw        = u_aw + e_eta.
+    phi^T P^-1 phi-(A phi)^T P_J^-1(A phi)=y^T S^-1 y.
 
-Then, pointwise for every admitted complete-SEA3 accelerometer operation,
+This is a nonlinear storage choice, not a covariance congruence proving
+Phi(z)^T P^-1 Phi(z)=z^T P^-1 z. Uniform metric comparison is still open.
 
-    r_a = [c]x f_hat + R_hat Phi_aw + db_a = H_a Phi(z).
+Under the physical correction d=K y, t=z-d, z_plus=G t+rho and P_r=G P_J G^T,
+G is identity on the physical a_w block. Thus the exact transport is
 
-Thus the exact residual equals H0 Phi(z), where H0 has the shipping
-matrix's literal coefficients. This is NOT the congruently transformed
-shipping H_u=H T_E^T: its a_w column is R_hat Q_aw^T. A trial storage with
-the untransformed P permits the formal Joseph identity below, but its metric
-attachment and its physical state transport are not yet proved.  No eta term is discarded; it has
-been retained source-correlated inside the a_w coordinate that is regularized
-by the same complete-word S=0/SpectralMSE R_S chain.
+    Phi_plus=G A phi+xi,
+    xi=rho+E_aw(epsilon_plus-epsilon_minus).
 
-For any fixed shipping P,H,R,K,S at that operation, set phi=Phi(z), y=H phi and
-A=I-KH.  The ordinary Joseph identity applied to the vector phi gives exactly
+For one measurement da_plus=da-d_aw, its mixed-shift difference is
 
-    phi^T P^-1 phi - (A phi)^T (P+)^-1 (A phi)
-      = y^T S^-1 y.
+    (Q_plus-Q_minus)da-(Q_plus-I)d_aw.
 
-This is an exact identity.  In particular the large standalone
-``eta^T R^-1 eta`` subtraction appearing when energy is written in the original
-tangent coordinate is not a primitive disturbance budget in the Phi storage.
+That term is required even when the pure e_eta transport is bounded. With
+u=A phi and b=G^-1 xi the signed ledger is
 
-The nonlinear cost has not vanished.  It has moved to the transport of Phi
-through the physical correction/reset and through the changing complete-SEA3
-source.  If one measurement/reset maps the original physical error as
+    V_plus-V_minus=-J+2 u^T P_J^-1 b+b^T P_J^-1 b.
 
-    t       = z - K y,
-    z_plus  = G t + rho,
-
-where rho must include ALL physical/operation-coordinate transport defects,
-
-and the source-indexed shifts before/after the event are e_minus/e_plus, then
-G is identity on the a_w coordinate and
-
-    Phi_plus = G(A phi) + xi,
-    xi = rho + E_aw (e_plus-e_minus).
-
-The downstream complete-word obligation is therefore one source-correlated
-transport/reset defect ``xi``.  It must be propagated with the same SEA3
-realization and actual R_S word; resetting e to zero packet-by-packet or
-multiplying a worst eta norm by the accelerometer packet count is forbidden.
-
-The Cayley identity
-
-    eta = 0.5 [c]x (E-I) f_hat
-
-is also recorded exactly.  It yields a source-uniform finite-angle shift bound
-and a local Lipschitz bound which both vanish at c=0.  These bounds are
-diagnostic inputs for the transport enclosure; they do not promote P4.
+The same full inverse, including all cross terms, must be used for both
+terms; a marginal covariance lower bound cannot replace it. Source transition,
+prediction, hybrid events and the complete H18/A21 word remain obligations.
+Candidate bounds below bound ONLY e_eta, not epsilon_aw. No promotion occurs.
 """
 from __future__ import annotations
 
@@ -81,8 +54,8 @@ import ou3_sea3_complete_source as COMPLETE
 
 REPO = Path(__file__).resolve().parents[2]
 DEFAULT_DOMAIN = REPO / "tools" / "stability" / "ou3_proof_operating_domain.json"
-SCHEMA = 1
-QUALIFICATION = "OU3_P4_COMPLETE_SEA3_MEASUREMENT_LINEARIZING_AW_COORDINATE"
+SCHEMA = 2
+QUALIFICATION = "OU3_P4_COMPLETE_SEA3_MEASUREMENT_LINEARIZING_AW_COORDINATE_V2"
 
 
 def _candidate(row: dict, force_upper: float) -> dict:
@@ -151,6 +124,8 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "all_valid_accelerometer_updates_remain_in_complete_word": True,
         "all_due_S_updates_and_actual_RS_remain_in_complete_word": True,
         "operation_coordinate_consumed": True,
+        "nonlinear_storage_metric_equivalence_to_original_closed": False,
+        "full_mixed_aw_shift_retained_in_transport": True,
         "operation_coordinate_transform_back_exact": bool(
             acc["state_coordinate_transform"]["transform_back_after_measurement_exact"]
         ),
@@ -163,17 +138,16 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
             "Q_aw": "R_hat^T E R_hat",
             "triangular_in_aw": True,
             "globally_invertible_in_aw_for_each_finite_c": True,
-            "inverse": "u_aw=Phi_aw-e_eta(c,zeta)",
+            "inverse": "delta_a_w=Q_aw^T*(Phi_aw-e_eta(c,zeta))",
+            "epsilon_aw": "(Q_aw-I)*delta_a_w+e_eta",
+            "full_shift_includes_mixed_aw_error": True,
             "R_hat_orthogonal": True,
             "Q_aw_orthogonal": True,
         },
         "exact_accelerometer_residual_identity": (
             "r_a=[c]x f_hat+R_hat Phi_aw+delta_b_a=H_a Phi(z)"
         ),
-        "exact_shipping_tangent_H_used": False,
-        "auxiliary_H0_uses_shipping_literal_coefficients": True,
-        "shipping_Joseph_binding_closed": False,
-        "rho_must_include_operation_coordinate_transport": True,
+        "exact_shipping_tangent_H_used": True,
         "accelerometer_eta_declared_zero_in_original_coordinate": False,
         "accelerometer_eta_dropped_from_physics": False,
         "standalone_eta_Rinv_packet_budget_used": False,
@@ -181,32 +155,38 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "actual_RS_regularizes_same_aw_coordinate_family": True,
         "joseph_P_H_R_K_S_unchanged": True,
         "phi_storage_exact_Joseph_identity": (
-            "phi^T P^-1 phi-(I-KH)phi^T(P+)^-1(I-KH)phi"
+            "phi^T P^-1 phi-((I-KH)phi)^T(P+)^-1((I-KH)phi)"
             "=y^T S^-1 y, y=H phi"
         ),
         "phi_storage_has_no_standalone_eta_penalty": True,
         "combined_correction_reset_transport": {
             "t": "z-Ky",
             "z_plus": "G t+rho",
-            "phi_linear_posterior": "(I-KH)phi=t+E_aw e_minus",
+            "phi_linear_posterior": "(I-KH)phi=t+E_aw epsilon_minus",
             "phi_plus": "G(I-KH)phi+xi",
-            "xi": "rho+E_aw(e_plus-e_minus)",
+            "xi": "rho+E_aw(epsilon_plus-epsilon_minus)",
+            "mixed_shift_difference": "(Q_plus-Q_minus)*delta_a_w-(Q_plus-I)*d_aw",
+            "signed_energy_ledger": "V_plus-V_minus=-J+2*u^T*P_J^-1*b+b^T*P_J^-1*b; b=G^-1*xi",
             "G_identity_on_aw_coordinate": True,
-            "reset_covariance_congruence_exact": bool(reset["exact_reset_congruence_identity"]),
+            "reset_covariance_congruence_exact": not RESET.validate(reset) and bool(reset["exact_reset_congruence_identity"]),
             "G_inverse_operator_norm_exact": float(reset["reset_inverse_operator_norm_upper"]),
         },
         "source_indexed_shift_must_persist_across_complete_word": True,
         "packetwise_shift_reset_to_zero_allowed": False,
         "complete_SEA3_source_transition_must_drive_e_plus_minus": True,
         "candidate_cells": rows,
+        "candidate_shift_bounds_cover_pure_e_eta_only": True,
         "candidate_shift_bounds_require_nominal_force_bound": True,
         "nominal_force_bound_certified_here": False,
+        "shipping_Joseph_binding_closed": False,
+        "shipping_Joseph_binding_scope": "SOURCE_UNIFORM_NONLINEAR_TRANSPORT",
+        "candidate_shift_bounds_cover_full_epsilon_aw": False,
         "outer_geometry_retained": bool(geom["outer_geometry_cell"]["sector_is_homogeneous_quadratic"]),
         "measurement_remainder_obligation_reduced_to_coordinate_transport": True,
         "complete_source_correlated_transport_defect_closed_here": False,
         "P4_promoted_here": False,
         "next_obligation": (
-            "first close the H0 versus congruent H_u binding; then outward-enclose full xi over the same complete SEA3 "
+            "evaluate the signed full-shift xi=rho+E_aw(epsilon_plus-epsilon_minus) on the same complete SEA3 "
             "source-indexed word, retaining the actual R_S directional metric and the "
             "same P,H,R,K,S cell; do not return to standalone eta or packet-count budgets"
         ),
@@ -227,24 +207,28 @@ def validate(d: dict) -> list[str]:
         "operation_coordinate_consumed",
         "operation_coordinate_transform_back_exact",
         "exact_cayley_remainder_identity_closed",
+        "exact_shipping_tangent_H_used",
         "actual_RS_regularizes_same_aw_coordinate_family",
         "joseph_P_H_R_K_S_unchanged",
         "phi_storage_has_no_standalone_eta_penalty",
         "source_indexed_shift_must_persist_across_complete_word",
         "complete_SEA3_source_transition_must_drive_e_plus_minus",
+        "full_mixed_aw_shift_retained_in_transport",
+        "candidate_shift_bounds_cover_pure_e_eta_only",
         "measurement_remainder_obligation_reduced_to_coordinate_transport",
     ):
         if d.get(key) is not True:
             f.append(f"{key} is not true")
     for key in (
         "nominal_force_bound_certified_here",
-        "exact_shipping_tangent_H_used",
         "shipping_Joseph_binding_closed",
         "trajectory_replay_used",
         "filter_changed",
         "declared_domain_changed",
         "source_family_replaced",
         "accelerometer_eta_declared_zero_in_original_coordinate",
+        "nonlinear_storage_metric_equivalence_to_original_closed",
+        "candidate_shift_bounds_cover_full_epsilon_aw",
         "accelerometer_eta_dropped_from_physics",
         "standalone_eta_Rinv_packet_budget_used",
         "packet_count_multiplier_used",

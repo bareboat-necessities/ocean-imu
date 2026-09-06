@@ -107,7 +107,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "P5_MAY_START": p4_pass,
         "P4_CANONICAL_FAIL_REASONS": fail_reasons,
         "next_obligation": (
-            "close the H0 versus congruent shipping H_u binding and full nonlinear coordinate/reset transport inside the signed complete H18/A21 SEA3 word; retain actual R_S and the 0.8-rad geometry; follow docs/ou3-proof-research-state.md"
+            "close full epsilon_aw=(Q_aw-I)*delta_a_w+e_eta transport and uniform storage comparison inside the signed complete H18/A21 SEA3 word; retain actual R_S and the 0.8-rad geometry; follow docs/ou3-proof-research-state.md"
             if p3_pass and rebind_closed
             else "close only the reported prerequisite; do not return to endpoint/source-word enumeration"
         ),

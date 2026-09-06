@@ -22,11 +22,14 @@ to u contributes),
     ||eta|| = sin(theta/2) ||h||,
     ||y||   = cos(theta/2) ||h||.
 
-The accelerometer operation-coordinate certificate removes a_w and b_a exactly
-from nonlinear eta, so its eta is precisely this pure rotation defect with
-v=f_hat.  The full linear a_w/b_a directions remain in y, S and K, and every
-actual SpectralMSE R_S S=0 update remains in the complete word.  Magnetometer
-radial energy is handled separately by the exact Joseph cancellation lemma.
+For the accelerometer these identities bound ONLY the pure rotation component
+with v=f_hat. The original shipping-tangent remainder ALSO contains
+(E-I)R_hat delta_a_w. A frozen covariance congruence does not eliminate that
+mixed term, and the orthogonality identity above does not apply to the full
+accelerometer residual/remainder. The mixed term must be retained in full-Phi
+transport or in the physical signed ledger. The b_a term is exactly linear.
+Every actual SpectralMSE R_S S=0 update remains in the complete word; the
+magnetometer radial energy uses its separate exact Joseph cancellation lemma.
 
 Configured Racc and Rmag are isotropic on this proof branch, so the same norm
 identities hold after whitening by R^-1.  These are homogeneous quadratic
@@ -49,8 +52,8 @@ import ou3_validated_transcendentals as VT
 
 REPO = Path(__file__).resolve().parents[2]
 DEFAULT_DOMAIN = REPO / "tools" / "stability" / "ou3_proof_operating_domain.json"
-SCHEMA = 1
-QUALIFICATION = "OU3_P4_COMPLETE_SEA3_PURE_VECTOR_REMAINDER_GEOMETRY"
+SCHEMA = 2
+QUALIFICATION = "OU3_P4_COMPLETE_SEA3_PURE_VECTOR_REMAINDER_GEOMETRY_V2"
 PI_UP = 355.0 / 113.0
 
 
@@ -121,7 +124,9 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "accelerometer_operation_coordinate_consumed": True,
         "accelerometer_aw_nonlinear_eta_coefficient": float(acc["latent_aw_nonlinear_eta_coefficient"]),
         "accelerometer_bias_nonlinear_eta_coefficient": float(acc["accelerometer_bias_nonlinear_eta_coefficient"]),
-        "accelerometer_eta_is_pure_force_rotation": True,
+        "accelerometer_eta_is_pure_force_rotation": False,
+        "sector_identities_apply_to_pure_rotation_component_only": True,
+        "mixed_aw_shipping_tangent_remainder_retained": True,
         "magnetometer_radial_Joseph_cancellation_consumed": bool(mag["radial_Joseph_energy_cancellation_exact"]),
         "configured_Racc_isotropic": acc_iso,
         "configured_Rmag_isotropic": mag_iso,
@@ -138,7 +143,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "complete_signed_word_established_here": False,
         "P4_promoted_here": False,
         "next_obligation": (
-            "accumulate these homogeneous signed vector forms with the same complete-SEA3 innovation recursion and the actual-R_S four-S a_w regularizer; scalarize only after the recurrent H/A word"
+            "retain the mixed a_w term alongside these pure-rotation forms in the same complete-SEA3 signed ledger and actual-R_S regularizer; the pure sector cannot stand for the full accelerometer remainder"
         ),
     }
 
@@ -152,7 +157,9 @@ def validate(d: dict) -> list[str]:
     for key in (
         "source_generated_not_trajectory_fit", "all_valid_accelerometer_updates_remain_in_complete_word",
         "all_due_S_updates_and_actual_RS_remain_in_complete_word",
-        "accelerometer_operation_coordinate_consumed", "accelerometer_eta_is_pure_force_rotation",
+        "accelerometer_operation_coordinate_consumed",
+        "sector_identities_apply_to_pure_rotation_component_only",
+        "mixed_aw_shipping_tangent_remainder_retained",
         "magnetometer_radial_Joseph_cancellation_consumed", "configured_Racc_isotropic",
         "configured_Rmag_isotropic", "R_inverse_whitening_preserves_pure_vector_sector",
     ):
@@ -160,13 +167,15 @@ def validate(d: dict) -> list[str]:
             f.append(f"{key} is not true")
     for key in (
         "trajectory_replay_used", "filter_changed", "declared_domain_changed", "source_family_replaced",
-        "retired_source_grid_remainder_route_used", "packet_count_multiplier_used",
+        "retired_source_grid_remainder_route_used", "accelerometer_eta_is_pure_force_rotation",
+        "packet_count_multiplier_used",
         "standalone_eta_disturbance_budget_used", "complete_signed_word_established_here", "P4_promoted_here",
     ):
         if d.get(key) is not False:
             f.append(f"{key} is not false")
-    if d.get("accelerometer_aw_nonlinear_eta_coefficient") != 0.0:
-        f.append("a_w re-entered nonlinear accelerometer eta")
+    aw = float(d.get("accelerometer_aw_nonlinear_eta_coefficient", 0.0))
+    if not (math.isfinite(aw) and aw > 0.0):
+        f.append("mixed a_w shipping-tangent remainder bound is missing")
     if d.get("accelerometer_bias_nonlinear_eta_coefficient") != 0.0:
         f.append("b_a re-entered nonlinear accelerometer eta")
     rows = d.get("candidate_cells", [])

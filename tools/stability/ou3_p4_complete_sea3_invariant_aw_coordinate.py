@@ -1,11 +1,8 @@
 #!/usr/bin/env python3
 """Invariant a_w normal form for complete-SEA3 OU-III P4.
 
-The triangular congruence and residual normal form below are separate
-pointwise identities. Their composition with the shipping Joseph map remains
-open: H0 in the residual rewrite is not H_u=H T_E^T from the preceding
-operation-coordinate congruence. In particular this file does not certify
-that a gravity-only attitude column describes the unchanged shipping gain.  It does not change the filter and it does
+This lemma is a linear, source-indexed congruence on top of the exact
+measurement-linearizing coordinate.  It does not change the filter and it does
 not replace the complete SEA3 word.
 
 For one accepted accelerometer operation let
@@ -17,19 +14,19 @@ where ``u_aw=R_hat^T E R_hat delta_a_w`` is the exact operation coordinate from
 ``ou3_p4_complete_sea3_accelerometer_operation_coordinate``.  Introduce the
 source-indexed *linear* triangular coordinate
 
-    w_lin = u_aw + B c,
+    w_lin = delta_a_w + B c,
     B c   = R_hat^T [c]x R_hat a_hat
           = -R_hat^T [R_hat a_hat]x c.
 
 Then the shipping tangent residual is identically
 
-    [c]x f_hat + R_hat u_aw + db_a
+    [c]x f_hat + R_hat delta_a_w + db_a
       = -[c]x R_hat g + R_hat w_lin + db_a.
 
 Thus the wave-acceleration part of the attitude column is moved into the a_w
 coordinate by a unit-triangular state transform.  If
 
-    T_B : (c,u_aw) -> (c,w_lin),
+    T_B : (c,delta_a_w) -> (c,w_lin),
 
 then det(T_B)=1 and T_B is nonsingular for every finite source value.  With
 
@@ -48,7 +45,8 @@ condition-number multiplier or group-isotropic metric is introduced.
 Apply the same T_B to the nonlinear measurement-linearizing coordinate.  With
 
     e_eta = R_hat^T ((E-I)-[c]x) f_hat,
-    w_exact = w_lin + e_eta,
+    epsilon_aw = (Q_E-I)delta_a_w + e_eta,
+    w_exact = w_lin + epsilon_aw,
 
 one obtains the exact finite-angle normal form
 
@@ -60,7 +58,8 @@ Equivalently, writing a_true=a_hat+delta_a_w and Q_E=R_hat^T E R_hat,
               - R_hat^T ((E-I)-[c]x) R_hat g.
 
 The only nonlinear displacement from the transformed tangent coordinate is
-therefore the already-certified pure finite-angle shift e_eta.  The large
+the full shift epsilon_aw, including the mixed wave-error term. The pure
+finite-angle e_eta bounds alone do not bound this displacement.  The large
 first-order wave-acceleration/attitude coupling is part of the exact linear
 congruence T_B, not a remainder.  Because the whole complete SEA3 word is
 transformed rather than altered, every due S=0 update and its actual applied
@@ -68,7 +67,7 @@ SpectralMSE R_S remain in the same word and regularize the transformed a_w
 direction through the same information matrix.
 
 This producer deliberately remains fail-closed.  P4 still requires an
-operation-matched bound on transport of e_eta through the physical correction,
+operation-matched bound on transport of full epsilon_aw through the physical correction,
 quaternion injection/reset, prediction, and source change.  That transport must
 be charged to the same Joseph information decrease; no packet-count-times-worst
 remainder budget is admissible.
@@ -87,8 +86,8 @@ import ou3_sea3_complete_source as COMPLETE
 
 REPO = Path(__file__).resolve().parents[2]
 DEFAULT_DOMAIN = REPO / "tools" / "stability" / "ou3_proof_operating_domain.json"
-SCHEMA = 1
-QUALIFICATION = "OU3_P4_COMPLETE_SEA3_INVARIANT_AW_NORMAL_FORM"
+SCHEMA = 2
+QUALIFICATION = "OU3_P4_COMPLETE_SEA3_INVARIANT_AW_NORMAL_FORM_V2"
 
 
 def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
@@ -139,8 +138,9 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "nominal_aw_bound_is_conditional_on_nominal_force_bound": True,
         "nominal_force_bound_inherited_from_physical_SEA3_proved": False,
         "shipping_Joseph_binding_closed": False,
+        "shipping_Joseph_binding_scope": "SOURCE_UNIFORM_NONLINEAR_TRANSPORT",
         "linear_triangular_coordinate": {
-            "w_lin": "u_aw+B*c",
+            "w_lin": "delta_a_w+B*c",
             "B_c": "R_hat^T*[c]x*R_hat*a_hat",
             "B_matrix": "-R_hat^T*[R_hat*a_hat]x",
             "B_operator_norm_upper_mps2_per_cayley": ahat,
@@ -150,7 +150,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
             "T_B_inverse_exact": True,
         },
         "tangent_normal_form_identity": (
-            "[c]x*f_hat+R_hat*u_aw+delta_b_a="
+            "[c]x*f_hat+R_hat*delta_a_w+delta_b_a="
             "-[c]x*R_hat*g+R_hat*w_lin+delta_b_a"
         ),
         "transformed_attitude_column_depends_only_on_gravity": True,
@@ -166,7 +166,8 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
             "group_isotropic_metric_assumption_used": False,
         },
         "exact_finite_angle_coordinate": {
-            "w_exact": "w_lin+e_eta",
+            "w_exact": "w_lin+epsilon_aw",
+            "epsilon_aw": "(Q_E-I)*delta_a_w+e_eta",
             "e_eta": "R_hat^T*((E-I)-[c]x)*f_hat",
             "equivalent_w_exact": (
                 "Q_E*a_true-a_hat-R_hat^T*((E-I)-[c]x)*R_hat*g"
@@ -175,17 +176,19 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
             "exact_residual": (
                 "r_a=-[c]x*R_hat*g+R_hat*w_exact+delta_b_a=H_B*Phi_B(z)"
             ),
-            "nonlinear_displacement_is_exactly_existing_e_eta": True,
+            "nonlinear_displacement_is_full_aw_shift": True,
             "first_order_wave_attitude_term_removed_from_remainder": True,
         },
         "measurement_linearizing_shift_bounds_reused_without_widening": awlin["candidate_cells"],
+        "reused_candidate_bounds_cover_pure_e_eta_only": True,
+        "full_nonlinear_coordinate_displacement_bounded_here": False,
         "standalone_eta_Rinv_packet_budget_used": False,
         "packet_count_multiplier_used": False,
         "actual_RS_information_matrix_retained_under_congruence": True,
         "complete_source_correlated_transport_defect_closed_here": False,
         "P4_promoted_here": False,
         "next_obligation": (
-            "first bind H0 to the actual congruent H_u and prove a nominal-force bound; then bound the full coordinate transport; "
+            "bound the full epsilon_aw change, including mixed wave error, under the same Joseph correction/reset and prediction; "
             "use the same operation's information decrease and transformed complete-word R_S metric, then scalarize only at the complete-word endpoint"
         ),
     }
@@ -206,12 +209,13 @@ def validate(d: dict) -> list[str]:
         "transformed_attitude_column_depends_only_on_gravity",
         "wave_acceleration_attitude_cross_term_is_linear_coordinate_coupling",
         "actual_RS_information_matrix_retained_under_congruence",
+        "reused_candidate_bounds_cover_pure_e_eta_only",
     ):
         if d.get(key) is not True:
             f.append(f"{key} is not true")
     for key in (
-        "shipping_Joseph_binding_closed",
         "nominal_force_bound_inherited_from_physical_SEA3_proved",
+        "shipping_Joseph_binding_closed",
         "trajectory_replay_used",
         "filter_changed",
         "declared_domain_changed",
@@ -219,6 +223,7 @@ def validate(d: dict) -> list[str]:
         "standalone_eta_Rinv_packet_budget_used",
         "packet_count_multiplier_used",
         "complete_source_correlated_transport_defect_closed_here",
+        "full_nonlinear_coordinate_displacement_bounded_here",
         "P4_promoted_here",
     ):
         if d.get(key) is not False:
@@ -245,7 +250,7 @@ def validate(d: dict) -> list[str]:
             f.append(f"forbidden moving metric shortcut {key} enabled")
     exact = d.get("exact_finite_angle_coordinate", {})
     for key in (
-        "nonlinear_displacement_is_exactly_existing_e_eta",
+        "nonlinear_displacement_is_full_aw_shift",
         "first_order_wave_attitude_term_removed_from_remainder",
     ):
         if exact.get(key) is not True:

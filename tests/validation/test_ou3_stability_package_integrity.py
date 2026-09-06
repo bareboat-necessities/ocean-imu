@@ -152,6 +152,21 @@ class StabilityPackageIntegrityTests(unittest.TestCase):
             "stability JSON domains still duplicated at tools/: " + ", ".join(root_duplicates),
         )
 
+    def test_workflow_json_globs_follow_relocated_domains(self):
+        stale = []
+        # Both literal paths and globs matter: a stale trigger can silently
+        # skip proof checks when only a theorem-domain JSON is changed.
+        legacy = ("tools/" + "ou3_*.json", "tools/" + "ou3_sea3_*.json")
+        for path in sorted((ROOT / ".github" / "workflows").glob("*.yml")):
+            for lineno, line in enumerate(path.read_text().splitlines(), 1):
+                if any(pattern in line for pattern in legacy):
+                    stale.append(f"{path.name}:{lineno}: {line.strip()}")
+        self.assertEqual([], stale, "stale JSON trigger globs:\n" + "\n".join(stale))
+        for name in ("ou3-stability-json-relocation-once.yml",
+                     "ou3-stability-json-relocation-final.yml"):
+            self.assertFalse((ROOT / ".github" / "workflows" / name).exists(),
+                             "completed one-time relocation workflow remains: " + name)
+
     def test_all_stability_json_files_have_moved(self):
         self.assertEqual([], sorted(p.name for p in TOOLS.glob("ou3_*.json")))
 
