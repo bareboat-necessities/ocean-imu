@@ -1,25 +1,102 @@
 from __future__ import annotations
-import ast,importlib,sys,unittest
+
+import ast
+import importlib
+import re
+import sys
+import unittest
 from pathlib import Path
-ROOT=Path(__file__).resolve().parents[2]; TOOLS=ROOT/"tools"; STABILITY=TOOLS/"stability"; sys.path.insert(0,str(TOOLS)); sys.path.insert(0,str(STABILITY))
-RETIRED_MODULES={"ou3_p3_p2_v1_history_frontier","ou3_p3_p2_v1_stage_phase_translation","ou3_p3_p2_v1_full_state_join","ou3_p3_canonical_gate","ou3_p4_p3_metric_attachment","ou3_p4_accelerometer_corotated_aw","ou3_p4_source_word_timing","ou3_p4_vector_remainder_sector","ou3_p4_signed_joseph_feasibility","ou3_p4_canonical_gate","ou3_p4_source_path_reachability","ou3_p4_source_node_cells","ou3_p4_sample_clock_source_refinement"}
+
+ROOT = Path(__file__).resolve().parents[2]
+TOOLS = ROOT / "tools"
+STABILITY = TOOLS / "stability"
+sys.path.insert(0, str(TOOLS))
+sys.path.insert(0, str(STABILITY))
+
+RETIRED_MODULES = {
+    "ou3_p3_p2_v1_history_frontier",
+    "ou3_p3_p2_v1_stage_phase_translation",
+    "ou3_p3_p2_v1_full_state_join",
+    "ou3_p3_canonical_gate",
+    "ou3_p4_p3_metric_attachment",
+    "ou3_p4_accelerometer_corotated_aw",
+    "ou3_p4_source_word_timing",
+    "ou3_p4_vector_remainder_sector",
+    "ou3_p4_signed_joseph_feasibility",
+    "ou3_p4_canonical_gate",
+    "ou3_p4_source_path_reachability",
+    "ou3_p4_source_node_cells",
+    "ou3_p4_sample_clock_source_refinement",
+}
+
+STALE_RELOCATED_PATH = re.compile(
+    r"(?:REPO|ROOT|repo_root)\s*/\s*['\"]tools['\"]\s*/\s*"
+    r"['\"]ou3_[^'\"]+\.py['\"]"
+)
+
+
 class StabilityPackageIntegrityTests(unittest.TestCase):
- def test_all_retained_ou3_imports_resolve_inside_retained_tree(self):
-  modules={p.stem for p in STABILITY.glob("ou3_*.py")}; top={p.stem for p in TOOLS.glob("ou3_*.py")}; unresolved=[]; retired=[]
-  for path in sorted(STABILITY.glob("ou3_*.py")):
-   tree=ast.parse(path.read_text(),filename=str(path))
-   for node in ast.walk(tree):
-    names=[a.name.split('.')[0] for a in node.names] if isinstance(node,ast.Import) else ([node.module.split('.')[0]] if isinstance(node,ast.ImportFrom) and node.module else [])
-    for name in names:
-     if not name.startswith('ou3_'): continue
-     if name in RETIRED_MODULES: retired.append(f"{path.name}: {name}")
-     if name not in modules and name not in top: unresolved.append(f"{path.name}: {name}")
-  self.assertEqual([],retired,"retired stability imports returned:\n"+'\n'.join(retired)); self.assertEqual([],unresolved,"unresolved stability imports:\n"+'\n'.join(unresolved))
- def test_every_retained_stability_module_imports(self):
-  failures=[]
-  for path in sorted(STABILITY.glob("ou3_*.py")):
-   try: importlib.import_module(path.stem)
-   except Exception as exc: failures.append(f"{path.name}: {type(exc).__name__}: {exc}")
-  self.assertEqual([],failures,"retained stability module import failures:\n"+'\n'.join(failures))
- def test_unrelated_ou3_studies_stay_outside_stability_package(self): self.assertEqual({"ou3_engine_noise_mitigation.py","ou3_lever_arm_study.py","ou3_lever_arm_tex.py"},{p.name for p in TOOLS.glob("ou3_*.py")})
-if __name__=="__main__": unittest.main()
+    def test_all_retained_ou3_imports_resolve_inside_retained_tree(self):
+        modules = {p.stem for p in STABILITY.glob("ou3_*.py")}
+        top = {p.stem for p in TOOLS.glob("ou3_*.py")}
+        unresolved = []
+        retired = []
+        for path in sorted(STABILITY.glob("ou3_*.py")):
+            tree = ast.parse(path.read_text(), filename=str(path))
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Import):
+                    names = [a.name.split(".")[0] for a in node.names]
+                elif isinstance(node, ast.ImportFrom) and node.module:
+                    names = [node.module.split(".")[0]]
+                else:
+                    names = []
+                for name in names:
+                    if not name.startswith("ou3_"):
+                        continue
+                    if name in RETIRED_MODULES:
+                        retired.append(f"{path.name}: {name}")
+                    if name not in modules and name not in top:
+                        unresolved.append(f"{path.name}: {name}")
+        self.assertEqual(
+            [], retired, "retired stability imports returned:\n" + "\n".join(retired)
+        )
+        self.assertEqual(
+            [], unresolved, "unresolved stability imports:\n" + "\n".join(unresolved)
+        )
+
+    def test_every_retained_stability_module_imports(self):
+        failures = []
+        for path in sorted(STABILITY.glob("ou3_*.py")):
+            try:
+                importlib.import_module(path.stem)
+            except Exception as exc:  # pragma: no cover - failure-reporting path
+                failures.append(f"{path.name}: {type(exc).__name__}: {exc}")
+        self.assertEqual(
+            [], failures, "retained stability module import failures:\n" + "\n".join(failures)
+        )
+
+    def test_retained_stability_modules_do_not_use_pre_package_python_paths(self):
+        stale = []
+        for path in sorted(STABILITY.glob("ou3_*.py")):
+            for match in STALE_RELOCATED_PATH.finditer(path.read_text(encoding="utf-8")):
+                stale.append(f"{path.name}: {match.group(0)}")
+        self.assertEqual(
+            [],
+            stale,
+            "retained stability modules still use pre-package Python paths:\n"
+            + "\n".join(stale),
+        )
+
+    def test_unrelated_ou3_studies_stay_outside_stability_package(self):
+        self.assertEqual(
+            {
+                "ou3_engine_noise_mitigation.py",
+                "ou3_lever_arm_study.py",
+                "ou3_lever_arm_tex.py",
+            },
+            {p.name for p in TOOLS.glob("ou3_*.py")},
+        )
+
+
+if __name__ == "__main__":
+    unittest.main()
