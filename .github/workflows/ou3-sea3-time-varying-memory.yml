@@ -13,6 +13,10 @@ on:
       - ".github/workflows/ou3-sea3-time-varying-memory.yml"
   workflow_dispatch:
 
+concurrency:
+  group: ou3-sea3-time-varying-memory-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
@@ -41,13 +45,19 @@ jobs:
           assert d['certified_macro_intervals_bound_by_facade'] == 25
           assert d['commit_geometry']['max_commit_interval_samples_certified'] == 23
           assert d['commit_geometry']['complete_constant_tune_intervals_lower'] >= 25
+          assert d['variable_interval_lengths_certified_by_monotonicity'] is True
+          assert d['longer_interval_counts_covered_by_one_sample_target_invariance'] is True
+          assert d['terminal_suffix_covered_by_same_uniform_one_sample_invariance'] is True
+          assert d['source_or_candidate_matrix_changed_by_acceleration'] is False
+          assert d['entrywise_lower_endpoint_table_is_Loewner_certificate'] is False
+          assert d['downstream_must_consume_full_interval_candidate'] is True
           assert d['full_4x4_time_varying_translation_memory_closed'] is True
           assert d['candidate_induction']['worst_conditioned_LDLT_pivot_lower'] > 0.0
           assert d['terminal_suffix']['worst_conditioned_LDLT_pivot_lower'] > 0.0
           print('TV_MEM_COMMIT_GEOMETRY', d['commit_geometry'])
           print('TV_MEM_INDUCTION_PIVOT', d['candidate_induction']['worst_conditioned_LDLT_pivot_lower'])
           print('TV_MEM_TAIL_PIVOT', d['terminal_suffix']['worst_conditioned_LDLT_pivot_lower'])
-          print('TV_MEM_LOWER', d['word_endpoint_translation_process_measurement_noise_covariance_lower'])
+          print('TV_MEM_INTERVAL_LOWER', d['word_endpoint_translation_process_measurement_noise_interval_lower'])
           PY
       - name: Test time-varying translation process memory
         working-directory: tests/validation
