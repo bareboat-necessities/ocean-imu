@@ -1,0 +1,115 @@
+name: ou3-stability-json-relocation-final
+on:
+  push:
+    branches: [codex/ou3-p4-p5-complete-sea3-after-492]
+    paths: [.github/workflows/ou3-stability-json-relocation-final.yml]
+permissions:
+  contents: write
+jobs:
+  prepare-correction:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: 80abe1beaa77feb13c994309551734810434e2bc
+          persist-credentials: false
+      - name: Decode and verify reviewed correction manifest
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY'
+          import base64,gzip,hashlib,json,os,pathlib,subprocess,urllib.request
+          base='https://api.github.com/repos/bareboat-necessities/ocean-imu'
+          def get_blob(sha):
+              req=urllib.request.Request(base+'/git/blobs/'+sha,headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json'})
+              with urllib.request.urlopen(req,timeout=60) as response:
+                  d=json.load(response)
+              return base64.b64decode(d['content']).decode()
+          def blob_sha(data):
+              return hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest()
+          sources=['9cca45b1d9872d21eb6e739c70a828388b957cbc','70cf1fadd03cc80fe632d54c89ae7553e28b333a','41a10b1538af2144e27c3a5e1f1390d0cf602d77','5bff08e26b30acd356f478a9008a5543d15e73e9','0e49e3cb6086e18f40f1b908a7a8b851a9e798d3','1eb49509acc028573558de4a14239cef2767f256']
+          chunks=[get_blob(s) for s in sources]
+          pathlib.Path('/tmp/transport').mkdir()
+          for i,c in enumerate(chunks):
+              pathlib.Path('/tmp/transport/part%d.txt'%i).write_text(c)
+          for old,new in [('iGTRxNag','iGTRNag'),('hNvRxb3iZaGc+c0','hNvRxb3iZGw+c0')]:
+              assert chunks[0].count(old)==1,old
+              chunks[0]=chunks[0].replace(old,new)
+          assert blob_sha(chunks[0].encode())=='5c8d62ca27329cf59507fc0267f8d678ed66f96f',blob_sha(chunks[0].encode())
+          payload=gzip.decompress(base64.b64decode(''.join(chunks),validate=True))
+          assert hashlib.sha256(payload).hexdigest()=='e3411ec9bfe6ffd90e00054ffe888de592ac42ac67de3114963a3e73cecdbdb7'
+          plan=json.loads(payload)
+          assert subprocess.check_output(['git','rev-parse','HEAD^{tree}'],text=True).strip()==plan['base_tree']
+          for item in plan['files']:
+              p=pathlib.Path(item['path'])
+              assert not p.is_absolute() and '..' not in p.parts
+              if item['old_sha'] is not None:
+                  old=p.read_bytes()
+                  assert blob_sha(old)==item['old_sha'],str(p)
+              else:
+                  assert not p.exists(),str(p)
+              if 'edits' in item:
+                  lines=old.decode().splitlines(keepends=True)
+                  for i,j,text in reversed(item['edits']):
+                      lines[i:j]=[text]
+                  p.write_text(''.join(lines),encoding='utf-8')
+              elif item['content'] is None:
+                  p.unlink()
+              else:
+                  p.parent.mkdir(parents=True,exist_ok=True)
+                  p.write_text(item['content'],encoding='utf-8')
+              if item['new_sha'] is not None:
+                  os.chmod(p,int(item['mode'],8)&0o777)
+                  assert blob_sha(p.read_bytes())==item['new_sha'],str(p)
+          subprocess.run(['git','add','-A'],check=True)
+          tree=subprocess.check_output(['git','write-tree'],text=True).strip()
+          assert tree==plan['target_tree']=='9bc1378e7de7ac9644e2b6d2427d5d03653eadc3',tree
+          assert subprocess.check_output(['git','rev-parse',tree+':src'],text=True).strip()=='53a10a7c02b1a0de4cef5ebab6e13e81909c4cdd'
+          pathlib.Path('/tmp/ou3-correction-plan.json').write_bytes(payload)
+          subprocess.run(['git','archive','--format=tar.gz','--output=/tmp/ou3-corrected-tree.tar.gz',tree],check=True)
+          print('VERIFIED_CORRECTIVE_TREE',tree)
+          PY
+          git diff --cached --check
+          make -C tests/validation build
+      - name: Test corrected algebra and complete source foundation
+        run: |
+          python3 -m unittest -v tests.validation.test_ou3_stability_package_integrity tests.validation.test_ou3_p4_coordinate_transport_algebra tests.validation.test_ou3_p4_complete_sea3_correction_information_bound tests.validation.test_ou3_result_determinism tests.validation.test_ou3_source_domain_contract tests.validation.test_ou3_proof_cleanup tests.validation.test_ou3_translational_uco_ucc tests.validation.test_ou3_full_process_ucc tests.validation.test_ou3_vector_uco_certificate tests.validation.test_ou3_p3_pseudo_scheduler_progress_certificate tests.validation.test_ou3_sea3_spectral_moment_bridge
+      - name: Publish content blobs only, without updating any branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY'
+          import json,os,pathlib,urllib.request
+          plan=json.loads(pathlib.Path('/tmp/ou3-correction-plan.json').read_text())
+          entries=[]
+          base='https://api.github.com/repos/bareboat-necessities/ocean-imu'
+          for item in plan['files']:
+              sha=item['new_sha']
+              if sha is not None:
+                  payload={'content':pathlib.Path(item['path']).read_text(),'encoding':'utf-8'}
+                  req=urllib.request.Request(base+'/git/blobs',data=json.dumps(payload).encode(),method='POST',headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json','Content-Type':'application/json'})
+                  with urllib.request.urlopen(req,timeout=60) as response:
+                      result=json.load(response)
+                  assert result['sha']==sha,item['path']
+              entries.append({'path':item['path'],'mode':item['mode'],'type':'blob','sha':sha})
+          out={'base_tree':plan['base_tree'],'target_tree':plan['target_tree'],'workflow_head':os.environ['GITHUB_SHA'],'entries':entries,'branch_updated':False}
+          pathlib.Path('/tmp/ou3-correction-blobs.json').write_text(json.dumps(out,indent=2))
+          print(json.dumps(out))
+          PY
+      - name: Export current merge-preparation checkpoint
+        if: always()
+        run: |
+          git fetch --depth=1 origin d2e2eb198192228de495e360cee5dd3bd81fd1e4
+          git archive --format=tar.gz --output=/tmp/ou3-current-checkpoint.tar.gz FETCH_HEAD
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: ou3-pr493-corrective-publication
+          path: |
+            /tmp/transport
+            /tmp/ou3-correction-plan.json
+            /tmp/ou3-correction-blobs.json
+            /tmp/ou3-corrected-tree.tar.gz
+            /tmp/ou3-current-checkpoint.tar.gz
+          retention-days: 1
