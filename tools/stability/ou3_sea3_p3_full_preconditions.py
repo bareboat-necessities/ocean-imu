@@ -28,7 +28,7 @@ import ou3_sea3_windowed_vector_pe as PE
 from ou3_interval import Interval
 
 REPO = Path(__file__).resolve().parents[2]
-DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
+DEFAULT_DOMAIN = REPO / "tools" / "stability" / "ou3_proof_operating_domain.json"
 WRAPPER = REPO / "src" / "kalman_ou_iii" / "SeaStateFusionFilter_OU_III.h"
 MEKF = REPO / "src" / "kalman_ou_iii" / "Kalman3D_Wave_OU_III.h"
 PAPER = REPO / "doc" / "kalman_ou_iii" / "w3d-iss-stability.tex-part"

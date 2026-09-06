@@ -33,7 +33,7 @@ import math
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
-DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
+DEFAULT_DOMAIN = REPO / "tools" / "stability" / "ou3_proof_operating_domain.json"
 SCHEMA = 1
 QUALIFICATION = "OU3_SEA3_PHYSICAL_STEEPNESS_ADMISSIBILITY"
 

@@ -61,7 +61,7 @@ import ou3_p4_moving_metric_rebind as REBIND
 import ou3_sea3_complete_source as COMPLETE
 
 REPO = Path(__file__).resolve().parents[2]
-DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
+DEFAULT_DOMAIN = REPO / "tools" / "stability" / "ou3_proof_operating_domain.json"
 MEKF = REPO / "src" / "kalman_ou_iii" / "Kalman3D_Wave_OU_III.h"
 SCHEMA = 2
 QUALIFICATION = "OU3_P4_COMPLETE_SEA3_ACCELEROMETER_OPERATION_COORDINATE_MOVING_METRIC_V2"

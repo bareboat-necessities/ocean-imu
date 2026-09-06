@@ -57,7 +57,7 @@ import ou3_p4_cayley_sector_certificate as CAYLEY
 import ou3_vector_uco_certificate as VECTOR
 
 REPO = Path(__file__).resolve().parents[2]
-DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
+DEFAULT_DOMAIN = REPO / "tools" / "stability" / "ou3_proof_operating_domain.json"
 MEKF = REPO / "src" / "kalman_ou_iii" / "Kalman3D_Wave_OU_III.h"
 SIM = REPO / "src" / "util" / "W3dSimCommon.h"
 CERT_SIM = REPO / "tests" / "kalman_ou_iii" / "ou3-certificate-sim.cpp"

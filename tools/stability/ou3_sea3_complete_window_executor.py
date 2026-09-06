@@ -41,7 +41,7 @@ import ou3_sea3_shipping_prediction_primitives as PRED
 import ou3_sea3_window_artifact_codec as CODEC
 
 REPO = Path(__file__).resolve().parents[2]
-DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
+DEFAULT_DOMAIN = REPO / "tools" / "stability" / "ou3_proof_operating_domain.json"
 SCHEMA = 3
 QUALIFICATION = "OU3_SEA3_COMPLETE_WINDOW_EXECUTOR_V3"
 DELTA = 1.0e-18

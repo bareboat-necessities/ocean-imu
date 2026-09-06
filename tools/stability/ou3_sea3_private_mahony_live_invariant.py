@@ -59,7 +59,7 @@ from ou3_interval import Interval
 import ou3_validated_transcendentals as VT
 
 REPO = Path(__file__).resolve().parents[2]
-DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
+DOMAIN = REPO / "tools" / "stability" / "ou3_proof_operating_domain.json"
 WRAPPER = REPO / "src" / "kalman_ou_iii" / "SeaStateFusionFilter_OU_III.h"
 SCHEMA = 1
 QUALIFICATION = "OU3_SEA3_PRIVATE_MAHONY_ALL_LIVE_PI_INVARIANT_V1"

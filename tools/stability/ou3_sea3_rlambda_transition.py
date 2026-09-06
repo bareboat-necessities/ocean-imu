@@ -47,7 +47,7 @@ import ou3_sea3_physical_admissibility as PHYSICAL
 import ou3_sea3_spectral_moment_bridge as MOMENT
 
 REPO = Path(__file__).resolve().parents[2]
-DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
+DEFAULT_DOMAIN = REPO / "tools" / "stability" / "ou3_proof_operating_domain.json"
 SCHEMA = 1
 QUALIFICATION = "OU3_SEA3_COUPLED_COMPACT_RLAMBDA_OUTER_RELATION_V1"
 M_MAX = 3

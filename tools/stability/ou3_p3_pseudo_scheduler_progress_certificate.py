@@ -37,7 +37,7 @@ import ou3_source_reachable_matrix_p3 as BASE
 REPO = Path(__file__).resolve().parents[2]
 MEKF = REPO / "src" / "kalman_ou_iii" / "Kalman3D_Wave_OU_III.h"
 CORE = REPO / "src" / "kalman_ou_common" / "KalmanOUCoreMath.h"
-DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
+DEFAULT_DOMAIN = REPO / "tools" / "stability" / "ou3_proof_operating_domain.json"
 SCHEMA = 1
 TARGET_SAMPLES = 635
 OLD_GAP = 13

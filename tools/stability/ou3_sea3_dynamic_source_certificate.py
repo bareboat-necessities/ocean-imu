@@ -29,7 +29,7 @@ REPO = Path(__file__).resolve().parents[2]
 WRAPPER = REPO / "src" / "kalman_ou_iii" / "SeaStateFusionFilter_OU_III.h"
 ESTIMATOR = REPO / "src" / "tuner" / "WavePeriodEstimator.h"
 LIMITS = REPO / "src" / "tuner" / "SeaStateAdaptationLimits.h"
-DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
+DEFAULT_DOMAIN = REPO / "tools" / "stability" / "ou3_proof_operating_domain.json"
 SCHEMA = 2
 QUALIFICATION = "OU3_SEA3_DYNAMIC_ADAPTIVE_SOURCE_CERTIFICATE"
 

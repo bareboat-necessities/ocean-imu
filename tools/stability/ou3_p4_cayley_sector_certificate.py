@@ -45,7 +45,7 @@ from ou3_interval import Interval
 import ou3_validated_transcendentals as VT
 
 REPO = Path(__file__).resolve().parents[2]
-DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
+DEFAULT_DOMAIN = REPO / "tools" / "stability" / "ou3_proof_operating_domain.json"
 SCHEMA = 1
 DEFAULT_OUTER_ANGLE_RAD = 0.80
 PI_UP = math.nextafter(math.pi, math.inf)

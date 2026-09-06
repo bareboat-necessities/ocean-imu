@@ -43,7 +43,7 @@ import ou3_sea3_tuner_scheduler_step as TUNER
 import ou3_sea3_private_mahony_state_step as MAHONY
 
 REPO = Path(__file__).resolve().parents[2]
-DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
+DEFAULT_DOMAIN = REPO / "tools" / "stability" / "ou3_proof_operating_domain.json"
 SCHEMA = 2
 QUALIFICATION = "OU3_SEA3_TRUSTED_TYPED_COMPLETE_WINDOW_EXECUTION_KERNEL_V2"
 

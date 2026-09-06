@@ -27,7 +27,7 @@ from ou3_interval import Interval
 import ou3_sea3_private_mahony_live_invariant as LIVE
 
 REPO = Path(__file__).resolve().parents[2]
-DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
+DOMAIN = REPO / "tools" / "stability" / "ou3_proof_operating_domain.json"
 SCHEMA = 1
 QUALIFICATION = "OU3_SEA3_PRIVATE_MAHONY_DISCRETE_PI_COMPARISON_V1"
 

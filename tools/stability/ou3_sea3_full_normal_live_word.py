@@ -57,7 +57,7 @@ from ou3_interval import (
 REPO = Path(__file__).resolve().parents[2]
 WRAPPER = REPO / "src" / "kalman_ou_iii" / "SeaStateFusionFilter_OU_III.h"
 MEKF = REPO / "src" / "kalman_ou_iii" / "Kalman3D_Wave_OU_III.h"
-DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
+DEFAULT_DOMAIN = REPO / "tools" / "stability" / "ou3_proof_operating_domain.json"
 SCHEMA = 1
 QUALIFICATION = "OU3_SEA3_LITERAL_FULL_NORMAL_LIVE_WORD_ASSEMBLER"
 USEFUL_GATE = 1.0e-18

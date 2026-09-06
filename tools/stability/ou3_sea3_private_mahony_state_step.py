@@ -50,7 +50,7 @@ VERTICAL = REPO / "src" / "tuner" / "VerticalAccelComplementary.h"
 MAHONY = REPO / "src" / "ahrs" / "Mahony_AHRS.h"
 WRAPPER = REPO / "src" / "kalman_ou_iii" / "SeaStateFusionFilter_OU_III.h"
 COMMON = REPO / "src" / "kalman_common" / "SeaStateFusionFilterCommon.h"
-DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
+DOMAIN = REPO / "tools" / "stability" / "ou3_proof_operating_domain.json"
 SCHEMA = 4
 QUALIFICATION = "OU3_SEA3_PRIVATE_MAHONY_LIVE_INTERVAL_STEP_V4"
 

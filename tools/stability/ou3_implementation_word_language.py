@@ -21,7 +21,7 @@ import ou3_validated_transcendentals as VT
 import ou3_vector_uco_certificate as VECTOR
 
 REPO = Path(__file__).resolve().parents[2]
-DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
+DEFAULT_DOMAIN = REPO / "tools" / "stability" / "ou3_proof_operating_domain.json"
 SCHEMA = 3
 
 

@@ -57,8 +57,8 @@ import ou3_sea3_dynamic_source_certificate as DYNAMIC
 import ou3_p3_pseudo_scheduler_progress_certificate as SCHED
 
 REPO = Path(__file__).resolve().parents[2]
-DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
-DEFAULT_RESPONSE_DOMAIN = REPO / "tools" / "ou3_sea3_directional_response_domain.json"
+DEFAULT_DOMAIN = REPO / "tools" / "stability" / "ou3_proof_operating_domain.json"
+DEFAULT_RESPONSE_DOMAIN = REPO / "tools" / "stability" / "ou3_sea3_directional_response_domain.json"
 WRAPPER = REPO / "src" / "kalman_ou_iii" / "SeaStateFusionFilter_OU_III.h"
 SCHEMA = 3
 QUALIFICATION = "OU3_SEA3_COMPLETE_NORMAL_LIVE_SOURCE_V3"

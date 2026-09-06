@@ -75,7 +75,7 @@ import ou3_p4_exact_reset_transport as RESET
 import ou3_sea3_complete_source as COMPLETE
 
 REPO = Path(__file__).resolve().parents[2]
-DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
+DEFAULT_DOMAIN = REPO / "tools" / "stability" / "ou3_proof_operating_domain.json"
 SCHEMA = 1
 QUALIFICATION = "OU3_P4_COMPLETE_SEA3_MEASUREMENT_LINEARIZING_AW_COORDINATE"
 

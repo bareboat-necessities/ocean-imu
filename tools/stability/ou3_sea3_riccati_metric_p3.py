@@ -38,7 +38,7 @@ import ou3_sea3_p3_conditional_composition as COMPOSE
 import ou3_sea3_p3_full_preconditions as FULL
 
 REPO = Path(__file__).resolve().parents[2]
-DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
+DEFAULT_DOMAIN = REPO / "tools" / "stability" / "ou3_proof_operating_domain.json"
 SCHEMA = 15
 QUALIFICATION = "OU3_SEA3_COMPLETE_SOURCE_FULL_WORD_P3_GATE_V15"
 USEFUL_GATE = 1.0e-18

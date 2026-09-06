@@ -42,8 +42,8 @@ import ou3_validated_transcendentals as VT
 from ou3_interval import Interval, down, up
 
 REPO = Path(__file__).resolve().parents[2]
-DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
-DEFAULT_RAO = REPO / "tools" / "ou3_sea3_directional_response_domain.json"
+DEFAULT_DOMAIN = REPO / "tools" / "stability" / "ou3_proof_operating_domain.json"
+DEFAULT_RAO = REPO / "tools" / "stability" / "ou3_sea3_directional_response_domain.json"
 SCHEMA = 1
 QUALIFICATION = "OU3_SEA3_COUPLED_SEA_RAO_P1_COMPATIBILITY"
 

@@ -48,7 +48,7 @@ import ou3_sea3_windowed_vector_pe as PE
 import ou3_validated_transcendentals as VT
 
 REPO = Path(__file__).resolve().parents[2]
-DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
+DEFAULT_DOMAIN = REPO / "tools" / "stability" / "ou3_proof_operating_domain.json"
 SCHEMA = 1
 QUALIFICATION = "OU3_P4_COMPLETE_SEA3_PURE_VECTOR_REMAINDER_GEOMETRY"
 PI_UP = 355.0 / 113.0

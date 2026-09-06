@@ -35,7 +35,7 @@ import ou3_sea3_h18_information_composition as HINFO
 import ou3_validated_transcendentals as VT
 
 REPO = Path(__file__).resolve().parents[2]
-DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
+DEFAULT_DOMAIN = REPO / "tools" / "stability" / "ou3_proof_operating_domain.json"
 SCHEMA = 2
 QUALIFICATION = "OU3_P4_COMPLETE_SEA3_FINITE_ANGLE_INFORMATION_SECTOR_V2"
 USEFUL_GATE = 1.0e-18

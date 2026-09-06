@@ -70,7 +70,7 @@ import ou3_sea3_dynamic_source_certificate as DYNAMIC
 import ou3_validated_transcendentals as VT
 
 REPO = Path(__file__).resolve().parents[2]
-DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
+DEFAULT_DOMAIN = REPO / "tools" / "stability" / "ou3_proof_operating_domain.json"
 SCHEMA = 2
 QUALIFICATION = "OU3_COMPLETE_SEA3_FOUR_S_FULL_TRANSLATION_INFORMATION"
 WINDOW_MULTIPLIERS = ((0.0, 1.0), (2.0, 3.0), (4.0, 5.0), (6.0, 7.0))

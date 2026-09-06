@@ -58,7 +58,7 @@ import ou3_validated_transcendentals as VT
 
 SCHEMA_VERSION = "OU3_SEA3_WAVE_PERIOD_FRONTEND_V3"
 REPO = Path(__file__).resolve().parents[2]
-DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
+DOMAIN = REPO / "tools" / "stability" / "ou3_proof_operating_domain.json"
 FILTER = REPO / "src" / "kalman_ou_iii" / "SeaStateFusionFilter_OU_III.h"
 ESTIMATOR = REPO / "src" / "tuner" / "WavePeriodEstimator.h"
 TUNER = REPO / "src" / "tuner" / "SeaStateAutoTuner.h"
@@ -214,7 +214,7 @@ def _source_startup_parity(filter_text: str, tuner_text: str) -> dict[str, bool]
 def build(repo_root: Path = REPO) -> dict[str, Any]:
     repo_root = Path(repo_root)
     domain = json.loads(
-        (repo_root / "tools" / "ou3_proof_operating_domain.json").read_text(
+        (repo_root / "tools" / "stability" / "ou3_proof_operating_domain.json").read_text(
             encoding="utf-8"
         )
     )

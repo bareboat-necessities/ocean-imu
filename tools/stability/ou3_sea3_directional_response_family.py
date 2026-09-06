@@ -20,7 +20,7 @@ from pathlib import Path
 import ou3_source_domain_contract as SOURCE
 
 REPO = Path(__file__).resolve().parents[2]
-DEFAULT_RESPONSE_DOMAIN = REPO / "tools" / "ou3_sea3_directional_response_domain.json"
+DEFAULT_RESPONSE_DOMAIN = REPO / "tools" / "stability" / "ou3_sea3_directional_response_domain.json"
 RESPONSE_SCHEMA = "OU3_SEA3_DIRECTIONAL_RESPONSE_DOMAIN_V3"
 PI_HI = 3.141592653589794
 

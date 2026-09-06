@@ -80,7 +80,7 @@ import ou3_sea3_four_s_translation_information_tight as FOUR_S
 import ou3_sea3_windowed_vector_pe as PE
 
 REPO = Path(__file__).resolve().parents[2]
-DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
+DEFAULT_DOMAIN = REPO / "tools" / "stability" / "ou3_proof_operating_domain.json"
 SCHEMA = 2
 QUALIFICATION = "OU3_COMPLETE_SEA3_H18_DIRECTIONAL_INFORMATION_COMPOSITION"
 USEFUL_GATE = 1.0e-18
