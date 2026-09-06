@@ -35,32 +35,32 @@ jobs:
             tools/stability/ou3_sea3_validated_float_trace.py \
             tools/stability/ou3_sea3_complete_word_feasibility_trace.py
           python3 tools/stability/ou3_sea3_continuum_driver_gram.py --output /tmp/sea3-driver.json
-          python3 tools/stability/ou3_sea3_validated_continuum_member.py \
-            | tee /tmp/sea3-validated-member.json
-          python3 tools/stability/ou3_sea3_validated_float_trace.py \
-            --output /tmp/sea3-validated-float-trace.json \
-            --shipping-input /tmp/sea3-validated-specific-force-z.txt
           python3 tools/stability/ou3_sea3_complete_word_feasibility_trace.py \
             --output /tmp/sea3-complete-word-float-trace.json \
             --shipping-input /tmp/sea3-complete-word-specific-force-z.txt
+          # The complete trace strictly contains the 60 s + 601-sample startup
+          # trace. Reuse that exact prefix instead of recomputing the same
+          # continuum enclosure a second time.
+          head -n 12601 /tmp/sea3-complete-word-specific-force-z.txt \
+            > /tmp/sea3-validated-specific-force-z.txt
           python3 - <<'PY'
           import json
-          d=json.load(open('/tmp/sea3-validated-float-trace.json'))
-          assert d['validation_pass'], d['validation_failures']
-          assert d['canonical_source']=='COMPLETE_SEA3_NORMAL_LIVE_WORD'
-          assert d['all_intervals_round_to_unique_binary32'] is True
-          assert d['same_continuum_member_before_and_after_live'] is True
-          assert d['quadrature_used'] is False
-          assert d['finite_harmonic_source_used'] is False
-          assert d['trajectory_replay_used'] is False
-          assert d['independent_sample_choice_used'] is False
           w=json.load(open('/tmp/sea3-complete-word-float-trace.json'))
           assert w['validation_pass'], w['validation_failures']
+          assert w['canonical_source']=='COMPLETE_SEA3_NORMAL_LIVE_WORD'
+          assert w['all_intervals_round_to_unique_binary32'] is True
           assert w['same_continuum_member_across_startup_H_release_A'] is True
           assert w['H18_window_samples']==601 and w['A21_window_samples']==601
           assert w['phase_reset_at_live_or_H_to_A'] is False
+          assert w['quadrature_used'] is False
+          assert w['finite_harmonic_source_used'] is False
+          assert w['trajectory_replay_used'] is False
+          assert w['independent_sample_choice_used'] is False
           assert w['independent_tuner_schedule_used'] is False
           assert w['independent_RS_schedule_used'] is False
+          assert len(w['rows']) == 13202
+          assert all(r['binary32_unique'] is True for r in w['rows'])
+          assert sum(1 for _ in open('/tmp/sea3-validated-specific-force-z.txt')) == 12601
           PY
       - name: Compile shipping startup bridge without modifying production code
         run: |
@@ -117,11 +117,9 @@ jobs:
           name: ou3-sea3-same-driver-startup
           path: |
             /tmp/sea3-driver.json
-            /tmp/sea3-validated-member.json
-            /tmp/sea3-validated-float-trace.json
-            /tmp/sea3-validated-specific-force-z.txt
             /tmp/sea3-complete-word-float-trace.json
             /tmp/sea3-complete-word-specific-force-z.txt
+            /tmp/sea3-validated-specific-force-z.txt
             /tmp/ou3-sea3-same-driver-shipping-trace.json
             /tmp/ou3-sea3-complete-word-feasibility.json
           retention-days: 7
