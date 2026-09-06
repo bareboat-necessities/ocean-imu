@@ -4,6 +4,7 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools"))
+import ou3_p4_accelerometer_corotated_aw as corot  # noqa: E402
 import ou3_p4_complete_sea3_finite_angle_information as finfo  # noqa: E402
 import ou3_p4_moving_metric_rebind as rebind  # noqa: E402
 import ou3_sea3_riccati_metric_p4 as mod  # noqa: E402
@@ -15,12 +16,18 @@ class Sea3MovingRiccatiP4Test(unittest.TestCase):
         cls.d = mod.build()
         cls.r = rebind.build()
         cls.i = finfo.build()
+        cls.c = corot.build()
         # Keep the quantitative continuation visible in the P4 CI log while
         # the signed-Joseph word is being closed.
         print("P4_FINITE_ANGLE_CELLS", [
             (x["attitude_angle_deg"], x["full_H18_information_lambda_min_lower"])
             for x in cls.i["candidate_cells"]
         ])
+        print("P4_COROTATED_AW", {
+            "aw_eta": cls.c["latent_aw_nonlinear_eta_coefficient"],
+            "moving_metric": cls.c["state_coordinate_transform"]["moving_metric_energy_invariant"],
+            "actual_RS_retained": cls.c["actual_RS_regularizer_not_removed_by_coordinate_change"],
+        })
 
     def test_p4_uses_same_moving_metric_and_not_800_endpoint_scan(self):
         self.assertEqual(mod.validate(self.d), [])
@@ -45,6 +52,19 @@ class Sea3MovingRiccatiP4Test(unittest.TestCase):
         self.assertTrue(self.r["left_error_reset_exact_metric_isometry"])
         self.assertFalse(self.r["group_isotropic_metric_attachment_used"])
         self.assertFalse(self.r["endpoint_source_word_scan_used"])
+
+    def test_accelerometer_aw_corotation_is_exact_in_moving_metric(self):
+        self.assertEqual(corot.validate(self.c), [])
+        self.assertEqual(self.c["canonical_source"], "COMPLETE_SEA3_NORMAL_LIVE_WORD")
+        self.assertTrue(self.c["aw_error_exactly_linear_in_accelerometer_operation_coordinate"])
+        self.assertTrue(self.c["accelerometer_bias_error_exactly_linear"])
+        self.assertEqual(self.c["latent_aw_nonlinear_eta_coefficient"], 0.0)
+        self.assertEqual(self.c["accelerometer_bias_nonlinear_eta_coefficient"], 0.0)
+        self.assertTrue(self.c["state_coordinate_transform"]["moving_metric_energy_invariant"])
+        self.assertTrue(self.c["state_coordinate_transform"]["innovation_covariance_S_invariant"])
+        self.assertFalse(self.c["state_coordinate_transform"]["group_isotropic_metric_assumption_required"])
+        self.assertTrue(self.c["actual_RS_regularizer_not_removed_by_coordinate_change"])
+        self.assertFalse(self.c["source_family_replaced"])
 
     def test_complete_sea3_finite_angle_information_is_a_p4_prerequisite(self):
         self.assertEqual(finfo.validate(self.i), [])
