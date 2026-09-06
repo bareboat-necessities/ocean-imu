@@ -13,6 +13,10 @@ on:
       - ".github/workflows/ou3-sea3-metric-memory.yml"
   workflow_dispatch:
 
+concurrency:
+  group: ou3-sea3-metric-memory-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
@@ -51,8 +55,7 @@ jobs:
           PY
       - name: Test complete SEA3 composition diagnostics
         working-directory: tests/validation
-        run: |
-          python3 -m unittest -v test_ou3_sea3_p3_conditional_composition
+        run: python3 -m unittest -v test_ou3_sea3_p3_conditional_composition
       - uses: actions/upload-artifact@v6
         with:
           name: ou3-sea3-metric-memory
