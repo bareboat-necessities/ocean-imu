@@ -71,18 +71,42 @@ jobs:
           cp /tmp/simulation/sim-data-files.zip sim-data-files.zip
           mkdir -p plots/kalman_ou_ii
           unzip -oq sim-data-files.zip -d plots/kalman_ou_ii
-      - name: Apply byte-exact locally tested ownership repair
+      - name: Apply and verify locally tested complete ownership repair
         run: |
           set -euo pipefail
           test "$(git hash-object tests/validation/test_workflow_contract.py)" = cba589141a3a0005d82b2fa35b1ea68fb31574fc
           python3 - <<'PY'
-          import base64, subprocess, zlib
-          encoded = 'eJydV2tv00gU/Z5fcWWQSLZ2aBtA0FUkqhJERGlRW2AlhIxjT5rZ2h4zM24aVf3ve+44fqQEFkgl1x7PPXPu+zoIAooeW2GseXwdpTKJrFS5WwiXSl/NU7UMY5VbHcV2WKx6Ozs7NPsdgZcvKdjzn9DOnv+UXr7s0VyrjIrILlI5I5kVSlt6j8fezvrBlLNCq1gY06vfl7m0fESP8OcQnz3390cAffbCH+073PpnRDofRsYIbY+B0Z/L/FLoQsvc+rSmLAaMxL9EzMmRF9cyEXkswku8DqUJ7UKEppR4WEq7UKV1K2Cm5qERkY4XwvT5sMFBL6gP9zzv0yKyhK1UlLNUxs4+xKCky9z4FOUJLRcrkpakoVxVm5cLlQpy5w17QQt4gXfGRpciodMPwXQ6JceAagYUaQEALQR9KyNthTaE11FOoKxx20LBAELDABCBQpmwMnZktIgSMtgdC/dslUphM1J5ujoAQZqVeZLyKdK0aFoUykir9KpS1DCZGOdm6pr3CqnpWuhEIgzorMxzhsRyBh4Gpub7Fs0uRW5XQSbzEoaKVZbBPP+qGZtoyQa9kmkKG2A1k0ng7ASCJHDEirJI5mBhFi2gi7L93f1nwe6LYHeEvT6lIrpes6CZjvJ4QexaRFetQUJ1GLAlWjRzJYuiFk1UXGagC7vINKGZWMicmQ1JlaPAuWe4ylJSy9xUGm9gzcrkUljj/GP+pq8cfV/hYyjoIqTSCcbGcXOlKaJUxfDavMSGAoG9CcdbqmhL00CLbyXgyGTqSrigG/Z2OrF5JoxK4R5QQ6AsZMGho8rLBb2LIKCRhoLh4MaI4G64V/LZSygaRxphYpFHlwBtYc9d5AQcLXQ+ORy5GFqHbBWrrlrATqliCypHF5Gicoft9rRwcLoZ0qR2QzeJnHWcB6T5VyGcOVCKVLAzfISJdEEqnKVaQGe9x5VFbKRhe8SuRcSsLe3oIWqTMoW1qGOtFiORWsQu1sd0Nnl/Gp6dnl7QY/Kcah7ftcWwI6eFKVMLobamDaFFv93Bv6P1qJU/lAiUhdyyHkD7hdVNDTzBpGkm9EXSnJuznOYjmJ85hnFkc5jBm6fzqCm/aSlNqlwBiRc4AUxryWOHGiO/gHeCyPkUCQXYnk1AKIqplwb31PDpUK5MZKNzm+mF+Pm7NXyfINB31VkOPgfPHB4jhsqHgocghfcUBSecUlvNY+As4VwGXkav6+AXSiDsNUHGZFsOIkwFlIHxlAvGCjEgzyrEprv7FmdMPqa7KMMyaRVsg+eUbGUSRyzyRvRNrrgsYSC4rBRHZUKVtSSxbCvciOsTdLiTGhpZIWLGnIJJEwDVACAJzcxOuNBauHu94be/OtGb4doWiE7sou71mrn4/v3729kLK1EqMFo+QV7yV4nlFs46LdohffRnwDIGXL/xUrDETaIGsNbG/pNofm44tnAD0GPKHBfgGeYE6T2DS1cGjRyqTfUQCN5pSgyvvfz/mCKBM/VRYBTnKNafH3cqFJGRTcnjDWpxGiGiGea1otwrkWCmfDjUhjwpDXfnChMmp1N3G6DCNqKY1NTyGgKOTykGTK7aGuUSofPYWTswNkvNWlbofYSCHGG/STF/e1AQMG7/JVUzYBxYBdrDc98uDwcWDmEPIDyCw1TPl05Wp/R80XMP367VcZnAHxoVFNMqdnCsWiFxovKaXFIAon02ScdOeyXTGzQg/P2jUZFgvcCQqaOxOcE57jaFxFgV/IjCt10469imcHgLTKgUaZogZlF82MLhhgN1OBUNLOAgHuqzWVx6Ra/UApBP/kjoeeFoFFZUgpVN7BPb8QrYXT+bHp9NeOLU2nouFg8fYi/CmjweLoZmkcLbOH9/I95+
-' 
-          patch = zlib.decompress(base64.b64decode(encoded))
-          subprocess.run(['git', 'apply', '-'], input=patch, check=True)
+          from pathlib import Path
+          p = Path('tests/validation/test_workflow_contract.py')
+          s = p.read_text().replace('from pathlib import Path\nimport unittest', 'from pathlib import Path\nimport subprocess\nimport unittest')
+          before = 'test_ou3_p4_*.py test_ou3_p5_*.py)'
+          assert s.count(before) == 1
+          s = s.replace(before, 'test_ou3_p4_*.py test_ou3_p5_*.py test_ou3_sea3_*.py)')
+          method = '\n'.join([
+              '    def test_resolved_partition_retains_every_proof_and_evidence_module(self):',
+              '        directory = REPO_ROOT / "tests" / "validation"',
+              '        result = subprocess.run(',
+              '            ["make", "--no-print-directory", "-s", "print-test-partition"],',
+              '            cwd=directory, check=True, capture_output=True, text=True, timeout=30,',
+              '        )',
+              '        rows = dict(line.split("=", 1) for line in result.stdout.splitlines())',
+              '        self.assertEqual(set(rows), {"EVIDENCE", "PROOF"})',
+              '        groups = {key: value.split() for key, value in rows.items()}',
+              '        all_modules = {p.stem for p in directory.glob("test_*.py")}',
+              '        proof = {p.stem for prefix in ("p2", "p3", "p4", "p5", "sea3")',
+              '                 for p in directory.glob(f"test_ou3_{prefix}_*.py")}',
+              '        self.assertTrue(proof)',
+              '        self.assertEqual(set(groups["PROOF"]), proof)',
+              '        self.assertEqual(set(groups["EVIDENCE"]), all_modules - proof)',
+              '        for group in groups.values():',
+              '            self.assertEqual(len(group), len(set(group)))',
+              '',
+          ])
+          assert '\n\nif __name__' in s
+          s = s.replace('\n\nif __name__', '\n\n'+method+'\n\nif __name__')
+          p.write_text(s)
           PY
-          test "$(git hash-object tests/validation/test_workflow_contract.py)" = 67d3e245ba800370c4c3e85962a021943cf7f43b
+          test "$(git hash-object tests/validation/test_workflow_contract.py)" = af48c62a3627908169c34706c4f57701bf0b4b16
           cd tests/validation
           python3 -m unittest -v test_workflow_contract
       - name: Record precise publication failure classification
