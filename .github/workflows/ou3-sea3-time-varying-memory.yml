@@ -1,0 +1,56 @@
+name: ou3-sea3-time-varying-memory
+
+on:
+  pull_request:
+    paths:
+      - "tools/ou3_sea3_time_varying_translation_memory.py"
+      - "tools/ou3_sea3_dynamic_source_certificate.py"
+      - "tools/ou3_sea3_four_s_translation_information_tight.py"
+      - "tools/ou3_sea3_riccati_tube*.py"
+      - "tools/ou3_sea3_windowed_vector_pe.py"
+      - "tests/validation/test_ou3_sea3_time_varying_translation_memory.py"
+      - ".github/workflows/ou3-sea3-time-varying-memory.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  translation-memory:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Build time-varying complete SEA3 translation process memory
+        run: |
+          python3 tools/ou3_sea3_time_varying_translation_memory.py --output /tmp/ou3_sea3_time_varying_translation_memory.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/ou3_sea3_time_varying_translation_memory.json'))
+          assert d['validation_pass'], d['validation_failures']
+          assert d['canonical_source'] == 'COMPLETE_SEA3_NORMAL_LIVE_WORD'
+          assert d['constant_tau_over_memory_assumed'] is False
+          assert d['time_varying_committed_tau_sigma_RS_allowed'] is True
+          assert d['source_history_graph_consumed'] is False
+          assert d['predecessor_path_enumeration_consumed'] is False
+          assert d['measurement_lower_recursion']['measurements_executed_sample_by_sample'] is True
+          assert d['measurement_lower_recursion']['measurements_moved_to_word_endpoint'] is False
+          assert d['commit_geometry']['complete_constant_tune_intervals_lower'] >= 26
+          assert d['full_4x4_time_varying_translation_memory_closed'] is True
+          assert d['candidate_induction']['worst_conditioned_LDLT_pivot_lower'] > 0.0
+          assert d['terminal_suffix']['worst_conditioned_LDLT_pivot_lower'] > 0.0
+          print('TV_MEM_COMMIT_GEOMETRY', d['commit_geometry'])
+          print('TV_MEM_INDUCTION_PIVOT', d['candidate_induction']['worst_conditioned_LDLT_pivot_lower'])
+          print('TV_MEM_TAIL_PIVOT', d['terminal_suffix']['worst_conditioned_LDLT_pivot_lower'])
+          print('TV_MEM_LOWER', d['word_endpoint_translation_process_measurement_noise_covariance_lower'])
+          PY
+      - name: Test time-varying translation process memory
+        working-directory: tests/validation
+        run: python3 -m unittest -v test_ou3_sea3_time_varying_translation_memory
+      - uses: actions/upload-artifact@v6
+        with:
+          name: ou3-sea3-time-varying-memory
+          path: /tmp/ou3_sea3_time_varying_translation_memory.json
+          retention-days: 7
