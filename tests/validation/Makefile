@@ -10,7 +10,7 @@ PROOF_SEARCH_TESTS := $(wildcard test_ou3_p2_*.py test_ou3_p3_*.py test_ou3_p4_*
 EVIDENCE_TESTS := $(filter-out $(PROOF_SEARCH_TESTS),$(wildcard test_*.py))
 
 build:
-	python3 -m py_compile ../../tools/*.py test_*.py
+	python3 -m py_compile ../../tools/*.py ../../tools/stability/*.py test_*.py
 
 publication-sync: build
 	python3 ../../tools/ou_publication_sync.py \
@@ -28,4 +28,4 @@ evidence-test: evidence-contract
 	python3 -m unittest -v $(EVIDENCE_TESTS:.py=)
 
 clean:
-	rm -rf __pycache__ ../../tools/__pycache__
+	rm -rf __pycache__ ../../tools/__pycache__ ../../tools/stability/__pycache__

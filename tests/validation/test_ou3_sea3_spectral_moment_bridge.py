@@ -8,6 +8,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools"))
+sys.path.insert(0, str(ROOT / "tools" / "stability"))
 
 import ou3_sea3_spectral_moment_bridge as bridge  # noqa: E402
 
@@ -73,7 +74,7 @@ class Sea3SpectralMomentBridgeTest(unittest.TestCase):
         payload["validation_pass"] = not failures
         payload["validation_failures"] = failures
         artifact = json.loads(
-            (ROOT / "tools/ou3_sea3_spectral_moment_bridge.json").read_text(
+            (ROOT / "tools/stability/ou3_sea3_spectral_moment_bridge.json").read_text(
                 encoding="utf-8"
             )
         )

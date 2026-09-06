@@ -6,6 +6,7 @@ from pathlib import Path
 TOOLS = Path(__file__).resolve().parents[2] / "tools"
 if str(TOOLS) not in sys.path:
     sys.path.insert(0, str(TOOLS))
+    sys.path.insert(0, str(TOOLS / "stability"))
 
 from ou3_interval import Interval
 import ou3_validated_log as VLOG

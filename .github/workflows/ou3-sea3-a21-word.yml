@@ -3,12 +3,12 @@ name: ou3-sea3-a21-word
 on:
   pull_request:
     paths:
-      - "tools/ou3_sea3_a21_prior_free_completion.py"
-      - "tools/ou3_sea3_a21_detectability_completion.py"
-      - "tools/ou3_sea3_h18_prior_free_completion.py"
-      - "tools/ou3_sea3_live_covariance_seed.py"
-      - "tools/ou3_sea3_full_word_event_algebra.py"
-      - "tools/ou3_full_process_ucc.py"
+      - "tools/stability/ou3_sea3_a21_prior_free_completion.py"
+      - "tools/stability/ou3_sea3_a21_detectability_completion.py"
+      - "tools/stability/ou3_sea3_h18_prior_free_completion.py"
+      - "tools/stability/ou3_sea3_live_covariance_seed.py"
+      - "tools/stability/ou3_sea3_full_word_event_algebra.py"
+      - "tools/stability/ou3_full_process_ucc.py"
       - "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h"
       - "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h"
       - "src/tuner/MagAutoTuner.h"
@@ -33,7 +33,7 @@ jobs:
           persist-credentials: false
       - name: Build canonical complete SEA3 H18-to-A21 hybrid matrix
         run: |
-          python3 tools/ou3_sea3_a21_prior_free_completion.py --output /tmp/ou3_sea3_a21_word.json
+          python3 tools/stability/ou3_sea3_a21_prior_free_completion.py --output /tmp/ou3_sea3_a21_word.json
           python3 - <<'PY'
           import json
           d=json.load(open('/tmp/ou3_sea3_a21_word.json'))

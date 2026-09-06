@@ -6,6 +6,7 @@ import unittest
 TOOLS = Path(__file__).resolve().parents[2] / "tools"
 if str(TOOLS) not in sys.path:
     sys.path.insert(0, str(TOOLS))
+    sys.path.insert(0, str(TOOLS / "stability"))
 
 import ou3_sea3_response_regularity_moment as REG
 

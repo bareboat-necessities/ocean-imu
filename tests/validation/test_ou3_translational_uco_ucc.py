@@ -6,10 +6,11 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools"))
+sys.path.insert(0, str(ROOT / "tools" / "stability"))
 
 
 def load(name):
-    spec = importlib.util.spec_from_file_location(name, ROOT / "tools" / f"{name}.py")
+    spec = importlib.util.spec_from_file_location(name, ROOT / "tools" / "stability" / f"{name}.py")
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
@@ -61,7 +62,7 @@ class TranslationalUcoUccTests(unittest.TestCase):
         self.assertGreater(E.lo, 0.0)
 
     def test_certificate_does_not_use_retired_replay_routes(self):
-        text = (ROOT / "tools" / "ou3_translational_uco_ucc.py").read_text()
+        text = (ROOT / "tools" / "stability" / "ou3_translational_uco_ucc.py").read_text()
         for forbidden in (
             "ou3_exact_replay",
             "ou3_numerical_certificate",

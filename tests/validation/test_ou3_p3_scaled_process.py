@@ -9,6 +9,7 @@ ROOT = Path(__file__).resolve().parents[2]
 TOOLS = ROOT / "tools"
 if str(TOOLS) not in sys.path:
     sys.path.insert(0, str(TOOLS))
+    sys.path.insert(0, str(TOOLS / "stability"))
 
 from ou3_interval import Interval
 import ou3_p3_scaled_process as P

@@ -5,6 +5,7 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools"))
+sys.path.insert(0, str(ROOT / "tools" / "stability"))
 
 import ou3_sea3_riccati_metric_p3 as mod  # noqa: E402
 
@@ -25,7 +26,7 @@ class Sea3P3PromotionStateTest(unittest.TestCase):
         self.assertTrue(self.d["no_fallback_route_enabled"])
 
     def test_pass_requires_universal_certificate_chain_not_finite_materialization(self):
-        self.assertTrue(self.d["P3_CANONICAL_PASS"])
+        self.assertTrue(self.d["P3_CONDITIONAL_SEA3_PASS"])
         self.assertFalse(self.d["SOURCE_REACHABLE_EVENT_FAMILY_MATERIALIZED"])
         self.assertFalse(self.d["finite_source_family_materialization_required"])
         d = deepcopy(self.d)
@@ -48,10 +49,12 @@ class Sea3P3PromotionStateTest(unittest.TestCase):
 
     def test_p4_must_follow_p3_exactly(self):
         d = deepcopy(self.d)
+        d["P3_CONDITIONAL_SEA3_PASS"] = False
         d["P3_CANONICAL_PASS"] = False
+        d["P4_MAY_CONSUME_CONDITIONAL_SEA3_P3"] = True
         d["P4_MAY_CONSUME_P3"] = True
         failures = mod.validate(d)
-        self.assertTrue(any("P4 promotion" in x for x in failures), failures)
+        self.assertTrue(any("P4 conditional-P3 consumption" in x for x in failures), failures)
 
     def test_physical_left_inclusion_cannot_be_smuggled_into_conditional_p3(self):
         d = deepcopy(self.d)

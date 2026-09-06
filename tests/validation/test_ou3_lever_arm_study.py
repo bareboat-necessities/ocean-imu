@@ -10,6 +10,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 TOOL = ROOT / "tools" / "ou3_lever_arm_study.py"
 sys.path.insert(0, str(ROOT / "tools"))
+sys.path.insert(0, str(ROOT / "tools" / "stability"))
 spec = importlib.util.spec_from_file_location("ou3_lever_arm_study", TOOL)
 mod = importlib.util.module_from_spec(spec)
 assert spec and spec.loader

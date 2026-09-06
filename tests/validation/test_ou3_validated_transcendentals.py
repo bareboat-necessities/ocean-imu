@@ -5,6 +5,7 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools"))
+sys.path.insert(0, str(ROOT / "tools" / "stability"))
 import ou3_validated_transcendentals as mod
 
 getcontext().prec = 100
@@ -115,7 +116,7 @@ class ValidatedTranscendentalTests(unittest.TestCase):
             mod.cosc_point(-4.0000001)
 
     def test_proof_module_does_not_call_libm_transcendentals(self):
-        text = (ROOT / "tools" / "ou3_validated_transcendentals.py").read_text(encoding="utf-8")
+        text = (ROOT / "tools" / "stability" / "ou3_validated_transcendentals.py").read_text(encoding="utf-8")
         for dead in ("math.exp(", "math.expm1(", "math.sin(", "math.cos("):
             self.assertNotIn(dead, text)
 

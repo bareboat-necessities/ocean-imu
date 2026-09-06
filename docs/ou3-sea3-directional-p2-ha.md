@@ -81,7 +81,7 @@ establish it.
 
 ## 3. Physical sea parameters are coupled, not a rectangular worst-case box
 
-`tools/ou3_sea3_physical_admissibility.py` adds a replay-free SEA0 parameter
+`tools/stability/ou3_sea3_physical_admissibility.py` adds a replay-free SEA0 parameter
 subcertificate so the three sea partitions cannot independently choose maximum
 height and minimum period.
 
