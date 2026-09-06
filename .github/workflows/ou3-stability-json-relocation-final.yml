@@ -14,79 +14,44 @@ jobs:
         with:
           ref: 80abe1beaa77feb13c994309551734810434e2bc
           persist-credentials: false
-      - name: Verify reviewed manifest and complete tree
+      - name: Reproduce checksum-verified preparation and tests
         run: |
           python3 - <<'PY'
-          import base64,gzip,hashlib,json,pathlib,re,subprocess,urllib.request
-          url='https://raw.githubusercontent.com/bareboat-necessities/ocean-imu/a2c9dd3e1f61680f16ebf6f59e686eaaaf2181ef/.github/workflows/ou3-stability-json-relocation-final.yml'
+          import hashlib,re,subprocess,textwrap,urllib.request
+          url='https://raw.githubusercontent.com/bareboat-necessities/ocean-imu/4de1d07d65b2a970b2ec64ef5f7fdb14d226036d/.github/workflows/ou3-stability-json-relocation-final.yml'
           with urllib.request.urlopen(url,timeout=60) as response:
-              workflow=response.read().decode()
-          encoded=re.search(r'EDITS: >-\s+([A-Za-z0-9+/=]+)',workflow).group(1)
-          # Restore three transport transcription errors; never alter source
-          # without verifying the original reviewed manifest SHA256 below.
-          for old,new in (('MKzk4EIN','MKzk4E7EIN'),('G/3hq5Fzk','G/3hq5Ffzk'),('DR1Jpe1fDx','DR1Jpe1rDx')):
-              assert encoded.count(old)==1,old
-              encoded=encoded.replace(old,new)
-          payload=gzip.decompress(base64.b64decode(encoded,validate=True))
-          assert hashlib.sha256(payload).hexdigest()=='6cbc957d634cdf577b92d187acc372904bb03ed2cd0d617b264ed7e7b62b09ab'
-          plan=json.loads(payload)
-          assert subprocess.check_output(['git','rev-parse','HEAD^{tree}'],text=True).strip()==plan['base_tree']
-          for item in plan['files']:
-              path=pathlib.Path(item['path'])
-              assert '..' not in path.parts and not path.is_absolute()
-              if item['old_sha'] is not None:
-                  old=path.read_bytes()
-                  assert hashlib.sha1(b'blob '+str(len(old)).encode()+b'\0'+old).hexdigest()==item['old_sha'], str(path)
-              else:
-                  assert not path.exists(),str(path)
-              if 'edits' in item:
-                  lines=old.decode().splitlines(keepends=True)
-                  for i,j,text in reversed(item['edits']):
-                      lines[i:j]=[text]
-                  path.write_text(''.join(lines),encoding='utf-8')
-              elif item['content'] is None:
-                  path.unlink()
-              else:
-                  path.parent.mkdir(parents=True,exist_ok=True)
-                  path.write_text(item['content'],encoding='utf-8')
-          subprocess.run(['git','add','-A'],check=True)
-          assert subprocess.check_output(['git','write-tree'],text=True).strip()==plan['target_tree']
-          p=pathlib.Path('docs/ou3-proof-research-state.md')
-          p.write_text(p.read_text().replace('All retained proof scripts and proof JSON inputs/artifacts live in\n`tools/stability/`. The domain files are `ou3_proof_operating_domain.json` and\n`ou3_sea3_directional_response_domain.json`; the committed spectral bridge is\n`ou3_sea3_spectral_moment_bridge.json`. Their relocation changes no JSON bytes.', 'Retained proof scripts and committed proof JSON inputs live in\n`tools/stability/`. The domain files are\n`tools/stability/ou3_proof_operating_domain.json` and\n`tools/stability/ou3_sea3_directional_response_domain.json`; the committed bridge is\n`tools/stability/ou3_sea3_spectral_moment_bridge.json`. Relocation changes no JSON bytes.'),encoding='utf-8')
-          subprocess.run(['git','add','-A'],check=True)
-          tree=subprocess.check_output(['git','write-tree'],text=True).strip()
-          assert tree=='81c38af8be3cd4ed511785b7b8742391960df1bc',tree
-          assert subprocess.check_output(['git','rev-parse',tree+':src'],text=True).strip()=='53a10a7c02b1a0de4cef5ebab6e13e81909c4cdd'
-          pathlib.Path('/tmp/prepared-paths.json').write_text(json.dumps([i['path'] for i in plan['files']]))
-          print('EXACT_PREPARED_TREE',tree)
+              raw=response.read()
+          assert hashlib.sha1(b'blob '+str(len(raw)).encode()+b'\0'+raw).hexdigest()=='d094810d089980959df9e80e82fa1a0cfc2ad152'
+          block=re.search(r'        run: \|\n(.*?)\n      - name: Stage',raw.decode(),re.S).group(1)
+          subprocess.run(['bash','-e','-c',textwrap.dedent(block)],check=True)
           PY
-          git diff --cached --check
-          make -C tests/validation build
-          python3 -m unittest -v tests.validation.test_ou3_stability_package_integrity tests.validation.test_ou3_result_determinism tests.validation.test_ou3_source_domain_contract tests.validation.test_ou3_proof_cleanup tests.validation.test_ou3_translational_uco_ucc tests.validation.test_ou3_full_process_ucc tests.validation.test_ou3_vector_uco_certificate tests.validation.test_ou3_p3_pseudo_scheduler_progress_certificate tests.validation.test_ou3_sea3_spectral_moment_bridge
-      - name: Stage Git objects only; branch update is performed separately
+      - name: Upload content blobs; leave tree and branch writes to connected GitHub
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           python3 - <<'PY'
-          import json,os,pathlib,urllib.request
-          base='https://api.github.com/repos/bareboat-necessities/ocean-imu'
-          def post(path,payload):
-              request=urllib.request.Request(base+path,data=json.dumps(payload).encode(),method='POST',headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json','Content-Type':'application/json'})
-              with urllib.request.urlopen(request,timeout=60) as response:
-                  return json.load(response)
+          import hashlib,json,os,pathlib,urllib.error,urllib.request
+          url='https://api.github.com/repos/bareboat-necessities/ocean-imu/git/blobs'
           entries=[]
           for name in json.loads(pathlib.Path('/tmp/prepared-paths.json').read_text()):
-              p=pathlib.Path(name)
-              entry={'path':name,'mode':'100644','type':'blob'}
-              entry.update({'content':p.read_text()} if p.is_file() else {'sha':None})
+              path=pathlib.Path(name)
+              entry={'path':name,'mode':'100644','type':'blob','sha':None}
+              if path.is_file():
+                  data=path.read_bytes()
+                  expected=hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest()
+                  request=urllib.request.Request(url,data=json.dumps({'content':data.decode(),'encoding':'utf-8'}).encode(),method='POST',headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json','Content-Type':'application/json'})
+                  try:
+                      with urllib.request.urlopen(request,timeout=60) as response:
+                          result=json.load(response)
+                  except urllib.error.HTTPError as error:
+                      print('BLOB_UPLOAD_ERROR',error.code,error.read().decode())
+                      raise
+                  assert result['sha']==expected,name
+                  entry['sha']=expected
               entries.append(entry)
-          tree=post('/git/trees',{'base_tree':'8fee0b062584a58fd34c60269a6f40912069c422','tree':entries})
-          assert tree['sha']=='81c38af8be3cd4ed511785b7b8742391960df1bc',tree['sha']
-          commit=post('/git/commits',{'message':'refactor: finish stability package cleanup and document exact P4 handoff','tree':tree['sha'],'parents':[os.environ['GITHUB_SHA']]})
-          result={'commit':commit['sha'],'tree':tree['sha'],'parent':os.environ['GITHUB_SHA'],'branch_updated':False}
-          pathlib.Path('/tmp/ou3-prepared.json').write_text(json.dumps(result,indent=2))
-          print('PREPARED_COMMIT',commit['sha'])
-          print('PREPARED_TREE',tree['sha'])
+          manifest={'base_tree':'8fee0b062584a58fd34c60269a6f40912069c422','target_tree':'81c38af8be3cd4ed511785b7b8742391960df1bc','parent':os.environ['GITHUB_SHA'],'tree_elements':entries,'branch_updated':False}
+          pathlib.Path('/tmp/ou3-prepared.json').write_text(json.dumps(manifest,indent=2))
+          print('PREPARED_OBJECTS',json.dumps(manifest))
           PY
       - uses: actions/upload-artifact@v6
         with:
