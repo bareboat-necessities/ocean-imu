@@ -1,0 +1,40 @@
+name: ou3-sea3-reset
+
+on:
+  pull_request:
+    paths:
+      - "tools/ou3_sea3_full_word_reset_congruence.py"
+      - "tools/ou3_sea3_full_word_riccati_backend.py"
+      - "tools/ou3_sea3_full_normal_live_word.py"
+      - "tools/ou3_sea3_full_normal_live_word_reset.py"
+      - "src/kalman_ou_common/KalmanOUCoreMath.h"
+      - "tests/validation/test_ou3_sea3_full_word_reset_congruence.py"
+      - "tests/validation/test_ou3_sea3_full_normal_live_word.py"
+      - ".github/workflows/ou3-sea3-reset.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: ou3-sea3-reset-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  reset-congruence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Validate shipping left-error reset congruence
+        run: python3 tools/ou3_sea3_full_word_reset_congruence.py
+      - name: Validate reset-complete literal H18/A21 word execution
+        run: python3 tools/ou3_sea3_full_normal_live_word_reset.py
+      - name: Test reset congruence and literal execution order
+        working-directory: tests/validation
+        run: |
+          python3 -m unittest -v \
+            test_ou3_sea3_full_word_reset_congruence \
+            test_ou3_sea3_full_normal_live_word

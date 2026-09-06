@@ -1,0 +1,135 @@
+name: ou3-sea3-four-s
+
+on:
+  pull_request:
+    paths:
+      - "tools/ou3_sea3_four_s_translation_information.py"
+      - "tools/ou3_sea3_four_s_translation_information_tight.py"
+      - "tools/ou3_sea3_four_s_live_prior_metric.py"
+      - "tools/ou3_sea3_h18_information_composition.py"
+      - "tools/ou3_sea3_h18_prior_free_completion.py"
+      - "tools/ou3_sea3_a21_detectability_completion.py"
+      - "tools/ou3_sea3_windowed_vector_pe.py"
+      - "tools/ou3_full_process_ucc.py"
+      - "tests/validation/test_ou3_sea3_four_s_translation_information.py"
+      - "tests/validation/test_ou3_sea3_four_s_live_prior_metric.py"
+      - "tests/validation/test_ou3_sea3_h18_information_composition.py"
+      - "tests/validation/test_ou3_sea3_h18_prior_free_completion.py"
+      - "tests/validation/test_ou3_sea3_a21_detectability_completion.py"
+      - ".github/workflows/ou3-sea3-four-s.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: ou3-sea3-four-s-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  four-s:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Build complete SEA3 four-S and H18 certificates
+        run: |
+          python3 tools/ou3_sea3_four_s_translation_information.py --output /tmp/ou3_sea3_four_s.json
+          python3 tools/ou3_sea3_four_s_translation_information_tight.py --output /tmp/ou3_sea3_four_s_tight.json
+          python3 tools/ou3_sea3_four_s_live_prior_metric.py --output /tmp/ou3_sea3_four_s_live_prior_metric.json
+          python3 tools/ou3_sea3_h18_information_composition.py --output /tmp/ou3_sea3_h18_information.json
+          python3 tools/ou3_sea3_h18_prior_free_completion.py --output /tmp/ou3_sea3_h18_prior_free_completion.json
+          python3 tools/ou3_sea3_a21_detectability_completion.py --output /tmp/ou3_sea3_a21_detectability_completion.json
+          python3 - <<'PY'
+          import json, sys
+          sys.path.insert(0, 'tools')
+          import ou3_sea3_windowed_vector_pe as PE
+          import ou3_full_process_ucc as PROC
+          import ou3_sea3_live_covariance_seed as LIVE
+          d=json.load(open('/tmp/ou3_sea3_four_s.json'))
+          t=json.load(open('/tmp/ou3_sea3_four_s_tight.json'))
+          pm=json.load(open('/tmp/ou3_sea3_four_s_live_prior_metric.json'))
+          h=json.load(open('/tmp/ou3_sea3_h18_information.json'))
+          hp=json.load(open('/tmp/ou3_sea3_h18_prior_free_completion.json'))
+          a=json.load(open('/tmp/ou3_sea3_a21_detectability_completion.json'))
+          for x in (d,t,pm,h,hp,a):
+              assert x['validation_pass'], x['validation_failures']
+          assert d['canonical_source'] == 'COMPLETE_SEA3_NORMAL_LIVE_WORD'
+          assert t['canonical_source'] == d['canonical_source']
+          assert pm['canonical_source'] == d['canonical_source']
+          assert hp['canonical_source'] == d['canonical_source']
+          assert a['canonical_source'] == d['canonical_source']
+          assert d['component_of_complete_SEA3_full_word'] is True
+          assert d['P3_architecture_replaced'] is False
+          assert d['source_family_replaced'] is False
+          assert d['selected_four_S_events_replace_full_scheduler_word'] is False
+          assert d['all_due_S_updates_remain_in_literal_word'] is True
+          assert d['actual_applied_SpectralMSE_R_S_consumed'] is True
+          assert d['instantaneous_R_S_target_substituted_for_applied_R_S'] is False
+          assert d['time_varying_tau_allowed_inside_selected_subword'] is True
+          assert d['dimensionless_translation_state'] == ['S','g*p','g^2*v','g^3*a_w']
+          ni=d['newton_coordinate_information']; nti=t['newton_coordinate_information']
+          assert ni['full_4x4_matrix_inequality_closed'] is True
+          assert ni['third_divided_difference_lower_enters_quantitative_bound'] is True
+          assert ni['determinant_used_for_information_lower'] is False
+          assert t['same_complete_SEA3_component_sharpened'] is True
+          assert t['selected_S_record_noise']['measurement_noise_not_multiplied_by_record_count'] is True
+          assert t['selected_S_record_noise']['process_cross_record_correlation_still_covered_by_trace_bound'] is True
+          assert nti['D_S_physical_lambda_min_lower'] > ni['D_S_physical_lambda_min_lower']
+          assert pm['shipping_Live_covariance_seed_consumed'] is True
+          assert pm['actual_applied_SpectralMSE_R_S_consumed'] is True
+          assert pm['translation_batch_prior_condition_pass'] is True
+          assert h['component_of_complete_SEA3_full_word'] is True
+          assert h['selected_four_S_events_replace_complete_word'] is False
+          assert h['actual_applied_SpectralMSE_R_S_consumed'] is True
+          assert h['tight_four_S_measurement_covariance_structure_consumed'] is True
+          assert h['directional_four_S_inverse_row_bound_used'] is True
+          assert h['triangular_information_composition']['full_18x18_matrix_information_lower_closed'] is True
+          assert h['H18_information_useful_gate_pass'] is True
+          assert h['triangular_information_composition']['D_H18_lambda_min_lower'] >= 1.0e-18
+          assert hp['full_H18_prior_free_matrix_condition_closed'] is True
+          assert hp['H18_prior_free_completion_closed'] is True
+          assert hp['full_18x18_interval_LDLT_used'] is True
+          assert hp['event_algebra_preserves_margin_after_closure'] is True
+          assert hp['useful_gate'] == 1.0e-18
+          assert hp['worst_full_H18_LDLT_pivot_lower'] > 0.0
+          assert a['paper_active_bias_route'] == 'ETA6_PLUS_FINITE_RESIDUAL_BIAS_CORRELATION'
+          assert a['eta9_point_packet_shortcut_used'] is False
+          assert a['A21_finite_bias_detectability_closed'] is True
+          assert a['A21_detectability_asymptotic_word_energy_gap_lower'] >= 1.0e-18
+          # Full A21 Riccati closure is owned only by ou3-sea3-a21-word.
+          assert a['full_21x21_Omega_minus_delta_P_LDLT_closed_here'] is False
+          pe=PE.build(); assert not PE.validate(pe)
+          proc=PROC.build(); assert not PROC.validate(proc)
+          live=LIVE.build(); assert not LIVE.validate(live)
+          print('FOUR_S_GAP', d['uniform_S_gap_s_upper'])
+          print('FOUR_S_D_CORRECTED_BASE', ni['D_S_physical_lambda_min_lower'])
+          print('FOUR_S_D_TIGHT', nti['D_S_physical_lambda_min_lower'])
+          print('H18_INFORMATION_LOWER', h['triangular_information_composition']['D_H18_lambda_min_lower'])
+          print('H18_PRIOR_FREE_WORST_PIVOT', hp['worst_full_H18_LDLT_pivot_lower'])
+          print('A21_DETECTABILITY_GAP', a['A21_detectability_asymptotic_word_energy_gap_lower'])
+          print('PROCESS_H_Q_MIN_DIAGNOSTIC', proc['modes']['H']['prediction_Q_lambda_min_lower'])
+          print('PROCESS_A_Q_MIN_DIAGNOSTIC', proc['modes']['A']['prediction_Q_lambda_min_lower'])
+          PY
+      - name: Test complete SEA3 information contracts
+        working-directory: tests/validation
+        run: |
+          python3 -m unittest -v \
+            test_ou3_sea3_four_s_translation_information \
+            test_ou3_sea3_four_s_live_prior_metric \
+            test_ou3_sea3_h18_information_composition \
+            test_ou3_sea3_h18_prior_free_completion \
+            test_ou3_sea3_a21_detectability_completion
+      - uses: actions/upload-artifact@v6
+        with:
+          name: ou3-sea3-four-s
+          path: |
+            /tmp/ou3_sea3_four_s.json
+            /tmp/ou3_sea3_four_s_tight.json
+            /tmp/ou3_sea3_four_s_live_prior_metric.json
+            /tmp/ou3_sea3_h18_information.json
+            /tmp/ou3_sea3_h18_prior_free_completion.json
+            /tmp/ou3_sea3_a21_detectability_completion.json
+          retention-days: 7

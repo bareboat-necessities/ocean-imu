@@ -1,0 +1,76 @@
+from pathlib import Path
+import sys
+import unittest
+
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "tools"))
+
+import ou3_sea3_p3_conditional_composition as mod  # noqa: E402
+
+
+class Sea3ConditionalP3CompositionTest(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.d = mod.build()
+
+    def test_conditional_p3_and_physical_left_inclusion_are_separate(self):
+        self.assertEqual(mod.validate(self.d), [])
+        self.assertEqual(
+            self.d["conditional_P3_quantifier"],
+            "FOR_EVERY_ADMITTED_COMPLETE_SEA3_NORMAL_LIVE_WORD",
+        )
+        self.assertTrue(self.d["theorem_conditional_on_admitted_complete_SEA3_word"])
+        self.assertFalse(self.d["finite_source_family_materialization_required_for_conditional_theorem"])
+        self.assertTrue(self.d["global_physical_deployment_left_inclusion_is_separate_obligation"])
+        self.assertFalse(self.d["global_physical_left_inclusion_required_before_conditional_P3_math"])
+        self.assertTrue(self.d["global_physical_left_inclusion_required_before_full_deployment_theorem"])
+        self.assertFalse(self.d["hard_shaping_physical_left_inclusion_currently_closed"])
+
+    def test_complete_word_uses_actual_rs_without_source_replacement(self):
+        self.assertTrue(self.d["four_S_information_component_consumed"])
+        self.assertTrue(self.d["actual_applied_SpectralMSE_R_S_consumed"])
+        self.assertTrue(self.d["all_due_S_updates_remain_in_complete_word"])
+        self.assertTrue(self.d["all_valid_accelerometer_updates_required"])
+        self.assertFalse(self.d["accelerometer_rejection_after_certified_Normal_Live_allowed"])
+        self.assertFalse(self.d["four_S_selected_events_replace_complete_word"])
+        self.assertFalse(self.d["source_family_replaced"])
+
+    def test_H18_and_A21_full_matrix_obligations_are_closed(self):
+        self.assertTrue(self.d["H18_full_information_matrix_lower_closed"])
+        self.assertTrue(self.d["H18_prior_free_completion_closed"])
+        self.assertTrue(self.d["H18_full_18x18_interval_LDLT_closed"])
+        self.assertGreater(self.d["H18_worst_LDLT_pivot_lower"], 0.0)
+        self.assertTrue(self.d["A21_finite_bias_correlation_route_consumed"])
+        self.assertFalse(self.d["A21_uses_eta9_packet_shortcut"])
+        self.assertTrue(self.d["A21_detectability_completion_closed"])
+        self.assertTrue(self.d["A21_paper_UES_hypotheses_closed"])
+        self.assertGreaterEqual(
+            self.d["A21_detectability_asymptotic_word_energy_gap_lower"],
+            1.0e-18,
+        )
+        self.assertTrue(self.d["A21_hybrid_release_full_matrix_consumed"])
+        self.assertTrue(self.d["A21_H18_word_finishes_before_release"])
+        self.assertTrue(self.d["A21_exact_direct_sum_full_matrix_hybrid_proof_used"])
+        self.assertGreater(self.d["A21_first_active_ba_M_delta_margin_lower"], 0.0)
+        self.assertTrue(self.d["A21_full_21x21_Riccati_bridge_closed"])
+
+    def test_reset_complete_literal_word_is_consumed(self):
+        self.assertTrue(self.d["exact_complete_word_event_algebra_consumed"])
+        self.assertTrue(self.d["event_algebra_covers_immediate_left_error_reset"])
+        self.assertTrue(self.d["event_algebra_preserves_first_established_full_matrix_margin"])
+        self.assertTrue(self.d["reset_complete_literal_word_consumed"])
+        self.assertTrue(self.d["reset_complete_literal_execution_closed"])
+        self.assertTrue(self.d["reset_injection_supplied_by_same_source_word"])
+        self.assertFalse(self.d["reset_small_angle_bound_required"])
+
+    def test_conditional_P3_now_closes_but_physical_left_inclusion_does_not(self):
+        self.assertTrue(self.d["P3_math_subobligations_H18_and_A21_detectability_closed"])
+        self.assertTrue(self.d["P3_full_matrix_H18_A21_and_reset_chain_closed"])
+        self.assertEqual("NONE", self.d["P3_remaining_canonical_obligation"])
+        self.assertTrue(self.d["P3_CANONICAL_PASS"])
+        self.assertTrue(self.d["P4_MAY_CONSUME_P3"])
+        self.assertFalse(self.d["global_physical_deployment_left_inclusion_closed_here"])
+
+
+if __name__ == "__main__":
+    unittest.main()

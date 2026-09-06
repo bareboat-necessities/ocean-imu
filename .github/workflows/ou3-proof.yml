@@ -114,7 +114,7 @@ jobs:
   riccati-p3:
     needs: complete-sea3-source
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v6
         with:
@@ -166,14 +166,22 @@ jobs:
           assert d['live_entry_seed_is_source_generated_not_arbitrary_PSD'] is True
           assert d['bootstrap_mekf_covariance_propagated_before_live'] is False
           assert d['source_parity_failures'] == []
+          r=d['H_to_A_release']
+          assert r['outer_acc_bias_hold_active_until_refinement_complete'] is True
+          assert r['minimum_H_mode_live_duration_before_A_release_s'] >= 30.0
+          assert r['H18_full_word_guaranteed_before_A_release'] is True
           PY
 
-      - name: Assemble literal complete H18/A21 word
+      - name: Assemble literal complete H18 word and reset-complete H18/A21 API
         run: |
           python3 tools/ou3_sea3_full_normal_live_word.py \
             --output /tmp/ou3_sea3_full_normal_live_word.json
+          python3 tools/ou3_sea3_full_normal_live_word_reset.py \
+            > /tmp/ou3_sea3_full_normal_live_word_reset.txt
           python3 - <<'PY'
-          import json
+          import json, pathlib, sys
+          sys.path.insert(0, str(pathlib.Path('tools').resolve()))
+          import ou3_sea3_full_normal_live_word_reset as reset
           d=json.load(open('/tmp/ou3_sea3_full_normal_live_word.json'))
           assert d['validation_pass'], d['validation_failures']
           assert d['canonical_architecture'] == 'SEA3_FULL_NORMAL_LIVE_RICCATI_WORD'
@@ -184,8 +192,16 @@ jobs:
           assert d['same_source_state_must_feed_F_Q_pseudo_period_and_applied_RS'] is True
           assert all(v is False for v in d['no_reduced_promotion_routes'].values())
           assert d['P3_CANONICAL_PASS'] is False
+          r=reset.build()
+          assert reset.validate(r) == []
+          assert r['shipping_reset_source_parity_pass'] is True
+          assert r['literal_reset_execution_complete'] is True
+          assert r['S_Joseph_immediately_followed_by_left_reset'] is True
+          assert r['accelerometer_Joseph_immediately_followed_by_left_reset'] is True
+          assert r['magnetometer_Joseph_immediately_followed_by_left_reset'] is True
+          assert r['reset_small_angle_bound_required'] is False
           print('LITERAL_WORD_SAMPLES', d['imu_samples_upper'])
-          print('LITERAL_WORD_OPEN', d['first_open_obligation'])
+          print('RESET_COMPLETE', r['literal_reset_execution_complete'])
           PY
 
       - name: Build canonical complete-SEA3 P3 gate
@@ -197,25 +213,51 @@ jobs:
           d=json.load(open('/tmp/ou3_sea3_riccati_metric_p3.json'))
           assert d['validation_pass'], d['validation_failures']
           assert d['canonical_P3_architecture'] == 'COMPLETE_SEA3_FULL_NORMAL_LIVE_RICCATI_WORD'
+          assert d['canonical_P3_topology'] == 'H18_3S_PRIOR_FREE_THEN_PRESERVED_H_TO_A_HYBRID_A21'
           assert d['canonical_source'] == 'COMPLETE_SEA3_NORMAL_LIVE_WORD'
           assert d['complete_SEA3_source_consumed'] is True
           assert d['complete_SEA3_response_couplings_consumed'] is True
           assert d['complete_SEA3_compact_parameter_domain_consumed'] is True
           assert d['complete_SEA3_compact_transition_relation_consumed'] is True
           assert d['complete_SEA3_phase_continuous_realization_required'] is True
-          assert d['same_xs_lambda_drives_entire_word'] is True
+          assert d['same_xs_lambda_drives_entire_execution'] is True
           assert d['stochastic_forcing_does_not_generate_source_words'] is True
           assert d['stochastic_forcing_does_not_prune_homogeneous_family'] is True
           assert d['complete_SEA3_frontend_state_consumed'] is True
           assert d['actual_applied_per_axis_RS_consumed'] is True
           assert d['all_due_S_updates_required'] is True
           assert d['all_valid_accelerometer_updates_required'] is True
-          assert d['same_complete_SEA3_word_used_for_H18_and_A21'] is True
+          assert d['accelerometer_rejection_after_certified_Normal_Live_allowed'] is False
+          assert d['same_complete_SEA3_execution_continues_across_H_to_A'] is True
+          assert d['same_three_second_same_mode_word_used_for_H18_and_A21'] is False
+          assert d['H_to_A_is_separate_dimension_changing_hybrid_event'] is True
+          assert d['shipping_H_mode_hold_guarantees_H18_before_A_release'] is True
+          assert d['reset_complete_literal_execution_consumed'] is True
+          assert d['immediate_left_error_reset_congruence_consumed'] is True
+          assert d['finite_source_family_materialization_required'] is False
+          assert d['SOURCE_REACHABLE_EVENT_FAMILY_MATERIALIZED'] is False
+          assert d['universal_complete_SEA3_certificate_chain_used_instead_of_finite_materialization'] is True
+          assert d['UNIVERSAL_COMPLETE_SEA3_CERTIFICATE_CHAIN_CLOSED'] is True
+          assert d['P3_FULL_WORD_ENCLOSED'] is True
+          assert d['P3_FULL_MATRIX_COMPARISON_CLOSED'] is True
           assert d['no_fallback_route_enabled'] is True
           assert all(v is False for v in d['no_fallback_generators'].values())
           assert d['useful_gate'] == 1e-18
+          assert d['modes']['H18']['dimension'] == 18
+          assert d['modes']['A21']['dimension'] == 21
+          for mode in ('H18','A21'):
+              assert d['modes'][mode]['Omega_minus_delta_P_full_matrix_closed'] is True
+              assert d['modes'][mode]['certified_delta_lower'] >= 1e-18
+              assert d['modes'][mode]['relative_Riccati_injection_margin_lower'] >= 1e-18
+          assert d['P3_CANONICAL_PASS'] is True
+          assert d['P4_MAY_CONSUME_P3'] is True
+          assert d['P3_CANONICAL_FAIL_REASONS'] == []
+          assert d['global_physical_deployment_left_inclusion_is_separate_obligation'] is True
+          assert d['global_physical_deployment_left_inclusion_closed_here'] is False
+          print('P3_H18_DELTA', d['modes']['H18']['certified_delta_lower'])
+          print('P3_A21_DELTA', d['modes']['A21']['certified_delta_lower'])
+          print('P3_A21_BA_MARGIN', d['modes']['A21']['first_active_ba_M_delta_margin_lower'])
           print('P3_CANONICAL_PASS', d['P3_CANONICAL_PASS'])
-          print('P3_FAIL_REASONS', d['P3_CANONICAL_FAIL_REASONS'])
           PY
 
       - name: Test complete SEA3 P3 contracts
@@ -227,6 +269,7 @@ jobs:
             test_ou3_sea3_live_covariance_seed \
             test_ou3_sea3_full_word_riccati_backend \
             test_ou3_sea3_full_normal_live_word \
+            test_ou3_sea3_full_word_reset_congruence \
             test_ou3_sea3_riccati_metric_p3 \
             test_ou3_sea3_riccati_metric_p3_promotion_state
 
@@ -237,6 +280,8 @@ jobs:
           d=json.load(open('/tmp/ou3_sea3_riccati_metric_p3.json'))
           if not d['P3_CANONICAL_PASS']:
               raise SystemExit('canonical complete-SEA3 P3 FAIL: ' + '; '.join(d['P3_CANONICAL_FAIL_REASONS']))
+          if not d['P3_FULL_MATRIX_COMPARISON_CLOSED']:
+              raise SystemExit('canonical complete-SEA3 P3 full-matrix comparison is not closed')
           PY
 
       - name: Upload canonical P3 artifacts
@@ -249,6 +294,7 @@ jobs:
             /tmp/ou3_sea3_shipping_prediction_primitives.json
             /tmp/ou3_sea3_live_covariance_seed.json
             /tmp/ou3_sea3_full_normal_live_word.json
+            /tmp/ou3_sea3_full_normal_live_word_reset.txt
             /tmp/ou3_sea3_riccati_metric_p3.json
           retention-days: 7
 
