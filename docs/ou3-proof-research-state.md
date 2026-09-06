@@ -153,25 +153,55 @@ inequality being demonstrated.
 ## Complete-word feasibility admission: current limiter
 
 The numerical experiment has not yet executed an admitted SEA3 word. The
-tracked JSON inputs contain no 601-transition numerical witness with its
-same-history frontend entry and Live covariance seed. The retained
-`ou3_sea3_complete_window_executor.py` rejects materialization while the
-code-owned hard-window provider is open. H18/A21 rho, maximizing direction,
-source/phase and signed word margins therefore remain **unmeasured**, not PASS
-and not evidence that rho exceeds one.
+tracked inputs contain no 601-transition witness with its same-history frontend
+entry and Live covariance seed, and the strict executor correctly rejects
+materialization while the code-owned hard-window provider is open. H18/A21
+nonlinear rho, maximizing direction, source/phase and signed word margins are
+therefore **unmeasured**, not PASS and not evidence that rho exceeds one.
 
-Classification: an executable source-admission gap, not a counterexample to
-conditional P3 or to nonlinear stability. This does not make global physical
-SEA0 left inclusion a prerequisite for testing one independently validated
-legal point. It does prohibit self-asserting provider closure or treating an
-algebra fixture, replay or unrelated bounded sequence as that point.
+The failed admission experiment now identifies the missing mathematical object
+more precisely. The theorem declares the coupled hard realization set
+`X^s_SEA3(lambda_0:N)` compact and requires SEA0 to give a machine-readable
+outward representation, but neither the theorem nor the retained source stack
+defines the deterministic spectral amplitude/driver relation that decides
+membership in that set. The statistical JONSWAP/PM spectrum and its moments are
+explicitly insufficient for that pathwise relation. Normal-Live acceleration
+and body-rate caps only bound the sampled projection; they are not membership
+conditions. Consequently a numerical 601-sample history cannot currently be
+proved to be a member from repository data alone.
 
-The operation regressions verify full prediction/reset/lift shift transport
-and the information identity for each supplied S covariance. They are not the
-required feasibility experiment and authorize no new proof-bound module.
-The strongest critic objection remains: additional coordinate identities do
-not demonstrate a complete-word margin. The next executable result must be a
-legal same-history word and its signed margin, not another claimed radius.
+Classification: **proof-method/source-specification gap**, not a counterexample
+to conditional P3, P4 contraction, or SEA3 compactness. It invalidates the
+hypothesis that the present abstract compact-set declaration is already enough
+to construct a legal point witness. It does not invalidate the continuum phase
+propagation, coupled lambda relation, response-envelope theorems, complete-word
+executor, or frozen P3 result. The limiting quantity is now source membership
+before `rho_W` can even be evaluated.
+
+Strongest critic objection: manufacturing a finite harmonic/grid realization,
+using a simulator replay, declaring arbitrary bounded samples admissible, or
+choosing an independent tuner/R_S schedule would silently add the missing
+driver relation and therefore change the source theorem. Those routes remain
+forbidden. A point diagnostic may avoid proving universal SEA0 left inclusion,
+but it still needs a witness whose membership follows from the existing SEA3
+source definition rather than from self-asserted provider flags.
+
+After this failure the qualitatively distinct alternatives are: (1) derive and
+state an exact deterministic spectral-factor/shaping realization relation from
+the existing SEA3 model, then validate one continuum same-history member; (2)
+state a direct hard finite-window/IQC definition of `X^s_SEA3` with an
+executable correlated membership oracle and prove the existing physical family
+left-included; or (3) formulate P4 directly over the abstract compact behavior
+using support-function/occupation-measure duality, provided it preserves the
+common SEA3 witness and every actual-applied R_S event. Alternative (1) is the
+shortest route to the mandatory non-promoting point experiment if the spectral
+model supplies a mathematically exact deterministic factor; otherwise (2) is
+the required theorem completion. Alternative (3) is a different proof
+architecture and must not be used merely to bypass missing source semantics.
+
+No further P4 proof-bound module is authorized until one of these source routes
+produces an admitted complete word. The next executable result must still be a
+legal same-history word and its signed complete-word margin.
 
 ## Verification ownership and contract repairs
 
