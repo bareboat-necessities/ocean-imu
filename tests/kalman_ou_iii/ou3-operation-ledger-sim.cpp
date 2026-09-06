@@ -23,8 +23,8 @@
 // Riccati recursion and no perturbed filter exist in this executable.
 #define private public
 #include "kalman_ou_iii/Kalman3D_Wave_OU_III.h"
-#undef private
 #include "kalman_ou_iii/SeaStateFusionFilter_OU_III.h"
+#undef private
 
 using Eigen::Matrix3f;
 using Eigen::Quaternionf;
@@ -175,7 +175,6 @@ public:
         const bool refined_post = fusion_.hasRefinedMagReference();
         if (active_pre != active_post || lock_pre != lock_post || refined_pre != refined_post) {
             fail("hybrid magnetic/mode event inside selected same-mode word");
-            return;
         }
         check_mode();
 
@@ -187,7 +186,6 @@ public:
         Eigen::LDLT<Matrix21f> ldlt(Ppre);
         if (ldlt.info() != Eigen::Success) {
             fail("mag pre-covariance LDLT failed");
-            return;
         }
         const Matrix21x3f Ht = ldlt.solve(PCt);
         const Matrix3x21f H = Ht.transpose();
@@ -222,6 +220,11 @@ public:
         }
 
         auto& filter = fusion_.raw();
+        // Shipping updateCore_ commits the tune staged after the previous IMU
+        // sample before the current prediction. Consume that exact commit here
+        // before taking the diagnostic snapshot; the normal update call below
+        // sees no pending commit and therefore executes the identical schedule.
+        filter.apply_pending_online_tune_();
         auto& mekf = filter.mekf();
         check_mode();
         const Matrix21f P0 = mekf.covariance_full();
@@ -258,8 +261,6 @@ public:
                 || lock_pre != lock_post
                 || refined_pre != refined_post) {
             fail("hybrid/live event inside selected same-mode word");
-            time_s_ += dt;
-            return;
         }
         check_mode();
 
@@ -291,8 +292,6 @@ public:
             Eigen::SelfAdjointEigenSolver<Matrix3f> es(Delta);
             if (es.info() != Eigen::Success) {
                 fail("aw-floor eigensolve failed");
-                time_s_ += dt;
-                return;
             }
             Vector3f evals = es.eigenvalues().cwiseMax(0.0f);
             const Matrix3f DeltaPlus =
@@ -315,8 +314,6 @@ public:
             Eigen::LDLT<Matrix3f> ldlt(S);
             if (ldlt.info() != Eigen::Success) {
                 fail("S innovation LDLT failed");
-                time_s_ += dt;
-                return;
             }
             const Matrix21x3f K = ldlt.solve(PCt.transpose()).transpose();
             const Vector3f rS = -xlin_pred.segment<3>(6);
@@ -335,8 +332,6 @@ public:
         const auto& ad = mekf.lastAccDiag();
         if (!ad.accepted) {
             fail("missing accelerometer update inside complete Normal-Live word");
-            time_s_ += dt;
-            return;
         }
 
         const Matrix21x3f PCt = mekf.PCt_scratch_;
@@ -344,8 +339,6 @@ public:
         Eigen::LDLT<Matrix21f> ldlt(Pcur);
         if (ldlt.info() != Eigen::Success) {
             fail("accelerometer pre-covariance LDLT failed");
-            time_s_ += dt;
-            return;
         }
         const Matrix21x3f Ht = ldlt.solve(PCt);
         const float lin_resid = (Pcur * Ht - PCt).norm() / std::max(1.0f, PCt.norm());
@@ -360,8 +353,6 @@ public:
         const float cov_resid = std::max(lin_resid, relative_matrix_difference(Precon, Ppost));
         if (!(std::isfinite(cov_resid) && cov_resid <= 2.0e-4f)) {
             fail("accelerometer covariance reconstruction mismatch");
-            time_s_ += dt;
-            return;
         }
         write_event("accelerometer", time_s_, Pcur, Ppost, C,
                     rs_scalar_pre, R_S_pre, dtheta.norm(), cov_resid);
@@ -423,17 +414,14 @@ private:
         if (time_s_ + 2.0e-6f < requested_t0_) return;
         if (std::abs(time_s_ - requested_t0_) > 2.0e-4f) {
             fail("ledger could not align to requested word start");
-            return;
         }
         check_mode();
-        if (failed_) return;
         started_ = true;
         actual_t0_ = time_s_;
         error_ = direction_;
         initial_energy_ = energy(fusion_.raw().mekf().covariance_full(), error_);
         if (!(std::isfinite(initial_energy_) && initial_energy_ > 0.0f)) {
             fail("invalid initial information energy");
-            return;
         }
         std::cout << "OU3_EVENT_LEDGER_START mode=" << requested_mode_
                   << " t0=" << actual_t0_
@@ -472,7 +460,6 @@ private:
         const float va = energy(Pafter, xafter);
         if (!(std::isfinite(vb) && vb > 0.0f && std::isfinite(va) && va >= 0.0f)) {
             fail(std::string("invalid information energy at ") + event);
-            return;
         }
         const float dv = va - vb;
         const float ratio = va / vb;
@@ -498,17 +485,15 @@ private:
         if (finished_ || failed_) return;
         if (std::abs(time_s_ - requested_t1_) > 2.0e-4f) {
             fail("ledger endpoint does not match selected complete word");
-            return;
         }
         const float final_energy = energy(fusion_.raw().mekf().covariance_full(), error_);
         if (!(std::isfinite(final_energy) && final_energy >= 0.0f)) {
             fail("invalid final information energy");
-            return;
         }
         const float rho = final_energy / initial_energy_;
-        const float telescoping = prediction_delta_ + floor_delta_ + s_delta_ + acc_delta_ + vector_delta_;
-        const float total_delta = final_energy - initial_energy_;
-        const float telescope_error = telescoping - total_delta;
+        const double telescoping = prediction_delta_ + floor_delta_ + s_delta_ + acc_delta_ + vector_delta_;
+        const double total_delta = static_cast<double>(final_energy) - static_cast<double>(initial_energy_);
+        const double telescope_error = telescoping - total_delta;
         std::cout << std::setprecision(12)
                   << "OU3_EVENT_LEDGER_DONE mode=" << requested_mode_
                   << " t0=" << actual_t0_ << " t1=" << time_s_
@@ -528,11 +513,12 @@ private:
         finished_ = true;
     }
 
-    void fail(const std::string& why)
+    [[noreturn]] void fail(const std::string& why)
     {
         if (!failed_) std::cerr << "OU3_EVENT_LEDGER_FAIL: " << why << "\n";
         failed_ = true;
         finished_ = true;
+        throw std::runtime_error("operation-ledger: " + why);
     }
 
     mutable Fusion fusion_;
