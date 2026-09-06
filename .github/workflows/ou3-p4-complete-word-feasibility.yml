@@ -4,7 +4,7 @@ on:
   push:
     paths:
       - "tests/kalman_ou_iii/ou3_p4_complete_sea3_word_feasibility.py"
-      - "tools/stability/ou3_p4_nonlinear_same_history_feasibility.py"
+      - "tests/kalman_ou_iii/ou3_p4_frozen_gain_shadow_feasibility.py"
       - "tools/stability/ou3_p4_complete_sea3_invariant_aw_coordinate.py"
       - "tools/stability/ou3_p4_complete_sea3_measurement_linearizing_aw_coordinate.py"
       - "tools/stability/ou3_p4_complete_sea3_accelerometer_operation_coordinate.py"
@@ -12,8 +12,8 @@ on:
       - "tools/stability/ou3_sea3_riccati_metric_p4.py"
       - "tools/stability/ou3_proof_operating_domain.json"
       - "tests/kalman_ou_iii/Makefile"
-      - "tests/kalman_ou_iii/ou3-neighborhood-sim.cpp"
       - "tests/kalman_ou_iii/ou3-operation-ledger-sim.cpp"
+      - "tests/kalman_ou_iii/ou3-frozen-gain-shadow-sim.cpp"
       - "src/kalman_ou_iii/**"
       - "src/kalman_ou_common/**"
       - "src/tuner/**"
@@ -21,7 +21,7 @@ on:
   pull_request:
     paths:
       - "tests/kalman_ou_iii/ou3_p4_complete_sea3_word_feasibility.py"
-      - "tools/stability/ou3_p4_nonlinear_same_history_feasibility.py"
+      - "tests/kalman_ou_iii/ou3_p4_frozen_gain_shadow_feasibility.py"
       - "tools/stability/ou3_p4_complete_sea3_invariant_aw_coordinate.py"
       - "tools/stability/ou3_p4_complete_sea3_measurement_linearizing_aw_coordinate.py"
       - "tools/stability/ou3_p4_complete_sea3_accelerometer_operation_coordinate.py"
@@ -29,8 +29,8 @@ on:
       - "tools/stability/ou3_sea3_riccati_metric_p4.py"
       - "tools/stability/ou3_proof_operating_domain.json"
       - "tests/kalman_ou_iii/Makefile"
-      - "tests/kalman_ou_iii/ou3-neighborhood-sim.cpp"
       - "tests/kalman_ou_iii/ou3-operation-ledger-sim.cpp"
+      - "tests/kalman_ou_iii/ou3-frozen-gain-shadow-sim.cpp"
       - "src/kalman_ou_iii/**"
       - "src/kalman_ou_common/**"
       - "src/tuner/**"
@@ -61,10 +61,10 @@ jobs:
       - name: Fetch genuine coupled wave simulation data
         run: make ensure-sim-data
 
-      - name: Build single shipping observer and nonlinear falsification observer
+      - name: Build single shipping observer and frozen-gain nonlinear shadow
         working-directory: tests/kalman_ou_iii
         run: |
-          make -j2 ou3-operation-ledger-sim ou3-neighborhood-sim
+          make -j2 ou3-operation-ledger-sim ou3-frozen-gain-shadow-sim
 
       - name: Scan genuine source with one shipping map and covariance observer
         working-directory: tests/kalman_ou_iii
@@ -155,18 +155,15 @@ jobs:
               'modes':{},
           }
           for mode in ('H18','A21'):
-              path=f'/tmp/ou3_p4_event_ledger_{mode}.csv'
-              with open(path,newline='') as f:
+              with open(f'/tmp/ou3_p4_event_ledger_{mode}.csv',newline='') as f:
                   rows=list(csv.DictReader(f))
               assert rows, mode
               w=linear['modes'][mode]['worst']
               v0=float(rows[0]['V_before']); v1=float(rows[-1]['V_after'])
-              rho=v1/v0
-              linear_rho=float(w['rho_linear'])
+              rho=v1/v0; linear_rho=float(w['rho_linear'])
               counts={k:sum(r['event']==k for r in rows)
                       for k in ('prediction','aw_floor','S_zero','accelerometer','vector')}
-              delta={k:sum(float(r['delta_V']) for r in rows if r['event']==k)
-                     for k in counts}
+              delta={k:sum(float(r['delta_V']) for r in rows if r['event']==k) for k in counts}
               telescope_error=sum(delta.values())-(v1-v0)
               assert counts['prediction']==600, (mode,counts)
               assert counts['accelerometer']==600, (mode,counts)
@@ -182,12 +179,9 @@ jobs:
                   assert abs(sx/sz-0.72) <= 2e-5, (mode,sx,sz)
                   assert abs(sy/sz-0.72) <= 2e-5, (mode,sy,sz)
               report['modes'][mode]={
-                  'rho_event_ledger':rho,
-                  'rho_complete_word_linear':linear_rho,
-                  'rho_difference':rho-linear_rho,
-                  'V0':v0,'V1':v1,
-                  'event_counts':counts,
-                  'signed_delta_V_by_event':delta,
+                  'rho_event_ledger':rho, 'rho_complete_word_linear':linear_rho,
+                  'rho_difference':rho-linear_rho, 'V0':v0, 'V1':v1,
+                  'event_counts':counts, 'signed_delta_V_by_event':delta,
                   'S_information_recovery':-delta['S_zero'],
                   'accelerometer_information_recovery':-delta['accelerometer'],
                   'vector_information_recovery':-delta['vector'],
@@ -197,49 +191,51 @@ jobs:
                   'actual_RS_std_ratio_xy_to_z_verified':True,
               }
               print('OU3_P4_SINGLE_OBSERVER',mode,
-                    'rho=',rho,'linear_rho=',linear_rho,
-                    'rho_difference=',rho-linear_rho,
-                    'counts=',counts,'delta=',delta,
-                    'S_recovery=',-delta['S_zero'],
+                    'rho=',rho,'linear_rho=',linear_rho,'rho_difference=',rho-linear_rho,
+                    'counts=',counts,'delta=',delta,'S_recovery=',-delta['S_zero'],
                     'telescope_error=',telescope_error)
           with open('/tmp/ou3_p4_exact_operation_ledger.json','w') as f:
               json.dump(report,f,indent=2,sort_keys=True)
           PY
 
-      - name: Execute finite two-estimator nonlinear falsification diagnostic
+      - name: Execute frozen-gain nonlinear complete-word shadow
         run: |
-          python3 tools/stability/ou3_p4_nonlinear_same_history_feasibility.py \
+          python3 tests/kalman_ou_iii/ou3_p4_frozen_gain_shadow_feasibility.py \
             --linear-json /tmp/ou3_p4_complete_word_feasibility.json \
             --domain tools/stability/ou3_proof_operating_domain.json \
-            --sim tests/kalman_ou_iii/ou3-neighborhood-sim \
+            --sim tests/kalman_ou_iii/ou3-frozen-gain-shadow-sim \
             --input tests/kalman_ou_iii/wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv \
-            --output-dir /tmp/ou3_p4_nonlinear_cases \
-            --output /tmp/ou3_p4_nonlinear_same_history_feasibility.json
+            --output-dir /tmp/ou3_p4_frozen_shadow_cases \
+            --output /tmp/ou3_p4_frozen_gain_shadow_feasibility.json
           python3 - <<'PY'
-          import json
-          d=json.load(open('/tmp/ou3_p4_nonlinear_same_history_feasibility.json'))
+          import json, math
+          d=json.load(open('/tmp/ou3_p4_frozen_gain_shadow_feasibility.json'))
           assert d['canonical_source'] == 'COMPLETE_SEA3_NORMAL_LIVE_WORD'
           assert d['point_same_history_diagnostic_only'] is True
           assert d['P4_promoted'] is False
-          assert d['same_shipping_covariance_at_injection_required'] is True
-          assert d['same_complete_word_endpoint_required'] is True
-          assert d['same_actual_applied_RS_history_required'] is True
-          assert d['both_signs_of_limiting_direction_tested'] is True
+          assert d['single_shipping_estimator_owns_covariance_and_gains'] is True
+          assert d['shadow_covariance_exists'] is False
+          assert d['shipping_acceptance_branches_frozen'] is True
+          assert d['same_actual_applied_RS_word_retained'] is True
+          assert d['all_due_S_updates_retained'] is True
           assert d['packet_count_remainder_budget_used'] is False
           assert d['selected_S_subset_used'] is False
           for mode in ('H18','A21'):
               m=d['modes'][mode]
-              assert m['same_history_cases'] > 0
-              print('OU3_P4_NONLINEAR', mode,
+              assert m['valid_cases'] > 0, mode
+              assert abs(float(m['smallest_pair_absolute_scale'])-0.001) <= 1e-12, (mode,m['smallest_pair_absolute_scale'])
+              assert abs(float(m['smallest_pair_central_minus_linear'])) <= 2e-4, (mode,m['smallest_pair_central_minus_linear'])
+              assert float(m['max_nominal_reconstruction_error']) <= 5e-5, (mode,m['max_nominal_reconstruction_error'])
+              print('OU3_P4_FROZEN_SHADOW',mode,
                     'linear_rho=',m['rho_linear_worst_word'],
-                    'worst_same_history_rho=',m['worst_same_history_nonlinear_rho'],
-                    'largest_same_history_absolute_scale=',m['largest_same_history_absolute_scale'],
-                    'smallest_same_history_absolute_scale=',m['smallest_same_history_absolute_scale'],
-                    'smallest_scale_rho=',m['smallest_scale_rho'],
-                    'smallest_scale_minus_linear_rho=',m['smallest_scale_minus_linear_rho'],
+                    'central_small_rho=',m['smallest_pair_central_rho'],
+                    'central_minus_linear=',m['smallest_pair_central_minus_linear'],
+                    'worst_rho=',m['worst_rho'],
+                    'first_rho_ge_one_abs_scale=',m['first_rho_ge_one_absolute_scale'],
                     'declared_scale_limit=',m['declared_scale_limit'],
                     'limiter=',m['declared_scale_limit_detail']['limiting_constraint'],
-                    'all_same_history_contract=',m['strict_contraction_on_all_same_history_cases'])
+                    'max_reconstruction_error=',m['max_nominal_reconstruction_error'],
+                    'all_tested_contract=',m['strict_contraction_on_all_tested_frozen_word_cases'])
           PY
 
       - name: Upload non-promoting feasibility evidence
@@ -254,6 +250,6 @@ jobs:
             /tmp/ou3_p4_exact_operation_ledger.json
             /tmp/ou3_p4_event_ledger_H18.csv
             /tmp/ou3_p4_event_ledger_A21.csv
-            /tmp/ou3_p4_nonlinear_same_history_feasibility.json
-            /tmp/ou3_p4_nonlinear_cases/*.csv
+            /tmp/ou3_p4_frozen_gain_shadow_feasibility.json
+            /tmp/ou3_p4_frozen_shadow_cases/*.csv
           retention-days: 7
