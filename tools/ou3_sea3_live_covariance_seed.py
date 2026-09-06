@@ -1,29 +1,31 @@
 #!/usr/bin/env python3
-"""Shipping Normal-Live covariance seed for the canonical OU-III P3 word.
+"""Shipping Normal-Live covariance seed and held->active bias release for P3.
 
-This is source extraction for the full-word assembler, not a replacement proof.
-Before handoff the outer wrapper runs ``updateFrontEnd(..., drive_mekf=false)``;
-the MEKF covariance is not propagated.  ``goLive`` reseeds attitude covariance,
-and ``enterLive_`` commits the current tuner operating point and calls
-``reset_aw_covariance_to_stationary`` before the first prediction.  Therefore
-the initial same-mode covariance family has substantially more structure than
-an arbitrary PSD box.
+Before handoff the outer wrapper runs the measurement-only front end; the MEKF
+covariance is not propagated.  ``goLive`` reseeds attitude covariance,
+``enterLive_`` commits the current tuner point, and the a_w marginal is reset to
+the committed stationary covariance before the first prediction.
 
-The active H18 seed is block diagonal apart from the anisotropic attitude block:
+For the configured full-heading deployment the accelerometer-bias coordinate is
+held out of H18 after Live.  This is stronger than the inner 250-magnetometer
+unlock counter: the outer shipping wrapper has ``with_mag=true`` and
+``mag_refine_enabled=true`` by default and calls
 
-  P_theta = s_tilt^2 (I-dd^T) + s_yaw^2 dd^T,
-  P_bg    = Pb0 I,
-  P_v     = sigma_v0^2 I,
-  P_p     = sigma_p0^2 I,
-  P_S     = sigma_S0^2 I,
-  P_aw    = Sigma_aw_stat(tune_at_Live),
+    impl_.setAccBiasHold(cfg_.with_mag && cfg_.mag_refine_enabled)
 
-with all inter-block cross covariances zero at the handoff/reset operations.
-The default isotropic S-factor makes ``P_aw=sigma_aw,Live^2 I`` after the source
-floor.  The accelerometer-bias coordinate is excluded from H18.  While held it
-has identity dynamics, no process injection, zero cross-covariances and frozen
-measurement rows.  On H->A release the source raises its diagonal to at least
-``sigma_bacc0^2`` before normal Gauss-Markov dynamics resume.
+at begin.  Magnetic refinement can start only after the outer wrapper is Live;
+it resets MagAutoTuner, sets its minimum accepted window to the configured
+``mag_refine_window_sec=30 s``, and releases the bias hold only *after* that
+refinement finishes.  MagAutoTuner::tryFinalize_ refuses completion while the
+accepted window is below that minimum.  Consequently the configured H mode is
+guaranteed to persist for at least 30 s after Live entry, far longer than the
+canonical 3 s H18 word.  The H18 full-matrix margin therefore exists before the
+separate H->A hybrid release.
+
+At release the held b_a block has zero H18 cross covariance and its diagonal is
+floored to the shipping seed variance.  Normal Gauss-Markov prediction then
+resumes.  These are source facts, not an alternate estimator or a trajectory
+fit.
 """
 from __future__ import annotations
 
@@ -38,9 +40,11 @@ import ou3_sea3_dynamic_source_certificate as DYNAMIC
 REPO = Path(__file__).resolve().parents[1]
 WRAPPER = REPO / "src" / "kalman_ou_iii" / "SeaStateFusionFilter_OU_III.h"
 MEKF = REPO / "src" / "kalman_ou_iii" / "Kalman3D_Wave_OU_III.h"
+MAG = REPO / "src" / "tuner" / "MagAutoTuner.h"
 DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
-SCHEMA = 1
-QUALIFICATION = "OU3_SEA3_SHIPPING_NORMAL_LIVE_COVARIANCE_SEED"
+SCHEMA = 2
+QUALIFICATION = "OU3_SEA3_SHIPPING_NORMAL_LIVE_COVARIANCE_SEED_AND_BIAS_RELEASE"
+H18_WORD_S = 3.0
 
 
 def _one(pattern: str, text: str, label: str) -> float:
@@ -58,6 +62,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     domain = json.loads(path.read_text(encoding="utf-8"))
     wrapper = WRAPPER.read_text(encoding="utf-8")
     mekf = MEKF.read_text(encoding="utf-8")
+    mag = MAG.read_text(encoding="utf-8")
     dynamic = DYNAMIC.build(path)
     df = DYNAMIC.validate(dynamic)
     if df:
@@ -74,18 +79,16 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     yaw = _one(r"proxy_handoff_yaw_sigma_rad\s*=\s*([0-9.eE+-]+)f", wrapper, "proxy yaw sigma")
     yaw_free = _one(r"proxy_handoff_yaw_sigma_free_rad\s*=\s*([0-9.eE+-]+)f", wrapper, "free yaw sigma")
     unlock_count = int(_one(r"MAG_UPDATES_TO_UNLOCK\s*=\s*([0-9]+)", wrapper, "mag unlock count"))
+    refine_window = _one(r"float mag_refine_window_sec\s*=\s*([0-9.eE+-]+)f", wrapper, "mag refine window")
+    refine_start = _one(r"float mag_refine_start_sec\s*=\s*([0-9.eE+-]+)f", wrapper, "mag refine start")
 
     parity = {
         "bootstrap_frontend_does_not_drive_mekf": (
             "updateCore_(dt, gyro, acc, /*tempC=*/35.0f, /*drive_mekf=*/false);" in wrapper
         ),
         "goLive_reseeds_attitude": "mekf_->initialize_from_attitude(q_bw, tilt_sigma_rad, yaw_sigma_rad);" in wrapper,
-        "enterLive_commits_tune_before_first_prediction": (
-            "void enterLive_()" in wrapper and "apply_ou_tune_(true);" in wrapper
-        ),
-        "enterLive_resets_aw_to_committed_stationary_covariance": (
-            "mekf_->reset_aw_covariance_to_stationary();" in wrapper
-        ),
+        "enterLive_commits_tune_before_first_prediction": "void enterLive_()" in wrapper and "apply_ou_tune_(true);" in wrapper,
+        "enterLive_resets_aw_to_committed_stationary_covariance": "mekf_->reset_aw_covariance_to_stationary();" in wrapper,
         "constructor_seeds_v_p_S": all(x in mekf for x in (
             "set_initial_linear_uncertainty(sigma_v0, sigma_p0, sigma_S0);",
             "Pext.template block<3,3>(OFF_V, OFF_V)",
@@ -97,9 +100,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
             "P_tilt_axes = I - P_yaw_axis;",
             "P_att = tilt_var * P_tilt_axes + yaw_var * P_yaw_axis;",
         )),
-        "attitude_handoff_drops_stale_cross_covariance": (
-            "attitude-to-bias cross-covariances are dropped" in mekf
-        ),
+        "attitude_handoff_drops_stale_cross_covariance": "attitude-to-bias cross-covariances are dropped" in mekf,
         "held_ba_identity_no_process": all(x in mekf for x in (
             "const T phi_b = acc_bias_updates_enabled_ ? std::exp(-Ts / tau_b) : T(1);",
             "if (acc_bias_updates_enabled_) {",
@@ -114,6 +115,20 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
             "Pba(i,i) = std::max(Pba(i,i), target_var);",
         )),
         "default_S_factor_is_isotropic": s_factor == 1.0,
+        "outer_default_with_mag_true": "bool with_mag = true;" in wrapper,
+        "outer_default_mag_refinement_enabled": "bool  mag_refine_enabled    = true;" in wrapper,
+        "outer_begin_holds_ba_for_mag_refinement": "impl_.setAccBiasHold(cfg_.with_mag && cfg_.mag_refine_enabled);" in wrapper,
+        "refinement_only_runs_after_outer_live": "if (stage_ != Stage::Live) return;" in wrapper,
+        "refinement_resets_accumulator": "mag_auto_tuner_.reset();" in wrapper,
+        "refinement_sets_configured_minimum_window": "refine_cfg.min_window_sec = cfg_.mag_refine_window_sec;" in wrapper,
+        "refinement_releases_hold_only_after_done": (
+            "mag_refine_done_    = true;" in wrapper and "impl_.setAccBiasHold(false);" in wrapper
+        ),
+        "mag_tuner_enforces_minimum_accepted_window": all(x in mag for x in (
+            "accepted_window_sec_ < cfg_.min_window_sec",
+            "return false;",
+            "return tryFinalize_();",
+        )),
     }
     failures = [k for k, v in parity.items() if not v]
 
@@ -123,11 +138,8 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     aw_std_lo = max(sigma_floor, sigma_lo)
     aw_std_hi = max(sigma_floor, sigma_hi)
 
-    W = float(domain["normal_live"]["vector_pe_recurrence_window_s"])
-    # The current PE machine witness explicitly selects one accepted magnetic
-    # occurrence per recurrence cell.  Under the default no-external-hold source,
-    # 250 accepted updates and the one-second guard therefore make H finite.
-    held_to_active_upper = math.nextafter(unlock_count * W + 1.0 + W, math.inf)
+    if not (refine_window >= H18_WORD_S and refine_start >= 0.0):
+        failures.append("default magnetic refinement does not guarantee one H18 word before A release")
 
     return {
         "schema": SCHEMA,
@@ -185,12 +197,19 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
             "default_mag_updates_required": unlock_count,
             "one_second_guard_after_first_mag_update": True,
             "bias_diagonal_floor_variance": sigma_ba0 * sigma_ba0,
-            "conditional_upper_time_under_one_accepted_PE_occurrence_per_window_s": held_to_active_upper,
-            "external_acc_bias_hold_assumed_false_for_default_deployment_bound": True,
+            "configured_full_heading_default_with_mag": True,
+            "configured_outer_mag_refinement_enabled": True,
+            "outer_acc_bias_hold_active_until_refinement_complete": True,
+            "mag_refinement_start_time_from_power_on_s": refine_start,
+            "mag_refinement_minimum_accepted_window_s": refine_window,
+            "minimum_H_mode_live_duration_before_A_release_s": refine_window,
+            "canonical_H18_word_horizon_s": H18_WORD_S,
+            "H18_full_word_guaranteed_before_A_release": refine_window >= H18_WORD_S,
+            "external_acc_bias_hold_assumed_false_for_default_deployment_bound": False,
         },
         "P3_promoted": False,
         "next_obligation": (
-            "seed the exact joint P/Psi/Omega reachability recursion from this structured covariance and prove a forward invariant same-mode covariance/source family"
+            "consume the guaranteed pre-release H18 full-matrix margin and certify the separate H->A dimension extension through the first active b_a prediction"
         ),
     }
 
@@ -218,6 +237,19 @@ def validate(d: dict) -> list[str]:
     for key in ("excluded_from_H18", "identity_homogeneous_dynamics", "no_process_injection_while_held", "cross_covariances_zero", "measurement_rows_frozen"):
         if held.get(key) is not True:
             f.append(f"held b_a source property lost: {key}")
+    rel = d.get("H_to_A_release", {})
+    for key in (
+        "configured_full_heading_default_with_mag",
+        "configured_outer_mag_refinement_enabled",
+        "outer_acc_bias_hold_active_until_refinement_complete",
+        "H18_full_word_guaranteed_before_A_release",
+    ):
+        if rel.get(key) is not True:
+            f.append(f"release source property lost: {key}")
+    if rel.get("external_acc_bias_hold_assumed_false_for_default_deployment_bound") is not False:
+        f.append("default full-heading proof incorrectly disables the shipping bias hold")
+    if float(rel.get("minimum_H_mode_live_duration_before_A_release_s", 0.0)) < H18_WORD_S:
+        f.append("A release can precede the canonical H18 word")
     if d.get("P3_promoted") is not False:
         f.append("seed producer promoted P3")
     return list(dict.fromkeys(f))
@@ -236,8 +268,7 @@ def main() -> int:
     args.output.write_text(json.dumps(d, indent=2, sort_keys=True), encoding="utf-8")
     print(json.dumps({
         "live_seed": d["live_entry_seed_is_source_generated_not_arbitrary_PSD"],
-        "translation_seed": d["translation_seed"],
-        "aw_live_seed": d["aw_live_seed"],
+        "H_to_A_release": d["H_to_A_release"],
         "held_ba": d["held_ba"],
         "failures": failures,
     }, indent=2, sort_keys=True))
