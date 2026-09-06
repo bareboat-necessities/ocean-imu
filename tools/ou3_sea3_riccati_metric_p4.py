@@ -23,8 +23,8 @@ import ou3_p4_cayley_sector_certificate as CAYLEY
 
 REPO = Path(__file__).resolve().parents[1]
 DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
-SCHEMA = 3
-QUALIFICATION = "OU3_SEA3_MOVING_RICCATI_NONLINEAR_P4"
+SCHEMA = 4
+QUALIFICATION = "OU3_SEA3_MOVING_RICCATI_NONLINEAR_P4_V4"
 
 
 def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
@@ -38,10 +38,12 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         raise RuntimeError(f"moving-Riccati P4 prerequisites failed: {prereq_failures}")
 
     p3_pass = bool(p3["P3_CANONICAL_PASS"])
+    h_delta = float(p3["modes"]["H18"]["relative_Riccati_injection_margin_lower"])
+    a_delta = float(p3["modes"]["A21"]["relative_Riccati_injection_margin_lower"])
     fail_reasons = []
     if not p3_pass:
         fail_reasons.append(
-            "canonical moving-Riccati P3 H/A quantitative margin has not met the useful gate"
+            "canonical moving-Riccati P3 H18/A21 quantitative margin has not met the useful gate"
         )
     fail_reasons += [
         "exact vector/accelerometer operations must be rebound to the moving covariance metric without the retired group-isotropic attachment",
@@ -70,8 +72,10 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
             "V(F(x),P_plus)-V(x,P) <= -mu*||x||_P^2 + R3(x,xi)"
         ),
         "P3_CANONICAL_PASS_consumed": p3_pass,
-        "P3_H_delta_consumed": p3["modes"]["H"]["relative_Riccati_injection_margin_lower"],
-        "P3_A_delta_consumed": p3["modes"]["A"]["relative_Riccati_injection_margin_lower"],
+        "P3_H18_delta_consumed": h_delta,
+        "P3_A21_delta_consumed": a_delta,
+        "P3_H_delta_consumed": h_delta,
+        "P3_A_delta_consumed": a_delta,
         "nonlinear_remainder_dominated_on_full_sector": False,
         "P4_CANONICAL_PASS": False,
         "P5_MAY_START": False,
@@ -79,7 +83,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "next_obligation": (
             "bind the exact measurement/reset operations by covariance congruence and certify the finite-angle H18/A21 remainder on 0.8 rad; do not return to endpoint/source-word enumeration"
             if p3_pass
-            else "first improve only the reported SEA3 moving-Riccati P3 limiting margin, then continue with nonlinear covariance-congruence/remainder closure; do not return to endpoint/source-word enumeration"
+            else "first close only the reported complete-SEA3 P3 limiting margin, then continue with nonlinear covariance-congruence/remainder closure; do not return to endpoint/source-word enumeration"
         ),
     }
 
@@ -116,7 +120,10 @@ def validate(d: dict) -> list[str]:
 
     if not isinstance(d.get("P3_CANONICAL_PASS_consumed"), bool):
         f.append("P4 did not consume a boolean canonical P3 verdict")
-    for key in ("P3_H_delta_consumed", "P3_A_delta_consumed"):
+    for key in (
+        "P3_H18_delta_consumed", "P3_A21_delta_consumed",
+        "P3_H_delta_consumed", "P3_A_delta_consumed",
+    ):
         x = d.get(key)
         if not isinstance(x, (int, float)) or float(x) <= 0.0:
             f.append(f"{key} is not positive")
@@ -127,9 +134,9 @@ def validate(d: dict) -> list[str]:
         f.append("open P4 route does not name remaining obligations")
 
     reasons = " ".join(d.get("P4_CANONICAL_FAIL_REASONS", [])).lower()
-    if d.get("P3_CANONICAL_PASS_consumed") is True and "p3 h/a quantitative margin" in reasons:
+    if d.get("P3_CANONICAL_PASS_consumed") is True and "p3 h18/a21 quantitative margin" in reasons:
         f.append("P4 still reports P3 as a blocker after canonical P3 passed")
-    if d.get("P3_CANONICAL_PASS_consumed") is False and "p3 h/a quantitative margin" not in reasons:
+    if d.get("P3_CANONICAL_PASS_consumed") is False and "p3 h18/a21 quantitative margin" not in reasons:
         f.append("P4 failed to report an unclosed canonical P3 blocker")
 
     return list(dict.fromkeys(f))
@@ -149,8 +156,8 @@ def main() -> int:
     print(json.dumps({
         "architecture": d["canonical_P4_architecture"],
         "P3_CANONICAL_PASS_consumed": d["P3_CANONICAL_PASS_consumed"],
-        "P3_H_delta_consumed": d["P3_H_delta_consumed"],
-        "P3_A_delta_consumed": d["P3_A_delta_consumed"],
+        "P3_H18_delta_consumed": d["P3_H18_delta_consumed"],
+        "P3_A21_delta_consumed": d["P3_A21_delta_consumed"],
         "P4_CANONICAL_PASS": d["P4_CANONICAL_PASS"],
         "fail_reasons": d["P4_CANONICAL_FAIL_REASONS"],
         "validation_failures": vf,
