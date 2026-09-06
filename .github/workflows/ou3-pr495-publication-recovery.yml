@@ -1,0 +1,245 @@
+name: ou3-pr495-publication-recovery
+on:
+  push:
+    branches: [codex/ou3-pr495-publication-recovery]
+    paths: [.github/workflows/ou3-pr495-publication-recovery.yml]
+permissions:
+  contents: write
+  actions: write
+jobs:
+  recover:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    outputs:
+      final_sha: ${{ steps.publish.outputs.final_sha }}
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      SOURCE_SHA: 6f9ddd2b7310160c894d4ba7e8986d260631a31a
+      TARGET_BRANCH: codex/ou3-complete-sea3-shipping-feasibility
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: 6f9ddd2b7310160c894d4ba7e8986d260631a31a
+          fetch-depth: 0
+      - name: Verify source and original successful regeneration jobs
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+          test "$(git rev-parse HEAD:src)" = 53a10a7c02b1a0de4cef5ebab6e13e81909c4cdd
+          test "$(git ls-remote origin refs/heads/$TARGET_BRANCH | cut -f1)" = "$SOURCE_SHA"
+          mkdir -p /tmp/recovery
+          gh api repos/${{ github.repository }}/actions/runs/34053412405 > /tmp/recovery/original-run.json
+          gh api 'repos/${{ github.repository }}/actions/runs/34053412405/jobs?per_page=100' > /tmp/recovery/original-jobs.json
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          root = Path('/tmp/recovery')
+          run = json.loads((root/'original-run.json').read_text())
+          assert run['head_sha'] == os.environ['SOURCE_SHA']
+          jobs = json.loads((root/'original-jobs.json').read_text())['jobs']
+          required = [f'regenerate ({study}, {i})' for study in ('validation', 'robustness') for i in range(3)]
+          required += ['combine (validation)', 'combine (robustness)']
+          for suffix in required:
+              matches = [j for j in jobs if j['name'].endswith(suffix)]
+              assert len(matches) == 1 and matches[0]['conclusion'] == 'success', (suffix, matches)
+          PY
+      - name: Download and digest-check exact original artifacts
+        run: |
+          set -euo pipefail
+          download() {
+            id="$1"; expected="$2"; destination="$3"
+            gh api repos/${{ github.repository }}/actions/artifacts/$id > /tmp/recovery/artifact-$id.json
+            python3 - "$id" "$expected" <<'PY'
+          import json, os, sys
+          d = json.load(open('/tmp/recovery/artifact-'+sys.argv[1]+'.json'))
+          assert d['workflow_run']['id'] == 34053412405
+          assert d['workflow_run']['head_sha'] == os.environ['SOURCE_SHA']
+          assert d['digest'] == 'sha256:'+sys.argv[2]
+          assert not d['expired']
+          PY
+            gh api repos/${{ github.repository }}/actions/artifacts/$id/zip > /tmp/artifact-$id.zip
+            echo "$expected  /tmp/artifact-$id.zip" | sha256sum --check
+            mkdir -p "$destination"
+            unzip -q /tmp/artifact-$id.zip -d "$destination"
+          }
+          download 9995240307 a938b8daa4807146ff51d919384f234d0b1e25f51c43d6880c2b50c320b22068 /tmp/simulation
+          download 9995867110 52d21e095ca300a4837a9925a116efd15b6b657028e417b3fb2a8ebc4d828538 /tmp/regenerated/validation
+          download 9995798242 c9517ac3f51d2a4bc379c0d388d3b8ab9c9de27b4ff6caa38f35d67d85df51d6 /tmp/regenerated/robustness
+          cp /tmp/simulation/sim-data-files.zip sim-data-files.zip
+          mkdir -p plots/kalman_ou_ii
+          unzip -oq sim-data-files.zip -d plots/kalman_ou_ii
+      - name: Apply tested ownership regression repair
+        run: |
+          set -euo pipefail
+          test "$(git hash-object tests/validation/test_workflow_contract.py)" = cba589141a3a0005d82b2fa35b1ea68fb31574fc
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('tests/validation/test_workflow_contract.py')
+          s = p.read_text().replace('from pathlib import Path\nimport unittest', 'from pathlib import Path\nimport subprocess\nimport unittest')
+          a = s.index('        """What the publication gate runs, and why it is not the whole suite.')
+          b = s.index('        self.assertIn(\n            "EVIDENCE_TESTS := ', a)
+          s = s[:a] + '''        """Resolve ownership through Make rather than a historical wildcard string.
+
+                  Source-only SEA3 and staged proof tests belong to the canonical proof
+                  jobs. Evidence publication runs the disjoint complement, while the full
+                  local/smoke target retains every test module.
+                  """
+                  directory = REPO_ROOT / "tests" / "validation"
+                  result = subprocess.run(
+                      ["make", "--no-print-directory", "-s", "print-test-partition"],
+                      cwd=directory, check=True, capture_output=True, text=True, timeout=30,
+                  )
+                  partition = dict(line.split("=", 1) for line in result.stdout.splitlines())
+                  self.assertEqual(set(partition), {"EVIDENCE", "PROOF"})
+                  actual = {key: value.split() for key, value in partition.items()}
+                  all_modules = {path.stem for path in directory.glob("test_*.py")}
+                  expected_proof = {
+                      path.stem
+                      for prefix in ("p2", "p3", "p4", "p5", "sea3")
+                      for path in directory.glob(f"test_ou3_{prefix}_*.py")
+                  }
+                  self.assertTrue(expected_proof)
+                  self.assertEqual(set(actual["PROOF"]), expected_proof)
+                  self.assertEqual(set(actual["EVIDENCE"]), all_modules - expected_proof)
+                  for modules in actual.values():
+                      self.assertEqual(len(modules), len(set(modules)))
+                  makefile = VALIDATION_MAKEFILE.read_text(encoding="utf-8")
+          '''.replace('\n          ', '\n') + s[b:]
+          a = s.index('        # Most of the skipped modules are named in the proof workflow.')
+          b = s.index('        workflow = WORKFLOW.read_text(encoding="utf-8")', a)
+          s = s[:a] + '''        # The canonical job consumes Make's complete proof partition, including
+                  # the renamed SEA3 tests, rather than enumerating a partial old list.
+                  proof = PROOF_WORKFLOW.read_text(encoding="utf-8")
+                  self.assertIn("make -C tests/validation proof-test", proof)
+                  self.assertIn("PROOF_TEST_SHARD_INDEX=${{ matrix.shard }}", proof)
+                  self.assertIn("PROOF_TEST_SHARD_COUNT=6", proof)
+
+          '''.replace('\n          ', '\n') + s[b:]
+          p.write_text(s)
+          PY
+          test "$(git hash-object tests/validation/test_workflow_contract.py)" = 67d3e245ba800370c4c3e85962a021943cf7f43b
+          cd tests/validation
+          python3 -m unittest -v test_workflow_contract
+      - name: Record precise publication failure classification
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('docs/ou3-proof-research-state.md')
+          s = p.read_text()
+          before = 'both module coverage and shard assignment. These are CI/contract repairs, not\nnew proof lemmas or evidence that the whole-word ratio is below one.'
+          after = ('both module coverage and shard assignment. A stale literal wildcard assertion\n'
+                   'blocked publication after all six replay shards and both combines succeeded.\n'
+                   'This is a CI-contract defect, not a failed replay or P3 inequality. The\n'
+                   'ownership test now resolves Make\'s actual partition and requires every staged\n'
+                   'and SEA3 proof module exactly once, with the complementary evidence modules.\n'
+                   'The falsifiable check is the unchanged evidence publication suite against\n'
+                   'the digest-verified bundles at their original replay commit. These repairs\n'
+                   'do not demonstrate a complete-word nonlinear margin.')
+          assert before in s
+          p.write_text(s.replace(before, after))
+          PY
+      - name: Install publication dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq python3-numpy python3-matplotlib
+      - name: Audit original replay counts and place publication bundles
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import collections, json, math, os
+          from pathlib import Path
+          def finite(x):
+              if isinstance(x, float):
+                  assert math.isfinite(x)
+              elif isinstance(x, dict):
+                  for v in x.values(): finite(v)
+              elif isinstance(x, list):
+                  for v in x: finite(v)
+          for study, count, per_rep in [('validation', 840, 84), ('robustness', 310, 31)]:
+              root = Path('/tmp/regenerated')/study
+              manifest = json.loads((root/f'ou_{study}_manifest.json').read_text())
+              assert manifest['git_commit'] == os.environ['SOURCE_SHA']
+              d = json.loads((root/f'ou_{study}.json').read_text())
+              finite(d)
+              rows = d['raw_runs']
+              assert len(rows) == count and len({r['run_id'] for r in rows}) == count
+              counts = collections.Counter(r['repetition'] for r in rows)
+              assert len(counts) == 10 and set(counts.values()) == {per_rep}
+              print(study, 'rows', count, 'repetitions', dict(counts))
+          PY
+          rm -rf reports/results/ou_validation reports/results/ou_robustness
+          mkdir -p reports/results/ou_validation reports/results/ou_robustness
+          cp -a /tmp/regenerated/validation/. reports/results/ou_validation/
+          cp -a /tmp/regenerated/robustness/. reports/results/ou_robustness/
+          mirror() { cp "reports/results/$1" "doc/kalman_ou_iii/$2"; }
+          mirror ou_validation/ou_validation_publication.tex w3d-ou-validation-results-generated.tex-part
+          mirror ou_validation/ou_validation_macros.tex w3d-ou-validation-macros-generated.tex-part
+          mirror ou_validation/ou_validation_tuning_points.tex w3d-ou-validation-tuning-points-generated.tex-part
+          mirror ou_validation/ou_validation_vertical.svg ou_validation_vertical.svg
+          mirror ou_validation/ou_validation_transition.svg ou_validation_transition.svg
+          mirror ou_robustness/ou_robustness_publication.tex w3d-ou-robustness-results-generated.tex-part
+          mirror ou_robustness/ou_robustness_macros.tex w3d-ou-robustness-macros-generated.tex-part
+          mirror ou_robustness/ou_robustness_sensitivity.svg ou_robustness_sensitivity.svg
+          mirror ou_robustness/ou_robustness_stress.svg ou_robustness_stress.svg
+      - name: Run unchanged publication gate and fingerprint producers
+        run: |
+          set -euo pipefail
+          make -C tests/validation evidence-test 2>&1 | tee /tmp/recovery/evidence-test.log
+          python3 tools/ou_replay_fingerprint.py --simulation-zip sim-data-files.zip --write reports/ou_evidence_fingerprint.json
+          python3 tools/ou_replay_fingerprint.py --simulation-zip sim-data-files.zip --check reports/ou_evidence_fingerprint.json
+          python3 tools/ou_evidence_contract.py --check
+          git diff --check
+      - name: Publish only tested fixes and genuine evidence without merging
+        id: publish
+        run: |
+          set -euo pipefail
+          git diff --exit-code "$SOURCE_SHA" -- src tools/stability tools/ou_evidence_contract.py tools/ou_evidence_provenance.py tests/validation/Makefile .github/workflows
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add tests/validation/test_workflow_contract.py docs/ou3-proof-research-state.md reports/results/ou_validation reports/results/ou_robustness reports/ou_evidence_fingerprint.json doc/kalman_ou_iii
+          git commit -m 'Publish genuine validation and robustness evidence; verify complete proof test ownership' -m 'Replay generation and combines: run 34053412405 at 6f9ddd2b7310160c894d4ba7e8986d260631a31a. Digest-checked original artifacts; unmodified publication/provenance pipeline. No filter, quality threshold, P3 source, or delta changes.'
+          python3 tools/ou_replay_fingerprint.py --simulation-zip sim-data-files.zip --check reports/ou_evidence_fingerprint.json
+          python3 tools/ou_evidence_contract.py --check
+          test "$(git rev-parse HEAD:src)" = 53a10a7c02b1a0de4cef5ebab6e13e81909c4cdd
+          test "$(git ls-remote origin refs/heads/$TARGET_BRANCH | cut -f1)" = "$SOURCE_SHA"
+          git push origin HEAD:refs/heads/$TARGET_BRANCH
+          echo "final_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          git rev-parse HEAD HEAD^{tree} HEAD:src > /tmp/recovery/published-identity.txt
+          git archive --format=tar.gz HEAD > /tmp/recovery/published-source.tar.gz
+          gh workflow run quality-gates.yml --ref "$TARGET_BRANCH"
+          gh workflow run build.yml --ref "$TARGET_BRANCH"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ou3-pr495-evidence-publication-recovery
+          path: /tmp/recovery
+          retention-days: 7
+  make-all:
+    needs: recover
+    runs-on: ubuntu-24.04
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.recover.outputs.final_sha }}
+          fetch-depth: 0
+      - name: Install host test dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libeigen3-dev python3-numpy python3-matplotlib
+      - uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: 34053412405
+          name: ou-fingerprinted-simulation-data
+          path: /tmp/original-simulation
+      - name: Execute complete unmodified make all on published head
+        run: |
+          set -euo pipefail
+          make all SIM_DATA_URL=file:///tmp/original-simulation/sim-data-files.zip 2>&1 | tee /tmp/make-all.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ou3-pr495-final-make-all
+          path: /tmp/make-all.log
+          retention-days: 7
