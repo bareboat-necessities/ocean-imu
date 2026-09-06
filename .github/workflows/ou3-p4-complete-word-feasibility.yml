@@ -3,7 +3,7 @@ name: ou3-p4-complete-word-feasibility
 on:
   push:
     paths:
-      - "tools/stability/ou3_p4_complete_sea3_word_feasibility.py"
+      - "tests/kalman_ou_iii/ou3_p4_complete_sea3_word_feasibility.py"
       - "tools/stability/ou3_p4_nonlinear_same_history_feasibility.py"
       - "tools/stability/ou3_p4_complete_sea3_measurement_linearizing_aw_coordinate.py"
       - "tools/stability/ou3_p4_complete_sea3_accelerometer_operation_coordinate.py"
@@ -19,7 +19,7 @@ on:
       - ".github/workflows/ou3-p4-complete-word-feasibility.yml"
   pull_request:
     paths:
-      - "tools/stability/ou3_p4_complete_sea3_word_feasibility.py"
+      - "tests/kalman_ou_iii/ou3_p4_complete_sea3_word_feasibility.py"
       - "tools/stability/ou3_p4_nonlinear_same_history_feasibility.py"
       - "tools/stability/ou3_p4_complete_sea3_measurement_linearizing_aw_coordinate.py"
       - "tools/stability/ou3_p4_complete_sea3_accelerometer_operation_coordinate.py"
@@ -80,7 +80,7 @@ jobs:
 
       - name: Compute H18 and A21 3-second worst linear complete-word directions
         run: |
-          python3 tools/stability/ou3_p4_complete_sea3_word_feasibility.py \
+          python3 tests/kalman_ou_iii/ou3_p4_complete_sea3_word_feasibility.py \
             --map /tmp/ou3_p4_complete_word_exact_maps.bin \
             --cov /tmp/ou3_p4_complete_word_covariance.bin \
             --output /tmp/ou3_p4_complete_word_feasibility.json
@@ -125,6 +125,7 @@ jobs:
           assert d['canonical_source'] == 'COMPLETE_SEA3_NORMAL_LIVE_WORD'
           assert d['point_same_history_diagnostic_only'] is True
           assert d['P4_promoted'] is False
+          assert d['same_shipping_covariance_at_injection_required'] is True
           assert d['same_actual_applied_RS_history_required'] is True
           assert d['packet_count_remainder_budget_used'] is False
           assert d['selected_S_subset_used'] is False
@@ -142,6 +143,7 @@ jobs:
                   print('OU3_P4_NONLINEAR_CASE', mode,
                         'scale=',c['scale'],
                         'source_match=',c.get('source_match'),
+                        'same_P0=',c.get('covariance_identical_at_injection'),
                         'rho=',c.get('rho_nonlinear'),
                         'distance=',c.get('distance_to_one'),
                         'theta0_deg=',c.get('initial_theta_rad',0.0)*180.0/3.141592653589793,
