@@ -35,7 +35,7 @@ jobs:
       - name: Compile shipping startup bridge without modifying production code
         run: |
           g++ -O3 -std=c++20 -Wall -Wextra -Wpedantic -Werror \
-            -I./src -isystem /usr/include/eigen3 \
+            -DEIGEN_NON_ARDUINO -I./src -isystem /usr/include/eigen3 \
             tests/kalman_ou_iii/ou3-sea3-same-driver-startup-test.cpp \
             -o /tmp/ou3-sea3-same-driver-startup
       - name: Execute same continuum history through shipping startup and 601 Live samples
