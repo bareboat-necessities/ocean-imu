@@ -29,7 +29,7 @@ import ou3_sea3_hard_window_behavior as BEHAVIOR
 
 REPO = Path(__file__).resolve().parents[2]
 THEOREM = REPO / "doc" / "kalman_ou_iii" / "w3d-sea3-stability-theorem.tex-part"
-COMPLETE_SOURCE = REPO / "tools" / "ou3_sea3_complete_source.py"
+COMPLETE_SOURCE = REPO / "tools" / "stability" / "ou3_sea3_complete_source.py"
 SCHEMA = 4
 QUALIFICATION = "OU3_SEA3_HARD_SHAPING_STATE_CONTRACT_V4"
 
