@@ -1,0 +1,12 @@
+name: ou3-pr495-full-evidence-dispatch
+on:
+  push:
+    branches: [codex/ou3-complete-sea3-shipping-feasibility]
+    paths: [.github/workflows/ou3-pr495-full-evidence-dispatch.yml]
+permissions:
+  contents: write
+jobs:
+  evidence:
+    uses: ./.github/workflows/ou-validation.yml
+    with:
+      validation_mode: full
