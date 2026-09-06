@@ -82,9 +82,18 @@ jobs:
           PY
       - name: Compile complete H18 release A21 shipping-word diagnostic
         run: |
+          # The point witness uses accepted magnetic packets at 100 Hz (every
+          # second 200 Hz IMU sample). This is not used as the theorem's PE
+          # recurrence: ou3_sea3_windowed_vector_pe remains asynchronous and
+          # ODR-independent. It only lets the unchanged shipping 250-packet
+          # H-to-A refinement gate occur inside the 3 s H18 point word.
+          sed 's/constexpr int MAG_STRIDE = 20;/constexpr int MAG_STRIDE = 2;/' \
+            tests/kalman_ou_iii/ou3-sea3-complete-word-feasibility-test.cpp \
+            > /tmp/ou3-sea3-complete-word-feasibility-test.cpp
+          grep -q 'constexpr int MAG_STRIDE = 2;' /tmp/ou3-sea3-complete-word-feasibility-test.cpp
           g++ -O3 -std=c++20 -Wall -Wextra -Wpedantic -Werror -Wno-unused-function \
             -DEIGEN_NON_ARDUINO -I./src -isystem /usr/include/eigen3 \
-            tests/kalman_ou_iii/ou3-sea3-complete-word-feasibility-test.cpp \
+            /tmp/ou3-sea3-complete-word-feasibility-test.cpp \
             -o /tmp/ou3-sea3-complete-word-feasibility
       - name: Execute non-promoting complete SEA3 nonlinear word diagnostic
         run: |
@@ -104,7 +113,7 @@ jobs:
           for key in ('H18_worst_tested','A21_worst_tested'):
               r=d[key]
               assert r['imu_samples']==601
-              assert r['mag_events']>=7
+              assert r['mag_events']>=250
               assert math.isfinite(r['rho']) and r['rho']>=0.0
               assert r['RS_min']>0.0 and r['effective_process_sigma_min']>=0.05
           PY
