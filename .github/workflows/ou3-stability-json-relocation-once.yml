@@ -16,7 +16,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          ref: codex/ou3-p4-p5-complete-sea3-after-492
+          ref: refs/heads/codex/ou3-p4-p5-complete-sea3-after-492
 
       - name: Rewrite retained stability-domain references
         run: |
@@ -75,4 +75,4 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
           git commit -m "refactor: move stability JSON domains into package"
-          git push origin HEAD:codex/ou3-p4-p5-complete-sea3-after-492
+          git push origin HEAD:refs/heads/codex/ou3-p4-p5-complete-sea3-after-492
