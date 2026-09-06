@@ -1,0 +1,116 @@
+name: ou3-p4-complete-word-feasibility
+
+on:
+  push:
+    paths:
+      - "tools/stability/ou3_p4_complete_sea3_word_feasibility.py"
+      - "tools/stability/ou3_p4_complete_sea3_measurement_linearizing_aw_coordinate.py"
+      - "tools/stability/ou3_p4_complete_sea3_accelerometer_operation_coordinate.py"
+      - "tools/stability/ou3_p4_moving_metric_rebind.py"
+      - "tools/stability/ou3_sea3_riccati_metric_p4.py"
+      - "tests/kalman_ou_iii/ou3-certificate-sim.cpp"
+      - "tests/kalman_ou_iii/ou3-information-certificate-sim.cpp"
+      - "tests/kalman_ou_iii/ou3-neighborhood-sim.cpp"
+      - "src/kalman_ou_iii/**"
+      - "src/kalman_ou_common/**"
+      - "src/tuner/**"
+      - ".github/workflows/ou3-p4-complete-word-feasibility.yml"
+  pull_request:
+    paths:
+      - "tools/stability/ou3_p4_complete_sea3_word_feasibility.py"
+      - "tools/stability/ou3_p4_complete_sea3_measurement_linearizing_aw_coordinate.py"
+      - "tools/stability/ou3_p4_complete_sea3_accelerometer_operation_coordinate.py"
+      - "tools/stability/ou3_p4_moving_metric_rebind.py"
+      - "tools/stability/ou3_sea3_riccati_metric_p4.py"
+      - "tests/kalman_ou_iii/ou3-certificate-sim.cpp"
+      - "tests/kalman_ou_iii/ou3-information-certificate-sim.cpp"
+      - "tests/kalman_ou_iii/ou3-neighborhood-sim.cpp"
+      - "src/kalman_ou_iii/**"
+      - "src/kalman_ou_common/**"
+      - "src/tuner/**"
+      - ".github/workflows/ou3-p4-complete-word-feasibility.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: ou3-p4-complete-word-feasibility-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  complete-word-feasibility:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Install host diagnostic dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libeigen3-dev python3-numpy
+
+      - name: Fetch genuine coupled wave simulation data
+        run: make ensure-sim-data
+
+      - name: Build retained exact-map and nonlinear neighborhood observers
+        working-directory: tests/kalman_ou_iii
+        run: |
+          make -j2 ou3-information-certificate-sim ou3-neighborhood-sim
+
+      - name: Run one genuine complete same-history SEA3 execution
+        working-directory: tests/kalman_ou_iii
+        env:
+          OU3_CERT_TRACE: /tmp/ou3_p4_complete_word_trace.csv
+          OU3_CERT_MAP_TRACE: /tmp/ou3_p4_complete_word_exact_maps.bin
+          OU3_CERT_COV_TRACE: /tmp/ou3_p4_complete_word_covariance.bin
+          OU3_CERT_MAP_STRIDE: "600"
+          OU3_CERT_TRACE_STRIDE: "20"
+          W3D_WRITE_TIMESERIES: "0"
+          W3D_VALIDATION_WINDOW_SEC: "0"
+        run: |
+          ./ou3-information-certificate-sim \
+            --input wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv
+
+      - name: Compute H18 and A21 3-second worst linear complete-word directions
+        run: |
+          python3 tools/stability/ou3_p4_complete_sea3_word_feasibility.py \
+            --map /tmp/ou3_p4_complete_word_exact_maps.bin \
+            --cov /tmp/ou3_p4_complete_word_covariance.bin \
+            --output /tmp/ou3_p4_complete_word_feasibility.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/ou3_p4_complete_word_feasibility.json'))
+          assert d['canonical_source'] == 'COMPLETE_SEA3_NORMAL_LIVE_WORD'
+          assert d['point_same_history_diagnostic_only'] is True
+          assert d['P4_promoted'] is False
+          assert d['filter_changed'] is False
+          assert d['declared_domain_changed'] is False
+          assert d['actual_applied_RS_used_inside_each_S_gain'] is True
+          assert d['RS_axis_std_factors_declared_by_complete_SEA3'] == [0.72,0.72,1.0]
+          assert d['all_valid_accelerometer_updates_required'] is True
+          assert d['all_due_S_updates_required'] is True
+          assert d['packet_count_remainder_budget_used'] is False
+          assert d['selected_S_subset_used'] is False
+          for mode in ('H18','A21'):
+              assert d['modes'][mode]['legal_blocks'] > 0, (mode,d['records_rejected'])
+              w=d['modes'][mode]['worst']
+              print('OU3_P4_FEASIBILITY', mode,
+                    'rho_linear=',w['rho_linear'],
+                    'distance_to_one=',w['distance_to_one'],
+                    't0=',w['t0'],'t1=',w['t1'],
+                    'acc=',w['acc_count'],'mag=',w['mag_count'],'S=',w['S_update_count'],
+                    'RS0=',w['RS_scalar_start'],'RS1=',w['RS_scalar_end'],
+                    'direction_group_norms=',w['maximizing_direction']['group_euclidean_norms'])
+          PY
+
+      - name: Upload non-promoting feasibility evidence
+        uses: actions/upload-artifact@v6
+        with:
+          name: ou3-p4-complete-word-feasibility
+          path: |
+            /tmp/ou3_p4_complete_word_feasibility.json
+            /tmp/ou3_p4_complete_word_trace.csv
+          retention-days: 7
