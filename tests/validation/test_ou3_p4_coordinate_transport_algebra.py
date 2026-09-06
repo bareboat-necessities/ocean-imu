@@ -330,7 +330,7 @@ class CoordinateTransportAlgebraTests(unittest.TestCase):
                     self.assertLess(xi[block+j][0].hi, 0.0)
 
     def test_reset_and_rectangular_hybrid_use_their_own_maps(self):
-        for n, a in self.cases.items():
+        for a in self.cases.values():
             xi = AWLIN.evaluate_full_shift_transport(iv(a['G']), iv(a['rho']), iv(a['epsilon']), iv(a['epsp']))
             for got, want in zip(xi, a['xi']):
                 self.assertLessEqual(F(got[0].lo), want[0])
