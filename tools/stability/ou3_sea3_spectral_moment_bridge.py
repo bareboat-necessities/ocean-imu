@@ -358,7 +358,7 @@ def main() -> int:
     payload["validation_failures"] = failures
     rendered = _render(payload)
 
-    committed = args.repo_root / "tools" / "ou3_sea3_spectral_moment_bridge.json"
+    committed = args.repo_root / "tools" / "stability" / "ou3_sea3_spectral_moment_bridge.json"
     if args.check:
         if not committed.exists():
             raise SystemExit(f"missing {committed}")
@@ -366,7 +366,7 @@ def main() -> int:
             raise SystemExit(
                 "SEA3 spectral-moment bridge is stale; rerun "
                 "python3 tools/stability/ou3_sea3_spectral_moment_bridge.py "
-                "--output tools/ou3_sea3_spectral_moment_bridge.json"
+                "--output tools/stability/ou3_sea3_spectral_moment_bridge.json"
             )
         if failures:
             raise SystemExit(f"SEA3 spectral bridge validation failed: {failures}")

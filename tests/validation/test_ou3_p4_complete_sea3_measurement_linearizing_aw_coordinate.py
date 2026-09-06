@@ -15,22 +15,39 @@ import ou3_p4_complete_sea3_measurement_linearizing_aw_coordinate as CERT
 
 
 class MeasurementLinearizingAwCoordinateTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.d = CERT.build()
+
     def test_complete_sea3_exact_coordinate_contract(self):
-        d = CERT.build()
+        d = self.d
         self.assertEqual([], CERT.validate(d))
         self.assertEqual("COMPLETE_SEA3_NORMAL_LIVE_WORD", d["canonical_source"])
         self.assertTrue(d["P3_frozen_not_modified"])
         self.assertTrue(d["all_due_S_updates_and_actual_RS_remain_in_complete_word"])
         self.assertTrue(d["exact_cayley_remainder_identity_closed"])
-        self.assertTrue(d["exact_shipping_tangent_H_used"])
+        self.assertFalse(d["exact_shipping_tangent_H_used"])
+        self.assertFalse(d["shipping_Joseph_binding_closed"])
+        self.assertTrue(d["auxiliary_H0_uses_shipping_literal_coefficients"])
         self.assertTrue(d["phi_storage_has_no_standalone_eta_penalty"])
         self.assertFalse(d["standalone_eta_Rinv_packet_budget_used"])
         self.assertFalse(d["packet_count_multiplier_used"])
         self.assertFalse(d["complete_source_correlated_transport_defect_closed_here"])
         self.assertFalse(d["P4_promoted_here"])
 
+    def test_finite_angle_residual_matrix_is_not_congruent_shipping_matrix(self):
+        # Exact rational Cayley c_z=1/10 rotation: Q_aw^T != I.  With R_hat=I,
+        # H0_aw=I while H_u_aw=Q_aw^T. No numerical tolerance or replay.
+        from fractions import Fraction as F
+        q_transpose = ((F(399, 401), F(40, 401), 0),
+                       (-F(40, 401), F(399, 401), 0), (0, 0, 1))
+        identity = ((1, 0, 0), (0, 1, 0), (0, 0, 1))
+        self.assertNotEqual(identity, q_transpose)
+        d = self.d
+        self.assertFalse(d["shipping_Joseph_binding_closed"])
+
     def test_transport_defect_is_combined_not_independent_eta(self):
-        d = CERT.build()
+        d = self.d
         tr = d["combined_correction_reset_transport"]
         self.assertEqual("rho+E_aw(e_plus-e_minus)", tr["xi"])
         self.assertTrue(tr["G_identity_on_aw_coordinate"])
@@ -40,7 +57,7 @@ class MeasurementLinearizingAwCoordinateTests(unittest.TestCase):
         self.assertFalse(d["packetwise_shift_reset_to_zero_allowed"])
 
     def test_candidate_shift_bounds_are_finite_and_monotone(self):
-        d = CERT.build()
+        d = self.d
         rows = d["candidate_cells"]
         self.assertEqual([30.0, 25.0, 20.0, 15.0],
                          [r["attitude_angle_deg"] for r in rows])

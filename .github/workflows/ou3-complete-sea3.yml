@@ -4,11 +4,11 @@ on:
   push:
     paths:
       - "tools/stability/ou3_sea3_*.py"
-      - "tools/ou3_sea3_*.json"
+      - "tools/stability/ou3_sea3_*.json"
       - "tools/stability/ou3_binary32_interval.py"
       - "tools/stability/ou3_fast_inv_sqrt_interval.py"
       - "tools/stability/ou3_validated_log.py"
-      - "tools/ou3_proof_operating_domain.json"
+      - "tools/stability/ou3_proof_operating_domain.json"
       - "tests/validation/test_ou3_sea3_*.py"
       - "tests/validation/test_ou3_validated_log.py"
       - "src/ahrs/Mahony_AHRS.h"
@@ -19,11 +19,11 @@ on:
   pull_request:
     paths:
       - "tools/stability/ou3_sea3_*.py"
-      - "tools/ou3_sea3_*.json"
+      - "tools/stability/ou3_sea3_*.json"
       - "tools/stability/ou3_binary32_interval.py"
       - "tools/stability/ou3_fast_inv_sqrt_interval.py"
       - "tools/stability/ou3_validated_log.py"
-      - "tools/ou3_proof_operating_domain.json"
+      - "tools/stability/ou3_proof_operating_domain.json"
       - "tests/validation/test_ou3_sea3_*.py"
       - "tests/validation/test_ou3_validated_log.py"
       - "src/ahrs/Mahony_AHRS.h"

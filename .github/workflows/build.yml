@@ -66,8 +66,8 @@ jobs:
               .github/workflows/ou3-complete-sea3.yml|\
               .github/workflows/ou3-sea3-*.yml|\
               tools/stability/ou3_*.py|\
-              tools/ou3_proof_operating_domain.json|\
-              tools/ou3_sea3_*.json|\
+              tools/stability/ou3_proof_operating_domain.json|\
+              tools/stability/ou3_sea3_*.json|\
               tests/validation/test_ou3_p3_*.py|\
               tests/validation/test_ou3_p4_*.py|\
               tests/validation/test_ou3_sea3_*.py|\

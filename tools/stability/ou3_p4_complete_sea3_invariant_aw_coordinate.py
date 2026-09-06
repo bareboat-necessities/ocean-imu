@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 """Invariant a_w normal form for complete-SEA3 OU-III P4.
 
-This lemma is a linear, source-indexed congruence on top of the exact
-measurement-linearizing coordinate.  It does not change the filter and it does
+The triangular congruence and residual normal form below are separate
+pointwise identities. Their composition with the shipping Joseph map remains
+open: H0 in the residual rewrite is not H_u=H T_E^T from the preceding
+operation-coordinate congruence. In particular this file does not certify
+that a gravity-only attitude column describes the unchanged shipping gain.  It does not change the filter and it does
 not replace the complete SEA3 word.
 
 For one accepted accelerometer operation let
@@ -133,6 +136,9 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "all_valid_accelerometer_updates_remain_in_complete_word": True,
         "all_due_S_updates_and_actual_RS_remain_in_complete_word": True,
         "source_nominal_aw_norm_upper_mps2": ahat,
+        "nominal_aw_bound_is_conditional_on_nominal_force_bound": True,
+        "nominal_force_bound_inherited_from_physical_SEA3_proved": False,
+        "shipping_Joseph_binding_closed": False,
         "linear_triangular_coordinate": {
             "w_lin": "u_aw+B*c",
             "B_c": "R_hat^T*[c]x*R_hat*a_hat",
@@ -179,7 +185,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "complete_source_correlated_transport_defect_closed_here": False,
         "P4_promoted_here": False,
         "next_obligation": (
-            "bound the change of e_eta under the same source-correlated Joseph correction/reset and prediction; "
+            "first bind H0 to the actual congruent H_u and prove a nominal-force bound; then bound the full coordinate transport; "
             "use the same operation's information decrease and transformed complete-word R_S metric, then scalarize only at the complete-word endpoint"
         ),
     }
@@ -204,6 +210,8 @@ def validate(d: dict) -> list[str]:
         if d.get(key) is not True:
             f.append(f"{key} is not true")
     for key in (
+        "shipping_Joseph_binding_closed",
+        "nominal_force_bound_inherited_from_physical_SEA3_proved",
         "trajectory_replay_used",
         "filter_changed",
         "declared_domain_changed",

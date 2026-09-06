@@ -89,7 +89,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
             "z_u=T_E z, P_u=T_E P T_E^T; z_u^T P_u^-1 z_u = z^T P^-1 z exactly"
         ),
         "nonlinear_word_inequality": (
-            "||x_W||_{P_W^-1} <= sqrt(1-delta)||x_0||_{P_0^-1} + sum_j ||r_j||_{R_j^-1}"
+            "V_after(F_W(x)) <= rho_W V_before(x), rho_W < 1, for every admitted complete SEA3 word"
         ),
         "P3_CONDITIONAL_SEA3_PASS_consumed": p3_pass,
         "P3_DEPLOYMENT_PASS_consumed_as_if_closed": False,
@@ -98,13 +98,16 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "P3_A21_delta_consumed": a_delta,
         "P3_H_delta_consumed": h_delta,
         "P3_A_delta_consumed": a_delta,
+        "nonlinear_coordinate_shipping_binding_closed": False,
+        "structural_rebind_does_not_close_nonlinear_coordinate_transport": True,
+        "packet_count_remainder_budget_used": False,
         "nonlinear_remainder_dominated_on_full_sector": remainder_closed,
         "P4_FINITE_WINDOW_CLOSED": p4_pass,
         "P4_CANONICAL_PASS": p4_pass,
         "P5_MAY_START": p4_pass,
         "P4_CANONICAL_FAIL_REASONS": fail_reasons,
         "next_obligation": (
-            "certify a finite nonlinear measurement remainder budget in the exact moving metric, using the P3 word margin and the 0.8-rad Cayley geometry; do not return to endpoint/source-word enumeration"
+            "close the H0 versus congruent shipping H_u binding and full nonlinear coordinate/reset transport inside the signed complete H18/A21 SEA3 word; retain actual R_S and the 0.8-rad geometry; follow docs/ou3-proof-research-state.md"
             if p3_pass and rebind_closed
             else "close only the reported prerequisite; do not return to endpoint/source-word enumeration"
         ),
@@ -130,6 +133,8 @@ def validate(d: dict) -> list[str]:
             f.append(f"{key} is not true")
 
     for key in (
+        "nonlinear_coordinate_shipping_binding_closed",
+        "packet_count_remainder_budget_used",
         "trajectory_replay_used",
         "filter_changed",
         "declared_domain_shrunk",

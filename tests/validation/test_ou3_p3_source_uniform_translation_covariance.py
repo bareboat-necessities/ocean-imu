@@ -9,9 +9,7 @@ if str(TOOLS) not in sys.path:
     sys.path.insert(0, str(TOOLS))
     sys.path.insert(0, str(TOOLS / "stability"))
 
-from ou3_interval import Interval
 import ou3_p3_source_uniform_translation_covariance as U
-import ou3_source_reachable_matrix_p3 as BASE
 
 
 class SourceUniformTranslationCovarianceTests(unittest.TestCase):

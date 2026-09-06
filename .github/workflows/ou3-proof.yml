@@ -4,8 +4,7 @@ on:
   push:
     paths:
       - "tools/stability/ou3_*.py"
-      - "tools/ou3_*.py"
-      - "tools/ou3_*.json"
+      - "tools/stability/ou3_*.json"
       - "tests/validation/test_ou3_*.py"
       - "src/kalman_ou_iii/**"
       - "src/kalman_ou_common/**"
@@ -15,8 +14,7 @@ on:
   pull_request:
     paths:
       - "tools/stability/ou3_*.py"
-      - "tools/ou3_*.py"
-      - "tools/ou3_*.json"
+      - "tools/stability/ou3_*.json"
       - "tests/validation/test_ou3_*.py"
       - "src/kalman_ou_iii/**"
       - "src/kalman_ou_common/**"
@@ -331,7 +329,22 @@ jobs:
 
       - name: Test moving-Riccati P4 contract
         working-directory: tests/validation
-        run: python3 -m unittest -v test_ou3_sea3_riccati_metric_p4
+        run: |
+          python3 -m unittest -v test_ou3_sea3_riccati_metric_p4
+          python3 -m unittest discover -v -p 'test_ou3_p4_*.py'
+
+      - name: Distinguish validated architecture from unclosed P4 and P5
+        run: |
+          python3 - <<'PY'
+          import json
+          d = json.load(open('/tmp/ou3_sea3_riccati_metric_p4.json'))
+          assert d['validation_pass'], d['validation_failures']
+          assert d['P3_CONDITIONAL_SEA3_PASS_consumed'] is True
+          assert d['nonlinear_coordinate_shipping_binding_closed'] is False
+          assert d['P4_CANONICAL_PASS'] is False
+          assert d['P5_MAY_START'] is False
+          print('Architecture contracts pass; nonlinear P4/P5 remain OPEN.')
+          PY
 
       - name: Upload canonical P4 architecture artifact
         uses: actions/upload-artifact@v6

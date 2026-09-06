@@ -39,6 +39,7 @@ DIRECTIONAL_RESPONSE_BASENAME = "ou3_sea3_directional_" + "response_domain.json"
 STABILITY_JSON_BASENAMES = {
     OPERATING_DOMAIN_BASENAME,
     DIRECTIONAL_RESPONSE_BASENAME,
+    "ou3_sea3_spectral_" + "moment_bridge.json",
 }
 TEXT_SUFFIXES = {".py", ".yml", ".yaml", ".md", ".tex", ".sh", ".txt"}
 
@@ -150,6 +151,31 @@ class StabilityPackageIntegrityTests(unittest.TestCase):
             [], root_duplicates,
             "stability JSON domains still duplicated at tools/: " + ", ".join(root_duplicates),
         )
+
+    def test_all_stability_json_files_have_moved(self):
+        self.assertEqual([], sorted(p.name for p in TOOLS.glob("ou3_*.json")))
+
+    def test_no_temporary_relocation_workflows_remain(self):
+        workflows = ROOT / ".github" / "workflows"
+        self.assertEqual([], sorted(p.name for p in workflows.glob("ou3-stability-*.yml")))
+
+    def test_inline_workflow_imports_use_stability_package(self):
+        # Inline Python is not covered by importing retained .py modules.
+        stale = []
+        pattern = re.compile(r"^\s*(?:import|from)\s+ou3_", re.MULTILINE)
+        for path in sorted((ROOT / ".github" / "workflows").glob("*.yml")):
+            text = path.read_text(encoding="utf-8")
+            if pattern.search(text) and "tools/stability" not in text:
+                stale.append(path.name)
+            if pattern.search(text) and re.search(
+                r"sys\.path\.insert\(0,\s*['\"]tools['\"]\)", text
+            ):
+                stale.append(path.name + ": root-only inline import path")
+        self.assertEqual([], stale)
+
+    def test_canonical_workflow_watches_stability_json(self):
+        text = (ROOT / ".github" / "workflows" / "ou3-proof.yml").read_text()
+        self.assertEqual(2, text.count('"tools/stability/ou3_*.json"'))
 
     def test_unrelated_ou3_studies_stay_outside_stability_package(self):
         self.assertEqual(

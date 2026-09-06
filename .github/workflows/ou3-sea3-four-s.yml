@@ -44,7 +44,7 @@ jobs:
           python3 tools/stability/ou3_sea3_a21_detectability_completion.py --output /tmp/ou3_sea3_a21_detectability_completion.json
           python3 - <<'PY'
           import json, sys
-          sys.path.insert(0, 'tools')
+          sys.path.insert(0, 'tools/stability')
           import ou3_sea3_windowed_vector_pe as PE
           import ou3_full_process_ucc as PROC
           import ou3_sea3_live_covariance_seed as LIVE

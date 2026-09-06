@@ -4,7 +4,7 @@
 This lemma removes the misleading standalone accelerometer ``eta`` charge
 without changing the filter or replacing the complete SEA3 source.
 
-Work in the exact per-operation coordinate already certified by
+Work in the pointwise residual-rewriting coordinate defined by
 ``ou3_p4_complete_sea3_accelerometer_operation_coordinate``.  There
 
     r_a = (E-I) f_hat + R_hat u_aw + db_a,
@@ -20,8 +20,11 @@ Then, pointwise for every admitted complete-SEA3 accelerometer operation,
 
     r_a = [c]x f_hat + R_hat Phi_aw + db_a = H_a Phi(z).
 
-Thus the exact residual is the *shipping tangent measurement map* evaluated at
-a nonlinear triangular state coordinate.  No eta term is discarded; it has
+Thus the exact residual equals H0 Phi(z), where H0 has the shipping
+matrix's literal coefficients. This is NOT the congruently transformed
+shipping H_u=H T_E^T: its a_w column is R_hat Q_aw^T. A trial storage with
+the untransformed P permits the formal Joseph identity below, but its metric
+attachment and its physical state transport are not yet proved.  No eta term is discarded; it has
 been retained source-correlated inside the a_w coordinate that is regularized
 by the same complete-word S=0/SpectralMSE R_S chain.
 
@@ -41,6 +44,8 @@ source.  If one measurement/reset maps the original physical error as
 
     t       = z - K y,
     z_plus  = G t + rho,
+
+where rho must include ALL physical/operation-coordinate transport defects,
 
 and the source-indexed shifts before/after the event are e_minus/e_plus, then
 G is identity on the a_w coordinate and
@@ -165,7 +170,10 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "exact_accelerometer_residual_identity": (
             "r_a=[c]x f_hat+R_hat Phi_aw+delta_b_a=H_a Phi(z)"
         ),
-        "exact_shipping_tangent_H_used": True,
+        "exact_shipping_tangent_H_used": False,
+        "auxiliary_H0_uses_shipping_literal_coefficients": True,
+        "shipping_Joseph_binding_closed": False,
+        "rho_must_include_operation_coordinate_transport": True,
         "accelerometer_eta_declared_zero_in_original_coordinate": False,
         "accelerometer_eta_dropped_from_physics": False,
         "standalone_eta_Rinv_packet_budget_used": False,
@@ -184,19 +192,21 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
             "phi_plus": "G(I-KH)phi+xi",
             "xi": "rho+E_aw(e_plus-e_minus)",
             "G_identity_on_aw_coordinate": True,
-            "reset_covariance_congruence_exact": bool(reset["reset_covariance_congruence_exact"]),
-            "G_inverse_operator_norm_exact": float(reset["G_inverse_operator_norm_exact"]),
+            "reset_covariance_congruence_exact": bool(reset["exact_reset_congruence_identity"]),
+            "G_inverse_operator_norm_exact": float(reset["reset_inverse_operator_norm_upper"]),
         },
         "source_indexed_shift_must_persist_across_complete_word": True,
         "packetwise_shift_reset_to_zero_allowed": False,
         "complete_SEA3_source_transition_must_drive_e_plus_minus": True,
         "candidate_cells": rows,
+        "candidate_shift_bounds_require_nominal_force_bound": True,
+        "nominal_force_bound_certified_here": False,
         "outer_geometry_retained": bool(geom["outer_geometry_cell"]["sector_is_homogeneous_quadratic"]),
         "measurement_remainder_obligation_reduced_to_coordinate_transport": True,
         "complete_source_correlated_transport_defect_closed_here": False,
         "P4_promoted_here": False,
         "next_obligation": (
-            "outward-enclose xi=rho+E_aw(e_plus-e_minus) over the same complete SEA3 "
+            "first close the H0 versus congruent H_u binding; then outward-enclose full xi over the same complete SEA3 "
             "source-indexed word, retaining the actual R_S directional metric and the "
             "same P,H,R,K,S cell; do not return to standalone eta or packet-count budgets"
         ),
@@ -217,7 +227,6 @@ def validate(d: dict) -> list[str]:
         "operation_coordinate_consumed",
         "operation_coordinate_transform_back_exact",
         "exact_cayley_remainder_identity_closed",
-        "exact_shipping_tangent_H_used",
         "actual_RS_regularizes_same_aw_coordinate_family",
         "joseph_P_H_R_K_S_unchanged",
         "phi_storage_has_no_standalone_eta_penalty",
@@ -228,6 +237,9 @@ def validate(d: dict) -> list[str]:
         if d.get(key) is not True:
             f.append(f"{key} is not true")
     for key in (
+        "nominal_force_bound_certified_here",
+        "exact_shipping_tangent_H_used",
+        "shipping_Joseph_binding_closed",
         "trajectory_replay_used",
         "filter_changed",
         "declared_domain_changed",

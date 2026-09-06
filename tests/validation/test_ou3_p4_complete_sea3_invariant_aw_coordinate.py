@@ -60,7 +60,10 @@ class CompleteSea3InvariantAwCoordinateTests(unittest.TestCase):
         self.assertFalse(self.d["complete_source_correlated_transport_defect_closed_here"])
         self.assertFalse(self.d["P4_promoted_here"])
 
-    def test_nominal_aw_bound_is_declared_domain_derived(self):
+    def test_nominal_aw_bound_is_only_conditional_not_certified(self):
+        self.assertTrue(self.d["nominal_aw_bound_is_conditional_on_nominal_force_bound"])
+        self.assertFalse(self.d["nominal_force_bound_inherited_from_physical_SEA3_proved"])
+        self.assertFalse(self.d["shipping_Joseph_binding_closed"])
         x = float(self.d["source_nominal_aw_norm_upper_mps2"])
         self.assertTrue(math.isfinite(x))
         self.assertGreater(x, 0.0)

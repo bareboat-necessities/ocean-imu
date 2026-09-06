@@ -5,20 +5,9 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
 
-# Current source-generated certificate/status producers only.  Keep this list in
-# sync with the canonical ou3-proof route; a producer may be fail-closed/status
-# only and still belongs here if its JSON is carried into the theorem chain.
-PRODUCERS = [
-    ROOT / "tools" / "stability" / "ou3_sea3_complete_source.py",
-    ROOT / "tools" / "stability" / "ou3_sea3_p3_full_preconditions.py",
-    ROOT / "tools" / "stability" / "ou3_sea3_full_normal_live_word.py",
-    ROOT / "tools" / "stability" / "ou3_sea3_p3_conditional_composition.py",
-    ROOT / "tools" / "stability" / "ou3_sea3_riccati_metric_p3.py",
-    ROOT / "tools" / "stability" / "ou3_p4_complete_sea3_accelerometer_operation_coordinate.py",
-    ROOT / "tools" / "stability" / "ou3_p4_complete_sea3_finite_angle_information.py",
-    ROOT / "tools" / "stability" / "ou3_p4_complete_sea3_vector_remainder_geometry.py",
-    ROOT / "tools" / "stability" / "ou3_sea3_riccati_metric_p4.py",
-]
+# Discover the retained package so deleting or adding a producer cannot leave a
+# stale manifest. This remains a static contract; it does not run proof searches.
+PRODUCERS = sorted((ROOT / "tools" / "stability").glob("ou3_*.py"))
 
 FORBIDDEN_RESULT_KEYS = {
     "generated_at", "generated_at_utc", "timestamp", "timestamp_utc",
@@ -43,6 +32,7 @@ def dotted_name(node: ast.AST) -> str:
 
 class Ou3ResultDeterminismTests(unittest.TestCase):
     def test_current_certificate_json_producers_have_no_ephemeral_provenance(self):
+        self.assertTrue(PRODUCERS, "stability package has no producers")
         for path in PRODUCERS:
             with self.subTest(path=path.name):
                 self.assertTrue(path.is_file(), msg=f"current producer missing: {path}")

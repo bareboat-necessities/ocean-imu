@@ -43,8 +43,12 @@ Since T_E is orthogonal,
 
 exactly.  Also H_u P_u H_u^T = H P H^T, so S is unchanged; the Joseph
 information identity and exact correction are unchanged under the congruence.
-The proof transforms back after the operation at zero metric cost.
-
+A distinction is essential: the residual rewrite above uses the auxiliary
+matrix H0 with a_w column R_hat. The congruently transformed shipping matrix
+H_u instead has a_w column R_hat Q_aw^T. These are not equal at finite angle.
+Consequently the aw-free eta is not the remainder relative to H_u, and these
+two valid algebraic identities do not close the nonlinear shipping Joseph map.
+No zero-cost composition of the residual rewrite and congruence is claimed.
 This is an operation identity over every admitted complete-SEA3 realization,
 not a source generator and not a P4 promotion.  The filename intentionally does
 not revive the retired endpoint-attachment era ``accelerometer_corotated_aw``
@@ -166,9 +170,12 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "retired_endpoint_attachment_module_reintroduced": False,
         "complete_H18_A21_word_established_here": False,
         "P4_USABLE_CERTIFICATE_PROMOTED": False,
+        "shipping_Joseph_binding_closed": False,
+        "auxiliary_H0_equals_congruent_shipping_Hu": False,
+        "congruent_shipping_aw_column": "R_hat Q_aw^T",
         "next_obligation": (
-            "use only the pure finite-angle force-rotation eta in the complete-SEA3 signed Joseph word; "
-            "keep u_aw and b_a in the linear residual/innovation and keep every actual-R_S S update"
+            "bind the auxiliary aw-free residual rewrite to the actual shipping H_u=H T_E^T and K_u=T_E K; "
+            "account for the missing finite-angle column/coordinate transport in the complete SEA3 word"
         ),
         "failures": failures,
     }
@@ -198,6 +205,7 @@ def validate(d: dict) -> list[str]:
         "trajectory_replay_used", "filter_changed", "declared_domain_changed",
         "source_family_replaced", "retired_endpoint_attachment_module_reintroduced",
         "complete_H18_A21_word_established_here", "P4_USABLE_CERTIFICATE_PROMOTED",
+        "shipping_Joseph_binding_closed", "auxiliary_H0_equals_congruent_shipping_Hu",
     ):
         if d.get(key) is not False:
             f.append(f"{key} is not false")

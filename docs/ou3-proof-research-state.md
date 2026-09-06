@@ -1,184 +1,158 @@
 # OU-III proof research state
 
-This file is the current proof ledger. Historical routes belong in Git history.
+## Current status and scope
 
-## Active theorem
+The canonical source is `COMPLETE_SEA3_NORMAL_LIVE_WORD`. The target is
+conditional nonlinear finite-window dissipation (P4), then finite capture (P5),
+for the declared complete SEA3 family. Production filter code and its quality
+thresholds are not to be changed for proof convenience.
 
-The target is **uniform regional practical stability with finite capture for
-perturbations of physically admissible multimodal directional JONSWAP SEA3 sea
-states**. P3 is the recurrent finite-window linear certificate, P4 is nonlinear
-finite-window dissipation, and P5 is finite capture.
+| Stage | Current meaning |
+| --- | --- |
+| Physical SEA0 -> SEA3 inclusion | OPEN: hard phase-continuous shaping/excitation and the joint translational/rotational response from that history remain separate deployment obligations. Compactness itself is not open. |
+| P3 conditional SEA3 | CLOSED by the retained complete-word H18/A21 chain at `delta=1e-18`; keep this mathematical chain frozen. |
+| P3 deployment | OPEN. `P3_DEPLOYMENT_PASS=false`; conditional P3 does not establish physical left inclusion. |
+| P4 | OPEN. Exact covariance identities and pointwise coordinate identities exist; their full nonlinear shipping attachment/transport and strict complete-word dissipation are not closed. |
+| P5 | BLOCKED. No finite-capture claim is authorized before strict P4 closure. |
 
-SEA3 is the compact theorem-domain sea family. Compactness is not an open
-obligation and may not be replaced by an independent rectangular sea/source
-box. The canonical exogenous state is the complete phase-continuous
+`P3_CANONICAL_PASS` is a deprecated alias of `P3_CONDITIONAL_SEA3_PASS`, not a
+claim of deployment closure. The canonical P4 result must keep
+`P4_CANONICAL_PASS=false`, `P4_FINITE_WINDOW_CLOSED=false`, and
+`P5_MAY_START=false` until the actual word inequality closes. A green
+architecture/contract CI job does not mean P4 has passed.
 
-`zeta_k = (x^s_k, lambda_k, z^t_k, q_k)`.
+## Source and frozen P3 contract
 
-The same `x^s/lambda` history must generate physical translation and rotation,
-the private measurement-only Mahony/WavePeriodEstimator front end, tuner
-candidate state, staged/committed `tau/sigma/R_S`, pseudo cadence, every
-shipping `F,Q`, every due `S=0` update with the actual applied per-axis `R_S`,
-every valid accelerometer update, asynchronous vector-PE events, covariance
-floor events, and the H18/A21 recursions.
+The same phase-continuous `zeta=(x^s,lambda,z^t,q)` history must generate the
+coupled three-partition directional JONSWAP/PM response, translation and
+rotation, private front end, WavePeriodEstimator, tuner candidates and staged
+commits, committed `tau/sigma/R_S`, pseudo cadence, and shipping `F,Q`.
 
-## Canonical SEA0 status
+Retain every valid accelerometer update, every due S=0 update with its actual
+applied per-axis SpectralMSE R_S, asynchronous magnetic/vector PE, full process
+Q, covariance-floor events, and immediate Joseph/injection/reset ordering.
+The deployed R_S standard-deviation factors are `[0.72,0.72,1]`. Target R_S is
+not a substitute for the independently smoothed *applied* R_S. Four selected
+S records can witness information inside the complete word; they cannot
+replace that word or its scheduler.
 
-The executable finite-window provider currently has three required ingredients:
+The H18 prior-free 3-second completion is followed by margin-preserving shipping
+events. The H-to-A dimension change is separate; the configured magnetic
+refinement hold gives H18 time to close before the A21 continuation. Consume
+the complete full-matrix comparison `Omega_W-delta P_W >= 0`, `delta>=1e-18`.
+Do not substitute the retired scalar-tube ratio or rework P3 to make P4 pass.
 
-1. **machine-readable coupled `R_lambda`: CLOSED.** The implementation uses a
-   conservative coupled outer transition relation containing the theorem's
-   tighter unknown rate-bounded relation. It retains partition-energy and
-   steepness coupling and invents no numerical transition rates.
-2. **hard phase-continuous `x^s` shaping/excitation representation: OPEN.** The
-   continuous JONSWAP/PM PSD is not, by itself, a deterministic pathwise bound.
-   A Gaussian good event, spectral moments, replay, the seeded 128-frequency
-   simulator, a finite RAO grid, or an arbitrary bounded-input box cannot close
-   this ingredient.
-3. **joint translational/rotational response from that same `x^s/lambda`
-   history: OPEN.** The continuum directional RAO envelope remains a theorem
-   response family, not an independently combinable source generator.
+Preserve the separate 0.8-rad outer Cayley geometry and the declared inner
+candidates `[30,25,20,15]` degrees. No candidate is currently a certified P4
+basin. Keep lever arm zero/disabled and the vibration guard dormant-transparent.
 
-`tools/stability/ou3_sea3_hard_shaping_state.py` owns the fail-closed second ingredient,
-and `tools/stability/ou3_sea3_hard_finite_window_source.py` consumes it directly. A
-provider JSON cannot self-assert either open ingredient.
+## Retained facts and exact limitation
 
-The upstream `oceanography-waves-lib` v1.1.3 JONSWAP simulator uses a seeded
-128-frequency harmonic approximation with sampled directions and second-order
-Stokes pairs. It remains useful for falsification and diagnostics, but it is not
-the complete continuum SEA3 source and cannot promote SEA0/P3.
+For a shipping operation `S=H P H^T+R`, `K=P H^T S^-1`, `d=K y`, and
+`J=y^T S^-1 y`, the dimension-independent full-matrix inequality is
 
-## Canonical P3 architecture
+`d d^T <= J K S K^T <= J P`.
 
-Canonical P3 is one **complete Normal-Live H18/A21 Riccati word**. No single
-mechanism is allowed to stand in for the rest of the theorem preconditions.
+Thus `||E_i d||^2 <= lambda_max(E_i P E_i^T) J`. For `y=H phi`, also
+`J<=phi^T P^-1 phi`. These are per-operation identities, not a source-uniform
+correction radius or a proof of physical nonlinear storage transport.
 
-The common word is at least 3 s long. That horizon is chosen from the
-intersection of the already-declared preconditions: the 1 s vector-PE recurrence
-allows one required occurrence in `[0,1]` and a second in `[2,3]`; the same word
-contains many source-guaranteed S=0 firings, every valid accelerometer update,
-repeated process injection, recurrent PSD `a_w` covariance-floor events, and the
-finite A-mode residual-bias contraction.
+With `Q_aw=R_hat^T E R_hat` and `u_aw=Q_aw delta_a_w`, the pointwise residual
+rewrite has an a_w-free rotation remainder relative to an **auxiliary H0**
+whose a_w column is `R_hat`. Separately, the exact covariance congruence
+`T_E=diag(I,...,Q_aw)` requires
 
-The final gate is
+`P_u=T_E P T_E^T`, `H_u=H T_E^T`, `K_u=T_E K`.
 
-`Omega_W - delta P_W >= 0`, `delta >= 1e-18`,
+Its a_w column is `R_hat Q_aw^T`, not `R_hat`. Hence `H0 != H_u` at finite
+angle. The residual rewrite and metric congruence are individually valid;
+combining them as an unchanged shipping Joseph operation is not established.
+The corresponding helper status `shipping_Joseph_binding_closed` is false.
 
-on the complete H18 and A21 coordinates using validated outward full-matrix
-LDLT. No determinant/trace scalarization, blockwise minimum ratio, scalar beta,
-or reduced-coordinate proxy may set the canonical pass flag.
+The measurement-linearizing shift `Phi_aw=u_aw+e_eta`, with
+`e_eta=R_hat^T((E-I)-[c]_x)f_hat`, is a trial-coordinate construction. Its formal
+Joseph identity does not make its nonlinear transport free. In
+`xi=rho+E_aw(e_plus-e_minus)`, rho must include the *full* physical-to-operation
+coordinate mismatch, not only the quaternion reset remainder. The invariant
+triangular gravity-column rewrite has the same attachment obligation. A
+physical specific-force bound does not automatically bound nominal f_hat;
+the nominal-force/nominal-a_w bound remains conditional.
 
-### Homogeneous measurement dissipation
+Exact covariance congruence is a metric isometry. It is not a Euclidean
+covariance upper: `G=I+[d]_x/2` can enlarge transverse covariance. Likewise a
+lower on `P_theta,theta` is not an upper on `(P^-1)_theta,theta`; use the full
+Loewner bound or the appropriate conditional-covariance Schur complement.
+The correction helper therefore emits no purported global energy balls,
+source-uniform ceilings, or posterior inverse-metric floors.
 
-For the homogeneous/noiseless error map of an exact linear Kalman correction,
-with the configured measurement covariance retained in the Riccati update,
+## Failure analysis and rejected uses
 
-`V^- - V^+ = r_h^T S_innov^-1 r_h`, `V=e^T P^-1 e`, `r_h=H e^-`.
+Classification: **proof-method/attachment gap**, plus implementation/contract
+errors; this is not a counterexample to the complete SEA3 theorem or frozen P3.
 
-This identity is not a statement that a realized noisy measurement contributes
-that exact deterministic decrement; measurement noise belongs to the forcing
-term in the practical-stability theorem. Canonical P3 uses the homogeneous word
-while retaining the deployed `R_acc`, `R_mag`, and actual adaptive `R_S` in the
-covariance/information recursion.
+Invalidated claims: zero-cost combination of H0 with the H_u covariance/gain;
+prediction-only covariance ceilings through nonorthogonal resets; reusing an
+H18 nonlinear ceiling in A21 without transport; selecting the minimum posterior
+floor from the cell minimizing a different scalar ratio; and reading inverse
+metric bounds from a marginal covariance lower. Unsupported numerical
+reset-radius closure has been withdrawn, not repaired by a smaller domain.
 
-Prediction is non-expansive in the shipping moving covariance metric when the
-shipping process covariance contribution is PSD. Over the complete recurrent
-word, sequential homogeneous innovations are accumulated by the full matrix
-recursion rather than reduced to a scalar information loss.
+Retained: the exact residual algebra, individual congruence identities, pure
+vector Cayley identities, magnetometer radial cancellation, the full
+per-operation correction inequality, and the frozen complete-word P3 result.
+The 30-degree information-headroom calculation is not signed-word dissipation.
 
-### R_S / S=0 contribution
+Do not revive replay fitting, arbitrary bounded-input/source boxes, independent
+`tau x sigma x R_S x T_S` or sea x RAO products, endpoint/history graphs,
+selected-four-S replacement words, scalar information-beta, blockwise minimum
+ratios, or packet-count-times-worst-remainder bounds. No new micro-certificate
+should be added without its place and quantitative effect in the master word
+inequality being demonstrated.
 
-`R_S` remains the strongest direct translation correction and must be credited
-as such. Four separated source-guaranteed `S=0` firings provide a useful
-full-rank translation subcertificate for arbitrary legal time-varying `tau`, but
-that selected four-update result is only a mandatory component, never the P3
-architecture by itself.
+## Next falsifiable experiment
 
-The full word must use the actual applied `R_S` generated by the same adaptive
-source path as `tau`, `sigma`, and `T_S`. SpectralMSE couples the target
-`(tau,sigma,T_S,R_S_target)` operating point, while applied `R_S` has its own
-EMA. The target formula may not be substituted for applied `R_S`, and
-independent `tau x sigma x R_S x T_S` extrema may not be multiplied together as
-a canonical source word.
+The controlling object is `rho_W=V_after(F_W(x))/V_before(x)` on the actual
+complete H18/A21 word, not positivity of an isolated lemma.
 
-### Windowed vector PE
+First choose between three genuinely different treatments: (1) retain shipping
+coordinates and accumulate the exact signed full residual/Joseph/reset form;
+(2) construct a genuine nonlinear chart with consistent transformed H,K,P and
+all chart-transport defects; (3) eliminate the coupled a_w direction only in
+the full-word Schur form, retaining all actual-R_S S events. Start with (1) as
+the unchanged-shipping reference against which the others must be checked.
 
-The paper theorem uses accumulated asynchronous finite-window information:
+Before further interval refinement, run a non-promoting high-precision
+complete-word feasibility test on legal same-history SEA3 realizations. Report
+both H18/A21 worst ratios, source/phase, maximizing error direction,
+operation-by-operation margin consumption, and distance to rho=1. A point
+sample is a falsification/feasibility diagnostic, never universal source
+coverage. Do not silently replace a missing source realization with independent
+bounded sequences. Follow `EXECUTE -> FAILURE ANALYSIS -> REPLAN -> EXECUTE`.
 
-`W_eta6(k,N6) >= alpha_6 I6`, `alpha_6 > 0`,
+Only a strict complete-word result may authorize enclosure of the nonlinear
+transport, selection of the widest certified candidate, and then P5 finite
+capture including the separate H-to-A hybrid event and forcing terms.
 
-and, when directly available, the analogous eta9 condition. Unequal sensor
-rates, rejected magnetic samples and short magnetic outages are allowed whenever
-the accumulated window remains coercive. Hardware magnetometer ODR is therefore
-**not** the canonical PE recurrence clock, and two consecutive accepted 25 Hz
-magnetic packets are not required.
+## Code map and reproduction
 
-For the declared 1 s Normal-Live recurrence, a machine sufficient witness selects
-required PE occurrences from `[0,1]` and `[2,3]`, uses the declared specific-force,
-magnetic-norm, sine-separation and body-rate bounds, and obtains a strict eta6
-information lower without assuming consecutive magnetic packets.
+Retained proof scripts and committed proof JSON inputs live in
+`tools/stability/`. The domain files are
+`tools/stability/ou3_proof_operating_domain.json` and
+`tools/stability/ou3_sea3_directional_response_domain.json`; the committed bridge is
+`tools/stability/ou3_sea3_spectral_moment_bridge.json`. Relocation changes no JSON bytes.
 
-In A mode, the paper also permits eta6 plus the deployed finite residual-bias
-correlation time. Canonical P3 credits that actual homogeneous bias contraction;
-it does not invent a pointwise eta9 packet shortcut.
+Entry points in that directory: `ou3_sea3_riccati_metric_p3.py` is the frozen
+conditional gate; `ou3_sea3_riccati_metric_p4.py` is the non-promoted canonical
+P4 status. The `ou3_p4_complete_sea3_*coordinate.py` helpers contain the trial
+coordinate algebra. `ou3_p4_complete_sea3_correction_information_bound.py`
+contains only the exact operation identity and explicit open obligations.
+`ou3_p4_exact_reset_transport.py` owns the parameterized reset remainder.
 
-### Other mandatory events/preconditions in the same word
-
-The full word must simultaneously consume:
-
-- the source-reachable adaptive state and held/commit phase;
-- the same joint source path in `F_k`, `Q_k`, pseudo cadence and applied `R_S`;
-- full process UCC for attitude/gyro bias, translation, and active bias;
-- every valid Normal-Live accelerometer correction, with no rejection branch;
-- the full accelerometer Jacobian coupling attitude, `a_w` and active `b_a`;
-- every due `S=0` update and its actual per-axis applied `R_S`;
-- recurrent default PSD `a_w` covariance-floor increments at their real event times;
-- zero lever arm and the dormant-transparent vibration-guard proof branch;
-- declared force, magnetic, body-rate, active-bias and projection bounds;
-- proved SEA3 partition-energy and height/period coupling whenever physical sea
-  variables enter the enclosure.
-
-The hard complete-SEA3 finite-window realization and the same-history continuum
-vessel-response left inclusion must close before the source-reachable 601-sample
-family may be materialized. P3 therefore remains fail-closed; no admitted point
-word or replay may stand in for this family.
-
-## Routes explicitly retired
-
-Canonical P3 must not use any of the following as a promotion route:
-
-- one-sample strict Riccati process injection;
-- per-sample SPD covariance lower requirements;
-- a translation-only variational/least-action replacement certificate;
-- a low-dimensional `R_S/tau` lag envelope as a substitute for the joint source;
-- hardware magnetometer ODR as the PE recurrence assumption;
-- selected-process-mode strictness in place of the full word;
-- determinant/trace eigenvalue scalarization;
-- scalar information-beta attenuation;
-- blockwise minimum ratios for the final H/A gate;
-- independent tuner extrema products;
-- independent SEA x RAO Cartesian products;
-- replay, Gaussian good events, spectral-moment-only words, or arbitrary bounded-input words;
-- fixed-lambda or point words;
-- the selected four-S word as a replacement for the full scheduler word;
-- the retired 800-state P2 graph or predecessor/source-history enumeration.
-
-The endpoint covariance upper remains useful for boundedness and later nonlinear
-work. Historical tiny one-step/tube margins remain diagnostic only and are not
-the current canonical failure mechanism.
-
-## Current quantitative obligation
-
-The immediate obligation is SEA0 execution, not a different P3 inequality:
-complete the code-owned hard phase-continuous `x^s` representation (or equivalent
-hard finite-window dynamic constraint) for the already-compact SEA3 theorem
-domain, then generate the joint translational/rotational response from that same
-history over all 601 samples. Once that provider closes, execute the exact
-front-end/tuner/scheduler/shipping event word in both H18 and A21 and test
-
-`Omega_W - delta P_W >= 0`, `delta >= 1e-18`
-
-with validated full-matrix LDLT in both modes.
-
-P4 remains blocked until that complete P3 passes. P5 remains blocked until P4
-closes.
+Run `make -C tests/validation build`, the source-foundation unittest command in
+`.github/workflows/ou3-proof.yml`, and all `test_ou3_p4_*.py` tests. Run each
+canonical gate with `--output /tmp/<name>.json`; inspect its pass flags, not
+just its exit code. `python3 tools/ou_evidence_contract.py --check` is separate
+from the stability theorem. Fresh validation/robustness replay evidence is
+still required for the changed source inherited from main; never hand-edit
+provenance hashes. The opt-in `ou-full-evidence-branch.yml` workflow owns a full
+branch refresh. No filter or pitch-gate edit is part of this handoff.
