@@ -9,7 +9,7 @@ never invented here.  The reset primitive is nonsingular for every finite
 injection, so no small-angle gate is added.
 """
 from __future__ import annotations
-import json, math
+import json
 from pathlib import Path
 import ou3_sea3_full_normal_live_word as BASE
 import ou3_sea3_full_word_reset_congruence as RESET

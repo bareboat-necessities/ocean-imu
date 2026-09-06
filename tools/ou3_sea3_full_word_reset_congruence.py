@@ -33,7 +33,6 @@ M_delta=Omega-delta P the reset gives exactly G M_delta G^T.
 """
 from __future__ import annotations
 
-import math
 from pathlib import Path
 from typing import Sequence
 

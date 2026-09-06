@@ -30,7 +30,6 @@ import math
 from ou3_interval import (
     Interval,
     matrix_add,
-    matrix_identity,
     matrix_mul,
     matrix_transpose,
 )

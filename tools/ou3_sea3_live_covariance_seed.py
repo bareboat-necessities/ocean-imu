@@ -59,7 +59,6 @@ def _one(pattern: str, text: str, label: str) -> float:
 
 def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     path = Path(domain_path).resolve()
-    domain = json.loads(path.read_text(encoding="utf-8"))
     wrapper = WRAPPER.read_text(encoding="utf-8")
     mekf = MEKF.read_text(encoding="utf-8")
     mag = MAG.read_text(encoding="utf-8")

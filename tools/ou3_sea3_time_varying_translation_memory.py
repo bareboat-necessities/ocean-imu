@@ -48,14 +48,12 @@ import functools
 import json
 import math
 from pathlib import Path
-import re
 from typing import Sequence
 
 from ou3_interval import (
     Interval,
     IntervalMatrix,
     matrix_add,
-    matrix_identity,
     matrix_mul,
     matrix_transpose,
     symmetric_positive_definite_ldlt,

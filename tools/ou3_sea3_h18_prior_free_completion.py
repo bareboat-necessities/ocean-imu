@@ -80,7 +80,6 @@ from ou3_interval import (
     Interval,
     IntervalMatrix,
     down,
-    up,
     symmetric_positive_definite_ldlt,
 )
 import ou3_full_process_ucc as PROCESS
