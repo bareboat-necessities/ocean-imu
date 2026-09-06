@@ -12,11 +12,13 @@ target is the compact correlated behavior ``B^601_SEA3`` defined by
 hull: membership still requires one common complete-SEA3 sea/phase/response
 witness.
 
-What remains open is computational closure of the hard spectral/behavior
-constraint: a validated correlated membership/separation or outer-enclosure
-oracle, the corresponding physical left-inclusion certificate, and the joint
-source-output enclosure consumable by the 601-sample executor.  A power
-spectrum or spectral moment alone cannot provide this pathwise oracle.
+What remains open for a conditional executable SEA3 point is computational
+closure of the hard spectral/behavior constraint and the joint source-output
+enclosure consumable by the 601-sample executor.  The physical SEA0->SEA3 left
+inclusion is a separate deployment obligation: it must close before deployment
+promotion, but it is not a prerequisite for executing one independently
+validated member of the already-declared SEA3 theorem set.  A power spectrum or
+spectral moment alone cannot provide the required pathwise membership oracle.
 """
 from __future__ import annotations
 
@@ -39,13 +41,21 @@ HARD_SPECTRAL_DRIVER_SET_CLOSED = False
 COMPLETE_SEA3_LEFT_INCLUSION_CLOSED = False
 JOINT_SOURCE_OUTPUT_MAP_CLOSED = False
 
+# Conditional source execution lives wholly inside the already-declared SEA3
+# theorem domain.  Do not fold the physical SEA0->SEA3 deployment inclusion
+# into this gate: doing so would incorrectly make a deployment theorem a
+# prerequisite for testing one independently validated SEA3 member.  The hard
+# driver and the joint same-history source-output map remain mandatory.
 HARD_SHAPING_STATE_OR_EXCITATION_BOUND_CLOSED = all((
     CONTINUUM_PHASE_COORDINATE_SET_CLOSED,
     PHASE_CONTINUOUS_PROPAGATION_CLOSED,
     HARD_SPECTRAL_DRIVER_SET_CLOSED,
-    COMPLETE_SEA3_LEFT_INCLUSION_CLOSED,
+))
+CONDITIONAL_SEA3_SOURCE_OUTPUT_CLOSED = all((
+    HARD_SHAPING_STATE_OR_EXCITATION_BOUND_CLOSED,
     JOINT_SOURCE_OUTPUT_MAP_CLOSED,
 ))
+DEPLOYMENT_LEFT_INCLUSION_CLOSED = COMPLETE_SEA3_LEFT_INCLUSION_CLOSED
 
 
 def _normalized_text(text: str) -> str:
@@ -159,10 +169,13 @@ def build() -> dict:
         ],
         "executable_ingredients": executable,
         "hard_shaping_state_or_excitation_bound_closed": HARD_SHAPING_STATE_OR_EXCITATION_BOUND_CLOSED,
+        "conditional_SEA3_source_output_closed": CONDITIONAL_SEA3_SOURCE_OUTPUT_CLOSED,
+        "deployment_left_inclusion_closed": DEPLOYMENT_LEFT_INCLUSION_CLOSED,
+        "conditional_execution_requires_deployment_left_inclusion": False,
         "complete_SEA3_family_materialized_here": False,
         "P3_promoted": False,
         "next_obligation": (
-            "B^601_SEA3 and the continuum phase propagation are now explicit and compact; implement a validated correlated membership/separation or outer-enclosure oracle for B^601_SEA3, then certify the physical left inclusion and feed that same witness into the joint translational/rotational output map"
+            "B^601_SEA3 and the continuum phase propagation are explicit and compact; close the hard spectral/driver membership relation and the same-history joint translational/rotational output map for a conditional SEA3 realization. Separately certify physical SEA0->SEA3 left inclusion before deployment promotion"
         ),
     }
 
@@ -220,6 +233,9 @@ def validate(d: dict) -> list[str]:
         "finite_RAO_grid_may_close_xs",
         "arbitrary_bounded_input_box_may_close_xs",
         "hard_shaping_state_or_excitation_bound_closed",
+        "conditional_SEA3_source_output_closed",
+        "deployment_left_inclusion_closed",
+        "conditional_execution_requires_deployment_left_inclusion",
         "complete_SEA3_family_materialized_here",
         "P3_promoted",
     ):
@@ -253,6 +269,8 @@ def main() -> int:
         "sampled_behavior_target": d["sampled_behavior_target"],
         "executable_ingredients": d["executable_ingredients"],
         "hard_shaping_closed": d["hard_shaping_state_or_excitation_bound_closed"],
+        "conditional_source_output_closed": d["conditional_SEA3_source_output_closed"],
+        "deployment_left_inclusion_closed": d["deployment_left_inclusion_closed"],
         "next_obligation": d["next_obligation"],
         "failures": failures,
     }, indent=2, sort_keys=True))
