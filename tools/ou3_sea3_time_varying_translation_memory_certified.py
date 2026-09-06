@@ -34,7 +34,6 @@ CERTIFIED_MACRO_INTERVALS = 25
 
 
 def _reconstruct_final_interval_candidate(path: Path):
-    """Rebuild exactly the verified L_25 candidate while backend count is 25."""
     dynamic = BACKEND.DYNAMIC.build(path)
     four = BACKEND.FOUR.build(path)
     pe = BACKEND.PE.build(path)
@@ -88,7 +87,12 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
 def validate(d: dict) -> list[str]:
     probe = dict(d)
     probe["qualification"] = d.get("backend_qualification")
-    failures = BACKEND.validate(probe)
+    old = BACKEND.MACRO_INTERVALS
+    try:
+        BACKEND.MACRO_INTERVALS = CERTIFIED_MACRO_INTERVALS
+        failures = BACKEND.validate(probe)
+    finally:
+        BACKEND.MACRO_INTERVALS = old
     if d.get("schema") != SCHEMA or d.get("qualification") != QUALIFICATION:
         failures.append("facade schema/qualification mismatch")
     if d.get("certified_macro_intervals_bound_by_facade") != CERTIFIED_MACRO_INTERVALS:
