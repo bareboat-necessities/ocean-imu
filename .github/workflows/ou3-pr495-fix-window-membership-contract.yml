@@ -1,0 +1,48 @@
+name: ou3-pr495-fix-window-membership-contract
+on:
+  push:
+    branches: [codex/ou3-complete-sea3-shipping-feasibility]
+    paths: [.github/workflows/ou3-pr495-fix-window-membership-contract.yml]
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Repair stale fixed-history membership assertions
+        env:
+          BRANCH: codex/ou3-complete-sea3-shipping-feasibility
+        run: |
+          set -euo pipefail
+          git checkout -B "$BRANCH" "origin/$BRANCH"
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('.github/workflows/ou3-sea3-window-contract.yml')
+          s=p.read_text()
+          replacements={
+            "x['source_membership']['membership_is_by_operator_construction_not_quadrature']":
+              "x['source_membership']['membership_is_analytic_Hilbert_norm_not_quadrature']",
+            "x['source_membership']['same_driver_field_entire_window']":
+              "x['source_membership']['same_driver_field_prehistory_and_window']",
+          }
+          for old,new in replacements.items():
+              if s.count(old)!=1:
+                  raise SystemExit(f'stale membership anchor count for {old!r}: {s.count(old)}')
+              if new in s:
+                  raise SystemExit(f'new membership assertion already present: {new!r}')
+              s=s.replace(old,new,1)
+          p.write_text(s)
+          Path('.github/workflows/ou3-pr495-fix-window-membership-contract.yml').unlink()
+          PY
+          git diff --check
+          grep -q "membership_is_analytic_Hilbert_norm_not_quadrature" .github/workflows/ou3-sea3-window-contract.yml
+          grep -q "same_driver_field_prehistory_and_window" .github/workflows/ou3-sea3-window-contract.yml
+          ! grep -q "membership_is_by_operator_construction_not_quadrature" .github/workflows/ou3-sea3-window-contract.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add .github/workflows
+          git commit -m 'Fix SEA3 fixed-history membership contract names'
+          git push origin HEAD:refs/heads/"$BRANCH"
