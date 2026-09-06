@@ -139,13 +139,16 @@ class StabilityPackageIntegrityTests(unittest.TestCase):
         ]
         stale = _stale_stability_json_references()
         self.assertEqual([], missing, "missing stability JSON domains: " + ", ".join(missing))
-        self.assertEqual(
-            [], root_duplicates,
-            "stability JSON domains still duplicated at tools/: " + ", ".join(root_duplicates),
-        )
+        # Report all stale consumers while the temporary root copies still
+        # exist; deleting those copies first would turn this into a sequence of
+        # opaque FileNotFoundError failures instead of one actionable list.
         self.assertEqual(
             [], stale,
             "stale pre-package stability JSON references:\n" + "\n".join(stale),
+        )
+        self.assertEqual(
+            [], root_duplicates,
+            "stability JSON domains still duplicated at tools/: " + ", ".join(root_duplicates),
         )
 
     def test_unrelated_ou3_studies_stay_outside_stability_package(self):
