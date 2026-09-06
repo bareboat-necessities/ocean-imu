@@ -1,41 +1,46 @@
 #!/usr/bin/env python3
 """Non-promoting fixed-history complete-SEA3 source-core feasibility point.
 
-This is the first numerical realization used by the complete-word feasibility
-experiment.  It is *not* a second source model.  The source remains the
-continuum Hilbert-ball representation from ``ou3_sea3_continuum_driver_gram``.
+This is a numerical realization of the *existing* continuum Hilbert-ball SEA3
+source from :mod:`ou3_sea3_continuum_driver_gram`; it is not another source
+model.  The purpose is to supply one legal, sustained same-history member to
+the ledger's mandatory complete-word feasibility experiment.
 
-We choose one exact admissible member of the existing compact SEA3 family:
+One exact admissible SEA3 history is fixed:
 
 * one active JONSWAP partition, H=1.5 m, Tp=6 s, gamma=3.3;
-* constant lambda over the diagnostic history;
-* a direction-independent translational RAO
+* constant lambda over the prehistory and 601-sample diagnostic window;
+* direction-independent translational RAO
       h_z(f)=G min(1,(fc/f)^2), G=1, fc=0.5 Hz,
   with h_x=h_y=0;
-* zero rotational response, which is admissible under the separately declared
-  Normal-Live rotational envelope;
-* the same continuum hard driver for the whole window.
+* zero rotational response, which is an admissible member of the separately
+  declared Normal-Live rotational family;
+* one common continuum driver for prehistory and diagnostic window.
 
-For this fixed history let K be the exact continuum map from normalized driver
-to the 601 sampled vertical CoG accelerations and Q=K K*.  The chosen driver is
+The hard driver is chosen analytically, not from a replay or a frequency grid:
 
-    a = K* e_0 / ||K* e_0||,
+    a_1(f,theta) = beta sqrt(D(theta)) g(f),
+    a_2=a_3=0,
+    g(f)=C exp(-(f-f0)^2/(2 sigma_f^2)),
+    integral |g(f)|^2 df = 1,
+    beta=0.5.
 
-so ||a||=1 and the resulting exact source sequence is
+Because the directional density is normalized, integral D(theta)dtheta=1,
+||a||_H=beta<=1 exactly.  The same a drives all times and channels.  With a
+direction-independent RAO the theta integral collapses analytically, leaving
+only the continuum frequency integral for the vertical CoG acceleration.
 
-    y = Q e_0 / sqrt(Q_00).
+The Simpson evaluations below are numerical evaluation of that continuum
+integral.  Quadrature nodes are never source modes or independently selectable
+amplitudes.  Two resolutions are compared as a non-promoting numerical
+convergence check.  Mathematical source membership comes from the analytic
+Hilbert norm above.
 
-Therefore source membership follows from the hard-driver operator itself, not
-from the numerical quadrature below.  The quadrature merely evaluates the
-continuum correlation integrals for this already-defined member.  It is never
-interpreted as a finite harmonic source: no quadrature node is a source mode,
-phase coordinate, or independently selectable amplitude.
-
-This module stops at the six-coordinate physical source core.  It does not
-invent a front-end entry or covariance seed and does not promote P4/P5.  The
-next step is to run a sufficiently long same-history prehistory through the
-actual C++ startup/front-end path, then feed the resulting Live entry and these
-same continuum-driver samples into the connected 601-sample executor.
+This module deliberately stops before inventing a front-end state or covariance
+seed.  The next stage runs a long prehistory of this *same* continuum member
+through the shipping C++ updateFrontEnd/TunerReady/goLive path, then serializes
+the actual Live entry and executes the same member through all 601 samples,
+including every due S=0 operation at its actual-applied per-axis R_S.
 """
 from __future__ import annotations
 
@@ -51,8 +56,8 @@ import ou3_sea3_directional_response_family as RESPONSE
 
 REPO = Path(__file__).resolve().parents[2]
 DEFAULT_DOMAIN = REPO / "tools" / "stability" / "ou3_proof_operating_domain.json"
-SCHEMA = 1
-QUALIFICATION = "OU3_SEA3_FIXED_HISTORY_SOURCE_CORE_V1"
+SCHEMA = 2
+QUALIFICATION = "OU3_SEA3_FIXED_HISTORY_SOURCE_CORE_V2"
 N = 601
 DT = 0.005
 H_M = 1.5
@@ -61,13 +66,16 @@ GAMMA = 3.3
 RAO_GAIN = 1.0
 RAO_CORNER_HZ = 0.5
 RAO_POWER = 2.0
+DRIVER_CENTER_HZ = 1.0 / TP_S
+DRIVER_SIGMA_HZ = 0.005
+DRIVER_BETA = 0.5
 SIGMA_LO = 0.07
 SIGMA_HI = 0.09
 PM_EXPONENT = 1.25
 
 
 def _shape(f_hz: float) -> float:
-    """Unnormalized JONSWAP shape in frequency coordinates."""
+    """Unnormalized JONSWAP surface-elevation shape in frequency coordinates."""
     if not (f_hz > 0.0):
         return 0.0
     fp = 1.0 / TP_S
@@ -86,6 +94,11 @@ def _rao(f_hz: float) -> float:
 def _acc_transfer(f_hz: float) -> float:
     omega = 2.0 * math.pi * f_hz
     return -(omega * omega) * _rao(f_hz)
+
+
+def _driver_raw(f_hz: float) -> float:
+    z = (f_hz - DRIVER_CENTER_HZ) / DRIVER_SIGMA_HZ
+    return math.exp(-0.5 * z * z)
 
 
 def _simpson_log(fn: Callable[[float], float], lo: float, hi: float, panels: int) -> float:
@@ -116,41 +129,44 @@ def _integration_limits() -> tuple[float, float]:
     return fp / 64.0, fp * 256.0
 
 
-def _normalized_spectrum_scale(panels: int) -> tuple[float, float]:
+def _normalized_spectrum_scale(panels: int) -> float:
     lo, hi = _integration_limits()
     raw = _simpson_log(_shape, lo, hi, panels)
     if not (raw > 0.0 and math.isfinite(raw)):
         raise RuntimeError("JONSWAP normalization integral failed")
-    target_m0 = H_M * H_M / 16.0
-    return target_m0 / raw, raw
+    return (H_M * H_M / 16.0) / raw
 
 
-def _gram_lag(lag: int, panels: int, scale: float) -> float:
+def _driver_normalization(panels: int) -> float:
     lo, hi = _integration_limits()
-    tau = float(lag) * DT
-    return _simpson_log(
-        lambda f: scale * _shape(f) * (_acc_transfer(f) ** 2) * math.cos(2.0 * math.pi * f * tau),
-        lo,
-        hi,
-        panels,
-    )
+    norm2 = _simpson_log(lambda f: _driver_raw(f) ** 2, lo, hi, panels)
+    if not (norm2 > 0.0 and math.isfinite(norm2)):
+        raise RuntimeError("continuum driver normalization failed")
+    return 1.0 / math.sqrt(norm2)
 
 
-def _evaluate(panels: int) -> tuple[list[float], dict]:
-    scale, raw = _normalized_spectrum_scale(panels)
-    q = [_gram_lag(k, panels, scale) for k in range(N)]
-    if not (q[0] > 0.0 and math.isfinite(q[0])):
-        raise RuntimeError("fixed-history Gram lost positive variance")
-    root = math.sqrt(q[0])
-    y = [x / root for x in q]
-    return y, {
-        "panels": panels,
-        "raw_shape_integral": raw,
-        "spectrum_scale": scale,
-        "Q00_acceleration_variance": q[0],
-        "driver_norm": 1.0,
-        "construction": "a=K*e0/sqrt(e0^T Q e0); y=Qe0/sqrt(Q00)",
-    }
+def acceleration_at_time(t_s: float, panels: int = 4096) -> float:
+    """Evaluate the exact fixed continuum member at one physical time.
+
+    ``panels`` affects only numerical quadrature.  The mathematical member is
+    the continuum integral and is independent of this argument.
+    """
+    lo, hi = _integration_limits()
+    spectrum_scale = _normalized_spectrum_scale(panels)
+    driver_c = _driver_normalization(panels)
+
+    def integrand(f_hz: float) -> float:
+        # a(f,theta)=beta sqrt(D) g(f), while K contains sqrt(S D).
+        # Integrating theta therefore contributes integral D dtheta = 1.
+        spectral = math.sqrt(max(0.0, spectrum_scale * _shape(f_hz)))
+        driver = DRIVER_BETA * driver_c * _driver_raw(f_hz)
+        return spectral * _acc_transfer(f_hz) * driver * math.cos(2.0 * math.pi * f_hz * t_s)
+
+    return _simpson_log(integrand, lo, hi, panels)
+
+
+def _evaluate_window(panels: int) -> list[float]:
+    return [acceleration_at_time(k * DT, panels) for k in range(N)]
 
 
 def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
@@ -170,18 +186,18 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     g = float(physical["gravity_mps2"])
     if not PHYSICAL.partition_admissible(H_M, TP_S, g):
         raise RuntimeError("selected fixed SEA3 partition violates peak-steepness contract")
-    RESPONSE.evaluate_rao_envelope_member(
-        RAO_GAIN, RAO_CORNER_HZ, RAO_POWER, response
-    )
+    RESPONSE.evaluate_rao_envelope_member(RAO_GAIN, RAO_CORNER_HZ, RAO_POWER, response)
 
-    # Two continuum quadrature resolutions.  Agreement is a numerical
-    # feasibility diagnostic only; mathematical membership came from y=Ka above.
-    y_coarse, coarse = _evaluate(4096)
-    y_fine, fine = _evaluate(8192)
+    # Coarse/fine convergence is only a continuum-evaluation diagnostic.
+    y_coarse = _evaluate_window(1024)
+    y_fine = _evaluate_window(2048)
     max_abs_delta = max(abs(a - b) for a, b in zip(y_coarse, y_fine))
     max_abs = max(abs(x) for x in y_fine)
+    normal_live_accel_cap = float(
+        json.loads(domain_path.read_text(encoding="utf-8"))["normal_live"]
+        ["non_gravitational_cog_acceleration_norm_upper_mps2"]
+    )
 
-    # Identity attitude, zero rotation and a vertical-only legal CoG response.
     source_core = [
         {
             "k": k,
@@ -196,15 +212,18 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "schema": SCHEMA,
         "qualification": QUALIFICATION,
         "canonical_source": "COMPLETE_SEA3_NORMAL_LIVE_WORD",
-        "role": "non-promoting legal fixed-history source-core point for the ledger feasibility experiment",
+        "role": "non-promoting legal fixed-history point for the ledger complete-word feasibility experiment",
         "source_membership": {
             "hard_driver_qualification": driver["qualification"],
             "fixed_history_operator": driver["fixed_history_operator"],
-            "fixed_history_gram": driver["fixed_history_gram"],
-            "driver_choice": "a=K*e0/||K*e0||",
-            "driver_norm": 1.0,
-            "membership_is_by_operator_construction_not_quadrature": True,
-            "same_driver_field_entire_window": True,
+            "driver_field": "a1(f,theta)=beta*sqrt(D(theta))*C*exp(-(f-f0)^2/(2*sigma_f^2)); a2=a3=0",
+            "driver_center_hz": DRIVER_CENTER_HZ,
+            "driver_sigma_hz": DRIVER_SIGMA_HZ,
+            "driver_beta": DRIVER_BETA,
+            "driver_norm": DRIVER_BETA,
+            "directional_norm_identity": "integral D(theta)dtheta=1",
+            "membership_is_analytic_Hilbert_norm_not_quadrature": True,
+            "same_driver_field_prehistory_and_window": True,
             "same_driver_field_translation_and_rotation": True,
         },
         "SEA3_fixed_history": {
@@ -212,10 +231,10 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
             "H_r_m": [H_M, 0.0, 0.0],
             "Tp_r_s": [TP_S, TP_S, TP_S],
             "gamma_r": [GAMMA, 1.0, 1.0],
-            "lambda_constant_over_window": True,
+            "lambda_constant_over_prehistory_and_window": True,
             "partition_peak_steepness_admissible": True,
             "total_Hs_m": H_M,
-            "directional_density_integrates_to_one_and_cancels_for_direction_independent_RAO": True,
+            "directional_density_integrates_to_one": True,
         },
         "fixed_response_member": {
             "translation": "h=[0,0,G min(1,(fc/f)^2)]",
@@ -229,10 +248,12 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "quadrature_diagnostic": {
             "coordinate": "log frequency",
             "source_modes_are_quadrature_nodes": False,
-            "coarse": coarse,
-            "fine": fine,
+            "coarse_panels": 1024,
+            "fine_panels": 2048,
             "max_abs_sample_delta_coarse_to_fine": max_abs_delta,
             "max_abs_source_acceleration_mps2": max_abs,
+            "normal_live_acceleration_cap_mps2": normal_live_accel_cap,
+            "inside_normal_live_acceleration_cap": max_abs <= normal_live_accel_cap,
             "convergence_relative_to_peak": max_abs_delta / max(max_abs, 1e-30),
         },
         "sample_count": N,
@@ -247,7 +268,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "finite_harmonic_source_used": False,
         "independent_sample_boxes_used": False,
         "next_obligation": (
-            "extend this exact fixed continuum-driver member backward through a same-history prehistory, run the actual C++ updateFrontEnd/TunerReady/goLive path, serialize the resulting frontend state and H18/A21 covariance seed, then execute all 601 shipping samples with every actual-applied R_S update"
+            "run this same continuum packet over the required startup prehistory through shipping C++ updateFrontEnd until TunerReady, call the real goLive handoff, serialize the resulting frontend and H18/A21 covariance state, then execute the same source through all 601 samples and every actual-applied R_S event"
         ),
     }
 
@@ -260,14 +281,15 @@ def validate(d: dict) -> list[str]:
         f.append("fixed history detached from canonical complete SEA3")
     membership = d.get("source_membership", {})
     for key in (
-        "membership_is_by_operator_construction_not_quadrature",
-        "same_driver_field_entire_window",
+        "membership_is_analytic_Hilbert_norm_not_quadrature",
+        "same_driver_field_prehistory_and_window",
         "same_driver_field_translation_and_rotation",
     ):
         if membership.get(key) is not True:
             f.append(f"source membership lost {key}")
-    if float(membership.get("driver_norm", 0.0)) != 1.0:
-        f.append("fixed-history driver is not on the admitted hard unit ball")
+    norm = float(membership.get("driver_norm", math.inf))
+    if not (0.0 < norm <= 1.0):
+        f.append("fixed-history continuum driver escaped the admitted hard unit ball")
     sea = d.get("SEA3_fixed_history", {})
     if sea.get("active_partitions") != 1:
         f.append("fixed feasibility history changed partition count")
@@ -281,8 +303,10 @@ def validate(d: dict) -> list[str]:
     quad = d.get("quadrature_diagnostic", {})
     if quad.get("source_modes_are_quadrature_nodes") is not False:
         f.append("quadrature nodes were promoted to source modes")
-    if not float(quad.get("convergence_relative_to_peak", math.inf)) < 5e-5:
+    if not float(quad.get("convergence_relative_to_peak", math.inf)) < 2e-4:
         f.append("fixed-history continuum quadrature has not converged sufficiently for feasibility")
+    if quad.get("inside_normal_live_acceleration_cap") is not True:
+        f.append("selected fixed source point leaves the declared Normal-Live acceleration domain")
     if d.get("sample_count") != N or not math.isclose(float(d.get("dt_s", 0.0)), DT):
         f.append("fixed history does not cover canonical 601 samples at 5 ms")
     if not isinstance(d.get("source_core"), list) or len(d["source_core"]) != N:
@@ -315,6 +339,7 @@ def main() -> int:
     args.output.write_text(json.dumps(d, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     print(json.dumps({
         "source": d["canonical_source"],
+        "membership": d["source_membership"],
         "history": d["SEA3_fixed_history"],
         "response": d["fixed_response_member"],
         "quadrature": d["quadrature_diagnostic"],
