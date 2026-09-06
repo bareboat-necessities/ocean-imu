@@ -3,13 +3,14 @@ name: ou3-sea3-a21-word
 on:
   pull_request:
     paths:
-      - "tools/ou3_sea3_a21_accumulated_word_matrix.py"
-      - "tools/ou3_sea3_word_noise_accumulation.py"
-      - "tools/ou3_sea3_h18_prior_free_completion.py"
+      - "tools/ou3_sea3_a21_prior_free_completion.py"
+      - "tools/ou3_sea3_a21_mixed_full_matrix.py"
       - "tools/ou3_sea3_a21_detectability_completion.py"
-      - "tools/ou3_sea3_riccati_tube*.py"
+      - "tools/ou3_sea3_h18_prior_free_completion.py"
+      - "tools/ou3_sea3_time_varying_translation_memory*.py"
+      - "tools/ou3_sea3_full_word_event_algebra.py"
       - "tools/ou3_full_process_ucc.py"
-      - "tests/validation/test_ou3_sea3_a21_accumulated_word_matrix.py"
+      - "tests/validation/test_ou3_sea3_a21_prior_free_completion.py"
       - ".github/workflows/ou3-sea3-a21-word.yml"
   workflow_dispatch:
 
@@ -19,38 +20,38 @@ permissions:
 jobs:
   a21-word:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v6
         with:
           persist-credentials: false
-      - name: Build restartable complete SEA3 A21 matrix
+      - name: Build canonical mixed complete SEA3 A21 matrix
         run: |
-          python3 tools/ou3_sea3_a21_accumulated_word_matrix.py --output /tmp/ou3_sea3_a21_word.json
+          python3 tools/ou3_sea3_a21_prior_free_completion.py --output /tmp/ou3_sea3_a21_word.json
           python3 - <<'PY'
           import json
           d=json.load(open('/tmp/ou3_sea3_a21_word.json'))
           assert d['validation_pass'], d['validation_failures']
           assert d['canonical_source'] == 'COMPLETE_SEA3_NORMAL_LIVE_WORD'
-          assert d['full_covariance_Loewner_upper_rule'] == 'P<=21*diag(u)'
-          assert d['unknown_covariance_cross_terms_covered'] is True
-          assert d['full_21x21_generalized_Riccati_matrix_closed'] is True
-          assert d['A21_restartable_reachable_tube_contraction_closed'] is True
-          assert d['worst_full_A21_inverse_space_LDLT_pivot_lower'] > 0.0
-          assert d['useful_gate'] == 1.0e-18
+          assert d['A21_prior_free_completion_closed'] is True
+          assert d['full_21x21_Omega_minus_delta_P_LDLT_closed'] is True
+          assert d['early']['full_21x21_interval_LDLT_used'] is True
+          assert d['early']['worst_full_21x21_LDLT_pivot_lower'] > 0.0
+          assert d['late']['ba_margin_lower'] > 0.0
+          assert d['time_varying_translation_memory_full_interval_consumed'] is True
+          assert d['translation_entrywise_lower_diagnostic_consumed'] is False
+          assert d['constant_tau_over_word_assumed'] is False
           assert d['eta9_point_packet_shortcut_used'] is False
-          assert d['independent_tau_sigma_RS_TS_product_used_as_source'] is False
-          print('A21_WORD_HORIZON', d['retained_accumulated_horizon_s'])
-          print('A21_WORD_X_CELLS', d['translation_word_X_cells_certified'])
-          print('A21_WORD_MAX_SPLIT_DEPTH', d['translation_word_X_max_split_depth'])
-          print('A21_WORD_WORST_PIVOT', d['worst_full_A21_inverse_space_LDLT_pivot_lower'])
-          print('A21_WORD_CLOSED', d['A21_restartable_reachable_tube_contraction_closed'])
-          print('A21_BA_BLOCK', d['active_ba_block'])
-          print('A21_ATT_BG_BLOCK', d['attitude_gyro_bias_block'])
+          assert d['full_A21_D_inverse_used'] is False
+          assert d['useful_gate'] == 1.0e-18
+          print('A21_EARLY_PIVOT', d['early']['worst_full_21x21_LDLT_pivot_lower'])
+          print('A21_EARLY_CELLS', d['early']['leaves'])
+          print('A21_LATE_BA_MARGIN', d['late']['ba_margin_lower'])
+          print('A21_CLOSED', d['A21_prior_free_completion_closed'])
           PY
-      - name: Test restartable complete SEA3 A21 matrix
+      - name: Test canonical mixed complete SEA3 A21 matrix
         working-directory: tests/validation
-        run: python3 -m unittest -v test_ou3_sea3_a21_accumulated_word_matrix
+        run: python3 -m unittest -v test_ou3_sea3_a21_prior_free_completion
       - uses: actions/upload-artifact@v6
         with:
           name: ou3-sea3-a21-word
