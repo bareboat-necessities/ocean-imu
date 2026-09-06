@@ -142,8 +142,11 @@ jobs:
               raise SystemExit('H18 workflow still materializes patched source')
           p.write_text(t)
 
-          # Permanent tree must not contain this one-shot mutator.
+          # Permanent tree must not contain one-shot mutators.
           Path('.github/workflows/ou3-pr495-normalize-point-diagnostic.yml').unlink()
+          helper = Path('.github/workflows/ou3-pr495-fix-normalizer-push.yml')
+          if helper.exists():
+              helper.unlink()
           PY
           git diff --check
           grep -q 'constexpr int MAG_STRIDE = 2;' tests/kalman_ou_iii/ou3-sea3-complete-word-feasibility-test.cpp
@@ -153,4 +156,4 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add .github/workflows tests/kalman_ou_iii
           git commit -m 'Commit exact SEA3 point diagnostic used by CI'
-          git push origin HEAD:"$BRANCH"
+          git push origin HEAD:refs/heads/"$BRANCH"
