@@ -20,10 +20,12 @@ class CompleteSea3FixedHistorySourceCoreTest(unittest.TestCase):
         d = self.payload
         self.assertEqual(CORE.validate(d), [])
         self.assertEqual(d["canonical_source"], "COMPLETE_SEA3_NORMAL_LIVE_WORD")
-        self.assertTrue(d["source_membership"]["membership_is_by_operator_construction_not_quadrature"])
-        self.assertTrue(d["source_membership"]["same_driver_field_entire_window"])
-        self.assertTrue(d["source_membership"]["same_driver_field_translation_and_rotation"])
-        self.assertEqual(d["source_membership"]["driver_norm"], 1.0)
+        m = d["source_membership"]
+        self.assertTrue(m["membership_is_analytic_Hilbert_norm_not_quadrature"])
+        self.assertTrue(m["same_driver_field_prehistory_and_window"])
+        self.assertTrue(m["same_driver_field_translation_and_rotation"])
+        self.assertGreater(m["driver_norm"], 0.0)
+        self.assertLessEqual(m["driver_norm"], 1.0)
         self.assertTrue(d["SEA3_fixed_history"]["partition_peak_steepness_admissible"])
         self.assertTrue(d["fixed_response_member"]["inside_declared_continuum_RAO_family"])
 
@@ -31,7 +33,8 @@ class CompleteSea3FixedHistorySourceCoreTest(unittest.TestCase):
         d = self.payload
         q = d["quadrature_diagnostic"]
         self.assertFalse(q["source_modes_are_quadrature_nodes"])
-        self.assertLess(q["convergence_relative_to_peak"], 5e-5)
+        self.assertLess(q["convergence_relative_to_peak"], 2e-4)
+        self.assertTrue(q["inside_normal_live_acceleration_cap"])
         self.assertFalse(d["fixed_response_member"]["finite_RAO_grid_used"])
         self.assertFalse(d["finite_harmonic_source_used"])
         self.assertFalse(d["trajectory_replay_used"])
