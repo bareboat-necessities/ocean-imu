@@ -8,70 +8,23 @@ on:
       - ".github/workflows/ou3-stability-json-relocation-final.yml"
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  relocate:
+  snapshot:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
         with:
-          ref: refs/heads/codex/ou3-p4-p5-complete-sea3-after-492
-          fetch-depth: 1
-
-      - name: Relocate stability-domain Python consumers
+          persist-credentials: false
+      - name: Export exact tracked source for relocation and proof tests
         run: |
-          python3 - <<'PY'
-          from pathlib import Path
-
-          pairs = (
-              (' / "tools" / "ou3_proof_operating_domain.json"',
-               ' / "tools" / "stability" / "ou3_proof_operating_domain.json"'),
-              (' / "tools" / "ou3_sea3_directional_response_domain.json"',
-               ' / "tools" / "stability" / "ou3_sea3_directional_response_domain.json"'),
-          )
-          changed = []
-          for path in sorted(Path("tools/stability").glob("ou3_*.py")):
-              old = path.read_text(encoding="utf-8")
-              new = old
-              for a, b in pairs:
-                  new = new.replace(a, b)
-              if new != old:
-                  path.write_text(new, encoding="utf-8")
-                  changed.append(str(path))
-          print("rewritten", len(changed), "Python files")
-          if len(changed) != 36:
-              raise SystemExit(f"expected validated 36-Python-file rewrite, got {len(changed)}")
-          PY
-          git rm tools/ou3_proof_operating_domain.json
-          git rm tools/ou3_sea3_directional_response_domain.json
-
-      - name: Verify non-workflow relocation
-        run: |
-          python3 -m py_compile tools/stability/*.py
-          python3 - <<'PY'
-          from pathlib import Path
-          old = (
-              ' / "tools" / "ou3_proof_operating_domain.json"',
-              ' / "tools" / "ou3_sea3_directional_response_domain.json"',
-          )
-          stale=[]
-          for p in Path('tools/stability').glob('ou3_*.py'):
-              text=p.read_text(encoding='utf-8')
-              for needle in old:
-                  if needle in text:
-                      stale.append(str(p))
-          assert not stale, stale
-          assert Path('tools/stability/ou3_proof_operating_domain.json').is_file()
-          assert Path('tools/stability/ou3_sea3_directional_response_domain.json').is_file()
-          assert not Path('tools/ou3_proof_operating_domain.json').exists()
-          assert not Path('tools/ou3_sea3_directional_response_domain.json').exists()
-          PY
-
-      - name: Commit and push non-workflow relocation
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A tools
-          git commit -m "refactor: move stability JSON domains into package"
-          git push origin HEAD:refs/heads/codex/ou3-p4-p5-complete-sea3-after-492
+          git rev-parse HEAD > /tmp/ou3-checkout-sha.txt
+          git archive --format=tar.gz HEAD > /tmp/ou3-current-checkout.tar.gz
+      - uses: actions/upload-artifact@v6
+        with:
+          name: ou3-current-checkout
+          path: |
+            /tmp/ou3-current-checkout.tar.gz
+            /tmp/ou3-checkout-sha.txt
+          retention-days: 1
