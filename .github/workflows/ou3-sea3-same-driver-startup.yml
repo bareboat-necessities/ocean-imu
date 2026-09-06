@@ -1,0 +1,51 @@
+name: ou3-sea3-same-driver-startup
+on:
+  push:
+    branches: [codex/ou3-complete-sea3-shipping-feasibility]
+    paths:
+      - tools/stability/ou3_sea3_continuum_driver_gram.py
+      - tools/stability/ou3_sea3_fixed_history_source_core.py
+      - tests/validation/test_ou3_sea3_fixed_history_source_core.py
+      - tests/kalman_ou_iii/ou3-sea3-same-driver-startup-test.cpp
+      - src/kalman_ou_iii/**
+      - src/tuner/**
+      - src/ahrs/**
+      - .github/workflows/ou3-sea3-same-driver-startup.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  same-driver-startup:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install Eigen
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libeigen3-dev
+      - name: Validate theorem-native continuum source member
+        run: |
+          python3 -m py_compile \
+            tools/stability/ou3_sea3_continuum_driver_gram.py \
+            tools/stability/ou3_sea3_fixed_history_source_core.py
+          python3 tools/stability/ou3_sea3_continuum_driver_gram.py --output /tmp/sea3-driver.json
+          python3 tools/stability/ou3_sea3_fixed_history_source_core.py --output /tmp/sea3-fixed-source.json
+          python3 -m unittest -v tests.validation.test_ou3_sea3_fixed_history_source_core
+      - name: Compile shipping startup bridge without modifying production code
+        run: |
+          g++ -O3 -std=c++20 -Wall -Wextra -Wpedantic -Werror \
+            -DEIGEN_NON_ARDUINO -I./src -isystem /usr/include/eigen3 \
+            tests/kalman_ou_iii/ou3-sea3-same-driver-startup-test.cpp \
+            -o /tmp/ou3-sea3-same-driver-startup
+      - name: Execute same continuum history through shipping startup and 601 Live samples
+        run: /tmp/ou3-sea3-same-driver-startup | tee /tmp/ou3-sea3-same-driver-startup.txt
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: ou3-sea3-same-driver-startup
+          path: |
+            /tmp/sea3-driver.json
+            /tmp/sea3-fixed-source.json
+            /tmp/ou3-sea3-same-driver-startup.txt
+          retention-days: 7
