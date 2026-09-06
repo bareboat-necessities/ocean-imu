@@ -8,6 +8,8 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <type_traits>
+#include <utility>
 #include <vector>
 
 #define EIGEN_NON_ARDUINO
@@ -46,7 +48,6 @@ constexpr int kOffBa = 18;
 using Vector21f = Eigen::Matrix<float, kNX, 1>;
 using Matrix21f = Eigen::Matrix<float, kNX, kNX>;
 using Matrix21x3f = Eigen::Matrix<float, kNX, 3>;
-using Matrix3x21f = Eigen::Matrix<float, 3, kNX>;
 using Vector12f = Eigen::Matrix<float, 12, 1>;
 
 float env_float_required(const char* name)
@@ -96,18 +97,32 @@ Quaternionf quaternion_exp(const Vector3f& delta)
     return Quaternionf(std::cos(half), scale * delta.x(), scale * delta.y(), scale * delta.z());
 }
 
-Vector3f quaternion_log(const Quaternionf& q_in)
+Quaternionf normalized_short_quaternion(const Quaternionf& q_in)
 {
     Quaternionf q = q_in;
     if (!(q.norm() > 1.0e-12f) || !q.coeffs().allFinite())
-        return Vector3f::Constant(std::numeric_limits<float>::quiet_NaN());
+        throw std::runtime_error("invalid relative quaternion");
     q.normalize();
     if (q.w() < 0.0f) q.coeffs() *= -1.0f;
+    return q;
+}
+
+Vector3f quaternion_log(const Quaternionf& q_in)
+{
+    const Quaternionf q = normalized_short_quaternion(q_in);
     const Vector3f v(q.x(), q.y(), q.z());
     const float nv = v.norm();
     if (nv < 1.0e-9f) return 2.0f * v;
     const float angle = 2.0f * std::atan2(nv, std::max(0.0f, q.w()));
     return (angle / nv) * v;
+}
+
+Vector3f quaternion_cayley(const Quaternionf& q_in)
+{
+    const Quaternionf q = normalized_short_quaternion(q_in);
+    if (!(q.w() > 1.0e-6f))
+        throw std::runtime_error("relative quaternion approaches Cayley antipode");
+    return (2.0f / q.w()) * Vector3f(q.x(), q.y(), q.z());
 }
 
 Matrix21f reset_transport(const Vector3f& dtheta)
@@ -171,11 +186,11 @@ public:
         filter.enableTuner(true);
         filter.enableClamp(true);
 
-        const std::string path = env_string_required("OU3_SHADOW_TRACE");
-        trace_.open(path);
+        trace_.open(env_string_required("OU3_SHADOW_TRACE"));
         if (!trace_) throw std::runtime_error("cannot open OU3_SHADOW_TRACE");
         trace_ << std::setprecision(12)
-               << "time_s,V,theta_norm,state_norm,reconstruction_error,prediction_count,S_count,acc_count,vector_count\n";
+               << "time_s,V_raw,V_phi,theta_norm,state_norm,reconstruction_error,"
+                  "prediction_count,S_count,acc_count,vector_count\n";
     }
 
     void updateMag(const Vector3f& mag_body_ned) override
@@ -310,8 +325,6 @@ public:
             const Vector3f dtheta_nom = K.topRows<3>() * r_nom;
             apply_correction(recon, K, r_nom, mekf);
             apply_correction(shadow_, K, r_shadow, mekf);
-            Matrix3x21f Hs = Matrix3x21f::Zero();
-            Hs.block<3,3>(0,kOffS) = Matrix3f::Identity();
             const Matrix21f G = reset_transport(dtheta_nom);
             Pcur = joseph_from_pct(Pcur, K, S, PCt);
             Pcur = G * Pcur * G.transpose();
@@ -411,14 +424,17 @@ private:
         started_ = true;
         actual_t0_ = time_s_;
         const Vector21f e0 = pair_error(shadow_, mekf);
+        const Vector21f phi0 = phi_error(shadow_, mekf);
         initial_energy_ = energy(mekf.covariance_full(), e0);
-        if (!(std::isfinite(initial_energy_) && initial_energy_ > 0.0f))
+        initial_phi_energy_ = energy(mekf.covariance_full(), phi0);
+        if (!(std::isfinite(initial_energy_) && initial_energy_ > 0.0f
+                && std::isfinite(initial_phi_energy_) && initial_phi_energy_ > 0.0f))
             fail("invalid initial frozen-shadow energy");
         write_trace();
         std::cout << std::setprecision(12)
                   << "OU3_FROZEN_SHADOW_START mode=" << requested_mode_
                   << " scale=" << scale_ << " t0=" << actual_t0_
-                  << " V0=" << initial_energy_ << "\n";
+                  << " V0=" << initial_energy_ << " V0_phi=" << initial_phi_energy_ << "\n";
     }
 
     void predict_state(ShadowState& s,
@@ -486,6 +502,34 @@ private:
         return e;
     }
 
+    Vector21f phi_error(const ShadowState& s, const Mekf& nominal) const
+    {
+        Vector21f z = Vector21f::Zero();
+        const Matrix3f R_true = s.qref.toRotationMatrix();
+        const Matrix3f R_hat = nominal.qref.toRotationMatrix();
+        const Matrix3f E = R_true * R_hat.transpose();
+        const Vector3f c = quaternion_cayley(s.qref * nominal.qref.conjugate());
+        z.head<3>() = c;
+        z.segment<3>(kOffBg) = s.x.segment<3>(kOffBg) - nominal.xext.segment<3>(kOffBg);
+        z.segment<3>(kOffV) = s.x.segment<3>(kOffV) - nominal.xext.segment<3>(kOffV);
+        z.segment<3>(kOffP) = s.x.segment<3>(kOffP) - nominal.xext.segment<3>(kOffP);
+        z.segment<3>(kOffS) = s.x.segment<3>(kOffS) - nominal.xext.segment<3>(kOffS);
+        const Vector3f da = s.x.segment<3>(kOffAw) - nominal.xext.segment<3>(kOffAw);
+        z.segment<3>(kOffAw) = da;
+        z.segment<3>(kOffBa) = s.x.segment<3>(kOffBa) - nominal.xext.segment<3>(kOffBa);
+        if (dimension() == 18) z.tail<3>().setZero();
+
+        const Matrix3f Qaw = R_hat.transpose() * E * R_hat;
+        const Vector3f g_world(0.0f, 0.0f, nominal.gravity_magnitude_);
+        const Vector3f f_hat = R_hat * (nominal.xext.segment<3>(kOffAw) - g_world);
+        const Vector3f e_eta = R_hat.transpose()
+            * ((E - Matrix3f::Identity()) - ocean_imu::kalman::ou_detail::skew(c))
+            * f_hat;
+        const Vector3f epsilon = (Qaw - Matrix3f::Identity()) * da + e_eta;
+        z.segment<3>(kOffAw) += epsilon;
+        return z;
+    }
+
     float energy(const Matrix21f& Pfull, const Vector21f& e) const
     {
         if (dimension() == 18) {
@@ -515,8 +559,10 @@ private:
         if (!started_) return;
         const auto& mekf = fusion_.raw().mekf();
         const Vector21f e = pair_error(shadow_, mekf);
+        const Vector21f phi = phi_error(shadow_, mekf);
         const float V = energy(mekf.covariance_full(), e);
-        trace_ << time_s_ << ',' << V << ',' << e.head<3>().norm() << ','
+        const float Vphi = energy(mekf.covariance_full(), phi);
+        trace_ << time_s_ << ',' << V << ',' << Vphi << ',' << e.head<3>().norm() << ','
                << e.head(dimension()).norm() << ',' << max_reconstruction_error_ << ','
                << prediction_count_ << ',' << s_count_ << ',' << acc_count_ << ',' << vector_count_ << '\n';
     }
@@ -528,15 +574,21 @@ private:
             fail("frozen shadow endpoint does not match selected word");
         const auto& mekf = fusion_.raw().mekf();
         const Vector21f ef = pair_error(shadow_, mekf);
+        const Vector21f phif = phi_error(shadow_, mekf);
         const float final_energy = energy(mekf.covariance_full(), ef);
-        if (!(std::isfinite(final_energy) && final_energy >= 0.0f))
+        const float final_phi_energy = energy(mekf.covariance_full(), phif);
+        if (!(std::isfinite(final_energy) && final_energy >= 0.0f
+                && std::isfinite(final_phi_energy) && final_phi_energy >= 0.0f))
             fail("invalid final frozen-shadow energy");
         const float rho = final_energy / initial_energy_;
+        const float rho_phi = final_phi_energy / initial_phi_energy_;
         write_trace();
         std::cout << std::setprecision(12)
                   << "OU3_FROZEN_SHADOW_DONE mode=" << requested_mode_
                   << " scale=" << scale_ << " t0=" << actual_t0_ << " t1=" << time_s_
                   << " V0=" << initial_energy_ << " V1=" << final_energy << " rho=" << rho
+                  << " V0_phi=" << initial_phi_energy_ << " V1_phi=" << final_phi_energy
+                  << " rho_phi=" << rho_phi
                   << " reconstruction_max=" << max_reconstruction_error_
                   << " prediction_count=" << prediction_count_
                   << " S_count=" << s_count_ << " accel_count=" << acc_count_
@@ -563,6 +615,7 @@ private:
     float time_s_ = 0.0f;
     float actual_t0_ = 0.0f;
     float initial_energy_ = std::numeric_limits<float>::quiet_NaN();
+    float initial_phi_energy_ = std::numeric_limits<float>::quiet_NaN();
     float max_reconstruction_error_ = 0.0f;
     bool started_ = false;
     bool finished_ = false;
