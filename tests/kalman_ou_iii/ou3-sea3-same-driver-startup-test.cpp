@@ -189,7 +189,7 @@ int main() {
         const double t=PREHISTORY_S+k*DT;
         const double y=source_accel(t,FINE_PANELS,fine_norm.scale,fine_c);
         max_abs=std::max(max_abs,std::abs(y));
-        f.updateTime(static_cast<float>(DT),gyro,specific_force_from_source(y),true);
+        f.updateTime(static_cast<float>(DT),gyro,specific_force_from_source(y),35.0f);
         const float rs=f.getRSApplied();
         rs_min=std::min(rs_min,rs);
         rs_max=std::max(rs_max,rs);
