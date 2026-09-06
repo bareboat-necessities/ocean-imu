@@ -1,17 +1,15 @@
 #!/usr/bin/env python3
-"""Canonical P4 architecture over the SEA3 moving-Riccati P3 metric.
+"""Canonical, unpromoted P4 over the complete SEA3 moving-Riccati P3 metric.
 
-P4 consumes the actual canonical P3 verdict and retains the validated 0.8-rad
-Cayley sector.  Exact prediction/Joseph/reset operations are rebound directly
-to the moving shipping covariance metric through the structural P4 rebind
-certificate; no retired group-isotropic attachment or endpoint/source-word scan
-is used.
+Prediction/Joseph/reset covariance identities are closed.  Their exact linear
+congruence is not a nonlinear storage isometry.  The shipping-H full-shift
+residual identity and the full prediction/reset/H-to-A transport identities
+still require source-conditioned physical defects and uniform storage bounds.
 
-After that exact rebind, the only remaining P4 obligation is quantitative:
-charge the finite-angle nonlinear accelerometer/magnetometer residual on the
-complete H18/A21 word and show that it is dominated by the strict P3 word
-margin on the full declared sector (or on a certified inner local radius while
-retaining the 0.8-rad outer geometry sector).
+The next experiment is the non-promoting signed complete-word ratio on legal
+same-history SEA3 realizations, with every actual-applied R_S update retained.
+Neither structural tests nor an auxiliary H0/congruent H_u identification can
+close full nonlinear transport or strict P4 dissipation.  P5 remains blocked.
 """
 from __future__ import annotations
 
@@ -25,8 +23,8 @@ import ou3_p4_moving_metric_rebind as REBIND
 
 REPO = Path(__file__).resolve().parents[2]
 DEFAULT_DOMAIN = REPO / "tools" / "stability" / "ou3_proof_operating_domain.json"
-SCHEMA = 5
-QUALIFICATION = "OU3_SEA3_MOVING_RICCATI_NONLINEAR_P4_V5"
+SCHEMA = 6
+QUALIFICATION = "OU3_SEA3_MOVING_RICCATI_NONLINEAR_P4_V6"
 
 
 def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
@@ -48,7 +46,8 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     p3_pass = bool(p3["P3_CONDITIONAL_SEA3_PASS"])
     h_delta = float(p3["modes"]["H18"]["relative_Riccati_injection_margin_lower"])
     a_delta = float(p3["modes"]["A21"]["relative_Riccati_injection_margin_lower"])
-    rebind_closed = bool(rebind["full_nonlinear_measurement_metric_rebind_closed"])
+    covariance_closed = bool(rebind["structural_shipping_covariance_identities_closed"])
+    transport_closed = bool(rebind["nonlinear_chart_transport_and_storage_closed"])
     remainder_closed = False
 
     fail_reasons = []
@@ -56,16 +55,18 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         fail_reasons.append(
             "canonical moving-Riccati P3 H18/A21 quantitative margin has not met the useful gate"
         )
-    if not rebind_closed:
+    if not covariance_closed:
+        fail_reasons.append("shipping covariance identities are not closed")
+    if not transport_closed:
         fail_reasons.append(
-            "exact vector/accelerometer operations have not been rebound to the moving covariance metric"
+            "full nonlinear shipping transport and uniform storage comparison remain open"
         )
     if not remainder_closed:
         fail_reasons.append(
             "complete H18/A21 recurrent-word nonlinear remainder domination is not yet emitted on the full 0.8-rad geometry sector"
         )
 
-    p4_pass = bool(p3_pass and rebind_closed and remainder_closed)
+    p4_pass = bool(p3_pass and covariance_closed and transport_closed and remainder_closed)
     return {
         "schema": SCHEMA,
         "qualification": QUALIFICATION,
@@ -80,8 +81,10 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "old_group_isotropic_P3_P4_metric_assumed": False,
         "outer_angle_rad": cayley["outer_angle_rad"],
         "cayley_geometry_validated": True,
-        "exact_vector_accelerometer_congruence_rebind_pending": not rebind_closed,
-        "full_nonlinear_measurement_metric_rebind_closed": rebind_closed,
+        "exact_vector_accelerometer_congruence_rebind_pending": not covariance_closed,
+        "structural_shipping_covariance_identities_closed": covariance_closed,
+        "full_nonlinear_measurement_metric_rebind_closed": transport_closed,
+        "full_nonlinear_transport_and_storage_closed": transport_closed,
         "moving_metric_rebind_qualification": rebind["qualification"],
         "moving_metric_coordinate_congruence_exact": rebind["moving_metric_coordinate_congruence_exact"],
         "Joseph_nonlinear_injection_metric_closed": rebind["Joseph_nonlinear_injection_metric_closed"],
@@ -107,8 +110,8 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "P5_MAY_START": p4_pass,
         "P4_CANONICAL_FAIL_REASONS": fail_reasons,
         "next_obligation": (
-            "close full epsilon_aw=(Q_aw-I)*delta_a_w+e_eta transport and uniform storage comparison inside the signed complete H18/A21 SEA3 word; retain actual R_S and the 0.8-rad geometry; follow docs/ou3-proof-research-state.md"
-            if p3_pass and rebind_closed
+            "run the non-promoting legal complete-SEA3 word feasibility experiment before further enclosure; retain full epsilon_aw=(Q_aw-I)*delta_a_w+e_eta transport, actual applied R_S and the separate H-to-A event; follow docs/ou3-proof-research-state.md"
+            if p3_pass and covariance_closed
             else "close only the reported prerequisite; do not return to endpoint/source-word enumeration"
         ),
     }
@@ -125,7 +128,7 @@ def validate(d: dict) -> list[str]:
         "source_generated_not_trajectory_fit",
         "SEA3_dynamic_source_used_through_P3",
         "cayley_geometry_validated",
-        "full_nonlinear_measurement_metric_rebind_closed",
+        "structural_shipping_covariance_identities_closed",
         "moving_metric_coordinate_congruence_exact",
         "Joseph_nonlinear_injection_metric_closed",
     ):
@@ -134,6 +137,8 @@ def validate(d: dict) -> list[str]:
 
     for key in (
         "nonlinear_coordinate_shipping_binding_closed",
+        "full_nonlinear_measurement_metric_rebind_closed",
+        "full_nonlinear_transport_and_storage_closed",
         "packet_count_remainder_budget_used",
         "trajectory_replay_used",
         "filter_changed",
@@ -164,8 +169,10 @@ def validate(d: dict) -> list[str]:
     if float(d.get("outer_angle_rad", 0.0)) < 0.80:
         f.append("declared nonlinear sector fell below 0.8 rad")
     reasons = d.get("P4_CANONICAL_FAIL_REASONS", [])
-    if len(reasons) != 1 or "nonlinear remainder" not in reasons[0].lower():
-        f.append("P4 should have exactly one remaining nonlinear-remainder blocker")
+    if len(reasons) != 2 or not any("uniform storage" in x.lower() for x in reasons) or not any(
+        "nonlinear remainder" in x.lower() for x in reasons
+    ):
+        f.append("P4 must report both nonlinear transport/storage and complete-word dissipation blockers")
     return list(dict.fromkeys(f))
 
 
