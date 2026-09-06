@@ -36,27 +36,10 @@ jobs:
           assert d['independent_tuner_schedule_used'] is False
           assert d['independent_RS_schedule_used'] is False
           PY
-      - name: Materialize corrected shipping-coordinate evaluator
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          text=Path('tests/kalman_ou_iii/ou3-sea3-complete-word-feasibility-test.cpp').read_text()
-          old='Eigen::Quaternionf qn = nominal.mekf().quaternion_boat();\n    Eigen::Quaternionf qp = pert.mekf().quaternion_boat();'
-          new='Eigen::Quaternionf qn = nominal.mekf().qref;\n    Eigen::Quaternionf qp = pert.mekf().qref;'
-          oldi='Eigen::Quaternionf q = cayley_quaternion(c) * f.mekf().quaternion_boat();\n        q.normalize();\n        f.mekf().set_quaternion_boat(q);'
-          newi='Eigen::Quaternionf q = cayley_quaternion(c) * f.mekf().qref;\n        q.normalize();\n        f.mekf().qref = q;\n        f.mekf().xext.template head<3>().setZero();'
-          if text.count(old)!=1 or text.count(oldi)!=1:
-              raise SystemExit('shipping coordinate patch anchors changed')
-          if text.count('constexpr int MAG_STRIDE = 20;')!=1:
-              raise SystemExit('magnetic point cadence anchor changed')
-          text=text.replace(old,new,1).replace(oldi,newi,1)
-          text=text.replace('constexpr int MAG_STRIDE = 20;', 'constexpr int MAG_STRIDE = 2;', 1)
-          Path('/tmp/ou3-sea3-complete-word-feasibility-corrected.cpp').write_text(text)
-          PY
       - name: Compile candidate-angle sweep
         run: |
           g++ -O3 -std=c++20 -Wall -Wextra -Wpedantic -Werror -Wno-unused-function \
-            -DEIGEN_NON_ARDUINO -I/tmp -I./src -isystem /usr/include/eigen3 \
+            -DEIGEN_NON_ARDUINO -I./src -isystem /usr/include/eigen3 \
             tests/kalman_ou_iii/ou3-sea3-candidate-angle-sweep-test.cpp \
             -o /tmp/ou3-sea3-candidate-angle-sweep
       - name: Execute candidate-angle sweep

@@ -44,7 +44,7 @@ constexpr float DT = 0.005f;
 constexpr int PRE = 12000;
 constexpr int N = 601;
 constexpr int TOTAL = PRE + 2 * N;
-constexpr int MAG_STRIDE = 20;  // 0.1 s; within the declared <=1 s PE window.
+constexpr int MAG_STRIDE = 2;  // 0.01 s (100 Hz); admissible point schedule and shipping 250-update unlock.
 constexpr float MAG_NORM_UT = 50.0f;
 constexpr float LOCAL_RADIUS = 0.10f; // sqrt(V) in the shipping metric.
 constexpr int RANDOM_DIRECTIONS = 24;
@@ -174,8 +174,10 @@ std::unique_ptr<Filter> prepare_mode(char mode) {
 
 Eigen::VectorXf physical_increment(const Filter& pert, const Filter& nominal, int dim) {
     Eigen::VectorXf e = Eigen::VectorXf::Zero(dim);
-    Eigen::Quaternionf qn = nominal.mekf().quaternion_boat();
-    Eigen::Quaternionf qp = pert.mekf().quaternion_boat();
+    // Pext attitude coordinates are the shipping left error on qref
+    // (WORLD->BODY'): qref_pert = corr(c) * qref_nominal.
+    Eigen::Quaternionf qn = nominal.mekf().qref;
+    Eigen::Quaternionf qp = pert.mekf().qref;
     qn.normalize(); qp.normalize();
     Eigen::Quaternionf qr = qp * qn.conjugate();
     if (qr.w() < 0.0f) qr.coeffs() *= -1.0f;
@@ -209,9 +211,12 @@ Eigen::Quaternionf cayley_quaternion(const Eigen::Vector3f& c) {
 void inject(Filter& f, const Eigen::VectorXf& delta) {
     const Eigen::Vector3f c = delta.head<3>();
     if (c.squaredNorm() > 0.0f) {
-        Eigen::Quaternionf q = cayley_quaternion(c) * f.mekf().quaternion_boat();
+        // Test-only state injection in the same left-error coordinate
+        // as shipping reset/injection. Covariance is intentionally unchanged.
+        Eigen::Quaternionf q = cayley_quaternion(c) * f.mekf().qref;
         q.normalize();
-        f.mekf().set_quaternion_boat(q);
+        f.mekf().qref = q;
+        f.mekf().xext.template head<3>().setZero();
     }
     for (int i = 3; i < delta.size(); ++i) f.mekf().xext(i) += delta(i);
 }

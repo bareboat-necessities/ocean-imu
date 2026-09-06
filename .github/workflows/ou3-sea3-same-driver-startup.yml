@@ -80,76 +80,13 @@ jobs:
           assert len(d['live_covariance']) in (18,21)
           assert all(len(r['RS_std_xyz']) == 3 for r in d['word_schedule'])
           PY
-      - name: Bind complete point word to shipping coordinates and 100 Hz admissible mag packets
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          p=Path('tests/kalman_ou_iii/ou3-sea3-complete-word-feasibility-test.cpp')
-          text=p.read_text()
-          old='''Eigen::VectorXf physical_increment(const Filter& pert, const Filter& nominal, int dim) {
-              Eigen::VectorXf e = Eigen::VectorXf::Zero(dim);
-              Eigen::Quaternionf qn = nominal.mekf().quaternion_boat();
-              Eigen::Quaternionf qp = pert.mekf().quaternion_boat();
-              qn.normalize(); qp.normalize();
-              Eigen::Quaternionf qr = qp * qn.conjugate();
-              if (qr.w() < 0.0f) qr.coeffs() *= -1.0f;
-              if (!(std::abs(qr.w()) > 1e-7f)) throw std::runtime_error("relative attitude left Cayley chart");
-              e.segment<3>(0) = 2.0f * qr.vec() / qr.w();
-              for (int i = 3; i < dim; ++i) {
-                  e(i) = pert.mekf().xext(i) - nominal.mekf().xext(i);
-              }
-              return e;
-          }'''
-          new='''Eigen::VectorXf physical_increment(const Filter& pert, const Filter& nominal, int dim) {
-              Eigen::VectorXf e = Eigen::VectorXf::Zero(dim);
-              // Pext attitude coordinates are the left error on qref (WORLD->BODY'):
-              // qref_pert = corr(c) * qref_nominal.
-              Eigen::Quaternionf qn = nominal.mekf().qref;
-              Eigen::Quaternionf qp = pert.mekf().qref;
-              qn.normalize(); qp.normalize();
-              Eigen::Quaternionf qr = qp * qn.conjugate();
-              if (qr.w() < 0.0f) qr.coeffs() *= -1.0f;
-              if (!(std::abs(qr.w()) > 1e-7f)) throw std::runtime_error("relative attitude left Cayley chart");
-              e.segment<3>(0) = 2.0f * qr.vec() / qr.w();
-              for (int i = 3; i < dim; ++i) {
-                  e(i) = pert.mekf().xext(i) - nominal.mekf().xext(i);
-              }
-              return e;
-          }'''
-          old_inject='''void inject(Filter& f, const Eigen::VectorXf& delta) {
-              const Eigen::Vector3f c = delta.head<3>();
-              if (c.squaredNorm() > 0.0f) {
-                  Eigen::Quaternionf q = cayley_quaternion(c) * f.mekf().quaternion_boat();
-                  q.normalize();
-                  f.mekf().set_quaternion_boat(q);
-              }
-              for (int i = 3; i < delta.size(); ++i) f.mekf().xext(i) += delta(i);
-          }'''
-          new_inject='''void inject(Filter& f, const Eigen::VectorXf& delta) {
-              const Eigen::Vector3f c = delta.head<3>();
-              if (c.squaredNorm() > 0.0f) {
-                  Eigen::Quaternionf q = cayley_quaternion(c) * f.mekf().qref;
-                  q.normalize();
-                  f.mekf().qref = q;
-                  f.mekf().xext.template head<3>().setZero();
-              }
-              for (int i = 3; i < delta.size(); ++i) f.mekf().xext(i) += delta(i);
-          }'''
-          if old not in text: raise SystemExit('old physical_increment block not found exactly')
-          if old_inject not in text: raise SystemExit('old inject block not found exactly')
-          if 'constexpr int MAG_STRIDE = 20;' not in text:
-              raise SystemExit('old magnetic point cadence not found exactly')
-          text=text.replace(old,new,1).replace(old_inject,new_inject,1)
-          text=text.replace('constexpr int MAG_STRIDE = 20;', 'constexpr int MAG_STRIDE = 2;', 1)
-          Path('/tmp/ou3-sea3-complete-word-feasibility-test.cpp').write_text(text)
-          PY
       - name: Compile complete H18 release A21 shipping-word diagnostic
         run: |
-          grep -q 'constexpr int MAG_STRIDE = 2;' /tmp/ou3-sea3-complete-word-feasibility-test.cpp
-          grep -q 'nominal.mekf().qref' /tmp/ou3-sea3-complete-word-feasibility-test.cpp
+          grep -q 'constexpr int MAG_STRIDE = 2;' tests/kalman_ou_iii/ou3-sea3-complete-word-feasibility-test.cpp
+          grep -q 'nominal.mekf().qref' tests/kalman_ou_iii/ou3-sea3-complete-word-feasibility-test.cpp
           g++ -O3 -std=c++20 -Wall -Wextra -Wpedantic -Werror -Wno-unused-function \
             -DEIGEN_NON_ARDUINO -I./src -isystem /usr/include/eigen3 \
-            /tmp/ou3-sea3-complete-word-feasibility-test.cpp \
+            tests/kalman_ou_iii/ou3-sea3-complete-word-feasibility-test.cpp \
             -o /tmp/ou3-sea3-complete-word-feasibility
       - name: Execute non-promoting complete SEA3 nonlinear word diagnostic
         run: |

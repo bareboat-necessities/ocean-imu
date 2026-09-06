@@ -1,13 +1,12 @@
 // Non-promoting finite-angle point sweep on the legal complete-SEA3 shipping word.
 //
-// The workflow provides /tmp/ou3-sea3-complete-word-feasibility-corrected.cpp,
-// which is the same mandatory point diagnostic bound to shipping's qref left
-// error coordinate.  This harness only exposes the already-existing evaluator
+// The checked-in complete-word evaluator is itself bound to shipping's qref
+// left-error coordinate. This harness only exposes that same evaluator
 // at the declared 15/20/25/30 degree attitude candidates, for both H18 and A21.
 // It introduces no source, schedule, covariance, or filter path.
 
 #define main ou3_complete_word_original_main_for_reuse
-#include "ou3-sea3-complete-word-feasibility-corrected.cpp"
+#include "ou3-sea3-complete-word-feasibility-test.cpp"
 #undef main
 
 #include <array>

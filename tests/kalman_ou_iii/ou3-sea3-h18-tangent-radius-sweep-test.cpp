@@ -8,9 +8,9 @@
 //
 // H18 is intentionally used here: it requires no held->active hybrid release,
 // so the test cannot be contaminated by the separate A21 gate timing.  The
-// 0.1 s magnetic packet spacing in the included point harness is already an
-// admissible asynchronous PE realization inside the declared <=1 s recurrence
-// window.  A rho that remains above one as radius -> 0 would therefore signal
+// 100 Hz accepted magnetic point schedule in the included harness is admissible
+// under the asynchronous PE premise and also satisfies shipping's unchanged
+// 250-update H-to-A unlock inside the 3 s H18 word.  A rho that remains above one as radius -> 0 would therefore signal
 // a coordinate/attachment mismatch in the point diagnostic, not a nonlinear
 // basin failure.
 
