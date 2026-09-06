@@ -1,0 +1,28 @@
+name: ou3-feasibility-session
+on:
+  push:
+    branches: [codex/ou3-complete-sea3-shipping-feasibility]
+    paths: [.github/workflows/ou3-feasibility-session.yml]
+permissions:
+  contents: read
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: 59ae933ad34f2412fcaddf8c7b804ed43932dd11
+          fetch-depth: 1
+      - name: Export exact continuation tree
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/ou3-session
+          git archive --format=tar.gz HEAD > /tmp/ou3-session/source.tar.gz
+          git rev-parse HEAD HEAD^{tree} HEAD:src > /tmp/ou3-session/source-identity.txt
+          sha256sum /tmp/ou3-session/*.tar.gz > /tmp/ou3-session/sha256.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ou3-exact-continuation-source
+          path: /tmp/ou3-session
+          retention-days: 2
