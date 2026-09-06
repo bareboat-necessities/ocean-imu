@@ -3,14 +3,14 @@ name: ou3-sea3-four-s
 on:
   pull_request:
     paths:
-      - "tools/ou3_sea3_four_s_translation_information.py"
-      - "tools/ou3_sea3_four_s_translation_information_tight.py"
-      - "tools/ou3_sea3_four_s_live_prior_metric.py"
-      - "tools/ou3_sea3_h18_information_composition.py"
-      - "tools/ou3_sea3_h18_prior_free_completion.py"
-      - "tools/ou3_sea3_a21_detectability_completion.py"
-      - "tools/ou3_sea3_windowed_vector_pe.py"
-      - "tools/ou3_full_process_ucc.py"
+      - "tools/stability/ou3_sea3_four_s_translation_information.py"
+      - "tools/stability/ou3_sea3_four_s_translation_information_tight.py"
+      - "tools/stability/ou3_sea3_four_s_live_prior_metric.py"
+      - "tools/stability/ou3_sea3_h18_information_composition.py"
+      - "tools/stability/ou3_sea3_h18_prior_free_completion.py"
+      - "tools/stability/ou3_sea3_a21_detectability_completion.py"
+      - "tools/stability/ou3_sea3_windowed_vector_pe.py"
+      - "tools/stability/ou3_full_process_ucc.py"
       - "tests/validation/test_ou3_sea3_four_s_translation_information.py"
       - "tests/validation/test_ou3_sea3_four_s_live_prior_metric.py"
       - "tests/validation/test_ou3_sea3_h18_information_composition.py"
@@ -36,12 +36,12 @@ jobs:
           persist-credentials: false
       - name: Build complete SEA3 four-S and H18 certificates
         run: |
-          python3 tools/ou3_sea3_four_s_translation_information.py --output /tmp/ou3_sea3_four_s.json
-          python3 tools/ou3_sea3_four_s_translation_information_tight.py --output /tmp/ou3_sea3_four_s_tight.json
-          python3 tools/ou3_sea3_four_s_live_prior_metric.py --output /tmp/ou3_sea3_four_s_live_prior_metric.json
-          python3 tools/ou3_sea3_h18_information_composition.py --output /tmp/ou3_sea3_h18_information.json
-          python3 tools/ou3_sea3_h18_prior_free_completion.py --output /tmp/ou3_sea3_h18_prior_free_completion.json
-          python3 tools/ou3_sea3_a21_detectability_completion.py --output /tmp/ou3_sea3_a21_detectability_completion.json
+          python3 tools/stability/ou3_sea3_four_s_translation_information.py --output /tmp/ou3_sea3_four_s.json
+          python3 tools/stability/ou3_sea3_four_s_translation_information_tight.py --output /tmp/ou3_sea3_four_s_tight.json
+          python3 tools/stability/ou3_sea3_four_s_live_prior_metric.py --output /tmp/ou3_sea3_four_s_live_prior_metric.json
+          python3 tools/stability/ou3_sea3_h18_information_composition.py --output /tmp/ou3_sea3_h18_information.json
+          python3 tools/stability/ou3_sea3_h18_prior_free_completion.py --output /tmp/ou3_sea3_h18_prior_free_completion.json
+          python3 tools/stability/ou3_sea3_a21_detectability_completion.py --output /tmp/ou3_sea3_a21_detectability_completion.json
           python3 - <<'PY'
           import json, sys
           sys.path.insert(0, 'tools')

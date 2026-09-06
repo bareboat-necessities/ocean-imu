@@ -12,7 +12,6 @@ from __future__ import annotations
 from pathlib import Path
 
 from ou3_interval import (
-    Interval,
     matrix_add,
     matrix_identity,
     matrix_mul,

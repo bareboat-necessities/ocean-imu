@@ -9,7 +9,6 @@ on:
       - 'src/tuner/**'
       - 'src/util/W3dSimCommon.*'
       - 'tests/kalman_tfg/**'
-      - 'docs/tfg-spectral-mse-ou3-parity.md'
       - '.github/workflows/tfg-validation.yml'
   pull_request:
     paths:
@@ -19,7 +18,6 @@ on:
       - 'src/tuner/**'
       - 'src/util/W3dSimCommon.*'
       - 'tests/kalman_tfg/**'
-      - 'docs/tfg-spectral-mse-ou3-parity.md'
       - '.github/workflows/tfg-validation.yml'
   workflow_dispatch:
 

@@ -3,11 +3,11 @@ name: ou3-complete-sea3
 on:
   push:
     paths:
-      - "tools/ou3_sea3_*.py"
+      - "tools/stability/ou3_sea3_*.py"
       - "tools/ou3_sea3_*.json"
-      - "tools/ou3_binary32_interval.py"
-      - "tools/ou3_fast_inv_sqrt_interval.py"
-      - "tools/ou3_validated_log.py"
+      - "tools/stability/ou3_binary32_interval.py"
+      - "tools/stability/ou3_fast_inv_sqrt_interval.py"
+      - "tools/stability/ou3_validated_log.py"
       - "tools/ou3_proof_operating_domain.json"
       - "tests/validation/test_ou3_sea3_*.py"
       - "tests/validation/test_ou3_validated_log.py"
@@ -18,11 +18,11 @@ on:
       - ".github/workflows/ou3-complete-sea3.yml"
   pull_request:
     paths:
-      - "tools/ou3_sea3_*.py"
+      - "tools/stability/ou3_sea3_*.py"
       - "tools/ou3_sea3_*.json"
-      - "tools/ou3_binary32_interval.py"
-      - "tools/ou3_fast_inv_sqrt_interval.py"
-      - "tools/ou3_validated_log.py"
+      - "tools/stability/ou3_binary32_interval.py"
+      - "tools/stability/ou3_fast_inv_sqrt_interval.py"
+      - "tools/stability/ou3_validated_log.py"
       - "tools/ou3_proof_operating_domain.json"
       - "tests/validation/test_ou3_sea3_*.py"
       - "tests/validation/test_ou3_validated_log.py"
@@ -52,43 +52,43 @@ jobs:
       - name: Compile complete SEA3 source stack
         run: |
           python3 -m py_compile \
-            tools/ou3_sea3_directional_response_family.py \
-            tools/ou3_sea3_complete_source.py \
-            tools/ou3_sea3_physical_admissibility.py \
-            tools/ou3_sea3_p1_compatibility.py \
-            tools/ou3_sea3_wave_period_spectral_identity.py \
-            tools/ou3_sea3_spectral_moment_bridge.py \
-            tools/ou3_sea3_wave_period_frontend.py \
-            tools/ou3_sea3_dynamic_source_certificate.py \
-            tools/ou3_sea3_windowed_vector_pe.py \
-            tools/ou3_sea3_shipping_prediction_primitives.py \
-            tools/ou3_sea3_tuner_scheduler_step.py \
-            tools/ou3_sea3_wpe_state_step.py \
-            tools/ou3_sea3_private_mahony_state_step.py \
-            tools/ou3_sea3_private_mahony_live_invariant.py \
-            tools/ou3_sea3_frontend_state_step.py \
-            tools/ou3_binary32_interval.py \
-            tools/ou3_fast_inv_sqrt_interval.py \
-            tools/ou3_validated_log.py \
-            tools/ou3_p3_pseudo_scheduler_progress_certificate.py
+            tools/stability/ou3_sea3_directional_response_family.py \
+            tools/stability/ou3_sea3_complete_source.py \
+            tools/stability/ou3_sea3_physical_admissibility.py \
+            tools/stability/ou3_sea3_p1_compatibility.py \
+            tools/stability/ou3_sea3_wave_period_spectral_identity.py \
+            tools/stability/ou3_sea3_spectral_moment_bridge.py \
+            tools/stability/ou3_sea3_wave_period_frontend.py \
+            tools/stability/ou3_sea3_dynamic_source_certificate.py \
+            tools/stability/ou3_sea3_windowed_vector_pe.py \
+            tools/stability/ou3_sea3_shipping_prediction_primitives.py \
+            tools/stability/ou3_sea3_tuner_scheduler_step.py \
+            tools/stability/ou3_sea3_wpe_state_step.py \
+            tools/stability/ou3_sea3_private_mahony_state_step.py \
+            tools/stability/ou3_sea3_private_mahony_live_invariant.py \
+            tools/stability/ou3_sea3_frontend_state_step.py \
+            tools/stability/ou3_binary32_interval.py \
+            tools/stability/ou3_fast_inv_sqrt_interval.py \
+            tools/stability/ou3_validated_log.py \
+            tools/stability/ou3_p3_pseudo_scheduler_progress_certificate.py
 
       - name: Build compact phase-continuous SEA3 source contract
         run: |
-          python3 tools/ou3_sea3_complete_source.py \
+          python3 tools/stability/ou3_sea3_complete_source.py \
             --output /tmp/ou3_sea3_complete_source.json
-          python3 tools/ou3_sea3_shipping_prediction_primitives.py \
+          python3 tools/stability/ou3_sea3_shipping_prediction_primitives.py \
             --output /tmp/ou3_sea3_shipping_prediction_primitives.json
-          python3 tools/ou3_sea3_tuner_scheduler_step.py \
+          python3 tools/stability/ou3_sea3_tuner_scheduler_step.py \
             --output /tmp/ou3_sea3_tuner_scheduler_step.json
-          python3 tools/ou3_sea3_wpe_state_step.py \
+          python3 tools/stability/ou3_sea3_wpe_state_step.py \
             --output /tmp/ou3_sea3_wpe_state_step.json
-          python3 tools/ou3_fast_inv_sqrt_interval.py \
+          python3 tools/stability/ou3_fast_inv_sqrt_interval.py \
             --output /tmp/ou3_fast_inv_sqrt_interval.json
-          python3 tools/ou3_sea3_private_mahony_state_step.py \
+          python3 tools/stability/ou3_sea3_private_mahony_state_step.py \
             --output /tmp/ou3_sea3_private_mahony_state_step.json
-          python3 tools/ou3_sea3_private_mahony_live_invariant.py \
+          python3 tools/stability/ou3_sea3_private_mahony_live_invariant.py \
             --output /tmp/ou3_sea3_private_mahony_live_invariant.json
-          python3 tools/ou3_sea3_frontend_state_step.py \
+          python3 tools/stability/ou3_sea3_frontend_state_step.py \
             --output /tmp/ou3_sea3_frontend_state_step.json
           python3 - <<'PY'
           import json

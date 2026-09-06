@@ -3,6 +3,7 @@ name: ou3-proof
 on:
   push:
     paths:
+      - "tools/stability/ou3_*.py"
       - "tools/ou3_*.py"
       - "tools/ou3_*.json"
       - "tests/validation/test_ou3_*.py"
@@ -13,6 +14,7 @@ on:
       - ".github/workflows/ou3-proof.yml"
   pull_request:
     paths:
+      - "tools/stability/ou3_*.py"
       - "tools/ou3_*.py"
       - "tools/ou3_*.json"
       - "tests/validation/test_ou3_*.py"
@@ -46,6 +48,9 @@ jobs:
         working-directory: tests/validation
         run: |
           python3 -m unittest -v \
+            test_ou3_stability_package_integrity \
+            test_ou3_result_determinism \
+            test_ou3_source_domain_contract \
             test_ou3_proof_cleanup \
             test_ou3_translational_uco_ucc \
             test_ou3_full_process_ucc \
@@ -63,9 +68,9 @@ jobs:
 
       - name: Build complete SEA3 source
         run: |
-          python3 tools/ou3_sea3_complete_source.py \
+          python3 tools/stability/ou3_sea3_complete_source.py \
             --output /tmp/ou3_sea3_complete_source.json
-          python3 tools/ou3_sea3_windowed_vector_pe.py \
+          python3 tools/stability/ou3_sea3_windowed_vector_pe.py \
             --output /tmp/ou3_sea3_windowed_vector_pe.json
           python3 - <<'PY'
           import json
@@ -122,7 +127,7 @@ jobs:
 
       - name: Build complete SEA3 P3 preconditions
         run: |
-          python3 tools/ou3_sea3_p3_full_preconditions.py \
+          python3 tools/stability/ou3_sea3_p3_full_preconditions.py \
             --output /tmp/ou3_sea3_p3_full_preconditions.json
           python3 - <<'PY'
           import json
@@ -147,12 +152,12 @@ jobs:
 
       - name: Validate shipping prediction matrices, Live covariance and full joint backend
         run: |
-          python3 tools/ou3_sea3_shipping_prediction_primitives.py \
+          python3 tools/stability/ou3_sea3_shipping_prediction_primitives.py \
             --output /tmp/ou3_sea3_shipping_prediction_primitives.json
-          python3 tools/ou3_sea3_live_covariance_seed.py \
+          python3 tools/stability/ou3_sea3_live_covariance_seed.py \
             --output /tmp/ou3_sea3_live_covariance_seed.json
-          python3 tools/ou3_sea3_full_word_riccati_backend.py
-          python3 -m py_compile tools/ou3_sea3_full_word_riccati_backend_tight.py
+          python3 tools/stability/ou3_sea3_full_word_riccati_backend.py
+          python3 -m py_compile tools/stability/ou3_sea3_full_word_riccati_backend_tight.py
           python3 - <<'PY'
           import json
           p=json.load(open('/tmp/ou3_sea3_shipping_prediction_primitives.json'))
@@ -174,13 +179,13 @@ jobs:
 
       - name: Assemble literal complete H18 word and reset-complete H18/A21 API
         run: |
-          python3 tools/ou3_sea3_full_normal_live_word.py \
+          python3 tools/stability/ou3_sea3_full_normal_live_word.py \
             --output /tmp/ou3_sea3_full_normal_live_word.json
-          python3 tools/ou3_sea3_full_normal_live_word_reset.py \
+          python3 tools/stability/ou3_sea3_full_normal_live_word_reset.py \
             > /tmp/ou3_sea3_full_normal_live_word_reset.txt
           python3 - <<'PY'
           import json, pathlib, sys
-          sys.path.insert(0, str(pathlib.Path('tools').resolve()))
+          sys.path.insert(0, str(pathlib.Path('tools/stability').resolve()))
           import ou3_sea3_full_normal_live_word_reset as reset
           d=json.load(open('/tmp/ou3_sea3_full_normal_live_word.json'))
           assert d['validation_pass'], d['validation_failures']
@@ -206,7 +211,7 @@ jobs:
 
       - name: Build canonical complete-SEA3 P3 gate
         run: |
-          python3 tools/ou3_sea3_riccati_metric_p3.py \
+          python3 tools/stability/ou3_sea3_riccati_metric_p3.py \
             --output /tmp/ou3_sea3_riccati_metric_p3.json
           python3 - <<'PY'
           import json
@@ -249,15 +254,20 @@ jobs:
               assert d['modes'][mode]['Omega_minus_delta_P_full_matrix_closed'] is True
               assert d['modes'][mode]['certified_delta_lower'] >= 1e-18
               assert d['modes'][mode]['relative_Riccati_injection_margin_lower'] >= 1e-18
-          assert d['P3_CANONICAL_PASS'] is True
+          assert d['P3_CONDITIONAL_SEA3_PASS'] is True
+          assert d['P3_DEPLOYMENT_PASS'] is False
+          assert d['P3_CANONICAL_PASS'] is d['P3_CONDITIONAL_SEA3_PASS']
+          assert d['P4_MAY_CONSUME_CONDITIONAL_SEA3_P3'] is True
           assert d['P4_MAY_CONSUME_P3'] is True
-          assert d['P3_CANONICAL_FAIL_REASONS'] == []
+          assert d['P3_CONDITIONAL_SEA3_FAIL_REASONS'] == []
+          assert d['P3_DEPLOYMENT_FAIL_REASONS']
           assert d['global_physical_deployment_left_inclusion_is_separate_obligation'] is True
           assert d['global_physical_deployment_left_inclusion_closed_here'] is False
           print('P3_H18_DELTA', d['modes']['H18']['certified_delta_lower'])
           print('P3_A21_DELTA', d['modes']['A21']['certified_delta_lower'])
           print('P3_A21_BA_MARGIN', d['modes']['A21']['first_active_ba_M_delta_margin_lower'])
-          print('P3_CANONICAL_PASS', d['P3_CANONICAL_PASS'])
+          print('P3_CONDITIONAL_SEA3_PASS', d['P3_CONDITIONAL_SEA3_PASS'])
+          print('P3_DEPLOYMENT_PASS', d['P3_DEPLOYMENT_PASS'])
           PY
 
       - name: Test complete SEA3 P3 contracts
@@ -278,8 +288,10 @@ jobs:
           python3 - <<'PY'
           import json
           d=json.load(open('/tmp/ou3_sea3_riccati_metric_p3.json'))
-          if not d['P3_CANONICAL_PASS']:
-              raise SystemExit('canonical complete-SEA3 P3 FAIL: ' + '; '.join(d['P3_CANONICAL_FAIL_REASONS']))
+          if not d['P3_CONDITIONAL_SEA3_PASS']:
+              raise SystemExit('conditional complete-SEA3 P3 FAIL: ' + '; '.join(d['P3_CONDITIONAL_SEA3_FAIL_REASONS']))
+          if d['P3_DEPLOYMENT_PASS']:
+              raise SystemExit('deployment P3 must remain fail-closed until physical SEA0->SEA3 inclusion closes')
           if not d['P3_FULL_MATRIX_COMPARISON_CLOSED']:
               raise SystemExit('canonical complete-SEA3 P3 full-matrix comparison is not closed')
           PY
@@ -309,12 +321,12 @@ jobs:
 
       - name: Validate retained 0.8-rad geometry
         run: |
-          python3 tools/ou3_p4_cayley_sector_certificate.py \
+          python3 tools/stability/ou3_p4_cayley_sector_certificate.py \
             --output /tmp/ou3_p4_cayley_sector_certificate.json
 
       - name: Build canonical nonlinear moving-Riccati P4 foundation
         run: |
-          python3 tools/ou3_sea3_riccati_metric_p4.py \
+          python3 tools/stability/ou3_sea3_riccati_metric_p4.py \
             --output /tmp/ou3_sea3_riccati_metric_p4.json
 
       - name: Test moving-Riccati P4 contract

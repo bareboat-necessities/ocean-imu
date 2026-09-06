@@ -108,20 +108,9 @@ jobs:
             case "$path" in
               .github/workflows/build.yml|\
               .github/workflows/ou-validation.yml|\
-              .github/workflows/ou3-proof-fast.yml|\
-              .github/workflows/ou3-proof-completion.yml|\
-              .github/workflows/ou3-numerical-certificate.yml|\
-              tools/ou3_certificate_completion.py|\
-              tools/ou3_validate_enclosure.py|\
-              tools/ou3_deployment_gate.py|\
-              tools/ou3_hybrid_aw_sync_proof.py|\
-              tools/ou3_hybrid_contract.py|\
-              tools/ou3_source_domain_contract.py|\
-              tests/validation/test_ou3_certificate_completion.py|\
-              tests/validation/test_ou3_validate_enclosure.py|\
-              tests/validation/test_ou3_deployment_gate.py|\
-              tests/validation/test_ou3_hybrid_aw_sync_proof.py|\
-              tests/validation/test_ou3_hybrid_contract.py|\
+              tools/stability/ou3_*.py|\
+              tests/validation/test_ou3_stability_package_integrity.py|\
+              tests/validation/test_ou3_result_determinism.py|\
               tests/validation/test_ou3_source_domain_contract.py)
                 ;;
               *)
