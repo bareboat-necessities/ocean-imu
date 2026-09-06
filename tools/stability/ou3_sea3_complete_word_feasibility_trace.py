@@ -47,8 +47,12 @@ def _unique_f32(lo: Decimal, hi: Decimal, label: str) -> float:
 
 
 def build() -> dict:
-    membership = MEMBER.self_check()
-    cert = membership["driver_norm_certificate"]
+    # Membership in the theorem's hard driver ball is analytic and independent
+    # of the sampled implementation trace.  The loop below already validates
+    # every timestamp of the *longer* startup/H/release/A history, so calling
+    # MEMBER.self_check() here would only recompute the same 12,601 earlier
+    # timestamps before immediately recomputing all 13,202 of them again.
+    cert = MEMBER.driver_norm_certificate()
     if cert["driver_norm_strictly_below_one"] is not True:
         raise RuntimeError("continuum member escaped the complete-SEA3 driver ball")
 
