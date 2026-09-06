@@ -6,6 +6,7 @@ on:
       - "tools/stability/ou3_*.py"
       - "tools/stability/ou3_*.json"
       - "tests/validation/test_ou3_*.py"
+      - "tests/validation/Makefile"
       - "src/kalman_ou_iii/**"
       - "src/kalman_ou_common/**"
       - "src/tuner/**"
@@ -16,6 +17,7 @@ on:
       - "tools/stability/ou3_*.py"
       - "tools/stability/ou3_*.json"
       - "tests/validation/test_ou3_*.py"
+      - "tests/validation/Makefile"
       - "src/kalman_ou_iii/**"
       - "src/kalman_ou_common/**"
       - "src/tuner/**"
@@ -56,6 +58,22 @@ jobs:
             test_ou3_full_process_ucc \
             test_ou3_vector_uco_certificate \
             test_ou3_p3_pseudo_scheduler_progress_certificate
+
+  proof-contracts:
+    needs: source-foundation
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3, 4, 5]
+    steps:
+      - uses: actions/checkout@v6
+      - name: Run every retained source/proof contract without publication replays
+        run: |
+          make -C tests/validation proof-test \
+            PROOF_TEST_SHARD_INDEX=${{ matrix.shard }} \
+            PROOF_TEST_SHARD_COUNT=6
 
   complete-sea3-source:
     needs: source-foundation

@@ -19,7 +19,11 @@ thresholds are not to be changed for proof convenience.
 claim of deployment closure. The canonical P4 result must keep
 `P4_CANONICAL_PASS=false`, `P4_FINITE_WINDOW_CLOSED=false`, and
 `P5_MAY_START=false` until the actual word inequality closes. A green
-architecture/contract CI job does not mean P4 has passed.
+architecture/contract CI job does not mean P4 has passed. The covariance
+identity flag `structural_shipping_covariance_identities_closed` is separate
+from `full_nonlinear_measurement_metric_rebind_closed` and
+`full_nonlinear_transport_and_storage_closed`; the latter two are false.
+No covariance-only test can close those source-conditioned obligations.
 
 ## Source and frozen P3 contract
 
@@ -169,6 +173,24 @@ The strongest critic objection remains: additional coordinate identities do
 not demonstrate a complete-word margin. The next executable result must be a
 legal same-history word and its signed margin, not another claimed radius.
 
+## Verification ownership and contract repairs
+
+The frozen conditional P3 producer is authoritative: tests must distinguish
+its `delta=1e-18` conditional verdict from still-open physical deployment and
+materialization. Retired source-identity keys and assertions equating these
+different verdicts were test-contract defects, not failed P3 inequalities.
+Likewise the old true "full nonlinear rebind" label overstated exact covariance
+identities. The corrected status exposes nonlinear transport/storage as open;
+no numerical P3 result or operating bound changes.
+
+Statistical evidence publication runs `evidence-test`; the canonical proof
+workflow runs the complementary `proof-test` shards. Their disjoint union is
+all validation modules, and the complete `test` target still runs everything.
+This prevents repeated source-only proof searches from consuming the evidence
+publisher's timeout while retaining every test. Partition regression checks
+both module coverage and shard assignment. These are CI/contract repairs, not
+new proof lemmas or evidence that the whole-word ratio is below one.
+
 ## Next falsifiable experiment
 
 The controlling object is `rho_W=V_after(F_W(x))/V_before(x)` on the actual
@@ -213,10 +235,12 @@ Run `make -C tests/validation build`, the source-foundation unittest command in
 `.github/workflows/ou3-proof.yml`, and all `test_ou3_p4_*.py` tests. Run each
 canonical gate with `--output /tmp/<name>.json`; inspect its pass flags, not
 just its exit code. `python3 tools/ou_evidence_contract.py --check` is separate
-from the stability theorem. Fresh validation/robustness replay evidence is
-still required for the changed source inherited from main; never hand-edit
-provenance hashes. The opt-in `ou-full-evidence-branch.yml` workflow owns a full
-branch refresh. No filter or pitch-gate edit is part of this handoff.
+from the stability theorem. Regenerate validation/robustness bundles against
+the checked-out source when their dependency contract is stale; never
+hand-edit provenance hashes or transplant another tree's replay fingerprint.
+The opt-in `ou-full-evidence-branch.yml` workflow owns a full branch refresh.
+Raw combined bundles are not published evidence until its provenance and
+publication checks pass. No filter or pitch-gate edit is part of this work.
 
 ## Continuation boundary
 

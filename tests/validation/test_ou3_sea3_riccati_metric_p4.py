@@ -1,3 +1,4 @@
+from copy import deepcopy
 from pathlib import Path
 import sys
 import unittest
@@ -46,9 +47,13 @@ class Sea3MovingRiccatiP4Test(unittest.TestCase):
         self.assertFalse(self.d["old_group_isotropic_P3_P4_metric_assumed"])
         self.assertGreaterEqual(self.d["outer_angle_rad"], 0.80)
 
-    def test_exact_moving_metric_rebind_is_closed(self):
+    def test_covariance_rebind_does_not_close_nonlinear_transport(self):
         self.assertTrue(self.d["P3_CONDITIONAL_SEA3_PASS_consumed"])
-        self.assertTrue(self.d["full_nonlinear_measurement_metric_rebind_closed"])
+        self.assertTrue(self.d["structural_shipping_covariance_identities_closed"])
+        self.assertFalse(self.d["full_nonlinear_measurement_metric_rebind_closed"])
+        self.assertFalse(self.d["full_nonlinear_transport_and_storage_closed"])
+        self.assertFalse(self.r["full_nonlinear_measurement_metric_rebind_closed"])
+        self.assertFalse(self.r["nonlinear_chart_transport_and_storage_closed"])
         self.assertFalse(self.d["exact_vector_accelerometer_congruence_rebind_pending"])
         self.assertTrue(self.d["moving_metric_coordinate_congruence_exact"])
         self.assertTrue(self.d["Joseph_nonlinear_injection_metric_closed"])
@@ -103,17 +108,24 @@ class Sea3MovingRiccatiP4Test(unittest.TestCase):
         self.assertTrue(self.i["information_headroom_closed"])
         self.assertFalse(self.i["P4_promoted_here"])
 
-    def test_only_live_blocker_is_finite_nonlinear_remainder(self):
+    def test_transport_and_signed_complete_word_both_remain_open(self):
         self.assertGreaterEqual(self.d["P3_H_delta_consumed"], 1.0e-18)
         self.assertGreaterEqual(self.d["P3_A_delta_consumed"], 1.0e-18)
         self.assertFalse(self.d["P4_CANONICAL_PASS"])
         self.assertFalse(self.d["P5_MAY_START"])
         self.assertFalse(self.d["nonlinear_remainder_dominated_on_full_sector"])
-        self.assertEqual(1, len(self.d["P4_CANONICAL_FAIL_REASONS"]))
-        self.assertIn(
-            "nonlinear remainder",
-            self.d["P4_CANONICAL_FAIL_REASONS"][0].lower(),
-        )
+        reasons = self.d["P4_CANONICAL_FAIL_REASONS"]
+        self.assertEqual(2, len(reasons))
+        self.assertTrue(any("uniform storage" in x.lower() for x in reasons))
+        self.assertTrue(any("nonlinear remainder" in x.lower() for x in reasons))
+
+    def test_covariance_identities_cannot_promote_nonlinear_binding(self):
+        d = deepcopy(self.d)
+        d["full_nonlinear_measurement_metric_rebind_closed"] = True
+        self.assertTrue(mod.validate(d))
+        r = deepcopy(self.r)
+        r["full_nonlinear_measurement_metric_rebind_closed"] = True
+        self.assertTrue(rebind.validate(r))
 
 
 if __name__ == "__main__":
