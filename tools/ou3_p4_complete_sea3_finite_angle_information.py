@@ -1,31 +1,24 @@
 #!/usr/bin/env python3
 """Finite-angle complete-SEA3 information sector for OU-III P4.
 
-This is a P4-only consumer of the frozen P3 information lemmas.  It does not
-create a source word and it does not replace the complete shipping word by the
-selected PE/four-S witnesses.  The selected witnesses are used only as the same
-PSD lower-bound components already used by the frozen complete-SEA3 P3 chain.
+P4-only consumer of the frozen complete-SEA3 P3 information lemmas.  It does
+not create a source word and does not replace the complete shipping word by the
+selected PE/four-S witnesses.  Those witnesses remain PSD lower-bound
+components of the same complete word.
 
-For a Cayley attitude error c with physical angle theta, the exact vector
-residual differential retains at least
+For Cayley attitude error c with physical angle theta, the exact vector
+residual differential retains at least k(theta)=cos(theta/2)^2 of the attitude
+coordinate singular value, hence k(theta)^2 of the eta6 vector information.
+The accelerometer a_w column is an orthogonal rotation and the same actual
+SpectralMSE R_S four-S regularizer is unchanged.  Reusing the frozen triangular
+Schur bound gives
 
-    k(theta) = cos(theta/2)^2
+  lambda >= alpha_theta*d_aw/(alpha_theta+||C_aw||^2+d_aw),
+  alpha_theta = k(theta)^2*alpha6.
 
-of the attitude coordinate singular value, hence k(theta)^2 of the eta6 vector
-information Gramian.  The accelerometer a_w column is a rotation and therefore
-keeps its spectral norm exactly; the four-S a_w regularizer is unchanged.  The
-same triangular Schur lower bound used by the frozen H18 information lemma can
-therefore be re-evaluated without changing source semantics:
-
-    lambda >= alpha_theta * d_aw / (alpha_theta + ||C_aw||^2 + d_aw),
-    alpha_theta = k(theta)^2 alpha_6.
-
-The magnetometer radial finite-angle component is excluded from the correction
-ledger by the exact shipping Joseph cancellation primitive.  The accelerometer
-radial component is *not* declared harmless here: it is in the full-rank a_w
-measurement range and must be charged in the subsequent signed-Joseph word.
-Consequently this module certifies finite-angle information headroom, not P4
-itself.
+The magnetometer radial component is removed by the exact Joseph cancellation
+lemma.  The accelerometer nonlinear component is deliberately NOT declared
+harmless here; it is charged by the downstream signed-Joseph/reset word.
 """
 from __future__ import annotations
 
@@ -39,19 +32,30 @@ import ou3_p4_cayley_sector_certificate as CAYLEY
 import ou3_p4_magnetometer_radial_joseph as MAG
 import ou3_sea3_complete_source as COMPLETE
 import ou3_sea3_h18_information_composition as HINFO
+import ou3_validated_transcendentals as VT
 
 REPO = Path(__file__).resolve().parents[1]
 DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
-SCHEMA = 1
-QUALIFICATION = "OU3_P4_COMPLETE_SEA3_FINITE_ANGLE_INFORMATION_SECTOR"
+SCHEMA = 2
+QUALIFICATION = "OU3_P4_COMPLETE_SEA3_FINITE_ANGLE_INFORMATION_SECTOR_V2"
 USEFUL_GATE = 1.0e-18
+# Rational Archimedean upper; avoids using libm pi in a promoted lower bound.
+PI_UP = 355.0 / 113.0
 
 
 def _candidate(theta_deg: float, *, alpha6: float, cross2: float, d_aw: float,
                non_aw: float) -> dict:
-    theta = math.radians(float(theta_deg))
-    half = 0.5 * theta
-    k = down(math.cos(half) ** 2)
+    deg = float(theta_deg)
+    if not (math.isfinite(deg) and 0.0 < deg <= 60.0):
+        raise ValueError("P4 candidate angle outside audited finite-angle range")
+    theta_hi = up(deg * PI_UP / 180.0)
+    half_hi = up(0.5 * theta_hi)
+    # cos is positive/decreasing on this audited interval.  Evaluate at the
+    # upper angle and take the validated lower endpoint.
+    c = VT.cos_point(half_hi)
+    if c.lo <= 0.0:
+        raise RuntimeError("validated candidate cosine lost positivity")
+    k = down(c.lo * c.lo)
     retention = down(k * k)
     alpha_theta = down(retention * alpha6)
     det = down(alpha_theta * d_aw)
@@ -59,8 +63,9 @@ def _candidate(theta_deg: float, *, alpha6: float, cross2: float, d_aw: float,
     coupled = down(det / trace)
     full = min(coupled, non_aw)
     return {
-        "attitude_angle_deg": float(theta_deg),
-        "attitude_angle_rad": theta,
+        "attitude_angle_deg": deg,
+        "attitude_angle_rad_upper": theta_hi,
+        "validated_cos_half_interval": c.as_list(),
         "cayley_chart_sigma_min_lower": k,
         "vector_information_retention_factor_lower": retention,
         "eta6_information_lower_after_finite_angle": alpha_theta,
@@ -116,6 +121,8 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "trajectory_replay_used": False,
         "filter_changed": False,
         "declared_domain_shrunk": False,
+        "ordinary_libm_trigonometric_used_in_pass_decision": False,
+        "validated_transcendental_backend_used": True,
         "P3_frozen_not_modified": True,
         "component_of_complete_SEA3_full_word": True,
         "selected_PE_or_four_S_replace_complete_word": False,
@@ -147,7 +154,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "reset_defect_complete_word_closed_here": False,
         "P4_promoted_here": False,
         "next_obligation": (
-            "use this retained finite-angle eta6/a_w information and the same actual-R_S complete SEA3 word in the signed Joseph correction/reset ledger; do not charge an N-times worst standalone accelerometer remainder"
+            "use retained finite-angle eta6/a_w information and the same actual-R_S complete SEA3 word in the signed Joseph correction/reset ledger; never charge an N-times worst standalone accelerometer remainder"
         ),
     }
 
@@ -159,8 +166,9 @@ def validate(d: dict) -> list[str]:
     if d.get("canonical_source") != "COMPLETE_SEA3_NORMAL_LIVE_WORD":
         f.append("canonical source changed")
     for key in (
-        "source_generated_not_trajectory_fit", "P3_frozen_not_modified",
-        "component_of_complete_SEA3_full_word", "all_due_S_updates_remain_in_complete_word",
+        "source_generated_not_trajectory_fit", "validated_transcendental_backend_used",
+        "P3_frozen_not_modified", "component_of_complete_SEA3_full_word",
+        "all_due_S_updates_remain_in_complete_word",
         "all_valid_accelerometer_updates_remain_in_complete_word",
         "actual_applied_SpectralMSE_R_S_consumed_through_frozen_H18_information",
         "directional_four_S_R_S_regularizer_retained", "finite_angle_vector_geometry_exact",
@@ -173,6 +181,7 @@ def validate(d: dict) -> list[str]:
             f.append(f"{key} is not true")
     for key in (
         "trajectory_replay_used", "filter_changed", "declared_domain_shrunk",
+        "ordinary_libm_trigonometric_used_in_pass_decision",
         "selected_PE_or_four_S_replace_complete_word", "accelerometer_radial_remainder_declared_zero",
         "signed_Joseph_complete_word_closed_here", "reset_defect_complete_word_closed_here",
         "P4_promoted_here",
@@ -207,6 +216,7 @@ def main() -> int:
     print(json.dumps({
         "widest_information_cell_deg": d["widest_information_cell_deg"],
         "widest_information_cell_H18_lambda_min_lower": d["widest_information_cell_H18_lambda_min_lower"],
+        "candidate_cells": d["candidate_cells"],
         "outer_geometry_angle_rad_retained": d["outer_geometry_angle_rad_retained"],
         "validation_failures": vf,
     }, indent=2, sort_keys=True))
