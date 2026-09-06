@@ -4,6 +4,7 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools"))
+sys.path.insert(0, str(ROOT / "tools" / "stability"))
 
 import ou3_sea3_complete_source as complete  # noqa: E402
 import ou3_sea3_p3_full_preconditions as full  # noqa: E402
@@ -145,9 +146,9 @@ class Sea3CompleteSourceP3Test(unittest.TestCase):
         self.assertTrue(self.d["UNIVERSAL_COMPLETE_SEA3_CERTIFICATE_CHAIN_CLOSED"])
         self.assertTrue(self.d["P3_FULL_WORD_ENCLOSED"])
         self.assertTrue(self.d["P3_FULL_MATRIX_COMPARISON_CLOSED"])
-        self.assertTrue(self.d["P3_CANONICAL_PASS"])
-        self.assertTrue(self.d["P4_MAY_CONSUME_P3"])
-        self.assertEqual([], self.d["P3_CANONICAL_FAIL_REASONS"])
+        self.assertTrue(self.d["P3_CONDITIONAL_SEA3_PASS"])
+        self.assertTrue(self.d["P4_MAY_CONSUME_CONDITIONAL_SEA3_P3"])
+        self.assertEqual([], self.d["P3_CONDITIONAL_SEA3_FAIL_REASONS"])
         for mode, dim in (("H18", 18), ("A21", 21)):
             self.assertEqual(self.d["modes"][mode]["dimension"], dim)
             self.assertTrue(self.d["modes"][mode]["Omega_minus_delta_P_full_matrix_closed"])

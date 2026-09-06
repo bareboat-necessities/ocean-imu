@@ -4,6 +4,7 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools"))
+sys.path.insert(0, str(ROOT / "tools" / "stability"))
 
 import ou3_sea3_frontend_state_step as frontend  # noqa: E402
 import ou3_sea3_private_mahony_state_step as mod  # noqa: E402

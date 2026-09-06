@@ -9,6 +9,7 @@ import numpy as np
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools"))
+sys.path.insert(0, str(ROOT / "tools" / "stability"))
 
 import ou_roundtrip_transition as transition
 import ou_validation as validation

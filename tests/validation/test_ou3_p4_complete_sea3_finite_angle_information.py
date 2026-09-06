@@ -4,6 +4,7 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools"))
+sys.path.insert(0, str(ROOT / "tools" / "stability"))
 import ou3_p4_complete_sea3_finite_angle_information as mod  # noqa: E402
 
 

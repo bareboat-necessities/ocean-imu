@@ -5,8 +5,9 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools"))
+sys.path.insert(0, str(ROOT / "tools" / "stability"))
 spec = importlib.util.spec_from_file_location(
-    "ou3_vector_uco_certificate", ROOT / "tools" / "ou3_vector_uco_certificate.py"
+    "ou3_vector_uco_certificate", ROOT / "tools" / "stability" / "ou3_vector_uco_certificate.py"
 )
 mod = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(mod)
@@ -45,7 +46,7 @@ class VectorUcoCertificateTests(unittest.TestCase):
         )
 
     def test_no_replay_or_observed_extrema_are_used(self):
-        text = (ROOT / "tools" / "ou3_vector_uco_certificate.py").read_text()
+        text = (ROOT / "tools" / "stability" / "ou3_vector_uco_certificate.py").read_text()
         for forbidden in (
             "ou3_exact_replay", "path_metrics", "neighborhood_radius_search",
             "np.quantile", "observed_min", "replay_min",

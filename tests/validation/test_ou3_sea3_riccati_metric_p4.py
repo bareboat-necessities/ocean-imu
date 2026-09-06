@@ -4,6 +4,7 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools"))
+sys.path.insert(0, str(ROOT / "tools" / "stability"))
 import ou3_p4_complete_sea3_accelerometer_operation_coordinate as acccoord  # noqa: E402
 import ou3_p4_complete_sea3_finite_angle_information as finfo  # noqa: E402
 import ou3_p4_complete_sea3_vector_remainder_geometry as remgeom  # noqa: E402
@@ -46,7 +47,7 @@ class Sea3MovingRiccatiP4Test(unittest.TestCase):
         self.assertGreaterEqual(self.d["outer_angle_rad"], 0.80)
 
     def test_exact_moving_metric_rebind_is_closed(self):
-        self.assertTrue(self.d["P3_CANONICAL_PASS_consumed"])
+        self.assertTrue(self.d["P3_CONDITIONAL_SEA3_PASS_consumed"])
         self.assertTrue(self.d["full_nonlinear_measurement_metric_rebind_closed"])
         self.assertFalse(self.d["exact_vector_accelerometer_congruence_rebind_pending"])
         self.assertTrue(self.d["moving_metric_coordinate_congruence_exact"])

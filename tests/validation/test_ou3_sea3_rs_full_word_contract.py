@@ -6,6 +6,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools"))
+sys.path.insert(0, str(ROOT / "tools" / "stability"))
 
 import ou3_sea3_complete_source as source  # noqa: E402
 import ou3_sea3_full_normal_live_word as word  # noqa: E402

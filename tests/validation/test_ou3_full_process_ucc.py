@@ -5,8 +5,9 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools"))
+sys.path.insert(0, str(ROOT / "tools" / "stability"))
 spec = importlib.util.spec_from_file_location(
-    "ou3_full_process_ucc", ROOT / "tools" / "ou3_full_process_ucc.py"
+    "ou3_full_process_ucc", ROOT / "tools" / "stability" / "ou3_full_process_ucc.py"
 )
 mod = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(mod)
@@ -51,7 +52,7 @@ class FullProcessUccTests(unittest.TestCase):
         self.assertLessEqual(d["modes"]["A"]["prediction_Q_lambda_min_lower"], qt)
 
     def test_no_replay_inputs(self):
-        text = (ROOT / "tools" / "ou3_full_process_ucc.py").read_text()
+        text = (ROOT / "tools" / "stability" / "ou3_full_process_ucc.py").read_text()
         for forbidden in ("ou3_exact_replay", "path_metrics", "neighborhood_radius_search"):
             self.assertNotIn(forbidden, text)
 

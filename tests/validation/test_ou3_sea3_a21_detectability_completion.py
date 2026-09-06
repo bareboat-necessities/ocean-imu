@@ -8,6 +8,7 @@ ROOT = Path(__file__).resolve().parents[2]
 TOOLS = ROOT / "tools"
 if str(TOOLS) not in sys.path:
     sys.path.insert(0, str(TOOLS))
+    sys.path.insert(0, str(TOOLS / "stability"))
 
 import ou3_sea3_a21_detectability_completion as A21
 

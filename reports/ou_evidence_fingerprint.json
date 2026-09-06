@@ -1794,27 +1794,27 @@
     },
     {
       "mode": "100644",
-      "path": "tools/ou3_full_process_ucc.py",
+      "path": "tools/stability/ou3_full_process_ucc.py",
       "sha256": "2ce0d3407509693de5ee0ac9ac120aeee8b9ba2bc4becdb59ce0ae57ad604e86"
     },
     {
       "mode": "100755",
-      "path": "tools/ou3_implementation_word_language.py",
+      "path": "tools/stability/ou3_implementation_word_language.py",
       "sha256": "3bbd388eb914b5a3b2affc8c1e17256a87def13571e1e785d9fe7bbe2b64b1cc"
     },
     {
       "mode": "100644",
-      "path": "tools/ou3_interval.py",
+      "path": "tools/stability/ou3_interval.py",
       "sha256": "fe1803ec3baee51d4c0c6f76b0b664e6c638f231bbbcba75579a52b8e9389459"
     },
     {
       "mode": "100644",
-      "path": "tools/ou3_interval_ad.py",
+      "path": "tools/stability/ou3_interval_ad.py",
       "sha256": "44aaf04cedbadd6b5b95c418bbccb3f863d3ca423b81c423b0888efe562a847e"
     },
     {
       "mode": "100644",
-      "path": "tools/ou3_interval_linear_algebra.py",
+      "path": "tools/stability/ou3_interval_linear_algebra.py",
       "sha256": "b34cc57aa49aa90e1d1bc613db29500b32ba5c4807063f84a21ed6a393743245"
     },
     {
@@ -1874,7 +1874,7 @@
     },
     {
       "mode": "100644",
-      "path": "tools/ou3_p3_gramian_e3.py",
+      "path": "tools/stability/ou3_p3_gramian_e3.py",
       "sha256": "2a9e4d13ec7a736dcf83239ef9e21325f13e37dde6bcd24cb7f68ba0f32de43e"
     },
     {
@@ -1904,7 +1904,7 @@
     },
     {
       "mode": "100644",
-      "path": "tools/ou3_p3_pseudo_scheduler_progress_certificate.py",
+      "path": "tools/stability/ou3_p3_pseudo_scheduler_progress_certificate.py",
       "sha256": "9128507b475aaad01fbb1628a7909afe263ebb19ef6431ad3ef022de6e130ce1"
     },
     {
@@ -1914,7 +1914,7 @@
     },
     {
       "mode": "100644",
-      "path": "tools/ou3_p3_scaled_process.py",
+      "path": "tools/stability/ou3_p3_scaled_process.py",
       "sha256": "32b1b97006dd7a56cc6dacb1795f335ff3ae7eba99c0674d0b4e84ffb1527345"
     },
     {
@@ -1929,7 +1929,7 @@
     },
     {
       "mode": "100644",
-      "path": "tools/ou3_p3_source_uniform_translation_covariance.py",
+      "path": "tools/stability/ou3_p3_source_uniform_translation_covariance.py",
       "sha256": "45107681a2693675f218ac85fdc5c2a59b0f61d2d46124bf657ef8605e7c6218"
     },
     {
@@ -1949,17 +1949,17 @@
     },
     {
       "mode": "100644",
-      "path": "tools/ou3_p4_cayley_sector_certificate.py",
+      "path": "tools/stability/ou3_p4_cayley_sector_certificate.py",
       "sha256": "f63678a496efb2fb64ddbd3bf176804aa00ec8ef5d63dd1ebebe6e842a2f90f9"
     },
     {
       "mode": "100644",
-      "path": "tools/ou3_p4_exact_reset_transport.py",
+      "path": "tools/stability/ou3_p4_exact_reset_transport.py",
       "sha256": "265dbd1431b4d5aa594805fb1330b7f744361d4ad08dbe2d9671295b505d9b88"
     },
     {
       "mode": "100644",
-      "path": "tools/ou3_p4_magnetometer_radial_joseph.py",
+      "path": "tools/stability/ou3_p4_magnetometer_radial_joseph.py",
       "sha256": "4fb11a694dc4c17691b3a07352b50d941b7b3bb72fba883bdcc554529c2cdbfc"
     },
     {
@@ -2009,42 +2009,42 @@
     },
     {
       "mode": "100644",
-      "path": "tools/ou3_sea3_spectral_moment_bridge.py",
+      "path": "tools/stability/ou3_sea3_spectral_moment_bridge.py",
       "sha256": "71bf840514c9f51e29c990b25575a4f2f5c1c1e48989152467a86d63edeaca09"
     },
     {
       "mode": "100644",
-      "path": "tools/ou3_sea3_wave_period_frontend.py",
+      "path": "tools/stability/ou3_sea3_wave_period_frontend.py",
       "sha256": "2b5dff11a5c646357beb74d60ee3477080d74c1ca327c07b3c24e334c20b91fc"
     },
     {
       "mode": "100644",
-      "path": "tools/ou3_source_domain_contract.py",
+      "path": "tools/stability/ou3_source_domain_contract.py",
       "sha256": "c07453a1083e238aff1b352b7933faa5f5ec576d65e5699c24d67514f8054aab"
     },
     {
       "mode": "100644",
-      "path": "tools/ou3_source_reachable_matrix_p3.py",
+      "path": "tools/stability/ou3_source_reachable_matrix_p3.py",
       "sha256": "87f8d30856953f381b54cde9d285f335f7cf8d5259fc150e36cef79bf0ca70c7"
     },
     {
       "mode": "100644",
-      "path": "tools/ou3_translational_uco_ucc.py",
+      "path": "tools/stability/ou3_translational_uco_ucc.py",
       "sha256": "6511a85b346c89baaa8ca4b4d7cfc73cb8f5ea51d99c7c56623027f504eec179"
     },
     {
       "mode": "100644",
-      "path": "tools/ou3_validated_transcendentals.py",
+      "path": "tools/stability/ou3_validated_transcendentals.py",
       "sha256": "c067534d83ce45cd2d8ad87a1f3285da2ec8587a613b2def6985f4d7e329bedc"
     },
     {
       "mode": "100644",
-      "path": "tools/ou3_vector_uco_certificate.py",
+      "path": "tools/stability/ou3_vector_uco_certificate.py",
       "sha256": "6d2d40f7a36bf38d6059192342a945ef9e7dd4904649b03a04c4443edadc4a8d"
     },
     {
       "mode": "100644",
-      "path": "tools/ou3_verified_spd_inverse.py",
+      "path": "tools/stability/ou3_verified_spd_inverse.py",
       "sha256": "16823a534118ec0c0119a68c7c85e3bc983454f38fd69cc433d99c033bec517f"
     },
     {

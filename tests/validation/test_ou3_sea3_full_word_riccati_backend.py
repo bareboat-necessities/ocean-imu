@@ -4,6 +4,7 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools"))
+sys.path.insert(0, str(ROOT / "tools" / "stability"))
 
 import ou3_sea3_full_word_riccati_backend as mod  # noqa: E402
 from ou3_interval import matrix_point  # noqa: E402

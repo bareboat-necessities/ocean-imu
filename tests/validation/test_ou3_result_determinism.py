@@ -9,19 +9,15 @@ ROOT = Path(__file__).resolve().parents[2]
 # sync with the canonical ou3-proof route; a producer may be fail-closed/status
 # only and still belongs here if its JSON is carried into the theorem chain.
 PRODUCERS = [
-    ROOT / "tools" / "ou3_p2_clock_phase_tuner_graph.py",
-    ROOT / "tools" / "ou3_p3_scaled_process.py",
-    ROOT / "tools" / "ou3_p3_p2_v1_history_frontier.py",
-    ROOT / "tools" / "ou3_p3_p2_v1_stage_phase_translation.py",
-    ROOT / "tools" / "ou3_p3_p2_v1_full_state_join.py",
-    ROOT / "tools" / "ou3_p3_canonical_gate.py",
-    ROOT / "tools" / "ou3_p4_p3_metric_attachment.py",
-    ROOT / "tools" / "ou3_p4_cayley_sector_certificate.py",
-    ROOT / "tools" / "ou3_p4_accelerometer_corotated_aw.py",
-    ROOT / "tools" / "ou3_p4_source_word_timing.py",
-    ROOT / "tools" / "ou3_p4_vector_remainder_sector.py",
-    ROOT / "tools" / "ou3_p4_signed_joseph_feasibility.py",
-    ROOT / "tools" / "ou3_p4_canonical_gate.py",
+    ROOT / "tools" / "stability" / "ou3_sea3_complete_source.py",
+    ROOT / "tools" / "stability" / "ou3_sea3_p3_full_preconditions.py",
+    ROOT / "tools" / "stability" / "ou3_sea3_full_normal_live_word.py",
+    ROOT / "tools" / "stability" / "ou3_sea3_p3_conditional_composition.py",
+    ROOT / "tools" / "stability" / "ou3_sea3_riccati_metric_p3.py",
+    ROOT / "tools" / "stability" / "ou3_p4_complete_sea3_accelerometer_operation_coordinate.py",
+    ROOT / "tools" / "stability" / "ou3_p4_complete_sea3_finite_angle_information.py",
+    ROOT / "tools" / "stability" / "ou3_p4_complete_sea3_vector_remainder_geometry.py",
+    ROOT / "tools" / "stability" / "ou3_sea3_riccati_metric_p4.py",
 ]
 
 FORBIDDEN_RESULT_KEYS = {

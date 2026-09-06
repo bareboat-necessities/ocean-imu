@@ -8,6 +8,7 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
 TOOLS = ROOT / "tools"
+STABILITY = TOOLS / "stability"
 WORKFLOWS = ROOT / ".github" / "workflows"
 VALIDATION = ROOT / "tests" / "validation"
 OU3_DOC = ROOT / "doc" / "kalman_ou_iii"
@@ -16,7 +17,7 @@ OU3_DOC = ROOT / "doc" / "kalman_ou_iii"
 class Ou3ProofCleanupTest(unittest.TestCase):
     def test_no_retired_p5_aliases_or_imports_remain(self):
         offenders = []
-        for path in sorted(TOOLS.glob("ou3_*.py")):
+        for path in sorted(STABILITY.glob("ou3_*.py")):
             text = path.read_text(encoding="utf-8")
             if path.name.startswith("ou3_p5_"):
                 offenders.append(f"retired filename: {path.name}")
@@ -38,9 +39,9 @@ class Ou3ProofCleanupTest(unittest.TestCase):
         retired_modules = {name[:-3] for name in retired_names}
         offenders = []
         for name in sorted(retired_names):
-            if (TOOLS / name).exists():
+            if (STABILITY / name).exists() or (TOOLS / name).exists():
                 offenders.append(f"retired filename: {name}")
-        for path in sorted(TOOLS.glob("ou3_*.py")):
+        for path in sorted(STABILITY.glob("ou3_*.py")):
             text = path.read_text(encoding="utf-8")
             for module in sorted(retired_modules):
                 if module in text:
@@ -67,7 +68,7 @@ class Ou3ProofCleanupTest(unittest.TestCase):
         }
         offenders = []
         for name in sorted(retired_tools):
-            tool = TOOLS / name
+            tool = STABILITY / name
             test = VALIDATION / f"test_{name}"
             if tool.exists():
                 offenders.append(f"retired tool: {tool.relative_to(ROOT)}")
@@ -88,9 +89,9 @@ class Ou3ProofCleanupTest(unittest.TestCase):
         retired_modules = {name[:-3] for name in retired_names}
         offenders = []
         for name in sorted(retired_names):
-            if (TOOLS / name).exists():
+            if (STABILITY / name).exists() or (TOOLS / name).exists():
                 offenders.append(f"retired filename: {name}")
-        for path in sorted(TOOLS.glob("ou3_*.py")):
+        for path in sorted(STABILITY.glob("ou3_*.py")):
             text = path.read_text(encoding="utf-8")
             for module in sorted(retired_modules):
                 if module in text:
@@ -99,7 +100,7 @@ class Ou3ProofCleanupTest(unittest.TestCase):
 
     def test_no_superseded_sea3_sizing_scaffolding_remains(self):
         retired = {
-            TOOLS / "ou3_sea3_initial_estimates.py",
+            STABILITY / "ou3_sea3_initial_estimates.py",
             TOOLS / "ou3_sea3_initial_estimates.json",
             VALIDATION / "test_ou3_sea3_initial_estimates.py",
         }
@@ -130,7 +131,6 @@ class Ou3ProofCleanupTest(unittest.TestCase):
     def test_canonical_workflow_does_not_execute_old_p2_or_fallback_routes(self):
         workflow = (WORKFLOWS / "ou3-proof.yml").read_text(encoding="utf-8")
         retired = (
-            "test_ou3_source_domain_contract",
             "ou3_sea3_directional_p2_ha_feasibility",
             "SEA3_TO_P2_INCLUSION_CERTIFICATE",
             "ou3_p3_p2_v1_history_frontier",

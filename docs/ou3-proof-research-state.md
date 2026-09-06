@@ -39,8 +39,8 @@ The executable finite-window provider currently has three required ingredients:
    history: OPEN.** The continuum directional RAO envelope remains a theorem
    response family, not an independently combinable source generator.
 
-`tools/ou3_sea3_hard_shaping_state.py` owns the fail-closed second ingredient,
-and `tools/ou3_sea3_hard_finite_window_source.py` consumes it directly. A
+`tools/stability/ou3_sea3_hard_shaping_state.py` owns the fail-closed second ingredient,
+and `tools/stability/ou3_sea3_hard_finite_window_source.py` consumes it directly. A
 provider JSON cannot self-assert either open ingredient.
 
 The upstream `oceanography-waves-lib` v1.1.3 JONSWAP simulator uses a seeded

@@ -7,6 +7,7 @@ from pathlib import Path
 
 TOOLS = Path(__file__).resolve().parents[2] / "tools"
 sys.path.insert(0, str(TOOLS))
+sys.path.insert(0, str(TOOLS / "stability"))
 
 import ou3_sea3_hard_shaping_state as SHAPING
 

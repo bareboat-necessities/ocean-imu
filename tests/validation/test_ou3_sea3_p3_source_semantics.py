@@ -6,6 +6,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools"))
+sys.path.insert(0, str(ROOT / "tools" / "stability"))
 
 import ou3_sea3_p3_full_preconditions as pre  # noqa: E402
 import ou3_sea3_riccati_metric_p3 as gate  # noqa: E402
