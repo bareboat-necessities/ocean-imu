@@ -66,11 +66,30 @@ transformed rather than altered, every due S=0 update and its actual applied
 SpectralMSE R_S remain in the same word and regularize the transformed a_w
 direction through the same information matrix.
 
+The nominal-force ceiling used below is NOT inferred from physical SEA3 alone.
+The declared Normal-Live source gives the true specific-force bound
+
+    ||a_true-g|| <= 13.80665 m/s^2,
+
+and the already-declared P4/startup perturbation domain gives
+
+    ||delta_a_w|| <= 2.941995 m/s^2.
+
+Since a_hat=a_true-delta_a_w,
+
+    ||a_hat-g|| <= 13.80665+2.941995 = 16.748645 m/s^2,
+    ||a_hat||   <= 16.748645+g       = 26.555295 m/s^2.
+
+Those are theorem-domain consequences, not replay extrema and not a new source
+assumption.  The pure-e_eta candidate rows inherited from the earlier helper
+were computed with the physical 13.80665 ceiling; this module outwardly widens
+them by the exact nominal/physical force ratio before they are reused.
+
 This producer deliberately remains fail-closed.  P4 still requires an
-operation-matched bound on transport of full epsilon_aw through the physical correction,
-quaternion injection/reset, prediction, and source change.  That transport must
-be charged to the same Joseph information decrease; no packet-count-times-worst
-remainder budget is admissible.
+operation-matched bound on transport of full epsilon_aw through the physical
+correction, quaternion injection/reset, prediction, and source change.  That
+transport must be charged to the same Joseph information decrease; no
+packet-count-times-worst remainder budget is admissible.
 """
 from __future__ import annotations
 
@@ -86,8 +105,37 @@ import ou3_sea3_complete_source as COMPLETE
 
 REPO = Path(__file__).resolve().parents[2]
 DEFAULT_DOMAIN = REPO / "tools" / "stability" / "ou3_proof_operating_domain.json"
-SCHEMA = 2
-QUALIFICATION = "OU3_P4_COMPLETE_SEA3_INVARIANT_AW_NORMAL_FORM_V2"
+SCHEMA = 3
+QUALIFICATION = "OU3_P4_COMPLETE_SEA3_INVARIANT_AW_NORMAL_FORM_V3"
+
+
+def _up_add(a: float, b: float) -> float:
+    return math.nextafter(float(a) + float(b), math.inf)
+
+
+def _widen_candidate_rows(rows: list[dict], physical_force: float, nominal_force: float) -> list[dict]:
+    if not (math.isfinite(physical_force) and physical_force > 0.0):
+        raise RuntimeError("invalid physical force ceiling")
+    if not (math.isfinite(nominal_force) and nominal_force >= physical_force):
+        raise RuntimeError("invalid nominal force ceiling")
+    ratio = math.nextafter(nominal_force / physical_force, math.inf)
+    out: list[dict] = []
+    for row in rows:
+        r = dict(row)
+        for key in (
+            "e_eta_norm_upper_mps2",
+            "e_eta_local_lipschitz_upper_mps2_per_cayley",
+        ):
+            value = float(r[key])
+            if not (math.isfinite(value) and value > 0.0):
+                raise RuntimeError(f"invalid inherited candidate bound {key}")
+            r[key] = math.nextafter(value * ratio, math.inf)
+        r["force_upper_mps2_used"] = nominal_force
+        r["inherited_physical_force_upper_mps2"] = physical_force
+        r["nominal_force_widening_ratio"] = ratio
+        r["widened_for_declared_delta_aw_domain"] = True
+        out.append(r)
+    return out
 
 
 def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
@@ -113,13 +161,16 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         raise RuntimeError("canonical complete SEA3 source changed")
 
     live = domain["normal_live"]
+    handoff = domain["startup"]["physical_handoff_coordinate_bounds"]
     g = float(domain["startup"]["gravity_mps2"])
-    fmax = float(live["specific_force_norm_upper_mps2"])
-    if not (math.isfinite(g) and g > 0.0 and math.isfinite(fmax) and fmax > 0.0):
-        raise RuntimeError("invalid gravity/specific-force theorem bounds")
-    # Since f_hat=R_hat(a_hat-g), orthogonality gives
-    # ||a_hat|| <= ||a_hat-g||+||g|| <= fmax+g.
-    ahat = math.nextafter(fmax + g, math.inf)
+    true_force = float(live["specific_force_norm_upper_mps2"])
+    delta_aw = float(handoff["latent_acceleration_error_norm_upper_mps2"])
+    if not all(math.isfinite(x) and x > 0.0 for x in (g, true_force, delta_aw)):
+        raise RuntimeError("invalid gravity/true-force/delta-aw theorem bounds")
+
+    nominal_force = _up_add(true_force, delta_aw)
+    nominal_aw = _up_add(nominal_force, g)
+    rows = _widen_candidate_rows(awlin["candidate_cells"], true_force, nominal_force)
 
     return {
         "schema": SCHEMA,
@@ -134,16 +185,30 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "complete_SEA3_word_retained": True,
         "all_valid_accelerometer_updates_remain_in_complete_word": True,
         "all_due_S_updates_and_actual_RS_remain_in_complete_word": True,
-        "source_nominal_aw_norm_upper_mps2": ahat,
-        "nominal_aw_bound_is_conditional_on_nominal_force_bound": True,
-        "nominal_force_bound_inherited_from_physical_SEA3_proved": False,
+        "nominal_force_derivation": {
+            "true_specific_force_upper_mps2": true_force,
+            "declared_delta_aw_error_upper_mps2": delta_aw,
+            "nominal_specific_force_upper_mps2": nominal_force,
+            "gravity_mps2": g,
+            "nominal_aw_norm_upper_mps2": nominal_aw,
+            "identity": "a_hat=a_true-delta_a_w",
+            "triangle_inequality": "||a_hat-g||<=||a_true-g||+||delta_a_w||",
+            "uses_complete_SEA3_physical_source_bound": True,
+            "uses_already_declared_P4_error_domain": True,
+            "new_source_assumption_added": False,
+            "replay_extrema_used": False,
+        },
+        "source_nominal_specific_force_upper_mps2": nominal_force,
+        "source_nominal_aw_norm_upper_mps2": nominal_aw,
+        "nominal_force_bound_from_complete_SEA3_plus_declared_error_domain_proved": True,
+        "nominal_force_bound_from_physical_SEA3_alone_claimed": False,
         "shipping_Joseph_binding_closed": False,
         "shipping_Joseph_binding_scope": "SOURCE_UNIFORM_NONLINEAR_TRANSPORT",
         "linear_triangular_coordinate": {
             "w_lin": "delta_a_w+B*c",
             "B_c": "R_hat^T*[c]x*R_hat*a_hat",
             "B_matrix": "-R_hat^T*[R_hat*a_hat]x",
-            "B_operator_norm_upper_mps2_per_cayley": ahat,
+            "B_operator_norm_upper_mps2_per_cayley": nominal_aw,
             "T_B_unit_triangular": True,
             "T_B_determinant_exact": 1.0,
             "T_B_nonsingular": True,
@@ -179,7 +244,8 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
             "nonlinear_displacement_is_full_aw_shift": True,
             "first_order_wave_attitude_term_removed_from_remainder": True,
         },
-        "measurement_linearizing_shift_bounds_reused_without_widening": awlin["candidate_cells"],
+        "measurement_linearizing_shift_bounds_reused_without_widening": False,
+        "measurement_linearizing_shift_bounds_widened_for_declared_delta_aw_domain": rows,
         "reused_candidate_bounds_cover_pure_e_eta_only": True,
         "full_nonlinear_coordinate_displacement_bounded_here": False,
         "standalone_eta_Rinv_packet_budget_used": False,
@@ -206,6 +272,7 @@ def validate(d: dict) -> list[str]:
         "complete_SEA3_word_retained",
         "all_valid_accelerometer_updates_remain_in_complete_word",
         "all_due_S_updates_and_actual_RS_remain_in_complete_word",
+        "nominal_force_bound_from_complete_SEA3_plus_declared_error_domain_proved",
         "transformed_attitude_column_depends_only_on_gravity",
         "wave_acceleration_attitude_cross_term_is_linear_coordinate_coupling",
         "actual_RS_information_matrix_retained_under_congruence",
@@ -214,7 +281,7 @@ def validate(d: dict) -> list[str]:
         if d.get(key) is not True:
             f.append(f"{key} is not true")
     for key in (
-        "nominal_force_bound_inherited_from_physical_SEA3_proved",
+        "nominal_force_bound_from_physical_SEA3_alone_claimed",
         "shipping_Joseph_binding_closed",
         "trajectory_replay_used",
         "filter_changed",
@@ -225,9 +292,34 @@ def validate(d: dict) -> list[str]:
         "complete_source_correlated_transport_defect_closed_here",
         "full_nonlinear_coordinate_displacement_bounded_here",
         "P4_promoted_here",
+        "measurement_linearizing_shift_bounds_reused_without_widening",
     ):
         if d.get(key) is not False:
             f.append(f"{key} is not false")
+
+    force = d.get("nominal_force_derivation", {})
+    for key in (
+        "uses_complete_SEA3_physical_source_bound",
+        "uses_already_declared_P4_error_domain",
+    ):
+        if force.get(key) is not True:
+            f.append(f"nominal-force derivation {key} is not true")
+    for key in ("new_source_assumption_added", "replay_extrema_used"):
+        if force.get(key) is not False:
+            f.append(f"nominal-force derivation {key} is not false")
+    true_force = float(force.get("true_specific_force_upper_mps2", math.nan))
+    delta_aw = float(force.get("declared_delta_aw_error_upper_mps2", math.nan))
+    nominal_force = float(force.get("nominal_specific_force_upper_mps2", math.nan))
+    g = float(force.get("gravity_mps2", math.nan))
+    nominal_aw = float(force.get("nominal_aw_norm_upper_mps2", math.nan))
+    if not all(math.isfinite(x) and x > 0.0 for x in (true_force, delta_aw, nominal_force, g, nominal_aw)):
+        f.append("nominal-force derivation contains invalid values")
+    else:
+        if nominal_force < true_force + delta_aw:
+            f.append("nominal specific-force ceiling dropped declared delta-aw error")
+        if nominal_aw < nominal_force + g:
+            f.append("nominal aw ceiling dropped gravity")
+
     tri = d.get("linear_triangular_coordinate", {})
     for key in ("T_B_unit_triangular", "T_B_nonsingular", "T_B_inverse_exact"):
         if tri.get(key) is not True:
@@ -235,8 +327,9 @@ def validate(d: dict) -> list[str]:
     if float(tri.get("T_B_determinant_exact", math.nan)) != 1.0:
         f.append("triangular coordinate determinant changed")
     B = float(tri.get("B_operator_norm_upper_mps2_per_cayley", math.nan))
-    if not (math.isfinite(B) and B > 0.0):
+    if not (math.isfinite(B) and B >= nominal_aw):
         f.append("triangular B norm bound invalid")
+
     metric = d.get("moving_metric_congruence", {})
     for key in (
         "innovation_covariance_S_invariant",
@@ -248,6 +341,7 @@ def validate(d: dict) -> list[str]:
     for key in ("condition_number_multiplier_used", "group_isotropic_metric_assumption_used"):
         if metric.get(key) is not False:
             f.append(f"forbidden moving metric shortcut {key} enabled")
+
     exact = d.get("exact_finite_angle_coordinate", {})
     for key in (
         "nonlinear_displacement_is_full_aw_shift",
@@ -255,9 +349,15 @@ def validate(d: dict) -> list[str]:
     ):
         if exact.get(key) is not True:
             f.append(f"exact finite-angle coordinate {key} is not true")
-    rows = d.get("measurement_linearizing_shift_bounds_reused_without_widening", [])
+
+    rows = d.get("measurement_linearizing_shift_bounds_widened_for_declared_delta_aw_domain", [])
     if [r.get("attitude_angle_deg") for r in rows] != [30.0, 25.0, 20.0, 15.0]:
         f.append("finite-angle candidate cells changed")
+    for row in rows:
+        if row.get("widened_for_declared_delta_aw_domain") is not True:
+            f.append("finite-angle row not widened for declared delta-aw domain")
+        if float(row.get("force_upper_mps2_used", math.nan)) < nominal_force:
+            f.append("finite-angle row uses insufficient nominal force ceiling")
     return list(dict.fromkeys(f))
 
 
@@ -273,6 +373,9 @@ def main() -> int:
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(d, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     print(json.dumps({
+        "true_specific_force_upper_mps2": d["nominal_force_derivation"]["true_specific_force_upper_mps2"],
+        "declared_delta_aw_error_upper_mps2": d["nominal_force_derivation"]["declared_delta_aw_error_upper_mps2"],
+        "nominal_specific_force_upper_mps2": d["source_nominal_specific_force_upper_mps2"],
         "source_nominal_aw_norm_upper_mps2": d["source_nominal_aw_norm_upper_mps2"],
         "gravity_only_attitude_column": d["transformed_attitude_column_depends_only_on_gravity"],
         "actual_RS_retained": d["actual_RS_information_matrix_retained_under_congruence"],
