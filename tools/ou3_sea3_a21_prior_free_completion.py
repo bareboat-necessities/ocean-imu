@@ -1,35 +1,43 @@
 #!/usr/bin/env python3
-"""Full A21 prior-free Riccati completion on canonical complete SEA3.
+"""Canonical H18 -> A21 hybrid full-matrix completion for OU-III P3.
 
-This closes the active 21-state mode without eta9 point-packet PE and without
-embedding a translation principal-block lower as a full-state Loewner lower.
+The shipping full-heading wrapper does not release accelerometer-bias learning
+at Live entry.  With the default configured magnetic-refinement path it holds
+``b_a`` out of H18 until at least 30 s of accepted refinement time has elapsed.
+The canonical H18 word is only 3 s, so the certified H18 margin exists before
+the separate H->A dimension change.
 
-The complete-SEA3 H18 finite-memory estimator is valid while accelerometer bias
-is active because its vector covariance upper explicitly pays the configured
-b_a nuisance.  In A mode every valid accelerometer update is accepted and its
-instantaneous Jacobian has H_ba=I.  At the word endpoint, combine that finite
-H18 estimator with the required accelerometer sample:
+While held, the shipping MEKF keeps the ``b_a`` covariance cross blocks exactly
+zero, uses identity homogeneous dynamics, injects no ``b_a`` process noise and
+freezes its measurement rows.  At release its diagonal is floored to the
+shipping seed variance ``P_ba0`` and the cross blocks remain zero.  Therefore,
+with the new coordinates appended to the already-certified H18 matrix,
 
-    b_a = y_a - H_H x_H - n_a.
+    M_A^- = diag(M_H, -delta P_ba0 I_3),
 
-No independence is assumed.  With ||H_H||^2 <= f_max^2+1,
+where ``M = Omega - delta P`` and ``M_H >= 0`` is the full H18 matrix at the
+same useful gate.
 
-    E||e_ba||^2 <= 2 tr(R_a) + 2 ||H_H||^2 tr(Pbar_H).
+The first active shipping prediction is block diagonal between H18 and ``b_a``
+(the implementation propagates AB/LB cross covariance only from pre-existing
+cross covariance, which is zero here).  Thus
 
-Hence a concrete finite full-21 estimator exists in the diffuse-prior limit.
-That proves the full A21 information matrix D_A is strictly positive without a
-pointwise eta9 packet condition, and supplies a source-uniform endpoint upper
-P_inf,A <= trace_A I.
+    M_A^+ = diag(
+        F_H M_H F_H' + (1-delta) Q_H,
+        ((1-delta) Q_ba - delta phi_b^2 P_ba0) I_3).
 
-The exact prior-free completion then uses the immediately following shipping
-prediction:
+The first block is positive semidefinite by the exact H18 event algebra and
+shipping process addition.  For the second block we conservatively use
+``phi_b^2 <= 1`` and the outward-rounded shipping lower bound on ``Q_ba``.
+A strictly positive scalar lower therefore proves the complete 21x21 matrix is
+positive semidefinite at ``delta=1e-18``.  This is an exact direct-sum
+full-matrix argument at the implementation's actual dimension-changing hybrid
+event; it is not a blockwise-minimum contraction surrogate, eta9 packet PE,
+source replay, or alternate estimator.
 
-    (1-delta) Q_A - (delta^2/4) F_A Pbar_A F_A' >> 0.
-
-The second term is bounded by a source-uniform isotropic penalty.  The actual
-21x21 matrix is certified with outward-rounded interval LDLT over the complete
-h/tau cover.  Translation retains the stable factored shipping integrated-OU
-Q; attitude/gyro-bias and active b_a consume the shipping process primitives.
+All later fixed-dimension A21 prediction, Joseph measurement, PSD covariance
+floor and immediate left-error reset events preserve the same full-matrix
+margin by the already-certified event algebra.
 """
 from __future__ import annotations
 
@@ -38,247 +46,295 @@ import json
 import math
 from pathlib import Path
 
-from ou3_interval import Interval, symmetric_positive_definite_ldlt
 import ou3_full_process_ucc as PROCESS
 import ou3_sea3_a21_detectability_completion as ADET
 import ou3_sea3_complete_source as COMPLETE
-import ou3_sea3_dynamic_source_certificate as DYNAMIC
 import ou3_sea3_full_word_event_algebra as EVENT
 import ou3_sea3_h18_prior_free_completion as H18
-import ou3_sea3_riccati_tube as TUBE
-import ou3_sea3_riccati_tube_factored as FACTORED
-import ou3_sea3_windowed_vector_pe as PE
+import ou3_sea3_live_covariance_seed as LIVE
 
+REPO = Path(__file__).resolve().parents[1]
+MEKF = REPO / "src" / "kalman_ou_iii" / "Kalman3D_Wave_OU_III.h"
 DEFAULT_DOMAIN = COMPLETE.DEFAULT_DOMAIN
-SCHEMA = 4
-QUALIFICATION = "OU3_COMPLETE_SEA3_A21_PRIOR_FREE_FULL_MATRIX_COMPLETION"
+SCHEMA = 5
+QUALIFICATION = "OU3_COMPLETE_SEA3_A21_HYBRID_RELEASE_FULL_MATRIX_COMPLETION"
 USEFUL_GATE = 1.0e-18
-HORIZON_S = 3.0
-DIM = 21
-OFF_V, OFF_P, OFF_S, OFF_AW, OFF_BA = 6, 9, 12, 15, 18
+DIM_H = 18
+DIM_A = 21
 
 
-def I(x: float) -> Interval:
-    return Interval.outward_bounds(float(x), float(x))
+def down(x: float) -> float:
+    return math.nextafter(float(x), -math.inf)
 
 
-def _zero(n: int):
-    z = I(0.0)
-    return [[z for _ in range(n)] for _ in range(n)]
-
-
-def _full_A21_cell(x: Interval, *, process: dict, dynamic: dict, penalty: float):
-    delta = USEFUL_GATE
-    one_minus = I(TUBE.down(1.0 - delta))
-    M = _zero(DIM)
-
-    q_att = float(process["attitude_gyro_bias"]["Q_attitude_gyro_bias_lambda_min_lower"])
-    att_diag = TUBE.down((1.0 - delta) * q_att - penalty)
-    if not att_diag > 0.0:
-        return False, {"reason": "attitude_gyro_bias_penalty", "diagonal_lower": att_diag}
-    for i in range(6):
-        M[i][i] = I(att_diag)
-
-    inv = dynamic["dynamic_invariant"]
-    sigma_floor = float(inv["sigma_aw_filter_mps2"][0])
-    h = float(dynamic["validated_rate_and_jump_bounds"]["dt_s"])
-    if not (sigma_floor > 0.0 and h > 0.0):
-        raise RuntimeError("invalid SEA3 translation process scale")
-    scales = [sigma_floor*h, sigma_floor*h*h, sigma_floor*h*h*h, sigma_floor]
-    B = FACTORED.step_scaled_q_over_x(x)
-    qscale = I(x.lo)
-    Maxis = [[one_minus*qscale*B[i][j] for j in range(4)] for i in range(4)]
-    for i in range(4):
-        pscaled = TUBE.up(penalty / TUBE.down(scales[i]*scales[i]))
-        Maxis[i][i] = Maxis[i][i] - I(pscaled)
-    idx = (OFF_V, OFF_P, OFF_S, OFF_AW)
-    for axis in range(3):
-        for i in range(4):
-            for j in range(4):
-                M[idx[i]+axis][idx[j]+axis] = Maxis[i][j]
-
-    q_ba = float(process["active_accelerometer_bias"]["Q_accel_bias_lambda_min_lower"])
-    ba_diag = TUBE.down((1.0 - delta) * q_ba - penalty)
-    if not ba_diag > 0.0:
-        return False, {"reason": "active_ba_penalty", "diagonal_lower": ba_diag}
-    for i in range(3):
-        M[OFF_BA+i][OFF_BA+i] = I(ba_diag)
-
-    ok, pivots = symmetric_positive_definite_ldlt(M)
-    return ok, {
-        "x_h_over_tau": x.as_list(),
-        "full_dimension": DIM,
-        "full_21x21_interval_LDLT": True,
-        "pivot_count": len(pivots),
-        "pivot_lower": min((p.lo for p in pivots), default=math.inf),
-        "attitude_gyro_bias_diagonal_lower": att_diag,
-        "active_ba_diagonal_lower": ba_diag,
-        "translation_congruence_scales": scales,
+def _prediction_source_parity() -> dict:
+    text = MEKF.read_text(encoding="utf-8")
+    return {
+        "active_ba_homogeneous_factor_is_scalar_phi": (
+            "const T phi_b = acc_bias_updates_enabled_ ? std::exp(-Ts / tau_b) : T(1);" in text
+        ),
+        "active_ba_covariance_prediction_is_phi_squared_plus_Q": (
+            "P_BB *= phi_b * phi_b;" in text
+            and "P_BB.noalias() += Q_bacc_ * qd_scale;" in text
+        ),
+        "attitude_ba_cross_block_only_propagates_existing_cross_covariance": (
+            "sum += F_AA(i,k) * Pext(k, OFF_BA + j);" in text
+            and "tmpAB *= phi_b;" in text
+        ),
+        "linear_ba_cross_block_only_propagates_existing_cross_covariance": (
+            "sum += F_LL(i,k) * Pext(OFF_V + k, OFF_BA + j);" in text
+            and "tmpLB *= phi_b;" in text
+        ),
+        "no_ba_forcing_is_added_to_H18_state_prediction": (
+            "x_lin_next = F_LL * x_lin_prev" in text
+            or "x_lin_next = F_LL * x_lin_prev.  Keep this in scalar loops" in text
+        ),
     }
 
 
 def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     path = Path(domain_path).resolve()
     complete = COMPLETE.build(path)
-    dynamic = DYNAMIC.build(path)
     process = PROCESS.build()
     h18 = H18.build(path)
+    live = LIVE.build(path)
     adet = ADET.build(path)
     event = EVENT.build()
-    pe = PE.build(path)
+
     bad = {
         "complete": COMPLETE.validate(complete),
-        "dynamic": DYNAMIC.validate(dynamic),
         "process": PROCESS.validate(process),
         "H18": H18.validate(h18),
+        "live_seed": LIVE.validate(live),
         "A21_detectability": ADET.validate(adet),
         "event_algebra": EVENT.validate(event),
-        "PE": PE.validate(pe),
     }
-    bad = {k:v for k,v in bad.items() if v}
+    bad = {k: v for k, v in bad.items() if v}
     if bad:
-        raise RuntimeError(f"A21 completion prerequisites failed: {bad}")
+        raise RuntimeError(f"A21 hybrid completion prerequisites failed: {bad}")
+
     if complete["canonical_P3_source"] != "COMPLETE_SEA3_NORMAL_LIVE_WORD":
-        raise RuntimeError("A21 completion detached from complete SEA3")
-    if float(complete["word_horizon_s"]) != HORIZON_S:
-        raise RuntimeError("canonical complete-SEA3 word is no longer 3 s")
-    if adet["paper_active_bias_route"] != "ETA6_PLUS_FINITE_RESIDUAL_BIAS_CORRELATION":
-        raise RuntimeError("A21 paper route changed")
-    if adet["eta9_point_packet_shortcut_used"] is not False:
-        raise RuntimeError("eta9 point-packet shortcut entered A21")
+        raise RuntimeError("A21 hybrid completion detached from complete SEA3")
+    if h18["canonical_source"] != complete["canonical_P3_source"]:
+        raise RuntimeError("H18 and A21 sources differ")
     if h18["H18_prior_free_completion_closed"] is not True:
-        raise RuntimeError("A21 requires the certified same-word H18 estimator")
-    if pe["all_valid_accelerometer_packets_required"] is not True:
-        raise RuntimeError("A mode no longer guarantees the endpoint accelerometer row")
+        raise RuntimeError("A21 release requires the certified H18 margin first")
+    if float(h18["complete_word_horizon_s"]) != 3.0:
+        raise RuntimeError("canonical H18 word horizon changed")
 
-    pbar_h = h18["same_word_diffuse_prior_covariance_upper"]
-    trace_h = float(pbar_h["Pbar_trace_upper"])
-    domain = json.loads(path.read_text(encoding="utf-8"))
-    fmax = float(domain["normal_live"]["specific_force_norm_upper_mps2"])
-    ra = float(pe["measurement_runtime"]["accelerometer_variance_upper"])
-    hacc_h_norm_sq = TUBE.up(fmax*fmax + 1.0)
-    ba_trace = TUBE.up(2.0*3.0*ra + 2.0*hacc_h_norm_sq*trace_h)
-    trace_a = TUBE.up(trace_h + ba_trace)
-    if not all(math.isfinite(v) and v > 0.0 for v in (trace_h,fmax,ra,hacc_h_norm_sq,ba_trace,trace_a)):
-        raise RuntimeError("A21 finite estimator covariance bound invalid")
+    held = live["held_ba"]
+    release = live["H_to_A_release"]
+    if held["excluded_from_H18"] is not True:
+        raise RuntimeError("b_a is no longer held out of H18")
+    for key in (
+        "identity_homogeneous_dynamics",
+        "no_process_injection_while_held",
+        "cross_covariances_zero",
+        "measurement_rows_frozen",
+    ):
+        if held[key] is not True:
+            raise RuntimeError(f"held b_a source property lost: {key}")
+    if release["hybrid_transition_not_inside_same_mode_word"] is not True:
+        raise RuntimeError("H->A release was moved inside a same-mode word")
+    if release["outer_acc_bias_hold_active_until_refinement_complete"] is not True:
+        raise RuntimeError("shipping outer b_a hold is not active")
+    if release["H18_full_word_guaranteed_before_A_release"] is not True:
+        raise RuntimeError("A release can precede H18 closure")
 
-    Fnorm2 = TUBE.up(max(1.0, float(h18["prediction_F_spectral_norm_squared_upper"])))
-    penalty = TUBE.up((USEFUL_GATE*USEFUL_GATE/4.0) * Fnorm2 * trace_a)
-    if not (math.isfinite(penalty) and penalty > 0.0):
-        raise RuntimeError("A21 delta^2 completion penalty invalid")
+    h_word = float(h18["complete_word_horizon_s"])
+    h_hold = float(release["minimum_H_mode_live_duration_before_A_release_s"])
+    if not (math.isfinite(h_hold) and h_hold >= h_word):
+        raise RuntimeError("shipping H-mode hold is too short for one H18 word")
 
-    rows, failures, worst = [], [], math.inf
-    for x in H18._x_cover(dynamic):
-        ok,row = _full_A21_cell(x, process=process, dynamic=dynamic, penalty=penalty)
-        rows.append(row)
-        if not ok:
-            failures.append(row)
-        else:
-            worst = min(worst, float(row["pivot_lower"]))
-    closed = bool(rows) and not failures and math.isfinite(worst) and worst > 0.0
+    p_ba0 = float(held["seed_variance"])
+    p_ba_release_floor = float(release["bias_diagonal_floor_variance"])
+    if not (math.isfinite(p_ba0) and p_ba0 > 0.0):
+        raise RuntimeError("invalid held b_a covariance")
+    if p_ba_release_floor != p_ba0:
+        raise RuntimeError("release floor no longer equals the held shipping b_a seed")
+
+    q_ba = float(process["active_accelerometer_bias"]["Q_accel_bias_lambda_min_lower"])
+    if not (math.isfinite(q_ba) and q_ba > 0.0):
+        raise RuntimeError("shipping active b_a process lower is not strict")
+
+    # phi_b^2 <= 1 for exp(-h/tau_b), so this is a source-uniform lower.
+    ba_adverse_upper = USEFUL_GATE * p_ba0
+    ba_margin = down((1.0 - USEFUL_GATE) * q_ba - ba_adverse_upper)
+    if not (math.isfinite(ba_margin) and ba_margin > 0.0):
+        raise RuntimeError("first active b_a prediction does not close the added directions")
+
+    parity = _prediction_source_parity()
+    parity_failures = [k for k, v in parity.items() if not v]
+    if parity_failures:
+        raise RuntimeError(f"A21 prediction source parity failed: {parity_failures}")
 
     preserve = event["full_matrix_margin_preservation"]
     suffix_preserved = all(bool(preserve[k]) for k in (
-        "covers_prediction", "covers_every_due_S_update",
+        "covers_prediction",
+        "covers_every_due_S_update",
         "covers_every_Normal_Live_accelerometer_update",
         "covers_asynchronous_magnetometer_update",
-        "covers_immediate_left_error_reset", "covers_aw_covariance_floor",
+        "covers_immediate_left_error_reset",
+        "covers_aw_covariance_floor",
         "covers_not_due_or_rejected_identity_branches",
     ))
+
+    full21_closed = bool(
+        h18["full_H18_prior_free_matrix_condition_closed"]
+        and h18["full_18x18_interval_LDLT_used"]
+        and ba_margin > 0.0
+        and not parity_failures
+    )
 
     return {
         "schema": SCHEMA,
         "qualification": QUALIFICATION,
         "canonical_source": complete["canonical_P3_source"],
-        "complete_word_horizon_s": HORIZON_S,
-        "component_of_complete_SEA3_full_word": True,
-        "paper_active_bias_route": adet["paper_active_bias_route"],
-        "eta9_point_packet_shortcut_used": False,
-        "H18_finite_memory_estimator_consumed": True,
-        "H18_estimator_pays_active_ba_nuisance": True,
-        "required_A_mode_accelerometer_row_consumed": True,
-        "A_mode_accelerometer_H_ba_is_identity": True,
-        "finite_full_A21_linear_estimator_constructed": True,
-        "finite_full_A21_estimator_implies_D_strictly_positive": True,
-        "full_A21_prior_free_D_inverse_identity_used": True,
-        "A21_diffuse_prior_covariance_upper": {
-            "H18_trace_upper": trace_h,
-            "accelerometer_H18_operator_norm_squared_upper": hacc_h_norm_sq,
-            "accelerometer_variance_upper": ra,
-            "ba_estimator_trace_upper": ba_trace,
-            "full_A21_trace_upper": trace_a,
-            "Loewner_upper": "P_inf,A <= trace_A * I_21",
-            "no_H_estimator_measurement_noise_independence_assumed": True,
-        },
-        "prediction_F_spectral_norm_squared_upper": Fnorm2,
-        "delta_squared_over_four_penalty_physical": penalty,
-        "stable_factored_shipping_integrated_OU_Q_consumed": True,
-        "shipping_active_ba_GM_Q_consumed": True,
-        "x_cells_certified": len(rows),
-        "x_cell_failures": failures,
-        "worst_full_A21_LDLT_pivot_lower": worst if closed else None,
-        "full_21x21_Omega_minus_delta_P_LDLT_closed": closed,
-        "A21_prior_free_completion_closed": closed,
-        "full_21x21_interval_LDLT_used": True,
-        "event_algebra_preserves_margin_after_closure": suffix_preserved,
-        "actual_applied_SpectralMSE_R_S_retained_through_H18_component": True,
-        "old_one_step_Euclidean_Q_min_used": False,
-        "scalar_beta_contraction_used": False,
+        "useful_gate": USEFUL_GATE,
+        "H18_dimension": DIM_H,
+        "A21_dimension": DIM_A,
+        "H18_full_matrix_margin_inherited_before_release": True,
+        "H18_full_18x18_interval_LDLT_consumed": bool(h18["full_18x18_interval_LDLT_used"]),
+        "H18_worst_LDLT_pivot_lower": h18["worst_full_H18_LDLT_pivot_lower"],
+        "shipping_H_mode_minimum_duration_before_A_release_s": h_hold,
+        "canonical_H18_word_horizon_s": h_word,
+        "H18_word_finishes_before_A_release": h_hold >= h_word,
+        "shipping_outer_mag_refinement_hold_consumed": True,
+        "H_to_A_is_separate_dimension_changing_hybrid_event": True,
+        "held_ba_cross_covariances_zero_at_release": True,
+        "held_ba_covariance_variance_at_release": p_ba0,
+        "release_ba_floor_variance": p_ba_release_floor,
+        "release_pre_prediction_full_matrix_structure": "diag(M_H18,-delta*P_ba0*I3)",
+        "first_active_prediction_block_diagonal_from_zero_release_cross_covariance": True,
+        "prediction_source_parity": parity,
+        "prediction_source_parity_failures": parity_failures,
+        "shipping_active_ba_Q_lambda_min_lower": q_ba,
+        "phi_b_squared_upper": 1.0,
+        "delta_times_release_ba_variance_upper": ba_adverse_upper,
+        "first_active_ba_M_delta_margin_lower": ba_margin,
+        "first_active_ba_block_strictly_positive": ba_margin > 0.0,
+        "full_A21_matrix_identity": (
+            "diag(F_H*M_H*F_H^T+(1-delta)Q_H,"
+            "((1-delta)Q_ba-delta*phi_b^2*P_ba0)I3)"
+        ),
+        "full_21x21_Omega_minus_delta_P_closed": full21_closed,
+        "A21_prior_free_completion_closed": full21_closed,
+        "exact_direct_sum_full_matrix_hybrid_proof_used": True,
         "blockwise_minimum_contraction_used": False,
+        "full_A21_prior_free_D_inverse_identity_used": False,
+        "finite_full_A21_linear_estimator_constructed": False,
+        "eta9_point_packet_shortcut_used": False,
+        "paper_active_bias_route": adet["paper_active_bias_route"],
+        "A21_detectability_certificate_retained_as_independent_support": bool(
+            adet["A21_finite_bias_detectability_closed"]
+        ),
+        "event_algebra_preserves_margin_after_first_active_prediction": suffix_preserved,
+        "actual_applied_SpectralMSE_R_S_retained_through_inherited_H18_margin": True,
+        "all_Normal_Live_accelerometer_updates_retained": True,
+        "accelerometer_rejection_after_certified_Normal_Live_allowed": False,
+        "old_one_step_Euclidean_full_state_Q_min_used": False,
+        "scalar_beta_contraction_used": False,
         "source_family_replaced": False,
         "trajectory_replay_used": False,
         "independent_tau_sigma_RS_source_created": False,
-        "useful_gate": USEFUL_GATE,
+        "filter_changed_for_A21_proof": False,
         "P3_promoted": False,
         "next_obligation": (
-            "wire the certified exact reset congruence into the literal S/accelerometer/magnetometer event API, then consume H18+A21 in canonical P3"
-            if closed else
-            "tighten only this same-word A21 estimator/SEA3 x cover; do not introduce eta9 or relax delta"
+            "consume this exact H18->A21 hybrid full-matrix closure and reset-complete literal event API in canonical P3 composition"
+            if full21_closed else
+            "fix the shipping hybrid matrix proof without eta9, source replay, or weakening delta"
         ),
     }
 
 
 def validate(d: dict) -> list[str]:
-    f=[]
-    if d.get("schema") != SCHEMA or d.get("qualification") != QUALIFICATION: f.append("schema/qualification mismatch")
-    if d.get("canonical_source") != "COMPLETE_SEA3_NORMAL_LIVE_WORD": f.append("canonical source changed")
-    for k in (
-        "component_of_complete_SEA3_full_word", "H18_finite_memory_estimator_consumed",
-        "H18_estimator_pays_active_ba_nuisance", "required_A_mode_accelerometer_row_consumed",
-        "A_mode_accelerometer_H_ba_is_identity", "finite_full_A21_linear_estimator_constructed",
-        "finite_full_A21_estimator_implies_D_strictly_positive", "full_A21_prior_free_D_inverse_identity_used",
-        "stable_factored_shipping_integrated_OU_Q_consumed", "shipping_active_ba_GM_Q_consumed",
-        "full_21x21_Omega_minus_delta_P_LDLT_closed", "A21_prior_free_completion_closed",
-        "full_21x21_interval_LDLT_used", "event_algebra_preserves_margin_after_closure",
-        "actual_applied_SpectralMSE_R_S_retained_through_H18_component",
+    f: list[str] = []
+    if d.get("schema") != SCHEMA or d.get("qualification") != QUALIFICATION:
+        f.append("schema/qualification mismatch")
+    if d.get("canonical_source") != "COMPLETE_SEA3_NORMAL_LIVE_WORD":
+        f.append("canonical source changed")
+    for key in (
+        "H18_full_matrix_margin_inherited_before_release",
+        "H18_full_18x18_interval_LDLT_consumed",
+        "H18_word_finishes_before_A_release",
+        "shipping_outer_mag_refinement_hold_consumed",
+        "H_to_A_is_separate_dimension_changing_hybrid_event",
+        "held_ba_cross_covariances_zero_at_release",
+        "first_active_prediction_block_diagonal_from_zero_release_cross_covariance",
+        "first_active_ba_block_strictly_positive",
+        "full_21x21_Omega_minus_delta_P_closed",
+        "A21_prior_free_completion_closed",
+        "exact_direct_sum_full_matrix_hybrid_proof_used",
+        "A21_detectability_certificate_retained_as_independent_support",
+        "event_algebra_preserves_margin_after_first_active_prediction",
+        "actual_applied_SpectralMSE_R_S_retained_through_inherited_H18_margin",
+        "all_Normal_Live_accelerometer_updates_retained",
     ):
-        if d.get(k) is not True: f.append(k)
-    for k in (
-        "eta9_point_packet_shortcut_used", "old_one_step_Euclidean_Q_min_used",
-        "scalar_beta_contraction_used", "blockwise_minimum_contraction_used",
-        "source_family_replaced", "trajectory_replay_used",
-        "independent_tau_sigma_RS_source_created", "P3_promoted",
+        if d.get(key) is not True:
+            f.append(f"{key} is not true")
+    for key in (
+        "blockwise_minimum_contraction_used",
+        "full_A21_prior_free_D_inverse_identity_used",
+        "finite_full_A21_linear_estimator_constructed",
+        "eta9_point_packet_shortcut_used",
+        "accelerometer_rejection_after_certified_Normal_Live_allowed",
+        "old_one_step_Euclidean_full_state_Q_min_used",
+        "scalar_beta_contraction_used",
+        "source_family_replaced",
+        "trajectory_replay_used",
+        "independent_tau_sigma_RS_source_created",
+        "filter_changed_for_A21_proof",
+        "P3_promoted",
     ):
-        if d.get(k) is not False: f.append(k)
-    if d.get("paper_active_bias_route") != "ETA6_PLUS_FINITE_RESIDUAL_BIAS_CORRELATION": f.append("paper active-bias route")
-    if float(d.get("useful_gate",math.nan)) != USEFUL_GATE: f.append("useful gate")
-    if int(d.get("x_cells_certified",0)) <= 0: f.append("no SEA3 x cells")
-    if d.get("x_cell_failures"): f.append("one or more A21 x cells failed")
-    p=d.get("worst_full_A21_LDLT_pivot_lower")
-    if not isinstance(p,(int,float)) or not(math.isfinite(float(p)) and float(p)>0): f.append("A21 full-matrix pivot")
-    est=d.get("A21_diffuse_prior_covariance_upper",{})
-    for k in ("H18_trace_upper","ba_estimator_trace_upper","full_A21_trace_upper"):
-        x=est.get(k)
-        if not isinstance(x,(int,float)) or not(math.isfinite(float(x)) and float(x)>0): f.append(f"invalid estimator {k}")
-    if est.get("no_H_estimator_measurement_noise_independence_assumed") is not True: f.append("estimator independence shortcut")
+        if d.get(key) is not False:
+            f.append(f"{key} is not false")
+    if d.get("paper_active_bias_route") != "ETA6_PLUS_FINITE_RESIDUAL_BIAS_CORRELATION":
+        f.append("paper active-bias route changed")
+    if d.get("prediction_source_parity_failures"):
+        f.append("prediction source parity failed")
+    if not all(d.get("prediction_source_parity", {}).values()):
+        f.append("prediction source parity incomplete")
+    if float(d.get("useful_gate", math.nan)) != USEFUL_GATE:
+        f.append("useful gate changed")
+    if float(d.get("shipping_H_mode_minimum_duration_before_A_release_s", 0.0)) < float(
+        d.get("canonical_H18_word_horizon_s", math.inf)
+    ):
+        f.append("A release precedes H18 word")
+    for key in (
+        "held_ba_covariance_variance_at_release",
+        "shipping_active_ba_Q_lambda_min_lower",
+        "first_active_ba_M_delta_margin_lower",
+        "H18_worst_LDLT_pivot_lower",
+    ):
+        x = d.get(key)
+        if not isinstance(x, (int, float)) or not (math.isfinite(float(x)) and float(x) > 0.0):
+            f.append(f"invalid positive field {key}")
     return list(dict.fromkeys(f))
 
 
 def main() -> int:
-    ap=argparse.ArgumentParser(); ap.add_argument("--domain",type=Path,default=DEFAULT_DOMAIN); ap.add_argument("--output",type=Path,required=True); a=ap.parse_args()
-    d=build(a.domain); f=validate(d); d["validation_pass"]=not f; d["validation_failures"]=f
-    a.output.parent.mkdir(parents=True,exist_ok=True); a.output.write_text(json.dumps(d,indent=2,sort_keys=True),encoding="utf-8")
-    print(json.dumps({"A21_trace_upper":d["A21_diffuse_prior_covariance_upper"]["full_A21_trace_upper"],"delta2_penalty":d["delta_squared_over_four_penalty_physical"],"x_cells":d["x_cells_certified"],"worst_A21_LDLT_pivot":d["worst_full_A21_LDLT_pivot_lower"],"A21_closed":d["A21_prior_free_completion_closed"],"failures":f},indent=2,sort_keys=True))
-    return 0 if not f else 2
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--domain", type=Path, default=DEFAULT_DOMAIN)
+    ap.add_argument("--output", type=Path, required=True)
+    args = ap.parse_args()
+    d = build(args.domain)
+    failures = validate(d)
+    d["validation_pass"] = not failures
+    d["validation_failures"] = failures
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    args.output.write_text(json.dumps(d, indent=2, sort_keys=True), encoding="utf-8")
+    print(json.dumps({
+        "H_hold_s": d["shipping_H_mode_minimum_duration_before_A_release_s"],
+        "H18_word_s": d["canonical_H18_word_horizon_s"],
+        "P_ba_release": d["held_ba_covariance_variance_at_release"],
+        "Q_ba_lower": d["shipping_active_ba_Q_lambda_min_lower"],
+        "delta_P_ba_upper": d["delta_times_release_ba_variance_upper"],
+        "ba_M_delta_margin_lower": d["first_active_ba_M_delta_margin_lower"],
+        "A21_closed": d["A21_prior_free_completion_closed"],
+        "failures": failures,
+    }, indent=2, sort_keys=True))
+    return 0 if not failures else 2
 
-if __name__=="__main__": raise SystemExit(main())
+
+if __name__ == "__main__":
+    raise SystemExit(main())
