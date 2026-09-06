@@ -187,6 +187,9 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "SEA0_machine_readable_R_lambda_closed": bool(
             provider_ingredients["machine_readable_R_lambda_closed"]
         ),
+        "SEA0_hard_shaping_state_or_excitation_bound_closed": bool(
+            provider_ingredients["hard_shaping_state_or_excitation_bound_closed"]
+        ),
         "SEA0_explicit_hard_realization_set_consumed": bool(
             shaping["SEA3_parameter_domain_compact"]
             and shaping["compactness_is_not_an_open_obligation"]
@@ -328,8 +331,9 @@ def validate(d: dict) -> list[str]:
         f.append("P3 preconditions lost the complete SEA3 hard realization set")
     if sea0.get("machine_readable_R_lambda_closed") is not True:
         f.append("P3 preconditions lost machine-readable R_lambda closure")
+    if sea0.get("hard_shaping_state_or_excitation_bound_closed") is not True:
+        f.append("P3 preconditions lost the closed hard SEA3 shaping/excitation set")
     for key in (
-        "hard_shaping_state_or_excitation_bound_closed",
         "joint_translational_rotational_shaping_closed",
         "provider_implementation_closed",
         "source_reachable_event_family_materialized",
