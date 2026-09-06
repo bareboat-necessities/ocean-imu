@@ -14,6 +14,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "tools" / "stabilit
 import ou3_p4_complete_sea3_accelerometer_operation_coordinate as ACC
 import ou3_p4_complete_sea3_correction_information_bound as CORR
 import ou3_p4_exact_reset_transport as RESET
+import ou3_p4_complete_sea3_measurement_linearizing_aw_coordinate as AWLIN
+import ou3_sea3_shipping_prediction_primitives as PRED
 from ou3_interval import Interval, matrix_point
 
 
@@ -275,6 +277,108 @@ class CoordinateTransportAlgebraTests(unittest.TestCase):
         self.assertEqual(reset[1][1], F(101, 100))
         self.assertGreater(reset[1][1], 1)
         self.assertEqual(mul(mul(tr(G), inv(reset)), G), eye(3))
+
+    def test_full_shift_prediction_keeps_velocity_position_and_S_components(self):
+        # Rational matrix identity fixture, NOT an admitted SEA3 source word.
+        for n, a in self.cases.items():
+            with self.subTest(n=n):
+                Fp = eye(n)
+                for j in range(3):
+                    Fp[6+j][15+j] = F(1, 50)
+                    Fp[9+j][15+j] = F(1, 800)
+                    Fp[12+j][15+j] = F(1, 48000)
+                    Fp[15+j][15+j] = F(99, 100)
+                defect = [[F(i+1, 10000000)] for i in range(n)]
+                ep = add(a['epsilon'], vec(F(1, 500), F(-1, 600), F(1, 700)))
+                before = [[F(0)] for _ in range(n)]
+                after = [[F(0)] for _ in range(n)]
+                before[15:18], after[15:18] = a['epsilon'], ep
+                expected = add(defect, sub(after, mul(Fp, before)))
+                zp = add(mul(Fp, a['z']), defect)
+                phip = add(zp, after)
+                self.assertEqual(phip, add(mul(Fp, a['phi']), expected))
+                # The reset-only formula incorrectly omits all three chains.
+                wrong = add(defect, sub(after, before))
+                for block in (6, 9, 12, 15):
+                    self.assertNotEqual(expected[block:block+3], wrong[block:block+3])
+                enclosed = AWLIN.evaluate_full_shift_transport(iv(Fp), iv(defect), iv(a['epsilon']), iv(ep))
+                for got, want in zip(enclosed, expected):
+                    self.assertLessEqual(F(got[0].lo), want[0])
+                    self.assertGreaterEqual(F(got[0].hi), want[0])
+                Q = scale(eye(n), F(1, 100000))
+                Pp = add(mul(mul(Fp, a['P']), tr(Fp)), Q)
+                precision = inv(Pp)
+                propagated = mul(Fp, a['phi'])
+                information = energy(a['phi'], a['Pinv'])-energy(propagated, precision)
+                ledger = -information+2*mul(mul(tr(propagated), precision), expected)[0][0]+energy(expected, precision)
+                self.assertEqual(energy(phip, precision)-energy(a['phi'], a['Pinv']), ledger)
+
+    def test_retained_shipping_OU_prediction_has_nonzero_S_shift_transport(self):
+        # These are operation inputs only; their values do not establish SEA3.
+        axis = PRED.translation_axis_transition(Interval.point(2.0), Interval.point(0.005))
+        for n in (18, 21):
+            Fp = matrix_point(eye(n))
+            for j in range(3):
+                indices = (6+j, 9+j, 12+j, 15+j)
+                for r, i in enumerate(indices):
+                    for c, k in enumerate(indices):
+                        Fp[i][k] = axis[r][c]
+            epsilon = matrix_point(vec(1, 2, 3))
+            xi = AWLIN.evaluate_full_shift_transport(Fp, matrix_point([[0] for _ in range(n)]), epsilon, epsilon)
+            for j in range(3):
+                for block in (6, 9, 12):
+                    self.assertLess(xi[block+j][0].hi, 0.0)
+
+    def test_reset_and_rectangular_hybrid_use_their_own_maps(self):
+        for n, a in self.cases.items():
+            xi = AWLIN.evaluate_full_shift_transport(iv(a['G']), iv(a['rho']), iv(a['epsilon']), iv(a['epsp']))
+            for got, want in zip(xi, a['xi']):
+                self.assertLessEqual(F(got[0].lo), want[0])
+                self.assertGreaterEqual(F(got[0].hi), want[0])
+        # Algebraic H->A fixture; no claim about reachability of an A21 seed.
+        a = self.cases[18]
+        lift = eye(18)+[[F(0) for _ in range(18)] for _ in range(3)]
+        defect = [[F(i+1, 100000)] for i in range(21)]
+        ep = scale(a['epsilon'], F(99, 100))
+        expected = [row[:] for row in defect]
+        expected[15:18] = add(expected[15:18], sub(ep, a['epsilon']))
+        xi = AWLIN.evaluate_full_shift_transport(iv(lift), iv(defect), iv(a['epsilon']), iv(ep))
+        for got, want in zip(xi, expected):
+            self.assertLessEqual(F(got[0].lo), want[0])
+            self.assertGreaterEqual(F(got[0].hi), want[0])
+
+    def test_S_information_uses_each_supplied_applied_axis_variance(self):
+        # Two distinct applied-R_S operations; no selected-word substitution.
+        for n, a in self.cases.items():
+            P, x = a['P'], a['phi']
+            H = [[F(0) for _ in range(n)] for _ in range(3)]
+            for j in range(3):
+                H[j][12+j] = F(1)
+            initial = energy(x, inv(P))
+            total = F(0)
+            for axis_std in (vec(F(9, 25), F(9, 25), F(1, 2)), vec(F(27, 50), F(27, 50), F(3, 4))):
+                R = [[axis_std[i][0]**2 if i == j else F(0) for j in range(3)] for i in range(3)]
+                S = add(mul(mul(H, P), tr(H)), R)
+                y = mul(H, x)
+                K = mul(mul(P, tr(H)), inv(S))
+                J = energy(y, inv(S))
+                xp = sub(x, mul(K, y))
+                posterior_precision = add(inv(P), mul(mul(tr(H), inv(R)), H))
+                self.assertEqual(energy(xp, posterior_precision)-energy(x, inv(P)), -J)
+                total += J
+                x, P = xp, inv(posterior_precision)
+            self.assertEqual(energy(x, inv(P))-initial, -total)
+            self.assertGreater(total, 0)
+
+    def test_transport_rejects_wrong_dimension_and_nonfinite_input(self):
+        for shape in ((18, 21), (3, 3), (0, 0)):
+            rows, cols = shape
+            with self.assertRaises(ValueError):
+                AWLIN.evaluate_full_shift_transport(matrix_point([[0]*cols for _ in range(rows)]), [], [], [])
+        with self.assertRaises(ValueError):
+            AWLIN.evaluate_full_shift_transport(matrix_point(eye(18)), matrix_point([[0] for _ in range(18)]), [], [])
+        with self.assertRaises(ValueError):
+            AWLIN.evaluate_full_shift_transport(matrix_point(eye(18)), matrix_point([[0] for _ in range(18)]), [[Interval(0, float('inf'))]]*3, matrix_point(vec(0, 0, 0)))
 
     def test_bad_covariance_and_vector_inputs_fail_closed(self):
         with self.assertRaises(ValueError):
