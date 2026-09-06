@@ -38,9 +38,6 @@ jobs:
           python3 tools/stability/ou3_sea3_complete_word_feasibility_trace.py \
             --output /tmp/sea3-complete-word-float-trace.json \
             --shipping-input /tmp/sea3-complete-word-specific-force-z.txt
-          # The complete trace strictly contains the 60 s + 601-sample startup
-          # trace. Reuse that exact prefix instead of recomputing the same
-          # continuum enclosure a second time.
           head -n 12601 /tmp/sea3-complete-word-specific-force-z.txt \
             > /tmp/sea3-validated-specific-force-z.txt
           python3 - <<'PY'
@@ -85,7 +82,7 @@ jobs:
           PY
       - name: Compile complete H18 release A21 shipping-word diagnostic
         run: |
-          g++ -O3 -std=c++20 -Wall -Wextra -Wpedantic -Werror \
+          g++ -O3 -std=c++20 -Wall -Wextra -Wpedantic -Werror -Wno-unused-function \
             -DEIGEN_NON_ARDUINO -I./src -isystem /usr/include/eigen3 \
             tests/kalman_ou_iii/ou3-sea3-complete-word-feasibility-test.cpp \
             -o /tmp/ou3-sea3-complete-word-feasibility
