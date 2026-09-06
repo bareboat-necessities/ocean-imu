@@ -1,24 +1,22 @@
 #!/usr/bin/env python3
 """Fail-closed contract for the deterministic complete-SEA3 shaping state.
 
-SEA3 is already the compact theorem-domain sea family.  This module does not
-re-open that compactness question.  It assembles the executable SEA0 pieces
+SEA3 is already the compact theorem-domain sea family. This module does not
+re-open that compactness question. It assembles the executable SEA0 pieces
 needed to propagate the complete compact family over the canonical 3 s word.
 
-The continuum phase coordinate and its no-reseed rotation are closed separately
-in ``ou3_sea3_continuum_phase_state``.  The finite-dimensional sampled physical
-target is the compact correlated behavior ``B^601_SEA3`` defined by
-``ou3_sea3_hard_window_behavior``.  That behavior is *not* its per-sample norm
-hull: membership still requires one common complete-SEA3 sea/phase/response
-witness.
+The continuum phase coordinate and its no-reseed rotation are closed in
+``ou3_sea3_continuum_phase_state``. The hard deterministic driver coordinate is
+the single common continuum Hilbert-ball representation in
+``ou3_sea3_continuum_driver_gram``. That representation preserves the complete
+three-partition spectral family and the joint six-DOF response; it is not a
+finite harmonic source, replay, Gaussian event, or independent sample box.
 
-What remains open for a conditional executable SEA3 point is computational
-closure of the hard spectral/behavior constraint and the joint source-output
-enclosure consumable by the 601-sample executor.  The physical SEA0->SEA3 left
-inclusion is a separate deployment obligation: it must close before deployment
-promotion, but it is not a prerequisite for executing one independently
-validated member of the already-declared SEA3 theorem set.  A power spectrum or
-spectral moment alone cannot provide the required pathwise membership oracle.
+The finite-dimensional sampled physical target is the compact correlated
+behavior ``B^601_SEA3`` defined by ``ou3_sea3_hard_window_behavior``. Numerical
+closure still requires an outward validated complete-family Gram enclosure and
+the same-history nonlinear physical output map consumable by the executor.
+Physical SEA0->SEA3 left inclusion remains a separate deployment obligation.
 """
 from __future__ import annotations
 
@@ -27,25 +25,21 @@ import json
 from pathlib import Path
 
 import ou3_sea3_continuum_phase_state as PHASE
+import ou3_sea3_continuum_driver_gram as DRIVER
 import ou3_sea3_hard_window_behavior as BEHAVIOR
 
 REPO = Path(__file__).resolve().parents[2]
 THEOREM = REPO / "doc" / "kalman_ou_iii" / "w3d-sea3-stability-theorem.tex-part"
 COMPLETE_SOURCE = REPO / "tools" / "stability" / "ou3_sea3_complete_source.py"
-SCHEMA = 4
-QUALIFICATION = "OU3_SEA3_HARD_SHAPING_STATE_CONTRACT_V4"
+SCHEMA = 5
+QUALIFICATION = "OU3_SEA3_HARD_SHAPING_STATE_CONTRACT_V5"
 
 CONTINUUM_PHASE_COORDINATE_SET_CLOSED = PHASE.CONTINUUM_PHASE_COORDINATE_SET_CLOSED
 PHASE_CONTINUOUS_PROPAGATION_CLOSED = PHASE.PHASE_CONTINUOUS_PROPAGATION_CLOSED
-HARD_SPECTRAL_DRIVER_SET_CLOSED = False
+HARD_SPECTRAL_DRIVER_SET_CLOSED = True
 COMPLETE_SEA3_LEFT_INCLUSION_CLOSED = False
 JOINT_SOURCE_OUTPUT_MAP_CLOSED = False
 
-# Conditional source execution lives wholly inside the already-declared SEA3
-# theorem domain.  Do not fold the physical SEA0->SEA3 deployment inclusion
-# into this gate: doing so would incorrectly make a deployment theorem a
-# prerequisite for testing one independently validated SEA3 member.  The hard
-# driver and the joint same-history source-output map remain mandatory.
 HARD_SHAPING_STATE_OR_EXCITATION_BOUND_CLOSED = all((
     CONTINUUM_PHASE_COORDINATE_SET_CLOSED,
     PHASE_CONTINUOUS_PROPAGATION_CLOSED,
@@ -67,13 +61,16 @@ def build() -> dict:
     theorem_flat = _normalized_text(theorem)
     complete = COMPLETE_SOURCE.read_text(encoding="utf-8")
     phase = PHASE.build()
+    driver = DRIVER.build()
     behavior = BEHAVIOR.build()
-    phase_failures = PHASE.validate(phase)
-    behavior_failures = BEHAVIOR.validate(behavior)
-    if phase_failures or behavior_failures:
-        raise RuntimeError(
-            f"SEA3 shaping prerequisites failed: phase={phase_failures}, behavior={behavior_failures}"
-        )
+    bad = {
+        "phase": PHASE.validate(phase),
+        "driver": DRIVER.validate(driver),
+        "behavior": BEHAVIOR.validate(behavior),
+    }
+    bad = {k: v for k, v in bad.items() if v}
+    if bad:
+        raise RuntimeError(f"SEA3 shaping prerequisites failed: {bad}")
 
     theorem_has_shaping_system = (
         "x^s_{k+1}&=A_s" in theorem
@@ -124,15 +121,21 @@ def build() -> dict:
             "continuum_index_set_retained": phase["continuum_index_set_retained"],
             "finite_frequency_grid_used": phase["finite_frequency_grid_used"],
             "finite_direction_grid_used": phase["finite_direction_grid_used"],
-            "phase_reset_on_lambda_transition_allowed": phase[
-                "phase_reset_on_lambda_transition_allowed"
-            ],
-            "continuum_phase_coordinate_set_closed": phase[
-                "continuum_phase_coordinate_set_closed"
-            ],
-            "phase_continuous_propagation_closed": phase[
-                "phase_continuous_propagation_closed"
-            ],
+            "phase_reset_on_lambda_transition_allowed": phase["phase_reset_on_lambda_transition_allowed"],
+            "continuum_phase_coordinate_set_closed": phase["continuum_phase_coordinate_set_closed"],
+            "phase_continuous_propagation_closed": phase["phase_continuous_propagation_closed"],
+        },
+        "hard_driver_certificate": {
+            "qualification": driver["qualification"],
+            "driver_space": driver["driver_space"],
+            "driver_set": driver["driver_set"],
+            "same_driver_field_entire_window": driver["same_driver_field_entire_window"],
+            "same_driver_field_translation_and_rotation": driver["same_driver_field_translation_and_rotation"],
+            "fixed_history_gram": driver["fixed_history_gram"],
+            "fixed_history_membership": driver["fixed_history_membership"],
+            "hard_spectral_driver_set_closed": driver["hard_spectral_driver_set_closed"],
+            "exact_fixed_history_correlated_oracle_formula_closed": driver["exact_fixed_history_correlated_oracle_formula_closed"],
+            "validated_complete_family_gram_enclosure_closed": driver["validated_complete_family_gram_enclosure_closed"],
         },
         "sampled_behavior_target": {
             "qualification": behavior["qualification"],
@@ -140,21 +143,11 @@ def build() -> dict:
             "sample_count": behavior["sample_count"],
             "sampled_projection_dimension": behavior["sampled_projection_dimension"],
             "compact": behavior["sampled_behavior_set_compact"],
-            "membership_requires_common_SEA3_witness": behavior[
-                "membership_requires_common_SEA3_witness"
-            ],
-            "normal_live_caps_are_membership_sufficient": behavior[
-                "normal_live_caps_are_membership_sufficient"
-            ],
-            "independent_sample_boxes_define_behavior_set": behavior[
-                "independent_sample_boxes_define_behavior_set"
-            ],
-            "validated_membership_or_separation_oracle_closed": behavior[
-                "validated_membership_or_separation_oracle_closed"
-            ],
-            "validated_correlated_outer_enclosure_closed": behavior[
-                "validated_correlated_outer_enclosure_closed"
-            ],
+            "membership_requires_common_SEA3_witness": behavior["membership_requires_common_SEA3_witness"],
+            "normal_live_caps_are_membership_sufficient": behavior["normal_live_caps_are_membership_sufficient"],
+            "independent_sample_boxes_define_behavior_set": behavior["independent_sample_boxes_define_behavior_set"],
+            "validated_membership_or_separation_oracle_closed": behavior["validated_membership_or_separation_oracle_closed"],
+            "validated_correlated_outer_enclosure_closed": behavior["validated_correlated_outer_enclosure_closed"],
         },
         "power_spectrum_alone_is_hard_pathwise_bound": False,
         "spectral_moments_alone_may_close_xs": False,
@@ -163,10 +156,6 @@ def build() -> dict:
         "seeded_128_frequency_generator_may_close_xs": False,
         "finite_RAO_grid_may_close_xs": False,
         "arbitrary_bounded_input_box_may_close_xs": False,
-        "allowed_closure_forms": [
-            "validated_compact_oscillator_or_shaping_state_with_hard_driver_set",
-            "validated_equivalent_hard_finite_window_dynamic_constraint",
-        ],
         "executable_ingredients": executable,
         "hard_shaping_state_or_excitation_bound_closed": HARD_SHAPING_STATE_OR_EXCITATION_BOUND_CLOSED,
         "conditional_SEA3_source_output_closed": CONDITIONAL_SEA3_SOURCE_OUTPUT_CLOSED,
@@ -174,9 +163,7 @@ def build() -> dict:
         "conditional_execution_requires_deployment_left_inclusion": False,
         "complete_SEA3_family_materialized_here": False,
         "P3_promoted": False,
-        "next_obligation": (
-            "B^601_SEA3 and the continuum phase propagation are explicit and compact; close the hard spectral/driver membership relation and the same-history joint translational/rotational output map for a conditional SEA3 realization. Separately certify physical SEA0->SEA3 left inclusion before deployment promotion"
-        ),
+        "next_obligation": "enclose the complete coupled 601-sample Gram family and propagate its same-history translation/rotation core through attitude/specific-force kinematics and the exact frontend/tuner/scheduler; do not add another source surrogate",
     }
 
 
@@ -192,26 +179,30 @@ def validate(d: dict) -> list[str]:
         "theorem_rejects_statistical_or_seeded_surrogates",
         "theorem_separates_probabilistic_random_sea_corollary",
         "complete_source_rejects_gaussian_word_generator",
+        "hard_shaping_state_or_excitation_bound_closed",
     ):
         if d.get(key) is not True:
             failures.append(f"{key} is not true")
     if d.get("hard_realization_set_symbol") != "X^s_SEA3(lambda_{0:N_W})":
         failures.append("hard realization set symbol drifted")
     phase = d.get("continuum_phase_certificate", {})
-    for key in (
-        "continuum_index_set_retained",
-        "continuum_phase_coordinate_set_closed",
-        "phase_continuous_propagation_closed",
-    ):
+    for key in ("continuum_index_set_retained", "continuum_phase_coordinate_set_closed", "phase_continuous_propagation_closed"):
         if phase.get(key) is not True:
             failures.append(f"continuum phase certificate lost {key}")
-    for key in (
-        "finite_frequency_grid_used",
-        "finite_direction_grid_used",
-        "phase_reset_on_lambda_transition_allowed",
-    ):
+    for key in ("finite_frequency_grid_used", "finite_direction_grid_used", "phase_reset_on_lambda_transition_allowed"):
         if phase.get(key) is not False:
             failures.append(f"continuum phase certificate reintroduced {key}")
+    driver = d.get("hard_driver_certificate", {})
+    for key in (
+        "same_driver_field_entire_window",
+        "same_driver_field_translation_and_rotation",
+        "hard_spectral_driver_set_closed",
+        "exact_fixed_history_correlated_oracle_formula_closed",
+    ):
+        if driver.get(key) is not True:
+            failures.append(f"hard driver certificate lost {key}")
+    if driver.get("validated_complete_family_gram_enclosure_closed") is not False:
+        failures.append("hard driver falsely claims complete-family Gram enclosure")
     behavior = d.get("sampled_behavior_target", {})
     for key in ("compact", "membership_requires_common_SEA3_witness"):
         if behavior.get(key) is not True:
@@ -232,7 +223,6 @@ def validate(d: dict) -> list[str]:
         "seeded_128_frequency_generator_may_close_xs",
         "finite_RAO_grid_may_close_xs",
         "arbitrary_bounded_input_box_may_close_xs",
-        "hard_shaping_state_or_excitation_bound_closed",
         "conditional_SEA3_source_output_closed",
         "deployment_left_inclusion_closed",
         "conditional_execution_requires_deployment_left_inclusion",
@@ -244,7 +234,7 @@ def validate(d: dict) -> list[str]:
     expected = {
         "continuum_phase_coordinate_set_closed": True,
         "phase_continuous_propagation_closed": True,
-        "hard_spectral_driver_set_closed": False,
+        "hard_spectral_driver_set_closed": True,
         "complete_SEA3_left_inclusion_closed": False,
         "joint_source_output_map_closed": False,
     }
@@ -266,7 +256,6 @@ def main() -> int:
     print(json.dumps({
         "SEA3_compact": d["SEA3_parameter_domain_compact"],
         "hard_realization_set": d["hard_realization_set_symbol"],
-        "sampled_behavior_target": d["sampled_behavior_target"],
         "executable_ingredients": d["executable_ingredients"],
         "hard_shaping_closed": d["hard_shaping_state_or_excitation_bound_closed"],
         "conditional_source_output_closed": d["conditional_SEA3_source_output_closed"],
