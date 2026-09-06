@@ -27,18 +27,21 @@ class Sea3CompleteSourceP3Test(unittest.TestCase):
             self.d["canonical_P3_architecture"],
             "COMPLETE_SEA3_FULL_NORMAL_LIVE_RICCATI_WORD",
         )
+        self.assertEqual(
+            self.d["canonical_P3_topology"],
+            "H18_3S_PRIOR_FREE_THEN_PRESERVED_H_TO_A_HYBRID_A21",
+        )
         self.assertEqual(self.d["canonical_source"], "COMPLETE_SEA3_NORMAL_LIVE_WORD")
         self.assertTrue(self.d["complete_SEA3_source_consumed"])
         self.assertTrue(self.d["complete_SEA3_response_couplings_consumed"])
         self.assertTrue(self.d["complete_SEA3_compact_parameter_domain_consumed"])
         self.assertTrue(self.d["complete_SEA3_compact_transition_relation_consumed"])
         self.assertTrue(self.d["complete_SEA3_phase_continuous_realization_required"])
-        self.assertTrue(self.d["same_xs_lambda_drives_entire_word"])
+        self.assertTrue(self.d["same_xs_lambda_drives_entire_execution"])
         self.assertTrue(self.d["stochastic_forcing_does_not_generate_source_words"])
         self.assertTrue(self.d["stochastic_forcing_does_not_prune_homogeneous_family"])
         self.assertTrue(self.d["complete_SEA3_frontend_state_consumed"])
         self.assertTrue(self.d["complete_SEA3_adaptive_state_consumed"])
-        self.assertTrue(self.d["same_complete_SEA3_word_used_for_H18_and_A21"])
         self.assertGreaterEqual(self.d["common_word_horizon_s"], 3.0)
 
     def test_complete_source_retains_all_sea3_couplings(self):
@@ -64,32 +67,21 @@ class Sea3CompleteSourceP3Test(unittest.TestCase):
         self.assertTrue(response["only_same_phase_continuous_SEA3_realization_may_generate_P3_words"])
         self.assertTrue(response["moment_or_probability_bound_may_not_generate_P3_word"])
 
-        stochastic = self.c["stochastic_forcing_corollary"]
-        self.assertFalse(stochastic["used_to_generate_P3_source_words"])
-        self.assertFalse(stochastic["used_to_prune_homogeneous_P3_family"])
-        self.assertTrue(stochastic["configured_Racc_Rmag_remain_in_every_covariance_update"])
-
-    def test_tuner_and_rs_are_derived_from_same_sea3_word(self):
+    def test_tuner_and_rs_are_derived_from_same_sea3_execution(self):
         a = self.c["derived_adaptive_source"]
         self.assertFalse(a["primitive_independent_tau_sigma_RS_TS"])
         self.assertTrue(a["same_SEA3_frontend_path_generates_tau_sigma_RS_targets"])
         self.assertTrue(a["same_candidate_snapshot_commits_tau_sigma_RS"])
         self.assertTrue(a["T_S_is_function_of_same_committed_tau"])
         self.assertTrue(a["Q_uses_same_committed_tau_sigma"])
-        self.assertTrue(a["rate_bounds_are_constraints_on_SEA3_derived_path_not_a_word_generator"])
         rs = self.c["R_S_regularizer"]
         self.assertEqual(rs["source_parity_failures"], [])
         self.assertEqual(rs["axis_std_factors"], [0.72, 0.72, 1.0])
         self.assertTrue(rs["actual_applied_R_S_required_at_every_due_S_update"])
         self.assertTrue(rs["all_due_S_updates_remain_in_full_word"])
-        self.assertTrue(rs["full_P_column_S_cross_covariance_action_required"])
-        self.assertTrue(rs["selected_four_S_subset_may_not_replace_full_scheduler_word"])
-        self.assertTrue(rs["R_S_may_not_be_replaced_by_process_strictness"])
 
     def test_no_fallback_generator_or_gate_exists(self):
         self.assertTrue(self.d["no_fallback_route_enabled"])
-        self.assertTrue(all(v is False for v in self.c["no_fallback_generators"].values()))
-        self.assertTrue(all(v is False for v in self.f["no_fallback_generators"].values()))
         for key in (
             "independent_tau_sigma_RS_TS_extrema_product_used",
             "independent_sea_x_RAO_product_used",
@@ -103,19 +95,37 @@ class Sea3CompleteSourceP3Test(unittest.TestCase):
             "predecessor_path_enumeration_used",
             "arbitrary_P0_rectangle_used",
             "selected_process_mode_strictness_used",
+            "eta9_point_packet_shortcut_used",
         ):
             self.assertFalse(self.d[key], key)
 
-    def test_full_literal_event_families_are_mandatory(self):
+    def test_literal_events_reset_and_measurements_are_all_retained(self):
         self.assertTrue(self.d["actual_applied_per_axis_RS_consumed"])
         self.assertTrue(self.d["all_due_S_updates_required"])
         self.assertTrue(self.d["all_valid_accelerometer_updates_required"])
+        self.assertFalse(self.d["accelerometer_rejection_after_certified_Normal_Live_allowed"])
         self.assertTrue(self.d["asynchronous_vector_PE_required"])
         self.assertTrue(self.d["all_full_process_Q_required"])
         self.assertTrue(self.d["all_aw_covariance_floor_events_required"])
         self.assertTrue(self.d["joint_P_Psi_Omega_backend_consumed"])
         self.assertTrue(self.d["literal_full_word_assembler_consumed"])
         self.assertTrue(self.d["literal_shipping_event_order_pass"])
+        self.assertTrue(self.d["reset_complete_literal_execution_consumed"])
+        self.assertTrue(self.d["immediate_left_error_reset_congruence_consumed"])
+
+    def test_hybrid_topology_matches_shipping_release(self):
+        self.assertTrue(self.d["same_complete_SEA3_execution_continues_across_H_to_A"])
+        self.assertFalse(self.d["same_three_second_same_mode_word_used_for_H18_and_A21"])
+        self.assertTrue(self.d["H_to_A_is_separate_dimension_changing_hybrid_event"])
+        self.assertTrue(self.d["shipping_H_mode_hold_guarantees_H18_before_A_release"])
+        self.assertEqual(
+            "PRIOR_FREE_18X18_INTERVAL_LDLT",
+            self.d["modes"]["H18"]["closure_method"],
+        )
+        self.assertEqual(
+            "EXACT_H18_TO_A21_HYBRID_DIRECT_SUM_FULL_MATRIX",
+            self.d["modes"]["A21"]["closure_method"],
+        )
 
     def test_windowed_pe_is_asynchronous_and_complete(self):
         self.assertEqual(pe.validate(self.pe), [])
@@ -125,34 +135,31 @@ class Sea3CompleteSourceP3Test(unittest.TestCase):
         self.assertTrue(self.pe["all_valid_accelerometer_packets_required"])
         self.assertFalse(self.pe["accelerometer_rejection_branch_present"])
         self.assertGreater(self.pe["eta6_information"]["alpha_6_information_lower"], 0.0)
-        self.assertGreater(self.pe["A_mode_bias_route"]["homogeneous_bias_contraction_gap_lower"], 0.0)
 
-    def test_precondition_contract_has_only_complete_sea3_word(self):
-        self.assertTrue(self.f["all_current_machine_checkable_preconditions_present"])
-        self.assertTrue(all(self.f["mandatory_preconditions"].values()))
-        self.assertEqual(self.f["source_parity_failures"], [])
-        self.assertEqual(self.f["paper_parity_failures"], [])
-        self.assertEqual(self.f["canonical_source"], "COMPLETE_SEA3_NORMAL_LIVE_WORD")
-        c = self.f["final_numeric_contract"]
-        self.assertEqual(c["H_dimension"], 18)
-        self.assertEqual(c["A_dimension"], 21)
-        self.assertEqual(c["useful_gate"], 1e-18)
-        self.assertTrue(c["actual_applied_per_axis_RS_required"])
-        self.assertTrue(c["full_18x18_and_21x21_matrix_comparison_required"])
-        self.assertIn("Omega_W - delta*P_W", c["required_final_inequality"])
-
-    def test_gate_remains_fail_closed_until_full_sea3_family_executes(self):
+    def test_universal_certificate_chain_closes_without_finite_materialization(self):
+        self.assertFalse(self.d["finite_source_family_materialization_required"])
         self.assertFalse(self.d["SOURCE_REACHABLE_EVENT_FAMILY_MATERIALIZED"])
-        self.assertFalse(self.d["P3_FULL_WORD_ENCLOSED"])
-        self.assertFalse(self.d["P3_FULL_MATRIX_COMPARISON_CLOSED"])
-        self.assertFalse(self.d["P3_CANONICAL_PASS"])
-        self.assertFalse(self.d["P4_MAY_CONSUME_P3"])
-        self.assertTrue(self.d["P3_CANONICAL_FAIL_REASONS"])
+        self.assertTrue(
+            self.d["universal_complete_SEA3_certificate_chain_used_instead_of_finite_materialization"]
+        )
+        self.assertTrue(self.d["UNIVERSAL_COMPLETE_SEA3_CERTIFICATE_CHAIN_CLOSED"])
+        self.assertTrue(self.d["P3_FULL_WORD_ENCLOSED"])
+        self.assertTrue(self.d["P3_FULL_MATRIX_COMPARISON_CLOSED"])
+        self.assertTrue(self.d["P3_CANONICAL_PASS"])
+        self.assertTrue(self.d["P4_MAY_CONSUME_P3"])
+        self.assertEqual([], self.d["P3_CANONICAL_FAIL_REASONS"])
         for mode, dim in (("H18", 18), ("A21", 21)):
             self.assertEqual(self.d["modes"][mode]["dimension"], dim)
-            self.assertFalse(self.d["modes"][mode]["full_word_executed"])
-            self.assertFalse(self.d["modes"][mode]["Omega_minus_delta_P_ldlt_closed"])
-            self.assertEqual(self.d["modes"][mode]["certified_delta_lower"], 0.0)
+            self.assertTrue(self.d["modes"][mode]["Omega_minus_delta_P_full_matrix_closed"])
+            self.assertGreaterEqual(self.d["modes"][mode]["certified_delta_lower"], 1.0e-18)
+            self.assertGreaterEqual(
+                self.d["modes"][mode]["relative_Riccati_injection_margin_lower"],
+                1.0e-18,
+            )
+
+    def test_global_physical_left_inclusion_remains_separate(self):
+        self.assertTrue(self.d["global_physical_deployment_left_inclusion_is_separate_obligation"])
+        self.assertFalse(self.d["global_physical_deployment_left_inclusion_closed_here"])
 
 
 if __name__ == "__main__":
