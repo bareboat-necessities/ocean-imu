@@ -34,6 +34,47 @@ STALE_RELOCATED_PATH = re.compile(
     r"['\"]ou3_[^'\"]+\.py['\"]"
 )
 
+OPERATING_DOMAIN_BASENAME = "ou3_proof_" + "operating_domain.json"
+DIRECTIONAL_RESPONSE_BASENAME = "ou3_sea3_directional_" + "response_domain.json"
+STABILITY_JSON_BASENAMES = {
+    OPERATING_DOMAIN_BASENAME,
+    DIRECTIONAL_RESPONSE_BASENAME,
+}
+TEXT_SUFFIXES = {".py", ".yml", ".yaml", ".md", ".tex", ".sh", ".txt"}
+
+
+def _stale_stability_json_references() -> list[str]:
+    stale: list[str] = []
+    roots = (
+        STABILITY,
+        ROOT / ".github" / "workflows",
+        ROOT / "tests" / "validation",
+        ROOT / "doc",
+        ROOT / "docs",
+    )
+    for base in roots:
+        if not base.exists():
+            continue
+        for path in sorted(p for p in base.rglob("*") if p.is_file()):
+            if path.suffix not in TEXT_SUFFIXES and path.name != "Makefile":
+                continue
+            try:
+                lines = path.read_text(encoding="utf-8").splitlines()
+            except UnicodeDecodeError:
+                continue
+            for lineno, line in enumerate(lines, 1):
+                for basename in STABILITY_JSON_BASENAMES:
+                    if basename not in line:
+                        continue
+                    # Every retained reference must make the new stability
+                    # package location explicit.  The basename is constructed
+                    # above so this integrity test does not match itself.
+                    if "stability" not in line:
+                        stale.append(
+                            f"{path.relative_to(ROOT)}:{lineno}: {line.strip()}"
+                        )
+    return stale
+
 
 class StabilityPackageIntegrityTests(unittest.TestCase):
     def test_all_retained_ou3_imports_resolve_inside_retained_tree(self):
@@ -85,6 +126,26 @@ class StabilityPackageIntegrityTests(unittest.TestCase):
             stale,
             "retained stability modules still use pre-package Python paths:\n"
             + "\n".join(stale),
+        )
+
+    def test_stability_json_domains_live_only_in_stability_package(self):
+        missing = [
+            name for name in sorted(STABILITY_JSON_BASENAMES)
+            if not (STABILITY / name).is_file()
+        ]
+        root_duplicates = [
+            name for name in sorted(STABILITY_JSON_BASENAMES)
+            if (TOOLS / name).exists()
+        ]
+        stale = _stale_stability_json_references()
+        self.assertEqual([], missing, "missing stability JSON domains: " + ", ".join(missing))
+        self.assertEqual(
+            [], root_duplicates,
+            "stability JSON domains still duplicated at tools/: " + ", ".join(root_duplicates),
+        )
+        self.assertEqual(
+            [], stale,
+            "stale pre-package stability JSON references:\n" + "\n".join(stale),
         )
 
     def test_unrelated_ou3_studies_stay_outside_stability_package(self):
