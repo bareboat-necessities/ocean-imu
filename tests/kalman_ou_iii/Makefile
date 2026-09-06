@@ -21,7 +21,7 @@ LDFLAGS  =
 # Tell make to look for source files in src/util
 VPATH = $(REPO_ROOT)/src/util
 
-TARGETS = kalman_ou_iii-sim accel_vibration_guard-test imu_lever_arm-test ou3-certificate-sim ou3-information-certificate-sim ou3-neighborhood-sim kalman_ou_common-test aw_covariance_policy-test acc_bias_ou-test channel_freeze-test wave_period-test mag_hard_iron-test continuous_mag_hard_iron-test tuner_coupling-test tuner_schedule-test wave_band_sigma-test iss_contract-test rs_law-test startup_init-test sea3_same_history_startup-test
+TARGETS = kalman_ou_iii-sim accel_vibration_guard-test imu_lever_arm-test ou3-certificate-sim ou3-information-certificate-sim ou3-neighborhood-sim kalman_ou_common-test aw_covariance_policy-test acc_bias_ou-test channel_freeze-test wave_period-test mag_hard_iron-test continuous_mag_hard_iron-test tuner_coupling-test tuner_schedule-test wave_band_sigma-test iss_contract-test rs_law-test startup_init-test
 
 all: build test
 
@@ -79,9 +79,6 @@ continuous_mag_hard_iron-test: continuous_mag_hard_iron-test.o
 
 # Needs W3dSimCommon for g_std, like the simulator target.
 startup_init-test: startup_init-test.o W3dSimCommon.o
-	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
-
-sea3_same_history_startup-test: sea3_same_history_startup-test.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
 tuner_schedule-test: tuner_schedule-test.o
