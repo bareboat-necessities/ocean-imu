@@ -160,8 +160,8 @@ jobs:
           # source by operator construction. Quadrature evaluates its continuum
           # integral but is not promoted to source modes.
           assert x['canonical_source'] == 'COMPLETE_SEA3_NORMAL_LIVE_WORD'
-          assert x['source_membership']['membership_is_by_operator_construction_not_quadrature'] is True
-          assert x['source_membership']['same_driver_field_entire_window'] is True
+          assert x['source_membership']['membership_is_analytic_Hilbert_norm_not_quadrature'] is True
+          assert x['source_membership']['same_driver_field_prehistory_and_window'] is True
           assert x['source_membership']['same_driver_field_translation_and_rotation'] is True
           assert x['fixed_response_member']['inside_declared_continuum_RAO_family'] is True
           assert x['fixed_response_member']['finite_RAO_grid_used'] is False
