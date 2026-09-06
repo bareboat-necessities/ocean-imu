@@ -72,6 +72,6 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A tools/stability tools/ou3_proof_operating_domain.json tools/ou3_sea3_directional_response_domain.json
+          git add -A tools
           git commit -m "refactor: move stability JSON domains into package"
           git push origin HEAD:refs/heads/codex/ou3-p4-p5-complete-sea3-after-492
