@@ -234,6 +234,18 @@ The MEMS-bias integration rebuild exposed an inherited CI lint defect:
 changing the source model or quality gate; the next check is the unchanged CI
 python job. The focused five bias algebra/negative-contract tests pass locally.
 
+The expanded same-history CI suite passed 46 of 49 tests, including the bias
+and nonlinear lineage tests, but exposed the inherited source-cell splitter's
+endpoint defect. Reapplying `outward_bounds` to stored endpoints changes a
+zero lower hull endpoint to `-1e-323` after two roundings and creates a nonzero
+overlap at the cut. This is an intersection-construction defect, not failure
+of SEA3 or a contraction inequality. Copying existing parent endpoints and
+one exact binary64 cut restores the exhaustive binary partition; exactly
+representable smoke-domain endpoints need no arithmetic rounding. The cover
+validator and outward arithmetic stay unchanged. This repairs structural
+partitioning only; the hard joint SEA3 oracle remains the limiting quantity.
+The next check is the same CI split tests, including repeated non-midpoint cuts.
+
 The exact `source-foundation` command passes 73 tests. The 0.4 P3 recomputation,
 finite-`tau_b` detectability rerun, canonical P4 integration, and all 91 P4
 discovery tests pass. `make all` is locally blocked before compilation because

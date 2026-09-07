@@ -194,8 +194,11 @@ def split_source_cell(
             complete_window_samples=cell.complete_window_samples,
         )
 
-    left = child("lo", Interval.outward_bounds(lo, mid))
-    right = child("hi", Interval.outward_bounds(mid, hi))
+    # lo/hi already enclose the parent; mid is the chosen binary64 cut itself.
+    # Intersections copy these exact endpoints. Rounding them outward again
+    # enlarges the parent hull and creates an overlap around the shared cut.
+    left = child("lo", Interval(lo, mid))
+    right = child("hi", Interval(mid, hi))
     return left, right
 
 
@@ -305,10 +308,10 @@ def _root_smoke_cell() -> Sea3WindowCell:
         joint_response_witness_id="G_imu:common-window",
         bias_path_witness_id=None,
         source_bounds=(
-            SourceBound("lambda.H1_fraction", Interval.outward_bounds(0.0, 1.0), "coupled Lambda_SEA3 search hull"),
-            SourceBound("lambda.nu1", Interval.outward_bounds(0.0, 1.0), "compact R_lambda coordinate"),
-            SourceBound("xs.support_coordinate", Interval.outward_bounds(-1.0, 1.0), "symbolic hard-realization search coordinate"),
-            SourceBound("response.gain_fraction", Interval.outward_bounds(0.0, 1.0), "joint response-family search hull"),
+            SourceBound("lambda.H1_fraction", Interval(0.0, 1.0), "coupled Lambda_SEA3 search hull"),
+            SourceBound("lambda.nu1", Interval(0.0, 1.0), "compact R_lambda coordinate"),
+            SourceBound("xs.support_coordinate", Interval(-1.0, 1.0), "symbolic hard-realization search coordinate"),
+            SourceBound("response.gain_fraction", Interval(0.0, 1.0), "joint response-family search hull"),
         ),
         shared_constraint_tokens=constraints,
     )
