@@ -179,3 +179,15 @@ The master and graph-sector machinery are non-promoting. P4 remains open until
 the source-uniform endpoint and every-prefix augmented LDLT plus domain
 retention close on the same complete SEA3 history. P5 remains blocked until
 strict canonical P4 contraction closes.
+
+## PR #500 experiment 1 failure analysis — arbitrary two-prefix covariance fixture
+
+Hypothesis: the trusted typed complete-SEA3 execution kernel can be instrumented passively to retain branch-correlated every-prefix ancestry and event-local H18/A21 Riccati cells (P-before/P-after plus the exact F/Q, floor increment, or Joseph H/R) without reimplementing shipping transitions or losing actual-applied R_S provenance.
+
+Execution: PR #500 added passive event capture inside `ou3_sea3_complete_window_execution_kernel.advance_branch` and a selector smoke that executed two identical point samples from the synthetic covariance fixture `P0_H=2 I_18`, `P0_A=2 I_21`. The canonical `ou3-proof` run `34132984840` passed source-foundation, complete-SEA3 source, frozen `riccati-p3`, the P4 geometry/metric/reset gates, and all pre-existing P4 tests before reaching the new selector test.
+
+Observed failure: `test_ou3_p4_complete_sea3_same_history_prefix_selectors.P4CompleteSea3SameHistoryPrefixSelectorsTest.setUpClass` failed during the second synthetic prefix in the unchanged outward interval Joseph backend. `matrix_inverse_gauss_jordan` rejected innovation pivot 1 because its enclosure crossed zero: `[-31.51349023865584, 33.33589453040376]`. The failure is an interval-enclosure failure of the arbitrary `2 I` multi-sample smoke fixture; it is not a P4 contraction result and not a shipping filter failure.
+
+Interpretation: using `2 I` as a convenient multi-prefix covariance is unjustified and substantially wider than the source-generated Normal-Live covariance structure. Refining the Gauss-Jordan backend, selecting a favorable interval branch, dropping the second prefix, or weakening the Joseph inversion would hide the fixture problem and is rejected. The typed capture concept itself was not falsified: the first sample and all pre-existing exact differential-event tests reach the same P/H/R semantics successfully.
+
+Replan: replace only the arbitrary smoke covariance with the canonical source-generated Normal-Live H18/A21 seed structure (including the actual attitude handoff seed, v/p/S seeds, committed stationary a_w covariance, and the A21 bias-release seed where applicable), while keeping the same trusted transition, every front-end successor, exact event order, actual applied R_S, and unchanged outward inverse backend. If the source seed still loses a pivot on the second prefix, stop and treat that as a separate interval-representation obstacle rather than widening/regularizing the inverse by hand.

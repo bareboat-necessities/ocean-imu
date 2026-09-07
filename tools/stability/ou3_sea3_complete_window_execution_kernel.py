@@ -22,6 +22,11 @@ an independent gyro-bias bound.
 Front-end interval branch splits are retained.  No favorable successor is
 selected.  Each successor receives a deep copy of the same post-magnetometer H
 and A Riccati states and continues as a separate source cell.
+
+For theorem consumers that need event-local same-history cells, ``advance_branch``
+can additionally capture the exact P-before/P-after and shipping H/R or F/Q
+objects at every Riccati event.  Capture is passive instrumentation of the same
+transition call; it never replays or independently reconstructs a word.
 """
 from __future__ import annotations
 
@@ -77,6 +82,24 @@ class ExecutionBranch:
     H: WORD.LiteralWordState
     A: WORD.LiteralWordState
     source_cell_id: str
+
+
+@dataclass(frozen=True)
+class RiccatiEventCell:
+    """Passive event-local snapshot from one trusted shipping transition."""
+
+    mode: str
+    kind: str
+    event_index_in_sample: int
+    P_before: IntervalMatrix
+    P_after: IntervalMatrix
+    H: IntervalMatrix | None = None
+    R: IntervalMatrix | None = None
+    F: IntervalMatrix | None = None
+    Q: IntervalMatrix | None = None
+    floor_increment: IntervalMatrix | None = None
+    magnetic_event_index: int | None = None
+    actual_rs_from_committed_schedule: bool = False
 
 
 @dataclass(frozen=True)
@@ -162,18 +185,65 @@ def _prediction(
     return WORD.pack_prediction(mode, Faa, Qaa, Fll, Qll)
 
 
+def _record_event_cell(
+    cells: list[RiccatiEventCell] | None,
+    *,
+    mode: str,
+    kind: str,
+    P_before: IntervalMatrix,
+    P_after: IntervalMatrix,
+    H: IntervalMatrix | None = None,
+    R: IntervalMatrix | None = None,
+    F: IntervalMatrix | None = None,
+    Q: IntervalMatrix | None = None,
+    floor_increment: IntervalMatrix | None = None,
+    magnetic_event_index: int | None = None,
+    actual_rs_from_committed_schedule: bool = False,
+) -> None:
+    if cells is None:
+        return
+    cells.append(
+        RiccatiEventCell(
+            mode=mode,
+            kind=kind,
+            event_index_in_sample=len(cells),
+            P_before=copy.deepcopy(P_before),
+            P_after=copy.deepcopy(P_after),
+            H=copy.deepcopy(H),
+            R=copy.deepcopy(R),
+            F=copy.deepcopy(F),
+            Q=copy.deepcopy(Q),
+            floor_increment=copy.deepcopy(floor_increment),
+            magnetic_event_index=magnetic_event_index,
+            actual_rs_from_committed_schedule=actual_rs_from_committed_schedule,
+        )
+    )
+
+
 def _apply_one_mode_imu_core(
     word: WORD.LiteralWordState,
     sample: SampleCoordinates,
     active: TUNER.ActiveSchedule,
     rs_xyz: Sequence[Interval],
     c: KernelConstants,
+    *,
+    event_cells: list[RiccatiEventCell] | None = None,
 ) -> str | None:
     """Apply prediction/floor/S/accel; async mag is applied after front-end."""
     F, Q = _prediction(word.mode, sample, active, c)
     # Prediction is executed here rather than through WORD.apply_imu_sample
     # because the shipping covariance floor depends on the just-predicted P.
+    P_before = copy.deepcopy(word.riccati.P)
     WORD.BACKEND.predict(word.riccati, F, Q)
+    _record_event_cell(
+        event_cells,
+        mode=word.mode,
+        kind="prediction",
+        P_before=P_before,
+        P_after=word.riccati.P,
+        F=F,
+        Q=Q,
+    )
     word.event_log.append("prediction")
 
     floor_case: str | None = None
@@ -181,28 +251,85 @@ def _apply_one_mode_imu_core(
         target = FLOOR.stationary_sigma_isotropic(active.sigma)
         Paw = FLOOR.aw_block(word.riccati.P, WORD.OFF_AW)
         Delta, floor_case = FLOOR.positive_part_enclosure(target, Paw)
-        WORD.BACKEND.add_psd_floor(word.riccati, WORD.aw_floor_increment(word.mode, Delta))
+        increment = WORD.aw_floor_increment(word.mode, Delta)
+        P_before = copy.deepcopy(word.riccati.P)
+        WORD.BACKEND.add_psd_floor(word.riccati, increment)
+        _record_event_cell(
+            event_cells,
+            mode=word.mode,
+            kind="aw_floor",
+            P_before=P_before,
+            P_after=word.riccati.P,
+            floor_increment=increment,
+        )
         word.aw_floor_applications += 1
         word.event_log.append("aw_floor")
 
     if sample.due_S:
+        H_S = WORD.H_S_zero(word.mode)
+        R_S = WORD.R_S_zero(rs_xyz)
+        P_before = copy.deepcopy(word.riccati.P)
         WORD.BACKEND.joseph_measurement(
             word.riccati,
-            WORD.H_S_zero(word.mode),
-            WORD.R_S_zero(rs_xyz),
+            H_S,
+            R_S,
+        )
+        _record_event_cell(
+            event_cells,
+            mode=word.mode,
+            kind="S_zero",
+            P_before=P_before,
+            P_after=word.riccati.P,
+            H=H_S,
+            R=R_S,
+            actual_rs_from_committed_schedule=True,
         )
         word.S_updates += 1
         word.event_log.append("S_zero")
 
+    H_acc = WORD.H_accelerometer(word.mode, sample.f_cog_body, sample.R_wb)
+    P_before = copy.deepcopy(word.riccati.P)
     WORD.BACKEND.joseph_measurement(
         word.riccati,
-        WORD.H_accelerometer(word.mode, sample.f_cog_body, sample.R_wb),
+        H_acc,
         c.Racc,
+    )
+    _record_event_cell(
+        event_cells,
+        mode=word.mode,
+        kind="accelerometer",
+        P_before=P_before,
+        P_after=word.riccati.P,
+        H=H_acc,
+        R=c.Racc,
     )
     word.accel_updates += 1
     word.imu_samples += 1
     word.event_log.append("accelerometer")
     return floor_case
+
+
+def _apply_magnetic_event(
+    word: WORD.LiteralWordState,
+    event: MagneticEvent,
+    *,
+    constants: KernelConstants,
+    magnetic_event_index: int,
+    event_cells: list[RiccatiEventCell] | None,
+) -> None:
+    H_mag = WORD.H_magnetometer(word.mode, event.m_body)
+    P_before = copy.deepcopy(word.riccati.P)
+    WORD.apply_magnetometer(word, m_body=event.m_body, Rmag=constants.Rmag)
+    _record_event_cell(
+        event_cells,
+        mode=word.mode,
+        kind="magnetometer",
+        P_before=P_before,
+        P_after=word.riccati.P,
+        H=H_mag,
+        R=constants.Rmag,
+        magnetic_event_index=magnetic_event_index,
+    )
 
 
 def advance_branch(
@@ -211,6 +338,7 @@ def advance_branch(
     *,
     constants: KernelConstants,
     next_cell_prefix: str,
+    capture_riccati_event_cells: bool = False,
 ) -> tuple[list[ExecutionBranch], dict]:
     """Advance one connected source cell without selecting a front-end branch."""
     committed = TUNER.commit_if_pending(branch.frontend.tuner, constants.tuner)
@@ -219,8 +347,24 @@ def advance_branch(
 
     H_post = copy.deepcopy(branch.H)
     A_post = copy.deepcopy(branch.A)
-    floor_H = _apply_one_mode_imu_core(H_post, sample, active, rs_xyz, constants)
-    floor_A = _apply_one_mode_imu_core(A_post, sample, active, rs_xyz, constants)
+    H_cells: list[RiccatiEventCell] | None = [] if capture_riccati_event_cells else None
+    A_cells: list[RiccatiEventCell] | None = [] if capture_riccati_event_cells else None
+    floor_H = _apply_one_mode_imu_core(
+        H_post,
+        sample,
+        active,
+        rs_xyz,
+        constants,
+        event_cells=H_cells,
+    )
+    floor_A = _apply_one_mode_imu_core(
+        A_post,
+        sample,
+        active,
+        rs_xyz,
+        constants,
+        event_cells=A_cells,
+    )
 
     # Shipping updateCore_ completes the private measurement-only
     # Mahony/tuner/WPE transition after the accelerometer correction.  Magnetic
@@ -242,9 +386,21 @@ def advance_branch(
         if tuple(succ.actual_rs_std_xyz_for_current_riccati_sample) != rs_xyz:
             raise RuntimeError("front-end actual R_S disagrees with Riccati R_S")
 
-    for event in sample.magnetometer_events_after_imu:
-        WORD.apply_magnetometer(H_post, m_body=event.m_body, Rmag=constants.Rmag)
-        WORD.apply_magnetometer(A_post, m_body=event.m_body, Rmag=constants.Rmag)
+    for magnetic_event_index, event in enumerate(sample.magnetometer_events_after_imu):
+        _apply_magnetic_event(
+            H_post,
+            event,
+            constants=constants,
+            magnetic_event_index=magnetic_event_index,
+            event_cells=H_cells,
+        )
+        _apply_magnetic_event(
+            A_post,
+            event,
+            constants=constants,
+            magnetic_event_index=magnetic_event_index,
+            event_cells=A_cells,
+        )
 
     out: list[ExecutionBranch] = []
     for i, succ in enumerate(frontend_successors):
@@ -261,6 +417,9 @@ def advance_branch(
         "same_active_schedule_verified": True,
         "same_actual_RS_verified": True,
         "frontend_completed_before_async_mag": True,
+        "riccati_event_cells_captured": capture_riccati_event_cells,
+        "H_event_cells": H_cells if H_cells is not None else [],
+        "A_event_cells": A_cells if A_cells is not None else [],
     }
 
 
@@ -358,6 +517,24 @@ def _smoke(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         domain_path=domain_path,
         branch_limit=32,
     )
+
+    c = _process_constants(domain_path)
+    root = ExecutionBranch(
+        frontend=frontend,
+        H=WORD.initialize_word("H", _diag_P(18, 2.0)),
+        A=WORD.initialize_word("A", _diag_P(21, 2.0)),
+        source_cell_id="root",
+    )
+    _, capture_meta = advance_branch(
+        root,
+        sample,
+        constants=c,
+        next_cell_prefix="capture",
+        capture_riccati_event_cells=True,
+    )
+    H_cells = capture_meta["H_event_cells"]
+    A_cells = capture_meta["A_event_cells"]
+    expected_kinds = ["prediction", "aw_floor", "S_zero", "accelerometer", "magnetometer"]
     return {
         **meta,
         "all_endpoint_H_events_present": all(
@@ -380,6 +557,33 @@ def _smoke(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         ),
         "decomposition_identity_A_enclosed": all(
             WORD.BACKEND.decomposition_identity_enclosed(b.A.riccati) for b in branches
+        ),
+        "riccati_event_cell_capture_exercised": capture_meta["riccati_event_cells_captured"],
+        "H_event_cell_kinds": [cell.kind for cell in H_cells],
+        "A_event_cell_kinds": [cell.kind for cell in A_cells],
+        "captured_shipping_event_order_exact": (
+            [cell.kind for cell in H_cells] == expected_kinds
+            and [cell.kind for cell in A_cells] == expected_kinds
+        ),
+        "captured_S_cells_use_actual_committed_RS": (
+            all(
+                cell.actual_rs_from_committed_schedule
+                for cell in H_cells + A_cells
+                if cell.kind == "S_zero"
+            )
+            and all(
+                not cell.actual_rs_from_committed_schedule
+                for cell in H_cells + A_cells
+                if cell.kind != "S_zero"
+            )
+        ),
+        "captured_measurement_cells_have_same_P_H_R": all(
+            cell.P_before
+            and cell.P_after
+            and cell.H is not None
+            and cell.R is not None
+            for cell in H_cells + A_cells
+            if cell.kind in ("S_zero", "accelerometer", "magnetometer")
         ),
     }
 
@@ -405,12 +609,17 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "frontend_completed_before_async_mag": True,
         "favorable_front_end_branch_selection_allowed": False,
         "typed_execution_kernel_ready": True,
+        "event_local_Riccati_cell_capture_available": True,
+        "event_local_capture_is_passive_same_transition_instrumentation": True,
+        "event_local_measurement_cells_retain_same_P_H_R": True,
+        "event_local_due_S_cells_retain_actual_committed_RS": True,
         "canonical_provider_gate_bypassed_by_this_status": False,
         "smoke": smoke,
         "P3_promoted": False,
         "next_obligation": (
             "deserialize only a canonical provider-certified 601-sample artifact into these typed coordinates, "
-            "execute all retained front-end branches, and certify every endpoint H18/A21 full-matrix LDLT"
+            "retain branch ancestry plus passive event-local P/H/R cells at every prefix, and feed the "
+            "same-history nonlinear P4 graph without selecting a favorable source successor"
         ),
     }
 
@@ -429,6 +638,10 @@ def validate(d: dict) -> list[str]:
         "front_end_branch_splits_retained",
         "frontend_completed_before_async_mag",
         "typed_execution_kernel_ready",
+        "event_local_Riccati_cell_capture_available",
+        "event_local_capture_is_passive_same_transition_instrumentation",
+        "event_local_measurement_cells_retain_same_P_H_R",
+        "event_local_due_S_cells_retain_actual_committed_RS",
     ):
         if d.get(key) is not True:
             f.append(f"{key} is not true")
@@ -448,6 +661,10 @@ def validate(d: dict) -> list[str]:
         "all_endpoint_event_logs_have_mag_after_accel",
         "decomposition_identity_H_enclosed",
         "decomposition_identity_A_enclosed",
+        "riccati_event_cell_capture_exercised",
+        "captured_shipping_event_order_exact",
+        "captured_S_cells_use_actual_committed_RS",
+        "captured_measurement_cells_have_same_P_H_R",
     ):
         if s.get(key) is not True:
             f.append(f"smoke lost {key}")
