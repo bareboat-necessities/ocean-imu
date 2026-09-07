@@ -21,6 +21,10 @@ The bounds here accept actual operation matrices. They create no alternative
 source and do not claim coverage of the complete SEA3 family. Uniform numeric
 radii remain null until reset/floor-complete source-correlated coverage closes.
 P3 is consumed unchanged and cannot be promoted by this module.
+
+The finite-angle rows consumed here are the invariant-coordinate rows already
+widened for the declared delta-a_w error domain.  The earlier physical-force-only
+rows are intentionally not accepted after the nominal-force correction.
 """
 from __future__ import annotations
 
@@ -36,8 +40,8 @@ import ou3_sea3_riccati_metric_p3 as P3
 
 REPO = Path(__file__).resolve().parents[2]
 DEFAULT_DOMAIN = REPO / "tools" / "stability" / "ou3_proof_operating_domain.json"
-SCHEMA = 3
-QUALIFICATION = "OU3_P4_COMPLETE_SEA3_OPERATION_CORRECTION_INFORMATION_BOUND_V3"
+SCHEMA = 4
+QUALIFICATION = "OU3_P4_COMPLETE_SEA3_OPERATION_CORRECTION_INFORMATION_BOUND_V4"
 
 
 def _checked_block(P: IntervalMatrix, indices: tuple[int, ...]) -> IntervalMatrix:
@@ -93,6 +97,10 @@ def defect_precision_trace_upper(P_J: IntervalMatrix, indices: tuple[int, ...]) 
 
 
 def _status(candidates: list[dict], p3_pass: bool) -> dict:
+    if [float(c.get("attitude_angle_deg", math.nan)) for c in candidates] != [30.0, 25.0, 20.0, 15.0]:
+        raise RuntimeError("widened invariant finite-angle rows missing or reordered")
+    if any(c.get("widened_for_declared_delta_aw_domain") is not True for c in candidates):
+        raise RuntimeError("un-widened finite-angle row reached correction-information consumer")
     modes = {}
     for mode, dimension in (("H", 18), ("A", 21)):
         modes[mode] = {
@@ -102,6 +110,9 @@ def _status(candidates: list[dict], p3_pass: bool) -> dict:
             "candidate_cells": [{
                 "candidate_attitude_angle_deg": float(c["attitude_angle_deg"]),
                 "candidate_cayley_norm_upper": float(c["cayley_norm_upper"]),
+                "candidate_e_eta_norm_upper_mps2": float(c["e_eta_norm_upper_mps2"]),
+                "candidate_force_upper_mps2_used": float(c["force_upper_mps2_used"]),
+                "widened_for_declared_delta_aw_domain": True,
                 "derived_metric_energy_radius_upper": None,
                 "candidate_metric_energy_ball_certified": False,
             } for c in candidates],
@@ -115,6 +126,8 @@ def _status(candidates: list[dict], p3_pass: bool) -> dict:
         "complete_SEA3_word_retained": True,
         "all_valid_accelerometer_updates_remain_in_complete_word": True,
         "all_due_S_updates_and_actual_RS_remain_in_complete_word": True,
+        "widened_invariant_finite_angle_rows_consumed": True,
+        "physical_force_only_candidate_rows_consumed": False,
         "same_operation_correction_information_identity_valid": True,
         "same_shipping_P_H_R_K_S_cell_required": True,
         "full_matrix_correction_inequality": "d d^T <= J K S K^T <= J P",
@@ -157,7 +170,8 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     failures = P3.validate(p3) + INVARIANT.validate(invariant)
     if failures or p3["P3_CONDITIONAL_SEA3_PASS"] is not True:
         raise RuntimeError(f"unchanged conditional P3/invariant prerequisites failed: {failures}")
-    return _status(invariant["measurement_linearizing_shift_bounds_reused_without_widening"], True)
+    candidates = invariant["measurement_linearizing_shift_bounds_widened_for_declared_delta_aw_domain"]
+    return _status(candidates, True)
 
 
 def validate(d: dict) -> list[str]:
@@ -170,11 +184,13 @@ def validate(d: dict) -> list[str]:
         "P3_frozen_not_modified", "P3_conditional_complete_SEA3_consumed", "complete_SEA3_word_retained",
         "all_valid_accelerometer_updates_remain_in_complete_word",
         "all_due_S_updates_and_actual_RS_remain_in_complete_word",
+        "widened_invariant_finite_angle_rows_consumed",
         "same_operation_correction_information_identity_valid", "full_posterior_inverse_required_for_defect_cost",
     ):
         if d.get(key) is not True:
             failures.append(f"{key} is not true")
     for key in (
+        "physical_force_only_candidate_rows_consumed",
         "storage_is_original_physical_metric_isometry", "source_uniform_covariance_reset_and_floor_coverage_closed",
         "candidate_metric_energy_balls_derived", "reset_transport_correction_radius_source_closed",
         "source_indexed_e_eta_transition_closed_here", "complete_word_nonlinear_dissipation_closed_here",
@@ -201,6 +217,11 @@ def validate(d: dict) -> list[str]:
             q = row.get("candidate_cayley_norm_upper")
             if not isinstance(q, (int, float)) or not (math.isfinite(float(q)) and 0.0 < q < 1.0):
                 failures.append(f"{mode} candidate Cayley radius invalid")
+            e = row.get("candidate_e_eta_norm_upper_mps2")
+            if not isinstance(e, (int, float)) or not (math.isfinite(float(e)) and float(e) > 0.0):
+                failures.append(f"{mode} widened e_eta bound invalid")
+            if row.get("widened_for_declared_delta_aw_domain") is not True:
+                failures.append(f"{mode} un-widened finite-angle row consumed")
             if row.get("derived_metric_energy_radius_upper") is not None:
                 failures.append(f"{mode} unsupported numeric candidate radius")
             if row.get("candidate_metric_energy_ball_certified") is not False:
