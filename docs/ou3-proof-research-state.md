@@ -90,14 +90,78 @@ constraints in the dense master, direct nonlinear joint graph sectors, or an
 analytically justified source-dependent motion storage. Do not resume a metric
 grid, shrink the domain, or restore a bias-decay target.
 
+### CI result and mandatory gain-budget failure analysis
+
+Connected CI `34165890828`, job `101876729854`, succeeds at `7898eb06`:
+42 tests, both shipping captures, byte identity, every finite factorization,
+the augmented endpoint/prefix experiment, and the retained-payload audit.
+Artifact `10034187923`, SHA256
+`b4bba842068c52f59049cf0cfb4416d2601fc6413293674c2ebd9d38c31c2b28`.
+
+| Fixed coefficient word | Endpoint factor a | Augmented maximum / cost | Strict margin | Common normalized channel gain | Every-prefix maximum / cost, Gamma=2 |
+| --- | --- | --- | --- | --- | --- |
+| H18 | 0.9999569976489486 | 0.9999569957000949 | 4.30042999e-5 | 4294967296 | 0.5021973016796247 |
+| A21 | 0.9788191291615017 | 0.9783443789603329 | 0.0216556210 | 68719476736 | 0.5000004886503184 |
+
+The 80-digit direction ratios are 0.99995699570009611095 and
+0.97834437896032508613. Maximum composed-word float parity defects are
+1.75604e-6/1.54728e-6, below the unchanged float-parity gate; minimum Cayley
+product denominators are 0.9999988264752726/0.9999999968125808. Every 137/108
+actual-R_S S event remains. The limiting prefixes are H18 sample 6601 after
+accelerometer correction, and A21 sample 228605 after the covariance floor.
+This confirms numerical **coefficient-slice supply feasibility**, not a
+nonlinear contraction factor valid on all physical SEA3 histories.
+
+Failed quantity: useful gain-budget/retention closure. In these fixed SI
+normalizations, the point source energies are 13.5744221779/6.39727241539.
+If the selected gains were extended uniformly, the triangle-bound composition
+with even B_true=0 would give an endpoint bound at least
+1.40372054310e15 (H18) / 2.23127068109e13 (A21) in motion-storage units.
+These are lower bounds on the *conservative composed bound*, not on actual
+filter error. For example, scaling the reported root motion direction to
+those levels gives position extents about 132180 m / 7679 m and Cayley
+attitude extents 72283 / 3315. Thus the plain storage-ellipsoid retention
+argument cannot make these witnesses useful; the observed 2--3% floor is
+not contradicted or certified by them.
+
+Classification: insufficient proof-method/gain-budget witness, not filter,
+coefficient, bias-compactness, source-admission or interval failure. This
+invalidates promoting these energy-only/common-gain candidates or spending
+effort enclosing them as usable certificates. It does not invalidate the
+relaxed theorem, the finite factorization, the augmented supply identity,
+or the possibility of much sharper source-correlated channel gains. The
+reported factors also cannot be quoted as actual nonlinear-filter contraction.
+
+Critic: arbitrary energy ports admit independent latent increments and S
+forcing that are coupled by the physical sea. A single common gain then
+charges every channel at the most expensive channel's scale. Both lose
+information that a usable SEA3 proof needs. The actual S correction is present;
+in the maximizing coefficient directions its signed contribution is negative
+in both modes. Tightening reset bounds or restoring bias-error decay addresses
+neither identified source of conservatism.
+
+Alternatives: (1) impose common-source equalities/sectors linking
+`u_L[j]=x_L_true[j+1]-F_LL[j]x_L_true[j]` and
+`u_S[j]=-C_S x_L_true[j]`, including the same rotational/frontend/bias root;
+(2) use the full joint nonlinear graph sectors with distinct, dimensionally
+declared channel gains rather than the common-gain outer test; (3) consider
+an analytically justified source-dependent motion storage if an admitted
+nonlinear direction defeats that structured master. No replay/metric grid,
+source-box splitting, or coefficient change is justified by this result.
+
+Next falsifiable experiment: construct the correlated complete-history
+source/forcing sector, retain its cross terms with the corrected bias history,
+and test whether the resulting gains close an explicit retention/accuracy
+budget on the same two words. Both response branches still require uniform
+coverage. P4_MOTION_PASS/P5_MOTION_MAY_START remain false. Freeze interval
+refinement of the current common-gain witnesses.
+
 Infrastructure failure: downloading connected artifact `10033198656` to this
 runtime returned HTTP 403 (`error code: 1010`). It blocks local reuse of that
 archive, not GitHub CI execution, attachment evidence, or any theorem. The
 runtime also lacks the optional mpmath package; the diagnostic uses Python's
-standard Decimal arithmetic instead. Next falsifiable experiment: GitHub CI
-must recapture the same two words, verify finite factorization at every event,
-and emit the augmented endpoint/prefix results. No numerical gain result is
-claimed before that run.
+standard Decimal arithmetic instead. GitHub CI independently recaptured and
+verified the same words, and emitted the numerical results above.
 
 The relaxed-theorem checkpoint's CI passed P3 and all 127 P4-job tests, the
 theorem smoke build and all six quality gates. The independent same-history
@@ -135,8 +199,9 @@ motion-master assembler are tested. Synthetic algebra witnesses are not
 Ocean-IMU motion-gain certificates. New P4_MOTION_PASS/P5_MOTION_MAY_START
 remain false independently of the stronger full-state flags.
 
-Current limiter and next falsifiable experiment: evaluate the finite-coefficient
-motion/supply master on the connected words before any uniform enclosure search.
+Current limiter and next falsifiable experiment: retain the complete source
+correlation in the motion/supply master and close a useful gain budget before
+any uniform enclosure search.
 Report the resulting motion-accuracy floor and test that it lies within the
 retained chart and requested physical performance tolerances. Preserve P3's
 delta=1e-18 while resolving projected-domain source coverage separately.
