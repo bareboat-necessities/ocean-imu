@@ -13,7 +13,7 @@ import ou3_sea3_riccati_metric_p3 as gate  # noqa: E402
 
 
 class Sea3SourceFamilyFailClosedTest(unittest.TestCase):
-    def test_contract_readiness_does_not_equal_materialization(self):
+    def test_universal_chain_does_not_claim_finite_materialization(self):
         s = source.build()
         self.assertEqual(source.validate(s), [])
         self.assertTrue(s["P3_source_contract_ready"])
@@ -22,8 +22,10 @@ class Sea3SourceFamilyFailClosedTest(unittest.TestCase):
         d = gate.build()
         self.assertEqual(gate.validate(d), [])
         self.assertFalse(d["SOURCE_REACHABLE_EVENT_FAMILY_MATERIALIZED"])
-        self.assertFalse(d["P3_CANONICAL_PASS"])
-        self.assertTrue(d["P3_CANONICAL_FAIL_REASONS"])
+        self.assertFalse(d["finite_source_family_materialization_required"])
+        self.assertTrue(d["UNIVERSAL_COMPLETE_SEA3_CERTIFICATE_CHAIN_CLOSED"])
+        self.assertTrue(d["P3_CONDITIONAL_SEA3_PASS"])
+        self.assertFalse(d["P3_DEPLOYMENT_PASS"])
 
 
 if __name__ == "__main__":
