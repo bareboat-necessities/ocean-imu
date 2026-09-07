@@ -1,0 +1,105 @@
+name: ou3-p4-a21-failure-mechanism
+
+on:
+  pull_request:
+    paths:
+      - "tests/kalman_ou_iii/ou3_p4_a21_failure_mechanism.py"
+      - "tests/kalman_ou_iii/ou3-frozen-gain-shadow-sim.cpp"
+      - "tests/kalman_ou_iii/ou3-operation-ledger-sim.cpp"
+      - "tests/kalman_ou_iii/ou3_p4_complete_sea3_word_feasibility.py"
+      - "tools/stability/ou3_proof_operating_domain.json"
+      - "src/kalman_ou_iii/**"
+      - "src/kalman_ou_common/**"
+      - "src/tuner/**"
+      - ".github/workflows/ou3-p4-a21-failure-mechanism.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: ou3-p4-a21-failure-mechanism-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  a21-mechanism:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Install host diagnostic dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libeigen3-dev python3-numpy
+      - name: Fetch genuine coupled wave simulation data
+        run: make ensure-sim-data
+      - name: Build single shipping observer and frozen-gain shadow
+        working-directory: tests/kalman_ou_iii
+        run: make -j2 ou3-operation-ledger-sim ou3-frozen-gain-shadow-sim
+      - name: Reconstruct the same complete-word scan
+        working-directory: tests/kalman_ou_iii
+        env:
+          OU3_LEDGER_MAP_TRACE: /tmp/ou3_p4_complete_word_exact_maps.bin
+          OU3_LEDGER_COV_TRACE: /tmp/ou3_p4_complete_word_covariance.bin
+          OU3_LEDGER_MAP_STRIDE: "600"
+          W3D_WRITE_TIMESERIES: "0"
+          W3D_VALIDATION_WINDOW_SEC: "0"
+        run: |
+          ./ou3-operation-ledger-sim --input wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv
+      - name: Select the same A21 limiting word
+        run: |
+          python3 tests/kalman_ou_iii/ou3_p4_complete_sea3_word_feasibility.py \
+            --map /tmp/ou3_p4_complete_word_exact_maps.bin \
+            --cov /tmp/ou3_p4_complete_word_covariance.bin \
+            --output /tmp/ou3_p4_complete_word_feasibility.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/ou3_p4_complete_word_feasibility.json'))
+          a=d['modes']['A21']['worst']
+          assert d['canonical_source']=='COMPLETE_SEA3_NORMAL_LIVE_WORD'
+          assert a['acc_count']==600 and a['S_update_count']==108 and a['mag_count']==75
+          print('A21_WORD',a['record'],a['t0'],a['t1'],a['rho_linear'])
+          PY
+      - name: Probe A21 nonlinear failure mechanism without changing the word
+        run: |
+          python3 tests/kalman_ou_iii/ou3_p4_a21_failure_mechanism.py \
+            --linear-json /tmp/ou3_p4_complete_word_feasibility.json \
+            --map /tmp/ou3_p4_complete_word_exact_maps.bin \
+            --cov /tmp/ou3_p4_complete_word_covariance.bin \
+            --sim tests/kalman_ou_iii/ou3-frozen-gain-shadow-sim \
+            --input tests/kalman_ou_iii/wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv \
+            --output-dir /tmp/ou3_p4_a21_mechanism_cases \
+            --output /tmp/ou3_p4_a21_failure_mechanism.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/ou3_p4_a21_failure_mechanism.json'))
+          assert d['canonical_source']=='COMPLETE_SEA3_NORMAL_LIVE_WORD'
+          assert d['same_complete_word_retained'] is True
+          assert d['same_shipping_covariance_and_gains_retained'] is True
+          assert d['all_due_S_updates_with_actual_RS_retained'] is True
+          assert d['source_family_replaced'] is False
+          assert d['declared_domain_changed'] is False
+          assert d['filter_changed'] is False
+          assert d['P4_promoted'] is False
+          s=d['linear_full_word_aw_schur']
+          assert s['full_D_lambda_min'] > 0
+          assert s['aw_pivot_lambda_min'] > 0
+          assert s['schur_rest_lambda_min'] > 0
+          print('A21_AW_SCHUR',s)
+          for name,p in d['probes'].items():
+              print('A21_MECHANISM',name,
+                    'worst_raw=',p['worst_raw_rho'],
+                    'worst_phi=',p['worst_phi_rho'],
+                    'raw_cross=',p['first_raw_crossing_abs_scale'],
+                    'phi_cross=',p['first_phi_crossing_abs_scale'])
+          PY
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: ou3-p4-a21-failure-mechanism
+          path: |
+            /tmp/ou3_p4_a21_failure_mechanism.json
+            /tmp/ou3_p4_a21_mechanism_cases/*.csv
+          retention-days: 7

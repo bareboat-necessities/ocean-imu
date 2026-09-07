@@ -1,0 +1,265 @@
+name: ou3-p4-complete-word-feasibility
+
+on:
+  push:
+    paths:
+      - "tests/kalman_ou_iii/ou3_p4_complete_sea3_word_feasibility.py"
+      - "tests/kalman_ou_iii/ou3_p4_frozen_gain_shadow_feasibility.py"
+      - "tools/stability/ou3_p4_complete_sea3_invariant_aw_coordinate.py"
+      - "tools/stability/ou3_p4_complete_sea3_measurement_linearizing_aw_coordinate.py"
+      - "tools/stability/ou3_p4_complete_sea3_accelerometer_operation_coordinate.py"
+      - "tools/stability/ou3_p4_moving_metric_rebind.py"
+      - "tools/stability/ou3_sea3_riccati_metric_p4.py"
+      - "tools/stability/ou3_proof_operating_domain.json"
+      - "tests/kalman_ou_iii/Makefile"
+      - "tests/kalman_ou_iii/ou3-operation-ledger-sim.cpp"
+      - "tests/kalman_ou_iii/ou3-frozen-gain-shadow-sim.cpp"
+      - "src/kalman_ou_iii/**"
+      - "src/kalman_ou_common/**"
+      - "src/tuner/**"
+      - ".github/workflows/ou3-p4-complete-word-feasibility.yml"
+  pull_request:
+    paths:
+      - "tests/kalman_ou_iii/ou3_p4_complete_sea3_word_feasibility.py"
+      - "tests/kalman_ou_iii/ou3_p4_frozen_gain_shadow_feasibility.py"
+      - "tools/stability/ou3_p4_complete_sea3_invariant_aw_coordinate.py"
+      - "tools/stability/ou3_p4_complete_sea3_measurement_linearizing_aw_coordinate.py"
+      - "tools/stability/ou3_p4_complete_sea3_accelerometer_operation_coordinate.py"
+      - "tools/stability/ou3_p4_moving_metric_rebind.py"
+      - "tools/stability/ou3_sea3_riccati_metric_p4.py"
+      - "tools/stability/ou3_proof_operating_domain.json"
+      - "tests/kalman_ou_iii/Makefile"
+      - "tests/kalman_ou_iii/ou3-operation-ledger-sim.cpp"
+      - "tests/kalman_ou_iii/ou3-frozen-gain-shadow-sim.cpp"
+      - "src/kalman_ou_iii/**"
+      - "src/kalman_ou_common/**"
+      - "src/tuner/**"
+      - ".github/workflows/ou3-p4-complete-word-feasibility.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: ou3-p4-complete-word-feasibility-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  complete-word-feasibility:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Install host diagnostic dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libeigen3-dev python3-numpy
+
+      - name: Fetch genuine coupled wave simulation data
+        run: make ensure-sim-data
+
+      - name: Build single shipping observer and frozen-gain nonlinear shadow
+        working-directory: tests/kalman_ou_iii
+        run: |
+          make -j2 ou3-operation-ledger-sim ou3-frozen-gain-shadow-sim
+
+      - name: Scan genuine source with one shipping map and covariance observer
+        working-directory: tests/kalman_ou_iii
+        env:
+          OU3_LEDGER_MAP_TRACE: /tmp/ou3_p4_complete_word_exact_maps.bin
+          OU3_LEDGER_COV_TRACE: /tmp/ou3_p4_complete_word_covariance.bin
+          OU3_LEDGER_MAP_STRIDE: "600"
+          W3D_WRITE_TIMESERIES: "0"
+          W3D_VALIDATION_WINDOW_SEC: "0"
+        run: |
+          ./ou3-operation-ledger-sim \
+            --input wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv
+
+      - name: Compute H18 and A21 3-second worst linear complete-word directions
+        run: |
+          python3 tests/kalman_ou_iii/ou3_p4_complete_sea3_word_feasibility.py \
+            --map /tmp/ou3_p4_complete_word_exact_maps.bin \
+            --cov /tmp/ou3_p4_complete_word_covariance.bin \
+            --output /tmp/ou3_p4_complete_word_feasibility.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/ou3_p4_complete_word_feasibility.json'))
+          assert d['canonical_source'] == 'COMPLETE_SEA3_NORMAL_LIVE_WORD'
+          assert d['point_same_history_diagnostic_only'] is True
+          assert d['P4_promoted'] is False
+          assert d['filter_changed'] is False
+          assert d['declared_domain_changed'] is False
+          assert d['actual_applied_RS_used_inside_each_S_gain'] is True
+          assert d['RS_axis_std_factors_declared_by_complete_SEA3'] == [0.72,0.72,1.0]
+          assert d['all_valid_accelerometer_updates_required'] is True
+          assert d['all_due_S_updates_required'] is True
+          assert d['packet_count_remainder_budget_used'] is False
+          assert d['selected_S_subset_used'] is False
+          for mode in ('H18','A21'):
+              assert d['modes'][mode]['legal_blocks'] > 0, (mode,d['records_rejected'])
+              w=d['modes'][mode]['worst']
+              print('OU3_P4_FEASIBILITY', mode,
+                    'rho_linear=',w['rho_linear'],
+                    'distance_to_one=',w['distance_to_one'],
+                    't0=',w['t0'],'t1=',w['t1'],
+                    'acc=',w['acc_count'],'mag=',w['mag_count'],'S=',w['S_update_count'],
+                    'RS0=',w['RS_scalar_start'],'RS1=',w['RS_scalar_end'],
+                    'direction_group_norms=',w['maximizing_direction']['group_euclidean_norms'])
+          PY
+
+      - name: Replay exact shipping-operation information ledgers on the same worst words
+        run: |
+          python3 - <<'PY'
+          import json, os, pathlib, subprocess
+          linear=json.load(open('/tmp/ou3_p4_complete_word_feasibility.json'))
+          sim=pathlib.Path('tests/kalman_ou_iii/ou3-operation-ledger-sim').resolve()
+          inp=pathlib.Path('tests/kalman_ou_iii/wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv').resolve()
+          for mode in ('H18','A21'):
+              w=linear['modes'][mode]['worst']
+              env=os.environ.copy()
+              env.pop('OU3_LEDGER_MAP_TRACE',None)
+              env.pop('OU3_LEDGER_COV_TRACE',None)
+              env.update({
+                  'OU3_LEDGER_TRACE': f'/tmp/ou3_p4_event_ledger_{mode}.csv',
+                  'OU3_LEDGER_T0': format(float(w['t0']), '.17g'),
+                  'OU3_LEDGER_T1': format(float(w['t1']), '.17g'),
+                  'OU3_LEDGER_MODE': mode,
+                  'OU3_LEDGER_DIRECTION': w['maximizing_direction']['csv'],
+                  'W3D_WRITE_TIMESERIES': '0',
+                  'W3D_VALIDATION_WINDOW_SEC': '0',
+              })
+              cp=subprocess.run([str(sim),'--input',str(inp)],env=env,text=True,
+                                stdout=subprocess.PIPE,stderr=subprocess.STDOUT,check=False)
+              print(cp.stdout)
+              if cp.returncode != 0:
+                  raise SystemExit(f'{mode} operation ledger failed rc={cp.returncode}')
+          PY
+
+      - name: Verify single-observer map and event-ledger consistency
+        run: |
+          python3 - <<'PY'
+          import csv, json
+          linear=json.load(open('/tmp/ou3_p4_complete_word_feasibility.json'))
+          report={
+              'qualification':'NON_PROMOTING_COMPLETE_SEA3_P4_SINGLE_SHIPPING_OBSERVER',
+              'canonical_source':'COMPLETE_SEA3_NORMAL_LIVE_WORD',
+              'single_shipping_estimator_only':True,
+              'single_schedule_boundary_for_scan_and_ledger':True,
+              'perturbed_Riccati_recursion_used':False,
+              'all_due_S_updates_with_actual_RS_retained':True,
+              'packet_count_remainder_budget_used':False,
+              'P4_promoted':False,
+              'modes':{},
+          }
+          for mode in ('H18','A21'):
+              with open(f'/tmp/ou3_p4_event_ledger_{mode}.csv',newline='') as f:
+                  rows=list(csv.DictReader(f))
+              assert rows, mode
+              w=linear['modes'][mode]['worst']
+              v0=float(rows[0]['V_before']); v1=float(rows[-1]['V_after'])
+              rho=v1/v0; linear_rho=float(w['rho_linear'])
+              counts={k:sum(r['event']==k for r in rows)
+                      for k in ('prediction','aw_floor','S_zero','accelerometer','vector')}
+              delta={k:sum(float(r['delta_V']) for r in rows if r['event']==k) for k in counts}
+              telescope_error=sum(delta.values())-(v1-v0)
+              assert counts['prediction']==600, (mode,counts)
+              assert counts['accelerometer']==600, (mode,counts)
+              assert counts['S_zero']==int(w['S_update_count']), (mode,counts,w['S_update_count'])
+              assert counts['vector']==int(w['mag_count']), (mode,counts,w['mag_count'])
+              assert abs(telescope_error) <= 5e-6*max(1.0,abs(v0)), (mode,telescope_error)
+              assert abs(rho-linear_rho) <= 5e-6, (mode,rho,linear_rho,rho-linear_rho)
+              srows=[r for r in rows if r['event']=='S_zero']
+              assert srows
+              for r in srows:
+                  sx=float(r['rs_std_x']); sy=float(r['rs_std_y']); sz=float(r['rs_std_z'])
+                  assert sx>0 and sy>0 and sz>0
+                  assert abs(sx/sz-0.72) <= 2e-5, (mode,sx,sz)
+                  assert abs(sy/sz-0.72) <= 2e-5, (mode,sy,sz)
+              report['modes'][mode]={
+                  'rho_event_ledger':rho, 'rho_complete_word_linear':linear_rho,
+                  'rho_difference':rho-linear_rho, 'V0':v0, 'V1':v1,
+                  'event_counts':counts, 'signed_delta_V_by_event':delta,
+                  'S_information_recovery':-delta['S_zero'],
+                  'accelerometer_information_recovery':-delta['accelerometer'],
+                  'vector_information_recovery':-delta['vector'],
+                  'prediction_information_change':delta['prediction'],
+                  'floor_information_change':delta['aw_floor'],
+                  'telescope_error':telescope_error,
+                  'actual_RS_std_ratio_xy_to_z_verified':True,
+              }
+              print('OU3_P4_SINGLE_OBSERVER',mode,
+                    'rho=',rho,'linear_rho=',linear_rho,'rho_difference=',rho-linear_rho,
+                    'counts=',counts,'delta=',delta,'S_recovery=',-delta['S_zero'],
+                    'telescope_error=',telescope_error)
+          with open('/tmp/ou3_p4_exact_operation_ledger.json','w') as f:
+              json.dump(report,f,indent=2,sort_keys=True)
+          PY
+
+      - name: Execute frozen-gain raw versus full-Phi complete-word shadow
+        run: |
+          python3 tests/kalman_ou_iii/ou3_p4_frozen_gain_shadow_feasibility.py \
+            --linear-json /tmp/ou3_p4_complete_word_feasibility.json \
+            --domain tools/stability/ou3_proof_operating_domain.json \
+            --sim tests/kalman_ou_iii/ou3-frozen-gain-shadow-sim \
+            --input tests/kalman_ou_iii/wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv \
+            --output-dir /tmp/ou3_p4_frozen_shadow_cases \
+            --output /tmp/ou3_p4_frozen_gain_shadow_feasibility.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/ou3_p4_frozen_gain_shadow_feasibility.json'))
+          assert d['canonical_source'] == 'COMPLETE_SEA3_NORMAL_LIVE_WORD'
+          assert d['point_same_history_diagnostic_only'] is True
+          assert d['P4_promoted'] is False
+          assert d['single_shipping_estimator_owns_covariance_and_gains'] is True
+          assert d['shadow_covariance_exists'] is False
+          assert d['shipping_acceptance_branches_frozen'] is True
+          assert d['same_actual_applied_RS_word_retained'] is True
+          assert d['all_due_S_updates_retained'] is True
+          assert d['full_phi_mixed_aw_shift_retained'] is True
+          assert d['packet_count_remainder_budget_used'] is False
+          assert d['selected_S_subset_used'] is False
+          assert d['binary32_resolution_scale_floor'] == 0.008
+          assert d['tangent_reference_scale'] == 0.125
+          for mode in ('H18','A21'):
+              m=d['modes'][mode]
+              assert m['valid_cases'] > 0, mode
+              ref=m['tangent_reference_pair']
+              assert ref is not None and abs(float(ref['absolute_scale'])-0.125) <= 1e-12, (mode,ref)
+              # Raw storage and full-Phi have the same first derivative at the
+              # origin.  Use a resolved binary32 scale instead of the 1e-3
+              # subtraction-noise regime to lock that attachment.
+              assert abs(float(ref['raw_central_minus_linear'])) <= 5e-4, (mode,ref)
+              assert abs(float(ref['phi_central_minus_linear'])) <= 2e-3, (mode,ref)
+              assert float(m['max_nominal_reconstruction_error']) <= 5e-5, (mode,m['max_nominal_reconstruction_error'])
+              print('OU3_P4_FROZEN_STORAGE',mode,
+                    'linear_rho=',m['rho_linear_worst_word'],
+                    'reference_pair=',ref,
+                    'worst_reliable_raw_rho=',m['worst_reliable_raw_rho'],
+                    'worst_reliable_phi_rho=',m['worst_reliable_phi_rho'],
+                    'first_reliable_raw_crossing=',m['first_reliable_raw_rho_ge_one_absolute_scale'],
+                    'first_reliable_phi_crossing=',m['first_reliable_phi_rho_ge_one_absolute_scale'],
+                    'declared_scale_limit=',m['declared_scale_limit'],
+                    'limiter=',m['declared_scale_limit_detail']['limiting_constraint'],
+                    'max_reconstruction_error=',m['max_nominal_reconstruction_error'],
+                    'raw_all_reliable_contract=',m['strict_raw_contraction_on_all_reliable_tested_cases'],
+                    'phi_all_reliable_contract=',m['strict_phi_contraction_on_all_reliable_tested_cases'])
+          PY
+
+      - name: Upload non-promoting feasibility evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: ou3-p4-complete-word-feasibility
+          path: |
+            /tmp/ou3_p4_complete_word_feasibility.json
+            /tmp/ou3_p4_complete_word_exact_maps.bin
+            /tmp/ou3_p4_complete_word_covariance.bin
+            /tmp/ou3_p4_exact_operation_ledger.json
+            /tmp/ou3_p4_event_ledger_H18.csv
+            /tmp/ou3_p4_event_ledger_A21.csv
+            /tmp/ou3_p4_frozen_gain_shadow_feasibility.json
+            /tmp/ou3_p4_frozen_shadow_cases/*.csv
+          retention-days: 7
