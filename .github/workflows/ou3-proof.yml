@@ -306,6 +306,11 @@ jobs:
               assert d['modes'][mode]['certified_delta_lower'] >= 1e-18
               assert d['modes'][mode]['relative_Riccati_injection_margin_lower'] >= 1e-18
           assert d['P3_CONDITIONAL_SEA3_PASS'] is True
+          assert d['SEA3_response_union']['set_operation'] == 'UNION'
+          assert set(d['response_branch_conditional_P3_coverage']) == {'LINEAR_VESSEL', 'STOKES_WAVE_FOLLOWING'}
+          for branch, coverage in d['response_branch_conditional_P3_coverage'].items():
+              assert coverage == {'H18': True, 'A21': True}
+              print('P3_RESPONSE_BRANCH_CONDITIONAL', branch, coverage)
           assert d['P3_DEPLOYMENT_PASS'] is False
           assert d['P3_CANONICAL_PASS'] is d['P3_CONDITIONAL_SEA3_PASS']
           assert d['P4_MAY_CONSUME_CONDITIONAL_SEA3_P3'] is True
@@ -326,6 +331,7 @@ jobs:
         run: |
           python3 -m unittest -v \
             test_ou3_sea3_physical_admissibility \
+            test_ou3_sea3_response_union \
             test_ou3_sea3_shipping_prediction_primitives \
             test_ou3_sea3_live_covariance_seed \
             test_ou3_sea3_full_word_riccati_backend \
@@ -416,6 +422,11 @@ jobs:
           assert d['canonical_P4_architecture'] == 'FINITE_STATE_COMPLETE_SEA3_QUADRATIC_ENDPOINT_AND_PREFIX'
           assert d['canonical_source'] == 'COMPLETE_SEA3_NORMAL_LIVE_WORD'
           assert d['P3_CONDITIONAL_SEA3_PASS_consumed'] is True
+          for obligation in ('endpoint', 'prefix_gain', 'prefix_retention'):
+              coverage = d['response_branch_P4_coverage'][obligation]
+              assert set(coverage) == {'LINEAR_VESSEL', 'STOKES_WAVE_FOLLOWING'}
+              assert all(c == {'H18': False, 'A21': False} for c in coverage.values())
+              print('P4_RESPONSE_BRANCH_OBLIGATION', obligation, coverage)
           assert d['P3_H18_delta_consumed'] == 1e-18
           assert d['P3_A21_delta_consumed'] == 1e-18
           assert d['finite_state_endpoint_dissipation_required'] is True

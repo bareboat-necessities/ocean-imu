@@ -47,6 +47,7 @@ import ou3_p4_complete_sea3_finite_map_mean_value as FINITE
 import ou3_p4_complete_sea3_signed_information_ledger as SIGNED
 import ou3_p4_complete_sea3_joint_sector_master as JOINT
 import ou3_mems_bias_contract as BIAS
+import ou3_sea3_response_union as UNION
 
 # Exact/outward finite-map differentiation machinery only.
 import ou3_p4_complete_sea3_phi_differential_metric as DIFF
@@ -104,6 +105,14 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     signed_domination_closed = bool(signed["source_uniform_joint_eta_reset_domination_closed"])
     joint_sector_closed = bool(joint["source_uniform_same_history_joint_sector_closed"])
     joint_ldlt_closed = bool(joint["source_uniform_full_augmented_LDLT_closed"])
+    response_coverage = {
+        obligation: UNION.branch_mode_coverage({"H18": closed, "A21": closed})
+        for obligation, closed in {
+            "endpoint": finite_endpoint_closed and joint_ldlt_closed and joint_sector_closed,
+            "prefix_gain": prefix_gain_closed,
+            "prefix_retention": prefix_domain_closed,
+        }.items()
+    }
 
     projection_machinery = bool(
         events["A21_bias_projection_generalized_Jacobian_available"]
@@ -116,6 +125,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     # differential-only, packetwise, or point-word gate.
     p4_pass = bool(
         p3_pass
+        and all(UNION.all_branches_modes_closed(c) for c in response_coverage.values())
         and endpoint_master_emitted
         and signed_ledger_ready
         and signed_domination_closed
@@ -156,6 +166,9 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "qualification": QUALIFICATION,
         "canonical_P4_architecture": ARCHITECTURE,
         "canonical_source": "COMPLETE_SEA3_NORMAL_LIVE_WORD",
+        "SEA3_response_union": p3["SEA3_response_union"],
+        "response_branch_conditional_P3_coverage_consumed": p3["response_branch_conditional_P3_coverage"],
+        "response_branch_P4_coverage": response_coverage,
         "mems_bias_preconditions": bias,
         "paper_Lyapunov_function": "V(e,zeta)=e^T M(zeta)e",
         "paper_endpoint_inequality": "V_{k+N_W} <= rho*V_k + gamma_s*D_s,k + gamma_n*D_n,k; 0<rho<1",
@@ -295,6 +308,14 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
 
 def validate(d: dict) -> list[str]:
     f: list[str] = []
+    f.extend(UNION.validate(d.get("SEA3_response_union", {})))
+    if not UNION.all_branches_modes_closed(d.get("response_branch_conditional_P3_coverage_consumed", {})):
+        f.append("P4 missing conditional P3 coverage of a response branch/mode")
+    coverage = d.get("response_branch_P4_coverage", {})
+    expected = UNION.branch_mode_coverage({"H18": False, "A21": False})
+    if set(coverage) != {"endpoint", "prefix_gain", "prefix_retention"} or any(
+            c != expected for c in coverage.values()):
+        f.append("P4 response coverage missing or promoted without branch certificates")
     f.extend(f"MEMS bias: {x}" for x in BIAS.validate(d.get("mems_bias_preconditions", {})))
     if d.get("mems_bias_preconditions") != d.get("joint_sector_master_contract", {}).get("mems_bias_preconditions"):
         f.append("joint sector master detached from canonical bias preconditions")

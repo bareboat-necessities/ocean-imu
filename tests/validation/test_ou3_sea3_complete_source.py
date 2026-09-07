@@ -30,7 +30,8 @@ class Sea3CompleteSourceTest(unittest.TestCase):
         dyn = self.d["SEA3_dynamic_realization"]
         self.assertTrue(dyn["phase_continuous"])
         self.assertEqual(dyn["shaping_state"], "x^s")
-        self.assertEqual(dyn["augmented_source_state"], "zeta=(x^s,lambda,z^t,q)")
+        self.assertEqual(dyn["augmented_source_state"],
+                         "zeta=(response_branch,x^s,lambda,z^t,q,b_true,bias_parameters)")
         self.assertTrue(
             dyn["same_realization_drives_translation_rotation_frontend_tuner_geometry"]
         )

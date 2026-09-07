@@ -1,4 +1,5 @@
 from pathlib import Path
+import math
 import sys
 import unittest
 
@@ -8,6 +9,22 @@ import ou3_physical_sea3_membership as M  # noqa: E402
 
 
 class PhysicalSea3MembershipTests(unittest.TestCase):
+    def test_stokes_branch_admits_same_high_frequency_and_bound_coefficients(self):
+        k = (2 * math.pi * 0.8)**2 / 9.80665
+        a = 0.01
+        atom = {"frequency_hz": 0.8, "amplitude_m": a,
+                "second_coefficient_m": k*a*a/2,
+                "third_coefficient_m": 3*k*k*a**3/8}
+        observation = {"frequency_count": 1, "order": 3,
+                       "gravity_mps2": 9.80665, "atoms": [atom]}
+        d = M.stokes_response_test(observation)
+        self.assertEqual(d["response_model_admission"], "ADMITTED")
+        self.assertFalse(d["outward_complete_word_certificate"])
+        self.assertEqual(d["full_Normal_Live_word_membership"], "UNDETERMINED")
+        atom["third_coefficient_m"] *= 1.01
+        with self.assertRaises(ValueError):
+            M.stokes_response_test(observation)
+
     def test_third_harmonic_fails_even_largest_declared_response(self):
         d = M.particle_response_test("12/5", "4", "6/5", "2")
         self.assertFalse(d["response_envelope_satisfied"])

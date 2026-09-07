@@ -14,11 +14,16 @@ a physically admissible, oscillatory, multimodal directional sea family.
 
 The result below is a \emph{conditional target theorem}.  Its composition
 argument is complete once the listed SEA0/P1--P5 certificates are available,
-but this manuscript does not claim that the new SEA0 directional-sea enclosure,
-the SEA3 P3/P4 margins, or the 45-degree SEA3 P5 capture certificate have
-already been constructed.
+but this manuscript does not claim a complete SEA0 directional-sea enclosure,
+P4 contraction, or the 45-degree SEA3 P5 capture certificate. Conditional
+P3 matrix coverage is distinct from these physical and nonlinear obligations.
 
 \subsection{Three-partition directional sea class}
+
+The continuum spectral formulas below describe the retained linear-vessel
+branch. The response union in Eq.~\eqref{eq:sea3-response-union} additionally
+admits a correlated atomic Stokes wave-following branch; its bound harmonics
+are not identified with this fundamental continuum spectrum.
 
 Fix
 \begin{equation}
@@ -70,7 +75,8 @@ reference simulations.
 
 \subsection{Directional response and oscillatory source}
 
-The spectrum of Eq.~\eqref{eq:sea3-directional-spectrum} is not converted to
+On the linear-vessel branch, the spectrum of
+Eq.~\eqref{eq:sea3-directional-spectrum} is not converted to
 independent Cartesian acceleration boxes.  Let
 $G_{\rm imu}(\omega,\vartheta;\lambda)$ denote the certified directional
 sea-to-CoG/IMU response family.  The corresponding matrix-valued source
@@ -121,6 +127,11 @@ not, by itself, supply a deterministic pathwise bound for
 $\mathcal X^s_{\rm SEA3}$.  Consequently, neither a Gaussian confidence event,
 spectral moments alone, a replay record, nor a finite seeded harmonic
 approximation may replace Eq.~\eqref{eq:sea3-hard-realization-set} in SEA0/P3.
+For SEA3$^+$ this hard-history obligation is imposed branchwise. The Stokes
+branch instead uses the nonlinear common-root output below; no linear
+$C_s x^s$ identity or continuum quadrature certificate is asserted for it.
+Compact source cells at fixed $N$ do not by themselves establish a uniform
+cover over the enlarged family.
 
 For an individual undamped oscillator, for example,
 \begin{equation}
@@ -286,19 +297,108 @@ separate from qualifying an assembled accelerometer. Neither declaring a
 zero true-bias root after capture nor assigning a SEA3 identifier proves the
 same-source equality.
 
-In particular, a wave-following surface-particle model cannot automatically
-serve as the vessel-response witness. For a directional Stokes harmonic its
+\paragraph{Enlarged response family (SEA3$^+$).}
+Retain the entire existing continuum linear-vessel family, with its unchanged
+$G\le4$, $f_c\le1.2\,\mathrm{Hz}$, $p\ge2$ envelope, and define
+\begin{equation}
+ \boxed{\mathcal G_{\rm SEA3}^{+}
+ =\mathcal G_{\rm vessel}^{\rm linear}
+ \cup\mathcal G_{\rm wave\text{-}following}^{\rm Stokes}.}
+ \label{eq:sea3-response-union}
+\end{equation}
+A response-branch label belongs to the source root and is retained through
+the entire word and every prefix. This is a union of complete histories, not
+permission to switch response laws at individual events. Both branches retain
+the same Normal-Live, vector-PE, frontend, tuner, scheduler, zero-lever-arm and
+BIAS0/1 premises. Neither branch alone covers the union.
+
+The second branch is the superposition of third-order bound harmonics used
+by the wave-following generator, not a claim to solve the full nonlinear
+water-wave equations. One lineage fixes a finite number $N$ of atoms,
+nonnegative amplitudes $a_i$, directions $d_i=(\cos\vartheta_i,\sin\vartheta_i)$,
+root phases $\phi_i$, and fundamental frequencies
+$f_i\in[0.02,0.8]\,\mathrm{Hz}$. All directions and phases are admitted;
+$N=128$ and seed 42 are one generator instance, not the source quantifier.
+Set $\omega_i=2\pi f_i$, $k_i=\omega_i^2/g$, require the model-validity
+premise $k_i a_i\le1/5$, and define
+\begin{align}
+ c_{i1}&=a_i,& c_{i2}&=\tfrac12 k_i a_i^2,&
+ c_{i3}&=\tfrac38 k_i^2a_i^3,\nonumber\\
+ \theta_i(x,y,t)&=k_i d_i^\top(x,y)-\omega_i t+\phi_i.
+ \label{eq:sea3-stokes-root-graph}
+\end{align}
+The PM/JONSWAP atomic weights and any Stokes variance renormalization are
+part of this root, not independently selected harmonic energies. Their
+discrete normalization is not the continuum identity
+Eq.~\eqref{eq:sea3-directional-spectrum}. The pinned generator permits a
+relative normalization tolerance of $10^{-3}$; use its actual coefficients,
+not an assumed exact equality to $H_s^2/16$.
+
+At a fixed material label the centered orbital displacement is
+\begin{equation}
+ d_o(t)=\sum_{i,n}c_{in}
+ \begin{bmatrix}-d_i\cos(n\theta_i)\\\sin(n\theta_i)\end{bmatrix},
+ \qquad v_o=\dot d_o,\quad a_o=\ddot d_o.
+ \label{eq:sea3-stokes-orbit}
+\end{equation}
+Use the same atoms to evaluate the surface slopes at the displaced horizontal
+point, $s=\sum_{i,n}n k_i c_{in}d_i\cos(n\theta_i)$.
+Set pitch $=\arctan(-s_x)$, roll
+$=\operatorname{atan2}(s_y,\sqrt{1+s_x^2})$, yaw $=0$, and let $C$ be the
+resulting world-to-body rotation. The ideal source outputs are
+$f_b=C(a_o-g_w)$ and $\omega_b=\operatorname{vee}(-\dot C C^\top)$.
+The pinned implementation approximates $\dot C$ by a centered difference;
+its measurement-discretization defect must be bounded and retained, not
+silently equated to the exact derivative. Its constant Stokes velocity drift
+is separate from centered orbital position and creates no acceleration term.
+
+\paragraph{Branch-specific hard bound.}
+For each such root put $B_r=\sum_{i,n}(n\omega_i)^r c_{in}$, $r=0,1,2$.
+Then, uniformly over time and every common-root phase/direction,
+\begin{equation}
+ \|d_o\|\le B_0,\quad \|v_o\|\le B_1,\quad \|a_o\|\le B_2,
+ \qquad \|s\|\le\sum_{i,n}n k_i c_{in}.
+ \label{eq:sea3-stokes-hard-bound}
+\end{equation}
+Indeed each trigonometric vector in Eq.~\eqref{eq:sea3-stokes-orbit} and
+its frequency-normalized derivatives has norm one; triangle inequalities
+give the first three bounds. The slope bound follows from $\|d_i\|=1$ and
+$|\cos|\le1$, also at the displaced point. These are hard model bounds,
+not covariance/PSD assertions or P4 nonlinear-remainder budgets. They are
+finite for a fixed finite root; a uniform primitive-source cover for all
+admitted roots is still an obligation. Normal-Live retention is checked on
+the actual joint output; exceeding a conservative $B_2$ bound does not itself
+prove violation of the actual acceleration cap.
+
+For a directional Stokes harmonic the
 displacement phasor relative to the same elevation harmonic has, up to phase
 convention, response $h=(i\cos\vartheta,i\sin\vartheta,1)$ and hence
 $\|h\|_2^2=2$. If a third-order generator retains a nonzero harmonic at
-$f=3(0.8)=2.4\,\mathrm{Hz}$, the current maximal response envelope permits
+$f=3(0.8)=2.4\,\mathrm{Hz}$, the linear-vessel response envelope permits
 only $\|h\|_2^2\le[4(1.2/2.4)^2]^2=1$ there. Thus that direct response
-witness violates the declared envelope. If only the fundamental sea is taken
-as input instead, the frequency-preserving linear response does not generate
-the higher Stokes harmonics. This rejects direct identification of those
-generating models; it does not exclude a different admissible realization
-matching a finite sample word. Such an embedding or an explicitly bounded
-model-mismatch decomposition requires its own proof.
+witness is outside the linear branch but is no longer excluded from SEA3$^+$:
+its higher harmonics belong to Eq.~\eqref{eq:sea3-stokes-root-graph}. The
+linear rolloff moment and surface-period lemmas remain linear-branch results.
+The Stokes branch must use its full output moments and exact discrete
+frontend history; fundamental surface $T_z$ cannot replace the tuner value.
+
+\paragraph{Certificate composition over the union.}
+Let $\mathcal C$ denote the unchanged common Normal-Live/PE, committed
+OU/scheduler, process and event premises used by the P3 matrix chain.
+For either branch $b$, admissible words lie in $\mathcal W_b\cap\mathcal C$.
+The response-independent implication
+$\mathcal C\Rightarrow\Omega_W-10^{-18}P_W\succeq0$ therefore applies to
+both branches: the H18 prior-free LDLT, the separate H-to-A hybrid direct
+sum and later event preservation are rebuilt without changing their margins.
+This conditional implication is not a proof that the generator or a retained
+word satisfies $\mathcal C$.
+P4 must certify Eq.~\eqref{eq:sea3-joint-word-sector-test}, including BIAS2
+when its positive premise is proved, on every source leaf of both branches
+and both H18/A21 modes. With a common window and compatible source-indexed
+storage, branch bounds combine as $\rho=\max_b\rho_b<1$ and
+$\Gamma=\max_{b,j}\Gamma_{b,j}<\infty$, with every-prefix domain retention.
+No prefix contraction is required. A missing branch, finite reset/storage
+attachment, physical bias root or source cover keeps P4 open and P5 blocked.
 
 For any invertible source-indexed frames $T_j$, a finite change of coordinates
 $z_j=T_j e_j$ preserves storage exactly only with the simultaneous transports
@@ -362,7 +462,8 @@ no future-event BIAS2 information may be used to justify an earlier chart.
 \begin{theorem}[Three-mode directional-sea regional practical stability and
 finite capture]
 \label{thm:sea3-regional-practical-stability}
-Assume the following hold for both fixed-dimensional Normal-Live modes.
+Assume the following hold uniformly for both fixed-dimensional Normal-Live
+modes and both response branches of Eq.~\eqref{eq:sea3-response-union}.
 
 \begin{enumerate}[label=(\roman*),leftmargin=2.1em]
 \item BIAS0 qualifies the sensor model and its residual/mismatch envelopes;
@@ -370,11 +471,15 @@ BIAS1 attaches the true bias and corrected-error history to the source,
 including projection compatibility and physical continuation through hold and
 H$\to$A.  Stochastic and calibration/model mismatch contributions remain
 in the declared forcing energies.
-\item SEA0 supplies a sound outward enclosure of the three-partition
-directional sea class of Eqs.~\eqref{eq:sea3-directional-spectrum}--
+\item SEA0 supplies a sound outward enclosure of the complete response union.
+On the linear branch this is the three-partition directional sea class of
+Eqs.~\eqref{eq:sea3-directional-spectrum}--
 \eqref{eq:sea3-shaping-system}, including the compact hard realization set of
 Eq.~\eqref{eq:sea3-hard-realization-set}, its declared rate-bounded parameter
-evolution, and its directional vessel/IMU response.
+evolution, and its directional vessel/IMU response. On the Stokes branch it
+is the joint root graph of Eqs.~\eqref{eq:sea3-stokes-root-graph}--
+\eqref{eq:sea3-stokes-hard-bound}, including physical IMU discretization
+defects where applicable. Neither enclosure replaces the other.
 \item P1 places the execution in the declared Normal-Live operating branch,
 including the current no-accelerometer-rejection condition and the declared
 startup prior/estimator source split.

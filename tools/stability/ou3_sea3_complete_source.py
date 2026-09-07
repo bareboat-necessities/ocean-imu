@@ -50,6 +50,7 @@ import ou3_validated_transcendentals as VT
 import ou3_sea3_physical_admissibility as PHYSICAL
 import ou3_sea3_p1_compatibility as P1COMPAT
 import ou3_sea3_directional_response_family as RESPONSE
+import ou3_sea3_response_union as UNION
 import ou3_sea3_wave_period_spectral_identity as PERIOD_ID
 import ou3_sea3_spectral_moment_bridge as MOMENT
 import ou3_sea3_wave_period_frontend as FRONTEND
@@ -219,11 +220,14 @@ def build(
             "x^s oscillator/shaping state",
             "lambda compact SEA3 parameter state",
         ],
-        "translational_response": ["G", "f_c", "p", "complex h(f,theta)"],
-        "rotational_response": ["K_rot", "f_c_rot", "q_rot", "complex r(f,theta)"],
+        "response_branch": list(UNION.BRANCHES),
+        "translational_response": ["linear: G, f_c, p, complex h(f,theta)",
+                                   "Stokes: common root atoms (a_i,f_i,d_i,phi_i), bound harmonics"],
+        "rotational_response": ["linear: K_rot, f_c_rot, q_rot, complex r(f,theta)",
+                                "Stokes: orientation and rate from same-root displaced surface slopes"],
         "finite_window_response_state": [
-            "post-RAO CoG acceleration process from the same x^s/lambda word",
-            "post-RAO body-rate process from the same x^s/lambda word",
+            "branch-specific CoG acceleration from the same x^s/lambda word",
+            "branch-specific body rate from the same x^s/lambda word",
         ],
         "front_end_state": [
             "vertical observer state",
@@ -275,6 +279,7 @@ def build(
         "qualification": QUALIFICATION,
         "canonical_P3_source": "COMPLETE_SEA3_NORMAL_LIVE_WORD",
         "mems_bias_preconditions": BIAS.build(domain_path),
+        "SEA3_response_union": UNION.build(),
         "source_coordinates": source_coordinates,
         "no_fallback_generators": no_fallback,
         "trajectory_replay_used": False,
@@ -310,7 +315,7 @@ def build(
             "sea_parameter_state": "lambda=(H_r,T_p_r,gamma_r,beta_r,s_r)_{r=1..3}",
             "shaping_state": "x^s",
             "compact_transition_relation": "lambda_{k+1} in R_lambda(lambda_k)",
-            "augmented_source_state": "zeta=(x^s,lambda,z^t,q)",
+            "augmented_source_state": "zeta=(response_branch,x^s,lambda,z^t,q,b_true,bias_parameters)",
             "same_realization_drives_translation_rotation_frontend_tuner_geometry": True,
             "hard_pathwise_acceleration_and_body_rate_conditions_retained": True,
             "finite_window_family_materialized": False,
@@ -318,6 +323,8 @@ def build(
             "arbitrary_bounded_input_may_substitute_for_realization": False,
         },
         "SEA3_translational_response_family": response,
+        "SEA3_translational_response_family_scope": UNION.LINEAR,
+        "SEA3_surface_family_scope": "continuum on LINEAR_VESSEL; root atomic PM/JONSWAP realization on STOKES_WAVE_FOLLOWING",
         "SEA3_response_couplings": {
             "independent_sea_x_RAO_cartesian_product_forbidden": bool(
                 p1compat["coupled_SEA3_domain_required"]
@@ -333,6 +340,7 @@ def build(
             "moment_or_probability_bound_may_not_generate_P3_word": True,
         },
         "stochastic_forcing_corollary": {
+            "centered_Gaussian_response_diagnostic_scope": [UNION.LINEAR],
             "role_in_P3": domain["stochastic"]["role_in_P3"],
             "used_to_generate_P3_source_words": False,
             "used_to_prune_homogeneous_P3_family": False,
@@ -348,6 +356,9 @@ def build(
             "combined_within_budget": combined_failure <= down(total_budget),
         },
         "SEA3_period_and_frontend": {
+            "steady_spectral_identities_scope": [UNION.LINEAR],
+            "Stokes_full_output_period_bridge_closed": False,
+            "exact_discrete_frontend_parity_scope": list(UNION.BRANCHES),
             "steady_response_weighted_period_identity": period_id[
                 "continuous_time_steady_state_identity"
             ],
@@ -418,6 +429,14 @@ def build(
 
 def validate(d: dict) -> list[str]:
     f: list[str] = []
+    f.extend(UNION.validate(d.get("SEA3_response_union", {})))
+    if d.get("SEA3_translational_response_family_scope") != UNION.LINEAR:
+        f.append("linear response moments applied outside their branch")
+    period = d.get("SEA3_period_and_frontend", {})
+    if period.get("steady_spectral_identities_scope") != [UNION.LINEAR]:
+        f.append("linear spectral identities applied to Stokes output")
+    if period.get("Stokes_full_output_period_bridge_closed") is not False:
+        f.append("Stokes period bridge falsely promoted")
     f.extend(f"MEMS bias: {x}" for x in BIAS.validate(d.get("mems_bias_preconditions", {})))
     if d.get("schema") != SCHEMA or d.get("qualification") != QUALIFICATION:
         f.append("schema/qualification mismatch")

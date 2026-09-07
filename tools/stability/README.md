@@ -66,11 +66,24 @@ expiring Actions artifact. Run the audit with `--unpack-retained`,
 
 Physical admission is checked separately by `ou3_physical_sea3_membership.py`
 and the public-API C++ probe `ou3-sea-generator-membership.cpp`, against the
-pinned v1.1.3 generator. The actual model shares one sea phase/direction history
-between translation and slope-derived attitude. Its third Stokes harmonic,
-however, prevents direct identification with the declared bounded linear SEA3
-response. The exact squared-gain test at 2.4 Hz is 2<=1, which fails. This is
-a model-level incompatibility, not proof that the finite samples cannot have
-another SEA3 realization. No generator source, source-domain cap or filter is
-changed to obtain admission. The simulator's actual turn-on bias/random walk
-is also distinct from the audit's unforced zero true-bias premise.
+pinned v1.1.3 generator. `ou3_sea3_response_union.py` defines the authorized
+SEA3+ union: the entire unchanged linear-vessel branch plus a correlated
+third-order Stokes wave-following branch. The branch is fixed at the source
+root; neither eventwise branch switching nor independent harmonic phases or
+coefficients are allowed. All root directions/phases are included, not one
+seed, and the finite Stokes model does not replace the legacy continuum.
+
+The exact linear-branch squared-gain test at 2.4 Hz remains 2<=1 (rejected).
+CI additionally checks all actual Stokes amplitudes, steepness and dependent
+coefficients; model admission there does not assert complete word admission.
+The linear moment/period lemmas stay linear-only; Stokes uses its full output
+and same-history discrete frontend. The conditional P3 matrix implication is
+rebuilt for both branches at delta=1e-18 under unchanged common Normal-Live
+premises. P4 reports endpoint, finite prefix gain and retention separately for
+both branches and both modes; missing coverage prevents P4/P5 promotion.
+
+The next proof-plan gate remains common-root source/bias plus exact finite
+reset/storage attachment, followed by BIAS2 in the full augmented master.
+The simulator's turn-on bias/random walk differs from the audit's unforced
+zero true-bias premise, and its finite-difference gyro needs a separate defect
+bound. Neither is silently repaired by the response-family enlargement.

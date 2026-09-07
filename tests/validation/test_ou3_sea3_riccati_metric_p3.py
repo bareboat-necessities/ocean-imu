@@ -1,4 +1,5 @@
 from pathlib import Path
+from copy import deepcopy
 import sys
 import unittest
 from unittest.mock import patch
@@ -54,6 +55,11 @@ class Sea3CompleteSourceP3Test(unittest.TestCase):
         first["nested"]["value"] = 2
         self.assertEqual(second["nested"]["value"], 1)
         self.assertEqual(cached["nested"]["value"], 1)
+
+    def test_conditional_union_coverage_does_not_admit_missing_branch(self):
+        d = deepcopy(self.d)
+        del d["response_branch_conditional_P3_coverage"]["STOKES_WAVE_FOLLOWING"]
+        self.assertIn("P3 does not cover both response branches and both modes", mod.validate(d))
 
     def test_complete_source_retains_all_sea3_couplings(self):
         sea = self.c["SEA3_surface_family"]

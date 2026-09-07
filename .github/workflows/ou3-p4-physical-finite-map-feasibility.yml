@@ -6,6 +6,8 @@ on:
       - "tests/kalman_ou_iii/ou3_p4_*"
       - "tests/kalman_ou_iii/ou3_physical_sea3_membership.py"
       - "tools/stability/ou3-sea-generator-membership.cpp"
+      - "tools/stability/ou3_sea3_response_union.py"
+      - "tests/validation/test_ou3_sea3_response_union.py"
       - "tests/kalman_ou_iii/fixtures/ou3_physical_generator_provenance.json"
       - "tests/kalman_ou_iii/fixtures/ou3_p4_retained_*"
       - "tests/validation/test_ou3_bias_witness_admissibility.py"
@@ -61,16 +63,21 @@ jobs:
           python3 - <<'PY'
           import json
           d=json.load(open('/tmp/ou3-physical-sea3-membership.json'))
-          assert d['direct_generator_response_admission'] == 'REJECTED'
+          assert d['linear_vessel_response_admission'] == 'REJECTED'
+          assert d['direct_generator_response_admission'] == 'ADMITTED'
+          assert d['admission_scope'] == 'RESPONSE_MODEL_ONLY_NOT_COMPLETE_RETAINED_WORD'
+          assert d['Stokes_response_test']['branch'] == 'STOKES_WAVE_FOLLOWING'
+          assert not d['Stokes_response_test']['outward_complete_word_certificate']
           assert d['exact_response_test']['squared_gap_exact'] == '1'
           assert d['finite_sample_membership_under_another_realization'] == 'UNDETERMINED'
           assert not d['canonical_P4_falsified'] and not d['P4_promoted']
           print('PHYSICAL_GENERATOR_OBSERVATION',d['public_generator_API_observation'])
+          print('SEA3_PLUS_RESPONSE_ADMISSION', d['Stokes_response_test'])
           PY
 
       - name: Test bias and finite attachment algebra
         working-directory: tests/validation
-        run: python3 -m unittest -v test_ou3_bias_witness_admissibility test_ou3_retained_word_attachment test_ou3_physical_sea3_membership
+        run: python3 -m unittest -v test_ou3_bias_witness_admissibility test_ou3_retained_word_attachment test_ou3_physical_sea3_membership test_ou3_sea3_response_union
 
       - name: Audit exact retained payloads without regeneration or a new search
         run: |

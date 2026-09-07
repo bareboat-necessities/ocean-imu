@@ -39,6 +39,7 @@ import ou3_sea3_live_covariance_seed as LIVE
 import ou3_sea3_p3_conditional_composition as COMPOSE
 import ou3_sea3_p3_full_preconditions as FULL
 import ou3_mems_bias_contract as BIAS
+import ou3_sea3_response_union as UNION
 
 REPO = Path(__file__).resolve().parents[2]
 DEFAULT_DOMAIN = REPO / "tools" / "stability" / "ou3_proof_operating_domain.json"
@@ -94,6 +95,13 @@ def _build_uncached(domain_path: Path) -> dict:
         and universal_chain
         and float(composition["useful_gate"]) == USEFUL_GATE
     )
+    # The quantitative chain uses Normal-Live/PE, committed OU/scheduler bounds,
+    # process matrices and event algebra, not h(f,theta) or a surface PSD.
+    # This is conditional implication coverage, NOT physical-source admission.
+    response_coverage = UNION.branch_mode_coverage({
+        "H18": p3_pass and h_closed, "A21": p3_pass and a_closed,
+    })
+    p3_pass = p3_pass and UNION.all_branches_modes_closed(response_coverage)
 
     modes = {
         "H18": {
@@ -138,6 +146,9 @@ def _build_uncached(domain_path: Path) -> dict:
         "canonical_P3_architecture": "COMPLETE_SEA3_FULL_NORMAL_LIVE_RICCATI_WORD",
         "canonical_P3_topology": "H18_3S_PRIOR_FREE_THEN_PRESERVED_H_TO_A_HYBRID_A21",
         "canonical_source": complete["canonical_P3_source"],
+        "SEA3_response_union": complete["SEA3_response_union"],
+        "response_branch_conditional_P3_coverage": response_coverage,
+        "response_coverage_scope": "COMMON_NORMAL_LIVE_PRECONDITIONS_IMPLY_MATRIX_CERTIFICATE_NOT_PHYSICAL_ADMISSION",
         "mems_bias_preconditions": complete["mems_bias_preconditions"],
         "source_generated_not_trajectory_fit": True,
         "trajectory_replay_used": False,
@@ -257,6 +268,11 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
 
 def validate(d: dict) -> list[str]:
     f: list[str] = []
+    f.extend(UNION.validate(d.get("SEA3_response_union", {})))
+    if not UNION.all_branches_modes_closed(d.get("response_branch_conditional_P3_coverage", {})):
+        f.append("P3 does not cover both response branches and both modes")
+    if d.get("response_coverage_scope") != "COMMON_NORMAL_LIVE_PRECONDITIONS_IMPLY_MATRIX_CERTIFICATE_NOT_PHYSICAL_ADMISSION":
+        f.append("P3 branch coverage confused with physical admission")
     f.extend(f"MEMS bias: {x}" for x in BIAS.validate(d.get("mems_bias_preconditions", {})))
     if d.get("schema") != SCHEMA or d.get("qualification") != QUALIFICATION:
         f.append("schema/qualification mismatch")

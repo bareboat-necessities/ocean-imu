@@ -19,7 +19,7 @@ falsifiable check compares these required transforms with the retained
 diagnostic at every operation. No metric or interval search is authorized by
 the diagnostic's expanding ratios.
 
-Canonical source remains `COMPLETE_SEA3_NORMAL_LIVE_WORD`. Conditional complete-SEA3 P3 is closed and frozen at `delta=1e-18`. P4 is **OPEN** and P5 is **BLOCKED**. H18 and A21 are both required; H18->A21 remains a separate rectangular hybrid event. Zero lever arm and the dormant-transparent vibration branch remain the certified production branch.
+Canonical source remains `COMPLETE_SEA3_NORMAL_LIVE_WORD`, now with the explicitly authorized response union `LINEAR_VESSEL` union `STOKES_WAVE_FOLLOWING`. The legacy linear domain is unchanged. Conditional P3 uses the same response-independent Normal-Live implication at `delta=1e-18`, with explicit H18/A21 coverage for both branches. This does not certify physical word admission. P4 is **OPEN** and P5 is **BLOCKED**; H18->A21 remains a separate rectangular hybrid event, with zero lever arm and dormant-transparent vibration.
 
 The only production/proof-domain change made on PR #496 is the user-authorized accelerometer-bias projection-radius tightening from `0.5` to `0.4 m/s^2`. The declared startup/handoff accelerometer-bias error envelope is also `0.4 m/s^2`, while the Normal-Live active-bias interior bound is `0.35 m/s^2`, preserving a `0.05 m/s^2` projection margin. No other filter tuning, quality gate, source-language parameter, or P3 mathematics was changed.
 
@@ -175,13 +175,13 @@ justifies source-uniform enclosure work.
 
 ## Complete-source obligation still open
 
-Direct physical-generator admission has a structural failure. The retained
+Direct physical-generator admission to the **linear branch** has a structural failure. The retained
 input names the v1.1.3 PM--Stokes surface-particle generator, pinned at
 `oceanography-waves-lib` commit `c5ddd8ddba6e062bb131d92efcd672dfa189455a`.
 It uses 128 logarithmic fundamental frequencies in [0.02,0.8] Hz, order 3,
 common seeded phases/directions, and attitude from the same advected surface
 slopes. This is an actual correlated generator, not 600 independent boxes.
-However, it is not itself the declared continuum linear vessel-response model.
+It is not itself the declared continuum linear vessel-response model.
 Relative to its fundamental-only sea, nonzero higher harmonics cannot be
 created by a linear response. Relative to its full Stokes elevation, the
 surface-particle displacement response is h=(i cos(theta),i sin(theta),1)
@@ -189,17 +189,31 @@ surface-particle displacement response is h=(i cos(theta),i sin(theta),1)
 f=3*(4/5)=12/5 Hz, the largest allowed SEA3 squared gain is
 [4*( (6/5)/(12/5) )^2]^2=1. The exact failed inequality is 2<=1.
 
-This is a physical-model/premise incompatibility for direct admission of the
-generating model, not an interval failure and not proof that no other
-admissible SEA3 realization could share the finite samples. It invalidates
-promoting the label "genuine PM+Stokes" to membership. The finite grid also
-does not certify the declared continuum spectrum. BIAS0/1/2 and canonical P3
-are not invalidated. The next check executes the pinned generator to confirm
-the offending harmonic is present and checks the exact response inequality.
-Alternatives are a validated finite-window embedding in the existing SEA3
-family, a separate physical theorem covering the nonlinear buoy response, or
-an explicit SEA3-plus-model-mismatch forcing decomposition. No source-domain
-change or silent transfer of homogeneous terms into ISS is made here.
+This is a model/premise incompatibility, not an interval or A21 theorem
+failure. It invalidates identifying Stokes with the linear RAO, not the
+user-authorized union `G_SEA3+ = G_vessel_linear union G_wave_following_Stokes`.
+That explicit new model branch makes the old rejection inapplicable to the
+union; the exact failed linear inequality remains a regression test.
+The new root retains all phases/directions and bound-harmonic coefficients,
+not just seed 42 or one frequency grid. Fixed finite N is a Stokes source
+coordinate; it does not replace or certify the legacy continuum branch.
+Per-root hard bounds follow from the actual coefficients; linear rolloff
+moments and surface-period identities remain scoped to the linear branch.
+
+Current limiter: response-model admission is weaker than full retained-word
+membership. The source clock/root, same-history frontend/tuner, BIAS0/1
+physical bias, actual Normal-Live bounds and finite reset/storage attachment
+are still required. The pinned generator's centered-difference gyro also
+needs an explicit discretization-defect enclosure; it is not exact Cdot.
+No bias feedback is silently moved into ISS. BIAS2 must be certified jointly
+on each full corrected-error history, not inferred from a Stokes label.
+
+Next falsifiable experiment: CI checks all 128 actual root amplitudes,
+steepness and dependent harmonic coefficients against the Stokes branch,
+retains rejection by the linear branch, and rebuilds conditional P3 plus
+endpoint/prefix/retention P4 obligations for **both** branches/modes.
+Then attach the complete source and finite storage to the retained word.
+A Stokes-only certificate cannot promote the enlarged union.
 
 The upstream complete-source contract still does not materialize the correlated finite-window SEA3 realization as an executable outward source family. Parameter compactness, RAO/moment envelopes, hard pathwise acceleration/body-rate caps, frontend parity, and adaptive-state rate/jump bounds do not replace a same-history transition for the correlated source state. P4 may not substitute independent per-sample boxes, a replay record, or a finite harmonic/grid surrogate.
 
@@ -208,8 +222,8 @@ state selectors, stacked nonlinear residual selectors, reset/boundary terms,
 and the A21 projection graph. A cell/lineage identifier is not a hard SEA3
 membership or inclusion proof. The translational response envelope does not
 supply the missing joint rotational realization or hard correlated driver.
-No additional rotational envelope, coherence budget, or source restriction
-is adopted here.
+No additional linear-vessel rotational envelope or coherence budget is
+adopted. The added Stokes branch has its own joint slope-derived rotation.
 
 The A21 projection also needs the same-history true temperature-centered
 residual bias. At zero bias error its output is
@@ -376,6 +390,13 @@ The next check is that focused test followed by the same canonical CI chain.
 `make all` is locally blocked before compilation because
 this environment has neither `/usr/include/eigen3/Eigen/Dense` nor a vendored
 Eigen tree; the build command and include policy were not changed.
+
+The SEA3+ local regression initially misplaced the cache-isolation assertion
+inside the new branch test (`NameError: cached`). This was a test-edit defect,
+not a failed matrix inequality: the source and P3/P4 builders completed.
+Restore the assertion's original scope and rerun that same suite; no proof
+constant or admission gate changes. GitHub CI remains the C++ build check
+while local `make all` fails at `KalmanQMEKF.h:30`, missing `Eigen/Dense`.
 
 `ou-validation` is red for a known evidence-provenance reason, not because its numerical unit-test body found a new filter failure: `tools/ou_evidence_contract.py --auto` reports replay dependencies changed relative to committed validation/robustness provenance, including the OU-III filter and WavePeriodEstimator dependencies. Genuine validation/robustness evidence regeneration is therefore still required before a later proof PR is declared final/ready. Do not hand-edit provenance hashes.
 

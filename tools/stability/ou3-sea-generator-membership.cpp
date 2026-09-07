@@ -33,5 +33,18 @@ int main()
               << "\"highest_fundamental_amplitude_m\":" << a << ','
               << "\"highest_third_harmonic_amplitude_m\":" << c3 << ','
               << "\"highest_third_harmonic_acceleration_amplitude_mps2\":"
-              << 9.0 * omega * omega * c3 << "}\n";
+              << 9.0 * omega * omega * c3 << ','
+              << "\"gravity_mps2\":" << gravity << ','
+              << "\"atoms\":[";
+    for (int i = 0; i < 128; ++i) {
+        const double fi = model.frequencies()(i);
+        const double ai = model.amplitudes()(i);
+        const double wi = 2.0 * std::numbers::pi * fi;
+        const double ki = wi * wi / gravity;
+        if (i != 0) std::cout << ',';
+        std::cout << "{\"frequency_hz\":" << fi << ",\"amplitude_m\":" << ai
+                  << ",\"second_coefficient_m\":" << 0.5 * ki * ai * ai
+                  << ",\"third_coefficient_m\":" << (3.0 / 8.0) * ki * ki * ai * ai * ai << '}';
+    }
+    std::cout << "]}\n";
 }
