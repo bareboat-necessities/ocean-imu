@@ -2,31 +2,56 @@
 
 ## Handoff checkpoint
 
-Current experiment: source-connected **actual finite** endpoints on the two
-fixed observer-clock windows, using one shipping observer from power-on and
-the admitted Stokes root, zero true bias/driver, and no state/covariance
-intervention. The original retained witness is not regenerated or replaced.
-The capture measures `x_true[k+1]-F_LL[k] x_true[k]` explicitly: removing sensor
-noise does not remove physical Stokes/OU model forcing. Its raw `VN/V0` cannot
-be used as a homogeneous P4 verdict. This is an attachment/forcing gate, not
-the requested completed homogeneous endpoint master. Source parity, exact
-fixed indices, actual P, and 80-digit endpoint evaluation are CI obligations;
-full subevent nonlinear graph, homogeneous attachment and BIAS2 remain open.
-Do not resume interval or metric searches based on this forced ratio.
-Local validation: 26 focused tests pass. `make all` is infrastructure-blocked
-at `KalmanQMEKF.h:30`, missing `Eigen/Dense` despite the retained include path;
-the local Python lint executable is also absent. CI installs both dependencies.
-An initial optional mpmath dependency was removed in favor of exact rational
-endpoint elimination and 80-digit decimal output; the focused tests now run
-without adding a new Python package.
-CI run `34157076036` compiled the source probe with warnings as errors and
-executed both fixed 600-sample captures, then failed serializing a NumPy
-`bool_` in the report. Classification: reporting implementation defect, not
-a storage/source theorem failure. It invalidates the report emitter, not
-the shipping capture or any mathematical inequality. The immediate limiter
-is native-JSON conversion of premise predicates. Next falsifiable check:
-serialize a complete synthetic H18/A21 audit in the regression suite, then
-rerun the unchanged physical histories and inspect their actual decisions.
+The source-connected **actual finite** endpoint capture passes CI run
+`34157292548` on code head `456fce0f`. One shipping observer owns the complete
+power-on history, nominal state, P, resets, tuner commits and actual R_S.
+The new conditional Stokes capture uses zero true bias/driver and makes no
+state/covariance intervention. It is not the original retained witness.
+
+| Fixed window | Sample indices | Source parity defect | Actual forced VN/V0 | Actual sample-prefix maximum |
+| --- | --- | --- | --- | --- |
+| H18 | 6600--7199 | 1.56e-15 | 7.97176522677814 | 7.97176522677814 |
+| A21 | 228600--229199 | 1.68e-14 | 0.496821403940055 | 1.46706257365206 |
+
+Both have 600 IMU calls and 75 magnetic calls; H18/A21 retain 137/108 due
+S calls. The checked Live/mode/magnetic-transition, accepted-accelerometer,
+physical acceleration/rate, bias-interior and Cayley-chart predicates pass.
+This is point evidence, not full Normal-Live/PE or source-uniform admission.
+Endpoint storage is evaluated by exact rational elimination with 80-digit
+decimal output from the float shipping coordinates; call margins telescope
+to reported roundoff. The capture artifact is `10031432066`, SHA256
+`ce787b17bcf700730f6905c87f2e5a0b303dd18e20da697de3b63a27afc7ff46`.
+
+The failed identification is **zero sensor/bias noise => homogeneous P4
+trajectory**. The same-root physical prediction defect
+`u_l[k]=x_true[k+1]-F_LL[k]x_true[k]` is nonzero: the largest acceleration
+coordinate increments are 0.018034304915645463 (H18) and
+0.022571626343973056 (A21). Classification: proof-map attachment gap, not
+a failed contraction theorem or interval enclosure. Neither raw ratio proves
+or falsifies the homogeneous P4 storage; do not optimize either one.
+BIAS1 does not remove ocean/OU model forcing. Assembled-sensor qualification
+is not a gate for this conditional work.
+
+Critic: abandon using an actual zero-noise simulation as the unforced master;
+its nonzero source-model input makes the ratio answer a different question.
+The current limiter is the exact joint error/source/forcing transition,
+including subevent nominal/P/reset attachment, not an eigenvalue margin.
+Next falsifiable experiment: construct that transition and require it to
+reproduce every captured shipping subevent at the recorded inputs. Then
+test whether its zero-input section preserves the claimed source attachment
+before composing the fixed complete-history homogeneous endpoint. If it
+does not, the qualitatively different alternative is the full forced
+window ISS master with explicit disturbance coordinates/cross terms, not
+deleting inputs and retaining the old covariance cells. BIAS2 must enter
+the correctly attached nonlinear graph, not a post-hoc PSD or sampled ratio.
+No interval/metric search is justified yet; P4/P5 remain open/blocked.
+
+All 27 focused tests and the retained-byte audit pass in CI. The first capture
+run hit a NumPy-bool JSON emission defect, repaired without changing the
+history or mathematical gates and covered by a complete-report regression.
+Locally `make all` remains infrastructure-blocked at `KalmanQMEKF.h:30`,
+missing `Eigen/Dense`; the local lint executable is absent. CI installs those
+dependencies; the source probe compiles with warnings as errors.
 
 The retained-witness CI run `34148309564` rejected a different payload SHA256
 (`c6b99250...` instead of `db38b812...` for H18). The regenerated A21 scan also
