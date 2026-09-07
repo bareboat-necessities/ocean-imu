@@ -1,191 +1,215 @@
 # OU-III proof research state
 
-## Current hypothesis
+## Current status
 
-The canonical source remains `COMPLETE_SEA3_NORMAL_LIVE_WORD`. Conditional P3 is
-closed and frozen at `delta=1e-18`; P4 is open and P5 is blocked. Production
-filter code, the declared source/error domain, quality gates, H18/A21 mode
-semantics, zero lever arm, and dormant-transparent vibration branch are fixed.
+The canonical source remains `COMPLETE_SEA3_NORMAL_LIVE_WORD`. Conditional P3
+is closed and frozen at `delta=1e-18`; P4 is OPEN and P5 is BLOCKED. Production
+filter code, the declared source/error domain, numerical quality gates, zero
+lever arm, dormant-transparent vibration branch, H18/A21 mode semantics, and
+the H18->A21 hybrid separation are fixed.
 
-The theorem objective is full-state nonlinear finite-window UES/ISS. Existing
-moving-Riccati storage constructions are proof hypotheses, not the theorem.
-A replacement P4 metric is admissible only if it is full rank on all active
-coordinates and proves the same full H18/A21 error dynamics. Eliminating a
-state, replacing the source, selecting favorable S events, replay fitting, or
-shrinking the declared domain is not admissible.
+The theorem objective is full-state nonlinear finite-window UES/ISS. A P4
+metric must be full rank on every active coordinate and prove the same physical
+true-minus-estimated H18/A21 error dynamics. State elimination, source
+replacement, replay witnesses, independently bounded tuner/R_S sequences,
+selected-S words, packet-count remainder sums, correction-radius fallbacks, and
+domain shrinkage are not admissible.
 
-## Evidence
+## Frozen linear reference
 
-The corrected single shipping observer is the point-diagnostic reference. It
-uses one source/tuner/Riccati history and retains every shipping operation,
-including every due S=0 update with the actual applied R_S matrix generated from
-the smoothed scalar `RS_applied` channel, realized pseudo cadence, and deployed
-standard-deviation factors `[0.72,0.72,1]`.
+The corrected single shipping observer owns one source/tuner/Riccati history and
+retains every executed operation, including every due S=0 update with the actual
+applied R_S matrix generated from the smoothed scalar `RS_applied` channel,
+realized pseudo cadence, and deployed standard-deviation factors
+`[0.72,0.72,1]`.
 
-For the genuine PM+Stokes Hs=1.5 m same-history source, legal 600-sample words
-give:
+On the genuine PM+Stokes Hs=1.5 m same-history source, the legal 600-sample
+point words are:
 
-- H18: complete-word linear `rho=0.9998658024147671`; 600 predictions,
-  600 accelerometer updates, 137 S updates, 75 vector updates.
-- A21: complete-word linear `rho=0.9958536807113242`; 600 predictions,
-  600 accelerometer updates, 108 S updates, 75 vector updates.
-- The selected-direction event ledgers reproduce those maps within about
-  `2.5e-6` and telescope to numerical roundoff.
-- The covariance-free frozen-gain nonlinear shadow reconstructs the nominal
-  shipping state to `2.98e-8` in H18 and `7.45e-9` in A21, so its finite-error
-  result is not a second-Riccati artifact.
+- H18: `rho_linear=0.9998658024147671`, with 600 predictions,
+  600 accelerometer updates, 137 S updates, and 75 vector updates.
+- A21: `rho_linear=0.9958536807113242`, with 600 predictions,
+  600 accelerometer updates, 108 S updates, and 75 vector updates.
 
-Two full-state storage hypotheses have now been falsified on that legal A21
-word:
+The selected-direction event ledgers reproduce those maps within about `2.5e-6`
+and telescope to numerical roundoff. These are non-promoting feasibility checks,
+not universal source coverage.
 
-1. Raw physical-error moving-Riccati storage `z^T P^-1 z` first crosses
-   `rho=1` at reliable scale 6.5 and reaches `rho=1.13702642918` on the tested
-   declared direction.
-2. Full measurement-linearizing storage
-   `Phi(z)^T P^-1 Phi(z)`, with
-   `epsilon_aw=(Q_aw-I)delta_a_w+e_eta` and all mixed transport retained, also
-   first crosses `rho=1` at scale 6.5 and reaches `rho=1.1339495182`.
+## Point-shadow diagnostics: what they do and do not establish
 
-At scale 6.5 the limiting A21 direction has approximately
-`||delta theta||=0.0235311 rad = 1.348 deg`,
-`||delta b_a||=0.0861747 m/s^2`, and
-`||delta a_w||=0.0121997 m/s^2`. The failure is therefore not caused by the
-30-degree attitude candidate and cannot be repaired by selecting 25/20/15
-degrees. H18 remains pointwise contractive throughout its tested declared
-limiting direction; its worst reliable full-Phi ratio is `0.999973833561`.
+The covariance-free frozen-gain shadow uses one shipping estimator for the
+source, covariance, gains, branch decisions, and actual-R_S word. Its nominal
+reconstruction error is about `2.98e-8` in H18 and `7.45e-9` in A21. It was
+useful for finding real harness defects: staged tuner/R_S commit ordering,
+covariance-changing perturbation injection, and the finite attitude-chart
+mismatch.
 
-Binary32 subtraction below about scale `0.008` is not used to judge the tangent
-map. At resolved scale `0.125`, both raw and full-Phi central ratios recover the
-linear complete-word tangent to about `1.3e-5` in H18 and `1e-4` in A21.
+The final parity check injects the requested **exact Cayley** attitude coordinate
+`c=2 tan(theta/2) u` by converting it to the equivalent rotation vector accepted
+by the host shadow. Focused workflow run `34071140640` retained the verified A21
+word `(600 prediction, 108 S, 600 accelerometer, 75 vector events)` and found,
+for the estimator-pair full-Phi storage:
 
-## Failure analysis
+- scale 6: `rho_Phi=0.999459385872` / `0.999386787415`;
+- scale 6.5: `1.00005078316` / `0.999995589256`;
+- scale 7: `1.00067698956` / `1.00064611435`;
+- scale 8: `1.00212538242` / `1.00215435028`;
+- declared limiting scale `37.714067586719345`: worst
+  `rho_Phi=1.13413977623`.
 
-Classification: **proof-method failure for the current moving-Riccati storage
-architectures**, not yet a theorem failure and not a source/CI/filter failure.
+Those numbers are real for the **incremental estimator-to-estimator shadow**.
+They are not a theorem-grade counterexample to the physical P4 map. The shadow
+stores `shadow estimate - nominal estimate` and both estimates receive Kalman
+corrections, whereas the theorem uses physical true-minus-estimated errors with
+`R_true=E R_hat`, `delta a_w=a_true-a_hat`, and the true trajectory does not
+receive estimator corrections. The two maps share the zero-error tangent, which
+explains the linear agreement, but their finite nonlinear maps are not
+identical.
 
-Failed controlling inequalities on one legal A21 complete word are
+Therefore the shadow result may falsify a proposed *diagnostic attachment* or
+warn against optimizing a finite endpoint storage, but it may not be used to
+claim that physical raw/Phi P4 is false. No P4 architecture may be promoted or
+rejected solely from this estimator-pair rho.
 
-`V_raw(F_W(z)) < V_raw(z)`
+## Exact physical-error convention retained for P4
 
-and
+The theorem-facing accelerometer coordinate is
 
-`V_Phi(F_W(z)) < V_Phi(z)`.
+`R_true = E R_hat`, `delta a_w = a_true-a_hat`,
 
-Both are false for admissible finite errors beginning at scale 6.5 along the
-reported full 21-state direction.
+with exact homogeneous residual
 
-This invalidates the strategy of proving P4 by sharpening remainder bounds
-around either of those two storages. It does **not** invalidate frozen P3, the
-linear UES certificate, the exact residual/Joseph/reset identities, complete
-SEA3 source generation, or the possibility of nonlinear UES in another
-full-rank metric or over a longer finite window.
+`y=(E-I) f_hat + E R_hat delta a_w + delta b_a`.
 
-**DEAD_ENDS**
+The shipping tangent is
 
-- duplicated pre-commit host observers;
-- standalone/pure `e_eta` or packet-count remainder budgets;
-- raw moving-Riccati endpoint storage as the nonlinear P4 certificate;
-- full-Phi moving-Riccati endpoint storage as the nonlinear P4 certificate;
-- Schur/elimination of `a_w` or any other active state from the final P4
-  coercivity condition. Such a reduced quantity is not the required full-state
-  theorem and must not be pursued as a rescue.
+`H z=[c]x f_hat + R_hat delta a_w + delta b_a`.
+
+The exact measurement-linearizing shift remains
+
+`Q_aw=R_hat^T E R_hat`,
+
+`e_eta=R_hat^T((E-I)-[c]x)f_hat`,
+
+`epsilon_aw=(Q_aw-I)delta a_w+e_eta`,
+
+`Phi(z)=z+E_aw epsilon_aw`,
+
+so `y=H Phi(z)` with the ORIGINAL shipping H/P/R/K/S. For a correction
+`d=K y`, the true-minus-estimated additive error subtracts `d` and the exact
+attitude error satisfies `E_plus=E Q(d)^-1`. Prediction retains the literal
+full `F E_aw` transport, including v/p/S/a_w rows. H18->A21 remains a separate
+21x18 physical/covariance hybrid.
+
+## Dead ends and forbidden rescues
+
+- duplicated host observers that reconstruct the scheduler independently;
+- pure-`e_eta`, scalar Lipschitz, correction-radius, metric-floor, or
+  packet-count-times-worst-remainder routes;
+- selected-S replacement words or independent R_S schedules;
+- reduced/end-point Schur elimination of `a_w` or any other active state from
+  the final P4 coercivity condition;
+- 6/9-second point-window optimization of the estimator-pair shadow;
+- treating the estimator-pair finite rho as the physical theorem map.
+
+The old `ou3-p4-a21-failure-mechanism` Schur/subdirection diagnostic is
+historical debugging only and must not feed canonical P4.
+
+## Canonical full-state differential architecture
+
+The current canonical P4 architecture is the full-rank pullback differential
+metric
+
+`M(z,zeta)=D Phi(z,zeta)^T P(zeta)^-1 D Phi(z,zeta)`.
+
+`D Phi` is block triangular and its a_w diagonal block is the orthogonal
+`Q_aw`, so `det D Phi=1` on the finite Cayley chart. No active state is
+eliminated. At zero error the metric reduces exactly to the frozen P3 moving
+metric.
+
+For one complete physical word `F_W` the controlling inequality is
+
+`rho M_0 - D F_W(z)^T M_1 D F_W(z) > 0`, `0<rho<1`,
+
+uniformly over every admitted complete SEA3 same-history word and every state
+in one certified finite-error cell, separately in H18 and A21. The H->A
+rectangular differential event is separate.
+
+The existing differential-word cocycle composes literal event Jacobians in
+shipping order and requires the same source token for every event. Every due
+S event must carry actual-applied SpectralMSE R_S provenance. The terminal gate
+is full interval LDLT, not a scalar packet norm.
+
+## Current full-state differential obligations
+
+The theorem-facing differential Joseph event module now:
+
+- uses exact Cayley physical true-minus-estimated state;
+- derives H/S/K from the SAME source-correlated P/H/R operation cell;
+- forbids an independently supplied theorem K;
+- requires the actual-applied-R_S provenance token on S events;
+- differentiates the exact deployed quaternion correction outward;
+- keeps all H18/A21 coordinates.
+
+The following obligations remain OPEN and are controlling:
+
+1. **Prediction differential.** Supply the exact physical true-minus-estimated
+   prediction Jacobian for the same source cell, including attitude/gyro-bias
+   propagation, the full v/p/S/a_w OU map, active b_a OU propagation, and the
+   source-committed schedule. The covariance-floor event has identity state
+   Jacobian but remains in the covariance/source word.
+2. **A21 b_a projection hybrid.** Shipping projects the estimated b_a state to
+   the 0.5 m/s^2 ball. Normal-Live declares nominal `||b_a_hat||<=0.45`, giving
+   only 0.05 m/s^2 nominal interior margin; the declared nonlinear error set can
+   cross the projection boundary. Projection inactivity is therefore NOT
+   source-uniformly proved. P4 must either derive a stronger invariant from
+   existing assumptions or include the exact nonsmooth projection hybrid /
+   generalized Jacobian. The domain must not be shrunk to avoid it.
+3. **Source-correlated finite event cells.** P/H/R, geometry, schedule and state
+   cells must be generated from one complete SEA3 history. Independent boxes
+   may not be multiplied into a fake word.
+4. **H18->A21 differential hybrid.** Supply the actual 21x18 lift and covariance
+   seed/reset event; do not reuse an H18 ceiling as A21.
+5. **Endpoint pullback cells.** Enclose P0^-1/P1^-1 and D Phi at the same source
+   endpoints and compose one full interval Jacobian through every prediction,
+   actual-R_S S event, accelerometer event, vector event, floor and reset.
+6. **Terminal full-matrix test.** Run interval LDLT for the candidate cells
+   `[30,25,20,15]` degrees, selecting only the widest cell for which the full
+   same-history H18 and A21 inequalities close. A green structural test alone
+   cannot promote P4.
 
 ## Independent critic pass
 
-Strongest reason to abandon the current architecture: the A21 obstruction is
-not interval pessimism. A covariance-free nonlinear shadow using the exact
-shipping source/gain word produces `rho>1` in both candidate storages well
-inside the declared domain. Tightening local bounds around either storage is
-therefore optimizing a false controlling inequality.
+The strongest reason this architecture could still fail is not the point-shadow
+rho. It is source-uniform interval dependency combined with the nonsmooth A21
+bias projection and source-correlated Kalman gains. A proof that boxes P/H/R/K,
+geometry, or schedule independently would almost certainly manufacture excess
+width and would violate complete SEA3 even if it numerically passed.
 
-Qualitatively different full-state alternatives are:
+Three legitimate alternatives if the pullback metric fails after a faithful
+same-history enclosure are:
 
-1. **Longer complete-SEA3 differential window in the retained moving metric.**
-   UES requires contraction over some bounded source-contiguous window, not
-   necessarily the 600-sample diagnostic window. Test the full nonlinear
-   Jacobian over 3 s / 6 s / 9 s while retaining all intervening shipping
-   operations and the actual endpoint Riccati metrics.
-2. **Full-state differential contraction / Riemannian metric.** If no longer
-   moving-Riccati window is strict but the differential cocycle is uniformly
-   stable, construct a full-rank state/source-dependent metric. No state may be
-   eliminated and all actual-R_S operations remain in the word.
-3. **Full-state converse/path-memory Lyapunov construction.** Build a
-   source/state-indexed finite-horizon pullback metric from the complete
-   Jacobian cocycle if a simple one-window metric is insufficient. This remains
-   full rank and cannot be replaced by endpoint block elimination.
-4. **Theorem falsification.** If the full-state nonlinear differential cocycle
-   cannot be made uniformly contractive over bounded complete source windows
-   while retaining uniformly coercive/bounded metrics, report that the
-   declared nonlinear P4/UES formulation is unsupported on the current domain.
+1. a different **full-rank** source/state-dependent Riemannian metric;
+2. a full-state converse/path-memory Lyapunov metric built from the same
+   differential cocycle;
+3. theorem-failure analysis if no uniformly coercive full-state metric can
+   close on the declared domain.
 
-## Master inequality before new proof code
-
-For a source state/history `s`, nonlinear active-state error `z`, and complete
-word map `F_{W,s}`, a full-rank differential metric `M(s,z)>0` must satisfy
-
-`DF_{W,s}(z)^T M(s+,F_{W,s}(z)) DF_{W,s}(z) <= rho M(s,z)`
-
-with one uniform `rho<1` over every admitted complete SEA3 word and every state
-in the certified nonlinear region, separately for H18 and A21. The H->A
-21x18 dimension-changing event remains a separate hybrid obligation.
-
-Because the system and admissible Lyapunov metric are time/source varying, the
-spectral radius of one finite transition matrix is **not** a standalone no-go
-criterion. The immediate feasibility quantity for the retained moving metric is
-
-`gamma_W(z)^2 = || P_1^(-1/2) DF_W(z) P_0^(1/2) ||_2^2`.
-
-If a bounded source-contiguous window has `sup gamma_W(z)^2 < 1`, then that
-window is a valid full-state differential-contraction candidate in the retained
-moving metric. If 3 s fails but 6 s or 9 s is strict, no new metric architecture
-is needed. If all tested bounded windows fail, a different uniformly coercive
-full-rank metric may still exist; its feasibility must be assessed through the
-full differential cocycle, not through the spectral radius of one time-varying
-transition.
-
-No new nonlinear lemma is authorized unless it enters this matrix inequality
-and has a quantified path to moving its largest generalized eigenvalue below 1.
-
-## Retained facts
-
-- canonical complete SEA3 same-history source and scheduler;
-- frozen conditional P3 at `1e-18`;
-- exact shipping H/P/R/K/S Joseph identities and full posterior precision;
-- exact full shift `epsilon_aw=(Q_aw-I)delta_a_w+e_eta`;
-- exact correction/reset and prediction shift transport, including all
-  `F E_aw` v/p/S/a_w rows;
-- actual applied R_S on every due S update;
-- separate H18->A21 hybrid event;
-- existing outward interval-AD Cayley/deployed-quaternion primitives.
+None permits state elimination, source replacement, or domain shrinkage.
 
 ## Next falsifiable experiment
 
-Build one host-only **full-state differential Jacobian diagnostic**, driven by
-the same single shipping estimator and complete SEA3 source. It must not create
-a second covariance, tuner, source, or acceptance history. Propagate central
-perturbation pairs for all active coordinates in parallel using higher-precision
-shadow states and the frozen shipping gains/branch sequence, then recover the
-full Jacobian.
+Complete the theorem-facing event library before constructing a universal word:
 
-For the A21 limiting source phase evaluate the origin and finite states on the
-same limiting direction at scales 4, 6, 6.5, and 8. For each center evaluate
-source-contiguous 3 s, 6 s, and 9 s windows and report:
+- verify every nonlinear Joseph event has the correct zero-cell tangent against
+  the literal shipping H/K/reset map;
+- implement and test the exact physical prediction Jacobian;
+- implement the A21 projection hybrid/generalized Jacobian (or prove its
+  inactivity from existing declarations without changing those declarations);
+- implement the H18->A21 rectangular differential event.
 
-- the complete 21x21 Jacobian and all active coordinates;
-- `gamma_W^2`, the largest generalized moving-metric differential ratio;
-- ordinary singular/eigen diagnostics only as conditioning information, not as
-  theorem criteria;
-- central-difference consistency under step refinement;
-- endpoint P0/P1 conditioning;
-- exact prediction/accelerometer/S/vector counts and a deterministic hash of
-  the actual-R_S event sequence.
-
-Also check H18 on its legal 3 s limiting word so both active dimensions remain
-attached to the same diagnostic machinery. If a longer A21 window makes
-`gamma_W^2` clearly below one, rigorous complete-SEA3 interval-AD enclosure of
-that **full state and full window** is quantitatively justified. If no tested
-window is strict, perform another architecture review before introducing a new
-metric; do not return to endpoint storage transformations or eliminated-state
-certificates.
+Only after those event maps pass exact point/interval algebra tests should one
+bind them to one source-correlated complete SEA3 word and evaluate the master
+full-matrix inequality. Do not return to finite endpoint-storage optimization.
 
 P4 remains OPEN. P5 remains BLOCKED. No merge is authorized.
