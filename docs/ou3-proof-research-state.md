@@ -19,7 +19,11 @@ thresholds are not to be changed for proof convenience.
 claim of deployment closure. The canonical P4 result must keep
 `P4_CANONICAL_PASS=false`, `P4_FINITE_WINDOW_CLOSED=false`, and
 `P5_MAY_START=false` until the actual word inequality closes. A green
-architecture/contract CI job does not mean P4 has passed.
+architecture/contract CI job does not mean P4 has passed. The covariance
+identity flag `structural_shipping_covariance_identities_closed` is separate
+from `full_nonlinear_measurement_metric_rebind_closed` and
+`full_nonlinear_transport_and_storage_closed`; the latter two are false.
+No covariance-only test can close those source-conditioned obligations.
 
 ## Source and frozen P3 contract
 
@@ -79,11 +83,23 @@ H,P,K,S and the full shift, not a mixture of auxiliary H0 and congruent H_u:
 
 This pointwise identity does not make Phi-storage isometric to the original
 physical-error storage. For d=K y, t=z-d, z_plus=G t+rho, and A=I-KH, the
-correct complete shift transport is
+correct measurement/reset shift transport is
 
     xi=rho+E_aw(epsilon_plus-epsilon_minus),
     epsilon_mixed_plus-epsilon_mixed_minus
       =(Q_plus-Q_minus)delta_a_w-(Q_plus-I)d_aw.
+
+Prediction is different. For the physical map `z_plus=F z+rho_p`, retain
+
+    Phi_plus=F Phi+xi_p,
+    xi_p=rho_p+E_aw epsilon_plus-F E_aw epsilon_minus.
+
+`F E_aw` has nonzero v,p,S as well as a_w rows. Substituting the reset-only
+shift difference loses the path into the S=0 regularizer. The supplied full
+physical defect must include source/model and chart terms; it is not declared
+zero by the transport evaluator. Source-only events use their actual map, and
+H18->A21 uses the actual rectangular lift and separate covariance/seed operation.
+No H18 covariance ceiling is transferred to A21 by this identity.
 
 With u=A Phi and b=G^-1 xi, the exact signed Joseph/reset ledger is
 
@@ -134,6 +150,77 @@ ratios, or packet-count-times-worst-remainder bounds. No new micro-certificate
 should be added without its place and quantitative effect in the master word
 inequality being demonstrated.
 
+## Complete-word feasibility admission: current limiter
+
+The numerical experiment has not yet executed an admitted SEA3 word. The
+tracked inputs contain no 601-transition witness with its same-history frontend
+entry and Live covariance seed, and the strict executor correctly rejects
+materialization while the code-owned hard-window provider is open. H18/A21
+nonlinear rho, maximizing direction, source/phase and signed word margins are
+therefore **unmeasured**, not PASS and not evidence that rho exceeds one.
+
+The failed admission experiment now identifies the missing mathematical object
+more precisely. The theorem declares the coupled hard realization set
+`X^s_SEA3(lambda_0:N)` compact and requires SEA0 to give a machine-readable
+outward representation, but neither the theorem nor the retained source stack
+defines the deterministic spectral amplitude/driver relation that decides
+membership in that set. The statistical JONSWAP/PM spectrum and its moments are
+explicitly insufficient for that pathwise relation. Normal-Live acceleration
+and body-rate caps only bound the sampled projection; they are not membership
+conditions. Consequently a numerical 601-sample history cannot currently be
+proved to be a member from repository data alone.
+
+Classification: **proof-method/source-specification gap**, not a counterexample
+to conditional P3, P4 contraction, or SEA3 compactness. It invalidates the
+hypothesis that the present abstract compact-set declaration is already enough
+to construct a legal point witness. It does not invalidate the continuum phase
+propagation, coupled lambda relation, response-envelope theorems, complete-word
+executor, or frozen P3 result. The limiting quantity is now source membership
+before `rho_W` can even be evaluated.
+
+Strongest critic objection: manufacturing a finite harmonic/grid realization,
+using a simulator replay, declaring arbitrary bounded samples admissible, or
+choosing an independent tuner/R_S schedule would silently add the missing
+driver relation and therefore change the source theorem. Those routes remain
+forbidden. A point diagnostic may avoid proving universal SEA0 left inclusion,
+but it still needs a witness whose membership follows from the existing SEA3
+source definition rather than from self-asserted provider flags.
+
+After this failure the qualitatively distinct alternatives are: (1) derive and
+state an exact deterministic spectral-factor/shaping realization relation from
+the existing SEA3 model, then validate one continuum same-history member; (2)
+state a direct hard finite-window/IQC definition of `X^s_SEA3` with an
+executable correlated membership oracle and prove the existing physical family
+left-included; or (3) formulate P4 directly over the abstract compact behavior
+using support-function/occupation-measure duality, provided it preserves the
+common SEA3 witness and every actual-applied R_S event. Alternative (1) is the
+shortest route to the mandatory non-promoting point experiment if the spectral
+model supplies a mathematically exact deterministic factor; otherwise (2) is
+the required theorem completion. Alternative (3) is a different proof
+architecture and must not be used merely to bypass missing source semantics.
+
+No further P4 proof-bound module is authorized until one of these source routes
+produces an admitted complete word. The next executable result must still be a
+legal same-history word and its signed complete-word margin.
+
+## Verification ownership and contract repairs
+
+The frozen conditional P3 producer is authoritative: tests must distinguish
+its `delta=1e-18` conditional verdict from still-open physical deployment and
+materialization. Retired source-identity keys and assertions equating these
+different verdicts were test-contract defects, not failed P3 inequalities.
+Likewise the old true "full nonlinear rebind" label overstated exact covariance
+identities. The corrected status exposes nonlinear transport/storage as open;
+no numerical P3 result or operating bound changes.
+
+Statistical evidence publication runs `evidence-test`; the canonical proof
+workflow runs the complementary `proof-test` shards. Their disjoint union is
+all validation modules, and the complete `test` target still runs everything.
+This prevents repeated source-only proof searches from consuming the evidence
+publisher's timeout while retaining every test. Partition regression checks
+both module coverage and shard assignment. These are CI/contract repairs, not
+new proof lemmas or evidence that the whole-word ratio is below one.
+
 ## Next falsifiable experiment
 
 The controlling object is `rho_W=V_after(F_W(x))/V_before(x)` on the actual
@@ -178,15 +265,18 @@ Run `make -C tests/validation build`, the source-foundation unittest command in
 `.github/workflows/ou3-proof.yml`, and all `test_ou3_p4_*.py` tests. Run each
 canonical gate with `--output /tmp/<name>.json`; inspect its pass flags, not
 just its exit code. `python3 tools/ou_evidence_contract.py --check` is separate
-from the stability theorem. Fresh validation/robustness replay evidence is
-still required for the changed source inherited from main; never hand-edit
-provenance hashes. The opt-in `ou-full-evidence-branch.yml` workflow owns a full
-branch refresh. No filter or pitch-gate edit is part of this handoff.
+from the stability theorem. Regenerate validation/robustness bundles against
+the checked-out source when their dependency contract is stale; never
+hand-edit provenance hashes or transplant another tree's replay fingerprint.
+The opt-in `ou-full-evidence-branch.yml` workflow owns a full branch refresh.
+Raw combined bundles are not published evidence until its provenance and
+publication checks pass. No filter or pitch-gate edit is part of this work.
 
-## Next conversation / PR boundary
+## Continuation boundary
 
-After PR #493 is merged, create a new PR from current main and continue the
-complete-word feasibility experiment above. Keep P3 frozen and P4/P5 open.
+Continue the complete-word feasibility experiment above from the reviewed
+branch/checkpoint, preserving newer main changes. Keep P3 frozen and P4/P5 open.
+Do not merge without explicit authorization.
 `tests/validation/test_ou3_p4_coordinate_transport_algebra.py` locks the exact
 full-shift, reset, and correlated-precision corrections. The full source-
 correlated H18/A21 transport and storage comparison are still the decisive

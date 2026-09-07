@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import subprocess
 import unittest
 
 
@@ -15,6 +16,35 @@ OU3_DOC = ROOT / "doc" / "kalman_ou_iii"
 
 
 class Ou3ProofCleanupTest(unittest.TestCase):
+    def test_evidence_and_canonical_proof_partition_lose_no_tests(self):
+        output = subprocess.check_output(
+            ["make", "--no-print-directory", "-s", "print-test-partition"],
+            cwd=VALIDATION,
+            text=True,
+        )
+        partition = dict(line.split("=", 1) for line in output.splitlines())
+        evidence = set(partition["EVIDENCE"].split())
+        proof = set(partition["PROOF"].split())
+        actual = {p.stem for p in VALIDATION.glob("test_*.py")}
+        self.assertEqual(evidence | proof, actual)
+        self.assertFalse(evidence & proof)
+        self.assertTrue(proof)
+        sea3 = {p.stem for p in VALIDATION.glob("test_ou3_sea3_*.py")}
+        self.assertTrue(sea3 <= proof)
+        self.assertIn("test_ou3_lever_arm_article", evidence)
+        self.assertIn("test_ou3_lever_arm_study", evidence)
+        workflow = (WORKFLOWS / "ou3-proof.yml").read_text(encoding="utf-8")
+        self.assertIn("make -C tests/validation proof-test", workflow)
+        self.assertIn("PROOF_TEST_SHARD_COUNT=6", workflow)
+        self.assertIn("shard: [0, 1, 2, 3, 4, 5]", workflow)
+        # Verify the exact shard assignment, not just filename coverage.
+        ordered = sorted(proof)
+        shards = [ordered[i::6] for i in range(6)]
+        flat = [name for shard in shards for name in shard]
+        self.assertEqual(len(flat), len(set(flat)))
+        self.assertEqual(set(flat), proof)
+        self.assertTrue(all(shards))
+
     def test_no_retired_p5_aliases_or_imports_remain(self):
         offenders = []
         for path in sorted(STABILITY.glob("ou3_*.py")):

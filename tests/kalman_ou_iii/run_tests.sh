@@ -16,3 +16,4 @@
 ./iss_contract-test
 ./rs_law-test
 ./startup_init-test
+./ou3-sea3-same-driver-startup-test

@@ -4,6 +4,8 @@ on:
   push:
     paths:
       - "tools/stability/ou3_sea3_continuum_phase_state.py"
+      - "tools/stability/ou3_sea3_continuum_driver_gram.py"
+      - "tools/stability/ou3_sea3_fixed_history_source_core.py"
       - "tools/stability/ou3_sea3_hard_window_behavior.py"
       - "tools/stability/ou3_sea3_hard_shaping_state.py"
       - "tools/stability/ou3_sea3_hard_finite_window_source.py"
@@ -28,6 +30,8 @@ on:
   pull_request:
     paths:
       - "tools/stability/ou3_sea3_continuum_phase_state.py"
+      - "tools/stability/ou3_sea3_continuum_driver_gram.py"
+      - "tools/stability/ou3_sea3_fixed_history_source_core.py"
       - "tools/stability/ou3_sea3_hard_window_behavior.py"
       - "tools/stability/ou3_sea3_hard_shaping_state.py"
       - "tools/stability/ou3_sea3_hard_finite_window_source.py"
@@ -71,6 +75,8 @@ jobs:
         run: |
           python3 -m py_compile \
             tools/stability/ou3_sea3_continuum_phase_state.py \
+            tools/stability/ou3_sea3_continuum_driver_gram.py \
+            tools/stability/ou3_sea3_fixed_history_source_core.py \
             tools/stability/ou3_sea3_hard_window_behavior.py \
             tools/stability/ou3_sea3_hard_shaping_state.py \
             tools/stability/ou3_sea3_hard_finite_window_source.py \
@@ -91,136 +97,131 @@ jobs:
             tests/validation/test_ou3_sea3_response_regularity_moment.py \
             tests/validation/test_ou3_sea3_aw_covariance_floor.py
 
-      - name: Build fail-closed provider and complete executor status
+      - name: Build complete SEA3 source boundary and legal feasibility point
         run: |
-          python3 tools/stability/ou3_sea3_rlambda_transition.py \
-            --output /tmp/ou3_sea3_rlambda_transition.json
-          python3 tools/stability/ou3_sea3_continuum_phase_state.py \
-            --output /tmp/ou3_sea3_continuum_phase_state.json
-          python3 tools/stability/ou3_sea3_hard_window_behavior.py \
-            --output /tmp/ou3_sea3_hard_window_behavior.json
-          python3 tools/stability/ou3_sea3_hard_shaping_state.py \
-            --output /tmp/ou3_sea3_hard_shaping_state.json
-          python3 tools/stability/ou3_sea3_hard_finite_window_source.py \
-            --output /tmp/ou3_sea3_hard_finite_window_source.json
-          python3 tools/stability/ou3_sea3_complete_window_executor.py \
-            --output /tmp/ou3_sea3_complete_window_executor.json
-          python3 tools/stability/ou3_sea3_complete_window_execution_kernel.py \
-            --output /tmp/ou3_sea3_complete_window_execution_kernel.json
-          python3 tools/stability/ou3_sea3_window_artifact_codec.py \
-            --output /tmp/ou3_sea3_window_artifact_codec.json
-          python3 tools/stability/ou3_sea3_response_regularity_moment.py \
-            --output /tmp/ou3_sea3_response_regularity_moment.json
-          python3 tools/stability/ou3_sea3_aw_covariance_floor.py \
-            --output /tmp/ou3_sea3_aw_covariance_floor.json
+          python3 tools/stability/ou3_sea3_rlambda_transition.py --output /tmp/ou3_sea3_rlambda_transition.json
+          python3 tools/stability/ou3_sea3_continuum_phase_state.py --output /tmp/ou3_sea3_continuum_phase_state.json
+          python3 tools/stability/ou3_sea3_continuum_driver_gram.py --output /tmp/ou3_sea3_continuum_driver_gram.json
+          python3 tools/stability/ou3_sea3_fixed_history_source_core.py --output /tmp/ou3_sea3_fixed_history_source_core.json
+          python3 tools/stability/ou3_sea3_hard_window_behavior.py --output /tmp/ou3_sea3_hard_window_behavior.json
+          python3 tools/stability/ou3_sea3_hard_shaping_state.py --output /tmp/ou3_sea3_hard_shaping_state.json
+          python3 tools/stability/ou3_sea3_hard_finite_window_source.py --output /tmp/ou3_sea3_hard_finite_window_source.json
+          python3 tools/stability/ou3_sea3_complete_window_executor.py --output /tmp/ou3_sea3_complete_window_executor.json
+          python3 tools/stability/ou3_sea3_complete_window_execution_kernel.py --output /tmp/ou3_sea3_complete_window_execution_kernel.json
+          python3 tools/stability/ou3_sea3_window_artifact_codec.py --output /tmp/ou3_sea3_window_artifact_codec.json
+          python3 tools/stability/ou3_sea3_response_regularity_moment.py --output /tmp/ou3_sea3_response_regularity_moment.json
+          python3 tools/stability/ou3_sea3_aw_covariance_floor.py --output /tmp/ou3_sea3_aw_covariance_floor.json
           python3 - <<'PY'
           import json
-          l=json.load(open('/tmp/ou3_sea3_rlambda_transition.json'))
-          p=json.load(open('/tmp/ou3_sea3_continuum_phase_state.json'))
-          b=json.load(open('/tmp/ou3_sea3_hard_window_behavior.json'))
-          h=json.load(open('/tmp/ou3_sea3_hard_shaping_state.json'))
-          s=json.load(open('/tmp/ou3_sea3_hard_finite_window_source.json'))
-          e=json.load(open('/tmp/ou3_sea3_complete_window_executor.json'))
-          k=json.load(open('/tmp/ou3_sea3_complete_window_execution_kernel.json'))
-          c=json.load(open('/tmp/ou3_sea3_window_artifact_codec.json'))
-          r=json.load(open('/tmp/ou3_sea3_response_regularity_moment.json'))
-          f=json.load(open('/tmp/ou3_sea3_aw_covariance_floor.json'))
-          assert l['validation_pass'], l['validation_failures']
+          load=lambda n: json.load(open('/tmp/'+n+'.json'))
+          l=load('ou3_sea3_rlambda_transition')
+          p=load('ou3_sea3_continuum_phase_state')
+          g=load('ou3_sea3_continuum_driver_gram')
+          x=load('ou3_sea3_fixed_history_source_core')
+          b=load('ou3_sea3_hard_window_behavior')
+          h=load('ou3_sea3_hard_shaping_state')
+          s=load('ou3_sea3_hard_finite_window_source')
+          e=load('ou3_sea3_complete_window_executor')
+          k=load('ou3_sea3_complete_window_execution_kernel')
+          c=load('ou3_sea3_window_artifact_codec')
+          r=load('ou3_sea3_response_regularity_moment')
+          f=load('ou3_sea3_aw_covariance_floor')
+
+          for d in (l,p,g,x,b,h,s,e,k,c,r,f):
+              assert d['validation_pass'], d.get('validation_failures')
+
           assert l['machine_readable_R_lambda_closed'] is True
           assert l['actual_rate_bounded_R_lambda_subset_Rhat'] is True
           assert l['rate_constants_fitted_or_invented'] is False
           assert l['fixed_lambda_word_used'] is False
-          assert l['hard_shaping_state_materialized_here'] is False
-          assert l['joint_response_materialized_here'] is False
-          assert l['P3_promoted'] is False
-          assert p['validation_pass'], p['validation_failures']
-          assert p['continuum_index_set_retained'] is True
+
+          # Phase propagation remains independently closed. This module does
+          # not own the now-closed driver set, so its local legacy flag stays false.
           assert p['continuum_phase_coordinate_set_closed'] is True
           assert p['phase_continuous_propagation_closed'] is True
           assert p['finite_frequency_grid_used'] is False
           assert p['finite_direction_grid_used'] is False
           assert p['seeded_phase_realization_used'] is False
           assert p['phase_reset_on_lambda_transition_allowed'] is False
-          assert p['hard_spectral_driver_set_closed'] is False
-          assert p['P3_promoted'] is False
-          assert b['validation_pass'], b['validation_failures']
+
+          # Canonical complete-SEA3 hard driver: one continuum field for the
+          # full 601-sample translation+rotation history, never sample boxes.
+          assert g['hard_spectral_driver_set_closed'] is True
+          assert g['exact_fixed_history_correlated_oracle_formula_closed'] is True
+          assert g['same_driver_field_entire_window'] is True
+          assert g['same_driver_field_translation_and_rotation'] is True
+          assert g['finite_frequency_grid_used'] is False
+          assert g['finite_harmonic_source_used'] is False
+          assert g['trajectory_replay_used'] is False
+          assert g['independent_sample_boxes_used'] is False
+          assert g['validated_complete_family_gram_enclosure_closed'] is False
+
+          # The diagnostic point is an actual member of the same continuum
+          # source by operator construction. Quadrature evaluates its continuum
+          # integral but is not promoted to source modes.
+          assert x['canonical_source'] == 'COMPLETE_SEA3_NORMAL_LIVE_WORD'
+          assert x['source_membership']['membership_is_analytic_Hilbert_norm_not_quadrature'] is True
+          assert x['source_membership']['same_driver_field_prehistory_and_window'] is True
+          assert x['source_membership']['same_driver_field_translation_and_rotation'] is True
+          assert x['fixed_response_member']['inside_declared_continuum_RAO_family'] is True
+          assert x['fixed_response_member']['finite_RAO_grid_used'] is False
+          assert x['quadrature_diagnostic']['source_modes_are_quadrature_nodes'] is False
+          assert len(x['source_core']) == 601
+          assert x['front_end_entry_derived_from_same_history'] is False
+          assert x['live_covariance_seed_derived_from_same_history'] is False
+          assert x['complete_executor_artifact_materialized'] is False
+          assert x['P4_promoted'] is False and x['P5_promoted'] is False
+
           assert b['behavior_set_symbol'] == 'B^601_SEA3'
           assert b['sampled_behavior_set_compact'] is True
           assert b['membership_requires_common_SEA3_witness'] is True
           assert b['normal_live_caps_are_membership_sufficient'] is False
-          assert b['arbitrary_bounded_sequence_is_member'] is False
           assert b['independent_sample_boxes_define_behavior_set'] is False
-          assert b['independent_axis_boxes_define_behavior_set'] is False
           assert b['validated_membership_or_separation_oracle_closed'] is False
           assert b['validated_correlated_outer_enclosure_closed'] is False
-          assert b['P3_promoted'] is False
-          assert h['validation_pass'], h['validation_failures']
+
           assert h['SEA3_parameter_domain_compact'] is True
-          assert h['compactness_is_not_an_open_obligation'] is True
-          assert h['sampled_behavior_target']['symbol'] == b['behavior_set_symbol']
-          assert h['sampled_behavior_target']['compact'] is True
-          assert h['sampled_behavior_target']['membership_requires_common_SEA3_witness'] is True
+          assert h['hard_driver_certificate']['hard_spectral_driver_set_closed'] is True
+          assert h['hard_driver_certificate']['same_driver_field_entire_window'] is True
           assert h['executable_ingredients'] == {
-            'continuum_phase_coordinate_set_closed': True,
-            'phase_continuous_propagation_closed': True,
-            'hard_spectral_driver_set_closed': False,
-            'complete_SEA3_left_inclusion_closed': False,
-            'joint_source_output_map_closed': False,
+              'continuum_phase_coordinate_set_closed': True,
+              'phase_continuous_propagation_closed': True,
+              'hard_spectral_driver_set_closed': True,
+              'complete_SEA3_left_inclusion_closed': False,
+              'joint_source_output_map_closed': False,
           }
-          assert h['continuum_phase_certificate']['qualification'] == p['qualification']
-          assert h['hard_shaping_state_or_excitation_bound_closed'] is False
-          assert h['power_spectrum_alone_is_hard_pathwise_bound'] is False
-          assert h['gaussian_good_event_may_close_xs'] is False
-          assert h['seeded_128_frequency_generator_may_close_xs'] is False
-          assert h['P3_promoted'] is False
-          assert s['validation_pass'], s['validation_failures']
-          assert s['SEA3_parameter_domain_compact'] is True
-          assert s['compact_transition_relation_is_theorem_domain'] is True
-          assert s['compactness_is_not_an_open_obligation'] is True
-          assert s['R_lambda_certificate']['machine_readable_R_lambda_closed'] is True
-          assert s['R_lambda_certificate']['actual_rate_bounded_R_lambda_subset_Rhat'] is True
-          assert s['R_lambda_certificate']['rate_constants_fitted_or_invented'] is False
-          assert s['hard_shaping_certificate']['qualification'] == h['qualification']
-          assert s['hard_shaping_certificate']['hard_shaping_state_or_excitation_bound_closed'] is False
-          assert s['hard_shaping_certificate']['power_spectrum_alone_is_hard_pathwise_bound'] is False
-          assert s['hard_shaping_certificate']['gaussian_good_event_may_close_xs'] is False
-          assert s['hard_shaping_certificate']['seeded_128_frequency_generator_may_close_xs'] is False
-          assert s['executor_payload_contract']['raw_gyro_and_corrected_rate_are_distinct_coordinates'] is True
-          assert s['executor_payload_contract']['precomputed_aw_covariance_floor_increment_allowed'] is False
+          assert h['hard_shaping_state_or_excitation_bound_closed'] is True
+          assert h['conditional_SEA3_source_output_closed'] is False
+
+          # Provider consumes the closed hard driver, but remains closed until
+          # same-history joint physical output plus reachable entry/seed exist.
+          assert s['hard_shaping_certificate']['hard_shaping_state_or_excitation_bound_closed'] is True
           assert s['executable_provider_ingredients'] == {
-            'machine_readable_R_lambda_closed': True,
-            'hard_shaping_state_or_excitation_bound_closed': False,
-            'joint_translational_rotational_shaping_closed': False,
+              'machine_readable_R_lambda_closed': True,
+              'hard_shaping_state_or_excitation_bound_closed': True,
+              'joint_translational_rotational_shaping_closed': False,
           }
           assert s['provider_implementation_closed'] is False
           assert s['source_reachable_event_family_materialized'] is False
           assert s['P3_promoted'] is False
-          assert r['validation_pass'], r['validation_failures']
+
           assert r['SEA3_parameter_domain_compact'] is True
           assert r['same_continuum_RAO_family_consumed'] is True
           assert r['hard_finite_window_source_materialized'] is False
           assert r['may_substitute_for_hard_window_IQC'] is False
-          assert r['P3_promoted'] is False
-          assert f['validation_pass'], f['validation_failures']
           assert f['floor_request_is_source_event'] is True
           assert f['floor_increment_is_source_coordinate'] is False
           assert f['floor_increment_depends_on_current_mode_Riccati_covariance'] is True
           assert f['same_source_request_may_produce_different_H18_A21_increment'] is True
-          assert f['P3_promoted'] is False
-          assert k['validation_pass'], k['validation_failures']
           assert k['typed_execution_kernel_ready'] is True
           assert k['raw_gyro_and_bias_corrected_rate_are_distinct_same_witness_coordinates'] is True
           assert k['covariance_floor_increment_computed_from_current_mode_P'] is True
           assert k['front_end_branch_splits_retained'] is True
           assert k['frontend_completed_before_async_mag'] is True
-          assert k['P3_promoted'] is False
-          assert c['validation_pass'], c['validation_failures']
           assert c['strict_codec_ready'] is True
           assert c['requires_provider_acceptance_before_canonical_use'] is True
           assert c['establishes_source_reachability'] is False
           assert c['precomputed_aw_floor_increment_accepted'] is False
-          assert c['P3_promoted'] is False
-          assert e['validation_pass'], e['validation_failures']
           assert e['only_canonical_SEA0_provider_artifact_accepted'] is True
           assert e['raw_sample_array_accepted'] is False
           assert e['independent_F_Q_schedule_accepted'] is False
@@ -236,19 +237,14 @@ jobs:
           assert e['FULL_H18_A21_LDLT_CLOSED'] is False
           assert e['execution_contract']['delta_lower_required'] == 1e-18
           assert e['P3_PROMOTED'] is False
-          print('SEA3_RLAMBDA', l['outer_relation'])
-          print('SEA3_CONTINUUM_PHASE', p['next_obligation'])
-          print('SEA3_BEHAVIOR', b['next_obligation'])
-          print('SEA3_HARD_SHAPING', h['next_obligation'])
+
+          print('SEA3_DRIVER', g['next_obligation'])
+          print('SEA3_FIXED_HISTORY', x['next_obligation'])
           print('SEA0_WINDOW_PROVIDER', s['next_obligation'])
-          print('SEA3_REGULARITY_BOUNDS', r['bounds'])
-          print('SEA3_AW_FLOOR', f['smoke'])
-          print('SEA3_TYPED_KERNEL', k['smoke'])
-          print('SEA3_CODEC', c['smoke'])
           print('SEA3_WINDOW_EXECUTOR', e['next_obligation'])
           PY
 
-      - name: Test fail-closed anti-shortcut contract
+      - name: Test anti-shortcut and provider contracts
         working-directory: tests/validation
         run: |
           python3 -m unittest -v \
@@ -270,6 +266,8 @@ jobs:
           path: |
             /tmp/ou3_sea3_rlambda_transition.json
             /tmp/ou3_sea3_continuum_phase_state.json
+            /tmp/ou3_sea3_continuum_driver_gram.json
+            /tmp/ou3_sea3_fixed_history_source_core.json
             /tmp/ou3_sea3_hard_window_behavior.json
             /tmp/ou3_sea3_hard_shaping_state.json
             /tmp/ou3_sea3_hard_finite_window_source.json

@@ -1,0 +1,68 @@
+# Dedicated fail-closed validation of the source-uniform full-posterior a_w precision primitive.
+name: ou3-p4-aw-precision
+
+on:
+  push:
+    branches: [codex/ou3-complete-sea3-shipping-feasibility]
+    paths:
+      - tools/stability/ou3_p4_complete_sea3_aw_precision.py
+      - tools/stability/ou3_source_reachable_matrix_p3.py
+      - tools/stability/ou3_sea3_riccati_metric_p3.py
+      - tools/stability/ou3_vector_uco_certificate.py
+      - tools/stability/ou3_proof_operating_domain.json
+      - src/kalman_ou_iii/**
+      - .github/workflows/ou3-p4-aw-precision.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  source-uniform-aw-precision:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - name: Run full-posterior a_w precision certificate
+        run: |
+          set -euo pipefail
+          python3 tools/stability/ou3_p4_complete_sea3_aw_precision.py \
+            --output /tmp/ou3-p4-aw-precision.json \
+            | tee /tmp/ou3-p4-aw-precision-summary.json
+      - name: Validate fail-closed P4 scope
+        run: |
+          python3 - <<'PY'
+          import json, math
+          d=json.load(open('/tmp/ou3-p4-aw-precision.json'))
+          assert d['validation_pass'], d['validation_failures']
+          assert d['canonical_source']=='COMPLETE_SEA3_NORMAL_LIVE_WORD'
+          assert d['P3_frozen_not_modified'] is True
+          assert d['P3_conditional_complete_SEA3_consumed'] is True
+          assert d['source_uniform_full_posterior_aw_precision_closed'] is True
+          assert d['full_process_cross_covariances_retained'] is True
+          assert d['marginal_covariance_inverse_used'] is False
+          assert d['trajectory_replay_used'] is False
+          assert d['source_family_replaced'] is False
+          assert d['independent_parameter_sequence_used'] is False
+          assert d['independent_RS_schedule_used'] is False
+          assert d['packet_count_multiplier_used'] is False
+          assert d['source_uniform_operation_covariance_ceiling_closed_here'] is False
+          assert d['source_correlated_correction_radius_closed_here'] is False
+          assert d['full_epsilon_aw_transport_closed_here'] is False
+          assert d['complete_word_nonlinear_dissipation_closed_here'] is False
+          assert d['P4_promoted_here'] is False
+          for mode in ('H','A'):
+              r=d['modes'][mode]
+              assert r['source_uniform_full_posterior_aw_precision_closed'] is True
+              assert r['reset_changes_full_inverse_aw_block'] is False
+              assert math.isfinite(r['full_posterior_aw_precision_trace_upper'])
+              assert r['full_posterior_aw_precision_trace_upper']>0
+          PY
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: ou3-p4-aw-precision
+          path: |
+            /tmp/ou3-p4-aw-precision.json
+            /tmp/ou3-p4-aw-precision-summary.json
+          retention-days: 7

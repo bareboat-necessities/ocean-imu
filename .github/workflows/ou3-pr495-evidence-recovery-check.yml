@@ -1,0 +1,125 @@
+name: ou3-pr495-evidence-recovery-check
+on:
+  push:
+    branches: [codex/ou3-complete-sea3-shipping-feasibility]
+    paths:
+      - '.github/workflows/ou3-pr495-evidence-recovery-check.yml'
+      - 'tests/validation/test_workflow_contract.py'
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: ou3-pr495-evidence-recovery-check
+  cancel-in-progress: true
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      ORIGINAL_REPLAY_SHA: a86c986049b6ba8572ac7746724e60589c91fa5b
+      ORIGINAL_RUN_ID: '34057300635'
+      CURRENT_BRANCH: codex/ou3-complete-sea3-shipping-feasibility
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Checkout exact replay source
+        uses: actions/checkout@v6
+        with:
+          ref: a86c986049b6ba8572ac7746724e60589c91fa5b
+          fetch-depth: 0
+
+      - name: Overlay only the repaired workflow contract test
+        run: |
+          set -euo pipefail
+          git fetch --quiet origin "refs/heads/${CURRENT_BRANCH}"
+          git show FETCH_HEAD:tests/validation/test_workflow_contract.py > tests/validation/test_workflow_contract.py
+          test "$(git rev-parse HEAD)" = "$ORIGINAL_REPLAY_SHA"
+          git diff --exit-code HEAD -- src tools tests/kalman_ou_ii tests/kalman_ou_iii || {
+            # The only allowed tests/ difference is the workflow contract itself.
+            git diff --name-only HEAD
+            test "$(git diff --name-only HEAD)" = "tests/validation/test_workflow_contract.py"
+          }
+
+      - name: Verify original artifact identities
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, subprocess
+          expected = {
+              9996350263: '65ed28c0d1374de212dff45d3be070a5e035f6e26f1f66fdefe996c3aa60671b',
+              9996836398: 'f3871bfcbef6e6dc6ee39f9a062065f2fb422dd22cb1896cca36bc576347f87f',
+              9996763805: '53c161ba7ae9a6b60094319714380fe10d37daeb832782039f5b4dcc570995e3',
+          }
+          for aid, digest in expected.items():
+              raw = subprocess.check_output([
+                  'gh', 'api', f'repos/${{ github.repository }}/actions/artifacts/{aid}'
+              ], text=True)
+              d = json.loads(raw)
+              assert d['workflow_run']['id'] == 34057300635, (aid, d['workflow_run'])
+              assert d['workflow_run']['head_sha'] == 'a86c986049b6ba8572ac7746724e60589c91fa5b', (aid, d['workflow_run'])
+              assert d['digest'] == 'sha256:' + digest, (aid, d['digest'])
+              assert not d['expired'], aid
+              print(aid, d['name'], d['digest'])
+          PY
+
+      - name: Download exact fingerprinted simulation archive
+        uses: actions/download-artifact@v8
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: 34057300635
+          name: ou-fingerprinted-simulation-data
+          path: .
+
+      - name: Download exact validation bundle
+        uses: actions/download-artifact@v8
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: 34057300635
+          name: ou-validation-full
+          path: regenerated/ou-validation-full
+
+      - name: Download exact robustness bundle
+        uses: actions/download-artifact@v8
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: 34057300635
+          name: ou-robustness-full
+          path: regenerated/ou-robustness-full
+
+      - name: Install publication-test dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq python3-numpy python3-matplotlib
+
+      - name: Materialize exact regenerated evidence
+        run: |
+          set -euo pipefail
+          mkdir -p plots/kalman_ou_ii
+          unzip -o sim-data-files.zip -d plots/kalman_ou_ii >/dev/null
+          rm -rf reports/results/ou_validation reports/results/ou_robustness
+          mkdir -p reports/results/ou_validation reports/results/ou_robustness
+          cp -a regenerated/ou-validation-full/. reports/results/ou_validation/
+          cp -a regenerated/ou-robustness-full/. reports/results/ou_robustness/
+          mirror() { cp "reports/results/$1" "doc/kalman_ou_iii/$2"; }
+          mirror ou_validation/ou_validation_publication.tex w3d-ou-validation-results-generated.tex-part
+          mirror ou_validation/ou_validation_macros.tex w3d-ou-validation-macros-generated.tex-part
+          mirror ou_validation/ou_validation_tuning_points.tex w3d-ou-validation-tuning-points-generated.tex-part
+          mirror ou_validation/ou_validation_vertical.svg ou_validation_vertical.svg
+          mirror ou_validation/ou_validation_transition.svg ou_validation_transition.svg
+          mirror ou_robustness/ou_robustness_publication.tex w3d-ou-robustness-results-generated.tex-part
+          mirror ou_robustness/ou_robustness_macros.tex w3d-ou-robustness-macros-generated.tex-part
+          mirror ou_robustness/ou_robustness_sensitivity.svg ou_robustness_sensitivity.svg
+          mirror ou_robustness/ou_robustness_stress.svg ou_robustness_stress.svg
+
+      - name: Run repaired workflow contract in isolation
+        working-directory: tests/validation
+        run: python3 -m unittest -v test_workflow_contract
+
+      - name: Run unchanged evidence publication gate
+        run: make -C tests/validation evidence-test
+
+      - name: Verify replay fingerprint can be recorded and checked
+        run: |
+          set -euo pipefail
+          python3 tools/ou_replay_fingerprint.py --simulation-zip sim-data-files.zip --write /tmp/ou_evidence_fingerprint.json
+          python3 tools/ou_replay_fingerprint.py --simulation-zip sim-data-files.zip --check /tmp/ou_evidence_fingerprint.json
+          git diff --check

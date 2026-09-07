@@ -85,14 +85,17 @@ class Sea3HardFiniteWindowSourceTest(unittest.TestCase):
             "transitions": transitions,
         }
 
-    def test_status_preserves_compact_sea3_and_fails_closed(self):
+    def test_status_preserves_complete_sea3_and_fails_closed_only_at_output_provider(self):
         d = SEA0.build()
         self.assertEqual(SEA0.validate_status(d), [])
         self.assertTrue(d["SEA3_parameter_domain_compact"])
         self.assertTrue(d["compact_transition_relation_is_theorem_domain"])
         ingredients = d["executable_provider_ingredients"]
         self.assertTrue(ingredients["machine_readable_R_lambda_closed"])
-        self.assertFalse(ingredients["hard_shaping_state_or_excitation_bound_closed"])
+        # The complete continuum hard driver is now closed inside the retained
+        # SEA3 source. The provider still cannot open until the joint physical
+        # translation/rotation output is generated from that same history.
+        self.assertTrue(ingredients["hard_shaping_state_or_excitation_bound_closed"])
         self.assertFalse(ingredients["joint_translational_rotational_shaping_closed"])
         rlambda = d["R_lambda_certificate"]
         self.assertTrue(rlambda["actual_rate_bounded_R_lambda_subset_Rhat"])
@@ -108,10 +111,7 @@ class Sea3HardFiniteWindowSourceTest(unittest.TestCase):
         d = self._candidate()
         self.assertEqual(SEA0.validate_candidate_structure(d), [])
         failures = SEA0.validate_artifact(d)
-        self.assertIn(
-            "validated SEA0 hard finite-window provider is not implemented",
-            failures,
-        )
+        self.assertIn("validated SEA0 hard finite-window provider is not implemented", failures)
 
     def test_every_shortcut_is_rejected(self):
         base = self._candidate()
@@ -123,10 +123,7 @@ class Sea3HardFiniteWindowSourceTest(unittest.TestCase):
                 self.assertTrue(any(key in x for x in failures), failures)
 
     def test_broken_xs_or_lambda_history_is_rejected(self):
-        for field, expected in (
-            ("xs_in_id", "x^s phase continuity"),
-            ("lambda_in_id", "lambda transition continuity"),
-        ):
+        for field, expected in (("xs_in_id", "x^s phase continuity"), ("lambda_in_id", "lambda transition continuity")):
             with self.subTest(field=field):
                 d = self._candidate()
                 d["transitions"][137][field] = "not-the-predecessor"
@@ -138,7 +135,6 @@ class Sea3HardFiniteWindowSourceTest(unittest.TestCase):
         d["transitions"][9]["joint_physical_output"]["source_transition_witness_id"] = "other"
         failures = SEA0.validate_candidate_structure(d)
         self.assertTrue(any("physical output detached" in x for x in failures), failures)
-
         d = self._candidate()
         d["transitions"][9]["source_events"]["source_transition_witness_id"] = "other"
         failures = SEA0.validate_candidate_structure(d)

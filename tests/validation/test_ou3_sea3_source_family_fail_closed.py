@@ -22,8 +22,16 @@ class Sea3SourceFamilyFailClosedTest(unittest.TestCase):
         d = gate.build()
         self.assertEqual(gate.validate(d), [])
         self.assertFalse(d["SOURCE_REACHABLE_EVENT_FAMILY_MATERIALIZED"])
-        self.assertFalse(d["P3_CANONICAL_PASS"])
-        self.assertTrue(d["P3_CANONICAL_FAIL_REASONS"])
+        # The universal conditional chain does not claim a materialized
+        # physical source family. Fail-closed deployment is the distinct gate.
+        self.assertTrue(d["P3_CONDITIONAL_SEA3_PASS"])
+        self.assertEqual(d["P3_CONDITIONAL_SEA3_FAIL_REASONS"], [])
+        self.assertFalse(d["P3_DEPLOYMENT_PASS"])
+        self.assertEqual(
+            d["P3_DEPLOYMENT_FAIL_REASONS"],
+            ["physical SEA0->SEA3 left inclusion remains open"],
+        )
+        self.assertFalse(d["global_physical_deployment_left_inclusion_closed_here"])
 
 
 if __name__ == "__main__":

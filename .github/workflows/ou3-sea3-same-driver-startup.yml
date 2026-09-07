@@ -1,0 +1,124 @@
+name: ou3-sea3-same-driver-startup
+on:
+  push:
+    branches: [codex/ou3-complete-sea3-shipping-feasibility]
+    paths:
+      - tools/stability/ou3_sea3_continuum_driver_gram.py
+      - tools/stability/ou3_sea3_validated_continuum_member.py
+      - tools/stability/ou3_sea3_validated_float_trace.py
+      - tools/stability/ou3_sea3_complete_word_feasibility_trace.py
+      - tests/kalman_ou_iii/ou3-sea3-same-driver-startup-test.cpp
+      - tests/kalman_ou_iii/ou3-sea3-complete-word-feasibility-test.cpp
+      - src/kalman_ou_iii/**
+      - src/tuner/**
+      - src/ahrs/**
+      - .github/workflows/ou3-sea3-same-driver-startup.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  same-driver-startup:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install Eigen
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libeigen3-dev
+      - name: Validate exact continuum member and bind its unique shipping float inputs
+        run: |
+          set -euo pipefail
+          python3 -m py_compile \
+            tools/stability/ou3_sea3_continuum_driver_gram.py \
+            tools/stability/ou3_sea3_validated_continuum_member.py \
+            tools/stability/ou3_sea3_validated_float_trace.py \
+            tools/stability/ou3_sea3_complete_word_feasibility_trace.py
+          python3 tools/stability/ou3_sea3_continuum_driver_gram.py --output /tmp/sea3-driver.json
+          python3 tools/stability/ou3_sea3_complete_word_feasibility_trace.py \
+            --output /tmp/sea3-complete-word-float-trace.json \
+            --shipping-input /tmp/sea3-complete-word-specific-force-z.txt
+          head -n 12601 /tmp/sea3-complete-word-specific-force-z.txt \
+            > /tmp/sea3-validated-specific-force-z.txt
+          python3 - <<'PY'
+          import json
+          w=json.load(open('/tmp/sea3-complete-word-float-trace.json'))
+          assert w['validation_pass'], w['validation_failures']
+          assert w['canonical_source']=='COMPLETE_SEA3_NORMAL_LIVE_WORD'
+          assert w['all_intervals_round_to_unique_binary32'] is True
+          assert w['same_continuum_member_across_startup_H_release_A'] is True
+          assert w['H18_window_samples']==601 and w['A21_window_samples']==601
+          assert w['phase_reset_at_live_or_H_to_A'] is False
+          assert w['quadrature_used'] is False
+          assert w['finite_harmonic_source_used'] is False
+          assert w['trajectory_replay_used'] is False
+          assert w['independent_sample_choice_used'] is False
+          assert w['independent_tuner_schedule_used'] is False
+          assert w['independent_RS_schedule_used'] is False
+          assert len(w['rows']) == 13202
+          assert all(r['binary32_unique'] is True for r in w['rows'])
+          assert sum(1 for _ in open('/tmp/sea3-validated-specific-force-z.txt')) == 12601
+          PY
+      - name: Compile shipping startup bridge without modifying production code
+        run: |
+          g++ -O3 -std=c++20 -Wall -Wextra -Wpedantic -Werror \
+            -DEIGEN_NON_ARDUINO -I./src -isystem /usr/include/eigen3 \
+            tests/kalman_ou_iii/ou3-sea3-same-driver-startup-test.cpp \
+            -o /tmp/ou3-sea3-same-driver-startup
+      - name: Execute exact continuum history through shipping startup and 601 Live samples
+        run: |
+          /tmp/ou3-sea3-same-driver-startup /tmp/sea3-validated-specific-force-z.txt \
+            | tee /tmp/ou3-sea3-same-driver-shipping-trace.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/ou3-sea3-same-driver-shipping-trace.json'))
+          assert d['canonical_source']=='COMPLETE_SEA3_NORMAL_LIVE_WORD'
+          assert d['same_validated_continuum_member'] is True
+          assert d['trajectory_replay_used'] is False
+          assert d['finite_harmonic_source_used'] is False
+          assert len(d['word_schedule']) == 601
+          assert len(d['live_covariance']) in (18,21)
+          assert all(len(r['RS_std_xyz']) == 3 for r in d['word_schedule'])
+          PY
+      - name: Compile complete H18 release A21 shipping-word diagnostic
+        run: |
+          grep -q 'constexpr int MAG_STRIDE = 2;' tests/kalman_ou_iii/ou3-sea3-complete-word-feasibility-test.cpp
+          grep -q 'nominal.mekf().qref' tests/kalman_ou_iii/ou3-sea3-complete-word-feasibility-test.cpp
+          g++ -O3 -std=c++20 -Wall -Wextra -Wpedantic -Werror -Wno-unused-function \
+            -DEIGEN_NON_ARDUINO -I./src -isystem /usr/include/eigen3 \
+            tests/kalman_ou_iii/ou3-sea3-complete-word-feasibility-test.cpp \
+            -o /tmp/ou3-sea3-complete-word-feasibility
+      - name: Execute non-promoting complete SEA3 nonlinear word diagnostic
+        run: |
+          /tmp/ou3-sea3-complete-word-feasibility /tmp/sea3-complete-word-specific-force-z.txt \
+            | tee /tmp/ou3-sea3-complete-word-feasibility.json
+          python3 - <<'PY'
+          import json, math
+          d=json.load(open('/tmp/ou3-sea3-complete-word-feasibility.json'))
+          assert d['canonical_source']=='COMPLETE_SEA3_NORMAL_LIVE_WORD'
+          assert d['same_continuum_source_across_H_release_A'] is True
+          assert d['trajectory_replay_used'] is False
+          assert d['finite_harmonic_source_used'] is False
+          assert d['independent_schedule_used'] is False
+          assert d['shipping_coordinates_used'] is True
+          assert d['P3_delta_changed'] is False
+          assert d['P4_promoted'] is False
+          for key in ('H18_worst_tested','A21_worst_tested'):
+              r=d[key]
+              assert r['imu_samples']==601
+              assert r['mag_events']>=250
+              assert math.isfinite(r['rho']) and r['rho']>=0.0
+              assert r['RS_min']>0.0 and r['effective_process_sigma_min']>=0.05
+          PY
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: ou3-sea3-same-driver-startup
+          path: |
+            /tmp/sea3-driver.json
+            /tmp/sea3-complete-word-float-trace.json
+            /tmp/sea3-complete-word-specific-force-z.txt
+            /tmp/sea3-validated-specific-force-z.txt
+            /tmp/ou3-sea3-same-driver-shipping-trace.json
+            /tmp/ou3-sea3-complete-word-feasibility.json
+          retention-days: 7
