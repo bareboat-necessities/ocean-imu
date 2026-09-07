@@ -19,6 +19,17 @@ retains the exact full epsilon_aw shift and literal shipping suffix maps, so
 every later S=0 update with its actual applied anisotropic SpectralMSE R_S stays
 inside the nonlinear defect transport.  Packetwise norm sums are forbidden.
 
+The exact signed-information ledger is also canonical P4 machinery.  Each
+accepted Joseph/reset event is organized as
+
+    Delta V = -I_y + E_eta + X_reset + E_reset.
+
+For S=0, eta=0 exactly, so every due S update contributes its favorable
+-y^T S^-1 y term with the ACTUAL applied R_S and no nonlinear residual charge.
+Accelerometer/vector eta and finite Cayley reset defects remain explicit and
+must be dominated jointly over the same complete SEA3 word; they may not be
+replaced by an event-count worst-case remainder budget.
+
 Conditional complete-SEA3 P3 is consumed unchanged at delta=1e-18.  P4/P5 stay
 open until both the finite endpoint inequality and every finite prefix gain plus
 domain-retention condition close on the same source-correlated complete word.
@@ -33,6 +44,7 @@ import ou3_sea3_riccati_metric_p3 as P3
 import ou3_p4_cayley_sector_certificate as CAYLEY
 import ou3_p4_complete_word_endpoint_transport as ENDPOINT
 import ou3_p4_complete_sea3_finite_map_mean_value as FINITE
+import ou3_p4_complete_sea3_signed_information_ledger as SIGNED
 
 # Exact/outward finite-map differentiation machinery only.
 import ou3_p4_complete_sea3_phi_differential_metric as DIFF
@@ -42,8 +54,8 @@ import ou3_p4_complete_sea3_differential_word as DWRD
 
 REPO = Path(__file__).resolve().parents[2]
 DEFAULT_DOMAIN = REPO / "tools" / "stability" / "ou3_proof_operating_domain.json"
-SCHEMA = 12
-QUALIFICATION = "OU3_SEA3_FINITE_STATE_ENDPOINT_PREFIX_P4_V12"
+SCHEMA = 13
+QUALIFICATION = "OU3_SEA3_FINITE_STATE_ENDPOINT_PREFIX_P4_V13"
 ARCHITECTURE = "FINITE_STATE_COMPLETE_SEA3_QUADRATIC_ENDPOINT_AND_PREFIX"
 CANDIDATES = [30.0, 25.0, 20.0, 15.0]
 
@@ -54,6 +66,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     cayley = CAYLEY.build(path)
     endpoint = ENDPOINT.build(path)
     finite = FINITE.build(path)
+    signed = SIGNED.build(path)
     diff = DIFF.build(path)
     pred = PRED.build(path)
     events = EVENTS.build(path)
@@ -63,6 +76,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         + [f"Cayley: {x}" for x in CAYLEY.validate(cayley)]
         + [f"endpoint: {x}" for x in ENDPOINT.validate(endpoint)]
         + [f"finite-map bridge: {x}" for x in FINITE.validate(finite)]
+        + [f"signed-information ledger: {x}" for x in SIGNED.validate(signed)]
         + [f"differential metric primitive: {x}" for x in DIFF.validate(diff)]
         + [f"prediction AD primitive: {x}" for x in PRED.validate(pred)]
         + [f"event AD primitive: {x}" for x in EVENTS.validate(events)]
@@ -81,6 +95,8 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     finite_endpoint_closed = bool(finite["source_uniform_endpoint_finite_map_closed"])
     prefix_gain_closed = bool(finite["source_uniform_all_prefix_gains_closed"])
     prefix_domain_closed = bool(finite["source_uniform_all_prefix_domains_closed"])
+    signed_ledger_ready = bool(signed["joint_complete_word_signed_information_composition_available"])
+    signed_domination_closed = bool(signed["source_uniform_joint_eta_reset_domination_closed"])
 
     projection_machinery = bool(
         events["A21_bias_projection_generalized_Jacobian_available"]
@@ -88,12 +104,14 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         and word["A21_bias_projection_generalized_Jacobian_available"]
     )
 
-    # Both endpoint formulations must close on the same finite physical map:
-    # the exact endpoint defect decomposition and the finite-map mean-value
-    # full-matrix test.  Neither may be replaced by a differential-only gate.
+    # Both endpoint formulations and the signed-information organization must
+    # close on the same finite physical map.  None may be replaced by a
+    # differential-only, packetwise, or point-word gate.
     p4_pass = bool(
         p3_pass
         and endpoint_master_emitted
+        and signed_ledger_ready
+        and signed_domination_closed
         and endpoint_closed
         and finite_jacobian_closed
         and finite_endpoint_closed
@@ -104,10 +122,16 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     fail_reasons: list[str] = []
     if not p3_pass:
         fail_reasons.append("frozen conditional complete-SEA3 P3 prerequisite is not closed")
-    if not (endpoint_closed and finite_jacobian_closed and finite_endpoint_closed):
+    if not (
+        signed_domination_closed
+        and endpoint_closed
+        and finite_jacobian_closed
+        and finite_endpoint_closed
+    ):
         fail_reasons.append(
-            "paper finite-state endpoint dissipation is open: jointly enclose the same-history complete-word finite map, "
-            "including B_W*epsilon_acc_history, r_W/boundary terms and every actual-R_S suffix map"
+            "paper finite-state endpoint dissipation is open: jointly dominate the same-history complete-word signed "
+            "accelerometer/vector eta and finite reset costs by the complete-word information decrease, crediting every "
+            "actual-R_S S event, and close the equivalent finite-map/endpoint full-matrix tests"
         )
     if not (prefix_gain_closed and prefix_domain_closed):
         fail_reasons.append(
@@ -162,6 +186,16 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "full_prediction_F_Eaw_rows_retained": bool(endpoint["full_prediction_F_Eaw_retained"]),
         "full_epsilon_aw_retained": bool(endpoint["full_epsilon_aw_retained"]),
 
+        "signed_information_qualification": signed["qualification"],
+        "signed_information_composition_available": signed_ledger_ready,
+        "signed_joseph_reset_identity": signed["combined_joseph_reset_identity"],
+        "S_zero_nonlinear_eta_exactly_zero": bool(signed["S_zero_nonlinear_eta_exactly_zero"]),
+        "actual_RS_S_information_credited_as_favorable_term": bool(
+            signed["every_due_S_update_contributes_negative_information_with_actual_RS"]
+        ),
+        "finite_reset_defect_explicit_in_signed_ledger": bool(signed["finite_reset_defect_remains_explicit"]),
+        "source_uniform_joint_eta_reset_domination_closed": signed_domination_closed,
+
         "endpoint_transport_qualification": endpoint["qualification"],
         "endpoint_master_object_emitted": endpoint_master_emitted,
         "endpoint_decomposition_identity": endpoint["endpoint_decomposition_identity"],
@@ -200,6 +234,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
 
         "packet_count_remainder_budget_used": False,
         "packetwise_remainder_norm_sum_used": False,
+        "standalone_eta_Rinv_budget_used": False,
         "state_elimination_used": False,
         "a_w_Schur_final_certificate_used": False,
         "correction_radius_claim_used": False,
@@ -213,10 +248,10 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "P5_MAY_START": p4_pass,
         "P4_CANONICAL_FAIL_REASONS": fail_reasons,
         "next_obligation": (
-            "construct one source-correlated COMPLETE_SEA3_NORMAL_LIVE_WORD outward-AD enclosure carrying finite state, "
-            "P/H/R, committed tuner schedule, actual applied R_S, event timing and A21 projection; use its endpoint and "
-            "every prefix generalized Jacobian in the paper full-matrix endpoint/prefix tests, while retaining the exact "
-            "B_W endpoint decomposition as a cross-check of the same finite physical map"
+            "construct one source-correlated COMPLETE_SEA3_NORMAL_LIVE_WORD outward enclosure carrying finite state, "
+            "P/H/R, committed tuner schedule, actual applied R_S, event timing and A21 projection; use the signed Joseph/reset "
+            "ledger to dominate the joint eta/reset costs by the same word's information, then close the equivalent endpoint "
+            "and every-prefix finite-map tests without packetwise scalarization"
             if p3_pass else "repair only the frozen P3 prerequisite failure"
         ),
     }
@@ -241,7 +276,9 @@ def validate(d: dict) -> list[str]:
         "all_process_Q_floor_reset_events_required", "asynchronous_vector_events_required",
         "H_to_A_rectangular_hybrid_event_required", "H_to_A_held_ba_error_retained_as_separate_forcing",
         "H_to_A_covariance_floor_retained_as_separate_metric_event", "full_prediction_F_Eaw_rows_retained",
-        "full_epsilon_aw_retained", "endpoint_master_object_emitted",
+        "full_epsilon_aw_retained", "signed_information_composition_available",
+        "S_zero_nonlinear_eta_exactly_zero", "actual_RS_S_information_credited_as_favorable_term",
+        "finite_reset_defect_explicit_in_signed_ledger", "endpoint_master_object_emitted",
         "actual_RS_regularization_enters_suffix_maps", "finite_map_mean_value_bridge_validated",
         "finite_map_not_differential_metric_replacement", "differential_AD_used_only_for_finite_map_enclosure",
         "same_source_omega_h_tau_prediction_required", "prediction_independent_F_forbidden",
@@ -253,12 +290,13 @@ def validate(d: dict) -> list[str]:
 
     for key in (
         "trajectory_replay_used", "filter_changed", "declared_domain_shrunk", "source_family_replaced",
-        "P3_DEPLOYMENT_PASS_consumed_as_if_closed", "source_uniform_joint_BW_epsilon_enclosure_closed",
-        "source_uniform_r_word_enclosure_closed", "source_uniform_master_endpoint_domination_closed",
-        "source_uniform_complete_word_generalized_Jacobian_enclosed", "source_uniform_endpoint_finite_map_closed",
-        "source_uniform_prefix_gain_closed", "source_uniform_prefix_domain_retention_closed",
-        "differential_pullback_used_as_replacement_P4", "packet_count_remainder_budget_used",
-        "packetwise_remainder_norm_sum_used", "state_elimination_used", "a_w_Schur_final_certificate_used",
+        "P3_DEPLOYMENT_PASS_consumed_as_if_closed", "source_uniform_joint_eta_reset_domination_closed",
+        "source_uniform_joint_BW_epsilon_enclosure_closed", "source_uniform_r_word_enclosure_closed",
+        "source_uniform_master_endpoint_domination_closed", "source_uniform_complete_word_generalized_Jacobian_enclosed",
+        "source_uniform_endpoint_finite_map_closed", "source_uniform_prefix_gain_closed",
+        "source_uniform_prefix_domain_retention_closed", "differential_pullback_used_as_replacement_P4",
+        "packet_count_remainder_budget_used", "packetwise_remainder_norm_sum_used",
+        "standalone_eta_Rinv_budget_used", "state_elimination_used", "a_w_Schur_final_certificate_used",
         "correction_radius_claim_used", "inverse_metric_floor_claim_used", "independent_RS_schedule_used",
         "point_word_rho_used_to_promote", "longer_point_window_optimization_used_to_promote",
         "P4_FINITE_WINDOW_CLOSED", "P4_CANONICAL_PASS", "P5_MAY_START",
@@ -304,6 +342,8 @@ def main() -> int:
     args.output.write_text(json.dumps(d, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     print(json.dumps({
         "architecture": d["canonical_P4_architecture"],
+        "signed_information": d["signed_information_composition_available"],
+        "signed_joint_domination": d["source_uniform_joint_eta_reset_domination_closed"],
         "finite_map_bridge": d["finite_map_mean_value_bridge_validated"],
         "endpoint_closed": d["source_uniform_endpoint_finite_map_closed"],
         "prefix_gain_closed": d["source_uniform_prefix_gain_closed"],
