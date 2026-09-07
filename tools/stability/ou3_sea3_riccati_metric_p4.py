@@ -1,38 +1,37 @@
 #!/usr/bin/env python3
-"""Canonical, unpromoted P4 over the complete SEA3 moving-Riccati P3 metric.
+"""Canonical unpromoted P4: full-state differential contraction on complete SEA3.
 
-The canonical nonlinear object is now the complete-word endpoint identity, not
-an accumulation of packetwise remainder norms.  The full accelerometer-
-linearizing shift
+Finite endpoint energies in raw or nonlinear-Phi coordinates are diagnostics,
+not the theorem architecture.  The canonical nonlinear metric is the full-rank
+Riemannian pullback
 
-    epsilon_aw=(Q_aw-I)delta_a_w+e_eta
+    M(z,zeta)=D Phi(z,zeta)^T P(zeta)^-1 D Phi(z,zeta),
 
-is transported through the literal same-history shipping word.  Variation of
-constants reduces all prediction/source/hybrid/floor shift transport exactly;
-S=0 and magnetometer events have zero interior a_w-shift term.  The remaining
-interior shift is the JOINT suffix-weighted accepted-accelerometer operator
+where Phi is the exact accelerometer-linearizing coordinate using the ORIGINAL
+shipping H/P/K/S and the full shift
 
-    B_W=[M_suffix G K H E_aw]_{acc(W)},
+    epsilon_aw=(Q_aw-I)delta_a_w+e_eta.
 
-whose suffixes contain every later shipping event, including every due S=0
-update with its actual applied per-axis SpectralMSE R_S.
+D Phi is block triangular with the orthogonal Q_aw block on a_w, so the metric
+is nonsingular in all H18/A21 coordinates and reduces exactly to the frozen P3
+moving metric at zero error.  No state is eliminated.
 
-Thus the P4 endpoint has the exact form
+For the complete nonlinear word F_W the P4 condition is
 
-    d_W=r_W+E_N epsilon_N-M_W E_0 epsilon_0-B_W epsilon_acc,
+    rho M_0 - D F_W(z)^T M_1 D F_W(z) > 0,    0<rho<1,
 
-and
+uniformly over every admitted complete SEA3 word and every state in one
+certified finite-angle cell.  The complete Jacobian must retain the same
+frontend/tuner/covariance history, full F/Q, every valid accelerometer update,
+every due S=0 update with the actual applied anisotropic SpectralMSE R_S,
+asynchronous vector events, covariance floors, immediate resets, and the
+separate H18->A21 rectangular differential event.
 
-    Delta V = -Phi_0^T D_W Phi_0
-              +2(M_W Phi_0)^T P_N^-1 d_W
-              +d_W^T P_N^-1 d_W.
-
-P3 remains frozen at delta=1e-18.  P4 is not closed until the joint nonlinear
-endpoint object is enclosed over the SAME complete SEA3 word and the last two
-terms are shown to fit inside the full-matrix P3 decrease on one declared
-finite-angle candidate.  No correction radius, inverse-metric floor,
-packet-count budget, independent R_S schedule, replay, or alternate estimator
-is used.
+P3 remains frozen at delta=1e-18.  P4/P5 remain open until a source-uniform
+outward complete-word Jacobian enclosure passes the full interval-LDLT
+inequality.  No replay, packet-count remainder, correction radius, inverse
+metric floor, finite-state endpoint optimization or eliminated-state shortcut
+can promote this gate.
 """
 from __future__ import annotations
 
@@ -42,148 +41,100 @@ from pathlib import Path
 
 import ou3_sea3_riccati_metric_p3 as P3
 import ou3_p4_cayley_sector_certificate as CAYLEY
-import ou3_p4_moving_metric_rebind as REBIND
-import ou3_p4_complete_word_endpoint_transport as ENDPOINT
+import ou3_p4_complete_sea3_phi_differential_metric as DIFF
 
 REPO = Path(__file__).resolve().parents[2]
 DEFAULT_DOMAIN = REPO / "tools" / "stability" / "ou3_proof_operating_domain.json"
-SCHEMA = 7
-QUALIFICATION = "OU3_SEA3_MOVING_RICCATI_NONLINEAR_P4_V7"
+SCHEMA = 8
+QUALIFICATION = "OU3_SEA3_FULL_STATE_DIFFERENTIAL_P4_V8"
 
 
 def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     path = Path(domain_path).resolve()
     p3 = P3.build(path)
-    p3f = P3.validate(p3)
     cayley = CAYLEY.build(path)
-    cf = CAYLEY.validate(cayley)
-    rebind = REBIND.build()
-    rf = REBIND.validate(rebind)
-    endpoint = ENDPOINT.build(path)
-    ef = ENDPOINT.validate(endpoint)
-    prereq_failures = (
-        [f"P3: {x}" for x in p3f]
-        + [f"Cayley: {x}" for x in cf]
-        + [f"rebind: {x}" for x in rf]
-        + [f"endpoint: {x}" for x in ef]
+    diff = DIFF.build(path)
+    failures = (
+        [f"P3: {x}" for x in P3.validate(p3)]
+        + [f"Cayley: {x}" for x in CAYLEY.validate(cayley)]
+        + [f"differential metric: {x}" for x in DIFF.validate(diff)]
     )
-    if prereq_failures:
-        raise RuntimeError(f"moving-Riccati P4 prerequisites failed: {prereq_failures}")
+    if failures:
+        raise RuntimeError(f"canonical differential P4 prerequisites failed: {failures}")
 
     p3_pass = bool(p3["P3_CONDITIONAL_SEA3_PASS"])
     h_delta = float(p3["modes"]["H18"]["relative_Riccati_injection_margin_lower"])
     a_delta = float(p3["modes"]["A21"]["relative_Riccati_injection_margin_lower"])
-    covariance_closed = bool(rebind["structural_shipping_covariance_identities_closed"])
-    endpoint_identity_closed = bool(endpoint["master_inequality_object_emitted"])
-    joint_endpoint_closed = bool(endpoint["source_uniform_master_endpoint_domination_closed"])
+    jacobian_closed = bool(diff["source_uniform_complete_word_Jacobian_enclosed"])
+    contraction_closed = bool(diff["source_uniform_pullback_differential_contraction_closed"])
+    p4_pass = bool(p3_pass and jacobian_closed and contraction_closed)
 
-    # Structural coordinate/covariance identities are valid, but the nonlinear
-    # Phi storage is not declared isometric to the original physical storage.
-    # The endpoint master inequality is the route that must close that gap.
-    transport_and_storage_closed = bool(
-        endpoint_identity_closed and joint_endpoint_closed
-    )
-    remainder_closed = joint_endpoint_closed
-
-    fail_reasons = []
+    fail_reasons: list[str] = []
     if not p3_pass:
+        fail_reasons.append("frozen conditional complete-SEA3 P3 prerequisite is not closed")
+    if not jacobian_closed:
         fail_reasons.append(
-            "canonical moving-Riccati P3 H18/A21 quantitative margin has not met the useful gate"
+            "source-uniform outward full-state Jacobian of the literal complete SEA3 H18/A21 word is not yet enclosed"
         )
-    if not covariance_closed:
-        fail_reasons.append("shipping covariance identities are not closed")
-    if not endpoint_identity_closed:
-        fail_reasons.append("whole-word full-shift endpoint identity is not closed")
-    if not joint_endpoint_closed:
+    if not contraction_closed:
         fail_reasons.append(
-            "source-uniform joint complete-SEA3 endpoint defect domination is open: enclose r_W, endpoint epsilon terms and the suffix-weighted accelerometer B_W*epsilon history in the full endpoint metric"
-        )
-    if not transport_and_storage_closed:
-        fail_reasons.append(
-            "full nonlinear storage comparison is not closed until the joint endpoint inequality is negative on a declared finite-angle candidate"
+            "full interval-LDLT pullback differential contraction is not yet strict on a declared [30,25,20,15] degree cell"
         )
 
-    p4_pass = bool(
-        p3_pass and covariance_closed and endpoint_identity_closed
-        and transport_and_storage_closed and remainder_closed
-    )
     return {
         "schema": SCHEMA,
         "qualification": QUALIFICATION,
-        "canonical_P4_architecture": "NONLINEAR_WORD_IN_MOVING_SHIPPING_RICCATI_METRIC",
+        "canonical_P4_architecture": "FULL_STATE_COMPLETE_SEA3_DIFFERENTIAL_PULLBACK",
+        "canonical_source": "COMPLETE_SEA3_NORMAL_LIVE_WORD",
         "source_generated_not_trajectory_fit": True,
         "trajectory_replay_used": False,
         "filter_changed": False,
         "declared_domain_shrunk": False,
-        "SEA3_dynamic_source_used_through_P3": True,
-        "old_800_endpoint_signed_Joseph_scan_consumed": False,
-        "old_terminal_source_phase_metric_attachment_consumed": False,
-        "old_group_isotropic_P3_P4_metric_assumed": False,
-        "outer_angle_rad": cayley["outer_angle_rad"],
-        "cayley_geometry_validated": True,
-        "exact_vector_accelerometer_congruence_rebind_pending": not covariance_closed,
-        "structural_shipping_covariance_identities_closed": covariance_closed,
-        "moving_metric_rebind_qualification": rebind["qualification"],
-        "moving_metric_coordinate_congruence_exact": rebind["moving_metric_coordinate_congruence_exact"],
-        "Joseph_nonlinear_injection_metric_closed": rebind["Joseph_nonlinear_injection_metric_closed"],
-        "moving_covariance_congruence_target": (
-            "z_u=T_E z, P_u=T_E P T_E^T; z_u^T P_u^-1 z_u = z^T P^-1 z exactly"
-        ),
-        "nonlinear_word_inequality": (
-            "V_after(F_W(x)) <= rho_W V_before(x), rho_W < 1, for every admitted complete SEA3 word"
-        ),
+        "source_family_replaced": False,
         "P3_CONDITIONAL_SEA3_PASS_consumed": p3_pass,
         "P3_DEPLOYMENT_PASS_consumed_as_if_closed": False,
-        "P3_CANONICAL_PASS_consumed": p3_pass,
         "P3_H18_delta_consumed": h_delta,
         "P3_A21_delta_consumed": a_delta,
-        "P3_H_delta_consumed": h_delta,
-        "P3_A_delta_consumed": a_delta,
-        "whole_word_endpoint_transport_qualification": endpoint["qualification"],
-        "whole_word_endpoint_transport_consumed": endpoint_identity_closed,
-        "exact_full_shift_endpoint_decomposition_closed": endpoint_identity_closed,
-        "endpoint_defect_formula": endpoint["endpoint_decomposition_identity"],
-        "joint_accelerometer_endpoint_operator": endpoint["accelerometer_joint_operator"],
-        "accepted_accelerometer_only_interior_shift_event_class": endpoint[
-            "accepted_accelerometer_is_only_interior_epsilon_event_class"
-        ],
-        "actual_RS_regularization_retained_in_endpoint_operator": endpoint[
-            "actual_RS_regularization_enters_every_applicable_suffix"
-        ],
-        "prediction_source_hybrid_floor_shift_telescoping_closed": endpoint[
-            "prediction_source_hybrid_floor_interior_epsilon_terms_cancel_exactly"
-        ],
-        "S_and_mag_interior_epsilon_terms_zero": bool(
-            endpoint["S_zero_interior_epsilon_term_zero_exactly"]
-            and endpoint["magnetometer_interior_epsilon_term_zero_exactly"]
-        ),
-        "master_endpoint_energy_identity": endpoint["master_endpoint_energy_identity"],
-        "master_endpoint_D_W_definition": endpoint["D_W_definition"],
-        "source_uniform_joint_BW_epsilon_enclosure_closed": endpoint[
-            "source_uniform_joint_BW_epsilon_enclosure_closed"
-        ],
-        "source_uniform_r_word_enclosure_closed": endpoint[
-            "source_uniform_r_word_enclosure_closed"
-        ],
-        "source_uniform_master_endpoint_domination_closed": joint_endpoint_closed,
-        "nonlinear_coordinate_shipping_binding_closed": transport_and_storage_closed,
-        "full_nonlinear_measurement_metric_rebind_closed": transport_and_storage_closed,
-        "full_nonlinear_transport_and_storage_closed": transport_and_storage_closed,
-        "structural_rebind_does_not_close_nonlinear_coordinate_transport": True,
+        "P3_frozen_not_modified": True,
+        "outer_angle_rad": float(cayley["outer_angle_rad"]),
+        "candidate_angles_deg": [30.0, 25.0, 20.0, 15.0],
+        "differential_metric_qualification": diff["qualification"],
+        "differential_metric_type": diff["metric_type"],
+        "differential_metric_definition": diff["metric_definition"],
+        "finite_Phi_storage_used_as_Lyapunov_function": False,
+        "finite_raw_endpoint_storage_used_as_P4_certificate": False,
+        "all_active_states_retained": bool(diff["all_active_states_retained"]),
+        "H18_full_rank": bool(diff["H18_full_rank"]),
+        "A21_full_rank": bool(diff["A21_full_rank"]),
+        "Phi_jacobian_determinant_exact": diff["Phi_jacobian_determinant_exact"],
+        "metric_reduces_exactly_to_P3_at_zero_error": bool(diff["metric_reduces_to_P3_at_zero_error"]),
+        "same_complete_SEA3_word_required": True,
+        "same_frontend_tuner_covariance_history_required": True,
+        "all_due_S_updates_with_actual_applied_RS_required": True,
+        "all_valid_accelerometer_updates_required": True,
+        "all_process_Q_floor_reset_events_required": True,
+        "H_to_A_rectangular_differential_event_required": True,
+        "outward_interval_AD_used": True,
+        "full_interval_LDLT_required": True,
+        "differential_word_inequality": diff["differential_word_inequality"],
+        "source_uniform_complete_word_Jacobian_enclosed": jacobian_closed,
+        "source_uniform_pullback_differential_contraction_closed": contraction_closed,
         "packet_count_remainder_budget_used": False,
         "packetwise_remainder_norm_sum_used": False,
-        "independent_RS_schedule_used": False,
+        "state_elimination_used": False,
+        "a_w_Schur_final_certificate_used": False,
         "correction_radius_claim_used": False,
         "inverse_metric_floor_claim_used": False,
-        "nonlinear_remainder_dominated_on_full_sector": remainder_closed,
+        "independent_RS_schedule_used": False,
+        "point_word_rho_used_to_promote": False,
+        "longer_point_window_optimization_used_to_promote": False,
         "P4_FINITE_WINDOW_CLOSED": p4_pass,
         "P4_CANONICAL_PASS": p4_pass,
         "P5_MAY_START": p4_pass,
         "P4_CANONICAL_FAIL_REASONS": fail_reasons,
         "next_obligation": (
-            "enclose the joint suffix-weighted accelerometer operator B_W and r_W over the SAME complete SEA3 H18/A21 execution; retain actual applied per-axis R_S inside every suffix map; prove the two endpoint nonlinear terms fit inside the full-matrix P3 decrease for the widest [30,25,20,15] degree candidate; no packetwise scalarization"
-            if p3_pass and covariance_closed and endpoint_identity_closed
-            else "close only the named prerequisite; do not return to point-word optimization or source shortcuts"
+            "construct one source-uniform outward D F_W enclosure for the literal complete SEA3 word using the existing interval-AD primitives; retain actual applied R_S inside every due S event; test rho*M0-J^T*M1*J by full interval LDLT from 30 degrees downward; if no cell closes, perform theorem/metric failure analysis rather than retuning or replacing the source"
+            if p3_pass else "repair only frozen P3 prerequisite failure"
         ),
     }
 
@@ -192,75 +143,49 @@ def validate(d: dict) -> list[str]:
     f: list[str] = []
     if d.get("schema") != SCHEMA or d.get("qualification") != QUALIFICATION:
         f.append("schema/qualification mismatch")
-    if d.get("canonical_P4_architecture") != "NONLINEAR_WORD_IN_MOVING_SHIPPING_RICCATI_METRIC":
-        f.append("wrong canonical P4 architecture")
-
+    if d.get("canonical_P4_architecture") != "FULL_STATE_COMPLETE_SEA3_DIFFERENTIAL_PULLBACK":
+        f.append("canonical P4 architecture changed")
+    if d.get("canonical_source") != "COMPLETE_SEA3_NORMAL_LIVE_WORD":
+        f.append("canonical source changed")
     for key in (
-        "source_generated_not_trajectory_fit",
-        "SEA3_dynamic_source_used_through_P3",
-        "cayley_geometry_validated",
-        "structural_shipping_covariance_identities_closed",
-        "moving_metric_coordinate_congruence_exact",
-        "Joseph_nonlinear_injection_metric_closed",
-        "whole_word_endpoint_transport_consumed",
-        "exact_full_shift_endpoint_decomposition_closed",
-        "accepted_accelerometer_only_interior_shift_event_class",
-        "actual_RS_regularization_retained_in_endpoint_operator",
-        "prediction_source_hybrid_floor_shift_telescoping_closed",
-        "S_and_mag_interior_epsilon_terms_zero",
-        "structural_rebind_does_not_close_nonlinear_coordinate_transport",
+        "source_generated_not_trajectory_fit", "P3_CONDITIONAL_SEA3_PASS_consumed",
+        "P3_frozen_not_modified", "all_active_states_retained", "H18_full_rank", "A21_full_rank",
+        "metric_reduces_exactly_to_P3_at_zero_error", "same_complete_SEA3_word_required",
+        "same_frontend_tuner_covariance_history_required",
+        "all_due_S_updates_with_actual_applied_RS_required", "all_valid_accelerometer_updates_required",
+        "all_process_Q_floor_reset_events_required", "H_to_A_rectangular_differential_event_required",
+        "outward_interval_AD_used", "full_interval_LDLT_required",
     ):
         if d.get(key) is not True:
             f.append(f"{key} is not true")
-
     for key in (
-        "nonlinear_coordinate_shipping_binding_closed",
-        "full_nonlinear_measurement_metric_rebind_closed",
-        "full_nonlinear_transport_and_storage_closed",
-        "source_uniform_joint_BW_epsilon_enclosure_closed",
-        "source_uniform_r_word_enclosure_closed",
-        "source_uniform_master_endpoint_domination_closed",
-        "packet_count_remainder_budget_used",
-        "packetwise_remainder_norm_sum_used",
-        "independent_RS_schedule_used",
-        "correction_radius_claim_used",
-        "inverse_metric_floor_claim_used",
-        "trajectory_replay_used",
-        "filter_changed",
-        "declared_domain_shrunk",
-        "old_800_endpoint_signed_Joseph_scan_consumed",
-        "old_terminal_source_phase_metric_attachment_consumed",
-        "old_group_isotropic_P3_P4_metric_assumed",
-        "exact_vector_accelerometer_congruence_rebind_pending",
-        "nonlinear_remainder_dominated_on_full_sector",
-        "P4_FINITE_WINDOW_CLOSED",
-        "P4_CANONICAL_PASS",
-        "P5_MAY_START",
+        "trajectory_replay_used", "filter_changed", "declared_domain_shrunk", "source_family_replaced",
+        "P3_DEPLOYMENT_PASS_consumed_as_if_closed", "finite_Phi_storage_used_as_Lyapunov_function",
+        "finite_raw_endpoint_storage_used_as_P4_certificate",
+        "source_uniform_complete_word_Jacobian_enclosed",
+        "source_uniform_pullback_differential_contraction_closed",
+        "packet_count_remainder_budget_used", "packetwise_remainder_norm_sum_used",
+        "state_elimination_used", "a_w_Schur_final_certificate_used", "correction_radius_claim_used",
+        "inverse_metric_floor_claim_used", "independent_RS_schedule_used", "point_word_rho_used_to_promote",
+        "longer_point_window_optimization_used_to_promote", "P4_FINITE_WINDOW_CLOSED",
+        "P4_CANONICAL_PASS", "P5_MAY_START",
     ):
         if d.get(key) is not False:
             f.append(f"{key} is not false")
-
-    if d.get("P3_CONDITIONAL_SEA3_PASS_consumed") is not True:
-        f.append("P4 did not consume the closed conditional SEA3 P3 verdict")
-    if d.get("P3_DEPLOYMENT_PASS_consumed_as_if_closed") is not False:
-        f.append("P4 incorrectly consumed the still-open deployment P3 verdict")
-    if d.get("P3_CANONICAL_PASS_consumed") is not True:
-        f.append("deprecated P3 compatibility alias is inconsistent")
-    for key in (
-        "P3_H18_delta_consumed", "P3_A21_delta_consumed",
-        "P3_H_delta_consumed", "P3_A_delta_consumed",
-    ):
-        x = d.get(key)
-        if not isinstance(x, (int, float)) or float(x) != 1.0e-18:
-            f.append(f"{key} changed from frozen 1e-18 gate")
-
+    for key in ("P3_H18_delta_consumed", "P3_A21_delta_consumed"):
+        if float(d.get(key, 0.0)) != 1.0e-18:
+            f.append(f"{key} changed from frozen delta")
+    if float(d.get("Phi_jacobian_determinant_exact", 0.0)) != 1.0:
+        f.append("Phi differential coordinate lost exact full rank")
     if float(d.get("outer_angle_rad", 0.0)) < 0.80:
-        f.append("declared nonlinear sector fell below 0.8 rad")
+        f.append("outer Cayley sector shrank")
+    if d.get("candidate_angles_deg") != [30.0, 25.0, 20.0, 15.0]:
+        f.append("declared P4 candidate sequence changed")
     reasons = d.get("P4_CANONICAL_FAIL_REASONS", [])
-    if len(reasons) != 2 or not any("joint complete-sea3 endpoint" in x.lower() for x in reasons) or not any(
-        "storage comparison" in x.lower() for x in reasons
+    if len(reasons) != 2 or not any("jacobian" in x.lower() for x in reasons) or not any(
+        "ldlt" in x.lower() or "contraction" in x.lower() for x in reasons
     ):
-        f.append("P4 must report the joint endpoint domination/storage blockers")
+        f.append("canonical P4 must expose Jacobian and differential-contraction blockers")
     return list(dict.fromkeys(f))
 
 
@@ -270,21 +195,21 @@ def main() -> int:
     ap.add_argument("--output", type=Path, required=True)
     args = ap.parse_args()
     d = build(args.domain)
-    vf = validate(d)
-    d["validation_pass"] = not vf
-    d["validation_failures"] = vf
+    failures = validate(d)
+    d["validation_pass"] = not failures
+    d["validation_failures"] = failures
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(d, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     print(json.dumps({
         "architecture": d["canonical_P4_architecture"],
-        "P3_CONDITIONAL_SEA3_PASS_consumed": d["P3_CONDITIONAL_SEA3_PASS_consumed"],
-        "endpoint_transport_consumed": d["whole_word_endpoint_transport_consumed"],
-        "actual_RS_in_endpoint_operator": d["actual_RS_regularization_retained_in_endpoint_operator"],
+        "metric": d["differential_metric_type"],
+        "actual_RS_required": d["all_due_S_updates_with_actual_applied_RS_required"],
+        "complete_word_Jacobian_closed": d["source_uniform_complete_word_Jacobian_enclosed"],
         "P4_CANONICAL_PASS": d["P4_CANONICAL_PASS"],
         "fail_reasons": d["P4_CANONICAL_FAIL_REASONS"],
-        "validation_failures": vf,
+        "validation_failures": failures,
     }, indent=2, sort_keys=True))
-    return 0 if not vf else 2
+    return 0 if not failures else 2
 
 
 if __name__ == "__main__":
