@@ -1,0 +1,29 @@
+{
+  "repository": "bareboat-necessities/oceanography-waves-lib",
+  "generator_commit": "c5ddd8ddba6e062bb131d92efcd672dfa189455a",
+  "release_tag": "v1.1.3",
+  "release_asset_id": 398201117,
+  "release_zip_sha256": "55cad13e6b928e9e4d9540adbedfa0189a8feb57febac41b4561bfb68986dcff",
+  "source_input_name": "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
+  "source_input_content_hash_recorded_in_retained_capture": false,
+  "generator_file_sha256": {
+    "data-sim/waves_sim.cpp": "fbdd3cb9bfd5ac65288a6f953523a78b946f2fc6fafaf787ef9a04eb6ec0d7d6",
+    "src/PiersonMoskowitzStokes3D_Waves.h": "3e8c981cff40b5fd5945c78cf459aa6b85660a47cb56cd6c65ca4b71d3b52e8e",
+    "src/DirectionalSpread.h": "b790eb266c2e70f9a8ef19ce57d40fd6f4232ecd349fac6bdef536d940b714fd",
+    "src/TrochoidalWave.h": "6b8bf69b7fcb536e9bd47ab3189ed37fa9133ef30919bbef905a3c8236bfe5e6",
+    "src/WaveFilesSupport.h": "a6d0f006430849d116327c472a4e49e19e35ce7b87365389b8ed54ab20fccb0b"
+  },
+  "scenario": {
+    "Hs_m": 1.5,
+    "Tp_s_source_literal": "5.7f",
+    "mean_direction_deg": -30,
+    "cosine_spreading_s": 10,
+    "seed": 42,
+    "fundamental_frequency_count": 128,
+    "fundamental_frequency_min_hz": "1/50",
+    "fundamental_frequency_max_hz": "4/5",
+    "Stokes_order": 3,
+    "sample_step_source_literal": "1.0f/200.0f",
+    "filename_P120_is_not_a_phase_history_certificate": true
+  }
+}

@@ -286,6 +286,20 @@ separate from qualifying an assembled accelerometer. Neither declaring a
 zero true-bias root after capture nor assigning a SEA3 identifier proves the
 same-source equality.
 
+In particular, a wave-following surface-particle model cannot automatically
+serve as the vessel-response witness. For a directional Stokes harmonic its
+displacement phasor relative to the same elevation harmonic has, up to phase
+convention, response $h=(i\cos\vartheta,i\sin\vartheta,1)$ and hence
+$\|h\|_2^2=2$. If a third-order generator retains a nonzero harmonic at
+$f=3(0.8)=2.4\,\mathrm{Hz}$, the current maximal response envelope permits
+only $\|h\|_2^2\le[4(1.2/2.4)^2]^2=1$ there. Thus that direct response
+witness violates the declared envelope. If only the fundamental sea is taken
+as input instead, the frequency-preserving linear response does not generate
+the higher Stokes harmonics. This rejects direct identification of those
+generating models; it does not exclude a different admissible realization
+matching a finite sample word. Such an embedding or an explicitly bounded
+model-mismatch decomposition requires its own proof.
+
 For any invertible source-indexed frames $T_j$, a finite change of coordinates
 $z_j=T_j e_j$ preserves storage exactly only with the simultaneous transports
 \begin{align}

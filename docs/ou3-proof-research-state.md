@@ -175,6 +175,32 @@ justifies source-uniform enclosure work.
 
 ## Complete-source obligation still open
 
+Direct physical-generator admission has a structural failure. The retained
+input names the v1.1.3 PM--Stokes surface-particle generator, pinned at
+`oceanography-waves-lib` commit `c5ddd8ddba6e062bb131d92efcd672dfa189455a`.
+It uses 128 logarithmic fundamental frequencies in [0.02,0.8] Hz, order 3,
+common seeded phases/directions, and attitude from the same advected surface
+slopes. This is an actual correlated generator, not 600 independent boxes.
+However, it is not itself the declared continuum linear vessel-response model.
+Relative to its fundamental-only sea, nonzero higher harmonics cannot be
+created by a linear response. Relative to its full Stokes elevation, the
+surface-particle displacement response is h=(i cos(theta),i sin(theta),1)
+(up to phase convention), so ||h||^2=2. At the highest third harmonic,
+f=3*(4/5)=12/5 Hz, the largest allowed SEA3 squared gain is
+[4*( (6/5)/(12/5) )^2]^2=1. The exact failed inequality is 2<=1.
+
+This is a physical-model/premise incompatibility for direct admission of the
+generating model, not an interval failure and not proof that no other
+admissible SEA3 realization could share the finite samples. It invalidates
+promoting the label "genuine PM+Stokes" to membership. The finite grid also
+does not certify the declared continuum spectrum. BIAS0/1/2 and canonical P3
+are not invalidated. The next check executes the pinned generator to confirm
+the offending harmonic is present and checks the exact response inequality.
+Alternatives are a validated finite-window embedding in the existing SEA3
+family, a separate physical theorem covering the nonlinear buoy response, or
+an explicit SEA3-plus-model-mismatch forcing decomposition. No source-domain
+change or silent transfer of homogeneous terms into ISS is made here.
+
 The upstream complete-source contract still does not materialize the correlated finite-window SEA3 realization as an executable outward source family. Parameter compactness, RAO/moment envelopes, hard pathwise acceleration/body-rate caps, frontend parity, and adaptive-state rate/jump bounds do not replace a same-history transition for the correlated source state. P4 may not substitute independent per-sample boxes, a replay record, or a finite harmonic/grid surrogate.
 
 The full-state master now identifies the needed quantities: same-history prefix

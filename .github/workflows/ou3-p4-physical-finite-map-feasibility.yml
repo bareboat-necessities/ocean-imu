@@ -4,9 +4,13 @@ on:
   push:
     paths: &audit_paths
       - "tests/kalman_ou_iii/ou3_p4_*"
+      - "tests/kalman_ou_iii/ou3_physical_sea3_membership.py"
+      - "tools/stability/ou3-sea-generator-membership.cpp"
+      - "tests/kalman_ou_iii/fixtures/ou3_physical_generator_provenance.json"
       - "tests/kalman_ou_iii/fixtures/ou3_p4_retained_*"
       - "tests/validation/test_ou3_bias_witness_admissibility.py"
       - "tests/validation/test_ou3_retained_word_attachment.py"
+      - "tests/validation/test_ou3_physical_sea3_membership.py"
       - "tools/stability/ou3_mems_bias_contract.py"
       - "tools/stability/ou3_p4_complete_sea3_signed_information_ledger.py"
       - "tools/stability/ou3_proof_operating_domain.json"
@@ -25,20 +29,48 @@ permissions:
 jobs:
   physical-finite-map-feasibility:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v6
         with:
           persist-credentials: false
 
-      - name: Install point-audit dependency
+      - name: Install point-audit and physical-generator dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y python3-numpy
+          sudo apt-get install -y python3-numpy g++ libeigen3-dev
+
+      - name: Checkout the pinned physical sea generator
+        uses: actions/checkout@v6
+        with:
+          repository: bareboat-necessities/oceanography-waves-lib
+          ref: c5ddd8ddba6e062bb131d92efcd672dfa189455a
+          path: _physical-sea-generator
+          persist-credentials: false
+
+      - name: Execute the generating model and check physical SEA3 admission
+        run: |
+          g++ -std=c++20 -O2 -Wall -Wextra -Wpedantic -Werror \
+            -isystem /usr/include/eigen3 -isystem _physical-sea-generator/src \
+            tools/stability/ou3-sea-generator-membership.cpp -o /tmp/ou3-sea-generator-membership
+          /tmp/ou3-sea-generator-membership > /tmp/ou3-sea-generator-observation.json
+          python3 tests/kalman_ou_iii/ou3_physical_sea3_membership.py \
+            --generator-root _physical-sea-generator \
+            --observation /tmp/ou3-sea-generator-observation.json \
+            --output /tmp/ou3-physical-sea3-membership.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/ou3-physical-sea3-membership.json'))
+          assert d['direct_generator_response_admission'] == 'REJECTED'
+          assert d['exact_response_test']['squared_gap_exact'] == '1'
+          assert d['finite_sample_membership_under_another_realization'] == 'UNDETERMINED'
+          assert not d['canonical_P4_falsified'] and not d['P4_promoted']
+          print('PHYSICAL_GENERATOR_OBSERVATION',d['public_generator_API_observation'])
+          PY
 
       - name: Test bias and finite attachment algebra
         working-directory: tests/validation
-        run: python3 -m unittest -v test_ou3_bias_witness_admissibility test_ou3_retained_word_attachment
+        run: python3 -m unittest -v test_ou3_bias_witness_admissibility test_ou3_retained_word_attachment test_ou3_physical_sea3_membership
 
       - name: Audit exact retained payloads without regeneration or a new search
         run: |
@@ -87,4 +119,6 @@ jobs:
           path: |
             /tmp/ou3_p4_bias_witness_admissibility.json
             /tmp/ou3_p4_bias_witness_admissibility.prefixes.csv.gz
+            /tmp/ou3-sea-generator-observation.json
+            /tmp/ou3-physical-sea3-membership.json
           retention-days: 7
