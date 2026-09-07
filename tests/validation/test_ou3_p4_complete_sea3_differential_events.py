@@ -21,12 +21,15 @@ def zero_state(n):
     return [Interval.point(0.0) for _ in range(n)]
 
 
-def point_K(n):
-    K = [[Interval.point(0.0) for _ in range(3)] for _ in range(n)]
-    vals = [0.02, -0.01, 0.015]
-    for i in range(min(n, 21)):
-        K[i][i % 3] = Interval.point(vals[i % 3] / (1.0 + i))
-    return K
+def point_covariance(n):
+    P = [[Interval.point(0.0) for _ in range(n)] for _ in range(n)]
+    for i in range(n):
+        P[i][i] = Interval.point(1.0 + 0.03 * i)
+    # Retain a few benign cross-covariances so K is genuinely full-state.
+    for i, j, x in ((0, 12, 0.02), (1, 15, -0.015), (6, 12, 0.01)):
+        if i < n and j < n:
+            P[i][j] = P[j][i] = Interval.point(x)
+    return P
 
 
 def expected_I_minus_KH(n, K, H):
@@ -43,35 +46,51 @@ def assert_contains(test, actual, expected):
 
 
 class CompleteSea3DifferentialEventTests(unittest.TestCase):
-    def test_S_zero_zero_error_jacobian_matches_literal_tangent(self):
+    def test_S_zero_zero_error_jacobian_matches_same_cell_literal_tangent(self):
         for mode, n in (("H", 18), ("A", 21)):
-            K = point_K(n)
-            J = EVENTS.joseph_event_jacobian(
-                mode, zero_state(n), K, "S_zero", actual_applied_RS=True
+            P = point_covariance(n)
+            R = WORD.R_S_zero([Interval.point(0.72), Interval.point(0.72), Interval.point(1.0)])
+            event = EVENTS.source_joseph_event(
+                mode, zero_state(n), P, R, "S_zero",
+                R_provenance=EVENTS.ACTUAL_RS_PROVENANCE,
             )
-            expected = expected_I_minus_KH(n, K, WORD.H_S_zero(mode))
-            assert_contains(self, J, expected)
+            expected = expected_I_minus_KH(n, event["K"], event["H"])
+            assert_contains(self, event["J_state"], expected)
+            self.assertTrue(event["same_P_H_R_cell"])
+            self.assertEqual(event["R_provenance"], EVENTS.ACTUAL_RS_PROVENANCE)
 
-    def test_magnetometer_zero_error_jacobian_matches_literal_tangent(self):
+    def test_S_zero_rejects_target_or_unprovenanced_R(self):
+        P = point_covariance(18)
+        R = WORD.R_S_zero([Interval.point(0.72), Interval.point(0.72), Interval.point(1.0)])
+        with self.assertRaisesRegex(ValueError, "actual applied SpectralMSE R_S"):
+            EVENTS.source_joseph_event("H", zero_state(18), P, R, "S_zero")
+        with self.assertRaisesRegex(ValueError, "actual applied SpectralMSE R_S"):
+            EVENTS.source_joseph_event(
+                "H", zero_state(18), P, R, "S_zero", R_provenance="TARGET_RS"
+            )
+
+    def test_magnetometer_zero_error_jacobian_matches_same_cell_literal_tangent(self):
         m = [Interval.point(20.0), Interval.point(-5.0), Interval.point(40.0)]
+        Rm = WORD.diagonal_R([0.3, 0.3, 0.3])
         for mode, n in (("H", 18), ("A", 21)):
-            K = point_K(n)
-            J = EVENTS.joseph_event_jacobian(
-                mode, zero_state(n), K, "magnetometer", m_body=m
+            event = EVENTS.source_joseph_event(
+                mode, zero_state(n), point_covariance(n), Rm,
+                "magnetometer", m_body=m,
             )
-            expected = expected_I_minus_KH(n, K, WORD.H_magnetometer(mode, m))
-            assert_contains(self, J, expected)
+            expected = expected_I_minus_KH(n, event["K"], event["H"])
+            assert_contains(self, event["J_state"], expected)
 
-    def test_accelerometer_zero_error_jacobian_matches_literal_tangent(self):
+    def test_accelerometer_zero_error_jacobian_matches_same_cell_literal_tangent(self):
         f = [Interval.point(1.5), Interval.point(-0.7), Interval.point(-9.2)]
-        R = point_matrix([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+        Rhat = point_matrix([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+        Ra = WORD.diagonal_R([0.2, 0.2, 0.2])
         for mode, n in (("H", 18), ("A", 21)):
-            K = point_K(n)
-            J = EVENTS.joseph_event_jacobian(
-                mode, zero_state(n), K, "accelerometer", f_hat=f, R_hat=R
+            event = EVENTS.source_joseph_event(
+                mode, zero_state(n), point_covariance(n), Ra,
+                "accelerometer", f_hat=f, R_hat=Rhat,
             )
-            expected = expected_I_minus_KH(n, K, WORD.H_accelerometer(mode, f, R))
-            assert_contains(self, J, expected)
+            expected = expected_I_minus_KH(n, event["K"], event["H"])
+            assert_contains(self, event["J_state"], expected)
 
     def test_finite_cell_uses_outward_exact_cayley_not_linear_reset(self):
         n = 18
@@ -79,27 +98,34 @@ class CompleteSea3DifferentialEventTests(unittest.TestCase):
         state[0] = Interval(-0.08, 0.08)
         state[1] = Interval(-0.05, 0.05)
         state[15] = Interval(-0.2, 0.2)
-        K = point_K(n)
         f = [Interval.point(2.0), Interval.point(0.5), Interval.point(-9.0)]
-        R = point_matrix([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
-        J = EVENTS.joseph_event_jacobian(
-            "H", state, K, "accelerometer", f_hat=f, R_hat=R
+        Rhat = point_matrix([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+        event = EVENTS.source_joseph_event(
+            "H", state, point_covariance(n), WORD.diagonal_R([0.2, 0.2, 0.2]),
+            "accelerometer", f_hat=f, R_hat=Rhat,
         )
+        J = event["J_state"]
         self.assertEqual((len(J), len(J[0])), (18, 18))
         self.assertTrue(any(x.lo != x.hi for row in J for x in row))
 
     def test_A21_projection_hybrid_fails_closed(self):
+        P = point_covariance(21)
+        R = WORD.R_S_zero([Interval.point(0.72), Interval.point(0.72), Interval.point(1.0)])
         with self.assertRaisesRegex(RuntimeError, "projection hybrid"):
-            EVENTS.joseph_event_jacobian(
-                "A", zero_state(21), point_K(21), "S_zero",
-                actual_applied_RS=True, bias_projection_inactive=False,
+            EVENTS.source_joseph_event(
+                "A", zero_state(21), P, R, "S_zero",
+                R_provenance=EVENTS.ACTUAL_RS_PROVENANCE,
+                bias_projection_inactive=False,
             )
 
     def test_status_keeps_projection_and_source_obligations_open(self):
         d = EVENTS.build()
         self.assertEqual(EVENTS.validate(d), [])
         self.assertEqual(d["canonical_source"], "COMPLETE_SEA3_NORMAL_LIVE_WORD")
+        self.assertTrue(d["same_P_H_R_cell_derives_S_and_K"])
+        self.assertFalse(d["independent_K_input_allowed_for_theorem"])
         self.assertTrue(d["actual_applied_RS_required_for_S_event"])
+        self.assertEqual(d["actual_applied_RS_provenance_token"], EVENTS.ACTUAL_RS_PROVENANCE)
         self.assertTrue(d["exact_Cayley_attitude_state"])
         self.assertGreater(d["A21_bias_projection_nominal_margin_mps2"], 0.0)
         self.assertFalse(d["A21_bias_projection_inactive_source_uniformly_proved_here"])
