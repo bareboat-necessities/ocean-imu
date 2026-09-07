@@ -6,6 +6,7 @@ on:
       - "tests/kalman_ou_iii/ou3-operation-ledger-sim.cpp"
       - "tests/kalman_ou_iii/ou3_p4_complete_sea3_word_feasibility.py"
       - "tests/kalman_ou_iii/ou3_p4_physical_finite_map_feasibility.py"
+      - "tests/kalman_ou_iii/ou3_p4_physical_finite_map_feasibility_fast.py"
       - "tests/kalman_ou_iii/ou3_p4_canonicalize_physical_payload.py"
       - "tools/stability/ou3_p4_complete_sea3_differential_prediction.py"
       - "tools/stability/ou3_p4_complete_sea3_differential_events.py"
@@ -21,6 +22,7 @@ on:
       - "tests/kalman_ou_iii/ou3-operation-ledger-sim.cpp"
       - "tests/kalman_ou_iii/ou3_p4_complete_sea3_word_feasibility.py"
       - "tests/kalman_ou_iii/ou3_p4_physical_finite_map_feasibility.py"
+      - "tests/kalman_ou_iii/ou3_p4_physical_finite_map_feasibility_fast.py"
       - "tests/kalman_ou_iii/ou3_p4_canonicalize_physical_payload.py"
       - "tools/stability/ou3_p4_complete_sea3_differential_prediction.py"
       - "tools/stability/ou3_p4_complete_sea3_differential_events.py"
@@ -158,7 +160,7 @@ jobs:
       - name: Execute reset-normalized physical finite-map diagnostics
         run: |
           for mode in H18 A21; do
-            python3 tests/kalman_ou_iii/ou3_p4_physical_finite_map_feasibility.py \
+            python3 tests/kalman_ou_iii/ou3_p4_physical_finite_map_feasibility_fast.py \
               --payload /tmp/ou3_p4_physical_payload_canonical_${mode}.bin \
               --domain tools/stability/ou3_proof_operating_domain.json \
               --input tests/kalman_ou_iii/wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv \
@@ -174,6 +176,9 @@ jobs:
               assert d['reset_gauge_normalized_representative'] is True
               assert d['same_single_shipping_observer_source_payload'] is True
               assert d['second_estimator_or_Riccati_history_used'] is False
+              assert d['source_only_Joseph_gains_precomputed_once'] is True
+              assert d['finite_scale_sweep_value_only_same_deployed_equations'] is True
+              assert d['zero_state_full_AD_parity_still_required'] is True
               assert d['all_due_S_updates_with_actual_RS_retained'] is True
               assert d['packet_count_remainder_budget_used'] is False
               assert d['state_elimination_used'] is False
