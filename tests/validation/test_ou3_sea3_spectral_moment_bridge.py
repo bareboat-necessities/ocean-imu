@@ -14,6 +14,12 @@ import ou3_sea3_spectral_moment_bridge as bridge  # noqa: E402
 
 
 class Sea3SpectralMomentBridgeTest(unittest.TestCase):
+    def test_process_cache_returns_defensive_result_copies(self) -> None:
+        first = bridge.build()
+        first["schema_version"] = "tampered"
+        second = bridge.build()
+        self.assertEqual(second["schema_version"], bridge.SCHEMA_VERSION)
+
     def test_surface_bridge_is_replay_free_and_non_promoting(self) -> None:
         payload = bridge.build()
         failures = bridge.validate(payload)

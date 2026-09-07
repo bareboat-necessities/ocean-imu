@@ -36,7 +36,7 @@ class Sea3P3SourceSemanticsTest(unittest.TestCase):
         self.assertTrue(d["complete_SEA3_compact_parameter_domain_consumed"])
         self.assertTrue(d["complete_SEA3_compact_transition_relation_consumed"])
         self.assertTrue(d["complete_SEA3_phase_continuous_realization_required"])
-        self.assertTrue(d["same_xs_lambda_drives_entire_word"])
+        self.assertTrue(d["same_xs_lambda_drives_entire_execution"])
         self.assertTrue(d["stochastic_forcing_does_not_generate_source_words"])
         self.assertTrue(d["stochastic_forcing_does_not_prune_homogeneous_family"])
         for key in (
@@ -49,8 +49,9 @@ class Sea3P3SourceSemanticsTest(unittest.TestCase):
             "selected_four_S_word_used",
         ):
             self.assertFalse(d[key], key)
-        self.assertFalse(d["P3_CANONICAL_PASS"])
-        self.assertFalse(d["P4_MAY_CONSUME_P3"])
+        self.assertTrue(d["P3_CONDITIONAL_SEA3_PASS"])
+        self.assertTrue(d["P4_MAY_CONSUME_CONDITIONAL_SEA3_P3"])
+        self.assertFalse(d["P3_DEPLOYMENT_PASS"])
 
 
 if __name__ == "__main__":

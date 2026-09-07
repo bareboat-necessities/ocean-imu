@@ -125,15 +125,17 @@ class CompleteWordEndpointTransportTests(unittest.TestCase):
         self.assertFalse(d["inverse_metric_floor_claim_used"])
         self.assertFalse(d["P4_promoted_here"])
 
-    def test_endpoint_storage_is_not_the_canonical_p4_architecture(self):
+    def test_endpoint_transport_is_subordinate_to_canonical_finite_state_p4(self):
         d = P4.build()
         self.assertEqual(P4.validate(d), [])
         self.assertEqual(
             d["canonical_P4_architecture"],
-            "FULL_STATE_COMPLETE_SEA3_DIFFERENTIAL_PULLBACK",
+            "FINITE_STATE_COMPLETE_SEA3_QUADRATIC_ENDPOINT_AND_PREFIX",
         )
-        self.assertFalse(d["finite_Phi_storage_used_as_Lyapunov_function"])
-        self.assertFalse(d["finite_raw_endpoint_storage_used_as_P4_certificate"])
+        self.assertEqual(d["paper_Lyapunov_function"], "V(e,zeta)=e^T M(zeta)e")
+        self.assertTrue(d["finite_state_endpoint_dissipation_required"])
+        self.assertTrue(d["finite_state_prefix_gain_required"])
+        self.assertFalse(d["differential_pullback_used_as_replacement_P4"])
         self.assertFalse(d["P4_CANONICAL_PASS"])
         self.assertFalse(d["P5_MAY_START"])
 

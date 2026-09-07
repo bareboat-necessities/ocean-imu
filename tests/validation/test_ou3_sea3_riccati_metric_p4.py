@@ -77,6 +77,15 @@ class Sea3FiniteStateP4Test(unittest.TestCase):
         self.assertFalse(self.d["point_word_rho_used_to_promote"])
         self.assertFalse(self.d["longer_point_window_optimization_used_to_promote"])
 
+    def test_full_state_finite_taub_joint_sector_bridge_is_retained_but_open(self):
+        self.assertTrue(self.d["full_state_joint_sector_master_available"])
+        self.assertTrue(self.d["A21_finite_taub_full_matrix_P3_required"])
+        self.assertTrue(self.d["A21_finite_taub_detectability_consumed"])
+        self.assertTrue(self.d["joint_sector_all_21_state_cross_terms_retained"])
+        self.assertTrue(self.d["joint_sector_actual_RS_provenance_preserved"])
+        self.assertFalse(self.d["source_uniform_same_history_joint_sector_closed"])
+        self.assertFalse(self.d["source_uniform_full_augmented_LDLT_closed"])
+
     def test_differential_ad_is_machinery_not_replacement_p4(self):
         self.assertEqual(diffmetric.validate(self.dm), [])
         self.assertTrue(self.d["differential_AD_used_only_for_finite_map_enclosure"])

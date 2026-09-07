@@ -26,8 +26,10 @@ obligation and is not required for this conditional P3 result.
 from __future__ import annotations
 
 import argparse
+import copy
 import json
 import math
+from functools import lru_cache
 from pathlib import Path
 
 import ou3_sea3_complete_source as COMPLETE
@@ -44,7 +46,7 @@ QUALIFICATION = "OU3_SEA3_COMPLETE_SOURCE_FULL_WORD_P3_GATE_V15"
 USEFUL_GATE = 1.0e-18
 
 
-def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
+def _build_uncached(domain_path: Path) -> dict:
     path = Path(domain_path).resolve()
     complete = COMPLETE.build(path)
     full = FULL.build(path)
@@ -238,6 +240,17 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
             if p3_pass else "close the named canonical complete-SEA3 certificate-chain failures"
         ),
     }
+
+
+@lru_cache(maxsize=None)
+def _build_cached(domain_path: str) -> dict:
+    return _build_uncached(Path(domain_path))
+
+
+def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
+    """Return an independent canonical result, computing each domain once per process."""
+    path = str(Path(domain_path).resolve())
+    return copy.deepcopy(_build_cached(path))
 
 
 def validate(d: dict) -> list[str]:

@@ -20,12 +20,9 @@ from __future__ import annotations
 
 import argparse
 import json
-import math
 import os
 from pathlib import Path
 import subprocess
-
-import numpy as np
 
 import ou3_p4_complete_sea3_word_feasibility as WORD
 import ou3_p4_physical_finite_map_feasibility as BASE

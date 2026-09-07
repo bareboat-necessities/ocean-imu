@@ -234,6 +234,39 @@ where $D_{s,k}$ and $D_{n,k}$ are hard energies over the window beginning at
 $k$.  No one-sample decrease of $V$ is required; growth inside an oscillation
 is allowed.
 
+For the homogeneous finite-state part of one complete shipping word, write
+$\Phi_N=M_W\Phi_0+d_W$, $J_N=P_N^{-1}$, and
+$D_W=J_0-M_W^\top J_N M_W$.  Retain the nonlinear residual, reset, boundary,
+and projection history as one same-history coordinate $w_W$, without splitting
+it into independent event radii, so that $d_W=B_W w_W$.  Then the exact endpoint
+energy difference is the full augmented quadratic form
+\begin{equation}
+ V_N-V_0
+ =
+ \begin{bmatrix}\Phi_0\\w_W\end{bmatrix}^{\!\top}
+ \underbrace{\begin{bmatrix}
+ -D_W & M_W^\top J_NB_W\\
+ B_W^\top J_NM_W & B_W^\top J_NB_W
+ \end{bmatrix}}_{L_W}
+ \begin{bmatrix}\Phi_0\\w_W\end{bmatrix}.
+ \label{eq:sea3-joint-word-master}
+\end{equation}
+If the correlated nonlinear graph is enclosed by quadratic sectors
+$z_W^\top\Pi_jz_W\ge0$, $z_W=[\Phi_0^\top,w_W^\top]^\top$, it is sufficient
+to find nonnegative multipliers $\lambda_j$ for which the outward full-matrix
+test
+\begin{equation}
+ \boxed{-\left(L_W+\sum_j\lambda_j\Pi_j\right)\succ0}
+ \label{eq:sea3-joint-word-sector-test}
+\end{equation}
+holds.  In active accelerometer-bias mode this test is on the full 21-state
+matrix and retains finite-$\tau_b$ bias decay and every state cross term.  Each
+suffix in $B_W$ contains every later shipping event, in particular each due
+$S=0$ update with the actual applied anisotropic $R_S$.  Thus
+Eq.~\eqref{eq:sea3-joint-word-sector-test} may neither eliminate $a_w$ or
+$b_a$ nor replace the same-history graph by a packet-count or independent-box
+bound.
+
 Endpoint contraction alone is not sufficient for a full-sample ISS claim.
 P4 must additionally certify a uniform prefix-gain inequality: there exist
 finite nonnegative constants $\kappa_V,\kappa_s,\kappa_n$ such that for every
