@@ -7,16 +7,16 @@ sys.path.insert(0, str(ROOT / "tools"))
 sys.path.insert(0, str(ROOT / "tools" / "stability"))
 import ou3_p4_complete_sea3_accelerometer_operation_coordinate as acccoord  # noqa: E402
 import ou3_p4_complete_sea3_finite_angle_information as finfo  # noqa: E402
+import ou3_p4_complete_sea3_phi_differential_metric as diffmetric  # noqa: E402
 import ou3_p4_complete_sea3_vector_remainder_geometry as remgeom  # noqa: E402
-import ou3_p4_moving_metric_rebind as rebind  # noqa: E402
 import ou3_sea3_riccati_metric_p4 as mod  # noqa: E402
 
 
-class Sea3MovingRiccatiP4Test(unittest.TestCase):
+class Sea3DifferentialP4Test(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.d = mod.build()
-        cls.r = rebind.build()
+        cls.dm = diffmetric.build()
         cls.i = finfo.build()
         cls.c = acccoord.build()
         cls.g = remgeom.build()
@@ -24,41 +24,53 @@ class Sea3MovingRiccatiP4Test(unittest.TestCase):
             (x["attitude_angle_deg"], x["full_H18_information_lambda_min_lower"])
             for x in cls.i["candidate_cells"]
         ])
-        print("P4_ACCEL_OPERATION_COORDINATE", {
-            "aw_eta": cls.c["latent_aw_nonlinear_eta_coefficient"],
-            "moving_metric": cls.c["state_coordinate_transform"]["moving_metric_energy_invariant"],
-            "actual_RS_retained": cls.c["actual_RS_regularizer_not_removed_by_coordinate_change"],
+        print("P4_DIFFERENTIAL_METRIC", {
+            "type": cls.dm["metric_type"],
+            "det_DPhi": cls.dm["Phi_jacobian_determinant_exact"],
+            "full_rank_H18": cls.dm["H18_full_rank"],
+            "full_rank_A21": cls.dm["A21_full_rank"],
+            "actual_RS_required": cls.dm["all_due_S_updates_with_actual_applied_RS_required"],
         })
-        print("P4_VECTOR_REMAINDER_CELLS", [
-            (x["attitude_angle_deg"], x["eta_squared_over_linear_tangent_squared_upper"])
-            for x in cls.g["candidate_cells"]
-        ])
 
-    def test_p4_uses_same_moving_metric_and_not_800_endpoint_scan(self):
+    def test_p4_uses_complete_sea3_full_state_differential_architecture(self):
         self.assertEqual(mod.validate(self.d), [])
-        self.assertEqual(rebind.validate(self.r), [])
+        self.assertEqual(diffmetric.validate(self.dm), [])
         self.assertEqual(
             self.d["canonical_P4_architecture"],
-            "NONLINEAR_WORD_IN_MOVING_SHIPPING_RICCATI_METRIC",
+            "FULL_STATE_COMPLETE_SEA3_DIFFERENTIAL_PULLBACK",
         )
-        self.assertFalse(self.d["old_800_endpoint_signed_Joseph_scan_consumed"])
-        self.assertFalse(self.d["old_terminal_source_phase_metric_attachment_consumed"])
-        self.assertFalse(self.d["old_group_isotropic_P3_P4_metric_assumed"])
+        self.assertEqual(self.d["canonical_source"], "COMPLETE_SEA3_NORMAL_LIVE_WORD")
         self.assertGreaterEqual(self.d["outer_angle_rad"], 0.80)
+        self.assertEqual(self.d["candidate_angles_deg"], [30.0, 25.0, 20.0, 15.0])
 
-    def test_exact_moving_metric_rebind_is_closed(self):
+    def test_differential_metric_is_full_rank_and_reduces_to_frozen_p3(self):
         self.assertTrue(self.d["P3_CONDITIONAL_SEA3_PASS_consumed"])
-        self.assertTrue(self.d["full_nonlinear_measurement_metric_rebind_closed"])
-        self.assertFalse(self.d["exact_vector_accelerometer_congruence_rebind_pending"])
-        self.assertTrue(self.d["moving_metric_coordinate_congruence_exact"])
-        self.assertTrue(self.d["Joseph_nonlinear_injection_metric_closed"])
-        self.assertTrue(self.r["prediction_linear_map_nonexpansive"])
-        self.assertTrue(self.r["Joseph_linear_map_nonexpansive"])
-        self.assertTrue(self.r["left_error_reset_exact_metric_isometry"])
-        self.assertFalse(self.r["group_isotropic_metric_attachment_used"])
-        self.assertFalse(self.r["endpoint_source_word_scan_used"])
+        self.assertTrue(self.d["P3_frozen_not_modified"])
+        self.assertEqual(self.d["P3_H18_delta_consumed"], 1.0e-18)
+        self.assertEqual(self.d["P3_A21_delta_consumed"], 1.0e-18)
+        self.assertTrue(self.d["all_active_states_retained"])
+        self.assertTrue(self.d["H18_full_rank"])
+        self.assertTrue(self.d["A21_full_rank"])
+        self.assertEqual(self.d["Phi_jacobian_determinant_exact"], 1.0)
+        self.assertTrue(self.d["metric_reduces_exactly_to_P3_at_zero_error"])
+        self.assertFalse(self.d["finite_Phi_storage_used_as_Lyapunov_function"])
+        self.assertFalse(self.d["finite_raw_endpoint_storage_used_as_P4_certificate"])
 
-    def test_accelerometer_operation_coordinate_is_exact_in_moving_metric(self):
+    def test_complete_shipping_word_and_actual_rs_are_mandatory(self):
+        for key in (
+            "same_complete_SEA3_word_required",
+            "same_frontend_tuner_covariance_history_required",
+            "all_due_S_updates_with_actual_applied_RS_required",
+            "all_valid_accelerometer_updates_required",
+            "all_process_Q_floor_reset_events_required",
+            "H_to_A_rectangular_differential_event_required",
+        ):
+            self.assertTrue(self.d[key], key)
+        self.assertFalse(self.d["independent_RS_schedule_used"])
+        self.assertFalse(self.d["point_word_rho_used_to_promote"])
+        self.assertFalse(self.d["longer_point_window_optimization_used_to_promote"])
+
+    def test_accelerometer_operation_coordinate_retains_full_shift_and_rs(self):
         self.assertEqual(acccoord.validate(self.c), [])
         self.assertEqual(self.c["canonical_source"], "COMPLETE_SEA3_NORMAL_LIVE_WORD")
         self.assertTrue(self.c["aw_error_exactly_linear_in_accelerometer_operation_coordinate"])
@@ -66,30 +78,18 @@ class Sea3MovingRiccatiP4Test(unittest.TestCase):
         self.assertGreater(self.c["latent_aw_nonlinear_eta_coefficient"], 0.0)
         self.assertTrue(self.c["mixed_aw_shipping_tangent_remainder_retained"])
         self.assertFalse(self.c["nonlinear_Phi_storage_is_original_metric_isometry"])
-        self.assertEqual(self.c["accelerometer_bias_nonlinear_eta_coefficient"], 0.0)
-        self.assertTrue(self.c["state_coordinate_transform"]["moving_metric_energy_invariant"])
-        self.assertTrue(self.c["state_coordinate_transform"]["innovation_covariance_S_invariant"])
-        self.assertFalse(self.c["state_coordinate_transform"]["group_isotropic_metric_assumption_required"])
         self.assertTrue(self.c["actual_RS_regularizer_not_removed_by_coordinate_change"])
         self.assertFalse(self.c["source_family_replaced"])
-        self.assertFalse(self.c["retired_endpoint_attachment_module_reintroduced"])
 
-    def test_pure_vector_remainder_is_homogeneous_and_keeps_RS(self):
+    def test_vector_remainder_geometry_remains_nonpromoting_input(self):
         self.assertEqual(remgeom.validate(self.g), [])
         self.assertEqual(self.g["canonical_source"], "COMPLETE_SEA3_NORMAL_LIVE_WORD")
-        self.assertGreater(self.g["accelerometer_aw_nonlinear_eta_coefficient"], 0.0)
         self.assertTrue(self.g["mixed_aw_shipping_tangent_remainder_retained"])
-        self.assertTrue(self.g["sector_identities_apply_to_pure_rotation_component_only"])
-        self.assertEqual(self.g["accelerometer_bias_nonlinear_eta_coefficient"], 0.0)
-        self.assertFalse(self.g["accelerometer_eta_is_pure_force_rotation"])
-        self.assertTrue(self.g["magnetometer_radial_Joseph_cancellation_consumed"])
-        self.assertTrue(self.g["R_inverse_whitening_preserves_pure_vector_sector"])
         self.assertTrue(self.g["all_due_S_updates_and_actual_RS_remain_in_complete_word"])
         self.assertFalse(self.g["packet_count_multiplier_used"])
         self.assertFalse(self.g["standalone_eta_disturbance_budget_used"])
-        self.assertFalse(self.g["retired_source_grid_remainder_route_used"])
 
-    def test_complete_sea3_finite_angle_information_is_a_p4_prerequisite(self):
+    def test_finite_angle_information_keeps_declared_candidates_without_promotion(self):
         self.assertEqual(finfo.validate(self.i), [])
         self.assertEqual(self.i["canonical_source"], "COMPLETE_SEA3_NORMAL_LIVE_WORD")
         self.assertTrue(self.i["P3_frozen_not_modified"])
@@ -97,23 +97,28 @@ class Sea3MovingRiccatiP4Test(unittest.TestCase):
         self.assertTrue(self.i["all_due_S_updates_remain_in_complete_word"])
         self.assertTrue(self.i["all_valid_accelerometer_updates_remain_in_complete_word"])
         self.assertFalse(self.i["selected_PE_or_four_S_replace_complete_word"])
-        self.assertFalse(self.i["ordinary_libm_trigonometric_used_in_pass_decision"])
-        self.assertTrue(self.i["validated_transcendental_backend_used"])
         self.assertEqual(self.i["widest_information_cell_deg"], 30.0)
         self.assertTrue(self.i["information_headroom_closed"])
         self.assertFalse(self.i["P4_promoted_here"])
 
-    def test_only_live_blocker_is_finite_nonlinear_remainder(self):
-        self.assertGreaterEqual(self.d["P3_H_delta_consumed"], 1.0e-18)
-        self.assertGreaterEqual(self.d["P3_A_delta_consumed"], 1.0e-18)
+    def test_only_canonical_blockers_are_full_jacobian_and_differential_ldlt(self):
+        self.assertFalse(self.d["source_uniform_complete_word_Jacobian_enclosed"])
+        self.assertFalse(self.d["source_uniform_pullback_differential_contraction_closed"])
         self.assertFalse(self.d["P4_CANONICAL_PASS"])
         self.assertFalse(self.d["P5_MAY_START"])
-        self.assertFalse(self.d["nonlinear_remainder_dominated_on_full_sector"])
-        self.assertEqual(1, len(self.d["P4_CANONICAL_FAIL_REASONS"]))
-        self.assertIn(
-            "nonlinear remainder",
-            self.d["P4_CANONICAL_FAIL_REASONS"][0].lower(),
-        )
+        self.assertEqual(2, len(self.d["P4_CANONICAL_FAIL_REASONS"]))
+        self.assertTrue(any("jacobian" in x.lower() for x in self.d["P4_CANONICAL_FAIL_REASONS"]))
+        self.assertTrue(any("ldlt" in x.lower() or "contraction" in x.lower()
+                            for x in self.d["P4_CANONICAL_FAIL_REASONS"]))
+        for key in (
+            "packet_count_remainder_budget_used",
+            "packetwise_remainder_norm_sum_used",
+            "state_elimination_used",
+            "a_w_Schur_final_certificate_used",
+            "correction_radius_claim_used",
+            "inverse_metric_floor_claim_used",
+        ):
+            self.assertFalse(self.d[key], key)
 
 
 if __name__ == "__main__":
