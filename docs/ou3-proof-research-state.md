@@ -2,7 +2,7 @@
 
 ## Current hypothesis: bounded-bias practical motion stability
 
-The next connected test is `ou3_p4_connected_motion.py`. A test-only header
+The connected attachment test is `ou3_p4_connected_motion.py`. A test-only header
 overlay inserts read-only callbacks into the actual C++ observer; stripping
 the callbacks must recover shipping bytes, and the complete root/input/endpoint
 capture must match an uninstrumented run byte-for-byte. The callbacks expose
@@ -12,13 +12,10 @@ fitted to the trajectory. The 18-error performance storage evaluates the
 principal 18x18 block of the full 21x21 information matrix, without changing
 the active filter or its gains.
 
-The first connected-trace head passed the subevent attachment step, but its
-Python quality job rejected B023 loop-variable captures in the local parity
-reporter (`defects`, `failures`, `row`). Classification: implementation/lint
-failure, not failed numerical attachment or a theorem failure. The reporter
-must own explicit per-mode/current-event context rather than close over a loop;
-its arithmetic and tolerance are unchanged. A regression checks failure
-attribution across successive events and modes; CI must rerun the same trace.
+At `bbc4b4cc`, connected CI `34162722761`, canonical proof `34162722636`
+and all six quality gates `34162722656` pass. The parity reporter owns explicit
+event/mode context; the earlier B023 closure defect is repaired and covered.
+The separate replay-provenance validation remains red and is not weakened.
 
 Connected CI run `34162280303` at `636ce7aa` completed successfully: 35 tests,
 both C++ builds, byte-identical baseline/trace root/input/endpoint captures,
@@ -53,10 +50,54 @@ this invalidates identification of those homogeneous maps with the actual
 noise-free sea trajectory. It does not invalidate their homogeneous algebra,
 P3, the relaxed theorem, or the filter coefficients. Both correction and
 physical forcing must remain in the connected graph, with separate units and
-no silent conversion of a forced ratio to contraction. The next falsifiable
-gate is every-subevent finite error/residual/P/K/reset reproduction, before
-assembling graph sectors and the augmented channel-gain master. Point parity
-and signed energy telescoping alone cannot certify motion gains or P4.
+no silent conversion of a forced ratio to contraction. Every-subevent point
+reproduction now passes. Point parity and signed energy telescoping alone
+cannot certify motion gains or P4.
+
+## Current experiment: connected finite-coefficient motion supply
+
+`ou3_p4_motion_gain.py` uses exact finite Cayley/quaternion algebra to write
+each completed shipping error step as `e_next=A(e,zeta)e+B(e,zeta)u`. It
+retains all 21 rows, actual R_S, finite resets/projection, and the actual
+within-sample corrected bias history. This is not a derivative or a fit of a
+matrix to one vector. The point capture uses its original zero true-bias root;
+nonzero BIAS0/1 roots and projection boundaries still need uniform coverage.
+
+Controlling test: minimize `a W0 + g_b D_b + sum u_j' U_j u_j` over the full
+fixed-coefficient equality graph. Exact Schur elimination of forcing gives
+`X_next=A X A'+B U^-1 B'`; the actual entrance bias costs add to `X^-1`.
+All state coordinates remain. The maximum performance/cost is
+`lambda_max(L_M' X_HH L_M)`. A regression compares this recursion against the
+explicit dense augmented quadratic with the corrected bias cost. This is the
+endpoint and prefix master, not a packetwise scalar remainder bound.
+
+Numerical candidates use one declared SI normalization per port and a fixed
+dyadic gain bracket through 2^40. No storage/window/filter parameter is fitted.
+The endpoint must permit a factor below one; the prefix test uses Gamma=2.
+The final coefficient-direction energy is recomputed at 80 decimal digits,
+with signed event contributions and the distance from the gain threshold.
+An explicit lower bound on the resulting *composed bound*, if these gains were
+extended uniformly, prevents confusing large finite gains with useful accuracy.
+It is not a lower bound on actual filter error.
+
+Scope/critic: frozen dependent coefficients and arbitrary energy ports form
+only a sufficient point-coefficient test. Its maximizing history is not
+presumed nonlinear/SEA3 admissible. A failing test cannot falsify P4; a passing
+one still cannot supply graph sectors or source-uniform coverage. Do not launch
+interval refinement from a pass without checking gain budgets/retention. If
+the outer test is too conservative, alternatives are correlated SEA3 port
+constraints in the dense master, direct nonlinear joint graph sectors, or an
+analytically justified source-dependent motion storage. Do not resume a metric
+grid, shrink the domain, or restore a bias-decay target.
+
+Infrastructure failure: downloading connected artifact `10033198656` to this
+runtime returned HTTP 403 (`error code: 1010`). It blocks local reuse of that
+archive, not GitHub CI execution, attachment evidence, or any theorem. The
+runtime also lacks the optional mpmath package; the diagnostic uses Python's
+standard Decimal arithmetic instead. Next falsifiable experiment: GitHub CI
+must recapture the same two words, verify finite factorization at every event,
+and emit the augmented endpoint/prefix results. No numerical gain result is
+claimed before that run.
 
 The relaxed-theorem checkpoint's CI passed P3 and all 127 P4-job tests, the
 theorem smoke build and all six quality gates. The independent same-history
@@ -94,9 +135,8 @@ motion-master assembler are tested. Synthetic algebra witnesses are not
 Ocean-IMU motion-gain certificates. New P4_MOTION_PASS/P5_MOTION_MAY_START
 remain false independently of the stronger full-state flags.
 
-Current limiter and next falsifiable experiment: reconstruct exact joint
-error/source/forcing subevents, then evaluate the motion master with explicit
-channel gains on the same complete word before any uniform enclosure search.
+Current limiter and next falsifiable experiment: evaluate the finite-coefficient
+motion/supply master on the connected words before any uniform enclosure search.
 Report the resulting motion-accuracy floor and test that it lies within the
 retained chart and requested physical performance tolerances. Preserve P3's
 delta=1e-18 while resolving projected-domain source coverage separately.

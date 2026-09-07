@@ -16,6 +16,7 @@ on:
       - "tests/validation/test_ou3_physical_sea3_membership.py"
       - "tests/validation/test_ou3_source_endpoint.py"
       - "tests/validation/test_ou3_connected_motion.py"
+      - "tests/validation/test_ou3_motion_gain.py"
       - "tools/stability/ou3_mems_bias_contract.py"
       - "tools/stability/ou3_p4_complete_sea3_signed_information_ledger.py"
       - "tools/stability/ou3_proof_operating_domain.json"
@@ -80,7 +81,7 @@ jobs:
 
       - name: Test bias and finite attachment algebra
         working-directory: tests/validation
-        run: python3 -m unittest -v test_ou3_bias_witness_admissibility test_ou3_retained_word_attachment test_ou3_physical_sea3_membership test_ou3_sea3_response_union test_ou3_source_endpoint test_ou3_connected_motion
+        run: python3 -m unittest -v test_ou3_bias_witness_admissibility test_ou3_retained_word_attachment test_ou3_physical_sea3_membership test_ou3_sea3_response_union test_ou3_source_endpoint test_ou3_connected_motion test_ou3_motion_gain
 
       - name: Capture one source-connected finite shipping history and test fixed endpoints
         run: |
@@ -119,6 +120,15 @@ jobs:
             --prefix /tmp/ou3-source-events --baseline-prefix /tmp/ou3-source-endpoint \
             --manifest /tmp/ou3-motion-trace-overlay/trace-manifest.json \
             --output /tmp/ou3-connected-motion.json
+
+      - name: Test the connected finite-coefficient augmented motion supply
+        env:
+          OPENBLAS_NUM_THREADS: 1
+          OMP_NUM_THREADS: 1
+        run: |
+          python3 tests/kalman_ou_iii/ou3_p4_motion_gain.py \
+            --prefix /tmp/ou3-source-events --attachment /tmp/ou3-connected-motion.json \
+            --output /tmp/ou3-motion-gain.json
 
       - name: Audit exact retained payloads without regeneration or a new search
         run: |
@@ -175,5 +185,6 @@ jobs:
             /tmp/ou3-source-endpoint.prefixes.jsonl
             /tmp/ou3-source-events.events.jsonl
             /tmp/ou3-connected-motion.json
+            /tmp/ou3-motion-gain.json
             /tmp/ou3-motion-trace-overlay/trace-manifest.json
           retention-days: 7

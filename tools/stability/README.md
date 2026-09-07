@@ -130,6 +130,25 @@ shipping event. In particular, physical S=0 has residual
 `delta_S-S_true`: the `-S_true` source input is retained alongside the existing
 actual-R_S stabilizing correction. The output includes full-information
 18-error storage and eventwise signed energy changes, not a fitted gain or
-an outward source-uniform certificate. Its stopping gate is point attachment;
-the nonlinear graph sectors and augmented motion/gain master must follow only
-on the attached graph. No earlier full-state ratio is promoted by this test.
+an outward source-uniform certificate. No earlier full-state ratio is promoted
+by this test.
+
+`tests/kalman_ou_iii/ou3_p4_motion_gain.py` consumes those SHA-attached files.
+It factorizes the finite error updates exactly as `e_next=A(e,zeta)e+B(e,zeta)u`,
+including the shipping quaternion polynomial, full 21-row gains, corrected
+bias/projection and physical S input. Its complete-word supply calculation
+eliminates forcing coordinates algebraically, retains all 21 error states,
+and checks the 18-error endpoint and every completed-event prefix. A dense
+augmented-matrix regression verifies that bias cost is charged to the actual
+corrected trajectory only at sample entrances. Candidate gains are selected
+from matrix inequalities, not fitted to the observed forced trajectory ratio.
+The diagnostic reports an 80-digit maximizing coefficient-direction energy
+calculation and signed event contributions, with declared port units.
+
+The point test freezes the dependent finite coefficients on one attached
+history and permits arbitrary energy ports as a sufficient outer test. It
+does not certify a nonlinear/source graph sector, source-uniform coverage,
+or a useful accuracy floor; its maximizing port history is not presumed SEA3
+admissible. The next gate after numerical feasibility is whether the gain
+budgets and correlated coefficient/source coverage can close retention.
+P4-motion and P5-motion remain false. No bias-error decay is required.
