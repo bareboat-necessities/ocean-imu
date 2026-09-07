@@ -26,18 +26,19 @@ mean-value enclosure of this finite map; they do not redefine the theorem.
 
 The corrected single shipping observer owns one source/tuner/Riccati history
 and retains every operation. On the genuine PM+Stokes Hs=1.5 m source the
-legal 600-sample linear point words are approximately
+legal 600-sample linear point words are
 
-- H18: `rho_linear=0.9998654`, 600 predictions, 137 actual-R_S S updates,
-  600 accelerometer updates, 75 vector updates;
-- A21: `rho_linear=0.9958522`, 600 predictions, 108 actual-R_S S updates,
-  600 accelerometer updates, 75 vector updates.
+- H18: `rho_linear=0.9998658024147671`, 600 predictions, 137 actual-R_S S
+  updates, 600 accelerometer updates, 75 vector updates;
+- A21: `rho_linear=0.9958536807113242`, 600 predictions, 108 actual-R_S S
+  updates, 600 accelerometer updates, 75 vector updates.
 
-The same-observer signed ledgers reproduce these maps within a few `1e-6` and
-telescope to numerical roundoff. This validates the point linear observer but
-is not universal source coverage.
+The same-observer signed ledgers reproduce these maps within about `2.5e-6`
+and telescope to numerical roundoff. H18 gives `rho=0.999863922596`; A21 gives
+`rho=0.9958561068`. This validates the point linear observer but is not
+universal source coverage.
 
-The exact-Cayley estimator-pair diagnostic is now final. On the same A21 word,
+The exact-Cayley estimator-pair diagnostic is final. On the same A21 word,
 full-Phi estimator-pair storage first crosses one at scale 6.5
 (`rho_Phi=1.00005078316` for the worse sign), reaches about `1.00215` at scale
 8, and reaches `1.13413977623` at the declared limiting scale. Nominal state
@@ -76,6 +77,12 @@ prediction, every due S update, every accelerometer update, asynchronous vector
 updates, covariance floors and immediate resets. This is a universal algebraic
 fact over complete SEA3 and does not require a finite source-word list.
 
+The reset-gauge attachment closes the **zero-error** P3-to-physical-P4 tangent:
+P3's margin is invariant under every finite covariance reset congruence, while
+for the homogeneous physical event `y(0)=0`, hence `dtheta=0` and `G=I`. This
+justifies the physical zero-state tangent `I-KH`. It does **not** close finite
+nonlinear reset-coordinate transport or nonzero forcing/noise reset attachment.
+
 ## Failure analysis / dead ends
 
 Classification of the finite-shadow expansion: **diagnostic-attachment failure,
@@ -83,6 +90,21 @@ not theorem failure**. It invalidates optimizing the estimator-pair raw/Phi
 endpoint storage as if it were the physical P4 map. It does not invalidate
 frozen P3, the physical event equations, or the finite-state endpoint/prefix
 P4 theorem.
+
+A second experiment-design issue is now explicit: a point evaluator that drops
+shipping covariance resets by selecting the congruent `G=I` representative can
+verify the zero-state tangent, but finite-error energies are not automatically
+the paper's quadratic physical-error storage. After a nonzero correction, the
+physical post-correction Cayley/additive coordinates and a Joseph-posterior
+covariance with its reset congruence omitted are not in the same finite
+coordinate gauge unless the exact finite reset-coordinate transport is also
+applied. The current reset-gauge lemma deliberately leaves that transport open.
+
+Classification: **finite diagnostic metric-attachment gap**, not theorem
+failure and not a P3 failure. It invalidates interpreting reset-normalized
+finite point ratios as theorem-grade `V_N/V_0` before the finite coordinate
+attachment is closed. It does not invalidate their zero-state Jacobian parity,
+the physical state event map itself, or the source/event payload.
 
 **DEAD_ENDS / forbidden rescues**
 
@@ -97,13 +119,18 @@ P4 theorem.
   boxes;
 - inventing an L2/spectral hard amplitude bound from JONSWAP. The theorem
   explicitly states that the spectrum alone does not provide the deterministic
-  pathwise bound for `X^s_SEA3`.
+  pathwise bound for `X^s_SEA3`;
+- treating zero-error reset-gauge isometry as if it had already proved finite
+  nonlinear reset-coordinate attachment.
 
 ## Current limiter
 
-There is still **no low-pessimism point feasibility result for the actual
-physical finite P4 map**. Going directly from the estimator-pair result to a
-source-uniform interval proof would violate the research protocol.
+There is still **no theorem-grade low-pessimism point energy result for the
+actual finite P4 storage**. The new same-observer physical payload and physical
+state map are useful, but finite energy interpretation requires the exact
+finite reset-coordinate attachment first. Going directly from a reset-normalized
+finite ratio to a source-uniform interval proof would violate the research
+protocol.
 
 For universal closure, the complete SEA3 hard-window behavior `B^601_SEA3` is
 compact and requires one common phase/parameter/response witness, but its
@@ -126,50 +153,53 @@ finite cell.
 
 ## Independent critic pass
 
-Strongest reason to abandon the present route would be a physical finite-map
-point result with `rho>=1` well inside the candidate cell after exact event
-parity is verified. That would show that interval sharpening cannot rescue the
-controlling theorem inequality.
+The strongest immediate reason to distrust the present point experiment is the
+finite reset-coordinate mismatch, not a numerical rho. Zero-error parity alone
+cannot justify evaluating finite post-correction physical errors in an
+unreset Joseph covariance metric.
 
-Qualitatively different outcomes after the physical-map probe are:
+Three legitimate routes from this limiter are:
 
-1. Physical endpoint and prefix ratios are strictly feasible: proceed to one
-   same-history complete-word mean-value enclosure, exploiting P3 prefix
-   information and the joint accelerometer channel rather than source boxes.
-2. Endpoint is feasible but a prefix leaves the domain or has excessive gain:
-   solve the actual prefix/domain-retention obligation; do not alter the
-   endpoint metric or source.
-3. Physical map is not feasible in the source-indexed quadratic metric but its
-   full-state differential cocycle is uniformly stable: a different full-rank
-   source-indexed/converse Lyapunov construction may be justified.
-4. Physical finite map itself has an admissible expanding direction with no
-   compatible full-state metric/path argument: report theorem-failure evidence
-   rather than weaken the domain or eliminate states.
+1. derive the exact finite reset-normalized physical coordinate and prove that
+   the paper's chosen quadratic storage is represented without an error-dependent
+   metric; then rerun the same-observer physical finite-map point test;
+2. keep the paper's physical Cayley/additive coordinates and transport the
+   source-indexed P3 metric through an exact source-only congruent representative
+   at each boundary, proving that the representative does not depend on the
+   finite error state;
+3. if neither is compatible with the paper's stated source-indexed quadratic
+   storage, use the whole-word endpoint identity directly and prove finite
+   dissipation without introducing a state-dependent Riccati metric.
+
+None permits state elimination, source replacement, independent R_S schedules,
+or changing the theorem domain.
 
 ## Next falsifiable experiment
 
-Extend the **existing single shipping operation observer** with an optional
-selected-word source-payload trace. Do not create another estimator, scheduler,
-or Riccati recursion. For every event record only the source quantities needed
-by the already-tested theorem event functions: prediction `omega_hat`, `h`,
-committed `tau`/A21 `tau_b`; pre-Joseph full P; actual R_S; accelerometer
-`f_hat,R_hat`; accepted vector geometry; and the A21 true-bias/projection
-coordinate required by the event contract.
+The same-observer payload path is implemented and should still be run because
+it verifies event extraction, actual-R_S retention, zero-state H/K/Jacobian
+parity, and the exact physical state map. Its finite ratios are **diagnostic
+only** until reset-coordinate attachment closes.
 
-Consume that trace with the existing Python physical prediction/Joseph event
-functions and compose the finite true-minus-estimated map in exact Cayley
-coordinates. On the same H18/A21 limiting words, test both signs and the
-candidate-domain scales while reporting:
+Before using those finite ratios to select or reject a P4 cell, derive and test
+the exact finite reset-coordinate identity at a single Joseph event:
 
-- finite endpoint `V_N/V_0` in the paper's source-indexed quadratic metric;
-- maximum every-prefix `V_l/V_0` and chart/domain retention;
-- zero-state Jacobian parity against the verified linear complete-word map;
-- exact event counts and actual-R_S history;
-- A21 projection branch/Clarke activity.
+- start from exact Cayley true-minus-estimated pre-correction error and the same
+  P/H/R cell;
+- apply the exact physical correction `E_plus=E Q(Ky)^-1` and additive
+  true-minus-estimated corrections;
+- relate the resulting finite physical coordinate to the covariance reset
+  `P_R=G P_J G^T` without replacing `G` by `I` unless the corresponding state
+  coordinate is transformed by the exact same gauge map;
+- prove the energy identity in both H18 and A21, including the A21 bias
+  projection branch;
+- verify its derivative at zero reduces to the already-closed reset-gauge
+  tangent.
 
-This is a non-promoting feasibility/falsification test only. If it is strict,
-the next implementation is the source-uniform generalized mean-value endpoint
-and prefix enclosure using the same complete-word event algebra. If it is not
-strict, stop and replan before adding any enclosure lemma.
+Only after that single-event finite metric attachment passes should the full
+same-observer physical word be assigned theorem-storage endpoint/prefix ratios.
+If the corrected physical point result is strict, proceed to the source-uniform
+generalized mean-value endpoint/prefix enclosure; if it is not strict, stop and
+replan before adding an enclosure lemma.
 
 P4 remains OPEN. P5 remains BLOCKED. No merge is authorized.
