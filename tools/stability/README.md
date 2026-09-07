@@ -87,3 +87,17 @@ reset/storage attachment, followed by BIAS2 in the full augmented master.
 The simulator's turn-on bias/random walk differs from the audit's unforced
 zero true-bias premise, and its finite-difference gyro needs a separate defect
 bound. Neither is silently repaired by the response-family enlargement.
+
+`tools/stability/ou3-source-endpoint.cpp` captures a new conditional
+Stokes point from power-on through the two fixed observer-clock windows. One
+shipping observer owns every nominal update, covariance reset, tuner commit
+and actual R_S. Root phases/directions, raw warmup inputs, true zero residual
+bias and actual sample/magnetic prefixes are retained. No initial state or
+covariance is overwritten, and this is not a replacement for the immutable
+retained witness. The Python endpoint audit independently reconstructs the
+source and evaluates full-state endpoint storage at 80 decimal digits from
+the float shipping states/covariances. It explicitly measures the physical
+truth's defect relative to the committed F_LL prediction. A forced trajectory
+ratio is not the homogeneous P4 ratio; no result of this capture alone can
+authorize a sector search or falsify homogeneous contraction. Intermediate
+S/accelerometer/reset graph capture and homogeneous attachment remain open.

@@ -6,6 +6,7 @@ on:
       - "tests/kalman_ou_iii/ou3_p4_*"
       - "tests/kalman_ou_iii/ou3_physical_sea3_membership.py"
       - "tools/stability/ou3-sea-generator-membership.cpp"
+      - "tools/stability/ou3-source-endpoint.cpp"
       - "tools/stability/ou3_sea3_response_union.py"
       - "tests/validation/test_ou3_sea3_response_union.py"
       - "tests/kalman_ou_iii/fixtures/ou3_physical_generator_provenance.json"
@@ -13,6 +14,7 @@ on:
       - "tests/validation/test_ou3_bias_witness_admissibility.py"
       - "tests/validation/test_ou3_retained_word_attachment.py"
       - "tests/validation/test_ou3_physical_sea3_membership.py"
+      - "tests/validation/test_ou3_source_endpoint.py"
       - "tools/stability/ou3_mems_bias_contract.py"
       - "tools/stability/ou3_p4_complete_sea3_signed_information_ledger.py"
       - "tools/stability/ou3_proof_operating_domain.json"
@@ -77,7 +79,31 @@ jobs:
 
       - name: Test bias and finite attachment algebra
         working-directory: tests/validation
-        run: python3 -m unittest -v test_ou3_bias_witness_admissibility test_ou3_retained_word_attachment test_ou3_physical_sea3_membership test_ou3_sea3_response_union
+        run: python3 -m unittest -v test_ou3_bias_witness_admissibility test_ou3_retained_word_attachment test_ou3_physical_sea3_membership test_ou3_sea3_response_union test_ou3_source_endpoint
+
+      - name: Capture one source-connected finite shipping history and test fixed endpoints
+        run: |
+          g++ -std=c++20 -O2 -Wall -Wextra -Werror \
+            -I src -isystem /usr/include/eigen3 -isystem _physical-sea-generator/src \
+            tools/stability/ou3-source-endpoint.cpp -o /tmp/ou3-source-endpoint
+          /tmp/ou3-source-endpoint /tmp/ou3-source-endpoint
+          python3 tests/kalman_ou_iii/ou3_p4_source_endpoint.py \
+            --prefix /tmp/ou3-source-endpoint \
+            --generator-root _physical-sea-generator \
+            --output /tmp/ou3-source-endpoint.json
+          python3 - <<'PY'
+          import json
+          d = json.load(open('/tmp/ou3-source-endpoint.json'))
+          assert d['initial_covariance_from_actual_shipping_history']
+          assert d['nominal_and_covariance_reset_feedback_owned_by_shipping']
+          assert not d['P4_promoted'] and not d['P5_may_start']
+          for mode, result in d['modes'].items():
+              assert result['events']['imu'] == 600
+              assert result['source_root_point_parity_pass'], (mode, result)
+              assert result['checked_common_premises']['BIAS1_zero_true_root_and_driver']
+              assert result['homogeneous_P4_endpoint_ratio'] is None
+              assert not result['canonical_P4_falsified']
+          PY
 
       - name: Audit exact retained payloads without regeneration or a new search
         run: |
@@ -128,4 +154,8 @@ jobs:
             /tmp/ou3_p4_bias_witness_admissibility.prefixes.csv.gz
             /tmp/ou3-sea-generator-observation.json
             /tmp/ou3-physical-sea3-membership.json
+            /tmp/ou3-source-endpoint.json
+            /tmp/ou3-source-endpoint.root.json
+            /tmp/ou3-source-endpoint.inputs.csv
+            /tmp/ou3-source-endpoint.prefixes.jsonl
           retention-days: 7

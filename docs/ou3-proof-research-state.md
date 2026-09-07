@@ -2,6 +2,24 @@
 
 ## Handoff checkpoint
 
+Current experiment: source-connected **actual finite** endpoints on the two
+fixed observer-clock windows, using one shipping observer from power-on and
+the admitted Stokes root, zero true bias/driver, and no state/covariance
+intervention. The original retained witness is not regenerated or replaced.
+The capture measures `x_true[k+1]-F_LL[k] x_true[k]` explicitly: removing sensor
+noise does not remove physical Stokes/OU model forcing. Its raw `VN/V0` cannot
+be used as a homogeneous P4 verdict. This is an attachment/forcing gate, not
+the requested completed homogeneous endpoint master. Source parity, exact
+fixed indices, actual P, and 80-digit endpoint evaluation are CI obligations;
+full subevent nonlinear graph, homogeneous attachment and BIAS2 remain open.
+Do not resume interval or metric searches based on this forced ratio.
+Local validation: 26 focused tests pass. `make all` is infrastructure-blocked
+at `KalmanQMEKF.h:30`, missing `Eigen/Dense` despite the retained include path;
+the local Python lint executable is also absent. CI installs both dependencies.
+An initial optional mpmath dependency was removed in favor of exact rational
+endpoint elimination and 80-digit decimal output; the focused tests now run
+without adding a new Python package.
+
 The retained-witness CI run `34148309564` rejected a different payload SHA256
 (`c6b99250...` instead of `db38b812...` for H18). The regenerated A21 scan also
 selected 1195.01025390625--1198.01318359375 s instead of the retained
