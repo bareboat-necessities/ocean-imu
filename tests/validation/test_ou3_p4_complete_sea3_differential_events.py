@@ -130,6 +130,20 @@ class CompleteSea3DifferentialEventTests(unittest.TestCase):
                 R_provenance=EVENTS.ACTUAL_RS_PROVENANCE,
             )
 
+    def test_norm_enclosure_handles_outward_sum_of_squares_at_zero(self):
+        exact_zero = EVENTS._norm_interval(
+            [Interval.point(0.0), Interval.point(0.0), Interval.point(0.0)]
+        )
+        self.assertEqual(exact_zero.lo, 0.0)
+        self.assertTrue(exact_zero.contains(0.0))
+
+        tiny = EVENTS._norm_interval(
+            [Interval(-1e-15, 1e-15), Interval.point(0.0), Interval.point(0.0)]
+        )
+        self.assertGreaterEqual(tiny.lo, 0.0)
+        self.assertTrue(tiny.contains(0.0))
+        self.assertGreater(tiny.hi, 0.0)
+
     def test_ball_projection_inactive_active_and_boundary_generalized_jacobian(self):
         inside = EVENTS.ball_projection_enclosure(
             [Interval.point(0.2), Interval.point(0.0), Interval.point(0.0)], 0.5
