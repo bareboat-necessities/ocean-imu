@@ -43,8 +43,6 @@ def assert_contains(test, actual, expected, tol=2e-10):
     for i in range(len(expected)):
         for j in range(len(expected[0])):
             e = expected[i][j]
-            # exact outward intervals should contain shipping F.  Tiny tolerance
-            # only protects point-to-outward representation in this regression.
             test.assertLessEqual(actual[i][j].lo, e.hi + tol, (i,j,actual[i][j],e))
             test.assertGreaterEqual(actual[i][j].hi, e.lo - tol, (i,j,actual[i][j],e))
 
@@ -63,8 +61,10 @@ class CompleteSea3DifferentialPredictionTests(unittest.TestCase):
             assert_contains(self, event["J_state"], expected)
             self.assertTrue(event["same_source_omega_h_tau"])
             self.assertTrue(event["full_F_Eaw_translation_rows_retained"])
+            self.assertEqual(len(event["state_out"]), n)
+            self.assertTrue(all(x.contains(0.0) for x in event["state_out"]))
 
-    def test_finite_cayley_and_gyro_bias_cell_is_differentiated_outward(self):
+    def test_finite_cayley_and_gyro_bias_cell_returns_state_and_jacobian_from_same_map(self):
         state = zero_state(18)
         state[0] = Interval(-0.15,0.15)
         state[1] = Interval(-0.10,0.10)
@@ -73,8 +73,11 @@ class CompleteSea3DifferentialPredictionTests(unittest.TestCase):
             "H", state, [I(0.3),I(-0.2),I(0.1)], I(0.005), I(2.0)
         )
         J = event["J_state"]
+        out = event["state_out"]
         self.assertEqual((len(J),len(J[0])),(18,18))
+        self.assertEqual(len(out),18)
         self.assertTrue(any(x.lo != x.hi for row in J for x in row))
+        self.assertTrue(any(x.lo != x.hi for x in out))
 
     def test_A21_requires_configured_bias_GM_factor(self):
         with self.assertRaisesRegex(ValueError, "tau_ba"):
@@ -89,6 +92,8 @@ class CompleteSea3DifferentialPredictionTests(unittest.TestCase):
         self.assertTrue(d["same_complete_SEA3_omega_h_tau_required"])
         self.assertFalse(d["independent_F_input_allowed_for_theorem"])
         self.assertTrue(d["exact_relative_attitude_prediction_differentiated"])
+        self.assertTrue(d["finite_physical_state_output_available"])
+        self.assertTrue(d["finite_state_and_Jacobian_share_one_AD_composition"])
         self.assertTrue(d["full_F_Eaw_v_p_S_aw_rows_retained"])
         self.assertTrue(d["process_Q_remains_in_same_source_Riccati_metric"])
         self.assertFalse(d["packetwise_norm_sum_used"])
