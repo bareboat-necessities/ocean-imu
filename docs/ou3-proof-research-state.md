@@ -398,6 +398,15 @@ Restore the assertion's original scope and rerun that same suite; no proof
 constant or admission gate changes. GitHub CI remains the C++ build check
 while local `make all` fails at `KalmanQMEKF.h:30`, missing `Eigen/Dense`.
 
+SEA3+ CI run `34153666156` passes the C++ public-API audit and 21 tests:
+all 128 atoms satisfy the Stokes model, maximum component steepness
+0.02503536704829765 < 0.2. Response admission is ADMITTED on the new branch;
+full word membership stays UNDETERMINED. The coupled proof run `34153666115`
+stopped before P3: the package-integrity test requires the response-domain
+JSON reference to include `tools/stability/`. This is a path-metadata
+integration failure, not a matrix/source inequality failure. Correct the
+reference, preserve the integrity gate and rerun the same certificate chain.
+
 `ou-validation` is red for a known evidence-provenance reason, not because its numerical unit-test body found a new filter failure: `tools/ou_evidence_contract.py --auto` reports replay dependencies changed relative to committed validation/robustness provenance, including the OU-III filter and WavePeriodEstimator dependencies. Genuine validation/robustness evidence regeneration is therefore still required before a later proof PR is declared final/ready. Do not hand-edit provenance hashes.
 
 No claim is made that P4 or P5 is complete.

@@ -21,7 +21,7 @@ def build() -> dict:
         "qualification": QUALIFICATION,
         "set_operation": "UNION",
         "branches": list(BRANCHES),
-        "linear_vessel_domain": "ou3_sea3_directional_response_domain.json",
+        "linear_vessel_domain": "tools/stability/ou3_sea3_directional_response_domain.json",
         "linear_vessel_domain_unchanged": True,
         "branch_selected_at_source_root_and_retained_at_every_prefix": True,
         "per_event_branch_switching_allowed": False,
