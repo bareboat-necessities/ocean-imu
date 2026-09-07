@@ -9,7 +9,6 @@ sys.path.insert(0, str(ROOT / "tools"))
 sys.path.insert(0, str(ROOT / "tools" / "stability"))
 
 import ou3_p4_complete_sea3_same_history_prefix_selectors as SELECTORS
-import ou3_sea3_complete_window_execution_kernel as KERNEL
 import ou3_sea3_frontend_state_step as FRONTEND
 
 
@@ -17,6 +16,16 @@ class P4CompleteSea3SameHistoryPrefixSelectorsTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.payload = SELECTORS.build()
+
+    @staticmethod
+    def _source_seeded_frontend_and_covariance():
+        frontend = FRONTEND._point_state()
+        P0_H, P0_A, meta = SELECTORS._source_generated_point_covariance_seed(
+            frontend, SELECTORS.DEFAULT_DOMAIN
+        )
+        if meta.get("arbitrary_P0_used") is not False:
+            raise AssertionError("selector test reverted to arbitrary covariance")
+        return frontend, P0_H, P0_A
 
     def test_status_is_non_promoting_and_preserves_frozen_contract(self):
         self.assertEqual(SELECTORS.validate(self.payload), [])
@@ -59,15 +68,21 @@ class P4CompleteSea3SameHistoryPrefixSelectorsTest(unittest.TestCase):
         self.assertTrue(smoke["all_measurement_event_cells_retain_same_P_H_R"])
         self.assertTrue(smoke["all_due_S_cells_retain_actual_committed_RS"])
         self.assertTrue(smoke["event_local_cells_captured_inside_same_transition"])
+        seed = smoke["source_generated_covariance_seed"]
+        self.assertTrue(seed["live_seed_contract_consumed"])
+        self.assertFalse(seed["arbitrary_P0_used"])
+        self.assertTrue(seed["aw_seed_uses_same_committed_sigma"])
+        self.assertTrue(seed["A21_ba_release_floor_attached"])
         self.assertFalse(smoke["favorable_frontend_successor_selected"])
         self.assertFalse(smoke["shipping_transition_reimplemented"])
 
     def test_selector_event_cells_match_exact_shipping_sample(self):
         sample = SELECTORS._point_sample()
+        frontend, P0_H, P0_A = self._source_seeded_frontend_and_covariance()
         endpoints, selectors, meta = SELECTORS.execute_with_prefix_selectors(
-            frontend_entry=FRONTEND._point_state(),
-            P0_H=KERNEL._diag_P(18, 2.0),
-            P0_A=KERNEL._diag_P(21, 2.0),
+            frontend_entry=frontend,
+            P0_H=P0_H,
+            P0_A=P0_A,
             samples=[sample],
             branch_limit=64,
         )
@@ -121,9 +136,9 @@ class P4CompleteSea3SameHistoryPrefixSelectorsTest(unittest.TestCase):
                 s_cell = cells[2]
                 self.assertTrue(s_cell.actual_rs_from_committed_schedule)
                 self.assertEqual(
-                    s_cell.R, KERNEL.WORD.R_S_zero(selector.actual_rs_std_xyz)
+                    s_cell.R, SELECTORS.WORD.R_S_zero(selector.actual_rs_std_xyz)
                 )
-                self.assertEqual(s_cell.H, KERNEL.WORD.H_S_zero(mode))
+                self.assertEqual(s_cell.H, SELECTORS.WORD.H_S_zero(mode))
                 for cell in cells[2:]:
                     self.assertIsNotNone(cell.H)
                     self.assertIsNotNone(cell.R)
@@ -138,10 +153,11 @@ class P4CompleteSea3SameHistoryPrefixSelectorsTest(unittest.TestCase):
 
     def test_lineage_is_explicit_across_two_prefixes(self):
         sample = SELECTORS._point_sample()
+        frontend, P0_H, P0_A = self._source_seeded_frontend_and_covariance()
         endpoints, selectors, _ = SELECTORS.execute_with_prefix_selectors(
-            frontend_entry=FRONTEND._point_state(),
-            P0_H=KERNEL._diag_P(18, 2.0),
-            P0_A=KERNEL._diag_P(21, 2.0),
+            frontend_entry=frontend,
+            P0_H=P0_H,
+            P0_A=P0_A,
             samples=[copy.deepcopy(sample), copy.deepcopy(sample)],
             branch_limit=128,
         )
@@ -160,10 +176,11 @@ class P4CompleteSea3SameHistoryPrefixSelectorsTest(unittest.TestCase):
 
     def test_broken_or_duplicate_ancestry_is_rejected(self):
         sample = SELECTORS._point_sample()
+        frontend, P0_H, P0_A = self._source_seeded_frontend_and_covariance()
         endpoints, selectors, _ = SELECTORS.execute_with_prefix_selectors(
-            frontend_entry=FRONTEND._point_state(),
-            P0_H=KERNEL._diag_P(18, 2.0),
-            P0_A=KERNEL._diag_P(21, 2.0),
+            frontend_entry=frontend,
+            P0_H=P0_H,
+            P0_A=P0_A,
             samples=[sample],
             branch_limit=64,
         )
