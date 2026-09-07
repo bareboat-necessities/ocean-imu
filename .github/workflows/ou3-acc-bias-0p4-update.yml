@@ -29,10 +29,10 @@ jobs:
           d=json.load(open('/tmp/domain.json'))
           assert d['startup']['physical_handoff_coordinate_bounds']['accelerometer_bias_error_norm_upper_mps2'] == 0.4
           assert d['normal_live']['active_accelerometer_bias_projection_limit_mps2'] == 0.4
-          assert d['normal_live']['active_accelerometer_bias_state_norm_upper_mps2'] <= 0.4
+          assert d['normal_live']['active_accelerometer_bias_state_norm_upper_mps2'] == 0.35
           PY
 
-      - name: Dispatch canonical P3/P4 and complete-SEA3 reruns
+      - name: Dispatch full OU-III proof, study, validation and robustness reruns
         run: |
           set -euo pipefail
           for wf in \
@@ -40,13 +40,19 @@ jobs:
             ou3-complete-sea3.yml \
             ou3-sea3-metric-memory.yml \
             ou3-sea3-a21-word.yml \
+            ou3-sea3-four-s.yml \
+            ou3-sea3-reset.yml \
+            ou3-sea3-time-varying-memory.yml \
+            ou3-sea3-window-contract.yml \
             ou3-p4-complete-word-feasibility.yml \
             ou3-p4-exact-cayley-parity.yml \
             ou3-p4-physical-finite-map-feasibility.yml \
             ou3-p4-physical-long-window-feasibility.yml \
+            ou3-lever-arm-study.yml \
             quality-gates.yml \
-            build.yml
+            build.yml \
+            ou-full-evidence-branch.yml
           do
             gh workflow run "$wf" --repo "$REPO" --ref "$BRANCH"
           done
-          echo 'Explicit proof/P4/build reruns dispatched.'
+          echo 'Explicit 0.4-clamp proof/study/full-evidence reruns dispatched.'
