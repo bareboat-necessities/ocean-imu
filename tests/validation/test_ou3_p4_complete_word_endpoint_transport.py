@@ -23,8 +23,6 @@ def vec(xs):
 
 class CompleteWordEndpointTransportTests(unittest.TestCase):
     def test_full_shift_telescope_leaves_only_accelerometer_interior_block(self):
-        # Five literal events including an S-like correction and a rectangular
-        # H->A lift.  Only event 2 has (C-L)E != 0 and it is accelerometer.
         I2 = mat([[1, 0], [0, 1]])
         events = [
             {
@@ -100,7 +98,7 @@ class CompleteWordEndpointTransportTests(unittest.TestCase):
                 [[F(1, 3)], [F(1, 4)]],
             )
 
-    def test_master_energy_identity_is_exact(self):
+    def test_master_energy_identity_is_exact_but_nonpromoting(self):
         J0 = mat([[2, F(1, 3)], [F(1, 3), 3]])
         JN = mat([[4, F(1, 5)], [F(1, 5), 5]])
         M = mat([[F(1, 2), F(1, 7)], [0, F(1, 3)]])
@@ -114,7 +112,7 @@ class CompleteWordEndpointTransportTests(unittest.TestCase):
             -d["linear_decrease"] + d["cross_term"] + d["defect_energy"],
         )
 
-    def test_canonical_status_uses_complete_sea3_and_forbids_packet_budget(self):
+    def test_endpoint_status_retains_complete_sea3_and_forbids_shortcuts(self):
         d = ENDPOINT.build()
         self.assertEqual(ENDPOINT.validate(d), [])
         self.assertEqual(d["canonical_source"], "COMPLETE_SEA3_NORMAL_LIVE_WORD")
@@ -127,12 +125,15 @@ class CompleteWordEndpointTransportTests(unittest.TestCase):
         self.assertFalse(d["inverse_metric_floor_claim_used"])
         self.assertFalse(d["P4_promoted_here"])
 
-    def test_canonical_p4_consumes_endpoint_master_object_but_stays_open(self):
+    def test_endpoint_storage_is_not_the_canonical_p4_architecture(self):
         d = P4.build()
         self.assertEqual(P4.validate(d), [])
-        self.assertTrue(d["whole_word_endpoint_transport_consumed"])
-        self.assertTrue(d["actual_RS_regularization_retained_in_endpoint_operator"])
-        self.assertFalse(d["packet_count_remainder_budget_used"])
+        self.assertEqual(
+            d["canonical_P4_architecture"],
+            "FULL_STATE_COMPLETE_SEA3_DIFFERENTIAL_PULLBACK",
+        )
+        self.assertFalse(d["finite_Phi_storage_used_as_Lyapunov_function"])
+        self.assertFalse(d["finite_raw_endpoint_storage_used_as_P4_certificate"])
         self.assertFalse(d["P4_CANONICAL_PASS"])
         self.assertFalse(d["P5_MAY_START"])
 
