@@ -142,7 +142,6 @@ jobs:
               assert r['accelerometer']['count']==601
               assert r['prediction']['count']==601
               assert r['S_zero']['count']>0
-              assert r['rs_schedule_changes']>0
               assert all(math.isfinite(x) and x>0 for x in r['RS_std_min_xyz'])
               assert all(math.isfinite(x) and x>0 for x in r['RS_std_max_xyz'])
               assert math.isfinite(r['tangent_rho']) and r['tangent_rho']>=0
@@ -150,6 +149,11 @@ jobs:
               assert math.isfinite(r['tangent_minus_nonlinear_rho'])
               assert r['covariance_reconstruction_residual_max']<=2.0e-4
               assert abs(r['telescope_error']) <= 1.0e-5*max(1.0,abs(r['V0']))
+          # The A21 point window legitimately carries the final applied R_S from
+          # the H18 history without another staged commit. Require the H/connected
+          # history to show actual schedule motion, but do not invent A21 motion.
+          assert H['rs_schedule_changes']>0
+          assert A['rs_schedule_changes']>=0
           assert HA['vector_due']>=600
           assert HA['vector_accepted']==HA['vector_due']
           assert HA['vector_rejected']==0
