@@ -4,7 +4,7 @@
 The Live proof follows the estimator modes implemented by the source.  The
 linear navigation block is active in Live mode.  Accelerometer-bias learning,
 however, can remain held after handoff: while held, the source propagates the
-residual accelerometer-bias state with the identity map and suppresses its
+estimated residual accelerometer-bias state with the identity map and suppresses its
 Kalman-gain row.  Stability is therefore stated for the active coordinates of
 each source mode and the held bias is treated as a bounded input until its
 one-time release.  This avoids assigning exponential decay to a coordinate that
@@ -454,13 +454,13 @@ $0<\rho_H<1$ such that
  \|\Psi_H(k,j)\|\le M_H\rho_H^{k-j}.
  \label{eq:iss-held-ues}
 \end{equation}
-For bounded frozen accelerometer-bias error and bounded model disturbance
+For bounded held-mode accelerometer-bias error history and bounded model disturbance
 $\vct d$, the active error satisfies
 \begin{equation}
  \boxed{
  \|\vct e_{H,k}\|
  \le C_H\lambda_H^{k-j}\|\vct e_{H,j}\|
- +\Gamma_{ba,H}\|\delta\vct b_{a,H}\|
+ +\Gamma_{ba,H}\|\delta\vct b_{a,H}\|_{\infty,[j,k)}
  +\Gamma_{d,H}\|\vct d\|_{\infty,[j,k)}.}
  \label{eq:iss-held-forced}
 \end{equation}
@@ -526,7 +526,7 @@ gramian
 Under the source-reachable bounds, a translational observability route above,
 and Eq.~\eqref{eq:iss-nomag-pe}, the homogeneous active error on the yaw
 quotient is UES in either accelerometer-bias source mode.  In held-bias mode the
-frozen $\delta b_a$ enters the projected active dynamics as a bounded input; in
+held-mode $\delta b_a$ enters the projected active dynamics as a bounded input; in
 active-bias mode the same full-PE or finite-$\tau_b$ alternatives as
 Theorem~\ref{thm:iss-21-ues} apply after projection.  Thus, for the appropriate
 active quotient coordinate,
