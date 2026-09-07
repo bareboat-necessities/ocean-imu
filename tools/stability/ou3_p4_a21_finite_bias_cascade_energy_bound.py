@@ -42,6 +42,7 @@ import json
 import math
 from pathlib import Path
 
+import ou3_full_process_ucc as PROCESS
 import ou3_p4_a21_finite_bias_cascade_bridge as BRIDGE
 import ou3_sea3_a21_detectability_completion as ADET
 import ou3_sea3_full_normal_live_word as WORD
@@ -91,11 +92,13 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     p3 = P3.build(path)
     adet = ADET.build(path)
     word = WORD.build(path)
+    process = PROCESS.build()
     bad = {
         "bridge": BRIDGE.validate(bridge),
         "P3": P3.validate(p3),
         "A21_detectability": ADET.validate(adet),
         "word": WORD.validate(word),
+        "process": PROCESS.validate(process),
     }
     bad = {k: v for k, v in bad.items() if v}
     if bad:
@@ -107,12 +110,13 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
 
     runtime = adet["active_bias_process"]
     tau_b = float(runtime["tau_ba_s"])
-    # The literal complete word supplies the configured IMU dt enclosure and
-    # requires every valid Normal-Live accelerometer update.
-    h_bounds = word["configured_runtime"]["imu_dt_outward_interval_s"]
+    # The process certificate owns the configured outward IMU-dt interval; the
+    # literal word owns the requirement that every valid sample includes the
+    # accelerometer Joseph operation.  Keep those ownerships distinct.
+    h_bounds = process["configured_runtime"]["imu_dt_outward_interval_s"]
     h_lower = float(h_bounds[0])
     n_acc = int(word["imu_samples_upper"])
-    if n_acc <= 0 or word["all_Normal_Live_accelerometer_updates_required"] is not True:
+    if n_acc <= 0 or word["every_valid_imu_sample_requires_accelerometer_Joseph"] is not True:
         raise RuntimeError("complete word no longer retains every accelerometer update")
 
     gsum = geometric_decay_energy_upper(n_acc, h_lower, tau_b)
