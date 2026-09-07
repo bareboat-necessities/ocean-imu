@@ -5,201 +5,251 @@
 The canonical source remains `COMPLETE_SEA3_NORMAL_LIVE_WORD`. Conditional P3 is
 closed and frozen at `delta=1e-18`; P4 is OPEN and P5 is BLOCKED. Production
 filter code, the declared source/error domain, numerical quality gates, zero
-lever arm, dormant-transparent vibration branch, H18/A21 semantics, and the
-separate H18->A21 hybrid are fixed.
+lever arm, dormant-transparent vibration branch, H18/A21 semantics, the
+accelerometer-bias clamp, and the separate H18->A21 hybrid are fixed.
 
-The canonical P4 target is the paper's **finite physical true-minus-estimated
-state map**, not an estimator-pair shadow and not a state-dependent replacement
-theorem. For each admitted complete SEA3 window it must close
+The canonical P4 target is the paper's finite physical true-minus-estimated
+state map. Point/shadow/replay calculations are falsification and architecture
+selection only; they cannot promote P4 or replace the complete SEA3 source.
+Every valid accelerometer correction, every due S=0 correction with the actual
+applied anisotropic SpectralMSE `R_S`, every applicable vector event, full Q,
+covariance floors, and immediate resets remain in the literal word.
 
-`V_{k+N} <= rho V_k + forcing`, `rho<1`,
+For one admitted proof window P4 must establish a strict finite endpoint
+inequality, a finite every-prefix gain, and every-prefix chart/domain retention.
+The proof window length is a theorem quantity, not intrinsically fixed to the
+600-sample / 3 s point diagnostic. The paper's S-observability construction
+explicitly states that a longer proof window may credit wider source-realizable
+S-event separation. Any longer-window experiment must nevertheless be the
+actual physical same-history complete word; the retired 6/9-second
+estimator-pair-shadow optimization remains forbidden.
 
-and, for every prefix,
-
-`V_{k+ell} <= kappa_V V_k + forcing`,
-
-with every prefix inside the certified chart/source domain. Outward
-physical-state Jacobians/Clarke Jacobians are permitted as a rigorous
-mean-value enclosure of this finite map; they do not redefine the theorem.
-
-## Evidence
+## Frozen linear evidence
 
 The corrected single shipping observer owns one source/tuner/Riccati history
 and retains every operation. On the genuine PM+Stokes Hs=1.5 m source the
-legal 600-sample linear point words are
+legal 600-sample point words are
 
 - H18: `rho_linear=0.9998658024147671`, 600 predictions, 137 actual-R_S S
   updates, 600 accelerometer updates, 75 vector updates;
 - A21: `rho_linear=0.9958536807113242`, 600 predictions, 108 actual-R_S S
   updates, 600 accelerometer updates, 75 vector updates.
 
-The same-observer signed ledgers reproduce these maps within about `2.5e-6`
-and telescope to numerical roundoff. H18 gives `rho=0.999863922596`; A21 gives
-`rho=0.9958561068`. This validates the point linear observer but is not
-universal source coverage.
+The same-observer event ledgers reproduce these maps within a few `1e-6` and
+telescope to roundoff. This establishes that the A21 obstruction is not a
+missing linear-information or observer-parity problem. It is not universal
+source coverage.
 
-The exact-Cayley estimator-pair diagnostic is final. On the same A21 word,
-full-Phi estimator-pair storage first crosses one at scale 6.5
-(`rho_Phi=1.00005078316` for the worse sign), reaches about `1.00215` at scale
-8, and reaches `1.13413977623` at the declared limiting scale. Nominal state
-reconstruction remains about `7.45e-9`.
+P3 also supplies the source-uniform prefix information inequality
 
-This is a real result for the covariance-free **estimator-to-estimator** shadow,
-but it is not a counterexample to the physical theorem map. The shadow stores
-the difference of two estimates that both receive Kalman corrections. P4 uses
-true-minus-estimated physical errors. The maps share the zero-error tangent but
-need not share their finite nonlinear map.
+`Psi_l^T P_l^-1 Psi_l <= P_0^-1`
+
+and exact event algebra preserves the established full-matrix margin through
+prediction, every due S update, every accelerometer update, asynchronous vector
+updates, covariance floors and finite reset congruences. P3 is not being
+retuned or reopened.
+
+## Nonlinear point evidence
+
+### Estimator-pair shadow
+
+The exact-Cayley covariance-free estimator-pair shadow remains a historical
+non-promoting diagnostic. H18 stays contractive. In A21, raw and full-Phi
+storage first cross one at reliable scale 6.5; full-Phi reaches about
+`1.13413977623` at the declared limiting scale. This is real for the
+estimator-to-estimator shadow but is not the paper's physical error map.
+
+### Physical reset-normalized diagnostic
+
+A single-observer physical source/event payload now drives the exact
+true-minus-estimated Cayley state equations. Host-reconstructed measurement H
+is projected back only to exact shipping structural support (S selector,
+skew vector block, SO(3) accelerometer a_w block, A21 identity b_a block), with
+P/Q/schedule/timestamps and every actual-R_S S event retained bit-for-bit.
+The original strict zero-state event and whole-word parity tolerances are not
+relaxed.
+
+Finite ratios from the reset-normalized point diagnostic remain non-promoting
+until the finite source-indexed reset/metric attachment is closed. They are
+nevertheless useful mechanism/falsification evidence because the physical
+state equations and same-source Joseph data are retained.
+
+The physical full-Phi endpoint was also tested. It improves A21 slightly but
+does not solve it: around scale 6.5 the worse sign is still essentially at or
+just above one, and the ratio rises above one at larger scales. Therefore
+full-Phi is not the A21 solution and will not be promoted as one.
+
+A simple same-endpoint constant discrete-converse metric obtained from a
+single A21 point map was also tested. It remains expansive for one sign at the
+relevant finite scales. Arbitrary pointwise metric fitting is therefore not a
+proof route.
+
+## Exact signed-information ledger
+
+The branch contains the exact complete-word Joseph/reset identities. For one
+same-cell Joseph event,
+
+`y = H e + eta`, `S = H P H^T + R`, `K = P H^T S^-1`, `t=e-Ky`,
+
+and
+
+`V_J - V = - y^T S^-1 y + eta^T R^-1 eta`.
+
+For the shipping reset `P_R=G P_J G^T`, if the exact finite physical error is
+`e_R=G t+rho`, `b=G^-1 rho`, then
+
+`V_R - V_J = 2 t^T J_J b + b^T J_J b`.
+
+Thus a correction/reset contributes exactly
+
+`Delta V = -I_y + E_eta + X_reset + E_reset`.
+
+Every S=0 event has `eta=0` exactly and therefore contributes favorable
+information with its actual applied R_S. Prediction with PSD Q and the PSD a_w
+covariance floor are non-increasing in the corresponding moving linear
+information energy. No packet-count remainder bound is needed or allowed.
+Exact rational H18/A21 tests close these identities.
+
+## A21 mechanism diagnosis
+
+The first reliable A21 finite loss is **not** caused by the 0.5 m/s^2
+accelerometer-bias projection. At scale 6.5 the b_a component of the point
+worst direction is only about 0.086 m/s^2; the projection is inactive. The user
+explicitly rejected lowering the clamp as a proof fix, and no clamp/domain
+change will be made.
+
+The signed point ledger localizes the A21 balance at scale +6.5 approximately
+as follows (diagnostic values, not a certificate):
+
+- initial information energy: about 42.25;
+- prediction/process covariance contribution: about `-0.657`;
+- covariance-floor contribution: about `-0.0011`;
+- 600 accelerometer corrections together: about `+0.662`;
+- vector and S corrections together: about `-0.0050`;
+- total finite reset contribution: small and mildly favorable;
+- nonlinear prediction excess over the linear prediction: only about `+1.8e-4`.
+
+Inside the accelerometer contribution, the dominant adverse term is the
+finite-angle nonlinear residual energy `eta^T R_acc^-1 eta`; the reset cross and
+reset-defect energies are tiny by comparison. At scale 8 the same imbalance is
+larger. Therefore the controlling mechanism is finite accelerometer curvature
+in an A21 direction where attitude, latent acceleration, and accelerometer bias
+nearly cancel the first-order accelerometer residual. Reset-radius tightening,
+metric-floor bounds, and clamp changes target the wrong mechanism.
+
+The exact accelerometer model explains this cancellation. With lever arm off,
+
+`y = (E-I) f_hat + E R_hat delta_a_w + delta_b_a`.
+
+Its first-order row is
+
+`H e = [c]_x f_hat + R_hat delta_a_w + delta_b_a`.
+
+A single short word can therefore contain a direction in which the three
+first-order pieces nearly cancel, while the second-order attitude curvature
+remains. The long-lived residual bias (`tau_b` about 5000 s), the much faster
+latent OU acceleration (order 2 s on the observed word), and changing attitude /
+specific-force geometry provide the natural mechanism that can break this
+cancellation over a longer source-correlated window.
+
+## Theorem-facing A21 routes
+
+The published active-bias theorem already permits two full-state A21 routes:
+
+1. full finite-window PE of attitude/gyro/accelerometer-bias coordinates; or
+2. reduced attitude/gyro PE together with finite bounded `tau_b`, using the
+   intrinsic residual-bias contraction/detectability fallback.
+
+Route 2 retains all 21 states. It is not state elimination and does not turn
+b_a into a removed coordinate. The current P4 machinery must not accidentally
+over-constrain the paper by requiring the shipping P^-1 quadratic to contract
+on every 3-second A21 word if a longer complete word or the finite-tau_b
+full-state cascade is the theorem's valid construction.
 
 ## Retained theorem-facing machinery
 
-The branch now contains exact/outward physical-state primitives for:
+The branch currently retains:
 
-- Cayley true-minus-estimated prediction with the same committed `tau`, body
-  rate and full v/p/S/a_w integrated-OU transition;
-- S=0, accelerometer and vector Joseph events with K derived from the SAME
-  source P/H/R cell;
-- mandatory actual-applied SpectralMSE R_S provenance at every S event;
-- deployed quaternion correction and exact physical attitude composition;
-- A21 0.5 m/s^2 accelerometer-bias projection with Clarke generalized
-  Jacobian when a cell crosses the projection boundary;
-- the separate rectangular H18->A21 event;
-- literal complete-word differential cocycle in shipping order;
-- finite-map generalized mean-value endpoint and every-prefix matrix tests;
-- exact whole-word endpoint transport and the joint accelerometer covariance
-  channel, in which every later S/R_S event remains inside the suffix map.
+- exact/outward Cayley physical prediction with committed h/tau/body rate and
+  the full v/p/S/a_w OU chain;
+- source-cell S/accelerometer/vector Joseph events with K derived from the same
+  P/H/R cell;
+- actual applied R_S provenance on every S event;
+- exact deployed quaternion correction and A21 0.5 m/s^2 bias projection with
+  Clarke generalized Jacobian;
+- the separate H18->A21 rectangular hybrid event;
+- literal complete-word differential cocycle and generalized mean-value bridge;
+- exact whole-word endpoint transport with later actual-R_S suffix maps;
+- joint accelerometer covariance channel;
+- exact signed Joseph/reset information ledger described above.
 
-P3 also supplies a source-uniform prefix information identity
+These are structural components only. Source-uniform finite P4 endpoint,
+every-prefix gain, every-prefix domain retention, and finite reset/source-metric
+attachment remain open.
 
-`Psi_l^T P_l^-1 Psi_l <= P_0^-1`,
+## Dead ends / forbidden rescues
 
-and exact event algebra preserves its established full-matrix margin through
-prediction, every due S update, every accelerometer update, asynchronous vector
-updates, covariance floors and immediate resets. This is a universal algebraic
-fact over complete SEA3 and does not require a finite source-word list.
-
-The reset-gauge attachment closes the **zero-error** P3-to-physical-P4 tangent:
-P3's margin is invariant under every finite covariance reset congruence, while
-for the homogeneous physical event `y(0)=0`, hence `dtheta=0` and `G=I`. This
-justifies the physical zero-state tangent `I-KH`. It does **not** close finite
-nonlinear reset-coordinate transport or nonzero forcing/noise reset attachment.
-
-## Failure analysis / dead ends
-
-Classification of the finite-shadow expansion: **diagnostic-attachment failure,
-not theorem failure**. It invalidates optimizing the estimator-pair raw/Phi
-endpoint storage as if it were the physical P4 map. It does not invalidate
-frozen P3, the physical event equations, or the finite-state endpoint/prefix
-P4 theorem.
-
-A second experiment-design issue is now explicit: a point evaluator that drops
-shipping covariance resets by selecting the congruent `G=I` representative can
-verify the zero-state tangent, but finite-error energies are not automatically
-the paper's quadratic physical-error storage. After a nonzero correction, the
-physical post-correction Cayley/additive coordinates and a Joseph-posterior
-covariance with its reset congruence omitted are not in the same finite
-coordinate gauge unless the exact finite reset-coordinate transport is also
-applied. The current reset-gauge lemma deliberately leaves that transport open.
-
-Classification: **finite diagnostic metric-attachment gap**, not theorem
-failure and not a P3 failure. It invalidates interpreting reset-normalized
-finite point ratios as theorem-grade `V_N/V_0` before the finite coordinate
-attachment is closed. It does not invalidate their zero-state Jacobian parity,
-the physical state event map itself, or the source/event payload.
-
-**DEAD_ENDS / forbidden rescues**
-
-- duplicated host observers that reconstruct the scheduler independently;
-- pure-`e_eta`, scalar Lipschitz, correction-radius, inverse-metric-floor, or
-  packet-count-times-worst-remainder routes;
-- selected-S replacement words or independent R_S/tuner schedules;
-- Schur/elimination of `a_w` or any active state from the final P4 condition;
+- duplicated host observers or independent schedulers/Riccati histories;
+- estimator-pair shadow promoted as the theorem map;
+- raw or full-Phi estimator-pair endpoint optimization;
+- physical full-Phi treated as an A21 solution after its point failure;
+- arbitrary single-map converse-metric fitting;
 - 6/9-second optimization of the estimator-pair shadow;
-- treating the estimator-pair finite rho as the physical theorem map;
-- replacing the 601-sample SEA3 behavior by independent per-sample physical
-  boxes;
-- inventing an L2/spectral hard amplitude bound from JONSWAP. The theorem
-  explicitly states that the spectrum alone does not provide the deterministic
-  pathwise bound for `X^s_SEA3`;
-- treating zero-error reset-gauge isometry as if it had already proved finite
-  nonlinear reset-coordinate attachment.
-
-## Current limiter
-
-There is still **no theorem-grade low-pessimism point energy result for the
-actual finite P4 storage**. The new same-observer physical payload and physical
-state map are useful, but finite energy interpretation requires the exact
-finite reset-coordinate attachment first. Going directly from a reset-normalized
-finite ratio to a source-uniform interval proof would violate the research
-protocol.
-
-For universal closure, the complete SEA3 hard-window behavior `B^601_SEA3` is
-compact and requires one common phase/parameter/response witness, but its
-validated correlated outer-enclosure oracle is not implemented. Normal-Live
-sample caps are explicitly not sufficient membership conditions. Conditional
-P4 does not require the separate physical SEA0->SEA3 left inclusion, but it may
-not replace the admitted SEA3 history by independent boxes.
-
-A promising way to avoid materializing the 10,818-dimensional sampled behavior
-is to use P3's universal event algebra and the complete-word endpoint
-reduction. The joint accelerometer channel already gives
-
-`d_acc^T P_N^-1 d_acc <= q^T R_acc^-1 q`
-
-for the entire stacked nonlinear accelerometer history, with no packet-count
-multiplier and with every later actual-R_S S event inside the suffix. The open
-question is whether the stacked nonlinear graph and endpoint cross/boundary
-terms can be dominated by the same complete-word information on a usable
-finite cell.
+- selected-S words, independent R_S/tuner schedules, or independent per-sample
+  source boxes;
+- state elimination / a_w Schur final certificate;
+- scalar Lipschitz, pure-e_eta, correction-radius, inverse-metric-floor, or
+  packet-count-times-worst-remainder bounds;
+- inventing an L2/spectral pathwise bound from JONSWAP;
+- changing the accelerometer-bias clamp or shrinking the declared domain to
+  make A21 easier.
 
 ## Independent critic pass
 
-The strongest immediate reason to distrust the present point experiment is the
-finite reset-coordinate mismatch, not a numerical rho. Zero-error parity alone
-cannot justify evaluating finite post-correction physical errors in an
-unreset Joseph covariance metric.
+The strongest reason to abandon a longer-window route would be a same-history
+**physical** A21 point result that remains expansive on source-contiguous 6 s
+and 9 s windows, especially after the linear maximizing direction is recomputed
+for each longer window. In that case extra source PE is not repairing the
+finite curvature mechanism and adding universal enclosure machinery would be
+wasted effort.
 
-Three legitimate routes from this limiter are:
+Conversely, a strict longer physical point result is not proof. It only shows
+that the paper-permitted longer complete-window route has enough margin to
+justify the next universal enclosure. The universal proof must consume the
+complete SEA3 source language, not the replay used by this falsification test.
 
-1. derive the exact finite reset-normalized physical coordinate and prove that
-   the paper's chosen quadratic storage is represented without an error-dependent
-   metric; then rerun the same-observer physical finite-map point test;
-2. keep the paper's physical Cayley/additive coordinates and transport the
-   source-indexed P3 metric through an exact source-only congruent representative
-   at each boundary, proving that the representative does not depend on the
-   finite error state;
-3. if neither is compatible with the paper's stated source-indexed quadratic
-   storage, use the whole-word endpoint identity directly and prove finite
-   dissipation without introducing a state-dependent Riccati metric.
-
-None permits state elimination, source replacement, independent R_S schedules,
-or changing the theorem domain.
+If longer physical windows fail, the next qualitatively different route is the
+paper's finite-tau_b full-state A21 cascade/detectability construction. That
+route must produce a full-rank 21-state Lyapunov inequality and retain all
+couplings; it may not eliminate b_a or weaken A21 into an 18-state result.
 
 ## Next falsifiable experiment
 
-The same-observer payload path is implemented and should still be run because
-it verifies event extraction, actual-R_S retention, zero-state H/K/Jacobian
-parity, and the exact physical state map. Its finite ratios are **diagnostic
-only** until reset-coordinate attachment closes.
+Use the existing **single shipping operation observer** and genuine coupled
+source, but scan source-contiguous 1200-sample (6 s) and 1800-sample (9 s)
+windows in addition to the existing 600-sample diagnostic. For each horizon:
 
-Before using those finite ratios to select or reject a P4 cell, derive and test
-the exact finite reset-coordinate identity at a single Joseph event:
+1. recompute the worst linear H18/A21 direction from the exact shipping map and
+   moving covariance boundaries for that same horizon;
+2. require every valid accelerometer update and every due S update with actual
+   applied R_S; reject hybrid/mode-changing windows exactly as for 3 s;
+3. emit the selected source/event payload from the same observer;
+4. canonicalize only the host-reconstructed measurement geometry, retaining
+   strict zero-state event/whole-word parity;
+5. execute the exact physical true-minus-estimated finite map for both signs
+   over the declared finite cell;
+6. report endpoint ratios, worst prefix gain, domain retention, event counts,
+   projection activity, and the signed-information balance;
+7. do not assert contraction as a CI infrastructure condition and do not
+   promote P4 from this replay.
 
-- start from exact Cayley true-minus-estimated pre-correction error and the same
-  P/H/R cell;
-- apply the exact physical correction `E_plus=E Q(Ky)^-1` and additive
-  true-minus-estimated corrections;
-- relate the resulting finite physical coordinate to the covariance reset
-  `P_R=G P_J G^T` without replacing `G` by `I` unless the corresponding state
-  coordinate is transformed by the exact same gauge map;
-- prove the energy identity in both H18 and A21, including the A21 bias
-  projection branch;
-- verify its derivative at zero reduces to the already-closed reset-gauge
-  tangent.
+This is a theorem-facing **window-length feasibility** test, not the retired
+estimator-shadow multiword optimization. The paper explicitly allows longer
+proof windows in its finite-window observability construction.
 
-Only after that single-event finite metric attachment passes should the full
-same-observer physical word be assigned theorem-storage endpoint/prefix ratios.
-If the corrected physical point result is strict, proceed to the source-uniform
-generalized mean-value endpoint/prefix enclosure; if it is not strict, stop and
-replan before adding an enclosure lemma.
+If a longer physical window is strict, the next proof implementation is the
+same-history complete-SEA3 signed-information / finite-map enclosure over that
+chosen finite window. If neither 6 s nor 9 s is strict, stop this route and
+build the finite-tau_b full-state A21 cascade certificate instead.
 
 P4 remains OPEN. P5 remains BLOCKED. No merge is authorized.
