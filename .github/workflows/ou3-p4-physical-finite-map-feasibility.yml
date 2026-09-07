@@ -15,6 +15,7 @@ on:
       - "tests/validation/test_ou3_retained_word_attachment.py"
       - "tests/validation/test_ou3_physical_sea3_membership.py"
       - "tests/validation/test_ou3_source_endpoint.py"
+      - "tests/validation/test_ou3_connected_motion.py"
       - "tools/stability/ou3_mems_bias_contract.py"
       - "tools/stability/ou3_p4_complete_sea3_signed_information_ledger.py"
       - "tools/stability/ou3_proof_operating_domain.json"
@@ -79,7 +80,7 @@ jobs:
 
       - name: Test bias and finite attachment algebra
         working-directory: tests/validation
-        run: python3 -m unittest -v test_ou3_bias_witness_admissibility test_ou3_retained_word_attachment test_ou3_physical_sea3_membership test_ou3_sea3_response_union test_ou3_source_endpoint
+        run: python3 -m unittest -v test_ou3_bias_witness_admissibility test_ou3_retained_word_attachment test_ou3_physical_sea3_membership test_ou3_sea3_response_union test_ou3_source_endpoint test_ou3_connected_motion
 
       - name: Capture one source-connected finite shipping history and test fixed endpoints
         run: |
@@ -104,6 +105,20 @@ jobs:
               assert result['homogeneous_P4_endpoint_ratio'] is None
               assert not result['canonical_P4_falsified']
           PY
+
+      - name: Attach every shipping subevent to the same physical source and forcing
+        run: |
+          python3 tests/kalman_ou_iii/ou3_p4_trace_overlay.py \
+            --repository . --output /tmp/ou3-motion-trace-overlay
+          g++ -std=c++20 -O2 -Wall -Wextra -Werror -DOU3_SOURCE_EVENT_TRACE \
+            -I /tmp/ou3-motion-trace-overlay -I src \
+            -isystem /usr/include/eigen3 -isystem _physical-sea-generator/src \
+            tools/stability/ou3-source-endpoint.cpp -o /tmp/ou3-source-events
+          /tmp/ou3-source-events /tmp/ou3-source-events
+          python3 tests/kalman_ou_iii/ou3_p4_connected_motion.py \
+            --prefix /tmp/ou3-source-events --baseline-prefix /tmp/ou3-source-endpoint \
+            --manifest /tmp/ou3-motion-trace-overlay/trace-manifest.json \
+            --output /tmp/ou3-connected-motion.json
 
       - name: Audit exact retained payloads without regeneration or a new search
         run: |
@@ -158,4 +173,7 @@ jobs:
             /tmp/ou3-source-endpoint.root.json
             /tmp/ou3-source-endpoint.inputs.csv
             /tmp/ou3-source-endpoint.prefixes.jsonl
+            /tmp/ou3-source-events.events.jsonl
+            /tmp/ou3-connected-motion.json
+            /tmp/ou3-motion-trace-overlay/trace-manifest.json
           retention-days: 7

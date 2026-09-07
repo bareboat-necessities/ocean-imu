@@ -120,3 +120,16 @@ truth's defect relative to the committed F_LL prediction. A forced trajectory
 ratio is not the homogeneous P4 ratio; no result of this capture alone can
 authorize a sector search or falsify homogeneous contraction. Intermediate
 S/accelerometer/reset graph capture and homogeneous attachment remain open.
+
+The connected subevent test is
+`tests/kalman_ou_iii/ou3_p4_connected_motion.py`. Its read-only trace overlay
+must strip back to the shipping header and reproduce the uninstrumented
+root/input/endpoint files byte-for-byte. It checks the full actual gains,
+Joseph updates, finite resets/projection and source/error residuals at every
+shipping event. In particular, physical S=0 has residual
+`delta_S-S_true`: the `-S_true` source input is retained alongside the existing
+actual-R_S stabilizing correction. The output includes full-information
+18-error storage and eventwise signed energy changes, not a fitted gain or
+an outward source-uniform certificate. Its stopping gate is point attachment;
+the nonlinear graph sectors and augmented motion/gain master must follow only
+on the attached graph. No earlier full-state ratio is promoted by this test.

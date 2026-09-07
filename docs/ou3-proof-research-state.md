@@ -2,6 +2,37 @@
 
 ## Current hypothesis: bounded-bias practical motion stability
 
+The next connected test is `ou3_p4_connected_motion.py`. A test-only header
+overlay inserts read-only callbacks into the actual C++ observer; stripping
+the callbacks must recover shipping bytes, and the complete root/input/endpoint
+capture must match an uninstrumented run byte-for-byte. The callbacks expose
+prediction, every actual-R_S S call, accelerometer/magnetic Joseph injection,
+finite quaternion/covariance reset and bias projection. No gain or storage is
+fitted to the trajectory. The 18-error performance storage evaluates the
+principal 18x18 block of the full 21x21 information matrix, without changing
+the active filter or its gains.
+
+Attachment finding: the earlier homogeneous S map contains `y=delta_S` and
+does retain the complete R_S-weighted corrective gain. Its physical residual
+is instead `r_S=-S_hat=delta_S-S_true`. The missing physical-source attachment
+is the `-S_true` input, not a missing S update or R_S regularization. Together
+with the already measured truth-minus-F_LL and gyro-discretization defects,
+this invalidates identification of those homogeneous maps with the actual
+noise-free sea trajectory. It does not invalidate their homogeneous algebra,
+P3, the relaxed theorem, or the filter coefficients. Both correction and
+physical forcing must remain in the connected graph, with separate units and
+no silent conversion of a forced ratio to contraction. The next falsifiable
+gate is every-subevent finite error/residual/P/K/reset reproduction, before
+assembling graph sectors and the augmented channel-gain master. Point parity
+and signed energy telescoping alone cannot certify motion gains or P4.
+
+The relaxed-theorem checkpoint's CI passed P3 and all 127 P4-job tests, the
+theorem smoke build and all six quality gates. The independent same-history
+job ended cancelled; its logs were unavailable, so it is not recorded as a
+PASS or a mathematical failure. The separate replay-provenance validation
+failure remains unchanged. This is an execution/evidence limitation, not
+permission to weaken a gate; the focused connected trace runs independently.
+
 The user-authorized primary theorem now asks for bounded accelerometer-bias
 error and practical stability of the other 18 errors, not full A21 nonlinear
 contraction or bias convergence. Both physical SEA3+ branches and both actual

@@ -20,6 +20,15 @@
 #include "util/W3dSimCommon.h"
 #include "kalman_ou_common/KalmanOUCoreMath.h"
 
+#ifdef OU3_SOURCE_EVENT_TRACE
+namespace ou3_source_trace {
+template<class Core> void state(const char*, const Core&);
+template<class V> void gyro(const V&);
+template<class Core, class A, class B, class C, class D>
+void measurement(const char*, const Core&, const A&, const B&, const C&, const D&);
+}
+#endif
+
 // Read-only host access, as in ou3-operation-ledger-sim.cpp. No writes to
 // private estimator state, no reseeding P or intervention at window entrance.
 #define private public
@@ -58,6 +67,17 @@ struct Truth {
     V3 acc;
     V3 gyro;
 };
+
+#ifdef OU3_SOURCE_EVENT_TRACE
+std::ostream* trace_output = nullptr;
+const Truth* trace_truth = nullptr;
+const Truth* trace_previous = nullptr;
+const char* trace_word = nullptr;
+unsigned trace_index = 0;
+double trace_time = 0;
+const char* trace_measurement_kind = "none";
+V3 trace_gyro = V3::Zero();
+#endif
 
 Truth source(const Sea& sea, double t)
 {
@@ -131,6 +151,80 @@ void checkpoint(std::ostream& out, const Fusion& fusion, const Truth& truth,
 }
 } // namespace
 
+#ifdef OU3_SOURCE_EVENT_TRACE
+namespace ou3_source_trace {
+template<class V>
+void gyro(const V& value)
+{
+    if (trace_word) trace_gyro = value.template cast<double>();
+}
+
+template<class Core>
+void common(std::ostream& out, const char* stage, const Core& m)
+{
+    const bool entrance = std::string(stage) == "prediction_enter";
+    const Truth& truth = entrance ? *trace_previous : *trace_truth;
+    M3 unheel;
+    for (int j = 0; j < 3; ++j)
+        unheel.col(j) = m.deheel_vector_(Eigen::Vector3f::Unit(j)).template cast<double>();
+    out << "{\"word\":\"" << trace_word << "\",\"index\":" << trace_index
+        << ",\"stage\":\"" << stage << "\",\"kind\":\"" << trace_measurement_kind
+        << "\",\"source_time\":" << trace_time-(entrance ? double(dt) : 0.0)
+        << ",\"active\":" << m.acc_bias_updates_enabled()
+        << ",\"wind_heel\":" << m.wind_heel_rad_
+        << ",\"gravity\":" << m.gravity_magnitude_
+        << ",\"tau_b\":" << m.tau_bacc_
+        << ",\"projection_radius\":" << m.acc_bias_limit_
+        << ",\"R_true\":";
+    array(out, (unheel*truth.R).eval());
+    out << ",\"linear_true\":"; array(out, truth.linear);
+    out << ",\"true_bias\":[0,0,0],\"R_hat\":"; array(out, m.R_wb());
+    out << ",\"x_hat\":"; array(out, m.xext);
+    out << ",\"P\":"; array(out, m.covariance_full());
+    out << ",\"R_S\":"; array(out, m.R_S);
+    out << ",\"mag_reference\":"; array(out, m.v2ref);
+}
+
+template<class Core>
+void state(const char* stage, const Core& m)
+{
+    if (!trace_word) return;
+    auto& out = *trace_output;
+    if (std::string(stage) == "prediction_enter") trace_measurement_kind = "none";
+    common(out, stage, m);
+    if (std::string(stage) == "prediction") {
+        out << ",\"F_LL\":"; array(out, m.F_LL_scratch_);
+        out << ",\"F_AA\":"; array(out, m.F_AA_scratch_);
+        out << ",\"Q_LL\":"; array(out, m.Q_LL_scratch_);
+        out << ",\"Q_AA\":"; array(out, m.Q_AA_scratch_);
+        out << ",\"Q_b\":"; array(out, m.Q_bacc_);
+        out << ",\"omega_hat\":"; array(out, m.last_gyr_bias_corrected);
+        out << ",\"gyro_measured\":"; array(out, trace_gyro);
+    }
+    out << "}\n";
+}
+
+template<class Core, class A, class B, class C, class D>
+void measurement(const char* kind, const Core& m, const A& residual,
+                 const B& measured, const C& R, const D& temperature_mean)
+{
+    if (!trace_word) return;
+    if (m.use_imu_lever_arm_) throw std::runtime_error("trace requires dormant lever arm");
+    trace_measurement_kind = kind;
+    auto& out = *trace_output;
+    common(out, "measurement", m);
+    out << ",\"r\":"; array(out, residual);
+    out << ",\"measured\":"; array(out, measured);
+    out << ",\"R\":"; array(out, R);
+    out << ",\"temperature_mean\":"; array(out, temperature_mean);
+    out << ",\"K\":"; array(out, m.K_scratch_);
+    out << ",\"PCt\":"; array(out, m.PCt_scratch_);
+    out << ",\"innovation_cov\":"; array(out, m.S_scratch_);
+    out << "}\n";
+}
+} // namespace ou3_source_trace
+#endif
+
 int main(int argc, char** argv)
 {
     try {
@@ -139,6 +233,12 @@ int main(int argc, char** argv)
         std::ofstream root(prefix + ".root.json");
         std::ofstream inputs(prefix + ".inputs.csv");
         std::ofstream points(prefix + ".prefixes.jsonl");
+#ifdef OU3_SOURCE_EVENT_TRACE
+        std::ofstream events(prefix + ".events.jsonl");
+        if (!events) throw std::runtime_error("cannot open event capture");
+        events << std::setprecision(17) << std::boolalpha;
+        trace_output = &events;
+#endif
         if (!root || !inputs || !points) throw std::runtime_error("cannot open capture");
         root << std::setprecision(17);
         inputs << std::setprecision(17);
@@ -202,6 +302,15 @@ int main(int argc, char** argv)
                                source_time-double(dt), false, rs, V12::Zero());
                 }
             }
+#ifdef OU3_SOURCE_EVENT_TRACE
+            trace_word = nullptr;
+            for (std::size_t w = 0; w < 2; ++w)
+                if (started[w] && counts[w] < 600u) trace_word = names[w];
+            trace_truth = &truth;
+            trace_previous = &previous;
+            trace_index = index;
+            trace_time = source_time;
+#endif
             fusion.update(dt, gyro, acc, 35.0f);
             // Handoff may replace the core; do not retain a pre-update core
             // reference across the literal wrapper update.
@@ -228,6 +337,9 @@ int main(int argc, char** argv)
             inputs << ',' << mag_tick;
             for (int j = 0; j < 3; ++j) inputs << ',' << mag(j);
             inputs << '\n';
+#ifdef OU3_SOURCE_EVENT_TRACE
+            trace_word = nullptr;
+#endif
             for (std::size_t w = 0; w < 2; ++w)
                 if (started[w] && counts[w] < 600u) ++counts[w];
             if (counts[1] == 600u) break;
