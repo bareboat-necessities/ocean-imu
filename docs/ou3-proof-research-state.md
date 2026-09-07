@@ -111,7 +111,9 @@ For `z=[x;w_W]`, the controlling matrix is
 `L_W=[[-D_W,M_W^T J_N B_W],[B_W^T J_N M_W,B_W^T J_N B_W]]`.
 Admissible graph sectors `z^T Pi_j z>=0` enter only through the full
 S-procedure test `-(L_W+sum lambda_j Pi_j)>0`; the same construction is
-required at every prefix.
+required at every prefix with finite gain, not prefix contraction. Set
+`D_k(Gamma)=Gamma J_0-M_k^T J_k M_k`, with finite `Gamma>=1`, in the
+same augmented builder. Every-prefix domain/chart retention remains separate.
 
 ## Evidence and current limiter
 
@@ -146,11 +148,13 @@ domain/filter changes remain forbidden.
 
 The remaining alternatives are a dense source-structured storage LMI, a
 path-dependent joint storage, or direct falsification of a source-uniform
-inner funnel. The next falsifiable experiment is to materialize only the
-same-history state/residual selectors needed by the master, lift the exact
-Cayley and A21 projection bounds into dense graph sectors, and evaluate the
-full augmented matrix first on the canonical point word. Proceed to outward
-source-uniform LDLT only if that non-promoting matrix diagnostic is below one.
+inner funnel. First obtain CI evidence for the connected execution fixture and
+resolve the complete-source witness. Before any new sector search, reconcile
+the retained A21 counterexample with the exact proposed source/error domain,
+physical map and storage. If it is admitted, valid graph sectors cannot change
+its `rho>1`. Conversely, failure of an S-procedure relaxation alone does not
+falsify the storage. Only a demonstrated feasible full-word formulation
+justifies source-uniform enclosure work.
 
 ## Complete-source obligation still open
 
@@ -158,8 +162,41 @@ The upstream complete-source contract still does not materialize the correlated 
 
 The full-state master now identifies the needed quantities: same-history prefix
 state selectors, stacked nonlinear residual selectors, reset/boundary terms,
-and the A21 projection graph. Extend the existing complete-SEA3 execution only
-to materialize those quantities, rather than creating another source language.
+and the A21 projection graph. A cell/lineage identifier is not a hard SEA3
+membership or inclusion proof. The translational response envelope does not
+supply the missing joint rotational realization or hard correlated driver.
+No additional rotational envelope, coherence budget, or source restriction
+is adopted here.
+
+The A21 projection also needs the same-history true temperature-centered
+residual bias. At zero bias error its output is
+`b_true-project_0.4(b_true)`. The homogeneous map must prove this is zero;
+an OU covariance or the estimated active-state cap does not provide that
+true-bias premise. Source forcing and the separate H->A event remain explicit.
+
+## Connected execution experiment
+
+The rejected `P0_H=2 I_18`, `P0_A=2 I_21` two-prefix fixture loses innovation
+pivot 1 at `[-31.51349023865584,33.33589453040376]` in the unchanged outward
+Joseph inverse. This is an enclosure failure of that arbitrary fixture, not
+a filter, conditional-P3, or P4-contraction result. Do not regularize the pivot,
+drop a prefix, or select a favorable frontend successor.
+
+The single motivated refinement uses Live-structured covariance: the same
+committed stationary `a_w` variance, tilt/yaw handoff, and shipping `b_g/v/p/S`
+seeds. A21 appends the shipping bias-floor variance for the fixture only.
+It does **not** execute pre-release H18 history or certify A21 entry reachability.
+The controlling diagnostic is completion of both prefixes with unchanged
+Joseph arithmetic and uninterrupted event-local covariance ancestry.
+
+CI produces `ou3-same-history-prefix-execution`: per-prefix H18/A21 covariance
+diagonals and interval widths, event order, and captured actual `R_S` diagonals.
+Its two-sample scope and unclosed source/entry/P4 flags are mandatory. The
+canonical P3->P4 dependency chain is unchanged. The critic boundary is that
+this repairs execution evidence, not the known A21 endpoint inequality.
+If the Live-structured fixture also fails, stop this refinement; the distinct
+alternatives are a covariance representation change, direct source-witness
+construction, or abandonment of this execution representation after audit.
 
 ## Current CI / evidence status
 

@@ -31,6 +31,41 @@ permissions:
   contents: read
 
 jobs:
+  same-history-execution:
+    # Non-promoting execution diagnostics can report independently of the
+    # longer canonical P3 -> P4 chain. No existing proof dependency is bypassed.
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Produce same-history prefix execution evidence
+        run: |
+          git rev-parse HEAD
+          python3 tools/stability/ou3_p4_complete_sea3_same_history_prefix_selectors.py \
+            --output /tmp/ou3_same_history_prefix_execution.json
+
+      - name: Test entry fixture and event-by-event covariance continuity
+        working-directory: tests/validation
+        run: |
+          python3 -m unittest -v \
+            test_ou3_p4_complete_sea3_same_history_prefix_selectors \
+            test_ou3_sea3_complete_window_execution_kernel \
+            test_ou3_sea3_live_covariance_seed \
+            test_ou3_p4_complete_sea3_finite_map_mean_value \
+            test_ou3_p4_complete_sea3_differential_events
+
+      - name: Upload non-promoting execution evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: ou3-same-history-prefix-execution
+          path: /tmp/ou3_same_history_prefix_execution.json
+          if-no-files-found: warn
+          retention-days: 7
+
   source-foundation:
     runs-on: ubuntu-latest
     timeout-minutes: 20
