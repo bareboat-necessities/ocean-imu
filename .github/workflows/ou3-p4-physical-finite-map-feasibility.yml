@@ -6,6 +6,7 @@ on:
       - "tests/kalman_ou_iii/ou3-operation-ledger-sim.cpp"
       - "tests/kalman_ou_iii/ou3_p4_complete_sea3_word_feasibility.py"
       - "tests/kalman_ou_iii/ou3_p4_physical_finite_map_feasibility.py"
+      - "tests/kalman_ou_iii/ou3_p4_canonicalize_physical_payload.py"
       - "tools/stability/ou3_p4_complete_sea3_differential_prediction.py"
       - "tools/stability/ou3_p4_complete_sea3_differential_events.py"
       - "tools/stability/ou3_p4_complete_sea3_reset_gauge_attachment.py"
@@ -20,6 +21,7 @@ on:
       - "tests/kalman_ou_iii/ou3-operation-ledger-sim.cpp"
       - "tests/kalman_ou_iii/ou3_p4_complete_sea3_word_feasibility.py"
       - "tests/kalman_ou_iii/ou3_p4_physical_finite_map_feasibility.py"
+      - "tests/kalman_ou_iii/ou3_p4_canonicalize_physical_payload.py"
       - "tools/stability/ou3_p4_complete_sea3_differential_prediction.py"
       - "tools/stability/ou3_p4_complete_sea3_differential_events.py"
       - "tools/stability/ou3_p4_complete_sea3_reset_gauge_attachment.py"
@@ -126,11 +128,38 @@ jobs:
                   raise SystemExit(f'{mode} physical payload was not emitted')
           PY
 
-      - name: Execute true-minus-estimated physical finite maps
+      - name: Canonicalize recovered measurement geometry without weakening parity gates
+        run: |
+          for mode in H18 A21; do
+            python3 tests/kalman_ou_iii/ou3_p4_canonicalize_physical_payload.py \
+              --input /tmp/ou3_p4_physical_payload_${mode}.bin \
+              --output /tmp/ou3_p4_physical_payload_canonical_${mode}.bin \
+              --report /tmp/ou3_p4_physical_payload_projection_${mode}.json
+          done
+          python3 - <<'PY'
+          import json
+          for mode in ('H18','A21'):
+              d=json.load(open(f'/tmp/ou3_p4_physical_payload_projection_{mode}.json'))
+              assert d['P_Q_linear_map_schedule_timestamps_copied_bit_for_bit'] is True
+              assert d['actual_RS_S_events_copied_bit_for_bit'] is True
+              assert d['finite_source_or_theorem_word_generated_here'] is False
+              assert d['P4_promoted'] is False
+              assert d['event_counts']['prediction'] == 600
+              assert d['event_counts']['accelerometer'] == 600
+              assert d['max_accelerometer_Rwb_orthogonality_error_after'] <= 1e-6
+              print('PHYSICAL_PAYLOAD_PROJECTION', mode,
+                    'H_rel_all=', d['max_H_relative_projection_all_columns'],
+                    'H_rel_supported=', d['max_H_relative_projection_supported_columns'],
+                    'R_offdiag=', d['max_R_offdiag_removed'],
+                    'Rwb_before=', d['max_accelerometer_Rwb_orthogonality_error_before'],
+                    'Rwb_after=', d['max_accelerometer_Rwb_orthogonality_error_after'])
+          PY
+
+      - name: Execute reset-normalized physical finite-map diagnostics
         run: |
           for mode in H18 A21; do
             python3 tests/kalman_ou_iii/ou3_p4_physical_finite_map_feasibility.py \
-              --payload /tmp/ou3_p4_physical_payload_${mode}.bin \
+              --payload /tmp/ou3_p4_physical_payload_canonical_${mode}.bin \
               --domain tools/stability/ou3_proof_operating_domain.json \
               --input tests/kalman_ou_iii/wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv \
               --output /tmp/ou3_p4_physical_finite_map_${mode}.json
@@ -154,7 +183,7 @@ jobs:
               assert d['event_counts']['prediction'] == 600
               assert d['event_counts']['accelerometer'] == 600
               assert d['actual_RS_std_ratio_max_error'] <= 2e-5
-              print('OU3_P4_PHYSICAL_FINITE_MAP', mode,
+              print('OU3_P4_RESET_NORMALIZED_PHYSICAL_DIAGNOSTIC', mode,
                     'linear_rho=', d['reset_normalized_linear_rho'],
                     'scale_limit=', d['declared_scale_limit'],
                     'valid_cases=', d['valid_domain_cases'],
@@ -176,6 +205,10 @@ jobs:
             /tmp/ou3_p4_physical_event_ledger_A21.csv
             /tmp/ou3_p4_physical_payload_H18.bin
             /tmp/ou3_p4_physical_payload_A21.bin
+            /tmp/ou3_p4_physical_payload_canonical_H18.bin
+            /tmp/ou3_p4_physical_payload_canonical_A21.bin
+            /tmp/ou3_p4_physical_payload_projection_H18.json
+            /tmp/ou3_p4_physical_payload_projection_A21.json
             /tmp/ou3_p4_physical_finite_map_H18.json
             /tmp/ou3_p4_physical_finite_map_A21.json
           retention-days: 7
