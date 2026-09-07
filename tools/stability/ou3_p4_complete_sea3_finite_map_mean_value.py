@@ -1,41 +1,33 @@
 #!/usr/bin/env python3
-"""Finite-map mean-value bridge for the canonical complete-SEA3 P4 theorem.
+"""Finite-map mean-value bridge for canonical complete-SEA3 P4.
 
-This module does not define a new Lyapunov metric and does not generate a source
-word.  It supplies the theorem bridge that lets the retained outward AD event
-machinery enclose the *finite physical error map* required by the paper.
+This is not a new source or Lyapunov metric.  It connects the retained outward
+AD machinery to the paper's finite physical quadratic theorem.
 
-Let F_W(0,zeta)=0 be the homogeneous physical true-minus-estimated complete-word
-map on a star-shaped finite-error cell X.  If one SAME-HISTORY complete-SEA3
-construction outward-encloses every ordinary/Clarke generalized Jacobian along
-all radial segments t e, 0<=t<=1, by a matrix family J_W, then the generalized
-mean-value theorem gives
+For the homogeneous physical error word F_W with F_W(0,zeta)=0, suppose one
+SAME-HISTORY complete-SEA3 enclosure contains every ordinary/Clarke generalized
+Jacobian on every radial segment t e, 0<=t<=1, inside a star-shaped finite-error
+cell X.  The generalized mean-value theorem gives
 
-    F_W(e,zeta) in J_W e,     e in X.
+    F_W(e,zeta) in J_W e.
 
-Thus the paper's finite quadratic endpoint condition is certified directly by
-one full-matrix enclosure
+Hence the paper endpoint inequality follows from the full-matrix test
 
-    rho M_0 - J_W^T M_N J_W > 0,       0<rho<1,
+    rho M_0 - J_W^T M_N J_W > 0,       0 < rho < 1.
 
-where M_0 and M_N are the source-indexed endpoint information metrics from the
-same SEA3 word.  This is a finite-state statement, not a differential-metric
-replacement theorem.
+For every literal prefix the same argument gives the required finite gain from
 
-Exactly the same construction applies to every literal prefix F_ell.  A finite
-prefix gain kappa_V is certified by
+    kappa_V M_0 - J_ell^T M_ell J_ell >= 0.
 
-    kappa_V M_0 - J_ell^T M_ell J_ell >= 0
+The computational test below uses strict interval LDLT also for prefixes; that
+is stronger than the paper's non-strict prefix condition and avoids relying on
+an uncertified semidefinite boundary.  Rectangular Jacobians are supported for
+the H18->A21 hybrid.
 
-for every 0<=ell<N_W, together with proof that each finite prefix remains in the
-same certified chart/source domain.  The H18->A21 map may be rectangular; the
-matrix test below therefore permits J to have a different output dimension.
-
-The interval matrix supplied to these routines must come from one correlated
-complete-SEA3 source cell.  Independently boxing P/H/R/K, tuner values, R_S,
-event timing, or successive Jacobians is expressly not justified by this
-bridge.  Every due S=0 event with the actual applied anisotropic SpectralMSE R_S
-must already be inside the literal word whose Jacobian is enclosed.
+The supplied metric/Jacobian cells must retain one correlated complete SEA3
+history.  Independently boxing P/H/R/K, tuner values, R_S, event timing, or
+successive Jacobians is not authorized.  Every due S=0 update with its actual
+applied anisotropic SpectralMSE R_S must already be in the literal word.
 """
 from __future__ import annotations
 
@@ -60,8 +52,8 @@ import ou3_p4_complete_sea3_differential_word as DWRD
 
 REPO = Path(__file__).resolve().parents[2]
 DEFAULT_DOMAIN = REPO / "tools" / "stability" / "ou3_proof_operating_domain.json"
-SCHEMA = 1
-QUALIFICATION = "OU3_P4_COMPLETE_SEA3_FINITE_MAP_MEAN_VALUE_BRIDGE_V1"
+SCHEMA = 2
+QUALIFICATION = "OU3_P4_COMPLETE_SEA3_FINITE_MAP_MEAN_VALUE_BRIDGE_V2"
 
 
 def _shape(A: Sequence[Sequence[Interval]]) -> tuple[int, int]:
@@ -85,22 +77,27 @@ def finite_quadratic_margin(
     J: Sequence[Sequence[Interval]],
     factor: float,
 ) -> IntervalMatrix:
-    """Return ``factor*M0 - J^T*M1*J`` with outward interval arithmetic.
+    """Outward enclosure of ``factor*M0 - J^T*M1*J``.
 
-    ``J`` may be rectangular, which is required for the H18->A21 hybrid.
-    The caller is responsible for same-source provenance of M0/M1/J.
+    J may be rectangular.  Same-source provenance of M0/M1/J is a caller
+    precondition; this routine never manufactures independent theorem cells.
     """
     n0, n0b = _shape(M0)
     n1, n1b = _shape(M1)
     jr, jc = _shape(J)
     if n0 == 0 or n0 != n0b or n1 == 0 or n1 != n1b:
-        raise ValueError("endpoint metrics must be nonempty square matrices")
+        raise ValueError("metrics must be nonempty square matrices")
     if (jr, jc) != (n1, n0):
-        raise ValueError("Jacobian shape must map input metric dimension to output metric dimension")
+        raise ValueError("Jacobian does not map input metric dimension to output dimension")
     if not (math.isfinite(float(factor)) and float(factor) > 0.0):
         raise ValueError("positive finite factor required")
     pullback = matrix_mul(matrix_mul(matrix_transpose(J), M1), J)
     return matrix_symmetric_hull(matrix_sub(_scale(M0, factor), pullback))
+
+
+def _strict_ldlt(margin: Sequence[Sequence[Interval]]) -> tuple[bool, list[float]]:
+    ok, pivots = symmetric_positive_definite_ldlt(margin)
+    return bool(ok), [float(x.lo) for x in pivots]
 
 
 def certify_strict_endpoint_contraction(
@@ -109,12 +106,9 @@ def certify_strict_endpoint_contraction(
     JN: Sequence[Sequence[Interval]],
     rho: float,
 ) -> tuple[bool, list[float]]:
-    """Strict full-matrix endpoint test for the finite physical map."""
     if not (0.0 < float(rho) < 1.0):
         raise ValueError("endpoint rho must lie strictly in (0,1)")
-    margin = finite_quadratic_margin(M0, MN, JN, rho)
-    ok, pivots = symmetric_positive_definite_ldlt(margin)
-    return bool(ok), [float(x) for x in pivots]
+    return _strict_ldlt(finite_quadratic_margin(M0, MN, JN, rho))
 
 
 def certify_prefix_gain(
@@ -123,17 +117,9 @@ def certify_prefix_gain(
     Jell: Sequence[Sequence[Interval]],
     kappa_v: float,
 ) -> tuple[bool, list[float]]:
-    """Full-matrix finite prefix-gain test for one literal prefix.
-
-    A strict positive enclosure is used in computation.  It is stronger than
-    the paper's non-strict prefix inequality and avoids an uncertified
-    semidefinite numerical boundary.
-    """
     if not (math.isfinite(float(kappa_v)) and float(kappa_v) >= 1.0):
-        raise ValueError("prefix gain kappa_V must be finite and at least one")
-    margin = finite_quadratic_margin(M0, Mell, Jell, kappa_v)
-    ok, pivots = symmetric_positive_definite_ldlt(margin)
-    return bool(ok), [float(x) for x in pivots]
+        raise ValueError("prefix kappa_V must be finite and at least one")
+    return _strict_ldlt(finite_quadratic_margin(M0, Mell, Jell, kappa_v))
 
 
 def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
@@ -154,7 +140,6 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         and events["A21_bias_projection_same_source_true_bias_required"]
         and word["A21_bias_projection_generalized_Jacobian_available"]
     )
-
     return {
         "schema": SCHEMA,
         "qualification": QUALIFICATION,
@@ -189,7 +174,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "next_obligation": (
             "construct one source-correlated COMPLETE_SEA3_NORMAL_LIVE_WORD AD enclosure carrying state, P/H/R, "
             "committed tuner schedule, actual applied R_S, event timing and the A21 projection generalized Jacobian; "
-            "use the resulting endpoint and every prefix Jacobian in the full-matrix tests above"
+            "use its endpoint and every prefix Jacobian in the full-matrix tests"
         ),
     }
 
@@ -243,7 +228,6 @@ def main() -> int:
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(d, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     print(json.dumps({
-        "qualification": d["qualification"],
         "finite_map_bridge": d["finite_map_not_differential_metric_replacement"],
         "endpoint_closed": d["source_uniform_endpoint_finite_map_closed"],
         "prefix_gains_closed": d["source_uniform_all_prefix_gains_closed"],
