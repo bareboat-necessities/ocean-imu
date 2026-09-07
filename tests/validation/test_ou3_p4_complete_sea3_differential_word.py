@@ -25,6 +25,10 @@ def zero_state(n):
     return [Interval.point(0.0) for _ in range(n)]
 
 
+def zero_bias_source():
+    return [Interval.point(0.0) for _ in range(3)]
+
+
 class CompleteSea3DifferentialWordTests(unittest.TestCase):
     def test_same_history_source_token_is_mandatory(self):
         w = WORD.initialize("H", "sea3-history-A")
@@ -66,18 +70,43 @@ class CompleteSea3DifferentialWordTests(unittest.TestCase):
         WORD.apply_event(w, WORD.DifferentialEvent("aw_floor", matrix_identity(21), "same"))
         self.assertEqual(w.floors, 1)
 
-    def test_unique_rectangular_h_to_a_lift_composes_full_state(self):
+    def test_unique_rectangular_h_to_a_lift_retains_forcing_and_covariance_event(self):
         w = WORD.initialize("H", "same")
         WORD.apply_event(w, WORD.DifferentialEvent("prediction", matrix_identity(18), "same"))
+
+        # A bare [I;0] matrix is not enough: the held b_a error and shipping
+        # covariance floor must remain explicit separate hybrid obligations.
         L = [[Interval.point(0.0) for _ in range(18)] for _ in range(21)]
         for i in range(18):
             L[i][i] = Interval.point(1.0)
-        WORD.apply_event(w, WORD.DifferentialEvent("H_to_A", L, "same"))
+        with self.assertRaisesRegex(ValueError, "held b_a error"):
+            WORD.apply_event(w, WORD.DifferentialEvent("H_to_A", L, "same"))
+
+        release = WORD.H_to_A_release_event("same")
+        WORD.apply_event(w, release)
         self.assertEqual((len(w.J_word), len(w.J_word[0])), (21, 18))
         self.assertEqual(w.current_dim, 21)
         self.assertEqual(w.hybrid_lifts, 1)
+        self.assertTrue(w.held_ba_forcing_separate)
+        self.assertTrue(w.release_covariance_floor_retained)
+        for i in range(21):
+            for j in range(18):
+                expected = 1.0 if i == j and i < 18 else 0.0
+                self.assertTrue(release.J[i][j].contains(expected))
         with self.assertRaisesRegex(ValueError, "unique 21x18"):
-            WORD.apply_event(w, WORD.DifferentialEvent("H_to_A", L, "same"))
+            WORD.apply_event(w, WORD.H_to_A_release_event("same"))
+
+    def test_H_to_A_rejects_noncanonical_rectangular_map(self):
+        w = WORD.initialize("H", "same")
+        L = WORD.H_to_A_release_event("same")
+        bad = [list(row) for row in L.J]
+        bad[18][0] = Interval.point(0.1)
+        with self.assertRaisesRegex(ValueError, "canonical"):
+            WORD.apply_event(w, WORD.DifferentialEvent(
+                "H_to_A", bad, "same",
+                held_ba_forcing_separate=True,
+                release_covariance_floor_retained=True,
+            ))
 
     def test_full_matrix_cocycle_feeds_ldlt_gate(self):
         w = WORD.initialize("A", "same")
@@ -92,6 +121,7 @@ class CompleteSea3DifferentialWordTests(unittest.TestCase):
         source = EVENTS.source_joseph_event(
             "A", zero_state(21), point_covariance(21), LITERAL.diagonal_R([0.2, 0.2, 0.2]),
             "accelerometer", f_hat=f, R_hat=Rhat,
+            bias_true=zero_bias_source(), bias_projection_limit=0.5,
         )
         # For this algebra-only LDLT smoke test use identity event after proving
         # theorem measurement events themselves require same-cell provenance.
@@ -99,6 +129,7 @@ class CompleteSea3DifferentialWordTests(unittest.TestCase):
             "accelerometer", matrix_identity(21), "same", same_P_H_R_cell=True
         ))
         self.assertTrue(source["same_P_H_R_cell"])
+        self.assertEqual(source["bias_projection_branch"], "inactive")
         ok, pivots = WORD.certify_word(
             w,
             matrix_identity(21), matrix_identity(21),
@@ -124,8 +155,13 @@ class CompleteSea3DifferentialWordTests(unittest.TestCase):
         self.assertFalse(d["independent_K_input_allowed_for_theorem"])
         self.assertTrue(d["actual_applied_per_axis_RS_required_on_every_S_event"])
         self.assertEqual(d["actual_RS_provenance_token"], EVENTS.ACTUAL_RS_PROVENANCE)
+        self.assertTrue(d["A21_bias_projection_generalized_Jacobian_available"])
+        self.assertFalse(d["A21_bias_projection_source_uniform_attachment_closed"])
         self.assertTrue(d["H_to_A_unique_rectangular_event_required"])
-        self.assertFalse(d["A21_bias_projection_hybrid_closed"])
+        self.assertTrue(d["H_to_A_homogeneous_lift_constructor_available"])
+        self.assertEqual(d["H_to_A_homogeneous_lift"], "[I18;0]")
+        self.assertTrue(d["H_to_A_held_ba_error_retained_as_separate_forcing"])
+        self.assertTrue(d["H_to_A_covariance_floor_retained_as_separate_metric_event"])
         self.assertFalse(d["packetwise_norm_sum_used"])
         self.assertFalse(d["packet_count_multiplier_used"])
         self.assertFalse(d["independent_RS_schedule_used"])
