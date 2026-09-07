@@ -12,6 +12,38 @@ fitted to the trajectory. The 18-error performance storage evaluates the
 principal 18x18 block of the full 21x21 information matrix, without changing
 the active filter or its gains.
 
+The first connected-trace head passed the subevent attachment step, but its
+Python quality job rejected B023 loop-variable captures in the local parity
+reporter (`defects`, `failures`, `row`). Classification: implementation/lint
+failure, not failed numerical attachment or a theorem failure. The reporter
+must own explicit per-mode/current-event context rather than close over a loop;
+its arithmetic and tolerance are unchanged. A regression checks failure
+attribution across successive events and modes; CI must rerun the same trace.
+
+Connected CI run `34162280303` at `636ce7aa` completed successfully: 35 tests,
+both C++ builds, byte-identical baseline/trace root/input/endpoint captures,
+and numerical attachment of all subevents. H18/A21 have 600 predictions,
+600 accelerometer corrections, 75 magnetic corrections and 137/108 actual-R_S
+S corrections; measurement-entry x/R/P continuity defects are exactly zero.
+The largest normalized finite-correction defects are 9.07e-7/1.64e-6, below
+the fixed float-parity tolerance 128*epsilon_float32. This is point numerical
+attachment, not an outward nonlinear certificate or complete uniform source
+admission. Artifact `10033045491`, SHA256
+`4653ecae47a7c5129e30be2a216ba8d74bc2bfc2984e34df923962eeddb75db0`.
+
+The selected full-information 18-error storage gives actual FORCED WN/W0
+7.9717652268 (H18) and 3.5866084405 (A21), with completed-event prefix maxima
+8.0134866100 and 3.9649751830. These are not homogeneous contraction tests.
+Actual S-correction signed energy totals are +10.7401950515 and -1.1215084220;
+their separately retained S_true input energies sum to 12.3018121053 and
+6.1242752691 under each event's actual R_S inverse. The source channels have
+different declared units and are not silently summed into one certified budget.
+In particular the A21 S corrections are present and net dissipative on this
+point. No coefficient/architecture failure follows from the forced endpoint
+ratios. The remaining mathematical limiter is a valid joint nonlinear graph
+sector and channel-gain witness; no multiplier, useful accuracy floor or
+source-uniform P4/P5 closure has been obtained from the attachment check.
+
 Attachment finding: the earlier homogeneous S map contains `y=delta_S` and
 does retain the complete R_S-weighted corrective gain. Its physical residual
 is instead `r_S=-S_hat=delta_S-S_true`. The missing physical-source attachment

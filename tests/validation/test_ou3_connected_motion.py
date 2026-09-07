@@ -11,6 +11,19 @@ import ou3_p4_trace_overlay as T  # noqa: E402
 
 
 class ConnectedMotionTests(unittest.TestCase):
+    def test_failure_reporter_binds_each_event_and_mode(self):
+        first, second = C.ParityChecks(), C.ParityChecks()
+        first.row = {"index": 5, "stage": "prediction"}
+        first("mismatch", [1.], [0.])
+        first.row = {"index": 6, "stage": "reset"}
+        first("mismatch", [2.], [0.])
+        second.row = {"index": 100, "stage": "projection"}
+        second("mismatch", [3.], [0.])
+        self.assertEqual([(r["index"], r["stage"]) for r in first.failures],
+                         [(5, "prediction"), (6, "reset")])
+        self.assertEqual(len(second.failures), 1)
+        self.assertEqual(second.failures[0]["index"], 100)
+
     def row(self, kind):
         return {"kind": kind, "R_hat": np.eye(3).ravel().tolist(),
                 "R_true": np.eye(3).ravel().tolist(), "x_hat": [0.]*21,

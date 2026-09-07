@@ -21,6 +21,24 @@ import ou3_p4_source_endpoint as SOURCE
 ROUNDING_PARITY_TOL = 128*np.finfo(np.float32).eps
 
 
+class ParityChecks:
+    """Explicit per-word/current-event context, never a loop closure."""
+    def __init__(self):
+        self.defects = defaultdict(float)
+        self.failures = []
+        self.row = None
+
+    def __call__(self, name, got, expected, scale=None):
+        got, expected = np.asarray(got), np.asarray(expected)
+        normalizer = max(float(np.max(np.abs(got))), float(np.max(np.abs(expected))),
+                         1e-30, 0. if scale is None else float(scale))
+        defect = float(np.max(np.abs(got-expected)))/normalizer
+        self.defects[name] = max(self.defects[name], defect)
+        if not np.isfinite(defect) or defect > ROUNDING_PARITY_TOL:
+            self.failures.append({"check": name, "index": self.row["index"], "stage": self.row["stage"],
+                                  "normalized_defect": defect, "normalizer": normalizer})
+
+
 def mat(row, key, n=3, m=None):
     return np.asarray(row[key], dtype=float).reshape(n, n if m is None else m)
 
@@ -123,7 +141,8 @@ def audit(root, rows, checkpoints):
             raise ValueError("missing baseline word root")
         if not events or events[0]["stage"] != "prediction_enter":
             raise ValueError("missing prediction entrance")
-        defects, failures, counts = defaultdict(float), [], Counter()
+        check = ParityChecks()
+        defects, failures, counts = check.defects, check.failures, Counter()
         forcing = defaultdict(float)
         energy_by_stage = defaultdict(float)
         previous_committed = points[0]
@@ -135,17 +154,8 @@ def audit(root, rows, checkpoints):
         group = None
         last_index = None
 
-        def check(name, got, expected, scale=None):
-            got, expected = np.asarray(got), np.asarray(expected)
-            normalizer = max(float(np.max(np.abs(got))), float(np.max(np.abs(expected))),
-                             1e-30, 0. if scale is None else float(scale))
-            defect = float(np.max(np.abs(got-expected)))/normalizer
-            defects[name] = max(defects[name], defect)
-            if not np.isfinite(defect) or defect > ROUNDING_PARITY_TOL:
-                failures.append({"check": name, "index": row["index"], "stage": row["stage"],
-                                 "normalized_defect": defect, "normalizer": normalizer})
-
         for row in events:
+            check.row = row
             stage = row["stage"]
             counts[stage] += 1
             try:
