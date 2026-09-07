@@ -45,6 +45,17 @@ acceleration is also prohibited. Finite transient impulses and zero motion
 remain admissible. A fixed-window bound alone, however small, does not
 exclude all constant accelerations; nor does small AC energy.
 
+For example, the fixed-root finite harmonic model of
+Eqs.~\eqref{eq:sea3-stokes-orbit}--\eqref{eq:sea3-stokes-hard-bound}
+has $a_m=\dot v_o$ and $\|v_o\|\le B_1=\sum_{i,n}n\omega_i c_{in}$.
+It therefore satisfies BRMM-0 for all time, with $V_m=B_1$ for the
+centered orbital primitive. Including its constant Stokes velocity drift
+only adds that drift's norm to $V_m$ and contributes no acceleration DC.
+Uniformity over a root family requires a uniform bound on $B_1$ and any
+included drift. This analytical model implication is independent of a
+finite-record mean; it does not by itself certify a replay's exact physical
+attachment, the hard acceleration/rate caps, or O-branch return lobes.
+
 Constant measurement offset belongs to BIAS0, not to $a_m$. Subtracting a
 sample mean cannot manufacture physical BRMM membership: the same actual
 acceleration must drive the source and observer. Sensor bias, compensation

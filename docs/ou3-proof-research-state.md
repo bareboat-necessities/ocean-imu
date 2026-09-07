@@ -44,10 +44,64 @@ Eight focused local tests pass, including independent rational-arithmetic
 energy/impulse/TV checks, verification of each positive lobe witness, calm
 motion, the quiet-DC loophole, and the long-period one-sided window.
 Actual bias/BRMM/retained-SEA3 LaTeX inputs compile in a 14-page syntax smoke
-build; this is not a complete manuscript build. GitHub eight-case results
-are pending.
+build; this is not a complete manuscript build.
+
+At c1046c1f, GitHub audit 34169268266 / job 101886317643 succeeds. All eight
+records have 240000 samples and 238001 windows each: 1904008 windows total.
+Every window is O at both .03/.05 RMS thresholds, with no ambiguous
+classification and no missing opposing-lobe witness. Thus these records
+provide no Q coverage. The minimum sampled energy lower bound is
+1.4596516559 m^2/s^3, and the minimum J witness lower bound is
+.2472575910 m/s at diagnostic chi=1. They are ZOH bounds, not continuous
+source constants. The full per-case summaries and CSV hashes are retained
+in docs/ou3-brmm-reference-audit.json. Every-window NPZ evidence is artifact
+10035278812, SHA256
+8be76bd010948f36f2ea564fea2dd2c3b0cd5bb814163c2b503e759c18df8409.
+The theorem CI job 101886317504 also succeeds (14-page syntax smoke).
+
+| Family | H_s m | Max acceleration m/s^2 | Max body rate deg/s | Max 10 s impulse m/s |
+| --- | ---: | ---: | ---: | ---: |
+| JONSWAP | .27 | 2.8321 | 36.599 | 1.0083 |
+| JONSWAP | 1.5 | 6.7233 | 83.971 | 2.7156 |
+| JONSWAP | 4 | 9.2272 | 129.129 | 5.2838 |
+| JONSWAP | 8.5 | 16.2162 | 198.355 | 8.0912 |
+| PM-Stokes | .27 | 2.1850 | 46.697 | .9870 |
+| PM-Stokes | 1.5 | 5.1905 | 123.326 | 2.9807 |
+| PM-Stokes | 4 | 6.6333 | 149.547 | 4.8231 |
+| PM-Stokes | 8.5 | 8.5683 | 197.461 | 6.8645 |
+
+Displayed maxima round upward; the JSON retains detailed outward sample
+bounds and radian-rate bounds. Physical intersample extrema remain unknown.
 
 ## Failure analysis and limiting quantity
+
+The sampled numerical-envelope hypothesis fails: six whole records contain
+definite acceleration >4 m/s^2, all eight contain body rate >30 deg/s, and
+six have 10 s impulse >2 m/s. For example JONSWAP H_s=8.5 has 30314/48304
+acceleration/rate exceedances and 134408 impulse-violating windows, starting
+at sample 0 for impulse. Failure class: proposed source-envelope admission,
+not an enclosure/conditioning failure. It invalidates the claim that the
+eight full reference histories already fit the proposed numerical caps.
+It does not falsify no-DC, the lobe condition on these sampled windows,
+conditional BRMM stability or the filter. No runtime Normal-Live predicate
+was applied, so this is not yet an admitted-word counterexample.
+
+Critic pass: sea height alone cannot guarantee the acceleration/rate caps,
+and a 2 m/s impulse cap is quantitatively too small for these records.
+Shrinking sample boxes or sharpening rounding cannot resolve the measured
+gaps. Keep the frozen caps and do not silently discard offending samples.
+Alternatives are (1) attach the actual execution predicate and determine
+which source intervals are inside/outside the declared theorem domain;
+(2) separately qualify a physically justified broader domain, rebuilding its
+dependent gravity/chart/P3/P4 bounds; (3) retain the original domain and
+state explicitly which simulation portions it does not cover. The current
+next experiment is (1). For recurrence alone, 10.2 m/s is a sampled-data
+V_R candidate with 25 percent margin; it is not a frozen physical constant.
+
+The no-DC premise has a separate analytical model route: the retained
+fixed-root harmonic graph has a_m=dv_o/dt and ||v_o||<=B1. Constant Stokes
+velocity drift contributes no acceleration DC. A uniform root-family B1
+bound and exact physical attachment still have to be supplied.
 
 The preceding point-coefficient supply test is mathematically feasible but
 fails as a useful accuracy/retention witness. At code head 7898eb06,
@@ -104,9 +158,11 @@ physical graph; (3) a physically structured/path-dependent motion storage.
 BRMM supplies a new source premise for (1); it does not make the old
 independent-port witness useful.
 
-First obtain the eight-case CI statistics without changing the recordings
-or frozen caps. Record actual sampled-envelope violations and unresolved
-windows. Establish continuous no-DC/recurrence membership from the generator
+The eight-case sampled lobe audit is complete; no longer search for a return
+lobe on those same windows. Attach the actual Normal-Live execution predicate
+to the unchanged records and expose every cap-exceeding interval, without
+selecting an easier source or treating missing admission as a P4 failure.
+Establish continuous no-DC/recurrence membership from the generator
 or qualified physical source, with same-history primitive/bias/frontend
 attachment. Then test the connected motion master with these joint
 constraints and explicit channel budgets. Require a useful composed bound
