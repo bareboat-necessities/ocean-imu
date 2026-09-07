@@ -18,9 +18,9 @@
 #include "kalman_ou_common/KalmanOUCoreMath.h"
 
 // Host-only complete-word observer. Production visibility/behavior is unchanged.
-// One shipping estimator owns both point-map scanning and selected-direction
-// event ledgers, so current-sample schedule data are read at exactly one
-// shipping boundary. No second Riccati recursion or perturbed filter exists.
+// One shipping estimator owns point-map scanning, selected-direction ledgers,
+// and the optional physical-event source payload. No second Riccati recursion
+// or perturbed filter exists.
 #define private public
 #include "kalman_ou_iii/Kalman3D_Wave_OU_III.h"
 #include "kalman_ou_iii/SeaStateFusionFilter_OU_III.h"
@@ -38,6 +38,7 @@ constexpr float kSigmaMRescale = 2.0f;
 constexpr float kMagOdrHz = 25.0f;
 constexpr float kDt = 1.0f / 200.0f;
 constexpr int kNX = 21;
+constexpr int kOffBg = 3;
 constexpr int kOffV = 6;
 constexpr int kOffS = 12;
 constexpr int kOffAw = 15;
@@ -48,10 +49,29 @@ using Matrix21x3f = Eigen::Matrix<float, kNX, 3>;
 using Matrix3x21f = Eigen::Matrix<float, 3, kNX>;
 using Vector12f = Eigen::Matrix<float, 12, 1>;
 
+enum class PhysicalEvent : std::uint32_t {
+    Prediction = 1,
+    AwFloor = 2,
+    SZero = 3,
+    Accelerometer = 4,
+    Vector = 5,
+};
+
 template<typename T>
 void write_binary(std::ofstream& f, const T& value)
 {
     f.write(reinterpret_cast<const char*>(&value), sizeof(T));
+}
+
+template<typename Derived>
+void write_matrix_f32(std::ofstream& f, const Eigen::MatrixBase<Derived>& M)
+{
+    for (Eigen::Index i = 0; i < M.rows(); ++i) {
+        for (Eigen::Index j = 0; j < M.cols(); ++j) {
+            const float x = static_cast<float>(M(i,j));
+            write_binary(f, x);
+        }
+    }
 }
 
 int env_positive_int(const char* name, int fallback)
@@ -125,6 +145,14 @@ float relative_matrix_difference(const Matrix21f& a, const Matrix21f& b)
     return (a - b).norm() / std::max(1.0e-12f, b.norm());
 }
 
+Matrix3f recover_measurement_R(const Matrix21f& P,
+                               const Matrix3x21f& H,
+                               const Matrix3f& S)
+{
+    Matrix3f R = S - H * P * H.transpose();
+    return 0.5f * (R + R.transpose());
+}
+
 class OperationObserverAdapter final : public IW3dFusionAdapter {
 public:
     using Fusion = SeaStateFusion_OU_III<TrackerType::KALMANF>;
@@ -178,6 +206,15 @@ public:
         trace_ << "sequence,time_s,event,mode,V_before,V_after,delta_V,event_ratio,"
                   "rs_scalar,rs_period_s,rs_std_x,rs_std_y,rs_std_z,"
                   "rs_var_x,rs_var_y,rs_var_z,dtheta_norm,covariance_reconstruction_rel\n";
+
+        if (const char* payload_path = std::getenv("OU3_PHYSICAL_PAYLOAD_TRACE")) {
+            if (*payload_path) {
+                physical_trace_.open(payload_path, std::ios::binary);
+                if (!physical_trace_)
+                    throw std::runtime_error("cannot open OU3_PHYSICAL_PAYLOAD_TRACE");
+                write_physical_header();
+            }
+        }
     }
 
     ~OperationObserverAdapter() override
@@ -256,6 +293,62 @@ private:
         write_binary(cov_trace_, cov_version);
         write_binary(cov_trace_, nx);
         write_binary(cov_trace_, stride);
+    }
+
+    void write_physical_header()
+    {
+        const char magic[8] = {'O','U','3','P','H','Y','1','\0'};
+        physical_trace_.write(magic, sizeof(magic));
+        const std::uint32_t version = 1;
+        const std::uint32_t nx = kNX;
+        const std::uint32_t mode_dim = static_cast<std::uint32_t>(dimension());
+        write_binary(physical_trace_, version);
+        write_binary(physical_trace_, nx);
+        write_binary(physical_trace_, mode_dim);
+        const double t0 = static_cast<double>(requested_t0_);
+        const double t1 = static_cast<double>(requested_t1_);
+        write_binary(physical_trace_, t0);
+        write_binary(physical_trace_, t1);
+    }
+
+    void write_physical_event(PhysicalEvent type,
+                              float event_time,
+                              float h,
+                              float tau_aw,
+                              float tau_ba,
+                              float rs_scalar,
+                              float pseudo_period,
+                              const Vector3f& omega_hat,
+                              const Vector3f& dtheta,
+                              const Matrix21f& Pbefore,
+                              const Matrix21f& Pafter,
+                              const Matrix21f& linear_map,
+                              const Matrix21f& Q,
+                              const Matrix3x21f& H,
+                              const Matrix3f& R,
+                              const Matrix3f& aux)
+    {
+        if (!physical_trace_ || failed_ || !started_ || finished_) return;
+        const std::uint32_t event_type = static_cast<std::uint32_t>(type);
+        const std::uint32_t mode_dim = static_cast<std::uint32_t>(dimension());
+        const double t = static_cast<double>(event_time);
+        write_binary(physical_trace_, event_type);
+        write_binary(physical_trace_, mode_dim);
+        write_binary(physical_trace_, t);
+        write_binary(physical_trace_, h);
+        write_binary(physical_trace_, tau_aw);
+        write_binary(physical_trace_, tau_ba);
+        write_binary(physical_trace_, rs_scalar);
+        write_binary(physical_trace_, pseudo_period);
+        write_matrix_f32(physical_trace_, omega_hat);
+        write_matrix_f32(physical_trace_, dtheta);
+        write_matrix_f32(physical_trace_, Pbefore);
+        write_matrix_f32(physical_trace_, Pafter);
+        write_matrix_f32(physical_trace_, linear_map);
+        write_matrix_f32(physical_trace_, Q);
+        write_matrix_f32(physical_trace_, H);
+        write_matrix_f32(physical_trace_, R);
+        write_matrix_f32(physical_trace_, aux);
     }
 
     void ensure_scan_block_started()
@@ -400,9 +493,6 @@ private:
         ensure_scan_block_started();
         auto& filter = fusion_.raw();
 
-        // This is exactly the first stateful shipping action in updateCore_.
-        // Consume it once before observing the current Riccati schedule; the
-        // subsequent wrapper call sees no pending commit and is trajectory-equivalent.
         filter.apply_pending_online_tune_();
         auto& mekf = filter.mekf();
 
@@ -643,7 +733,14 @@ private:
         const Vector3f dtheta = K.topRows<3>() * md.r;
         const Matrix21f C = reset_transport(dtheta)
                           * (Matrix21f::Identity() - K * H);
-        write_event("vector", time_s_, Ppre, mekf.covariance_full(), C,
+        const Matrix21f Ppost = mekf.covariance_full();
+        const Matrix3f R = recover_measurement_R(Ppre, H, mekf.S_scratch_);
+        write_physical_event(
+            PhysicalEvent::Vector, time_s_, 0.0f, 0.0f, mekf.tau_bacc_,
+            std::numeric_limits<float>::quiet_NaN(), mekf.pseudo_update_period_s_,
+            Vector3f::Zero(), dtheta, Ppre, Ppost, C, Matrix21f::Zero(), H, R,
+            Matrix3f::Zero());
+        write_event("vector", time_s_, Ppre, Ppost, C,
                     std::numeric_limits<float>::quiet_NaN(), Matrix3f::Zero(),
                     dtheta.norm(), 0.0f);
         ++vector_count_;
@@ -689,8 +786,11 @@ private:
         const Matrix3f R_S_pre = mekf.R_S;
         const float rs_scalar_pre = filter.getRSApplied();
         const float pseudo_period_pre = mekf.pseudo_update_period_s_;
+        const float tau_aw_pre = filter.getTauApplied();
         const float tau_b_pre = mekf.tau_bacc_;
         const Matrix3f Q_bacc_pre = mekf.Q_bacc_;
+        const Vector3f omega_hat =
+            mekf.deheel_vector_(gyr_meas_ned) - mekf.xext.segment<3>(kOffBg);
         float pseudo_elapsed_copy = mekf.pseudo_update_elapsed_s_;
         const bool pseudo_due = ocean_imu::kalman::ou_detail::periodic_update_due(
             dt, pseudo_period_pre, pseudo_elapsed_copy);
@@ -721,6 +821,10 @@ private:
 
         Matrix21f Ppred = A * P0 * A.transpose() + Q;
         Ppred = 0.5f * (Ppred + Ppred.transpose());
+        write_physical_event(
+            PhysicalEvent::Prediction, time_s_, dt, tau_aw_pre, tau_b_pre,
+            rs_scalar_pre, pseudo_period_pre, omega_hat, Vector3f::Zero(),
+            P0, Ppred, A, Q, Matrix3x21f::Zero(), Matrix3f::Zero(), Matrix3f::Zero());
         write_event("prediction", time_s_, P0, Ppred, A,
                     rs_scalar_pre, R_S_pre, 0.0f, 0.0f);
         ++prediction_count_;
@@ -736,6 +840,11 @@ private:
                 es.eigenvectors() * evals.asDiagonal() * es.eigenvectors().transpose();
             Matrix21f Pnext = Pcur;
             Pnext.block<3,3>(kOffAw,kOffAw) += DeltaPlus;
+            write_physical_event(
+                PhysicalEvent::AwFloor, time_s_, 0.0f, tau_aw_pre, tau_b_pre,
+                rs_scalar_pre, pseudo_period_pre, Vector3f::Zero(), Vector3f::Zero(),
+                Pcur, Pnext, Matrix21f::Identity(), Matrix21f::Zero(),
+                Matrix3x21f::Zero(), Matrix3f::Zero(), aw_floor_target);
             write_event("aw_floor", time_s_, Pcur, Pnext, Matrix21f::Identity(),
                         rs_scalar_pre, R_S_pre, 0.0f, 0.0f);
             ++floor_count_;
@@ -759,6 +868,10 @@ private:
             Matrix21f Pnext = joseph_from_pct(Pcur, K, S, PCt);
             Pnext = G * Pnext * G.transpose();
             Pnext = 0.5f * (Pnext + Pnext.transpose());
+            write_physical_event(
+                PhysicalEvent::SZero, time_s_, 0.0f, tau_aw_pre, tau_b_pre,
+                rs_scalar_pre, pseudo_period_pre, Vector3f::Zero(), dtheta,
+                Pcur, Pnext, C, Matrix21f::Zero(), Hs, R_S_pre, Matrix3f::Zero());
             write_event("S_zero", time_s_, Pcur, Pnext, C,
                         rs_scalar_pre, R_S_pre, dtheta.norm(), 0.0f);
             ++s_count_;
@@ -784,6 +897,11 @@ private:
         const float cov_resid = std::max(lin_resid, relative_matrix_difference(Precon, Ppost));
         if (!(std::isfinite(cov_resid) && cov_resid <= 2.0e-4f))
             fail("accelerometer covariance reconstruction mismatch");
+        const Matrix3f Racc = recover_measurement_R(Pcur, H, mekf.S_scratch_);
+        write_physical_event(
+            PhysicalEvent::Accelerometer, time_s_, 0.0f, tau_aw_pre, tau_b_pre,
+            rs_scalar_pre, pseudo_period_pre, Vector3f::Zero(), dtheta,
+            Pcur, Ppost, C, Matrix21f::Zero(), H, Racc, Matrix3f::Zero());
         write_event("accelerometer", time_s_, Pcur, Ppost, C,
                     rs_scalar_pre, R_S_pre, dtheta.norm(), cov_resid);
         ++acc_count_;
@@ -835,7 +953,6 @@ private:
     bool scan_mode_ = false;
     float time_s_ = 0.0f;
 
-    // Scan mode: complete 21x21 map plus shipping covariance boundaries.
     std::ofstream map_trace_;
     std::ofstream cov_trace_;
     int scan_stride_ = 600;
@@ -858,8 +975,8 @@ private:
     Matrix21f scan_accum_ = Matrix21f::Identity();
     Matrix21f scan_cov_start_ = Matrix21f::Zero();
 
-    // Selected-direction event-ledger mode.
     std::ofstream trace_;
+    std::ofstream physical_trace_;
     float requested_t0_ = 0.0f;
     float requested_t1_ = 0.0f;
     std::string requested_mode_;
@@ -883,6 +1000,29 @@ private:
     double vector_delta_ = 0.0;
 };
 
+void write_truth_bias_trace(const W3dSimulationRunResult& result)
+{
+    const char* path = std::getenv("OU3_PHYSICAL_TRUTH_TRACE");
+    if (!path || !*path) return;
+    const std::size_t n = result.accb_true_x.size();
+    if (result.accb_true_y.size() != n || result.accb_true_z.size() != n)
+        throw std::runtime_error("accelerometer truth-bias history length mismatch");
+    std::ofstream f(path, std::ios::binary);
+    if (!f) throw std::runtime_error("cannot open OU3_PHYSICAL_TRUTH_TRACE");
+    const char magic[8] = {'O','U','3','T','R','U','1','\0'};
+    f.write(magic, sizeof(magic));
+    const std::uint32_t version = 1;
+    const std::uint32_t count = static_cast<std::uint32_t>(n);
+    write_binary(f, version);
+    write_binary(f, kDt);
+    write_binary(f, count);
+    for (std::size_t i = 0; i < n; ++i) {
+        write_binary(f, result.accb_true_x[i]);
+        write_binary(f, result.accb_true_y[i]);
+        write_binary(f, result.accb_true_z[i]);
+    }
+}
+
 void process_one(const std::string& filename,
                  bool with_mag,
                  const W3dRandomSeeds& seeds)
@@ -892,6 +1032,7 @@ void process_one(const std::string& filename,
         "_fusion_ou3_operation_observer", "_fusion_ou3_operation_observer_nomag",
         seeds, false);
     if (!result) throw std::runtime_error("operation-observer simulation did not produce a result");
+    write_truth_bias_trace(*result);
 }
 
 } // namespace
@@ -909,7 +1050,9 @@ int main(int argc, char** argv)
                       << "Scan env: OU3_LEDGER_MAP_TRACE, OU3_LEDGER_COV_TRACE, "
                          "OU3_LEDGER_MAP_STRIDE (default 600).\n"
                       << "Selected-ledger env: OU3_LEDGER_TRACE, OU3_LEDGER_T0, OU3_LEDGER_T1, "
-                         "OU3_LEDGER_MODE=H18|A21, OU3_LEDGER_DIRECTION (21 CSV values).\n";
+                         "OU3_LEDGER_MODE=H18|A21, OU3_LEDGER_DIRECTION (21 CSV values).\n"
+                      << "Optional physical-map traces: OU3_PHYSICAL_PAYLOAD_TRACE, "
+                         "OU3_PHYSICAL_TRUTH_TRACE.\n";
             return 0;
         } else {
             std::cerr << "ERROR: unknown or incomplete argument: " << arg << "\n";
