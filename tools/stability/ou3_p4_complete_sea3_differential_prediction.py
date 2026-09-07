@@ -30,6 +30,10 @@ including the exact attitude/gyro-bias cross block and every v/p/S/a_w row.
 The process Q remains in the same source Riccati history used by the pullback
 metric; it is not part of the deterministic state Jacobian and is never
 removed from the complete word.
+
+The evaluator also returns the outward finite ``state_out`` from the very same
+AD composition.  This is used by non-promoting physical finite-map feasibility
+and later mean-value enclosure; it does not introduce a second predictor.
 """
 from __future__ import annotations
 
@@ -115,7 +119,7 @@ def prediction_event(
     *,
     tau_ba: Interval | None = None,
 ):
-    """Return same-source F_LL/phi_ba and outward nonlinear state Jacobian."""
+    """Return same-source finite state, F_LL/phi_ba and outward state Jacobian."""
     n = _dim(mode)
     if len(state) != n or len(omega_hat) != 3:
         raise ValueError("prediction state/body-rate dimension mismatch")
@@ -157,6 +161,7 @@ def prediction_event(
     if len(out) != n:
         raise RuntimeError("prediction differential output dimension drifted")
     return {
+        "state_out": AD.values(out),
         "J_state": AD.jacobian(out),
         "F_LL": Fll,
         "phi_ba": phi_ba,
@@ -183,6 +188,8 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "same_complete_SEA3_omega_h_tau_required": True,
         "independent_F_input_allowed_for_theorem": False,
         "exact_relative_attitude_prediction_differentiated": True,
+        "finite_physical_state_output_available": True,
+        "finite_state_and_Jacobian_share_one_AD_composition": True,
         "shipping_deployed_quaternion_branch_used": True,
         "integrated_OU_F_LL_generated_from_same_committed_tau": True,
         "full_F_Eaw_v_p_S_aw_rows_retained": True,
@@ -211,6 +218,7 @@ def validate(d: dict) -> list[str]:
         f.append("canonical source changed")
     for key in (
         "same_complete_SEA3_omega_h_tau_required", "exact_relative_attitude_prediction_differentiated",
+        "finite_physical_state_output_available", "finite_state_and_Jacobian_share_one_AD_composition",
         "shipping_deployed_quaternion_branch_used", "integrated_OU_F_LL_generated_from_same_committed_tau",
         "full_F_Eaw_v_p_S_aw_rows_retained", "gyro_bias_homogeneous_mean_constant",
         "A21_accelerometer_bias_GM_mean_retained", "process_Q_remains_in_same_source_Riccati_metric",
@@ -243,6 +251,7 @@ def main() -> int:
     print(json.dumps({
         "source": d["canonical_source"],
         "exact_attitude_prediction": d["exact_relative_attitude_prediction_differentiated"],
+        "finite_state_output": d["finite_physical_state_output_available"],
         "full_F_Eaw": d["full_F_Eaw_v_p_S_aw_rows_retained"],
         "prediction_Jacobian_closed": d["source_uniform_prediction_Jacobian_closed"],
         "failures": failures,
