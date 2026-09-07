@@ -1,0 +1,154 @@
+name: ou3-p4-physical-long-window-feasibility
+
+on:
+  push:
+    paths:
+      - "tests/kalman_ou_iii/ou3-operation-ledger-sim.cpp"
+      - "tests/kalman_ou_iii/ou3_p4_complete_sea3_word_feasibility.py"
+      - "tests/kalman_ou_iii/ou3_p4_physical_finite_map_feasibility.py"
+      - "tests/kalman_ou_iii/ou3_p4_physical_finite_map_feasibility_fast.py"
+      - "tests/kalman_ou_iii/ou3_p4_canonicalize_physical_payload.py"
+      - "tests/kalman_ou_iii/ou3_p4_physical_long_window_feasibility.py"
+      - "tools/stability/ou3_p4_complete_sea3_differential_prediction.py"
+      - "tools/stability/ou3_p4_complete_sea3_differential_events.py"
+      - "tools/stability/ou3_proof_operating_domain.json"
+      - "docs/ou3-proof-research-state.md"
+      - ".github/workflows/ou3-p4-physical-long-window-feasibility.yml"
+  pull_request:
+    paths:
+      - "tests/kalman_ou_iii/ou3-operation-ledger-sim.cpp"
+      - "tests/kalman_ou_iii/ou3_p4_complete_sea3_word_feasibility.py"
+      - "tests/kalman_ou_iii/ou3_p4_physical_finite_map_feasibility.py"
+      - "tests/kalman_ou_iii/ou3_p4_physical_finite_map_feasibility_fast.py"
+      - "tests/kalman_ou_iii/ou3_p4_canonicalize_physical_payload.py"
+      - "tests/kalman_ou_iii/ou3_p4_physical_long_window_feasibility.py"
+      - "tools/stability/ou3_p4_complete_sea3_differential_prediction.py"
+      - "tools/stability/ou3_p4_complete_sea3_differential_events.py"
+      - "tools/stability/ou3_proof_operating_domain.json"
+      - "docs/ou3-proof-research-state.md"
+      - ".github/workflows/ou3-p4-physical-long-window-feasibility.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: ou3-p4-physical-long-window-feasibility-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  physical-long-window-feasibility:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Install host diagnostic dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libeigen3-dev python3-numpy
+
+      - name: Fetch genuine coupled wave simulation data
+        run: make ensure-sim-data
+
+      - name: Build the single shipping observer
+        working-directory: tests/kalman_ou_iii
+        run: make ou3-operation-ledger-sim
+
+      - name: Scan source-contiguous 6-second shipping words
+        working-directory: tests/kalman_ou_iii
+        env:
+          OU3_LEDGER_MAP_TRACE: /tmp/ou3_p4_long_6s_maps.bin
+          OU3_LEDGER_COV_TRACE: /tmp/ou3_p4_long_6s_cov.bin
+          OU3_LEDGER_MAP_STRIDE: "1200"
+          W3D_WRITE_TIMESERIES: "0"
+          W3D_VALIDATION_WINDOW_SEC: "0"
+        run: |
+          ./ou3-operation-ledger-sim \
+            --input wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv
+
+      - name: Evaluate 6-second physical finite map
+        run: |
+          python3 tests/kalman_ou_iii/ou3_p4_physical_long_window_feasibility.py \
+            --map /tmp/ou3_p4_long_6s_maps.bin \
+            --cov /tmp/ou3_p4_long_6s_cov.bin \
+            --sim tests/kalman_ou_iii/ou3-operation-ledger-sim \
+            --input tests/kalman_ou_iii/wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv \
+            --domain tools/stability/ou3_proof_operating_domain.json \
+            --stride 1200 \
+            --output-dir /tmp/ou3_p4_long_6s \
+            --output /tmp/ou3_p4_long_6s.json
+
+      - name: Scan source-contiguous 9-second shipping words
+        working-directory: tests/kalman_ou_iii
+        env:
+          OU3_LEDGER_MAP_TRACE: /tmp/ou3_p4_long_9s_maps.bin
+          OU3_LEDGER_COV_TRACE: /tmp/ou3_p4_long_9s_cov.bin
+          OU3_LEDGER_MAP_STRIDE: "1800"
+          W3D_WRITE_TIMESERIES: "0"
+          W3D_VALIDATION_WINDOW_SEC: "0"
+        run: |
+          ./ou3-operation-ledger-sim \
+            --input wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv
+
+      - name: Evaluate 9-second physical finite map
+        run: |
+          python3 tests/kalman_ou_iii/ou3_p4_physical_long_window_feasibility.py \
+            --map /tmp/ou3_p4_long_9s_maps.bin \
+            --cov /tmp/ou3_p4_long_9s_cov.bin \
+            --sim tests/kalman_ou_iii/ou3-operation-ledger-sim \
+            --input tests/kalman_ou_iii/wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv \
+            --domain tools/stability/ou3_proof_operating_domain.json \
+            --stride 1800 \
+            --output-dir /tmp/ou3_p4_long_9s \
+            --output /tmp/ou3_p4_long_9s.json
+
+      - name: Validate experiment provenance and report result
+        run: |
+          python3 - <<'PY'
+          import json
+          for tag, stride in (("6s", 1200), ("9s", 1800)):
+              d=json.load(open(f'/tmp/ou3_p4_long_{tag}.json'))
+              assert d['canonical_source'] == 'COMPLETE_SEA3_NORMAL_LIVE_WORD'
+              assert d['point_same_history_diagnostic_only'] is True
+              assert d['single_shipping_observer_used'] is True
+              assert d['actual_applied_RS_retained'] is True
+              assert d['retired_estimator_pair_multiword_shadow_used'] is False
+              assert d['filter_changed'] is False
+              assert d['declared_domain_changed'] is False
+              assert d['P4_promoted'] is False
+              assert d['P5_may_start'] is False
+              assert d['window_stride_samples'] == stride
+              for mode in ('H18','A21'):
+                  m=d['modes'][mode]
+                  assert m['zero_state_parity']['pass'] is True
+                  assert m['event_counts']['prediction'] == stride
+                  assert m['event_counts']['accelerometer'] == stride
+                  assert m['event_counts']['S_zero'] > 0
+                  assert m['actual_RS_std_ratio_max_error'] <= 2e-5
+              print('LONG_WINDOW_RESULT', tag,
+                    'A21_linear=', d['linear_scan']['modes']['A21']['worst']['rho_linear'],
+                    'A21_reset_normalized_linear=', d['modes']['A21']['reset_normalized_linear_rho'],
+                    'A21_worst_physical=', d['modes']['A21']['worst_endpoint_rho_on_domain_retained_cases'],
+                    'A21_first_crossing=', d['modes']['A21']['first_endpoint_rho_ge_one_absolute_scale'],
+                    'A21_prefix=', d['modes']['A21']['worst_prefix_ratio_on_domain_retained_cases'],
+                    'A21_strict_tested=', d['modes']['A21']['strict_endpoint_contraction_on_all_domain_retained_tested_cases'])
+          PY
+
+      - name: Upload non-promoting long-window evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: ou3-p4-physical-long-window-feasibility
+          path: |
+            /tmp/ou3_p4_long_6s.json
+            /tmp/ou3_p4_long_9s.json
+            /tmp/ou3_p4_long_6s_maps.bin
+            /tmp/ou3_p4_long_6s_cov.bin
+            /tmp/ou3_p4_long_9s_maps.bin
+            /tmp/ou3_p4_long_9s_cov.bin
+            /tmp/ou3_p4_long_6s/**
+            /tmp/ou3_p4_long_9s/**
+          retention-days: 7
