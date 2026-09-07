@@ -19,8 +19,10 @@ identities are analytical.
 from __future__ import annotations
 
 import argparse
+import copy
 import json
 import math
+from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
@@ -162,7 +164,7 @@ def _pm_exact_ratio() -> float:
     return (PM_EXPONENT * math.pi) ** (-0.25)
 
 
-def build() -> dict[str, Any]:
+def _build_uncached() -> dict[str, Any]:
     gamma_step = (GAMMA_MAX - GAMMA_MIN) / GAMMA_CELLS
     global_lo = math.inf
     global_hi = 0.0
@@ -283,6 +285,16 @@ def build() -> dict[str, Any]:
             "to prune the P2 source language"
         ),
     }
+
+
+@lru_cache(maxsize=1)
+def _build_cached() -> dict[str, Any]:
+    return _build_uncached()
+
+
+def build() -> dict[str, Any]:
+    """Return an independent result while evaluating the fixed quadrature once."""
+    return copy.deepcopy(_build_cached())
 
 
 def validate(payload: dict[str, Any]) -> list[str]:

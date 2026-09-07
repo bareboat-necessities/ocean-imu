@@ -88,11 +88,10 @@ Retired / forbidden rescue routes include:
 - scalar Lipschitz, correction-radius, inverse-metric-floor, or packet-count-times-worst-remainder bounds;
 - further proof-driven filter/domain tightening beyond the authorized 0.4 change.
 
-## Correct next theorem route
+## Retained finite-`tau_b` premise
 
-The next PR should start from current main after this handoff and pursue the paper-permitted **finite-`tau_b`, full-21-state A21 cascade/detectability route**. This is qualitatively different from the failed endpoint/window experiments.
-
-The existing `tools/stability/ou3_sea3_a21_detectability_completion.py` already establishes the paper-level finite-bias detectability/UES hypothesis from:
+`tools/stability/ou3_sea3_a21_detectability_completion.py` establishes the
+paper-level finite-bias detectability/UES hypothesis from:
 
 - complete-SEA3 H18 contraction;
 - exact finite residual-bias Gauss-Markov decay;
@@ -100,26 +99,83 @@ The existing `tools/stability/ou3_sea3_a21_detectability_completion.py` already 
 - full A21 process UCC;
 - no alternate estimator and no state elimination.
 
-However, that module deliberately remains fail-closed for the stronger canonical implementation-word bridge: `full_21x21_Omega_minus_delta_P_LDLT_closed_here = False` and `P4_MAY_CONSUME_P3 = False`.
+Its stronger implementation-word flags remain deliberately false. The joint
+master consumes this result only through the validated canonical P3 chain; it
+does not promote the comparison observer or replace the full A21 matrix test.
 
-The next theorem-facing master inequality must therefore be a **full-rank 21-state** Lyapunov/cascade inequality that consumes the same complete-SEA3 source history and retains every actual shipping event/coupling. It must show how the finite-`tau_b` bias decay/detectability estimate combines with the H18 complete-word dissipation and the nonlinear accelerometer residual sector without eliminating `b_a`, `a_w`, or any cross terms. Only after that full-state bridge is quantitative and outward-certified should the universal nonlinear complete-word P4 endpoint/prefix enclosure resume.
+## Current hypothesis
 
-If the full-state finite-`tau_b` construction itself exposes a genuine admissible expanding direction that violates the paper-equivalent P4 inequality on the declared domain, report that obstruction directly rather than inventing a weaker certificate or shrinking the domain.
+Use the exact complete-word endpoint identity and the full 21-state finite-`tau_b`
+P3/detectability result to build one correlated nonlinear graph-sector master.
+For `z=[x;w_W]`, the controlling matrix is
+`L_W=[[-D_W,M_W^T J_N B_W],[B_W^T J_N M_W,B_W^T J_N B_W]]`.
+Admissible graph sectors `z^T Pi_j z>=0` enter only through the full
+S-procedure test `-(L_W+sum lambda_j Pi_j)>0`; the same construction is
+required at every prefix.
+
+## Evidence and current limiter
+
+P3 was recomputed with the deployed `0.4 m/s^2` accelerometer-bias projection
+limit: H18 and A21 retain `delta=1e-18`, the first active A21 bias full-matrix
+margin is `1.2499987189052501e-9`, and the H18 worst interval LDLT pivot is
+`4.987499868870966e-14`. `P3_DEPLOYMENT_PASS` remains false only for the
+separate physical-language inclusion obligation.
+
+The canonical 6 s A21 payload has a strict small-error margin
+(`rho=0.9911176` at scale `0.125`) but crosses one at scale `7.5` and
+reaches `1.1357229` at the retained-domain boundary. The finite-`tau_b`
+detectability rerun passes with bias energy gap `1.1992803e-3` and
+asymptotic A21 gap `1e-18`. Thus linear bias decay is not the limiter;
+the limiter is the correlated attitude/`a_w`/`b_a` accelerometer curvature.
+
+## Failed approaches / DEAD_ENDS
+
+On the same canonical payload, diagonal bias precision, fixed-frame and
+source-framed `a_w`/`b_a` cross penalties, and separate latent diagonal
+energies all failed after their allowed refinement. The closest result was
+`rho_linear=0.996797290`, `rho_finite=1.00009035805` at
+`(beta_aw,beta_b)=(500,310000)`. Do not resume metric-grid tuning.
+
+## Retained facts, alternatives, and next experiment
+
+Retain the complete same-history source, frozen P3 `delta=1e-18`, full H18/A21
+states and cross terms, exact Cayley/reset residuals, all valid accelerometer
+and vector events, and every due S event with actual applied `R_S` inside its
+suffix. Packetwise radii, state elimination, replay fitting, and further
+domain/filter changes remain forbidden.
+
+The remaining alternatives are a dense source-structured storage LMI, a
+path-dependent joint storage, or direct falsification of a source-uniform
+inner funnel. The next falsifiable experiment is to materialize only the
+same-history state/residual selectors needed by the master, lift the exact
+Cayley and A21 projection bounds into dense graph sectors, and evaluate the
+full augmented matrix first on the canonical point word. Proceed to outward
+source-uniform LDLT only if that non-promoting matrix diagnostic is below one.
 
 ## Complete-source obligation still open
 
 The upstream complete-source contract still does not materialize the correlated finite-window SEA3 realization as an executable outward source family. Parameter compactness, RAO/moment envelopes, hard pathwise acceleration/body-rate caps, frontend parity, and adaptive-state rate/jump bounds do not replace a same-history transition for the correlated source state. P4 may not substitute independent per-sample boxes, a replay record, or a finite harmonic/grid surrogate.
 
-The continuation should first formulate the full-state finite-`tau_b` master inequality and determine exactly which source-correlated quantities it needs. Then extend the existing complete-SEA3 execution/source machinery only for those theorem quantities, rather than creating another surrogate proof language.
+The full-state master now identifies the needed quantities: same-history prefix
+state selectors, stacked nonlinear residual selectors, reset/boundary terms,
+and the A21 projection graph. Extend the existing complete-SEA3 execution only
+to materialize those quantities, rather than creating another source language.
 
-## CI / evidence status at handoff
+## Current CI / evidence status
 
-The long-window falsification workflow is green. Exact Cayley parity, the physical 3-second finite-map feasibility, A21-word, complete-word feasibility, and lever-arm-study workflows were also green on head `80140b762ab7bfd924d1d5dc279153e425a31612` when this handoff was prepared; several broader workflows were still running.
+The exact `source-foundation` command passes 73 tests. The 0.4 P3 recomputation,
+finite-`tau_b` detectability rerun, canonical P4 integration, and all 91 P4
+discovery tests pass. `make all` is locally blocked before compilation because
+this environment has neither `/usr/include/eigen3/Eigen/Dense` nor a vendored
+Eigen tree; the build command and include policy were not changed.
 
 `ou-validation` is red for a known evidence-provenance reason, not because its numerical unit-test body found a new filter failure: `tools/ou_evidence_contract.py --auto` reports replay dependencies changed relative to committed validation/robustness provenance, including the OU-III filter and WavePeriodEstimator dependencies. Genuine validation/robustness evidence regeneration is therefore still required before a later proof PR is declared final/ready. Do not hand-edit provenance hashes.
 
-No claim is made that P4 or P5 is complete at this merge checkpoint.
+No claim is made that P4 or P5 is complete.
 
-## Continuation instruction
+## Promotion boundary
 
-Create a new PR from the merged main state. Read `AGENTS.md`, this file, the merged #496 handoff comment, `doc/kalman_ou_iii/w3d-sea3-stability-theorem.tex-part`, and `tools/stability/ou3_sea3_a21_detectability_completion.py` first. Keep P3 frozen at `delta=1e-18`; preserve complete same-history SEA3 and every actual-applied R_S update. Build the full-21-state finite-`tau_b` cascade/detectability bridge before adding further universal P4 enclosure machinery. P5 remains blocked until strict P4 closes.
+The master and graph-sector machinery are non-promoting. P4 remains open until
+the source-uniform endpoint and every-prefix augmented LDLT plus domain
+retention close on the same complete SEA3 history. P5 remains blocked until
+strict canonical P4 contraction closes.

@@ -13,7 +13,8 @@ applied R_S from that source word.
 The finite state is the paper's true-minus-estimated physical Cayley error.  It
 is propagated by the existing theorem-facing physical prediction and Joseph
 event functions.  A21 uses homogeneous source true residual bias zero and the
-shipping 0.5 m/s^2 projection; the full delta-b_a error coordinate is retained.
+projection radius read from the current proof domain; the full delta-b_a error
+coordinate is retained.
 
 Before any finite ratio is reported, the zero-state physical Jacobian cocycle
 must reproduce the reset-normalized linear cocycle.  This is a point

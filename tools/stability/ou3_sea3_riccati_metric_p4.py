@@ -45,6 +45,7 @@ import ou3_p4_cayley_sector_certificate as CAYLEY
 import ou3_p4_complete_word_endpoint_transport as ENDPOINT
 import ou3_p4_complete_sea3_finite_map_mean_value as FINITE
 import ou3_p4_complete_sea3_signed_information_ledger as SIGNED
+import ou3_p4_complete_sea3_joint_sector_master as JOINT
 
 # Exact/outward finite-map differentiation machinery only.
 import ou3_p4_complete_sea3_phi_differential_metric as DIFF
@@ -54,8 +55,8 @@ import ou3_p4_complete_sea3_differential_word as DWRD
 
 REPO = Path(__file__).resolve().parents[2]
 DEFAULT_DOMAIN = REPO / "tools" / "stability" / "ou3_proof_operating_domain.json"
-SCHEMA = 13
-QUALIFICATION = "OU3_SEA3_FINITE_STATE_ENDPOINT_PREFIX_P4_V13"
+SCHEMA = 14
+QUALIFICATION = "OU3_SEA3_FINITE_STATE_ENDPOINT_PREFIX_P4_V14"
 ARCHITECTURE = "FINITE_STATE_COMPLETE_SEA3_QUADRATIC_ENDPOINT_AND_PREFIX"
 CANDIDATES = [30.0, 25.0, 20.0, 15.0]
 
@@ -67,6 +68,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     endpoint = ENDPOINT.build(path)
     finite = FINITE.build(path)
     signed = SIGNED.build(path)
+    joint = JOINT.build(p3_contract=p3, signed_contract=signed)
     diff = DIFF.build(path)
     pred = PRED.build(path)
     events = EVENTS.build(path)
@@ -77,6 +79,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         + [f"endpoint: {x}" for x in ENDPOINT.validate(endpoint)]
         + [f"finite-map bridge: {x}" for x in FINITE.validate(finite)]
         + [f"signed-information ledger: {x}" for x in SIGNED.validate(signed)]
+        + [f"joint-sector master: {x}" for x in JOINT.validate(joint)]
         + [f"differential metric primitive: {x}" for x in DIFF.validate(diff)]
         + [f"prediction AD primitive: {x}" for x in PRED.validate(pred)]
         + [f"event AD primitive: {x}" for x in EVENTS.validate(events)]
@@ -97,6 +100,8 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     prefix_domain_closed = bool(finite["source_uniform_all_prefix_domains_closed"])
     signed_ledger_ready = bool(signed["joint_complete_word_signed_information_composition_available"])
     signed_domination_closed = bool(signed["source_uniform_joint_eta_reset_domination_closed"])
+    joint_sector_closed = bool(joint["source_uniform_same_history_joint_sector_closed"])
+    joint_ldlt_closed = bool(joint["source_uniform_full_augmented_LDLT_closed"])
 
     projection_machinery = bool(
         events["A21_bias_projection_generalized_Jacobian_available"]
@@ -112,6 +117,8 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         and endpoint_master_emitted
         and signed_ledger_ready
         and signed_domination_closed
+        and joint_sector_closed
+        and joint_ldlt_closed
         and endpoint_closed
         and finite_jacobian_closed
         and finite_endpoint_closed
@@ -124,14 +131,16 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         fail_reasons.append("frozen conditional complete-SEA3 P3 prerequisite is not closed")
     if not (
         signed_domination_closed
+        and joint_sector_closed
+        and joint_ldlt_closed
         and endpoint_closed
         and finite_jacobian_closed
         and finite_endpoint_closed
     ):
         fail_reasons.append(
-            "paper finite-state endpoint dissipation is open: jointly dominate the same-history complete-word signed "
-            "accelerometer/vector eta and finite reset costs by the complete-word information decrease, crediting every "
-            "actual-R_S S event, and close the equivalent finite-map/endpoint full-matrix tests"
+            "paper finite-state endpoint dissipation is open: materialize the source-correlated same-history nonlinear "
+            "graph sectors and close -(L_W+sum lambda_j Pi_j)>0 by full augmented interval LDLT, retaining all A21 "
+            "finite-tau_b cross terms and every actual-R_S S event in the complete-word suffixes"
         )
     if not (prefix_gain_closed and prefix_domain_closed):
         fail_reasons.append(
@@ -196,6 +205,26 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "finite_reset_defect_explicit_in_signed_ledger": bool(signed["finite_reset_defect_remains_explicit"]),
         "source_uniform_joint_eta_reset_domination_closed": signed_domination_closed,
 
+        "joint_sector_master_contract": joint,
+        "joint_sector_master_qualification": joint["qualification"],
+        "full_state_joint_sector_master_available": bool(
+            joint["terminal_full_augmented_interval_LDLT_available"]
+        ),
+        "A21_finite_taub_full_matrix_P3_required": bool(
+            joint["full_A21_finite_taub_P3_margin_required"]
+        ),
+        "A21_finite_taub_detectability_consumed": bool(
+            joint["finite_taub_A21_detectability_consumed"]
+        ),
+        "joint_sector_all_21_state_cross_terms_retained": bool(
+            joint["all_21_state_cross_terms_retained"]
+        ),
+        "joint_sector_actual_RS_provenance_preserved": bool(
+            joint["actual_RS_provenance_preserved"]
+        ),
+        "source_uniform_same_history_joint_sector_closed": joint_sector_closed,
+        "source_uniform_full_augmented_LDLT_closed": joint_ldlt_closed,
+
         "endpoint_transport_qualification": endpoint["qualification"],
         "endpoint_master_object_emitted": endpoint_master_emitted,
         "endpoint_decomposition_identity": endpoint["endpoint_decomposition_identity"],
@@ -222,6 +251,9 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
 
         "differential_AD_used_only_for_finite_map_enclosure": True,
         "differential_pullback_used_as_replacement_P4": False,
+        "differential_finite_distance_bridge_closed": bool(
+            finite_jacobian_closed and finite_endpoint_closed
+        ),
         "prediction_AD_qualification": pred["qualification"],
         "event_AD_qualification": events["qualification"],
         "differential_word_qualification": word["qualification"],
@@ -248,10 +280,9 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "P5_MAY_START": p4_pass,
         "P4_CANONICAL_FAIL_REASONS": fail_reasons,
         "next_obligation": (
-            "construct one source-correlated COMPLETE_SEA3_NORMAL_LIVE_WORD outward enclosure carrying finite state, "
-            "P/H/R, committed tuner schedule, actual applied R_S, event timing and A21 projection; use the signed Joseph/reset "
-            "ledger to dominate the joint eta/reset costs by the same word's information, then close the equivalent endpoint "
-            "and every-prefix finite-map tests without packetwise scalarization"
+            "materialize one source-correlated COMPLETE_SEA3_NORMAL_LIVE_WORD same-history nonlinear graph, including the "
+            "A21 bias-projection generalized Jacobian, and close the full augmented joint-sector LDLT at the endpoint and "
+            "every prefix; retain finite state, P/H/R, tuner schedule, actual applied R_S and all 21-state cross terms"
             if p3_pass else "repair only the frozen P3 prerequisite failure"
         ),
     }
@@ -279,6 +310,9 @@ def validate(d: dict) -> list[str]:
         "full_epsilon_aw_retained", "signed_information_composition_available",
         "S_zero_nonlinear_eta_exactly_zero", "actual_RS_S_information_credited_as_favorable_term",
         "finite_reset_defect_explicit_in_signed_ledger", "endpoint_master_object_emitted",
+        "full_state_joint_sector_master_available", "A21_finite_taub_full_matrix_P3_required",
+        "A21_finite_taub_detectability_consumed",
+        "joint_sector_all_21_state_cross_terms_retained", "joint_sector_actual_RS_provenance_preserved",
         "actual_RS_regularization_enters_suffix_maps", "finite_map_mean_value_bridge_validated",
         "finite_map_not_differential_metric_replacement", "differential_AD_used_only_for_finite_map_enclosure",
         "same_source_omega_h_tau_prediction_required", "prediction_independent_F_forbidden",
@@ -291,10 +325,12 @@ def validate(d: dict) -> list[str]:
     for key in (
         "trajectory_replay_used", "filter_changed", "declared_domain_shrunk", "source_family_replaced",
         "P3_DEPLOYMENT_PASS_consumed_as_if_closed", "source_uniform_joint_eta_reset_domination_closed",
+        "source_uniform_same_history_joint_sector_closed", "source_uniform_full_augmented_LDLT_closed",
         "source_uniform_joint_BW_epsilon_enclosure_closed", "source_uniform_r_word_enclosure_closed",
         "source_uniform_master_endpoint_domination_closed", "source_uniform_complete_word_generalized_Jacobian_enclosed",
         "source_uniform_endpoint_finite_map_closed", "source_uniform_prefix_gain_closed",
         "source_uniform_prefix_domain_retention_closed", "differential_pullback_used_as_replacement_P4",
+        "differential_finite_distance_bridge_closed",
         "packet_count_remainder_budget_used", "packetwise_remainder_norm_sum_used",
         "standalone_eta_Rinv_budget_used", "state_elimination_used", "a_w_Schur_final_certificate_used",
         "correction_radius_claim_used", "inverse_metric_floor_claim_used", "independent_RS_schedule_used",
@@ -333,6 +369,7 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--domain", type=Path, default=DEFAULT_DOMAIN)
     ap.add_argument("--output", type=Path, required=True)
+    ap.add_argument("--joint-sector-output", type=Path)
     args = ap.parse_args()
     d = build(args.domain)
     failures = validate(d)
@@ -340,6 +377,15 @@ def main() -> int:
     d["validation_failures"] = failures
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(d, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    if args.joint_sector_output is not None:
+        joint = dict(d["joint_sector_master_contract"])
+        joint_failures = JOINT.validate(joint)
+        joint["validation_pass"] = not joint_failures
+        joint["validation_failures"] = joint_failures
+        args.joint_sector_output.parent.mkdir(parents=True, exist_ok=True)
+        args.joint_sector_output.write_text(
+            json.dumps(joint, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+        )
     print(json.dumps({
         "architecture": d["canonical_P4_architecture"],
         "signed_information": d["signed_information_composition_available"],

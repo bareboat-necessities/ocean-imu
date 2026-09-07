@@ -164,10 +164,13 @@ def apply_event(word: DifferentialWord, event: DifferentialEvent) -> None:
     if not event.accepted:
         raise ValueError("only executed/accepted nonlinear events belong in the cocycle")
     r, c = _shape(event.J)
-    if c != word.current_dim:
+    kind = event.kind
+    if kind == "H_to_A":
+        if word.hybrid_lifts != 0 or word.current_dim != 18 or (r, c) != (21, 18):
+            raise ValueError("H->A differential lift must be the unique 21x18 hybrid event")
+    elif c != word.current_dim:
         raise ValueError("differential event input dimension does not match current word")
 
-    kind = event.kind
     if kind == "prediction":
         if r != c:
             raise ValueError("same-mode prediction must be square")
@@ -200,8 +203,6 @@ def apply_event(word: DifferentialWord, event: DifferentialEvent) -> None:
             raise ValueError("vector event did not derive its gain from the same P/H/R cell")
         word.vector_updates += 1
     elif kind == "H_to_A":
-        if word.hybrid_lifts != 0 or word.current_dim != 18 or (r, c) != (21, 18):
-            raise ValueError("H->A differential lift must be the unique 21x18 hybrid event")
         if not _is_canonical_H_to_A_lift(event.J):
             raise ValueError("H->A homogeneous derivative must be canonical [I18;0]")
         if event.held_ba_forcing_separate is not True:

@@ -1,6 +1,7 @@
 from pathlib import Path
 import sys
 import unittest
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools"))
@@ -44,6 +45,15 @@ class Sea3CompleteSourceP3Test(unittest.TestCase):
         self.assertTrue(self.d["complete_SEA3_frontend_state_consumed"])
         self.assertTrue(self.d["complete_SEA3_adaptive_state_consumed"])
         self.assertGreaterEqual(self.d["common_word_horizon_s"], 3.0)
+
+    def test_process_cache_returns_defensive_result_copies(self):
+        cached = {"nested": {"value": 1}}
+        with patch.object(mod, "_build_cached", return_value=cached):
+            first = mod.build()
+            second = mod.build()
+        first["nested"]["value"] = 2
+        self.assertEqual(second["nested"]["value"], 1)
+        self.assertEqual(cached["nested"]["value"], 1)
 
     def test_complete_source_retains_all_sea3_couplings(self):
         sea = self.c["SEA3_surface_family"]
