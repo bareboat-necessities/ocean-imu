@@ -8,6 +8,10 @@ on:
       - "tests/kalman_ou_iii/ou3_p4_physical_finite_map_feasibility.py"
       - "tests/kalman_ou_iii/ou3_p4_physical_finite_map_feasibility_fast.py"
       - "tests/kalman_ou_iii/ou3_p4_canonicalize_physical_payload.py"
+      - "tests/kalman_ou_iii/ou3_p4_bias_witness_admissibility.py"
+      - "tests/kalman_ou_iii/fixtures/ou3_p4_retained_bias_witnesses.json"
+      - "tests/validation/test_ou3_bias_witness_admissibility.py"
+      - "tools/stability/ou3_mems_bias_contract.py"
       - "tools/stability/ou3_p4_complete_sea3_differential_prediction.py"
       - "tools/stability/ou3_p4_complete_sea3_differential_events.py"
       - "tools/stability/ou3_p4_complete_sea3_reset_gauge_attachment.py"
@@ -24,6 +28,10 @@ on:
       - "tests/kalman_ou_iii/ou3_p4_physical_finite_map_feasibility.py"
       - "tests/kalman_ou_iii/ou3_p4_physical_finite_map_feasibility_fast.py"
       - "tests/kalman_ou_iii/ou3_p4_canonicalize_physical_payload.py"
+      - "tests/kalman_ou_iii/ou3_p4_bias_witness_admissibility.py"
+      - "tests/kalman_ou_iii/fixtures/ou3_p4_retained_bias_witnesses.json"
+      - "tests/validation/test_ou3_bias_witness_admissibility.py"
+      - "tools/stability/ou3_mems_bias_contract.py"
       - "tools/stability/ou3_p4_complete_sea3_differential_prediction.py"
       - "tools/stability/ou3_p4_complete_sea3_differential_events.py"
       - "tools/stability/ou3_p4_complete_sea3_reset_gauge_attachment.py"
@@ -58,6 +66,10 @@ jobs:
 
       - name: Fetch genuine coupled wave simulation data
         run: make ensure-sim-data
+
+      - name: Test conditional bias admissibility and dense BIAS2 point algebra
+        working-directory: tests/validation
+        run: python3 -m unittest -v test_ou3_bias_witness_admissibility
 
       - name: Build single shipping observer
         working-directory: tests/kalman_ou_iii
@@ -197,6 +209,43 @@ jobs:
                     'worst_prefix_ratio=', d['worst_prefix_ratio_on_domain_retained_cases'])
           PY
 
+      - name: Audit retained witnesses against conditional BIAS0 BIAS1 and BIAS2
+        run: |
+          python3 tests/kalman_ou_iii/ou3_p4_bias_witness_admissibility.py \
+            --payload-prefix /tmp/ou3_p4_physical_payload \
+            --output /tmp/ou3_p4_bias_witness_admissibility.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/ou3_p4_bias_witness_admissibility.json'))
+          assert d['conditional_mathematical_experiment'] is True
+          assert d['hardware_qualification_required_to_run_this_experiment'] is False
+          assert d['new_source_or_direction_or_scale_search'] is False
+          assert d['filter_or_domain_changed'] is False
+          assert d['BIAS2_evaluated_on_actual_corrected_error_histories'] is True
+          assert d['BIAS2_uniform_sector_available'] is False
+          assert d['canonical_P4_falsified_here'] is False
+          assert d['P4_promoted'] is False and d['P5_may_start'] is False
+          for mode in ('H18','A21'):
+              m=d['modes'][mode]
+              assert m['retained_payload_identity_verified'] is True
+              assert m['all_actual_RS_values_copied_bit_for_bit'] is True
+              assert m['event_counts']['prediction'] == 600
+              assert m['event_counts']['accelerometer'] == 600
+              assert all(c['bias_recurrence_point_check_pass'] for c in m['cases'])
+              for c in m['cases']:
+                  if c['rho_endpoint'] > 1:
+                      print('BIAS2_EXPANDING_RETAINED_CASE', mode, c['scale'],
+                            'rho=',c['rho_endpoint'],
+                            'bias_interior=',c['estimated_bias_interior_retained'],
+                            'max_bhat=',c['max_estimated_bias_norm'],
+                            'mu_sufficient_point=',c['BIAS2']['mu_sufficient_point'],
+                            'mu_actual_point=',c['BIAS2']['mu_actual_point'],
+                            'kappa_point=',c['BIAS2']['kappa_point'],
+                            'verdict=',c['verdict'])
+          print('BIAS_WITNESS_SOURCE_STATUS', d['source_membership_status'])
+          print('BIAS_WITNESS_RESET_STATUS', d['finite_reset_storage_attachment_status'])
+          PY
+
       - name: Upload non-promoting physical finite-map evidence
         if: always()
         uses: actions/upload-artifact@v6
@@ -216,4 +265,6 @@ jobs:
             /tmp/ou3_p4_physical_payload_projection_A21.json
             /tmp/ou3_p4_physical_finite_map_H18.json
             /tmp/ou3_p4_physical_finite_map_A21.json
+            /tmp/ou3_p4_bias_witness_admissibility.json
+            /tmp/ou3_p4_bias_witness_admissibility.prefixes.csv.gz
           retention-days: 7

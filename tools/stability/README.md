@@ -39,3 +39,14 @@ CI rebuilds the bias contract, source, frozen P3 and canonical P4 chain and
 publishes their separate closure flags. BIAS0 qualification, BIAS2 separation,
 the complete source cover, P4 and P5 remain open until their actual evidence is
 available. Literature establishes the model rationale, not those certificates.
+
+The retained-witness experiment is
+`tests/kalman_ou_iii/ou3_p4_bias_witness_admissibility.py`, run by the existing
+physical finite-map CI workflow. It pins the original H18/A21 payloads and
+directions, checks the initial and every-event bias state, and evaluates BIAS2
+with the full stacked nonlinear/corrected-error cross term and Xi=V0. It also
+reports missing source membership and finite reset/storage attachment. Hardware
+qualification is not an execution gate for this conditional experiment.
+The current result retains interior A21 expansion even with positive point
+separation; see the research ledger. A positive sampled BIAS2 ratio is neither
+a uniform sector nor proof of endpoint dissipation.

@@ -39,7 +39,7 @@ The corrected single shipping observer owns one source/tuner/Riccati history and
 
 Same-observer event ledgers reproduce those ratios within a few `1e-6` and telescope to roundoff. The old duplicate observer that staged tuner-commit data at the wrong boundary is retired; its older A21 rho values are stale.
 
-On the 0.4 head, the 3-second physical reset-normalized diagnostic keeps strict zero-state parity. H18 remains contracting over every retained tested scale. A21 still first crosses one at scale `8.0`; the bias projection is inactive in the problematic cases, and the worst retained-domain endpoint ratio is about `1.0860152320`. Thus the 0.4 clamp is a legitimate production/domain tightening, not a proof fix.
+On the 0.4 head, the 3-second physical reset-normalized diagnostic keeps strict zero-state parity. H18 remains contracting over the retained tested scales. A21 first crosses one at scale `8.0`. The bias-admissibility audit below excludes the approximately `1.086` boundary case from the 0.35 Normal-Live estimated-bias interior, but retains expanding +/-8 and +/-16 cases with inactive projection. The 0.4 clamp does not remove that interior diagnostic obstruction.
 
 ## 6-second and 9-second falsification result: longer-window route stopped
 
@@ -175,6 +175,54 @@ an OU covariance or the estimated active-state cap does not provide that
 true-bias premise. Source forcing and the separate H->A event remain explicit.
 
 ## Bias-premise audit and current proof plan
+
+The fixed-witness audit uses the archived directions/scales and SHA256-pinned
+3 s H18/A21 payloads. It assumes the same zero true-bias root, zero unmatched
+deterministic offset and zero homogeneous driving as the retained evaluator;
+it does not wait for assembled-sensor qualification. BIAS1 admits this true
+bias algebra. It checks the initial state and every event against the existing
+0.35 Normal-Live estimated-bias interior as well as the old error-domain checks.
+
+The point result is:
+
+| A21 scale | Endpoint rho | Maximum estimated-bias norm | Sufficient BIAS2 point ratio, Xi=V0 | Checked bias/domain result |
+| --- | --- | --- | --- | --- |
+| -8 | 1.0022511802 | 0.1060604400 | 0.0067782449 | retained |
+| -16 | 1.0213229467 | 0.2121209584 | 0.0068726407 | retained |
+| -30.1714758181 | 1.0860153089 | 0.4000000000 | 0.0072294990 | initial estimate outside 0.35 interior |
+
+The positive +8/+16 cases also expand within the checked bounds. All four
+interior expanders have inactive projection and 600 predictions, 600
+accelerometer events, 108 actual-R_S S events and 75 vector events. Corrected
+bias-error recurrences agree with the retained finite evaluator; at scale -16
+the corrected error differs from a free GM path by up to 0.0001764025 m/s^2.
+The negative boundary case has two active projections and was never an
+inactive-projection witness. H18's worst retained ratio is 0.9998370258.
+
+BIAS2 is evaluated jointly: a and d are the full stacked whitened nonlinear
+attitude/acceleration and corrected bias-error channels. At scale -16,
+kappa_point=0.9999717099, so separation is positive but cancellation remains
+strong. These point ratios (and their sampled minimum) are not uniform
+constants. Positive separation coexists with positive Delta V in the retained
+storage. For every sector valid at this point and lambda>=0,
+`Delta V + sum lambda_j*z^T Pi_j*z >= Delta V > 0`. Thus an admitted expansion
+cannot be repaired by stronger use of valid BIAS0/1/2 sectors in that storage.
+
+The missing attachment is mathematical: the payload has no complete SEA3
+joint source/bias membership witness, and its reset-normalized covariance has
+only a tangent bridge to the captured source covariance. Their maximum
+normalized covariance differences are 0.0010948683 (H18) and 4.9266941e-7
+(A21); small numerical differences do not prove finite gauge equivalence.
+The audit therefore reports full admissibility unresolved, not a canonical
+P4 falsification. Its prefix CSV retains each checked state and residual.
+No filter, domain, direction, scale, metric or window-length search is added.
+
+Critic decision: BIAS1 slow true-bias transport and positive point BIAS2
+separation do not supply a quantitative rescue of the current storage. Resolve
+the complete source and finite reset/storage attachment first. If the interior
+expansion is admitted, abandon this storage: the distinct alternatives remain
+dense source-structured storage, path-dependent storage, or direct theorem
+falsification. No new interval campaign is justified by this audit.
 
 The BIAS0/1/2 package in `w3d-mems-bias-preconditions.tex-part` is conditional.
 BIAS0 separates qualified sensor physics from the filter's 5000 s setting and

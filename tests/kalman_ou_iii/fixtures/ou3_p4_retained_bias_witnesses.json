@@ -1,0 +1,470 @@
+{
+  "deterministic_bias_mismatch": [
+    0.0,
+    0.0,
+    0.0
+  ],
+  "modes": {
+    "A21": {
+      "canonical_payload_sha256": "b1e55c22742398f00d2c2e3f7f725a53b3ad685d62681f0add91a0cc49106c0a",
+      "cases": [
+        {
+          "domain_retained": true,
+          "projection_counts": {
+            "active": 0,
+            "clarke_hull": 0,
+            "inactive": 783,
+            "not_applicable": 0
+          },
+          "rho_endpoint": 0.9958519764806222,
+          "scale": -0.125
+        },
+        {
+          "domain_retained": true,
+          "projection_counts": {
+            "active": 0,
+            "clarke_hull": 0,
+            "inactive": 783,
+            "not_applicable": 0
+          },
+          "rho_endpoint": 0.9958502070000137,
+          "scale": 0.125
+        },
+        {
+          "domain_retained": true,
+          "projection_counts": {
+            "active": 0,
+            "clarke_hull": 0,
+            "inactive": 783,
+            "not_applicable": 0
+          },
+          "rho_endpoint": 0.9958778744731258,
+          "scale": -0.5
+        },
+        {
+          "domain_retained": true,
+          "projection_counts": {
+            "active": 0,
+            "clarke_hull": 0,
+            "inactive": 783,
+            "not_applicable": 0
+          },
+          "rho_endpoint": 0.9958707968769561,
+          "scale": 0.5
+        },
+        {
+          "domain_retained": true,
+          "projection_counts": {
+            "active": 0,
+            "clarke_hull": 0,
+            "inactive": 783,
+            "not_applicable": 0
+          },
+          "rho_endpoint": 0.9959557925619626,
+          "scale": -1.0
+        },
+        {
+          "domain_retained": true,
+          "projection_counts": {
+            "active": 0,
+            "clarke_hull": 0,
+            "inactive": 783,
+            "not_applicable": 0
+          },
+          "rho_endpoint": 0.9959416394573926,
+          "scale": 1.0
+        },
+        {
+          "domain_retained": true,
+          "projection_counts": {
+            "active": 0,
+            "clarke_hull": 0,
+            "inactive": 783,
+            "not_applicable": 0
+          },
+          "rho_endpoint": 0.9962603781933329,
+          "scale": -2.0
+        },
+        {
+          "domain_retained": true,
+          "projection_counts": {
+            "active": 0,
+            "clarke_hull": 0,
+            "inactive": 783,
+            "not_applicable": 0
+          },
+          "rho_endpoint": 0.9962320886855838,
+          "scale": 2.0
+        },
+        {
+          "domain_retained": true,
+          "projection_counts": {
+            "active": 0,
+            "clarke_hull": 0,
+            "inactive": 783,
+            "not_applicable": 0
+          },
+          "rho_endpoint": 0.997464463329597,
+          "scale": -4.0
+        },
+        {
+          "domain_retained": true,
+          "projection_counts": {
+            "active": 0,
+            "clarke_hull": 0,
+            "inactive": 783,
+            "not_applicable": 0
+          },
+          "rho_endpoint": 0.9974080179106106,
+          "scale": 4.0
+        },
+        {
+          "domain_retained": true,
+          "projection_counts": {
+            "active": 0,
+            "clarke_hull": 0,
+            "inactive": 783,
+            "not_applicable": 0
+          },
+          "rho_endpoint": 0.9994615306972224,
+          "scale": -6.0
+        },
+        {
+          "domain_retained": true,
+          "projection_counts": {
+            "active": 0,
+            "clarke_hull": 0,
+            "inactive": 783,
+            "not_applicable": 0
+          },
+          "rho_endpoint": 0.9993771964805833,
+          "scale": 6.0
+        },
+        {
+          "domain_retained": true,
+          "projection_counts": {
+            "active": 0,
+            "clarke_hull": 0,
+            "inactive": 783,
+            "not_applicable": 0
+          },
+          "rho_endpoint": 1.002251180214921,
+          "scale": -8.0
+        },
+        {
+          "domain_retained": true,
+          "projection_counts": {
+            "active": 0,
+            "clarke_hull": 0,
+            "inactive": 783,
+            "not_applicable": 0
+          },
+          "rho_endpoint": 1.0021393576728377,
+          "scale": 8.0
+        },
+        {
+          "domain_retained": true,
+          "projection_counts": {
+            "active": 0,
+            "clarke_hull": 0,
+            "inactive": 783,
+            "not_applicable": 0
+          },
+          "rho_endpoint": 1.0213229467010378,
+          "scale": -16.0
+        },
+        {
+          "domain_retained": true,
+          "projection_counts": {
+            "active": 0,
+            "clarke_hull": 0,
+            "inactive": 783,
+            "not_applicable": 0
+          },
+          "rho_endpoint": 1.0211078327648138,
+          "scale": 16.0
+        },
+        {
+          "domain_retained": true,
+          "projection_counts": {
+            "active": 2,
+            "clarke_hull": 0,
+            "inactive": 781,
+            "not_applicable": 0
+          },
+          "rho_endpoint": 1.0860153088918405,
+          "scale": -30.171475818133718
+        },
+        {
+          "domain_retained": true,
+          "projection_counts": {
+            "active": 0,
+            "clarke_hull": 0,
+            "inactive": 783,
+            "not_applicable": 0
+          },
+          "rho_endpoint": 1.0856669933404512,
+          "scale": 30.171475818133718
+        }
+      ],
+      "dimension": 21,
+      "direction": [
+        0.001293932420669109,
+        -0.0001458199816461155,
+        0.0033779998693096672,
+        2.056205069656712e-06,
+        -4.7341991843434037e-07,
+        3.944430036808539e-06,
+        0.0007378499838720592,
+        0.0005394840622222438,
+        -0.0004993463472261506,
+        0.00020606775316567232,
+        0.00024052587291466092,
+        -0.00028235905088225396,
+        -0.00025111016146027985,
+        -0.00027190592519682656,
+        0.00029511675354283794,
+        -0.0013036508226788295,
+        -0.0008733429165233123,
+        0.001029915633671752,
+        -0.0027399280059495603,
+        -0.012971334812525749,
+        -5.674718874394263e-06
+      ],
+      "event_counts": {
+        "S_zero": 108,
+        "accelerometer": 600,
+        "aw_floor": 29,
+        "prediction": 600,
+        "vector": 75
+      },
+      "raw_payload_sha256": "73e489dc2f1239536fe64af372f274e86fab4e287765bff572b8440de12e3d6b",
+      "word_t0": 1143.96044921875,
+      "word_t1": 1146.96337890625
+    },
+    "H18": {
+      "canonical_payload_sha256": "55413d6d0d8742d9f1d2e81c3a1ec972e4b94ea9d4065c0417ed74e1e4ba4432",
+      "cases": [
+        {
+          "domain_retained": true,
+          "projection_counts": {
+            "active": 0,
+            "clarke_hull": 0,
+            "inactive": 0,
+            "not_applicable": 812
+          },
+          "rho_endpoint": 0.9998358581590598,
+          "scale": -0.125
+        },
+        {
+          "domain_retained": true,
+          "projection_counts": {
+            "active": 0,
+            "clarke_hull": 0,
+            "inactive": 0,
+            "not_applicable": 812
+          },
+          "rho_endpoint": 0.9998358709114178,
+          "scale": 0.125
+        },
+        {
+          "domain_retained": true,
+          "projection_counts": {
+            "active": 0,
+            "clarke_hull": 0,
+            "inactive": 0,
+            "not_applicable": 812
+          },
+          "rho_endpoint": 0.999835841787008,
+          "scale": -0.5
+        },
+        {
+          "domain_retained": true,
+          "projection_counts": {
+            "active": 0,
+            "clarke_hull": 0,
+            "inactive": 0,
+            "not_applicable": 812
+          },
+          "rho_endpoint": 0.9998358927966926,
+          "scale": 0.5
+        },
+        {
+          "domain_retained": true,
+          "projection_counts": {
+            "active": 0,
+            "clarke_hull": 0,
+            "inactive": 0,
+            "not_applicable": 812
+          },
+          "rho_endpoint": 0.9998358251024241,
+          "scale": -1.0
+        },
+        {
+          "domain_retained": true,
+          "projection_counts": {
+            "active": 0,
+            "clarke_hull": 0,
+            "inactive": 0,
+            "not_applicable": 812
+          },
+          "rho_endpoint": 0.9998359271236066,
+          "scale": 1.0
+        },
+        {
+          "domain_retained": true,
+          "projection_counts": {
+            "active": 0,
+            "clarke_hull": 0,
+            "inactive": 0,
+            "not_applicable": 812
+          },
+          "rho_endpoint": 0.9998358093693785,
+          "scale": -2.0
+        },
+        {
+          "domain_retained": true,
+          "projection_counts": {
+            "active": 0,
+            "clarke_hull": 0,
+            "inactive": 0,
+            "not_applicable": 812
+          },
+          "rho_endpoint": 0.9998360134261849,
+          "scale": 2.0
+        },
+        {
+          "domain_retained": true,
+          "projection_counts": {
+            "active": 0,
+            "clarke_hull": 0,
+            "inactive": 0,
+            "not_applicable": 812
+          },
+          "rho_endpoint": 0.9998358484238955,
+          "scale": -4.0
+        },
+        {
+          "domain_retained": true,
+          "projection_counts": {
+            "active": 0,
+            "clarke_hull": 0,
+            "inactive": 0,
+            "not_applicable": 812
+          },
+          "rho_endpoint": 0.999836256653034,
+          "scale": 4.0
+        },
+        {
+          "domain_retained": true,
+          "projection_counts": {
+            "active": 0,
+            "clarke_hull": 0,
+            "inactive": 0,
+            "not_applicable": 812
+          },
+          "rho_endpoint": 0.999835981462415,
+          "scale": -6.0
+        },
+        {
+          "domain_retained": true,
+          "projection_counts": {
+            "active": 0,
+            "clarke_hull": 0,
+            "inactive": 0,
+            "not_applicable": 812
+          },
+          "rho_endpoint": 0.9998365940949425,
+          "scale": 6.0
+        },
+        {
+          "domain_retained": true,
+          "projection_counts": {
+            "active": 0,
+            "clarke_hull": 0,
+            "inactive": 0,
+            "not_applicable": 812
+          },
+          "rho_endpoint": 0.9998362084357829,
+          "scale": -8.0
+        },
+        {
+          "domain_retained": true,
+          "projection_counts": {
+            "active": 0,
+            "clarke_hull": 0,
+            "inactive": 0,
+            "not_applicable": 812
+          },
+          "rho_endpoint": 0.9998370258183069,
+          "scale": 8.0
+        },
+        {
+          "domain_retained": false,
+          "projection_counts": {
+            "active": 0,
+            "clarke_hull": 0,
+            "inactive": 0,
+            "not_applicable": 812
+          },
+          "rho_endpoint": 0.9998365318818988,
+          "scale": -10.014036829202285
+        },
+        {
+          "domain_retained": false,
+          "projection_counts": {
+            "active": 0,
+            "clarke_hull": 0,
+            "inactive": 0,
+            "not_applicable": 812
+          },
+          "rho_endpoint": 0.9998375559187852,
+          "scale": 10.014036829202285
+        }
+      ],
+      "dimension": 18,
+      "direction": [
+        -0.0007206092145913719,
+        0.0001019004713493318,
+        -0.001524358642927274,
+        0.0003559329665479859,
+        -4.4298490563940464e-05,
+        0.0009319591735432404,
+        -0.00029219931500901934,
+        -0.004915757476919989,
+        0.00012177623590609454,
+        8.244155538276267e-05,
+        0.002010319674406916,
+        -3.015953970419193e-05,
+        -1.4472913511971488e-05,
+        -0.00037797838968554285,
+        1.0308644184140338e-06,
+        -0.00013877810788590794,
+        0.005527658528865078,
+        8.072030033239554e-05
+      ],
+      "event_counts": {
+        "S_zero": 137,
+        "accelerometer": 600,
+        "aw_floor": 28,
+        "prediction": 600,
+        "vector": 75
+      },
+      "raw_payload_sha256": "db38b812f25e38b6d4bfff60b9452c3af018d7dbe0965ef08f4e220185b8c928",
+      "word_t0": 32.99784469604492,
+      "word_t1": 35.99848556518555
+    }
+  },
+  "qualification": "RETAINED_POINT_WITNESSES_NOT_SEA3_MEMBERSHIP_CERTIFICATES",
+  "retained_ci_run_id": 34102009588,
+  "retained_ci_artifact_id": 10011024466,
+  "retained_ci_archive_sha256": "e969109c3f327dc967e824cf2acc4c7cbb40f32a5c13f99c4a67595348ab9432",
+  "schema": 1,
+  "source_input_name": "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
+  "stochastic_driving_removed_for_homogeneous_map": true,
+  "true_bias_root": [
+    0.0,
+    0.0,
+    0.0
+  ]
+}
