@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
-"""Canonical, unpromoted P4 for the complete SEA3 finite-state theorem.
+"""Unpromoted complete-SEA3 P4 gates for motion and full-state targets.
 
-The paper's P4 object is the source-indexed finite-state quadratic storage
+The primary relaxed motion contract is built separately by
+ou3_p4_bounded_bias_motion. The full-state construction below is retained as
+a stronger unclosed extension; its flags cannot stand in for motion gains.
+
+The stronger P4 object is the source-indexed finite-state quadratic storage
 
     V(e,zeta) = e^T M(zeta) e,
 
@@ -48,6 +52,7 @@ import ou3_p4_complete_sea3_signed_information_ledger as SIGNED
 import ou3_p4_complete_sea3_joint_sector_master as JOINT
 import ou3_mems_bias_contract as BIAS
 import ou3_sea3_response_union as UNION
+import ou3_p4_bounded_bias_motion as MOTION
 
 # Exact/outward finite-map differentiation machinery only.
 import ou3_p4_complete_sea3_phi_differential_metric as DIFF
@@ -66,6 +71,7 @@ CANDIDATES = [30.0, 25.0, 20.0, 15.0]
 def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     path = Path(domain_path).resolve()
     p3 = P3.build(path)
+    motion = MOTION.build(p3_contract=p3)
     cayley = CAYLEY.build(path)
     endpoint = ENDPOINT.build(path)
     finite = FINITE.build(path)
@@ -77,6 +83,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     word = DWRD.build(path)
     failures = (
         [f"P3: {x}" for x in P3.validate(p3)]
+        + [f"motion target: {x}" for x in MOTION.validate(motion)]
         + [f"Cayley: {x}" for x in CAYLEY.validate(cayley)]
         + [f"endpoint: {x}" for x in ENDPOINT.validate(endpoint)]
         + [f"finite-map bridge: {x}" for x in FINITE.validate(finite)]
@@ -163,6 +170,11 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
 
     return {
         "schema": SCHEMA,
+        "primary_proof_target": MOTION.TARGET,
+        "bounded_bias_motion_contract": motion,
+        "P4_MOTION_PASS": motion["P4_MOTION_PASS"],
+        "P5_MOTION_MAY_START": motion["P5_MOTION_MAY_START"],
+        "legacy_full_state_gate_scope": "stronger unclosed extension, not the primary motion target",
         "qualification": QUALIFICATION,
         "canonical_P4_architecture": ARCHITECTURE,
         "canonical_source": "COMPLETE_SEA3_NORMAL_LIVE_WORD",
@@ -308,6 +320,13 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
 
 def validate(d: dict) -> list[str]:
     f: list[str] = []
+    motion = d.get("bounded_bias_motion_contract", {})
+    f.extend(f"motion target: {x}" for x in MOTION.validate(motion))
+    if d.get("primary_proof_target") != MOTION.TARGET:
+        f.append("primary motion theorem target missing")
+    for key in ("P4_MOTION_PASS", "P5_MOTION_MAY_START"):
+        if d.get(key) is not False or d.get(key) != motion.get(key):
+            f.append(f"{key} missing, detached or falsely promoted")
     f.extend(UNION.validate(d.get("SEA3_response_union", {})))
     if not UNION.all_branches_modes_closed(d.get("response_branch_conditional_P3_coverage_consumed", {})):
         f.append("P4 missing conditional P3 coverage of a response branch/mode")
@@ -399,6 +418,7 @@ def main() -> int:
     ap.add_argument("--domain", type=Path, default=DEFAULT_DOMAIN)
     ap.add_argument("--output", type=Path, required=True)
     ap.add_argument("--joint-sector-output", type=Path)
+    ap.add_argument("--motion-output", type=Path)
     args = ap.parse_args()
     d = build(args.domain)
     failures = validate(d)
@@ -406,6 +426,12 @@ def main() -> int:
     d["validation_failures"] = failures
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(d, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    if args.motion_output is not None:
+        motion = dict(d["bounded_bias_motion_contract"])
+        motion_failures = MOTION.validate(motion)
+        motion.update(validation_pass=not motion_failures, validation_failures=motion_failures)
+        args.motion_output.parent.mkdir(parents=True, exist_ok=True)
+        args.motion_output.write_text(json.dumps(motion, indent=2, sort_keys=True)+"\n", encoding="utf-8")
     if args.joint_sector_output is not None:
         joint = dict(d["joint_sector_master_contract"])
         joint_failures = JOINT.validate(joint)
@@ -416,6 +442,10 @@ def main() -> int:
             json.dumps(joint, indent=2, sort_keys=True) + "\n", encoding="utf-8"
         )
     print(json.dumps({
+        "primary_proof_target": d["primary_proof_target"],
+        "P4_MOTION_PASS": d["P4_MOTION_PASS"],
+        "P5_MOTION_MAY_START": d["P5_MOTION_MAY_START"],
+        "motion_fail_reasons": d["bounded_bias_motion_contract"]["P4_MOTION_FAIL_REASONS"],
         "architecture": d["canonical_P4_architecture"],
         "signed_information": d["signed_information_composition_available"],
         "signed_joint_domination": d["source_uniform_joint_eta_reset_domination_closed"],

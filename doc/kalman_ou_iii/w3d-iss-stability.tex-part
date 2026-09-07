@@ -14,6 +14,15 @@ BIAS0/1 in Section~\ref{sec:mems-bias-preconditions} supply the sensor
 qualification, true-bias history and projection-compatibility premises.
 Model mismatch remains an explicit input through hold and H$\to$A release.
 
+The linear Kalman/Riccati implications below are auxiliary results, not a
+completed finite-error nonlinear A21 certificate. The primary nonlinear target
+is Theorem~\ref{thm:sea3-bounded-bias-motion}: bounded accelerometer-bias
+error and practical stability of the other 18 errors in both modes, using the
+full active 21-state gain/covariance history. It requires neither bias-error
+convergence nor a zero model-mismatch floor. The active motion gain and all
+prefix/domain obligations must be certified separately; the held-mode bound
+cannot simply be transferred after release.
+
 \subsection{Adopted horizontal gauge}
 \label{sec:iss-heading-gauge}
 

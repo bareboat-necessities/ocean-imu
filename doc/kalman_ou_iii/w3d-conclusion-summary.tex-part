@@ -4,13 +4,14 @@
 This work develops a three-dimensional quaternion MEKF in which a latent
 Ornstein--Uhlenbeck acceleration prior drives velocity, oscillatory displacement,
 and an integral-displacement state whose zero pseudo-measurement provides
-low-frequency drift control.  The Live stability analysis follows the source
-modes directly.  While accelerometer-bias learning is held, the active 18-state
-subsystem is uniformly exponentially stable under the stated translational and
-finite-window attitude/gyro-bias information conditions, with the held-mode bias error
-entering as a bounded input.  After bias release, the deployed finite
-correlation time of the residual accelerometer-bias state contracts any
-unobserved residual-bias direction in the active 21-state recursion.  The
+low-frequency drift control. The primary nonlinear theorem is conditional
+practical stability of the 18 motion/attitude/gyro-bias errors, together with
+compact accelerometer-bias error, in both filter modes. The bias estimate is
+clamped; a separate BIAS0/1 true-bias envelope is needed to bound its error.
+No bias-error convergence is required. The full active 21-state recursion and
+its covariance cross terms remain unchanged. Finite residual-bias correlation
+supplies an auxiliary linear detectability argument, not nonlinear A21
+contraction. The
 positive OU process floor and exact OU-driven integration chain provide active
 translational process excitation analytically.  Separated accepted
 specific-force--magnetic vector packets provide an explicit sufficient
@@ -20,7 +21,13 @@ rather than stability-critical feedback parameters.  Without an absolute
 heading reference, the same estimator structure descends to the yaw quotient
 rather than assigning convergence to absolute yaw.
 
-The quantitative deployed certificate is source reachable.  Separate
+The quantitative target is source reachable, but its complete deployed
+certificate remains open. Source-uniform motion/channel gains, every-prefix
+retention, projection-boundary coverage and hybrid entry must still be
+established. The theorem permits a positive model-mismatch floor even with
+sensor noise off; observed percentage accuracy is not a certified uniform
+constant. The full-state constructions below are conditional auxiliary routes,
+not completed proofs of the primary motion target. Separate
 fixed-dimensional graphs are used for the held 18-state and active 21-state
 normal-Live modes, and source-complete words carry path-dependent quadratic
 metrics for the additive coordinates.  Attitude is not reduced to a local

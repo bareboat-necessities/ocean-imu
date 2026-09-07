@@ -9,6 +9,16 @@ estimated residual, and $e_b=b_a^{\rm true}-\hat b_a$ their error in the
 shipping temperature-centered coordinates.  These three quantities must not
 be interchanged.
 
+For the primary bounded-bias motion target of
+Theorem~\ref{thm:sea3-bounded-bias-motion}, BIAS0/1 supplies a same-history
+true-bias envelope and retains all corrected bias dynamics. Projection gives
+compactness of the estimate, and the triangle bound gives compactness of its
+error; neither requires bias convergence. BIAS2 is an optional way to sharpen
+the motion-coupling gain, not a prerequisite for the compactness lemma.
+Any BIAS2 sector actually used must still be proved on the full relevant
+graph. Source/model mismatch remains a forcing channel even at zero sensor
+noise, so the weaker theorem allows a nonzero residual motion-error floor.
+
 \subsection{BIAS0: physical decomposition and qualification premise}
 \label{sec:bias0}
 For the declared assembly, temperature, supply, strain and operating range,

@@ -18,6 +18,15 @@ but this manuscript does not claim a complete SEA0 directional-sea enclosure,
 P4 contraction, or the 45-degree SEA3 P5 capture certificate. Conditional
 P3 matrix coverage is distinct from these physical and nonlinear obligations.
 
+The primary target is now the bounded-bias motion theorem in
+Section~\ref{sec:sea3-bounded-bias-motion}: practical stability of the 18
+motion/attitude/gyro-bias errors, with a bounded accelerometer-bias error but
+without a claim that this error converges. The estimator still executes its
+full active 21-state recursion. The full-state contraction construction and
+Theorem~\ref{thm:sea3-regional-practical-stability} below are retained as a
+\emph{stronger, unclosed extension}, not prerequisites for the weaker nonlinear
+claim. Neither target is closed merely by the bias clamp or by conditional P3.
+
 \subsection{Three-partition directional sea class}
 
 The continuum spectral formulas below describe the retained linear-vessel
@@ -457,7 +466,185 @@ endpoint contraction does not require prefix contraction.  BIAS1 projection
 compatibility and error/source-domain retention must hold at each prefix;
 no future-event BIAS2 information may be used to justify an earlier chart.
 
-\subsection{Main conditional stability theorem}
+\subsection{Primary target: bounded bias and practical motion stability}
+\label{sec:sea3-bounded-bias-motion}
+
+Write the exact finite error as $(e_H,e_b)$, where
+\begin{equation}
+ e_H=(c,\delta b_g,\delta v,\delta p,\delta S,\delta a_w)\in\mathbb R^{18},
+ \qquad e_b=b_a^{\rm true}-\hat b_a\in\mathbb R^3.
+ \label{eq:sea3-motion-coordinates}
+\end{equation}
+Here $c$ is the finite Cayley coordinate, not a small-angle substitution.
+In H18 the estimate is held but the physical bias continues; in A21 both
+coordinates follow the full prediction/correction/projection recurrence of
+BIAS1. Selectivity of the \emph{storage} does not remove states from the filter.
+Choose a same-source storage, in fixed physically scaled coordinates,
+\begin{equation}
+ W_H(e_H,\zeta)=e_H^\top M_H(\zeta)e_H,\qquad
+ m_-\|e_H\|^2\le W_H\le m_+\|e_H\|^2,
+ \quad 0<m_-\le m_+<\infty.
+ \label{eq:sea3-motion-storage}
+\end{equation}
+In active mode $\zeta$ retains the complete 21-state nominal/covariance and
+bias history. The active gains are not the held-mode gains: for example the
+accelerometer gain numerator for $e_H$ contains
+$P_{HH}H_H^\top+P_{Hb}$, and its innovation covariance includes the bias
+and cross blocks. Thus the H18 certificate cannot be copied to active mode,
+nor may a Schur/reduced-state replacement estimator be used.
+
+\begin{lemma}[Conditional compactness of accelerometer-bias error]
+\label{lem:sea3-bias-compactness}
+Assume the initial estimate lies in the deployed projection ball of radius
+$R_b=0.4\,\mathrm{m/s^2}$. Hold, finite-$\tau_b$ prediction with factor in
+$(0,1]$, norm-preserving frame changes and the projection after every state
+injection preserve $\|\hat b_a\|\le R_b$. If BIAS0/1 additionally supplies a
+same-history hard envelope $\|b_a^{\rm true}\|\le B_{\rm true}$, then
+\begin{equation}
+ \boxed{\|e_b\|\le B_e:=B_{\rm true}+R_b.}
+ \label{eq:sea3-bias-compact-error}
+\end{equation}
+No convergence of $e_b$ or identification of $b_a^{\rm true}$ is asserted.
+\end{lemma}
+\begin{proof}
+Each listed estimate operation preserves the ball, so induction gives the
+estimate bound. The triangle inequality gives Eq.~\eqref{eq:sea3-bias-compact-error}.
+The argument does not require true bias to lie inside the projection ball.
+\end{proof}
+The physical envelope includes uncompensated deterministic offsets and the
+BIAS1 driving convolution. A stochastic OU PSD is not a deterministic cap:
+a finite-horizon high-probability envelope gives only a correspondingly
+conditional finite-horizon conclusion, not an almost-sure infinite-time bound.
+Assembled-sensor qualification is required for deployment, not for proving
+this conditional implication with symbolic or declared physical bounds.
+The estimate bound concerns committed states after the immediate projection;
+the pre-projection correction is an auxiliary graph coordinate and need not
+lie in the ball.
+
+For this weaker target the old $0.35$ active-estimate interior premise is
+replaced by the closed $R_b$ ball; the remaining physical SEA3$^+$, event,
+lever-arm and dormant-vibration premises are retained. Consequently all
+projection-boundary branches must be covered. An interior-only certificate,
+including existing P3 source coverage where it uses that premise, cannot be
+silently extended to the boundary. The deployed filter is unchanged.
+
+On a complete word define the \emph{internal coupling energy}
+\begin{equation}
+ D_{b,k}=\sum_{j=k}^{k+N_W-1}h_j\|e_{b,j}\|^2
+ \le T_W B_e^2,\qquad T_W=\sum_{j=k}^{k+N_W-1}h_j.
+ \label{eq:sea3-motion-bias-energy}
+\end{equation}
+Fix $e_{b,j}$ at the sample entrance; every intra-sample bias correction and
+projection remains explicitly in the exact joint graph. A certificate must
+bound their effect with that convention; it cannot silently sample a different
+bias history or drop a correction. $D_b$ is not an exogenous noise budget:
+it bounds the actual internal bias-error trajectory, without assuming it is
+independent of $e_H$. BIAS0/1 supplies its root/forcing dependence. A BIAS2
+sector can sharpen the coupling gain, but positive separation is not required
+merely to assert bias compactness; any sector used still needs its own valid
+same-history, same-prefix proof.
+
+The new P4-motion obligations, for both response branches and both actual
+filter modes, are
+\begin{align}
+ W_{H,k+N_W}&\le\rho_H W_{H,k}
+       +\gamma_bD_{b,k}+\gamma_sD_{s,k}+\gamma_nD_{n,k},
+       &&0<\rho_H<1, \label{eq:sea3-motion-endpoint}\\
+ W_{H,k;\ell}&\le\Gamma W_{H,k}
+       +\kappa_bD_{b,k}+\kappa_sD_{s,k}+\kappa_nD_{n,k},
+       &&\ell\in\operatorname{Pref}(W),\quad 1\le\Gamma<\infty.
+       \label{eq:sea3-motion-prefix}
+\end{align}
+All gains are finite and nonnegative. Prefix contraction is not required.
+Here $\operatorname{Pref}(W)$ includes every completed shipping event, not
+only IMU sample boundaries; each correction includes its immediate reset and
+projection, with their auxiliary states retained in the graph.
+Every physical model, measurement and gyro-discretization defect stays in its
+declared source/noise channel. Removing sensor noise does not set $D_s=0$.
+In particular, ocean-wave truth generally does not obey the filter's latent
+OU prediction: $x^{\rm true}_{L,j+1}-F_{LL,j}x^{\rm true}_{L,j}$ can remain
+nonzero in a noise-free run. Its budget is not removed to obtain contraction.
+
+For a common augmented graph coordinate $z$, write
+$e_{H,0}=C_0z$, $e_{H,N}=C_Nz$, and
+$D_i=z^\top Q_i z$ for $i\in\{b,s,n\}$. The endpoint master is
+\begin{equation}
+ L_H=C_N^\top M_{H,N}C_N-\rho_H C_0^\top M_{H,0}C_0
+       -\gamma_bQ_b-\gamma_sQ_s-\gamma_nQ_n.
+ \label{eq:sea3-motion-master}
+\end{equation}
+The maps and all dense cross terms come from the same full shipping graph,
+including every actual-$R_S$ S event and its finite reset. Valid graph sectors
+$z^\top\Pi_jz\ge0$ and $\lambda_j\ge0$ with
+$-(L_H+\sum_j\lambda_j\Pi_j)\succ0$ suffice. This is a sufficient augmented
+test, not a claim that every sound certificate must be strictly definite in
+redundant graph coordinates. Prefix masters replace $C_N,M_{H,N},\rho_H$
+by the corresponding prefix maps/metric and $\Gamma$, using only valid prefix
+sectors. This changes the performance storage, not the executed covariance.
+
+\begin{theorem}[Regional practical motion stability with compact bias error]
+\label{thm:sea3-bounded-bias-motion}
+Assume the bias compactness lemma and complete same-history source/event
+coverage above, uniform metric bounds, and a finite word length $T_W\le\bar T$.
+Retain the canonical P3 matrix checks at $\delta=10^{-18}$, but separately
+establish their applicable source premises and the active-mode motion gain;
+P3 alone does not prove Eq.~\eqref{eq:sea3-motion-endpoint}. Suppose P4-motion
+proves Eqs.~\eqref{eq:sea3-motion-endpoint}--\eqref{eq:sea3-motion-prefix}
+on the relevant first-exit graph and source/noise windows satisfy
+$D_s\le\bar D_s$, $D_n\le\bar D_n$. Put
+\begin{align}
+ C&=\gamma_b\bar T B_e^2+\gamma_s\bar D_s+\gamma_n\bar D_n,\nonumber\\
+ C_p&=\kappa_b\bar T B_e^2+\kappa_s\bar D_s+\kappa_n\bar D_n.
+ \label{eq:sea3-motion-budgets}
+\end{align}
+Suppose an endpoint level $L$ and chart-valid level $L_{\rm chart}$ satisfy
+\begin{equation}
+ W_{H,k_c}\le L,\qquad \rho_H L+C\le L,\qquad
+ \Gamma L+C_p<L_{\rm chart}.
+ \label{eq:sea3-motion-retention}
+\end{equation}
+All non-energy source/bias domains are also retained at every subevent.
+Then, on successive same-mode complete words after entry,
+\begin{align}
+ W_{H,k_c+mN_W}&\le\rho_H^m W_{H,k_c}
+                   +\frac{1-\rho_H^m}{1-\rho_H}C,\nonumber\\
+ \limsup_k W_{H,k}&\le\Gamma\frac{C}{1-\rho_H}+C_p,
+ \qquad \|e_{b,k}\|\le B_e.
+ \label{eq:sea3-motion-ultimate}
+\end{align}
+The infinite-time statement requires the envelopes on all successive windows.
+A full startup-to-active result additionally requires P5-motion finite capture
+and explicit metric/error/source transport at H$\to$A and all other allowed
+hybrid events. Capture cannot be inferred from bias compactness.
+\end{theorem}
+\begin{proof}
+The bias lemma bounds each internal coupling energy. Iteration of the endpoint
+inequality gives the geometric-series bound. The two level inequalities and
+the independently checked source domains exclude a first exit, so the graph
+premises remain valid without circularly assuming retention. Apply the prefix
+inequality and take the limsup to obtain Eq.~\eqref{eq:sea3-motion-ultimate}.
+Metric coercivity converts this into a motion-error norm bound. A certified
+hybrid transport restarts the argument at the next admitted mode level.
+\end{proof}
+
+The useful performance quantity is the resulting error floor, in particular
+the bias contribution
+\[
+ \frac{\Gamma\gamma_b\bar T B_e^2}{1-\rho_H}+\kappa_b\bar T B_e^2,
+\]
+not compactness alone. It must satisfy the desired
+motion-accuracy tolerances as well as chart retention. No numerical gain,
+accuracy floor, source-uniform motion certificate or bias convergence is
+claimed here. P4-motion/P5-motion are separate gates from the retained stronger
+full-state P4/P5 gates.
+Even with $\bar D_n=0$ and vanishing bias error, nonzero $\bar D_s$ generally
+leaves a positive certified upper error floor. The theorem does not require
+that floor to be zero, nor does it claim that the upper bound is the attained
+error. Observed percentage errors are performance evidence, not numerical
+theorem constants until the relevant output normalization, source family and
+gain bound have been certified.
+
+\subsection{Stronger full-state conditional stability theorem}
 
 \begin{theorem}[Three-mode directional-sea regional practical stability and
 finite capture]

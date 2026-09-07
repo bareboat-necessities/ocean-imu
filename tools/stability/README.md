@@ -6,9 +6,14 @@ Production/validation utilities and unrelated OU-III engineering studies remain 
 
 ## Current proof plan
 
-The controlling target is strict endpoint dissipation and finite every-prefix
-gain plus chart/domain retention on one complete correlated SEA3 word, for both
-H18 and A21. The physical bias package is stated and proved conditionally in
+The primary target is **bounded accelerometer-bias error plus regional practical
+ISS of the other 18 errors**, in both held and active modes. The active filter
+still executes all 21 states and every covariance/gain cross term. The target
+is stated in `thm:sea3-bounded-bias-motion` in
+`doc/kalman_ou_iii/w3d-sea3-stability-theorem.tex-part` and built by
+`ou3_p4_bounded_bias_motion.py`. The earlier full-state contraction theorem is
+a stronger unclosed extension, not a prerequisite for this weaker objective.
+The physical bias package is stated and proved conditionally in
 `doc/kalman_ou_iii/w3d-mems-bias-preconditions.tex-part` and recorded by
 `ou3_mems_bias_contract.py`. Its open physical constants are not inferred from
 the filter settings, simulation extrema, or the desired P4 margin.
@@ -18,27 +23,38 @@ the filter settings, simulation extrema, or the desired P4 margin.
 | BIAS0 / SEA0 | Qualify the assembled sensor, actual calibration, true residual root, temperature/strain mismatch and GM parameter range. Compose with the existing complete SEA3 source. | Stationary/thermal/restart/unit data, fit uncertainty and residual bounds; currently missing. |
 | P1 entry and H18 hold | Retain the true physical bias while the estimate is held. Bound the held error and actual uncompensated offset as source inputs. | Reachable entry and continuing physical history; an estimate clamp is insufficient. |
 | P2 / source cells | Carry one bias root, common parameters and driver history through the same window lineage. Split source coordinates and replay descendants. | BIAS1 dependence, same source ID and joint SEA3 membership; neither fresh event boxes nor ID attachment alone proves it. |
-| P3 / detectability | Consume the matched finite-tau prediction premise; retain all full-state process matrices and actual R_S. | Rebuild the existing conditional H/A gate at delta=1e-18. Device qualification remains a separate deployment blocker. If actual tau differs, retain mismatch forcing or explicitly re-certify the changed homogeneous family. |
+| P3 / detectability | Retain the full-state process matrices, finite tau, and actual R_S at delta=1e-18. | Rebuild the existing conditional H/A gate; separately establish coverage where the weaker target admits the projection boundary. Held H18 does not certify active-mode motion gains. |
 | H18 to A21 | Transport the physical bias without reset; keep the rectangular error lift, actual held error, release covariance and all subsequent corrections. | Same-history reachable release, not an appended A21 fixture block. |
-| P4 nonlinear graph | Use BIAS1 true-bias evolution for projection, and the full prediction/correction/projection recurrence for bias error. | Root-derived projection inputs; retain deterministic Kalman corrections inside the homogeneous graph. |
-| BIAS2 / P4 endpoint | Certify positive separation on the actual corrected-error graph before using Pi_sep in the dense augmented master. | Uniform mu_sep and source identity are currently missing. A SEA3 spectrum and an OU PSD do not prove separation. |
-| P4 every prefix | Use restricted graph sectors and finite Gamma_k, then prove chart, bias and source-domain retention. | Strict outward augmented LDLT for finite gain; prefix contraction is unnecessary. |
-| P5 / practical ISS | Carry bias source/forcing through capture and all hybrid events, then consume certified P4. | Finite capture and disturbance propagation; stationary spectral variance is only a stochastic corollary. |
+| Bias compactness | Projection preserves the estimate ball; BIAS0/1 bounds the same-history true bias. | Conditional error bound B_e=B_true+0.4; no bias convergence or hard Gaussian-OU cap is inferred. |
+| P4-motion nonlinear graph | Keep the full bias prediction/correction/projection recurrence and actual active P/H/R/K. | The new domain includes the closed 0.4 ball; pre-projection auxiliaries may leave it. Existing 0.35-interior coverage cannot be reused silently. |
+| P4-motion endpoint | Certify W_H,N <= rho_H W_H,0 + gamma_b D_b + gamma_s D_s + gamma_n D_n. | Strict motion decay factor, quantified coupling gains and exact source/error/forcing attachment. D_b bounds internal corrected bias error, not exogenous noise. |
+| BIAS2 / gain sharpening | If used, certify the sector on the actual same-history graph. | Optional for the weaker objective; positive separation is not needed for compactness itself. |
+| P4-motion every prefix | Certify finite Gamma and channel gains at every completed shipping event. | Endpoint-level invariance and strict chart retention, including all actual R_S events; prefix contraction is unnecessary. |
+| P5-motion / capture | Carry bias/source/forcing through startup, H-to-A and all allowed hybrid events. | Start only after P4-motion, including a useful residual bound and retention, is certified; compactness alone supplies neither capture nor motion accuracy. |
 
-Before a new sector/enclosure search, replay the retained expanding A21 witness
-through the exact admitted source/error map with BIAS1 attached. True bias and
-bias estimation error are different: the latter receives every Kalman update.
-If that witness remains admitted with rho>1, the same storage is falsified;
-valid graph sectors cannot repair it. Conversely, failure of an S-procedure
-relaxation alone does not falsify the storage. The qualitative alternatives are
-dense source-structured storage, path-dependent storage, or a direct theorem
-falsification. No metric grid, longer-window search or source reduction is
-authorized by the new bias model alone.
+The new master is C_N^T M_N C_N-rho_H C_0^T M_0 C_0 minus the same-graph
+bias/source/noise energy forms. The full graph and its cross terms remain;
+only the performance storage changes. Before enclosure work, evaluate this
+inequality on an exactly attached complete word with candidate channel gains.
+Its limiting performance quantity is the ultimate bound, not a raw VN/V0
+ratio with nonzero forcing. No metric grid, longer-window search or source
+reduction is authorized. The immutable old witness remains evidence about
+the stronger storage only, subject to its documented attachment defects.
 
-CI rebuilds the bias contract, source, frozen P3 and canonical P4 chain and
-publishes their separate closure flags. BIAS0 qualification, BIAS2 separation,
-the complete source cover, P4 and P5 remain open until their actual evidence is
-available. Literature establishes the model rationale, not those certificates.
+With B_e=B_true+0.4, the endpoint forcing budget is
+C=gamma_b*T*B_e^2+gamma_s*Dbar_s+gamma_n*Dbar_n. The endpoint error floor is
+C/(1-rho_H), and the every-prefix floor includes Gamma and the prefix input
+budget. Model mismatch remains when sensor noise is off. The observed 2--3%
+residual is not asserted as a uniform certified number; its output metric,
+normalization, source range and quantitative gain still require proof.
+
+CI rebuilds bias/source/P3 and emits separate `P4_MOTION_PASS` and
+`P5_MOTION_MAY_START` flags alongside the unchanged stronger full-state flags.
+The compactness and composition lemmas are conditional results, not numerical
+motion-gain certificates. Both motion flags remain false until the source,
+endpoint, prefix, retention and accuracy obligations close. BIAS0 device
+qualification remains a separate deployment requirement; conditional work
+does not wait for measurements. Literature does not supply numerical gains.
 
 The retained-witness experiment is
 `tests/kalman_ou_iii/ou3_p4_bias_witness_admissibility.py`, run by the existing
@@ -79,11 +95,14 @@ coefficients; model admission there does not assert complete word admission.
 The linear moment/period lemmas stay linear-only; Stokes uses its full output
 and same-history discrete frontend. The conditional P3 matrix implication is
 rebuilt for both branches at delta=1e-18 under unchanged common Normal-Live
-premises. P4 reports endpoint, finite prefix gain and retention separately for
-both branches and both modes; missing coverage prevents P4/P5 promotion.
+premises. The retained stronger P4 gate reports endpoint, finite prefix gain
+and retention separately for both branches and both modes; missing coverage
+prevents promotion of that stronger P4/P5 pair. The motion gates have their own
+gain, projected-domain and retention obligations above.
 
-The next proof-plan gate remains common-root source/bias plus exact finite
-reset/storage attachment, followed by BIAS2 in the full augmented master.
+The next motion proof-plan gate is common-root source/bias plus exact finite
+error/forcing/reset/storage attachment, followed by the motion/channel-gain
+master. Valid BIAS2 sectors may sharpen it but are not mandatory.
 The simulator's turn-on bias/random walk differs from the audit's unforced
 zero true-bias premise, and its finite-difference gyro needs a separate defect
 bound. Neither is silently repaired by the response-family enlargement.

@@ -1,6 +1,52 @@
 # OU-III proof research state
 
-## Handoff checkpoint
+## Current hypothesis: bounded-bias practical motion stability
+
+The user-authorized primary theorem now asks for bounded accelerometer-bias
+error and practical stability of the other 18 errors, not full A21 nonlinear
+contraction or bias convergence. Both physical SEA3+ branches and both actual
+filter modes remain required; A21 still executes its full 21-state P/K/reset
+history with every actual R_S. The performance storage is 18-dimensional;
+this is not a reduced estimator or a copied held-mode H18 certificate.
+
+BIAS0/1 gives a conditional same-history true-bias bound B_true; projection
+gives the estimate ball and hence ||e_b||<=B_true+0.4. The weaker target uses
+the closed 0.4 ball, including projection boundaries, instead of assuming
+the old 0.35 interior. The legacy domain and full-state flags remain intact;
+their P3/source coverage is not automatically extended to the new domain.
+BIAS2 is optional gain sharpening, valid only with a certified graph sector.
+Bias corrections remain internal coupling, not renamed sensor noise.
+
+The controlling new inequality is
+`W_H,N <= rho_H W_H,0 + gamma_b D_b + gamma_s D_s + gamma_n D_n`, rho_H<1,
+with finite every-event prefix gain, chart/source retention and hybrid entry.
+The gain/floor master uses the same full nonlinear graph and actual forcing.
+Zero sensor noise does not remove ocean/OU model mismatch. A nonzero residual
+floor is allowed and expected; the observed 2--3% is not yet a certified
+uniform constant or an identified output normalization.
+
+Current evidence: the conditional compactness and geometric-series/retention
+lemmas are in LaTeX; exact composition arithmetic and an outward full-graph
+motion-master assembler are tested. Synthetic algebra witnesses are not
+Ocean-IMU motion-gain certificates. New P4_MOTION_PASS/P5_MOTION_MAY_START
+remain false independently of the stronger full-state flags.
+
+Current limiter and next falsifiable experiment: reconstruct exact joint
+error/source/forcing subevents, then evaluate the motion master with explicit
+channel gains on the same complete word before any uniform enclosure search.
+Report the resulting motion-accuracy floor and test that it lies within the
+retained chart and requested physical performance tolerances. Preserve P3's
+delta=1e-18 while resolving projected-domain source coverage separately.
+No new metric grid, packetwise scalar budgets, longer-window search or
+filter changes are authorized. P5-motion cannot start from compactness alone.
+
+Local build limitation: `make all` stops at `KalmanQMEKF.h:30` because
+Eigen/Dense is absent; the include path is unchanged. The theorem smoke
+harness initially loaded an unavailable, unused siunitx package; it now loads
+only packages used by its actual inputs. Neither issue is a theorem failure;
+GitHub CI supplies the independent proof and LaTeX rebuild results.
+
+## Retained stronger-target source-capture evidence
 
 The source-connected **actual finite** endpoint capture passes CI run
 `34157292548` on code head `456fce0f`. One shipping observer owns the complete
@@ -74,7 +120,7 @@ Canonical source remains `COMPLETE_SEA3_NORMAL_LIVE_WORD`, now with the explicit
 
 The only production/proof-domain change made on PR #496 is the user-authorized accelerometer-bias projection-radius tightening from `0.5` to `0.4 m/s^2`. The declared startup/handoff accelerometer-bias error envelope is also `0.4 m/s^2`, while the Normal-Live active-bias interior bound is `0.35 m/s^2`, preserving a `0.05 m/s^2` projection margin. No other filter tuning, quality gate, source-language parameter, or P3 mathematics was changed.
 
-The paper target remains the finite full-state source-indexed quadratic storage
+The retained stronger paper target uses the finite full-state source-indexed quadratic storage
 
 `V(e,zeta)=e^T M(zeta)e`
 
@@ -171,7 +217,7 @@ Its stronger implementation-word flags remain deliberately false. The joint
 master consumes this result only through the validated canonical P3 chain; it
 does not promote the comparison observer or replace the full A21 matrix test.
 
-## Current hypothesis
+## Retained stronger full-state hypothesis
 
 Use the exact complete-word endpoint identity and the full 21-state finite-`tau_b`
 P3/detectability result to build one correlated nonlinear graph-sector master.
