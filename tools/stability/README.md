@@ -45,8 +45,21 @@ The retained-witness experiment is
 physical finite-map CI workflow. It pins the original H18/A21 payloads and
 directions, checks the initial and every-event bias state, and evaluates BIAS2
 with the full stacked nonlinear/corrected-error cross term and Xi=V0. It also
-reports missing source membership and finite reset/storage attachment. Hardware
+audits the required F/Q/H/covariance transports and exact finite reset energy
+identity using `ou3_p4_retained_word_attachment.py`. The reset-deleted
+diagnostic fails attachment as a gauge representative; its expansion is not
+a canonical counterexample. Source membership remains undetermined because
+the capture lacks its hard driver, phase, joint response and nominal history.
+Hardware
 qualification is not an execution gate for this conditional experiment.
 The current result retains interior A21 expansion even with positive point
 separation; see the research ledger. A positive sampled BIAS2 ratio is neither
 a uniform sector nor proof of endpoint dissipation.
+
+The 4.6 MiB fixture `tests/kalman_ou_iii/fixtures/ou3_p4_retained_payloads.tar.xz`
+preserves the four original payloads from run `34102009588`, artifact
+`10011024466`. The manifest pins their individual SHA256 values and the
+archive SHA256. CI extracts these bytes and uses the frozen directions/scales;
+it does not regenerate a simulation, select another window or depend on an
+expiring Actions artifact. Run the audit with `--unpack-retained`,
+`--payload-prefix /tmp/ou3_p4_physical_payload` and an `--output` JSON path.

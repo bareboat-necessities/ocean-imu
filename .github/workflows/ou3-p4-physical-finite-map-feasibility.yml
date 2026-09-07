@@ -2,45 +2,17 @@ name: ou3-p4-physical-finite-map-feasibility
 
 on:
   push:
-    paths:
-      - "tests/kalman_ou_iii/ou3-operation-ledger-sim.cpp"
-      - "tests/kalman_ou_iii/ou3_p4_complete_sea3_word_feasibility.py"
-      - "tests/kalman_ou_iii/ou3_p4_physical_finite_map_feasibility.py"
-      - "tests/kalman_ou_iii/ou3_p4_physical_finite_map_feasibility_fast.py"
-      - "tests/kalman_ou_iii/ou3_p4_canonicalize_physical_payload.py"
-      - "tests/kalman_ou_iii/ou3_p4_bias_witness_admissibility.py"
-      - "tests/kalman_ou_iii/fixtures/ou3_p4_retained_bias_witnesses.json"
+    paths: &audit_paths
+      - "tests/kalman_ou_iii/ou3_p4_*"
+      - "tests/kalman_ou_iii/fixtures/ou3_p4_retained_*"
       - "tests/validation/test_ou3_bias_witness_admissibility.py"
+      - "tests/validation/test_ou3_retained_word_attachment.py"
       - "tools/stability/ou3_mems_bias_contract.py"
-      - "tools/stability/ou3_p4_complete_sea3_differential_prediction.py"
-      - "tools/stability/ou3_p4_complete_sea3_differential_events.py"
-      - "tools/stability/ou3_p4_complete_sea3_reset_gauge_attachment.py"
+      - "tools/stability/ou3_p4_complete_sea3_signed_information_ledger.py"
       - "tools/stability/ou3_proof_operating_domain.json"
-      - "tests/kalman_ou_iii/Makefile"
-      - "src/kalman_ou_iii/**"
-      - "src/kalman_ou_common/**"
-      - "src/tuner/**"
       - ".github/workflows/ou3-p4-physical-finite-map-feasibility.yml"
   pull_request:
-    paths:
-      - "tests/kalman_ou_iii/ou3-operation-ledger-sim.cpp"
-      - "tests/kalman_ou_iii/ou3_p4_complete_sea3_word_feasibility.py"
-      - "tests/kalman_ou_iii/ou3_p4_physical_finite_map_feasibility.py"
-      - "tests/kalman_ou_iii/ou3_p4_physical_finite_map_feasibility_fast.py"
-      - "tests/kalman_ou_iii/ou3_p4_canonicalize_physical_payload.py"
-      - "tests/kalman_ou_iii/ou3_p4_bias_witness_admissibility.py"
-      - "tests/kalman_ou_iii/fixtures/ou3_p4_retained_bias_witnesses.json"
-      - "tests/validation/test_ou3_bias_witness_admissibility.py"
-      - "tools/stability/ou3_mems_bias_contract.py"
-      - "tools/stability/ou3_p4_complete_sea3_differential_prediction.py"
-      - "tools/stability/ou3_p4_complete_sea3_differential_events.py"
-      - "tools/stability/ou3_p4_complete_sea3_reset_gauge_attachment.py"
-      - "tools/stability/ou3_proof_operating_domain.json"
-      - "tests/kalman_ou_iii/Makefile"
-      - "src/kalman_ou_iii/**"
-      - "src/kalman_ou_common/**"
-      - "src/tuner/**"
-      - ".github/workflows/ou3-p4-physical-finite-map-feasibility.yml"
+    paths: *audit_paths
   workflow_dispatch:
 
 concurrency:
@@ -53,218 +25,66 @@ permissions:
 jobs:
   physical-finite-map-feasibility:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v6
         with:
           persist-credentials: false
 
-      - name: Install host diagnostic dependencies
+      - name: Install point-audit dependency
         run: |
           sudo apt-get update
-          sudo apt-get install -y libeigen3-dev python3-numpy
+          sudo apt-get install -y python3-numpy
 
-      - name: Fetch genuine coupled wave simulation data
-        run: make ensure-sim-data
-
-      - name: Test conditional bias admissibility and dense BIAS2 point algebra
+      - name: Test bias and finite attachment algebra
         working-directory: tests/validation
-        run: python3 -m unittest -v test_ou3_bias_witness_admissibility
+        run: python3 -m unittest -v test_ou3_bias_witness_admissibility test_ou3_retained_word_attachment
 
-      - name: Build single shipping observer
-        working-directory: tests/kalman_ou_iii
-        run: make ou3-operation-ledger-sim
-
-      - name: Scan genuine source with one shipping map and covariance observer
-        working-directory: tests/kalman_ou_iii
-        env:
-          OU3_LEDGER_MAP_TRACE: /tmp/ou3_p4_physical_exact_maps.bin
-          OU3_LEDGER_COV_TRACE: /tmp/ou3_p4_physical_covariance.bin
-          OU3_LEDGER_MAP_STRIDE: "600"
-          W3D_WRITE_TIMESERIES: "0"
-          W3D_VALIDATION_WINDOW_SEC: "0"
-        run: |
-          ./ou3-operation-ledger-sim \
-            --input wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv
-
-      - name: Select same worst complete-word H18 and A21 point cells
-        run: |
-          python3 tests/kalman_ou_iii/ou3_p4_complete_sea3_word_feasibility.py \
-            --map /tmp/ou3_p4_physical_exact_maps.bin \
-            --cov /tmp/ou3_p4_physical_covariance.bin \
-            --output /tmp/ou3_p4_physical_linear_words.json
-          python3 - <<'PY'
-          import json
-          d=json.load(open('/tmp/ou3_p4_physical_linear_words.json'))
-          assert d['canonical_source'] == 'COMPLETE_SEA3_NORMAL_LIVE_WORD'
-          assert d['point_same_history_diagnostic_only'] is True
-          assert d['P4_promoted'] is False
-          assert d['actual_applied_RS_used_inside_each_S_gain'] is True
-          assert d['packet_count_remainder_budget_used'] is False
-          for mode in ('H18','A21'):
-              w=d['modes'][mode]['worst']
-              assert w['acc_count'] == 600
-              assert w['S_update_count'] > 0
-              print('PHYSICAL_WORD', mode, 'rho_linear=', w['rho_linear'],
-                    't0=', w['t0'], 't1=', w['t1'],
-                    'S=', w['S_update_count'], 'mag=', w['mag_count'])
-          PY
-
-      - name: Emit same-observer physical source/event payloads
-        run: |
-          python3 - <<'PY'
-          import json, os, pathlib, subprocess
-          words=json.load(open('/tmp/ou3_p4_physical_linear_words.json'))
-          sim=pathlib.Path('tests/kalman_ou_iii/ou3-operation-ledger-sim').resolve()
-          inp=pathlib.Path('tests/kalman_ou_iii/wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv').resolve()
-          for mode in ('H18','A21'):
-              w=words['modes'][mode]['worst']
-              env=os.environ.copy()
-              env.pop('OU3_LEDGER_MAP_TRACE',None)
-              env.pop('OU3_LEDGER_COV_TRACE',None)
-              env.update({
-                  'OU3_LEDGER_TRACE': f'/tmp/ou3_p4_physical_event_ledger_{mode}.csv',
-                  'OU3_PHYSICAL_PAYLOAD_TRACE': f'/tmp/ou3_p4_physical_payload_{mode}.bin',
-                  'OU3_LEDGER_T0': format(float(w['t0']), '.17g'),
-                  'OU3_LEDGER_T1': format(float(w['t1']), '.17g'),
-                  'OU3_LEDGER_MODE': mode,
-                  'OU3_LEDGER_DIRECTION': w['maximizing_direction']['csv'],
-                  'W3D_WRITE_TIMESERIES': '0',
-                  'W3D_VALIDATION_WINDOW_SEC': '0',
-              })
-              cp=subprocess.run([str(sim),'--input',str(inp)],env=env,text=True,
-                                stdout=subprocess.PIPE,stderr=subprocess.STDOUT,check=False)
-              print(cp.stdout)
-              if cp.returncode != 0:
-                  raise SystemExit(f'{mode} physical payload replay failed rc={cp.returncode}')
-              payload=pathlib.Path(f'/tmp/ou3_p4_physical_payload_{mode}.bin')
-              if not payload.exists() or payload.stat().st_size == 0:
-                  raise SystemExit(f'{mode} physical payload was not emitted')
-          PY
-
-      - name: Canonicalize recovered measurement geometry without weakening parity gates
-        run: |
-          for mode in H18 A21; do
-            python3 tests/kalman_ou_iii/ou3_p4_canonicalize_physical_payload.py \
-              --input /tmp/ou3_p4_physical_payload_${mode}.bin \
-              --output /tmp/ou3_p4_physical_payload_canonical_${mode}.bin \
-              --report /tmp/ou3_p4_physical_payload_projection_${mode}.json
-          done
-          python3 - <<'PY'
-          import json
-          for mode in ('H18','A21'):
-              d=json.load(open(f'/tmp/ou3_p4_physical_payload_projection_{mode}.json'))
-              assert d['P_Q_linear_map_schedule_timestamps_copied_bit_for_bit'] is True
-              assert d['actual_RS_S_events_copied_bit_for_bit'] is True
-              assert d['finite_source_or_theorem_word_generated_here'] is False
-              assert d['P4_promoted'] is False
-              assert d['event_counts']['prediction'] == 600
-              assert d['event_counts']['accelerometer'] == 600
-              assert d['max_accelerometer_Rwb_orthogonality_error_after'] <= 1e-6
-              print('PHYSICAL_PAYLOAD_PROJECTION', mode,
-                    'H_rel_all=', d['max_H_relative_projection_all_columns'],
-                    'H_rel_supported=', d['max_H_relative_projection_supported_columns'],
-                    'R_offdiag=', d['max_R_offdiag_removed'],
-                    'Rwb_before=', d['max_accelerometer_Rwb_orthogonality_error_before'],
-                    'Rwb_after=', d['max_accelerometer_Rwb_orthogonality_error_after'])
-          PY
-
-      - name: Execute reset-normalized physical finite-map diagnostics
-        run: |
-          for mode in H18 A21; do
-            python3 tests/kalman_ou_iii/ou3_p4_physical_finite_map_feasibility_fast.py \
-              --payload /tmp/ou3_p4_physical_payload_canonical_${mode}.bin \
-              --domain tools/stability/ou3_proof_operating_domain.json \
-              --input tests/kalman_ou_iii/wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv \
-              --output /tmp/ou3_p4_physical_finite_map_${mode}.json
-          done
-          python3 - <<'PY'
-          import json
-          for mode in ('H18','A21'):
-              d=json.load(open(f'/tmp/ou3_p4_physical_finite_map_{mode}.json'))
-              assert d['canonical_source'] == 'COMPLETE_SEA3_NORMAL_LIVE_WORD'
-              assert d['point_same_history_diagnostic_only'] is True
-              assert d['physical_true_minus_estimated_map'] is True
-              assert d['reset_gauge_normalized_representative'] is True
-              assert d['same_single_shipping_observer_source_payload'] is True
-              assert d['second_estimator_or_Riccati_history_used'] is False
-              assert d['source_only_Joseph_gains_precomputed_once'] is True
-              assert d['finite_scale_sweep_value_only_same_deployed_equations'] is True
-              assert d['zero_state_full_AD_parity_still_required'] is True
-              assert d['all_due_S_updates_with_actual_RS_retained'] is True
-              assert d['packet_count_remainder_budget_used'] is False
-              assert d['state_elimination_used'] is False
-              assert d['P4_promoted'] is False
-              assert d['P5_may_start'] is False
-              assert d['zero_state_parity']['pass'] is True
-              assert d['event_counts']['prediction'] == 600
-              assert d['event_counts']['accelerometer'] == 600
-              assert d['actual_RS_std_ratio_max_error'] <= 2e-5
-              print('OU3_P4_RESET_NORMALIZED_PHYSICAL_DIAGNOSTIC', mode,
-                    'linear_rho=', d['reset_normalized_linear_rho'],
-                    'scale_limit=', d['declared_scale_limit'],
-                    'valid_cases=', d['valid_domain_cases'],
-                    'worst_endpoint_rho=', d['worst_endpoint_rho_on_domain_retained_cases'],
-                    'first_crossing=', d['first_endpoint_rho_ge_one_absolute_scale'],
-                    'worst_prefix_ratio=', d['worst_prefix_ratio_on_domain_retained_cases'])
-          PY
-
-      - name: Audit retained witnesses against conditional BIAS0 BIAS1 and BIAS2
+      - name: Audit exact retained payloads without regeneration or a new search
         run: |
           python3 tests/kalman_ou_iii/ou3_p4_bias_witness_admissibility.py \
+            --unpack-retained \
             --payload-prefix /tmp/ou3_p4_physical_payload \
             --output /tmp/ou3_p4_bias_witness_admissibility.json
           python3 - <<'PY'
           import json
           d=json.load(open('/tmp/ou3_p4_bias_witness_admissibility.json'))
-          assert d['conditional_mathematical_experiment'] is True
-          assert d['hardware_qualification_required_to_run_this_experiment'] is False
-          assert d['new_source_or_direction_or_scale_search'] is False
-          assert d['filter_or_domain_changed'] is False
-          assert d['BIAS2_evaluated_on_actual_corrected_error_histories'] is True
-          assert d['BIAS2_uniform_sector_available'] is False
-          assert d['canonical_P4_falsified_here'] is False
-          assert d['P4_promoted'] is False and d['P5_may_start'] is False
+          assert d['conditional_mathematical_experiment']
+          assert not d['hardware_qualification_required_to_run_this_experiment']
+          assert not d['new_source_or_direction_or_scale_search']
+          assert not d['filter_or_domain_changed']
+          assert not d['BIAS2_uniform_sector_available']
+          assert not d['canonical_P4_falsified_here']
+          assert not d['P4_promoted'] and not d['P5_may_start']
           for mode in ('H18','A21'):
               m=d['modes'][mode]
-              assert m['retained_payload_identity_verified'] is True
-              assert m['all_actual_RS_values_copied_bit_for_bit'] is True
+              assert m['retained_payload_identity_verified']
+              assert m['all_actual_RS_values_copied_bit_for_bit']
               assert m['event_counts']['prediction'] == 600
               assert m['event_counts']['accelerometer'] == 600
-              assert all(c['bias_recurrence_point_check_pass'] for c in m['cases'])
+              assert m['source_evidence']['membership_decision'] == 'UNDETERMINED'
+              t=m['captured_reset_storage_transport']
+              assert t['dropping_resets_with_unchanged_F_Q_H_is_not_a_gauge_attachment']
+              print('FINITE_ATTACHMENT', mode, t['max_required_transport_difference'])
               for c in m['cases']:
-                  if c['rho_endpoint'] > 1:
+                  assert c['bias_recurrence_point_check_pass']
+                  r=c['finite_reset_energy_attachment']
+                  assert r['max_relative_signed_identity_residual'] < 1e-10
+                  if c['rho_endpoint'] > 1 and c['conditional_point_checks_pass']:
                       print('BIAS2_EXPANDING_RETAINED_CASE', mode, c['scale'],
                             'rho=',c['rho_endpoint'],
-                            'bias_interior=',c['estimated_bias_interior_retained'],
-                            'max_bhat=',c['max_estimated_bias_norm'],
-                            'mu_sufficient_point=',c['BIAS2']['mu_sufficient_point'],
-                            'mu_actual_point=',c['BIAS2']['mu_actual_point'],
-                            'kappa_point=',c['BIAS2']['kappa_point'],
-                            'verdict=',c['verdict'])
-          print('BIAS_WITNESS_SOURCE_STATUS', d['source_membership_status'])
-          print('BIAS_WITNESS_RESET_STATUS', d['finite_reset_storage_attachment_status'])
+                            'mu_point=',c['BIAS2']['mu_sufficient_point'],
+                            'canonical_counterexample=',c['canonical_P4_falsified_here'])
+          print('SOURCE_STATUS', d['source_membership_status'])
+          print('RESET_STATUS', d['finite_reset_storage_attachment_status'])
           PY
 
-      - name: Upload non-promoting physical finite-map evidence
+      - name: Upload retained-word attachment evidence
         if: always()
         uses: actions/upload-artifact@v6
         with:
-          name: ou3-p4-physical-finite-map-feasibility
+          name: ou3-p4-retained-word-attachment
           path: |
-            /tmp/ou3_p4_physical_linear_words.json
-            /tmp/ou3_p4_physical_exact_maps.bin
-            /tmp/ou3_p4_physical_covariance.bin
-            /tmp/ou3_p4_physical_event_ledger_H18.csv
-            /tmp/ou3_p4_physical_event_ledger_A21.csv
-            /tmp/ou3_p4_physical_payload_H18.bin
-            /tmp/ou3_p4_physical_payload_A21.bin
-            /tmp/ou3_p4_physical_payload_canonical_H18.bin
-            /tmp/ou3_p4_physical_payload_canonical_A21.bin
-            /tmp/ou3_p4_physical_payload_projection_H18.json
-            /tmp/ou3_p4_physical_payload_projection_A21.json
-            /tmp/ou3_p4_physical_finite_map_H18.json
-            /tmp/ou3_p4_physical_finite_map_A21.json
             /tmp/ou3_p4_bias_witness_admissibility.json
             /tmp/ou3_p4_bias_witness_admissibility.prefixes.csv.gz
           retention-days: 7

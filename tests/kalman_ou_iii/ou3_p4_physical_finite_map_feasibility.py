@@ -2,13 +2,13 @@
 """Non-promoting physical finite-map feasibility on one complete SEA3 point word.
 
 The source/event payload is emitted by the same shipping observer used by the
-linear complete-word scan.  This evaluator does not run another estimator,
-scheduler, tuner or Riccati recursion.  It chooses the reset-gauge-normalized
-representative justified by the P3 reset-congruence bridge: prediction/floor
-source data and every H/R measurement cell are retained, while covariance
-resets are represented by G=I.  The resulting Riccati path is rebuilt from the
-same source F/Q/H/R sequence and every due S operation retains the actual
-applied R_S from that source word.
+linear complete-word scan. This evaluator rebuilds a diagnostic Riccati path
+with covariance resets deleted and F/Q/H retained. That operation is NOT
+justified as a finite gauge change by the P3 congruence identity: the latter
+requires simultaneous transport of F/Q/H and the finite physical map. Every
+due S operation retains its actual applied R_S, but canonical source membership
+and finite storage attachment remain absent. Historical function/field names
+containing reset_normalized do not certify that attachment.
 
 The finite state is the paper's true-minus-estimated physical Cayley error.  It
 is propagated by the existing theorem-facing physical prediction and Joseph
@@ -488,9 +488,11 @@ def main() -> int:
         "canonical_source": "COMPLETE_SEA3_NORMAL_LIVE_WORD",
         "point_same_history_diagnostic_only": True,
         "physical_true_minus_estimated_map": True,
-        "reset_gauge_normalized_representative": True,
+        "reset_gauge_normalized_representative": False,
         "same_single_shipping_observer_source_payload": True,
-        "second_estimator_or_Riccati_history_used": False,
+        "second_estimator_or_Riccati_history_used": True,
+        "diagnostic_Riccati_rebuilt_without_resets": True,
+        "finite_gauge_attachment_verified": False,
         "all_due_S_updates_with_actual_RS_retained": True,
         "packet_count_remainder_budget_used": False,
         "state_elimination_used": False,

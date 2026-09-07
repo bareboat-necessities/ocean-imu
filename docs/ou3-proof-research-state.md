@@ -2,6 +2,23 @@
 
 ## Handoff checkpoint
 
+The retained-witness CI run `34148309564` rejected a different payload SHA256
+(`c6b99250...` instead of `db38b812...` for H18). The regenerated A21 scan also
+selected 1195.01025390625--1198.01318359375 s instead of the retained
+1143.96044921875--1146.96337890625 s. This is an evidence-reproduction failure,
+not a BIAS theorem failure. Regeneration is not content-addressed evidence.
+The next check must consume the retained bytes, retaining the identity gate.
+
+The finite attachment hypothesis that deleting covariance resets while keeping
+F/Q/H unchanged is a coordinate change has failed. For a frame T,
+the required maps are F'=T_next F T^-1, Q'=T_next Q T_next^T,
+H'=H T^-1 and the exact finite map f'=T_next f(T^-1 z). Omitting these
+transports invalidates that justification; it does not invalidate the P3
+congruence identity or establish a canonical P4 counterexample. The next
+falsifiable check compares these required transforms with the retained
+diagnostic at every operation. No metric or interval search is authorized by
+the diagnostic's expanding ratios.
+
 Canonical source remains `COMPLETE_SEA3_NORMAL_LIVE_WORD`. Conditional complete-SEA3 P3 is closed and frozen at `delta=1e-18`. P4 is **OPEN** and P5 is **BLOCKED**. H18 and A21 are both required; H18->A21 remains a separate rectangular hybrid event. Zero lever arm and the dormant-transparent vibration branch remain the certified production branch.
 
 The only production/proof-domain change made on PR #496 is the user-authorized accelerometer-bias projection-radius tightening from `0.5` to `0.4 m/s^2`. The declared startup/handoff accelerometer-bias error envelope is also `0.4 m/s^2`, while the Normal-Live active-bias interior bound is `0.35 m/s^2`, preserving a `0.05 m/s^2` projection margin. No other filter tuning, quality gate, source-language parameter, or P3 mathematics was changed.
@@ -208,21 +225,47 @@ storage. For every sector valid at this point and lambda>=0,
 `Delta V + sum lambda_j*z^T Pi_j*z >= Delta V > 0`. Thus an admitted expansion
 cannot be repaired by stronger use of valid BIAS0/1/2 sectors in that storage.
 
-The missing attachment is mathematical: the payload has no complete SEA3
-joint source/bias membership witness, and its reset-normalized covariance has
-only a tangent bridge to the captured source covariance. Their maximum
-normalized covariance differences are 0.0010948683 (H18) and 4.9266941e-7
-(A21); small numerical differences do not prove finite gauge equivalence.
-The audit therefore reports full admissibility unresolved, not a canonical
-P4 falsification. Its prefix CSV retains each checked state and residual.
+The source membership decision is **undetermined**. OU3PHY1 stores derived
+P/H/R/F/Q, resets and timing; it lacks the common hard-driver/phase/response
+realization, frontend/tuner root, raw measurements, nominal-state history and
+physical-bias/forcing decomposition. The original SEA3 hard-driver set and
+joint output map also lack an executable membership characterization. This
+is missing mathematical source data, independently of assembled-sensor
+qualification. A replay label, norm cap or zero bias root cannot fill it.
+
+The proposed finite gauge attachment is **rejected**. Set T0=I and propagate
+T_next=T G^-1 at each captured reset. At event 2 the next H needs a nonzero
+transport: Frobenius difference 0.00897303817 for H18 and 0.0000609319492 for
+A21. Maximum required H changes over the retained words are 0.4790199261 and
+0.0104868913 respectively. F and Q require transport too. The reset-deleted
+diagnostic keeps the original matrices, so it is a rebuilt Riccati history,
+not the captured word in new coordinates. This invalidates using its expanding
+rho as a canonical counterexample; it does not invalidate the conditional P3
+congruence theorem, finite Cayley algebra or BIAS0/1/2.
+
+The finite storage identity is executable at every retained measurement:
+q=e-Ky, r=e_plus-Gq, b=G^-1 r gives
+V_plus=q^T Pj^-1 q+2 q^T Pj^-1 b+b^T Pj^-1 b.
+It includes projection defects and retains the signed cross term. This
+one-event attachment does not authorize reuse of subsequent reset-deleted
+covariances. The audit also implements exact finite frame pullback and tests
+dense H18/A21 Joseph, prediction/noise and nonlinear energy identities.
+An initial numpy/list adapter error was an implementation defect (ambiguous
+array truth value in the retained signed-ledger helper); converting its inputs
+to the helper's sequence representation resolves it without changing algebra.
+The prefix CSV retains each checked state and residual.
 No filter, domain, direction, scale, metric or window-length search is added.
 
-Critic decision: BIAS1 slow true-bias transport and positive point BIAS2
-separation do not supply a quantitative rescue of the current storage. Resolve
-the complete source and finite reset/storage attachment first. If the interior
-expansion is admitted, abandon this storage: the distinct alternatives remain
-dense source-structured storage, path-dependent storage, or direct theorem
-falsification. No new interval campaign is justified by this audit.
+Critic decision: abandon the claimed reset-deletion gauge equivalence.
+The next falsifiable experiment requires a common source witness and either
+(1) an actual finite shipping covariance/nominal history with each correction's
+reset, or (2) its fully transported finite representative with all transformed
+F/Q/H and floors. These are attachments, not metric searches. A third option
+is to prove a conservative outer source inclusion and certify the whole
+nonlinear graph there; success would suffice without inverting a replay.
+Source-only names and independent sample boxes cannot establish that inclusion.
+Only after this attachment gate may a full-word BIAS2/storage feasibility
+decision justify interval certification or abandoning the storage itself.
 
 The BIAS0/1/2 package in `w3d-mems-bias-preconditions.tex-part` is conditional.
 BIAS0 separates qualified sensor physics from the filter's 5000 s setting and

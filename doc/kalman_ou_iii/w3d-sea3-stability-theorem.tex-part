@@ -274,6 +274,51 @@ A BIAS2 sector from Eq.~\eqref{eq:bias2-sector} may enter the master only
 after its uniform positive separation premise has been verified on this same
 graph.  Literature or stationary PSDs cannot supply that certificate.
 
+\paragraph{Source and finite storage attachment.}
+Membership of an individual word requires one witness in
+Eq.~\eqref{eq:sea3-hard-realization-set}, its joint translational/rotational
+output map, the frontend/tuner root and the BIAS0/1 physical-bias history.
+These must generate the word's actual measurements, schedules and $P,H,R$
+cells. A capture of those derived cells alone does not supply the missing
+witness. The unspecified hard-driver set and joint response realization
+must be supplied before this membership predicate is executable; this is
+separate from qualifying an assembled accelerometer. Neither declaring a
+zero true-bias root after capture nor assigning a SEA3 identifier proves the
+same-source equality.
+
+For any invertible source-indexed frames $T_j$, a finite change of coordinates
+$z_j=T_j e_j$ preserves storage exactly only with the simultaneous transports
+\begin{align}
+ \widetilde P_j&=T_jP_jT_j^\top,&
+ \widetilde f_j(z)&=T_{j+1}f_j(T_j^{-1}z),\nonumber\\
+ \widetilde F_j&=T_{j+1}F_jT_j^{-1},&
+ \widetilde Q_j&=T_{j+1}Q_jT_{j+1}^\top,\nonumber\\
+ \widetilde H_j&=H_jT_j^{-1},&\widetilde R_j&=R_j.
+ \label{eq:sea3-finite-storage-pullback}
+\end{align}
+Indeed, inversion of the covariance congruence gives
+$z_j^\top\widetilde P_j^{-1}z_j=e_j^\top P_j^{-1}e_j$,
+and substitution gives the finite-map identity. At a pure reset
+$P^+=GP_JG^\top$, choosing $T^+=T^-G^{-1}$ removes that covariance
+reset in the transformed coordinates. Subsequent prediction, noise, floor
+increments, measurement rows and the finite physical map must still undergo
+Eq.~\eqref{eq:sea3-finite-storage-pullback}. Keeping their old numerical
+values while deleting resets is generally a different Riccati history.
+
+Equivalently retain the shipping coordinates. For a homogeneous correction,
+put $q=e-Ky$, $r=e^+-Gq$, and $b=G^{-1}r$, where $e^+$ is the exact
+Cayley/projection output and $G$ uses that correction's own injection. Then
+\begin{equation}
+ (e^+)^\top(GP_JG^\top)^{-1}e^+
+ =q^\top P_J^{-1}q+2q^\top P_J^{-1}b+b^\top P_J^{-1}b.
+ \label{eq:sea3-finite-reset-storage-attachment}
+\end{equation}
+The last two terms remain in the joint nonlinear graph. Their existence is
+an exact identity, not a contraction estimate. A zero-error tangent check
+does not authorize dropping them or reusing later covariance cells after
+changing a finite reset. Until this attachment and source membership hold,
+an expanding diagnostic ratio does not falsify the canonical P4 inequality.
+
 Endpoint contraction alone is not sufficient for a full-sample ISS claim.
 P4 must additionally certify a uniform prefix-gain inequality: there exist
 finite nonnegative constants $\kappa_V,\kappa_s,\kappa_n$ such that for every

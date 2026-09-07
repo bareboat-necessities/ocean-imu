@@ -20,6 +20,12 @@ This bridge does not remove shipping resets or alter P3.  It records that the
 frozen P3 margin is valid in the zero-reset congruent representative needed by
 the homogeneous physical P4 map.  Nonzero finite-error chart transport and
 nonzero forcing/noise are still P4 obligations and are not closed here.
+
+In particular this tangent bridge does not justify deleting captured resets
+and rebuilding a word with unchanged F/Q/H. Finite gauge transport also needs
+P'=T P T^T, F'=T_next F T^-1, Q'=T_next Q T_next^T, H'=H T^-1 and
+f'(z)=T_next f(T^-1 z). The retained-word attachment audit checks this
+distinction; matching zero-state tangents alone is insufficient.
 """
 from __future__ import annotations
 

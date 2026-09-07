@@ -54,7 +54,8 @@ class BiasWitnessAdmissibilityTests(unittest.TestCase):
         K[18:21] = 0.5 * np.eye(3)
         event = {"type": AUDIT.BASE.EV_ACC, "name": "accelerometer", "time": 0.0,
                  "H": H, "R": np.eye(3)}
-        linear = {"direction": x, "Q0": np.eye(n), "QN": np.eye(n)}
+        linear = {"direction": x, "Q0": np.eye(n), "QN": np.eye(n),
+                  "path": [{"Pafter": np.eye(n)}]}
         domain = json.loads(AUDIT.BIAS.DEFAULT_DOMAIN.read_text())
         return AUDIT.audit_case(
             {"mode_dim": n, "t0": 0.0, "events": [event]}, linear,
