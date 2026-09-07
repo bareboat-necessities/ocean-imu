@@ -100,28 +100,28 @@ therefore optimizing a false controlling inequality.
 
 Qualitatively different full-state alternatives are:
 
-1. **Full-state differential contraction / Riemannian metric.** Enclose the
-   exact 21x21 Jacobian of the nonlinear complete word and use a full-rank
-   state/source-dependent metric. No state is eliminated and all actual-R_S
-   operations remain in the word.
-2. **Longer complete-SEA3 finite window.** UES requires contraction over some
-   bounded window, not necessarily the 600-sample diagnostic window. Compose
-   consecutive complete source words with all intervening shipping events and
-   test 6 s / 9 s full-state Jacobians before changing metric architecture.
-3. **Full-state converse/path-memory Lyapunov construction.** If longer exact
-   Jacobian products are uniformly stable but no simple one-window metric is,
-   construct a source/state-indexed finite-horizon pullback metric from the
-   full Jacobian products. This remains full rank and is not an endpoint state
-   elimination.
-4. **Theorem falsification.** If an admissible full-state nonlinear Jacobian has
-   spectral radius >=1 persistently over bounded longer windows, stop proof
-   construction and report that the declared nonlinear P4/UES formulation is
-   not supported on the current domain.
+1. **Longer complete-SEA3 differential window in the retained moving metric.**
+   UES requires contraction over some bounded source-contiguous window, not
+   necessarily the 600-sample diagnostic window. Test the full nonlinear
+   Jacobian over 3 s / 6 s / 9 s while retaining all intervening shipping
+   operations and the actual endpoint Riccati metrics.
+2. **Full-state differential contraction / Riemannian metric.** If no longer
+   moving-Riccati window is strict but the differential cocycle is uniformly
+   stable, construct a full-rank state/source-dependent metric. No state may be
+   eliminated and all actual-R_S operations remain in the word.
+3. **Full-state converse/path-memory Lyapunov construction.** Build a
+   source/state-indexed finite-horizon pullback metric from the complete
+   Jacobian cocycle if a simple one-window metric is insufficient. This remains
+   full rank and cannot be replaced by endpoint block elimination.
+4. **Theorem falsification.** If the full-state nonlinear differential cocycle
+   cannot be made uniformly contractive over bounded complete source windows
+   while retaining uniformly coercive/bounded metrics, report that the
+   declared nonlinear P4/UES formulation is unsupported on the current domain.
 
 ## Master inequality before new proof code
 
 For a source state/history `s`, nonlinear active-state error `z`, and complete
-word map `F_{W,s}`, a full-rank differential metric `M(s,z) > 0` must satisfy
+word map `F_{W,s}`, a full-rank differential metric `M(s,z)>0` must satisfy
 
 `DF_{W,s}(z)^T M(s+,F_{W,s}(z)) DF_{W,s}(z) <= rho M(s,z)`
 
@@ -129,12 +129,19 @@ with one uniform `rho<1` over every admitted complete SEA3 word and every state
 in the certified nonlinear region, separately for H18 and A21. The H->A
 21x18 dimension-changing event remains a separate hybrid obligation.
 
-The immediate feasibility quantity is the spectral radius of the **full**
-Jacobian `J_W(z)=DF_W(z)`. If `spectral_radius(J_W(z))>1`, no equivalent norm can
-make that same complete-word map locally contractive at that state; metric
-search for that word is then futile. If the 3 s Jacobian is locally expansive
-but a longer full-source product is Schur stable, the theorem may still close
-with a longer finite window.
+Because the system and admissible Lyapunov metric are time/source varying, the
+spectral radius of one finite transition matrix is **not** a standalone no-go
+criterion. The immediate feasibility quantity for the retained moving metric is
+
+`gamma_W(z)^2 = || P_1^(-1/2) DF_W(z) P_0^(1/2) ||_2^2`.
+
+If a bounded source-contiguous window has `sup gamma_W(z)^2 < 1`, then that
+window is a valid full-state differential-contraction candidate in the retained
+moving metric. If 3 s fails but 6 s or 9 s is strict, no new metric architecture
+is needed. If all tested bounded windows fail, a different uniformly coercive
+full-rank metric may still exist; its feasibility must be assessed through the
+full differential cocycle, not through the spectral radius of one time-varying
+transition.
 
 No new nonlinear lemma is authorized unless it enters this matrix inequality
 and has a quantified path to moving its largest generalized eigenvalue below 1.
@@ -153,27 +160,32 @@ and has a quantified path to moving its largest generalized eigenvalue below 1.
 
 ## Next falsifiable experiment
 
-Build one host-only **full-state Jacobian diagnostic**, driven by the same single
-shipping estimator and complete SEA3 word. It must not create a second covariance
-or source history. Propagate central perturbation pairs for all active
-coordinates in parallel using higher-precision shadow states and the frozen
-shipping gains/branch sequence, then recover the complete-word Jacobian.
+Build one host-only **full-state differential Jacobian diagnostic**, driven by
+the same single shipping estimator and complete SEA3 source. It must not create
+a second covariance, tuner, source, or acceptance history. Propagate central
+perturbation pairs for all active coordinates in parallel using higher-precision
+shadow states and the frozen shipping gains/branch sequence, then recover the
+full Jacobian.
 
-For the A21 limiting word evaluate at least the origin and the finite states on
-the same direction at scales 4, 6, 6.5, and 8. Report:
+For the A21 limiting source phase evaluate the origin and finite states on the
+same limiting direction at scales 4, 6, 6.5, and 8. For each center evaluate
+source-contiguous 3 s, 6 s, and 9 s windows and report:
 
-- all 21 singular/eigen directions, not a reduced block;
-- spectral radius of the full Jacobian;
-- largest singular value in the current shipping metric only as a diagnostic;
-- determinant/conditioning and central-difference consistency under step
-  refinement;
-- exact event counts and actual-R_S history.
+- the complete 21x21 Jacobian and all active coordinates;
+- `gamma_W^2`, the largest generalized moving-metric differential ratio;
+- ordinary singular/eigen diagnostics only as conditioning information, not as
+  theorem criteria;
+- central-difference consistency under step refinement;
+- endpoint P0/P1 conditioning;
+- exact prediction/accelerometer/S/vector counts and a deterministic hash of
+  the actual-R_S event sequence.
 
-Then compose the same full-state diagnostic over 6 s and 9 s source-contiguous
-windows beginning at the same phase. If spectral radius is below one with
-numerical margin, a full-rank differential/converse metric is quantitatively
-justified and only then should interval-AD enclosure be implemented. If it is
-not below one on any bounded tested window, treat that as theorem-falsification
-evidence rather than introducing another storage shortcut.
+Also check H18 on its legal 3 s limiting word so both active dimensions remain
+attached to the same diagnostic machinery. If a longer A21 window makes
+`gamma_W^2` clearly below one, rigorous complete-SEA3 interval-AD enclosure of
+that **full state and full window** is quantitatively justified. If no tested
+window is strict, perform another architecture review before introducing a new
+metric; do not return to endpoint storage transformations or eliminated-state
+certificates.
 
 P4 remains OPEN. P5 remains BLOCKED. No merge is authorized.
