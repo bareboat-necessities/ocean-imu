@@ -1,0 +1,81 @@
+name: ou3-acc-bias-0p4-update
+
+on:
+  push:
+    branches: [codex/ou3-complete-sea3-p4-closure]
+    paths: [.github/workflows/ou3-acc-bias-0p4-update.yml]
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  update-and-dispatch:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      BRANCH: codex/ou3-complete-sea3-p4-closure
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: codex/ou3-complete-sea3-p4-closure
+          fetch-depth: 0
+
+      - name: Change deployed clamp and theorem domain together
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          header = Path('src/kalman_ou_iii/Kalman3D_Wave_OU_III.h')
+          text = header.read_text()
+          old = 'T acc_bias_limit_ = T(0.5);   // see set_accel_bias_limit()'
+          new = 'T acc_bias_limit_ = T(0.4);   // see set_accel_bias_limit()'
+          assert text.count(old) == 1, text.count(old)
+          text = text.replace(old, new)
+          old_comment = 'MEMS unit (0.5 m/s^2 is about 51 mg, against tens of mg of turn-on bias'
+          new_comment = 'MEMS unit (0.4 m/s^2 is about 41 mg, against tens of mg of turn-on bias'
+          assert text.count(old_comment) == 1, text.count(old_comment)
+          text = text.replace(old_comment, new_comment)
+          header.write_text(text)
+
+          domain_path = Path('tools/stability/ou3_proof_operating_domain.json')
+          d = json.loads(domain_path.read_text())
+          handoff = d['startup']['physical_handoff_coordinate_bounds']
+          assert handoff['accelerometer_bias_error_norm_upper_mps2'] == 0.5
+          handoff['accelerometer_bias_error_norm_upper_mps2'] = 0.4
+          live = d['normal_live']
+          assert live['active_accelerometer_bias_state_norm_upper_mps2'] == 0.45
+          assert live['active_accelerometer_bias_projection_limit_mps2'] == 0.5
+          live['active_accelerometer_bias_state_norm_upper_mps2'] = 0.4
+          live['active_accelerometer_bias_projection_limit_mps2'] = 0.4
+          domain_path.write_text(json.dumps(d, indent=2) + '\n')
+          PY
+
+      - name: Audit bias-limit references before commit
+        run: |
+          set -euo pipefail
+          echo '--- bias-related references after update ---'
+          git grep -n -E 'acc_bias_limit_|accelerometer_bias_error_norm_upper_mps2|active_accelerometer_bias_(state_norm_upper|projection_limit)_mps2' -- src tools tests doc docs || true
+          echo '--- diff ---'
+          git diff -- src/kalman_ou_iii/Kalman3D_Wave_OU_III.h tools/stability/ou3_proof_operating_domain.json
+          git diff --check
+
+      - name: Commit clamp/domain change
+        id: commit
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/kalman_ou_iii/Kalman3D_Wave_OU_III.h tools/stability/ou3_proof_operating_domain.json
+          git commit -m 'Tighten accelerometer-bias clamp and proof domain to 0.4 m/s2' -m 'Change the deployed residual accelerometer-bias projection radius from 0.5 to 0.4 m/s^2 and tighten the startup/A21 theorem bounds to the same 0.4 value. No other filter tuning or quality threshold changes.'
+          git push origin HEAD:refs/heads/$BRANCH
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Explicitly rerun full evidence studies on the new filter/domain
+        run: |
+          set -euo pipefail
+          gh workflow run ou-full-evidence-branch.yml --ref "$BRANCH"
+          echo "Dispatched full validation + robustness evidence replay for ${{ steps.commit.outputs.sha }}"
