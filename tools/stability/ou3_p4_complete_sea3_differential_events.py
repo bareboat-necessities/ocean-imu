@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Outward full-state Jacobians of complete-SEA3 nonlinear Joseph events.
 
-This module differentiates the physical error map used by P4.  It does not
-accept an independently selected Kalman gain as a theorem input.  For each
-source event it derives
+This module differentiates the physical true-minus-estimated error map used by
+P4.  It does not accept an independently selected Kalman gain as a theorem
+input.  For each source event it derives
 
     S = H P H^T + R,
     K = P H^T S^-1
@@ -29,23 +29,35 @@ Exact residuals:
   with b_a absent in H18.
 
 At z=0 these reduce exactly to the literal shipping H_S, H_mag and H_acc, so
-the event Jacobian is I-KH with K from that same P/H/R cell.
+the smooth event Jacobian is I-KH with K from that same P/H/R cell.
 
-A21 accelerometer-bias norm projection is a separate nonsmooth hybrid.  The
-current Normal-Live event differentiator fails closed unless projection is
-known inactive; universal P4 must prove that from the declared 0.45/0.5 domain
-or add the projection hybrid explicitly.
+Shipping projects the A21 residual accelerometer-bias estimate onto the ball of
+radius 0.5 m/s^2 after every state injection.  P4 may not assume that projection
+is inactive: the declared nominal bound is 0.45 but the finite physical error
+cell can cross the boundary.  For the Euclidean ball projection Pi_R(x),
+
+    D Pi_R(x) = I,                                  ||x|| < R,
+              = (R/r)(I - x x^T/r^2),              ||x|| > R,
+
+and at ||x||=R the Clarke generalized Jacobian is the convex hull of the two
+one-sided limits.  The routines below enclose that generalized Jacobian
+outwardly and compose it with the smooth Joseph map.  An A21 theorem event must
+therefore supply the same-source true residual-bias cell; omitting it fails
+closed rather than silently selecting the inactive branch.
 """
 from __future__ import annotations
 
 import argparse
 import json
+import math
 from pathlib import Path
 from typing import Sequence
 
 from ou3_interval import (
     Interval,
+    hull,
     matrix_add,
+    matrix_identity,
     matrix_mul,
     matrix_transpose,
 )
@@ -56,8 +68,8 @@ import ou3_sea3_full_normal_live_word as WORD
 
 REPO = Path(__file__).resolve().parents[2]
 DEFAULT_DOMAIN = REPO / "tools" / "stability" / "ou3_proof_operating_domain.json"
-SCHEMA = 2
-QUALIFICATION = "OU3_P4_COMPLETE_SEA3_NONLINEAR_JOSEPH_DIFFERENTIAL_EVENTS_V2"
+SCHEMA = 3
+QUALIFICATION = "OU3_P4_COMPLETE_SEA3_NONLINEAR_JOSEPH_DIFFERENTIAL_EVENTS_V3"
 ACTUAL_RS_PROVENANCE = "ACTUAL_APPLIED_SPECTRALMSE_RS"
 
 OFF_S = 12
@@ -134,6 +146,107 @@ def _apply_physical_correction(z, K, residual):
     return out
 
 
+def _sqrt_nonnegative_interval(x: Interval) -> Interval:
+    """Outward square-root enclosure for a nonnegative algebraic interval."""
+    if x.lo < 0.0:
+        raise ValueError("square-root interval must be nonnegative")
+    lo = 0.0 if x.lo == 0.0 else math.nextafter(math.sqrt(x.lo), -math.inf)
+    hi = math.nextafter(math.sqrt(x.hi), math.inf)
+    return Interval(max(0.0, lo), hi)
+
+
+def _norm_interval(x: Sequence[Interval]) -> Interval:
+    if len(x) != 3 or any(not isinstance(v, Interval) for v in x):
+        raise ValueError("projection vector must be three outward intervals")
+    r2 = Interval.point(0.0)
+    for v in x:
+        r2 = r2 + v.square()
+    return _sqrt_nonnegative_interval(r2)
+
+
+def ball_projection_enclosure(x: Sequence[Interval], radius: float) -> dict:
+    """Value and Clarke-Jacobian enclosure of Euclidean ball projection.
+
+    ``x`` is the same-source pre-projection estimated residual bias.  The
+    returned Jacobian is with respect to x.  If the interval box straddles the
+    projection boundary, the result hulls the inactive identity with the active
+    radial projection derivative instead of choosing either branch.
+    """
+    R = float(radius)
+    if not (math.isfinite(R) and R > 0.0):
+        raise ValueError("projection radius must be finite positive")
+    r = _norm_interval(x)
+    I3 = matrix_identity(3)
+    if r.hi < R:
+        return {
+            "value": list(x),
+            "J": I3,
+            "branch": "inactive",
+            "norm": r,
+        }
+
+    # On the active subset r>=R.  In a boundary-straddling box, clipping the
+    # denominator lower endpoint to R is valid because only the active subset
+    # is represented by this formula; the identity branch is hulled below.
+    r_active = Interval(max(R, r.lo), max(R, r.hi))
+    Ri = Interval.point(R)
+    alpha = Ri / r_active
+    beta = Ri / (r_active * r_active * r_active)
+    active_J = []
+    for i in range(3):
+        row = []
+        for j in range(3):
+            base = alpha if i == j else Interval.point(0.0)
+            row.append(base - beta * x[i] * x[j])
+        active_J.append(row)
+    active_value = [alpha * v for v in x]
+
+    if r.lo > R:
+        return {
+            "value": active_value,
+            "J": active_J,
+            "branch": "active",
+            "norm": r,
+        }
+
+    return {
+        "value": [hull(x[i], active_value[i]) for i in range(3)],
+        "J": [[hull(I3[i][j], active_J[i][j]) for j in range(3)] for i in range(3)],
+        "branch": "clarke_hull",
+        "norm": r,
+    }
+
+
+def _compose_A21_bias_projection(out, bias_true, radius: float):
+    """Compose shipping b_a estimate projection with smooth physical error map."""
+    if len(out) != 21 or bias_true is None or len(bias_true) != 3:
+        raise RuntimeError(
+            "A21 projection hybrid requires the same-source true residual-bias cell"
+        )
+    if any(not isinstance(x, Interval) for x in bias_true):
+        raise TypeError("same-source true residual-bias cell must use outward intervals")
+
+    # Smooth correction gives u = b_true - b_hat_corr.  Therefore the estimate
+    # presented to project_acc_bias_ is x_hat=b_true-u.  True bias is a frozen
+    # source coordinate for this measurement event.
+    n = 21
+    pre_error = out[OFF_BA:OFF_BA + 3]
+    xhat_ad = [_const(bias_true[i], n) - pre_error[i] for i in range(3)]
+    xhat = AD.values(xhat_ad)
+    proj = ball_projection_enclosure(xhat, radius)
+
+    smooth_J = AD.jacobian(out)
+    projected_ba_rows = matrix_mul(proj["J"], smooth_J[OFF_BA:OFF_BA + 3])
+    J = [list(row) for row in smooth_J]
+    J[OFF_BA:OFF_BA + 3] = projected_ba_rows
+
+    state_out = AD.values(out)
+    state_out[OFF_BA:OFF_BA + 3] = [
+        bias_true[i] - proj["value"][i] for i in range(3)
+    ]
+    return J, state_out, proj
+
+
 def residual_S(z):
     return [z[OFF_S + i] for i in range(3)]
 
@@ -190,16 +303,23 @@ def source_joseph_event(
     R_hat=None,
     m_body=None,
     R_provenance: str | None = None,
-    bias_projection_inactive: bool = True,
+    bias_true: Sequence[Interval] | None = None,
+    bias_projection_limit: float | None = None,
 ):
     """Build H/S/K and the outward physical-state Jacobian from one source cell."""
     n = _dim(mode)
     if len(state) != n or _shape(P) != (n, n) or _shape(R) != (3, 3):
         raise ValueError("state/P/R dimension mismatch")
-    if mode == "A" and not bias_projection_inactive:
-        raise RuntimeError("A21 b_a projection hybrid is not silently approximated")
     if kind == "S_zero" and R_provenance != ACTUAL_RS_PROVENANCE:
         raise ValueError("S event R must be the actual applied SpectralMSE R_S from this source cell")
+    if mode == "A" and (
+        bias_true is None
+        or bias_projection_limit is None
+        or not (math.isfinite(float(bias_projection_limit)) and float(bias_projection_limit) > 0.0)
+    ):
+        raise RuntimeError(
+            "A21 projection hybrid requires same-source true bias and shipping projection limit"
+        )
 
     H = _event_H(mode, kind, f_hat=f_hat, R_hat=R_hat, m_body=m_body)
     K, S = source_joseph_gain(P, H, R)
@@ -211,13 +331,32 @@ def source_joseph_event(
     else:
         y = residual_accelerometer(z, f_hat, R_hat)
     out = _apply_physical_correction(z, K, y)
+
+    if mode == "A":
+        J, state_out, projection = _compose_A21_bias_projection(
+            out, bias_true, float(bias_projection_limit)
+        )
+        projection_branch = projection["branch"]
+        projection_J = projection["J"]
+        projection_input_norm = projection["norm"]
+    else:
+        J = AD.jacobian(out)
+        state_out = AD.values(out)
+        projection_branch = "not_applicable"
+        projection_J = None
+        projection_input_norm = None
+
     return {
         "H": H,
         "S": S,
         "K": K,
-        "J_state": AD.jacobian(out),
+        "J_state": J,
+        "state_out": state_out,
         "R_provenance": R_provenance,
         "same_P_H_R_cell": True,
+        "bias_projection_branch": projection_branch,
+        "bias_projection_J": projection_J,
+        "bias_projection_input_norm": projection_input_norm,
     }
 
 
@@ -268,6 +407,8 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "A21_bias_projection_limit_mps2": projection_limit,
         "A21_bias_state_norm_upper_mps2": state_cap,
         "A21_bias_projection_nominal_margin_mps2": projection_margin,
+        "A21_bias_projection_generalized_Jacobian_available": True,
+        "A21_bias_projection_same_source_true_bias_required": True,
         "A21_bias_projection_inactive_source_uniformly_proved_here": False,
         "projection_hybrid_silently_ignored": False,
         "packet_count_remainder_budget_used": False,
@@ -279,7 +420,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "source_uniform_finite_angle_event_Jacobians_closed": False,
         "P4_promoted_here": False,
         "next_obligation": (
-            "feed same-source P/H/R cells into these AD events, prove the A21 bias projection stays inactive or include its exact hybrid, and compose the resulting matrices through the literal differential word"
+            "feed same-source P/H/R/true-bias cells into these AD events, including the exact A21 projection generalized Jacobian, and compose the resulting matrices through the literal differential word"
         ),
     }
 
@@ -295,6 +436,8 @@ def validate(d: dict) -> list[str]:
         "actual_applied_RS_required_for_S_event", "exact_Cayley_attitude_state",
         "deployed_quaternion_branch_differentiated_outward",
         "zero_error_tangent_matches_literal_shipping_H", "Phi_frame_conjugation_available",
+        "A21_bias_projection_generalized_Jacobian_available",
+        "A21_bias_projection_same_source_true_bias_required",
     ):
         if d.get(key) is not True:
             f.append(f"{key} is not true")
@@ -332,7 +475,7 @@ def main() -> int:
         "source": d["canonical_source"],
         "same_cell_gain": d["same_P_H_R_cell_derives_S_and_K"],
         "actual_RS_S": d["actual_applied_RS_required_for_S_event"],
-        "projection_closed": d["A21_bias_projection_inactive_source_uniformly_proved_here"],
+        "projection_generalized_J": d["A21_bias_projection_generalized_Jacobian_available"],
         "event_Jacobians_closed": d["source_uniform_finite_angle_event_Jacobians_closed"],
         "failures": failures,
     }, indent=2, sort_keys=True))
