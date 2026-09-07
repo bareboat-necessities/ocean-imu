@@ -26,7 +26,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import math
 import struct
 from pathlib import Path
 
@@ -81,6 +80,12 @@ def _structural_R(R: np.ndarray, event_type: int) -> np.ndarray:
     return R.copy()
 
 
+def _take(vals: np.ndarray, start: int, count: int) -> tuple[np.ndarray, int]:
+    """Return one contiguous record slice and the next parser offset."""
+    end = start + count
+    return vals[start:end], end
+
+
 def canonicalize(src: Path, dst: Path) -> dict:
     raw = src.read_bytes()
     if len(raw) < HEADER.size:
@@ -112,23 +117,19 @@ def canonicalize(src: Path, dst: Path) -> dict:
         offset += 4 * FLOATS_PER_RECORD
 
         k = 0
-        def take(count: int) -> np.ndarray:
-            nonlocal k
-            a = vals[k:k + count]
-            k += count
-            return a
-
-        take(3)  # omega
-        take(3)  # dtheta
-        take(NX * NX)  # Pbefore
-        take(NX * NX)  # Pafter
-        take(NX * NX)  # linear map
-        take(NX * NX)  # Q
+        _, k = _take(vals, k, 3)  # omega
+        _, k = _take(vals, k, 3)  # dtheta
+        _, k = _take(vals, k, NX * NX)  # Pbefore
+        _, k = _take(vals, k, NX * NX)  # Pafter
+        _, k = _take(vals, k, NX * NX)  # linear map
+        _, k = _take(vals, k, NX * NX)  # Q
         H_start = k
-        H = take(3 * NX).reshape(3, NX)
+        Hflat, k = _take(vals, k, 3 * NX)
+        H = Hflat.reshape(3, NX)
         R_start = k
-        R = take(9).reshape(3, 3)
-        take(9)  # aux
+        Rflat, k = _take(vals, k, 9)
+        R = Rflat.reshape(3, 3)
+        _, k = _take(vals, k, 9)  # aux
         if k != FLOATS_PER_RECORD:
             raise RuntimeError("physical payload parser drifted")
 
