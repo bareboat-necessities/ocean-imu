@@ -19,6 +19,14 @@ the local Python lint executable is also absent. CI installs both dependencies.
 An initial optional mpmath dependency was removed in favor of exact rational
 endpoint elimination and 80-digit decimal output; the focused tests now run
 without adding a new Python package.
+CI run `34157076036` compiled the source probe with warnings as errors and
+executed both fixed 600-sample captures, then failed serializing a NumPy
+`bool_` in the report. Classification: reporting implementation defect, not
+a storage/source theorem failure. It invalidates the report emitter, not
+the shipping capture or any mathematical inequality. The immediate limiter
+is native-JSON conversion of premise predicates. Next falsifiable check:
+serialize a complete synthetic H18/A21 audit in the regression suite, then
+rerun the unchanged physical histories and inspect their actual decisions.
 
 The retained-witness CI run `34148309564` rejected a different payload SHA256
 (`c6b99250...` instead of `db38b812...` for H18). The regenerated A21 scan also

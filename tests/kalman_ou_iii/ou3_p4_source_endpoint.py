@@ -182,6 +182,7 @@ def audit(root, rows):
             "finite_Cayley_45_degree_chart": norms["attitude_error_deg"] <= 45,
             "BIAS1_zero_true_root_and_driver": all(r["true_bias"] == [0, 0, 0] and r["tau_b"] == 5000 for r in word),
         }
+        checks = {name: bool(value) for name, value in checks.items()}
         source_matches = max(source_defects) < 2e-7
         forcing_zero = bool(np.max(np.abs(force)) <= 1e-13)
         margins = {event: float(sum(energies[i]-energies[i-1]
