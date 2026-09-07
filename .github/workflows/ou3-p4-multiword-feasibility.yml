@@ -1,0 +1,98 @@
+name: ou3-p4-multiword-feasibility
+
+on:
+  pull_request:
+    paths:
+      - "tests/kalman_ou_iii/ou3_p4_multiword_feasibility.py"
+      - "tests/kalman_ou_iii/ou3_p4_complete_sea3_word_feasibility.py"
+      - "tests/kalman_ou_iii/ou3_p4_frozen_gain_shadow_feasibility.py"
+      - "tests/kalman_ou_iii/ou3-operation-ledger-sim.cpp"
+      - "tests/kalman_ou_iii/ou3-frozen-gain-shadow-sim.cpp"
+      - "tools/stability/ou3_proof_operating_domain.json"
+      - "src/kalman_ou_iii/**"
+      - "src/kalman_ou_common/**"
+      - "src/tuner/**"
+      - ".github/workflows/ou3-p4-multiword-feasibility.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: ou3-p4-multiword-feasibility-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  multiword:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Install host diagnostic dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libeigen3-dev python3-numpy
+      - name: Fetch genuine coupled wave simulation data
+        run: make ensure-sim-data
+      - name: Build single shipping observer and covariance-free shadow
+        working-directory: tests/kalman_ou_iii
+        run: make -j2 ou3-operation-ledger-sim ou3-frozen-gain-shadow-sim
+      - name: Produce the retained 3-second complete-word trace
+        working-directory: tests/kalman_ou_iii
+        env:
+          OU3_LEDGER_MAP_TRACE: /tmp/ou3_p4_complete_word_exact_maps.bin
+          OU3_LEDGER_COV_TRACE: /tmp/ou3_p4_complete_word_covariance.bin
+          OU3_LEDGER_MAP_STRIDE: "600"
+          W3D_WRITE_TIMESERIES: "0"
+          W3D_VALIDATION_WINDOW_SEC: "0"
+        run: |
+          ./ou3-operation-ledger-sim --input wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv
+      - name: Compose and replay 6-second and 9-second complete A21 windows
+        run: |
+          python3 tests/kalman_ou_iii/ou3_p4_multiword_feasibility.py \
+            --map /tmp/ou3_p4_complete_word_exact_maps.bin \
+            --cov /tmp/ou3_p4_complete_word_covariance.bin \
+            --domain tools/stability/ou3_proof_operating_domain.json \
+            --sim tests/kalman_ou_iii/ou3-frozen-gain-shadow-sim \
+            --input tests/kalman_ou_iii/wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv \
+            --output-dir /tmp/ou3_p4_multiword_cases \
+            --output /tmp/ou3_p4_multiword_feasibility.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/ou3_p4_multiword_feasibility.json'))
+          assert d['canonical_source']=='COMPLETE_SEA3_NORMAL_LIVE_WORD'
+          assert d['concatenates_same_source_words_only'] is True
+          assert d['source_family_replaced'] is False
+          assert d['selected_S_subset_used'] is False
+          assert d['packet_count_remainder_budget_used'] is False
+          assert d['all_due_S_updates_with_actual_RS_retained'] is True
+          assert d['all_valid_accelerometer_updates_retained'] is True
+          assert d['filter_changed'] is False
+          assert d['declared_domain_changed'] is False
+          assert d['P4_promoted'] is False
+          for key, expected_blocks in (('6s',2),('9s',3)):
+              w=d['windows'][key]
+              assert w['blocks']==expected_blocks
+              assert w['acc_count']==600*expected_blocks
+              assert w['valid_cases'] > 0
+              assert w['max_nominal_reconstruction_error'] <= 5e-5
+              print('OU3_P4_MULTIWORD',key,
+                    'rho_linear=',w['rho_linear'],
+                    'records=',w['start_record'],w['end_record'],
+                    'acc=',w['acc_count'],'S=',w['S_update_count'],'vector=',w['mag_count'],
+                    'worst_raw=',w['worst_reliable_raw_rho'],
+                    'worst_phi=',w['worst_reliable_phi_rho'],
+                    'raw_cross=',w['first_reliable_raw_crossing_abs_scale'],
+                    'phi_cross=',w['first_reliable_phi_crossing_abs_scale'],
+                    'scale_limit=',w['declared_scale_limit'])
+          PY
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: ou3-p4-multiword-feasibility
+          path: |
+            /tmp/ou3_p4_multiword_feasibility.json
+            /tmp/ou3_p4_multiword_cases/*.csv
+          retention-days: 7
