@@ -36,6 +36,7 @@ import ou3_p4_complete_sea3_joint_sector_master as JOINT
 import ou3_sea3_complete_window_execution_kernel as KERNEL
 import ou3_sea3_frontend_state_step as FRONTEND
 import ou3_sea3_full_normal_live_word as WORD
+import ou3_sea3_live_covariance_seed as LIVE
 import ou3_sea3_tuner_scheduler_step as TUNER
 
 REPO = Path(__file__).resolve().parents[2]
@@ -420,12 +421,84 @@ def _point_sample() -> KERNEL.SampleCoordinates:
     )
 
 
+def _source_generated_point_covariance_seed(
+    frontend_entry: FRONTEND.FrontEndState,
+    domain_path: Path,
+):
+    """Build the narrow shipping Live/release covariance structure for smoke only.
+
+    The previous 2*I fixture was an arbitrary PSD matrix and caused enclosure
+    loss on the second Joseph prefix.  This fixture instead consumes the
+    shipping Live seed contract: full-heading tilt/yaw handoff covariance,
+    constructor b_g/v/p/S seeds, a_w reset to the committed stationary
+    covariance, and the held->active b_a diagonal release floor.  The point
+    geometry is identity, so the body-down projector is the z axis and the
+    attitude seed is diag(tilt^2, tilt^2, yaw^2).
+
+    This is still a selector smoke fixture, not a P4 source-family witness.
+    """
+    live = LIVE.build(Path(domain_path).resolve())
+    lf = LIVE.validate(live)
+    if lf:
+        raise RuntimeError(f"shipping Live covariance seed invalid: {lf}")
+
+    active = TUNER.commit_if_pending(frontend_entry.tuner, TUNER.constants()).active
+    if active.sigma.lo <= 0.0:
+        raise RuntimeError("point frontend active sigma is not strictly positive")
+
+    def zero_matrix(n: int):
+        z = KERNEL.PRED.I(0.0)
+        return [[z for _ in range(n)] for _ in range(n)]
+
+    def set_diag(P, offset: int, values):
+        for i, value in enumerate(values):
+            P[offset + i][offset + i] = value
+
+    tilt = KERNEL.PRED.I(float(live["full_heading_gauged_live_attitude_seed"]["tilt_std_rad"]))
+    yaw = KERNEL.PRED.I(float(live["full_heading_gauged_live_attitude_seed"]["yaw_std_rad"]))
+    tilt_var = tilt * tilt
+    yaw_var = yaw * yaw
+    bg_var = KERNEL.PRED.I(float(live["constructor"]["P_bg_variance"]))
+    v_var = KERNEL.PRED.I(float(live["translation_seed"]["P_v"]))
+    p_var = KERNEL.PRED.I(float(live["translation_seed"]["P_p"]))
+    s_var = KERNEL.PRED.I(float(live["translation_seed"]["P_S"]))
+    aw_var = active.sigma * active.sigma
+    ba_std = KERNEL.PRED.I(float(live["constructor"]["sigma_ba0"]))
+    ba_var = ba_std * ba_std
+
+    P_H = zero_matrix(WORD.H_DIM)
+    set_diag(P_H, WORD.OFF_TH, (tilt_var, tilt_var, yaw_var))
+    set_diag(P_H, WORD.OFF_BG, (bg_var, bg_var, bg_var))
+    set_diag(P_H, WORD.OFF_V, (v_var, v_var, v_var))
+    set_diag(P_H, WORD.OFF_P, (p_var, p_var, p_var))
+    set_diag(P_H, WORD.OFF_S, (s_var, s_var, s_var))
+    set_diag(P_H, WORD.OFF_AW, (aw_var, aw_var, aw_var))
+
+    P_A = zero_matrix(WORD.A_DIM)
+    for i in range(WORD.H_DIM):
+        for j in range(WORD.H_DIM):
+            P_A[i][j] = P_H[i][j]
+    set_diag(P_A, WORD.OFF_BA, (ba_var, ba_var, ba_var))
+
+    return P_H, P_A, {
+        "live_seed_contract_consumed": True,
+        "arbitrary_P0_used": False,
+        "identity_point_attitude_seed_uses_tilt_yaw_split": True,
+        "aw_seed_uses_same_committed_sigma": True,
+        "A21_ba_release_floor_attached": True,
+    }
+
+
 def _smoke(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     samples = [_point_sample(), _point_sample()]
+    frontend_entry = FRONTEND._point_state()
+    P0_H, P0_A, seed_meta = _source_generated_point_covariance_seed(
+        frontend_entry, domain_path
+    )
     endpoints, selectors, meta = execute_with_prefix_selectors(
-        frontend_entry=FRONTEND._point_state(),
-        P0_H=KERNEL._diag_P(18, 2.0),
-        P0_A=KERNEL._diag_P(21, 2.0),
+        frontend_entry=frontend_entry,
+        P0_H=P0_H,
+        P0_A=P0_A,
         samples=samples,
         domain_path=domain_path,
         branch_limit=128,
@@ -443,6 +516,7 @@ def _smoke(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     ]
     return {
         **meta,
+        "source_generated_covariance_seed": seed_meta,
         "selector_graph_failures": failures,
         "selector_graph_valid": not failures,
         "all_endpoint_lineages_cover_every_prefix": bool(lineages)
@@ -569,6 +643,17 @@ def validate(d: dict) -> list[str]:
         if d.get(key) is not False:
             failures.append(f"{key} is not false")
     smoke = d.get("smoke", {})
+    seed = smoke.get("source_generated_covariance_seed", {})
+    for key in (
+        "live_seed_contract_consumed",
+        "identity_point_attitude_seed_uses_tilt_yaw_split",
+        "aw_seed_uses_same_committed_sigma",
+        "A21_ba_release_floor_attached",
+    ):
+        if seed.get(key) is not True:
+            failures.append(f"smoke source covariance seed lost {key}")
+    if seed.get("arbitrary_P0_used") is not False:
+        failures.append("smoke reverted to arbitrary P0")
     for key in (
         "same_word_executed_H18_A21",
         "frontend_completed_before_async_mag",
