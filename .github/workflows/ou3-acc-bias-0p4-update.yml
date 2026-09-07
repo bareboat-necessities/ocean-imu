@@ -32,7 +32,7 @@ jobs:
           assert d['normal_live']['active_accelerometer_bias_state_norm_upper_mps2'] == 0.35
           PY
 
-      - name: Dispatch full OU-III proof, study, validation and robustness reruns
+      - name: Dispatch proof, P4, study and quality reruns
         run: |
           set -euo pipefail
           for wf in \
@@ -50,9 +50,16 @@ jobs:
             ou3-p4-physical-long-window-feasibility.yml \
             ou3-lever-arm-study.yml \
             quality-gates.yml \
-            build.yml \
-            ou-full-evidence-branch.yml
+            build.yml
           do
             gh workflow run "$wf" --repo "$REPO" --ref "$BRANCH"
           done
+
+      - name: Dispatch full validation and robustness evidence on this branch
+        run: |
+          set -euo pipefail
+          gh workflow run ou-full-evidence-branch.yml \
+            --repo "$REPO" \
+            --ref "$BRANCH" \
+            -f ref="$BRANCH"
           echo 'Explicit 0.4-clamp proof/study/full-evidence reruns dispatched.'
