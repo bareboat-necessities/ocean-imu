@@ -2,12 +2,18 @@
 """Point nonlinear complete-word storage comparison on one frozen shipping word.
 
 The shipping estimator alone generates the complete SEA3 source, covariance,
-branch decisions, gains, actual R_S sequence and endpoint metric.  The host-only
+branch decisions, gains, actual R_S sequence and endpoint metric. The host-only
 shadow has state but no covariance and therefore cannot create a second Riccati
-history.  It recomputes only nonlinear residuals under those frozen shipping
-operations and reports both raw physical-error storage and the corrected full-
-Phi measurement-linearizing storage.  This remains a non-promoting point
-feasibility/falsification experiment.
+history. It recomputes only nonlinear residuals under those frozen shipping
+operations and reports both the legacy rotation-vector raw storage and the
+corrected full-Phi measurement-linearizing storage.
+
+The theorem-facing attitude coordinate is Cayley
+``c = 2 tan(theta/2) u``. The C++ shadow injector accepts a rotation vector, so
+this driver converts every requested finite Cayley perturbation to the exact
+rotation vector that produces it before running the shadow. Thus the full-Phi
+storage is evaluated with the theorem's exact attitude chart at both endpoints.
+This remains a non-promoting point feasibility/falsification experiment.
 """
 from __future__ import annotations
 
@@ -65,12 +71,15 @@ def max_scale(direction: list[float], mode: str, domain: dict, input_path: Path)
     limits: dict[str, float] = {}
     for name, cap in caps.items():
         g = group_norm(direction, name)
-        if g > 0.0: limits[name] = cap / g
+        if g > 0.0:
+            limits[name] = cap / g
     hs = parse_hs(input_path)
     if hs is not None:
         for j, x in enumerate(direction[9:12]):
-            if abs(x) > 0.0: limits[f"p_component_{j}"] = 0.5 * hs / abs(x)
-    if not limits: raise RuntimeError(f"zero direction for {mode}")
+            if abs(x) > 0.0:
+                limits[f"p_component_{j}"] = 0.5 * hs / abs(x)
+    if not limits:
+        raise RuntimeError(f"zero direction for {mode}")
     limiter = min(limits, key=limits.get)
     return float(limits[limiter]), {
         "limiting_constraint": limiter,
@@ -82,8 +91,8 @@ def max_scale(direction: list[float], mode: str, domain: dict, input_path: Path)
 
 def choose_magnitudes(limit: float) -> list[float]:
     # 0.001--0.004 are deliberately retained to expose binary32 subtraction
-    # resolution; theorem-facing point interpretation starts at 0.008.  The
-    # half-step samples refine the observed A21 raw-storage crossing at 4--8.
+    # resolution; theorem-facing point interpretation starts at 0.008. The
+    # half-step samples refine the observed A21 crossing at 4--8.
     base = [
         0.001, 0.002, 0.004, 0.008, 0.015625, 0.03125, 0.0625,
         0.125, 0.25, 0.5, 1.0, 2.0, 4.0,
@@ -91,21 +100,44 @@ def choose_magnitudes(limit: float) -> list[float]:
         16.0, 32.0,
     ]
     out = [x for x in base if x <= limit * (1.0 + 1e-12)]
-    if not out or limit > out[-1] * (1.0 + 1e-6): out.append(limit)
+    if not out or limit > out[-1] * (1.0 + 1e-6):
+        out.append(limit)
     return out
+
+
+def exact_cayley_injection_direction(direction: list[float], scale: float) -> tuple[list[float], float]:
+    """Convert requested finite Cayley c=scale*d_theta to injector rotvec/scale.
+
+    The host executable injects ``exp(scale * direction_theta)``. For the
+    theorem coordinate c, the equivalent rotation angle is
+    ``theta = 2 atan(||c||/2)`` about the same axis.
+    """
+    if not math.isfinite(scale) or scale == 0.0:
+        raise ValueError("finite shadow case requires nonzero scale")
+    out = list(direction)
+    c = [scale * x for x in direction[:3]]
+    cn = norm(c)
+    if cn == 0.0:
+        return out, 0.0
+    angle = 2.0 * math.atan(0.5 * cn)
+    factor = angle / cn
+    rotvec = [factor * x for x in c]
+    out[:3] = [x / scale for x in rotvec]
+    return out, cn
 
 
 def run_case(sim: Path, input_path: Path, out_dir: Path, mode: str,
              worst: dict, direction: list[float], scale: float) -> dict:
     tag = f"{scale:+.12g}".replace("+", "p").replace("-", "m")
     trace = out_dir / f"frozen_shadow_{mode}_{tag}.csv"
+    sim_direction, initial_cayley_norm = exact_cayley_injection_direction(direction, scale)
     env = os.environ.copy()
     env.update({
         "OU3_SHADOW_TRACE": str(trace),
         "OU3_SHADOW_T0": f"{float(worst['t0']):.17g}",
         "OU3_SHADOW_T1": f"{float(worst['t1']):.17g}",
         "OU3_SHADOW_MODE": mode,
-        "OU3_SHADOW_DIRECTION": ",".join(f"{x:.17g}" for x in direction),
+        "OU3_SHADOW_DIRECTION": ",".join(f"{x:.17g}" for x in sim_direction),
         "OU3_SHADOW_SCALE": f"{scale:.17g}",
         "W3D_WRITE_TIMESERIES": "0",
         "W3D_VALIDATION_WINDOW_SEC": "0",
@@ -116,9 +148,15 @@ def run_case(sim: Path, input_path: Path, out_dir: Path, mode: str,
     )
     matches = list(DONE_RE.finditer(cp.stdout))
     result = {
-        "mode": mode, "scale": scale, "absolute_scale": abs(scale),
-        "returncode": cp.returncode, "trace": str(trace),
+        "mode": mode,
+        "scale": scale,
+        "absolute_scale": abs(scale),
+        "returncode": cp.returncode,
+        "trace": str(trace),
         "stdout_tail": "\n".join(cp.stdout.splitlines()[-10:]),
+        "exact_cayley_injection_requested": True,
+        "requested_initial_cayley_norm": initial_cayley_norm,
+        "injector_rotation_vector_norm": abs(scale) * norm(sim_direction[:3]),
     }
     if cp.returncode != 0 or not matches:
         result["valid"] = False
@@ -150,7 +188,8 @@ def paired(cases: list[dict], magnitudes: list[float], linear_rho: float) -> lis
     for mag in magnitudes:
         neg = next((c for c in valid if math.isclose(c["scale"], -mag, rel_tol=0, abs_tol=1e-12)), None)
         pos = next((c for c in valid if math.isclose(c["scale"], +mag, rel_tol=0, abs_tol=1e-12)), None)
-        if not (neg and pos): continue
+        if not (neg and pos):
+            continue
         raw = 0.5 * (float(neg["rho_raw"]) + float(pos["rho_raw"]))
         phi = 0.5 * (float(neg["rho_phi"]) + float(pos["rho_phi"]))
         out.append({
@@ -184,7 +223,7 @@ def main() -> int:
     args.output_dir.mkdir(parents=True, exist_ok=True)
 
     report = {
-        "qualification": "NON_PROMOTING_COMPLETE_SEA3_P4_FROZEN_GAIN_RAW_VS_FULL_PHI",
+        "qualification": "NON_PROMOTING_COMPLETE_SEA3_P4_FROZEN_GAIN_RAW_VS_FULL_PHI_CAYLEY",
         "canonical_source": "COMPLETE_SEA3_NORMAL_LIVE_WORD",
         "point_same_history_diagnostic_only": True,
         "P4_promoted": False,
@@ -196,6 +235,10 @@ def main() -> int:
         "same_actual_applied_RS_word_retained": True,
         "all_due_S_updates_retained": True,
         "full_phi_mixed_aw_shift_retained": True,
+        "exact_theorem_cayley_attitude_injection": True,
+        "full_phi_attitude_chart": "CAYLEY",
+        "raw_storage_attitude_chart": "ROTATION_VECTOR_LOG",
+        "raw_storage_is_secondary_diagnostic_only": True,
         "packet_count_remainder_budget_used": False,
         "selected_S_subset_used": False,
         "both_signs_tested": True,
