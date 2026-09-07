@@ -22,7 +22,7 @@ jobs:
           ref: codex/ou3-complete-sea3-p4-closure
           fetch-depth: 0
 
-      - name: Change deployed clamp and theorem domain together
+      - name: Change deployed clamp and remaining theorem handoff bound
         run: |
           set -euo pipefail
           python3 - <<'PY'
@@ -47,10 +47,8 @@ jobs:
           assert handoff['accelerometer_bias_error_norm_upper_mps2'] == 0.5
           handoff['accelerometer_bias_error_norm_upper_mps2'] = 0.4
           live = d['normal_live']
-          assert live['active_accelerometer_bias_state_norm_upper_mps2'] == 0.45
-          assert live['active_accelerometer_bias_projection_limit_mps2'] == 0.5
-          live['active_accelerometer_bias_state_norm_upper_mps2'] = 0.4
-          live['active_accelerometer_bias_projection_limit_mps2'] = 0.4
+          assert live['active_accelerometer_bias_projection_limit_mps2'] == 0.4
+          assert 0.0 < live['active_accelerometer_bias_state_norm_upper_mps2'] <= 0.4
           domain_path.write_text(json.dumps(d, indent=2) + '\n')
           PY
 
@@ -70,7 +68,7 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add src/kalman_ou_iii/Kalman3D_Wave_OU_III.h tools/stability/ou3_proof_operating_domain.json
-          git commit -m 'Tighten accelerometer-bias clamp and proof domain to 0.4 m/s2' -m 'Change the deployed residual accelerometer-bias projection radius from 0.5 to 0.4 m/s^2 and tighten the startup/A21 theorem bounds to the same 0.4 value. No other filter tuning or quality threshold changes.'
+          git commit -m 'Tighten deployed accelerometer-bias clamp to 0.4 m/s2' -m 'Set the Kalman residual accelerometer-bias projection radius to 0.4 m/s^2 and tighten the startup/handoff theorem bias-error bound to 0.4. Preserve the already-tighter A21 active-state bound 0.35 and existing 0.4 A21 projection limit. No other filter tuning or quality threshold changes.'
           git push origin HEAD:refs/heads/$BRANCH
           echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
