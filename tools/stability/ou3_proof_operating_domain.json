@@ -101,8 +101,8 @@
     "magnetic_vector_norm_upper_uT": 200.0,
     "vector_sine_separation_lower": 0.1,
     "body_rate_norm_upper_deg_s": 30.0,
-    "active_accelerometer_bias_state_norm_upper_mps2": 0.45,
-    "active_accelerometer_bias_projection_limit_mps2": 0.5,
+    "active_accelerometer_bias_state_norm_upper_mps2": 0.35,
+    "active_accelerometer_bias_projection_limit_mps2": 0.4,
     "gravity_quotient": {
       "accepted_packet_recurrence_window_s": 1.0,
       "accepted_packet_separation_min_s": 0.04,
