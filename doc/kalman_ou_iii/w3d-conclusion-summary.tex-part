@@ -7,7 +7,7 @@ and an integral-displacement state whose zero pseudo-measurement provides
 low-frequency drift control.  The Live stability analysis follows the source
 modes directly.  While accelerometer-bias learning is held, the active 18-state
 subsystem is uniformly exponentially stable under the stated translational and
-finite-window attitude/gyro-bias information conditions, with the frozen bias
+finite-window attitude/gyro-bias information conditions, with the held-mode bias error
 entering as a bounded input.  After bias release, the deployed finite
 correlation time of the residual accelerometer-bias state contracts any
 unobserved residual-bias direction in the active 21-state recursion.  The

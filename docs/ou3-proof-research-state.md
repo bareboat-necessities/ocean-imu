@@ -228,6 +228,12 @@ construction, or abandonment of this execution representation after audit.
 
 ## Current CI / evidence status
 
+The MEMS-bias integration rebuild exposed an inherited CI lint defect:
+`ou3_sea3_correlated_window_cells.py` imported unused `dataclasses.replace`
+(ruff F401). Removing the import repairs that implementation defect without
+changing the source model or quality gate; the next check is the unchanged CI
+python job. The focused five bias algebra/negative-contract tests pass locally.
+
 The exact `source-foundation` command passes 73 tests. The 0.4 P3 recomputation,
 finite-`tau_b` detectability rerun, canonical P4 integration, and all 91 P4
 discovery tests pass. `make all` is locally blocked before compilation because
