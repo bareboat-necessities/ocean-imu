@@ -267,6 +267,13 @@ Eq.~\eqref{eq:sea3-joint-word-sector-test} may neither eliminate $a_w$ or
 $b_a$ nor replace the same-history graph by a packet-count or independent-box
 bound.
 
+The bias source and its initial cell satisfy BIAS0/1 in
+Section~\ref{sec:mems-bias-preconditions}.  The full nonlinear graph uses the
+corrected error recurrence, not a free GM replacement for $\delta b_a$.
+A BIAS2 sector from Eq.~\eqref{eq:bias2-sector} may enter the master only
+after its uniform positive separation premise has been verified on this same
+graph.  Literature or stationary PSDs cannot supply that certificate.
+
 Endpoint contraction alone is not sufficient for a full-sample ISS claim.
 P4 must additionally certify a uniform prefix-gain inequality: there exist
 finite nonnegative constants $\kappa_V,\kappa_s,\kappa_n$ such that for every
@@ -284,6 +291,12 @@ admissible SEA3 window and every $0\le\ell<N_W$,
 The full-window energies may be used on the right because they dominate their
 prefix restrictions.  This quantitative bound is separate from, and stronger
 than, merely proving that all prefixes stay inside the Cayley/source domain.
+For a homogeneous prefix $\ell$, the augmented test replaces the upper-left
+block $-D_W$ by $M_\ell^\top J_\ell M_\ell-\Gamma_\ell J_0$, with a finite
+$\Gamma_\ell\ge1$, and uses only sectors valid for that prefix.  Strict
+endpoint contraction does not require prefix contraction.  BIAS1 projection
+compatibility and error/source-domain retention must hold at each prefix;
+no future-event BIAS2 information may be used to justify an earlier chart.
 
 \subsection{Main conditional stability theorem}
 
@@ -293,6 +306,11 @@ finite capture]
 Assume the following hold for both fixed-dimensional Normal-Live modes.
 
 \begin{enumerate}[label=(\roman*),leftmargin=2.1em]
+\item BIAS0 qualifies the sensor model and its residual/mismatch envelopes;
+BIAS1 attaches the true bias and corrected-error history to the source,
+including projection compatibility and physical continuation through hold and
+H$\to$A.  Stochastic and calibration/model mismatch contributions remain
+in the declared forcing energies.
 \item SEA0 supplies a sound outward enclosure of the three-partition
 directional sea class of Eqs.~\eqref{eq:sea3-directional-spectrum}--
 \eqref{eq:sea3-shaping-system}, including the compact hard realization set of
@@ -306,10 +324,15 @@ exact deployed period-source mode, tuner, parameter-EMA, stage/commit, and
 pseudo-update scheduler history.
 \item P3 supplies bounded positive source metrics and a strict finite-window
 linear information/contraction margin on every SEA3-complete window.
+Its configured finite-$\tau_b$ matrices are retained at $\delta=10^{-18}$.
+Any later change to those matrices requires a new quantitative P3 build;
+qualification alone does not change the deployed time constant or process $Q$.
 \item P4 verifies both Eqs.~\eqref{eq:sea3-window-dissipation} and
 \eqref{eq:sea3-prefix-gain} for the exact nonlinear shipping word map on an
 invariant inner funnel $\mathcal F_{\rm inner}$, with every prefix inside its
 declared chart/source domain.
+Any BIAS2 sector it consumes has a certified positive constant on the exact
+same-history nonlinear graph, as required by Theorem~\ref{thm:bias2-separation}.
 \item P5 proves that every admitted 45-degree entrance state reaches
 $\mathcal F_{\rm inner}$ in at most $K_{\rm cap}$ samples while respecting the
 hybrid obligations.

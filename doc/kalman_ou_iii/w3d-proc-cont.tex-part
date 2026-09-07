@@ -109,8 +109,10 @@ with stationary covariance
 \end{equation}
 Temperature-sensor error, calibration error, lag, and hysteresis remain model
 mismatch and enter the local stability analysis as bounded exogenous inputs.
-During warmup/frozen-bias mode, the residual state and covariance are frozen
-rather than propagated by the OU transition.
+During warmup/frozen-bias mode, the estimated residual state and covariance
+are frozen rather than propagated by the OU transition.  Physical sensor bias
+does not freeze; its source history, model qualification and mismatch are
+specified in Section~\ref{sec:mems-bias-preconditions}.
 
 \subsection{Unified local-error SDE}
 Over one sample, $\hat{\vct{\omega}}$ is treated as constant.  With ordering

@@ -58,6 +58,7 @@ import ou3_sea3_full_normal_live_word as WORD
 import ou3_sea3_h18_prior_free_completion as H18
 import ou3_sea3_live_covariance_seed as LIVE
 import ou3_sea3_windowed_vector_pe as PE
+import ou3_mems_bias_contract as BIAS
 
 DEFAULT_DOMAIN = COMPLETE.DEFAULT_DOMAIN
 SCHEMA = 1
@@ -176,6 +177,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "schema": SCHEMA,
         "qualification": QUALIFICATION,
         "canonical_source": source,
+        "mems_bias_preconditions": complete["mems_bias_preconditions"],
         "complete_word_horizon_s": HORIZON_S,
         "component_of_complete_SEA3_full_word": True,
         "paper_active_bias_route": "ETA6_PLUS_FINITE_RESIDUAL_BIAS_CORRELATION",
@@ -228,6 +230,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
 
 def validate(d: dict) -> list[str]:
     f: list[str] = []
+    f.extend(f"MEMS bias: {x}" for x in BIAS.validate(d.get("mems_bias_preconditions", {})))
     if d.get("schema") != SCHEMA or d.get("qualification") != QUALIFICATION:
         f.append("schema/qualification mismatch")
     if d.get("canonical_source") != "COMPLETE_SEA3_NORMAL_LIVE_WORD":

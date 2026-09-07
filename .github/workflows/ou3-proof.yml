@@ -10,6 +10,9 @@ on:
       - "src/kalman_ou_common/**"
       - "src/tuner/**"
       - "doc/kalman_ou_iii/w3d-iss-stability.tex-part"
+      - "doc/kalman_ou_iii/w3d-mems-bias-preconditions.tex-part"
+      - "doc/kalman_ou_iii/w3d-sea3-stability-theorem.tex-part"
+      - "doc/kalman_ou_iii/w3d-proc-cont.tex-part"
       - ".github/workflows/ou3-proof.yml"
   pull_request:
     paths:
@@ -20,6 +23,9 @@ on:
       - "src/kalman_ou_common/**"
       - "src/tuner/**"
       - "doc/kalman_ou_iii/w3d-iss-stability.tex-part"
+      - "doc/kalman_ou_iii/w3d-mems-bias-preconditions.tex-part"
+      - "doc/kalman_ou_iii/w3d-sea3-stability-theorem.tex-part"
+      - "doc/kalman_ou_iii/w3d-proc-cont.tex-part"
       - ".github/workflows/ou3-proof.yml"
   workflow_dispatch:
 
@@ -44,6 +50,8 @@ jobs:
       - name: Produce same-history prefix execution evidence
         run: |
           git rev-parse HEAD
+          python3 tools/stability/ou3_mems_bias_contract.py \
+            --output /tmp/ou3_mems_bias_contract.json
           python3 tools/stability/ou3_p4_complete_sea3_same_history_prefix_selectors.py \
             --output /tmp/ou3_same_history_prefix_execution.json
 
@@ -51,6 +59,9 @@ jobs:
         working-directory: tests/validation
         run: |
           python3 -m unittest -v \
+            test_ou3_mems_bias_contract \
+            test_ou3_p4_same_history_nonlinear_graph_lineage \
+            test_ou3_sea3_correlated_window_cells \
             test_ou3_p4_complete_sea3_same_history_prefix_selectors \
             test_ou3_sea3_complete_window_execution_kernel \
             test_ou3_sea3_live_covariance_seed \
@@ -62,7 +73,9 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: ou3-same-history-prefix-execution
-          path: /tmp/ou3_same_history_prefix_execution.json
+          path: |
+            /tmp/ou3_same_history_prefix_execution.json
+            /tmp/ou3_mems_bias_contract.json
           if-no-files-found: warn
           retention-days: 7
 
@@ -103,6 +116,8 @@ jobs:
 
       - name: Build complete SEA3 source
         run: |
+          python3 tools/stability/ou3_mems_bias_contract.py \
+            --output /tmp/ou3_mems_bias_contract.json
           python3 tools/stability/ou3_sea3_complete_source.py \
             --output /tmp/ou3_sea3_complete_source.json
           python3 tools/stability/ou3_sea3_windowed_vector_pe.py \
@@ -147,6 +162,7 @@ jobs:
         with:
           name: ou3-complete-sea3
           path: |
+            /tmp/ou3_mems_bias_contract.json
             /tmp/ou3_sea3_complete_source.json
             /tmp/ou3_sea3_windowed_vector_pe.json
           retention-days: 7

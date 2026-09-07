@@ -120,8 +120,8 @@ same augmented builder. Every-prefix domain/chart retention remains separate.
 P3 was recomputed with the deployed `0.4 m/s^2` accelerometer-bias projection
 limit: H18 and A21 retain `delta=1e-18`, the first active A21 bias full-matrix
 margin is `1.2499987189052501e-9`, and the H18 worst interval LDLT pivot is
-`4.987499868870966e-14`. `P3_DEPLOYMENT_PASS` remains false only for the
-separate physical-language inclusion obligation.
+`4.987499868870966e-14`. `P3_DEPLOYMENT_PASS` remains false for the
+physical-language inclusion and assembled-sensor BIAS0 qualification obligations.
 
 The canonical 6 s A21 payload has a strict small-error margin
 (`rho=0.9911176` at scale `0.125`) but crosses one at scale `7.5` and
@@ -173,6 +173,34 @@ residual bias. At zero bias error its output is
 `b_true-project_0.4(b_true)`. The homogeneous map must prove this is zero;
 an OU covariance or the estimated active-state cap does not provide that
 true-bias premise. Source forcing and the separate H->A event remain explicit.
+
+## Bias-premise audit and current proof plan
+
+The BIAS0/1/2 package in `w3d-mems-bias-preconditions.tex-part` is conditional.
+BIAS0 separates qualified sensor physics from the filter's 5000 s setting and
+0.4 projection; assembled-unit tau/sigma, true-root and mismatch bounds remain
+unassigned. BIAS1 retains one true-bias root and GM parameter through every
+prefix. Main's nonlinear lineage and correlated window-cell data model are
+retained; the nonlinear consumer now checks the GM graph, not just matching IDs.
+
+The proposed substitution `delta_b_j=exp(-t_j/tau_b)*delta_b_0` through a
+corrected word is invalid: every measurement changes the error by `-K_b*y`,
+with the projection defect added afterward. This is a mathematical premise
+failure, not a new filter instability. It invalidates treating corrected bias
+error as a free slow source or charging its feedback to exogenous ISS forcing.
+It does not invalidate true-bias GM transport or the existing finite-tau P3
+detectability argument. BIAS2 is therefore a conditional full nonlinear graph
+separation lemma; its uniform positive `mu_sep` is still missing.
+
+The controlling contribution is `lambda_sep*(C_y^T W C_y-mu_sep X)` in the full
+augmented master. There is no certified numerical contribution yet, so this
+package authorizes no new interval or metric search. First check the retained
+expanding A21 witness against the exact BIAS1 source/error graph. If admitted,
+valid sectors cannot rescue that storage. The alternatives remain dense
+source-structured storage, path-dependent storage, or direct falsification.
+The stage-by-stage BIAS0-to-P5 dependencies are in `tools/stability/README.md`.
+Rebuild conditional P3 at delta=1e-18 and canonical P4 with these explicit
+premises; keep physical qualification, source cover and P4/P5 closure separate.
 
 ## Connected execution experiment
 

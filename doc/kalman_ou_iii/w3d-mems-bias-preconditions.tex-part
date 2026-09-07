@@ -1,0 +1,227 @@
+\section{MEMS residual-bias qualification and complete-word constraints}
+\label{sec:mems-bias-preconditions}
+
+The following sensor premises supplement the complete SEA3 motion source.
+They do not replace its joint translational/rotational realization, certify an
+assembled sensor, or assert a positive nonlinear P4 margin.  Throughout this
+section $\beta$ denotes a true physical residual, $\hat b_a$ the shipping
+estimated residual, and $e_b=b_a^{\rm true}-\hat b_a$ their error in the
+shipping temperature-centered coordinates.  These three quantities must not
+be interchanged.
+
+\subsection{BIAS0: physical decomposition and qualification premise}
+\label{sec:bias0}
+For the declared assembly, temperature, supply, strain and operating range,
+assume the qualified accelerometer model admits
+\begin{equation}
+ b_a^{\rm tot}(t)=b_0+K_T\Delta T(t)
+       +K_\varepsilon\varepsilon_{\rm pcb}(t)+\beta(t)+d_{\rm ng}(t).
+ \label{eq:bias0-decomposition}
+\end{equation}
+Here $d_{\rm ng}$ retains unmodeled offset effects; scale-factor error instead
+multiplies specific force and is a separate measurement-model disturbance.
+Bosch lists BMI270 zero-g offset, temperature drift and PCB-strain offset
+magnitudes of $\pm20\,\mathrm{mg}$, $\pm0.25\,\mathrm{mg/K}$ and
+$\pm0.010\,\mathrm{mg}/\mu\mathrm{strain}$, respectively, and sensitivity
+temperature drift $0.004\,\%/\mathrm K$, under the specified datasheet
+conditions \cite{BoschBMI270DS08}.  These component characteristics are not a
+joint three-axis residual envelope or a hard guarantee for an assembled board.
+
+The implemented model subtracts its configured temperature mean; it does not
+implement a PCB-strain compensation channel.  Define $d_{\rm det}$ to include
+\emph{all} deterministic/non-GM terms left after the calibration actually
+performed, including any unremoved $b_0$, temperature error and strain offset.
+Then the true coordinate needed by shipping projection is
+\begin{equation}
+ b_a^{\rm true}=\beta+d_{\rm det}.
+ \label{eq:bias0-shipping-truth}
+\end{equation}
+No additional compensation is presumed to exist in the filter.
+
+An admissible stochastic model for each residual axis is
+\begin{equation}
+ d\beta_i=-\tau_{b,i}^{-1}\beta_i\,dt
+       +\sqrt{2\sigma_{b,i}^2/\tau_{b,i}}\,dW_i.
+ \label{eq:bias0-gm}
+\end{equation}
+First-order GM modeling and Allan/autocorrelation identification are supported
+by inertial-sensor studies; model fit and time-constant uncertainty must still
+be assessed for the particular sensor \cite{Quinchia2013MEMSErrors,
+GarciaCrespillo2020GM}.  The deployed $5000\,\mathrm s$ time constant is a
+filter setting, not a universal MEMS physical constant.  The qualification
+record must state parameter intervals, initial residual envelope, residual
+model mismatch, calibration actually applied, and their evidence.  Until
+such a record exists, numerical physical constants remain unassigned.
+
+Qualification should include stationary recordings long enough to resolve the
+claimed correlation-time range, repeated turn-ons, temperature ramps and
+assembly/unit variation, with uncertainty and fit residuals retained.
+Quinchia et al. use seven hours of static data in their study
+\cite{Quinchia2013MEMSErrors}; that duration is an example, not a universal
+sufficiency rule.  Allan deviation alone does not identify a unique noise law.
+
+\subsection{BIAS1: true-bias history and corrected-error transport}
+\begin{theorem}[Conditional homogeneous residual-bias history]
+\label{thm:bias1-history}
+Under BIAS0, hold the physical GM parameters fixed over a window and set its
+stochastic driving and model mismatch to zero for the homogeneous source.
+For scalar $\tau_b>0$, its true residual history is
+\begin{equation}
+ \beta_j=\Phi_b(j,0)\beta_0,\qquad
+ \Phi_b(j,\ell)=e^{-(t_j-t_\ell)/\tau_b}I_3.
+ \label{eq:bias1-history}
+\end{equation}
+Thus, conditional on the parameters, the history is the image of one
+three-dimensional root cell, with $\|\beta_0\|\le B_b$ if that root envelope
+has been qualified.  Per-axis parameters give a diagonal $\Phi_b$; uncertain
+parameters remain common source coordinates, not independent event choices.
+For nonzero driving, the exact decomposition is
+\begin{equation}
+ \beta_j=\Phi_b(j,0)\beta_0+
+       \sum_{\ell<j}\Phi_b(j,\ell+1)\nu_\ell,
+ \label{eq:bias1-forced-history}
+\end{equation}
+where $\nu_\ell$ is the stochastic convolution over that sample.  In the
+stationary scalar-parameter model,
+$\operatorname{Cov}(\nu_\ell)=\sigma_b^2(1-e^{-2h_\ell/\tau_b})I_3$.
+\end{theorem}
+\begin{proof}
+Variation of constants solves Eq.~\eqref{eq:bias0-gm}; iteration of the exact
+sample transition gives Eq.~\eqref{eq:bias1-forced-history}.  Integrating the
+driving covariance gives the displayed innovation covariance.
+\end{proof}
+
+Physical bias continues through estimator hold and H$\to$A release; neither
+operation resets the sensor.  For prediction, writing $\hat\phi_j$ for the
+shipping factor and $\phi_j$ for the true factor gives exactly
+\begin{align}
+ e_{b,j+1}^-={}&\hat\phi_j e_{b,j}^+
+ +(\phi_j-\hat\phi_j)\beta_j+\nu_j \nonumber\\
+ &+d_{{\rm det},j+1}-\hat\phi_jd_{{\rm det},j}.
+ \label{eq:bias1-error-prediction}
+\end{align}
+The matched homogeneous A21 specialization is
+$e_{b,j+1}^-=\hat\phi_j e_{b,j}^+$; H18 holds the estimated bias with
+$\hat\phi_j=1$ and retains the physical bias as an input.  Parameter mismatch
+must remain an explicit disturbance, or be enclosed in a newly verified
+homogeneous model; it cannot silently alter the frozen P3 matrices.
+
+At \emph{every} shipping Joseph correction, including S and vector events,
+let $y_j$ use the physical error-map sign convention and $K_{b,j}$ be the
+actual bias rows of the same-event Kalman gain.  With radius $R_b=0.4$,
+\begin{align}
+ \hat b_{a,j}^{\rm corr}&=\hat b_{a,j}^-+K_{b,j}y_j,\nonumber\\
+ r_{{\rm proj},j}&=\hat b_{a,j}^{\rm corr}
+                -\operatorname{Proj}_{R_b}(\hat b_{a,j}^{\rm corr}),\nonumber\\
+ e_{b,j}^+&=e_{b,j}^- -K_{b,j}y_j+r_{{\rm proj},j}.
+ \label{eq:bias1-error-correction}
+\end{align}
+Bias coordinates are unchanged by the attitude reset.  Consequently the
+\emph{corrected estimation error} is not the free GM history of
+Eq.~\eqref{eq:bias1-history}.  Kalman corrections and projection defects are
+endogenous graph coordinates, including at zero external noise; they must not
+be charged to an exogenous ISS budget.  Removing stochastic driving also does
+not remove any process $Q$, covariance floor or gain from the Riccati word.
+
+\begin{lemma}[Projection compatibility with qualified true bias]
+\label{lem:bias1-projection}
+If $\|b_a^{\rm true}\|\le R_b$ at a correction event, projection preserves
+zero error and
+\begin{equation}
+ \|b_a^{\rm true}-\operatorname{Proj}_{R_b}(b_a^{\rm true}-e_b)\|
+ \le\|e_b\|.
+ \label{eq:bias1-projection}
+\end{equation}
+For the matched homogeneous history, a qualified $B_b\le R_b$ suffices.
+With mismatch/forcing, the envelope must also cover $d_{\rm det}$ and the
+same-history convolution in Eq.~\eqref{eq:bias1-forced-history} at every prefix.
+\end{lemma}
+\begin{proof}
+Euclidean ball projection fixes $b_a^{\rm true}$ in the ball and is
+nonexpansive.  Apply it to $b_a^{\rm true}$ and $b_a^{\rm true}-e_b$.
+\end{proof}
+This is a bias-block Euclidean statement, not contraction in the full coupled
+$P^{-1}$ metric.  Neither the estimated $0.35$ active-state interior nor the
+$0.4$ startup error envelope qualifies $B_b$.  If true bias is outside the
+ball, the exact projection offset
+$b_a^{\rm true}-\operatorname{Proj}_{R_b}(b_a^{\rm true})$ is nonzero and
+must remain an explicit forcing term; zero-error invariance is not available.
+
+\subsection{BIAS2: conditional separation on the full nonlinear graph}
+\begin{theorem}[Sufficient complete-word distinguishability condition]
+\label{thm:bias2-separation}
+Fix the exact full H18/A21 same-history graph, its chart/domain, and every
+shipping event.  At accelerometer events set
+\[
+ g_j=(E_j-I)\hat f_j+E_j\hat R_j\delta a_{w,j},\qquad
+ y_j=g_j+e_{b,j}^-.
+\]
+Stack $a=(R_{a,j}^{-1/2}g_j)_j$ and
+$d=(R_{a,j}^{-1/2}e_{b,j}^-)_j$.  Suppose validated constants
+$0\le\kappa<1$, $\alpha>0$ satisfy, uniformly on that graph,
+\begin{equation}
+ 2|a^\top d|\le\kappa(\|a\|^2+\|d\|^2),\qquad
+ \|a\|^2+\|d\|^2\ge\alpha\,\Xi(z_W),
+ \label{eq:bias2-premise}
+\end{equation}
+where $\Xi(z_W)=z_W^\top Xz_W\ge0$ is the declared quadratic target on the
+full word coordinate.  Then
+\begin{equation}
+ \sum_j\|y_j\|_{R_{a,j}^{-1}}^2
+ \ge\mu_{\rm sep}\Xi(z_W),\qquad
+ \mu_{\rm sep}=(1-\kappa)\alpha>0.
+ \label{eq:bias2-separation}
+\end{equation}
+\end{theorem}
+\begin{proof}
+Expand $\|a+d\|^2$ and apply both inequalities in
+Eq.~\eqref{eq:bias2-premise}.
+\end{proof}
+BIAS0/1 and an oscillatory sea spectrum do \emph{not} establish
+Eq.~\eqref{eq:bias2-premise}.  The signal $g_j$ also depends on evolving
+estimation errors, gravity and feedback; it is not the SEA3 wave acceleration.
+Even for free bias, $g_j=-\Phi_b(j,0)\beta_0$ shows why a temporal GM
+constraint alone cannot imply positive separation.  Whether an analogous
+cancellation is admitted by the actual SEA3/error graph is the numerical
+obligation, not a new exclusion imposed on the source.
+
+If $y_W=C_yz_W$ with exact nonlinear defects retained in $z_W$, a verified
+Eq.~\eqref{eq:bias2-separation} supplies the dense sector
+\begin{equation}
+ \Pi_{\rm sep}=C_y^\top\operatorname{diag}(R_{a,j}^{-1})C_y
+                    -\mu_{\rm sep}X,
+ \qquad z_W^\top\Pi_{\rm sep}z_W\ge0.
+ \label{eq:bias2-sector}
+\end{equation}
+It enters Eq.~\eqref{eq:sea3-joint-word-sector-test} with a nonnegative
+multiplier.  This does not change the signed Joseph information weight or
+discard nonlinear curvature.  All 21 states, cross terms, resets, process
+covariances and actual-applied $R_S$ suffix events remain.  No positive
+$\mu_{\rm sep}$ is currently certified.  Every prefix uses its own valid
+restricted graph and finite-gain master, never an endpoint sector containing
+unexecuted future events.
+A prefix need not possess positive BIAS2 separation: it may omit that sector
+and certify a larger finite gain using its other valid graph constraints.
+
+\subsection{Stationary stochastic corollary}
+For a stationary scalar-axis OU residual, its autocorrelation and two-sided
+angular-frequency PSD are
+\[
+ R_\beta(\Delta)=\sigma_b^2e^{-|\Delta|/\tau_b},\qquad
+ S_\beta(\omega)=\frac{2\sigma_b^2\tau_b}{1+(\omega\tau_b)^2}.
+\]
+Integrating over both bands
+$[-\omega_2,-\omega_1]\cup[\omega_1,\omega_2]$, with
+$0\le\omega_1<\omega_2$, and using
+$\sigma_b^2=(2\pi)^{-1}\int_{\mathbb R}S_\beta(\omega)d\omega$ gives
+\begin{equation}
+ \eta_b=\frac2\pi\left[\arctan(\omega_2\tau_b)
+                      -\arctan(\omega_1\tau_b)\right].
+ \label{eq:bias-stochastic-band}
+\end{equation}
+This is a variance fraction, not a finite-window pathwise bound.  Stationarity,
+initial transients, parameter uncertainty, sampling/aliasing and the actual
+disturbance transfer must be respected in an ISS/moment corollary.  Gaussian
+OU forcing has unbounded support and nondifferentiable sample paths; neither a
+deterministic amplitude/derivative cap nor a SEA3 source restriction follows
+from its PSD.  Stochastic bias forcing remains separate from homogeneous P4.

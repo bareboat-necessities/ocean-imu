@@ -55,6 +55,7 @@ import ou3_sea3_spectral_moment_bridge as MOMENT
 import ou3_sea3_wave_period_frontend as FRONTEND
 import ou3_sea3_dynamic_source_certificate as DYNAMIC
 import ou3_p3_pseudo_scheduler_progress_certificate as SCHED
+import ou3_mems_bias_contract as BIAS
 
 REPO = Path(__file__).resolve().parents[2]
 DEFAULT_DOMAIN = REPO / "tools" / "stability" / "ou3_proof_operating_domain.json"
@@ -273,6 +274,7 @@ def build(
         "schema": SCHEMA,
         "qualification": QUALIFICATION,
         "canonical_P3_source": "COMPLETE_SEA3_NORMAL_LIVE_WORD",
+        "mems_bias_preconditions": BIAS.build(domain_path),
         "source_coordinates": source_coordinates,
         "no_fallback_generators": no_fallback,
         "trajectory_replay_used": False,
@@ -416,6 +418,7 @@ def build(
 
 def validate(d: dict) -> list[str]:
     f: list[str] = []
+    f.extend(f"MEMS bias: {x}" for x in BIAS.validate(d.get("mems_bias_preconditions", {})))
     if d.get("schema") != SCHEMA or d.get("qualification") != QUALIFICATION:
         f.append("schema/qualification mismatch")
     if d.get("canonical_P3_source") != "COMPLETE_SEA3_NORMAL_LIVE_WORD":

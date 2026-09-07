@@ -46,6 +46,7 @@ import ou3_p4_complete_word_endpoint_transport as ENDPOINT
 import ou3_p4_complete_sea3_finite_map_mean_value as FINITE
 import ou3_p4_complete_sea3_signed_information_ledger as SIGNED
 import ou3_p4_complete_sea3_joint_sector_master as JOINT
+import ou3_mems_bias_contract as BIAS
 
 # Exact/outward finite-map differentiation machinery only.
 import ou3_p4_complete_sea3_phi_differential_metric as DIFF
@@ -88,6 +89,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     if failures:
         raise RuntimeError(f"canonical finite-state P4 prerequisites failed: {failures}")
 
+    bias = p3["mems_bias_preconditions"]
     p3_pass = bool(p3["P3_CONDITIONAL_SEA3_PASS"])
     h_delta = float(p3["modes"]["H18"]["relative_Riccati_injection_margin_lower"])
     a_delta = float(p3["modes"]["A21"]["relative_Riccati_injection_margin_lower"])
@@ -124,6 +126,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         and finite_endpoint_closed
         and prefix_gain_closed
         and prefix_domain_closed
+        and bias["P4_bias_preconditions_closed"]
     )
 
     fail_reasons: list[str] = []
@@ -140,7 +143,8 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         fail_reasons.append(
             "paper finite-state endpoint dissipation is open: materialize the source-correlated same-history nonlinear "
             "graph sectors and close -(L_W+sum lambda_j Pi_j)>0 by full augmented interval LDLT, retaining all A21 "
-            "finite-tau_b cross terms and every actual-R_S S event in the complete-word suffixes"
+            "finite-tau_b cross terms and every actual-R_S S event in the complete-word suffixes; "
+            "BIAS1 projection compatibility and BIAS2 full corrected-error separation remain unclosed"
         )
     if not (prefix_gain_closed and prefix_domain_closed):
         fail_reasons.append(
@@ -152,6 +156,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "qualification": QUALIFICATION,
         "canonical_P4_architecture": ARCHITECTURE,
         "canonical_source": "COMPLETE_SEA3_NORMAL_LIVE_WORD",
+        "mems_bias_preconditions": bias,
         "paper_Lyapunov_function": "V(e,zeta)=e^T M(zeta)e",
         "paper_endpoint_inequality": "V_{k+N_W} <= rho*V_k + gamma_s*D_s,k + gamma_n*D_n,k; 0<rho<1",
         "paper_prefix_gain_inequality": "V_{k+ell} <= kappa_V*V_k + kappa_s*D_s,k + kappa_n*D_n,k; 0<=ell<N_W",
@@ -290,6 +295,9 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
 
 def validate(d: dict) -> list[str]:
     f: list[str] = []
+    f.extend(f"MEMS bias: {x}" for x in BIAS.validate(d.get("mems_bias_preconditions", {})))
+    if d.get("mems_bias_preconditions") != d.get("joint_sector_master_contract", {}).get("mems_bias_preconditions"):
+        f.append("joint sector master detached from canonical bias preconditions")
     if d.get("schema") != SCHEMA or d.get("qualification") != QUALIFICATION:
         f.append("schema/qualification mismatch")
     if d.get("canonical_P4_architecture") != ARCHITECTURE:

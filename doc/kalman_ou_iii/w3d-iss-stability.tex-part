@@ -9,6 +9,10 @@ Kalman-gain row.  Stability is therefore stated for the active coordinates of
 each source mode and the held bias is treated as a bounded input until its
 one-time release.  This avoids assigning exponential decay to a coordinate that
 the implemented recursion intentionally freezes.
+The frozen coordinate is the estimate, not the physical sensor bias.
+BIAS0/1 in Section~\ref{sec:mems-bias-preconditions} supply the sensor
+qualification, true-bias history and projection-compatibility premises.
+Model mismatch remains an explicit input through hold and H$\to$A release.
 
 \subsection{Adopted horizontal gauge}
 \label{sec:iss-heading-gauge}
@@ -355,6 +359,11 @@ available, the deployed finite residual-bias correlation time gives
  \label{eq:iss-bias-contraction}
 \end{equation}
 which supplies the detectability fallback for the active 21-state mode.
+This is the matched homogeneous prediction/comparison-observer factor of
+Theorem~\ref{thm:bias1-history}.  It does not impose free exponential decay
+on the shipping corrected error: Eq.~\eqref{eq:bias1-error-correction}
+retains every measurement injection and projection.  Physical/filter
+time-constant mismatch is treated by Eq.~\eqref{eq:bias1-error-prediction}.
 
 \subsection{Process excitation supplied by the deployed source}
 \label{sec:iss-process-source}
