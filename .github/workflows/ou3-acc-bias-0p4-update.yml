@@ -16,12 +16,13 @@ jobs:
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       BRANCH: codex/ou3-complete-sea3-p4-closure
+      REPO: ${{ github.repository }}
     steps:
       - name: Verify clamp/domain at branch head
         run: |
           set -euo pipefail
-          gh api repos/${{ github.repository }}/contents/src/kalman_ou_iii/Kalman3D_Wave_OU_III.h?ref=$BRANCH --jq .content | base64 -d > /tmp/kalman.h
-          gh api repos/${{ github.repository }}/contents/tools/stability/ou3_proof_operating_domain.json?ref=$BRANCH --jq .content | base64 -d > /tmp/domain.json
+          gh api repos/$REPO/contents/src/kalman_ou_iii/Kalman3D_Wave_OU_III.h?ref=$BRANCH --jq .content | base64 -d > /tmp/kalman.h
+          gh api repos/$REPO/contents/tools/stability/ou3_proof_operating_domain.json?ref=$BRANCH --jq .content | base64 -d > /tmp/domain.json
           grep -F 'T acc_bias_limit_ = T(0.4);' /tmp/kalman.h
           python3 - <<'PY'
           import json
@@ -46,6 +47,6 @@ jobs:
             quality-gates.yml \
             build.yml
           do
-            gh workflow run "$wf" --ref "$BRANCH"
+            gh workflow run "$wf" --repo "$REPO" --ref "$BRANCH"
           done
           echo 'Explicit proof/P4/build reruns dispatched.'
