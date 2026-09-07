@@ -1,33 +1,37 @@
 #!/usr/bin/env python3
-"""Canonical unpromoted P4: full-state differential contraction on complete SEA3.
+"""Canonical, unpromoted P4 for the complete SEA3 finite-state theorem.
 
-The nonlinear theorem metric is the full-rank pullback
+The paper's P4 object is the source-indexed finite-state quadratic storage
 
-    M(z,zeta)=D Phi(z,zeta)^T P(zeta)^-1 D Phi(z,zeta),
+    V(e,zeta) = e^T M(zeta) e,
 
-with the exact accelerometer-linearizing Phi coordinate and all active H18/A21
-states retained. At zero error D Phi=I, so this is an exact nonlinear
-differential continuation of the frozen complete-SEA3 P3 metric.
+with two obligations on one complete same-history SEA3 word:
 
-The complete nonlinear Jacobian is assembled by the literal differential
-cocycle. Prediction is differentiated from the SAME source omega/dt/committed
-tau using the deployed quaternion and integrated-OU mean. Every Joseph event
-derives H,S,K from the SAME source-correlated P/H/R cell; a due S=0 event is
-accepted only with ``ACTUAL_APPLIED_SPECTRALMSE_RS`` provenance. In A21 the
-shipping residual-bias ball projection is differentiated by its exact outward
-Clarke generalized Jacobian and consumes the same-source true-bias cell; it is
-not assumed inactive. The H18->A21 homogeneous lift is exactly [I18;0], while
-the held b_a error and shipping b_a covariance floor remain explicit separate
-hybrid forcing/metric obligations.
+    V_{k+N_W} <= rho V_k + forcing,          0 < rho < 1,
+    V_{k+ell} <= kappa_V V_k + forcing,      0 <= ell < N_W,
 
-The P4 gate is the full matrix inequality
+and every prefix must remain in the certified chart/source domain.  A
+state-dependent differential/Riemannian pullback can be useful machinery for
+validated finite-map enclosure, but it is not this theorem unless a separate
+finite-distance bridge is proved.  A strict differential Jacobian inequality
+therefore cannot promote P4 by itself.
 
-    rho M_0 - D F_W(z)^T M_1 D F_W(z) > 0,  0<rho<1,
+The retained endpoint algebra uses the exact physical full shift
 
-uniformly over every admitted complete SEA3 word/state cell. No finite endpoint
-energy, packetwise remainder, correction radius, inverse-metric floor, state
-elimination, independent K/R_S schedule, replay or longer sampled-word
-optimization may promote this gate.
+    epsilon_aw = (Q_aw-I) delta_a_w + e_eta
+
+and the literal ordered shipping maps.  Variation of constants telescopes the
+prediction/source/hybrid/floor shift terms.  S=0 and magnetometer events have
+H E_aw=0, so only accepted accelerometer corrections leave an interior shift
+term.  These are kept jointly in the suffix-weighted operator B_W; every later
+S=0 operation, with its actual applied anisotropic SpectralMSE R_S, remains
+inside the suffix maps.  No packetwise norm sum or packet-count multiplier is
+admissible.
+
+Conditional complete-SEA3 P3 is consumed unchanged at delta=1e-18.  P4 and P5
+remain open until both the finite endpoint inequality and the complete prefix
+gain/domain-retention inequality close uniformly over one of the declared
+[30,25,20,15] degree cells in H18 and A21, including the separate H->A event.
 """
 from __future__ import annotations
 
@@ -37,6 +41,10 @@ from pathlib import Path
 
 import ou3_sea3_riccati_metric_p3 as P3
 import ou3_p4_cayley_sector_certificate as CAYLEY
+import ou3_p4_complete_word_endpoint_transport as ENDPOINT
+
+# Retained only as exact/outward finite-map differentiation machinery.  These
+# modules do not redefine the canonical finite-state P4 theorem.
 import ou3_p4_complete_sea3_phi_differential_metric as DIFF
 import ou3_p4_complete_sea3_differential_prediction as PRED
 import ou3_p4_complete_sea3_differential_events as EVENTS
@@ -44,14 +52,17 @@ import ou3_p4_complete_sea3_differential_word as DWRD
 
 REPO = Path(__file__).resolve().parents[2]
 DEFAULT_DOMAIN = REPO / "tools" / "stability" / "ou3_proof_operating_domain.json"
-SCHEMA = 10
-QUALIFICATION = "OU3_SEA3_FULL_STATE_DIFFERENTIAL_P4_V10"
+SCHEMA = 11
+QUALIFICATION = "OU3_SEA3_FINITE_STATE_ENDPOINT_PREFIX_P4_V11"
+ARCHITECTURE = "FINITE_STATE_COMPLETE_SEA3_QUADRATIC_ENDPOINT_AND_PREFIX"
+CANDIDATES = [30.0, 25.0, 20.0, 15.0]
 
 
 def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     path = Path(domain_path).resolve()
     p3 = P3.build(path)
     cayley = CAYLEY.build(path)
+    endpoint = ENDPOINT.build(path)
     diff = DIFF.build(path)
     pred = PRED.build(path)
     events = EVENTS.build(path)
@@ -59,61 +70,69 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     failures = (
         [f"P3: {x}" for x in P3.validate(p3)]
         + [f"Cayley: {x}" for x in CAYLEY.validate(cayley)]
-        + [f"differential metric: {x}" for x in DIFF.validate(diff)]
-        + [f"prediction: {x}" for x in PRED.validate(pred)]
-        + [f"Joseph events: {x}" for x in EVENTS.validate(events)]
-        + [f"differential word: {x}" for x in DWRD.validate(word)]
+        + [f"endpoint: {x}" for x in ENDPOINT.validate(endpoint)]
+        + [f"differential metric primitive: {x}" for x in DIFF.validate(diff)]
+        + [f"prediction AD primitive: {x}" for x in PRED.validate(pred)]
+        + [f"event AD primitive: {x}" for x in EVENTS.validate(events)]
+        + [f"differential-word primitive: {x}" for x in DWRD.validate(word)]
     )
     if failures:
-        raise RuntimeError(f"canonical differential P4 prerequisites failed: {failures}")
+        raise RuntimeError(f"canonical finite-state P4 prerequisites failed: {failures}")
 
     p3_pass = bool(p3["P3_CONDITIONAL_SEA3_PASS"])
     h_delta = float(p3["modes"]["H18"]["relative_Riccati_injection_margin_lower"])
     a_delta = float(p3["modes"]["A21"]["relative_Riccati_injection_margin_lower"])
 
-    pred_closed = bool(pred["source_uniform_prediction_Jacobian_closed"])
-    joseph_closed = bool(events["source_uniform_finite_angle_event_Jacobians_closed"])
-    projection_differentiated = bool(
+    endpoint_master_emitted = bool(endpoint["master_inequality_object_emitted"])
+    endpoint_closed = bool(endpoint["source_uniform_master_endpoint_domination_closed"])
+
+    # Required separately by the paper.  Endpoint contraction or differential
+    # contraction alone does not provide either statement.
+    prefix_gain_closed = False
+    prefix_domain_closed = False
+
+    projection_machinery = bool(
         events["A21_bias_projection_generalized_Jacobian_available"]
         and events["A21_bias_projection_same_source_true_bias_required"]
         and word["A21_bias_projection_generalized_Jacobian_available"]
     )
-    word_closed = bool(word["source_uniform_complete_word_Jacobian_enclosed"])
-    metric_word_closed = bool(diff["source_uniform_complete_word_Jacobian_enclosed"])
-    jacobian_closed = bool(
-        pred_closed and joseph_closed and projection_differentiated
-        and word_closed and metric_word_closed
+
+    p4_pass = bool(
+        p3_pass
+        and endpoint_master_emitted
+        and endpoint_closed
+        and prefix_gain_closed
+        and prefix_domain_closed
     )
-    contraction_closed = bool(diff["source_uniform_pullback_differential_contraction_closed"])
-    p4_pass = bool(p3_pass and jacobian_closed and contraction_closed)
 
     fail_reasons: list[str] = []
     if not p3_pass:
         fail_reasons.append("frozen conditional complete-SEA3 P3 prerequisite is not closed")
-    if not jacobian_closed:
-        open_parts = []
-        if not pred_closed:
-            open_parts.append("same-history prediction")
-        if not joseph_closed:
-            open_parts.append("same-history P/H/R/true-bias Joseph attachment")
-        if not projection_differentiated:
-            open_parts.append("A21 projection generalized Jacobian")
-        if not word_closed or not metric_word_closed:
-            open_parts.append("literal complete-word composition")
+    if not endpoint_closed:
         fail_reasons.append(
-            "source-uniform outward full-state Jacobian of the literal complete SEA3 word is open: "
-            + ", ".join(open_parts)
+            "paper finite-state endpoint dissipation is open: jointly enclose the same-history "
+            "B_W*epsilon_acc_history, r_W and boundary epsilon terms with every actual-R_S suffix map"
         )
-    if not contraction_closed:
+    if not (prefix_gain_closed and prefix_domain_closed):
         fail_reasons.append(
-            "full interval-LDLT pullback differential contraction is not yet strict on a declared [30,25,20,15] degree cell"
+            "paper finite-window prefix gain/domain retention is open for every prefix of the same complete SEA3 word"
         )
 
     return {
         "schema": SCHEMA,
         "qualification": QUALIFICATION,
-        "canonical_P4_architecture": "FULL_STATE_COMPLETE_SEA3_DIFFERENTIAL_PULLBACK",
+        "canonical_P4_architecture": ARCHITECTURE,
         "canonical_source": "COMPLETE_SEA3_NORMAL_LIVE_WORD",
+        "paper_Lyapunov_function": "V(e,zeta)=e^T M(zeta)e",
+        "paper_endpoint_inequality": (
+            "V_{k+N_W} <= rho*V_k + gamma_s*D_s,k + gamma_n*D_n,k; 0<rho<1"
+        ),
+        "paper_prefix_gain_inequality": (
+            "V_{k+ell} <= kappa_V*V_k + kappa_s*D_s,k + kappa_n*D_n,k; 0<=ell<N_W"
+        ),
+        "finite_state_endpoint_dissipation_required": True,
+        "finite_state_prefix_gain_required": True,
+        "prefix_chart_and_source_domain_retention_required": True,
         "source_generated_not_trajectory_fit": True,
         "trajectory_replay_used": False,
         "filter_changed": False,
@@ -125,45 +144,16 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "P3_A21_delta_consumed": a_delta,
         "P3_frozen_not_modified": True,
         "outer_angle_rad": float(cayley["outer_angle_rad"]),
-        "candidate_angles_deg": [30.0, 25.0, 20.0, 15.0],
-
-        "differential_metric_qualification": diff["qualification"],
-        "differential_metric_type": diff["metric_type"],
-        "differential_metric_definition": diff["metric_definition"],
-        "prediction_differential_qualification": pred["qualification"],
-        "Joseph_differential_qualification": events["qualification"],
-        "literal_differential_word_qualification": word["qualification"],
-
-        "finite_Phi_storage_used_as_Lyapunov_function": False,
-        "finite_raw_endpoint_storage_used_as_P4_certificate": False,
-        "all_active_states_retained": bool(diff["all_active_states_retained"]),
-        "H18_full_rank": bool(diff["H18_full_rank"]),
-        "A21_full_rank": bool(diff["A21_full_rank"]),
-        "Phi_jacobian_determinant_exact": diff["Phi_jacobian_determinant_exact"],
-        "metric_reduces_exactly_to_P3_at_zero_error": bool(diff["metric_reduces_to_P3_at_zero_error"]),
+        "candidate_angles_deg": list(CANDIDATES),
 
         "same_complete_SEA3_word_required": True,
         "same_frontend_tuner_covariance_history_required": True,
-        "same_source_omega_h_tau_prediction_required": bool(pred["same_complete_SEA3_omega_h_tau_required"]),
-        "prediction_independent_F_forbidden": not bool(pred["independent_F_input_allowed_for_theorem"]),
-        "full_prediction_F_Eaw_rows_retained": bool(pred["full_F_Eaw_v_p_S_aw_rows_retained"]),
-        "same_P_H_R_cell_required_for_Joseph": bool(events["same_P_H_R_cell_derives_S_and_K"]),
-        "independent_K_forbidden": not bool(events["independent_K_input_allowed_for_theorem"]),
         "all_due_S_updates_with_actual_applied_RS_required": True,
-        "actual_RS_provenance_token": events["actual_applied_RS_provenance_token"],
+        "actual_RS_provenance_token": EVENTS.ACTUAL_RS_PROVENANCE,
         "all_valid_accelerometer_updates_required": True,
         "all_process_Q_floor_reset_events_required": True,
-
-        "A21_bias_projection_generalized_Jacobian_available": bool(
-            events["A21_bias_projection_generalized_Jacobian_available"]
-        ),
-        "A21_bias_projection_same_source_true_bias_required": bool(
-            events["A21_bias_projection_same_source_true_bias_required"]
-        ),
-        "A21_bias_projection_hybrid_differentiated": projection_differentiated,
-        "A21_bias_projection_assumed_inactive": False,
-
-        "H_to_A_rectangular_differential_event_required": True,
+        "asynchronous_vector_events_required": True,
+        "H_to_A_rectangular_hybrid_event_required": True,
         "H_to_A_homogeneous_lift": word["H_to_A_homogeneous_lift"],
         "H_to_A_held_ba_error_retained_as_separate_forcing": bool(
             word["H_to_A_held_ba_error_retained_as_separate_forcing"]
@@ -171,18 +161,46 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "H_to_A_covariance_floor_retained_as_separate_metric_event": bool(
             word["H_to_A_covariance_floor_retained_as_separate_metric_event"]
         ),
+        "full_prediction_F_Eaw_rows_retained": bool(endpoint["full_prediction_F_Eaw_retained"]),
+        "full_epsilon_aw_retained": bool(endpoint["full_epsilon_aw_retained"]),
 
-        "literal_cocycle_same_source_token_required": bool(word["same_complete_SEA3_source_token_required_for_every_event"]),
-        "literal_cocycle_same_cell_Joseph_required": bool(word["same_P_H_R_cell_required_for_every_Joseph_event"]),
-        "outward_interval_AD_used": True,
-        "full_interval_LDLT_required": True,
-        "differential_word_inequality": diff["differential_word_inequality"],
+        "endpoint_transport_qualification": endpoint["qualification"],
+        "endpoint_master_object_emitted": endpoint_master_emitted,
+        "endpoint_decomposition_identity": endpoint["endpoint_decomposition_identity"],
+        "master_endpoint_energy_identity": endpoint["master_endpoint_energy_identity"],
+        "joint_accelerometer_suffix_operator": endpoint["accelerometer_joint_operator"],
+        "actual_RS_regularization_enters_suffix_maps": bool(
+            endpoint["actual_RS_regularization_enters_every_applicable_suffix"]
+        ),
+        "source_uniform_joint_BW_epsilon_enclosure_closed": bool(
+            endpoint["source_uniform_joint_BW_epsilon_enclosure_closed"]
+        ),
+        "source_uniform_r_word_enclosure_closed": bool(
+            endpoint["source_uniform_r_word_enclosure_closed"]
+        ),
+        "source_uniform_master_endpoint_domination_closed": endpoint_closed,
+        "source_uniform_prefix_gain_closed": prefix_gain_closed,
+        "source_uniform_prefix_domain_retention_closed": prefix_domain_closed,
 
-        "source_uniform_prediction_Jacobian_closed": pred_closed,
-        "source_uniform_Joseph_Jacobians_closed": joseph_closed,
-        "source_uniform_literal_cocycle_closed": word_closed,
-        "source_uniform_complete_word_Jacobian_enclosed": jacobian_closed,
-        "source_uniform_pullback_differential_contraction_closed": contraction_closed,
+        "differential_AD_used_only_for_finite_map_enclosure": True,
+        "differential_pullback_used_as_replacement_P4": False,
+        "differential_finite_distance_bridge_closed": False,
+        "differential_metric_qualification": diff["qualification"],
+        "prediction_AD_qualification": pred["qualification"],
+        "event_AD_qualification": events["qualification"],
+        "differential_word_qualification": word["qualification"],
+        "same_source_omega_h_tau_prediction_required": bool(
+            pred["same_complete_SEA3_omega_h_tau_required"]
+        ),
+        "prediction_independent_F_forbidden": not bool(
+            pred["independent_F_input_allowed_for_theorem"]
+        ),
+        "same_P_H_R_cell_required_for_Joseph": bool(
+            events["same_P_H_R_cell_derives_S_and_K"]
+        ),
+        "independent_K_forbidden": not bool(events["independent_K_input_allowed_for_theorem"]),
+        "A21_bias_projection_generalized_Jacobian_machinery_retained": projection_machinery,
+        "outward_interval_AD_machinery_retained": True,
 
         "packet_count_remainder_budget_used": False,
         "packetwise_remainder_norm_sum_used": False,
@@ -199,8 +217,11 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "P5_MAY_START": p4_pass,
         "P4_CANONICAL_FAIL_REASONS": fail_reasons,
         "next_obligation": (
-            "close the source-uniform same-history prediction and same-cell P/H/R/true-bias Joseph event enclosures, compose them through the literal cocycle with every actual-applied R_S event, then test rho*M0-J^T*M1*J by full interval LDLT from 30 degrees downward; if no cell closes, perform theorem/metric failure analysis rather than retuning or replacing the source"
-            if p3_pass else "repair only frozen P3 prerequisite failure"
+            "use the retained same-cell outward AD primitives to enclose the finite physical complete-word defect "
+            "d_W=r_W+boundary_epsilon-B_W*epsilon_acc_history jointly over COMPLETE_SEA3_NORMAL_LIVE_WORD, "
+            "with every actual applied R_S inside the suffix maps; then prove both the paper endpoint quadratic "
+            "decrease and the finite prefix-gain/domain-retention inequalities on the widest [30,25,20,15] degree cell"
+            if p3_pass else "repair only the frozen P3 prerequisite failure"
         ),
     }
 
@@ -209,40 +230,41 @@ def validate(d: dict) -> list[str]:
     f: list[str] = []
     if d.get("schema") != SCHEMA or d.get("qualification") != QUALIFICATION:
         f.append("schema/qualification mismatch")
-    if d.get("canonical_P4_architecture") != "FULL_STATE_COMPLETE_SEA3_DIFFERENTIAL_PULLBACK":
-        f.append("canonical P4 architecture changed")
+    if d.get("canonical_P4_architecture") != ARCHITECTURE:
+        f.append("canonical P4 architecture is not the paper finite-state endpoint+prefix theorem")
     if d.get("canonical_source") != "COMPLETE_SEA3_NORMAL_LIVE_WORD":
         f.append("canonical source changed")
 
     for key in (
-        "source_generated_not_trajectory_fit", "P3_CONDITIONAL_SEA3_PASS_consumed",
-        "P3_frozen_not_modified", "all_active_states_retained", "H18_full_rank", "A21_full_rank",
-        "metric_reduces_exactly_to_P3_at_zero_error", "same_complete_SEA3_word_required",
-        "same_frontend_tuner_covariance_history_required", "same_source_omega_h_tau_prediction_required",
-        "prediction_independent_F_forbidden", "full_prediction_F_Eaw_rows_retained",
-        "same_P_H_R_cell_required_for_Joseph", "independent_K_forbidden",
+        "finite_state_endpoint_dissipation_required", "finite_state_prefix_gain_required",
+        "prefix_chart_and_source_domain_retention_required", "source_generated_not_trajectory_fit",
+        "P3_CONDITIONAL_SEA3_PASS_consumed", "P3_frozen_not_modified",
+        "same_complete_SEA3_word_required", "same_frontend_tuner_covariance_history_required",
         "all_due_S_updates_with_actual_applied_RS_required", "all_valid_accelerometer_updates_required",
-        "all_process_Q_floor_reset_events_required", "A21_bias_projection_generalized_Jacobian_available",
-        "A21_bias_projection_same_source_true_bias_required", "A21_bias_projection_hybrid_differentiated",
-        "H_to_A_rectangular_differential_event_required", "H_to_A_held_ba_error_retained_as_separate_forcing",
-        "H_to_A_covariance_floor_retained_as_separate_metric_event",
-        "literal_cocycle_same_source_token_required", "literal_cocycle_same_cell_Joseph_required",
-        "outward_interval_AD_used", "full_interval_LDLT_required",
+        "all_process_Q_floor_reset_events_required", "asynchronous_vector_events_required",
+        "H_to_A_rectangular_hybrid_event_required", "H_to_A_held_ba_error_retained_as_separate_forcing",
+        "H_to_A_covariance_floor_retained_as_separate_metric_event", "full_prediction_F_Eaw_rows_retained",
+        "full_epsilon_aw_retained", "endpoint_master_object_emitted",
+        "actual_RS_regularization_enters_suffix_maps", "differential_AD_used_only_for_finite_map_enclosure",
+        "same_source_omega_h_tau_prediction_required", "prediction_independent_F_forbidden",
+        "same_P_H_R_cell_required_for_Joseph", "independent_K_forbidden",
+        "A21_bias_projection_generalized_Jacobian_machinery_retained",
+        "outward_interval_AD_machinery_retained",
     ):
         if d.get(key) is not True:
             f.append(f"{key} is not true")
 
     for key in (
         "trajectory_replay_used", "filter_changed", "declared_domain_shrunk", "source_family_replaced",
-        "P3_DEPLOYMENT_PASS_consumed_as_if_closed", "finite_Phi_storage_used_as_Lyapunov_function",
-        "finite_raw_endpoint_storage_used_as_P4_certificate", "A21_bias_projection_assumed_inactive",
-        "source_uniform_prediction_Jacobian_closed", "source_uniform_Joseph_Jacobians_closed",
-        "source_uniform_literal_cocycle_closed", "source_uniform_complete_word_Jacobian_enclosed",
-        "source_uniform_pullback_differential_contraction_closed", "packet_count_remainder_budget_used",
-        "packetwise_remainder_norm_sum_used", "state_elimination_used", "a_w_Schur_final_certificate_used",
-        "correction_radius_claim_used", "inverse_metric_floor_claim_used", "independent_RS_schedule_used",
-        "point_word_rho_used_to_promote", "longer_point_window_optimization_used_to_promote",
-        "P4_FINITE_WINDOW_CLOSED", "P4_CANONICAL_PASS", "P5_MAY_START",
+        "P3_DEPLOYMENT_PASS_consumed_as_if_closed", "source_uniform_joint_BW_epsilon_enclosure_closed",
+        "source_uniform_r_word_enclosure_closed", "source_uniform_master_endpoint_domination_closed",
+        "source_uniform_prefix_gain_closed", "source_uniform_prefix_domain_retention_closed",
+        "differential_pullback_used_as_replacement_P4", "differential_finite_distance_bridge_closed",
+        "packet_count_remainder_budget_used", "packetwise_remainder_norm_sum_used", "state_elimination_used",
+        "a_w_Schur_final_certificate_used", "correction_radius_claim_used", "inverse_metric_floor_claim_used",
+        "independent_RS_schedule_used", "point_word_rho_used_to_promote",
+        "longer_point_window_optimization_used_to_promote", "P4_FINITE_WINDOW_CLOSED",
+        "P4_CANONICAL_PASS", "P5_MAY_START",
     ):
         if d.get(key) is not False:
             f.append(f"{key} is not false")
@@ -254,17 +276,21 @@ def validate(d: dict) -> list[str]:
         f.append("actual R_S provenance token changed")
     if d.get("H_to_A_homogeneous_lift") != "[I18;0]":
         f.append("H->A homogeneous lift changed")
-    if float(d.get("Phi_jacobian_determinant_exact", 0.0)) != 1.0:
-        f.append("Phi differential coordinate lost exact full rank")
     if float(d.get("outer_angle_rad", 0.0)) < 0.80:
         f.append("outer Cayley sector shrank")
-    if d.get("candidate_angles_deg") != [30.0, 25.0, 20.0, 15.0]:
+    if d.get("candidate_angles_deg") != CANDIDATES:
         f.append("declared P4 candidate sequence changed")
+    if d.get("paper_Lyapunov_function") != "V(e,zeta)=e^T M(zeta)e":
+        f.append("paper finite-state Lyapunov function missing")
+
     reasons = d.get("P4_CANONICAL_FAIL_REASONS", [])
-    if len(reasons) != 2 or not any("jacobian" in x.lower() for x in reasons) or not any(
-        "ldlt" in x.lower() or "contraction" in x.lower() for x in reasons
-    ):
-        f.append("canonical P4 must expose Jacobian and differential-contraction blockers")
+    if len(reasons) != 2:
+        f.append("canonical P4 must expose endpoint and prefix blockers")
+    else:
+        if not any("endpoint" in x.lower() for x in reasons):
+            f.append("finite-state endpoint blocker missing")
+        if not any("prefix" in x.lower() for x in reasons):
+            f.append("finite-state prefix blocker missing")
     return list(dict.fromkeys(f))
 
 
@@ -281,10 +307,11 @@ def main() -> int:
     args.output.write_text(json.dumps(d, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     print(json.dumps({
         "architecture": d["canonical_P4_architecture"],
-        "prediction_closed": d["source_uniform_prediction_Jacobian_closed"],
-        "Joseph_closed": d["source_uniform_Joseph_Jacobians_closed"],
-        "A21_projection_differentiated": d["A21_bias_projection_hybrid_differentiated"],
-        "literal_cocycle_closed": d["source_uniform_literal_cocycle_closed"],
+        "endpoint_master_emitted": d["endpoint_master_object_emitted"],
+        "endpoint_closed": d["source_uniform_master_endpoint_domination_closed"],
+        "prefix_gain_closed": d["source_uniform_prefix_gain_closed"],
+        "prefix_domain_closed": d["source_uniform_prefix_domain_retention_closed"],
+        "differential_AD_only": d["differential_AD_used_only_for_finite_map_enclosure"],
         "actual_RS_required": d["all_due_S_updates_with_actual_applied_RS_required"],
         "P4_CANONICAL_PASS": d["P4_CANONICAL_PASS"],
         "fail_reasons": d["P4_CANONICAL_FAIL_REASONS"],
