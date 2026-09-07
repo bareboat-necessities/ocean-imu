@@ -5,7 +5,9 @@ This structural certificate binds P4 to the exact shipping covariance algebra.
 For P+=A P A^T+B with B>=0, A^T P+^-1 A<=P^-1.  For a Joseph
 update B=K R K^T, K^T P+^-1 K<=R^-1.  Nonsingular covariance
 congruence is an exact metric isometry.  These identities are independent of
-state dimension and therefore apply to both H18 and A21.
+state dimension and therefore apply to both H18 and A21.  They are covariance
+identities only: they do not identify an auxiliary residual Jacobian with the
+congruent shipping Jacobian, or close nonlinear chart transport and storage.
 """
 from __future__ import annotations
 
@@ -24,8 +26,8 @@ import ou3_sea3_full_word_riccati_backend as BACKEND
 import ou3_sea3_full_word_reset_congruence as RESET
 
 REPO = Path(__file__).resolve().parents[2]
-SCHEMA = 1
-QUALIFICATION = "OU3_P4_EXACT_MOVING_COVARIANCE_METRIC_REBIND"
+SCHEMA = 2
+QUALIFICATION = "OU3_P4_EXACT_MOVING_COVARIANCE_METRIC_REBIND_V2"
 
 
 def _contains_zero(A) -> bool:
@@ -118,7 +120,9 @@ def build() -> dict:
             "K^T P_plus^-1 K<=R^-1. Nonsingular congruence is exact."
         ),
         "interval_self_tests": {**joseph, **congruence},
-        "full_nonlinear_measurement_metric_rebind_closed": closed,
+        "structural_shipping_covariance_identities_closed": closed,
+        "full_nonlinear_measurement_metric_rebind_closed": False,
+        "nonlinear_chart_transport_and_storage_closed": False,
         "P4_promoted": False,
     }
 
@@ -133,13 +137,15 @@ def validate(d: dict) -> list[str]:
         "prediction_linear_map_nonexpansive", "Joseph_linear_map_nonexpansive",
         "Joseph_nonlinear_injection_metric_closed", "PSD_floor_nonexpansive",
         "left_error_reset_exact_metric_isometry", "dimension_independent_H18_A21",
-        "full_nonlinear_measurement_metric_rebind_closed",
+        "structural_shipping_covariance_identities_closed",
     ):
         if d.get(k) is not True:
             f.append(f"{k} is not true")
     for k in (
         "trajectory_replay_used", "filter_changed", "group_isotropic_metric_attachment_used",
         "endpoint_source_word_scan_used", "ordinary_float_eigensolver_used", "P4_promoted",
+        "full_nonlinear_measurement_metric_rebind_closed",
+        "nonlinear_chart_transport_and_storage_closed",
     ):
         if d.get(k) is not False:
             f.append(f"{k} is not false")
@@ -159,5 +165,5 @@ def validate(d: dict) -> list[str]:
 if __name__ == "__main__":
     d = build()
     f = validate(d)
-    print({"qualification": QUALIFICATION, "closed": d["full_nonlinear_measurement_metric_rebind_closed"], "failures": f})
+    print({"qualification": QUALIFICATION, "structural_covariance_closed": d["structural_shipping_covariance_identities_closed"], "failures": f})
     raise SystemExit(0 if not f else 2)

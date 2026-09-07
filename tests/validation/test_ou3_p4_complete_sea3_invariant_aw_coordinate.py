@@ -28,6 +28,7 @@ class CompleteSea3InvariantAwCoordinateTests(unittest.TestCase):
         self.assertTrue(self.d["all_due_S_updates_and_actual_RS_remain_in_complete_word"])
         self.assertFalse(self.d["trajectory_replay_used"])
         self.assertFalse(self.d["source_family_replaced"])
+        self.assertFalse(self.d["declared_domain_changed"])
 
     def test_triangular_transform_is_exact_not_metric_shortcut(self):
         tri = self.d["linear_triangular_coordinate"]
@@ -59,15 +60,36 @@ class CompleteSea3InvariantAwCoordinateTests(unittest.TestCase):
     def test_helper_does_not_promote_p4(self):
         self.assertFalse(self.d["complete_source_correlated_transport_defect_closed_here"])
         self.assertFalse(self.d["P4_promoted_here"])
-
-    def test_nominal_aw_bound_is_only_conditional_not_certified(self):
-        self.assertTrue(self.d["nominal_aw_bound_is_conditional_on_nominal_force_bound"])
-        self.assertFalse(self.d["nominal_force_bound_inherited_from_physical_SEA3_proved"])
         self.assertFalse(self.d["shipping_Joseph_binding_closed"])
-        x = float(self.d["source_nominal_aw_norm_upper_mps2"])
-        self.assertTrue(math.isfinite(x))
-        self.assertGreater(x, 0.0)
-        self.assertLess(x, 30.0)
+
+    def test_nominal_force_is_derived_from_existing_sea3_and_error_domain(self):
+        self.assertTrue(
+            self.d["nominal_force_bound_from_complete_SEA3_plus_declared_error_domain_proved"]
+        )
+        self.assertFalse(self.d["nominal_force_bound_from_physical_SEA3_alone_claimed"])
+        f = self.d["nominal_force_derivation"]
+        self.assertTrue(f["uses_complete_SEA3_physical_source_bound"])
+        self.assertTrue(f["uses_already_declared_P4_error_domain"])
+        self.assertFalse(f["new_source_assumption_added"])
+        self.assertFalse(f["replay_extrema_used"])
+        self.assertAlmostEqual(13.80665, f["true_specific_force_upper_mps2"], places=6)
+        self.assertAlmostEqual(2.941995, f["declared_delta_aw_error_upper_mps2"], places=6)
+        self.assertGreaterEqual(f["nominal_specific_force_upper_mps2"], 16.748645)
+        self.assertGreaterEqual(f["nominal_aw_norm_upper_mps2"], 26.555295)
+        self.assertLess(f["nominal_aw_norm_upper_mps2"], 27.0)
+
+    def test_candidate_eta_bounds_are_widened_before_reuse(self):
+        self.assertFalse(self.d["measurement_linearizing_shift_bounds_reused_without_widening"])
+        rows = self.d["measurement_linearizing_shift_bounds_widened_for_declared_delta_aw_domain"]
+        self.assertEqual([30.0, 25.0, 20.0, 15.0],
+                         [r["attitude_angle_deg"] for r in rows])
+        nominal_force = float(self.d["source_nominal_specific_force_upper_mps2"])
+        for row in rows:
+            self.assertTrue(row["widened_for_declared_delta_aw_domain"])
+            self.assertGreaterEqual(float(row["force_upper_mps2_used"]), nominal_force)
+            self.assertGreater(float(row["nominal_force_widening_ratio"]), 1.0)
+            self.assertGreater(float(row["e_eta_norm_upper_mps2"]), 0.0)
+            self.assertTrue(math.isfinite(float(row["e_eta_norm_upper_mps2"])))
 
 
 if __name__ == "__main__":

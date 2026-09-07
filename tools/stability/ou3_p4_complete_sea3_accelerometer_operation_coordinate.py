@@ -193,7 +193,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
             "transform_back_after_measurement_exact": True,
             "group_isotropic_metric_assumption_required": False,
         },
-        "moving_metric_rebind_consumed": bool(rebind["full_nonlinear_measurement_metric_rebind_closed"]),
+        "moving_metric_rebind_consumed": bool(rebind["structural_shipping_covariance_identities_closed"]),
         "outer_angle_rad": float(cayley["outer_angle_rad"]),
         "outer_sector_covered": float(cayley["outer_angle_rad"]) >= 0.80,
         "retired_endpoint_attachment_module_reintroduced": False,

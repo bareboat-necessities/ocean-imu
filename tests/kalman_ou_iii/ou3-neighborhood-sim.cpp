@@ -109,6 +109,24 @@ Vector3f quaternion_log(const Quaternionf& q_in)
     return (angle / nv) * v;
 }
 
+Quaternionf quaternion_exp(const Vector3f& delta)
+{
+    const float angle = delta.norm();
+    if (!std::isfinite(angle))
+        return Quaternionf(
+            std::numeric_limits<float>::quiet_NaN(), 0.0f, 0.0f, 0.0f);
+    const float half = 0.5f * angle;
+    float scale = 0.5f;
+    if (angle > 1.0e-7f) {
+        scale = std::sin(half) / angle;
+    } else {
+        const float a2 = angle * angle;
+        scale = 0.5f - a2 / 48.0f;
+    }
+    return Quaternionf(
+        std::cos(half), scale * delta.x(), scale * delta.y(), scale * delta.z());
+}
+
 bool close_source_scalar(float a, float b)
 {
     const float scale = std::max({1.0f, std::abs(a), std::abs(b)});
@@ -283,15 +301,20 @@ private:
                   << " mode=" << injected_mode_
                   << " W0=" << information_energy(nominal_.raw().mekf())
                   << " theta_deg=" << rad_to_deg(pair_error().head<3>().norm())
+                  << " cov_rel=" << covariance_relative_difference()
                   << "\n";
     }
 
     static void inject_delta(Mekf& m, const Vector21f& d)
     {
-        // Attitude uses the filter's exact left-error retraction and covariance
-        // reset.  Remaining coordinates are ordinary additive states.
-        m.xext.template head<3>() = d.template head<3>();
-        m.applyQuaternionCorrectionFromErrorState();
+        // Establish a second point in the same shipping chart without executing
+        // an estimator correction/reset event.  The P4 word starts with one
+        // common shipping covariance P0; only the state error is perturbed.
+        // Actual accelerometer/vector corrections later in the word still use
+        // the filter's real left-error injection and covariance reset exactly.
+        const Quaternionf dq = quaternion_exp(d.template head<3>());
+        m.qref = (dq * m.qref).normalized();
+        m.xext.template head<3>().setZero();
         m.xext.template segment<3>(kOffBg) += d.template segment<3>(kOffBg);
         m.xext.template segment<3>(kOffV) += d.template segment<3>(kOffV);
         m.xext.template segment<3>(kOffP) += d.template segment<3>(kOffP);

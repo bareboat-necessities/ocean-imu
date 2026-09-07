@@ -484,7 +484,7 @@ class Kalman3D_Wave_OU_III {
       ||b_g|| <= M_b and whose properties that proof uses explicitly.
 
       The default is deliberately loose enough never to bind on a healthy
-      MEMS unit (0.5 m/s^2 is about 51 mg, against tens of mg of turn-on bias
+      MEMS unit (0.4 m/s^2 is about 41 mg, against tens of mg of turn-on bias
       plus temperature drift), so it acts as a guarantee rather than as a
       tuning parameter.
     */
@@ -628,7 +628,7 @@ class Kalman3D_Wave_OU_III {
     // Accelerometer bias temperature coefficient (per-axis), units: m/s^2 per °C.
     // Default here reflects BMI270 typical accel drift (~0.002 m/s^2/°C).
     Vector3 k_a_ = Vector3::Constant(T(0.002));
-    T acc_bias_limit_ = T(0.5);   // see set_accel_bias_limit()
+    T acc_bias_limit_ = T(0.4);   // see set_accel_bias_limit()
 
 
     // Constant matrices

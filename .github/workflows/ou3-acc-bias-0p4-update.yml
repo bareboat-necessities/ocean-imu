@@ -1,0 +1,65 @@
+name: ou3-acc-bias-0p4-update
+
+on:
+  push:
+    branches: [codex/ou3-complete-sea3-p4-closure]
+    paths: [.github/workflows/ou3-acc-bias-0p4-update.yml]
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  dispatch-proof-reruns:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      BRANCH: codex/ou3-complete-sea3-p4-closure
+      REPO: ${{ github.repository }}
+    steps:
+      - name: Verify clamp/domain at branch head
+        run: |
+          set -euo pipefail
+          gh api repos/$REPO/contents/src/kalman_ou_iii/Kalman3D_Wave_OU_III.h?ref=$BRANCH --jq .content | base64 -d > /tmp/kalman.h
+          gh api repos/$REPO/contents/tools/stability/ou3_proof_operating_domain.json?ref=$BRANCH --jq .content | base64 -d > /tmp/domain.json
+          grep -F 'T acc_bias_limit_ = T(0.4);' /tmp/kalman.h
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/domain.json'))
+          assert d['startup']['physical_handoff_coordinate_bounds']['accelerometer_bias_error_norm_upper_mps2'] == 0.4
+          assert d['normal_live']['active_accelerometer_bias_projection_limit_mps2'] == 0.4
+          assert d['normal_live']['active_accelerometer_bias_state_norm_upper_mps2'] == 0.35
+          PY
+
+      - name: Dispatch proof, P4, study and quality reruns
+        run: |
+          set -euo pipefail
+          for wf in \
+            ou3-proof.yml \
+            ou3-complete-sea3.yml \
+            ou3-sea3-metric-memory.yml \
+            ou3-sea3-a21-word.yml \
+            ou3-sea3-four-s.yml \
+            ou3-sea3-reset.yml \
+            ou3-sea3-time-varying-memory.yml \
+            ou3-sea3-window-contract.yml \
+            ou3-p4-complete-word-feasibility.yml \
+            ou3-p4-exact-cayley-parity.yml \
+            ou3-p4-physical-finite-map-feasibility.yml \
+            ou3-p4-physical-long-window-feasibility.yml \
+            ou3-lever-arm-study.yml \
+            quality-gates.yml \
+            build.yml
+          do
+            gh workflow run "$wf" --repo "$REPO" --ref "$BRANCH"
+          done
+
+      - name: Dispatch full validation and robustness evidence on this branch
+        run: |
+          set -euo pipefail
+          gh workflow run ou-full-evidence-branch.yml \
+            --repo "$REPO" \
+            --ref "$BRANCH" \
+            -f ref="$BRANCH"
+          echo 'Explicit 0.4-clamp proof/study/full-evidence reruns dispatched.'
