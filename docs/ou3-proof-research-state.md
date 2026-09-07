@@ -246,9 +246,17 @@ validator and outward arithmetic stay unchanged. This repairs structural
 partitioning only; the hard joint SEA3 oracle remains the limiting quantity.
 The next check is the same CI split tests, including repeated non-midpoint cuts.
 
-The exact `source-foundation` command passes 73 tests. The 0.4 P3 recomputation,
-finite-`tau_b` detectability rerun, canonical P4 integration, and all 91 P4
-discovery tests pass. `make all` is locally blocked before compilation because
+On head `6ed27d24`, GitHub CI passes 73 source-foundation tests, 50 connected
+execution tests, and the rebuilt conditional H18/A21 P3 at delta=1e-18 with
+46 contract tests. All quality checks pass. The canonical P4 artifact builds,
+but its expanded discovery suite passes 104 of 105 tests: the mocked P3 input
+in the joint-sector test lacks the newly required `mems_bias_preconditions`
+field and raises `KeyError`. This is an incomplete test-fixture integration,
+not a nonlinear inequality failure. Add the actual bias contract to that
+fixture and check its propagation; retain the production dependency check.
+The next check is that focused test followed by the same canonical CI chain.
+
+`make all` is locally blocked before compilation because
 this environment has neither `/usr/include/eigen3/Eigen/Dense` nor a vendored
 Eigen tree; the build command and include policy were not changed.
 
