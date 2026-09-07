@@ -1,33 +1,26 @@
 #!/usr/bin/env python3
 """Branch-correlated every-prefix selectors for complete-SEA3 OU-III P4.
 
-P4 cannot be certified from an endpoint word object alone.  The finite-state
-theorem requires the endpoint and every finite prefix to refer to ONE
-same-history complete SEA3 execution.  In particular, the nonlinear graph
-assembler must not reconstruct independent boxes for the tuner schedule,
-actual applied R_S, Riccati state, source sample, or front-end branch.
+P4 needs the endpoint and every finite prefix of ONE correlated complete-SEA3
+history.  Reconstructing tuner schedules, actual R_S, Riccati covariances, or
+Joseph gains from independent boxes would destroy exactly the source
+correlation the theorem must retain.
 
-This module is a non-promoting bridge from the retained trusted typed execution
-kernel to the P4 joint-sector machinery.  It does not create a source family,
-does not bypass the canonical hard-window provider gate, and does not change
-shipping algebra.  Every transition is executed by
-``ou3_sea3_complete_window_execution_kernel.advance_branch``.
+This non-promoting bridge executes every transition through
+``ou3_sea3_complete_window_execution_kernel.advance_branch`` and records, for
+each retained child prefix:
 
-For every retained front-end successor after sample k, one PrefixSelector keeps
+* explicit parent/child source-cell ancestry;
+* the exact provider sample coordinates;
+* the committed tau/sigma/pseudo-period schedule and actual anisotropic R_S;
+* H18/A21 literal-word states before and after the sample;
+* the exact shipping event slice; and
+* passive event-local Riccati cells captured inside that same trusted
+  transition: P-before/P-after plus F/Q, floor increment, or Joseph H/R.
 
-* the exact parent and child source-cell identifiers, so ancestry is explicit;
-* the provider sample coordinate object used on that transition;
-* the active tau/sigma/pseudo-period schedule committed before that sample;
-* the actual anisotropic per-axis R_S derived from that same schedule;
-* deep snapshots of the H18/A21 literal-word state before and after the sample;
-* the exact shipping event slice appended on that sample.
-
-Those objects are sufficient to attach the next rigorous objects -- event-local
-P/H/R cells, Cayley/reset residual coordinates, A21 projection graph sectors,
-and suffix/prefix selectors -- without detaching them from execution history.
-
-The bridge intentionally stops before claiming a source-uniform nonlinear graph
-or P4.  The hard SEA3 provider remains open upstream.
+The bridge still does not create the hard SEA3 provider family, nonlinear
+residual/projection graph sectors, or an augmented endpoint/prefix LDLT.
+Therefore it cannot promote P4.
 """
 from __future__ import annotations
 
@@ -47,17 +40,13 @@ import ou3_sea3_tuner_scheduler_step as TUNER
 
 REPO = Path(__file__).resolve().parents[2]
 DEFAULT_DOMAIN = REPO / "tools" / "stability" / "ou3_proof_operating_domain.json"
-SCHEMA = 1
-QUALIFICATION = "OU3_P4_COMPLETE_SEA3_SAME_HISTORY_PREFIX_SELECTORS_V1"
+SCHEMA = 2
+QUALIFICATION = "OU3_P4_COMPLETE_SEA3_SAME_HISTORY_PREFIX_SELECTORS_V2"
 
 
 @dataclass(frozen=True)
 class PrefixSelector:
-    """One retained child of one exact same-history sample transition.
-
-    Snapshot fields are deep copies.  They are proof inputs and must be treated
-    as read-only by downstream assemblers.
-    """
+    """One retained child of one exact same-history sample transition."""
 
     sample_index: int
     prefix_length: int
@@ -74,6 +63,8 @@ class PrefixSelector:
     A_after: WORD.LiteralWordState
     H_events_this_sample: tuple[str, ...]
     A_events_this_sample: tuple[str, ...]
+    H_event_cells: tuple[KERNEL.RiccatiEventCell, ...]
+    A_event_cells: tuple[KERNEL.RiccatiEventCell, ...]
     H_floor_case: str | None
     A_floor_case: str | None
 
@@ -102,9 +93,9 @@ def execute_with_prefix_selectors(
 ) -> tuple[list[KERNEL.ExecutionBranch], list[PrefixSelector], dict]:
     """Execute the trusted kernel while retaining every branch-correlated prefix.
 
-    This intentionally mirrors only the branch-retention loop.  The physical
-    and Riccati transition itself is not reimplemented: ``advance_branch`` is
-    the sole transition primitive.
+    Only the branch-retention loop lives here.  The physical and Riccati
+    transition is not reimplemented.  Event-local cells are passive snapshots
+    emitted by the same ``advance_branch`` call that creates the child state.
     """
     constants = KERNEL._process_constants(domain_path)
     branches = [
@@ -132,14 +123,19 @@ def execute_with_prefix_selectors(
                 sample,
                 constants=constants,
                 next_cell_prefix=f"k{k}:parent{j}",
+                capture_riccati_event_cells=True,
             )
             if meta.get("same_active_schedule_verified") is not True:
                 raise RuntimeError("trusted kernel did not verify same active schedule")
             if meta.get("same_actual_RS_verified") is not True:
                 raise RuntimeError("trusted kernel did not verify actual R_S provenance")
+            if meta.get("riccati_event_cells_captured") is not True:
+                raise RuntimeError("trusted kernel did not capture event-local Riccati cells")
             if not successors:
                 raise RuntimeError("trusted kernel transition produced no successor")
 
+            H_cells = tuple(copy.deepcopy(meta["H_event_cells"]))
+            A_cells = tuple(copy.deepcopy(meta["A_event_cells"]))
             for i, child in enumerate(successors):
                 H_events = tuple(child.H.event_log[len(H_before.event_log):])
                 A_events = tuple(child.A.event_log[len(A_before.event_log):])
@@ -160,6 +156,8 @@ def execute_with_prefix_selectors(
                         A_after=copy.deepcopy(child.A),
                         H_events_this_sample=H_events,
                         A_events_this_sample=A_events,
+                        H_event_cells=copy.deepcopy(H_cells),
+                        A_event_cells=copy.deepcopy(A_cells),
                         H_floor_case=meta.get("H_floor_case"),
                         A_floor_case=meta.get("A_floor_case"),
                     )
@@ -192,6 +190,7 @@ def execute_with_prefix_selectors(
         "favorable_frontend_successor_selected": False,
         "shipping_transition_reimplemented": False,
         "trusted_advance_branch_is_only_transition_primitive": True,
+        "event_local_cells_captured_inside_same_transition": True,
         "kernel_self_test_only_not_P4": True,
     }
 
@@ -231,6 +230,78 @@ def lineage_for_endpoint(
     return lineage
 
 
+def _validate_event_cells(
+    selector: PrefixSelector,
+    mode: str,
+    events: tuple[str, ...],
+    cells: tuple[KERNEL.RiccatiEventCell, ...],
+) -> list[str]:
+    failures: list[str] = []
+    label = "H18" if mode == "H" else "A21"
+    prefix = f"{selector.source_cell_id}: {label}"
+
+    if tuple(cell.kind for cell in cells) != events:
+        failures.append(f"{prefix} event-cell order detached from shipping event slice")
+    if any(cell.mode != mode for cell in cells):
+        failures.append(f"{prefix} event-cell mode mismatch")
+    if any(cell.event_index_in_sample != i for i, cell in enumerate(cells)):
+        failures.append(f"{prefix} event-cell sample index is not contiguous")
+
+    measurement_kinds = {"S_zero", "accelerometer", "magnetometer"}
+    for cell in cells:
+        if not cell.P_before or not cell.P_after:
+            failures.append(f"{prefix} {cell.kind} lost covariance snapshots")
+        if cell.kind == "prediction":
+            if cell.F is None or cell.Q is None:
+                failures.append(f"{prefix} prediction lost same-event F/Q")
+        elif cell.kind == "aw_floor":
+            if cell.floor_increment is None:
+                failures.append(f"{prefix} floor lost covariance increment")
+        elif cell.kind in measurement_kinds:
+            if cell.H is None or cell.R is None:
+                failures.append(f"{prefix} {cell.kind} lost same-event P/H/R")
+
+    expected_s_R = WORD.R_S_zero(selector.actual_rs_std_xyz)
+    s_cells = [cell for cell in cells if cell.kind == "S_zero"]
+    expected_s_count = 1 if selector.sample_coordinates.due_S else 0
+    if len(s_cells) != expected_s_count:
+        failures.append(f"{prefix} captured due-S count changed")
+    for cell in s_cells:
+        if cell.actual_rs_from_committed_schedule is not True:
+            failures.append(f"{prefix} S cell lost actual committed R_S provenance")
+        if cell.R != expected_s_R:
+            failures.append(f"{prefix} S cell R differs from exact actual applied R_S")
+        if cell.H != WORD.H_S_zero(mode):
+            failures.append(f"{prefix} S cell H differs from shipping H_S")
+
+    acc_cells = [cell for cell in cells if cell.kind == "accelerometer"]
+    if len(acc_cells) != 1:
+        failures.append(f"{prefix} captured accelerometer count changed")
+    elif acc_cells[0].H != WORD.H_accelerometer(
+        mode,
+        selector.sample_coordinates.f_cog_body,
+        selector.sample_coordinates.R_wb,
+    ):
+        failures.append(f"{prefix} accelerometer H detached from provider geometry")
+
+    mag_cells = [cell for cell in cells if cell.kind == "magnetometer"]
+    magnetic_events = selector.sample_coordinates.magnetometer_events_after_imu
+    if len(mag_cells) != len(magnetic_events):
+        failures.append(f"{prefix} captured magnetometer count changed")
+    else:
+        for i, (cell, event) in enumerate(zip(mag_cells, magnetic_events)):
+            if cell.magnetic_event_index != i:
+                failures.append(f"{prefix} magnetometer event index changed")
+            if cell.H != WORD.H_magnetometer(mode, event.m_body):
+                failures.append(f"{prefix} magnetometer H detached from provider vector")
+
+    if cells:
+        final_P = selector.H_after.riccati.P if mode == "H" else selector.A_after.riccati.P
+        if cells[-1].P_after != final_P:
+            failures.append(f"{prefix} final captured covariance differs from child word")
+    return failures
+
+
 def validate_selector_graph(
     selectors: Sequence[PrefixSelector],
     *,
@@ -257,23 +328,31 @@ def validate_selector_graph(
             elif parent.prefix_length + 1 != selector.prefix_length:
                 failures.append(f"{selector.source_cell_id}: parent is not previous prefix")
 
-        for mode, events in (
-            ("H18", selector.H_events_this_sample),
-            ("A21", selector.A_events_this_sample),
+        for mode, events, cells in (
+            ("H", selector.H_events_this_sample, selector.H_event_cells),
+            ("A", selector.A_events_this_sample, selector.A_event_cells),
         ):
+            label = "H18" if mode == "H" else "A21"
             if not events or events[0] != "prediction":
-                failures.append(f"{selector.source_cell_id}: {mode} sample does not begin with prediction")
+                failures.append(
+                    f"{selector.source_cell_id}: {label} sample does not begin with prediction"
+                )
             if "accelerometer" not in events:
-                failures.append(f"{selector.source_cell_id}: {mode} sample lost accelerometer")
+                failures.append(f"{selector.source_cell_id}: {label} sample lost accelerometer")
             if selector.sample_coordinates.due_S and "S_zero" not in events:
-                failures.append(f"{selector.source_cell_id}: {mode} due S event missing")
+                failures.append(f"{selector.source_cell_id}: {label} due S event missing")
             if not selector.sample_coordinates.due_S and "S_zero" in events:
-                failures.append(f"{selector.source_cell_id}: {mode} inserted non-due S event")
+                failures.append(f"{selector.source_cell_id}: {label} inserted non-due S event")
             mag_count = len(selector.sample_coordinates.magnetometer_events_after_imu)
             if events.count("magnetometer") != mag_count:
-                failures.append(f"{selector.source_cell_id}: {mode} async magnetometer count changed")
+                failures.append(
+                    f"{selector.source_cell_id}: {label} async magnetometer count changed"
+                )
             if mag_count and events.index("magnetometer") < events.index("accelerometer"):
-                failures.append(f"{selector.source_cell_id}: {mode} magnetometer moved before accelerometer")
+                failures.append(
+                    f"{selector.source_cell_id}: {label} magnetometer moved before accelerometer"
+                )
+            failures.extend(_validate_event_cells(selector, mode, events, cells))
 
         if selector.H_after.imu_samples != selector.H_before.imu_samples + 1:
             failures.append(f"{selector.source_cell_id}: H18 sample counter mismatch")
@@ -358,6 +437,10 @@ def _smoke(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         endpoint_source_cell_ids=endpoint_ids,
     )
     lineages = [lineage_for_endpoint(selectors, endpoint) for endpoint in endpoint_ids]
+    all_cells = [cell for s in selectors for cell in s.H_event_cells + s.A_event_cells]
+    measurement_cells = [
+        cell for cell in all_cells if cell.kind in ("S_zero", "accelerometer", "magnetometer")
+    ]
     return {
         **meta,
         "selector_graph_failures": failures,
@@ -376,11 +459,19 @@ def _smoke(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         ),
         "all_selectors_retain_exact_event_slices": bool(selectors)
         and all(
-            "prediction" in s.H_events_this_sample
-            and "accelerometer" in s.H_events_this_sample
-            and "prediction" in s.A_events_this_sample
-            and "accelerometer" in s.A_events_this_sample
+            tuple(cell.kind for cell in s.H_event_cells) == s.H_events_this_sample
+            and tuple(cell.kind for cell in s.A_event_cells) == s.A_events_this_sample
             for s in selectors
+        ),
+        "all_measurement_event_cells_retain_same_P_H_R": bool(measurement_cells)
+        and all(cell.P_before and cell.P_after and cell.H is not None and cell.R is not None for cell in measurement_cells),
+        "all_due_S_cells_retain_actual_committed_RS": bool(
+            [cell for cell in all_cells if cell.kind == "S_zero"]
+        )
+        and all(
+            cell.actual_rs_from_committed_schedule
+            for cell in all_cells
+            if cell.kind == "S_zero"
         ),
     }
 
@@ -415,9 +506,12 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "actual_applied_anisotropic_RS_retained_per_transition": True,
         "H18_A21_before_after_literal_states_retained_per_transition": True,
         "exact_shipping_event_slice_retained_per_transition": True,
+        "event_local_cells_captured_inside_same_trusted_transition": True,
+        "event_local_same_P_H_R_cells_materialized_on_typed_execution": True,
+        "event_local_due_S_cells_use_exact_actual_committed_RS": True,
         "joint_sector_master_consumed_without_promotion": True,
         "source_uniform_provider_family_closed_here": False,
-        "event_local_same_P_H_R_cells_materialized_here": False,
+        "source_uniform_event_local_same_P_H_R_cells_closed_here": False,
         "nonlinear_residual_history_graph_materialized_here": False,
         "A21_projection_graph_attached_here": False,
         "source_uniform_endpoint_joint_sector_closed_here": False,
@@ -425,9 +519,9 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "P4_promoted_here": False,
         "smoke": smoke,
         "next_obligation": (
-            "consume these branch-correlated prefix selectors to materialize event-local same-P/H/R "
-            "prediction/Joseph/reset/projection graph cells and the joint nonlinear residual history "
-            "for endpoint plus every prefix; then run the full augmented outward LDLT on the same lineage"
+            "feed these same-history event-local P/H/R cells plus source residual/true-bias coordinates "
+            "into the exact nonlinear Joseph/reset/projection graph, assemble the full augmented master "
+            "at endpoint and every prefix, and only then attempt source-uniform outward LDLT"
         ),
     }
 
@@ -449,6 +543,9 @@ def validate(d: dict) -> list[str]:
         "actual_applied_anisotropic_RS_retained_per_transition",
         "H18_A21_before_after_literal_states_retained_per_transition",
         "exact_shipping_event_slice_retained_per_transition",
+        "event_local_cells_captured_inside_same_trusted_transition",
+        "event_local_same_P_H_R_cells_materialized_on_typed_execution",
+        "event_local_due_S_cells_use_exact_actual_committed_RS",
         "joint_sector_master_consumed_without_promotion",
     ):
         if d.get(key) is not True:
@@ -462,7 +559,7 @@ def validate(d: dict) -> list[str]:
         "canonical_provider_gate_bypassed",
         "shipping_transition_reimplemented",
         "source_uniform_provider_family_closed_here",
-        "event_local_same_P_H_R_cells_materialized_here",
+        "source_uniform_event_local_same_P_H_R_cells_closed_here",
         "nonlinear_residual_history_graph_materialized_here",
         "A21_projection_graph_attached_here",
         "source_uniform_endpoint_joint_sector_closed_here",
@@ -476,11 +573,14 @@ def validate(d: dict) -> list[str]:
         "same_word_executed_H18_A21",
         "frontend_completed_before_async_mag",
         "trusted_advance_branch_is_only_transition_primitive",
+        "event_local_cells_captured_inside_same_transition",
         "selector_graph_valid",
         "all_endpoint_lineages_cover_every_prefix",
         "all_selectors_retain_actual_RS",
         "all_selectors_retain_H18_A21_before_after",
         "all_selectors_retain_exact_event_slices",
+        "all_measurement_event_cells_retain_same_P_H_R",
+        "all_due_S_cells_retain_actual_committed_RS",
     ):
         if smoke.get(key) is not True:
             failures.append(f"smoke lost {key}")
@@ -515,6 +615,9 @@ def main() -> int:
             {
                 "prefix_selectors_available": d[
                     "branch_correlated_every_prefix_selector_available"
+                ],
+                "same_P_H_R_cells": d[
+                    "event_local_same_P_H_R_cells_materialized_on_typed_execution"
                 ],
                 "actual_RS_retained": d[
                     "actual_applied_anisotropic_RS_retained_per_transition"
