@@ -1,17 +1,49 @@
 # OU-III stability tooling
 
-This package contains the retained OU-III stability theorem, interval arithmetic, SEA3 source, and P1-P4/P5 certificate tooling.
+This package contains the retained OU-III stability theorem, interval arithmetic, primary BRMM source target, retained SEA3 specialization, and P1-P4/P5 certificate tooling.
 
-Production/validation utilities and unrelated OU-III engineering studies remain in `tools/`. Retired P2 history/source-node routes are not compatibility-shimmed here: canonical P3/P4 use the complete SEA3 moving-Riccati route.
+Production/validation utilities and unrelated OU-III engineering studies remain in `tools/`. Retired P2 history/source-node routes are not compatibility-shimmed here: the existing SEA3 P3/P4 gates retain their original source scope.
 
 ## Current proof plan
+
+BRMM replaces spectral SEA3 membership in the primary theorem. Its BRMM-0
+condition is a_m=dv_m/dt with uniformly bounded same-history v_m on the
+entire continuation. Thus every long-time average has norm at most 2*V_m/T,
+tending uniformly to zero. Fixed nonzero physical acceleration is prohibited
+in Q, O and their mixtures. Constant measurement offset belongs to BIAS0.
+Do not subtract a sample mean from actual motion to manufacture membership.
+Neither low AC energy nor a 10-second impulse cap alone excludes DC.
+
+The Q/O recurrence declaration retains acceleration <=4 m/s^2, body rate
+<=30 deg/s, positive H_s<=8.5 m and an explicit calm case. The candidate audit
+uses T_R=10 s, quiet RMS .03/.05 m/s^2 and impulse cap 2 m/s; recurrence,
+lobe and primitive constants remain unfrozen. Shipping tuner defaults stay
+.03--1.2 Hz; the proposed .02--1.2 outer interval is not a physical bandlimit.
+Position/S primitives need their own correlated bounds or forcing budgets.
+
+The focused `OU3 BRMM source audit` workflow downloads the unchanged v1.1.3
+reference archive and runs `tests/kalman_ou_iii/ou3_brmm_audit.py` on every
+sample-aligned 10-second window in all eight records. JSON records extrema,
+cap exceedances and Q/O counts; NPZ stores every window and explicit lobe
+witness offsets. Arithmetic encloses binary64 sample ZOH statistics only.
+No witness means unresolved, not nonexistence. Finite records cannot certify
+infinite-time no-DC, intersample inclusion, Normal-Live admission or uniform
+BRMM coverage. Empirical margins are candidate values, not theorem constants.
+All BRMM source/P3/P4/P5 flags remain false.
+
+The next P4 master must retain shared primitive and recurrence constraints
+inside its dense source/error graph, including every actual R_S and -S_true
+input. First resolve BRMM admission, then a connected point motion-gain test
+with a useful composed floor and retention margin; only then outward cover.
+
 
 The primary target is **bounded accelerometer-bias error plus regional practical
 ISS of the other 18 errors**, in both held and active modes. The active filter
 still executes all 21 states and every covariance/gain cross term. The target
-is stated in `thm:sea3-bounded-bias-motion` in
-`doc/kalman_ou_iii/w3d-sea3-stability-theorem.tex-part` and built by
-`ou3_p4_bounded_bias_motion.py`. The earlier full-state contraction theorem is
+is stated in `thm:brmm-bounded-bias-motion` in
+`doc/kalman_ou_iii/w3d-brmm-stability-theorem.tex-part`. The source declaration
+is `ou3_brmm_contract.py`. The retained `ou3_p4_bounded_bias_motion.py`
+master has its original SEA3 scope until its actual source premises are rebound. The earlier full-state contraction theorem is
 a stronger unclosed extension, not a prerequisite for this weaker objective.
 The physical bias package is stated and proved conditionally in
 `doc/kalman_ou_iii/w3d-mems-bias-preconditions.tex-part` and recorded by
@@ -20,10 +52,10 @@ the filter settings, simulation extrema, or the desired P4 margin.
 
 | Step | Required use of the bias premises | Evidence needed |
 | --- | --- | --- |
-| BIAS0 / SEA0 | Qualify the assembled sensor, actual calibration, true residual root, temperature/strain mismatch and GM parameter range. Compose with the existing complete SEA3 source. | Stationary/thermal/restart/unit data, fit uncertainty and residual bounds; currently missing. |
+| BIAS0 / SEA0 | Qualify the assembled sensor, actual calibration, true residual root, temperature/strain mismatch and GM parameter range. Compose with one complete BRMM history; measurements gate deployment, not conditional mathematical work. | Stationary/thermal/restart/unit data, fit uncertainty and residual bounds; currently missing. |
 | P1 entry and H18 hold | Retain the true physical bias while the estimate is held. Bound the held error and actual uncompensated offset as source inputs. | Reachable entry and continuing physical history; an estimate clamp is insufficient. |
-| P2 / source cells | Carry one bias root, common parameters and driver history through the same window lineage. Split source coordinates and replay descendants. | BIAS1 dependence, same source ID and joint SEA3 membership; neither fresh event boxes nor ID attachment alone proves it. |
-| P3 / detectability | Retain the full-state process matrices, finite tau, and actual R_S at delta=1e-18. | Rebuild the existing conditional H/A gate; separately establish coverage where the weaker target admits the projection boundary. Held H18 does not certify active-mode motion gains. |
+| P2 / source cells | Carry one bias root, common parameters and driver history through the same window lineage. Split source coordinates and replay descendants. | BIAS1 dependence, same source ID and joint BRMM membership; neither fresh event boxes nor ID attachment alone proves it. |
+| P3 / detectability | Retain the full-state process matrices, finite tau, and actual R_S at delta=1e-18. | Establish the matrix implication's actual premises for BRMM Q/O/mixed windows and the projection boundary. Scalar recurrence is not vector PE; old SEA3 PASS does not certify BRMM. Held H18 does not certify active-mode motion gains. |
 | H18 to A21 | Transport the physical bias without reset; keep the rectangular error lift, actual held error, release covariance and all subsequent corrections. | Same-history reachable release, not an appended A21 fixture block. |
 | Bias compactness | Projection preserves the estimate ball; BIAS0/1 bounds the same-history true bias. | Conditional error bound B_e=B_true+0.4; no bias convergence or hard Gaussian-OU cap is inferred. |
 | P4-motion nonlinear graph | Keep the full bias prediction/correction/projection recurrence and actual active P/H/R/K. | The new domain includes the closed 0.4 ball; pre-projection auxiliaries may leave it. Existing 0.35-interior coverage cannot be reused silently. |
@@ -48,7 +80,7 @@ budget. Model mismatch remains when sensor noise is off. The observed 2--3%
 residual is not asserted as a uniform certified number; its output metric,
 normalization, source range and quantitative gain still require proof.
 
-CI rebuilds bias/source/P3 and emits separate `P4_MOTION_PASS` and
+The retained SEA3 CI rebuilds bias/source/P3 and emits separate `P4_MOTION_PASS` and
 `P5_MOTION_MAY_START` flags alongside the unchanged stronger full-state flags.
 The compactness and composition lemmas are conditional results, not numerical
 motion-gain certificates. Both motion flags remain false until the source,

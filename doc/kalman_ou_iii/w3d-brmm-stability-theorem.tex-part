@@ -1,0 +1,374 @@
+\section{Primary BRMM source and bounded-bias motion theorem}
+\label{sec:brmm-source}
+
+BRMM (bounded recurrent marine motion) replaces the spectral SEA3 source
+hypothesis for the primary practical-motion theorem. The retained SEA3
+constructions are specializations; their certificate flags retain their
+original scope. Complete execution semantics are unchanged: one physical
+root and continuation produce $a_m,\omega,R$, frontend and geometry states,
+committed $\tau,\sigma_{aw},R_S,T_S$, and the actual covariance/event history.
+There are no independent acceleration, bias, tuner or pseudo-measurement boxes.
+
+\subsection{BRMM physical motion: no acceleration DC in either branch}
+
+Let $a_m(t)\in\mathbb R^3$ be non-gravitational CoG acceleration in one
+fixed physical world frame. On the admitted Normal-Live execution require
+\[
+ \|a_m(t)\|\le4.0\ {\rm m\,s^{-2}},\qquad
+ \|\omega(t)\|\le30^\circ/{\rm s}.
+\]
+Thus $5.80665\le\|a_m-g\|\le13.80665\ {\rm m\,s^{-2}}$ for standard
+gravity. Positive sea-height cases satisfy $0<H_s\le8.5\ {\rm m}$;
+zero motion is also admitted. At $H_s=0$ use fixed physical coordinate
+scales, never division by sea height. These caps are admission premises,
+not assertions that every reference replay satisfies them.
+
+\paragraph{BRMM-0: prohibit physical acceleration DC.}
+For the entire admitted continuation, require an absolutely continuous
+same-history velocity primitive $v_m$ and a uniform finite constant $V_m$:
+\begin{equation}
+ a_m=\dot v_m\quad\hbox{a.e.},\qquad
+ \sup_{t\ge t_{\rm Live}}\|v_m(t)\|\le V_m<\infty.
+ \label{eq:brmm-zero-dc}
+\end{equation}
+This applies to both Q and O and every transition between them. For every
+$t$ and $T>0$ within that continuation, the fundamental theorem of calculus gives
+\begin{equation}
+ \left\|\frac1T\int_t^{t+T}a_m(s)\,ds\right\|
+ \le\frac{2V_m}{T}\longrightarrow0
+ \quad\hbox{uniformly in }t.
+ \label{eq:brmm-zero-mean}
+\end{equation}
+In particular, $a_m(t)\equiv d\ne0$ is prohibited: its primitive grows as
+$td$. A persistent nonzero long-time mean hidden inside oscillatory
+acceleration is also prohibited. Finite transient impulses and zero motion
+remain admissible. A fixed-window bound alone, however small, does not
+exclude all constant accelerations; nor does small AC energy.
+
+Constant measurement offset belongs to BIAS0, not to $a_m$. Subtracting a
+sample mean cannot manufacture physical BRMM membership: the same actual
+acceleration must drive the source and observer. Sensor bias, compensation
+residuals and model mismatch retain their own input budgets. Bounded
+velocity alone does not bound displacement or the $S$ primitive. Bounds on
+these additional same-history primitives, or their physical forcing
+energies, remain explicit obligations. The actual $S=0$ residual
+$\delta S-S_{\rm true}$ and its applied anisotropic $R_S$ remain in the graph.
+
+\subsection{Window recurrence and quiet motion}
+
+For every start time $t_k$ and common duration $T_R>0$, put
+\[
+ \bar a_k=T_R^{-1}\int_{t_k}^{t_k+T_R}a_m(t)\,dt,\qquad
+ E_k=\int_{t_k}^{t_k+T_R}\|a_m(t)-\bar a_k\|^2\,dt.
+\]
+Require the finite-window mean-reversion bound on \emph{both} branches,
+\begin{equation}
+ \left\|\int_{t_k}^{t_k+T_R}a_m(t)\,dt\right\|\le V_R.
+ \label{eq:brmm-window-impulse}
+\end{equation}
+One may take $V_R=2V_m$ from BRMM-0; a smaller bound needs separate evidence.
+Every window satisfies one of
+\[
+ {\rm Q}:\ E_k\le E_q,\qquad
+ {\rm O}:\ E_k>E_q,\quad E_k\ge E_{\min},
+ \qquad E_q\ge0,\quad E_{\min}>0.
+\]
+Only O additionally requires disjoint subintervals $I_k^+,I_k^-$ with
+impulses $j_k^\pm=\int_{I_k^\pm}a_m(t)\,dt$ such that
+\begin{equation}
+ \|j_k^\pm\|\ge J_{\min}>0,\qquad
+ (j_k^+)^\top j_k^-\le-\chi J_{\min}^2,\qquad\chi>0.
+ \label{eq:brmm-opposing-lobes}
+\end{equation}
+No minimum wave amplitude or O-branch excitation is imposed on Q. Quiet
+does not mean DC: Q still obeys BRMM-0 and
+Eq.~\eqref{eq:brmm-window-impulse}. An optional bound
+$\mathrm{TV}_{[t_k,t_k+T_R]}(a_m)\le V_a$ may be added if a concrete
+finite-map enclosure needs it; it is not currently a frozen premise.
+
+The initial audit uses $T_R=10\,{\rm s}$, quiet RMS thresholds
+$0.03$ and $0.05\,{\rm m\,s^{-2}}$ (respectively
+$E_q=0.009$ and $0.025\,{\rm m^2\,s^{-3}}$), and candidate
+$V_R=2\,{\rm m\,s^{-1}}$. These are diagnostic choices, not qualified
+uniform constants. $T_R,E_q,V_R,E_{\min},J_{\min},\chi,V_a$ and the primitive
+bounds remain to be assigned with evidence.
+The proposed outer tuner interval $[0.02,1.2]\,{\rm Hz}$ does not change the
+shipping defaults $[0.03,1.2]\,{\rm Hz}$ and is not a physical motion
+bandlimit. A $0.02\,{\rm Hz}$ sinusoid has a $50\,{\rm s}$ period:
+opposing lobes in every $10\,{\rm s}$ window are not automatic.
+
+\paragraph{Certificate entry and audit limits.}
+The eight unchanged JONSWAP/PM--Stokes records at
+$H_s\in\{0.27,1.5,4,8.5\}\,{\rm m}$ are tested on every sample-aligned
+$10\,{\rm s}$ window. Outward arithmetic encloses binary64 sample values
+under an explicit zero-order-hold interpretation. Stored lobe intervals
+certify positive witnesses; a finite search finding none leaves the window
+unresolved. Finite sampled statistics neither prove infinite-time BRMM-0
+nor enclose physical intersample motion, all continuous window offsets,
+Normal-Live entry, or the complete source family. They suggest candidate
+constants and expose sampled-envelope violations; they do not set theorem constants.
+
+\paragraph{Proof obligations under the replacement source.}
+BIAS0/1 supplies qualified true-bias bounds and its connected history;
+estimate projection supplies compactness, not bias-error decay.
+P1/P2 must attach each BRMM history to the exact shipping Normal-Live graph
+(lever arm disabled, vibration guard transparent, all valid accelerometer
+samples accepted, all asynchronous vector events, process floors, resets
+and every due actual-$R_S$ correction). P3 retains $\delta=10^{-18}$ and its
+matrix implications only where their actual premises are established.
+Scalar BRMM recurrence does not prove vector persistent excitation,
+especially in Q; Q, O, their mixtures and both modes require explicit P3
+coverage. Existing SEA3 PASS flags therefore do not certify BRMM P3.
+
+For P4, primitive and recurrence constraints enter the same full-history
+graph and source/forcing forms in Eq.~\eqref{eq:brmm-motion-master}.
+Where BIAS2 sharpens a gain, its positive sector must be proved on this
+actual graph, not inferred from oscillatory source energy or bias compactness.
+First check the attached finite-word motion master with useful channel gains.
+Only a feasible quantitative endpoint and retention margin justifies outward
+source coverage. Then certify every-prefix finite gain and first-exit
+retention, including the closed projection boundary, before P5 capture.
+Neither a sampled recurrence audit nor an unusably large finite input gain
+promotes P4.
+
+\subsection{Primary target: bounded bias and practical motion stability}
+\label{sec:brmm-bounded-bias-motion}
+
+Write the exact finite error as $(e_H,e_b)$, where
+\begin{equation}
+ e_H=(c,\delta b_g,\delta v,\delta p,\delta S,\delta a_w)\in\mathbb R^{18},
+ \qquad e_b=b_a^{\rm true}-\hat b_a\in\mathbb R^3.
+ \label{eq:brmm-motion-coordinates}
+\end{equation}
+Here $c$ is the finite Cayley coordinate, not a small-angle substitution.
+In H18 the estimate is held but the physical bias continues; in A21 both
+coordinates follow the full prediction/correction/projection recurrence of
+BIAS1. Selectivity of the \emph{storage} does not remove states from the filter.
+Choose a same-source storage, in fixed physically scaled coordinates,
+\begin{equation}
+ W_H(e_H,\zeta)=e_H^\top M_H(\zeta)e_H,\qquad
+ m_-\|e_H\|^2\le W_H\le m_+\|e_H\|^2,
+ \quad 0<m_-\le m_+<\infty.
+ \label{eq:brmm-motion-storage}
+\end{equation}
+In active mode $\zeta$ retains the complete 21-state nominal/covariance and
+bias history. The active gains are not the held-mode gains: for example the
+accelerometer gain numerator for $e_H$ contains
+$P_{HH}H_H^\top+P_{Hb}$, and its innovation covariance includes the bias
+and cross blocks. Thus the H18 certificate cannot be copied to active mode,
+nor may a Schur/reduced-state replacement estimator be used.
+
+\begin{lemma}[Conditional compactness of accelerometer-bias error]
+\label{lem:brmm-bias-compactness}
+Assume the initial estimate lies in the deployed projection ball of radius
+$R_b=0.4\,\mathrm{m/s^2}$. Hold, finite-$\tau_b$ prediction with factor in
+$(0,1]$, norm-preserving frame changes and the projection after every state
+injection preserve $\|\hat b_a\|\le R_b$. If BIAS0/1 additionally supplies a
+same-history hard envelope $\|b_a^{\rm true}\|\le B_{\rm true}$, then
+\begin{equation}
+ \boxed{\|e_b\|\le B_e:=B_{\rm true}+R_b.}
+ \label{eq:brmm-bias-compact-error}
+\end{equation}
+No convergence of $e_b$ or identification of $b_a^{\rm true}$ is asserted.
+\end{lemma}
+\begin{proof}
+Each listed estimate operation preserves the ball, so induction gives the
+estimate bound. The triangle inequality gives Eq.~\eqref{eq:brmm-bias-compact-error}.
+The argument does not require true bias to lie inside the projection ball.
+\end{proof}
+The physical envelope includes uncompensated deterministic offsets and the
+BIAS1 driving convolution. A stochastic OU PSD is not a deterministic cap:
+a finite-horizon high-probability envelope gives only a correspondingly
+conditional finite-horizon conclusion, not an almost-sure infinite-time bound.
+Assembled-sensor qualification is required for deployment, not for proving
+this conditional implication with symbolic or declared physical bounds.
+The estimate bound concerns committed states after the immediate projection;
+the pre-projection correction is an auxiliary graph coordinate and need not
+lie in the ball.
+
+For this weaker target the old $0.35$ active-estimate interior premise is
+replaced by the closed $R_b$ ball; the remaining physical BRMM, event,
+lever-arm and dormant-vibration premises are retained. Consequently all
+projection-boundary branches must be covered. An interior-only certificate,
+including existing P3 source coverage where it uses that premise, cannot be
+silently extended to the boundary. The deployed filter is unchanged.
+
+On a complete word define the \emph{internal coupling energy}
+\begin{equation}
+ D_{b,k}=\sum_{j=k}^{k+N_W-1}h_j\|e_{b,j}\|^2
+ \le T_W B_e^2,\qquad T_W=\sum_{j=k}^{k+N_W-1}h_j.
+ \label{eq:brmm-motion-bias-energy}
+\end{equation}
+Fix $e_{b,j}$ at the sample entrance; every intra-sample bias correction and
+projection remains explicitly in the exact joint graph. A certificate must
+bound their effect with that convention; it cannot silently sample a different
+bias history or drop a correction. $D_b$ is not an exogenous noise budget:
+it bounds the actual internal bias-error trajectory, without assuming it is
+independent of $e_H$. BIAS0/1 supplies its root/forcing dependence. A BIAS2
+sector can sharpen the coupling gain, but positive separation is not required
+merely to assert bias compactness; any sector used still needs its own valid
+same-history, same-prefix proof.
+
+The new P4-motion obligations, for both Q/O branches, their admissible mixtures, and both actual
+filter modes, are
+\begin{align}
+ W_{H,k+N_W}&\le\rho_H W_{H,k}
+       +\gamma_bD_{b,k}+\gamma_sD_{s,k}+\gamma_nD_{n,k},
+       &&0<\rho_H<1, \label{eq:brmm-motion-endpoint}\\
+ W_{H,k;\ell}&\le\Gamma W_{H,k}
+       +\kappa_bD_{b,k}+\kappa_sD_{s,k}+\kappa_nD_{n,k},
+       &&\ell\in\operatorname{Pref}(W),\quad 1\le\Gamma<\infty.
+       \label{eq:brmm-motion-prefix}
+\end{align}
+All gains are finite and nonnegative. Prefix contraction is not required.
+Here $\operatorname{Pref}(W)$ includes every completed shipping event, not
+only IMU sample boundaries; each correction includes its immediate reset and
+projection, with their auxiliary states retained in the graph.
+Every physical model, measurement and gyro-discretization defect stays in its
+declared source/noise channel. Removing sensor noise does not set $D_s=0$.
+In particular, ocean-wave truth generally does not obey the filter's latent
+OU prediction: $x^{\rm true}_{L,j+1}-F_{LL,j}x^{\rm true}_{L,j}$ can remain
+nonzero in a noise-free run. Its budget is not removed to obtain contraction.
+
+For a common augmented graph coordinate $z$, write
+$e_{H,0}=C_0z$, $e_{H,N}=C_Nz$, and
+$D_i=z^\top Q_i z$ for $i\in\{b,s,n\}$. The endpoint master is
+\begin{equation}
+ L_H=C_N^\top M_{H,N}C_N-\rho_H C_0^\top M_{H,0}C_0
+       -\gamma_bQ_b-\gamma_sQ_s-\gamma_nQ_n.
+ \label{eq:brmm-motion-master}
+\end{equation}
+The maps and all dense cross terms come from the same full shipping graph,
+including every actual-$R_S$ S event and its finite reset. Valid graph sectors
+$z^\top\Pi_jz\ge0$ and $\lambda_j\ge0$ with
+$-(L_H+\sum_j\lambda_j\Pi_j)\succ0$ suffice. This is a sufficient augmented
+test, not a claim that every sound certificate must be strictly definite in
+redundant graph coordinates. Prefix masters replace $C_N,M_{H,N},\rho_H$
+by the corresponding prefix maps/metric and $\Gamma$, using only valid prefix
+sectors. This changes the performance storage, not the executed covariance.
+
+\begin{lemma}[Finite-coefficient realization of the motion supply test]
+\label{lem:brmm-motion-finite-coefficients}
+Suppose the exact completed-event error graph has a factorization
+\begin{equation}
+ e_{j+1}=A_j(e,\zeta)e_j+B_j(e,\zeta)u_j,\qquad e_j\in\mathbb R^{21}.
+ \label{eq:brmm-motion-finite-coefficients}
+\end{equation}
+The coefficient sequence is evaluated on the same complete error/source
+history, including actual gains and finite resets. Let $C_H$ and $C_b$
+select the 18 performance and three bias-error coordinates. Fix a positive
+factor $a$, bias gain $g_b>0$, and positive definite port costs $U_j$ in
+explicitly declared units. Charge $h_jg_b\|C_b e_j\|^2$ at sample entrances,
+including the root; do not charge it again at each correction. For a fixed
+coefficient sequence, define the auxiliary inverse minimum-energy matrix
+\begin{align}
+ X_0&=(aC_H^\top M_{H,0}C_H+h_0g_bC_b^\top C_b)^{-1},\nonumber\\
+ X_j&\leftarrow(X_j^{-1}+h_jg_bC_b^\top C_b)^{-1}
+       &&\text{at later sample entrances},\nonumber\\
+ X_{j+1}&=A_jX_jA_j^\top+B_jU_j^{-1}B_j^\top.
+ \label{eq:brmm-motion-supply-elimination}
+\end{align}
+Assume these matrices are positive definite. If
+\begin{equation}
+ \lambda_{\max}\!\left(L_j^\top C_HX_jC_H^\top L_j\right)\le1,
+ \qquad M_{H,j}=L_jL_j^\top,
+ \label{eq:brmm-motion-supply-eigenvalue}
+\end{equation}
+then $W_{H,j}\le aW_{H,0}+g_bD_{b,0:j}+\sum_{i<j}u_i^\top U_i u_i$
+on that coefficient sequence. Uniform validity over all coefficient
+sequences generated by the retained nonlinear BRMM graph gives the
+corresponding finite-error inequality. Use $a<1$ for the endpoint and
+$a=\Gamma\ge1$ for every completed-event prefix.
+\end{lemma}
+\begin{proof}
+For fixed coefficients, minimize the positive quadratic input cost subject
+to the full linear equality graph in Eq.~\eqref{eq:brmm-motion-finite-coefficients}.
+At an entrance the bias cost adds to its Hessian. Eliminating the forcing
+coordinates through one transition gives
+Eq.~\eqref{eq:brmm-motion-supply-elimination}; the minimum cost at $e_j$ is
+$e_j^\top X_j^{-1}e_j$. Equation~\eqref{eq:brmm-motion-supply-eigenvalue}
+is equivalent to $C_H^\top M_{H,j}C_H\preceq X_j^{-1}$.
+The actual history has at least this minimum cost. Applying the inequality
+to each admissible dependent coefficient sequence proves the stated claim.
+No bias-error decay is used.
+\end{proof}
+
+The auxiliary $X_j$ is a quadratic-cost elimination variable, not the filter's
+covariance or another estimator. All 21 state coordinates and cross terms
+remain. Exact finite coefficients can use
+$(E(c)-I)f=-(I-[c]_\times/2)^{-1}[f]_\times c$ and, with
+$\widetilde d=\operatorname{Cayley}(R_{\rm shipping}(d))$,
+$c^+=(c-\widetilde d-\tfrac12c\times\widetilde d)/
+(1+\tfrac14c^\top\widetilde d)$, on their retained charts. These are finite
+identities, not differential approximations. Physical $S$ forcing remains
+$u_S=-S_{\rm true}$ alongside the actual $R_S$ correction.
+
+A numerical check with coefficients frozen on one attached word does not
+establish their uniform nonlinear/source dependence. Allowing arbitrary
+energy ports for that sufficient check does not replace BRMM with independent
+sample boxes; a failing maximizing port history need not be physically
+admissible. A successful point check still needs outward uniform coverage,
+the declared bias/source budgets, and the retention test below. In particular,
+large finite gains alone do not certify a useful accuracy floor.
+
+\begin{theorem}[Regional practical motion stability with compact bias error]
+\label{thm:brmm-bounded-bias-motion}
+Assume the bias compactness lemma and complete same-history source/event
+coverage above, uniform metric bounds, and a finite word length $T_W\le\bar T$.
+Retain the canonical P3 matrix checks at $\delta=10^{-18}$, but separately
+establish their applicable source premises and the active-mode motion gain;
+P3 alone does not prove Eq.~\eqref{eq:brmm-motion-endpoint}. Suppose P4-motion
+proves Eqs.~\eqref{eq:brmm-motion-endpoint}--\eqref{eq:brmm-motion-prefix}
+on the relevant first-exit graph and source/noise windows satisfy
+$D_s\le\bar D_s$, $D_n\le\bar D_n$. Put
+\begin{align}
+ C&=\gamma_b\bar T B_e^2+\gamma_s\bar D_s+\gamma_n\bar D_n,\nonumber\\
+ C_p&=\kappa_b\bar T B_e^2+\kappa_s\bar D_s+\kappa_n\bar D_n.
+ \label{eq:brmm-motion-budgets}
+\end{align}
+Suppose an endpoint level $L$ and chart-valid level $L_{\rm chart}$ satisfy
+\begin{equation}
+ W_{H,k_c}\le L,\qquad \rho_H L+C\le L,\qquad
+ \Gamma L+C_p<L_{\rm chart}.
+ \label{eq:brmm-motion-retention}
+\end{equation}
+All non-energy source/bias domains are also retained at every subevent.
+Then, on successive same-mode complete words after entry,
+\begin{align}
+ W_{H,k_c+mN_W}&\le\rho_H^m W_{H,k_c}
+                   +\frac{1-\rho_H^m}{1-\rho_H}C,\nonumber\\
+ \limsup_k W_{H,k}&\le\Gamma\frac{C}{1-\rho_H}+C_p,
+ \qquad \|e_{b,k}\|\le B_e.
+ \label{eq:brmm-motion-ultimate}
+\end{align}
+The infinite-time statement requires the envelopes on all successive windows.
+A full startup-to-active result additionally requires P5-motion finite capture
+and explicit metric/error/source transport at H$\to$A and all other allowed
+hybrid events. Capture cannot be inferred from bias compactness.
+\end{theorem}
+\begin{proof}
+The bias lemma bounds each internal coupling energy. Iteration of the endpoint
+inequality gives the geometric-series bound. The two level inequalities and
+the independently checked source domains exclude a first exit, so the graph
+premises remain valid without circularly assuming retention. Apply the prefix
+inequality and take the limsup to obtain Eq.~\eqref{eq:brmm-motion-ultimate}.
+Metric coercivity converts this into a motion-error norm bound. A certified
+hybrid transport restarts the argument at the next admitted mode level.
+\end{proof}
+
+The useful performance quantity is the resulting error floor, in particular
+the bias contribution
+\[
+ \frac{\Gamma\gamma_b\bar T B_e^2}{1-\rho_H}+\kappa_b\bar T B_e^2,
+\]
+not compactness alone. It must satisfy the desired
+motion-accuracy tolerances as well as chart retention. No numerical gain,
+accuracy floor, source-uniform motion certificate or bias convergence is
+claimed here. P4-motion/P5-motion are separate gates from the retained stronger
+full-state P4/P5 gates.
+Even with $\bar D_n=0$ and vanishing bias error, nonzero $\bar D_s$ generally
+leaves a positive certified upper error floor. The theorem does not require
+that floor to be zero, nor does it claim that the upper bound is the attained
+error. Observed percentage errors are performance evidence, not numerical
+theorem constants until the relevant output normalization, source family and
+gain bound have been certified.
