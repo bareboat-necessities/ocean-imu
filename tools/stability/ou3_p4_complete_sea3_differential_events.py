@@ -147,11 +147,19 @@ def _apply_physical_correction(z, K, residual):
 
 
 def _sqrt_nonnegative_interval(x: Interval) -> Interval:
-    """Outward square-root enclosure for a nonnegative algebraic interval."""
-    if x.lo < 0.0:
-        raise ValueError("square-root interval must be nonnegative")
-    lo = 0.0 if x.lo == 0.0 else math.nextafter(math.sqrt(x.lo), -math.inf)
-    hi = math.nextafter(math.sqrt(x.hi), math.inf)
+    """Outward square-root enclosure for a known nonnegative algebraic quantity.
+
+    ``_norm_interval`` calls this only for a sum of squares.  Generic outward
+    interval addition can widen the stored lower endpoint a few ulps below zero
+    even though the exact algebraic quantity is nonnegative (notably at the
+    zero-state A21 projection parity check).  Clip only that known algebraic
+    lower bound.  An interval lying wholly below zero still fails closed.
+    """
+    if x.hi < 0.0:
+        raise ValueError("nonnegative square-root enclosure lies wholly below zero")
+    xlo = max(0.0, x.lo)
+    lo = 0.0 if xlo == 0.0 else math.nextafter(math.sqrt(xlo), -math.inf)
+    hi = math.nextafter(math.sqrt(max(0.0, x.hi)), math.inf)
     return Interval(max(0.0, lo), hi)
 
 
