@@ -1,0 +1,154 @@
+name: ou3-p4-exact-cayley-parity
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/ou3-p4-exact-cayley-parity.yml"
+      - "tests/kalman_ou_iii/ou3-frozen-gain-shadow-sim.cpp"
+      - "tests/kalman_ou_iii/ou3_p4_frozen_gain_shadow_feasibility.py"
+  workflow_dispatch:
+
+# Keep a started parity check alive even if unrelated research commits land on
+# the PR.  This job is a non-promoting falsification check, not a proof gate.
+concurrency:
+  group: ou3-p4-exact-cayley-parity-${{ github.sha }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  exact-cayley-a21:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Install host dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libeigen3-dev python3-numpy
+
+      - name: Fetch only the genuine source record used by the verified word
+        run: |
+          curl -fL \
+            https://github.com/bareboat-necessities/oceanography-waves-lib/releases/download/v1.1.3/sim-data-files.zip \
+            -o /tmp/ou3-sim-data.zip
+          unzip -j -o /tmp/ou3-sim-data.zip \
+            'wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv' \
+            -d tests/kalman_ou_iii
+          test -s tests/kalman_ou_iii/wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv
+
+      - name: Build covariance-free frozen-gain shadow
+        working-directory: tests/kalman_ou_iii
+        run: make -j2 ou3-frozen-gain-shadow-sim
+
+      - name: Run exact-Cayley A21 finite parity cases
+        run: |
+          python3 - <<'PY'
+          import json, math, os, pathlib, re, subprocess
+
+          # Frozen reference from the already-verified single-shipping-observer
+          # complete-word scan.  These constants select a diagnostic replay;
+          # they are not a theorem source and cannot promote P4.
+          t0 = 1143.96044921875
+          t1 = 1146.96337890625
+          direction = [
+              -0.0012939842592769033, 0.00014567651657596765, -0.003377869341749532,
+              -2.056353781818223e-06, 4.7206975297305744e-07, -3.944929285529658e-06,
+              -0.0007386394859901729, -0.0005394520849837641, 0.0004994246729370214,
+              -0.00020709839173334104, -0.00024072254582626663, 0.00028239941517938503,
+              0.00025313147233396076, 0.000274064072354795, -0.0002953719553197962,
+              0.0013034334934076421, 0.0008733973849860034, -0.0010300010445878144,
+              0.002738637834962725, 0.012971706851924237, 5.679930808283466e-06,
+          ]
+          scales = [6.0, 6.5, 7.0, 8.0, 16.0, 37.714067586719345]
+          sim = pathlib.Path('tests/kalman_ou_iii/ou3-frozen-gain-shadow-sim').resolve()
+          inp = pathlib.Path('tests/kalman_ou_iii/wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv').resolve()
+          outdir = pathlib.Path('/tmp/ou3_exact_cayley_cases'); outdir.mkdir(parents=True, exist_ok=True)
+          done = re.compile(
+              r'OU3_FROZEN_SHADOW_DONE mode=A21 scale=(?P<scale>[-+0-9.eE]+) '
+              r't0=(?P<t0>[-+0-9.eE]+) t1=(?P<t1>[-+0-9.eE]+) '
+              r'V0=(?P<V0>[-+0-9.eE]+) V1=(?P<V1>[-+0-9.eE]+) rho=(?P<rho>[-+0-9.eE]+) '
+              r'V0_phi=(?P<V0phi>[-+0-9.eE]+) V1_phi=(?P<V1phi>[-+0-9.eE]+) rho_phi=(?P<rhophi>[-+0-9.eE]+) '
+              r'reconstruction_max=(?P<recon>[-+0-9.eE]+) prediction_count=(?P<pred>\d+) '
+              r'S_count=(?P<S>\d+) accel_count=(?P<acc>\d+) vector_count=(?P<vector>\d+)'
+          )
+
+          def exact_cayley_sim_direction(scale):
+              c = [scale*x for x in direction[:3]]
+              cn = math.sqrt(sum(x*x for x in c))
+              out = list(direction)
+              if cn:
+                  angle = 2.0*math.atan(0.5*cn)
+                  factor = angle/cn
+                  rot = [factor*x for x in c]
+                  out[:3] = [x/scale for x in rot]
+              return out, cn
+
+          cases=[]
+          for mag in scales:
+              for scale in (-mag, +mag):
+                  sd, cn = exact_cayley_sim_direction(scale)
+                  tag = f'{scale:+.12g}'.replace('+','p').replace('-','m')
+                  trace = outdir / f'A21_exact_cayley_{tag}.csv'
+                  env=os.environ.copy()
+                  env.update({
+                      'OU3_SHADOW_TRACE': str(trace),
+                      'OU3_SHADOW_T0': format(t0,'.17g'),
+                      'OU3_SHADOW_T1': format(t1,'.17g'),
+                      'OU3_SHADOW_MODE': 'A21',
+                      'OU3_SHADOW_DIRECTION': ','.join(format(x,'.17g') for x in sd),
+                      'OU3_SHADOW_SCALE': format(scale,'.17g'),
+                      'W3D_WRITE_TIMESERIES': '0',
+                      'W3D_VALIDATION_WINDOW_SEC': '0',
+                  })
+                  cp=subprocess.run([str(sim),'--input',str(inp)],env=env,text=True,
+                                    stdout=subprocess.PIPE,stderr=subprocess.STDOUT,check=False)
+                  ms=list(done.finditer(cp.stdout))
+                  if cp.returncode != 0 or not ms:
+                      raise SystemExit(f'case {scale} failed rc={cp.returncode}\n{cp.stdout[-3000:]}')
+                  g=ms[-1].groupdict()
+                  row={k:float(v) for k,v in g.items() if k not in ('pred','S','acc','vector')}
+                  row.update(scale=scale, requested_initial_cayley_norm=cn,
+                             pred=int(g['pred']), S=int(g['S']), acc=int(g['acc']), vector=int(g['vector']))
+                  assert abs(row['t0']-t0) <= 2e-6 and abs(row['t1']-t1) <= 2e-6, row
+                  assert (row['pred'],row['S'],row['acc'],row['vector']) == (600,108,600,75), row
+                  assert row['recon'] <= 5e-5, row
+                  cases.append(row)
+                  print('OU3_EXACT_CAYLEY_A21', scale, 'rho_raw=',row['rho'], 'rho_phi=',row['rhophi'],
+                        'c0_norm=',cn, 'recon=',row['recon'])
+
+          crossings=[r for r in cases if r['rhophi'] >= 1.0]
+          report={
+              'qualification':'NON_PROMOTING_COMPLETE_SEA3_A21_EXACT_CAYLEY_PARITY',
+              'canonical_source':'COMPLETE_SEA3_NORMAL_LIVE_WORD',
+              'point_diagnostic_only':True,
+              'P4_promoted':False,
+              'filter_changed':False,
+              'declared_domain_changed':False,
+              'source_family_replaced':False,
+              'single_shipping_estimator_source_gain_history':True,
+              'shadow_covariance_exists':False,
+              'exact_theorem_cayley_attitude_injection':True,
+              'verified_reference_word':{'t0':t0,'t1':t1,'prediction':600,'S':108,'acc':600,'vector':75},
+              'scales':scales,
+              'cases':cases,
+              'first_full_phi_crossing_abs_scale':min((abs(r['scale']) for r in crossings),default=None),
+              'worst_full_phi_rho':max(r['rhophi'] for r in cases),
+              'full_phi_strict_on_all_tested_cases':not crossings,
+          }
+          pathlib.Path('/tmp/ou3_p4_exact_cayley_a21_parity.json').write_text(json.dumps(report,indent=2,sort_keys=True)+'\n')
+          print(json.dumps({k:report[k] for k in ('first_full_phi_crossing_abs_scale','worst_full_phi_rho','full_phi_strict_on_all_tested_cases')},indent=2))
+          PY
+
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: ou3-p4-exact-cayley-a21-parity
+          path: |
+            /tmp/ou3_p4_exact_cayley_a21_parity.json
+            /tmp/ou3_exact_cayley_cases/*.csv
+          retention-days: 7
