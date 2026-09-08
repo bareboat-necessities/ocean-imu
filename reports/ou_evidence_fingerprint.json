@@ -1,7 +1,7 @@
 {
   "algorithm": "sha256-framed-v1",
-  "replay_fingerprint": "697fa35b92c4857f79d7edfa4eb993186609152d058852fdfedf6b8899706660",
-  "results_file_count": 241,
+  "replay_fingerprint": "508e273d64454812acaa1e91ecb7da157819a5ca3f75c9d3f762c73ca17bbc9d",
+  "results_file_count": 248,
   "results_files": [
     {
       "kind": "file",
@@ -256,7 +256,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness.json",
-      "sha256": "ef536ed1a3f551e369d1329a479914922ca00a73255ad96f251a762c23067c4b"
+      "sha256": "4cc0a3d2324a2841e88e93e7998d19c47a60ddd2a3fe5853fcd12432ab834511"
     },
     {
       "kind": "file",
@@ -266,12 +266,12 @@
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_manifest.json",
-      "sha256": "3a66b5b107a4fc2d683d44b5da6511c66ea312bf845488d7b3e63dcc878a5635"
+      "sha256": "a51ef7e9ad30764d79de9199f085bf7468c48e86feb5a128f51904b56cd7d757"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_paired_effects.csv",
-      "sha256": "4f26323980fae413b235bab8695b44073a908799577f54c3fff1b439ad321821"
+      "sha256": "bff52741e1d42831672d9172323c6a12f9d53ca41d2e26e2cf6751f326cee33e"
     },
     {
       "kind": "file",
@@ -281,22 +281,22 @@
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_raw.csv",
-      "sha256": "252ae84906a9496fcbbb0c18ec36ec6c3a3a9d2d48cadafa6ab348562a9a85e9"
+      "sha256": "e1150ab0fcfdc313e5385e124bcf2fb0b116972168e1503d9447475e384413a3"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_sensitivity.svg",
-      "sha256": "8e9c08bba2da81f75dc6fc0cc3961b93c021d38ce059b8a832d07a3ee4dc810e"
+      "sha256": "2e7dc9f795170ae328b563dfef583e4959ab9316695047d5373f013f126457b7"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_stress.svg",
-      "sha256": "ba12cae40286bee6202906aad730520ed942ee876afd9151db0a403b48413078"
+      "sha256": "a7d1d1e54b98f9c1a7e77e9ddccd1bb2f284b16761432cc64991316d1bd366af"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_summary.csv",
-      "sha256": "387186030202bda3e9dc6c43991d5ec0588b57c8007628afa98064abf8e9dae1"
+      "sha256": "66f2bf7db4fe8cecc856cc9fb1058283d2a17e72d094af241c72059c9d61112c"
     },
     {
       "kind": "file",
@@ -336,7 +336,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation.json",
-      "sha256": "0bd2f74a3aae0ef42b1dd258fbebdc36ae82cff111e762026d5b4369a46a32de"
+      "sha256": "e4951a4c1cbdd157d7326cb027d2984eacd066d85ebb75d1442e04251aaf380c"
     },
     {
       "kind": "file",
@@ -361,7 +361,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_manifest.json",
-      "sha256": "60f1a08d0266ed6a2dd3221cfe644e6e0f630243cd316c5c3169789b1616cfea"
+      "sha256": "da61834e1dc058e2aedbc4f5280b161444c93ab865afca62a75f6406885d0af1"
     },
     {
       "kind": "file",
@@ -391,12 +391,12 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_transition.csv",
-      "sha256": "0d12d6fb02f2f85a11ecda204d7c29ac49c52648b8a9b96f309cbe17e3236159"
+      "sha256": "514069d953df2ad0600df936ac0b1cd3ada1c323dcb9eef705eada6d7d7c2bb6"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_transition.svg",
-      "sha256": "37cb79874907a08bb6aef0f800c4c9892648f920cbb131040eaeaa7db3e4e4af"
+      "sha256": "a39abc0cc0032d9cb53df37f3bc4a7261ea1877680d27a91fabd4d0430f23ef5"
     },
     {
       "kind": "file",
@@ -422,6 +422,21 @@
       "kind": "file",
       "path": "reports/results/rao_parameter_tuning/bias-tau-configs.json",
       "sha256": "32e1198b40d1a4e5c0f3a9898fb9831913920bc31a89cd4dee7234157dc7d89b"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/rao_parameter_tuning/bias2-continuation/screening-source.patch",
+      "sha256": "f020bbdf1a583420916a5833be2635ff890a476d503f4b1cfab5e374a553e9bb"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/rao_parameter_tuning/bias2-continuation/studies.json",
+      "sha256": "3e284b938ed772c7bde09aa6bdffecef12ce43f6fbbee2fdbd3df879567c2281"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/rao_parameter_tuning/bias2-continuation/study.md",
+      "sha256": "acff9cfa6dadbbbe12df3bac5e4e92e8c17c5ff16c6de31f7f6f8511a4d8323b"
     },
     {
       "kind": "file",
@@ -1155,6 +1170,26 @@
     },
     {
       "kind": "file",
+      "path": "reports/results/rao_stability/bias2-connected-attachment.json",
+      "sha256": "70fc4b117d68a5e9d18a498e0d6d19d3d98aecd5271803c6beed0c512e550722"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/rao_stability/bias2-motion-gain.json",
+      "sha256": "7b19912070b7198595533396d8d9b010e06034b242742675522f519f8676c4e0"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/rao_stability/bias2-source.root.json",
+      "sha256": "342430657fe96aec340deb40fca231dfdbad738b63fb2abc495f8111cb63d357"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/rao_stability/bias2-trace-manifest.json",
+      "sha256": "f13cba38b9e4be043b5ed6514174ab368507a704b8d37f20af4eb4753e5fb7eb"
+    },
+    {
+      "kind": "file",
       "path": "reports/results/rao_stability/joint-sector.json",
       "sha256": "d6ca14c9c360c8a9cc2e89bab47b8736af01544ed5e2ce377a1a6bcae203a843"
     },
@@ -1209,7 +1244,7 @@
       "sha256": "d59590abd2add23cdf5302ec8eface7c7bf7a1f0c641d3251aaef21e66a12ce0"
     }
   ],
-  "results_fingerprint": "d48096727407e9c8a22aaba1c4669095c68ff86460049516eabf06f3d4af369d",
+  "results_fingerprint": "851ea5ccf4e3cf8a2822109d76fcf79e6854662592614625dae284c3e5e814cb",
   "schema_version": 3,
   "simulation_data": {
     "file": "sim-data-files-vessel-rao-28ft.zip",
@@ -1300,7 +1335,7 @@
     {
       "mode": "100644",
       "path": ".github/workflows/ou3-p4-physical-finite-map-feasibility.yml",
-      "sha256": "7a48b61f6a925170f617fa37b36ff34a199b532315098c356ced3b0858ae27db"
+      "sha256": "fb14d81d2858672270462dece5303343da0162f691e5611cd4577efc902b52f5"
     },
     {
       "mode": "100644",
@@ -2130,7 +2165,7 @@
     {
       "mode": "100644",
       "path": "tests/kalman_ou_iii/ou3_p4_motion_gain.py",
-      "sha256": "0c65f4c116b9176f506bbf20a824d626605f8913b28eaf802061545dc0862b38"
+      "sha256": "dc4009a38bf2b3808be0a946b4d41704767f3b3e45019813ff61a741ce34b383"
     },
     {
       "mode": "100644",
@@ -2675,7 +2710,7 @@
     {
       "mode": "100644",
       "path": "tests/validation/test_ou3_motion_gain.py",
-      "sha256": "58e11915edd653b5a60ad3e34655997bcdd8f188341adca685d54bbaa8271bf8"
+      "sha256": "bdbd9276844766d0afba30d91f58666d45f28be86fc31901dc7edb3070872f1a"
     },
     {
       "mode": "100644",
@@ -2805,7 +2840,7 @@
     {
       "mode": "100644",
       "path": "tests/validation/test_ou3_proof_cleanup.py",
-      "sha256": "77f56822795108086cfdd411a884d79d41843584aa628754ab9f0c6562368472"
+      "sha256": "f720e86bec6aae66614e3bc0669ebb12325c2cafe4981abbef452eacb7946e0b"
     },
     {
       "mode": "100644",

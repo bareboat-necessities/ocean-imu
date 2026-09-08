@@ -168,8 +168,8 @@
     }
   },
   "git_branch": "codex/vessel-rao-121",
-  "git_commit": "7a8321c969e6090bb89bccc0593bfda134abba72",
-  "git_diff_stat": "reports/results/ou_validation/ou_validation.json   | 125630 ++++++++++--------\n .../ou_validation/ou_validation_attitude.svg       |    704 +-\n .../ou_validation/ou_validation_covsync.svg        |    728 +-\n .../ou_validation/ou_validation_displacement.svg   |    716 +-\n .../results/ou_validation/ou_validation_macros.tex |    198 +-\n .../ou_validation/ou_validation_paired_effects.csv |   4877 +-\n .../ou_validation/ou_validation_publication.tex    |     72 +-\n .../results/ou_validation/ou_validation_raw.csv    |   1682 +-\n .../ou_validation/ou_validation_summary.csv        |   5712 +-\n .../results/ou_validation/ou_validation_table.tex  |     76 +-\n .../ou_validation/ou_validation_transition.csv     |  24000 ++--\n .../ou_validation/ou_validation_transition.svg     |  19545 +--\n .../ou_validation/ou_validation_tuning_points.tex  |     18 +-\n .../ou_validation/ou_validation_vertical.svg       |    700 +-\n 14 files changed, 100383 insertions(+), 84275 deletions(-)",
+  "git_commit": "07d7d14e770030816c36cadfefc83de7942cdf83",
+  "git_diff_stat": "reports/results/ou_validation/ou_validation.json   |     5 +-\n .../ou_validation/ou_validation_publication.tex    |     2 +-\n .../ou_validation/ou_validation_transition.csv     | 15734 +++++++++----------\n .../ou_validation/ou_validation_transition.svg     |  4189 ++---\n 4 files changed, 9967 insertions(+), 9963 deletions(-)",
   "implementation_files": {
     "src/ahrs/FrameConversions.h": {
       "bytes": 18427,
@@ -463,8 +463,8 @@
       "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
       "python": "3.12.3 (main, Jul 15 2026, 23:46:41) [GCC 13.3.0]"
     },
-    "generated_at": "2026-09-08T19:33:17+00:00",
-    "git_commit": "7a8321c969e6090bb89bccc0593bfda134abba72",
+    "generated_at": "2026-09-08T22:38:56+00:00",
+    "git_commit": "07d7d14e770030816c36cadfefc83de7942cdf83",
     "implementation_files": {
       "src/ahrs/FrameConversions.h": {
         "sha256": "7d402b7a283a21df7c739ca6d3a15782fec68eeedf745949a18cff807458d78d",
@@ -651,14 +651,14 @@
     "workflow_run": {
       "job": "commit",
       "run_attempt": "1",
-      "run_id": "34265935605",
+      "run_id": "34283728873",
       "workflow": "ou-full-evidence-branch"
     }
   },
   "result_files": {
     "ou_validation.json": {
       "bytes": 5376291,
-      "sha256": "0bd2f74a3aae0ef42b1dd258fbebdc36ae82cff111e762026d5b4369a46a32de"
+      "sha256": "e4951a4c1cbdd157d7326cb027d2984eacd066d85ebb75d1442e04251aaf380c"
     },
     "ou_validation_attitude.svg": {
       "bytes": 81539,
@@ -697,12 +697,12 @@
       "sha256": "090e78dfba8276a7dd8d5026c97738abc132e49ce7a5504a7acabdc77c459e72"
     },
     "ou_validation_transition.csv": {
-      "bytes": 1243597,
-      "sha256": "0d12d6fb02f2f85a11ecda204d7c29ac49c52648b8a9b96f309cbe17e3236159"
+      "bytes": 1242532,
+      "sha256": "514069d953df2ad0600df936ac0b1cd3ada1c323dcb9eef705eada6d7d7c2bb6"
     },
     "ou_validation_transition.svg": {
-      "bytes": 355388,
-      "sha256": "37cb79874907a08bb6aef0f800c4c9892648f920cbb131040eaeaa7db3e4e4af"
+      "bytes": 355542,
+      "sha256": "a39abc0cc0032d9cb53df37f3bc4a7261ea1877680d27a91fabd4d0430f23ef5"
     },
     "ou_validation_tuning_points.tex": {
       "bytes": 2122,
@@ -788,7 +788,7 @@
   },
   "transition_diagnostic": {
     "decimation": 20,
-    "disp_z_pct_hs": 4.81265211,
+    "disp_z_pct_hs": 4.81265163,
     "family": "OU_III",
     "imu_noise_seed": 101,
     "initialization_seed": 1009,
