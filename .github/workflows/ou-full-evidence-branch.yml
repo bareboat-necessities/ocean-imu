@@ -2,12 +2,13 @@ name: ou-full-evidence-branch
 
 on:
   workflow_dispatch:
+  push:
+    branches-ignore: [main]
+    paths:
+      - "tools/sim_dataset.py"
+      - "Makefile"
 
-# Full branch evidence is intentionally opt-in. Main is the authoritative
-# automatic full-study path through build.yml. Keeping branch replays manual
-# prevents ordinary development pushes from duplicating the same ~1,150
-# simulator replays while still allowing an explicit pre-merge regeneration
-# when one is useful.
+# Dataset changes require full branch regeneration; other changes remain opt-in.
 concurrency:
   group: ou-full-evidence-branch-${{ github.ref }}
   cancel-in-progress: true

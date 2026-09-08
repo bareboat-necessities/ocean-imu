@@ -1,0 +1,17 @@
+{
+  "repository": "bareboat-necessities/oceanography-waves-lib",
+  "generator_commit": "e442150682f560384be427df4cc7815956a091c5",
+  "release_tag": "v1.2.1",
+  "release_asset": "sim-data-files-vessel-rao-28ft.zip",
+  "release_asset_id": 549811259,
+  "release_zip_sha256": "6d6eb92db78e97f1d2456c6b92387993bf23be14a9a6cf26943f0a22fc6fee60",
+  "response_model": "VESSEL_RAO_28FT",
+  "generator_file_sha256": {
+    "data-sim/waves_sim.cpp": "443f390487eed9c29f3a9e99d8434066f4a1ad9e036a8d8c7f8aa9d83fdfd80d",
+    "src/VesselRao.h": "eb2d2a7f735816b383285687835dc0ad9e3151d08099a31ade4b921ca1d395cc",
+    "src/WaveHarmonic.h": "6b2415ee26a07dcc3a7b1af1dec67d545f891b61bb7888ec420b5b2371d2088b",
+    "src/PiersonMoskowitzStokes3D_Waves.h": "372e354c107071b11177edba30333092138ad0318713431f378b47df21437241",
+    "src/DirectionalSpread.h": "b790eb266c2e70f9a8ef19ce57d40fd6f4232ecd349fac6bdef536d940b714fd",
+    "src/WaveFilesSupport.h": "58423bdc6a8b7abbcfcfdeabb0977cc72d165442651d52c09742d72ddc5e13f1"
+  }
+}

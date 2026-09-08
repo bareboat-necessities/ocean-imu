@@ -18,7 +18,7 @@ residue, attitude/translation coupling, and numerical discretization.
 ## Protocol
 
 `tools/model_mismatch_ablation.py` replays the eight versioned stationary
-JONSWAP and PM-Stokes cases from `oceanography-waves-lib` release `v1.1.3`, at
+JONSWAP and PM-Stokes cases from `oceanography-waves-lib` release `v1.2.1`, at
 `H_s = {0.27, 1.5, 4.0, 8.5} m`, through each of OU-II, OU-III, and TFG.  Each
 simulator is invoked with `--no-noise`; the harness also requires the simulator
 to report `noise=false` before accepting its metrics.

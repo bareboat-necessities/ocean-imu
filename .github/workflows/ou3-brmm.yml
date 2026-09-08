@@ -50,14 +50,14 @@ jobs:
           g++ "${flags[@]}" -Isrc -c src/util/W3dSimCommon.cpp -o /tmp/ou3-brmm-runtime/common.o
           g++ "${flags[@]}" -Isrc tests/kalman_ou_iii/kalman_ou_iii-sim.cpp /tmp/ou3-brmm-runtime/common.o -o /tmp/ou3-brmm-runtime/baseline
           g++ "${flags[@]}" -I/tmp/ou3-brmm-runtime/overlay/src -Isrc -Itests/kalman_ou_iii /tmp/ou3-brmm-runtime/overlay/tests/kalman_ou_iii/kalman_ou_iii-sim.cpp /tmp/ou3-brmm-runtime/common.o -o /tmp/ou3-brmm-runtime/traced
-      - name: Download unchanged reference archive
+      - name: Download verified vessel RAO reference archive
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release download v1.1.3 --repo bareboat-necessities/oceanography-waves-lib --pattern sim-data-files.zip --dir /tmp/ou3-brmm-runtime --clobber
+        run: python3 tools/sim_dataset.py --archive /tmp/ou3-brmm-runtime/sim-data-files-vessel-rao-28ft.zip
       - name: Audit all eight runtime histories and retain every violating interval
         run: |
           python3 -u tests/kalman_ou_iii/ou3_brmm_runtime_audit.py \
-            --archive /tmp/ou3-brmm-runtime/sim-data-files.zip \
+            --archive /tmp/ou3-brmm-runtime/sim-data-files-vessel-rao-28ft.zip \
             --baseline /tmp/ou3-brmm-runtime/baseline --traced /tmp/ou3-brmm-runtime/traced \
             --manifest /tmp/ou3-brmm-runtime/overlay/manifest.json \
             --output-dir /tmp/ou3-brmm-runtime/results
@@ -91,14 +91,14 @@ jobs:
         run: |
           mkdir -p /tmp/ou3-brmm
           python3 tools/stability/ou3_brmm_contract.py --output /tmp/ou3-brmm/contract.json
-      - name: Download unchanged eight-case reference archive
+      - name: Download verified vessel RAO reference archive
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release download v1.1.3 --repo bareboat-necessities/oceanography-waves-lib --pattern sim-data-files.zip --dir /tmp/ou3-brmm --clobber
+          python3 tools/sim_dataset.py --archive /tmp/ou3-brmm/sim-data-files-vessel-rao-28ft.zip
       - name: Audit every sliding 10-second source window
         run: |
-          python3 tests/kalman_ou_iii/ou3_brmm_audit.py --archive /tmp/ou3-brmm/sim-data-files.zip --output-dir /tmp/ou3-brmm/results
+          python3 tests/kalman_ou_iii/ou3_brmm_audit.py --archive /tmp/ou3-brmm/sim-data-files-vessel-rao-28ft.zip --output-dir /tmp/ou3-brmm/results
       - name: Retain complete per-window witnesses and source hashes
         if: always()
         uses: actions/upload-artifact@v6

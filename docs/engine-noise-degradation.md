@@ -91,7 +91,7 @@ well-isolated installation) to 2.40 m/s^2 (a sensor near the engine bed).
 ## Protocol
 
 `tools/engine_noise_degradation.py` replays the eight versioned stationary
-JONSWAP and PM-Stokes cases from `oceanography-waves-lib` release `v1.1.3`, at
+JONSWAP and PM-Stokes cases from `oceanography-waves-lib` release `v1.2.1`, at
 `H_s = {0.27, 1.5, 4.0, 8.5} m`, through each of OU-II, OU-III, and TFG.  The
 ordinary sensor noise models stay on and the engine vibration is added on top;
 the filters keep their deployed covariances, adaptation, pseudo-measurements,

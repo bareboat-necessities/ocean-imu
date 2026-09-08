@@ -4,7 +4,8 @@
 \subsection{Sea-state ensemble and reference motion}
 
 The evaluation uses four stationary JONSWAP seas and four Pierson--Moskowitz
-seas with nonlinear Stokes harmonics (Table~\ref{tab:scenarios}).  Each
+incident seas, each filtered by the 28 ft sailboat RAO
+(Table~\ref{tab:scenarios}). Each
 \SI{1200}{s} record is sampled at \SI{200}{Hz} and provides reference 3-D
 displacement, velocity, acceleration, attitude, and corresponding body-frame
 sensor measurements.  Results are scored over the final \SI{900}{s}, after
@@ -30,7 +31,9 @@ startup and one-time magnetic-reference reconfiguration.
 The records are directional rather than scalar heave inputs.  Figure~\ref{fig:input-spectra-3d}
 shows representative frequency--direction energy densities.  JONSWAP supplies
 the declared primary comparison; PM--Stokes is a separate predeclared family
-testing transfer to a different spectral shape with bound harmonics.
+testing transfer to a different incident spectral shape. The retained
+PM--Stokes filename denotes the upstream family; its particle harmonics
+are not applied to the vessel.
 
 \begin{figure}[t]
 \centering
@@ -68,7 +71,7 @@ introducing bias-process mismatch.
     \midrule
     IMU rate & \SI{200}{Hz} & prediction and accel update \\
     Magnetometer rate & \SI{25}{Hz} & asynchronous update \\
-    $S$ pseudo-update period & $\tau$-scaled & \SIrange{5}{250}{ms} bounds \\
+    $S$ pseudo-update period & $\tau$-scaled & \SIrange{5}{150}{ms} bounds \\
     Accel white noise & \SI{0.0148}{m.s^{-2}} & RMS per sample \\
     Accel bias RW & \SI{5e-4}{m.s^{-2}.s^{-0.5}} & truth model \\
     Gyro white noise & \SI{0.00157}{rad.s^{-1}} & RMS per sample \\
@@ -87,8 +90,8 @@ random-walk mismatch.
 
 The principal study also uses the committed reference-point configuration, so
 the implemented lever-arm model is not physically validated off-CoG.  The
-records represent a surface-following inertial package rather than a particular
-hull RAO.
+records represent the estimated sailboat response at its centre of gravity.
+The separate lever-arm study tests 10--30 cm installation offsets.
 
 \subsection{Paired Monte Carlo protocol}
 

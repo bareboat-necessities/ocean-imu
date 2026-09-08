@@ -66,6 +66,7 @@
 
 \begin{document}
 \maketitle
+\input{../simulation-dataset.tex-part}
 
 \begin{abstract}
 This early implementation paper describes a right-invariant two-frame Lie-group error-state extended Kalman filter (EKF) for marine inertial wave-state estimation. The estimator was developed as a geometric reformulation of an existing quaternion multiplicative EKF with an Ornstein--Uhlenbeck (OU) wave-acceleration model. The state combines body-to-world attitude, four world-frame translational columns (velocity, position, integral displacement, and wave acceleration), and body-frame inertial-sensor biases. The resulting two-frame group lets a single finite correction rotate the attitude and world-vector states coherently while retaining the natural body-frame interpretation of biases. The implemented error is right-invariant, $\bm{\eta}=\hat {\bm{X}} \bm{X}^{-1}$, while corrections are applied by left multiplication. Accelerometer and magnetometer updates use invariant-style Jacobians built from fixed world references, and covariance is transported after finite injection with the full group retraction Jacobian. The complete marine process is not claimed to be group-affine or log-linear; estimated-state-dependent couplings remain in the propagation model. The present paper focuses on conventions, group construction, implemented propagation and measurement equations, numerical safeguards, and verification architecture. Performance claims are intentionally preliminary pending a publication-scale paired simulation campaign.

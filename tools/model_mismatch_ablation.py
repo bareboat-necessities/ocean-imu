@@ -646,7 +646,7 @@ def main() -> int:
     manifest = {
         "study": "noise-free model-mismatch ablation",
         "source_commit": commit,
-        "simulation_data": "oceanography-waves-lib v1.1.3",
+        "simulation_data": "oceanography-waves-lib v1.2.1 vessel-rao-28ft",
         "families": list(FAMILIES),
         "records": [record.__dict__ for record in RECORDS],
         "record_count_per_family": len(RECORDS),

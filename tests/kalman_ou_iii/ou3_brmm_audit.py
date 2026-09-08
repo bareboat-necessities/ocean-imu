@@ -217,7 +217,7 @@ def main():
     args = p.parse_args()
     args.output_dir.mkdir(parents=True, exist_ok=True)
     report = {"qualification": "BRMM_EIGHT_REFERENCE_RECORD_SAMPLED_AUDIT_V1",
-              "simulation_release": "oceanography-waves-lib/v1.1.3",
+              "simulation_release": "oceanography-waves-lib/v1.2.1",
               "archive_sha256": hashlib.sha256(args.archive.read_bytes()).hexdigest(),
               "clock": "200 Hz sample index; rounded CSV timestamps are not integration weights",
               "frame": "fixed geographic world CoG acceleration; constant NED rotation preserves these statistics",

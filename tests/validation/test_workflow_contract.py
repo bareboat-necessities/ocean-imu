@@ -101,7 +101,7 @@ class WorkflowContractTests(unittest.TestCase):
 
         gate = workflow[fingerprint:regenerate]
         self.assertIn("tools/ou_replay_fingerprint.py", gate)
-        self.assertIn("sim-data-files.zip", gate)
+        self.assertIn("sim-data-files-vessel-rao-28ft.zip", gate)
         self.assertIn("reports/ou_evidence_fingerprint.json", gate)
         self.assertIn("replay_required=false", gate)
         self.assertIn("replay_required=true", gate)
@@ -124,7 +124,7 @@ class WorkflowContractTests(unittest.TestCase):
             4,
         )
         regenerate = full[full.index("  regenerate:"):]
-        self.assertNotIn("gh release download v1.1.3", regenerate)
+        self.assertNotIn("gh release download v1.2.1", regenerate)
 
     def test_regenerated_evidence_hashes_the_final_validated_tree(self):
         workflow = WORKFLOW.read_text(encoding="utf-8")
@@ -289,7 +289,7 @@ class WorkflowContractTests(unittest.TestCase):
 
     def test_branch_full_evidence_is_manual_only(self):
         workflow = BRANCH_WORKFLOW.read_text(encoding="utf-8")
-        self.assertEqual(_mapping_child_keys(workflow, "on"), {"workflow_dispatch"})
+        self.assertEqual(_mapping_child_keys(workflow, "on"), {"workflow_dispatch", "push"})
         self.assertIn("validation_mode: full", workflow)
 
     def test_main_build_is_the_authoritative_automatic_full_evidence_path(self):

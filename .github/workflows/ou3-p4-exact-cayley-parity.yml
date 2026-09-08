@@ -33,9 +33,7 @@ jobs:
 
       - name: Fetch only the genuine source record used by the verified word
         run: |
-          curl -fL \
-            https://github.com/bareboat-necessities/oceanography-waves-lib/releases/download/v1.1.3/sim-data-files.zip \
-            -o /tmp/ou3-sim-data.zip
+          python3 tools/sim_dataset.py --archive /tmp/ou3-sim-data.zip
           unzip -j -o /tmp/ou3-sim-data.zip \
             'wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv' \
             -d tests/kalman_ou_iii

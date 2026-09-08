@@ -2302,7 +2302,7 @@ def _pmstokes_table(
         r"",
         r"\begin{table*}[t]",
         r"  \centering",
-        r"  \caption{Ten-seed paired OU-family comparison on the PM--Stokes seas, scored over the same final \SI{900}{s} window and the same seed triplets as the JONSWAP ensemble. PM--Stokes carries third-order bound harmonics that JONSWAP does not, so it is reported as a separate declared ensemble and is not pooled into the primary aggregate.}",
+        r"  \caption{Ten-seed paired OU-family comparison on the PM--Stokes seas, scored over the same final \SI{900}{s} window and the same seed triplets as the JONSWAP ensemble. The PM--Stokes archive uses first-order PM components filtered by the sailboat RAO, so it is reported as a separate declared ensemble and is not pooled into the primary aggregate.}",
         r"  \label{tab:ou_mc_pmstokes}",
         r"  \footnotesize",
         r"  \setlength{\tabcolsep}{4.0pt}",

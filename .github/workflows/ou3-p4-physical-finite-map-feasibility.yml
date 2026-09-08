@@ -9,7 +9,7 @@ on:
       - "tools/stability/ou3-source-endpoint.cpp"
       - "tools/stability/ou3_brmm_response_union.py"
       - "tests/validation/test_ou3_brmm_response_union.py"
-      - "tests/kalman_ou_iii/fixtures/ou3_physical_generator_provenance.json"
+      - "tests/kalman_ou_iii/fixtures/ou3_vessel_generator_provenance.json"
       - "tests/kalman_ou_iii/fixtures/ou3_p4_retained_*"
       - "tests/validation/test_ou3_bias_witness_admissibility.py"
       - "tests/validation/test_ou3_retained_word_attachment.py"
@@ -50,7 +50,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           repository: bareboat-necessities/oceanography-waves-lib
-          ref: c5ddd8ddba6e062bb131d92efcd672dfa189455a
+          ref: e442150682f560384be427df4cc7815956a091c5
           path: _physical-sea-generator
           persist-credentials: false
 
@@ -67,16 +67,11 @@ jobs:
           python3 - <<'PY'
           import json
           d=json.load(open('/tmp/ou3-physical-brmm-membership.json'))
-          assert d['linear_vessel_response_admission'] == 'REJECTED'
-          assert d['direct_generator_response_admission'] == 'ADMITTED'
-          assert d['admission_scope'] == 'RESPONSE_MODEL_ONLY_NOT_COMPLETE_RETAINED_WORD'
-          assert d['Stokes_response_test']['branch'] == 'STOKES_WAVE_FOLLOWING'
-          assert not d['Stokes_response_test']['outward_complete_word_certificate']
-          assert d['exact_response_test']['squared_gap_exact'] == '1'
-          assert d['finite_sample_membership_under_another_realization'] == 'UNDETERMINED'
+          assert d['response_model'] == 'VESSEL_RAO_28FT'
+          assert d['admission_scope'] == 'POINT_RESPONSE_AUDIT_NOT_COMPLETE_RETAINED_WORD'
+          assert not d['BRMM_SOURCE_ADMISSION_PASS']
           assert not d['canonical_P4_falsified'] and not d['P4_promoted']
           print('PHYSICAL_GENERATOR_OBSERVATION',d['public_generator_API_observation'])
-          print('BRMM_PLUS_RESPONSE_ADMISSION', d['Stokes_response_test'])
           PY
 
       - name: Test bias and finite attachment algebra

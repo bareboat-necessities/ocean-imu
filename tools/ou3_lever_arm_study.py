@@ -1094,7 +1094,7 @@ def main() -> int:
     manifest = {
         "study": "OU-III IMU lever-arm installation",
         "source_commit": source_commit(),
-        "simulation_data": "oceanography-waves-lib v1.1.3",
+        "simulation_data": "oceanography-waves-lib v1.2.1 vessel-rao-28ft",
         "mode": args.mode,
         "scoring_window_sec": args.window_sec,
         "axes": axes,
