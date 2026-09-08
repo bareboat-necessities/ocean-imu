@@ -1,0 +1,16 @@
+[
+  {
+    "name": "baseline",
+    "env": {
+      "SF_MAG_HI_RIDGE_REL": ".5",
+      "SF_MAG_HI_MIN_INFO": "2",
+      "SF_SIGMA_M_SCALE": ".25",
+      "SF_GYRO_BIAS_RW_VAR": "1e-11",
+      "SF_SIGMA_G_SCALE": "5"
+    }
+  },
+  {
+    "name": "selected",
+    "env": {}
+  }
+]

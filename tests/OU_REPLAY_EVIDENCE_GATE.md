@@ -9,7 +9,7 @@ The OU validation/robustness evidence gate is intentionally conservative. Its pu
 - **every tracked file anywhere under `tests/`, regardless of filename, extension, or executable bit**;
 - tracked source, script, workflow, and build files elsewhere in the repository, using a deliberately broad set of executable/source/build extensions and standard build-system filenames;
 - every tracked file whose Git mode is executable, regardless of its name or extension; and
-- the SHA-256 of the exact `sim-data-files.zip` archive used by the study.
+- the SHA-256 of the exact `sim-data-files-vessel-rao-28ft.zip` archive used by the study.
 
 The unconditional `tests/**` rule is important. Test and study configuration can be hidden in files such as `.txt`, `.csv`, `.json`, `.dat`, fixtures, reference data, or extensionless files. The gate therefore does not try to infer which test files are executable or reachable. A content change to any tracked file under `tests/` invalidates the replay-input fingerprint.
 

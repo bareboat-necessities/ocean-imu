@@ -23,7 +23,7 @@ endif
 LDFLAGS  =
 
 # Targets
-TARGETS = freq-track
+TARGETS = freq-track pll-coarse-test
 
 all: build test
 
@@ -38,8 +38,13 @@ ensure-sim-data:
 freq-track: freq-track.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
+pll-coarse-test: pll-coarse-test.o
+	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+
 %.o: %.cpp
-	$(CC) $(CXXFLAGS) -c $< -o $@
+	$(CC) $(CXXFLAGS) -MMD -MP -c $< -o $@
+
+-include $(wildcard *.d)
 
 clean:
-	rm -f *.o $(TARGETS) *.exe *.csv
+	rm -f *.o *.d $(TARGETS) *.exe *.csv

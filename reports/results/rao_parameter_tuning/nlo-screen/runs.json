@@ -1,0 +1,131 @@
+[
+  {
+    "theta_gain": 0.56,
+    "exit_code": 1,
+    "z_pct_hs": [
+      6.50171,
+      6.82846,
+      6.4951,
+      6.94823,
+      6.62835,
+      12.7763,
+      6.19056,
+      6.45344
+    ],
+    "failures": [
+      "ERROR: raw Z RMS above limit (12.7763% > 7.13%). Mean Z error was -8.09601e-05 m. Failing."
+    ]
+  },
+  {
+    "theta_gain": 0.2,
+    "exit_code": 1,
+    "z_pct_hs": [
+      99.1045,
+      30.2393,
+      24.0765,
+      12.5842,
+      325.515,
+      7.69146,
+      20.688,
+      13.4313
+    ],
+    "failures": [
+      "ERROR: raw Z RMS above limit (99.1045% > 7.26%). Mean Z error was 0.00556109 m. Failing.",
+      "ERROR: raw Z RMS above limit (30.2393% > 7.26%). Mean Z error was 0.0393893 m. Failing.",
+      "ERROR: raw Z RMS above limit (24.0765% > 7.26%). Mean Z error was 0.157392 m. Failing.",
+      "ERROR: raw Z RMS above limit (12.5842% > 7.26%). Mean Z error was 0.249264 m. Failing.",
+      "ERROR: raw Z RMS above limit (325.515% > 7.13%). Mean Z error was 0.0401509 m. Failing.",
+      "ERROR: raw Z RMS above limit (7.69146% > 7.13%). Mean Z error was 0.00316761 m. Failing.",
+      "ERROR: raw Z RMS above limit (20.688% > 7.13%). Mean Z error was 0.165181 m. Failing.",
+      "ERROR: raw Z RMS above limit (13.4313% > 7.13%). Mean Z error was 0.266831 m. Failing."
+    ]
+  },
+  {
+    "theta_gain": 0.28,
+    "exit_code": 1,
+    "z_pct_hs": [
+      134.817,
+      14.8491,
+      13.1379,
+      9.03268,
+      14.7411,
+      6.49138,
+      10.7597,
+      12.5406
+    ],
+    "failures": [
+      "ERROR: raw Z RMS above limit (134.817% > 7.26%). Mean Z error was 0.024821 m. Failing.",
+      "ERROR: raw Z RMS above limit (14.8491% > 7.26%). Mean Z error was 0.0118711 m. Failing.",
+      "ERROR: raw Z RMS above limit (13.1379% > 7.26%). Mean Z error was 0.0345736 m. Failing.",
+      "ERROR: raw Z RMS above limit (9.03268% > 7.26%). Mean Z error was 0.111916 m. Failing.",
+      "ERROR: raw Z RMS above limit (14.7411% > 7.13%). Mean Z error was 0.00308181 m. Failing.",
+      "ERROR: raw Z RMS above limit (10.7597% > 7.13%). Mean Z error was 0.0394607 m. Failing.",
+      "ERROR: raw Z RMS above limit (12.5406% > 7.13%). Mean Z error was 0.183679 m. Failing."
+    ]
+  },
+  {
+    "theta_gain": 0.4,
+    "exit_code": 1,
+    "z_pct_hs": [
+      11.7855,
+      7.82539,
+      7.19498,
+      6.35668,
+      12.9118,
+      8.84517,
+      6.45824,
+      9.00992
+    ],
+    "failures": [
+      "ERROR: raw Z RMS above limit (11.7855% > 7.26%). Mean Z error was 0.00186215 m. Failing.",
+      "ERROR: raw Z RMS above limit (7.82539% > 7.26%). Mean Z error was 0.00353761 m. Failing.",
+      "ERROR: raw Z RMS above limit (12.9118% > 7.13%). Mean Z error was 0.00183345 m. Failing.",
+      "ERROR: raw Z RMS above limit (8.84517% > 7.13%). Mean Z error was -8.44944e-05 m. Failing.",
+      "ERROR: raw Z RMS above limit (9.00992% > 7.13%). Mean Z error was 0.0587614 m. Failing."
+    ]
+  },
+  {
+    "theta_gain": 0.7,
+    "exit_code": 1,
+    "z_pct_hs": [
+      7.10783,
+      7.92957,
+      7.80059,
+      8.6088,
+      6.34181,
+      16.0702,
+      7.46189,
+      6.8799
+    ],
+    "failures": [
+      "ERROR: raw Z RMS above limit (7.92957% > 7.26%). Mean Z error was 2.80221e-05 m. Failing.",
+      "ERROR: raw Z RMS above limit (7.80059% > 7.26%). Mean Z error was 0.000258376 m. Failing.",
+      "ERROR: raw Z RMS above limit (8.6088% > 7.26%). Mean Z error was 0.000318296 m. Failing.",
+      "ERROR: raw Z RMS above limit (16.0702% > 7.13%). Mean Z error was -1.71923e-06 m. Failing.",
+      "ERROR: raw Z RMS above limit (7.46189% > 7.13%). Mean Z error was -0.000371384 m. Failing."
+    ]
+  },
+  {
+    "theta_gain": 0.9,
+    "exit_code": 1,
+    "z_pct_hs": [
+      32.0474,
+      10.329,
+      10.202,
+      11.2511,
+      6.91065,
+      16.3294,
+      9.7691,
+      9.01949
+    ],
+    "failures": [
+      "ERROR: raw Z RMS above limit (32.0474% > 7.26%). Mean Z error was 0.00928897 m. Failing.",
+      "ERROR: raw Z RMS above limit (10.329% > 7.26%). Mean Z error was -0.000157168 m. Failing.",
+      "ERROR: raw Z RMS above limit (10.202% > 7.26%). Mean Z error was -0.0012438 m. Failing.",
+      "ERROR: raw Z RMS above limit (11.2511% > 7.26%). Mean Z error was -0.00476365 m. Failing.",
+      "ERROR: raw Z RMS above limit (16.3294% > 7.13%). Mean Z error was 8.59079e-06 m. Failing.",
+      "ERROR: raw Z RMS above limit (9.7691% > 7.13%). Mean Z error was -0.00146085 m. Failing.",
+      "ERROR: raw Z RMS above limit (9.01949% > 7.13%). Mean Z error was 0.00234182 m. Failing."
+    ]
+  }
+]

@@ -574,7 +574,9 @@ def analysis_warnings(study: str, manifest: Mapping[str, Any]) -> list[str]:
 
 def _scalar_matches_csv(value: Any, csv_value: str) -> bool:
     if value is None:
-        return csv_value == ""
+        # JSON-safe output encodes an unresolved numeric estimate as null;
+        # the canonical CSV retains its NaN. Finite values must never match.
+        return csv_value == "" or csv_value.strip().lower() == "nan"
     if isinstance(value, bool):
         return csv_value.lower() in ({"true", "1"} if value else {"false", "0"})
     if isinstance(value, (int, float)) and csv_value != "":

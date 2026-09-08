@@ -1,0 +1,309 @@
+[
+  {
+    "config": "baseline",
+    "env": {},
+    "exit_code": 1,
+    "z_pct_hs": [
+      3.72163,
+      10.0794,
+      11.0955,
+      12.6056,
+      3.80964,
+      7.92819,
+      8.26279,
+      10.0362
+    ],
+    "failures": [
+      "ERROR: Z RMS above limit (10.0794% > 8.91%). Failing.",
+      "ERROR: Z RMS above limit (11.0955% > 8.91%). Failing.",
+      "ERROR: Z RMS above limit (12.6056% > 8.91%). Failing.",
+      "ERROR: Z RMS above limit (10.0362% > 9.41%). Failing.",
+      "ERROR: Yaw RMS above limit (10.8505 deg > 10.84 deg). Failing."
+    ]
+  },
+  {
+    "config": "PII_R_SCALE_0.5",
+    "env": {
+      "PII_R_SCALE": "0.5"
+    },
+    "exit_code": 1,
+    "z_pct_hs": [
+      5.64194,
+      5.78838,
+      5.86542,
+      7.96254,
+      5.67441,
+      7.17198,
+      7.04532,
+      10.3543
+    ],
+    "failures": [
+      "ERROR: Z RMS above limit (10.3543% > 9.41%). Failing.",
+      "ERROR: Yaw RMS above limit (10.8505 deg > 10.84 deg). Failing."
+    ]
+  },
+  {
+    "config": "PII_R_SCALE_0.75",
+    "env": {
+      "PII_R_SCALE": "0.75"
+    },
+    "exit_code": 1,
+    "z_pct_hs": [
+      3.72725,
+      7.06717,
+      7.76469,
+      9.30814,
+      3.81536,
+      5.98528,
+      6.19605,
+      8.3751
+    ],
+    "failures": [
+      "ERROR: Z RMS above limit (9.30814% > 8.91%). Failing.",
+      "ERROR: Yaw RMS above limit (10.8505 deg > 10.84 deg). Failing."
+    ]
+  },
+  {
+    "config": "PII_R_SCALE_1.5",
+    "env": {
+      "PII_R_SCALE": "1.5"
+    },
+    "exit_code": 1,
+    "z_pct_hs": [
+      3.71889,
+      12.1863,
+      17.2325,
+      18.8353,
+      3.80693,
+      10.8199,
+      13.3993,
+      15.1738
+    ],
+    "failures": [
+      "ERROR: Z RMS above limit (12.1863% > 8.91%). Failing.",
+      "ERROR: Z RMS above limit (17.2325% > 8.91%). Failing.",
+      "ERROR: Z RMS above limit (18.8353% > 8.91%). Failing.",
+      "ERROR: Z RMS above limit (10.8199% > 9.41%). Failing.",
+      "ERROR: Z RMS above limit (13.3993% > 9.41%). Failing.",
+      "ERROR: Z RMS above limit (15.1738% > 9.41%). Failing.",
+      "ERROR: Yaw RMS above limit (10.8505 deg > 10.84 deg). Failing."
+    ]
+  },
+  {
+    "config": "PII_R_SCALE_2",
+    "env": {
+      "PII_R_SCALE": "2"
+    },
+    "exit_code": 1,
+    "z_pct_hs": [
+      3.7177,
+      12.1869,
+      17.6208,
+      21.8225,
+      3.80577,
+      10.8204,
+      15.6588,
+      19.5916
+    ],
+    "failures": [
+      "ERROR: Z RMS above limit (12.1869% > 8.91%). Failing.",
+      "ERROR: Z RMS above limit (17.6208% > 8.91%). Failing.",
+      "ERROR: Z RMS above limit (21.8225% > 8.91%). Failing.",
+      "ERROR: Z RMS above limit (10.8204% > 9.41%). Failing.",
+      "ERROR: Z RMS above limit (15.6588% > 9.41%). Failing.",
+      "ERROR: Z RMS above limit (19.5916% > 9.41%). Failing.",
+      "ERROR: Yaw RMS above limit (10.8505 deg > 10.84 deg). Failing."
+    ]
+  },
+  {
+    "config": "PII_TAU_A_SCALE_0.25",
+    "env": {
+      "PII_TAU_A_SCALE": "0.25"
+    },
+    "exit_code": 1,
+    "z_pct_hs": [
+      3.72238,
+      10.4319,
+      13.0162,
+      15.2083,
+      3.8103,
+      8.85057,
+      10.7707,
+      13.272
+    ],
+    "failures": [
+      "ERROR: Z RMS above limit (10.4319% > 8.91%). Failing.",
+      "ERROR: Z RMS above limit (13.0162% > 8.91%). Failing.",
+      "ERROR: Z RMS above limit (15.2083% > 8.91%). Failing.",
+      "ERROR: Z RMS above limit (10.7707% > 9.41%). Failing.",
+      "ERROR: Z RMS above limit (13.272% > 9.41%). Failing.",
+      "ERROR: Yaw RMS above limit (10.8505 deg > 10.84 deg). Failing."
+    ]
+  },
+  {
+    "config": "PII_TAU_A_SCALE_0.5",
+    "env": {
+      "PII_TAU_A_SCALE": "0.5"
+    },
+    "exit_code": 1,
+    "z_pct_hs": [
+      3.72218,
+      10.4316,
+      13.0159,
+      14.7785,
+      3.81012,
+      8.85027,
+      10.4797,
+      12.2813
+    ],
+    "failures": [
+      "ERROR: Z RMS above limit (10.4316% > 8.91%). Failing.",
+      "ERROR: Z RMS above limit (13.0159% > 8.91%). Failing.",
+      "ERROR: Z RMS above limit (14.7785% > 8.91%). Failing.",
+      "ERROR: Z RMS above limit (10.4797% > 9.41%). Failing.",
+      "ERROR: Z RMS above limit (12.2813% > 9.41%). Failing.",
+      "ERROR: Yaw RMS above limit (10.8505 deg > 10.84 deg). Failing."
+    ]
+  },
+  {
+    "config": "PII_TAU_A_SCALE_2",
+    "env": {
+      "PII_TAU_A_SCALE": "2"
+    },
+    "exit_code": 1,
+    "z_pct_hs": [
+      3.71987,
+      7.15761,
+      8.38739,
+      9.75442,
+      3.80811,
+      6.59549,
+      8.03924,
+      9.06897
+    ],
+    "failures": [
+      "ERROR: Z RMS above limit (9.75442% > 8.91%). Failing.",
+      "ERROR: Yaw RMS above limit (10.8505 deg > 10.84 deg). Failing."
+    ]
+  },
+  {
+    "config": "PII_KP_SCALE_0.25",
+    "env": {
+      "PII_KP_SCALE": "0.25"
+    },
+    "exit_code": 1,
+    "z_pct_hs": [
+      3.7004,
+      9.98452,
+      11.0982,
+      12.7639,
+      3.79647,
+      7.87257,
+      8.25134,
+      12.1293
+    ],
+    "failures": [
+      "ERROR: Z RMS above limit (9.98452% > 8.91%). Failing.",
+      "ERROR: Z RMS above limit (11.0982% > 8.91%). Failing.",
+      "ERROR: Z RMS above limit (12.7639% > 8.91%). Failing.",
+      "ERROR: Yaw RMS above limit (14.4658 deg > 10.84 deg). Failing.",
+      "ERROR: Z RMS above limit (12.1293% > 9.41%). Failing.",
+      "ERROR: Yaw RMS above limit (19.8509 deg > 10.84 deg). Failing."
+    ]
+  },
+  {
+    "config": "PII_KP_SCALE_0.5",
+    "env": {
+      "PII_KP_SCALE": "0.5"
+    },
+    "exit_code": 1,
+    "z_pct_hs": [
+      3.70535,
+      10.0226,
+      11.1033,
+      12.6267,
+      3.80005,
+      7.81679,
+      8.24681,
+      10.4689
+    ],
+    "failures": [
+      "ERROR: Z RMS above limit (10.0226% > 8.91%). Failing.",
+      "ERROR: Z RMS above limit (11.1033% > 8.91%). Failing.",
+      "ERROR: Z RMS above limit (12.6267% > 8.91%). Failing.",
+      "ERROR: Yaw RMS above limit (11.1571 deg > 10.84 deg). Failing.",
+      "ERROR: Z RMS above limit (10.4689% > 9.41%). Failing.",
+      "ERROR: Yaw RMS above limit (15.6551 deg > 10.84 deg). Failing."
+    ]
+  },
+  {
+    "config": "PII_KP_SCALE_2",
+    "env": {
+      "PII_KP_SCALE": "2"
+    },
+    "exit_code": 1,
+    "z_pct_hs": [
+      3.75413,
+      10.1668,
+      11.1181,
+      12.5833,
+      3.82773,
+      8.24547,
+      8.38109,
+      10.0937
+    ],
+    "failures": [
+      "ERROR: Z RMS above limit (10.1668% > 8.91%). Failing.",
+      "ERROR: Z RMS above limit (11.1181% > 8.91%). Failing.",
+      "ERROR: Z RMS above limit (12.5833% > 8.91%). Failing.",
+      "ERROR: Z RMS above limit (10.0937% > 9.41%). Failing."
+    ]
+  },
+  {
+    "config": "PII_KI_SCALE_0.25",
+    "env": {
+      "PII_KI_SCALE": "0.25"
+    },
+    "exit_code": 1,
+    "z_pct_hs": [
+      3.7208,
+      10.0666,
+      11.091,
+      12.5994,
+      3.80929,
+      7.89059,
+      8.25759,
+      9.99342
+    ],
+    "failures": [
+      "ERROR: Z RMS above limit (10.0666% > 8.91%). Failing.",
+      "ERROR: Z RMS above limit (11.091% > 8.91%). Failing.",
+      "ERROR: Z RMS above limit (12.5994% > 8.91%). Failing.",
+      "ERROR: Z RMS above limit (9.99342% > 9.41%). Failing."
+    ]
+  },
+  {
+    "config": "PII_KI_SCALE_2",
+    "env": {
+      "PII_KI_SCALE": "2"
+    },
+    "exit_code": 1,
+    "z_pct_hs": [
+      3.72266,
+      10.0791,
+      11.1031,
+      12.624,
+      3.81015,
+      7.97979,
+      8.27495,
+      10.0965
+    ],
+    "failures": [
+      "ERROR: Z RMS above limit (10.0791% > 8.91%). Failing.",
+      "ERROR: Z RMS above limit (11.1031% > 8.91%). Failing.",
+      "ERROR: Z RMS above limit (12.624% > 8.91%). Failing.",
+      "ERROR: Z RMS above limit (10.0965% > 9.41%). Failing.",
+      "ERROR: Yaw RMS above limit (11.301 deg > 10.84 deg). Failing."
+    ]
+  }
+]

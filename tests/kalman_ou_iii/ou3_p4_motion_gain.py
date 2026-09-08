@@ -174,7 +174,17 @@ def build_word(root, rows, points, mode):
         defects("finite_factorization", a@before+b@u, actual, 1+np.linalg.norm(before, np.inf))
         running = a@running+b@u
         defects("composed_word_factorization", running, actual, 1+np.linalg.norm(actual, np.inf))
-        steps.append({"A": a, "B": b, "u": u, "Uinv": covariance,
+        bias2 = None
+        if stage == "projection" and row["kind"] == "accelerometer":
+            e, _ = C.SOURCE.error_and_covariance(pending, 21)
+            y, source, h = C.residual_graph(pending, e)
+            h[:, :3] = np.linalg.solve(I3-.5*C.skew(e[:3]), h[:, :3])
+            h[:, 15:18] = C.rotation(e[:3])@C.mat(pending, "R_hat")
+            defects("bias2_corrected_residual", h@e, y-source,
+                    1+np.linalg.norm(y-source, np.inf))
+            bias2 = {"H": h, "R": C.mat(pending, "R"),
+                     "g": y-source-e[18:], "bias": e[18:].copy()}
+        steps.append({"A": a, "B": b, "u": u, "Uinv": covariance, "bias2": bias2,
                       "metric": metric(row), "bias_cost": stage == "prediction_enter",
                       "index": row["index"], "stage": stage, "kind": row["kind"],
                       "denominator": float(den)})
@@ -338,11 +348,226 @@ def experiment(steps, m0, dt):
             "useful_uniform_accuracy_floor_certified": False}
 
 
+def template_forms(steps, m0, dt):
+    """Restrict all forcing ports to one common scalar times the captured root.
+
+    A 22-coordinate lift retains all 21 root errors and one template amplitude.
+    Bias supply uses the corrected full trajectory. Template energy is charged
+    once for the complete word, including in prefix bounds. This restricts a
+    frozen-coefficient diagnostic; it does not describe new physical roots.
+    """
+    if dt <= 0 or not steps or not steps[0]["bias_cost"]:
+        raise ValueError("positive dt and a complete word entrance required")
+    state = np.zeros((21, 22))
+    state[:, :21] = I21
+    initial = np.zeros((22, 22))
+    initial[:18, :18] = m0
+    bias = np.zeros((22, 22))
+    energy = sum(float(s["u"]@np.linalg.solve(s["Uinv"], s["u"]))
+                 for s in steps if len(s["u"]))
+    if energy <= 0:
+        raise ValueError("nonzero physical template required")
+    forms = []
+    for step in steps:
+        if step["bias_cost"]:
+            bias += dt*state[18:].T@state[18:]
+        else:
+            state = step["A"]@state
+            state[:, 21] += step["B"]@step["u"]
+        supply = bias.copy()
+        supply[21, 21] += energy
+        forms.append((sym(state[:18].T@step["metric"]@state[:18]),
+                      sym(supply), state.copy()))
+    return initial, forms, energy
+
+
+def template_test(initial, form, factor, gain):
+    if factor <= 0 or gain <= 0:
+        raise ValueError("positive factor and gain required")
+    terminal, supply, _ = form
+    chol = np.linalg.cholesky(factor*initial+gain*supply)
+    normalized = np.linalg.solve(chol, terminal)
+    normalized = np.linalg.solve(chol, normalized.T).T
+    values, vectors = np.linalg.eigh(sym(normalized))
+    direction = np.linalg.solve(chol.T, vectors[:, -1])
+    return float(values[-1]), direction
+
+
+def template_witness(steps, m0, dt, factor, gain, direction, stop):
+    """80-digit complete-word propagation of the selected coefficient direction."""
+    with localcontext() as ctx:
+        ctx.prec = 80
+        def dec(a):
+            return np.asarray([Decimal.from_float(float(x)) for x in np.asarray(a).flat],
+                              dtype=object).reshape(np.shape(a))
+        x, amplitude = dec(direction[:21]), Decimal.from_float(float(direction[21]))
+        previous = x[:18]@dec(m0)@x[:18]
+        root_energy = previous
+        bias, source = Decimal(0), Decimal(0)
+        changes = Counter()
+        for step in steps:
+            if len(step["u"]):
+                u = amplitude*dec(step["u"])
+                inverse = np.linalg.solve(step["Uinv"], np.eye(len(u)))
+                source += u@dec(inverse)@u
+        for step in steps[:stop+1]:
+            if step["bias_cost"]:
+                bias += Decimal.from_float(dt)*(x[18:]@x[18:])
+            else:
+                x = dec(step["A"])@x+dec(step["B"])@(amplitude*dec(step["u"]))
+            current = x[:18]@dec(step["metric"])@x[:18]
+            changes[step["stage"]+":"+step["kind"]] += current-previous
+            previous = current
+        cost = Decimal.from_float(factor)*root_energy+Decimal.from_float(gain)*(bias+source)
+        return {"root_direction_full_21": direction[:21].tolist(),
+                "common_template_amplitude": float(direction[21]),
+                "root_group_norms": {name: float(np.linalg.norm(direction[i:i+3]))
+                                     for name, i in (("attitude", 0), ("gyro_bias", 3),
+                                                     ("v", 6), ("p", 9), ("S", 12),
+                                                     ("a_w", 15), ("accel_bias", 18))},
+                "ratio_80_digit": str(previous/cost), "supply_cost_80_digit": str(cost),
+                "bias_energy_80_digit": str(bias), "source_energy_80_digit": str(source),
+                "signed_motion_energy_changes_80_digit": {k: str(v) for k, v in changes.items()},
+                "nonlinear_or_physical_root_admissibility_established": False}
+
+
+def template_bias2(steps, initial, forms, prefix_index):
+    """Invoke the dense BIAS2 sector on the same corrected root/template graph.
+
+    Xi is the sum of corrected bias-error energies at accelerometer events,
+    weighted by their actual Racc inverse. It is not a free GM trajectory.
+    Each prefix sector contains only measurements executed by that prefix.
+    Candidate mu values are conditional diagnostics, never admitted premises.
+    """
+    state = np.zeros((21, 22))
+    state[:, :21] = I21
+    aa, dd, cross, yy = (np.zeros((22, 22)) for _ in range(4))
+    point = np.zeros(4)
+    prefix_sectors = []
+    for step in steps:
+        attachment = step.get("bias2")
+        if attachment is not None:
+            weight = np.linalg.inv(attachment["R"])
+            gmap = attachment["H"][:, :18]@state[:18]
+            dmap = state[18:]
+            ymap = gmap+dmap
+            aa += gmap.T@weight@gmap
+            dd += dmap.T@weight@dmap
+            cross += gmap.T@weight@dmap
+            yy += ymap.T@weight@ymap
+            g, b = attachment["g"], attachment["bias"]
+            point += [g@weight@g, b@weight@b, g@weight@b, (g+b)@weight@(g+b)]
+        if not step["bias_cost"]:
+            state = step["A"]@state
+            state[:, 21] += step["B"]@step["u"]
+        prefix_sectors.append((sym(yy.copy()), sym(dd.copy())))
+
+    scale = initial.copy()
+    scale[18:21, 18:21] = I3
+    scale[21, 21] = 1.
+    chol = np.linalg.cholesky(scale)
+    def normalize(matrix):
+        left = np.linalg.solve(chol, matrix)
+        return sym(np.linalg.solve(chol, left.T).T)
+
+    results = {}
+    for name, index, factor in (("endpoint", len(steps)-1, .96),
+                                ("tested_prefix", prefix_index, 2.)):
+        # Select the endpoint factor from the held/active word itself.
+        if name == "endpoint":
+            factor = .9998 if all(np.array_equal(s["A"][18:, 18:], I3)
+                                  for s in steps if s["stage"] == "prediction") else .96
+        yform, target = prefix_sectors[index]
+        source_and_bias = target.copy()
+        source_and_bias[21, 21] += 1.  # one dimensionless physical-template amplitude
+        trials = []
+        for gain in (1e-4, .01, 1., 100.):
+            master = normalize(forms[index][0]-factor*initial-gain*source_and_bias)
+            baseline = float(np.linalg.eigvalsh(master)[-1])
+            for mu in (.0001, .001, .01, .03, .05, .08, .1, .3, 1., 3.):
+                sector = normalize(yform-mu*target)
+                def objective(log_multiplier, master=master, sector=sector):
+                    return float(np.linalg.eigvalsh(master+10**log_multiplier*sector)[-1])
+                grid = np.arange(-16., 7., .5)
+                values = [objective(value) for value in grid]
+                best = int(np.argmin(values))
+                # Fixed candidate grid; no numerical minimizer is treated as
+                # an enclosure or as a source-uniform multiplier certificate.
+                multiplier = 10**float(grid[best]) if values[best] < baseline else 0.
+                value = min(values[best], baseline)
+                trials.append({"gain": gain, "conditional_mu": mu, "multiplier": multiplier,
+                               "largest_eigenvalue_without_BIAS2": baseline,
+                               "largest_eigenvalue_with_BIAS2": value,
+                               "point_master_strict": value < 0.,
+                               "BIAS2_changes_nonpassing_master_to_strict": baseline >= 0. and value < 0.})
+        results[name] = {"factor": factor, "step": index,
+                         "sector_has_no_future_events": True, "trials": trials}
+    total = point[0]+point[1]
+    return {"invoked_in_dense_master": True,
+            "master_sign": "L + lambda*(C_y^T Racc^-1 C_y - mu*X), lambda >= 0",
+            "Xi": "sum corrected bias error^T actual_Racc^-1 corrected bias error at accelerometer events",
+            "physical_forcing_excluded_from_homogeneous_y": True,
+            "full_21_state_feedback_and_projection_coefficients_retained": True,
+            "point_channel_energies": dict(zip(("g", "corrected_bias", "cross", "homogeneous_y"), point.tolist(), strict=True)),
+            "point_kappa": float(2*abs(point[2])/total) if total else None,
+            "point_mu_sufficient_for_declared_Xi": float((total-2*abs(point[2]))/point[1]) if point[1] > 0 else None,
+            "point_energy_identity_residual": float(point[3]-total-2*point[2]),
+            "dense_graph_identity_max_defect": float(np.max(np.abs(yy-aa-dd-cross-cross.T))),
+            "conditional_master_tests": results,
+            "source_uniform_BIAS2_constant_certified": False,
+            "point_ratios_used_as_uniform_mu": False,
+            "P4_MOTION_PASS": False, "P5_MOTION_MAY_START": False}
+
+
+def template_experiment(steps, m0, dt):
+    initial, forms, energy = template_forms(steps, m0, dt)
+    candidates = []
+    for power in range(-16, 41, 4):
+        gain = float(2**power)
+        ratio, _ = template_test(initial, forms[-1], 1., gain)
+        candidates.append({"gain": gain, "endpoint_at_factor_one": ratio})
+        if ratio < 1-1e-8:
+            break
+    factor = (1+ratio)/2 if ratio < 1-1e-8 else 1.
+    endpoint, direction = template_test(initial, forms[-1], factor, gain)
+    prefix, index = max((template_test(initial, form, 2., gain)[0], i)
+                        for i, form in enumerate(forms))
+    _, prefix_direction = template_test(initial, forms[index], 2., gain)
+    witness = template_witness(steps, m0, dt, factor, gain, direction, len(steps)-1)
+    prefix_witness = template_witness(steps, m0, dt, 2., gain, prefix_direction, index)
+    for expected, checked in ((endpoint, witness), (prefix, prefix_witness)):
+        if abs(float(checked["ratio_80_digit"])-expected) > 1e-7*max(1., expected):
+            raise ValueError("80-digit common-template direction check disagrees")
+    bound = gain*(sum(s["bias_cost"] for s in steps)*dt*.4**2+energy)/(1-factor) if factor < 1 else None
+    # Diagnostic conversion of the declared widest candidate angle, NOT a
+    # source-uniform chart certificate or a new operating-domain restriction.
+    radius = 2*np.tan(np.deg2rad(30.)/2)
+    chart = min(radius**2/np.linalg.eigvalsh(np.linalg.inv(s["metric"])[:3, :3])[-1]
+                for s in steps)
+    return {"decision": "COMMON_TEMPLATE_COEFFICIENT_DIAGNOSTIC_ONLY",
+            "lift_dimension": 22, "same_scalar_for_all_forcing_events": True,
+            "template_energy_charged_once_over_complete_word": energy,
+            "candidate_matrix_tests": candidates, "endpoint_factor": factor,
+            "gain": gain, "endpoint_ratio": endpoint, "endpoint_distance_to_one": 1-endpoint,
+            "prefix_factor": 2., "every_prefix_ratio_max": prefix,
+            "limiting_prefix": {k: steps[index][k] for k in ("index", "stage", "kind")},
+            "maximizing_endpoint_direction": witness, "maximizing_prefix_direction": prefix_witness,
+            "candidate_composed_storage_bound": bound,
+            "point_30_degree_chart_storage_level_min": float(chart),
+            "endpoint_floor_over_point_chart_level": bound/chart if bound is not None else None,
+            "point_frozen_coefficients_only": True, "new_physical_source_family_defined": False,
+            "BIAS2": template_bias2(steps, initial, forms, index),
+            "source_uniform_gains_certified": False, "P4_MOTION_PASS": False,
+            "P5_MOTION_MAY_START": False}
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--prefix", required=True, type=Path)
     parser.add_argument("--attachment", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
+    parser.add_argument("--correlated-template", action="store_true",
+                        help="test one common forcing template instead of independent ports")
     args = parser.parse_args()
     trace_path = Path(str(args.prefix)+".events.jsonl")
     attachment = json.loads(args.attachment.read_text())
@@ -356,10 +581,16 @@ def main():
     points = [json.loads(line) for line in Path(str(args.prefix)+".prefixes.jsonl").read_text().splitlines()]
     root = json.loads(Path(str(args.prefix)+".root.json").read_text())
     report = {"experiment": "CONNECTED_FINITE_COEFFICIENT_MOTION_SUPPLY", "event_trace_sha256": digest,
+              "producer_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+              "capture_sha256": attachment["baseline_capture_sha256"],
               "supply_units": SUPPLY_UNITS, "coefficient_dependencies_frozen_only_for_point_test": True,
               "forcing_ports_relaxed_only_for_sufficient_coefficient_test": True,
               "independent_BRMM_sample_boxes_created": False, "bias_error_decay_required": False,
               "P4_MOTION_PASS": False, "P5_MOTION_MAY_START": False, "modes": {}}
+    if args.correlated_template:
+        report["experiment"] = "CONNECTED_COMMON_TEMPLATE_MOTION_SUPPLY"
+        report["forcing_ports_relaxed_only_for_sufficient_coefficient_test"] = False
+        report["common_template_restriction_is_not_a_sufficient_BRMM_test"] = True
     for mode in ("H18", "A21"):
         if attachment["modes"][mode]["decision"] != "CONNECTED_POINT_ATTACHMENT_PASS":
             raise ValueError("connected subevents have not passed: "+mode)
@@ -369,7 +600,10 @@ def main():
                 "minimum_chart_denominator": min(s["denominator"] for s in steps)}
         report["modes"][mode] = item
         if not defects.failures:
-            item.update(experiment(steps, m0, root["dt"]))
+            if args.correlated_template:
+                item.update(template_experiment(steps, m0, root["dt"]))
+            else:
+                item.update(experiment(steps, m0, root["dt"]))
         else:
             item["decision"] = "FINITE_FACTORIZATION_ATTACHMENT_FAIL"
         args.output.write_text(json.dumps(report, indent=2, allow_nan=False)+"\n")

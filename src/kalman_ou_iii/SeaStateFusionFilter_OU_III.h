@@ -76,6 +76,8 @@
 #include "wave_dir/KalmanWaveDirection.h"
 #include "wave_dir/WaveDirectionDetector.h"
 #include "wave_dir/WaveDirectionFrame.h"
+#include "wave_dir/VesselRaoEqualizer.h"
+#include "wave_dir/VesselRaoNoiseWeighting.h"
 #include "detrend/AdaptiveWaveDetrender3D.h"
 #include "kalman_common/SeaStateFusionFilterCommon.h"
 
@@ -788,7 +790,7 @@ private:
         // axis and is therefore invariant under q -> Rz(psi) q, so only the
         // tilt of whichever quaternion is supplied can reach the result.
         const auto direction_accel = wave_direction::heading_frame_acceleration<float>(
-            drive_mekf ? mekf_->quaternion_boat() : startupProxyQuat(), acc, g_std);
+            drive_mekf ? mekf_->quaternion_boat() : startupProxyQuat(), acc_in, g_std);
 
         // Stage 1 estimates the apparent propagation plane as an unsigned axis
         // relative to boat heading.  Stage 2 resolves propagation sense along
@@ -826,14 +828,24 @@ private:
         // exogenous bit-for-bit and bounds the Leveled path's gain.
         wave_period_.update(dt, wave_period_input_ms2_(direction_accel));
 
-        dir_filter_.update(direction_accel.forward_ms2,
-                           direction_accel.starboard_ms2,
+        // The direction branch needs inertial acceleration. Correct the body
+        // sensor bias before levelling, as the MEKF's acceleration model does.
+        // Keep the period/tuner input above independent of this estimate.
+        auto direction_input = direction_accel;
+        if (drive_mekf) {
+            const Eigen::Vector3f corrected = acc_in - mekf_->get_acc_bias_body_at_temperature(tempC);
+            direction_input = wave_direction::heading_frame_acceleration<float>(
+                mekf_->quaternion_boat(), corrected, g_std);
+        }
+        const auto direction_matched = direction_rao_.step(direction_input, dt);
+        dir_filter_.update(direction_matched.forward_ms2,
+                           direction_matched.starboard_ms2,
                            omega, dt);
         const Eigen::Vector2f propagation_axis_boat = dir_filter_.getAxis();
         dir_sign_state_ = dir_sign_.update(
-            direction_accel.forward_ms2,
-            direction_accel.starboard_ms2,
-            direction_accel.up_ms2,
+            direction_matched.forward_ms2,
+            direction_matched.starboard_ms2,
+            direction_matched.up_ms2,
             propagation_axis_boat.x(), propagation_axis_boat.y(),
             dt, dir_filter_.getLastStableConfidence());
     }
@@ -1328,9 +1340,9 @@ public:
     inline float getFreqHz()        const noexcept { return freq_hz_; }        // fast branch
     inline float getFreqSlowHz()    const noexcept { return freq_hz_slow_; }   // slow branch
     inline float getFreqRawHz()     const noexcept { return f_raw; }
-    inline float getTauApplied()    const noexcept { return tune_.tau_applied; }
-    inline float getSigmaApplied()  const noexcept { return tune_.sigma_applied; }
-    inline float getRSApplied()     const noexcept { return tune_.RS_applied; }
+    inline float getTauApplied()    const noexcept { return mekf_ ? mekf_->get_aw_time_constant() : NAN; }
+    inline float getSigmaApplied()  const noexcept { return mekf_ ? mekf_->get_aw_stationary_std().z() : NAN; }
+    inline float getRSApplied()     const noexcept { return mekf_ ? mekf_->get_RS_noise_std().z() : NAN; }
     inline float getTauTarget()     const noexcept { return tau_target_;   }
     inline float getSigmaTarget()   const noexcept { return sigma_target_; }
     inline float getRSTarget()      const noexcept { return RS_target_;    }
@@ -1424,6 +1436,14 @@ public:
     // Horizon currently in force [s]; the variance is a two-stage EWMA at it.
     float getSigmaVarianceHorizonSec() const noexcept {
         return tuner_.getVarianceHorizonSec();
+    }
+
+    void setLowWaveNoiseWeighting(const wave_direction::VesselRaoNoiseWeighting& config) {
+        low_wave_noise_ = config;
+    }
+
+    void setDirectionRao(const wave_direction::VesselRaoEqualizer::Config& config) {
+        direction_rao_.configure(config);
     }
 
     inline WaveDirection getDirSignState() const noexcept { return dir_sign_state_; }
@@ -1898,6 +1918,7 @@ private:
 
         dir_filter_ = KalmanWaveDirection(2.0f * static_cast<float>(M_PI) * FREQ_GUESS);
         dir_sign_.reset();
+        direction_rao_.reset();
         dir_sign_state_ = UNCERTAIN;
 
         last_adapt_time_sec_ = time_;
@@ -1929,13 +1950,20 @@ private:
     }
 
     void apply_racc_vibration_inflation_() {
-        if (!mekf_ || !(racc_vibration_gain_ > 0.0f)) return;
+        if (!mekf_ || (!(racc_vibration_gain_ > 0.0f) &&
+                       !(low_wave_noise_.max_std_scale > 1.0f) && !racc_inflated_)) return;
 
         const Eigen::Vector3f base = racc_base_std_();
         if (!(base.minCoeff() > 0.0f)) return;
 
         const float excess = accel_guard_.excessRms();
-        if (!(excess > 0.0f)) {
+        // The tuner is updated later in this sample. Use its previous
+        // measurement-only schedule, independently of direction RAO on/off.
+        const Eigen::Vector3f scales = isAdaptiveLive()
+            ? low_wave_noise_.scales(tune_.sigma_applied / sigma_coeff_,
+                                     tuner_frequency_hz_(), base)
+            : Eigen::Vector3f::Ones();
+        if (!(excess > 0.0f) && scales.maxCoeff() <= 1.0f) {
             // Hand the base back once on the way down, then stay quiet, so a
             // dormant guard leaves the stage logic's covariance untouched.
             if (racc_inflated_) {
@@ -1948,7 +1976,7 @@ private:
 
         const float added = racc_vibration_gain_ * excess;
         const Eigen::Vector3f effective =
-            (base.array().square() + added * added).sqrt().matrix();
+            ((base.array() * scales.array()).square() + added * added).sqrt().matrix();
         mekf_->set_Racc_std(effective);
         racc_effective_ = effective;
         racc_inflated_ = true;
@@ -2210,6 +2238,8 @@ private:
     FreqInputLPF        freq_input_lpf_;
     StillnessAdapter    freq_stillness_;
 
+    wave_direction::VesselRaoEqualizer direction_rao_{};
+    wave_direction::VesselRaoNoiseWeighting low_wave_noise_{};
     WaveDirectionDetector<float> dir_sign_{0.002f, 0.005f};
     WaveDirection                dir_sign_state_ = UNCERTAIN;
 };
@@ -2308,7 +2338,7 @@ public:
         //            value and seeds the commanded-parameter filter.
         float Pq0       = 5e-4f;
         float Pb0       = 1e-6f;
-        float b0        = 1e-11f;
+        float b0        = 1e-10f;
         float R_S_noise = 1.5f;
         float gravity_magnitude = g_std;
 
@@ -2419,8 +2449,8 @@ public:
         // calibration.  See ContinuousMagHardIronEstimator::Config and
         // docs/continuous-mag-hard-iron.md for why it came down from 4e-3.
         float mag_hi_model_ridge              = 5.0e-4f;
-        float mag_hi_model_ridge_relative     = 0.5f;
-        float mag_hi_min_information          = 2.0f;
+        float mag_hi_model_ridge_relative     = 0.25f;
+        float mag_hi_min_information          = 0.1f;
         float mag_hi_min_effective_weight     = 500.0f;
         float mag_hi_max_residual_rms_uT      = 3.0f;
         float mag_hi_max_bias_fraction        = 0.35f;

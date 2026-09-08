@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import re
 import unittest
 
 
@@ -119,14 +120,37 @@ class Ou3ProofCleanupTest(unittest.TestCase):
         offenders = [name for name in sorted(retired) if (WORKFLOWS / name).exists()]
         self.assertEqual([], offenders, "retired extra proof workflows returned")
 
-    def test_master_paper_includes_retained_brmm_theorem_parts(self):
+    def test_master_paper_places_brmm_before_live_stability_without_retired_section(self):
         paper = (OU3_DOC / "kalman_ou-w3d.tex").read_text(encoding="utf-8")
-        self.assertIn(r"\input{w3d-marine-reference-models.tex-part}", paper)
-        self.assertIn(r"\input{w3d-brmm-period-bridge.tex-part}", paper)
-        self.assertLess(
-            paper.index(r"\input{w3d-marine-reference-models.tex-part}"),
-            paper.index(r"\input{w3d-brmm-period-bridge.tex-part}"),
+        ordered = (
+            "w3d-mems-bias-preconditions.tex-part",
+            "w3d-brmm-stability-theorem.tex-part",
+            "w3d-brmm-period-bridge.tex-part",
+            "w3d-iss-stability.tex-part",
         )
+        positions = [paper.index(r"\input{" + name + "}") for name in ordered]
+        self.assertEqual(positions, sorted(positions))
+
+        inputs = []
+        parts = []
+
+        def visit(path):
+            text = re.sub(r"(?m)(?<!\\)%.*$", "", path.read_text(encoding="utf-8"))
+            parts.append(text)
+            for name in re.findall(r"\\input\{([A-Za-z0-9_./-]+)\}", text):
+                inputs.append(name)
+                source = (OU3_DOC / name).resolve()
+                # Optional generated study inputs may await evidence replay.
+                if source.is_file():
+                    visit(source)
+
+        visit(OU3_DOC / "kalman_ou-w3d.tex")
+        for name in ordered:
+            self.assertEqual(inputs.count(name), 1, name)
+        article = "\n".join(parts)
+        self.assertNotIn("w3d-marine-reference-models.tex-part", inputs)
+        self.assertNotIn("marine-reference-", article)
+        self.assertNotRegex(article, r"(?i)\bSEA[ _-]?3\b")
 
     def test_canonical_workflow_does_not_execute_old_p2_or_fallback_routes(self):
         workflow = (WORKFLOWS / "ou3-proof.yml").read_text(encoding="utf-8")

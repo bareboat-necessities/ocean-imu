@@ -1,0 +1,12 @@
+[
+  {
+    "name": "head",
+    "env": {
+      "OU_II_PSEUDO_MSE_RATIO": "0.4"
+    }
+  },
+  {
+    "name": "current",
+    "env": {}
+  }
+]

@@ -10,12 +10,16 @@ from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
+import json
+import subprocess
 import sys
 import tempfile
 from pathlib import Path
 from typing import Any, Sequence
 
 import numpy as np
+from sim_dataset import input_provenance
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 OU_III_DATA = REPO_ROOT / "tests" / "kalman_ou_iii"
@@ -236,6 +240,7 @@ def write_roundtrip_diagnostic(
     ov = _validation_module()
     low_path = ov.find_default_input(OU_III_DATA, "1.500", "50.710")
     high_path = ov.find_default_input(OU_III_DATA, "8.500", "202.839")
+    dataset = input_provenance((low_path, high_path))
     columns, low_data = ov.read_wave_csv(low_path, ROUNDTRIP_DURATION_SEC)
     _, high_data = ov.read_wave_csv(high_path, ROUNDTRIP_DURATION_SEC)
     high_scale = DIAGNOSTIC_HIGH_HEIGHT_M / DIAGNOSTIC_SOURCE_HEIGHT_M
@@ -349,6 +354,7 @@ def write_roundtrip_diagnostic(
     )
 
     return {
+        "simulation_provenance": dataset,
         "family": "OU_III",
         "wave_phase_seed": wave_seed,
         "imu_noise_seed": imu_seed,
@@ -389,7 +395,7 @@ def main(argv: list[str] | None = None) -> int:
     if len(seeds) != 3:
         raise SystemExit("--diagnostic-seeds takes wave,imu,init")
 
-    write_roundtrip_diagnostic(
+    metadata = write_roundtrip_diagnostic(
         args.output_dir / "ou_rs_roundtrip_transition.svg",
         args.output_dir / "ou_rs_roundtrip_transition.csv",
         *seeds,
@@ -397,6 +403,15 @@ def main(argv: list[str] | None = None) -> int:
         return_start_sec=args.transition_return_start_sec,
         decimation=args.decimation,
     )
+    metadata["source_commit"] = subprocess.check_output(
+        ["git", "rev-parse", "HEAD"], cwd=REPO_ROOT, text=True).strip()
+    metadata["producer_sha256"] = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
+    metadata["files"] = {
+        p.name: hashlib.sha256(p.read_bytes()).hexdigest()
+        for p in args.output_dir.iterdir() if p.suffix in (".csv", ".svg", ".tex")
+    }
+    (args.output_dir / "manifest.json").write_text(
+        json.dumps(metadata, indent=2, sort_keys=True) + "\n")
     return 0
 
 

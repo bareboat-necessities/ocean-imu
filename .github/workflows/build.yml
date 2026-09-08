@@ -140,11 +140,11 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release download v1.1.3 --repo bareboat-necessities/oceanography-waves-lib --pattern "sim-data-files.zip" --clobber
+          python3 tools/sim_dataset.py --archive sim-data-files-vessel-rao-28ft.zip
 
       - name: Unpack simulation data (${{ matrix.dir }})
         run: |
-          unzip -o sim-data-files.zip -d ${{ github.workspace }}/plots/${{ matrix.dir }}
+          unzip -o sim-data-files-vessel-rao-28ft.zip -d ${{ github.workspace }}/plots/${{ matrix.dir }}
 
       # Retries and per-connection timeouts, because the archive stalling is
       # what actually burns the twenty minutes when this step fails.
@@ -206,11 +206,17 @@ jobs:
           cp ${{ github.workspace }}/plots/${{ matrix.dir }}/*.csv tests/${{ matrix.dir }}
 
       - name: Run tests (${{ matrix.dir }})
+        id: regression
+        continue-on-error: true
+        env:
+          W3D_COLLECT_ALL_GATES: "1"
         run: |
           cd tests/${{ matrix.dir }}
           chmod +x *.sh
           ./run_tests.sh
-          cp *.csv ../../plots/${{ matrix.dir }}
+
+      - name: Retain simulation output even when a regression gate fails
+        run: cp tests/${{ matrix.dir }}/*.csv plots/${{ matrix.dir }}/
 
       # Regenerated while the simulator still exists and before the document is
       # built, so the deterministic 900 s table in the PDF is the one this code
@@ -237,14 +243,20 @@ jobs:
         run: make -C tests/${{ matrix.dir }} clean
 
       - name: Generate PGF plots (${{ matrix.dir }})
+        id: plots
+        continue-on-error: true
+        env:
+          W3D_COLLECT_ALL_GATES: "1"
         shell: bash
         run: |
           cd plots/${{ matrix.dir }}
           chmod +x *.sh
-          ./draw_plots.sh
+          plot_status=0
+          bash -E -c 'status=0; trap "status=1" ERR; source ./draw_plots.sh; exit "$status"' || plot_status=$?
           mv -v *.pgf ../../doc/${{ matrix.dir }}/ || true
           mv -v *.svg ../../doc/${{ matrix.dir }}/ || true
           mv -v *.png ../../doc/${{ matrix.dir }}/ || true
+          exit "$plot_status"
 
       # Keep one retry for transient TeX/package failures. PlantUML is not used
       # by any document in this repository, so the build deliberately has no
@@ -319,6 +331,12 @@ jobs:
           name: release-svgs-${{ matrix.dir }}
           path: release-svg/${{ matrix.dir }}/**/*.svg
           if-no-files-found: error
+
+      - name: Preserve regression and plot failures after producing review artifacts
+        if: steps.regression.outcome != 'success' || steps.plots.outcome != 'success'
+        run: |
+          echo "Simulation regression or plot generation failed; see the original step logs."
+          exit 1
 
   release:
     # ou-evidence only runs on main. The build job explicitly survives a

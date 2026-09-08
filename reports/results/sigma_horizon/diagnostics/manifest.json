@@ -1,0 +1,35 @@
+{
+  "source_commit": "8889188557a70ad91925d58bf960441fed37eb07",
+  "source_diff_sha256": "c7134584033ab3e3adad4995d952cc2be949a2de7ff8932fbc5a908d7d818f2b",
+  "binary_sha256": {
+    "OU-II": "62fce0caf5c310c83e7fd1a0001c404ddfc4f29e921bac1ab47d722c16332879",
+    "OU-III": "f7531577ae3fc78f7c7fb722b45043dc74db94e1da053588ec72d12b2b4bcac8"
+  },
+  "producer_sha256": "7744e9e10c6ac133b11b7ace4de302c81bbb0efadf8413817c55d44b15cf5d6f",
+  "configs": [
+    {
+      "name": "baseline_cap35",
+      "env": {
+        "OU_SIGMA_VAR_HORIZON_MAX_S": "35"
+      }
+    },
+    {
+      "name": "K16_cap180",
+      "env": {
+        "OU_SIGMA_VAR_K_PERIODS": "16",
+        "OU_SIGMA_VAR_HORIZON_MAX_S": "180"
+      }
+    },
+    {
+      "name": "K32_cap180",
+      "env": {
+        "OU_SIGMA_VAR_K_PERIODS": "32",
+        "OU_SIGMA_VAR_HORIZON_MAX_S": "180"
+      }
+    }
+  ],
+  "seeds": "default",
+  "records": "0,4",
+  "statistics_use_all_200hz_samples": true,
+  "saved_series_sampling_hz": 1
+}

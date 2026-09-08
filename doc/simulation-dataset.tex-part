@@ -1,0 +1,16 @@
+\paragraph{Simulation dataset.}
+Simulation records use \texttt{oceanography-waves-lib} release
+\texttt{v1.2.1}, archive \texttt{sim-data-files-vessel-rao-28ft.zip}.
+Motion and IMU channels describe the centre of gravity of an estimated
+28 ft (8.53 m) fin-keel sailboat at zero forward speed and fixed heading.
+The analytical response-amplitude operators (RAOs) include surge, sway,
+heave, roll and pitch; Euler yaw is held fixed. Body axes are $x$ forward, $y$ port and $z$ up. These are estimated
+coefficients, not measured hull-specific RAOs. File heights and periods
+identify the incident sea, and spectrum CSVs remain incident-wave spectra;
+they are not vessel-motion spectra. JONSWAP and PM records drive the RAOs
+with their first-order incident components, without particle Stokes drift
+or higher-order particle harmonics. Regular-wave elevation harmonics are
+filtered by the same response. The largest cases are extrapolated stress
+tests. The default IMU is at the centre of gravity; lever-arm studies add
+an explicit sensor offset. The wave-theory derivations and auxiliary
+Fenton surface plots describe incident waves separately from vessel motion.

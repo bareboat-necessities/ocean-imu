@@ -3,8 +3,8 @@
 \label{sec:direction-validation}
 
 The estimator is evaluated on the same directional records used by the marine
-motion study: four JONSWAP seas and four Pierson--Moskowitz seas with nonlinear
-Stokes harmonics.  Each record is \SI{1200}{s} long at \SI{200}{Hz}; scoring
+motion study: four JONSWAP seas and four Pierson--Moskowitz seas, each passed through the v1.2.1
+28 ft vessel RAO.  Each record is \SI{1200}{s} long at \SI{200}{Hz}; scoring
 uses the final \SI{900}{s} so that startup and magnetic-reference acquisition
 do not dominate the direction metric.  Ten paired seed triplets vary the wave
 realization, sensor noise and drift, and residual-error initialization.  The
@@ -41,6 +41,39 @@ against the generator's physical propagation direction.  The implementation's
 FORWARD/BACKWARD labels themselves are not treated as physical truth: they are
 labels relative to whichever axial representative the estimator returns and
 can exchange names when that representative flips by $180^\circ$.
+All ten replays are retained. Angular scores are conditional on a finite
+estimate; a replay with no resolved travel direction contributes to the
+unresolved fraction but has no directed angular score. Summary counts and
+paired counts use finite observations and their matched seed intersection.
+
+\subsection{Known-vessel response matching}
+The direction branch receives the engine-guarded accelerometer. After levelling,
+a direction-only equalizer matches surge, sway and heave amplitude and phase.
+In the causal Laplace convention, let
+\begin{equation}
+Q_j(s)=(1+\tau_j s)^{-2},\qquad
+G_h(s)=\left(1+2\zeta_hs/\omega_h+s^2/\omega_h^2\right)^{-1}.
+\end{equation}
+For the pinned hull, $\tau_{\rm surge}=0.7$ s, $\tau_{\rm sway}=1.0$ s,
+$\omega_h=2\pi/2.4$ rad/s and $\zeta_h=0.45$. With
+$Q_t=(1+s)^{-2}$, the compensators are $E_j=Q_t/Q_j$ and $E_z=Q_t/G_h$.
+They are stable and proper, and their magnitudes do not exceed one.
+The common footprint/depth attenuation remains; this is relative response
+matching, not incident-wave-height reconstruction. Matching heave as well as
+both horizontal channels preserves the orbital quadrature needed for travel
+sense. The existing simulation basis conversion exchanges surge and sway at
+the input of this stage, so the channel time constants are assigned accordingly.
+
+The wave-period tuner reads the pre-equalized signal. Neither attitude nor
+translation receives equalizer output. The profile is explicitly enabled in
+the vessel simulators; generic deployment requires a known response in the
+correct coordinate frame. Weak response, response nulls and directional spread
+can still leave direction unresolved. Confidence and simulation acceptance
+thresholds are unchanged. The v1.2.1 phase kernel
+$\cos(\mathbf{k}\cdot\mathbf{x}-\omega t+\phi)$ defines the reported azimuth as
+propagation-to, with no additional $180^\circ$ shift.
+
+\input{w3d-direction-rao-generated.tex-part}
 
 \section{Results}
 \label{sec:direction-results}
@@ -57,7 +90,7 @@ estimate is \OUValidationTravelAbsError{} degrees under the aggregate metric
 reported by the committed validation bundle.
 
 These numbers answer two different questions.  The axial statistic measures
-whether horizontal orbital motion identifies the vertical propagation plane;
+whether horizontal vessel motion identifies the incident propagation plane;
 the travel-sense statistic measures whether the horizontal--vertical phase test
 chooses the correct direction along that plane.  A low axial error therefore
 does not, by itself, demonstrate a correct $0$--$360^\circ$ propagation
@@ -86,35 +119,36 @@ OU--III performance claim for this paper.
 \begin{table}[t]
   \centering
   \caption{Wave-direction RMS errors in the ten-seed adaptive OU--III integrated
-  replay.  Entries are mean $\pm$ sample standard deviation across the ten seed
-  triplets, in degrees.}
+  replay. Entries are mean $\pm$ sample standard deviation of finite
+  per-replay angular scores, in degrees. $n$ is the number of valid directed
+  scores out of ten executions; availability is reported separately.}
   \label{tab:direction-ou3-rms}
   \footnotesize
   \setlength{\tabcolsep}{3.0pt}
   \renewcommand{\arraystretch}{1.06}
-  \begin{tabular}{@{}lrrr@{}}
+  \begin{tabular}{@{}lrrrr@{}}
     \toprule
-    Case & $H_s$ [m] & Axis RMS & Directed RMS \\
+    Case & $H_s$ [m] & Axis RMS & Directed RMS & $n$ \\
     \midrule
-    JONSWAP     & 0.27 & $13.79\pm0.97$ & $15.16\pm0.93$ \\
-    JONSWAP     & 1.50 & $12.03\pm0.53$ & $19.45\pm1.94$ \\
-    JONSWAP     & 4.00 & $11.44\pm0.55$ & $23.99\pm1.96$ \\
-    JONSWAP     & 8.50 & $11.28\pm0.40$ & $27.02\pm2.37$ \\
+    JONSWAP     & 0.27 & $6.27\pm3.71$ & $5.68\pm4.63$ & 9 \\
+    JONSWAP     & 1.50 & $21.33\pm2.11$ & $18.83\pm1.42$ & 10 \\
+    JONSWAP     & 4.00 & $18.01\pm2.00$ & $17.94\pm2.19$ & 10 \\
+    JONSWAP     & 8.50 & $25.58\pm2.54$ & $26.34\pm2.25$ & 10 \\
     \addlinespace
-    PM--Stokes  & 0.27 & $14.36\pm1.11$ & $14.42\pm1.30$ \\
-    PM--Stokes  & 1.50 & $12.37\pm0.64$ & $15.09\pm0.74$ \\
-    PM--Stokes  & 4.00 & $12.10\pm0.79$ & $15.95\pm1.19$ \\
-    PM--Stokes  & 8.50 & $12.31\pm0.82$ & $16.64\pm1.22$ \\
+    PM--Stokes  & 0.27 & $8.72\pm6.74$ & $9.14\pm5.02$ & 2 \\
+    PM--Stokes  & 1.50 & $22.81\pm1.99$ & $20.08\pm1.27$ & 10 \\
+    PM--Stokes  & 4.00 & $16.10\pm1.57$ & $16.25\pm1.39$ & 10 \\
+    PM--Stokes  & 8.50 & $23.71\pm2.09$ & $25.31\pm2.41$ & 10 \\
     \bottomrule
   \end{tabular}
 \end{table}
 
-The directed RMS is intentionally much larger than the scenario-level circular
-mean error.  A small fraction of wrong travel-sense decisions produces errors
+The directed RMS can be much larger than the scenario-level circular
+mean error.  Wrong travel-sense decisions produces errors
 near $180^\circ$ and therefore carries large quadratic weight in RMS, even
 though the truth-referenced travel-sense decision is correct for
 \OUValidationTravelCorrect\% of samples.  Reporting both metrics prevents the
-high correct-decision fraction from hiding those rare but severe sense flips.
+aggregate correct-decision fraction from hiding large sense-flip errors.
 
 \begin{table}[t]
   \centering
@@ -129,15 +163,15 @@ high correct-decision fraction from hiding those rare but severe sense flips.
     \toprule
     Case & $H_s$ & R & P & Y & $\bar\theta$ & T/A/U [\%] \\
     \midrule
-    JONSWAP     & 0.27 & 0.23 & 0.18 & 0.63 &  31.5 & 0.1/96.8/3.1 \\
-    JONSWAP     & 1.50 & 0.19 & 0.14 & 0.90 & -28.6 & 96.7/0.8/2.5 \\
-    JONSWAP     & 4.00 & 0.31 & 0.13 & 0.47 &  31.1 & 1.2/96.5/2.3 \\
-    JONSWAP     & 8.50 & 0.17 & 0.11 & 0.57 & -26.9 & 94.7/1.7/3.6 \\
+    JONSWAP     & 0.27 & 0.31 & 0.13 & 0.48 &   0.8 & 0.3/0.0/99.7 \\
+    JONSWAP     & 1.50 & 0.16 & 0.17 & 0.59 & -25.5 & 70.4/17.7/11.8 \\
+    JONSWAP     & 4.00 & 0.22 & 0.16 & 0.77 &  28.3 & 8.4/87.1/4.5 \\
+    JONSWAP     & 8.50 & 0.28 & 0.20 & 0.55 & -26.4 & 19.5/76.3/4.2 \\
     \addlinespace
-    PM--Stokes  & 0.27 & 0.22 & 0.18 & 0.69 &  32.5 & 0.0/97.3/2.7 \\
-    PM--Stokes  & 1.50 & 0.21 & 0.17 & 0.58 & -28.1 & 96.9/0.5/2.6 \\
-    PM--Stokes  & 4.00 & 0.35 & 0.20 & 0.72 &  30.0 & 0.2/98.2/1.6 \\
-    PM--Stokes  & 8.50 & 0.16 & 0.11 & 0.31 & -26.7 & 97.9/0.4/1.8 \\
+    PM--Stokes  & 0.27 & 0.32 & 0.13 & 0.65 &   0.6 & 0.1/0.0/99.9 \\
+    PM--Stokes  & 1.50 & 0.16 & 0.17 & 0.43 & -25.4 & 40.1/45.7/14.3 \\
+    PM--Stokes  & 4.00 & 0.21 & 0.16 & 0.58 &  27.5 & 0.0/94.9/5.1 \\
+    PM--Stokes  & 8.50 & 0.32 & 0.21 & 0.44 & -25.5 & 58.1/38.2/3.7 \\
     \bottomrule
   \end{tabular}
   \vspace{1pt}
@@ -187,3 +221,10 @@ policy, followed by comparison against a directional wave buoy or wave-tank
 reference.  The alternative Aranovskiy and PLL trackers in
 Appendix~\ref{app:tracker-alternatives} are implementation options only; the
 current evidence does not rank them against KalmANF.
+
+Without response matching, unequal surge/sway gains and heave phase distort
+the incident direction signature. The known-preset equalizer addresses this
+relative distortion, while retained footprint attenuation, directional spread,
+attitude error and sensor noise still limit accuracy and availability. It does
+not establish validity for an unknown hull or recover information at response
+nulls.

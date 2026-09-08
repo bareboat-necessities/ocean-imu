@@ -131,16 +131,17 @@ class WaveDirectionChartContractTests(unittest.TestCase):
                     metrics[(scenario, row["metric"])] = (
                         float(row["mean"]),
                         float(row["std"]),
+                        int(row["n"]),
                     )
 
         self.assertEqual(len(metrics), 16)
         for scenario, (case, hs) in scenario_labels.items():
-            axis_mean, axis_std = metrics[(scenario, "dir_axis_rmse_deg")]
-            travel_mean, travel_std = metrics[(scenario, "dir_travel_rmse_deg")]
+            axis_mean, axis_std, _ = metrics[(scenario, "dir_axis_rmse_deg")]
+            travel_mean, travel_std, travel_n = metrics[(scenario, "dir_travel_rmse_deg")]
             expected = (
                 rf"{re.escape(case)}\s*&\s*{re.escape(hs)}\s*&\s*"
                 rf"\${axis_mean:.2f}\\pm{axis_std:.2f}\$\s*&\s*"
-                rf"\${travel_mean:.2f}\\pm{travel_std:.2f}\$"
+                rf"\${travel_mean:.2f}\\pm{travel_std:.2f}\$\s*&\s*{travel_n}\s*\\\\"
             )
             self.assertRegex(results, expected)
 

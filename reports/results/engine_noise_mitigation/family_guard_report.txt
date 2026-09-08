@@ -1,0 +1,12 @@
+Pooled over 8 stationary records, 900 s scoring window
+
+Family    engine off    2400 off  2400 guard+R  residual   yaw off   yaw +R
+---------------------------------------------------------------------------
+OU-II          0.515      18.610         0.541    1.051x    103.77     2.68
+OU-III         0.405      22.195         0.456    1.126x    103.90     5.08
+TFG            0.416       9.574         0.457    1.097x    105.29     2.10
+
+Engine-off replays, guarded against unguarded:
+  OU-II    identical
+  OU-III   identical
+  TFG      identical

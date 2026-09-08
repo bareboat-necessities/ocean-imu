@@ -23,8 +23,8 @@ accelerometer channel used for both attitude and wave acceleration.
 
 To measure this effect without changing any other part of the estimator, the
 standard eight JONSWAP and PM--Stokes records are replayed with the IMU moved
-\SIlist{10;20;30}{cm} along each canonical body direction: athwartships,
-fore--aft, and vertical.  The record's CG motion, attitude, gyroscope,
+\SIlist{10;20;30}{cm} along each canonical body direction: forward ($x$),
+port ($y$), and up ($z$), matching the RAO generator.  The record's CG motion, attitude, gyroscope,
 magnetometer, stochastic sensor realization, OU adaptation, covariance,
 pseudo-measurements, startup logic, and vibration guard are unchanged.
 
@@ -58,100 +58,46 @@ measures what a deployable implementation actually recovers.
 }
 
 \IfFileExists{ou3_lever_arm_penalty.svg}{%
-  \begin{figure*}[t]
-    \centering
-    \includesvg[width=\textwidth,inkscapelatex=false]{ou3_lever_arm_penalty}
-    \caption{Pooled OU--III 3-D displacement RMS, normalized by the CG-mounted
-    baseline, versus IMU lever-arm magnitude, one panel per canonical
-    installation direction.  The unmodeled curve is the installation penalty;
-    the exact-model curve is what an ideal lever-arm model recovers, and the
-    gyro-model curve is what the deployable reconstruction recovers from the
-    corrupted rate alone.  A curve on the unit line is indistinguishable from
-    a CG-mounted IMU.}
-    \label{fig:imu-lever-arm-penalty}
-  \end{figure*}
+\begin{figure*}[t]\centering
+\includesvg[width=\textwidth,inkscapelatex=false]{ou3_lever_arm_penalty}
+\caption{Pooled 3-D RMS normalized by the CG baseline. An offset may increase or decrease the existing estimator residual; compensation targets the physical rotational term.}\label{fig:imu-lever-arm-penalty}
+\end{figure*}
 }{}
 
 \IfFileExists{ou3_lever_arm_tilt.svg}{%
-  \begin{figure*}[t]
-    \centering
-    \includesvg[width=\textwidth,inkscapelatex=false]{ou3_lever_arm_tilt}
-    \caption{Pooled maximum roll/pitch RMS for the same sweep, normalized by
-    the CG-mounted baseline.  This is the channel the effect reaches first:
-    off-CG translational acceleration is absorbed by the attitude solution
-    before it appears in displacement, so the athwartships arm roughly doubles
-    the pooled tilt error at \SI{30}{cm} while barely moving the 3-D score of
-    Fig.~\ref{fig:imu-lever-arm-penalty}.  The fore--aft arm briefly reduces
-    pooled tilt at short offsets, which is the injected term happening to
-    oppose the residual the estimator already carries there; it is not a
-    benefit an installation can rely on, and it reverses by \SI{30}{cm}.}
-    \label{fig:imu-lever-arm-tilt}
-  \end{figure*}
+\begin{figure*}[t]\centering
+\includesvg[width=\textwidth,inkscapelatex=false]{ou3_lever_arm_tilt}
+\caption{Pooled maximum roll/pitch RMS normalized by the CG baseline. The generated table reports the measured ratios; small or negative changes can reflect interaction with existing residuals.}\label{fig:imu-lever-arm-tilt}
+\end{figure*}
 }{}
 
 \IfFileExists{ou3_lever_arm_mechanism.svg}{%
-  \begin{figure*}[t]
-    \centering
-    \includesvg[width=\textwidth,inkscapelatex=false]{ou3_lever_arm_mechanism}
-    \caption{The mechanism behind Figs.~\ref{fig:imu-lever-arm-penalty} and
-    \ref{fig:imu-lever-arm-tilt}, measured directly on the specific-force
-    channel rather than on the score.  Left: RMS of the rotational term
-    \eqref{eq:imu-lever-arm} that the installation injects, which grows
-    linearly in $|r|$ at fixed sea state.  Right: the fraction of that term
-    each modeling arm leaves behind at \SI{30}{cm}.  The unmodeled arm leaves
-    all of it by definition, the exact model cancels it identically, and the
-    gyro model leaves only the fifth its finite derivative band cannot follow
-    --- in every canonical direction alike, since the reconstruction does not
-    depend on which direction $r$ points.}
-    \label{fig:imu-lever-arm-mechanism}
-  \end{figure*}
+\begin{figure*}[t]\centering
+\includesvg[width=\textwidth,inkscapelatex=false]{ou3_lever_arm_mechanism}
+\caption{RMS of the installed rotational acceleration and the fraction remaining after each model. The force scales linearly with offset; the gyro model leaves a direction-dependent residual.}\label{fig:imu-lever-arm-mechanism}
+\end{figure*}
 }{}
 
 \IfFileExists{ou3_lever_arm_sea_state.svg}{%
-  \begin{figure*}[t]
-    \centering
-    \includesvg[width=\textwidth,inkscapelatex=false]{ou3_lever_arm_sea_state}
-    \caption{Per-sea penalty at \SI{30}{cm}, each sea normalized by its own
-    CG-mounted baseline, for the direction that maximizes each channel.  The
-    two channels run in opposite directions with sea state: the displacement
-    penalty is worst in the mildest seas, where the injected term is largest
-    relative to the wave signal, while the tilt penalty is worst in the
-    steepest seas.  Pooling over all eight seas, as
-    Table~\ref{tab:imu-lever-arm} does, is dominated by the largest and
-    therefore understates both.  Both models remove the penalty in every sea.}
-    \label{fig:imu-lever-arm-sea-state}
-  \end{figure*}
+\begin{figure*}[t]\centering
+\includesvg[width=\textwidth,inkscapelatex=false]{ou3_lever_arm_sea_state}
+\caption{Per-record normalized scores at 30 cm, using the direction that maximizes each pooled channel. Individual records are reported separately because pooling weights the largest absolute errors most heavily.}\label{fig:imu-lever-arm-sea-state}
+\end{figure*}
 }{}
 
 \IfFileExists{ou3_lever_arm_cutoff.svg}{%
-  \begin{figure}[t]
-    \centering
-    \includesvg[width=\columnwidth,inkscapelatex=false]{ou3_lever_arm_cutoff}
-    \caption{The deployable model's one design parameter.  Too narrow a
-    derivative band and the low-pass phase lag misaligns a correction whose
-    amplitude is already right, so the model is worse than none; too wide and
-    the differentiated gyroscope noise it admits exceeds the term it removes.
-    Between the two failure modes the basin is flat, which is what makes the
-    deployable model robust rather than tuned.}
-    \label{fig:imu-lever-arm-cutoff}
-  \end{figure}
+\begin{figure}[t]\centering
+\includesvg[width=\columnwidth,inkscapelatex=false]{ou3_lever_arm_cutoff}
+\caption{Derivative-band sweep for the 30 cm port arm. Narrow-band phase lag and wide-band differentiated noise compete. The deployed 15 Hz point remains close to the best measured 3-D score; it is not refitted.}\label{fig:imu-lever-arm-cutoff}
+\end{figure}
 }{}
 
-Two conclusions follow.  First, the installation penalty is real at realistic
-offsets and it is not uniform across the state.  Attitude degrades well before
-displacement does, and the two channels do not even share a worst case: the
-displacement penalty peaks in the mildest seas, where the injected term is
-largest relative to the wave signal, while the tilt penalty peaks in the
-steepest ones.  A single pooled ratio therefore understates the effect in both
-directions, which is why Fig.~\ref{fig:imu-lever-arm-sea-state} reports it sea
-by sea.
-
-Second, the penalty is entirely deterministic.  The exact-model arm returns to
-the CG baseline in every direction, at every offset, and in every sea, so
-nothing about an off-CG installation exceeds what \eqref{eq:imu-lever-arm}
-describes; there is no residual stochastic cost to pay.  The gyro-model arm
-shows that most of that recovery survives having only a noisy, biased rate to
-differentiate, provided the derivative band is chosen inside the basin of
-Fig.~\ref{fig:imu-lever-arm-cutoff}.  The practical consequence for an
-installation is that the lever arm must be measured and modeled, not that the
-IMU must be moved to the CG.
+The installed force is measurable even when the pooled reconstruction
+penalty is small or negative. The generated results report all three axes at each offset.
+A lower score can arise when the injected term opposes an existing residual;
+it is not a reason to choose an incorrect sensor model.
+The exact-model arm recovers the CG baseline to numerical precision.
+The measured-gyro arm removes most of the installed acceleration, but its
+remaining differentiated noise and lag do not guarantee a better score
+for every record. The lever vector and body convention must therefore be
+specified explicitly when interpreting an installation study.

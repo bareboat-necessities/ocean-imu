@@ -35,6 +35,12 @@ static constexpr float NOISE_STDDEV   = 0.08f;
 static constexpr float BIAS_MEAN      = 0.10f;
 static constexpr float FREQ_MIN_HZ    = 0.04f;
 static constexpr float FREQ_MAX_HZ    = 2.0f;
+// Condition the measured signal identically for each standalone backend.
+// The injected bias/noise remain present at the input; these causal filters
+// remove DC and suppress noise above the wave band without consulting truth.
+static constexpr double INPUT_HP_HZ = 0.01;
+static constexpr double INPUT_LP_HZ = 0.8;
+static constexpr float ZC_HYSTERESIS_G = 0.004f;
 static constexpr double QUALITY_WINDOW_SECONDS = 5.0;
 static constexpr double QUALITY_GATE_REL_MAX = 0.70;
 
@@ -76,6 +82,7 @@ static void reset_run_state() {
     kalmanfTracker = TrackerPolicy<TrackerType::KALMANF>();
     init_kalmanf_backend();
     zcTracker = TrackerPolicy<TrackerType::ZEROCROSS>();
+    zcTracker.t = SchmittTriggerZCFreqTracker(ZC_HYSTERESIS_G, ZERO_CROSSINGS_PERIODS);
     freqSmoother = FrequencySmoother<float>();
     pllTracker.reset(FREQ_GUESS);
 }
@@ -189,12 +196,22 @@ static TrackerRunSummary run_from_csv(TrackerType tracker,
 
     reset_run_state();
 
+    double input_dc = 0.0;
+    double input_lp1 = 0.0;
+    double input_lp2 = 0.0;
+    const double hp_alpha = -std::expm1(-2.0 * M_PI * INPUT_HP_HZ * DELTA_T);
+    const double lp_alpha = -std::expm1(-2.0 * M_PI * INPUT_LP_HZ * DELTA_T);
+
     // Process records
     WaveDataCSVReader reader(csv_file);
     reader.for_each_record([&](const Wave_Data_Sample &rec) {
         float accel_z = (meta.type == WaveType::JONSWAP || meta.type == WaveType::PMSTOKES) ? rec.imu.acc_bz - g_std : rec.wave.acc_z;
         float noisy_accel = accel_z + bias + gauss(rng);
-        auto [est_freq, tracker_smooth_freq] = run_tracker_once(tracker, noisy_accel, DELTA_T);
+        input_dc += hp_alpha * (noisy_accel - input_dc);
+        input_lp1 += lp_alpha * (noisy_accel - input_dc - input_lp1);
+        input_lp2 += lp_alpha * (input_lp1 - input_lp2);
+        auto [est_freq, tracker_smooth_freq] =
+            run_tracker_once(tracker, static_cast<float>(input_lp2), DELTA_T);
         const bool updated = !std::isnan(est_freq);
 
         double smooth_freq = std::numeric_limits<double>::quiet_NaN();

@@ -54,6 +54,11 @@ inline float wrapAxialDeg90(float a) {
 }
 
 inline float dirDegGeneratorSignedFromVec(const Vector2f& v) {
+    // getAxis() returns zero when the amplitude/confidence gate is closed.
+    // atan2(0, 0) must not turn that unavailable estimate into a north bearing.
+    if (!v.allFinite() || !(v.squaredNorm() > 1e-12f)) {
+        return std::numeric_limits<float>::quiet_NaN();
+    }
     float deg = rad_to_deg(std::atan2(v.x(), v.y()));
     return wrapAxialDeg90(deg);
 }
@@ -74,12 +79,12 @@ inline float travelDegGeneratorFromVec(const Vector2f& v, float heading_deg) {
     return deg;
 }
 
-// The generator azimuth in a record name is the direction the waves come from:
-// the propagation-to vector recovered from the truth channels lies at
-// azimuth + 180 in every shipped record.  Travel-sense scoring compares against
-// this, not against the raw azimuth.
+// v1.2.1 incident harmonics use cos(k.d - omega*t + phase): the
+// filename azimuth is propagation-to, as documented by VesselRao. It is
+// not a meteorological wave-from bearing. Axis scoring is modulo 180, but
+// travel-sense scoring must retain this directed source convention.
 inline float travelTruthDegFromGeneratorAzimuth(float azimuth_deg) {
-    float deg = std::fmod(azimuth_deg + 180.0f, 360.0f);
+    float deg = std::fmod(azimuth_deg, 360.0f);
     if (deg < 0.0f) deg += 360.0f;
     return deg;
 }
@@ -692,6 +697,7 @@ struct W3dSimulationRunResult {
 
     std::vector<float> errs_x, errs_y, errs_z, errs_roll, errs_pitch, errs_yaw;
     std::vector<float> ref_x, ref_y, ref_z;
+    std::vector<float> accel_err_x, accel_err_y, accel_err_z;
     std::vector<float> accb_err_x, accb_err_y, accb_err_z;
     std::vector<float> gyrb_err_x, gyrb_err_y, gyrb_err_z;
     std::vector<float> magb_err_x, magb_err_y, magb_err_z;

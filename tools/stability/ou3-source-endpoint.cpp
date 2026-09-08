@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <complex>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
@@ -18,6 +19,7 @@
 #include <string>
 #include <vector>
 #include "util/W3dSimCommon.h"
+#include "VesselRao.h"
 #include "kalman_ou_common/KalmanOUCoreMath.h"
 
 #ifdef OU3_SOURCE_EVENT_TRACE
@@ -82,31 +84,24 @@ V3 trace_gyro = V3::Zero();
 Truth source(const Sea& sea, double t)
 {
     const M3 basis = basis_zu_to_ned().cast<double>();
-    const auto state = sea.getLagrangianState(t);
-    const auto imu = sea.getIMUReadings(0.0, 0.0, t, 0.0, double(dt));
+    const auto waves = sea.incidentHarmonics();
+    const VesselRao vessel(waves);
+    const auto state = vessel.state(t);
     V3 integral = V3::Zero();
-    V3 drift = V3::Zero();
-    for (int i = 0; i < 128; ++i) {
-        const double a = sea.A1_(i), k = sea.k_(i), omega = sea.omega_(i);
-        const V3 direction(sea.dir_x_(i), sea.dir_y_(i), 0.0);
-        drift += omega * k * a * a * direction;
-        const std::array<double, 3> coeff = {a, k*a*a/2, 3*k*k*a*a*a/8};
-        for (int n = 1; n <= 3; ++n) {
-            const double theta = double(n) * (-omega*t + sea.phi_(i));
-            integral += coeff[std::size_t(n-1)] / (double(n)*omega)
-                * (std::sin(theta)*direction + std::cos(theta)*V3::UnitZ());
-        }
+    for (const auto& wave : waves) {
+        const auto response = vessel.transfer(wave.omega, wave.wavenumber, wave.direction);
+        const auto phase = std::polar(wave.amplitude, wave.phase-wave.omega*t);
+        for (int j = 0; j < 3; ++j)
+            integral(j) += (std::complex<double>(0,1) * response[std::size_t(j)] * phase / wave.omega).real();
     }
     Truth truth;
-    truth.R = basis * sea.rotationMatrixAt(0.0, 0.0, t) * basis.transpose();
-    // The source's constant Stokes drift is not the derivative of its
-    // centered displacement. Use the same centered orbital v/p/S graph.
-    truth.linear.segment<3>(0) = basis * (state.velocity - drift);
+    truth.R = basis * state.world_to_body * basis.transpose();
+    truth.linear.segment<3>(0) = basis * state.velocity;
     truth.linear.segment<3>(3) = basis * state.displacement;
     truth.linear.segment<3>(6) = basis * integral;
     truth.linear.segment<3>(9) = basis * state.acceleration;
-    truth.acc = basis * imu.accel_body;
-    truth.gyro = basis * imu.gyro_body;
+    truth.acc = basis * state.accel_body;
+    truth.gyro = basis * state.gyro_body;
     return truth;
 }
 
@@ -246,14 +241,16 @@ int main(int argc, char** argv)
         auto spread = std::make_shared<Cosine2sRandomizedDistribution>(
             -30.0f * std::numbers::pi / 180.0, 10.0, 42u);
         Sea sea(1.5f, 5.7f, spread, 0.02, 0.8, g_std, 42u);
-        root << "{\"branch\":\"STOKES_WAVE_FOLLOWING\",\"seed\":42,"
+        root << "{\"branch\":\"VESSEL_RAO_28FT\",\"seed\":42,"
              << "\"gravity\":" << g_std << ",\"dt\":" << dt
              << ",\"bias_root\":[0,0,0],\"bias_driver\":\"ZERO\","
              << "\"temperature\":35,\"mag_world\":[20,0,40],\"atoms\":[";
-        for (int i = 0; i < 128; ++i) {
+        const auto waves = sea.incidentHarmonics();
+        for (std::size_t i = 0; i < waves.size(); ++i) {
             if (i) root << ',';
-            root << '[' << sea.omega_(i) << ',' << sea.k_(i) << ',' << sea.A1_(i)
-                 << ',' << sea.phi_(i) << ',' << sea.dir_x_(i) << ',' << sea.dir_y_(i) << ']';
+            const auto& w = waves[i];
+            root << '[' << w.omega << ',' << w.wavenumber << ',' << w.amplitude
+                 << ',' << w.phase << ',' << std::cos(w.direction) << ',' << std::sin(w.direction) << ']';
         }
         root << "]}\n";
 

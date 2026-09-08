@@ -152,6 +152,9 @@ DIRECTION_METRIC_NAMES = (
     "dir_axis_abs_error_deg",
     "dir_axis_rmse_deg",
     "dir_axis_circ_std_deg",
+    # Angular errors are conditional on an available axis; retain its share
+    # of the complete scoring window so missing motion cannot look accurate.
+    "dir_axis_available_pct",
     "dir_sense_forward_pct",
     "dir_sense_reverse_pct",
     "dir_sense_uncertain_pct",
@@ -169,6 +172,10 @@ DIRECTION_METRIC_NAMES = (
 )
 
 METRIC_NAMES = (
+    "accel_x_rms_mps2",
+    "accel_y_rms_mps2",
+    "accel_z_rms_mps2",
+    "accel_3d_rms_mps2",
     "disp_x_rms_m",
     "disp_y_rms_m",
     "disp_z_rms_m",
@@ -418,8 +425,9 @@ def phase_randomize_wave(
 ) -> np.ndarray:
     """Build a band-limited, kinematically closed phase surrogate.
 
-    The released JONSWAP traces contain components from 0.02 to 0.8 Hz and
-    second-order sum harmonics up to 1.6 Hz.  Their finite record boundaries
+    The released vessel traces respond to incident components from 0.02 to
+    0.8 Hz. The predeclared DFT surrogate retains bins through 1.6 Hz; this
+    diagnostic truncation is not the physical RAO forcing bandwidth. Record boundaries
     are not periodic, so independently rotating the DFTs of displacement,
     velocity, and acceleration redistributes boundary leakage and breaks
     ``v = d/dt(p)`` and ``a = d/dt(v)``.
@@ -459,7 +467,7 @@ def phase_randomize_wave(
     source_velocity = np.fft.rfft(data[:, velocity_indices], axis=0)
     velocity_spectrum = np.zeros_like(source_velocity)
     # The state represents oscillatory displacement, so exclude the source
-    # model's separate mean Stokes-drift velocity from this closed chain.
+    # record's finite-window velocity mean from this closed chain.
     velocity_spectrum[retained] = (
         source_velocity[retained] * rotation[retained, None]
     )
@@ -758,7 +766,7 @@ OU_III_RS_BOUNDS_MS = (0.15, 100.0)
 # because the law ablation uses them; the fixed-tuning modes derive their
 # frozen pair from the deployed law.
 OU_II_PSEUDO_MSE_COEFF = 0.1116
-OU_II_PSEUDO_MSE_RATIO = 0.4611
+OU_II_PSEUDO_MSE_RATIO = 0.3
 OU_II_PSEUDO_QEFF = 2.0 * (0.12 ** 2) * (1.0 / 200.0)
 OU_II_PSEUDO_TAU_RATIO = 0.015 / 1.1
 OU_II_PSEUDO_PERIOD_BOUNDS_S = (1.0 / 200.0, 0.25)
@@ -824,7 +832,7 @@ def _finite_values(rows: Sequence[Mapping[str, Any]], metric: str) -> np.ndarray
     # Segment metrics only exist for the non-stationary scenario, so a missing
     # key is an expected absence rather than a defect.
     values = np.asarray(
-        [float(row.get(metric, math.nan)) for row in rows], dtype=np.float64
+        [float(row[metric]) if row.get(metric) is not None else math.nan for row in rows], dtype=np.float64
     )
     return values[np.isfinite(values)]
 
@@ -1145,7 +1153,7 @@ def _paired_effect(
         return {
             tuple(row[key] for key in pair_keys): float(row[metric])
             for row in rows
-            if math.isfinite(float(row.get(metric, math.nan)))
+            if row.get(metric) is not None and math.isfinite(float(row[metric]))
         }
 
     left = indexed(left_rows)
@@ -2302,7 +2310,7 @@ def _pmstokes_table(
         r"",
         r"\begin{table*}[t]",
         r"  \centering",
-        r"  \caption{Ten-seed paired OU-family comparison on the PM--Stokes seas, scored over the same final \SI{900}{s} window and the same seed triplets as the JONSWAP ensemble. PM--Stokes carries third-order bound harmonics that JONSWAP does not, so it is reported as a separate declared ensemble and is not pooled into the primary aggregate.}",
+        r"  \caption{Ten-seed paired OU-family comparison on the PM--Stokes seas, scored over the same final \SI{900}{s} window and the same seed triplets as the JONSWAP ensemble. The PM--Stokes archive uses first-order PM components filtered by the sailboat RAO, so it is reported as a separate declared ensemble and is not pooled into the primary aggregate.}",
         r"  \label{tab:ou_mc_pmstokes}",
         r"  \footnotesize",
         r"  \setlength{\tabcolsep}{4.0pt}",
@@ -2370,7 +2378,7 @@ def _direction_table(
         r"",
         r"\begin{table*}[t]",
         r"  \centering",
-        r"  \caption{Ten-seed OU--III wave-direction results over the final \SI{900}{s}, against the generator azimuth of each record. The propagation axis is defined modulo \SI{180}{\degree}, so $|\Delta\theta|$ is the absolute axial error of the circular-mean estimate and $\theta_{\mathrm{RMSE}}$ is the sample-wise axial RMS error. \emph{Sense} is a genuine correctness rate: the estimator's directed propagation vector, with the vessel heading removed, scored against the physical propagation direction of the record, which is the generator azimuth plus \SI{180}{\degree}. \emph{Unresolved} is the share below the confidence and amplitude thresholds. The FORWARD/BACKWARD classes the estimator exports are relative to the axis representative it happens to return and invert under a \SI{180}{\degree} heading change, so they are not scored here. Entries are mean $\pm$ sample standard deviation over the seed triplets.}",
+        r"  \caption{Ten-seed OU--III wave-direction results over the final \SI{900}{s}, against the generator azimuth of each record. The propagation axis is defined modulo \SI{180}{\degree}, so $|\Delta\theta|$ is the absolute axial error of the circular-mean estimate and $\theta_{\mathrm{RMSE}}$ is the sample-wise axial RMS error. \emph{Sense} is a genuine correctness rate: the estimator's directed propagation vector, with the vessel heading removed, scored against the physical propagation direction of the record, which is the v1.2.1 incident propagation azimuth. \emph{Unresolved} is the share below the confidence and amplitude thresholds. The FORWARD/BACKWARD classes the estimator exports are relative to the axis representative it happens to return and invert under a \SI{180}{\degree} heading change, so they are not scored here. Entries are mean $\pm$ sample standard deviation over the seed triplets.}",
         r"  \label{tab:ou_mc_direction}",
         r"  \footnotesize",
         r"  \setlength{\tabcolsep}{3.6pt}",
@@ -3301,9 +3309,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     else:
         stationary_inputs = sorted(args.data_dir.glob("wave_data_jonswap_*.csv"))
         if not args.skip_pmstokes:
-            # PM-Stokes carries third-order bound harmonics that JONSWAP does
-            # not, so it is a genuinely different input family rather than
-            # another draw from the confirmatory ensemble.  It is scored with
+            # The PM incident spectrum differs from JONSWAP. Both now drive
+            # the same vessel RAO with first-order components. It is scored with
             # the same seeds but kept out of the primary aggregate.
             stationary_inputs += sorted(
                 args.data_dir.glob("wave_data_pmstokes_*.csv")

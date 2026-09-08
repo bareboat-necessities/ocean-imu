@@ -1,0 +1,36 @@
+{
+  "source_commit": "8889188557a70ad91925d58bf960441fed37eb07",
+  "source_diff_sha256": "cf765a4b20b431b9dc5cfddc5d4087de7f349c789bd5b477e44c949796a91cc3",
+  "binary_sha256": {
+    "OU-II": "e1d526c5f6e5a85f0201e3f5c7808a31d1ae087d506f556b15e05b162e3e467a",
+    "OU-III": "960ade0c2a7c7d303321d40ca9b559889140fd854d3616e99d3ee382dd3a0364"
+  },
+  "producer_sha256": "1b61cb8cb2543e7c6dc75e510d18ef420a6fa41becf90b3c518a1cd942450889",
+  "configs": [
+    {
+      "name": "baseline_cap35",
+      "env": {
+        "OU_SIGMA_VAR_HORIZON_MAX_S": "35"
+      }
+    },
+    {
+      "name": "decay5_only",
+      "env": {
+        "OU_SIGMA_VAR_HORIZON_MAX_S": "35",
+        "OU_SIGMA_STILL_DECAY_SEC": "5"
+      }
+    },
+    {
+      "name": "K16_decay5",
+      "env": {
+        "OU_SIGMA_VAR_HORIZON_MAX_S": "180",
+        "OU_SIGMA_VAR_K_PERIODS": "16",
+        "OU_SIGMA_STILL_DECAY_SEC": "5"
+      }
+    }
+  ],
+  "seeds": "default",
+  "records": "0,4",
+  "statistics_use_all_200hz_samples": true,
+  "saved_series_sampling_hz": 1
+}

@@ -1,0 +1,16 @@
+[
+  {
+    "name": "baseline",
+    "env": {
+      "TFG_MAG_HI_RIDGE_REL": ".5",
+      "TFG_MAG_HI_MIN_INFO": "2",
+      "SF_SIGMA_M_SCALE": ".25",
+      "SF_SIGMA_G_SCALE": "10",
+      "TFG_MAG_REFINE_START_SEC": "90"
+    }
+  },
+  {
+    "name": "selected",
+    "env": {}
+  }
+]

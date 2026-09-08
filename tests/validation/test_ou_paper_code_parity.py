@@ -242,13 +242,13 @@ class OUPaperCodeParityTests(unittest.TestCase):
     def test_ou2_physical_mse_default_matches_paper(self):
         self.assertIn("PseudoAdaptationLaw pseudo_law_ = PseudoAdaptationLaw::PhysicalMSE;", self.ou2_wrap)
         self.assertRegex(self.ou2_wrap, r"R_PSEUDO_MSE_COEFF_DEFAULT\s*=\s*0\.1116f")
-        self.assertRegex(self.ou2_wrap, r"R_PSEUDO_MSE_RATIO_DEFAULT\s*=\s*0\.4611f")
+        self.assertRegex(self.ou2_wrap, r"R_PSEUDO_MSE_RATIO_DEFAULT\s*=\s*0\.3f")
         self.assertIn("ACC_NOISE_FLOOR_SIGMA_DEFAULT * ACC_NOISE_FLOOR_SIGMA_DEFAULT * FREQ_SMOOTHER_DT", self.ou2_wrap)
         self.assertIn("std::pow(u, 0.8f) / std::sqrt(TS)", self.ou2_wrap)
         self.assertIn("r_v = r_p / (ratio * tau);", self.ou2_wrap)
         self.assertIn("if (pseudo_law_ != PseudoAdaptationLaw::Empirical) return 1.0f;", self.ou2_wrap)
         for token in (
-            r"C_P=0.1116", r"\frac{C_P}{C_V}=0.4611",
+            r"C_P=0.1116", r"\frac{C_P}{C_V}=0.3",
             r"\sigma_{\rm floor}=\SI{0.12}{m.s^{-2}}", r"h=\SI{0.005}{s}",
             r"\tau^{12/5}T_S^{-1/2}", r"\tau^{7/5}T_S^{-1/2}",
         ):

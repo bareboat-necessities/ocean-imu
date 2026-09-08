@@ -1,0 +1,24 @@
+[
+  {
+    "config": "head",
+    "failed_records": 32,
+    "violations": 91,
+    "worst_ratio": 6.7392441538291035,
+    "yaw_rms_deg": 1.81482759795,
+    "roll_rms_deg": 0.27751470765,
+    "pitch_rms_deg": 0.297719894375,
+    "disp_3d_rms_m": 0.2915243532275,
+    "accel_bias_3d_rms_mps2": 0.07035916557250001
+  },
+  {
+    "config": "candidate",
+    "failed_records": 30,
+    "violations": 87,
+    "worst_ratio": 6.729624293472238,
+    "yaw_rms_deg": 1.8194730697000001,
+    "roll_rms_deg": 0.27831897325,
+    "pitch_rms_deg": 0.29610074015,
+    "disp_3d_rms_m": 0.2938793902525,
+    "accel_bias_3d_rms_mps2": 0.0701375397075
+  }
+]

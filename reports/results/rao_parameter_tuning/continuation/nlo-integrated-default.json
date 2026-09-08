@@ -1,0 +1,26 @@
+{
+  "source_parent": "6b20d608bca82f6487fd6d4c1d8344f4af829eef",
+  "source_note": "Working tree continuation: NLO coarse horizon 120 s; actual source hashes below.",
+  "source_sha256": {
+    "src/nlo/TimeVarGainNLO_Adapter.h": "9636070aa0972ddf399feeaa10a61fb080482c1df7c9ed42744643464ddf4fb7",
+    "tests/nlo/nlo-sim.cpp": "bb4dcd93aa733f0e48d8e1e7fda5aba926f3f4c32f60dc18df4f730da1d382c8",
+    "src/freq/PLLFreqTracker.h": "5199262b5dc37ee68c51b6acdc55d4f08bc8e9561349cb87d8e4adbd2165a76e"
+  },
+  "binary_sha256": "2bd09d2f04e73b75e0ac16ffb84229db6436c0b692ab6c15e395aecec18e1d1a",
+  "exit_code": 1,
+  "command": "W3D_COLLECT_ALL_GATES=1 W3D_WRITE_TIMESERIES=0 bash tests/nlo/run_tests.sh (cwd tests/nlo)",
+  "z_pct_hs": [
+    6.90799,
+    6.90062,
+    6.91584,
+    6.90372,
+    7.52444,
+    6.82936,
+    6.89257,
+    7.10524
+  ],
+  "failures": [
+    "ERROR: raw Z RMS above limit (7.52444% > 7.13%). Mean Z error was 0.000334329 m. Failing."
+  ],
+  "matches_instrumented_candidate_to_max_abs_percent_hs": 0.0
+}

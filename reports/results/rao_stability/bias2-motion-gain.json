@@ -1,0 +1,1892 @@
+{
+  "experiment": "CONNECTED_COMMON_TEMPLATE_MOTION_SUPPLY",
+  "event_trace_sha256": "bda02dfe732318c6e6ab6cb8394303e5b91577a6c73b7e9b6695eaefddf05216",
+  "producer_sha256": "dc4009a38bf2b3808be0a946b4d41704767f3b3e45019813ff61a741ce34b383",
+  "capture_sha256": {
+    ".root.json": "342430657fe96aec340deb40fca231dfdbad738b63fb2abc495f8111cb63d357",
+    ".inputs.csv": "2ff04db07ea8baf72f4dd652352d559ff07fba970ed4bba88fd287eb733b8655",
+    ".prefixes.jsonl": "2a184f24637abdab8026a8da7f75c68857e3993bc42b769c0d19f924cb2bb444"
+  },
+  "supply_units": {
+    "bias": "integral |e_b/(1 m/s^2)|^2 dt/(1 s), sample entrances",
+    "latent": "sum squared increments in [v/(1 m/s), p/(1 m), S/(1 m s), a_w/(1 m/s^2)]",
+    "gyro": "sum |Cayley discretization defect/(1 rad)|^2",
+    "accelerometer": "sum u_acc^T actual_R_acc^-1 u_acc",
+    "magnetometer": "sum u_mag^T actual_R_mag^-1 u_mag",
+    "S_zero": "sum S_true^T actual_R_S^-1 S_true"
+  },
+  "coefficient_dependencies_frozen_only_for_point_test": true,
+  "forcing_ports_relaxed_only_for_sufficient_coefficient_test": false,
+  "independent_BRMM_sample_boxes_created": false,
+  "bias_error_decay_required": false,
+  "P4_MOTION_PASS": false,
+  "P5_MOTION_MAY_START": false,
+  "modes": {
+    "H18": {
+      "counts": {
+        "prediction_enter": 600,
+        "prediction": 600,
+        "aw_floor": 600,
+        "accelerometer": 600,
+        "projection": 793,
+        "magnetometer": 75,
+        "S_zero": 118
+      },
+      "factorization_defects": {
+        "finite_factorization": 7.548560983834027e-07,
+        "composed_word_factorization": 1.020599725163322e-06,
+        "bias2_corrected_residual": 5.842560283464134e-16
+      },
+      "factorization_failure": [],
+      "minimum_chart_denominator": 0.999999895006483,
+      "decision": "COMMON_TEMPLATE_COEFFICIENT_DIAGNOSTIC_ONLY",
+      "lift_dimension": 22,
+      "same_scalar_for_all_forcing_events": true,
+      "template_energy_charged_once_over_complete_word": 4.88513815042876,
+      "candidate_matrix_tests": [
+        {
+          "gain": 1.52587890625e-05,
+          "endpoint_at_factor_one": 69038833.61146793
+        },
+        {
+          "gain": 0.000244140625,
+          "endpoint_at_factor_one": 4314927.496759639
+        },
+        {
+          "gain": 0.00390625,
+          "endpoint_at_factor_one": 269683.3645910629
+        },
+        {
+          "gain": 0.0625,
+          "endpoint_at_factor_one": 16855.606341660172
+        },
+        {
+          "gain": 1.0,
+          "endpoint_at_factor_one": 1053.8716292175086
+        },
+        {
+          "gain": 16.0,
+          "endpoint_at_factor_one": 66.26606374419059
+        },
+        {
+          "gain": 256.0,
+          "endpoint_at_factor_one": 4.586853122642359
+        },
+        {
+          "gain": 4096.0,
+          "endpoint_at_factor_one": 1.0753795677590787
+        },
+        {
+          "gain": 65536.0,
+          "endpoint_at_factor_one": 0.9995834885336551
+        }
+      ],
+      "endpoint_factor": 0.9997917442668276,
+      "gain": 65536.0,
+      "endpoint_ratio": 0.9997916981796175,
+      "endpoint_distance_to_one": 0.0002083018203824505,
+      "prefix_factor": 2.0,
+      "every_prefix_ratio_max": 2.709959729408948,
+      "limiting_prefix": {
+        "index": 6600,
+        "stage": "projection",
+        "kind": "accelerometer"
+      },
+      "maximizing_endpoint_direction": {
+        "root_direction_full_21": [
+          0.0010395349378817525,
+          -0.00013620951336688948,
+          0.0022552602281286195,
+          -0.0004525158407591653,
+          -6.469804628630163e-06,
+          -0.0008879679282831381,
+          0.0007258273256091388,
+          0.01131828879575715,
+          -0.00032674529441700746,
+          -0.0008974514705221555,
+          -0.00616445532211388,
+          0.0003487951974520292,
+          0.00048529889683599745,
+          0.0015934231201582005,
+          -0.00020046203608947689,
+          0.00037423425929490985,
+          -0.010214521154303978,
+          6.92676480044745e-05,
+          -1.0862838242101883e-06,
+          -8.045651095831904e-06,
+          4.64634311704326e-07
+        ],
+        "common_template_amplitude": 4.565222898937888e-09,
+        "root_group_norms": {
+          "attitude": 0.0024870433480716045,
+          "gyro_bias": 0.000996644112092855,
+          "v": 0.011346243830368993,
+          "p": 0.006239197596650239,
+          "S": 0.0016777059596478966,
+          "a_w": 0.010221609056289209,
+          "accel_bias": 8.131936986119284e-06
+        },
+        "ratio_80_digit": "0.99979169817961655615510656332705362756023923758335246361446935082968119036971463",
+        "supply_cost_80_digit": "1.0000000000000005392279832182307427630021189625611042206411669164806713643835469",
+        "bias_energy_80_digit": "1.9838519300438964408831430956366906506808362632770536643974896017798770767943400E-10",
+        "source_energy_80_digit": "1.0181243490050184701269367988697425662394610322920544983822451619972430720492494E-16",
+        "signed_motion_energy_changes_80_digit": {
+          "prediction_enter:none": "0E-80",
+          "prediction:none": "-0.00117313871042732390661723978052492026180824365738694285418309404170294055144583",
+          "aw_floor:none": "-0.00001227141608447600839756920469619912649975131678535927634557489029988720440444",
+          "projection:accelerometer": "0.00084971785883097565603834977153378683623355069523053902362079155182589345793604",
+          "projection:magnetometer": "-0.00004098140527231625767052160623542197445101303195127649996551175975198928900931",
+          "projection:S_zero": "-0.00002692317323037325831356690236929838207748631009662846828236157465140197603097"
+        },
+        "nonlinear_or_physical_root_admissibility_established": false
+      },
+      "maximizing_prefix_direction": {
+        "root_direction_full_21": [
+          -0.0004286946290996148,
+          7.496648155998723e-05,
+          -0.0008771413567282639,
+          -6.634434419267358e-07,
+          1.304245255282423e-07,
+          -8.78407954386635e-08,
+          -0.00010980259681472858,
+          0.004579976645988896,
+          5.965951654333812e-05,
+          -5.48606835084519e-05,
+          0.0017498250862833693,
+          2.941802103935772e-05,
+          -8.803210199657134e-06,
+          0.00025943215154717827,
+          4.709013802232454e-06,
+          -0.0020012162531107256,
+          0.004194739669883355,
+          0.0010241260781562523,
+          0.04928670141423638,
+          0.005602518896987064,
+          -0.023496006243884295
+        ],
+        "common_template_amplitude": -5.53540006818137e-08,
+        "root_group_norms": {
+          "attitude": 0.0009791710872260474,
+          "gyro_bias": 6.818238503001771e-07,
+          "v": 0.004581681126615551,
+          "p": 0.0017509320224221977,
+          "S": 0.000259624175640881,
+          "a_w": 0.004759153455580872,
+          "accel_bias": 0.05488742536956746
+        },
+        "ratio_80_digit": "2.7099597294089472069064365496691083832106575226219245508964929768412725576515345",
+        "supply_cost_80_digit": "1.0000000000000004877946591938055964055901971244904077296898541228285194869515048",
+        "bias_energy_80_digit": "0.000015063146981811605331944751074597724597497990580227761640197684685765583701852042",
+        "source_energy_80_digit": "1.4968382739338281412614848268309707294245240283254508066512963879188995945768607E-14",
+        "signed_motion_energy_changes_80_digit": {
+          "prediction_enter:none": "0E-82",
+          "prediction:none": "-0.0043103651761179545475009202735138732074698235269538915653395161392938258756559281",
+          "aw_floor:none": "-3.219155077208336227106049711305114874873288545182551411989788741598E-16",
+          "projection:accelerometer": "2.7078592953755532104958006383894642870552902267880146160037934205564443206456427"
+        },
+        "nonlinear_or_physical_root_admissibility_established": false
+      },
+      "candidate_composed_storage_bound": 1688355406.918368,
+      "point_30_degree_chart_storage_level_min": 93.68622178204247,
+      "endpoint_floor_over_point_chart_level": 18021384.306075066,
+      "point_frozen_coefficients_only": true,
+      "new_physical_source_family_defined": false,
+      "BIAS2": {
+        "invoked_in_dense_master": true,
+        "master_sign": "L + lambda*(C_y^T Racc^-1 C_y - mu*X), lambda >= 0",
+        "Xi": "sum corrected bias error^T actual_Racc^-1 corrected bias error at accelerometer events",
+        "physical_forcing_excluded_from_homogeneous_y": true,
+        "full_21_state_feedback_and_projection_coefficients_retained": true,
+        "point_channel_energies": {
+          "g": 41.41861744102959,
+          "corrected_bias": 0.0,
+          "cross": 0.0,
+          "homogeneous_y": 41.41861744102959
+        },
+        "point_kappa": 0.0,
+        "point_mu_sufficient_for_declared_Xi": null,
+        "point_energy_identity_residual": 0.0,
+        "dense_graph_identity_max_defect": 8.149072527885437e-09,
+        "conditional_master_tests": {
+          "endpoint": {
+            "factor": 0.9998,
+            "step": 2592,
+            "sector_has_no_future_events": true,
+            "trials": [
+              {
+                "gain": 0.0001,
+                "conditional_mu": 0.0001,
+                "multiplier": 1e-16,
+                "largest_eigenvalue_without_BIAS2": 3091.5464892624527,
+                "largest_eigenvalue_with_BIAS2": 3091.546489262452,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 0.0001,
+                "conditional_mu": 0.001,
+                "multiplier": 3.1622776601683793e-16,
+                "largest_eigenvalue_without_BIAS2": 3091.5464892624527,
+                "largest_eigenvalue_with_BIAS2": 3091.546489262451,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 0.0001,
+                "conditional_mu": 0.01,
+                "multiplier": 1.0,
+                "largest_eigenvalue_without_BIAS2": 3091.5464892624527,
+                "largest_eigenvalue_with_BIAS2": 45.598646683276534,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 0.0001,
+                "conditional_mu": 0.03,
+                "multiplier": 0.31622776601683794,
+                "largest_eigenvalue_without_BIAS2": 3091.5464892624527,
+                "largest_eigenvalue_with_BIAS2": 17.20959224567739,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 0.0001,
+                "conditional_mu": 0.05,
+                "multiplier": 0.1,
+                "largest_eigenvalue_without_BIAS2": 3091.5464892624527,
+                "largest_eigenvalue_with_BIAS2": 8.42644681425363,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 0.0001,
+                "conditional_mu": 0.08,
+                "multiplier": 0.1,
+                "largest_eigenvalue_without_BIAS2": 3091.5464892624527,
+                "largest_eigenvalue_with_BIAS2": 8.2530694502806,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 0.0001,
+                "conditional_mu": 0.1,
+                "multiplier": 0.1,
+                "largest_eigenvalue_without_BIAS2": 3091.5464892624527,
+                "largest_eigenvalue_with_BIAS2": 8.249846325750816,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 0.0001,
+                "conditional_mu": 0.3,
+                "multiplier": 0.03162277660168379,
+                "largest_eigenvalue_without_BIAS2": 3091.5464892624527,
+                "largest_eigenvalue_with_BIAS2": 5.423780370380507,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 0.0001,
+                "conditional_mu": 1.0,
+                "multiplier": 0.01,
+                "largest_eigenvalue_without_BIAS2": 3091.5464892624527,
+                "largest_eigenvalue_with_BIAS2": 4.531349838463611,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 0.0001,
+                "conditional_mu": 3.0,
+                "multiplier": 0.0031622776601683794,
+                "largest_eigenvalue_without_BIAS2": 3091.5464892624527,
+                "largest_eigenvalue_with_BIAS2": 4.250526157658616,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 0.01,
+                "conditional_mu": 0.0001,
+                "multiplier": 3.1622776601683793e-16,
+                "largest_eigenvalue_without_BIAS2": 4.109917930368909,
+                "largest_eigenvalue_with_BIAS2": 4.1099179303686295,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 0.01,
+                "conditional_mu": 0.001,
+                "multiplier": 3.1622776601683793e-16,
+                "largest_eigenvalue_without_BIAS2": 4.109917930368909,
+                "largest_eigenvalue_with_BIAS2": 4.1099179303687,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 0.01,
+                "conditional_mu": 0.01,
+                "multiplier": 3.1622776601683794e-15,
+                "largest_eigenvalue_without_BIAS2": 4.109917930368909,
+                "largest_eigenvalue_with_BIAS2": 4.109917930368897,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 0.01,
+                "conditional_mu": 0.03,
+                "multiplier": 1e-16,
+                "largest_eigenvalue_without_BIAS2": 4.109917930368909,
+                "largest_eigenvalue_with_BIAS2": 4.109917930368549,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 0.01,
+                "conditional_mu": 0.05,
+                "multiplier": 1e-15,
+                "largest_eigenvalue_without_BIAS2": 4.109917930368909,
+                "largest_eigenvalue_with_BIAS2": 4.109917930368554,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 0.01,
+                "conditional_mu": 0.08,
+                "multiplier": 1e-15,
+                "largest_eigenvalue_without_BIAS2": 4.109917930368909,
+                "largest_eigenvalue_with_BIAS2": 4.109917930368813,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 0.01,
+                "conditional_mu": 0.1,
+                "multiplier": 3.1622776601683794e-15,
+                "largest_eigenvalue_without_BIAS2": 4.109917930368909,
+                "largest_eigenvalue_with_BIAS2": 4.109917930368725,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 0.01,
+                "conditional_mu": 0.3,
+                "multiplier": 1e-15,
+                "largest_eigenvalue_without_BIAS2": 4.109917930368909,
+                "largest_eigenvalue_with_BIAS2": 4.109917930368437,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 0.01,
+                "conditional_mu": 1.0,
+                "multiplier": 1e-16,
+                "largest_eigenvalue_without_BIAS2": 4.109917930368909,
+                "largest_eigenvalue_with_BIAS2": 4.109917930368815,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 0.01,
+                "conditional_mu": 3.0,
+                "multiplier": 3.1622776601683793e-16,
+                "largest_eigenvalue_without_BIAS2": 4.109917930368909,
+                "largest_eigenvalue_with_BIAS2": 4.109917930368671,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 1.0,
+                "conditional_mu": 0.0001,
+                "multiplier": 3.1622776601683796e-14,
+                "largest_eigenvalue_without_BIAS2": 3.1207170149193812,
+                "largest_eigenvalue_with_BIAS2": 3.120717014912512,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 1.0,
+                "conditional_mu": 0.001,
+                "multiplier": 3.1622776601683796e-14,
+                "largest_eigenvalue_without_BIAS2": 3.1207170149193812,
+                "largest_eigenvalue_with_BIAS2": 3.120717014912512,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 1.0,
+                "conditional_mu": 0.01,
+                "multiplier": 3.1622776601683794e-15,
+                "largest_eigenvalue_without_BIAS2": 3.1207170149193812,
+                "largest_eigenvalue_with_BIAS2": 3.120717014913364,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 1.0,
+                "conditional_mu": 0.03,
+                "multiplier": 3.1622776601683796e-14,
+                "largest_eigenvalue_without_BIAS2": 3.1207170149193812,
+                "largest_eigenvalue_with_BIAS2": 3.1207170149153036,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 1.0,
+                "conditional_mu": 0.05,
+                "multiplier": 1e-14,
+                "largest_eigenvalue_without_BIAS2": 3.1207170149193812,
+                "largest_eigenvalue_with_BIAS2": 3.120717014914965,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 1.0,
+                "conditional_mu": 0.08,
+                "multiplier": 1e-14,
+                "largest_eigenvalue_without_BIAS2": 3.1207170149193812,
+                "largest_eigenvalue_with_BIAS2": 3.120717014916609,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 1.0,
+                "conditional_mu": 0.1,
+                "multiplier": 3.1622776601683794e-15,
+                "largest_eigenvalue_without_BIAS2": 3.1207170149193812,
+                "largest_eigenvalue_with_BIAS2": 3.120717014915211,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 1.0,
+                "conditional_mu": 0.3,
+                "multiplier": 3.1622776601683793e-16,
+                "largest_eigenvalue_without_BIAS2": 3.1207170149193812,
+                "largest_eigenvalue_with_BIAS2": 3.1207170149152477,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 1.0,
+                "conditional_mu": 1.0,
+                "multiplier": 1e-16,
+                "largest_eigenvalue_without_BIAS2": 3.1207170149193812,
+                "largest_eigenvalue_with_BIAS2": 3.1207170149136196,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 1.0,
+                "conditional_mu": 3.0,
+                "multiplier": 1e-14,
+                "largest_eigenvalue_without_BIAS2": 3.1207170149193812,
+                "largest_eigenvalue_with_BIAS2": 3.1207170149108587,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 100.0,
+                "conditional_mu": 0.0001,
+                "multiplier": 1e-06,
+                "largest_eigenvalue_without_BIAS2": -0.00022727765396206501,
+                "largest_eigenvalue_with_BIAS2": -0.00022728633206867198,
+                "point_master_strict": true,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 100.0,
+                "conditional_mu": 0.001,
+                "multiplier": 1e-06,
+                "largest_eigenvalue_without_BIAS2": -0.00022727765396206501,
+                "largest_eigenvalue_with_BIAS2": -0.00022729189471810116,
+                "point_master_strict": true,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 100.0,
+                "conditional_mu": 0.01,
+                "multiplier": 3.162277660168379e-07,
+                "largest_eigenvalue_without_BIAS2": -0.00022727765396206501,
+                "largest_eigenvalue_with_BIAS2": -0.00022728708142230014,
+                "point_master_strict": true,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 100.0,
+                "conditional_mu": 0.03,
+                "multiplier": 3.1622776601683795e-09,
+                "largest_eigenvalue_without_BIAS2": -0.00022727765396206501,
+                "largest_eigenvalue_with_BIAS2": -0.00022728782844891524,
+                "point_master_strict": true,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 100.0,
+                "conditional_mu": 0.05,
+                "multiplier": 1e-08,
+                "largest_eigenvalue_without_BIAS2": -0.00022727765396206501,
+                "largest_eigenvalue_with_BIAS2": -0.00022729625353083566,
+                "point_master_strict": true,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 100.0,
+                "conditional_mu": 0.08,
+                "multiplier": 1e-11,
+                "largest_eigenvalue_without_BIAS2": -0.00022727765396206501,
+                "largest_eigenvalue_with_BIAS2": -0.00022728540892711721,
+                "point_master_strict": true,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 100.0,
+                "conditional_mu": 0.1,
+                "multiplier": 1e-13,
+                "largest_eigenvalue_without_BIAS2": -0.00022727765396206501,
+                "largest_eigenvalue_with_BIAS2": -0.00022728450420774529,
+                "point_master_strict": true,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 100.0,
+                "conditional_mu": 0.3,
+                "multiplier": 1e-10,
+                "largest_eigenvalue_without_BIAS2": -0.00022727765396206501,
+                "largest_eigenvalue_with_BIAS2": -0.00022728234149020846,
+                "point_master_strict": true,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 100.0,
+                "conditional_mu": 1.0,
+                "multiplier": 3.162277660168379e-07,
+                "largest_eigenvalue_without_BIAS2": -0.00022727765396206501,
+                "largest_eigenvalue_with_BIAS2": -0.00022728753028706194,
+                "point_master_strict": true,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 100.0,
+                "conditional_mu": 3.0,
+                "multiplier": 1e-12,
+                "largest_eigenvalue_without_BIAS2": -0.00022727765396206501,
+                "largest_eigenvalue_with_BIAS2": -0.00022729336548327252,
+                "point_master_strict": true,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              }
+            ]
+          },
+          "tested_prefix": {
+            "factor": 2.0,
+            "step": 3,
+            "sector_has_no_future_events": true,
+            "trials": [
+              {
+                "gain": 0.0001,
+                "conditional_mu": 0.0001,
+                "multiplier": 0.0,
+                "largest_eigenvalue_without_BIAS2": 876.6881406716649,
+                "largest_eigenvalue_with_BIAS2": 876.6881406716649,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 0.0001,
+                "conditional_mu": 0.001,
+                "multiplier": 0.0,
+                "largest_eigenvalue_without_BIAS2": 876.6881406716649,
+                "largest_eigenvalue_with_BIAS2": 876.6881406716649,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 0.0001,
+                "conditional_mu": 0.01,
+                "multiplier": 0.0,
+                "largest_eigenvalue_without_BIAS2": 876.6881406716649,
+                "largest_eigenvalue_with_BIAS2": 876.6881406716649,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 0.0001,
+                "conditional_mu": 0.03,
+                "multiplier": 0.0,
+                "largest_eigenvalue_without_BIAS2": 876.6881406716649,
+                "largest_eigenvalue_with_BIAS2": 876.6881406716649,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 0.0001,
+                "conditional_mu": 0.05,
+                "multiplier": 0.0,
+                "largest_eigenvalue_without_BIAS2": 876.6881406716649,
+                "largest_eigenvalue_with_BIAS2": 876.6881406716649,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 0.0001,
+                "conditional_mu": 0.08,
+                "multiplier": 0.0,
+                "largest_eigenvalue_without_BIAS2": 876.6881406716649,
+                "largest_eigenvalue_with_BIAS2": 876.6881406716649,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 0.0001,
+                "conditional_mu": 0.1,
+                "multiplier": 0.0,
+                "largest_eigenvalue_without_BIAS2": 876.6881406716649,
+                "largest_eigenvalue_with_BIAS2": 876.6881406716649,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 0.0001,
+                "conditional_mu": 0.3,
+                "multiplier": 0.0,
+                "largest_eigenvalue_without_BIAS2": 876.6881406716649,
+                "largest_eigenvalue_with_BIAS2": 876.6881406716649,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 0.0001,
+                "conditional_mu": 1.0,
+                "multiplier": 0.31622776601683794,
+                "largest_eigenvalue_without_BIAS2": 876.6881406716649,
+                "largest_eigenvalue_with_BIAS2": 876.6358336637403,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 0.0001,
+                "conditional_mu": 3.0,
+                "multiplier": 1.0,
+                "largest_eigenvalue_without_BIAS2": 876.6881406716649,
+                "largest_eigenvalue_with_BIAS2": 0.2698490840388632,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 0.01,
+                "conditional_mu": 0.0001,
+                "multiplier": 0.0,
+                "largest_eigenvalue_without_BIAS2": 865.2653422035715,
+                "largest_eigenvalue_with_BIAS2": 865.2653422035715,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 0.01,
+                "conditional_mu": 0.001,
+                "multiplier": 0.0,
+                "largest_eigenvalue_without_BIAS2": 865.2653422035715,
+                "largest_eigenvalue_with_BIAS2": 865.2653422035715,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 0.01,
+                "conditional_mu": 0.01,
+                "multiplier": 0.0,
+                "largest_eigenvalue_without_BIAS2": 865.2653422035715,
+                "largest_eigenvalue_with_BIAS2": 865.2653422035715,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 0.01,
+                "conditional_mu": 0.03,
+                "multiplier": 0.0,
+                "largest_eigenvalue_without_BIAS2": 865.2653422035715,
+                "largest_eigenvalue_with_BIAS2": 865.2653422035715,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 0.01,
+                "conditional_mu": 0.05,
+                "multiplier": 0.0,
+                "largest_eigenvalue_without_BIAS2": 865.2653422035715,
+                "largest_eigenvalue_with_BIAS2": 865.2653422035715,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 0.01,
+                "conditional_mu": 0.08,
+                "multiplier": 0.0,
+                "largest_eigenvalue_without_BIAS2": 865.2653422035715,
+                "largest_eigenvalue_with_BIAS2": 865.2653422035715,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 0.01,
+                "conditional_mu": 0.1,
+                "multiplier": 0.0,
+                "largest_eigenvalue_without_BIAS2": 865.2653422035715,
+                "largest_eigenvalue_with_BIAS2": 865.2653422035715,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 0.01,
+                "conditional_mu": 0.3,
+                "multiplier": 0.0,
+                "largest_eigenvalue_without_BIAS2": 865.2653422035715,
+                "largest_eigenvalue_with_BIAS2": 865.2653422035715,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 0.01,
+                "conditional_mu": 1.0,
+                "multiplier": 0.31622776601683794,
+                "largest_eigenvalue_without_BIAS2": 865.2653422035715,
+                "largest_eigenvalue_with_BIAS2": 865.2123415945726,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 0.01,
+                "conditional_mu": 3.0,
+                "multiplier": 1.0,
+                "largest_eigenvalue_without_BIAS2": 865.2653422035715,
+                "largest_eigenvalue_with_BIAS2": 0.2603275629886548,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 1.0,
+                "conditional_mu": 0.0001,
+                "multiplier": 3.162277660168379e-13,
+                "largest_eigenvalue_without_BIAS2": -0.97433080891344,
+                "largest_eigenvalue_with_BIAS2": -0.974330808913458,
+                "point_master_strict": true,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 1.0,
+                "conditional_mu": 0.001,
+                "multiplier": 3.162277660168379e-13,
+                "largest_eigenvalue_without_BIAS2": -0.97433080891344,
+                "largest_eigenvalue_with_BIAS2": -0.974330808913453,
+                "point_master_strict": true,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 1.0,
+                "conditional_mu": 0.01,
+                "multiplier": 3.1622776601683796e-14,
+                "largest_eigenvalue_without_BIAS2": -0.97433080891344,
+                "largest_eigenvalue_with_BIAS2": -0.9743308089134601,
+                "point_master_strict": true,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 1.0,
+                "conditional_mu": 0.03,
+                "multiplier": 3.162277660168379e-13,
+                "largest_eigenvalue_without_BIAS2": -0.97433080891344,
+                "largest_eigenvalue_with_BIAS2": -0.9743308089134635,
+                "point_master_strict": true,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 1.0,
+                "conditional_mu": 0.05,
+                "multiplier": 3.1622776601683794e-15,
+                "largest_eigenvalue_without_BIAS2": -0.97433080891344,
+                "largest_eigenvalue_with_BIAS2": -0.974330808913465,
+                "point_master_strict": true,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 1.0,
+                "conditional_mu": 0.08,
+                "multiplier": 1e-15,
+                "largest_eigenvalue_without_BIAS2": -0.97433080891344,
+                "largest_eigenvalue_with_BIAS2": -0.9743308089134549,
+                "point_master_strict": true,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 1.0,
+                "conditional_mu": 0.1,
+                "multiplier": 1e-12,
+                "largest_eigenvalue_without_BIAS2": -0.97433080891344,
+                "largest_eigenvalue_with_BIAS2": -0.9743308089134675,
+                "point_master_strict": true,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 1.0,
+                "conditional_mu": 0.3,
+                "multiplier": 0.1,
+                "largest_eigenvalue_without_BIAS2": -0.97433080891344,
+                "largest_eigenvalue_with_BIAS2": -0.9749985197629721,
+                "point_master_strict": true,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 1.0,
+                "conditional_mu": 1.0,
+                "multiplier": 0.1,
+                "largest_eigenvalue_without_BIAS2": -0.97433080891344,
+                "largest_eigenvalue_with_BIAS2": -0.9802446371231321,
+                "point_master_strict": true,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 1.0,
+                "conditional_mu": 3.0,
+                "multiplier": 0.1,
+                "largest_eigenvalue_without_BIAS2": -0.97433080891344,
+                "largest_eigenvalue_with_BIAS2": -0.9850814253602961,
+                "point_master_strict": true,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 100.0,
+                "conditional_mu": 0.0001,
+                "multiplier": 1e-13,
+                "largest_eigenvalue_without_BIAS2": -0.997576146383674,
+                "largest_eigenvalue_with_BIAS2": -0.9975761463836974,
+                "point_master_strict": true,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 100.0,
+                "conditional_mu": 0.001,
+                "multiplier": 1e-13,
+                "largest_eigenvalue_without_BIAS2": -0.997576146383674,
+                "largest_eigenvalue_with_BIAS2": -0.9975761463836974,
+                "point_master_strict": true,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 100.0,
+                "conditional_mu": 0.01,
+                "multiplier": 3.1622776601683796e-14,
+                "largest_eigenvalue_without_BIAS2": -0.997576146383674,
+                "largest_eigenvalue_with_BIAS2": -0.997576146383702,
+                "point_master_strict": true,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 100.0,
+                "conditional_mu": 0.03,
+                "multiplier": 3.162277660168379e-13,
+                "largest_eigenvalue_without_BIAS2": -0.997576146383674,
+                "largest_eigenvalue_with_BIAS2": -0.9975761463837038,
+                "point_master_strict": true,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 100.0,
+                "conditional_mu": 0.05,
+                "multiplier": 3.162277660168379e-13,
+                "largest_eigenvalue_without_BIAS2": -0.997576146383674,
+                "largest_eigenvalue_with_BIAS2": -0.9975761463837038,
+                "point_master_strict": true,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 100.0,
+                "conditional_mu": 0.08,
+                "multiplier": 3.1622776601683796e-14,
+                "largest_eigenvalue_without_BIAS2": -0.997576146383674,
+                "largest_eigenvalue_with_BIAS2": -0.997576146383702,
+                "point_master_strict": true,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 100.0,
+                "conditional_mu": 0.1,
+                "multiplier": 1e-12,
+                "largest_eigenvalue_without_BIAS2": -0.997576146383674,
+                "largest_eigenvalue_with_BIAS2": -0.9975761463837044,
+                "point_master_strict": true,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 100.0,
+                "conditional_mu": 0.3,
+                "multiplier": 3.162277660168379e-13,
+                "largest_eigenvalue_without_BIAS2": -0.997576146383674,
+                "largest_eigenvalue_with_BIAS2": -0.9975761463837041,
+                "point_master_strict": true,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 100.0,
+                "conditional_mu": 1.0,
+                "multiplier": 3.162277660168379e-13,
+                "largest_eigenvalue_without_BIAS2": -0.997576146383674,
+                "largest_eigenvalue_with_BIAS2": -0.9975761463837106,
+                "point_master_strict": true,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 100.0,
+                "conditional_mu": 3.0,
+                "multiplier": 3.1622776601683794e-12,
+                "largest_eigenvalue_without_BIAS2": -0.997576146383674,
+                "largest_eigenvalue_with_BIAS2": -0.9975761463837057,
+                "point_master_strict": true,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              }
+            ]
+          }
+        },
+        "source_uniform_BIAS2_constant_certified": false,
+        "point_ratios_used_as_uniform_mu": false,
+        "P4_MOTION_PASS": false,
+        "P5_MOTION_MAY_START": false
+      },
+      "source_uniform_gains_certified": false,
+      "P4_MOTION_PASS": false,
+      "P5_MOTION_MAY_START": false
+    },
+    "A21": {
+      "counts": {
+        "prediction_enter": 600,
+        "prediction": 600,
+        "aw_floor": 600,
+        "accelerometer": 600,
+        "projection": 769,
+        "magnetometer": 75,
+        "S_zero": 94
+      },
+      "factorization_defects": {
+        "finite_factorization": 1.2398178614958184e-06,
+        "composed_word_factorization": 5.022135983620037e-06,
+        "bias2_corrected_residual": 6.178350949613874e-16
+      },
+      "factorization_failure": [],
+      "minimum_chart_denominator": 0.9999999976340465,
+      "decision": "COMMON_TEMPLATE_COEFFICIENT_DIAGNOSTIC_ONLY",
+      "lift_dimension": 22,
+      "same_scalar_for_all_forcing_events": true,
+      "template_energy_charged_once_over_complete_word": 2.8683869333728125,
+      "candidate_matrix_tests": [
+        {
+          "gain": 1.52587890625e-05,
+          "endpoint_at_factor_one": 6891232516.848463
+        },
+        {
+          "gain": 0.000244140625,
+          "endpoint_at_factor_one": 430702032.6513734
+        },
+        {
+          "gain": 0.00390625,
+          "endpoint_at_factor_one": 26918877.389055625
+        },
+        {
+          "gain": 0.0625,
+          "endpoint_at_factor_one": 1682430.1851607787
+        },
+        {
+          "gain": 1.0,
+          "endpoint_at_factor_one": 105152.23491751199
+        },
+        {
+          "gain": 16.0,
+          "endpoint_at_factor_one": 6572.363029871458
+        },
+        {
+          "gain": 256.0,
+          "endpoint_at_factor_one": 411.12107789238047
+        },
+        {
+          "gain": 4096.0,
+          "endpoint_at_factor_one": 26.044106568770538
+        },
+        {
+          "gain": 65536.0,
+          "endpoint_at_factor_one": 1.9860867224619478
+        },
+        {
+          "gain": 1048576.0,
+          "endpoint_at_factor_one": 0.9202143174199103
+        }
+      ],
+      "endpoint_factor": 0.9601071587099552,
+      "gain": 1048576.0,
+      "endpoint_ratio": 0.9581386537986811,
+      "endpoint_distance_to_one": 0.04186134620131887,
+      "prefix_factor": 2.0,
+      "every_prefix_ratio_max": 0.5000006064696396,
+      "limiting_prefix": {
+        "index": 228605,
+        "stage": "aw_floor",
+        "kind": "none"
+      },
+      "maximizing_endpoint_direction": {
+        "root_direction_full_21": [
+          3.7507925615780575e-05,
+          -1.8809649211029556e-06,
+          0.00015480343983930933,
+          1.0631912606456927e-06,
+          4.814627416807158e-07,
+          3.6123185112484505e-06,
+          0.00021848242353808344,
+          -0.00032469949011739677,
+          0.00340861103498896,
+          0.00023426056247601075,
+          -0.00024893793916555535,
+          0.003707319925041137,
+          -0.0010914699305712052,
+          0.0011420731430003433,
+          -0.08891257152213264,
+          4.1693248327704986e-05,
+          -0.0001785010745879316,
+          0.0001411410966283406,
+          -2.8023333834193964e-06,
+          3.54060838911796e-06,
+          0.0001429399033982511
+        ],
+        "common_template_amplitude": 9.666402425994524e-09,
+        "root_group_norms": {
+          "attitude": 0.00015929371456248993,
+          "gyro_bias": 3.7961858562310025e-06,
+          "v": 0.003431004738575288,
+          "p": 0.0037230456799903213,
+          "S": 0.08892660463748549,
+          "a_w": 0.00023134772474051388,
+          "accel_bias": 0.00014301120572758722
+        },
+        "ratio_80_digit": "0.95813865379867824485468907772294642620060092154841748936816802507072694488483576",
+        "supply_cost_80_digit": "0.99999999999999988245727987834811501421450591876073891099240201932297871596242948",
+        "bias_energy_80_digit": "7.6924848248340579475040124581276653420939987308258644506096949752682258185155712E-9",
+        "source_energy_80_digit": "2.6802017004750862140179712042360425384892042729501967327985326618638365667349703E-16",
+        "signed_motion_energy_changes_80_digit": {
+          "prediction_enter:none": "0E-80",
+          "prediction:none": "-0.10399551811151885785212522544375289446614685318082328092621847623520723507270462",
+          "aw_floor:none": "-0.00216090325441656396430907576360092676982575070875137991340847003657829300705386",
+          "projection:accelerometer": "0.00171282265180611915589453278295328251717915306485385702234550578698448064249586",
+          "projection:magnetometer": "-0.00012988279506878032695399045756472973112329185151072124234806797136400459893321",
+          "projection:S_zero": "0.02956303757165709764736263035457196935644734880604160390909954843017362991403412"
+        },
+        "nonlinear_or_physical_root_admissibility_established": false
+      },
+      "maximizing_prefix_direction": {
+        "root_direction_full_21": [
+          -1.107716902195615e-05,
+          -4.186602627461429e-06,
+          -1.5276023028024397e-05,
+          -3.790452518204806e-07,
+          -7.98655275762262e-07,
+          -2.400033915271627e-07,
+          0.0023673199865547746,
+          0.0003999792299661766,
+          -3.1317888365208135e-07,
+          0.021805825947448423,
+          0.0006972511022170143,
+          -1.4711019908769976e-05,
+          0.09403094347752206,
+          -0.0013304412179030599,
+          -0.0001883892822174562,
+          -5.396424944916177e-05,
+          9.949168418304667e-05,
+          -3.721062014680963e-06,
+          -1.5142963826312839e-07,
+          -3.348337985134569e-08,
+          8.600787810832277e-08
+        ],
+        "common_template_amplitude": 4.57761072801046e-11,
+        "root_group_norms": {
+          "attitude": 1.93284296996415e-05,
+          "gyro_bias": 9.16038853092535e-07,
+          "v": 0.0024008722167635343,
+          "p": 0.021816975518253314,
+          "S": 0.09404054389266844,
+          "a_w": 0.0001132456698629469,
+          "accel_bias": 1.773398634471887e-07
+        },
+        "ratio_80_digit": "0.50000060646963945118786305256329800869224337400684410680580889379002351094303147",
+        "supply_cost_80_digit": "1.0000000000000000831140100600378383590151750796327689639912489274542039743169627",
+        "bias_energy_80_digit": "8.6179015232176137177448901674073661803000183765874159911887178066044995313810571E-16",
+        "source_energy_80_digit": "6.0105671297689876300932933724687668430620888278838763860839683165790622538856073E-21",
+        "signed_motion_energy_changes_80_digit": {
+          "prediction_enter:none": "0E-80",
+          "prediction:none": "3.7523430052674012668242039629495873863883716600369463404375745562229786161E-7",
+          "aw_floor:none": "-2.78419509596679279770831207013099491736781064750997699434826734741E-15",
+          "projection:accelerometer": "2.6676682569146785924834627353186789886506842042424029423908529985289801624E-7",
+          "projection:magnetometer": "-3.507965459617628554687896975231201636399918684114035108518681197217755640E-8"
+        },
+        "nonlinear_or_physical_root_admissibility_established": false
+      },
+      "candidate_composed_storage_bound": 88011734.74386008,
+      "point_30_degree_chart_storage_level_min": 22824.34158765353,
+      "endpoint_floor_over_point_chart_level": 3856.047036707015,
+      "point_frozen_coefficients_only": true,
+      "new_physical_source_family_defined": false,
+      "BIAS2": {
+        "invoked_in_dense_master": true,
+        "master_sign": "L + lambda*(C_y^T Racc^-1 C_y - mu*X), lambda >= 0",
+        "Xi": "sum corrected bias error^T actual_Racc^-1 corrected bias error at accelerometer events",
+        "physical_forcing_excluded_from_homogeneous_y": true,
+        "full_21_state_feedback_and_projection_coefficients_retained": true,
+        "point_channel_energies": {
+          "g": 272.6275503877423,
+          "corrected_bias": 234.4861544028035,
+          "cross": -240.71554545285193,
+          "homogeneous_y": 25.68261388484169
+        },
+        "point_kappa": 0.9493553149082222,
+        "point_mu_sufficient_for_declared_Xi": 0.10952720833454413,
+        "point_energy_identity_residual": -2.2737367544323206e-13,
+        "dense_graph_identity_max_defect": 1.1641532182693481e-09,
+        "conditional_master_tests": {
+          "endpoint": {
+            "factor": 0.96,
+            "step": 2568,
+            "sector_has_no_future_events": true,
+            "trials": [
+              {
+                "gain": 0.0001,
+                "conditional_mu": 0.0001,
+                "multiplier": 1e-15,
+                "largest_eigenvalue_without_BIAS2": 314602.93500931363,
+                "largest_eigenvalue_with_BIAS2": 314602.9350093135,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 0.0001,
+                "conditional_mu": 0.001,
+                "multiplier": 1e-15,
+                "largest_eigenvalue_without_BIAS2": 314602.93500931363,
+                "largest_eigenvalue_with_BIAS2": 314602.9350093135,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 0.0001,
+                "conditional_mu": 0.01,
+                "multiplier": 100.0,
+                "largest_eigenvalue_without_BIAS2": 314602.93500931363,
+                "largest_eigenvalue_with_BIAS2": 2571.78496067229,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 0.0001,
+                "conditional_mu": 0.03,
+                "multiplier": 31.622776601683793,
+                "largest_eigenvalue_without_BIAS2": 314602.93500931363,
+                "largest_eigenvalue_with_BIAS2": 820.3023051530961,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 0.0001,
+                "conditional_mu": 0.05,
+                "multiplier": 10.0,
+                "largest_eigenvalue_without_BIAS2": 314602.93500931363,
+                "largest_eigenvalue_with_BIAS2": 271.1328462310436,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 0.0001,
+                "conditional_mu": 0.08,
+                "multiplier": 10.0,
+                "largest_eigenvalue_without_BIAS2": 314602.93500931363,
+                "largest_eigenvalue_with_BIAS2": 267.3252653551437,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 0.0001,
+                "conditional_mu": 0.1,
+                "multiplier": 10.0,
+                "largest_eigenvalue_without_BIAS2": 314602.93500931363,
+                "largest_eigenvalue_with_BIAS2": 266.86912352823305,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 0.0001,
+                "conditional_mu": 0.3,
+                "multiplier": 3.1622776601683795,
+                "largest_eigenvalue_without_BIAS2": 314602.93500931363,
+                "largest_eigenvalue_with_BIAS2": 92.0419502012489,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 0.0001,
+                "conditional_mu": 1.0,
+                "multiplier": 1.0,
+                "largest_eigenvalue_without_BIAS2": 314602.93500931363,
+                "largest_eigenvalue_with_BIAS2": 36.68873450539894,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 0.0001,
+                "conditional_mu": 3.0,
+                "multiplier": 0.31622776601683794,
+                "largest_eigenvalue_without_BIAS2": 314602.93500931363,
+                "largest_eigenvalue_with_BIAS2": 19.317771725760185,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 0.01,
+                "conditional_mu": 0.0001,
+                "multiplier": 1e-14,
+                "largest_eigenvalue_without_BIAS2": 307765.86883264064,
+                "largest_eigenvalue_with_BIAS2": 307765.8688326403,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 0.01,
+                "conditional_mu": 0.001,
+                "multiplier": 1e-14,
+                "largest_eigenvalue_without_BIAS2": 307765.86883264064,
+                "largest_eigenvalue_with_BIAS2": 307765.8688326403,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 0.01,
+                "conditional_mu": 0.01,
+                "multiplier": 100.0,
+                "largest_eigenvalue_without_BIAS2": 307765.86883264064,
+                "largest_eigenvalue_with_BIAS2": 2571.660559804229,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 0.01,
+                "conditional_mu": 0.03,
+                "multiplier": 31.622776601683793,
+                "largest_eigenvalue_without_BIAS2": 307765.86883264064,
+                "largest_eigenvalue_with_BIAS2": 820.260631799604,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 0.01,
+                "conditional_mu": 0.05,
+                "multiplier": 10.0,
+                "largest_eigenvalue_without_BIAS2": 307765.86883264064,
+                "largest_eigenvalue_with_BIAS2": 270.3771562449791,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 0.01,
+                "conditional_mu": 0.08,
+                "multiplier": 10.0,
+                "largest_eigenvalue_without_BIAS2": 307765.86883264064,
+                "largest_eigenvalue_with_BIAS2": 267.2844353175759,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 0.01,
+                "conditional_mu": 0.1,
+                "multiplier": 10.0,
+                "largest_eigenvalue_without_BIAS2": 307765.86883264064,
+                "largest_eigenvalue_with_BIAS2": 266.8432007316593,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 0.01,
+                "conditional_mu": 0.3,
+                "multiplier": 3.1622776601683795,
+                "largest_eigenvalue_without_BIAS2": 307765.86883264064,
+                "largest_eigenvalue_with_BIAS2": 92.01648462740333,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 0.01,
+                "conditional_mu": 1.0,
+                "multiplier": 1.0,
+                "largest_eigenvalue_without_BIAS2": 307765.86883264064,
+                "largest_eigenvalue_with_BIAS2": 36.666040028949965,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 0.01,
+                "conditional_mu": 3.0,
+                "multiplier": 0.31622776601683794,
+                "largest_eigenvalue_without_BIAS2": 307765.86883264064,
+                "largest_eigenvalue_with_BIAS2": 19.293410920520795,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 1.0,
+                "conditional_mu": 0.0001,
+                "multiplier": 1e-16,
+                "largest_eigenvalue_without_BIAS2": 10.2434490335473,
+                "largest_eigenvalue_with_BIAS2": 10.243449033539541,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 1.0,
+                "conditional_mu": 0.001,
+                "multiplier": 1e-12,
+                "largest_eigenvalue_without_BIAS2": 10.2434490335473,
+                "largest_eigenvalue_with_BIAS2": 10.243449033530572,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 1.0,
+                "conditional_mu": 0.01,
+                "multiplier": 1e-12,
+                "largest_eigenvalue_without_BIAS2": 10.2434490335473,
+                "largest_eigenvalue_with_BIAS2": 10.243449033532944,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 1.0,
+                "conditional_mu": 0.03,
+                "multiplier": 1e-16,
+                "largest_eigenvalue_without_BIAS2": 10.2434490335473,
+                "largest_eigenvalue_with_BIAS2": 10.243449033539541,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 1.0,
+                "conditional_mu": 0.05,
+                "multiplier": 1e-16,
+                "largest_eigenvalue_without_BIAS2": 10.2434490335473,
+                "largest_eigenvalue_with_BIAS2": 10.243449033539541,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 1.0,
+                "conditional_mu": 0.08,
+                "multiplier": 1e-12,
+                "largest_eigenvalue_without_BIAS2": 10.2434490335473,
+                "largest_eigenvalue_with_BIAS2": 10.243449033511249,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 1.0,
+                "conditional_mu": 0.1,
+                "multiplier": 1e-15,
+                "largest_eigenvalue_without_BIAS2": 10.2434490335473,
+                "largest_eigenvalue_with_BIAS2": 10.243449033481932,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 1.0,
+                "conditional_mu": 0.3,
+                "multiplier": 1e-16,
+                "largest_eigenvalue_without_BIAS2": 10.2434490335473,
+                "largest_eigenvalue_with_BIAS2": 10.243449033497228,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 1.0,
+                "conditional_mu": 1.0,
+                "multiplier": 1e-13,
+                "largest_eigenvalue_without_BIAS2": 10.2434490335473,
+                "largest_eigenvalue_with_BIAS2": 10.243449033521678,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 1.0,
+                "conditional_mu": 3.0,
+                "multiplier": 1e-15,
+                "largest_eigenvalue_without_BIAS2": 10.2434490335473,
+                "largest_eigenvalue_with_BIAS2": 10.24344903354061,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 100.0,
+                "conditional_mu": 0.0001,
+                "multiplier": 3.162277660168379e-07,
+                "largest_eigenvalue_without_BIAS2": -0.04151719506935221,
+                "largest_eigenvalue_with_BIAS2": -0.041517198966391326,
+                "point_master_strict": true,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 100.0,
+                "conditional_mu": 0.001,
+                "multiplier": 3.162277660168379e-07,
+                "largest_eigenvalue_without_BIAS2": -0.04151719506935221,
+                "largest_eigenvalue_with_BIAS2": -0.04151720067308994,
+                "point_master_strict": true,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 100.0,
+                "conditional_mu": 0.01,
+                "multiplier": 3.162277660168379e-08,
+                "largest_eigenvalue_without_BIAS2": -0.04151719506935221,
+                "largest_eigenvalue_with_BIAS2": -0.041517200637354985,
+                "point_master_strict": true,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 100.0,
+                "conditional_mu": 0.03,
+                "multiplier": 3.162277660168379e-07,
+                "largest_eigenvalue_without_BIAS2": -0.04151719506935221,
+                "largest_eigenvalue_with_BIAS2": -0.04151720166778296,
+                "point_master_strict": true,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 100.0,
+                "conditional_mu": 0.05,
+                "multiplier": 3.162277660168379e-08,
+                "largest_eigenvalue_without_BIAS2": -0.04151719506935221,
+                "largest_eigenvalue_with_BIAS2": -0.04151720082705457,
+                "point_master_strict": true,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 100.0,
+                "conditional_mu": 0.08,
+                "multiplier": 1e-07,
+                "largest_eigenvalue_without_BIAS2": -0.04151719506935221,
+                "largest_eigenvalue_with_BIAS2": -0.041517200856221126,
+                "point_master_strict": true,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 100.0,
+                "conditional_mu": 0.1,
+                "multiplier": 3.1622776601683794e-12,
+                "largest_eigenvalue_without_BIAS2": -0.04151719506935221,
+                "largest_eigenvalue_with_BIAS2": -0.04151720032268416,
+                "point_master_strict": true,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 100.0,
+                "conditional_mu": 0.3,
+                "multiplier": 1e-05,
+                "largest_eigenvalue_without_BIAS2": -0.04151719506935221,
+                "largest_eigenvalue_with_BIAS2": -0.041517200129170755,
+                "point_master_strict": true,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 100.0,
+                "conditional_mu": 1.0,
+                "multiplier": 3.162277660168379e-08,
+                "largest_eigenvalue_without_BIAS2": -0.04151719506935221,
+                "largest_eigenvalue_with_BIAS2": -0.0415172011096566,
+                "point_master_strict": true,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 100.0,
+                "conditional_mu": 3.0,
+                "multiplier": 3.162277660168379e-08,
+                "largest_eigenvalue_without_BIAS2": -0.04151719506935221,
+                "largest_eigenvalue_with_BIAS2": -0.041517199791147937,
+                "point_master_strict": true,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              }
+            ]
+          },
+          "tested_prefix": {
+            "factor": 2.0,
+            "step": 23,
+            "sector_has_no_future_events": true,
+            "trials": [
+              {
+                "gain": 0.0001,
+                "conditional_mu": 0.0001,
+                "multiplier": 0.0,
+                "largest_eigenvalue_without_BIAS2": 488.8881766504412,
+                "largest_eigenvalue_with_BIAS2": 488.8881766504412,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 0.0001,
+                "conditional_mu": 0.001,
+                "multiplier": 0.0,
+                "largest_eigenvalue_without_BIAS2": 488.8881766504412,
+                "largest_eigenvalue_with_BIAS2": 488.8881766504412,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 0.0001,
+                "conditional_mu": 0.01,
+                "multiplier": 0.0,
+                "largest_eigenvalue_without_BIAS2": 488.8881766504412,
+                "largest_eigenvalue_with_BIAS2": 488.8881766504412,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 0.0001,
+                "conditional_mu": 0.03,
+                "multiplier": 0.0,
+                "largest_eigenvalue_without_BIAS2": 488.8881766504412,
+                "largest_eigenvalue_with_BIAS2": 488.8881766504412,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 0.0001,
+                "conditional_mu": 0.05,
+                "multiplier": 0.0,
+                "largest_eigenvalue_without_BIAS2": 488.8881766504412,
+                "largest_eigenvalue_with_BIAS2": 488.8881766504412,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 0.0001,
+                "conditional_mu": 0.08,
+                "multiplier": 1e-16,
+                "largest_eigenvalue_without_BIAS2": 488.8881766504412,
+                "largest_eigenvalue_with_BIAS2": 488.8881766504411,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 0.0001,
+                "conditional_mu": 0.1,
+                "multiplier": 1e-16,
+                "largest_eigenvalue_without_BIAS2": 488.8881766504412,
+                "largest_eigenvalue_with_BIAS2": 488.8881766504411,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 0.0001,
+                "conditional_mu": 0.3,
+                "multiplier": 3.1622776601683795,
+                "largest_eigenvalue_without_BIAS2": 488.8881766504412,
+                "largest_eigenvalue_with_BIAS2": 11.686202036547286,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 0.0001,
+                "conditional_mu": 1.0,
+                "multiplier": 0.31622776601683794,
+                "largest_eigenvalue_without_BIAS2": 488.8881766504412,
+                "largest_eigenvalue_with_BIAS2": 0.20936446505357753,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 0.0001,
+                "conditional_mu": 3.0,
+                "multiplier": 0.1,
+                "largest_eigenvalue_without_BIAS2": 488.8881766504412,
+                "largest_eigenvalue_with_BIAS2": 0.1301759269279632,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 0.01,
+                "conditional_mu": 0.0001,
+                "multiplier": 1e-16,
+                "largest_eigenvalue_without_BIAS2": 431.78311191215516,
+                "largest_eigenvalue_with_BIAS2": 431.78311191215505,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 0.01,
+                "conditional_mu": 0.001,
+                "multiplier": 1e-16,
+                "largest_eigenvalue_without_BIAS2": 431.78311191215516,
+                "largest_eigenvalue_with_BIAS2": 431.78311191215505,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 0.01,
+                "conditional_mu": 0.01,
+                "multiplier": 1e-16,
+                "largest_eigenvalue_without_BIAS2": 431.78311191215516,
+                "largest_eigenvalue_with_BIAS2": 431.78311191215505,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 0.01,
+                "conditional_mu": 0.03,
+                "multiplier": 1e-16,
+                "largest_eigenvalue_without_BIAS2": 431.78311191215516,
+                "largest_eigenvalue_with_BIAS2": 431.78311191215505,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 0.01,
+                "conditional_mu": 0.05,
+                "multiplier": 1e-16,
+                "largest_eigenvalue_without_BIAS2": 431.78311191215516,
+                "largest_eigenvalue_with_BIAS2": 431.78311191215505,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 0.01,
+                "conditional_mu": 0.08,
+                "multiplier": 1e-16,
+                "largest_eigenvalue_without_BIAS2": 431.78311191215516,
+                "largest_eigenvalue_with_BIAS2": 431.78311191215505,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 0.01,
+                "conditional_mu": 0.1,
+                "multiplier": 1e-16,
+                "largest_eigenvalue_without_BIAS2": 431.78311191215516,
+                "largest_eigenvalue_with_BIAS2": 431.78311191215505,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 0.01,
+                "conditional_mu": 0.3,
+                "multiplier": 3.1622776601683795,
+                "largest_eigenvalue_without_BIAS2": 431.78311191215516,
+                "largest_eigenvalue_with_BIAS2": 11.136994071707672,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 0.01,
+                "conditional_mu": 1.0,
+                "multiplier": 0.31622776601683794,
+                "largest_eigenvalue_without_BIAS2": 431.78311191215516,
+                "largest_eigenvalue_with_BIAS2": 0.19957586222636792,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 0.01,
+                "conditional_mu": 3.0,
+                "multiplier": 0.1,
+                "largest_eigenvalue_without_BIAS2": 431.78311191215516,
+                "largest_eigenvalue_with_BIAS2": 0.12017973981716046,
+                "point_master_strict": false,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 1.0,
+                "conditional_mu": 0.0001,
+                "multiplier": 3.1622776601683793e-16,
+                "largest_eigenvalue_without_BIAS2": -0.8018369444523717,
+                "largest_eigenvalue_with_BIAS2": -0.8018369444523911,
+                "point_master_strict": true,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 1.0,
+                "conditional_mu": 0.001,
+                "multiplier": 3.1622776601683796e-14,
+                "largest_eigenvalue_without_BIAS2": -0.8018369444523717,
+                "largest_eigenvalue_with_BIAS2": -0.8018369444523968,
+                "point_master_strict": true,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 1.0,
+                "conditional_mu": 0.01,
+                "multiplier": 1e-13,
+                "largest_eigenvalue_without_BIAS2": -0.8018369444523717,
+                "largest_eigenvalue_with_BIAS2": -0.8018369444523944,
+                "point_master_strict": true,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 1.0,
+                "conditional_mu": 0.03,
+                "multiplier": 3.162277660168379e-13,
+                "largest_eigenvalue_without_BIAS2": -0.8018369444523717,
+                "largest_eigenvalue_with_BIAS2": -0.8018369444524388,
+                "point_master_strict": true,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 1.0,
+                "conditional_mu": 0.05,
+                "multiplier": 3.162277660168379e-13,
+                "largest_eigenvalue_without_BIAS2": -0.8018369444523717,
+                "largest_eigenvalue_with_BIAS2": -0.801836944452424,
+                "point_master_strict": true,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 1.0,
+                "conditional_mu": 0.08,
+                "multiplier": 3.162277660168379e-13,
+                "largest_eigenvalue_without_BIAS2": -0.8018369444523717,
+                "largest_eigenvalue_with_BIAS2": -0.8018369444527087,
+                "point_master_strict": true,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 1.0,
+                "conditional_mu": 0.1,
+                "multiplier": 3.162277660168379e-13,
+                "largest_eigenvalue_without_BIAS2": -0.8018369444523717,
+                "largest_eigenvalue_with_BIAS2": -0.8018369444527191,
+                "point_master_strict": true,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 1.0,
+                "conditional_mu": 0.3,
+                "multiplier": 3.1622776601683793e-16,
+                "largest_eigenvalue_without_BIAS2": -0.8018369444523717,
+                "largest_eigenvalue_with_BIAS2": -0.8018369444523911,
+                "point_master_strict": true,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 1.0,
+                "conditional_mu": 1.0,
+                "multiplier": 3.162277660168379e-13,
+                "largest_eigenvalue_without_BIAS2": -0.8018369444523717,
+                "largest_eigenvalue_with_BIAS2": -0.8018369444526714,
+                "point_master_strict": true,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 1.0,
+                "conditional_mu": 3.0,
+                "multiplier": 1e-12,
+                "largest_eigenvalue_without_BIAS2": -0.8018369444523717,
+                "largest_eigenvalue_with_BIAS2": -0.80183694445278,
+                "point_master_strict": true,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 100.0,
+                "conditional_mu": 0.0001,
+                "multiplier": 3.1622776601683795e-10,
+                "largest_eigenvalue_without_BIAS2": -0.9999987875668235,
+                "largest_eigenvalue_with_BIAS2": -0.9999987875668253,
+                "point_master_strict": true,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 100.0,
+                "conditional_mu": 0.001,
+                "multiplier": 3.1622776601683795e-09,
+                "largest_eigenvalue_without_BIAS2": -0.9999987875668235,
+                "largest_eigenvalue_with_BIAS2": -0.9999987875668251,
+                "point_master_strict": true,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 100.0,
+                "conditional_mu": 0.01,
+                "multiplier": 3.1622776601683795e-10,
+                "largest_eigenvalue_without_BIAS2": -0.9999987875668235,
+                "largest_eigenvalue_with_BIAS2": -0.9999987875668255,
+                "point_master_strict": true,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 100.0,
+                "conditional_mu": 0.03,
+                "multiplier": 1e-10,
+                "largest_eigenvalue_without_BIAS2": -0.9999987875668235,
+                "largest_eigenvalue_with_BIAS2": -0.9999987875668257,
+                "point_master_strict": true,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 100.0,
+                "conditional_mu": 0.05,
+                "multiplier": 3.162277660168379e-08,
+                "largest_eigenvalue_without_BIAS2": -0.9999987875668235,
+                "largest_eigenvalue_with_BIAS2": -0.9999987875668254,
+                "point_master_strict": true,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 100.0,
+                "conditional_mu": 0.08,
+                "multiplier": 3.1622776601683794e-12,
+                "largest_eigenvalue_without_BIAS2": -0.9999987875668235,
+                "largest_eigenvalue_with_BIAS2": -0.9999987875668257,
+                "point_master_strict": true,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 100.0,
+                "conditional_mu": 0.1,
+                "multiplier": 1e-10,
+                "largest_eigenvalue_without_BIAS2": -0.9999987875668235,
+                "largest_eigenvalue_with_BIAS2": -0.9999987875668257,
+                "point_master_strict": true,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 100.0,
+                "conditional_mu": 0.3,
+                "multiplier": 3.1622776601683794e-15,
+                "largest_eigenvalue_without_BIAS2": -0.9999987875668235,
+                "largest_eigenvalue_with_BIAS2": -0.9999987875668248,
+                "point_master_strict": true,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 100.0,
+                "conditional_mu": 1.0,
+                "multiplier": 3.1622776601683796e-14,
+                "largest_eigenvalue_without_BIAS2": -0.9999987875668235,
+                "largest_eigenvalue_with_BIAS2": -0.9999987875668255,
+                "point_master_strict": true,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              },
+              {
+                "gain": 100.0,
+                "conditional_mu": 3.0,
+                "multiplier": 3.1622776601683794e-15,
+                "largest_eigenvalue_without_BIAS2": -0.9999987875668235,
+                "largest_eigenvalue_with_BIAS2": -0.9999987875668257,
+                "point_master_strict": true,
+                "BIAS2_changes_nonpassing_master_to_strict": false
+              }
+            ]
+          }
+        },
+        "source_uniform_BIAS2_constant_certified": false,
+        "point_ratios_used_as_uniform_mu": false,
+        "P4_MOTION_PASS": false,
+        "P5_MOTION_MAY_START": false
+      },
+      "source_uniform_gains_certified": false,
+      "P4_MOTION_PASS": false,
+      "P5_MOTION_MAY_START": false
+    }
+  },
+  "common_template_restriction_is_not_a_sufficient_BRMM_test": true
+}

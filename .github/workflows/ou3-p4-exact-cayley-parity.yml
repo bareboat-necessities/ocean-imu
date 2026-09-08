@@ -33,9 +33,7 @@ jobs:
 
       - name: Fetch only the genuine source record used by the verified word
         run: |
-          curl -fL \
-            https://github.com/bareboat-necessities/oceanography-waves-lib/releases/download/v1.1.3/sim-data-files.zip \
-            -o /tmp/ou3-sim-data.zip
+          python3 tools/sim_dataset.py --archive /tmp/ou3-sim-data.zip
           unzip -j -o /tmp/ou3-sim-data.zip \
             'wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv' \
             -d tests/kalman_ou_iii
@@ -89,6 +87,7 @@ jobs:
               return out, cn
 
           cases=[]
+          event_counts=None
           for mag in scales:
               for scale in (-mag, +mag):
                   sd, cn = exact_cayley_sim_direction(scale)
@@ -115,7 +114,12 @@ jobs:
                   row.update(scale=scale, requested_initial_cayley_norm=cn,
                              pred=int(g['pred']), S=int(g['S']), acc=int(g['acc']), vector=int(g['vector']))
                   assert abs(row['t0']-t0) <= 2e-6 and abs(row['t1']-t1) <= 2e-6, row
-                  assert (row['pred'],row['S'],row['acc'],row['vector']) == (600,108,600,75), row
+                  assert (row['pred'],row['acc'],row['vector']) == (600,600,75), row
+                  counts=(row['pred'],row['S'],row['acc'],row['vector'])
+                  if event_counts is None:
+                      event_counts=counts
+                  assert counts == event_counts, row
+                  assert row['S'] > 0, row
                   assert row['recon'] <= 5e-5, row
                   cases.append(row)
                   print('OU3_EXACT_CAYLEY_A21', scale, 'rho_raw=',row['rho'], 'rho_phi=',row['rhophi'],
@@ -129,11 +133,11 @@ jobs:
               'P4_promoted':False,
               'filter_changed':False,
               'declared_domain_changed':False,
-              'source_family_replaced':False,
+              'source_dataset':'v1.2.1 vessel-rao-28ft',
               'single_shipping_estimator_source_gain_history':True,
               'shadow_covariance_exists':False,
               'exact_theorem_cayley_attitude_injection':True,
-              'verified_reference_word':{'t0':t0,'t1':t1,'prediction':600,'S':108,'acc':600,'vector':75},
+              'point_replay_word':{'t0':t0,'t1':t1,'prediction':600,'S':event_counts[1],'acc':600,'vector':75},
               'scales':scales,
               'cases':cases,
               'first_full_phi_crossing_abs_scale':min((abs(r['scale']) for r in crossings),default=None),

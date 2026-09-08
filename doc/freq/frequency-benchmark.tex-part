@@ -1,0 +1,14 @@
+The standalone comparison adds Gaussian acceleration noise with standard
+deviation \(0.08\,\mathrm{m/s^2}\) and a constant bias of
+\(0.10\,\mathrm{m/s^2}\). Each backend then receives the same causal
+conditioning: a \(0.01\,\mathrm{Hz}\) DC-removal filter followed by two
+\(0.8\,\mathrm{Hz}\) low-pass poles. All states reset for each replay.
+The zero-crossing hysteresis is \(0.004g\); the former \(0.04g\) setting
+exceeds the weak-cnoidal signal amplitude. These are standalone benchmark
+settings; deployed adapters configure their own preprocessing.
+The injected corruption, input records, tracker-specific random seeds,
+\(0.04\)--\(2.0\,\mathrm{Hz}\) output limits, final five-second scoring
+window, and \(70\%\) pairwise disagreement limit are unchanged.
+This gate checks agreement between trackers; it does not certify accuracy
+against a reference spectrum. On the slowest cnoidal record, for example,
+the final means still range from \(0.040\) to \(0.090\,\mathrm{Hz}\).

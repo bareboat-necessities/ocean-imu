@@ -1,0 +1,119 @@
+[
+  {
+    "name": "combined",
+    "env": {
+      "SF_MAG_HI_RIDGE_REL": ".25",
+      "SF_MAG_HI_MIN_INFO": ".1",
+      "SF_GYRO_BIAS_RW_VAR": "1e-10",
+      "SF_SIGMA_M_SCALE": "2"
+    }
+  },
+  {
+    "name": "sf_sigma_a_scale0.5",
+    "env": {
+      "SF_MAG_HI_RIDGE_REL": ".25",
+      "SF_MAG_HI_MIN_INFO": ".1",
+      "SF_GYRO_BIAS_RW_VAR": "1e-10",
+      "SF_SIGMA_M_SCALE": "2",
+      "SF_SIGMA_A_SCALE": "0.5"
+    }
+  },
+  {
+    "name": "sf_sigma_a_scale2",
+    "env": {
+      "SF_MAG_HI_RIDGE_REL": ".25",
+      "SF_MAG_HI_MIN_INFO": ".1",
+      "SF_GYRO_BIAS_RW_VAR": "1e-10",
+      "SF_SIGMA_M_SCALE": "2",
+      "SF_SIGMA_A_SCALE": "2"
+    }
+  },
+  {
+    "name": "sf_sigma_a_scale4",
+    "env": {
+      "SF_MAG_HI_RIDGE_REL": ".25",
+      "SF_MAG_HI_MIN_INFO": ".1",
+      "SF_GYRO_BIAS_RW_VAR": "1e-10",
+      "SF_SIGMA_M_SCALE": "2",
+      "SF_SIGMA_A_SCALE": "4"
+    }
+  },
+  {
+    "name": "sf_sigma_g_scale0.5",
+    "env": {
+      "SF_MAG_HI_RIDGE_REL": ".25",
+      "SF_MAG_HI_MIN_INFO": ".1",
+      "SF_GYRO_BIAS_RW_VAR": "1e-10",
+      "SF_SIGMA_M_SCALE": "2",
+      "SF_SIGMA_G_SCALE": "0.5"
+    }
+  },
+  {
+    "name": "sf_sigma_g_scale2",
+    "env": {
+      "SF_MAG_HI_RIDGE_REL": ".25",
+      "SF_MAG_HI_MIN_INFO": ".1",
+      "SF_GYRO_BIAS_RW_VAR": "1e-10",
+      "SF_SIGMA_M_SCALE": "2",
+      "SF_SIGMA_G_SCALE": "2"
+    }
+  },
+  {
+    "name": "ou_ii_acc_bias_rw0.00025",
+    "env": {
+      "SF_MAG_HI_RIDGE_REL": ".25",
+      "SF_MAG_HI_MIN_INFO": ".1",
+      "SF_GYRO_BIAS_RW_VAR": "1e-10",
+      "SF_SIGMA_M_SCALE": "2",
+      "OU_II_ACC_BIAS_RW": "0.00025"
+    }
+  },
+  {
+    "name": "ou_ii_acc_bias_rw0.0004",
+    "env": {
+      "SF_MAG_HI_RIDGE_REL": ".25",
+      "SF_MAG_HI_MIN_INFO": ".1",
+      "SF_GYRO_BIAS_RW_VAR": "1e-10",
+      "SF_SIGMA_M_SCALE": "2",
+      "OU_II_ACC_BIAS_RW": "0.0004"
+    }
+  },
+  {
+    "name": "ou_ii_acc_bias_rw0.00075",
+    "env": {
+      "SF_MAG_HI_RIDGE_REL": ".25",
+      "SF_MAG_HI_MIN_INFO": ".1",
+      "SF_GYRO_BIAS_RW_VAR": "1e-10",
+      "SF_SIGMA_M_SCALE": "2",
+      "OU_II_ACC_BIAS_RW": "0.00075"
+    }
+  },
+  {
+    "name": "sf_mag_hi_ridge_rel0.1",
+    "env": {
+      "SF_MAG_HI_RIDGE_REL": "0.1",
+      "SF_MAG_HI_MIN_INFO": ".1",
+      "SF_GYRO_BIAS_RW_VAR": "1e-10",
+      "SF_SIGMA_M_SCALE": "2"
+    }
+  },
+  {
+    "name": "sf_mag_hi_ridge_rel0.4",
+    "env": {
+      "SF_MAG_HI_RIDGE_REL": "0.4",
+      "SF_MAG_HI_MIN_INFO": ".1",
+      "SF_GYRO_BIAS_RW_VAR": "1e-10",
+      "SF_SIGMA_M_SCALE": "2"
+    }
+  },
+  {
+    "name": "sf_mag_refine_start_sec30",
+    "env": {
+      "SF_MAG_HI_RIDGE_REL": ".25",
+      "SF_MAG_HI_MIN_INFO": ".1",
+      "SF_GYRO_BIAS_RW_VAR": "1e-10",
+      "SF_SIGMA_M_SCALE": "2",
+      "SF_MAG_REFINE_START_SEC": "30"
+    }
+  }
+]

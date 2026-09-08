@@ -17,7 +17,7 @@ import sys
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools/stability"))
 import ou3_brmm_response_union as UNION  # noqa: E402
-MANIFEST = Path(__file__).with_name("fixtures") / "ou3_physical_generator_provenance.json"
+MANIFEST = Path(__file__).with_name("fixtures") / "ou3_vessel_generator_provenance.json"
 
 
 def particle_response_test(frequency, gain, corner, power):
@@ -82,43 +82,33 @@ def build(generator_root: Path, observed: dict):
     for name, digest in manifest["generator_file_sha256"].items():
         if hashlib.sha256((generator_root / name).read_bytes()).hexdigest() != digest:
             raise ValueError(f"physical generator source changed: {name}")
-    if "SIM_DATA_VERSION ?= v1.1.3" not in (ROOT / "Makefile").read_text():
+    if "SIM_DATA_VERSION ?= v1.2.1" not in (ROOT / "Makefile").read_text():
         raise ValueError("deployed simulation data version changed")
-    if observed["frequency_count"] != 128 or observed["order"] != 3:
+    if observed.get("response_model") != "VESSEL_RAO_28FT" or observed["frequency_count"] != 128:
         raise ValueError("observed generator family changed")
-    if not (abs(observed["highest_fundamental_hz"] - 0.8) < 1e-12
-            and observed["highest_third_harmonic_amplitude_m"] > 0):
-        raise ValueError("expected nonzero highest harmonic is absent")
-    response = json.loads((ROOT / "tools/stability/ou3_brmm_directional_response_domain.json").read_text())["response_contract"]
-    # This corner dominates the unchanged LINEAR branch, not the new union.
-    gain = str(response["peak_translation_gain_range"][1])
-    corner = str(response["rolloff_corner_hz_range"][1])
-    power = str(response["high_frequency_rolloff_power_min"])
-    inequality = particle_response_test("12/5", gain, corner, power)
-    stokes = stokes_response_test(observed)
+    if observed.get("particle_harmonics_applied") is not False:
+        raise ValueError("particle harmonics must not drive the vessel RAO")
+    atoms = observed["atoms"]
+    if len(atoms) != 128 or any(not all(math.isfinite(a[k]) for k in
+        ("frequency_hz", "amplitude_m", "translation_gain_norm", "yaw_gain_norm")) for a in atoms):
+        raise ValueError("invalid RAO component observation")
     return {
-        "qualification": "PINNED_GENERATOR_REFERENCE_RESPONSE_MODEL_AUDIT",
+        "qualification": "PINNED_VESSEL_RAO_REFERENCE_RESPONSE_MODEL_AUDIT",
         "provenance": manifest,
-        "reference_response_union": UNION.build(),
-        "Stokes_response_test": stokes,
         "public_generator_API_observation": observed,
-        "exact_response_test": inequality,
-        "fundamental_input_obstruction": "a linear response cannot create the nonzero 3*f_max harmonic above the generator's fundamental support",
-        "full_Stokes_elevation_input_obstruction": "the surface-particle translational gain violates the reference linear response envelope at 12/5 Hz",
+        "response_model": "VESSEL_RAO_28FT",
+        "maximum_sampled_translation_gain": max(a["translation_gain_norm"] for a in atoms),
+        "incident_fundamental_band_hz": [min(a["frequency_hz"] for a in atoms), max(a["frequency_hz"] for a in atoms)],
         "generator_has_one_correlated_phase_direction_history": True,
         "generator_is_complete_continuum_BRMM_provider": False,
-        "linear_vessel_response_admission": "REJECTED" if not inequality["response_envelope_satisfied"] else "REQUIRES_REMAINING_PREMISES",
-        "direct_generator_response_admission": stokes["response_model_admission"],
-        "admission_scope": "RESPONSE_MODEL_ONLY_NOT_COMPLETE_RETAINED_WORD",
+        "admission_scope": "POINT_RESPONSE_AUDIT_NOT_COMPLETE_RETAINED_WORD",
         "BRMM_SOURCE_ADMISSION_PASS": False,
-        "gyro_centered_difference_defect_certified": False,
         "finite_sample_membership_under_another_realization": "UNDETERMINED",
         "retained_payload_rebound_to_regenerated_history": False,
-        "true_bias_noise_model_in_simulator": "turn-on offset plus random walk and white measurement noise; not an unforced OU history",
-        "bias_mismatch_silently_charged_to_ISS": False,
         "canonical_P4_falsified": False,
         "P4_promoted": False,
     }
+
 
 
 def main():
@@ -130,8 +120,8 @@ def main():
     report = build(args.generator_root, json.loads(args.observation.read_text()))
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(report, indent=2, sort_keys=True, allow_nan=False) + "\n")
-    print("REFERENCE_GENERATOR_RESPONSE_ADMISSION", report["direct_generator_response_admission"],
-          json.dumps(report["exact_response_test"], sort_keys=True))
+    print("REFERENCE_GENERATOR_RESPONSE", report["response_model"],
+          report["maximum_sampled_translation_gain"])
     print("FINITE_SAMPLE_MEMBERSHIP", report["finite_sample_membership_under_another_realization"])
 
 

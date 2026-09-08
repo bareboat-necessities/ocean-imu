@@ -1,0 +1,19 @@
+{
+  "source_commit": "942d3a9542ab2b1dc8f909bbfe270ac1328575c1",
+  "note": "NLO sources unchanged since original head; built with that head PLL header ahead of current include path. Identical compiler flags. Default draw, all eight records, last 900 s.",
+  "binary_sha256": "75d8b5ab8119b75840df7937b8e6d412ee17c6177819a59428fbd292b0b7716f",
+  "exit_code": 1,
+  "z_pct_hs": [
+    6.50171,
+    6.82846,
+    6.4951,
+    6.94823,
+    6.62835,
+    12.7763,
+    6.19056,
+    6.45344
+  ],
+  "failures": [
+    "ERROR: raw Z RMS above limit (12.7763% > 7.13%). Mean Z error was -8.09601e-05 m. Failing."
+  ]
+}

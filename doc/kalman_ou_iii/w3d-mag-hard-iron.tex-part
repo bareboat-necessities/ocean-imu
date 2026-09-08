@@ -60,7 +60,7 @@ therefore uses an excitation-scaled ridge,
 =\bar{\vct m}-\bar{\mat A}^{\top}\bar{\vct w},
 \label{eq:mag-ridge}
 \end{equation}
-with $\rho_0=5\times10^{-4}$ and $\rho_1=0.5$.  The excitation-dependent term
+with $\rho_0=5\times10^{-4}$ and $\rho_1=0.25$.  The excitation-dependent term
 limits misspecification when larger motion increases both geometric information
 and unmodeled distortion.  The absolute floor $\rho_0$ is set by the admission
 gate below rather than by a sweep: at the saturated weight of the \SI{600}{s}
@@ -103,8 +103,3 @@ additive correction degrades performance, despite strong offset dominance in
 the reported draw.  The ridge in Eq.~\eqref{eq:mag-ridge} therefore limits model
 misspecification as well as numerical ill-conditioning.  Section~\ref{sec:mag-hi-results}
 reports the deterministic result for the evaluated draw.
-
-% Keep the directional-sea theorem immediately ahead of the existing Live
-% stability chain without changing the frozen source-word sections themselves.
-\input{w3d-marine-reference-models.tex-part}
-\input{w3d-brmm-period-bridge.tex-part}

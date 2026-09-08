@@ -1,0 +1,20 @@
+[
+  {
+    "name": "coarse_tau_30",
+    "env": {
+      "NLO_COARSE_TAU": "30"
+    }
+  },
+  {
+    "name": "coarse_tau_120",
+    "env": {
+      "NLO_COARSE_TAU": "120"
+    }
+  },
+  {
+    "name": "coarse_tau_600",
+    "env": {
+      "NLO_COARSE_TAU": "600"
+    }
+  }
+]

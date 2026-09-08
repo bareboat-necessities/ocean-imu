@@ -34,6 +34,13 @@ branch. The response union in Eq.~\eqref{eq:marine-reference-response-union} add
 admits a correlated atomic Stokes wave-following branch; its bound harmonics
 are not identified with this fundamental continuum spectrum.
 
+The simulation release v1.2.1 uses the estimated 28 ft sailboat RAO,
+with first-order incident JONSWAP/PM components. The Stokes wave-following
+branch below is an optional theoretical reference family, not the current
+simulation response. The estimated RAO curve and actual execution history
+still require qualification against the declared continuum and Normal-Live
+premises; replacing the data archive does not establish that membership.
+
 Fix
 \begin{equation}
  \boxed{M_{\max}=3.}

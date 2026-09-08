@@ -418,6 +418,14 @@ class Kalman3D_Wave_OU_II {
         return Vector3::Zero();
     }
 
+    // Bias used by the measurement model, expressed in physical sensor axes.
+    [[nodiscard]] Vector3 get_acc_bias_body_at_temperature(T tempC) const {
+        Vector3 b = get_acc_bias_at_temperature(tempC);
+        if (std::abs(wind_heel_rad_) < T(1e-9)) return b;
+        return Vector3(b.x(), cos_unheel_x_ * b.y() + sin_unheel_x_ * b.z(),
+                       -sin_unheel_x_ * b.y() + cos_unheel_x_ * b.z());
+    }
+
     void set_initial_acc_bias(const Vector3& b0) {
         if constexpr (with_accel_bias)
             xext.template segment<3>(OFF_BA) = b0;

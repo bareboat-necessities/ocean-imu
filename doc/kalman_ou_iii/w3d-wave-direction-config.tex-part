@@ -36,3 +36,9 @@ own absolute-energy and coherence requirements and may therefore remain
 unresolved even while the axis is valid.  This separation is intentional: a
 well-determined propagation plane is not sufficient evidence for choosing one
 of its two directed senses.
+
+The vessel simulators additionally enable the known v1.2.1 response profile
+in \texttt{VesselRaoEqualizer}. It uses the guarded accelerometer and matches
+horizontal and heave responses only in the direction branch. The generic
+filter leaves this profile disabled until the hull response is configured;
+\texttt{W3D\_DIRECTION\_RAO=off} selects the simulation ablation.

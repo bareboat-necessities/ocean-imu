@@ -2,9 +2,9 @@
 \label{sec:brmm-source}
 
 BRMM (bounded recurrent marine motion) is the physical source hypothesis
-for the primary practical-motion theorem. Spectral and vessel models in
-Section~\ref{sec:marine-reference-stability-target} are reference specializations; neither
-their spectra nor their response-family membership define BRMM admission. Complete execution semantics are unchanged: one physical
+for the primary practical-motion theorem. A spectral or vessel-response model
+can provide an example of physical motion, but membership in such a model
+does not define BRMM admission. One physical
 root and continuation produce $a_m,\omega,R$, frontend and geometry states,
 committed $\tau,\sigma_{aw},R_S,T_S$, and the actual covariance/event history.
 There are no independent acceleration, bias, tuner or pseudo-measurement boxes.
@@ -45,16 +45,21 @@ acceleration is also prohibited. Finite transient impulses and zero motion
 remain admissible. A fixed-window bound alone, however small, does not
 exclude all constant accelerations; nor does small AC energy.
 
-For example, the fixed-root finite harmonic model of
-Eqs.~\eqref{eq:marine-reference-stokes-orbit}--\eqref{eq:marine-reference-stokes-hard-bound}
-has $a_m=\dot v_o$ and $\|v_o\|\le B_1=\sum_{i,n}n\omega_i c_{in}$.
-It therefore satisfies BRMM-0 for all time, with $V_m=B_1$ for the
-centered orbital primitive. Including its constant Stokes velocity drift
-only adds that drift's norm to $V_m$ and contributes no acceleration DC.
-Uniformity over a root family requires a uniform bound on $B_1$ and any
-included drift. This analytical model implication is independent of a
-finite-record mean; it does not by itself certify a replay's exact physical
-attachment, the hard acceleration/rate caps, or O-branch return lobes.
+For example, a finite harmonic acceleration with fixed vector coefficients
+and frequencies $\omega_i>0$,
+\begin{equation}
+ a_m(t)=\sum_i\bigl[A_i\cos(\omega_i t)+B_i\sin(\omega_i t)\bigr],
+\end{equation}
+has the same-history primitive
+\begin{equation}
+ v_m(t)=v_0+\sum_i\frac{A_i\sin(\omega_i t)-B_i\cos(\omega_i t)}{\omega_i}.
+\end{equation}
+It satisfies BRMM-0 for all time with
+$V_m=\|v_0\|+\sum_i(\|A_i\|+\|B_i\|)/\omega_i$.
+A constant velocity drift changes this bound but contributes no acceleration
+DC. Uniformity over a family requires a uniform bound on this expression.
+This analytical implication does not by itself certify a replay's exact
+physical attachment, the acceleration/rate caps, or O-branch return lobes.
 
 Constant measurement offset belongs to BIAS0, not to $a_m$. Subtracting a
 sample mean cannot manufacture physical BRMM membership: the same actual
@@ -109,7 +114,7 @@ bandlimit. A $0.02\,{\rm Hz}$ sinusoid has a $50\,{\rm s}$ period:
 opposing lobes in every $10\,{\rm s}$ window are not automatic.
 
 \paragraph{Certificate entry and audit limits.}
-The eight unchanged JONSWAP/PM--Stokes records at
+The eight v1.2.1 vessel-response JONSWAP/PM--Stokes records at
 $H_s\in\{0.27,1.5,4,8.5\}\,{\rm m}$ are tested on every sample-aligned
 $10\,{\rm s}$ window. Outward arithmetic encloses binary64 sample values
 under an explicit zero-order-hold interpretation. Stored lobe intervals
@@ -118,6 +123,18 @@ unresolved. Finite sampled statistics neither prove infinite-time BRMM-0
 nor enclose physical intersample motion, all continuous window offsets,
 Normal-Live entry, or the complete source family. They suggest candidate
 constants and expose sampled-envelope violations; they do not set theorem constants.
+
+The sampled v1.2.1 audit contains 1,920,000 samples and 1,904,008 complete
+sample-aligned windows. All windows fall in the diagnostic O branch.
+There are 10,205 samples above the acceleration cap and 31,937 above
+the rate cap. Restricting to the runtime Live flag leaves 10,002 and
+31,589 such samples. Moreover, the runtime covariance settings differ
+from the configured vector-covariance premises used by the conditional
+matrix certificate. No sampled execution satisfies all audited admission
+checks, even where the physical caps hold. The trace observer is bitwise
+transparent to ordinary replay output; two of eight replays fail their
+unchanged performance gates. None of these finite-record observations
+promotes source admission, P4 or P5.
 
 \paragraph{Proof obligations under the replacement source.}
 BIAS0/1 supplies qualified true-bias bounds and its connected history;

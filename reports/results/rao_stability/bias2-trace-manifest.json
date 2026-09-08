@@ -1,0 +1,18 @@
+{
+  "shipping_header_sha256": "c9ed955ef998992e33b253ed0d5d49673852b87413a8c560479a9b482786d64b",
+  "overlay_header_sha256": "5bf8d13a788c68726c2e0951658cfed715ec060a4d9a4f90799c3055d4c88c26",
+  "read_only_insertions": [
+    "\n    ou3_source_trace::state(\"prediction_enter\", *this); // OU3_READ_ONLY_TRACE\n",
+    "\n    ou3_source_trace::gyro(gyr); // OU3_READ_ONLY_TRACE\n",
+    "\n    ou3_source_trace::state(\"prediction\", *this); // OU3_READ_ONLY_TRACE\n",
+    "\n    ou3_source_trace::state(\"aw_floor\", *this); // OU3_READ_ONLY_TRACE\n",
+    "\n    ou3_source_trace::measurement(\"accelerometer\", *this, r, acc_meas, Racc, k_a_ * (tempC - tempC_ref)); // OU3_READ_ONLY_TRACE\n",
+    "\n    ou3_source_trace::measurement(\"magnetometer\", *this, r, mag_meas, Rmag, Vector3::Zero()); // OU3_READ_ONLY_TRACE\n",
+    "\n    ou3_source_trace::measurement(\"S_zero\", *this, r, Vector3::Zero(), R_S, Vector3::Zero()); // OU3_READ_ONLY_TRACE\n",
+    "\n    ou3_source_trace::state(\"injected\", *this); // OU3_READ_ONLY_TRACE\n",
+    "\n    ou3_source_trace::state(\"reset\", *this); // OU3_READ_ONLY_TRACE\n",
+    "\n    ou3_source_trace::state(\"projection\", *this); // OU3_READ_ONLY_TRACE\n"
+  ],
+  "stripping_recovers_shipping_bytes": true,
+  "runtime_bitwise_transparency_still_requires_dual_run": true
+}

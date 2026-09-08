@@ -1,0 +1,12 @@
+[
+  {
+    "name": "head",
+    "env": {
+      "SF_SIGMA_G_SCALE": "5"
+    }
+  },
+  {
+    "name": "current",
+    "env": {}
+  }
+]

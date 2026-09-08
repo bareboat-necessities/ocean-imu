@@ -107,6 +107,12 @@ int main() {
         std::cerr << "FAIL: test did not create a distinct staged candidate\n";
         return 1;
     }
+    if (!near(f.getTauApplied(), active_tau_before) ||
+        !near(f.getRSApplied() * f.getRSApplied(), active_rs_before) ||
+        !near(f.getSigmaApplied() * f.getSigmaApplied(), f.mekf_->Sigma_aw_stat(2, 2))) {
+        std::cerr << "FAIL: applied telemetry exposed a staged candidate instead of the active model\n";
+        return 1;
+    }
 
     f.enable_tuner_ = false;
     f.updateTime(0.005f, gyro, acc);

@@ -219,6 +219,9 @@ private:
         if (const char* s = std::getenv("NLO_THETA_TAU")) {
             cfg.theta_smooth_tau_s = std::strtof(s, nullptr);
         }
+        if (const char* s = std::getenv("NLO_COARSE_TAU")) {
+            cfg.wave_freq_tracker.coarse_smooth_tau_s = std::strtof(s, nullptr);
+        }
         if (const char* s = std::getenv("NLO_VIRT_XY")) {
             cfg.filter.use_virtual_horizontal_position = (std::atoi(s) != 0);
         }
@@ -368,6 +371,8 @@ static void print_tvg_nlo_vertical_summary(const TvgNloSimulationRunResult& resu
     std::cout << "===============================================================\n\n";
 }
 
+static bool any_vertical_gate_failed = false;
+
 static void fail_if_tvg_nlo_vertical_gates_breached(const TvgNloSimulationRunResult& result,
                                                     float dt)
 {
@@ -423,7 +428,10 @@ static void fail_if_tvg_nlo_vertical_gates_breached(const TvgNloSimulationRunRes
                   << z_limit << "%). Mean Z error was " << mean_z_err
                   << " m. Failing.\n";
         if (std::getenv("NLO_NOGATE") == nullptr) {
-            std::exit(EXIT_FAILURE);
+            any_vertical_gate_failed = true;
+            if (std::getenv("W3D_COLLECT_ALL_GATES") == nullptr) {
+                std::exit(EXIT_FAILURE);
+            }
         }
     }
 }
@@ -444,19 +452,20 @@ process_wave_file_for_tvg_nlo_nomag_nognss(const std::string& filename,
     const float gyr_bias_rw = 0.00001f;
 
     SimulationNoiseModels noise_models;
+    const W3dRandomSeeds seeds = w3d_random_seeds_from_env();
 
     noise_models.accel_noise = make_imu_noise_model(
         acc_sigma,
         acc_bias_range,
         acc_bias_rw,
-        1234
+        seeds.accel_noise, seeds.accel_initialization
     );
 
     noise_models.gyro_noise = make_imu_noise_model(
         gyr_sigma,
         gyr_bias_range,
         gyr_bias_rw,
-        5678
+        seeds.gyro_noise, seeds.gyro_initialization
     );
 
     const Vector3f sigma_a_init(
@@ -531,5 +540,9 @@ int main(int argc, char* argv[])
         fail_if_tvg_nlo_vertical_gates_breached(*result, dt);
     }
 
+    if (any_vertical_gate_failed) {
+        std::cout << "QUALITY_GATE: PASS=0\n";
+        return EXIT_FAILURE;
+    }
     return 0;
 }

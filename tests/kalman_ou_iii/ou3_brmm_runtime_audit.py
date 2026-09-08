@@ -243,13 +243,15 @@ def replay(binary, directory, filename, env):
     command = [str(binary), '--input', filename]
     with (directory/'stdout.txt').open('wb') as out, (directory/'stderr.txt').open('wb') as err:
         result = subprocess.run(command, cwd=directory, env=env, stdout=out, stderr=err)
-    if result.returncode:
+    stdout = (directory/'stdout.txt').read_text()
+    gate_failure = result.returncode == 1 and 'QUALITY_GATE: PASS=0' in stdout
+    if result.returncode and not (env.get('W3D_COLLECT_ALL_GATES') == '1' and gate_failure):
         raise ValueError(f'simulator failed ({result.returncode}): ' +
                          (directory/'stderr.txt').read_text()[-4000:])
     outputs = sorted(p for p in directory.iterdir() if p.name.startswith('w3d_') or p.suffix == '.txt')
     if not any(p.name.startswith('w3d_') and p.suffix == '.csv' for p in outputs):
         raise ValueError('ordinary simulator output missing')
-    return {p.name: digest(p) for p in outputs}
+    return {'exit_code': result.returncode, 'files': {p.name: digest(p) for p in outputs}}
 
 
 def run(args):
@@ -274,6 +276,7 @@ def run(args):
     # reference experiment. Ordinary PATH/compiler/runtime environment survives.
     prefixes = ('OU_', 'OU3_', 'OU_III_', 'SF_', 'W3D_')
     env = {k: v for k,v in os.environ.items() if not k.startswith(prefixes)}
+    env['W3D_COLLECT_ALL_GATES'] = '1'
     with zipfile.ZipFile(args.archive) as archive:
         for family in SOURCE.FAMILIES:
             for height in SOURCE.HEIGHTS:
@@ -306,7 +309,10 @@ def run(args):
                     events_path = Path(str(trace_prefix)+'.events.csv')
                     result, masks = analyze(pd.read_csv(source_path), pd.read_csv(samples_path), pd.read_csv(events_path), domain)
                     result.update(record=name, csv_sha256=digest(source_path),
-                                  ordinary_output_sha256=baseline, read_only_runtime_output_bitwise_identical=True)
+                                  ordinary_output_sha256=baseline["files"],
+                                  regression_exit_code=baseline["exit_code"],
+                                  regression_quality_gates_pass=baseline["exit_code"] == 0,
+                                  read_only_runtime_output_bitwise_identical=True)
                     with gzip.open(case_dir/'violating-intervals.csv.gz', 'wt') as stream:
                         stream.write('reason,start_sample,stop_sample_exclusive\n')
                         for reason, mask in masks.items():

@@ -119,6 +119,45 @@ class MotionGainTests(unittest.TestCase):
         self.assertAlmostEqual(float(witness["supply_cost_80_digit"]), 1., places=12)
         self.assertFalse(witness["BRMM_nonlinear_admissibility_of_maximizer_established"])
 
+    def test_common_template_restriction_and_amplitude_invariance(self):
+        steps, m0 = self.example()
+        for step in steps:
+            step["u"] = np.ones(step["B"].shape[1])
+        initial, forms, _ = G.template_forms(steps, m0, .005)
+        independent = G.gain_test(steps, m0, .005, .9, 20.)
+        ratios = []
+        for i, form in enumerate(forms):
+            ratio, direction = G.template_test(initial, form, .9, 20.)
+            ratios.append(ratio)
+            self.assertLessEqual(ratio, independent["ratios"][i]+1e-12)
+            witness = G.template_witness(steps, m0, .005, .9, 20., direction, i)
+            self.assertAlmostEqual(float(witness["ratio_80_digit"]), ratio, places=12)
+        for step in steps:
+            step["u"] *= -7
+        initial, forms, _ = G.template_forms(steps, m0, .005)
+        np.testing.assert_allclose(
+            [G.template_test(initial, form, .9, 20.)[0] for form in forms], ratios,
+            atol=1e-12, rtol=1e-12)
+
+    def test_bias2_prefix_does_not_borrow_future_measurements(self):
+        steps, m0 = self.example()
+        for step in steps:
+            step["u"] = np.ones(step["B"].shape[1])
+        h = np.zeros((3, 21))
+        h[:, :3] = h[:, 18:] = np.eye(3)
+        steps[2]["bias2"] = {"H": h, "R": np.diag([.1, .2, .3]),
+                             "g": np.array([1., 2., 3.]), "bias": np.full(3, -.5)}
+        initial, forms, _ = G.template_forms(steps, m0, .005)
+        report = G.template_bias2(steps, initial, forms, 1)
+        for trial in report["conditional_master_tests"]["tested_prefix"]["trials"]:
+            self.assertEqual(trial["largest_eigenvalue_without_BIAS2"],
+                             trial["largest_eigenvalue_with_BIAS2"])
+        self.assertLess(abs(report["point_energy_identity_residual"]), 1e-12)
+        self.assertLess(report["dense_graph_identity_max_defect"], 1e-12)
+        self.assertFalse(report["source_uniform_BIAS2_constant_certified"])
+        self.assertFalse(report["P4_MOTION_PASS"])
+        self.assertFalse(report["P5_MOTION_MAY_START"])
+
     def test_bad_supply_or_unattached_word_fails_closed(self):
         steps, m0 = self.example()
         with self.assertRaises(ValueError):

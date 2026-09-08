@@ -21,7 +21,33 @@ ROOT = Path(__file__).resolve().parents[2]
 FIXTURES = Path(__file__).with_name("fixtures")
 
 
+def vessel_rao(root, t):
+    omega, k, a, phase, dx, dy = np.asarray(root["atoms"], dtype=float).T
+    footprint = np.exp(-((7*k*dx)**2+(2.9*k*dy)**2)/24)
+    horizontal = footprint*np.exp(-.35*k*1.5)
+    def oscillator(period, damping):
+        ratio = omega*period/(2*math.pi)
+        return 1/(1-ratio**2-2j*damping*ratio)
+    transfer = np.stack((1j*dx*horizontal/(1-1j*omega*.7)**2,
+                         1j*dy*horizontal/(1-1j*omega)**2,
+                         footprint*oscillator(2.4,.45),
+                         1j*k*dy*footprint*oscillator(3.5,.22),
+                         -1j*k*dx*footprint*oscillator(2.8,.35)))
+    response = transfer*a*np.exp(1j*(phase-omega*t))
+    pose = response.real.sum(axis=1)
+    velocity = (omega*response[:3].imag).sum(axis=1)
+    acceleration = (-omega**2*response[:3].real).sum(axis=1)
+    integral = (-response[:3].imag/omega).sum(axis=1)
+    roll, pitch = pose[3:]
+    cr, sr, cp, sp = math.cos(roll), math.sin(roll), math.cos(pitch), math.sin(pitch)
+    rotation = np.array([[cp,0,-sp],[sr*sp,cr,sr*cp],[cr*sp,-sr,cr*cp]])
+    basis = np.array([[0.,1,0],[1,0,0],[0,0,-1]])
+    return np.concatenate([basis@v for v in (velocity,pose[:3],integral,acceleration)]), basis@rotation@basis.T
+
+
 def stokes(root, t):
+    if root.get("branch") == "VESSEL_RAO_28FT":
+        return vessel_rao(root, t)
     atoms = np.asarray(root["atoms"], dtype=float)
     omega, k, a, phase, dx, dy = atoms.T
     coeff = np.stack((a, k*a*a/2, 3*k*k*a**3/8))
@@ -234,7 +260,7 @@ def main():
     parser.add_argument("--generator-root", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
-    provenance = json.loads((FIXTURES / "ou3_physical_generator_provenance.json").read_text())
+    provenance = json.loads((FIXTURES / "ou3_vessel_generator_provenance.json").read_text())
     commit = subprocess.check_output(["git", "-C", str(args.generator_root), "rev-parse", "HEAD"], text=True).strip()
     if commit != provenance["generator_commit"]:
         raise ValueError("generator commit mismatch")

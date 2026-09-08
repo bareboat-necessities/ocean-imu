@@ -3,6 +3,8 @@ name: ou3-proof
 on:
   push:
     paths:
+      - "tools/sim_dataset.py"
+      - "Makefile"
       - "tools/stability/ou3_*.py"
       - "tools/stability/ou3_*.json"
       - "tests/validation/test_ou3_*.py"
@@ -18,6 +20,8 @@ on:
       - ".github/workflows/ou3-proof.yml"
   pull_request:
     paths:
+      - "tools/sim_dataset.py"
+      - "Makefile"
       - "tools/stability/ou3_*.py"
       - "tools/stability/ou3_*.json"
       - "tests/validation/test_ou3_*.py"

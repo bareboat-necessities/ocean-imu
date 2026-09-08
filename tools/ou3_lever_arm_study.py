@@ -50,6 +50,7 @@ import subprocess
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from pathlib import Path
+from sim_dataset import input_provenance
 from typing import Any, Iterable, Sequence
 
 import ou_validation as ouv
@@ -80,8 +81,8 @@ RECORDS = (
 )
 
 AXES: dict[str, tuple[float, float, float]] = {
-    "x-athwartships": (1.0, 0.0, 0.0),
-    "y-fore-aft": (0.0, 1.0, 0.0),
+    "x-fore-aft": (1.0, 0.0, 0.0),
+    "y-port": (0.0, 1.0, 0.0),
     "z-vertical": (0.0, 0.0, 1.0),
 }
 DISTANCES_M = (0.10, 0.20, 0.30)
@@ -104,7 +105,7 @@ MODE_LABELS = {
 # sweep is the study's answer to "why 15 Hz": below it the low-pass phase lag
 # dominates, above it the differentiated gyro noise does.
 SWEEP_CUTOFFS_HZ = (1.0, 2.0, 5.0, 10.0, 15.0, 25.0, 50.0, 100.0)
-SWEEP_AXIS = "y-fore-aft"
+SWEEP_AXIS = "y-port"
 SWEEP_DISTANCE_M = 0.30
 DEFAULT_CUTOFF_HZ = 15.0
 
@@ -465,7 +466,7 @@ def markdown_report(
         "| gyro | off-CG specific force, compensated from the measured rate |",
         "| exact | off-CG specific force, compensated from truth kinematics |",
         "",
-        "The canonical body directions are x = athwartships, y = fore-aft, and z = vertical.",
+        "The canonical body directions are x = forward, y = port, and z = vertical.",
         f"Scoring uses the trailing **{window_sec:.0f} s** of each 1200 s record.",
         "",
         "The `exact` arm is an oracle bound on what any lever-arm model can recover.",
@@ -503,7 +504,7 @@ def markdown_report(
             "",
             "## Derivative band of the deployable model",
             "",
-            f"Fore-aft arm at {100*SWEEP_DISTANCE_M:.0f} cm, pooled over the same eight seas.",
+            f"Port arm at {100*SWEEP_DISTANCE_M:.0f} cm, pooled over the same eight seas.",
             "",
             "| Cutoff [Hz] | 3D disp [m] | 3D / CG | Residual [m/s^2] | Residual / installed |",
             "| ---: | ---: | ---: | ---: | ---: |",
@@ -529,10 +530,9 @@ def markdown_report(
         "narrow a derivative band and the low-pass phase lag misaligns a correction of",
         "the right size, too wide and differentiated gyro noise dominates.",
         "",
-        "Read the pooled ratios above with the per-sea figure beside them.  An RMS over",
-        "all eight seas is dominated by the largest, where the injected term is smallest",
-        "relative to the wave signal, so pooling understates a penalty that is severe in",
-        "the mildest seas for displacement and in the steepest seas for attitude.",
+        "The injected force is deterministic, but estimator error can increase or decrease",
+        "because it combines with existing residuals. Read every sea and axis separately;",
+        "a reduction below the CG score is not evidence that the installation is better.",
         "",
         f"Study matrix: {'8 records, 3 axes, 3 offsets, 3 modelling arms' if full else 'smoke subset'}.",
         "",
@@ -552,8 +552,8 @@ MODE_STYLE = {
     "exact": {"color": "#1a7f37", "marker": "^", "linestyle": ":"},
 }
 AXIS_LABEL = {
-    "x-athwartships": "athwartships",
-    "y-fore-aft": "fore-aft",
+    "x-fore-aft": "fore-aft",
+    "y-port": "port",
     "z-vertical": "vertical",
 }
 # Eight sea labels have to share one axis; the full names collide.
@@ -952,13 +952,14 @@ def main() -> int:
         AXES
         if full
         else {
-            "x-athwartships": AXES["x-athwartships"],
+            "x-fore-aft": AXES["x-fore-aft"],
             "z-vertical": AXES["z-vertical"],
         }
     )
     distances = DISTANCES_M if full else (0.10, 0.30)
     cutoffs = SWEEP_CUTOFFS_HZ if full else (2.0, 15.0)
     sources = {r: find_record(args.data_dir, r) for r in records}
+    dataset = input_provenance(sources.values())
 
     out = args.output_dir
     if out.exists():
@@ -1094,7 +1095,8 @@ def main() -> int:
     manifest = {
         "study": "OU-III IMU lever-arm installation",
         "source_commit": source_commit(),
-        "simulation_data": "oceanography-waves-lib v1.1.3",
+        "simulation_data": "oceanography-waves-lib v1.2.1 vessel-rao-28ft",
+        "simulation_provenance": dataset,
         "mode": args.mode,
         "scoring_window_sec": args.window_sec,
         "axes": axes,

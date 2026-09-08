@@ -68,6 +68,7 @@
         data and schedules its own attitude gains from accelerometer trust.
         The emphasis here is on the actual implemented equations and signal flow.
     \end{abstract}
+\input{../simulation-dataset.tex-part}
 
     \begin{IEEEkeywords}
         heave estimation, vertical observer, PII observer, Mahony AHRS,
@@ -729,7 +730,7 @@
     shared default tracker configuration, even though the adaptive wrapper
     itself remains generic. It sets the following values for the core observer:
     \begin{align}
-        r &= 0.125,\\
+        r &= 0.08125,\\
         \tau_a &= 0.40~\si{s},\\
         \tau_d &= 49.0~\si{s},\\
         k_b &= 2.5\times10^{-5},\\
@@ -785,11 +786,11 @@
     The simulation-backed Mahony tuning uses
     \begin{align}
     (2K_p)_{\mathrm{base}} &= 1.70,\\
-    (2K_i)_{\mathrm{base}} &= 0.090,\\
+    (2K_i)_{\mathrm{base}} &= 0.0225,\\
     (2K_p)_{\mathrm{calm}} &= 1.50,\\
     (2K_p)_{\mathrm{rough}} &= 1.20,\\
-    (2K_i)_{\mathrm{calm}} &= 0.100,\\
-    (2K_i)_{\mathrm{rough}} &= 0.070.
+    (2K_i)_{\mathrm{calm}} &= 0.025,\\
+    (2K_i)_{\mathrm{rough}} &= 0.0175.
     \end{align}
 
     The trust references are

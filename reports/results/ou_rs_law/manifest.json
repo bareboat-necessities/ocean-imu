@@ -1,0 +1,104 @@
+{
+  "decimation": 20,
+  "disp_z_pct_hs": 4.35502434,
+  "family": "OU_III",
+  "files": {
+    "ou_rs_roundtrip_scores.csv": "a138a029cb889d65fa354fa5c701c9c0b191a4df1e8a8b23a98ac69384e95119",
+    "ou_rs_roundtrip_scores.tex": "3fac9e1360bd94d391dd749c10cf01baf9f2bd625bbcf143f43cf29f1e0cbcfe",
+    "ou_rs_roundtrip_transition.csv": "17a8d669e4d598e1089de315d312fcbc08597fe706dfba5b6fdbe2ef9bc20b67",
+    "ou_rs_roundtrip_transition.svg": "a7dfe7bc84d83f29269e477b549fc0b2da916e88707aefa3e189436b227d6699"
+  },
+  "high_r_s_ms": 8.744975552262504,
+  "high_sigma_aw_mps2": 0.485370368,
+  "high_tau_s": 4.49806786,
+  "imu_noise_seed": 101,
+  "initialization_seed": 1009,
+  "low_r_s_ms": 1.326771751559308,
+  "low_sigma_aw_mps2": 0.397530764,
+  "low_tau_s": 2.50470543,
+  "producer_sha256": "99d9693d10d49ce2ba312b1e68668c28112c2b9d8236cf234ea1cae9a0753a4a",
+  "segment_scores": [
+    {
+      "disp_3d_rms_m": 0.121061437,
+      "disp_z_pct_hs": 1.93471539,
+      "disp_z_pct_refrms": 25.1457195,
+      "disp_z_ref_rms_m": 0.307760596,
+      "disp_z_rms_m": 0.0773886144,
+      "segment": "low_start",
+      "start_s": 300.0,
+      "stop_s": 400.0
+    },
+    {
+      "disp_3d_rms_m": 0.340111047,
+      "disp_z_pct_hs": 4.3619318,
+      "disp_z_pct_refrms": 34.2348824,
+      "disp_z_ref_rms_m": 0.509647667,
+      "disp_z_rms_m": 0.174477279,
+      "segment": "rise",
+      "start_s": 400.0,
+      "stop_s": 520.0
+    },
+    {
+      "disp_3d_rms_m": 0.559880972,
+      "disp_z_pct_hs": 6.88173246,
+      "disp_z_pct_refrms": 19.9073639,
+      "disp_z_ref_rms_m": 1.38275111,
+      "disp_z_rms_m": 0.2752693,
+      "segment": "high_recover",
+      "start_s": 520.0,
+      "stop_s": 640.0
+    },
+    {
+      "disp_3d_rms_m": 0.492290705,
+      "disp_z_pct_hs": 6.37731791,
+      "disp_z_pct_refrms": 23.1255226,
+      "disp_z_ref_rms_m": 1.10307872,
+      "disp_z_rms_m": 0.25509271,
+      "segment": "high",
+      "start_s": 640.0,
+      "stop_s": 800.0
+    },
+    {
+      "disp_3d_rms_m": 0.300093025,
+      "disp_z_pct_hs": 3.44477153,
+      "disp_z_pct_refrms": 23.8214149,
+      "disp_z_ref_rms_m": 0.578432739,
+      "disp_z_rms_m": 0.137790859,
+      "segment": "fall",
+      "start_s": 800.0,
+      "stop_s": 920.0
+    },
+    {
+      "disp_3d_rms_m": 0.131542727,
+      "disp_z_pct_hs": 1.75299835,
+      "disp_z_pct_refrms": 18.1516666,
+      "disp_z_ref_rms_m": 0.386300266,
+      "disp_z_rms_m": 0.0701199323,
+      "segment": "low_recover",
+      "start_s": 920.0,
+      "stop_s": 1040.0
+    },
+    {
+      "disp_3d_rms_m": 0.113734327,
+      "disp_z_pct_hs": 1.64025152,
+      "disp_z_pct_refrms": 20.7040157,
+      "disp_z_ref_rms_m": 0.316895336,
+      "disp_z_rms_m": 0.0656100586,
+      "segment": "low_return",
+      "start_s": 1040.0,
+      "stop_s": 1200.0
+    }
+  ],
+  "simulation_provenance": {
+    "archive": "sim-data-files-vessel-rao-28ft.zip",
+    "archive_sha256": "6d6eb92db78e97f1d2456c6b92387993bf23be14a9a6cf26943f0a22fc6fee60",
+    "input_sha256": {
+      "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "cd8e8ea89123773e7d8dcf7ac8712d780528c6ff02436b0f40b4d1a6a1bb97e0",
+      "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "f147cba9d14b87d0e1af4d3e434196312d91295cd40b9a9d738e2919e60cdaa7"
+    },
+    "motion_model": "VESSEL_RAO_28FT",
+    "release": "v1.2.1"
+  },
+  "source_commit": "9de0543507509cabb478b751b83bf5c74711764d",
+  "wave_phase_seed": 11
+}

@@ -23,7 +23,7 @@ claims use the versioned ten-seed evidence below.
 \label{fig:representative-3d-kinematics}
 \end{figure*}
 
-\paragraph{Horizontal drift and isotropic regularization}
+\paragraph{Horizontal drift and directional regularization}
 \label{sec:riccati-per-axis-limits}
 After attitude compensation, small tilt errors leak gravity into horizontal
 acceleration approximately as
@@ -38,10 +38,8 @@ g\,\delta\theta_y\\-g\,\delta\theta_x
 \label{eq:riccati-axis-tilt-leak}
 \end{equation}
 The vertical channel has no corresponding first-order term, and horizontal bias
-is less observable without an external kinematic reference.  Across the eight
-stationary calibration records, world-$x$ and world-$y$ low-frequency
-acceleration-error intensities are approximately $65$ and $102$ times the
-vertical value.
+is less observable without an external kinematic reference.  The magnitude of this coupling depends on the vessel response, attitude
+solution and sensor realization; it must be measured for the current source.
 
 These ratios do not by themselves determine separate horizontal
 pseudo-measurement covariances.  The scalar spectral reduction of
@@ -51,11 +49,15 @@ it omits attitude-error coupling, axis-dependent bias observability, and the
 directional desired-motion spectrum.  In particular, horizontal desired motion
 is a heading-dependent projection of the same orbital field, so a fixed world
 $x/y$ multiplier would not be invariant to vessel heading.  The supported
-full-filter result is therefore narrower: isotropic $r_S$ performs well over the
-tested directional records.  Further horizontal improvement should target the
+full-filter result is therefore narrower: the retained OU--III horizontal
+$r_S$ standard-deviation factors are equal at $0.72$, with the vertical factor
+one. A sweep to $0.5$ improved training displacement but introduced a fresh-draw
+violation and worsened mean pitch, so it is not the deployed setting.  Further horizontal improvement should target the
 disturbance itself---tilt error, accelerometer-bias observability, GNSS, or
-another horizontal reference.  The $65$--$102\times$ ratios are simulation
-diagnostics, not universal ocean constants.
+another horizontal reference.  No fixed horizontal-to-vertical noise-intensity ratio is inferred from
+the incident wave spectrum.
+
+\input{w3d-low-wave-noise.tex-part}
 
 \subsection{Attitude and adaptation behavior}
 
@@ -110,56 +112,14 @@ Gauss--Markov residual.}
 \subsection{Hard-iron correction result}
 \label{sec:mag-hi-results}
 
-The hard-iron correction is evaluated under the deterministic protocol: one
-realization per stationary record, the default sensor-error draw, and the final
-\SI{900}{s}.  Enabling it reduces yaw RMS on all eight records; the mean falls
-from \SI{2.065}{\degree} to \SI{0.617}{\degree} and the worst case from
-\SI{2.132}{\degree} to \SI{0.878}{\degree}.  The tilt channels move in the
-opposite direction by a much smaller amount---mean roll
-\SIrange{0.264}{0.267}{\degree} and mean pitch
-\SIrange{0.161}{0.164}{\degree}, both under \pct{2}---and vertical and
-three-dimensional displacement RMS change by less than \pct{0.1}, so the gauge
-correction is not paid for in the channels it shares an attitude solution
-with.  Because matched OU--II uses the same magnetic
-correction, this effect does not contribute to the reported
-OU--III-minus-OU--II translational difference.
+The current paired hard-iron ablation uses the default sensor-error draw
+on each v1.2.1 RAO record and scores the final \SI{900}{s}.
+Table~\ref{tab:mag-hi-yaw} reports every record. Arithmetic mean yaw RMS
+falls from \SI{2.048}{\degree} to \SI{0.989}{\degree}; the worst-record
+RMS falls from \SI{2.112}{\degree} to \SI{1.631}{\degree}.
+The matched OU--II comparison uses the same magnetic correction.
 
-\begin{table}[t]
-  \centering
-  \caption{Hard-iron correction effect on attitude RMS.}
-  \label{tab:mag-hi-yaw}
-  \setlength{\tabcolsep}{4pt}
-  \renewcommand{\arraystretch}{1.08}
-  \footnotesize
-  \sisetup{detect-all}
-  \begin{tabular}{@{}l
-                  S[table-format=1.2]
-                  S[table-format=1.3]
-                  S[table-format=1.3]
-                  S[table-format=1.3]
-                  S[table-format=1.3]
-                  @{}}
-    \toprule
-    {Case} & {$H_s$} & \multicolumn{2}{c}{Yaw RMS (\si{\degree})}
-           & \multicolumn{2}{c}{Pitch RMS (\si{\degree})} \\
-    \cmidrule(lr){3-4}\cmidrule(lr){5-6}
-    {} & {\si{m}} & {off} & {on} & {off} & {on} \\
-    \midrule
-    JONSWAP    & 0.27 & 2.130 & 0.631 & 0.170 & 0.175 \\
-    JONSWAP    & 1.50 & 2.068 & 0.878 & 0.130 & 0.130 \\
-    JONSWAP    & 4.00 & 1.922 & 0.503 & 0.131 & 0.131 \\
-    JONSWAP    & 8.50 & 2.030 & 0.531 & 0.149 & 0.150 \\
-    \addlinespace
-    PM--Stokes & 0.27 & 2.129 & 0.695 & 0.172 & 0.182 \\
-    PM--Stokes & 1.50 & 2.132 & 0.562 & 0.167 & 0.167 \\
-    PM--Stokes & 4.00 & 2.034 & 0.733 & 0.188 & 0.196 \\
-    PM--Stokes & 8.50 & 2.071 & 0.400 & 0.181 & 0.182 \\
-    \midrule
-    {mean}     & {}   & 2.065 & 0.617 & 0.161 & 0.164 \\
-    {worst}    & {}   & 2.132 & 0.878 & 0.188 & 0.196 \\
-    \bottomrule
-  \end{tabular}
-\end{table}
+\input{w3d-hard-iron-results-generated.tex-part}
 
 This result is conditional on the reported calibration draw.  Additional
 misalignment-dominated draws can regress because soft-iron and misalignment
@@ -183,3 +143,5 @@ The same estimator source compiles and executes on an M5Stack AtomS3R
 This establishes functional source portability only.  Processor load, memory,
 power, deadline margin, thermal behavior, and externally referenced
 reconstruction accuracy were not measured.
+
+\input{w3d-rao-tuning-generated.tex-part}

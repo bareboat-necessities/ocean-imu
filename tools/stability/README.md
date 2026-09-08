@@ -21,7 +21,7 @@ lobe and primitive constants remain unfrozen. Shipping tuner defaults stay
 .03--1.2 Hz; the proposed .02--1.2 outer interval is not a physical bandlimit.
 Position/S primitives need their own correlated bounds or forcing budgets.
 
-The focused `OU3 BRMM source audit` workflow downloads the unchanged v1.1.3
+The focused `OU3 BRMM source audit` workflow downloads the checksum-pinned v1.2.1 vessel-RAO
 reference archive and runs `tests/kalman_ou_iii/ou3_brmm_audit.py` on every
 sample-aligned 10-second window in all eight records. JSON records extrema,
 cap exceedances and Q/O counts; NPZ stores every window and explicit lobe
@@ -114,7 +114,7 @@ expiring Actions artifact. Run the audit with `--unpack-retained`,
 
 Reference response-model admission is checked separately by `ou3_physical_brmm_membership.py`
 and the public-API C++ probe `ou3-sea-generator-membership.cpp`, against the
-pinned v1.1.3 generator. This is not complete BRMM admission. `ou3_brmm_response_union.py` defines the
+pinned v1.2.1 sailboat RAO generator. This is not complete BRMM admission. `ou3_brmm_response_union.py` defines the
 reference-model union: the unchanged linear-vessel branch plus a correlated
 third-order Stokes wave-following branch. The branch is fixed at the source
 root; neither eventwise branch switching nor independent harmonic phases or

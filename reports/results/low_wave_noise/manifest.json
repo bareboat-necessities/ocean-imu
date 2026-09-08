@@ -1,0 +1,27 @@
+{
+  "selected_source": "9de0543507509cabb478b751b83bf5c74711764d",
+  "baseline_source": "121a154c9024dcce755d8b8ebbf39c1f7da92b33",
+  "rows": 3764,
+  "valid_rows": 3752,
+  "studies": 45,
+  "files": {
+    "acceleration-error-spectra.png": "00f0c6a97c75c0c3c45df172ed1bc20251eeac2dd234ddf55bc2c638049aaa8d",
+    "baseline-spectra.json": "a24bcbf35d6466d2dfecc15198b7f5b1b802f7a2e07c58bc1c0bc5743a275348",
+    "magnetic-error-diagnostic.json": "d8cf8abfd9af587ac156f74b1788adb77eabd1fc08ed2f8300399199f8f2ec73",
+    "reproduction.tar.gz": "7ad4b5065b3838d21a1f371ef21d18a9d19306ad6ec5930e223900826acc08a2",
+    "runs.jsonl.gz": "e1602980258bc8f55b16629f1fa92a7513e368880804b53332c231250a8941ce",
+    "screen-summaries.json": "1aa2793d12f89ac9c2e156c41ff45cefa6e9e5d25e90243be8eec662e33a3973",
+    "selected-spectra.json": "15c9dc04b64e61c8634201c24d0d5a53b1f3a11babfa062df9324076f8d60f91",
+    "spectral-comparison.csv": "6fc1893219eca16e2a25d9005234f764eb0ffc07b53e576a818849cc7e0e5ce9",
+    "study-manifests.json": "0f3529077a0887f8c6d58ab9ae0fecaf3ad69f6dc4240a7e39a725d1590f2f8c"
+  },
+  "protocol": "Training default/11/23, first fresh 17011/19001/23003/29009 for rejected global weighting/R_S, locked SNR candidate fresh 31013/37003/41011/47017, angle check 53017. Final default O3 pairs verify shipping source. All full 1200 s; score final 900 s; unchanged gates.",
+  "limitations": [
+    "Screen manifests identify binary bytes; their parent source commit alone does not reproduce uncommitted instrumentation. Source snapshots/patches are provided; path literals in scratch reproduction scripts require relocation.",
+    "O2 screens were used to reduce compile cost. Final shipping O3 checks are recorded separately.",
+    "Twelve OU-II bias-tau arms are invalid because the variable was unsupported; later runner rejects this condition.",
+    "First direction sweep zero-axis statistics and earlier OU-III applied-parameter CSV columns have the stated semantic limitations.",
+    "Angle runner violation lists were reconstructed from retained combined stdout/stderr logs; metrics and exit codes unchanged.",
+    "Rotated and new-angle records retain the prescribed harmonic phases; no claim of independent stochastic sea or different-hull validation."
+  ]
+}

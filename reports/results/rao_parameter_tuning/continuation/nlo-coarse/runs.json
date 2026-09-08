@@ -1,0 +1,63 @@
+[
+  {
+    "name": "coarse_tau_30",
+    "env": {
+      "NLO_COARSE_TAU": "30"
+    },
+    "exit_code": 1,
+    "z_pct_hs": [
+      6.89955,
+      6.94392,
+      7.07853,
+      7.0116,
+      7.55104,
+      6.87293,
+      6.98562,
+      7.39579
+    ],
+    "failures": [
+      "ERROR: raw Z RMS above limit (7.55104% > 7.13%). Mean Z error was 0.000488455 m. Failing.",
+      "ERROR: raw Z RMS above limit (7.39579% > 7.13%). Mean Z error was 0.00186564 m. Failing."
+    ]
+  },
+  {
+    "name": "coarse_tau_120",
+    "env": {
+      "NLO_COARSE_TAU": "120"
+    },
+    "exit_code": 1,
+    "z_pct_hs": [
+      6.90799,
+      6.90062,
+      6.91584,
+      6.90372,
+      7.52444,
+      6.82936,
+      6.89257,
+      7.10524
+    ],
+    "failures": [
+      "ERROR: raw Z RMS above limit (7.52444% > 7.13%). Mean Z error was 0.000334329 m. Failing."
+    ]
+  },
+  {
+    "name": "coarse_tau_600",
+    "env": {
+      "NLO_COARSE_TAU": "600"
+    },
+    "exit_code": 1,
+    "z_pct_hs": [
+      6.82091,
+      6.82093,
+      6.77914,
+      6.93184,
+      7.0591,
+      8.90668,
+      6.70108,
+      6.66839
+    ],
+    "failures": [
+      "ERROR: raw Z RMS above limit (8.90668% > 7.13%). Mean Z error was -0.00176387 m. Failing."
+    ]
+  }
+]

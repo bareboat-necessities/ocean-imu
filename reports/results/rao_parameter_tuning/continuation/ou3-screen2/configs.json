@@ -1,0 +1,37 @@
+[
+  {
+    "name": "head",
+    "env": {}
+  },
+  {
+    "name": "mse_0.08",
+    "env": {
+      "OU_III_RS_MSE_COEFF": "0.08"
+    }
+  },
+  {
+    "name": "mse_0.12",
+    "env": {
+      "OU_III_RS_MSE_COEFF": "0.12"
+    }
+  },
+  {
+    "name": "mag_more",
+    "env": {
+      "SF_SIGMA_M_SCALE": "2"
+    }
+  },
+  {
+    "name": "gyro_less",
+    "env": {
+      "SF_SIGMA_G_SCALE": "0.2"
+    }
+  },
+  {
+    "name": "mag_more_gyro_less",
+    "env": {
+      "SF_SIGMA_M_SCALE": "2",
+      "SF_SIGMA_G_SCALE": "0.2"
+    }
+  }
+]

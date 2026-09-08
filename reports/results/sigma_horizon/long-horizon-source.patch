@@ -1,0 +1,26 @@
+diff --git a/src/tuner/SeaStateAdaptationLimits.h b/src/tuner/SeaStateAdaptationLimits.h
+index d974677..a394d35 100644
+--- a/src/tuner/SeaStateAdaptationLimits.h
++++ b/src/tuner/SeaStateAdaptationLimits.h
+@@ -29,7 +29,7 @@ inline constexpr float kDynamicEmaTimeScaleMaxSec = 6.0f;
+ // OU-II/TFG drift smoother) is still comfortably interior.  Treat a change to
+ // K_periods or to this ceiling as a retune that needs a re-gauge, not a tweak.
+ inline constexpr float kDynamicEmaHorizonMinSec = 0.05f;
+-inline constexpr float kDynamicEmaHorizonMaxSec = 35.0f;
++inline constexpr float kDynamicEmaHorizonMaxSec = 180.0f;
+
+ inline float clampDynamicEmaTimeScaleSec(float sec) noexcept {
+     if (!(std::isfinite(sec) && sec > 0.0f)) return kDynamicEmaTimeScaleMaxSec;
+diff --git a/tools/rao_parameter_tuning.py b/tools/rao_parameter_tuning.py
+index 044fdbd..a65a150 100644
+--- a/tools/rao_parameter_tuning.py
++++ b/tools/rao_parameter_tuning.py
+@@ -23,7 +23,7 @@ def main():
+  # Performance controls only. Reject any attempted test/gate or sensor-data override.
+  for c in configs:
+   for k in c['env']:
+-   if (not k.startswith(('SF_','OU_II_','OU_III_','TFG_')) and k!='W3D_AW_COV_SYNC') or any(x in k for x in ('GATE','LIMIT','SEED')):raise ValueError(k)
++   if (not k.startswith(('SF_','OU_II_','OU_III_','TFG_')) and k not in ('W3D_AW_COV_SYNC','OU_SIGMA_VAR_K_PERIODS','OU_SIGMA_VAR_HORIZON_MIN_S','OU_SIGMA_VAR_HORIZON_MAX_S')) or any(x in k for x in ('GATE','LIMIT','SEED')):raise ValueError(k)
+    # A family may not expose another family's knob. Require its exact C-string
+    # in the executable so an ignored variable cannot masquerade as an ablation.
+    # This is a necessary check; paired controls still verify the applied effect.

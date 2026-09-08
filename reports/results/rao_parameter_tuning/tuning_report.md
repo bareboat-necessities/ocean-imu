@@ -1,0 +1,85 @@
+# Filter retuning on the v1.2.1 vessel dataset
+
+All runs use the pinned 28 ft sailboat RAO records and the existing executable quality gates. Full 1200-second records are scored over their final 900 seconds. Candidate screening used the default draw and, for OU-III, paired training seeds 11 and 23. Validation uses four unseen paired sensor/initialization seeds: 101, 1009, 2027 and 3037, across all eight records (32 cases per family). These are new sensor realizations on the same prescribed wave records, not validation on unseen hulls or sea realizations.
+
+## Selected settings
+
+| Filter | Parameter | Previous | Selected |
+|---|---|---:|---:|
+| OU-II | Simulator magnetic sigma rescale | 2 | 4 |
+| OU-III | Simulator magnetic sigma rescale | 2 | 8 |
+| OU-II, OU-III | Gyro-bias random-walk variance | 1e-11 | 1e-10 |
+| OU-II, OU-III, TFG | Relative hard-iron ridge | 0.5 | 0.25 |
+| OU-II, OU-III, TFG | Minimum hard-iron information | 2 | 0.1 |
+| OU-II | Pseudo-measurement MSE ratio | 0.4611 | 0.3 |
+| OU-III | Simulator gyro sigma rescale | 0.05 | 0.01 |
+| TFG | Simulator magnetic sigma rescale | 1 | 4 |
+| TFG | Simulator gyro sigma rescale | 1 | 0.1 |
+| TFG | Magnetic refinement start, seconds | 90 | 30 |
+| PII adapter | Observer r | 0.125 | 0.08125 |
+| PII adapter | Mahony Ki, base/calm/rough | 0.090/0.100/0.070 | 0.0225/0.025/0.0175 |
+
+Minimum information is a calibration-activation parameter; simulation acceptance thresholds are unchanged. Covariance rescaling is an empirical performance weight, not an estimate of injected sensor noise density. OU-II retains C_P=0.1116, giving C_V=0.372. OU-III retains C_J=0.0538 and its 5000-second accelerometer-bias time constant. TFG gyro-bias random-walk variance was already 1e-10. NLO retains theta_gain=0.56. Standalone frequency tracking uses causal 0.01 Hz DC removal, two 0.8 Hz low-pass poles, and 0.004g zero-crossing hysteresis. PLL coarse smoothing advances by the elapsed detected period. Input noise, output bounds, scoring windows and quality gates are unchanged.
+
+## Held-out results
+
+Counts are individual threshold violations, not failed records. Metrics are arithmetic means of per-record RMS values. Every failure is retained.
+
+| Filter | Setting | Violations / 32 cases | Yaw RMS, degrees | Roll RMS, degrees | Pitch RMS, degrees | 3-D RMS, m | Worst violation / limit |
+|---|---|---:|---:|---:|---:|---:|---:|
+| OU-II | baseline | 84 | 2.644 | 0.278 | 0.420 | 0.393 | 8.783 |
+| OU-II | selected | 85 | 2.258 | 0.273 | 0.374 | 0.378 | 6.685 |
+| OU-III | baseline | 90 | 2.469 | 0.282 | 0.356 | 0.311 | 8.883 |
+| OU-III | selected | 85 | 2.135 | 0.287 | 0.332 | 0.293 | 6.730 |
+| TFG | baseline | 44 | 2.967 | 0.352 | 0.501 | 0.478 | 6.778 |
+| TFG | selected | 32 | 2.215 | 0.263 | 0.402 | 0.292 | 4.840 |
+
+PII quality-gate violations fall from 23 to 7; mean vertical RMS falls from 8.375% to 5.961% of incident Hs. These include vertical-displacement and yaw gates: the baseline has 16 vertical and 7 yaw violations; the selected setting has 0 vertical and 7 yaw violations. This count is not directly comparable with OU/TFG multi-metric counts.
+
+On the default draw, OU-III retains two failing records (two violations); OU-II retains two (six violations). Both are the 8.5 m seas. All 20 standalone frequency records pass. Passing the default draw does not establish multi-seed reliability. TFG and PII pass all eight integrated default records. NLO results and remaining failures are reported separately below.
+
+Relative to the pre-RAO parameter point, OU-II's held-out violations change from 84 to 85, and OU-III's from 90 to 85. Relative to the continuation baseline at 942d3a9542ab2b1dc8f909bbfe270ac1328575c1, OU-II improves from 86 to 85 violations, with 30 failing cases unchanged; OU-III improves from 88 to 85 violations and 30 to 28 failing cases. Mean 3-D RMS rises slightly: OU-II 0.375220 to 0.377672 m, OU-III 0.290842 to 0.292620 m. OU-III's held-out mean attitude errors also rise slightly. These are explicit tradeoffs, not uniformly improved performance.
+
+The OU continuation screens use default, 11 and 23 sensor/initialization draws. Its validation reuses the four held-out sensor draws, which were excluded from candidate screening. These draws remain on the same eight prescribed wave records. The larger OU-II joint change (ratio 0.3, magnetic sigma x1.5, bias RW 0.00035) is rejected: violations rise from 86 to 94 despite lower mean errors. `continuation` preserves all 488 OU candidate/baseline replays, including rejected settings, manifests and binary hashes. Its overrides apply to the baseline binaries; the OU `continuation/*-current-default-replay-configs.json` files instead reproduce the retained comparison on the current source defaults.
+
+## Reproduction and provenance
+
+Screen and validation subdirectories preserve aggregate `runs.json` with every candidate, seed, metric, and failure message, plus manifests where generated by the reusable runner. Redundant per-record logs/JSON are omitted after aggregation. Early NLO/PII screens predate the reusable runner and have weaker provenance; the selected PII setting has a separately recorded held-out replay.
+
+The `*-selected-configs.json` files contain overrides relative to the **pre-retuning baseline binaries**, whose hashes are recorded in the experiment manifests. Do not apply these scale factors to the newly retuned defaults: that would scale twice. For a new replay with the selected source defaults, use `*-current-default-replay-configs.json`: baseline overrides restore the old parameter point and the selected arm uses defaults. These reproduce the parameter comparison, not the historical pre-direction binary byte hash.
+
+The OU parameter comparisons used the original PR head PLL; the integrated default and full validation/robustness replays provide evidence for the corrected shared code. The earlier PII screen likewise predates the shared PLL correction.
+
+Baseline source parent was 456430d4d2cb2449dd0ae3c7781f71c5eedf599e, with uncommitted sweep hooks; manifests identify actual binary hashes rather than claiming that parent alone reproduces the instrumented executable. `tools/rao_parameter_tuning.py` and `tools/observer_parameter_tuning.py` rerun explicit configurations without modifying quality gates.
+
+The `selected-source.bundle` preserves local source commit 1cb65a24379b74bf59443701c9ecb3be03f0574d, referenced by the selected study and runtime manifests. It requires parent 456430d4d2cb2449dd0ae3c7781f71c5eedf599e, already in this repository. `git bundle verify` checks that prerequisite; the bundle can be fetched to recover the exact local source revision. Later paper/configuration-check edits are carried by the PR.
+
+The tuning evidence predates direction RAO matching and correction of the v1.2.1 propagation-to reference. Direction measurements from these parameter screens are not publication evidence; use the separate direction ablation and final integrated replay. Attitude/displacement tuning metrics are unaffected by that direction-only branch.
+
+Performance selection does not alter the canonical P3/P4/P5 proof thresholds or imply deployment-domain stability admission. Stability and live-covariance audits are separate obligations.
+
+## NLO after the PLL clock correction
+
+The shared correction exposes gain-scheduling sensitivity in the NLO adapter.
+The selected NLO-only coarse-frequency horizon is 120 s; its gain multiplier
+remains 0.56 and gain smoothing remains 30 s. The longer crossing average
+reduces jitter but also slows acquisition. These stationary records do not
+validate rapid sea transitions.
+
+| Configuration | Default failing records / 8 | Held-out failing records / 32 | Mean vertical RMS / Hs, % | Worst vertical RMS / Hs, % |
+|---|---:|---:|---:|---:|
+| Original PR head | 1 | 6 | 25.723540 | 180.40700 |
+| Corrected PLL, 4.5 s coarse horizon | 5 | 19 | 7.380337 | 8.42239 |
+| Selected NLO 120 s coarse horizon | 1 | 9 | 7.321152 | 13.61710 |
+
+The selected default failure is PM-Stokes Hs=0.27 m: 7.52444% against
+the unchanged 7.13% limit. Relative to the original PR head, extreme held-out
+errors decrease substantially while failing cases increase from six to nine.
+Relative to the corrected PLL's short-horizon default, failures decrease from
+19 to nine, but the held-out maximum increases from 8.42239% to 13.6171%.
+This is a measured tradeoff, not uniformly improved performance or a passing
+NLO regression suite. Gain-only and gain-smoothing screens are retained as
+rejected alternatives. The four held-out sensor draws were excluded from
+NLO candidate screening and still use the same eight prescribed seas.
+
+The fresh PII replay after the shared PLL correction has 0 vertical and 7 yaw violations over the same 32 held-out cases. Mean vertical RMS is 5.783283% of Hs. Its eight default records pass both unchanged gates.

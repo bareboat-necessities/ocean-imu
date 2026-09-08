@@ -1,0 +1,12 @@
+[
+  {
+    "name": "head",
+    "env": {}
+  },
+  {
+    "name": "candidate",
+    "env": {
+      "SF_SIGMA_G_SCALE": "0.2"
+    }
+  }
+]

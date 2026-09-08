@@ -502,6 +502,25 @@ bool test_startup_gate_certifies_the_aligned_branch() {
 }  // namespace
 
 int main() {
+    // Direction consumes physical sensor axes, whereas the MEKF stores its
+    // temperature-dependent bias in the virtual un-heeled frame.
+    {
+        Kalman3D_Wave_OU_II<float> m(Eigen::Vector3f::Constant(.02f),
+            Eigen::Vector3f::Constant(.001f), Eigen::Vector3f::Constant(.25f));
+        const Eigen::Vector3f b(.03f, -.04f, .05f), k(.002f, -.003f, .001f);
+        m.set_initial_acc_bias(b);
+        m.set_accel_bias_temp_coeff(k);
+        m.update_wind_heel(.4f);
+        for (float temperature : {25.0f, 35.0f, 45.0f}) {
+            const Eigen::Vector3f expected = b + Eigen::AngleAxisf(.4f,
+                Eigen::Vector3f::UnitX()) * (k * (temperature - 35.0f));
+            if ((m.get_acc_bias_body_at_temperature(temperature) - expected).norm() > 1e-6f) {
+                std::cerr << "FAIL: physical accelerometer bias frame/temperature\n";
+                return 1;
+            }
+        }
+    }
+
     bool ok = true;
     ok &= test_front_end_is_independent_of_the_mekf();
     ok &= test_heading_frame_ignores_yaw();

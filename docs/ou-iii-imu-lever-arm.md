@@ -55,4 +55,4 @@ A separate sweep varies the `gyro` model's derivative band over 1-100 Hz on a 30
 
 With `--mirror-doc` the five figures are copied byte-for-byte into `doc/kalman_ou_iii/` for the article; `tools/ou3_lever_arm_tex.py` generates the section's numeric fragment from the two summary CSVs. `tests/validation/test_ou3_lever_arm_article.py` fails if the committed article stops matching the committed evidence.
 
-The full study is run in CI by `.github/workflows/ou3-lever-arm-study.yml` against `oceanography-waves-lib` release `v1.1.3`. The simulator stage has its own unit test in `tests/kalman_ou_iii/imu_lever_arm-test.cpp`.
+The full study is run in CI by `.github/workflows/ou3-lever-arm-study.yml` against `oceanography-waves-lib` release `v1.2.1`. The simulator stage has its own unit test in `tests/kalman_ou_iii/imu_lever_arm-test.cpp`.

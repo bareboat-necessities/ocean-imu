@@ -53,6 +53,7 @@ empirical adaptation law or a law-comparison ablation. Its principal limitation
 is that attitude, bias, and axis-dependent gravity leakage are reduced to the
 effective acceleration-error intensity $q_{\rm eff}$.
 \end{abstract}
+\input{../simulation-dataset.tex-part}
 
 \begin{IEEEkeywords}
 Kalman filter, inertial navigation, marine motion estimation,
@@ -366,10 +367,17 @@ with
 \begin{equation}
  C_P=0.1116,
  \qquad
- \frac{C_P}{C_V}=0.4611,
- \qquad C_V\simeq0.2420.
+ \frac{C_P}{C_V}=0.3,
+ \qquad C_V=0.3720.
  \label{eq:deployed-constants}
 \end{equation}
+The position coefficient is retained; the channel ratio is tuned to the
+28 ft dataset and checked on separate sensor draws.
+The accompanying coefficient diagnostic now evaluates the actual v1.2.1
+CG-heave periodogram at current five-draw OU--II operating points; its
+finite-record optimum is reported separately and is not a new universal
+coefficient or a change to the deployed law.
+
 The physical band-amplitude estimate $\widehat\sigma_{a,B}$ is recovered from
 the scheduled OU prior amplitude rather than treating the prior coefficient as
 an additional physical exponent. The default residual acceleration intensity is
@@ -396,11 +404,11 @@ implementation safety. Because $T_S$ appears explicitly in
 Eqs.~\eqref{eq:deployed-rp}--\eqref{eq:deployed-rv}, no additional historical
 cadence renormalization is applied to the PhysicalMSE target.
 
-The constants are obtained from the finite-band reference spectra through the
-same moment relations used in the derivation. Across those spectra the inferred
-ratio $C_P/C_V$ lies near the ideal fixed-shape values; the deployed value is a
-single analytical reference for the common scheduler rather than a scenario-
-specific fit.
+The moment relations motivate the scheduler's powers under a fixed-shape
+spectral scaling. The vessel RAO has fixed resonance periods and does not
+preserve that spectral family across sea states. The selected channel ratio
+is therefore an empirical common configuration, validated across records and
+sensor draws; it is not an exact optimum inferred from a universal wave spectrum.
 
 \section{Interpretation}
 

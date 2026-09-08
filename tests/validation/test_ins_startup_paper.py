@@ -72,7 +72,8 @@ class InsStartupPaperTests(unittest.TestCase):
     def test_two_stage_magnetic_policy_matches_sources(self):
         for source in (self.ou3, self.ou2, self.tfg):
             self.assertRegex(source, re.compile(r"mag_refine_enabled\s*=\s*true"))
-            self.assertRegex(source, re.compile(r"mag_refine_start_sec\s*=\s*90\.0f"))
+            start = "30" if source == self.tfg else "90"
+            self.assertRegex(source, re.compile(rf"mag_refine_start_sec\s*=\s*{start}\.0f"))
             self.assertRegex(source, re.compile(r"mag_refine_window_sec\s*=\s*30\.0f"))
             self.assertRegex(
                 source, re.compile(r"mag_continuous_hard_iron\s*=\s*true")
@@ -120,79 +121,27 @@ class InsStartupPaperTests(unittest.TestCase):
         ):
             self.assertIn(token, self.paper)
 
-    def test_ou3_startup_table_matches_committed_evidence(self):
-        expected_rows = (
-            r"Staged MEKF & $\sim22$ s & 4.301 & 19.872 & 0.372 & 0.275 & 1.796 & 0.0631",
-            r"Mahony proxy, 2-stage & 22--52 s & 4.287 & 19.851 & 0.339 & 0.266 & 1.835 & 0.0574",
-            r"Mahony proxy, late single-stage & $\sim105$ s & -- & -- & 0.310 & 0.259 & 1.839 & 0.0517",
-        )
-        for row in expected_rows:
-            self.assertIn(row, self.paper)
-
-    def test_ou2_marginal_startup_attribution_matches_evidence(self):
-        for row in (
-            r"roll RMS [deg] & 0.348 & 0.286 & $-17.8\%$",
-            r"pitch RMS [deg] & 0.308 & 0.300 & $-2.6\%$",
-            r"yaw RMS [deg] & 2.360 & 2.411 & $+2.2\%$",
-            r"accel-bias RMS [m/s$^2$] & 0.0616 & 0.0520 & $-15.6\%$",
-        ):
-            self.assertIn(row, self.paper)
-
-    def test_hard_iron_results_match_committed_evidence(self):
-        # The paper and the note both quote the ablation as re-measured on the
-        # re-cut ridge floor.  The numbers the correction originally landed
-        # with are a different baseline and are pinned separately below, so
-        # the two cannot be confused for each other again.
-        for row in (
-            r"yaw RMS mean [deg] & 2.065 & 0.617 & $-70.1\%$",
-            r"yaw RMS worst [deg] & 2.132 & 0.878 & $-58.8\%$",
-            r"yaw RMS mean [deg] & 1.869 & 0.661 & $-64.6\%$",
-            r"yaw RMS worst [deg] & 2.133 & 1.078 & $-49.5\%$",
-        ):
-            self.assertIn(row, self.paper)
-
-        self.assertIn("2.065 deg mean / 2.133 deg worst", self.hi_doc)
-        self.assertIn("0.617 deg mean /", self.hi_doc)
-        self.assertIn("| **mean** | | 0.768 | **0.617** | 0.751 | **0.661** |",
-                      self.hi_doc)
-        self.assertIn("| **worst** | | 1.265 | **0.878** | 1.067 | 1.078 |",
-                      self.hi_doc)
-
-    def test_hard_iron_landing_baseline_is_kept_as_history(self):
-        # The note keeps what the correction landed with, and says so.  This
-        # pins that framing: the older numbers must stay, and must not be the
-        # ones the paper quotes.
-        self.assertIn("1.835 deg mean / 2.162 deg worst", self.hi_doc)
-        self.assertIn("**1.887** | **0.813**", self.hi_doc)
-        self.assertIn("**2.161** | **1.089**", self.hi_doc)
-        self.assertNotIn(r"yaw RMS mean [deg] & 1.835", self.paper)
-
-    def test_tfg_feature_attribution_matches_evidence(self):
-        for row in (
-            "Deployed & 0.777 & 1.345 & 0.296 & 0.366 & 97.1 & 164.1",
-            "Hard iron off & 2.486 & 3.256 & 0.307 & 0.373 & 94.3 & 159.3",
-            "Mag refinement off & 0.688 & 1.534 & 0.600 & 0.241 & 118.0 & 204.3",
-            "Staged startup & 2.265 & 2.906 & 0.697 & 0.303 & 145.7 & 398.3",
-        ):
-            self.assertIn(row, self.paper)
-
-    def test_limit_on_soft_iron_is_not_hidden(self):
-        for phrase in (
-            "5 of 40 pairs became worse",
-            "misalignment-dominated",
-            "2.98 to 2.74 deg",
-            "1.02 deg",
-            "cannot identify soft-iron/misalignment error without additional heading excitation",
-        ):
-            self.assertIn(phrase, self.flat)
-
-        self.assertIn("5 / 40", self.hi_doc)
-        self.assertIn("seed=23", self.hi_doc)
+    def test_current_ablation_tables_are_generated_from_full_replay(self):
+        import csv
+        import importlib.util
+        producer = REPO_ROOT / "tools/startup_publication_sync.py"
+        spec = importlib.util.spec_from_file_location("startup_publication_sync", producer)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        with (REPO_ROOT / "reports/results/startup_ablation/startup_runs.csv").open() as stream:
+            rows = list(csv.DictReader(stream))
+        self.assertEqual(len(rows), 192)
+        hard, study = mod.generate(rows)
+        self.assertEqual(hard, (DOC / "w3d-hard-iron-results-generated.tex-part").read_text())
+        self.assertEqual(study, (DOC / "w3d-startup-results-generated.tex-part").read_text())
+        self.assertIn(r"\input{w3d-startup-results-generated.tex-part}", self.paper)
+        self.assertIn("misalignment-dominated", self.paper)
+        self.assertIn("soft-iron/misalignment error without additional heading excitation", self.flat)
 
     def test_ieee_two_column_tables_stay_single_column(self):
         self.assertNotIn(r"\begin{table*}", self.paper)
         self.assertNotIn(r"\begin{figure*}", self.paper)
-        self.assertGreaterEqual(self.paper.count(r"\resizebox{\columnwidth}{!}"), 2)
+        self.assertNotIn(r"\begin{table*}", (DOC / "w3d-startup-results-generated.tex-part").read_text())
 
 
 if __name__ == "__main__":
