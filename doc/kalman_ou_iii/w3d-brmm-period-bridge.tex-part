@@ -1,11 +1,13 @@
 \subsection{Peak-period to zero-crossing-period bridge}
 \label{sec:brmm-tp-tz-bridge}
 
-The spectral sea family above is parameterized by the physically conventional
-peak periods $T_{p,r}$, but the deployed tuner does \emph{not} estimate a peak
+When a spectral model is used to interpret a BRMM history, its components may
+be parameterized by peak periods $T_{p,r}$, but the deployed tuner does \emph{not} estimate a peak
 period.  Its measurement-derived canonical period state is the zero-crossing/
 moment period $T_z$ produced by \texttt{WavePeriodEstimator}.  These quantities
-must therefore remain distinct in the certificate.
+must therefore remain distinct. The spectral bridge below is optional;
+BRMM admission itself requires no spectral decomposition or fixed number of
+sea partitions.
 
 For a scalar spectrum $\Phi(\omega)$ with angular-frequency moments
 \begin{equation}
@@ -37,7 +39,7 @@ not an arithmetic average of their periods.  Consequently two partitions with
 the same $T_p$ but different $\gamma$, energy share, direction, or vessel
 response need not induce the same tuner period.
 
-The first replay-free SEA0 spectral subcertificate,
+The replay-free spectral diagnostic,
 \texttt{ou3\_brmm\_spectral\_moment\_bridge.json}, isolates the frequency-shape
 part of this bridge before any vessel response is applied.  On its provisional
 JONSWAP shape screen $1\le\gamma\le7$ with the standard piecewise peak widths
@@ -59,19 +61,28 @@ analytical tail pads, currently encloses the \emph{surface-elevation} ratio as
 This numerical interval is deliberately non-promoting: its quadrature has not
 yet been replaced by validated interval integration.  The exact PM identity and
 Eq.~\eqref{eq:brmm-multimodal-tz} are analytical; the continuum endpoints are
-only a feasibility screen for the next SEA0 construction.
+only a feasibility screen for a validated spectral enclosure.
 
-SEA0 must therefore certify a relation
+For a spectral family whose BRMM premises have separately been established,
+any tighter tuner bound must certify a relation
 \begin{equation}
  \boxed{
- (\lambda,x^s)\in\widehat{\mathcal S}_{\rm BRMM}
+ (\lambda,x^s)\in\widehat{\mathcal S}_{\rm spec}
  \Longrightarrow
  T_z^{\rm src}\in\mathcal T_z(\lambda,x^s),
  }
  \label{eq:brmm-tp-tz-relation}
 \end{equation}
-using the same directional response of
-Eq.~\eqref{eq:marine-reference-matrix-spectrum} and the exact deployed period-source path.
+where $\lambda$ collects spectral/response parameters and $x^s$ retains
+their common physical history. For a directional elevation spectrum
+$E(\omega,\vartheta;\lambda)$ and sea-to-IMU response $G_{\rm imu}$, the
+corresponding matrix spectrum is
+\begin{equation}
+ \Phi_u(\omega;\lambda)=\int
+ G_{\rm imu}E(\omega,\vartheta;\lambda)G_{\rm imu}^{*}\,d\vartheta.
+ \label{eq:brmm-response-spectrum}
+\end{equation}
+The response and cross spectra must belong to that same physical history.
 For an analytical spectral enclosure, Eq.~\eqref{eq:brmm-tz-moment} supplies
 the moment bridge; for the final source certificate the leaky filters, finite
 moment EMAs, log-period state, initialization, and clamps are propagated
@@ -87,7 +98,7 @@ of moment history is required.  The stricter \texttt{isReady()} diagnostic
 retains its $6/\lambda$ floor and debiased-weight test.  The tuner consumes the
 period source before the current sample advances the WavePeriodEstimator, so
 the first newly usable estimator frequency can affect the tuner no earlier
-than the following valid sample.  Therefore the final SEA0/P2 bridge must
+than the following valid sample. Therefore the source-to-tuner bridge must
 enclose both the prior-driven and startup-usable estimator-driven branches and
 their one-sample takeover edge.
 
@@ -98,13 +109,15 @@ idealized acceleration second moment would therefore contain an asymptotic
 $\int d\omega/\omega$ term and is not a finite certificate quantity.  The
 heuristic scaling $\sigma_{a}T_p^2/H_s=O(1)$ becomes usable only after the
 certified vessel/IMU response and the deployed finite wave band are included.
-SEA0 must bound that response-weighted, band-limited statistic; it must not use
+Source qualification must bound that response-weighted, band-limited statistic;
+it must not use
 an unbanded JONSWAP acceleration variance as a theorem assumption.
 
 The current $0.03$--$1.2$ Hz range is consequently a bound on the
 \emph{committed tuning-frequency channel}, not an asserted $T_p$ range for the
 physical sea.  The BRMM P2 refinement may use a tighter $T_z/T_p$ relation only
-after SEA0 has certified it over the declared JONSWAP/PM mixture and directional
+after it has been certified over the declared JONSWAP/PM mixture and directional
 response family and propagated it through the exact prior/estimator source
-state.  This response-plus-estimator bridge is a SEA0 promotion gate, not an
-optional tightening of the later P2/P3 search.
+state. Such a spectral tightening requires both the response and estimator
+bridge; a history qualified directly under BRMM may instead establish tuner
+reachability from its physical and execution constraints.

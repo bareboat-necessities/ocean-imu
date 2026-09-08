@@ -2,9 +2,9 @@
 \label{sec:brmm-source}
 
 BRMM (bounded recurrent marine motion) is the physical source hypothesis
-for the primary practical-motion theorem. Spectral and vessel models in
-Section~\ref{sec:marine-reference-stability-target} are reference specializations; neither
-their spectra nor their response-family membership define BRMM admission. Complete execution semantics are unchanged: one physical
+for the primary practical-motion theorem. A spectral or vessel-response model
+can provide an example of physical motion, but membership in such a model
+does not define BRMM admission. One physical
 root and continuation produce $a_m,\omega,R$, frontend and geometry states,
 committed $\tau,\sigma_{aw},R_S,T_S$, and the actual covariance/event history.
 There are no independent acceleration, bias, tuner or pseudo-measurement boxes.
@@ -45,16 +45,21 @@ acceleration is also prohibited. Finite transient impulses and zero motion
 remain admissible. A fixed-window bound alone, however small, does not
 exclude all constant accelerations; nor does small AC energy.
 
-For example, the fixed-root finite harmonic model of
-Eqs.~\eqref{eq:marine-reference-stokes-orbit}--\eqref{eq:marine-reference-stokes-hard-bound}
-has $a_m=\dot v_o$ and $\|v_o\|\le B_1=\sum_{i,n}n\omega_i c_{in}$.
-It therefore satisfies BRMM-0 for all time, with $V_m=B_1$ for the
-centered orbital primitive. Including its constant Stokes velocity drift
-only adds that drift's norm to $V_m$ and contributes no acceleration DC.
-Uniformity over a root family requires a uniform bound on $B_1$ and any
-included drift. This analytical model implication is independent of a
-finite-record mean; it does not by itself certify a replay's exact physical
-attachment, the hard acceleration/rate caps, or O-branch return lobes.
+For example, a finite harmonic acceleration with fixed vector coefficients,
+\begin{equation}
+ a_m(t)=\sum_i\bigl[A_i\cos(\omega_i t)+B_i\sin(\omega_i t)\bigr],
+ \qquad \omega_i>0,
+\end{equation}
+has the same-history primitive
+\begin{equation}
+ v_m(t)=v_0+\sum_i\frac{A_i\sin(\omega_i t)-B_i\cos(\omega_i t)}{\omega_i}.
+\end{equation}
+It satisfies BRMM-0 for all time with
+$V_m=\|v_0\|+\sum_i(\|A_i\|+\|B_i\|)/\omega_i$.
+A constant velocity drift changes this bound but contributes no acceleration
+DC. Uniformity over a family requires a uniform bound on this expression.
+This analytical implication does not by itself certify a replay's exact
+physical attachment, the acceleration/rate caps, or O-branch return lobes.
 
 Constant measurement offset belongs to BIAS0, not to $a_m$. Subtracting a
 sample mean cannot manufacture physical BRMM membership: the same actual
