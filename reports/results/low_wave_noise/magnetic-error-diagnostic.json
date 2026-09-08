@@ -1,0 +1,62 @@
+{
+  "scope": "Noise-free level-heading diagnostic of prescribed initial magnetic distortion; not a replay, calibration result, or quality-gate pass. Matrix and bias are taken from the exact seeded simulation noise generator.",
+  "results": [
+    {
+      "mag_initialization_seed": 9012,
+      "level_heading_error_deg": {
+        "matrix_only": -0.025100708,
+        "initial_bias_only": -2.167099,
+        "matrix_and_initial_bias": -2.2403717
+      },
+      "true_initial_hard_iron_uT": [
+        0.721080065,
+        0.413675785,
+        -0.940434217
+      ],
+      "true_accel_initial_bias_mps2": [
+        0.0191596467,
+        -0.000366584107,
+        -0.0484025739
+      ],
+      "seed": "default"
+    },
+    {
+      "mag_initialization_seed": 4294335758,
+      "level_heading_error_deg": {
+        "matrix_only": 0.273834229,
+        "initial_bias_only": -3.02877808,
+        "matrix_and_initial_bias": -2.58926392
+      },
+      "true_initial_hard_iron_uT": [
+        1.01548886,
+        0.566731691,
+        0.0772325993
+      ],
+      "true_accel_initial_bias_mps2": [
+        0.0430309623,
+        0.0746318996,
+        0.0228014812
+      ],
+      "seed": "11"
+    },
+    {
+      "mag_initialization_seed": 589269823,
+      "level_heading_error_deg": {
+        "matrix_only": 2.15957642,
+        "initial_bias_only": 0.696624756,
+        "matrix_and_initial_bias": 2.97090149
+      },
+      "true_initial_hard_iron_uT": [
+        0.0114617348,
+        -1.14460945,
+        -1.08215427
+      ],
+      "true_accel_initial_bias_mps2": [
+        -0.00223032525,
+        -0.0744953826,
+        0.0475870632
+      ],
+      "seed": "23"
+    }
+  ]
+}

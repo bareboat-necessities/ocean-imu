@@ -1,0 +1,57 @@
+\subsection{Low-wave noise and directional observability}
+\label{sec:low-wave-noise-weighting}
+
+The known vessel response suppresses horizontal wave acceleration toward the
+sensor noise floor. A bounded measurement weight uses the preceding
+measurement-only wave-band scale and frequency to predict, for horizontal
+sensor axis $i$,
+\begin{equation}
+ \hat\sigma_i=\sigma_z\,
+ \frac{\sqrt{(1-(fT_h)^2)^2+(2\zeta_h fT_h)^2}}
+ {1+(2\pi f\tau_i)^2},\qquad
+ \rho_i=\hat\sigma_i/\sigma_{a,i}.
+\end{equation}
+The unknown incident-direction projection is bounded by one, and common
+depth/footprint attenuation is omitted conservatively. The accelerometer
+standard-deviation multiplier is four for $\rho_i\le2$ and exactly one for
+$\rho_i\ge4$; its variance multiplier follows a cubic smoothstep between
+those endpoints. Vertical weighting is unchanged. Vibration inflation is
+added in variance after this weight. The current measurement cannot select
+its own covariance. This is an empirical regularization policy for the
+configured stationary hull, not an estimate of injected sensor-noise density.
+It is independent of the direction-equalizer switch and leaves the OU prior,
+$\tau$, $R_S$ law, and acceptance thresholds unchanged.
+
+Four fresh paired sensor/initialization draws (31013, 37003, 41011, 47017)
+on all eight records give the following results. Acceleration columns average
+only the two lowest-wave records across those draws; the remaining columns
+average all 32 cases. The fixed prescribed sea records do not constitute
+independent sea or hull realizations.
+\begin{table*}[t]\centering\footnotesize
+\caption{Fresh-draw low-wave weighting validation. Acceleration is in
+\si{m.s^{-2}}, attitude in degrees. Counts are unchanged-threshold violations,
+not failing records.}
+\label{tab:low-wave-noise-weighting}
+\begin{tabular}{@{}llrrrrrr@{}}\toprule
+Family & Weighting & Low $a_x$ RMS & Low $a_y$ RMS & Roll & Pitch & Yaw & Violations/32\\
+\midrule
+OU--II & Off & 0.009421 & 0.009486 & 0.2553 & 0.3282 & 1.9230 & 70\\
+OU--II & Response/SNR & 0.006875 & 0.006750 & 0.2551 & 0.3305 & 1.9282 & 69\\
+OU--III & Off & 0.007941 & 0.007976 & 0.2142 & 0.3272 & 1.9234 & 81\\
+OU--III & Response/SNR & 0.006370 & 0.006081 & 0.2128 & 0.3308 & 1.9334 & 80\\
+\bottomrule\end{tabular}\end{table*}
+OU--II still fails 30 of 32 cases and OU--III all 32. Mean pitch and yaw
+increase slightly; the improvement is principally acceleration noise, with
+OU--III low-wave 3-D displacement RMS decreasing from \SI{0.02121}{m} to
+\SI{0.01753}{m}. New-angle and rotated-heading paired checks add no
+violations but retain small attitude tradeoffs.
+
+The direction input subtracts the estimated temperature-dependent
+accelerometer bias in physical sensor axes before levelling and response
+matching. The separate wave-period/tuning input remains measurement-only.
+An unavailable zero axis produces no angular score. At the default lowest
+waves, corrected axis availability averages about one percent and travel direction
+is unresolved more than 99 percent of the time. Conditional angular accuracy
+therefore does not establish usable low-wave direction. Static tilt/bias
+ambiguity and incomplete magnetic calibration remain limiting mechanisms;
+no new yaw or $R_S$ default is justified by the tuning screens.

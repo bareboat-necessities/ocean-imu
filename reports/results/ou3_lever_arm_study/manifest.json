@@ -34,16 +34,16 @@
   ],
   "exact_arm": "oracle: truth angular kinematics; an upper bound, not a claim",
   "files": {
-    "lever_arm_cutoff_runs.csv": "b54ca669fb3a36ba1e91ddb4ec053937cea041e0b732d15727558741a5eb5450",
-    "lever_arm_cutoff_summary.csv": "9367163bbcbcf479a531bffc2694c9ba8004e38060cda9b062c5405ff07be273",
-    "lever_arm_report.md": "d5fcd5c821154539a6bfd4cd29de2f0dd75aa817d5b9db48d2bcc707deb0aeeb",
-    "lever_arm_runs.csv": "d16caa2dc592b3f5d895a7c3e1193d74276fc9377f87d6849ea0230ca5e41c29",
-    "lever_arm_summary.csv": "154ff96ca9d9fc0ced81069cb6cf7980a2ee75a935158a40190b393d01ca08bd",
-    "ou3_lever_arm_cutoff.svg": "7045765b687eb2aa87fcabdb2e73337f1734b975c6e83bd2825fa8492b910ed4",
+    "lever_arm_cutoff_runs.csv": "41b9146e7afd04a81246a6b115613558109a1c75208dce879adff39549b8bbf8",
+    "lever_arm_cutoff_summary.csv": "188e152a9024897bc567a74a6c582430580db37768d4c16b712733f7cd8fdf19",
+    "lever_arm_report.md": "940ee879dd4153b53cd05fd7ac36bda2f521e48b4dd2f094b52d0381a6fc8404",
+    "lever_arm_runs.csv": "4109712ded87a0aaeaf8eb975cb6664fdf77d2a25384d1ce17e389e14fb6103d",
+    "lever_arm_summary.csv": "4c57817cabdf2be1950752356fb710d70b3561b17fc4bacd2d5d7cf0cfca2c52",
+    "ou3_lever_arm_cutoff.svg": "641c8501448ec1e3176738759b74b4a04d2ff6841794a0bc45a97572ad7c5131",
     "ou3_lever_arm_mechanism.svg": "6d116eb91e01c2c3f756ee77472c4cbff313aa238bcfbdd365692879adfaa49c",
-    "ou3_lever_arm_penalty.svg": "a1876a9be4d2fb52700994f84c150a7d0f86664524ff8e0295cb0befbe7a6b53",
-    "ou3_lever_arm_sea_state.svg": "6411535925c3173a401f6d0da5d89fda1c61c947ef907bf183e8cb74c4b8950c",
-    "ou3_lever_arm_tilt.svg": "f81a5ebb5b0f412649b85484eee43bdc85b2ce2afd28c90e48e5f49c71c484e1"
+    "ou3_lever_arm_penalty.svg": "cca9b197e8330fe0624240926d48a40bb68705147e787deb9d201ca82db60caf",
+    "ou3_lever_arm_sea_state.svg": "b7b167b2ca9bc091249741d883be76ea9701dbe985c0a5dd7fece00c39fed765",
+    "ou3_lever_arm_tilt.svg": "72a04be9f999dbdd6029d5ccfb893db343c676bbdf603fb048eb0a1c73c8eebf"
   },
   "gyro_arm": "deployable: two-pole low-pass on the measured rate followed by a causal second-order difference",
   "installation_stage": "simulator applies the rigid-body term to the accelerometer truth before sensor corruption (W3D_IMU_LEVER_ARM_M)",
@@ -73,6 +73,6 @@
     "motion_model": "VESSEL_RAO_28FT",
     "release": "v1.2.1"
   },
-  "source_commit": "5c19226291a2beb735906009d5eaf776cc5e0b0f",
+  "source_commit": "a86d4585f2b2affd39c9856d4b1639b61e4d2755",
   "study": "OU-III IMU lever-arm installation"
 }

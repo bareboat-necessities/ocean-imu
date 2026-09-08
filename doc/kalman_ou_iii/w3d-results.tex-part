@@ -23,7 +23,7 @@ claims use the versioned ten-seed evidence below.
 \label{fig:representative-3d-kinematics}
 \end{figure*}
 
-\paragraph{Horizontal drift and isotropic regularization}
+\paragraph{Horizontal drift and directional regularization}
 \label{sec:riccati-per-axis-limits}
 After attitude compensation, small tilt errors leak gravity into horizontal
 acceleration approximately as
@@ -49,11 +49,15 @@ it omits attitude-error coupling, axis-dependent bias observability, and the
 directional desired-motion spectrum.  In particular, horizontal desired motion
 is a heading-dependent projection of the same orbital field, so a fixed world
 $x/y$ multiplier would not be invariant to vessel heading.  The supported
-full-filter result is therefore narrower: isotropic $r_S$ performs well over the
-tested directional records.  Further horizontal improvement should target the
+full-filter result is therefore narrower: the retained OU--III horizontal
+$r_S$ standard-deviation factors are equal at $0.72$, with the vertical factor
+one. A sweep to $0.5$ improved training displacement but introduced a fresh-draw
+violation and worsened mean pitch, so it is not the deployed setting.  Further horizontal improvement should target the
 disturbance itself---tilt error, accelerometer-bias observability, GNSS, or
 another horizontal reference.  No fixed horizontal-to-vertical noise-intensity ratio is inferred from
 the incident wave spectrum.
+
+\input{w3d-low-wave-noise.tex-part}
 
 \subsection{Attitude and adaptation behavior}
 

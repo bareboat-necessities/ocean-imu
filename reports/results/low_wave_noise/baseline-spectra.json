@@ -1,0 +1,430 @@
+[
+  {
+    "family": "OU-II",
+    "record": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+    "metrics": {
+      "family": "OU_II",
+      "tuning_mode": "adaptive",
+      "aw_cov_sync": "periodic",
+      "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+      "window_s": 900.0,
+      "samples": 180000,
+      "disp_x_rms_m": 0.00732127531,
+      "disp_y_rms_m": 0.00596560165,
+      "disp_z_rms_m": 0.0175505243,
+      "disp_3d_rms_m": 0.0199301373,
+      "disp_x_pct_hs": 2.71158338,
+      "disp_y_pct_hs": 2.20948195,
+      "disp_z_pct_hs": 6.50019407,
+      "disp_3d_pct_refmax": 9.96080017,
+      "disp_z_ref_rms_m": 0.0534430593,
+      "disp_z_pct_refrms": 32.8396721,
+      "roll_rms_deg": 0.338853031,
+      "pitch_rms_deg": 0.0959965065,
+      "yaw_rms_deg": 0.603051186,
+      "dir_travel_error_deg": 0.857965171,
+      "dir_travel_rmse_deg": 4.04272318,
+      "dir_travel_correct_pct": 0.455555558,
+      "dir_travel_wrong_pct": 0.0,
+      "dir_travel_unresolved_pct": 99.5444489,
+      "dir_axis_mean_deg": 3.84576416,
+      "dir_axis_truth_deg": 30.0,
+      "dir_axis_error_deg": -26.1542358,
+      "dir_axis_rmse_deg": 27.8967571,
+      "dir_axis_circ_std_deg": 11.1948652,
+      "dir_sense_forward_pct": 0.455555558,
+      "dir_sense_reverse_pct": 0.0,
+      "dir_sense_uncertain_pct": 99.5444489,
+      "dir_sense_dominant_pct": 0.455555558,
+      "accel_bias_3d_rms_mps2": 0.0599688888,
+      "gyro_bias_3d_rms_radps": 0.000100997131,
+      "tau_applied_s": 1.53025579,
+      "sigma_applied_mps2": 0.0500000007,
+      "tuning_applied": 0.117084146,
+      "wave_period_s": 3.05647588,
+      "frequency_hz": 0.235941797,
+      "period_s": 3.10486245,
+      "accel_variance_m2ps4": 0.0307989549,
+      "dir_axis_abs_error_deg": 26.1542358,
+      "dir_travel_abs_error_deg": 0.857965171
+    },
+    "axes": {
+      "x": {
+        "ref_rms": 0.038136384930431165,
+        "error_rms": 0.00940650081381923,
+        "error_mean": 0.00042207204846407277,
+        "peak_hz": 0.32958984375,
+        "gain_at_peak": 0.9879598713542593,
+        "phase_deg_at_peak": 0.6575791548918531,
+        "coherence_at_peak": 0.9997336815705155,
+        "wave_band_error_rms": 0.002300149585800957,
+        "out_of_band_est_rms": 0.00650768701989635
+      },
+      "y": {
+        "ref_rms": 0.016757060132411235,
+        "error_rms": 0.00950028410307914,
+        "error_mean": 5.9095884447351073e-05,
+        "peak_hz": 0.3173828125,
+        "gain_at_peak": 0.9454319608877604,
+        "phase_deg_at_peak": 3.1096255232365664,
+        "coherence_at_peak": 0.9963324483972352,
+        "wave_band_error_rms": 0.0028099460974194326,
+        "out_of_band_est_rms": 0.006495440037568629
+      },
+      "z": {
+        "ref_rms": 0.24619788094380185,
+        "error_rms": 0.009579663891135784,
+        "error_mean": 0.00016939859472756672,
+        "peak_hz": 0.32958984375,
+        "gain_at_peak": 0.9920333008483363,
+        "phase_deg_at_peak": -0.8108632710950612,
+        "coherence_at_peak": 0.9999715664546159,
+        "wave_band_error_rms": 0.005371392256723671,
+        "out_of_band_est_rms": 0.006175697111192748
+      }
+    },
+    "tuning": {
+      "tau_applied": {
+        "mean": 1.5448638575,
+        "min": 1.42455,
+        "max": 1.77199
+      },
+      "sigma_a_applied": {
+        "mean": 0.11901709505833334,
+        "min": 0.05,
+        "max": 0.276345
+      },
+      "R_p0_applied": {
+        "mean": 0.2822115162666667,
+        "min": 0.10648,
+        "max": 0.662211
+      },
+      "freq_tracker_hz": {
+        "mean": 0.3042900989833333,
+        "min": 0.2,
+        "max": 0.464808
+      }
+    }
+  },
+  {
+    "family": "OU-II",
+    "record": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+    "metrics": {
+      "family": "OU_II",
+      "tuning_mode": "adaptive",
+      "aw_cov_sync": "periodic",
+      "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+      "window_s": 900.0,
+      "samples": 180000,
+      "disp_x_rms_m": 0.00711674802,
+      "disp_y_rms_m": 0.00573831005,
+      "disp_z_rms_m": 0.0164852217,
+      "disp_3d_rms_m": 0.0188504346,
+      "disp_x_pct_hs": 2.63583255,
+      "disp_y_pct_hs": 2.12529993,
+      "disp_z_pct_hs": 6.10563755,
+      "disp_3d_pct_refmax": 9.74260235,
+      "disp_z_ref_rms_m": 0.0499124601,
+      "disp_z_pct_refrms": 33.0282669,
+      "roll_rms_deg": 0.330386162,
+      "pitch_rms_deg": 0.0890783668,
+      "yaw_rms_deg": 0.648279727,
+      "dir_travel_error_deg": 2.48182917,
+      "dir_travel_rmse_deg": 4.64559078,
+      "dir_travel_correct_pct": 0.302222222,
+      "dir_travel_wrong_pct": 0.0,
+      "dir_travel_unresolved_pct": 99.6977768,
+      "dir_axis_mean_deg": 3.24147034,
+      "dir_axis_truth_deg": 30.0,
+      "dir_axis_error_deg": -26.7585297,
+      "dir_axis_rmse_deg": 28.2575207,
+      "dir_axis_circ_std_deg": 10.6132355,
+      "dir_sense_forward_pct": 0.302222222,
+      "dir_sense_reverse_pct": 0.0,
+      "dir_sense_uncertain_pct": 99.6977768,
+      "dir_sense_dominant_pct": 0.302222222,
+      "accel_bias_3d_rms_mps2": 0.0582778826,
+      "gyro_bias_3d_rms_radps": 9.68374443e-05,
+      "tau_applied_s": 1.51966047,
+      "sigma_applied_mps2": 0.0804252103,
+      "tuning_applied": 0.185731396,
+      "wave_period_s": 3.02446294,
+      "frequency_hz": 0.409234107,
+      "period_s": 2.78987837,
+      "accel_variance_m2ps4": 0.0310976487,
+      "dir_axis_abs_error_deg": 26.7585297,
+      "dir_travel_abs_error_deg": 2.48182917
+    },
+    "axes": {
+      "x": {
+        "ref_rms": 0.03405621524808339,
+        "error_rms": 0.009220232631883147,
+        "error_mean": 0.00039805628805732223,
+        "peak_hz": 0.30517578125,
+        "gain_at_peak": 0.9857837291174282,
+        "phase_deg_at_peak": -0.08041459117729757,
+        "coherence_at_peak": 0.9997116465475753,
+        "wave_band_error_rms": 0.0022796731875866817,
+        "out_of_band_est_rms": 0.006460175399796915
+      },
+      "y": {
+        "ref_rms": 0.016956076212366108,
+        "error_rms": 0.00930538390681744,
+        "error_mean": 4.764754119489446e-05,
+        "peak_hz": 0.28076171875,
+        "gain_at_peak": 0.9712645250977672,
+        "phase_deg_at_peak": 1.825006534866469,
+        "coherence_at_peak": 0.9983819229415954,
+        "wave_band_error_rms": 0.002714098356470497,
+        "out_of_band_est_rms": 0.006457133186307901
+      },
+      "z": {
+        "ref_rms": 0.23611241057811808,
+        "error_rms": 0.009608196659735035,
+        "error_mean": 0.00021696309282613334,
+        "peak_hz": 0.4150390625,
+        "gain_at_peak": 0.9945571757586973,
+        "phase_deg_at_peak": -1.188492187497578,
+        "coherence_at_peak": 0.9999682237725502,
+        "wave_band_error_rms": 0.005618009639142789,
+        "out_of_band_est_rms": 0.006129961719760206
+      }
+    },
+    "tuning": {
+      "tau_applied": {
+        "mean": 1.5454258023333334,
+        "min": 1.39123,
+        "max": 1.84396
+      },
+      "sigma_a_applied": {
+        "mean": 0.1118123725,
+        "min": 0.05,
+        "max": 0.270045
+      },
+      "R_p0_applied": {
+        "mean": 0.26517266645,
+        "min": 0.105359,
+        "max": 0.601792
+      },
+      "freq_tracker_hz": {
+        "mean": 0.31077126717222225,
+        "min": 0.2,
+        "max": 0.499201
+      }
+    }
+  },
+  {
+    "family": "OU-III",
+    "record": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+    "metrics": {
+      "family": "OU_III",
+      "tuning_mode": "adaptive",
+      "aw_cov_sync": "periodic",
+      "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+      "window_s": 900.0,
+      "samples": 180000,
+      "disp_x_rms_m": 0.0131720258,
+      "disp_y_rms_m": 0.0126199862,
+      "disp_z_rms_m": 0.0114728706,
+      "disp_3d_rms_m": 0.0215497818,
+      "disp_x_pct_hs": 4.87852812,
+      "disp_y_pct_hs": 4.67406893,
+      "disp_z_pct_hs": 4.24921131,
+      "disp_3d_pct_refmax": 10.7702761,
+      "disp_z_ref_rms_m": 0.0534430593,
+      "disp_z_pct_refrms": 21.4674644,
+      "roll_rms_deg": 0.305561543,
+      "pitch_rms_deg": 0.128166333,
+      "yaw_rms_deg": 0.478182137,
+      "dir_travel_error_deg": 1.98862362,
+      "dir_travel_rmse_deg": 6.35477018,
+      "dir_travel_correct_pct": 0.290555567,
+      "dir_travel_wrong_pct": 0.0,
+      "dir_travel_unresolved_pct": 99.7094498,
+      "dir_axis_mean_deg": 0.806625366,
+      "dir_axis_truth_deg": 30.0,
+      "dir_axis_error_deg": -29.1933746,
+      "dir_axis_rmse_deg": 29.5538807,
+      "dir_axis_circ_std_deg": 5.83423662,
+      "dir_sense_forward_pct": 0.290555567,
+      "dir_sense_reverse_pct": 0.0,
+      "dir_sense_uncertain_pct": 99.7094498,
+      "dir_sense_dominant_pct": 0.290555567,
+      "accel_bias_3d_rms_mps2": 0.0565022044,
+      "gyro_bias_3d_rms_radps": 0.000103738268,
+      "tau_applied_s": 1.53016257,
+      "sigma_applied_mps2": 0.00927246734,
+      "tuning_applied": 0.150355458,
+      "wave_period_s": 3.05647588,
+      "frequency_hz": 0.235941797,
+      "period_s": 3.10486245,
+      "accel_variance_m2ps4": 0.0307989549,
+      "dir_axis_abs_error_deg": 29.1933746,
+      "dir_travel_abs_error_deg": 1.98862362
+    },
+    "axes": {
+      "x": {
+        "ref_rms": 0.038136384930431165,
+        "error_rms": 0.007942263957369224,
+        "error_mean": 0.00032646812617006165,
+        "peak_hz": 0.32958984375,
+        "gain_at_peak": 0.9792021130884976,
+        "phase_deg_at_peak": 0.07367393276923444,
+        "coherence_at_peak": 0.9997499400917275,
+        "wave_band_error_rms": 0.002410492864996052,
+        "out_of_band_est_rms": 0.005605122839809649
+      },
+      "y": {
+        "ref_rms": 0.016757060132411235,
+        "error_rms": 0.007987433581763608,
+        "error_mean": 7.91324724895111e-05,
+        "peak_hz": 0.3173828125,
+        "gain_at_peak": 0.9378633592199275,
+        "phase_deg_at_peak": 2.7543659881666183,
+        "coherence_at_peak": 0.9972414812100465,
+        "wave_band_error_rms": 0.002819537219596679,
+        "out_of_band_est_rms": 0.005599490315453329
+      },
+      "z": {
+        "ref_rms": 0.24619788094380185,
+        "error_rms": 0.009762170700060725,
+        "error_mean": 0.00024527249163439996,
+        "peak_hz": 0.32958984375,
+        "gain_at_peak": 0.9881569937534885,
+        "phase_deg_at_peak": -0.8927191305004799,
+        "coherence_at_peak": 0.9999643994433187,
+        "wave_band_error_rms": 0.00643413029899985,
+        "out_of_band_est_rms": 0.005931474793788647
+      }
+    },
+    "tuning": {
+      "tau_applied": {
+        "mean": 1.5448659218888887,
+        "min": 1.42436,
+        "max": 1.772
+      },
+      "sigma_a_applied": {
+        "mean": 0.1176109504162,
+        "min": 0.000900008,
+        "max": 0.292841
+      },
+      "R_p0_applied": {
+        "mean": 0.1606707592722222,
+        "min": 0.150003,
+        "max": 0.234142
+      },
+      "freq_tracker_hz": {
+        "mean": 0.3042900989833333,
+        "min": 0.2,
+        "max": 0.464808
+      }
+    }
+  },
+  {
+    "family": "OU-III",
+    "record": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+    "metrics": {
+      "family": "OU_III",
+      "tuning_mode": "adaptive",
+      "aw_cov_sync": "periodic",
+      "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+      "window_s": 900.0,
+      "samples": 180000,
+      "disp_x_rms_m": 0.0130563304,
+      "disp_y_rms_m": 0.0125049632,
+      "disp_z_rms_m": 0.0113742882,
+      "disp_3d_rms_m": 0.0213592201,
+      "disp_x_pct_hs": 4.83567762,
+      "disp_y_pct_hs": 4.63146782,
+      "disp_z_pct_hs": 4.21269941,
+      "disp_3d_pct_refmax": 11.0392351,
+      "disp_z_ref_rms_m": 0.0499124601,
+      "disp_z_pct_refrms": 22.788475,
+      "roll_rms_deg": 0.311392635,
+      "pitch_rms_deg": 0.127208427,
+      "yaw_rms_deg": 0.6447348,
+      "dir_travel_error_deg": 10.8942146,
+      "dir_travel_rmse_deg": 10.8945389,
+      "dir_travel_correct_pct": 0.0538888909,
+      "dir_travel_wrong_pct": 0.0,
+      "dir_travel_unresolved_pct": 99.9461136,
+      "dir_axis_mean_deg": 0.549743652,
+      "dir_axis_truth_deg": 30.0,
+      "dir_axis_error_deg": -29.4502563,
+      "dir_axis_rmse_deg": 29.7130775,
+      "dir_axis_circ_std_deg": 5.1804328,
+      "dir_sense_forward_pct": 0.0538888909,
+      "dir_sense_reverse_pct": 0.0,
+      "dir_sense_uncertain_pct": 99.9461136,
+      "dir_sense_dominant_pct": 0.0538888909,
+      "accel_bias_3d_rms_mps2": 0.0573710576,
+      "gyro_bias_3d_rms_radps": 9.93967697e-05,
+      "tau_applied_s": 1.5192982,
+      "sigma_applied_mps2": 0.0886807293,
+      "tuning_applied": 0.150114924,
+      "wave_period_s": 3.02446294,
+      "frequency_hz": 0.409234107,
+      "period_s": 2.78987837,
+      "accel_variance_m2ps4": 0.0310976487,
+      "dir_axis_abs_error_deg": 29.4502563,
+      "dir_travel_abs_error_deg": 10.8942146
+    },
+    "axes": {
+      "x": {
+        "ref_rms": 0.03405621524808339,
+        "error_rms": 0.007821321756626053,
+        "error_mean": 0.00032291065921254445,
+        "peak_hz": 0.30517578125,
+        "gain_at_peak": 0.9691618907248198,
+        "phase_deg_at_peak": -0.42711211540570254,
+        "coherence_at_peak": 0.9997118887960309,
+        "wave_band_error_rms": 0.0024171334056103375,
+        "out_of_band_est_rms": 0.0055475719982200165
+      },
+      "y": {
+        "ref_rms": 0.016956076212366108,
+        "error_rms": 0.007859106398913249,
+        "error_mean": 7.455016511971668e-05,
+        "peak_hz": 0.28076171875,
+        "gain_at_peak": 0.9506767594334623,
+        "phase_deg_at_peak": 1.9492302347030732,
+        "coherence_at_peak": 0.9986167123889349,
+        "wave_band_error_rms": 0.002775353089509334,
+        "out_of_band_est_rms": 0.005549649570666456
+      },
+      "z": {
+        "ref_rms": 0.23611241057811808,
+        "error_rms": 0.009944862190040126,
+        "error_mean": 0.0002830104825649166,
+        "peak_hz": 0.4150390625,
+        "gain_at_peak": 0.9919739737658588,
+        "phase_deg_at_peak": -1.4872336406233386,
+        "coherence_at_peak": 0.9999572263277925,
+        "wave_band_error_rms": 0.0068034027634722525,
+        "out_of_band_est_rms": 0.005903112391979777
+      }
+    },
+    "tuning": {
+      "tau_applied": {
+        "mean": 1.5454289532777779,
+        "min": 1.39119,
+        "max": 1.84399
+      },
+      "sigma_a_applied": {
+        "mean": 0.11068930094901666,
+        "min": 0.00090006,
+        "max": 0.2861
+      },
+      "R_p0_applied": {
+        "mean": 0.1579020975722222,
+        "min": 0.150003,
+        "max": 0.220401
+      },
+      "freq_tracker_hz": {
+        "mean": 0.31077126717222225,
+        "min": 0.2,
+        "max": 0.499201
+      }
+    }
+  }
+]

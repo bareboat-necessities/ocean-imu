@@ -41,31 +41,25 @@ Table~\ref{tab:engine-noise-cruise} reports the current paired measurements.
 \toprule
 Family & Engine & 3-D [m] & 3-D offset [m] & Pitch [\si{\degree}] & Yaw [\si{\degree}] \\
 \midrule
-OU--II & off & 0.515 & 0.062 & 0.186 & 0.59 \\
-OU--II & on & 18.610 & 6.557 & 4.896 & 103.77 \\
-OU--III & off & 0.405 & 0.043 & 0.156 & 0.57 \\
-OU--III & on & 22.195 & 5.159 & 1.988 & 103.90 \\
+OU--II & off & 0.515 & 0.062 & 0.187 & 0.60 \\
+OU--II & on & 18.594 & 6.555 & 4.846 & 91.91 \\
+OU--III & off & 0.405 & 0.043 & 0.156 & 0.58 \\
+OU--III & on & 22.186 & 5.158 & 1.972 & 90.29 \\
 TFG & off & 0.416 & 0.089 & 0.083 & 0.55 \\
 TFG & on & 9.574 & 8.820 & 7.545 & 105.29 \\
 \bottomrule\end{tabular}\end{table}
 
-OU--III's 3-D RMS rises from \SI{0.405}{m}
-to \SI{22.195}{m}, a factor of
-\num{54.77}.
-At cruise the systematic component is \pct{23.2}
-of the total RMS magnitude. Across families the offset fractions are
-OU--II: \pct{35.2}, OU--III: \pct{23.2}, TFG: \pct{92.1}.
-Static offset therefore does not dominate both OU families.
-Pitch RMS and pitch offset are
-\SI{2.092}{\degree} and
-\SI{1.166}{\degree}.
+OU--III's 3-D RMS rises from \SI{0.405}{m} to \SI{22.186}{m}, a factor of \num{54.75}.
+Across families the offset fractions are OU--II: \pct{35.3}, OU--III: \pct{23.2}, TFG: \pct{92.1}.
+Static offset does not dominate both OU families.
+Pitch RMS and pitch offset are \SI{1.972}{\degree} and \SI{1.411}{\degree}.
 The accelerometer update shares its residual between attitude, bias and
 wave acceleration; a standing tilt can therefore leak gravity into the
 horizontal reconstruction. This is a mechanism interpretation of the
 paired ablations, not a source-uniform theorem.
 
 Removing the modeled gyroscope perturbation changes nominal 3-D RMS by
-at most \pct{0.020} across the families. The measured degradation is dominated
+at most \pct{0.016} across the families. The measured degradation is dominated
 by the accelerometer path in this experiment.
 
 \subsubsection{Speed, level and bandwidth}
@@ -74,8 +68,8 @@ The level and bandwidth controls should therefore be read directly from
 Figs.~\ref{fig:engine-noise-speed} and \ref{fig:engine-noise-mechanism}.
 The matched-power sweep holds recorded RMS at \SI{0.4543}{m.s^{-2}}
 while changing bandwidth and folded order locations.
- For OU--II, the maximum/minimum 3-D spread falls from \num{21.10} to \num{4.74}.
- For OU--III, the maximum/minimum 3-D spread falls from \num{23.06} to \num{8.96}.
+ For OU--II, the maximum/minimum 3-D spread falls from \num{21.13} to \num{4.76}.
+ For OU--III, the maximum/minimum 3-D spread falls from \num{23.07} to \num{9.06}.
 Recorded power explains much of the bandwidth sensitivity, while the
 remaining spread shows that equal power does not make the inputs equivalent.
 
@@ -100,7 +94,7 @@ proxy, MEKF and tilt watchdog. Two low-pass poles at \SI{14}{Hz} engage
 using a separate two-pole \SI{25}{Hz} high-pass detector with
 \SIrange{0.03}{0.08}{m.s^{-2}} rails and a \SI{5}{s} engagement time scale.
 The covariance arm commands
-$\sqrt{\sigma^2+(0.75 e)^2}$ from the same gated detector excess $e$.
+$\sqrt{(w\sigma)^2+(0.75 e)^2}$ from the same gated detector excess $e$, after the low-wave multiplier $w$ of Sec.~\ref{sec:low-wave-noise-weighting}.
 These are fixed deployed settings. This study does not optimize the gain,
 isolate forced-on quiet-input delay, or measure an engine-shutdown transient.
 
@@ -115,20 +109,19 @@ The last column is the guard plus covariance arm divided by the engine-off basel
 Condition & off & guard & $+R$ & off & guard & $+R$ & $\times$ base \\
 \midrule
 Engine off & 0.405 & 0.405 & 0.405 & 0.146 & 0.146 & 0.146 & 1.000 \\
-\SI{800}{rpm} & 4.462 & 0.599 & 0.590 & 2.208 & 1.378 & 1.656 & 1.456 \\
-\SI{1600}{rpm} & 15.761 & 0.517 & 0.473 & 3.896 & 1.454 & 1.086 & 1.166 \\
-\SI{2400}{rpm} & 22.195 & 0.517 & 0.456 & 1.424 & 1.501 & 0.548 & 1.126 \\
-\SI{3200}{rpm} & 26.346 & 0.653 & 0.470 & 4.739 & 1.611 & 0.571 & 1.160 \\
-Quiet mount & 3.865 & 0.468 & 0.449 & 1.904 & 1.009 & 0.616 & 1.108 \\
-Engine bed & 125.299 & 0.994 & 0.488 & 26.237 & 1.485 & 0.541 & 1.205 \\
-Wide sensor & 23.525 & 0.469 & 0.441 & 1.245 & 1.030 & 0.036 & 1.087 \\
+\SI{800}{rpm} & 4.370 & 0.599 & 0.590 & 2.055 & 1.511 & 1.517 & 1.456 \\
+\SI{1600}{rpm} & 15.747 & 0.517 & 0.473 & 3.781 & 1.283 & 0.871 & 1.167 \\
+\SI{2400}{rpm} & 22.186 & 0.517 & 0.456 & 1.411 & 1.159 & 0.474 & 1.127 \\
+\SI{3200}{rpm} & 26.330 & 0.653 & 0.470 & 4.665 & 1.510 & 0.545 & 1.160 \\
+Quiet mount & 3.864 & 0.467 & 0.449 & 1.828 & 0.674 & 0.423 & 1.108 \\
+Engine bed & 125.221 & 0.995 & 0.488 & 25.126 & 1.419 & 0.528 & 1.205 \\
+Wide sensor & 23.523 & 0.469 & 0.441 & 1.129 & 0.648 & 0.061 & 1.087 \\
 \bottomrule\end{tabular}\end{table}
 
 The table reports conditioning and covariance inflation separately.
 Their relative benefit depends on the engine condition; these measurements
 do not imply uniform improvement from covariance inflation.
-At \SI{800}{rpm}, pitch offset rises from \SI{1.378}{\degree}
-to \SI{1.656}{\degree} with covariance inflation.
+At \SI{800}{rpm}, pitch offset rises from \SI{1.511}{\degree} to \SI{1.517}{\degree} with covariance inflation.
 For all eight engine-off records the detector stays below its rail and
 engagement is zero. Their guarded and unguarded scores are identical.
 This finite-record transparency result does not establish transparency

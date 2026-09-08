@@ -62,7 +62,10 @@ introducing bias-process mismatch.
 OU--III's gyro covariance uses an empirical simulator rescale of \(0.01\)
 on the harness's \(2\sigma_g\) value. This is a performance-tuning weight,
 not an estimate of the injected noise density. The injected sensor errors
-in Table~\ref{tab:sim_constants} are unchanged.
+in Table~\ref{tab:sim_constants} are unchanged. Both OU simulators also use
+bounded, response-aware horizontal accelerometer measurement weighting near
+the noise floor, as described in Sec.~\ref{sec:low-wave-noise-weighting}.
+The generic filters leave that optional hull-specific policy disabled.
 
 \begin{table}[t]
   \centering

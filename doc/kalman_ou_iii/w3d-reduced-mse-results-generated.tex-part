@@ -16,7 +16,7 @@ PM--Stokes & 4.00 & 0.409 & 0.855 & 2.927 & 0.428 \\
 PM--Stokes & 8.50 & 0.327 & 0.856 & 2.928 & 0.428 \\
 \bottomrule\end{tabular}\end{table}
 Using the current five-draw operating points, the diagnostic equivalent
-coefficient ranges from \num{0.0275} to \num{0.4465}.
+coefficient ranges from \num{0.0275} to \num{0.1324}.
 The deployed $C_J=0.0538$ is retained. A hull with fixed resonance periods
 is not a period-scaled family; these local fixed-shape exponents cannot
 be interpreted as the derivative across the actual RAO sea-state family.

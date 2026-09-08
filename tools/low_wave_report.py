@@ -2,7 +2,6 @@
 """Render the retained low-wave study without selecting parameters or changing gates."""
 import gzip
 import json
-import math
 import statistics
 from pathlib import Path
 
@@ -38,7 +37,7 @@ def main():
         '(OU-II 73/16 cases; OU-III 65/16), while small attitude tradeoffs persist.', '',
         'Direction bias correction is paired within a single executable. It does not alter upstream attitude/displacement/tuning. '
         'Zero axes are unavailable; conditional RMS cannot be interpreted without availability. At the default low-wave draw, '
-        'corrected axis availability is below 1% and travel direction is unresolved more than 99% of the time.', '',
+        'corrected axis availability averages about 1% and travel direction is unresolved more than 99% of the time.', '',
         'Rejected defaults include direct RAO scaling of the OU prior, longer tau alone, cadence-matched tau changes, '
         'globally enlarged accelerometer covariance, asymmetric R_S factors, increased bias priors, and magnetic-weight changes. '
         'OU-III R_S factors 0.5 improve training displacement but add a fresh-draw violation and worsen mean pitch. '

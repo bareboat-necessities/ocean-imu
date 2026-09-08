@@ -126,15 +126,8 @@
     "motion_model": "VESSEL_RAO_28FT",
     "release": "v1.2.1"
   },
-  "source_commit": "6b20d608bca82f6487fd6d4c1d8344f4af829eef",
+  "source_commit": "9de0543507509cabb478b751b83bf5c74711764d",
   "study": "engine-noise mitigation (OU-III accelerometer vibration guard)",
   "total_replays": 192,
-  "window_sec": 900.0,
-  "cross_family_check": {
-    "source_commit": "6b20d608bca82f6487fd6d4c1d8344f4af829eef",
-    "workflow_run": 34238512816,
-    "artifact_id": 10061848730,
-    "source": "study.log: Pooled over 8 stationary records",
-    "scope": "96 paired replays; self-check against the same runner degradation outputs; quality thresholds unchanged"
-  }
+  "window_sec": 900.0
 }

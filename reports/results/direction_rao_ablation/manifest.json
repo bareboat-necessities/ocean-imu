@@ -1,5 +1,5 @@
 {
-  "source_commit": "6b20d608bca82f6487fd6d4c1d8344f4af829eef",
+  "source_commit": "9de0543507509cabb478b751b83bf5c74711764d",
   "simulation_provenance": {
     "release": "v1.2.1",
     "archive": "sim-data-files-vessel-rao-28ft.zip",
@@ -19,14 +19,14 @@
   "protocol": "Full eight records x two OU families x engine off/2400 RPM (0.6 m/s2 reference level, 80 Hz sensor bandwidth) x three conditioning arms; default draw; final 900 s; unchanged gates",
   "producer_sha256": "19f884047f27389e82325824ab36b80900417152aafee8679140c79368efb8ff",
   "binary_sha256": {
-    "OU-II": "52ee540b2f98b1db02d65de790a41703923b6d0720caa77f6987a273a4958fc1",
-    "OU-III": "2afcbf3eb27c041d011799963e10d1f73d74477294c41a8394337d08f261abf7"
+    "OU-II": "edd2b822cfd614b8a6ec86fd83288417289d3466f0cd2d5e69391f5b4ac75f00",
+    "OU-III": "7780b0e9f3dad8fc34f1835d4ce4e589767134216dd93c9e60c3620c05eb9d6a"
   },
   "files": {
-    "direction_runs.csv": "2ed734f82959d22f51658c536bac9e6fa6b9bb69d981c9395a6b8fa24e78d7a7",
-    "direction_report.md": "bc7e6e8ad2224a82bdb04c6ecf61acc88b34edd5f898477915a6d18cb173eb6b",
-    "direction_ablation.tex": "2941dc93a2062f30d4d9a389193ea8f631a744ebc9a63cc691e8af82d38ce012",
-    "direction_summary.csv": "89c544f7f5201b23b534a9b572d699dda5114692c1452fc7a98a8afae9a27644"
+    "direction_runs.csv": "32d4786bb1ea5f895c14edc2ab8f0ad120c2faef27c0961069d3779b9d94e8d4",
+    "direction_report.md": "0b1993bd266bdc36551558352480837e191d554b16db60bf7f172aaa6a1b54bb",
+    "direction_ablation.tex": "972dd9d1031a4f2884e4286533280404a8e08c57bc82e3cd460ca7a2592ed913",
+    "direction_summary.csv": "d6430b010c9c58f0d8bb121efd93d3128b355fa60fc00349eec54aedf089bcef"
   },
-  "report_producer_sha256": "7355f092e874bf753a5170045d70e9aa29630dd5be516e115fdd59a8cd9e0dcb"
+  "report_producer_sha256": "b86b015ebaea23515b861d74bcb5708902e53ab2c354939fa8ef368d74b25cca"
 }

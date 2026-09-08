@@ -1,0 +1,2506 @@
+{
+  "angle-direction": {
+    "protocol": "16 full records x two OU families x paired baseline/candidate; new IMU/initialization seed 53017; final 900 seconds; unchanged gates. Eight rigid world rotations and eight independently recomputed hull responses at new incident angles. Same prescribed harmonic phases, not new stochastic sea realizations.",
+    "configs": [
+      [
+        "current",
+        {}
+      ],
+      [
+        "candidate",
+        {
+          "SF_DIAGNOSTIC_DIRECTION_INPUT": "1"
+        }
+      ]
+    ],
+    "producer_sha256": "e5b986e13253c7c4099252150d332eb7f49c6b736fbf73ab8252a50fa1717301",
+    "binary_sha256": {
+      "OU-II": "3418466b15028d54fd7b1dadf0419d855724aae66d55da1ef7501503d93fc92e",
+      "OU-III": "cd722afdad7cb06696fe0a80d85dbadebe1edff93236973d83834de6d4351476"
+    },
+    "input_sha256": {
+      "heading-records/-60/wave_data_jonswap_H0.270_L14.047_A-30.00_P60.00.csv": "f042058e40779d236de12423d118e5da7070339fe7e1ab5600926908504c2563",
+      "heading-records/-60/wave_data_jonswap_H8.500_L202.839_A-90.00_P72.00.csv": "6bf7ad37f5ed0e3e5aa470c05053c1e81102de0c7a134707f402b8839a196993",
+      "heading-records/-60/wave_data_pmstokes_H0.270_L14.047_A-30.00_P60.00.csv": "2b3d4315de6a701fd840b8008cd263892becbeec56a4c54ee603500aee7dc1af",
+      "heading-records/-60/wave_data_pmstokes_H8.500_L202.839_A-90.00_P72.00.csv": "5bada535920a57de0e162718be7be73ccc9871e1054c645be0fdc09950051051",
+      "heading-records/75/wave_data_jonswap_H0.270_L14.047_A105.00_P60.00.csv": "f8f34ff278e364fe88fed56a807d20a88173617c709e3252948832d107589f1c",
+      "heading-records/75/wave_data_jonswap_H8.500_L202.839_A45.00_P72.00.csv": "b23bcf147391cbfa71cbf62668756111b8d87d7e5a591fc8a07a31c240ba6d81",
+      "heading-records/75/wave_data_pmstokes_H0.270_L14.047_A105.00_P60.00.csv": "b7b77fc3cfc6a7d56524197c3ce00db711da671410c2fd858b43c02eaf8f1b80",
+      "heading-records/75/wave_data_pmstokes_H8.500_L202.839_A45.00_P72.00.csv": "7d3e2eb0d1dff44f56b2f10aa0d470a4603294535616343c4654e5888c8e2da7",
+      "relative-angle-records/-60/wave_data_jonswap_H0.270_L14.047_A-60.00_P60.00.csv": "44de0f0a375a224f1e1341b06fbf2b9fe8d324a1f5b2e79bc7576c1a0d19619d",
+      "relative-angle-records/-60/wave_data_jonswap_H8.500_L202.839_A-60.00_P72.00.csv": "7a1879b976fc90d87169dfdaec1215ee610f78e54339240cc0c063ae81ffa800",
+      "relative-angle-records/-60/wave_data_pmstokes_H0.270_L14.047_A-60.00_P60.00.csv": "1b3f3a0061627be54745aa36f524b47b6a77645713a99a8ec1ac6f867f1957d5",
+      "relative-angle-records/-60/wave_data_pmstokes_H8.500_L202.839_A-60.00_P72.00.csv": "2c5a1023b28153482b2cc46c9e202b575c3df4039e528f61548c844c8b90decc",
+      "relative-angle-records/75/wave_data_jonswap_H0.270_L14.047_A75.00_P60.00.csv": "e1be34711da1f119cb8fd7bd83f1a14e4b53537584f755551a53a95624a3f264",
+      "relative-angle-records/75/wave_data_jonswap_H8.500_L202.839_A75.00_P72.00.csv": "3ad2a8b3d9535d6d8e9279f6bad618b0f4db44e5801918ed46355e1a8c6038e9",
+      "relative-angle-records/75/wave_data_pmstokes_H0.270_L14.047_A75.00_P60.00.csv": "f18f04e2a545b42982834da2806038a4c01b091713d61b7994dd5a52fb246d68",
+      "relative-angle-records/75/wave_data_pmstokes_H8.500_L202.839_A75.00_P72.00.csv": "d634ed38e12b0aae0c148b7aff3aac349293fc8ee72b0eb539942f200a5e350f"
+    },
+    "aggregation_note": "Violation list rebuilt from retained combined stdout/stderr logs; initial runner mistakenly inspected stdout alone. Exit codes and metrics unchanged."
+  },
+  "angle-snr": {
+    "protocol": "16 full records x two OU families x paired baseline/candidate; new IMU/initialization seed 53017; final 900 seconds; unchanged gates. Eight rigid world rotations and eight independently recomputed hull responses at new incident angles. Same prescribed harmonic phases, not new stochastic sea realizations.",
+    "configs": [
+      [
+        "current",
+        {}
+      ],
+      [
+        "candidate",
+        {
+          "SF_LOW_WAVE_RACC_MAX_SCALE": "4",
+          "SF_LOW_WAVE_RACC_SNR": "2"
+        }
+      ]
+    ],
+    "producer_sha256": "e5b986e13253c7c4099252150d332eb7f49c6b736fbf73ab8252a50fa1717301",
+    "binary_sha256": {
+      "OU-II": "2bd790d27ce5bc725c49d83d30080812aa322c8cc7c4ef6b2fa7562375fb2647",
+      "OU-III": "83d70dcbea751fbbd7df74440807885189cc14e4657fcaf980d9688b2191087d"
+    },
+    "input_sha256": {
+      "heading-records/-60/wave_data_jonswap_H0.270_L14.047_A-30.00_P60.00.csv": "f042058e40779d236de12423d118e5da7070339fe7e1ab5600926908504c2563",
+      "heading-records/-60/wave_data_jonswap_H8.500_L202.839_A-90.00_P72.00.csv": "6bf7ad37f5ed0e3e5aa470c05053c1e81102de0c7a134707f402b8839a196993",
+      "heading-records/-60/wave_data_pmstokes_H0.270_L14.047_A-30.00_P60.00.csv": "2b3d4315de6a701fd840b8008cd263892becbeec56a4c54ee603500aee7dc1af",
+      "heading-records/-60/wave_data_pmstokes_H8.500_L202.839_A-90.00_P72.00.csv": "5bada535920a57de0e162718be7be73ccc9871e1054c645be0fdc09950051051",
+      "heading-records/75/wave_data_jonswap_H0.270_L14.047_A105.00_P60.00.csv": "f8f34ff278e364fe88fed56a807d20a88173617c709e3252948832d107589f1c",
+      "heading-records/75/wave_data_jonswap_H8.500_L202.839_A45.00_P72.00.csv": "b23bcf147391cbfa71cbf62668756111b8d87d7e5a591fc8a07a31c240ba6d81",
+      "heading-records/75/wave_data_pmstokes_H0.270_L14.047_A105.00_P60.00.csv": "b7b77fc3cfc6a7d56524197c3ce00db711da671410c2fd858b43c02eaf8f1b80",
+      "heading-records/75/wave_data_pmstokes_H8.500_L202.839_A45.00_P72.00.csv": "7d3e2eb0d1dff44f56b2f10aa0d470a4603294535616343c4654e5888c8e2da7",
+      "relative-angle-records/-60/wave_data_jonswap_H0.270_L14.047_A-60.00_P60.00.csv": "44de0f0a375a224f1e1341b06fbf2b9fe8d324a1f5b2e79bc7576c1a0d19619d",
+      "relative-angle-records/-60/wave_data_jonswap_H8.500_L202.839_A-60.00_P72.00.csv": "7a1879b976fc90d87169dfdaec1215ee610f78e54339240cc0c063ae81ffa800",
+      "relative-angle-records/-60/wave_data_pmstokes_H0.270_L14.047_A-60.00_P60.00.csv": "1b3f3a0061627be54745aa36f524b47b6a77645713a99a8ec1ac6f867f1957d5",
+      "relative-angle-records/-60/wave_data_pmstokes_H8.500_L202.839_A-60.00_P72.00.csv": "2c5a1023b28153482b2cc46c9e202b575c3df4039e528f61548c844c8b90decc",
+      "relative-angle-records/75/wave_data_jonswap_H0.270_L14.047_A75.00_P60.00.csv": "e1be34711da1f119cb8fd7bd83f1a14e4b53537584f755551a53a95624a3f264",
+      "relative-angle-records/75/wave_data_jonswap_H8.500_L202.839_A75.00_P72.00.csv": "3ad2a8b3d9535d6d8e9279f6bad618b0f4db44e5801918ed46355e1a8c6038e9",
+      "relative-angle-records/75/wave_data_pmstokes_H0.270_L14.047_A75.00_P60.00.csv": "f18f04e2a545b42982834da2806038a4c01b091713d61b7994dd5a52fb246d68",
+      "relative-angle-records/75/wave_data_pmstokes_H8.500_L202.839_A75.00_P72.00.csv": "d634ed38e12b0aae0c148b7aff3aac349293fc8ee72b0eb539942f200a5e350f"
+    },
+    "aggregation_note": "Violation list rebuilt from retained combined stdout/stderr logs; initial runner mistakenly inspected stdout alone. Exit codes and metrics unchanged."
+  },
+  "direction-sweep": {
+    "parent": "121a154c9024dcce755d8b8ebbf39c1f7da92b33",
+    "binary_sha256": {
+      "kalman_ou_iii-sim": "5b9b0d59ede08919903c7fe9eb6f5cf2699547f1f9977ec3ce17ba127031c905",
+      "kalman_ou_ii-sim": "dece08a2dcdb1a3744baae6ccd9cfaefe0adf1d5d43533e7663c5c51bbb7b3c9"
+    },
+    "header_sha256": {
+      "SeaStateFusionFilter_OU_II.h": "a2d64a05989835d0cc074a52b61c4ce993c96acf66fd953db8cc31dcd18bc1f6",
+      "SeaStateFusionFilter_OU_III.h": "8941a7f5169853dcb1092c0ca6836b214c684ca490166d73b0382c682696b9a8"
+    },
+    "modes": {
+      "0": "current measured acceleration",
+      "1": "subtract estimated body accelerometer bias",
+      "2": "OU world acceleration projected into heading frame"
+    },
+    "protocol": "Eight full records x default/11/23 x three direction inputs; only direction branch changed; unchanged production gates"
+  },
+  "low-transition": {
+    "source_commit": "9de0543507509cabb478b751b83bf5c74711764d",
+    "protocol": "Eight paired O3 replays, Hs .27 -> 1.5 -> .27, 120 s smooth transitions at 400 and 800 s. Kinematically closed surrogate, phase seed 60013, fresh IMU/init seeds60017/65003. Existing gates retained; segment errors in physical units are primary because one filename Hs cannot normalize both sea states.",
+    "producer_sha256": "f41d725c86c4a3637fd443118abcab87f0d7c39c025426bce31a5306b35e1a0a",
+    "input_sha256": "e63b6eb2b7ba940d385ce8f1f559b6d75aa56f485f8316c4c13c283012123b09"
+  },
+  "ou2-axis": {
+    "source_commit": "121a154c9024dcce755d8b8ebbf39c1f7da92b33",
+    "simulation_provenance": {
+      "release": "v1.2.1",
+      "archive": "sim-data-files-vessel-rao-28ft.zip",
+      "archive_sha256": "6d6eb92db78e97f1d2456c6b92387993bf23be14a9a6cf26943f0a22fc6fee60",
+      "motion_model": "VESSEL_RAO_28FT",
+      "input_sha256": {
+        "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "6a8a27234cb8fe3b1ecd524d2c13a9ebd029d584652f4212023ba974bd218e03",
+        "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "cd8e8ea89123773e7d8dcf7ac8712d780528c6ff02436b0f40b4d1a6a1bb97e0",
+        "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": "11e29a93ad1084b02af116311d194416567fa6bc20ac9569f5471f97b3d9f8bb",
+        "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "f147cba9d14b87d0e1af4d3e434196312d91295cd40b9a9d738e2919e60cdaa7",
+        "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "a1a4fff90e99a5be68f7767b2865db317e413c87df8e942440c6f6ca1520cf0c",
+        "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": "3db45e87b465aed441637ba7d7d8b67c3944416a784ea9aef6ce57e9360e72e4",
+        "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": "f7d56bcfe9f901727e3dd1e21e61144d666943f6a74e2c1b5f4cc13d0cf580f2",
+        "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "793c3f6fd08bef8c980da53f7b77fc2f4e60914fe1e652f47ed5a7996d9a9fa1"
+      }
+    },
+    "configs": [
+      {
+        "name": "current",
+        "env": {}
+      },
+      {
+        "name": "X_0.3",
+        "env": {
+          "OU_II_R_P0_X_FACTOR": "0.3"
+        }
+      },
+      {
+        "name": "X_0.5",
+        "env": {
+          "OU_II_R_P0_X_FACTOR": "0.5"
+        }
+      },
+      {
+        "name": "X_1.2",
+        "env": {
+          "OU_II_R_P0_X_FACTOR": "1.2"
+        }
+      },
+      {
+        "name": "X_2.0",
+        "env": {
+          "OU_II_R_P0_X_FACTOR": "2.0"
+        }
+      },
+      {
+        "name": "Y_0.3",
+        "env": {
+          "OU_II_R_P0_Y_FACTOR": "0.3"
+        }
+      },
+      {
+        "name": "Y_0.5",
+        "env": {
+          "OU_II_R_P0_Y_FACTOR": "0.5"
+        }
+      },
+      {
+        "name": "Y_1.2",
+        "env": {
+          "OU_II_R_P0_Y_FACTOR": "1.2"
+        }
+      },
+      {
+        "name": "Y_2.0",
+        "env": {
+          "OU_II_R_P0_Y_FACTOR": "2.0"
+        }
+      }
+    ],
+    "records": "0,1,2,3,4,5,6,7",
+    "seeds": "default,11,23",
+    "producer_sha256": "b0e6048a0b48c4433fd250d6fceebd6da9d5f26d722b9d52edd580ebfde4acf4",
+    "binary_sha256": "08c1ce1762eb90956e228ffce8b70a173d27156f475bfe8939c80c2ebddb039e",
+    "protocol": "Full records, final 900 s; unchanged executable quality gates; seeded paired sensor and initialization draws",
+    "producer_snapshot": "screen-producer.py"
+  },
+  "ou2-axis-weight": {
+    "source_commit": "121a154c9024dcce755d8b8ebbf39c1f7da92b33",
+    "simulation_provenance": {
+      "release": "v1.2.1",
+      "archive": "sim-data-files-vessel-rao-28ft.zip",
+      "archive_sha256": "6d6eb92db78e97f1d2456c6b92387993bf23be14a9a6cf26943f0a22fc6fee60",
+      "motion_model": "VESSEL_RAO_28FT",
+      "input_sha256": {
+        "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "6a8a27234cb8fe3b1ecd524d2c13a9ebd029d584652f4212023ba974bd218e03",
+        "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "cd8e8ea89123773e7d8dcf7ac8712d780528c6ff02436b0f40b4d1a6a1bb97e0",
+        "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": "11e29a93ad1084b02af116311d194416567fa6bc20ac9569f5471f97b3d9f8bb",
+        "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "f147cba9d14b87d0e1af4d3e434196312d91295cd40b9a9d738e2919e60cdaa7",
+        "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "a1a4fff90e99a5be68f7767b2865db317e413c87df8e942440c6f6ca1520cf0c",
+        "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": "3db45e87b465aed441637ba7d7d8b67c3944416a784ea9aef6ce57e9360e72e4",
+        "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": "f7d56bcfe9f901727e3dd1e21e61144d666943f6a74e2c1b5f4cc13d0cf580f2",
+        "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "793c3f6fd08bef8c980da53f7b77fc2f4e60914fe1e652f47ed5a7996d9a9fa1"
+      }
+    },
+    "configs": [
+      {
+        "name": "current",
+        "env": {}
+      },
+      {
+        "name": "raccX_0.5",
+        "env": {
+          "SF_SIGMA_A_X_SCALE": "0.5"
+        }
+      },
+      {
+        "name": "raccX_2.0",
+        "env": {
+          "SF_SIGMA_A_X_SCALE": "2.0"
+        }
+      },
+      {
+        "name": "raccX_4.0",
+        "env": {
+          "SF_SIGMA_A_X_SCALE": "4.0"
+        }
+      },
+      {
+        "name": "raccY_0.5",
+        "env": {
+          "SF_SIGMA_A_Y_SCALE": "0.5"
+        }
+      },
+      {
+        "name": "raccY_2.0",
+        "env": {
+          "SF_SIGMA_A_Y_SCALE": "2.0"
+        }
+      },
+      {
+        "name": "raccY_4.0",
+        "env": {
+          "SF_SIGMA_A_Y_SCALE": "4.0"
+        }
+      },
+      {
+        "name": "raccXY_0.5",
+        "env": {
+          "SF_SIGMA_A_X_SCALE": "0.5",
+          "SF_SIGMA_A_Y_SCALE": "0.5"
+        }
+      },
+      {
+        "name": "raccXY_2.0",
+        "env": {
+          "SF_SIGMA_A_X_SCALE": "2.0",
+          "SF_SIGMA_A_Y_SCALE": "2.0"
+        }
+      },
+      {
+        "name": "raccXY_4.0",
+        "env": {
+          "SF_SIGMA_A_X_SCALE": "4.0",
+          "SF_SIGMA_A_Y_SCALE": "4.0"
+        }
+      }
+    ],
+    "records": "0,1,2,3,4,5,6,7",
+    "seeds": "default,11,23",
+    "producer_sha256": "b0e6048a0b48c4433fd250d6fceebd6da9d5f26d722b9d52edd580ebfde4acf4",
+    "binary_sha256": "9a06a08365b7c17261864874c4b72736a759c30c1428a069577860a61a4e0ab8",
+    "protocol": "Full records, final 900 s; unchanged executable quality gates; seeded paired sensor and initialization draws",
+    "producer_snapshot": "screen-producer.py"
+  },
+  "ou2-bias": {
+    "source_commit": "121a154c9024dcce755d8b8ebbf39c1f7da92b33",
+    "simulation_provenance": {
+      "release": "v1.2.1",
+      "archive": "sim-data-files-vessel-rao-28ft.zip",
+      "archive_sha256": "6d6eb92db78e97f1d2456c6b92387993bf23be14a9a6cf26943f0a22fc6fee60",
+      "motion_model": "VESSEL_RAO_28FT",
+      "input_sha256": {
+        "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "6a8a27234cb8fe3b1ecd524d2c13a9ebd029d584652f4212023ba974bd218e03",
+        "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "f147cba9d14b87d0e1af4d3e434196312d91295cd40b9a9d738e2919e60cdaa7",
+        "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "a1a4fff90e99a5be68f7767b2865db317e413c87df8e942440c6f6ca1520cf0c",
+        "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "793c3f6fd08bef8c980da53f7b77fc2f4e60914fe1e652f47ed5a7996d9a9fa1"
+      }
+    },
+    "configs": [
+      {
+        "name": "current",
+        "env": {}
+      },
+      {
+        "name": "ba_init_0.012",
+        "env": {
+          "OU_II_ACC_BIAS_INIT_STD": "0.012"
+        }
+      },
+      {
+        "name": "ba_init_0.04",
+        "env": {
+          "OU_II_ACC_BIAS_INIT_STD": "0.04"
+        }
+      },
+      {
+        "name": "ba_init_0.08",
+        "env": {
+          "OU_II_ACC_BIAS_INIT_STD": "0.08"
+        }
+      },
+      {
+        "name": "ba_tau_20000",
+        "env": {
+          "OU_II_ACC_BIAS_TAU_SEC": "20000"
+        }
+      }
+    ],
+    "records": "0,3,4,7",
+    "seeds": "default,11,23",
+    "producer_sha256": "b0e6048a0b48c4433fd250d6fceebd6da9d5f26d722b9d52edd580ebfde4acf4",
+    "binary_sha256": "08c1ce1762eb90956e228ffce8b70a173d27156f475bfe8939c80c2ebddb039e",
+    "protocol": "Full records, final 900 s; unchanged executable quality gates; seeded paired sensor and initialization draws",
+    "producer_snapshot": "screen-producer.py"
+  },
+  "ou2-candidates": {
+    "source_commit": "121a154c9024dcce755d8b8ebbf39c1f7da92b33",
+    "simulation_provenance": {
+      "release": "v1.2.1",
+      "archive": "sim-data-files-vessel-rao-28ft.zip",
+      "archive_sha256": "6d6eb92db78e97f1d2456c6b92387993bf23be14a9a6cf26943f0a22fc6fee60",
+      "motion_model": "VESSEL_RAO_28FT",
+      "input_sha256": {
+        "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "6a8a27234cb8fe3b1ecd524d2c13a9ebd029d584652f4212023ba974bd218e03",
+        "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "cd8e8ea89123773e7d8dcf7ac8712d780528c6ff02436b0f40b4d1a6a1bb97e0",
+        "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": "11e29a93ad1084b02af116311d194416567fa6bc20ac9569f5471f97b3d9f8bb",
+        "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "f147cba9d14b87d0e1af4d3e434196312d91295cd40b9a9d738e2919e60cdaa7",
+        "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "a1a4fff90e99a5be68f7767b2865db317e413c87df8e942440c6f6ca1520cf0c",
+        "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": "3db45e87b465aed441637ba7d7d8b67c3944416a784ea9aef6ce57e9360e72e4",
+        "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": "f7d56bcfe9f901727e3dd1e21e61144d666943f6a74e2c1b5f4cc13d0cf580f2",
+        "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "793c3f6fd08bef8c980da53f7b77fc2f4e60914fe1e652f47ed5a7996d9a9fa1"
+      }
+    },
+    "configs": [
+      {
+        "name": "current",
+        "env": {}
+      },
+      {
+        "name": "xy2",
+        "env": {
+          "SF_SIGMA_A_X_SCALE": "2",
+          "SF_SIGMA_A_Y_SCALE": "2"
+        }
+      },
+      {
+        "name": "xy4",
+        "env": {
+          "SF_SIGMA_A_X_SCALE": "4",
+          "SF_SIGMA_A_Y_SCALE": "4"
+        }
+      },
+      {
+        "name": "xy2_mag05",
+        "env": {
+          "SF_SIGMA_A_X_SCALE": "2",
+          "SF_SIGMA_A_Y_SCALE": "2",
+          "SF_SIGMA_M_SCALE": ".5"
+        }
+      },
+      {
+        "name": "xy4_mag05",
+        "env": {
+          "SF_SIGMA_A_X_SCALE": "4",
+          "SF_SIGMA_A_Y_SCALE": "4",
+          "SF_SIGMA_M_SCALE": ".5"
+        }
+      }
+    ],
+    "records": "0,1,2,3,4,5,6,7",
+    "seeds": "default,11,23",
+    "producer_sha256": "53cfd1a760dfd0764fa4cebd5eae6b57c6c46a994eb3527cc607f7f7f4b29c55",
+    "binary_sha256": "9b586c63d6d0c65d8525d86298ea4656f7f6ea6819989b418043de785bfc7890",
+    "protocol": "Full records, final 900 s; unchanged executable quality gates; seeded paired sensor and initialization draws"
+  },
+  "ou2-covariance": {
+    "source_commit": "121a154c9024dcce755d8b8ebbf39c1f7da92b33",
+    "simulation_provenance": {
+      "release": "v1.2.1",
+      "archive": "sim-data-files-vessel-rao-28ft.zip",
+      "archive_sha256": "6d6eb92db78e97f1d2456c6b92387993bf23be14a9a6cf26943f0a22fc6fee60",
+      "motion_model": "VESSEL_RAO_28FT",
+      "input_sha256": {
+        "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "6a8a27234cb8fe3b1ecd524d2c13a9ebd029d584652f4212023ba974bd218e03",
+        "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "cd8e8ea89123773e7d8dcf7ac8712d780528c6ff02436b0f40b4d1a6a1bb97e0",
+        "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": "11e29a93ad1084b02af116311d194416567fa6bc20ac9569f5471f97b3d9f8bb",
+        "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "f147cba9d14b87d0e1af4d3e434196312d91295cd40b9a9d738e2919e60cdaa7",
+        "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "a1a4fff90e99a5be68f7767b2865db317e413c87df8e942440c6f6ca1520cf0c",
+        "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": "3db45e87b465aed441637ba7d7d8b67c3944416a784ea9aef6ce57e9360e72e4",
+        "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": "f7d56bcfe9f901727e3dd1e21e61144d666943f6a74e2c1b5f4cc13d0cf580f2",
+        "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "793c3f6fd08bef8c980da53f7b77fc2f4e60914fe1e652f47ed5a7996d9a9fa1"
+      }
+    },
+    "configs": [
+      {
+        "name": "current",
+        "env": {}
+      },
+      {
+        "name": "process_only_sigma_0.9",
+        "env": {
+          "W3D_AW_COV_SYNC": "reconfigure",
+          "OU_II_SIGMA_COEFF": "0.9"
+        }
+      },
+      {
+        "name": "process_only_sigma_1.1",
+        "env": {
+          "W3D_AW_COV_SYNC": "reconfigure",
+          "OU_II_SIGMA_COEFF": "1.1"
+        }
+      },
+      {
+        "name": "process_only_sigma_1.3",
+        "env": {
+          "W3D_AW_COV_SYNC": "reconfigure",
+          "OU_II_SIGMA_COEFF": "1.3"
+        }
+      }
+    ],
+    "records": "0,1,2,3,4,5,6,7",
+    "seeds": "default",
+    "producer_sha256": "43af9f7c2799bf9cb36250f20ad4c57308bef27d26c8ec25e38500ba319062a5",
+    "binary_sha256": "9b586c63d6d0c65d8525d86298ea4656f7f6ea6819989b418043de785bfc7890",
+    "protocol": "Full records, final 900 s; unchanged executable quality gates; seeded paired sensor and initialization draws"
+  },
+  "ou2-direction-frequency": {
+    "source_commit": "121a154c9024dcce755d8b8ebbf39c1f7da92b33",
+    "simulation_provenance": {
+      "release": "v1.2.1",
+      "archive": "sim-data-files-vessel-rao-28ft.zip",
+      "archive_sha256": "6d6eb92db78e97f1d2456c6b92387993bf23be14a9a6cf26943f0a22fc6fee60",
+      "motion_model": "VESSEL_RAO_28FT",
+      "input_sha256": {
+        "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "6a8a27234cb8fe3b1ecd524d2c13a9ebd029d584652f4212023ba974bd218e03",
+        "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "cd8e8ea89123773e7d8dcf7ac8712d780528c6ff02436b0f40b4d1a6a1bb97e0",
+        "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": "11e29a93ad1084b02af116311d194416567fa6bc20ac9569f5471f97b3d9f8bb",
+        "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "f147cba9d14b87d0e1af4d3e434196312d91295cd40b9a9d738e2919e60cdaa7",
+        "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "a1a4fff90e99a5be68f7767b2865db317e413c87df8e942440c6f6ca1520cf0c",
+        "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": "3db45e87b465aed441637ba7d7d8b67c3944416a784ea9aef6ce57e9360e72e4",
+        "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": "f7d56bcfe9f901727e3dd1e21e61144d666943f6a74e2c1b5f4cc13d0cf580f2",
+        "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "793c3f6fd08bef8c980da53f7b77fc2f4e60914fe1e652f47ed5a7996d9a9fa1"
+      }
+    },
+    "configs": [
+      {
+        "name": "current",
+        "env": {}
+      },
+      {
+        "name": "bias",
+        "env": {
+          "SF_DIAGNOSTIC_DIRECTION_INPUT": "1"
+        }
+      },
+      {
+        "name": "wave_carrier_0",
+        "env": {
+          "SF_DIAGNOSTIC_DIRECTION_INPUT": "0",
+          "SF_DIAGNOSTIC_WAVE_CARRIER": "1"
+        }
+      },
+      {
+        "name": "highpass_0",
+        "env": {
+          "SF_DIAGNOSTIC_DIRECTION_INPUT": "0",
+          "SF_DIAGNOSTIC_DIRECTION_HP_HZ": ".02"
+        }
+      },
+      {
+        "name": "wave_carrier_1",
+        "env": {
+          "SF_DIAGNOSTIC_DIRECTION_INPUT": "1",
+          "SF_DIAGNOSTIC_WAVE_CARRIER": "1"
+        }
+      },
+      {
+        "name": "highpass_1",
+        "env": {
+          "SF_DIAGNOSTIC_DIRECTION_INPUT": "1",
+          "SF_DIAGNOSTIC_DIRECTION_HP_HZ": ".02"
+        }
+      }
+    ],
+    "records": "0,1,2,3,4,5,6,7",
+    "seeds": "default",
+    "producer_sha256": "b0e6048a0b48c4433fd250d6fceebd6da9d5f26d722b9d52edd580ebfde4acf4",
+    "binary_sha256": "3418466b15028d54fd7b1dadf0419d855724aae66d55da1ef7501503d93fc92e",
+    "protocol": "Full records, final 900 s; unchanged executable quality gates; seeded paired sensor and initialization draws",
+    "producer_snapshot": "screen-producer.py"
+  },
+  "ou2-final-o3": {
+    "source_commit": "9de0543507509cabb478b751b83bf5c74711764d",
+    "source_dirty": false,
+    "source_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "simulation_provenance": {
+      "release": "v1.2.1",
+      "archive": "sim-data-files-vessel-rao-28ft.zip",
+      "archive_sha256": "6d6eb92db78e97f1d2456c6b92387993bf23be14a9a6cf26943f0a22fc6fee60",
+      "motion_model": "VESSEL_RAO_28FT",
+      "input_sha256": {
+        "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "6a8a27234cb8fe3b1ecd524d2c13a9ebd029d584652f4212023ba974bd218e03",
+        "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "cd8e8ea89123773e7d8dcf7ac8712d780528c6ff02436b0f40b4d1a6a1bb97e0",
+        "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": "11e29a93ad1084b02af116311d194416567fa6bc20ac9569f5471f97b3d9f8bb",
+        "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "f147cba9d14b87d0e1af4d3e434196312d91295cd40b9a9d738e2919e60cdaa7",
+        "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "a1a4fff90e99a5be68f7767b2865db317e413c87df8e942440c6f6ca1520cf0c",
+        "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": "3db45e87b465aed441637ba7d7d8b67c3944416a784ea9aef6ce57e9360e72e4",
+        "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": "f7d56bcfe9f901727e3dd1e21e61144d666943f6a74e2c1b5f4cc13d0cf580f2",
+        "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "793c3f6fd08bef8c980da53f7b77fc2f4e60914fe1e652f47ed5a7996d9a9fa1"
+      }
+    },
+    "configs": [
+      {
+        "name": "selected",
+        "env": {}
+      },
+      {
+        "name": "weighting_off",
+        "env": {
+          "SF_LOW_WAVE_RACC_MAX_SCALE": "1"
+        }
+      }
+    ],
+    "records": "0,1,2,3,4,5,6,7",
+    "seeds": "default",
+    "producer_sha256": "851f0d21038fa5c430c2bb37500563210791b1dd1a52120dc0da6feebcbaa0cb",
+    "binary_sha256": "d3f93fafde8c08580c28f026ab235719b402f0305051a0a3c8fa629c7a6112ac",
+    "protocol": "Full records, final 900 s; unchanged executable quality gates; seeded paired sensor and initialization draws"
+  },
+  "ou2-fresh": {
+    "source_commit": "121a154c9024dcce755d8b8ebbf39c1f7da92b33",
+    "simulation_provenance": {
+      "release": "v1.2.1",
+      "archive": "sim-data-files-vessel-rao-28ft.zip",
+      "archive_sha256": "6d6eb92db78e97f1d2456c6b92387993bf23be14a9a6cf26943f0a22fc6fee60",
+      "motion_model": "VESSEL_RAO_28FT",
+      "input_sha256": {
+        "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "6a8a27234cb8fe3b1ecd524d2c13a9ebd029d584652f4212023ba974bd218e03",
+        "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "cd8e8ea89123773e7d8dcf7ac8712d780528c6ff02436b0f40b4d1a6a1bb97e0",
+        "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": "11e29a93ad1084b02af116311d194416567fa6bc20ac9569f5471f97b3d9f8bb",
+        "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "f147cba9d14b87d0e1af4d3e434196312d91295cd40b9a9d738e2919e60cdaa7",
+        "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "a1a4fff90e99a5be68f7767b2865db317e413c87df8e942440c6f6ca1520cf0c",
+        "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": "3db45e87b465aed441637ba7d7d8b67c3944416a784ea9aef6ce57e9360e72e4",
+        "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": "f7d56bcfe9f901727e3dd1e21e61144d666943f6a74e2c1b5f4cc13d0cf580f2",
+        "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "793c3f6fd08bef8c980da53f7b77fc2f4e60914fe1e652f47ed5a7996d9a9fa1"
+      }
+    },
+    "configs": [
+      {
+        "name": "current",
+        "env": {}
+      },
+      {
+        "name": "xy4",
+        "env": {
+          "SF_SIGMA_A_X_SCALE": "4",
+          "SF_SIGMA_A_Y_SCALE": "4"
+        }
+      }
+    ],
+    "records": "0,1,2,3,4,5,6,7",
+    "seeds": "17011,19001,23003,29009",
+    "producer_sha256": "43af9f7c2799bf9cb36250f20ad4c57308bef27d26c8ec25e38500ba319062a5",
+    "binary_sha256": "9b586c63d6d0c65d8525d86298ea4656f7f6ea6819989b418043de785bfc7890",
+    "protocol": "Full records, final 900 s; unchanged executable quality gates; seeded paired sensor and initialization draws"
+  },
+  "ou2-joint": {
+    "source_commit": "121a154c9024dcce755d8b8ebbf39c1f7da92b33",
+    "simulation_provenance": {
+      "release": "v1.2.1",
+      "archive": "sim-data-files-vessel-rao-28ft.zip",
+      "archive_sha256": "6d6eb92db78e97f1d2456c6b92387993bf23be14a9a6cf26943f0a22fc6fee60",
+      "motion_model": "VESSEL_RAO_28FT",
+      "input_sha256": {
+        "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "6a8a27234cb8fe3b1ecd524d2c13a9ebd029d584652f4212023ba974bd218e03",
+        "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "f147cba9d14b87d0e1af4d3e434196312d91295cd40b9a9d738e2919e60cdaa7",
+        "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "a1a4fff90e99a5be68f7767b2865db317e413c87df8e942440c6f6ca1520cf0c",
+        "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "793c3f6fd08bef8c980da53f7b77fc2f4e60914fe1e652f47ed5a7996d9a9fa1"
+      }
+    },
+    "configs": [
+      {
+        "name": "current",
+        "env": {}
+      },
+      {
+        "name": "h0.15_r0.2",
+        "env": {
+          "OU_II_P_FACTOR": "0.15",
+          "OU_II_R_P0_X_FACTOR": "0.2",
+          "OU_II_R_P0_Y_FACTOR": "0.2"
+        }
+      },
+      {
+        "name": "h0.15_r0.72",
+        "env": {
+          "OU_II_P_FACTOR": "0.15",
+          "OU_II_R_P0_X_FACTOR": "0.72",
+          "OU_II_R_P0_Y_FACTOR": "0.72"
+        }
+      },
+      {
+        "name": "h0.15_r1.4",
+        "env": {
+          "OU_II_P_FACTOR": "0.15",
+          "OU_II_R_P0_X_FACTOR": "1.4",
+          "OU_II_R_P0_Y_FACTOR": "1.4"
+        }
+      },
+      {
+        "name": "h0.35_r0.2",
+        "env": {
+          "OU_II_P_FACTOR": "0.35",
+          "OU_II_R_P0_X_FACTOR": "0.2",
+          "OU_II_R_P0_Y_FACTOR": "0.2"
+        }
+      },
+      {
+        "name": "h0.35_r0.72",
+        "env": {
+          "OU_II_P_FACTOR": "0.35",
+          "OU_II_R_P0_X_FACTOR": "0.72",
+          "OU_II_R_P0_Y_FACTOR": "0.72"
+        }
+      },
+      {
+        "name": "h0.35_r1.4",
+        "env": {
+          "OU_II_P_FACTOR": "0.35",
+          "OU_II_R_P0_X_FACTOR": "1.4",
+          "OU_II_R_P0_Y_FACTOR": "1.4"
+        }
+      },
+      {
+        "name": "h0.7_r0.2",
+        "env": {
+          "OU_II_P_FACTOR": "0.7",
+          "OU_II_R_P0_X_FACTOR": "0.2",
+          "OU_II_R_P0_Y_FACTOR": "0.2"
+        }
+      },
+      {
+        "name": "h0.7_r0.72",
+        "env": {
+          "OU_II_P_FACTOR": "0.7",
+          "OU_II_R_P0_X_FACTOR": "0.72",
+          "OU_II_R_P0_Y_FACTOR": "0.72"
+        }
+      },
+      {
+        "name": "h0.7_r1.4",
+        "env": {
+          "OU_II_P_FACTOR": "0.7",
+          "OU_II_R_P0_X_FACTOR": "1.4",
+          "OU_II_R_P0_Y_FACTOR": "1.4"
+        }
+      }
+    ],
+    "records": "0,3,4,7",
+    "seeds": "default,11,23",
+    "producer_sha256": "b0e6048a0b48c4433fd250d6fceebd6da9d5f26d722b9d52edd580ebfde4acf4",
+    "binary_sha256": "08c1ce1762eb90956e228ffce8b70a173d27156f475bfe8939c80c2ebddb039e",
+    "protocol": "Full records, final 900 s; unchanged executable quality gates; seeded paired sensor and initialization draws",
+    "producer_snapshot": "screen-producer.py"
+  },
+  "ou2-joint-axis": {
+    "source_commit": "121a154c9024dcce755d8b8ebbf39c1f7da92b33",
+    "simulation_provenance": {
+      "release": "v1.2.1",
+      "archive": "sim-data-files-vessel-rao-28ft.zip",
+      "archive_sha256": "6d6eb92db78e97f1d2456c6b92387993bf23be14a9a6cf26943f0a22fc6fee60",
+      "motion_model": "VESSEL_RAO_28FT",
+      "input_sha256": {
+        "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "6a8a27234cb8fe3b1ecd524d2c13a9ebd029d584652f4212023ba974bd218e03",
+        "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "cd8e8ea89123773e7d8dcf7ac8712d780528c6ff02436b0f40b4d1a6a1bb97e0",
+        "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": "11e29a93ad1084b02af116311d194416567fa6bc20ac9569f5471f97b3d9f8bb",
+        "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "f147cba9d14b87d0e1af4d3e434196312d91295cd40b9a9d738e2919e60cdaa7",
+        "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "a1a4fff90e99a5be68f7767b2865db317e413c87df8e942440c6f6ca1520cf0c",
+        "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": "3db45e87b465aed441637ba7d7d8b67c3944416a784ea9aef6ce57e9360e72e4",
+        "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": "f7d56bcfe9f901727e3dd1e21e61144d666943f6a74e2c1b5f4cc13d0cf580f2",
+        "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "793c3f6fd08bef8c980da53f7b77fc2f4e60914fe1e652f47ed5a7996d9a9fa1"
+      }
+    },
+    "configs": [
+      {
+        "name": "current",
+        "env": {}
+      },
+      {
+        "name": "xy_0.6_1.2",
+        "env": {
+          "OU_II_R_P0_X_FACTOR": "0.6",
+          "OU_II_R_P0_Y_FACTOR": "1.2"
+        }
+      },
+      {
+        "name": "xy_0.5_1.2",
+        "env": {
+          "OU_II_R_P0_X_FACTOR": "0.5",
+          "OU_II_R_P0_Y_FACTOR": "1.2"
+        }
+      },
+      {
+        "name": "xy_0.6_1.0",
+        "env": {
+          "OU_II_R_P0_X_FACTOR": "0.6",
+          "OU_II_R_P0_Y_FACTOR": "1.0"
+        }
+      },
+      {
+        "name": "xy_0.72_1.0",
+        "env": {
+          "OU_II_R_P0_X_FACTOR": "0.72",
+          "OU_II_R_P0_Y_FACTOR": "1.0"
+        }
+      },
+      {
+        "name": "xy_0.8_1.2",
+        "env": {
+          "OU_II_R_P0_X_FACTOR": "0.8",
+          "OU_II_R_P0_Y_FACTOR": "1.2"
+        }
+      }
+    ],
+    "records": "0,1,2,3,4,5,6,7",
+    "seeds": "default",
+    "producer_sha256": "b0e6048a0b48c4433fd250d6fceebd6da9d5f26d722b9d52edd580ebfde4acf4",
+    "binary_sha256": "08c1ce1762eb90956e228ffce8b70a173d27156f475bfe8939c80c2ebddb039e",
+    "protocol": "Full records, final 900 s; unchanged executable quality gates; seeded paired sensor and initialization draws",
+    "producer_snapshot": "screen-producer.py"
+  },
+  "ou2-mag-weight": {
+    "source_commit": "121a154c9024dcce755d8b8ebbf39c1f7da92b33",
+    "simulation_provenance": {
+      "release": "v1.2.1",
+      "archive": "sim-data-files-vessel-rao-28ft.zip",
+      "archive_sha256": "6d6eb92db78e97f1d2456c6b92387993bf23be14a9a6cf26943f0a22fc6fee60",
+      "motion_model": "VESSEL_RAO_28FT",
+      "input_sha256": {
+        "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "6a8a27234cb8fe3b1ecd524d2c13a9ebd029d584652f4212023ba974bd218e03",
+        "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "a1a4fff90e99a5be68f7767b2865db317e413c87df8e942440c6f6ca1520cf0c"
+      }
+    },
+    "configs": [
+      {
+        "name": "current",
+        "env": {}
+      },
+      {
+        "name": "mag_0.25",
+        "env": {
+          "SF_SIGMA_M_SCALE": "0.25"
+        }
+      },
+      {
+        "name": "mag_2.0",
+        "env": {
+          "SF_SIGMA_M_SCALE": "2.0"
+        }
+      },
+      {
+        "name": "mag_5.0",
+        "env": {
+          "SF_SIGMA_M_SCALE": "5.0"
+        }
+      }
+    ],
+    "records": "0,4",
+    "seeds": "default,11,23",
+    "producer_sha256": "b0e6048a0b48c4433fd250d6fceebd6da9d5f26d722b9d52edd580ebfde4acf4",
+    "binary_sha256": "08c1ce1762eb90956e228ffce8b70a173d27156f475bfe8939c80c2ebddb039e",
+    "protocol": "Full records, final 900 s; unchanged executable quality gates; seeded paired sensor and initialization draws",
+    "producer_snapshot": "screen-producer.py"
+  },
+  "ou2-snr": {
+    "source_commit": "121a154c9024dcce755d8b8ebbf39c1f7da92b33",
+    "simulation_provenance": {
+      "release": "v1.2.1",
+      "archive": "sim-data-files-vessel-rao-28ft.zip",
+      "archive_sha256": "6d6eb92db78e97f1d2456c6b92387993bf23be14a9a6cf26943f0a22fc6fee60",
+      "motion_model": "VESSEL_RAO_28FT",
+      "input_sha256": {
+        "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "6a8a27234cb8fe3b1ecd524d2c13a9ebd029d584652f4212023ba974bd218e03",
+        "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "cd8e8ea89123773e7d8dcf7ac8712d780528c6ff02436b0f40b4d1a6a1bb97e0",
+        "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": "11e29a93ad1084b02af116311d194416567fa6bc20ac9569f5471f97b3d9f8bb",
+        "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "f147cba9d14b87d0e1af4d3e434196312d91295cd40b9a9d738e2919e60cdaa7",
+        "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "a1a4fff90e99a5be68f7767b2865db317e413c87df8e942440c6f6ca1520cf0c",
+        "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": "3db45e87b465aed441637ba7d7d8b67c3944416a784ea9aef6ce57e9360e72e4",
+        "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": "f7d56bcfe9f901727e3dd1e21e61144d666943f6a74e2c1b5f4cc13d0cf580f2",
+        "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "793c3f6fd08bef8c980da53f7b77fc2f4e60914fe1e652f47ed5a7996d9a9fa1"
+      }
+    },
+    "configs": [
+      {
+        "name": "current",
+        "env": {}
+      },
+      {
+        "name": "snr1",
+        "env": {
+          "SF_LOW_WAVE_RACC_MAX_SCALE": "4",
+          "SF_LOW_WAVE_RACC_SNR": "1"
+        }
+      },
+      {
+        "name": "snr2",
+        "env": {
+          "SF_LOW_WAVE_RACC_MAX_SCALE": "4",
+          "SF_LOW_WAVE_RACC_SNR": "2"
+        }
+      },
+      {
+        "name": "snr3",
+        "env": {
+          "SF_LOW_WAVE_RACC_MAX_SCALE": "4",
+          "SF_LOW_WAVE_RACC_SNR": "3"
+        }
+      }
+    ],
+    "records": "0,1,2,3,4,5,6,7",
+    "seeds": "default,11,23",
+    "producer_sha256": "43af9f7c2799bf9cb36250f20ad4c57308bef27d26c8ec25e38500ba319062a5",
+    "binary_sha256": "2bd790d27ce5bc725c49d83d30080812aa322c8cc7c4ef6b2fa7562375fb2647",
+    "protocol": "Full records, final 900 s; unchanged executable quality gates; seeded paired sensor and initialization draws"
+  },
+  "ou2-snr-fresh": {
+    "source_commit": "121a154c9024dcce755d8b8ebbf39c1f7da92b33",
+    "simulation_provenance": {
+      "release": "v1.2.1",
+      "archive": "sim-data-files-vessel-rao-28ft.zip",
+      "archive_sha256": "6d6eb92db78e97f1d2456c6b92387993bf23be14a9a6cf26943f0a22fc6fee60",
+      "motion_model": "VESSEL_RAO_28FT",
+      "input_sha256": {
+        "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "6a8a27234cb8fe3b1ecd524d2c13a9ebd029d584652f4212023ba974bd218e03",
+        "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "cd8e8ea89123773e7d8dcf7ac8712d780528c6ff02436b0f40b4d1a6a1bb97e0",
+        "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": "11e29a93ad1084b02af116311d194416567fa6bc20ac9569f5471f97b3d9f8bb",
+        "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "f147cba9d14b87d0e1af4d3e434196312d91295cd40b9a9d738e2919e60cdaa7",
+        "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "a1a4fff90e99a5be68f7767b2865db317e413c87df8e942440c6f6ca1520cf0c",
+        "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": "3db45e87b465aed441637ba7d7d8b67c3944416a784ea9aef6ce57e9360e72e4",
+        "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": "f7d56bcfe9f901727e3dd1e21e61144d666943f6a74e2c1b5f4cc13d0cf580f2",
+        "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "793c3f6fd08bef8c980da53f7b77fc2f4e60914fe1e652f47ed5a7996d9a9fa1"
+      }
+    },
+    "configs": [
+      {
+        "name": "current",
+        "env": {}
+      },
+      {
+        "name": "snr2",
+        "env": {
+          "SF_LOW_WAVE_RACC_MAX_SCALE": "4",
+          "SF_LOW_WAVE_RACC_SNR": "2"
+        }
+      }
+    ],
+    "records": "0,1,2,3,4,5,6,7",
+    "seeds": "31013,37003,41011,47017",
+    "producer_sha256": "43af9f7c2799bf9cb36250f20ad4c57308bef27d26c8ec25e38500ba319062a5",
+    "binary_sha256": "2bd790d27ce5bc725c49d83d30080812aa322c8cc7c4ef6b2fa7562375fb2647",
+    "protocol": "Full records, final 900 s; unchanged executable quality gates; seeded paired sensor and initialization draws"
+  },
+  "ou2-tau-matched": {
+    "source_commit": "121a154c9024dcce755d8b8ebbf39c1f7da92b33",
+    "simulation_provenance": {
+      "release": "v1.2.1",
+      "archive": "sim-data-files-vessel-rao-28ft.zip",
+      "archive_sha256": "6d6eb92db78e97f1d2456c6b92387993bf23be14a9a6cf26943f0a22fc6fee60",
+      "motion_model": "VESSEL_RAO_28FT",
+      "input_sha256": {
+        "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "6a8a27234cb8fe3b1ecd524d2c13a9ebd029d584652f4212023ba974bd218e03",
+        "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "cd8e8ea89123773e7d8dcf7ac8712d780528c6ff02436b0f40b4d1a6a1bb97e0",
+        "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": "11e29a93ad1084b02af116311d194416567fa6bc20ac9569f5471f97b3d9f8bb",
+        "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "f147cba9d14b87d0e1af4d3e434196312d91295cd40b9a9d738e2919e60cdaa7",
+        "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "a1a4fff90e99a5be68f7767b2865db317e413c87df8e942440c6f6ca1520cf0c",
+        "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": "3db45e87b465aed441637ba7d7d8b67c3944416a784ea9aef6ce57e9360e72e4",
+        "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": "f7d56bcfe9f901727e3dd1e21e61144d666943f6a74e2c1b5f4cc13d0cf580f2",
+        "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "793c3f6fd08bef8c980da53f7b77fc2f4e60914fe1e652f47ed5a7996d9a9fa1"
+      }
+    },
+    "configs": [
+      {
+        "name": "current",
+        "env": {}
+      },
+      {
+        "name": "tau_1.5_matched_information",
+        "env": {
+          "OU_II_TAU_COEFF": "1.5",
+          "OU_II_PSEUDO_MSE_COEFF": "0.04217403682069282",
+          "OU_II_PSEUDO_MSE_RATIO": "0.19999999999999998"
+        }
+      },
+      {
+        "name": "tau_2.0_matched_information",
+        "env": {
+          "OU_II_TAU_COEFF": "2.0",
+          "OU_II_PSEUDO_MSE_COEFF": "0.021144246102820057",
+          "OU_II_PSEUDO_MSE_RATIO": "0.15"
+        }
+      }
+    ],
+    "records": "0,1,2,3,4,5,6,7",
+    "seeds": "default",
+    "producer_sha256": "b0e6048a0b48c4433fd250d6fceebd6da9d5f26d722b9d52edd580ebfde4acf4",
+    "binary_sha256": "08c1ce1762eb90956e228ffce8b70a173d27156f475bfe8939c80c2ebddb039e",
+    "protocol": "Full records, final 900 s; unchanged executable quality gates; seeded paired sensor and initialization draws",
+    "producer_snapshot": "screen-producer.py"
+  },
+  "ou2-weight": {
+    "source_commit": "121a154c9024dcce755d8b8ebbf39c1f7da92b33",
+    "simulation_provenance": {
+      "release": "v1.2.1",
+      "archive": "sim-data-files-vessel-rao-28ft.zip",
+      "archive_sha256": "6d6eb92db78e97f1d2456c6b92387993bf23be14a9a6cf26943f0a22fc6fee60",
+      "motion_model": "VESSEL_RAO_28FT",
+      "input_sha256": {
+        "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "6a8a27234cb8fe3b1ecd524d2c13a9ebd029d584652f4212023ba974bd218e03",
+        "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "cd8e8ea89123773e7d8dcf7ac8712d780528c6ff02436b0f40b4d1a6a1bb97e0",
+        "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": "11e29a93ad1084b02af116311d194416567fa6bc20ac9569f5471f97b3d9f8bb",
+        "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "f147cba9d14b87d0e1af4d3e434196312d91295cd40b9a9d738e2919e60cdaa7",
+        "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "a1a4fff90e99a5be68f7767b2865db317e413c87df8e942440c6f6ca1520cf0c",
+        "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": "3db45e87b465aed441637ba7d7d8b67c3944416a784ea9aef6ce57e9360e72e4",
+        "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": "f7d56bcfe9f901727e3dd1e21e61144d666943f6a74e2c1b5f4cc13d0cf580f2",
+        "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "793c3f6fd08bef8c980da53f7b77fc2f4e60914fe1e652f47ed5a7996d9a9fa1"
+      }
+    },
+    "configs": [
+      {
+        "name": "current",
+        "env": {}
+      },
+      {
+        "name": "ou_ii_p_factor_1.5",
+        "env": {
+          "OU_II_P_FACTOR": "1.5"
+        }
+      },
+      {
+        "name": "ou_ii_p_factor_3.0",
+        "env": {
+          "OU_II_P_FACTOR": "3.0"
+        }
+      },
+      {
+        "name": "ou_ii_tau_coeff_0.5",
+        "env": {
+          "OU_II_TAU_COEFF": "0.5"
+        }
+      },
+      {
+        "name": "ou_ii_tau_coeff_2.0",
+        "env": {
+          "OU_II_TAU_COEFF": "2.0"
+        }
+      },
+      {
+        "name": "ou_ii_tau_coeff_4.0",
+        "env": {
+          "OU_II_TAU_COEFF": "4.0"
+        }
+      },
+      {
+        "name": "sf_sigma_a_scale_0.5",
+        "env": {
+          "SF_SIGMA_A_SCALE": "0.5"
+        }
+      },
+      {
+        "name": "sf_sigma_a_scale_2.0",
+        "env": {
+          "SF_SIGMA_A_SCALE": "2.0"
+        }
+      },
+      {
+        "name": "sf_sigma_a_scale_4.0",
+        "env": {
+          "SF_SIGMA_A_SCALE": "4.0"
+        }
+      },
+      {
+        "name": "sf_sigma_g_scale_0.2",
+        "env": {
+          "SF_SIGMA_G_SCALE": "0.2"
+        }
+      },
+      {
+        "name": "sf_sigma_g_scale_2.0",
+        "env": {
+          "SF_SIGMA_G_SCALE": "2.0"
+        }
+      }
+    ],
+    "records": "0,1,2,3,4,5,6,7",
+    "seeds": "default",
+    "producer_sha256": "b0e6048a0b48c4433fd250d6fceebd6da9d5f26d722b9d52edd580ebfde4acf4",
+    "binary_sha256": "08c1ce1762eb90956e228ffce8b70a173d27156f475bfe8939c80c2ebddb039e",
+    "protocol": "Full records, final 900 s; unchanged executable quality gates; seeded paired sensor and initialization draws",
+    "producer_snapshot": "screen-producer.py"
+  },
+  "ou3-axis": {
+    "source_commit": "121a154c9024dcce755d8b8ebbf39c1f7da92b33",
+    "simulation_provenance": {
+      "release": "v1.2.1",
+      "archive": "sim-data-files-vessel-rao-28ft.zip",
+      "archive_sha256": "6d6eb92db78e97f1d2456c6b92387993bf23be14a9a6cf26943f0a22fc6fee60",
+      "motion_model": "VESSEL_RAO_28FT",
+      "input_sha256": {
+        "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "6a8a27234cb8fe3b1ecd524d2c13a9ebd029d584652f4212023ba974bd218e03",
+        "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "cd8e8ea89123773e7d8dcf7ac8712d780528c6ff02436b0f40b4d1a6a1bb97e0",
+        "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": "11e29a93ad1084b02af116311d194416567fa6bc20ac9569f5471f97b3d9f8bb",
+        "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "f147cba9d14b87d0e1af4d3e434196312d91295cd40b9a9d738e2919e60cdaa7",
+        "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "a1a4fff90e99a5be68f7767b2865db317e413c87df8e942440c6f6ca1520cf0c",
+        "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": "3db45e87b465aed441637ba7d7d8b67c3944416a784ea9aef6ce57e9360e72e4",
+        "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": "f7d56bcfe9f901727e3dd1e21e61144d666943f6a74e2c1b5f4cc13d0cf580f2",
+        "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "793c3f6fd08bef8c980da53f7b77fc2f4e60914fe1e652f47ed5a7996d9a9fa1"
+      }
+    },
+    "configs": [
+      {
+        "name": "current",
+        "env": {}
+      },
+      {
+        "name": "X_0.3",
+        "env": {
+          "OU_III_R_S_X_FACTOR": "0.3"
+        }
+      },
+      {
+        "name": "X_0.5",
+        "env": {
+          "OU_III_R_S_X_FACTOR": "0.5"
+        }
+      },
+      {
+        "name": "X_1.2",
+        "env": {
+          "OU_III_R_S_X_FACTOR": "1.2"
+        }
+      },
+      {
+        "name": "X_2.0",
+        "env": {
+          "OU_III_R_S_X_FACTOR": "2.0"
+        }
+      },
+      {
+        "name": "Y_0.3",
+        "env": {
+          "OU_III_R_S_Y_FACTOR": "0.3"
+        }
+      },
+      {
+        "name": "Y_0.5",
+        "env": {
+          "OU_III_R_S_Y_FACTOR": "0.5"
+        }
+      },
+      {
+        "name": "Y_1.2",
+        "env": {
+          "OU_III_R_S_Y_FACTOR": "1.2"
+        }
+      },
+      {
+        "name": "Y_2.0",
+        "env": {
+          "OU_III_R_S_Y_FACTOR": "2.0"
+        }
+      }
+    ],
+    "records": "0,1,2,3,4,5,6,7",
+    "seeds": "default,11,23",
+    "producer_sha256": "b0e6048a0b48c4433fd250d6fceebd6da9d5f26d722b9d52edd580ebfde4acf4",
+    "binary_sha256": "492561a6785d2ff2a10769a4688382395c9fe9eb7a35b0caf9edd4f0fc590b4d",
+    "protocol": "Full records, final 900 s; unchanged executable quality gates; seeded paired sensor and initialization draws",
+    "producer_snapshot": "screen-producer.py"
+  },
+  "ou3-axis-weight": {
+    "source_commit": "121a154c9024dcce755d8b8ebbf39c1f7da92b33",
+    "simulation_provenance": {
+      "release": "v1.2.1",
+      "archive": "sim-data-files-vessel-rao-28ft.zip",
+      "archive_sha256": "6d6eb92db78e97f1d2456c6b92387993bf23be14a9a6cf26943f0a22fc6fee60",
+      "motion_model": "VESSEL_RAO_28FT",
+      "input_sha256": {
+        "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "6a8a27234cb8fe3b1ecd524d2c13a9ebd029d584652f4212023ba974bd218e03",
+        "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "cd8e8ea89123773e7d8dcf7ac8712d780528c6ff02436b0f40b4d1a6a1bb97e0",
+        "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": "11e29a93ad1084b02af116311d194416567fa6bc20ac9569f5471f97b3d9f8bb",
+        "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "f147cba9d14b87d0e1af4d3e434196312d91295cd40b9a9d738e2919e60cdaa7",
+        "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "a1a4fff90e99a5be68f7767b2865db317e413c87df8e942440c6f6ca1520cf0c",
+        "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": "3db45e87b465aed441637ba7d7d8b67c3944416a784ea9aef6ce57e9360e72e4",
+        "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": "f7d56bcfe9f901727e3dd1e21e61144d666943f6a74e2c1b5f4cc13d0cf580f2",
+        "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "793c3f6fd08bef8c980da53f7b77fc2f4e60914fe1e652f47ed5a7996d9a9fa1"
+      }
+    },
+    "configs": [
+      {
+        "name": "current",
+        "env": {}
+      },
+      {
+        "name": "raccX_0.5",
+        "env": {
+          "SF_SIGMA_A_X_SCALE": "0.5"
+        }
+      },
+      {
+        "name": "raccX_2.0",
+        "env": {
+          "SF_SIGMA_A_X_SCALE": "2.0"
+        }
+      },
+      {
+        "name": "raccX_4.0",
+        "env": {
+          "SF_SIGMA_A_X_SCALE": "4.0"
+        }
+      },
+      {
+        "name": "raccY_0.5",
+        "env": {
+          "SF_SIGMA_A_Y_SCALE": "0.5"
+        }
+      },
+      {
+        "name": "raccY_2.0",
+        "env": {
+          "SF_SIGMA_A_Y_SCALE": "2.0"
+        }
+      },
+      {
+        "name": "raccY_4.0",
+        "env": {
+          "SF_SIGMA_A_Y_SCALE": "4.0"
+        }
+      },
+      {
+        "name": "raccXY_0.5",
+        "env": {
+          "SF_SIGMA_A_X_SCALE": "0.5",
+          "SF_SIGMA_A_Y_SCALE": "0.5"
+        }
+      },
+      {
+        "name": "raccXY_2.0",
+        "env": {
+          "SF_SIGMA_A_X_SCALE": "2.0",
+          "SF_SIGMA_A_Y_SCALE": "2.0"
+        }
+      },
+      {
+        "name": "raccXY_4.0",
+        "env": {
+          "SF_SIGMA_A_X_SCALE": "4.0",
+          "SF_SIGMA_A_Y_SCALE": "4.0"
+        }
+      }
+    ],
+    "records": "0,1,2,3,4,5,6,7",
+    "seeds": "default,11,23",
+    "producer_sha256": "b0e6048a0b48c4433fd250d6fceebd6da9d5f26d722b9d52edd580ebfde4acf4",
+    "binary_sha256": "4e3fbfa20d4d0423986fa68d9a5cd4167224e2f50fc0addb5f950d609040fc8e",
+    "protocol": "Full records, final 900 s; unchanged executable quality gates; seeded paired sensor and initialization draws",
+    "producer_snapshot": "screen-producer.py"
+  },
+  "ou3-bias": {
+    "source_commit": "121a154c9024dcce755d8b8ebbf39c1f7da92b33",
+    "simulation_provenance": {
+      "release": "v1.2.1",
+      "archive": "sim-data-files-vessel-rao-28ft.zip",
+      "archive_sha256": "6d6eb92db78e97f1d2456c6b92387993bf23be14a9a6cf26943f0a22fc6fee60",
+      "motion_model": "VESSEL_RAO_28FT",
+      "input_sha256": {
+        "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "6a8a27234cb8fe3b1ecd524d2c13a9ebd029d584652f4212023ba974bd218e03",
+        "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "f147cba9d14b87d0e1af4d3e434196312d91295cd40b9a9d738e2919e60cdaa7",
+        "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "a1a4fff90e99a5be68f7767b2865db317e413c87df8e942440c6f6ca1520cf0c",
+        "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "793c3f6fd08bef8c980da53f7b77fc2f4e60914fe1e652f47ed5a7996d9a9fa1"
+      }
+    },
+    "configs": [
+      {
+        "name": "current",
+        "env": {}
+      },
+      {
+        "name": "ba_init_0.012",
+        "env": {
+          "OU_III_ACC_BIAS_INIT_STD": "0.012"
+        }
+      },
+      {
+        "name": "ba_init_0.04",
+        "env": {
+          "OU_III_ACC_BIAS_INIT_STD": "0.04"
+        }
+      },
+      {
+        "name": "ba_init_0.08",
+        "env": {
+          "OU_III_ACC_BIAS_INIT_STD": "0.08"
+        }
+      },
+      {
+        "name": "ba_tau_20000",
+        "env": {
+          "OU_III_ACC_BIAS_TAU_SEC": "20000"
+        }
+      }
+    ],
+    "records": "0,3,4,7",
+    "seeds": "default,11,23",
+    "producer_sha256": "b0e6048a0b48c4433fd250d6fceebd6da9d5f26d722b9d52edd580ebfde4acf4",
+    "binary_sha256": "492561a6785d2ff2a10769a4688382395c9fe9eb7a35b0caf9edd4f0fc590b4d",
+    "protocol": "Full records, final 900 s; unchanged executable quality gates; seeded paired sensor and initialization draws",
+    "producer_snapshot": "screen-producer.py"
+  },
+  "ou3-candidates": {
+    "source_commit": "121a154c9024dcce755d8b8ebbf39c1f7da92b33",
+    "simulation_provenance": {
+      "release": "v1.2.1",
+      "archive": "sim-data-files-vessel-rao-28ft.zip",
+      "archive_sha256": "6d6eb92db78e97f1d2456c6b92387993bf23be14a9a6cf26943f0a22fc6fee60",
+      "motion_model": "VESSEL_RAO_28FT",
+      "input_sha256": {
+        "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "6a8a27234cb8fe3b1ecd524d2c13a9ebd029d584652f4212023ba974bd218e03",
+        "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "cd8e8ea89123773e7d8dcf7ac8712d780528c6ff02436b0f40b4d1a6a1bb97e0",
+        "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": "11e29a93ad1084b02af116311d194416567fa6bc20ac9569f5471f97b3d9f8bb",
+        "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "f147cba9d14b87d0e1af4d3e434196312d91295cd40b9a9d738e2919e60cdaa7",
+        "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "a1a4fff90e99a5be68f7767b2865db317e413c87df8e942440c6f6ca1520cf0c",
+        "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": "3db45e87b465aed441637ba7d7d8b67c3944416a784ea9aef6ce57e9360e72e4",
+        "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": "f7d56bcfe9f901727e3dd1e21e61144d666943f6a74e2c1b5f4cc13d0cf580f2",
+        "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "793c3f6fd08bef8c980da53f7b77fc2f4e60914fe1e652f47ed5a7996d9a9fa1"
+      }
+    },
+    "configs": [
+      {
+        "name": "current",
+        "env": {}
+      },
+      {
+        "name": "rs05",
+        "env": {
+          "OU_III_R_S_X_FACTOR": ".5",
+          "OU_III_R_S_Y_FACTOR": ".5"
+        }
+      },
+      {
+        "name": "rs05_ba04",
+        "env": {
+          "OU_III_R_S_X_FACTOR": ".5",
+          "OU_III_R_S_Y_FACTOR": ".5",
+          "OU_III_ACC_BIAS_INIT_STD": ".04"
+        }
+      },
+      {
+        "name": "rs05_xy4",
+        "env": {
+          "OU_III_R_S_X_FACTOR": ".5",
+          "OU_III_R_S_Y_FACTOR": ".5",
+          "SF_SIGMA_A_X_SCALE": "4",
+          "SF_SIGMA_A_Y_SCALE": "4"
+        }
+      },
+      {
+        "name": "rs05_ba04_xy4",
+        "env": {
+          "OU_III_R_S_X_FACTOR": ".5",
+          "OU_III_R_S_Y_FACTOR": ".5",
+          "OU_III_ACC_BIAS_INIT_STD": ".04",
+          "SF_SIGMA_A_X_SCALE": "4",
+          "SF_SIGMA_A_Y_SCALE": "4"
+        }
+      },
+      {
+        "name": "ba04_xy4",
+        "env": {
+          "OU_III_ACC_BIAS_INIT_STD": ".04",
+          "SF_SIGMA_A_X_SCALE": "4",
+          "SF_SIGMA_A_Y_SCALE": "4"
+        }
+      },
+      {
+        "name": "rs05_tau15",
+        "env": {
+          "OU_III_R_S_X_FACTOR": ".5",
+          "OU_III_R_S_Y_FACTOR": ".5",
+          "OU_III_TAU_COEFF": "1.5",
+          "OU_III_RS_MSE_COEFF": "0.013398025994012698",
+          "OU_III_R_S_MIN": "0.12247448713915891"
+        }
+      }
+    ],
+    "records": "0,1,2,3,4,5,6,7",
+    "seeds": "default,11,23",
+    "producer_sha256": "53cfd1a760dfd0764fa4cebd5eae6b57c6c46a994eb3527cc607f7f7f4b29c55",
+    "binary_sha256": "f0beea2220dbed2e4ddc45a325f2620974392a9990b2aa47620a7443e0affff0",
+    "protocol": "Full records, final 900 s; unchanged executable quality gates; seeded paired sensor and initialization draws"
+  },
+  "ou3-covariance": {
+    "source_commit": "121a154c9024dcce755d8b8ebbf39c1f7da92b33",
+    "simulation_provenance": {
+      "release": "v1.2.1",
+      "archive": "sim-data-files-vessel-rao-28ft.zip",
+      "archive_sha256": "6d6eb92db78e97f1d2456c6b92387993bf23be14a9a6cf26943f0a22fc6fee60",
+      "motion_model": "VESSEL_RAO_28FT",
+      "input_sha256": {
+        "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "6a8a27234cb8fe3b1ecd524d2c13a9ebd029d584652f4212023ba974bd218e03",
+        "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "cd8e8ea89123773e7d8dcf7ac8712d780528c6ff02436b0f40b4d1a6a1bb97e0",
+        "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": "11e29a93ad1084b02af116311d194416567fa6bc20ac9569f5471f97b3d9f8bb",
+        "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "f147cba9d14b87d0e1af4d3e434196312d91295cd40b9a9d738e2919e60cdaa7",
+        "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "a1a4fff90e99a5be68f7767b2865db317e413c87df8e942440c6f6ca1520cf0c",
+        "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": "3db45e87b465aed441637ba7d7d8b67c3944416a784ea9aef6ce57e9360e72e4",
+        "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": "f7d56bcfe9f901727e3dd1e21e61144d666943f6a74e2c1b5f4cc13d0cf580f2",
+        "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "793c3f6fd08bef8c980da53f7b77fc2f4e60914fe1e652f47ed5a7996d9a9fa1"
+      }
+    },
+    "configs": [
+      {
+        "name": "current",
+        "env": {}
+      },
+      {
+        "name": "process_only_sigma_0.9",
+        "env": {
+          "W3D_AW_COV_SYNC": "reconfigure",
+          "OU_III_SIGMA_COEFF": "0.9"
+        }
+      },
+      {
+        "name": "process_only_sigma_1.1",
+        "env": {
+          "W3D_AW_COV_SYNC": "reconfigure",
+          "OU_III_SIGMA_COEFF": "1.1"
+        }
+      },
+      {
+        "name": "process_only_sigma_1.3",
+        "env": {
+          "W3D_AW_COV_SYNC": "reconfigure",
+          "OU_III_SIGMA_COEFF": "1.3"
+        }
+      }
+    ],
+    "records": "0,1,2,3,4,5,6,7",
+    "seeds": "default",
+    "producer_sha256": "43af9f7c2799bf9cb36250f20ad4c57308bef27d26c8ec25e38500ba319062a5",
+    "binary_sha256": "f0beea2220dbed2e4ddc45a325f2620974392a9990b2aa47620a7443e0affff0",
+    "protocol": "Full records, final 900 s; unchanged executable quality gates; seeded paired sensor and initialization draws"
+  },
+  "ou3-direction-frequency": {
+    "source_commit": "121a154c9024dcce755d8b8ebbf39c1f7da92b33",
+    "simulation_provenance": {
+      "release": "v1.2.1",
+      "archive": "sim-data-files-vessel-rao-28ft.zip",
+      "archive_sha256": "6d6eb92db78e97f1d2456c6b92387993bf23be14a9a6cf26943f0a22fc6fee60",
+      "motion_model": "VESSEL_RAO_28FT",
+      "input_sha256": {
+        "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "6a8a27234cb8fe3b1ecd524d2c13a9ebd029d584652f4212023ba974bd218e03",
+        "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "cd8e8ea89123773e7d8dcf7ac8712d780528c6ff02436b0f40b4d1a6a1bb97e0",
+        "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": "11e29a93ad1084b02af116311d194416567fa6bc20ac9569f5471f97b3d9f8bb",
+        "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "f147cba9d14b87d0e1af4d3e434196312d91295cd40b9a9d738e2919e60cdaa7",
+        "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "a1a4fff90e99a5be68f7767b2865db317e413c87df8e942440c6f6ca1520cf0c",
+        "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": "3db45e87b465aed441637ba7d7d8b67c3944416a784ea9aef6ce57e9360e72e4",
+        "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": "f7d56bcfe9f901727e3dd1e21e61144d666943f6a74e2c1b5f4cc13d0cf580f2",
+        "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "793c3f6fd08bef8c980da53f7b77fc2f4e60914fe1e652f47ed5a7996d9a9fa1"
+      }
+    },
+    "configs": [
+      {
+        "name": "current",
+        "env": {}
+      },
+      {
+        "name": "bias",
+        "env": {
+          "SF_DIAGNOSTIC_DIRECTION_INPUT": "1"
+        }
+      },
+      {
+        "name": "wave_carrier_0",
+        "env": {
+          "SF_DIAGNOSTIC_DIRECTION_INPUT": "0",
+          "SF_DIAGNOSTIC_WAVE_CARRIER": "1"
+        }
+      },
+      {
+        "name": "highpass_0",
+        "env": {
+          "SF_DIAGNOSTIC_DIRECTION_INPUT": "0",
+          "SF_DIAGNOSTIC_DIRECTION_HP_HZ": ".02"
+        }
+      },
+      {
+        "name": "wave_carrier_1",
+        "env": {
+          "SF_DIAGNOSTIC_DIRECTION_INPUT": "1",
+          "SF_DIAGNOSTIC_WAVE_CARRIER": "1"
+        }
+      },
+      {
+        "name": "highpass_1",
+        "env": {
+          "SF_DIAGNOSTIC_DIRECTION_INPUT": "1",
+          "SF_DIAGNOSTIC_DIRECTION_HP_HZ": ".02"
+        }
+      }
+    ],
+    "records": "0,1,2,3,4,5,6,7",
+    "seeds": "default",
+    "producer_sha256": "b0e6048a0b48c4433fd250d6fceebd6da9d5f26d722b9d52edd580ebfde4acf4",
+    "binary_sha256": "cd722afdad7cb06696fe0a80d85dbadebe1edff93236973d83834de6d4351476",
+    "protocol": "Full records, final 900 s; unchanged executable quality gates; seeded paired sensor and initialization draws",
+    "producer_snapshot": "screen-producer.py"
+  },
+  "ou3-final-o3": {
+    "source_commit": "9de0543507509cabb478b751b83bf5c74711764d",
+    "source_dirty": false,
+    "source_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "simulation_provenance": {
+      "release": "v1.2.1",
+      "archive": "sim-data-files-vessel-rao-28ft.zip",
+      "archive_sha256": "6d6eb92db78e97f1d2456c6b92387993bf23be14a9a6cf26943f0a22fc6fee60",
+      "motion_model": "VESSEL_RAO_28FT",
+      "input_sha256": {
+        "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "6a8a27234cb8fe3b1ecd524d2c13a9ebd029d584652f4212023ba974bd218e03",
+        "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "cd8e8ea89123773e7d8dcf7ac8712d780528c6ff02436b0f40b4d1a6a1bb97e0",
+        "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": "11e29a93ad1084b02af116311d194416567fa6bc20ac9569f5471f97b3d9f8bb",
+        "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "f147cba9d14b87d0e1af4d3e434196312d91295cd40b9a9d738e2919e60cdaa7",
+        "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "a1a4fff90e99a5be68f7767b2865db317e413c87df8e942440c6f6ca1520cf0c",
+        "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": "3db45e87b465aed441637ba7d7d8b67c3944416a784ea9aef6ce57e9360e72e4",
+        "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": "f7d56bcfe9f901727e3dd1e21e61144d666943f6a74e2c1b5f4cc13d0cf580f2",
+        "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "793c3f6fd08bef8c980da53f7b77fc2f4e60914fe1e652f47ed5a7996d9a9fa1"
+      }
+    },
+    "configs": [
+      {
+        "name": "selected",
+        "env": {}
+      },
+      {
+        "name": "weighting_off",
+        "env": {
+          "SF_LOW_WAVE_RACC_MAX_SCALE": "1"
+        }
+      }
+    ],
+    "records": "0,1,2,3,4,5,6,7",
+    "seeds": "default",
+    "producer_sha256": "851f0d21038fa5c430c2bb37500563210791b1dd1a52120dc0da6feebcbaa0cb",
+    "binary_sha256": "32ccec794b2c9c6942d342decc0657c300c59bc70d7804ca765f6168eb26509e",
+    "protocol": "Full records, final 900 s; unchanged executable quality gates; seeded paired sensor and initialization draws"
+  },
+  "ou3-fresh": {
+    "source_commit": "121a154c9024dcce755d8b8ebbf39c1f7da92b33",
+    "simulation_provenance": {
+      "release": "v1.2.1",
+      "archive": "sim-data-files-vessel-rao-28ft.zip",
+      "archive_sha256": "6d6eb92db78e97f1d2456c6b92387993bf23be14a9a6cf26943f0a22fc6fee60",
+      "motion_model": "VESSEL_RAO_28FT",
+      "input_sha256": {
+        "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "6a8a27234cb8fe3b1ecd524d2c13a9ebd029d584652f4212023ba974bd218e03",
+        "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "cd8e8ea89123773e7d8dcf7ac8712d780528c6ff02436b0f40b4d1a6a1bb97e0",
+        "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": "11e29a93ad1084b02af116311d194416567fa6bc20ac9569f5471f97b3d9f8bb",
+        "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "f147cba9d14b87d0e1af4d3e434196312d91295cd40b9a9d738e2919e60cdaa7",
+        "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "a1a4fff90e99a5be68f7767b2865db317e413c87df8e942440c6f6ca1520cf0c",
+        "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": "3db45e87b465aed441637ba7d7d8b67c3944416a784ea9aef6ce57e9360e72e4",
+        "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": "f7d56bcfe9f901727e3dd1e21e61144d666943f6a74e2c1b5f4cc13d0cf580f2",
+        "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "793c3f6fd08bef8c980da53f7b77fc2f4e60914fe1e652f47ed5a7996d9a9fa1"
+      }
+    },
+    "configs": [
+      {
+        "name": "current",
+        "env": {}
+      },
+      {
+        "name": "rs05",
+        "env": {
+          "OU_III_R_S_X_FACTOR": "0.5",
+          "OU_III_R_S_Y_FACTOR": "0.5"
+        }
+      }
+    ],
+    "records": "0,1,2,3,4,5,6,7",
+    "seeds": "17011,19001,23003,29009",
+    "producer_sha256": "43af9f7c2799bf9cb36250f20ad4c57308bef27d26c8ec25e38500ba319062a5",
+    "binary_sha256": "f0beea2220dbed2e4ddc45a325f2620974392a9990b2aa47620a7443e0affff0",
+    "protocol": "Full records, final 900 s; unchanged executable quality gates; seeded paired sensor and initialization draws"
+  },
+  "ou3-joint": {
+    "source_commit": "121a154c9024dcce755d8b8ebbf39c1f7da92b33",
+    "simulation_provenance": {
+      "release": "v1.2.1",
+      "archive": "sim-data-files-vessel-rao-28ft.zip",
+      "archive_sha256": "6d6eb92db78e97f1d2456c6b92387993bf23be14a9a6cf26943f0a22fc6fee60",
+      "motion_model": "VESSEL_RAO_28FT",
+      "input_sha256": {
+        "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "6a8a27234cb8fe3b1ecd524d2c13a9ebd029d584652f4212023ba974bd218e03",
+        "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "f147cba9d14b87d0e1af4d3e434196312d91295cd40b9a9d738e2919e60cdaa7",
+        "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "a1a4fff90e99a5be68f7767b2865db317e413c87df8e942440c6f6ca1520cf0c",
+        "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "793c3f6fd08bef8c980da53f7b77fc2f4e60914fe1e652f47ed5a7996d9a9fa1"
+      }
+    },
+    "configs": [
+      {
+        "name": "current",
+        "env": {}
+      },
+      {
+        "name": "h0.15_r0.2",
+        "env": {
+          "OU_III_S_FACTOR": "0.15",
+          "OU_III_R_S_X_FACTOR": "0.2",
+          "OU_III_R_S_Y_FACTOR": "0.2"
+        }
+      },
+      {
+        "name": "h0.15_r0.72",
+        "env": {
+          "OU_III_S_FACTOR": "0.15",
+          "OU_III_R_S_X_FACTOR": "0.72",
+          "OU_III_R_S_Y_FACTOR": "0.72"
+        }
+      },
+      {
+        "name": "h0.15_r1.4",
+        "env": {
+          "OU_III_S_FACTOR": "0.15",
+          "OU_III_R_S_X_FACTOR": "1.4",
+          "OU_III_R_S_Y_FACTOR": "1.4"
+        }
+      },
+      {
+        "name": "h0.35_r0.2",
+        "env": {
+          "OU_III_S_FACTOR": "0.35",
+          "OU_III_R_S_X_FACTOR": "0.2",
+          "OU_III_R_S_Y_FACTOR": "0.2"
+        }
+      },
+      {
+        "name": "h0.35_r0.72",
+        "env": {
+          "OU_III_S_FACTOR": "0.35",
+          "OU_III_R_S_X_FACTOR": "0.72",
+          "OU_III_R_S_Y_FACTOR": "0.72"
+        }
+      },
+      {
+        "name": "h0.35_r1.4",
+        "env": {
+          "OU_III_S_FACTOR": "0.35",
+          "OU_III_R_S_X_FACTOR": "1.4",
+          "OU_III_R_S_Y_FACTOR": "1.4"
+        }
+      },
+      {
+        "name": "h0.7_r0.2",
+        "env": {
+          "OU_III_S_FACTOR": "0.7",
+          "OU_III_R_S_X_FACTOR": "0.2",
+          "OU_III_R_S_Y_FACTOR": "0.2"
+        }
+      },
+      {
+        "name": "h0.7_r0.72",
+        "env": {
+          "OU_III_S_FACTOR": "0.7",
+          "OU_III_R_S_X_FACTOR": "0.72",
+          "OU_III_R_S_Y_FACTOR": "0.72"
+        }
+      },
+      {
+        "name": "h0.7_r1.4",
+        "env": {
+          "OU_III_S_FACTOR": "0.7",
+          "OU_III_R_S_X_FACTOR": "1.4",
+          "OU_III_R_S_Y_FACTOR": "1.4"
+        }
+      }
+    ],
+    "records": "0,3,4,7",
+    "seeds": "default,11,23",
+    "producer_sha256": "b0e6048a0b48c4433fd250d6fceebd6da9d5f26d722b9d52edd580ebfde4acf4",
+    "binary_sha256": "492561a6785d2ff2a10769a4688382395c9fe9eb7a35b0caf9edd4f0fc590b4d",
+    "protocol": "Full records, final 900 s; unchanged executable quality gates; seeded paired sensor and initialization draws",
+    "producer_snapshot": "screen-producer.py"
+  },
+  "ou3-joint-axis": {
+    "source_commit": "121a154c9024dcce755d8b8ebbf39c1f7da92b33",
+    "simulation_provenance": {
+      "release": "v1.2.1",
+      "archive": "sim-data-files-vessel-rao-28ft.zip",
+      "archive_sha256": "6d6eb92db78e97f1d2456c6b92387993bf23be14a9a6cf26943f0a22fc6fee60",
+      "motion_model": "VESSEL_RAO_28FT",
+      "input_sha256": {
+        "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "6a8a27234cb8fe3b1ecd524d2c13a9ebd029d584652f4212023ba974bd218e03",
+        "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "cd8e8ea89123773e7d8dcf7ac8712d780528c6ff02436b0f40b4d1a6a1bb97e0",
+        "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": "11e29a93ad1084b02af116311d194416567fa6bc20ac9569f5471f97b3d9f8bb",
+        "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "f147cba9d14b87d0e1af4d3e434196312d91295cd40b9a9d738e2919e60cdaa7",
+        "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "a1a4fff90e99a5be68f7767b2865db317e413c87df8e942440c6f6ca1520cf0c",
+        "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": "3db45e87b465aed441637ba7d7d8b67c3944416a784ea9aef6ce57e9360e72e4",
+        "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": "f7d56bcfe9f901727e3dd1e21e61144d666943f6a74e2c1b5f4cc13d0cf580f2",
+        "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "793c3f6fd08bef8c980da53f7b77fc2f4e60914fe1e652f47ed5a7996d9a9fa1"
+      }
+    },
+    "configs": [
+      {
+        "name": "current",
+        "env": {}
+      },
+      {
+        "name": "xy_0.5_0.5",
+        "env": {
+          "OU_III_R_S_X_FACTOR": "0.5",
+          "OU_III_R_S_Y_FACTOR": "0.5"
+        }
+      },
+      {
+        "name": "xy_0.6_0.5",
+        "env": {
+          "OU_III_R_S_X_FACTOR": "0.6",
+          "OU_III_R_S_Y_FACTOR": "0.5"
+        }
+      },
+      {
+        "name": "xy_0.6_0.6",
+        "env": {
+          "OU_III_R_S_X_FACTOR": "0.6",
+          "OU_III_R_S_Y_FACTOR": "0.6"
+        }
+      },
+      {
+        "name": "xy_0.72_0.6",
+        "env": {
+          "OU_III_R_S_X_FACTOR": "0.72",
+          "OU_III_R_S_Y_FACTOR": "0.6"
+        }
+      },
+      {
+        "name": "xy_0.7_0.7",
+        "env": {
+          "OU_III_R_S_X_FACTOR": "0.7",
+          "OU_III_R_S_Y_FACTOR": "0.7"
+        }
+      }
+    ],
+    "records": "0,1,2,3,4,5,6,7",
+    "seeds": "default",
+    "producer_sha256": "b0e6048a0b48c4433fd250d6fceebd6da9d5f26d722b9d52edd580ebfde4acf4",
+    "binary_sha256": "492561a6785d2ff2a10769a4688382395c9fe9eb7a35b0caf9edd4f0fc590b4d",
+    "protocol": "Full records, final 900 s; unchanged executable quality gates; seeded paired sensor and initialization draws",
+    "producer_snapshot": "screen-producer.py"
+  },
+  "ou3-mag-weight": {
+    "source_commit": "121a154c9024dcce755d8b8ebbf39c1f7da92b33",
+    "simulation_provenance": {
+      "release": "v1.2.1",
+      "archive": "sim-data-files-vessel-rao-28ft.zip",
+      "archive_sha256": "6d6eb92db78e97f1d2456c6b92387993bf23be14a9a6cf26943f0a22fc6fee60",
+      "motion_model": "VESSEL_RAO_28FT",
+      "input_sha256": {
+        "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "6a8a27234cb8fe3b1ecd524d2c13a9ebd029d584652f4212023ba974bd218e03",
+        "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "a1a4fff90e99a5be68f7767b2865db317e413c87df8e942440c6f6ca1520cf0c"
+      }
+    },
+    "configs": [
+      {
+        "name": "current",
+        "env": {}
+      },
+      {
+        "name": "mag_0.25",
+        "env": {
+          "SF_SIGMA_M_SCALE": "0.25"
+        }
+      },
+      {
+        "name": "mag_2.0",
+        "env": {
+          "SF_SIGMA_M_SCALE": "2.0"
+        }
+      },
+      {
+        "name": "mag_5.0",
+        "env": {
+          "SF_SIGMA_M_SCALE": "5.0"
+        }
+      }
+    ],
+    "records": "0,4",
+    "seeds": "default,11,23",
+    "producer_sha256": "b0e6048a0b48c4433fd250d6fceebd6da9d5f26d722b9d52edd580ebfde4acf4",
+    "binary_sha256": "492561a6785d2ff2a10769a4688382395c9fe9eb7a35b0caf9edd4f0fc590b4d",
+    "protocol": "Full records, final 900 s; unchanged executable quality gates; seeded paired sensor and initialization draws",
+    "producer_snapshot": "screen-producer.py"
+  },
+  "ou3-noise-combination": {
+    "source_commit": "121a154c9024dcce755d8b8ebbf39c1f7da92b33",
+    "simulation_provenance": {
+      "release": "v1.2.1",
+      "archive": "sim-data-files-vessel-rao-28ft.zip",
+      "archive_sha256": "6d6eb92db78e97f1d2456c6b92387993bf23be14a9a6cf26943f0a22fc6fee60",
+      "motion_model": "VESSEL_RAO_28FT",
+      "input_sha256": {
+        "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "6a8a27234cb8fe3b1ecd524d2c13a9ebd029d584652f4212023ba974bd218e03",
+        "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "cd8e8ea89123773e7d8dcf7ac8712d780528c6ff02436b0f40b4d1a6a1bb97e0",
+        "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": "11e29a93ad1084b02af116311d194416567fa6bc20ac9569f5471f97b3d9f8bb",
+        "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "f147cba9d14b87d0e1af4d3e434196312d91295cd40b9a9d738e2919e60cdaa7",
+        "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "a1a4fff90e99a5be68f7767b2865db317e413c87df8e942440c6f6ca1520cf0c",
+        "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": "3db45e87b465aed441637ba7d7d8b67c3944416a784ea9aef6ce57e9360e72e4",
+        "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": "f7d56bcfe9f901727e3dd1e21e61144d666943f6a74e2c1b5f4cc13d0cf580f2",
+        "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "793c3f6fd08bef8c980da53f7b77fc2f4e60914fe1e652f47ed5a7996d9a9fa1"
+      }
+    },
+    "configs": [
+      {
+        "name": "current",
+        "env": {}
+      },
+      {
+        "name": "rs05",
+        "env": {
+          "OU_III_R_S_X_FACTOR": ".5",
+          "OU_III_R_S_Y_FACTOR": ".5"
+        }
+      },
+      {
+        "name": "rs0.6_xy2",
+        "env": {
+          "OU_III_R_S_X_FACTOR": "0.6",
+          "OU_III_R_S_Y_FACTOR": "0.6",
+          "SF_SIGMA_A_X_SCALE": "2",
+          "SF_SIGMA_A_Y_SCALE": "2"
+        }
+      },
+      {
+        "name": "rs0.65_xy4",
+        "env": {
+          "OU_III_R_S_X_FACTOR": "0.65",
+          "OU_III_R_S_Y_FACTOR": "0.65",
+          "SF_SIGMA_A_X_SCALE": "4",
+          "SF_SIGMA_A_Y_SCALE": "4"
+        }
+      }
+    ],
+    "records": "0,1,2,3,4,5,6,7",
+    "seeds": "default,11,23",
+    "producer_sha256": "43af9f7c2799bf9cb36250f20ad4c57308bef27d26c8ec25e38500ba319062a5",
+    "binary_sha256": "f0beea2220dbed2e4ddc45a325f2620974392a9990b2aa47620a7443e0affff0",
+    "protocol": "Full records, final 900 s; unchanged executable quality gates; seeded paired sensor and initialization draws"
+  },
+  "ou3-snr": {
+    "source_commit": "121a154c9024dcce755d8b8ebbf39c1f7da92b33",
+    "simulation_provenance": {
+      "release": "v1.2.1",
+      "archive": "sim-data-files-vessel-rao-28ft.zip",
+      "archive_sha256": "6d6eb92db78e97f1d2456c6b92387993bf23be14a9a6cf26943f0a22fc6fee60",
+      "motion_model": "VESSEL_RAO_28FT",
+      "input_sha256": {
+        "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "6a8a27234cb8fe3b1ecd524d2c13a9ebd029d584652f4212023ba974bd218e03",
+        "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "cd8e8ea89123773e7d8dcf7ac8712d780528c6ff02436b0f40b4d1a6a1bb97e0",
+        "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": "11e29a93ad1084b02af116311d194416567fa6bc20ac9569f5471f97b3d9f8bb",
+        "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "f147cba9d14b87d0e1af4d3e434196312d91295cd40b9a9d738e2919e60cdaa7",
+        "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "a1a4fff90e99a5be68f7767b2865db317e413c87df8e942440c6f6ca1520cf0c",
+        "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": "3db45e87b465aed441637ba7d7d8b67c3944416a784ea9aef6ce57e9360e72e4",
+        "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": "f7d56bcfe9f901727e3dd1e21e61144d666943f6a74e2c1b5f4cc13d0cf580f2",
+        "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "793c3f6fd08bef8c980da53f7b77fc2f4e60914fe1e652f47ed5a7996d9a9fa1"
+      }
+    },
+    "configs": [
+      {
+        "name": "current",
+        "env": {}
+      },
+      {
+        "name": "snr1",
+        "env": {
+          "SF_LOW_WAVE_RACC_MAX_SCALE": "4",
+          "SF_LOW_WAVE_RACC_SNR": "1"
+        }
+      },
+      {
+        "name": "snr2",
+        "env": {
+          "SF_LOW_WAVE_RACC_MAX_SCALE": "4",
+          "SF_LOW_WAVE_RACC_SNR": "2"
+        }
+      },
+      {
+        "name": "snr3",
+        "env": {
+          "SF_LOW_WAVE_RACC_MAX_SCALE": "4",
+          "SF_LOW_WAVE_RACC_SNR": "3"
+        }
+      }
+    ],
+    "records": "0,1,2,3,4,5,6,7",
+    "seeds": "default,11,23",
+    "producer_sha256": "43af9f7c2799bf9cb36250f20ad4c57308bef27d26c8ec25e38500ba319062a5",
+    "binary_sha256": "83d70dcbea751fbbd7df74440807885189cc14e4657fcaf980d9688b2191087d",
+    "protocol": "Full records, final 900 s; unchanged executable quality gates; seeded paired sensor and initialization draws"
+  },
+  "ou3-snr-fresh": {
+    "source_commit": "121a154c9024dcce755d8b8ebbf39c1f7da92b33",
+    "simulation_provenance": {
+      "release": "v1.2.1",
+      "archive": "sim-data-files-vessel-rao-28ft.zip",
+      "archive_sha256": "6d6eb92db78e97f1d2456c6b92387993bf23be14a9a6cf26943f0a22fc6fee60",
+      "motion_model": "VESSEL_RAO_28FT",
+      "input_sha256": {
+        "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "6a8a27234cb8fe3b1ecd524d2c13a9ebd029d584652f4212023ba974bd218e03",
+        "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "cd8e8ea89123773e7d8dcf7ac8712d780528c6ff02436b0f40b4d1a6a1bb97e0",
+        "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": "11e29a93ad1084b02af116311d194416567fa6bc20ac9569f5471f97b3d9f8bb",
+        "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "f147cba9d14b87d0e1af4d3e434196312d91295cd40b9a9d738e2919e60cdaa7",
+        "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "a1a4fff90e99a5be68f7767b2865db317e413c87df8e942440c6f6ca1520cf0c",
+        "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": "3db45e87b465aed441637ba7d7d8b67c3944416a784ea9aef6ce57e9360e72e4",
+        "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": "f7d56bcfe9f901727e3dd1e21e61144d666943f6a74e2c1b5f4cc13d0cf580f2",
+        "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "793c3f6fd08bef8c980da53f7b77fc2f4e60914fe1e652f47ed5a7996d9a9fa1"
+      }
+    },
+    "configs": [
+      {
+        "name": "current",
+        "env": {}
+      },
+      {
+        "name": "snr2",
+        "env": {
+          "SF_LOW_WAVE_RACC_MAX_SCALE": "4",
+          "SF_LOW_WAVE_RACC_SNR": "2"
+        }
+      }
+    ],
+    "records": "0,1,2,3,4,5,6,7",
+    "seeds": "31013,37003,41011,47017",
+    "producer_sha256": "43af9f7c2799bf9cb36250f20ad4c57308bef27d26c8ec25e38500ba319062a5",
+    "binary_sha256": "83d70dcbea751fbbd7df74440807885189cc14e4657fcaf980d9688b2191087d",
+    "protocol": "Full records, final 900 s; unchanged executable quality gates; seeded paired sensor and initialization draws"
+  },
+  "ou3-tau-matched": {
+    "source_commit": "121a154c9024dcce755d8b8ebbf39c1f7da92b33",
+    "simulation_provenance": {
+      "release": "v1.2.1",
+      "archive": "sim-data-files-vessel-rao-28ft.zip",
+      "archive_sha256": "6d6eb92db78e97f1d2456c6b92387993bf23be14a9a6cf26943f0a22fc6fee60",
+      "motion_model": "VESSEL_RAO_28FT",
+      "input_sha256": {
+        "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "6a8a27234cb8fe3b1ecd524d2c13a9ebd029d584652f4212023ba974bd218e03",
+        "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "cd8e8ea89123773e7d8dcf7ac8712d780528c6ff02436b0f40b4d1a6a1bb97e0",
+        "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": "11e29a93ad1084b02af116311d194416567fa6bc20ac9569f5471f97b3d9f8bb",
+        "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "f147cba9d14b87d0e1af4d3e434196312d91295cd40b9a9d738e2919e60cdaa7",
+        "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "a1a4fff90e99a5be68f7767b2865db317e413c87df8e942440c6f6ca1520cf0c",
+        "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": "3db45e87b465aed441637ba7d7d8b67c3944416a784ea9aef6ce57e9360e72e4",
+        "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": "f7d56bcfe9f901727e3dd1e21e61144d666943f6a74e2c1b5f4cc13d0cf580f2",
+        "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "793c3f6fd08bef8c980da53f7b77fc2f4e60914fe1e652f47ed5a7996d9a9fa1"
+      }
+    },
+    "configs": [
+      {
+        "name": "current",
+        "env": {}
+      },
+      {
+        "name": "tau_1.5_matched_information",
+        "env": {
+          "OU_III_TAU_COEFF": "1.5",
+          "OU_III_RS_MSE_COEFF": "0.013398025994012698",
+          "OU_III_R_S_MIN": "0.12247448713915891"
+        }
+      },
+      {
+        "name": "tau_2.0_matched_information",
+        "env": {
+          "OU_III_TAU_COEFF": "2.0",
+          "OU_III_RS_MSE_COEFF": "0.00499665579722299",
+          "OU_III_R_S_MIN": "0.10606601717798211"
+        }
+      },
+      {
+        "name": "rs_floor_0.05",
+        "env": {
+          "OU_III_R_S_MIN": "0.05"
+        }
+      },
+      {
+        "name": "rs_floor_0.08",
+        "env": {
+          "OU_III_R_S_MIN": "0.08"
+        }
+      },
+      {
+        "name": "rs_floor_0.1",
+        "env": {
+          "OU_III_R_S_MIN": "0.1"
+        }
+      },
+      {
+        "name": "xy_05",
+        "env": {
+          "OU_III_R_S_X_FACTOR": ".5",
+          "OU_III_R_S_Y_FACTOR": ".5"
+        }
+      }
+    ],
+    "records": "0,1,2,3,4,5,6,7",
+    "seeds": "default",
+    "producer_sha256": "b0e6048a0b48c4433fd250d6fceebd6da9d5f26d722b9d52edd580ebfde4acf4",
+    "binary_sha256": "492561a6785d2ff2a10769a4688382395c9fe9eb7a35b0caf9edd4f0fc590b4d",
+    "protocol": "Full records, final 900 s; unchanged executable quality gates; seeded paired sensor and initialization draws",
+    "producer_snapshot": "screen-producer.py"
+  },
+  "ou3-weight": {
+    "source_commit": "121a154c9024dcce755d8b8ebbf39c1f7da92b33",
+    "simulation_provenance": {
+      "release": "v1.2.1",
+      "archive": "sim-data-files-vessel-rao-28ft.zip",
+      "archive_sha256": "6d6eb92db78e97f1d2456c6b92387993bf23be14a9a6cf26943f0a22fc6fee60",
+      "motion_model": "VESSEL_RAO_28FT",
+      "input_sha256": {
+        "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "6a8a27234cb8fe3b1ecd524d2c13a9ebd029d584652f4212023ba974bd218e03",
+        "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "cd8e8ea89123773e7d8dcf7ac8712d780528c6ff02436b0f40b4d1a6a1bb97e0",
+        "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": "11e29a93ad1084b02af116311d194416567fa6bc20ac9569f5471f97b3d9f8bb",
+        "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "f147cba9d14b87d0e1af4d3e434196312d91295cd40b9a9d738e2919e60cdaa7",
+        "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "a1a4fff90e99a5be68f7767b2865db317e413c87df8e942440c6f6ca1520cf0c",
+        "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": "3db45e87b465aed441637ba7d7d8b67c3944416a784ea9aef6ce57e9360e72e4",
+        "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": "f7d56bcfe9f901727e3dd1e21e61144d666943f6a74e2c1b5f4cc13d0cf580f2",
+        "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "793c3f6fd08bef8c980da53f7b77fc2f4e60914fe1e652f47ed5a7996d9a9fa1"
+      }
+    },
+    "configs": [
+      {
+        "name": "current",
+        "env": {}
+      },
+      {
+        "name": "ou_iii_s_factor_1.5",
+        "env": {
+          "OU_III_S_FACTOR": "1.5"
+        }
+      },
+      {
+        "name": "ou_iii_s_factor_3.0",
+        "env": {
+          "OU_III_S_FACTOR": "3.0"
+        }
+      },
+      {
+        "name": "ou_iii_tau_coeff_0.5",
+        "env": {
+          "OU_III_TAU_COEFF": "0.5"
+        }
+      },
+      {
+        "name": "ou_iii_tau_coeff_2.0",
+        "env": {
+          "OU_III_TAU_COEFF": "2.0"
+        }
+      },
+      {
+        "name": "ou_iii_tau_coeff_4.0",
+        "env": {
+          "OU_III_TAU_COEFF": "4.0"
+        }
+      },
+      {
+        "name": "sf_sigma_a_scale_0.5",
+        "env": {
+          "SF_SIGMA_A_SCALE": "0.5"
+        }
+      },
+      {
+        "name": "sf_sigma_a_scale_2.0",
+        "env": {
+          "SF_SIGMA_A_SCALE": "2.0"
+        }
+      },
+      {
+        "name": "sf_sigma_a_scale_4.0",
+        "env": {
+          "SF_SIGMA_A_SCALE": "4.0"
+        }
+      },
+      {
+        "name": "sf_sigma_g_scale_0.2",
+        "env": {
+          "SF_SIGMA_G_SCALE": "0.2"
+        }
+      },
+      {
+        "name": "sf_sigma_g_scale_2.0",
+        "env": {
+          "SF_SIGMA_G_SCALE": "2.0"
+        }
+      }
+    ],
+    "records": "0,1,2,3,4,5,6,7",
+    "seeds": "default",
+    "producer_sha256": "b0e6048a0b48c4433fd250d6fceebd6da9d5f26d722b9d52edd580ebfde4acf4",
+    "binary_sha256": "492561a6785d2ff2a10769a4688382395c9fe9eb7a35b0caf9edd4f0fc590b4d",
+    "protocol": "Full records, final 900 s; unchanged executable quality gates; seeded paired sensor and initialization draws",
+    "producer_snapshot": "screen-producer.py"
+  },
+  "yaw-noise/ou2-floor": {
+    "source_commit": "632cbe8abd633d161489f6446f26f3cec4be34ae",
+    "simulation_provenance": {
+      "release": "v1.2.1",
+      "archive": "sim-data-files-vessel-rao-28ft.zip",
+      "archive_sha256": "6d6eb92db78e97f1d2456c6b92387993bf23be14a9a6cf26943f0a22fc6fee60",
+      "motion_model": "VESSEL_RAO_28FT",
+      "input_sha256": {
+        "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "6a8a27234cb8fe3b1ecd524d2c13a9ebd029d584652f4212023ba974bd218e03",
+        "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "cd8e8ea89123773e7d8dcf7ac8712d780528c6ff02436b0f40b4d1a6a1bb97e0",
+        "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": "11e29a93ad1084b02af116311d194416567fa6bc20ac9569f5471f97b3d9f8bb",
+        "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "f147cba9d14b87d0e1af4d3e434196312d91295cd40b9a9d738e2919e60cdaa7",
+        "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "a1a4fff90e99a5be68f7767b2865db317e413c87df8e942440c6f6ca1520cf0c",
+        "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": "3db45e87b465aed441637ba7d7d8b67c3944416a784ea9aef6ce57e9360e72e4",
+        "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": "f7d56bcfe9f901727e3dd1e21e61144d666943f6a74e2c1b5f4cc13d0cf580f2",
+        "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "793c3f6fd08bef8c980da53f7b77fc2f4e60914fe1e652f47ed5a7996d9a9fa1"
+      }
+    },
+    "configs": [
+      {
+        "name": "current",
+        "env": {}
+      },
+      {
+        "name": "floor_0.015",
+        "env": {
+          "OU_II_ACC_NOISE_FLOOR_SIGMA": "0.015",
+          "OU_III_ACC_NOISE_FLOOR_SIGMA": "0.015"
+        }
+      },
+      {
+        "name": "floor_0.04",
+        "env": {
+          "OU_II_ACC_NOISE_FLOOR_SIGMA": "0.04",
+          "OU_III_ACC_NOISE_FLOOR_SIGMA": "0.04"
+        }
+      },
+      {
+        "name": "floor_0.08",
+        "env": {
+          "OU_II_ACC_NOISE_FLOOR_SIGMA": "0.08",
+          "OU_III_ACC_NOISE_FLOOR_SIGMA": "0.08"
+        }
+      },
+      {
+        "name": "floor_0.2",
+        "env": {
+          "OU_II_ACC_NOISE_FLOOR_SIGMA": "0.2",
+          "OU_III_ACC_NOISE_FLOOR_SIGMA": "0.2"
+        }
+      }
+    ],
+    "records": "0,1,2,3,4,5,6,7",
+    "seeds": "default,11,23",
+    "producer_sha256": "b0e6048a0b48c4433fd250d6fceebd6da9d5f26d722b9d52edd580ebfde4acf4",
+    "binary_sha256": "08c1ce1762eb90956e228ffce8b70a173d27156f475bfe8939c80c2ebddb039e",
+    "protocol": "Full records, final 900 s; unchanged executable quality gates; seeded paired sensor and initialization draws"
+  },
+  "yaw-noise/ou2-ridge": {
+    "source_commit": "632cbe8abd633d161489f6446f26f3cec4be34ae",
+    "simulation_provenance": {
+      "release": "v1.2.1",
+      "archive": "sim-data-files-vessel-rao-28ft.zip",
+      "archive_sha256": "6d6eb92db78e97f1d2456c6b92387993bf23be14a9a6cf26943f0a22fc6fee60",
+      "motion_model": "VESSEL_RAO_28FT",
+      "input_sha256": {
+        "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "6a8a27234cb8fe3b1ecd524d2c13a9ebd029d584652f4212023ba974bd218e03",
+        "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "cd8e8ea89123773e7d8dcf7ac8712d780528c6ff02436b0f40b4d1a6a1bb97e0",
+        "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": "11e29a93ad1084b02af116311d194416567fa6bc20ac9569f5471f97b3d9f8bb",
+        "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "f147cba9d14b87d0e1af4d3e434196312d91295cd40b9a9d738e2919e60cdaa7",
+        "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "a1a4fff90e99a5be68f7767b2865db317e413c87df8e942440c6f6ca1520cf0c",
+        "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": "3db45e87b465aed441637ba7d7d8b67c3944416a784ea9aef6ce57e9360e72e4",
+        "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": "f7d56bcfe9f901727e3dd1e21e61144d666943f6a74e2c1b5f4cc13d0cf580f2",
+        "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "793c3f6fd08bef8c980da53f7b77fc2f4e60914fe1e652f47ed5a7996d9a9fa1"
+      }
+    },
+    "configs": [
+      {
+        "name": "ridge_5e-05",
+        "env": {
+          "SF_MAG_HI_RIDGE": "5e-05"
+        }
+      },
+      {
+        "name": "ridge_0.0001",
+        "env": {
+          "SF_MAG_HI_RIDGE": "0.0001"
+        }
+      },
+      {
+        "name": "ridge_0.0002",
+        "env": {
+          "SF_MAG_HI_RIDGE": "0.0002"
+        }
+      }
+    ],
+    "records": "0,1,2,3,4,5,6,7",
+    "seeds": "default,11,23",
+    "producer_sha256": "b0e6048a0b48c4433fd250d6fceebd6da9d5f26d722b9d52edd580ebfde4acf4",
+    "binary_sha256": "08c1ce1762eb90956e228ffce8b70a173d27156f475bfe8939c80c2ebddb039e",
+    "protocol": "Full records, final 900 s; unchanged executable quality gates; seeded paired sensor and initialization draws"
+  },
+  "yaw-noise/ou2-yaw": {
+    "source_commit": "632cbe8abd633d161489f6446f26f3cec4be34ae",
+    "simulation_provenance": {
+      "release": "v1.2.1",
+      "archive": "sim-data-files-vessel-rao-28ft.zip",
+      "archive_sha256": "6d6eb92db78e97f1d2456c6b92387993bf23be14a9a6cf26943f0a22fc6fee60",
+      "motion_model": "VESSEL_RAO_28FT",
+      "input_sha256": {
+        "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "6a8a27234cb8fe3b1ecd524d2c13a9ebd029d584652f4212023ba974bd218e03",
+        "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "a1a4fff90e99a5be68f7767b2865db317e413c87df8e942440c6f6ca1520cf0c"
+      }
+    },
+    "configs": [
+      {
+        "name": "current",
+        "env": {}
+      },
+      {
+        "name": "hard_iron_off",
+        "env": {
+          "SF_MAG_CONT_HI": "0"
+        }
+      },
+      {
+        "name": "absolute_ridge_low",
+        "env": {
+          "SF_MAG_HI_RIDGE": "0.00005"
+        }
+      },
+      {
+        "name": "relative_ridge_low",
+        "env": {
+          "SF_MAG_HI_RIDGE_REL": "0.1"
+        }
+      },
+      {
+        "name": "relative_ridge_high",
+        "env": {
+          "SF_MAG_HI_RIDGE_REL": "0.5"
+        }
+      },
+      {
+        "name": "memory_cumulative",
+        "env": {
+          "SF_MAG_HI_MEMORY_SEC": "0"
+        }
+      },
+      {
+        "name": "refine_window_120",
+        "env": {
+          "SF_MAG_REFINE_WINDOW_SEC": "120"
+        }
+      }
+    ],
+    "records": "0,4",
+    "seeds": "default,11,23",
+    "producer_sha256": "b0e6048a0b48c4433fd250d6fceebd6da9d5f26d722b9d52edd580ebfde4acf4",
+    "binary_sha256": "08c1ce1762eb90956e228ffce8b70a173d27156f475bfe8939c80c2ebddb039e",
+    "protocol": "Full records, final 900 s; unchanged executable quality gates; seeded paired sensor and initialization draws"
+  },
+  "yaw-noise/ou2-yaw-validation": {
+    "source_commit": "632cbe8abd633d161489f6446f26f3cec4be34ae",
+    "simulation_provenance": {
+      "release": "v1.2.1",
+      "archive": "sim-data-files-vessel-rao-28ft.zip",
+      "archive_sha256": "6d6eb92db78e97f1d2456c6b92387993bf23be14a9a6cf26943f0a22fc6fee60",
+      "motion_model": "VESSEL_RAO_28FT",
+      "input_sha256": {
+        "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "6a8a27234cb8fe3b1ecd524d2c13a9ebd029d584652f4212023ba974bd218e03",
+        "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "cd8e8ea89123773e7d8dcf7ac8712d780528c6ff02436b0f40b4d1a6a1bb97e0",
+        "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": "11e29a93ad1084b02af116311d194416567fa6bc20ac9569f5471f97b3d9f8bb",
+        "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "f147cba9d14b87d0e1af4d3e434196312d91295cd40b9a9d738e2919e60cdaa7",
+        "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "a1a4fff90e99a5be68f7767b2865db317e413c87df8e942440c6f6ca1520cf0c",
+        "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": "3db45e87b465aed441637ba7d7d8b67c3944416a784ea9aef6ce57e9360e72e4",
+        "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": "f7d56bcfe9f901727e3dd1e21e61144d666943f6a74e2c1b5f4cc13d0cf580f2",
+        "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "793c3f6fd08bef8c980da53f7b77fc2f4e60914fe1e652f47ed5a7996d9a9fa1"
+      }
+    },
+    "configs": [
+      {
+        "name": "current",
+        "env": {}
+      },
+      {
+        "name": "ridge_0.0001",
+        "env": {
+          "SF_MAG_HI_RIDGE": "0.0001"
+        }
+      }
+    ],
+    "records": "0,1,2,3,4,5,6,7",
+    "seeds": "5003,7001,11003,15013",
+    "producer_sha256": "b0e6048a0b48c4433fd250d6fceebd6da9d5f26d722b9d52edd580ebfde4acf4",
+    "binary_sha256": "08c1ce1762eb90956e228ffce8b70a173d27156f475bfe8939c80c2ebddb039e",
+    "protocol": "Full records, final 900 s; unchanged executable quality gates; seeded paired sensor and initialization draws"
+  },
+  "yaw-noise/ou3-floor": {
+    "source_commit": "632cbe8abd633d161489f6446f26f3cec4be34ae",
+    "simulation_provenance": {
+      "release": "v1.2.1",
+      "archive": "sim-data-files-vessel-rao-28ft.zip",
+      "archive_sha256": "6d6eb92db78e97f1d2456c6b92387993bf23be14a9a6cf26943f0a22fc6fee60",
+      "motion_model": "VESSEL_RAO_28FT",
+      "input_sha256": {
+        "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "6a8a27234cb8fe3b1ecd524d2c13a9ebd029d584652f4212023ba974bd218e03",
+        "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "cd8e8ea89123773e7d8dcf7ac8712d780528c6ff02436b0f40b4d1a6a1bb97e0",
+        "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": "11e29a93ad1084b02af116311d194416567fa6bc20ac9569f5471f97b3d9f8bb",
+        "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "f147cba9d14b87d0e1af4d3e434196312d91295cd40b9a9d738e2919e60cdaa7",
+        "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "a1a4fff90e99a5be68f7767b2865db317e413c87df8e942440c6f6ca1520cf0c",
+        "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": "3db45e87b465aed441637ba7d7d8b67c3944416a784ea9aef6ce57e9360e72e4",
+        "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": "f7d56bcfe9f901727e3dd1e21e61144d666943f6a74e2c1b5f4cc13d0cf580f2",
+        "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "793c3f6fd08bef8c980da53f7b77fc2f4e60914fe1e652f47ed5a7996d9a9fa1"
+      }
+    },
+    "configs": [
+      {
+        "name": "current",
+        "env": {}
+      },
+      {
+        "name": "floor_0.015",
+        "env": {
+          "OU_II_ACC_NOISE_FLOOR_SIGMA": "0.015",
+          "OU_III_ACC_NOISE_FLOOR_SIGMA": "0.015"
+        }
+      },
+      {
+        "name": "floor_0.04",
+        "env": {
+          "OU_II_ACC_NOISE_FLOOR_SIGMA": "0.04",
+          "OU_III_ACC_NOISE_FLOOR_SIGMA": "0.04"
+        }
+      },
+      {
+        "name": "floor_0.08",
+        "env": {
+          "OU_II_ACC_NOISE_FLOOR_SIGMA": "0.08",
+          "OU_III_ACC_NOISE_FLOOR_SIGMA": "0.08"
+        }
+      },
+      {
+        "name": "floor_0.2",
+        "env": {
+          "OU_II_ACC_NOISE_FLOOR_SIGMA": "0.2",
+          "OU_III_ACC_NOISE_FLOOR_SIGMA": "0.2"
+        }
+      }
+    ],
+    "records": "0,1,2,3,4,5,6,7",
+    "seeds": "default,11,23",
+    "producer_sha256": "b0e6048a0b48c4433fd250d6fceebd6da9d5f26d722b9d52edd580ebfde4acf4",
+    "binary_sha256": "492561a6785d2ff2a10769a4688382395c9fe9eb7a35b0caf9edd4f0fc590b4d",
+    "protocol": "Full records, final 900 s; unchanged executable quality gates; seeded paired sensor and initialization draws"
+  },
+  "yaw-noise/ou3-prior-floor": {
+    "source_commit": "632cbe8abd633d161489f6446f26f3cec4be34ae",
+    "simulation_provenance": {
+      "release": "v1.2.1",
+      "archive": "sim-data-files-vessel-rao-28ft.zip",
+      "archive_sha256": "6d6eb92db78e97f1d2456c6b92387993bf23be14a9a6cf26943f0a22fc6fee60",
+      "motion_model": "VESSEL_RAO_28FT",
+      "input_sha256": {
+        "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "6a8a27234cb8fe3b1ecd524d2c13a9ebd029d584652f4212023ba974bd218e03",
+        "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "cd8e8ea89123773e7d8dcf7ac8712d780528c6ff02436b0f40b4d1a6a1bb97e0",
+        "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": "11e29a93ad1084b02af116311d194416567fa6bc20ac9569f5471f97b3d9f8bb",
+        "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "f147cba9d14b87d0e1af4d3e434196312d91295cd40b9a9d738e2919e60cdaa7",
+        "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "a1a4fff90e99a5be68f7767b2865db317e413c87df8e942440c6f6ca1520cf0c",
+        "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": "3db45e87b465aed441637ba7d7d8b67c3944416a784ea9aef6ce57e9360e72e4",
+        "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": "f7d56bcfe9f901727e3dd1e21e61144d666943f6a74e2c1b5f4cc13d0cf580f2",
+        "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "793c3f6fd08bef8c980da53f7b77fc2f4e60914fe1e652f47ed5a7996d9a9fa1"
+      }
+    },
+    "configs": [
+      {
+        "name": "floor_0.05",
+        "env": {
+          "OU_III_PRIOR_STD_FLOOR": "0.05"
+        }
+      },
+      {
+        "name": "floor_0.01",
+        "env": {
+          "OU_III_PRIOR_STD_FLOOR": "0.01"
+        }
+      },
+      {
+        "name": "floor_0.02",
+        "env": {
+          "OU_III_PRIOR_STD_FLOOR": "0.02"
+        }
+      },
+      {
+        "name": "floor_0.1",
+        "env": {
+          "OU_III_PRIOR_STD_FLOOR": "0.1"
+        }
+      }
+    ],
+    "records": "0,1,2,3,4,5,6,7",
+    "seeds": "default,11,23",
+    "producer_sha256": "b0e6048a0b48c4433fd250d6fceebd6da9d5f26d722b9d52edd580ebfde4acf4",
+    "binary_sha256": "d6fa82e048ecd93c8987b80071d18f48156e0c1fe29ce737df3744437a9a2508",
+    "protocol": "Full records, final 900 s; unchanged executable quality gates; seeded paired sensor and initialization draws"
+  },
+  "yaw-noise/ou3-ridge": {
+    "source_commit": "632cbe8abd633d161489f6446f26f3cec4be34ae",
+    "simulation_provenance": {
+      "release": "v1.2.1",
+      "archive": "sim-data-files-vessel-rao-28ft.zip",
+      "archive_sha256": "6d6eb92db78e97f1d2456c6b92387993bf23be14a9a6cf26943f0a22fc6fee60",
+      "motion_model": "VESSEL_RAO_28FT",
+      "input_sha256": {
+        "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "6a8a27234cb8fe3b1ecd524d2c13a9ebd029d584652f4212023ba974bd218e03",
+        "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "cd8e8ea89123773e7d8dcf7ac8712d780528c6ff02436b0f40b4d1a6a1bb97e0",
+        "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": "11e29a93ad1084b02af116311d194416567fa6bc20ac9569f5471f97b3d9f8bb",
+        "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "f147cba9d14b87d0e1af4d3e434196312d91295cd40b9a9d738e2919e60cdaa7",
+        "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "a1a4fff90e99a5be68f7767b2865db317e413c87df8e942440c6f6ca1520cf0c",
+        "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": "3db45e87b465aed441637ba7d7d8b67c3944416a784ea9aef6ce57e9360e72e4",
+        "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": "f7d56bcfe9f901727e3dd1e21e61144d666943f6a74e2c1b5f4cc13d0cf580f2",
+        "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "793c3f6fd08bef8c980da53f7b77fc2f4e60914fe1e652f47ed5a7996d9a9fa1"
+      }
+    },
+    "configs": [
+      {
+        "name": "ridge_5e-05",
+        "env": {
+          "SF_MAG_HI_RIDGE": "5e-05"
+        }
+      },
+      {
+        "name": "ridge_0.0001",
+        "env": {
+          "SF_MAG_HI_RIDGE": "0.0001"
+        }
+      },
+      {
+        "name": "ridge_0.0002",
+        "env": {
+          "SF_MAG_HI_RIDGE": "0.0002"
+        }
+      }
+    ],
+    "records": "0,1,2,3,4,5,6,7",
+    "seeds": "default,11,23",
+    "producer_sha256": "b0e6048a0b48c4433fd250d6fceebd6da9d5f26d722b9d52edd580ebfde4acf4",
+    "binary_sha256": "492561a6785d2ff2a10769a4688382395c9fe9eb7a35b0caf9edd4f0fc590b4d",
+    "protocol": "Full records, final 900 s; unchanged executable quality gates; seeded paired sensor and initialization draws"
+  },
+  "yaw-noise/ou3-yaw": {
+    "source_commit": "632cbe8abd633d161489f6446f26f3cec4be34ae",
+    "simulation_provenance": {
+      "release": "v1.2.1",
+      "archive": "sim-data-files-vessel-rao-28ft.zip",
+      "archive_sha256": "6d6eb92db78e97f1d2456c6b92387993bf23be14a9a6cf26943f0a22fc6fee60",
+      "motion_model": "VESSEL_RAO_28FT",
+      "input_sha256": {
+        "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "6a8a27234cb8fe3b1ecd524d2c13a9ebd029d584652f4212023ba974bd218e03",
+        "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "a1a4fff90e99a5be68f7767b2865db317e413c87df8e942440c6f6ca1520cf0c"
+      }
+    },
+    "configs": [
+      {
+        "name": "current",
+        "env": {}
+      },
+      {
+        "name": "hard_iron_off",
+        "env": {
+          "SF_MAG_CONT_HI": "0"
+        }
+      },
+      {
+        "name": "absolute_ridge_low",
+        "env": {
+          "SF_MAG_HI_RIDGE": "0.00005"
+        }
+      },
+      {
+        "name": "relative_ridge_low",
+        "env": {
+          "SF_MAG_HI_RIDGE_REL": "0.1"
+        }
+      },
+      {
+        "name": "relative_ridge_high",
+        "env": {
+          "SF_MAG_HI_RIDGE_REL": "0.5"
+        }
+      },
+      {
+        "name": "memory_cumulative",
+        "env": {
+          "SF_MAG_HI_MEMORY_SEC": "0"
+        }
+      },
+      {
+        "name": "refine_window_120",
+        "env": {
+          "SF_MAG_REFINE_WINDOW_SEC": "120"
+        }
+      }
+    ],
+    "records": "0,4",
+    "seeds": "default,11,23",
+    "producer_sha256": "b0e6048a0b48c4433fd250d6fceebd6da9d5f26d722b9d52edd580ebfde4acf4",
+    "binary_sha256": "492561a6785d2ff2a10769a4688382395c9fe9eb7a35b0caf9edd4f0fc590b4d",
+    "protocol": "Full records, final 900 s; unchanged executable quality gates; seeded paired sensor and initialization draws"
+  },
+  "yaw-noise/ou3-yaw-validation": {
+    "source_commit": "121a154c9024dcce755d8b8ebbf39c1f7da92b33",
+    "simulation_provenance": {
+      "release": "v1.2.1",
+      "archive": "sim-data-files-vessel-rao-28ft.zip",
+      "archive_sha256": "6d6eb92db78e97f1d2456c6b92387993bf23be14a9a6cf26943f0a22fc6fee60",
+      "motion_model": "VESSEL_RAO_28FT",
+      "input_sha256": {
+        "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "6a8a27234cb8fe3b1ecd524d2c13a9ebd029d584652f4212023ba974bd218e03",
+        "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "cd8e8ea89123773e7d8dcf7ac8712d780528c6ff02436b0f40b4d1a6a1bb97e0",
+        "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": "11e29a93ad1084b02af116311d194416567fa6bc20ac9569f5471f97b3d9f8bb",
+        "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "f147cba9d14b87d0e1af4d3e434196312d91295cd40b9a9d738e2919e60cdaa7",
+        "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "a1a4fff90e99a5be68f7767b2865db317e413c87df8e942440c6f6ca1520cf0c",
+        "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": "3db45e87b465aed441637ba7d7d8b67c3944416a784ea9aef6ce57e9360e72e4",
+        "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": "f7d56bcfe9f901727e3dd1e21e61144d666943f6a74e2c1b5f4cc13d0cf580f2",
+        "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "793c3f6fd08bef8c980da53f7b77fc2f4e60914fe1e652f47ed5a7996d9a9fa1"
+      }
+    },
+    "configs": [
+      {
+        "name": "current",
+        "env": {}
+      },
+      {
+        "name": "ridge_0.00005",
+        "env": {
+          "SF_MAG_HI_RIDGE": "0.00005"
+        }
+      }
+    ],
+    "records": "0,1,2,3,4,5,6,7",
+    "seeds": "5003,7001,11003,15013",
+    "producer_sha256": "b0e6048a0b48c4433fd250d6fceebd6da9d5f26d722b9d52edd580ebfde4acf4",
+    "binary_sha256": "492561a6785d2ff2a10769a4688382395c9fe9eb7a35b0caf9edd4f0fc590b4d",
+    "protocol": "Full records, final 900 s; unchanged executable quality gates; seeded paired sensor and initialization draws"
+  },
+  "yaw-noise/tfg-ridge": {
+    "source_commit": "632cbe8abd633d161489f6446f26f3cec4be34ae",
+    "simulation_provenance": {
+      "release": "v1.2.1",
+      "archive": "sim-data-files-vessel-rao-28ft.zip",
+      "archive_sha256": "6d6eb92db78e97f1d2456c6b92387993bf23be14a9a6cf26943f0a22fc6fee60",
+      "motion_model": "VESSEL_RAO_28FT",
+      "input_sha256": {
+        "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "6a8a27234cb8fe3b1ecd524d2c13a9ebd029d584652f4212023ba974bd218e03",
+        "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "cd8e8ea89123773e7d8dcf7ac8712d780528c6ff02436b0f40b4d1a6a1bb97e0",
+        "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": "11e29a93ad1084b02af116311d194416567fa6bc20ac9569f5471f97b3d9f8bb",
+        "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "f147cba9d14b87d0e1af4d3e434196312d91295cd40b9a9d738e2919e60cdaa7",
+        "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "a1a4fff90e99a5be68f7767b2865db317e413c87df8e942440c6f6ca1520cf0c",
+        "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": "3db45e87b465aed441637ba7d7d8b67c3944416a784ea9aef6ce57e9360e72e4",
+        "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": "f7d56bcfe9f901727e3dd1e21e61144d666943f6a74e2c1b5f4cc13d0cf580f2",
+        "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "793c3f6fd08bef8c980da53f7b77fc2f4e60914fe1e652f47ed5a7996d9a9fa1"
+      }
+    },
+    "configs": [
+      {
+        "name": "current",
+        "env": {}
+      },
+      {
+        "name": "ridge_5e-05",
+        "env": {
+          "SF_MAG_HI_RIDGE": "5e-05"
+        }
+      },
+      {
+        "name": "ridge_0.0001",
+        "env": {
+          "SF_MAG_HI_RIDGE": "0.0001"
+        }
+      },
+      {
+        "name": "ridge_0.0002",
+        "env": {
+          "SF_MAG_HI_RIDGE": "0.0002"
+        }
+      }
+    ],
+    "records": "0,1,2,3,4,5,6,7",
+    "seeds": "default,11,23",
+    "producer_sha256": "b0e6048a0b48c4433fd250d6fceebd6da9d5f26d722b9d52edd580ebfde4acf4",
+    "binary_sha256": "bb385642e75354dfa9f93ad4ffae7f35b53efd963edc3084e651496f3d627296",
+    "protocol": "Full records, final 900 s; unchanged executable quality gates; seeded paired sensor and initialization draws"
+  }
+}
