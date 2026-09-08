@@ -54,6 +54,7 @@ import csv
 from pathlib import Path
 from sim_dataset import input_provenance
 from model_mismatch_ablation import RECORDS
+from ou_validation import OU_II_PSEUDO_MSE_RATIO
 from scipy.signal import periodogram
 
 import numpy as np
@@ -83,7 +84,7 @@ C_SIGMA_OU_II = 0.85
 
 # Selected physical-MSE coefficients, quoted for comparison only.
 C_P_DEPLOYED = 0.1116
-C_V_DEPLOYED = C_P_DEPLOYED / 0.4
+C_V_DEPLOYED = C_P_DEPLOYED / OU_II_PSEUDO_MSE_RATIO
 
 # The simulator's first-order spectra are band-limited to 0.02-0.8 Hz.
 BAND_HZ = (0.02, 0.8)

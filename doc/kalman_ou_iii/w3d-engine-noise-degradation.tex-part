@@ -41,20 +41,20 @@ Table~\ref{tab:engine-noise-cruise} reports the current paired measurements.
 \toprule
 Family & Engine & 3-D [m] & 3-D offset [m] & Pitch [\si{\degree}] & Yaw [\si{\degree}] \\
 \midrule
-OU--II & off & 0.511 & 0.061 & 0.189 & 0.60 \\
-OU--II & on & 18.166 & 6.440 & 4.899 & 103.77 \\
-OU--III & off & 0.405 & 0.047 & 0.166 & 0.57 \\
-OU--III & on & 27.258 & 6.775 & 2.092 & 103.88 \\
+OU--II & off & 0.515 & 0.062 & 0.186 & 0.59 \\
+OU--II & on & 18.610 & 6.557 & 4.896 & 103.77 \\
+OU--III & off & 0.405 & 0.043 & 0.156 & 0.57 \\
+OU--III & on & 22.195 & 5.159 & 1.988 & 103.90 \\
 TFG & off & 0.416 & 0.089 & 0.083 & 0.55 \\
 TFG & on & 9.574 & 8.820 & 7.545 & 105.29 \\
 \bottomrule\end{tabular}\end{table}
 
 OU--III's 3-D RMS rises from \SI{0.405}{m}
-to \SI{27.258}{m}, a factor of
-\num{67.36}.
-At cruise the systematic component is \pct{24.9}
+to \SI{22.195}{m}, a factor of
+\num{54.77}.
+At cruise the systematic component is \pct{23.2}
 of the total RMS magnitude. Across families the offset fractions are
-OU--II: \pct{35.5}, OU--III: \pct{24.9}, TFG: \pct{92.1}.
+OU--II: \pct{35.2}, OU--III: \pct{23.2}, TFG: \pct{92.1}.
 Static offset therefore does not dominate both OU families.
 Pitch RMS and pitch offset are
 \SI{2.092}{\degree} and
@@ -74,8 +74,8 @@ The level and bandwidth controls should therefore be read directly from
 Figs.~\ref{fig:engine-noise-speed} and \ref{fig:engine-noise-mechanism}.
 The matched-power sweep holds recorded RMS at \SI{0.4543}{m.s^{-2}}
 while changing bandwidth and folded order locations.
- For OU--II, the maximum/minimum 3-D spread falls from \num{20.89} to \num{4.71}.
- For OU--III, the maximum/minimum 3-D spread falls from \num{25.07} to \num{9.61}.
+ For OU--II, the maximum/minimum 3-D spread falls from \num{21.10} to \num{4.74}.
+ For OU--III, the maximum/minimum 3-D spread falls from \num{23.06} to \num{8.96}.
 Recorded power explains much of the bandwidth sensitivity, while the
 remaining spread shows that equal power does not make the inputs equivalent.
 
@@ -114,21 +114,21 @@ The last column is the guard plus covariance arm divided by the engine-off basel
 \cmidrule(lr){2-4}\cmidrule(lr){5-7}
 Condition & off & guard & $+R$ & off & guard & $+R$ & $\times$ base \\
 \midrule
-Engine off & 0.405 & 0.405 & 0.405 & 0.157 & 0.157 & 0.157 & 1.000 \\
-\SI{800}{rpm} & 5.214 & 0.598 & 0.592 & 2.699 & 1.382 & 1.680 & 1.462 \\
-\SI{1600}{rpm} & 19.770 & 0.512 & 0.470 & 4.837 & 1.479 & 1.104 & 1.160 \\
-\SI{2400}{rpm} & 27.258 & 0.514 & 0.453 & 1.166 & 1.526 & 0.557 & 1.121 \\
-\SI{3200}{rpm} & 31.342 & 0.669 & 0.471 & 6.295 & 1.634 & 0.579 & 1.164 \\
-Quiet mount & 4.525 & 0.460 & 0.441 & 2.129 & 1.036 & 0.634 & 1.091 \\
-Engine bed & 112.393 & 1.063 & 0.495 & 27.927 & 1.549 & 0.546 & 1.223 \\
-Wide sensor & 27.794 & 0.458 & 0.440 & 1.224 & 1.055 & 0.036 & 1.087 \\
+Engine off & 0.405 & 0.405 & 0.405 & 0.146 & 0.146 & 0.146 & 1.000 \\
+\SI{800}{rpm} & 4.462 & 0.599 & 0.590 & 2.208 & 1.378 & 1.656 & 1.456 \\
+\SI{1600}{rpm} & 15.761 & 0.517 & 0.473 & 3.896 & 1.454 & 1.086 & 1.166 \\
+\SI{2400}{rpm} & 22.195 & 0.517 & 0.456 & 1.424 & 1.501 & 0.548 & 1.126 \\
+\SI{3200}{rpm} & 26.346 & 0.653 & 0.470 & 4.739 & 1.611 & 0.571 & 1.160 \\
+Quiet mount & 3.865 & 0.468 & 0.449 & 1.904 & 1.009 & 0.616 & 1.108 \\
+Engine bed & 125.299 & 0.994 & 0.488 & 26.237 & 1.485 & 0.541 & 1.205 \\
+Wide sensor & 23.525 & 0.469 & 0.441 & 1.245 & 1.030 & 0.036 & 1.087 \\
 \bottomrule\end{tabular}\end{table}
 
 The table reports conditioning and covariance inflation separately.
 Their relative benefit depends on the engine condition; these measurements
 do not imply uniform improvement from covariance inflation.
-At \SI{800}{rpm}, pitch offset rises from \SI{1.382}{\degree}
-to \SI{1.680}{\degree} with covariance inflation.
+At \SI{800}{rpm}, pitch offset rises from \SI{1.378}{\degree}
+to \SI{1.656}{\degree} with covariance inflation.
 For all eight engine-off records the detector stays below its rail and
 engagement is zero. Their guarded and unguarded scores are identical.
 This finite-record transparency result does not establish transparency

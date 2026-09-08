@@ -1,0 +1,261 @@
+[
+  {
+    "config": "fixed_pll_default",
+    "env": {},
+    "seed": "101",
+    "exit_code": 1,
+    "z_pct_hs": [
+      6.68103,
+      6.92586,
+      7.9657,
+      7.38005,
+      6.4152,
+      6.9559,
+      7.94352,
+      8.1706
+    ],
+    "angles_deg": [
+      [
+        0.0895478,
+        0.127105,
+        0.0
+      ],
+      [
+        0.0907903,
+        0.123627,
+        0.0
+      ],
+      [
+        0.123685,
+        0.134789,
+        8.99852e-07
+      ],
+      [
+        0.189769,
+        0.170683,
+        1.57016e-06
+      ],
+      [
+        0.0899167,
+        0.126998,
+        0.0
+      ],
+      [
+        0.0945416,
+        0.125533,
+        1.9699e-07
+      ],
+      [
+        0.156533,
+        0.156899,
+        1.559e-06
+      ],
+      [
+        0.274993,
+        0.233713,
+        2.48915e-06
+      ]
+    ],
+    "failures": [
+      "ERROR: raw Z RMS above limit (7.9657% > 7.26%). Mean Z error was -0.00418788 m. Failing.",
+      "ERROR: raw Z RMS above limit (7.38005% > 7.26%). Mean Z error was -0.00420703 m. Failing.",
+      "ERROR: raw Z RMS above limit (7.94352% > 7.13%). Mean Z error was -0.0035503 m. Failing.",
+      "ERROR: raw Z RMS above limit (8.1706% > 7.13%). Mean Z error was -0.00140357 m. Failing."
+    ]
+  },
+  {
+    "config": "fixed_pll_default",
+    "env": {},
+    "seed": "1009",
+    "exit_code": 1,
+    "z_pct_hs": [
+      6.15314,
+      6.77392,
+      7.99846,
+      7.28811,
+      6.33282,
+      7.03708,
+      7.55988,
+      8.18993
+    ],
+    "angles_deg": [
+      [
+        0.372878,
+        0.300139,
+        0.0
+      ],
+      [
+        0.409607,
+        0.319538,
+        0.0
+      ],
+      [
+        0.461785,
+        0.354656,
+        8.99852e-07
+      ],
+      [
+        0.519329,
+        0.396018,
+        1.57016e-06
+      ],
+      [
+        0.375663,
+        0.300765,
+        0.0
+      ],
+      [
+        0.401619,
+        0.313489,
+        1.9699e-07
+      ],
+      [
+        0.464007,
+        0.356415,
+        1.559e-06
+      ],
+      [
+        0.531565,
+        0.422386,
+        2.48915e-06
+      ]
+    ],
+    "failures": [
+      "ERROR: raw Z RMS above limit (7.99846% > 7.26%). Mean Z error was -0.00427638 m. Failing.",
+      "ERROR: raw Z RMS above limit (7.28811% > 7.26%). Mean Z error was -0.00698123 m. Failing.",
+      "ERROR: raw Z RMS above limit (7.55988% > 7.13%). Mean Z error was -0.00494509 m. Failing.",
+      "ERROR: raw Z RMS above limit (8.18993% > 7.13%). Mean Z error was -0.000374795 m. Failing."
+    ]
+  },
+  {
+    "config": "fixed_pll_default",
+    "env": {},
+    "seed": "2027",
+    "exit_code": 1,
+    "z_pct_hs": [
+      6.82846,
+      6.83681,
+      7.73998,
+      7.34604,
+      6.76385,
+      6.83115,
+      7.69914,
+      8.21482
+    ],
+    "angles_deg": [
+      [
+        0.174411,
+        0.278633,
+        0.0
+      ],
+      [
+        0.160545,
+        0.278307,
+        0.0
+      ],
+      [
+        0.169667,
+        0.284423,
+        8.99852e-07
+      ],
+      [
+        0.202142,
+        0.312035,
+        1.57016e-06
+      ],
+      [
+        0.17451,
+        0.279191,
+        0.0
+      ],
+      [
+        0.164772,
+        0.277311,
+        1.9699e-07
+      ],
+      [
+        0.197249,
+        0.296869,
+        1.559e-06
+      ],
+      [
+        0.287002,
+        0.341683,
+        2.48915e-06
+      ]
+    ],
+    "failures": [
+      "ERROR: raw Z RMS above limit (7.73998% > 7.26%). Mean Z error was -0.000412991 m. Failing.",
+      "ERROR: raw Z RMS above limit (7.34604% > 7.26%). Mean Z error was -0.00669339 m. Failing.",
+      "ERROR: raw Z RMS above limit (7.69914% > 7.13%). Mean Z error was -0.000706212 m. Failing.",
+      "ERROR: raw Z RMS above limit (8.21482% > 7.13%). Mean Z error was -0.00258238 m. Failing."
+    ]
+  },
+  {
+    "config": "fixed_pll_default",
+    "env": {},
+    "seed": "3037",
+    "exit_code": 1,
+    "z_pct_hs": [
+      7.86319,
+      7.15614,
+      8.16985,
+      7.60926,
+      7.66716,
+      7.2733,
+      7.97803,
+      8.42239
+    ],
+    "angles_deg": [
+      [
+        0.183916,
+        0.198075,
+        0.0
+      ],
+      [
+        0.197126,
+        0.213054,
+        0.0
+      ],
+      [
+        0.21674,
+        0.227983,
+        8.99852e-07
+      ],
+      [
+        0.278663,
+        0.258911,
+        1.57016e-06
+      ],
+      [
+        0.18393,
+        0.197831,
+        0.0
+      ],
+      [
+        0.193855,
+        0.210112,
+        1.9699e-07
+      ],
+      [
+        0.236229,
+        0.238535,
+        1.559e-06
+      ],
+      [
+        0.340222,
+        0.292205,
+        2.48915e-06
+      ]
+    ],
+    "failures": [
+      "ERROR: raw Z RMS above limit (7.86319% > 7.26%). Mean Z error was 0.000122609 m. Failing.",
+      "ERROR: raw Z RMS above limit (8.16985% > 7.26%). Mean Z error was -7.01947e-05 m. Failing.",
+      "ERROR: raw Z RMS above limit (7.60926% > 7.26%). Mean Z error was 0.00462261 m. Failing.",
+      "ERROR: raw Z RMS above limit (7.66716% > 7.13%). Mean Z error was -0.000110477 m. Failing.",
+      "ERROR: raw Z RMS above limit (7.2733% > 7.13%). Mean Z error was 0.000385138 m. Failing.",
+      "ERROR: raw Z RMS above limit (7.97803% > 7.13%). Mean Z error was -0.000398785 m. Failing.",
+      "ERROR: raw Z RMS above limit (8.42239% > 7.13%). Mean Z error was 0.0097549 m. Failing."
+    ]
+  }
+]

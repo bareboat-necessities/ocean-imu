@@ -16,11 +16,11 @@
     }
   },
   "q_eff_m2ps3": 2.1904000000000002e-06,
-  "operating_points_sha256": "66e0cb0f54fd19d67e0264854b72e583edfb794306481a20584421a1997abaf2",
+  "operating_points_sha256": "aca5959c42228a3cfad3e49f5cb5f60d98d4934f4b3c077cff743383ef397e3a",
   "producer_sha256": "0d70dfcb2310923c330171a87f0ddf32e05c2d02ea17e3a5cc057649f7a6e1dc",
   "scope": "finite-periodogram reduced-model diagnostic; no filter retuning or proof promotion",
   "files": {
-    "reduced_mse.tex": "8b98bbb4c09016c40f9536470dc3c3f63f0b8703e987355d60b86b2f92f76a7b",
-    "reduced_mse.csv": "05e1844357d6e214be60a4343ff4579e597d348777b9b73eda67d09716570b16"
+    "reduced_mse.csv": "05e1844357d6e214be60a4343ff4579e597d348777b9b73eda67d09716570b16",
+    "reduced_mse.tex": "8b98bbb4c09016c40f9536470dc3c3f63f0b8703e987355d60b86b2f92f76a7b"
   }
 }

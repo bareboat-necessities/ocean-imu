@@ -75,7 +75,7 @@
     "release": "v1.2.1"
   },
   "simulator_switch": "--no-noise",
-  "source_commit": "456430d4d2cb2449dd0ae3c7781f71c5eedf599e",
+  "source_commit": "6b20d608bca82f6487fd6d4c1d8344f4af829eef",
   "study": "noise-free model-mismatch ablation",
   "total_replays": 24,
   "window_sec": 900.0

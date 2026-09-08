@@ -256,7 +256,7 @@
     "motion_model": "VESSEL_RAO_28FT",
     "release": "v1.2.1"
   },
-  "source_commit": "1cb65a24379b74bf59443701c9ecb3be03f0574d",
+  "source_commit": "6b20d608bca82f6487fd6d4c1d8344f4af829eef",
   "study": "engine-noise degradation",
   "total_replays": 456,
   "window_sec": 900.0

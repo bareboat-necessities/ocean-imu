@@ -23,5 +23,5 @@ unexpanded objective, exact |G-1|^2 on the finite band:
   expansion cost: C_P +8.7 %, C_V -12.8 %, ratio +22.4 %
 
 relative to the selected physical-MSE schedule at the same operating points:
-  asymptotic C_P/selected = 1.410, C_V/selected = 1.344
-  selected channel ratio = 0.400, diagnostic mean ratio = 0.423
+  asymptotic C_P/selected = 1.410, C_V/selected = 1.008
+  selected channel ratio = 0.300, diagnostic mean ratio = 0.423

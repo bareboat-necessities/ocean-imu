@@ -56,7 +56,6 @@
     }
   ],
   "family": "OU-III",
-  "family_guard_report_sha256": "3cf17579f80bd081b644c03353051d704a8229aac5886a0c98f093cc52b4be3f",
   "guard": {
     "cutoff_hz": 14.0,
     "poles": 2,
@@ -127,8 +126,15 @@
     "motion_model": "VESSEL_RAO_28FT",
     "release": "v1.2.1"
   },
-  "source_commit": "456430d4d2cb2449dd0ae3c7781f71c5eedf599e",
+  "source_commit": "6b20d608bca82f6487fd6d4c1d8344f4af829eef",
   "study": "engine-noise mitigation (OU-III accelerometer vibration guard)",
   "total_replays": 192,
-  "window_sec": 900.0
+  "window_sec": 900.0,
+  "cross_family_check": {
+    "source_commit": "6b20d608bca82f6487fd6d4c1d8344f4af829eef",
+    "workflow_run": 34238512816,
+    "artifact_id": 10061848730,
+    "source": "study.log: Pooled over 8 stationary records",
+    "scope": "96 paired replays; self-check against the same runner degradation outputs; quality thresholds unchanged"
+  }
 }

@@ -14,7 +14,7 @@ def main():
  paths={r.filename:(binary.parent/r.filename).resolve() for r in RECORDS};prov=input_provenance(paths.values());binary_hash=hashlib.sha256(binary.read_bytes()).hexdigest()
  for c in configs:
   for k in c['env']:
-   if k not in ['PII_R_SCALE','PII_TAU_A_SCALE','PII_KP_SCALE','PII_KI_SCALE','NLO_THETA','NLO_THETA_GAIN','NLO_THETA_TAU','NLO_K1I','NLO_KII']:raise ValueError(k)
+   if k not in ['PII_R_SCALE','PII_TAU_A_SCALE','PII_KP_SCALE','PII_KI_SCALE','NLO_THETA','NLO_THETA_GAIN','NLO_THETA_TAU','NLO_COARSE_TAU','NLO_K1I','NLO_KII']:raise ValueError(k)
  def run(task):
   c,seed=task;key=c['name']+'_'+seed
   with tempfile.TemporaryDirectory(prefix='observer-tuning-') as tmp:

@@ -342,6 +342,11 @@ public:
             if constexpr (requires { c.f_max_hz; })     c.f_max_hz = R(0.50);
             if constexpr (requires { c.pre_lp_hz; })    c.pre_lp_hz = R(0.60);
             if constexpr (requires { c.lock_rms_min; }) c.lock_rms_min = R(5e-4);
+            // Average crossing periods over many waves in this broadband
+            // displacement channel. The coarse smoother now advances on its
+            // physical event clock; a short acquisition horizon makes the
+            // NLO gain schedule follow individual irregular-wave crossings.
+            if constexpr (requires { c.coarse_smooth_tau_s; }) c.coarse_smooth_tau_s = R(120.0);
             return c;
         }();
     };

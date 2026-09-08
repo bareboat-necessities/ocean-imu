@@ -1,0 +1,168 @@
+[
+  {
+    "config": "head",
+    "seed": "101",
+    "env": {},
+    "exit_code": 1,
+    "z_pct_hs": [
+      154.405,
+      6.70575,
+      6.70322,
+      6.98515,
+      122.007,
+      13.2151,
+      6.63,
+      6.46476
+    ],
+    "failures": [
+      "ERROR: raw Z RMS above limit (154.405% > 7.26%). Mean Z error was 0.0169695 m. Failing.",
+      "ERROR: raw Z RMS above limit (122.007% > 7.13%). Mean Z error was 0.00408124 m. Failing.",
+      "ERROR: raw Z RMS above limit (13.2151% > 7.13%). Mean Z error was -0.000119153 m. Failing."
+    ]
+  },
+  {
+    "config": "head",
+    "seed": "1009",
+    "env": {},
+    "exit_code": 1,
+    "z_pct_hs": [
+      180.407,
+      6.5436,
+      6.41787,
+      6.77482,
+      141.687,
+      6.5445,
+      6.32645,
+      6.7061
+    ],
+    "failures": [
+      "ERROR: raw Z RMS above limit (180.407% > 7.26%). Mean Z error was -0.0615852 m. Failing.",
+      "ERROR: raw Z RMS above limit (141.687% > 7.13%). Mean Z error was -0.024944 m. Failing."
+    ]
+  },
+  {
+    "config": "head",
+    "seed": "2027",
+    "env": {},
+    "exit_code": 0,
+    "z_pct_hs": [
+      6.41045,
+      6.62032,
+      6.56124,
+      6.938,
+      6.5665,
+      6.39811,
+      6.52985,
+      6.07312
+    ],
+    "failures": []
+  },
+  {
+    "config": "head",
+    "seed": "3037",
+    "env": {},
+    "exit_code": 1,
+    "z_pct_hs": [
+      38.1503,
+      7.13297,
+      6.99505,
+      7.11705,
+      6.68824,
+      6.91675,
+      6.93226,
+      6.59976
+    ],
+    "failures": [
+      "ERROR: raw Z RMS above limit (38.1503% > 7.26%). Mean Z error was 0.00600231 m. Failing."
+    ]
+  },
+  {
+    "config": "candidate",
+    "seed": "101",
+    "env": {
+      "NLO_COARSE_TAU": "120"
+    },
+    "exit_code": 1,
+    "z_pct_hs": [
+      7.14478,
+      6.80348,
+      7.0299,
+      6.94829,
+      7.64834,
+      6.77343,
+      6.8852,
+      6.99932
+    ],
+    "failures": [
+      "ERROR: raw Z RMS above limit (7.64834% > 7.13%). Mean Z error was -0.00135054 m. Failing."
+    ]
+  },
+  {
+    "config": "candidate",
+    "seed": "1009",
+    "env": {
+      "NLO_COARSE_TAU": "120"
+    },
+    "exit_code": 1,
+    "z_pct_hs": [
+      8.23165,
+      6.66911,
+      6.88023,
+      6.7175,
+      8.60187,
+      6.58724,
+      6.8465,
+      7.10089
+    ],
+    "failures": [
+      "ERROR: raw Z RMS above limit (8.23165% > 7.26%). Mean Z error was -0.00130373 m. Failing.",
+      "ERROR: raw Z RMS above limit (8.60187% > 7.13%). Mean Z error was -0.00151535 m. Failing."
+    ]
+  },
+  {
+    "config": "candidate",
+    "seed": "2027",
+    "env": {
+      "NLO_COARSE_TAU": "120"
+    },
+    "exit_code": 1,
+    "z_pct_hs": [
+      6.81782,
+      6.74745,
+      6.9626,
+      6.88869,
+      7.22484,
+      6.68341,
+      6.82847,
+      7.02936
+    ],
+    "failures": [
+      "ERROR: raw Z RMS above limit (7.22484% > 7.13%). Mean Z error was 0.00034706 m. Failing."
+    ]
+  },
+  {
+    "config": "candidate",
+    "seed": "3037",
+    "env": {
+      "NLO_COARSE_TAU": "120"
+    },
+    "exit_code": 1,
+    "z_pct_hs": [
+      13.6171,
+      7.20574,
+      7.29043,
+      7.07517,
+      8.4306,
+      7.06879,
+      7.23535,
+      7.30331
+    ],
+    "failures": [
+      "ERROR: raw Z RMS above limit (13.6171% > 7.26%). Mean Z error was -0.00017692 m. Failing.",
+      "ERROR: raw Z RMS above limit (7.29043% > 7.26%). Mean Z error was 0.000721168 m. Failing.",
+      "ERROR: raw Z RMS above limit (8.4306% > 7.13%). Mean Z error was -1.16288e-05 m. Failing.",
+      "ERROR: raw Z RMS above limit (7.23535% > 7.13%). Mean Z error was 0.00049643 m. Failing.",
+      "ERROR: raw Z RMS above limit (7.30331% > 7.13%). Mean Z error was 0.000472537 m. Failing."
+    ]
+  }
+]

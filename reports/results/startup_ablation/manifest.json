@@ -1,11 +1,11 @@
 {
   "binary_sha256": {
-    "OU-II": "702add58b609cfdb374dfd3bf7bf6dc459c922056ffb9cdd262b3d11192d5bf3",
-    "OU-III": "db39fb62f67b0ed790125e10bab534953a430cad10ab906dc4c05f58d2715055",
-    "TFG": "265ae56a9f192a15781fa02ec6643b029963217af9adeddfd6affc36a4825818"
+    "OU-II": "e8ff749fac28b1e2ed1f143b67902416da7791eb2e653f2890787d39c0563f6d",
+    "OU-III": "4e4fe552a3b388684d31e567033be1ed30866be3ceb4a5bd9115aaff187a0cde",
+    "TFG": "53e3213c0addc1add163497814d724649a178b93ce9beb58f6c4336f97954425"
   },
   "files": {
-    "startup_runs.csv": "66e0cb0f54fd19d67e0264854b72e583edfb794306481a20584421a1997abaf2"
+    "startup_runs.csv": "aca5959c42228a3cfad3e49f5cb5f60d98d4934f4b3c077cff743383ef397e3a"
   },
   "producer_sha256": "b2d63f54c0c671e3612910a18f823536c77128e2857af468806b9130547ad92e",
   "protocol": "default sensor draw; final 900 s; paired initial-calibration seeds",
@@ -33,5 +33,5 @@
     "motion_model": "VESSEL_RAO_28FT",
     "release": "v1.2.1"
   },
-  "source_commit": "456430d4d2cb2449dd0ae3c7781f71c5eedf599e"
+  "source_commit": "6b20d608bca82f6487fd6d4c1d8344f4af829eef"
 }

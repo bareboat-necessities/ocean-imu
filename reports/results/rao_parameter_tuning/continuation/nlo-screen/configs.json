@@ -1,0 +1,38 @@
+[
+  {
+    "name": "gain_0.3",
+    "env": {
+      "NLO_THETA_GAIN": "0.3"
+    }
+  },
+  {
+    "name": "gain_0.4",
+    "env": {
+      "NLO_THETA_GAIN": "0.4"
+    }
+  },
+  {
+    "name": "gain_0.45",
+    "env": {
+      "NLO_THETA_GAIN": "0.45"
+    }
+  },
+  {
+    "name": "gain_0.5",
+    "env": {
+      "NLO_THETA_GAIN": "0.5"
+    }
+  },
+  {
+    "name": "gain_0.56",
+    "env": {
+      "NLO_THETA_GAIN": "0.56"
+    }
+  },
+  {
+    "name": "gain_0.65",
+    "env": {
+      "NLO_THETA_GAIN": "0.65"
+    }
+  }
+]

@@ -9,3 +9,6 @@ settings; deployed adapters configure their own preprocessing.
 The injected corruption, input records, tracker-specific random seeds,
 \(0.04\)--\(2.0\,\mathrm{Hz}\) output limits, final five-second scoring
 window, and \(70\%\) pairwise disagreement limit are unchanged.
+This gate checks agreement between trackers; it does not certify accuracy
+against a reference spectrum. On the slowest cnoidal record, for example,
+the final means still range from \(0.040\) to \(0.090\,\mathrm{Hz}\).

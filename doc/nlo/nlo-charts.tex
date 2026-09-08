@@ -41,6 +41,14 @@
 This report shows the no-GNSS/no-magnetometer TimeVarGain nonlinear observer simulation.
 The observer uses the vertical VVR constraint and IMU measurements only. Yaw is free and is not interpreted as an observable output.
 
+The PLL coarse-frequency smoother advances once per detected period using
+that elapsed period. For this broadband displacement channel, its time
+constant is 120 seconds; the gain multiplier remains 0.56 and the separate
+gain-smoothing time constant remains 30 seconds. The longer coarse horizon
+reduces irregular-wave crossing jitter, with a corresponding acquisition lag.
+Validation here covers stationary vessel records, not a guarantee of tracking
+rapidly changing seas. The original displacement quality limits are unchanged.
+
 \section*{Attitude}
 
 \plotpgf{w3d_tvg_nlo_pmstokes_low_att}

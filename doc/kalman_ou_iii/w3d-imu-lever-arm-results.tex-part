@@ -1,6 +1,6 @@
 The CG-mounted baseline has pooled 3-D displacement RMS of
 \SI{0.405}{m} and maximum pooled
-roll/pitch RMS of \SI{0.255}{\degree}.
+roll/pitch RMS of \SI{0.251}{\degree}.
 Table~\ref{tab:imu-lever-arm} reports the worst canonical direction at each
 installation distance.  At \SI{30}{cm} the rotational term
 reaches \SI{0.116}{\meter\per\second\squared} RMS in the worst
@@ -30,8 +30,8 @@ depends on the interaction with existing residuals; force subtraction need not i
     Offset & Max 3-D / CG & Max tilt / CG & Gyro model & Exact model \\
     {[cm]} & unmodeled & unmodeled & max 3-D / CG & max 3-D / CG \\
     \midrule
-    10 & 1.000 (port) & 0.998 (port) & 1.000 & 1.000 \\
-    20 & 1.002 (port) & 0.995 (port) & 1.000 & 1.000 \\
+    10 & 1.001 (port) & 0.998 (port) & 1.000 & 1.000 \\
+    20 & 1.002 (port) & 0.994 (port) & 1.001 & 1.000 \\
     30 & 1.003 (port) & 0.988 (port) & 1.001 & 1.000 \\
     \bottomrule
   \end{tabular}
@@ -41,14 +41,14 @@ The deployable model has one design parameter, the band of its rate
 derivative, and it is two-sided.  Over the same eight seas with a
 \SI{30}{cm} port arm, a
 \SI{1}{Hz} corner leaves
-\num{1.010} times the CG
+\num{1.013} times the CG
 baseline because the low-pass phase lag misaligns a correction whose
 amplitude is already right, and a \SI{100}{Hz}
-corner leaves \num{1.014} because
+corner leaves \num{1.025} because
 the differentiated gyro noise it admits exceeds the term it removes.  The
 basin between them is flat: the deployed
 \SI{15}{Hz} corner reaches
 \num{1.000} and the best
-corner measured, \SI{10}{Hz}, reaches
-\num{1.000}, so the model is
+corner measured, \SI{5}{Hz}, reaches
+\num{0.999}, so the model is
 robust to this choice rather than tuned to it.

@@ -219,6 +219,9 @@ private:
         if (const char* s = std::getenv("NLO_THETA_TAU")) {
             cfg.theta_smooth_tau_s = std::strtof(s, nullptr);
         }
+        if (const char* s = std::getenv("NLO_COARSE_TAU")) {
+            cfg.wave_freq_tracker.coarse_smooth_tau_s = std::strtof(s, nullptr);
+        }
         if (const char* s = std::getenv("NLO_VIRT_XY")) {
             cfg.filter.use_virtual_horizontal_position = (std::atoi(s) != 0);
         }

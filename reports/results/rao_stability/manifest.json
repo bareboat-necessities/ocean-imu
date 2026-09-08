@@ -7,11 +7,28 @@
     "tools/stability/ou3_brmm_riccati_metric_p4.py": "8be5a721b29d7c49c5b56f40a3a601867d63c7de4a2807d9885309337d74f61b"
   },
   "files": {
-    "runtime-audit.json": "83b0227b2ab856428c7c1053d71b3c4cc622a3b6aa0ccabecc43825d4c0a4918",
+    "runtime-audit.json": "163e3a7a37b0a8b2f183a60f791026d0dbfb379772b3d88232e95493848976c7",
     "p4.json": "6d3556053783eb0c5d63413e32c6a3ca95ae3f9817aa59be5d04a93679a78dc3",
     "motion.json": "c1167ca999c46a3b3b2eb57ddb06e7747abec3e133649a9edb7495ed24338cce",
     "p3.json": "5efa4980d2a4bd9855bd80ba7c40b058da625bdb8131d1c68d62ec7957ec3e7f",
     "source-endpoint.json": "9024d858789db9d5c7fb398167a89d32cf4b7ffb482bcd343643e69121f1c4ab",
     "joint-sector.json": "d6ca14c9c360c8a9cc2e89bab47b8736af01544ed5e2ce377a1a6bcae203a843"
+  },
+  "runtime_rerun": {
+    "source_commit": "5c19226291a2beb735906009d5eaf776cc5e0b0f",
+    "pr_head": "6b20d608bca82f6487fd6d4c1d8344f4af829eef",
+    "workflow_run": 34238517793,
+    "artifact_id": 10061151074,
+    "qualification": "Passive runtime audit; all eight shipping-source hashes checked; no proof promotion"
+  },
+  "p3_rerun": {
+    "pr_head": "6b20d608bca82f6487fd6d4c1d8344f4af829eef",
+    "workflow_run": 34238517952,
+    "artifact_id": 10061431600
+  },
+  "p4_rerun": {
+    "pr_head": "6b20d608bca82f6487fd6d4c1d8344f4af829eef",
+    "workflow_run": 34238517952,
+    "artifact_id": 10062121515
   }
 }

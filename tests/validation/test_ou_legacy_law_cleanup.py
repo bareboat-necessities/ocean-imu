@@ -32,7 +32,7 @@ class OULegacyLawCleanupTests(unittest.TestCase):
         self.assertIn(r"\label{eq:deployed-rp}", paper)
         self.assertIn(r"\label{eq:deployed-rv}", paper)
         self.assertIn("C_P=0.1116", paper)
-        self.assertIn(r"\frac{C_P}{C_V}=0.4", paper)
+        self.assertIn(r"\frac{C_P}{C_V}=0.3", paper)
         for retired in (
             "PseudoAdaptationLaw::Empirical",
             "implemented empirical",
