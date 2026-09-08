@@ -255,7 +255,8 @@ class OuArticleEngineNoiseContractTests(unittest.TestCase):
                 )
             )
             with self.subTest(family=family):
-                expected = (family.replace("-", "--") + rf": \pct{{{100 * offset / float(row["disp_3d_rms_m"]):.1f}}}")
+                fraction_pct = 100 * offset / float(row["disp_3d_rms_m"])
+                expected = family.replace("-", "--") + rf": \pct{{{fraction_pct:.1f}}}"
                 self.assertIn(expected, article)
 
     def test_figures_are_mirrored_from_generated_evidence(self):
