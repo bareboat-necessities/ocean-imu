@@ -1,4 +1,5 @@
 from pathlib import Path
+import subprocess
 import unittest
 
 
@@ -210,6 +211,23 @@ class WorkflowContractTests(unittest.TestCase):
         workflow = WORKFLOW.read_text(encoding="utf-8")
         smoke = workflow[workflow.index("  validate:"):workflow.index("  fingerprint:")]
         self.assertIn("make -C tests/validation test", smoke)
+
+    def test_brmm_matrix_searches_have_ci_owners_outside_publication(self):
+        command = subprocess.check_output(
+            ["make", "-s", "-n", "evidence-test"],
+            cwd=VALIDATION_MAKEFILE.parent, text=True,
+        )
+        tests = command.split("python3 -m unittest -v ")[-1].split()
+        workflows = "\n".join(p.read_text().partition("jobs:")[2]
+                              for p in (REPO_ROOT / ".github/workflows").glob("ou3*.yml"))
+        for path in VALIDATION_MAKEFILE.parent.glob("test_ou3_brmm_*.py"):
+            module = path.stem
+            if module == "test_ou3_brmm_runtime":
+                continue
+            self.assertNotIn(module, tests)
+            self.assertIn(module + "\n", workflows.replace(" \\\n", "\n"))
+        self.assertIn("test_ou_evidence_contract", tests)
+        self.assertIn("test_ou3_brmm_runtime", tests)
 
     def test_commit_job_validates_against_the_regenerated_commit(self):
         """The bundles are made at github.sha, so the gate must see that tree.

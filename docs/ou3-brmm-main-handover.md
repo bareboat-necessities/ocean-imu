@@ -98,6 +98,14 @@ retained; the previously missing forcing attachment was -S_true.
 
 ## Current continuation
 
+The user is fixing oceanography-waves-lib separately. Leave that work to the
+user. The checked-in audit describes the unchanged v1.1.3 archive, not the
+corrected generator. Keep both phase cap proposals provisional. Once a corrected
+release is supplied, pin its identity, genuinely regenerate all eight records,
+rerun both source and runtime audits, and then reassess the numerical envelope
+and actual replay Racc/Rmag before rebuilding broader P3.
+
+
 Read docs/ou3-proof-research-state.md and docs/ou3-brmm-runtime-audit.json.
 The eight-case runtime attachment is now implemented. Live itself contains
 acceleration/rate violations, and actual replay Racc/Rmag differ from the
@@ -120,7 +128,36 @@ was downloaded and its ZIP SHA256 verified as
 This supersedes the queued P3 status at landing. The result is conditional
 on its declared configuration and is not a broader-domain or nonlinear PASS.
 
-The separate inherited replay-provenance failure requires genuine full
-validation/robustness regeneration through the existing full-study workflow.
-No quality gate, dependency hash or proof threshold may be bypassed. See
-the current research ledger for the runtime experiment and its validation.
+## Evidence recovery and release handover
+
+The full validation and robustness bundles were genuinely regenerated on
+85e04037 by run 34173418479. Their publication job timed out in a renamed
+BRMM proof search; it did not publish the bundles. The recovered artifacts
+are 10037040546 (validation, SHA256
+383537dba6baeffba0d0aac8995e6a9d7a3f1f8840c79914079f07266824c843) and
+10037010990 (robustness, SHA256
+3eaa7b32194d50c9cca40f4befd740fe4fc47f5e5c117b2d1e77cb44c68e5dbc).
+Their hashes were verified and the normal evidence contract initialized their
+provenance at the actual original replay commit, then verified the unchanged
+replay dependency closure on the audit branch. Raw rows were not relabeled.
+
+Evidence publication now leaves BRMM source-only searches to their dedicated
+CI jobs. A regression checks that every such module has an explicit CI owner.
+The full local test target still runs all tests; publication still runs the
+scientific evidence contracts. The runtime audit's pandas dependency is
+installed in validation jobs.
+
+PR #505 revision 3d487972 passed the eight-case runtime audit in job
+101905861666, conditional P3 (56 tests) in job 101906259900, and quality gates.
+The CI runtime counts agree with the local audit. P4's green test job validates
+its current non-promoting machinery; P4 and P5 remain mathematically open.
+
+Before a release tag, fetch main after the authorized merge and automatic
+evidence publication. Run the evidence contract and verify
+reports/ou_evidence_fingerprint.json against the exact simulation archive.
+The conservative repository fingerprint must be emitted by the genuine full
+workflow on the resulting revision, not rewritten to suppress regeneration.
+Check the completed main build, proof and quality jobs, and use that verified
+main revision as the tag target. Do not tag an intermediate pre-evidence tip.
+The release must state conditional P3 and open P4/P5; it does not certify the
+unqualified wider physical envelopes or the future generator correction.

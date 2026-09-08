@@ -7,6 +7,10 @@
 # their verdict. `evidence-test` therefore leaves them to the workflow that
 # owns them, and runs every contract that does depend on the evidence tree.
 PROOF_SEARCH_TESTS := $(wildcard test_ou3_p2_*.py test_ou3_p3_*.py test_ou3_p4_*.py test_ou3_p5_*.py)
+# BRMM proof producers have descriptive names rather than the stage prefix.
+# These source-only matrix searches are owned by the dedicated proof workflows;
+# keep them out of evidence publication while retaining them in the full test.
+PROOF_SEARCH_TESTS += $(filter-out test_ou3_brmm_runtime.py,$(wildcard test_ou3_brmm_*.py))
 EVIDENCE_TESTS := $(filter-out $(PROOF_SEARCH_TESTS),$(wildcard test_*.py))
 
 build:

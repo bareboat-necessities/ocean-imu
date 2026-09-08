@@ -160,21 +160,29 @@ prefix retention before any rigorous source covering. P5 remains blocked.
 
 ## Validation state
 
-Eight attachment tests and focused Python lint pass. Every retained compressed
-trace was rechecked against its decompressed capture SHA256, and all eight
-histories were reanalyzed successfully. One truncated retained local gzip was
-recovered from an earlier byte-identical capture and checked against the final
-expected hash; this was an artifact-storage failure, not modified evidence.
+PR #505 revision 3d487972 passed the eight-case runtime CI job 101905861666,
+conditional P3 job 101906259900 (56 tests), and quality gates. All runtime
+counts agree with the local result. The eight attachment tests and eight raw
+source tests pass. No nonlinear P4/P5 promotion follows from green tests.
 
-`make all CPPFLAGS=-I/workspace/scratch/a68889bf9a31/eigen-3.4
-EIGEN_DIR=/workspace/scratch/a68889bf9a31/eigen-3.4
-SIM_DATA_ZIP=/workspace/scratch/a68889bf9a31/sim-data-files.zip` built with
-Eigen 3.4 and reached the inherited evidence-contract failure. Exact failing
-command in tests/validation: `python3 ../../tools/ou_evidence_contract.py --auto`.
-It reports "replay dependency differs from replay provenance" for OU-II,
-OU-III, WavePeriodEstimator and the OU-III simulator; make exits 2.
-This invalidates a complete local validation PASS, not the runtime audit.
-Main's automatic genuine regeneration has completed its validation/robustness
-shards and combination; its commit step was still running when checked.
-Verify the resulting evidence revision before declaring that gate repaired.
-It must never be repaired by hand-stamping dependency hashes.
+Full validation/robustness replays completed on main 85e04037 in run
+34173418479. Publication job 101903490256 timed out after the source-only
+spectral-moment tests, before the next BRMM search completed. Class: CI routing
+failure; the stage-prefix exclusion missed renamed BRMM modules. It invalidates
+publication completion, not the regenerated raw rows. Increasing timeouts
+again would leave the same coupling. Alternatives: route source-only tests to
+their existing proof jobs, shard them, or reuse exact-revision proof artifacts.
+The selected correction routes them to explicit CI owners, with a regression
+checking ownership; the full test target and evidence contracts remain intact.
+
+The two full artifacts were recovered, their ZIP identities verified, and
+provenance initialized by the normal contract at the genuine replay commit.
+The contract passes against the current replay dependency closure. Original
+raw-row identity and replay commit are retained. Artifact identities and
+release checks are in docs/ou3-brmm-main-handover.md. Main must still complete
+its automatic full publication and conservative fingerprint check before a
+release tag; do not restamp a fingerprint to avoid that gate.
+
+The user owns the generator correction. Continue physical qualification only
+after corrected reference records are supplied. Until then preserve the v1.1.3
+audit as evidence of the existing records and leave all proposed caps unfrozen.

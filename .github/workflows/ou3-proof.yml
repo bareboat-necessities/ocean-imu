@@ -128,7 +128,12 @@ jobs:
             test_ou3_translational_uco_ucc \
             test_ou3_full_process_ucc \
             test_ou3_vector_uco_certificate \
-            test_ou3_p3_pseudo_scheduler_progress_certificate
+            test_ou3_p3_pseudo_scheduler_progress_certificate \
+            test_ou3_brmm_dynamic_source_certificate \
+            test_ou3_brmm_private_mahony_discrete_comparison \
+            test_ou3_brmm_riccati_tube \
+            test_ou3_brmm_spectral_moment_bridge \
+            test_ou3_brmm_wave_period_frontend
 
   complete-brmm-source:
     needs: source-foundation
