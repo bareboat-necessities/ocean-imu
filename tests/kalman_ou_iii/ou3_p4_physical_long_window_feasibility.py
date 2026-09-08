@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Non-promoting 6/9 s physical complete-SEA3 P4 feasibility probe.
+"""Non-promoting 6/9 s physical complete-BRMM P4 feasibility probe.
 
 This is deliberately different from the retired multiword estimator-pair
 shadow experiment.  One shipping observer scans ONE source-contiguous window of
@@ -24,7 +24,7 @@ import os
 from pathlib import Path
 import subprocess
 
-import ou3_p4_complete_sea3_word_feasibility as WORD
+import ou3_p4_complete_brmm_word_feasibility as WORD
 import ou3_p4_physical_finite_map_feasibility as BASE
 import ou3_p4_physical_finite_map_feasibility_fast as FAST
 import ou3_p4_canonicalize_physical_payload as CANON
@@ -114,8 +114,8 @@ def analyze_linear_windows(map_path: Path, cov_path: Path, stride: int) -> dict:
         }
 
     return {
-        "qualification": "NON_PROMOTING_COMPLETE_SEA3_P4_LONG_PHYSICAL_WINDOW_LINEAR_SCAN",
-        "canonical_source": "COMPLETE_SEA3_NORMAL_LIVE_WORD",
+        "qualification": "NON_PROMOTING_COMPLETE_BRMM_P4_LONG_PHYSICAL_WINDOW_LINEAR_SCAN",
+        "canonical_source": "COMPLETE_BRMM_NORMAL_LIVE_WORD",
         "same_history_point_diagnostic_only": True,
         "stride_samples": stride,
         "horizon_s": expected_horizon,
@@ -231,8 +231,8 @@ def physical_report(
     valid = [c for c in cases if c["domain_retained"]]
     crossings = [c for c in valid if c["rho_endpoint"] >= 1.0]
     return {
-        "qualification": "NON_PROMOTING_COMPLETE_SEA3_PHYSICAL_LONG_WINDOW_POINT_V1",
-        "canonical_source": "COMPLETE_SEA3_NORMAL_LIVE_WORD",
+        "qualification": "NON_PROMOTING_COMPLETE_BRMM_PHYSICAL_LONG_WINDOW_POINT_V1",
+        "canonical_source": "COMPLETE_BRMM_NORMAL_LIVE_WORD",
         "point_same_history_diagnostic_only": True,
         "physical_true_minus_estimated_map": True,
         "reset_normalized_metric_diagnostic_only": True,
@@ -313,8 +313,8 @@ def main() -> int:
         )
 
     result = {
-        "qualification": "NON_PROMOTING_COMPLETE_SEA3_P4_PHYSICAL_LONG_WINDOW_FEASIBILITY_V1",
-        "canonical_source": "COMPLETE_SEA3_NORMAL_LIVE_WORD",
+        "qualification": "NON_PROMOTING_COMPLETE_BRMM_P4_PHYSICAL_LONG_WINDOW_FEASIBILITY_V1",
+        "canonical_source": "COMPLETE_BRMM_NORMAL_LIVE_WORD",
         "point_same_history_diagnostic_only": True,
         "window_stride_samples": args.stride,
         "window_horizon_s": args.stride * DT,

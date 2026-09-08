@@ -1,5 +1,5 @@
 // Execute the pinned physical generator through its public API. This observes
-// its spectrum; it is neither an estimator nor a replacement SEA3 provider.
+// its spectrum; it is neither an estimator nor a replacement BRMM provider.
 // This audit utility requires the external pinned generator headers. CI builds
 // it explicitly with warnings as errors, separately from the filter host TUs.
 #define EIGEN_NON_ARDUINO

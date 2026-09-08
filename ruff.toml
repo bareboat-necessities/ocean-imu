@@ -46,10 +46,10 @@ ignore = [
 "tools/ou_robustness.py" = ["F403"]
 
 # These three retained pre-#491 proof utilities already carry one dead import
-# each on main.  They are not part of the canonical SEA3 P3 route and #491 does
-# not modify them.  Keep F401 strict everywhere else (including every new SEA3
+# each on main.  They are not part of the canonical BRMM P3 route and #491 does
+# not modify them.  Keep F401 strict everywhere else (including every new BRMM
 # module) while quarantining this unrelated baseline until those retired/legacy
 # utilities are cleaned or removed in their owning change.
 "tools/stability/ou3_decimal_interval.py" = ["F401"]
-"tools/stability/ou3_sea3_full_normal_live_word.py" = ["F401"]
-"tools/stability/ou3_sea3_riccati_tube.py" = ["F401"]
+"tools/stability/ou3_brmm_full_normal_live_word.py" = ["F401"]
+"tools/stability/ou3_brmm_riccati_tube.py" = ["F401"]

@@ -4,21 +4,21 @@ on:
   push:
     paths: &audit_paths
       - "tests/kalman_ou_iii/ou3_p4_*"
-      - "tests/kalman_ou_iii/ou3_physical_sea3_membership.py"
+      - "tests/kalman_ou_iii/ou3_physical_brmm_membership.py"
       - "tools/stability/ou3-sea-generator-membership.cpp"
       - "tools/stability/ou3-source-endpoint.cpp"
-      - "tools/stability/ou3_sea3_response_union.py"
-      - "tests/validation/test_ou3_sea3_response_union.py"
+      - "tools/stability/ou3_brmm_response_union.py"
+      - "tests/validation/test_ou3_brmm_response_union.py"
       - "tests/kalman_ou_iii/fixtures/ou3_physical_generator_provenance.json"
       - "tests/kalman_ou_iii/fixtures/ou3_p4_retained_*"
       - "tests/validation/test_ou3_bias_witness_admissibility.py"
       - "tests/validation/test_ou3_retained_word_attachment.py"
-      - "tests/validation/test_ou3_physical_sea3_membership.py"
+      - "tests/validation/test_ou3_physical_brmm_membership.py"
       - "tests/validation/test_ou3_source_endpoint.py"
       - "tests/validation/test_ou3_connected_motion.py"
       - "tests/validation/test_ou3_motion_gain.py"
       - "tools/stability/ou3_mems_bias_contract.py"
-      - "tools/stability/ou3_p4_complete_sea3_signed_information_ledger.py"
+      - "tools/stability/ou3_p4_complete_brmm_signed_information_ledger.py"
       - "tools/stability/ou3_proof_operating_domain.json"
       - ".github/workflows/ou3-p4-physical-finite-map-feasibility.yml"
   pull_request:
@@ -54,19 +54,19 @@ jobs:
           path: _physical-sea-generator
           persist-credentials: false
 
-      - name: Execute the generating model and check physical SEA3 admission
+      - name: Execute the generating model and check physical BRMM admission
         run: |
           g++ -std=c++20 -O2 -Wall -Wextra -Wpedantic -Werror \
             -isystem /usr/include/eigen3 -isystem _physical-sea-generator/src \
             tools/stability/ou3-sea-generator-membership.cpp -o /tmp/ou3-sea-generator-membership
           /tmp/ou3-sea-generator-membership > /tmp/ou3-sea-generator-observation.json
-          python3 tests/kalman_ou_iii/ou3_physical_sea3_membership.py \
+          python3 tests/kalman_ou_iii/ou3_physical_brmm_membership.py \
             --generator-root _physical-sea-generator \
             --observation /tmp/ou3-sea-generator-observation.json \
-            --output /tmp/ou3-physical-sea3-membership.json
+            --output /tmp/ou3-physical-brmm-membership.json
           python3 - <<'PY'
           import json
-          d=json.load(open('/tmp/ou3-physical-sea3-membership.json'))
+          d=json.load(open('/tmp/ou3-physical-brmm-membership.json'))
           assert d['linear_vessel_response_admission'] == 'REJECTED'
           assert d['direct_generator_response_admission'] == 'ADMITTED'
           assert d['admission_scope'] == 'RESPONSE_MODEL_ONLY_NOT_COMPLETE_RETAINED_WORD'
@@ -76,12 +76,12 @@ jobs:
           assert d['finite_sample_membership_under_another_realization'] == 'UNDETERMINED'
           assert not d['canonical_P4_falsified'] and not d['P4_promoted']
           print('PHYSICAL_GENERATOR_OBSERVATION',d['public_generator_API_observation'])
-          print('SEA3_PLUS_RESPONSE_ADMISSION', d['Stokes_response_test'])
+          print('BRMM_PLUS_RESPONSE_ADMISSION', d['Stokes_response_test'])
           PY
 
       - name: Test bias and finite attachment algebra
         working-directory: tests/validation
-        run: python3 -m unittest -v test_ou3_bias_witness_admissibility test_ou3_retained_word_attachment test_ou3_physical_sea3_membership test_ou3_sea3_response_union test_ou3_source_endpoint test_ou3_connected_motion test_ou3_motion_gain
+        run: python3 -m unittest -v test_ou3_bias_witness_admissibility test_ou3_retained_word_attachment test_ou3_physical_brmm_membership test_ou3_brmm_response_union test_ou3_source_endpoint test_ou3_connected_motion test_ou3_motion_gain
 
       - name: Capture one source-connected finite shipping history and test fixed endpoints
         run: |
@@ -178,7 +178,7 @@ jobs:
             /tmp/ou3_p4_bias_witness_admissibility.json
             /tmp/ou3_p4_bias_witness_admissibility.prefixes.csv.gz
             /tmp/ou3-sea-generator-observation.json
-            /tmp/ou3-physical-sea3-membership.json
+            /tmp/ou3-physical-brmm-membership.json
             /tmp/ou3-source-endpoint.json
             /tmp/ou3-source-endpoint.root.json
             /tmp/ou3-source-endpoint.inputs.csv

@@ -11,7 +11,7 @@ from fractions import Fraction
 from ou3_interval import Interval, matrix_mul, matrix_sub, matrix_transpose
 from ou3_interval_linear_algebra import matrix_symmetric_hull
 import ou3_mems_bias_contract as BIAS
-import ou3_sea3_response_union as UNION
+import ou3_brmm_response_union as UNION
 
 TARGET = "BOUNDED_BIAS_FULL_FILTER_18_ERROR_PRACTICAL_ISS"
 QUALIFICATION = "OU3_BOUNDED_BIAS_MOTION_TARGET_V1"
@@ -106,7 +106,7 @@ def build(*, p3_contract: dict) -> dict:
     return {
         "qualification": QUALIFICATION,
         "primary_target": TARGET,
-        "canonical_source": "COMPLETE_SEA3_NORMAL_LIVE_WORD",
+        "canonical_source": "COMPLETE_BRMM_NORMAL_LIVE_WORD",
         "response_branches": list(UNION.BRANCHES),
         "source_domain_change": "replace 0.35 estimated-bias interior by closed deployed projection ball for motion target only",
         "projection_radius_mps2": radius,
@@ -130,7 +130,7 @@ def build(*, p3_contract: dict) -> dict:
         "BIAS2_optional_gain_sharpening_requires_valid_sector": True,
         "BIAS2_positive_separation_required_for_compactness": False,
         "mems_bias_preconditions": bias,
-        "P3_CONDITIONAL_SEA3_PASS_consumed": p3_contract["P3_CONDITIONAL_SEA3_PASS"],
+        "P3_CONDITIONAL_BRMM_PASS_consumed": p3_contract["P3_CONDITIONAL_BRMM_PASS"],
         "P3_delta_consumed": {mode: p3_contract["modes"][mode]["relative_Riccati_injection_margin_lower"]
                               for mode in ("H18", "A21")},
         "existing_P3_automatically_covers_projection_boundary": False,
@@ -161,7 +161,7 @@ def validate(d: dict) -> list[str]:
     # Freeze the current evidentiary status: arbitrary true booleans are not
     # certificates. A future promoting builder must consume actual witnesses.
     expected = build(p3_contract={
-        "mems_bias_preconditions": BIAS.build(), "P3_CONDITIONAL_SEA3_PASS": True,
+        "mems_bias_preconditions": BIAS.build(), "P3_CONDITIONAL_BRMM_PASS": True,
         "modes": {mode: {"relative_Riccati_injection_margin_lower": 1e-18}
                   for mode in ("H18", "A21")}})
     for key, value in expected.items():

@@ -96,7 +96,7 @@ def all_positive_normal_normalized_norm2_enclosure(
     """Enclose normalization over every positive *normal* binary32 input.
 
     Mahony's physical accelerometer norm and its quaternion norm are normal
-    floats on the declared SEA3 path. We enumerate all 254 finite normal
+    floats on the declared BRMM path. We enumerate all 254 finite normal
     exponents and partition each 23-bit mantissa range, retaining local x/y
     dependence in every cell.
     """

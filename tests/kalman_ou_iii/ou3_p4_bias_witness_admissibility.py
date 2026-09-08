@@ -6,7 +6,7 @@ are the archived directions/scales and content-addressed physical payloads.
 The existing finite-value evaluator and reset-normalized covariance are reused.
 Source membership and finite reset/storage attachment are separate obligations:
 a zero true-bias root satisfies GM algebra but does not bind a replay payload to
-the complete SEA3 joint source. Hardware qualification is not a prerequisite
+the complete BRMM joint source. Hardware qualification is not a prerequisite
 for this conditional experiment. Numerical point ratios are not certificates.
 """
 from __future__ import annotations
@@ -92,7 +92,7 @@ def case_verdict(bias_interior: bool, legacy_domain: bool,
         return "BIAS1_POINT_RECURRENCE_FAILED"
     if not bias_interior or not legacy_domain:
         return "OUTSIDE_CHECKED_CONDITIONAL_POINT_DOMAIN"
-    return "BIAS_COMPATIBLE_FULL_SEA3_ADMISSIBILITY_UNRESOLVED"
+    return "BIAS_COMPATIBLE_FULL_BRMM_ADMISSIBILITY_UNRESOLVED"
 
 
 def audit_case(payload: dict, linear: dict, kernels: list[dict], domain: dict,
@@ -233,7 +233,7 @@ def audit_case(payload: dict, linear: dict, kernels: list[dict], domain: dict,
         "BIAS2": separation,
         "positive_point_separation_and_expanding_storage": rho > 1.0 and separation["positive_sufficient_separation_at_this_point"],
         "verdict": case_verdict(interior_ok, domain_ok, recurrence_ok),
-        "complete_SEA3_source_and_bias_membership_verified": False,
+        "complete_BRMM_source_and_bias_membership_verified": False,
         "finite_reset_storage_attachment_verified": False,
         "canonical_P4_falsified_here": False,
     }
@@ -342,7 +342,7 @@ def main() -> int:
         "filter_or_domain_changed": False,
         "BIAS2_evaluated_on_actual_corrected_error_histories": True,
         "BIAS2_uniform_sector_available": False,
-        "source_membership_status": "UNRESOLVED: archived payload lacks a complete SEA3 joint source/bias realization witness",
+        "source_membership_status": "UNRESOLVED: archived payload lacks a complete BRMM joint source/bias realization witness",
         "finite_reset_storage_attachment_status": "REJECTED_AS_GAUGE_ATTACHMENT: deleting captured resets without transporting F/Q/H does not attach this finite word; exact finite pullback and signed reset identities remain valid",
         "critic": "An admitted rho>1 point cannot satisfy a negative master after adding nonnegative multiples of sectors valid at that point, even when its BIAS2 separation ratio is positive.",
         "canonical_P4_falsified_here": False, "P4_promoted": False, "P5_may_start": False,

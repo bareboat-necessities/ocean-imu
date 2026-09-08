@@ -35,7 +35,7 @@ class BiasWitnessAdmissibilityTests(unittest.TestCase):
 
     def test_bias_compatibility_never_self_certifies_source_membership(self):
         self.assertEqual(AUDIT.case_verdict(True, True, True),
-                         "BIAS_COMPATIBLE_FULL_SEA3_ADMISSIBILITY_UNRESOLVED")
+                         "BIAS_COMPATIBLE_FULL_BRMM_ADMISSIBILITY_UNRESOLVED")
         self.assertEqual(AUDIT.case_verdict(False, True, True),
                          "OUTSIDE_CHECKED_CONDITIONAL_POINT_DOMAIN")
         self.assertEqual(AUDIT.case_verdict(True, True, False),

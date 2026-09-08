@@ -2,8 +2,8 @@
 
 ## Current hypothesis
 
-Complete BRMM replaces spectral SEA3 membership underneath the primary
-bounded-bias practical-motion theorem. The full shipping active 21-state
+Complete BRMM is the physical source underneath the primary bounded-bias
+practical-motion theorem; spectral models are reference specializations. The full shipping active 21-state
 filter, covariance/gain cross terms, finite resets/projection, every due
 actual anisotropic R_S correction and physical -S_true input remain.
 The performance storage measures the other 18 errors. Bias-error decay and
@@ -27,9 +27,11 @@ physical motion bandlimit. A .02 Hz sinusoid need not return inside 10 s.
 
 The BRMM contract, LaTeX theorem and proof plan separate source admission,
 P3 at delta=1e-18, endpoint motion gains, every-prefix gain/retention and P5.
-Existing SEA3 PASS flags retain their original scope; all BRMM gates are false.
-Quiet, oscillatory, mixed windows, both modes and the closed estimate ball
-need explicit coverage. Scalar motion recurrence does not imply vector PE.
+P3 is being rebuilt as BRMM plus explicit execution premises implies the
+full matrix inequality, with Q/O/mixed conditional coverage and a checked
+covariance identity at the closed bias projection boundary. Source admission,
+P4 and P5 remain open. Scalar motion recurrence does not imply vector PE.
+The runtime Live flag does not establish the full Normal-Live theorem regime.
 
 The focused BRMM CI audits every sample-aligned 10-second window of all eight
 unchanged v1.1.3 JONSWAP/PM-Stokes reference CSVs. It records energy, impulse,
@@ -43,7 +45,7 @@ Empirical margins do not set physical theorem constants.
 Eight focused local tests pass, including independent rational-arithmetic
 energy/impulse/TV checks, verification of each positive lobe witness, calm
 motion, the quiet-DC loophole, and the long-period one-sided window.
-Actual bias/BRMM/retained-SEA3 LaTeX inputs compile in a 14-page syntax smoke
+Actual bias/BRMM/reference-model LaTeX inputs compile in a 14-page syntax smoke
 build; this is not a complete manuscript build.
 
 At c1046c1f, GitHub audit 34169268266 / job 101886317643 succeeds. All eight
@@ -72,6 +74,29 @@ The theorem CI job 101886317504 also succeeds (14-page syntax smoke).
 
 Displayed maxima round upward; the JSON retains detailed outward sample
 bounds and radian-rate bounds. Physical intersample extrema remain unknown.
+
+## BRMM naming and P3 premise migration
+
+The current tree renames the retired physical-source identifiers, imports,
+paths and workflow/artifact names to BRMM. Reference spectral artifacts remain
+explicit reference-model metadata; they do not define primary BRMM membership.
+The canonical source carries bounded motion primitives and one common history.
+The new P3 premise manifest distinguishes code identities from execution
+assumptions and checks the exact shipping projection body: it changes only
+nominal bias, so the covariance comparison is unchanged. The covariance-word
+transport is not the derivative of the nonlinear projected error map; P4
+must still attach that map and prove retention. The numeric P3 chain is to be
+rebuilt in GitHub CI, retaining delta=1e-18 and Q/O/mixed conditional coverage.
+
+Local verification: 15 focused BRMM/source/premise tests pass, including a
+mutation that inserts a covariance write into projection and is rejected.
+All proof/test Python files parse. Mandatory `make all` fails at
+`src/ahrs/KalmanQMEKF.h:30`, missing `Eigen/Dense` despite the existing
+`-I/usr/include/eigen3`. Class: local dependency/infrastructure failure; it
+says nothing about theorem feasibility. CI installs Eigen and must provide
+build results. No include path, production filter or numerical gate changed.
+The existing OU validation replay-provenance mismatch is a separate red gate;
+only genuine full replay regeneration may replace that evidence.
 
 ## Failure analysis and limiting quantity
 
@@ -145,7 +170,7 @@ The separate inherited OU replay-provenance mismatch is not weakened.
   Assembled-sensor measurements gate deployment, not conditional mathematics.
 - BIAS2 may sharpen a gain only through a proved sector on the same corrected
   nonlinear/source history. Positive source AC energy alone is insufficient.
-- Legacy SEA3 linear/Stokes source tools and matrix gates remain scoped
+- Legacy BRMM linear/Stokes source tools and matrix gates remain scoped
   specializations, not BRMM admission or BRMM P3/P4 proofs.
 
 ## Alternatives and next falsifiable experiment

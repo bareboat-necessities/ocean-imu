@@ -10,7 +10,7 @@ sys.path.insert(0, str(ROOT / "tools/stability"))
 
 from ou3_interval import Interval, matrix_identity
 import ou3_mems_bias_contract as BIAS
-import ou3_p4_complete_sea3_differential_events as EVENTS
+import ou3_p4_complete_brmm_differential_events as EVENTS
 
 
 class MemsBiasContractTests(unittest.TestCase):
@@ -24,7 +24,7 @@ class MemsBiasContractTests(unittest.TestCase):
             ("BIAS1", "bias_error_is_free_GM_history", True),
             ("BIAS1", "Kalman_corrections_charged_to_exogenous_ISS", True),
             ("BIAS2", "uniform_separation_constant_lower", 0.001),
-            ("stochastic_corollary", "PSD_used_to_prune_homogeneous_SEA3", True),
+            ("stochastic_corollary", "PSD_used_to_prune_homogeneous_BRMM", True),
         ):
             with self.subTest(field=field):
                 bad = copy.deepcopy(contract)

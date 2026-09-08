@@ -1,7 +1,8 @@
-"""Primary BRMM physical-source target; legacy SEA3 certificates stay scoped.
+"""Primary BRMM physical-source declaration, not a numerical P3 certificate.
 
-This declaration does not turn sampled recurrence statistics into uniform
-source coverage or transfer a SEA3 P3 certificate to a different source family.
+Sampled recurrence statistics cannot establish uniform physical admission.
+The separate P3 producer proves a conditional matrix implication with its
+explicit execution premises; this declaration alone promotes no proof gate.
 """
 from __future__ import annotations
 
@@ -14,7 +15,7 @@ def build():
     return {
         "qualification": "OU3_COMPLETE_BRMM_BOUNDED_BIAS_MOTION_V1",
         "canonical_source": "COMPLETE_BRMM_NORMAL_LIVE_WORD",
-        "spectral_SEA3_membership_required": False,
+        "spectral_membership_required": False,
         "common_source_frontend_tuner_geometry_and_filter_history_required": True,
         "every_due_actual_anisotropic_RS_required": True,
         "fixed_frame_CoG_acceleration_required": True,
@@ -46,10 +47,10 @@ def build():
         "bias_error_decay_required": False,
         "zero_navigation_error_floor_required": False,
         "P3_delta": 1e-18,
-        "legacy_P3_matrix_implication_reusable_with_its_actual_premises": True,
-        "legacy_SEA3_P3_flags_renamed_to_BRMM": False,
+        "P3_matrix_implication_requires_its_actual_premises": True,
+        "source_declaration_promotes_P3": False,
         "BRMM_SOURCE_UNIFORM_PASS": False,
-        "BRMM_P3_PASS": False,
+        "source_declaration_is_P3_certificate": False,
         "BRMM_P4_MOTION_PASS": False,
         "BRMM_P5_MOTION_MAY_START": False,
         "sampled_audit_sets_physical_theorem_constants": False,

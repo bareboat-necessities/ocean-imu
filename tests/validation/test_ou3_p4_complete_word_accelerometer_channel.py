@@ -14,7 +14,7 @@ class CompleteWordAccelerometerChannelTest(unittest.TestCase):
     def test_contract_is_joint_complete_word_and_nonpromoting(self):
         d = mod.build()
         self.assertEqual(mod.validate(d), [])
-        self.assertEqual(d["canonical_source"], "COMPLETE_SEA3_NORMAL_LIVE_WORD")
+        self.assertEqual(d["canonical_source"], "COMPLETE_BRMM_NORMAL_LIVE_WORD")
         self.assertTrue(d["accelerometer_measurement_noise_is_PSD_final_covariance_component"])
         self.assertTrue(d["all_later_due_S_updates_remain_inside_suffix"])
         self.assertTrue(d["actual_applied_RS_required_for_every_later_S_suffix_event"])

@@ -1,4 +1,4 @@
-"""Exact-rational operation regressions, not SEA3 words or theorem evidence.
+"""Exact-rational operation regressions, not BRMM words or theorem evidence.
 
 The fixtures deliberately test identities with dense H18/A21 covariances.
 They do not establish source reachability, recurrent-word contraction or P4.
@@ -11,11 +11,11 @@ import sys
 import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "tools" / "stability"))
-import ou3_p4_complete_sea3_accelerometer_operation_coordinate as ACC
-import ou3_p4_complete_sea3_correction_information_bound as CORR
+import ou3_p4_complete_brmm_accelerometer_operation_coordinate as ACC
+import ou3_p4_complete_brmm_correction_information_bound as CORR
 import ou3_p4_exact_reset_transport as RESET
-import ou3_p4_complete_sea3_measurement_linearizing_aw_coordinate as AWLIN
-import ou3_sea3_shipping_prediction_primitives as PRED
+import ou3_p4_complete_brmm_measurement_linearizing_aw_coordinate as AWLIN
+import ou3_brmm_shipping_prediction_primitives as PRED
 from ou3_interval import Interval, matrix_point
 
 
@@ -279,7 +279,7 @@ class CoordinateTransportAlgebraTests(unittest.TestCase):
         self.assertEqual(mul(mul(tr(G), inv(reset)), G), eye(3))
 
     def test_full_shift_prediction_keeps_velocity_position_and_S_components(self):
-        # Rational matrix identity fixture, NOT an admitted SEA3 source word.
+        # Rational matrix identity fixture, NOT an admitted BRMM source word.
         for n, a in self.cases.items():
             with self.subTest(n=n):
                 Fp = eye(n)
@@ -314,7 +314,7 @@ class CoordinateTransportAlgebraTests(unittest.TestCase):
                 self.assertEqual(energy(phip, precision)-energy(a['phi'], a['Pinv']), ledger)
 
     def test_retained_shipping_OU_prediction_has_nonzero_S_shift_transport(self):
-        # These are operation inputs only; their values do not establish SEA3.
+        # These are operation inputs only; their values do not establish BRMM.
         axis = PRED.translation_axis_transition(Interval.point(2.0), Interval.point(0.005))
         for n in (18, 21):
             Fp = matrix_point(eye(n))

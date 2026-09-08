@@ -1,12 +1,12 @@
 # OU-III stability tooling
 
-This package contains the retained OU-III stability theorem, interval arithmetic, primary BRMM source target, retained SEA3 specialization, and P1-P4/P5 certificate tooling.
+This package contains the retained OU-III stability theorem, interval arithmetic, primary BRMM source target, retained BRMM specialization, and P1-P4/P5 certificate tooling.
 
-Production/validation utilities and unrelated OU-III engineering studies remain in `tools/`. Retired P2 history/source-node routes are not compatibility-shimmed here: the existing SEA3 P3/P4 gates retain their original source scope.
+Production/validation utilities and unrelated OU-III engineering studies remain in `tools/`. Retired P2 history/source-node routes are not compatibility-shimmed here: the existing BRMM P3/P4 gates retain their original source scope.
 
 ## Current proof plan
 
-BRMM replaces spectral SEA3 membership in the primary theorem. Its BRMM-0
+BRMM is the physical source in the primary theorem; spectral models are optional reference examples. Its BRMM-0
 condition is a_m=dv_m/dt with uniformly bounded same-history v_m on the
 entire continuation. Thus every long-time average has norm at most 2*V_m/T,
 tending uniformly to zero. Fixed nonzero physical acceleration is prohibited
@@ -43,7 +43,7 @@ still executes all 21 states and every covariance/gain cross term. The target
 is stated in `thm:brmm-bounded-bias-motion` in
 `doc/kalman_ou_iii/w3d-brmm-stability-theorem.tex-part`. The source declaration
 is `ou3_brmm_contract.py`. The retained `ou3_p4_bounded_bias_motion.py`
-master has its original SEA3 scope until its actual source premises are rebound. The earlier full-state contraction theorem is
+master has its original BRMM scope until its actual source premises are rebound. The earlier full-state contraction theorem is
 a stronger unclosed extension, not a prerequisite for this weaker objective.
 The physical bias package is stated and proved conditionally in
 `doc/kalman_ou_iii/w3d-mems-bias-preconditions.tex-part` and recorded by
@@ -55,7 +55,7 @@ the filter settings, simulation extrema, or the desired P4 margin.
 | BIAS0 / SEA0 | Qualify the assembled sensor, actual calibration, true residual root, temperature/strain mismatch and GM parameter range. Compose with one complete BRMM history; measurements gate deployment, not conditional mathematical work. | Stationary/thermal/restart/unit data, fit uncertainty and residual bounds; currently missing. |
 | P1 entry and H18 hold | Retain the true physical bias while the estimate is held. Bound the held error and actual uncompensated offset as source inputs. | Reachable entry and continuing physical history; an estimate clamp is insufficient. |
 | P2 / source cells | Carry one bias root, common parameters and driver history through the same window lineage. Split source coordinates and replay descendants. | BIAS1 dependence, same source ID and joint BRMM membership; neither fresh event boxes nor ID attachment alone proves it. |
-| P3 / detectability | Retain the full-state process matrices, finite tau, and actual R_S at delta=1e-18. | Establish the matrix implication's actual premises for BRMM Q/O/mixed windows and the projection boundary. Scalar recurrence is not vector PE; old SEA3 PASS does not certify BRMM. Held H18 does not certify active-mode motion gains. |
+| P3 / detectability | Retain the full-state process matrices, finite tau, and actual R_S at delta=1e-18. | Establish the matrix implication's actual premises for BRMM Q/O/mixed windows and the projection boundary. Scalar recurrence is not vector PE; old BRMM PASS does not certify BRMM. Held H18 does not certify active-mode motion gains. |
 | H18 to A21 | Transport the physical bias without reset; keep the rectangular error lift, actual held error, release covariance and all subsequent corrections. | Same-history reachable release, not an appended A21 fixture block. |
 | Bias compactness | Projection preserves the estimate ball; BIAS0/1 bounds the same-history true bias. | Conditional error bound B_e=B_true+0.4; no bias convergence or hard Gaussian-OU cap is inferred. |
 | P4-motion nonlinear graph | Keep the full bias prediction/correction/projection recurrence and actual active P/H/R/K. | The new domain includes the closed 0.4 ball; pre-projection auxiliaries may leave it. Existing 0.35-interior coverage cannot be reused silently. |
@@ -80,7 +80,7 @@ budget. Model mismatch remains when sensor noise is off. The observed 2--3%
 residual is not asserted as a uniform certified number; its output metric,
 normalization, source range and quantitative gain still require proof.
 
-The retained SEA3 CI rebuilds bias/source/P3 and emits separate `P4_MOTION_PASS` and
+The retained BRMM CI rebuilds bias/source/P3 and emits separate `P4_MOTION_PASS` and
 `P5_MOTION_MAY_START` flags alongside the unchanged stronger full-state flags.
 The compactness and composition lemmas are conditional results, not numerical
 motion-gain certificates. Both motion flags remain false until the source,
@@ -112,10 +112,10 @@ it does not regenerate a simulation, select another window or depend on an
 expiring Actions artifact. Run the audit with `--unpack-retained`,
 `--payload-prefix /tmp/ou3_p4_physical_payload` and an `--output` JSON path.
 
-Physical admission is checked separately by `ou3_physical_sea3_membership.py`
+Physical admission is checked separately by `ou3_physical_brmm_membership.py`
 and the public-API C++ probe `ou3-sea-generator-membership.cpp`, against the
-pinned v1.1.3 generator. `ou3_sea3_response_union.py` defines the authorized
-SEA3+ union: the entire unchanged linear-vessel branch plus a correlated
+pinned v1.1.3 generator. `ou3_brmm_response_union.py` defines the authorized
+BRMM+ union: the entire unchanged linear-vessel branch plus a correlated
 third-order Stokes wave-following branch. The branch is fixed at the source
 root; neither eventwise branch switching nor independent harmonic phases or
 coefficients are allowed. All root directions/phases are included, not one
@@ -180,7 +180,7 @@ calculation and signed event contributions, with declared port units.
 The point test freezes the dependent finite coefficients on one attached
 history and permits arbitrary energy ports as a sufficient outer test. It
 does not certify a nonlinear/source graph sector, source-uniform coverage,
-or a useful accuracy floor; its maximizing port history is not presumed SEA3
+or a useful accuracy floor; its maximizing port history is not presumed BRMM
 admissible. The next gate after numerical feasibility is whether the gain
 budgets and correlated coefficient/source coverage can close retention.
 P4-motion and P5-motion remain false. No bias-error decay is required.

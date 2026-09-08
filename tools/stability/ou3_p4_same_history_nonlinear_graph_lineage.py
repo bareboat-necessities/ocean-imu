@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Same-history nonlinear H18/A21 graph lineage for complete-SEA3 P4.
+"""Same-history nonlinear H18/A21 graph lineage for complete-BRMM P4.
 
 This module is the theorem-facing bridge between the branch-correlated prefix
 selectors and the retained exact nonlinear prediction/Joseph/reset/projection
-maps.  It deliberately does not generate a SEA3 source family.  A caller must
+maps.  It deliberately does not generate a BRMM source family.  A caller must
 supply one already-connected selector lineage and, for A21, one absolute
 accelerometer-bias history attached to that same lineage.
 
@@ -32,19 +32,19 @@ from pathlib import Path
 from typing import Mapping, Sequence
 
 from ou3_interval import Interval, matrix_identity
-import ou3_p4_complete_sea3_differential_events as EVENTS
-import ou3_p4_complete_sea3_differential_prediction as PREDICTION
-import ou3_p4_complete_sea3_differential_word as DWORD
-import ou3_p4_complete_sea3_same_history_prefix_selectors as SELECTORS
-import ou3_sea3_complete_window_execution_kernel as KERNEL
-import ou3_sea3_frontend_state_step as FRONTEND
+import ou3_p4_complete_brmm_differential_events as EVENTS
+import ou3_p4_complete_brmm_differential_prediction as PREDICTION
+import ou3_p4_complete_brmm_differential_word as DWORD
+import ou3_p4_complete_brmm_same_history_prefix_selectors as SELECTORS
+import ou3_brmm_complete_window_execution_kernel as KERNEL
+import ou3_brmm_frontend_state_step as FRONTEND
 import ou3_mems_bias_contract as BIAS
 
 REPO = Path(__file__).resolve().parents[2]
 DEFAULT_DOMAIN = REPO / "tools" / "stability" / "ou3_proof_operating_domain.json"
 SCHEMA = 1
-QUALIFICATION = "OU3_P4_COMPLETE_SEA3_SAME_HISTORY_NONLINEAR_GRAPH_LINEAGE_V1"
-CANONICAL_SOURCE = "COMPLETE_SEA3_NORMAL_LIVE_WORD"
+QUALIFICATION = "OU3_P4_COMPLETE_BRMM_SAME_HISTORY_NONLINEAR_GRAPH_LINEAGE_V1"
+CANONICAL_SOURCE = "COMPLETE_BRMM_NORMAL_LIVE_WORD"
 
 
 @dataclass(frozen=True)
@@ -345,7 +345,7 @@ def homogeneous_bias_lineage(
     """Retain one root and matched tau alongside their derived prefix hulls.
 
     This is the zero-forcing BIAS1 model only, conditional on BIAS0. The
-    interval AD consumer is still an enclosure, not an exhaustive SEA3 cover.
+    interval AD consumer is still an enclosure, not an exhaustive BRMM cover.
     """
     if not lineage:
         raise ValueError("nonempty selector lineage required")
@@ -458,7 +458,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "independent_true_bias_event_boxes_allowed": False,
         "point_zero_bias_history_is_homogeneous_and_nonpromoting": True,
         "source_uniform_absolute_bias_history_materialized_here": False,
-        "source_uniform_SEA3_window_family_materialized_here": False,
+        "source_uniform_BRMM_window_family_materialized_here": False,
         "joint_graph_sectors_assembled_here": False,
         "endpoint_augmented_LDLT_closed_here": False,
         "every_prefix_augmented_LDLT_closed_here": False,
@@ -469,7 +469,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "P4_promoted_here": False,
         "smoke": smoke,
         "next_obligation": (
-            "materialize the correlated finite-window SEA3 source cells, including the same-history absolute A21 physical-bias coordinate, then lift this exact nonlinear lineage into dense joint graph sectors before attempting the canonical-point augmented master"
+            "materialize the correlated finite-window BRMM source cells, including the same-history absolute A21 physical-bias coordinate, then lift this exact nonlinear lineage into dense joint graph sectors before attempting the canonical-point augmented master"
         ),
     }
 
@@ -499,7 +499,7 @@ def validate(d: dict) -> list[str]:
     for key in (
         "independent_true_bias_event_boxes_allowed",
         "source_uniform_absolute_bias_history_materialized_here",
-        "source_uniform_SEA3_window_family_materialized_here",
+        "source_uniform_BRMM_window_family_materialized_here",
         "joint_graph_sectors_assembled_here",
         "endpoint_augmented_LDLT_closed_here",
         "every_prefix_augmented_LDLT_closed_here",
@@ -552,7 +552,7 @@ def main() -> int:
         "nonlinear_H18": d["full_H18_nonlinear_lineage_composition_available"],
         "nonlinear_A21": d["full_A21_nonlinear_lineage_composition_available"],
         "A21_absolute_bias_required": d["A21_absolute_bias_history_required"],
-        "source_uniform": d["source_uniform_SEA3_window_family_materialized_here"],
+        "source_uniform": d["source_uniform_BRMM_window_family_materialized_here"],
         "P4_promoted": d["P4_promoted_here"],
         "smoke": d["smoke"],
         "failures": failures,

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Non-promoting physical finite-map feasibility on one complete SEA3 point word.
+"""Non-promoting physical finite-map feasibility on one complete BRMM point word.
 
 The source/event payload is emitted by the same shipping observer used by the
 linear complete-word scan. This evaluator rebuilds a diagnostic Riccati path
@@ -19,7 +19,7 @@ coordinate is retained.
 Before any finite ratio is reported, the zero-state physical Jacobian cocycle
 must reproduce the reset-normalized linear cocycle.  This is a point
 feasibility/falsification diagnostic only.  It never promotes P4 or substitutes
-for source-uniform complete-SEA3 enclosure.
+for source-uniform complete-BRMM enclosure.
 """
 from __future__ import annotations
 
@@ -38,8 +38,8 @@ if str(STABILITY) not in sys.path:
     sys.path.insert(0, str(STABILITY))
 
 from ou3_interval import Interval, matrix_point
-import ou3_p4_complete_sea3_differential_events as EVENTS
-import ou3_p4_complete_sea3_differential_prediction as PRED
+import ou3_p4_complete_brmm_differential_events as EVENTS
+import ou3_p4_complete_brmm_differential_prediction as PRED
 
 NX = 21
 OFF_BG = 3
@@ -484,8 +484,8 @@ def main() -> int:
     valid = [c for c in cases if c["domain_retained"]]
     endpoint_crossings = [c for c in valid if c["rho_endpoint"] >= 1.0]
     report = {
-        "qualification": "NON_PROMOTING_COMPLETE_SEA3_PHYSICAL_FINITE_MAP_POINT_V1",
-        "canonical_source": "COMPLETE_SEA3_NORMAL_LIVE_WORD",
+        "qualification": "NON_PROMOTING_COMPLETE_BRMM_PHYSICAL_FINITE_MAP_POINT_V1",
+        "canonical_source": "COMPLETE_BRMM_NORMAL_LIVE_WORD",
         "point_same_history_diagnostic_only": True,
         "physical_true_minus_estimated_map": True,
         "reset_gauge_normalized_representative": False,

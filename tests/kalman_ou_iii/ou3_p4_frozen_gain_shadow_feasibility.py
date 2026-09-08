@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Point nonlinear complete-word storage comparison on one frozen shipping word.
 
-The shipping estimator alone generates the complete SEA3 source, covariance,
+The shipping estimator alone generates the complete BRMM source, covariance,
 branch decisions, gains, actual R_S sequence and endpoint metric. The host-only
 shadow has state but no covariance and therefore cannot create a second Riccati
 history. It recomputes only nonlinear residuals under those frozen shipping
@@ -223,8 +223,8 @@ def main() -> int:
     args.output_dir.mkdir(parents=True, exist_ok=True)
 
     report = {
-        "qualification": "NON_PROMOTING_COMPLETE_SEA3_P4_FROZEN_GAIN_RAW_VS_FULL_PHI_CAYLEY",
-        "canonical_source": "COMPLETE_SEA3_NORMAL_LIVE_WORD",
+        "qualification": "NON_PROMOTING_COMPLETE_BRMM_P4_FROZEN_GAIN_RAW_VS_FULL_PHI_CAYLEY",
+        "canonical_source": "COMPLETE_BRMM_NORMAL_LIVE_WORD",
         "point_same_history_diagnostic_only": True,
         "P4_promoted": False,
         "filter_changed": False,

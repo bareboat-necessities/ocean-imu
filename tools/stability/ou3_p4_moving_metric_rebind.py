@@ -22,8 +22,8 @@ from ou3_interval import (
     matrix_transpose,
 )
 from ou3_interval_linear_algebra import matrix_inverse_gauss_jordan, matrix_symmetric_hull
-import ou3_sea3_full_word_riccati_backend as BACKEND
-import ou3_sea3_full_word_reset_congruence as RESET
+import ou3_brmm_full_word_riccati_backend as BACKEND
+import ou3_brmm_full_word_reset_congruence as RESET
 
 REPO = Path(__file__).resolve().parents[2]
 SCHEMA = 2

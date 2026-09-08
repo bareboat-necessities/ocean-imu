@@ -2,7 +2,7 @@
 """Run finite nonlinear same-history P4 feasibility checks along linear worst directions.
 
 This is a non-promoting diagnostic.  It consumes the worst H18/A21 directions
-from ``ou3_p4_complete_sea3_word_feasibility.py`` and injects scaled versions
+from ``ou3_p4_complete_brmm_word_feasibility.py`` and injects scaled versions
 into the retained host-only ``ou3-neighborhood-sim``.  Both estimators receive
 the same genuine coupled measurements and the observer rejects a case from the
 same-history set as soon as Live/mode/acceptance/tuner/pseudo-period histories
@@ -257,8 +257,8 @@ def main() -> int:
     args.output_dir.mkdir(parents=True, exist_ok=True)
 
     report = {
-        "qualification": "NON_PROMOTING_COMPLETE_SEA3_P4_NONLINEAR_SAME_HISTORY_FEASIBILITY",
-        "canonical_source": "COMPLETE_SEA3_NORMAL_LIVE_WORD",
+        "qualification": "NON_PROMOTING_COMPLETE_BRMM_P4_NONLINEAR_SAME_HISTORY_FEASIBILITY",
+        "canonical_source": "COMPLETE_BRMM_NORMAL_LIVE_WORD",
         "point_same_history_diagnostic_only": True,
         "P4_promoted": False,
         "filter_changed": False,

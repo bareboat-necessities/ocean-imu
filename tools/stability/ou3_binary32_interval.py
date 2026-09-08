@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Small outward binary32 arithmetic layer for the SEA3 shipping front end.
+"""Small outward binary32 arithmetic layer for the BRMM shipping front end.
 
 The C++ measurement-only front end is implemented in ``float``.  A binary64
 interval around the corresponding real formula is therefore not, by itself, a

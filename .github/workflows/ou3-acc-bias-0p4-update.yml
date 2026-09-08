@@ -2,7 +2,7 @@ name: ou3-acc-bias-0p4-update
 
 on:
   push:
-    branches: [codex/ou3-complete-sea3-p4-closure]
+    branches: [codex/ou3-complete-brmm-p4-closure]
     paths: [.github/workflows/ou3-acc-bias-0p4-update.yml]
 
 permissions:
@@ -15,7 +15,7 @@ jobs:
     timeout-minutes: 10
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      BRANCH: codex/ou3-complete-sea3-p4-closure
+      BRANCH: codex/ou3-complete-brmm-p4-closure
       REPO: ${{ github.repository }}
     steps:
       - name: Verify clamp/domain at branch head
@@ -37,13 +37,13 @@ jobs:
           set -euo pipefail
           for wf in \
             ou3-proof.yml \
-            ou3-complete-sea3.yml \
-            ou3-sea3-metric-memory.yml \
-            ou3-sea3-a21-word.yml \
-            ou3-sea3-four-s.yml \
-            ou3-sea3-reset.yml \
-            ou3-sea3-time-varying-memory.yml \
-            ou3-sea3-window-contract.yml \
+            ou3-complete-brmm.yml \
+            ou3-brmm-metric-memory.yml \
+            ou3-brmm-a21-word.yml \
+            ou3-brmm-four-s.yml \
+            ou3-brmm-reset.yml \
+            ou3-brmm-time-varying-memory.yml \
+            ou3-brmm-window-contract.yml \
             ou3-p4-complete-word-feasibility.yml \
             ou3-p4-exact-cayley-parity.yml \
             ou3-p4-physical-finite-map-feasibility.yml \

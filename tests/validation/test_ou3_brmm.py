@@ -99,10 +99,10 @@ class BrmmTests(unittest.TestCase):
     def test_no_legacy_promotion_or_parameter_freezing(self):
         d = contract.build()
         self.assertEqual(contract.validate(d), [])
-        self.assertFalse(d["spectral_SEA3_membership_required"])
+        self.assertFalse(d["spectral_membership_required"])
         self.assertEqual(d["P3_delta"], 1e-18)
         self.assertTrue(all(v is None for v in d["unfrozen_physical_constants"].values()))
-        for gate in ("BRMM_SOURCE_UNIFORM_PASS", "BRMM_P3_PASS", "BRMM_P4_MOTION_PASS",
+        for gate in ("BRMM_SOURCE_UNIFORM_PASS", "source_declaration_is_P3_certificate", "BRMM_P4_MOTION_PASS",
                      "BRMM_P5_MOTION_MAY_START"):
             self.assertTrue(contract.validate({**d, gate: True}))
 

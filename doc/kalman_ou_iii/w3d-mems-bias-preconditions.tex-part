@@ -1,7 +1,7 @@
 \section{MEMS residual-bias qualification and complete-word constraints}
 \label{sec:mems-bias-preconditions}
 
-The following sensor premises accompany the complete BRMM motion source; the retained SEA3 specialization uses the same sensor premises.
+The following sensor premises accompany the complete BRMM motion source; the retained BRMM specialization uses the same sensor premises.
 They do not replace its joint translational/rotational realization, certify an
 assembled sensor, or assert a positive nonlinear P4 margin.  Throughout this
 section $\beta$ denotes a true physical residual, $\hat b_a$ the shipping
@@ -204,7 +204,7 @@ Eq.~\eqref{eq:bias2-separation} supplies the dense sector
  \label{eq:bias2-sector}
 \end{equation}
 It enters the primary Eq.~\eqref{eq:brmm-motion-master} (or the retained
-SEA3 Eq.~\eqref{eq:sea3-joint-word-sector-test}) with a nonnegative multiplier.
+BRMM Eq.~\eqref{eq:brmm-joint-word-sector-test}) with a nonnegative multiplier.
 This does not change the signed Joseph information weight or
 discard nonlinear curvature.  All 21 states, cross terms, resets, process
 covariances and actual-applied $R_S$ suffix events remain.  No positive
@@ -234,5 +234,5 @@ This is a variance fraction, not a finite-window pathwise bound.  Stationarity,
 initial transients, parameter uncertainty, sampling/aliasing and the actual
 disturbance transfer must be respected in an ISS/moment corollary.  Gaussian
 OU forcing has unbounded support and nondifferentiable sample paths; neither a
-deterministic amplitude/derivative cap nor a SEA3 source restriction follows
+deterministic amplitude/derivative cap nor a BRMM source restriction follows
 from its PSD.  Stochastic bias forcing remains separate from homogeneous P4.

@@ -115,6 +115,8 @@
     "vector_sine_separation_lower": 0.1,
     "body_rate_norm_upper_deg_s": 30.0,
     "active_accelerometer_bias_state_norm_upper_mps2": 0.35,
+    "active_accelerometer_bias_interior_scope": "auxiliary interior-only nonlinear certificates; not the primary bounded-bias theorem or covariance-only P3 algebra",
+    "primary_bounded_bias_estimate_domain": "closed projection ball of radius 0.4 m/s^2; nonlinear P4 boundary retention remains open",
     "active_accelerometer_bias_projection_limit_mps2": 0.4,
     "gravity_quotient": {
       "accepted_packet_recurrence_window_s": 1.0,
@@ -124,7 +126,7 @@
       "axial_gyro_bias_is_neutral_input": true,
       "note": "Conditional gravity-only theorem hypothesis: before magnetic regauging, every quotient word contains two accepted accelerometer packets separated inside the declared interval and satisfying the same 4.0 m/s^2 non-gravitational CoG acceleration envelope."
     },
-    "pe_scope_note": "The full-heading theorem is for normal ocean-wave/ship motion at the CoG, not impact/slam dynamics. Its primary physical acceleration assumption is ||a_non-grav|| <= 4.0 m/s^2 = 0.408 g. With g=9.80665 m/s^2 and lever arm disabled, triangle inequality gives the derived total CoG specific-force envelope 5.80665 <= ||a_w-g|| <= 13.80665 m/s^2 (0.592 to 1.408 g). The previous independent 30 m/s^2 = 3.06 g upper cap had no marine-physics derivation and is retired. The 10 uT magnetic floor and 0.1 vector-sine separation remain PE assumptions. Active/transitioning vibration guard, impacts/slams, nonzero lever arm, and saturated A-mode bias states remain separate hybrid/domain obligations.",
+    "pe_scope_note": "The full-heading theorem is for normal ocean-wave/ship motion at the CoG, not impact/slam dynamics. Its primary physical acceleration assumption is ||a_non-grav|| <= 4.0 m/s^2 = 0.408 g. With g=9.80665 m/s^2 and lever arm disabled, triangle inequality gives the derived total CoG specific-force envelope 5.80665 <= ||a_w-g|| <= 13.80665 m/s^2 (0.592 to 1.408 g). The previous independent 30 m/s^2 = 3.06 g upper cap had no marine-physics derivation and is retired. The 10 uT magnetic floor and 0.1 vector-sine separation remain PE assumptions. Active/transitioning vibration guard, impacts/slams, nonzero lever arm, and hard attitude rewrites remain separate hybrid/domain obligations. The primary bounded-bias theorem covers the closed estimate projection ball; P3 covariance identity at projection does not close nonlinear P4 retention.",
     "accelerometer_update_required_each_valid_imu_sample_after_live_entry": true,
     "accelerometer_rejection_in_normal_live_scope": false,
     "accelerometer_update_scope_note": "After entry into Normal Live, every valid IMU sample executes the accelerometer Kalman update. The certified source language therefore contains no rejected/missing accelerometer branch; numerical innovation-factorization failure is outside the normal theorem domain. Magnetometer timing and rejection remain asynchronous.",

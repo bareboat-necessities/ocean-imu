@@ -8,7 +8,7 @@ Freezing them does not certify the nonlinear/source graph that generated them.
 
 The augmented supply test retains the complete bias trajectory in its cost.
 Forcing ports are relaxed to arbitrary energy inputs for this sufficient
-coefficient test, with explicit units; no independent SEA3 boxes are created.
+coefficient test, with explicit units; no independent BRMM boxes are created.
 Failure of this larger test is not a nonlinear/source-admissible counterexample.
 Success still requires correlated nonlinear/source coverage and useful budgets.
 """
@@ -291,7 +291,7 @@ def high_precision_direction(steps, m0, dt, factor, gain, test):
                 "ratio_80_digit": str(final/cost),
                 "channel_energies_80_digit": {k: str(v) for k, v in channels.items()},
                 "signed_motion_energy_changes_80_digit": {k: str(v) for k, v in changes.items()},
-                "SEA3_nonlinear_admissibility_of_maximizer_established": False}
+                "BRMM_nonlinear_admissibility_of_maximizer_established": False}
 
 
 def experiment(steps, m0, dt):
@@ -358,7 +358,7 @@ def main():
     report = {"experiment": "CONNECTED_FINITE_COEFFICIENT_MOTION_SUPPLY", "event_trace_sha256": digest,
               "supply_units": SUPPLY_UNITS, "coefficient_dependencies_frozen_only_for_point_test": True,
               "forcing_ports_relaxed_only_for_sufficient_coefficient_test": True,
-              "independent_SEA3_sample_boxes_created": False, "bias_error_decay_required": False,
+              "independent_BRMM_sample_boxes_created": False, "bias_error_decay_required": False,
               "P4_MOTION_PASS": False, "P5_MOTION_MAY_START": False, "modes": {}}
     for mode in ("H18", "A21"):
         if attachment["modes"][mode]["decision"] != "CONNECTED_POINT_ATTACHMENT_PASS":

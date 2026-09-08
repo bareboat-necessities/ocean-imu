@@ -1,10 +1,10 @@
 \section{Primary BRMM source and bounded-bias motion theorem}
 \label{sec:brmm-source}
 
-BRMM (bounded recurrent marine motion) replaces the spectral SEA3 source
-hypothesis for the primary practical-motion theorem. The retained SEA3
-constructions are specializations; their certificate flags retain their
-original scope. Complete execution semantics are unchanged: one physical
+BRMM (bounded recurrent marine motion) is the physical source hypothesis
+for the primary practical-motion theorem. Spectral and vessel models in
+Section~\ref{sec:brmm-stability-target} are reference specializations; neither
+their spectra nor their response-family membership define BRMM admission. Complete execution semantics are unchanged: one physical
 root and continuation produce $a_m,\omega,R$, frontend and geometry states,
 committed $\tau,\sigma_{aw},R_S,T_S$, and the actual covariance/event history.
 There are no independent acceleration, bias, tuner or pseudo-measurement boxes.
@@ -46,7 +46,7 @@ remain admissible. A fixed-window bound alone, however small, does not
 exclude all constant accelerations; nor does small AC energy.
 
 For example, the fixed-root finite harmonic model of
-Eqs.~\eqref{eq:sea3-stokes-orbit}--\eqref{eq:sea3-stokes-hard-bound}
+Eqs.~\eqref{eq:brmm-stokes-orbit}--\eqref{eq:brmm-stokes-hard-bound}
 has $a_m=\dot v_o$ and $\|v_o\|\le B_1=\sum_{i,n}n\omega_i c_{in}$.
 It therefore satisfies BRMM-0 for all time, with $V_m=B_1$ for the
 centered orbital primitive. Including its constant Stokes velocity drift
@@ -128,8 +128,56 @@ samples accepted, all asynchronous vector events, process floors, resets
 and every due actual-$R_S$ correction). P3 retains $\delta=10^{-18}$ and its
 matrix implications only where their actual premises are established.
 Scalar BRMM recurrence does not prove vector persistent excitation,
-especially in Q; Q, O, their mixtures and both modes require explicit P3
-coverage. Existing SEA3 PASS flags therefore do not certify BRMM P3.
+especially in Q. The conditional P3 implication below covers Q, O and their
+mixtures through the same execution premises in both modes. A source
+declaration or sampled audit does not establish those premises.
+
+\paragraph{What Normal-Live means for P3.}
+It is an execution regime, not merely the runtime \texttt{Live} flag.
+Write $\mathcal C_W$ for the existing explicit hypotheses used by the
+matrix certificates: the source-generated Live covariance and shipping
+held-to-active release; accepted accelerometer updates at every valid IMU
+sample; the declared asynchronous vector-PE occurrences with one-second
+recurrence, magnetic norm $10$--$200\,\mu{\rm T}$, vector sine separation at
+least $0.1$, the stated specific-force bounds and body-rate cap; committed
+OU and scheduler invariants; full configured process and measurement
+covariances, PSD latent-acceleration floors, every due actual-$R_S$ update,
+and each immediate covariance reset. The lever arm is disabled, the
+vibration guard is dormant/transparent, required factorizations succeed,
+and hard attitude rewrites are separate hybrid entries. Geometry bounds
+must describe the actual Jacobians on that same history.
+
+Some parts of $\mathcal C_W$ are shipping identities or clamp invariants;
+accepted-vector recurrence, geometry and branch retention are execution
+assumptions requiring separate admission evidence. Scalar BRMM recurrence
+and the runtime Live flag do not imply them. In particular, no inequality
+$\Omega_W\succeq\delta P_W$, nonlinear contraction, or bias-error decay is
+assumed in $\mathcal C_W$.
+
+The conditional P3 claim is
+\[
+ (\mathrm{BRMM}\ \text{and}\ \mathcal C_W)
+ \quad\Longrightarrow\quad
+ \Omega_W-10^{-18}P_W\succeq0 .
+\]
+Its numerical chain uses the complete H18 information word and following
+prediction, outward full-matrix prior-free completion, then the exact
+held-to-active covariance bridge and event preservation. Those matrix
+steps use no spectral membership or positive lower bound on wave energy.
+Thus the same implication applies to Q, O and mixed histories satisfying
+$\mathcal C_W$; this is not a claim that all BRMM histories satisfy it.
+Physical source admission and P4 are separate.
+
+The shipping bias projection changes the nominal bias but does not modify
+$P$. The $P,\Psi,\Omega$ covariance comparison is consequently unchanged
+by that event, including at the closed $0.4\,{\rm m\,s^{-2}}$ boundary.
+Here $\Psi$ denotes the formal covariance-word transport, not the
+derivative of the projected nonlinear error map.
+Subsequent Jacobians and events must still satisfy $\mathcal C_W$. This
+covariance identity neither bounds the nonlinear projection/reset error
+map nor proves subsequent domain retention. The finite configured bias
+correlation used in the A21 covariance bridge is not a conclusion that
+physical bias error decays.
 
 For P4, primitive and recurrence constraints enter the same full-history
 graph and source/forcing forms in Eq.~\eqref{eq:brmm-motion-master}.
@@ -201,8 +249,9 @@ For this weaker target the old $0.35$ active-estimate interior premise is
 replaced by the closed $R_b$ ball; the remaining physical BRMM, event,
 lever-arm and dormant-vibration premises are retained. Consequently all
 projection-boundary branches must be covered. An interior-only certificate,
-including existing P3 source coverage where it uses that premise, cannot be
-silently extended to the boundary. The deployed filter is unchanged.
+cannot be silently extended to the boundary. P3 uses the covariance-only
+projection identity above, whereas P4 still needs the finite nonlinear
+projection sector and retention proof. The deployed filter is unchanged.
 
 On a complete word define the \emph{internal coupling energy}
 \begin{equation}
