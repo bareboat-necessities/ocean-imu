@@ -4,7 +4,7 @@ Simulation records use \texttt{oceanography-waves-lib} release
 Motion and IMU channels describe the centre of gravity of an estimated
 28 ft (8.53 m) fin-keel sailboat at zero forward speed and fixed heading.
 The analytical response-amplitude operators (RAOs) include surge, sway,
-heave, roll and pitch; Euler yaw is held fixed. These are estimated
+heave, roll and pitch; Euler yaw is held fixed. Body axes are $x$ forward, $y$ port and $z$ up. These are estimated
 coefficients, not measured hull-specific RAOs. File heights and periods
 identify the incident sea, and spectrum CSVs remain incident-wave spectra;
 they are not vessel-motion spectra. JONSWAP and PM records drive the RAOs

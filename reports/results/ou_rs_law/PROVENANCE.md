@@ -2,7 +2,9 @@
 
 `ou_rs_roundtrip_transition.svg` and its decimated series
 `ou_rs_roundtrip_transition.csv` are one bidirectional transition realization
-replayed through the current deployed OU-III adaptive filter.  The figure uses
+replayed through the current deployed OU-III adaptive filter on oceanography-waves-lib v1.2.1
+28 ft RAO inputs. `manifest.json` retains the input hashes, replay seeds,
+producer hash and all segment scores.  The figure uses
 `tools/ou_validation.py:plot_transition_diagnostic`, the same drawing code as
 the primary one-way transition diagnostic.
 

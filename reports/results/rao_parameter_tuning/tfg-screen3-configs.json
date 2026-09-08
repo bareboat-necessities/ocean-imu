@@ -1,0 +1,57 @@
+[
+  {
+    "name": "g0.05",
+    "env": {
+      "TFG_MAG_HI_RIDGE_REL": ".25",
+      "TFG_MAG_HI_MIN_INFO": ".1",
+      "SF_SIGMA_M_SCALE": "4",
+      "SF_GYRO_BIAS_RW_VAR": "1e-10",
+      "TFG_MAG_REFINE_START_SEC": "30",
+      "SF_SIGMA_G_SCALE": "0.05"
+    }
+  },
+  {
+    "name": "g0.1",
+    "env": {
+      "TFG_MAG_HI_RIDGE_REL": ".25",
+      "TFG_MAG_HI_MIN_INFO": ".1",
+      "SF_SIGMA_M_SCALE": "4",
+      "SF_GYRO_BIAS_RW_VAR": "1e-10",
+      "TFG_MAG_REFINE_START_SEC": "30",
+      "SF_SIGMA_G_SCALE": "0.1"
+    }
+  },
+  {
+    "name": "g0.25",
+    "env": {
+      "TFG_MAG_HI_RIDGE_REL": ".25",
+      "TFG_MAG_HI_MIN_INFO": ".1",
+      "SF_SIGMA_M_SCALE": "4",
+      "SF_GYRO_BIAS_RW_VAR": "1e-10",
+      "TFG_MAG_REFINE_START_SEC": "30",
+      "SF_SIGMA_G_SCALE": "0.25"
+    }
+  },
+  {
+    "name": "g0.5",
+    "env": {
+      "TFG_MAG_HI_RIDGE_REL": ".25",
+      "TFG_MAG_HI_MIN_INFO": ".1",
+      "SF_SIGMA_M_SCALE": "4",
+      "SF_GYRO_BIAS_RW_VAR": "1e-10",
+      "TFG_MAG_REFINE_START_SEC": "30",
+      "SF_SIGMA_G_SCALE": "0.5"
+    }
+  },
+  {
+    "name": "g1",
+    "env": {
+      "TFG_MAG_HI_RIDGE_REL": ".25",
+      "TFG_MAG_HI_MIN_INFO": ".1",
+      "SF_SIGMA_M_SCALE": "4",
+      "SF_GYRO_BIAS_RW_VAR": "1e-10",
+      "TFG_MAG_REFINE_START_SEC": "30",
+      "SF_SIGMA_G_SCALE": "1"
+    }
+  }
+]

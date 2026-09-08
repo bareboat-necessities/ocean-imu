@@ -8,11 +8,10 @@ that regularize the OU-II integration chain.  Its result is a pair of *shapes*,
     r_p = C_P q_eff^(1/10) sigma_a,B^(4/5) tau^(12/5) / sqrt(T_S),
     r_v = C_V q_eff^(1/10) sigma_a,B^(4/5) tau^(7/5)  / sqrt(T_S),
 
-against the empirical sigma_aw tau^2 and sigma_aw tau base laws.  This driver
-supplies the two constants the shapes leave open, by evaluating the derivation's
-own stationarity conditions on the eight reference spectra at the operating
-points the OU-II tuner actually selects on them.  Nothing here is fitted to the
-empirical schedule.
+This driver evaluates diagnostic coefficients for the shapes using the derivation's
+own stationarity conditions on the eight v1.2.1 vessel CG-heave periodograms
+at the operating points in the current five-draw OU-II startup study. The diagnostic
+does not replace the selected deployed coefficients.
 
 C_P and C_V absorb dimensionless spectral moments of the self-similar
 displacement spectrum,
@@ -51,8 +50,14 @@ from __future__ import annotations
 import argparse
 import math
 import sys
+import csv
+from pathlib import Path
+from sim_dataset import input_provenance
+from model_mismatch_ablation import RECORDS
+from scipy.signal import periodogram
 
 import numpy as np
+trapezoid = np.trapezoid if hasattr(np, "trapezoid") else np.trapz
 
 GRAV = 9.80665
 
@@ -70,55 +75,45 @@ Q_EFF = 2.0 * R_A
 
 # Deployed pseudo-update cadence and its safety clamps.
 C_T = 0.015 / 1.1
-TS0 = 0.015
 TS_MIN, TS_MAX = 1.0 / 200.0, 0.250
 
 # sigma_aw = c_sigma sigma_a,B is the OU prior; the distortion penalty depends
 # on the physical band RMS, so the law divides c_sigma back out.
 C_SIGMA_OU_II = 0.85
 
-# Deployed empirical coefficients, quoted for comparison only.
-C_P_EMPIRICAL = 0.65
-C_V_EMPIRICAL = 1.30
+# Selected physical-MSE coefficients, quoted for comparison only.
+C_P_DEPLOYED = 0.1116
+C_V_DEPLOYED = C_P_DEPLOYED / 0.4
 
 # The simulator's first-order spectra are band-limited to 0.02-0.8 Hz.
 BAND_HZ = (0.02, 0.8)
 
-# The eight scored records, with the (tau, sigma_aw) the OU-II tuner settles on
-# for each.  Operating points are the deployed-arm means over the five seeds of
-# reports/results/ou_qmekf_variances/ou_ii_raw.csv; peak wavelengths are encoded
-# in the record names.
-# (record, family, Hs [m], peak wavelength [m], tau [s], sigma_aw [m/s^2])
-SEAS = (
-    ("jonswap_H0.270", "jonswap", 0.270, 14.047, 1.2720, 0.3330),
-    ("jonswap_H1.500", "jonswap", 1.500, 50.710, 2.1815, 0.6805),
-    ("jonswap_H4.000", "jonswap", 4.000, 112.766, 3.5904, 1.0614),
-    ("jonswap_H8.500", "jonswap", 8.500, 202.839, 4.2221, 1.3402),
-    ("pmstokes_H0.270", "pm", 0.270, 14.047, 1.1643, 0.3722),
-    ("pmstokes_H1.500", "pm", 1.500, 50.710, 2.0437, 0.7469),
-    ("pmstokes_H4.000", "pm", 4.000, 112.766, 3.2905, 1.0617),
-    ("pmstokes_H8.500", "pm", 8.500, 202.839, 4.1025, 1.4109),
-)
+ROOT = Path(__file__).resolve().parents[1]
 
 
-def peak_period(wavelength_m: float) -> float:
-    """Deep-water peak period of a scenario's peak wavelength."""
-    return math.sqrt(2.0 * math.pi * wavelength_m / GRAV)
+def reference_operating_points(path: Path):
+    """Current five-draw OU-II operating points; no historical constants."""
+    with path.open() as stream:
+        rows = [r for r in csv.DictReader(stream)
+                if r["family"] == "OU-II" and r["arm"] == "deployed"]
+    for record in RECORDS:
+        rr = [r for r in rows if r["input"] == record.filename]
+        if len(rr) != 5:
+            raise ValueError(f"{record.filename}: five current calibration draws required")
+        yield (record.filename, np.mean([float(r["tau_applied_s"]) for r in rr]),
+               np.mean([float(r["sigma_applied_mps2"]) for r in rr]))
 
 
-def jonswap(w: np.ndarray, hs: float, tp: float, gamma: float = 3.3) -> np.ndarray:
-    """One-sided elevation spectrum scaled so int S dw = (Hs/4)^2.
+def vessel_spectrum(path: Path):
+    """Finite-record CG-heave periodogram, density per rad/s.
 
-    gamma = 1 is Pierson-Moskowitz, the first-order spectrum underlying the
-    PM-Stokes records.
+    This diagnostic uses the actual vessel output, including its response
+    attenuation. It is not an incident-elevation spectrum or a continuum proof.
     """
-    wp = 2.0 * math.pi / tp
-    sigma = np.where(w <= wp, 0.07, 0.09)
-    peak = np.exp(-((w - wp) ** 2) / (2.0 * sigma**2 * wp**2))
-    with np.errstate(divide="ignore", over="ignore", invalid="ignore"):
-        s = w**-5.0 * np.exp(-1.25 * (wp / w) ** 4) * gamma**peak
-    s = np.nan_to_num(np.where(w > 0.0, s, 0.0))
-    return s * ((hs / 4.0) ** 2 / np.trapezoid(s, w))
+    t, z = np.loadtxt(path, delimiter=",", skiprows=1, usecols=(0, 3), unpack=True)
+    f, density_hz = periodogram(z, fs=1.0 / np.median(np.diff(t)), detrend="constant")
+    band = (f >= BAND_HZ[0]) & (f <= BAND_HZ[1])
+    return 2.0 * math.pi * f[band], density_hz[band] / (2.0 * math.pi)
 
 
 def pseudo_period(tau: float) -> float:
@@ -134,11 +129,10 @@ def frequency_grid(points: int = 4001) -> np.ndarray:
 def moments(s_eta: np.ndarray, w: np.ndarray) -> tuple[float, float]:
     """(M_0, M_-2): displacement variance and its second negative moment.
 
-    For heave the physical displacement spectrum is the elevation spectrum, and
-    the two-sided normalization of Eqs. (M0)-(Mminus2) reduces to the plain
-    one-sided integrals.
+    S_eta denotes CG heave here. Incident elevation is filtered by the vessel
+    response before these one-sided integrals are evaluated.
     """
-    return float(np.trapezoid(s_eta, w)), float(np.trapezoid(s_eta / w**2, w))
+    return float(trapezoid(s_eta, w)), float(trapezoid(s_eta / w**2, w))
 
 
 def asymptotic_optimum(m0: float, m_2: float) -> tuple[float, float]:
@@ -157,7 +151,7 @@ def j_wave(wp: float, chi: float, w: np.ndarray, s_eta: np.ndarray) -> float:
     """Eq. (Jwave-exact): distortion of the real wave, with no chi expansion."""
     jw = 1j * w
     g = (1.0 / (1.0 + chi)) * jw**2 / (jw**2 + wp * math.sqrt(2.0 + chi) * jw + wp**2)
-    return float(np.trapezoid(np.abs(g - 1.0) ** 2 * s_eta, w))
+    return float(trapezoid(np.abs(g - 1.0) ** 2 * s_eta, w))
 
 
 def exact_optimum(w: np.ndarray, s_eta: np.ndarray,
@@ -190,11 +184,13 @@ def main(argv: list[str] | None = None) -> int:
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--exact", action="store_true",
                     help="also solve the unexpanded objective (needs SciPy)")
-    ap.add_argument("--points", type=int, default=4001,
-                    help="frequency grid points (default 4001)")
+    ap.add_argument("--data-dir", type=Path, default=ROOT / "plots/kalman_ou_ii")
+    ap.add_argument("--operating-points", type=Path,
+                    default=ROOT / "reports/results/startup_ablation/startup_runs.csv")
     args = ap.parse_args(argv)
 
-    w = frequency_grid(args.points)
+    seas = list(reference_operating_points(args.operating_points))
+    input_provenance(args.data_dir / record for record, _, _ in seas)
     print(f"q_eff = {Q_EFF:.4e} m^2/s^3   c_sigma = {C_SIGMA_OU_II}   "
           f"band = {BAND_HZ[0]}-{BAND_HZ[1]} Hz\n")
 
@@ -206,9 +202,8 @@ def main(argv: list[str] | None = None) -> int:
 
     cps, cvs, ratios = [], [], []
     cps_x, cvs_x, ratios_x = [], [], []
-    for record, family, hs, lam, tau, sigma_aw in SEAS:
-        gamma = 3.3 if family == "jonswap" else 1.0
-        s_eta = jonswap(w, hs, peak_period(lam), gamma)
+    for record, tau, sigma_aw in seas:
+        w, s_eta = vessel_spectrum(args.data_dir / record)
         m0, m_2 = moments(s_eta, w)
         wp, chi = asymptotic_optimum(m0, m_2)
         c_p, c_v = coefficients(wp, chi, tau, sigma_aw)
@@ -240,19 +235,11 @@ def main(argv: list[str] | None = None) -> int:
               f"C_V {100.0 * (c_vx / c_v - 1.0):+.1f} %, "
               f"ratio {100.0 * (ratio_x / ratio - 1.0):+.1f} %")
 
-    print("\nrelative to the empirical schedule, at the same operating points:")
-    print(f"  {'record':>16}{'r_p MSE/emp':>13}{'r_v MSE/emp':>13}")
-    for record, _family, _hs, _lam, tau, sigma_aw in SEAS:
-        ts = pseudo_period(tau)
-        norm = math.sqrt(TS0 / ts)
-        rp_emp = C_P_EMPIRICAL * sigma_aw * tau * tau * norm
-        rv_emp = C_V_EMPIRICAL * sigma_aw * tau * norm
-        scale = Q_EFF**0.1 * (sigma_aw / C_SIGMA_OU_II) ** 0.8 / math.sqrt(ts)
-        rp_mse = c_p * scale * tau**2.4
-        rv_mse = c_v * scale * tau**1.4
-        print(f"  {record:>16}{rp_mse / rp_emp:13.3f}{rv_mse / rv_emp:13.3f}")
-    print(f"\n  empirical channel ratio c_p/c_v = "
-          f"{C_P_EMPIRICAL / C_V_EMPIRICAL:.3f} against the derived {ratio:.3f}")
+    print("\nrelative to the selected physical-MSE schedule at the same operating points:")
+    print(f"  asymptotic C_P/selected = {c_p / C_P_DEPLOYED:.3f}, "
+          f"C_V/selected = {c_v / C_V_DEPLOYED:.3f}")
+    print(f"  selected channel ratio = {C_P_DEPLOYED / C_V_DEPLOYED:.3f}, "
+          f"diagnostic mean ratio = {ratio:.3f}")
     return 0
 
 

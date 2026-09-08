@@ -1,0 +1,525 @@
+{
+  "A21_bias_projection_generalized_Jacobian_machinery_retained": true,
+  "A21_finite_taub_detectability_consumed": true,
+  "A21_finite_taub_full_matrix_P3_required": true,
+  "H_to_A_covariance_floor_retained_as_separate_metric_event": true,
+  "H_to_A_held_ba_error_retained_as_separate_forcing": true,
+  "H_to_A_homogeneous_lift": "[I18;0]",
+  "H_to_A_rectangular_hybrid_event_required": true,
+  "P3_A21_delta_consumed": 1e-18,
+  "P3_CONDITIONAL_BRMM_PASS_consumed": true,
+  "P3_DEPLOYMENT_PASS_consumed_as_if_closed": false,
+  "P3_H18_delta_consumed": 1e-18,
+  "P3_frozen_not_modified": true,
+  "P4_CANONICAL_FAIL_REASONS": [
+    "paper finite-state endpoint dissipation is open: materialize the source-correlated same-history nonlinear graph sectors and close -(L_W+sum lambda_j Pi_j)>0 by full augmented interval LDLT, retaining all A21 finite-tau_b cross terms and every actual-R_S S event in the complete-word suffixes; BIAS1 projection compatibility and BIAS2 full corrected-error separation remain unclosed",
+    "paper finite-window prefix gain/domain retention is open for every prefix of the same complete BRMM word"
+  ],
+  "P4_CANONICAL_PASS": false,
+  "P4_FINITE_WINDOW_CLOSED": false,
+  "P4_MOTION_PASS": false,
+  "P5_MAY_START": false,
+  "P5_MOTION_MAY_START": false,
+  "S_zero_nonlinear_eta_exactly_zero": true,
+  "a_w_Schur_final_certificate_used": false,
+  "actual_RS_S_information_credited_as_favorable_term": true,
+  "actual_RS_provenance_token": "ACTUAL_APPLIED_SPECTRALMSE_RS",
+  "actual_RS_regularization_enters_suffix_maps": true,
+  "all_due_S_updates_with_actual_applied_RS_required": true,
+  "all_process_Q_floor_reset_events_required": true,
+  "all_radial_segment_Jacobians_must_be_enclosed": true,
+  "all_valid_accelerometer_updates_required": true,
+  "asynchronous_vector_events_required": true,
+  "bounded_bias_motion_contract": {
+    "BIAS2_optional_gain_sharpening_requires_valid_sector": true,
+    "BIAS2_positive_separation_required_for_compactness": false,
+    "P3_CONDITIONAL_BRMM_PASS_consumed": true,
+    "P3_delta_consumed": {
+      "A21": 1e-18,
+      "H18": 1e-18
+    },
+    "P4_MOTION_FAIL_REASONS": [
+      "same-history source/error/forcing attachment and projected-bias-domain source/P3 coverage remain open",
+      "source-uniform actual-filter 18-error endpoint and bias/source/noise gains remain unproved",
+      "every-event finite prefix gains, chart retention, useful accuracy floor and hybrid attachment remain unproved"
+    ],
+    "P4_MOTION_PASS": false,
+    "P5_MOTION_MAY_START": false,
+    "all_completed_shipping_event_prefixes_required": true,
+    "bias_coupling_is_external_sensor_noise": false,
+    "bias_error_bound_formula": "B_true + R_b",
+    "bias_error_bound_lemma_closed_conditionally": true,
+    "bias_error_convergence_required": false,
+    "canonical_source": "COMPLETE_BRMM_NORMAL_LIVE_WORD",
+    "certified_accuracy_floor": null,
+    "certified_motion_gains": null,
+    "clamp_or_OU_PSD_supplies_true_bias_bound": false,
+    "conditional_composition_arithmetic_closed": true,
+    "conditional_true_bias_bound_mps2": null,
+    "empirical_accuracy_is_a_certified_theorem_constant": false,
+    "estimate_ball_invariance_lemma_closed_conditionally": true,
+    "executed_active_filter_dimension": 21,
+    "existing_P3_automatically_covers_projection_boundary": false,
+    "full_21_state_nonlinear_contraction_required": false,
+    "full_active_covariance_cross_terms_gains_resets_and_actual_RS_retained": true,
+    "full_state_to_motion_storage_is_estimator_reduction": false,
+    "hardware_qualification_required_to_run_conditional_mathematics": false,
+    "held_H18_certificate_transferred_to_active_filter": false,
+    "legacy_interior_domain_and_full_state_flags_unchanged": true,
+    "mems_bias_preconditions": {
+      "BIAS0": {
+        "assembled_sensor_qualification_closed": false,
+        "estimated_state_cap_is_true_bias_cap": false,
+        "filter_Q_ba_density": 2.499999993688107e-07,
+        "filter_prior_is_physical_qualification": false,
+        "filter_projection_radius_mps2": 0.4,
+        "filter_tau_s": 5000.0,
+        "physical_model": "b_total=b0+K_T*dT+K_strain*strain+beta+d_nonGM",
+        "qualified_deterministic_mismatch_bound_mps2": null,
+        "qualified_stationary_sigma_mps2": null,
+        "qualified_tau_interval_s": null,
+        "qualified_true_residual_root_bound_mps2": null,
+        "shipping_centered_truth": "b_true=beta+d_det; retain all uncompensated deterministic terms"
+      },
+      "BIAS1": {
+        "H_to_A_reseeds_physical_bias": false,
+        "Kalman_corrections_charged_to_exogenous_ISS": false,
+        "bias_error_is_free_GM_history": false,
+        "homogeneous_true_bias_graph": "beta_j=exp(-(t_j-t_0)/tau_true)*beta_0",
+        "matched_tau_required_for_homogeneous_prediction": true,
+        "measurement_bias_corrections_retained": true,
+        "one_root_and_parameter_history_required": true,
+        "process_Q_removed_from_Riccati_word": false,
+        "projection_uses_shipping_centered_truth": true,
+        "source_uniform_projection_compatibility_closed": false,
+        "tau_mismatch_is_explicit_forcing": true,
+        "true_bias_frozen_when_estimator_held": false
+      },
+      "BIAS2": {
+        "each_consumed_sector_must_be_valid_on_its_prefix": true,
+        "positive_separation_follows_from_BRMM_or_GM_alone": false,
+        "prefix_contraction_required": false,
+        "requires_full_corrected_bias_error_history": true,
+        "sector": "Pi_sep=C_y^T W C_y-mu_sep X on the exact full-state same-history graph",
+        "source_uniform_separation_closed": false,
+        "uniform_separation_constant_lower": null
+      },
+      "P3_delta": 1e-18,
+      "P3_numerical_matrices_changed": false,
+      "P4_bias_preconditions_closed": false,
+      "P5_capture_must_retain_bias_source_and_forcing": true,
+      "canonical_source": "COMPLETE_BRMM_NORMAL_LIVE_WORD",
+      "qualification": "OU3_MEMS_BIAS_PHYSICAL_AND_WORD_PRECONDITIONS_V1",
+      "stochastic_corollary": {
+        "Gaussian_forcing_has_hard_pathwise_cap": false,
+        "PSD": "2*sigma_b^2*tau_b/(1+(omega*tau_b)^2)",
+        "PSD_used_to_prune_homogeneous_BRMM": false,
+        "band_fraction": "2/pi*(atan(omega_hi*tau_b)-atan(omega_lo*tau_b))",
+        "stationary_model_required": true
+      }
+    },
+    "motion_master_assembler_available": true,
+    "motion_storage_dimension": 18,
+    "prefix_contraction_required": false,
+    "preprojection_auxiliary_coordinate_may_leave_ball": true,
+    "primary_target": "BOUNDED_BIAS_FULL_FILTER_18_ERROR_PRACTICAL_ISS",
+    "projection_radius_mps2": 0.4,
+    "qualification": "OU3_BOUNDED_BIAS_MOTION_TARGET_V1",
+    "response_branches": [
+      "LINEAR_VESSEL",
+      "STOKES_WAVE_FOLLOWING"
+    ],
+    "response_mode_coverage": {
+      "bias_to_motion_gain": {
+        "LINEAR_VESSEL": {
+          "A21": false,
+          "H18": false
+        },
+        "STOKES_WAVE_FOLLOWING": {
+          "A21": false,
+          "H18": false
+        }
+      },
+      "every_event_prefix_gain": {
+        "LINEAR_VESSEL": {
+          "A21": false,
+          "H18": false
+        },
+        "STOKES_WAVE_FOLLOWING": {
+          "A21": false,
+          "H18": false
+        }
+      },
+      "every_event_retention": {
+        "LINEAR_VESSEL": {
+          "A21": false,
+          "H18": false
+        },
+        "STOKES_WAVE_FOLLOWING": {
+          "A21": false,
+          "H18": false
+        }
+      },
+      "motion_endpoint": {
+        "LINEAR_VESSEL": {
+          "A21": false,
+          "H18": false
+        },
+        "STOKES_WAVE_FOLLOWING": {
+          "A21": false,
+          "H18": false
+        }
+      },
+      "projected_bias_domain_source_coverage": {
+        "LINEAR_VESSEL": {
+          "A21": false,
+          "H18": false
+        },
+        "STOKES_WAVE_FOLLOWING": {
+          "A21": false,
+          "H18": false
+        }
+      }
+    },
+    "same_history_bias_prediction_corrections_and_projection_retained": true,
+    "same_history_finite_error_source_forcing_attachment_required": true,
+    "sensor_noise_zero_implies_model_mismatch_zero": false,
+    "source_domain_change": "replace 0.35 estimated-bias interior by closed deployed projection ball for motion target only",
+    "zero_error_floor_required": false
+  },
+  "candidate_angles_deg": [
+    30.0,
+    25.0,
+    20.0,
+    15.0
+  ],
+  "canonical_P4_architecture": "FINITE_STATE_COMPLETE_BRMM_QUADRATIC_ENDPOINT_AND_PREFIX",
+  "canonical_source": "COMPLETE_BRMM_NORMAL_LIVE_WORD",
+  "correction_radius_claim_used": false,
+  "declared_domain_shrunk": false,
+  "differential_AD_used_only_for_finite_map_enclosure": true,
+  "differential_finite_distance_bridge_closed": false,
+  "differential_pullback_used_as_replacement_P4": false,
+  "differential_word_qualification": "OU3_P4_COMPLETE_BRMM_LITERAL_DIFFERENTIAL_WORD_V3",
+  "endpoint_decomposition_identity": "d_W=r_W+E_N*epsilon_N-M_W*E_0*epsilon_0+sum_k M_suffix(k)*(C_k-L_k)*E_k*epsilon_k",
+  "endpoint_master_object_emitted": true,
+  "endpoint_transport_qualification": "OU3_P4_COMPLETE_BRMM_WHOLE_WORD_ENDPOINT_TRANSPORT_V1",
+  "event_AD_qualification": "OU3_P4_COMPLETE_BRMM_NONLINEAR_JOSEPH_DIFFERENTIAL_EVENTS_V3",
+  "filter_changed": false,
+  "finite_map_mean_value_bridge_validated": true,
+  "finite_map_mean_value_qualification": "OU3_P4_COMPLETE_BRMM_FINITE_MAP_MEAN_VALUE_BRIDGE_V2",
+  "finite_map_not_differential_metric_replacement": true,
+  "finite_reset_defect_explicit_in_signed_ledger": true,
+  "finite_state_endpoint_dissipation_required": true,
+  "finite_state_prefix_gain_required": true,
+  "full_epsilon_aw_retained": true,
+  "full_prediction_F_Eaw_rows_retained": true,
+  "full_state_joint_sector_master_available": true,
+  "independent_K_forbidden": true,
+  "independent_RS_schedule_used": false,
+  "inverse_metric_floor_claim_used": false,
+  "joint_accelerometer_suffix_operator": "B_W=[M_suffix(k)*G_k*K_k*H_k*E_aw] over accepted accelerometer events",
+  "joint_sector_actual_RS_provenance_preserved": true,
+  "joint_sector_all_21_state_cross_terms_retained": true,
+  "joint_sector_master_contract": {
+    "P3_A21_delta_consumed": 1e-18,
+    "P3_H18_delta_consumed": 1e-18,
+    "P3_delta_required": 1e-18,
+    "P4_promoted_here": false,
+    "a_w_or_b_a_Schur_elimination_used": false,
+    "accelerometer_Riccati_noise_channel_domination_consumed": true,
+    "accelerometer_bias_nonlinearity_exactly_zero": true,
+    "actual_RS_provenance_preserved": true,
+    "all_21_state_cross_terms_retained": true,
+    "all_due_S_updates_with_actual_applied_RS_remain_in_suffix": true,
+    "arbitrary_joint_nondiagonal_sector_weights_retained": true,
+    "canonical_full_matrix_P3_consumed": true,
+    "canonical_source": "COMPLETE_BRMM_NORMAL_LIVE_WORD",
+    "correction_radius_used": false,
+    "declared_domain_changed": false,
+    "detectability_comparison_observer_only": true,
+    "endpoint_and_prefix_use_same_master_builder": true,
+    "exact_Cayley_residual_sector_consumed": true,
+    "filter_changed": false,
+    "finite_taub_A21_asymptotic_gap_lower": 1e-18,
+    "finite_taub_A21_detectability_consumed": true,
+    "finite_taub_A21_detectability_qualification": "OU3_COMPLETE_BRMM_A21_FINITE_BIAS_DETECTABILITY",
+    "finite_taub_bias_contraction_gap_lower": 0.0005998200359945692,
+    "finite_taub_detectability_used_as_standalone_P4_promotion": false,
+    "full_A21_finite_taub_P3_margin_required": true,
+    "full_state_dimensions": {
+      "A21": 21,
+      "H18": 18
+    },
+    "graph_sector_convention": "z^T*Pi_j*z>=0",
+    "inverse_metric_floor_used": false,
+    "joint_word_defect": "d_W=B_W*w_W",
+    "master_coordinate": "z=[x;w_W]",
+    "master_matrix": "[[-D_W,M_W^T*J_N*B_W],[B_W^T*J_N*M_W,B_W^T*J_N*B_W]]",
+    "mems_bias_preconditions": {
+      "BIAS0": {
+        "assembled_sensor_qualification_closed": false,
+        "estimated_state_cap_is_true_bias_cap": false,
+        "filter_Q_ba_density": 2.499999993688107e-07,
+        "filter_prior_is_physical_qualification": false,
+        "filter_projection_radius_mps2": 0.4,
+        "filter_tau_s": 5000.0,
+        "physical_model": "b_total=b0+K_T*dT+K_strain*strain+beta+d_nonGM",
+        "qualified_deterministic_mismatch_bound_mps2": null,
+        "qualified_stationary_sigma_mps2": null,
+        "qualified_tau_interval_s": null,
+        "qualified_true_residual_root_bound_mps2": null,
+        "shipping_centered_truth": "b_true=beta+d_det; retain all uncompensated deterministic terms"
+      },
+      "BIAS1": {
+        "H_to_A_reseeds_physical_bias": false,
+        "Kalman_corrections_charged_to_exogenous_ISS": false,
+        "bias_error_is_free_GM_history": false,
+        "homogeneous_true_bias_graph": "beta_j=exp(-(t_j-t_0)/tau_true)*beta_0",
+        "matched_tau_required_for_homogeneous_prediction": true,
+        "measurement_bias_corrections_retained": true,
+        "one_root_and_parameter_history_required": true,
+        "process_Q_removed_from_Riccati_word": false,
+        "projection_uses_shipping_centered_truth": true,
+        "source_uniform_projection_compatibility_closed": false,
+        "tau_mismatch_is_explicit_forcing": true,
+        "true_bias_frozen_when_estimator_held": false
+      },
+      "BIAS2": {
+        "each_consumed_sector_must_be_valid_on_its_prefix": true,
+        "positive_separation_follows_from_BRMM_or_GM_alone": false,
+        "prefix_contraction_required": false,
+        "requires_full_corrected_bias_error_history": true,
+        "sector": "Pi_sep=C_y^T W C_y-mu_sep X on the exact full-state same-history graph",
+        "source_uniform_separation_closed": false,
+        "uniform_separation_constant_lower": null
+      },
+      "P3_delta": 1e-18,
+      "P3_numerical_matrices_changed": false,
+      "P4_bias_preconditions_closed": false,
+      "P5_capture_must_retain_bias_source_and_forcing": true,
+      "canonical_source": "COMPLETE_BRMM_NORMAL_LIVE_WORD",
+      "qualification": "OU3_MEMS_BIAS_PHYSICAL_AND_WORD_PRECONDITIONS_V1",
+      "stochastic_corollary": {
+        "Gaussian_forcing_has_hard_pathwise_cap": false,
+        "PSD": "2*sigma_b^2*tau_b/(1+(omega*tau_b)^2)",
+        "PSD_used_to_prune_homogeneous_BRMM": false,
+        "band_fraction": "2/pi*(atan(omega_hi*tau_b)-atan(omega_lo*tau_b))",
+        "stationary_model_required": true
+      }
+    },
+    "next_obligation": "materialize one outward same-history residual-history graph from the complete BRMM execution, form its joint endpoint and every-prefix quadratic sectors, and close the full augmented LDLT without packetwise scalarization; retain the A21 projection generalized Jacobian as a separate graph sector",
+    "nonnegative_S_procedure_multipliers_required": true,
+    "packet_count_multiplier_used": false,
+    "packetwise_norm_sum_used": false,
+    "paper_finite_state_quadratic_storage_retained": true,
+    "per_event_scalar_sector_required": false,
+    "qualification": "OU3_P4_COMPLETE_BRMM_FULL_STATE_JOINT_SECTOR_MASTER_V1",
+    "quality_gates_changed": false,
+    "same_history_joint_graph_sector_required": true,
+    "same_history_quadratic_graph_sector_assembler_available": true,
+    "schema": 1,
+    "signed_information_ledger_consumed": true,
+    "source_family_replaced": false,
+    "source_uniform_full_augmented_LDLT_closed": false,
+    "source_uniform_prefix_joint_sector_closed": false,
+    "source_uniform_same_history_joint_sector_closed": false,
+    "stacked_accelerometer_history_retained_jointly": true,
+    "state_elimination_used": false,
+    "terminal_full_augmented_interval_LDLT_available": true,
+    "terminal_test": "-(L_W+sum_j lambda_j*Pi_j)>0",
+    "trajectory_replay_used": false
+  },
+  "joint_sector_master_qualification": "OU3_P4_COMPLETE_BRMM_FULL_STATE_JOINT_SECTOR_MASTER_V1",
+  "legacy_full_state_gate_scope": "stronger unclosed extension, not the primary motion target",
+  "longer_point_window_optimization_used_to_promote": false,
+  "master_endpoint_energy_identity": "DeltaV=-Phi0^T*D_W*Phi0+2*(M_W*Phi0)^T*P_N^-1*d_W+d_W^T*P_N^-1*d_W",
+  "mems_bias_preconditions": {
+    "BIAS0": {
+      "assembled_sensor_qualification_closed": false,
+      "estimated_state_cap_is_true_bias_cap": false,
+      "filter_Q_ba_density": 2.499999993688107e-07,
+      "filter_prior_is_physical_qualification": false,
+      "filter_projection_radius_mps2": 0.4,
+      "filter_tau_s": 5000.0,
+      "physical_model": "b_total=b0+K_T*dT+K_strain*strain+beta+d_nonGM",
+      "qualified_deterministic_mismatch_bound_mps2": null,
+      "qualified_stationary_sigma_mps2": null,
+      "qualified_tau_interval_s": null,
+      "qualified_true_residual_root_bound_mps2": null,
+      "shipping_centered_truth": "b_true=beta+d_det; retain all uncompensated deterministic terms"
+    },
+    "BIAS1": {
+      "H_to_A_reseeds_physical_bias": false,
+      "Kalman_corrections_charged_to_exogenous_ISS": false,
+      "bias_error_is_free_GM_history": false,
+      "homogeneous_true_bias_graph": "beta_j=exp(-(t_j-t_0)/tau_true)*beta_0",
+      "matched_tau_required_for_homogeneous_prediction": true,
+      "measurement_bias_corrections_retained": true,
+      "one_root_and_parameter_history_required": true,
+      "process_Q_removed_from_Riccati_word": false,
+      "projection_uses_shipping_centered_truth": true,
+      "source_uniform_projection_compatibility_closed": false,
+      "tau_mismatch_is_explicit_forcing": true,
+      "true_bias_frozen_when_estimator_held": false
+    },
+    "BIAS2": {
+      "each_consumed_sector_must_be_valid_on_its_prefix": true,
+      "positive_separation_follows_from_BRMM_or_GM_alone": false,
+      "prefix_contraction_required": false,
+      "requires_full_corrected_bias_error_history": true,
+      "sector": "Pi_sep=C_y^T W C_y-mu_sep X on the exact full-state same-history graph",
+      "source_uniform_separation_closed": false,
+      "uniform_separation_constant_lower": null
+    },
+    "P3_delta": 1e-18,
+    "P3_numerical_matrices_changed": false,
+    "P4_bias_preconditions_closed": false,
+    "P5_capture_must_retain_bias_source_and_forcing": true,
+    "canonical_source": "COMPLETE_BRMM_NORMAL_LIVE_WORD",
+    "qualification": "OU3_MEMS_BIAS_PHYSICAL_AND_WORD_PRECONDITIONS_V1",
+    "stochastic_corollary": {
+      "Gaussian_forcing_has_hard_pathwise_cap": false,
+      "PSD": "2*sigma_b^2*tau_b/(1+(omega*tau_b)^2)",
+      "PSD_used_to_prune_homogeneous_BRMM": false,
+      "band_fraction": "2/pi*(atan(omega_hi*tau_b)-atan(omega_lo*tau_b))",
+      "stationary_model_required": true
+    }
+  },
+  "next_obligation": "materialize one source-correlated COMPLETE_BRMM_NORMAL_LIVE_WORD same-history nonlinear graph, including the A21 bias-projection generalized Jacobian, and close the full augmented joint-sector LDLT at the endpoint and every prefix; retain finite state, P/H/R, tuner schedule, actual applied R_S and all 21-state cross terms",
+  "outer_angle_rad": 0.8,
+  "outward_interval_AD_machinery_retained": true,
+  "packet_count_remainder_budget_used": false,
+  "packetwise_remainder_norm_sum_used": false,
+  "paper_Lyapunov_function": "V(e,zeta)=e^T M(zeta)e",
+  "paper_endpoint_inequality": "V_{k+N_W} <= rho*V_k + gamma_s*D_s,k + gamma_n*D_n,k; 0<rho<1",
+  "paper_prefix_gain_inequality": "V_{k+ell} <= kappa_V*V_k + kappa_s*D_s,k + kappa_n*D_n,k; 0<=ell<N_W",
+  "point_word_rho_used_to_promote": false,
+  "prediction_AD_qualification": "OU3_P4_COMPLETE_BRMM_NONLINEAR_PREDICTION_DIFFERENTIAL_V1",
+  "prediction_independent_F_forbidden": true,
+  "prefix_chart_and_source_domain_retention_required": true,
+  "primary_proof_target": "BOUNDED_BIAS_FULL_FILTER_18_ERROR_PRACTICAL_ISS",
+  "qualification": "OU3_BRMM_FINITE_STATE_ENDPOINT_PREFIX_P4_V14",
+  "reference_response_union": {
+    "P3_extension_rule": "shared Normal-Live preconditions imply the same response-independent H18/A21 matrix certificate on each branch",
+    "P4_extension_rule": "endpoint contraction AND finite every-prefix gain AND retention for both modes on EVERY branch/source leaf",
+    "branch_selected_at_source_root_and_retained_at_every_prefix": true,
+    "branches": [
+      "LINEAR_VESSEL",
+      "STOKES_WAVE_FOLLOWING"
+    ],
+    "legacy_continuum_replaced_by_finite_grid": false,
+    "linear_RAO_moment_and_surface_period_lemmas_scope": [
+      "LINEAR_VESSEL"
+    ],
+    "linear_vessel_domain": "tools/stability/ou3_brmm_directional_response_domain.json",
+    "linear_vessel_domain_unchanged": true,
+    "per_event_branch_switching_allowed": false,
+    "physical_deployment_inclusion_closed": false,
+    "qualification": "OU3_BRMM_REFERENCE_RESPONSE_UNION_V2",
+    "required_for_BRMM_membership": false,
+    "scope": "REFERENCE_MODELS_ONLY_NOT_BRMM_MEMBERSHIP",
+    "set_operation": "UNION",
+    "shared_word_premises": [
+      "unchanged Normal-Live acceleration/body-rate/chart bounds and vector PE",
+      "same-history exact frontend/tuner/commit/scheduler and actual anisotropic R_S",
+      "all shipping events and source-generated Live covariance",
+      "BIAS0/1 true-bias root, forcing split and corrected-error recurrence"
+    ],
+    "stokes": {
+      "amplitudes": "nonnegative common-root amplitudes; PM/JONSWAP quadrature and its Stokes normalization are source coordinates, not the continuum identity",
+      "atom_count": "any finite N, fixed on a source lineage; 128 is the pinned generator instance",
+      "coefficients": [
+        "a",
+        "k*a^2/2",
+        "3*k^2*a^3/8"
+      ],
+      "component_steepness_upper_exact": "1/5",
+      "directions_and_phases": "all root directions and phases, not seed 42 only",
+      "dispersion": "omega=2*pi*f; k=omega^2/g",
+      "fundamental_frequency_hz": [
+        0.02,
+        0.8
+      ],
+      "global_compact_primitive_cover_closed": false,
+      "gyro": "exact vee(-Cdot*C^T); the generator centered difference is a separately recorded measurement-discretization defect",
+      "hard_bound": "B_r=sum_i sum_n (n*omega_i)^r*c_in; ||d||<=B_0, ||v_orb||<=B_1, ||a||<=B_2",
+      "joint_output": "orbital displacement/velocity/acceleration and slopes at the displaced surface point; world-to-body attitude from those slopes",
+      "model": "superposed third-order bound harmonics; not an exact water-wave PDE solution",
+      "order": 3,
+      "phase_graph": "theta_i(x,y,t)=k_i*d_i dot (x,y)-omega_i*t+phi_i; harmonic n uses n*theta_i",
+      "same_history_outward_output_cover_closed": false,
+      "slope_bound": "||s||<=sum_i sum_n n*k_i*c_in, also at the displaced point",
+      "steady_drift": "retain constant Stokes velocity drift separately from centered orbital position; no fictitious drift acceleration"
+    },
+    "stokes_period_moments": "derive from the full phase-locked output; never substitute the fundamental surface Tz"
+  },
+  "response_branch_P4_coverage": {
+    "endpoint": {
+      "LINEAR_VESSEL": {
+        "A21": false,
+        "H18": false
+      },
+      "STOKES_WAVE_FOLLOWING": {
+        "A21": false,
+        "H18": false
+      }
+    },
+    "prefix_gain": {
+      "LINEAR_VESSEL": {
+        "A21": false,
+        "H18": false
+      },
+      "STOKES_WAVE_FOLLOWING": {
+        "A21": false,
+        "H18": false
+      }
+    },
+    "prefix_retention": {
+      "LINEAR_VESSEL": {
+        "A21": false,
+        "H18": false
+      },
+      "STOKES_WAVE_FOLLOWING": {
+        "A21": false,
+        "H18": false
+      }
+    }
+  },
+  "response_branch_conditional_P3_coverage_consumed": {
+    "LINEAR_VESSEL": {
+      "A21": true,
+      "H18": true
+    },
+    "STOKES_WAVE_FOLLOWING": {
+      "A21": true,
+      "H18": true
+    }
+  },
+  "same_P_H_R_cell_required_for_Joseph": true,
+  "same_complete_BRMM_word_required": true,
+  "same_frontend_tuner_covariance_history_required": true,
+  "same_source_correlated_generalized_Jacobian_required": true,
+  "same_source_omega_h_tau_prediction_required": true,
+  "schema": 14,
+  "signed_information_composition_available": true,
+  "signed_information_qualification": "OU3_P4_COMPLETE_BRMM_SIGNED_INFORMATION_LEDGER_V1",
+  "signed_joseph_reset_identity": "DeltaV=-I_y+E_eta+X_reset+E_reset",
+  "source_family_replaced": false,
+  "source_generated_not_trajectory_fit": true,
+  "source_uniform_complete_word_generalized_Jacobian_enclosed": false,
+  "source_uniform_endpoint_finite_map_closed": false,
+  "source_uniform_full_augmented_LDLT_closed": false,
+  "source_uniform_joint_BW_epsilon_enclosure_closed": false,
+  "source_uniform_joint_eta_reset_domination_closed": false,
+  "source_uniform_master_endpoint_domination_closed": false,
+  "source_uniform_prefix_domain_retention_closed": false,
+  "source_uniform_prefix_gain_closed": false,
+  "source_uniform_r_word_enclosure_closed": false,
+  "source_uniform_same_history_joint_sector_closed": false,
+  "standalone_eta_Rinv_budget_used": false,
+  "state_elimination_used": false,
+  "trajectory_replay_used": false,
+  "validation_failures": [],
+  "validation_pass": true
+}

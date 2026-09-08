@@ -7,10 +7,17 @@ on:
     paths:
       - "tools/sim_dataset.py"
       - "Makefile"
+      - "tools/startup_ablation.py"
+      - "tools/ou3_lever_arm_study.py"
+      - "tests/nlo/nlo-sim.cpp"
+      - "src/**"
+      - "tests/kalman_ou_ii/kalman_ou_ii-sim.cpp"
+      - "tests/kalman_ou_iii/kalman_ou_iii-sim.cpp"
+      - "tests/kalman_tfg/kalman_tfg-sim.cpp"
       - ".github/workflows/ou-validation.yml"
       - ".github/workflows/ou-full-evidence-branch.yml"
 
-# Dataset changes require full branch regeneration; other changes remain opt-in.
+# Dataset and deployed-filter changes require full branch regeneration.
 concurrency:
   group: ou-full-evidence-branch-${{ github.ref }}
   cancel-in-progress: true

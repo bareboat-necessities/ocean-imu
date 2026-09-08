@@ -3,8 +3,8 @@
 \label{sec:direction-validation}
 
 The estimator is evaluated on the same directional records used by the marine
-motion study: four JONSWAP seas and four Pierson--Moskowitz seas with nonlinear
-Stokes harmonics.  Each record is \SI{1200}{s} long at \SI{200}{Hz}; scoring
+motion study: four JONSWAP seas and four Pierson--Moskowitz seas, each passed through the v1.2.1
+28 ft vessel RAO.  Each record is \SI{1200}{s} long at \SI{200}{Hz}; scoring
 uses the final \SI{900}{s} so that startup and magnetic-reference acquisition
 do not dominate the direction metric.  Ten paired seed triplets vary the wave
 realization, sensor noise and drift, and residual-error initialization.  The
@@ -42,6 +42,35 @@ FORWARD/BACKWARD labels themselves are not treated as physical truth: they are
 labels relative to whichever axial representative the estimator returns and
 can exchange names when that representative flips by $180^\circ$.
 
+\subsection{Known-vessel response matching}
+The direction branch receives the engine-guarded accelerometer. After levelling,
+a direction-only equalizer matches surge, sway and heave amplitude and phase.
+In the causal Laplace convention, let
+\begin{equation}
+Q_j(s)=(1+\tau_j s)^{-2},\qquad
+G_h(s)=\left(1+2\zeta_hs/\omega_h+s^2/\omega_h^2\right)^{-1}.
+\end{equation}
+For the pinned hull, $\tau_{\rm surge}=0.7$ s, $\tau_{\rm sway}=1.0$ s,
+$\omega_h=2\pi/2.4$ rad/s and $\zeta_h=0.45$. With
+$Q_t=(1+s)^{-2}$, the compensators are $E_j=Q_t/Q_j$ and $E_z=Q_t/G_h$.
+They are stable and proper, and their magnitudes do not exceed one.
+The common footprint/depth attenuation remains; this is relative response
+matching, not incident-wave-height reconstruction. Matching heave as well as
+both horizontal channels preserves the orbital quadrature needed for travel
+sense. The existing simulation basis conversion exchanges surge and sway at
+the input of this stage, so the channel time constants are assigned accordingly.
+
+The wave-period tuner reads the pre-equalized signal. Neither attitude nor
+translation receives equalizer output. The profile is explicitly enabled in
+the vessel simulators; generic deployment requires a known response in the
+correct coordinate frame. Weak response, response nulls and directional spread
+can still leave direction unresolved. Confidence and simulation acceptance
+thresholds are unchanged. The v1.2.1 phase kernel
+$\cos(\mathbf{k}\cdot\mathbf{x}-\omega t+\phi)$ defines the reported azimuth as
+propagation-to, with no additional $180^\circ$ shift.
+
+\input{w3d-direction-rao-generated.tex-part}
+
 \section{Results}
 \label{sec:direction-results}
 
@@ -57,7 +86,7 @@ estimate is \OUValidationTravelAbsError{} degrees under the aggregate metric
 reported by the committed validation bundle.
 
 These numbers answer two different questions.  The axial statistic measures
-whether horizontal orbital motion identifies the vertical propagation plane;
+whether horizontal vessel motion identifies the incident propagation plane;
 the travel-sense statistic measures whether the horizontal--vertical phase test
 chooses the correct direction along that plane.  A low axial error therefore
 does not, by itself, demonstrate a correct $0$--$360^\circ$ propagation
@@ -109,12 +138,12 @@ OU--III performance claim for this paper.
   \end{tabular}
 \end{table}
 
-The directed RMS is intentionally much larger than the scenario-level circular
-mean error.  A small fraction of wrong travel-sense decisions produces errors
+The directed RMS can be much larger than the scenario-level circular
+mean error.  Wrong travel-sense decisions produces errors
 near $180^\circ$ and therefore carries large quadratic weight in RMS, even
 though the truth-referenced travel-sense decision is correct for
 \OUValidationTravelCorrect\% of samples.  Reporting both metrics prevents the
-high correct-decision fraction from hiding those rare but severe sense flips.
+aggregate correct-decision fraction from hiding large sense-flip errors.
 
 \begin{table}[t]
   \centering
@@ -187,3 +216,10 @@ policy, followed by comparison against a directional wave buoy or wave-tank
 reference.  The alternative Aranovskiy and PLL trackers in
 Appendix~\ref{app:tracker-alternatives} are implementation options only; the
 current evidence does not rank them against KalmANF.
+
+Without response matching, unequal surge/sway gains and heave phase distort
+the incident direction signature. The known-preset equalizer addresses this
+relative distortion, while retained footprint attenuation, directional spread,
+attitude error and sensor noise still limit accuracy and availability. It does
+not establish validity for an unknown hull or recover information at response
+nulls.

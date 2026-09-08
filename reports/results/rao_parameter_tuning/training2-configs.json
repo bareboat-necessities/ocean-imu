@@ -1,0 +1,33 @@
+[
+  {
+    "name": "baseline",
+    "env": {}
+  },
+  {
+    "name": "m2_b1e-10",
+    "env": {
+      "SF_MAG_HI_RIDGE_REL": ".25",
+      "SF_MAG_HI_MIN_INFO": ".1",
+      "SF_SIGMA_M_SCALE": "2",
+      "SF_GYRO_BIAS_RW_VAR": "1e-10"
+    }
+  },
+  {
+    "name": "m4_b1e-10",
+    "env": {
+      "SF_MAG_HI_RIDGE_REL": ".25",
+      "SF_MAG_HI_MIN_INFO": ".1",
+      "SF_SIGMA_M_SCALE": "4",
+      "SF_GYRO_BIAS_RW_VAR": "1e-10"
+    }
+  },
+  {
+    "name": "m5_b1e-10",
+    "env": {
+      "SF_MAG_HI_RIDGE_REL": ".25",
+      "SF_MAG_HI_MIN_INFO": ".1",
+      "SF_SIGMA_M_SCALE": "5",
+      "SF_GYRO_BIAS_RW_VAR": "1e-10"
+    }
+  }
+]

@@ -25,7 +25,7 @@
     \IfFileExists{#1.pgf}{%
         \resizebox{\textwidth}{!}{\input{#1.pgf}}%
     }{%
-        \fbox{\parbox{0.92\textwidth}{Missing plot file: \texttt{#1.pgf}}}%
+        \fbox{\parbox{0.92\textwidth}{Missing plot file: \texttt{\detokenize{#1.pgf}}}}%
     }%
     \caption{#2}
     \label{#3}

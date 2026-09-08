@@ -1,0 +1,111 @@
+[
+  {
+    "name": "ridge25_mag2",
+    "env": {
+      "SF_MAG_HI_RIDGE_REL": ".25",
+      "SF_SIGMA_M_SCALE": "2"
+    }
+  },
+  {
+    "name": "sf_sigma_m_scale_4",
+    "env": {
+      "SF_MAG_HI_RIDGE_REL": ".25",
+      "SF_SIGMA_M_SCALE": "4"
+    }
+  },
+  {
+    "name": "sf_sigma_m_scale_8",
+    "env": {
+      "SF_MAG_HI_RIDGE_REL": ".25",
+      "SF_SIGMA_M_SCALE": "8"
+    }
+  },
+  {
+    "name": "sf_mag_hi_min_info_0.1",
+    "env": {
+      "SF_MAG_HI_RIDGE_REL": ".25",
+      "SF_SIGMA_M_SCALE": "2",
+      "SF_MAG_HI_MIN_INFO": "0.1"
+    }
+  },
+  {
+    "name": "sf_mag_hi_memory_sec_150",
+    "env": {
+      "SF_MAG_HI_RIDGE_REL": ".25",
+      "SF_SIGMA_M_SCALE": "2",
+      "SF_MAG_HI_MEMORY_SEC": "150"
+    }
+  },
+  {
+    "name": "sf_mag_hi_memory_sec_1200",
+    "env": {
+      "SF_MAG_HI_RIDGE_REL": ".25",
+      "SF_SIGMA_M_SCALE": "2",
+      "SF_MAG_HI_MEMORY_SEC": "1200"
+    }
+  },
+  {
+    "name": "sf_mag_hi_ridge_1e-05",
+    "env": {
+      "SF_MAG_HI_RIDGE_REL": ".25",
+      "SF_SIGMA_M_SCALE": "2",
+      "SF_MAG_HI_RIDGE": "1e-05"
+    }
+  },
+  {
+    "name": "sf_mag_refine_window_sec_90",
+    "env": {
+      "SF_MAG_HI_RIDGE_REL": ".25",
+      "SF_SIGMA_M_SCALE": "2",
+      "SF_MAG_REFINE_WINDOW_SEC": "90"
+    }
+  },
+  {
+    "name": "sf_mag_refine_window_sec_180",
+    "env": {
+      "SF_MAG_HI_RIDGE_REL": ".25",
+      "SF_SIGMA_M_SCALE": "2",
+      "SF_MAG_REFINE_WINDOW_SEC": "180"
+    }
+  },
+  {
+    "name": "sf_mag_refine_start_sec_30",
+    "env": {
+      "SF_MAG_HI_RIDGE_REL": ".25",
+      "SF_SIGMA_M_SCALE": "2",
+      "SF_MAG_REFINE_START_SEC": "30"
+    }
+  },
+  {
+    "name": "ou_iii_acc_bias_rw_1e-08",
+    "env": {
+      "SF_MAG_HI_RIDGE_REL": ".25",
+      "SF_SIGMA_M_SCALE": "2",
+      "OU_III_ACC_BIAS_RW": "1e-08"
+    }
+  },
+  {
+    "name": "ou_iii_acc_bias_rw_1e-06",
+    "env": {
+      "SF_MAG_HI_RIDGE_REL": ".25",
+      "SF_SIGMA_M_SCALE": "2",
+      "OU_III_ACC_BIAS_RW": "1e-06"
+    }
+  },
+  {
+    "name": "ou_iii_rs_mse_coeff_0.1",
+    "env": {
+      "SF_MAG_HI_RIDGE_REL": ".25",
+      "SF_SIGMA_M_SCALE": "2",
+      "OU_III_RS_MSE_COEFF": "0.1"
+    }
+  },
+  {
+    "name": "ou_iii_rs_mse_coeff_0.2",
+    "env": {
+      "SF_MAG_HI_RIDGE_REL": ".25",
+      "SF_SIGMA_M_SCALE": "2",
+      "OU_III_RS_MSE_COEFF": "0.2"
+    }
+  }
+]

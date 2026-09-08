@@ -1,11 +1,11 @@
 {
   "axes": {
-    "x-athwartships": [
+    "x-fore-aft": [
       1.0,
       0.0,
       0.0
     ],
-    "y-fore-aft": [
+    "y-port": [
       0.0,
       1.0,
       0.0
@@ -34,16 +34,16 @@
   ],
   "exact_arm": "oracle: truth angular kinematics; an upper bound, not a claim",
   "files": {
-    "lever_arm_cutoff_runs.csv": "d9d01654adc60c586b7a5776b85ebd052bb83c61889360552cd796d41cd1db59",
-    "lever_arm_cutoff_summary.csv": "e9a08d2b446b8e0cde126805971299236d257e8c6215591a827080a77fe0a7ce",
-    "lever_arm_report.md": "f21466b72b3761db25f53986dd5381d06d2ba739be8ae762b7ebb8989a589786",
-    "lever_arm_runs.csv": "7dec6d14b5b9b335889c5a09787ed0fd77d8748f0bcbd77bd7e6b3de1dd1dbb6",
-    "lever_arm_summary.csv": "ab0a236524d6dc0900031aadb4e78e2a23a21ce5ffc086e40d7e1ff33beb4347",
-    "ou3_lever_arm_cutoff.svg": "026a4bafd382bb721869ef01d9b6276c36ef8ebf5c8b01fb8d30b5d2711fe630",
-    "ou3_lever_arm_mechanism.svg": "6962996003347922abf933ba725c110f305dc5add19664273b79725a33877b13",
-    "ou3_lever_arm_penalty.svg": "2b72055bf757f0ae1753c89d1420e8dc4020ee8aed8dcaa1c932fb9f4b106e19",
-    "ou3_lever_arm_sea_state.svg": "f3c625abbe7785bb6dad4029b0ca3190c4226de27826f4584b5ce8e95c0ed109",
-    "ou3_lever_arm_tilt.svg": "3029db6206488afd553700b162a33961649ac02d22e1b01f114554805b9dfb9d"
+    "lever_arm_cutoff_runs.csv": "5155f6e1d26a9a2cf937b6e71c7f15455e6b9ab3b390b071f5ca4e4c7531c671",
+    "lever_arm_cutoff_summary.csv": "1cedc98bc9eb08e41b34008a7276eba4074c285f0c61e0fd3e2039ff3f2857ab",
+    "lever_arm_report.md": "f88836ee0deacdce2f5f66e06a2d36d1f04acea74727038c9a2cc5f5ea602d07",
+    "lever_arm_runs.csv": "4b999b60c2a5b53a90757238a994b002c8d92041dea9e0181722e9d9452cd7d0",
+    "lever_arm_summary.csv": "dc8489f2916c74d2e562fe0da7495ffd7cee7a76cd5c8f72e2f53353d05d9c68",
+    "ou3_lever_arm_cutoff.svg": "d6d84772abf07cb2908886cae3e25f20d38f9e94d170a8339969942b7226ceeb",
+    "ou3_lever_arm_mechanism.svg": "c58c0b8d395580109ca7e3686360d061f5798a99873593a573ac797dc9fcc0da",
+    "ou3_lever_arm_penalty.svg": "2b3d1ba8a07290c24062027cdb601b4c8d1e220d9449bccfc844c06eea6a8d00",
+    "ou3_lever_arm_sea_state.svg": "9e1e610aacd1077316007171c2bf51842ab9d1cf77c0ad38b5769e95c76b141b",
+    "ou3_lever_arm_tilt.svg": "49ade9f9b3c3912f91f3cf02e38bbe3708bd2a12aff36c10b08ae977161ec992"
   },
   "gyro_arm": "deployable: two-pole low-pass on the measured rate followed by a causal second-order difference",
   "installation_stage": "simulator applies the rigid-body term to the accelerometer truth before sensor corruption (W3D_IMU_LEVER_ARM_M)",
@@ -56,7 +56,23 @@
     "unmodeled": "none"
   },
   "scoring_window_sec": 900.0,
-  "simulation_data": "oceanography-waves-lib v1.1.3",
-  "source_commit": "dd30ffb2ea6fa2b41d8bb85dd9e5604c3735ece5",
+  "simulation_data": "oceanography-waves-lib v1.2.1 vessel-rao-28ft",
+  "simulation_provenance": {
+    "archive": "sim-data-files-vessel-rao-28ft.zip",
+    "archive_sha256": "6d6eb92db78e97f1d2456c6b92387993bf23be14a9a6cf26943f0a22fc6fee60",
+    "input_sha256": {
+      "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "6a8a27234cb8fe3b1ecd524d2c13a9ebd029d584652f4212023ba974bd218e03",
+      "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "cd8e8ea89123773e7d8dcf7ac8712d780528c6ff02436b0f40b4d1a6a1bb97e0",
+      "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": "11e29a93ad1084b02af116311d194416567fa6bc20ac9569f5471f97b3d9f8bb",
+      "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "f147cba9d14b87d0e1af4d3e434196312d91295cd40b9a9d738e2919e60cdaa7",
+      "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "a1a4fff90e99a5be68f7767b2865db317e413c87df8e942440c6f6ca1520cf0c",
+      "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": "3db45e87b465aed441637ba7d7d8b67c3944416a784ea9aef6ce57e9360e72e4",
+      "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": "f7d56bcfe9f901727e3dd1e21e61144d666943f6a74e2c1b5f4cc13d0cf580f2",
+      "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "793c3f6fd08bef8c980da53f7b77fc2f4e60914fe1e652f47ed5a7996d9a9fa1"
+    },
+    "motion_model": "VESSEL_RAO_28FT",
+    "release": "v1.2.1"
+  },
+  "source_commit": "1cb65a24379b74bf59443701c9ecb3be03f0574d",
   "study": "OU-III IMU lever-arm installation"
 }

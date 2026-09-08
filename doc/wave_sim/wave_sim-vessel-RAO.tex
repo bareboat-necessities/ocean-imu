@@ -75,6 +75,43 @@
     \end{abstract}
 \input{../simulation-dataset.tex-part}
 
+    \section{Preset used by the reference simulations}
+    The v1.2.1 reference archive uses an analytical zero-speed preset for an
+    8.53 m fin-keel sailboat. Its waterline length, beam and keel-inclusive
+    draft are 7.0, 2.9 and 1.5 m. The heave, pitch and roll natural periods
+    are 2.4, 2.8 and 3.5 s, with damping ratios 0.45, 0.35 and 0.22.
+    Surge and sway use nonresonant response times 0.7 and 1.0 s. Heading and
+    mean heel are zero. The response origin and default IMU are at the CG.
+
+    With incident propagation direction $\beta$ relative to the fixed heading,
+    the preset uses the smooth footprint and horizontal attenuation
+    \begin{align}
+      F&=\exp\!\left[-\frac{(7k\cos\beta)^2+(2.9k\sin\beta)^2}{24}\right],\\
+      P&=F\exp(-0.35k\,1.5).
+    \end{align}
+    For the convention $\operatorname{Re}(Ha e^{i\phi-i\omega t})$, define
+    $G_j=(1-r_j^2-2i\zeta_jr_j)^{-1}$ with $r_j=\omega T_j/(2\pi)$ and
+    $Q_j=(1-i\omega\tau_j)^{-2}$. The six displacement responses are
+    \begin{align}
+      H_x&=i\cos\beta\,P Q_x,&H_y&=i\sin\beta\,P Q_y,\\
+      H_z&=F G_z,&H_{\rm roll}&=ik\sin\beta\,F G_{\rm roll},\\
+      H_{\rm pitch}&=-ik\cos\beta\,F G_{\rm pitch},&H_{\rm yaw}&=0.
+    \end{align}
+    Translation responses are metres per metre of incident amplitude, and
+    angular responses are radians per metre. Velocity and acceleration are
+    analytic derivatives of the same complex response. The body axes are
+    forward, port and up; body-to-world attitude is
+    $R_z(\psi)R_y(\theta)R_x(\varphi)$. Body rates use the full attitude
+    derivative, so a zero Euler-yaw rate does not imply zero body gyro $z$.
+
+    These parameters are engineering estimates, not measured or computed
+    hull-specific RAOs. The preset does not model forward speed, wave yaw,
+    mean sailing heel, slamming, breaking or nonlinear restoring. Applying
+    linear response to regular-wave bound elevation harmonics is an additional
+    approximation. The 8.5 m incident-height cases are extrapolated stress
+    tests. No acceleration clamp is imposed to keep the response below gravity.
+
+
     \begin{IEEEkeywords}
         Seakeeping, response amplitude operator, RAO, PM spectrum, JONSWAP,
         irregular waves, vessel motions, wave excitation, Cummins equation,

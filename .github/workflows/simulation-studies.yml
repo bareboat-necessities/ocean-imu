@@ -5,6 +5,18 @@ on:
     paths:
       - 'tools/sim_dataset.py'
       - 'tools/model_mismatch_ablation.py'
+      - 'tools/startup_ablation.py'
+      - 'tools/startup_publication_sync.py'
+      - 'tools/ou3_reduced_mse_study.py'
+      - 'tools/direction_rao_ablation.py'
+      - 'tools/direction_rao_report.py'
+      - 'src/wave_dir/**'
+      - 'src/kalman_ou_ii/**'
+      - 'src/kalman_ou_iii/**'
+      - 'src/kalman_tfg/**'
+      - 'tests/kalman_ou_ii/kalman_ou_ii-sim.cpp'
+      - 'tests/kalman_ou_iii/kalman_ou_iii-sim.cpp'
+      - 'tests/kalman_tfg/kalman_tfg-sim.cpp'
       - 'tools/engine_noise_degradation.py'
       - 'tools/ou3_engine_noise_mitigation.py'
       - '.github/workflows/simulation-studies.yml'
@@ -20,7 +32,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        study: [model_mismatch_ablation, engine_noise_degradation, ou3_engine_noise_mitigation, ou_roundtrip_transition]
+        study: [model_mismatch_ablation, engine_noise_degradation, ou3_engine_noise_mitigation, ou_roundtrip_transition, startup_ablation, direction_rao_ablation]
     steps:
       - uses: actions/checkout@v6
       - name: Install dependencies
@@ -45,6 +57,15 @@ jobs:
           else
             python3 -u "tools/$STUDY.py" --data-dir plots/kalman_ou_ii --jobs "$(nproc)" 2>&1 | tee study.log
           fi
+          if [ "$STUDY" = direction_rao_ablation ]; then
+            python3 tools/direction_rao_report.py
+          fi
+          if [ "$STUDY" = startup_ablation ]; then
+            python3 tools/startup_publication_sync.py
+            mkdir -p reports/results/ou2_dual_mse
+            python3 tools/ou2_dual_mse_coefficients.py --exact | tee reports/results/ou2_dual_mse/coefficient_report.txt
+            python3 tools/ou3_reduced_mse_study.py
+          fi
           if [ "$STUDY" = engine_noise_degradation ]; then
             python3 -u tools/engine_noise_guard_families.py --data-dir plots/kalman_ou_ii --jobs "$(nproc)" 2>&1 | tee -a study.log
           fi
@@ -62,6 +83,10 @@ jobs:
             reports/results/engine_noise_degradation/
             reports/results/engine_noise_mitigation/
             reports/results/ou_rs_law/
+            reports/results/startup_ablation/
+            reports/results/ou2_dual_mse/
+            reports/results/ou3_reduced_mse/
+            reports/results/direction_rao_ablation/
             study.log
             source-commit.txt
             simulation-sha256.txt

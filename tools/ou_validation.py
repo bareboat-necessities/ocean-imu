@@ -759,7 +759,7 @@ OU_III_RS_BOUNDS_MS = (0.15, 100.0)
 # because the law ablation uses them; the fixed-tuning modes derive their
 # frozen pair from the deployed law.
 OU_II_PSEUDO_MSE_COEFF = 0.1116
-OU_II_PSEUDO_MSE_RATIO = 0.4611
+OU_II_PSEUDO_MSE_RATIO = 0.4
 OU_II_PSEUDO_QEFF = 2.0 * (0.12 ** 2) * (1.0 / 200.0)
 OU_II_PSEUDO_TAU_RATIO = 0.015 / 1.1
 OU_II_PSEUDO_PERIOD_BOUNDS_S = (1.0 / 200.0, 0.25)
@@ -825,7 +825,7 @@ def _finite_values(rows: Sequence[Mapping[str, Any]], metric: str) -> np.ndarray
     # Segment metrics only exist for the non-stationary scenario, so a missing
     # key is an expected absence rather than a defect.
     values = np.asarray(
-        [float(row.get(metric, math.nan)) for row in rows], dtype=np.float64
+        [float(row[metric]) if row.get(metric) is not None else math.nan for row in rows], dtype=np.float64
     )
     return values[np.isfinite(values)]
 
@@ -1146,7 +1146,7 @@ def _paired_effect(
         return {
             tuple(row[key] for key in pair_keys): float(row[metric])
             for row in rows
-            if math.isfinite(float(row.get(metric, math.nan)))
+            if row.get(metric) is not None and math.isfinite(float(row[metric]))
         }
 
     left = indexed(left_rows)
@@ -2371,7 +2371,7 @@ def _direction_table(
         r"",
         r"\begin{table*}[t]",
         r"  \centering",
-        r"  \caption{Ten-seed OU--III wave-direction results over the final \SI{900}{s}, against the generator azimuth of each record. The propagation axis is defined modulo \SI{180}{\degree}, so $|\Delta\theta|$ is the absolute axial error of the circular-mean estimate and $\theta_{\mathrm{RMSE}}$ is the sample-wise axial RMS error. \emph{Sense} is a genuine correctness rate: the estimator's directed propagation vector, with the vessel heading removed, scored against the physical propagation direction of the record, which is the generator azimuth plus \SI{180}{\degree}. \emph{Unresolved} is the share below the confidence and amplitude thresholds. The FORWARD/BACKWARD classes the estimator exports are relative to the axis representative it happens to return and invert under a \SI{180}{\degree} heading change, so they are not scored here. Entries are mean $\pm$ sample standard deviation over the seed triplets.}",
+        r"  \caption{Ten-seed OU--III wave-direction results over the final \SI{900}{s}, against the generator azimuth of each record. The propagation axis is defined modulo \SI{180}{\degree}, so $|\Delta\theta|$ is the absolute axial error of the circular-mean estimate and $\theta_{\mathrm{RMSE}}$ is the sample-wise axial RMS error. \emph{Sense} is a genuine correctness rate: the estimator's directed propagation vector, with the vessel heading removed, scored against the physical propagation direction of the record, which is the v1.2.1 incident propagation azimuth. \emph{Unresolved} is the share below the confidence and amplitude thresholds. The FORWARD/BACKWARD classes the estimator exports are relative to the axis representative it happens to return and invert under a \SI{180}{\degree} heading change, so they are not scored here. Entries are mean $\pm$ sample standard deviation over the seed triplets.}",
         r"  \label{tab:ou_mc_direction}",
         r"  \footnotesize",
         r"  \setlength{\tabcolsep}{3.6pt}",

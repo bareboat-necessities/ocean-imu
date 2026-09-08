@@ -1,9 +1,8 @@
 """Conventions of the shipped wave records, asserted rather than assumed.
 
-The generator azimuth in a record name is the direction the waves come *from*,
-so travel-sense scoring has to compare against ``azimuth + 180``.  That was
-never written down and it mattered.  The test needs a record and skips when the
-simulation data has not been fetched.
+The v1.2.1 generator azimuth is the incident propagation-to direction.
+Known RAO phase/amplitude matching is necessary before using an orbital
+correlation to check it. The test skips if records have not been fetched.
 
 The second contract here is the Python mirror of the deployed fixed-tuning
 operating point, pinned against the shipping headers.
@@ -14,6 +13,7 @@ import unittest
 from pathlib import Path
 
 import numpy as np
+from scipy.signal import bilinear, lfilter
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT / "tools"))
@@ -24,7 +24,7 @@ ANALYSIS_SECONDS = 400.0
 
 def _records():
     for directory in (Path(__file__).resolve().parent, REPO_ROOT / "tests" / "kalman_ou_iii"):
-        found = sorted(directory.glob("wave_data_jonswap_*.csv"))
+        found = sorted(directory.glob("wave_data_jonswap_*.csv")) + sorted(directory.glob("wave_data_pmstokes_*.csv"))
         if found:
             return found
     return []
@@ -38,7 +38,7 @@ def _azimuth_from_name(path: Path) -> float:
 
 
 class GeneratorAzimuthConventionTests(unittest.TestCase):
-    def test_azimuth_is_the_direction_waves_come_from(self):
+    def test_azimuth_is_propagation_to_after_rao_phase_matching(self):
         records = _records()
         if not records:
             self.skipTest("simulation records not fetched")
@@ -55,6 +55,14 @@ class GeneratorAzimuthConventionTests(unittest.TestCase):
                     max_rows=rows,
                     usecols=[index["disp_x"], index["disp_y"], index["disp_z"]],
                 )
+                # Independent continuous transfer formulas of VesselRao:
+                # X has surge tau=.7, Y sway tau=1; match X and heave to Y.
+                bx, ax = bilinear([.7**2, 1.4, 1], [1, 2, 1], fs=SAMPLE_RATE_HZ)
+                wn = 2 * np.pi / 2.4
+                bz, az = bilinear([1/wn**2, .9/wn, 1], [1, 2, 1], fs=SAMPLE_RATE_HZ)
+                data[:, 0] = lfilter(bx, ax, data[:, 0])
+                data[:, 2] = lfilter(bz, az, data[:, 2])
+                data = data[int(30 * SAMPLE_RATE_HZ):]
                 horizontal = data[:, :2] - data[:, :2].mean(axis=0)
                 vertical = data[:, 2] - data[:, 2].mean()
 
@@ -71,13 +79,13 @@ class GeneratorAzimuthConventionTests(unittest.TestCase):
                     axis = -axis
 
                 travel_deg = np.degrees(np.arctan2(axis[1], axis[0])) % 360.0
-                expected_deg = (_azimuth_from_name(path) + 180.0) % 360.0
+                expected_deg = _azimuth_from_name(path) % 360.0
                 error = (travel_deg - expected_deg + 180.0) % 360.0 - 180.0
                 self.assertLess(
                     abs(error),
                     20.0,
                     f"{path.name}: propagation-to direction {travel_deg:.1f} deg is not "
-                    f"azimuth + 180 = {expected_deg:.1f} deg",
+                    f"propagation azimuth = {expected_deg:.1f} deg",
                 )
 
 

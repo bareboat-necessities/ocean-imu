@@ -1,0 +1,9 @@
+# Stability rerun on the vessel source
+
+Canonical P3 validation passes conditionally for H18 and A21 at delta=1e-18. Source/deployment admission remains false. Canonical P4 and motion-P4 remain open; P5 and motion-P5 may not start. Successful program validation means the retained algebra and obligation bookkeeping checked successfully, not that these open theorem stages were proved.
+
+The selected runtime audit covers all eight records, 1,920,000 samples. Its passive observer is byte-identical to the matched baseline in all cases. Two records fail ordinary quality gates. Runtime Live contains 10,002 physical-acceleration and 31,589 body-rate cap violations. Actual vector covariances differ from the frozen P3 premises, so no sample passes every audited necessary condition. The audit retains all violation intervals and source/binary hashes.
+
+The source-connected finite endpoint probe uses one exact v1.2.1 physical history and an unmodified shipping observer, with fixed 600-sample H18 and A21 windows. Forced endpoint ratios are approximately 7.274527 and 0.436047; the A21 maximum prefix ratio is 1.296876. Independent physical-source reconstruction agrees to 5.22e-15 and 1.42e-13. These are forced trajectories, not homogeneous contraction tests or counterexamples. No window/direction search or proof-domain retuning was performed.
+
+`docs/ou3-proof-research-state.md` records the controlling open inequalities, failed approaches and next falsifiable experiment. Complete capture files can be regenerated using `.github/workflows/ou3-p4-physical-finite-map-feasibility.yml`; the committed endpoint report retains their hashes. The runtime capture is reproducible through `.github/workflows/ou3-brmm.yml`.

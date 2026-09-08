@@ -17,7 +17,7 @@ else
     CXXFLAGS = $(BASEFLAGS)
 endif
 
-TARGETS = wave-direction-test wave-direction-iq-test wave-encounter-test
+TARGETS = wave-direction-test wave-direction-iq-test wave-encounter-test vessel-rao-equalizer-test
 
 all: build test
 build: $(TARGETS)
@@ -31,6 +31,9 @@ wave-direction-iq-test: wave-direction-iq-test.cpp
 	$(CXX) $(CXXFLAGS) -o $@ $<
 
 wave-encounter-test: wave-encounter-test.cpp
+	$(CXX) $(CXXFLAGS) -o $@ $<
+
+vessel-rao-equalizer-test: vessel-rao-equalizer-test.cpp $(REPO_ROOT)/src/wave_dir/VesselRaoEqualizer.h
 	$(CXX) $(CXXFLAGS) -o $@ $<
 
 clean:

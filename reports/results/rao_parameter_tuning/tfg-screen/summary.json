@@ -1,0 +1,79 @@
+[
+  {
+    "config": "baseline",
+    "failed_records": 6,
+    "violations": 11,
+    "worst_ratio": 1.908498452012384,
+    "yaw_rms_deg": 1.5769899855,
+    "roll_rms_deg": 0.32777654562499997,
+    "pitch_rms_deg": 0.4677867825,
+    "disp_3d_rms_m": 0.483293314925,
+    "accel_bias_3d_rms_mps2": 0.0971464081875
+  },
+  {
+    "config": "m1_b1e-11",
+    "failed_records": 6,
+    "violations": 9,
+    "worst_ratio": 1.4232430340557274,
+    "yaw_rms_deg": 1.051155638375,
+    "roll_rms_deg": 0.33092373425,
+    "pitch_rms_deg": 0.46290634575,
+    "disp_3d_rms_m": 0.4886786289125,
+    "accel_bias_3d_rms_mps2": 0.0983313299
+  },
+  {
+    "config": "m1_b1e-10",
+    "failed_records": 6,
+    "violations": 9,
+    "worst_ratio": 1.4425232198142415,
+    "yaw_rms_deg": 1.060657639375,
+    "roll_rms_deg": 0.3293921185,
+    "pitch_rms_deg": 0.46995564825,
+    "disp_3d_rms_m": 0.4859617416,
+    "accel_bias_3d_rms_mps2": 0.0977528593
+  },
+  {
+    "config": "m2_b1e-11",
+    "failed_records": 4,
+    "violations": 8,
+    "worst_ratio": 1.2170758354755784,
+    "yaw_rms_deg": 0.993072572625,
+    "roll_rms_deg": 0.316134618625,
+    "pitch_rms_deg": 0.4233705103375,
+    "disp_3d_rms_m": 0.47127933250000004,
+    "accel_bias_3d_rms_mps2": 0.0943381148125
+  },
+  {
+    "config": "m2_b1e-10",
+    "failed_records": 4,
+    "violations": 7,
+    "worst_ratio": 1.227469040247678,
+    "yaw_rms_deg": 1.004621143625,
+    "roll_rms_deg": 0.313941959375,
+    "pitch_rms_deg": 0.432724935,
+    "disp_3d_rms_m": 0.4685360592375,
+    "accel_bias_3d_rms_mps2": 0.0939238365
+  },
+  {
+    "config": "m4_b1e-11",
+    "failed_records": 4,
+    "violations": 5,
+    "worst_ratio": 1.117093998234775,
+    "yaw_rms_deg": 0.907332798875,
+    "roll_rms_deg": 0.30331653175,
+    "pitch_rms_deg": 0.3794364138,
+    "disp_3d_rms_m": 0.49884175445,
+    "accel_bias_3d_rms_mps2": 0.088538461825
+  },
+  {
+    "config": "m4_b1e-10",
+    "failed_records": 4,
+    "violations": 5,
+    "worst_ratio": 1.116659311562224,
+    "yaw_rms_deg": 0.92186424,
+    "roll_rms_deg": 0.3000364155,
+    "pitch_rms_deg": 0.39134659236249997,
+    "disp_3d_rms_m": 0.495149268675,
+    "accel_bias_3d_rms_mps2": 0.08822965475
+  }
+]

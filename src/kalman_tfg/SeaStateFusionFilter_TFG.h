@@ -182,7 +182,7 @@ public:
         float proxy_mag_settle_sec = 0.0f;
 
         bool  mag_refine_enabled    = true;
-        float mag_refine_start_sec  = 90.0f;
+        float mag_refine_start_sec  = 30.0f;
         float mag_refine_window_sec = 30.0f;
 
         bool  mag_enable_quality_weighting = false;
@@ -194,8 +194,8 @@ public:
         bool  mag_continuous_hard_iron        = true;
         float mag_hi_memory_sec               = 600.0f;
         float mag_hi_model_ridge              = 5.0e-4f;
-        float mag_hi_model_ridge_relative     = 0.5f;
-        float mag_hi_min_information          = 2.0f;
+        float mag_hi_model_ridge_relative     = 0.25f;
+        float mag_hi_min_information          = 0.1f;
         float mag_hi_min_effective_weight     = 500.0f;
         float mag_hi_max_residual_rms_uT      = 3.0f;
         float mag_hi_max_bias_fraction        = 0.35f;

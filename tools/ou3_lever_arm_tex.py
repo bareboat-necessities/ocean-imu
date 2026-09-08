@@ -18,8 +18,8 @@ from pathlib import Path
 DEPLOYED_CUTOFF_HZ = 15.0
 
 AXIS_TEX = {
-    "x-athwartships": "athwartships",
-    "y-fore-aft": "fore--aft",
+    "x-fore-aft": "fore-aft",
+    "y-port": "port",
     "z-vertical": "vertical",
 }
 
@@ -104,20 +104,20 @@ def generate(
         "Table~\\ref{tab:imu-lever-arm} reports the worst canonical direction at each",
         f"installation distance.  At \\SI{{{100.0 * far:.0f}}}{{cm}} the rotational term",
         f"reaches \\SI{{{injected:.3f}}}{{\\meter\\per\\second\\squared}} RMS in the worst",
-        "direction.  Leaving it unmodeled raises 3-D displacement to",
+        "direction. The largest unmodeled 3-D displacement ratio is",
         f"\\num{{{value(worst_3d, 'disp_3d_ratio_to_baseline'):.3f}}} times the CG",
         f"baseline in the {axis_tex(worst_3d['axis'])} direction, and the largest tilt",
         f"ratio is \\num{{{value(worst_tilt, 'tilt_ratio_to_baseline'):.3f}}} in the",
         f"{axis_tex(worst_tilt['axis'])} direction.  Modelling the same lever arm inside",
-        "the filter removes it: with exact angular kinematics the largest 3-D ratio over",
-        f"the three directions falls to \\num{{{exact_max:.3f}}}, and with the deployable",
+        "the filter subtracts its rotational force: with exact angular kinematics the largest 3-D ratio over",
+        f"the three directions is \\num{{{exact_max:.3f}}}, and with the deployable",
         "model driven by the measured rate it is",
         f"\\num{{{gyro_max:.3f}}}, leaving only",
         f"\\SI{{{gyro_residual:.3f}}}{{\\meter\\per\\second\\squared}} of the injected term",
-        "behind.  The attitude channel, which carries the larger penalty, recovers with",
-        f"it: the worst tilt ratio falls to \\num{{{exact_tilt:.3f}}} under the exact model",
+        "behind. The attitude channel is reported separately:",
+        f"the worst tilt ratio is \\num{{{exact_tilt:.3f}}} under the exact model",
         f"and \\num{{{gyro_tilt:.3f}}} under the deployable one.  The installation penalty",
-        "is therefore deterministic and recoverable rather than intrinsic OU--III error.",
+        "depends on the interaction with existing residuals; force subtraction need not improve every error metric.",
         "",
         "\\begin{table}[t]",
         "  \\centering",
@@ -153,7 +153,7 @@ def generate(
         lines += [
             "The deployable model has one design parameter, the band of its rate",
             "derivative, and it is two-sided.  Over the same eight seas with a",
-            f"\\SI{{{100.0 * value(narrow, 'distance_m'):.0f}}}{{cm}} fore--aft arm, a",
+            f"\\SI{{{100.0 * value(narrow, 'distance_m'):.0f}}}{{cm}} port arm, a",
             f"\\SI{{{value(narrow, 'cutoff_hz'):.0f}}}{{Hz}} corner leaves",
             f"\\num{{{value(narrow, 'disp_3d_ratio_to_baseline'):.3f}}} times the CG",
             "baseline because the low-pass phase lag misaligns a correction whose",

@@ -281,7 +281,7 @@ private:
         HeaveFilter::Config cfg{};
 
         // Base observer
-        cfg.core.observer.r          = 0.125f;
+        cfg.core.observer.r          = 0.08125f;
         cfg.core.observer.tau_a      = 0.40f;
         cfg.core.observer.tau_d      = 49.0f;
         cfg.core.observer.kb         = 2.5e-5f;
@@ -363,7 +363,7 @@ private:
 
         // Mahony base gains
         cfg.mahony_twoKp = 1.70f;
-        cfg.mahony_twoKi = 0.090f;
+        cfg.mahony_twoKi = 0.0225f;
         cfg.gravity_mps2 = g_std;
         cfg.use_mag = with_mag;
 
@@ -371,13 +371,32 @@ private:
         cfg.adapt_mahony_gains = true;
         cfg.mahony_twoKp_calm  = 1.50f;
         cfg.mahony_twoKp_rough = 1.20f;
-        cfg.mahony_twoKi_calm  = 0.100f;
-        cfg.mahony_twoKi_rough = 0.070f;
+        cfg.mahony_twoKi_calm  = 0.025f;
+        cfg.mahony_twoKi_rough = 0.0175f;
         cfg.mahony_sigma_ref = 0.45f;
         cfg.mahony_norm_err_ref = 0.12f;
         cfg.mahony_innov_ref = 0.18f;
         cfg.mahony_gain_smooth_tau_s = 1.0f;
         cfg.mahony_acc_trust_min = 0.65f;
+
+        // Reproducible parameter sweeps; regression limits are never overridden.
+        const auto scale = [](const char* name, float& value) {
+            if (const char* text = std::getenv(name)) {
+                const float factor = std::strtof(text, nullptr);
+                if (!(std::isfinite(factor) && factor > 0.0f)) {
+                    throw std::invalid_argument(name);
+                }
+                value *= factor;
+            }
+        };
+        scale("PII_R_SCALE", cfg.core.observer.r);
+        scale("PII_TAU_A_SCALE", cfg.core.observer.tau_a);
+        scale("PII_KP_SCALE", cfg.mahony_twoKp);
+        scale("PII_KP_SCALE", cfg.mahony_twoKp_calm);
+        scale("PII_KP_SCALE", cfg.mahony_twoKp_rough);
+        scale("PII_KI_SCALE", cfg.mahony_twoKi);
+        scale("PII_KI_SCALE", cfg.mahony_twoKi_calm);
+        scale("PII_KI_SCALE", cfg.mahony_twoKi_rough);
 
         return cfg;
     }
@@ -435,6 +454,8 @@ static void print_vertical_only_summary(const W3dSimulationRunResult& result, fl
     std::cout << "===========================================================\n\n";
 }
 
+static bool any_quality_gate_failed = false;
+
 static void fail_if_vertical_quality_gates_breached(const W3dSimulationRunResult& result, float dt)
 {
     const int N_last = static_cast<int>(RMS_WINDOW_SEC / dt);
@@ -464,13 +485,15 @@ static void fail_if_vertical_quality_gates_breached(const W3dSimulationRunResult
     if (z_pct > z_limit) {
         std::cerr << "ERROR: Z RMS above limit (" << z_pct << "% > " << z_limit
                   << "%). Failing.\n";
-        std::exit(EXIT_FAILURE);
+        any_quality_gate_failed = true;
+        if (std::getenv("W3D_COLLECT_ALL_GATES") == nullptr) std::exit(EXIT_FAILURE);
     }
 
     if (result.with_mag && rms_yaw.rms() > FAIL_LIMITS.err_limit_yaw_deg) {
         std::cerr << "ERROR: Yaw RMS above limit (" << rms_yaw.rms() << " deg > "
                   << FAIL_LIMITS.err_limit_yaw_deg << " deg). Failing.\n";
-        std::exit(EXIT_FAILURE);
+        any_quality_gate_failed = true;
+        if (std::getenv("W3D_COLLECT_ALL_GATES") == nullptr) std::exit(EXIT_FAILURE);
     }
 }
 
@@ -490,10 +513,14 @@ process_wave_file_for_adaptive_pii_mahony(const std::string& filename,
     const float mag_sigma_uT = (mag_odr_hz <= 20.0f) ? 0.30f : 0.60f;
 
     SimulationNoiseModels noise_models;
-    noise_models.accel_noise = make_imu_noise_model(acc_sigma, acc_bias_range, acc_bias_rw, 1234);
-    noise_models.gyro_noise  = make_imu_noise_model(gyr_sigma, gyr_bias_range, gyr_bias_rw, 5678);
+    const W3dRandomSeeds seeds = w3d_random_seeds_from_env();
+    noise_models.accel_noise = make_imu_noise_model(acc_sigma, acc_bias_range, acc_bias_rw,
+                                                 seeds.accel_noise, seeds.accel_initialization);
+    noise_models.gyro_noise  = make_imu_noise_model(gyr_sigma, gyr_bias_range, gyr_bias_rw,
+                                                  seeds.gyro_noise, seeds.gyro_initialization);
     noise_models.mag_noise   = make_mag_noise_model(mag_sigma_uT, 2.0f, 0.01f,
-                                                    0.015f, 0.010f, 1.0f, 9012);
+                                                    0.015f, 0.010f, 1.0f,
+                                                    seeds.mag_noise, seeds.mag_initialization);
 
     const Vector3f sigma_a_init(2.8f * acc_sigma, 2.8f * acc_sigma, 2.8f * acc_sigma);
     const Vector3f sigma_g(2.0f * gyr_sigma, 2.0f * gyr_sigma, 2.0f * gyr_sigma);
@@ -553,5 +580,9 @@ int main(int argc, char* argv[])
         fail_if_vertical_quality_gates_breached(*result, dt);
     }
 
+    if (any_quality_gate_failed) {
+        std::cout << "QUALITY_GATE: PASS=0\n";
+        return EXIT_FAILURE;
+    }
     return 0;
 }

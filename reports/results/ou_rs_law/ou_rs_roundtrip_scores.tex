@@ -1,0 +1,20 @@
+\begin{table}[t]
+  \centering
+  \caption{Bidirectional low--high--low transition scores for the deployed OU--III SpectralMSE configuration. Rise and fall are the two \SI{120}{s} crossfade scores; recovery and settled intervals are reported separately.}
+  \label{tab:ou-roundtrip-scores}
+  \footnotesize
+  \setlength{\tabcolsep}{2.7pt}
+  \begin{tabular}{@{}lrrrrr@{}}
+    \toprule
+    Segment & $Z$ [m] & $Z_{\rm ref}$ [m] & $Z/Z_{\rm ref}$ [\%] & $Z/H_s$ [\%] & 3-D [m] \\
+    \midrule
+    Low start & 0.077 & 0.308 & 25.15 & 1.94 & 0.115 \\
+    Rise crossfade & 0.174 & 0.510 & 34.22 & 4.36 & 0.355 \\
+    High recovery & 0.275 & 1.383 & 19.91 & 6.88 & 0.595 \\
+    High settled & 0.255 & 1.103 & 23.13 & 6.38 & 0.509 \\
+    Fall crossfade & 0.138 & 0.578 & 23.82 & 3.45 & 0.294 \\
+    Low recovery & 0.070 & 0.386 & 18.15 & 1.75 & 0.114 \\
+    Low return & 0.066 & 0.317 & 20.71 & 1.64 & 0.102 \\
+    \bottomrule
+  \end{tabular}
+\end{table}

@@ -74,12 +74,12 @@ inline float travelDegGeneratorFromVec(const Vector2f& v, float heading_deg) {
     return deg;
 }
 
-// The generator azimuth in a record name is the direction the waves come from:
-// the propagation-to vector recovered from the truth channels lies at
-// azimuth + 180 in every shipped record.  Travel-sense scoring compares against
-// this, not against the raw azimuth.
+// v1.2.1 incident harmonics use cos(k.d - omega*t + phase): the
+// filename azimuth is propagation-to, as documented by VesselRao. It is
+// not a meteorological wave-from bearing. Axis scoring is modulo 180, but
+// travel-sense scoring must retain this directed source convention.
 inline float travelTruthDegFromGeneratorAzimuth(float azimuth_deg) {
-    float deg = std::fmod(azimuth_deg + 180.0f, 360.0f);
+    float deg = std::fmod(azimuth_deg, 360.0f);
     if (deg < 0.0f) deg += 360.0f;
     return deg;
 }

@@ -1,0 +1,32 @@
+{
+  "source_commit": "456430d4d2cb2449dd0ae3c7781f71c5eedf599e",
+  "simulation_provenance": {
+    "release": "v1.2.1",
+    "archive": "sim-data-files-vessel-rao-28ft.zip",
+    "archive_sha256": "6d6eb92db78e97f1d2456c6b92387993bf23be14a9a6cf26943f0a22fc6fee60",
+    "motion_model": "VESSEL_RAO_28FT",
+    "input_sha256": {
+      "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "6a8a27234cb8fe3b1ecd524d2c13a9ebd029d584652f4212023ba974bd218e03",
+      "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "cd8e8ea89123773e7d8dcf7ac8712d780528c6ff02436b0f40b4d1a6a1bb97e0",
+      "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": "11e29a93ad1084b02af116311d194416567fa6bc20ac9569f5471f97b3d9f8bb",
+      "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "f147cba9d14b87d0e1af4d3e434196312d91295cd40b9a9d738e2919e60cdaa7",
+      "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "a1a4fff90e99a5be68f7767b2865db317e413c87df8e942440c6f6ca1520cf0c",
+      "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": "3db45e87b465aed441637ba7d7d8b67c3944416a784ea9aef6ce57e9360e72e4",
+      "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": "f7d56bcfe9f901727e3dd1e21e61144d666943f6a74e2c1b5f4cc13d0cf580f2",
+      "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "793c3f6fd08bef8c980da53f7b77fc2f4e60914fe1e652f47ed5a7996d9a9fa1"
+    }
+  },
+  "protocol": "Full eight records x two OU families x engine off/2400 RPM (0.6 m/s2 reference level, 80 Hz sensor bandwidth) x three conditioning arms; default draw; final 900 s; unchanged gates",
+  "producer_sha256": "19f884047f27389e82325824ab36b80900417152aafee8679140c79368efb8ff",
+  "binary_sha256": {
+    "OU-II": "702add58b609cfdb374dfd3bf7bf6dc459c922056ffb9cdd262b3d11192d5bf3",
+    "OU-III": "db39fb62f67b0ed790125e10bab534953a430cad10ab906dc4c05f58d2715055"
+  },
+  "files": {
+    "direction_runs.csv": "f6bf63027cecdc44f92b74676a4e7bcd19409efcee69f3d58873e8676092bbee",
+    "direction_summary.csv": "68c13e79d611f0bebbaf724564de9528d7adc08ccbd959f5fcd6d96d6f32313f",
+    "direction_ablation.tex": "c2c58b9fc264b56324c92bb031110bfdd38a36b85f8c9b4e8c2b3f1fb74975f9",
+    "direction_report.md": "00d9aa73ff498dc19dba5ee6bef0c3018caa30351cbfa3a2588df2c1c8c2540c"
+  },
+  "report_producer_sha256": "615bb4d36eea529c76020c62929f907dd412e703e0518a2635dbc0ee5df8b6ba"
+}

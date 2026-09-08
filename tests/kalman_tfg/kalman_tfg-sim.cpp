@@ -102,8 +102,8 @@ public:
     // mag).  Set by TFG's own MEKF-variance sweep; 1.0 here means the harness
     // value is used unchanged.
     static constexpr float SIGMA_A_RESCALE = 1.0f;
-    static constexpr float SIGMA_G_RESCALE = 1.0f;
-    static constexpr float SIGMA_M_RESCALE = 1.0f;
+    static constexpr float SIGMA_G_RESCALE = 0.1f;
+    static constexpr float SIGMA_M_RESCALE = 4.0f;
 
     FusionAdapter_TFG(bool with_mag,
                       const Vector3f& sigma_a_init,
@@ -148,6 +148,7 @@ public:
         if (float v = 0.0f; env_float("TFG_MAG_REFINE_WINDOW_SEC", v)) cfg.mag_refine_window_sec = v;
         if (float v = 0.0f; env_float("TFG_MAG_HI_SLEW_TAU_SEC", v)) cfg.mag_hi_slew_tau_sec = v;
         if (float v = 0.0f; env_float("TFG_MAG_HI_RIDGE_REL", v)) cfg.mag_hi_model_ridge_relative = v;
+        if (float v = 0.0f; env_float("TFG_MAG_HI_MIN_INFO", v)) cfg.mag_hi_min_information = v;
         if (float v = 0.0f; env_float("TFG_ACC_BIAS_UNLOCK_SEC", v)) cfg.acc_bias_unlock_sec = v;
 
         // Out-of-band accelerometer guard ahead of the proxy and the MEKF.

@@ -1,0 +1,57 @@
+[
+  {
+    "config": "g0.05",
+    "failed_records": 0,
+    "violations": 0,
+    "worst_ratio": 1,
+    "yaw_rms_deg": 0.577024105875,
+    "roll_rms_deg": 0.303576029875,
+    "pitch_rms_deg": 0.110768126375,
+    "disp_3d_rms_m": 0.3099891425,
+    "accel_bias_3d_rms_mps2": 0.0533576300375
+  },
+  {
+    "config": "g0.1",
+    "failed_records": 0,
+    "violations": 0,
+    "worst_ratio": 1,
+    "yaw_rms_deg": 0.51829084,
+    "roll_rms_deg": 0.302405249375,
+    "pitch_rms_deg": 0.0824262210875,
+    "disp_3d_rms_m": 0.3035775932375,
+    "accel_bias_3d_rms_mps2": 0.0513625149625
+  },
+  {
+    "config": "g0.25",
+    "failed_records": 0,
+    "violations": 0,
+    "worst_ratio": 1,
+    "yaw_rms_deg": 0.5555251165,
+    "roll_rms_deg": 0.303935848125,
+    "pitch_rms_deg": 0.1193101402,
+    "disp_3d_rms_m": 0.3452187888875,
+    "accel_bias_3d_rms_mps2": 0.0551508697625
+  },
+  {
+    "config": "g0.5",
+    "failed_records": 1,
+    "violations": 1,
+    "worst_ratio": 1.0116747572815534,
+    "yaw_rms_deg": 0.637531075625,
+    "roll_rms_deg": 0.317681402,
+    "pitch_rms_deg": 0.173092072775,
+    "disp_3d_rms_m": 0.4137239648625,
+    "accel_bias_3d_rms_mps2": 0.0615334743625
+  },
+  {
+    "config": "g1",
+    "failed_records": 1,
+    "violations": 1,
+    "worst_ratio": 1.0192828773168578,
+    "yaw_rms_deg": 0.695290037,
+    "roll_rms_deg": 0.34683582925,
+    "pitch_rms_deg": 0.208468002125,
+    "disp_3d_rms_m": 0.4970021900125,
+    "accel_bias_3d_rms_mps2": 0.06361118053749999
+  }
+]

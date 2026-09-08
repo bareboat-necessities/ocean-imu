@@ -1,0 +1,62 @@
+[
+  {
+    "name": "m4_t5000",
+    "env": {
+      "SF_MAG_HI_RIDGE_REL": ".25",
+      "SF_MAG_HI_MIN_INFO": ".1",
+      "SF_SIGMA_M_SCALE": "4",
+      "SF_GYRO_BIAS_RW_VAR": "1e-10",
+      "OU_III_ACC_BIAS_TAU_SEC": "5000"
+    }
+  },
+  {
+    "name": "m4_t10000",
+    "env": {
+      "SF_MAG_HI_RIDGE_REL": ".25",
+      "SF_MAG_HI_MIN_INFO": ".1",
+      "SF_SIGMA_M_SCALE": "4",
+      "SF_GYRO_BIAS_RW_VAR": "1e-10",
+      "OU_III_ACC_BIAS_TAU_SEC": "10000"
+    }
+  },
+  {
+    "name": "m4_t20000",
+    "env": {
+      "SF_MAG_HI_RIDGE_REL": ".25",
+      "SF_MAG_HI_MIN_INFO": ".1",
+      "SF_SIGMA_M_SCALE": "4",
+      "SF_GYRO_BIAS_RW_VAR": "1e-10",
+      "OU_III_ACC_BIAS_TAU_SEC": "20000"
+    }
+  },
+  {
+    "name": "m5_t5000",
+    "env": {
+      "SF_MAG_HI_RIDGE_REL": ".25",
+      "SF_MAG_HI_MIN_INFO": ".1",
+      "SF_SIGMA_M_SCALE": "5",
+      "SF_GYRO_BIAS_RW_VAR": "1e-10",
+      "OU_III_ACC_BIAS_TAU_SEC": "5000"
+    }
+  },
+  {
+    "name": "m5_t10000",
+    "env": {
+      "SF_MAG_HI_RIDGE_REL": ".25",
+      "SF_MAG_HI_MIN_INFO": ".1",
+      "SF_SIGMA_M_SCALE": "5",
+      "SF_GYRO_BIAS_RW_VAR": "1e-10",
+      "OU_III_ACC_BIAS_TAU_SEC": "10000"
+    }
+  },
+  {
+    "name": "m5_t20000",
+    "env": {
+      "SF_MAG_HI_RIDGE_REL": ".25",
+      "SF_MAG_HI_MIN_INFO": ".1",
+      "SF_SIGMA_M_SCALE": "5",
+      "SF_GYRO_BIAS_RW_VAR": "1e-10",
+      "OU_III_ACC_BIAS_TAU_SEC": "20000"
+    }
+  }
+]

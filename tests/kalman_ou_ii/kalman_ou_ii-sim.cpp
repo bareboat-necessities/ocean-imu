@@ -48,37 +48,13 @@ bool env_int(const char* name, int& out)
 
 class FusionAdapter_OU_II final : public IW3dFusionAdapter {
 public:
-    // OU-II's own MEKF sensor variances, as multiples of the ones the shared
-    // harness hands every family.  The harness builds each as a fixed multiple
-    // of the white noise it injects -- 2.8x on accel, 2.0x on gyro, 1.2x on
-    // mag -- and those multiples had never been swept for any family.
-    // A dedicated MEKF-variance sweep gauged them.
-    //
-    // sigma_g is a units correction, not a fit, and it is the same one OU-III
-    // carries: the harness multiplies a *per-sample* gyro standard deviation
-    // at 200 Hz, but Kalman3D_Wave_OU_II integrates this argument as a noise
-    // *density* (Q_AA = Qbase * Ts), so the deployed value overstated the
-    // angular random walk by sqrt(200) = 14.1x on top of its own 2x inflation
-    // -- 28.3x in std, 800x in variance.  0.05 puts the argument back on the
-    // injected density and keeps a sqrt(2) inflation over it, which is where
-    // the measured optimum sits.  One error in two places, not two errors.
-    //
-    // The other two are empirical: accel to 1.4x the injected white (from
-    // 2.8x) and mag to 2.4x (from 1.2x).  The mag value is worth a note,
-    // because moving it alone is a *loss* here -- 2x costs pitch and 3D in the
-    // one-at-a-time sweep -- and only becomes a gain once sigma_g is
-    // corrected.  It was adopted from the joint round, not the axis round.
-    //
-    // Paired over 8 records x 5 seeds against the previous point: roll -12.5%,
-    // pitch -11.6%, yaw -1.2%, vertical displacement -1.7%, 3D displacement
-    // -23.8%, accelerometer bias -0.7%, gyro bias -36.6%.  tau_applied and
-    // sigma_applied are bit-for-bit unchanged, so the OU schedule is untouched.
-    //
-    // The SF_SIGMA_*_SCALE overrides below multiply these, so a scale of 1
-    // reproduces the deployed point and a re-run of the sweep re-centres on it.
+    // RAO replay tuning, validated on separate sensor/initialization draws.
+    // Gyro sample standard deviation is converted to a density at 200 Hz.
+    // Magnetometer uncertainty includes residual calibration/model error.
+    // Environment scales multiply these deployed settings; gates are fixed.
     static constexpr float SIGMA_A_RESCALE = 0.5f;   // 2.8x -> 1.4x injected accel white
     static constexpr float SIGMA_G_RESCALE = 0.05f;  // 2.0x sample std -> sqrt(2)x density
-    static constexpr float SIGMA_M_RESCALE = 2.0f;   // 1.2x -> 2.4x injected mag white
+    static constexpr float SIGMA_M_RESCALE = 4.0f;   // 1.2x -> 4.8x injected mag white
 
     FusionAdapter_OU_II(bool with_mag,
                         const Vector3f& sigma_a_init,
@@ -100,6 +76,22 @@ public:
         filter.setPeriodicAwCovarianceSync(load_periodic_aw_cov_sync());
 
         {
+            // Known stationary RAO of the pinned simulation dataset.
+            // ENU->NED swaps horizontal axes: the direction branch's X reads
+            // vessel sway, and its Y reads vessel surge. Follow the actual
+            // basis conversion, not the legacy forward/starboard labels.
+            wave_direction::VesselRaoEqualizer::Config direction_rao;
+            direction_rao.enabled = true;
+            direction_rao.horizontal_x_tau_s = 1.0;
+            direction_rao.horizontal_y_tau_s = 0.7;
+            if (const char* mode = std::getenv("W3D_DIRECTION_RAO")) {
+                const std::string name(mode);
+                if (name == "off") direction_rao.enabled = false;
+                else if (name != "vessel-rao-28ft")
+                    throw std::invalid_argument("Unknown W3D_DIRECTION_RAO profile");
+            }
+            filter.setDirectionRao(direction_rao);
+
             filter.enableTuner(true);
             filter.enableClamp(true);
 

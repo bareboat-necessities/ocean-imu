@@ -3,3 +3,5 @@
 ./wave-direction-test
 ./wave-direction-iq-test
 ./wave-encounter-test
+
+./vessel-rao-equalizer-test

@@ -1,0 +1,24 @@
+[
+  {
+    "config": "baseline",
+    "failed_records": 31,
+    "violations": 90,
+    "worst_ratio": 8.883497728028372,
+    "yaw_rms_deg": 2.4686431517500003,
+    "roll_rms_deg": 0.282225332196875,
+    "pitch_rms_deg": 0.3557861833125,
+    "disp_3d_rms_m": 0.310874987946875,
+    "accel_bias_3d_rms_mps2": 0.080047422365625
+  },
+  {
+    "config": "selected",
+    "failed_records": 30,
+    "violations": 88,
+    "worst_ratio": 6.7392441538291035,
+    "yaw_rms_deg": 2.1282822228125,
+    "roll_rms_deg": 0.28522517925,
+    "pitch_rms_deg": 0.33119814759375,
+    "disp_3d_rms_m": 0.290841211046875,
+    "accel_bias_3d_rms_mps2": 0.075381154146875
+  }
+]

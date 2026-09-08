@@ -114,9 +114,9 @@ class LeverArmSummaryTests(unittest.TestCase):
 
         return [
             row("baseline", "cg", 0.0, 0.100, 0.20),
-            row("unmodeled", "y-fore-aft", 0.30, 0.200, 0.40),
-            row("gyro", "y-fore-aft", 0.30, 0.125, 0.22),
-            row("exact", "y-fore-aft", 0.30, 0.100, 0.20),
+            row("unmodeled", "y-port", 0.30, 0.200, 0.40),
+            row("gyro", "y-port", 0.30, 0.125, 0.22),
+            row("exact", "y-port", 0.30, 0.100, 0.20),
         ]
 
     def summaries(self) -> dict[str, dict[str, object]]:
@@ -154,14 +154,14 @@ class LeverArmReproducibilityTests(unittest.TestCase):
         return [
             {
                 "mode": "unmodeled",
-                "axis": "x-athwartships",
+                "axis": "x-fore-aft",
                 "distance_m": "0.3",
                 "disp_3d_ratio_to_baseline": "1.009",
                 "tilt_ratio_to_baseline": "1.986",
             },
             {
                 "mode": "exact",
-                "axis": "x-athwartships",
+                "axis": "x-fore-aft",
                 "distance_m": "0.3",
                 "disp_3d_ratio_to_baseline": "1.000",
                 "tilt_ratio_to_baseline": "1.000",

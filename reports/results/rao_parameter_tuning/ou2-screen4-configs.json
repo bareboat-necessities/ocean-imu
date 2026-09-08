@@ -1,0 +1,82 @@
+[
+  {
+    "name": "ou_ii_acc_bias_init_std0.01",
+    "env": {
+      "SF_MAG_HI_RIDGE_REL": ".25",
+      "SF_MAG_HI_MIN_INFO": ".1",
+      "SF_GYRO_BIAS_RW_VAR": "1e-10",
+      "SF_SIGMA_M_SCALE": "2",
+      "OU_II_ACC_BIAS_INIT_STD": "0.01"
+    }
+  },
+  {
+    "name": "ou_ii_acc_bias_init_std0.03",
+    "env": {
+      "SF_MAG_HI_RIDGE_REL": ".25",
+      "SF_MAG_HI_MIN_INFO": ".1",
+      "SF_GYRO_BIAS_RW_VAR": "1e-10",
+      "SF_SIGMA_M_SCALE": "2",
+      "OU_II_ACC_BIAS_INIT_STD": "0.03"
+    }
+  },
+  {
+    "name": "ou_ii_acc_bias_init_std0.08",
+    "env": {
+      "SF_MAG_HI_RIDGE_REL": ".25",
+      "SF_MAG_HI_MIN_INFO": ".1",
+      "SF_GYRO_BIAS_RW_VAR": "1e-10",
+      "SF_SIGMA_M_SCALE": "2",
+      "OU_II_ACC_BIAS_INIT_STD": "0.08"
+    }
+  },
+  {
+    "name": "ou_ii_pseudo_mse_coeff0.05",
+    "env": {
+      "SF_MAG_HI_RIDGE_REL": ".25",
+      "SF_MAG_HI_MIN_INFO": ".1",
+      "SF_GYRO_BIAS_RW_VAR": "1e-10",
+      "SF_SIGMA_M_SCALE": "2",
+      "OU_II_PSEUDO_MSE_COEFF": "0.05"
+    }
+  },
+  {
+    "name": "ou_ii_pseudo_mse_coeff0.075",
+    "env": {
+      "SF_MAG_HI_RIDGE_REL": ".25",
+      "SF_MAG_HI_MIN_INFO": ".1",
+      "SF_GYRO_BIAS_RW_VAR": "1e-10",
+      "SF_SIGMA_M_SCALE": "2",
+      "OU_II_PSEUDO_MSE_COEFF": "0.075"
+    }
+  },
+  {
+    "name": "ou_ii_pseudo_mse_coeff0.16",
+    "env": {
+      "SF_MAG_HI_RIDGE_REL": ".25",
+      "SF_MAG_HI_MIN_INFO": ".1",
+      "SF_GYRO_BIAS_RW_VAR": "1e-10",
+      "SF_SIGMA_M_SCALE": "2",
+      "OU_II_PSEUDO_MSE_COEFF": "0.16"
+    }
+  },
+  {
+    "name": "ou_ii_pseudo_mse_ratio0.4",
+    "env": {
+      "SF_MAG_HI_RIDGE_REL": ".25",
+      "SF_MAG_HI_MIN_INFO": ".1",
+      "SF_GYRO_BIAS_RW_VAR": "1e-10",
+      "SF_SIGMA_M_SCALE": "2",
+      "OU_II_PSEUDO_MSE_RATIO": "0.4"
+    }
+  },
+  {
+    "name": "ou_ii_pseudo_mse_ratio1.0",
+    "env": {
+      "SF_MAG_HI_RIDGE_REL": ".25",
+      "SF_MAG_HI_MIN_INFO": ".1",
+      "SF_GYRO_BIAS_RW_VAR": "1e-10",
+      "SF_SIGMA_M_SCALE": "2",
+      "OU_II_PSEUDO_MSE_RATIO": "1.0"
+    }
+  }
+]

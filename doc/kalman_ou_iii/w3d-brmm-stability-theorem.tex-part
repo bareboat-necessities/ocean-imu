@@ -109,7 +109,7 @@ bandlimit. A $0.02\,{\rm Hz}$ sinusoid has a $50\,{\rm s}$ period:
 opposing lobes in every $10\,{\rm s}$ window are not automatic.
 
 \paragraph{Certificate entry and audit limits.}
-The eight unchanged JONSWAP/PM--Stokes records at
+The eight v1.2.1 vessel-response JONSWAP/PM--Stokes records at
 $H_s\in\{0.27,1.5,4,8.5\}\,{\rm m}$ are tested on every sample-aligned
 $10\,{\rm s}$ window. Outward arithmetic encloses binary64 sample values
 under an explicit zero-order-hold interpretation. Stored lobe intervals
@@ -118,6 +118,18 @@ unresolved. Finite sampled statistics neither prove infinite-time BRMM-0
 nor enclose physical intersample motion, all continuous window offsets,
 Normal-Live entry, or the complete source family. They suggest candidate
 constants and expose sampled-envelope violations; they do not set theorem constants.
+
+The sampled v1.2.1 audit contains 1,920,000 samples and 1,904,008 complete
+sample-aligned windows. All windows fall in the diagnostic O branch.
+There are 10,205 samples above the acceleration cap and 31,937 above
+the rate cap. Restricting to the runtime Live flag leaves 10,002 and
+31,589 such samples. Moreover, the runtime covariance settings differ
+from the configured vector-covariance premises used by the conditional
+matrix certificate. No sampled execution satisfies all audited admission
+checks, even where the physical caps hold. The trace observer is bitwise
+transparent to ordinary replay output; two of eight replays fail their
+unchanged performance gates. None of these finite-record observations
+promotes source admission, P4 or P5.
 
 \paragraph{Proof obligations under the replacement source.}
 BIAS0/1 supplies qualified true-bias bounds and its connected history;

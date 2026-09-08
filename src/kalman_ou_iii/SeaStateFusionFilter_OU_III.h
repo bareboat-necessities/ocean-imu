@@ -76,6 +76,7 @@
 #include "wave_dir/KalmanWaveDirection.h"
 #include "wave_dir/WaveDirectionDetector.h"
 #include "wave_dir/WaveDirectionFrame.h"
+#include "wave_dir/VesselRaoEqualizer.h"
 #include "detrend/AdaptiveWaveDetrender3D.h"
 #include "kalman_common/SeaStateFusionFilterCommon.h"
 
@@ -788,7 +789,7 @@ private:
         // axis and is therefore invariant under q -> Rz(psi) q, so only the
         // tilt of whichever quaternion is supplied can reach the result.
         const auto direction_accel = wave_direction::heading_frame_acceleration<float>(
-            drive_mekf ? mekf_->quaternion_boat() : startupProxyQuat(), acc, g_std);
+            drive_mekf ? mekf_->quaternion_boat() : startupProxyQuat(), acc_in, g_std);
 
         // Stage 1 estimates the apparent propagation plane as an unsigned axis
         // relative to boat heading.  Stage 2 resolves propagation sense along
@@ -826,14 +827,15 @@ private:
         // exogenous bit-for-bit and bounds the Leveled path's gain.
         wave_period_.update(dt, wave_period_input_ms2_(direction_accel));
 
-        dir_filter_.update(direction_accel.forward_ms2,
-                           direction_accel.starboard_ms2,
+        const auto direction_matched = direction_rao_.step(direction_accel, dt);
+        dir_filter_.update(direction_matched.forward_ms2,
+                           direction_matched.starboard_ms2,
                            omega, dt);
         const Eigen::Vector2f propagation_axis_boat = dir_filter_.getAxis();
         dir_sign_state_ = dir_sign_.update(
-            direction_accel.forward_ms2,
-            direction_accel.starboard_ms2,
-            direction_accel.up_ms2,
+            direction_matched.forward_ms2,
+            direction_matched.starboard_ms2,
+            direction_matched.up_ms2,
             propagation_axis_boat.x(), propagation_axis_boat.y(),
             dt, dir_filter_.getLastStableConfidence());
     }
@@ -1426,6 +1428,10 @@ public:
         return tuner_.getVarianceHorizonSec();
     }
 
+    void setDirectionRao(const wave_direction::VesselRaoEqualizer::Config& config) {
+        direction_rao_.configure(config);
+    }
+
     inline WaveDirection getDirSignState() const noexcept { return dir_sign_state_; }
 
     // Propagation-plane angle relative to boat +X, modulo 180 degrees.
@@ -1898,6 +1904,7 @@ private:
 
         dir_filter_ = KalmanWaveDirection(2.0f * static_cast<float>(M_PI) * FREQ_GUESS);
         dir_sign_.reset();
+        direction_rao_.reset();
         dir_sign_state_ = UNCERTAIN;
 
         last_adapt_time_sec_ = time_;
@@ -2210,6 +2217,7 @@ private:
     FreqInputLPF        freq_input_lpf_;
     StillnessAdapter    freq_stillness_;
 
+    wave_direction::VesselRaoEqualizer direction_rao_{};
     WaveDirectionDetector<float> dir_sign_{0.002f, 0.005f};
     WaveDirection                dir_sign_state_ = UNCERTAIN;
 };
@@ -2308,7 +2316,7 @@ public:
         //            value and seeds the commanded-parameter filter.
         float Pq0       = 5e-4f;
         float Pb0       = 1e-6f;
-        float b0        = 1e-11f;
+        float b0        = 1e-10f;
         float R_S_noise = 1.5f;
         float gravity_magnitude = g_std;
 
@@ -2419,8 +2427,8 @@ public:
         // calibration.  See ContinuousMagHardIronEstimator::Config and
         // docs/continuous-mag-hard-iron.md for why it came down from 4e-3.
         float mag_hi_model_ridge              = 5.0e-4f;
-        float mag_hi_model_ridge_relative     = 0.5f;
-        float mag_hi_min_information          = 2.0f;
+        float mag_hi_model_ridge_relative     = 0.25f;
+        float mag_hi_min_information          = 0.1f;
         float mag_hi_min_effective_weight     = 500.0f;
         float mag_hi_max_residual_rms_uT      = 3.0f;
         float mag_hi_max_bias_fraction        = 0.35f;

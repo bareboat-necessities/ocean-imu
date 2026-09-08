@@ -3,6 +3,7 @@ name: ou3-p4-physical-finite-map-feasibility
 on:
   push:
     paths: &audit_paths
+      - "src/**"
       - "tests/kalman_ou_iii/ou3_p4_*"
       - "tests/kalman_ou_iii/ou3_physical_brmm_membership.py"
       - "tools/stability/ou3-sea-generator-membership.cpp"

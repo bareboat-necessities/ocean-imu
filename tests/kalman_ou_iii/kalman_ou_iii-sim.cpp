@@ -48,39 +48,15 @@ bool env_int(const char* name, int& out)
 
 class FusionAdapter_OU_III final : public IW3dFusionAdapter {
 public:
-    // OU-III's own MEKF sensor variances, as multiples of the ones the shared
-    // harness hands every family.  The harness builds each as a fixed multiple
-    // of the white noise it injects -- 2.8x on accel, 2.0x on gyro, 1.2x on
-    // mag -- and those multiples had never been swept for any family.
-    // A dedicated MEKF-variance sweep moves all three, and the gyro one is
-    // much the largest effect.
-    //
-    // sigma_g is a units correction, not a fit.  The harness multiplies a
-    // *per-sample* gyro standard deviation at 200 Hz, but
-    // Kalman3D_Wave_OU_III integrates this argument as a noise *density*
-    // (Q_AA = Qbase * Ts), so the deployed value overstated the angular random
-    // walk by sqrt(200) = 14.1x on top of its own 2x inflation -- 28.3x in
-    // std, 800x in variance.  0.05 puts the argument back on the injected
-    // density and keeps a sqrt(2) inflation over it, which is where the
-    // measured optimum sits: correcting the units *is* the optimum, to within
-    // the width of the basin.
-    //
-    // The other two are empirical, measured against this harness's noise model
-    // rather than derived, and both are small next to the gyro term: accel to
-    // 2.0x the injected white (from 2.8x) and mag to 2.4x (from 1.2x).
-    //
-    // Paired over 8 records x 5 seeds against the previous point, every
-    // channel improves and none is traded away: roll -13.3%, pitch -14.7%,
-    // yaw -1.2%, vertical displacement -2.4%, 3D displacement -37.2%,
-    // accelerometer bias -1.0%, gyro bias -36.5%.  The tuner operating point
-    // (tau_applied, sigma_applied) is bit-for-bit unchanged, so this is a
-    // MEKF-side effect only and does not perturb the OU schedule.
-    //
-    // The SF_SIGMA_*_SCALE overrides below multiply these, so a scale of 1
-    // reproduces the deployed point and a re-run of the sweep re-centres on it.
+    // RAO replay tuning. Gyro sample standard deviation is converted to a
+    // continuous-time density at 200 Hz. Magnetometer uncertainty includes
+    // residual calibration/model error, not just injected white noise.
+    // Paired training and independent validation are recorded in
+    // reports/results/rao_parameter_tuning; quality limits are unchanged.
+    // Environment scale factors below multiply these deployed settings.
     static constexpr float SIGMA_A_RESCALE = 0.71f;  // 2.8x -> 2.0x injected accel white
     static constexpr float SIGMA_G_RESCALE = 0.05f;  // 2.0x sample std -> sqrt(2)x density
-    static constexpr float SIGMA_M_RESCALE = 2.0f;   // 1.2x -> 2.4x injected mag white
+    static constexpr float SIGMA_M_RESCALE = 8.0f;   // 1.2x -> 9.6x injected mag white
 
     FusionAdapter_OU_III(bool with_mag,
                          const Vector3f& sigma_a_init,
@@ -106,6 +82,22 @@ public:
         filter.setAwCovarianceSyncCongruent(aw_cov_sync == "congruent");
 
         {
+            // Known stationary RAO of the pinned simulation dataset.
+            // ENU->NED swaps horizontal axes: the direction branch's X reads
+            // vessel sway, and its Y reads vessel surge. Follow the actual
+            // basis conversion, not the legacy forward/starboard labels.
+            wave_direction::VesselRaoEqualizer::Config direction_rao;
+            direction_rao.enabled = true;
+            direction_rao.horizontal_x_tau_s = 1.0;
+            direction_rao.horizontal_y_tau_s = 0.7;
+            if (const char* mode = std::getenv("W3D_DIRECTION_RAO")) {
+                const std::string name(mode);
+                if (name == "off") direction_rao.enabled = false;
+                else if (name != "vessel-rao-28ft")
+                    throw std::invalid_argument("Unknown W3D_DIRECTION_RAO profile");
+            }
+            filter.setDirectionRao(direction_rao);
+
             filter.enableTuner(true);
             filter.enableClamp(true);
 
@@ -298,6 +290,9 @@ public:
             // the knob that prices that competition.
             if (env_float("OU_III_ACC_BIAS_RW", v)) {
                 filter.mekf().set_Q_bacc_rw(Eigen::Vector3f::Constant(v));
+            }
+            if (env_float("OU_III_ACC_BIAS_TAU_SEC", v)) {
+                filter.mekf().set_acc_bias_time_constant(v);
             }
 
             // Knobs that no longer exist.  tau and the sigma band are

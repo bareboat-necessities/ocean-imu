@@ -3,10 +3,9 @@
 
 Section~\ref{sec:adaptation-reduced-mse-envelope} derives the reduced
 physical-MSE schedule of Eq.~\eqref{eq:adapt-reduced-mse-law}.  This subsection
-checks that reduction directly on the measured reference spectra.  It replaces
+checks that reduction directly on the vessel-CG spectra. It replaces
 the high-frequency asymptote used in Eq.~\eqref{eq:adapt-reduced-physical-mse}
-with the exact reconstruction integral and determines the spectral coefficient
-used by the deployed schedule.
+with the exact reconstruction integral and diagnoses its spectral coefficient.
 
 \subsubsection{Exact reconstruction integral}
 
@@ -35,46 +34,12 @@ p_\tau=\tfrac{5}{2}+3s.
 The asymptotic branch corresponds to $s=1/7$ and reproduces
 $(p_a,p_\tau)=(6/7,41/14)$.
 
-Equation~\eqref{eq:adapt-exact-wave-cost} was evaluated on the eight measured
-directional spectra of the reference records, summed over direction, and $J$
-minimized numerically in $\log\omega_R$. The results are collected in
-Table~\ref{tab:adapt-exact-mse-exponents}.
-
-\begin{table}[t]
-\centering
-\caption{Exact minimization of the reduced physical MSE on the measured
-reference spectra.}
-\label{tab:adapt-exact-mse-exponents}
-\footnotesize
-\begin{tabular}{@{}llrrrr@{}}
-\toprule
-Spectrum & $H_s$ (m) & $\kappa_\star$ & $p_a$ & $p_\tau$ &
-$J_{\rm wave}/J$ \\
-\midrule
-JONSWAP    & 0.27 & 0.556 & 0.853 & 2.927 & 0.427 \\
-JONSWAP    & 1.50 & 0.403 & 0.854 & 2.927 & 0.428 \\
-JONSWAP    & 4.00 & 0.399 & 0.855 & 2.927 & 0.428 \\
-JONSWAP    & 8.50 & 0.320 & 0.855 & 2.928 & 0.428 \\
-PM--Stokes & 0.27 & 0.513 & 0.853 & 2.926 & 0.427 \\
-PM--Stokes & 1.50 & 0.382 & 0.854 & 2.927 & 0.428 \\
-PM--Stokes & 4.00 & 0.370 & 0.855 & 2.927 & 0.428 \\
-PM--Stokes & 8.50 & 0.315 & 0.855 & 2.928 & 0.428 \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-The exact exponents reproduce the asymptotic pair to three significant figures
-over the calibrated envelope, so Eq.~\eqref{eq:adapt-reduced-mse-law} is not
-merely a limiting form for these reference spectra.  The ratio
-$J_{\rm wave}/J\simeq0.428$ is essentially constant and equals the $3/7$
-stationary balance of the reduced $A\omega_R^{-3}+B\omega_R^4$ objective.
-The optimizing $\kappa_\star$ varies from $0.556$ to $0.315$, reflecting the
-sea-state dependence of the physical drift--distortion optimum rather than a
-fixed normalized correction corner.
-
-As an independent check, $m_{-4}$ recovered from the optimality balance
-Eq.~\eqref{eq:adapt-reduced-mse-pole} agrees with direct numerical integration
-of $\omega^{-4}S_\eta^{(2)}$ to within $1$--$2\,\%$ on all eight records.
+Equation~\eqref{eq:adapt-exact-wave-cost} is evaluated using periodograms
+of the eight vessel-CG heave records, rather than incident surface spectra.
+The normalized coordinates use the paired five-draw operating points of the
+current OU-III simulator. Local derivatives hold the normalized spectrum fixed;
+they do not assert universality across hulls or sea states.
+\input{w3d-reduced-mse-results-generated.tex-part}
 
 \subsubsection{Analytical schedule coefficient}
 
@@ -90,7 +55,7 @@ r_{S,\rm MSE}^\star
 \end{equation}
 where $C_J$ collects the normalized spectral moment
 $\left(\int x^{-8}\Phi_a(x)\,dx\right)^{3/7}$ and the constants of the reduced
-optimization. Solving the exact balance on the eight reference spectra gives
+optimization. The currently configured coefficient is
 \begin{equation}
 \boxed{C_J\simeq0.0538.}
 \label{eq:adapt-mse-coefficient}
@@ -101,3 +66,6 @@ $\sigma_{aw}$ because the distortion penalty is a property of the physical sea,
 not of the prior.  The implementation therefore keeps $c_\sigma$ and $C_J$
 separate: $c_\sigma$ maps the measured acceleration statistic into the OU prior,
 whereas $C_J$ sets the independent integral-state regularizer.
+
+The record-dependent optimum is reported separately in the generated table.
+The fixed coefficient is a filter setting, not a universal hull-RAO identity.

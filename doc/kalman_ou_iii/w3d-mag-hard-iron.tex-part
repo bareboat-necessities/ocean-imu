@@ -60,7 +60,7 @@ therefore uses an excitation-scaled ridge,
 =\bar{\vct m}-\bar{\mat A}^{\top}\bar{\vct w},
 \label{eq:mag-ridge}
 \end{equation}
-with $\rho_0=5\times10^{-4}$ and $\rho_1=0.5$.  The excitation-dependent term
+with $\rho_0=5\times10^{-4}$ and $\rho_1=0.25$.  The excitation-dependent term
 limits misspecification when larger motion increases both geometric information
 and unmodeled distortion.  The absolute floor $\rho_0$ is set by the admission
 gate below rather than by a sweep: at the saturated weight of the \SI{600}{s}

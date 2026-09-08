@@ -1,0 +1,17 @@
+{
+  "source_commit": "1cb65a24379b74bf59443701c9ecb3be03f0574d",
+  "scope": "Canonical conditional P3 and P4 obligation rerun; unchanged delta=1e-18, H18/A21 and source premises; no deployment admission or P5 promotion",
+  "execution_note": "Run began before the local source commit; source bytes were unchanged during these proof evaluations.",
+  "producer_sha256": {
+    "tools/stability/ou3_brmm_riccati_metric_p3.py": "0963f1dd3f9508abb039eb499e84818c4342becc7d902d53c8a1a10b845cac2a",
+    "tools/stability/ou3_brmm_riccati_metric_p4.py": "8be5a721b29d7c49c5b56f40a3a601867d63c7de4a2807d9885309337d74f61b"
+  },
+  "files": {
+    "runtime-audit.json": "83b0227b2ab856428c7c1053d71b3c4cc622a3b6aa0ccabecc43825d4c0a4918",
+    "p4.json": "6d3556053783eb0c5d63413e32c6a3ca95ae3f9817aa59be5d04a93679a78dc3",
+    "motion.json": "c1167ca999c46a3b3b2eb57ddb06e7747abec3e133649a9edb7495ed24338cce",
+    "p3.json": "5efa4980d2a4bd9855bd80ba7c40b058da625bdb8131d1c68d62ec7957ec3e7f",
+    "source-endpoint.json": "9024d858789db9d5c7fb398167a89d32cf4b7ffb482bcd343643e69121f1c4ab",
+    "joint-sector.json": "d6ca14c9c360c8a9cc2e89bab47b8736af01544ed5e2ce377a1a6bcae203a843"
+  }
+}

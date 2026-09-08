@@ -391,7 +391,10 @@ class CommittedRobustnessResultsTests(unittest.TestCase):
         # Sensitivity: every off-reference scale against x1, per direction.
         # Degradation: one low-motion pair, plus rate and adaptation pairs.
         comparisons = len(parameters) * (len(scales) - 1) + 1 + 4
-        self.assertEqual(len(effects), comparisons * len(bundle_metrics))
+        nullable = {metric for metric in bundle_metrics if metric.startswith("dir_")}
+        self.assertLessEqual(len(effects), comparisons * len(bundle_metrics))
+        self.assertEqual(sum(row["metric"] not in nullable for row in effects),
+                         comparisons * len(bundle_metrics - nullable))
         self.assertEqual(
             Counter(row["experiment"] for row in raw),
             {
@@ -405,8 +408,34 @@ class CommittedRobustnessResultsTests(unittest.TestCase):
         )
         self.assertEqual(len(groups), cells)
         self.assertEqual(set(groups.values()), {10})
-        self.assertEqual({int(row["n"]) for row in summary}, {10})
-        self.assertEqual({int(row["n_pairs"]) for row in effects}, {10})
+        # Ten executed replays need not produce ten resolved directions.
+        # Verify the actual finite count instead of treating missing estimates
+        # as measurements. Non-direction channels still require all ten.
+        for row in summary:
+            group = [r for r in raw if all(r[k] == row[k]
+                     for k in ("experiment", "case", "parameter", "scale_label", "mode"))]
+            finite = sum(math.isfinite(float(r[row["metric"]])) for r in group)
+            self.assertEqual(int(row["n"]), finite)
+            if row["metric"] not in nullable:
+                self.assertEqual(finite, 10)
+        for row in effects:
+            def keys(side, row=row):
+                case = row[side + "_case"]
+                group = [r for r in raw if r["experiment"] == row["experiment"]]
+                if row["experiment"] == "sensitivity":
+                    group = [r for r in group if r["parameter"] == row["parameter"]
+                             and float(r["scale_multiplier"]) == float(case[1:])]
+                elif row["experiment"] == "transition_rate":
+                    name, mode = case.split("/")
+                    group = [r for r in group if r["case"] == name and r["mode"] == mode]
+                else:
+                    group = [r for r in group if r["case"] == case]
+                return {tuple(r[k] for k in ("wave_phase_seed", "imu_noise_seed", "initialization_seed"))
+                        for r in group if math.isfinite(float(r[row["metric"]]))}
+            count = len(keys("left") & keys("right"))
+            self.assertEqual(int(row["n_pairs"]), count)
+            if row["metric"] not in nullable:
+                self.assertEqual(count, 10)
         self.assertEqual({int(row["samples"]) for row in raw}, {180000})
         self.assertEqual({float(row["window_s"]) for row in raw}, {900.0})
         self.assertTrue(

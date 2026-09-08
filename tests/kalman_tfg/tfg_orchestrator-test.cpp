@@ -425,12 +425,12 @@ void test_sea_scaled_ema_defaults() {
           "world-frame gravity trust averaging differs from OU-III");
     check(c.mag_min_samples == 128 && std::fabs(c.mag_min_window_sec - 15.0f) <= 1e-6f,
           "mag initial acquisition window differs from OU-III");
-    check(std::fabs(c.mag_refine_start_sec - 90.0f) <= 1e-6f &&
+    check(std::fabs(c.mag_refine_start_sec - 30.0f) <= 1e-6f &&
           std::fabs(c.mag_refine_window_sec - 30.0f) <= 1e-6f,
-          "mag refinement schedule differs from OU-III");
+          "TFG selected mag refinement schedule moved");
     check(std::fabs(c.mag_hi_memory_sec - 600.0f) <= 1e-6f &&
           std::fabs(c.mag_hi_model_ridge - 5e-4f) <= 1e-8f &&
-          std::fabs(c.mag_hi_model_ridge_relative - 0.5f) <= 1e-6f &&
+          std::fabs(c.mag_hi_model_ridge_relative - 0.25f) <= 1e-6f &&
           std::fabs(c.mag_hi_slew_tau_sec - 45.0f) <= 1e-6f,
           "continuous hard-iron coefficients differ from OU-III");
 
