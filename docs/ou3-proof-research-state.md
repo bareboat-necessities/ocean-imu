@@ -85,12 +85,14 @@ invalidates claiming a complete nonlinear certificate. P4-motion is also
 false; P5 and P5-motion may not start. The next experiment must quantify a
 useful same-history supply/storage bound before any interval refinement.
 
-The checked head's frequency, TFG and PII defaults pass. OU-II and OU-III
-fail both high-sea records; NLO fails low-wave PM-Stokes. These are numerical
-performance failures, independent of the proof contract. Paired tuning keeps
-all gates, noise and scoring windows fixed. Joint OU candidates that pass the
-default draw have increased fresh-seed violations and are not qualified as
-robust improvements. Retain rejected candidates and their full validation rows.
+The frequency, TFG, PII and selected OU-II default records pass. OU-II's
+vessel profile retains a 5 s post-statistical stillness decay and the paired
+bias/drift retune in `reports/results/sigma_horizon/study.md`: all eight
+defaults pass, and fresh failing records decrease from 28 to 24, with a 4.6%
+mean pitch tradeoff. The moment averaging remains four periods / 35 s;
+increasing it alone failed to improve low-wave accuracy. OU-III's two
+high-sea Z-bias gates and NLO's low-wave PM-Stokes vertical gate remain
+unresolved. No performance gate or canonical proof premise is changed.
 
 The prior travel reference `azimuth + 180` fails on all four JONSWAP
 RAO records by 166--174 degrees. This is a source-convention implementation
@@ -168,3 +170,58 @@ metric. The next falsifiable experiment is a complete-word forced-response
 storage with separate physical output and initial-error budgets, tested on
 H18 and A21 before any source covering. No interval refinement is justified
 by the present gains. Physical admission, P4 and P5 remain unclosed.
+
+## Three-route complete-word result
+
+`reports/results/rao_stability/three-storage-routes.json` records all three
+executed routes on the same attached H18/A21 source, with maximizing root
+vectors, endpoint/prefix propagation at 80 digits and signed operation costs.
+No source search, coefficient fitting, changed filter or reduced domain.
+
+1. Source-centered **18-error motion** storage has endpoint ratios
+   .999572658878 / .932948381611 and prefix maxima
+   1.003245112488 / 1.000001212298. Full A21 error storage additionally gives
+   .997124968091. Full corrected 21-state feedback remains in every map;
+   initial bias is separately budgeted, not silently held at zero in the
+   complete forcing inequality. Squared initial-bias gains reach
+   3160.343 / 314671.332; particular-response point energies reach
+   4.13762 / 16.50404. The .4 zero-true-bias capture ball plus the common
+   template gives sufficient prefix bounds 600.63 / 51794.18, exceeding
+   point 30-degree chart storage by 6.41 / 2.27. This invalidates using this
+   unqualified separated budget for chart retention, not source-centered
+   ISS or the nonlinear theorem. H18's limiting endpoint direction couples
+   Y velocity, Y wave acceleration and Y displacement; A21 is dominated by
+   integrated Z displacement. H18's smallest endpoint margin is .00042734.
+2. Fixed SI storages give rho=1072.993 / 6659.686; fixed gravity/3-second
+   storages give 11.18378 / 6.57608. These diagonal physical-metric formulations
+   fail even at the coefficient point. Congruent rescaling of the information
+   storage leaves rho unchanged to numerical precision. Classification:
+   proof-method failure, not poor interval conditioning or a legal nonlinear
+   counterexample. Freeze these metrics; finer arithmetic cannot repair them.
+3. Full transported accepted-vector information is positive at this point:
+   eta6 SI minimum eigenvalues 972.647 / 862.261. Keeping the signed whole-word
+   matrix remainder reproduces positive motion margins .00042734 / .06705162.
+   Separate scalar minima instead give negative bounds -.380703 / -.257014.
+   The scalarized transport tactic is rejected; the full signed matrix route
+   survives point feasibility. This is the corrected finite residual transport,
+   not an automatic replacement for the canonical open-loop PE certificate.
+
+## Current critic and next falsifiable experiment
+
+The strongest reason to reject promotion is that a forced-response subtraction
+can hide physical output error, while the worst independent initial bias and
+forcing budgets still exceed the chart. Positive information alone also hides
+the signed reset/projection and covariance remainder. None of these point
+calculations establishes a uniform nonlinear matrix inequality or BIAS2 mu.
+
+Three distinct remaining architectures are: a joint source/bias reachable set
+that preserves their correlation; a globally bounded particular solution from
+BRMM physical primitives rather than restarting a local response every word;
+or a full signed vector-information enclosure with explicit source admission.
+The quantitative next test is whether joint bias/response geometry can reduce
+the sufficient chart ratios 6.41 / 2.27 below one while retaining the full .4
+ball and both modes. This requires a new correlation fact, not smaller boxes
+around the failed independent budget. The global-response and signed-matrix
+routes remain viable hypotheses; the three executed experiments exhaust neither
+those architectures nor all P4 options. Physical admission, strict uniform P4
+and P5 remain unclosed.

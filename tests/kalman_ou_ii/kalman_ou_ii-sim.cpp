@@ -54,7 +54,7 @@ public:
     // Environment scales multiply these deployed settings; gates are fixed.
     static constexpr float SIGMA_A_RESCALE = 0.5f;   // 2.8x -> 1.4x injected accel white
     static constexpr float SIGMA_G_RESCALE = 0.05f;  // 2.0x sample std -> sqrt(2)x density
-    static constexpr float SIGMA_M_RESCALE = 4.0f;   // 1.2x -> 4.8x injected mag white
+    static constexpr float SIGMA_M_RESCALE = 8.0f;   // 1.2x -> 9.6x injected mag white
 
     FusionAdapter_OU_II(bool with_mag,
                         const Vector3f& sigma_a_init,
@@ -103,6 +103,12 @@ public:
 
             filter.enableTuner(true);
             filter.enableClamp(true);
+
+            // Vessel-RAO profile; paired fresh-seed evidence is retained in
+            // reports/results/sigma_horizon. Sensor injection and gates are fixed.
+            filter.setTauCoeff(0.95f);
+            filter.setPseudoMseRatio(0.5f);
+            filter.setSigmaStillnessDecaySec(5.0f);
 
             float v = 0.0f;
 
@@ -286,9 +292,15 @@ public:
             // acceleration for the low-frequency content, and the wave-band
             // operating point moves the OU corner down toward it, so this is
             // the knob that prices that competition.
-            if (env_float("OU_II_ACC_BIAS_RW", v)) {
-                filter.mekf().set_Q_bacc_rw(Eigen::Vector3f::Constant(v));
-            }
+            Eigen::Vector3f bias_rw(0.00015f, 0.00015f, 0.0004f);
+            if (env_float("OU_II_ACC_BIAS_RW", v)) bias_rw.setConstant(v);
+            env_float("OU_II_ACC_BIAS_RW_X", bias_rw.x());
+            env_float("OU_II_ACC_BIAS_RW_Y", bias_rw.y());
+            env_float("OU_II_ACC_BIAS_RW_Z", bias_rw.z());
+            filter.mekf().set_Q_bacc_rw(bias_rw);
+            float bias_tau_sec = 20000.0f;
+            env_float("OU_II_ACC_BIAS_TAU_SEC", bias_tau_sec);
+            filter.mekf().set_acc_bias_time_constant(bias_tau_sec);
 
             // Knobs that no longer exist.  tau and the sigma band are
             // wave-band quantities at every instant of the run, and every
@@ -314,6 +326,9 @@ public:
 
             // sigma_a averaging horizon, in periods of the tuning frequency,
             // and its absolute clamps in seconds.
+            if (env_float("OU_SIGMA_STILL_DECAY_SEC", v)) {
+                filter.setSigmaStillnessDecaySec(v);
+            }
             if (env_float("OU_SIGMA_VAR_K_PERIODS", v)) {
                 filter.setSigmaVarianceKPeriods(v);
             }

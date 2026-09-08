@@ -23,7 +23,7 @@ def main():
  # Performance controls only. Reject any attempted test/gate or sensor-data override.
  for c in configs:
   for k in c['env']:
-   if (not k.startswith(('SF_','OU_II_','OU_III_','TFG_')) and k!='W3D_AW_COV_SYNC') or any(x in k for x in ('GATE','LIMIT','SEED')):raise ValueError(k)
+   if (not k.startswith(('SF_','OU_II_','OU_III_','TFG_')) and k not in ('W3D_AW_COV_SYNC','OU_SIGMA_STILL_DECAY_SEC','OU_SIGMA_VAR_K_PERIODS','OU_SIGMA_VAR_HORIZON_MIN_S','OU_SIGMA_VAR_HORIZON_MAX_S')) or any(x in k for x in ('GATE','LIMIT','SEED')):raise ValueError(k)
    # A family may not expose another family's knob. Require its exact C-string
    # in the executable so an ignored variable cannot masquerade as an ablation.
    # This is a necessary check; paired controls still verify the applied effect.

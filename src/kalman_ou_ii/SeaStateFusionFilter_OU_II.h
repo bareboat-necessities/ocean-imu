@@ -1433,6 +1433,9 @@ public:
     // when tuning moved to the wave band -- the same K is now 5-17 s instead of
     // about 4 -- so it is a tuning surface.
     void setSigmaVarianceKPeriods(float k) { tuner_.setKPeriods(k); }
+    void setSigmaStillnessDecaySec(float sec) {
+        if (std::isfinite(sec) && sec > 0.0f) sigma_stillness_decay_sec_ = sec;
+    }
     float getSigmaVarianceKPeriods() const noexcept { return tuner_.getKPeriods(); }
     void setSigmaVarianceHorizonBounds(float min_s, float max_s) {
         tuner_.setVarianceHorizonBounds(min_s, max_s);
@@ -1721,8 +1724,9 @@ private:
 
         if (freq_stillness_.isStill()) {
             const float still_t = std::max(0.0f, freq_stillness_.getStillTime());
-            constexpr float STILL_VAR_DECAY_SEC = 1.0f;
-            float atten = std::exp(-still_t / STILL_VAR_DECAY_SEC);
+            // This attenuation follows the statistical variance EMA.
+            // Its horizon must preserve wave energy across brief quiet intervals.
+            float atten = std::exp(-still_t / sigma_stillness_decay_sec_);
             atten = std::min(std::max(atten, 0.0f), 1.0f);
             var_wave *= atten;
         }
@@ -1995,6 +1999,7 @@ private:
     float MAX_R_p0_std_           = MAX_R_p0_std;
     float MIN_R_v0_std_           = MIN_R_v0_std;
     float MAX_R_v0_std_           = MAX_R_v0_std;
+    float sigma_stillness_decay_sec_ = 1.0f;
     float adapt_tau_sec_              = ADAPT_TAU_SEC;
     float adapt_tau_sea_periods_      = ADAPT_TAU_SEA_PERIODS;
     float adapt_R_p0_mult_            = ADAPT_R_p0_MULT;

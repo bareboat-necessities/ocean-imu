@@ -18,6 +18,7 @@ on:
       - "tests/validation/test_ou3_source_endpoint.py"
       - "tests/validation/test_ou3_connected_motion.py"
       - "tests/validation/test_ou3_motion_gain.py"
+      - "tests/validation/test_ou3_storage_routes.py"
       - "tools/stability/ou3_mems_bias_contract.py"
       - "tools/stability/ou3_p4_complete_brmm_signed_information_ledger.py"
       - "tools/stability/ou3_proof_operating_domain.json"
@@ -77,7 +78,7 @@ jobs:
 
       - name: Test bias and finite attachment algebra
         working-directory: tests/validation
-        run: python3 -m unittest -v test_ou3_bias_witness_admissibility test_ou3_retained_word_attachment test_ou3_physical_brmm_membership test_ou3_brmm_response_union test_ou3_source_endpoint test_ou3_connected_motion test_ou3_motion_gain
+        run: python3 -m unittest -v test_ou3_bias_witness_admissibility test_ou3_retained_word_attachment test_ou3_physical_brmm_membership test_ou3_brmm_response_union test_ou3_source_endpoint test_ou3_connected_motion test_ou3_motion_gain test_ou3_storage_routes
 
       - name: Capture one source-connected finite shipping history and test fixed endpoints
         run: |
@@ -128,6 +129,9 @@ jobs:
           python3 tests/kalman_ou_iii/ou3_p4_motion_gain.py \
             --prefix /tmp/ou3-source-events --attachment /tmp/ou3-connected-motion.json \
             --correlated-template --output /tmp/ou3-bias2-motion-gain.json
+          python3 tests/kalman_ou_iii/ou3_p4_storage_routes.py \
+            --prefix /tmp/ou3-source-events --attachment /tmp/ou3-connected-motion.json \
+            --output /tmp/ou3-three-storage-routes.json
 
       - name: Audit exact retained payloads without regeneration or a new search
         run: |
@@ -175,6 +179,7 @@ jobs:
           name: ou3-p4-retained-word-attachment
           path: |
             /tmp/ou3_p4_bias_witness_admissibility.json
+            /tmp/ou3-three-storage-routes.json
             /tmp/ou3_p4_bias_witness_admissibility.prefixes.csv.gz
             /tmp/ou3-sea-generator-observation.json
             /tmp/ou3-physical-brmm-membership.json
