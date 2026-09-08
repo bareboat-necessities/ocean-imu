@@ -22,6 +22,21 @@ def digest(path: Path) -> str:
         return hashlib.file_digest(stream, 'sha256').hexdigest()
 
 
+REFERENCE_CSV_SHA256 = {'wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv': '6a8a27234cb8fe3b1ecd524d2c13a9ebd029d584652f4212023ba974bd218e03', 'wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv': 'cd8e8ea89123773e7d8dcf7ac8712d780528c6ff02436b0f40b4d1a6a1bb97e0', 'wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv': '11e29a93ad1084b02af116311d194416567fa6bc20ac9569f5471f97b3d9f8bb', 'wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv': 'f147cba9d14b87d0e1af4d3e434196312d91295cd40b9a9d738e2919e60cdaa7', 'wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv': 'a1a4fff90e99a5be68f7767b2865db317e413c87df8e942440c6f6ca1520cf0c', 'wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv': '3db45e87b465aed441637ba7d7d8b67c3944416a784ea9aef6ce57e9360e72e4', 'wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv': 'f7d56bcfe9f901727e3dd1e21e61144d666943f6a74e2c1b5f4cc13d0cf580f2', 'wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv': '793c3f6fd08bef8c980da53f7b77fc2f4e60914fe1e652f47ed5a7996d9a9fa1'}
+
+
+def input_provenance(paths) -> dict:
+    records = {}
+    for path in paths:
+        path = Path(path)
+        actual = digest(path)
+        if REFERENCE_CSV_SHA256.get(path.name) != actual:
+            raise ValueError(f'{path}: input is not a pinned v1.2.1 vessel RAO reference')
+        records[path.name] = actual
+    return {'release': RELEASE, 'archive': ARCHIVE, 'archive_sha256': SHA256,
+            'motion_model': 'VESSEL_RAO_28FT', 'input_sha256': records}
+
+
 def verify(archive: Path) -> None:
     actual = digest(archive)
     if actual != SHA256:

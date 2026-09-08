@@ -5,6 +5,8 @@ from pathlib import Path
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
+from types import SimpleNamespace
 
 import numpy as np
 import pandas as pd
@@ -129,6 +131,24 @@ class RuntimeAuditTests(unittest.TestCase):
                 audit.verify_manifest(manifest, ROOT)
         with self.assertRaises(ValueError):
             overlay.instrument((ROOT/overlay.MEKF).read_text().replace('last_acc_diag_ = MeasDiag3{};', ''), overlay.MEKF)
+
+
+class RuntimeReplayFailureTests(unittest.TestCase):
+    def test_complete_gate_failure_is_retained_but_crashes_are_rejected(self):
+        with tempfile.TemporaryDirectory() as temp:
+            directory = Path(temp)
+            (directory/'w3d_output.csv').write_text('complete output')
+            def simulate(*args, **kwargs):
+                kwargs['stdout'].write(b'QUALITY_GATE: PASS=0 REASON=roll_rms_exceeded\n')
+                return SimpleNamespace(returncode=1)
+            with patch.object(audit.subprocess, 'run', side_effect=simulate):
+                result = audit.replay(Path('/sim'), directory, 'input.csv', {'W3D_COLLECT_ALL_GATES':'1'})
+                self.assertEqual(result['exit_code'], 1)
+                with self.assertRaises(ValueError):
+                    audit.replay(Path('/sim'), directory, 'input.csv', {})
+            with patch.object(audit.subprocess, 'run', return_value=SimpleNamespace(returncode=-11)):
+                with self.assertRaises(ValueError):
+                    audit.replay(Path('/sim'), directory, 'input.csv', {'W3D_COLLECT_ALL_GATES':'1'})
 
 
 if __name__ == '__main__':

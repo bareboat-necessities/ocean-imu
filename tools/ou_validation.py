@@ -418,8 +418,9 @@ def phase_randomize_wave(
 ) -> np.ndarray:
     """Build a band-limited, kinematically closed phase surrogate.
 
-    The released JONSWAP traces contain components from 0.02 to 0.8 Hz and
-    second-order sum harmonics up to 1.6 Hz.  Their finite record boundaries
+    The released vessel traces respond to incident components from 0.02 to
+    0.8 Hz. The predeclared DFT surrogate retains bins through 1.6 Hz; this
+    diagnostic truncation is not the physical RAO forcing bandwidth. Record boundaries
     are not periodic, so independently rotating the DFTs of displacement,
     velocity, and acceleration redistributes boundary leakage and breaks
     ``v = d/dt(p)`` and ``a = d/dt(v)``.
@@ -459,7 +460,7 @@ def phase_randomize_wave(
     source_velocity = np.fft.rfft(data[:, velocity_indices], axis=0)
     velocity_spectrum = np.zeros_like(source_velocity)
     # The state represents oscillatory displacement, so exclude the source
-    # model's separate mean Stokes-drift velocity from this closed chain.
+    # record's finite-window velocity mean from this closed chain.
     velocity_spectrum[retained] = (
         source_velocity[retained] * rotation[retained, None]
     )
@@ -3301,9 +3302,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     else:
         stationary_inputs = sorted(args.data_dir.glob("wave_data_jonswap_*.csv"))
         if not args.skip_pmstokes:
-            # PM-Stokes carries third-order bound harmonics that JONSWAP does
-            # not, so it is a genuinely different input family rather than
-            # another draw from the confirmatory ensemble.  It is scored with
+            # The PM incident spectrum differs from JONSWAP. Both now drive
+            # the same vessel RAO with first-order components. It is scored with
             # the same seeds but kept out of the primary aggregate.
             stationary_inputs += sorted(
                 args.data_dir.glob("wave_data_pmstokes_*.csv")

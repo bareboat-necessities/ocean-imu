@@ -42,6 +42,7 @@ import tempfile
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from pathlib import Path
+from sim_dataset import input_provenance
 from typing import Any, Iterable
 
 import ou_validation as ouv
@@ -421,28 +422,17 @@ def markdown_report(summaries: list[dict[str, Any]], window_sec: float,
         "the property that lets the guard ship without re-cutting any fitted gate",
         "or invalidating a committed replay.",
         "",
-        "It holds because the detector is placed above the sea rather than at the",
-        "conditioning corner.  Across a 31:1 range of significant wave height the",
-        "clean detector reading varies by about one percent, so a big sea does not",
-        "look like machinery to it.",
+        "The per-record output retains detector readings and engagement for all",
+        "eight vessel-response cases; these are checked independently of height.",
         "",
     ])
-
     lines.extend([
-        "## Why the residual does not go to one",
+        "## Residual and scope",
         "",
-        "Conditioning costs group delay, and that cost is still there when there is",
-        "nothing left to remove.  Forcing the guard on over a *quiet* input isolates",
-        "it: on the two JONSWAP records at Hs 1.5 and 8.5 the delay alone accounts",
-        "for 1.021x and 1.063x, against deployed residuals of 1.074x and 1.151x.",
-        "So roughly half the remaining gap is the guard's own delay, which no",
-        "covariance change can touch, and the covariance arm attacks the other half.",
-        "",
-        "That is also why the two channels disagree about the best gain.  Attitude",
-        "keeps improving as the accelerometer is de-weighted further, but the",
-        "accelerometer is the only wave measurement there is, so past a gain of",
-        "about 1.25 displacement turns back up as the estimate leans on the OU",
-        f"prior instead.  {RACC_GAIN:g} sits at the displacement optimum with margin.",
+        "Conditioning introduces group delay. The fixed-gain arms measure its",
+        "combined effect with vibration attenuation and covariance inflation.",
+        "This run does not isolate delay on a forced-on quiet input and does not",
+        f"optimize the deployed covariance gain {RACC_GAIN:g}.",
         "",
     ])
 
@@ -461,11 +451,9 @@ def markdown_report(summaries: list[dict[str, Any]], window_sec: float,
         "## What this does not do",
         "",
         "Group delay is the price of conditioning and is paid whether or not there",
-        "is anything left to remove, so the residual cannot reach 1.00 while the",
-        "guard is engaged.  And no front-end filter helps with machinery whose",
+        "is anything left to remove. No front-end filter separates machinery whose",
         "orders reach into the wave band, since there is nothing there to separate",
-        "them from the sea: the 800 rpm row is that limit showing itself early,",
-        "and it is the one condition where the covariance stage does not pay.",
+        "them from vessel motion. Compare each recorded condition and arm directly.",
         "",
         "Mechanical isolation and a tighter sensor anti-alias filter still act on",
         "the quantity that matters, and are the only things that reduce the input",
@@ -575,6 +563,7 @@ def main() -> int:
 
     data_dir = args.data_dir.resolve()
     inputs = {record: find_record(data_dir, record) for record in RECORDS}
+    dataset = input_provenance(inputs.values())
 
     rows: list[dict[str, Any]] = []
     with ThreadPoolExecutor(max_workers=args.jobs) as executor:
@@ -620,6 +609,7 @@ def main() -> int:
         "study": "engine-noise mitigation (OU-III accelerometer vibration guard)",
         "source_commit": commit,
         "simulation_data": "oceanography-waves-lib v1.2.1 vessel-rao-28ft",
+        "simulation_provenance": dataset,
         "family": "OU-III",
         "guard": {"cutoff_hz": GUARD_CUTOFF_HZ, "poles": GUARD_POLES,
                   "racc_gain": RACC_GAIN},

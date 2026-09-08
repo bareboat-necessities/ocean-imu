@@ -50,6 +50,7 @@ import subprocess
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from pathlib import Path
+from sim_dataset import input_provenance
 from typing import Any, Iterable, Sequence
 
 import ou_validation as ouv
@@ -959,6 +960,7 @@ def main() -> int:
     distances = DISTANCES_M if full else (0.10, 0.30)
     cutoffs = SWEEP_CUTOFFS_HZ if full else (2.0, 15.0)
     sources = {r: find_record(args.data_dir, r) for r in records}
+    dataset = input_provenance(sources.values())
 
     out = args.output_dir
     if out.exists():
@@ -1095,6 +1097,7 @@ def main() -> int:
         "study": "OU-III IMU lever-arm installation",
         "source_commit": source_commit(),
         "simulation_data": "oceanography-waves-lib v1.2.1 vessel-rao-28ft",
+        "simulation_provenance": dataset,
         "mode": args.mode,
         "scoring_window_sec": args.window_sec,
         "axes": axes,

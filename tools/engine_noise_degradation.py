@@ -54,6 +54,7 @@ import tempfile
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from pathlib import Path
+from sim_dataset import input_provenance
 from typing import Any, Iterable
 
 import ou_validation as ouv
@@ -1006,6 +1007,7 @@ def main() -> int:
 
     data_dir = args.data_dir.resolve()
     inputs = {record: find_record(data_dir, record) for record in RECORDS}
+    dataset = input_provenance(inputs.values())
     for family, binary in FAMILIES.items():
         if not binary.exists():
             raise SystemExit(f"missing {family} simulator: {binary}; build it first")
@@ -1079,6 +1081,7 @@ def main() -> int:
         "study": "engine-noise degradation",
         "source_commit": commit,
         "simulation_data": "oceanography-waves-lib v1.2.1 vessel-rao-28ft",
+        "simulation_provenance": dataset,
         "families": list(FAMILIES),
         "records": [record.__dict__ for record in RECORDS],
         "record_count_per_family": len(RECORDS),

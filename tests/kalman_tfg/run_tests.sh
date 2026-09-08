@@ -12,4 +12,7 @@ set -e
 ./tfg_jacobians-test
 ./covariance_transport-test
 ./tfg_orchestrator-test
-./kalman_tfg-sim
+sim_status=0
+W3D_COLLECT_ALL_GATES=1 ./kalman_tfg-sim || sim_status=$?
+
+exit "$sim_status"
