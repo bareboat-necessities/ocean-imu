@@ -45,10 +45,10 @@ acceleration is also prohibited. Finite transient impulses and zero motion
 remain admissible. A fixed-window bound alone, however small, does not
 exclude all constant accelerations; nor does small AC energy.
 
-For example, a finite harmonic acceleration with fixed vector coefficients,
+For example, a finite harmonic acceleration with fixed vector coefficients
+and frequencies $\omega_i>0$,
 \begin{equation}
  a_m(t)=\sum_i\bigl[A_i\cos(\omega_i t)+B_i\sin(\omega_i t)\bigr],
- \qquad \omega_i>0,
 \end{equation}
 has the same-history primitive
 \begin{equation}

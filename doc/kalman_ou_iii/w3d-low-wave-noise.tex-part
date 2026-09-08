@@ -6,10 +6,12 @@ sensor noise floor. A bounded measurement weight uses the preceding
 measurement-only wave-band scale and frequency to predict, for horizontal
 sensor axis $i$,
 \begin{equation}
- \hat\sigma_i=\sigma_z\,
+ \begin{aligned}
+ \hat\sigma_i&=\sigma_z\,
  \frac{\sqrt{(1-(fT_h)^2)^2+(2\zeta_h fT_h)^2}}
- {1+(2\pi f\tau_i)^2},\qquad
- \rho_i=\hat\sigma_i/\sigma_{a,i}.
+ {1+(2\pi f\tau_i)^2},\\
+ \rho_i&=\hat\sigma_i/\sigma_{a,i}.
+ \end{aligned}
 \end{equation}
 The unknown incident-direction projection is bounded by one, and common
 depth/footprint attenuation is omitted conservatively. The accelerometer
