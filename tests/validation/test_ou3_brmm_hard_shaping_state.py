@@ -23,7 +23,7 @@ class HardShapingStateContractTest(unittest.TestCase):
         self.assertTrue(d["theorem_rejects_statistical_or_seeded_surrogates"])
         self.assertTrue(d["theorem_separates_probabilistic_random_sea_corollary"])
         self.assertTrue(d["complete_source_rejects_gaussian_word_generator"])
-        self.assertEqual(d["hard_realization_set_symbol"], "X^s_BRMM(lambda_{0:N_W})")
+        self.assertEqual(d["hard_realization_set_symbol"], "X^s_ref(lambda_{0:N_W})")
         phase = d["continuum_phase_certificate"]
         self.assertTrue(phase["continuum_phase_coordinate_set_closed"])
         self.assertTrue(phase["phase_continuous_propagation_closed"])

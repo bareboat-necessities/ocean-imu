@@ -71,9 +71,9 @@ def build() -> dict:
         and "oscillator/shaping state or an equivalent hard finite-window" in theorem_flat
     )
     theorem_has_explicit_hard_realization_set = (
-        "\\mathcal X^s_{\\rm BRMM}(\\lambda_{0:N_W})" in theorem
-        and "eq:brmm-hard-realization-set" in theorem
-        and "does not reopen BRMM compactness" in theorem_flat
+        "\\mathcal X^s_{\\rm ref}(\\lambda_{0:N_W})" in theorem
+        and "eq:marine-reference-hard-realization-set" in theorem
+        and "BRMM itself does not require a finite spectral state" in theorem_flat
         and "machine-readable outward representation" in theorem_flat
     )
     theorem_separates_probabilistic_corollary = (
@@ -107,7 +107,7 @@ def build() -> dict:
         "theorem_rejects_statistical_or_seeded_surrogates": theorem_rejects_finite_or_statistical_surrogates,
         "theorem_separates_probabilistic_random_sea_corollary": theorem_separates_probabilistic_corollary,
         "complete_source_rejects_gaussian_word_generator": source_rejects_gaussian_generator,
-        "hard_realization_set_symbol": "X^s_BRMM(lambda_{0:N_W})",
+        "hard_realization_set_symbol": "X^s_ref(lambda_{0:N_W})",
         "continuum_phase_certificate": {
             "qualification": phase["qualification"],
             "phase_state_set": phase["phase_state_set"],
@@ -182,7 +182,7 @@ def validate(d: dict) -> list[str]:
     ):
         if d.get(key) is not True:
             failures.append(f"{key} is not true")
-    if d.get("hard_realization_set_symbol") != "X^s_BRMM(lambda_{0:N_W})":
+    if d.get("hard_realization_set_symbol") != "X^s_ref(lambda_{0:N_W})":
         failures.append("hard realization set symbol drifted")
     phase = d.get("continuum_phase_certificate", {})
     for key in (

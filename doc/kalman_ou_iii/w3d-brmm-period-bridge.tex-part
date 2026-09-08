@@ -71,7 +71,7 @@ SEA0 must therefore certify a relation
  \label{eq:brmm-tp-tz-relation}
 \end{equation}
 using the same directional response of
-Eq.~\eqref{eq:brmm-matrix-spectrum} and the exact deployed period-source path.
+Eq.~\eqref{eq:marine-reference-matrix-spectrum} and the exact deployed period-source path.
 For an analytical spectral enclosure, Eq.~\eqref{eq:brmm-tz-moment} supplies
 the moment bridge; for the final source certificate the leaky filters, finite
 moment EMAs, log-period state, initialization, and clamps are propagated

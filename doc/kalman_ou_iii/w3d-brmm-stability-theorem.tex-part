@@ -3,7 +3,7 @@
 
 BRMM (bounded recurrent marine motion) is the physical source hypothesis
 for the primary practical-motion theorem. Spectral and vessel models in
-Section~\ref{sec:brmm-stability-target} are reference specializations; neither
+Section~\ref{sec:marine-reference-stability-target} are reference specializations; neither
 their spectra nor their response-family membership define BRMM admission. Complete execution semantics are unchanged: one physical
 root and continuation produce $a_m,\omega,R$, frontend and geometry states,
 committed $\tau,\sigma_{aw},R_S,T_S$, and the actual covariance/event history.
@@ -46,7 +46,7 @@ remain admissible. A fixed-window bound alone, however small, does not
 exclude all constant accelerations; nor does small AC energy.
 
 For example, the fixed-root finite harmonic model of
-Eqs.~\eqref{eq:brmm-stokes-orbit}--\eqref{eq:brmm-stokes-hard-bound}
+Eqs.~\eqref{eq:marine-reference-stokes-orbit}--\eqref{eq:marine-reference-stokes-hard-bound}
 has $a_m=\dot v_o$ and $\|v_o\|\le B_1=\sum_{i,n}n\omega_i c_{in}$.
 It therefore satisfies BRMM-0 for all time, with $V_m=B_1$ for the
 centered orbital primitive. Including its constant Stokes velocity drift

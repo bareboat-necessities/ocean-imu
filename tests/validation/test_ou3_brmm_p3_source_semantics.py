@@ -13,15 +13,13 @@ import ou3_brmm_riccati_metric_p3 as gate  # noqa: E402
 
 
 class BrmmP3SourceSemanticsTest(unittest.TestCase):
-    def test_preconditions_require_same_compact_phase_continuous_source(self):
+    def test_preconditions_require_same_brmm_history_and_explicit_execution_premises(self):
         d = pre.build()
         self.assertEqual(pre.validate(d), [])
         m = d["mandatory_preconditions"]
         for key in (
-            "compact_BRMM_parameter_domain_consumed",
-            "compact_BRMM_transition_relation_consumed",
-            "phase_continuous_BRMM_realization_required",
-            "same_xs_lambda_drives_entire_source_word",
+            "explicit_execution_premises_bound",
+            "same_complete_BRMM_history_required",
             "hard_pathwise_BRMM_conditions_retained",
             "stochastic_event_not_source_generator",
             "stochastic_event_not_homogeneous_pruner",
@@ -29,6 +27,9 @@ class BrmmP3SourceSemanticsTest(unittest.TestCase):
         ):
             self.assertTrue(m[key], key)
         self.assertFalse(d["complete_BRMM_source_family_materialized"])
+        self.assertFalse(d["reference_provider_is_BRMM_membership_requirement"])
+        self.assertFalse(d["explicit_execution_premises"]["P3_conclusion_is_an_assumption"])
+        self.assertFalse(d["explicit_execution_premises"]["spectral_membership_required"])
 
     def test_canonical_gate_rejects_all_non_brmm_source_shortcuts(self):
         d = gate.build()

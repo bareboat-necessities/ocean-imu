@@ -85,8 +85,18 @@ The new P3 premise manifest distinguishes code identities from execution
 assumptions and checks the exact shipping projection body: it changes only
 nominal bias, so the covariance comparison is unchanged. The covariance-word
 transport is not the derivative of the nonlinear projected error map; P4
-must still attach that map and prove retention. The numeric P3 chain is to be
+must still attach that map and prove retention. The numeric P3 chain is being
 rebuilt in GitHub CI, retaining delta=1e-18 and Q/O/mixed conditional coverage.
+At 0db18980, source-foundation and the actual theorem syntax build pass.
+Quality job 101895520177 reports one F841 unused `sea` local left after
+removing reference-only data from P3 mandatory premises. Class: implementation
+cleanup defect, not theorem failure. Remove that unused assignment and rebuild;
+no numerical premise or proof gate changes. A focused check also caught a
+reference hard-set paper-parity marker still expecting the primary-source
+notation after the reference section was relabelled. Bind it to the actual
+reference hard set and its explicit non-membership scope; retain compactness,
+outward representation and rejection of stochastic/seeded surrogates.
+Class: documentation-to-contract binding defect, not a numerical failure.
 
 Local verification: 15 focused BRMM/source/premise tests pass, including a
 mutation that inserts a covariance write into projection and is rejected.

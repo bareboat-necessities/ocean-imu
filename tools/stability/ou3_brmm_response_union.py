@@ -1,6 +1,7 @@
-"""BRMM+ response contract: unchanged linear vessels UNION correlated Stokes.
+"""Reference response models: linear vessels UNION correlated Stokes.
 
-This is a model-domain extension, not a certificate that a captured word has
+Membership in this reference union is not required by BRMM. It does not
+certify that a captured word has
 the required source root, Normal-Live bounds, bias history or finite storage.
 Finite Stokes atoms are a new physical-model branch, never a quadrature proof
 of the existing continuum linear-vessel branch. No global atom-count cap is
@@ -13,12 +14,14 @@ from fractions import Fraction
 LINEAR = "LINEAR_VESSEL"
 STOKES = "STOKES_WAVE_FOLLOWING"
 BRANCHES = (LINEAR, STOKES)
-QUALIFICATION = "OU3_BRMM_PLUS_RESPONSE_UNION_V1"
+QUALIFICATION = "OU3_BRMM_REFERENCE_RESPONSE_UNION_V2"
 
 
 def build() -> dict:
     return {
         "qualification": QUALIFICATION,
+        "scope": "REFERENCE_MODELS_ONLY_NOT_BRMM_MEMBERSHIP",
+        "required_for_BRMM_membership": False,
         "set_operation": "UNION",
         "branches": list(BRANCHES),
         "linear_vessel_domain": "tools/stability/ou3_brmm_directional_response_domain.json",
@@ -62,7 +65,7 @@ def build() -> dict:
 def validate(d: dict) -> list[str]:
     # A changed union requires an explicit theorem/contract revision, not an
     # extra label silently accepted by an old certificate.
-    return [] if d == build() else ["BRMM+ response union contract changed or incomplete"]
+    return [] if d == build() else ["reference response union contract changed or incomplete"]
 
 
 def stokes_hard_bounds(atoms) -> dict:

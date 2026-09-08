@@ -97,19 +97,20 @@ def build(generator_root: Path, observed: dict):
     inequality = particle_response_test("12/5", gain, corner, power)
     stokes = stokes_response_test(observed)
     return {
-        "qualification": "PINNED_PHYSICAL_GENERATOR_BRMM_ADMISSION_AUDIT",
+        "qualification": "PINNED_GENERATOR_REFERENCE_RESPONSE_MODEL_AUDIT",
         "provenance": manifest,
         "reference_response_union": UNION.build(),
         "Stokes_response_test": stokes,
         "public_generator_API_observation": observed,
         "exact_response_test": inequality,
         "fundamental_input_obstruction": "a linear response cannot create the nonzero 3*f_max harmonic above the generator's fundamental support",
-        "full_Stokes_elevation_input_obstruction": "the surface-particle translational gain violates the declared BRMM envelope at 12/5 Hz",
+        "full_Stokes_elevation_input_obstruction": "the surface-particle translational gain violates the reference linear response envelope at 12/5 Hz",
         "generator_has_one_correlated_phase_direction_history": True,
         "generator_is_complete_continuum_BRMM_provider": False,
         "linear_vessel_response_admission": "REJECTED" if not inequality["response_envelope_satisfied"] else "REQUIRES_REMAINING_PREMISES",
         "direct_generator_response_admission": stokes["response_model_admission"],
         "admission_scope": "RESPONSE_MODEL_ONLY_NOT_COMPLETE_RETAINED_WORD",
+        "BRMM_SOURCE_ADMISSION_PASS": False,
         "gyro_centered_difference_defect_certified": False,
         "finite_sample_membership_under_another_realization": "UNDETERMINED",
         "retained_payload_rebound_to_regenerated_history": False,
@@ -129,7 +130,7 @@ def main():
     report = build(args.generator_root, json.loads(args.observation.read_text()))
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(report, indent=2, sort_keys=True, allow_nan=False) + "\n")
-    print("PHYSICAL_BRMM_GENERATOR_ADMISSION", report["direct_generator_response_admission"],
+    print("REFERENCE_GENERATOR_RESPONSE_ADMISSION", report["direct_generator_response_admission"],
           json.dumps(report["exact_response_test"], sort_keys=True))
     print("FINITE_SAMPLE_MEMBERSHIP", report["finite_sample_membership_under_another_realization"])
 

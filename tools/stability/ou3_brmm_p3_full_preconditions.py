@@ -170,7 +170,6 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "selected_process_mode_gate": False,
     })
 
-    sea = complete["reference_surface_family"]
     realization = complete["BRMM_dynamic_realization"]
     stochastic = complete["stochastic_forcing_corollary"]
     provider_ingredients = sea0["executable_provider_ingredients"]
@@ -214,7 +213,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
 
     sea0_execution_status = {
         "hard_realization_set_symbol": shaping.get(
-            "hard_realization_set_symbol", "X^s_BRMM(lambda_{0:N_W})"
+            "hard_realization_set_symbol", "X^s_ref(lambda_{0:N_W})"
         ),
         "machine_readable_R_lambda_closed": bool(
             provider_ingredients["machine_readable_R_lambda_closed"]
@@ -308,7 +307,7 @@ def validate(d: dict) -> list[str]:
         if d.get(key) is not True:
             f.append(f"{key} is not true")
     sea0 = d.get("SEA0_execution_status", {})
-    if sea0.get("hard_realization_set_symbol") != "X^s_BRMM(lambda_{0:N_W})":
+    if sea0.get("hard_realization_set_symbol") != "X^s_ref(lambda_{0:N_W})":
         f.append("P3 preconditions lost the complete BRMM hard realization set")
     if sea0.get("machine_readable_R_lambda_closed") is not True:
         f.append("P3 preconditions lost machine-readable R_lambda closure")
