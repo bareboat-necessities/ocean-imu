@@ -188,9 +188,6 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           python3 tools/sim_dataset.py --archive sim-data-files-vessel-rao-28ft.zip
-            --repo bareboat-necessities/oceanography-waves-lib \
-            --pattern sim-data-files-vessel-rao-28ft.zip \
-            --clobber
           mkdir -p plots/kalman_ou_ii
           unzip -o sim-data-files-vessel-rao-28ft.zip -d plots/kalman_ou_ii >/dev/null
 
@@ -242,9 +239,6 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           python3 tools/sim_dataset.py --archive sim-data-files-vessel-rao-28ft.zip
-            --repo bareboat-necessities/oceanography-waves-lib \
-            --pattern sim-data-files-vessel-rao-28ft.zip \
-            --clobber
 
       # Every full-study job below consumes this exact archive, rather than
       # independently redownloading a release asset that could theoretically be

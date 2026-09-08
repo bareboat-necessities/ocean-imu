@@ -51,9 +51,6 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           python3 tools/sim_dataset.py --archive sim-data-files-vessel-rao-28ft.zip
-            --repo bareboat-necessities/oceanography-waves-lib \
-            --pattern sim-data-files-vessel-rao-28ft.zip \
-            --clobber
           mkdir -p /tmp/ou3-lever-data
           unzip -o sim-data-files-vessel-rao-28ft.zip -d /tmp/ou3-lever-data >/dev/null
 

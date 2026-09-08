@@ -23,6 +23,7 @@ class SimDatasetTests(unittest.TestCase):
             source = path.read_text()
             self.assertNotIn('sim-data-files.zip', source, path.name)
             self.assertNotIn('releases/download/v1.1.3', source, path.name)
+            self.assertNotIn('--pattern sim-data-files-vessel-rao-28ft.zip', source, path.name)
             if 'sim-data-files-vessel-rao-28ft.zip' in source and 'ou-validation' not in path.name:
                 self.assertIn('tools/sim_dataset.py', source, path.name)
 

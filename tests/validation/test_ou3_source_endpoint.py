@@ -40,6 +40,18 @@ class SourceEndpointTests(unittest.TestCase):
         np.testing.assert_allclose(derivative[:3], x[9:12], atol=1e-10)
         np.testing.assert_allclose(rotation@rotation.T, np.eye(3), atol=1e-14)
 
+    def test_vessel_rao_primitive_and_attitude_use_the_same_harmonics(self):
+        root = {"atoms": [[1., 1/9.80665, .05, .4, .6, .8]], "branch": "VESSEL_RAO_28FT"}
+        x, rotation = E.stokes(root, .3)
+        eps = 1e-5
+        xp, _ = E.stokes(root, .3+eps)
+        xm, _ = E.stokes(root, .3-eps)
+        derivative = (xp-xm)/(2*eps)
+        np.testing.assert_allclose(derivative[6:9], x[3:6], atol=1e-10)
+        np.testing.assert_allclose(derivative[3:6], x[:3], atol=1e-10)
+        np.testing.assert_allclose(derivative[:3], x[9:12], atol=1e-10)
+        np.testing.assert_allclose(rotation@rotation.T, np.eye(3), atol=1e-14)
+
     def test_full_21_state_storage_keeps_bias_and_cross_terms(self):
         p = np.eye(21)
         p[6, 18] = p[18, 6] = .25

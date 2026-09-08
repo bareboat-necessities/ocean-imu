@@ -7,6 +7,8 @@ on:
     paths:
       - "tools/sim_dataset.py"
       - "Makefile"
+      - ".github/workflows/ou-validation.yml"
+      - ".github/workflows/ou-full-evidence-branch.yml"
 
 # Dataset changes require full branch regeneration; other changes remain opt-in.
 concurrency:
