@@ -5,7 +5,8 @@ on:
   push:
     branches-ignore: [main]
     paths:
-      - "tools/sim_dataset.py"
+      - "tools/**"
+      - "tests/validation/**"
       - "Makefile"
       - "tools/startup_ablation.py"
       - "tools/ou3_lever_arm_study.py"

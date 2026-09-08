@@ -198,6 +198,7 @@ class StabilityPackageIntegrityTests(unittest.TestCase):
                 "ou3_engine_noise_mitigation.py",
                 "ou3_lever_arm_study.py",
                 "ou3_lever_arm_tex.py",
+                "ou3_reduced_mse_study.py",
             },
             {p.name for p in TOOLS.glob("ou3_*.py")},
         )

@@ -53,7 +53,10 @@ OU--III's 3-D RMS rises from \SI{0.405}{m}
 to \SI{27.258}{m}, a factor of
 \num{67.36}.
 At cruise the systematic component is \pct{24.9}
-of the total RMS magnitude. Pitch RMS and pitch offset are
+of the total RMS magnitude. Across families the offset fractions are
+OU--II: \pct{35.5}, OU--III: \pct{24.9}, TFG: \pct{92.1}.
+Static offset therefore does not dominate both OU families.
+Pitch RMS and pitch offset are
 \SI{2.092}{\degree} and
 \SI{1.166}{\degree}.
 The accelerometer update shares its residual between attitude, bias and
@@ -124,6 +127,8 @@ Wide sensor & 27.794 & 0.458 & 0.440 & 1.224 & 1.055 & 0.036 & 1.087 \\
 The table reports conditioning and covariance inflation separately.
 Their relative benefit depends on the engine condition; these measurements
 do not imply uniform improvement from covariance inflation.
+At \SI{800}{rpm}, pitch offset rises from \SI{1.382}{\degree}
+to \SI{1.680}{\degree} with covariance inflation.
 For all eight engine-off records the detector stays below its rail and
 engagement is zero. Their guarded and unguarded scores are identical.
 This finite-record transparency result does not establish transparency

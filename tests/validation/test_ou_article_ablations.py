@@ -197,7 +197,9 @@ class OuArticleEngineNoiseContractTests(unittest.TestCase):
                     self.assertIn(expected, normalized)
 
     def test_matched_power_control_is_the_stated_comparison(self):
-        """The central claim is power, not fold placement; check both spreads."""
+        """Report both measured spreads without assuming equal power erases dynamics."""
+
+        article = (DOC / "w3d-engine-noise-degradation.tex-part").read_text()
 
         rows = self.summary()
         for family in ("OU-II", "OU-III"):
@@ -216,9 +218,9 @@ class OuArticleEngineNoiseContractTests(unittest.TestCase):
                 )
             ]
             with self.subTest(family=family):
-                # Equalizing recorded power must collapse the bandwidth spread.
-                self.assertGreater(max(as_is) / min(as_is), 5.0)
-                self.assertLess(max(matched) / min(matched), 3.0)
+                expected = (f"For {family.replace(chr(45), chr(45) * 2)}, the maximum/minimum 3-D spread falls from "
+                            rf"\num{{{max(as_is) / min(as_is):.2f}}} to \num{{{max(matched) / min(matched):.2f}}}.")
+                self.assertIn(expected, article)
 
         # And every matched cell really is at one recorded level.
         recorded = {
@@ -241,7 +243,8 @@ class OuArticleEngineNoiseContractTests(unittest.TestCase):
             with self.subTest(family=family):
                 self.assertAlmostEqual(accel_only / full, 1.0, delta=0.01)
 
-    def test_error_is_dominated_by_the_static_offset(self):
+    def test_reported_static_offset_fraction_matches_measurement(self):
+        article = (DOC / "w3d-engine-noise-degradation.tex-part").read_text()
         rows = self.summary()
         for family in ("OU-II", "OU-III", "TFG"):
             row = rows[(family, "speed 2400 rpm")]
@@ -252,7 +255,8 @@ class OuArticleEngineNoiseContractTests(unittest.TestCase):
                 )
             )
             with self.subTest(family=family):
-                self.assertGreater(offset / float(row["disp_3d_rms_m"]), 0.8)
+                expected = (family.replace("-", "--") + rf": \pct{{{100 * offset / float(row["disp_3d_rms_m"]):.1f}}}")
+                self.assertIn(expected, article)
 
     def test_figures_are_mirrored_from_generated_evidence(self):
         for name in ENGINE_FIGURES:
@@ -506,25 +510,15 @@ class OuArticleVibrationGuardContractTests(unittest.TestCase):
                 self.assertIn(mekf, filt)
                 self.assertNotIn("measurement_update_acc_only(acc,", filt)
 
-    def test_covariance_inflation_helps_where_the_guard_leaves_most(self):
-        """The arm exists to attack what conditioning cannot reach."""
-
+    def test_covariance_inflation_tradeoff_is_reported(self):
+        """The paper must expose the measured low-speed pitch regression."""
         rows = self.summary()
-        for condition in ("2400 rpm", "3200 rpm", "2400 rpm, engine bed"):
-            guard = float(rows[(condition, "guard")]["disp_3d_rms_m"])
-            both = float(rows[(condition, "guard+R")]["disp_3d_rms_m"])
-            with self.subTest(condition=condition):
-                self.assertLess(both, guard, condition)
-        # And the standing tilt offset it targets falls everywhere it engages.
-        for (condition, arm), row in rows.items():
-            if arm != "guard+R" or condition == "engine off":
-                continue
-            guard_pitch = abs(float(rows[(condition, "guard")]["pitch_mean_deg"]))
-            both_pitch = abs(float(row["pitch_mean_deg"]))
-            if float(row["guard_engagement"]) < 0.9:
-                continue
-            with self.subTest(condition=condition):
-                self.assertLessEqual(both_pitch, guard_pitch * 1.05, condition)
+        article = (DOC / "w3d-engine-noise-degradation.tex-part").read_text()
+        guard = abs(float(rows[("800 rpm", "guard")]["pitch_mean_deg"]))
+        both = abs(float(rows[("800 rpm", "guard+R")]["pitch_mean_deg"]))
+        expected = (rf"At \SI{{800}}{{rpm}}, pitch offset rises from \SI{{{guard:.3f}}}{{\degree}} "
+                    rf"to \SI{{{both:.3f}}}{{\degree}} with covariance inflation.")
+        self.assertIn(expected, " ".join(article.split()))
 
     def test_degradation_study_pins_the_guard_off(self):
         """It is the unguarded comparison, and all three families arm the guard.
