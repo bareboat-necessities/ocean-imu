@@ -1,0 +1,59 @@
+from __future__ import annotations
+
+import sys
+import unittest
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "tools"))
+sys.path.insert(0, str(ROOT / "tools" / "stability"))
+
+import ou3_brmm_p3_full_preconditions as pre  # noqa: E402
+import ou3_brmm_riccati_metric_p3 as gate  # noqa: E402
+
+
+class BrmmP3SourceSemanticsTest(unittest.TestCase):
+    def test_preconditions_require_same_brmm_history_and_explicit_execution_premises(self):
+        d = pre.build()
+        self.assertEqual(pre.validate(d), [])
+        m = d["mandatory_preconditions"]
+        for key in (
+            "explicit_execution_premises_bound",
+            "same_complete_BRMM_history_required",
+            "hard_pathwise_BRMM_conditions_retained",
+            "stochastic_event_not_source_generator",
+            "stochastic_event_not_homogeneous_pruner",
+            "actual_applied_per_axis_R_S_required",
+        ):
+            self.assertTrue(m[key], key)
+        self.assertFalse(d["complete_BRMM_source_family_materialized"])
+        self.assertFalse(d["reference_provider_is_BRMM_membership_requirement"])
+        self.assertFalse(d["explicit_execution_premises"]["P3_conclusion_is_an_assumption"])
+        self.assertFalse(d["explicit_execution_premises"]["spectral_membership_required"])
+
+    def test_canonical_gate_rejects_all_non_brmm_source_shortcuts(self):
+        d = gate.build()
+        self.assertEqual(gate.validate(d), [])
+        self.assertTrue(d["reference_compact_parameter_domain_validated"])
+        self.assertTrue(d["reference_compact_transition_relation_validated"])
+        self.assertTrue(d["complete_BRMM_same_history_realization_required"])
+        self.assertTrue(d["same_primitive_root_drives_entire_execution"])
+        self.assertTrue(d["stochastic_forcing_does_not_generate_source_words"])
+        self.assertTrue(d["stochastic_forcing_does_not_prune_homogeneous_family"])
+        for key in (
+            "gaussian_good_event_source_used",
+            "spectral_moment_only_source_used",
+            "arbitrary_bounded_input_source_used",
+            "independent_tau_sigma_RS_TS_extrema_product_used",
+            "independent_sea_x_RAO_product_used",
+            "point_source_word_used",
+            "selected_four_S_word_used",
+        ):
+            self.assertFalse(d[key], key)
+        self.assertTrue(d["P3_CONDITIONAL_BRMM_PASS"])
+        self.assertTrue(d["P4_MAY_CONSUME_CONDITIONAL_BRMM_P3"])
+        self.assertFalse(d["P3_DEPLOYMENT_PASS"])
+
+
+if __name__ == "__main__":
+    unittest.main()

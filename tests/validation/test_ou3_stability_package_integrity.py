@@ -35,11 +35,11 @@ STALE_RELOCATED_PATH = re.compile(
 )
 
 OPERATING_DOMAIN_BASENAME = "ou3_proof_" + "operating_domain.json"
-DIRECTIONAL_RESPONSE_BASENAME = "ou3_sea3_directional_" + "response_domain.json"
+DIRECTIONAL_RESPONSE_BASENAME = "ou3_brmm_directional_" + "response_domain.json"
 STABILITY_JSON_BASENAMES = {
     OPERATING_DOMAIN_BASENAME,
     DIRECTIONAL_RESPONSE_BASENAME,
-    "ou3_sea3_spectral_" + "moment_bridge.json",
+    "ou3_brmm_spectral_" + "moment_bridge.json",
 }
 TEXT_SUFFIXES = {".py", ".yml", ".yaml", ".md", ".tex", ".sh", ".txt"}
 
@@ -156,7 +156,7 @@ class StabilityPackageIntegrityTests(unittest.TestCase):
         stale = []
         # Both literal paths and globs matter: a stale trigger can silently
         # skip proof checks when only a theorem-domain JSON is changed.
-        legacy = ("tools/" + "ou3_*.json", "tools/" + "ou3_sea3_*.json")
+        legacy = ("tools/" + "ou3_*.json", "tools/" + "ou3_brmm_*.json")
         for path in sorted((ROOT / ".github" / "workflows").glob("*.yml")):
             for lineno, line in enumerate(path.read_text().splitlines(), 1):
                 if any(pattern in line for pattern in legacy):

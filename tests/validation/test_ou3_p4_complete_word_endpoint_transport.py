@@ -10,7 +10,7 @@ if str(STABILITY) not in sys.path:
     sys.path.insert(0, str(STABILITY))
 
 import ou3_p4_complete_word_endpoint_transport as ENDPOINT
-import ou3_sea3_riccati_metric_p4 as P4
+import ou3_brmm_riccati_metric_p4 as P4
 
 
 def mat(rows):
@@ -112,10 +112,10 @@ class CompleteWordEndpointTransportTests(unittest.TestCase):
             -d["linear_decrease"] + d["cross_term"] + d["defect_energy"],
         )
 
-    def test_endpoint_status_retains_complete_sea3_and_forbids_shortcuts(self):
+    def test_endpoint_status_retains_complete_brmm_and_forbids_shortcuts(self):
         d = ENDPOINT.build()
         self.assertEqual(ENDPOINT.validate(d), [])
-        self.assertEqual(d["canonical_source"], "COMPLETE_SEA3_NORMAL_LIVE_WORD")
+        self.assertEqual(d["canonical_source"], "COMPLETE_BRMM_NORMAL_LIVE_WORD")
         self.assertEqual(d["P3_delta_consumed"], 1.0e-18)
         self.assertTrue(d["actual_applied_per_axis_RS_retained_in_word"])
         self.assertTrue(d["accepted_accelerometer_is_only_interior_epsilon_event_class"])
@@ -130,7 +130,7 @@ class CompleteWordEndpointTransportTests(unittest.TestCase):
         self.assertEqual(P4.validate(d), [])
         self.assertEqual(
             d["canonical_P4_architecture"],
-            "FINITE_STATE_COMPLETE_SEA3_QUADRATIC_ENDPOINT_AND_PREFIX",
+            "FINITE_STATE_COMPLETE_BRMM_QUADRATIC_ENDPOINT_AND_PREFIX",
         )
         self.assertEqual(d["paper_Lyapunov_function"], "V(e,zeta)=e^T M(zeta)e")
         self.assertTrue(d["finite_state_endpoint_dissipation_required"])

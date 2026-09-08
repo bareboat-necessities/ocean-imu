@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""BIAS0/1/2 premises for the unchanged complete-SEA3 proof.
+"""BIAS0/1/2 premises for the unchanged complete-BRMM proof.
 
 These are conditional model/graph obligations, not device qualification or a
 new P4 certificate. True residual bias and corrected estimation error are
@@ -29,7 +29,7 @@ def homogeneous_bias_at(
     """Marginal enclosure derived from ONE retained root/tau, never a new root.
 
     Callers must retain the root and factor dependency in their word graph.
-    Evaluating these marginals does not materialize a joint SEA3 source cover.
+    Evaluating these marginals does not materialize a joint BRMM source cover.
     """
     if len(root) != 3 or any(not isinstance(x, Interval) for x in root):
         raise TypeError("true residual-bias root must have three outward intervals")
@@ -64,7 +64,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     c = PROCESS._constants()
     return {
         "qualification": QUALIFICATION,
-        "canonical_source": "COMPLETE_SEA3_NORMAL_LIVE_WORD",
+        "canonical_source": "COMPLETE_BRMM_NORMAL_LIVE_WORD",
         "BIAS0": {
             "physical_model": "b_total=b0+K_T*dT+K_strain*strain+beta+d_nonGM",
             "shipping_centered_truth": "b_true=beta+d_det; retain all uncompensated deterministic terms",
@@ -98,7 +98,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
             "uniform_separation_constant_lower": None,
             "source_uniform_separation_closed": False,
             "requires_full_corrected_bias_error_history": True,
-            "positive_separation_follows_from_SEA3_or_GM_alone": False,
+            "positive_separation_follows_from_BRMM_or_GM_alone": False,
             "each_consumed_sector_must_be_valid_on_its_prefix": True,
             "prefix_contraction_required": False,
         },
@@ -107,7 +107,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
             "band_fraction": "2/pi*(atan(omega_hi*tau_b)-atan(omega_lo*tau_b))",
             "stationary_model_required": True,
             "Gaussian_forcing_has_hard_pathwise_cap": False,
-            "PSD_used_to_prune_homogeneous_SEA3": False,
+            "PSD_used_to_prune_homogeneous_BRMM": False,
         },
         "P3_delta": 1.0e-18,
         "P3_numerical_matrices_changed": False,

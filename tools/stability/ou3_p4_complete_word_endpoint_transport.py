@@ -61,7 +61,7 @@ energy identity is
 
 P3 supplies the complete same-history linear word and its full-matrix margin.
 P4 must now enclose the *joint* (r_W, epsilon_0, epsilon_N,
-epsilon_acc-history) object over the same complete SEA3 word and show the last
+epsilon_acc-history) object over the same complete BRMM word and show the last
 two endpoint terms fit inside that full-matrix decrease.  No scalar correction
 radius, inverse-metric floor, independent R_S schedule, replay, or alternate
 estimator is introduced here.
@@ -73,15 +73,15 @@ import json
 from pathlib import Path
 from typing import Any, Sequence
 
-import ou3_p4_complete_sea3_measurement_linearizing_aw_coordinate as AW
-import ou3_p4_complete_sea3_accelerometer_operation_coordinate as ACC
-import ou3_sea3_full_word_event_algebra as EVENT
-import ou3_sea3_riccati_metric_p3 as P3
+import ou3_p4_complete_brmm_measurement_linearizing_aw_coordinate as AW
+import ou3_p4_complete_brmm_accelerometer_operation_coordinate as ACC
+import ou3_brmm_full_word_event_algebra as EVENT
+import ou3_brmm_riccati_metric_p3 as P3
 
 REPO = Path(__file__).resolve().parents[2]
 DEFAULT_DOMAIN = REPO / "tools" / "stability" / "ou3_proof_operating_domain.json"
 SCHEMA = 1
-QUALIFICATION = "OU3_P4_COMPLETE_SEA3_WHOLE_WORD_ENDPOINT_TRANSPORT_V1"
+QUALIFICATION = "OU3_P4_COMPLETE_BRMM_WHOLE_WORD_ENDPOINT_TRANSPORT_V1"
 
 
 def _shape(a: Sequence[Sequence[Any]]) -> tuple[int, int]:
@@ -319,16 +319,16 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     )
     if failures:
         raise RuntimeError(f"whole-word endpoint prerequisites failed: {failures}")
-    if p3.get("P3_CONDITIONAL_SEA3_PASS") is not True:
+    if p3.get("P3_CONDITIONAL_BRMM_PASS") is not True:
         raise RuntimeError("whole-word endpoint transport requires frozen conditional P3")
 
     return {
         "schema": SCHEMA,
         "qualification": QUALIFICATION,
-        "canonical_source": "COMPLETE_SEA3_NORMAL_LIVE_WORD",
+        "canonical_source": "COMPLETE_BRMM_NORMAL_LIVE_WORD",
         "P3_frozen_not_modified": True,
         "P3_delta_consumed": 1.0e-18,
-        "same_complete_SEA3_execution_required": True,
+        "same_complete_BRMM_execution_required": True,
         "actual_applied_per_axis_RS_retained_in_word": True,
         "all_due_S_updates_retained": True,
         "all_valid_accelerometer_updates_retained": True,
@@ -370,7 +370,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "P4_promoted_here": False,
         "P5_may_start_here": False,
         "next_obligation": (
-            "enclose the joint suffix-weighted accelerometer operator B_W and r_W over the SAME complete SEA3 word, "
+            "enclose the joint suffix-weighted accelerometer operator B_W and r_W over the SAME complete BRMM word, "
             "with actual applied R_S inside the suffix maps, and prove the two endpoint nonlinear terms fit inside "
             "the full-matrix P3 decrease for the widest declared [30,25,20,15] degree candidate; do not scalarize packetwise"
         ),
@@ -381,12 +381,12 @@ def validate(d: dict) -> list[str]:
     f: list[str] = []
     if d.get("schema") != SCHEMA or d.get("qualification") != QUALIFICATION:
         f.append("schema/qualification mismatch")
-    if d.get("canonical_source") != "COMPLETE_SEA3_NORMAL_LIVE_WORD":
+    if d.get("canonical_source") != "COMPLETE_BRMM_NORMAL_LIVE_WORD":
         f.append("canonical source changed")
     if float(d.get("P3_delta_consumed", 0.0)) != 1.0e-18:
         f.append("frozen P3 delta changed")
     for key in (
-        "P3_frozen_not_modified", "same_complete_SEA3_execution_required",
+        "P3_frozen_not_modified", "same_complete_BRMM_execution_required",
         "actual_applied_per_axis_RS_retained_in_word", "all_due_S_updates_retained",
         "all_valid_accelerometer_updates_retained", "asynchronous_vector_events_retained",
         "full_process_Q_and_aw_floors_retained", "H_to_A_rectangular_hybrid_retained",

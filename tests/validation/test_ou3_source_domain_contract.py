@@ -10,10 +10,10 @@ STABILITY = TOOLS / "stability"
 sys.path.insert(0, str(TOOLS)); sys.path.insert(0, str(STABILITY))
 spec = importlib.util.spec_from_file_location("ou3_source_domain_contract", STABILITY / "ou3_source_domain_contract.py")
 mod = importlib.util.module_from_spec(spec); spec.loader.exec_module(mod)
-import ou3_sea3_complete_source as sea3_complete
-import ou3_sea3_p1_compatibility as sea3_p1
-import ou3_sea3_physical_admissibility as sea3_phys
-import ou3_sea3_wave_period_spectral_identity as sea3_period_identity
+import ou3_brmm_complete_source as brmm_complete
+import ou3_brmm_p1_compatibility as brmm_p1
+import ou3_brmm_physical_admissibility as brmm_phys
+import ou3_brmm_wave_period_spectral_identity as brmm_period_identity
 def f32(value): return struct.unpack(">f", struct.pack(">f", float(value)))[0]
 class SourceDomainContractTests(unittest.TestCase):
  def test_contract_uses_shipping_clamps_and_keeps_theorem_unpromoted(self):
@@ -29,11 +29,11 @@ class SourceDomainContractTests(unittest.TestCase):
  def test_contract_names_every_hybrid_transition_required_for_deployment(self):
   d=mod.build(mod.DEFAULT_HEADER); self.assertEqual(set(d["hybrid_obligations"]),{"startup_handoff","held_to_active","magnetic_lock","magnetic_regauge_refinement","tilt_reset","tilt_relock","cooldown_reentry","periodic_aw_covariance_sync"}); self.assertEqual(d["periodic_aw_covariance_sync_proof"]["required_mode"],"PSD_NONEXPANSIVE")
  def test_physical_height_period_coupling_remains_fail_closed(self):
-  d=sea3_phys.build(); self.assertEqual(sea3_phys.validate(d),[]); self.assertTrue(d["three_partition_contract"]["independent_H_r_and_T_p_rectangular_extrema_forbidden"]); self.assertEqual(d["repository_total_Hs_upper_m"],8.5); self.assertFalse(d["left_language_inclusion_closed"])
+  d=brmm_phys.build(); self.assertEqual(brmm_phys.validate(d),[]); self.assertTrue(d["three_partition_contract"]["independent_H_r_and_T_p_rectangular_extrema_forbidden"]); self.assertEqual(d["repository_total_Hs_upper_m"],8.5); self.assertFalse(d["left_language_inclusion_closed"])
  def test_cartesian_sea_x_rao_domain_is_rejected_before_p1(self):
-  d=sea3_p1.build(); self.assertEqual(sea3_p1.validate(d),[]); self.assertTrue(d["cartesian_product_refuted_by_analytical_witness"]); self.assertTrue(d["coupled_SEA3_domain_required"]); self.assertFalse(d["independent_cartesian_sea_x_RAO_domain_is_P1_sound"]); self.assertFalse(d["finite_window_realization_certificate_closed"]); self.assertFalse(d["L_actual_sea_subset_Lhat_SEA3_closed"])
+  d=brmm_p1.build(); self.assertEqual(brmm_p1.validate(d),[]); self.assertTrue(d["cartesian_product_refuted_by_analytical_witness"]); self.assertTrue(d["coupled_BRMM_domain_required"]); self.assertFalse(d["independent_cartesian_sea_x_RAO_domain_is_P1_sound"]); self.assertFalse(d["finite_window_realization_certificate_closed"]); self.assertFalse(d["L_actual_sea_subset_Lhat_BRMM_closed"])
  def test_wave_period_leak_subtraction_identity_stays_source_bound(self):
-  d=sea3_period_identity.build(); self.assertEqual(sea3_period_identity.validate(d),[]); self.assertEqual(set(d["source_parity"]),set(sea3_period_identity.SOURCE_PARITY_KEYS)); self.assertTrue(all(d["source_parity"].values()))
- def test_complete_sea3_conditional_source_does_not_claim_physical_left_inclusion(self):
-  d=sea3_complete.build(); self.assertEqual(sea3_complete.validate(d),[]); self.assertEqual(d["canonical_P3_source"],"COMPLETE_SEA3_NORMAL_LIVE_WORD"); self.assertTrue(d["P3_source_contract_ready"]); self.assertFalse(d["P3_source_family_materialized"]); self.assertFalse(d["global_physical_deployment_left_inclusion_closed_here"])
+  d=brmm_period_identity.build(); self.assertEqual(brmm_period_identity.validate(d),[]); self.assertEqual(set(d["source_parity"]),set(brmm_period_identity.SOURCE_PARITY_KEYS)); self.assertTrue(all(d["source_parity"].values()))
+ def test_complete_brmm_conditional_source_does_not_claim_physical_left_inclusion(self):
+  d=brmm_complete.build(); self.assertEqual(brmm_complete.validate(d),[]); self.assertEqual(d["canonical_P3_source"],"COMPLETE_BRMM_NORMAL_LIVE_WORD"); self.assertTrue(d["P3_source_contract_ready"]); self.assertFalse(d["P3_source_family_materialized"]); self.assertFalse(d["global_physical_deployment_left_inclusion_closed_here"])
 if __name__ == "__main__": unittest.main()

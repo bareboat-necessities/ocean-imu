@@ -8,12 +8,12 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools/stability"))
 from ou3_interval import Interval, matrix_point, matrix_identity  # noqa: E402
 import ou3_p4_bounded_bias_motion as M  # noqa: E402
-import ou3_p4_complete_sea3_joint_sector_master as J  # noqa: E402
+import ou3_p4_complete_brmm_joint_sector_master as J  # noqa: E402
 
 
 def contract():
     return M.build(p3_contract={
-        "mems_bias_preconditions": M.BIAS.build(), "P3_CONDITIONAL_SEA3_PASS": True,
+        "mems_bias_preconditions": M.BIAS.build(), "P3_CONDITIONAL_BRMM_PASS": True,
         "modes": {mode: {"relative_Riccati_injection_margin_lower": 1e-18}
                   for mode in ("H18", "A21")}})
 

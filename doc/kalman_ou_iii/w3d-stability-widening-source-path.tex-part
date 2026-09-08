@@ -231,7 +231,7 @@ Section~\ref{sec:mems-bias-preconditions} require the same-history true bias
 and corrected-error recurrence to establish this.  Until every-prefix
 retention is proved, canonical P4 retains the exact projection/generalized
 Jacobian, including boundary branches, and does not claim identity projection.
-The conditional local construction above is not a completed canonical SEA3 P4
+The conditional local construction above is not a completed canonical BRMM P4
 certificate.
 
 Define

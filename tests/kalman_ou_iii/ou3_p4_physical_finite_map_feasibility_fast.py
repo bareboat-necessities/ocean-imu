@@ -241,8 +241,8 @@ def main() -> int:
     valid = [c for c in cases if c["domain_retained"]]
     crossings = [c for c in valid if c["rho_endpoint"] >= 1.0]
     report = {
-        "qualification": "NON_PROMOTING_COMPLETE_SEA3_PHYSICAL_FINITE_MAP_POINT_FAST_V1",
-        "canonical_source": "COMPLETE_SEA3_NORMAL_LIVE_WORD",
+        "qualification": "NON_PROMOTING_COMPLETE_BRMM_PHYSICAL_FINITE_MAP_POINT_FAST_V1",
+        "canonical_source": "COMPLETE_BRMM_NORMAL_LIVE_WORD",
         "point_same_history_diagnostic_only": True,
         "physical_true_minus_estimated_map": True,
         "reset_gauge_normalized_representative": False,

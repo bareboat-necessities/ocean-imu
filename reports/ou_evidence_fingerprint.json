@@ -1524,12 +1524,12 @@
     },
     {
       "mode": "100644",
-      "path": "tests/validation/test_ou3_sea3_spectral_moment_bridge.py",
+      "path": "tests/validation/test_ou3_brmm_spectral_moment_bridge.py",
       "sha256": "f9e1b787b1cb291792b41d7fe75bdd2cb5c4c60bea7db15381193ea070df3c03"
     },
     {
       "mode": "100644",
-      "path": "tests/validation/test_ou3_sea3_wave_period_frontend.py",
+      "path": "tests/validation/test_ou3_brmm_wave_period_frontend.py",
       "sha256": "800863fdbb484a80bc6f4c463c2e78e0478ed59b64b596ea622abeae9129609b"
     },
     {
@@ -2009,12 +2009,12 @@
     },
     {
       "mode": "100644",
-      "path": "tools/stability/ou3_sea3_spectral_moment_bridge.py",
+      "path": "tools/stability/ou3_brmm_spectral_moment_bridge.py",
       "sha256": "71bf840514c9f51e29c990b25575a4f2f5c1c1e48989152467a86d63edeaca09"
     },
     {
       "mode": "100644",
-      "path": "tools/stability/ou3_sea3_wave_period_frontend.py",
+      "path": "tools/stability/ou3_brmm_wave_period_frontend.py",
       "sha256": "2b5dff11a5c646357beb74d60ee3477080d74c1ca327c07b3c24e334c20b91fc"
     },
     {

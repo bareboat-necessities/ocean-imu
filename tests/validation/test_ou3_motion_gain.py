@@ -117,7 +117,7 @@ class MotionGainTests(unittest.TestCase):
         witness = G.high_precision_direction(steps, m0, dt, factor, gain, actual)
         self.assertAlmostEqual(float(witness["ratio_80_digit"]), actual["endpoint"], places=12)
         self.assertAlmostEqual(float(witness["supply_cost_80_digit"]), 1., places=12)
-        self.assertFalse(witness["SEA3_nonlinear_admissibility_of_maximizer_established"])
+        self.assertFalse(witness["BRMM_nonlinear_admissibility_of_maximizer_established"])
 
     def test_bad_supply_or_unattached_word_fails_closed(self):
         steps, m0 = self.example()

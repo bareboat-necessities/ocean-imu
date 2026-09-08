@@ -4,26 +4,26 @@ on:
   push:
     paths:
       - "tests/kalman_ou_iii/ou3-operation-ledger-sim.cpp"
-      - "tests/kalman_ou_iii/ou3_p4_complete_sea3_word_feasibility.py"
+      - "tests/kalman_ou_iii/ou3_p4_complete_brmm_word_feasibility.py"
       - "tests/kalman_ou_iii/ou3_p4_physical_finite_map_feasibility.py"
       - "tests/kalman_ou_iii/ou3_p4_physical_finite_map_feasibility_fast.py"
       - "tests/kalman_ou_iii/ou3_p4_canonicalize_physical_payload.py"
       - "tests/kalman_ou_iii/ou3_p4_physical_long_window_feasibility.py"
-      - "tools/stability/ou3_p4_complete_sea3_differential_prediction.py"
-      - "tools/stability/ou3_p4_complete_sea3_differential_events.py"
+      - "tools/stability/ou3_p4_complete_brmm_differential_prediction.py"
+      - "tools/stability/ou3_p4_complete_brmm_differential_events.py"
       - "tools/stability/ou3_proof_operating_domain.json"
       - "docs/ou3-proof-research-state.md"
       - ".github/workflows/ou3-p4-physical-long-window-feasibility.yml"
   pull_request:
     paths:
       - "tests/kalman_ou_iii/ou3-operation-ledger-sim.cpp"
-      - "tests/kalman_ou_iii/ou3_p4_complete_sea3_word_feasibility.py"
+      - "tests/kalman_ou_iii/ou3_p4_complete_brmm_word_feasibility.py"
       - "tests/kalman_ou_iii/ou3_p4_physical_finite_map_feasibility.py"
       - "tests/kalman_ou_iii/ou3_p4_physical_finite_map_feasibility_fast.py"
       - "tests/kalman_ou_iii/ou3_p4_canonicalize_physical_payload.py"
       - "tests/kalman_ou_iii/ou3_p4_physical_long_window_feasibility.py"
-      - "tools/stability/ou3_p4_complete_sea3_differential_prediction.py"
-      - "tools/stability/ou3_p4_complete_sea3_differential_events.py"
+      - "tools/stability/ou3_p4_complete_brmm_differential_prediction.py"
+      - "tools/stability/ou3_p4_complete_brmm_differential_events.py"
       - "tools/stability/ou3_proof_operating_domain.json"
       - "docs/ou3-proof-research-state.md"
       - ".github/workflows/ou3-p4-physical-long-window-feasibility.yml"
@@ -111,7 +111,7 @@ jobs:
           import json
           for tag, stride in (("6s", 1200), ("9s", 1800)):
               d=json.load(open(f'/tmp/ou3_p4_long_{tag}.json'))
-              assert d['canonical_source'] == 'COMPLETE_SEA3_NORMAL_LIVE_WORD'
+              assert d['canonical_source'] == 'COMPLETE_BRMM_NORMAL_LIVE_WORD'
               assert d['point_same_history_diagnostic_only'] is True
               assert d['single_shipping_observer_used'] is True
               assert d['actual_applied_RS_retained'] is True

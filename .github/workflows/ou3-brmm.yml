@@ -1,0 +1,55 @@
+name: OU3 BRMM source audit
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/ou3-brmm.yml"
+      - "tests/kalman_ou_iii/ou3_brmm_audit.py"
+      - "tests/validation/test_ou3_brmm.py"
+      - "tools/stability/ou3_brmm_contract.py"
+      - "doc/kalman_ou_iii/w3d-brmm-stability-theorem.tex-part"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ou3-brmm-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  eight-case-source-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Install numerical dependency
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-numpy
+      - name: Check interval arithmetic and no-DC theorem boundary
+        run: python3 -m unittest discover -s tests/validation -p test_ou3_brmm.py -v
+      - name: Emit BRMM source declaration without promoting proof gates
+        run: |
+          mkdir -p /tmp/ou3-brmm
+          python3 tools/stability/ou3_brmm_contract.py --output /tmp/ou3-brmm/contract.json
+      - name: Download unchanged eight-case reference archive
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download v1.1.3 --repo bareboat-necessities/oceanography-waves-lib --pattern sim-data-files.zip --dir /tmp/ou3-brmm --clobber
+      - name: Audit every sliding 10-second source window
+        run: |
+          python3 tests/kalman_ou_iii/ou3_brmm_audit.py --archive /tmp/ou3-brmm/sim-data-files.zip --output-dir /tmp/ou3-brmm/results
+      - name: Retain complete per-window witnesses and source hashes
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: ou3-brmm-eight-case-source-audit
+          path: |
+            /tmp/ou3-brmm/contract.json
+            /tmp/ou3-brmm/results
+          if-no-files-found: warn
+          retention-days: 14

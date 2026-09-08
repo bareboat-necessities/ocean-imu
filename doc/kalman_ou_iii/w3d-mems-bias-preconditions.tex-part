@@ -1,7 +1,7 @@
 \section{MEMS residual-bias qualification and complete-word constraints}
 \label{sec:mems-bias-preconditions}
 
-The following sensor premises supplement the complete SEA3 motion source.
+The following sensor premises accompany the complete BRMM motion source; reference spectral specializations use the same sensor premises.
 They do not replace its joint translational/rotational realization, certify an
 assembled sensor, or assert a positive nonlinear P4 margin.  Throughout this
 section $\beta$ denotes a true physical residual, $\hat b_a$ the shipping
@@ -10,7 +10,7 @@ shipping temperature-centered coordinates.  These three quantities must not
 be interchanged.
 
 For the primary bounded-bias motion target of
-Theorem~\ref{thm:sea3-bounded-bias-motion}, BIAS0/1 supplies a same-history
+Theorem~\ref{thm:brmm-bounded-bias-motion}, BIAS0/1 supplies a same-history
 true-bias envelope and retains all corrected bias dynamics. Projection gives
 compactness of the estimate, and the triangle bound gives compactness of its
 error; neither requires bias convergence. BIAS2 is an optional way to sharpen
@@ -189,10 +189,10 @@ Eq.~\eqref{eq:bias2-premise}.
 \end{proof}
 BIAS0/1 and an oscillatory sea spectrum do \emph{not} establish
 Eq.~\eqref{eq:bias2-premise}.  The signal $g_j$ also depends on evolving
-estimation errors, gravity and feedback; it is not the SEA3 wave acceleration.
+estimation errors, gravity and feedback; it is not the physical marine acceleration.
 Even for free bias, $g_j=-\Phi_b(j,0)\beta_0$ shows why a temporal GM
 constraint alone cannot imply positive separation.  Whether an analogous
-cancellation is admitted by the actual SEA3/error graph is the numerical
+cancellation is admitted by the actual BRMM/error graph is the numerical
 obligation, not a new exclusion imposed on the source.
 
 If $y_W=C_yz_W$ with exact nonlinear defects retained in $z_W$, a verified
@@ -203,8 +203,9 @@ Eq.~\eqref{eq:bias2-separation} supplies the dense sector
  \qquad z_W^\top\Pi_{\rm sep}z_W\ge0.
  \label{eq:bias2-sector}
 \end{equation}
-It enters Eq.~\eqref{eq:sea3-joint-word-sector-test} with a nonnegative
-multiplier.  This does not change the signed Joseph information weight or
+It enters the primary Eq.~\eqref{eq:brmm-motion-master} (or the retained
+BRMM Eq.~\eqref{eq:marine-reference-joint-word-sector-test}) with a nonnegative multiplier.
+This does not change the signed Joseph information weight or
 discard nonlinear curvature.  All 21 states, cross terms, resets, process
 covariances and actual-applied $R_S$ suffix events remain.  No positive
 $\mu_{\rm sep}$ is currently certified.  Every prefix uses its own valid
@@ -233,5 +234,5 @@ This is a variance fraction, not a finite-window pathwise bound.  Stationarity,
 initial transients, parameter uncertainty, sampling/aliasing and the actual
 disturbance transfer must be respected in an ISS/moment corollary.  Gaussian
 OU forcing has unbounded support and nondifferentiable sample paths; neither a
-deterministic amplitude/derivative cap nor a SEA3 source restriction follows
+deterministic amplitude/derivative cap nor a BRMM source restriction follows
 from its PSD.  Stochastic bias forcing remains separate from homogeneous P4.

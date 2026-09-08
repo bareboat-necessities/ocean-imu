@@ -11,7 +11,7 @@ import numpy as np
 
 import ou3_p4_physical_finite_map_feasibility as BASE
 import ou3_p4_physical_finite_map_feasibility_fast as FAST
-import ou3_p4_complete_sea3_signed_information_ledger as SIGNED
+import ou3_p4_complete_brmm_signed_information_ledger as SIGNED
 
 
 def reset_matrix(dtheta, n):
@@ -118,7 +118,7 @@ def source_evidence_inventory(payload):
     """Identify unavailable proof inputs from the decoded capture schema.
 
     Presence would only make validation possible, never prove membership.
-    The actual SEA3 membership predicate is X^s_SEA3 plus its joint output
+    The actual BRMM membership predicate is X^s_BRMM plus its joint output
     map; parameter bounds or a PSD alone do not define that predicate.
     """
     required = (
@@ -136,5 +136,5 @@ def source_evidence_inventory(payload):
         "missing_evidence_is_not_proof_of_nonmembership": True,
         "spectral_label_or_norm_caps_used_as_membership": False,
         "zero_bias_root_substituted_for_captured_truth": False,
-        "complete_SEA3_membership_verified": False,
+        "complete_BRMM_membership_verified": False,
     }

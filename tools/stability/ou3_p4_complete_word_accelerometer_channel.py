@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Joint whole-word accelerometer channel for canonical complete-SEA3 P4.
+"""Joint whole-word accelerometer channel for canonical complete-BRMM P4.
 
 This is a direct reduction of the endpoint master inequality, not a standalone
 remainder certificate.  For each accepted accelerometer correction in one
@@ -18,7 +18,7 @@ events contributes exactly
 
 to the final Riccati covariance.  All initial-covariance, process-Q, covariance
 floor, S=0, vector/magnetometer, and hybrid covariance contributions are PSD,
-so for every admitted complete SEA3 word
+so for every admitted complete BRMM word
 
     W_acc <= P_N.
 
@@ -57,7 +57,7 @@ from ou3_interval import (
     symmetric_positive_definite_ldlt,
 )
 from ou3_interval_linear_algebra import matrix_inverse_gauss_jordan, matrix_symmetric_hull
-import ou3_sea3_full_word_event_algebra as EVENT
+import ou3_brmm_full_word_event_algebra as EVENT
 
 REPO = Path(__file__).resolve().parents[2]
 SCHEMA = 1
@@ -188,8 +188,8 @@ def build() -> dict:
     return {
         "schema": SCHEMA,
         "qualification": QUALIFICATION,
-        "canonical_source": "COMPLETE_SEA3_NORMAL_LIVE_WORD",
-        "same_complete_SEA3_word_required": True,
+        "canonical_source": "COMPLETE_BRMM_NORMAL_LIVE_WORD",
+        "same_complete_BRMM_word_required": True,
         "same_shipping_suffix_for_state_and_covariance_required": True,
         "accelerometer_channel_definition": "A_i=M_suffix(i)*G_i*K_i",
         "stacked_noise_covariance_definition": "R=diag(Racc_i)",
@@ -226,10 +226,10 @@ def validate(d: dict) -> list[str]:
     f: list[str] = []
     if d.get("schema") != SCHEMA or d.get("qualification") != QUALIFICATION:
         f.append("schema/qualification mismatch")
-    if d.get("canonical_source") != "COMPLETE_SEA3_NORMAL_LIVE_WORD":
+    if d.get("canonical_source") != "COMPLETE_BRMM_NORMAL_LIVE_WORD":
         f.append("canonical source changed")
     for key in (
-        "same_complete_SEA3_word_required", "same_shipping_suffix_for_state_and_covariance_required",
+        "same_complete_BRMM_word_required", "same_shipping_suffix_for_state_and_covariance_required",
         "accelerometer_measurement_noise_is_PSD_final_covariance_component",
         "all_later_due_S_updates_remain_inside_suffix",
         "actual_applied_RS_required_for_every_later_S_suffix_event",

@@ -1,0 +1,617 @@
+% =======================================================
+\section{Retained directional-sea specialization}
+\label{sec:marine-reference-stability-target}
+
+The implementation is intended for oscillatory marine motion, not for an
+arbitrary bounded specific-force sequence.  The quantitative source-word proof
+of Sec.~\ref{sec:stability-widening-source-path} deliberately remains valid as
+the stronger implementation-source envelope, but it can be much more
+conservative than the physical deployment class because instantaneous source
+bounds alone permit sample-to-sample combinations that no directional sea can
+produce. This section retains the spectral specialization and its stronger
+full-state conditional target. Spectral membership is not a prerequisite
+of the primary BRMM theorem.
+
+The result below is a \emph{conditional target theorem}.  Its composition
+argument is complete once the listed SEA0/P1--P5 certificates are available,
+but this manuscript does not claim a complete SEA0 directional-sea enclosure,
+P4 contraction, or the 45-degree BRMM P5 capture certificate. Conditional
+P3 matrix coverage is distinct from these physical and nonlinear obligations.
+
+The primary target is now the bounded-bias motion theorem in
+Section~\ref{sec:brmm-bounded-bias-motion}: practical stability of the 18
+motion/attitude/gyro-bias errors, with a bounded accelerometer-bias error but
+without a claim that this error converges. The estimator still executes its
+full active 21-state recursion. The full-state contraction construction and
+Theorem~\ref{thm:marine-reference-regional-practical-stability} below are retained as a
+\emph{stronger, unclosed extension}, not prerequisites for the weaker nonlinear
+claim. Neither target is closed merely by the bias clamp or by conditional P3.
+
+\subsection{Three-partition directional sea class}
+
+The continuum spectral formulas below describe the retained linear-vessel
+branch. The response union in Eq.~\eqref{eq:marine-reference-response-union} additionally
+admits a correlated atomic Stokes wave-following branch; its bound harmonics
+are not identified with this fundamental continuum spectrum.
+
+Fix
+\begin{equation}
+ \boxed{M_{\max}=3.}
+ \label{eq:marine-reference-mmax}
+\end{equation}
+For partition $r\in\{1,2,3\}$ let
+\begin{equation}
+ \lambda_r=(H_r,T_{p,r},\gamma_r,\beta_r,s_r)
+ \label{eq:marine-reference-partition-parameter}
+\end{equation}
+collect significant-height contribution, peak period, JONSWAP peak-enhancement
+factor, mean propagation direction, and directional-spreading parameter.  An
+inactive slot is represented by $H_r=0$ rather than by a change of model
+dimension.  Under the spectral convention used here, $\gamma_r=1$ gives the
+PM limit of the JONSWAP frequency family.
+
+The directional elevation spectrum is
+\begin{equation}
+ \boxed{
+ E(\omega,\vartheta;\lambda)
+ =
+ \sum_{r=1}^{3}
+ S_J(\omega;H_r,T_{p,r},\gamma_r)
+ D_r(\vartheta;\beta_r,s_r,\omega),
+ }
+ \label{eq:marine-reference-directional-spectrum}
+\end{equation}
+where each $D_r$ is nonnegative and normalized over direction.  The partition
+energies are coupled by
+\begin{equation}
+ \boxed{H_s^2=\sum_{r=1}^{3}H_r^2.}
+ \label{eq:marine-reference-total-energy}
+\end{equation}
+Thus a one-system sea, wind sea plus swell, crossing swell, and a
+three-component multimodal sea all belong to one fixed-dimensional parameter
+family.  In particular, the proof is not allowed to maximize all three $H_r$
+independently while also holding $H_s$ fixed.
+
+The sea parameters evolve through a compact transition relation
+\begin{equation}
+ \lambda_{k+1}\in\mathcal R_\lambda(\lambda_k),
+ \label{eq:marine-reference-rate-relation}
+\end{equation}
+whose component bounds include physically justified limits on changes of
+$H_r$, $T_{p,r}$, $\gamma_r$, $\beta_r$, and $s_r$.  Those rate limits are
+theorem assumptions to be certified by SEA0; they are not fitted to the eight
+reference simulations.
+
+\subsection{Directional response and oscillatory source}
+
+On the linear-vessel branch, the spectrum of
+Eq.~\eqref{eq:marine-reference-directional-spectrum} is not converted to
+independent Cartesian acceleration boxes.  Let
+$G_{\rm imu}(\omega,\vartheta;\lambda)$ denote the certified directional
+sea-to-CoG/IMU response family.  The corresponding matrix-valued source
+spectrum is
+\begin{equation}
+ \boxed{
+ \Phi_u(\omega;\lambda)
+ =
+ \int
+ G_{\rm imu}(\omega,\vartheta;\lambda)
+ E(\omega,\vartheta;\lambda)
+ G_{\rm imu}^{*}(\omega,\vartheta;\lambda)\,d\vartheta .
+ }
+ \label{eq:marine-reference-matrix-spectrum}
+\end{equation}
+It retains the physically coupled cross spectra between the measured vector
+components.
+
+For deterministic certification SEA0 supplies an outward enclosure of this
+family by an oscillator/shaping state or an equivalent hard finite-window
+dynamic constraint,
+\begin{align}
+ x^s_{k+1}&=A_s(\lambda_k)x^s_k+B_s(\lambda_k)w_k, \nonumber\\
+ u^s_k&=C_s(\lambda_k)x^s_k,
+ \label{eq:marine-reference-shaping-system}
+\end{align}
+with the oscillatory blocks preserving phase continuity.  The compact reference-model
+domain includes this deterministic realization coordinate; over a
+finite sea window we write it as the coupled history set
+\begin{equation}
+ \boxed{
+ (x^s_{0:N_W},w_{0:N_W-1})
+ \in
+ \mathcal X^s_{\rm ref}(\lambda_{0:N_W}),
+ \qquad
+ \mathcal X^s_{\rm ref}(\lambda_{0:N_W})\ \text{compact}.
+ }
+ \label{eq:marine-reference-hard-realization-set}
+\end{equation}
+Equation~\eqref{eq:marine-reference-hard-realization-set} is not an independent disturbance
+box. It makes explicit the phase/driver coordinate carried by $x^s$ in
+this reference model; BRMM itself does not require a finite spectral state.
+SEA0 must provide a machine-readable outward representation of this coupled
+set, its phase-continuous transition, and the left inclusion of the physical
+reference realization family into that representation.  The statistical spectrum
+of Eq.~\eqref{eq:marine-reference-directional-spectrum} constrains the sea family but does
+not, by itself, supply a deterministic pathwise bound for
+$\mathcal X^s_{\rm ref}$.  Consequently, neither a Gaussian confidence event,
+spectral moments alone, a replay record, nor a finite seeded harmonic
+approximation may replace Eq.~\eqref{eq:marine-reference-hard-realization-set} in SEA0/P3.
+For the reference union this hard-history obligation is imposed branchwise. The Stokes
+branch instead uses the nonlinear common-root output below; no linear
+$C_s x^s$ identity or continuum quadrature certificate is asserted for it.
+Compact source cells at fixed $N$ do not by themselves establish a uniform
+cover over the enlarged family.
+
+For an individual undamped oscillator, for example,
+\begin{equation}
+ \begin{bmatrix}q_{c,k+1}\\q_{s,k+1}\end{bmatrix}
+ =
+ \begin{bmatrix}
+ \cos\omega h&-\sin\omega h\\
+ \sin\omega h& \cos\omega h
+ \end{bmatrix}
+ \begin{bmatrix}q_{c,k}\\q_{s,k}\end{bmatrix}.
+ \label{eq:marine-reference-oscillator-step}
+\end{equation}
+The actual theorem input is separated as
+\begin{equation}
+ \boxed{u_k=u^s_k+d^s_k,}
+ \label{eq:marine-reference-perturbed-source}
+\end{equation}
+where motion generated by admissible changes of the three sea partitions is
+part of $u^s$, while $d^s$ denotes bounded out-of-class/model-mismatch input.
+The deterministic theorem uses a hard finite-window bound on this input.  A
+probabilistic statement for random sea realizations is a later corollary; no
+infinite-time pointwise bound is inferred merely from a Gaussian spectrum.
+
+\subsection{Exact tuner reachability and source-language refinement}
+
+The deployed measurement-only adaptation path remains inside the source:
+\begin{equation}
+ u_k
+ \longrightarrow
+ \text{WavePeriodEstimator/prior source}
+ \longrightarrow
+ \text{band variance/EMAs}
+ \longrightarrow
+ (\tau_k,\sigma_{aw,k},R_{S,k},T_{S,k}),
+ \label{eq:marine-reference-tuner-chain}
+\end{equation}
+including the exact stage/commit and pseudo-update scheduler state.  Shipping
+code uses the fixed $0.2$ Hz tuning prior until the existing
+WavePeriodEstimator reports \texttt{hasUsablePeriod()}.  The same estimator
+starts its moment statistics after $3/\lambda$, may qualify startup use no
+earlier than $4/\lambda$, and additionally requires at least one current
+estimated period of moment history.  Its stricter \texttt{isReady()} diagnostic
+still requires at least $6/\lambda$ and the existing debiased-moment weight.
+The tuner update for sample $k$ executes before the current sample advances the
+WavePeriodEstimator, so a newly usable period estimate can affect the tuner no
+earlier than the following valid sample.  Filter \texttt{TunerReady} and Live
+entry require this startup-usable measured period, but do \emph{not} wait for
+\texttt{WavePeriodEstimator::isReady()}.  BRMM/P2 must retain the prior-driven
+and startup-usable estimator-driven source modes and their one-sample takeover
+edge.
+
+Denote the tuner memory by $z^t_k$ and scheduler/hybrid source memory by $q_k$.
+The augmented exogenous state is therefore
+\begin{equation}
+ \boxed{\zeta_k=(x^s_k,\lambda_k,z^t_k,q_k).}
+ \label{eq:marine-reference-augmented-source}
+\end{equation}
+A certificate using this reference model must establish the sound language inclusions
+\begin{equation}
+ \boxed{
+ \mathcal L_{\rm actual\ sea}
+ \subseteq
+ \widehat{\mathcal L}_{\rm ref}
+ \subseteq
+ \mathcal L_{\rm current\ source}.
+ }
+ \label{eq:marine-reference-language-inclusions}
+\end{equation}
+The right-hand language is the existing correlated implementation-source
+language; its frozen P2 semantics are not redefined.  Replay records may
+falsify either inclusion but may not be used to construct the reference language.
+
+\subsection{Finite sea windows}
+
+With two or three active partitions the modal frequencies need not be
+commensurate, so no common wave period is assumed.  Let $T_W$ be a finite
+\emph{sea window} and
+\begin{equation}
+ N_W=\left\lceil T_W/h\right\rceil
+ \label{eq:marine-reference-window-samples}
+\end{equation}
+its sample count.  SEA0/P3 must choose $T_W$ from a certified
+finite-window information condition, not from a replayed trajectory.  A
+representative target is
+\begin{equation}
+ \boxed{\mathcal O_{k,N_W}\succeq\alpha_O I,\qquad \alpha_O>0}
+ \label{eq:marine-reference-window-information}
+\end{equation}
+for every admitted reference-model window in each fixed-dimensional Live mode.
+
+Let $M(\zeta)\succ0$ be the source-indexed information metric and write
+\begin{equation}
+ V(e,\zeta)=e^\top M(\zeta)e
+ \label{eq:marine-reference-lifted-energy}
+\end{equation}
+in local error coordinates, with the exact Cayley lift of
+Sec.~\ref{sec:stability-widening-source-path} used for finite attitude error.
+The key nonlinear endpoint certificate is the window-wise inequality
+\begin{equation}
+ \boxed{
+ V_{k+N_W}
+ \le
+ \rho V_k
+ +\gamma_sD_{s,k}
+ +\gamma_nD_{n,k},
+ \qquad 0<\rho<1,
+ }
+ \label{eq:marine-reference-window-dissipation}
+\end{equation}
+where $D_{s,k}$ and $D_{n,k}$ are hard energies over the window beginning at
+$k$.  No one-sample decrease of $V$ is required; growth inside an oscillation
+is allowed.
+
+For the homogeneous finite-state part of one complete shipping word, write
+$\Phi_N=M_W\Phi_0+d_W$, $J_N=P_N^{-1}$, and
+$D_W=J_0-M_W^\top J_N M_W$.  Retain the nonlinear residual, reset, boundary,
+and projection history as one same-history coordinate $w_W$, without splitting
+it into independent event radii, so that $d_W=B_W w_W$.  Then the exact endpoint
+energy difference is the full augmented quadratic form
+\begin{equation}
+ V_N-V_0
+ =
+ \begin{bmatrix}\Phi_0\\w_W\end{bmatrix}^{\!\top}
+ \underbrace{\begin{bmatrix}
+ -D_W & M_W^\top J_NB_W\\
+ B_W^\top J_NM_W & B_W^\top J_NB_W
+ \end{bmatrix}}_{L_W}
+ \begin{bmatrix}\Phi_0\\w_W\end{bmatrix}.
+ \label{eq:marine-reference-joint-word-master}
+\end{equation}
+If the correlated nonlinear graph is enclosed by quadratic sectors
+$z_W^\top\Pi_jz_W\ge0$, $z_W=[\Phi_0^\top,w_W^\top]^\top$, it is sufficient
+to find nonnegative multipliers $\lambda_j$ for which the outward full-matrix
+test
+\begin{equation}
+ \boxed{-\left(L_W+\sum_j\lambda_j\Pi_j\right)\succ0}
+ \label{eq:marine-reference-joint-word-sector-test}
+\end{equation}
+holds.  In active accelerometer-bias mode this test is on the full 21-state
+matrix and retains finite-$\tau_b$ bias decay and every state cross term.  Each
+suffix in $B_W$ contains every later shipping event, in particular each due
+$S=0$ update with the actual applied anisotropic $R_S$.  Thus
+Eq.~\eqref{eq:marine-reference-joint-word-sector-test} may neither eliminate $a_w$ or
+$b_a$ nor replace the same-history graph by a packet-count or independent-box
+bound.
+
+The bias source and its initial cell satisfy BIAS0/1 in
+Section~\ref{sec:mems-bias-preconditions}.  The full nonlinear graph uses the
+corrected error recurrence, not a free GM replacement for $\delta b_a$.
+A BIAS2 sector from Eq.~\eqref{eq:bias2-sector} may enter the master only
+after its uniform positive separation premise has been verified on this same
+graph.  Literature or stationary PSDs cannot supply that certificate.
+
+\paragraph{Source and finite storage attachment.}
+Membership of an individual word requires one witness in
+Eq.~\eqref{eq:marine-reference-hard-realization-set}, its joint translational/rotational
+output map, the frontend/tuner root and the BIAS0/1 physical-bias history.
+These must generate the word's actual measurements, schedules and $P,H,R$
+cells. A capture of those derived cells alone does not supply the missing
+witness. The unspecified hard-driver set and joint response realization
+must be supplied before this membership predicate is executable; this is
+separate from qualifying an assembled accelerometer. Neither declaring a
+zero true-bias root after capture nor assigning a BRMM identifier proves the
+same-source equality.
+
+\paragraph{Reference response-model union.}
+Retain the entire existing continuum linear-vessel family, with its unchanged
+$G\le4$, $f_c\le1.2\,\mathrm{Hz}$, $p\ge2$ envelope, and define
+\begin{equation}
+ \boxed{\mathcal G_{\rm ref}^{+}
+ =\mathcal G_{\rm vessel}^{\rm linear}
+ \cup\mathcal G_{\rm wave\text{-}following}^{\rm Stokes}.}
+ \label{eq:marine-reference-response-union}
+\end{equation}
+A response-branch label belongs to the source root and is retained through
+the entire word and every prefix. This is a union of complete histories, not
+permission to switch response laws at individual events. Both branches retain
+the same Normal-Live, vector-PE, frontend, tuner, scheduler, zero-lever-arm and
+BIAS0/1 premises. Neither branch alone covers the union.
+
+The second branch is the superposition of third-order bound harmonics used
+by the wave-following generator, not a claim to solve the full nonlinear
+water-wave equations. One lineage fixes a finite number $N$ of atoms,
+nonnegative amplitudes $a_i$, directions $d_i=(\cos\vartheta_i,\sin\vartheta_i)$,
+root phases $\phi_i$, and fundamental frequencies
+$f_i\in[0.02,0.8]\,\mathrm{Hz}$. All directions and phases are admitted;
+$N=128$ and seed 42 are one generator instance, not the source quantifier.
+Set $\omega_i=2\pi f_i$, $k_i=\omega_i^2/g$, require the model-validity
+premise $k_i a_i\le1/5$, and define
+\begin{align}
+ c_{i1}&=a_i,& c_{i2}&=\tfrac12 k_i a_i^2,&
+ c_{i3}&=\tfrac38 k_i^2a_i^3,\nonumber\\
+ \theta_i(x,y,t)&=k_i d_i^\top(x,y)-\omega_i t+\phi_i.
+ \label{eq:marine-reference-stokes-root-graph}
+\end{align}
+The PM/JONSWAP atomic weights and any Stokes variance renormalization are
+part of this root, not independently selected harmonic energies. Their
+discrete normalization is not the continuum identity
+Eq.~\eqref{eq:marine-reference-directional-spectrum}. The pinned generator permits a
+relative normalization tolerance of $10^{-3}$; use its actual coefficients,
+not an assumed exact equality to $H_s^2/16$.
+
+At a fixed material label the centered orbital displacement is
+\begin{equation}
+ d_o(t)=\sum_{i,n}c_{in}
+ \begin{bmatrix}-d_i\cos(n\theta_i)\\\sin(n\theta_i)\end{bmatrix},
+ \qquad v_o=\dot d_o,\quad a_o=\ddot d_o.
+ \label{eq:marine-reference-stokes-orbit}
+\end{equation}
+Use the same atoms to evaluate the surface slopes at the displaced horizontal
+point, $s=\sum_{i,n}n k_i c_{in}d_i\cos(n\theta_i)$.
+Set pitch $=\arctan(-s_x)$, roll
+$=\operatorname{atan2}(s_y,\sqrt{1+s_x^2})$, yaw $=0$, and let $C$ be the
+resulting world-to-body rotation. The ideal source outputs are
+$f_b=C(a_o-g_w)$ and $\omega_b=\operatorname{vee}(-\dot C C^\top)$.
+The pinned implementation approximates $\dot C$ by a centered difference;
+its measurement-discretization defect must be bounded and retained, not
+silently equated to the exact derivative. Its constant Stokes velocity drift
+is separate from centered orbital position and creates no acceleration term.
+
+\paragraph{Branch-specific hard bound.}
+For each such root put $B_r=\sum_{i,n}(n\omega_i)^r c_{in}$, $r=0,1,2$.
+Then, uniformly over time and every common-root phase/direction,
+\begin{equation}
+ \|d_o\|\le B_0,\quad \|v_o\|\le B_1,\quad \|a_o\|\le B_2,
+ \qquad \|s\|\le\sum_{i,n}n k_i c_{in}.
+ \label{eq:marine-reference-stokes-hard-bound}
+\end{equation}
+Indeed each trigonometric vector in Eq.~\eqref{eq:marine-reference-stokes-orbit} and
+its frequency-normalized derivatives has norm one; triangle inequalities
+give the first three bounds. The slope bound follows from $\|d_i\|=1$ and
+$|\cos|\le1$, also at the displaced point. These are hard model bounds,
+not covariance/PSD assertions or P4 nonlinear-remainder budgets. They are
+finite for a fixed finite root; a uniform primitive-source cover for all
+admitted roots is still an obligation. Normal-Live retention is checked on
+the actual joint output; exceeding a conservative $B_2$ bound does not itself
+prove violation of the actual acceleration cap.
+
+For a directional Stokes harmonic the
+displacement phasor relative to the same elevation harmonic has, up to phase
+convention, response $h=(i\cos\vartheta,i\sin\vartheta,1)$ and hence
+$\|h\|_2^2=2$. If a third-order generator retains a nonzero harmonic at
+$f=3(0.8)=2.4\,\mathrm{Hz}$, the linear-vessel response envelope permits
+only $\|h\|_2^2\le[4(1.2/2.4)^2]^2=1$ there. Thus that direct response
+witness is outside the linear branch but is no longer excluded from the reference response union:
+its higher harmonics belong to Eq.~\eqref{eq:marine-reference-stokes-root-graph}. The
+linear rolloff moment and surface-period lemmas remain linear-branch results.
+The Stokes branch must use its full output moments and exact discrete
+frontend history; fundamental surface $T_z$ cannot replace the tuner value.
+
+\paragraph{Certificate composition over the union.}
+Let $\mathcal C$ denote the unchanged common Normal-Live/PE, committed
+OU/scheduler, process and event premises used by the P3 matrix chain.
+For either branch $b$, admissible words lie in $\mathcal W_b\cap\mathcal C$.
+The response-independent implication
+$\mathcal C\Rightarrow\Omega_W-10^{-18}P_W\succeq0$ therefore applies to
+both branches: the H18 prior-free LDLT, the separate H-to-A hybrid direct
+sum and later event preservation are rebuilt without changing their margins.
+This conditional implication is not a proof that the generator or a retained
+word satisfies $\mathcal C$.
+P4 must certify Eq.~\eqref{eq:marine-reference-joint-word-sector-test}, including BIAS2
+when its positive premise is proved, on every source leaf of both branches
+and both H18/A21 modes. With a common window and compatible source-indexed
+storage, branch bounds combine as $\rho=\max_b\rho_b<1$ and
+$\Gamma=\max_{b,j}\Gamma_{b,j}<\infty$, with every-prefix domain retention.
+No prefix contraction is required. A missing branch, finite reset/storage
+attachment, physical bias root or source cover keeps P4 open and P5 blocked.
+
+For any invertible source-indexed frames $T_j$, a finite change of coordinates
+$z_j=T_j e_j$ preserves storage exactly only with the simultaneous transports
+\begin{align}
+ \widetilde P_j&=T_jP_jT_j^\top,&
+ \widetilde f_j(z)&=T_{j+1}f_j(T_j^{-1}z),\nonumber\\
+ \widetilde F_j&=T_{j+1}F_jT_j^{-1},&
+ \widetilde Q_j&=T_{j+1}Q_jT_{j+1}^\top,\nonumber\\
+ \widetilde H_j&=H_jT_j^{-1},&\widetilde R_j&=R_j.
+ \label{eq:marine-reference-finite-storage-pullback}
+\end{align}
+Indeed, inversion of the covariance congruence gives
+$z_j^\top\widetilde P_j^{-1}z_j=e_j^\top P_j^{-1}e_j$,
+and substitution gives the finite-map identity. At a pure reset
+$P^+=GP_JG^\top$, choosing $T^+=T^-G^{-1}$ removes that covariance
+reset in the transformed coordinates. Subsequent prediction, noise, floor
+increments, measurement rows and the finite physical map must still undergo
+Eq.~\eqref{eq:marine-reference-finite-storage-pullback}. Keeping their old numerical
+values while deleting resets is generally a different Riccati history.
+
+Equivalently retain the shipping coordinates. For a homogeneous correction,
+put $q=e-Ky$, $r=e^+-Gq$, and $b=G^{-1}r$, where $e^+$ is the exact
+Cayley/projection output and $G$ uses that correction's own injection. Then
+\begin{equation}
+ (e^+)^\top(GP_JG^\top)^{-1}e^+
+ =q^\top P_J^{-1}q+2q^\top P_J^{-1}b+b^\top P_J^{-1}b.
+ \label{eq:marine-reference-finite-reset-storage-attachment}
+\end{equation}
+The last two terms remain in the joint nonlinear graph. Their existence is
+an exact identity, not a contraction estimate. A zero-error tangent check
+does not authorize dropping them or reusing later covariance cells after
+changing a finite reset. Until this attachment and source membership hold,
+an expanding diagnostic ratio does not falsify the canonical P4 inequality.
+
+Endpoint contraction alone is not sufficient for a full-sample ISS claim.
+P4 must additionally certify a uniform prefix-gain inequality: there exist
+finite nonnegative constants $\kappa_V,\kappa_s,\kappa_n$ such that for every
+admissible reference-model window and every $0\le\ell<N_W$,
+\begin{equation}
+ \boxed{
+ V_{k+\ell}
+ \le
+ \kappa_V V_k
+ +\kappa_sD_{s,k}
+ +\kappa_nD_{n,k}.
+ }
+ \label{eq:marine-reference-prefix-gain}
+\end{equation}
+The full-window energies may be used on the right because they dominate their
+prefix restrictions.  This quantitative bound is separate from, and stronger
+than, merely proving that all prefixes stay inside the Cayley/source domain.
+For a homogeneous prefix $\ell$, the augmented test replaces the upper-left
+block $-D_W$ by $M_\ell^\top J_\ell M_\ell-\Gamma_\ell J_0$, with a finite
+$\Gamma_\ell\ge1$, and uses only sectors valid for that prefix.  Strict
+endpoint contraction does not require prefix contraction.  BIAS1 projection
+compatibility and error/source-domain retention must hold at each prefix;
+no future-event BIAS2 information may be used to justify an earlier chart.
+
+% Primary BRMM motion theorem: w3d-brmm-stability-theorem.tex-part.
+% The spectral family below retains its original scope.
+
+\subsection{Stronger full-state conditional stability theorem}
+
+\begin{theorem}[Three-mode directional-sea regional practical stability and
+finite capture]
+\label{thm:marine-reference-regional-practical-stability}
+Assume the following hold uniformly for both fixed-dimensional Normal-Live
+modes and both response branches of Eq.~\eqref{eq:marine-reference-response-union}.
+
+\begin{enumerate}[label=(\roman*),leftmargin=2.1em]
+\item BIAS0 qualifies the sensor model and its residual/mismatch envelopes;
+BIAS1 attaches the true bias and corrected-error history to the source,
+including projection compatibility and physical continuation through hold and
+H$\to$A.  Stochastic and calibration/model mismatch contributions remain
+in the declared forcing energies.
+\item SEA0 supplies a sound outward enclosure of the complete response union.
+On the linear branch this is the three-partition directional sea class of
+Eqs.~\eqref{eq:marine-reference-directional-spectrum}--
+\eqref{eq:marine-reference-shaping-system}, including the compact hard realization set of
+Eq.~\eqref{eq:marine-reference-hard-realization-set}, its declared rate-bounded parameter
+evolution, and its directional vessel/IMU response. On the Stokes branch it
+is the joint root graph of Eqs.~\eqref{eq:marine-reference-stokes-root-graph}--
+\eqref{eq:marine-reference-stokes-hard-bound}, including physical IMU discretization
+defects where applicable. Neither enclosure replaces the other.
+\item P1 places the execution in the declared Normal-Live operating branch,
+including the current no-accelerometer-rejection condition and the declared
+startup prior/estimator source split.
+\item P2 proves Eq.~\eqref{eq:marine-reference-language-inclusions} while preserving the
+exact deployed period-source mode, tuner, parameter-EMA, stage/commit, and
+pseudo-update scheduler history.
+\item P3 supplies bounded positive source metrics and a strict finite-window
+linear information/contraction margin on every admitted reference-model window.
+Its configured finite-$\tau_b$ matrices are retained at $\delta=10^{-18}$.
+Any later change to those matrices requires a new quantitative P3 build;
+qualification alone does not change the deployed time constant or process $Q$.
+\item P4 verifies both Eqs.~\eqref{eq:marine-reference-window-dissipation} and
+\eqref{eq:marine-reference-prefix-gain} for the exact nonlinear shipping word map on an
+invariant inner funnel $\mathcal F_{\rm inner}$, with every prefix inside its
+declared chart/source domain.
+Any BIAS2 sector it consumes has a certified positive constant on the exact
+same-history nonlinear graph, as required by Theorem~\ref{thm:bias2-separation}.
+\item P5 proves that every admitted 45-degree entrance state reaches
+$\mathcal F_{\rm inner}$ in at most $K_{\rm cap}$ samples while respecting the
+hybrid obligations.
+\end{enumerate}
+
+Then for the capture time $k_c$ and every integer $m\ge0$,
+\begin{equation}
+ \boxed{
+ V_{k_c+mN_W}
+ \le
+ \rho^mV_{k_c}
+ +
+ \sum_{j=0}^{m-1}
+ \rho^{m-1-j}
+ \left(
+ \gamma_sD_{s,k_c+jN_W}
+ +\gamma_nD_{n,k_c+jN_W}
+ \right).
+ }
+ \label{eq:marine-reference-practical-iss-sum}
+\end{equation}
+For every $0\le\ell<N_W$, combining this endpoint estimate with
+Eq.~\eqref{eq:marine-reference-prefix-gain} gives the explicit intermediate-sample bound
+\begin{align}
+ V_{k_c+mN_W+\ell}
+ &\le
+ \kappa_V\rho^mV_{k_c} \nonumber\\
+ &\quad +\kappa_V
+ \sum_{j=0}^{m-1}
+ \rho^{m-1-j}
+ \left(
+ \gamma_sD_{s,k_c+jN_W}
+ +\gamma_nD_{n,k_c+jN_W}
+ \right) \nonumber\\
+ &\quad +\kappa_sD_{s,k_c+mN_W}
+ +\kappa_nD_{n,k_c+mN_W}.
+ \label{eq:marine-reference-practical-iss-prefix}
+\end{align}
+If every post-capture sea window satisfies
+$D_{s,k_c+jN_W}\le\overline D_s$ and
+$D_{n,k_c+jN_W}\le\overline D_n$, then
+\begin{equation}
+ \boxed{
+ \limsup_{m\to\infty}V_{k_c+mN_W}
+ \le
+ \frac{\gamma_s\overline D_s+\gamma_n\overline D_n}{1-\rho}.
+ }
+ \label{eq:marine-reference-practical-ultimate}
+\end{equation}
+and Eq.~\eqref{eq:marine-reference-practical-iss-prefix} yields the full-sample bound
+\begin{equation}
+ \boxed{
+ \limsup_{k\to\infty}V_k
+ \le
+ \kappa_V
+ \frac{\gamma_s\overline D_s+\gamma_n\overline D_n}{1-\rho}
+ +\kappa_s\overline D_s+\kappa_n\overline D_n.
+ }
+ \label{eq:marine-reference-practical-ultimate-full}
+\end{equation}
+Uniform upper/lower bounds on $M(\zeta)$ then convert these energy inequalities
+to a regional practical ISS bound on the error norm.  When both perturbation
+energies vanish, the inner error converges exponentially at sea-window
+endpoints and Eq.~\eqref{eq:marine-reference-prefix-gain} carries that convergence between
+endpoints.
+\end{theorem}
+
+\begin{proof}
+P5 gives a finite $k_c$ with the state in the P4 invariant funnel.
+Equation~\eqref{eq:marine-reference-window-dissipation} can then be iterated on consecutive
+reference-model windows because P2/SEA0 preserve source completeness and P4
+preserves the funnel.  Iteration gives
+Eq.~\eqref{eq:marine-reference-practical-iss-sum} with disturbance energies indexed at the
+actual post-capture window starts.  Applying the certified prefix inequality to
+the window beginning at $k_c+mN_W$ gives
+Eq.~\eqref{eq:marine-reference-practical-iss-prefix}.  Bounded disturbance energies and the
+geometric series give Eqs.~\eqref{eq:marine-reference-practical-ultimate} and
+\eqref{eq:marine-reference-practical-ultimate-full}; uniform metric equivalence then gives
+the corresponding error-norm statement.
+\end{proof}
+
+The theorem is called \emph{regional} because the present entrance set is
+fixed at 45 degrees.  A semiglobal corollary would require the certificate
+construction to succeed for every prescribed compact entrance subset of the
+Cayley chart; that stronger claim is not assumed here.
+
+\subsection{Shipping envelope used by the new certificate}
+
+Any reference-model construction must use the current deployed clamps rather than the
+historical wider proof envelope.  The source at this revision gives
+\begin{center}
+\begin{tabular}{@{}ll@{}}
+\toprule
+Quantity & Current bound\\
+\midrule
+tuning frequency & $0.03\le f_{\rm tune}\le1.2$ Hz\\
+OU time constant & $0.02\le\tau\le12$ s\\
+OU acceleration standard deviation & $\sigma_{aw}\le4$ m/s$^2$\\
+$R_S$ scalar clamp & $0.15\le R_S\le100$\\
+$S=0$ pseudo-update period & $0.005\le T_S\le0.150$ s\\
+dynamic EMA horizon & $\le35$ s\\
+Normal-Live accelerometer rejection & not admitted\\
+\bottomrule
+\end{tabular}
+\end{center}
+These are source-parity values, not fitted sea parameters.

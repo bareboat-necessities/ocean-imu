@@ -86,7 +86,7 @@ class RetainedWordAttachmentTests(unittest.TestCase):
 
     def test_capture_identity_and_caps_do_not_supply_missing_realization(self):
         ev, _, _ = self.event(21)
-        d = A.source_evidence_inventory({"events": [ev], "source_id": "SEA3", "caps_pass": True})
+        d = A.source_evidence_inventory({"events": [ev], "source_id": "BRMM", "caps_pass": True})
         self.assertEqual(d["membership_decision"], "UNDETERMINED")
         self.assertIn("joint_response_witness", d["missing_common_realization_inputs"])
         self.assertIn("true_bias_root_and_history", d["missing_common_realization_inputs"])

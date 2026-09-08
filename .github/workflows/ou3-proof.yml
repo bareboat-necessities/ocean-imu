@@ -11,7 +11,8 @@ on:
       - "src/tuner/**"
       - "doc/kalman_ou_iii/w3d-iss-stability.tex-part"
       - "doc/kalman_ou_iii/w3d-mems-bias-preconditions.tex-part"
-      - "doc/kalman_ou_iii/w3d-sea3-stability-theorem.tex-part"
+      - "doc/kalman_ou_iii/w3d-marine-reference-models.tex-part"
+      - "doc/kalman_ou_iii/w3d-brmm-stability-theorem.tex-part"
       - "doc/kalman_ou_iii/w3d-proc-cont.tex-part"
       - "doc/kalman_ou_iii/tests/motion-theorem-smoke.tex"
       - ".github/workflows/ou3-proof.yml"
@@ -25,7 +26,8 @@ on:
       - "src/tuner/**"
       - "doc/kalman_ou_iii/w3d-iss-stability.tex-part"
       - "doc/kalman_ou_iii/w3d-mems-bias-preconditions.tex-part"
-      - "doc/kalman_ou_iii/w3d-sea3-stability-theorem.tex-part"
+      - "doc/kalman_ou_iii/w3d-marine-reference-models.tex-part"
+      - "doc/kalman_ou_iii/w3d-brmm-stability-theorem.tex-part"
       - "doc/kalman_ou_iii/w3d-proc-cont.tex-part"
       - "doc/kalman_ou_iii/tests/motion-theorem-smoke.tex"
       - ".github/workflows/ou3-proof.yml"
@@ -75,7 +77,7 @@ jobs:
           git rev-parse HEAD
           python3 tools/stability/ou3_mems_bias_contract.py \
             --output /tmp/ou3_mems_bias_contract.json
-          python3 tools/stability/ou3_p4_complete_sea3_same_history_prefix_selectors.py \
+          python3 tools/stability/ou3_p4_complete_brmm_same_history_prefix_selectors.py \
             --output /tmp/ou3_same_history_prefix_execution.json
 
       - name: Test entry fixture and event-by-event covariance continuity
@@ -84,12 +86,12 @@ jobs:
           python3 -m unittest -v \
             test_ou3_mems_bias_contract \
             test_ou3_p4_same_history_nonlinear_graph_lineage \
-            test_ou3_sea3_correlated_window_cells \
-            test_ou3_p4_complete_sea3_same_history_prefix_selectors \
-            test_ou3_sea3_complete_window_execution_kernel \
-            test_ou3_sea3_live_covariance_seed \
-            test_ou3_p4_complete_sea3_finite_map_mean_value \
-            test_ou3_p4_complete_sea3_differential_events
+            test_ou3_brmm_correlated_window_cells \
+            test_ou3_p4_complete_brmm_same_history_prefix_selectors \
+            test_ou3_brmm_complete_window_execution_kernel \
+            test_ou3_brmm_live_covariance_seed \
+            test_ou3_p4_complete_brmm_finite_map_mean_value \
+            test_ou3_p4_complete_brmm_differential_events
 
       - name: Upload non-promoting execution evidence
         if: always()
@@ -119,7 +121,7 @@ jobs:
           python3 -m unittest -v \
             test_ou3_stability_package_integrity \
             test_ou3_p4_coordinate_transport_algebra \
-            test_ou3_p4_complete_sea3_correction_information_bound \
+            test_ou3_p4_complete_brmm_correction_information_bound \
             test_ou3_result_determinism \
             test_ou3_source_domain_contract \
             test_ou3_proof_cleanup \
@@ -128,7 +130,7 @@ jobs:
             test_ou3_vector_uco_certificate \
             test_ou3_p3_pseudo_scheduler_progress_certificate
 
-  complete-sea3-source:
+  complete-brmm-source:
     needs: source-foundation
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -137,61 +139,61 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Build complete SEA3 source
+      - name: Build complete BRMM source
         run: |
           python3 tools/stability/ou3_mems_bias_contract.py \
             --output /tmp/ou3_mems_bias_contract.json
-          python3 tools/stability/ou3_sea3_complete_source.py \
-            --output /tmp/ou3_sea3_complete_source.json
-          python3 tools/stability/ou3_sea3_windowed_vector_pe.py \
-            --output /tmp/ou3_sea3_windowed_vector_pe.json
+          python3 tools/stability/ou3_brmm_complete_source.py \
+            --output /tmp/ou3_brmm_complete_source.json
+          python3 tools/stability/ou3_brmm_windowed_vector_pe.py \
+            --output /tmp/ou3_brmm_windowed_vector_pe.json
           python3 - <<'PY'
           import json
-          d=json.load(open('/tmp/ou3_sea3_complete_source.json'))
+          d=json.load(open('/tmp/ou3_brmm_complete_source.json'))
           assert d['validation_pass'], d['validation_failures']
-          assert d['canonical_P3_source'] == 'COMPLETE_SEA3_NORMAL_LIVE_WORD'
+          assert d['canonical_P3_source'] == 'COMPLETE_BRMM_NORMAL_LIVE_WORD'
           assert d['P3_source_contract_ready'] is True
           assert d['P3_source_family_materialized'] is False
           assert all(v is False for v in d['no_fallback_generators'].values())
-          sea=d['SEA3_surface_family']
+          sea=d['reference_surface_family']
           assert sea['modes_max'] == 3
           assert sea['parameter_domain_compact'] is True
-          assert sea['compact_transition_relation_is_theorem_domain'] is True
+          assert sea['reference_compact_transition_relation'] is True
           assert sea['independent_H_T_extrema_forbidden'] is True
-          dyn=d['SEA3_dynamic_realization']
-          assert dyn['phase_continuous'] is True
+          dyn=d['BRMM_dynamic_realization']
+          assert dyn['single_history_required'] is True
           assert dyn['same_realization_drives_translation_rotation_frontend_tuner_geometry'] is True
           assert dyn['finite_window_family_materialized'] is False
           assert dyn['probabilistic_event_may_substitute_for_realization'] is False
-          coupling=d['SEA3_response_couplings']
+          coupling=d['BRMM_response_couplings']
           assert coupling['independent_sea_x_RAO_cartesian_product_forbidden'] is True
-          assert coupling['only_same_phase_continuous_SEA3_realization_may_generate_P3_words'] is True
+          assert coupling['only_same_history_BRMM_realization_may_generate_P3_words'] is True
           assert coupling['moment_or_probability_bound_may_not_generate_P3_word'] is True
           stochastic=d['stochastic_forcing_corollary']
           assert stochastic['used_to_generate_P3_source_words'] is False
           assert stochastic['used_to_prune_homogeneous_P3_family'] is False
           assert d['derived_adaptive_source']['primitive_independent_tau_sigma_RS_TS'] is False
-          assert d['derived_adaptive_source']['same_SEA3_frontend_path_generates_tau_sigma_RS_targets'] is True
+          assert d['derived_adaptive_source']['same_BRMM_frontend_path_generates_tau_sigma_RS_targets'] is True
           assert d['R_S_regularizer']['actual_applied_R_S_required_at_every_due_S_update'] is True
           assert d['R_S_regularizer']['all_due_S_updates_remain_in_full_word'] is True
           assert d['R_S_regularizer']['selected_four_S_subset_may_not_replace_full_scheduler_word'] is True
-          print('COMPLETE_SEA3_SOURCE', d['canonical_P3_source'])
-          print('COMPLETE_SEA3_SAMPLES', d['word_samples'])
-          print('COMPLETE_SEA3_FALLBACKS', d['no_fallback_generators'])
+          print('COMPLETE_BRMM_SOURCE', d['canonical_P3_source'])
+          print('COMPLETE_BRMM_SAMPLES', d['word_samples'])
+          print('COMPLETE_BRMM_FALLBACKS', d['no_fallback_generators'])
           PY
 
-      - name: Upload complete SEA3 source artifacts
+      - name: Upload complete BRMM source artifacts
         uses: actions/upload-artifact@v6
         with:
-          name: ou3-complete-sea3
+          name: ou3-complete-brmm
           path: |
             /tmp/ou3_mems_bias_contract.json
-            /tmp/ou3_sea3_complete_source.json
-            /tmp/ou3_sea3_windowed_vector_pe.json
+            /tmp/ou3_brmm_complete_source.json
+            /tmp/ou3_brmm_windowed_vector_pe.json
           retention-days: 7
 
   riccati-p3:
-    needs: complete-sea3-source
+    needs: complete-brmm-source
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
@@ -199,17 +201,17 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Build complete SEA3 P3 preconditions
+      - name: Build complete BRMM P3 preconditions
         run: |
-          python3 tools/stability/ou3_sea3_p3_full_preconditions.py \
-            --output /tmp/ou3_sea3_p3_full_preconditions.json
+          python3 tools/stability/ou3_brmm_p3_full_preconditions.py \
+            --output /tmp/ou3_brmm_p3_full_preconditions.json
           python3 - <<'PY'
           import json
-          d=json.load(open('/tmp/ou3_sea3_p3_full_preconditions.json'))
+          d=json.load(open('/tmp/ou3_brmm_p3_full_preconditions.json'))
           assert d['validation_pass'], d['validation_failures']
-          assert d['canonical_source'] == 'COMPLETE_SEA3_NORMAL_LIVE_WORD'
-          assert d['complete_SEA3_source_consumed'] is True
-          assert d['complete_SEA3_source_family_materialized'] is False
+          assert d['canonical_source'] == 'COMPLETE_BRMM_NORMAL_LIVE_WORD'
+          assert d['complete_BRMM_source_consumed'] is True
+          assert d['complete_BRMM_source_family_materialized'] is False
           assert d['all_current_machine_checkable_preconditions_present'] is True
           assert all(d['mandatory_preconditions'].values())
           assert all(v is False for v in d['no_fallback_generators'].values())
@@ -226,21 +228,21 @@ jobs:
 
       - name: Validate shipping prediction matrices, Live covariance and full joint backend
         run: |
-          python3 tools/stability/ou3_sea3_shipping_prediction_primitives.py \
-            --output /tmp/ou3_sea3_shipping_prediction_primitives.json
-          python3 tools/stability/ou3_sea3_live_covariance_seed.py \
-            --output /tmp/ou3_sea3_live_covariance_seed.json
-          python3 tools/stability/ou3_sea3_full_word_riccati_backend.py
-          python3 -m py_compile tools/stability/ou3_sea3_full_word_riccati_backend_tight.py
+          python3 tools/stability/ou3_brmm_shipping_prediction_primitives.py \
+            --output /tmp/ou3_brmm_shipping_prediction_primitives.json
+          python3 tools/stability/ou3_brmm_live_covariance_seed.py \
+            --output /tmp/ou3_brmm_live_covariance_seed.json
+          python3 tools/stability/ou3_brmm_full_word_riccati_backend.py
+          python3 -m py_compile tools/stability/ou3_brmm_full_word_riccati_backend_tight.py
           python3 - <<'PY'
           import json
-          p=json.load(open('/tmp/ou3_sea3_shipping_prediction_primitives.json'))
+          p=json.load(open('/tmp/ou3_brmm_shipping_prediction_primitives.json'))
           assert p['validation_pass'], p['validation_failures']
           assert p['validated_matrix_primitives_ready'] is True
-          assert p['consumes_only_SEA3_derived_sample_coordinates'] is True
+          assert p['consumes_only_BRMM_derived_sample_coordinates'] is True
           assert p['source_domain_created_here'] is False
           assert p['P3_promoted'] is False
-          d=json.load(open('/tmp/ou3_sea3_live_covariance_seed.json'))
+          d=json.load(open('/tmp/ou3_brmm_live_covariance_seed.json'))
           assert d['validation_pass'], d['validation_failures']
           assert d['live_entry_seed_is_source_generated_not_arbitrary_PSD'] is True
           assert d['bootstrap_mekf_covariance_propagated_before_live'] is False
@@ -253,17 +255,17 @@ jobs:
 
       - name: Assemble literal complete H18 word and reset-complete H18/A21 API
         run: |
-          python3 tools/stability/ou3_sea3_full_normal_live_word.py \
-            --output /tmp/ou3_sea3_full_normal_live_word.json
-          python3 tools/stability/ou3_sea3_full_normal_live_word_reset.py \
-            > /tmp/ou3_sea3_full_normal_live_word_reset.txt
+          python3 tools/stability/ou3_brmm_full_normal_live_word.py \
+            --output /tmp/ou3_brmm_full_normal_live_word.json
+          python3 tools/stability/ou3_brmm_full_normal_live_word_reset.py \
+            > /tmp/ou3_brmm_full_normal_live_word_reset.txt
           python3 - <<'PY'
           import json, pathlib, sys
           sys.path.insert(0, str(pathlib.Path('tools/stability').resolve()))
-          import ou3_sea3_full_normal_live_word_reset as reset
-          d=json.load(open('/tmp/ou3_sea3_full_normal_live_word.json'))
+          import ou3_brmm_full_normal_live_word_reset as reset
+          d=json.load(open('/tmp/ou3_brmm_full_normal_live_word.json'))
           assert d['validation_pass'], d['validation_failures']
-          assert d['canonical_architecture'] == 'SEA3_FULL_NORMAL_LIVE_RICCATI_WORD'
+          assert d['canonical_architecture'] == 'BRMM_FULL_NORMAL_LIVE_RICCATI_WORD'
           assert d['shipping_event_order_parity_pass'] is True
           assert d['every_valid_imu_sample_requires_prediction'] is True
           assert d['every_valid_imu_sample_requires_accelerometer_Joseph'] is True
@@ -283,31 +285,31 @@ jobs:
           print('RESET_COMPLETE', r['literal_reset_execution_complete'])
           PY
 
-      - name: Build canonical complete-SEA3 P3 gate
+      - name: Build canonical complete-BRMM P3 gate
         run: |
-          python3 tools/stability/ou3_sea3_riccati_metric_p3.py \
-            --output /tmp/ou3_sea3_riccati_metric_p3.json
+          python3 tools/stability/ou3_brmm_riccati_metric_p3.py \
+            --output /tmp/ou3_brmm_riccati_metric_p3.json
           python3 - <<'PY'
           import json
-          d=json.load(open('/tmp/ou3_sea3_riccati_metric_p3.json'))
+          d=json.load(open('/tmp/ou3_brmm_riccati_metric_p3.json'))
           assert d['validation_pass'], d['validation_failures']
-          assert d['canonical_P3_architecture'] == 'COMPLETE_SEA3_FULL_NORMAL_LIVE_RICCATI_WORD'
+          assert d['canonical_P3_architecture'] == 'COMPLETE_BRMM_FULL_NORMAL_LIVE_RICCATI_WORD'
           assert d['canonical_P3_topology'] == 'H18_3S_PRIOR_FREE_THEN_PRESERVED_H_TO_A_HYBRID_A21'
-          assert d['canonical_source'] == 'COMPLETE_SEA3_NORMAL_LIVE_WORD'
-          assert d['complete_SEA3_source_consumed'] is True
-          assert d['complete_SEA3_response_couplings_consumed'] is True
-          assert d['complete_SEA3_compact_parameter_domain_consumed'] is True
-          assert d['complete_SEA3_compact_transition_relation_consumed'] is True
-          assert d['complete_SEA3_phase_continuous_realization_required'] is True
-          assert d['same_xs_lambda_drives_entire_execution'] is True
+          assert d['canonical_source'] == 'COMPLETE_BRMM_NORMAL_LIVE_WORD'
+          assert d['complete_BRMM_source_consumed'] is True
+          assert d['complete_BRMM_response_couplings_consumed'] is True
+          assert d['reference_compact_parameter_domain_validated'] is True
+          assert d['reference_compact_transition_relation_validated'] is True
+          assert d['complete_BRMM_same_history_realization_required'] is True
+          assert d['same_primitive_root_drives_entire_execution'] is True
           assert d['stochastic_forcing_does_not_generate_source_words'] is True
           assert d['stochastic_forcing_does_not_prune_homogeneous_family'] is True
-          assert d['complete_SEA3_frontend_state_consumed'] is True
+          assert d['complete_BRMM_frontend_state_consumed'] is True
           assert d['actual_applied_per_axis_RS_consumed'] is True
           assert d['all_due_S_updates_required'] is True
           assert d['all_valid_accelerometer_updates_required'] is True
           assert d['accelerometer_rejection_after_certified_Normal_Live_allowed'] is False
-          assert d['same_complete_SEA3_execution_continues_across_H_to_A'] is True
+          assert d['same_complete_BRMM_execution_continues_across_H_to_A'] is True
           assert d['same_three_second_same_mode_word_used_for_H18_and_A21'] is False
           assert d['H_to_A_is_separate_dimension_changing_hybrid_event'] is True
           assert d['shipping_H_mode_hold_guarantees_H18_before_A_release'] is True
@@ -315,8 +317,8 @@ jobs:
           assert d['immediate_left_error_reset_congruence_consumed'] is True
           assert d['finite_source_family_materialization_required'] is False
           assert d['SOURCE_REACHABLE_EVENT_FAMILY_MATERIALIZED'] is False
-          assert d['universal_complete_SEA3_certificate_chain_used_instead_of_finite_materialization'] is True
-          assert d['UNIVERSAL_COMPLETE_SEA3_CERTIFICATE_CHAIN_CLOSED'] is True
+          assert d['universal_complete_BRMM_certificate_chain_used_instead_of_finite_materialization'] is True
+          assert d['UNIVERSAL_COMPLETE_BRMM_CERTIFICATE_CHAIN_CLOSED'] is True
           assert d['P3_FULL_WORD_ENCLOSED'] is True
           assert d['P3_FULL_MATRIX_COMPARISON_CLOSED'] is True
           assert d['no_fallback_route_enabled'] is True
@@ -328,66 +330,78 @@ jobs:
               assert d['modes'][mode]['Omega_minus_delta_P_full_matrix_closed'] is True
               assert d['modes'][mode]['certified_delta_lower'] >= 1e-18
               assert d['modes'][mode]['relative_Riccati_injection_margin_lower'] >= 1e-18
-          assert d['P3_CONDITIONAL_SEA3_PASS'] is True
-          assert d['SEA3_response_union']['set_operation'] == 'UNION'
+          assert d['P3_CONDITIONAL_BRMM_PASS'] is True
+          assert set(d['BRMM_branch_conditional_P3_coverage']) == {'Q', 'O', 'MIXED'}
+          for branch in d['BRMM_branch_conditional_P3_coverage'].values():
+              assert branch['H18'] is True and branch['A21'] is True
+              assert branch['physical_admission_certified'] is False
+          assert d['explicit_execution_premises']['P3_conclusion_is_an_assumption'] is False
+          assert d['explicit_execution_premises']['BRMM_alone_implies_vector_PE'] is False
+          assert d['closed_projection_covariance_comparison_covered'] is True
+          assert d['BRMM_SOURCE_ADMISSION_PASS'] is False
+          assert d['spectral_membership_required'] is False
+          assert d['bias_error_decay_required'] is False
+          assert d['reference_response_union']['set_operation'] == 'UNION'
           assert set(d['response_branch_conditional_P3_coverage']) == {'LINEAR_VESSEL', 'STOKES_WAVE_FOLLOWING'}
           for branch, coverage in d['response_branch_conditional_P3_coverage'].items():
               assert coverage == {'H18': True, 'A21': True}
               print('P3_RESPONSE_BRANCH_CONDITIONAL', branch, coverage)
           assert d['P3_DEPLOYMENT_PASS'] is False
-          assert d['P3_CANONICAL_PASS'] is d['P3_CONDITIONAL_SEA3_PASS']
-          assert d['P4_MAY_CONSUME_CONDITIONAL_SEA3_P3'] is True
+          assert d['P3_CANONICAL_PASS'] is d['P3_CONDITIONAL_BRMM_PASS']
+          assert d['P4_MAY_CONSUME_CONDITIONAL_BRMM_P3'] is True
           assert d['P4_MAY_CONSUME_P3'] is True
-          assert d['P3_CONDITIONAL_SEA3_FAIL_REASONS'] == []
+          assert d['P3_CONDITIONAL_BRMM_FAIL_REASONS'] == []
           assert d['P3_DEPLOYMENT_FAIL_REASONS']
           assert d['global_physical_deployment_left_inclusion_is_separate_obligation'] is True
           assert d['global_physical_deployment_left_inclusion_closed_here'] is False
           print('P3_H18_DELTA', d['modes']['H18']['certified_delta_lower'])
           print('P3_A21_DELTA', d['modes']['A21']['certified_delta_lower'])
           print('P3_A21_BA_MARGIN', d['modes']['A21']['first_active_ba_M_delta_margin_lower'])
-          print('P3_CONDITIONAL_SEA3_PASS', d['P3_CONDITIONAL_SEA3_PASS'])
+          print('P3_CONDITIONAL_BRMM_PASS', d['P3_CONDITIONAL_BRMM_PASS'])
           print('P3_DEPLOYMENT_PASS', d['P3_DEPLOYMENT_PASS'])
           PY
 
-      - name: Test complete SEA3 P3 contracts
+      - name: Test complete BRMM P3 contracts
         working-directory: tests/validation
         run: |
           python3 -m unittest -v \
-            test_ou3_sea3_physical_admissibility \
-            test_ou3_sea3_response_union \
-            test_ou3_sea3_shipping_prediction_primitives \
-            test_ou3_sea3_live_covariance_seed \
-            test_ou3_sea3_full_word_riccati_backend \
-            test_ou3_sea3_full_normal_live_word \
-            test_ou3_sea3_full_word_reset_congruence \
-            test_ou3_sea3_riccati_metric_p3 \
-            test_ou3_sea3_riccati_metric_p3_promotion_state
+            test_ou3_brmm_physical_admissibility \
+            test_ou3_brmm_response_union \
+            test_ou3_brmm_shipping_prediction_primitives \
+            test_ou3_brmm_live_covariance_seed \
+            test_ou3_brmm_full_word_riccati_backend \
+            test_ou3_brmm_full_normal_live_word \
+            test_ou3_brmm_full_word_reset_congruence \
+            test_ou3_brmm_p3_premises \
+            test_ou3_brmm_naming \
+            test_ou3_brmm_riccati_metric_p3 \
+            test_ou3_brmm_riccati_metric_p3_promotion_state
 
       - name: Enforce canonical P3 quantitative closure
         run: |
           python3 - <<'PY'
           import json
-          d=json.load(open('/tmp/ou3_sea3_riccati_metric_p3.json'))
-          if not d['P3_CONDITIONAL_SEA3_PASS']:
-              raise SystemExit('conditional complete-SEA3 P3 FAIL: ' + '; '.join(d['P3_CONDITIONAL_SEA3_FAIL_REASONS']))
+          d=json.load(open('/tmp/ou3_brmm_riccati_metric_p3.json'))
+          if not d['P3_CONDITIONAL_BRMM_PASS']:
+              raise SystemExit('conditional complete-BRMM P3 FAIL: ' + '; '.join(d['P3_CONDITIONAL_BRMM_FAIL_REASONS']))
           if d['P3_DEPLOYMENT_PASS']:
-              raise SystemExit('deployment P3 must remain fail-closed until physical SEA0->SEA3 inclusion closes')
+              raise SystemExit('deployment P3 must remain fail-closed until physical SEA0->BRMM inclusion closes')
           if not d['P3_FULL_MATRIX_COMPARISON_CLOSED']:
-              raise SystemExit('canonical complete-SEA3 P3 full-matrix comparison is not closed')
+              raise SystemExit('canonical complete-BRMM P3 full-matrix comparison is not closed')
           PY
 
       - name: Upload canonical P3 artifacts
         if: always()
         uses: actions/upload-artifact@v6
         with:
-          name: ou3-p3-complete-sea3
+          name: ou3-p3-complete-brmm
           path: |
-            /tmp/ou3_sea3_p3_full_preconditions.json
-            /tmp/ou3_sea3_shipping_prediction_primitives.json
-            /tmp/ou3_sea3_live_covariance_seed.json
-            /tmp/ou3_sea3_full_normal_live_word.json
-            /tmp/ou3_sea3_full_normal_live_word_reset.txt
-            /tmp/ou3_sea3_riccati_metric_p3.json
+            /tmp/ou3_brmm_p3_full_preconditions.json
+            /tmp/ou3_brmm_shipping_prediction_primitives.json
+            /tmp/ou3_brmm_live_covariance_seed.json
+            /tmp/ou3_brmm_full_normal_live_word.json
+            /tmp/ou3_brmm_full_normal_live_word_reset.txt
+            /tmp/ou3_brmm_riccati_metric_p3.json
           retention-days: 7
 
   riccati-p4:
@@ -406,36 +420,36 @@ jobs:
 
       - name: Build retained full-state Phi differential primitive
         run: |
-          python3 tools/stability/ou3_p4_complete_sea3_phi_differential_metric.py \
-            --output /tmp/ou3_p4_complete_sea3_phi_differential_metric.json
+          python3 tools/stability/ou3_p4_complete_brmm_phi_differential_metric.py \
+            --output /tmp/ou3_p4_complete_brmm_phi_differential_metric.json
 
       - name: Bind frozen P3 to homogeneous physical reset gauge
         run: |
-          python3 tools/stability/ou3_p4_complete_sea3_reset_gauge_attachment.py \
-            --output /tmp/ou3_p4_complete_sea3_reset_gauge_attachment.json
+          python3 tools/stability/ou3_p4_complete_brmm_reset_gauge_attachment.py \
+            --output /tmp/ou3_p4_complete_brmm_reset_gauge_attachment.json
 
       - name: Build canonical finite-state endpoint and prefix P4 gate
         run: |
-          python3 tools/stability/ou3_sea3_riccati_metric_p4.py \
-            --output /tmp/ou3_sea3_riccati_metric_p4.json \
-            --joint-sector-output /tmp/ou3_p4_complete_sea3_joint_sector_master.json \
+          python3 tools/stability/ou3_brmm_riccati_metric_p4.py \
+            --output /tmp/ou3_brmm_riccati_metric_p4.json \
+            --joint-sector-output /tmp/ou3_p4_complete_brmm_joint_sector_master.json \
             --motion-output /tmp/ou3_p4_bounded_bias_motion.json
 
-      - name: Test complete-SEA3 finite physical P4 contract
+      - name: Test complete-BRMM finite physical P4 contract
         working-directory: tests/validation
         run: |
-          python3 -m unittest -v test_ou3_sea3_riccati_metric_p4
-          python3 -m unittest -v test_ou3_p4_complete_sea3_phi_differential_metric
+          python3 -m unittest -v test_ou3_brmm_riccati_metric_p4
+          python3 -m unittest -v test_ou3_p4_complete_brmm_phi_differential_metric
           python3 -m unittest discover -v -p 'test_ou3_p4_*.py'
 
       - name: Distinguish validated physical-map architecture from unclosed P4 and P5
         run: |
           python3 - <<'PY'
           import json
-          m = json.load(open('/tmp/ou3_p4_complete_sea3_phi_differential_metric.json'))
-          r = json.load(open('/tmp/ou3_p4_complete_sea3_reset_gauge_attachment.json'))
-          j = json.load(open('/tmp/ou3_p4_complete_sea3_joint_sector_master.json'))
-          d = json.load(open('/tmp/ou3_sea3_riccati_metric_p4.json'))
+          m = json.load(open('/tmp/ou3_p4_complete_brmm_phi_differential_metric.json'))
+          r = json.load(open('/tmp/ou3_p4_complete_brmm_reset_gauge_attachment.json'))
+          j = json.load(open('/tmp/ou3_p4_complete_brmm_joint_sector_master.json'))
+          d = json.load(open('/tmp/ou3_brmm_riccati_metric_p4.json'))
           motion = json.load(open('/tmp/ou3_p4_bounded_bias_motion.json'))
           assert motion['validation_pass'], motion['validation_failures']
           assert d['primary_proof_target'] == motion['primary_target']
@@ -461,9 +475,9 @@ jobs:
           assert r['zero_error_P3_to_physical_P4_tangent_attachment_closed'] is True
           assert r['finite_error_nonlinear_reset_transport_closed_here'] is False
           assert r['nonzero_forcing_noise_reset_attachment_closed_here'] is False
-          assert d['canonical_P4_architecture'] == 'FINITE_STATE_COMPLETE_SEA3_QUADRATIC_ENDPOINT_AND_PREFIX'
-          assert d['canonical_source'] == 'COMPLETE_SEA3_NORMAL_LIVE_WORD'
-          assert d['P3_CONDITIONAL_SEA3_PASS_consumed'] is True
+          assert d['canonical_P4_architecture'] == 'FINITE_STATE_COMPLETE_BRMM_QUADRATIC_ENDPOINT_AND_PREFIX'
+          assert d['canonical_source'] == 'COMPLETE_BRMM_NORMAL_LIVE_WORD'
+          assert d['P3_CONDITIONAL_BRMM_PASS_consumed'] is True
           for obligation in ('endpoint', 'prefix_gain', 'prefix_retention'):
               coverage = d['response_branch_P4_coverage'][obligation]
               assert set(coverage) == {'LINEAR_VESSEL', 'STOKES_WAVE_FOLLOWING'}
@@ -474,7 +488,7 @@ jobs:
           assert d['finite_state_endpoint_dissipation_required'] is True
           assert d['finite_state_prefix_gain_required'] is True
           assert d['prefix_chart_and_source_domain_retention_required'] is True
-          assert d['same_complete_SEA3_word_required'] is True
+          assert d['same_complete_BRMM_word_required'] is True
           assert d['all_due_S_updates_with_actual_applied_RS_required'] is True
           assert j['P3_delta_required'] == 1e-18
           assert j['full_A21_finite_taub_P3_margin_required'] is True
@@ -512,12 +526,12 @@ jobs:
       - name: Upload canonical finite-state P4 artifacts
         uses: actions/upload-artifact@v6
         with:
-          name: ou3-p4-complete-sea3-finite-state
+          name: ou3-p4-complete-brmm-finite-state
           path: |
             /tmp/ou3_p4_cayley_sector_certificate.json
-            /tmp/ou3_p4_complete_sea3_phi_differential_metric.json
-            /tmp/ou3_p4_complete_sea3_reset_gauge_attachment.json
-            /tmp/ou3_p4_complete_sea3_joint_sector_master.json
-            /tmp/ou3_sea3_riccati_metric_p4.json
+            /tmp/ou3_p4_complete_brmm_phi_differential_metric.json
+            /tmp/ou3_p4_complete_brmm_reset_gauge_attachment.json
+            /tmp/ou3_p4_complete_brmm_joint_sector_master.json
+            /tmp/ou3_brmm_riccati_metric_p4.json
             /tmp/ou3_p4_bounded_bias_motion.json
           retention-days: 7

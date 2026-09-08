@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validated natural-log enclosures for the complete SEA3 source state.
+"""Validated natural-log enclosures for the complete BRMM source state.
 
 WavePeriodEstimator stores its canonical period in log space.  Canonical P3 may
 therefore not call ordinary ``math.log`` and then pretend the rounded result is

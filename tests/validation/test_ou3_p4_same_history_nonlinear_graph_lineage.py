@@ -9,9 +9,9 @@ sys.path.insert(0, str(ROOT / "tools"))
 sys.path.insert(0, str(ROOT / "tools" / "stability"))
 
 from ou3_interval import Interval
-import ou3_p4_complete_sea3_same_history_prefix_selectors as SELECTORS
+import ou3_p4_complete_brmm_same_history_prefix_selectors as SELECTORS
 import ou3_p4_same_history_nonlinear_graph_lineage as GRAPH
-import ou3_sea3_frontend_state_step as FRONTEND
+import ou3_brmm_frontend_state_step as FRONTEND
 
 
 class P4SameHistoryNonlinearGraphLineageTests(unittest.TestCase):
@@ -41,14 +41,14 @@ class P4SameHistoryNonlinearGraphLineageTests(unittest.TestCase):
     def test_status_is_connected_and_nonpromoting(self):
         self.assertEqual(GRAPH.validate(self.payload), [])
         self.assertEqual(
-            self.payload["canonical_source"], "COMPLETE_SEA3_NORMAL_LIVE_WORD"
+            self.payload["canonical_source"], "COMPLETE_BRMM_NORMAL_LIVE_WORD"
         )
         self.assertEqual(self.payload["P3_delta_preserved"], 1.0e-18)
         self.assertTrue(self.payload["event_local_same_P_H_R_cells_consumed"])
         self.assertTrue(self.payload["actual_applied_RS_provenance_retained"])
         self.assertTrue(self.payload["A21_absolute_bias_history_required"])
         self.assertFalse(self.payload["independent_true_bias_event_boxes_allowed"])
-        self.assertFalse(self.payload["source_uniform_SEA3_window_family_materialized_here"])
+        self.assertFalse(self.payload["source_uniform_BRMM_window_family_materialized_here"])
         self.assertFalse(self.payload["joint_graph_sectors_assembled_here"])
         self.assertFalse(self.payload["endpoint_augmented_LDLT_closed_here"])
         self.assertFalse(self.payload["P4_promoted_here"])
@@ -92,7 +92,7 @@ class P4SameHistoryNonlinearGraphLineageTests(unittest.TestCase):
                 mode="A",
                 lineage=SELECTORS.lineage_for_endpoint(selectors, endpoint),
                 initial_state=[Interval.point(0.0) for _ in range(21)],
-                source_token="COMPLETE_SEA3_NORMAL_LIVE_WORD:test",
+                source_token="COMPLETE_BRMM_NORMAL_LIVE_WORD:test",
                 constants=GRAPH.KERNEL._process_constants(GRAPH.DEFAULT_DOMAIN),
                 bias_lineage=None,
                 projection_limit=0.4,

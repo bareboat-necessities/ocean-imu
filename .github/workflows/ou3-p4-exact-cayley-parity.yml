@@ -123,8 +123,8 @@ jobs:
 
           crossings=[r for r in cases if r['rhophi'] >= 1.0]
           report={
-              'qualification':'NON_PROMOTING_COMPLETE_SEA3_A21_EXACT_CAYLEY_PARITY',
-              'canonical_source':'COMPLETE_SEA3_NORMAL_LIVE_WORD',
+              'qualification':'NON_PROMOTING_COMPLETE_BRMM_A21_EXACT_CAYLEY_PARITY',
+              'canonical_source':'COMPLETE_BRMM_NORMAL_LIVE_WORD',
               'point_diagnostic_only':True,
               'P4_promoted':False,
               'filter_changed':False,
