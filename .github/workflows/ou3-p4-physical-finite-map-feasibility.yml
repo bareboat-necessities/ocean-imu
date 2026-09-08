@@ -125,6 +125,9 @@ jobs:
           python3 tests/kalman_ou_iii/ou3_p4_motion_gain.py \
             --prefix /tmp/ou3-source-events --attachment /tmp/ou3-connected-motion.json \
             --output /tmp/ou3-motion-gain.json
+          python3 tests/kalman_ou_iii/ou3_p4_motion_gain.py \
+            --prefix /tmp/ou3-source-events --attachment /tmp/ou3-connected-motion.json \
+            --correlated-template --output /tmp/ou3-bias2-motion-gain.json
 
       - name: Audit exact retained payloads without regeneration or a new search
         run: |
@@ -182,5 +185,6 @@ jobs:
             /tmp/ou3-source-events.events.jsonl
             /tmp/ou3-connected-motion.json
             /tmp/ou3-motion-gain.json
+            /tmp/ou3-bias2-motion-gain.json
             /tmp/ou3-motion-trace-overlay/trace-manifest.json
           retention-days: 7

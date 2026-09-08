@@ -58,6 +58,12 @@ remain fixed. The runtime audit verifies passive-trace parity on the selected co
 
 ## Failure analysis and current limiter
 
+The current proof CI failure is an implementation/test-contract defect:
+the article cleanup test's identifier contains the retired source name,
+contradicting the repository-wide naming contract. Renaming that test keeps
+both assertions intact; their combined ten tests pass. This failure does not
+invalidate any matrix inequality. The 17 conditional P3 producer/promotion tests pass.
+
 The old claim that startup exclusions alone reconcile surface-reference
 histories with the configured caps failed source admission, not stability.
 The new RAO source audit still observes cap/impulse violations in larger
@@ -79,23 +85,12 @@ invalidates claiming a complete nonlinear certificate. P4-motion is also
 false; P5 and P5-motion may not start. The next experiment must quantify a
 useful same-history supply/storage bound before any interval refinement.
 
-The required `make all` compiles and reaches the existing frequency gate:
-`freq-track.cpp:321: Assertion all_quality_ok && "freq_track quality gate failed"`.
-This is a performance regression under the changed source, not a proof failure.
-NLO also fails its unchanged vertical gate (for example 12.7763% > 7.13%).
-Collect-all execution retains every record and a failing final exit status.
-No performance threshold is changed. Parameter selection is evaluated
-separately on paired default and additional sensor/initialization draws;
-proof margins are not an optimization objective. Small NLO theta gains
-produced large drift errors (up to 325.515% Hs), invalidating that tuning
-direction, not the stability theorem. Retain the baseline unless a candidate
-improves the full record set and separate validation draws.
-
-The frequency failures occur on weak cnoidal CG acceleration with injected
-DC bias and noise. The zero-crossing threshold is larger than the wave
-amplitude and reports its fallback. Forcing estimator outputs together or
-changing the 70% agreement threshold is not a valid tuning remedy; a
-separately justified bias-rejection change would be an algorithm change.
+The checked head's frequency, TFG and PII defaults pass. OU-II and OU-III
+fail both high-sea records; NLO fails low-wave PM-Stokes. These are numerical
+performance failures, independent of the proof contract. Paired tuning keeps
+all gates, noise and scoring windows fixed. Joint OU candidates that pass the
+default draw have increased fresh-seed violations and are not qualified as
+robust improvements. Retain rejected candidates and their full validation rows.
 
 The prior travel reference `azimuth + 180` fails on all four JONSWAP
 RAO records by 166--174 degrees. This is a source-convention implementation
@@ -130,3 +125,46 @@ Physical admission requires the actual covariance and vector-history premises,
 not merely the runtime Live flag. A new P4 method needs useful practical
 bounds and every-prefix retention before rigorous source covering. P5
 remains blocked by the unclosed P4 obligation.
+
+The point experiment freezes the attached finite coefficients and keeps
+one common scalar multiplier on the entire physical forcing template,
+including the latent increments and physical -S_true at every due update.
+It tests the complete 21-state root/template quadratic form, including the
+corrected bias trajectory, against the 18-error endpoint and every prefix.
+This is a necessary feasibility screen for retaining source correlation,
+not a certificate for varying physical roots or nonlinear coefficients.
+This reduces endpoint gains to 65536 (H18) and 1048576 (A21), but gives
+candidate composed storage bounds 1.6884e9 and 8.8012e7. H18's every-prefix
+test at Gamma=2 fails at the first accelerometer correction with ratio
+2.70996. This is a proof-method/supply failure, not a legal nonlinear
+counterexample: the root direction and frozen coefficients are relaxed.
+The common-template/common-gain restriction is also a DEAD_END pending a
+new controlling fact. It does not invalidate correlated-source ISS itself.
+
+BIAS2 is invoked in the dense endpoint and prefix master matrices, using
+actual accelerometer covariance and the corrected 21-state history through
+finite reset/projection. For A21, point energies are g=272.62755,
+b=234.48615, cross=-240.71555 and y=25.68261; kappa=.9493553.
+For Xi=sum b_error^T Racc^-1 b_error, the point sufficient mu is .1095272.
+These are point values, not admitted source-uniform constants. H18 has zero
+captured bias error and cannot identify a uniform mu from that point.
+
+The explicit test is L + lambda*(Q_y - mu*Q_b) < 0, lambda>=0,
+with each prefix using only its executed accelerometer events. The fixed
+conditional mu/gain/multiplier grid makes no previously nonstrict master
+strict. This is a coefficient-feasibility failure, not a proof that every
+BIAS2 multiplier or the nonlinear theorem fails. It invalidates treating the
+observed positive separation as the missing uniform certificate. The tested
+common-gain bounds exceed the point 30-degree chart storage budgets by
+1.8021e7 (H18) and 3856 (A21), even before uniform nonlinear enclosure.
+All directions, 80-digit ratios, energy accounting and candidate multipliers
+are in `reports/results/rao_stability/bias2-motion-gain.json`.
+
+Critic alternatives are (1) separate bias and physical-template budgets,
+(2) storage about the source-generated forced response, retaining its physical
+output error explicitly, or (3) a physically scaled storage with a new
+whole-word dissipativity argument instead of the ill-conditioned information
+metric. The next falsifiable experiment is a complete-word forced-response
+storage with separate physical output and initial-error budgets, tested on
+H18 and A21 before any source covering. No interval refinement is justified
+by the present gains. Physical admission, P4 and P5 remain unclosed.
