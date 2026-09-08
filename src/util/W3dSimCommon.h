@@ -54,6 +54,11 @@ inline float wrapAxialDeg90(float a) {
 }
 
 inline float dirDegGeneratorSignedFromVec(const Vector2f& v) {
+    // getAxis() returns zero when the amplitude/confidence gate is closed.
+    // atan2(0, 0) must not turn that unavailable estimate into a north bearing.
+    if (!v.allFinite() || !(v.squaredNorm() > 1e-12f)) {
+        return std::numeric_limits<float>::quiet_NaN();
+    }
     float deg = rad_to_deg(std::atan2(v.x(), v.y()));
     return wrapAxialDeg90(deg);
 }
@@ -692,6 +697,7 @@ struct W3dSimulationRunResult {
 
     std::vector<float> errs_x, errs_y, errs_z, errs_roll, errs_pitch, errs_yaw;
     std::vector<float> ref_x, ref_y, ref_z;
+    std::vector<float> accel_err_x, accel_err_y, accel_err_z;
     std::vector<float> accb_err_x, accb_err_y, accb_err_z;
     std::vector<float> gyrb_err_x, gyrb_err_y, gyrb_err_z;
     std::vector<float> magb_err_x, magb_err_y, magb_err_z;

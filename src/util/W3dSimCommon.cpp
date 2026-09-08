@@ -1280,6 +1280,10 @@ std::optional<W3dSimulationRunResult> W3dSimulationRunner::run(const std::string
         Vector3f vel_ref(rec.wave.vel_x, rec.wave.vel_y, rec.wave.vel_z);
         Vector3f acc_ref(rec.wave.acc_x, rec.wave.acc_y, rec.wave.acc_z);
 
+        const Vector3f accel_err = snap.acc_est_zu - acc_ref;
+        result.accel_err_x.push_back(accel_err.x());
+        result.accel_err_y.push_back(accel_err.y());
+        result.accel_err_z.push_back(accel_err.z());
         Vector3f disp_err = snap.disp_est_zu - disp_ref;
         result.errs_x.push_back(disp_err.x());
         result.errs_y.push_back(disp_err.y());
@@ -1572,6 +1576,10 @@ std::optional<TvgNloSimulationRunResult> TvgNloSimulationRunner::run(const std::
         Vector3f vel_ref(rec.wave.vel_x, rec.wave.vel_y, rec.wave.vel_z);
         Vector3f acc_ref(rec.wave.acc_x, rec.wave.acc_y, rec.wave.acc_z);
 
+        const Vector3f accel_err = snap.acc_est_zu - acc_ref;
+        result.accel_err_x.push_back(accel_err.x());
+        result.accel_err_y.push_back(accel_err.y());
+        result.accel_err_z.push_back(accel_err.z());
         Vector3f disp_err = snap.disp_est_zu - disp_ref;
         result.errs_x.push_back(disp_err.x());
         result.errs_y.push_back(disp_err.y());
@@ -1760,6 +1768,9 @@ void emit_window_metrics(const W3dSimulationRunResult& result,
 
     RMSReport x, y, z, roll, pitch, yaw;
     RMSReport acc_x, acc_y, acc_z, gyro_x, gyro_y, gyro_z;
+    RMSReport wave_acc_x, wave_acc_y, wave_acc_z;
+    const bool have_acceleration = stop <= result.accel_err_x.size()
+        && stop <= result.accel_err_y.size() && stop <= result.accel_err_z.size();
     RMSReport ref_z_rms;
     // Mean error alongside the RMS.  An RMS cannot tell a zero-mean
     // fluctuation from a constant offset, and several deployed error sources
@@ -1797,6 +1808,11 @@ void emit_window_metrics(const W3dSimulationRunResult& result,
         gyro_x.add(result.gyrb_err_x[i]);
         gyro_y.add(result.gyrb_err_y[i]);
         gyro_z.add(result.gyrb_err_z[i]);
+        if (have_acceleration) {
+            wave_acc_x.add(result.accel_err_x[i]);
+            wave_acc_y.add(result.accel_err_y[i]);
+            wave_acc_z.add(result.accel_err_z[i]);
+        }
         const float rx = result.ref_x[i];
         const float ry = result.ref_y[i];
         const float rz = result.ref_z[i];
@@ -1848,6 +1864,7 @@ void emit_window_metrics(const W3dSimulationRunResult& result,
     float dir_axis_error_deg = NAN;
     float dir_axis_rmse_deg = NAN;
     float dir_axis_circ_std_deg = NAN;
+    float dir_axis_available_pct = NAN;
     float sense_forward_pct = NAN;
     float sense_reverse_pct = NAN;
     float sense_uncertain_pct = NAN;
@@ -1862,6 +1879,8 @@ void emit_window_metrics(const W3dSimulationRunResult& result,
             axis.push_back(d);
             axis_error.add(axial_difference_deg(d, truth_deg));
         }
+        dir_axis_available_pct = 100.0f * static_cast<float>(axis.size())
+            / static_cast<float>(count);
         if (!axis.empty()) {
             const auto stats = circular_stats_180(axis);
             dir_axis_mean_deg = stats.mean_deg;
@@ -1959,6 +1978,11 @@ void emit_window_metrics(const W3dSimulationRunResult& result,
               << " roll_rms_deg=" << roll.rms()
               << " pitch_rms_deg=" << pitch.rms()
               << " yaw_rms_deg=" << yaw.rms()
+              << " accel_x_rms_mps2=" << (have_acceleration ? wave_acc_x.rms() : NAN)
+              << " accel_y_rms_mps2=" << (have_acceleration ? wave_acc_y.rms() : NAN)
+              << " accel_z_rms_mps2=" << (have_acceleration ? wave_acc_z.rms() : NAN)
+              << " accel_3d_rms_mps2=" << (have_acceleration
+                  ? std::hypot(wave_acc_x.rms(), wave_acc_y.rms(), wave_acc_z.rms()) : NAN)
               << " dir_travel_error_deg=" << travel_error_deg
               << " dir_travel_rmse_deg=" << travel_rmse_deg
               << " dir_travel_correct_pct=" << travel_correct_pct
@@ -1969,6 +1993,7 @@ void emit_window_metrics(const W3dSimulationRunResult& result,
               << " dir_axis_error_deg=" << dir_axis_error_deg
               << " dir_axis_rmse_deg=" << dir_axis_rmse_deg
               << " dir_axis_circ_std_deg=" << dir_axis_circ_std_deg
+              << " dir_axis_available_pct=" << dir_axis_available_pct
               << " dir_sense_forward_pct=" << sense_forward_pct
               << " dir_sense_reverse_pct=" << sense_reverse_pct
               << " dir_sense_uncertain_pct=" << sense_uncertain_pct

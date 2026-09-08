@@ -152,6 +152,9 @@ DIRECTION_METRIC_NAMES = (
     "dir_axis_abs_error_deg",
     "dir_axis_rmse_deg",
     "dir_axis_circ_std_deg",
+    # Angular errors are conditional on an available axis; retain its share
+    # of the complete scoring window so missing motion cannot look accurate.
+    "dir_axis_available_pct",
     "dir_sense_forward_pct",
     "dir_sense_reverse_pct",
     "dir_sense_uncertain_pct",
@@ -169,6 +172,10 @@ DIRECTION_METRIC_NAMES = (
 )
 
 METRIC_NAMES = (
+    "accel_x_rms_mps2",
+    "accel_y_rms_mps2",
+    "accel_z_rms_mps2",
+    "accel_3d_rms_mps2",
     "disp_x_rms_m",
     "disp_y_rms_m",
     "disp_z_rms_m",

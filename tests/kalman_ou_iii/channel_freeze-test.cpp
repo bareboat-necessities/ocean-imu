@@ -56,6 +56,9 @@ bool test_freezes_exactly_one_channel() {
     bool ok = true;
 
     Filter rs_only;
+    rs_only.initialize(Eigen::Vector3f::Constant(0.0148f),
+                       Eigen::Vector3f::Constant(0.00157f),
+                       Eigen::Vector3f::Constant(0.25f));
     ok &= check(
         rs_only.setChannelFreeze(true, NOMINAL_TAU, NOMINAL_SIGMA, false, 0.0f),
         "freezing the OU channel alone must be accepted");
@@ -67,12 +70,15 @@ bool test_freezes_exactly_one_channel() {
                 "frozen sigma_aw must be applied immediately");
 
     Filter ou_only;
+    ou_only.initialize(Eigen::Vector3f::Constant(0.0148f),
+                       Eigen::Vector3f::Constant(0.00157f),
+                       Eigen::Vector3f::Constant(0.25f));
     ok &= check(ou_only.setChannelFreeze(false, 0.0f, 0.0f, true, NOMINAL_RS),
                 "freezing the r_S channel alone must be accepted");
     ok &= check(!ou_only.frozenOUChannel() && ou_only.frozenRSChannel(),
                 "OU-only mode must hold r_S and free the OU channel");
-    ok &= check(std::abs(ou_only.getRSApplied() - NOMINAL_RS) <= 1e-6f,
-                "frozen r_S must be applied immediately");
+    ok &= check(std::abs(ou_only.getRSApplied() - NOMINAL_RS) > 1e-6f,
+                "bootstrap must not report a pending r_S freeze as applied");
 
     // The tuner must keep running in both cases.  If setChannelFreeze
     // disabled it the way setFixedTuning does, the free channel would stop

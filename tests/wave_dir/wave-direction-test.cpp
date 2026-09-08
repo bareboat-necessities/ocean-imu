@@ -13,6 +13,7 @@
 #include "wave_dir/WaveDirectionDetector.h"
 #include "wave_dir/WaveDirectionFrame.h"
 #include "wave_dir/WaveEncounter.h"
+#include "util/W3dSimCommon.h"
 
 namespace {
 
@@ -498,6 +499,21 @@ void test_encounter_forward_model_and_inverse() {
 }  // namespace
 
 int main() {
+  // A low-amplitude, perfectly axial signal still closes the existing gate.
+  // Both angle adapters must preserve that unavailable result, including an
+  // exactly zero vector (for which atan2 would otherwise fabricate 0 deg).
+  KalmanWaveDirection weak_axis(2.0f * kPi * 0.3f);
+  for (int k = 0; k < 12000; ++k) {
+    const float a = 0.02f * std::sin(2.0f * kPi * 0.3f * 0.005f * float(k));
+    weak_axis.update(a, a, 2.0f * kPi * 0.3f, 0.005f);
+  }
+  require(!weak_axis.isAxisReliable(), "weak motion passed the amplitude gate");
+  require(!std::isfinite(dirDegGeneratorSignedFromVec(weak_axis.getAxis())),
+          "unavailable axis became a finite generator bearing");
+  require(!std::isfinite(travelDegGeneratorFromVec(weak_axis.getAxis(), 0.0f)),
+          "unavailable travel sense became a finite generator bearing");
+  require(std::abs(dirDegGeneratorSignedFromVec(Eigen::Vector2f(1.0f, 1.0f))
+                   - 45.0f) < 1e-5f, "valid axis conversion changed");
   test_axis_estimator_all_angles_and_phases();
   test_axis_estimator_sample_rate_invariance();
   test_axis_estimator_rejects_circular_motion();

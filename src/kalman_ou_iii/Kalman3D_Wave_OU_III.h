@@ -224,6 +224,15 @@ class Kalman3D_Wave_OU_III {
     // Latent OU world-acceleration a_w (world, NED)
     [[nodiscard]] Vector3 get_world_accel() const { return xext.template segment<3>(OFF_AW); }
 
+    // Read the active model, including parameter smoothing and applied floors.
+    [[nodiscard]] T get_aw_time_constant() const { return tau_aw; }
+    [[nodiscard]] Vector3 get_aw_stationary_std() const {
+        return Sigma_aw_stat.diagonal().cwiseMax(T(0)).cwiseSqrt();
+    }
+    [[nodiscard]] Vector3 get_RS_noise_std() const {
+        return R_S.diagonal().cwiseMax(T(0)).cwiseSqrt();
+    }
+
     // Tuning setters
 	void set_aw_time_constant(T tau_seconds) {
 	    if (param_rw_enabled_) { param_rw_update_tau_cmd_(tau_seconds); return; }
@@ -456,6 +465,14 @@ class Kalman3D_Wave_OU_III {
             return xext.template segment<3>(OFF_BA) + k_a_ * (tempC - tempC_ref);
         }
         return Vector3::Zero();
+    }
+
+    // Bias used by the measurement model, expressed in physical sensor axes.
+    [[nodiscard]] Vector3 get_acc_bias_body_at_temperature(T tempC) const {
+        const Vector3 b = get_acc_bias_at_temperature(tempC);
+        if (std::abs(wind_heel_rad_) < T(1e-9)) return b;
+        return Vector3(b.x(), cos_unheel_x_ * b.y() + sin_unheel_x_ * b.z(),
+                       -sin_unheel_x_ * b.y() + cos_unheel_x_ * b.z());
     }
 
     void set_initial_acc_bias(const Vector3& b0) {

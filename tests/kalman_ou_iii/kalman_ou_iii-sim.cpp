@@ -97,6 +97,15 @@ public:
                     throw std::invalid_argument("Unknown W3D_DIRECTION_RAO profile");
             }
             filter.setDirectionRao(direction_rao);
+            wave_direction::VesselRaoNoiseWeighting low_wave_noise;
+            low_wave_noise.response = direction_rao;
+            // The known hull attenuates horizontal wave motion toward the
+            // accelerometer noise floor. Revert to nominal weights above SNR 4.
+            low_wave_noise.max_std_scale = 4.0f;
+            env_float("SF_LOW_WAVE_RACC_MAX_SCALE", low_wave_noise.max_std_scale);
+            env_float("SF_LOW_WAVE_RACC_SNR", low_wave_noise.transition_snr);
+            filter.setLowWaveNoiseWeighting(low_wave_noise);
+
 
             filter.enableTuner(true);
             filter.enableClamp(true);
@@ -397,6 +406,10 @@ public:
         // The remaining four are absolute and go through the Config fields
         // added for them.
         if (env_float("SF_SIGMA_A_SCALE", vf)) cfg_.sigma_a *= vf;
+        // Body-axis measurement weighting; injected sensor noise is unchanged.
+        if (env_float("SF_SIGMA_A_X_SCALE", vf)) cfg_.sigma_a.x() *= vf;
+        if (env_float("SF_SIGMA_A_Y_SCALE", vf)) cfg_.sigma_a.y() *= vf;
+        if (env_float("SF_SIGMA_A_Z_SCALE", vf)) cfg_.sigma_a.z() *= vf;
         if (env_float("SF_SIGMA_G_SCALE", vf)) cfg_.sigma_g *= vf;
         if (env_float("SF_SIGMA_M_SCALE", vf)) cfg_.sigma_m *= vf;
 

@@ -1,9 +1,31 @@
 #define EIGEN_NON_ARDUINO
 #include "wave_dir/VesselRaoEqualizer.h"
+#include "wave_dir/VesselRaoNoiseWeighting.h"
 #include <complex>
 #include <iostream>
 
 int main() {
+    // Weighting must preserve strong signals, remain bounded near zero, and
+    // follow physical channel assignments independently of direction on/off.
+    wave_direction::VesselRaoNoiseWeighting noise;
+    const Eigen::Vector3f nominal = Eigen::Vector3f::Constant(.02f);
+    if (noise.scales(0, .3f, nominal) != Eigen::Vector3f::Ones()) return 4;
+    noise.max_std_scale = 4;
+    if (noise.scales(0, .3f, nominal) != Eigen::Vector3f(4,4,1)) return 5;
+    if (noise.scales(100, .3f, nominal) != Eigen::Vector3f::Ones()) return 6;
+    const auto original = noise.scales(.15f, .3f, nominal);
+    std::swap(noise.response.horizontal_x_tau_s, noise.response.horizontal_y_tau_s);
+    noise.response.enabled = true;
+    const auto swapped = noise.scales(.15f, .3f, nominal);
+    if (original.x() != swapped.y() || original.y() != swapped.x()) return 7;
+    float previous = 4;
+    for (int j=0; j<1000; ++j) {
+        const auto scales = noise.scales(float(j)*.001f, .3f, nominal);
+        if (!scales.allFinite() || scales.minCoeff()<1 || scales.maxCoeff()>4 ||
+            scales.x()>previous || scales.z()!=1) return 8;
+        previous=scales.x();
+    }
+    if (noise.scales(NAN, .3f, nominal) != Eigen::Vector3f::Ones()) return 9;
     using C=std::complex<double>;
     const double pi=std::acos(-1.0),dt=.005;
     wave_direction::VesselRaoEqualizer e;

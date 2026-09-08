@@ -1,6 +1,6 @@
 # Wave direction with a known vessel RAO
 
-The OU-II and OU-III direction branches use the engine-guarded accelerometer, level it using the attitude estimate, and optionally match the three translational RAOs before estimating the propagation axis and travel sense. The wave-period tuner reads the pre-equalized signal. Equalization does not feed back into attitude, displacement, or adaptive OU regularization. TFG currently has no direction estimator.
+The OU-II and OU-III direction branches use the engine-guarded accelerometer, subtract the estimated temperature-dependent sensor bias in physical body axes, level it using the attitude estimate, and optionally match the three translational RAOs before estimating the propagation axis and travel sense. The wave-period tuner keeps its separate measurement-only input. Equalization does not feed back into attitude, displacement, or adaptive OU regularization. TFG currently has no direction estimator.
 
 ## Complex response matching
 
@@ -33,4 +33,4 @@ Common footprint/depth attenuation is retained. This is not incident-wave-height
 
 `tools/direction_rao_ablation.py` runs all eight records with OU-II and OU-III, engine off and nominal 2400 RPM (0.6 m/s² reference vibration, 80 Hz sensor bandwidth), and three arms: unconditioned, guard only, and guard plus RAO. The 96 full-record replays use the final 900 seconds and retain all quality failures. Results and exact input/binary hashes are under `reports/results/direction_rao_ablation/`.
 
-Guard-off disables both conditioning and vibration covariance inflation. Quiet guard-on/off parity checks detector transparency. Guard-only versus guard-plus-RAO pairs isolate direction equalization; their upstream attitude and displacement measurements must be identical. Report unresolved fractions alongside angular errors so improved accuracy cannot hide reduced availability.
+Guard-off disables both conditioning and vibration covariance inflation. Quiet guard-on/off parity checks detector transparency. Guard-only versus guard-plus-RAO pairs isolate direction equalization; their upstream attitude and displacement measurements must be identical. Report axis availability and unresolved travel fractions alongside conditional angular errors. A zero axis means unavailable and is excluded from angular statistics, not interpreted as a zero-degree bearing. Availability uses the entire scoring window as its denominator.

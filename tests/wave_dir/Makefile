@@ -24,7 +24,7 @@ build: $(TARGETS)
 test: $(TARGETS)
 	bash ./run_tests.sh
 
-wave-direction-test: wave-direction-test.cpp
+wave-direction-test: wave-direction-test.cpp $(REPO_ROOT)/src/util/W3dSimCommon.h
 	$(CXX) $(CXXFLAGS) -o $@ $<
 
 wave-direction-iq-test: wave-direction-iq-test.cpp
@@ -33,7 +33,7 @@ wave-direction-iq-test: wave-direction-iq-test.cpp
 wave-encounter-test: wave-encounter-test.cpp
 	$(CXX) $(CXXFLAGS) -o $@ $<
 
-vessel-rao-equalizer-test: vessel-rao-equalizer-test.cpp $(REPO_ROOT)/src/wave_dir/VesselRaoEqualizer.h
+vessel-rao-equalizer-test: vessel-rao-equalizer-test.cpp $(REPO_ROOT)/src/wave_dir/VesselRaoEqualizer.h $(REPO_ROOT)/src/wave_dir/VesselRaoNoiseWeighting.h
 	$(CXX) $(CXXFLAGS) -o $@ $<
 
 clean:

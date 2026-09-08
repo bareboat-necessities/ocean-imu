@@ -120,6 +120,7 @@
 #include "wave_dir/WaveDirectionDetector.h"
 #include "wave_dir/WaveDirectionFrame.h"
 #include "wave_dir/VesselRaoEqualizer.h"
+#include "wave_dir/VesselRaoNoiseWeighting.h"
 #include "detrend/AdaptiveWaveDetrender3D.h"
 #include "kalman_common/SeaStateFusionFilterCommon.h"
 
@@ -882,7 +883,16 @@ private:
         // default is exogenous bit-for-bit and bounds the Leveled path's gain.
         wave_period_.update(dt, wave_period_input_ms2_(direction_accel));
 
-        const auto direction_matched = direction_rao_.step(direction_accel, dt);
+        // The direction branch needs inertial acceleration. Correct the body
+        // sensor bias before levelling, as the MEKF's acceleration model does.
+        // Keep the period/tuner input above independent of this estimate.
+        auto direction_input = direction_accel;
+        if (drive_mekf) {
+            const Eigen::Vector3f corrected = acc_in - mekf_->get_acc_bias_body_at_temperature(tempC);
+            direction_input = wave_direction::heading_frame_acceleration<float>(
+                mekf_->quaternion_boat(), corrected, g_std);
+        }
+        const auto direction_matched = direction_rao_.step(direction_input, dt);
         dir_filter_.update(direction_matched.forward_ms2,
                            direction_matched.starboard_ms2,
                            omega, dt);
@@ -1432,6 +1442,10 @@ public:
         return tuner_.getVarianceHorizonSec();
     }
 
+    void setLowWaveNoiseWeighting(const wave_direction::VesselRaoNoiseWeighting& config) {
+        low_wave_noise_ = config;
+    }
+
     void setDirectionRao(const wave_direction::VesselRaoEqualizer::Config& config) {
         direction_rao_.configure(config);
     }
@@ -1869,13 +1883,20 @@ private:
     }
 
     void apply_racc_vibration_inflation_() {
-        if (!mekf_ || !(racc_vibration_gain_ > 0.0f)) return;
+        if (!mekf_ || (!(racc_vibration_gain_ > 0.0f) &&
+                       !(low_wave_noise_.max_std_scale > 1.0f) && !racc_inflated_)) return;
 
         const Eigen::Vector3f base = racc_base_std_();
         if (!(base.minCoeff() > 0.0f)) return;
 
         const float excess = accel_guard_.excessRms();
-        if (!(excess > 0.0f)) {
+        // The tuner is updated later in this sample. Use its previous
+        // measurement-only schedule, independently of direction RAO on/off.
+        const Eigen::Vector3f scales = isAdaptiveLive()
+            ? low_wave_noise_.scales(tune_.sigma_applied / sigma_coeff_,
+                                     tuner_frequency_hz_(), base)
+            : Eigen::Vector3f::Ones();
+        if (!(excess > 0.0f) && scales.maxCoeff() <= 1.0f) {
             // Hand the base back once on the way down, then stay quiet, so a
             // dormant guard leaves the stage logic's covariance untouched.
             if (racc_inflated_) {
@@ -1888,7 +1909,7 @@ private:
 
         const float added = racc_vibration_gain_ * excess;
         const Eigen::Vector3f effective =
-            (base.array().square() + added * added).sqrt().matrix();
+            ((base.array() * scales.array()).square() + added * added).sqrt().matrix();
         mekf_->set_Racc_std(effective);
         racc_effective_ = effective;
         racc_inflated_ = true;
@@ -2105,6 +2126,7 @@ private:
     StillnessAdapter freq_stillness_;
 
     wave_direction::VesselRaoEqualizer direction_rao_{};
+    wave_direction::VesselRaoNoiseWeighting low_wave_noise_{};
     WaveDirectionDetector<float> dir_sign_{0.002f, 0.005f};
     WaveDirection                dir_sign_state_ = UNCERTAIN;
 };
