@@ -1,0 +1,41 @@
+[
+  {
+    "name": "head",
+    "env": {}
+  },
+  {
+    "name": "gyro_acc_0.5",
+    "env": {
+      "SF_SIGMA_G_SCALE": "0.2",
+      "SF_SIGMA_A_SCALE": "0.5"
+    }
+  },
+  {
+    "name": "gyro_acc_1.5",
+    "env": {
+      "SF_SIGMA_G_SCALE": "0.2",
+      "SF_SIGMA_A_SCALE": "1.5"
+    }
+  },
+  {
+    "name": "gyro_tau_0.8",
+    "env": {
+      "SF_SIGMA_G_SCALE": "0.2",
+      "OU_III_TAU_COEFF": "0.8"
+    }
+  },
+  {
+    "name": "gyro_tau_1.1",
+    "env": {
+      "SF_SIGMA_G_SCALE": "0.2",
+      "OU_III_TAU_COEFF": "1.1"
+    }
+  },
+  {
+    "name": "gyro_sigma",
+    "env": {
+      "SF_SIGMA_G_SCALE": "0.2",
+      "OU_III_SIGMA_COEFF": "0.75"
+    }
+  }
+]

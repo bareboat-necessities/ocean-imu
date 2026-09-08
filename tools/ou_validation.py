@@ -759,7 +759,7 @@ OU_III_RS_BOUNDS_MS = (0.15, 100.0)
 # because the law ablation uses them; the fixed-tuning modes derive their
 # frozen pair from the deployed law.
 OU_II_PSEUDO_MSE_COEFF = 0.1116
-OU_II_PSEUDO_MSE_RATIO = 0.4
+OU_II_PSEUDO_MSE_RATIO = 0.3
 OU_II_PSEUDO_QEFF = 2.0 * (0.12 ** 2) * (1.0 / 200.0)
 OU_II_PSEUDO_TAU_RATIO = 0.015 / 1.1
 OU_II_PSEUDO_PERIOD_BOUNDS_S = (1.0 / 200.0, 0.25)

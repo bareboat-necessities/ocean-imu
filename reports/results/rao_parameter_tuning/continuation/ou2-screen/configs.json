@@ -1,0 +1,37 @@
+[
+  {
+    "name": "head",
+    "env": {}
+  },
+  {
+    "name": "bias_rw_0.00025",
+    "env": {
+      "OU_II_ACC_BIAS_RW": "0.00025"
+    }
+  },
+  {
+    "name": "bias_rw_0.00035",
+    "env": {
+      "OU_II_ACC_BIAS_RW": "0.00035"
+    }
+  },
+  {
+    "name": "refine_30",
+    "env": {
+      "SF_MAG_REFINE_START_SEC": "30"
+    }
+  },
+  {
+    "name": "refine_60",
+    "env": {
+      "SF_MAG_REFINE_START_SEC": "60"
+    }
+  },
+  {
+    "name": "bias_rw_refine",
+    "env": {
+      "OU_II_ACC_BIAS_RW": "0.00025",
+      "SF_MAG_REFINE_START_SEC": "30"
+    }
+  }
+]

@@ -487,7 +487,11 @@ private:
         if (period_s > Real(0)) {
           const Real f_meas = Real(1) / period_s;
           if (f_meas >= cfg_.f_min_hz && f_meas <= cfg_.f_max_hz) {
-            const Real a_coarse = alphaFromTau(cfg_.coarse_smooth_tau_s, dt);
+            // This average advances once per detected cycle, not once per
+            // IMU sample. Using dt here stretches its horizon by the number
+            // of samples in a wave period and can retain an acquisition error
+            // for thousands of seconds.
+            const Real a_coarse = alphaFromTau(cfg_.coarse_smooth_tau_s, period_s);
             if (!coarse_valid_) {
               coarse_freq_hz_ = f_meas;
             } else {

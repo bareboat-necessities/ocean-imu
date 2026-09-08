@@ -65,7 +65,7 @@ int main() {
         return fail("PhysicalMSE changed at fixed physical acceleration RMS");
 
     if (!rel_near(f.getPseudoMseCoeff(), 0.1116f, 1e-5f) ||
-        !rel_near(f.getPseudoMseRatio(), 0.4f, 1e-5f))
+        !rel_near(f.getPseudoMseRatio(), 0.3f, 1e-5f))
         return fail("deployed PhysicalMSE constants moved");
 
     std::cout << "OU-II deployed PhysicalMSE law passed\n";

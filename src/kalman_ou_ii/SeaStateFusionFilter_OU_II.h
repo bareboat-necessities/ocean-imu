@@ -401,13 +401,13 @@ constexpr float R_PSEUDO_MSE_COEFF_DEFAULT = 0.1116f;
 // because q_eff and the cadence normalization both cancel out of it:
 //     (r_p / r_v)^2 = (3/2) M_-2 / M_0,
 // hence r_p/r_v = C_P/C_V * tau for a fixed normalized sea shape.  The eight
-// vessel-CG spectra motivate a separate ratio diagnostic. The deployed 0.4
+// vessel-CG spectra motivate a separate ratio diagnostic. The deployed 0.3
 // is a parameter choice validated on independent RAO sensor draws.
 //
 // Applying the ratio rather than a second independent power is exact, not an
 // approximation: sigma^(4/5) tau^(7/5) = sigma^(4/5) tau^(12/5) / tau.  It is
 // also what keeps the whole schedule down to a single transcendental.
-constexpr float R_PSEUDO_MSE_RATIO_DEFAULT = 0.4f;
+constexpr float R_PSEUDO_MSE_RATIO_DEFAULT = 0.3f;
 
 // q_eff = 2 r_a with r_a = R_a * h, the density of the residual acceleration
 // error the integration chain actually sees.

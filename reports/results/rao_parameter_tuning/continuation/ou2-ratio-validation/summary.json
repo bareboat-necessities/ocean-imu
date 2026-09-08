@@ -1,0 +1,13 @@
+[
+  {
+    "config": "ratio_0.3",
+    "failed_records": 32,
+    "violations": 91,
+    "worst_ratio": 6.684649375600384,
+    "yaw_rms_deg": 1.9243109069,
+    "roll_rms_deg": 0.277662014105,
+    "pitch_rms_deg": 0.33455717548249997,
+    "disp_3d_rms_m": 0.37713318607,
+    "accel_bias_3d_rms_mps2": 0.076711878485
+  }
+]

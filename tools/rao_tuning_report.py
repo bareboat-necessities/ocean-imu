@@ -7,6 +7,17 @@ import statistics
 ROOT = Path(__file__).resolve().parents[1]
 
 
+def current_summary(out, family):
+    study = 'ou2-ratio-validation' if family == 'ou2' else 'ou3-validation'
+    config = 'ratio_0.3' if family == 'ou2' else 'candidate'
+    rows = json.loads((out / 'continuation' / study / 'runs.json').read_text())
+    rows = [r for r in rows if r['config'] == config and r['seed'] != 'default']
+    return dict(config='selected', violations=sum(len(r['violations']) for r in rows),
+                worst_ratio=max(v['ratio'] or 0 for r in rows for v in r['violations']),
+                **{k: statistics.fmean(r['metrics'][k] for r in rows) for k in
+                   ('yaw_rms_deg', 'roll_rms_deg', 'pitch_rms_deg', 'disp_3d_rms_m')})
+
+
 def main():
     out = ROOT / 'reports/results/rao_parameter_tuning'
     md = '''# Filter retuning on the v1.2.1 vessel dataset
@@ -22,14 +33,15 @@ All runs use the pinned 28 ft sailboat RAO records and the existing executable q
 | OU-II, OU-III | Gyro-bias random-walk variance | 1e-11 | 1e-10 |
 | OU-II, OU-III, TFG | Relative hard-iron ridge | 0.5 | 0.25 |
 | OU-II, OU-III, TFG | Minimum hard-iron information | 2 | 0.1 |
-| OU-II | Pseudo-measurement MSE ratio | 0.4611 | 0.4 |
+| OU-II | Pseudo-measurement MSE ratio | 0.4611 | 0.3 |
+| OU-III | Simulator gyro sigma rescale | 0.05 | 0.01 |
 | TFG | Simulator magnetic sigma rescale | 1 | 4 |
 | TFG | Simulator gyro sigma rescale | 1 | 0.1 |
 | TFG | Magnetic refinement start, seconds | 90 | 30 |
 | PII adapter | Observer r | 0.125 | 0.08125 |
 | PII adapter | Mahony Ki, base/calm/rough | 0.090/0.100/0.070 | 0.0225/0.025/0.0175 |
 
-Minimum information is a calibration-activation parameter; simulation acceptance thresholds are unchanged. Magnetic covariance accounts empirically for calibration/model uncertainty as well as white sensor noise. OU-II retains C_P=0.1116, giving C_V=0.279. OU-III retains C_J=0.0538 and its 5000-second accelerometer-bias time constant. TFG gyro-bias random-walk variance was already 1e-10. NLO retains theta_gain=0.56: the screened alternatives did not show a clear overall improvement. Frequency settings are unchanged.
+Minimum information is a calibration-activation parameter; simulation acceptance thresholds are unchanged. Covariance rescaling is an empirical performance weight, not an estimate of injected sensor noise density. OU-II retains C_P=0.1116, giving C_V=0.372. OU-III retains C_J=0.0538 and its 5000-second accelerometer-bias time constant. TFG gyro-bias random-walk variance was already 1e-10. NLO retains theta_gain=0.56. Standalone frequency tracking uses causal 0.01 Hz DC removal, two 0.8 Hz low-pass poles, and 0.004g zero-crossing hysteresis. PLL coarse smoothing advances by the elapsed detected period. Input noise, output bounds, scoring windows and quality gates are unchanged.
 
 ## Held-out results
 
@@ -51,6 +63,8 @@ Family & Setting & Violations & Yaw [deg] & Roll [deg] & Pitch [deg] & 3-D [m] &
     for family in ('ou2', 'ou3', 'tfg'):
         label = {'ou2': 'OU-II', 'ou3': 'OU-III', 'tfg': 'TFG'}[family]
         for r in json.loads((out / f'{family}-validation/summary.json').read_text()):
+            if family in ('ou2', 'ou3') and r['config'] != 'baseline':
+                r = current_summary(out, family)
             values = [str(r['violations'])] + [f'{r[k]:.3f}' for k in ('yaw_rms_deg', 'roll_rms_deg', 'pitch_rms_deg', 'disp_3d_rms_m', 'worst_ratio')]
             md += '| ' + ' | '.join([label, r['config'], *values]) + ' |\n'
             tex += ' & '.join([label.replace('-', '--'), r['config'], *values]) + r' \\' + '\n'
@@ -62,9 +76,11 @@ Family & Setting & Violations & Yaw [deg] & Roll [deg] & Pitch [deg] & 3-D [m] &
         pp[name] = (sum(len(r['failures']) for r in rr), statistics.fmean(v for r in rr for v in r['z_pct_hs']))
     md += f'''\nPII vertical-displacement violations fall from {pp['baseline'][0]} to {pp['candidate'][0]}; mean vertical RMS falls from {pp['baseline'][1]:.3f}% to {pp['candidate'][1]:.3f}% of incident Hs. Its unchanged quality gates test vertical displacement, so this count is not directly comparable with OU/TFG multi-metric counts.
 
-On the default draw, all eight TFG and PII records pass. OU-III retains two failing records (three violations); OU-II retains three (seven violations). NLO retains the PM 1.5 m vertical-displacement failure. The frequency test retains its low-signal cnoidal failure. Passing the default draw does not establish multi-seed reliability.
+On the default draw, OU-III retains two failing records (two violations); OU-II retains two (six violations). Both are the 8.5 m seas. All 20 standalone frequency records pass. Passing the default draw does not establish multi-seed reliability. TFG, PII and NLO results after the shared PLL correction are verified separately by the integrated build.
 
-OU-II improves average errors and worst normalized exceedance but increases held-out violation count from 84 to 86 and failing cases from 29 to 30. OU-III roll RMS increases slightly. These are explicit tradeoffs, not claims of uniformly improved gates. The selected tuning does not make all studies pass.
+Relative to the pre-RAO parameter point, OU-II's held-out violations change from 84 to 85, and OU-III's from 90 to 85. Relative to the continuation baseline at 942d3a9542ab2b1dc8f909bbfe270ac1328575c1, OU-II improves from 86 to 85 violations, with 30 failing cases unchanged; OU-III improves from 88 to 85 violations and 30 to 28 failing cases. Mean 3-D RMS rises slightly: OU-II 0.375220 to 0.377672 m, OU-III 0.290842 to 0.292620 m. OU-III's held-out mean attitude errors also rise slightly. These are explicit tradeoffs, not uniformly improved performance.
+
+The continuation screens use default, 11 and 23 sensor/initialization draws. Its validation reuses the four held-out sensor draws, which were excluded from candidate screening. These draws remain on the same eight prescribed wave records. The larger OU-II joint change (ratio 0.3, magnetic sigma x1.5, bias RW 0.00035) is rejected: violations rise from 86 to 94 despite lower mean errors. `continuation` preserves all 488 candidate/baseline replays, including rejected settings, manifests and binary hashes. Its overrides apply to the baseline binaries; the two `continuation/*-current-default-replay-configs.json` files instead reproduce the retained comparison on the current source defaults.
 
 ## Reproduction and provenance
 
@@ -80,9 +96,17 @@ The tuning evidence predates direction RAO matching and correction of the v1.2.1
 
 Performance selection does not alter the canonical P3/P4/P5 proof thresholds or imply deployment-domain stability admission. Stability and live-covariance audits are separate obligations.
 '''
-    tex += r'''Selected covariance and calibration settings improve aggregate errors but do not
-make every quality gate pass. OU--II's held-out violation count increases despite
-lower mean errors; OU--III roll RMS increases slightly. PII's held-out vertical
+    tex += r'''Selected covariance and calibration settings do not make every gate pass.
+Relative to the continuation baseline, OU--II's held-out violations decrease
+from 86 to 85 and OU--III's from 88 to 85. OU--III's failing cases decrease
+from 30 to 28; OU--II remains at 30. Mean 3-D RMS increases slightly, from
+0.375220 to 0.377672 m for OU--II and 0.290842 to 0.292620 m for OU--III.
+OU--III's mean held-out attitude errors also increase slightly. The retained
+changes are OU--II's channel ratio 0.4 to 0.3 and OU--III's gyro covariance
+sigma rescale 0.05 to 0.01. This empirical weight does not alter injected noise.
+The default draw retains two failing 8.5 m records in each OU family.
+The larger OU--II joint candidate is rejected because violations rise to 94.
+PII's earlier parameter-screen held-out vertical
 violations decrease from 23 to 7, with mean vertical RMS decreasing from
 8.375\% to 5.961\% of incident $H_s$. The validation draws change sensor and
 initialization errors on the same wave records; they do not cover unseen hulls.

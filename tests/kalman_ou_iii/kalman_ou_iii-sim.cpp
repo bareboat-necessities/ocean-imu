@@ -55,7 +55,7 @@ public:
     // reports/results/rao_parameter_tuning; quality limits are unchanged.
     // Environment scale factors below multiply these deployed settings.
     static constexpr float SIGMA_A_RESCALE = 0.71f;  // 2.8x -> 2.0x injected accel white
-    static constexpr float SIGMA_G_RESCALE = 0.05f;  // 2.0x sample std -> sqrt(2)x density
+    static constexpr float SIGMA_G_RESCALE = 0.01f;  // empirical gyro weighting on vessel replay
     static constexpr float SIGMA_M_RESCALE = 8.0f;   // 1.2x -> 9.6x injected mag white
 
     FusionAdapter_OU_III(bool with_mag,

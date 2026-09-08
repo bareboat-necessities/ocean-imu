@@ -59,6 +59,10 @@ error, misalignment, and slow drift (Table~\ref{tab:sim_constants}).  The
 accelerometer truth uses random-walk bias while the estimator uses a slow
 Gauss--Markov residual about its temperature calibration, deliberately
 introducing bias-process mismatch.
+OU--III's gyro covariance uses an empirical simulator rescale of \(0.01\)
+on the harness's \(2\sigma_g\) value. This is a performance-tuning weight,
+not an estimate of the injected noise density. The injected sensor errors
+in Table~\ref{tab:sim_constants} are unchanged.
 
 \begin{table}[t]
   \centering

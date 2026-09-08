@@ -507,8 +507,12 @@ and Its C\texttt{++} Implementation}
 
     Accepted measurements are exponentially smoothed:
     \begin{equation}
-        f_c \leftarrow \alpha_c f_c + (1-\alpha_c) f_{c,k}.
+        f_c \leftarrow \alpha_c f_c + (1-\alpha_c) f_{c,k},
+        \qquad \alpha_c = \exp(-T_k/\tau_c).
     \end{equation}
+    The smoothing interval is the detected cycle duration \(T_k\), since this
+    update runs once per cycle. The IMU sample interval would make the physical
+    smoothing horizon depend on sample rate.
 
     If no fresh coarse event arrives for too long, the coarse estimate times out
     and is marked invalid.
