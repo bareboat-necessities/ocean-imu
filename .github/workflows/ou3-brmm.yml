@@ -5,6 +5,12 @@ on:
     paths:
       - ".github/workflows/ou3-brmm.yml"
       - "tests/kalman_ou_iii/ou3_brmm_audit.py"
+      - "tests/kalman_ou_iii/ou3_brmm_runtime*"
+      - "tests/validation/test_ou3_brmm_runtime.py"
+      - "src/kalman_ou_iii/**"
+      - "src/util/W3dSimCommon.*"
+      - "tests/kalman_ou_iii/kalman_ou_iii-sim.cpp"
+      - "tools/stability/ou3_proof_operating_domain.json"
       - "tests/validation/test_ou3_brmm.py"
       - "tools/stability/ou3_brmm_contract.py"
       - "doc/kalman_ou_iii/w3d-brmm-stability-theorem.tex-part"
@@ -18,6 +24,56 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  eight-case-runtime-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Install runtime audit dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y g++ make libeigen3-dev python3-numpy python3-pandas
+      - name: Test passive capture and fail-closed source attachment
+        run: python3 -m unittest discover -s tests/validation -p test_ou3_brmm_runtime.py -v
+      - name: Build identical baseline and passive observer
+        run: |
+          mkdir -p /tmp/ou3-brmm-runtime
+          python3 tests/kalman_ou_iii/ou3_brmm_runtime_overlay.py --repository . --output /tmp/ou3-brmm-runtime/overlay
+          # The pilot native build showed optimizer-dependent FMA differences
+          # after instrumentation. Both audit executables use this same explicit
+          # contraction policy. No production Makefile or quality gate changes.
+          flags=(-O3 -std=c++20 -Wall -Wextra -Wshadow -Wconversion -funroll-loops -fno-finite-math-only -march=native -ffp-contract=off -isystem /usr/include/eigen3)
+          printf '%s\n' "${flags[@]}" > /tmp/ou3-brmm-runtime/compiler-flags.txt
+          g++ --version > /tmp/ou3-brmm-runtime/compiler-version.txt
+          g++ "${flags[@]}" -Isrc -c src/util/W3dSimCommon.cpp -o /tmp/ou3-brmm-runtime/common.o
+          g++ "${flags[@]}" -Isrc tests/kalman_ou_iii/kalman_ou_iii-sim.cpp /tmp/ou3-brmm-runtime/common.o -o /tmp/ou3-brmm-runtime/baseline
+          g++ "${flags[@]}" -I/tmp/ou3-brmm-runtime/overlay/src -Isrc -Itests/kalman_ou_iii /tmp/ou3-brmm-runtime/overlay/tests/kalman_ou_iii/kalman_ou_iii-sim.cpp /tmp/ou3-brmm-runtime/common.o -o /tmp/ou3-brmm-runtime/traced
+      - name: Download unchanged reference archive
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release download v1.1.3 --repo bareboat-necessities/oceanography-waves-lib --pattern sim-data-files.zip --dir /tmp/ou3-brmm-runtime --clobber
+      - name: Audit all eight runtime histories and retain every violating interval
+        run: |
+          python3 -u tests/kalman_ou_iii/ou3_brmm_runtime_audit.py \
+            --archive /tmp/ou3-brmm-runtime/sim-data-files.zip \
+            --baseline /tmp/ou3-brmm-runtime/baseline --traced /tmp/ou3-brmm-runtime/traced \
+            --manifest /tmp/ou3-brmm-runtime/overlay/manifest.json \
+            --output-dir /tmp/ou3-brmm-runtime/results
+      - name: Retain runtime admission evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: ou3-brmm-eight-case-runtime-audit
+          path: |
+            /tmp/ou3-brmm-runtime/results
+            /tmp/ou3-brmm-runtime/overlay/manifest.json
+            /tmp/ou3-brmm-runtime/compiler-flags.txt
+            /tmp/ou3-brmm-runtime/compiler-version.txt
+          if-no-files-found: warn
+          retention-days: 14
+
   eight-case-source-audit:
     runs-on: ubuntu-latest
     timeout-minutes: 35

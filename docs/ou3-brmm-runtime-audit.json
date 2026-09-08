@@ -1,0 +1,2870 @@
+{
+  "qualification": "OU3_BRMM_RUNTIME_NECESSARY_CONDITIONS_V1",
+  "source_commit": "85e040371812d1fa32508d521acded0a6328102f",
+  "archive_sha256": "55cad13e6b928e9e4d9540adbedfa0189a8feb57febac41b4561bfb68986dcff",
+  "domain_sha256": "28e4de3a2b47e3e63918a2ab077ffeaa878e6e2e5c9d2ea8747d8dee04f5a6e6",
+  "baseline_binary_sha256": "b11b108291f575ddfc7d0eaa7c9607d507df8a47cb08e405759edb148315bc45",
+  "traced_binary_sha256": "622149b79110563e7dd468b7354d1d253a258df0ab6b69c4928452e06d4ad952",
+  "audit_producer_sha256": "97a4221859bd514d0c23e3dda943064f7a5a923da43c0f8220e63bc3a5a5bc8c",
+  "clock": "200 Hz sample index; snapshot follows IMU then asynchronous 25 Hz magnetometer",
+  "protocol": "unchanged simulator, default noise/seeds/magnetometer, all original quality gates",
+  "observer_build": "baseline and trace use identical flags with -ffp-contract=off; native FMA capture is not bitwise transparent",
+  "scope": "sampled necessary-condition audit; no physical admission or P3/P4/P5 promotion",
+  "replay_audit_producer_sha256": "be74ea5d71b30d5ab0502a14aeb86d27a5002dca7ef46af89231b877ae08eae3",
+  "retained_trace_integrity": "all 16 compressed traces rechecked against decompressed capture SHA256",
+  "observer_header_sha256": "caac3833bef196901537ae4b9d078d4a8605ad75bd3e436f63c19d173dbacef9",
+  "overlay_producer_sha256": "1f149c7b9326fdfadd19e73efa3ba35e6bdef5c034e95cfd15aa3eeb543a7ea0",
+  "shipping_source_sha256": {
+    "tests/kalman_ou_iii/kalman_ou_iii-sim.cpp": "d1b3db5e0ac50ffd1f9856e2432a70a9601557668e43f3a1b3634b6cdb7bb9be",
+    "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h": "da3431ae1bea59b3d4561118c9eaca68167360596b69f563f71699ccf29df523",
+    "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": "cdbff5c562187ad9bcd3d8f7ccdb387cd05d145ff3a61a732f221b344bd086f5"
+  },
+  "cases": [
+    {
+      "samples": 240000,
+      "regimes": {
+        "all": {
+          "samples": 240000,
+          "intervals": 1,
+          "first_interval": [
+            0,
+            240000
+          ],
+          "longest_interval_samples": 240000
+        },
+        "outer_inner_Live": {
+          "samples": 233632,
+          "intervals": 1,
+          "first_interval": [
+            6368,
+            240000
+          ],
+          "longest_interval_samples": 233632
+        },
+        "H18": {
+          "samples": 17648,
+          "intervals": 1,
+          "first_interval": [
+            6368,
+            24016
+          ],
+          "longest_interval_samples": 17648
+        },
+        "A21": {
+          "samples": 215983,
+          "intervals": 1,
+          "first_interval": [
+            24017,
+            240000
+          ],
+          "longest_interval_samples": 215983
+        }
+      },
+      "vectors": {
+        "acc": {
+          "accepted_events": 233632,
+          "configured_R": [
+            [
+              0.04000000000000001,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.04000000000000001,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.04000000000000001
+            ]
+          ],
+          "R_diagonal_min": [
+            0.000866618473,
+            0.000866618473,
+            0.000866618473
+          ],
+          "R_diagonal_max": [
+            0.000866618473,
+            0.000866618473,
+            0.000866618473
+          ],
+          "norm_min": 8.60385048361182,
+          "norm_max": 12.5433356216149,
+          "comparison_rounding_relative_tolerance": 9.5367431640625e-07
+        },
+        "mag": {
+          "accepted_events": 29204,
+          "configured_R": [
+            [
+              0.09,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.09,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.09
+            ]
+          ],
+          "R_diagonal_min": [
+            3.68640018,
+            3.68640018,
+            3.68640018
+          ],
+          "R_diagonal_max": [
+            3.68640018,
+            3.68640018,
+            3.68640018
+          ],
+          "norm_min": 51.754638615889256,
+          "norm_max": 53.51495584933645,
+          "comparison_rounding_relative_tolerance": 9.5367431640625e-07
+        }
+      },
+      "physical_phase_extrema": {
+        "before_Live": {
+          "samples": 6368,
+          "acceleration_norm_max_upper_mps2": 1.2673690572682454,
+          "body_rate_norm_max_upper_rad_s": 0.3595620971177861,
+          "specific_force_norm_min_lower_mps2": 8.961472706079666,
+          "specific_force_norm_max_upper_mps2": 10.853639366435665,
+          "vertical_acceleration_min_mps2": -0.84526,
+          "vertical_acceleration_max_mps2": 1.03879,
+          "acceleration_norm_above_g_samples": 0
+        },
+        "Live": {
+          "samples": 233632,
+          "acceleration_norm_max_upper_mps2": 2.832024995323488,
+          "body_rate_norm_max_upper_rad_s": 0.6387578242611517,
+          "specific_force_norm_min_lower_mps2": 8.628526513785125,
+          "specific_force_norm_max_upper_mps2": 12.53519012391089,
+          "vertical_acceleration_min_mps2": -1.20875,
+          "vertical_acceleration_max_mps2": 2.70508,
+          "acceleration_norm_above_g_samples": 0
+        },
+        "non_Live_after_entry": {
+          "samples": 0,
+          "acceleration_norm_max_upper_mps2": null,
+          "body_rate_norm_max_upper_rad_s": null,
+          "specific_force_norm_min_lower_mps2": null,
+          "specific_force_norm_max_upper_mps2": null,
+          "vertical_acceleration_min_mps2": null,
+          "vertical_acceleration_max_mps2": null,
+          "acceleration_norm_above_g_samples": 0
+        }
+      },
+      "observations": {
+        "magnetic_reference_write": {
+          "samples": 22625,
+          "intervals": 22625,
+          "first_interval": [
+            4400,
+            4401
+          ],
+          "longest_interval_samples": 1
+        },
+        "same_sample_vector_sine_below_bound": {
+          "samples": 0,
+          "intervals": 0,
+          "first_interval": null,
+          "longest_interval_samples": 0
+        }
+      },
+      "candidate_impulse_windows": {
+        "all": {
+          "complete_10s_windows": 238001,
+          "candidate_2_mps_definite_violations": {
+            "samples": 0,
+            "intervals": 0,
+            "first_interval": null,
+            "longest_interval_samples": 0
+          },
+          "max_upper_mps": 1.0082105757543764
+        },
+        "outer_inner_Live": {
+          "complete_10s_windows": 231633,
+          "candidate_2_mps_definite_violations": {
+            "samples": 0,
+            "intervals": 0,
+            "first_interval": null,
+            "longest_interval_samples": 0
+          },
+          "max_upper_mps": 1.0082105757543764
+        },
+        "H18": {
+          "complete_10s_windows": 15649,
+          "candidate_2_mps_definite_violations": {
+            "samples": 0,
+            "intervals": 0,
+            "first_interval": null,
+            "longest_interval_samples": 0
+          },
+          "max_upper_mps": 0.8654602316375033
+        },
+        "A21": {
+          "complete_10s_windows": 213984,
+          "candidate_2_mps_definite_violations": {
+            "samples": 0,
+            "intervals": 0,
+            "first_interval": null,
+            "longest_interval_samples": 0
+          },
+          "max_upper_mps": 1.0082105757543764
+        }
+      },
+      "physical_caps_inside_runtime_Live": {
+        "samples": 233383,
+        "intervals": 8,
+        "first_interval": [
+          6368,
+          93390
+        ],
+        "longest_interval_samples": 87022
+      },
+      "passes_observed_sample_checks_only": {
+        "samples": 0,
+        "intervals": 0,
+        "first_interval": null,
+        "longest_interval_samples": 0
+      },
+      "live_1s_windows_without_accepted_mag": 0,
+      "same_sample_accepted_pair_count": 29204,
+      "same_sample_common_frame_sine_min_diagnostic": 0.29663232278174256,
+      "S_calls": 65610,
+      "S_applied": 65610,
+      "S_R_diagonal_min": [
+        0.0116643934,
+        0.0116643934,
+        0.0225007571
+      ],
+      "S_R_diagonal_max": [
+        0.45879516,
+        0.45879516,
+        0.885021448
+      ],
+      "source_samples_pruned": 0,
+      "runtime_Live_implies_Normal_Live": false,
+      "continuous_BRMM_admission_certified": false,
+      "transported_vector_PE_certified": false,
+      "P3_certified_by_this_audit": false,
+      "P4_or_P5_promoted": false,
+      "remaining_admission_obligations": [
+        "continuous no-DC/recurrence and source primitives",
+        "transported asynchronous vector PE on the complete word",
+        "source-uniform entry, Q/floor/tuner invariant attachment",
+        "nonlinear projection and every-prefix chart/domain retention"
+      ],
+      "record": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+      "csv_sha256": "fa724aaea217b953cfcdde89b346d18218a970b79c277068ed3e7a8ef3f8981b",
+      "ordinary_output_sha256": {
+        "stderr.txt": "658cac8ea2726ff0a56e734485f31d1e7a87a6ae80e8274193fa326e8d6b49c5",
+        "stdout.txt": "29904b07c6ac1ad8c94be7346ec0caa27fa3207e51f26b4ce52755e80d73d40e",
+        "w3d_jonswap_H0.270_L14.047_A30.00_P60.00_fusion_ou3.csv": "9b2e9a8939c5c06062af311ddb0d843b48a572034fe5384e38640a9506a54dfe"
+      },
+      "read_only_runtime_output_bitwise_identical": true,
+      "trace_sha256": {
+        "runtime.samples.csv": "cee6a8968e89ffc38f24ad7d62b3b2c1adbf328a4b76107bfca7a17c1083deba",
+        "runtime.events.csv": "cb6b5b45141d8eb568ba5cfde7710e87627b0a24996aaa32429771e1b25a58d0"
+      },
+      "violation_sample_counts": {
+        "outside_outer_and_inner_Live": {
+          "all": 6368,
+          "outer_inner_Live": 0,
+          "H18": 0,
+          "A21": 0
+        },
+        "bias_mode_transition": {
+          "all": 1,
+          "outer_inner_Live": 1,
+          "H18": 0,
+          "A21": 0
+        },
+        "physical_acceleration_above_cap": {
+          "all": 0,
+          "outer_inner_Live": 0,
+          "H18": 0,
+          "A21": 0
+        },
+        "physical_body_rate_above_cap": {
+          "all": 249,
+          "outer_inner_Live": 249,
+          "H18": 0,
+          "A21": 249
+        },
+        "guard_not_dormant_transparent": {
+          "all": 0,
+          "outer_inner_Live": 0,
+          "H18": 0,
+          "A21": 0
+        },
+        "prediction_or_accelerometer_missing": {
+          "all": 6368,
+          "outer_inner_Live": 0,
+          "H18": 0,
+          "A21": 0
+        },
+        "S_factorization_failure": {
+          "all": 0,
+          "outer_inner_Live": 0,
+          "H18": 0,
+          "A21": 0
+        },
+        "mag_factorization_failure": {
+          "all": 0,
+          "outer_inner_Live": 0,
+          "H18": 0,
+          "A21": 0
+        },
+        "hard_tilt_reset": {
+          "all": 0,
+          "outer_inner_Live": 0,
+          "H18": 0,
+          "A21": 0
+        },
+        "magnetic_lock_or_refinement_transition": {
+          "all": 2,
+          "outer_inner_Live": 1,
+          "H18": 0,
+          "A21": 0
+        },
+        "source_cap_rounding_unresolved": {
+          "all": 0,
+          "outer_inner_Live": 0,
+          "H18": 0,
+          "A21": 0
+        },
+        "acc_configured_R_mismatch": {
+          "all": 233632,
+          "outer_inner_Live": 233632,
+          "H18": 17648,
+          "A21": 215983
+        },
+        "acc_Jacobian_vector_norm_outside_bounds": {
+          "all": 0,
+          "outer_inner_Live": 0,
+          "H18": 0,
+          "A21": 0
+        },
+        "mag_configured_R_mismatch": {
+          "all": 29204,
+          "outer_inner_Live": 29204,
+          "H18": 2206,
+          "A21": 26997
+        },
+        "mag_Jacobian_vector_norm_outside_bounds": {
+          "all": 0,
+          "outer_inner_Live": 0,
+          "H18": 0,
+          "A21": 0
+        }
+      }
+    },
+    {
+      "samples": 240000,
+      "regimes": {
+        "all": {
+          "samples": 240000,
+          "intervals": 1,
+          "first_interval": [
+            0,
+            240000
+          ],
+          "longest_interval_samples": 240000
+        },
+        "outer_inner_Live": {
+          "samples": 233632,
+          "intervals": 1,
+          "first_interval": [
+            6368,
+            240000
+          ],
+          "longest_interval_samples": 233632
+        },
+        "H18": {
+          "samples": 17648,
+          "intervals": 1,
+          "first_interval": [
+            6368,
+            24016
+          ],
+          "longest_interval_samples": 17648
+        },
+        "A21": {
+          "samples": 215983,
+          "intervals": 1,
+          "first_interval": [
+            24017,
+            240000
+          ],
+          "longest_interval_samples": 215983
+        }
+      },
+      "vectors": {
+        "acc": {
+          "accepted_events": 233632,
+          "configured_R": [
+            [
+              0.04000000000000001,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.04000000000000001,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.04000000000000001
+            ]
+          ],
+          "R_diagonal_min": [
+            0.000866618473,
+            0.000866618473,
+            0.000866618473
+          ],
+          "R_diagonal_max": [
+            0.000866618473,
+            0.000866618473,
+            0.000866618473
+          ],
+          "norm_min": 6.516240457664159,
+          "norm_max": 14.995210141939562,
+          "comparison_rounding_relative_tolerance": 9.5367431640625e-07
+        },
+        "mag": {
+          "accepted_events": 29204,
+          "configured_R": [
+            [
+              0.09,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.09,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.09
+            ]
+          ],
+          "R_diagonal_min": [
+            3.68640018,
+            3.68640018,
+            3.68640018
+          ],
+          "R_diagonal_max": [
+            3.68640018,
+            3.68640018,
+            3.68640018
+          ],
+          "norm_min": 51.96996325857635,
+          "norm_max": 53.51181902162654,
+          "comparison_rounding_relative_tolerance": 9.5367431640625e-07
+        }
+      },
+      "physical_phase_extrema": {
+        "before_Live": {
+          "samples": 6368,
+          "acceleration_norm_max_upper_mps2": 3.3273421476908576,
+          "body_rate_norm_max_upper_rad_s": 0.6098133027831062,
+          "specific_force_norm_min_lower_mps2": 8.302085019486183,
+          "specific_force_norm_max_upper_mps2": 12.499105875383451,
+          "vertical_acceleration_min_mps2": -1.66833,
+          "vertical_acceleration_max_mps2": 2.65999,
+          "acceleration_norm_above_g_samples": 0
+        },
+        "Live": {
+          "samples": 233632,
+          "acceleration_norm_max_upper_mps2": 6.723219714705153,
+          "body_rate_norm_max_upper_rad_s": 1.4655572811221547,
+          "specific_force_norm_min_lower_mps2": 6.514846250565624,
+          "specific_force_norm_max_upper_mps2": 15.046984697663554,
+          "vertical_acceleration_min_mps2": -3.45155,
+          "vertical_acceleration_max_mps2": 5.11003,
+          "acceleration_norm_above_g_samples": 0
+        },
+        "non_Live_after_entry": {
+          "samples": 0,
+          "acceleration_norm_max_upper_mps2": null,
+          "body_rate_norm_max_upper_rad_s": null,
+          "specific_force_norm_min_lower_mps2": null,
+          "specific_force_norm_max_upper_mps2": null,
+          "vertical_acceleration_min_mps2": null,
+          "vertical_acceleration_max_mps2": null,
+          "acceleration_norm_above_g_samples": 0
+        }
+      },
+      "observations": {
+        "magnetic_reference_write": {
+          "samples": 26999,
+          "intervals": 26999,
+          "first_interval": [
+            4400,
+            4401
+          ],
+          "longest_interval_samples": 1
+        },
+        "same_sample_vector_sine_below_bound": {
+          "samples": 0,
+          "intervals": 0,
+          "first_interval": null,
+          "longest_interval_samples": 0
+        }
+      },
+      "candidate_impulse_windows": {
+        "all": {
+          "complete_10s_windows": 238001,
+          "candidate_2_mps_definite_violations": {
+            "samples": 5227,
+            "intervals": 48,
+            "first_interval": [
+              8942,
+              9190
+            ],
+            "longest_interval_samples": 441
+          },
+          "max_upper_mps": 2.7155863805959966
+        },
+        "outer_inner_Live": {
+          "complete_10s_windows": 231633,
+          "candidate_2_mps_definite_violations": {
+            "samples": 5227,
+            "intervals": 48,
+            "first_interval": [
+              8942,
+              9190
+            ],
+            "longest_interval_samples": 441
+          },
+          "max_upper_mps": 2.7155863805959966
+        },
+        "H18": {
+          "complete_10s_windows": 15649,
+          "candidate_2_mps_definite_violations": {
+            "samples": 330,
+            "intervals": 2,
+            "first_interval": [
+              8942,
+              9190
+            ],
+            "longest_interval_samples": 248
+          },
+          "max_upper_mps": 2.3406821677345926
+        },
+        "A21": {
+          "complete_10s_windows": 213984,
+          "candidate_2_mps_definite_violations": {
+            "samples": 4883,
+            "intervals": 45,
+            "first_interval": [
+              24471,
+              24517
+            ],
+            "longest_interval_samples": 441
+          },
+          "max_upper_mps": 2.7155863805959966
+        }
+      },
+      "physical_caps_inside_runtime_Live": {
+        "samples": 218187,
+        "intervals": 268,
+        "first_interval": [
+          6368,
+          6556
+        ],
+        "longest_interval_samples": 7310
+      },
+      "passes_observed_sample_checks_only": {
+        "samples": 0,
+        "intervals": 0,
+        "first_interval": null,
+        "longest_interval_samples": 0
+      },
+      "live_1s_windows_without_accepted_mag": 0,
+      "same_sample_accepted_pair_count": 29204,
+      "same_sample_common_frame_sine_min_diagnostic": 0.2276409498144553,
+      "S_calls": 38956,
+      "S_applied": 38956,
+      "S_R_diagonal_min": [
+        0.530589998,
+        0.530589998,
+        1.02351451
+      ],
+      "S_R_diagonal_max": [
+        3.49068809,
+        3.49068809,
+        6.73357964
+      ],
+      "source_samples_pruned": 0,
+      "runtime_Live_implies_Normal_Live": false,
+      "continuous_BRMM_admission_certified": false,
+      "transported_vector_PE_certified": false,
+      "P3_certified_by_this_audit": false,
+      "P4_or_P5_promoted": false,
+      "remaining_admission_obligations": [
+        "continuous no-DC/recurrence and source primitives",
+        "transported asynchronous vector PE on the complete word",
+        "source-uniform entry, Q/floor/tuner invariant attachment",
+        "nonlinear projection and every-prefix chart/domain retention"
+      ],
+      "record": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+      "csv_sha256": "2fa6c06d80d61e76f00dea60cc5f4330007c4192536bee46c52e8fd639bc30ae",
+      "ordinary_output_sha256": {
+        "stderr.txt": "658cac8ea2726ff0a56e734485f31d1e7a87a6ae80e8274193fa326e8d6b49c5",
+        "stdout.txt": "7f2f59276eee47bda446e825b017c8c5379702105e36c9e8da028e39e735a07f",
+        "w3d_jonswap_H1.500_L50.710_A-30.00_P120.00_fusion_ou3.csv": "bd6ec5ead376eda7659da6c6e7909895423f7b11cc3a29c17e2ec79c6f0b05f5"
+      },
+      "read_only_runtime_output_bitwise_identical": true,
+      "trace_sha256": {
+        "runtime.samples.csv": "f1daa7694630d3b47caf2b2eef736ffe2df03a9d3ed077cb2572684831752ab6",
+        "runtime.events.csv": "0babea8d9c8fe149689bb65e252a24a92bfbe90181580a5255fcbce78f12612b"
+      },
+      "violation_sample_counts": {
+        "outside_outer_and_inner_Live": {
+          "all": 6368,
+          "outer_inner_Live": 0,
+          "H18": 0,
+          "A21": 0
+        },
+        "bias_mode_transition": {
+          "all": 1,
+          "outer_inner_Live": 1,
+          "H18": 0,
+          "A21": 0
+        },
+        "physical_acceleration_above_cap": {
+          "all": 1909,
+          "outer_inner_Live": 1909,
+          "H18": 116,
+          "A21": 1793
+        },
+        "physical_body_rate_above_cap": {
+          "all": 14528,
+          "outer_inner_Live": 14401,
+          "H18": 867,
+          "A21": 13534
+        },
+        "guard_not_dormant_transparent": {
+          "all": 0,
+          "outer_inner_Live": 0,
+          "H18": 0,
+          "A21": 0
+        },
+        "prediction_or_accelerometer_missing": {
+          "all": 6368,
+          "outer_inner_Live": 0,
+          "H18": 0,
+          "A21": 0
+        },
+        "S_factorization_failure": {
+          "all": 0,
+          "outer_inner_Live": 0,
+          "H18": 0,
+          "A21": 0
+        },
+        "mag_factorization_failure": {
+          "all": 0,
+          "outer_inner_Live": 0,
+          "H18": 0,
+          "A21": 0
+        },
+        "hard_tilt_reset": {
+          "all": 0,
+          "outer_inner_Live": 0,
+          "H18": 0,
+          "A21": 0
+        },
+        "magnetic_lock_or_refinement_transition": {
+          "all": 2,
+          "outer_inner_Live": 1,
+          "H18": 0,
+          "A21": 0
+        },
+        "source_cap_rounding_unresolved": {
+          "all": 0,
+          "outer_inner_Live": 0,
+          "H18": 0,
+          "A21": 0
+        },
+        "acc_configured_R_mismatch": {
+          "all": 233632,
+          "outer_inner_Live": 233632,
+          "H18": 17648,
+          "A21": 215983
+        },
+        "acc_Jacobian_vector_norm_outside_bounds": {
+          "all": 710,
+          "outer_inner_Live": 710,
+          "H18": 93,
+          "A21": 617
+        },
+        "mag_configured_R_mismatch": {
+          "all": 29204,
+          "outer_inner_Live": 29204,
+          "H18": 2206,
+          "A21": 26997
+        },
+        "mag_Jacobian_vector_norm_outside_bounds": {
+          "all": 0,
+          "outer_inner_Live": 0,
+          "H18": 0,
+          "A21": 0
+        }
+      }
+    },
+    {
+      "samples": 240000,
+      "regimes": {
+        "all": {
+          "samples": 240000,
+          "intervals": 1,
+          "first_interval": [
+            0,
+            240000
+          ],
+          "longest_interval_samples": 240000
+        },
+        "outer_inner_Live": {
+          "samples": 233632,
+          "intervals": 1,
+          "first_interval": [
+            6368,
+            240000
+          ],
+          "longest_interval_samples": 233632
+        },
+        "H18": {
+          "samples": 17648,
+          "intervals": 1,
+          "first_interval": [
+            6368,
+            24016
+          ],
+          "longest_interval_samples": 17648
+        },
+        "A21": {
+          "samples": 215983,
+          "intervals": 1,
+          "first_interval": [
+            24017,
+            240000
+          ],
+          "longest_interval_samples": 215983
+        }
+      },
+      "vectors": {
+        "acc": {
+          "accepted_events": 233632,
+          "configured_R": [
+            [
+              0.04000000000000001,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.04000000000000001,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.04000000000000001
+            ]
+          ],
+          "R_diagonal_min": [
+            0.000866618473,
+            0.000866618473,
+            0.000866618473
+          ],
+          "R_diagonal_max": [
+            0.000866618473,
+            0.000866618473,
+            0.000866618473
+          ],
+          "norm_min": 3.816739104857666,
+          "norm_max": 17.929287286622344,
+          "comparison_rounding_relative_tolerance": 9.5367431640625e-07
+        },
+        "mag": {
+          "accepted_events": 29204,
+          "configured_R": [
+            [
+              0.09,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.09,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.09
+            ]
+          ],
+          "R_diagonal_min": [
+            3.68640018,
+            3.68640018,
+            3.68640018
+          ],
+          "R_diagonal_max": [
+            3.68640018,
+            3.68640018,
+            3.68640018
+          ],
+          "norm_min": 51.106809497267484,
+          "norm_max": 53.48143337652958,
+          "comparison_rounding_relative_tolerance": 9.5367431640625e-07
+        }
+      },
+      "physical_phase_extrema": {
+        "before_Live": {
+          "samples": 6368,
+          "acceleration_norm_max_upper_mps2": 5.488748817772592,
+          "body_rate_norm_max_upper_rad_s": 0.9229417747920183,
+          "specific_force_norm_min_lower_mps2": 7.542898230336994,
+          "specific_force_norm_max_upper_mps2": 13.823239841761742,
+          "vertical_acceleration_min_mps2": -2.71363,
+          "vertical_acceleration_max_mps2": 3.90821,
+          "acceleration_norm_above_g_samples": 0
+        },
+        "Live": {
+          "samples": 233632,
+          "acceleration_norm_max_upper_mps2": 9.227149574608623,
+          "body_rate_norm_max_upper_rad_s": 2.2537184094737754,
+          "specific_force_norm_min_lower_mps2": 3.8153126395996684,
+          "specific_force_norm_max_upper_mps2": 17.945362885163437,
+          "vertical_acceleration_min_mps2": -6.03291,
+          "vertical_acceleration_max_mps2": 7.8679,
+          "acceleration_norm_above_g_samples": 0
+        },
+        "non_Live_after_entry": {
+          "samples": 0,
+          "acceleration_norm_max_upper_mps2": null,
+          "body_rate_norm_max_upper_rad_s": null,
+          "specific_force_norm_min_lower_mps2": null,
+          "specific_force_norm_max_upper_mps2": null,
+          "vertical_acceleration_min_mps2": null,
+          "vertical_acceleration_max_mps2": null,
+          "acceleration_norm_above_g_samples": 0
+        }
+      },
+      "observations": {
+        "magnetic_reference_write": {
+          "samples": 26999,
+          "intervals": 26999,
+          "first_interval": [
+            4400,
+            4401
+          ],
+          "longest_interval_samples": 1
+        },
+        "same_sample_vector_sine_below_bound": {
+          "samples": 0,
+          "intervals": 0,
+          "first_interval": null,
+          "longest_interval_samples": 0
+        }
+      },
+      "candidate_impulse_windows": {
+        "all": {
+          "complete_10s_windows": 238001,
+          "candidate_2_mps_definite_violations": {
+            "samples": 76842,
+            "intervals": 224,
+            "first_interval": [
+              1273,
+              1354
+            ],
+            "longest_interval_samples": 3181
+          },
+          "max_upper_mps": 5.283784101716874
+        },
+        "outer_inner_Live": {
+          "complete_10s_windows": 231633,
+          "candidate_2_mps_definite_violations": {
+            "samples": 74846,
+            "intervals": 219,
+            "first_interval": [
+              6603,
+              6687
+            ],
+            "longest_interval_samples": 3181
+          },
+          "max_upper_mps": 5.283784101716874
+        },
+        "H18": {
+          "complete_10s_windows": 15649,
+          "candidate_2_mps_definite_violations": {
+            "samples": 4724,
+            "intervals": 17,
+            "first_interval": [
+              6603,
+              6687
+            ],
+            "longest_interval_samples": 1573
+          },
+          "max_upper_mps": 4.720766676090013
+        },
+        "A21": {
+          "complete_10s_windows": 213984,
+          "candidate_2_mps_definite_violations": {
+            "samples": 69525,
+            "intervals": 201,
+            "first_interval": [
+              24017,
+              24035
+            ],
+            "longest_interval_samples": 3181
+          },
+          "max_upper_mps": 5.283784101716874
+        }
+      },
+      "physical_caps_inside_runtime_Live": {
+        "samples": 195899,
+        "intervals": 573,
+        "first_interval": [
+          6368,
+          6487
+        ],
+        "longest_interval_samples": 2519
+      },
+      "passes_observed_sample_checks_only": {
+        "samples": 0,
+        "intervals": 0,
+        "first_interval": null,
+        "longest_interval_samples": 0
+      },
+      "live_1s_windows_without_accepted_mag": 0,
+      "same_sample_accepted_pair_count": 29204,
+      "same_sample_common_frame_sine_min_diagnostic": 0.11004979891163097,
+      "S_calls": 27238,
+      "S_applied": 27238,
+      "S_R_diagonal_min": [
+        3.65405631,
+        3.65405631,
+        7.04871988
+      ],
+      "S_R_diagonal_max": [
+        60.0062828,
+        60.0062828,
+        115.752853
+      ],
+      "source_samples_pruned": 0,
+      "runtime_Live_implies_Normal_Live": false,
+      "continuous_BRMM_admission_certified": false,
+      "transported_vector_PE_certified": false,
+      "P3_certified_by_this_audit": false,
+      "P4_or_P5_promoted": false,
+      "remaining_admission_obligations": [
+        "continuous no-DC/recurrence and source primitives",
+        "transported asynchronous vector PE on the complete word",
+        "source-uniform entry, Q/floor/tuner invariant attachment",
+        "nonlinear projection and every-prefix chart/domain retention"
+      ],
+      "record": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+      "csv_sha256": "5258a757b11c0aa5ce2fee37bb061031d4229025d3381ca4f524451deab7e18a",
+      "ordinary_output_sha256": {
+        "stderr.txt": "658cac8ea2726ff0a56e734485f31d1e7a87a6ae80e8274193fa326e8d6b49c5",
+        "stdout.txt": "422838e846bc3cac0e300015c04deea151389b140dc6c320db9bc751b760f8f4",
+        "w3d_jonswap_H4.000_L112.766_A30.00_P30.00_fusion_ou3.csv": "deeb1c879134e3cbd18a03d09ba56cc704175a659a935c402c236a6d24a3eab2"
+      },
+      "read_only_runtime_output_bitwise_identical": true,
+      "trace_sha256": {
+        "runtime.samples.csv": "1e63f4b1e507fd38918b9d9a8e6144151f84094dd2cd99820e9ad12bfe361c40",
+        "runtime.events.csv": "ba703c5407a323dc6412fa86e6e3d35f7e284e696bb2ba50514f3e3f236c0970"
+      },
+      "violation_sample_counts": {
+        "outside_outer_and_inner_Live": {
+          "all": 6368,
+          "outer_inner_Live": 0,
+          "H18": 0,
+          "A21": 0
+        },
+        "bias_mode_transition": {
+          "all": 1,
+          "outer_inner_Live": 1,
+          "H18": 0,
+          "A21": 0
+        },
+        "physical_acceleration_above_cap": {
+          "all": 11620,
+          "outer_inner_Live": 11442,
+          "H18": 635,
+          "A21": 10807
+        },
+        "physical_body_rate_above_cap": {
+          "all": 30592,
+          "outer_inner_Live": 30076,
+          "H18": 2119,
+          "A21": 27957
+        },
+        "guard_not_dormant_transparent": {
+          "all": 0,
+          "outer_inner_Live": 0,
+          "H18": 0,
+          "A21": 0
+        },
+        "prediction_or_accelerometer_missing": {
+          "all": 6368,
+          "outer_inner_Live": 0,
+          "H18": 0,
+          "A21": 0
+        },
+        "S_factorization_failure": {
+          "all": 0,
+          "outer_inner_Live": 0,
+          "H18": 0,
+          "A21": 0
+        },
+        "mag_factorization_failure": {
+          "all": 0,
+          "outer_inner_Live": 0,
+          "H18": 0,
+          "A21": 0
+        },
+        "hard_tilt_reset": {
+          "all": 0,
+          "outer_inner_Live": 0,
+          "H18": 0,
+          "A21": 0
+        },
+        "magnetic_lock_or_refinement_transition": {
+          "all": 2,
+          "outer_inner_Live": 1,
+          "H18": 0,
+          "A21": 0
+        },
+        "source_cap_rounding_unresolved": {
+          "all": 0,
+          "outer_inner_Live": 0,
+          "H18": 0,
+          "A21": 0
+        },
+        "acc_configured_R_mismatch": {
+          "all": 233632,
+          "outer_inner_Live": 233632,
+          "H18": 17648,
+          "A21": 215983
+        },
+        "acc_Jacobian_vector_norm_outside_bounds": {
+          "all": 4785,
+          "outer_inner_Live": 4785,
+          "H18": 333,
+          "A21": 4452
+        },
+        "mag_configured_R_mismatch": {
+          "all": 29204,
+          "outer_inner_Live": 29204,
+          "H18": 2206,
+          "A21": 26997
+        },
+        "mag_Jacobian_vector_norm_outside_bounds": {
+          "all": 0,
+          "outer_inner_Live": 0,
+          "H18": 0,
+          "A21": 0
+        }
+      }
+    },
+    {
+      "samples": 240000,
+      "regimes": {
+        "all": {
+          "samples": 240000,
+          "intervals": 1,
+          "first_interval": [
+            0,
+            240000
+          ],
+          "longest_interval_samples": 240000
+        },
+        "outer_inner_Live": {
+          "samples": 233632,
+          "intervals": 1,
+          "first_interval": [
+            6368,
+            240000
+          ],
+          "longest_interval_samples": 233632
+        },
+        "H18": {
+          "samples": 17648,
+          "intervals": 1,
+          "first_interval": [
+            6368,
+            24016
+          ],
+          "longest_interval_samples": 17648
+        },
+        "A21": {
+          "samples": 215983,
+          "intervals": 1,
+          "first_interval": [
+            24017,
+            240000
+          ],
+          "longest_interval_samples": 215983
+        }
+      },
+      "vectors": {
+        "acc": {
+          "accepted_events": 233632,
+          "configured_R": [
+            [
+              0.04000000000000001,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.04000000000000001,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.04000000000000001
+            ]
+          ],
+          "R_diagonal_min": [
+            0.000866618473,
+            0.000866618473,
+            0.000866618473
+          ],
+          "R_diagonal_max": [
+            0.000866618473,
+            0.000866618473,
+            0.000866618473
+          ],
+          "norm_min": 0.9445407204553731,
+          "norm_max": 25.315634845336938,
+          "comparison_rounding_relative_tolerance": 9.5367431640625e-07
+        },
+        "mag": {
+          "accepted_events": 29204,
+          "configured_R": [
+            [
+              0.09,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.09,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.09
+            ]
+          ],
+          "R_diagonal_min": [
+            3.68640018,
+            3.68640018,
+            3.68640018
+          ],
+          "R_diagonal_max": [
+            3.68640018,
+            3.68640018,
+            3.68640018
+          ],
+          "norm_min": 51.58940666156473,
+          "norm_max": 53.52826852017362,
+          "comparison_rounding_relative_tolerance": 9.5367431640625e-07
+        }
+      },
+      "physical_phase_extrema": {
+        "before_Live": {
+          "samples": 6368,
+          "acceleration_norm_max_upper_mps2": 7.0829079613461055,
+          "body_rate_norm_max_upper_rad_s": 1.8793724903193094,
+          "specific_force_norm_min_lower_mps2": 6.052456708534557,
+          "specific_force_norm_max_upper_mps2": 15.061829552019905,
+          "vertical_acceleration_min_mps2": -3.87151,
+          "vertical_acceleration_max_mps2": 5.01967,
+          "acceleration_norm_above_g_samples": 0
+        },
+        "Live": {
+          "samples": 233632,
+          "acceleration_norm_max_upper_mps2": 16.216192989391814,
+          "body_rate_norm_max_upper_rad_s": 3.461935226234166,
+          "specific_force_norm_min_lower_mps2": 0.9650206838327339,
+          "specific_force_norm_max_upper_mps2": 25.351095027223195,
+          "vertical_acceleration_min_mps2": -9.28725,
+          "vertical_acceleration_max_mps2": 14.4933,
+          "acceleration_norm_above_g_samples": 845
+        },
+        "non_Live_after_entry": {
+          "samples": 0,
+          "acceleration_norm_max_upper_mps2": null,
+          "body_rate_norm_max_upper_rad_s": null,
+          "specific_force_norm_min_lower_mps2": null,
+          "specific_force_norm_max_upper_mps2": null,
+          "vertical_acceleration_min_mps2": null,
+          "vertical_acceleration_max_mps2": null,
+          "acceleration_norm_above_g_samples": 0
+        }
+      },
+      "observations": {
+        "magnetic_reference_write": {
+          "samples": 26999,
+          "intervals": 26999,
+          "first_interval": [
+            4768,
+            4769
+          ],
+          "longest_interval_samples": 1
+        },
+        "same_sample_vector_sine_below_bound": {
+          "samples": 9,
+          "intervals": 9,
+          "first_interval": [
+            38304,
+            38305
+          ],
+          "longest_interval_samples": 1
+        }
+      },
+      "candidate_impulse_windows": {
+        "all": {
+          "complete_10s_windows": 238001,
+          "candidate_2_mps_definite_violations": {
+            "samples": 134408,
+            "intervals": 287,
+            "first_interval": [
+              0,
+              356
+            ],
+            "longest_interval_samples": 3546
+          },
+          "max_upper_mps": 8.091184415134268
+        },
+        "outer_inner_Live": {
+          "complete_10s_windows": 231633,
+          "candidate_2_mps_definite_violations": {
+            "samples": 130348,
+            "intervals": 274,
+            "first_interval": [
+              6607,
+              6696
+            ],
+            "longest_interval_samples": 3546
+          },
+          "max_upper_mps": 8.091184415134268
+        },
+        "H18": {
+          "complete_10s_windows": 15649,
+          "candidate_2_mps_definite_violations": {
+            "samples": 10087,
+            "intervals": 20,
+            "first_interval": [
+              6607,
+              6696
+            ],
+            "longest_interval_samples": 3546
+          },
+          "max_upper_mps": 5.675800734250644
+        },
+        "A21": {
+          "complete_10s_windows": 213984,
+          "candidate_2_mps_definite_violations": {
+            "samples": 118905,
+            "intervals": 251,
+            "first_interval": [
+              24084,
+              24181
+            ],
+            "longest_interval_samples": 3486
+          },
+          "max_upper_mps": 8.091184415134268
+        }
+      },
+      "physical_caps_inside_runtime_Live": {
+        "samples": 165796,
+        "intervals": 919,
+        "first_interval": [
+          6384,
+          6457
+        ],
+        "longest_interval_samples": 2690
+      },
+      "passes_observed_sample_checks_only": {
+        "samples": 0,
+        "intervals": 0,
+        "first_interval": null,
+        "longest_interval_samples": 0
+      },
+      "live_1s_windows_without_accepted_mag": 0,
+      "same_sample_accepted_pair_count": 29204,
+      "same_sample_common_frame_sine_min_diagnostic": 0.0245252673187454,
+      "S_calls": 20878,
+      "S_applied": 20878,
+      "S_R_diagonal_min": [
+        4.17314672,
+        4.17314672,
+        8.05005074
+      ],
+      "S_R_diagonal_max": [
+        455.100891,
+        455.100891,
+        877.895142
+      ],
+      "source_samples_pruned": 0,
+      "runtime_Live_implies_Normal_Live": false,
+      "continuous_BRMM_admission_certified": false,
+      "transported_vector_PE_certified": false,
+      "P3_certified_by_this_audit": false,
+      "P4_or_P5_promoted": false,
+      "remaining_admission_obligations": [
+        "continuous no-DC/recurrence and source primitives",
+        "transported asynchronous vector PE on the complete word",
+        "source-uniform entry, Q/floor/tuner invariant attachment",
+        "nonlinear projection and every-prefix chart/domain retention"
+      ],
+      "record": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "csv_sha256": "f0be2c41464e4a5a0924bab652549d38ffc6bec55406156b7b4a0ef72ce490d4",
+      "ordinary_output_sha256": {
+        "stderr.txt": "6a222acddc57a7acff69383ddd3f0a3844a967ee3dbb4df0b722c4b2059452a2",
+        "stdout.txt": "55496f942e611856b2d39b934fe211511d78787c918f4b9430a87844b9d423dd",
+        "w3d_jonswap_H8.500_L202.839_A-30.00_P72.00_fusion_ou3.csv": "0b0e798fab8ccae0d8308d0b9fca48aa3cec9e4d3dc02da848b308665e60f83d"
+      },
+      "read_only_runtime_output_bitwise_identical": true,
+      "trace_sha256": {
+        "runtime.samples.csv": "9a1453d7733fa770f53a6f0f80398df8bcb8b5afc2bfef6469969e8518ea9abd",
+        "runtime.events.csv": "b24c9f230384933ec21b1dddc520bf0e83dad87a8042fd4b4175e637ba01deb5"
+      },
+      "violation_sample_counts": {
+        "outside_outer_and_inner_Live": {
+          "all": 6368,
+          "outer_inner_Live": 0,
+          "H18": 0,
+          "A21": 0
+        },
+        "bias_mode_transition": {
+          "all": 1,
+          "outer_inner_Live": 1,
+          "H18": 0,
+          "A21": 0
+        },
+        "physical_acceleration_above_cap": {
+          "all": 30314,
+          "outer_inner_Live": 29832,
+          "H18": 1828,
+          "A21": 28004
+        },
+        "physical_body_rate_above_cap": {
+          "all": 48304,
+          "outer_inner_Live": 47120,
+          "H18": 3189,
+          "A21": 43930
+        },
+        "guard_not_dormant_transparent": {
+          "all": 0,
+          "outer_inner_Live": 0,
+          "H18": 0,
+          "A21": 0
+        },
+        "prediction_or_accelerometer_missing": {
+          "all": 6368,
+          "outer_inner_Live": 0,
+          "H18": 0,
+          "A21": 0
+        },
+        "S_factorization_failure": {
+          "all": 0,
+          "outer_inner_Live": 0,
+          "H18": 0,
+          "A21": 0
+        },
+        "mag_factorization_failure": {
+          "all": 0,
+          "outer_inner_Live": 0,
+          "H18": 0,
+          "A21": 0
+        },
+        "hard_tilt_reset": {
+          "all": 0,
+          "outer_inner_Live": 0,
+          "H18": 0,
+          "A21": 0
+        },
+        "magnetic_lock_or_refinement_transition": {
+          "all": 2,
+          "outer_inner_Live": 1,
+          "H18": 0,
+          "A21": 0
+        },
+        "source_cap_rounding_unresolved": {
+          "all": 0,
+          "outer_inner_Live": 0,
+          "H18": 0,
+          "A21": 0
+        },
+        "acc_configured_R_mismatch": {
+          "all": 233632,
+          "outer_inner_Live": 233632,
+          "H18": 17648,
+          "A21": 215983
+        },
+        "acc_Jacobian_vector_norm_outside_bounds": {
+          "all": 12724,
+          "outer_inner_Live": 12724,
+          "H18": 727,
+          "A21": 11997
+        },
+        "mag_configured_R_mismatch": {
+          "all": 29204,
+          "outer_inner_Live": 29204,
+          "H18": 2206,
+          "A21": 26997
+        },
+        "mag_Jacobian_vector_norm_outside_bounds": {
+          "all": 0,
+          "outer_inner_Live": 0,
+          "H18": 0,
+          "A21": 0
+        }
+      }
+    },
+    {
+      "samples": 240000,
+      "regimes": {
+        "all": {
+          "samples": 240000,
+          "intervals": 1,
+          "first_interval": [
+            0,
+            240000
+          ],
+          "longest_interval_samples": 240000
+        },
+        "outer_inner_Live": {
+          "samples": 233632,
+          "intervals": 1,
+          "first_interval": [
+            6368,
+            240000
+          ],
+          "longest_interval_samples": 233632
+        },
+        "H18": {
+          "samples": 17648,
+          "intervals": 1,
+          "first_interval": [
+            6368,
+            24016
+          ],
+          "longest_interval_samples": 17648
+        },
+        "A21": {
+          "samples": 215983,
+          "intervals": 1,
+          "first_interval": [
+            24017,
+            240000
+          ],
+          "longest_interval_samples": 215983
+        }
+      },
+      "vectors": {
+        "acc": {
+          "accepted_events": 233632,
+          "configured_R": [
+            [
+              0.04000000000000001,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.04000000000000001,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.04000000000000001
+            ]
+          ],
+          "R_diagonal_min": [
+            0.000866618473,
+            0.000866618473,
+            0.000866618473
+          ],
+          "R_diagonal_max": [
+            0.000866618473,
+            0.000866618473,
+            0.000866618473
+          ],
+          "norm_min": 7.67338887682162,
+          "norm_max": 11.653292223114477,
+          "comparison_rounding_relative_tolerance": 9.5367431640625e-07
+        },
+        "mag": {
+          "accepted_events": 29204,
+          "configured_R": [
+            [
+              0.09,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.09,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.09
+            ]
+          ],
+          "R_diagonal_min": [
+            3.68640018,
+            3.68640018,
+            3.68640018
+          ],
+          "R_diagonal_max": [
+            3.68640018,
+            3.68640018,
+            3.68640018
+          ],
+          "norm_min": 51.78732188507683,
+          "norm_max": 53.52000756060905,
+          "comparison_rounding_relative_tolerance": 9.5367431640625e-07
+        }
+      },
+      "physical_phase_extrema": {
+        "before_Live": {
+          "samples": 6368,
+          "acceleration_norm_max_upper_mps2": 1.7378538467523936,
+          "body_rate_norm_max_upper_rad_s": 0.6636128752095489,
+          "specific_force_norm_min_lower_mps2": 8.069960791049333,
+          "specific_force_norm_max_upper_mps2": 11.12034774633438,
+          "vertical_acceleration_min_mps2": -1.73672,
+          "vertical_acceleration_max_mps2": 1.31103,
+          "acceleration_norm_above_g_samples": 0
+        },
+        "Live": {
+          "samples": 233632,
+          "acceleration_norm_max_upper_mps2": 2.1849643553808846,
+          "body_rate_norm_max_upper_rad_s": 0.8150044312051319,
+          "specific_force_norm_min_lower_mps2": 7.66829315396565,
+          "specific_force_norm_max_upper_mps2": 11.63982342630734,
+          "vertical_acceleration_min_mps2": -2.14133,
+          "vertical_acceleration_max_mps2": 1.82823,
+          "acceleration_norm_above_g_samples": 0
+        },
+        "non_Live_after_entry": {
+          "samples": 0,
+          "acceleration_norm_max_upper_mps2": null,
+          "body_rate_norm_max_upper_rad_s": null,
+          "specific_force_norm_min_lower_mps2": null,
+          "specific_force_norm_max_upper_mps2": null,
+          "vertical_acceleration_min_mps2": null,
+          "vertical_acceleration_max_mps2": null,
+          "acceleration_norm_above_g_samples": 0
+        }
+      },
+      "observations": {
+        "magnetic_reference_write": {
+          "samples": 24575,
+          "intervals": 24575,
+          "first_interval": [
+            4400,
+            4401
+          ],
+          "longest_interval_samples": 1
+        },
+        "same_sample_vector_sine_below_bound": {
+          "samples": 0,
+          "intervals": 0,
+          "first_interval": null,
+          "longest_interval_samples": 0
+        }
+      },
+      "candidate_impulse_windows": {
+        "all": {
+          "complete_10s_windows": 238001,
+          "candidate_2_mps_definite_violations": {
+            "samples": 0,
+            "intervals": 0,
+            "first_interval": null,
+            "longest_interval_samples": 0
+          },
+          "max_upper_mps": 0.9869749955629263
+        },
+        "outer_inner_Live": {
+          "complete_10s_windows": 231633,
+          "candidate_2_mps_definite_violations": {
+            "samples": 0,
+            "intervals": 0,
+            "first_interval": null,
+            "longest_interval_samples": 0
+          },
+          "max_upper_mps": 0.9869749955629263
+        },
+        "H18": {
+          "complete_10s_windows": 15649,
+          "candidate_2_mps_definite_violations": {
+            "samples": 0,
+            "intervals": 0,
+            "first_interval": null,
+            "longest_interval_samples": 0
+          },
+          "max_upper_mps": 0.8664757089277774
+        },
+        "A21": {
+          "complete_10s_windows": 213984,
+          "candidate_2_mps_definite_violations": {
+            "samples": 0,
+            "intervals": 0,
+            "first_interval": null,
+            "longest_interval_samples": 0
+          },
+          "max_upper_mps": 0.9869749955629263
+        }
+      },
+      "physical_caps_inside_runtime_Live": {
+        "samples": 231962,
+        "intervals": 43,
+        "first_interval": [
+          6368,
+          13449
+        ],
+        "longest_interval_samples": 14434
+      },
+      "passes_observed_sample_checks_only": {
+        "samples": 0,
+        "intervals": 0,
+        "first_interval": null,
+        "longest_interval_samples": 0
+      },
+      "live_1s_windows_without_accepted_mag": 0,
+      "same_sample_accepted_pair_count": 29204,
+      "same_sample_common_frame_sine_min_diagnostic": 0.3059638523781295,
+      "S_calls": 70147,
+      "S_applied": 70147,
+      "S_R_diagonal_min": [
+        0.0116643663,
+        0.0116643663,
+        0.0225007031
+      ],
+      "S_R_diagonal_max": [
+        0.950883806,
+        0.950883806,
+        1.83426642
+      ],
+      "source_samples_pruned": 0,
+      "runtime_Live_implies_Normal_Live": false,
+      "continuous_BRMM_admission_certified": false,
+      "transported_vector_PE_certified": false,
+      "P3_certified_by_this_audit": false,
+      "P4_or_P5_promoted": false,
+      "remaining_admission_obligations": [
+        "continuous no-DC/recurrence and source primitives",
+        "transported asynchronous vector PE on the complete word",
+        "source-uniform entry, Q/floor/tuner invariant attachment",
+        "nonlinear projection and every-prefix chart/domain retention"
+      ],
+      "record": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+      "csv_sha256": "f1d13e93aabcea7d2ab002d7829f7d5a0fb820165851f2bb327021e73b5c7fb7",
+      "ordinary_output_sha256": {
+        "stderr.txt": "658cac8ea2726ff0a56e734485f31d1e7a87a6ae80e8274193fa326e8d6b49c5",
+        "stdout.txt": "b8603986c009c207361185a2cb472cfdaf1528992909545645609c6aee73848c",
+        "w3d_pmstokes_H0.270_L14.047_A30.00_P60.00_fusion_ou3.csv": "eb3442c037b7f18c761480ca3ec93f82bcd3786fcf28ca49a756a9309fa91c7b"
+      },
+      "read_only_runtime_output_bitwise_identical": true,
+      "trace_sha256": {
+        "runtime.samples.csv": "59431d88188463fe8912446c1fe23726f2f9086b8ad741875fa7774f0f25b9a4",
+        "runtime.events.csv": "5b7215ddb2da828a846745ae8c0b897a418680f21f416af2332b8b9fd4d30774"
+      },
+      "violation_sample_counts": {
+        "outside_outer_and_inner_Live": {
+          "all": 6368,
+          "outer_inner_Live": 0,
+          "H18": 0,
+          "A21": 0
+        },
+        "bias_mode_transition": {
+          "all": 1,
+          "outer_inner_Live": 1,
+          "H18": 0,
+          "A21": 0
+        },
+        "physical_acceleration_above_cap": {
+          "all": 0,
+          "outer_inner_Live": 0,
+          "H18": 0,
+          "A21": 0
+        },
+        "physical_body_rate_above_cap": {
+          "all": 1726,
+          "outer_inner_Live": 1670,
+          "H18": 143,
+          "A21": 1527
+        },
+        "guard_not_dormant_transparent": {
+          "all": 0,
+          "outer_inner_Live": 0,
+          "H18": 0,
+          "A21": 0
+        },
+        "prediction_or_accelerometer_missing": {
+          "all": 6368,
+          "outer_inner_Live": 0,
+          "H18": 0,
+          "A21": 0
+        },
+        "S_factorization_failure": {
+          "all": 0,
+          "outer_inner_Live": 0,
+          "H18": 0,
+          "A21": 0
+        },
+        "mag_factorization_failure": {
+          "all": 0,
+          "outer_inner_Live": 0,
+          "H18": 0,
+          "A21": 0
+        },
+        "hard_tilt_reset": {
+          "all": 0,
+          "outer_inner_Live": 0,
+          "H18": 0,
+          "A21": 0
+        },
+        "magnetic_lock_or_refinement_transition": {
+          "all": 2,
+          "outer_inner_Live": 1,
+          "H18": 0,
+          "A21": 0
+        },
+        "source_cap_rounding_unresolved": {
+          "all": 0,
+          "outer_inner_Live": 0,
+          "H18": 0,
+          "A21": 0
+        },
+        "acc_configured_R_mismatch": {
+          "all": 233632,
+          "outer_inner_Live": 233632,
+          "H18": 17648,
+          "A21": 215983
+        },
+        "acc_Jacobian_vector_norm_outside_bounds": {
+          "all": 0,
+          "outer_inner_Live": 0,
+          "H18": 0,
+          "A21": 0
+        },
+        "mag_configured_R_mismatch": {
+          "all": 29204,
+          "outer_inner_Live": 29204,
+          "H18": 2206,
+          "A21": 26997
+        },
+        "mag_Jacobian_vector_norm_outside_bounds": {
+          "all": 0,
+          "outer_inner_Live": 0,
+          "H18": 0,
+          "A21": 0
+        }
+      }
+    },
+    {
+      "samples": 240000,
+      "regimes": {
+        "all": {
+          "samples": 240000,
+          "intervals": 1,
+          "first_interval": [
+            0,
+            240000
+          ],
+          "longest_interval_samples": 240000
+        },
+        "outer_inner_Live": {
+          "samples": 233632,
+          "intervals": 1,
+          "first_interval": [
+            6368,
+            240000
+          ],
+          "longest_interval_samples": 233632
+        },
+        "H18": {
+          "samples": 17648,
+          "intervals": 1,
+          "first_interval": [
+            6368,
+            24016
+          ],
+          "longest_interval_samples": 17648
+        },
+        "A21": {
+          "samples": 215983,
+          "intervals": 1,
+          "first_interval": [
+            24017,
+            240000
+          ],
+          "longest_interval_samples": 215983
+        }
+      },
+      "vectors": {
+        "acc": {
+          "accepted_events": 233632,
+          "configured_R": [
+            [
+              0.04000000000000001,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.04000000000000001,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.04000000000000001
+            ]
+          ],
+          "R_diagonal_min": [
+            0.000866618473,
+            0.000866618473,
+            0.000866618473
+          ],
+          "R_diagonal_max": [
+            0.000866618473,
+            0.000866618473,
+            0.000866618473
+          ],
+          "norm_min": 4.800947461929076,
+          "norm_max": 14.04546393707819,
+          "comparison_rounding_relative_tolerance": 9.5367431640625e-07
+        },
+        "mag": {
+          "accepted_events": 29204,
+          "configured_R": [
+            [
+              0.09,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.09,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.09
+            ]
+          ],
+          "R_diagonal_min": [
+            3.68640018,
+            3.68640018,
+            3.68640018
+          ],
+          "R_diagonal_max": [
+            3.68640018,
+            3.68640018,
+            3.68640018
+          ],
+          "norm_min": 52.05797043790602,
+          "norm_max": 53.49630035601733,
+          "comparison_rounding_relative_tolerance": 9.5367431640625e-07
+        }
+      },
+      "physical_phase_extrema": {
+        "before_Live": {
+          "samples": 6368,
+          "acceleration_norm_max_upper_mps2": 3.813003369348106,
+          "body_rate_norm_max_upper_rad_s": 1.593948006051754,
+          "specific_force_norm_min_lower_mps2": 6.030485981006808,
+          "specific_force_norm_max_upper_mps2": 12.38178158652159,
+          "vertical_acceleration_min_mps2": -3.77897,
+          "vertical_acceleration_max_mps2": 2.52518,
+          "acceleration_norm_above_g_samples": 0
+        },
+        "Live": {
+          "samples": 233632,
+          "acceleration_norm_max_upper_mps2": 5.1904076234014624,
+          "body_rate_norm_max_upper_rad_s": 2.152438381962247,
+          "specific_force_norm_min_lower_mps2": 4.790482936191277,
+          "specific_force_norm_max_upper_mps2": 14.047521409316916,
+          "vertical_acceleration_min_mps2": -5.03727,
+          "vertical_acceleration_max_mps2": 4.22543,
+          "acceleration_norm_above_g_samples": 0
+        },
+        "non_Live_after_entry": {
+          "samples": 0,
+          "acceleration_norm_max_upper_mps2": null,
+          "body_rate_norm_max_upper_rad_s": null,
+          "specific_force_norm_min_lower_mps2": null,
+          "specific_force_norm_max_upper_mps2": null,
+          "vertical_acceleration_min_mps2": null,
+          "vertical_acceleration_max_mps2": null,
+          "acceleration_norm_above_g_samples": 0
+        }
+      },
+      "observations": {
+        "magnetic_reference_write": {
+          "samples": 26999,
+          "intervals": 26999,
+          "first_interval": [
+            4400,
+            4401
+          ],
+          "longest_interval_samples": 1
+        },
+        "same_sample_vector_sine_below_bound": {
+          "samples": 0,
+          "intervals": 0,
+          "first_interval": null,
+          "longest_interval_samples": 0
+        }
+      },
+      "candidate_impulse_windows": {
+        "all": {
+          "complete_10s_windows": 238001,
+          "candidate_2_mps_definite_violations": {
+            "samples": 6739,
+            "intervals": 33,
+            "first_interval": [
+              11354,
+              11536
+            ],
+            "longest_interval_samples": 719
+          },
+          "max_upper_mps": 2.980607683855462
+        },
+        "outer_inner_Live": {
+          "complete_10s_windows": 231633,
+          "candidate_2_mps_definite_violations": {
+            "samples": 6739,
+            "intervals": 33,
+            "first_interval": [
+              11354,
+              11536
+            ],
+            "longest_interval_samples": 719
+          },
+          "max_upper_mps": 2.980607683855462
+        },
+        "H18": {
+          "complete_10s_windows": 15649,
+          "candidate_2_mps_definite_violations": {
+            "samples": 229,
+            "intervals": 2,
+            "first_interval": [
+              11354,
+              11536
+            ],
+            "longest_interval_samples": 182
+          },
+          "max_upper_mps": 2.244384879711787
+        },
+        "A21": {
+          "complete_10s_windows": 213984,
+          "candidate_2_mps_definite_violations": {
+            "samples": 6433,
+            "intervals": 30,
+            "first_interval": [
+              34048,
+              34343
+            ],
+            "longest_interval_samples": 719
+          },
+          "max_upper_mps": 2.980607683855462
+        }
+      },
+      "physical_caps_inside_runtime_Live": {
+        "samples": 206562,
+        "intervals": 450,
+        "first_interval": [
+          6368,
+          6389
+        ],
+        "longest_interval_samples": 3006
+      },
+      "passes_observed_sample_checks_only": {
+        "samples": 0,
+        "intervals": 0,
+        "first_interval": null,
+        "longest_interval_samples": 0
+      },
+      "live_1s_windows_without_accepted_mag": 0,
+      "same_sample_accepted_pair_count": 29204,
+      "same_sample_common_frame_sine_min_diagnostic": 0.14314958940387765,
+      "S_calls": 41881,
+      "S_applied": 41881,
+      "S_R_diagonal_min": [
+        0.328070998,
+        0.328070998,
+        0.632852912
+      ],
+      "S_R_diagonal_max": [
+        3.60260391,
+        3.60260391,
+        6.94946718
+      ],
+      "source_samples_pruned": 0,
+      "runtime_Live_implies_Normal_Live": false,
+      "continuous_BRMM_admission_certified": false,
+      "transported_vector_PE_certified": false,
+      "P3_certified_by_this_audit": false,
+      "P4_or_P5_promoted": false,
+      "remaining_admission_obligations": [
+        "continuous no-DC/recurrence and source primitives",
+        "transported asynchronous vector PE on the complete word",
+        "source-uniform entry, Q/floor/tuner invariant attachment",
+        "nonlinear projection and every-prefix chart/domain retention"
+      ],
+      "record": "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
+      "csv_sha256": "b250fbd7147c5edb67427b22055f36d75989a9aeba01a01716a48b24feb0af55",
+      "ordinary_output_sha256": {
+        "stderr.txt": "658cac8ea2726ff0a56e734485f31d1e7a87a6ae80e8274193fa326e8d6b49c5",
+        "stdout.txt": "202bd32c158bb67ba99ddb01184449d936303f4d138ce6da5565b0df8284c997",
+        "w3d_pmstokes_H1.500_L50.710_A-30.00_P120.00_fusion_ou3.csv": "0fb1d949aae56a03da17e9a6dfebd526949511e11530578470948aeb335ca379"
+      },
+      "read_only_runtime_output_bitwise_identical": true,
+      "trace_sha256": {
+        "runtime.samples.csv": "4a43d8dfada17f2b32ad0764b4f0547d4a44f9aa1f4fe3b40a90302a55d9300d",
+        "runtime.events.csv": "b703a3c20ff314fdea726efc3ce357f9fae41e58b062b31c4c75d0b343263264"
+      },
+      "violation_sample_counts": {
+        "outside_outer_and_inner_Live": {
+          "all": 6368,
+          "outer_inner_Live": 0,
+          "H18": 0,
+          "A21": 0
+        },
+        "bias_mode_transition": {
+          "all": 1,
+          "outer_inner_Live": 1,
+          "H18": 0,
+          "A21": 0
+        },
+        "physical_acceleration_above_cap": {
+          "all": 603,
+          "outer_inner_Live": 603,
+          "H18": 0,
+          "A21": 603
+        },
+        "physical_body_rate_above_cap": {
+          "all": 27487,
+          "outer_inner_Live": 26812,
+          "H18": 1981,
+          "A21": 24831
+        },
+        "guard_not_dormant_transparent": {
+          "all": 0,
+          "outer_inner_Live": 0,
+          "H18": 0,
+          "A21": 0
+        },
+        "prediction_or_accelerometer_missing": {
+          "all": 6368,
+          "outer_inner_Live": 0,
+          "H18": 0,
+          "A21": 0
+        },
+        "S_factorization_failure": {
+          "all": 0,
+          "outer_inner_Live": 0,
+          "H18": 0,
+          "A21": 0
+        },
+        "mag_factorization_failure": {
+          "all": 0,
+          "outer_inner_Live": 0,
+          "H18": 0,
+          "A21": 0
+        },
+        "hard_tilt_reset": {
+          "all": 0,
+          "outer_inner_Live": 0,
+          "H18": 0,
+          "A21": 0
+        },
+        "magnetic_lock_or_refinement_transition": {
+          "all": 2,
+          "outer_inner_Live": 1,
+          "H18": 0,
+          "A21": 0
+        },
+        "source_cap_rounding_unresolved": {
+          "all": 0,
+          "outer_inner_Live": 0,
+          "H18": 0,
+          "A21": 0
+        },
+        "acc_configured_R_mismatch": {
+          "all": 233632,
+          "outer_inner_Live": 233632,
+          "H18": 17648,
+          "A21": 215983
+        },
+        "acc_Jacobian_vector_norm_outside_bounds": {
+          "all": 151,
+          "outer_inner_Live": 151,
+          "H18": 0,
+          "A21": 151
+        },
+        "mag_configured_R_mismatch": {
+          "all": 29204,
+          "outer_inner_Live": 29204,
+          "H18": 2206,
+          "A21": 26997
+        },
+        "mag_Jacobian_vector_norm_outside_bounds": {
+          "all": 0,
+          "outer_inner_Live": 0,
+          "H18": 0,
+          "A21": 0
+        }
+      }
+    },
+    {
+      "samples": 240000,
+      "regimes": {
+        "all": {
+          "samples": 240000,
+          "intervals": 1,
+          "first_interval": [
+            0,
+            240000
+          ],
+          "longest_interval_samples": 240000
+        },
+        "outer_inner_Live": {
+          "samples": 233632,
+          "intervals": 1,
+          "first_interval": [
+            6368,
+            240000
+          ],
+          "longest_interval_samples": 233632
+        },
+        "H18": {
+          "samples": 17648,
+          "intervals": 1,
+          "first_interval": [
+            6368,
+            24016
+          ],
+          "longest_interval_samples": 17648
+        },
+        "A21": {
+          "samples": 215983,
+          "intervals": 1,
+          "first_interval": [
+            24017,
+            240000
+          ],
+          "longest_interval_samples": 215983
+        }
+      },
+      "vectors": {
+        "acc": {
+          "accepted_events": 233632,
+          "configured_R": [
+            [
+              0.04000000000000001,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.04000000000000001,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.04000000000000001
+            ]
+          ],
+          "R_diagonal_min": [
+            0.000866618473,
+            0.000866618473,
+            0.000866618473
+          ],
+          "R_diagonal_max": [
+            0.000866618473,
+            0.000866618473,
+            0.000866618473
+          ],
+          "norm_min": 3.5353401830556046,
+          "norm_max": 16.22896349663208,
+          "comparison_rounding_relative_tolerance": 9.5367431640625e-07
+        },
+        "mag": {
+          "accepted_events": 29204,
+          "configured_R": [
+            [
+              0.09,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.09,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.09
+            ]
+          ],
+          "R_diagonal_min": [
+            3.68640018,
+            3.68640018,
+            3.68640018
+          ],
+          "R_diagonal_max": [
+            3.68640018,
+            3.68640018,
+            3.68640018
+          ],
+          "norm_min": 51.25617052504231,
+          "norm_max": 53.49193229064395,
+          "comparison_rounding_relative_tolerance": 9.5367431640625e-07
+        }
+      },
+      "physical_phase_extrema": {
+        "before_Live": {
+          "samples": 6368,
+          "acceleration_norm_max_upper_mps2": 4.900828569109515,
+          "body_rate_norm_max_upper_rad_s": 1.8769751046208076,
+          "specific_force_norm_min_lower_mps2": 5.134629395423293,
+          "specific_force_norm_max_upper_mps2": 13.41537275699297,
+          "vertical_acceleration_min_mps2": -4.70105,
+          "vertical_acceleration_max_mps2": 3.54556,
+          "acceleration_norm_above_g_samples": 0
+        },
+        "Live": {
+          "samples": 233632,
+          "acceleration_norm_max_upper_mps2": 6.633227022897682,
+          "body_rate_norm_max_upper_rad_s": 2.610071350346577,
+          "specific_force_norm_min_lower_mps2": 3.5197469185354833,
+          "specific_force_norm_max_upper_mps2": 16.228144372496825,
+          "vertical_acceleration_min_mps2": -6.30067,
+          "vertical_acceleration_max_mps2": 6.37019,
+          "acceleration_norm_above_g_samples": 0
+        },
+        "non_Live_after_entry": {
+          "samples": 0,
+          "acceleration_norm_max_upper_mps2": null,
+          "body_rate_norm_max_upper_rad_s": null,
+          "specific_force_norm_min_lower_mps2": null,
+          "specific_force_norm_max_upper_mps2": null,
+          "vertical_acceleration_min_mps2": null,
+          "vertical_acceleration_max_mps2": null,
+          "acceleration_norm_above_g_samples": 0
+        }
+      },
+      "observations": {
+        "magnetic_reference_write": {
+          "samples": 26999,
+          "intervals": 26999,
+          "first_interval": [
+            4496,
+            4497
+          ],
+          "longest_interval_samples": 1
+        },
+        "same_sample_vector_sine_below_bound": {
+          "samples": 0,
+          "intervals": 0,
+          "first_interval": null,
+          "longest_interval_samples": 0
+        }
+      },
+      "candidate_impulse_windows": {
+        "all": {
+          "complete_10s_windows": 238001,
+          "candidate_2_mps_definite_violations": {
+            "samples": 97110,
+            "intervals": 179,
+            "first_interval": [
+              0,
+              37
+            ],
+            "longest_interval_samples": 3858
+          },
+          "max_upper_mps": 4.8230071438795195
+        },
+        "outer_inner_Live": {
+          "complete_10s_windows": 231633,
+          "candidate_2_mps_definite_violations": {
+            "samples": 94522,
+            "intervals": 172,
+            "first_interval": [
+              7085,
+              7264
+            ],
+            "longest_interval_samples": 3858
+          },
+          "max_upper_mps": 4.8230071438795195
+        },
+        "H18": {
+          "complete_10s_windows": 15649,
+          "candidate_2_mps_definite_violations": {
+            "samples": 4485,
+            "intervals": 13,
+            "first_interval": [
+              7085,
+              7264
+            ],
+            "longest_interval_samples": 888
+          },
+          "max_upper_mps": 3.881205194292159
+        },
+        "A21": {
+          "complete_10s_windows": 213984,
+          "candidate_2_mps_definite_violations": {
+            "samples": 89323,
+            "intervals": 159,
+            "first_interval": [
+              24017,
+              24260
+            ],
+            "longest_interval_samples": 3858
+          },
+          "max_upper_mps": 4.8230071438795195
+        }
+      },
+      "physical_caps_inside_runtime_Live": {
+        "samples": 178723,
+        "intervals": 744,
+        "first_interval": [
+          6368,
+          6376
+        ],
+        "longest_interval_samples": 2384
+      },
+      "passes_observed_sample_checks_only": {
+        "samples": 0,
+        "intervals": 0,
+        "first_interval": null,
+        "longest_interval_samples": 0
+      },
+      "live_1s_windows_without_accepted_mag": 0,
+      "same_sample_accepted_pair_count": 29204,
+      "same_sample_common_frame_sine_min_diagnostic": 0.1619637571383574,
+      "S_calls": 29050,
+      "S_applied": 29050,
+      "S_R_diagonal_min": [
+        1.77717137,
+        1.77717137,
+        3.42818522
+      ],
+      "S_R_diagonal_max": [
+        36.0420113,
+        36.0420113,
+        69.5254745
+      ],
+      "source_samples_pruned": 0,
+      "runtime_Live_implies_Normal_Live": false,
+      "continuous_BRMM_admission_certified": false,
+      "transported_vector_PE_certified": false,
+      "P3_certified_by_this_audit": false,
+      "P4_or_P5_promoted": false,
+      "remaining_admission_obligations": [
+        "continuous no-DC/recurrence and source primitives",
+        "transported asynchronous vector PE on the complete word",
+        "source-uniform entry, Q/floor/tuner invariant attachment",
+        "nonlinear projection and every-prefix chart/domain retention"
+      ],
+      "record": "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
+      "csv_sha256": "c0f833b6618576f768a05c31f2552a9644587a9ed73cdf3d6f4f261aa49372b2",
+      "ordinary_output_sha256": {
+        "stderr.txt": "7542609c4c3d8bd98fc655e86cedfb567d0495e8e85521cdb5273e8878545664",
+        "stdout.txt": "ed1308a8d0886f60b4332f53e3198c10e7e3c18ad495296db357a21c62a8cea9",
+        "w3d_pmstokes_H4.000_L112.766_A30.00_P30.00_fusion_ou3.csv": "998722cf280cc5f52ec9306d77cea6f7e0de3eea00846c0813c248d1e7f1c108"
+      },
+      "read_only_runtime_output_bitwise_identical": true,
+      "trace_sha256": {
+        "runtime.samples.csv": "e552a05e5e2ef918c33db30d323633b904c521b4c51f6c6944f144a67fe06753",
+        "runtime.events.csv": "4c7519d82caab3f944c5d80f2a74e298b65e187c428ee31476e914f20d34974d"
+      },
+      "violation_sample_counts": {
+        "outside_outer_and_inner_Live": {
+          "all": 6368,
+          "outer_inner_Live": 0,
+          "H18": 0,
+          "A21": 0
+        },
+        "bias_mode_transition": {
+          "all": 1,
+          "outer_inner_Live": 1,
+          "H18": 0,
+          "A21": 0
+        },
+        "physical_acceleration_above_cap": {
+          "all": 9885,
+          "outer_inner_Live": 9622,
+          "H18": 572,
+          "A21": 9050
+        },
+        "physical_body_rate_above_cap": {
+          "all": 50859,
+          "outer_inner_Live": 49405,
+          "H18": 3561,
+          "A21": 45843
+        },
+        "guard_not_dormant_transparent": {
+          "all": 0,
+          "outer_inner_Live": 0,
+          "H18": 0,
+          "A21": 0
+        },
+        "prediction_or_accelerometer_missing": {
+          "all": 6368,
+          "outer_inner_Live": 0,
+          "H18": 0,
+          "A21": 0
+        },
+        "S_factorization_failure": {
+          "all": 0,
+          "outer_inner_Live": 0,
+          "H18": 0,
+          "A21": 0
+        },
+        "mag_factorization_failure": {
+          "all": 0,
+          "outer_inner_Live": 0,
+          "H18": 0,
+          "A21": 0
+        },
+        "hard_tilt_reset": {
+          "all": 0,
+          "outer_inner_Live": 0,
+          "H18": 0,
+          "A21": 0
+        },
+        "magnetic_lock_or_refinement_transition": {
+          "all": 2,
+          "outer_inner_Live": 1,
+          "H18": 0,
+          "A21": 0
+        },
+        "source_cap_rounding_unresolved": {
+          "all": 0,
+          "outer_inner_Live": 0,
+          "H18": 0,
+          "A21": 0
+        },
+        "acc_configured_R_mismatch": {
+          "all": 233632,
+          "outer_inner_Live": 233632,
+          "H18": 17648,
+          "A21": 215983
+        },
+        "acc_Jacobian_vector_norm_outside_bounds": {
+          "all": 2388,
+          "outer_inner_Live": 2388,
+          "H18": 97,
+          "A21": 2291
+        },
+        "mag_configured_R_mismatch": {
+          "all": 29204,
+          "outer_inner_Live": 29204,
+          "H18": 2206,
+          "A21": 26997
+        },
+        "mag_Jacobian_vector_norm_outside_bounds": {
+          "all": 0,
+          "outer_inner_Live": 0,
+          "H18": 0,
+          "A21": 0
+        }
+      }
+    },
+    {
+      "samples": 240000,
+      "regimes": {
+        "all": {
+          "samples": 240000,
+          "intervals": 1,
+          "first_interval": [
+            0,
+            240000
+          ],
+          "longest_interval_samples": 240000
+        },
+        "outer_inner_Live": {
+          "samples": 233502,
+          "intervals": 1,
+          "first_interval": [
+            6498,
+            240000
+          ],
+          "longest_interval_samples": 233502
+        },
+        "H18": {
+          "samples": 17518,
+          "intervals": 1,
+          "first_interval": [
+            6498,
+            24016
+          ],
+          "longest_interval_samples": 17518
+        },
+        "A21": {
+          "samples": 215983,
+          "intervals": 1,
+          "first_interval": [
+            24017,
+            240000
+          ],
+          "longest_interval_samples": 215983
+        }
+      },
+      "vectors": {
+        "acc": {
+          "accepted_events": 233502,
+          "configured_R": [
+            [
+              0.04000000000000001,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.04000000000000001,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.04000000000000001
+            ]
+          ],
+          "R_diagonal_min": [
+            0.000866618473,
+            0.000866618473,
+            0.000866618473
+          ],
+          "R_diagonal_max": [
+            0.000866618473,
+            0.000866618473,
+            0.000866618473
+          ],
+          "norm_min": 2.2910597698065587,
+          "norm_max": 18.224953286858987,
+          "comparison_rounding_relative_tolerance": 9.5367431640625e-07
+        },
+        "mag": {
+          "accepted_events": 29187,
+          "configured_R": [
+            [
+              0.09,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.09,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.09
+            ]
+          ],
+          "R_diagonal_min": [
+            3.68640018,
+            3.68640018,
+            3.68640018
+          ],
+          "R_diagonal_max": [
+            3.68640018,
+            3.68640018,
+            3.68640018
+          ],
+          "norm_min": 51.57978952892637,
+          "norm_max": 53.47220502238532,
+          "comparison_rounding_relative_tolerance": 9.5367431640625e-07
+        }
+      },
+      "physical_phase_extrema": {
+        "before_Live": {
+          "samples": 6498,
+          "acceleration_norm_max_upper_mps2": 6.010337932945204,
+          "body_rate_norm_max_upper_rad_s": 3.115051481073406,
+          "specific_force_norm_min_lower_mps2": 4.144317889656871,
+          "specific_force_norm_max_upper_mps2": 14.295073620867475,
+          "vertical_acceleration_min_mps2": -5.71243,
+          "vertical_acceleration_max_mps2": 4.44164,
+          "acceleration_norm_above_g_samples": 0
+        },
+        "Live": {
+          "samples": 233502,
+          "acceleration_norm_max_upper_mps2": 8.568214498394639,
+          "body_rate_norm_max_upper_rad_s": 3.4463282774312516,
+          "specific_force_norm_min_lower_mps2": 2.2870200137639793,
+          "specific_force_norm_max_upper_mps2": 18.228158483857918,
+          "vertical_acceleration_min_mps2": -7.52459,
+          "vertical_acceleration_max_mps2": 8.37458,
+          "acceleration_norm_above_g_samples": 0
+        },
+        "non_Live_after_entry": {
+          "samples": 0,
+          "acceleration_norm_max_upper_mps2": null,
+          "body_rate_norm_max_upper_rad_s": null,
+          "specific_force_norm_min_lower_mps2": null,
+          "specific_force_norm_max_upper_mps2": null,
+          "vertical_acceleration_min_mps2": null,
+          "vertical_acceleration_max_mps2": null,
+          "acceleration_norm_above_g_samples": 0
+        }
+      },
+      "observations": {
+        "magnetic_reference_write": {
+          "samples": 26999,
+          "intervals": 26999,
+          "first_interval": [
+            6496,
+            6497
+          ],
+          "longest_interval_samples": 1
+        },
+        "same_sample_vector_sine_below_bound": {
+          "samples": 30,
+          "intervals": 30,
+          "first_interval": [
+            15776,
+            15777
+          ],
+          "longest_interval_samples": 1
+        }
+      },
+      "candidate_impulse_windows": {
+        "all": {
+          "complete_10s_windows": 238001,
+          "candidate_2_mps_definite_violations": {
+            "samples": 159985,
+            "intervals": 212,
+            "first_interval": [
+              0,
+              1325
+            ],
+            "longest_interval_samples": 6119
+          },
+          "max_upper_mps": 6.864444738428974
+        },
+        "outer_inner_Live": {
+          "complete_10s_windows": 231503,
+          "candidate_2_mps_definite_violations": {
+            "samples": 155145,
+            "intervals": 205,
+            "first_interval": [
+              6579,
+              6741
+            ],
+            "longest_interval_samples": 6119
+          },
+          "max_upper_mps": 6.864444738428974
+        },
+        "H18": {
+          "complete_10s_windows": 15519,
+          "candidate_2_mps_definite_violations": {
+            "samples": 9215,
+            "intervals": 16,
+            "first_interval": [
+              6579,
+              6741
+            ],
+            "longest_interval_samples": 2108
+          },
+          "max_upper_mps": 5.551531847813375
+        },
+        "A21": {
+          "complete_10s_windows": 213984,
+          "candidate_2_mps_definite_violations": {
+            "samples": 144397,
+            "intervals": 189,
+            "first_interval": [
+              24017,
+              24346
+            ],
+            "longest_interval_samples": 6119
+          },
+          "max_upper_mps": 6.864444738428974
+        }
+      },
+      "physical_caps_inside_runtime_Live": {
+        "samples": 143200,
+        "intervals": 933,
+        "first_interval": [
+          6553,
+          7179
+        ],
+        "longest_interval_samples": 1828
+      },
+      "passes_observed_sample_checks_only": {
+        "samples": 0,
+        "intervals": 0,
+        "first_interval": null,
+        "longest_interval_samples": 0
+      },
+      "live_1s_windows_without_accepted_mag": 0,
+      "same_sample_accepted_pair_count": 29187,
+      "same_sample_common_frame_sine_min_diagnostic": 0.013886474765944828,
+      "S_calls": 21961,
+      "S_applied": 21961,
+      "S_R_diagonal_min": [
+        5.64607,
+        5.64607,
+        10.8913374
+      ],
+      "S_R_diagonal_max": [
+        343.946869,
+        343.946869,
+        663.477661
+      ],
+      "source_samples_pruned": 0,
+      "runtime_Live_implies_Normal_Live": false,
+      "continuous_BRMM_admission_certified": false,
+      "transported_vector_PE_certified": false,
+      "P3_certified_by_this_audit": false,
+      "P4_or_P5_promoted": false,
+      "remaining_admission_obligations": [
+        "continuous no-DC/recurrence and source primitives",
+        "transported asynchronous vector PE on the complete word",
+        "source-uniform entry, Q/floor/tuner invariant attachment",
+        "nonlinear projection and every-prefix chart/domain retention"
+      ],
+      "record": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+      "csv_sha256": "fd91aa656af65590c050f9ebe38f3f1935efec35871d26905d4838183a1f3eed",
+      "ordinary_output_sha256": {
+        "stderr.txt": "48077cc8ecad29c82f906a54c3381d95cdc4e10a93c669ed4a0227a0e36bc93c",
+        "stdout.txt": "bff581a9b06a6ef6f0bdc51ae9fdb760b0cb51b7405f579076340e5d659a8481",
+        "w3d_pmstokes_H8.500_L202.839_A-30.00_P72.00_fusion_ou3.csv": "dbee46dc2a757298e45193d3dd98842410aa5671a6df98b5b74bf4683192381c"
+      },
+      "read_only_runtime_output_bitwise_identical": true,
+      "trace_sha256": {
+        "runtime.samples.csv": "25ca8811e1272cffcec7b9bf2c6166961ec1c50f25f324450053ebbf1ffcf8fa",
+        "runtime.events.csv": "c8b247d360e1c831b1cc9dc778a203011d539fc1d6e0fb538d461f8da6862ead"
+      },
+      "violation_sample_counts": {
+        "outside_outer_and_inner_Live": {
+          "all": 6498,
+          "outer_inner_Live": 0,
+          "H18": 0,
+          "A21": 0
+        },
+        "bias_mode_transition": {
+          "all": 1,
+          "outer_inner_Live": 1,
+          "H18": 0,
+          "A21": 0
+        },
+        "physical_acceleration_above_cap": {
+          "all": 33268,
+          "outer_inner_Live": 32476,
+          "H18": 2054,
+          "A21": 30422
+        },
+        "physical_body_rate_above_cap": {
+          "all": 73087,
+          "outer_inner_Live": 71050,
+          "H18": 5007,
+          "A21": 66042
+        },
+        "guard_not_dormant_transparent": {
+          "all": 0,
+          "outer_inner_Live": 0,
+          "H18": 0,
+          "A21": 0
+        },
+        "prediction_or_accelerometer_missing": {
+          "all": 6498,
+          "outer_inner_Live": 0,
+          "H18": 0,
+          "A21": 0
+        },
+        "S_factorization_failure": {
+          "all": 0,
+          "outer_inner_Live": 0,
+          "H18": 0,
+          "A21": 0
+        },
+        "mag_factorization_failure": {
+          "all": 0,
+          "outer_inner_Live": 0,
+          "H18": 0,
+          "A21": 0
+        },
+        "hard_tilt_reset": {
+          "all": 0,
+          "outer_inner_Live": 0,
+          "H18": 0,
+          "A21": 0
+        },
+        "magnetic_lock_or_refinement_transition": {
+          "all": 2,
+          "outer_inner_Live": 1,
+          "H18": 0,
+          "A21": 0
+        },
+        "source_cap_rounding_unresolved": {
+          "all": 0,
+          "outer_inner_Live": 0,
+          "H18": 0,
+          "A21": 0
+        },
+        "acc_configured_R_mismatch": {
+          "all": 233502,
+          "outer_inner_Live": 233502,
+          "H18": 17518,
+          "A21": 215983
+        },
+        "acc_Jacobian_vector_norm_outside_bounds": {
+          "all": 11260,
+          "outer_inner_Live": 11260,
+          "H18": 667,
+          "A21": 10593
+        },
+        "mag_configured_R_mismatch": {
+          "all": 29187,
+          "outer_inner_Live": 29187,
+          "H18": 2189,
+          "A21": 26997
+        },
+        "mag_Jacobian_vector_norm_outside_bounds": {
+          "all": 0,
+          "outer_inner_Live": 0,
+          "H18": 0,
+          "A21": 0
+        }
+      }
+    }
+  ]
+}
