@@ -1,5 +1,16 @@
 # OU-III proof research state
 
+## Landing checkpoint
+
+The user authorized merging #502 and #504 into main on 2026-09-08. #502
+merged as 14b4abc5b0ec0b24748c7acea9b3b8ac10558793; #504 was retargeted to
+main and its merge-tree check is clean. The detailed continuation contract is
+`docs/ou3-brmm-main-handover.md`. At this checkpoint corrected code head
+1395e615 has passed source foundation and complete source in GitHub run
+34173154195; its P3 job 101897660299 is queued. The BRMM P3 rebuild is not
+reported complete. Landing does not promote physical admission, P4 or P5,
+or erase the separate stale replay-provenance validation failure.
+
 ## Current hypothesis
 
 Complete BRMM is the physical source underneath the primary bounded-bias

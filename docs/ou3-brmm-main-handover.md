@@ -2,18 +2,18 @@
 
 ## Landing and starting point
 
-Work is in [PR #504](https://github.com/bareboat-necessities/ocean-imu/pull/504),
-stacked on [PR #502](https://github.com/bareboat-necessities/ocean-imu/pull/502).
-Both are separate from merged #500. Main at the last sync is
-`f5dacecb7fe73e6daf1e3caeb1b9124d5511c966`; #502 head is
-`998eb8c2737f159728a6804e43419a3254b9f8dd`. Neither PR has been merged by this
-work. Merge preparation is not a claim that main already contains the changes.
+The user authorized landing [PR #502](https://github.com/bareboat-necessities/ocean-imu/pull/502)
+and [PR #504](https://github.com/bareboat-necessities/ocean-imu/pull/504) into main
+on 2026-09-08. #502 merged as `14b4abc5b0ec0b24748c7acea9b3b8ac10558793`.
+#504 was retargeted to that main revision; its merge-tree check was clean.
+This handover is delivered by #504. Verify its merged status when resuming.
+Both changes are separate from previously merged #500.
 
-After checks and merge authorization, land #502 first, retarget #504 to main,
-recheck its diff and CI, then land #504. A new thread should fetch main and
-verify it contains this document and `tools/stability/ou3_brmm_p3_premises.py`
-before continuing. If either is absent, the stack has not fully landed.
-Do not start from an older theorem or silently discard the stack's changes.
+Start a new thread from freshly fetched main containing this document and
+`tools/stability/ou3_brmm_p3_premises.py`. Read this handover and the research
+ledger, then check CI on the landed revision. Do not start from an older
+source/theorem or silently discard the stack's changes. Landing the research
+work does not assert that every CI job or proof obligation has passed.
 
 ## The theorem being pursued
 
@@ -123,21 +123,31 @@ Follow AGENTS.md: record exact failures and what they invalidate, perform a
 critic pass, and respect the two-strike rule. Do not retune the filter, weaken
 quality gates or infer sensor qualification from configured tau_b=5000 s.
 
-## CI and merge gates
+## CI at handover and outstanding validation
 
-The migration revision is `0db18980f4ff7e018e392a847ed4ba0d6ad24ef7`, tree
-`de271057b08b870de9fb05f4099fc8518d7f3df3`; GitHub run 34172553221 rebuilds
-the theorem/source/P3 chain. Results and any following fixes are recorded in
-the research ledger and PR body; do not transfer a PASS from another tree.
+The first migration revision is `0db18980f4ff7e018e392a847ed4ba0d6ad24ef7`, tree
+`de271057b08b870de9fb05f4099fc8518d7f3df3`. GitHub run 34172553221 passed the
+source foundation, complete source, same-history execution and actual theorem
+syntax build. Its Python quality job found one unused local, corrected in the
+follow-up. A local reference hard-set paper-binding failure was also corrected
+and the focused precondition test passed.
+
+The corrected code revision is `1395e615107d26804f4fbe2ee08acdf1bd6e43ef`, tree
+`b29fdb7c199456638141cb79a17340c3c36cf1c7`. At the landing checkpoint, run
+34173154195 had passed source foundation and complete BRMM source; theorem and
+same-history jobs were running, and P3 job 101897660299 was queued. **The new
+BRMM P3 numerical rebuild is not reported complete at handover.** Follow the
+landed revision's CI and record its actual H18/A21 delta, pivots and artifact
+identity before declaring the conditional certificate rebuilt. Do not transfer
+PASS from another source scope or a different code tree. The final landing
+checkpoint changes documentation only.
 
 Mandatory local `make all` fails because Eigen/Dense is unavailable. CI owns
-the C++ build result. The initial migration's Python quality job identified
-one unused reference-only local; remove it without changing the mathematics.
-
-An independent OU validation gate reports stale replay provenance for OU-II,
-OU-III, the tuner and the OU-III simulation driver. It requires a genuine full
-validation/robustness regeneration. The existing `ou-full-evidence-branch.yml`
-workflow is opt-in and runs about 1150 simulator replays; main has its automatic
-full-study path. Never repair this gate by restamping hashes or bypassing the
-evidence contract. Until the required checks are green, the stack is not
-merge-ready even if conditional P3 passes.
+the C++ build result. An independent OU validation gate reports stale replay
+provenance for OU-II, OU-III, the tuner and the OU-III simulation driver. It
+requires genuine full validation/robustness regeneration. The existing
+`ou-full-evidence-branch.yml` workflow is opt-in and runs about 1150 simulator
+replays; main has its automatic full-study path. Never repair this gate by
+restamping hashes or bypassing the evidence contract. These are outstanding
+validation obligations after the user-authorized landing, not proof of a
+filter failure and not permission to promote P4/P5.
