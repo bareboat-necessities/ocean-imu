@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
-"""Canonical, unpromoted P4 for the complete SEA3 finite-state theorem.
+"""Unpromoted complete-SEA3 P4 gates for motion and full-state targets.
 
-The paper's P4 object is the source-indexed finite-state quadratic storage
+The primary relaxed motion contract is built separately by
+ou3_p4_bounded_bias_motion. The full-state construction below is retained as
+a stronger unclosed extension; its flags cannot stand in for motion gains.
+
+The stronger P4 object is the source-indexed finite-state quadratic storage
 
     V(e,zeta) = e^T M(zeta) e,
 
@@ -46,6 +50,9 @@ import ou3_p4_complete_word_endpoint_transport as ENDPOINT
 import ou3_p4_complete_sea3_finite_map_mean_value as FINITE
 import ou3_p4_complete_sea3_signed_information_ledger as SIGNED
 import ou3_p4_complete_sea3_joint_sector_master as JOINT
+import ou3_mems_bias_contract as BIAS
+import ou3_sea3_response_union as UNION
+import ou3_p4_bounded_bias_motion as MOTION
 
 # Exact/outward finite-map differentiation machinery only.
 import ou3_p4_complete_sea3_phi_differential_metric as DIFF
@@ -64,6 +71,7 @@ CANDIDATES = [30.0, 25.0, 20.0, 15.0]
 def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     path = Path(domain_path).resolve()
     p3 = P3.build(path)
+    motion = MOTION.build(p3_contract=p3)
     cayley = CAYLEY.build(path)
     endpoint = ENDPOINT.build(path)
     finite = FINITE.build(path)
@@ -75,6 +83,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     word = DWRD.build(path)
     failures = (
         [f"P3: {x}" for x in P3.validate(p3)]
+        + [f"motion target: {x}" for x in MOTION.validate(motion)]
         + [f"Cayley: {x}" for x in CAYLEY.validate(cayley)]
         + [f"endpoint: {x}" for x in ENDPOINT.validate(endpoint)]
         + [f"finite-map bridge: {x}" for x in FINITE.validate(finite)]
@@ -88,6 +97,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     if failures:
         raise RuntimeError(f"canonical finite-state P4 prerequisites failed: {failures}")
 
+    bias = p3["mems_bias_preconditions"]
     p3_pass = bool(p3["P3_CONDITIONAL_SEA3_PASS"])
     h_delta = float(p3["modes"]["H18"]["relative_Riccati_injection_margin_lower"])
     a_delta = float(p3["modes"]["A21"]["relative_Riccati_injection_margin_lower"])
@@ -102,6 +112,14 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     signed_domination_closed = bool(signed["source_uniform_joint_eta_reset_domination_closed"])
     joint_sector_closed = bool(joint["source_uniform_same_history_joint_sector_closed"])
     joint_ldlt_closed = bool(joint["source_uniform_full_augmented_LDLT_closed"])
+    response_coverage = {
+        obligation: UNION.branch_mode_coverage({"H18": closed, "A21": closed})
+        for obligation, closed in {
+            "endpoint": finite_endpoint_closed and joint_ldlt_closed and joint_sector_closed,
+            "prefix_gain": prefix_gain_closed,
+            "prefix_retention": prefix_domain_closed,
+        }.items()
+    }
 
     projection_machinery = bool(
         events["A21_bias_projection_generalized_Jacobian_available"]
@@ -114,6 +132,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     # differential-only, packetwise, or point-word gate.
     p4_pass = bool(
         p3_pass
+        and all(UNION.all_branches_modes_closed(c) for c in response_coverage.values())
         and endpoint_master_emitted
         and signed_ledger_ready
         and signed_domination_closed
@@ -124,6 +143,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         and finite_endpoint_closed
         and prefix_gain_closed
         and prefix_domain_closed
+        and bias["P4_bias_preconditions_closed"]
     )
 
     fail_reasons: list[str] = []
@@ -140,7 +160,8 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         fail_reasons.append(
             "paper finite-state endpoint dissipation is open: materialize the source-correlated same-history nonlinear "
             "graph sectors and close -(L_W+sum lambda_j Pi_j)>0 by full augmented interval LDLT, retaining all A21 "
-            "finite-tau_b cross terms and every actual-R_S S event in the complete-word suffixes"
+            "finite-tau_b cross terms and every actual-R_S S event in the complete-word suffixes; "
+            "BIAS1 projection compatibility and BIAS2 full corrected-error separation remain unclosed"
         )
     if not (prefix_gain_closed and prefix_domain_closed):
         fail_reasons.append(
@@ -149,9 +170,18 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
 
     return {
         "schema": SCHEMA,
+        "primary_proof_target": MOTION.TARGET,
+        "bounded_bias_motion_contract": motion,
+        "P4_MOTION_PASS": motion["P4_MOTION_PASS"],
+        "P5_MOTION_MAY_START": motion["P5_MOTION_MAY_START"],
+        "legacy_full_state_gate_scope": "stronger unclosed extension, not the primary motion target",
         "qualification": QUALIFICATION,
         "canonical_P4_architecture": ARCHITECTURE,
         "canonical_source": "COMPLETE_SEA3_NORMAL_LIVE_WORD",
+        "SEA3_response_union": p3["SEA3_response_union"],
+        "response_branch_conditional_P3_coverage_consumed": p3["response_branch_conditional_P3_coverage"],
+        "response_branch_P4_coverage": response_coverage,
+        "mems_bias_preconditions": bias,
         "paper_Lyapunov_function": "V(e,zeta)=e^T M(zeta)e",
         "paper_endpoint_inequality": "V_{k+N_W} <= rho*V_k + gamma_s*D_s,k + gamma_n*D_n,k; 0<rho<1",
         "paper_prefix_gain_inequality": "V_{k+ell} <= kappa_V*V_k + kappa_s*D_s,k + kappa_n*D_n,k; 0<=ell<N_W",
@@ -290,6 +320,24 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
 
 def validate(d: dict) -> list[str]:
     f: list[str] = []
+    motion = d.get("bounded_bias_motion_contract", {})
+    f.extend(f"motion target: {x}" for x in MOTION.validate(motion))
+    if d.get("primary_proof_target") != MOTION.TARGET:
+        f.append("primary motion theorem target missing")
+    for key in ("P4_MOTION_PASS", "P5_MOTION_MAY_START"):
+        if d.get(key) is not False or d.get(key) != motion.get(key):
+            f.append(f"{key} missing, detached or falsely promoted")
+    f.extend(UNION.validate(d.get("SEA3_response_union", {})))
+    if not UNION.all_branches_modes_closed(d.get("response_branch_conditional_P3_coverage_consumed", {})):
+        f.append("P4 missing conditional P3 coverage of a response branch/mode")
+    coverage = d.get("response_branch_P4_coverage", {})
+    expected = UNION.branch_mode_coverage({"H18": False, "A21": False})
+    if set(coverage) != {"endpoint", "prefix_gain", "prefix_retention"} or any(
+            c != expected for c in coverage.values()):
+        f.append("P4 response coverage missing or promoted without branch certificates")
+    f.extend(f"MEMS bias: {x}" for x in BIAS.validate(d.get("mems_bias_preconditions", {})))
+    if d.get("mems_bias_preconditions") != d.get("joint_sector_master_contract", {}).get("mems_bias_preconditions"):
+        f.append("joint sector master detached from canonical bias preconditions")
     if d.get("schema") != SCHEMA or d.get("qualification") != QUALIFICATION:
         f.append("schema/qualification mismatch")
     if d.get("canonical_P4_architecture") != ARCHITECTURE:
@@ -370,6 +418,7 @@ def main() -> int:
     ap.add_argument("--domain", type=Path, default=DEFAULT_DOMAIN)
     ap.add_argument("--output", type=Path, required=True)
     ap.add_argument("--joint-sector-output", type=Path)
+    ap.add_argument("--motion-output", type=Path)
     args = ap.parse_args()
     d = build(args.domain)
     failures = validate(d)
@@ -377,6 +426,12 @@ def main() -> int:
     d["validation_failures"] = failures
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(d, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    if args.motion_output is not None:
+        motion = dict(d["bounded_bias_motion_contract"])
+        motion_failures = MOTION.validate(motion)
+        motion.update(validation_pass=not motion_failures, validation_failures=motion_failures)
+        args.motion_output.parent.mkdir(parents=True, exist_ok=True)
+        args.motion_output.write_text(json.dumps(motion, indent=2, sort_keys=True)+"\n", encoding="utf-8")
     if args.joint_sector_output is not None:
         joint = dict(d["joint_sector_master_contract"])
         joint_failures = JOINT.validate(joint)
@@ -387,6 +442,10 @@ def main() -> int:
             json.dumps(joint, indent=2, sort_keys=True) + "\n", encoding="utf-8"
         )
     print(json.dumps({
+        "primary_proof_target": d["primary_proof_target"],
+        "P4_MOTION_PASS": d["P4_MOTION_PASS"],
+        "P5_MOTION_MAY_START": d["P5_MOTION_MAY_START"],
+        "motion_fail_reasons": d["bounded_bias_motion_contract"]["P4_MOTION_FAIL_REASONS"],
         "architecture": d["canonical_P4_architecture"],
         "signed_information": d["signed_information_composition_available"],
         "signed_joint_domination": d["source_uniform_joint_eta_reset_domination_closed"],

@@ -4,11 +4,24 @@
 The Live proof follows the estimator modes implemented by the source.  The
 linear navigation block is active in Live mode.  Accelerometer-bias learning,
 however, can remain held after handoff: while held, the source propagates the
-residual accelerometer-bias state with the identity map and suppresses its
+estimated residual accelerometer-bias state with the identity map and suppresses its
 Kalman-gain row.  Stability is therefore stated for the active coordinates of
 each source mode and the held bias is treated as a bounded input until its
 one-time release.  This avoids assigning exponential decay to a coordinate that
 the implemented recursion intentionally freezes.
+The frozen coordinate is the estimate, not the physical sensor bias.
+BIAS0/1 in Section~\ref{sec:mems-bias-preconditions} supply the sensor
+qualification, true-bias history and projection-compatibility premises.
+Model mismatch remains an explicit input through hold and H$\to$A release.
+
+The linear Kalman/Riccati implications below are auxiliary results, not a
+completed finite-error nonlinear A21 certificate. The primary nonlinear target
+is Theorem~\ref{thm:sea3-bounded-bias-motion}: bounded accelerometer-bias
+error and practical stability of the other 18 errors in both modes, using the
+full active 21-state gain/covariance history. It requires neither bias-error
+convergence nor a zero model-mismatch floor. The active motion gain and all
+prefix/domain obligations must be certified separately; the held-mode bound
+cannot simply be transferred after release.
 
 \subsection{Adopted horizontal gauge}
 \label{sec:iss-heading-gauge}
@@ -355,6 +368,11 @@ available, the deployed finite residual-bias correlation time gives
  \label{eq:iss-bias-contraction}
 \end{equation}
 which supplies the detectability fallback for the active 21-state mode.
+This is the matched homogeneous prediction/comparison-observer factor of
+Theorem~\ref{thm:bias1-history}.  It does not impose free exponential decay
+on the shipping corrected error: Eq.~\eqref{eq:bias1-error-correction}
+retains every measurement injection and projection.  Physical/filter
+time-constant mismatch is treated by Eq.~\eqref{eq:bias1-error-prediction}.
 
 \subsection{Process excitation supplied by the deployed source}
 \label{sec:iss-process-source}
@@ -445,13 +463,13 @@ $0<\rho_H<1$ such that
  \|\Psi_H(k,j)\|\le M_H\rho_H^{k-j}.
  \label{eq:iss-held-ues}
 \end{equation}
-For bounded frozen accelerometer-bias error and bounded model disturbance
+For bounded held-mode accelerometer-bias error history and bounded model disturbance
 $\vct d$, the active error satisfies
 \begin{equation}
  \boxed{
  \|\vct e_{H,k}\|
  \le C_H\lambda_H^{k-j}\|\vct e_{H,j}\|
- +\Gamma_{ba,H}\|\delta\vct b_{a,H}\|
+ +\Gamma_{ba,H}\|\delta\vct b_{a,H}\|_{\infty,[j,k)}
  +\Gamma_{d,H}\|\vct d\|_{\infty,[j,k)}.}
  \label{eq:iss-held-forced}
 \end{equation}
@@ -517,7 +535,7 @@ gramian
 Under the source-reachable bounds, a translational observability route above,
 and Eq.~\eqref{eq:iss-nomag-pe}, the homogeneous active error on the yaw
 quotient is UES in either accelerometer-bias source mode.  In held-bias mode the
-frozen $\delta b_a$ enters the projected active dynamics as a bounded input; in
+held-mode $\delta b_a$ enters the projected active dynamics as a bounded input; in
 active-bias mode the same full-PE or finite-$\tau_b$ alternatives as
 Theorem~\ref{thm:iss-21-ues} apply after projection.  Thus, for the appropriate
 active quotient coordinate,

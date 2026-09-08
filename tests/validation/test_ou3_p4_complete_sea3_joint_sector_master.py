@@ -63,6 +63,7 @@ class CompleteSea3JointSectorMasterTests(unittest.TestCase):
         signed = {"joint_complete_word_signed_information_composition_available": True}
         p3 = {
             "P3_CONDITIONAL_SEA3_PASS": True,
+            "mems_bias_preconditions": mod.BIAS.build(),
             "conditional_composition": {
                 "A21_finite_bias_correlation_route_consumed": True,
                 "A21_detectability_completion_closed": True,
@@ -94,6 +95,7 @@ class CompleteSea3JointSectorMasterTests(unittest.TestCase):
                 p3_contract=p3,
             )
         self.assertEqual(mod.validate(d), [])
+        self.assertEqual(d["mems_bias_preconditions"], p3["mems_bias_preconditions"])
         self.assertEqual(d["canonical_source"], "COMPLETE_SEA3_NORMAL_LIVE_WORD")
         self.assertEqual(d["P3_delta_required"], 1.0e-18)
         self.assertEqual(d["full_state_dimensions"], {"H18": 18, "A21": 21})

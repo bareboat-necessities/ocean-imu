@@ -101,7 +101,7 @@ without closing a loop through the estimator they schedule.
 \node[stateb] (lin) at (10.2,-6.20)
   {Linear OU chain\\ $\delta\vct v,\delta\vct p,\delta\vct S,\delta\vct a_w$};
 \node[stateb] (ba) at (15.3,-6.20)
-  {Residual accel.\ bias\\ $\delta\vct b_a$, OU with $\tau_b$};
+  {Residual accel.\ bias error\\ GM prediction and corrections};
 
 \begin{scope}[on background layer]
   \node[grp, fit=(tu)(au)(mu)(pu)(rst)(att)(lin)(ba)] (coreblk) {};

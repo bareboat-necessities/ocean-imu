@@ -54,6 +54,16 @@ class Sea3FiniteStateP4Test(unittest.TestCase):
         self.assertEqual(self.d["P3_A21_delta_consumed"], 1.0e-18)
         self.assertFalse(self.d["P3_DEPLOYMENT_PASS_consumed_as_if_closed"])
 
+    def test_primary_motion_target_does_not_relabel_full_state_P4(self):
+        self.assertEqual(self.d["primary_proof_target"], mod.MOTION.TARGET)
+        motion = self.d["bounded_bias_motion_contract"]
+        self.assertEqual(mod.MOTION.validate(motion), [])
+        self.assertFalse(motion["bias_error_convergence_required"])
+        self.assertFalse(motion["zero_error_floor_required"])
+        self.assertFalse(self.d["P4_MOTION_PASS"])
+        self.assertFalse(self.d["P5_MOTION_MAY_START"])
+        self.assertFalse(self.d["P4_CANONICAL_PASS"])
+
     def test_endpoint_master_retains_complete_word_and_actual_rs(self):
         for key in (
             "same_complete_SEA3_word_required",

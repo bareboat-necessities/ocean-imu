@@ -38,6 +38,7 @@ import ou3_p4_complete_sea3_differential_word as DWORD
 import ou3_p4_complete_sea3_same_history_prefix_selectors as SELECTORS
 import ou3_sea3_complete_window_execution_kernel as KERNEL
 import ou3_sea3_frontend_state_step as FRONTEND
+import ou3_mems_bias_contract as BIAS
 
 REPO = Path(__file__).resolve().parents[2]
 DEFAULT_DOMAIN = REPO / "tools" / "stability" / "ou3_proof_operating_domain.json"
@@ -55,6 +56,31 @@ class SameHistoryBiasLineage:
         str, tuple[Interval, Interval, Interval]
     ]
     source_uniform_materialization: bool = False
+    homogeneous_root: tuple[Interval, Interval, Interval] | None = None
+    root_source_cell_id: str | None = None
+    tau_s: Interval | None = None
+
+    def validate_homogeneous(self, lineage, constants, projection_limit):
+        """Check BIAS1 ancestry and matched dynamics, not just matching ID sets."""
+        if self.source_uniform_materialization:
+            raise RuntimeError("a bias point/hull lineage is not a qualified source-uniform family")
+        if self.homogeneous_root is None or self.tau_s is None:
+            raise RuntimeError("BIAS1 requires one true-bias root and common GM parameter")
+        if self.root_source_cell_id != lineage[0].parent_source_cell_id:
+            raise RuntimeError("BIAS1 true-bias root detached from selector ancestry")
+        if self.tau_s != constants.accel_bias_tau_s:
+            raise RuntimeError("true/filter tau mismatch requires explicit forcing, not the homogeneous map")
+        norm_sq = Interval.point(0.0)
+        for x in self.homogeneous_root:
+            norm_sq = norm_sq + x * x
+        radius_sq = Interval.point(projection_limit) * Interval.point(projection_limit)
+        if norm_sq.hi > radius_sq.lo:
+            raise RuntimeError("homogeneous true-bias root does not certify projection zero-error invariance")
+        for selector in lineage:
+            elapsed = constants.h * Interval.point(float(selector.prefix_length))
+            expected = BIAS.homogeneous_bias_at(self.homogeneous_root, self.tau_s, elapsed)
+            if self.at(selector.source_cell_id) != expected:
+                raise RuntimeError("BIAS1 bias prefix detached from the common GM root")
 
     def at(self, source_cell_id: str) -> tuple[Interval, Interval, Interval]:
         try:
@@ -144,6 +170,8 @@ def _consume_mode_lineage(
         raise RuntimeError("A21 nonlinear lineage requires same-history absolute bias")
     if mode == "H" and bias_lineage is not None:
         raise ValueError("H18 lineage must not consume an A21 absolute-bias history")
+    if mode == "A":
+        bias_lineage.validate_homogeneous(lineage, constants, projection_limit)
 
     word = DWORD.initialize(mode, source_token)
     state = list(initial_state)
@@ -309,18 +337,42 @@ def consume_endpoint_lineage(
     return H, A
 
 
-def _zero_bias_lineage(lineage: Sequence[SELECTORS.PrefixSelector]) -> SameHistoryBiasLineage:
-    z = (Interval.point(0.0), Interval.point(0.0), Interval.point(0.0))
+def homogeneous_bias_lineage(
+    lineage: Sequence[SELECTORS.PrefixSelector],
+    root: tuple[Interval, Interval, Interval],
+    domain_path: Path = DEFAULT_DOMAIN,
+) -> SameHistoryBiasLineage:
+    """Retain one root and matched tau alongside their derived prefix hulls.
+
+    This is the zero-forcing BIAS1 model only, conditional on BIAS0. The
+    interval AD consumer is still an enclosure, not an exhaustive SEA3 cover.
+    """
+    if not lineage:
+        raise ValueError("nonempty selector lineage required")
+    constants = KERNEL._process_constants(domain_path)
     return SameHistoryBiasLineage(
         endpoint_source_cell_id=lineage[-1].source_cell_id,
-        bias_true_by_source_cell_id={selector.source_cell_id: z for selector in lineage},
+        bias_true_by_source_cell_id={
+            selector.source_cell_id: BIAS.homogeneous_bias_at(
+                root, constants.accel_bias_tau_s,
+                constants.h * Interval.point(float(selector.prefix_length)),
+            ) for selector in lineage
+        },
         source_uniform_materialization=False,
+        homogeneous_root=root,
+        root_source_cell_id=lineage[0].parent_source_cell_id,
+        tau_s=constants.accel_bias_tau_s,
     )
+
+
+def _zero_bias_lineage(lineage, domain_path: Path = DEFAULT_DOMAIN) -> SameHistoryBiasLineage:
+    z = (Interval.point(0.0), Interval.point(0.0), Interval.point(0.0))
+    return homogeneous_bias_lineage(lineage, z, domain_path)
 
 
 def _smoke(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     frontend = FRONTEND._point_state()
-    P0_H, P0_A, seed_meta = SELECTORS._source_generated_point_covariance_seed(
+    P0_H, P0_A, seed_meta = SELECTORS._live_structured_point_covariance_fixture(
         frontend, domain_path
     )
     sample = SELECTORS._point_sample()
@@ -334,7 +386,7 @@ def _smoke(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     )
     endpoint = endpoints[0].source_cell_id
     lineage = SELECTORS.lineage_for_endpoint(selectors, endpoint)
-    bias = _zero_bias_lineage(lineage)
+    bias = _zero_bias_lineage(lineage, domain_path)
     H, A = consume_endpoint_lineage(
         selectors,
         endpoint,
@@ -393,6 +445,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "schema": SCHEMA,
         "qualification": QUALIFICATION,
         "canonical_source": CANONICAL_SOURCE,
+        "mems_bias_preconditions": BIAS.build(domain_path),
         "P3_delta_preserved": 1.0e-18,
         "branch_correlated_prefix_selector_consumed": True,
         "event_local_same_P_H_R_cells_consumed": True,
@@ -423,6 +476,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
 
 def validate(d: dict) -> list[str]:
     f: list[str] = []
+    f.extend(f"MEMS bias: {x}" for x in BIAS.validate(d.get("mems_bias_preconditions", {})))
     if d.get("schema") != SCHEMA or d.get("qualification") != QUALIFICATION:
         f.append("schema/qualification mismatch")
     if d.get("canonical_source") != CANONICAL_SOURCE:

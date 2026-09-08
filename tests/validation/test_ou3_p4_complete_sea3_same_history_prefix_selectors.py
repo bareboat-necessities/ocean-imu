@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import copy
+from dataclasses import replace
 import sys
 import unittest
 from pathlib import Path
@@ -9,6 +10,7 @@ sys.path.insert(0, str(ROOT / "tools"))
 sys.path.insert(0, str(ROOT / "tools" / "stability"))
 
 import ou3_p4_complete_sea3_same_history_prefix_selectors as SELECTORS
+import ou3_sea3_complete_window_execution_kernel as KERNEL
 import ou3_sea3_frontend_state_step as FRONTEND
 
 
@@ -16,16 +18,12 @@ class P4CompleteSea3SameHistoryPrefixSelectorsTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.payload = SELECTORS.build()
-
-    @staticmethod
-    def _source_seeded_frontend_and_covariance():
-        frontend = FRONTEND._point_state()
-        P0_H, P0_A, meta = SELECTORS._source_generated_point_covariance_seed(
-            frontend, SELECTORS.DEFAULT_DOMAIN
+        cls.frontend_entry = FRONTEND._point_state()
+        cls.P0_H, cls.P0_A, cls.seed_meta = (
+            SELECTORS._live_structured_point_covariance_fixture(
+                cls.frontend_entry, SELECTORS.DEFAULT_DOMAIN
+            )
         )
-        if meta.get("arbitrary_P0_used") is not False:
-            raise AssertionError("selector test reverted to arbitrary covariance")
-        return frontend, P0_H, P0_A
 
     def test_status_is_non_promoting_and_preserves_frozen_contract(self):
         self.assertEqual(SELECTORS.validate(self.payload), [])
@@ -68,21 +66,15 @@ class P4CompleteSea3SameHistoryPrefixSelectorsTest(unittest.TestCase):
         self.assertTrue(smoke["all_measurement_event_cells_retain_same_P_H_R"])
         self.assertTrue(smoke["all_due_S_cells_retain_actual_committed_RS"])
         self.assertTrue(smoke["event_local_cells_captured_inside_same_transition"])
-        seed = smoke["source_generated_covariance_seed"]
-        self.assertTrue(seed["live_seed_contract_consumed"])
-        self.assertFalse(seed["arbitrary_P0_used"])
-        self.assertTrue(seed["aw_seed_uses_same_committed_sigma"])
-        self.assertTrue(seed["A21_ba_release_floor_attached"])
         self.assertFalse(smoke["favorable_frontend_successor_selected"])
         self.assertFalse(smoke["shipping_transition_reimplemented"])
 
     def test_selector_event_cells_match_exact_shipping_sample(self):
         sample = SELECTORS._point_sample()
-        frontend, P0_H, P0_A = self._source_seeded_frontend_and_covariance()
         endpoints, selectors, meta = SELECTORS.execute_with_prefix_selectors(
-            frontend_entry=frontend,
-            P0_H=P0_H,
-            P0_A=P0_A,
+            frontend_entry=FRONTEND._point_state(),
+            P0_H=self.P0_H,
+            P0_A=self.P0_A,
             samples=[sample],
             branch_limit=64,
         )
@@ -136,9 +128,9 @@ class P4CompleteSea3SameHistoryPrefixSelectorsTest(unittest.TestCase):
                 s_cell = cells[2]
                 self.assertTrue(s_cell.actual_rs_from_committed_schedule)
                 self.assertEqual(
-                    s_cell.R, SELECTORS.WORD.R_S_zero(selector.actual_rs_std_xyz)
+                    s_cell.R, KERNEL.WORD.R_S_zero(selector.actual_rs_std_xyz)
                 )
-                self.assertEqual(s_cell.H, SELECTORS.WORD.H_S_zero(mode))
+                self.assertEqual(s_cell.H, KERNEL.WORD.H_S_zero(mode))
                 for cell in cells[2:]:
                     self.assertIsNotNone(cell.H)
                     self.assertIsNotNone(cell.R)
@@ -153,11 +145,10 @@ class P4CompleteSea3SameHistoryPrefixSelectorsTest(unittest.TestCase):
 
     def test_lineage_is_explicit_across_two_prefixes(self):
         sample = SELECTORS._point_sample()
-        frontend, P0_H, P0_A = self._source_seeded_frontend_and_covariance()
         endpoints, selectors, _ = SELECTORS.execute_with_prefix_selectors(
-            frontend_entry=frontend,
-            P0_H=P0_H,
-            P0_A=P0_A,
+            frontend_entry=FRONTEND._point_state(),
+            P0_H=self.P0_H,
+            P0_A=self.P0_A,
             samples=[copy.deepcopy(sample), copy.deepcopy(sample)],
             branch_limit=128,
         )
@@ -176,11 +167,10 @@ class P4CompleteSea3SameHistoryPrefixSelectorsTest(unittest.TestCase):
 
     def test_broken_or_duplicate_ancestry_is_rejected(self):
         sample = SELECTORS._point_sample()
-        frontend, P0_H, P0_A = self._source_seeded_frontend_and_covariance()
         endpoints, selectors, _ = SELECTORS.execute_with_prefix_selectors(
-            frontend_entry=frontend,
-            P0_H=P0_H,
-            P0_A=P0_A,
+            frontend_entry=FRONTEND._point_state(),
+            P0_H=self.P0_H,
+            P0_A=self.P0_A,
             samples=[sample],
             branch_limit=64,
         )
@@ -192,6 +182,73 @@ class P4CompleteSea3SameHistoryPrefixSelectorsTest(unittest.TestCase):
             endpoint_source_cell_ids=[b.source_cell_id for b in endpoints],
         )
         self.assertTrue(any("duplicate source cell id" in x for x in failures))
+
+    def test_fixture_cannot_claim_reachable_A21_or_complete_SEA3(self):
+        smoke = self.payload["smoke"]
+        self.assertEqual(smoke["evidence_scope"], "TWO_SAMPLE_FIXTURE_NOT_COMPLETE_SEA3_FAMILY")
+        self.assertFalse(self.seed_meta["arbitrary_2I_covariance_used"])
+        for key in (
+            "same_history_H_to_A_release_executed",
+            "A21_entry_reachability_certified",
+            "complete_SEA3_source_membership_certified",
+        ):
+            self.assertFalse(self.seed_meta[key])
+            bad = copy.deepcopy(self.payload)
+            bad["smoke"]["live_structured_covariance_fixture"][key] = True
+            self.assertTrue(any(key in x for x in SELECTORS.validate(bad)))
+
+    def test_CI_records_covariance_width_and_actual_RS_for_each_prefix(self):
+        smoke = self.payload["smoke"]
+        evidence = smoke["prefix_evidence"]
+        self.assertEqual(len(evidence), smoke["prefix_selectors"])
+        self.assertEqual({x["prefix_length"] for x in evidence}, {1, 2})
+        for prefix in evidence:
+            for mode, dimension in (("H18", 18), ("A21", 21)):
+                record = prefix[mode]
+                self.assertEqual(record["dimension"], dimension)
+                self.assertEqual(len(record["P_after_diagonal"]), dimension)
+                self.assertGreater(record["P_after_max_entry_width"], 0.0)
+                self.assertEqual(len(record["actual_R_S_diagonals"]), 1)
+                diagonal = record["actual_R_S_diagonals"][0]
+                self.assertEqual(len(diagonal), 3)
+                self.assertTrue(all(0.0 < lo <= hi for lo, hi in diagonal))
+            self.assertEqual(
+                prefix["H18"]["actual_R_S_diagonals"],
+                prefix["A21"]["actual_R_S_diagonals"],
+            )
+
+    def test_covariance_chain_and_parent_state_cannot_be_detached(self):
+        endpoints, selectors, _ = SELECTORS.execute_with_prefix_selectors(
+            frontend_entry=self.frontend_entry,
+            P0_H=self.P0_H,
+            P0_A=self.P0_A,
+            samples=[SELECTORS._point_sample(), SELECTORS._point_sample()],
+            branch_limit=128,
+        )
+        ids = [b.source_cell_id for b in endpoints]
+        bad = copy.deepcopy(selectors)
+        bad[0].H_event_cells[2].P_before[0][0] = KERNEL.PRED.I(123.0)
+        failures = SELECTORS.validate_selector_graph(
+            bad, samples_executed=2, endpoint_source_cell_ids=ids
+        )
+        self.assertTrue(any("covariance continuity lost" in x for x in failures))
+
+        bad = copy.deepcopy(selectors)
+        bad[-1].A_before.riccati.P[0][0] = KERNEL.PRED.I(123.0)
+        failures = SELECTORS.validate_selector_graph(
+            bad, samples_executed=2, endpoint_source_cell_ids=ids
+        )
+        self.assertTrue(any("word state detached from parent" in x for x in failures))
+
+        cyclic = list(selectors)
+        cyclic[0] = replace(cyclic[0], parent_source_cell_id=ids[0])
+        with self.assertRaisesRegex(ValueError, "cycle"):
+            SELECTORS.lineage_for_endpoint(cyclic, ids[0])
+
+    def test_empty_family_cannot_pass_by_vacuity(self):
+        self.assertTrue(SELECTORS.validate_selector_graph(
+            [], samples_executed=2, endpoint_source_cell_ids=[]
+        ))
 
 
 if __name__ == "__main__":

@@ -14,11 +14,25 @@ a physically admissible, oscillatory, multimodal directional sea family.
 
 The result below is a \emph{conditional target theorem}.  Its composition
 argument is complete once the listed SEA0/P1--P5 certificates are available,
-but this manuscript does not claim that the new SEA0 directional-sea enclosure,
-the SEA3 P3/P4 margins, or the 45-degree SEA3 P5 capture certificate have
-already been constructed.
+but this manuscript does not claim a complete SEA0 directional-sea enclosure,
+P4 contraction, or the 45-degree SEA3 P5 capture certificate. Conditional
+P3 matrix coverage is distinct from these physical and nonlinear obligations.
+
+The primary target is now the bounded-bias motion theorem in
+Section~\ref{sec:sea3-bounded-bias-motion}: practical stability of the 18
+motion/attitude/gyro-bias errors, with a bounded accelerometer-bias error but
+without a claim that this error converges. The estimator still executes its
+full active 21-state recursion. The full-state contraction construction and
+Theorem~\ref{thm:sea3-regional-practical-stability} below are retained as a
+\emph{stronger, unclosed extension}, not prerequisites for the weaker nonlinear
+claim. Neither target is closed merely by the bias clamp or by conditional P3.
 
 \subsection{Three-partition directional sea class}
+
+The continuum spectral formulas below describe the retained linear-vessel
+branch. The response union in Eq.~\eqref{eq:sea3-response-union} additionally
+admits a correlated atomic Stokes wave-following branch; its bound harmonics
+are not identified with this fundamental continuum spectrum.
 
 Fix
 \begin{equation}
@@ -70,7 +84,8 @@ reference simulations.
 
 \subsection{Directional response and oscillatory source}
 
-The spectrum of Eq.~\eqref{eq:sea3-directional-spectrum} is not converted to
+On the linear-vessel branch, the spectrum of
+Eq.~\eqref{eq:sea3-directional-spectrum} is not converted to
 independent Cartesian acceleration boxes.  Let
 $G_{\rm imu}(\omega,\vartheta;\lambda)$ denote the certified directional
 sea-to-CoG/IMU response family.  The corresponding matrix-valued source
@@ -121,6 +136,11 @@ not, by itself, supply a deterministic pathwise bound for
 $\mathcal X^s_{\rm SEA3}$.  Consequently, neither a Gaussian confidence event,
 spectral moments alone, a replay record, nor a finite seeded harmonic
 approximation may replace Eq.~\eqref{eq:sea3-hard-realization-set} in SEA0/P3.
+For SEA3$^+$ this hard-history obligation is imposed branchwise. The Stokes
+branch instead uses the nonlinear common-root output below; no linear
+$C_s x^s$ identity or continuum quadrature certificate is asserted for it.
+Compact source cells at fixed $N$ do not by themselves establish a uniform
+cover over the enlarged family.
 
 For an individual undamped oscillator, for example,
 \begin{equation}
@@ -267,6 +287,161 @@ Eq.~\eqref{eq:sea3-joint-word-sector-test} may neither eliminate $a_w$ or
 $b_a$ nor replace the same-history graph by a packet-count or independent-box
 bound.
 
+The bias source and its initial cell satisfy BIAS0/1 in
+Section~\ref{sec:mems-bias-preconditions}.  The full nonlinear graph uses the
+corrected error recurrence, not a free GM replacement for $\delta b_a$.
+A BIAS2 sector from Eq.~\eqref{eq:bias2-sector} may enter the master only
+after its uniform positive separation premise has been verified on this same
+graph.  Literature or stationary PSDs cannot supply that certificate.
+
+\paragraph{Source and finite storage attachment.}
+Membership of an individual word requires one witness in
+Eq.~\eqref{eq:sea3-hard-realization-set}, its joint translational/rotational
+output map, the frontend/tuner root and the BIAS0/1 physical-bias history.
+These must generate the word's actual measurements, schedules and $P,H,R$
+cells. A capture of those derived cells alone does not supply the missing
+witness. The unspecified hard-driver set and joint response realization
+must be supplied before this membership predicate is executable; this is
+separate from qualifying an assembled accelerometer. Neither declaring a
+zero true-bias root after capture nor assigning a SEA3 identifier proves the
+same-source equality.
+
+\paragraph{Enlarged response family (SEA3$^+$).}
+Retain the entire existing continuum linear-vessel family, with its unchanged
+$G\le4$, $f_c\le1.2\,\mathrm{Hz}$, $p\ge2$ envelope, and define
+\begin{equation}
+ \boxed{\mathcal G_{\rm SEA3}^{+}
+ =\mathcal G_{\rm vessel}^{\rm linear}
+ \cup\mathcal G_{\rm wave\text{-}following}^{\rm Stokes}.}
+ \label{eq:sea3-response-union}
+\end{equation}
+A response-branch label belongs to the source root and is retained through
+the entire word and every prefix. This is a union of complete histories, not
+permission to switch response laws at individual events. Both branches retain
+the same Normal-Live, vector-PE, frontend, tuner, scheduler, zero-lever-arm and
+BIAS0/1 premises. Neither branch alone covers the union.
+
+The second branch is the superposition of third-order bound harmonics used
+by the wave-following generator, not a claim to solve the full nonlinear
+water-wave equations. One lineage fixes a finite number $N$ of atoms,
+nonnegative amplitudes $a_i$, directions $d_i=(\cos\vartheta_i,\sin\vartheta_i)$,
+root phases $\phi_i$, and fundamental frequencies
+$f_i\in[0.02,0.8]\,\mathrm{Hz}$. All directions and phases are admitted;
+$N=128$ and seed 42 are one generator instance, not the source quantifier.
+Set $\omega_i=2\pi f_i$, $k_i=\omega_i^2/g$, require the model-validity
+premise $k_i a_i\le1/5$, and define
+\begin{align}
+ c_{i1}&=a_i,& c_{i2}&=\tfrac12 k_i a_i^2,&
+ c_{i3}&=\tfrac38 k_i^2a_i^3,\nonumber\\
+ \theta_i(x,y,t)&=k_i d_i^\top(x,y)-\omega_i t+\phi_i.
+ \label{eq:sea3-stokes-root-graph}
+\end{align}
+The PM/JONSWAP atomic weights and any Stokes variance renormalization are
+part of this root, not independently selected harmonic energies. Their
+discrete normalization is not the continuum identity
+Eq.~\eqref{eq:sea3-directional-spectrum}. The pinned generator permits a
+relative normalization tolerance of $10^{-3}$; use its actual coefficients,
+not an assumed exact equality to $H_s^2/16$.
+
+At a fixed material label the centered orbital displacement is
+\begin{equation}
+ d_o(t)=\sum_{i,n}c_{in}
+ \begin{bmatrix}-d_i\cos(n\theta_i)\\\sin(n\theta_i)\end{bmatrix},
+ \qquad v_o=\dot d_o,\quad a_o=\ddot d_o.
+ \label{eq:sea3-stokes-orbit}
+\end{equation}
+Use the same atoms to evaluate the surface slopes at the displaced horizontal
+point, $s=\sum_{i,n}n k_i c_{in}d_i\cos(n\theta_i)$.
+Set pitch $=\arctan(-s_x)$, roll
+$=\operatorname{atan2}(s_y,\sqrt{1+s_x^2})$, yaw $=0$, and let $C$ be the
+resulting world-to-body rotation. The ideal source outputs are
+$f_b=C(a_o-g_w)$ and $\omega_b=\operatorname{vee}(-\dot C C^\top)$.
+The pinned implementation approximates $\dot C$ by a centered difference;
+its measurement-discretization defect must be bounded and retained, not
+silently equated to the exact derivative. Its constant Stokes velocity drift
+is separate from centered orbital position and creates no acceleration term.
+
+\paragraph{Branch-specific hard bound.}
+For each such root put $B_r=\sum_{i,n}(n\omega_i)^r c_{in}$, $r=0,1,2$.
+Then, uniformly over time and every common-root phase/direction,
+\begin{equation}
+ \|d_o\|\le B_0,\quad \|v_o\|\le B_1,\quad \|a_o\|\le B_2,
+ \qquad \|s\|\le\sum_{i,n}n k_i c_{in}.
+ \label{eq:sea3-stokes-hard-bound}
+\end{equation}
+Indeed each trigonometric vector in Eq.~\eqref{eq:sea3-stokes-orbit} and
+its frequency-normalized derivatives has norm one; triangle inequalities
+give the first three bounds. The slope bound follows from $\|d_i\|=1$ and
+$|\cos|\le1$, also at the displaced point. These are hard model bounds,
+not covariance/PSD assertions or P4 nonlinear-remainder budgets. They are
+finite for a fixed finite root; a uniform primitive-source cover for all
+admitted roots is still an obligation. Normal-Live retention is checked on
+the actual joint output; exceeding a conservative $B_2$ bound does not itself
+prove violation of the actual acceleration cap.
+
+For a directional Stokes harmonic the
+displacement phasor relative to the same elevation harmonic has, up to phase
+convention, response $h=(i\cos\vartheta,i\sin\vartheta,1)$ and hence
+$\|h\|_2^2=2$. If a third-order generator retains a nonzero harmonic at
+$f=3(0.8)=2.4\,\mathrm{Hz}$, the linear-vessel response envelope permits
+only $\|h\|_2^2\le[4(1.2/2.4)^2]^2=1$ there. Thus that direct response
+witness is outside the linear branch but is no longer excluded from SEA3$^+$:
+its higher harmonics belong to Eq.~\eqref{eq:sea3-stokes-root-graph}. The
+linear rolloff moment and surface-period lemmas remain linear-branch results.
+The Stokes branch must use its full output moments and exact discrete
+frontend history; fundamental surface $T_z$ cannot replace the tuner value.
+
+\paragraph{Certificate composition over the union.}
+Let $\mathcal C$ denote the unchanged common Normal-Live/PE, committed
+OU/scheduler, process and event premises used by the P3 matrix chain.
+For either branch $b$, admissible words lie in $\mathcal W_b\cap\mathcal C$.
+The response-independent implication
+$\mathcal C\Rightarrow\Omega_W-10^{-18}P_W\succeq0$ therefore applies to
+both branches: the H18 prior-free LDLT, the separate H-to-A hybrid direct
+sum and later event preservation are rebuilt without changing their margins.
+This conditional implication is not a proof that the generator or a retained
+word satisfies $\mathcal C$.
+P4 must certify Eq.~\eqref{eq:sea3-joint-word-sector-test}, including BIAS2
+when its positive premise is proved, on every source leaf of both branches
+and both H18/A21 modes. With a common window and compatible source-indexed
+storage, branch bounds combine as $\rho=\max_b\rho_b<1$ and
+$\Gamma=\max_{b,j}\Gamma_{b,j}<\infty$, with every-prefix domain retention.
+No prefix contraction is required. A missing branch, finite reset/storage
+attachment, physical bias root or source cover keeps P4 open and P5 blocked.
+
+For any invertible source-indexed frames $T_j$, a finite change of coordinates
+$z_j=T_j e_j$ preserves storage exactly only with the simultaneous transports
+\begin{align}
+ \widetilde P_j&=T_jP_jT_j^\top,&
+ \widetilde f_j(z)&=T_{j+1}f_j(T_j^{-1}z),\nonumber\\
+ \widetilde F_j&=T_{j+1}F_jT_j^{-1},&
+ \widetilde Q_j&=T_{j+1}Q_jT_{j+1}^\top,\nonumber\\
+ \widetilde H_j&=H_jT_j^{-1},&\widetilde R_j&=R_j.
+ \label{eq:sea3-finite-storage-pullback}
+\end{align}
+Indeed, inversion of the covariance congruence gives
+$z_j^\top\widetilde P_j^{-1}z_j=e_j^\top P_j^{-1}e_j$,
+and substitution gives the finite-map identity. At a pure reset
+$P^+=GP_JG^\top$, choosing $T^+=T^-G^{-1}$ removes that covariance
+reset in the transformed coordinates. Subsequent prediction, noise, floor
+increments, measurement rows and the finite physical map must still undergo
+Eq.~\eqref{eq:sea3-finite-storage-pullback}. Keeping their old numerical
+values while deleting resets is generally a different Riccati history.
+
+Equivalently retain the shipping coordinates. For a homogeneous correction,
+put $q=e-Ky$, $r=e^+-Gq$, and $b=G^{-1}r$, where $e^+$ is the exact
+Cayley/projection output and $G$ uses that correction's own injection. Then
+\begin{equation}
+ (e^+)^\top(GP_JG^\top)^{-1}e^+
+ =q^\top P_J^{-1}q+2q^\top P_J^{-1}b+b^\top P_J^{-1}b.
+ \label{eq:sea3-finite-reset-storage-attachment}
+\end{equation}
+The last two terms remain in the joint nonlinear graph. Their existence is
+an exact identity, not a contraction estimate. A zero-error tangent check
+does not authorize dropping them or reusing later covariance cells after
+changing a finite reset. Until this attachment and source membership hold,
+an expanding diagnostic ratio does not falsify the canonical P4 inequality.
+
 Endpoint contraction alone is not sufficient for a full-sample ISS claim.
 P4 must additionally certify a uniform prefix-gain inequality: there exist
 finite nonnegative constants $\kappa_V,\kappa_s,\kappa_n$ such that for every
@@ -284,20 +459,278 @@ admissible SEA3 window and every $0\le\ell<N_W$,
 The full-window energies may be used on the right because they dominate their
 prefix restrictions.  This quantitative bound is separate from, and stronger
 than, merely proving that all prefixes stay inside the Cayley/source domain.
+For a homogeneous prefix $\ell$, the augmented test replaces the upper-left
+block $-D_W$ by $M_\ell^\top J_\ell M_\ell-\Gamma_\ell J_0$, with a finite
+$\Gamma_\ell\ge1$, and uses only sectors valid for that prefix.  Strict
+endpoint contraction does not require prefix contraction.  BIAS1 projection
+compatibility and error/source-domain retention must hold at each prefix;
+no future-event BIAS2 information may be used to justify an earlier chart.
 
-\subsection{Main conditional stability theorem}
+\subsection{Primary target: bounded bias and practical motion stability}
+\label{sec:sea3-bounded-bias-motion}
+
+Write the exact finite error as $(e_H,e_b)$, where
+\begin{equation}
+ e_H=(c,\delta b_g,\delta v,\delta p,\delta S,\delta a_w)\in\mathbb R^{18},
+ \qquad e_b=b_a^{\rm true}-\hat b_a\in\mathbb R^3.
+ \label{eq:sea3-motion-coordinates}
+\end{equation}
+Here $c$ is the finite Cayley coordinate, not a small-angle substitution.
+In H18 the estimate is held but the physical bias continues; in A21 both
+coordinates follow the full prediction/correction/projection recurrence of
+BIAS1. Selectivity of the \emph{storage} does not remove states from the filter.
+Choose a same-source storage, in fixed physically scaled coordinates,
+\begin{equation}
+ W_H(e_H,\zeta)=e_H^\top M_H(\zeta)e_H,\qquad
+ m_-\|e_H\|^2\le W_H\le m_+\|e_H\|^2,
+ \quad 0<m_-\le m_+<\infty.
+ \label{eq:sea3-motion-storage}
+\end{equation}
+In active mode $\zeta$ retains the complete 21-state nominal/covariance and
+bias history. The active gains are not the held-mode gains: for example the
+accelerometer gain numerator for $e_H$ contains
+$P_{HH}H_H^\top+P_{Hb}$, and its innovation covariance includes the bias
+and cross blocks. Thus the H18 certificate cannot be copied to active mode,
+nor may a Schur/reduced-state replacement estimator be used.
+
+\begin{lemma}[Conditional compactness of accelerometer-bias error]
+\label{lem:sea3-bias-compactness}
+Assume the initial estimate lies in the deployed projection ball of radius
+$R_b=0.4\,\mathrm{m/s^2}$. Hold, finite-$\tau_b$ prediction with factor in
+$(0,1]$, norm-preserving frame changes and the projection after every state
+injection preserve $\|\hat b_a\|\le R_b$. If BIAS0/1 additionally supplies a
+same-history hard envelope $\|b_a^{\rm true}\|\le B_{\rm true}$, then
+\begin{equation}
+ \boxed{\|e_b\|\le B_e:=B_{\rm true}+R_b.}
+ \label{eq:sea3-bias-compact-error}
+\end{equation}
+No convergence of $e_b$ or identification of $b_a^{\rm true}$ is asserted.
+\end{lemma}
+\begin{proof}
+Each listed estimate operation preserves the ball, so induction gives the
+estimate bound. The triangle inequality gives Eq.~\eqref{eq:sea3-bias-compact-error}.
+The argument does not require true bias to lie inside the projection ball.
+\end{proof}
+The physical envelope includes uncompensated deterministic offsets and the
+BIAS1 driving convolution. A stochastic OU PSD is not a deterministic cap:
+a finite-horizon high-probability envelope gives only a correspondingly
+conditional finite-horizon conclusion, not an almost-sure infinite-time bound.
+Assembled-sensor qualification is required for deployment, not for proving
+this conditional implication with symbolic or declared physical bounds.
+The estimate bound concerns committed states after the immediate projection;
+the pre-projection correction is an auxiliary graph coordinate and need not
+lie in the ball.
+
+For this weaker target the old $0.35$ active-estimate interior premise is
+replaced by the closed $R_b$ ball; the remaining physical SEA3$^+$, event,
+lever-arm and dormant-vibration premises are retained. Consequently all
+projection-boundary branches must be covered. An interior-only certificate,
+including existing P3 source coverage where it uses that premise, cannot be
+silently extended to the boundary. The deployed filter is unchanged.
+
+On a complete word define the \emph{internal coupling energy}
+\begin{equation}
+ D_{b,k}=\sum_{j=k}^{k+N_W-1}h_j\|e_{b,j}\|^2
+ \le T_W B_e^2,\qquad T_W=\sum_{j=k}^{k+N_W-1}h_j.
+ \label{eq:sea3-motion-bias-energy}
+\end{equation}
+Fix $e_{b,j}$ at the sample entrance; every intra-sample bias correction and
+projection remains explicitly in the exact joint graph. A certificate must
+bound their effect with that convention; it cannot silently sample a different
+bias history or drop a correction. $D_b$ is not an exogenous noise budget:
+it bounds the actual internal bias-error trajectory, without assuming it is
+independent of $e_H$. BIAS0/1 supplies its root/forcing dependence. A BIAS2
+sector can sharpen the coupling gain, but positive separation is not required
+merely to assert bias compactness; any sector used still needs its own valid
+same-history, same-prefix proof.
+
+The new P4-motion obligations, for both response branches and both actual
+filter modes, are
+\begin{align}
+ W_{H,k+N_W}&\le\rho_H W_{H,k}
+       +\gamma_bD_{b,k}+\gamma_sD_{s,k}+\gamma_nD_{n,k},
+       &&0<\rho_H<1, \label{eq:sea3-motion-endpoint}\\
+ W_{H,k;\ell}&\le\Gamma W_{H,k}
+       +\kappa_bD_{b,k}+\kappa_sD_{s,k}+\kappa_nD_{n,k},
+       &&\ell\in\operatorname{Pref}(W),\quad 1\le\Gamma<\infty.
+       \label{eq:sea3-motion-prefix}
+\end{align}
+All gains are finite and nonnegative. Prefix contraction is not required.
+Here $\operatorname{Pref}(W)$ includes every completed shipping event, not
+only IMU sample boundaries; each correction includes its immediate reset and
+projection, with their auxiliary states retained in the graph.
+Every physical model, measurement and gyro-discretization defect stays in its
+declared source/noise channel. Removing sensor noise does not set $D_s=0$.
+In particular, ocean-wave truth generally does not obey the filter's latent
+OU prediction: $x^{\rm true}_{L,j+1}-F_{LL,j}x^{\rm true}_{L,j}$ can remain
+nonzero in a noise-free run. Its budget is not removed to obtain contraction.
+
+For a common augmented graph coordinate $z$, write
+$e_{H,0}=C_0z$, $e_{H,N}=C_Nz$, and
+$D_i=z^\top Q_i z$ for $i\in\{b,s,n\}$. The endpoint master is
+\begin{equation}
+ L_H=C_N^\top M_{H,N}C_N-\rho_H C_0^\top M_{H,0}C_0
+       -\gamma_bQ_b-\gamma_sQ_s-\gamma_nQ_n.
+ \label{eq:sea3-motion-master}
+\end{equation}
+The maps and all dense cross terms come from the same full shipping graph,
+including every actual-$R_S$ S event and its finite reset. Valid graph sectors
+$z^\top\Pi_jz\ge0$ and $\lambda_j\ge0$ with
+$-(L_H+\sum_j\lambda_j\Pi_j)\succ0$ suffice. This is a sufficient augmented
+test, not a claim that every sound certificate must be strictly definite in
+redundant graph coordinates. Prefix masters replace $C_N,M_{H,N},\rho_H$
+by the corresponding prefix maps/metric and $\Gamma$, using only valid prefix
+sectors. This changes the performance storage, not the executed covariance.
+
+\begin{lemma}[Finite-coefficient realization of the motion supply test]
+\label{lem:sea3-motion-finite-coefficients}
+Suppose the exact completed-event error graph has a factorization
+\begin{equation}
+ e_{j+1}=A_j(e,\zeta)e_j+B_j(e,\zeta)u_j,\qquad e_j\in\mathbb R^{21}.
+ \label{eq:sea3-motion-finite-coefficients}
+\end{equation}
+The coefficient sequence is evaluated on the same complete error/source
+history, including actual gains and finite resets. Let $C_H$ and $C_b$
+select the 18 performance and three bias-error coordinates. Fix a positive
+factor $a$, bias gain $g_b>0$, and positive definite port costs $U_j$ in
+explicitly declared units. Charge $h_jg_b\|C_b e_j\|^2$ at sample entrances,
+including the root; do not charge it again at each correction. For a fixed
+coefficient sequence, define the auxiliary inverse minimum-energy matrix
+\begin{align}
+ X_0&=(aC_H^\top M_{H,0}C_H+h_0g_bC_b^\top C_b)^{-1},\nonumber\\
+ X_j&\leftarrow(X_j^{-1}+h_jg_bC_b^\top C_b)^{-1}
+       &&\text{at later sample entrances},\nonumber\\
+ X_{j+1}&=A_jX_jA_j^\top+B_jU_j^{-1}B_j^\top.
+ \label{eq:sea3-motion-supply-elimination}
+\end{align}
+Assume these matrices are positive definite. If
+\begin{equation}
+ \lambda_{\max}\!\left(L_j^\top C_HX_jC_H^\top L_j\right)\le1,
+ \qquad M_{H,j}=L_jL_j^\top,
+ \label{eq:sea3-motion-supply-eigenvalue}
+\end{equation}
+then $W_{H,j}\le aW_{H,0}+g_bD_{b,0:j}+\sum_{i<j}u_i^\top U_i u_i$
+on that coefficient sequence. Uniform validity over all coefficient
+sequences generated by the retained nonlinear SEA3 graph gives the
+corresponding finite-error inequality. Use $a<1$ for the endpoint and
+$a=\Gamma\ge1$ for every completed-event prefix.
+\end{lemma}
+\begin{proof}
+For fixed coefficients, minimize the positive quadratic input cost subject
+to the full linear equality graph in Eq.~\eqref{eq:sea3-motion-finite-coefficients}.
+At an entrance the bias cost adds to its Hessian. Eliminating the forcing
+coordinates through one transition gives
+Eq.~\eqref{eq:sea3-motion-supply-elimination}; the minimum cost at $e_j$ is
+$e_j^\top X_j^{-1}e_j$. Equation~\eqref{eq:sea3-motion-supply-eigenvalue}
+is equivalent to $C_H^\top M_{H,j}C_H\preceq X_j^{-1}$.
+The actual history has at least this minimum cost. Applying the inequality
+to each admissible dependent coefficient sequence proves the stated claim.
+No bias-error decay is used.
+\end{proof}
+
+The auxiliary $X_j$ is a quadratic-cost elimination variable, not the filter's
+covariance or another estimator. All 21 state coordinates and cross terms
+remain. Exact finite coefficients can use
+$(E(c)-I)f=-(I-[c]_\times/2)^{-1}[f]_\times c$ and, with
+$\widetilde d=\operatorname{Cayley}(R_{\rm shipping}(d))$,
+$c^+=(c-\widetilde d-\tfrac12c\times\widetilde d)/
+(1+\tfrac14c^\top\widetilde d)$, on their retained charts. These are finite
+identities, not differential approximations. Physical $S$ forcing remains
+$u_S=-S_{\rm true}$ alongside the actual $R_S$ correction.
+
+A numerical check with coefficients frozen on one attached word does not
+establish their uniform nonlinear/source dependence. Allowing arbitrary
+energy ports for that sufficient check does not replace SEA3 with independent
+sample boxes; a failing maximizing port history need not be physically
+admissible. A successful point check still needs outward uniform coverage,
+the declared bias/source budgets, and the retention test below. In particular,
+large finite gains alone do not certify a useful accuracy floor.
+
+\begin{theorem}[Regional practical motion stability with compact bias error]
+\label{thm:sea3-bounded-bias-motion}
+Assume the bias compactness lemma and complete same-history source/event
+coverage above, uniform metric bounds, and a finite word length $T_W\le\bar T$.
+Retain the canonical P3 matrix checks at $\delta=10^{-18}$, but separately
+establish their applicable source premises and the active-mode motion gain;
+P3 alone does not prove Eq.~\eqref{eq:sea3-motion-endpoint}. Suppose P4-motion
+proves Eqs.~\eqref{eq:sea3-motion-endpoint}--\eqref{eq:sea3-motion-prefix}
+on the relevant first-exit graph and source/noise windows satisfy
+$D_s\le\bar D_s$, $D_n\le\bar D_n$. Put
+\begin{align}
+ C&=\gamma_b\bar T B_e^2+\gamma_s\bar D_s+\gamma_n\bar D_n,\nonumber\\
+ C_p&=\kappa_b\bar T B_e^2+\kappa_s\bar D_s+\kappa_n\bar D_n.
+ \label{eq:sea3-motion-budgets}
+\end{align}
+Suppose an endpoint level $L$ and chart-valid level $L_{\rm chart}$ satisfy
+\begin{equation}
+ W_{H,k_c}\le L,\qquad \rho_H L+C\le L,\qquad
+ \Gamma L+C_p<L_{\rm chart}.
+ \label{eq:sea3-motion-retention}
+\end{equation}
+All non-energy source/bias domains are also retained at every subevent.
+Then, on successive same-mode complete words after entry,
+\begin{align}
+ W_{H,k_c+mN_W}&\le\rho_H^m W_{H,k_c}
+                   +\frac{1-\rho_H^m}{1-\rho_H}C,\nonumber\\
+ \limsup_k W_{H,k}&\le\Gamma\frac{C}{1-\rho_H}+C_p,
+ \qquad \|e_{b,k}\|\le B_e.
+ \label{eq:sea3-motion-ultimate}
+\end{align}
+The infinite-time statement requires the envelopes on all successive windows.
+A full startup-to-active result additionally requires P5-motion finite capture
+and explicit metric/error/source transport at H$\to$A and all other allowed
+hybrid events. Capture cannot be inferred from bias compactness.
+\end{theorem}
+\begin{proof}
+The bias lemma bounds each internal coupling energy. Iteration of the endpoint
+inequality gives the geometric-series bound. The two level inequalities and
+the independently checked source domains exclude a first exit, so the graph
+premises remain valid without circularly assuming retention. Apply the prefix
+inequality and take the limsup to obtain Eq.~\eqref{eq:sea3-motion-ultimate}.
+Metric coercivity converts this into a motion-error norm bound. A certified
+hybrid transport restarts the argument at the next admitted mode level.
+\end{proof}
+
+The useful performance quantity is the resulting error floor, in particular
+the bias contribution
+\[
+ \frac{\Gamma\gamma_b\bar T B_e^2}{1-\rho_H}+\kappa_b\bar T B_e^2,
+\]
+not compactness alone. It must satisfy the desired
+motion-accuracy tolerances as well as chart retention. No numerical gain,
+accuracy floor, source-uniform motion certificate or bias convergence is
+claimed here. P4-motion/P5-motion are separate gates from the retained stronger
+full-state P4/P5 gates.
+Even with $\bar D_n=0$ and vanishing bias error, nonzero $\bar D_s$ generally
+leaves a positive certified upper error floor. The theorem does not require
+that floor to be zero, nor does it claim that the upper bound is the attained
+error. Observed percentage errors are performance evidence, not numerical
+theorem constants until the relevant output normalization, source family and
+gain bound have been certified.
+
+\subsection{Stronger full-state conditional stability theorem}
 
 \begin{theorem}[Three-mode directional-sea regional practical stability and
 finite capture]
 \label{thm:sea3-regional-practical-stability}
-Assume the following hold for both fixed-dimensional Normal-Live modes.
+Assume the following hold uniformly for both fixed-dimensional Normal-Live
+modes and both response branches of Eq.~\eqref{eq:sea3-response-union}.
 
 \begin{enumerate}[label=(\roman*),leftmargin=2.1em]
-\item SEA0 supplies a sound outward enclosure of the three-partition
-directional sea class of Eqs.~\eqref{eq:sea3-directional-spectrum}--
+\item BIAS0 qualifies the sensor model and its residual/mismatch envelopes;
+BIAS1 attaches the true bias and corrected-error history to the source,
+including projection compatibility and physical continuation through hold and
+H$\to$A.  Stochastic and calibration/model mismatch contributions remain
+in the declared forcing energies.
+\item SEA0 supplies a sound outward enclosure of the complete response union.
+On the linear branch this is the three-partition directional sea class of
+Eqs.~\eqref{eq:sea3-directional-spectrum}--
 \eqref{eq:sea3-shaping-system}, including the compact hard realization set of
 Eq.~\eqref{eq:sea3-hard-realization-set}, its declared rate-bounded parameter
-evolution, and its directional vessel/IMU response.
+evolution, and its directional vessel/IMU response. On the Stokes branch it
+is the joint root graph of Eqs.~\eqref{eq:sea3-stokes-root-graph}--
+\eqref{eq:sea3-stokes-hard-bound}, including physical IMU discretization
+defects where applicable. Neither enclosure replaces the other.
 \item P1 places the execution in the declared Normal-Live operating branch,
 including the current no-accelerometer-rejection condition and the declared
 startup prior/estimator source split.
@@ -306,10 +739,15 @@ exact deployed period-source mode, tuner, parameter-EMA, stage/commit, and
 pseudo-update scheduler history.
 \item P3 supplies bounded positive source metrics and a strict finite-window
 linear information/contraction margin on every SEA3-complete window.
+Its configured finite-$\tau_b$ matrices are retained at $\delta=10^{-18}$.
+Any later change to those matrices requires a new quantitative P3 build;
+qualification alone does not change the deployed time constant or process $Q$.
 \item P4 verifies both Eqs.~\eqref{eq:sea3-window-dissipation} and
 \eqref{eq:sea3-prefix-gain} for the exact nonlinear shipping word map on an
 invariant inner funnel $\mathcal F_{\rm inner}$, with every prefix inside its
 declared chart/source domain.
+Any BIAS2 sector it consumes has a certified positive constant on the exact
+same-history nonlinear graph, as required by Theorem~\ref{thm:bias2-separation}.
 \item P5 proves that every admitted 45-degree entrance state reaches
 $\mathcal F_{\rm inner}$ in at most $K_{\rm cap}$ samples while respecting the
 hybrid obligations.

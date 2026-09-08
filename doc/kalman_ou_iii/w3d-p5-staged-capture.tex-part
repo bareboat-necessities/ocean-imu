@@ -120,3 +120,10 @@ large-angle sector closes the outer prefix bootstrap, the staged
 Eqs.~\eqref{eq:p5-golive-cross-zero}--\eqref{eq:p5-first-S-state-prefix} provide
 the early $S\to\theta$ contribution and the resulting outer H funnel can be
 iterated only after it overlaps the already-certified inner P4 level.
+
+The capture source also carries BIAS0/1 from
+Section~\ref{sec:mems-bias-preconditions}: true physical bias and its forcing
+continue through startup, hold and H$\to$A release.  A bounded estimated bias
+does not establish a bounded true bias or bias error.  P5 must propagate the
+qualified root and disturbance envelopes into the P4 funnel, with projection
+compatibility at every prefix; it cannot restart the sensor history at capture.

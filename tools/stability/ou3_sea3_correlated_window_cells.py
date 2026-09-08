@@ -31,7 +31,7 @@ variance is not accepted as such a bound.
 from __future__ import annotations
 
 import argparse
-from dataclasses import dataclass, replace
+from dataclasses import dataclass
 import json
 import math
 from pathlib import Path
@@ -41,6 +41,7 @@ from ou3_interval import Interval
 import ou3_p4_complete_sea3_same_history_prefix_selectors as SELECTORS
 import ou3_sea3_hard_finite_window_source as HARD
 import ou3_sea3_rlambda_transition as RLAMBDA
+import ou3_mems_bias_contract as BIAS
 
 REPO = Path(__file__).resolve().parents[2]
 DEFAULT_DOMAIN = REPO / "tools" / "stability" / "ou3_proof_operating_domain.json"
@@ -193,8 +194,11 @@ def split_source_cell(
             complete_window_samples=cell.complete_window_samples,
         )
 
-    left = child("lo", Interval.outward_bounds(lo, mid))
-    right = child("hi", Interval.outward_bounds(mid, hi))
+    # lo/hi already enclose the parent; mid is the chosen binary64 cut itself.
+    # Intersections copy these exact endpoints. Rounding them outward again
+    # enlarges the parent hull and creates an overlap around the shared cut.
+    left = child("lo", Interval(lo, mid))
+    right = child("hi", Interval(mid, hi))
     return left, right
 
 
@@ -269,6 +273,8 @@ def attach_window_cell_to_endpoint_lineage(
             bias = absolute_bias_true_by_selector_cell[selector.source_cell_id]
             if len(bias) != 3 or any(not isinstance(x, Interval) for x in bias):
                 raise TypeError("absolute physical-bias source cell must contain three intervals")
+            # This flag establishes ID attachment only. BIAS1 dynamics are
+            # checked by the nonlinear lineage's retained root/GM graph.
             same_history = True
         attached.append(
             AttachedPrefix(
@@ -302,10 +308,10 @@ def _root_smoke_cell() -> Sea3WindowCell:
         joint_response_witness_id="G_imu:common-window",
         bias_path_witness_id=None,
         source_bounds=(
-            SourceBound("lambda.H1_fraction", Interval.outward_bounds(0.0, 1.0), "coupled Lambda_SEA3 search hull"),
-            SourceBound("lambda.nu1", Interval.outward_bounds(0.0, 1.0), "compact R_lambda coordinate"),
-            SourceBound("xs.support_coordinate", Interval.outward_bounds(-1.0, 1.0), "symbolic hard-realization search coordinate"),
-            SourceBound("response.gain_fraction", Interval.outward_bounds(0.0, 1.0), "joint response-family search hull"),
+            SourceBound("lambda.H1_fraction", Interval(0.0, 1.0), "coupled Lambda_SEA3 search hull"),
+            SourceBound("lambda.nu1", Interval(0.0, 1.0), "compact R_lambda coordinate"),
+            SourceBound("xs.support_coordinate", Interval(-1.0, 1.0), "symbolic hard-realization search coordinate"),
+            SourceBound("response.gain_fraction", Interval(0.0, 1.0), "joint response-family search hull"),
         ),
         shared_constraint_tokens=constraints,
     )
@@ -319,7 +325,7 @@ def _smoke(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     split_failures = validate_binary_split(root, (left, right), "lambda.H1_fraction")
 
     frontend = SELECTORS.FRONTEND._point_state()
-    P0_H, P0_A, _ = SELECTORS._source_generated_point_covariance_seed(frontend, domain_path)
+    P0_H, P0_A, _ = SELECTORS._live_structured_point_covariance_fixture(frontend, domain_path)
     sample = SELECTORS._point_sample()
     endpoints, selectors, _ = SELECTORS.execute_with_prefix_selectors(
         frontend_entry=frontend,
@@ -384,6 +390,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "schema": SCHEMA,
         "qualification": QUALIFICATION,
         "canonical_source": CANONICAL_SOURCE,
+        "mems_bias_preconditions": BIAS.build(domain_path),
         "P3_delta_preserved": 1.0e-18,
         "complete_window_samples": 601,
         "correlated_window_source_cell_data_model_available": True,
@@ -416,6 +423,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
 
 def validate(d: dict) -> list[str]:
     f: list[str] = []
+    f.extend(f"MEMS bias: {x}" for x in BIAS.validate(d.get("mems_bias_preconditions", {})))
     if d.get("schema") != SCHEMA or d.get("qualification") != QUALIFICATION:
         f.append("schema/qualification mismatch")
     if d.get("canonical_source") != CANONICAL_SOURCE:

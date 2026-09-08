@@ -10,6 +10,10 @@ on:
       - "src/kalman_ou_common/**"
       - "src/tuner/**"
       - "doc/kalman_ou_iii/w3d-iss-stability.tex-part"
+      - "doc/kalman_ou_iii/w3d-mems-bias-preconditions.tex-part"
+      - "doc/kalman_ou_iii/w3d-sea3-stability-theorem.tex-part"
+      - "doc/kalman_ou_iii/w3d-proc-cont.tex-part"
+      - "doc/kalman_ou_iii/tests/motion-theorem-smoke.tex"
       - ".github/workflows/ou3-proof.yml"
   pull_request:
     paths:
@@ -20,6 +24,10 @@ on:
       - "src/kalman_ou_common/**"
       - "src/tuner/**"
       - "doc/kalman_ou_iii/w3d-iss-stability.tex-part"
+      - "doc/kalman_ou_iii/w3d-mems-bias-preconditions.tex-part"
+      - "doc/kalman_ou_iii/w3d-sea3-stability-theorem.tex-part"
+      - "doc/kalman_ou_iii/w3d-proc-cont.tex-part"
+      - "doc/kalman_ou_iii/tests/motion-theorem-smoke.tex"
       - ".github/workflows/ou3-proof.yml"
   workflow_dispatch:
 
@@ -31,6 +39,69 @@ permissions:
   contents: read
 
 jobs:
+  theorem-latex:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Compile actual bias and motion theorem inputs
+        uses: xu-cheng/latex-action@v4
+        with:
+          root_file: motion-theorem-smoke.tex
+          working_directory: doc/kalman_ou_iii/tests
+          work_in_root_file_dir: true
+      - name: Upload theorem smoke build
+        uses: actions/upload-artifact@v6
+        with:
+          name: ou3-bounded-bias-motion-theorem-smoke
+          path: doc/kalman_ou_iii/tests/motion-theorem-smoke.pdf
+          if-no-files-found: error
+          retention-days: 7
+
+  same-history-execution:
+    # Non-promoting execution diagnostics can report independently of the
+    # longer canonical P3 -> P4 chain. No existing proof dependency is bypassed.
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Produce same-history prefix execution evidence
+        run: |
+          git rev-parse HEAD
+          python3 tools/stability/ou3_mems_bias_contract.py \
+            --output /tmp/ou3_mems_bias_contract.json
+          python3 tools/stability/ou3_p4_complete_sea3_same_history_prefix_selectors.py \
+            --output /tmp/ou3_same_history_prefix_execution.json
+
+      - name: Test entry fixture and event-by-event covariance continuity
+        working-directory: tests/validation
+        run: |
+          python3 -m unittest -v \
+            test_ou3_mems_bias_contract \
+            test_ou3_p4_same_history_nonlinear_graph_lineage \
+            test_ou3_sea3_correlated_window_cells \
+            test_ou3_p4_complete_sea3_same_history_prefix_selectors \
+            test_ou3_sea3_complete_window_execution_kernel \
+            test_ou3_sea3_live_covariance_seed \
+            test_ou3_p4_complete_sea3_finite_map_mean_value \
+            test_ou3_p4_complete_sea3_differential_events
+
+      - name: Upload non-promoting execution evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: ou3-same-history-prefix-execution
+          path: |
+            /tmp/ou3_same_history_prefix_execution.json
+            /tmp/ou3_mems_bias_contract.json
+          if-no-files-found: warn
+          retention-days: 7
+
   source-foundation:
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -68,6 +139,8 @@ jobs:
 
       - name: Build complete SEA3 source
         run: |
+          python3 tools/stability/ou3_mems_bias_contract.py \
+            --output /tmp/ou3_mems_bias_contract.json
           python3 tools/stability/ou3_sea3_complete_source.py \
             --output /tmp/ou3_sea3_complete_source.json
           python3 tools/stability/ou3_sea3_windowed_vector_pe.py \
@@ -112,6 +185,7 @@ jobs:
         with:
           name: ou3-complete-sea3
           path: |
+            /tmp/ou3_mems_bias_contract.json
             /tmp/ou3_sea3_complete_source.json
             /tmp/ou3_sea3_windowed_vector_pe.json
           retention-days: 7
@@ -255,6 +329,11 @@ jobs:
               assert d['modes'][mode]['certified_delta_lower'] >= 1e-18
               assert d['modes'][mode]['relative_Riccati_injection_margin_lower'] >= 1e-18
           assert d['P3_CONDITIONAL_SEA3_PASS'] is True
+          assert d['SEA3_response_union']['set_operation'] == 'UNION'
+          assert set(d['response_branch_conditional_P3_coverage']) == {'LINEAR_VESSEL', 'STOKES_WAVE_FOLLOWING'}
+          for branch, coverage in d['response_branch_conditional_P3_coverage'].items():
+              assert coverage == {'H18': True, 'A21': True}
+              print('P3_RESPONSE_BRANCH_CONDITIONAL', branch, coverage)
           assert d['P3_DEPLOYMENT_PASS'] is False
           assert d['P3_CANONICAL_PASS'] is d['P3_CONDITIONAL_SEA3_PASS']
           assert d['P4_MAY_CONSUME_CONDITIONAL_SEA3_P3'] is True
@@ -275,6 +354,7 @@ jobs:
         run: |
           python3 -m unittest -v \
             test_ou3_sea3_physical_admissibility \
+            test_ou3_sea3_response_union \
             test_ou3_sea3_shipping_prediction_primitives \
             test_ou3_sea3_live_covariance_seed \
             test_ou3_sea3_full_word_riccati_backend \
@@ -338,7 +418,8 @@ jobs:
         run: |
           python3 tools/stability/ou3_sea3_riccati_metric_p4.py \
             --output /tmp/ou3_sea3_riccati_metric_p4.json \
-            --joint-sector-output /tmp/ou3_p4_complete_sea3_joint_sector_master.json
+            --joint-sector-output /tmp/ou3_p4_complete_sea3_joint_sector_master.json \
+            --motion-output /tmp/ou3_p4_bounded_bias_motion.json
 
       - name: Test complete-SEA3 finite physical P4 contract
         working-directory: tests/validation
@@ -355,6 +436,24 @@ jobs:
           r = json.load(open('/tmp/ou3_p4_complete_sea3_reset_gauge_attachment.json'))
           j = json.load(open('/tmp/ou3_p4_complete_sea3_joint_sector_master.json'))
           d = json.load(open('/tmp/ou3_sea3_riccati_metric_p4.json'))
+          motion = json.load(open('/tmp/ou3_p4_bounded_bias_motion.json'))
+          assert motion['validation_pass'], motion['validation_failures']
+          assert d['primary_proof_target'] == motion['primary_target']
+          assert motion['executed_active_filter_dimension'] == 21
+          assert motion['motion_storage_dimension'] == 18
+          assert motion['estimate_ball_invariance_lemma_closed_conditionally']
+          assert motion['bias_error_bound_lemma_closed_conditionally']
+          assert motion['bias_error_bound_formula'] == 'B_true + R_b'
+          assert not motion['full_21_state_nonlinear_contraction_required']
+          assert not motion['held_H18_certificate_transferred_to_active_filter']
+          assert not motion['existing_P3_automatically_covers_projection_boundary']
+          assert not motion['sensor_noise_zero_implies_model_mismatch_zero']
+          assert not motion['zero_error_floor_required']
+          assert motion['certified_motion_gains'] is None
+          assert motion['certified_accuracy_floor'] is None
+          assert not d['P4_MOTION_PASS'] and not motion['P4_MOTION_PASS']
+          assert not d['P5_MOTION_MAY_START'] and not motion['P5_MOTION_MAY_START']
+          print('BOUNDED_BIAS_MOTION_TARGET', json.dumps(motion, sort_keys=True))
           assert m['validation_pass'], m['validation_failures']
           assert r['validation_pass'], r['validation_failures']
           assert j['validation_pass'], j['validation_failures']
@@ -365,6 +464,11 @@ jobs:
           assert d['canonical_P4_architecture'] == 'FINITE_STATE_COMPLETE_SEA3_QUADRATIC_ENDPOINT_AND_PREFIX'
           assert d['canonical_source'] == 'COMPLETE_SEA3_NORMAL_LIVE_WORD'
           assert d['P3_CONDITIONAL_SEA3_PASS_consumed'] is True
+          for obligation in ('endpoint', 'prefix_gain', 'prefix_retention'):
+              coverage = d['response_branch_P4_coverage'][obligation]
+              assert set(coverage) == {'LINEAR_VESSEL', 'STOKES_WAVE_FOLLOWING'}
+              assert all(c == {'H18': False, 'A21': False} for c in coverage.values())
+              print('P4_RESPONSE_BRANCH_OBLIGATION', obligation, coverage)
           assert d['P3_H18_delta_consumed'] == 1e-18
           assert d['P3_A21_delta_consumed'] == 1e-18
           assert d['finite_state_endpoint_dissipation_required'] is True
@@ -415,4 +519,5 @@ jobs:
             /tmp/ou3_p4_complete_sea3_reset_gauge_attachment.json
             /tmp/ou3_p4_complete_sea3_joint_sector_master.json
             /tmp/ou3_sea3_riccati_metric_p4.json
+            /tmp/ou3_p4_bounded_bias_motion.json
           retention-days: 7

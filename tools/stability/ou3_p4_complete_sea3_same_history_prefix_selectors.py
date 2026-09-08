@@ -218,7 +218,11 @@ def lineage_for_endpoint(
         raise ValueError(f"unknown endpoint source cell {endpoint_source_cell_id}")
     reverse: list[PrefixSelector] = []
     cell = endpoint_source_cell_id
+    visited: set[str] = set()
     while cell != "root":
+        if cell in visited:
+            raise ValueError("cycle in same-history ancestry")
+        visited.add(cell)
         selector = by_child.get(cell)
         if selector is None:
             raise ValueError(f"broken same-history ancestry at {cell}")
@@ -297,7 +301,13 @@ def _validate_event_cells(
                 failures.append(f"{prefix} magnetometer H detached from provider vector")
 
     if cells:
+        initial_P = selector.H_before.riccati.P if mode == "H" else selector.A_before.riccati.P
         final_P = selector.H_after.riccati.P if mode == "H" else selector.A_after.riccati.P
+        if cells[0].P_before != initial_P:
+            failures.append(f"{prefix} first captured covariance differs from parent word")
+        for previous, current in zip(cells, cells[1:]):
+            if previous.P_after != current.P_before:
+                failures.append(f"{prefix} covariance continuity lost before {current.kind}")
         if cells[-1].P_after != final_P:
             failures.append(f"{prefix} final captured covariance differs from child word")
     return failures
@@ -311,6 +321,8 @@ def validate_selector_graph(
 ) -> list[str]:
     """Validate ancestry/event/source invariants without claiming source closure."""
     failures: list[str] = []
+    if samples_executed <= 0 or not selectors or not endpoint_source_cell_ids:
+        return ["nonempty executed prefix family and endpoints required"]
     try:
         by_child = selector_index(selectors)
     except ValueError as exc:
@@ -328,6 +340,11 @@ def validate_selector_graph(
                 failures.append(f"{selector.source_cell_id}: missing parent selector")
             elif parent.prefix_length + 1 != selector.prefix_length:
                 failures.append(f"{selector.source_cell_id}: parent is not previous prefix")
+            elif (
+                selector.H_before != parent.H_after
+                or selector.A_before != parent.A_after
+            ):
+                failures.append(f"{selector.source_cell_id}: word state detached from parent prefix")
 
         for mode, events, cells in (
             ("H", selector.H_events_this_sample, selector.H_event_cells),
@@ -421,11 +438,11 @@ def _point_sample() -> KERNEL.SampleCoordinates:
     )
 
 
-def _source_generated_point_covariance_seed(
+def _live_structured_point_covariance_fixture(
     frontend_entry: FRONTEND.FrontEndState,
     domain_path: Path,
 ):
-    """Build the narrow shipping Live/release covariance structure for smoke only.
+    """Build a Live-structured covariance fixture, not a reachable A21 entry.
 
     The previous 2*I fixture was an arbitrary PSD matrix and caused enclosure
     loss on the second Joseph prefix.  This fixture instead consumes the
@@ -435,14 +452,18 @@ def _source_generated_point_covariance_seed(
     geometry is identity, so the body-down projector is the z axis and the
     attitude seed is diag(tilt^2, tilt^2, yaw^2).
 
-    This is still a selector smoke fixture, not a P4 source-family witness.
+    The H block uses the Live seed structure, while the A block appends the
+    shipping bias-floor variance solely to exercise the full 21-state code.
+    No pre-release H history or rectangular H->A event is executed here.
+    Neither this fixture nor the point frontend proves SEA3 reachability.
     """
     live = LIVE.build(Path(domain_path).resolve())
     lf = LIVE.validate(live)
     if lf:
         raise RuntimeError(f"shipping Live covariance seed invalid: {lf}")
 
-    active = TUNER.commit_if_pending(frontend_entry.tuner, TUNER.constants()).active
+    constants = KERNEL._process_constants(Path(domain_path).resolve())
+    active = TUNER.commit_if_pending(frontend_entry.tuner, constants.tuner).active
     if active.sigma.lo <= 0.0:
         raise RuntimeError("point frontend active sigma is not strictly positive")
 
@@ -482,17 +503,45 @@ def _source_generated_point_covariance_seed(
 
     return P_H, P_A, {
         "live_seed_contract_consumed": True,
-        "arbitrary_P0_used": False,
+        "arbitrary_2I_covariance_used": False,
         "identity_point_attitude_seed_uses_tilt_yaw_split": True,
         "aw_seed_uses_same_committed_sigma": True,
-        "A21_ba_release_floor_attached": True,
+        "A21_ba_floor_variance_attached_for_fixture_only": True,
+        "same_history_H_to_A_release_executed": False,
+        "A21_entry_reachability_certified": False,
+        "complete_SEA3_source_membership_certified": False,
     }
+
+
+def _prefix_evidence(selector: PrefixSelector) -> dict:
+    """Small numerical CI record from the captured cells, not a certificate."""
+    result = {
+        "prefix_length": selector.prefix_length,
+        "parent_source_cell_id": selector.parent_source_cell_id,
+        "source_cell_id": selector.source_cell_id,
+    }
+    for mode, word, cells in (
+        ("H18", selector.H_after, selector.H_event_cells),
+        ("A21", selector.A_after, selector.A_event_cells),
+    ):
+        P = word.riccati.P
+        result[mode] = {
+            "dimension": len(P),
+            "events": [cell.kind for cell in cells],
+            "P_after_diagonal": [[P[i][i].lo, P[i][i].hi] for i in range(len(P))],
+            "P_after_max_entry_width": max(x.hi - x.lo for row in P for x in row),
+            "actual_R_S_diagonals": [
+                [[cell.R[i][i].lo, cell.R[i][i].hi] for i in range(3)]
+                for cell in cells if cell.kind == "S_zero"
+            ],
+        }
+    return result
 
 
 def _smoke(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     samples = [_point_sample(), _point_sample()]
     frontend_entry = FRONTEND._point_state()
-    P0_H, P0_A, seed_meta = _source_generated_point_covariance_seed(
+    P0_H, P0_A, seed_meta = _live_structured_point_covariance_fixture(
         frontend_entry, domain_path
     )
     endpoints, selectors, meta = execute_with_prefix_selectors(
@@ -516,7 +565,9 @@ def _smoke(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     ]
     return {
         **meta,
-        "source_generated_covariance_seed": seed_meta,
+        "live_structured_covariance_fixture": seed_meta,
+        "evidence_scope": "TWO_SAMPLE_FIXTURE_NOT_COMPLETE_SEA3_FAMILY",
+        "prefix_evidence": [_prefix_evidence(s) for s in selectors],
         "selector_graph_failures": failures,
         "selector_graph_valid": not failures,
         "all_endpoint_lineages_cover_every_prefix": bool(lineages)
@@ -643,17 +694,27 @@ def validate(d: dict) -> list[str]:
         if d.get(key) is not False:
             failures.append(f"{key} is not false")
     smoke = d.get("smoke", {})
-    seed = smoke.get("source_generated_covariance_seed", {})
+    seed = smoke.get("live_structured_covariance_fixture", {})
     for key in (
         "live_seed_contract_consumed",
         "identity_point_attitude_seed_uses_tilt_yaw_split",
         "aw_seed_uses_same_committed_sigma",
-        "A21_ba_release_floor_attached",
+        "A21_ba_floor_variance_attached_for_fixture_only",
     ):
         if seed.get(key) is not True:
-            failures.append(f"smoke source covariance seed lost {key}")
-    if seed.get("arbitrary_P0_used") is not False:
-        failures.append("smoke reverted to arbitrary P0")
+            failures.append(f"smoke covariance fixture lost {key}")
+    for key in (
+        "arbitrary_2I_covariance_used",
+        "same_history_H_to_A_release_executed",
+        "A21_entry_reachability_certified",
+        "complete_SEA3_source_membership_certified",
+    ):
+        if seed.get(key) is not False:
+            failures.append(f"smoke covariance fixture changed {key}")
+    if smoke.get("evidence_scope") != "TWO_SAMPLE_FIXTURE_NOT_COMPLETE_SEA3_FAMILY":
+        failures.append("smoke was relabeled as a complete SEA3 source family")
+    if len(smoke.get("prefix_evidence", [])) != smoke.get("prefix_selectors"):
+        failures.append("numerical CI evidence does not cover every retained prefix")
     for key in (
         "same_word_executed_H18_A21",
         "frontend_completed_before_async_mag",

@@ -27,14 +27,14 @@ The contributions are:
         gyro and residual accelerometer bias, and three exact OU-driven
         $[v,p,S,a_w]$ chains, with $S$ providing soft low-frequency drift
         control;
-  \item a two-level stability result: finite-horizon observability,
-        finite-correlation residual-bias contraction, bounded Riccati
-        covariance, and UES yield local 21-state Live ISS, while the
-        independent Mahony startup observer gives an almost-global,
-        semiglobal practical attitude-capture extension into that Live basin
-        uniformly on compact startup sets contained in the proxy's desired
-        almost-global domain under the explicit handoff conditions of
-        Secs.~\ref{app:iss-stability} and \ref{sec:semiglobal-stability};
+  \item a conditional stability framework with bounded accelerometer-bias
+        error and practical stability of the other 18 errors, retaining the
+        full active filter. Model mismatch may leave a nonzero accuracy floor.
+        The linear Riccati implications and independent Mahony startup result
+        supply auxiliary ingredients; quantitative nonlinear source-uniform
+        gains, prefix retention and handoff remain certificate obligations
+        of Theorem~\ref{thm:sea3-bounded-bias-motion}. Full A21 nonlinear
+        contraction is a stronger, unclosed extension;
   \item an exogenous adaptation architecture that estimates wave time scale and
         acceleration level from measurement-only signals and schedules the OU
         prior and integral regularizer.  Sea-similarity arguments determine the

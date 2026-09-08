@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import sys
+from dataclasses import replace
 import unittest
 from pathlib import Path
 
@@ -66,6 +67,24 @@ class Sea3CorrelatedWindowCellsTests(unittest.TestCase):
                 Interval.outward_bounds(1.0, 2.0),
                 "illegal independent R_S hull",
             )
+
+    def test_repeated_cuts_preserve_already_outward_parent_endpoints(self):
+        parent = CELLS._root_smoke_cell()
+        name = "lambda.H1_fraction"
+        old = parent.bound(name)
+        widened = CELLS.SourceBound(name, Interval.outward_bounds(0.0, 1.0), old.provenance)
+        parent = replace(parent, source_bounds=tuple(
+            widened if b.coordinate == name else b for b in parent.source_bounds
+        ))
+        for cut in (0.37, 0.123, 0.019):
+            bounds = parent.bound(name).interval
+            left, right = CELLS.split_source_cell(parent, name, split_value=cut)
+            self.assertEqual(CELLS.validate_binary_split(parent, (left, right), name), [])
+            self.assertEqual(left.bound(name).interval.lo, bounds.lo)
+            self.assertEqual(right.bound(name).interval.hi, bounds.hi)
+            self.assertEqual(left.bound(name).interval.hi, cut)
+            self.assertEqual(right.bound(name).interval.lo, cut)
+            parent = left
 
     def test_source_split_does_not_cartesianize_coupled_partition_constraints(self):
         parent = CELLS._root_smoke_cell()

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import sys
+from dataclasses import replace
 import unittest
 from pathlib import Path
 
@@ -21,7 +22,7 @@ class P4SameHistoryNonlinearGraphLineageTests(unittest.TestCase):
     @staticmethod
     def _fixture():
         frontend = FRONTEND._point_state()
-        P0_H, P0_A, _ = SELECTORS._source_generated_point_covariance_seed(
+        P0_H, P0_A, _ = SELECTORS._live_structured_point_covariance_fixture(
             frontend, SELECTORS.DEFAULT_DOMAIN
         )
         sample = SELECTORS._point_sample()
@@ -125,6 +126,22 @@ class P4SameHistoryNonlinearGraphLineageTests(unittest.TestCase):
                 initial_A_state=[Interval.point(0.0) for _ in range(21)],
                 A21_bias_lineage=wrong_endpoint,
             )
+
+    def test_matching_prefix_ids_do_not_replace_the_GM_history(self):
+        _, _, lineage, _ = self._fixture()
+        root = (Interval.point(0.1), Interval.point(-0.05), Interval.point(0.02))
+        bias = GRAPH.homogeneous_bias_lineage(lineage, root)
+        constants = GRAPH.KERNEL._process_constants(GRAPH.DEFAULT_DOMAIN)
+        bias.validate_homogeneous(lineage, constants, 0.4)
+        detached = dict(bias.bias_true_by_source_cell_id)
+        detached[lineage[-1].source_cell_id] = root
+        with self.assertRaisesRegex(RuntimeError, "common GM root"):
+            replace(bias, bias_true_by_source_cell_id=detached).validate_homogeneous(lineage, constants, 0.4)
+        with self.assertRaisesRegex(RuntimeError, "tau mismatch"):
+            replace(bias, tau_s=Interval.point(4000.0)).validate_homogeneous(lineage, constants, 0.4)
+        outside = GRAPH.homogeneous_bias_lineage(lineage, (Interval.point(0.5),) * 3)
+        with self.assertRaisesRegex(RuntimeError, "zero-error invariance"):
+            outside.validate_homogeneous(lineage, constants, 0.4)
 
 
 if __name__ == "__main__":

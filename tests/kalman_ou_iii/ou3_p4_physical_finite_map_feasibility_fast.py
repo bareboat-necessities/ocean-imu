@@ -13,11 +13,13 @@ This companion preserves the exact same point source payload and metric path:
 * every source-only Joseph gain K and every P_after^-1 are precomputed once;
 * finite values use the same deployed quaternion branch, exact Cayley
   composition, exact physical S/vector/accelerometer residuals, and the same
-  A21 0.5 m/s^2 bias projection;
+  A21 bias projection at the declared radius (currently 0.4 m/s^2);
 * every due S update therefore still uses its actual applied anisotropic R_S.
 
 No theorem enclosure is obtained here.  This remains a point
 feasibility/falsification diagnostic and cannot promote P4.
+The reset-deleted covariance path is a rebuilt diagnostic path, not an
+attached finite gauge representative; see ou3_p4_retained_word_attachment.
 """
 from __future__ import annotations
 
@@ -243,9 +245,11 @@ def main() -> int:
         "canonical_source": "COMPLETE_SEA3_NORMAL_LIVE_WORD",
         "point_same_history_diagnostic_only": True,
         "physical_true_minus_estimated_map": True,
-        "reset_gauge_normalized_representative": True,
+        "reset_gauge_normalized_representative": False,
         "same_single_shipping_observer_source_payload": True,
-        "second_estimator_or_Riccati_history_used": False,
+        "second_estimator_or_Riccati_history_used": True,
+        "diagnostic_Riccati_rebuilt_without_resets": True,
+        "finite_gauge_attachment_verified": False,
         "source_only_Joseph_gains_precomputed_once": True,
         "finite_scale_sweep_value_only_same_deployed_equations": True,
         "zero_state_full_AD_parity_still_required": True,

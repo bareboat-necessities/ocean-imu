@@ -55,6 +55,7 @@ from ou3_interval import (
 from ou3_interval_linear_algebra import matrix_symmetric_hull
 import ou3_p4_complete_sea3_residual_sector as RESIDUAL
 import ou3_p4_complete_word_accelerometer_channel as CHANNEL
+import ou3_mems_bias_contract as BIAS
 import ou3_p4_complete_sea3_signed_information_ledger as SIGNED
 import ou3_sea3_riccati_metric_p3 as P3
 
@@ -234,6 +235,7 @@ def build(
         "schema": SCHEMA,
         "qualification": QUALIFICATION,
         "canonical_source": "COMPLETE_SEA3_NORMAL_LIVE_WORD",
+        "mems_bias_preconditions": p3["mems_bias_preconditions"],
         "P3_delta_required": P3_DELTA,
         "P3_H18_delta_consumed": float(
             p3["modes"]["H18"]["relative_Riccati_injection_margin_lower"]
@@ -312,6 +314,7 @@ def build(
 
 def validate(d: dict) -> list[str]:
     f: list[str] = []
+    f.extend(f"MEMS bias: {x}" for x in BIAS.validate(d.get("mems_bias_preconditions", {})))
     if d.get("schema") != SCHEMA or d.get("qualification") != QUALIFICATION:
         f.append("schema/qualification mismatch")
     if d.get("canonical_source") != "COMPLETE_SEA3_NORMAL_LIVE_WORD":

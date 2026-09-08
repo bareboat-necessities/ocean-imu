@@ -1,12 +1,294 @@
 # OU-III proof research state
 
-## Handoff checkpoint
+## Current hypothesis: bounded-bias practical motion stability
 
-Canonical source remains `COMPLETE_SEA3_NORMAL_LIVE_WORD`. Conditional complete-SEA3 P3 is closed and frozen at `delta=1e-18`. P4 is **OPEN** and P5 is **BLOCKED**. H18 and A21 are both required; H18->A21 remains a separate rectangular hybrid event. Zero lever arm and the dormant-transparent vibration branch remain the certified production branch.
+The connected attachment test is `ou3_p4_connected_motion.py`. A test-only header
+overlay inserts read-only callbacks into the actual C++ observer; stripping
+the callbacks must recover shipping bytes, and the complete root/input/endpoint
+capture must match an uninstrumented run byte-for-byte. The callbacks expose
+prediction, every actual-R_S S call, accelerometer/magnetic Joseph injection,
+finite quaternion/covariance reset and bias projection. No gain or storage is
+fitted to the trajectory. The 18-error performance storage evaluates the
+principal 18x18 block of the full 21x21 information matrix, without changing
+the active filter or its gains.
+
+At `bbc4b4cc`, connected CI `34162722761`, canonical proof `34162722636`
+and all six quality gates `34162722656` pass. The parity reporter owns explicit
+event/mode context; the earlier B023 closure defect is repaired and covered.
+The separate replay-provenance validation remains red and is not weakened.
+
+Connected CI run `34162280303` at `636ce7aa` completed successfully: 35 tests,
+both C++ builds, byte-identical baseline/trace root/input/endpoint captures,
+and numerical attachment of all subevents. H18/A21 have 600 predictions,
+600 accelerometer corrections, 75 magnetic corrections and 137/108 actual-R_S
+S corrections; measurement-entry x/R/P continuity defects are exactly zero.
+The largest normalized finite-correction defects are 9.07e-7/1.64e-6, below
+the fixed float-parity tolerance 128*epsilon_float32. This is point numerical
+attachment, not an outward nonlinear certificate or complete uniform source
+admission. Artifact `10033045491`, SHA256
+`4653ecae47a7c5129e30be2a216ba8d74bc2bfc2984e34df923962eeddb75db0`.
+
+The selected full-information 18-error storage gives actual FORCED WN/W0
+7.9717652268 (H18) and 3.5866084405 (A21), with completed-event prefix maxima
+8.0134866100 and 3.9649751830. These are not homogeneous contraction tests.
+Actual S-correction signed energy totals are +10.7401950515 and -1.1215084220;
+their separately retained S_true input energies sum to 12.3018121053 and
+6.1242752691 under each event's actual R_S inverse. The source channels have
+different declared units and are not silently summed into one certified budget.
+In particular the A21 S corrections are present and net dissipative on this
+point. No coefficient/architecture failure follows from the forced endpoint
+ratios. The remaining mathematical limiter is a valid joint nonlinear graph
+sector and channel-gain witness; no multiplier, useful accuracy floor or
+source-uniform P4/P5 closure has been obtained from the attachment check.
+
+Attachment finding: the earlier homogeneous S map contains `y=delta_S` and
+does retain the complete R_S-weighted corrective gain. Its physical residual
+is instead `r_S=-S_hat=delta_S-S_true`. The missing physical-source attachment
+is the `-S_true` input, not a missing S update or R_S regularization. Together
+with the already measured truth-minus-F_LL and gyro-discretization defects,
+this invalidates identification of those homogeneous maps with the actual
+noise-free sea trajectory. It does not invalidate their homogeneous algebra,
+P3, the relaxed theorem, or the filter coefficients. Both correction and
+physical forcing must remain in the connected graph, with separate units and
+no silent conversion of a forced ratio to contraction. Every-subevent point
+reproduction now passes. Point parity and signed energy telescoping alone
+cannot certify motion gains or P4.
+
+## Current experiment: connected finite-coefficient motion supply
+
+`ou3_p4_motion_gain.py` uses exact finite Cayley/quaternion algebra to write
+each completed shipping error step as `e_next=A(e,zeta)e+B(e,zeta)u`. It
+retains all 21 rows, actual R_S, finite resets/projection, and the actual
+within-sample corrected bias history. This is not a derivative or a fit of a
+matrix to one vector. The point capture uses its original zero true-bias root;
+nonzero BIAS0/1 roots and projection boundaries still need uniform coverage.
+
+Controlling test: minimize `a W0 + g_b D_b + sum u_j' U_j u_j` over the full
+fixed-coefficient equality graph. Exact Schur elimination of forcing gives
+`X_next=A X A'+B U^-1 B'`; the actual entrance bias costs add to `X^-1`.
+All state coordinates remain. The maximum performance/cost is
+`lambda_max(L_M' X_HH L_M)`. A regression compares this recursion against the
+explicit dense augmented quadratic with the corrected bias cost. This is the
+endpoint and prefix master, not a packetwise scalar remainder bound.
+
+Numerical candidates use one declared SI normalization per port and a fixed
+dyadic gain bracket through 2^40. No storage/window/filter parameter is fitted.
+The endpoint must permit a factor below one; the prefix test uses Gamma=2.
+The final coefficient-direction energy is recomputed at 80 decimal digits,
+with signed event contributions and the distance from the gain threshold.
+An explicit lower bound on the resulting *composed bound*, if these gains were
+extended uniformly, prevents confusing large finite gains with useful accuracy.
+It is not a lower bound on actual filter error.
+
+Scope/critic: frozen dependent coefficients and arbitrary energy ports form
+only a sufficient point-coefficient test. Its maximizing history is not
+presumed nonlinear/SEA3 admissible. A failing test cannot falsify P4; a passing
+one still cannot supply graph sectors or source-uniform coverage. Do not launch
+interval refinement from a pass without checking gain budgets/retention. If
+the outer test is too conservative, alternatives are correlated SEA3 port
+constraints in the dense master, direct nonlinear joint graph sectors, or an
+analytically justified source-dependent motion storage. Do not resume a metric
+grid, shrink the domain, or restore a bias-decay target.
+
+### CI result and mandatory gain-budget failure analysis
+
+Connected CI `34165890828`, job `101876729854`, succeeds at `7898eb06`:
+42 tests, both shipping captures, byte identity, every finite factorization,
+the augmented endpoint/prefix experiment, and the retained-payload audit.
+Artifact `10034187923`, SHA256
+`b4bba842068c52f59049cf0cfb4416d2601fc6413293674c2ebd9d38c31c2b28`.
+
+| Fixed coefficient word | Endpoint factor a | Augmented maximum / cost | Strict margin | Common normalized channel gain | Every-prefix maximum / cost, Gamma=2 |
+| --- | --- | --- | --- | --- | --- |
+| H18 | 0.9999569976489486 | 0.9999569957000949 | 4.30042999e-5 | 4294967296 | 0.5021973016796247 |
+| A21 | 0.9788191291615017 | 0.9783443789603329 | 0.0216556210 | 68719476736 | 0.5000004886503184 |
+
+The 80-digit direction ratios are 0.99995699570009611095 and
+0.97834437896032508613. Maximum composed-word float parity defects are
+1.75604e-6/1.54728e-6, below the unchanged float-parity gate; minimum Cayley
+product denominators are 0.9999988264752726/0.9999999968125808. Every 137/108
+actual-R_S S event remains. The limiting prefixes are H18 sample 6601 after
+accelerometer correction, and A21 sample 228605 after the covariance floor.
+This confirms numerical **coefficient-slice supply feasibility**, not a
+nonlinear contraction factor valid on all physical SEA3 histories.
+
+Failed quantity: useful gain-budget/retention closure. In these fixed SI
+normalizations, the point source energies are 13.5744221779/6.39727241539.
+If the selected gains were extended uniformly, the triangle-bound composition
+with even B_true=0 would give an endpoint bound at least
+1.40372054310e15 (H18) / 2.23127068109e13 (A21) in motion-storage units.
+These are lower bounds on the *conservative composed bound*, not on actual
+filter error. For example, scaling the reported root motion direction to
+those levels gives position extents about 132180 m / 7679 m and Cayley
+attitude extents 72283 / 3315. Thus the plain storage-ellipsoid retention
+argument cannot make these witnesses useful; the observed 2--3% floor is
+not contradicted or certified by them.
+
+Classification: insufficient proof-method/gain-budget witness, not filter,
+coefficient, bias-compactness, source-admission or interval failure. This
+invalidates promoting these energy-only/common-gain candidates or spending
+effort enclosing them as usable certificates. It does not invalidate the
+relaxed theorem, the finite factorization, the augmented supply identity,
+or the possibility of much sharper source-correlated channel gains. The
+reported factors also cannot be quoted as actual nonlinear-filter contraction.
+
+Critic: arbitrary energy ports admit independent latent increments and S
+forcing that are coupled by the physical sea. A single common gain then
+charges every channel at the most expensive channel's scale. Both lose
+information that a usable SEA3 proof needs. The actual S correction is present;
+in the maximizing coefficient directions its signed contribution is negative
+in both modes. Tightening reset bounds or restoring bias-error decay addresses
+neither identified source of conservatism.
+
+Alternatives: (1) impose common-source equalities/sectors linking
+`u_L[j]=x_L_true[j+1]-F_LL[j]x_L_true[j]` and
+`u_S[j]=-C_S x_L_true[j]`, including the same rotational/frontend/bias root;
+(2) use the full joint nonlinear graph sectors with distinct, dimensionally
+declared channel gains rather than the common-gain outer test; (3) consider
+an analytically justified source-dependent motion storage if an admitted
+nonlinear direction defeats that structured master. No replay/metric grid,
+source-box splitting, or coefficient change is justified by this result.
+
+Next falsifiable experiment: construct the correlated complete-history
+source/forcing sector, retain its cross terms with the corrected bias history,
+and test whether the resulting gains close an explicit retention/accuracy
+budget on the same two words. Both response branches still require uniform
+coverage. P4_MOTION_PASS/P5_MOTION_MAY_START remain false. Freeze interval
+refinement of the current common-gain witnesses.
+
+Infrastructure failure: downloading connected artifact `10033198656` to this
+runtime returned HTTP 403 (`error code: 1010`). It blocks local reuse of that
+archive, not GitHub CI execution, attachment evidence, or any theorem. The
+runtime also lacks the optional mpmath package; the diagnostic uses Python's
+standard Decimal arithmetic instead. GitHub CI independently recaptured and
+verified the same words, and emitted the numerical results above.
+
+The relaxed-theorem checkpoint's CI passed P3 and all 127 P4-job tests, the
+theorem smoke build and all six quality gates. The independent same-history
+job ended cancelled; its logs were unavailable, so it is not recorded as a
+PASS or a mathematical failure. The separate replay-provenance validation
+failure remains unchanged. This is an execution/evidence limitation, not
+permission to weaken a gate; the focused connected trace runs independently.
+
+The user-authorized primary theorem now asks for bounded accelerometer-bias
+error and practical stability of the other 18 errors, not full A21 nonlinear
+contraction or bias convergence. Both physical SEA3+ branches and both actual
+filter modes remain required; A21 still executes its full 21-state P/K/reset
+history with every actual R_S. The performance storage is 18-dimensional;
+this is not a reduced estimator or a copied held-mode H18 certificate.
+
+BIAS0/1 gives a conditional same-history true-bias bound B_true; projection
+gives the estimate ball and hence ||e_b||<=B_true+0.4. The weaker target uses
+the closed 0.4 ball, including projection boundaries, instead of assuming
+the old 0.35 interior. The legacy domain and full-state flags remain intact;
+their P3/source coverage is not automatically extended to the new domain.
+BIAS2 is optional gain sharpening, valid only with a certified graph sector.
+Bias corrections remain internal coupling, not renamed sensor noise.
+
+The controlling new inequality is
+`W_H,N <= rho_H W_H,0 + gamma_b D_b + gamma_s D_s + gamma_n D_n`, rho_H<1,
+with finite every-event prefix gain, chart/source retention and hybrid entry.
+The gain/floor master uses the same full nonlinear graph and actual forcing.
+Zero sensor noise does not remove ocean/OU model mismatch. A nonzero residual
+floor is allowed and expected; the observed 2--3% is not yet a certified
+uniform constant or an identified output normalization.
+
+Current evidence: the conditional compactness and geometric-series/retention
+lemmas are in LaTeX; exact composition arithmetic and an outward full-graph
+motion-master assembler are tested. Synthetic algebra witnesses are not
+Ocean-IMU motion-gain certificates. New P4_MOTION_PASS/P5_MOTION_MAY_START
+remain false independently of the stronger full-state flags.
+
+Current limiter and next falsifiable experiment: retain the complete source
+correlation in the motion/supply master and close a useful gain budget before
+any uniform enclosure search.
+Report the resulting motion-accuracy floor and test that it lies within the
+retained chart and requested physical performance tolerances. Preserve P3's
+delta=1e-18 while resolving projected-domain source coverage separately.
+No new metric grid, packetwise scalar budgets, longer-window search or
+filter changes are authorized. P5-motion cannot start from compactness alone.
+
+Local build limitation: `make all` stops at `KalmanQMEKF.h:30` because
+Eigen/Dense is absent; the include path is unchanged. The theorem smoke
+harness initially loaded an unavailable, unused siunitx package; it now loads
+only packages used by its actual inputs. Neither issue is a theorem failure;
+GitHub CI supplies the independent proof and LaTeX rebuild results.
+
+## Retained stronger-target source-capture evidence
+
+The source-connected **actual finite** endpoint capture passes CI run
+`34157292548` on code head `456fce0f`. One shipping observer owns the complete
+power-on history, nominal state, P, resets, tuner commits and actual R_S.
+The new conditional Stokes capture uses zero true bias/driver and makes no
+state/covariance intervention. It is not the original retained witness.
+
+| Fixed window | Sample indices | Source parity defect | Actual forced VN/V0 | Actual sample-prefix maximum |
+| --- | --- | --- | --- | --- |
+| H18 | 6600--7199 | 1.56e-15 | 7.97176522677814 | 7.97176522677814 |
+| A21 | 228600--229199 | 1.68e-14 | 0.496821403940055 | 1.46706257365206 |
+
+Both have 600 IMU calls and 75 magnetic calls; H18/A21 retain 137/108 due
+S calls. The checked Live/mode/magnetic-transition, accepted-accelerometer,
+physical acceleration/rate, bias-interior and Cayley-chart predicates pass.
+This is point evidence, not full Normal-Live/PE or source-uniform admission.
+Endpoint storage is evaluated by exact rational elimination with 80-digit
+decimal output from the float shipping coordinates; call margins telescope
+to reported roundoff. The capture artifact is `10031432066`, SHA256
+`ce787b17bcf700730f6905c87f2e5a0b303dd18e20da697de3b63a27afc7ff46`.
+
+The failed identification is **zero sensor/bias noise => homogeneous P4
+trajectory**. The same-root physical prediction defect
+`u_l[k]=x_true[k+1]-F_LL[k]x_true[k]` is nonzero: the largest acceleration
+coordinate increments are 0.018034304915645463 (H18) and
+0.022571626343973056 (A21). Classification: proof-map attachment gap, not
+a failed contraction theorem or interval enclosure. Neither raw ratio proves
+or falsifies the homogeneous P4 storage; do not optimize either one.
+BIAS1 does not remove ocean/OU model forcing. Assembled-sensor qualification
+is not a gate for this conditional work.
+
+Critic: abandon using an actual zero-noise simulation as the unforced master;
+its nonzero source-model input makes the ratio answer a different question.
+The current limiter is the exact joint error/source/forcing transition,
+including subevent nominal/P/reset attachment, not an eigenvalue margin.
+Next falsifiable experiment: construct that transition and require it to
+reproduce every captured shipping subevent at the recorded inputs. Then
+test whether its zero-input section preserves the claimed source attachment
+before composing the fixed complete-history homogeneous endpoint. If it
+does not, the qualitatively different alternative is the full forced
+window ISS master with explicit disturbance coordinates/cross terms, not
+deleting inputs and retaining the old covariance cells. BIAS2 must enter
+the correctly attached nonlinear graph, not a post-hoc PSD or sampled ratio.
+No interval/metric search is justified yet; P4/P5 remain open/blocked.
+
+All 27 focused tests and the retained-byte audit pass in CI. The first capture
+run hit a NumPy-bool JSON emission defect, repaired without changing the
+history or mathematical gates and covered by a complete-report regression.
+Locally `make all` remains infrastructure-blocked at `KalmanQMEKF.h:30`,
+missing `Eigen/Dense`; the local lint executable is absent. CI installs those
+dependencies; the source probe compiles with warnings as errors.
+
+The retained-witness CI run `34148309564` rejected a different payload SHA256
+(`c6b99250...` instead of `db38b812...` for H18). The regenerated A21 scan also
+selected 1195.01025390625--1198.01318359375 s instead of the retained
+1143.96044921875--1146.96337890625 s. This is an evidence-reproduction failure,
+not a BIAS theorem failure. Regeneration is not content-addressed evidence.
+The next check must consume the retained bytes, retaining the identity gate.
+
+The finite attachment hypothesis that deleting covariance resets while keeping
+F/Q/H unchanged is a coordinate change has failed. For a frame T,
+the required maps are F'=T_next F T^-1, Q'=T_next Q T_next^T,
+H'=H T^-1 and the exact finite map f'=T_next f(T^-1 z). Omitting these
+transports invalidates that justification; it does not invalidate the P3
+congruence identity or establish a canonical P4 counterexample. The next
+falsifiable check compares these required transforms with the retained
+diagnostic at every operation. No metric or interval search is authorized by
+the diagnostic's expanding ratios.
+
+Canonical source remains `COMPLETE_SEA3_NORMAL_LIVE_WORD`, now with the explicitly authorized response union `LINEAR_VESSEL` union `STOKES_WAVE_FOLLOWING`. The legacy linear domain is unchanged. Conditional P3 uses the same response-independent Normal-Live implication at `delta=1e-18`, with explicit H18/A21 coverage for both branches. This does not certify physical word admission. P4 is **OPEN** and P5 is **BLOCKED**; H18->A21 remains a separate rectangular hybrid event, with zero lever arm and dormant-transparent vibration.
 
 The only production/proof-domain change made on PR #496 is the user-authorized accelerometer-bias projection-radius tightening from `0.5` to `0.4 m/s^2`. The declared startup/handoff accelerometer-bias error envelope is also `0.4 m/s^2`, while the Normal-Live active-bias interior bound is `0.35 m/s^2`, preserving a `0.05 m/s^2` projection margin. No other filter tuning, quality gate, source-language parameter, or P3 mathematics was changed.
 
-The paper target remains the finite full-state source-indexed quadratic storage
+The retained stronger paper target uses the finite full-state source-indexed quadratic storage
 
 `V(e,zeta)=e^T M(zeta)e`
 
@@ -39,7 +321,7 @@ The corrected single shipping observer owns one source/tuner/Riccati history and
 
 Same-observer event ledgers reproduce those ratios within a few `1e-6` and telescope to roundoff. The old duplicate observer that staged tuner-commit data at the wrong boundary is retired; its older A21 rho values are stale.
 
-On the 0.4 head, the 3-second physical reset-normalized diagnostic keeps strict zero-state parity. H18 remains contracting over every retained tested scale. A21 still first crosses one at scale `8.0`; the bias projection is inactive in the problematic cases, and the worst retained-domain endpoint ratio is about `1.0860152320`. Thus the 0.4 clamp is a legitimate production/domain tightening, not a proof fix.
+On the 0.4 head, the 3-second physical reset-normalized diagnostic keeps strict zero-state parity. H18 remains contracting over the retained tested scales. A21 first crosses one at scale `8.0`. The bias-admissibility audit below excludes the approximately `1.086` boundary case from the 0.35 Normal-Live estimated-bias interior, but retains expanding +/-8 and +/-16 cases with inactive projection. The 0.4 clamp does not remove that interior diagnostic obstruction.
 
 ## 6-second and 9-second falsification result: longer-window route stopped
 
@@ -103,7 +385,7 @@ Its stronger implementation-word flags remain deliberately false. The joint
 master consumes this result only through the validated canonical P3 chain; it
 does not promote the comparison observer or replace the full A21 matrix test.
 
-## Current hypothesis
+## Retained stronger full-state hypothesis
 
 Use the exact complete-word endpoint identity and the full 21-state finite-`tau_b`
 P3/detectability result to build one correlated nonlinear graph-sector master.
@@ -111,15 +393,17 @@ For `z=[x;w_W]`, the controlling matrix is
 `L_W=[[-D_W,M_W^T J_N B_W],[B_W^T J_N M_W,B_W^T J_N B_W]]`.
 Admissible graph sectors `z^T Pi_j z>=0` enter only through the full
 S-procedure test `-(L_W+sum lambda_j Pi_j)>0`; the same construction is
-required at every prefix.
+required at every prefix with finite gain, not prefix contraction. Set
+`D_k(Gamma)=Gamma J_0-M_k^T J_k M_k`, with finite `Gamma>=1`, in the
+same augmented builder. Every-prefix domain/chart retention remains separate.
 
 ## Evidence and current limiter
 
 P3 was recomputed with the deployed `0.4 m/s^2` accelerometer-bias projection
 limit: H18 and A21 retain `delta=1e-18`, the first active A21 bias full-matrix
 margin is `1.2499987189052501e-9`, and the H18 worst interval LDLT pivot is
-`4.987499868870966e-14`. `P3_DEPLOYMENT_PASS` remains false only for the
-separate physical-language inclusion obligation.
+`4.987499868870966e-14`. `P3_DEPLOYMENT_PASS` remains false for the
+physical-language inclusion and assembled-sensor BIAS0 qualification obligations.
 
 The canonical 6 s A21 payload has a strict small-error margin
 (`rho=0.9911176` at scale `0.125`) but crosses one at scale `7.5` and
@@ -146,28 +430,247 @@ domain/filter changes remain forbidden.
 
 The remaining alternatives are a dense source-structured storage LMI, a
 path-dependent joint storage, or direct falsification of a source-uniform
-inner funnel. The next falsifiable experiment is to materialize only the
-same-history state/residual selectors needed by the master, lift the exact
-Cayley and A21 projection bounds into dense graph sectors, and evaluate the
-full augmented matrix first on the canonical point word. Proceed to outward
-source-uniform LDLT only if that non-promoting matrix diagnostic is below one.
+inner funnel. First obtain CI evidence for the connected execution fixture and
+resolve the complete-source witness. Before any new sector search, reconcile
+the retained A21 counterexample with the exact proposed source/error domain,
+physical map and storage. If it is admitted, valid graph sectors cannot change
+its `rho>1`. Conversely, failure of an S-procedure relaxation alone does not
+falsify the storage. Only a demonstrated feasible full-word formulation
+justifies source-uniform enclosure work.
 
 ## Complete-source obligation still open
+
+Direct physical-generator admission to the **linear branch** has a structural failure. The retained
+input names the v1.1.3 PM--Stokes surface-particle generator, pinned at
+`oceanography-waves-lib` commit `c5ddd8ddba6e062bb131d92efcd672dfa189455a`.
+It uses 128 logarithmic fundamental frequencies in [0.02,0.8] Hz, order 3,
+common seeded phases/directions, and attitude from the same advected surface
+slopes. This is an actual correlated generator, not 600 independent boxes.
+It is not itself the declared continuum linear vessel-response model.
+Relative to its fundamental-only sea, nonzero higher harmonics cannot be
+created by a linear response. Relative to its full Stokes elevation, the
+surface-particle displacement response is h=(i cos(theta),i sin(theta),1)
+(up to phase convention), so ||h||^2=2. At the highest third harmonic,
+f=3*(4/5)=12/5 Hz, the largest allowed SEA3 squared gain is
+[4*( (6/5)/(12/5) )^2]^2=1. The exact failed inequality is 2<=1.
+
+This is a model/premise incompatibility, not an interval or A21 theorem
+failure. It invalidates identifying Stokes with the linear RAO, not the
+user-authorized union `G_SEA3+ = G_vessel_linear union G_wave_following_Stokes`.
+That explicit new model branch makes the old rejection inapplicable to the
+union; the exact failed linear inequality remains a regression test.
+The new root retains all phases/directions and bound-harmonic coefficients,
+not just seed 42 or one frequency grid. Fixed finite N is a Stokes source
+coordinate; it does not replace or certify the legacy continuum branch.
+Per-root hard bounds follow from the actual coefficients; linear rolloff
+moments and surface-period identities remain scoped to the linear branch.
+
+Current limiter: response-model admission is weaker than full retained-word
+membership. The source clock/root, same-history frontend/tuner, BIAS0/1
+physical bias, actual Normal-Live bounds and finite reset/storage attachment
+are still required. The pinned generator's centered-difference gyro also
+needs an explicit discretization-defect enclosure; it is not exact Cdot.
+No bias feedback is silently moved into ISS. BIAS2 must be certified jointly
+on each full corrected-error history, not inferred from a Stokes label.
+
+Next falsifiable experiment: CI checks all 128 actual root amplitudes,
+steepness and dependent harmonic coefficients against the Stokes branch,
+retains rejection by the linear branch, and rebuilds conditional P3 plus
+endpoint/prefix/retention P4 obligations for **both** branches/modes.
+Then attach the complete source and finite storage to the retained word.
+A Stokes-only certificate cannot promote the enlarged union.
 
 The upstream complete-source contract still does not materialize the correlated finite-window SEA3 realization as an executable outward source family. Parameter compactness, RAO/moment envelopes, hard pathwise acceleration/body-rate caps, frontend parity, and adaptive-state rate/jump bounds do not replace a same-history transition for the correlated source state. P4 may not substitute independent per-sample boxes, a replay record, or a finite harmonic/grid surrogate.
 
 The full-state master now identifies the needed quantities: same-history prefix
 state selectors, stacked nonlinear residual selectors, reset/boundary terms,
-and the A21 projection graph. Extend the existing complete-SEA3 execution only
-to materialize those quantities, rather than creating another source language.
+and the A21 projection graph. A cell/lineage identifier is not a hard SEA3
+membership or inclusion proof. The translational response envelope does not
+supply the missing joint rotational realization or hard correlated driver.
+No additional linear-vessel rotational envelope or coherence budget is
+adopted. The added Stokes branch has its own joint slope-derived rotation.
+
+The A21 projection also needs the same-history true temperature-centered
+residual bias. At zero bias error its output is
+`b_true-project_0.4(b_true)`. The homogeneous map must prove this is zero;
+an OU covariance or the estimated active-state cap does not provide that
+true-bias premise. Source forcing and the separate H->A event remain explicit.
+
+## Bias-premise audit and current proof plan
+
+The fixed-witness audit uses the archived directions/scales and SHA256-pinned
+3 s H18/A21 payloads. It assumes the same zero true-bias root, zero unmatched
+deterministic offset and zero homogeneous driving as the retained evaluator;
+it does not wait for assembled-sensor qualification. BIAS1 admits this true
+bias algebra. It checks the initial state and every event against the existing
+0.35 Normal-Live estimated-bias interior as well as the old error-domain checks.
+
+The point result is:
+
+| A21 scale | Endpoint rho | Maximum estimated-bias norm | Sufficient BIAS2 point ratio, Xi=V0 | Checked bias/domain result |
+| --- | --- | --- | --- | --- |
+| -8 | 1.0022511802 | 0.1060604400 | 0.0067782449 | retained |
+| -16 | 1.0213229467 | 0.2121209584 | 0.0068726407 | retained |
+| -30.1714758181 | 1.0860153089 | 0.4000000000 | 0.0072294990 | initial estimate outside 0.35 interior |
+
+The positive +8/+16 cases also expand within the checked bounds. All four
+interior expanders have inactive projection and 600 predictions, 600
+accelerometer events, 108 actual-R_S S events and 75 vector events. Corrected
+bias-error recurrences agree with the retained finite evaluator; at scale -16
+the corrected error differs from a free GM path by up to 0.0001764025 m/s^2.
+The negative boundary case has two active projections and was never an
+inactive-projection witness. H18's worst retained ratio is 0.9998370258.
+
+BIAS2 is evaluated jointly: a and d are the full stacked whitened nonlinear
+attitude/acceleration and corrected bias-error channels. At scale -16,
+kappa_point=0.9999717099, so separation is positive but cancellation remains
+strong. These point ratios (and their sampled minimum) are not uniform
+constants. Positive separation coexists with positive Delta V in the retained
+storage. For every sector valid at this point and lambda>=0,
+`Delta V + sum lambda_j*z^T Pi_j*z >= Delta V > 0`. Thus an admitted expansion
+cannot be repaired by stronger use of valid BIAS0/1/2 sectors in that storage.
+
+The source membership decision is **undetermined**. OU3PHY1 stores derived
+P/H/R/F/Q, resets and timing; it lacks the common hard-driver/phase/response
+realization, frontend/tuner root, raw measurements, nominal-state history and
+physical-bias/forcing decomposition. The original SEA3 hard-driver set and
+joint output map also lack an executable membership characterization. This
+is missing mathematical source data, independently of assembled-sensor
+qualification. A replay label, norm cap or zero bias root cannot fill it.
+
+The proposed finite gauge attachment is **rejected**. Set T0=I and propagate
+T_next=T G^-1 at each captured reset. At event 2 the next H needs a nonzero
+transport: Frobenius difference 0.00897303817 for H18 and 0.0000609319492 for
+A21. Maximum required H changes over the retained words are 0.4790199261 and
+0.0104868913 respectively. F and Q require transport too. The reset-deleted
+diagnostic keeps the original matrices, so it is a rebuilt Riccati history,
+not the captured word in new coordinates. This invalidates using its expanding
+rho as a canonical counterexample; it does not invalidate the conditional P3
+congruence theorem, finite Cayley algebra or BIAS0/1/2.
+
+The finite storage identity is executable at every retained measurement:
+q=e-Ky, r=e_plus-Gq, b=G^-1 r gives
+V_plus=q^T Pj^-1 q+2 q^T Pj^-1 b+b^T Pj^-1 b.
+It includes projection defects and retains the signed cross term. This
+one-event attachment does not authorize reuse of subsequent reset-deleted
+covariances. The audit also implements exact finite frame pullback and tests
+dense H18/A21 Joseph, prediction/noise and nonlinear energy identities.
+An initial numpy/list adapter error was an implementation defect (ambiguous
+array truth value in the retained signed-ledger helper); converting its inputs
+to the helper's sequence representation resolves it without changing algebra.
+The prefix CSV retains each checked state and residual.
+No filter, domain, direction, scale, metric or window-length search is added.
+
+Critic decision: abandon the claimed reset-deletion gauge equivalence.
+The next falsifiable experiment requires a common source witness and either
+(1) an actual finite shipping covariance/nominal history with each correction's
+reset, or (2) its fully transported finite representative with all transformed
+F/Q/H and floors. These are attachments, not metric searches. A third option
+is to prove a conservative outer source inclusion and certify the whole
+nonlinear graph there; success would suffice without inverting a replay.
+Source-only names and independent sample boxes cannot establish that inclusion.
+Only after this attachment gate may a full-word BIAS2/storage feasibility
+decision justify interval certification or abandoning the storage itself.
+
+The BIAS0/1/2 package in `w3d-mems-bias-preconditions.tex-part` is conditional.
+BIAS0 separates qualified sensor physics from the filter's 5000 s setting and
+0.4 projection; assembled-unit tau/sigma, true-root and mismatch bounds remain
+unassigned. BIAS1 retains one true-bias root and GM parameter through every
+prefix. Main's nonlinear lineage and correlated window-cell data model are
+retained; the nonlinear consumer now checks the GM graph, not just matching IDs.
+
+The proposed substitution `delta_b_j=exp(-t_j/tau_b)*delta_b_0` through a
+corrected word is invalid: every measurement changes the error by `-K_b*y`,
+with the projection defect added afterward. This is a mathematical premise
+failure, not a new filter instability. It invalidates treating corrected bias
+error as a free slow source or charging its feedback to exogenous ISS forcing.
+It does not invalidate true-bias GM transport or the existing finite-tau P3
+detectability argument. BIAS2 is therefore a conditional full nonlinear graph
+separation lemma; its uniform positive `mu_sep` is still missing.
+
+The controlling contribution is `lambda_sep*(C_y^T W C_y-mu_sep X)` in the full
+augmented master. There is no certified numerical contribution yet, so this
+package authorizes no new interval or metric search. First check the retained
+expanding A21 witness against the exact BIAS1 source/error graph. If admitted,
+valid sectors cannot rescue that storage. The alternatives remain dense
+source-structured storage, path-dependent storage, or direct falsification.
+The stage-by-stage BIAS0-to-P5 dependencies are in `tools/stability/README.md`.
+Rebuild conditional P3 at delta=1e-18 and canonical P4 with these explicit
+premises; keep physical qualification, source cover and P4/P5 closure separate.
+
+## Connected execution experiment
+
+The rejected `P0_H=2 I_18`, `P0_A=2 I_21` two-prefix fixture loses innovation
+pivot 1 at `[-31.51349023865584,33.33589453040376]` in the unchanged outward
+Joseph inverse. This is an enclosure failure of that arbitrary fixture, not
+a filter, conditional-P3, or P4-contraction result. Do not regularize the pivot,
+drop a prefix, or select a favorable frontend successor.
+
+The single motivated refinement uses Live-structured covariance: the same
+committed stationary `a_w` variance, tilt/yaw handoff, and shipping `b_g/v/p/S`
+seeds. A21 appends the shipping bias-floor variance for the fixture only.
+It does **not** execute pre-release H18 history or certify A21 entry reachability.
+The controlling diagnostic is completion of both prefixes with unchanged
+Joseph arithmetic and uninterrupted event-local covariance ancestry.
+
+CI produces `ou3-same-history-prefix-execution`: per-prefix H18/A21 covariance
+diagonals and interval widths, event order, and captured actual `R_S` diagonals.
+Its two-sample scope and unclosed source/entry/P4 flags are mandatory. The
+canonical P3->P4 dependency chain is unchanged. The critic boundary is that
+this repairs execution evidence, not the known A21 endpoint inequality.
+If the Live-structured fixture also fails, stop this refinement; the distinct
+alternatives are a covariance representation change, direct source-witness
+construction, or abandonment of this execution representation after audit.
 
 ## Current CI / evidence status
 
-The exact `source-foundation` command passes 73 tests. The 0.4 P3 recomputation,
-finite-`tau_b` detectability rerun, canonical P4 integration, and all 91 P4
-discovery tests pass. `make all` is locally blocked before compilation because
+The MEMS-bias integration rebuild exposed an inherited CI lint defect:
+`ou3_sea3_correlated_window_cells.py` imported unused `dataclasses.replace`
+(ruff F401). Removing the import repairs that implementation defect without
+changing the source model or quality gate; the next check is the unchanged CI
+python job. The focused five bias algebra/negative-contract tests pass locally.
+
+The expanded same-history CI suite passed 46 of 49 tests, including the bias
+and nonlinear lineage tests, but exposed the inherited source-cell splitter's
+endpoint defect. Reapplying `outward_bounds` to stored endpoints changes a
+zero lower hull endpoint to `-1e-323` after two roundings and creates a nonzero
+overlap at the cut. This is an intersection-construction defect, not failure
+of SEA3 or a contraction inequality. Copying existing parent endpoints and
+one exact binary64 cut restores the exhaustive binary partition; exactly
+representable smoke-domain endpoints need no arithmetic rounding. The cover
+validator and outward arithmetic stay unchanged. This repairs structural
+partitioning only; the hard joint SEA3 oracle remains the limiting quantity.
+The next check is the same CI split tests, including repeated non-midpoint cuts.
+
+On head `6ed27d24`, GitHub CI passes 73 source-foundation tests, 50 connected
+execution tests, and the rebuilt conditional H18/A21 P3 at delta=1e-18 with
+46 contract tests. All quality checks pass. The canonical P4 artifact builds,
+but its expanded discovery suite passes 104 of 105 tests: the mocked P3 input
+in the joint-sector test lacks the newly required `mems_bias_preconditions`
+field and raises `KeyError`. This is an incomplete test-fixture integration,
+not a nonlinear inequality failure. Add the actual bias contract to that
+fixture and check its propagation; retain the production dependency check.
+The next check is that focused test followed by the same canonical CI chain.
+
+`make all` is locally blocked before compilation because
 this environment has neither `/usr/include/eigen3/Eigen/Dense` nor a vendored
 Eigen tree; the build command and include policy were not changed.
+
+The SEA3+ local regression initially misplaced the cache-isolation assertion
+inside the new branch test (`NameError: cached`). This was a test-edit defect,
+not a failed matrix inequality: the source and P3/P4 builders completed.
+Restore the assertion's original scope and rerun that same suite; no proof
+constant or admission gate changes. GitHub CI remains the C++ build check
+while local `make all` fails at `KalmanQMEKF.h:30`, missing `Eigen/Dense`.
+
+SEA3+ CI run `34153666156` passes the C++ public-API audit and 21 tests:
+all 128 atoms satisfy the Stokes model, maximum component steepness
+0.02503536704829765 < 0.2. Response admission is ADMITTED on the new branch;
+full word membership stays UNDETERMINED. The coupled proof run `34153666115`
+stopped before P3: the package-integrity test requires the response-domain
+JSON reference to include `tools/stability/`. This is a path-metadata
+integration failure, not a matrix/source inequality failure. Correct the
+reference, preserve the integrity gate and rerun the same certificate chain.
 
 `ou-validation` is red for a known evidence-provenance reason, not because its numerical unit-test body found a new filter failure: `tools/ou_evidence_contract.py --auto` reports replay dependencies changed relative to committed validation/robustness provenance, including the OU-III filter and WavePeriodEstimator dependencies. Genuine validation/robustness evidence regeneration is therefore still required before a later proof PR is declared final/ready. Do not hand-edit provenance hashes.
 
@@ -179,15 +682,3 @@ The master and graph-sector machinery are non-promoting. P4 remains open until
 the source-uniform endpoint and every-prefix augmented LDLT plus domain
 retention close on the same complete SEA3 history. P5 remains blocked until
 strict canonical P4 contraction closes.
-
-## PR #500 experiment 1 failure analysis — arbitrary two-prefix covariance fixture
-
-Hypothesis: the trusted typed complete-SEA3 execution kernel can be instrumented passively to retain branch-correlated every-prefix ancestry and event-local H18/A21 Riccati cells (P-before/P-after plus the exact F/Q, floor increment, or Joseph H/R) without reimplementing shipping transitions or losing actual-applied R_S provenance.
-
-Execution: PR #500 added passive event capture inside `ou3_sea3_complete_window_execution_kernel.advance_branch` and a selector smoke that executed two identical point samples from the synthetic covariance fixture `P0_H=2 I_18`, `P0_A=2 I_21`. The canonical `ou3-proof` run `34132984840` passed source-foundation, complete-SEA3 source, frozen `riccati-p3`, the P4 geometry/metric/reset gates, and all pre-existing P4 tests before reaching the new selector test.
-
-Observed failure: `test_ou3_p4_complete_sea3_same_history_prefix_selectors.P4CompleteSea3SameHistoryPrefixSelectorsTest.setUpClass` failed during the second synthetic prefix in the unchanged outward interval Joseph backend. `matrix_inverse_gauss_jordan` rejected innovation pivot 1 because its enclosure crossed zero: `[-31.51349023865584, 33.33589453040376]`. The failure is an interval-enclosure failure of the arbitrary `2 I` multi-sample smoke fixture; it is not a P4 contraction result and not a shipping filter failure.
-
-Interpretation: using `2 I` as a convenient multi-prefix covariance is unjustified and substantially wider than the source-generated Normal-Live covariance structure. Refining the Gauss-Jordan backend, selecting a favorable interval branch, dropping the second prefix, or weakening the Joseph inversion would hide the fixture problem and is rejected. The typed capture concept itself was not falsified: the first sample and all pre-existing exact differential-event tests reach the same P/H/R semantics successfully.
-
-Replan: replace only the arbitrary smoke covariance with the canonical source-generated Normal-Live H18/A21 seed structure (including the actual attitude handoff seed, v/p/S seeds, committed stationary a_w covariance, and the A21 bias-release seed where applicable), while keeping the same trusted transition, every front-end successor, exact event order, actual applied R_S, and unchanged outward inverse backend. If the source seed still loses a pivot on the second prefix, stop and treat that as a separate interval-representation obstacle rather than widening/regularizing the inverse by hand.
