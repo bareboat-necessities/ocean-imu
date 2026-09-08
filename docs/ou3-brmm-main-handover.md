@@ -1,19 +1,12 @@
 # BRMM stability proof handover
 
-## Landing and starting point
+## Starting point
 
-The user authorized landing [PR #502](https://github.com/bareboat-necessities/ocean-imu/pull/502)
-and [PR #504](https://github.com/bareboat-necessities/ocean-imu/pull/504) into main
-on 2026-09-08. #502 merged as `14b4abc5b0ec0b24748c7acea9b3b8ac10558793`.
-#504 was retargeted to that main revision; its merge-tree check was clean.
-This handover is delivered by #504. Verify its merged status when resuming.
-Both changes are separate from previously merged #500.
-
-Start a new thread from freshly fetched main containing this document and
-`tools/stability/ou3_brmm_p3_premises.py`. Read this handover and the research
-ledger, then check CI on the landed revision. Do not start from an older
-source/theorem or silently discard the stack's changes. Landing the research
-work does not assert that every CI job or proof obligation has passed.
+The conditional certificate below was rebuilt on main
+85e040371812d1fa32508d521acded0a6328102f. Read this handover and the research
+ledger, then check the exact revision and its CI before continuing.
+The runtime audit qualifies coverage of the reference simulations; it does
+not establish all Normal-Live premises or complete the nonlinear theorem.
 
 ## The theorem being pursued
 
@@ -37,7 +30,7 @@ energy and finite-window impulse bounds alone do not prohibit DC. Do not
 subtract a sample mean to manufacture membership. Bounded velocity alone
 does not bound position or S; their shared primitives/budgets remain needed.
 
-Physical bounds are acceleration 4 m/s^2, body rate 30 deg/s, positive
+The current conditional P3 bounds are acceleration 4 m/s^2, body rate 30 deg/s, positive
 H_s<=8.5 m plus calm motion. Ten seconds, RMS .03/.05 and impulse 2 m/s
 are audit candidates; recurrence/lobe/primitive constants remain unfrozen.
 The shipping tuner .03--1.2 Hz is not a physical motion bandlimit.
@@ -85,9 +78,10 @@ bounds, not physical intersample or infinite-time source certificates.
 
 Six whole records exceed acceleration 4, all eight exceed body rate 30, and
 six exceed candidate 10-second impulse 2. Largest sampled values round upward
-to 16.2162 m/s^2, 198.355 deg/s and 8.0912 m/s. No runtime Normal-Live predicate
-was attached, so these are source-envelope failures over whole raw records,
-not admitted-word counterexamples or filter instability. Keep all violations.
+to 16.2162 m/s^2, 198.355 deg/s and 8.0912 m/s. This raw source audit does
+not attach runtime state. The separate runtime audit below now shows that
+violations also occur in Live. These remain admission failures, not
+admitted-word counterexamples or filter instability. Keep all violations.
 Per-case evidence and CSV hashes are in `docs/ou3-brmm-reference-audit.json`.
 Audit run 34169896915 artifact 10035405278 has SHA256
 `e4a95423a06e16e6cead32b3e73bd3cee6a579dd2c72d89a3717c6cbca3b5b18`.
@@ -102,52 +96,31 @@ charged every channel at the most expensive scale. No interval refinement or
 metric grid is justified around that witness. Actual R_S corrections were
 retained; the previously missing forcing attachment was -S_true.
 
-## Next decisive work
+## Current continuation
 
-1. Attach the actual runtime Normal-Live predicate to the unchanged eight
-   histories. Record outer/inner Live, held/active bias, actual guard action,
-   accepted vector events, hard re-lock/reset events and every S correction.
-   Expose cap-exceeding intervals; do not prune them to claim admission.
-2. Establish continuous no-DC/recurrence membership and common physical
-   primitives. A fixed harmonic model's all-time velocity bound B1 helps,
-   but uniform root bounds and exact physical/front-end attachment are needed.
-3. Feed those primitive equalities, BIAS0/1 history and any proved BIAS2 sectors
-   into the full connected nonlinear motion master. Retain -S_true and actual
-   P/H/R/K/reset/projection from every selector on the same lineage.
-4. Test useful endpoint motion factor/channel gains and a resulting practical
-   floor compatible with chart/domain retention before outward source covering.
-   Every prefix needs finite gain and retention, not contraction. P4/P5 stay
-   closed until those obligations are certified uniformly over admitted leaves.
+Read docs/ou3-proof-research-state.md and docs/ou3-brmm-runtime-audit.json.
+The eight-case runtime attachment is now implemented. Live itself contains
+acceleration/rate violations, and actual replay Racc/Rmag differ from the
+configured P3 values. Do not repeat the raw-window lobe search or select
+samples using the very caps being tested. The next question is physically
+qualified, separate before-Live/Live envelopes and the corresponding actual
+measurement configuration. The large JONSWAP peak includes a second-order
+correction larger than the linear contribution and needs model qualification.
+A 250 deg/s candidate fails the existing two-occurrence PE transport bound;
+full accepted-vector transport is needed before claiming a broader P3.
 
-Follow AGENTS.md: record exact failures and what they invalidate, perform a
-critic pass, and respect the two-strike rule. Do not retune the filter, weaken
-quality gates or infer sensor qualification from configured tau_b=5000 s.
+## Verified P3 and outstanding validation
 
-## CI at handover and outstanding validation
+Exact main 85e040371812d1fa32508d521acded0a6328102f passed conditional BRMM
+P3 in run 34173418232 / job 101899163631, including 56 tests. H18 and A21
+delta are both 1e-18. H18 worst outward LDLT pivot is 4.987499868870966e-14;
+first active A21 bias margin is 1.2499987189052501e-9. Artifact 10036647100
+was downloaded and its ZIP SHA256 verified as
+03d4011e49f0c54224cc129709631a26d5ee8b5399a435e9e083f22026b8ab03.
+This supersedes the queued P3 status at landing. The result is conditional
+on its declared configuration and is not a broader-domain or nonlinear PASS.
 
-The first migration revision is `0db18980f4ff7e018e392a847ed4ba0d6ad24ef7`, tree
-`de271057b08b870de9fb05f4099fc8518d7f3df3`. GitHub run 34172553221 passed the
-source foundation, complete source, same-history execution and actual theorem
-syntax build. Its Python quality job found one unused local, corrected in the
-follow-up. A local reference hard-set paper-binding failure was also corrected
-and the focused precondition test passed.
-
-The corrected code revision is `1395e615107d26804f4fbe2ee08acdf1bd6e43ef`, tree
-`b29fdb7c199456638141cb79a17340c3c36cf1c7`. At the landing checkpoint, run
-34173154195 had passed source foundation and complete BRMM source; theorem and
-same-history jobs were running, and P3 job 101897660299 was queued. **The new
-BRMM P3 numerical rebuild is not reported complete at handover.** Follow the
-landed revision's CI and record its actual H18/A21 delta, pivots and artifact
-identity before declaring the conditional certificate rebuilt. Do not transfer
-PASS from another source scope or a different code tree. The final landing
-checkpoint changes documentation only.
-
-Mandatory local `make all` fails because Eigen/Dense is unavailable. CI owns
-the C++ build result. An independent OU validation gate reports stale replay
-provenance for OU-II, OU-III, the tuner and the OU-III simulation driver. It
-requires genuine full validation/robustness regeneration. The existing
-`ou-full-evidence-branch.yml` workflow is opt-in and runs about 1150 simulator
-replays; main has its automatic full-study path. Never repair this gate by
-restamping hashes or bypassing the evidence contract. These are outstanding
-validation obligations after the user-authorized landing, not proof of a
-filter failure and not permission to promote P4/P5.
+The separate inherited replay-provenance failure requires genuine full
+validation/robustness regeneration through the existing full-study workflow.
+No quality gate, dependency hash or proof threshold may be bypassed. See
+the current research ledger for the runtime experiment and its validation.

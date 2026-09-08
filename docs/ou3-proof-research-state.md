@@ -1,216 +1,180 @@
 # OU-III proof research state
 
-## Landing checkpoint
-
-The user authorized merging #502 and #504 into main on 2026-09-08. #502
-merged as 14b4abc5b0ec0b24748c7acea9b3b8ac10558793; #504 was retargeted to
-main and its merge-tree check is clean. The detailed continuation contract is
-`docs/ou3-brmm-main-handover.md`. At this checkpoint corrected code head
-1395e615 has passed source foundation and complete source in GitHub run
-34173154195; its P3 job 101897660299 is queued. The BRMM P3 rebuild is not
-reported complete. Landing does not promote physical admission, P4 or P5,
-or erase the separate stale replay-provenance validation failure.
-
 ## Current hypothesis
 
-Complete BRMM is the physical source underneath the primary bounded-bias
-practical-motion theorem; spectral models are reference specializations. The full shipping active 21-state
-filter, covariance/gain cross terms, finite resets/projection, every due
-actual anisotropic R_S correction and physical -S_true input remain.
-The performance storage measures the other 18 errors. Bias-error decay and
-a zero mismatch/noise floor are not requirements.
+BRMM is the primary physical motion source. The target is bounded
+accelerometer-bias error plus practical ISS of the other 18 errors, using
+the actual full 21-state estimator. Preserve the common physical history,
+every actual anisotropic R_S update, full Q/floors/cross covariance, finite
+reset/projection, physical -S_true forcing and the closed .4 bias estimate
+ball. Bias-error decay and a zero practical floor are not requirements.
+BRMM-0 requires a_m=dv_m/dt with uniformly bounded same-history velocity;
+constant physical acceleration DC is excluded in Q, O and mixed histories.
+A constant sensor offset remains BIAS0. Bounded velocity alone does not
+bound displacement or S. Spectral models are reference specializations.
 
-BRMM-0 requires a_m=dv_m/dt and uniformly bounded same-history velocity on
-the whole admitted continuation. It excludes fixed nonzero acceleration DC
-in Q, O and their mixtures: every long-time mean is bounded by 2*V_m/T.
-Constant measurement offset remains a BIAS0 coordinate. A small AC energy
-or fixed 10-second impulse cap alone does not exclude DC. Bounded velocity
-alone does not bound displacement/S; retain their shared graph and forcing
-budgets. No sample-mean subtraction can manufacture physical membership.
+## Certified subcertificate
 
-The declared acceleration/body-rate caps remain 4 m/s^2 and 30 deg/s.
-Positive H_s<=8.5 m and calm motion are admitted. T_R=10 s, quiet RMS .03/.05
-and impulse cap 2 m/s are initial audit candidates; recurrence/lobe/primitive
-constants are unfrozen. Shipping tuner defaults remain .03--1.2 Hz, not a
-physical motion bandlimit. A .02 Hz sinusoid need not return inside 10 s.
+Main 85e040371812d1fa32508d521acded0a6328102f has rebuilt conditional BRMM
+P3 in run 34173418232, job 101899163631. All 56 P3 tests passed. Both H18
+and A21 have delta=1e-18; the H18 worst outward LDLT pivot is
+4.987499868870966e-14 and the first active A21 bias margin is
+1.2499987189052501e-9. Artifact 10036647100 has verified ZIP SHA256
+03d4011e49f0c54224cc129709631a26d5ee8b5399a435e9e083f22026b8ab03.
 
-## Evidence and current experiment
+This proves the matrix implication under the explicit configured
+Normal-Live premises, including accepted-vector geometry/recurrence.
+It does not establish physical admission, projected nonlinear contraction,
+P4 or P5. The numerical configuration remains acceleration 4 m/s^2, rate
+30 deg/s, Racc=.04 I and Rmag=.09 I. A broader proposed domain cannot
+inherit this PASS. BRMM recurrence alone does not imply vector PE.
 
-The BRMM contract, LaTeX theorem and proof plan separate source admission,
-P3 at delta=1e-18, endpoint motion gains, every-prefix gain/retention and P5.
-P3 is being rebuilt as BRMM plus explicit execution premises implies the
-full matrix inequality, with Q/O/mixed conditional coverage and a checked
-covariance identity at the closed bias projection boundary. Source admission,
-P4 and P5 remain open. Scalar motion recurrence does not imply vector PE.
-The runtime Live flag does not establish the full Normal-Live theorem regime.
+## Runtime evidence
 
-The focused BRMM CI audits every sample-aligned 10-second window of all eight
-unchanged v1.1.3 JONSWAP/PM-Stokes reference CSVs. It records energy, impulse,
-TV, explicit opposing-lobe witness offsets, cap violations and primitive
-diagnostics. Outward arithmetic encloses binary64 CSV-point ZOH statistics;
-a missing finite-search lobe witness is unresolved, not nonexistence.
-This is not physical intersample inclusion, all continuous offsets,
-Normal-Live/frontend/tuner admission, infinite-time no-DC, or a source cover.
-Empirical margins do not set physical theorem constants.
+The runtime audit executes all eight unchanged v1.1.3 reference records with
+the ordinary simulator, noise/seeds, 25 Hz magnetometer and quality gates.
+An insertion-only overlay records outer/inner Live before and after each
+sample, held/active bias, actual guard action, accepted Jacobian vectors,
+reference writes, resets and every S update with its actual full 3x3 R_S.
+Runtime flags define the phase partition independently of physical caps.
+No source sample is removed to manufacture admission.
 
-Eight focused local tests pass, including independent rational-arithmetic
-energy/impulse/TV checks, verification of each positive lobe witness, calm
-motion, the quiet-DC loophole, and the long-period one-sided window.
-Actual bias/BRMM/reference-model LaTeX inputs compile in a 14-page syntax smoke
-build; this is not a complete manuscript build.
+All eight dual runs passed byte-for-byte ordinary output comparison with
+identical simulator compiler flags including -ffp-contract=off. They retain
+1,920,000 samples and 315,721 actual S corrections. Sample summaries and
+source/output/trace identities are in docs/ou3-brmm-runtime-audit.json;
+the workflow retains complete compressed traces and violating intervals.
+The archive remains the same input used by the prior source audit.
 
-At c1046c1f, GitHub audit 34169268266 / job 101886317643 succeeds. All eight
-records have 240000 samples and 238001 windows each: 1904008 windows total.
-Every window is O at both .03/.05 RMS thresholds, with no ambiguous
-classification and no missing opposing-lobe witness. Thus these records
-provide no Q coverage. The minimum sampled energy lower bound is
-1.4596516559 m^2/s^3, and the minimum J witness lower bound is
-.2472575910 m/s at diagnostic chi=1. They are ZOH bounds, not continuous
-source constants. The full per-case summaries and CSV hashes are retained
-in docs/ou3-brmm-reference-audit.json. Every-window NPZ evidence is artifact
-10035278812, SHA256
-8be76bd010948f36f2ea564fea2dd2c3b0cd5bb814163c2b503e759c18df8409.
-The theorem CI job 101886317504 also succeeds (14-page syntax smoke).
-
-| Family | H_s m | Max acceleration m/s^2 | Max body rate deg/s | Max 10 s impulse m/s |
+| Reference | H_s m | Runtime Live samples | Acceleration >4 | Body rate >30 deg/s |
 | --- | ---: | ---: | ---: | ---: |
-| JONSWAP | .27 | 2.8321 | 36.599 | 1.0083 |
-| JONSWAP | 1.5 | 6.7233 | 83.971 | 2.7156 |
-| JONSWAP | 4 | 9.2272 | 129.129 | 5.2838 |
-| JONSWAP | 8.5 | 16.2162 | 198.355 | 8.0912 |
-| PM-Stokes | .27 | 2.1850 | 46.697 | .9870 |
-| PM-Stokes | 1.5 | 5.1905 | 123.326 | 2.9807 |
-| PM-Stokes | 4 | 6.6333 | 149.547 | 4.8231 |
-| PM-Stokes | 8.5 | 8.5683 | 197.461 | 6.8645 |
+| JONSWAP | .27 | 233632 | 0 | 249 |
+| JONSWAP | 1.5 | 233632 | 1909 | 14401 |
+| JONSWAP | 4 | 233632 | 11442 | 30076 |
+| JONSWAP | 8.5 | 233632 | 29832 | 47120 |
+| PM-Stokes | .27 | 233632 | 0 | 1670 |
+| PM-Stokes | 1.5 | 233632 | 603 | 26812 |
+| PM-Stokes | 4 | 233632 | 9622 | 49405 |
+| PM-Stokes | 8.5 | 233502 | 32476 | 71050 |
 
-Displayed maxima round upward; the JSON retains detailed outward sample
-bounds and radian-rate bounds. Physical intersample extrema remain unknown.
+These violations occur during runtime Live with the guard dormant, no
+hard tilt reset and no rejected accelerometer update. They are not explained
+by startup alone. Six records also violate the candidate 2 m/s impulse cap
+on complete 10-second runtime Live windows. That candidate is still unfrozen.
+The prior 1,904,008-window source lobe audit found only O windows, no Q
+coverage. Sampled lobe/primitive statistics remain non-promoting.
 
-## BRMM naming and P3 premise migration
+Actual replay Racc=.000866618473 I and Rmag=3.68640018 I differ from the
+configured P3 matrices. Therefore no complete reference history is admitted
+by that exact configuration, independently of physical cap violations.
+Every sample-aligned 1-second runtime Live window has an accepted mag event;
+this is packet recurrence, not a transported PE certificate. Some same-sample
+vector sines drop below .1; that does not disprove asynchronous window PE.
+Continuous magnetic-reference writes are retained variation, not automatically
+forbidden hard regauges.
 
-The current tree renames the retired physical-source identifiers, imports,
-paths and workflow/artifact names to BRMM. Reference spectral artifacts remain
-explicit reference-model metadata; they do not define primary BRMM membership.
-The canonical source carries bounded motion primitives and one common history.
-The new P3 premise manifest distinguishes code identities from execution
-assumptions and checks the exact shipping projection body: it changes only
-nominal bias, so the covariance comparison is unchanged. The covariance-word
-transport is not the derivative of the nonlinear projected error map; P4
-must still attach that map and prove retention. The numeric P3 chain is being
-rebuilt in GitHub CI, retaining delta=1e-18 and Q/O/mixed conditional coverage.
-At 0db18980, source-foundation and the actual theorem syntax build pass.
-Quality job 101895520177 reports one F841 unused `sea` local left after
-removing reference-only data from P3 mandatory premises. Class: implementation
-cleanup defect, not theorem failure. Remove that unused assignment and rebuild;
-no numerical premise or proof gate changes. A focused check also caught a
-reference hard-set paper-parity marker still expecting the primary-source
-notation after the reference section was relabelled. Bind it to the actual
-reference hard set and its explicit non-membership scope; retain compactness,
-outward representation and rejection of stochastic/seeded surrogates.
-Class: documentation-to-contract binding defect, not a numerical failure.
+## Separate phase envelopes and physical qualification
 
-Local verification: 15 focused BRMM/source/premise tests pass, including a
-mutation that inserts a covariance write into projection and is rejected.
-All proof/test Python files parse. Mandatory `make all` fails at
-`src/ahrs/KalmanQMEKF.h:30`, missing `Eigen/Dense` despite the existing
-`-I/usr/include/eigen3`. Class: local dependency/infrastructure failure; it
-says nothing about theorem feasibility. CI installs Eigen and must provide
-build results. No include path, production filter or numerical gate changed.
-The existing OU validation replay-provenance mismatch is a separate red gate;
-only genuine full replay regeneration may replace that evidence.
+The requested phase separation gives sampled maxima of approximately
+7.083 m/s^2 and 178.480 deg/s before Live, versus 16.217 m/s^2 and
+198.355 deg/s in Live. A rounded envelope with at least 25 percent headroom
+would be 9 m/s^2 and 225 deg/s before Live, and 21 m/s^2 and 250 deg/s in
+Live. These are candidate qualification targets, not certified physical
+bounds or permission to transfer the old P3 result.
 
-## Failure analysis and limiting quantity
+Only the H_s=8.5 JONSWAP record exceeds g in non-gravitational acceleration:
+845 samples, all during Live. At sample 54116 (270.58 s) its vector is
+approximately (6.52644,-3.42066,14.4454) m/s^2. The release generator
+v1.1.3/c5ddd8dd reproduces that point: linear vertical contribution 6.67798,
+simplified second-order contribution 7.76747 m/s^2. Linear vertical motion
+alone ranges from -5.91312 to 6.70258 over the record. The second-order
+correction exceeding the linear term is a model-validity concern, not proof
+of physical vessel acceleration. The generator follows surface slopes and
+uses 128 components over .02--.8 Hz plus sum-frequency terms up to 1.6 Hz;
+it is not a qualified vessel response model. Do not treat its sampled
+extrema as a physical validation of wider BRMM constants.
+The primary implementation is the release's
+[Jonswap3dStokesWaves.h](https://github.com/bareboat-necessities/oceanography-waves-lib/blob/v1.1.3/src/Jonswap3dStokesWaves.h)
+with parameters from
+[waves_sim.cpp](https://github.com/bareboat-necessities/oceanography-waves-lib/blob/v1.1.3/data-sim/waves_sim.cpp).
+The point decomposition uses that header's amplitudes/frequencies, its
+mt19937 seed-42 paired phases, T_p=float(11.4), and t=54116*float(1/200).
+The linear vertical term is -sum A_i*(2*pi*f_i)^2*sin(phi_i-2*pi*f_i*t);
+subtract it from the header's returned vertical acceleration for the bound term.
 
-The sampled numerical-envelope hypothesis fails: six whole records contain
-definite acceleration >4 m/s^2, all eight contain body rate >30 deg/s, and
-six have 10 s impulse >2 m/s. For example JONSWAP H_s=8.5 has 30314/48304
-acceleration/rate exceedances and 134408 impulse-violating windows, starting
-at sample 0 for impulse. Failure class: proposed source-envelope admission,
-not an enclosure/conditioning failure. It invalidates the claim that the
-eight full reference histories already fit the proposed numerical caps.
-It does not falsify no-DC, the lobe condition on these sampled windows,
-conditional BRMM stability or the filter. No runtime Normal-Live predicate
-was applied, so this is not yet an admitted-word counterexample.
+## Failure analysis and current limiter
 
-Critic pass: sea height alone cannot guarantee the acceleration/rate caps,
-and a 2 m/s impulse cap is quantitatively too small for these records.
-Shrinking sample boxes or sharpening rounding cannot resolve the measured
-gaps. Keep the frozen caps and do not silently discard offending samples.
-Alternatives are (1) attach the actual execution predicate and determine
-which source intervals are inside/outside the declared theorem domain;
-(2) separately qualify a physically justified broader domain, rebuilding its
-dependent gravity/chart/P3/P4 bounds; (3) retain the original domain and
-state explicitly which simulation portions it does not cover. The current
-next experiment is (1). For recurrence alone, 10.2 m/s is a sampled-data
-V_R candidate with 25 percent margin; it is not a frozen physical constant.
+The hypothesis that startup exclusions reconcile the old caps with all
+reference Live histories fails. Class: source/configuration admission
+failure, not filter instability, numerical enclosure failure or a P3
+counterexample. It invalidates coverage claims for these whole replays by
+the existing deployment configuration. Narrowing sample boxes cannot fix it.
 
-The no-DC premise has a separate analytical model route: the retained
-fixed-root harmonic graph has a_m=dv_o/dt and ||v_o||<=B1. Constant Stokes
-velocity drift contributes no acceleration DC. A uniform root-family B1
-bound and exact physical attachment still have to be supplied.
+A candidate Live cap of 21 m/s^2 also removes the triangle-inequality force
+floor g-4. Any wider theorem requires an independent nonvanishing specific
+force/geometry premise or a different window observability argument.
+The candidate rate 250 deg/s was tested through the existing windowed PE
+producer (with positive candidate force floor .5). It fails closed with
+"declared PE recurrence/rate box is too wide for the current two-occurrence
+transport bound". At the unchanged one-second recurrence, the controlling
+bracket 1 - omega_max*(3 s)/2 is -5.544984694978735. Class: proof-method
+transport failure; it does not falsify observability using all actual
+accepted vectors. No gain from tightening interval rounding can cross zero.
 
-The preceding point-coefficient supply test is mathematically feasible but
-fails as a useful accuracy/retention witness. At code head 7898eb06,
-connected CI 34165890828 passed 42 tests and both shipping captures.
-H18/A21 candidate factors are .9999569976489486/.9788191291615017, with
-common normalized gains 4294967296/68719476736. Their composed storage
-bounds would be at least 1.4037e15/2.2313e13 using the observed source energy,
-even with zero true-bias root. These are unusably loose bounds, not actual
-filter error floors or certified nonlinear contraction factors.
-Artifact 10034187923 has SHA256
-b4bba842068c52f59049cf0cfb4416d2601fc6413293674c2ebd9d38c31c2b28.
-
-Failure class: proof-method/gain-budget failure. Arbitrary independent energy
-ports discard physical coupling between latent increments and S_true;
-one common gain charges every channel at the most expensive scale.
-This invalidates using that witness for a useful uniform funnel. It does not
-falsify the filter, bounded-bias theorem, or the still-unproved BRMM target.
-No interval refinement or common-gain search is justified for that witness.
-
-BRMM's current limiter is a qualified no-DC/recurrence source graph and its
-usable joint forcing/gain budget, with separate Q/P3 coverage. No nonlinear
-gain is inferred merely from an impulse statistic or optional BIAS2 sector.
-
-Mandatory local build: make all fails in tests/ahrs while compiling
-ahrs-qmekf-sim.cpp, at src/ahrs/KalmanQMEKF.h:30:10:
-fatal error: Eigen/Dense: No such file or directory.
-Failure class: local infrastructure; preserve Eigen/include paths.
-It does not invalidate the math or Python/LaTeX checks. CI installs Eigen.
-The separate inherited OU replay-provenance mismatch is not weakened.
+Critic pass: the two-occurrence scalar transport bound cannot support the
+requested high-rate envelope. Alternatives are (1) use the full transported
+accepted-vector information history, retaining all intermediate acc events;
+(2) qualify an explicitly different recurrence premise from deployment,
+without silently substituting hardware ODR for accepted-vector PE; (3)
+qualify a vessel-response source and separate surface-follower stress tests.
+The physical validity of the extreme second-order wave motion must be
+resolved before choosing the enlarged deployment domain.
 
 ## Retained facts and dead ends
 
-- All 137/108 actual R_S corrections are present in the connected H18/A21
-  words. A21 net signed S energy is -1.121508422 on that point. The older
-  physical attachment omission was the -S_true input, not the R_S gain.
-- Actual forced W18 endpoint ratios 7.971765/3.586608 are not homogeneous
-  contraction tests. The reset-deleted stronger A21 expander is not a
-  canonical counterexample because finite reset/source attachment is missing.
-- Qualified true-bias bound plus the .4 estimate clamp gives bounded error.
-  The old .35 interior does not cover the primary closed projection ball.
-  Assembled-sensor measurements gate deployment, not conditional mathematics.
-- BIAS2 may sharpen a gain only through a proved sector on the same corrected
-  nonlinear/source history. Positive source AC energy alone is insufficient.
-- Legacy BRMM linear/Stokes source tools and matrix gates remain scoped
-  specializations, not BRMM admission or BRMM P3/P4 proofs.
+- The old independent-port common-gain P4 witness is quantitatively unusable.
+  Point factors .9999569976489486/.9788191291615017 with gains 2^32/2^36
+  imply storage bounds at least 1.4037e15/2.2313e13. These are neither
+  nonlinear contraction factors nor actual filter error floors. Its discarded
+  source correlations cannot be recovered by interval refinement.
+- Retain the common primitive graph coupling latent increments, physical
+  -S_true, bias and every actual R_S. Useful channel gains and every-prefix
+  retention must precede source-uniform covering and P4/P5 promotion.
+- A qualified true-bias bound plus the .4 estimate ball gives bounded bias
+  error. BIAS0/1 need qualification; optional BIAS2 needs its actual nonlinear
+  sector. Configured tau_b=5000 s is not sensor qualification.
+- Native FMA overlay output differed at sample 6371, initially in gyro-bias
+  last digits. Class: instrumentation/code-generation failure. The single
+  refinement used identical explicit -ffp-contract=off in baseline and
+  overlay and passed all eight output comparisons. No tolerance was relaxed.
 
-## Alternatives and next falsifiable experiment
+## Next falsifiable experiment
 
-The strongest criticism of the preceding method is that no amount of outward
-tightening restores correlations removed from its port domain. Distinct
-alternatives are: (1) source-primitive/recurrence equalities and dense joint
-sectors; (2) independently weighted channel gains after preserving the
-physical graph; (3) a physically structured/path-dependent motion storage.
-BRMM supplies a new source premise for (1); it does not make the old
-independent-port witness useful.
+Qualify the phase-specific physical source envelope and actual measurement
+configuration, including the large second-order reference peak. Then test
+full transported vector information on that declared domain before a wider
+P3 rebuild at delta=1e-18. Keep the current narrow conditional certificate
+identified separately. P4 next consumes same-history primitive equalities
+and explicit channel budgets; it requires a useful practical bound and
+prefix retention before any rigorous source covering. P5 remains blocked.
 
-The eight-case sampled lobe audit is complete; no longer search for a return
-lobe on those same windows. Attach the actual Normal-Live execution predicate
-to the unchanged records and expose every cap-exceeding interval, without
-selecting an easier source or treating missing admission as a P4 failure.
-Establish continuous no-DC/recurrence membership from the generator
-or qualified physical source, with same-history primitive/bias/frontend
-attachment. Then test the connected motion master with these joint
-constraints and explicit channel budgets. Require a useful composed bound
-and prefix retention margin before source-uniform enclosure. P4/P5 remain
-open; do not promote them from a successful sampled audit.
+## Validation state
+
+Eight attachment tests and focused Python lint pass. Every retained compressed
+trace was rechecked against its decompressed capture SHA256, and all eight
+histories were reanalyzed successfully. One truncated retained local gzip was
+recovered from an earlier byte-identical capture and checked against the final
+expected hash; this was an artifact-storage failure, not modified evidence.
+
+`make all CPPFLAGS=-I/workspace/scratch/a68889bf9a31/eigen-3.4
+EIGEN_DIR=/workspace/scratch/a68889bf9a31/eigen-3.4
+SIM_DATA_ZIP=/workspace/scratch/a68889bf9a31/sim-data-files.zip` built with
+Eigen 3.4 and reached the inherited evidence-contract failure. Exact failing
+command in tests/validation: `python3 ../../tools/ou_evidence_contract.py --auto`.
+It reports "replay dependency differs from replay provenance" for OU-II,
+OU-III, WavePeriodEstimator and the OU-III simulator; make exits 2.
+This invalidates a complete local validation PASS, not the runtime audit.
+Main's automatic genuine regeneration has completed its validation/robustness
+shards and combination; its commit step was still running when checked.
+Verify the resulting evidence revision before declaring that gate repaired.
+It must never be repaired by hand-stamping dependency hashes.
