@@ -281,14 +281,14 @@ def _direction_summary_rows(validation_dir: Path) -> list[str]:
                 and row.get("mode") == "Adaptive"
                 and row.get("metric") in {"dir_axis_rmse_deg", "dir_travel_rmse_deg"}
             ):
-                metrics[key] = (float(row["mean"]), float(row["std"]))
+                metrics[key] = (float(row["mean"]), float(row["std"]), int(row["n"]))
     rows = []
     for index, (scenario, case, hs) in enumerate(DIRECTION_SCENARIOS):
-        axis, axis_std = metrics[(scenario, "dir_axis_rmse_deg")]
-        travel, travel_std = metrics[(scenario, "dir_travel_rmse_deg")]
+        axis, axis_std, _ = metrics[(scenario, "dir_axis_rmse_deg")]
+        travel, travel_std, travel_n = metrics[(scenario, "dir_travel_rmse_deg")]
         rows.append(
             f"    {case:<11} & {hs} & ${axis:.2f}\\pm{axis_std:.2f}$ & "
-            f"${travel:.2f}\\pm{travel_std:.2f}$ \\\\"
+            f"${travel:.2f}\\pm{travel_std:.2f}$ & {travel_n} \\\\"
         )
         if index == 3:
             rows.append(r"    \addlinespace")

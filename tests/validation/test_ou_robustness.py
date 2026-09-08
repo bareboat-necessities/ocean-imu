@@ -391,7 +391,11 @@ class CommittedRobustnessResultsTests(unittest.TestCase):
         # Sensitivity: every off-reference scale against x1, per direction.
         # Degradation: one low-motion pair, plus rate and adaptation pairs.
         comparisons = len(parameters) * (len(scales) - 1) + 1 + 4
-        nullable = {metric for metric in bundle_metrics if metric.startswith("dir_")}
+        nullable = bundle_metrics & {
+            "dir_axis_mean_deg", "dir_axis_error_deg", "dir_axis_abs_error_deg",
+            "dir_axis_rmse_deg", "dir_axis_circ_std_deg", "dir_travel_error_deg",
+            "dir_travel_abs_error_deg", "dir_travel_rmse_deg",
+        }
         self.assertLessEqual(len(effects), comparisons * len(bundle_metrics))
         self.assertEqual(sum(row["metric"] not in nullable for row in effects),
                          comparisons * len(bundle_metrics - nullable))

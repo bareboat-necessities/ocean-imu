@@ -590,16 +590,36 @@ class CommittedFullResultsTests(unittest.TestCase):
         )
         self.assertEqual(len(groups), cells)
         self.assertEqual(set(groups.values()), {10})
-        # Segment metrics exist only where extra scoring intervals were
-        # requested, which is the non-stationary scenario.
+        # Availability is a measurement, not permission to omit a replay.
+        # Conditional angular scores may be absent; truth and coverage metrics
+        # still require all ten observations, as do non-direction channels.
+        nullable = {
+            "dir_axis_mean_deg", "dir_axis_error_deg", "dir_axis_abs_error_deg",
+            "dir_axis_rmse_deg", "dir_axis_circ_std_deg", "dir_travel_error_deg",
+            "dir_travel_abs_error_deg", "dir_travel_rmse_deg",
+        }
         for row in summary:
-            segmented = row["metric"].startswith("seg_")
-            transition = row["scenario"].startswith("nonstationary_")
-            self.assertEqual(
-                int(row["n"]), 0 if segmented and not transition else 10,
-                (row["scenario"], row["metric"]),
-            )
-        self.assertEqual({int(row["n_pairs"]) for row in effects}, {10})
+            metric = row["metric"]
+            group = [r for r in raw if all(r[k] == row[k]
+                     for k in ("scenario", "family", "mode"))]
+            finite = sum(math.isfinite(float(r[metric] or "nan")) for r in group)
+            self.assertEqual(int(row["n"]), finite,
+                             (row["scenario"], row["family"], row["mode"], metric))
+            if metric not in nullable:
+                segmented = metric.startswith("seg_")
+                transition = row["scenario"].startswith("nonstationary_")
+                self.assertEqual(finite, 0 if segmented and not transition else 10)
+        for row in effects:
+            def keys(side, row=row):
+                family, mode = row[side].split("/")
+                return {tuple(r[k] for k in ("wave_phase_seed", "imu_noise_seed", "initialization_seed"))
+                        for r in raw if r["scenario"] == row["scenario"]
+                        and r["family"] == family and r["mode"] == mode
+                        and math.isfinite(float(r[row["metric"]] or "nan"))}
+            count = len(keys("left") & keys("right"))
+            self.assertEqual(int(row["n_pairs"]), count)
+            if row["metric"] not in nullable:
+                self.assertEqual(count, 10)
         self.assertEqual({int(row["samples"]) for row in raw}, {180000})
         self.assertEqual({float(row["window_s"]) for row in raw}, {900.0})
         self.assertTrue(

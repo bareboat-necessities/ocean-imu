@@ -41,6 +41,10 @@ against the generator's physical propagation direction.  The implementation's
 FORWARD/BACKWARD labels themselves are not treated as physical truth: they are
 labels relative to whichever axial representative the estimator returns and
 can exchange names when that representative flips by $180^\circ$.
+All ten replays are retained. Angular scores are conditional on a finite
+estimate; a replay with no resolved travel direction contributes to the
+unresolved fraction but has no directed angular score. Summary counts and
+paired counts use finite observations and their matched seed intersection.
 
 \subsection{Known-vessel response matching}
 The direction branch receives the engine-guarded accelerometer. After levelling,
@@ -115,25 +119,26 @@ OU--III performance claim for this paper.
 \begin{table}[t]
   \centering
   \caption{Wave-direction RMS errors in the ten-seed adaptive OU--III integrated
-  replay.  Entries are mean $\pm$ sample standard deviation across the ten seed
-  triplets, in degrees.}
+  replay. Entries are mean $\pm$ sample standard deviation of finite
+  per-replay angular scores, in degrees. $n$ is the number of valid directed
+  scores out of ten executions; availability is reported separately.}
   \label{tab:direction-ou3-rms}
   \footnotesize
   \setlength{\tabcolsep}{3.0pt}
   \renewcommand{\arraystretch}{1.06}
-  \begin{tabular}{@{}lrrr@{}}
+  \begin{tabular}{@{}lrrrr@{}}
     \toprule
-    Case & $H_s$ [m] & Axis RMS & Directed RMS \\
+    Case & $H_s$ [m] & Axis RMS & Directed RMS & $n$ \\
     \midrule
-    JONSWAP     & 0.27 & $13.79\pm0.97$ & $15.16\pm0.93$ \\
-    JONSWAP     & 1.50 & $12.03\pm0.53$ & $19.45\pm1.94$ \\
-    JONSWAP     & 4.00 & $11.44\pm0.55$ & $23.99\pm1.96$ \\
-    JONSWAP     & 8.50 & $11.28\pm0.40$ & $27.02\pm2.37$ \\
+    JONSWAP     & 0.27 & $29.69\pm0.32$ & $9.77\pm6.71$ & 9 \\
+    JONSWAP     & 1.50 & $21.48\pm2.12$ & $18.51\pm1.44$ & 10 \\
+    JONSWAP     & 4.00 & $18.33\pm1.76$ & $17.97\pm1.87$ & 10 \\
+    JONSWAP     & 8.50 & $25.54\pm2.74$ & $26.20\pm2.51$ & 10 \\
     \addlinespace
-    PM--Stokes  & 0.27 & $14.36\pm1.11$ & $14.42\pm1.30$ \\
-    PM--Stokes  & 1.50 & $12.37\pm0.64$ & $15.09\pm0.74$ \\
-    PM--Stokes  & 4.00 & $12.10\pm0.79$ & $15.95\pm1.19$ \\
-    PM--Stokes  & 8.50 & $12.31\pm0.82$ & $16.64\pm1.22$ \\
+    PM--Stokes  & 0.27 & $29.86\pm0.33$ & $13.63\pm9.18$ & 7 \\
+    PM--Stokes  & 1.50 & $22.58\pm2.01$ & $19.67\pm1.47$ & 10 \\
+    PM--Stokes  & 4.00 & $16.44\pm1.40$ & $16.26\pm1.28$ & 10 \\
+    PM--Stokes  & 8.50 & $23.90\pm2.18$ & $25.60\pm2.27$ & 10 \\
     \bottomrule
   \end{tabular}
 \end{table}
@@ -158,15 +163,15 @@ aggregate correct-decision fraction from hiding large sense-flip errors.
     \toprule
     Case & $H_s$ & R & P & Y & $\bar\theta$ & T/A/U [\%] \\
     \midrule
-    JONSWAP     & 0.27 & 0.23 & 0.18 & 0.63 &  31.5 & 0.1/96.8/3.1 \\
-    JONSWAP     & 1.50 & 0.19 & 0.14 & 0.90 & -28.6 & 96.7/0.8/2.5 \\
-    JONSWAP     & 4.00 & 0.31 & 0.13 & 0.47 &  31.1 & 1.2/96.5/2.3 \\
-    JONSWAP     & 8.50 & 0.17 & 0.11 & 0.57 & -26.9 & 94.7/1.7/3.6 \\
+    JONSWAP     & 0.27 & 0.31 & 0.13 & 0.48 &   0.8 & 0.3/0.0/99.7 \\
+    JONSWAP     & 1.50 & 0.16 & 0.17 & 0.59 & -25.5 & 70.4/17.7/11.8 \\
+    JONSWAP     & 4.00 & 0.22 & 0.16 & 0.77 &  28.3 & 8.4/87.1/4.5 \\
+    JONSWAP     & 8.50 & 0.28 & 0.20 & 0.55 & -26.4 & 19.5/76.3/4.2 \\
     \addlinespace
-    PM--Stokes  & 0.27 & 0.22 & 0.18 & 0.69 &  32.5 & 0.0/97.3/2.7 \\
-    PM--Stokes  & 1.50 & 0.21 & 0.17 & 0.58 & -28.1 & 96.9/0.5/2.6 \\
-    PM--Stokes  & 4.00 & 0.35 & 0.20 & 0.72 &  30.0 & 0.2/98.2/1.6 \\
-    PM--Stokes  & 8.50 & 0.16 & 0.11 & 0.31 & -26.7 & 97.9/0.4/1.8 \\
+    PM--Stokes  & 0.27 & 0.32 & 0.13 & 0.65 &   0.6 & 0.1/0.0/99.9 \\
+    PM--Stokes  & 1.50 & 0.16 & 0.17 & 0.43 & -25.4 & 40.1/45.7/14.3 \\
+    PM--Stokes  & 4.00 & 0.21 & 0.16 & 0.58 &  27.5 & 0.0/94.9/5.1 \\
+    PM--Stokes  & 8.50 & 0.32 & 0.21 & 0.44 & -25.5 & 58.1/38.2/3.7 \\
     \bottomrule
   \end{tabular}
   \vspace{1pt}
