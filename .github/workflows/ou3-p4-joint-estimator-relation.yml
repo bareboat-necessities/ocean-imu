@@ -31,10 +31,67 @@ jobs:
           python-version: '3.12'
       - name: Check proof source syntax
         run: python -m compileall -q tools/stability
-      - name: Retain exact PR source and existing joint diagnostics
+      - name: Execute same-signal estimator relation
         run: |
           set -euo pipefail
           mkdir -p /tmp/ou3-p4-relation-evidence
+          python tools/stability/ou3_validated_positive_transcendentals.py
+          python tools/stability/ou3_p4_joint_estimator_transition.py --output /tmp/ou3-p4-relation-evidence/joint-estimator.json
+          python tools/stability/ou3_brmm_sigma_stillness_step.py --output /tmp/ou3-p4-relation-evidence/sigma-stillness.json
+          python tools/stability/ou3_p4_brmm_tuner_stillness_transition.py --output /tmp/ou3-p4-relation-evidence/tuner-stillness.json
+          python tools/stability/ou3_p4_joint_brmm_frontend_transition.py --output /tmp/ou3-p4-relation-evidence/joint-brmm-frontend.json
+          python tools/stability/ou3_p4_complete_brmm_universal_target_relation.py --output /tmp/ou3-p4-relation-evidence/target-relation.json
+          python tools/stability/ou3_p4_complete_brmm_source_cover_contract.py --output /tmp/ou3-p4-relation-evidence/source-cover-contract.json
+          python - <<'PY'
+          import json
+          root='/tmp/ou3-p4-relation-evidence/'
+          j=json.load(open(root+'joint-estimator.json'))
+          s=json.load(open(root+'sigma-stillness.json'))
+          t=json.load(open(root+'tuner-stillness.json'))
+          b=json.load(open(root+'joint-brmm-frontend.json'))
+          u=json.load(open(root+'target-relation.json'))
+          c=json.load(open(root+'source-cover-contract.json'))
+          for name,obj in [('joint',j),('stillness',s),('tuner',t),('brmm',b),('target',u),('cover',c)]:
+              assert obj['validation_pass'], (name,obj.get('validation_failures'))
+
+          # The period and sigma are estimator outputs from the same signal;
+          # they are not theorem parameters. Their dependent coefficient image
+          # must remain intact all the way to the current applied schedule.
+          assert j['same_signal_wave_period_and_band_state_materialized']
+          assert j['raw_period_and_canonical_log_period_relation_materialized']
+          assert j['exact_frequency_reciprocal_relation_materialized']
+          assert j['adaptive_band_previous_tuner_frequency_lag_materialized']
+          assert j['sigma_first_second_moment_statistic_materialized']
+          assert j['band_noise_p11_subtraction_materialized']
+          assert j['joint_f_tau_sigma_TS_RS_image_materialized']
+          assert not j['independent_f_sigma_rectangle_accepted_by_transition']
+
+          assert s['same_vertical_sample_drives_lpf_energy_and_sigma_attenuation']
+          assert t['same_history_still_attenuation_enters_before_variance_floor']
+          assert b['same_private_Mahony_vertical_drives_stillness_tuner_and_WPE']
+          assert b['previous_WPE_frequency_drives_current_tuner']
+          assert b['same_history_stillness_attenuation_drives_sigma']
+          assert b['joint_raw_f_tau_sigma_TS_RS_tuple_emitted']
+          assert b['current_Riccati_active_schedule_precedes_current_measurement']
+          assert b['actual_applied_RS_xyz_retained_from_same_active_schedule']
+          assert b['independent_frequency_sigma_RS_forbidden']
+
+          assert u['same_BRMM_sample_joint_frontend_transition_materialized']
+          assert u['same_BRMM_current_applied_schedule_retained']
+          assert not u['coefficient_target_inclusion_closed']
+          assert c['theorem_cell_coefficients_must_come_from_joint_estimator_image']
+          assert c['free_tau_sigma_constructor_for_theorem_forbidden']
+          assert c['S_zero_R_derived_from_same_active_schedule']
+
+          # No proof promotion from this relation alone.
+          assert not j['P4_MOTION_PASS'] and not j['P4_PASS'] and not j['P5_MAY_START']
+          assert not b['P4_MOTION_PASS'] and not b['P4_PASS'] and not b['P5_MAY_START']
+          assert not c['P4_promoted_here']
+          print('SAME_SIGNAL_ESTIMATOR_RELATION_PASS')
+          PY
+      - name: Retain exact PR source and relation evidence
+        run: |
+          set -euo pipefail
           git rev-parse HEAD > /tmp/ou3-p4-relation-evidence/source-commit.txt
           git archive --format=tar.gz HEAD > /tmp/ou3-p4-relation-evidence/proof-sources.tar.gz
           sha256sum /tmp/ou3-p4-relation-evidence/proof-sources.tar.gz > /tmp/ou3-p4-relation-evidence/SHA256SUMS
