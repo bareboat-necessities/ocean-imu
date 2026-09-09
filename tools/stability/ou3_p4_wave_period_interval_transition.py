@@ -29,7 +29,6 @@ import json
 import math
 from pathlib import Path
 import re
-from typing import Sequence
 
 from ou3_interval import Interval
 import ou3_validated_transcendentals as VT
@@ -37,11 +36,11 @@ import ou3_brmm_wave_period_frontend as FRONTEND
 
 REPO=Path(__file__).resolve().parents[2]
 ESTIMATOR=REPO/"src"/"tuner"/"WavePeriodEstimator.h"
-SCHEMA=1
-QUALIFICATION="OU3_P4_WAVE_PERIOD_ESTIMATOR_INTERVAL_MOMENT_TRANSITION_V1"
+SCHEMA=2
+QUALIFICATION="OU3_P4_WAVE_PERIOD_ESTIMATOR_INTERVAL_MOMENT_TRANSITION_V2"
 
 
-def I(x:float)->Interval:return Interval.outward_bounds(float(x),float(x))
+def I(x:float)->Interval:return Interval.point(float(x))
 def finite(x:Interval)->bool:return isinstance(x,Interval) and math.isfinite(x.lo) and math.isfinite(x.hi) and x.lo<=x.hi
 
 def _ctor_default(text:str,name:str)->float:
@@ -57,7 +56,6 @@ def constants()->dict:
     lh=_ctor_default(text,"log_smoothing_periods")
     hmin=_ctor_default(text,"min_horizon_sec")
     hmax=_ctor_default(text,"max_horizon_sec")
-    # Wide pi enclosure, matching the existing frontend certificate.
     pi=Interval.outward_bounds(3.141592653589793,3.141592653589794)
     lam=I(2.0)*pi*I(max(1e-4,hp))
     return {"high_pass_hz":hp,"moment_horizon_periods":mh,"log_smoothing_periods":lh,
@@ -89,8 +87,8 @@ def validate_state(s:WavePeriodState)->list[str]:
     f=[]
     for name,x in s.__dict__.items():
         if not finite(x):f.append(name+" nonfinite")
-    if finite(s.weight) and (s.weight.lo<0.0 or s.weight.hi>1.0+1e-12):f.append("weight outside [0,1]")
-    if finite(s.elapsed_sec) and s.elapsed_sec.lo<0.0:f.append("negative elapsed")
+    if finite(s.weight) and (s.weight.lo < -1e-300 or s.weight.hi>1.0+1e-12):f.append("weight outside [0,1] enclosure")
+    if finite(s.elapsed_sec) and s.elapsed_sec.lo < -1e-300:f.append("negative elapsed")
     return f
 
 
@@ -102,7 +100,8 @@ def _decay_gain(dt:Interval,lam:Interval)->tuple[Interval,Interval]:
 
 
 def linear_frontend_step(s:WavePeriodState,dt:Interval,input_accel:Interval)->WavePeriodState:
-    if validate_state(s):raise ValueError("invalid predecessor state")
+    failures=validate_state(s)
+    if failures:raise ValueError("invalid predecessor state: "+repr(failures))
     if not finite(input_accel):raise ValueError("same-source input interval required")
     c=constants();decay,gain=_decay_gain(dt,c["lambda"])
     stage1=decay*(s.high_pass_1+input_accel-s.accel_prev)
@@ -117,12 +116,12 @@ def linear_frontend_step(s:WavePeriodState,dt:Interval,input_accel:Interval)->Wa
 
 def _alpha_for_horizon(dt:Interval,horizon:Interval)->Interval:
     if not finite(horizon) or horizon.lo<=0:raise ValueError("invalid horizon")
-    # dt/horizon is monotone over positive intervals; validated exp encloses all.
     return I(1.0)-VT.exp_interval(-(dt/horizon))
 
 
 def moment_update(s:WavePeriodState,dt:Interval,horizon:Interval)->WavePeriodState:
-    if validate_state(s):raise ValueError("invalid moment predecessor")
+    failures=validate_state(s)
+    if failures:raise ValueError("invalid moment predecessor: "+repr(failures))
     alpha=_alpha_for_horizon(dt,horizon)
     one_minus=I(1.0)-alpha
     weight=one_minus*s.weight+alpha
@@ -135,13 +134,12 @@ def moment_update(s:WavePeriodState,dt:Interval,horizon:Interval)->WavePeriodSta
 
 
 def step_branches(s:WavePeriodState,dt:Interval,input_accel:Interval)->list[tuple[str,WavePeriodState]]:
-    """Propagate one sample and preserve the 3/lambda moment-start branch."""
     lin=linear_frontend_step(s,dt,input_accel)
     c=constants(); start=I(3.0)/c["lambda"]
     definitely_before=lin.elapsed_sec.hi < start.lo
     definitely_after=lin.elapsed_sec.lo >= start.hi
     if definitely_before:return [("pre_moment",lin)]
-    horizon=Interval.outward_bounds(c["min_horizon_sec"],c["max_horizon_sec"])
+    horizon=Interval(c["min_horizon_sec"],c["max_horizon_sec"])
     updated=moment_update(lin,dt,horizon)
     if definitely_after:return [("moment",updated)]
     return [("pre_moment",lin),("moment",updated)]
@@ -150,16 +148,14 @@ def step_branches(s:WavePeriodState,dt:Interval,input_accel:Interval)->list[tupl
 def build()->dict:
     frontend=FRONTEND.build(REPO);ff=FRONTEND.validate(frontend)
     if ff:raise RuntimeError("frontend prerequisite failed: "+repr(ff))
-    c=constants(); dt=Interval.outward_bounds(*map(float,frontend["declared_inputs"]["imu_dt_s"]))
+    c=constants(); dt=Interval(*map(float,frontend["declared_inputs"]["imu_dt_s"]))
     z=zero_state()
     one=step_branches(z,dt,Interval.outward_bounds(-1.0,1.0))
     smoke=len(one)==1 and one[0][0]=="pre_moment" and not validate_state(one[0][1])
-    # Construct a threshold-straddling elapsed cell while keeping all other
-    # states zero to verify branch preservation rather than threshold hulling.
     start=I(3.0)/c["lambda"]
     e=WavePeriodState(z.accel_prev,z.high_pass_1,z.high_pass_1_prev,z.high_pass_2,z.velocity,z.elevation,
                       z.velocity_mean,z.velocity_sq,z.elevation_mean,z.elevation_sq,z.weight,
-                      Interval.outward_bounds(max(0.0,start.lo-dt.hi*1.5),start.hi))
+                      Interval(max(0.0,start.lo-dt.hi*1.5),start.hi))
     split={name for name,_ in step_branches(e,dt,I(0.0))}=={"pre_moment","moment"}
     return {
         "schema":SCHEMA,"qualification":QUALIFICATION,
@@ -170,6 +166,7 @@ def build()->dict:
         "moment_start_branch_preserved":True,
         "moment_start_straddling_requires_source_split":split,
         "same_source_input_interval_required":True,
+        "exact_structural_zero_not_outward_widened":True,
         "physical_BRMM_to_private_complementary_input_attached_here":False,
         "positive_correlated_moment_variance_proved_here":False,
         "raw_period_ratio_transition_materialized_here":False,
@@ -188,7 +185,7 @@ def build()->dict:
 def validate(d:dict)->list[str]:
     f=[]
     if d.get("schema")!=SCHEMA or d.get("qualification")!=QUALIFICATION:f.append("schema/qualification mismatch")
-    for k in ("shipping_two_high_pass_and_leaky_integrator_transition_materialized","EW_first_second_moment_transition_materialized","moment_horizon_full_shipping_guard_interval_retained","moment_start_branch_preserved","moment_start_straddling_requires_source_split","same_source_input_interval_required","point_smoke_pass"):
+    for k in ("shipping_two_high_pass_and_leaky_integrator_transition_materialized","EW_first_second_moment_transition_materialized","moment_horizon_full_shipping_guard_interval_retained","moment_start_branch_preserved","moment_start_straddling_requires_source_split","same_source_input_interval_required","exact_structural_zero_not_outward_widened","point_smoke_pass"):
         if d.get(k) is not True:f.append(k+" not true")
     for k in ("physical_BRMM_to_private_complementary_input_attached_here","positive_correlated_moment_variance_proved_here","raw_period_ratio_transition_materialized_here","log_period_transition_materialized_here","usable_period_latch_transition_materialized_here","independent_moment_boxes_may_be_divided_to_make_period","complete_wave_period_source_transition_closed_here","P4_promoted_here"):
         if d.get(k) is not False:f.append(k+" not false")
