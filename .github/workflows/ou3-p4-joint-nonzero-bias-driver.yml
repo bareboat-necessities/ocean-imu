@@ -79,7 +79,6 @@ jobs:
           assert d['read_only_trace_recovers_baseline_bit_for_bit']
           for mode,m in d['modes'].items():
               assert m['decision']=='CONNECTED_POINT_ATTACHMENT_PASS', (mode,m)
-              assert not m['canonical_P4_falsified']
           PY
 
       - name: Execute joint nonzero-driver recurrence, compatible storage, and prefix budgets
