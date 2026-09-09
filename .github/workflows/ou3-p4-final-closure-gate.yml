@@ -16,7 +16,10 @@ on:
       - "tools/stability/ou3_p4_kalman_reset_binary32_iss.py"
       - "tools/stability/ou3_p4_binary32_platform_arithmetic_contract.py"
       - "tools/stability/ou3_p4_hard_entry_set.py"
+      - "tools/stability/ou3_p4_bias0_family.py"
       - "tools/stability/ou3_p4_bias1_family.py"
+      - "tools/stability/ou3_p4_bias2_family.py"
+      - "tools/stability/ou3_p4_bias_family_joint_iss_supply.py"
       - "tools/stability/ou3_p4_p3_execution_admission.py"
       - ".github/workflows/ou3-p4-final-closure-gate.yml"
   pull_request:
@@ -48,7 +51,14 @@ jobs:
           assert d['canonical_source']=='COMPLETE_BRMM_NORMAL_LIVE_WORD'
           assert d['BRMM_required_for_any_P4_proof']
           assert d['required_bias_families']==['BIAS0','BIAS1','BIAS2']
-          assert set(d['bias_family_source_uniform_same_history_closed'])=={'BIAS0','BIAS1','BIAS2'}
+          for table in ('bias_family_source_uniform_same_history_closed','bias_family_source_admission',
+                        'bias_family_joint_ISS_supply_materialized','bias_family_same_history_graph_ready'):
+              assert set(d[table])=={'BIAS0','BIAS1','BIAS2'},table
+          # Every family is admitted and lifted from its own module; that alone
+          # closes nothing, and BIAS0/BIAS2 are never read off BIAS1.
+          assert all(d['bias_family_source_admission'].values())
+          assert all(d['bias_family_joint_ISS_supply_materialized'].values())
+          assert not d['BIAS0_or_BIAS2_inferred_from_BIAS1']
           assert d['signal_generated_tau_sigma_required']
           assert d['tau_sigma_TS_to_RS_interdependence_required']
           assert d['adaptation_schedule_candidate_active_commit_scheduler_required']
@@ -62,6 +72,9 @@ jobs:
           if d['remaining_mathematical_P4_blockers']:
               assert not d['P4_MOTION_PASS'] and not d['P4_PASS'] and not d['P5_MAY_START']
           print('REQUIRED_BIAS_FAMILIES',*d['required_bias_families'])
+          print('BIAS_FAMILY_ADMISSION',d['bias_family_source_admission'])
+          print('BIAS_FAMILY_SUPPLY',d['bias_family_joint_supply_norm_upper_mps2'])
+          print('BIAS_FAMILY_GRAPH_READY',d['bias_family_same_history_graph_ready'])
           print('BIAS_FAMILY_CLOSURE',d['bias_family_source_uniform_same_history_closed'])
           print('ADAPTIVE_SOURCE_COVER_CLOSED',d['adaptive_same_signal_source_uniform_cover_closed'])
           print('RESET_DOMAIN_CLOSED',d['source_uniform_same_graph_correction_domain_closed'])

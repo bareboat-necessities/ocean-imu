@@ -19,20 +19,25 @@ from __future__ import annotations
 import argparse,json
 from pathlib import Path
 import ou3_p4_hard_entry_set as ENTRY
+import ou3_p4_bias0_family as BIAS0
 import ou3_p4_bias1_family as BIAS1
+import ou3_p4_bias2_family as BIAS2
+import ou3_p4_bias_family_joint_iss_supply as BIASISS
 import ou3_p4_p3_execution_admission as P3A
 import ou3_p4_exact_chord_signed_master_bridge as BRIDGE
 import ou3_p4_reset_domain_binding as RESETBIND
 import ou3_p4_kalman_reset_binary32_iss as FP
 import ou3_p4_complete_brmm_source_cover_contract as SOURCE
 
-QUALIFICATION='OU3_P4_FINAL_FAIL_CLOSED_GATE_V6'
+QUALIFICATION='OU3_P4_FINAL_FAIL_CLOSED_GATE_V7'
 REQUIRED_BIAS_FAMILIES=('BIAS0','BIAS1','BIAS2')
 
 
 def build():
-    e=ENTRY.build();b=BIAS1.build();p=P3A.build();g=BRIDGE.build();rb=RESETBIND.build();fp=FP.build();src=SOURCE.build()
-    bad={'entry':ENTRY.validate(e),'bias1':BIAS1.validate(b),'p3':P3A.validate(p),
+    e=ENTRY.build();b0=BIAS0.build();b=BIAS1.build();b2=BIAS2.build();bs=BIASISS.build()
+    p=P3A.build();g=BRIDGE.build();rb=RESETBIND.build();fp=FP.build();src=SOURCE.build()
+    bad={'entry':ENTRY.validate(e),'bias0':BIAS0.validate(b0),'bias1':BIAS1.validate(b),
+         'bias2':BIAS2.validate(b2),'bias_family_supply':BIASISS.validate(bs),'p3':P3A.validate(p),
          'bridge':BRIDGE.validate(g),'reset_binding':RESETBIND.validate(rb),'fp':FP.validate(fp),
          'source_contract':SOURCE.validate(src)}
     bad={k:v for k,v in bad.items() if v}
@@ -47,13 +52,27 @@ def build():
       and g['joint_ISS_master_ready_for_BIAS1_and_roundoff']
       and g['physical_BIAS1_projection_and_Joseph_prerequisites_ready'])
 
-    # The existing branch has a genuine BIAS1 conditional graph. BIAS0 and
-    # BIAS2 are deliberately not inferred from it. They require their own
-    # source-uniform same-history certificates before P4 may promote.
+    # Each bias family is admitted and lifted from its own authoritative module;
+    # none is inferred from another. What separates BIAS1 from BIAS0/BIAS2 here
+    # is the same-history graph: the exact-chord signed master bridge exposes
+    # BIAS1 projection/Joseph prerequisites only, so BIAS0 and BIAS2 still need
+    # their own source-uniform same-history certificates. BIAS2 additionally
+    # needs a uniform separation constant, which is not proved.
+    family_admission={
+      'BIAS0':bool(b0['BIAS0_SOURCE_ADMISSION_PASS']),
+      'BIAS1':bool(b['BIAS1_SOURCE_ADMISSION_PASS']),
+      'BIAS2':bool(b2['BIAS2_SOURCE_ADMISSION_PASS']),
+    }
+    family_supply_materialized={
+      x:bool(bs['each_family_pushed_through_deployed_24state_event_lift']
+             and bs['family_supply'][x]['event_lift']['same_w_column_shared_by_error_and_truth'])
+      for x in REQUIRED_BIAS_FAMILIES}
+    family_graph_ready={'BIAS0':False,'BIAS1':bool(graph_ready),'BIAS2':False}
+    bias2_separation_closed=bool(b2['source_uniform_separation_closed'])
     bias_family_closed={
-      'BIAS0':False,
-      'BIAS1':bool(admissions and graph_ready),
-      'BIAS2':False,
+      'BIAS0':bool(admissions and family_admission['BIAS0'] and family_supply_materialized['BIAS0'] and family_graph_ready['BIAS0']),
+      'BIAS1':bool(admissions and family_admission['BIAS1'] and family_supply_materialized['BIAS1'] and family_graph_ready['BIAS1']),
+      'BIAS2':bool(admissions and family_admission['BIAS2'] and family_supply_materialized['BIAS2'] and family_graph_ready['BIAS2'] and bias2_separation_closed),
     }
     all_bias_families_closed=all(bias_family_closed[x] for x in REQUIRED_BIAS_FAMILIES)
 
@@ -94,6 +113,12 @@ def build():
       'qualification':QUALIFICATION,'canonical_source':'COMPLETE_BRMM_NORMAL_LIVE_WORD','declared_domain_shrunk':False,
       'filter_changed':False,'quality_gates_changed':False,'P3_delta':1e-18,
       'required_bias_families':list(REQUIRED_BIAS_FAMILIES),
+      'bias_family_source_admission':family_admission,
+      'bias_family_joint_ISS_supply_materialized':family_supply_materialized,
+      'bias_family_same_history_graph_ready':family_graph_ready,
+      'bias_family_joint_supply_norm_upper_mps2':{x:bs['family_supply'][x]['joint_supply_norm_upper_per_prediction_mps2'] for x in REQUIRED_BIAS_FAMILIES},
+      'BIAS2_uniform_separation_sector_closed':bias2_separation_closed,
+      'BIAS0_or_BIAS2_inferred_from_BIAS1':False,
       'bias_family_source_uniform_same_history_closed':bias_family_closed,
       'all_required_bias_families_closed':all_bias_families_closed,
       'BRMM_required_for_any_P4_proof':True,
@@ -123,9 +148,10 @@ def build():
       'point_capture_can_promote':False,'rowwise_coefficient_boxes_can_promote':False,'differential_backbone_alone_can_promote':False,
       'P4_MOTION_PASS':motion,'P4_PASS':motion,'P5_MAY_START':motion,
       'remaining_mathematical_P4_blockers':[x for x,ok in (
-        ('source-uniform BIAS0 same-history physical-driver family',bias_family_closed['BIAS0']),
+        ('BIAS0 same-history projection/Joseph graph on the exact-chord bridge',bias_family_closed['BIAS0']),
         ('source-uniform BIAS1 same-history physical-driver family',bias_family_closed['BIAS1']),
-        ('source-uniform BIAS2 same-history physical-driver family',bias_family_closed['BIAS2']),
+        ('BIAS2 same-history projection/Joseph graph on the exact-chord bridge',family_graph_ready['BIAS2']),
+        ('uniform BIAS2 separation constant mu_sep on the same-history graph',bias2_separation_closed),
         ('COMPLETE BRMM same-signal estimator/source cover with signal-derived tau and sigma',adaptive_source_cover_closed),
         ('interdependent (tau,sigma,T_S)->R_S with literal adaptation/commit/scheduler history',adaptive_source_cover_closed),
         ('source-uniform same-cell Joseph correction/reset domain',correction and reset_iqc and reset_gain),
@@ -142,7 +168,10 @@ def validate(d):
     if d.get('canonical_source')!='COMPLETE_BRMM_NORMAL_LIVE_WORD':f.append('source changed')
     if float(d.get('P3_delta',0))!=1e-18:f.append('P3 delta changed')
     if tuple(d.get('required_bias_families',()))!=REQUIRED_BIAS_FAMILIES:f.append('required bias family set changed')
-    if set(d.get('bias_family_source_uniform_same_history_closed',{}))!=set(REQUIRED_BIAS_FAMILIES):f.append('bias family closure map incomplete')
+    for table in ('bias_family_source_uniform_same_history_closed','bias_family_source_admission','bias_family_joint_ISS_supply_materialized','bias_family_same_history_graph_ready'):
+        if set(d.get(table,{}))!=set(REQUIRED_BIAS_FAMILIES):f.append(table+' incomplete')
+    if not all(bool(v) for v in d.get('bias_family_source_admission',{}).values()):f.append('every bias family must be admitted from its own module')
+    if not all(bool(v) for v in d.get('bias_family_joint_ISS_supply_materialized',{}).values()):f.append('every bias family must have a materialized joint ISS supply')
     for k in ('BRMM_required_for_any_P4_proof','signal_generated_tau_sigma_required',
               'tau_sigma_TS_to_RS_interdependence_required','adaptation_schedule_candidate_active_commit_scheduler_required',
               'adaptive_same_signal_source_contract_ready','hard_entry_set_admitted_without_covariance_membership',
@@ -151,7 +180,8 @@ def validate(d):
         if d.get(k) is not True:f.append(k+' not true')
     for k in ('declared_domain_shrunk','filter_changed','quality_gates_changed','point_capture_can_promote',
               'rowwise_coefficient_boxes_can_promote','differential_backbone_alone_can_promote',
-              'independent_tau_sigma_TS_RS_boxes_can_promote','independent_frequency_sigma_coordinates_can_promote'):
+              'independent_tau_sigma_TS_RS_boxes_can_promote','independent_frequency_sigma_coordinates_can_promote',
+              'BIAS0_or_BIAS2_inferred_from_BIAS1'):
         if d.get(k) is not False:f.append(k+' not false')
     for k in ('H18_finite_angle_worst_LDLT_pivot_lower','A21_first_active_ba_margin_lower'):
         if float(d.get(k,0))<=0:f.append(k+' not positive')

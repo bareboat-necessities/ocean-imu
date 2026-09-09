@@ -2,8 +2,12 @@ name: ou3-p4-closure-prerequisites
 on:
   push:
     paths: &paths
+      - "tools/stability/ou3_p4_bias0_family.py"
       - "tools/stability/ou3_p4_bias1_family.py"
+      - "tools/stability/ou3_p4_bias2_family.py"
       - "tools/stability/ou3_p4_bias1_joint_iss_supply.py"
+      - "tools/stability/ou3_p4_bias_family_joint_iss_supply.py"
+      - "tools/stability/ou3_p4_all_bias_families_contract.py"
       - "tools/stability/ou3_p4_hard_entry_set.py"
       - "tools/stability/ou3_p4_p3_execution_admission.py"
       - "tools/stability/ou3_p4_rowwise_coefficient_enclosure.py"
@@ -27,8 +31,12 @@ jobs:
         with: {persist-credentials: false}
       - name: Build independent closure prerequisites
         run: |
+          python3 tools/stability/ou3_p4_bias0_family.py --output /tmp/bias0.json
           python3 tools/stability/ou3_p4_bias1_family.py --output /tmp/bias1.json
+          python3 tools/stability/ou3_p4_bias2_family.py --output /tmp/bias2.json
           python3 tools/stability/ou3_p4_bias1_joint_iss_supply.py --output /tmp/bias1-iss.json
+          python3 tools/stability/ou3_p4_bias_family_joint_iss_supply.py --output /tmp/bias-family-iss.json
+          python3 tools/stability/ou3_p4_all_bias_families_contract.py --output /tmp/all-bias.json
           python3 tools/stability/ou3_p4_hard_entry_set.py --output /tmp/entry.json
           python3 tools/stability/ou3_p4_p3_execution_admission.py --output /tmp/p3admit.json
           python3 tools/stability/ou3_p4_rowwise_coefficient_enclosure_fast.py --output /tmp/coeff.json
@@ -36,9 +44,31 @@ jobs:
         run: |
           python3 - <<'PY'
           import json
-          b=json.load(open('/tmp/bias1.json')); bi=json.load(open('/tmp/bias1-iss.json'))
+          b0=json.load(open('/tmp/bias0.json')); b=json.load(open('/tmp/bias1.json')); b2=json.load(open('/tmp/bias2.json'))
+          bi=json.load(open('/tmp/bias1-iss.json')); bf=json.load(open('/tmp/bias-family-iss.json'))
+          ab=json.load(open('/tmp/all-bias.json'))
           e=json.load(open('/tmp/entry.json')); p=json.load(open('/tmp/p3admit.json')); c=json.load(open('/tmp/coeff.json'))
           assert b['BIAS1_SOURCE_ADMISSION_PASS'] and not b['deployment_hardware_admission_pass']
+
+          # All three physical-driver families are bound to their own modules,
+          # none is inferred from BIAS1, and none of that promotes anything.
+          for name,d in (('BIAS0',b0),('BIAS2',b2)):
+              assert d['validation_pass'],(name,d['validation_failures'])
+              assert d['conditional_theorem_family'] and not d['assembled_sensor_hardware_qualified']
+              assert not d['may_be_substituted_by_BIAS1']
+          assert b0['gauss_markov_pathwise_increment_cap_is_declared_hypothesis']
+          assert not b0['stationary_OU_PSD_used_to_derive_pathwise_cap']
+          assert b2['non_relaxing_limit_admitted'] and b2['phi_true_interval'][1]==1.0
+          assert b2['uniform_separation_constant_lower'] is None
+          assert not b2['source_uniform_separation_closed']
+          assert bf['validation_pass'],bf['validation_failures']
+          assert bf['each_family_pushed_through_deployed_24state_event_lift']
+          assert bf['BIAS1_class_contains_no_other_family'] and bf['no_single_family_covers_the_other_two']
+          assert bf['every_family_true_bias_within_hard_entry_envelope']
+          assert not bf['P4_promoted_here']
+          assert ab['validation_pass'],ab['validation_failures']
+          assert ab['all_three_semantically_bound_here']
+          assert not ab['all_bias_promotion_gate_closed'] and not ab['P4_PASS']
           assert bi['validation_pass'],bi['validation_failures']
           assert bi['same_w_enters_error_and_true_bias'] and not bi['independent_per_sample_bias_state_slots_used']
           assert e['entry_set_declared_and_membership_checkable'] and e['scale_of_declared_handoff_envelope'] == 1.0
@@ -51,7 +81,12 @@ jobs:
           for mode,m in c['modes'].items():
             print('COEFF',mode,'correction=',m['attitude_correction_norm_upper'],'limiting=',m['limiting_correction_event'])
             print('RESET',mode,json.dumps(m['reset_enclosure'],sort_keys=True))
-          print('BIAS1_W',b['driver_increment_norm_upper_mps2'])
+          for name in ab['required_bias_families']:
+            f=bf['family_supply'][name]
+            print('BIAS_FAMILY',name,'w=',f['driver_increment_norm_upper_mps2'],
+                  'm=',f['tau_mismatch_forcing_norm_upper_mps2'],
+                  's=',f['joint_supply_norm_upper_per_prediction_mps2'])
+          print('BIAS_CONTAINMENT',json.dumps(bf['relaxation_class_containment'],sort_keys=True))
           print('BIAS1_ISS',bi['joint_supply_norm_upper_per_prediction_mps2'])
           print('ENTRY',e['coordinate_radii'])
           PY
@@ -59,8 +94,12 @@ jobs:
         with:
           name: ou3-p4-closure-prerequisites
           path: |
+            /tmp/bias0.json
             /tmp/bias1.json
+            /tmp/bias2.json
             /tmp/bias1-iss.json
+            /tmp/bias-family-iss.json
+            /tmp/all-bias.json
             /tmp/entry.json
             /tmp/p3admit.json
             /tmp/coeff.json

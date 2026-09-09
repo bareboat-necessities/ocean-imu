@@ -44,6 +44,31 @@ its unit amplitude is not a uniform BRMM budget. The numerical metric
 condition numbers are 3.33e9 / 5.11e9, so directional high precision and
 small Stein residuals do not constitute rigorous enclosure.
 
+### Bias-family driver recurrences
+
+All three mandatory accelerometer-bias families now have their own authoritative
+driver recurrence, each from its own declared parameter box in
+`ou3_p4_closure_domain.json`; none is read off BIAS1. Every admitted history
+satisfies the exact relation `b_i = phi_true*b_{i-1} + w_i`, so the content is
+the outward bound on `w` and on the tau-mismatch forcing `m=(phi_true-phi_hat)b`
+against the deployed `phi_hat=exp(-.005/5000)=.999999`.
+
+| Family | Driver | Admitted `phi_true` | Driver norm | Mismatch norm | Joint supply |
+| --- | --- | --- | ---: | ---: | ---: |
+| BIAS0 | composite: turn-on, thermal, strain, non-GM, declared pathwise GM cap | [.9999833335, .9999986111] | 8.7552e-4 | 3.5276e-6 | 8.7553e-4 |
+| BIAS1 | one root, one parameter history | [.9999916667, .9999979167] | 4.9266e-6 | 1.6512e-6 | 5.1960e-6 |
+| BIAS2 | bounded-variation drift, no relaxation root | [.9999979167, 1] | 2.2011e-6 | 2.4393e-7 | 2.2146e-6 |
+
+Each family's factor interval passes through the deployed 24-state event lift
+with the shared `w` column retained, and each declared true-bias norm 0.2252
+stays inside the .4 hard-entry radius. On the ISS pair (factor interval, driver
+bound) BIAS0's class contains BIAS1's; BIAS1's contains neither of the others
+and no single family covers the other two, so the three-family quantifier
+cannot be discharged by one proof. BIAS0's pathwise GM increment cap is a
+declared family hypothesis at 4.33 times the largest admitted one-step
+innovation sigma; it is not a consequence of the stationary PSD, which supplies
+no pathwise cap at all.
+
 Exact-real projection already preserves the estimate ball in both modes.
 The prior .400126 A21 bias-row value extrapolates frozen interior projection
 coefficients; it is not an actual nonlinear projection escape. BIAS0/1 plus
@@ -59,6 +84,15 @@ Pointwise `rho(T)<1` and existence of a metric for each T do not imply
 compatible contraction along a nonlinear source continuation. A pair of
 Schur matrices with an unstable product is included only as a logical
 counterexample, not as an admissible OU-III source.
+
+Materializing the three driver recurrences moves the limiter but does not
+close it. BIAS0 now dominates the supply axis at 168 times the BIAS1 joint
+supply, driven by its declared pathwise GM cap; BIAS2 dominates the retention
+axis, because `phi_true=1` leaves the truth with no relaxation at all and the
+bias-error mode decays only through `phi_hat` and the corrections. Both remain
+open on the same-history graph: the exact-chord signed master bridge exposes
+BIAS1 projection/Joseph prerequisites only, and no uniform BIAS2 separation
+constant `mu_sep` is proved.
 
 The new separate endpoint supply is feasible at the coefficient point, but
 the relaxed L2 bias budget still does not establish coordinate retention.
@@ -83,7 +117,10 @@ proved BIAS2 sector; (2) a compatible source-dependent metric over actual
 consecutive words; (3) source-centered correlated coordinate tubes with a
 qualified entry set. The next falsifiable experiment is a consecutive-word
 joint-graph test retaining the actual bias recurrence and source continuation,
-with endpoint and every-prefix coordinate budgets before uniform covering.
+with endpoint and every-prefix coordinate budgets before uniform covering. Run
+it per family rather than once: BIAS0 tests whether the budgets survive the
+largest admitted supply, and BIAS2 whether they survive a non-relaxing truth,
+which is the case that decides whether a separation sector is needed at all.
 
 ## Retained facts and rejected routes
 

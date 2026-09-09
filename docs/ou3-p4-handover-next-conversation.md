@@ -37,21 +37,29 @@ The final fail-closed promotion gate now encodes this contract. In particular it
 
 ## What is already available
 
-The merged branch contains substantial reusable machinery: exact finite-angle chord/projection sectors; same-cell Joseph/reset signed identities; hard entry-set admission; BIAS1 conditional root/driver recurrence; compatible storage infrastructure; source-cover/event lineage APIs; joint WavePeriodEstimator/AdaptiveWaveBandPass estimator plumbing; BRMM attachment machinery; actual-applied `R_S` provenance; and binary32 additive ISS infrastructure.
+The merged branch contains substantial reusable machinery: exact finite-angle chord/projection sectors; same-cell Joseph/reset signed identities; hard entry-set admission; compatible storage infrastructure; source-cover/event lineage APIs; joint WavePeriodEstimator/AdaptiveWaveBandPass estimator plumbing; BRMM attachment machinery; actual-applied `R_S` provenance; and binary32 additive ISS infrastructure.
 
-These are prerequisites and partial lemmas, not P4 closure.
+All three physical-driver recurrences are now materialized, each from its own declared parameter box and its own module, and none inferred from another:
+
+- `ou3_p4_bias0_family.py` — composite turn-on/thermal/strain/non-Gauss-Markov driver with a declared pathwise Gauss-Markov increment cap;
+- `ou3_p4_bias1_family.py` — one-root one-parameter driver;
+- `ou3_p4_bias2_family.py` — bounded-variation drift admitting `phi_true=1`, i.e. no relaxation root;
+- `ou3_p4_bias_family_joint_iss_supply.py` — the joint `[e_b;b_true]` supply for all three, each pushed through the deployed 24-state event lift with the shared `w` column retained.
+
+These are prerequisites and partial lemmas, not P4 closure. Semantic binding is not closure: BIAS0 assembled-sensor qualification, a uniform BIAS2 separation constant `mu_sep`, and the BIAS0/BIAS2 same-history projection/Joseph graph are all still open, and the final gate reports them as blockers.
 
 ## Mandatory next proof work
 
 The next conversation should continue only along this path:
 
-1. Materialize source-uniform `BIAS0` and `BIAS2` physical-driver recurrences alongside the existing `BIAS1` recurrence; do not infer them from BIAS1.
-2. Complete the same-signal BRMM estimator cover so the input history jointly generates frequency, tau, raw/effective sigma, `T_S`, and SpectralMSE `R_S` while preserving candidate/active EMA, staged commits, and scheduler semantics.
-3. Emit correlated same-history source cells for every admitted BRMM continuation, bias family, and hard-entry radial segment.
-4. Derive `K` only from the same reachable `P/H/R` cell and retain exact reset transport/projection coupling.
-5. Form source-correlated endpoint and literal-every-prefix augmented matrices for all three bias families.
-6. Run outward LDLT with finite-precision ISS charges and prove the full retained-coordinate budgets.
-7. Only after **all three bias families plus the adaptive BRMM source cover** close may the final gate be changed to report their closure bits true.
+1. Extend the exact-chord signed master bridge past its BIAS1-only projection/Joseph prerequisites so `BIAS0` and `BIAS2` reach the same-history graph; the driver recurrences alone do not.
+2. Prove a uniform `BIAS2` separation constant `mu_sep` on that graph, or establish that the non-relaxing family cannot close without one.
+3. Complete the same-signal BRMM estimator cover so the input history jointly generates frequency, tau, raw/effective sigma, `T_S`, and SpectralMSE `R_S` while preserving candidate/active EMA, staged commits, and scheduler semantics.
+4. Emit correlated same-history source cells for every admitted BRMM continuation, bias family, and hard-entry radial segment.
+5. Derive `K` only from the same reachable `P/H/R` cell and retain exact reset transport/projection coupling.
+6. Form source-correlated endpoint and literal-every-prefix augmented matrices for all three bias families. Run these per family: BIAS0 carries the largest admitted supply and BIAS2 the non-relaxing truth, so a budget that survives BIAS1 says nothing about either.
+7. Run outward LDLT with finite-precision ISS charges and prove the full retained-coordinate budgets.
+8. Only after **all three bias families plus the adaptive BRMM source cover** close may the final gate be changed to report their closure bits true.
 
 ## Invalid routes
 
