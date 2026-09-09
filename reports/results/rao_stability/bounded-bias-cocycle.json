@@ -1,0 +1,253 @@
+{
+  "experiment": "BOUNDED_INTERNAL_BIAS_SAMPLE_COCYCLE",
+  "capture_sha256": {
+    ".root.json": "342430657fe96aec340deb40fca231dfdbad738b63fb2abc495f8111cb63d357",
+    ".inputs.csv": "2ff04db07ea8baf72f4dd652352d559ff07fba970ed4bba88fd287eb733b8655",
+    ".prefixes.jsonl": "2a184f24637abdab8026a8da7f75c68857e3993bc42b769c0d19f924cb2bb444",
+    ".events.jsonl": "bda02dfe732318c6e6ab6cb8394303e5b91577a6c73b7e9b6695eaefddf05216"
+  },
+  "producer_sha256": "4eb011ba7311f9eaf684e533066025bbfc764256e7c117210bf26126b5a7f097",
+  "domain_sha256": "28e4de3a2b47e3e63918a2ab077ffeaa878e6e2e5c9d2ea8747d8dee04f5a6e6",
+  "frozen_coefficients_only": true,
+  "same_history_factorization_retained": true,
+  "bias_cost_convention": "dt times squared bias error at sample entrances only",
+  "no_shipping_bias_reset_or_filter_change": true,
+  "BIAS2_uniform_sector_used": false,
+  "nonlinear_projection_invariance_falsified": false,
+  "projection_ball_statement": "exact-real projection; float rounding is a separate enclosure",
+  "P4_MOTION_PASS": false,
+  "P4_PASS": false,
+  "P5_MAY_START": false,
+  "modes": {
+    "H18": {
+      "spectral_radius": 0.9976639606709256,
+      "stein_q": 0.9988319803354628,
+      "complete_word_ratio": 0.995550332925724,
+      "distance_to_one": 0.004449667074275965,
+      "relative_stein_residual": 1.0303210263000326e-16,
+      "metric_condition": 3329305769.6792235,
+      "sample_count": 600,
+      "completed_prefix_count": 2593,
+      "full_word_motion_principal_spectral_radius": 0.9976639606709258,
+      "full_word_principal_vs_sample_cocycle_norm": 2.6643519079292963e-16,
+      "actual_bias_sequence_lift_defect": 9.992007221626409e-16,
+      "worst_prefix_ratio": 11.217808221270065,
+      "worst_prefix": {
+        "sample": 108,
+        "index": 6708,
+        "stage": "prediction",
+        "kind": "none"
+      },
+      "endpoint_direction": [0.0009202851274429755, 0.0001337909840944173, 0.0005734648205404318, -0.00019014761904778346, 9.011254960006506e-06, -0.0003926081708233306, 6.219725193861614e-05, 0.000519504377050076, 9.28756074635304e-06, -0.0023681197536349597, 0.010803865171073014, 1.2205349429150534e-05, 0.5637032392596022, -4.328228106182315, -0.002421235445932861, -5.244535999877842e-05, 0.00011182312013176965, 1.1036069706421271e-05],
+      "prefix_direction": [-0.16345453089040024, 0.015391930960246247, -0.15203183563323747, -0.0018614347861055339, -8.208526406446788e-05, 0.0007834365104686302, -0.13668095415898976, 1.1266079381274252, 0.002430790187032612, 1.3440180415767264, -10.913590746347763, -0.04706109386716175, 1.5906811656016597, -19.74028413283303, -0.02398886301379033, 0.020121977984190395, 0.13494507134118713, -0.010156582847525063],
+      "endpoint_high_precision": {
+        "ratio": "0.99555033292572036595433437551362103821094376410775178298694729086091853714773645",
+        "direction_prefix_max": "1.2568351930068028661205185204994581698954441563060684235779766602570008097338308",
+        "signed_operation_costs": {
+          "prediction_enter:none": "0.0",
+          "prediction:none": "-0.028277671078162473140000380024822965697618001049990492224988453332082390002021393",
+          "aw_floor:none": "0.0",
+          "projection:accelerometer": "0.0097111945735331801669208183147179779296406069035006003014361388434425422705759064",
+          "projection:magnetometer": "-0.0013691507840243629092358274394500495147127237876567484630649048064946924213810479",
+          "projection:S_zero": "0.015485960214374021836649764663176075493633882041898423373564510156053077300563004"
+        }
+      },
+      "prefix_high_precision": {
+        "ratio": "11.217808221270086440848066188002218704157312035584061250429486208152391017076848",
+        "direction_prefix_max": "11.217808221270086440848066188002218704157312035584061250429486208152391017076848",
+        "signed_operation_costs": {
+          "prediction_enter:none": "0",
+          "prediction:none": "1.1249979723181905415942125496626477263075772006666572108771183545741651887726278",
+          "aw_floor:none": "0",
+          "projection:accelerometer": "0.37678763663784347385855575713934082664958411524882462569109202015788107550148137",
+          "projection:magnetometer": "-0.059011803369801397249996377470502838460361804446366441657624663409508599272895946",
+          "projection:S_zero": "8.7750344156838538226452942586707329896605125241149458555189004968298533520756348"
+        }
+      },
+      "endpoint_supply": {
+        "rho": 0.9977751664628624,
+        "gamma_bias": 4847.730174382815,
+        "gamma_template": 0.23724501905272985,
+        "normalized_supply_ratio": 0.7564181878030412,
+        "template_amplitude_is_not_a_BRMM_uniform_budget": true
+      },
+      "point_complete_word_feasible": true,
+      "P4_MOTION_PASS": false,
+      "P4_PASS": false,
+      "P5_MAY_START": false,
+      "coordinate_prefix_supplies": {
+        "attitude": {
+          "max_bias_energy_gain": 1.0195147760556806,
+          "bias_gain_prefix": 1561,
+          "max_template_excursion": 0.00333326622866327,
+          "bounded_bias_plus_template_outer_ratio": 1.3211970064762661,
+          "zero_true_bias_point_budget_only": true
+        },
+        "gyro_bias": {
+          "max_bias_energy_gain": 0.003029028446901765,
+          "bias_gain_prefix": 2557,
+          "max_template_excursion": 5.251766296443883e-05,
+          "bounded_bias_plus_template_outer_ratio": 0.21503193144308527,
+          "zero_true_bias_point_budget_only": true
+        },
+        "velocity": {
+          "max_bias_energy_gain": 7.748379813390401,
+          "bias_gain_prefix": 2019,
+          "max_template_excursion": 0.23494959850847766,
+          "bounded_bias_plus_template_outer_ratio": 1.1133523031153056,
+          "zero_true_bias_point_budget_only": true
+        },
+        "position": {
+          "max_bias_energy_gain": 5.5155618794612264,
+          "bias_gain_prefix": 2282,
+          "max_template_excursion": 0.4513722237075684,
+          "bounded_bias_plus_template_outer_ratio": 0.20984415074551635,
+          "zero_true_bias_point_budget_only": true
+        },
+        "integral_displacement": {
+          "max_bias_energy_gain": 1.7215150996261597,
+          "bias_gain_prefix": 2581,
+          "max_template_excursion": 0.4483465813147983,
+          "bounded_bias_plus_template_outer_ratio": 0.005344045596192225,
+          "zero_true_bias_point_budget_only": true
+        },
+        "latent_acceleration": {
+          "max_bias_energy_gain": 14.911370224074384,
+          "bias_gain_prefix": 1360,
+          "max_template_excursion": 0.022512891913039235,
+          "bounded_bias_plus_template_outer_ratio": 3.5159160162683785,
+          "zero_true_bias_point_budget_only": true
+        }
+      },
+      "counts": {
+        "prediction_enter": 600,
+        "prediction": 600,
+        "aw_floor": 600,
+        "accelerometer": 600,
+        "projection": 793,
+        "magnetometer": 75,
+        "S_zero": 118
+      },
+      "factorization_normalized_defects": {
+        "finite_factorization": 7.548560983834027e-07,
+        "composed_word_factorization": 1.020599725163322e-06,
+        "bias2_corrected_residual": 5.842560283464134e-16
+      }
+    },
+    "A21": {
+      "spectral_radius": 0.9606753134002746,
+      "stein_q": 0.9803376567001373,
+      "complete_word_ratio": 0.9539932634176703,
+      "distance_to_one": 0.04600673658232968,
+      "relative_stein_residual": 1.3805535020666816e-16,
+      "metric_condition": 5109861849.927311,
+      "sample_count": 600,
+      "completed_prefix_count": 2569,
+      "full_word_motion_principal_spectral_radius": 0.9608132139861153,
+      "full_word_principal_vs_sample_cocycle_norm": 0.5162275386379169,
+      "actual_bias_sequence_lift_defect": 2.498001805406602e-16,
+      "worst_prefix_ratio": 1.6354455638027041,
+      "worst_prefix": {
+        "sample": 290,
+        "index": 228890,
+        "stage": "prediction",
+        "kind": "none"
+      },
+      "endpoint_direction": [0.026358953734392374, -0.00018282917261115814, -0.012795782194152092, -3.740848467622365e-05, 5.769816173927024e-06, 3.7999846172321996e-05, -0.0036780102191617137, 0.0400423340427263, 6.439792910400768e-05, 0.006594758844483905, 0.14281666234406587, 0.0006927300344111383, 1.159592658717808, -19.456008345627748, -0.07087977666095462, -3.923744233041267e-06, 3.1342568686849936e-05, 3.9655426726100655e-06],
+      "prefix_direction": [0.03610210929854625, -0.012204243441367928, 0.047367678694983435, 0.0008289345052031366, -0.0003398625332156009, 0.00046188098947578203, 0.008032047049323955, -0.050220038332133725, -0.006158683886877386, -1.8412260122104287, -5.118957659252458, -0.06101888470934469, 5.824019541505527, 16.708696195710605, -0.2830888419174671, -2.1114908987560045e-05, -0.00021902992193061083, 3.2281360412052956e-05],
+      "endpoint_high_precision": {
+        "ratio": "0.95399326341767362458324752948920924239467297606461122919926583523045106977809184",
+        "direction_prefix_max": "1.1066479284716046052361721362857686762276197917140777610645942962419548609549018",
+        "signed_operation_costs": {
+          "prediction_enter:none": "0.0",
+          "prediction:none": "-0.13347465791811819890898220725756461543685834034016252999924365336376407585178561",
+          "aw_floor:none": "0.0",
+          "projection:accelerometer": "0.015542501283943727236363671858767413724898605745398043161239032879011051216397895",
+          "projection:magnetometer": "-0.040023543029169863997080674412112838718102890951980981848987571977703956593347682",
+          "projection:S_zero": "0.11194896308101796025294673930011928282473560161135669788625802769290805100682718"
+        }
+      },
+      "prefix_high_precision": {
+        "ratio": "1.6354455638027124074227562973698054008690098753215808252171958744976341830133220",
+        "direction_prefix_max": "1.6354455638027124074227562973698054008690098753215808252171958744976341830133220",
+        "signed_operation_costs": {
+          "prediction_enter:none": "0",
+          "prediction:none": "0.36046781420127913645976518020151281503396639893384583472071609788179691319191465",
+          "aw_floor:none": "0",
+          "projection:accelerometer": "0.032141995704001792285259416034826534311217201218834130650861869251694246619967630",
+          "projection:magnetometer": "0.019312091692428268295341419984096476920637475138581570584001359759616056442095548",
+          "projection:S_zero": "0.22352366220500321038239028114936957460318880003031928926161654760452696675934409"
+        }
+      },
+      "endpoint_supply": {
+        "rho": 0.976996631708835,
+        "gamma_bias": 117.30361670045627,
+        "gamma_template": 0.025801527123384526,
+        "normalized_supply_ratio": 0.7810658582395615,
+        "template_amplitude_is_not_a_BRMM_uniform_budget": true
+      },
+      "point_complete_word_feasible": true,
+      "P4_MOTION_PASS": false,
+      "P4_PASS": false,
+      "P5_MAY_START": false,
+      "coordinate_prefix_supplies": {
+        "attitude": {
+          "max_bias_energy_gain": 0.0029534690828493687,
+          "bias_gain_prefix": 2566,
+          "max_template_excursion": 0.0012386342480902503,
+          "bounded_bias_plus_template_outer_ratio": 0.005864954076612404,
+          "zero_true_bias_point_budget_only": true
+        },
+        "gyro_bias": {
+          "max_bias_energy_gain": 8.844879729482004e-05,
+          "bias_gain_prefix": 2564,
+          "max_template_excursion": 6.335439398297254e-06,
+          "bounded_bias_plus_template_outer_ratio": 0.0065797452137284175,
+          "zero_true_bias_point_budget_only": true
+        },
+        "velocity": {
+          "max_bias_energy_gain": 1.7087698470816153,
+          "bias_gain_prefix": 2566,
+          "max_template_excursion": 0.023387931901496233,
+          "bounded_bias_plus_template_outer_ratio": 0.2414371310723004,
+          "zero_true_bias_point_budget_only": true
+        },
+        "position": {
+          "max_bias_energy_gain": 2.695060788846504,
+          "bias_gain_prefix": 2566,
+          "max_template_excursion": 0.06823207453928624,
+          "bounded_bias_plus_template_outer_ratio": 0.09657601960105908,
+          "zero_true_bias_point_budget_only": true
+        },
+        "integral_displacement": {
+          "max_bias_energy_gain": 2.192746414209014,
+          "bias_gain_prefix": 2566,
+          "max_template_excursion": 0.20994201416703068,
+          "bounded_bias_plus_template_outer_ratio": 0.005744494616369481,
+          "zero_true_bias_point_budget_only": true
+        },
+        "latent_acceleration": {
+          "max_bias_energy_gain": 14.112700990116352,
+          "bias_gain_prefix": 1040,
+          "max_template_excursion": 0.012277235993041641,
+          "bounded_bias_plus_template_outer_ratio": 3.3272259763037297,
+          "zero_true_bias_point_budget_only": true
+        }
+      },
+      "counts": {
+        "prediction_enter": 600,
+        "prediction": 600,
+        "aw_floor": 600,
+        "accelerometer": 600,
+        "projection": 769,
+        "magnetometer": 75,
+        "S_zero": 94
+      },
+      "factorization_normalized_defects": {
+        "finite_factorization": 1.2398178614958184e-06,
+        "composed_word_factorization": 5.022135983620037e-06,
+        "bias2_corrected_residual": 6.178350949613874e-16
+      }
+    }
+  }
+}
