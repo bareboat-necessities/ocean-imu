@@ -71,6 +71,12 @@ def chart_radius(degrees=30.):
 
 
 def declared_radii():
+    """The declared operating-domain radius of each coordinate group.
+
+    Every value comes from `ou3_proof_operating_domain.json` except attitude,
+    which uses the same 30-degree Cayley chart radius route 1 uses. None is
+    fitted to a replay.
+    """
     bounds = json.loads(DOMAIN.read_text())["startup"]["physical_handoff_coordinate_bounds"]
     radii = {}
     for name, _, key in GROUPS:
@@ -294,6 +300,12 @@ def ellipsoid_retention(transitions, responses, radii, covariance):
 
 
 def audit_mode(root, rows, points, mode):
+    """Run every initial set of this experiment against one attached word.
+
+    Reports the four product-set subsets and the correlated covariance
+    ellipsoid, together with the limiting group and the largest box of the
+    declared shape the word retains. Promotion flags stay false throughout.
+    """
     steps, _, _, defects, counts = G.build_word(root, rows, points, mode)
     if defects.failures:
         raise ValueError("finite factorization failed: "+repr(defects.failures[:1]))
@@ -346,6 +358,12 @@ def audit_mode(root, rows, points, mode):
 
 
 def main():
+    """Verify the capture hashes, audit both modes and write the evidence.
+
+    The trace must recover its baseline bit for bit and every hash must match
+    the recorded attachment, so a detached or regenerated capture fails here
+    rather than producing a report.
+    """
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--prefix", type=Path, required=True)
     parser.add_argument("--attachment", type=Path, required=True)

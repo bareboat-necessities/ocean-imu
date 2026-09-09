@@ -11,6 +11,7 @@ import ou3_p4_domain_retention as D  # noqa: E402
 
 class DomainRetentionTests(unittest.TestCase):
     def test_declared_radii_come_from_the_operating_domain_file(self):
+        """Radii are read from the declared domain, never hard-coded here."""
         radii = D.declared_radii()
         self.assertEqual(set(radii), {name for name, _, _ in D.GROUPS})
         self.assertAlmostEqual(radii["attitude"], 2*np.tan(np.deg2rad(15.)), places=12)
@@ -21,15 +22,18 @@ class DomainRetentionTests(unittest.TestCase):
             self.assertGreater(value, 0.)
 
     def test_groups_tile_the_twenty_one_error_coordinates_in_order(self):
+        """The seven groups partition the 21 error coordinates without a gap."""
         self.assertEqual([offset for _, offset, _ in D.GROUPS], list(range(0, 21, 3)))
 
     def example(self):
+        """A small random word shared by the product-set tests."""
         rng = np.random.default_rng(2026)
         blocks = {name: rng.normal(size=(3, 3))/3 for name, _, _ in D.GROUPS}
         radii = D.declared_radii()
         return blocks, radii, rng.normal(size=3)/10
 
     def test_attained_bound_never_exceeds_its_certified_enclosure(self):
+        """The attained functional is a lower bound on the same supremum."""
         blocks, radii, forcing = self.example()
         lower = D.attained_lower_bound(blocks, radii, forcing)
         upper = D.certified_upper_bound(blocks, radii, forcing)
@@ -37,6 +41,7 @@ class DomainRetentionTests(unittest.TestCase):
         self.assertGreater(lower, 0.)
 
     def test_attained_bound_dominates_every_sampled_admissible_state(self):
+        """No sampled admissible initial state reaches past the attained bound."""
         blocks, radii, forcing = self.example()
         lower = D.attained_lower_bound(blocks, radii, forcing)
         rng = np.random.default_rng(7)
@@ -48,6 +53,7 @@ class DomainRetentionTests(unittest.TestCase):
             self.assertLessEqual(np.linalg.norm(reached), lower*(1+1e-9))
 
     def test_source_contributions_reproduce_the_certified_bound(self):
+        """The per-source shares sum back to the subadditive bound they explain."""
         blocks, radii, forcing = self.example()
         shares = D.source_contributions(blocks, radii, forcing)
         self.assertEqual(shares["forcing_template"], float(np.linalg.norm(forcing)))
@@ -55,6 +61,7 @@ class DomainRetentionTests(unittest.TestCase):
                                D.certified_upper_bound(blocks, radii, forcing), places=12)
 
     def test_retention_is_positively_homogeneous_in_the_declared_radii(self):
+        """Scaling every radius and the template together leaves the ratios fixed."""
         rng = np.random.default_rng(11)
         transitions = [rng.normal(size=(21, 21))/4 for _ in range(3)]
         responses = [rng.normal(size=21)/8 for _ in range(3)]
@@ -95,6 +102,7 @@ class DomainRetentionTests(unittest.TestCase):
         self.assertAlmostEqual(result["attained_lower_bound"], 5., places=9)
 
     def test_a_boundary_ratio_is_not_reported_as_a_definite_violation(self):
+        """A group exactly at its radius sits inside the shared margin."""
         radii = D.declared_radii()
         blocks = {"attitude": np.eye(3)}
         active = {"attitude": radii["attitude"]}
@@ -104,6 +112,7 @@ class DomainRetentionTests(unittest.TestCase):
         self.assertGreater(D.MARGIN, 0.)
 
     def test_restricting_the_initial_set_can_only_lower_the_bound(self):
+        """Dropping initial balls can never raise the reachable excursion."""
         rng = np.random.default_rng(13)
         transitions = [rng.normal(size=(21, 21))/4 for _ in range(3)]
         responses = [rng.normal(size=21)/8 for _ in range(3)]
@@ -116,6 +125,7 @@ class DomainRetentionTests(unittest.TestCase):
 
 
     def ellipsoid_example(self):
+        """A small random word and covariance shared by the ellipsoid tests."""
         rng = np.random.default_rng(31)
         factor = rng.normal(size=(21, 21))/8
         covariance = factor@factor.T + np.eye(21)*1e-3
@@ -141,6 +151,7 @@ class DomainRetentionTests(unittest.TestCase):
                 self.assertLessEqual(np.linalg.norm(state[rows]), reach*(1+1e-9))
 
     def test_critical_level_scales_inversely_with_the_initial_covariance(self):
+        """Quadrupling the covariance halves every critical level."""
         transitions, responses, covariance = self.ellipsoid_example()
         radii = D.declared_radii()
         base = D.ellipsoid_retention(transitions, responses, radii, covariance)
@@ -150,6 +161,7 @@ class DomainRetentionTests(unittest.TestCase):
                                    item["critical_initial_sigma_level"]/2., places=9)
 
     def test_a_group_the_forcing_alone_evicts_admits_no_level(self):
+        """Forcing past a declared radius leaves no admissible level at all."""
         transitions, responses, covariance = self.ellipsoid_example()
         radii = D.declared_radii()
         evicted = [np.zeros(21), np.zeros(21)]
@@ -160,6 +172,7 @@ class DomainRetentionTests(unittest.TestCase):
         self.assertFalse(out["P4_PASS"])
 
     def test_a_zero_gain_prefix_never_limits_the_level(self):
+        """A prefix with no gain places no bound on the level."""
         radii = D.declared_radii()
         covariance = np.eye(21)
         transitions = [np.zeros((21, 21)), np.eye(21)]
