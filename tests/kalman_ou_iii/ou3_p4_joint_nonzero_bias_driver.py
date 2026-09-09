@@ -1,8 +1,7 @@
 """Nonzero BIAS1 driver on the same-history 24D P4 point graph.
 
-This closes a gap in the preceding joint-storage diagnostic: the physical bias
-is not reduced to a free per-sample error input and a nonzero driver is not
-rejected.  The source capture declares
+The physical bias is not reduced to a free per-sample error input.  The source
+capture declares
 
     beta(t) = beta0 exp(-t/tau_true) + a sin(omega t + phase)
 
@@ -17,25 +16,29 @@ true-bias coordinate:
 
     e_b,i = phi_hat e_b,i-1 + (phi_true-phi_hat) beta_i-1 + w_i.
 
-Estimator corrections and radial projection remain in the full shipping
-21-state factor.  For a projection multiplier s on the attached history,
+Estimator corrections and radial projection remain in the same graph.  For a
+projection multiplier s on the attached history,
 
-    e_b+ = s e_b_pre + (1-s) beta_true
+    e_b+ = s e_b_pre + (1-s) beta_true.
 
-is added to the same 24D factor.  The physical source forcing, bias recurrence,
-projection, covariance feedback and all actual R_S therefore remain one
-continuation.  No independent source port or fresh bias slot is introduced.
+A local finite 21-error factorization first verifies the driven shipping trace.
+Its physical-bias affine terms are then lifted back into the beta_true state,
+so they are not double counted as exogenous forcing.  Physical source forcing,
+bias recurrence, projection, covariance feedback and all actual R_S therefore
+remain one continuation.  No independent source port or fresh bias slot is
+introduced.
 
-The compatible cyclic motion metric is reused only as a source-indexed
-storage coordinate.  Retention is evaluated directly at every completed event
-from one correlated root covariance ellipsoid about the actual driven center.
-This is still a frozen-coefficient point test: the covariance ellipsoid is not
-a qualified hard entry set and the source/projection coefficient family is not
-uniformly enclosed.  P4/P5 flags therefore stay false.
+The compatible cyclic motion metric is reused only as a source-indexed storage
+coordinate.  Retention is evaluated directly at every completed event from one
+correlated root covariance ellipsoid about the actual driven center.  This is
+still a frozen-coefficient point test: that ellipsoid is not a qualified hard
+entry set and the source/projection coefficient family is not uniformly
+enclosed.  P4/P5 flags therefore stay false.
 """
 from __future__ import annotations
 
 import argparse
+from collections import Counter
 import hashlib
 import json
 import math
@@ -48,6 +51,7 @@ import ou3_p4_motion_gain as G
 import ou3_p4_source_endpoint as SOURCE
 
 I3 = np.eye(3)
+I21 = np.eye(21)
 
 
 def declared_bias(root, t):
@@ -106,9 +110,141 @@ def trace_recurrence(root, rows, mode, dt):
             "nonzero_driver_executed": max_driver > 0.}
 
 
+def _append_affine_port(b, u, covariance, affine):
+    """Append one deterministic scalar-one port for finite point parity only."""
+    affine = np.asarray(affine, dtype=float)
+    if affine.shape != (21,):
+        raise ValueError("21-vector affine source required")
+    b2 = np.column_stack((np.asarray(b, dtype=float), affine))
+    u2 = np.r_[np.asarray(u, dtype=float), 1.]
+    n = covariance.shape[0]
+    c2 = np.zeros((n+1, n+1))
+    c2[:n, :n] = covariance
+    return b2, u2, c2
+
+
+def measurement_factor_nonzero(row, error):
+    """Exact finite correction/projection factor at a nonzero true-bias point.
+
+    The returned deterministic affine column is used only to verify the 21-D
+    trace.  `projection_bias_affine` is removed again when lifting to 24-D and
+    replaced by the beta_true state coupling (1-s)I.
+    """
+    residual, source, h = G.C.residual_graph(row, error)
+    if row["kind"] in ("accelerometer", "magnetometer"):
+        h[:, :3] = np.linalg.solve(I3-.5*G.C.skew(error[:3]), h[:, :3])
+        if row["kind"] == "accelerometer":
+            h[:, 15:18] = G.C.rotation(error[:3])@G.C.mat(row, "R_hat")
+    k = G.C.mat(row, "K", 21, 3)
+    correction = k@residual
+    w, q = G.quat_coefficients(correction[:3]@correction[:3])
+    scale_att = 2*q/w
+    denominator = 1+scale_att*(error[:3]@correction[:3])/4
+    if denominator <= 0:
+        raise ValueError("finite correction left the retained Cayley chart")
+    a, b = I21-k@h, -k.copy()
+    reset_gain = scale_att*(I3+.5*G.C.skew(error[:3]))@k[:3]
+    a[:3] = (I21[:3]-reset_gain@h)/denominator
+    b[:3] = -reset_gain/denominator
+
+    beta = np.asarray(row["true_bias"], dtype=float)
+    error_pre = error[18:21]-correction[18:21]
+    estimate_pre = beta-error_pre
+    norm = float(np.linalg.norm(estimate_pre))
+    radius = float(row["projection_radius"])
+    projection = min(1., radius/norm) if norm else 1.
+    a[18:21] *= projection
+    b[18:21] *= projection
+    affine = np.zeros(21)
+    affine[18:21] = (1-projection)*beta
+    b, source, covariance = _append_affine_port(
+        b, source, G.C.mat(row, "R"), affine)
+    return a, b, source, covariance, float(denominator), affine, projection
+
+
+def prediction_factor_nonzero(before, row, dt):
+    """Shipping prediction plus the exact physical-bias affine point term."""
+    a, b, u, covariance, denominator = G.prediction_factor(before, row, dt)
+    phi_hat = math.exp(-dt/float(row["tau_b"])) if row["active"] else 1.
+    beta_before = np.asarray(before["true_bias"], dtype=float)
+    beta_after = np.asarray(row["true_bias"], dtype=float)
+    affine = np.zeros(21)
+    affine[18:21] = beta_after-phi_hat*beta_before
+    b, u, covariance = _append_affine_port(b, u, covariance, affine)
+    return a, b, u, covariance, denominator, affine
+
+
+def build_word_nonzero(root, rows, points, mode):
+    """Build/verify the driven 21-D finite factors without a zero-bias premise."""
+    events = [r for r in rows if r["word"] == mode]
+    original = [r for r in points if r["word"] == mode]
+    if not original or not events or events[0]["stage"] != "prediction_enter":
+        raise ValueError("missing connected word root")
+    e0, _ = SOURCE.error_and_covariance(original[0], 21)
+    running = e0.copy()
+    steps, counts, defects = [], Counter(), G.C.ParityChecks()
+    previous = original[0]
+    entrance = pending = None
+    for row in events:
+        stage = row["stage"]
+        projection_affine = None
+        prediction_affine = None
+        projection_scale = None
+        if stage == "prediction_enter":
+            entrance = row
+            a, b, u = I21.copy(), np.zeros((21, 0)), np.zeros(0)
+            covariance, denominator = np.zeros((0, 0)), 1.
+        elif stage == "prediction":
+            a, b, u, covariance, denominator, prediction_affine = \
+                prediction_factor_nonzero(entrance, row, float(root["dt"]))
+        elif stage == "aw_floor":
+            a, b, u = I21.copy(), np.zeros((21, 0)), np.zeros(0)
+            covariance, denominator = np.zeros((0, 0)), 1.
+        elif stage == "measurement":
+            pending = row
+            continue
+        elif stage == "projection":
+            if pending is None:
+                raise ValueError("projection without pending measurement")
+            error, _ = SOURCE.error_and_covariance(pending, 21)
+            (a, b, u, covariance, denominator,
+             projection_affine, projection_scale) = measurement_factor_nonzero(pending, error)
+            if row["kind"] == "S_zero" and pending["R"] != pending["R_S"]:
+                raise ValueError("derived gain lost actual R_S")
+            counts[row["kind"]] += 1
+        else:
+            continue
+
+        actual, _ = SOURCE.error_and_covariance(row, 21)
+        before, _ = SOURCE.error_and_covariance(previous, 21)
+        defects.row = row
+        defects("finite_factorization", a@before+b@u, actual,
+                1+np.linalg.norm(before, np.inf))
+        running = a@running+b@u
+        defects("composed_word_factorization", running, actual,
+                1+np.linalg.norm(actual, np.inf))
+        steps.append({"A": a, "B": b, "u": u, "Uinv": covariance,
+                      "bias2": None, "metric": G.metric(row),
+                      "bias_cost": stage == "prediction_enter",
+                      "index": row["index"], "stage": stage, "kind": row["kind"],
+                      "denominator": float(denominator),
+                      "prediction_bias_affine": prediction_affine,
+                      "projection_bias_affine": projection_affine,
+                      "projection_scale": projection_scale})
+        counts[stage] += 1
+        previous = row
+        if stage == "projection":
+            pending = None
+    if counts["prediction"] != 600 or counts["accelerometer"] != 600:
+        raise ValueError("incomplete finite-factor word")
+    return steps, G.metric(original[0]), e0, defects, counts
+
+
 def augmented_steps(root, rows, steps, mode, dt):
-    """Lift shipping factors and the declared affine physical-bias recurrence."""
-    scales = J.projection_scales(rows, mode)
+    """Lift driven shipping factors into the joint (error,true-bias) graph."""
+    # Synthetic unit tests may supply steps without point-factor metadata; in
+    # that case recover the attached scale as before.
+    fallback_scales = None
     row_by_prediction = {(r["index"], r["stage"]): r for r in rows
                          if r["word"] == mode and r["stage"] == "prediction"}
     lifted = []
@@ -122,6 +258,9 @@ def augmented_steps(root, rows, steps, mode, dt):
         forcing = np.zeros(24)
         forcing[:21] = forcing21
         if step["stage"] == "prediction":
+            point_affine = step.get("prediction_bias_affine")
+            if point_affine is not None:
+                forcing[:21] -= np.asarray(point_affine, dtype=float)
             phi_hat = float(a21[18, 18])
             if not np.allclose(a21[18:21, 18:21], phi_hat*I3, rtol=0, atol=2e-15):
                 raise ValueError("expected isotropic shipping bias prediction")
@@ -133,7 +272,15 @@ def augmented_steps(root, rows, steps, mode, dt):
             forcing[21:24] += w
             driver_norms.append(float(np.linalg.norm(w)))
         elif step["stage"] == "projection":
-            scale = float(scales[(step["index"], step["kind"])])
+            point_affine = step.get("projection_bias_affine")
+            if point_affine is not None:
+                forcing[:21] -= np.asarray(point_affine, dtype=float)
+            scale = step.get("projection_scale")
+            if scale is None:
+                if fallback_scales is None:
+                    fallback_scales = J.projection_scales(rows, mode)
+                scale = fallback_scales[(step["index"], step["kind"])]
+            scale = float(scale)
             if not 0 < scale <= 1:
                 raise ValueError("invalid radial projection scale")
             a[18:21, 21:24] += (1-scale)*I3
@@ -179,7 +326,7 @@ def audit_mode(root, rows, points, mode, radii):
     if not recurrence["nonzero_driver_executed"]:
         raise ValueError("nonzero driver diagnostic received zero driver")
 
-    steps21, _, initial21, defects, counts = G.build_word(root, rows, points, mode)
+    steps21, _, initial21, defects, counts = build_word_nonzero(root, rows, points, mode)
     if defects.failures:
         raise ValueError("finite coefficient attachment failed: "+repr(defects.failures[:1]))
     steps24, augmentation = augmented_steps(root, rows, steps21, mode, dt)
@@ -257,6 +404,7 @@ def audit_mode(root, rows, points, mode, radii):
             "physical_bias_recurrence": recurrence,
             "joint_augmentation": augmentation,
             "joint_physical_bias_lift_defect": beta_defect,
+            "finite_factorization_normalized_defects": dict(defects.defects),
             "root_covariance_condition": float(np.linalg.cond(covariance)),
             "one_correlated_initial_covariance_root": True,
             "physical_bias_driver_is_same_history_not_independent_port": True,
