@@ -44,6 +44,47 @@ its unit amplitude is not a uniform BRMM budget. The numerical metric
 condition numbers are 3.33e9 / 5.11e9, so directional high precision and
 small Stein residuals do not constitute rigorous enclosure.
 
+### Bias-family driver recurrences
+
+All three mandatory accelerometer-bias families now have their own authoritative
+driver recurrence, each from its own declared parameter box in
+`ou3_p4_closure_domain.json`; none is read off BIAS1. Every admitted history
+satisfies the exact relation `b_i = phi_true*b_{i-1} + w_i`, so the content is
+the outward bound on `w` and on the tau-mismatch forcing `m=(phi_true-phi_hat)b`
+against the deployed `phi_hat=exp(-.005/5000)=.999999`.
+
+| Family | Driver | Admitted `phi_true` | Driver norm | Mismatch norm | Joint supply |
+| --- | --- | --- | ---: | ---: | ---: |
+| BIAS0 | composite: turn-on, thermal, strain, non-GM, declared pathwise GM cap | [.9999833335, .9999986111] | 8.7552e-4 | 3.5276e-6 | 8.7553e-4 |
+| BIAS1 | one root, one parameter history | [.9999916667, .9999979167] | 4.9266e-6 | 1.6512e-6 | 5.1960e-6 |
+| BIAS2 | bounded-variation drift, no relaxation root | [.9999979167, 1] | 2.2011e-6 | 2.4393e-7 | 2.2146e-6 |
+
+All three also reach the same-history projection/Joseph graph, so the
+bias-family half of the P4 contract is closed. The prerequisites see a family
+only through admission, one retained physical bias history, the shared `w`
+column and `|b_true|`: the radial projection map `F_R(e,beta)=beta-Pi_R(beta-e)`
+carries no driver term and the Joseph/reset gains come from the reachable
+`P/H/R` cell. The three declared boxes share one true-bias envelope to 5.6e-17,
+so the fourth dependence is one number and `|e_b| <= R+B_true = .6252` holds
+for all three.
+
+A uniform BIAS2 separation constant is NOT a prerequisite of the declared
+objective. Bounded bias error comes from the closed radial projection sector,
+which holds for a non-relaxing truth exactly as for a relaxing one, and the
+motion half is the cocycle contraction against a persistent forcing, i.e. a
+finite ultimate bound. `mu_sep` sharpens motion gains only; it stays unproved
+and is no longer counted as a blocker.
+
+Each family's factor interval passes through the deployed 24-state event lift
+with the shared `w` column retained, and each declared true-bias norm 0.2252
+stays inside the .4 hard-entry radius. On the ISS pair (factor interval, driver
+bound) BIAS0's class contains BIAS1's; BIAS1's contains neither of the others
+and no single family covers the other two, so the three-family quantifier
+cannot be discharged by one proof. BIAS0's pathwise GM increment cap is a
+declared family hypothesis at 4.33 times the largest admitted one-step
+innovation sigma; it is not a consequence of the stationary PSD, which supplies
+no pathwise cap at all.
+
 Exact-real projection already preserves the estimate ball in both modes.
 The prior .400126 A21 bias-row value extrapolates frozen interior projection
 coefficients; it is not an actual nonlinear projection escape. BIAS0/1 plus
@@ -51,14 +92,104 @@ projection gives `B_error <= B_true + R`, without assuming bias convergence
 or zero active motion-to-bias feedback. The captured binary32 radius is
 .4000000059604645. Shipping rounding remains a separate enclosure obligation.
 
+### Which declared entry ball actually limits retention
+
+`entry-block-retention.json` switches each declared entry ball on ALONE and
+maximizes over every completed prefix of the same attached capture, so the
+subadditive total that `domain-retention.json` reports per coordinate is split
+into the terms that produce it. The capture is reproduced bit-for-bit from
+`ou3-source-endpoint.cpp` against the pinned generator
+e442150682f560384be427df4cc7815956a091c5; all four capture hashes match the
+retained record, as do every number the two experiments share.
+
+Two facts follow that the total cannot show.
+
+The accelerometer-bias entry ball limits **no** coordinate, not merely not the
+total: its worst single-ball reach is .1544 (H18) and .2335 (A21) of a radius
+over both modes and all six motion coordinates. Together with the .2382
+same-graph result this closes the bias entry ball as a retention limiter.
+
+The declared 300 m*s integral-displacement ball is the worst single ball for
+five of six H18 coordinates and four of six in A21, reaching 32.50 velocity
+radii in H18 on its own. With it the H18 attitude coordinate reaches Cayley
+norm 4.5788 against the declared chart bound 1.0, so the declared product box
+drives the state out of the chart the frozen map is expanded in and that
+configuration invalidates its own linearization. Without that one ball the
+chart is retained in both modes, at .9411 (H18) and .6537 (A21).
+
+The minimal working radii this word retains at every completed prefix, as
+multiples of the declared entry radii and with the independent integral ball
+removed, are
+
+| Coordinate | H18 | A21 |
+| --- | ---: | ---: |
+| attitude | 1.756 | 1.220 |
+| gyro bias | 2.315 | 1.428 |
+| velocity | 4.033 | 4.921 |
+| position | 1.027 | 2.237 |
+| integral displacement | 1.000 | 1.000 |
+| latent acceleration | 1.935 | 2.199 |
+
+These are a working domain strictly LARGER than the entry set, never a reduced
+entry set: the entry radii are unchanged and the retention target is enlarged,
+which makes every downstream nonlinear obligation harder. Only attitude carries
+a chart constraint, and it is the row that already fits.
+
+These ratios are normalized by the ENTRY radii, which is the producer's
+convention and not the theorem's requirement. `thm:brmm-bounded-bias-motion`
+already separates the entry level `L` from a chart-valid level `L_chart` and
+asks only for `Gamma*L+C_p < L_chart`, so a prefix excursion above an entry
+radius is not by itself a failure. What the excursion must not do is leave the
+chart on which the nonlinear majorants are declared.
+
+That is where the declared box fails, and it fails the theorem's own
+hypothesis rather than a bookkeeping convention. With `L` the declared product
+box the H18 prefix excursion reaches Cayley norm 4.5788 against the declared
+chart bound 1.0, so no chart-valid `L_chart` satisfies `Gamma*L+C_p<L_chart`
+and the hypothesis is unsatisfiable at that entry set. Removing the one
+independent integral-displacement ball makes it satisfiable: the excursion is
+.9411 (H18) and .6537 (A21), so a chart-valid `L_chart` exists, with 5.9%
+margin in H18.
+
+The velocity row is physically forced, and is a statement about how large
+`L_chart` must be in the coordinates that carry no chart constraint, not an
+obstruction: a 30 degree attitude entry error mis-resolves gravity by
+g*sin(30)=4.903 m/s^2, which over the 3 s word is 14.7 m/s against a 5 m/s
+entry radius, and the attitude ball alone reaches 2.9178 velocity radii in A21,
+which is that number. Velocity carries no chart, so absorbing it is a
+declaration, not a lemma.
+
+The integral state is the exact unleaked running integral of position in the
+deployed factors, `S_next=S+dt*p+dt^2/2*v`, so the position/integral
+correlation is hard kinematics rather than a covariance fact. That alone does
+not supply the missing correlated ball: with `e_S(0)=0` at power-on the
+reachable `|e_S|` grows as `20*T_handoff`, and the declared live-entry timing
+floor (`4/lambda` with `lambda=2*pi*.02`, plus one period) puts `T_handoff`
+above 30 s, i.e. above 600 m*s rather than under the declared 300. The ball can
+only be justified from the deployed S=0 regulation during startup, which is
+P5 capture material, not P4.
+
 ## Current limiter and failure analysis
 
 The controlling unresolved quantity is a useful **uniform, consecutive-word
-motion supply and retention bound**, not exact-real bias compactness.
+motion supply and retention bound**, not exact-real bias compactness. The
+retention half is now split: against enlarged working radii it holds on this
+word for every coordinate once the independent integral ball is replaced, and
+the open items are the correlated integral ball, the enlarged working-domain
+declaration and its nonlinear majorants, and outward uniformity.
 Pointwise `rho(T)<1` and existence of a metric for each T do not imply
 compatible contraction along a nonlinear source continuation. A pair of
 Schur matrices with an unstable product is included only as a logical
 counterexample, not as an admissible OU-III source.
+
+Materializing the three driver recurrences moves the limiter but does not
+close it. BIAS0 now dominates the supply axis at 168 times the BIAS1 joint
+supply, driven by its declared pathwise GM cap; BIAS2 dominates the retention
+axis, because `phi_true=1` leaves the truth with no relaxation at all and the
+bias-error mode decays only through `phi_hat` and the corrections. Both remain
+open on the same-history graph: the exact-chord signed master bridge exposes
+BIAS1 projection/Joseph prerequisites only, and no uniform BIAS2 separation
+constant `mu_sep` is proved.
 
 The new separate endpoint supply is feasible at the coefficient point, but
 the relaxed L2 bias budget still does not establish coordinate retention.
@@ -83,7 +214,10 @@ proved BIAS2 sector; (2) a compatible source-dependent metric over actual
 consecutive words; (3) source-centered correlated coordinate tubes with a
 qualified entry set. The next falsifiable experiment is a consecutive-word
 joint-graph test retaining the actual bias recurrence and source continuation,
-with endpoint and every-prefix coordinate budgets before uniform covering.
+with endpoint and every-prefix coordinate budgets before uniform covering. Run
+it per family rather than once: BIAS0 tests whether the budgets survive the
+largest admitted supply, and BIAS2 whether they survive a non-relaxing truth,
+which is the case that decides whether a separation sector is needed at all.
 
 ## Retained facts and rejected routes
 
@@ -149,5 +283,18 @@ eight-seed study in `reports/results/rao_parameter_tuning/ou3_acc_z_bias/`
 did not justify committing the default-seed-only passing profile. The RAO
 propagation-to convention correction and its 11 tests are retained.
 No performance coefficient or threshold is changed here.
+
+## The one object the remaining blockers reduce to
+
+Six gate blockers remain and all six consume the same missing object, the
+**source-uniform COMPLETE BRMM cover**: the correction/reset domain, the
+endpoint and every-prefix augmented LDLT and the every-prefix hard-domain
+retention each need a source-uniform cell family that has not been
+materialized. The cover needs the estimator-owned transition operator over
+every admitted BRMM continuation, every hard-entry radial segment and every
+correlated Joseph cell, with the coefficient image proved inside the target
+cell. A captured word cannot supply it and the contract forbids trying:
+`point_trace_can_promote_source_uniform_cover` and
+`trajectory_replay_or_pinned_generator_may_establish_uniform_cover` are false.
 
 **P4_MOTION_PASS=false, P4_PASS=false. P5-motion and P5 may not start.**

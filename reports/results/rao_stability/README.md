@@ -9,3 +9,14 @@ The retained historical source-connected finite endpoint probe uses one exact v1
 `domain-retention.md` records the declared-domain coordinate route on the same attached word. It retires the separated bias budget as the limiter: the closed .4 m/s^2 ball plus the same forcing template reaches .0703 (H18) and .0041 (A21) of the 30-degree chart radius and at most .1713 / .2382 of any declared motion bound, against the linear equivalents 2.532 / 1.506 of the scalarized storage route. The closed bias ball is the one exception and a separate open premise: H18 maps it into itself exactly, while A21 reaches .400126 m/s^2, a relative 3.146e-4 above the declared radius. The limiter moves to the declared handoff set itself, whose product of independent balls this word does not retain: velocity 35.358 / 9.357, dominated by the 300 m*s integral-displacement ball that the position state's own kinematics cannot reach independently. The correlated alternative behaves very differently: the covariance of the word's initial point is expanded by at most 7.2% in any declared coordinate, with critical levels 4.974 sigma (H18) and 27.452 sigma (A21), so the retention obligation is a covariance-consistency requirement rather than a dynamics one. The common forcing template alone reaches at most .0470 / .00472 of a declared bound and is not the obstruction. The report tabulates all thirteen executed routes with their verdicts.
 
 `docs/ou3-proof-research-state.md` records the controlling open inequalities, failed approaches and next falsifiable experiment. Complete capture files can be regenerated using `.github/workflows/ou3-p4-physical-finite-map-feasibility.yml`; the committed endpoint report retains their hashes. The runtime capture is reproducible through `.github/workflows/ou3-brmm.yml`.
+
+`entry-block-retention.json` splits the declared-box retention total of
+`domain-retention.json` into one term per declared entry ball, maximized over
+every completed prefix of the same capture. It records that the accelerometer-
+bias entry ball limits no coordinate (worst single reach .1544 H18, .2335 A21),
+that the 300 m*s integral-displacement ball is the worst single ball for five
+of six H18 coordinates, and that with it the H18 attitude coordinate reaches
+Cayley norm 4.5788 against the declared chart bound 1.0 while without it the
+chart is retained in both modes. The minimal working radii it reports are a
+working domain larger than the entry set, not a reduced entry set. Binary64
+point arithmetic on one word; it promotes nothing.

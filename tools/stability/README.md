@@ -50,9 +50,19 @@ The physical bias package is stated and proved conditionally in
 `ou3_mems_bias_contract.py`. Its open physical constants are not inferred from
 the filter settings, simulation extrema, or the desired P4 margin.
 
+BIAS0, BIAS1 and BIAS2 are three separate mandatory physical-driver families,
+declared in `ou3_p4_closure_domain.json` and bound by `ou3_p4_bias0_family.py`,
+`ou3_p4_bias1_family.py` and `ou3_p4_bias2_family.py`. Each supplies its own
+exact `b_i=phi_true*b_{i-1}+w_i` recurrence and outward driver bound, and
+`ou3_p4_bias_family_joint_iss_supply.py` lifts all three into the joint
+`[e_b;b_true]` supply with the shared `w` column retained. No family is read off
+another: `ou3_p4_all_bias_families_contract.py` rejects any subset attempt, and
+the final gate still reports BIAS0 and BIAS2 as unclosed because neither has the
+same-history projection/Joseph graph and BIAS2 has no proved `mu_sep`.
+
 | Step | Required use of the bias premises | Evidence needed |
 | --- | --- | --- |
-| BIAS0 / SEA0 | Qualify the assembled sensor, actual calibration, true residual root, temperature/strain mismatch and GM parameter range. Compose with one complete BRMM history; measurements gate deployment, not conditional mathematical work. | Stationary/thermal/restart/unit data, fit uncertainty and residual bounds; currently missing. |
+| BIAS0 / SEA0 | Carry the composite turn-on/thermal/strain/non-GM driver of `ou3_p4_bias0_family.py` through one complete BRMM history. Its pathwise GM increment cap is a declared family hypothesis, not a PSD consequence. Measurements gate deployment, not conditional mathematical work. | The conditional driver family and its joint supply are bound; assembled-sensor qualification still needs stationary/thermal/restart/unit data, fit uncertainty and residual bounds. |
 | P1 entry and H18 hold | Retain the true physical bias while the estimate is held. Bound the held error and actual uncompensated offset as source inputs. | Reachable entry and continuing physical history; an estimate clamp is insufficient. |
 | P2 / source cells | Carry one bias root, common parameters and driver history through the same window lineage. Split source coordinates and replay descendants. | BIAS1 dependence, same source ID and joint BRMM membership; neither fresh event boxes nor ID attachment alone proves it. |
 | P3 / detectability | Retain the full-state process matrices, finite tau, and actual R_S at delta=1e-18. | Establish the matrix implication's actual premises for BRMM Q/O/mixed windows and the projection boundary. Scalar recurrence is not vector PE; the P3 premise manifest distinguishes the covariance implication from physical admission. Held H18 does not certify active-mode motion gains. |
@@ -60,7 +70,7 @@ the filter settings, simulation extrema, or the desired P4 margin.
 | Bias compactness | Projection preserves the estimate ball; BIAS0/1 bounds the same-history true bias. | Conditional error bound B_e=B_true+0.4; no bias convergence or hard Gaussian-OU cap is inferred. |
 | P4-motion nonlinear graph | Keep the full bias prediction/correction/projection recurrence and actual active P/H/R/K. | The new domain includes the closed 0.4 ball; pre-projection auxiliaries may leave it. Existing 0.35-interior coverage cannot be reused silently. |
 | P4-motion endpoint | Certify W_H,N <= rho_H W_H,0 + gamma_b D_b + gamma_s D_s + gamma_n D_n. | Strict motion decay factor, quantified coupling gains and exact source/error/forcing attachment. D_b bounds internal corrected bias error, not exogenous noise. |
-| BIAS2 / gain sharpening | If used, certify the sector on the actual same-history graph. | Optional for the weaker objective; positive separation is not needed for compactness itself. |
+| BIAS2 / drift family and gain sharpening | Carry the non-relaxing bounded-variation driver of `ou3_p4_bias2_family.py`, which admits `phi_true=1`; certify the separation sector on the actual same-history graph. | The driver family is bound; no uniform `mu_sep` is proved. Positive separation is not needed for compactness itself, but the non-relaxing family has no other route to ISS closure. |
 | P4-motion every prefix | Certify finite Gamma and channel gains at every completed shipping event. | Endpoint-level invariance and strict chart retention, including all actual R_S events; prefix contraction is unnecessary. |
 | P5-motion / capture | Carry bias/source/forcing through startup, H-to-A and all allowed hybrid events. | Start only after P4-motion, including a useful residual bound and retention, is certified; compactness alone supplies neither capture nor motion accuracy. |
 

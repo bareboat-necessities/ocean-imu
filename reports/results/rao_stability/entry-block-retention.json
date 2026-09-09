@@ -1,0 +1,306 @@
+{
+  "experiment": "DECLARED_ENTRY_BLOCK_EVERY_PREFIX_RETENTION",
+  "capture_sha256": {
+    ".root.json": "342430657fe96aec340deb40fca231dfdbad738b63fb2abc495f8111cb63d357",
+    ".inputs.csv": "2ff04db07ea8baf72f4dd652352d559ff07fba970ed4bba88fd287eb733b8655",
+    ".prefixes.jsonl": "2a184f24637abdab8026a8da7f75c68857e3993bc42b769c0d19f924cb2bb444",
+    ".events.jsonl": "bda02dfe732318c6e6ab6cb8394303e5b91577a6c73b7e9b6695eaefddf05216"
+  },
+  "producer_sha256": "d4cd5ba034ceef252267415f303d2daf9b8f7b2ff7de377bfc8dbf8e9224d216",
+  "domain_sha256": "28e4de3a2b47e3e63918a2ab077ffeaa878e6e2e5c9d2ea8747d8dee04f5a6e6",
+  "declared_entry_radii": {
+    "attitude": 0.5358983848622454,
+    "gyro_bias": 0.01,
+    "velocity": 5.0,
+    "position": 20.0,
+    "integral_displacement": 300.0,
+    "latent_acceleration": 2.941995,
+    "accelerometer_bias": 0.4
+  },
+  "entry_radii_reduced": false,
+  "filter_changed": false,
+  "source_or_coefficient_search_used": false,
+  "P4_MOTION_PASS": false,
+  "P4_PASS": false,
+  "P5_MAY_START": false,
+  "modes": {
+    "H18": {
+      "completed_prefix_count": 2593,
+      "entry_order": [
+        "attitude",
+        "gyro_bias",
+        "velocity",
+        "position",
+        "integral_displacement",
+        "latent_acceleration",
+        "accelerometer_bias"
+      ],
+      "single_ball_reach": {
+        "attitude": {
+          "attitude": 1.0305790933653827,
+          "gyro_bias": 0.04829599233293043,
+          "velocity": 0.236172739939322,
+          "position": 0.7023985671067992,
+          "integral_displacement": 7.225314215380346,
+          "latent_acceleration": 0.08715431693163109,
+          "accelerometer_bias": 0.06641789730558793
+        },
+        "gyro_bias": {
+          "attitude": 1.2507286432220732,
+          "gyro_bias": 1.0000000011194017,
+          "velocity": 0.006182098643488914,
+          "position": 0.044796261679743765,
+          "integral_displacement": 0.5229460261684256,
+          "latent_acceleration": 0.00789752970682304,
+          "accelerometer_bias": 0.0048058477869068065
+        },
+        "velocity": {
+          "attitude": 1.0050388939066655,
+          "gyro_bias": 0.04223322627742314,
+          "velocity": 1.0,
+          "position": 2.4744106480423307,
+          "integral_displacement": 32.5003509335618,
+          "latent_acceleration": 0.05757783279264729,
+          "accelerometer_bias": 0.15444336779395879
+        },
+        "position": {
+          "attitude": 0.17105470434720532,
+          "gyro_bias": 0.005592392106479703,
+          "velocity": 0.14691985067011898,
+          "position": 1.0,
+          "integral_displacement": 18.96459696245134,
+          "latent_acceleration": 0.00951221564808702,
+          "accelerometer_bias": 0.029533770648446284
+        },
+        "integral_displacement": {
+          "attitude": 0.0034209211685891825,
+          "gyro_bias": 8.81869298169373e-05,
+          "velocity": 0.0026920580505135536,
+          "position": 0.012974019589469844,
+          "integral_displacement": 1.0,
+          "latent_acceleration": 0.00019419049899605328,
+          "accelerometer_bias": 0.0006170318438386119
+        },
+        "latent_acceleration": {
+          "attitude": 1.6264579998985778,
+          "gyro_bias": 0.0666429334826529,
+          "velocity": 0.17231667325594724,
+          "position": 0.5084606443100588,
+          "integral_displacement": 6.277574838944873,
+          "latent_acceleration": 1.0,
+          "accelerometer_bias": 0.13599254774001604
+        }
+      },
+      "common_template_reach": {
+        "attitude": 0.006219959460262415,
+        "gyro_bias": 0.005251766296443881,
+        "velocity": 0.04698991970169551,
+        "position": 0.0225686111853784,
+        "integral_displacement": 0.0014944886043826615,
+        "latent_acceleration": 0.007652253628248586
+      },
+      "declared_box_subadditive_total": {
+        "attitude": 8.544239911476401,
+        "gyro_bias": 2.8378105123640176,
+        "velocity": 35.35798704299414,
+        "position": 19.75582671807822,
+        "integral_displacement": 1.001479741184917,
+        "latent_acceleration": 7.977788063164522
+      },
+      "without_independent_integral_ball": {
+        "attitude": 1.7560453915466054,
+        "gyro_bias": 2.3148823269452317,
+        "velocity": 4.032684073976557,
+        "position": 1.0265371671014036,
+        "integral_displacement": 0.015451492241557471,
+        "latent_acceleration": 1.935007704178764
+      },
+      "minimal_working_radius_inflation_declared_box": {
+        "attitude": 8.544239911476401,
+        "gyro_bias": 2.8378105123640176,
+        "velocity": 35.35798704299414,
+        "position": 19.75582671807822,
+        "integral_displacement": 1.001479741184917,
+        "latent_acceleration": 7.977788063164522
+      },
+      "minimal_working_radius_inflation_without_integral_ball": {
+        "attitude": 1.7560453915466054,
+        "gyro_bias": 2.3148823269452317,
+        "velocity": 4.032684073976557,
+        "position": 1.0265371671014036,
+        "integral_displacement": 1.0,
+        "latent_acceleration": 1.935007704178764
+      },
+      "accelerometer_bias_ball_worst_single_reach": 0.15444336779395879,
+      "accelerometer_bias_ball_limits_no_coordinate": true,
+      "worst_single_ball_per_coordinate": {
+        "attitude": "integral_displacement",
+        "gyro_bias": "attitude",
+        "velocity": "integral_displacement",
+        "position": "integral_displacement",
+        "integral_displacement": "integral_displacement",
+        "latent_acceleration": "integral_displacement"
+      },
+      "declared_chart_cayley_norm_upper": 1.0,
+      "attitude_cayley_norm_reached_declared_box": 4.578844368435738,
+      "attitude_cayley_norm_reached_without_integral_ball": 0.9410618890746152,
+      "declared_box_stays_inside_declared_chart": false,
+      "without_integral_ball_stays_inside_declared_chart": true,
+      "entry_radii_reduced": false,
+      "working_domain_is_larger_than_entry_set": true,
+      "frozen_point_binary64_diagnostic_not_outward_certificate": true,
+      "P4_MOTION_PASS": false,
+      "P4_PASS": false,
+      "P5_MAY_START": false,
+      "sample_count": 600,
+      "counts": {
+        "prediction_enter": 600,
+        "prediction": 600,
+        "aw_floor": 600,
+        "accelerometer": 600,
+        "projection": 793,
+        "magnetometer": 75,
+        "S_zero": 118
+      }
+    },
+    "A21": {
+      "completed_prefix_count": 2569,
+      "entry_order": [
+        "attitude",
+        "gyro_bias",
+        "velocity",
+        "position",
+        "integral_displacement",
+        "latent_acceleration",
+        "accelerometer_bias"
+      ],
+      "single_ball_reach": {
+        "attitude": {
+          "attitude": 1.0370167489739197,
+          "gyro_bias": 0.056998403589475326,
+          "velocity": 0.03021780189769063,
+          "position": 0.09342972835880724,
+          "integral_displacement": 0.6043080666407327,
+          "latent_acceleration": 0.00022958972505769,
+          "accelerometer_bias": 0.0020901914859543314
+        },
+        "gyro_bias": {
+          "attitude": 0.18154914218256346,
+          "gyro_bias": 1.0006583784124161,
+          "velocity": 0.05928180176426651,
+          "position": 0.18224231078411063,
+          "integral_displacement": 1.1964374822069963,
+          "latent_acceleration": 0.00012734363719665756,
+          "accelerometer_bias": 0.004094608620749909
+        },
+        "velocity": {
+          "attitude": 2.9178186850175347,
+          "gyro_bias": 0.08180381270770554,
+          "velocity": 1.0,
+          "position": 0.7595603091450338,
+          "integral_displacement": 5.025637814682435,
+          "latent_acceleration": 0.0029388149524983017,
+          "accelerometer_bias": 0.23351519710641327
+        },
+        "position": {
+          "attitude": 0.9750473705569462,
+          "gyro_bias": 0.018523595889856366,
+          "velocity": 0.6215019070951775,
+          "position": 1.0,
+          "integral_displacement": 5.909587150244607,
+          "latent_acceleration": 0.0009317728688599539,
+          "accelerometer_bias": 0.08118302599648261
+        },
+        "integral_displacement": {
+          "attitude": 0.04109355256529425,
+          "gyro_bias": 0.0006063876785738974,
+          "velocity": 0.04201439498671806,
+          "position": 0.0776166708646504,
+          "integral_displacement": 1.0,
+          "latent_acceleration": 6.371532222266593e-05,
+          "accelerometer_bias": 0.003911236392428962
+        },
+        "latent_acceleration": {
+          "attitude": 2.0552275169443965,
+          "gyro_bias": 0.09587016382675062,
+          "velocity": 0.0491342843863643,
+          "position": 0.153508444183941,
+          "integral_displacement": 0.996312712988763,
+          "latent_acceleration": 1.0,
+          "accelerometer_bias": 0.13595908960905492
+        }
+      },
+      "common_template_reach": {
+        "attitude": 0.0023113897262696196,
+        "gyro_bias": 0.0006336237317256996,
+        "velocity": 0.004721574872039643,
+        "position": 0.0034140283767761883,
+        "integral_displacement": 0.0006996538436183774,
+        "latent_acceleration": 0.004192270402075693
+      },
+      "declared_box_subadditive_total": {
+        "attitude": 1.7501309041261546,
+        "gyro_bias": 2.4442688701239033,
+        "velocity": 9.357210977053947,
+        "position": 8.041424031371704,
+        "integral_displacement": 1.0020751304500417,
+        "latent_acceleration": 2.98107288688111
+      },
+      "without_independent_integral_ball": {
+        "attitude": 1.219802894902112,
+        "gyro_bias": 1.4282812728462486,
+        "velocity": 4.920577440085827,
+        "position": 2.2364614816061734,
+        "integral_displacement": 0.1646834115691377,
+        "latent_acceleration": 2.1992035257702147
+      },
+      "minimal_working_radius_inflation_declared_box": {
+        "attitude": 1.7501309041261546,
+        "gyro_bias": 2.4442688701239033,
+        "velocity": 9.357210977053947,
+        "position": 8.041424031371704,
+        "integral_displacement": 1.0020751304500417,
+        "latent_acceleration": 2.98107288688111
+      },
+      "minimal_working_radius_inflation_without_integral_ball": {
+        "attitude": 1.219802894902112,
+        "gyro_bias": 1.4282812728462486,
+        "velocity": 4.920577440085827,
+        "position": 2.2364614816061734,
+        "integral_displacement": 1.0,
+        "latent_acceleration": 2.1992035257702147
+      },
+      "accelerometer_bias_ball_worst_single_reach": 0.23351519710641327,
+      "accelerometer_bias_ball_limits_no_coordinate": true,
+      "worst_single_ball_per_coordinate": {
+        "attitude": "attitude",
+        "gyro_bias": "integral_displacement",
+        "velocity": "integral_displacement",
+        "position": "integral_displacement",
+        "integral_displacement": "integral_displacement",
+        "latent_acceleration": "attitude"
+      },
+      "declared_chart_cayley_norm_upper": 1.0,
+      "attitude_cayley_norm_reached_declared_box": 0.9378923248187074,
+      "attitude_cayley_norm_reached_without_integral_ball": 0.6536904012283331,
+      "declared_box_stays_inside_declared_chart": true,
+      "without_integral_ball_stays_inside_declared_chart": true,
+      "entry_radii_reduced": false,
+      "working_domain_is_larger_than_entry_set": true,
+      "frozen_point_binary64_diagnostic_not_outward_certificate": true,
+      "P4_MOTION_PASS": false,
+      "P4_PASS": false,
+      "P5_MAY_START": false,
+      "sample_count": 600,
+      "counts": {
+        "prediction_enter": 600,
+        "prediction": 600,
+        "aw_floor": 600,
+        "accelerometer": 600,
+        "projection": 769,
+        "magnetometer": 75,
+        "S_zero": 94
+      }
+    }
+  }
+}

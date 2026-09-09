@@ -1,6 +1,6 @@
 {
-  "schema": 2,
-  "qualification": "OU3_P4_EXPLICIT_CLOSURE_DOMAIN_V2",
+  "schema": 3,
+  "qualification": "OU3_P4_EXPLICIT_CLOSURE_DOMAIN_V3",
   "trajectory_fit": false,
   "scope": "conditional Normal-Live COMPLETE_BRMM theorem domain; not a replay-derived deployment claim",
   "hard_entry_search": {
@@ -20,6 +20,27 @@
     "requires_full_declared_scale": true,
     "shipping_covariance_is_not_entry_set": true
   },
+  "BIAS0_family": {
+    "model": "b_true(t)=beta_gm(t)+b0+K_T*dT(t)+K_strain*strain(t)+d_nonGM(t)",
+    "family_role": "composite physical-composition family; distinct from BIAS1 and never inferred from it",
+    "gauss_markov_component_abs_upper_mps2": 0.02,
+    "gauss_markov_tau_true_s": [300.0, 3600.0],
+    "gauss_markov_pathwise_increment_component_abs_upper_mps2": 0.0005,
+    "gauss_markov_stationary_sigma_descriptive_mps2": 0.02,
+    "gauss_markov_pathwise_increment_cap_is_declared_hypothesis": true,
+    "turn_on_offset_component_abs_upper_mps2": 0.05,
+    "thermal_coefficient_abs_upper_mps2_per_K": 0.0015,
+    "thermal_deviation_abs_upper_K": 20.0,
+    "thermal_deviation_rate_abs_upper_K_s": 0.02,
+    "strain_component_abs_upper_mps2": 0.02,
+    "strain_component_rate_abs_upper_mps3": 0.0005,
+    "non_gauss_markov_component_abs_upper_mps2": 0.01,
+    "non_gauss_markov_rate_abs_upper_mps3": 0.0002,
+    "driver_increment_definition": "w_i=b_true(t_i)-phi_true*b_true(t_{i-1}) with phi_true the declared Gauss-Markov channel root",
+    "one_composite_history_required": true,
+    "independent_per_sample_bias_slots_forbidden": true,
+    "assembled_sensor_hardware_qualified": false
+  },
   "BIAS1_family": {
     "model": "beta(t)=beta0*exp(-(t-t0)/tau_true)+a*sin(omega*(t-t0)+phase)+d_det(t)",
     "root_component_abs_upper_mps2": 0.1,
@@ -33,6 +54,21 @@
     "one_root_one_parameter_history_required": true,
     "independent_per_sample_bias_slots_forbidden": true,
     "existing_nonzero_driver_probe_must_be_member": true
+  },
+  "BIAS2_family": {
+    "model": "b_true(t) is bounded-variation drift admitting no relaxation root; tau_true is unbounded above",
+    "family_role": "non-relaxing drift family whose ISS closure needs the separation sector; never inferred from BIAS0/BIAS1",
+    "component_abs_upper_mps2": 0.13,
+    "rate_abs_upper_mps3": 0.0002,
+    "tau_true_lower_s": 2400.0,
+    "tau_true_upper_is_infinite": true,
+    "driver_increment_definition": "w_i=b_true(t_i)-phi_true*b_true(t_{i-1}) for every admitted phi_true in [exp(-dt/tau_true_lower_s), 1]",
+    "separation_sector": "Pi_sep=C_y^T W C_y-mu_sep X on the exact full-state same-history graph",
+    "uniform_separation_constant_lower": null,
+    "separation_sector_required_for_ISS_closure": true,
+    "one_drift_history_required": true,
+    "independent_per_sample_bias_slots_forbidden": true,
+    "assembled_sensor_hardware_qualified": false
   },
   "P3_execution_admission": {
     "canonical_source": "COMPLETE_BRMM_NORMAL_LIVE_WORD",

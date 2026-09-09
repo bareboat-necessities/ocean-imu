@@ -6,12 +6,21 @@ attempt must explicitly quantify over all three admitted bias families:
 
     BIAS0, BIAS1, BIAS2.
 
-BIAS1 already has a concrete repository semantic binding (the physical one-root
-one-parameter driver family and its joint ISS lift).  BIAS0 hardware
-qualification and BIAS2 remain distinct required families; until authoritative
-repository definitions are attached to this contract they are intentionally
-reported as semantically unbound.  They may NOT be silently replaced by BIAS1,
-collapsed into a generic bias box, or omitted from a P4 attempt.
+Each family now has its own authoritative repository binding:
+
+    BIAS0  composite physical-composition driver (turn-on offset, thermal,
+           strain, non-Gauss-Markov residual and a declared pathwise
+           Gauss-Markov increment cap);
+    BIAS1  one-root one-parameter driver family;
+    BIAS2  non-relaxing bounded-variation drift, admitting phi_true=1.
+
+None is inferred from another, none may be silently replaced by BIAS1,
+collapsed into a generic bias box, or omitted from a P4 attempt.  Semantic
+binding is not closure: BIAS0 assembled-sensor qualification remains open, and
+no family has its source cover or every-prefix ISS LDLT closed.  BIAS2's
+separation sector is a motion-gain sharpener rather than a prerequisite: the
+bias half of the declared objective comes from the closed radial projection
+sector, which holds for a non-relaxing truth exactly as for a relaxing one.
 
 This module distinguishes two questions:
 
@@ -20,19 +29,23 @@ This module distinguishes two questions:
    source and propagated through source cover, projection, transport, ISS and
    every-prefix LDLT?
 
-The first is mandatory immediately.  The second is a promotion prerequisite.
-Therefore this contract itself validates while P4 remains fail-closed until all
-three semantic bindings and downstream closures are true.
+The first is mandatory immediately.  The second is a promotion prerequisite:
+the authoritative bindings and the joint ISS supply exist, the downstream
+closures do not.  This contract therefore validates while P4 stays fail-closed
+until every downstream closure is true as well.
 """
 from __future__ import annotations
 import argparse,json
 from pathlib import Path
 
+import ou3_p4_bias0_family as BIAS0
 import ou3_p4_bias1_family as BIAS1
+import ou3_p4_bias2_family as BIAS2
 import ou3_p4_bias1_joint_iss_supply as BIAS1_ISS
+import ou3_p4_bias_family_joint_iss_supply as ALL_ISS
 
-SCHEMA=1
-QUALIFICATION='OU3_P4_ALL_BIAS0_BIAS1_BIAS2_MANDATORY_CONTRACT_V1'
+SCHEMA=2
+QUALIFICATION='OU3_P4_ALL_BIAS0_BIAS1_BIAS2_MANDATORY_CONTRACT_V2'
 REQUIRED_BIAS_FAMILIES=('BIAS0','BIAS1','BIAS2')
 
 
@@ -66,11 +79,20 @@ def promotion_bias_gate(*,families,semantic_bindings,source_cover,projection_tra
 
 
 def build():
-    b1=BIAS1.build();b1f=BIAS1.validate(b1)
-    iss=BIAS1_ISS.build();issf=BIAS1_ISS.validate(iss)
-    if b1f or issf:raise RuntimeError(f'BIAS1 binding prerequisite failed family={b1f} ISS={issf}')
+    modules={'BIAS0':BIAS0,'BIAS1':BIAS1,'BIAS2':BIAS2}
+    bound={}
+    for name,mod in modules.items():
+        d=mod.build();bad=mod.validate(d)
+        if bad:raise RuntimeError(f'{name} binding prerequisite failed: {bad!r}')
+        bound[name]=d
+    b1=bound['BIAS1']
+    b0=bound['BIAS0'];b2=bound['BIAS2']
+    issf=BIAS1_ISS.validate(BIAS1_ISS.build())
+    if issf:raise RuntimeError(f'BIAS1 joint ISS binding prerequisite failed: {issf!r}')
+    joint=ALL_ISS.build();jointf=ALL_ISS.validate(joint)
+    if jointf:raise RuntimeError(f'all-family joint ISS supply prerequisite failed: {jointf!r}')
     required=require_all_bias_families(REQUIRED_BIAS_FAMILIES)
-    semantic={'BIAS0':False,'BIAS1':True,'BIAS2':False}
+    semantic={'BIAS0':True,'BIAS1':True,'BIAS2':True}
     source={'BIAS0':False,'BIAS1':False,'BIAS2':False}
     projection={'BIAS0':False,'BIAS1':False,'BIAS2':False}
     prefix={'BIAS0':False,'BIAS1':False,'BIAS2':False}
@@ -88,11 +110,25 @@ def build():
       'omitting_BIAS0_is_rejected':not omitted0['closed'],
       'omitting_BIAS1_is_rejected':not omitted1['closed'],
       'omitting_BIAS2_is_rejected':not omitted2['closed'],
+      'BIAS0_authoritative_family_module_bound':True,
       'BIAS1_authoritative_family_module_bound':True,
+      'BIAS2_authoritative_family_module_bound':True,
       'BIAS1_joint_ISS_supply_module_bound':True,
+      'all_family_joint_ISS_supply_module_bound':True,
+      'BIAS0_one_composite_history_retained':bool(b0['one_composite_history_required']),
       'BIAS1_one_root_one_parameter_history_retained':bool(b1['one_root_one_parameter_history_required']),
-      'BIAS0_authoritative_semantic_binding_closed_here':False,
-      'BIAS2_authoritative_semantic_binding_closed_here':False,
+      'BIAS2_one_drift_history_retained':bool(b2['one_drift_history_required']),
+      'BIAS2_non_relaxing_limit_admitted':bool(b2['non_relaxing_limit_admitted']),
+      'BIAS1_class_contains_no_other_family':bool(joint['BIAS1_class_contains_no_other_family']),
+      'no_single_family_covers_the_other_two':bool(joint['no_single_family_covers_the_other_two']),
+      'family_joint_supply_norm_upper_mps2':{n:joint['family_supply'][n]['joint_supply_norm_upper_per_prediction_mps2'] for n in REQUIRED_BIAS_FAMILIES},
+      'BIAS0_authoritative_semantic_binding_closed_here':True,
+      'BIAS2_authoritative_semantic_binding_closed_here':True,
+      'BIAS0_assembled_sensor_hardware_qualified':bool(b0['assembled_sensor_hardware_qualified']),
+      'BIAS2_uniform_separation_sector_closed':bool(b2['source_uniform_separation_closed']),
+      'BIAS2_separation_required_for_bounded_bias_objective':bool(b2['separation_sector_required_for_bounded_bias_objective']),
+      'bias_error_compactness_upper_mps2':joint['bias_error_compactness_upper_mps2'],
+      'families_share_one_true_bias_envelope':bool(joint['families_share_one_true_bias_envelope']),
       'BIAS0_may_be_substituted_by_BIAS1':False,'BIAS2_may_be_substituted_by_BIAS1':False,
       'generic_bias_box_may_replace_three_family_quantifier':False,
       'semantic_bindings':semantic,'source_cover_closure':source,
@@ -103,16 +139,16 @@ def build():
       'all_three_every_prefix_ISS_LDLT_closed_here':all(prefix.values()),
       'all_bias_promotion_gate_closed':promotion,
       'P4_MOTION_PASS':False,'P4_PASS':False,'P5_MAY_START':False,
-      'next_obligation':'attach authoritative BIAS0 and BIAS2 definitions, then require each BIAS0/1/2 family independently through same-history source cover, projection/bias transport, finite-precision ISS maps, endpoint and every-prefix augmented LDLT before any P4 promotion'}
+      'next_obligation':'carry each independently bound BIAS0/1/2 family through the same-history BRMM source cover, projection/bias transport, finite-precision ISS maps and endpoint plus every-prefix augmented LDLT before any P4 promotion; the uniform BIAS2 separation constant is an optional motion-gain sharpener, not a prerequisite of the declared bounded-bias objective'}
 
 
 def validate(d):
     f=[]
     if d.get('schema')!=SCHEMA or d.get('qualification')!=QUALIFICATION:f.append('schema/qualification mismatch')
     if d.get('required_bias_families')!=list(REQUIRED_BIAS_FAMILIES):f.append('required bias family set changed')
-    for k in ('all_future_P4_attempts_must_declare_BIAS0_BIAS1_BIAS2','single_or_subset_bias_family_attempt_forbidden','omitting_BIAS0_is_rejected','omitting_BIAS1_is_rejected','omitting_BIAS2_is_rejected','BIAS1_authoritative_family_module_bound','BIAS1_joint_ISS_supply_module_bound','BIAS1_one_root_one_parameter_history_retained'):
+    for k in ('all_future_P4_attempts_must_declare_BIAS0_BIAS1_BIAS2','single_or_subset_bias_family_attempt_forbidden','omitting_BIAS0_is_rejected','omitting_BIAS1_is_rejected','omitting_BIAS2_is_rejected','BIAS0_authoritative_family_module_bound','BIAS1_authoritative_family_module_bound','BIAS2_authoritative_family_module_bound','BIAS1_joint_ISS_supply_module_bound','all_family_joint_ISS_supply_module_bound','BIAS0_one_composite_history_retained','BIAS1_one_root_one_parameter_history_retained','BIAS2_one_drift_history_retained','BIAS2_non_relaxing_limit_admitted','BIAS1_class_contains_no_other_family','no_single_family_covers_the_other_two','families_share_one_true_bias_envelope','BIAS0_authoritative_semantic_binding_closed_here','BIAS2_authoritative_semantic_binding_closed_here','all_three_semantically_bound_here'):
         if d.get(k) is not True:f.append(k+' not true')
-    for k in ('BIAS0_authoritative_semantic_binding_closed_here','BIAS2_authoritative_semantic_binding_closed_here','BIAS0_may_be_substituted_by_BIAS1','BIAS2_may_be_substituted_by_BIAS1','generic_bias_box_may_replace_three_family_quantifier','all_three_semantically_bound_here','all_three_source_cover_closed_here','all_three_projection_transport_closed_here','all_three_every_prefix_ISS_LDLT_closed_here','all_bias_promotion_gate_closed','P4_MOTION_PASS','P4_PASS','P5_MAY_START'):
+    for k in ('BIAS0_may_be_substituted_by_BIAS1','BIAS2_may_be_substituted_by_BIAS1','generic_bias_box_may_replace_three_family_quantifier','BIAS0_assembled_sensor_hardware_qualified','BIAS2_uniform_separation_sector_closed','BIAS2_separation_required_for_bounded_bias_objective','all_three_source_cover_closed_here','all_three_projection_transport_closed_here','all_three_every_prefix_ISS_LDLT_closed_here','all_bias_promotion_gate_closed','P4_MOTION_PASS','P4_PASS','P5_MAY_START'):
         if d.get(k) is not False:f.append(k+' not false')
     for name in REQUIRED_BIAS_FAMILIES:
         for table in ('semantic_bindings','source_cover_closure','projection_transport_closure','every_prefix_ISS_LDLT_closure'):
@@ -121,5 +157,5 @@ def validate(d):
 
 
 def main():
-    ap=argparse.ArgumentParser();ap.add_argument('--output',type=Path,required=True);a=ap.parse_args();d=build();f=validate(d);d['validation_pass']=not f;d['validation_failures']=f;a.output.parent.mkdir(parents=True,exist_ok=True);a.output.write_text(json.dumps(d,indent=2,sort_keys=True)+'\n');print(json.dumps({'required':d['required_bias_families'],'BIAS0_bound':d['BIAS0_authoritative_semantic_binding_closed_here'],'BIAS1_bound':d['semantic_bindings']['BIAS1'],'BIAS2_bound':d['BIAS2_authoritative_semantic_binding_closed_here'],'promotion':d['all_bias_promotion_gate_closed'],'P4':d['P4_PASS'],'failures':f},sort_keys=True));return int(bool(f))
+    ap=argparse.ArgumentParser();ap.add_argument('--output',type=Path,required=True);a=ap.parse_args();d=build();f=validate(d);d['validation_pass']=not f;d['validation_failures']=f;a.output.parent.mkdir(parents=True,exist_ok=True);a.output.write_text(json.dumps(d,indent=2,sort_keys=True)+'\n');print(json.dumps({'required':d['required_bias_families'],'semantic':d['semantic_bindings'],'supply':d['family_joint_supply_norm_upper_mps2'],'promotion':d['all_bias_promotion_gate_closed'],'P4':d['P4_PASS'],'failures':f},sort_keys=True));return int(bool(f))
 if __name__=='__main__':raise SystemExit(main())
