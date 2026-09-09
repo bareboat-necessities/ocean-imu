@@ -4,8 +4,9 @@
   "trajectory_fit": false,
   "scope": "conditional Normal-Live COMPLETE_BRMM theorem domain; not a replay-derived deployment claim",
   "hard_entry_search": {
-    "definition": "fixed physical-coordinate box, selected before any trajectory result; widest candidate that satisfies the uniform nonlinear/rounding inequalities is certified",
-    "candidate_scale_factors": [1.0, 0.1, 0.01, 0.001, 0.0001, 1e-05, 1e-06, 1e-07, 1e-08, 1e-09, 1e-10, 1e-11, 1e-12, 1e-13, 1e-14, 1e-15, 1e-16, 1e-17, 1e-18, 1e-19, 1e-20, 1e-21, 1e-22, 1e-23, 1e-24],
+    "definition": "fixed physical-coordinate box; the theorem requires at least the predeclared minimum scale and may certify a wider listed candidate, never an arbitrarily tiny positive set",
+    "candidate_scale_factors": [1.0, 0.1, 0.03, 0.01],
+    "minimum_certified_scale": 0.01,
     "base_coordinate_radii": {
       "attitude_cayley_norm": 0.8284271247461901,
       "gyro_bias_norm_rad_s": 0.01,
