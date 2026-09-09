@@ -7,6 +7,7 @@ on:
       - "tools/stability/ou3_p4_complete_brmm_source_cover_transition.py"
       - "tools/stability/ou3_p4_complete_brmm_adaptive_transition.py"
       - "tools/stability/ou3_p4_complete_brmm_target_cell.py"
+      - "tools/stability/ou3_p4_complete_brmm_universal_target_relation.py"
       - "tools/stability/ou3_p4_complete_brmm_frontend_geometry_transition.py"
       - "tools/stability/ou3_p4_wave_period_interval_transition.py"
       - "tools/stability/ou3_p4_complete_brmm_finite_map_mean_value.py"
@@ -39,6 +40,7 @@ jobs:
           python3 tools/stability/ou3_p4_complete_brmm_source_cover_transition.py --output /tmp/source-cover-transition.json
           python3 tools/stability/ou3_p4_complete_brmm_adaptive_transition.py --output /tmp/adaptive-transition.json
           python3 tools/stability/ou3_p4_complete_brmm_target_cell.py --output /tmp/target-cell.json
+          python3 tools/stability/ou3_p4_complete_brmm_universal_target_relation.py --output /tmp/universal-target-relation.json
           python3 tools/stability/ou3_p4_wave_period_interval_transition.py --output /tmp/wave-period-transition.json
           python3 tools/stability/ou3_p4_complete_brmm_frontend_geometry_transition.py --output /tmp/frontend-geometry-transition.json
           python3 tools/stability/ou3_p4_complete_brmm_finite_map_mean_value.py --output /tmp/finite-map.json
@@ -69,10 +71,16 @@ jobs:
           t=json.load(open('/tmp/source-cover-transition.json'))
           a=json.load(open('/tmp/adaptive-transition.json'))
           x=json.load(open('/tmp/target-cell.json'))
+          u=json.load(open('/tmp/universal-target-relation.json'))
           w=json.load(open('/tmp/wave-period-transition.json'))
           g=json.load(open('/tmp/frontend-geometry-transition.json'))
           f=json.load(open('/tmp/finite-map.json'))
           assert d['validation_pass'],d['validation_failures']
+          assert d['coefficient_target_inclusion_closed']
+          assert d['coefficient_target_family_is_conservative_overapproximation']
+          assert d['coefficient_target_overapproximation_does_not_make_active_schedule_arbitrary']
+          assert d['tau_TS_SpectralMSE_RS_same_cell_relation_closed']
+          assert d['raw_effective_sigma_split_preserved']
           assert not d['SOURCE_UNIFORM_COMPLETE_BRMM_COVER_CLOSED']
           assert not d['point_trace_can_promote_source_uniform_cover']
           assert d['independent_P_H_R_K_boxes_forbidden']
@@ -88,11 +96,20 @@ jobs:
           assert a['deadline_straddling_cell_requires_branch_split']
           assert not a['complete_BRMM_adaptive_cover_closed_here']
           assert x['validation_pass'],x['validation_failures']
+          assert x['shipping_frequency_clamp_reapplied_before_reciprocal']
           assert x['full_dynamic_target_rectangle_image_valid']
           assert x['SpectralMSE_RS_is_same_tau_sigma_image']
           assert x['quiet_sigma_target_admitted']
           assert x['independent_RS_target_forbidden']
           assert not x['complete_BRMM_target_source_cover_closed_here']
+          assert u['validation_pass'],u['validation_failures']
+          assert u['coefficient_target_inclusion_closed']
+          assert u['tau_TS_RS_are_correlated_same_cell_images']
+          assert u['active_schedule_connected_by_shipping_EMA']
+          assert u['active_schedule_connected_by_staged_commit']
+          assert u['pseudo_event_incidence_connected_by_scheduler']
+          assert not u['target_overapproximation_may_generate_arbitrary_active_schedule']
+          assert not u['complete_source_cover_closed_here']
           assert w['validation_pass'],w['validation_failures']
           assert w['shipping_two_high_pass_and_leaky_integrator_transition_materialized']
           assert w['EW_first_second_moment_transition_materialized']
@@ -113,6 +130,7 @@ jobs:
           print('SOURCE_COVER_COVARIANCE_TRANSITION',t['shipping_covariance_transition_operator_available'])
           print('SOURCE_COVER_ADAPTIVE_TRANSITION',a['EMA_candidate_transition_available'],a['scheduler_due_not_due_branch_preserved'])
           print('SOURCE_COVER_TARGET_CELL',x['full_dynamic_target_rectangle_image_valid'],x['full_RS_target'])
+          print('SOURCE_COVER_UNIVERSAL_TARGET',u['coefficient_target_inclusion_closed'],u['target_overapproximation_may_generate_arbitrary_active_schedule'])
           print('SOURCE_COVER_WAVE_MOMENT_TRANSITION',w['shipping_two_high_pass_and_leaky_integrator_transition_materialized'],w['EW_first_second_moment_transition_materialized'])
           print('SOURCE_COVER_FRONTEND_PARTIAL',g['fixed_prior_branch_materialized'],g['screened_frequency_to_tau_target_map_materialized'],g['finite_EW_moment_state_transition_materialized'])
           print('SOURCE_COVER_UNIFORM_CLOSED',d['SOURCE_UNIFORM_COMPLETE_BRMM_COVER_CLOSED'])
@@ -125,6 +143,7 @@ jobs:
             /tmp/source-cover-transition.json
             /tmp/adaptive-transition.json
             /tmp/target-cell.json
+            /tmp/universal-target-relation.json
             /tmp/wave-period-transition.json
             /tmp/frontend-geometry-transition.json
             /tmp/finite-map.json
