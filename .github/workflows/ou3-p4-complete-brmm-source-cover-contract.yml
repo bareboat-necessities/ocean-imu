@@ -5,9 +5,11 @@ on:
     paths: &paths
       - "tools/stability/ou3_p4_complete_brmm_source_cover_contract.py"
       - "tools/stability/ou3_p4_complete_brmm_source_cover_transition.py"
+      - "tools/stability/ou3_p4_complete_brmm_adaptive_transition.py"
       - "tools/stability/ou3_p4_complete_brmm_finite_map_mean_value.py"
       - "tools/stability/ou3_p4_complete_brmm_differential_events.py"
       - "tools/stability/ou3_brmm_complete_source.py"
+      - "tools/stability/ou3_brmm_dynamic_source_certificate.py"
       - "tools/stability/ou3_brmm_full_normal_live_word.py"
       - ".github/workflows/ou3-p4-complete-brmm-source-cover-contract.yml"
   pull_request:
@@ -29,6 +31,7 @@ jobs:
         run: |
           python3 tools/stability/ou3_p4_complete_brmm_source_cover_contract.py --output /tmp/source-cover-contract.json
           python3 tools/stability/ou3_p4_complete_brmm_source_cover_transition.py --output /tmp/source-cover-transition.json
+          python3 tools/stability/ou3_p4_complete_brmm_adaptive_transition.py --output /tmp/adaptive-transition.json
           python3 tools/stability/ou3_p4_complete_brmm_finite_map_mean_value.py --output /tmp/finite-map.json
           python3 - <<'PY'
           import json,sys
@@ -55,6 +58,7 @@ jobs:
 
           d=json.load(open('/tmp/source-cover-contract.json'))
           t=json.load(open('/tmp/source-cover-transition.json'))
+          a=json.load(open('/tmp/adaptive-transition.json'))
           f=json.load(open('/tmp/finite-map.json'))
           assert d['validation_pass'],d['validation_failures']
           assert not d['SOURCE_UNIFORM_COMPLETE_BRMM_COVER_CLOSED']
@@ -63,12 +67,19 @@ jobs:
           assert t['validation_pass'],t['validation_failures']
           assert t['shipping_covariance_transition_operator_available']
           assert not t['complete_BRMM_source_transition_cover_closed_here']
+          assert a['validation_pass'],a['validation_failures']
+          assert a['EMA_candidate_transition_available']
+          assert a['staged_commit_transition_available']
+          assert a['scheduler_due_not_due_branch_preserved']
+          assert a['deadline_straddling_cell_requires_branch_split']
+          assert not a['complete_BRMM_adaptive_cover_closed_here']
           assert f['validation_pass'],f['validation_failures']
           assert f['source_cover_contract_consumed']
           assert not f['source_cover_uniform_complete_BRMM_closed']
           assert not f['P4_promoted_here']
           print('SOURCE_COVER_INTERFACE_SMOKE',ev['same_P_H_R_cell'],ev['R_provenance'])
           print('SOURCE_COVER_COVARIANCE_TRANSITION',t['shipping_covariance_transition_operator_available'])
+          print('SOURCE_COVER_ADAPTIVE_TRANSITION',a['EMA_candidate_transition_available'],a['scheduler_due_not_due_branch_preserved'])
           print('SOURCE_COVER_UNIFORM_CLOSED',d['SOURCE_UNIFORM_COMPLETE_BRMM_COVER_CLOSED'])
           PY
       - uses: actions/upload-artifact@v6
@@ -77,5 +88,6 @@ jobs:
           path: |
             /tmp/source-cover-contract.json
             /tmp/source-cover-transition.json
+            /tmp/adaptive-transition.json
             /tmp/finite-map.json
           retention-days: 7
