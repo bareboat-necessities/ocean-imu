@@ -20,7 +20,12 @@ over the independent declared balls and never understates the reachable
 excursion. The attained lower bound is a maximizing unit functional and is
 always achieved by an admissible initial state. A group is retained only when
 its upper bound stays inside its own ball, and is definitely violated only
-when its attained bound leaves it.
+when its attained bound leaves it by more than the 1e-9 relative margin the
+enclosure check itself allows.
+
+The two bounds are maximized over the prefixes independently, because the
+prefix whose subadditive sum is loosest need not be the prefix actually
+reached furthest. Each is reported with the prefix index that attains it.
 
 ## The bias ball is not the limiter
 
@@ -38,22 +43,39 @@ large margin.
 | Latent-acceleration ball | .1431 | .1397 |
 | Accelerometer-bias ball | 1.0000 | 1.0004 |
 
-Attained and certified bounds agree to within .3% on every row, so these are
-tight numbers rather than a loose enclosure.
+The rows are certified upper bounds. On the four that carry the conclusion —
+velocity, position, the integral state and the chart — the attained bound is
+within 1.3% of them, so those are tight numbers rather than a loose enclosure.
+The gyro-bias row is the widest, 19.3% in H18, and both of its bounds are two
+orders of magnitude inside the declared ball either way.
 
 Route 1 reports the same initial set as a sufficient storage 6.4111 (H18) and
 2.2693 (A21) times the 30-degree chart level. Storage is quadratic, so the
 comparable linear excursions are 2.532 and 1.506 chart radii, against .0703
-and .0041 here — factors of 36.0 and 368. The 6.41/2.27 failure is therefore
+and .0041 here — factors of 36.0 and 364. The 6.41/2.27 failure is therefore
 manufactured by charging a bias-driven velocity and displacement excursion to
 attitude through the worst direction of the information metric. It is a
-property of that scalarization, not of the reachable set. The bias ball also
-maps into itself to within 4e-4 over the complete word, which is what a
-bounded-bias statement needs.
+property of that scalarization, not of the reachable set.
 
-This retires the separated bias budget as the current limiter. It does not
-prove P4, admit a physical source, or establish anything uniform over the
-nonlinear source family.
+This retires the separated bias budget as the source of route 1's chart
+failure. It does not prove P4, admit a physical source, or establish anything
+uniform over the nonlinear source family.
+
+## The closed bias ball is not itself invariant in A21
+
+The accelerometer-bias row above is the one that is not retained. H18 maps the
+closed .4 m/s² ball into itself exactly. A21 does not: its attained bound is
+.400126 m/s², exceeding the declared radius by 1.259e-4 m/s², a relative
+3.146e-4. That is roughly 2e12 ULPs and is not roundoff, so A21's complete
+word grows the worst bias direction rather than contracting it, and the ball
+is invariant for one mode only.
+
+The growth is small but it is a real open obligation: a bounded-bias statement
+over repeated words has to carry it rather than assume the ball is invariant.
+It is separate from the chart question above — every motion row is reached to
+at most .2382 of its declared bound, and none of them depends on the bias
+ball's own behaviour — so it qualifies the bias premise without reinstating
+the separated budget as the chart limiter.
 
 ## The declared product box is not invariant
 
@@ -64,7 +86,7 @@ wide margin, and the limiting group is velocity in both modes.
 |---|---:|---:|
 | Full declared box | 35.358 (velocity) | 9.357 (velocity) |
 | Without the 300 m·s integral ball | 4.033 (velocity) | 4.921 (velocity) |
-| Bias ball and template only | 1.000 (bias) | 1.0004 (bias) |
+| Bias ball and template only | 1.0000 (bias) | 1.0004 (bias) |
 
 Every bound is positively homogeneous in the declared radii and the template
 amplitude, so the largest box of the declared shape that this word retains is
@@ -87,6 +109,7 @@ integral/position fact is necessary but not sufficient on its own.
 
 These are point diagnostics on one frozen capture. The complete-word endpoint
 ratios (.999572659 and .932948382) and prefix maxima (1.003245112 and
-1.000001212) are unchanged by this experiment. Nothing here is a uniform
+1.000001212) are unchanged by this experiment. Neither is the A21 bias-ball
+growth a counterexample to anything: it is one more unmet premise. Nothing here is a uniform
 nonlinear certificate, a legal counterexample, physical source admission, or a
 promotion: P4 is unproved and P5 may not start.

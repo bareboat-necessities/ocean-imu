@@ -6,7 +6,7 @@
     ".prefixes.jsonl": "2a184f24637abdab8026a8da7f75c68857e3993bc42b769c0d19f924cb2bb444",
     ".events.jsonl": "bda02dfe732318c6e6ab6cb8394303e5b91577a6c73b7e9b6695eaefddf05216"
   },
-  "producer_sha256": "1d619aefac09d1f7fb24447f7a16ca1ba1c1e88b57d775744bc06b89e0abe9a8",
+  "producer_sha256": "249da159c9ce5900c545ecaf0a9c576e6c202f790c4d94b4884eda259aa9aa37",
   "frozen_coefficients_only": true,
   "same_history_forcing_preserved": true,
   "operating_domain_reduced": false,
@@ -40,10 +40,13 @@
       "P4_PASS": false,
       "full_declared_initial_set": {
         "attitude": {
-          "prefix_index": 1544,
+          "certified_prefix_index": 1544,
+          "attained_prefix_index": 1544,
           "declared_radius": 0.5358983848622454,
           "certified_upper_bound": 4.578844368435758,
+          "attained_lower_bound": 4.570397199507606,
           "certified_retention_ratio": 8.544239911476438,
+          "attained_retention_ratio": 8.528477279666449,
           "source_contributions": {
             "attitude": 0.5061075017266459,
             "gyro_bias": 0.016445271989034442,
@@ -54,15 +57,16 @@
             "accelerometer_bias": 0.015170133315440324,
             "forcing_template": 0.0017383563082647038
           },
-          "attained_lower_bound": 4.570397199507606,
-          "attained_retention_ratio": 8.528477279666449,
           "dominant_source": "integral_displacement"
         },
         "gyro_bias": {
-          "prefix_index": 2583,
+          "certified_prefix_index": 2583,
+          "attained_prefix_index": 2583,
           "declared_radius": 0.01,
           "certified_upper_bound": 0.02837810512364018,
+          "attained_lower_bound": 0.026872453544286197,
           "certified_retention_ratio": 2.8378105123640176,
+          "attained_retention_ratio": 2.6872453544286197,
           "source_contributions": {
             "attitude": 0.012507093950352308,
             "gyro_bias": 0.00999328651406201,
@@ -73,15 +77,16 @@
             "accelerometer_bias": 4.79438847059113e-05,
             "forcing_template": 5.227967055483832e-05
           },
-          "attained_lower_bound": 0.026872453544286197,
-          "attained_retention_ratio": 2.6872453544286197,
           "dominant_source": "attitude"
         },
         "velocity": {
-          "prefix_index": 1630,
+          "certified_prefix_index": 1630,
+          "attained_prefix_index": 1630,
           "declared_radius": 5.0,
           "certified_upper_bound": 176.78993521497165,
+          "attained_lower_bound": 175.59758252253565,
           "certified_retention_ratio": 35.35798704299433,
+          "attained_retention_ratio": 35.11951650450713,
           "source_contributions": {
             "attitude": 4.775754031997597,
             "gyro_bias": 0.10178969893910195,
@@ -92,15 +97,16 @@
             "accelerometer_bias": 0.577790202570159,
             "forcing_template": 0.234949598508478
           },
-          "attained_lower_bound": 175.59758252253562,
-          "attained_retention_ratio": 35.119516504507125,
           "dominant_source": "integral_displacement"
         },
         "position": {
-          "prefix_index": 424,
+          "certified_prefix_index": 424,
+          "attained_prefix_index": 402,
           "declared_radius": 20.0,
           "certified_upper_bound": 395.1165343615654,
+          "attained_lower_bound": 392.9922694195101,
           "certified_retention_ratio": 19.75582671807827,
+          "attained_retention_ratio": 19.649613470975503,
           "source_contributions": {
             "attitude": 0.5174035299704406,
             "gyro_bias": 0.0032981114371734926,
@@ -111,15 +117,16 @@
             "accelerometer_bias": 0.045078968200585684,
             "forcing_template": 0.1677829225365207
           },
-          "attained_lower_bound": 392.9157010409571,
-          "attained_retention_ratio": 19.645785052047856,
           "dominant_source": "integral_displacement"
         },
         "integral_displacement": {
-          "prefix_index": 14,
+          "certified_prefix_index": 14,
+          "attained_prefix_index": 14,
           "declared_radius": 300.0,
           "certified_upper_bound": 300.4439223554751,
+          "attained_lower_bound": 300.44387815405736,
           "certified_retention_ratio": 1.001479741184917,
+          "attained_retention_ratio": 1.001479593846858,
           "source_contributions": {
             "attitude": 0.02716020176628568,
             "gyro_bias": 6.941408661302099e-06,
@@ -130,15 +137,16 @@
             "accelerometer_bias": 0.0018943059342672573,
             "forcing_template": 3.065176614226413e-05
           },
-          "attained_lower_bound": 300.44387815405736,
-          "attained_retention_ratio": 1.001479593846858,
           "dominant_source": "integral_displacement"
         },
         "latent_acceleration": {
-          "prefix_index": 1499,
+          "certified_prefix_index": 1499,
+          "attained_prefix_index": 1499,
           "declared_radius": 2.941995,
           "certified_upper_bound": 23.470612592889776,
+          "attained_lower_bound": 23.399388100215187,
           "certified_retention_ratio": 7.977788063164545,
+          "attained_retention_ratio": 7.953578473184077,
           "source_contributions": {
             "attitude": 3.6359065083187088,
             "gyro_bias": 0.14269857184049248,
@@ -149,15 +157,16 @@
             "accelerometer_bias": 0.39970347868989015,
             "forcing_template": 0.010082532755032481
           },
-          "attained_lower_bound": 23.399388100215187,
-          "attained_retention_ratio": 7.953578473184077,
           "dominant_source": "integral_displacement"
         },
         "accelerometer_bias": {
-          "prefix_index": 0,
+          "certified_prefix_index": 0,
+          "attained_prefix_index": 16,
           "declared_radius": 0.4,
           "certified_upper_bound": 0.4,
+          "attained_lower_bound": 0.40000000000000013,
           "certified_retention_ratio": 1.0,
+          "attained_retention_ratio": 1.0000000000000002,
           "source_contributions": {
             "attitude": 0.0,
             "gyro_bias": 0.0,
@@ -168,110 +177,118 @@
             "accelerometer_bias": 0.4,
             "forcing_template": 0.0
           },
-          "attained_lower_bound": 0.40000000000000013,
-          "attained_retention_ratio": 1.0000000000000002,
           "dominant_source": "accelerometer_bias"
         }
       },
       "bias_ball_and_template_only": {
         "attitude": {
-          "prefix_index": 2592,
+          "certified_prefix_index": 2592,
+          "attained_prefix_index": 2583,
           "declared_radius": 0.5358983848622454,
           "certified_upper_bound": 0.03765670124510711,
+          "attained_lower_bound": 0.03752095176105174,
           "certified_retention_ratio": 0.07026836114609097,
+          "attained_retention_ratio": 0.07001504916029302,
           "source_contributions": {
             "accelerometer_bias": 0.03559324389201101,
             "forcing_template": 0.0020634573530961017
           },
-          "attained_lower_bound": 0.037515591313175146,
-          "attained_retention_ratio": 0.07000504642837964,
           "dominant_source": "accelerometer_bias"
         },
         "gyro_bias": {
-          "prefix_index": 2592,
+          "certified_prefix_index": 2592,
+          "attained_prefix_index": 2592,
           "declared_radius": 0.01,
           "certified_upper_bound": 0.00010057614083350701,
+          "attained_lower_bound": 8.119308403319339e-05,
           "certified_retention_ratio": 0.0100576140833507,
+          "attained_retention_ratio": 0.008119308403319338,
           "source_contributions": {
             "accelerometer_bias": 4.805847786906809e-05,
             "forcing_template": 5.251766296443893e-05
           },
-          "attained_lower_bound": 8.119308403319339e-05,
-          "attained_retention_ratio": 0.008119308403319338,
           "dominant_source": "forcing_template"
         },
         "velocity": {
-          "prefix_index": 2088,
+          "certified_prefix_index": 2088,
+          "attained_prefix_index": 2088,
           "declared_radius": 5.0,
           "certified_upper_bound": 0.8567001659336374,
+          "attained_lower_bound": 0.8563572780575176,
           "certified_retention_ratio": 0.17134003318672747,
+          "attained_retention_ratio": 0.17127145561150353,
           "source_contributions": {
             "accelerometer_bias": 0.6738242886847123,
             "forcing_template": 0.1828758772489251
           },
-          "attained_lower_bound": 0.8563572780575176,
-          "attained_retention_ratio": 0.17127145561150353,
           "dominant_source": "accelerometer_bias"
         },
         "position": {
-          "prefix_index": 2153,
+          "certified_prefix_index": 2153,
+          "attained_prefix_index": 2153,
           "declared_radius": 20.0,
           "certified_upper_bound": 0.8875600458350883,
+          "attained_lower_bound": 0.887240428557375,
           "certified_retention_ratio": 0.04437800229175441,
+          "attained_retention_ratio": 0.04436202142786875,
           "source_contributions": {
             "accelerometer_bias": 0.47219097669727134,
             "forcing_template": 0.4153690691378169
           },
-          "attained_lower_bound": 0.887240428557375,
-          "attained_retention_ratio": 0.04436202142786875,
           "dominant_source": "accelerometer_bias"
         },
         "integral_displacement": {
-          "prefix_index": 2347,
+          "certified_prefix_index": 2347,
+          "attained_prefix_index": 2347,
           "declared_radius": 300.0,
           "certified_upper_bound": 0.6009318138878912,
+          "attained_lower_bound": 0.6003147863917434,
           "certified_retention_ratio": 0.0020031060462929705,
+          "attained_retention_ratio": 0.002001049287972478,
           "source_contributions": {
             "accelerometer_bias": 0.1575959013724183,
             "forcing_template": 0.44333591251547294
           },
-          "attained_lower_bound": 0.6003147863917434,
-          "attained_retention_ratio": 0.002001049287972478,
           "dominant_source": "forcing_template"
         },
         "latent_acceleration": {
-          "prefix_index": 670,
+          "certified_prefix_index": 670,
+          "attained_prefix_index": 2581,
           "declared_radius": 2.941995,
           "certified_upper_bound": 0.42112746163132936,
+          "attained_lower_bound": 0.4130213194305989,
           "certified_retention_ratio": 0.143143500118569,
+          "attained_retention_ratio": 0.14038817857630584,
           "source_contributions": {
             "accelerometer_bias": 0.3986145697182901,
             "forcing_template": 0.022512891913039228
           },
-          "attained_lower_bound": 0.40998109167408275,
-          "attained_retention_ratio": 0.13935478873148416,
           "dominant_source": "accelerometer_bias"
         },
         "accelerometer_bias": {
-          "prefix_index": 0,
+          "certified_prefix_index": 0,
+          "attained_prefix_index": 16,
           "declared_radius": 0.4,
           "certified_upper_bound": 0.4,
+          "attained_lower_bound": 0.40000000000000013,
           "certified_retention_ratio": 1.0,
+          "attained_retention_ratio": 1.0000000000000002,
           "source_contributions": {
             "accelerometer_bias": 0.4,
             "forcing_template": 0.0
           },
-          "attained_lower_bound": 0.40000000000000013,
-          "attained_retention_ratio": 1.0000000000000002,
           "dominant_source": "accelerometer_bias"
         }
       },
       "declared_set_without_integral_displacement_ball": {
         "attitude": {
-          "prefix_index": 2590,
+          "certified_prefix_index": 2590,
+          "attained_prefix_index": 2590,
           "declared_radius": 0.5358983848622454,
           "certified_upper_bound": 0.9410618890746134,
+          "attained_lower_bound": 0.9381187984331928,
           "certified_retention_ratio": 1.756045391546602,
+          "attained_retention_ratio": 1.750553509644071,
           "source_contributions": {
             "attitude": 0.34935475930587834,
             "gyro_bias": 0.02583826363493566,
@@ -281,15 +298,16 @@
             "accelerometer_bias": 0.035588575330231485,
             "forcing_template": 0.002067586166449372
           },
-          "attained_lower_bound": 0.9381187984331928,
-          "attained_retention_ratio": 1.750553509644071,
           "dominant_source": "position"
         },
         "gyro_bias": {
-          "prefix_index": 2592,
+          "certified_prefix_index": 2592,
+          "attained_prefix_index": 2592,
           "declared_radius": 0.01,
           "certified_upper_bound": 0.02314882326945233,
+          "attained_lower_bound": 0.022178511053777036,
           "certified_retention_ratio": 2.314882326945233,
+          "attained_retention_ratio": 2.2178511053777035,
           "source_contributions": {
             "attitude": 0.012507286432220766,
             "gyro_bias": 0.00999325814695519,
@@ -299,15 +317,16 @@
             "accelerometer_bias": 4.805847786906809e-05,
             "forcing_template": 5.251766296443893e-05
           },
-          "attained_lower_bound": 0.022178511053777036,
-          "attained_retention_ratio": 2.2178511053777035,
           "dominant_source": "attitude"
         },
         "velocity": {
-          "prefix_index": 1063,
+          "certified_prefix_index": 1063,
+          "attained_prefix_index": 1063,
           "declared_radius": 5.0,
           "certified_upper_bound": 20.163420369882797,
+          "attained_lower_bound": 19.283192925621417,
           "certified_retention_ratio": 4.03268407397656,
+          "attained_retention_ratio": 3.8566385851242835,
           "source_contributions": {
             "attitude": 3.6074947683043828,
             "gyro_bias": 0.04131058343005546,
@@ -317,15 +336,16 @@
             "accelerometer_bias": 0.4371736922728678,
             "forcing_template": 0.13955955102420534
           },
-          "attained_lower_bound": 19.283192925621414,
-          "attained_retention_ratio": 3.8566385851242826,
           "dominant_source": "position"
         },
         "position": {
-          "prefix_index": 61,
+          "certified_prefix_index": 61,
+          "attained_prefix_index": 61,
           "declared_radius": 20.0,
           "certified_upper_bound": 20.530743342028067,
+          "attained_lower_bound": 20.468804578819014,
           "certified_retention_ratio": 1.0265371671014034,
+          "attained_retention_ratio": 1.0234402289409508,
           "source_contributions": {
             "attitude": 0.2056888866900092,
             "gyro_bias": 0.000273928927958508,
@@ -335,15 +355,16 @@
             "accelerometer_bias": 0.012402668742096197,
             "forcing_template": 0.04203134444970929
           },
-          "attained_lower_bound": 20.468804578819014,
-          "attained_retention_ratio": 1.0234402289409508,
           "dominant_source": "position"
         },
         "integral_displacement": {
-          "prefix_index": 493,
+          "certified_prefix_index": 493,
+          "attained_prefix_index": 493,
           "declared_radius": 300.0,
           "certified_upper_bound": 4.635447672467242,
+          "attained_lower_bound": 4.442411939589791,
           "certified_retention_ratio": 0.015451492241557473,
+          "attained_retention_ratio": 0.014808039798632636,
           "source_contributions": {
             "attitude": 0.17775309052629007,
             "gyro_bias": 0.0011957945843686095,
@@ -353,15 +374,16 @@
             "accelerometer_bias": 0.007942942776403015,
             "forcing_template": 0.16758302169584502
           },
-          "attained_lower_bound": 4.44241193958979,
-          "attained_retention_ratio": 0.014808039798632633,
           "dominant_source": "position"
         },
         "latent_acceleration": {
-          "prefix_index": 936,
+          "certified_prefix_index": 936,
+          "attained_prefix_index": 936,
           "declared_radius": 2.941995,
           "certified_upper_bound": 5.692782990655398,
+          "attained_lower_bound": 5.640606684283732,
           "certified_retention_ratio": 1.9350077041787623,
+          "attained_retention_ratio": 1.9172726956652653,
           "source_contributions": {
             "attitude": 4.14265053623247,
             "gyro_bias": 0.093673971518763,
@@ -371,15 +393,16 @@
             "accelerometer_bias": 0.39966763461178595,
             "forcing_template": 0.020002739785890754
           },
-          "attained_lower_bound": 5.640606684283732,
-          "attained_retention_ratio": 1.9172726956652653,
           "dominant_source": "attitude"
         },
         "accelerometer_bias": {
-          "prefix_index": 0,
+          "certified_prefix_index": 0,
+          "attained_prefix_index": 16,
           "declared_radius": 0.4,
           "certified_upper_bound": 0.4,
+          "attained_lower_bound": 0.40000000000000013,
           "certified_retention_ratio": 1.0,
+          "attained_retention_ratio": 1.0000000000000002,
           "source_contributions": {
             "attitude": 0.0,
             "gyro_bias": 0.0,
@@ -389,8 +412,6 @@
             "accelerometer_bias": 0.4,
             "forcing_template": 0.0
           },
-          "attained_lower_bound": 0.40000000000000013,
-          "attained_retention_ratio": 1.0000000000000002,
           "dominant_source": "accelerometer_bias"
         }
       },
@@ -398,8 +419,8 @@
       "limiting_certified_retention_ratio": 35.35798704299433,
       "largest_retained_similar_box_fraction": 0.028282153019175773,
       "declared_domain_retained": false,
+      "violation_margin": 1e-09,
       "definitely_violated_groups": [
-        "accelerometer_bias",
         "attitude",
         "gyro_bias",
         "integral_displacement",
@@ -433,10 +454,13 @@
       "P4_PASS": false,
       "full_declared_initial_set": {
         "attitude": {
-          "prefix_index": 1894,
+          "certified_prefix_index": 1894,
+          "attained_prefix_index": 1894,
           "declared_radius": 0.5358983848622454,
           "certified_upper_bound": 0.9378923248187069,
+          "attained_lower_bound": 0.9344894790635635,
           "certified_retention_ratio": 1.7501309041261535,
+          "attained_retention_ratio": 1.7437811075018959,
           "source_contributions": {
             "attitude": 0.5549471980851408,
             "gyro_bias": 0.02243011721392135,
@@ -447,15 +471,16 @@
             "accelerometer_bias": 0.00036937338794170316,
             "forcing_template": 0.0011837698715053725
           },
-          "attained_lower_bound": 0.9344894790635635,
-          "attained_retention_ratio": 1.7437811075018959,
           "dominant_source": "attitude"
         },
         "gyro_bias": {
-          "prefix_index": 1785,
+          "certified_prefix_index": 1785,
+          "attained_prefix_index": 1720,
           "declared_radius": 0.01,
           "certified_upper_bound": 0.024442688701239047,
+          "attained_lower_bound": 0.02334556456911705,
           "certified_retention_ratio": 2.4442688701239046,
+          "attained_retention_ratio": 2.334556456911705,
           "source_contributions": {
             "attitude": 0.0012723037255975586,
             "gyro_bias": 0.010004264513207708,
@@ -466,15 +491,16 @@
             "accelerometer_bias": 1.1376498077014153e-05,
             "forcing_template": 6.308915521614147e-06
           },
-          "attained_lower_bound": 0.023336630002006472,
-          "attained_retention_ratio": 2.333663000200647,
           "dominant_source": "integral_displacement"
         },
         "velocity": {
-          "prefix_index": 2545,
+          "certified_prefix_index": 2545,
+          "attained_prefix_index": 2463,
           "declared_radius": 5.0,
           "certified_upper_bound": 46.78605488526979,
+          "attained_lower_bound": 46.02228123872492,
           "certified_retention_ratio": 9.357210977053958,
+          "attained_retention_ratio": 9.204456247744984,
           "source_contributions": {
             "attitude": 14.500625465227369,
             "gyro_bias": 0.40251152220719527,
@@ -485,15 +511,16 @@
             "accelerometer_bias": 1.1586030827281464,
             "forcing_template": 0.023607874360198306
           },
-          "attained_lower_bound": 45.97015862171942,
-          "attained_retention_ratio": 9.194031724343883,
           "dominant_source": "integral_displacement"
         },
         "position": {
-          "prefix_index": 2545,
+          "certified_prefix_index": 2545,
+          "attained_prefix_index": 2356,
           "declared_radius": 20.0,
           "certified_upper_bound": 160.82848062743417,
+          "attained_lower_bound": 150.87613694040272,
           "certified_retention_ratio": 8.041424031371708,
+          "attained_retention_ratio": 7.543806847020136,
           "source_contributions": {
             "attitude": 19.271832941664158,
             "gyro_bias": 0.36229714422059695,
@@ -504,15 +531,16 @@
             "accelerometer_bias": 1.6001664538114324,
             "forcing_template": 0.06518836157417014
           },
-          "attained_lower_bound": 150.32063117455513,
-          "attained_retention_ratio": 7.516031558727756,
           "dominant_source": "integral_displacement"
         },
         "integral_displacement": {
-          "prefix_index": 22,
+          "certified_prefix_index": 22,
+          "attained_prefix_index": 22,
           "declared_radius": 300.0,
           "certified_upper_bound": 300.6225391350125,
+          "attained_lower_bound": 300.62248032919393,
           "certified_retention_ratio": 1.0020751304500417,
+          "attained_retention_ratio": 1.0020749344306465,
           "source_contributions": {
             "attitude": 0.017336953865976598,
             "gyro_bias": 3.3340895399140843e-06,
@@ -523,15 +551,16 @@
             "accelerometer_bias": 0.0003482280415950973,
             "forcing_template": 5.14461783853786e-05
           },
-          "attained_lower_bound": 300.62248032919393,
-          "attained_retention_ratio": 1.0020749344306465,
           "dominant_source": "integral_displacement"
         },
         "latent_acceleration": {
-          "prefix_index": 1579,
+          "certified_prefix_index": 1579,
+          "attained_prefix_index": 1579,
           "declared_radius": 2.941995,
           "certified_upper_bound": 8.770301527839797,
+          "attained_lower_bound": 8.768329132405738,
           "certified_retention_ratio": 2.981072886881112,
+          "attained_retention_ratio": 2.9804024590136073,
           "source_contributions": {
             "attitude": 4.9719999027351784,
             "gyro_bias": 0.17226659457196875,
@@ -542,15 +571,16 @@
             "accelerometer_bias": 0.3995712435417391,
             "forcing_template": 0.009677281983715938
           },
-          "attained_lower_bound": 8.768329132405738,
-          "attained_retention_ratio": 2.9804024590136073,
           "dominant_source": "attitude"
         },
         "accelerometer_bias": {
-          "prefix_index": 2548,
+          "certified_prefix_index": 2548,
+          "attained_prefix_index": 2547,
           "declared_radius": 0.4,
           "certified_upper_bound": 1.2397712296067234,
+          "attained_lower_bound": 1.1616096072574282,
           "certified_retention_ratio": 3.0994280740168083,
+          "attained_retention_ratio": 2.9040240181435704,
           "source_contributions": {
             "attitude": 0.07978076845247317,
             "gyro_bias": 0.0023235554892452022,
@@ -561,110 +591,118 @@
             "accelerometer_bias": 0.3994934053050241,
             "forcing_template": 0.00039795240215106383
           },
-          "attained_lower_bound": 1.1616095767084007,
-          "attained_retention_ratio": 2.9040239417710016,
           "dominant_source": "integral_displacement"
         }
       },
       "bias_ball_and_template_only": {
         "attitude": {
-          "prefix_index": 2548,
+          "certified_prefix_index": 2548,
+          "attained_prefix_index": 2547,
           "declared_radius": 0.5358983848622454,
           "certified_upper_bound": 0.0022171827438663373,
+          "attained_lower_bound": 0.002114151520274288,
           "certified_retention_ratio": 0.004137319324887072,
+          "attained_retention_ratio": 0.003945060444281313,
           "source_contributions": {
             "accelerometer_bias": 0.001119073349122814,
             "forcing_template": 0.0010981093947435233
           },
-          "attained_lower_bound": 0.0021141436325100814,
-          "attained_retention_ratio": 0.003945045725512924,
           "dominant_source": "accelerometer_bias"
         },
         "gyro_bias": {
-          "prefix_index": 2568,
+          "certified_prefix_index": 2568,
+          "attained_prefix_index": 2568,
           "declared_radius": 0.01,
           "certified_upper_bound": 4.5467280074998706e-05,
+          "attained_lower_bound": 4.359413179728375e-05,
           "certified_retention_ratio": 0.00454672800749987,
+          "attained_retention_ratio": 0.004359413179728375,
           "source_contributions": {
             "accelerometer_bias": 4.094608620749911e-05,
             "forcing_template": 4.521193867499598e-06
           },
-          "attained_lower_bound": 4.359413179728375e-05,
-          "attained_retention_ratio": 0.004359413179728375,
           "dominant_source": "accelerometer_bias"
         },
         "velocity": {
-          "prefix_index": 2568,
+          "certified_prefix_index": 2568,
+          "attained_prefix_index": 2568,
           "declared_radius": 5.0,
           "certified_upper_bound": 1.1911144295758629,
+          "attained_lower_bound": 1.1758936384159624,
           "certified_retention_ratio": 0.23822288591517257,
+          "attained_retention_ratio": 0.23517872768319248,
           "source_contributions": {
             "accelerometer_bias": 1.1675759855320649,
             "forcing_template": 0.023538444043798016
           },
-          "attained_lower_bound": 1.1758936384159624,
-          "attained_retention_ratio": 0.23517872768319248,
           "dominant_source": "accelerometer_bias"
         },
         "position": {
-          "prefix_index": 2566,
+          "certified_prefix_index": 2566,
+          "attained_prefix_index": 2566,
           "declared_radius": 20.0,
           "certified_upper_bound": 1.6881409594223737,
+          "attained_lower_bound": 1.6658851641811174,
           "certified_retention_ratio": 0.08440704797111868,
+          "attained_retention_ratio": 0.08329425820905587,
           "source_contributions": {
             "accelerometer_bias": 1.6236605199296514,
             "forcing_template": 0.06448043949272224
           },
-          "attained_lower_bound": 1.6658851641811174,
-          "attained_retention_ratio": 0.08329425820905587,
           "dominant_source": "accelerometer_bias"
         },
         "integral_displacement": {
-          "prefix_index": 2566,
+          "certified_prefix_index": 2566,
+          "attained_prefix_index": 2566,
           "declared_radius": 300.0,
           "certified_upper_bound": 1.3775269950465199,
+          "attained_lower_bound": 1.3402973510248015,
           "certified_retention_ratio": 0.004591756650155066,
+          "attained_retention_ratio": 0.004467657836749338,
           "source_contributions": {
             "accelerometer_bias": 1.1733709177286868,
             "forcing_template": 0.20415607731783303
           },
-          "attained_lower_bound": 1.3402973510248015,
-          "attained_retention_ratio": 0.004467657836749338,
           "dominant_source": "accelerometer_bias"
         },
         "latent_acceleration": {
-          "prefix_index": 675,
+          "certified_prefix_index": 675,
+          "attained_prefix_index": 675,
           "declared_radius": 2.941995,
           "certified_upper_bound": 0.4109590573731051,
+          "attained_lower_bound": 0.4109411381741785,
           "certified_retention_ratio": 0.1396872045578273,
+          "attained_retention_ratio": 0.13968111372527095,
           "source_contributions": {
             "accelerometer_bias": 0.3987415362296372,
             "forcing_template": 0.012217521143467941
           },
-          "attained_lower_bound": 0.4109411381741785,
-          "attained_retention_ratio": 0.13968111372527095,
           "dominant_source": "accelerometer_bias"
         },
         "accelerometer_bias": {
-          "prefix_index": 350,
+          "certified_prefix_index": 350,
+          "attained_prefix_index": 382,
           "declared_radius": 0.4,
           "certified_upper_bound": 0.40017243330734337,
+          "attained_lower_bound": 0.4001258549461477,
           "certified_retention_ratio": 1.0004310832683583,
+          "attained_retention_ratio": 1.0003146373653693,
           "source_contributions": {
             "accelerometer_bias": 0.4000187294353027,
             "forcing_template": 0.00015370387204065682
           },
-          "attained_lower_bound": 0.4001204492037603,
-          "attained_retention_ratio": 1.0003011230094006,
           "dominant_source": "accelerometer_bias"
         }
       },
       "declared_set_without_integral_displacement_ball": {
         "attitude": {
-          "prefix_index": 2566,
+          "certified_prefix_index": 2566,
+          "attained_prefix_index": 2566,
           "declared_radius": 0.5358983848622454,
           "certified_upper_bound": 0.6536904012283338,
+          "attained_lower_bound": 0.6515508695335994,
           "certified_retention_ratio": 1.2198028949021134,
+          "attained_retention_ratio": 1.215810474407537,
           "source_contributions": {
             "attitude": 0.5545715864550739,
             "gyro_bias": 0.030545352423326393,
@@ -674,15 +712,16 @@
             "accelerometer_bias": 0.0011201301335692195,
             "forcing_template": 0.0010852803073116183
           },
-          "attained_lower_bound": 0.6515508695335994,
-          "attained_retention_ratio": 1.215810474407537,
           "dominant_source": "attitude"
         },
         "gyro_bias": {
-          "prefix_index": 2568,
+          "certified_prefix_index": 2568,
+          "attained_prefix_index": 2568,
           "declared_radius": 0.01,
           "certified_upper_bound": 0.014282812728462508,
+          "attained_lower_bound": 0.01337967073410545,
           "certified_retention_ratio": 1.4282812728462508,
+          "attained_retention_ratio": 1.3379670734105449,
           "source_contributions": {
             "attitude": 0.001815491421825636,
             "gyro_bias": 0.010006392883746646,
@@ -692,15 +731,16 @@
             "accelerometer_bias": 4.094608620749911e-05,
             "forcing_template": 4.521193867499598e-06
           },
-          "attained_lower_bound": 0.01337967073410545,
-          "attained_retention_ratio": 1.3379670734105449,
           "dominant_source": "gyro_bias"
         },
         "velocity": {
-          "prefix_index": 2568,
+          "certified_prefix_index": 2568,
+          "attained_prefix_index": 2568,
           "declared_radius": 5.0,
           "certified_upper_bound": 24.60288720042917,
+          "attained_lower_bound": 23.767366680751927,
           "certified_retention_ratio": 4.920577440085834,
+          "attained_retention_ratio": 4.753473336150385,
           "source_contributions": {
             "attitude": 14.589093425087698,
             "gyro_bias": 0.40901906353852857,
@@ -710,15 +750,16 @@
             "accelerometer_bias": 1.1675759855320649,
             "forcing_template": 0.023538444043798016
           },
-          "attained_lower_bound": 23.767366680751927,
-          "attained_retention_ratio": 4.753473336150385,
           "dominant_source": "attitude"
         },
         "position": {
-          "prefix_index": 2566,
+          "certified_prefix_index": 2566,
+          "attained_prefix_index": 2566,
           "declared_radius": 20.0,
           "certified_upper_bound": 44.72922963212351,
+          "attained_lower_bound": 35.27364651488631,
           "certified_retention_ratio": 2.2364614816061756,
+          "attained_retention_ratio": 1.7636823257443155,
           "source_contributions": {
             "attitude": 19.500947411138956,
             "gyro_bias": 0.3704719177971279,
@@ -728,15 +769,16 @@
             "accelerometer_bias": 1.6236605199296514,
             "forcing_template": 0.06448043949272224
           },
-          "attained_lower_bound": 35.27364651488631,
-          "attained_retention_ratio": 1.7636823257443155,
           "dominant_source": "attitude"
         },
         "integral_displacement": {
-          "prefix_index": 2566,
+          "certified_prefix_index": 2566,
+          "attained_prefix_index": 2566,
           "declared_radius": 300.0,
           "certified_upper_bound": 49.40502347074139,
+          "attained_lower_bound": 39.95005246763935,
           "certified_retention_ratio": 0.16468341156913796,
+          "attained_retention_ratio": 0.13316684155879785,
           "source_contributions": {
             "attitude": 12.32806576958829,
             "gyro_bias": 0.18191630357216926,
@@ -746,15 +788,16 @@
             "accelerometer_bias": 1.1733709177286868,
             "forcing_template": 0.20415607731783303
           },
-          "attained_lower_bound": 39.95005246763935,
-          "attained_retention_ratio": 0.13316684155879785,
           "dominant_source": "position"
         },
         "latent_acceleration": {
-          "prefix_index": 140,
+          "certified_prefix_index": 140,
+          "attained_prefix_index": 140,
           "declared_radius": 2.941995,
           "certified_upper_bound": 6.47004577679834,
+          "attained_lower_bound": 6.4684437455127455,
           "certified_retention_ratio": 2.199203525770214,
+          "attained_retention_ratio": 2.198658986678341,
           "source_contributions": {
             "attitude": 6.044544128836773,
             "gyro_bias": 0.018611724456208716,
@@ -764,15 +807,16 @@
             "accelerometer_bias": 0.3999816424861009,
             "forcing_template": 0.0021270368094306945
           },
-          "attained_lower_bound": 6.4684437363232385,
-          "attained_retention_ratio": 2.198658983554778,
           "dominant_source": "attitude"
         },
         "accelerometer_bias": {
-          "prefix_index": 2548,
+          "certified_prefix_index": 2548,
+          "attained_prefix_index": 2547,
           "declared_radius": 0.4,
           "certified_upper_bound": 0.6019515277723714,
+          "attained_lower_bound": 0.5455926009185662,
           "certified_retention_ratio": 1.5048788194309284,
+          "attained_retention_ratio": 1.3639815022964155,
           "source_contributions": {
             "attitude": 0.07978076845247317,
             "gyro_bias": 0.0023235554892452022,
@@ -782,8 +826,6 @@
             "accelerometer_bias": 0.3994934053050241,
             "forcing_template": 0.00039795240215106383
           },
-          "attained_lower_bound": 0.5455925897289128,
-          "attained_retention_ratio": 1.3639814743222818,
           "dominant_source": "accelerometer_bias"
         }
       },
@@ -791,6 +833,7 @@
       "limiting_certified_retention_ratio": 9.357210977053958,
       "largest_retained_similar_box_fraction": 0.10686945099904564,
       "declared_domain_retained": false,
+      "violation_margin": 1e-09,
       "definitely_violated_groups": [
         "accelerometer_bias",
         "attitude",

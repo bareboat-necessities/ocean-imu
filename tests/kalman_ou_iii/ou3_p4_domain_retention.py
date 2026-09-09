@@ -38,6 +38,11 @@ import ou3_p4_storage_routes as R
 REPO = Path(__file__).resolve().parents[2]
 DOMAIN = REPO / "tools/stability/ou3_proof_operating_domain.json"
 
+# One relative margin for both the enclosure check and the violation
+# classification. A group whose attained bound sits within it of its declared
+# radius is at the boundary in binary64, not demonstrably outside it.
+MARGIN = 1e-9
+
 # The 21 error coordinates in their declared physical groups. Offsets follow
 # Kalman3D_Wave_OU_III: attitude, gyro bias, v, p, S, latent a_w, accel bias.
 GROUPS = (
@@ -104,6 +109,52 @@ def attained_lower_bound(blocks, radii, forcing, restarts=24, iterations=400):
     return float(best)
 
 
+def stacked_blocks(transitions, responses, offset, active):
+    """Every prefix's row block and forcing for one output group."""
+    rows = slice(offset, offset+3)
+    names = [name for name, _, _ in GROUPS if active[name] > 0]
+    blocks = np.stack([np.stack([transition[rows, start:start+3]
+                                 for name, start, _ in GROUPS if active[name] > 0])
+                       for transition in transitions])
+    weights = np.array([active[name] for name in names])
+    forcing = np.stack([response[rows] for response in responses])
+    return blocks, weights, forcing
+
+
+def attained_every_prefix(blocks, weights, forcing, restarts=6, iterations=120):
+    """The same functional as `attained_lower_bound`, at every prefix at once.
+
+    Selecting only the prefix with the largest certified bound can miss a
+    prefix whose attained bound is larger, and it is the attained bound that
+    demonstrates a violation. This runs the fixed point on every prefix so the
+    reported maximum is over all of them.
+    """
+    rng = np.random.default_rng(20260908)
+    count = len(forcing)
+    fallback = np.tile(np.array([1., 0., 0.]), (count, 1))
+    starts = [forcing] + [np.tile(axis, (count, 1)) for axis in np.eye(3)]
+    starts += [rng.normal(size=(count, 3)) for _ in range(restarts)]
+    best = np.zeros(count)
+    for start in starts:
+        u = np.array(start, dtype=float)
+        norm = np.linalg.norm(u, axis=1, keepdims=True)
+        u = np.where(norm > 0, u/np.where(norm > 0, norm, 1.), fallback)
+        for _ in range(iterations):
+            projected = np.einsum("pgji,pj->pgi", blocks, u)
+            norms = np.linalg.norm(projected, axis=2, keepdims=True)
+            unit = np.divide(projected, norms, out=np.zeros_like(projected),
+                             where=norms > 0)
+            gradient = np.einsum("g,pgij,pgj->pi", weights, blocks, unit)
+            sign = np.sign(np.einsum("pi,pi->p", u, forcing))
+            gradient = gradient + forcing*np.where(sign == 0, 1., sign)[:, None]
+            norm = np.linalg.norm(gradient, axis=1, keepdims=True)
+            u = np.where(norm > 0, gradient/np.where(norm > 0, norm, 1.), u)
+        projected = np.einsum("pgji,pj->pgi", blocks, u)
+        value = np.einsum("g,pg->p", weights, np.linalg.norm(projected, axis=2))
+        best = np.maximum(best, value + np.abs(np.einsum("pi,pi->p", u, forcing)))
+    return best
+
+
 def source_contributions(blocks, radii, forcing):
     """Per-source share of the subadditive bound, in the output group's unit."""
     shares = {name: radii[name]*float(np.linalg.norm(block, 2))
@@ -118,37 +169,51 @@ def certified_upper_bound(blocks, radii, forcing):
 
 
 def retention(transitions, responses, radii, keep=None):
-    """Per-group retention of the declared domain at every prefix.
+    """Per-group retention of the declared domain over every prefix.
 
-    The subadditive bound is evaluated at every prefix; the attained
-    functional, which is the expensive half, is evaluated at the prefix that
-    bound selects, so both numbers describe the same prefix.
+    The certified bound answers retention and the attained bound answers
+    violation, and the two are maximized over the prefixes independently: the
+    prefix that reaches furthest need not be the prefix whose subadditive
+    bound is loosest. Each is reported with the prefix that attains it.
     """
     active = {name: (radii[name] if keep is None or name in keep else 0.)
               for name, _, _ in GROUPS}
-    worst = {}
-    for index, (transition, response) in enumerate(zip(transitions, responses, strict=True)):
-        for name, offset, _ in GROUPS:
-            rows = slice(offset, offset+3)
-            blocks = {source: transition[rows, slice(start, start+3)]
-                      for source, start, _ in GROUPS if active[source] > 0}
-            upper = certified_upper_bound(blocks, active, response[rows])
-            if name not in worst or upper > worst[name]["certified_upper_bound"]:
-                worst[name] = {"prefix_index": index, "declared_radius": radii[name],
-                               "certified_upper_bound": upper,
-                               "certified_retention_ratio": upper/radii[name],
-                               "source_contributions": source_contributions(
-                                   blocks, active, response[rows]),
-                               "blocks": blocks, "forcing": response[rows].copy()}
-    for name, item in worst.items():
-        lower = attained_lower_bound(item.pop("blocks"), active, item.pop("forcing"))
-        if lower > item["certified_upper_bound"]*(1+1e-9):
+    result = {}
+    for name, offset, _ in GROUPS:
+        blocks, weights, forcing = stacked_blocks(transitions, responses, offset, active)
+        certified = (np.einsum("g,pg->p", weights, np.linalg.svd(blocks, compute_uv=False)[..., 0])
+                     + np.linalg.norm(forcing, axis=1))
+        certified_at = int(np.argmax(certified))
+        attained = attained_every_prefix(blocks, weights, forcing)
+        # Refine with the multi-restart search at the two prefixes that can
+        # carry the maximum, so the reported value is never below the coarse
+        # sweep and the certified prefix is always evaluated.
+        attained_at = int(np.argmax(attained))
+        best = float(attained[attained_at])
+        for index in {attained_at, certified_at}:
+            named = {source: transitions[index][offset:offset+3, start:start+3]
+                     for source, start, _ in GROUPS if active[source] > 0}
+            refined = attained_lower_bound(named, active, responses[index][offset:offset+3])
+            if refined > best:
+                best, attained_at = refined, index
+        upper = float(certified[certified_at])
+        if best > upper*(1+MARGIN):
             raise ValueError("attained bound exceeded its certified enclosure: "+name)
-        item["attained_lower_bound"] = lower
-        item["attained_retention_ratio"] = lower/item["declared_radius"]
-        item["dominant_source"] = max(item["source_contributions"],
-                                      key=item["source_contributions"].get)
-    return worst
+        named = {source: transitions[certified_at][offset:offset+3, start:start+3]
+                 for source, start, _ in GROUPS if active[source] > 0}
+        result[name] = {
+            "certified_prefix_index": certified_at,
+            "attained_prefix_index": attained_at,
+            "declared_radius": radii[name],
+            "certified_upper_bound": upper,
+            "attained_lower_bound": best,
+            "certified_retention_ratio": upper/radii[name],
+            "attained_retention_ratio": best/radii[name],
+            "source_contributions": source_contributions(
+                named, active, responses[certified_at][offset:offset+3])}
+        result[name]["dominant_source"] = max(result[name]["source_contributions"],
+                                              key=result[name]["source_contributions"].get)
+    return result
 
 
 def audit_mode(root, rows, points, mode):
@@ -188,8 +253,10 @@ def audit_mode(root, rows, points, mode):
         "largest_retained_similar_box_fraction": 1./ratio,
         "declared_domain_retained": all(
             item["certified_retention_ratio"] <= 1. for item in full.values()),
+        "violation_margin": MARGIN,
         "definitely_violated_groups": sorted(
-            name for name, item in full.items() if item["attained_retention_ratio"] > 1.)})
+            name for name, item in full.items()
+            if item["attained_retention_ratio"] > 1.+MARGIN)})
     return result
 
 

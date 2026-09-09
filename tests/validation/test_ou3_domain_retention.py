@@ -65,7 +65,43 @@ class DomainRetentionTests(unittest.TestCase):
         for name, item in base.items():
             self.assertAlmostEqual(scaled[name]["certified_retention_ratio"],
                                    item["certified_retention_ratio"], places=10)
-            self.assertEqual(scaled[name]["prefix_index"], item["prefix_index"])
+            self.assertEqual(scaled[name]["certified_prefix_index"],
+                             item["certified_prefix_index"])
+
+    def test_attained_bound_is_taken_over_every_prefix(self):
+        """The loosest subadditive prefix need not be the one reached furthest.
+
+        The first prefix sends the seven declared balls onto three mutually
+        orthogonal output axes, so no single direction collects them all and
+        its subadditive sum 7 overstates the reached 17**.5. The second sends
+        one ball along one axis, where the two bounds agree at 5. The
+        certified maximum is therefore the first prefix and the attained
+        maximum the second, and selecting on the certified bound alone would
+        report 17**.5 and miss the larger 5.
+        """
+        radii = D.declared_radii()
+        spread, concentrated = np.zeros((21, 21)), np.zeros((21, 21))
+        for position, (name, start, _) in enumerate(D.GROUPS):
+            axis = np.zeros(3)
+            axis[position % 3] = 1.
+            spread[0:3, start:start+3] = np.outer(axis, [1., 0., 0.])/radii[name]
+        concentrated[0:3, 12:15] = 5*np.outer([1., 0., 0.], [1., 0., 0.])/radii["integral_displacement"]
+        transitions = [spread, concentrated]
+        responses = [np.zeros(21), np.zeros(21)]
+        result = D.retention(transitions, responses, radii)["attitude"]
+        self.assertEqual(result["certified_prefix_index"], 0)
+        self.assertEqual(result["attained_prefix_index"], 1)
+        self.assertAlmostEqual(result["certified_upper_bound"], 7., places=9)
+        self.assertAlmostEqual(result["attained_lower_bound"], 5., places=9)
+
+    def test_a_boundary_ratio_is_not_reported_as_a_definite_violation(self):
+        radii = D.declared_radii()
+        blocks = {"attitude": np.eye(3)}
+        active = {"attitude": radii["attitude"]}
+        forcing = np.zeros(3)
+        attained = D.attained_lower_bound(blocks, active, forcing)
+        self.assertLessEqual(attained/radii["attitude"], 1.+D.MARGIN)
+        self.assertGreater(D.MARGIN, 0.)
 
     def test_restricting_the_initial_set_can_only_lower_the_bound(self):
         rng = np.random.default_rng(13)

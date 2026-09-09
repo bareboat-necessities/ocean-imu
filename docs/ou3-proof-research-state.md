@@ -65,11 +65,11 @@ attached word in the declared physical coordinates instead of a scalar
 storage. With the closed .4 m/s^2 bias ball and the same forcing template as
 the only initial deviation, every motion coordinate is retained: 30-degree
 chart .0703 (H18) and .0041 (A21) of its radius, velocity .1713 / .2382,
-position .0444 / .0844, latent acceleration .1431 / .1397, and the bias ball
-maps into itself to within 4e-4. Route 1's sufficient storages 6.4111 / 2.2693
-are quadratic, so their linear equivalents are 2.532 / 1.506 chart radii, a
-factor 36.0 / 368 above these. Attained and certified bounds agree to within
-.3%, so this is a tight comparison, not a looser enclosure.
+position .0444 / .0844, and latent acceleration .1431 / .1397. Route 1's
+sufficient storages 6.4111 / 2.2693 are quadratic, so their linear equivalents
+are 2.532 / 1.506 chart radii, a factor 36.0 / 364 above these. On the rows
+that carry this conclusion the attained bound is within 1.3% of the certified
+one, so it is a tight comparison, not a looser enclosure.
 
 Classification: route 1's chart failure is a proof-method (scalarization)
 failure. Charging a bias-driven velocity and displacement excursion to
@@ -78,6 +78,13 @@ it. This invalidates treating the separated bias budget as the limiter and
 invalidates any further refinement of that budget. It does not prove P4,
 admit a physical source, change any endpoint or prefix ratio, or establish
 anything uniform over the nonlinear source family.
+
+The accelerometer-bias row is the one exception and a separate open premise:
+H18 maps the closed .4 m/s^2 ball into itself exactly, but A21 reaches
+.400126 m/s^2, a relative 3.146e-4 above the declared radius and far outside
+roundoff. The ball is therefore invariant for one mode only, and a
+bounded-bias statement over repeated words has to carry that growth. No motion
+row depends on it.
 
 The new limiter is the declared handoff set itself. Under the complete
 declared product box the same word leaves the domain, limited by velocity at

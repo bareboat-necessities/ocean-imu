@@ -145,10 +145,17 @@ jobs:
               assert not m['scalarized_storage_conversion_used']
               bias = m['bias_ball_and_template_only']
               # The closed .4 ball plus the template retains every motion
-              # coordinate; the bias ball itself is the only unit-ratio row.
+              # coordinate. The bias ball itself is the exception, and A21
+              # leaves it: that row is pinned here rather than asserted away.
               for name, item in bias.items():
-                  limit = 1.01 if name == 'accelerometer_bias' else 1.0
-                  assert item['certified_retention_ratio'] <= limit, (mode, name, item)
+                  if name == 'accelerometer_bias':
+                      assert item['certified_retention_ratio'] <= 1.01, (mode, item)
+                      continue
+                  assert item['certified_retention_ratio'] <= 1.0, (mode, name, item)
+              ball = bias['accelerometer_bias']['attained_retention_ratio']
+              print('BIAS_BALL', mode, ball,
+                    'not_retained' if ball > 1+d['modes'][mode]['violation_margin']
+                    else 'retained')
               print('DOMAIN_RETENTION', mode, m['limiting_group'],
                     m['limiting_certified_retention_ratio'],
                     'largest_retained_similar_box',
