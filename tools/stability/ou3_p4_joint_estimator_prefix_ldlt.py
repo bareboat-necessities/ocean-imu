@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 """Same-history joint-estimator lineage -> endpoint/every-prefix LDLT bridge.
 
-This module is intentionally non-generative: it does not invent coefficient
-boxes or master matrices. A caller must supply one ancestry-ordered sequence
-whose estimator image was emitted by ``ou3_p4_joint_estimator_transition`` and
-whose augmented master/sectors/source/finite-precision maps were constructed
-from that same source cell. It then applies the existing full interval ISS LDLT
-to every literal prefix and the endpoint.
+This older structural bridge remains a non-production guard. It does not invent
+coefficient boxes or master matrices. A caller must supply one ancestry-ordered
+sequence whose estimator image was emitted by the same-signal joint transition
+and whose augmented master/sectors/source/finite-precision maps came from that
+same source cell. The BRMM event-prefix bridge is the production-facing path.
 """
 from __future__ import annotations
 from dataclasses import dataclass,replace
@@ -16,8 +15,8 @@ from typing import Sequence
 from ou3_interval import Interval
 import ou3_p4_joint_estimator_transition as EST
 import ou3_p4_joint_iss_augmented_master as ISS
-SCHEMA=3
-QUALIFICATION="OU3_P4_JOINT_ESTIMATOR_EVERY_PREFIX_LDLT_BRIDGE_V3"
+SCHEMA=4
+QUALIFICATION="OU3_P4_JOINT_ESTIMATOR_EVERY_PREFIX_LDLT_BRIDGE_V4"
 
 @dataclass(frozen=True)
 class JointPrefixInput:
@@ -57,6 +56,7 @@ def validate_prefix_sequence(cells):
         if n==0 or n!=m:f.append(f"prefix {i}: master must be nonempty square")
         if len(c.sectors)!=len(c.multipliers) or not c.sectors:f.append(f"prefix {i}: sector/multiplier family missing")
     return list(dict.fromkeys(f))
+
 def certify_literal_prefixes(cells):
     failures=validate_prefix_sequence(cells)
     if failures:return {"closed":False,"validation_failures":failures,"prefixes":[]}
@@ -66,15 +66,16 @@ def certify_literal_prefixes(cells):
         records.append({"prefix_length":i+1,"source_token":c.source_token,"predecessor_token":c.predecessor_token,"ldlt_closed":bool(ok),"pivot_lowers":pivots})
     every=all(r["ldlt_closed"] for r in records);endpoint=bool(records[-1]["ldlt_closed"])
     return {"closed":bool(every and endpoint),"validation_failures":[],"endpoint_closed":endpoint,"every_prefix_closed":every,"prefixes":records}
+
 def build():
     s=EST.zero_state("root");children=advance_estimator_with_lineage(s,Interval.outward_bounds(.004,.006),Interval.outward_bounds(-.1,.1),child_prefix="k0")
     lineage=bool(children) and all(x.state.predecessor_token=="root" and x.state.source_token.startswith("k0:b") for x in children)
-    noise=EST.deployed_acc_noise_floor_sigma()
-    return {"schema":SCHEMA,"qualification":QUALIFICATION,"canonical_source":"COMPLETE_BRMM_NORMAL_LIVE_WORD","joint_estimator_child_ancestry_materialized":lineage,"explicit_root_predecessor_retained":True,"deployed_noise_floor_inherited_from_estimator":noise.contains(.12),"literal_previous_prefix_relation_required":True,"joint_target_tuple_required_at_each_certified_prefix":True,"same_cell_augmented_master_and_ISS_maps_required":True,"endpoint_cannot_substitute_for_every_prefix":True,"full_interval_ISS_LDLT_reused":True,"independent_f_sigma_target_forbidden":True,"production_source_cover_attached_here":False,"production_endpoint_LDLT_closed_here":False,"production_every_prefix_LDLT_closed_here":False,"P4_MOTION_PASS":False,"P4_PASS":False,"P5_MAY_START":False,"next_obligation":"emit the actual admitted BRMM/radial source-cover lineage with one joint estimator image and one same-cell augmented master per literal prefix, including BIAS1 and binary32 ISS maps, then call certify_literal_prefixes on every retained lineage"}
+    noise=EST.deployed_acc_noise_floor_sigma();deployed=EST.deployed_acc_noise_floor_value()
+    return {"schema":SCHEMA,"qualification":QUALIFICATION,"canonical_source":"COMPLETE_BRMM_NORMAL_LIVE_WORD","joint_estimator_child_ancestry_materialized":lineage,"explicit_root_predecessor_retained":True,"deployed_noise_floor_inherited_from_estimator":noise.contains(deployed),"deployed_noise_floor_binary32_value":deployed,"central_statistics_relation_inherited":True,"literal_previous_prefix_relation_required":True,"joint_target_tuple_required_at_each_certified_prefix":True,"same_cell_augmented_master_and_ISS_maps_required":True,"endpoint_cannot_substitute_for_every_prefix":True,"full_interval_ISS_LDLT_reused":True,"independent_f_sigma_target_forbidden":True,"production_source_cover_attached_here":False,"production_endpoint_LDLT_closed_here":False,"production_every_prefix_LDLT_closed_here":False,"P4_MOTION_PASS":False,"P4_PASS":False,"P5_MAY_START":False,"next_obligation":"use the BRMM estimator-owned event-prefix bridge with full source/radial lineages, BIAS1 and binary32 ISS maps; this structural bridge remains non-promoting"}
 def validate(d):
     f=[]
     if d.get("schema")!=SCHEMA or d.get("qualification")!=QUALIFICATION:f.append("schema/qualification mismatch")
-    for k in ("joint_estimator_child_ancestry_materialized","explicit_root_predecessor_retained","deployed_noise_floor_inherited_from_estimator","literal_previous_prefix_relation_required","joint_target_tuple_required_at_each_certified_prefix","same_cell_augmented_master_and_ISS_maps_required","endpoint_cannot_substitute_for_every_prefix","full_interval_ISS_LDLT_reused","independent_f_sigma_target_forbidden"):
+    for k in ("joint_estimator_child_ancestry_materialized","explicit_root_predecessor_retained","deployed_noise_floor_inherited_from_estimator","central_statistics_relation_inherited","literal_previous_prefix_relation_required","joint_target_tuple_required_at_each_certified_prefix","same_cell_augmented_master_and_ISS_maps_required","endpoint_cannot_substitute_for_every_prefix","full_interval_ISS_LDLT_reused","independent_f_sigma_target_forbidden"):
         if d.get(k) is not True:f.append(k+" not true")
     for k in ("production_source_cover_attached_here","production_endpoint_LDLT_closed_here","production_every_prefix_LDLT_closed_here","P4_MOTION_PASS","P4_PASS","P5_MAY_START"):
         if d.get(k) is not False:f.append(k+" not false")
