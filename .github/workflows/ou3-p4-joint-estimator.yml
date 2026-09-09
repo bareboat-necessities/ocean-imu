@@ -1,0 +1,44 @@
+name: ou3-p4-joint-estimator
+
+on:
+  push:
+    branches: [main, 'codex/ou3-p4-joint-estimator-20260909']
+    paths:
+      - 'src/**'
+      - 'tools/stability/**'
+      - '.github/workflows/ou3-p4-joint-estimator.yml'
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'tools/stability/**'
+      - '.github/workflows/ou3-p4-joint-estimator.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ou3-p4-joint-estimator-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  joint-estimator:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Check proof source syntax
+        run: python -m compileall -q tools/stability
+      - name: Retain exact proof source snapshot
+        run: |
+          mkdir -p /tmp/ou3-joint-estimator-evidence
+          git rev-parse HEAD > /tmp/ou3-joint-estimator-evidence/source-commit.txt
+          git archive --format=tar.gz HEAD src tools/stability tests docs .github/workflows Makefile > /tmp/ou3-joint-estimator-evidence/proof-sources.tar.gz
+          sha256sum /tmp/ou3-joint-estimator-evidence/proof-sources.tar.gz > /tmp/ou3-joint-estimator-evidence/SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ou3-p4-joint-estimator-evidence
+          path: /tmp/ou3-joint-estimator-evidence/
+          if-no-files-found: error
