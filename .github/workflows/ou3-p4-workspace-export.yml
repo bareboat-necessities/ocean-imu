@@ -1,13 +1,10 @@
 name: ou3-p4-workspace-export
-
 on:
   push:
     branches: [work/ou3-p4-joint-estimator-20260909]
     paths: [.github/workflows/ou3-p4-workspace-export.yml]
-
 permissions:
   contents: read
-
 jobs:
   export:
     runs-on: ubuntu-latest
@@ -17,14 +14,57 @@ jobs:
         with:
           ref: ed1ed742826ec716aab2f5c58a5b696831b98e34
           persist-credentials: false
-      - name: Export pinned PR 510 sources for local proof validation
+      - name: Verify patch and reconcile with current existing PR head
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          git archive --format=tar.gz --output=/tmp/ou3-p4-sources.tar.gz HEAD
-          git rev-parse HEAD > /tmp/ou3-p4-source-commit.txt
+          python3 - <<'PY'
+          import base64,hashlib,json,lzma,os,pathlib,subprocess,urllib.request
+          repo='bareboat-necessities/ocean-imu'
+          base='ed1ed742826ec716aab2f5c58a5b696831b98e34'
+          chunks=['4ed40f22eccaf6ab78bb4d9f67c9b52f54e6de78','e9bd397201d0bdd88852b403eb103d63374d6917','b1854d0e1f2539a87b96ef06002e39816b859b3a','d5748cff65b99a11260af5fdb27381793d6f8892','a9ee549712ce1aa2650831ab6092e67ea2b100be']
+          def api(path):
+              req=urllib.request.Request('https://api.github.com/repos/'+repo+'/'+path,headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json'})
+              with urllib.request.urlopen(req,timeout=60) as r:return json.load(r)
+          data=b''.join(base64.b64decode(api('git/blobs/'+sha)['content']) for sha in chunks)
+          patch=lzma.decompress(base64.b64decode(data,validate=True))
+          assert hashlib.sha256(patch).hexdigest()=='d2f2856307cbfd7998c24ade6bc42a5ea55f2e5c03c7bfaf897f7c9fd7cbdbb2'
+          out=pathlib.Path('/tmp/pr510-reconcile');out.mkdir()
+          (out/'tested.patch').write_bytes(patch)
+          subprocess.run(['git','apply','--check',str(out/'tested.patch')],check=True)
+          subprocess.run(['git','apply','--index',str(out/'tested.patch')],check=True)
+          paths=subprocess.check_output(['git','diff','--cached','--name-only']).decode().splitlines()
+          assert len(paths)==16 and all(not p.startswith('src/') for p in paths)
+          previous={};ours={}
+          for p in paths:
+              old=subprocess.run(['git','show',base+':'+p],capture_output=True)
+              previous[p]=old.stdout if old.returncode==0 else b''
+              ours[p]=pathlib.Path(p).read_bytes()
+          pr=api('pulls/510');assert pr['state']=='open' and pr['head']['ref']=='codex/ou3-p4-joint-estimator-transition'
+          head=pr['head']['sha']
+          subprocess.run(['git','fetch','--depth=1','origin',head],check=True)
+          subprocess.run(['git','reset','--hard',head],check=True)
+          subprocess.run(['git','archive','--format=tar.gz','--output='+str(out/'current-sources.tar.gz'),'HEAD'],check=True)
+          conflicts=[]
+          for p in paths:
+              cur=pathlib.Path(p).read_bytes() if pathlib.Path(p).exists() else b''
+              for role,value in [('base',previous[p]),('ours',ours[p]),('current',cur)]:
+                  f=out/role/p;f.parent.mkdir(parents=True,exist_ok=True);f.write_bytes(value)
+              if cur==previous[p]: merged=ours[p]
+              elif ours[p]==previous[p] or ours[p]==cur: merged=cur
+              else:
+                  r=subprocess.run(['git','merge-file','-p','--diff3',str(out/'current'/p),str(out/'base'/p),str(out/'ours'/p)],capture_output=True)
+                  if r.returncode not in (0,1): raise RuntimeError('merge-file failed: '+p+' '+r.stderr.decode())
+                  merged=r.stdout
+                  if r.returncode:conflicts.append(p)
+              f=out/'merged'/p;f.parent.mkdir(parents=True,exist_ok=True);f.write_bytes(merged)
+          result={'base':base,'head':head,'paths':paths,'conflicts':conflicts,'patch_sha256':hashlib.sha256(patch).hexdigest(),'PR_ref_changed':False}
+          (out/'result.json').write_text(json.dumps(result,indent=2)+'\n')
+          print(json.dumps(result,sort_keys=True))
+          PY
       - uses: actions/upload-artifact@v6
+        if: always()
         with:
-          name: ou3-p4-workspace-pr510-current
-          path: |
-            /tmp/ou3-p4-sources.tar.gz
-            /tmp/ou3-p4-source-commit.txt
+          name: ou3-p4-pr510-reconcile
+          path: /tmp/pr510-reconcile/
           retention-days: 1
