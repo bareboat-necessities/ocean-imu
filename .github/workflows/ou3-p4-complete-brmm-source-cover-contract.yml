@@ -4,6 +4,7 @@ on:
   push:
     paths: &paths
       - "tools/stability/ou3_p4_complete_brmm_source_cover_contract.py"
+      - "tools/stability/ou3_p4_complete_brmm_source_cover_transition.py"
       - "tools/stability/ou3_p4_complete_brmm_finite_map_mean_value.py"
       - "tools/stability/ou3_p4_complete_brmm_differential_events.py"
       - "tools/stability/ou3_brmm_complete_source.py"
@@ -27,6 +28,7 @@ jobs:
       - name: Validate fail-closed same-history source-cover contract
         run: |
           python3 tools/stability/ou3_p4_complete_brmm_source_cover_contract.py --output /tmp/source-cover-contract.json
+          python3 tools/stability/ou3_p4_complete_brmm_source_cover_transition.py --output /tmp/source-cover-transition.json
           python3 tools/stability/ou3_p4_complete_brmm_finite_map_mean_value.py --output /tmp/finite-map.json
           python3 - <<'PY'
           import json,sys
@@ -52,16 +54,21 @@ jobs:
           assert ev['R_provenance']==E.ACTUAL_RS_PROVENANCE
 
           d=json.load(open('/tmp/source-cover-contract.json'))
+          t=json.load(open('/tmp/source-cover-transition.json'))
           f=json.load(open('/tmp/finite-map.json'))
           assert d['validation_pass'],d['validation_failures']
           assert not d['SOURCE_UNIFORM_COMPLETE_BRMM_COVER_CLOSED']
           assert not d['point_trace_can_promote_source_uniform_cover']
           assert d['independent_P_H_R_K_boxes_forbidden']
+          assert t['validation_pass'],t['validation_failures']
+          assert t['shipping_covariance_transition_operator_available']
+          assert not t['complete_BRMM_source_transition_cover_closed_here']
           assert f['validation_pass'],f['validation_failures']
           assert f['source_cover_contract_consumed']
           assert not f['source_cover_uniform_complete_BRMM_closed']
           assert not f['P4_promoted_here']
           print('SOURCE_COVER_INTERFACE_SMOKE',ev['same_P_H_R_cell'],ev['R_provenance'])
+          print('SOURCE_COVER_COVARIANCE_TRANSITION',t['shipping_covariance_transition_operator_available'])
           print('SOURCE_COVER_UNIFORM_CLOSED',d['SOURCE_UNIFORM_COMPLETE_BRMM_COVER_CLOSED'])
           PY
       - uses: actions/upload-artifact@v6
@@ -69,5 +76,6 @@ jobs:
           name: ou3-p4-complete-brmm-source-cover-contract
           path: |
             /tmp/source-cover-contract.json
+            /tmp/source-cover-transition.json
             /tmp/finite-map.json
           retention-days: 7
