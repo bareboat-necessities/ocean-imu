@@ -1,0 +1,38 @@
+name: ou3-p4-reset-signed-absorption-diagnostic
+on:
+  push:
+    paths: &paths
+      - "tools/stability/ou3_p4_reset_signed_absorption_diagnostic.py"
+      - "tools/stability/ou3_p4_rowwise_coefficient_enclosure_fast.py"
+      - "tools/stability/ou3_p4_exact_reset_transport.py"
+      - "tools/stability/ou3_p4_hard_entry_set.py"
+      - ".github/workflows/ou3-p4-reset-signed-absorption-diagnostic.yml"
+  pull_request:
+    paths: *paths
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  diagnostic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with: {persist-credentials: false}
+      - name: Quantify exact reset defect
+        run: python3 tools/stability/ou3_p4_reset_signed_absorption_diagnostic.py --output /tmp/reset-absorb.json
+      - name: Enforce non-promotion and print limiting ratios
+        run: |
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/reset-absorb.json'))
+          assert d['validation_pass'],d['validation_failures']
+          assert not d['P4_promoted_here'] and not d['packet_count_multiplier_used']
+          for mode,m in d['modes'].items():
+              print('RESET_ABSORPTION',mode,'delta',m['correction_norm_upper'],'rho',m['reset_attitude_defect_norm_upper'],'rho/d',m['rho_over_delta'],'rho/(q*d)',m['rho_over_q_delta'],'event',m['limiting_correction_event'])
+          PY
+      - uses: actions/upload-artifact@v6
+        with:
+          name: ou3-p4-reset-signed-absorption-diagnostic
+          path: /tmp/reset-absorb.json
+          retention-days: 7
