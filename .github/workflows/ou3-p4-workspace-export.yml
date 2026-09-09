@@ -15,7 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          ref: 0075d787979bed750ae3ecf4cfa81ed23ae61b0e
+          ref: ed1ed742826ec716aab2f5c58a5b696831b98e34
           persist-credentials: false
       - name: Export pinned PR 510 sources for local proof validation
         run: |
@@ -23,7 +23,7 @@ jobs:
           git rev-parse HEAD > /tmp/ou3-p4-source-commit.txt
       - uses: actions/upload-artifact@v6
         with:
-          name: ou3-p4-workspace-pr510
+          name: ou3-p4-workspace-pr510-current
           path: |
             /tmp/ou3-p4-sources.tar.gz
             /tmp/ou3-p4-source-commit.txt
