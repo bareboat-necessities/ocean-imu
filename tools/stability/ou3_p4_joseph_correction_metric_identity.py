@@ -27,7 +27,7 @@ non-diagonal SPD smoke cases.  The theorem identity itself is algebraic and is
 consumed downstream as an equality/IQC on the same P,H,R,S,K event cell.
 """
 from __future__ import annotations
-import argparse,json,math
+import argparse,json
 from pathlib import Path
 import numpy as np
 
