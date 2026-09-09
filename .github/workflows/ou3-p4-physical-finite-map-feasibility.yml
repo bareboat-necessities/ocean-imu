@@ -19,6 +19,7 @@ on:
       - "tests/validation/test_ou3_connected_motion.py"
       - "tests/validation/test_ou3_motion_gain.py"
       - "tests/validation/test_ou3_storage_routes.py"
+      - "tests/validation/test_ou3_domain_retention.py"
       - "tools/stability/ou3_mems_bias_contract.py"
       - "tools/stability/ou3_p4_complete_brmm_signed_information_ledger.py"
       - "tools/stability/ou3_proof_operating_domain.json"
@@ -78,7 +79,7 @@ jobs:
 
       - name: Test bias and finite attachment algebra
         working-directory: tests/validation
-        run: python3 -m unittest -v test_ou3_bias_witness_admissibility test_ou3_retained_word_attachment test_ou3_physical_brmm_membership test_ou3_brmm_response_union test_ou3_source_endpoint test_ou3_connected_motion test_ou3_motion_gain test_ou3_storage_routes
+        run: python3 -m unittest -v test_ou3_bias_witness_admissibility test_ou3_retained_word_attachment test_ou3_physical_brmm_membership test_ou3_brmm_response_union test_ou3_source_endpoint test_ou3_connected_motion test_ou3_motion_gain test_ou3_storage_routes test_ou3_domain_retention
 
       - name: Capture one source-connected finite shipping history and test fixed endpoints
         run: |
@@ -132,6 +133,69 @@ jobs:
           python3 tests/kalman_ou_iii/ou3_p4_storage_routes.py \
             --prefix /tmp/ou3-source-events --attachment /tmp/ou3-connected-motion.json \
             --output /tmp/ou3-three-storage-routes.json
+          python3 tests/kalman_ou_iii/ou3_p4_domain_retention.py \
+            --prefix /tmp/ou3-source-events --attachment /tmp/ou3-connected-motion.json \
+            --output /tmp/ou3-domain-retention.json
+          python3 - <<'PY'
+          import json
+          d = json.load(open('/tmp/ou3-domain-retention.json'))
+          assert not d['operating_domain_reduced'] and not d['replay_fitted_radius']
+          assert not d['P4_PASS'] and not d['P5_MAY_START']
+          for mode, m in d['modes'].items():
+              assert not m['scalarized_storage_conversion_used']
+              bias = m['bias_ball_and_template_only']
+              # The closed .4 ball plus the template retains every motion
+              # coordinate. The bias ball itself is the exception, and A21
+              # leaves it: that row is pinned here rather than asserted away.
+              for name, item in bias.items():
+                  if name == 'accelerometer_bias':
+                      assert item['certified_retention_ratio'] <= 1.01, (mode, item)
+                      continue
+                  assert item['certified_retention_ratio'] <= 1.0, (mode, name, item)
+              ball = bias['accelerometer_bias']['attained_retention_ratio']
+              print('BIAS_BALL', mode, ball,
+                    'not_retained' if ball > 1+d['modes'][mode]['violation_margin']
+                    else 'retained')
+              # The correlated alternative to the declared product box. Its
+              # level is a requirement on covariance consistency, not a
+              # certificate, so it is printed and never asserted as a pass.
+              ellipsoid = m['covariance_ellipsoid_initial_set']
+              assert not ellipsoid['P4_PASS']
+              assert ellipsoid['covariance_consistency_is_an_unproved_premise']
+              print('ELLIPSOID', mode, ellipsoid['limiting_group'],
+                    ellipsoid['critical_initial_sigma_level'])
+              # The forcing template on its own, with every initial ball zero.
+              forcing = m['forcing_template_only']
+              print('FORCING_ONLY', mode, max(
+                  (i['certified_retention_ratio'], n) for n, i in forcing.items()))
+              # The closed-form floor over every quadratic storage. Existence
+              # of a contracting one on a frozen capture is not a certificate,
+              # so this is pinned and printed, never asserted as a pass.
+              for block, best in m['optimal_quadratic_storage'].items():
+                  assert not best['P4_PASS']
+                  assert best['frozen_capture_not_a_uniform_certificate']
+                  assert best['witness_metric_achieves'] >= \
+                      best['best_achievable_complete_word_ratio']*(1-1e-6)
+                  print('OPTIMAL_STORAGE', mode, block,
+                        best['spectral_radius'],
+                        best['best_achievable_complete_word_ratio'],
+                        best['a_contracting_quadratic_storage_exists'])
+              # H18's exact cascade is a structural fact worth regressing on:
+              # its bias-from-motion block vanishes in every per-step factor.
+              cascade = m['cascade_structure']
+              assert not cascade['P4_PASS']
+              if mode == 'H18':
+                  assert cascade['exact_cascade'], cascade
+                  assert cascade['per_step_bias_from_motion_defect'] == 0.
+              print('CASCADE', mode, cascade['exact_cascade'],
+                    cascade['motion_spectral_radius'],
+                    cascade['motion_non_normality'],
+                    cascade.get('iss_limit'))
+              print('DOMAIN_RETENTION', mode, m['limiting_group'],
+                    m['limiting_certified_retention_ratio'],
+                    'largest_retained_similar_box',
+                    m['largest_retained_similar_box_fraction'])
+          PY
 
       - name: Audit exact retained payloads without regeneration or a new search
         run: |
@@ -180,6 +244,7 @@ jobs:
           path: |
             /tmp/ou3_p4_bias_witness_admissibility.json
             /tmp/ou3-three-storage-routes.json
+            /tmp/ou3-domain-retention.json
             /tmp/ou3_p4_bias_witness_admissibility.prefixes.csv.gz
             /tmp/ou3-sea-generator-observation.json
             /tmp/ou3-physical-brmm-membership.json

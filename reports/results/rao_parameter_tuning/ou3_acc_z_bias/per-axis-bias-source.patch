@@ -1,0 +1,37 @@
+diff --git a/tests/kalman_ou_iii/kalman_ou_iii-sim.cpp b/tests/kalman_ou_iii/kalman_ou_iii-sim.cpp
+index 77e8894..caf383c 100644
+--- a/tests/kalman_ou_iii/kalman_ou_iii-sim.cpp
++++ b/tests/kalman_ou_iii/kalman_ou_iii-sim.cpp
+@@ -291,18 +291,23 @@ public:
+                 filter.setFreqInputCutoffHz(v);
+             }
+ 
+-            // Scalar accel-bias initialization uncertainty only.
+-            // Bias vector X/Y/Z env overrides intentionally removed.
+             // Accelerometer-bias random walk.  The bias competes with the OU
+             // acceleration for the low-frequency content, and the wave-band
+             // operating point moves the OU corner down toward it, so this is
+-            // the knob that prices that competition.
+-            if (env_float("OU_III_ACC_BIAS_RW", v)) {
+-                filter.mekf().set_Q_bacc_rw(Eigen::Vector3f::Constant(v));
+-            }
+-            if (env_float("OU_III_ACC_BIAS_TAU_SEC", v)) {
+-                filter.mekf().set_acc_bias_time_constant(v);
+-            }
++            // the knob that prices that competition.  The three axes do not
++            // compete equally: a horizontal bias and a tilt error are barely
++            // separable in waves, so X and Y are driven far more slowly than
++            // the vertically observable Z, exactly as the OU-II vessel
++            // profile does.
++            Eigen::Vector3f bias_rw(0.00012f, 0.00012f, 0.00045f);
++            if (env_float("OU_III_ACC_BIAS_RW", v)) bias_rw.setConstant(v);
++            env_float("OU_III_ACC_BIAS_RW_X", bias_rw.x());
++            env_float("OU_III_ACC_BIAS_RW_Y", bias_rw.y());
++            env_float("OU_III_ACC_BIAS_RW_Z", bias_rw.z());
++            filter.mekf().set_Q_bacc_rw(bias_rw);
++            float bias_tau_sec = 20000.0f;
++            env_float("OU_III_ACC_BIAS_TAU_SEC", bias_tau_sec);
++            filter.mekf().set_acc_bias_time_constant(bias_tau_sec);
+ 
+             // Knobs that no longer exist.  tau and the sigma band are
+             // wave-band quantities at every instant of the run, and every
