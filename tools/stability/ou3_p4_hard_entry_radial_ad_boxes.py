@@ -22,8 +22,8 @@ from ou3_interval import Interval
 import ou3_p4_hard_entry_set as ENTRY
 import ou3_p4_brmm_event_lineage_cover as LINEAGE
 
-SCHEMA=1
-QUALIFICATION='OU3_P4_HARD_ENTRY_CONTINUOUS_RADIAL_AD_BOX_V1'
+SCHEMA=2
+QUALIFICATION='OU3_P4_HARD_ENTRY_CONTINUOUS_RADIAL_AD_BOX_V2'
 GROUP_ORDER=(
  'attitude_cayley_norm','gyro_bias_norm_rad_s','velocity_norm_mps','position_norm_m',
  'integral_displacement_norm_m_s','latent_acceleration_norm_mps2','accelerometer_bias_error_norm_mps2')
@@ -51,22 +51,34 @@ def box_contains_radial_ball_components(mode,radial,box,entry):
             if not(x.lo<=-b and x.hi>=b):return False
     return True
 
+def partition(depth:int=2):
+    if depth<0:raise ValueError('nonnegative partition depth required')
+    cells=(LINEAGE.root_radial(),)
+    for _ in range(depth):
+        nxt=[]
+        for c in cells:nxt.extend(LINEAGE.split_radial(c))
+        cells=tuple(nxt)
+    if not LINEAGE.partition_covers_unit(cells):raise RuntimeError('radial partition lost exact [0,1] cover')
+    return cells
+
 def build():
     e=ENTRY.build();ef=ENTRY.validate(e)
     if ef:raise RuntimeError('hard-entry prerequisite failed: '+repr(ef))
-    root=LINEAGE.root_radial_cell();parts=LINEAGE.partition(root,4)
-    hboxes=[radial_state_box('H',p.radial_scale,e) for p in parts]
-    aboxes=[radial_state_box('A',p.radial_scale,e) for p in parts]
-    exact_cover=LINEAGE.exact_partition_cover(parts)
-    contains=all(box_contains_radial_ball_components(m,p.radial_scale,b,e) for p,b in zip(parts,hboxes) for m in ('H',) ) and all(box_contains_radial_ball_components('A',p.radial_scale,b,e) for p,b in zip(parts,aboxes))
-    nested=all(hboxes[i][j].abs_upper()<=hboxes[i+1][j].abs_upper() for i in range(len(hboxes)-1) for j in range(18))
+    parts=partition(2)
+    hboxes=[radial_state_box('H',p.interval,e) for p in parts]
+    aboxes=[radial_state_box('A',p.interval,e) for p in parts]
+    exact_cover=LINEAGE.partition_covers_unit(parts)
+    contains=all(box_contains_radial_ball_components('H',p.interval,b,e) for p,b in zip(parts,hboxes)) and all(box_contains_radial_ball_components('A',p.interval,b,e) for p,b in zip(parts,aboxes))
+    ordered=sorted(zip(parts,hboxes),key=lambda pb:pb[0].interval.hi)
+    nested=all(ordered[i][1][j].abs_upper()<=ordered[i+1][1][j].abs_upper() for i in range(len(ordered)-1) for j in range(18))
     return {'schema':SCHEMA,'qualification':QUALIFICATION,'canonical_source':'COMPLETE_BRMM_NORMAL_LIVE_WORD',
       'hard_entry_full_declared_scale_consumed':bool(e['full_declared_scale_enforced']),
+      'current_lineage_radial_API_consumed':True,
       'continuous_radial_interval_not_point_sample':True,'recursive_partition_exactly_covers_unit_interval':exact_cover,
       'rectangular_box_is_outer_AD_enclosure_only':True,'rectangular_box_replaces_hard_ball_IQCs':False,
       'component_bound_formula':'abs(x_gj)<=radial_hi*r_g','all_partition_boxes_contain_corresponding_radial_ball_components':contains,
       'nested_component_boxes_with_increasing_radial_upper':nested,'H18_box_dimension':18,'A21_box_dimension':21,
-      'radial_partition_count':len(parts),'radial_partition_bounds':[p.radial_scale.as_list() for p in parts],
+      'radial_partition_count':len(parts),'radial_partition_bounds':[p.interval.as_list() for p in parts],
       'covariance_membership_used':False,'trajectory_replay_used':False,'domain_shrunk':False,
       'production_event_state_reachability_proved_here':False,'production_every_prefix_hard_domain_retention_closed_here':False,
       'P4_MOTION_PASS':False,'P4_PASS':False,'P5_MAY_START':False,
@@ -74,7 +86,7 @@ def build():
 def validate(d):
     f=[]
     if d.get('schema')!=SCHEMA or d.get('qualification')!=QUALIFICATION:f.append('schema/qualification mismatch')
-    for k in ('hard_entry_full_declared_scale_consumed','continuous_radial_interval_not_point_sample','recursive_partition_exactly_covers_unit_interval','rectangular_box_is_outer_AD_enclosure_only','all_partition_boxes_contain_corresponding_radial_ball_components','nested_component_boxes_with_increasing_radial_upper'):
+    for k in ('hard_entry_full_declared_scale_consumed','current_lineage_radial_API_consumed','continuous_radial_interval_not_point_sample','recursive_partition_exactly_covers_unit_interval','rectangular_box_is_outer_AD_enclosure_only','all_partition_boxes_contain_corresponding_radial_ball_components','nested_component_boxes_with_increasing_radial_upper'):
         if d.get(k) is not True:f.append(k+' not true')
     for k in ('rectangular_box_replaces_hard_ball_IQCs','covariance_membership_used','trajectory_replay_used','domain_shrunk','production_event_state_reachability_proved_here','production_every_prefix_hard_domain_retention_closed_here','P4_MOTION_PASS','P4_PASS','P5_MAY_START'):
         if d.get(k) is not False:f.append(k+' not false')
