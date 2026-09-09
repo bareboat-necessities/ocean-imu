@@ -19,9 +19,8 @@ contraction or masquerade as an exact-real state map.
 from __future__ import annotations
 import argparse,json,math
 from pathlib import Path
-from typing import Sequence
 
-from ou3_interval import Interval,matrix_add,matrix_mul,matrix_sub,matrix_transpose,symmetric_positive_definite_ldlt
+from ou3_interval import Interval,matrix_mul,matrix_sub,matrix_transpose,symmetric_positive_definite_ldlt
 from ou3_interval_linear_algebra import matrix_symmetric_hull
 import ou3_p4_complete_brmm_joint_sector_master as JOINT
 import ou3_p4_bias1_joint_iss_supply as BIAS1
