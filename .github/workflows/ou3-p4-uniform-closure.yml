@@ -7,6 +7,7 @@ on:
       - "tools/stability/ou3_p4_closure_domain.json"
       - "tools/stability/ou3_p4_projection_sector.py"
       - "tools/stability/ou3_projection_sector.py"
+      - "tools/stability/ou3_p4_projection_binary32_enclosure.py"
       - "tools/stability/ou3_p4_strong_linear_margin.py"
       - "tools/stability/ou3_brmm_p3_premises.py"
       - "tools/stability/ou3_brmm_riccati_metric_p3.py"
@@ -65,16 +66,19 @@ jobs:
           assert d['P3_execution_admission']['conditional_execution_premises_admitted']
           assert not d['P3_execution_admission']['physical_execution_admission_proved']
           assert d['projection_global_nonlinear_sector_consumed']
-          assert not d['projection_finite_precision_closed']
+          assert d['projection_finite_precision_closed']
+          assert d['projection_finite_precision_contract']['single_evaluation_projection_value_error_norm_upper_mps2'] < 1e-5
           assert not d['source_uniform_Kalman_reset_coefficient_family_enclosed']
           assert not d['consecutive_compatible_storage_inequality_closed']
+          assert not d['complete_filter_finite_precision_enclosure_closed']
           assert not d['finite_precision_enclosure_closed']
           assert not d['P4_MOTION_PASS'] and not d['P4_PASS'] and not d['P5_MAY_START']
           assert len(d['remaining_blockers']) >= 3
           print('P4_ADMISSIONS',
                 'hard_entry=',d['qualified_hard_entry_error_set_as_declared_theorem_assumption'],
                 'bias1=',d['BIAS1_admission']['conditional_BIAS1_SOURCE_ADMISSION_PASS'],
-                'p3_execution=',d['P3_execution_admission']['conditional_execution_premises_admitted'])
+                'p3_execution=',d['P3_execution_admission']['conditional_execution_premises_admitted'],
+                'projection_fp=',d['projection_finite_precision_closed'])
           print('P4_BLOCKERS', *d['remaining_blockers'], sep='\n- ')
           print('STRONG_LINEAR_MARGIN', d['strong_linear_margin_diagnostic'])
           PY
