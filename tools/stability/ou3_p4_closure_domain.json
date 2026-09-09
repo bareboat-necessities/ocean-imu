@@ -1,12 +1,12 @@
 {
-  "schema": 1,
-  "qualification": "OU3_P4_EXPLICIT_CLOSURE_DOMAIN_V1",
+  "schema": 2,
+  "qualification": "OU3_P4_EXPLICIT_CLOSURE_DOMAIN_V2",
   "trajectory_fit": false,
   "scope": "conditional Normal-Live COMPLETE_BRMM theorem domain; not a replay-derived deployment claim",
   "hard_entry_search": {
-    "definition": "fixed physical-coordinate box; the theorem requires at least the predeclared minimum scale and may certify a wider listed candidate, never an arbitrarily tiny positive set",
-    "candidate_scale_factors": [1.0, 0.1, 0.03, 0.01],
-    "minimum_certified_scale": 0.01,
+    "definition": "the full already-declared physical P4 word-entry envelope; no PR-created fractional shrink is authorized",
+    "candidate_scale_factors": [1.0],
+    "minimum_certified_scale": 1.0,
     "base_coordinate_radii": {
       "attitude_cayley_norm": 0.8284271247461901,
       "gyro_bias_norm_rad_s": 0.01,
@@ -16,8 +16,8 @@
       "latent_acceleration_norm_mps2": 2.941995,
       "accelerometer_bias_error_norm_mps2": 0.4
     },
-    "base_radius_provenance": "45 degree SO(3) entrance, startup physical handoff norms, and |dp_i|<=0.5*Hs with Hs<=8.5 m from ou3_proof_operating_domain.json",
-    "requires_positive_nonzero_certified_scale": true,
+    "base_radius_provenance": "45 degree SO(3) entrance, startup physical handoff norms, and Euclidean position norm implied by |dp_i|<=0.5*Hs with Hs<=8.5 m from ou3_proof_operating_domain.json",
+    "requires_full_declared_scale": true,
     "shipping_covariance_is_not_entry_set": true
   },
   "BIAS1_family": {
@@ -53,9 +53,10 @@
     "reassociation_without_fast_math_assumed_false": true,
     "outward_binary32_operation_layer_required": true,
     "source_constants_quantized_before_variance_required": true,
-    "per_completed_event_rounding_reserve_ulps": 256,
     "projection_norm_rounding_reserve_ulps": 32,
-    "strict_interval_LDLT_after_rounding_required": true
+    "strict_interval_LDLT_after_rounding_required": true,
+    "complete_Eigen_expression_evaluation_order_enclosed": false,
+    "complete_shipping_Kalman_reset_roundoff_enclosed": false
   },
   "uniform_nonlinear_enclosure": {
     "rotation_second_derivative_majorant_on_cayley_norm_le_1": 4096.0,
@@ -63,8 +64,7 @@
     "majorants_are_analytic_overestimates_not_fitted": true,
     "required_cayley_state_norm_upper": 1.0,
     "required_correction_cayley_norm_upper": 0.25,
-    "nonlinear_budget_fraction_of_linear_Riccati_margin": 0.25,
-    "finite_precision_budget_fraction_of_linear_Riccati_margin": 0.25,
-    "remaining_strict_margin_fraction": 0.5
+    "scalar_P3_margin_architecture_abandoned": true,
+    "replacement": "joint signed Joseph/reset information ledger with same-history graph sectors"
   }
 }
