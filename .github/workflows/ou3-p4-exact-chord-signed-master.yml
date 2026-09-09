@@ -9,7 +9,8 @@ on:
       - "tools/stability/ou3_p4_complete_brmm_joint_sector_master.py"
       - "tools/stability/ou3_p4_joint_iss_augmented_master.py"
       - "tools/stability/ou3_p4_joseph_reset_reduced_signed_identity.py"
-      - "tools/stability/ou3_p4_reduced_signed_event_master.py"
+      - "tools/stability/ou3_p4_reduced_joseph_reset_event_quadratic.py"
+      - "tools/stability/ou3_p4_joseph_history_covariance_domination.py"
       - "tools/stability/ou3_p4_exact_reset_covariance_frame.py"
       - "tools/stability/ou3_p4_universal_finite_angle_strict_blocks.py"
       - "tools/stability/ou3_p4_bias1_family.py"
@@ -39,8 +40,10 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with: {persist-credentials: false}
-      - name: Build reduced same-cell event quadratic
-        run: python3 tools/stability/ou3_p4_reduced_signed_event_master.py --output /tmp/reduced-event.json
+      - name: Verify reduced same-cell event quadratic
+        run: python3 tools/stability/ou3_p4_reduced_joseph_reset_event_quadratic.py --output /tmp/reduced-event.json
+      - name: Verify every-prefix Joseph covariance domination
+        run: python3 tools/stability/ou3_p4_joseph_history_covariance_domination.py --output /tmp/history-domination.json
       - name: Build exact-chord signed-master bridge
         run: python3 tools/stability/ou3_p4_exact_chord_signed_master_bridge.py --output /tmp/bridge.json
       - name: Enforce correlation-preserving fail-closed state
@@ -48,13 +51,24 @@ jobs:
           python3 - <<'PY'
           import json
           r=json.load(open('/tmp/reduced-event.json'))
+          h=json.load(open('/tmp/history-domination.json'))
           d=json.load(open('/tmp/bridge.json'))
           assert r['validation_pass'],r['validation_failures']
-          assert r['augmented_matrix_API_available'] and r['full_Joseph_correction_d_retained']
-          assert r['dense_q_eta_d_b_e_cross_terms_retained']
-          assert not r['S_inverse_used'] and not r['posterior_precision_used']
-          assert not r['independent_K_box_used'] and not r['independent_reset_norm_port_used']
-          assert r['algebra_smoke_quadratic_defect'] < 1e-10
+          assert r['reduced_event_quadratic_available']
+          assert r['dense_common_augmented_coordinate_supported']
+          assert r['same_cell_d_equals_Kq_binding_required_downstream']
+          assert r['exact_rational_matrix_matches_reduced_identity']
+          assert not r['S_inverse_present_in_event_quadratic']
+          assert not r['posterior_precision_present_in_event_quadratic']
+          assert not r['independent_K_box_present_in_event_quadratic']
+          assert not r['independent_reset_defect_port_used']
+          assert h['validation_pass'],h['validation_failures']
+          assert h['every_literal_prefix_covariance_domination_identity_available']
+          assert h['whole_word_covariance_domination_identity_available']
+          assert h['every_prefix_metric_joint_input_gain_at_most_one']
+          assert h['endpoint_metric_joint_input_gain_at_most_one']
+          assert not h['rowwise_K_box_used'] and not h['suffix_operator_norm_bound_used']
+          assert not h['packet_count_multiplier_used'] and not h['independent_R_schedule_used']
           assert d['validation_pass'],d['validation_failures']
           assert d['same_canonical_source_across_chord_signed_master']
           assert d['universal_full_entry_finite_angle_differential_backbone_closed']
@@ -62,16 +76,10 @@ jobs:
           assert d['reset_covariance_frame_identity_ready']
           assert d['universal_strict_interval_blocks_materialized']
           assert d['exact_chord_parameterized_reset_affine_graph_ready_for_augmented_master']
-          assert d['parameterized_same_cell_reset_IQC_primitive_ready']
           assert d['same_cell_reset_domain_binding_clean']
           assert d['affine_hard_entry_correction_and_prefix_IQC_ready']
           assert d['joint_ISS_master_ready_for_BIAS1_and_roundoff']
           assert d['physical_BIAS1_projection_and_Joseph_prerequisites_ready']
-          assert d['joseph_favorable_q_u_cross_term_retained']
-          assert d['mixed_c_cross_aw_retained_as_explicit_coordinate']
-          assert d['finite_reset_cross_and_defect_terms_retained']
-          assert d['actual_same_history_K_required_not_independent_row_box']
-          assert d['rowwise_K_reset_domain_forbidden']
           assert not d['packet_count_multiplier_used'] and not d['standalone_eta_Rinv_budget_used']
           assert not d['scalar_correction_radius_used_for_storage']
           assert isinstance(d['source_uniform_same_graph_correction_domain_closed'],bool)
@@ -79,13 +87,11 @@ jobs:
           assert not d['source_uniform_exact_graph_every_prefix_augmented_LDLT_closed']
           assert not d['same_graph_every_prefix_hard_domain_retention_closed']
           assert not d['P4_MOTION_PASS'] and not d['P4_PASS'] and not d['P5_MAY_START']
-          print('REDUCED_EVENT_DEFECT',r['algebra_smoke_quadratic_defect'])
-          print('EXACT_CHORD_SIGNED_MASTER_READY',d['full_declared_entry_chord_information_retention_lower'])
+          print('REDUCED_EVENT_EXACT',r['exact_rational_matrix_matches_reduced_identity'])
+          print('PREFIX_HISTORY_DOMINATION',h['every_prefix_metric_joint_input_gain_at_most_one'])
           print('H18_PIVOT',d['universal_H18_worst_LDLT_pivot_lower'])
           print('A21_BA_MARGIN',d['universal_A21_first_active_ba_margin_lower'])
           print('RESET_DOMAIN_CLOSED',d['source_uniform_same_graph_correction_domain_closed'])
-          for mode,m in d['same_cell_reset_domain_modes'].items():
-              print('RESET_DOMAIN',mode,'delta',m['correction_norm_upper'],'event',m['limiting_event'],'valid',m['uniform_reset_gain_over_zero_to_ceiling'])
           print('NEXT',d['next_obligation'])
           PY
       - uses: actions/upload-artifact@v6
@@ -95,5 +101,6 @@ jobs:
           path: |
             /tmp/bridge.json
             /tmp/reduced-event.json
+            /tmp/history-domination.json
           retention-days: 7
           if-no-files-found: warn
