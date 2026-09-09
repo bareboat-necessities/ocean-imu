@@ -1,0 +1,48 @@
+name: ou3-p4-same-cell-correction-domain
+on:
+  push:
+    paths: &paths
+      - "tools/stability/ou3_p4_same_cell_correction_domain.py"
+      - "tools/stability/ou3_brmm_riccati_tube_factored.py"
+      - "tools/stability/ou3_brmm_endpoint_covariance.py"
+      - "tools/stability/ou3_p4_hard_entry_set.py"
+      - "tools/stability/ou3_proof_operating_domain.json"
+      - ".github/workflows/ou3-p4-same-cell-correction-domain.yml"
+  pull_request:
+    paths: *paths
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  diagnostic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with: {persist-credentials: false}
+      - name: Build same-cell Joseph correction-domain diagnostic
+        run: python3 tools/stability/ou3_p4_same_cell_correction_domain.py --output /tmp/correction-domain.json
+      - name: Enforce non-rowwise non-promotion contract
+        run: |
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/correction-domain.json'))
+          assert d['validation_pass'],d['validation_failures']
+          assert d['same_cell_Joseph_covariance_identity_consumed']
+          assert d['attitude_block_only_used']
+          assert not d['rowwise_K_bound_used'] and not d['independent_K_box_used']
+          assert not d['production_same_graph_correction_domain_promoted_here']
+          assert not d['P4_promoted_here']
+          for mode,m in d['modes'].items():
+              for ev,e in m['events'].items():
+                  print('CORRECTION_DOMAIN',mode,ev,'delta=',e['same_cell_attitude_correction_norm_upper'],'inside_reset_utility=',e['inside_reset_utility_domain'])
+              print('CORRECTION_LIMIT',mode,m['limiting_event'],m['correction_norm_upper'])
+          print('ALL_RESET_UTILITY',d['all_events_inside_exact_reset_utility_domain'])
+          PY
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: ou3-p4-same-cell-correction-domain
+          path: /tmp/correction-domain.json
+          retention-days: 7
+          if-no-files-found: warn

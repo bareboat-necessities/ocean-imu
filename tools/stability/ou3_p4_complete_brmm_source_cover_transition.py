@@ -1,0 +1,198 @@
+#!/usr/bin/env python3
+"""Exact covariance-transition layer for the complete-BRMM P4 source cover.
+
+``ou3_p4_complete_brmm_source_cover_contract`` defines what one theorem-facing
+source cell must contain.  This module enforces the next structural requirement:
+adjacent cells are not independent boxes.  Their covariance coordinates must be
+linked by the literal shipping recursion.
+
+For prediction:
+
+    P1 = F P0 F^T + Q.
+
+For one accepted 3-vector Joseph correction, using the SAME event cell:
+
+    Pj = P0 - K PCt^T - PCt K^T + K S K^T,
+    PCt = P0 H^T,  S = H P0 H^T + R.
+
+The immediate left-error covariance reset is
+
+    P1 = G(d) Pj G(d)^T,
+    G(d) = I + 0.5 [d_theta]x.
+
+The functions operate on outward interval matrices.  ``P_out`` must enclose the
+entire outward image; exact point cells therefore regression-test the same code
+path used by a future interval source cover.  Because every primitive operation
+rounds outward, even a point identity calculation may return a narrow interval
+around the exact point.  The regression therefore checks enclosure of the exact
+point result, not literal equality of the interval representations.
+
+No independent P/H/R/K selection, trajectory replay, or scalar reset radius is
+introduced here.
+
+This layer still does not materialize the complete BRMM transition relation for
+physical motion/frontend/tuner/geometry.  It closes only the shipping covariance
+recurrence part of that transition operator.
+"""
+from __future__ import annotations
+
+import argparse
+import json
+from pathlib import Path
+from typing import Sequence
+
+from ou3_interval import (
+    Interval,
+    matrix_add,
+    matrix_identity,
+    matrix_mul,
+    matrix_sub,
+    matrix_transpose,
+)
+import ou3_p4_complete_brmm_source_cover_contract as COVER
+
+SCHEMA = 1
+QUALIFICATION = "OU3_P4_COMPLETE_BRMM_SOURCE_COVER_COVARIANCE_TRANSITION_V1"
+
+
+def _shape(A) -> tuple[int, int]:
+    r=len(A); c=len(A[0]) if r else 0
+    if any(len(row)!=c for row in A): raise ValueError("ragged matrix")
+    return r,c
+
+
+def _check_matrix(A, r:int, c:int, name:str) -> None:
+    if _shape(A)!=(r,c) or any(not isinstance(v,Interval) for row in A for v in row):
+        raise ValueError(f"{name} must be {r}x{c} outward Interval matrix")
+
+
+def _contains(outer:Interval, inner:Interval) -> bool:
+    return outer.lo <= inner.lo and outer.hi >= inner.hi
+
+
+def matrix_encloses(outer, inner) -> bool:
+    if _shape(outer)!=_shape(inner): return False
+    return all(_contains(outer[i][j],inner[i][j]) for i in range(len(outer)) for j in range(len(outer[0])))
+
+
+def prediction_image(P,F,Q):
+    n,n2=_shape(P)
+    if n==0 or n!=n2: raise ValueError("P must be square")
+    _check_matrix(P,n,n,"P")
+    _check_matrix(F,n,n,"F")
+    _check_matrix(Q,n,n,"Q")
+    return matrix_add(matrix_mul(matrix_mul(F,P),matrix_transpose(F)),Q)
+
+
+def joseph_image(P,K,S,PCt):
+    n,n2=_shape(P)
+    if n==0 or n!=n2: raise ValueError("P must be square")
+    _check_matrix(P,n,n,"P")
+    _check_matrix(K,n,3,"K")
+    _check_matrix(S,3,3,"S")
+    _check_matrix(PCt,n,3,"PCt")
+    a=matrix_sub(P,matrix_mul(K,matrix_transpose(PCt)))
+    a=matrix_sub(a,matrix_mul(PCt,matrix_transpose(K)))
+    return matrix_add(a,matrix_mul(matrix_mul(K,S),matrix_transpose(K)))
+
+
+def reset_G(dtheta:Sequence[Interval],n:int):
+    if len(dtheta)!=3 or any(not isinstance(x,Interval) for x in dtheta):
+        raise ValueError("dtheta must be a 3-vector of outward intervals")
+    if n not in (18,21): raise ValueError("reset dimension must be H18/A21")
+    z=Interval.point(0.0); h=Interval.point(0.5)
+    x,y,w=dtheta
+    S=[[z,-w,y],[w,z,-x],[-y,x,z]]
+    G=matrix_identity(n)
+    for i in range(3):
+        for j in range(3): G[i][j]=G[i][j]+h*S[i][j]
+    return G
+
+
+def reset_image(Pj,dtheta):
+    n,n2=_shape(Pj)
+    if n==0 or n!=n2: raise ValueError("Pj must be square")
+    G=reset_G(dtheta,n)
+    return matrix_mul(matrix_mul(G,Pj),matrix_transpose(G))
+
+
+def prediction_transition_closed(before:COVER.SourceCoverCell,after:COVER.SourceCoverCell,F,Q)->bool:
+    if COVER.validate_cell(before) or COVER.validate_cell(after): return False
+    if before.source_token!=after.source_token or after.predecessor_token!=before.source_token: return False
+    if before.mode!=after.mode: return False
+    return matrix_encloses(after.P,prediction_image(before.P,F,Q))
+
+
+def joseph_reset_transition_closed(
+    before:COVER.SourceCoverCell,
+    after:COVER.SourceCoverCell,
+    *,K,S,PCt,dtheta,
+)->bool:
+    if COVER.validate_cell(before) or COVER.validate_cell(after): return False
+    if before.source_token!=after.source_token or after.predecessor_token!=before.source_token: return False
+    if before.mode!=after.mode: return False
+    Pj=joseph_image(before.P,K,S,PCt)
+    return matrix_encloses(after.P,reset_image(Pj,dtheta))
+
+
+def build()->dict:
+    I=Interval.point
+    n=18
+    P=[[I(1.0 if i==j else 0.0) for j in range(n)] for i in range(n)]
+    F=[[I(1.0 if i==j else 0.0) for j in range(n)] for i in range(n)]
+    Q=[[I(0.0) for _ in range(n)] for _ in range(n)]
+    pred=prediction_image(P,F,Q)
+    # Point arithmetic is executed by outward interval primitives.  The exact
+    # identity matrix must be contained in the resulting enclosure; requiring
+    # the enclosure to be bitwise equal to the point matrix would incorrectly
+    # reject legitimate directed-rounding width.
+    pred_exact=matrix_encloses(pred,P)
+
+    # Algebraic Joseph/reset smoke with K=0.  This deliberately tests only the
+    # recurrence implementation, not a source-uniform correction theorem.
+    K=[[I(0.0) for _ in range(3)] for _ in range(n)]
+    PCt=[[I(0.0) for _ in range(3)] for _ in range(n)]
+    S=[[I(1.0 if i==j else 0.0) for j in range(3)] for i in range(3)]
+    Pj=joseph_image(P,K,S,PCt)
+    Pr=reset_image(Pj,[I(0.0),I(0.0),I(0.0)])
+    joseph_reset_exact=matrix_encloses(Pr,P)
+
+    return {
+      "schema":SCHEMA,"qualification":QUALIFICATION,
+      "canonical_source":"COMPLETE_BRMM_NORMAL_LIVE_WORD",
+      "prediction_covariance_transition":"P1=F*P0*F^T+Q",
+      "Joseph_covariance_transition":"Pj=P0-K*PCt^T-PCt*K^T+K*S*K^T",
+      "left_reset_covariance_transition":"P1=G(dtheta)*Pj*G(dtheta)^T",
+      "same_history_predecessor_link_required":True,
+      "same_cell_K_S_PCt_required":True,
+      "outward_successor_covariance_must_enclose_full_image":True,
+      "independent_successive_P_boxes_forbidden":True,
+      "independent_K_or_R_schedule_forbidden":True,
+      "scalar_reset_radius_used":False,
+      "prediction_point_identity_smoke_exact":pred_exact,
+      "Joseph_reset_zero_correction_point_smoke_exact":joseph_reset_exact,
+      "point_smokes_use_exact_result_containment_not_interval_equality":True,
+      "shipping_covariance_transition_operator_available":True,
+      "physical_motion_frontend_tuner_geometry_transition_materialized_here":False,
+      "complete_BRMM_source_transition_cover_closed_here":False,
+      "P4_promoted_here":False,
+    }
+
+
+def validate(d:dict)->list[str]:
+    f=[]
+    if d.get("schema")!=SCHEMA or d.get("qualification")!=QUALIFICATION:f.append("schema/qualification mismatch")
+    for k in ("same_history_predecessor_link_required","same_cell_K_S_PCt_required","outward_successor_covariance_must_enclose_full_image","independent_successive_P_boxes_forbidden","independent_K_or_R_schedule_forbidden","prediction_point_identity_smoke_exact","Joseph_reset_zero_correction_point_smoke_exact","point_smokes_use_exact_result_containment_not_interval_equality","shipping_covariance_transition_operator_available"):
+        if d.get(k) is not True:f.append(k+" not true")
+    for k in ("scalar_reset_radius_used","physical_motion_frontend_tuner_geometry_transition_materialized_here","complete_BRMM_source_transition_cover_closed_here","P4_promoted_here"):
+        if d.get(k) is not False:f.append(k+" not false")
+    return f
+
+
+def main()->int:
+    ap=argparse.ArgumentParser();ap.add_argument("--output",type=Path,required=True);a=ap.parse_args()
+    d=build();f=validate(d);d["validation_pass"]=not f;d["validation_failures"]=f
+    a.output.parent.mkdir(parents=True,exist_ok=True);a.output.write_text(json.dumps(d,indent=2,sort_keys=True)+"\n")
+    print(json.dumps({"covariance_transition":d["shipping_covariance_transition_operator_available"],"complete_source_cover":d["complete_BRMM_source_transition_cover_closed_here"],"failures":f},sort_keys=True))
+    return int(bool(f))
+if __name__=="__main__":raise SystemExit(main())

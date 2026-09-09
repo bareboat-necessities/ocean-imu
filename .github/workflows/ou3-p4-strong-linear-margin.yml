@@ -1,0 +1,46 @@
+name: ou3-p4-strong-linear-margin
+
+on:
+  push:
+    paths: &paths
+      - "tools/stability/ou3_p4_strong_linear_margin.py"
+      - "tools/stability/ou3_brmm_h18_prior_free_completion.py"
+      - "tools/stability/ou3_brmm_a21_prior_free_completion.py"
+      - "tools/stability/ou3_proof_operating_domain.json"
+      - ".github/workflows/ou3-p4-strong-linear-margin.yml"
+  pull_request:
+    paths: *paths
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  strong-linear-margin:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Compute maximum certified source-uniform margin
+        run: |
+          python3 tools/stability/ou3_p4_strong_linear_margin.py --output /tmp/ou3-p4-strong-linear-margin.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/ou3-p4-strong-linear-margin.json'))
+          assert d['validation_pass'], d['validation_failures']
+          assert d['P3_frozen_gate']==1e-18
+          assert not d['P3_numerical_matrices_changed']
+          assert d['H18']['strong_relative_margin_lower']>1e-18
+          assert d['A21']['strong_relative_margin_lower']>1e-18
+          print('STRONG_MARGIN H18',d['H18']['strong_relative_margin_lower'])
+          print('STRONG_MARGIN A21',d['A21']['strong_relative_margin_lower'])
+          PY
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: ou3-p4-strong-linear-margin
+          path: /tmp/ou3-p4-strong-linear-margin.json
+          retention-days: 7
+          if-no-files-found: warn

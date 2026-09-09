@@ -1,0 +1,70 @@
+{
+  "schema": 2,
+  "qualification": "OU3_P4_EXPLICIT_CLOSURE_DOMAIN_V2",
+  "trajectory_fit": false,
+  "scope": "conditional Normal-Live COMPLETE_BRMM theorem domain; not a replay-derived deployment claim",
+  "hard_entry_search": {
+    "definition": "the full already-declared physical P4 word-entry envelope; no PR-created fractional shrink is authorized",
+    "candidate_scale_factors": [1.0],
+    "minimum_certified_scale": 1.0,
+    "base_coordinate_radii": {
+      "attitude_cayley_norm": 0.8284271247461901,
+      "gyro_bias_norm_rad_s": 0.01,
+      "velocity_norm_mps": 5.0,
+      "position_norm_m": 7.361215932167728,
+      "integral_displacement_norm_m_s": 300.0,
+      "latent_acceleration_norm_mps2": 2.941995,
+      "accelerometer_bias_error_norm_mps2": 0.4
+    },
+    "base_radius_provenance": "45 degree SO(3) entrance, startup physical handoff norms, and Euclidean position norm implied by |dp_i|<=0.5*Hs with Hs<=8.5 m from ou3_proof_operating_domain.json",
+    "requires_full_declared_scale": true,
+    "shipping_covariance_is_not_entry_set": true
+  },
+  "BIAS1_family": {
+    "model": "beta(t)=beta0*exp(-(t-t0)/tau_true)+a*sin(omega*(t-t0)+phase)+d_det(t)",
+    "root_component_abs_upper_mps2": 0.1,
+    "tau_true_s": [600.0, 2400.0],
+    "sinusoid_component_amplitude_abs_upper_mps2": 0.02,
+    "sinusoid_period_s": [300.0, 1200.0],
+    "phase_rad": [-3.141592653589793, 3.141592653589793],
+    "deterministic_mismatch_component_abs_upper_mps2": 0.01,
+    "deterministic_mismatch_derivative_component_abs_upper_mps3": 0.0001,
+    "driver_increment_definition": "w_i=beta(t_i)-phi_true*beta(t_{i-1})",
+    "one_root_one_parameter_history_required": true,
+    "independent_per_sample_bias_slots_forbidden": true,
+    "existing_nonzero_driver_probe_must_be_member": true
+  },
+  "P3_execution_admission": {
+    "canonical_source": "COMPLETE_BRMM_NORMAL_LIVE_WORD",
+    "scope_is_BRMM_family_itself": true,
+    "global_SEA0_to_BRMM_left_inclusion_required_for_this_scoped_theorem": false,
+    "conditional_P3_delta_required": 1e-18,
+    "all_due_S_updates_with_actual_applied_RS_required": true,
+    "all_valid_accelerometer_updates_required": true,
+    "projection_covariance_identity_required": true,
+    "same_history_frontend_tuner_covariance_required": true,
+    "no_replay_or_finite_harmonic_membership_substitute": true
+  },
+  "finite_precision": {
+    "runtime_scalar_format": "IEEE754_binary32",
+    "unit_roundoff": 5.960464477539063e-08,
+    "compiler_fast_math_forbidden": true,
+    "fma_may_contract_multiply_add": true,
+    "reassociation_without_fast_math_assumed_false": true,
+    "outward_binary32_operation_layer_required": true,
+    "source_constants_quantized_before_variance_required": true,
+    "projection_norm_rounding_reserve_ulps": 32,
+    "strict_interval_LDLT_after_rounding_required": true,
+    "complete_Eigen_expression_evaluation_order_enclosed": false,
+    "complete_shipping_Kalman_reset_roundoff_enclosed": false
+  },
+  "uniform_nonlinear_enclosure": {
+    "rotation_second_derivative_majorant_on_cayley_norm_le_1": 4096.0,
+    "cayley_reset_second_derivative_majorant_for_input_norms_le_1": 262144.0,
+    "majorants_are_analytic_overestimates_not_fitted": true,
+    "required_cayley_state_norm_upper": 1.0,
+    "required_correction_cayley_norm_upper": 0.25,
+    "scalar_P3_margin_architecture_abandoned": true,
+    "replacement": "joint signed Joseph/reset information ledger with same-history graph sectors"
+  }
+}

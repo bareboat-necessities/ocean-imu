@@ -1,0 +1,66 @@
+name: ou3-p4-projection-sector
+
+on:
+  push:
+    paths: &paths
+      - "tools/stability/ou3_projection_sector.py"
+      - "tools/stability/ou3_p4_projection_binary32_enclosure.py"
+      - "tests/validation/test_ou3_projection_sector.py"
+      - "tests/validation/test_ou3_projection_binary32_enclosure.py"
+      - "tools/stability/ou3_proof_operating_domain.json"
+      - ".github/workflows/ou3-p4-projection-sector.yml"
+  pull_request:
+    paths: *paths
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  projection-sector:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Install numpy
+        run: sudo apt-get update && sudo apt-get install -y python3-numpy
+      - name: Run projection-sector regressions
+        working-directory: tests/validation
+        run: python3 -m unittest -v test_ou3_projection_sector test_ou3_projection_binary32_enclosure
+      - name: Produce exact-real and binary32 projection contracts
+        run: |
+          python3 tools/stability/ou3_projection_sector.py \
+            --radius 0.4 --output /tmp/ou3-projection-sector.json
+          python3 tools/stability/ou3_p4_projection_binary32_enclosure.py \
+            --output /tmp/ou3-projection-binary32.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/ou3-projection-sector.json'))
+          fp=json.load(open('/tmp/ou3-projection-binary32.json'))
+          assert d['exact_real_operator_sector_closed']
+          assert d['saturated_branch_included_analytically']
+          assert d['unsaturated_branch_included_analytically']
+          assert d['boundary_clarke_branch_included_analytically']
+          assert not d['fixed_multiplier_required']
+          assert not d['saturation_pattern_enumeration_required']
+          assert d['estimate_ball_invariant_exact_real']
+          assert not d['floating_point_rounding_enclosed']
+          assert fp['validation_pass'], fp['validation_failures']
+          assert fp['projection_finite_precision_enclosure_closed']
+          assert fp['branch_ambiguity_covered']
+          assert not fp['full_Kalman_reset_finite_precision_enclosure_closed_here']
+          assert not fp['P4_MOTION_PASS'] and not fp['P4_PASS']
+          assert not d['source_dependent_coefficients_enclosed']
+          assert not d['word_entry_set_qualified']
+          assert not d['P4_MOTION_PASS'] and not d['P4_PASS'] and not d['P5_MAY_START']
+          print('PROJECTION_SECTOR', d['sector'])
+          print('PROJECTION_BINARY32_EPS', fp['single_evaluation_projection_value_error_norm_upper_mps2'])
+          PY
+      - uses: actions/upload-artifact@v6
+        with:
+          name: ou3-p4-projection-sector
+          path: |
+            /tmp/ou3-projection-sector.json
+            /tmp/ou3-projection-binary32.json
+          retention-days: 7

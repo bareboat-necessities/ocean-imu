@@ -1,0 +1,45 @@
+name: ou3-p4-bias1-p3-admission
+on:
+  push:
+    paths:
+      - "tools/stability/ou3_p4_bias1_p3_admission.py"
+      - "tools/stability/ou3_p4_closure_domain.json"
+      - "tools/stability/ou3_p4_projection_sector.py"
+      - ".github/workflows/ou3-p4-bias1-p3-admission.yml"
+  pull_request:
+    paths:
+      - "tools/stability/ou3_p4_bias1_p3_admission.py"
+      - "tools/stability/ou3_p4_closure_domain.json"
+      - "tools/stability/ou3_p4_projection_sector.py"
+      - ".github/workflows/ou3-p4-bias1-p3-admission.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  admission:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Qualify BIAS1 and P3 execution premises
+        run: |
+          python3 tools/stability/ou3_p4_bias1_p3_admission.py --output /tmp/ou3-p4-bias1-p3-admission.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/ou3-p4-bias1-p3-admission.json'))
+          assert d['validation_pass'], d['validation_failures']
+          assert d['BIAS1_SOURCE_ADMISSION_PASS']
+          assert d['P3_EXECUTION_ADMISSION_PASS']
+          assert d['P3_frozen_delta']==1e-18
+          assert not d['P3_numerical_certificate_modified']
+          assert not d['P4_endpoint_contraction_promoted_here']
+          PY
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: ou3-p4-bias1-p3-admission
+          path: /tmp/ou3-p4-bias1-p3-admission.json
+          retention-days: 7
+          if-no-files-found: warn

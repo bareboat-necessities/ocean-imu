@@ -1,0 +1,34 @@
+name: ou3-p4-joseph-reset-reduced-signed-identity
+on:
+  push:
+    paths: &paths
+      - "tools/stability/ou3_p4_joseph_reset_reduced_signed_identity.py"
+      - "tools/stability/ou3_p4_same_cell_kalman_cross_identities.py"
+      - ".github/workflows/ou3-p4-joseph-reset-reduced-signed-identity.yml"
+  pull_request:
+    paths: *paths
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  identity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with: {persist-credentials: false}
+      - name: Verify exact reduced signed identity
+        run: python3 tools/stability/ou3_p4_joseph_reset_reduced_signed_identity.py --output /tmp/reduced.json
+      - name: Enforce exact non-scalarized reduction
+        run: |
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/reduced.json'))
+          assert d['validation_pass'],d['validation_failures']
+          assert d['S_inverse_eliminated_from_reduced_nonlinear_reset_ledger']
+          assert d['posterior_precision_eliminated_from_reduced_nonlinear_reset_ledger']
+          assert d['K_survives_only_through_same_cell_d_equals_Kq_graph']
+          assert not d['independent_K_box_used'] and not d['independent_Sinverse_box_used']
+          assert not d['posterior_precision_box_used'] and not d['condition_number_scalarization_used']
+          assert not d['P4_promoted_here']
+          print('REDUCED_SIGNED_IDENTITY',d['reduced_identity'])
+          PY

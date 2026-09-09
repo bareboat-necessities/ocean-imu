@@ -1,0 +1,49 @@
+name: ou3-p4-marginal-correction-obstruction
+
+on:
+  push:
+    paths: &paths
+      - "tools/stability/ou3_p4_marginal_correction_obstruction.py"
+      - "tools/stability/ou3_brmm_riccati_tube_factored.py"
+      - "tools/stability/ou3_brmm_endpoint_covariance.py"
+      - "tools/stability/ou3_p4_hard_entry_set.py"
+      - "tools/stability/ou3_brmm_dynamic_source_certificate.py"
+      - "tools/stability/ou3_p4_exact_reset_transport.py"
+      - ".github/workflows/ou3-p4-marginal-correction-obstruction.yml"
+  pull_request:
+    paths: *paths
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  obstruction:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Prove detached marginal Pbar route is insufficient
+        run: |
+          python3 tools/stability/ou3_p4_marginal_correction_obstruction.py --output /tmp/marginal-obstruction.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/marginal-obstruction.json'))
+          assert d['validation_pass'], d['validation_failures']
+          assert d['marginal_only_reset_domain_proof_architecture_obstructed']
+          assert not d['reachable_shipping_covariance_counterexample_claimed']
+          assert not d['canonical_P4_falsified']
+          assert not d['rowwise_or_trace_Pbar_retuning_can_close_P4']
+          assert not d['P4_promoted_here']
+          for mode,m in d['modes'].items():
+              print('MARGINAL_OBSTRUCTION', mode,
+                    'correction=',m['same_cell_attitude_correction_norm'],
+                    'det=',m['witness_2x2_determinant_lower'])
+          PY
+      - uses: actions/upload-artifact@v6
+        with:
+          name: ou3-p4-marginal-correction-obstruction
+          path: /tmp/marginal-obstruction.json
+          retention-days: 7

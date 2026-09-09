@@ -1,0 +1,166 @@
+name: ou3-p4-joint-bias-source-storage
+
+on:
+  push:
+    paths: &paths
+      - "src/**"
+      - "tools/stability/ou3-source-endpoint.cpp"
+      - "tools/stability/ou3_proof_operating_domain.json"
+      - "tests/kalman_ou_iii/ou3_p4_joint_bias_source_storage.py"
+      - "tests/kalman_ou_iii/ou3_p4_joint_source_centered_retention.py"
+      - "tests/kalman_ou_iii/ou3_p4_motion_gain.py"
+      - "tests/kalman_ou_iii/ou3_p4_connected_motion.py"
+      - "tests/kalman_ou_iii/ou3_p4_source_endpoint.py"
+      - "tests/kalman_ou_iii/ou3_p4_trace_overlay.py"
+      - "tests/validation/test_ou3_joint_bias_source_storage.py"
+      - ".github/workflows/ou3-p4-joint-bias-source-storage.yml"
+  pull_request:
+    paths: *paths
+  workflow_dispatch:
+
+concurrency:
+  group: ou3-p4-joint-bias-source-storage-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  joint-bias-source-storage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-numpy g++ libeigen3-dev
+
+      - name: Checkout pinned physical source generator
+        uses: actions/checkout@v6
+        with:
+          repository: bareboat-necessities/oceanography-waves-lib
+          ref: e442150682f560384be427df4cc7815956a091c5
+          path: _physical-sea-generator
+          persist-credentials: false
+
+      - name: Run algebraic compatible-storage tests
+        working-directory: tests/validation
+        run: python3 -m unittest -v test_ou3_joint_bias_source_storage
+
+      - name: Capture one unmodified shipping source history
+        run: |
+          g++ -std=c++20 -O2 -Wall -Wextra -Werror \
+            -I src -isystem /usr/include/eigen3 -isystem _physical-sea-generator/src \
+            tools/stability/ou3-source-endpoint.cpp -o /tmp/ou3-source-endpoint
+          /tmp/ou3-source-endpoint /tmp/ou3-source-endpoint
+          python3 tests/kalman_ou_iii/ou3_p4_source_endpoint.py \
+            --prefix /tmp/ou3-source-endpoint \
+            --generator-root _physical-sea-generator \
+            --output /tmp/ou3-source-endpoint.json
+
+      - name: Attach every shipping subevent to the same continuation
+        run: |
+          python3 tests/kalman_ou_iii/ou3_p4_trace_overlay.py \
+            --repository . --output /tmp/ou3-motion-trace-overlay
+          g++ -std=c++20 -O2 -Wall -Wextra -Werror -DOU3_SOURCE_EVENT_TRACE \
+            -I /tmp/ou3-motion-trace-overlay -I src \
+            -isystem /usr/include/eigen3 -isystem _physical-sea-generator/src \
+            tools/stability/ou3-source-endpoint.cpp -o /tmp/ou3-source-events
+          /tmp/ou3-source-events /tmp/ou3-source-events
+          python3 tests/kalman_ou_iii/ou3_p4_connected_motion.py \
+            --prefix /tmp/ou3-source-events --baseline-prefix /tmp/ou3-source-endpoint \
+            --manifest /tmp/ou3-motion-trace-overlay/trace-manifest.json \
+            --output /tmp/ou3-connected-motion.json
+
+      - name: Run joint physical-bias/source compatible storage
+        env:
+          OPENBLAS_NUM_THREADS: 1
+          OMP_NUM_THREADS: 1
+        run: |
+          python3 tests/kalman_ou_iii/ou3_p4_joint_bias_source_storage.py \
+            --prefix /tmp/ou3-source-events \
+            --attachment /tmp/ou3-connected-motion.json \
+            --output /tmp/ou3-joint-bias-source-storage.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/ou3-joint-bias-source-storage.json'))
+          assert d['proof_state_dimension'] == 24
+          assert d['shipping_error_state_dimension'] == 21
+          assert not d['shipping_filter_changed']
+          assert not d['independent_bias_energy_slots_used']
+          assert not d['independent_source_ports_used']
+          assert not d['fresh_metric_per_sample_used']
+          assert not d['P4_MOTION_PASS'] and not d['P4_PASS'] and not d['P5_MAY_START']
+          for mode,m in d['modes'].items():
+              assert m['boundary_count'] == 600
+              assert m['physical_bias_recurrence']['recurrence_reconstruction_pass']
+              assert m['physical_bias_recurrence']['zero_driver_is_not_uniform_BIAS1_coverage']
+              assert m['joint_error_lift_defect'] < 1e-10
+              assert m['joint_physical_bias_lift_defect'] < 1e-10
+              assert m['cyclic_metric_closure_relative'] < 2e-8
+              assert m['max_actual_minus_bound'] <= 5e-8*max(1,m['endpoint_actual_storage'])
+              assert not m['joint_augmentation']['nonzero_driver_lift_present']
+              assert not m['source_dependent_metric_uniformly_enclosed']
+              assert not m['nonzero_BIAS1_driver_uniformly_enclosed']
+              assert not m['active_projection_uniformly_enclosed']
+              assert not m['P4_MOTION_PASS'] and not m['P4_PASS'] and not m['P5_MAY_START']
+              print('JOINT_STORAGE_POINT', mode,
+                    'rate=',m['compatible_storage_product_rate'],
+                    'retained=',m['point_motion_coordinate_retained'],
+                    'max_prefix=',max(x['retention_ratio'] for x in m['max_prefix_coordinate_budgets'].values()))
+          PY
+
+      - name: Keep one correlated root through every prefix
+        env:
+          OPENBLAS_NUM_THREADS: 1
+          OMP_NUM_THREADS: 1
+        run: |
+          python3 tests/kalman_ou_iii/ou3_p4_joint_source_centered_retention.py \
+            --prefix /tmp/ou3-source-events \
+            --attachment /tmp/ou3-connected-motion.json \
+            --output /tmp/ou3-joint-source-centered-retention.json
+          python3 - <<'PY'
+          import json, math
+          d=json.load(open('/tmp/ou3-joint-source-centered-retention.json'))
+          assert d['proof_state_dimension'] == 24
+          assert not d['shipping_filter_changed']
+          assert not d['independent_bias_slots_used']
+          assert not d['independent_source_ports_used']
+          assert not d['fresh_metric_per_sample_used']
+          assert not d['covariance_ellipsoid_promoted_to_true_error_set']
+          assert not d['P4_MOTION_PASS'] and not d['P4_PASS'] and not d['P5_MAY_START']
+          for mode,m in d['modes'].items():
+              assert m['one_correlated_initial_covariance_root']
+              assert m['physical_true_bias_root_fixed_not_independent']
+              assert math.isfinite(m['critical_initial_sigma_level']) and m['critical_initial_sigma_level'] > 0
+              assert m['covariance_consistency_is_unproved']
+              assert not m['nonzero_BIAS1_driver_uniformly_enclosed']
+              assert not m['active_projection_uniformly_enclosed']
+              assert not m['source_dependent_coefficients_uniformly_enclosed']
+              assert not m['P4_MOTION_PASS'] and not m['P4_PASS'] and not m['P5_MAY_START']
+              print('CORRELATED_ROOT_POINT', mode,
+                    'retained=',m['one_sigma_motion_coordinate_retained'],
+                    'critical_sigma=',m['critical_initial_sigma_level'],
+                    'limiting=',m['limiting_group'])
+          PY
+
+      - name: Upload joint continuation evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: ou3-p4-joint-bias-source-storage
+          path: |
+            /tmp/ou3-joint-bias-source-storage.json
+            /tmp/ou3-joint-source-centered-retention.json
+            /tmp/ou3-source-endpoint.json
+            /tmp/ou3-source-endpoint.root.json
+            /tmp/ou3-source-endpoint.inputs.csv
+            /tmp/ou3-source-endpoint.prefixes.jsonl
+            /tmp/ou3-source-events.events.jsonl
+            /tmp/ou3-connected-motion.json
+            /tmp/ou3-motion-trace-overlay/trace-manifest.json
+          retention-days: 7

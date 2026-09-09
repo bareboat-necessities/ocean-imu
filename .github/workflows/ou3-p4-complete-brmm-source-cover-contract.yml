@@ -1,0 +1,171 @@
+name: ou3-p4-complete-brmm-source-cover-contract
+
+on:
+  push:
+    paths: &paths
+      - "tools/stability/ou3_p4_complete_brmm_source_cover_contract.py"
+      - "tools/stability/ou3_p4_complete_brmm_source_cover_transition.py"
+      - "tools/stability/ou3_p4_complete_brmm_adaptive_transition.py"
+      - "tools/stability/ou3_p4_complete_brmm_target_cell.py"
+      - "tools/stability/ou3_p4_complete_brmm_universal_target_relation.py"
+      - "tools/stability/ou3_p4_complete_brmm_frontend_geometry_transition.py"
+      - "tools/stability/ou3_p4_wave_period_interval_transition.py"
+      - "tools/stability/ou3_p4_complete_brmm_finite_map_mean_value.py"
+      - "tools/stability/ou3_p4_complete_brmm_differential_events.py"
+      - "tools/stability/ou3_brmm_complete_source.py"
+      - "tools/stability/ou3_brmm_dynamic_source_certificate.py"
+      - "tools/stability/ou3_brmm_wave_period_frontend.py"
+      - "tools/stability/ou3_validated_positive_roots.py"
+      - "tools/stability/ou3_vector_uco_certificate.py"
+      - "tools/stability/ou3_brmm_full_normal_live_word.py"
+      - ".github/workflows/ou3-p4-complete-brmm-source-cover-contract.yml"
+  pull_request:
+    paths: *paths
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Validate fail-closed same-history source-cover contract
+        run: |
+          python3 tools/stability/ou3_p4_complete_brmm_source_cover_contract.py --output /tmp/source-cover-contract.json
+          python3 tools/stability/ou3_p4_complete_brmm_source_cover_transition.py --output /tmp/source-cover-transition.json
+          python3 tools/stability/ou3_p4_complete_brmm_adaptive_transition.py --output /tmp/adaptive-transition.json
+          python3 tools/stability/ou3_p4_complete_brmm_target_cell.py --output /tmp/target-cell.json
+          python3 tools/stability/ou3_p4_complete_brmm_universal_target_relation.py --output /tmp/universal-target-relation.json
+          python3 tools/stability/ou3_p4_wave_period_interval_transition.py --output /tmp/wave-period-transition.json
+          python3 tools/stability/ou3_p4_complete_brmm_frontend_geometry_transition.py --output /tmp/frontend-geometry-transition.json
+          python3 tools/stability/ou3_p4_complete_brmm_finite_map_mean_value.py --output /tmp/finite-map.json
+          python3 - <<'PY'
+          import json,sys
+          sys.path.insert(0,'tools/stability')
+          from ou3_interval import Interval
+          import ou3_p4_complete_brmm_source_cover_contract as C
+          import ou3_p4_complete_brmm_differential_events as E
+
+          I=Interval.point
+          n=18
+          P=[[I(1.0 if i==j else 0.0) for j in range(n)] for i in range(n)]
+          R=[[I(1.0 if i==j else 0.0) for j in range(3)] for i in range(3)]
+          cell=C.SourceCoverCell(
+              source_token='SMOKE_ONE_HISTORY', predecessor_token='SMOKE_PREDECESSOR',
+              mode='H', sample_index=0, event_ordinal=1, kind='S_zero',
+              state=[I(0.0) for _ in range(n)], P=P,
+              dt_s=I(0.005), tau_applied_s=I(2.0), sigma_aw_mps2=I(1.0),
+              pseudo_elapsed_s=I(0.015), R=R, R_provenance=E.ACTUAL_RS_PROVENANCE,
+              radial_scale=Interval.outward_bounds(0.0,1.0))
+          assert C.validate_cell(cell)==[], C.validate_cell(cell)
+          ev=E.source_joseph_event(**C.joseph_event_kwargs(cell))
+          assert ev['same_P_H_R_cell']
+          assert ev['R_provenance']==E.ACTUAL_RS_PROVENANCE
+
+          d=json.load(open('/tmp/source-cover-contract.json'))
+          t=json.load(open('/tmp/source-cover-transition.json'))
+          a=json.load(open('/tmp/adaptive-transition.json'))
+          x=json.load(open('/tmp/target-cell.json'))
+          u=json.load(open('/tmp/universal-target-relation.json'))
+          w=json.load(open('/tmp/wave-period-transition.json'))
+          g=json.load(open('/tmp/frontend-geometry-transition.json'))
+          f=json.load(open('/tmp/finite-map.json'))
+
+          assert d['validation_pass'],d['validation_failures']
+          assert d['independent_frequency_sigma_coordinates_forbidden']
+          assert d['same_signal_history_must_generate_period_and_sigma']
+          assert d['wave_period_moments_must_be_retained']
+          assert d['period_scaled_sigma_band_must_be_retained']
+          assert d['sigma_variance_statistic_must_be_retained']
+          assert d['period_frequency_reciprocal_relation_must_be_retained']
+          assert d['tau_TS_SpectralMSE_RS_same_cell_relation_available']
+          assert d['raw_effective_sigma_split_preserved']
+          assert not d['coarse_frequency_sigma_rectangle_may_promote_P4']
+          assert not d['joint_estimator_relation_materialized']
+          assert not d['coefficient_target_inclusion_closed']
+          assert not d['SOURCE_UNIFORM_COMPLETE_BRMM_COVER_CLOSED']
+          assert not d['point_trace_can_promote_source_uniform_cover']
+          assert d['independent_P_H_R_K_boxes_forbidden']
+
+          assert t['validation_pass'],t['validation_failures']
+          assert t['shipping_covariance_transition_operator_available']
+          assert not t['complete_BRMM_source_transition_cover_closed_here']
+
+          assert a['validation_pass'],a['validation_failures']
+          assert a['raw_and_effective_sigma_coordinates_preserved']
+          assert a['EMA_candidate_transition_available']
+          assert a['staged_commit_transition_available']
+          assert a['effective_filter_sigma_image_available']
+          assert a['scheduler_due_not_due_branch_preserved']
+          assert a['deadline_straddling_cell_requires_branch_split']
+          assert not a['complete_BRMM_adaptive_cover_closed_here']
+
+          assert x['validation_pass'],x['validation_failures']
+          assert x['shipping_frequency_clamp_reapplied_before_reciprocal']
+          assert x['full_dynamic_target_rectangle_image_valid']
+          assert x['SpectralMSE_RS_is_same_tau_sigma_image']
+          assert x['quiet_sigma_target_admitted']
+          assert x['independent_RS_target_forbidden']
+          assert not x['physical_frontend_frequency_sigma_relation_materialized_here']
+          assert not x['complete_BRMM_target_source_cover_closed_here']
+
+          assert u['validation_pass'],u['validation_failures']
+          assert u['full_rectangle_is_coarse_sanity_enclosure_only']
+          assert u['independent_frequency_sigma_coordinates_forbidden']
+          assert u['same_signal_history_must_generate_period_and_sigma']
+          assert u['wave_period_moments_must_be_retained']
+          assert u['period_scaled_sigma_band_must_be_retained']
+          assert u['sigma_variance_statistic_must_be_retained']
+          assert u['period_frequency_reciprocal_relation_must_be_retained']
+          assert u['tau_TS_RS_are_correlated_same_cell_images']
+          assert u['active_schedule_connected_by_shipping_EMA']
+          assert u['active_schedule_connected_by_staged_commit']
+          assert u['pseudo_event_incidence_connected_by_scheduler']
+          assert not u['target_pair_may_span_full_rectangle_in_theorem']
+          assert not u['joint_estimator_relation_materialized_here']
+          assert not u['coefficient_target_inclusion_closed']
+          assert not u['complete_source_cover_closed_here']
+
+          assert w['validation_pass'],w['validation_failures']
+          assert w['shipping_two_high_pass_and_leaky_integrator_transition_materialized']
+          assert w['EW_first_second_moment_transition_materialized']
+          assert w['moment_start_straddling_requires_source_split']
+          assert not w['raw_period_ratio_transition_materialized_here']
+
+          assert g['validation_pass'],g['validation_failures']
+          assert g['fixed_prior_branch_materialized']
+          assert g['screened_frequency_to_tau_target_map_materialized']
+          assert g['finite_EW_moment_state_transition_materialized']
+          assert g['moment_start_branch_preserved']
+          assert not g['raw_period_ratio_transition_materialized_here']
+          assert not g['sigma_target_physical_frontend_relation_materialized_here']
+          assert not g['physical_rotation_vector_geometry_transition_materialized_here']
+
+          assert f['validation_pass'],f['validation_failures']
+          assert f['source_cover_contract_consumed']
+          assert not f['source_cover_uniform_complete_BRMM_closed']
+          assert not f['P4_promoted_here']
+
+          print('SOURCE_COVER_INTERFACE_SMOKE',ev['same_P_H_R_cell'],ev['R_provenance'])
+          print('SOURCE_COVER_JOINT_ESTIMATOR_REQUIRED',d['same_signal_history_must_generate_period_and_sigma'])
+          print('SOURCE_COVER_COEFFICIENT_CLOSED',d['coefficient_target_inclusion_closed'])
+          print('SOURCE_COVER_UNIFORM_CLOSED',d['SOURCE_UNIFORM_COMPLETE_BRMM_COVER_CLOSED'])
+          PY
+      - uses: actions/upload-artifact@v6
+        with:
+          name: ou3-p4-complete-brmm-source-cover-contract
+          path: |
+            /tmp/source-cover-contract.json
+            /tmp/source-cover-transition.json
+            /tmp/adaptive-transition.json
+            /tmp/target-cell.json
+            /tmp/universal-target-relation.json
+            /tmp/wave-period-transition.json
+            /tmp/frontend-geometry-transition.json
+            /tmp/finite-map.json
+          retention-days: 7

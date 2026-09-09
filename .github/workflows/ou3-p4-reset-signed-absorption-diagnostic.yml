@@ -1,0 +1,46 @@
+name: ou3-p4-reset-signed-absorption-diagnostic
+on:
+  push:
+    paths: &paths
+      - "tools/stability/ou3_p4_reset_signed_absorption_diagnostic.py"
+      - "tools/stability/ou3_p4_exact_reset_transport.py"
+      - "tools/stability/ou3_p4_hard_entry_set.py"
+      - ".github/workflows/ou3-p4-reset-signed-absorption-diagnostic.yml"
+  pull_request:
+    paths: *paths
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  diagnostic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with: {persist-credentials: false}
+      - name: Build parameterized homogeneous exact reset sector
+        run: python3 tools/stability/ou3_p4_reset_signed_absorption_diagnostic.py --output /tmp/reset-absorb.json
+      - name: Enforce same-graph non-promotion contract
+        run: |
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/reset-absorb.json'))
+          assert d['validation_pass'],d['validation_failures']
+          assert d['parameterized_same_cell_reset_sector_available']
+          assert d['production_delta_is_argument_not_rowwise_K_bound']
+          assert d['same_graph_correction_domain_certificate_required']
+          assert d['reset_defect_is_homogeneous_in_same_cell_correction']
+          assert d['same_cell_d_equals_Ky_must_be_retained_downstream']
+          assert not d['rowwise_K_used_for_reset_domain']
+          assert not d['production_correction_domain_closed_here']
+          assert not d['independent_reset_disturbance_used']
+          assert not d['P4_promoted_here'] and not d['packet_count_multiplier_used']
+          for delta,m in d['smoke'].items():
+              assert m['homogeneous_sector_dominates_endpoint_absolute_bound']
+              print('RESET_SECTOR_SMOKE',delta,'mu_R=',m['reset_defect_over_correction_norm_upper'])
+          PY
+      - uses: actions/upload-artifact@v6
+        with:
+          name: ou3-p4-reset-signed-absorption-diagnostic
+          path: /tmp/reset-absorb.json
+          retention-days: 7

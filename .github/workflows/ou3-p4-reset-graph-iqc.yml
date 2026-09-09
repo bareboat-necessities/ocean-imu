@@ -1,0 +1,47 @@
+name: ou3-p4-reset-graph-iqc
+on:
+  push:
+    paths: &paths
+      - "tools/stability/ou3_p4_reset_graph_iqc.py"
+      - "tools/stability/ou3_p4_reset_signed_absorption_diagnostic.py"
+      - "tools/stability/ou3_p4_affine_hard_tube_iqc.py"
+      - "tools/stability/ou3_p4_exact_reset_transport.py"
+      - "tools/stability/ou3_p4_hard_entry_set.py"
+      - ".github/workflows/ou3-p4-reset-graph-iqc.yml"
+  pull_request:
+    paths: *paths
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  iqc:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with: {persist-credentials: false}
+      - name: Build parameterized dense same-cell reset graph IQC
+        run: python3 tools/stability/ou3_p4_reset_graph_iqc.py --output /tmp/reset-iqc.json
+      - name: Enforce correction-domain correlation scope
+        run: |
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/reset-iqc.json'))
+          assert d['validation_pass'],d['validation_failures']
+          assert d['same_cell_K_required'] and d['independent_correction_port_forbidden']
+          assert d['parameterized_reset_defect_dense_IQC_available']
+          assert d['reset_IQC_keeps_residual_direction_via_Etheta_K_Y']
+          assert d['production_delta_must_be_certified_from_same_Dmap']
+          assert d['affine_correction_domain_target_available']
+          assert d['rowwise_K_correction_domain_forbidden']
+          assert d['parameterized_homogeneous_reset_sector_consumed']
+          assert d['smoke_reset_sector_zero_contained']
+          assert not d['production_same_graph_correction_domain_closed_here']
+          assert not d['source_uniform_augmented_LDLT_closed_here'] and not d['P4_promoted_here']
+          print('RESET_IQC_SMOKE',d['smoke_delta_not_theorem_bound'],d['smoke_reset_gain'])
+          PY
+      - uses: actions/upload-artifact@v6
+        with:
+          name: ou3-p4-reset-graph-iqc
+          path: /tmp/reset-iqc.json
+          retention-days: 7

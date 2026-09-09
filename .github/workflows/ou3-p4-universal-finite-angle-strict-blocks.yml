@@ -1,0 +1,51 @@
+name: ou3-p4-universal-finite-angle-strict-blocks
+on:
+  push:
+    paths: &paths
+      - "tools/stability/ou3_p4_universal_finite_angle_strict_blocks.py"
+      - "tools/stability/ou3_p4_finite_angle_h18_universal.py"
+      - "tools/stability/ou3_p4_finite_angle_a21_universal.py"
+      - "tools/stability/ou3_brmm_h18_prior_free_completion.py"
+      - "tools/stability/ou3_brmm_riccati_tube_factored.py"
+      - ".github/workflows/ou3-p4-universal-finite-angle-strict-blocks.yml"
+  pull_request:
+    paths: *paths
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  strict-blocks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with: {persist-credentials: false}
+      - name: Materialize finite-angle strict blocks
+        run: python3 tools/stability/ou3_p4_universal_finite_angle_strict_blocks.py --output /tmp/strict-blocks.json
+      - name: Enforce full-matrix non-promotion contract
+        run: |
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/strict-blocks.json'))
+          assert d['validation_pass'],d['validation_failures']
+          assert d['finite_angle_H18_actual_interval_matrices_materialized']
+          assert d['A21_exact_first_active_direct_sum_matrices_materialized']
+          assert not d['scalar_margin_substituted_for_matrix']
+          assert not d['source_enumeration_used'] and not d['trajectory_replay_used']
+          assert d['P3_delta']==1e-18
+          assert d['H18_worst_materialized_LDLT_pivot_lower']>0
+          assert d['A21_worst_materialized_LDLT_pivot_lower']>0
+          assert not d['endpoint_augmented_LDLT_closed_here']
+          assert not d['every_prefix_augmented_LDLT_closed_here']
+          assert not d['P4_promoted_here']
+          print('STRICT_BLOCK_CELLS',d['cell_count'])
+          print('STRICT_H18_PIVOT',d['H18_worst_materialized_LDLT_pivot_lower'])
+          print('STRICT_A21_PIVOT',d['A21_worst_materialized_LDLT_pivot_lower'])
+          PY
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: ou3-p4-universal-finite-angle-strict-blocks
+          path: /tmp/strict-blocks.json
+          retention-days: 7
+          if-no-files-found: warn

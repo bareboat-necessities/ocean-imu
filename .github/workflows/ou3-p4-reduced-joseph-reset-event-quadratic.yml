@@ -1,0 +1,37 @@
+name: ou3-p4-reduced-joseph-reset-event-quadratic
+on:
+  push:
+    paths: &paths
+      - "tools/stability/ou3_p4_reduced_joseph_reset_event_quadratic.py"
+      - "tools/stability/ou3_p4_joseph_reset_reduced_signed_identity.py"
+      - ".github/workflows/ou3-p4-reduced-joseph-reset-event-quadratic.yml"
+  pull_request:
+    paths: *paths
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  quadratic:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with: {persist-credentials: false}
+      - name: Verify dense reduced event quadratic
+        run: python3 tools/stability/ou3_p4_reduced_joseph_reset_event_quadratic.py --output /tmp/event-q.json
+      - name: Enforce exact common-coordinate contract
+        run: |
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/event-q.json'))
+          assert d['validation_pass'],d['validation_failures']
+          assert d['dense_common_augmented_coordinate_supported']
+          assert d['reduced_event_quadratic_available']
+          assert d['same_cell_d_equals_Kq_binding_required_downstream']
+          assert not d['S_inverse_present_in_event_quadratic']
+          assert not d['posterior_precision_present_in_event_quadratic']
+          assert not d['independent_K_box_present_in_event_quadratic']
+          assert not d['independent_reset_defect_port_used']
+          assert not d['packet_count_multiplier_used']
+          assert not d['P4_promoted_here']
+          print('REDUCED_EVENT_QUADRATIC_EXACT',d['exact_rational_matrix_matches_reduced_identity'])
+          PY

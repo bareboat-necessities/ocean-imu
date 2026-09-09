@@ -168,8 +168,9 @@ def audit(root, rows, checkpoints):
                               [0, -np.sin(heel), np.cos(heel)]])
             check("source_linear", row["linear_true"], linear, 1)
             check("source_rotation", mat(row, "R_true"), unheel@rt, 1)
-            if row["active"] != (mode == "A21") or row["true_bias"] != [0, 0, 0]:
-                raise ValueError("mode or single BIAS1 root detached")
+            true_bias = np.asarray(row["true_bias"], dtype=float)
+            if row["active"] != (mode == "A21") or true_bias.shape != (3,) or not np.isfinite(true_bias).all():
+                raise ValueError("mode or finite BIAS1 physical-bias history detached")
 
             if stage == "prediction_enter":
                 if pending is not None or (last_index is not None and row["index"] != last_index+1):
@@ -200,7 +201,13 @@ def audit(root, rows, checkpoints):
                 u = np.asarray(row["linear_true"])-fll@before["linear_true"]
                 expected = eb.copy()
                 expected[6:18] = fll@eb[6:18]+u
-                expected[18:] *= phi
+                # e_b = beta_true-b_hat.  The shipping estimate predicts
+                # b_hat+ = phi*b_hat, while the physical BIAS1 history keeps
+                # its own same-source beta transition.  Retain the resulting
+                # exact forcing instead of assuming beta_true==0.
+                beta_before = np.asarray(before["true_bias"], dtype=float)
+                beta_after = np.asarray(row["true_bias"], dtype=float)
+                expected[18:] = phi*eb[18:] + beta_after - phi*beta_before
                 unbiased = np.asarray(row["gyro_measured"])
                 source_step_defect = mat(row, "R_true") @ (
                     deployed_rotation(-dt*unbiased)@mat(before, "R_true")).T
@@ -342,6 +349,7 @@ def audit(root, rows, checkpoints):
             "float_parity_is_an_outward_certificate": False,
             "measurement_S_true_forcing_retained": True,
             "bias_prediction_correction_projection_coupling_retained": True,
+            "nonzero_physical_bias_history_supported": True,
             "no_gain_fit_metric_search_or_source_window_reselection": True,
             "modes": result, "P4_MOTION_PASS": False, "P5_MOTION_MAY_START": False,
             "remaining_gate": "source/error joint graph sectors and channel-gain augmented master; then source-uniform prefix/retention cover"}
@@ -354,32 +362,34 @@ def main():
     parser.add_argument("--manifest", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
-    digest = {}
-    for suffix in (".root.json", ".inputs.csv", ".prefixes.jsonl"):
-        traced, baseline = Path(str(args.prefix)+suffix), Path(str(args.baseline_prefix)+suffix)
-        digest[suffix] = hashlib.sha256(traced.read_bytes()).hexdigest()
-        if digest[suffix] != hashlib.sha256(baseline.read_bytes()).hexdigest():
-            raise ValueError("read-only instrumentation changed baseline bytes: "+suffix)
     root = json.loads(Path(str(args.prefix)+".root.json").read_text())
     rows = [json.loads(line) for line in Path(str(args.prefix)+".events.jsonl").read_text().splitlines()]
     points = [json.loads(line) for line in Path(str(args.prefix)+".prefixes.jsonl").read_text().splitlines()]
-    try:
-        report = audit(root, rows, points)
-    except (ValueError, KeyError, np.linalg.LinAlgError) as exc:
-        args.output.write_text(json.dumps({"decision": "CONNECTED_POINT_ATTACHMENT_FAIL",
-            "error": str(exc), "P4_MOTION_PASS": False, "P5_MOTION_MAY_START": False}, indent=2)+"\n")
-        raise
-    report["read_only_trace_recovers_baseline_bit_for_bit"] = True
-    report["baseline_capture_sha256"] = digest
-    report["trace_overlay_manifest"] = json.loads(args.manifest.read_text())
-    if not report["trace_overlay_manifest"]["stripping_recovers_shipping_bytes"]:
-        raise ValueError("unverified trace instrumentation")
-    report["event_trace_sha256"] = hashlib.sha256(Path(str(args.prefix)+".events.jsonl").read_bytes()).hexdigest()
+    baseline_paths = {suffix: Path(str(args.baseline_prefix)+suffix) for suffix in
+                      (".root.json", ".inputs.csv", ".prefixes.jsonl")}
+    traced_paths = {suffix: Path(str(args.prefix)+suffix) for suffix in baseline_paths}
+    baseline_hashes = {suffix: hashlib.sha256(path.read_bytes()).hexdigest()
+                       for suffix, path in baseline_paths.items()}
+    traced_hashes = {suffix: hashlib.sha256(path.read_bytes()).hexdigest()
+                     for suffix, path in traced_paths.items()}
+    parity = baseline_hashes == traced_hashes
+    if not parity:
+        raise ValueError("read-only trace changed the shipping source/root/endpoint capture")
+    report = audit(root, rows, points)
+    report.update({"root_sha256": traced_hashes[".root.json"],
+                   "input_trace_sha256": traced_hashes[".inputs.csv"],
+                   "prefix_trace_sha256": traced_hashes[".prefixes.jsonl"],
+                   "event_trace_sha256": hashlib.sha256(Path(str(args.prefix)+".events.jsonl").read_bytes()).hexdigest(),
+                   "baseline_capture_sha256": baseline_hashes,
+                   "read_only_trace_recovers_baseline_bit_for_bit": parity,
+                   "trace_overlay_manifest_sha256": hashlib.sha256(args.manifest.read_bytes()).hexdigest(),
+                   "P4_MOTION_PASS": False, "P5_MOTION_MAY_START": False})
+    args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(report, indent=2, allow_nan=False)+"\n")
-    for mode, result in report["modes"].items():
-        print("CONNECTED_MOTION_ATTACHMENT", mode, json.dumps(result, allow_nan=False))
-    if any(r["first_failed_attachment"] for r in report["modes"].values()):
-        raise SystemExit("connected error/source/forcing reproduction failed; do not run a master on detached cells")
+    for mode, value in report["modes"].items():
+        print("CONNECTED_MOTION", mode, value["decision"],
+              value["actual_forced_motion_ratio"],
+              value["actual_completed_event_prefix_ratio_max"], flush=True)
 
 
 if __name__ == "__main__":

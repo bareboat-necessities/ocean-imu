@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """Finite-map mean-value bridge for canonical complete-BRMM P4.
 
-This is not a new source or Lyapunov metric.  It connects the retained outward
+This is not a new source or Lyapunov metric. It connects the retained outward
 AD machinery to the paper's finite physical quadratic theorem.
 
 For the homogeneous physical error word F_W with F_W(0,zeta)=0, suppose one
 SAME-HISTORY complete-BRMM enclosure contains every ordinary/Clarke generalized
 Jacobian on every radial segment t e, 0<=t<=1, inside a star-shaped finite-error
-cell X.  The generalized mean-value theorem gives
+cell X. The generalized mean-value theorem gives
 
     F_W(e,zeta) in J_W e.
 
@@ -21,13 +21,15 @@ For every literal prefix the same argument gives the required finite gain from
 
 The computational test below uses strict interval LDLT also for prefixes; that
 is stronger than the paper's non-strict prefix condition and avoids relying on
-an uncertified semidefinite boundary.  Rectangular Jacobians are supported for
+an uncertified semidefinite boundary. Rectangular Jacobians are supported for
 the H18->A21 hybrid.
 
-The supplied metric/Jacobian cells must retain one correlated complete BRMM
-history.  Independently boxing P/H/R/K, tuner values, R_S, event timing, or
-successive Jacobians is not authorized.  Every due S=0 update with its actual
-applied anisotropic SpectralMSE R_S must already be in the literal word.
+The supplied metric/Jacobian cells must satisfy the executable
+``ou3_p4_complete_brmm_source_cover_contract``. Independently boxing P/H/R/K,
+tuner values, R_S, event timing, or successive Jacobians is not authorized.
+Every due S=0 update with its actual applied anisotropic SpectralMSE R_S must
+already be in the literal word. A retained point trace may regression-test the
+interface but cannot establish the source-uniform cover.
 """
 from __future__ import annotations
 
@@ -49,11 +51,12 @@ from ou3_interval_linear_algebra import matrix_symmetric_hull
 import ou3_p4_cayley_sector_certificate as CAYLEY
 import ou3_p4_complete_brmm_differential_events as EVENTS
 import ou3_p4_complete_brmm_differential_word as DWRD
+import ou3_p4_complete_brmm_source_cover_contract as COVER
 
 REPO = Path(__file__).resolve().parents[2]
 DEFAULT_DOMAIN = REPO / "tools" / "stability" / "ou3_proof_operating_domain.json"
-SCHEMA = 2
-QUALIFICATION = "OU3_P4_COMPLETE_BRMM_FINITE_MAP_MEAN_VALUE_BRIDGE_V2"
+SCHEMA = 3
+QUALIFICATION = "OU3_P4_COMPLETE_BRMM_FINITE_MAP_MEAN_VALUE_BRIDGE_V3"
 
 
 def _shape(A: Sequence[Sequence[Interval]]) -> tuple[int, int]:
@@ -79,7 +82,7 @@ def finite_quadratic_margin(
 ) -> IntervalMatrix:
     """Outward enclosure of ``factor*M0 - J^T*M1*J``.
 
-    J may be rectangular.  Same-source provenance of M0/M1/J is a caller
+    J may be rectangular. Same-source provenance of M0/M1/J is a caller
     precondition; this routine never manufactures independent theorem cells.
     """
     n0, n0b = _shape(M0)
@@ -127,10 +130,12 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     cayley = CAYLEY.build(path)
     events = EVENTS.build(path)
     word = DWRD.build(path)
+    cover = COVER.build(path)
     failures = (
         [f"Cayley: {x}" for x in CAYLEY.validate(cayley)]
         + [f"event AD: {x}" for x in EVENTS.validate(events)]
         + [f"word AD: {x}" for x in DWRD.validate(word)]
+        + [f"source cover: {x}" for x in COVER.validate(cover)]
     )
     if failures:
         raise RuntimeError(f"finite-map mean-value prerequisites failed: {failures}")
@@ -140,6 +145,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         and events["A21_bias_projection_same_source_true_bias_required"]
         and word["A21_bias_projection_generalized_Jacobian_available"]
     )
+    uniform_cover = bool(cover["SOURCE_UNIFORM_COMPLETE_BRMM_COVER_CLOSED"])
     return {
         "schema": SCHEMA,
         "qualification": QUALIFICATION,
@@ -156,6 +162,12 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "Clarke_generalized_Jacobian_handles_A21_projection": projection,
         "A21_projection_assumed_inactive": False,
         "rectangular_H18_to_A21_Jacobian_supported": True,
+        "source_cover_contract_consumed": True,
+        "source_cover_contract_qualification": cover["qualification"],
+        "source_cover_cell_adapter_to_same_cell_Joseph_available": True,
+        "source_cover_uniform_complete_BRMM_closed": uniform_cover,
+        "point_trace_can_promote_source_uniform_cover": False,
+        "marginal_Pbar_only_cover_authorized": False,
         "endpoint_matrix_test": "rho*M0-J_N^T*M_N*J_N > 0",
         "prefix_matrix_test": "kappa_V*M0-J_ell^T*M_ell*J_ell >= 0",
         "prefix_gain_required_for_every_literal_prefix": True,
@@ -172,9 +184,9 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "source_uniform_all_prefix_domains_closed": False,
         "P4_promoted_here": False,
         "next_obligation": (
-            "construct one source-correlated COMPLETE_BRMM_NORMAL_LIVE_WORD AD enclosure carrying state, P/H/R, "
-            "committed tuner schedule, actual applied R_S, event timing and the A21 projection generalized Jacobian; "
-            "use its endpoint and every prefix Jacobian in the full-matrix tests"
+            "materialize the COVER transition operator over the complete BRMM augmented source state zeta; "
+            "emit correlated SourceCoverCell objects for every literal event and radial segment, then feed them "
+            "through EVENTS.source_joseph_event and DWRD before the endpoint/prefix full-matrix tests"
         ),
     }
 
@@ -195,6 +207,7 @@ def validate(d: dict) -> list[str]:
         "all_radial_segment_Jacobians_must_be_enclosed",
         "Clarke_generalized_Jacobian_handles_A21_projection",
         "rectangular_H18_to_A21_Jacobian_supported",
+        "source_cover_contract_consumed", "source_cover_cell_adapter_to_same_cell_Joseph_available",
         "prefix_gain_required_for_every_literal_prefix",
         "prefix_domain_retention_required_for_every_literal_prefix",
         "actual_applied_RS_required_inside_same_word",
@@ -202,9 +215,10 @@ def validate(d: dict) -> list[str]:
         if d.get(key) is not True:
             f.append(f"{key} is not true")
     for key in (
-        "A21_projection_assumed_inactive", "independent_P_H_R_K_boxes_authorized",
-        "independent_tuner_RS_schedule_authorized", "packetwise_remainder_sum_authorized",
-        "finite_harmonic_or_replay_source_authorized",
+        "A21_projection_assumed_inactive", "source_cover_uniform_complete_BRMM_closed",
+        "point_trace_can_promote_source_uniform_cover", "marginal_Pbar_only_cover_authorized",
+        "independent_P_H_R_K_boxes_authorized", "independent_tuner_RS_schedule_authorized",
+        "packetwise_remainder_sum_authorized", "finite_harmonic_or_replay_source_authorized",
         "source_uniform_complete_word_generalized_Jacobian_enclosed",
         "source_uniform_endpoint_finite_map_closed", "source_uniform_all_prefix_gains_closed",
         "source_uniform_all_prefix_domains_closed", "P4_promoted_here",
@@ -213,6 +227,8 @@ def validate(d: dict) -> list[str]:
             f.append(f"{key} is not false")
     if d.get("actual_RS_provenance_token") != EVENTS.ACTUAL_RS_PROVENANCE:
         f.append("actual R_S provenance changed")
+    if d.get("source_cover_contract_qualification") != COVER.QUALIFICATION:
+        f.append("source-cover qualification changed")
     return list(dict.fromkeys(f))
 
 
@@ -229,6 +245,8 @@ def main() -> int:
     args.output.write_text(json.dumps(d, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     print(json.dumps({
         "finite_map_bridge": d["finite_map_not_differential_metric_replacement"],
+        "cover_contract": d["source_cover_contract_consumed"],
+        "cover_closed": d["source_cover_uniform_complete_BRMM_closed"],
         "endpoint_closed": d["source_uniform_endpoint_finite_map_closed"],
         "prefix_gains_closed": d["source_uniform_all_prefix_gains_closed"],
         "P4_promoted_here": d["P4_promoted_here"],
