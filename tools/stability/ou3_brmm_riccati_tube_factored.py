@@ -37,7 +37,7 @@ def build(domain_path=DEFAULT_DOMAIN):
     # immediately before evaluating BACKEND's saved original BASE.build.
     ENDPOINT.install(BACKEND.BASE)
     d = BACKEND.build(domain_path)
-    timing = d.get("covariance_memory", {})
+    timing = d.get("translation_covariance_ceiling", {})
     d["endpoint_referenced_translation_covariance"] = True
     d["post_reconstruction_forward_propagation_used"] = False
     d["covariance_ceiling_argument"] = (
@@ -60,7 +60,7 @@ BACKEND.BASE.build = build
 
 def validate(payload):
     failures = list(BACKEND.validate(payload))
-    timing = payload.get("covariance_memory", {})
+    timing = payload.get("translation_covariance_ceiling", {})
     if payload.get("endpoint_referenced_translation_covariance") is not True:
         failures.append("translation covariance is not endpoint referenced")
     if payload.get("post_reconstruction_forward_propagation_used") is not False:
