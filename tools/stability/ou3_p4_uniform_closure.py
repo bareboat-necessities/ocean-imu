@@ -1,21 +1,22 @@
 #!/usr/bin/env python3
-"""Source-uniform closure contract for the OU-III bounded-bias P4 theorem.
+"""Fail-closed source-uniform P4 closure audit.
 
-This producer closes four obligations without replacing the shipping observer:
+This audit separates four logically different obligations that were previously
+collapsed into one permissive scalar-radius test:
 
-* the source-uniform *linear* coefficient family comes from the existing BRMM
-  moving-Riccati interval tube, not a replay or independent P/H/R/K boxes;
-* finite nonlinear Joseph/Cayley/reset coefficients are bounded as a uniform
-  perturbation of that family on one explicit hard physical entry box;
-* BIAS1 is an admitted bounded physical source family with one retained root,
-  parameters and affine driver recurrence; and
-* binary32 arithmetic is retained as an explicit bounded ISS forcing.  It is
-  never used to claim zero-floor contraction.
+1. conditional admission of the declared hard word-entry error set;
+2. conditional admission of the BIAS1 root/driver family and canonical P3
+   execution premises;
+3. source-uniform same-history Kalman/reset coefficient and signed-ledger
+   domination with consecutive compatible storage; and
+4. shipping finite-precision enclosure.
 
-The hard entry box is selected from a fixed, predeclared geometric sequence in
-``ou3_p4_closure_domain.json``.  Selection uses theorem constants only.  The
-shipping covariance is therefore a storage object, not the definition of the
-entry set.
+The first two can be closed as theorem-domain assumptions without using a
+covariance ellipsoid as an error bound.  The latter two remain fail-closed until
+existing outward same-history machinery actually certifies them.  In
+particular, an arbitrarily tiny positive entry box may never promote P4, and a
+binary32 helper for selected arithmetic may never stand in for a full shipping
+rounding enclosure.
 """
 from __future__ import annotations
 
@@ -24,271 +25,266 @@ import json
 import math
 from pathlib import Path
 
-import ou3_brmm_dynamic_source_certificate as DYNAMIC
+import ou3_brmm_p3_premises as PREMISES
 import ou3_brmm_riccati_metric_p3 as P3
-import ou3_brmm_riccati_tube as TUBE
-import ou3_full_process_ucc as PROCESS
 import ou3_mems_bias_contract as BIAS
 import ou3_p4_projection_sector as PROJ
+import ou3_p4_complete_brmm_differential_events as EVENTS
+import ou3_p4_complete_brmm_differential_word as WORD
+import ou3_p4_complete_brmm_finite_map_mean_value as FINITE
+import ou3_p4_complete_brmm_signed_information_ledger as SIGNED
+import ou3_p4_complete_brmm_joint_sector_master as JOINT
+import ou3_p4_strong_linear_margin as STRONG
 
 REPO = Path(__file__).resolve().parents[2]
 DEFAULT_DOMAIN = REPO / "tools" / "stability" / "ou3_proof_operating_domain.json"
 DEFAULT_CLOSURE = REPO / "tools" / "stability" / "ou3_p4_closure_domain.json"
-SCHEMA = 1
-QUALIFICATION = "OU3_P4_SOURCE_UNIFORM_HARD_ENTRY_BIAS1_FP_CLOSURE_V1"
+SCHEMA = 2
+QUALIFICATION = "OU3_P4_SOURCE_UNIFORM_CLOSURE_AUDIT_V2"
 
 
-def up(x: float) -> float:
-    return math.nextafter(float(x), math.inf)
-
-
-def down(x: float) -> float:
-    return math.nextafter(float(x), -math.inf)
-
-
-def _finite_pos(x, label: str) -> float:
+def _finite_nonnegative(x, label: str) -> float:
     y = float(x)
-    if not math.isfinite(y) or y <= 0.0:
-        raise RuntimeError(f"{label} must be finite positive")
+    if not math.isfinite(y) or y < 0.0:
+        raise RuntimeError(f"{label} must be finite nonnegative")
     return y
 
 
-def _base_vector(c: dict, mode: str) -> list[float]:
-    b = c["hard_entry_search"]["base_coordinate_radii"]
-    out = [float(b["attitude_cayley_norm"])] * 3
-    out += [float(b["gyro_bias_norm_rad_s"])] * 3
-    out += [float(b["velocity_norm_mps"])] * 3
-    out += [float(b["position_norm_m"])] * 3
-    out += [float(b["integral_displacement_norm_m_s"])] * 3
-    out += [float(b["latent_acceleration_norm_mps2"])] * 3
-    if mode == "A":
-        out += [float(b["accelerometer_bias_error_norm_mps2"])] * 3
-    return out
-
-
-def _probe_membership(family: dict) -> dict:
-    # Literal values used by OU3_CONDITIONAL_BIAS_DRIVER in ou3-source-endpoint.cpp.
-    root = [0.08, -0.05, 0.03]
-    amp = [0.015, 0.010, -0.008]
-    tau = 1200.0
-    period = 600.0
-    rb = float(family["root_component_abs_upper_mps2"])
-    ab = float(family["sinusoid_component_amplitude_abs_upper_mps2"])
-    tlo, thi = map(float, family["tau_true_s"])
-    plo, phi = map(float, family["sinusoid_period_s"])
+def _declared_hard_entry(domain: dict) -> dict:
+    startup = domain["startup"]["physical_handoff_coordinate_bounds"]
+    entrance = domain["initial_filter_entrance"]
+    hs = float(entrance["position"]["significant_wave_height_Hs_upper_m"])
+    theta = math.radians(float(entrance["attitude"]["full_attitude_error_upper_deg"]))
+    cayley = 2.0 * math.tan(theta / 2.0)
+    position_component = float(entrance["position"]["component_abs_error_upper_Hs_factor"]) * hs
     return {
-        "root_member": max(map(abs, root)) <= rb,
-        "amplitude_member": max(map(abs, amp)) <= ab,
-        "tau_member": tlo <= tau <= thi,
-        "period_member": plo <= period <= phi,
-        "probe_root": root,
-        "probe_amplitude": amp,
-        "probe_tau_s": tau,
-        "probe_period_s": period,
+        "qualification": "DECLARED_HARD_P4_WORD_ENTRY_SET",
+        "source": "ou3_proof_operating_domain.json",
+        "attitude_cayley_norm_upper": cayley,
+        "gyro_bias_error_norm_upper_rad_s": float(startup["gyro_bias_error_norm_upper_rad_s"]),
+        "velocity_error_norm_upper_mps": float(startup["velocity_error_norm_upper_mps"]),
+        "position_component_abs_error_upper_m": position_component,
+        "integral_displacement_error_norm_upper_m_s": float(startup["integral_displacement_error_norm_upper_m_s"]),
+        "latent_acceleration_error_norm_upper_mps2": float(startup["latent_acceleration_error_norm_upper_mps2"]),
+        "accelerometer_bias_error_norm_upper_mps2": float(startup["accelerometer_bias_error_norm_upper_mps2"]),
+        "covariance_ellipsoid_used_for_membership": False,
+        "replay_fit_used_for_membership": False,
+        "declared_theorem_entry_assumption": True,
+        "physical_reachability_from_arbitrary_startup_proved_here": False,
     }
 
 
-def _mode_constants(mode: str, closure: dict, domain: dict, tube: dict, process: dict, dynamic: dict) -> dict:
-    key = "H" if mode == "H18" else "A"
-    row = tube["modes"][key]
-    pdiag = [float(x) for x in row["Pbar_diagonal_variance_upper"]]
-    pmax = up(sum(pdiag))
-    qmin = _finite_pos(process["modes"][key]["prediction_Q_lambda_min_lower"], "Q lower")
-    delta = _finite_pos(row["relative_Riccati_injection_margin_lower"], "Riccati margin")
+def _hard_entry_matches_closure_contract(entry: dict, closure: dict) -> bool:
+    search = closure["hard_entry_search"]
+    b = search["base_coordinate_radii"]
+    checks = (
+        math.isclose(entry["attitude_cayley_norm_upper"], float(b["attitude_cayley_norm"]), rel_tol=0.0, abs_tol=2e-16),
+        entry["gyro_bias_error_norm_upper_rad_s"] == float(b["gyro_bias_norm_rad_s"]),
+        entry["velocity_error_norm_upper_mps"] == float(b["velocity_norm_mps"]),
+        entry["position_component_abs_error_upper_m"] <= float(b["position_norm_m"]),
+        entry["integral_displacement_error_norm_upper_m_s"] == float(b["integral_displacement_norm_m_s"]),
+        entry["latent_acceleration_error_norm_upper_mps2"] == float(b["latent_acceleration_norm_mps2"]),
+        entry["accelerometer_bias_error_norm_upper_mps2"] == float(b["accelerometer_bias_error_norm_mps2"]),
+        float(search["minimum_certified_scale"]) >= 0.01,
+        min(map(float, search["candidate_scale_factors"])) >= float(search["minimum_certified_scale"]),
+    )
+    return all(checks)
 
-    live = domain["normal_live"]
-    fmax = _finite_pos(live["specific_force_norm_upper_mps2"], "force upper")
-    mmax = _finite_pos(live["magnetic_vector_norm_upper_uT"], "mag upper")
-    rslo = _finite_pos(dynamic["dynamic_invariant"]["R_S_applied"][0], "R_S lower")
-    # Configured measurement standard deviations are fixed theorem inputs.
-    racc = min(float(x) ** 2 for x in domain["configured_runtime"]["measurement_noise_std"]["accelerometer_mps2"])
-    rmag = min(float(x) ** 2 for x in domain["configured_runtime"]["measurement_noise_std"]["magnetometer_uT"])
-    rs_var = (0.72 * rslo) ** 2
-    rmin = down(min(racc, rmag, rs_var))
 
-    # Spectral-norm H majorants.  S=0 has norm one.  The accelerometer block is
-    # [skew(f), R, I_ba] and the magnetic block is skew(m).
-    hacc = math.sqrt(fmax * fmax + 1.0 + (1.0 if key == "A" else 0.0))
-    hmax = up(max(1.0, hacc, mmax))
-
-    # K=P H'(H P H'+R)^-1.  With A=R^-1/2 H P^1/2, the singular values of
-    # A'(AA'+I)^-1 are s/(1+s^2)<=1/2, hence this bound is source-uniform and
-    # substantially tighter than ||P||||H||/lambda_min(R).
-    kmax = up(0.5 * math.sqrt(pmax / rmin))
-
-    # One prediction injects Q>=qmin I.  Assimilating at most S, accel and one
-    # asynchronous vector event can only reduce P.  Information form gives a
-    # conservative completed-event lower bound.
-    pmin = down(1.0 / up(1.0 / qmin + 3.0 * hmax * hmax / rmin))
-    if pmin <= 0.0:
-        raise RuntimeError("completed-event covariance lower bound lost positivity")
-
-    major = closure["uniform_nonlinear_enclosure"]
-    rot2 = _finite_pos(major["rotation_second_derivative_majorant_on_cayley_norm_le_1"], "rotation majorant")
-    reset2 = _finite_pos(major["cayley_reset_second_derivative_majorant_for_input_norms_le_1"], "reset majorant")
-    # Conservative source-uniform Hessian majorant of a completed nonlinear
-    # Joseph/reset map.  It deliberately overbounds all event types and all
-    # covariance cross terms through kmax.
-    residual2 = up(rot2 * max(mmax, fmax + 1.0))
-    lin_gain = up(1.0 + kmax * hmax)
-    hessian = up(reset2 * lin_gain * lin_gain + kmax * residual2 * (1.0 + lin_gain))
-
-    # Standard metric comparison: pmin I <= P <= pmax I.  A quadratic
-    # remainder ||r(e)|| <= .5*hessian*||e||^2 consumes at most delta/4 of the
-    # moving-Riccati contraction when the following Euclidean radius holds.
-    metric_condition_sqrt = up(math.sqrt(pmax / pmin))
-    nonlinear_radius = down(delta / up(2.0 * hessian * metric_condition_sqrt))
-    correction_radius = down(float(major["required_correction_cayley_norm_upper"]) / up(kmax * hmax))
-    chart_radius = float(major["required_cayley_state_norm_upper"])
-    allowable_euclidean = down(min(nonlinear_radius, correction_radius, chart_radius))
-    if allowable_euclidean <= 0.0:
-        raise RuntimeError("uniform nonlinear radius is not positive")
-
-    base = _base_vector(closure, key)
-    base_norm = up(math.sqrt(sum(x * x for x in base)))
-    selected = None
-    for scale in map(float, closure["hard_entry_search"]["candidate_scale_factors"]):
-        radius = up(scale * base_norm)
-        if radius <= allowable_euclidean:
-            selected = scale
-            break
-    if selected is None:
-        raise RuntimeError(
-            f"no declared hard-entry candidate closes {mode}; allowable radius={allowable_euclidean:.3e}"
-        )
-    radii = [up(selected * x) for x in base]
-    radius = up(math.sqrt(sum(x * x for x in radii)))
-    nonlinear_relative_charge = up(2.0 * hessian * metric_condition_sqrt * radius)
-
-    fp = closure["finite_precision"]
-    u = _finite_pos(fp["unit_roundoff"], "binary32 unit roundoff")
-    ulps = int(fp["per_completed_event_rounding_reserve_ulps"])
-    # Finite precision is an ISS forcing, not a homogeneous contraction claim.
-    # The scale uses the largest theorem coordinate/source magnitude entering a
-    # completed event.  Prefix and word energies are explicit and finite.
-    arithmetic_scale = up(max(1.0, mmax, fmax, max(base), math.sqrt(pmax)))
-    fp_event_abs = up(ulps * u * arithmetic_scale)
-    samples = 600
-    fp_word_l2 = up(math.sqrt(samples) * fp_event_abs)
-
+def _bias1_conditional_admission(closure: dict) -> dict:
+    f = closure["BIAS1_family"]
+    root = _finite_nonnegative(f["root_component_abs_upper_mps2"], "BIAS1 root bound")
+    amp = _finite_nonnegative(f["sinusoid_component_amplitude_abs_upper_mps2"], "BIAS1 sinusoid bound")
+    det = _finite_nonnegative(f["deterministic_mismatch_component_abs_upper_mps2"], "BIAS1 deterministic bound")
+    ddet = _finite_nonnegative(f["deterministic_mismatch_derivative_component_abs_upper_mps3"], "BIAS1 derivative bound")
+    tau_lo, tau_hi = map(float, f["tau_true_s"])
+    per_lo, per_hi = map(float, f["sinusoid_period_s"])
+    phase_lo, phase_hi = map(float, f["phase_rad"])
+    structurally_closed = bool(
+        root > 0.0 and amp >= 0.0 and det >= 0.0 and ddet >= 0.0
+        and 0.0 < tau_lo <= tau_hi and 0.0 < per_lo <= per_hi
+        and phase_lo <= -math.pi and phase_hi >= math.pi
+        and f["one_root_one_parameter_history_required"]
+        and f["independent_per_sample_bias_slots_forbidden"]
+        and f["driver_increment_definition"] == "w_i=beta(t_i)-phi_true*beta(t_{i-1})"
+    )
+    probe = {
+        "root": [0.08, -0.05, 0.03],
+        "amplitude": [0.015, 0.010, -0.008],
+        "tau_s": 1200.0,
+        "period_s": 600.0,
+    }
+    probe_member = bool(
+        max(map(abs, probe["root"])) <= root
+        and max(map(abs, probe["amplitude"])) <= amp
+        and tau_lo <= probe["tau_s"] <= tau_hi
+        and per_lo <= probe["period_s"] <= per_hi
+    )
     return {
-        "dimension": 18 if key == "H" else 21,
-        "Pbar_lambda_max_trace_upper": pmax,
-        "completed_event_P_lambda_min_lower": pmin,
-        "source_uniform_linear_Riccati_margin_lower": delta,
-        "measurement_R_lambda_min_lower": rmin,
-        "source_uniform_H_norm_upper": hmax,
-        "source_uniform_K_norm_upper": kmax,
-        "completed_event_Hessian_norm_upper": hessian,
-        "metric_condition_sqrt_upper": metric_condition_sqrt,
-        "nonlinear_Euclidean_radius_upper": nonlinear_radius,
-        "correction_chart_Euclidean_radius_upper": correction_radius,
-        "certified_hard_entry_scale": selected,
-        "certified_hard_entry_coordinate_radii": radii,
-        "certified_hard_entry_Euclidean_radius": radius,
-        "shipping_covariance_defines_entry_set": False,
-        "nonlinear_relative_charge_upper": nonlinear_relative_charge,
-        "nonlinear_charge_below_half_linear_margin": nonlinear_relative_charge <= 0.5 * delta,
-        "finite_precision_event_abs_forcing_upper": fp_event_abs,
-        "finite_precision_600_sample_l2_forcing_upper": fp_word_l2,
-        "finite_precision_is_explicit_ISS_forcing": True,
-        "finite_precision_zero_floor_contraction_claimed": False,
-        "consecutive_storage_inequality": "V[i+1] <= (1-delta/2)*V[i] + gamma_source*D_source[i] + gamma_fp*D_fp[i]",
-        "consecutive_compatible_storage_closed": nonlinear_relative_charge <= 0.5 * delta,
+        "family": f,
+        "conditional_theorem_source_family_well_posed": structurally_closed,
+        "existing_nonzero_driver_probe_member": probe_member,
+        "one_root_and_driver_history_required": True,
+        "independent_per_sample_bias_slots_used": False,
+        "conditional_BIAS1_SOURCE_ADMISSION_PASS": structurally_closed and probe_member,
+        "assembled_sensor_BIAS0_deployment_qualification_pass": False,
+        "scope": "conditional theorem family; not an assembled-sensor hardware qualification",
+    }
+
+
+def _p3_conditional_admission(p3: dict, premises: dict, closure: dict) -> dict:
+    declared = premises["execution_premises"]
+    bool_leaves = []
+    for value in declared.values():
+        if isinstance(value, bool):
+            bool_leaves.append(value)
+    c = closure["P3_execution_admission"]
+    conditional = bool(
+        p3["P3_CONDITIONAL_BRMM_PASS"]
+        and float(p3["useful_gate"]) == 1.0e-18
+        and float(premises["delta"]) == 1.0e-18
+        and all(bool_leaves)
+        and premises["projection_leaves_covariance_unchanged_source_parity"]
+        and c["canonical_source"] == p3["canonical_source"]
+        and c["scope_is_BRMM_family_itself"]
+        and c["all_due_S_updates_with_actual_applied_RS_required"]
+        and c["all_valid_accelerometer_updates_required"]
+        and c["projection_covariance_identity_required"]
+        and c["same_history_frontend_tuner_covariance_required"]
+        and c["no_replay_or_finite_harmonic_membership_substitute"]
+    )
+    return {
+        "conditional_execution_premises_admitted": conditional,
+        "canonical_P3_delta": 1.0e-18,
+        "runtime_Live_flag_is_not_admission": not premises["runtime_Live_flag_implies_all_premises"],
+        "BRMM_alone_is_not_execution_admission": not premises["BRMM_alone_implies_vector_PE"],
+        "physical_execution_admission_proved": premises["physical_execution_admission_proved_here"],
+        "scope": premises["scope"],
     }
 
 
 def build(domain_path: Path = DEFAULT_DOMAIN, closure_path: Path = DEFAULT_CLOSURE) -> dict:
-    domain = json.loads(Path(domain_path).read_text(encoding="utf-8"))
-    closure = json.loads(Path(closure_path).read_text(encoding="utf-8"))
-    if closure.get("trajectory_fit") is not False:
-        raise RuntimeError("closure domain may not be trajectory fitted")
+    domain_path = Path(domain_path).resolve()
+    closure_path = Path(closure_path).resolve()
+    domain = json.loads(domain_path.read_text(encoding="utf-8"))
+    closure = json.loads(closure_path.read_text(encoding="utf-8"))
+    if domain.get("trajectory_fit") is not False or closure.get("trajectory_fit") is not False:
+        raise RuntimeError("P4 closure audit cannot consume a trajectory-fitted domain")
 
-    p3 = P3.build(Path(domain_path).resolve())
-    tube = TUBE.build(Path(domain_path).resolve())
-    process = PROCESS.build()
-    dynamic = DYNAMIC.build(Path(domain_path).resolve())
-    bias = BIAS.build(Path(domain_path).resolve())
-    proj = PROJ.build()
+    p3 = P3.build(domain_path)
+    premises = PREMISES.build(domain_path)
+    bias = BIAS.build(domain_path)
+    projection = PROJ.build()
+    events = EVENTS.build(domain_path)
+    word = WORD.build(domain_path)
+    finite = FINITE.build(domain_path)
+    signed = SIGNED.build(domain_path)
+    joint = JOINT.build(p3_contract=p3, signed_contract=signed)
+    strong = STRONG.build(domain_path)
+
     prereq = {
         "P3": P3.validate(p3),
-        "tube": TUBE.validate(tube),
-        "process": PROCESS.validate(process),
-        "dynamic": DYNAMIC.validate(dynamic),
+        "premises": PREMISES.validate(premises, domain_path),
         "bias": BIAS.validate(bias),
-        "projection": PROJ.validate(proj),
+        "projection": PROJ.validate(projection),
+        "events": EVENTS.validate(events),
+        "word": WORD.validate(word),
+        "finite": FINITE.validate(finite),
+        "signed": SIGNED.validate(signed),
+        "joint": JOINT.validate(joint),
+        "strong": STRONG.validate(strong),
     }
     bad = {k: v for k, v in prereq.items() if v}
     if bad:
-        raise RuntimeError(f"uniform P4 prerequisites failed: {bad}")
+        raise RuntimeError(f"uniform closure prerequisites failed: {bad}")
 
-    admission = closure["P3_execution_admission"]
-    p3_admitted = bool(
-        p3["P3_CONDITIONAL_BRMM_PASS"]
-        and float(p3["useful_gate"]) == float(admission["conditional_P3_delta_required"])
-        and admission["scope_is_BRMM_family_itself"]
-        and admission["canonical_source"] == p3["canonical_source"]
-        and p3["actual_applied_per_axis_RS_consumed"]
-        and p3["all_due_S_updates_required"]
-        and p3["all_valid_accelerometer_updates_required"]
-        and p3["closed_projection_covariance_comparison_covered"]
+    entry = _declared_hard_entry(domain)
+    entry_declared = _hard_entry_matches_closure_contract(entry, closure)
+    bias1 = _bias1_conditional_admission(closure)
+    p3_admission = _p3_conditional_admission(p3, premises, closure)
+
+    coefficient_family = bool(
+        events["source_uniform_finite_angle_event_Jacobians_closed"]
+        and word["source_uniform_complete_word_Jacobian_enclosed"]
+        and finite["source_uniform_complete_word_generalized_Jacobian_enclosed"]
+        and joint["source_uniform_same_history_joint_sector_closed"]
+        and joint["source_uniform_full_augmented_LDLT_closed"]
+    )
+    consecutive_storage = bool(
+        coefficient_family
+        and finite["source_uniform_endpoint_finite_map_closed"]
+        and finite["source_uniform_all_prefix_gains_closed"]
+        and signed["source_uniform_joint_eta_reset_domination_closed"]
+        and signed["source_uniform_endpoint_dissipation_closed_here"]
+        and signed["source_uniform_all_prefix_gain_closed_here"]
+        and joint["source_uniform_prefix_joint_sector_closed"]
     )
 
-    probe = _probe_membership(closure["BIAS1_family"])
-    bias1_admitted = bool(all(probe[k] for k in ("root_member", "amplitude_member", "tau_member", "period_member")))
-    modes = {
-        "H18": _mode_constants("H18", closure, domain, tube, process, dynamic),
-        "A21": _mode_constants("A21", closure, domain, tube, process, dynamic),
+    fp_cfg = closure["finite_precision"]
+    # The repository has an outward binary32 helper, but it explicitly states
+    # that it does not cover compiler reassociation/FMA and it is not wired over
+    # the complete Eigen/Kalman/reset execution.  Keep this false until a full
+    # event-by-event shipping arithmetic enclosure exists.
+    finite_precision = False
+
+    strong_summary = {
+        "H18_relative_margin_lower": float(strong["H18"]["strong_relative_margin_lower"]),
+        "A21_relative_margin_lower": float(strong["A21"]["strong_relative_margin_lower"]),
+        "H18_worst_LDLT_pivot_lower": float(strong["H18"]["worst_interval_LDLT_pivot_lower_at_strong_margin"]),
+        "A21_first_active_ba_margin_lower": float(strong["A21"]["first_active_ba_margin_lower"]),
+        "scalar_margin_architecture_rejected_for_finite_nonlinear_closure": True,
     }
-    uniform_closed = all(m["consecutive_compatible_storage_closed"] for m in modes.values())
-    hard_entry = all(m["certified_hard_entry_scale"] > 0 for m in modes.values())
-    projection_closed = bool(proj["global_joint_sector_closed"] and proj["estimate_ball_invariance_closed"])
-    fp = closure["finite_precision"]
-    fp_closed = bool(
-        fp["runtime_scalar_format"] == "IEEE754_binary32"
-        and fp["compiler_fast_math_forbidden"]
-        and fp["outward_binary32_operation_layer_required"]
-        and all(m["finite_precision_is_explicit_ISS_forcing"] for m in modes.values())
+
+    blockers = []
+    if not coefficient_family:
+        blockers.append("same-history source-uniform finite-angle Kalman/reset coefficient and joint-sector enclosure is not closed")
+    if not consecutive_storage:
+        blockers.append("source-uniform endpoint/every-prefix compatible-storage inequality is not closed")
+    if not finite_precision:
+        blockers.append("complete shipping binary32/Eigen Kalman-reset arithmetic is not outwardly enclosed")
+    if not entry_declared:
+        blockers.append("declared hard entry set no longer matches the theorem operating domain")
+    if not bias1["conditional_BIAS1_SOURCE_ADMISSION_PASS"]:
+        blockers.append("conditional BIAS1 driver family is not admitted")
+    if not p3_admission["conditional_execution_premises_admitted"]:
+        blockers.append("canonical conditional P3 execution premises are not admitted")
+
+    p4_motion = bool(
+        entry_declared
+        and bias1["conditional_BIAS1_SOURCE_ADMISSION_PASS"]
+        and p3_admission["conditional_execution_premises_admitted"]
+        and projection["global_joint_sector_closed"]
+        and coefficient_family
+        and consecutive_storage
+        and finite_precision
     )
-    p4_motion = bool(p3_admitted and bias1_admitted and uniform_closed and hard_entry and projection_closed and fp_closed)
 
     return {
         "schema": SCHEMA,
         "qualification": QUALIFICATION,
         "canonical_source": p3["canonical_source"],
-        "trajectory_fit": False,
         "filter_changed": False,
         "declared_main_operating_domain_shrunk": False,
-        "P3_delta_consumed": float(admission["conditional_P3_delta_required"]),
-        "P3_CONDITIONAL_BRMM_PASS_consumed": bool(p3["P3_CONDITIONAL_BRMM_PASS"]),
-        "P3_scoped_physical_source_admission_closed": p3_admitted,
-        "global_SEA0_to_BRMM_left_inclusion_claimed": False,
-        "scoped_theorem_source_is_BRMM_family_itself": True,
-        "BIAS1_family": closure["BIAS1_family"],
-        "BIAS1_existing_driver_probe_membership": probe,
-        "BIAS1_SOURCE_ADMISSION_PASS": bias1_admitted,
-        "one_physical_bias_root_and_driver_history_retained": True,
-        "independent_per_sample_bias_slots_used": False,
-        "projection_global_nonlinear_sector_consumed": projection_closed,
-        "source_uniform_Riccati_tube_consumed": True,
-        "same_source_P_H_R_K_required": True,
-        "independent_P_H_R_K_boxes_used": False,
-        "hard_entry_set_is_explicit_physical_coordinate_box": hard_entry,
+        "quality_gates_changed": False,
+        "P3_delta_consumed": 1.0e-18,
+        "hard_entry_error_set": entry,
+        "qualified_hard_entry_error_set_as_declared_theorem_assumption": entry_declared,
+        "hard_entry_reachability_from_arbitrary_startup_claimed": False,
         "shipping_covariance_used_as_entry_membership_test": False,
-        "finite_precision": {
-            **fp,
-            "closed_as_explicit_ISS_forcing": fp_closed,
-            "zero_floor_contraction_claimed": False,
-        },
-        "modes": modes,
-        "source_uniform_Kalman_reset_coefficient_family_enclosed": uniform_closed,
-        "consecutive_compatible_storage_inequality_closed": uniform_closed,
-        "qualified_hard_entry_error_set_closed": hard_entry,
-        "finite_precision_enclosure_closed": fp_closed,
+        "BIAS1_admission": bias1,
+        "P3_execution_admission": p3_admission,
+        "projection_global_nonlinear_sector_consumed": bool(projection["global_joint_sector_closed"]),
+        "projection_finite_precision_closed": bool(projection["finite_precision_closed_here"]),
+        "strong_linear_margin_diagnostic": strong_summary,
+        "source_uniform_Kalman_reset_coefficient_family_enclosed": coefficient_family,
+        "consecutive_compatible_storage_inequality_closed": consecutive_storage,
+        "finite_precision_contract": fp_cfg,
+        "outward_binary32_helper_available_but_not_complete_shipping_enclosure": True,
+        "finite_precision_enclosure_closed": finite_precision,
         "P4_MOTION_PASS": p4_motion,
         "P4_PASS": p4_motion,
         "P5_MAY_START": p4_motion,
-        "remaining_global_deployment_obligation": "SEA0-to-BRMM left inclusion only; outside this explicitly scoped BRMM theorem",
+        "remaining_blockers": blockers,
     }
 
 
@@ -296,32 +292,34 @@ def validate(d: dict) -> list[str]:
     f: list[str] = []
     if d.get("schema") != SCHEMA or d.get("qualification") != QUALIFICATION:
         f.append("schema/qualification mismatch")
-    for k in (
-        "P3_CONDITIONAL_BRMM_PASS_consumed", "P3_scoped_physical_source_admission_closed",
-        "BIAS1_SOURCE_ADMISSION_PASS", "one_physical_bias_root_and_driver_history_retained",
-        "projection_global_nonlinear_sector_consumed", "source_uniform_Riccati_tube_consumed",
-        "same_source_P_H_R_K_required", "hard_entry_set_is_explicit_physical_coordinate_box",
+    if d.get("canonical_source") != "COMPLETE_BRMM_NORMAL_LIVE_WORD":
+        f.append("canonical source changed")
+    if float(d.get("P3_delta_consumed", 0.0)) != 1.0e-18:
+        f.append("canonical P3 delta changed")
+    for key in (
+        "qualified_hard_entry_error_set_as_declared_theorem_assumption",
+        "projection_global_nonlinear_sector_consumed",
+        "outward_binary32_helper_available_but_not_complete_shipping_enclosure",
+    ):
+        if d.get(key) is not True:
+            f.append(f"{key} is not true")
+    for key in (
+        "filter_changed", "declared_main_operating_domain_shrunk", "quality_gates_changed",
+        "hard_entry_reachability_from_arbitrary_startup_claimed",
+        "shipping_covariance_used_as_entry_membership_test",
+        "projection_finite_precision_closed",
         "source_uniform_Kalman_reset_coefficient_family_enclosed",
-        "consecutive_compatible_storage_inequality_closed", "qualified_hard_entry_error_set_closed",
+        "consecutive_compatible_storage_inequality_closed",
         "finite_precision_enclosure_closed", "P4_MOTION_PASS", "P4_PASS", "P5_MAY_START",
     ):
-        if d.get(k) is not True:
-            f.append(f"{k} is not true")
-    for k in (
-        "filter_changed", "declared_main_operating_domain_shrunk",
-        "global_SEA0_to_BRMM_left_inclusion_claimed", "independent_per_sample_bias_slots_used",
-        "independent_P_H_R_K_boxes_used", "shipping_covariance_used_as_entry_membership_test",
-    ):
-        if d.get(k) is not False:
-            f.append(f"{k} is not false")
-    if float(d.get("P3_delta_consumed", 0.0)) != 1e-18:
-        f.append("canonical P3 delta changed")
-    for mode in ("H18", "A21"):
-        m = d.get("modes", {}).get(mode, {})
-        if not m.get("consecutive_compatible_storage_closed"):
-            f.append(f"{mode} compatible-storage inequality open")
-        if not (float(m.get("certified_hard_entry_scale", 0.0)) > 0.0):
-            f.append(f"{mode} hard entry set empty")
+        if d.get(key) is not False:
+            f.append(f"{key} must remain false until its certificate closes")
+    if d.get("BIAS1_admission", {}).get("conditional_BIAS1_SOURCE_ADMISSION_PASS") is not True:
+        f.append("conditional BIAS1 source family not admitted")
+    if d.get("P3_execution_admission", {}).get("conditional_execution_premises_admitted") is not True:
+        f.append("conditional P3 execution premises not admitted")
+    if not d.get("remaining_blockers"):
+        f.append("fail-closed audit unexpectedly has no blockers")
     return list(dict.fromkeys(f))
 
 
@@ -338,10 +336,14 @@ def main() -> int:
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(d, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     print(json.dumps({
-        "P4_MOTION_PASS": d["P4_MOTION_PASS"],
+        "hard_entry_declared": d["qualified_hard_entry_error_set_as_declared_theorem_assumption"],
+        "BIAS1_conditional_admission": d["BIAS1_admission"]["conditional_BIAS1_SOURCE_ADMISSION_PASS"],
+        "P3_conditional_execution_admission": d["P3_execution_admission"]["conditional_execution_premises_admitted"],
+        "coefficient_family_closed": d["source_uniform_Kalman_reset_coefficient_family_enclosed"],
+        "compatible_storage_closed": d["consecutive_compatible_storage_inequality_closed"],
+        "finite_precision_closed": d["finite_precision_enclosure_closed"],
         "P4_PASS": d["P4_PASS"],
-        "H18_scale": d["modes"]["H18"]["certified_hard_entry_scale"],
-        "A21_scale": d["modes"]["A21"]["certified_hard_entry_scale"],
+        "blockers": d["remaining_blockers"],
         "failures": failures,
     }, indent=2, sort_keys=True))
     return 0 if not failures else 2
