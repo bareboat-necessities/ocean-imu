@@ -7,6 +7,7 @@ on:
       - "tools/stability/ou3-source-endpoint.cpp"
       - "tools/stability/ou3_proof_operating_domain.json"
       - "tests/kalman_ou_iii/ou3_p4_joint_bias_source_storage.py"
+      - "tests/kalman_ou_iii/ou3_p4_joint_source_centered_retention.py"
       - "tests/kalman_ou_iii/ou3_p4_motion_gain.py"
       - "tests/kalman_ou_iii/ou3_p4_connected_motion.py"
       - "tests/kalman_ou_iii/ou3_p4_source_endpoint.py"
@@ -113,6 +114,40 @@ jobs:
                     'max_prefix=',max(x['retention_ratio'] for x in m['max_prefix_coordinate_budgets'].values()))
           PY
 
+      - name: Keep one correlated root through every prefix
+        env:
+          OPENBLAS_NUM_THREADS: 1
+          OMP_NUM_THREADS: 1
+        run: |
+          python3 tests/kalman_ou_iii/ou3_p4_joint_source_centered_retention.py \
+            --prefix /tmp/ou3-source-events \
+            --attachment /tmp/ou3-connected-motion.json \
+            --output /tmp/ou3-joint-source-centered-retention.json
+          python3 - <<'PY'
+          import json, math
+          d=json.load(open('/tmp/ou3-joint-source-centered-retention.json'))
+          assert d['proof_state_dimension'] == 24
+          assert not d['shipping_filter_changed']
+          assert not d['independent_bias_slots_used']
+          assert not d['independent_source_ports_used']
+          assert not d['fresh_metric_per_sample_used']
+          assert not d['covariance_ellipsoid_promoted_to_true_error_set']
+          assert not d['P4_MOTION_PASS'] and not d['P4_PASS'] and not d['P5_MAY_START']
+          for mode,m in d['modes'].items():
+              assert m['one_correlated_initial_covariance_root']
+              assert m['physical_true_bias_root_fixed_not_independent']
+              assert math.isfinite(m['critical_initial_sigma_level']) and m['critical_initial_sigma_level'] > 0
+              assert m['covariance_consistency_is_unproved']
+              assert not m['nonzero_BIAS1_driver_uniformly_enclosed']
+              assert not m['active_projection_uniformly_enclosed']
+              assert not m['source_dependent_coefficients_uniformly_enclosed']
+              assert not m['P4_MOTION_PASS'] and not m['P4_PASS'] and not m['P5_MAY_START']
+              print('CORRELATED_ROOT_POINT', mode,
+                    'retained=',m['one_sigma_motion_coordinate_retained'],
+                    'critical_sigma=',m['critical_initial_sigma_level'],
+                    'limiting=',m['limiting_group'])
+          PY
+
       - name: Upload joint continuation evidence
         if: always()
         uses: actions/upload-artifact@v6
@@ -120,6 +155,7 @@ jobs:
           name: ou3-p4-joint-bias-source-storage
           path: |
             /tmp/ou3-joint-bias-source-storage.json
+            /tmp/ou3-joint-source-centered-retention.json
             /tmp/ou3-source-endpoint.json
             /tmp/ou3-source-endpoint.root.json
             /tmp/ou3-source-endpoint.inputs.csv
