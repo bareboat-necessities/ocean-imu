@@ -1,0 +1,53 @@
+name: ou3-p4-exact-chord-joint
+
+on:
+  push:
+    paths: &paths
+      - "tools/stability/ou3_p4_complete_brmm_exact_chord_joint_coordinate.py"
+      - "tools/stability/ou3_p4_complete_brmm_exact_chord_iqc.py"
+      - "tools/stability/ou3_p4_cayley_sector_certificate.py"
+      - "tools/stability/ou3_proof_operating_domain.json"
+      - ".github/workflows/ou3-p4-exact-chord-joint.yml"
+  pull_request:
+    paths: *paths
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  exact-chord-joint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with: {persist-credentials: false}
+      - name: Build exact chord vector coordinate
+        run: python3 tools/stability/ou3_p4_complete_brmm_exact_chord_joint_coordinate.py --output /tmp/chord.json
+      - name: Build dense chord and cross-product IQCs
+        run: python3 tools/stability/ou3_p4_complete_brmm_exact_chord_iqc.py --output /tmp/iqc.json
+      - name: Enforce full-domain non-scalarized contract
+        run: |
+          python3 - <<'PY'
+          import json
+          c=json.load(open('/tmp/chord.json')); q=json.load(open('/tmp/iqc.json'))
+          assert c['validation_pass'],c['validation_failures']
+          assert q['validation_pass'],q['validation_failures']
+          assert c['full_declared_entry_attitude_deg']==45.0
+          assert c['information_retention_factor_lower_full_entry']>0.85
+          assert c['exact_accelerometer_joint_identity_closed']
+          assert q['exact_q_dot_q_minus_p_equality_encoded_as_two_IQCs']
+          assert q['q_u_Joseph_cross_terms_preserved_by_coordinate_not_scalarized']
+          assert q['mixed_c_cross_aw_has_explicit_augmented_coordinate']
+          assert not q['packet_count_multiplier_used'] and not q['standalone_eta_Rinv_budget_used']
+          assert not q['P4_promoted_here']
+          print('FULL_ENTRY_CHORD_RETENTION',c['information_retention_factor_lower_full_entry'])
+          print('CHORD_IQCS',q['chord_IQC_names'])
+          print('CROSS_IQCS',q['cross_product_IQC_names'])
+          PY
+      - uses: actions/upload-artifact@v6
+        with:
+          name: ou3-p4-exact-chord-joint
+          path: |
+            /tmp/chord.json
+            /tmp/iqc.json
+          retention-days: 7
