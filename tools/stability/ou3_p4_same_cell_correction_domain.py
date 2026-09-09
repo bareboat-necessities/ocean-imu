@@ -61,17 +61,16 @@ def _residual_bounds(domain: dict, entry: dict, dynamic: dict) -> dict:
     ba = float(entry["coordinate_radii"].get("accelerometer_bias_error_norm_mps2", 0.0))
     S = float(entry["coordinate_radii"]["integral_displacement_norm_m_s"])
 
-    acc_std = float(live["configured_accelerometer_measurement_std_mps2"])
-    mag_std = float(live["configured_magnetometer_measurement_std_uT"])
+    noise = domain["configured_runtime"]["measurement_noise_std"]
+    acc_std = min(map(float, noise["accelerometer_mps2"]))
+    mag_std = min(map(float, noise["magnetometer_uT"]))
     if not (acc_std > 0.0 and mag_std > 0.0):
-        # Older operating-domain schema stores these under vector PE config;
-        # fail closed rather than silently inventing measurement noise.
-        raise RuntimeError("configured vector measurement std missing from normal_live")
+        raise RuntimeError("configured vector measurement std lost positivity")
 
     inv = dynamic["dynamic_invariant"]
     rs_lo = float(inv["R_S_applied"][0])
     # Shipping horizontal factors are 0.72 and vertical is 1.0.  The smallest
-    # variance gives the largest R^-1 energy and is therefore the safe bound.
+    # standard deviation gives the largest R^-1 energy and is therefore safe.
     rs_std_min = down(rs_lo * 0.72)
     if not rs_std_min > 0.0:
         raise RuntimeError("actual applied R_S lower lost positivity")
@@ -85,6 +84,8 @@ def _residual_bounds(domain: dict, entry: dict, dynamic: dict) -> dict:
         "accelerometer_residual_norm_upper": acc_norm,
         "magnetometer_residual_norm_upper": mag_norm,
         "S_zero_residual_norm_upper": S,
+        "accelerometer_measurement_std_lower": acc_std,
+        "magnetometer_measurement_std_lower": mag_std,
         "accelerometer_Rinv_energy_upper": up(acc_norm * acc_norm / down(acc_std * acc_std)),
         "magnetometer_Rinv_energy_upper": up(mag_norm * mag_norm / down(mag_std * mag_std)),
         "S_zero_Rinv_energy_upper": up(S * S / down(rs_std_min * rs_std_min)),
