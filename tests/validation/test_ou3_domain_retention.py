@@ -115,5 +115,60 @@ class DomainRetentionTests(unittest.TestCase):
                                  full[name]["certified_upper_bound"]*(1+1e-12))
 
 
+    def ellipsoid_example(self):
+        rng = np.random.default_rng(31)
+        factor = rng.normal(size=(21, 21))/8
+        covariance = factor@factor.T + np.eye(21)*1e-3
+        transitions = [np.eye(21), rng.normal(size=(21, 21))/10]
+        responses = [np.zeros(21), rng.normal(size=21)/100]
+        return transitions, responses, covariance
+
+    def test_ellipsoid_excursion_dominates_every_sampled_admissible_state(self):
+        """The ellipsoid image needs no subadditive step, so it is exact."""
+        transitions, responses, covariance = self.ellipsoid_example()
+        radii = D.declared_radii()
+        out = D.ellipsoid_retention(transitions, responses, radii, covariance)
+        root = np.linalg.cholesky(covariance)
+        rng = np.random.default_rng(37)
+        for name, offset, _ in D.GROUPS:
+            rows = slice(offset, offset+3)
+            reach = out["groups"][name]["excursion_at_one_sigma"]
+            index = out["groups"][name]["one_sigma_prefix_index"]
+            for _ in range(300):
+                y = rng.normal(size=21)
+                x = root @ (y/np.linalg.norm(y))
+                state = transitions[index] @ x + responses[index]*rng.uniform(-1., 1.)
+                self.assertLessEqual(np.linalg.norm(state[rows]), reach*(1+1e-9))
+
+    def test_critical_level_scales_inversely_with_the_initial_covariance(self):
+        transitions, responses, covariance = self.ellipsoid_example()
+        radii = D.declared_radii()
+        base = D.ellipsoid_retention(transitions, responses, radii, covariance)
+        scaled = D.ellipsoid_retention(transitions, responses, radii, 4*covariance)
+        for name, item in base["groups"].items():
+            self.assertAlmostEqual(scaled["groups"][name]["critical_initial_sigma_level"],
+                                   item["critical_initial_sigma_level"]/2., places=9)
+
+    def test_a_group_the_forcing_alone_evicts_admits_no_level(self):
+        transitions, responses, covariance = self.ellipsoid_example()
+        radii = D.declared_radii()
+        evicted = [np.zeros(21), np.zeros(21)]
+        evicted[1][3:6] = 2*radii["gyro_bias"]
+        out = D.ellipsoid_retention(transitions, evicted, radii, covariance)
+        self.assertEqual(out["groups"]["gyro_bias"]["critical_initial_sigma_level"], 0.)
+        self.assertEqual(out["limiting_group"], "gyro_bias")
+        self.assertFalse(out["P4_PASS"])
+
+    def test_a_zero_gain_prefix_never_limits_the_level(self):
+        radii = D.declared_radii()
+        covariance = np.eye(21)
+        transitions = [np.zeros((21, 21)), np.eye(21)]
+        responses = [np.zeros(21), np.zeros(21)]
+        out = D.ellipsoid_retention(transitions, responses, radii, covariance)
+        for name, item in out["groups"].items():
+            self.assertAlmostEqual(item["critical_initial_sigma_level"],
+                                   radii[name], places=9)
+
+
 if __name__ == "__main__":
     unittest.main()

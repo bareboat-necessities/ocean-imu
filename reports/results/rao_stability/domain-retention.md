@@ -105,6 +105,75 @@ Removing that ball still leaves velocity at 4.03 (H18) and 4.92 (A21), with
 position and attitude as the next dominant sources, so a correlated
 integral/position fact is necessary but not sufficient on its own.
 
+## The correlated initial set is very nearly invariant
+
+The product box is not the only correlated alternative, and the filter already
+carries one: the covariance of the word's initial point, which holds exactly
+the position/integral/attitude cross terms the box discards. It is a single
+convex set rather than a product, so its image needs no subadditive step and
+the excursion `sqrt(c)*||Pi_G T_j L||_2 + |alpha|*|Pi_G r_j|`, with
+`P = L L^T`, is exact.
+
+Reading the result in initial standard deviations makes the two sets
+comparable. For each group the critical level is the largest `sqrt(c)` this
+word keeps inside the declared radius, and the declared radius itself sits at
+some number of initial sigma. Their ratio is what the complete word actually
+costs.
+
+| Group | H18 critical / radius, in sigma | growth | A21 critical / radius, in sigma | growth |
+|---|---:|---:|---:|---:|
+| Attitude | 9.679 / 9.679 | .001% | 113.48 / 113.49 | .005% |
+| Gyro bias | 9.956 / 10.000 | .443% | 123.75 / 123.75 | .000% |
+| Velocity | 4.974 / 4.979 | .117% | 174.92 / 176.01 | .622% |
+| Position | 19.37 / 19.57 | 1.021% | 231.30 / 233.44 | .922% |
+| Integral displacement | 550.3 / 567.4 | 3.111% | 1593.9 / 1607.7 | .869% |
+| Latent acceleration | 11.93 / 12.79 | 7.200% | 112.87 / 112.88 | .008% |
+| Accelerometer bias | 100.0 / 100.0 | .000% | 27.45 / 27.46 | .049% |
+
+Every critical level is within 7.2% of the level at which the initial set
+already touches its own declared radius, and within 1.1% on five of the seven
+H18 rows. The complete word therefore barely expands this set at all: the
+binding quantity is how many initial standard deviations the declared radius
+is, not the word's dynamics. Against the same word the declared product box
+overshoots velocity by 3436%.
+
+The overall critical levels are 4.974 sigma (H18, limited by velocity) and
+27.452 sigma (A21, limited by the bias ball). Both are what a covariance
+consistency requirement looks like once it is stated quantitatively.
+
+This exchanges one unproved premise for another and does not close P4. The box
+was never a reachable set; this ellipsoid is the covariance the filter
+believes, not a qualified bound on its actual error, and the runtime audit
+records that actual covariances differ from the frozen P3 premises. The level
+above is the requirement, not the certificate.
+
+## The forcing template is not the obstruction
+
+The critic's second architecture asks whether a particular response restarted
+every word is what fails. With every initial ball at zero, the same common
+template reaches at most .0470 of a declared bound in H18 and .00472 in A21,
+both in velocity. It consumes under 5% of the smallest budget in play, so a
+globally bounded particular solution would not change any conclusion here.
+That architecture is answered at this capture rather than left open.
+
+## Every route executed on this capture
+
+| Route | Verdict | Status |
+|---|---|---|
+| Independent-port common-gain storage | bounds at least 1.4037e15 / 2.2313e13 | dead end, frozen |
+| Two-occurrence scalar PE transport | 1 − omega_max·3 s/2 = −5.544984695 | dead end, sign unrepairable |
+| Common-template common-gain frozen coefficients | H18 every-prefix fails at 2.70996 | dead end pending a new fact |
+| Fixed SI diagonal metric | rho 1072.993 / 6659.686 | dead end, congruence-invariant |
+| Fixed gravity/3-second diagonal metric | rho 11.183777 / 6.576082 | dead end, congruence-invariant |
+| Separately scalarized information and remainder | −.380703 / −.257014 | rejected |
+| BIAS2 conditional multiplier grid | no nonstrict master becomes strict | coefficient-feasibility failure |
+| Source-centered motion storage | endpoint .999572659 / .932948382, prefix max 1.003245112 / 1.000001212 | open; its 6.41 / 2.27 chart budget is a scalarization artifact |
+| Full signed vector information | margins .00042734 / .06705162, eta6 minima 972.647 / 862.261 | open; blocked on source admission |
+| Declared-domain product box | velocity 35.358 / 9.357 | not invariant; the box is not a reachable set |
+| Bias ball and template only | every motion group at most .2382 | retires the separated bias budget |
+| Correlated covariance ellipsoid | word growth at most 7.2%; critical 4.974 / 27.452 sigma | open; needs covariance consistency |
+| Forcing template alone | at most .0470 / .00472 | not the obstruction |
+
 ## Scope
 
 These are point diagnostics on one frozen capture. The complete-word endpoint

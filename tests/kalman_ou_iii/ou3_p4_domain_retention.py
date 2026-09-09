@@ -10,11 +10,20 @@ instead of tightening it: the reachable set is propagated in the declared
 physical coordinates and each coordinate group is compared against its own
 declared bound.
 
-The initial set is the product of the declared operating-domain balls in
-`tools/stability/ou3_proof_operating_domain.json`, with attitude at the same
-30-degree Cayley radius route 1 uses, and one common amplitude on the same
-physical forcing template. Nothing here is fitted to a replay, no domain is
-reduced, no filter coefficient changes, and no route is promoted.
+Four initial sets are reported against the same word. The declared product of
+operating-domain balls in `tools/stability/ou3_proof_operating_domain.json`,
+with attitude at the same 30-degree Cayley radius route 1 uses; the closed
+bias ball alone, which is route 1's budget in these coordinates; the same
+declared set without its integral-displacement ball, which says how much of
+the failure that one ball carries; and the common forcing template on its own.
+Each carries one amplitude on the same physical forcing template.
+
+`ellipsoid_retention` then reports the correlated alternative: the covariance
+of the word's initial point, which is a single convex set and needs no
+subadditive step at all.
+
+Nothing here is fitted to a replay, no domain is reduced, no filter
+coefficient changes, and no route is promoted.
 
 For each prefix the report gives both sides of the enclosure: a certified
 upper bound (subadditive over the initial groups) and an attained lower bound
@@ -112,12 +121,16 @@ def attained_lower_bound(blocks, radii, forcing, restarts=24, iterations=400):
 def stacked_blocks(transitions, responses, offset, active):
     """Every prefix's row block and forcing for one output group."""
     rows = slice(offset, offset+3)
-    names = [name for name, _, _ in GROUPS if active[name] > 0]
-    blocks = np.stack([np.stack([transition[rows, start:start+3]
-                                 for name, start, _ in GROUPS if active[name] > 0])
-                       for transition in transitions])
-    weights = np.array([active[name] for name in names])
+    starts = [start for name, start, _ in GROUPS if active[name] > 0]
+    weights = np.array([active[name] for name, _, _ in GROUPS if active[name] > 0])
     forcing = np.stack([response[rows] for response in responses])
+    # An initial set with every ball at zero is legal: it is the forcing
+    # template on its own, and it stacks to an empty group axis rather than
+    # to nothing at all.
+    blocks = np.empty((len(transitions), len(starts), 3, 3))
+    for index, transition in enumerate(transitions):
+        for position, start in enumerate(starts):
+            blocks[index, position] = transition[rows, start:start+3]
     return blocks, weights, forcing
 
 
@@ -216,12 +229,78 @@ def retention(transitions, responses, radii, keep=None):
     return result
 
 
+def ellipsoid_retention(transitions, responses, radii, covariance):
+    """Retention of the filter's own correlated initial set, exactly.
+
+    The declared product box lets every coordinate sit at its own bound
+    independently, which this filter's own kinematics cannot produce: the
+    integral state is the running integral of the position state. The
+    covariance of the word's initial point is the correlated alternative --
+    it carries exactly the position/integral/attitude cross terms the box
+    discards. It is also one convex set rather than a product, so its image
+    needs no subadditive step and the bound below is exact.
+
+    For `{x : x^T P^-1 x <= c}` with `P = L L^T`, the reachable excursion of
+    group G at prefix j is `sqrt(c)*||Pi_G T_j L||_2 + |alpha|*|Pi_G r_j|`.
+    The critical level is the largest `sqrt(c)` keeping every group inside its
+    declared radius at every prefix, in units of the initial covariance, so 1
+    is the filter's own one-sigma set.
+
+    This exchanges one unproved premise for another: the box was never a
+    reachable set, and this ellipsoid is the covariance the filter believes
+    rather than a qualified bound on its actual error. The runtime audit
+    records that actual covariances differ from the frozen P3 premises. The
+    level below is therefore a requirement on covariance consistency, not a
+    certificate.
+    """
+    root = np.linalg.cholesky(G.sym(covariance))
+    report, levels = {}, {}
+    for name, offset, _ in GROUPS:
+        rows = slice(offset, offset+3)
+        gains = np.array([float(np.linalg.norm(transition[rows] @ root, 2))
+                          for transition in transitions])
+        forcing = np.array([float(np.linalg.norm(response[rows]))
+                            for response in responses])
+        headroom = radii[name] - forcing
+        # A zero gain places no bound on the level, so it cannot be limiting.
+        allowed = np.divide(headroom, gains, out=np.full_like(gains, np.inf),
+                            where=gains > 0)
+        # A prefix whose forcing alone leaves the ball admits no level at all.
+        level = 0. if np.any(headroom <= 0) else float(np.min(allowed))
+        worst = int(np.argmin(allowed)) if level > 0 else int(np.argmax(forcing))
+        marginal = float(np.max(np.linalg.eigvalsh(covariance[rows, rows])))
+        report[name] = {
+            "declared_radius": radii[name],
+            "critical_initial_sigma_level": level,
+            "limiting_prefix_index": worst,
+            "gain_at_limiting_prefix": float(gains[worst]),
+            "forcing_at_limiting_prefix": float(forcing[worst]),
+            "maximum_forcing_excursion": float(np.max(forcing)),
+            # How many initial standard deviations the declared radius is in
+            # this coordinate, which is what makes the two sets comparable.
+            "declared_radius_in_initial_sigma": (
+                radii[name]/np.sqrt(marginal) if marginal > 0 else float("inf")),
+            "one_sigma_prefix_index": int(np.argmax(gains+forcing)),
+            "excursion_at_one_sigma": float(np.max(gains+forcing)),
+            "retention_ratio_at_one_sigma": float(np.max(gains+forcing)/radii[name])}
+        levels[name] = level
+    limiting = min(levels, key=levels.get)
+    return {"groups": report,
+            "critical_initial_sigma_level": levels[limiting],
+            "limiting_group": limiting,
+            "exact_no_subadditive_step": True,
+            "covariance_consistency_is_an_unproved_premise": True,
+            "P4_PASS": False}
+
+
 def audit_mode(root, rows, points, mode):
     steps, _, _, defects, counts = G.build_word(root, rows, points, mode)
     if defects.failures:
         raise ValueError("finite factorization failed: "+repr(defects.failures[:1]))
     events = [r for r in rows if r["word"] == mode]
     transitions, responses, _, _ = R.compose(steps, events)
+    point = next(r for r in points if r["word"] == mode)
+    _, covariance = R.C.SOURCE.error_and_covariance(point, 21)
     radii = declared_radii()
     names = [name for name, _, _ in GROUPS]
     subsets = {
@@ -233,6 +312,10 @@ def audit_mode(root, rows, points, mode):
         # 300 m*s integral ball carries; it does not reduce any domain.
         "declared_set_without_integral_displacement_ball":
             {n for n in names if n != "integral_displacement"},
+        # The common forcing template alone, with every initial ball at zero.
+        # This is the globally bounded particular solution the critic listed:
+        # if the response were the obstruction it would show here.
+        "forcing_template_only": set(),
     }
     result = {"counts": dict(counts),
               "declared_radii": radii,
@@ -257,6 +340,8 @@ def audit_mode(root, rows, points, mode):
         "definitely_violated_groups": sorted(
             name for name, item in full.items()
             if item["attained_retention_ratio"] > 1.+MARGIN)})
+    result["covariance_ellipsoid_initial_set"] = ellipsoid_retention(
+        transitions, responses, radii, covariance)
     return result
 
 

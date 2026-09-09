@@ -156,6 +156,18 @@ jobs:
               print('BIAS_BALL', mode, ball,
                     'not_retained' if ball > 1+d['modes'][mode]['violation_margin']
                     else 'retained')
+              # The correlated alternative to the declared product box. Its
+              # level is a requirement on covariance consistency, not a
+              # certificate, so it is printed and never asserted as a pass.
+              ellipsoid = m['covariance_ellipsoid_initial_set']
+              assert not ellipsoid['P4_PASS']
+              assert ellipsoid['covariance_consistency_is_an_unproved_premise']
+              print('ELLIPSOID', mode, ellipsoid['limiting_group'],
+                    ellipsoid['critical_initial_sigma_level'])
+              # The forcing template on its own, with every initial ball zero.
+              forcing = m['forcing_template_only']
+              print('FORCING_ONLY', mode, max(
+                  (i['certified_retention_ratio'], n) for n, i in forcing.items()))
               print('DOMAIN_RETENTION', mode, m['limiting_group'],
                     m['limiting_certified_retention_ratio'],
                     'largest_retained_similar_box',

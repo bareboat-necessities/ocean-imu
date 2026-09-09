@@ -86,6 +86,25 @@ roundoff. The ball is therefore invariant for one mode only, and a
 bounded-bias statement over repeated words has to carry that growth. No motion
 row depends on it.
 
+The correlated alternative changes the picture. The covariance of the word's
+initial point carries the position/integral/attitude cross terms the product
+box discards, and it is one convex set, so its image is exact without a
+subadditive step. Measured in initial standard deviations, this word expands
+it by at most 7.2% in any declared coordinate, and by at most 1.1% on five of
+the seven H18 rows. The critical levels are 4.974 sigma (H18, velocity) and
+27.452 sigma (A21, the bias ball), each within 7.2% of the level at which the
+initial set already touches its own declared radius. The binding quantity is
+how many initial standard deviations the declared radius is, not the word.
+
+That converts the retention obligation into a covariance-consistency
+requirement with a number attached, and it does not discharge it: the
+ellipsoid is the covariance the filter believes, and the runtime audit records
+that actual covariances differ from the frozen P3 premises.
+
+The common forcing template on its own reaches at most .0470 (H18) and .00472
+(A21) of any declared bound, both in velocity, so the globally bounded
+particular solution is not the obstruction either.
+
 The new limiter is the declared handoff set itself. Under the complete
 declared product box the same word leaves the domain, limited by velocity at
 35.358 (H18) and 9.357 (A21); the largest box of that shape it retains is
@@ -276,28 +295,37 @@ reduced domain.
 The strongest reason to reject promotion is unchanged in kind: every executed
 route is a point diagnostic on one frozen capture, and none establishes a
 uniform nonlinear matrix inequality, a BIAS2 mu, or physical source admission.
-The retention result removes an obstruction rather than supplying a
-certificate. The complete-word endpoint ratios .999572659 / .932948382 and
-prefix maxima 1.003245112 / 1.000001212 are untouched by it, and a prefix
-maximum above one still has to be discharged by retention rather than assumed
-away.
+The complete-word endpoint ratios .999572659 / .932948382 and prefix maxima
+1.003245112 / 1.000001212 are untouched by any of them.
 
-The critic's own objection to this route is that it replaces one unproved
-premise with another: the declared handoff box was never a reachable set, so
-showing it is not invariant is weak evidence about admissible trajectories.
-That objection is the next experiment. The three remaining architectures are a
-correlated reachable set for the kinematically linked (p, S) and attitude
-coordinates, a globally bounded particular solution from BRMM physical
-primitives instead of a response restarted every word, and a full signed
-vector-information enclosure with explicit source admission.
+Every route that can be computed from the frozen capture has now been
+executed, and `reports/results/rao_stability/domain-retention.md` tabulates
+all thirteen with their verdicts. What is left is not a computation on this
+capture. Two modelling obligations remain, and neither can be closed by
+arithmetic here:
 
-The quantitative next test is the first of those: whether the exact kinematic
-identity relating the integral state to the position state, applied as a
-correlation constraint on the initial set rather than as a smaller box, brings
-the H18 velocity ratio 35.358 and the A21 ratio 9.357 below one. The integral
-ball alone accounts for 35.358 -> 4.033 (H18) and 9.357 -> 4.921 (A21), so the
-identity is necessary but cannot close either mode by itself; attitude and
-position must supply the remainder. Refining the declared box without such an
-identity is a dead end: it is a smaller box around a set that was already
-shown not to be invariant. Physical admission, strict uniform P4 and P5 remain
-unclosed.
+1. **A qualified initial-error set.** The declared product box is not a
+   reachable set and this word does not retain it. The covariance ellipsoid is
+   retained to within 7.2%, but it is the filter's believed covariance rather
+   than a qualified bound, and the runtime audit says actual covariances
+   differ from the P3 premises. Closing this needs either a covariance
+   consistency result or a hardware-qualified error envelope at word entry,
+   with the quantitative target now explicit: 4.974 sigma for H18 and 27.452
+   sigma for A21.
+2. **Source admission.** The signed vector-information route survives point
+   feasibility with margins .00042734 / .06705162, and its remaining half is
+   admission of the actual physical source. That is currently false rather
+   than merely unproved: among 1,920,000 audited source samples, 10,205 exceed
+   the declared 4 m/s^2 and 31,937 exceed 30 deg/s, and runtime Live contains
+   10,002 acceleration and 31,589 rate violations. It cannot be closed by
+   widening the declared caps, which the immutable constraints forbid, so it
+   needs a hybrid or impact-aware source model.
+
+The quantitative next test therefore belongs to obligation 1 and is not a
+retention computation: whether the actual word-entry error, measured against
+the filter's own covariance across the eight replays rather than assumed, stays
+inside 4.974 sigma (H18) and 27.452 sigma (A21). That is a consistency
+measurement on existing replays, and it is falsifiable. Refining any bound on
+this capture is a dead end: the word already costs at most 7.2%, so no
+tightening of the dynamics can move a limiter that lives entirely in the
+initial set. Physical admission, strict uniform P4 and P5 remain unclosed.
