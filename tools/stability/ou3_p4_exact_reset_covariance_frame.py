@@ -27,29 +27,63 @@ this module does not promote P4 by itself.
 from __future__ import annotations
 import argparse,json,math
 from pathlib import Path
-import numpy as np
 
 QUALIFICATION='OU3_P4_EXACT_RESET_COVARIANCE_FRAME_IDENTITY_V1'
 
 
+def dot(a,b):return sum(float(x)*float(y) for x,y in zip(a,b))
+def norm(v):return math.sqrt(dot(v,v))
+def add(a,b):return [float(x)+float(y) for x,y in zip(a,b)]
+def sub(a,b):return [float(x)-float(y) for x,y in zip(a,b)]
+def scale(a,s):return [float(s)*float(x) for x in a]
+def mv(A,x):return [sum(float(a)*float(b) for a,b in zip(row,x)) for row in A]
+def mm(A,B):
+    Bt=list(zip(*B))
+    return [[sum(float(a)*float(b) for a,b in zip(row,col)) for col in Bt] for row in A]
+def eye3():return [[1.0,0.0,0.0],[0.0,1.0,0.0],[0.0,0.0,1.0]]
 def skew(v):
-    x,y,z=map(float,v);return np.array([[0.,-z,y],[z,0.,-x],[-y,x,0.]])
+    x,y,z=map(float,v);return [[0.0,-z,y],[z,0.0,-x],[-y,x,0.0]]
+def madd(A,B):return [[float(A[i][j])+float(B[i][j]) for j in range(3)] for i in range(3)]
+def mscale(A,s):return [[float(s)*float(x) for x in row] for row in A]
+
+def solve3(A,b):
+    """Dense pivoted 3x3 solve used only by the algebraic regression smoke."""
+    M=[list(map(float,row))+[float(rhs)] for row,rhs in zip(A,b)]
+    for k in range(3):
+        p=max(range(k,3),key=lambda i:abs(M[i][k]))
+        if abs(M[p][k])<1e-18:raise ValueError('singular 3x3 reset frame matrix')
+        if p!=k:M[k],M[p]=M[p],M[k]
+        piv=M[k][k]
+        for j in range(k,4):M[k][j]/=piv
+        for i in range(3):
+            if i==k:continue
+            f=M[i][k]
+            for j in range(k,4):M[i][j]-=f*M[k][j]
+    return [M[i][3] for i in range(3)]
+
+def inverse3(A):
+    cols=[solve3(A,[1.0 if i==j else 0.0 for i in range(3)]) for j in range(3)]
+    return [list(row) for row in zip(*cols)]
 
 def kappa_from_d(d):
-    r=float(np.linalg.norm(d))
+    r=norm(d)
     if r==0:return 1.0
     return 2.0*math.tan(0.5*r)/r
 
 def exact_identity(c,d):
-    c=np.asarray(c,dtype=float);d=np.asarray(d,dtype=float);k=kappa_from_d(d);a=k*d
-    Gd=np.eye(3)+.5*skew(d);Ga=np.eye(3)+.5*skew(a);h=1+.25*float(a@c)
+    c=list(map(float,c));d=list(map(float,d));k=kappa_from_d(d);a=scale(d,k)
+    Gd=madd(eye3(),mscale(skew(d),.5));Ga=madd(eye3(),mscale(skew(a),.5));h=1+.25*dot(a,c)
     if h<=0:raise ValueError('Cayley denominator nonpositive')
-    cp=Ga@(c-a)/h;t=c-d;u=np.linalg.solve(Gd,cp);A=np.linalg.solve(Gd,Ga)
-    residual=h*u-(A@t-(k-1)*d)
-    return {'kappa':k,'h':h,'c_plus':cp.tolist(),'t':t.tolist(),'u':u.tolist(),
-            'A':A.tolist(),'identity_residual_norm':float(np.linalg.norm(residual)),
-            'A_axis_residual_norm':float(np.linalg.norm(A@d-d)),
-            'A_operator_norm':float(np.linalg.norm(A,2))}
+    cp=scale(mv(Ga,sub(c,a)),1.0/h);t=sub(c,d);u=solve3(Gd,cp);A=mm(inverse3(Gd),Ga)
+    residual=sub(scale(u,h),sub(mv(A,t),scale(d,k-1.0)))
+    # Parallel-axis structure gives the exact singular values: one along d,
+    # and sqrt((1+|a|^2/4)/(1+|d|^2/4)) on the orthogonal plane.
+    d2=dot(d,d);a2=dot(a,a)
+    op=max(1.0,math.sqrt((1.0+.25*a2)/(1.0+.25*d2)))
+    return {'kappa':k,'h':h,'c_plus':cp,'t':t,'u':u,'A':A,
+            'identity_residual_norm':norm(residual),
+            'A_axis_residual_norm':norm(sub(mv(A,d),d)),
+            'A_operator_norm':op}
 
 def build():
     points=[([.31,-.17,.22],[.18,-.09,.12]),([-.42,.11,.27],[.007,-.004,.002]),([.2,.3,-.1],[0.,0.,0.])]
@@ -58,7 +92,7 @@ def build():
       'same_cell_correction_required':'d=E_theta*K*y','deployed_correction_cayley_parallel_to_d':True,
       'exact_covariance_frame_identity':'(1+.25*aTc)u=G(d)^-1*G(a)*t-(kappa-1)d',
       'reset_defect_independent_port_used':False,'same_Joseph_information_frame_retained':True,
-      'homogeneous_lift_available':True,'regression':rows,
+      'homogeneous_lift_available':True,'numpy_required':False,'regression':rows,
       'max_identity_residual_norm':max(r['identity_residual_norm'] for r in rows),
       'max_axis_residual_norm':max(r['A_axis_residual_norm'] for r in rows),
       'source_uniform_endpoint_augmented_LDLT_closed_here':False,
@@ -69,7 +103,7 @@ def validate(d):
     if d.get('qualification')!=QUALIFICATION:f.append('qualification mismatch')
     for k in ('deployed_correction_cayley_parallel_to_d','same_Joseph_information_frame_retained','homogeneous_lift_available'):
         if d.get(k) is not True:f.append(k+' not true')
-    for k in ('reset_defect_independent_port_used','source_uniform_endpoint_augmented_LDLT_closed_here','source_uniform_every_prefix_augmented_LDLT_closed_here','P4_promoted_here'):
+    for k in ('numpy_required','reset_defect_independent_port_used','source_uniform_endpoint_augmented_LDLT_closed_here','source_uniform_every_prefix_augmented_LDLT_closed_here','P4_promoted_here'):
         if d.get(k) is not False:f.append(k+' not false')
     if float(d.get('max_identity_residual_norm',math.inf))>1e-12:f.append('covariance-frame identity regression failed')
     if float(d.get('max_axis_residual_norm',math.inf))>1e-12:f.append('parallel-axis identity regression failed')
