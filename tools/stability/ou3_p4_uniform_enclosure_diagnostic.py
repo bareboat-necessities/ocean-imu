@@ -10,7 +10,9 @@ nonlinear/reset amplification is charged.  Therefore a proof that treats
 roundoff as a relative perturbation paid directly from that scalar margin cannot
 close a nontrivial shipping tube.
 
-The signed Joseph/reset information ledger remains the intended route.
+The signed Joseph/reset information ledger remains the intended route.  The old
+CI execution is retained only as a human-readable historical label so generated
+certificate JSON contains no ephemeral run/workflow identifiers.
 """
 from __future__ import annotations
 
@@ -22,7 +24,7 @@ from pathlib import Path
 import ou3_p4_strong_linear_margin as STRONG
 
 UNIT_ROUNDOFF = 5.960464477539063e-08
-FAILED_RUN_ID = 34310904248
+FAILED_CI_REFERENCE = "historical scalar-route CI 34310904248"
 FAILED_H18_RADIUS = 2.465e-84
 
 
@@ -48,8 +50,8 @@ def build() -> dict:
         },
         "binary32_unit_roundoff": UNIT_ROUNDOFF,
         "roundoff_to_margin_ratios": ratios,
-        "previous_failed_CI_run": {
-            "run_id": FAILED_RUN_ID,
+        "previous_failed_CI_evidence": {
+            "historical_reference": FAILED_CI_REFERENCE,
             "H18_allowable_Euclidean_radius_reported": FAILED_H18_RADIUS,
             "role": "historical diagnostic only; not a theorem constant",
         },
