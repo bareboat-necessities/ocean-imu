@@ -3,6 +3,7 @@ on:
   push:
     paths: &paths
       - "tools/stability/ou3_p4_reset_graph_iqc.py"
+      - "tools/stability/ou3_p4_reset_signed_absorption_diagnostic.py"
       - "tools/stability/ou3_p4_exact_reset_transport.py"
       - "tools/stability/ou3_p4_rowwise_coefficient_enclosure_fast.py"
       - "tools/stability/ou3_p4_hard_entry_set.py"
@@ -21,7 +22,7 @@ jobs:
         with: {persist-credentials: false}
       - name: Build dense same-cell reset graph IQC
         run: python3 tools/stability/ou3_p4_reset_graph_iqc.py --output /tmp/reset-iqc.json
-      - name: Enforce correlation-preserving scope
+      - name: Enforce correlation-preserving uniform scope
         run: |
           python3 - <<'PY'
           import json
@@ -29,8 +30,14 @@ jobs:
           assert d['validation_pass'],d['validation_failures']
           assert d['same_cell_K_required'] and d['independent_correction_port_forbidden']
           assert d['reset_defect_dense_IQC_available'] and d['reset_IQC_keeps_residual_direction_via_Etheta_K_Y']
+          assert d['uniform_gain_from_homogeneous_exact_reset_sector']
+          assert d['rowwise_K_used_only_for_uniform_correction_ceiling']
+          assert d['rowwise_K_may_not_replace_same_cell_Dmap_in_storage']
           assert not d['source_uniform_augmented_LDLT_closed_here'] and not d['P4_promoted_here']
           for mode,m in d['modes'].items():
+              assert m['uniform_gain_from_homogeneous_exact_reset_sector']
+              assert not m['endpoint_ratio_used_as_uniform_gain']
+              assert m['homogeneous_sector_dominates_endpoint_absolute_bound']
               print('RESET_IQC_GAIN',mode,m['reset_defect_to_actual_correction_norm_gain_upper'])
           PY
       - uses: actions/upload-artifact@v6
