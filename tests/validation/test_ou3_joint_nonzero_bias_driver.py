@@ -3,11 +3,13 @@ from __future__ import annotations
 
 import importlib.util
 from pathlib import Path
+import sys
 import unittest
 
 import numpy as np
 
 ROOT = Path(__file__).resolve().parents[1] / "kalman_ou_iii"
+sys.path.insert(0, str(ROOT))
 SPEC = importlib.util.spec_from_file_location(
     "joint_nonzero_driver", ROOT / "ou3_p4_joint_nonzero_bias_driver.py")
 D = importlib.util.module_from_spec(SPEC)
