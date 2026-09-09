@@ -19,17 +19,28 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with: {persist-credentials: false}
-      - name: Quantify exact reset defect
+      - name: Build homogeneous exact reset sector
         run: python3 tools/stability/ou3_p4_reset_signed_absorption_diagnostic.py --output /tmp/reset-absorb.json
-      - name: Enforce non-promotion and print limiting ratios
+      - name: Enforce same-cell homogeneous non-promotion contract
         run: |
           python3 - <<'PY'
           import json
           d=json.load(open('/tmp/reset-absorb.json'))
           assert d['validation_pass'],d['validation_failures']
+          assert d['reset_defect_is_homogeneous_in_same_cell_correction']
+          assert d['same_cell_d_equals_Ky_must_be_retained_downstream']
+          assert d['rowwise_K_used_only_for_correction_ceiling_not_storage']
+          assert not d['independent_reset_disturbance_used']
           assert not d['P4_promoted_here'] and not d['packet_count_multiplier_used']
           for mode,m in d['modes'].items():
-              print('RESET_ABSORPTION',mode,'delta',m['correction_norm_upper'],'rho',m['reset_attitude_defect_norm_upper'],'rho/d',m['rho_over_delta'],'rho/(q*d)',m['rho_over_q_delta'],'event',m['limiting_correction_event'])
+              assert m['homogeneous_sector_dominates_endpoint_absolute_bound']
+              print('RESET_SECTOR',mode,
+                    'delta=',m['correction_norm_upper'],
+                    'alpha=',m['alpha_cayley_over_rotation_vector_upper'],
+                    'eps_a=',m['relative_cayley_minus_rotation_vector_upper'],
+                    'mu_R=',m['reset_defect_over_correction_norm_upper'],
+                    'rho=',m['endpoint_absolute_reset_defect_norm_upper'],
+                    'event=',m['limiting_correction_event'])
           PY
       - uses: actions/upload-artifact@v6
         with:
