@@ -1,0 +1,39 @@
+name: ou3-p4-finite-angle-a21-universal
+on:
+  push:
+    paths: &paths
+      - "tools/stability/ou3_p4_finite_angle_h18_universal.py"
+      - "tools/stability/ou3_p4_finite_angle_a21_universal.py"
+      - "tools/stability/ou3_brmm_a21_prior_free_completion.py"
+      - ".github/workflows/ou3-p4-finite-angle-a21-universal.yml"
+  pull_request:
+    paths: *paths
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  finite-angle-a21:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with: {persist-credentials: false}
+      - name: Build universal finite-angle A21 backbone
+        run: python3 tools/stability/ou3_p4_finite_angle_a21_universal.py --output /tmp/a21.json
+      - name: Enforce full-entry direct-sum closure
+        run: |
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/a21.json'))
+          assert d['validation_pass'],d['validation_failures']
+          assert d['universal_A21_finite_angle_first_active_full_matrix_LDLT_closed']
+          assert d['eta6_plus_finite_bias_correlation_route_retained']
+          assert not d['eta9_packet_shortcut_used'] and not d['domain_shrunk']
+          assert not d['P4_PASS']
+          print('FINITE_ANGLE_A21',d['H18_worst_LDLT_pivot_lower'],d['first_active_ba_margin_lower'],d['finite_bias_homogeneous_energy_gap_lower'])
+          PY
+      - uses: actions/upload-artifact@v6
+        with:
+          name: ou3-p4-finite-angle-a21-universal
+          path: /tmp/a21.json
+          retention-days: 7
