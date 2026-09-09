@@ -103,7 +103,7 @@ def validate_covariance_ceiling(payload):
     for key in ("h_over_tau_leaf_count", "sigma_cells", "R_S_cells", "combined_current_cells"):
         if int(cover.get(key, 0)) <= 0:
             failures.append("invalid covariance-envelope interval cover " + key)
-    if int(cover.get("max_split_depth", -1)) != BACKEND.MAX_X_SPLIT_DEPTH:
+    if int(cover.get("max_split_depth", -1)) != BACKEND.BASE.MAX_X_SPLIT_DEPTH:
         failures.append("x split depth metadata mismatch")
     ceiling = payload.get("full_state_covariance_ceiling", {})
     expected = {"H": 18, "A": 21}
