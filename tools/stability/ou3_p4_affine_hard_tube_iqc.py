@@ -40,7 +40,7 @@ import argparse,json,math
 from pathlib import Path
 from typing import Sequence
 
-from ou3_interval import Interval,matrix_add,matrix_mul,matrix_sub,matrix_transpose,symmetric_positive_definite_ldlt
+from ou3_interval import Interval,matrix_mul,matrix_sub,matrix_transpose,symmetric_positive_definite_ldlt
 from ou3_interval_linear_algebra import matrix_symmetric_hull
 import ou3_p4_hard_entry_set as ENTRY
 import ou3_p4_bias1_family as BIAS1
