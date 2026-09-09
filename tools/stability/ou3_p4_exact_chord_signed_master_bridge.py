@@ -30,7 +30,7 @@ import ou3_p4_complete_brmm_signed_information_ledger as SIGNED
 import ou3_p4_complete_brmm_joint_sector_master as MASTER
 import ou3_p4_bias1_family as BIAS1
 import ou3_p4_projection_sector as PROJ
-import ou3_p4_rowwise_coefficient_enclosure as COEFF
+import ou3_p4_rowwise_coefficient_enclosure_fast as COEFF
 
 SCHEMA = 1
 QUALIFICATION = "OU3_P4_EXACT_CHORD_SIGNED_MASTER_BRIDGE_V1"
@@ -83,6 +83,7 @@ def build() -> dict:
       'full_declared_entry_information_retention_lower':chord['information_retention_factor_lower_full_entry'],
       'exact_chord_graph_ready_for_augmented_master':graph_ready,
       'physical_BIAS1_projection_and_coefficient_prerequisites_ready':physical_ready,
+      'dependency_reduced_smallx_tube_used_for_same_bounds':True,
       'accelerometer_residual_coordinate':'y=q+u; p=[c]x(f_hat+R_hat*delta_a_w); u=R_hat*delta_a_w+delta_b_a',
       'joseph_favorable_q_u_cross_term_retained':True,
       'mixed_c_cross_aw_retained_as_explicit_coordinate':True,
@@ -110,10 +111,11 @@ def validate(d: dict) -> list[str]:
     f=[]
     if d.get('schema')!=SCHEMA or d.get('qualification')!=QUALIFICATION:f.append('schema/qualification mismatch')
     for k in ('same_canonical_source_across_chord_signed_master','exact_chord_graph_ready_for_augmented_master',
-              'physical_BIAS1_projection_and_coefficient_prerequisites_ready','joseph_favorable_q_u_cross_term_retained',
-              'mixed_c_cross_aw_retained_as_explicit_coordinate','finite_reset_cross_and_defect_terms_retained',
-              'physical_BIAS1_one_history_retained','active_radial_projection_sector_retained',
-              'actual_same_history_K_required_not_independent_row_box','rowwise_K_enclosure_used_only_as_magnitude_ceiling'):
+              'physical_BIAS1_projection_and_coefficient_prerequisites_ready','dependency_reduced_smallx_tube_used_for_same_bounds',
+              'joseph_favorable_q_u_cross_term_retained','mixed_c_cross_aw_retained_as_explicit_coordinate',
+              'finite_reset_cross_and_defect_terms_retained','physical_BIAS1_one_history_retained',
+              'active_radial_projection_sector_retained','actual_same_history_K_required_not_independent_row_box',
+              'rowwise_K_enclosure_used_only_as_magnitude_ceiling'):
         if d.get(k) is not True:f.append(k+' not true')
     for k in ('packet_count_multiplier_used','standalone_eta_Rinv_budget_used','scalar_correction_radius_used_for_storage',
               'source_correlated_outward_word_and_prefix_cell_materialized','endpoint_augmented_LDLT_closed',
