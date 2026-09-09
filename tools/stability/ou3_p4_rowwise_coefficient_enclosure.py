@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Source-uniform rowwise Joseph-gain magnitude enclosure for P4.
 
-The endpoint-referenced factored Riccati tube gives
+The endpoint-referenced covariance envelope gives
 
   ||row_i(K)|| <= .5*sqrt(P_ii/lambda_min(R)).
 
@@ -9,7 +9,8 @@ for every actual Joseph gain. These row bounds are valid magnitude envelopes
 for finite-precision accounting. They are deliberately NOT composed through a
 word and are NOT used to choose a reset correction domain: doing so destroys
 the same-history K/H correlation (notably for S=0) and produces uselessly huge
-attitude-correction radii.
+attitude-correction radii.  The separate moving-Riccati scalar contraction
+margin is not consumed by this magnitude-only certificate.
 
 Reset G(d) has ||G^-1||=1 for every finite d, but its finite Cayley graph sector
 requires a bound on d proved from the same augmented D=E_theta*K*Y graph. That
@@ -35,7 +36,7 @@ def _diagnostic_correction_radius(rows,residuals):
     return best,kind
 
 def build():
-    tube=TUBE.build();dyn=DYNAMIC.build();entry=ENTRY.build();bad={'tube':TUBE.validate(tube),'dynamic':DYNAMIC.validate(dyn),'entry':ENTRY.validate(entry)};bad={k:v for k,v in bad.items() if v}
+    tube=TUBE.build();dyn=DYNAMIC.build();entry=ENTRY.build();bad={'endpoint_covariance_envelope':TUBE.validate_covariance_ceiling(tube),'dynamic':DYNAMIC.validate(dyn),'entry':ENTRY.validate(entry)};bad={k:v for k,v in bad.items() if v}
     if bad:raise RuntimeError('coefficient prerequisites failed: '+repr(bad))
     domain=json.loads(TUBE.DEFAULT_DOMAIN.read_text());live=domain['normal_live'];fmax=float(live['specific_force_norm_upper_mps2']);mmax=float(live['magnetic_vector_norm_upper_uT']);rslo=float(dyn['dynamic_invariant']['R_S_applied'][0])
     r_acc=down(.2**2);r_mag=down(.3**2);r_s=down((.72*rslo)**2);er=entry['coordinate_radii'];q=float(er['attitude_cayley_norm']);aw=float(er['latent_acceleration_norm_mps2']);ba=float(er['accelerometer_bias_error_norm_mps2']);S=float(er['integral_displacement_norm_m_s']);rot_diff=up(q/math.sqrt(1+.25*q*q));common={'S_zero':S,'magnetometer':up(rot_diff*mmax)};out={}
@@ -45,13 +46,13 @@ def build():
             vals=p[off:off+3];rows[name]={'Pii_upper':vals,'K_row_norm_upper_accelerometer':_row_norms(vals,r_acc),'K_row_norm_upper_magnetometer':_row_norms(vals,r_mag),'K_row_norm_upper_S_zero':_row_norms(vals,r_s)}
         residuals=dict(common);residuals['accelerometer']=up(rot_diff*fmax+aw+(ba if mode=='A21' else 0.0));delta,limiting=_diagnostic_correction_radius(rows,residuals)
         out[mode]={'rows':rows,'measurement_R_variance_lower':{'accelerometer':r_acc,'magnetometer':r_mag,'S_zero':r_s},'hard_entry_residual_norm_upper_diagnostic':residuals,'independent_rowbox_attitude_correction_norm_upper_diagnostic':delta,'independent_rowbox_limiting_event_diagnostic':limiting}
-    return {'qualification':'OU3_P4_SOURCE_UNIFORM_ROWWISE_JOSEPH_GAIN_ENCLOSURE_V4','canonical_endpoint_referenced_factored_Riccati_tube_consumed':True,'source_uniform_Riccati_diagonal_ceiling_consumed':True,'rowwise_Joseph_gain_bound_proved':True,'Joseph_gain_family_outwardly_bounded':True,'actual_RS_lower_from_dynamic_invariant':True,'hard_entry_set_consumed':entry,'independent_P_H_R_K_boxes_claimed_physical':False,'rowwise_K_used_for_finite_precision_magnitude_only':True,'rowwise_K_reset_correction_domain_forbidden':True,'reset_inverse_operator_norm_upper_for_any_finite_correction':1.0,'reset_coefficient_family_requires_same_graph_correction_domain':True,'Kalman_and_reset_coefficient_family_outwardly_bounded':False,'same_history_correlation_retained_for_storage_test':True,'independent_row_box_word_composition_forbidden':True,'modes':out,'consecutive_storage_closed_here':False,'P4_MOTION_PASS':False,'P4_PASS':False}
+    return {'qualification':'OU3_P4_SOURCE_UNIFORM_ROWWISE_JOSEPH_GAIN_ENCLOSURE_V5','canonical_endpoint_referenced_covariance_envelope_consumed':True,'failed_moving_Riccati_relative_margin_consumed':False,'moving_Riccati_tube_pass_claimed':False,'source_uniform_Riccati_diagonal_ceiling_consumed':True,'rowwise_Joseph_gain_bound_proved':True,'Joseph_gain_family_outwardly_bounded':True,'actual_RS_lower_from_dynamic_invariant':True,'hard_entry_set_consumed':entry,'independent_P_H_R_K_boxes_claimed_physical':False,'rowwise_K_used_for_finite_precision_magnitude_only':True,'rowwise_K_reset_correction_domain_forbidden':True,'reset_inverse_operator_norm_upper_for_any_finite_correction':1.0,'reset_coefficient_family_requires_same_graph_correction_domain':True,'Kalman_and_reset_coefficient_family_outwardly_bounded':False,'same_history_correlation_retained_for_storage_test':True,'independent_row_box_word_composition_forbidden':True,'modes':out,'consecutive_storage_closed_here':False,'P4_MOTION_PASS':False,'P4_PASS':False}
 def validate(d):
     f=[]
-    if d.get('qualification')!='OU3_P4_SOURCE_UNIFORM_ROWWISE_JOSEPH_GAIN_ENCLOSURE_V4':f.append('qualification mismatch')
-    for k in ('canonical_endpoint_referenced_factored_Riccati_tube_consumed','source_uniform_Riccati_diagonal_ceiling_consumed','rowwise_Joseph_gain_bound_proved','Joseph_gain_family_outwardly_bounded','actual_RS_lower_from_dynamic_invariant','rowwise_K_used_for_finite_precision_magnitude_only','rowwise_K_reset_correction_domain_forbidden','reset_coefficient_family_requires_same_graph_correction_domain','same_history_correlation_retained_for_storage_test','independent_row_box_word_composition_forbidden'):
+    if d.get('qualification')!='OU3_P4_SOURCE_UNIFORM_ROWWISE_JOSEPH_GAIN_ENCLOSURE_V5':f.append('qualification mismatch')
+    for k in ('canonical_endpoint_referenced_covariance_envelope_consumed','source_uniform_Riccati_diagonal_ceiling_consumed','rowwise_Joseph_gain_bound_proved','Joseph_gain_family_outwardly_bounded','actual_RS_lower_from_dynamic_invariant','rowwise_K_used_for_finite_precision_magnitude_only','rowwise_K_reset_correction_domain_forbidden','reset_coefficient_family_requires_same_graph_correction_domain','same_history_correlation_retained_for_storage_test','independent_row_box_word_composition_forbidden'):
         if d.get(k) is not True:f.append(k+' not true')
-    for k in ('independent_P_H_R_K_boxes_claimed_physical','Kalman_and_reset_coefficient_family_outwardly_bounded','consecutive_storage_closed_here','P4_MOTION_PASS','P4_PASS'):
+    for k in ('failed_moving_Riccati_relative_margin_consumed','moving_Riccati_tube_pass_claimed','independent_P_H_R_K_boxes_claimed_physical','Kalman_and_reset_coefficient_family_outwardly_bounded','consecutive_storage_closed_here','P4_MOTION_PASS','P4_PASS'):
         if d.get(k) is not False:f.append(k+' not false')
     if d.get('reset_inverse_operator_norm_upper_for_any_finite_correction')!=1.0:f.append('reset inverse norm changed')
     for mode,m in d['modes'].items():
