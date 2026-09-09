@@ -1,21 +1,20 @@
 name: ou3-p4-closure-prerequisites
 on:
   push:
-    paths:
+    paths: &paths
       - "tools/stability/ou3_p4_bias1_family.py"
+      - "tools/stability/ou3_p4_bias1_joint_iss_supply.py"
       - "tools/stability/ou3_p4_hard_entry_set.py"
       - "tools/stability/ou3_p4_p3_execution_admission.py"
       - "tools/stability/ou3_p4_rowwise_coefficient_enclosure.py"
+      - "tools/stability/ou3_p4_rowwise_coefficient_enclosure_fast.py"
+      - "tools/stability/ou3_brmm_riccati_tube_smallx_scaled.py"
+      - "tools/stability/ou3_brmm_riccati_tube.py"
+      - "tools/stability/ou3_p4_exact_reset_transport.py"
       - "tools/stability/ou3_p4_closure_domain.json"
       - ".github/workflows/ou3-p4-closure-prerequisites.yml"
   pull_request:
-    paths:
-      - "tools/stability/ou3_p4_bias1_family.py"
-      - "tools/stability/ou3_p4_hard_entry_set.py"
-      - "tools/stability/ou3_p4_p3_execution_admission.py"
-      - "tools/stability/ou3_p4_rowwise_coefficient_enclosure.py"
-      - "tools/stability/ou3_p4_closure_domain.json"
-      - ".github/workflows/ou3-p4-closure-prerequisites.yml"
+    paths: *paths
   workflow_dispatch:
 permissions:
   contents: read
@@ -29,22 +28,31 @@ jobs:
       - name: Build independent closure prerequisites
         run: |
           python3 tools/stability/ou3_p4_bias1_family.py --output /tmp/bias1.json
+          python3 tools/stability/ou3_p4_bias1_joint_iss_supply.py --output /tmp/bias1-iss.json
           python3 tools/stability/ou3_p4_hard_entry_set.py --output /tmp/entry.json
           python3 tools/stability/ou3_p4_p3_execution_admission.py --output /tmp/p3admit.json
-          python3 tools/stability/ou3_p4_rowwise_coefficient_enclosure.py --output /tmp/coeff.json
+          python3 tools/stability/ou3_p4_rowwise_coefficient_enclosure_fast.py --output /tmp/coeff.json
       - name: Enforce fail-honest scope
         run: |
           python3 - <<'PY'
           import json
-          b=json.load(open('/tmp/bias1.json')); e=json.load(open('/tmp/entry.json')); p=json.load(open('/tmp/p3admit.json')); c=json.load(open('/tmp/coeff.json'))
+          b=json.load(open('/tmp/bias1.json')); bi=json.load(open('/tmp/bias1-iss.json'))
+          e=json.load(open('/tmp/entry.json')); p=json.load(open('/tmp/p3admit.json')); c=json.load(open('/tmp/coeff.json'))
           assert b['BIAS1_SOURCE_ADMISSION_PASS'] and not b['deployment_hardware_admission_pass']
-          assert e['entry_set_declared_and_membership_checkable'] and e['scale_of_declared_handoff_envelope'] >= .01
+          assert bi['validation_pass'],bi['validation_failures']
+          assert bi['same_w_enters_error_and_true_bias'] and not bi['independent_per_sample_bias_state_slots_used']
+          assert e['entry_set_declared_and_membership_checkable'] and e['scale_of_declared_handoff_envelope'] == 1.0
           assert not e['covariance_ellipsoid_used'] and not e['startup_reachability_proved_here']
           assert p['P3_SCOPED_EXECUTION_ADMISSION_PASS'] and not p['P3_DEPLOYMENT_PASS']
-          assert c['coefficient_family_outwardly_bounded'] and not c['consecutive_storage_closed_here']
+          assert c['validation_pass'],c['validation_failures']
+          assert c['Kalman_and_reset_coefficient_family_outwardly_bounded']
+          assert c['smallx_scaled_dependency_reduction_used'] and c['base_certificate_unchanged']
+          assert not c['consecutive_storage_closed_here']
           for mode,m in c['modes'].items():
-            print('COEFF',mode,json.dumps(m['rows'],sort_keys=True))
+            print('COEFF',mode,'correction=',m['attitude_correction_norm_upper'],'limiting=',m['limiting_correction_event'])
+            print('RESET',mode,json.dumps(m['reset_enclosure'],sort_keys=True))
           print('BIAS1_W',b['driver_increment_norm_upper_mps2'])
+          print('BIAS1_ISS',bi['joint_supply_norm_upper_per_prediction_mps2'])
           print('ENTRY',e['coordinate_radii'])
           PY
       - uses: actions/upload-artifact@v6
@@ -52,6 +60,7 @@ jobs:
           name: ou3-p4-closure-prerequisites
           path: |
             /tmp/bias1.json
+            /tmp/bias1-iss.json
             /tmp/entry.json
             /tmp/p3admit.json
             /tmp/coeff.json
