@@ -1,0 +1,46 @@
+name: ou3-p4-working-chart-capacity
+on:
+  push:
+    paths: &paths
+      - "tools/stability/ou3_p4_working_chart_capacity.py"
+      - "tools/stability/ou3_p4_cayley_sector_certificate.py"
+      - "tools/stability/ou3_brmm_h18_prior_free_completion.py"
+      - "tools/stability/ou3_brmm_h18_information_composition.py"
+      - "tools/stability/ou3_brmm_a21_prior_free_completion.py"
+      - ".github/workflows/ou3-p4-working-chart-capacity.yml"
+  pull_request:
+    paths: *paths
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  capacity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with: {persist-credentials: false}
+      - name: Certify wider finite-angle working chart
+        run: python3 tools/stability/ou3_p4_working_chart_capacity.py --output /tmp/working-chart.json
+      - name: Enforce entry/tube distinction
+        run: |
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/working-chart.json'))
+          assert d['validation_pass'],d['validation_failures']
+          assert d['declared_entry_attitude_deg']==45.0
+          assert not d['declared_entry_set_changed'] and not d['declared_entry_set_shrunk']
+          assert d['working_tube_is_larger_than_entry_set']
+          assert d['universal_wider_working_chart_differential_backbone_closed']
+          assert not d['every_prefix_membership_in_working_chart_closed_here']
+          assert not d['P4_MOTION_PASS'] and not d['P4_PASS']
+          print('WORKING_CHART_DEG',d['working_chart_outer_angle_deg'])
+          print('ATTITUDE_HEADROOM_DEG',d['attitude_headroom_deg'])
+          print('WORKING_H18_PIVOT',d['H18']['worst_LDLT_pivot_lower'])
+          print('WORKING_A21_BA_MARGIN',d['A21']['first_active_ba_margin_lower'])
+          PY
+      - uses: actions/upload-artifact@v6
+        with:
+          name: ou3-p4-working-chart-capacity
+          path: /tmp/working-chart.json
+          retention-days: 7
