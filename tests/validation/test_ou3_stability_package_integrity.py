@@ -67,7 +67,13 @@ def _stale_stability_json_references() -> list[str]:
                 for basename in STABILITY_JSON_BASENAMES:
                     if basename not in line:
                         continue
-                    # Every retained reference must make the new stability
+                    # Metadata may identify a theorem-domain source by basename
+                    # without being a filesystem consumer.  Only executable or
+                    # documentary path references must spell out the relocated
+                    # stability package path.
+                    if re.search(r"['\"]source['\"]\s*:\s*['\"][^'\"]+['\"]", line):
+                        continue
+                    # Every retained path reference must make the new stability
                     # package location explicit.  The basename is constructed
                     # above so this integrity test does not match itself.
                     if "stability" not in line:
