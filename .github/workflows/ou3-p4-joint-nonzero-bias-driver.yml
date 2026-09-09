@@ -1,0 +1,143 @@
+name: ou3-p4-joint-nonzero-bias-driver
+
+on:
+  push:
+    paths: &paths
+      - "src/**"
+      - "tools/stability/ou3-source-endpoint.cpp"
+      - "tests/kalman_ou_iii/ou3_p4_connected_motion.py"
+      - "tests/kalman_ou_iii/ou3_p4_motion_gain.py"
+      - "tests/kalman_ou_iii/ou3_p4_trace_overlay.py"
+      - "tests/kalman_ou_iii/ou3_p4_joint_bias_source_storage.py"
+      - "tests/kalman_ou_iii/ou3_p4_joint_nonzero_bias_driver.py"
+      - "tests/validation/test_ou3_joint_nonzero_bias_driver.py"
+      - "tools/stability/ou3_proof_operating_domain.json"
+      - ".github/workflows/ou3-p4-joint-nonzero-bias-driver.yml"
+  pull_request:
+    paths: *paths
+  workflow_dispatch:
+
+concurrency:
+  group: ou3-p4-joint-nonzero-bias-driver-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  joint-nonzero-bias-driver:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-numpy g++ libeigen3-dev
+
+      - name: Checkout pinned physical sea generator
+        uses: actions/checkout@v6
+        with:
+          repository: bareboat-necessities/oceanography-waves-lib
+          ref: e442150682f560384be427df4cc7815956a091c5
+          path: _physical-sea-generator
+          persist-credentials: false
+
+      - name: Test nonzero driver algebra
+        working-directory: tests/validation
+        run: python3 -m unittest -v test_ou3_joint_nonzero_bias_driver
+
+      - name: Build baseline and passive trace with the same nonzero physical driver
+        run: |
+          g++ -std=c++20 -O2 -Wall -Wextra -Werror -DOU3_CONDITIONAL_BIAS_DRIVER \
+            -I src -isystem /usr/include/eigen3 -isystem _physical-sea-generator/src \
+            tools/stability/ou3-source-endpoint.cpp -o /tmp/ou3-driver-baseline
+          /tmp/ou3-driver-baseline /tmp/ou3-driver-baseline
+
+          python3 tests/kalman_ou_iii/ou3_p4_trace_overlay.py \
+            --repository . --output /tmp/ou3-driver-trace-overlay
+          g++ -std=c++20 -O2 -Wall -Wextra -Werror \
+            -DOU3_CONDITIONAL_BIAS_DRIVER -DOU3_SOURCE_EVENT_TRACE \
+            -I /tmp/ou3-driver-trace-overlay -I src \
+            -isystem /usr/include/eigen3 -isystem _physical-sea-generator/src \
+            tools/stability/ou3-source-endpoint.cpp -o /tmp/ou3-driver-events
+          /tmp/ou3-driver-events /tmp/ou3-driver-events
+
+      - name: Attach all shipping subevents to the same driven source history
+        run: |
+          python3 tests/kalman_ou_iii/ou3_p4_connected_motion.py \
+            --prefix /tmp/ou3-driver-events \
+            --baseline-prefix /tmp/ou3-driver-baseline \
+            --manifest /tmp/ou3-driver-trace-overlay/trace-manifest.json \
+            --output /tmp/ou3-driver-connected-motion.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/ou3-driver-connected-motion.json'))
+          assert d['read_only_trace_recovers_baseline_bit_for_bit']
+          for mode,m in d['modes'].items():
+              assert m['decision']=='CONNECTED_POINT_ATTACHMENT_PASS', (mode,m)
+              assert not m['canonical_P4_falsified']
+          PY
+
+      - name: Execute joint nonzero-driver recurrence, compatible storage, and prefix budgets
+        env:
+          OPENBLAS_NUM_THREADS: 1
+          OMP_NUM_THREADS: 1
+        run: |
+          python3 tests/kalman_ou_iii/ou3_p4_joint_nonzero_bias_driver.py \
+            --prefix /tmp/ou3-driver-events \
+            --attachment /tmp/ou3-driver-connected-motion.json \
+            --output /tmp/ou3-joint-nonzero-bias-driver.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/ou3-joint-nonzero-bias-driver.json'))
+          assert d['nonzero_driver_required']
+          assert not d['shipping_filter_changed']
+          assert not d['independent_bias_slots_used']
+          assert not d['independent_source_ports_used']
+          assert not d['fresh_metric_per_sample_used']
+          assert not d['P4_MOTION_PASS'] and not d['P4_PASS'] and not d['P5_MAY_START']
+          for mode,m in d['modes'].items():
+              r=m['physical_bias_recurrence']
+              a=m['joint_augmentation']
+              assert r['nonzero_driver_executed']
+              assert r['declared_model_trace_max_abs_defect'] < 2e-12
+              assert r['affine_recurrence_max_abs_defect'] < 2e-12
+              assert a['driver_prediction_count']==600
+              assert a['maximum_driver_increment_norm'] > 0
+              assert a['projection_event_count'] > 0
+              assert a['driver_affine_input_lift_present']
+              assert a['projection_beta_coupling_present']
+              assert m['joint_physical_bias_lift_defect'] < 2e-10
+              assert m['completed_prefix_count'] > 2000
+              assert m['nonzero_BIAS1_driver_point_covered']
+              assert m['active_projection_point_graph_retained']
+              assert not m['nonzero_BIAS1_driver_uniformly_enclosed']
+              assert not m['active_projection_uniformly_enclosed']
+              assert not m['source_dependent_coefficients_uniformly_enclosed']
+              assert not m['P4_MOTION_PASS'] and not m['P4_PASS'] and not m['P5_MAY_START']
+              print('NONZERO_DRIVER_POINT', mode,
+                    'retained=',m['one_sigma_motion_coordinate_retained'],
+                    'critical_sigma=',m['critical_initial_sigma_level'],
+                    'limiting=',m['limiting_group'],
+                    'projection_min=',a['minimum_projection_scale'],
+                    'saturated_projection_count=',a['saturated_projection_count'])
+          PY
+
+      - name: Upload joint nonzero-driver evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: ou3-p4-joint-nonzero-bias-driver
+          path: |
+            /tmp/ou3-joint-nonzero-bias-driver.json
+            /tmp/ou3-driver-connected-motion.json
+            /tmp/ou3-driver-baseline.root.json
+            /tmp/ou3-driver-baseline.inputs.csv
+            /tmp/ou3-driver-baseline.prefixes.jsonl
+            /tmp/ou3-driver-events.events.jsonl
+            /tmp/ou3-driver-trace-overlay/trace-manifest.json
+          retention-days: 7
