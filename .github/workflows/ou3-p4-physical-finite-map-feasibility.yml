@@ -20,6 +20,7 @@ on:
       - "tests/validation/test_ou3_motion_gain.py"
       - "tests/validation/test_ou3_storage_routes.py"
       - "tests/validation/test_ou3_domain_retention.py"
+      - "tests/validation/test_ou3_bounded_bias_cocycle.py"
       - "tools/stability/ou3_mems_bias_contract.py"
       - "tools/stability/ou3_p4_complete_brmm_signed_information_ledger.py"
       - "tools/stability/ou3_proof_operating_domain.json"
@@ -43,6 +44,9 @@ jobs:
       - uses: actions/checkout@v6
         with:
           persist-credentials: false
+
+      - name: Preserve the exact source alongside numerical evidence
+        run: git archive --format=tar.gz --output=/tmp/ou3-proof-source.tar.gz HEAD
 
       - name: Install point-audit and physical-generator dependencies
         run: |
@@ -79,7 +83,7 @@ jobs:
 
       - name: Test bias and finite attachment algebra
         working-directory: tests/validation
-        run: python3 -m unittest -v test_ou3_bias_witness_admissibility test_ou3_retained_word_attachment test_ou3_physical_brmm_membership test_ou3_brmm_response_union test_ou3_source_endpoint test_ou3_connected_motion test_ou3_motion_gain test_ou3_storage_routes test_ou3_domain_retention
+        run: python3 -m unittest -v test_ou3_bias_witness_admissibility test_ou3_retained_word_attachment test_ou3_physical_brmm_membership test_ou3_brmm_response_union test_ou3_source_endpoint test_ou3_connected_motion test_ou3_motion_gain test_ou3_storage_routes test_ou3_domain_retention test_ou3_bounded_bias_cocycle
 
       - name: Capture one source-connected finite shipping history and test fixed endpoints
         run: |
@@ -119,6 +123,31 @@ jobs:
             --manifest /tmp/ou3-motion-trace-overlay/trace-manifest.json \
             --output /tmp/ou3-connected-motion.json
 
+      - name: Test the sample-entrance bounded-bias motion cocycle
+        env:
+          OPENBLAS_NUM_THREADS: 1
+          OMP_NUM_THREADS: 1
+        run: |
+          python3 tests/kalman_ou_iii/ou3_p4_bounded_bias_cocycle.py \
+            --prefix /tmp/ou3-source-events --attachment /tmp/ou3-connected-motion.json \
+            --output /tmp/ou3-bounded-bias-cocycle.json
+          python3 - <<'PY'
+          import json
+          d = json.load(open('/tmp/ou3-bounded-bias-cocycle.json'))
+          assert d['no_shipping_bias_reset_or_filter_change']
+          assert d['frozen_coefficients_only']
+          assert not d['P4_MOTION_PASS'] and not d['P4_PASS'] and not d['P5_MAY_START']
+          for mode, m in d['modes'].items():
+              assert m['sample_count'] == 600
+              assert m['point_complete_word_feasible']
+              assert m['actual_bias_sequence_lift_defect'] < 1e-10
+              assert m['endpoint_supply']['normalized_supply_ratio'] < 1
+              assert not m['P4_MOTION_PASS'] and not m['P4_PASS'] and not m['P5_MAY_START']
+              assert abs(float(m['endpoint_high_precision']['ratio']) - m['complete_word_ratio']) < 1e-8
+              assert abs(float(m['prefix_high_precision']['ratio']) - m['worst_prefix_ratio']) < 1e-8
+              print('COCYCLE_POINT_ONLY', mode, m['complete_word_ratio'], m['worst_prefix_ratio'])
+          PY
+
       - name: Test the connected finite-coefficient augmented motion supply
         env:
           OPENBLAS_NUM_THREADS: 1
@@ -144,16 +173,16 @@ jobs:
           for mode, m in d['modes'].items():
               assert not m['scalarized_storage_conversion_used']
               bias = m['bias_ball_and_template_only']
-              # The closed .4 ball plus the template retains every motion
-              # coordinate. The bias ball itself is the exception, and A21
-              # leaves it: that row is pinned here rather than asserted away.
+              # This is a frozen-coefficient image, not nonlinear projection
+              # invariance. A21's bias row extrapolates interior coefficients;
+              # the actual radial projection is covered by compactness.
               for name, item in bias.items():
                   if name == 'accelerometer_bias':
                       assert item['certified_retention_ratio'] <= 1.01, (mode, item)
                       continue
                   assert item['certified_retention_ratio'] <= 1.0, (mode, name, item)
               ball = bias['accelerometer_bias']['attained_retention_ratio']
-              print('BIAS_BALL', mode, ball,
+              print('FROZEN_COEFFICIENT_BIAS_BALL', mode, ball,
                     'not_retained' if ball > 1+d['modes'][mode]['violation_margin']
                     else 'retained')
               # The correlated alternative to the declared product box. Its
@@ -242,6 +271,8 @@ jobs:
         with:
           name: ou3-p4-retained-word-attachment
           path: |
+            /tmp/ou3-proof-source.tar.gz
+            /tmp/ou3-bounded-bias-cocycle.json
             /tmp/ou3_p4_bias_witness_admissibility.json
             /tmp/ou3-three-storage-routes.json
             /tmp/ou3-domain-retention.json
