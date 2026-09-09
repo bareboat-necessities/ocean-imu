@@ -30,6 +30,7 @@ correction-domain target.
 from __future__ import annotations
 from dataclasses import dataclass
 import argparse,json,math
+from pathlib import Path
 from typing import Sequence
 
 from ou3_interval import Interval,matrix_add,matrix_mul,matrix_sub,matrix_transpose
@@ -68,7 +69,6 @@ def mscale(A,a):
 def maxabs(x):return max(abs(x.lo),abs(x.hi))
 
 def _linear_cross_c_const(v,nz):
-    """Map Cayley c (first three e coordinates) to c x v."""
     if len(v)!=3:raise ValueError('constant vector must have length three')
     x,y,z=v;A=zeros(3,nz)
     A[0][1]=z;A[0][2]=-y
@@ -82,7 +82,6 @@ def _embed_rotation_aw(Rhat,nz):
     return matrix_mul(Rhat,S)
 
 def _equality_zero_sector(A):
-    """-||A z||^2 >=0 forces the linear equality A z=0 exactly."""
     return matrix_symmetric_hull(neg(gram(A)))
 
 @dataclass(frozen=True)
@@ -98,7 +97,6 @@ class EventMaster:
     reset_b_constraint:str
 
 def _nonlinear_maps(cell,event,n):
-    """Return nz/layout/N/nonlinear sectors before q,d/reset maps are formed."""
     entry=ENTRY.build();ef=ENTRY.validate(entry)
     if ef:raise RuntimeError('hard-entry prerequisite failed: '+repr(ef))
     chord=CHORD.build();cf=CHORD.validate(chord)
@@ -108,11 +106,9 @@ def _nonlinear_maps(cell,event,n):
     awmax=float(entry['coordinate_radii']['latent_acceleration_norm_mps2'])
 
     if cell.kind=='S_zero':
-        # [e,btheta,h]
         nz=n+4;hidx=n+3;N=zeros(3,nz);layout=(('e',0,n),('b_theta',n,3),('h',hidx,1));return nz,hidx,layout,N,(),n
 
     if cell.kind=='magnetometer':
-        # [e,p,qc,btheta,h]
         p0=n;qc0=n+3;b0=n+6;hidx=n+9;nz=n+10
         P=selector(3,nz,p0);Qc=selector(3,nz,qc0)
         Cm=_linear_cross_c_const(cell.m_body,nz)
@@ -124,12 +120,11 @@ def _nonlinear_maps(cell,event,n):
         return nz,hidx,layout,N,tuple(sectors),b0
 
     if cell.kind=='accelerometer':
-        # [e,p,qc,r,btheta,h]
         p0=n;qc0=n+3;r0=n+6;b0=n+9;hidx=n+12;nz=n+13
         P=selector(3,nz,p0);Qc=selector(3,nz,qc0);R=selector(3,nz,r0)
         Cf=_linear_cross_c_const(cell.f_hat,nz);Daw=_embed_rotation_aw(cell.R_hat,nz);Cmap=selector(3,nz,0)
-        peq=matrix_sub(matrix_sub(P,Cf),R)   # p-Cf-r = 0
-        N=matrix_add(matrix_sub(Qc,P),R)     # eta=qc-p+r
+        peq=matrix_sub(matrix_sub(P,Cf),R)
+        N=matrix_add(matrix_sub(Qc,P),R)
         sectors=[('p_equals_Cf_plus_r',_equality_zero_sector(peq))]
         sectors.extend(('chord_'+name,Pi) for name,Pi in CHORDIQC.exact_chord_iqcs(P,Qc,k).items())
         sectors.extend(('cross_'+name,Pi) for name,Pi in CHORDIQC.cross_product_iqcs(Cmap,Daw,R,cmax,awmax).items())
