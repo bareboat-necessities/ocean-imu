@@ -12,6 +12,10 @@ on:
       - "tools/stability/ou3_p4_wave_period_interval_transition.py"
       - "tools/stability/ou3_p4_joint_estimator_transition.py"
       - "tools/stability/ou3_p4_joint_estimator_prefix_ldlt.py"
+      - "tools/stability/ou3_p4_joint_brmm_frontend_transition.py"
+      - "tools/stability/ou3_p4_joint_brmm_prefix_ldlt.py"
+      - "tools/stability/ou3_p4_brmm_tuner_stillness_transition.py"
+      - "tools/stability/ou3_brmm_sigma_stillness_step.py"
       - "tools/stability/ou3_validated_positive_transcendentals.py"
       - "tools/stability/ou3_p4_complete_brmm_finite_map_mean_value.py"
       - "tools/stability/ou3_p4_complete_brmm_differential_events.py"
@@ -42,6 +46,10 @@ jobs:
           python3 tools/stability/ou3_validated_positive_transcendentals.py
           python3 tools/stability/ou3_p4_joint_estimator_transition.py --output /tmp/joint-estimator-transition.json
           python3 tools/stability/ou3_p4_joint_estimator_prefix_ldlt.py --output /tmp/joint-prefix-ldlt.json
+          python3 tools/stability/ou3_brmm_sigma_stillness_step.py --output /tmp/brmm-sigma-stillness.json
+          python3 tools/stability/ou3_p4_brmm_tuner_stillness_transition.py --output /tmp/brmm-tuner-stillness.json
+          python3 tools/stability/ou3_p4_joint_brmm_frontend_transition.py --output /tmp/joint-brmm-frontend.json
+          python3 tools/stability/ou3_p4_joint_brmm_prefix_ldlt.py --output /tmp/joint-brmm-prefix-ldlt.json
           python3 tools/stability/ou3_p4_complete_brmm_source_cover_contract.py --output /tmp/source-cover-contract.json
           python3 tools/stability/ou3_p4_complete_brmm_source_cover_transition.py --output /tmp/source-cover-transition.json
           python3 tools/stability/ou3_p4_complete_brmm_adaptive_transition.py --output /tmp/adaptive-transition.json
@@ -83,11 +91,20 @@ jobs:
           f=json.load(open('/tmp/finite-map.json'))
           j=json.load(open('/tmp/joint-estimator-transition.json'))
           p=json.load(open('/tmp/joint-prefix-ldlt.json'))
+          ss=json.load(open('/tmp/brmm-sigma-stillness.json'))
+          ts=json.load(open('/tmp/brmm-tuner-stillness.json'))
+          bj=json.load(open('/tmp/joint-brmm-frontend.json'))
+          bp=json.load(open('/tmp/joint-brmm-prefix-ldlt.json'))
 
-          for name,obj in [('contract',d),('transition',t),('adaptive',a),('target',x),('universal',u),('wave',w),('geometry',g),('finite',f),('joint',j),('prefix',p)]:
+          for name,obj in [
+              ('contract',d),('transition',t),('adaptive',a),('target',x),
+              ('universal',u),('wave',w),('geometry',g),('finite',f),
+              ('joint',j),('prefix',p),('sigma-stillness',ss),
+              ('tuner-stillness',ts),('brmm-joint',bj),('brmm-prefix',bp)]:
               assert obj['validation_pass'], (name,obj.get('validation_failures'))
 
-          # Canonical correction: period and sigma must stay on one estimator history.
+          # Hard P4 invariant: the theorem coefficient family is the image of one
+          # physical estimator history.  No independent f/sigma/tau/TS/RS boxes.
           assert j['same_signal_wave_period_and_band_state_materialized']
           assert j['tuner_precedes_current_sample_wave_period_update']
           assert j['newly_usable_period_affects_tuner_only_next_sample']
@@ -101,10 +118,48 @@ jobs:
           assert j['band_noise_p11_subtraction_materialized']
           assert j['joint_f_tau_sigma_TS_RS_image_materialized']
           assert not j['independent_f_sigma_rectangle_accepted_by_transition']
-          assert not j['physical_BRMM_signal_attachment_closed_here']
-          assert not j['all_admitted_same_history_source_cells_emitted_here']
-          assert not j['endpoint_and_every_prefix_augmented_LDLT_closed_here']
-          assert not j['P4_MOTION_PASS'] and not j['P4_PASS'] and not j['P5_MAY_START']
+
+          assert ss['same_vertical_sample_drives_lpf_energy_and_sigma_attenuation']
+          assert ss['threshold_straddling_cell_is_branched']
+          assert ts['same_history_still_attenuation_enters_before_variance_floor']
+          assert ts['raw_target_tuple_emitted_before_candidate_EMA']
+          assert ts['raw_and_active_schedule_remain_distinct']
+
+          assert bj['same_private_Mahony_vertical_drives_stillness_tuner_and_WPE']
+          assert bj['previous_WPE_frequency_drives_current_tuner']
+          assert bj['same_history_stillness_attenuation_drives_sigma']
+          assert bj['joint_raw_f_tau_sigma_TS_RS_tuple_emitted']
+          assert bj['candidate_EMA_and_stage_branch_retained']
+          assert bj['current_Riccati_active_schedule_precedes_current_measurement']
+          assert bj['actual_applied_RS_xyz_retained_from_same_active_schedule']
+          assert bj['independent_frequency_sigma_RS_forbidden']
+          assert bj['source_child_predecessor_lineage_materialized']
+
+          assert u['joint_estimator_relation_materialized_here']
+          assert u['joint_transition_rejects_independent_f_sigma']
+          assert u['joint_transition_requires_split_on_dependency_loss']
+          assert u['same_BRMM_sample_joint_frontend_transition_materialized']
+          assert u['same_BRMM_current_applied_schedule_retained']
+
+          # The production cover and production LDLTs remain deliberately false
+          # until every admitted BRMM/radial predecessor lineage is covered.
+          assert not bj['complete_BRMM_predecessor_state_family_covered_here']
+          assert not bj['all_radial_hard_entry_segments_covered_here']
+          assert not u['joint_transition_physical_BRMM_attachment_closed']
+          assert not u['complete_BRMM_predecessor_family_covered']
+          assert not u['coefficient_target_inclusion_closed']
+          assert not u['complete_source_cover_closed_here']
+
+          assert bp['BRMM_attached_joint_image_required_at_every_prefix']
+          assert bp['literal_previous_prefix_ancestry_required']
+          assert bp['current_applied_schedule_retained_at_every_prefix']
+          assert bp['raw_joint_f_tau_sigma_TS_RS_retained_at_every_prefix']
+          assert bp['same_cell_augmented_master_sector_source_fp_maps_required']
+          assert bp['BIAS1_source_map_required_for_production']
+          assert bp['binary32_fp_map_required_for_production']
+          assert not bp['production_complete_source_lineages_supplied_here']
+          assert not bp['production_endpoint_closed_here']
+          assert not bp['production_every_prefix_closed_here']
 
           assert d['independent_frequency_sigma_coordinates_forbidden']
           assert d['same_signal_history_must_generate_period_and_sigma']
@@ -113,15 +168,6 @@ jobs:
           assert not d['coarse_frequency_sigma_rectangle_may_promote_P4']
           assert not d['coefficient_target_inclusion_closed']
           assert not d['SOURCE_UNIFORM_COMPLETE_BRMM_COVER_CLOSED']
-          assert not d['P4_promoted_here']
-
-          assert u['joint_estimator_relation_materialized_here']
-          assert u['joint_transition_rejects_independent_f_sigma']
-          assert u['joint_transition_requires_split_on_dependency_loss']
-          assert not u['joint_transition_physical_BRMM_attachment_closed']
-          assert not u['coefficient_target_inclusion_closed']
-          assert not u['complete_source_cover_closed_here']
-          assert not u['P4_promoted_here']
 
           assert p['joint_estimator_child_ancestry_materialized']
           assert p['explicit_root_predecessor_retained']
@@ -130,7 +176,6 @@ jobs:
           assert not p['production_source_cover_attached_here']
           assert not p['production_endpoint_LDLT_closed_here']
           assert not p['production_every_prefix_LDLT_closed_here']
-          assert not p['P4_MOTION_PASS'] and not p['P4_PASS'] and not p['P5_MAY_START']
 
           assert t['shipping_covariance_transition_operator_available']
           assert not t['complete_BRMM_source_transition_cover_closed_here']
@@ -150,11 +195,19 @@ jobs:
           assert not g['physical_rotation_vector_geometry_transition_materialized_here']
           assert f['source_cover_contract_consumed']
           assert not f['source_cover_uniform_complete_BRMM_closed']
+
+          for obj in (j,p,bj,bp):
+              assert not obj['P4_MOTION_PASS']
+              assert not obj['P4_PASS']
+              assert not obj['P5_MAY_START']
+          assert not d['P4_promoted_here']
+          assert not u['P4_promoted_here']
           assert not f['P4_promoted_here']
 
           print('SOURCE_COVER_INTERFACE_SMOKE',ev['same_P_H_R_cell'],ev['R_provenance'])
           print('JOINT_ESTIMATOR_RELATION',d['joint_estimator_relation_materialized'])
-          print('PHYSICAL_ATTACHMENT',d['joint_estimator_physical_BRMM_attachment_closed'])
+          print('BRMM_SAME_SIGNAL_ATTACHED_SAMPLE',u['same_BRMM_sample_joint_frontend_transition_materialized'])
+          print('PHYSICAL_FAMILY_ATTACHMENT_CLOSED',d['joint_estimator_physical_BRMM_attachment_closed'])
           print('COEFFICIENT_CLOSED',d['coefficient_target_inclusion_closed'])
           print('UNIFORM_CLOSED',d['SOURCE_UNIFORM_COMPLETE_BRMM_COVER_CLOSED'])
           PY
@@ -164,6 +217,10 @@ jobs:
           path: |
             /tmp/joint-estimator-transition.json
             /tmp/joint-prefix-ldlt.json
+            /tmp/brmm-sigma-stillness.json
+            /tmp/brmm-tuner-stillness.json
+            /tmp/joint-brmm-frontend.json
+            /tmp/joint-brmm-prefix-ldlt.json
             /tmp/source-cover-contract.json
             /tmp/source-cover-transition.json
             /tmp/adaptive-transition.json
