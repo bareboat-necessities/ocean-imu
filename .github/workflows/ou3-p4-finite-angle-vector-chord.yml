@@ -1,0 +1,39 @@
+name: ou3-p4-finite-angle-vector-chord
+on:
+  push:
+    paths: &paths
+      - "tools/stability/ou3_p4_finite_angle_vector_chord.py"
+      - "tools/stability/ou3_p4_hard_entry_set.py"
+      - "tools/stability/ou3_p4_closure_domain.json"
+      - ".github/workflows/ou3-p4-finite-angle-vector-chord.yml"
+  pull_request:
+    paths: *paths
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  chord:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with: {persist-credentials: false}
+      - name: Build finite-angle chord sector
+        run: |
+          python3 tools/stability/ou3_p4_finite_angle_vector_chord.py --output /tmp/ou3-p4-finite-angle-vector-chord.json
+          python3 - <<'PY'
+          import json,math
+          d=json.load(open('/tmp/ou3-p4-finite-angle-vector-chord.json'))
+          assert d['validation_pass'],d['validation_failures']
+          assert d['valid_for_every_vector_m']
+          assert d['valid_for_every_c_in_full_declared_entry_ball']
+          assert abs(d['full_declared_entry_angle_deg']-45.0)<1e-12
+          assert d['finite_angle_linear_information_retention_factor_lower']>0.8535
+          assert not d['pure_vector_orientation_residual_standalone_eta_budget_required']
+          assert not d['P4_PASS']
+          print('FINITE_ANGLE_CHORD_FACTOR',d['finite_angle_linear_information_retention_factor_lower'])
+          PY
+      - uses: actions/upload-artifact@v6
+        with:
+          name: ou3-p4-finite-angle-vector-chord
+          path: /tmp/ou3-p4-finite-angle-vector-chord.json
+          retention-days: 7
