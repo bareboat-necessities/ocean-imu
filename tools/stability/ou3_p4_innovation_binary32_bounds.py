@@ -1,8 +1,12 @@
 #!/usr/bin/env python3
 """Source-uniform innovation magnitude and hand-written KSK roundoff bounds.
 
-For each shipping 3-vector measurement, S=H P H^T+R is SPD.  The moving
-Riccati tube gives a diagonal Pbar ceiling, hence lambda_max(P)<=trace(Pbar).
+For each shipping 3-vector measurement, S=H P H^T+R is SPD.  The canonical
+endpoint-referenced factored Riccati covariance envelope gives a diagonal Pbar
+ceiling, hence lambda_max(P)<=trace(Pbar).  This producer consumes only that
+rigorous covariance-magnitude contract; the abandoned scalar moving-Riccati
+relative-contraction margin is not an arithmetic premise.
+
 Using the literal H block structure gives
 
   S-zero: ||H||_2^2 = 1,
@@ -18,14 +22,14 @@ The shipping Joseph loop forms K S K^T with nine scalar triple products.  An
 absolute binary32 error bound follows from the source-uniform scalar K ceiling,
 |S_ab|<=lambda_max(S), and an overcounted separate multiply/add model.  FMA
 contraction can only reduce that rounding count.  These bounds are arithmetic
-magnitude enclosures only; they do not compose independent K/S boxes as a word.
+magnitude enclosures only; they do not compose independent K/S boxes as a word
+or supply a reset correction domain.
 """
 from __future__ import annotations
 import argparse,json,math
 from pathlib import Path
 
-import ou3_brmm_riccati_tube as TUBE
-import ou3_brmm_riccati_tube_smallx_scaled as FASTTUBE
+import ou3_brmm_riccati_tube_factored as TUBE
 import ou3_brmm_dynamic_source_certificate as DYNAMIC
 import ou3_p4_rowwise_coefficient_enclosure_fast as COEFF
 
@@ -37,12 +41,11 @@ def gamma(k):
     return up((k*U)/(1-k*U))
 
 def build():
-    tube=FASTTUBE.build_base(); dyn=DYNAMIC.build(); coeff=COEFF.build()
-    bad={'tube':TUBE.validate(tube),'dynamic':DYNAMIC.validate(dyn),'coeff':COEFF.validate(coeff)}
+    tube=TUBE.build(); dyn=DYNAMIC.build(); coeff=COEFF.build()
+    bad={'endpoint_covariance_envelope':TUBE.validate_covariance_ceiling(tube),'dynamic':DYNAMIC.validate(dyn),'coeff':COEFF.validate(coeff)}
     bad={k:v for k,v in bad.items() if v}
     if bad:raise RuntimeError('innovation prerequisites failed: '+repr(bad))
-    domain=json.loads(TUBE.DEFAULT_DOMAIN.read_text())
-    live=domain['normal_live']; fmax=float(live['specific_force_norm_upper_mps2']);mmax=float(live['magnetic_vector_norm_upper_uT'])
+    domain=json.loads(TUBE.DEFAULT_DOMAIN.read_text());live=domain['normal_live']; fmax=float(live['specific_force_norm_upper_mps2']);mmax=float(live['magnetic_vector_norm_upper_uT'])
     rslo,rshi=map(float,dyn['dynamic_invariant']['R_S_applied'])
     # Runtime configured vector measurement variances on this proof branch.
     r={'accelerometer':(0.2**2,0.2**2),'magnetometer':(0.3**2,0.3**2),
@@ -73,18 +76,21 @@ def build():
               'KSK_roundoff_closed':math.isfinite(rnd)}
         modes[mode]={'Pbar_trace_upper':ptrace,'events':events,
           'all_event_innovation_and_KSK_bounds_closed':all(x['KSK_roundoff_closed'] for x in events.values())}
-    return {'qualification':'OU3_P4_INNOVATION_AND_KSK_BINARY32_BOUNDS_V1','runtime_scalar_format':'IEEE754_binary32','unit_roundoff':U,
+    return {'qualification':'OU3_P4_INNOVATION_AND_KSK_BINARY32_BOUNDS_V2','runtime_scalar_format':'IEEE754_binary32','unit_roundoff':U,
+      'canonical_endpoint_referenced_covariance_envelope_consumed':True,
+      'failed_moving_Riccati_relative_margin_consumed':False,
       'same_source_R_S_range_consumed':True,'actual_RS_horizontal_factor':0.72,'actual_RS_vertical_factor':1.0,
       'PSD_innovation_entry_bound_from_lambda_max':True,'FMA_safe_by_rounding_overcount':True,
-      'independent_K_S_word_boxes_used':False,'modes':modes,
+      'independent_K_S_word_boxes_used':False,'rowwise_K_reset_domain_used':False,'modes':modes,
       'all_innovation_magnitude_bounds_closed':all(m['all_event_innovation_and_KSK_bounds_closed'] for m in modes.values()),
       'Eigen_LDLT_solve_closed_here':False,'full_P4_finite_precision_closed_here':False}
 
 def validate(d):
     f=[]
-    for k in ('same_source_R_S_range_consumed','PSD_innovation_entry_bound_from_lambda_max','FMA_safe_by_rounding_overcount','all_innovation_magnitude_bounds_closed'):
+    if d.get('qualification')!='OU3_P4_INNOVATION_AND_KSK_BINARY32_BOUNDS_V2':f.append('qualification mismatch')
+    for k in ('canonical_endpoint_referenced_covariance_envelope_consumed','same_source_R_S_range_consumed','PSD_innovation_entry_bound_from_lambda_max','FMA_safe_by_rounding_overcount','all_innovation_magnitude_bounds_closed'):
         if d.get(k) is not True:f.append(k+' not true')
-    for k in ('independent_K_S_word_boxes_used','Eigen_LDLT_solve_closed_here','full_P4_finite_precision_closed_here'):
+    for k in ('failed_moving_Riccati_relative_margin_consumed','independent_K_S_word_boxes_used','rowwise_K_reset_domain_used','Eigen_LDLT_solve_closed_here','full_P4_finite_precision_closed_here'):
         if d.get(k) is not False:f.append(k+' not false')
     if float(d.get('actual_RS_horizontal_factor',0))!=0.72 or float(d.get('actual_RS_vertical_factor',0))!=1.0:f.append('RS anisotropy changed')
     for mode,m in d.get('modes',{}).items():
