@@ -121,7 +121,16 @@ defaults pass, and fresh failing records decrease from 28 to 24, with a 4.6%
 mean pitch tradeoff. The moment averaging remains four periods / 35 s;
 increasing it alone failed to improve low-wave accuracy. OU-III's two
 high-sea Z-bias gates and NLO's low-wave PM-Stokes vertical gate remain
-unresolved. No performance gate or canonical proof premise is changed.
+unresolved. `reports/results/rao_parameter_tuning/ou3_acc_z_bias/study.md`
+screens the coefficients that move the OU-III metric: only the accelerometer
+bias prior, its correlation time and its per-axis driving noise do, and the
+one screened profile that clears all eight default-seed gates changes the
+scored quantity by -0.4% over eight fresh paired seeds while costing 1.1% of
+low-wave vertical accuracy. Over those seeds the committed profile itself
+scores between 2.51% and 14.58% on the two failing records, so the 4.3% bar,
+cut from one realization, is violated on 22 of 64 fresh cells before and after
+every screened profile. No performance gate, deployed coefficient or canonical
+proof premise is changed.
 
 The prior travel reference `azimuth + 180` fails on all four JONSWAP
 RAO records by 166--174 degrees. This is a source-convention implementation
