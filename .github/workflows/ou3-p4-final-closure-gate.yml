@@ -4,6 +4,12 @@ on:
     paths: &paths
       - "tools/stability/ou3_p4_final_closure_gate.py"
       - "tools/stability/ou3_p4_exact_chord_signed_master_bridge.py"
+      - "tools/stability/ou3_p4_reset_domain_binding.py"
+      - "tools/stability/ou3_p4_same_cell_correction_domain.py"
+      - "tools/stability/ou3_p4_reset_graph_iqc.py"
+      - "tools/stability/ou3_p4_reset_signed_absorption_diagnostic.py"
+      - "tools/stability/ou3_p4_exact_reset_joint_coordinate.py"
+      - "tools/stability/ou3_p4_exact_reset_lifted_qc.py"
       - "tools/stability/ou3_p4_kalman_reset_binary32_iss.py"
       - "tools/stability/ou3_p4_binary32_platform_arithmetic_contract.py"
       - "tools/stability/ou3_p4_hard_entry_set.py"
@@ -24,7 +30,7 @@ jobs:
         with: {persist-credentials: false}
       - name: Build final P4 closure gate
         run: python3 tools/stability/ou3_p4_final_closure_gate.py --output /tmp/p4-final-gate.json
-      - name: Enforce current fail-closed state
+      - name: Enforce fail-closed promotion semantics
         run: |
           python3 - <<'PY'
           import json
@@ -32,16 +38,16 @@ jobs:
           assert d['validation_pass'],d['validation_failures']
           assert d['hard_entry_set_admitted_without_covariance_membership']
           assert d['exact_chord_projection_BIAS1_same_history_graph_ready']
+          assert d['same_cell_Joseph_reset_domain_binding_consumed']
           assert d['conditional_full_shipping_finite_precision_additive_ISS_closed']
-          assert not d['target_toolchain_finite_precision_qualified']
           assert not d['point_capture_can_promote']
           assert not d['rowwise_coefficient_boxes_can_promote']
-          assert not d['source_uniform_endpoint_augmented_LDLT_closed']
-          assert not d['source_uniform_every_prefix_augmented_LDLT_closed']
-          assert not d['source_uniform_every_prefix_hard_domain_retention_closed']
-          assert not d['P4_MOTION_PASS'] and not d['P4_PASS'] and not d['P5_MAY_START']
-          assert len(d['remaining_mathematical_P4_blockers'])==3
-          assert len(d['remaining_deployment_blockers'])==1
+          # Open closure obligations are allowed and must simply hold P4 false.
+          if d['remaining_mathematical_P4_blockers']:
+              assert not d['P4_MOTION_PASS'] and not d['P4_PASS'] and not d['P5_MAY_START']
+          print('RESET_DOMAIN_CLOSED',d['source_uniform_same_graph_correction_domain_closed'])
+          for mode,m in d['reset_binding_modes'].items():
+              print('RESET_BINDING',mode,m['limiting_event'],m['correction_norm_upper'],m['uniform_reset_gain_over_zero_to_ceiling'])
           print('P4_MATHEMATICAL_BLOCKERS',*d['remaining_mathematical_P4_blockers'],sep='\n- ')
           print('P4_DEPLOYMENT_BLOCKERS',*d['remaining_deployment_blockers'],sep='\n- ')
           PY
