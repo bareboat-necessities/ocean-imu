@@ -7,10 +7,13 @@ on:
       - "tools/stability/ou3_p4_complete_brmm_exact_chord_iqc.py"
       - "tools/stability/ou3_p4_complete_brmm_signed_information_ledger.py"
       - "tools/stability/ou3_p4_complete_brmm_joint_sector_master.py"
+      - "tools/stability/ou3_p4_joint_iss_augmented_master.py"
       - "tools/stability/ou3_p4_bias1_family.py"
+      - "tools/stability/ou3_p4_bias1_joint_iss_supply.py"
       - "tools/stability/ou3_p4_projection_sector.py"
-      - "tools/stability/ou3_p4_rowwise_coefficient_enclosure.py"
-      - "tools/stability/ou3_brmm_riccati_tube.py"
+      - "tools/stability/ou3_p4_rowwise_coefficient_enclosure_fast.py"
+      - "tools/stability/ou3_p4_finite_angle_h18_universal.py"
+      - "tools/stability/ou3_p4_finite_angle_a21_universal.py"
       - ".github/workflows/ou3-p4-exact-chord-signed-master.yml"
   pull_request:
     paths: *paths
@@ -32,17 +35,23 @@ jobs:
           import json
           d=json.load(open('/tmp/bridge.json'))
           assert d['validation_pass'],d['validation_failures']
+          assert d['same_canonical_source_across_chord_signed_master']
+          assert d['universal_full_entry_finite_angle_differential_backbone_closed']
           assert d['exact_chord_graph_ready_for_augmented_master']
+          assert d['joint_ISS_master_ready_for_BIAS1_and_roundoff']
           assert d['physical_BIAS1_projection_and_coefficient_prerequisites_ready']
           assert d['joseph_favorable_q_u_cross_term_retained']
           assert d['mixed_c_cross_aw_retained_as_explicit_coordinate']
           assert d['finite_reset_cross_and_defect_terms_retained']
           assert d['actual_same_history_K_required_not_independent_row_box']
           assert not d['packet_count_multiplier_used'] and not d['standalone_eta_Rinv_budget_used']
-          assert not d['endpoint_augmented_LDLT_closed']
-          assert not d['every_literal_prefix_augmented_LDLT_closed']
+          assert not d['source_uniform_exact_graph_endpoint_augmented_LDLT_closed']
+          assert not d['source_uniform_exact_graph_every_prefix_augmented_LDLT_closed']
+          assert not d['same_graph_every_prefix_hard_domain_retention_closed']
           assert not d['P4_MOTION_PASS'] and not d['P4_PASS']
-          print('EXACT_CHORD_SIGNED_MASTER_READY',d['full_declared_entry_information_retention_lower'])
+          print('EXACT_CHORD_SIGNED_MASTER_READY',d['full_declared_entry_chord_information_retention_lower'])
+          print('H18_PIVOT',d['universal_H18_worst_LDLT_pivot_lower'])
+          print('A21_BA_MARGIN',d['universal_A21_first_active_ba_margin_lower'])
           print('NEXT',d['next_obligation'])
           PY
       - uses: actions/upload-artifact@v6
