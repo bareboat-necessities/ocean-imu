@@ -15,10 +15,9 @@ proof must retain the dense same-history S/K direction in the augmented master.
 A positive factor is a valid source-uniform lower that can be fed back into the
 universal information composition.
 
-The covariance ceiling is taken from the canonical factored, endpoint-referenced
-Riccati tube. The older small-x adapter could fail numerically at the x=0.01
-branch boundary after recursive subdivision; that arithmetic artifact is not a
-signed-Joseph result and is not used here.
+The covariance ceiling is taken from the canonical factored endpoint-referenced
+covariance envelope.  The independent moving-Riccati scalar contraction margin
+is not consumed by this magnitude-only diagnostic.
 """
 from __future__ import annotations
 import argparse,json,math
@@ -31,8 +30,8 @@ def up(x):return math.nextafter(float(x),math.inf)
 def down(x):return math.nextafter(float(x),-math.inf)
 
 def build():
-    t=TUBE.build();tv=TUBE.validate(t);c=CHORD.build();vf=CHORD.validate(c)
-    if tv:raise RuntimeError('factored Riccati tube invalid: '+repr(tv))
+    t=TUBE.build();tv=TUBE.validate_covariance_ceiling(t);c=CHORD.build();vf=CHORD.validate(c)
+    if tv:raise RuntimeError('endpoint covariance envelope invalid: '+repr(tv))
     if vf:raise RuntimeError('chord invalid: '+repr(vf))
     k=float(c['information_retention_factor_lower_full_entry'])
     # Config/runtime vector bounds.
@@ -51,18 +50,19 @@ def build():
             events[ev]={'HPHt_lambda_max_upper_relevant_subspace':hph,'normalized_A_norm_squared_upper':a2,
               'signed_chord_information_factor_lower':factor,'nonnegative':factor>=0}
         modes[mode]={'attitude_Pii_max':patt,'aw_trace_upper':paw,'ba_trace_upper':pba,'events':events}
-    return {'qualification':'OU3_P4_EXACT_CHORD_SIGNED_JOSEPH_RELEVANT_SUBSPACE_V2','canonical_source':'COMPLETE_BRMM_NORMAL_LIVE_WORD',
-      'canonical_factored_endpoint_referenced_Riccati_tube_used':True,'smallx_recursive_tube_used':False,
+    return {'qualification':'OU3_P4_EXACT_CHORD_SIGNED_JOSEPH_RELEVANT_SUBSPACE_V3','canonical_source':'COMPLETE_BRMM_NORMAL_LIVE_WORD',
+      'canonical_endpoint_referenced_covariance_envelope_used':True,'failed_moving_Riccati_relative_margin_consumed':False,
+      'moving_Riccati_tube_pass_claimed':False,'smallx_recursive_tube_used':False,
       'full_entry_chord_k_lower':k,'whole_state_Ptrace_not_used':True,'relevant_H_subspace_only':True,
       'dense_same_history_master_still_preferred_if_negative':True,'modes':modes,
       'all_event_scalar_factors_nonnegative':all(e['nonnegative'] for m in modes.values() for e in m['events'].values()),
       'P4_promoted_here':False}
 def validate(d):
     f=[]
-    if d.get('qualification')!='OU3_P4_EXACT_CHORD_SIGNED_JOSEPH_RELEVANT_SUBSPACE_V2':f.append('qualification mismatch')
-    for k in ('canonical_factored_endpoint_referenced_Riccati_tube_used','whole_state_Ptrace_not_used','relevant_H_subspace_only','dense_same_history_master_still_preferred_if_negative'):
+    if d.get('qualification')!='OU3_P4_EXACT_CHORD_SIGNED_JOSEPH_RELEVANT_SUBSPACE_V3':f.append('qualification mismatch')
+    for k in ('canonical_endpoint_referenced_covariance_envelope_used','whole_state_Ptrace_not_used','relevant_H_subspace_only','dense_same_history_master_still_preferred_if_negative'):
         if d.get(k) is not True:f.append(k+' not true')
-    for k in ('smallx_recursive_tube_used','P4_promoted_here'):
+    for k in ('failed_moving_Riccati_relative_margin_consumed','moving_Riccati_tube_pass_claimed','smallx_recursive_tube_used','P4_promoted_here'):
         if d.get(k) is not False:f.append(k+' not false')
     for mode,m in d['modes'].items():
         for ev,e in m['events'].items():
