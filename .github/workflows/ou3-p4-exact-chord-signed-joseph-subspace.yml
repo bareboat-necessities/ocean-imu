@@ -1,0 +1,38 @@
+name: ou3-p4-exact-chord-signed-joseph-subspace
+on:
+  push:
+    paths: &paths
+      - "tools/stability/ou3_p4_exact_chord_signed_joseph_subspace.py"
+      - "tools/stability/ou3_brmm_riccati_tube_smallx_scaled.py"
+      - "tools/stability/ou3_p4_complete_brmm_exact_chord_joint_coordinate.py"
+      - ".github/workflows/ou3-p4-exact-chord-signed-joseph-subspace.yml"
+  pull_request:
+    paths: *paths
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  diagnostic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with: {persist-credentials: false}
+      - name: Build relevant-subspace signed Joseph diagnostic
+        run: python3 tools/stability/ou3_p4_exact_chord_signed_joseph_subspace.py --output /tmp/chord-joseph.json
+      - name: Report factors without promotion
+        run: |
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/chord-joseph.json'))
+          assert d['validation_pass'],d['validation_failures']
+          assert not d['P4_promoted_here']
+          for mode,m in d['modes'].items():
+            for ev,e in m['events'].items(): print('CHORD_JOSEPH',mode,ev,e['normalized_A_norm_squared_upper'],e['signed_chord_information_factor_lower'])
+          print('ALL_NONNEGATIVE',d['all_event_scalar_factors_nonnegative'])
+          PY
+      - uses: actions/upload-artifact@v6
+        with:
+          name: ou3-p4-exact-chord-signed-joseph-subspace
+          path: /tmp/chord-joseph.json
+          retention-days: 7
