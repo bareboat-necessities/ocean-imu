@@ -6,7 +6,7 @@
     ".prefixes.jsonl": "2a184f24637abdab8026a8da7f75c68857e3993bc42b769c0d19f924cb2bb444",
     ".events.jsonl": "bda02dfe732318c6e6ab6cb8394303e5b91577a6c73b7e9b6695eaefddf05216"
   },
-  "producer_sha256": "7b6717fa331d47eafd7c76cf4776e4386f35cd3da0cb44b3cc01305cae3edb71",
+  "producer_sha256": "bc43207b15eece973b643c09c1ae416c9d3797c3f244bcc7076aa27b79683878",
   "frozen_coefficients_only": true,
   "same_history_forcing_preserved": true,
   "operating_domain_reduced": false,
@@ -633,6 +633,24 @@
           "frozen_capture_not_a_uniform_certificate": true,
           "P4_PASS": false
         }
+      },
+      "cascade_structure": {
+        "exact_cascade": true,
+        "per_step_bias_from_motion_defect": 0.0,
+        "endpoint_bias_from_motion_norm": 0.0,
+        "motion_spectral_radius": 0.997663960670924,
+        "motion_euclidean_norm": 32.756565844760246,
+        "motion_non_normality": 32.83326564460805,
+        "motion_weighted_norm": 0.9976639606709244,
+        "bias_spectral_radius": 1.0,
+        "bias_euclidean_norm": 1.0,
+        "bias_to_motion_weighted_gain": 12.051133892359623,
+        "bias_ball": 0.4,
+        "cascade_iss_applies": true,
+        "P4_PASS": false,
+        "forcing_weighted_norm": 2.23565151879749,
+        "iss_gain": 428.0749846774759,
+        "iss_limit": 3020.542072180634
       }
     },
     "A21": {
@@ -1254,6 +1272,24 @@
           "frozen_capture_not_a_uniform_certificate": true,
           "P4_PASS": false
         }
+      },
+      "cascade_structure": {
+        "exact_cascade": false,
+        "per_step_bias_from_motion_defect": 0.0021711419797608993,
+        "endpoint_bias_from_motion_norm": 0.27596503167510156,
+        "motion_spectral_radius": 0.960813213986115,
+        "motion_euclidean_norm": 81.60690124751146,
+        "motion_non_normality": 84.93524033557972,
+        "motion_weighted_norm": 0.9608132139861177,
+        "bias_spectral_radius": 0.9987275558050489,
+        "bias_euclidean_norm": 0.9987288967575726,
+        "bias_to_motion_weighted_gain": 125.37883248108277,
+        "bias_ball": 0.4,
+        "cascade_iss_applies": false,
+        "P4_PASS": false,
+        "forcing_weighted_norm": 1.4783912783093183,
+        "iss_gain": 25.518806253866835,
+        "iss_limit": 1317.534034366893
       }
     }
   }
