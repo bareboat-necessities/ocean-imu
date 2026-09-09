@@ -37,6 +37,7 @@ correction radius and does not promote P4 by itself.
 """
 from __future__ import annotations
 import argparse,json,math
+from fractions import Fraction
 from pathlib import Path
 from typing import Sequence
 
@@ -115,20 +116,20 @@ def hard_entry_iqcs(mode:str,n:int,h_index:int=0,state_offset:int=1):
 def build():
     e=ENTRY.build();b=BIAS1.build();bad={'entry':ENTRY.validate(e),'bias1':BIAS1.validate(b)};bad={k:v for k,v in bad.items() if v}
     if bad:raise RuntimeError('affine hard-tube prerequisites failed: '+repr(bad))
-    # Smoke coordinate [h,x0,x1,x2].  Premise ||x||<=2h implies target
-    # ||0.4x||<=0.9h strictly: T-0.16 Pi leaves (0.81-0.64)h^2 >0 but
-    # zero x pivots. Add a second, deliberately stronger target map involving h
-    # to exercise a genuinely strict 4x4 LDLT without changing production API.
+    # Smoke coordinate [h,x0,x1,x2]. Premise ||x||<=2h implies target
+    # ||0.4x||<=0.9h with multiplier 0.16. The exact remainder is
+    # diag(0.17,0,0,0), so its zero pivots must not be rejected merely because
+    # outward interval rounding straddles zero. Production strict LDLT below is
+    # unchanged and is used only where callers provide strict slack.
     n=4;Pi=ball_iqc(n,0,(1,2,3),2.0)
     D=[[Interval.point(0.0) for _ in range(n)] for _ in range(3)]
     for i in range(3):D[i][1+i]=Interval.point(0.4)
     target=mapped_ball_target(D,0,0.9)
-    # Semidefinite implication is checked analytically by diagonal endpoints;
-    # production strict LDLT is only claimed when callers have strict slack in
-    # all augmented directions.
     rem=sprocedure_remainder(target,[Pi],[0.16])
-    diag=[rem[i][i].lo for i in range(n)];off=max(abs(rem[i][j].lo) for i in range(n) for j in range(n) if i!=j)
-    smoke_semidefinite=min(diag)>=0 and off==0.0
+    interval_consistent=(rem[0][0].lo>0.0 and all(rem[i][i].lo<=0.0<=rem[i][i].hi for i in range(1,n))
+                         and all(rem[i][j].lo<=0.0<=rem[i][j].hi for i in range(n) for j in range(n) if i!=j))
+    lam=Fraction(4,25);h_slack=Fraction(9,10)**2-lam*Fraction(2)**2;x_slack=-Fraction(2,5)**2+lam
+    smoke_semidefinite=bool(h_slack>0 and x_slack==0 and interval_consistent)
     return {
       'qualification':QUALIFICATION,'canonical_source':'COMPLETE_BRMM_NORMAL_LIVE_WORD',
       'lift_coordinate':'z=[h; physical_error; chord/reset/projection/source/roundoff auxiliaries]',
