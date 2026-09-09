@@ -1,0 +1,45 @@
+name: ou3-p4-uniform-enclosure-diagnostic
+
+on:
+  push:
+    paths:
+      - "tools/stability/ou3_p4_uniform_enclosure_diagnostic.py"
+      - "tools/stability/ou3_p4_uniform_closure.py"
+      - "tools/stability/ou3_p4_closure_domain.json"
+      - ".github/workflows/ou3-p4-uniform-enclosure-diagnostic.yml"
+  pull_request:
+    paths:
+      - "tools/stability/ou3_p4_uniform_enclosure_diagnostic.py"
+      - "tools/stability/ou3_p4_uniform_closure.py"
+      - "tools/stability/ou3_p4_closure_domain.json"
+      - ".github/workflows/ou3-p4-uniform-enclosure-diagnostic.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Produce failed-architecture diagnostics
+        run: python3 tools/stability/ou3_p4_uniform_enclosure_diagnostic.py --output /tmp/ou3-p4-uniform-enclosure-diagnostic.json
+      - name: Enforce non-promotion
+        run: |
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/ou3-p4-uniform-enclosure-diagnostic.json'))
+          assert d['non_promoting']
+          assert not d['P4_MOTION_PASS'] and not d['P4_PASS'] and not d['P5_MAY_START']
+          assert d['decision'] == 'ABANDON_THIS_SCALAR_ARCHITECTURE'
+          PY
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: ou3-p4-uniform-enclosure-diagnostic
+          path: /tmp/ou3-p4-uniform-enclosure-diagnostic.json
+          retention-days: 7
