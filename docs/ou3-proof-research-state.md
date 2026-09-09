@@ -58,11 +58,40 @@ remain fixed. The runtime audit verifies passive-trace parity on the selected co
 
 ## Failure analysis and current limiter
 
-The current proof CI failure is an implementation/test-contract defect:
-the article cleanup test's identifier contains the retired source name,
-contradicting the repository-wide naming contract. Renaming that test keeps
-both assertions intact; their combined ten tests pass. This failure does not
-invalidate any matrix inequality. The 17 conditional P3 producer/promotion tests pass.
+The current limiting quantity is no longer the separated bias budget. The
+declared-domain coordinate retention experiment
+(`reports/results/rao_stability/domain-retention.md`) propagates the same
+attached word in the declared physical coordinates instead of a scalar
+storage. With the closed .4 m/s^2 bias ball and the same forcing template as
+the only initial deviation, every motion coordinate is retained: 30-degree
+chart .0703 (H18) and .0041 (A21) of its radius, velocity .1713 / .2382,
+position .0444 / .0844, latent acceleration .1431 / .1397, and the bias ball
+maps into itself to within 4e-4. Route 1's sufficient storages 6.4111 / 2.2693
+are quadratic, so their linear equivalents are 2.532 / 1.506 chart radii, a
+factor 36.0 / 368 above these. Attained and certified bounds agree to within
+.3%, so this is a tight comparison, not a looser enclosure.
+
+Classification: route 1's chart failure is a proof-method (scalarization)
+failure. Charging a bias-driven velocity and displacement excursion to
+attitude through the worst direction of the information metric manufactures
+it. This invalidates treating the separated bias budget as the limiter and
+invalidates any further refinement of that budget. It does not prove P4,
+admit a physical source, change any endpoint or prefix ratio, or establish
+anything uniform over the nonlinear source family.
+
+The new limiter is the declared handoff set itself. Under the complete
+declared product box the same word leaves the domain, limited by velocity at
+35.358 (H18) and 9.357 (A21); the largest box of that shape it retains is
+2.83% / 10.69% of the declared one. The dominant single source is the declared
+300 m*s integral-displacement ball, which alone drives H18 velocity to
+159.7 m/s against 5 m/s and position to 379.3 m against 20 m. That ball is not
+independently reachable: the integral state is the running integral of the
+position state, so 300 m*s with position at most 20 m needs a sustained 20 m
+error for 15 s. Deleting it still leaves velocity at 4.033 / 4.921, with
+position and attitude as the next sources, so a correlated integral/position
+fact is necessary but not sufficient.
+
+The 17 conditional P3 producer/promotion tests pass.
 
 The old claim that startup exclusions alone reconcile surface-reference
 histories with the configured caps failed source admission, not stability.
@@ -206,22 +235,53 @@ No source search, coefficient fitting, changed filter or reduced domain.
    survives point feasibility. This is the corrected finite residual transport,
    not an automatic replacement for the canonical open-loop PE certificate.
 
+## Declared-domain retention result
+
+`reports/results/rao_stability/domain-retention.json` records the fourth
+executed route on the same attached H18/A21 source, produced by
+`tests/kalman_ou_iii/ou3_p4_domain_retention.py`. Each prefix carries a
+certified subadditive upper bound and an attained maximizing functional, so a
+group is retained only when its upper bound stays inside its own declared ball
+and definitely violated only when its attained bound leaves it. Radii come
+from `tools/stability/ou3_proof_operating_domain.json` with the same 30-degree
+Cayley chart route 1 uses. No metric, no scalarization, no fitted radius, no
+reduced domain.
+
+| Reached / declared bound | H18 | A21 |
+|---|---:|---:|
+| Bias ball and template, worst motion group | .1713 | .2382 |
+| Bias ball and template, 30-degree chart | .0703 | .0041 |
+| Full declared box, worst group (velocity) | 35.358 | 9.357 |
+| Full declared box without the integral ball | 4.033 | 4.921 |
+| Largest retained box of the declared shape | 2.83% | 10.69% |
+
 ## Current critic and next falsifiable experiment
 
-The strongest reason to reject promotion is that a forced-response subtraction
-can hide physical output error, while the worst independent initial bias and
-forcing budgets still exceed the chart. Positive information alone also hides
-the signed reset/projection and covariance remainder. None of these point
-calculations establishes a uniform nonlinear matrix inequality or BIAS2 mu.
+The strongest reason to reject promotion is unchanged in kind: every executed
+route is a point diagnostic on one frozen capture, and none establishes a
+uniform nonlinear matrix inequality, a BIAS2 mu, or physical source admission.
+The retention result removes an obstruction rather than supplying a
+certificate. The complete-word endpoint ratios .999572659 / .932948382 and
+prefix maxima 1.003245112 / 1.000001212 are untouched by it, and a prefix
+maximum above one still has to be discharged by retention rather than assumed
+away.
 
-Three distinct remaining architectures are: a joint source/bias reachable set
-that preserves their correlation; a globally bounded particular solution from
-BRMM physical primitives rather than restarting a local response every word;
-or a full signed vector-information enclosure with explicit source admission.
-The quantitative next test is whether joint bias/response geometry can reduce
-the sufficient chart ratios 6.41 / 2.27 below one while retaining the full .4
-ball and both modes. This requires a new correlation fact, not smaller boxes
-around the failed independent budget. The global-response and signed-matrix
-routes remain viable hypotheses; the three executed experiments exhaust neither
-those architectures nor all P4 options. Physical admission, strict uniform P4
-and P5 remain unclosed.
+The critic's own objection to this route is that it replaces one unproved
+premise with another: the declared handoff box was never a reachable set, so
+showing it is not invariant is weak evidence about admissible trajectories.
+That objection is the next experiment. The three remaining architectures are a
+correlated reachable set for the kinematically linked (p, S) and attitude
+coordinates, a globally bounded particular solution from BRMM physical
+primitives instead of a response restarted every word, and a full signed
+vector-information enclosure with explicit source admission.
+
+The quantitative next test is the first of those: whether the exact kinematic
+identity relating the integral state to the position state, applied as a
+correlation constraint on the initial set rather than as a smaller box, brings
+the H18 velocity ratio 35.358 and the A21 ratio 9.357 below one. The integral
+ball alone accounts for 35.358 -> 4.033 (H18) and 9.357 -> 4.921 (A21), so the
+identity is necessary but cannot close either mode by itself; attitude and
+position must supply the remainder. Refining the declared box without such an
+identity is a dead end: it is a smaller box around a set that was already
+shown not to be invariant. Physical admission, strict uniform P4 and P5 remain
+unclosed.

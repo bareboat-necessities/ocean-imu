@@ -1,0 +1,235 @@
+"""Declared-domain coordinate retention of the same attached complete word.
+
+Route 1 of `ou3_p4_storage_routes.py` converts every reachable state into one
+scalar information storage and then converts that scalar back into a 30-degree
+attitude excursion through the worst direction of the metric. That second
+conversion charges the whole bias-driven storage -- which lives in velocity and
+displacement -- to attitude, and is where its sufficient chart bound 6.41 (H18)
+and 2.27 (A21) is manufactured. This experiment deletes the scalarization
+instead of tightening it: the reachable set is propagated in the declared
+physical coordinates and each coordinate group is compared against its own
+declared bound.
+
+The initial set is the product of the declared operating-domain balls in
+`tools/stability/ou3_proof_operating_domain.json`, with attitude at the same
+30-degree Cayley radius route 1 uses, and one common amplitude on the same
+physical forcing template. Nothing here is fitted to a replay, no domain is
+reduced, no filter coefficient changes, and no route is promoted.
+
+For each prefix the report gives both sides of the enclosure: a certified
+upper bound (subadditive over the initial groups) and an attained lower bound
+(a maximizing unit functional). A group is retained only when its upper bound
+stays inside its own declared ball; it is definitely violated only when the
+attained lower bound leaves it. Anything between the two is an enclosure gap,
+not a result.
+"""
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+from pathlib import Path
+
+import numpy as np
+
+import ou3_p4_motion_gain as G
+import ou3_p4_storage_routes as R
+
+REPO = Path(__file__).resolve().parents[2]
+DOMAIN = REPO / "tools/stability/ou3_proof_operating_domain.json"
+
+# The 21 error coordinates in their declared physical groups. Offsets follow
+# Kalman3D_Wave_OU_III: attitude, gyro bias, v, p, S, latent a_w, accel bias.
+GROUPS = (
+    ("attitude", 0, "chart"),
+    ("gyro_bias", 3, "gyro_bias_error_norm_upper_rad_s"),
+    ("velocity", 6, "velocity_error_norm_upper_mps"),
+    ("position", 9, "position_error_norm_upper_m"),
+    ("integral_displacement", 12, "integral_displacement_error_norm_upper_m_s"),
+    ("latent_acceleration", 15, "latent_acceleration_error_norm_upper_mps2"),
+    ("accelerometer_bias", 18, "accelerometer_bias_error_norm_upper_mps2"),
+)
+
+
+def chart_radius(degrees=30.):
+    """Cayley radius of the declared attitude chart, as route 1 uses it."""
+    return 2*np.tan(np.deg2rad(degrees)/2)
+
+
+def declared_radii():
+    bounds = json.loads(DOMAIN.read_text())["startup"]["physical_handoff_coordinate_bounds"]
+    radii = {}
+    for name, _, key in GROUPS:
+        radii[name] = chart_radius() if key == "chart" else float(bounds[key])
+        if not np.isfinite(radii[name]) or radii[name] <= 0:
+            raise ValueError("declared domain radius must be positive and finite: "+name)
+    return radii
+
+
+def attained_lower_bound(blocks, radii, forcing, restarts=24, iterations=400):
+    """max_{|u|=1} sum_H r_H |B_H^T u| + |u.f|, by normalized fixed point.
+
+    The objective is convex, so every fixed point is an attained value of the
+    exact supremum and never overstates it.
+    """
+    rng = np.random.default_rng(20260908)
+    n = len(forcing)
+    best = 0.
+    starts = [forcing.copy()] if np.linalg.norm(forcing) > 0 else []
+    starts += [np.linalg.svd(b)[0][:, 0] for b in blocks.values()]
+    starts += [rng.normal(size=n) for _ in range(restarts)]
+    for start in starts:
+        u = np.asarray(start, dtype=float)
+        if np.linalg.norm(u) == 0:
+            continue
+        u /= np.linalg.norm(u)
+        for _ in range(iterations):
+            gradient = np.zeros(n)
+            for name, block in blocks.items():
+                projected = block.T @ u
+                norm = np.linalg.norm(projected)
+                if norm > 0:
+                    gradient += radii[name]*(block @ projected)/norm
+            gradient += forcing*np.sign(u @ forcing or 1.)
+            norm = np.linalg.norm(gradient)
+            if norm == 0:
+                break
+            candidate = gradient/norm
+            if np.linalg.norm(candidate-u) < 1e-14:
+                u = candidate
+                break
+            u = candidate
+        value = sum(radii[name]*np.linalg.norm(block.T @ u) for name, block in blocks.items())
+        best = max(best, value + abs(u @ forcing))
+    return float(best)
+
+
+def source_contributions(blocks, radii, forcing):
+    """Per-source share of the subadditive bound, in the output group's unit."""
+    shares = {name: radii[name]*float(np.linalg.norm(block, 2))
+              for name, block in blocks.items()}
+    shares["forcing_template"] = float(np.linalg.norm(forcing))
+    return shares
+
+
+def certified_upper_bound(blocks, radii, forcing):
+    """Subadditive over the independent declared balls; never understates."""
+    return float(sum(source_contributions(blocks, radii, forcing).values()))
+
+
+def retention(transitions, responses, radii, keep=None):
+    """Per-group retention of the declared domain at every prefix.
+
+    The subadditive bound is evaluated at every prefix; the attained
+    functional, which is the expensive half, is evaluated at the prefix that
+    bound selects, so both numbers describe the same prefix.
+    """
+    active = {name: (radii[name] if keep is None or name in keep else 0.)
+              for name, _, _ in GROUPS}
+    worst = {}
+    for index, (transition, response) in enumerate(zip(transitions, responses, strict=True)):
+        for name, offset, _ in GROUPS:
+            rows = slice(offset, offset+3)
+            blocks = {source: transition[rows, slice(start, start+3)]
+                      for source, start, _ in GROUPS if active[source] > 0}
+            upper = certified_upper_bound(blocks, active, response[rows])
+            if name not in worst or upper > worst[name]["certified_upper_bound"]:
+                worst[name] = {"prefix_index": index, "declared_radius": radii[name],
+                               "certified_upper_bound": upper,
+                               "certified_retention_ratio": upper/radii[name],
+                               "source_contributions": source_contributions(
+                                   blocks, active, response[rows]),
+                               "blocks": blocks, "forcing": response[rows].copy()}
+    for name, item in worst.items():
+        lower = attained_lower_bound(item.pop("blocks"), active, item.pop("forcing"))
+        if lower > item["certified_upper_bound"]*(1+1e-9):
+            raise ValueError("attained bound exceeded its certified enclosure: "+name)
+        item["attained_lower_bound"] = lower
+        item["attained_retention_ratio"] = lower/item["declared_radius"]
+        item["dominant_source"] = max(item["source_contributions"],
+                                      key=item["source_contributions"].get)
+    return worst
+
+
+def audit_mode(root, rows, points, mode):
+    steps, _, _, defects, counts = G.build_word(root, rows, points, mode)
+    if defects.failures:
+        raise ValueError("finite factorization failed: "+repr(defects.failures[:1]))
+    events = [r for r in rows if r["word"] == mode]
+    transitions, responses, _, _ = R.compose(steps, events)
+    radii = declared_radii()
+    names = [name for name, _, _ in GROUPS]
+    subsets = {
+        # The declared product box exactly as written.
+        "full_declared_initial_set": None,
+        # Route 1's budget in these coordinates: bias ball plus the template.
+        "bias_ball_and_template_only": {"accelerometer_bias"},
+        # Diagnostic only. It reports how much of the failure the declared
+        # 300 m*s integral ball carries; it does not reduce any domain.
+        "declared_set_without_integral_displacement_ball":
+            {n for n in names if n != "integral_displacement"},
+    }
+    result = {"counts": dict(counts),
+              "declared_radii": radii,
+              "declared_domain_sha256": hashlib.sha256(DOMAIN.read_bytes()).hexdigest(),
+              "scalarized_storage_conversion_used": False,
+              "operating_domain_reduced": False,
+              "P4_PASS": False}
+    for label, keep in subsets.items():
+        result[label] = retention(transitions, responses, radii, keep=keep)
+    full = result["full_declared_initial_set"]
+    limiting = max(full, key=lambda k: full[k]["certified_retention_ratio"])
+    ratio = full[limiting]["certified_retention_ratio"]
+    result.update({
+        "limiting_group": limiting,
+        "limiting_certified_retention_ratio": ratio,
+        # Every bound is positively homogeneous in the declared radii and the
+        # template amplitude, so one similarity factor scales them all.
+        "largest_retained_similar_box_fraction": 1./ratio,
+        "declared_domain_retained": all(
+            item["certified_retention_ratio"] <= 1. for item in full.values()),
+        "definitely_violated_groups": sorted(
+            name for name, item in full.items() if item["attained_retention_ratio"] > 1.)})
+    return result
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--prefix", type=Path, required=True)
+    parser.add_argument("--attachment", type=Path, required=True)
+    parser.add_argument("--output", type=Path, required=True)
+    args = parser.parse_args()
+    attachment = json.loads(args.attachment.read_text())
+    paths = {suffix: Path(str(args.prefix)+suffix) for suffix in
+             (".root.json", ".inputs.csv", ".prefixes.jsonl", ".events.jsonl")}
+    hashes = {suffix: hashlib.sha256(path.read_bytes()).hexdigest() for suffix, path in paths.items()}
+    if not attachment["read_only_trace_recovers_baseline_bit_for_bit"]:
+        raise ValueError("passive source trace parity is required")
+    if hashes[".events.jsonl"] != attachment["event_trace_sha256"]:
+        raise ValueError("detached event trace")
+    if any(hashes[k] != attachment["baseline_capture_sha256"][k] for k in
+           (".root.json", ".inputs.csv", ".prefixes.jsonl")):
+        raise ValueError("detached source/root/prefix")
+    rows = [json.loads(line) for line in paths[".events.jsonl"].read_text().splitlines()]
+    points = [json.loads(line) for line in paths[".prefixes.jsonl"].read_text().splitlines()]
+    root = json.loads(paths[".root.json"].read_text())
+    report = {"experiment": "DECLARED_DOMAIN_COORDINATE_RETENTION",
+              "capture_sha256": hashes,
+              "producer_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+              "frozen_coefficients_only": True, "same_history_forcing_preserved": True,
+              "operating_domain_reduced": False, "replay_fitted_radius": False,
+              "physical_source_admission_pass": False,
+              "P4_PASS": False, "P5_MAY_START": False, "modes": {}}
+    for mode in ("H18", "A21"):
+        if attachment["modes"][mode]["decision"] != "CONNECTED_POINT_ATTACHMENT_PASS":
+            raise ValueError("unattached word: "+mode)
+        report["modes"][mode] = audit_mode(root, rows, points, mode)
+        print("DOMAIN_RETENTION", mode,
+              report["modes"][mode]["limiting_group"],
+              report["modes"][mode]["limiting_certified_retention_ratio"], flush=True)
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    args.output.write_text(json.dumps(report, indent=2, allow_nan=False)+"\n")
+
+
+if __name__ == "__main__":
+    main()
