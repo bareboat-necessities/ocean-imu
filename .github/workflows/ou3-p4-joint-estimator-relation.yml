@@ -31,7 +31,7 @@ jobs:
           python-version: '3.12'
       - name: Check proof source syntax
         run: python -m compileall -q tools/stability
-      - name: Execute same-signal estimator, event master, and lineage relation
+      - name: Execute same-signal estimator, event master, reset binding, and lineage relation
         run: |
           set -euo pipefail
           mkdir -p /tmp/ou3-p4-relation-evidence
@@ -44,6 +44,7 @@ jobs:
           python tools/stability/ou3_p4_complete_brmm_universal_target_relation.py --output /tmp/ou3-p4-relation-evidence/target-relation.json
           python tools/stability/ou3_p4_complete_brmm_source_cover_contract.py --output /tmp/ou3-p4-relation-evidence/source-cover-contract.json
           python tools/stability/ou3_p4_brmm_reduced_event_master.py --output /tmp/ou3-p4-relation-evidence/reduced-event-master.json
+          python tools/stability/ou3_p4_brmm_same_Dtheta_reset_binding.py --output /tmp/ou3-p4-relation-evidence/same-Dtheta-reset-binding.json
           python tools/stability/ou3_p4_brmm_event_lineage_cover.py --output /tmp/ou3-p4-relation-evidence/event-lineage-cover.json
           python - <<'PY'
           import json
@@ -56,8 +57,9 @@ jobs:
           u=json.load(open(root+'target-relation.json'))
           c=json.load(open(root+'source-cover-contract.json'))
           m=json.load(open(root+'reduced-event-master.json'))
+          r=json.load(open(root+'same-Dtheta-reset-binding.json'))
           l=json.load(open(root+'event-lineage-cover.json'))
-          for name,obj in [('joint',j),('stats',q),('stillness',s),('tuner',t),('brmm',b),('target',u),('cover',c),('event-master',m),('lineage',l)]:
+          for name,obj in [('joint',j),('stats',q),('stillness',s),('tuner',t),('brmm',b),('target',u),('cover',c),('event-master',m),('reset-binding',r),('lineage',l)]:
               assert obj['validation_pass'], (name,obj.get('validation_failures'))
 
           assert j['same_signal_wave_period_and_band_state_materialized']
@@ -121,7 +123,21 @@ jobs:
           assert not m['independent_d_port_used']
           assert not m['independent_eta_port_used']
           assert not m['full_state_independent_reset_b_port_used']
-          assert not m['production_same_graph_reset_delta_certified_here']
+
+          # The reset radius is now certified by the same-cell KSK^T metric
+          # identity and attached to the exact event Dtheta map.  This is an
+          # event-level prerequisite, not yet a lineage-wide closure claim.
+          assert r['same_estimator_owned_event_Dtheta_is_reset_graph_input']
+          assert r['same_cell_KSK_covariance_identity_is_domain_proof']
+          assert r['source_uniform_covariance_envelope_consumed']
+          assert r['actual_applied_RS_lower_consumed_for_S_zero']
+          assert r['event_specific_delta_bound_attached']
+          assert r['smoke_event_specific_same_Dtheta_reset_domain_closed']
+          assert not r['mode_worst_delta_substituted']
+          assert not r['rowwise_K_correction_domain_used']
+          assert not r['independent_K_box_used']
+          assert not r['production_all_estimator_owned_events_bound_here']
+          assert not r['production_lineage_wide_reset_domain_closed_here']
 
           # Continuous hard-entry radial scale is covered by intervals, not a grid.
           assert l['continuous_radial_coordinate_retained']
@@ -138,10 +154,10 @@ jobs:
           assert not l['synthetic_identity_master_may_promote']
           assert not l['production_same_history_event_master_maps_materialized_here']
 
-          for obj in (j,q,b,m,l):
+          for obj in (j,q,b,m,r,l):
               assert not obj['P4_MOTION_PASS'] and not obj['P4_PASS'] and not obj['P5_MAY_START']
           assert not c['P4_promoted_here']
-          print('SAME_SIGNAL_ESTIMATOR_STRUCTURED_EVENT_MASTER_AND_LINEAGE_PASS')
+          print('SAME_SIGNAL_ESTIMATOR_STRUCTURED_EVENT_MASTER_RESET_BINDING_AND_LINEAGE_PASS')
           PY
       - name: Retain exact PR source and relation evidence
         run: |
