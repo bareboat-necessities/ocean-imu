@@ -34,7 +34,7 @@ import json
 import math
 from pathlib import Path
 
-from ou3_interval import Interval, hull
+from ou3_interval import Interval
 import ou3_brmm_dynamic_source_certificate as DYNAMIC
 import ou3_source_domain_contract as SOURCE
 import ou3_validated_transcendentals as VT
@@ -42,12 +42,13 @@ import ou3_validated_transcendentals as VT
 REPO = Path(__file__).resolve().parents[2]
 WRAPPER = REPO / "src" / "kalman_ou_iii" / "SeaStateFusionFilter_OU_III.h"
 DEFAULT_DOMAIN = REPO / "tools" / "stability" / "ou3_proof_operating_domain.json"
-SCHEMA = 1
-QUALIFICATION = "OU3_P4_COMPLETE_BRMM_ADAPTIVE_BRANCH_TRANSITION_V1"
+SCHEMA = 2
+QUALIFICATION = "OU3_P4_COMPLETE_BRMM_ADAPTIVE_BRANCH_TRANSITION_V2"
 
 
 def I(x: float) -> Interval:
-    return Interval.outward_bounds(float(x), float(x))
+    """Exact represented source/code constant; arithmetic widens downstream."""
+    return Interval.point(float(x))
 
 
 def _finite_interval(x: Interval, *, positive: bool = False) -> bool:
@@ -66,14 +67,17 @@ def _subset(x: Interval, bounds) -> bool:
 def _clamp_interval(x: Interval, lo: float, hi: float) -> Interval:
     if not (math.isfinite(lo) and math.isfinite(hi) and lo <= hi):
         raise ValueError("invalid clamp")
-    return Interval.outward_bounds(max(lo, min(hi, x.lo)), max(lo, min(hi, x.hi)))
+    # clamp() is an exact set map on the already-outward input interval.  Do not
+    # widen beyond the hard shipping clamp itself: doing so would manufacture
+    # values outside the invariant.  All arithmetic that produced x was already
+    # directed outward by Interval operations.
+    return Interval(max(lo, min(hi, x.lo)), max(lo, min(hi, x.hi)))
 
 
 def _alpha_interval(dt: float, horizon: Interval) -> Interval:
     """Outward alpha=1-exp(-dt/T), monotone decreasing in T."""
     if not _finite_interval(horizon, positive=True) or not (math.isfinite(dt) and dt > 0.0):
         raise ValueError("invalid EMA horizon/dt")
-    # x=dt/T is largest at T.lo and smallest at T.hi.
     x = Interval.outward_bounds(dt / horizon.hi, dt / horizon.lo)
     e = VT.exp_interval(-x)
     return Interval.outward_bounds(math.nextafter(1.0 - e.hi, -math.inf),
@@ -118,8 +122,6 @@ def validate_state(s: AdaptiveState, dynamic: dict) -> list[str]:
             failures.append(name+" outside dynamic invariant")
     if not _finite_interval(s.pseudo_elapsed) or s.pseudo_elapsed.lo < 0.0:
         failures.append("pseudo_elapsed invalid")
-    # Elapsed may be slightly above a period immediately before the branch is
-    # resolved, but must remain inside the source-uniform max firing-gap bound.
     gap=float(dynamic["validated_rate_and_jump_bounds"]["active_commit_gap_s_upper"])
     period_hi=float(inv["pseudo_update_period_s"][1])
     if s.pseudo_elapsed.hi > period_hi + gap:
@@ -139,14 +141,15 @@ def target_cell_valid(tau_target: Interval, sigma_target: Interval, rs_target: I
 
 def candidate_step(state: AdaptiveState, tau_target: Interval, sigma_target: Interval,
                    rs_target: Interval, dynamic: dict) -> AdaptiveState:
-    if validate_state(state,dynamic):
-        raise ValueError("invalid adaptive predecessor")
+    predecessor_failures=validate_state(state,dynamic)
+    if predecessor_failures:
+        raise ValueError("invalid adaptive predecessor: "+repr(predecessor_failures))
     if not target_cell_valid(tau_target,sigma_target,rs_target,dynamic):
         raise ValueError("target cell outside source invariant")
     inv=dynamic["dynamic_invariant"]
     dt=float(dynamic["validated_rate_and_jump_bounds"]["dt_s"])
-    ah=_alpha_interval(dt,Interval.outward_bounds(*map(float,inv["common_tau_sigma_horizon_s"])))
-    ar=_alpha_interval(dt,Interval.outward_bounds(*map(float,inv["R_S_horizon_s"])))
+    ah=_alpha_interval(dt,Interval(*map(float,inv["common_tau_sigma_horizon_s"])))
+    ar=_alpha_interval(dt,Interval(*map(float,inv["R_S_horizon_s"])))
     return AdaptiveState(
         tau_candidate=_clamp_interval(ema_image(state.tau_candidate,tau_target,ah),*map(float,inv["tau_applied_s"])),
         sigma_candidate=_clamp_interval(ema_image(state.sigma_candidate,sigma_target,ah),*map(float,inv["sigma_aw_filter_mps2"])),
@@ -173,8 +176,9 @@ def pseudo_period_image(tau_active: Interval) -> Interval:
 
 
 def commit_branch(state: AdaptiveState, commit: bool, dynamic: dict) -> AdaptiveState:
-    if validate_state(state,dynamic):
-        raise ValueError("invalid adaptive predecessor")
+    failures=validate_state(state,dynamic)
+    if failures:
+        raise ValueError("invalid adaptive predecessor: "+repr(failures))
     if not commit:
         return state
     return AdaptiveState(
@@ -190,14 +194,9 @@ def commit_branch(state: AdaptiveState, commit: bool, dynamic: dict) -> Adaptive
 
 
 def scheduler_branches(state: AdaptiveState, dynamic: dict) -> list[tuple[str,AdaptiveState]]:
-    """Return branch-preserving due/not-due successors for one sample.
-
-    If the interval ordering proves the predicate, only one branch is returned.
-    If the cell straddles the deadline, both branches are returned; a theorem
-    cover may then subdivide the source cell rather than forgetting incidence.
-    """
-    if validate_state(state,dynamic):
-        raise ValueError("invalid adaptive predecessor")
+    failures=validate_state(state,dynamic)
+    if failures:
+        raise ValueError("invalid adaptive predecessor: "+repr(failures))
     dt=float(dynamic["validated_rate_and_jump_bounds"]["dt_s"])
     advanced=state.pseudo_elapsed+I(dt)
     definitely_due=advanced.lo >= state.pseudo_period.hi
@@ -222,7 +221,6 @@ def build(domain_path: Path=DEFAULT_DOMAIN) -> dict:
     if failures:
         raise RuntimeError("dynamic source prerequisite failed: "+repr(failures))
     inv=dynamic["dynamic_invariant"]
-    # Interior point smoke exercises each transition without claiming a cover.
     def mid(bounds):
         a,b=map(float,bounds); return I(0.5*(a+b))
     s=AdaptiveState(mid(inv["tau_applied_s"]),mid(inv["sigma_aw_filter_mps2"]),mid(inv["R_S_applied"]),
@@ -232,10 +230,9 @@ def build(domain_path: Path=DEFAULT_DOMAIN) -> dict:
     committed=commit_branch(stepped,True,dynamic)
     branches=scheduler_branches(committed,dynamic)
     smoke=not validate_state(committed,dynamic) and len(branches)>=1
-    # A deliberate deadline-straddling cell must return both branches.
     p=mid(inv["pseudo_update_period_s"]); dt=float(dynamic["validated_rate_and_jump_bounds"]["dt_s"])
     uncertain=AdaptiveState(s.tau_candidate,s.sigma_candidate,s.rs_candidate,s.tau_active,s.sigma_active,s.rs_active,p,
-                            Interval.outward_bounds(max(0.0,p.lo-dt*1.5),p.hi))
+                            Interval(max(0.0,p.lo-dt*1.5),p.hi))
     split=scheduler_branches(uncertain,dynamic)
     branch_split={name for name,_ in split}=={"not_due","due_S_zero"}
     return {
@@ -250,6 +247,8 @@ def build(domain_path: Path=DEFAULT_DOMAIN) -> dict:
         "same_frontend_cell_targets_required":True,
         "independent_per_sample_tuner_boxes_forbidden":True,
         "trajectory_replay_used":False,
+        "exact_structural_zero_not_outward_widened":True,
+        "hard_clamp_does_not_widen_beyond_invariant":True,
         "point_smoke_pass":smoke,
         "physical_frontend_target_transition_materialized_here":False,
         "complete_BRMM_adaptive_cover_closed_here":False,
@@ -260,7 +259,7 @@ def build(domain_path: Path=DEFAULT_DOMAIN) -> dict:
 def validate(d:dict)->list[str]:
     f=[]
     if d.get("schema")!=SCHEMA or d.get("qualification")!=QUALIFICATION:f.append("schema/qualification mismatch")
-    for k in ("dynamic_source_contract_consumed","EMA_candidate_transition_available","staged_commit_transition_available","pseudo_period_is_clamped_committed_tau_image","scheduler_due_not_due_branch_preserved","deadline_straddling_cell_requires_branch_split","same_frontend_cell_targets_required","independent_per_sample_tuner_boxes_forbidden","point_smoke_pass"):
+    for k in ("dynamic_source_contract_consumed","EMA_candidate_transition_available","staged_commit_transition_available","pseudo_period_is_clamped_committed_tau_image","scheduler_due_not_due_branch_preserved","deadline_straddling_cell_requires_branch_split","same_frontend_cell_targets_required","independent_per_sample_tuner_boxes_forbidden","exact_structural_zero_not_outward_widened","hard_clamp_does_not_widen_beyond_invariant","point_smoke_pass"):
         if d.get(k) is not True:f.append(k+" not true")
     for k in ("trajectory_replay_used","physical_frontend_target_transition_materialized_here","complete_BRMM_adaptive_cover_closed_here","P4_promoted_here"):
         if d.get(k) is not False:f.append(k+" not false")
