@@ -1,0 +1,113 @@
+name: ou3-p4-entry-relation-and-classification
+
+on:
+  push:
+    branches: [main]
+    paths: &paths
+      - 'tools/stability/ou3_p4_correlated_entry_relation.py'
+      - 'tools/stability/ou3_p4_blocker_falsification_classification.py'
+      - 'tools/stability/ou3_p4_final_closure_gate.py'
+      - 'tools/stability/ou3_p4_same_cell_correction_domain.py'
+      - 'tools/stability/ou3_p4_hard_entry_set.py'
+      - 'tools/stability/ou3_proof_operating_domain.json'
+      - 'reports/results/rao_stability/entry-block-retention.json'
+      - 'tests/validation/test_ou3_p4_correlated_entry_relation.py'
+      - 'tests/validation/test_ou3_p4_blocker_falsification_classification.py'
+      - '.github/workflows/ou3-p4-entry-relation-and-classification.yml'
+  pull_request:
+    paths: *paths
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ou3-p4-entry-relation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  entry-relation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Build the correlated integral entry relation
+        run: python3 tools/stability/ou3_p4_correlated_entry_relation.py --output /tmp/entry-relation.json
+      - name: Build the A-E blocker falsification classification
+        run: python3 tools/stability/ou3_p4_blocker_falsification_classification.py --output /tmp/blocker-classification.json
+      - name: Enforce fail-closed entry/classification semantics
+        run: |
+          python3 - <<'PY'
+          import json
+          rel=json.load(open('/tmp/entry-relation.json'))
+          cls=json.load(open('/tmp/blocker-classification.json'))
+          assert rel['validation_pass'],rel['validation_failures']
+          assert cls['validation_pass'],cls['validation_failures']
+
+          # The relation may never shrink the declared entry set, replay-fit it,
+          # or borrow a covariance-confidence ellipsoid, and may never be
+          # consumed by the promotion gate while it stays conditional.
+          for k in ('declared_domain_shrunk','entry_radii_reduced_here','trajectory_replay_used',
+                    'covariance_confidence_ellipsoid_used','P5_capture_assumed',
+                    'entry_relation_consumed_by_final_gate','P4_promoted_here'):
+              assert rel[k] is False,k
+          assert rel['error_obeys_same_row_exactly']
+          assert rel['unconditional_entry_anchor_requires_P5_or_reachable_P_SS_lower_bound']
+          # The deployed S=0 regulation is a non-expansion but is not a uniform
+          # anchor; if that ever changes it must be proved, not assumed here.
+          assert rel['S_zero_regulation']['weighted_non_expansion_always_holds']
+          assert rel['S_zero_gives_uniform_anchor_without_dwell'] is False
+          # The declared independent ball must keep failing the chart threshold
+          # while the correlated one-cadence relation meets it.
+          assert rel['declared_radius_meets_chart_threshold'] is False
+          assert rel['one_cadence_relation_meets_chart_threshold'] is True
+
+          # Only class A or a rigorous class B may support unprovability.
+          assert cls['counterexample_class_A_found'] is False
+          assert cls['rigorous_infeasibility_class_B_established'] is False
+          assert cls['P4_unprovable_on_declared_domain_supported'] is False
+          assert cls['frozen_map_diagnostic_promoted_to_lower_bound'] is False
+          assert cls['diagnostic_4p5788_treated_as_counterexample'] is False
+          assert not cls['P4_MOTION_PASS'] and not cls['P4_PASS'] and not cls['P5_MAY_START']
+          fp=cls['finite_precision']
+          assert fp['conditional_mathematical_binary32_additive_ISS_closed']
+          assert fp['missing_toolchain_qualification_is_a_mathematical_P4_blocker'] is False
+          assert fp['host_arithmetic_check_is_deployment_qualification'] is False
+
+          print('DECLARED_INDEPENDENT_INTEGRAL_M_S',rel['declared_independent_integral_radius_m_s'])
+          print('DECLARED_IS_CONSERVATIVE',rel['declared_independent_radius_is_conservative'])
+          print('CORRELATED_ONE_CADENCE_M_S',rel['correlated_radius_one_cadence_m_s'])
+          print('CORRELATED_ONE_WORD_M_S',rel['correlated_radius_one_word_m_s'])
+          print('CHART_THRESHOLD_M_S',rel['chart_retaining_integral_radius_upper_m_s'],
+                'binding',rel['chart_retention_binding_mode'])
+          print('S_ZERO_MU_LOWER',rel['S_zero_regulation']['worst_cell_mu_lower'])
+          print('BLOCKER_CLASSES')
+          for name,row in sorted(cls['blocker_classification'].items()):
+              print(' -',row['class'],name)
+          for mode,row in sorted(cls['correction_domain_attribution'].items()):
+              print('CORRECTION_ATTRIBUTION',mode,
+                    'limiter_declared',row['limiting_event_declared_entry_set'],
+                    'limiter_correlated',row['limiting_event_with_correlated_integral_relation'],
+                    'attitude_trace_excess',row['attitude_trace_excess_factor'])
+          route=cls['magnitude_route_after_transverse_cap']
+          print('TRANSVERSE_CAP_RAD2',cls['prior_independent_transverse_attitude_cap']['transverse_trace_upper_two_axes_rad2'])
+          print('ACC_CEILING_RINV',route['accelerometer_ceiling_with_Rinverse_relaxation'])
+          print('ACC_CEILING_SINV',route['accelerometer_ceiling_retaining_same_cell_Sinverse'])
+          PY
+      - name: Run the producer unit tests
+        run: |
+          python3 -m unittest -v \
+            tests.validation.test_ou3_p4_correlated_entry_relation \
+            tests.validation.test_ou3_p4_blocker_falsification_classification
+      - uses: actions/upload-artifact@v6
+        with:
+          name: ou3-p4-entry-relation-and-classification
+          path: |
+            /tmp/entry-relation.json
+            /tmp/blocker-classification.json
+          retention-days: 7

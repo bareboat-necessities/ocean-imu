@@ -53,11 +53,13 @@ def build():
       and g['physical_BIAS1_projection_and_Joseph_prerequisites_ready'])
 
     # Each bias family is admitted and lifted from its own authoritative module;
-    # none is inferred from another. What separates BIAS1 from BIAS0/BIAS2 here
-    # is the same-history graph: the exact-chord signed master bridge exposes
-    # BIAS1 projection/Joseph prerequisites only, so BIAS0 and BIAS2 still need
-    # their own source-uniform same-history certificates. BIAS2 additionally
-    # needs a uniform separation constant, which is not proved.
+    # none is inferred from another. The exact-chord signed master bridge now
+    # exposes the projection/Joseph prerequisites family-parametrically, so
+    # BIAS0 and BIAS2 discharge them from their own certificates rather than by
+    # inheriting BIAS1's. BIAS2's uniform separation constant stays unproved and
+    # is reported as an optional gain sharpener, not as a blocker, because the
+    # declared objective's bias half comes from the closed radial projection
+    # sector. The per-family closure table below is authoritative.
     family_admission={
       'BIAS0':bool(b0['BIAS0_SOURCE_ADMISSION_PASS']),
       'BIAS1':bool(b['BIAS1_SOURCE_ADMISSION_PASS']),

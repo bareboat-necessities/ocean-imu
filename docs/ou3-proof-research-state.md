@@ -159,15 +159,54 @@ entry radius, and the attitude ball alone reaches 2.9178 velocity radii in A21,
 which is that number. Velocity carries no chart, so absorbing it is a
 declaration, not a lemma.
 
-The integral state is the exact unleaked running integral of position in the
-deployed factors, `S_next=S+dt*p+dt^2/2*v`, so the position/integral
-correlation is hard kinematics rather than a covariance fact. That alone does
-not supply the missing correlated ball: with `e_S(0)=0` at power-on the
-reachable `|e_S|` grows as `20*T_handoff`, and the declared live-entry timing
-floor (`4/lambda` with `lambda=2*pi*.02`, plus one period) puts `T_handoff`
-above 30 s, i.e. above 600 m*s rather than under the declared 300. The ball can
-only be justified from the deployed S=0 regulation during startup, which is
-P5 capture material, not P4.
+### The correlated integral entry relation
+
+`ou3_p4_correlated_entry_relation.py` replaces the independent ball with what
+the deployed recurrence and the deployed S=0 scheduler actually permit. Four
+facts are now materialized and outward.
+
+The deployed translational factor's S row is exactly `(dt^2/2, dt, 1, phi_Sa)`
+with `phi_Sa = int_0^dt (dt-s)^2/2*exp(-s/tau) ds` in `(0, dt^3/6]`, and the
+same factor drives truth and estimate, so the ERROR obeys
+`e_S_next = e_S + dt*e_p + dt^2/2*e_v + phi_Sa*e_aw` with no remainder. The
+S=0 error update is exactly `e_S^+ = (I-K_S) e_S^- - K_S S_true` with
+`K_S = P_SS (P_SS+R_S)^{-1}`, i.e. the physical `-S_true` forcing.
+
+The declared 300 m*s is not derived and not conservative. The operating domain
+records no provenance for it, and at the declared 20 m startup position
+envelope the free integral reaches `20*T_handoff`, above 600 m*s over the
+declared live-entry timing floor. It is an arbitrary constant, hence a class-D
+entry-set modeling defect in either direction.
+
+The scheduler is the missing quantitative ingredient. `T_S` is clamped to at
+most .15 s, so consecutive S=0 Joseph events are at most .155 s apart, not one
+per handoff interval. Over one such gap at the declared handoff envelope the
+exact accumulation is at most **3.2020 m*s**; over one 3 s P4 word it is
+60.1376 m*s.
+
+| Integral radius | m*s | Chart threshold 4.5664 | Correction ceiling 10.2458 |
+| --- | ---: | :---: | :---: |
+| declared independent ball | 300 | fails | fails |
+| one P4 word of dwell | 60.1376 | fails | fails |
+| one S=0 cadence of dwell | 3.2020 | passes | passes |
+
+The chart threshold is derived from the retained `entry-block-retention.json`:
+scaling the integral radius by `s` scales exactly that term of the subadditive
+per-prefix sum, so `total <= without_S + s*alone_S` at every prefix, and H18 is
+the binding mode at 4.5664 m*s. It is a frozen-map diagnostic threshold, not an
+outward certificate.
+
+What is NOT established is an unconditional anchor. The S=0 update is a
+non-expansion of `S_hat` in the `R_S`-weighted norm for every cell, because
+`I-K_S` is similar to a symmetric operator with norm `1/(1+mu)` and `mu>=0`.
+A uniform CONTRACTION needs a uniform positive `mu`, hence a reachable `P_SS`
+lower bound. The only source-uniform one available is `P^->=Q` over one
+prediction step, which gives `q_SS >= sigma^2*dt^7*(1-x/4)^2/(126*tau)` and
+`mu >= 1.3e-26` against `R_S <= 100` -- above 1e25 events per e-fold. So the
+deployed S=0 regulation cannot anchor `e_S` uniformly over the admitted cell
+family, and an unconditional correlated entry set needs either a proved
+reachable `P_SS` lower bound far above the process floor or the P5 capture
+argument. That is reported as class E rather than assumed inside P4.
 
 ## Current limiter and failure analysis
 
@@ -186,10 +225,14 @@ Materializing the three driver recurrences moves the limiter but does not
 close it. BIAS0 now dominates the supply axis at 168 times the BIAS1 joint
 supply, driven by its declared pathwise GM cap; BIAS2 dominates the retention
 axis, because `phi_true=1` leaves the truth with no relaxation at all and the
-bias-error mode decays only through `phi_hat` and the corrections. Both remain
-open on the same-history graph: the exact-chord signed master bridge exposes
-BIAS1 projection/Joseph prerequisites only, and no uniform BIAS2 separation
-constant `mu_sep` is proved.
+bias-error mode decays only through `phi_hat` and the corrections. Neither is
+open on the same-history graph any more: the bridge's projection/Joseph
+prerequisites are family-parametric and each family discharges them from its
+own certificate, as the executable gate records in
+`bias_family_source_uniform_same_history_closed`. `mu_sep` remains unproved
+and is not a prerequisite of the declared objective, so it is not a blocker.
+What the three driver recurrences move is the motion half, and that is where
+the six remaining gate blockers now sit.
 
 The new separate endpoint supply is feasible at the coefficient point, but
 the relaxed L2 bias budget still does not establish coordinate retention.
@@ -234,7 +277,9 @@ which is the case that decides whether a separation sector is needed at all.
   limited by velocity 35.358 / 9.357. The 300 m*s integral ball is a dominant
   source. A physically reachable correlated entry set must be proved; a
   covariance ellipsoid is not automatically a true-error envelope. Its point
-  requirements remain 4.974 / 27.452 initial sigma, not a certificate.
+  requirements remain 4.974 / 27.452 initial sigma, not a certificate. The
+  correlated relation derived above meets the chart threshold at one S=0
+  cadence of dwell; the unconditional anchor is still open.
 - `bias2-motion-gain.json`: BIAS2 was invoked on the corrected full21 graph;
   A21 point separation does not certify a uniform sector or strict master.
   Independent-port common gains and common-template/common-gain storages
@@ -284,17 +329,92 @@ did not justify committing the default-seed-only passing profile. The RAO
 propagation-to convention correction and its 11 tests are retained.
 No performance coefficient or threshold is changed here.
 
+## Which blocker is which failure class
+
+`ou3_p4_blocker_falsification_classification.py` attributes every open gate
+blocker to one of the declared classes A (an actual admissible trajectory or
+source counterexample), B (rigorous source-uniform infeasibility), C (enclosure
+/ conditioning / dependency loss), D (entry-set modeling) or E (missing source
+qualification or materialization). Only A or a rigorous B would support saying
+P4 is unprovable on the declared domain.
+
+| Blocker | Class |
+| --- | :---: |
+| COMPLETE BRMM same-signal estimator/source cover | E |
+| interdependent `(tau,sigma,T_S)->R_S` with the literal adaptation history | E |
+| source-uniform same-cell Joseph correction/reset domain | C |
+| source-uniform exact-graph endpoint augmented LDLT | E |
+| source-uniform exact-graph every-prefix augmented LDLT | E |
+| same exact graph every-prefix hard-domain retention | C |
+
+No class A and no class B finding exists. The 4.5788 frozen-word Cayley value
+is NOT promoted to a lower bound on the true nonlinear trajectory: outside its
+chart the frozen expansion is not valid, so it is evidence that the independent
+integral ball destroys the certificate, never a disproof of P4.
+
+### The correction/reset blocker is a dependency loss, not infeasibility
+
+The same-cell magnitude certificate is
+`||d_theta||^2 <= trace(P^-_theta) * y^T R^{-1} y`. Two quantities decide it.
+
+The integral entry ball is NOT its limiter. Feeding the correlated 3.2020 m*s
+relation instead of the 300 m*s ball moves the S=0 ceiling from 9.6223e7 to
+9.9481e5, and the ACCELEROMETER event then limits at 2.4091e6. Both remain far
+outside the exact reset utility domain 3.0, so the entry set is not what blocks
+this obligation.
+
+The attitude covariance envelope is its limiter, and it is a conditioning
+artifact. The retained endpoint-referenced envelope gives an attitude variance
+upper of 3.99983e8 rad^2 per axis, 1.19995e9 as a trace. But the accelerometer
+Joseph event admits a prior-INDEPENDENT posterior cap: for a scalar angle
+measurement with gain `|f|` and noise variance `r`,
+`P^+ = P^- r/(P^- |f|^2 + r) <= r/|f|^2` whatever `P^-` was, and the declared
+Normal-Live invariant executes that update at EVERY valid IMU sample. With
+`R_acc = .04` and `|f| >= 5.80665` this caps the two directions transverse to
+the specific force at 1.18634e-3 rad^2 each. The envelope in use therefore
+exceeds what the deployed event structure permits by **6.4485e11**, which is
+the endpoint-referenced Lagrange/Vandermonde inversion losing conditioning over
+its .775 s observation window, not a physical bound.
+
+One lossy step then remains in the magnitude route itself. At the transverse
+cap the `R^{-1}` relaxation gives an accelerometer ceiling of 3.3876, just above
+the reset utility limit 3.0, while retaining the same-cell
+`S^{-1} = (H P H^T + R)^{-1}` gives 2.3954, because at the cap `H P H^T` equals
+`R` exactly and the innovation covariance is twice `R`. So the route closes on
+the two transverse directions once `S^{-1}` is kept. The third direction,
+rotation about the specific force, is not observed by the accelerometer at all
+and needs the asynchronous magnetometer plus gyro-bias transport; that is not
+established and stays open.
+
+### Finite-precision status
+
+The conditional mathematical binary32 additive ISS enclosure is closed and is
+the only finite-precision object P4 depends on. Target-toolchain qualification
+of the declared binary32 LDLT/libm forward postconditions is a separate
+deployment blocker. Neither may masquerade as the other: a missing toolchain
+qualification is not a mathematical P4 failure, and a host-only arithmetic
+check is not deployment qualification.
+
 ## The one object the remaining blockers reduce to
 
-Six gate blockers remain and all six consume the same missing object, the
-**source-uniform COMPLETE BRMM cover**: the correction/reset domain, the
-endpoint and every-prefix augmented LDLT and the every-prefix hard-domain
-retention each need a source-uniform cell family that has not been
+Six gate blockers remain. Four consume the same missing object, the
+**source-uniform COMPLETE BRMM cover**: the same-signal estimator/source cover,
+the interdependent adaptation history and the endpoint and every-prefix
+augmented LDLT each need a source-uniform cell family that has not been
 materialized. The cover needs the estimator-owned transition operator over
 every admitted BRMM continuation, every hard-entry radial segment and every
 correlated Joseph cell, with the coefficient image proved inside the target
 cell. A captured word cannot supply it and the contract forbids trying:
 `point_trace_can_promote_source_uniform_cover` and
 `trajectory_replay_or_pinned_generator_may_establish_uniform_cover` are false.
+
+The other two, the correction/reset domain and the every-prefix hard-domain
+retention, are now separately attributed. Neither is limited by the cover
+alone: the correction domain is limited by an attitude covariance envelope
+6.4485e11 above what the deployed accelerometer event permits, plus the
+`R^{-1}` relaxation of the same-cell `S^{-1}`; the retention is limited by the
+independent integral entry ball, which the correlated relation replaces on the
+chart threshold. Both are class C, and both have a stated constructive repair
+rather than an infeasibility.
 
 **P4_MOTION_PASS=false, P4_PASS=false. P5-motion and P5 may not start.**
