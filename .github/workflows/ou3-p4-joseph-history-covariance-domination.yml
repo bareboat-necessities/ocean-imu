@@ -15,7 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with: {persist-credentials: false}
-      - name: Verify exact whole-word covariance domination
+      - name: Verify exact every-prefix covariance domination
         run: python3 tools/stability/ou3_p4_joseph_history_covariance_domination.py --output /tmp/history-domination.json
       - name: Enforce correlation-preserving contract
         run: |
@@ -23,14 +23,19 @@ jobs:
           import json
           d=json.load(open('/tmp/history-domination.json'))
           assert d['validation_pass'],d['validation_failures']
+          assert d['every_literal_prefix_covariance_domination_identity_available']
           assert d['whole_word_covariance_domination_identity_available']
+          assert d['stacked_correction_operator_WmWT_Loewner_below_each_prefix_Pm']
+          assert d['every_prefix_metric_joint_input_gain_at_most_one']
           assert d['stacked_correction_operator_WWT_Loewner_below_endpoint_P']
           assert d['endpoint_metric_joint_input_gain_at_most_one']
-          assert d['accelerometer_endpoint_interior_can_use_u_equals_RminusHalf_H_E_epsilon']
+          assert d['accelerometer_prefix_and_endpoint_interior_can_use_u_equals_RminusHalf_H_E_epsilon']
           assert not d['rowwise_K_box_used']
           assert not d['suffix_operator_norm_bound_used']
           assert not d['packet_count_multiplier_used']
           assert not d['independent_R_schedule_used']
           assert not d['P4_promoted_here']
+          print('JOSEPH_HISTORY_PREFIX_GAIN_LE_ONE',d['every_prefix_metric_joint_input_gain_at_most_one'])
           print('JOSEPH_HISTORY_ENDPOINT_GAIN_LE_ONE',d['endpoint_metric_joint_input_gain_at_most_one'])
+          print('PREFIX_REGRESSION',d['prefix_regression'])
           PY
