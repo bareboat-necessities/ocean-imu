@@ -1,0 +1,83 @@
+name: ou3-p4-kernel-radial-event-ad-cover
+
+on:
+  push:
+    branches: [main, 'codex/ou3-p4-joint-estimator-transition']
+    paths: &paths
+      - 'tools/stability/ou3_p4_brmm_kernel_event_capture_bridge.py'
+      - 'tools/stability/ou3_p4_brmm_kernel_source_cell_smoke.py'
+      - 'tools/stability/ou3_p4_hard_entry_radial_ad_boxes.py'
+      - 'tools/stability/ou3_p4_brmm_kernel_radial_event_ad_cover.py'
+      - 'tools/stability/ou3_p4_complete_brmm_source_cover_contract.py'
+      - 'tools/stability/ou3_p4_complete_brmm_differential_events.py'
+      - 'tools/stability/ou3_p4_brmm_reduced_event_master.py'
+      - 'tools/stability/ou3_p4_brmm_same_Dtheta_reset_binding.py'
+      - 'tools/stability/ou3_p4_brmm_event_lineage_cover.py'
+      - '.github/workflows/ou3-p4-kernel-radial-event-ad-cover.yml'
+  pull_request:
+    paths: *paths
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ou3-p4-kernel-radial-event-ad-cover-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile proof sources
+        run: python -m compileall -q tools/stability
+      - name: Execute kernel radial event AD cover
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/ou3-p4-kernel-radial
+          python tools/stability/ou3_p4_brmm_kernel_event_capture_bridge.py --output /tmp/ou3-p4-kernel-radial/kernel-capture.json
+          python tools/stability/ou3_p4_brmm_kernel_source_cell_smoke.py --output /tmp/ou3-p4-kernel-radial/zero-root-source-cells.json
+          python tools/stability/ou3_p4_hard_entry_radial_ad_boxes.py --output /tmp/ou3-p4-kernel-radial/radial-boxes.json
+          python tools/stability/ou3_p4_brmm_kernel_radial_event_ad_cover.py --output /tmp/ou3-p4-kernel-radial/radial-event-ad.json
+          python - <<'PY'
+          import json
+          root='/tmp/ou3-p4-kernel-radial/'
+          k=json.load(open(root+'kernel-capture.json'))
+          z=json.load(open(root+'zero-root-source-cells.json'))
+          r=json.load(open(root+'radial-boxes.json'))
+          a=json.load(open(root+'radial-event-ad.json'))
+          for name,obj in [('kernel',k),('zero-root',z),('radial-boxes',r),('radial-event-ad',a)]:
+              assert obj['validation_pass'], (name,obj.get('validation_failures'))
+          assert k['trusted_kernel_passive_capture_consumed']
+          assert k['all_same_sample_joint_and_kernel_successors_retained']
+          assert z['all_estimator_owned_source_cells_valid']
+          assert r['current_lineage_radial_API_consumed']
+          assert r['recursive_partition_exactly_covers_unit_interval']
+          assert r['rectangular_box_is_outer_AD_enclosure_only']
+          assert not r['rectangular_box_replaces_hard_ball_IQCs']
+          assert a['trusted_kernel_passive_event_cells_consumed']
+          assert a['every_same_sample_joint_estimator_image_consumed']
+          assert a['continuous_radial_partition_exactly_covers_unit_interval']
+          assert a['same_cell_P_H_R_K_used_for_every_Joseph_AD_cell']
+          assert a['all_radial_Joseph_state_outputs_and_Jacobians_finite']
+          assert a['all_real_structured_event_masters_and_reset_bindings_constructed']
+          assert a['A21_projection_not_assumed_inactive']
+          assert a['BIAS1_true_bias_outer_box_consumed_for_A21_AD']
+          assert not a['local_full_hard_box_at_each_event_claimed_reachable']
+          assert not a['production_prefix_state_reachability_closed_here']
+          assert not a['P4_MOTION_PASS'] and not a['P4_PASS'] and not a['P5_MAY_START']
+          print('KERNEL_RADIAL_EVENT_AD_COVER_PASS',a['A21_projection_branches_observed'])
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ou3-p4-kernel-radial-event-ad-cover
+          path: /tmp/ou3-p4-kernel-radial/
+          if-no-files-found: error
