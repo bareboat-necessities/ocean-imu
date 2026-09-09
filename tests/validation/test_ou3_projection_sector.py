@@ -17,23 +17,20 @@ class ProjectionSectorTests(unittest.TestCase):
     def test_inside_and_outside_jacobians_have_joint_gain_at_most_one(self):
         r = .4
         for x in ([.1, .2, 0.], [.8, 0., 0.], [.5, -.7, .3]):
-            j = P.projection_jacobian(x, r)
+            j = np.asarray(P.projection_jacobian(x, r), dtype=float)
             np.testing.assert_allclose(j, j.T, rtol=0, atol=2e-15)
             ev = np.linalg.eigvalsh(j)
             self.assertGreaterEqual(ev[0], -2e-15)
             self.assertLessEqual(ev[-1], 1+2e-15)
-            self.assertLessEqual(P.stacked_sector_ratio(j), 1+2e-15)
+            self.assertLessEqual(P.stacked_sector_ratio(j.tolist()), 1+2e-15)
 
     def test_boundary_clarke_family_has_same_sector(self):
         tangent = np.diag([0., 1., 1.])
         for theta in np.linspace(0, 1, 21):
             j = theta*np.eye(3)+(1-theta)*tangent
-            self.assertLessEqual(P.stacked_sector_ratio(j), 1+2e-15)
+            self.assertLessEqual(P.stacked_sector_ratio(j.tolist()), 1+2e-15)
 
     def test_joint_finite_difference_sector_crosses_saturation_boundary(self):
-        # These pairs deliberately place beta-e on different sides/directions
-        # of the projection boundary.  This is a regression, while the module
-        # docstring contains the all-points generalized-Jacobian proof.
         r = .4
         pairs = [
             (np.array([.05, 0, 0]), np.zeros(3),
@@ -44,8 +41,8 @@ class ProjectionSectorTests(unittest.TestCase):
              np.array([.400001, 0, 0]), np.zeros(3)),
         ]
         for e1,b1,e2,b2 in pairs:
-            f1=P.bias_error_projection(e1,b1,r)
-            f2=P.bias_error_projection(e2,b2,r)
+            f1=np.asarray(P.bias_error_projection(e1,b1,r),dtype=float)
+            f2=np.asarray(P.bias_error_projection(e2,b2,r),dtype=float)
             lhs=float(np.dot(f1-f2,f1-f2))
             rhs=float(np.dot(e1-e2,e1-e2)+np.dot(b1-b2,b1-b2))
             self.assertLessEqual(lhs, rhs*(1+2e-14)+1e-15)
@@ -56,8 +53,8 @@ class ProjectionSectorTests(unittest.TestCase):
         rng=np.random.default_rng(7)
         for _ in range(200):
             e1,e2=rng.normal(size=(2,3))
-            f1=P.bias_error_projection(e1,beta,r)
-            f2=P.bias_error_projection(e2,beta,r)
+            f1=np.asarray(P.bias_error_projection(e1,beta,r),dtype=float)
+            f2=np.asarray(P.bias_error_projection(e2,beta,r),dtype=float)
             self.assertLessEqual(np.linalg.norm(f1-f2),
                                  np.linalg.norm(e1-e2)*(1+2e-14)+1e-15)
 
@@ -65,7 +62,7 @@ class ProjectionSectorTests(unittest.TestCase):
         r=.4
         for e,b in (([0,0,0],[0,0,0]), ([2,-3,4],[.2,-.1,.05]),
                     ([-.1,.2,.3],[1.,-1.,.5])):
-            projected_error=P.bias_error_projection(e,b,r)
+            projected_error=np.asarray(P.bias_error_projection(e,b,r),dtype=float)
             estimate=np.asarray(b)-projected_error
             self.assertLessEqual(np.linalg.norm(estimate),r*(1+2e-15))
 
