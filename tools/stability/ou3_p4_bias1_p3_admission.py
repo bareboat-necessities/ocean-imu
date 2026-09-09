@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import math
 from pathlib import Path
 
 import ou3_brmm_riccati_metric_p3 as P3
