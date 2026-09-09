@@ -24,10 +24,12 @@ import ou3_validated_positive_transcendentals as VPOS
 import ou3_p4_wave_period_interval_transition as WAVE
 import ou3_p4_complete_brmm_target_cell as TARGET
 import ou3_brmm_wave_period_frontend as FRONTEND
+import ou3_source_domain_contract as SOURCE
 REPO=Path(__file__).resolve().parents[2]
-SCHEMA=2
-QUALIFICATION="OU3_P4_JOINT_SAME_SIGNAL_ESTIMATOR_TRANSITION_V2"
+SCHEMA=3
+QUALIFICATION="OU3_P4_JOINT_SAME_SIGNAL_ESTIMATOR_TRANSITION_V3"
 _PRIOR=None
+_NOISE=None
 
 def I(x):return Interval.point(float(x))
 def finite(x):return isinstance(x,Interval) and math.isfinite(x.lo) and math.isfinite(x.hi) and x.lo<=x.hi
@@ -42,6 +44,13 @@ def prior_frequency():
         if f:raise RuntimeError("wave-period frontend prerequisite failed: "+repr(f))
         a,b=map(float,d["declared_inputs"]["fixed_tuning_frequency_prior_hz"]);_PRIOR=Interval(a,b)
     return _PRIOR
+def deployed_acc_noise_floor_sigma():
+    global _NOISE
+    if _NOISE is None:
+        text=TARGET.WRAPPER.read_text(encoding="utf-8")
+        value=float(SOURCE.parse_const(text,"ACC_NOISE_FLOOR_SIGMA_DEFAULT"))
+        _NOISE=Interval.outward_bounds(value,value)
+    return _NOISE
 
 @dataclass(frozen=True)
 class BandState:
@@ -135,8 +144,10 @@ def _wave_successors(s,dt,input_accel):
         out.append((w,period,_usable(s.usable_period,w,period),split))
     return out
 
-def step_joint(s,dt,input_accel,*,acc_noise_floor_sigma=I(.0148),still_attenuation=I(1.0)):
+def step_joint(s,dt,input_accel,*,acc_noise_floor_sigma=None,still_attenuation=None):
     if not s.source_token:raise ValueError("source token required")
+    if acc_noise_floor_sigma is None:acc_noise_floor_sigma=deployed_acc_noise_floor_sigma()
+    if still_attenuation is None:still_attenuation=I(1.0)
     tc=TARGET.constants();f_tuner=_tuning_input_from_predecessor(s)
     f_band=s.tuner.frequency_hz if s.tuner.frequency_hz is not None else f_tuner;f_band=clampi(f_band,tc["MIN_TUNE_FREQ_HZ"],tc["MAX_TUNE_FREQ_HZ"])
     band=_band_step(s.band,input_accel,dt,f_band)
@@ -152,17 +163,18 @@ def step_joint(s,dt,input_accel,*,acc_noise_floor_sigma=I(.0148),still_attenuati
     return out
 
 def build():
-    s=zero_state();dt=Interval.outward_bounds(.004,.006);b=step_joint(s,dt,Interval.outward_bounds(-.1,.1));prior=prior_frequency()
+    s=zero_state();dt=Interval.outward_bounds(.004,.006);b=step_joint(s,dt,Interval.outward_bounds(-.1,.1));prior=prior_frequency();noise=deployed_acc_noise_floor_sigma()
     startup=bool(b) and all(x.frequency_hz is not None and x.frequency_hz.contains_interval(prior) for x in b)
-    return {"schema":SCHEMA,"qualification":QUALIFICATION,"canonical_source":"COMPLETE_BRMM_NORMAL_LIVE_WORD","same_signal_wave_period_and_band_state_materialized":True,"tuner_precedes_current_sample_wave_period_update":True,"newly_usable_period_affects_tuner_only_next_sample":True,"fixed_prior_used_until_predecessor_period_usable":True,"same_history_positive_variance_required_before_ratio":True,"raw_period_and_canonical_log_period_relation_materialized":True,"exact_frequency_reciprocal_relation_materialized":True,"adaptive_band_previous_tuner_frequency_lag_materialized":True,"adaptive_band_time_varying_white_noise_covariance_materialized":True,"sigma_first_second_moment_statistic_materialized":True,"band_noise_p11_subtraction_materialized":True,"raw_sigma_and_effective_OU_sigma_kept_distinct":True,"joint_f_tau_sigma_TS_RS_image_materialized":True,"independent_f_sigma_rectangle_accepted_by_transition":False,"unresolved_wide_cells_require_source_split":True,"startup_prior_causality_smoke_pass":startup,"physical_BRMM_signal_attachment_closed_here":False,"all_admitted_same_history_source_cells_emitted_here":False,"endpoint_and_every_prefix_augmented_LDLT_closed_here":False,"P4_MOTION_PASS":False,"P4_PASS":False,"P5_MAY_START":False,"next_obligation":"attach every admitted BRMM/private-observer vertical-acceleration and stillness branch to this causal joint state, recursively split dependency-lost cells, carry only its emitted targets through active EMA/commit/scheduler and same-history Riccati/Joseph/reset cells, then certify endpoint and literal every-prefix augmented LDLT with finite-precision ISS"}
+    source_noise_parity=noise.contains(0.12) and noise.lo>0
+    return {"schema":SCHEMA,"qualification":QUALIFICATION,"canonical_source":"COMPLETE_BRMM_NORMAL_LIVE_WORD","same_signal_wave_period_and_band_state_materialized":True,"tuner_precedes_current_sample_wave_period_update":True,"newly_usable_period_affects_tuner_only_next_sample":True,"fixed_prior_used_until_predecessor_period_usable":True,"deployed_acc_noise_floor_sigma_source_parity":source_noise_parity,"deployed_acc_noise_floor_sigma_enclosure":noise.as_list(),"same_history_positive_variance_required_before_ratio":True,"raw_period_and_canonical_log_period_relation_materialized":True,"exact_frequency_reciprocal_relation_materialized":True,"adaptive_band_previous_tuner_frequency_lag_materialized":True,"adaptive_band_time_varying_white_noise_covariance_materialized":True,"sigma_first_second_moment_statistic_materialized":True,"band_noise_p11_subtraction_materialized":True,"raw_sigma_and_effective_OU_sigma_kept_distinct":True,"joint_f_tau_sigma_TS_RS_image_materialized":True,"independent_f_sigma_rectangle_accepted_by_transition":False,"unresolved_wide_cells_require_source_split":True,"startup_prior_causality_smoke_pass":startup,"physical_BRMM_signal_attachment_closed_here":False,"all_admitted_same_history_source_cells_emitted_here":False,"endpoint_and_every_prefix_augmented_LDLT_closed_here":False,"P4_MOTION_PASS":False,"P4_PASS":False,"P5_MAY_START":False,"next_obligation":"attach every admitted BRMM/private-observer vertical-acceleration and stillness branch to this causal joint state, recursively split dependency-lost cells, carry only its emitted targets through active EMA/commit/scheduler and same-history Riccati/Joseph/reset cells, then certify endpoint and literal every-prefix augmented LDLT with finite-precision ISS"}
 def validate(d):
     f=[]
     if d.get("schema")!=SCHEMA or d.get("qualification")!=QUALIFICATION:f.append("schema/qualification mismatch")
-    for k in ("same_signal_wave_period_and_band_state_materialized","tuner_precedes_current_sample_wave_period_update","newly_usable_period_affects_tuner_only_next_sample","fixed_prior_used_until_predecessor_period_usable","same_history_positive_variance_required_before_ratio","raw_period_and_canonical_log_period_relation_materialized","exact_frequency_reciprocal_relation_materialized","adaptive_band_previous_tuner_frequency_lag_materialized","adaptive_band_time_varying_white_noise_covariance_materialized","sigma_first_second_moment_statistic_materialized","band_noise_p11_subtraction_materialized","raw_sigma_and_effective_OU_sigma_kept_distinct","joint_f_tau_sigma_TS_RS_image_materialized","unresolved_wide_cells_require_source_split","startup_prior_causality_smoke_pass"):
+    for k in ("same_signal_wave_period_and_band_state_materialized","tuner_precedes_current_sample_wave_period_update","newly_usable_period_affects_tuner_only_next_sample","fixed_prior_used_until_predecessor_period_usable","deployed_acc_noise_floor_sigma_source_parity","same_history_positive_variance_required_before_ratio","raw_period_and_canonical_log_period_relation_materialized","exact_frequency_reciprocal_relation_materialized","adaptive_band_previous_tuner_frequency_lag_materialized","adaptive_band_time_varying_white_noise_covariance_materialized","sigma_first_second_moment_statistic_materialized","band_noise_p11_subtraction_materialized","raw_sigma_and_effective_OU_sigma_kept_distinct","joint_f_tau_sigma_TS_RS_image_materialized","unresolved_wide_cells_require_source_split","startup_prior_causality_smoke_pass"):
         if d.get(k) is not True:f.append(k+" not true")
     for k in ("independent_f_sigma_rectangle_accepted_by_transition","physical_BRMM_signal_attachment_closed_here","all_admitted_same_history_source_cells_emitted_here","endpoint_and_every_prefix_augmented_LDLT_closed_here","P4_MOTION_PASS","P4_PASS","P5_MAY_START"):
         if d.get(k) is not False:f.append(k+" not false")
     return f
 def main():
-    ap=argparse.ArgumentParser();ap.add_argument("--output",type=Path,required=True);a=ap.parse_args();d=build();f=validate(d);d["validation_pass"]=not f;d["validation_failures"]=f;a.output.parent.mkdir(parents=True,exist_ok=True);a.output.write_text(json.dumps(d,indent=2,sort_keys=True)+"\n");print(json.dumps({"joint":d["joint_f_tau_sigma_TS_RS_image_materialized"],"causal":d["startup_prior_causality_smoke_pass"],"P4":d["P4_PASS"],"failures":f},sort_keys=True));return int(bool(f))
+    ap=argparse.ArgumentParser();ap.add_argument("--output",type=Path,required=True);a=ap.parse_args();d=build();f=validate(d);d["validation_pass"]=not f;d["validation_failures"]=f;a.output.parent.mkdir(parents=True,exist_ok=True);a.output.write_text(json.dumps(d,indent=2,sort_keys=True)+"\n");print(json.dumps({"joint":d["joint_f_tau_sigma_TS_RS_image_materialized"],"causal":d["startup_prior_causality_smoke_pass"],"noise":d["deployed_acc_noise_floor_sigma_enclosure"],"P4":d["P4_PASS"],"failures":f},sort_keys=True));return int(bool(f))
 if __name__=="__main__":raise SystemExit(main())
