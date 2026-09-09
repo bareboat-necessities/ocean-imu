@@ -22,19 +22,18 @@ It is exactly what finite reset transport needs: the correction coordinate can
 be retained in the posterior metric without a source-uniform marginal P ceiling
 or an independent norm box for K.
 
-The helper below verifies (1) on rigorous interval point matrices for several
-non-diagonal SPD smoke cases.  The theorem identity itself is algebraic and is
-consumed downstream as an equality/IQC on the same P,H,R,S,K event cell.
+NumPy is imported lazily inside ``build`` so the retained stability package can
+be imported on the minimal source-foundation runner.  The numerical smoke still
+requires NumPy when executed; the theorem identity itself is algebraic.
 """
 from __future__ import annotations
 import argparse,json
 from pathlib import Path
-import numpy as np
 
 SCHEMA=1
 QUALIFICATION='OU3_P4_JOSEPH_CORRECTION_POSTERIOR_METRIC_IDENTITY_V1'
 
-def _check(P,H,R):
+def _check(np,P,H,R):
     P=np.asarray(P,dtype=float);H=np.asarray(H,dtype=float);R=np.asarray(R,dtype=float)
     S=H@P@H.T+R
     K=P@H.T@np.linalg.inv(S)
@@ -46,9 +45,10 @@ def _check(P,H,R):
     return err,err<=5e-12*scale
 
 def build():
+    import numpy as np
     cases=[]
     for P,H,R in (
-      (np.diag([2.,3.,4.]),np.eye(3),np.diag([.2,.3,.4])),
+      ([[2.,0.,0.],[0.,3.,0.],[0.,0.,4.]],[[1.,0.,0.],[0.,1.,0.],[0.,0.,1.]],[[.2,0.,0.],[0.,.3,0.],[0.,0.,.4]]),
       ([[2.,.2,0,.1],[.2,1.4,.1,0],[0,.1,1.8,.3],[.1,0,.3,2.2]],
        [[1.,.2,0,.1],[0,.7,.3,-.2],[.1,0,.8,.4]],
        [[.4,.03,0],[.03,.5,.02],[0,.02,.6]]),
@@ -56,7 +56,7 @@ def build():
        [[.3,-.4,.8],[.7,.2,-.1],[-.2,.5,.6]],
        [[.25,.01,.02],[.01,.32,0],[.02,0,.29]]),
     ):
-        err,ok=_check(P,H,R);cases.append({'max_abs_identity_error':err,'pass':ok})
+        err,ok=_check(np,P,H,R);cases.append({'max_abs_identity_error':err,'pass':ok})
     return {
       'schema':SCHEMA,'qualification':QUALIFICATION,'canonical_source':'COMPLETE_BRMM_NORMAL_LIVE_WORD',
       'identity':'K^T(Pplus)^-1K=R^-1-S^-1',
@@ -66,13 +66,14 @@ def build():
       'independent_K_box_used':False,'marginal_Ptheta_ceiling_used':False,
       'complementary_innovation_information_retained':True,
       'usable_as_reset_correction_supply_coordinate':True,
+      'numpy_import_is_lazy_execution_only':True,
       'smoke_cases':cases,'smoke_identity_closed':all(x['pass'] for x in cases),
       'filter_changed':False,'declared_domain_changed':False,'P4_promoted_here':False,
     }
 def validate(d):
     f=[]
     if d.get('schema')!=SCHEMA or d.get('qualification')!=QUALIFICATION:f.append('schema/qualification mismatch')
-    for k in ('same_event_P_H_R_S_K_required','actual_K_eliminated_only_by_exact_same_event_identity','complementary_innovation_information_retained','usable_as_reset_correction_supply_coordinate','smoke_identity_closed'):
+    for k in ('same_event_P_H_R_S_K_required','actual_K_eliminated_only_by_exact_same_event_identity','complementary_innovation_information_retained','usable_as_reset_correction_supply_coordinate','numpy_import_is_lazy_execution_only','smoke_identity_closed'):
         if d.get(k) is not True:f.append(k+' not true')
     for k in ('independent_K_box_used','marginal_Ptheta_ceiling_used','filter_changed','declared_domain_changed','P4_promoted_here'):
         if d.get(k) is not False:f.append(k+' not false')
