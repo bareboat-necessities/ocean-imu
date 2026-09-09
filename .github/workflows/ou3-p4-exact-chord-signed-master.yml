@@ -1,0 +1,52 @@
+name: ou3-p4-exact-chord-signed-master
+on:
+  push:
+    paths: &paths
+      - "tools/stability/ou3_p4_exact_chord_signed_master_bridge.py"
+      - "tools/stability/ou3_p4_complete_brmm_exact_chord_joint_coordinate.py"
+      - "tools/stability/ou3_p4_complete_brmm_exact_chord_iqc.py"
+      - "tools/stability/ou3_p4_complete_brmm_signed_information_ledger.py"
+      - "tools/stability/ou3_p4_complete_brmm_joint_sector_master.py"
+      - "tools/stability/ou3_p4_bias1_family.py"
+      - "tools/stability/ou3_p4_projection_sector.py"
+      - "tools/stability/ou3_p4_rowwise_coefficient_enclosure.py"
+      - "tools/stability/ou3_brmm_riccati_tube.py"
+      - ".github/workflows/ou3-p4-exact-chord-signed-master.yml"
+  pull_request:
+    paths: *paths
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  bridge:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with: {persist-credentials: false}
+      - name: Build exact-chord signed-master bridge
+        run: python3 tools/stability/ou3_p4_exact_chord_signed_master_bridge.py --output /tmp/bridge.json
+      - name: Enforce correlation-preserving fail-closed state
+        run: |
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/bridge.json'))
+          assert d['validation_pass'],d['validation_failures']
+          assert d['exact_chord_graph_ready_for_augmented_master']
+          assert d['physical_BIAS1_projection_and_coefficient_prerequisites_ready']
+          assert d['joseph_favorable_q_u_cross_term_retained']
+          assert d['mixed_c_cross_aw_retained_as_explicit_coordinate']
+          assert d['finite_reset_cross_and_defect_terms_retained']
+          assert d['actual_same_history_K_required_not_independent_row_box']
+          assert not d['packet_count_multiplier_used'] and not d['standalone_eta_Rinv_budget_used']
+          assert not d['endpoint_augmented_LDLT_closed']
+          assert not d['every_literal_prefix_augmented_LDLT_closed']
+          assert not d['P4_MOTION_PASS'] and not d['P4_PASS']
+          print('EXACT_CHORD_SIGNED_MASTER_READY',d['full_declared_entry_information_retention_lower'])
+          print('NEXT',d['next_obligation'])
+          PY
+      - uses: actions/upload-artifact@v6
+        with:
+          name: ou3-p4-exact-chord-signed-master
+          path: /tmp/bridge.json
+          retention-days: 7
