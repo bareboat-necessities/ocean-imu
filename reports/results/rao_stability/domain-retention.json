@@ -6,7 +6,7 @@
     ".prefixes.jsonl": "2a184f24637abdab8026a8da7f75c68857e3993bc42b769c0d19f924cb2bb444",
     ".events.jsonl": "bda02dfe732318c6e6ab6cb8394303e5b91577a6c73b7e9b6695eaefddf05216"
   },
-  "producer_sha256": "edb758496ebc5ca0762ee318e7b318534240daaa8ce1cc19e7fc04aac565ddbe",
+  "producer_sha256": "7b6717fa331d47eafd7c76cf4776e4386f35cd3da0cb44b3cc01305cae3edb71",
   "frozen_coefficients_only": true,
   "same_history_forcing_preserved": true,
   "operating_domain_reduced": false,
@@ -613,6 +613,26 @@
         "exact_no_subadditive_step": true,
         "covariance_consistency_is_an_unproved_premise": true,
         "P4_PASS": false
+      },
+      "optimal_quadratic_storage": {
+        "motion_18": {
+          "spectral_radius": 0.997663960670924,
+          "best_achievable_complete_word_ratio": 0.995333378421595,
+          "witness_metric_achieves": 0.995333378421595,
+          "eigenbasis_condition": 4205.978528286449,
+          "a_contracting_quadratic_storage_exists": true,
+          "frozen_capture_not_a_uniform_certificate": true,
+          "P4_PASS": false
+        },
+        "full_21": {
+          "spectral_radius": 1.0,
+          "best_achievable_complete_word_ratio": 1.0,
+          "witness_metric_achieves": 1.0,
+          "eigenbasis_condition": 4485.8294963743465,
+          "a_contracting_quadratic_storage_exists": false,
+          "frozen_capture_not_a_uniform_certificate": true,
+          "P4_PASS": false
+        }
       }
     },
     "A21": {
@@ -1214,6 +1234,26 @@
         "exact_no_subadditive_step": true,
         "covariance_consistency_is_an_unproved_premise": true,
         "P4_PASS": false
+      },
+      "optimal_quadratic_storage": {
+        "motion_18": {
+          "spectral_radius": 0.960813213986115,
+          "best_achievable_complete_word_ratio": 0.923162032170328,
+          "witness_metric_achieves": 0.9231620321807384,
+          "eigenbasis_condition": 28554.288296330666,
+          "a_contracting_quadratic_storage_exists": true,
+          "frozen_capture_not_a_uniform_certificate": true,
+          "P4_PASS": false
+        },
+        "full_21": {
+          "spectral_radius": 0.9993994325070672,
+          "best_achievable_complete_word_ratio": 0.998799225695448,
+          "witness_metric_achieves": 0.998799225695448,
+          "eigenbasis_condition": 15098.354417446651,
+          "a_contracting_quadratic_storage_exists": true,
+          "frozen_capture_not_a_uniform_certificate": true,
+          "P4_PASS": false
+        }
       }
     }
   }

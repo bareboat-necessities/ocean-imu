@@ -168,6 +168,18 @@ jobs:
               forcing = m['forcing_template_only']
               print('FORCING_ONLY', mode, max(
                   (i['certified_retention_ratio'], n) for n, i in forcing.items()))
+              # The closed-form floor over every quadratic storage. Existence
+              # of a contracting one on a frozen capture is not a certificate,
+              # so this is pinned and printed, never asserted as a pass.
+              for block, best in m['optimal_quadratic_storage'].items():
+                  assert not best['P4_PASS']
+                  assert best['frozen_capture_not_a_uniform_certificate']
+                  assert best['witness_metric_achieves'] >= \
+                      best['best_achievable_complete_word_ratio']*(1-1e-6)
+                  print('OPTIMAL_STORAGE', mode, block,
+                        best['spectral_radius'],
+                        best['best_achievable_complete_word_ratio'],
+                        best['a_contracting_quadratic_storage_exists'])
               print('DOMAIN_RETENTION', mode, m['limiting_group'],
                     m['limiting_certified_retention_ratio'],
                     'largest_retained_similar_box',

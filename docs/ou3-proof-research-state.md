@@ -298,11 +298,35 @@ uniform nonlinear matrix inequality, a BIAS2 mu, or physical source admission.
 The complete-word endpoint ratios .999572659 / .932948382 and prefix maxima
 1.003245112 / 1.000001212 are untouched by any of them.
 
-Every route that can be computed from the frozen capture has now been
-executed, and `reports/results/rao_stability/domain-retention.md` tabulates
-all thirteen with their verdicts. What is left is not a computation on this
-capture. Two modelling obligations remain, and neither can be closed by
-arithmetic here:
+Fourteen routes have now been executed and
+`reports/results/rao_stability/domain-retention.md` tabulates them with their
+verdicts. That is not the same as exhausting what this capture can compute,
+and an earlier draft of this ledger wrongly said it was: the space of
+quadratic storages is infinite and the first thirteen routes each picked one
+metric by hand.
+
+The fourteenth asks the systematic question instead, and it changes the
+reading of the earlier failures. For `V(x) = x^T P x` the complete-word ratio
+is the squared `P`-weighted operator norm of the word transition, whose
+infimum over all `P > 0` is the spectral radius, so `inf_P rho_w(P) =
+rho(T)^2` decides the whole architecture in one number. On the 18 motion
+errors `rho(T)` is .997663961 (H18) and .960813214 (A21), giving best
+achievable complete-word ratios .995333378 and .923162032. A contracting
+quadratic storage therefore exists for both modes and is constructed from the
+eigenbasis. The diagonal metrics frozen above at rho 1072.993 / 6659.686 were
+bad choices, not evidence that the architecture fails.
+
+On the full 21 states `rho(T)` is exactly 1 for H18 and .999399433 for A21.
+H18's unit eigenvalue is structural rather than a search failure: its
+accelerometer bias is unobserved over the capture, so no quadratic storage
+contracts the full word. That predicts both measured bias-ball results, H18
+invariant to 2.2e-16 and A21 growing 3.146e-4, and it says strict contraction
+is the wrong target for the full state while boundedness is the right one,
+which is what the BRMM hypothesis at the top of this ledger already assumes.
+
+These are the frozen capture's own transitions, so a contracting storage here
+is not a uniform certificate over words or sources. Two modelling obligations
+remain, and neither can be closed by arithmetic here:
 
 1. **A qualified initial-error set.** The declared product box is not a
    reachable set and this word does not retain it. The covariance ellipsoid is
@@ -322,10 +346,11 @@ arithmetic here:
    needs a hybrid or impact-aware source model.
 
 The quantitative next test therefore belongs to obligation 1 and is not a
-retention computation: whether the actual word-entry error, measured against
+retention or metric computation: whether the actual word-entry error, measured against
 the filter's own covariance across the eight replays rather than assumed, stays
 inside 4.974 sigma (H18) and 27.452 sigma (A21). That is a consistency
-measurement on existing replays, and it is falsifiable. Refining any bound on
-this capture is a dead end: the word already costs at most 7.2%, so no
-tightening of the dynamics can move a limiter that lives entirely in the
-initial set. Physical admission, strict uniform P4 and P5 remain unclosed.
+measurement on existing replays, and it is falsifiable. Searching for a better metric on this capture is
+a dead end for a different and now precise reason: the infimum over every
+quadratic storage is already known in closed form, so no metric can beat
+.995333378 / .923162032, and the limiter lives entirely in the initial set,
+which the word costs at most 7.2%. Physical admission, strict uniform P4 and P5 remain unclosed.

@@ -156,7 +156,51 @@ both in velocity. It consumes under 5% of the smallest budget in play, so a
 globally bounded particular solution would not change any conclusion here.
 That architecture is answered at this capture rather than left open.
 
+## The best quadratic storage, in closed form
+
+Every route above picks a metric and measures its ratio. The systematic
+question is what the best metric could do, and it has a closed-form answer.
+For `V(x) = x^T P x` the complete-word ratio is the squared `P`-weighted
+operator norm of the word transition, and the infimum of that norm over all
+`P > 0` is the spectral radius, so
+
+    inf over P > 0 of rho_w(P) = rho(T)^2.
+
+The infimum is attained when the eigenvalues of largest modulus are semisimple
+and is otherwise approached, which the reported eigenbasis condition number
+exposes. One metric is used before and after, which is what a uniform
+statement needs; route 1 compares two different actual covariances and is a
+different quantity, so its .999572659 / .932948382 are not comparable with the
+numbers below.
+
+| Word transition | rho(T) | best achievable rho_w | contracting storage |
+|---|---:|---:|---|
+| H18, 18 motion errors | .997663961 | .995333378 | exists |
+| A21, 18 motion errors | .960813214 | .923162032 | exists |
+| H18, full 21 states | 1.000000000 | 1.000000000 | none |
+| A21, full 21 states | .999399433 | .998799226 | exists |
+
+On the motion block the metric was never the obstruction: a contracting
+quadratic storage exists for both modes, and the eigenbasis witness
+`P = (S^-1)^H (S^-1)` attains the infimum. The two fixed diagonal metrics
+frozen above at rho 1072.993 and 6659.686 were poor choices rather than
+evidence against the architecture.
+
+H18's full-state unit eigenvalue is structural. Its accelerometer bias is
+unobserved over this capture, so it contributes an eigenvalue of exactly one
+and no quadratic storage contracts the full word. That predicts both measured
+bias-ball rows above -- H18 invariant to 2.2e-16, A21 growing 3.146e-4 -- and
+it says the full state wants a bounded-bias statement rather than strict
+contraction, which is what the retained BRMM hypothesis assumes.
+
+These are the frozen capture's own transitions. Existence of a contracting
+storage here is not a uniform certificate over words, sources or the nonlinear
+coefficient dependence, and it promotes nothing.
+
 ## Every route executed on this capture
+
+The list below is the routes executed, not a claim that the space is
+exhausted. The last row is the one that bounds the rest.
 
 | Route | Verdict | Status |
 |---|---|---|
@@ -173,6 +217,7 @@ That architecture is answered at this capture rather than left open.
 | Bias ball and template only | every motion group at most .2382 | retires the separated bias budget |
 | Correlated covariance ellipsoid | word growth at most 7.2%; critical 4.974 / 27.452 sigma | open; needs covariance consistency |
 | Forcing template alone | at most .0470 / .00472 | not the obstruction |
+| Optimal quadratic storage, closed form | motion rho(T) .997663961 / .960813214; full 1.0 / .999399433 | metric was never the motion-block obstruction |
 
 ## Scope
 

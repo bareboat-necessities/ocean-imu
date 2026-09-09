@@ -183,5 +183,50 @@ class DomainRetentionTests(unittest.TestCase):
                                    radii[name], places=9)
 
 
+    def test_optimal_storage_attains_the_squared_spectral_radius(self):
+        """The eigenbasis witness meets the infimum over all metrics."""
+        rng = np.random.default_rng(101)
+        for _ in range(5):
+            transition = rng.normal(size=(6, 6))/3
+            out = D.optimal_quadratic_storage(transition)
+            spectral = max(abs(np.linalg.eigvals(transition)))
+            self.assertAlmostEqual(out["spectral_radius"], spectral, places=10)
+            self.assertAlmostEqual(out["best_achievable_complete_word_ratio"],
+                                   spectral**2, places=10)
+            self.assertAlmostEqual(out["witness_metric_achieves"],
+                                   spectral**2, places=6)
+
+    def test_no_metric_beats_the_spectral_radius(self):
+        """Random metrics never fall below the reported infimum."""
+        rng = np.random.default_rng(103)
+        transition = rng.normal(size=(6, 6))/3
+        floor = D.optimal_quadratic_storage(
+            transition)["best_achievable_complete_word_ratio"]
+        for _ in range(200):
+            a = rng.normal(size=(6, 6))
+            root = np.linalg.cholesky(a@a.T + np.eye(6))
+            ratio = np.linalg.norm(
+                root.T @ transition @ np.linalg.inv(root.T), 2)**2
+            self.assertGreaterEqual(ratio, floor*(1-1e-9))
+
+    def test_a_unit_eigenvalue_admits_no_contracting_storage(self):
+        """An unobserved state puts the spectral radius exactly at one."""
+        transition = np.diag([.5, .25, 1.])
+        out = D.optimal_quadratic_storage(transition)
+        self.assertEqual(out["spectral_radius"], 1.)
+        self.assertFalse(out["a_contracting_quadratic_storage_exists"])
+        self.assertFalse(out["P4_PASS"])
+
+    def test_similarity_leaves_the_infimum_unchanged(self):
+        """The bound is a similarity invariant, not a coordinate artefact."""
+        rng = np.random.default_rng(107)
+        transition = rng.normal(size=(6, 6))/3
+        basis = rng.normal(size=(6, 6)) + 3*np.eye(6)
+        moved = np.linalg.solve(basis, transition) @ basis
+        self.assertAlmostEqual(
+            D.optimal_quadratic_storage(moved)["spectral_radius"],
+            D.optimal_quadratic_storage(transition)["spectral_radius"], places=9)
+
+
 if __name__ == "__main__":
     unittest.main()

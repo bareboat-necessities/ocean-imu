@@ -299,6 +299,46 @@ def ellipsoid_retention(transitions, responses, radii, covariance):
             "P4_PASS": False}
 
 
+def optimal_quadratic_storage(transition):
+    """The best complete-word ratio any quadratic storage can achieve.
+
+    Every route so far picked a metric and measured its ratio. This asks the
+    systematic question instead. For `V(x) = x^T P x` the complete-word ratio
+    is the squared `P`-weighted operator norm of the word transition, and the
+    infimum of that norm over all `P > 0` is the spectral radius. So
+
+        inf_{P>0} rho_w(P) = rho(T)^2,
+
+    where the infimum is attained when the eigenvalues of largest modulus are
+    semisimple and is otherwise only approached. One metric is used before and
+    after, which is the setting a uniform statement needs; route 1 instead
+    compares two different actual covariances and is not this quantity.
+
+    which decides the whole quadratic-storage architecture in one number: a
+    contracting quadratic storage exists exactly when `rho(T) < 1`, and no
+    amount of metric search can beat `rho(T)^2`.
+
+    The witness is built from the eigenbasis, `P = (S^-1)^H (S^-1)`, which
+    attains the infimum whenever the transition is diagonalisable. The
+    returned ratio is the one that metric actually achieves, so a large
+    eigenbasis condition number shows up as a gap rather than as a claim.
+    """
+    values, basis = np.linalg.eig(transition)
+    spectral = float(np.max(np.abs(values)))
+    inverse = np.linalg.inv(basis)
+    metric = G.sym((inverse.conj().T @ inverse).real)
+    root = np.linalg.cholesky(metric + np.eye(len(transition))*1e-18*np.trace(metric))
+    achieved = float(np.linalg.norm(
+        root.T @ transition @ np.linalg.inv(root.T), 2))**2
+    return {"spectral_radius": spectral,
+            "best_achievable_complete_word_ratio": spectral**2,
+            "witness_metric_achieves": achieved,
+            "eigenbasis_condition": float(np.linalg.cond(basis)),
+            "a_contracting_quadratic_storage_exists": spectral < 1.,
+            "frozen_capture_not_a_uniform_certificate": True,
+            "P4_PASS": False}
+
+
 def audit_mode(root, rows, points, mode):
     """Run every initial set of this experiment against one attached word.
 
@@ -354,6 +394,10 @@ def audit_mode(root, rows, points, mode):
             if item["attained_retention_ratio"] > 1.+MARGIN)})
     result["covariance_ellipsoid_initial_set"] = ellipsoid_retention(
         transitions, responses, radii, covariance)
+    # Decides the quadratic-storage architecture instead of sampling it.
+    result["optimal_quadratic_storage"] = {
+        "motion_18": optimal_quadratic_storage(transitions[-1][:18, :18]),
+        "full_21": optimal_quadratic_storage(transitions[-1])}
     return result
 
 
