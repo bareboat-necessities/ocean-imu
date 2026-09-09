@@ -1,0 +1,50 @@
+name: ou3-entry-basin-audit
+on:
+  push:
+    paths:
+      - '.github/workflows/ou3-entry-basin-audit.yml'
+  pull_request:
+    paths:
+      - '.github/workflows/ou3-entry-basin-audit.yml'
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+      - name: Package exact tracked proof and shipping sources
+        run: |
+          python3 - <<'PY'
+          import hashlib, json, pathlib, subprocess, tarfile
+          root = pathlib.Path('.')
+          suffixes = {'.h', '.hpp', '.c', '.cc', '.cpp', '.py', '.md', '.tex', '.yml', '.yaml', '.json', '.mk', '.txt', '.sh', '.ino', '.toml'}
+          manifest = {'commit': subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(), 'files': {}}
+          names = subprocess.check_output(['git', 'ls-files', '-z']).decode().split('\0')
+          with tarfile.open('/tmp/ou3-proof-sources.tar.gz', 'w:gz') as out:
+              for name in names:
+                  if not name:
+                      continue
+                  p = root / name
+                  if not p.is_file() or p.is_symlink():
+                      continue
+                  if p.suffix not in suffixes and p.name not in {'Makefile', 'CMakeLists.txt'}:
+                      continue
+                  if p.stat().st_size > 20_000_000:
+                      continue
+                  manifest['files'][name] = hashlib.sha256(p.read_bytes()).hexdigest()
+                  out.add(p, arcname=name, recursive=False)
+          pathlib.Path('/tmp/ou3-source-manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')
+          print('Bundled tracked source files:', len(manifest['files']))
+          PY
+      - uses: actions/upload-artifact@v6
+        with:
+          name: ou3-entry-audit-sources
+          path: |
+            /tmp/ou3-proof-sources.tar.gz
+            /tmp/ou3-source-manifest.json
+          retention-days: 3
