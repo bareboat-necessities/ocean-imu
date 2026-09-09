@@ -1,4 +1,4 @@
-"""Regression tests for the joint bias/source compatible-storage diagnostic."""
+"""Regression tests for the 24D joint bias/source compatible-storage diagnostic."""
 from __future__ import annotations
 
 import importlib.util
@@ -17,11 +17,11 @@ SPEC.loader.exec_module(J)
 
 
 def sample(a, g=None, d=None, index=0):
-    full = np.eye(21)
+    full = np.eye(24)
     full[:18, :18] = a
     if g is not None:
-        full[:18, 18:] = g
-    forcing = np.zeros(21)
+        full[:18, 18:24] = g
+    forcing = np.zeros(24)
     if d is not None:
         forcing[:18] = d
     step = {"stage": "projection", "kind": "accelerometer", "index": index}
@@ -56,14 +56,14 @@ class CompatibleMetricTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             J.periodic_metrics([sample(1.01*np.eye(18))], np.ones(18))
 
-    def test_one_step_supply_bounds_correlated_input(self):
+    def test_one_step_supply_bounds_one_correlated_joint_internal_vector(self):
         a = .8*np.eye(18)
-        g = np.zeros((18, 3)); g[0, 0] = .2
+        g = np.zeros((18, 6)); g[0, 0] = .2; g[0, 3] = -.1
         d = np.zeros(18); d[1] = .1
         mnext = 2*np.eye(18)
         q = np.eye(18)
-        bias = np.array([.3, 0, 0])
-        rate, supply, v, _ = J.one_step_budget(a, g, d, bias, mnext, q)
+        internal = np.array([.3, 0, 0, .2, 0, 0])
+        rate, supply, v, _ = J.one_step_budget(a, g, d, internal, mnext, q)
         mi = a.T@mnext@a+q
         rng = np.random.default_rng(7)
         for _ in range(100):
@@ -72,34 +72,63 @@ class CompatibleMetricTests(unittest.TestCase):
             rhs = rate*(x@mi@x)+supply
             self.assertLessEqual(lhs, rhs+1e-10*max(1., abs(rhs)))
 
-    def test_prefix_bound_keeps_bias_and_source_in_one_vector(self):
+    def test_prefix_bound_preserves_bias_source_cancellation(self):
         a = .5*np.eye(18)
-        g = np.zeros((18, 3)); g[0, 0] = 2
-        d = np.zeros(18); d[0] = -1
+        g = np.zeros((18, 6)); g[0, 0] = 2; g[0, 3] = -1
+        d = np.zeros(18); d[0] = -.8
         s = sample(a, g, d)
-        result = J.prefix_bound(s, np.eye(18), 1., np.array([.5, 0, 0]), np.ones(18))
-        # G*b+d cancels exactly.  Splitting their norms would not.
+        internal = np.array([.5, 0, 0, .2, 0, 0])
+        result = J.prefix_bound(s, np.eye(18), 1., internal, np.ones(18))
+        # 2*.5 - 1*.2 -.8 = 0.  Splitting bias/source norms would lose this.
         self.assertAlmostEqual(result[0]["groups"]["attitude"]["joint_bias_source_excursion"], 0.)
         self.assertAlmostEqual(result[0]["groups"]["attitude"]["bound"], .5)
 
 
-class BiasRecurrenceTests(unittest.TestCase):
+class PhysicalBiasGraphTests(unittest.TestCase):
     def rows(self, value=(0., 0., 0.)):
         return [{"word": "H18", "stage": "prediction_enter", "true_bias": list(value)}
                 for _ in range(600)]
 
-    def test_literal_zero_driver_is_reconstructed_not_promoted(self):
+    def test_literal_zero_root_driver_is_reconstructed_but_not_promoted(self):
         r = J.true_bias_recurrence({"bias_root": [0, 0, 0], "bias_driver": "ZERO"},
                                    self.rows(), "H18")
         self.assertTrue(r["recurrence_reconstruction_pass"])
         self.assertTrue(r["zero_driver_is_not_uniform_BIAS1_coverage"])
         self.assertFalse(r["nonzero_driver_coverage"])
 
-    def test_zero_driver_nonzero_root_must_continue_without_reseed(self):
+    def test_nonzero_root_without_time_transport_is_refused(self):
         r = J.true_bias_recurrence({"bias_root": [.1, -.2, .3], "bias_driver": "ZERO"},
                                    self.rows((.1, -.2, .3)), "H18")
-        self.assertTrue(r["recurrence_reconstruction_pass"])
-        self.assertEqual(r["recurrence_reconstruction_max_abs"], 0.)
+        self.assertFalse(r["recurrence_reconstruction_pass"])
+        with self.assertRaises(ValueError):
+            J.initial_joint_state({"bias_root": [.1, -.2, .3]}, np.zeros(21))
+
+    def test_true_tau_must_be_declared_for_nonzero_physical_root(self):
+        row = {"tau_b": 5000.}
+        phi, unidentified = J.declared_true_phi(
+            {"bias_root": [.1, 0, 0], "bias_driver": "ZERO", "bias_tau_true_s": 1000.},
+            row, .005)
+        self.assertFalse(unidentified)
+        self.assertAlmostEqual(phi, np.exp(-.005/1000.))
+        with self.assertRaises(ValueError):
+            J.declared_true_phi({"bias_root": [.1, 0, 0], "bias_driver": "ZERO"}, row, .005)
+
+    def test_zero_root_zero_driver_allows_unidentified_tau_only_at_zero(self):
+        phi, unidentified = J.declared_true_phi(
+            {"bias_root": [0, 0, 0], "bias_driver": "ZERO"}, {"tau_b": 5000.}, .005)
+        self.assertTrue(unidentified)
+        self.assertAlmostEqual(phi, np.exp(-.005/5000.))
+
+    def test_projection_joint_formula_retains_true_bias_coordinate(self):
+        beta = np.array([.3, -.1, .05])
+        epre = np.array([.2, .4, -.1])
+        radius = .4
+        estimate_pre = beta-epre
+        scale = min(1., radius/np.linalg.norm(estimate_pre))
+        projected_estimate = scale*estimate_pre
+        exact_error = beta-projected_estimate
+        joint_formula = scale*epre + (1-scale)*beta
+        np.testing.assert_allclose(joint_formula, exact_error, rtol=0, atol=2e-15)
 
     def test_unexplained_nonzero_driver_is_not_inferred_from_trace(self):
         r = J.true_bias_recurrence({"bias_root": [0, 0, 0], "bias_driver": "SOMETHING"},
