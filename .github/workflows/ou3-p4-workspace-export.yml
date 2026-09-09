@@ -1,0 +1,29 @@
+name: ou3-p4-workspace-export
+
+on:
+  push:
+    branches: [work/ou3-p4-joint-estimator-20260909]
+    paths: [.github/workflows/ou3-p4-workspace-export.yml]
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Export pinned sources for local proof validation
+        run: |
+          git archive --format=tar.gz --output=/tmp/ou3-p4-sources.tar.gz HEAD
+          git rev-parse HEAD > /tmp/ou3-p4-source-commit.txt
+      - uses: actions/upload-artifact@v6
+        with:
+          name: ou3-p4-workspace-sources
+          path: |
+            /tmp/ou3-p4-sources.tar.gz
+            /tmp/ou3-p4-source-commit.txt
+          retention-days: 1
