@@ -27,6 +27,7 @@
     "sinusoid_period_s": [300.0, 1200.0],
     "phase_rad": [-3.141592653589793, 3.141592653589793],
     "deterministic_mismatch_component_abs_upper_mps2": 0.01,
+    "deterministic_mismatch_derivative_component_abs_upper_mps3": 0.0001,
     "driver_increment_definition": "w_i=beta(t_i)-phi_true*beta(t_{i-1})",
     "one_root_one_parameter_history_required": true,
     "independent_per_sample_bias_slots_forbidden": true,
