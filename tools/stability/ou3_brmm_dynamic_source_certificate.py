@@ -238,7 +238,10 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
             "tau_applied_s": [down(tau_applied_lo), up(tau_applied_hi)],
             "sigma_target_raw_mps2": [down(sigma_target_lo), up(sigma_target_hi)],
             "sigma_candidate_raw_mps2": [down(sigma_candidate_lo), up(sigma_candidate_hi)],
-            "sigma_aw_filter_mps2": [down(sigma_filter_lo), up(sigma_filter_hi)],
+            # 0.05 is a proven hard lower clamp in apply_ou_tune_, not an
+            # uncertain measured endpoint.  Keep the exact conservative lower
+            # bound rather than widening it below a value shipping cannot use.
+            "sigma_aw_filter_mps2": [sigma_filter_lo, up(sigma_filter_hi)],
             "R_S_applied": [down(rs_lo), up(rs_hi)],
             "pseudo_update_period_s": [
                 down(c["PSEUDO_UPDATE_PERIOD_MIN_S_DEFAULT"]),
