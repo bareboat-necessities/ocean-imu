@@ -31,6 +31,11 @@ split_x_cell = BACKEND.split_x_cell
 
 
 def build(domain_path=DEFAULT_DOMAIN):
+    # Install at call time as well as import time.  Several proof adapters
+    # temporarily replace BASE helpers while sharing the same Python module;
+    # the canonical producer must reassert the endpoint-reference theorem
+    # immediately before evaluating BACKEND's saved original BASE.build.
+    ENDPOINT.install(BACKEND.BASE)
     d = BACKEND.build(domain_path)
     timing = d.get("covariance_memory", {})
     d["endpoint_referenced_translation_covariance"] = True
