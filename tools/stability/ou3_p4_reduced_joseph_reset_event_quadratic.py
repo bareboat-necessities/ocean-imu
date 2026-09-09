@@ -25,6 +25,7 @@ from __future__ import annotations
 import argparse,json
 from fractions import Fraction
 from pathlib import Path
+from ou3_interval import Interval
 
 QUALIFICATION='OU3_P4_DENSE_REDUCED_JOSEPH_RESET_EVENT_QUADRATIC_V1'
 
@@ -42,10 +43,12 @@ def mm(A,B):
 def madd(A,B):
     if shape(A)!=shape(B):raise ValueError('matrix add mismatch')
     return [[A[i][j]+B[i][j] for j in range(len(A[0]))] for i in range(len(A))]
-# Multiply on the matrix-entry side.  This keeps the helper generic for both
-# exact Fraction arithmetic and the outward Interval type, whose supported
-# scalar multiplication is x*c rather than relying on scalar __rmul__.
-def mscale(A,c):return [[x*c for x in row] for row in A]
+def mscale(A,c):
+    """Scale exact-Fraction or outward-Interval matrices without type leakage."""
+    if not A or not A[0]:raise ValueError('nonempty matrix required')
+    sample=A[0][0]
+    cc=Interval.point(float(c)) if isinstance(sample,Interval) else c
+    return [[x*cc for x in row] for row in A]
 def symcross(A,W,B):
     """Matrix whose quadratic is (Az)'W(Bz), with symmetry made explicit."""
     X=mm(mm(mt(A),W),B);Xt=mt(X)
@@ -66,17 +69,12 @@ def event_quadratic(J,H,Rinv,E,Q,N,D,B):
         if ar!=expect:raise ValueError(name+' row dimension invalid')
         if nz is None:nz=ac
         if ac!=nz:raise ValueError('augmented coordinate dimensions differ')
-    HR=mm(mt(H),Rinv) # n x 3
-    HtRH=mm(HR,H)    # n x n
-    # -q'R^-1q + eta'R^-1eta
+    HR=mm(mt(H),Rinv)
+    HtRH=mm(HR,H)
     M=madd(mscale(gram(Q,Rinv),-1),gram(N,Rinv))
-    # + q'R^-1 H d
     M=madd(M,symcross(Q,mm(Rinv,H),D))
-    # +2 e'Jb
     M=madd(M,mscale(symcross(E,J,B),2))
-    # -2 eta'R^-1 H b
     M=madd(M,mscale(symcross(N,mm(Rinv,H),B),-2))
-    # +b'Jb +(Hb)'R^-1(Hb)
     M=madd(M,gram(B,J));M=madd(M,gram(B,HtRH))
     return M
 
@@ -88,9 +86,6 @@ def selector(rows,n,offset):
     return [[o if j==offset+i else z for j in range(n)] for i in range(rows)]
 
 def build():
-    # Exact rational smoke on z=[e2,q2,eta2,d2,b2] using a 2-D analogue of the
-    # general 3-vector formula.  A local builder below mirrors event_quadratic
-    # without hard-coding measurement dimension three.
     J=[[Fraction(5,3),Fraction(1,7)],[Fraction(1,7),Fraction(7,4)]]
     H=[[Fraction(1),Fraction(2)],[Fraction(-1),Fraction(1,3)]]
     Rinv=[[Fraction(3,5),Fraction(-1,13)],[Fraction(-1,13),Fraction(4,7)]]
