@@ -33,14 +33,26 @@ jobs:
           assert d['validation_pass'],d['validation_failures']
           assert d['same_cell_Joseph_correction_domain_consumed']
           assert d['exact_reset_joint_coordinate_consumed']
-          assert d['exact_reset_lifted_QCs_consumed']
+          assert d['same_cell_parameterized_exact_reset_lift_builder_used']
           assert not d['rowwise_K_bound_used'] and not d['independent_K_box_used']
+          assert not d['historical_rowwise_reset_lift_path_consumed']
           assert not d['scalar_delta_used_as_independent_storage_port']
           assert not d['P4_promoted_here']
           print('RESET_DOMAIN_CLOSED',d['source_uniform_same_graph_correction_domain_closed'])
           for mode,m in d['modes'].items():
+              lift=m['same_cell_exact_reset_lift']
+              if lift is not None:
+                  assert lift['same_cell_correction_domain_supplied']
+                  assert not lift['rowwise_K_correction_domain_used']
+                  assert lift['correction_norm_upper']==m['correction_norm_upper']
+                  assert not m['same_cell_exact_reset_lift_failures']
               print('RESET_DOMAIN',mode,'limiting=',m['limiting_event'],'delta=',m['correction_norm_upper'],
-                    'inside=',m['inside_exact_reset_utility_domain'],'mu=',m['reset_defect_over_correction_norm_upper'])
+                    'inside=',m['inside_exact_reset_utility_domain'],'mu=',m['reset_defect_over_correction_norm_upper'],
+                    'same_cell_lift=',lift is not None)
+          if d['source_uniform_same_graph_correction_domain_closed']:
+              assert d['exact_reset_lifted_QCs_consumed_from_same_cell_domain']
+              assert d['homogeneous_same_cell_reset_IQC_consumed']
+              assert d['reset_gain_uniform_over_zero_to_correction_ceiling']
           PY
       - uses: actions/upload-artifact@v6
         if: always()
