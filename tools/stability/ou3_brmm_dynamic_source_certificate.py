@@ -2,14 +2,19 @@
 """Canonical BRMM dynamic adaptive-source certificate for OU-III.
 
 The canonical proof no longer turns the tuner into an 800-state arbitrary
-switching language.  Its source state is the shipping adaptive state
+switching language.  Its source state is the shipping adaptive state plus the
+effective OU scale consumed by the filter.
 
-    xi = (tau_applied, sigma_aw, R_S, T_S, pending_commit_progress).
+A crucial distinction is retained explicitly:
 
-BRMM supplies the admissible physical event; the existing WavePeriodEstimator,
-tuner EMA and staged commit semantics determine xi.  This producer certifies a
-compact invariant and conservative motion bounds without replay fitting and
-without constructing the retired P2 history graph.
+* ``sigma_target_raw`` / ``sigma_candidate_raw`` are the shipping tuner values.
+  Once the variance EMA is ready, quiet input may drive the target down to
+  ``sigma_coeff*sqrt(1e-6)``; there is no 0.05 floor on this raw state.
+* ``sigma_aw_filter`` is the effective OU stationary standard deviation after
+  ``apply_ou_tune_`` applies ``max(0.05, band_noise_floor, tune_.sigma_applied)``.
+
+Conflating those coordinates would exclude the BRMM quiet continuation and is
+therefore not admissible for P4.
 """
 from __future__ import annotations
 
@@ -28,9 +33,10 @@ import ou3_validated_transcendentals as VT
 REPO = Path(__file__).resolve().parents[2]
 WRAPPER = REPO / "src" / "kalman_ou_iii" / "SeaStateFusionFilter_OU_III.h"
 ESTIMATOR = REPO / "src" / "tuner" / "WavePeriodEstimator.h"
+TUNER = REPO / "src" / "tuner" / "SeaStateAutoTuner.h"
 LIMITS = REPO / "src" / "tuner" / "SeaStateAdaptationLimits.h"
 DEFAULT_DOMAIN = REPO / "tools" / "stability" / "ou3_proof_operating_domain.json"
-SCHEMA = 2
+SCHEMA = 3
 QUALIFICATION = "OU3_BRMM_DYNAMIC_ADAPTIVE_SOURCE_CERTIFICATE"
 
 
@@ -43,7 +49,7 @@ def up(x: float) -> float:
 
 
 def _point(x: float) -> Interval:
-    return Interval.outward_bounds(float(x), float(x))
+    return Interval.point(float(x))
 
 
 def _member_float(text: str, name: str) -> float:
@@ -73,6 +79,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
 
     wrapper = WRAPPER.read_text(encoding="utf-8")
     estimator = ESTIMATOR.read_text(encoding="utf-8")
+    tuner = TUNER.read_text(encoding="utf-8")
     limits = LIMITS.read_text(encoding="utf-8")
 
     physical = PHYSICAL.build(path)
@@ -96,6 +103,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     smax = SOURCE.parse_const(limits, "kDynamicEmaTimeScaleMaxSec")
 
     tau_coeff = _member_float(wrapper, "tau_coeff_")
+    sigma_coeff = _member_float(wrapper, "sigma_coeff_")
     tau_initial = _member_float(wrapper, "tau_applied")
     sigma_initial = _member_float(wrapper, "sigma_applied")
     rs_initial = _member_float(wrapper, "RS_applied")
@@ -108,8 +116,19 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     tau_applied_lo = min(tau_initial, tau_target_lo)
     tau_applied_hi = max(tau_initial, tau_target_hi)
 
+    # After variance readiness shipping executes
+    #   var_wave=max(var_total-var_noise,0); var_wave=max(var_wave,1e-6)
+    #   sigma_target=min(sigma_coeff*sqrt(var_wave),MAX_SIGMA_A).
+    # Therefore quiet continuation permits 0.001*sigma_coeff.  The separate
+    # 0.05 floor appears only later in apply_ou_tune_ when the filter consumes
+    # the candidate.
+    sigma_target_lo = min(c["MAX_SIGMA_A"], max(0.0, sigma_coeff) * 1.0e-3)
+    sigma_target_hi = c["MAX_SIGMA_A"]
+    sigma_candidate_lo = min(sigma_initial, sigma_target_lo)
+    sigma_candidate_hi = max(sigma_initial, sigma_target_hi)
     sigma_filter_lo = 0.05
-    sigma_filter_hi = max(sigma_initial, c["MAX_SIGMA_A"])
+    sigma_filter_hi = max(0.05, sigma_candidate_hi)
+
     rs_lo = min(rs_initial, c["MIN_R_S"])
     rs_hi = max(rs_initial, c["MAX_R_S"])
 
@@ -130,11 +149,9 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     alpha_common = _alpha_upper(dt, common_h_lo)
     alpha_rs = _alpha_upper(dt, rs_h_lo)
     per_sample_tau = up(alpha_common * (tau_target_hi - tau_target_lo))
-    per_sample_sigma = up(alpha_common * (sigma_filter_hi - sigma_filter_lo))
+    per_sample_sigma = up(alpha_common * (sigma_target_hi - sigma_target_lo))
     per_sample_rs = up(alpha_rs * (rs_hi - rs_lo))
 
-    # `time-last > cadence` can cost one extra sample; retain two samples of
-    # source-independent padding rather than depending on decimal equality.
     commit_gap_samples = int(math.ceil(c["ADAPT_EVERY_SECS"] / dt)) + 2
     commit_gap_s_upper = up(commit_gap_samples * dt)
     tau_commit_jump = up(commit_gap_samples * per_sample_tau)
@@ -161,6 +178,17 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         ),
         "dynamic_horizon_ceiling_35s_present": "kDynamicEmaHorizonMaxSec = 35.0f" in limits,
         "one_way_usable_period_latch_present": "if (usable_period_) return;" in estimator,
+        "quiet_variance_may_reach_zero_after_ready": (
+            "return std::max(0.0f, A_sq.get() - mu * mu);" in tuner
+        ),
+        "raw_sigma_target_uses_1e_minus6_variance_floor": (
+            "var_wave = std::max(var_wave, 1e-6f);" in wrapper
+            and "sigma_wave = std::sqrt(var_wave);" in wrapper
+        ),
+        "effective_filter_sigma_has_separate_0p05_floor": (
+            "const float sigma_floor = std::max(0.05f, band_noise_floor_sigma_());" in wrapper
+            and "const float sZ = std::max(sigma_floor, tune_.sigma_applied);" in wrapper
+        ),
     }
     parity_failures = [name for name, ok in parity.items() if not ok]
 
@@ -178,9 +206,10 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "old_P2_800_state_graph_consumed": False,
         "old_P2_history_word_enumeration_consumed": False,
         "adaptive_state": [
-            "tau_applied", "sigma_aw_filter", "R_S_applied",
-            "pseudo_update_period", "pending_commit_progress",
+            "tau_candidate_active", "sigma_candidate_raw", "R_S_candidate_active",
+            "sigma_aw_filter_effective", "pseudo_update_period", "pending_commit_progress",
         ],
+        "raw_and_effective_sigma_are_distinct_coordinates": True,
         "source_parity": parity,
         "source_parity_failures": parity_failures,
         "reference_model_metadata": {
@@ -201,11 +230,14 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
                 "accelerometer_rejection_in_normal_live_scope"
             ],
             "vector_PE_recurrence_window_s": live["vector_pe_recurrence_window_s"],
+            "quiet_case_admitted": True,
         },
         "dynamic_invariant": {
             "tuning_frequency_hz": [down(f_lo), up(f_hi)],
             "tau_target_s": [down(tau_target_lo), up(tau_target_hi)],
             "tau_applied_s": [down(tau_applied_lo), up(tau_applied_hi)],
+            "sigma_target_raw_mps2": [down(sigma_target_lo), up(sigma_target_hi)],
+            "sigma_candidate_raw_mps2": [down(sigma_candidate_lo), up(sigma_candidate_hi)],
             "sigma_aw_filter_mps2": [down(sigma_filter_lo), up(sigma_filter_hi)],
             "R_S_applied": [down(rs_lo), up(rs_hi)],
             "pseudo_update_period_s": [
@@ -235,8 +267,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "P3_PROMOTED": False,
         "P4_PROMOTED": False,
         "next_obligation": (
-            "use the compact BRMM-driven adaptive state directly in the moving-Riccati proof; "
-            "do not reconstruct an 800-state source-word language"
+            "propagate raw tuner candidates and the separately floored effective OU sigma through the same-history P4 source cover; do not replace them by one sigma coordinate"
         ),
     }
 
@@ -245,7 +276,10 @@ def validate(d: dict) -> list[str]:
     f: list[str] = []
     if d.get("schema") != SCHEMA or d.get("qualification") != QUALIFICATION:
         f.append("schema/qualification mismatch")
-    for key in ("source_generated_not_trajectory_fit", "theorem_is_conditional_on_admitted_BRMM_event"):
+    for key in (
+        "source_generated_not_trajectory_fit", "theorem_is_conditional_on_admitted_BRMM_event",
+        "raw_and_effective_sigma_are_distinct_coordinates",
+    ):
         if d.get(key) is not True:
             f.append(f"{key} is not true")
     for key in (
@@ -264,11 +298,18 @@ def validate(d: dict) -> list[str]:
         f.append("normal Live accelerometer recurrence lost")
     if live.get("accelerometer_rejection_in_scope") is not False:
         f.append("rejected accelerometer branch re-entered theorem")
-    for name, bounds in d.get("dynamic_invariant", {}).items():
+    if live.get("quiet_case_admitted") is not True:
+        f.append("quiet BRMM continuation was lost")
+    inv=d.get("dynamic_invariant",{})
+    for name, bounds in inv.items():
         if isinstance(bounds, list) and len(bounds) == 2:
             lo, hi = map(float, bounds)
             if not (math.isfinite(lo) and math.isfinite(hi) and 0.0 < lo <= hi):
                 f.append(f"invalid dynamic interval {name}")
+    raw=inv.get("sigma_candidate_raw_mps2",[math.nan,math.nan])
+    eff=inv.get("sigma_aw_filter_mps2",[math.nan,math.nan])
+    if not (float(raw[0]) < 0.05 <= float(eff[0])):
+        f.append("raw/effective sigma lower-bound distinction missing")
     if d.get("P3_PROMOTED") is not False or d.get("P4_PROMOTED") is not False:
         f.append("dynamic source stage promoted downstream theorem")
     return list(dict.fromkeys(f))
