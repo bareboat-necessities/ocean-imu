@@ -2,23 +2,20 @@
 """Kernel-backed radial first-exit Joseph working cells for P4.
 
 For finite-state first-exit analysis, every prefix strictly before the first
-exit lies in the declared hard working domain.  Therefore a Joseph event that
+exit lies in the declared hard working domain. Therefore a Joseph event that
 could cause the first exit may be differentiated/enclosed on an outward box of
-that same working domain.  This module combines:
-
-* trusted same-transition kernel P/H/R captures;
-* every same-sample joint-estimator Image (no favorable successor selection);
-* a continuous exact radial partition of [0,1];
-* rectangular AD boxes that only OUTER-enclose the hard-ball geometry; and
-* the original hard-ball/radial coordinates retained separately for later IQCs.
+that same working domain. This module combines trusted kernel P/H/R captures,
+every same-sample joint-estimator Image, a continuous exact radial partition,
+outward AD boxes, and the original hard-ball/radial coordinates retained for
+later IQCs.
 
 For each S=0, accelerometer and magnetometer event it emits an estimator-owned
 SourceCoverCell and builds the real same-cell nonlinear event plus structured
-reduced event master.  A21 true physical bias is enclosed from the qualified
-BIAS1 family, independently of covariance.
+reduced event master. A21 true physical bias is enclosed from the qualified
+BIAS1 family independently of covariance.
 
-These are theorem working-domain cells, not a reachability claim.  Promotion
-still requires the every-prefix hard-domain/first-exit implication and complete
+These are theorem working-domain cells, not a reachability claim. Promotion
+still requires every-prefix hard-domain/first-exit implication and complete
 source continuation over the admitted BRMM family.
 """
 from __future__ import annotations
@@ -46,8 +43,12 @@ def _true_bias_box():
     if bf:raise RuntimeError('BIAS1 prerequisite failed: '+repr(bf))
     r=float(b['true_bias_norm_upper_mps2']);u=math.nextafter(r,math.inf)
     return [Interval(-u,u) for _ in range(3)]
+def _event_token(image,radial,ordinal):
+    # Source-cover ownership requires the literal refinement to begin ':e'.
+    # Radial identity remains encoded inside that event suffix.
+    return f'{image.source_token}:eR{radial.token}_{ordinal}'
 def _cell(image,rc,sample,mode,radial,ordinal,state,pred):
-    token=f'{image.source_token}:r{radial.token}:e{ordinal}'
+    token=_event_token(image,radial,ordinal)
     common=dict(image=image,mode=mode,sample_index=0,event_ordinal=ordinal,kind=rc.kind,state=state,P=rc.P_before,
       dt_s=I(.005),pseudo_elapsed_s=I(.005*ordinal),radial_scale=radial.radial_scale,event_source_token=token,event_predecessor_token=pred,
       true_bias=_true_bias_box() if mode=='A' else None,bias_projection_limit=_limit() if mode=='A' else None)
@@ -82,12 +83,14 @@ def build():
     total=sum(r['event_count'] for r in records)
     s_ok=all(next(x for x in r['Joseph_events'] if x['kind']=='S_zero')['actual_RS'] is True for r in records)
     nonlinear=all(next(x for x in r['Joseph_events'] if x['kind']=='accelerometer')['nonlinear_sector_count']>0 and next(x for x in r['Joseph_events'] if x['kind']=='magnetometer')['nonlinear_sector_count']>0 for r in records)
+    owned=all(x['event_token'].startswith(r['image_token']+':e') for r in records for x in r['Joseph_events'])
     return {'schema':SCHEMA,'qualification':QUALIFICATION,'canonical_source':'COMPLETE_BRMM_NORMAL_LIVE_WORD',
       'trusted_kernel_same_transition_captures_consumed':True,'every_same_sample_joint_estimator_image_consumed':True,
       'continuous_radial_partition_consumed':True,'radial_partition_exactly_covers_unit_interval':LINEAGE.exact_partition_cover(radials),
       'hard_ball_geometry_replaced_by_AD_box':False,'AD_box_is_outer_working_domain_enclosure_only':True,
       'first_exit_semantics_required_for_working_cells':True,'working_cell_reachability_claimed':False,
       'qualified_BIAS1_true_bias_box_attached_to_A21':True,'covariance_membership_used_for_error_state':False,
+      'radial_identity_encoded_inside_estimator_owned_event_suffix':owned,
       'record_count':len(records),'Joseph_event_count_total':total,'records':records,
       'all_working_cells_and_real_event_masters_valid':valid,'all_Szero_cells_use_actual_applied_RS':s_ok,
       'all_nonlinear_cells_retain_structured_graph_sectors':nonlinear,
@@ -97,7 +100,7 @@ def build():
 def validate(d):
     f=[]
     if d.get('schema')!=SCHEMA or d.get('qualification')!=QUALIFICATION:f.append('schema/qualification mismatch')
-    for k in ('trusted_kernel_same_transition_captures_consumed','every_same_sample_joint_estimator_image_consumed','continuous_radial_partition_consumed','radial_partition_exactly_covers_unit_interval','AD_box_is_outer_working_domain_enclosure_only','first_exit_semantics_required_for_working_cells','qualified_BIAS1_true_bias_box_attached_to_A21','all_working_cells_and_real_event_masters_valid','all_Szero_cells_use_actual_applied_RS','all_nonlinear_cells_retain_structured_graph_sectors'):
+    for k in ('trusted_kernel_same_transition_captures_consumed','every_same_sample_joint_estimator_image_consumed','continuous_radial_partition_consumed','radial_partition_exactly_covers_unit_interval','AD_box_is_outer_working_domain_enclosure_only','first_exit_semantics_required_for_working_cells','qualified_BIAS1_true_bias_box_attached_to_A21','radial_identity_encoded_inside_estimator_owned_event_suffix','all_working_cells_and_real_event_masters_valid','all_Szero_cells_use_actual_applied_RS','all_nonlinear_cells_retain_structured_graph_sectors'):
         if d.get(k) is not True:f.append(k+' not true')
     for k in ('hard_ball_geometry_replaced_by_AD_box','working_cell_reachability_claimed','covariance_membership_used_for_error_state','production_every_prefix_first_exit_retention_closed_here','production_complete_BRMM_source_family_covered_here','production_reachable_state_lineage_claimed_here','P4_MOTION_PASS','P4_PASS','P5_MAY_START'):
         if d.get(k) is not False:f.append(k+' not false')
