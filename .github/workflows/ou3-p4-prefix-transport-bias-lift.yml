@@ -7,6 +7,7 @@ on:
       - 'tools/stability/ou3_p4_complete_word_prefix_transport.py'
       - 'tools/stability/ou3_p4_complete_word_endpoint_transport.py'
       - 'tools/stability/ou3_p4_a21_bias_projection_beta_lift.py'
+      - 'tools/stability/ou3_p4_a21_bias1_24state_event_lift.py'
       - 'tools/stability/ou3_p4_complete_brmm_differential_events.py'
       - 'tools/stability/ou3_p4_brmm_reduced_event_master.py'
       - 'tools/stability/ou3_p4_brmm_same_Dtheta_reset_binding.py'
@@ -42,6 +43,7 @@ jobs:
           mkdir -p /tmp/ou3-p4-prefix-bias
           python tools/stability/ou3_p4_complete_word_prefix_transport.py --output /tmp/ou3-p4-prefix-bias/prefix-transport.json
           python tools/stability/ou3_p4_a21_bias_projection_beta_lift.py --output /tmp/ou3-p4-prefix-bias/beta-projection-lift.json
+          python tools/stability/ou3_p4_a21_bias1_24state_event_lift.py --output /tmp/ou3-p4-prefix-bias/bias1-24state-lift.json
           python tools/stability/ou3_p4_brmm_reduced_event_master.py --output /tmp/ou3-p4-prefix-bias/event-master.json
           python tools/stability/ou3_p4_brmm_same_Dtheta_reset_binding.py --output /tmp/ou3-p4-prefix-bias/reset-binding.json
           python tools/stability/ou3_p4_brmm_szero_correction_domain.py --output /tmp/ou3-p4-prefix-bias/szero-domain.json
@@ -50,10 +52,11 @@ jobs:
           root='/tmp/ou3-p4-prefix-bias/'
           p=json.load(open(root+'prefix-transport.json'))
           b=json.load(open(root+'beta-projection-lift.json'))
+          j=json.load(open(root+'bias1-24state-lift.json'))
           e=json.load(open(root+'event-master.json'))
           r=json.load(open(root+'reset-binding.json'))
           s=json.load(open(root+'szero-domain.json'))
-          for name,obj in [('prefix',p),('beta',b),('event',e),('reset',r),('szero',s)]:
+          for name,obj in [('prefix',p),('beta',b),('bias1-24',j),('event',e),('reset',r),('szero',s)]:
               assert obj['validation_pass'], (name,obj.get('validation_failures'))
           assert p['every_prefix_transport_family_constructor_available']
           assert p['exact_rational_every_prefix_identity_closed']
@@ -64,12 +67,18 @@ jobs:
           assert b['active_projection_beta_derivative_retained']
           assert b['clarke_boundary_beta_derivative_hulled']
           assert not b['production_lineage_24state_events_materialized_here']
+          assert j['prediction_24state_lift_available']
+          assert j['prediction_supply_map_available']
+          assert j['same_w_enters_error_and_true_bias']
+          assert j['one_persistent_beta_state_across_prediction_and_measurement']
+          assert j['active_projection_true_bias_coupling_nonzero']
+          assert not j['production_prefix_source_transport_closed_here']
           assert e['real_reduced_event_master_materialized']
           assert r['smoke_event_specific_same_Dtheta_reset_domain_closed']
           assert s['smoke_same_graph_correction_domain_closed']
-          for obj in (p,b,e,r,s):
+          for obj in (p,b,j,e,r,s):
               assert not obj['P4_PASS'] and not obj['P5_MAY_START']
-          print('PREFIX_TRANSPORT_TRUE_BIAS_PROJECTION_LIFT_PASS')
+          print('PREFIX_TRANSPORT_TRUE_BIAS_24STATE_LIFT_PASS')
           PY
       - uses: actions/upload-artifact@v4
         if: always()
