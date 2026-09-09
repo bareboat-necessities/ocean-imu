@@ -1,0 +1,122 @@
+name: ou3-p4-prefix-transport-bias-lift
+
+on:
+  push:
+    branches: [main, 'codex/ou3-p4-joint-estimator-transition']
+    paths: &paths
+      - 'tools/stability/ou3_p4_complete_word_prefix_transport.py'
+      - 'tools/stability/ou3_p4_complete_word_endpoint_transport.py'
+      - 'tools/stability/ou3_p4_a21_bias_projection_beta_lift.py'
+      - 'tools/stability/ou3_p4_a21_bias1_24state_event_lift.py'
+      - 'tools/stability/ou3_p4_prefix_supply_transport.py'
+      - 'tools/stability/ou3_p4_brmm_bias1_prediction_lift.py'
+      - 'tools/stability/ou3_p4_brmm_binary32_prefix_lift.py'
+      - 'tools/stability/ou3_p4_brmm_projection_graph_iqc.py'
+      - 'tools/stability/ou3_p4_brmm_a21_projection_prefix.py'
+      - 'tools/stability/ou3_p4_brmm_bias_projection_prediction_chain.py'
+      - 'tools/stability/ou3_p4_brmm_kernel_event_capture_bridge.py'
+      - 'tools/stability/ou3_p4_brmm_kernel_source_cell_smoke.py'
+      - 'tools/stability/ou3_p4_hard_entry_radial_ad_boxes.py'
+      - 'tools/stability/ou3_p4_brmm_kernel_radial_working_cells.py'
+      - 'tools/stability/ou3_brmm_complete_window_execution_kernel.py'
+      - 'tools/stability/ou3_p4_complete_brmm_differential_events.py'
+      - 'tools/stability/ou3_p4_brmm_reduced_event_master.py'
+      - 'tools/stability/ou3_p4_reduced_joseph_reset_event_quadratic.py'
+      - 'tools/stability/ou3_p4_brmm_same_Dtheta_reset_binding.py'
+      - 'tools/stability/ou3_p4_brmm_szero_correction_domain.py'
+      - 'tools/stability/ou3_p4_brmm_nonlinear_correction_domain.py'
+      - '.github/workflows/ou3-p4-prefix-transport-bias-lift.yml'
+  pull_request:
+    paths: *paths
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ou3-p4-prefix-transport-bias-lift-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile proof sources
+        run: python -m compileall -q tools/stability
+      - name: Execute prefix transport, physical-bias lift, kernel lineage, and radial working cells
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/ou3-p4-prefix-bias
+          python tools/stability/ou3_p4_complete_word_prefix_transport.py --output /tmp/ou3-p4-prefix-bias/prefix-transport.json
+          python tools/stability/ou3_p4_a21_bias_projection_beta_lift.py --output /tmp/ou3-p4-prefix-bias/beta-projection-lift.json
+          python tools/stability/ou3_p4_a21_bias1_24state_event_lift.py --output /tmp/ou3-p4-prefix-bias/bias1-24state-lift.json
+          python tools/stability/ou3_p4_prefix_supply_transport.py --output /tmp/ou3-p4-prefix-bias/prefix-supply-transport.json
+          python tools/stability/ou3_p4_brmm_bias1_prediction_lift.py --output /tmp/ou3-p4-prefix-bias/bias1-prediction-lift.json
+          python tools/stability/ou3_p4_brmm_binary32_prefix_lift.py --output /tmp/ou3-p4-prefix-bias/binary32-prefix-lift.json
+          python tools/stability/ou3_p4_brmm_projection_graph_iqc.py --output /tmp/ou3-p4-prefix-bias/projection-graph.json
+          python tools/stability/ou3_p4_brmm_a21_projection_prefix.py --output /tmp/ou3-p4-prefix-bias/a21-projection-prefix.json
+          python tools/stability/ou3_p4_brmm_bias_projection_prediction_chain.py --output /tmp/ou3-p4-prefix-bias/projection-prediction-chain.json
+          python tools/stability/ou3_p4_brmm_kernel_event_capture_bridge.py --output /tmp/ou3-p4-prefix-bias/kernel-event-capture.json
+          python tools/stability/ou3_p4_brmm_kernel_source_cell_smoke.py --output /tmp/ou3-p4-prefix-bias/kernel-source-cells.json
+          python tools/stability/ou3_p4_hard_entry_radial_ad_boxes.py --output /tmp/ou3-p4-prefix-bias/radial-ad-boxes.json
+          python tools/stability/ou3_p4_brmm_kernel_radial_working_cells.py --output /tmp/ou3-p4-prefix-bias/kernel-radial-working-cells.json
+          python tools/stability/ou3_p4_brmm_reduced_event_master.py --output /tmp/ou3-p4-prefix-bias/event-master.json
+          python tools/stability/ou3_p4_brmm_same_Dtheta_reset_binding.py --output /tmp/ou3-p4-prefix-bias/reset-binding.json
+          python tools/stability/ou3_p4_brmm_szero_correction_domain.py --output /tmp/ou3-p4-prefix-bias/szero-domain.json
+          python tools/stability/ou3_p4_brmm_nonlinear_correction_domain.py --output /tmp/ou3-p4-prefix-bias/nonlinear-domain.json
+          python - <<'PY'
+          import json
+          root='/tmp/ou3-p4-prefix-bias/'
+          names=['prefix-transport','beta-projection-lift','bias1-24state-lift','prefix-supply-transport','bias1-prediction-lift','binary32-prefix-lift','projection-graph','a21-projection-prefix','projection-prediction-chain','kernel-event-capture','kernel-source-cells','radial-ad-boxes','kernel-radial-working-cells','event-master','reset-binding','szero-domain','nonlinear-domain']
+          objs={n:json.load(open(root+n+'.json')) for n in names}
+          for name,obj in objs.items():
+              assert obj['validation_pass'], (name,obj.get('validation_failures'))
+          p=objs['prefix-transport'];b=objs['beta-projection-lift'];j=objs['bias1-24state-lift'];u=objs['prefix-supply-transport']
+          bp=objs['bias1-prediction-lift'];fp=objs['binary32-prefix-lift'];pg=objs['projection-graph'];ap=objs['a21-projection-prefix'];ch=objs['projection-prediction-chain']
+          kc=objs['kernel-event-capture'];ks=objs['kernel-source-cells'];ra=objs['radial-ad-boxes'];kw=objs['kernel-radial-working-cells']
+          e=objs['event-master'];r=objs['reset-binding'];s=objs['szero-domain'];nd=objs['nonlinear-domain']
+          assert p['every_prefix_transport_family_constructor_available'] and p['exact_rational_every_prefix_identity_closed'] and p['actual_applied_RS_suffix_semantics_inherited']
+          assert not p['production_every_prefix_transport_enclosed_here']
+          assert b['measurement_event_24state_lift_available'] and b['one_beta_true_coordinate_must_persist_across_word'] and b['active_projection_beta_derivative_retained'] and b['clarke_boundary_beta_derivative_hulled']
+          assert j['prediction_24state_lift_available'] and j['prediction_supply_map_available'] and j['same_w_enters_error_and_true_bias'] and j['one_persistent_beta_state_across_prediction_and_measurement']
+          assert u['every_literal_prefix_supply_map_available'] and u['joint_columns_retain_event_identity'] and u['same_w_bias_structure_available_before_suffix_transport']
+          assert not u['packet_count_multiplier_used'] and not u['per_event_norm_sum_used']
+          assert bp['same_w_columns_enter_error_and_true_bias'] and bp['one_physical_beta_state_carried_across_prediction']
+          assert fp['additive_state_forcing_coordinate_materialized'] and fp['covariance_roundoff_not_double_counted_as_state_kick']
+          assert pg['dense_projection_IQC_available'] and pg['Clarke_boundary_branch_retained']
+          assert ap['all_augmented_matrices_share_one_coordinate'] and ap['event_specific_same_Dtheta_reset_sector_embedded']
+          assert ch['projected_ba_is_next_prediction_error_input'] and ch['same_persistent_beta_is_next_prediction_true_bias_input'] and ch['same_w_enters_next_error_and_true_bias']
+          assert kc['trusted_kernel_passive_capture_consumed'] and kc['all_same_sample_joint_and_kernel_successors_retained']
+          assert not kc['favorable_joint_estimator_successor_selected_for_production'] and not kc['covariance_used_as_physical_error_membership']
+          assert ks['same_sample_complete_joint_estimator_image_family_consumed'] and ks['every_joint_image_has_both_mode_literal_five_event_chains']
+          assert ks['all_estimator_owned_source_cells_valid'] and ks['all_three_Joseph_event_master_classes_built_for_every_image_and_mode']
+          assert not ks['favorable_joint_estimator_successor_selected'] and not ks['point_zero_root_may_promote_source_uniform_cover']
+          assert ra['recursive_partition_exactly_covers_unit_interval'] and ra['rectangular_box_is_outer_AD_enclosure_only']
+          assert not ra['rectangular_box_replaces_hard_ball_IQCs'] and not ra['production_every_prefix_hard_domain_retention_closed_here']
+          assert kw['trusted_kernel_same_transition_captures_consumed'] and kw['every_same_sample_joint_estimator_image_consumed']
+          assert kw['radial_partition_exactly_covers_unit_interval'] and kw['radial_identity_encoded_inside_estimator_owned_event_suffix']
+          assert kw['all_working_cells_and_real_event_masters_valid'] and kw['all_Szero_cells_use_actual_applied_RS'] and kw['all_nonlinear_cells_retain_structured_graph_sectors']
+          assert not kw['working_cell_reachability_claimed'] and not kw['production_every_prefix_first_exit_retention_closed_here']
+          assert e['real_reduced_event_master_materialized'] and r['smoke_event_specific_same_Dtheta_reset_domain_closed'] and s['smoke_same_graph_correction_domain_closed']
+          assert nd['same_cell_Dtheta_consumed'] and nd['full_declared_hard_entry_balls_consumed'] and nd['exact_chord_sectors_retained_in_correction_implication'] and nd['accelerometer_c_cross_aw_sectors_retained_in_correction_implication']
+          assert nd['strict_outward_LDLT_is_only_success_condition'] and not nd['rowwise_K_bound_used'] and not nd['independent_residual_norm_used']
+          assert nd['accelerometer']['attempts'] > 0 and nd['magnetometer']['attempts'] > 0
+          for obj in objs.values():
+              assert not obj.get('P4_PASS',False) and not obj.get('P5_MAY_START',False)
+          print('NONLINEAR_DOMAIN_RESULT',nd['smoke_accelerometer_same_graph_closed'],nd['smoke_magnetometer_same_graph_closed'])
+          print('KERNEL_LINEAGES',ks['joint_image_lineage_count'],'RADIAL_WORKING_RECORDS',kw['record_count'])
+          print('PREFIX_TRANSPORT_PROJECTION_BIAS1_BINARY32_KERNEL_RADIAL_PASS')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ou3-p4-prefix-transport-bias-lift
+          path: /tmp/ou3-p4-prefix-bias/
+          if-no-files-found: error

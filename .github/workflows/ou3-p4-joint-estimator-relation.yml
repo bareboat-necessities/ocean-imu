@@ -1,0 +1,144 @@
+name: ou3-p4-joint-estimator-relation
+
+on:
+  push:
+    branches: [main, 'codex/ou3-p4-joint-estimator-transition']
+    paths: &paths
+      - 'src/**'
+      - 'tools/stability/**'
+      - '.github/workflows/ou3-p4-joint-estimator-relation.yml'
+  pull_request:
+    paths: *paths
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ou3-p4-joint-estimator-relation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  relation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Check proof source syntax
+        run: python -m compileall -q tools/stability
+      - name: Execute same-signal estimator, event/reset/projection, BIAS1 lift, and lineage relation
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/ou3-p4-relation-evidence
+          python tools/stability/ou3_validated_positive_transcendentals.py
+          python tools/stability/ou3_p4_joint_estimator_transition.py --output /tmp/ou3-p4-relation-evidence/joint-estimator.json
+          python tools/stability/ou3_p4_brmm_same_signal_statistics.py --output /tmp/ou3-p4-relation-evidence/same-signal-statistics.json
+          python tools/stability/ou3_brmm_sigma_stillness_step.py --output /tmp/ou3-p4-relation-evidence/sigma-stillness.json
+          python tools/stability/ou3_p4_brmm_tuner_stillness_transition.py --output /tmp/ou3-p4-relation-evidence/tuner-stillness.json
+          python tools/stability/ou3_p4_joint_brmm_frontend_transition.py --output /tmp/ou3-p4-relation-evidence/joint-brmm-frontend.json
+          python tools/stability/ou3_p4_complete_brmm_universal_target_relation.py --output /tmp/ou3-p4-relation-evidence/target-relation.json
+          python tools/stability/ou3_p4_complete_brmm_source_cover_contract.py --output /tmp/ou3-p4-relation-evidence/source-cover-contract.json
+          python tools/stability/ou3_p4_brmm_reduced_event_master.py --output /tmp/ou3-p4-relation-evidence/reduced-event-master.json
+          python tools/stability/ou3_p4_brmm_same_Dtheta_reset_binding.py --output /tmp/ou3-p4-relation-evidence/same-Dtheta-reset-binding.json
+          python tools/stability/ou3_p4_brmm_projection_graph_iqc.py --output /tmp/ou3-p4-relation-evidence/projection-graph-iqc.json
+          python tools/stability/ou3_p4_brmm_a21_projection_prefix.py --output /tmp/ou3-p4-relation-evidence/a21-projection-prefix.json
+          python tools/stability/ou3_p4_brmm_bias1_prediction_lift.py --output /tmp/ou3-p4-relation-evidence/bias1-prediction-lift.json
+          python tools/stability/ou3_p4_brmm_event_lineage_cover.py --output /tmp/ou3-p4-relation-evidence/event-lineage-cover.json
+          python - <<'PY'
+          import json
+          root='/tmp/ou3-p4-relation-evidence/'
+          names=['joint-estimator','same-signal-statistics','sigma-stillness','tuner-stillness','joint-brmm-frontend','target-relation','source-cover-contract','reduced-event-master','same-Dtheta-reset-binding','projection-graph-iqc','a21-projection-prefix','bias1-prediction-lift','event-lineage-cover']
+          data={name:json.load(open(root+name+'.json')) for name in names}
+          for name,obj in data.items():
+              assert obj['validation_pass'], (name,obj.get('validation_failures'))
+          j=data['joint-estimator'];q=data['same-signal-statistics'];s=data['sigma-stillness'];t=data['tuner-stillness'];b=data['joint-brmm-frontend'];u=data['target-relation'];c=data['source-cover-contract'];m=data['reduced-event-master'];r=data['same-Dtheta-reset-binding'];pg=data['projection-graph-iqc'];ap=data['a21-projection-prefix'];bl=data['bias1-prediction-lift'];l=data['event-lineage-cover']
+
+          assert j['same_signal_wave_period_and_band_state_materialized']
+          assert j['exact_same_history_central_moment_ghost_recurrence_materialized']
+          assert j['period_variance_uses_central_ghost_not_detached_subtraction']
+          assert j['sigma_variance_uses_central_ghost_not_detached_subtraction']
+          assert j['central_moment_nonnegative_by_construction']
+          assert j['joint_f_tau_sigma_TS_RS_image_materialized']
+          assert not j['independent_f_sigma_rectangle_accepted_by_transition']
+          assert q['same_signal_central_WPE_velocity_variance_materialized']
+          assert q['same_signal_central_WPE_elevation_variance_materialized']
+          assert q['same_signal_central_tuner_band_variance_materialized']
+          assert q['tau_TS_RS_are_dependent_images_of_estimated_f_sigma']
+          assert s['same_vertical_sample_drives_lpf_energy_and_sigma_attenuation']
+          assert t['same_history_still_attenuation_enters_before_variance_floor']
+          assert b['same_private_Mahony_vertical_drives_stillness_tuner_and_WPE']
+          assert b['period_and_sigma_generated_by_same_signal_statistics']
+          assert b['actual_applied_RS_xyz_retained_from_same_active_schedule']
+          assert u['same_BRMM_sample_joint_frontend_transition_materialized']
+          assert c['theorem_cell_coefficients_must_come_from_joint_estimator_image']
+          assert c['estimator_ancestry_distinct_from_literal_event_ancestry']
+          assert c['S_zero_R_derived_from_same_active_schedule']
+
+          assert m['same_cell_P_H_R_K_consumed']
+          assert m['q_equals_H_e_plus_structured_eta_substituted_exactly']
+          assert m['d_equals_same_cell_K_q_substituted_exactly']
+          assert m['accelerometer_eta_eliminated_into_chord_and_cross_coordinates']
+          assert m['same_Dtheta_reset_sector_materialized']
+          assert m['real_reduced_event_master_materialized']
+          assert not m['independent_K_coordinate_or_box_used']
+          assert not m['independent_eta_port_used']
+
+          assert r['same_estimator_owned_event_Dtheta_is_reset_graph_input']
+          assert r['same_cell_KSK_covariance_identity_is_domain_proof']
+          assert r['event_specific_delta_bound_attached']
+          assert r['smoke_event_specific_same_Dtheta_reset_domain_closed']
+          assert not r['rowwise_K_correction_domain_used']
+
+          assert pg['global_joint_sector_consumed']
+          assert pg['saturated_branch_retained'] and pg['unsaturated_branch_retained'] and pg['Clarke_boundary_branch_retained']
+          assert pg['dense_projection_IQC_available']
+          assert not pg['inactive_projection_assumed']
+          assert ap['estimator_owned_A21_event_consumed']
+          assert ap['preprojection_ba_is_e_ba_minus_same_cell_d_ba']
+          assert ap['physical_BIAS1_beta_coordinate_materialized']
+          assert ap['global_active_projection_IQC_attached']
+          assert ap['BIAS1_true_bias_hard_bound_attached_on_same_h']
+          assert ap['all_augmented_matrices_share_one_coordinate']
+
+          # Physical BIAS1 prediction recurrence is now a literal outward map.
+          assert bl['outward_A_matrix_materialized']
+          assert bl['outward_B_matrix_materialized']
+          assert bl['same_w_columns_enter_error_and_true_bias']
+          assert bl['m_tau_columns_enter_error_not_true_bias']
+          assert bl['one_physical_beta_state_carried_across_prediction']
+          assert bl['physical_BIAS1_family_is_subset_of_supply_class']
+          assert bl['homogeneous_joint_supply_ball_IQC_materialized']
+          assert not bl['independent_per_sample_beta_slots_used']
+          assert not bl['trajectory_replay_used']
+
+          assert l['continuous_radial_coordinate_retained']
+          assert l['recursive_partition_exactly_covers_unit_interval']
+          assert l['estimator_owned_event_lineage_smoke_pass']
+          assert l['real_estimator_owned_Joseph_prefix_bundle_materialized_smoke']
+          assert l['Joseph_prefix_bundle_contains_real_signed_master']
+          assert l['Joseph_prefix_bundle_contains_structured_nonlinear_sectors']
+          assert l['Joseph_prefix_bundle_contains_certified_same_Dtheta_reset_sector']
+          assert not l['production_same_history_event_master_maps_materialized_here']
+
+          for obj in (j,q,b,m,r,ap,bl,l):
+              assert not obj['P4_MOTION_PASS'] and not obj['P4_PASS'] and not obj['P5_MAY_START']
+          assert not c['P4_promoted_here']
+          print('SAME_SIGNAL_EVENT_RESET_PROJECTION_BIAS1_LINEAGE_PASS')
+          PY
+      - name: Retain exact PR source and relation evidence
+        run: |
+          set -euo pipefail
+          git rev-parse HEAD > /tmp/ou3-p4-relation-evidence/source-commit.txt
+          git archive --format=tar.gz HEAD > /tmp/ou3-p4-relation-evidence/proof-sources.tar.gz
+          sha256sum /tmp/ou3-p4-relation-evidence/proof-sources.tar.gz > /tmp/ou3-p4-relation-evidence/SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ou3-p4-relation-evidence
+          path: /tmp/ou3-p4-relation-evidence/
+          if-no-files-found: error
