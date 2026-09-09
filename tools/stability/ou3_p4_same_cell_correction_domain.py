@@ -14,9 +14,11 @@ Hence, using the first three rows only,
       <= lambda_max(P^-_{theta,theta}) * y^T R^-1 y.
 
 This is not a rowwise K bound and does not detach K from P/H/R.  It is a
-same-cell Joseph metric consequence.  The source-uniform Riccati tube supplies
-an outward upper bound on the attitude covariance block; the deterministic hard
-entry set and exact finite-angle geometry supply event residual bounds.
+same-cell Joseph metric consequence.  The source-uniform endpoint covariance
+envelope supplies an outward upper bound on the attitude covariance block; the
+deterministic hard entry set and exact finite-angle geometry supply event
+residual bounds.  The separate scalar moving-Riccati injection-margin gate is
+not consumed by this magnitude-only certificate.
 
 The result is intentionally diagnostic.  If the certified correction ceilings
 fit inside the exact-reset chart utility, they can be consumed as production
@@ -39,7 +41,7 @@ import ou3_p4_cayley_sector_certificate as CAYLEY
 
 REPO = Path(__file__).resolve().parents[2]
 DEFAULT_DOMAIN = REPO / "tools" / "stability" / "ou3_proof_operating_domain.json"
-QUALIFICATION = "OU3_P4_SAME_CELL_JOSEPH_CORRECTION_DOMAIN_DIAGNOSTIC_V1"
+QUALIFICATION = "OU3_P4_SAME_CELL_JOSEPH_CORRECTION_DOMAIN_DIAGNOSTIC_V2"
 
 
 def up(x: float) -> float:
@@ -101,7 +103,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     dynamic = DYNAMIC.build(path)
     cayley = CAYLEY.build(path)
     bad = {
-        "tube": TUBE.validate(tube),
+        "endpoint_covariance_envelope": TUBE.validate_covariance_ceiling(tube),
         "entry": ENTRY.validate(entry),
         "dynamic": DYNAMIC.validate(dynamic),
         "cayley": CAYLEY.validate(cayley),
@@ -150,7 +152,9 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "rowwise_K_bound_used": False,
         "independent_K_box_used": False,
         "hard_entry_residual_geometry_consumed": True,
-        "source_uniform_Riccati_attitude_covariance_consumed": True,
+        "source_uniform_endpoint_covariance_envelope_consumed": True,
+        "failed_moving_Riccati_relative_margin_consumed": False,
+        "moving_Riccati_tube_pass_claimed": False,
         "actual_applied_RS_lower_consumed": True,
         "residual_bounds": residual,
         "modes": modes,
@@ -170,7 +174,7 @@ def validate(d: dict) -> list[str]:
         "same_cell_Joseph_covariance_identity_consumed",
         "attitude_block_only_used",
         "hard_entry_residual_geometry_consumed",
-        "source_uniform_Riccati_attitude_covariance_consumed",
+        "source_uniform_endpoint_covariance_envelope_consumed",
         "actual_applied_RS_lower_consumed",
     ):
         if d.get(k) is not True:
@@ -178,6 +182,8 @@ def validate(d: dict) -> list[str]:
     for k in (
         "rowwise_K_bound_used",
         "independent_K_box_used",
+        "failed_moving_Riccati_relative_margin_consumed",
+        "moving_Riccati_tube_pass_claimed",
         "production_same_graph_correction_domain_promoted_here",
         "endpoint_augmented_LDLT_closed_here",
         "every_prefix_augmented_LDLT_closed_here",
