@@ -77,7 +77,7 @@ def _append_ba(M18,ba_margin:float):
 
 
 def raw_blocks(domain_path:Path=HPF.DEFAULT_DOMAIN):
-    path=Path(domain_path).resolve();h=H18FA.build();a=A21FA.build();dyn=DYNAMIC.build();proc=PROCESS.build()
+    h=H18FA.build();a=A21FA.build();dyn=DYNAMIC.build();proc=PROCESS.build()
     bad={'H18':H18FA.validate(h),'A21':A21FA.validate(a),'dynamic':DYNAMIC.validate(dyn),'process':PROCESS.validate(proc)};bad={k:v for k,v in bad.items() if v}
     if bad:raise RuntimeError('strict-block prerequisites failed: '+repr(bad))
     penalty=float(h['delta_squared_completion_penalty']);ba=float(a['first_active_ba_margin_lower']);rows=[]
