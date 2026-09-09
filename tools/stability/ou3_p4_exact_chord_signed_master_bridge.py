@@ -3,14 +3,13 @@
 
 The bridge keeps finite-angle vector geometry, accelerometer a_w/b_a coupling,
 physical BIAS1 recurrence, active radial projection and exact finite reset in one
-same-history architecture.  Reset is deliberately parameterized: its correction
-domain must be proved from the SAME affine augmented map D=E_theta*K*Y, never
-from an independent rowwise K box.
+same-history architecture.  Reset correction-domain validity is consumed only
+from the production same-cell Joseph binding; an independent rowwise K box is
+never a theorem input.
 
 This remains a prerequisite bridge.  The production certificate must separately
-close (1) every same-cell correction domain needed by reset, (2) endpoint
-augmented LDLT, (3) every literal-prefix augmented LDLT, and (4) every-prefix
-hard/working-domain retention.  No prerequisite boolean can promote P4.
+close endpoint augmented LDLT, every literal-prefix augmented LDLT, and every-
+prefix hard/working-domain retention.  No prerequisite boolean can promote P4.
 """
 from __future__ import annotations
 import argparse,json
@@ -28,31 +27,33 @@ import ou3_p4_rowwise_coefficient_enclosure_fast as COEFF
 import ou3_p4_finite_angle_h18_universal as H18FA
 import ou3_p4_finite_angle_a21_universal as A21FA
 import ou3_p4_reset_graph_iqc as RESETIQC
+import ou3_p4_reset_domain_binding as RESETBIND
 import ou3_p4_affine_hard_tube_iqc as HARDIQC
 import ou3_p4_kalman_reset_binary32_iss as FPISS
 import ou3_p4_binary32_platform_arithmetic_contract as PLATFORM
 
-SCHEMA=4
-QUALIFICATION="OU3_P4_EXACT_CHORD_SIGNED_MASTER_BRIDGE_V4"
+SCHEMA=5
+QUALIFICATION="OU3_P4_EXACT_CHORD_SIGNED_MASTER_BRIDGE_V5"
 
 def build()->dict:
     chord=CHORD.build();iqc=IQC.build();signed=SIGNED.build();master=MASTER.build();iss=ISSMASTER.build()
     bias=BIAS1.build();biasiss=BIASISS.build();proj=PROJ.build();coeff=COEFF.build();h18=H18FA.build();a21=A21FA.build()
-    reset=RESETIQC.build();hard=HARDIQC.build();fp=FPISS.build();platform=PLATFORM.build()
+    reset=RESETIQC.build();resetbind=RESETBIND.build();hard=HARDIQC.build();fp=FPISS.build();platform=PLATFORM.build()
     bad={
       'chord':CHORD.validate(chord),'iqc':IQC.validate(iqc),'signed':SIGNED.validate(signed),
       'master':MASTER.validate(master),'iss_master':ISSMASTER.validate(iss),
       'bias1':BIAS1.validate(bias),'bias_iss':BIASISS.validate(biasiss),
       'projection':PROJ.validate(proj),'coeff':COEFF.validate(coeff),
       'H18_finite_angle':H18FA.validate(h18),'A21_finite_angle':A21FA.validate(a21),
-      'reset_iqc':RESETIQC.validate(reset),'hard_iqc':HARDIQC.validate(hard),
-      'finite_precision_iss':FPISS.validate(fp),'platform':PLATFORM.validate(platform)}
+      'reset_iqc':RESETIQC.validate(reset),'reset_binding':RESETBIND.validate(resetbind),
+      'hard_iqc':HARDIQC.validate(hard),'finite_precision_iss':FPISS.validate(fp),'platform':PLATFORM.validate(platform)}
     bad={k:v for k,v in bad.items() if v}
     if bad:raise RuntimeError('exact-chord signed-master prerequisites failed: '+repr(bad))
 
     same_source=all(x=='COMPLETE_BRMM_NORMAL_LIVE_WORD' for x in (
       chord['canonical_source'],iqc['canonical_source'],signed['canonical_source'],master['canonical_source'],
-      iss['canonical_source'],biasiss['canonical_source'],h18['canonical_source'],a21['canonical_source'],reset['canonical_source']))
+      iss['canonical_source'],biasiss['canonical_source'],h18['canonical_source'],a21['canonical_source'],
+      reset['canonical_source'],resetbind['canonical_source']))
     reset_primitive=bool(
       reset['parameterized_reset_defect_dense_IQC_available']
       and reset['reset_IQC_keeps_residual_direction_via_Etheta_K_Y']
@@ -60,6 +61,14 @@ def build()->dict:
       and reset['affine_correction_domain_target_available']
       and reset['rowwise_K_correction_domain_forbidden']
       and reset['parameterized_homogeneous_reset_sector_consumed'])
+    reset_binding_clean=bool(
+      resetbind['same_cell_Joseph_correction_domain_consumed']
+      and resetbind['same_cell_parameterized_exact_reset_lift_builder_used']
+      and resetbind['same_cell_d_equals_Etheta_K_y_retained']
+      and not resetbind['rowwise_K_bound_used']
+      and not resetbind['independent_K_box_used']
+      and not resetbind['historical_rowwise_reset_lift_path_consumed']
+      and not resetbind['scalar_delta_used_as_independent_storage_port'])
     hard_ready=bool(
       hard['hard_entry_ball_IQC_available']
       and hard['same_graph_correction_domain_target_available']
@@ -75,7 +84,7 @@ def build()->dict:
       and iqc['mixed_c_cross_aw_has_explicit_augmented_coordinate']
       and signed['joint_complete_word_signed_information_composition_available']
       and signed['finite_reset_defect_remains_explicit']
-      and reset_primitive and hard_ready
+      and reset_primitive and reset_binding_clean and hard_ready
       and master['terminal_full_augmented_interval_LDLT_available']
       and master['same_history_quadratic_graph_sector_assembler_available']
       and iss['same_augmented_coordinate_for_state_graph_source_and_roundoff'])
@@ -99,9 +108,11 @@ def build()->dict:
       and platform['conditional_mathematical_execution_premise']
       and platform['P4_may_consume_as_explicit_execution_premise'])
 
-    # Fail closed until a production source-correlated augmented certificate
-    # supplies actual outward matrices and pivots for all four obligations.
-    correction_domain=False;endpoint=False;prefix=False;retention=False
+    # Reset-domain closure may now promote as a prerequisite, but never P4.
+    # Endpoint/prefix/retention remain fail-closed until actual outward matrices
+    # and pivots are supplied by the production augmented certificate.
+    correction_domain=bool(resetbind['source_uniform_same_graph_correction_domain_closed'])
+    endpoint=False;prefix=False;retention=False
     return {
       'schema':SCHEMA,'qualification':QUALIFICATION,'canonical_source':'COMPLETE_BRMM_NORMAL_LIVE_WORD',
       'same_canonical_source_across_chord_signed_master':same_source,
@@ -115,6 +126,7 @@ def build()->dict:
       'finite_source_enumeration_required_for_differential_backbone':False,
       'exact_chord_parameterized_reset_affine_graph_ready_for_augmented_master':graph_ready,
       'parameterized_same_cell_reset_IQC_primitive_ready':reset_primitive,
+      'same_cell_reset_domain_binding_clean':reset_binding_clean,
       'affine_hard_entry_correction_and_prefix_IQC_ready':hard_ready,
       'same_graph_correction_domain_certificate_required':True,
       'rowwise_K_reset_domain_forbidden':True,
@@ -133,15 +145,16 @@ def build()->dict:
       'packet_count_multiplier_used':False,'standalone_eta_Rinv_budget_used':False,
       'scalar_correction_radius_used_for_storage':False,
       'source_uniform_same_graph_correction_domain_closed':correction_domain,
+      'same_cell_reset_domain_modes':resetbind['modes'],
       'source_uniform_exact_graph_endpoint_augmented_LDLT_closed':endpoint,
       'source_uniform_exact_graph_every_prefix_augmented_LDLT_closed':prefix,
       'same_graph_every_prefix_hard_domain_retention_closed':retention,
       'P4_MOTION_PASS':False,'P4_PASS':False,'P5_MAY_START':False,
       'next_obligation':(
-        'materialize source-correlated endpoint/literal-prefix augmented matrices; first certify each reset correction '
-        'domain delta^2*h^2-||Etheta*K*Y*z||^2>=0 from the same hard-entry/graph IQCs, then instantiate mu_R(delta), '
-        'close endpoint and every-prefix outward LDLT with chord/projection/BIAS1/binary32 supplies, and certify every '
-        'prefix physical-coordinate target from those same affine matrices')}
+        'materialize source-correlated endpoint/literal-prefix augmented matrices using the now-bound same-cell reset '
+        'domain when available; append exact chord/reset/projection/BIAS1/binary32 graph QCs to the universal strict '
+        'H18/A21 blocks, close endpoint and every-prefix outward LDLT, and certify every prefix physical-coordinate '
+        'target from those same affine matrices')}
 
 def validate(d):
     f=[]
@@ -149,18 +162,22 @@ def validate(d):
     for k in ('same_canonical_source_across_chord_signed_master','universal_H18_finite_angle_differential_backbone_closed',
               'universal_A21_finite_angle_differential_backbone_closed','universal_full_entry_finite_angle_differential_backbone_closed',
               'exact_chord_parameterized_reset_affine_graph_ready_for_augmented_master','parameterized_same_cell_reset_IQC_primitive_ready',
-              'affine_hard_entry_correction_and_prefix_IQC_ready','same_graph_correction_domain_certificate_required',
-              'rowwise_K_reset_domain_forbidden','joint_ISS_master_ready_for_BIAS1_and_roundoff',
-              'conditional_full_binary32_additive_ISS_ready','physical_BIAS1_projection_and_Joseph_prerequisites_ready',
-              'joseph_favorable_q_u_cross_term_retained','mixed_c_cross_aw_retained_as_explicit_coordinate',
-              'finite_reset_cross_and_defect_terms_retained','physical_BIAS1_one_history_retained','active_radial_projection_sector_retained',
+              'same_cell_reset_domain_binding_clean','affine_hard_entry_correction_and_prefix_IQC_ready',
+              'same_graph_correction_domain_certificate_required','rowwise_K_reset_domain_forbidden',
+              'joint_ISS_master_ready_for_BIAS1_and_roundoff','conditional_full_binary32_additive_ISS_ready',
+              'physical_BIAS1_projection_and_Joseph_prerequisites_ready','joseph_favorable_q_u_cross_term_retained',
+              'mixed_c_cross_aw_retained_as_explicit_coordinate','finite_reset_cross_and_defect_terms_retained',
+              'physical_BIAS1_one_history_retained','active_radial_projection_sector_retained',
               'actual_same_history_K_required_not_independent_row_box','rowwise_K_enclosure_used_only_as_finite_precision_magnitude_ceiling'):
         if d.get(k) is not True:f.append(k+' not true')
     for k in ('finite_source_enumeration_required_for_differential_backbone','packet_count_multiplier_used','standalone_eta_Rinv_budget_used',
-              'scalar_correction_radius_used_for_storage','source_uniform_same_graph_correction_domain_closed',
-              'source_uniform_exact_graph_endpoint_augmented_LDLT_closed','source_uniform_exact_graph_every_prefix_augmented_LDLT_closed',
-              'same_graph_every_prefix_hard_domain_retention_closed','P4_MOTION_PASS','P4_PASS','P5_MAY_START'):
+              'scalar_correction_radius_used_for_storage','source_uniform_exact_graph_endpoint_augmented_LDLT_closed',
+              'source_uniform_exact_graph_every_prefix_augmented_LDLT_closed','same_graph_every_prefix_hard_domain_retention_closed',
+              'P4_MOTION_PASS','P4_PASS','P5_MAY_START'):
         if d.get(k) is not False:f.append(k+' not false')
+    # correction-domain is an independently closable prerequisite and may be
+    # either false or true; it cannot promote endpoint/prefix/P4 by itself.
+    if d.get('source_uniform_same_graph_correction_domain_closed') not in (False,True):f.append('correction-domain flag not boolean')
     if float(d.get('full_declared_entry_chord_information_retention_lower',0))<=0.85:f.append('chord retention lost')
     if float(d.get('finite_angle_differential_information_retention_lower',0))<=0.64:f.append('differential retention lost')
     for k in ('universal_H18_worst_LDLT_pivot_lower','universal_A21_first_active_ba_margin_lower'):
@@ -171,8 +188,9 @@ def main():
     ap=argparse.ArgumentParser();ap.add_argument('--output',type=Path,required=True);a=ap.parse_args();d=build();f=validate(d);d['validation_pass']=not f;d['validation_failures']=f
     a.output.parent.mkdir(parents=True,exist_ok=True);a.output.write_text(json.dumps(d,indent=2,sort_keys=True)+'\n')
     print(json.dumps({'backbone':d['universal_full_entry_finite_angle_differential_backbone_closed'],
-      'reset_primitive':d['parameterized_same_cell_reset_IQC_primitive_ready'],'hard_iqc':d['affine_hard_entry_correction_and_prefix_IQC_ready'],
-      'binary32_iss':d['conditional_full_binary32_additive_ISS_ready'],'H18_pivot':d['universal_H18_worst_LDLT_pivot_lower'],
-      'A21_ba_margin':d['universal_A21_first_active_ba_margin_lower'],'correction_domain':d['source_uniform_same_graph_correction_domain_closed'],
-      'endpoint':d['source_uniform_exact_graph_endpoint_augmented_LDLT_closed'],'prefix':d['source_uniform_exact_graph_every_prefix_augmented_LDLT_closed'],'failures':f},sort_keys=True));return int(bool(f))
+      'reset_primitive':d['parameterized_same_cell_reset_IQC_primitive_ready'],'reset_binding_clean':d['same_cell_reset_domain_binding_clean'],
+      'hard_iqc':d['affine_hard_entry_correction_and_prefix_IQC_ready'],'binary32_iss':d['conditional_full_binary32_additive_ISS_ready'],
+      'H18_pivot':d['universal_H18_worst_LDLT_pivot_lower'],'A21_ba_margin':d['universal_A21_first_active_ba_margin_lower'],
+      'correction_domain':d['source_uniform_same_graph_correction_domain_closed'],'endpoint':d['source_uniform_exact_graph_endpoint_augmented_LDLT_closed'],
+      'prefix':d['source_uniform_exact_graph_every_prefix_augmented_LDLT_closed'],'failures':f},sort_keys=True));return int(bool(f))
 if __name__=='__main__':raise SystemExit(main())
