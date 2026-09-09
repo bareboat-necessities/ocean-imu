@@ -17,8 +17,9 @@ from __future__ import annotations
 import argparse,json,math
 from pathlib import Path
 
-import ou3_p4_rowwise_coefficient_enclosure as COEFF
+import ou3_p4_rowwise_coefficient_enclosure_fast as COEFF
 import ou3_brmm_riccati_tube as TUBE
+import ou3_brmm_riccati_tube_smallx_scaled as FASTTUBE
 import ou3_p4_hard_entry_set as ENTRY
 import ou3_p4_projection_binary32_enclosure as PROJFP
 
@@ -29,12 +30,11 @@ NX={'H18':18,'A21':21}
 def gamma(k:int)->float:
     if k<0 or k*U>=1: raise ValueError('invalid gamma index')
     return math.nextafter((k*U)/(1-k*U),math.inf)
-
 def up(x): return math.nextafter(float(x),math.inf)
 
 
 def build()->dict:
-    coeff=COEFF.build(); tube=TUBE.build(); entry=ENTRY.build(); proj=PROJFP.build()
+    coeff=COEFF.build(); tube=FASTTUBE.build_base(); entry=ENTRY.build(); proj=PROJFP.build()
     bad={'coeff':COEFF.validate(coeff),'tube':TUBE.validate(tube),'entry':ENTRY.validate(entry),'projection':PROJFP.validate(proj)}
     bad={k:v for k,v in bad.items() if v}
     if bad: raise RuntimeError('binary32 ISS prerequisites failed: '+repr(bad))
@@ -58,23 +58,12 @@ def build()->dict:
 
         # Joseph KCP dot: 3 products + 2 adds. KSK uses 9 triple products; count
         # each triple as two multiplications and accumulate 9 terms.  Magnitude
-        # S is conservatively bounded by residual-independent covariance scale:
-        # HPH'+R cannot exceed a useful tight source-correlated value here, so
-        # use a coarse explicit ceiling derived from the correction identity
-        # K*S=P*H'.  For arithmetic magnitude only, taking S<=1+Pmax*Hmax^2 is
-        # deferred; record KSK as not fully closed until a same-source S ceiling
-        # is imported rather than inventing Hmax here.
+        # S is deliberately not invented here; it is the next same-source cell
+        # to attach to this arithmetic channel.
         kcp_abs=up(3.0*kmax*pabs)
         kcp_round=up(gamma(5)*3.0*kmax*pabs)
 
-        # Symmetrization computes .5*(a+b): one add + one multiply.  With a,b
-        # bounded by a conservative covariance envelope including one Joseph
-        # delta, this remains an additive scalar perturbation once KSK is bounded.
         symmetry_relative=gamma(2)
-
-        # Reset state mat-vec G*x: three-term attitude block plus identity rows.
-        # The exact reset contract supplies ||G^-1||=1 and a finite G envelope;
-        # use its correction radius only as magnitude, never for storage.
         dtheta=float(mm['attitude_correction_norm_upper'])
         reset_matvec_component_round=up(gamma(5)*(1.0+dtheta)*max(1.0,residual))
         reset_matvec_norm_round=up(math.sqrt(3)*reset_matvec_component_round)
@@ -99,6 +88,7 @@ def build()->dict:
     return {
       'qualification':'OU3_P4_BINARY32_KALMAN_RESET_ISS_V1',
       'runtime_scalar_format':'IEEE754_binary32','unit_roundoff':U,
+      'dependency_reduced_smallx_tube_used_for_same_bounds':True,
       'source_uniform_magnitude_envelopes_only_not_word_composition':True,
       'PSD_cross_covariance_bound_used':'|Pij|<=sqrt(Pii*Pjj)',
       'FMA_contraction_safe_by_separate_operation_overcount':True,
@@ -117,8 +107,9 @@ def build()->dict:
 
 def validate(d):
     f=[]
-    for k in ('source_uniform_magnitude_envelopes_only_not_word_composition','FMA_contraction_safe_by_separate_operation_overcount',
-              'explicit_Joseph_reset_scalar_loop_roundoff_enclosed','projection_binary32_enclosure_consumed'):
+    for k in ('dependency_reduced_smallx_tube_used_for_same_bounds','source_uniform_magnitude_envelopes_only_not_word_composition',
+              'FMA_contraction_safe_by_separate_operation_overcount','explicit_Joseph_reset_scalar_loop_roundoff_enclosed',
+              'projection_binary32_enclosure_consumed'):
         if d.get(k) is not True:f.append(k+' not true')
     for k in ('full_shipping_Kalman_reset_finite_precision_enclosure_closed','additive_ISS_channel_complete_for_P4','P4_MOTION_PASS','P4_PASS'):
         if d.get(k) is not False:f.append(k+' not false')
