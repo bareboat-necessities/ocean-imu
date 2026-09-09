@@ -22,8 +22,13 @@ The immediate left-error covariance reset is
 
 The functions operate on outward interval matrices.  ``P_out`` must enclose the
 entire outward image; exact point cells therefore regression-test the same code
-path used by a future interval source cover.  No independent P/H/R/K selection,
-trajectory replay, or scalar reset radius is introduced here.
+path used by a future interval source cover.  Because every primitive operation
+rounds outward, even a point identity calculation may return a narrow interval
+around the exact point.  The regression therefore checks enclosure of the exact
+point result, not literal equality of the interval representations.
+
+No independent P/H/R/K selection, trajectory replay, or scalar reset radius is
+introduced here.
 
 This layer still does not materialize the complete BRMM transition relation for
 physical motion/frontend/tuner/geometry.  It closes only the shipping covariance
@@ -72,6 +77,7 @@ def matrix_encloses(outer, inner) -> bool:
 
 def prediction_image(P,F,Q):
     n,n2=_shape(P)
+    if n==0 or n!=n2: raise ValueError("P must be square")
     _check_matrix(P,n,n,"P")
     _check_matrix(F,n,n,"F")
     _check_matrix(Q,n,n,"Q")
@@ -136,7 +142,11 @@ def build()->dict:
     F=[[I(1.0 if i==j else 0.0) for j in range(n)] for i in range(n)]
     Q=[[I(0.0) for _ in range(n)] for _ in range(n)]
     pred=prediction_image(P,F,Q)
-    pred_exact=matrix_encloses(P,pred) and matrix_encloses(pred,P)
+    # Point arithmetic is executed by outward interval primitives.  The exact
+    # identity matrix must be contained in the resulting enclosure; requiring
+    # the enclosure to be bitwise equal to the point matrix would incorrectly
+    # reject legitimate directed-rounding width.
+    pred_exact=matrix_encloses(pred,P)
 
     # Algebraic Joseph/reset smoke with K=0.  This deliberately tests only the
     # recurrence implementation, not a source-uniform correction theorem.
@@ -145,7 +155,7 @@ def build()->dict:
     S=[[I(1.0 if i==j else 0.0) for j in range(3)] for i in range(3)]
     Pj=joseph_image(P,K,S,PCt)
     Pr=reset_image(Pj,[I(0.0),I(0.0),I(0.0)])
-    joseph_reset_exact=matrix_encloses(P,Pr) and matrix_encloses(Pr,P)
+    joseph_reset_exact=matrix_encloses(Pr,P)
 
     return {
       "schema":SCHEMA,"qualification":QUALIFICATION,
@@ -161,6 +171,7 @@ def build()->dict:
       "scalar_reset_radius_used":False,
       "prediction_point_identity_smoke_exact":pred_exact,
       "Joseph_reset_zero_correction_point_smoke_exact":joseph_reset_exact,
+      "point_smokes_use_exact_result_containment_not_interval_equality":True,
       "shipping_covariance_transition_operator_available":True,
       "physical_motion_frontend_tuner_geometry_transition_materialized_here":False,
       "complete_BRMM_source_transition_cover_closed_here":False,
@@ -171,7 +182,7 @@ def build()->dict:
 def validate(d:dict)->list[str]:
     f=[]
     if d.get("schema")!=SCHEMA or d.get("qualification")!=QUALIFICATION:f.append("schema/qualification mismatch")
-    for k in ("same_history_predecessor_link_required","same_cell_K_S_PCt_required","outward_successor_covariance_must_enclose_full_image","independent_successive_P_boxes_forbidden","independent_K_or_R_schedule_forbidden","prediction_point_identity_smoke_exact","Joseph_reset_zero_correction_point_smoke_exact","shipping_covariance_transition_operator_available"):
+    for k in ("same_history_predecessor_link_required","same_cell_K_S_PCt_required","outward_successor_covariance_must_enclose_full_image","independent_successive_P_boxes_forbidden","independent_K_or_R_schedule_forbidden","prediction_point_identity_smoke_exact","Joseph_reset_zero_correction_point_smoke_exact","point_smokes_use_exact_result_containment_not_interval_equality","shipping_covariance_transition_operator_available"):
         if d.get(k) is not True:f.append(k+" not true")
     for k in ("scalar_reset_radius_used","physical_motion_frontend_tuner_geometry_transition_materialized_here","complete_BRMM_source_transition_cover_closed_here","P4_promoted_here"):
         if d.get(k) is not False:f.append(k+" not false")
