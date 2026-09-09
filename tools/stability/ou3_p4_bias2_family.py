@@ -19,16 +19,31 @@ Every admitted sequence satisfies the exact recurrence
           <= rate*dt + (1-phi_lo)*magnitude,
 
 so the driver increment is small while the tau mismatch against the deployed
-phi_hat is maximal.  Consequently the driver recurrence alone does not close
-ISS for this family: the separation sector
+phi_hat is maximal.
+
+A non-relaxing truth does NOT force the separation sector on the declared
+objective.  That objective is bounded accelerometer-bias error plus regional
+practical ISS of the other 18 errors, and the bias half of it comes from the
+deployed radial projection, not from any decay of the bias error:
+`ou3_p4_projection_sector` closes `F_R(e,beta)=beta-Pi_R(beta-e)` analytically
+on every branch, so the estimate stays in the R ball and
+
+    |e_b| <= |b_hat| + |b_true| <= R + B_true
+
+pointwise at every event, for any admitted truth history and hence for every
+one of BIAS0/BIAS1/BIAS2.  The three families share one declared truth
+envelope, so that compactness bound is the same number for all three.  The
+motion half is the cocycle contraction against a persistent bias forcing,
+which is a finite ultimate bound rather than a separation statement.
+
+The separation sector
 
     Pi_sep = C_y^T W C_y - mu_sep X
 
-on the exact full-state same-history graph is required, and no uniform
-mu_sep lower bound is proved here.  This module therefore materializes the
-source-uniform BIAS2 physical-driver recurrence and reports the separation
-sector as the family's open obligation.  It is a theorem/source-family
-qualification, not assembled-sensor hardware qualification.
+therefore only SHARPENS the motion channel gains; it is not a prerequisite of
+the declared objective.  No uniform mu_sep lower bound is proved here and none
+is required here.  This module is a theorem/source-family qualification, not
+assembled-sensor hardware qualification.
 """
 from __future__ import annotations
 import argparse, json, math
@@ -38,7 +53,7 @@ REPO=Path(__file__).resolve().parents[2]
 DEFAULT=REPO/'tools/stability/ou3_p4_closure_domain.json'
 DT=0.005
 SCHEMA=1
-QUALIFICATION='OU3_P4_CONDITIONAL_BIAS2_FAMILY_V1'
+QUALIFICATION='OU3_P4_CONDITIONAL_BIAS2_FAMILY_V2'
 
 
 def up(x): return math.nextafter(float(x), math.inf)
@@ -56,6 +71,13 @@ def build(path: Path=DEFAULT):
         raise RuntimeError('BIAS2 must admit the non-relaxing limit')
     if c.get('uniform_separation_constant_lower') is not None:
         raise RuntimeError('BIAS2 separation constant is not proved and must stay null')
+    import ou3_p4_projection_sector as PROJ
+    proj=PROJ.build()
+    if PROJ.validate(proj):
+        raise RuntimeError('projection sector prerequisite failed')
+    if not (proj['global_joint_sector_closed'] and proj['estimate_ball_invariance_closed']):
+        raise RuntimeError('bias compactness needs the closed projection sector')
+    projection_radius=float(proj['base_report']['projection_radius'])
 
     phi_lo=down(math.exp(-DT/tau_lo)); phi_hi=1.0
     one_minus_phi=up(1.0-phi_lo)
@@ -85,9 +107,18 @@ def build(path: Path=DEFAULT):
       'driver_bound_is_analytic_not_replay_fit':True,
       'separation_sector':c['separation_sector'],
       'uniform_separation_constant_lower':None,
-      'separation_sector_required_for_ISS_closure':True,
       'source_uniform_separation_closed':False,
-      'driver_recurrence_alone_closes_ISS':False,
+      # The declared objective is bounded bias error plus practical ISS of the
+      # other 18 errors.  Projection supplies the bias half for a non-relaxing
+      # truth exactly as it does for a relaxing one, so separation is a gain
+      # sharpener here, not a prerequisite.
+      'separation_sector_required_for_bounded_bias_objective':False,
+      'separation_sector_sharpens_motion_gains_only':True,
+      'deployed_projection_radius_mps2':projection_radius,
+      'bias_compactness_route':'|e_b| <= R + B_true pointwise from the closed radial projection sector',
+      'bias_error_compactness_upper_mps2':up(projection_radius+up(math.sqrt(3)*mag)),
+      'bias_compactness_needs_no_relaxation_root':True,
+      'bias_compactness_needs_no_separation_constant':True,
       'BIAS2_SOURCE_ADMISSION_PASS':True,
       'deployment_hardware_admission_pass':False,
     }
@@ -96,13 +127,16 @@ def build(path: Path=DEFAULT):
 def validate(x):
     f=[]
     if x.get('schema')!=SCHEMA or x.get('qualification')!=QUALIFICATION: f.append('schema/qualification mismatch')
-    for k in ('conditional_theorem_family','one_drift_history_required','independent_per_sample_bias_slots_forbidden','non_relaxing_limit_admitted','tau_true_upper_is_infinite','separation_sector_required_for_ISS_closure','driver_bound_is_analytic_not_replay_fit','BIAS2_SOURCE_ADMISSION_PASS'):
+    for k in ('conditional_theorem_family','one_drift_history_required','independent_per_sample_bias_slots_forbidden','non_relaxing_limit_admitted','tau_true_upper_is_infinite','separation_sector_sharpens_motion_gains_only','bias_compactness_needs_no_relaxation_root','bias_compactness_needs_no_separation_constant','driver_bound_is_analytic_not_replay_fit','BIAS2_SOURCE_ADMISSION_PASS'):
         if x.get(k) is not True: f.append(k+' not true')
-    for k in ('assembled_sensor_hardware_qualified','deployment_hardware_admission_pass','inferred_from_BIAS0_or_BIAS1','may_be_substituted_by_BIAS1','source_uniform_separation_closed','driver_recurrence_alone_closes_ISS'):
+    for k in ('assembled_sensor_hardware_qualified','deployment_hardware_admission_pass','inferred_from_BIAS0_or_BIAS1','may_be_substituted_by_BIAS1','source_uniform_separation_closed','separation_sector_required_for_bounded_bias_objective'):
         if x.get(k) is not False: f.append(k+' not false')
     if x.get('uniform_separation_constant_lower') is not None: f.append('separation constant falsely bound')
     if not float(x.get('driver_increment_norm_upper_mps2',0))>0: f.append('driver bound not positive')
     if not float(x.get('true_bias_norm_upper_mps2',0))>0: f.append('true bias bound not positive')
+    compact=float(x.get('bias_error_compactness_upper_mps2',0))
+    if not compact>=float(x.get('deployed_projection_radius_mps2',0))+float(x.get('true_bias_norm_upper_mps2',0)):
+        f.append('compactness bound does not dominate R+B_true')
     channels=x.get('channel_driver_increment_components_mps2',{})
     if set(channels)!={'bounded_variation','admitted_relaxation'}:
         f.append('BIAS2 driver channel decomposition incomplete')

@@ -90,7 +90,7 @@ class Bias0FamilyTests(unittest.TestCase):
 
 
 class Bias2FamilyTests(unittest.TestCase):
-    def test_non_relaxing_limit_is_admitted_and_separation_stays_open(self):
+    def test_non_relaxing_limit_is_admitted_and_separation_stays_unproved(self):
         d = BIAS2.build()
         self.assertEqual(BIAS2.validate(d), [])
         self.assertTrue(d["non_relaxing_limit_admitted"])
@@ -98,8 +98,19 @@ class Bias2FamilyTests(unittest.TestCase):
         self.assertTrue(d["tau_true_upper_is_infinite"])
         self.assertIsNone(d["uniform_separation_constant_lower"])
         self.assertFalse(d["source_uniform_separation_closed"])
-        self.assertTrue(d["separation_sector_required_for_ISS_closure"])
-        self.assertFalse(d["driver_recurrence_alone_closes_ISS"])
+
+    def test_compactness_comes_from_projection_not_from_separation(self):
+        d = BIAS2.build()
+        # A non-relaxing truth still has a bounded error, because the deployed
+        # radial projection holds the estimate in its ball.  Separation would
+        # only sharpen the motion gains, so it is not a prerequisite.
+        self.assertFalse(d["separation_sector_required_for_bounded_bias_objective"])
+        self.assertTrue(d["separation_sector_sharpens_motion_gains_only"])
+        self.assertTrue(d["bias_compactness_needs_no_relaxation_root"])
+        self.assertTrue(d["bias_compactness_needs_no_separation_constant"])
+        self.assertAlmostEqual(d["bias_error_compactness_upper_mps2"],
+                               d["deployed_projection_radius_mps2"] + d["true_bias_norm_upper_mps2"],
+                               places=12)
 
     def test_driver_increment_dominates_admitted_drift_paths(self):
         d = BIAS2.build()
@@ -158,6 +169,23 @@ class JointSupplyTests(unittest.TestCase):
     def test_BIAS1_numbers_are_delegated_not_restated(self):
         d = SUPPLY.build()
         self.assertTrue(d["BIAS1_supply_delegated_to_authoritative_module"])
+
+    def test_the_three_families_share_one_true_bias_envelope(self):
+        d = SUPPLY.build()
+        # This is what makes the projection/Joseph prerequisites family-
+        # parametric: they see a family only through |b_true|, and that is one
+        # number here, so the compactness bound is one number too.
+        self.assertTrue(d["families_share_one_true_bias_envelope"])
+        self.assertTrue(d["bias_compactness_is_family_uniform"])
+        self.assertTrue(d["radial_projection_sector_closed_for_every_family"])
+        self.assertTrue(d["projection_sector_sees_no_bias_driver"])
+        self.assertFalse(d["BIAS2_separation_required_for_bounded_bias_objective"])
+        compact = set(d["bias_error_compactness_upper_mps2"].values())
+        self.assertEqual(len(compact), 1)
+        self.assertAlmostEqual(compact.pop(),
+                               d["deployed_projection_radius_mps2"]
+                               + max(s["true_bias_norm_upper_mps2"] for s in d["family_supply"].values()),
+                               places=12)
 
     def test_declared_truth_stays_inside_the_hard_entry_envelope(self):
         d = SUPPLY.build()

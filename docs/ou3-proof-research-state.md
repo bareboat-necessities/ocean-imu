@@ -59,6 +59,22 @@ against the deployed `phi_hat=exp(-.005/5000)=.999999`.
 | BIAS1 | one root, one parameter history | [.9999916667, .9999979167] | 4.9266e-6 | 1.6512e-6 | 5.1960e-6 |
 | BIAS2 | bounded-variation drift, no relaxation root | [.9999979167, 1] | 2.2011e-6 | 2.4393e-7 | 2.2146e-6 |
 
+All three also reach the same-history projection/Joseph graph, so the
+bias-family half of the P4 contract is closed. The prerequisites see a family
+only through admission, one retained physical bias history, the shared `w`
+column and `|b_true|`: the radial projection map `F_R(e,beta)=beta-Pi_R(beta-e)`
+carries no driver term and the Joseph/reset gains come from the reachable
+`P/H/R` cell. The three declared boxes share one true-bias envelope to 5.6e-17,
+so the fourth dependence is one number and `|e_b| <= R+B_true = .6252` holds
+for all three.
+
+A uniform BIAS2 separation constant is NOT a prerequisite of the declared
+objective. Bounded bias error comes from the closed radial projection sector,
+which holds for a non-relaxing truth exactly as for a relaxing one, and the
+motion half is the cocycle contraction against a persistent forcing, i.e. a
+finite ultimate bound. `mu_sep` sharpens motion gains only; it stays unproved
+and is no longer counted as a blocker.
+
 Each family's factor interval passes through the deployed 24-state event lift
 with the shared `w` column retained, and each declared true-bias norm 0.2252
 stays inside the .4 hard-entry radius. On the ISS pair (factor interval, driver
@@ -251,5 +267,18 @@ eight-seed study in `reports/results/rao_parameter_tuning/ou3_acc_z_bias/`
 did not justify committing the default-seed-only passing profile. The RAO
 propagation-to convention correction and its 11 tests are retained.
 No performance coefficient or threshold is changed here.
+
+## The one object the remaining blockers reduce to
+
+Six gate blockers remain and all six consume the same missing object, the
+**source-uniform COMPLETE BRMM cover**: the correction/reset domain, the
+endpoint and every-prefix augmented LDLT and the every-prefix hard-domain
+retention each need a source-uniform cell family that has not been
+materialized. The cover needs the estimator-owned transition operator over
+every admitted BRMM continuation, every hard-entry radial segment and every
+correlated Joseph cell, with the coefficient image proved inside the target
+cell. A captured word cannot supply it and the contract forbids trying:
+`point_trace_can_promote_source_uniform_cover` and
+`trajectory_replay_or_pinned_generator_may_establish_uniform_cover` are false.
 
 **P4_MOTION_PASS=false, P4_PASS=false. P5-motion and P5 may not start.**

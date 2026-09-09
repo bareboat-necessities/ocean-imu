@@ -59,6 +59,12 @@ jobs:
           assert all(d['bias_family_source_admission'].values())
           assert all(d['bias_family_joint_ISS_supply_materialized'].values())
           assert not d['BIAS0_or_BIAS2_inferred_from_BIAS1']
+          # The projection/Joseph prerequisites are family-parametric, so every
+          # family reaches the graph on its own certificate, and the compactness
+          # bound |e_b| <= R+B_true is one number for the three of them.
+          assert d['projection_and_Joseph_prerequisites_are_family_parametric']
+          assert len(set(d['bias_error_compactness_upper_mps2'].values()))==1
+          assert not d['BIAS2_separation_required_for_bounded_bias_objective']
           assert d['signal_generated_tau_sigma_required']
           assert d['tau_sigma_TS_to_RS_interdependence_required']
           assert d['adaptation_schedule_candidate_active_commit_scheduler_required']

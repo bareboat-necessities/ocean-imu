@@ -29,7 +29,7 @@ import ou3_p4_reset_domain_binding as RESETBIND
 import ou3_p4_kalman_reset_binary32_iss as FP
 import ou3_p4_complete_brmm_source_cover_contract as SOURCE
 
-QUALIFICATION='OU3_P4_FINAL_FAIL_CLOSED_GATE_V7'
+QUALIFICATION='OU3_P4_FINAL_FAIL_CLOSED_GATE_V8'
 REQUIRED_BIAS_FAMILIES=('BIAS0','BIAS1','BIAS2')
 
 
@@ -67,13 +67,25 @@ def build():
       x:bool(bs['each_family_pushed_through_deployed_24state_event_lift']
              and bs['family_supply'][x]['event_lift']['same_w_column_shared_by_error_and_truth'])
       for x in REQUIRED_BIAS_FAMILIES}
-    family_graph_ready={'BIAS0':False,'BIAS1':bool(graph_ready),'BIAS2':False}
+    # The bridge's projection/Joseph prerequisites are family-parametric: the
+    # radial projection map carries no driver term, the Joseph/reset gains come
+    # from the reachable P/H/R cell, and the three families share one true-bias
+    # envelope.  Each family therefore reaches the same-history graph on its own
+    # certificate rather than by inheriting BIAS1's.
+    family_graph_ready={x:bool(graph_ready and g['physical_projection_and_Joseph_prerequisites_ready_per_family'][x])
+                        for x in REQUIRED_BIAS_FAMILIES}
+    # BIAS2 admits phi_true=1.  The declared objective is bounded bias error
+    # plus practical ISS of the other 18, and the bias half comes from the
+    # closed radial projection sector, which needs no relaxation root and no
+    # separation constant.  mu_sep would only sharpen motion gains, so it is an
+    # optional sharpener here and is reported as such rather than as a blocker.
     bias2_separation_closed=bool(b2['source_uniform_separation_closed'])
+    bias2_separation_required=bool(b2['separation_sector_required_for_bounded_bias_objective'])
     bias_family_closed={
-      'BIAS0':bool(admissions and family_admission['BIAS0'] and family_supply_materialized['BIAS0'] and family_graph_ready['BIAS0']),
-      'BIAS1':bool(admissions and family_admission['BIAS1'] and family_supply_materialized['BIAS1'] and family_graph_ready['BIAS1']),
-      'BIAS2':bool(admissions and family_admission['BIAS2'] and family_supply_materialized['BIAS2'] and family_graph_ready['BIAS2'] and bias2_separation_closed),
-    }
+      x:bool(admissions and family_admission[x] and family_supply_materialized[x] and family_graph_ready[x])
+      for x in REQUIRED_BIAS_FAMILIES}
+    if bias2_separation_required and not bias2_separation_closed:
+        bias_family_closed['BIAS2']=False
     all_bias_families_closed=all(bias_family_closed[x] for x in REQUIRED_BIAS_FAMILIES)
 
     adaptive_source_contract=bool(
@@ -118,6 +130,9 @@ def build():
       'bias_family_same_history_graph_ready':family_graph_ready,
       'bias_family_joint_supply_norm_upper_mps2':{x:bs['family_supply'][x]['joint_supply_norm_upper_per_prediction_mps2'] for x in REQUIRED_BIAS_FAMILIES},
       'BIAS2_uniform_separation_sector_closed':bias2_separation_closed,
+      'BIAS2_separation_required_for_bounded_bias_objective':bias2_separation_required,
+      'bias_error_compactness_upper_mps2':g['bias_error_compactness_upper_mps2'],
+      'projection_and_Joseph_prerequisites_are_family_parametric':bool(g['projection_and_Joseph_prerequisites_are_family_parametric']),
       'BIAS0_or_BIAS2_inferred_from_BIAS1':False,
       'bias_family_source_uniform_same_history_closed':bias_family_closed,
       'all_required_bias_families_closed':all_bias_families_closed,
@@ -148,10 +163,9 @@ def build():
       'point_capture_can_promote':False,'rowwise_coefficient_boxes_can_promote':False,'differential_backbone_alone_can_promote':False,
       'P4_MOTION_PASS':motion,'P4_PASS':motion,'P5_MAY_START':motion,
       'remaining_mathematical_P4_blockers':[x for x,ok in (
-        ('BIAS0 same-history projection/Joseph graph on the exact-chord bridge',bias_family_closed['BIAS0']),
+        ('source-uniform BIAS0 same-history physical-driver family',bias_family_closed['BIAS0']),
         ('source-uniform BIAS1 same-history physical-driver family',bias_family_closed['BIAS1']),
-        ('BIAS2 same-history projection/Joseph graph on the exact-chord bridge',family_graph_ready['BIAS2']),
-        ('uniform BIAS2 separation constant mu_sep on the same-history graph',bias2_separation_closed),
+        ('source-uniform BIAS2 same-history physical-driver family',bias_family_closed['BIAS2']),
         ('COMPLETE BRMM same-signal estimator/source cover with signal-derived tau and sigma',adaptive_source_cover_closed),
         ('interdependent (tau,sigma,T_S)->R_S with literal adaptation/commit/scheduler history',adaptive_source_cover_closed),
         ('source-uniform same-cell Joseph correction/reset domain',correction and reset_iqc and reset_gain),
@@ -176,12 +190,13 @@ def validate(d):
               'tau_sigma_TS_to_RS_interdependence_required','adaptation_schedule_candidate_active_commit_scheduler_required',
               'adaptive_same_signal_source_contract_ready','hard_entry_set_admitted_without_covariance_membership',
               'universal_full_entry_finite_angle_differential_backbone_closed','exact_chord_projection_BIAS1_same_history_graph_ready',
-              'same_cell_Joseph_reset_domain_binding_consumed','conditional_full_shipping_finite_precision_additive_ISS_closed'):
+              'same_cell_Joseph_reset_domain_binding_consumed','conditional_full_shipping_finite_precision_additive_ISS_closed',
+              'projection_and_Joseph_prerequisites_are_family_parametric'):
         if d.get(k) is not True:f.append(k+' not true')
     for k in ('declared_domain_shrunk','filter_changed','quality_gates_changed','point_capture_can_promote',
               'rowwise_coefficient_boxes_can_promote','differential_backbone_alone_can_promote',
               'independent_tau_sigma_TS_RS_boxes_can_promote','independent_frequency_sigma_coordinates_can_promote',
-              'BIAS0_or_BIAS2_inferred_from_BIAS1'):
+              'BIAS0_or_BIAS2_inferred_from_BIAS1','BIAS2_separation_required_for_bounded_bias_objective'):
         if d.get(k) is not False:f.append(k+' not false')
     for k in ('H18_finite_angle_worst_LDLT_pivot_lower','A21_first_active_ba_margin_lower'):
         if float(d.get(k,0))<=0:f.append(k+' not positive')

@@ -28,6 +28,7 @@ import ou3_p4_complete_brmm_joint_sector_master as MASTER
 import ou3_p4_joint_iss_augmented_master as ISSMASTER
 import ou3_p4_bias1_joint_iss_supply as BIASISS
 import ou3_p4_bias1_family as BIAS1
+import ou3_p4_bias_family_joint_iss_supply as ALLBIAS
 import ou3_p4_projection_sector as PROJ
 import ou3_p4_rowwise_coefficient_enclosure_fast as COEFF
 import ou3_p4_finite_angle_h18_universal as H18FA
@@ -41,18 +42,20 @@ import ou3_p4_joseph_reset_reduced_signed_identity as REDUCED
 import ou3_p4_exact_reset_covariance_frame as RESETFRAME
 import ou3_p4_universal_finite_angle_strict_blocks as STRICT
 
-SCHEMA=6
-QUALIFICATION="OU3_P4_EXACT_CHORD_SIGNED_MASTER_BRIDGE_V6"
+SCHEMA=7
+QUALIFICATION="OU3_P4_EXACT_CHORD_SIGNED_MASTER_BRIDGE_V7"
 
 def build()->dict:
     chord=CHORD.build();iqc=IQC.build();signed=SIGNED.build();master=MASTER.build();iss=ISSMASTER.build()
     bias=BIAS1.build();biasiss=BIASISS.build();proj=PROJ.build();coeff=COEFF.build();h18=H18FA.build();a21=A21FA.build()
     reset=RESETIQC.build();resetbind=RESETBIND.build();hard=HARDIQC.build();fp=FPISS.build();platform=PLATFORM.build()
     reduced=REDUCED.build();resetframe=RESETFRAME.build();strict=STRICT.build()
+    allbias=ALLBIAS.build()
     bad={
       'chord':CHORD.validate(chord),'iqc':IQC.validate(iqc),'signed':SIGNED.validate(signed),
       'master':MASTER.validate(master),'iss_master':ISSMASTER.validate(iss),
       'bias1':BIAS1.validate(bias),'bias_iss':BIASISS.validate(biasiss),
+      'all_bias_family_supply':ALLBIAS.validate(allbias),
       'projection':PROJ.validate(proj),'coeff':COEFF.validate(coeff),
       'H18_finite_angle':H18FA.validate(h18),'A21_finite_angle':A21FA.validate(a21),
       'reset_iqc':RESETIQC.validate(reset),'reset_binding':RESETBIND.validate(resetbind),
@@ -122,15 +125,39 @@ def build()->dict:
       and master['terminal_full_augmented_interval_LDLT_available']
       and master['same_history_quadratic_graph_sector_assembler_available']
       and iss['same_augmented_coordinate_for_state_graph_source_and_roundoff'])
+    # The projection/Joseph prerequisites see an accelerometer-bias family only
+    # through four things: that it is admitted, that it carries ONE physical
+    # bias history across the word, that its driver enters e_b and b_true
+    # through the same w column, and through |b_true|.  The radial projection
+    # map F_R(e,beta)=beta-Pi_R(beta-e) contains no driver term at all, and the
+    # Joseph/reset coefficient family comes from the reachable P/H/R cell, not
+    # from the bias model.  The three declared families share one true-bias
+    # envelope, so the fourth dependence is one number for all of them and the
+    # prerequisites are family-parametric rather than BIAS1-specific.
+    graph_prerequisites=bool(
+      proj['global_joint_sector_closed']
+      and coeff['Joseph_gain_family_outwardly_bounded']
+      and coeff['rowwise_K_reset_correction_domain_forbidden']
+      and coeff['reset_coefficient_family_requires_same_graph_correction_domain']
+      and allbias['radial_projection_sector_closed_for_every_family']
+      and allbias['projection_sector_sees_no_bias_driver']
+      and allbias['families_share_one_true_bias_envelope']
+      and allbias['bias_compactness_is_family_uniform'])
+    physical_ready_family={
+      name:bool(
+        graph_prerequisites
+        and allbias['family_supply'][name]['event_lift']['prediction_lift_accepts_family_interval']
+        and allbias['family_supply'][name]['event_lift']['supply_injection_available']
+        and allbias['family_supply'][name]['event_lift']['same_w_column_shared_by_error_and_truth']
+        and allbias['family_supply'][name]['event_lift']['physical_factor_carried_in_truth_block']
+        and not allbias['independent_per_sample_bias_state_slots_used'])
+      for name in ALLBIAS.REQUIRED_BIAS_FAMILIES}
     physical_ready=bool(
       bias['BIAS1_SOURCE_ADMISSION_PASS'] and bias['one_root_one_parameter_history_required']
       and bias['independent_per_sample_bias_slots_forbidden']
       and biasiss['same_w_enters_error_and_true_bias']
       and biasiss['one_physical_beta_state_carried_across_word']
-      and proj['global_joint_sector_closed']
-      and coeff['Joseph_gain_family_outwardly_bounded']
-      and coeff['rowwise_K_reset_correction_domain_forbidden']
-      and coeff['reset_coefficient_family_requires_same_graph_correction_domain'])
+      and physical_ready_family['BIAS1'])
     backbone=bool(
       h18['full_declared_45deg_entry_covered']
       and h18['universal_H18_finite_angle_prior_free_LDLT_closed']
@@ -169,6 +196,10 @@ def build()->dict:
       'conditional_full_binary32_additive_ISS_ready':fp_ready,
       'target_toolchain_qualified_here':platform['target_toolchain_qualified_here'],
       'physical_BIAS1_projection_and_Joseph_prerequisites_ready':physical_ready,
+      'physical_projection_and_Joseph_prerequisites_ready_per_family':physical_ready_family,
+      'projection_and_Joseph_prerequisites_are_family_parametric':graph_prerequisites,
+      'all_bias_families_reach_the_same_history_graph':all(physical_ready_family.values()),
+      'bias_error_compactness_upper_mps2':allbias['bias_error_compactness_upper_mps2'],
       'accelerometer_residual_coordinate':'y=q+u; p=[c]x(f_hat+R_hat*delta_a_w); u=R_hat*delta_a_w+delta_b_a',
       'joseph_favorable_q_u_cross_term_retained':True,
       'mixed_c_cross_aw_retained_as_explicit_coordinate':True,
@@ -201,6 +232,7 @@ def validate(d):
               'affine_hard_entry_correction_and_prefix_IQC_ready','same_graph_correction_domain_certificate_required',
               'rowwise_K_reset_domain_forbidden','joint_ISS_master_ready_for_BIAS1_and_roundoff',
               'conditional_full_binary32_additive_ISS_ready','physical_BIAS1_projection_and_Joseph_prerequisites_ready',
+              'projection_and_Joseph_prerequisites_are_family_parametric','all_bias_families_reach_the_same_history_graph',
               'joseph_favorable_q_u_cross_term_retained','mixed_c_cross_aw_retained_as_explicit_coordinate',
               'finite_reset_cross_and_defect_terms_retained','physical_BIAS1_one_history_retained','active_radial_projection_sector_retained',
               'actual_same_history_K_required_not_independent_row_box','rowwise_K_enclosure_used_only_as_finite_precision_magnitude_ceiling'):

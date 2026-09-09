@@ -16,9 +16,11 @@ Each family now has its own authoritative repository binding:
 
 None is inferred from another, none may be silently replaced by BIAS1,
 collapsed into a generic bias box, or omitted from a P4 attempt.  Semantic
-binding is not closure: BIAS0 assembled-sensor qualification and BIAS2's
-uniform separation sector both remain open, and no family has its source
-cover, projection/bias transport or every-prefix ISS LDLT closed.
+binding is not closure: BIAS0 assembled-sensor qualification remains open, and
+no family has its source cover or every-prefix ISS LDLT closed.  BIAS2's
+separation sector is a motion-gain sharpener rather than a prerequisite: the
+bias half of the declared objective comes from the closed radial projection
+sector, which holds for a non-relaxing truth exactly as for a relaxing one.
 
 This module distinguishes two questions:
 
@@ -124,6 +126,9 @@ def build():
       'BIAS2_authoritative_semantic_binding_closed_here':True,
       'BIAS0_assembled_sensor_hardware_qualified':bool(b0['assembled_sensor_hardware_qualified']),
       'BIAS2_uniform_separation_sector_closed':bool(b2['source_uniform_separation_closed']),
+      'BIAS2_separation_required_for_bounded_bias_objective':bool(b2['separation_sector_required_for_bounded_bias_objective']),
+      'bias_error_compactness_upper_mps2':joint['bias_error_compactness_upper_mps2'],
+      'families_share_one_true_bias_envelope':bool(joint['families_share_one_true_bias_envelope']),
       'BIAS0_may_be_substituted_by_BIAS1':False,'BIAS2_may_be_substituted_by_BIAS1':False,
       'generic_bias_box_may_replace_three_family_quantifier':False,
       'semantic_bindings':semantic,'source_cover_closure':source,
@@ -134,16 +139,16 @@ def build():
       'all_three_every_prefix_ISS_LDLT_closed_here':all(prefix.values()),
       'all_bias_promotion_gate_closed':promotion,
       'P4_MOTION_PASS':False,'P4_PASS':False,'P5_MAY_START':False,
-      'next_obligation':'carry each independently bound BIAS0/1/2 family through the same-history BRMM source cover, projection/bias transport, finite-precision ISS maps and endpoint plus every-prefix augmented LDLT, and prove a uniform BIAS2 separation constant, before any P4 promotion'}
+      'next_obligation':'carry each independently bound BIAS0/1/2 family through the same-history BRMM source cover, projection/bias transport, finite-precision ISS maps and endpoint plus every-prefix augmented LDLT before any P4 promotion; the uniform BIAS2 separation constant is an optional motion-gain sharpener, not a prerequisite of the declared bounded-bias objective'}
 
 
 def validate(d):
     f=[]
     if d.get('schema')!=SCHEMA or d.get('qualification')!=QUALIFICATION:f.append('schema/qualification mismatch')
     if d.get('required_bias_families')!=list(REQUIRED_BIAS_FAMILIES):f.append('required bias family set changed')
-    for k in ('all_future_P4_attempts_must_declare_BIAS0_BIAS1_BIAS2','single_or_subset_bias_family_attempt_forbidden','omitting_BIAS0_is_rejected','omitting_BIAS1_is_rejected','omitting_BIAS2_is_rejected','BIAS0_authoritative_family_module_bound','BIAS1_authoritative_family_module_bound','BIAS2_authoritative_family_module_bound','BIAS1_joint_ISS_supply_module_bound','all_family_joint_ISS_supply_module_bound','BIAS0_one_composite_history_retained','BIAS1_one_root_one_parameter_history_retained','BIAS2_one_drift_history_retained','BIAS2_non_relaxing_limit_admitted','BIAS1_class_contains_no_other_family','no_single_family_covers_the_other_two','BIAS0_authoritative_semantic_binding_closed_here','BIAS2_authoritative_semantic_binding_closed_here','all_three_semantically_bound_here'):
+    for k in ('all_future_P4_attempts_must_declare_BIAS0_BIAS1_BIAS2','single_or_subset_bias_family_attempt_forbidden','omitting_BIAS0_is_rejected','omitting_BIAS1_is_rejected','omitting_BIAS2_is_rejected','BIAS0_authoritative_family_module_bound','BIAS1_authoritative_family_module_bound','BIAS2_authoritative_family_module_bound','BIAS1_joint_ISS_supply_module_bound','all_family_joint_ISS_supply_module_bound','BIAS0_one_composite_history_retained','BIAS1_one_root_one_parameter_history_retained','BIAS2_one_drift_history_retained','BIAS2_non_relaxing_limit_admitted','BIAS1_class_contains_no_other_family','no_single_family_covers_the_other_two','families_share_one_true_bias_envelope','BIAS0_authoritative_semantic_binding_closed_here','BIAS2_authoritative_semantic_binding_closed_here','all_three_semantically_bound_here'):
         if d.get(k) is not True:f.append(k+' not true')
-    for k in ('BIAS0_may_be_substituted_by_BIAS1','BIAS2_may_be_substituted_by_BIAS1','generic_bias_box_may_replace_three_family_quantifier','BIAS0_assembled_sensor_hardware_qualified','BIAS2_uniform_separation_sector_closed','all_three_source_cover_closed_here','all_three_projection_transport_closed_here','all_three_every_prefix_ISS_LDLT_closed_here','all_bias_promotion_gate_closed','P4_MOTION_PASS','P4_PASS','P5_MAY_START'):
+    for k in ('BIAS0_may_be_substituted_by_BIAS1','BIAS2_may_be_substituted_by_BIAS1','generic_bias_box_may_replace_three_family_quantifier','BIAS0_assembled_sensor_hardware_qualified','BIAS2_uniform_separation_sector_closed','BIAS2_separation_required_for_bounded_bias_objective','all_three_source_cover_closed_here','all_three_projection_transport_closed_here','all_three_every_prefix_ISS_LDLT_closed_here','all_bias_promotion_gate_closed','P4_MOTION_PASS','P4_PASS','P5_MAY_START'):
         if d.get(k) is not False:f.append(k+' not false')
     for name in REQUIRED_BIAS_FAMILIES:
         for table in ('semantic_bindings','source_cover_closure','projection_transport_closure','every_prefix_ISS_LDLT_closure'):

@@ -40,6 +40,7 @@ import ou3_p4_bias2_family as BIAS2
 import ou3_p4_bias1_joint_iss_supply as BIAS1_ISS
 import ou3_p4_a21_bias1_24state_event_lift as LIFT
 import ou3_p4_hard_entry_set as ENTRY
+import ou3_p4_projection_sector as PROJ
 
 DT=0.005
 WORD=600
@@ -130,6 +131,24 @@ def build():
     entry_radius=float(ENTRY.build()['coordinate_radii']['accelerometer_bias_error_norm_mps2'])
     truth_within_entry_envelope=all(float(supply[n]['true_bias_norm_upper_mps2'])<=entry_radius for n in REQUIRED_BIAS_FAMILIES)
 
+    # Shared-envelope lemma.  The three families are declared on one common
+    # true-bias component envelope, so every downstream bound that sees the
+    # family only through |b_true| is the SAME number for all three.  That is
+    # what makes the projection sector, the Joseph/reset correction domain and
+    # the measurement graph family-parametric rather than BIAS1-specific: the
+    # projection map F_R(e,beta)=beta-Pi_R(beta-e) does not see the driver at
+    # all, and the compactness bound |e_b| <= R + B_true is one number here.
+    proj=PROJ.build()
+    if PROJ.validate(proj):raise RuntimeError('projection sector prerequisite failed')
+    projection_radius=float(proj['base_report']['projection_radius'])
+    envelopes={n:float(families[n]['true_bias_component_abs_upper_mps2']) for n in REQUIRED_BIAS_FAMILIES}
+    shared_envelope=max(envelopes.values())
+    envelope_spread=up(shared_envelope-min(envelopes.values()))
+    # One ulp of slack: the three boxes are declared equal and differ only by
+    # the outward rounding each family module applies to its own channel sum.
+    envelope_shared=envelope_spread<=up(4.0*abs(shared_envelope)*2.220446049250313e-16)
+    compactness={n:up(projection_radius+float(supply[n]['true_bias_norm_upper_mps2'])) for n in REQUIRED_BIAS_FAMILIES}
+
     return {
       'schema':SCHEMA,'qualification':QUALIFICATION,
       'canonical_source':'COMPLETE_BRMM_NORMAL_LIVE_WORD',
@@ -148,6 +167,14 @@ def build():
       'no_single_family_covers_the_other_two':no_family_covers_all,
       'hard_entry_accelerometer_bias_error_radius_mps2':entry_radius,
       'every_family_true_bias_within_hard_entry_envelope':truth_within_entry_envelope,
+      'deployed_projection_radius_mps2':projection_radius,
+      'radial_projection_sector_closed_for_every_family':bool(proj['global_joint_sector_closed'] and proj['estimate_ball_invariance_closed']),
+      'projection_sector_sees_no_bias_driver':True,
+      'true_bias_component_envelope_mps2':envelopes,
+      'families_share_one_true_bias_envelope':envelope_shared,
+      'true_bias_envelope_spread_mps2':envelope_spread,
+      'bias_error_compactness_upper_mps2':compactness,
+      'bias_compactness_is_family_uniform':len(set(round(v,12) for v in compactness.values()))==1,
       'BIAS1_supply_delegated_to_authoritative_module':delegated,
       'BIAS0_inferred_from_BIAS1':False,'BIAS2_inferred_from_BIAS1':False,
       'generic_bias_box_replaces_three_families':False,
@@ -155,7 +182,7 @@ def build():
       'largest_tau_mismatch_family':max(REQUIRED_BIAS_FAMILIES,key=lambda n:supply[n]['tau_mismatch_factor_upper']),
       'projection_correction_charged_as_exogenous_supply':False,
       'projection_must_use_same_b_true_coordinate':True,
-      'BIAS2_separation_sector_still_required':bool(families['BIAS2']['separation_sector_required_for_ISS_closure']),
+      'BIAS2_separation_required_for_bounded_bias_objective':bool(families['BIAS2']['separation_sector_required_for_bounded_bias_objective']),
       'BIAS2_uniform_separation_closed':bool(families['BIAS2']['source_uniform_separation_closed']),
       'filter_changed':False,'declared_domain_changed':False,'trajectory_replay_used':False,
       'endpoint_augmented_LDLT_closed_here':False,
@@ -170,9 +197,9 @@ def validate(d):
     if d.get('required_bias_families')!=list(REQUIRED_BIAS_FAMILIES):f.append('required bias family set changed')
     supply=d.get('family_supply',{})
     if set(supply)!=set(REQUIRED_BIAS_FAMILIES):f.append('family supply table must be exactly BIAS0/BIAS1/BIAS2')
-    for k in ('same_w_enters_error_and_true_bias','one_physical_bias_state_carried_across_word','each_family_pushed_through_deployed_24state_event_lift','BIAS1_class_contains_no_other_family','no_single_family_covers_the_other_two','every_family_true_bias_within_hard_entry_envelope','BIAS1_supply_delegated_to_authoritative_module','projection_must_use_same_b_true_coordinate','BIAS2_separation_sector_still_required'):
+    for k in ('same_w_enters_error_and_true_bias','one_physical_bias_state_carried_across_word','each_family_pushed_through_deployed_24state_event_lift','BIAS1_class_contains_no_other_family','no_single_family_covers_the_other_two','every_family_true_bias_within_hard_entry_envelope','BIAS1_supply_delegated_to_authoritative_module','projection_must_use_same_b_true_coordinate','radial_projection_sector_closed_for_every_family','projection_sector_sees_no_bias_driver','families_share_one_true_bias_envelope','bias_compactness_is_family_uniform'):
         if d.get(k) is not True:f.append(k+' not true')
-    for k in ('independent_per_sample_bias_state_slots_used','BIAS0_inferred_from_BIAS1','BIAS2_inferred_from_BIAS1','generic_bias_box_replaces_three_families','projection_correction_charged_as_exogenous_supply','BIAS2_uniform_separation_closed','filter_changed','declared_domain_changed','trajectory_replay_used','endpoint_augmented_LDLT_closed_here','every_prefix_augmented_LDLT_closed_here','P4_promoted_here'):
+    for k in ('independent_per_sample_bias_state_slots_used','BIAS0_inferred_from_BIAS1','BIAS2_inferred_from_BIAS1','generic_bias_box_replaces_three_families','projection_correction_charged_as_exogenous_supply','BIAS2_uniform_separation_closed','BIAS2_separation_required_for_bounded_bias_objective','filter_changed','declared_domain_changed','trajectory_replay_used','endpoint_augmented_LDLT_closed_here','every_prefix_augmented_LDLT_closed_here','P4_promoted_here'):
         if d.get(k) is not False:f.append(k+' not false')
     containment=d.get('relaxation_class_containment',{})
     if set(containment)!=set(REQUIRED_BIAS_FAMILIES):f.append('relaxation containment table incomplete')
