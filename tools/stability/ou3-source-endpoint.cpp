@@ -70,10 +70,30 @@ struct Truth {
     V3 gyro;
 };
 
+#ifdef OU3_CONDITIONAL_BIAS_DRIVER
+constexpr double bias_tau_true_s = 1200.0;
+constexpr double bias_driver_omega = 2.0 * std::numbers::pi / 600.0;
+const V3 bias_root(0.08, -0.05, 0.03);
+const V3 bias_driver_amplitude(0.015, 0.010, -0.008);
+const V3 bias_driver_phase(0.0, 1.1, -0.7);
+
+V3 physical_bias(double t)
+{
+    V3 out = bias_root * std::exp(-t / bias_tau_true_s);
+    for (int j = 0; j < 3; ++j)
+        out(j) += bias_driver_amplitude(j) * std::sin(bias_driver_omega*t + bias_driver_phase(j));
+    return out;
+}
+#else
+V3 physical_bias(double) { return V3::Zero(); }
+#endif
+
 #ifdef OU3_SOURCE_EVENT_TRACE
 std::ostream* trace_output = nullptr;
 const Truth* trace_truth = nullptr;
 const Truth* trace_previous = nullptr;
+V3 trace_bias = V3::Zero();
+V3 trace_previous_bias = V3::Zero();
 const char* trace_word = nullptr;
 unsigned trace_index = 0;
 double trace_time = 0;
@@ -106,9 +126,9 @@ Truth source(const Sea& sea, double t)
 }
 
 void checkpoint(std::ostream& out, const Fusion& fusion, const Truth& truth,
-                const char* word, const char* event, unsigned index, double t,
-                bool s_due, const Eigen::Matrix3f& applied_rs,
-                const V12& prediction_forcing)
+                const V3& true_bias, const char* word, const char* event,
+                unsigned index, double t, bool s_due,
+                const Eigen::Matrix3f& applied_rs, const V12& prediction_forcing)
 {
     const auto& raw = fusion.raw();
     const auto& m = raw.mekf();
@@ -137,7 +157,8 @@ void checkpoint(std::ostream& out, const Fusion& fusion, const Truth& truth,
     out << ",\"P\":"; array(out, m.covariance_full());
     out << ",\"R_S\":"; array(out, applied_rs);
     out << ",\"prediction_forcing\":"; array(out, prediction_forcing);
-    out << ",\"true_bias\":[0,0,0],\"physical_acceleration\":";
+    out << ",\"true_bias\":"; array(out, true_bias);
+    out << ",\"physical_acceleration\":";
     array(out, truth.linear.tail<3>());
     out << ",\"physical_gyro\":"; array(out, truth.gyro);
     out << ",\"mag_reference\":"; array(out, m.v2ref);
@@ -159,6 +180,7 @@ void common(std::ostream& out, const char* stage, const Core& m)
 {
     const bool entrance = std::string(stage) == "prediction_enter";
     const Truth& truth = entrance ? *trace_previous : *trace_truth;
+    const V3& true_bias = entrance ? trace_previous_bias : trace_bias;
     M3 unheel;
     for (int j = 0; j < 3; ++j)
         unheel.col(j) = m.deheel_vector_(Eigen::Vector3f::Unit(j)).template cast<double>();
@@ -173,7 +195,8 @@ void common(std::ostream& out, const char* stage, const Core& m)
         << ",\"R_true\":";
     array(out, (unheel*truth.R).eval());
     out << ",\"linear_true\":"; array(out, truth.linear);
-    out << ",\"true_bias\":[0,0,0],\"R_hat\":"; array(out, m.R_wb());
+    out << ",\"true_bias\":"; array(out, true_bias);
+    out << ",\"R_hat\":"; array(out, m.R_wb());
     out << ",\"x_hat\":"; array(out, m.xext);
     out << ",\"P\":"; array(out, m.covariance_full());
     out << ",\"R_S\":"; array(out, m.R_S);
@@ -242,9 +265,18 @@ int main(int argc, char** argv)
             -30.0f * std::numbers::pi / 180.0, 10.0, 42u);
         Sea sea(1.5f, 5.7f, spread, 0.02, 0.8, g_std, 42u);
         root << "{\"branch\":\"VESSEL_RAO_28FT\",\"seed\":42,"
-             << "\"gravity\":" << g_std << ",\"dt\":" << dt
-             << ",\"bias_root\":[0,0,0],\"bias_driver\":\"ZERO\","
-             << "\"temperature\":35,\"mag_world\":[20,0,40],\"atoms\":[";
+             << "\"gravity\":" << g_std << ",\"dt\":" << dt;
+#ifdef OU3_CONDITIONAL_BIAS_DRIVER
+        root << ",\"bias_root\":"; array(root, bias_root);
+        root << ",\"bias_driver\":\"DETERMINISTIC_SINUSOIDAL_GM\""
+             << ",\"bias_tau_true_s\":" << bias_tau_true_s
+             << ",\"bias_driver_omega_rad_s\":" << bias_driver_omega
+             << ",\"bias_driver_amplitude\":"; array(root, bias_driver_amplitude);
+        root << ",\"bias_driver_phase\":"; array(root, bias_driver_phase);
+#else
+        root << ",\"bias_root\":[0,0,0],\"bias_driver\":\"ZERO\"";
+#endif
+        root << ",\"temperature\":35,\"mag_world\":[20,0,40],\"atoms\":[";
         const auto waves = sea.incidentHarmonics();
         for (std::size_t i = 0; i < waves.size(); ++i) {
             if (i) root << ',';
@@ -274,10 +306,16 @@ int main(int argc, char** argv)
         double source_time = 0.0;
         float observer_time = 0.0f, mag_elapsed = 0.0f;
         Truth previous = source(sea, -double(dt));
-        inputs << "index,source_time,observer_time,ax,ay,az,gx,gy,gz,mag_tick,mx,my,mz\n";
+        V3 previous_bias = physical_bias(-double(dt));
+        inputs << "index,source_time,observer_time,ax,ay,az,gx,gy,gz,mag_tick,mx,my,mz";
+#ifdef OU3_CONDITIONAL_BIAS_DRIVER
+        inputs << ",btx,bty,btz";
+#endif
+        inputs << '\n';
         for (unsigned index = 0; index < 250000u; ++index) {
             const Truth truth = source(sea, source_time);
-            const Eigen::Vector3f acc = truth.acc.cast<float>();
+            const V3 true_bias = physical_bias(source_time);
+            const Eigen::Vector3f acc = (truth.acc + true_bias).cast<float>();
             const Eigen::Vector3f gyro = truth.gyro.cast<float>();
             const Eigen::Vector3f mag = (truth.R * V3(20,0,40)).cast<float>();
             auto& raw = fusion.raw();
@@ -295,7 +333,7 @@ int main(int argc, char** argv)
                     if (std::abs(observer_time - starts[w]) > 2.0e-4f)
                         throw std::runtime_error("fixed entrance clock missed");
                     started[w] = true;
-                    checkpoint(points, fusion, previous, names[w], "root", index,
+                    checkpoint(points, fusion, previous, previous_bias, names[w], "root", index,
                                source_time-double(dt), false, rs, V12::Zero());
                 }
             }
@@ -305,6 +343,8 @@ int main(int argc, char** argv)
                 if (started[w] && counts[w] < 600u) trace_word = names[w];
             trace_truth = &truth;
             trace_previous = &previous;
+            trace_bias = true_bias;
+            trace_previous_bias = previous_bias;
             trace_index = index;
             trace_time = source_time;
 #endif
@@ -315,7 +355,7 @@ int main(int argc, char** argv)
                 - raw.mekf().F_LL_scratch_.cast<double>() * previous.linear;
             for (std::size_t w = 0; w < 2; ++w)
                 if (started[w] && counts[w] < 600u)
-                    checkpoint(points, fusion, truth, names[w], "imu", index,
+                    checkpoint(points, fusion, truth, true_bias, names[w], "imu", index,
                                source_time, due, rs, forcing);
 
             mag_elapsed += dt;
@@ -325,7 +365,7 @@ int main(int argc, char** argv)
                 fusion.updateMag(mag);
                 for (std::size_t w = 0; w < 2; ++w)
                     if (started[w] && counts[w] < 600u)
-                        checkpoint(points, fusion, truth, names[w], "mag", index,
+                        checkpoint(points, fusion, truth, true_bias, names[w], "mag", index,
                                    source_time, false, rs, V12::Zero());
             }
             inputs << index << ',' << source_time << ',' << observer_time;
@@ -333,6 +373,9 @@ int main(int argc, char** argv)
             for (int j = 0; j < 3; ++j) inputs << ',' << gyro(j);
             inputs << ',' << mag_tick;
             for (int j = 0; j < 3; ++j) inputs << ',' << mag(j);
+#ifdef OU3_CONDITIONAL_BIAS_DRIVER
+            for (int j = 0; j < 3; ++j) inputs << ',' << true_bias(j);
+#endif
             inputs << '\n';
 #ifdef OU3_SOURCE_EVENT_TRACE
             trace_word = nullptr;
@@ -341,6 +384,7 @@ int main(int argc, char** argv)
                 if (started[w] && counts[w] < 600u) ++counts[w];
             if (counts[1] == 600u) break;
             previous = truth;
+            previous_bias = true_bias;
             source_time += double(dt);
             observer_time += dt;
         }
