@@ -1,0 +1,73 @@
+name: ou3-p4-complete-brmm-source-cover-contract
+
+on:
+  push:
+    paths: &paths
+      - "tools/stability/ou3_p4_complete_brmm_source_cover_contract.py"
+      - "tools/stability/ou3_p4_complete_brmm_finite_map_mean_value.py"
+      - "tools/stability/ou3_p4_complete_brmm_differential_events.py"
+      - "tools/stability/ou3_brmm_complete_source.py"
+      - "tools/stability/ou3_brmm_full_normal_live_word.py"
+      - ".github/workflows/ou3-p4-complete-brmm-source-cover-contract.yml"
+  pull_request:
+    paths: *paths
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Validate fail-closed same-history source-cover contract
+        run: |
+          python3 tools/stability/ou3_p4_complete_brmm_source_cover_contract.py --output /tmp/source-cover-contract.json
+          python3 tools/stability/ou3_p4_complete_brmm_finite_map_mean_value.py --output /tmp/finite-map.json
+          python3 - <<'PY'
+          import json,sys
+          sys.path.insert(0,'tools/stability')
+          from ou3_interval import Interval
+          import ou3_p4_complete_brmm_source_cover_contract as C
+          import ou3_p4_complete_brmm_differential_events as E
+
+          I=Interval.point
+          n=18
+          P=[[I(1.0 if i==j else 0.0) for j in range(n)] for i in range(n)]
+          R=[[I(1.0 if i==j else 0.0) for j in range(3)] for i in range(3)]
+          cell=C.SourceCoverCell(
+              source_token='SMOKE_ONE_HISTORY', predecessor_token='SMOKE_PREDECESSOR',
+              mode='H', sample_index=0, event_ordinal=1, kind='S_zero',
+              state=[I(0.0) for _ in range(n)], P=P,
+              dt_s=I(0.005), tau_applied_s=I(2.0), sigma_aw_mps2=I(1.0),
+              pseudo_elapsed_s=I(0.015), R=R, R_provenance=E.ACTUAL_RS_PROVENANCE,
+              radial_scale=Interval.outward_bounds(0.0,1.0))
+          assert C.validate_cell(cell)==[], C.validate_cell(cell)
+          ev=E.source_joseph_event(**C.joseph_event_kwargs(cell))
+          assert ev['same_P_H_R_cell']
+          assert ev['R_provenance']==E.ACTUAL_RS_PROVENANCE
+
+          d=json.load(open('/tmp/source-cover-contract.json'))
+          f=json.load(open('/tmp/finite-map.json'))
+          assert d['validation_pass'],d['validation_failures']
+          assert not d['SOURCE_UNIFORM_COMPLETE_BRMM_COVER_CLOSED']
+          assert not d['point_trace_can_promote_source_uniform_cover']
+          assert d['independent_P_H_R_K_boxes_forbidden']
+          assert f['validation_pass'],f['validation_failures']
+          assert f['source_cover_contract_consumed']
+          assert not f['source_cover_uniform_complete_BRMM_closed']
+          assert not f['P4_promoted_here']
+          print('SOURCE_COVER_INTERFACE_SMOKE',ev['same_P_H_R_cell'],ev['R_provenance'])
+          print('SOURCE_COVER_UNIFORM_CLOSED',d['SOURCE_UNIFORM_COMPLETE_BRMM_COVER_CLOSED'])
+          PY
+      - uses: actions/upload-artifact@v6
+        with:
+          name: ou3-p4-complete-brmm-source-cover-contract
+          path: |
+            /tmp/source-cover-contract.json
+            /tmp/finite-map.json
+          retention-days: 7
