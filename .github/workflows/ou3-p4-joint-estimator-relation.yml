@@ -1,0 +1,46 @@
+name: ou3-p4-joint-estimator-relation
+
+on:
+  push:
+    branches: [main, 'codex/ou3-p4-joint-estimator-transition']
+    paths: &paths
+      - 'src/**'
+      - 'tools/stability/**'
+      - '.github/workflows/ou3-p4-joint-estimator-relation.yml'
+  pull_request:
+    paths: *paths
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ou3-p4-joint-estimator-relation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  relation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Check proof source syntax
+        run: python -m compileall -q tools/stability
+      - name: Retain exact PR source and existing joint diagnostics
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/ou3-p4-relation-evidence
+          git rev-parse HEAD > /tmp/ou3-p4-relation-evidence/source-commit.txt
+          git archive --format=tar.gz HEAD > /tmp/ou3-p4-relation-evidence/proof-sources.tar.gz
+          sha256sum /tmp/ou3-p4-relation-evidence/proof-sources.tar.gz > /tmp/ou3-p4-relation-evidence/SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ou3-p4-relation-evidence
+          path: /tmp/ou3-p4-relation-evidence/
+          if-no-files-found: error
