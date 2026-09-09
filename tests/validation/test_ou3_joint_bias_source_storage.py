@@ -42,8 +42,8 @@ class CompatibleMetricTests(unittest.TestCase):
         self.assertAlmostEqual(report["word_spectral_radius"], .56)
 
     def test_individually_unstable_sample_is_allowed_if_cycle_is_schur(self):
-        a0 = np.eye(18)
-        a1 = np.eye(18)
+        a0 = .8*np.eye(18)
+        a1 = .7*np.eye(18)
         a0[0, 0] = 1.2
         a1[0, 0] = .5
         metrics, _, report = J.periodic_metrics([sample(a0), sample(a1, index=1)],
