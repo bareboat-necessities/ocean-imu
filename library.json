@@ -32,7 +32,8 @@
       "name": "M5Unified"
     },
     {
-      "name": "Eigen"
+      "name": "Eigen",
+      "version": "0.3.2"
     }
   ],
   "build": {
