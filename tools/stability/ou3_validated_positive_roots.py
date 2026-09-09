@@ -2,14 +2,15 @@
 """Validated positive binary64 root/rational-power endpoint enclosures.
 
 The P4 adaptive source cover needs the deployed SpectralMSE map, including
-``sqrt(x)`` and ``x^(6/7)``.  Ordinary libm results are not theorem bounds.
-This module uses binary64 only as a search grid: every candidate is converted
-exactly to :class:`fractions.Fraction` and accepted only after an exact integer
-power comparison proves which side of the real root it lies on.
+``sqrt(x)``, ``x^(6/7)`` and the cached ``q_eff^(1/14)``.  Ordinary libm results
+are not theorem bounds.  This module uses binary64 only as a search grid: every
+candidate is converted exactly to :class:`fractions.Fraction` and accepted only
+after an exact integer-power comparison proves which side of the real root it
+lies on.
 
 ``math.sqrt``/``math.pow`` may provide an initial search seed, but correctness
-does not depend on their rounding.  The loop walks by ``nextafter`` until the
-exact inequalities certify adjacent lower/upper binary64 endpoints.
+does not depend on their rounding.  The loop walks by ``nextafter`` until exact
+inequalities certify adjacent lower/upper binary64 endpoints.
 """
 from __future__ import annotations
 
@@ -26,9 +27,8 @@ def _q(x: float) -> Fraction:
     return Fraction.from_float(x)
 
 
-def _bracket_monotone_root(x: float, *, numerator_power: int,
-                           root_power: int, seed: float) -> Interval:
-    """Enclose y=x^(numerator_power/root_power) by exact comparisons."""
+def rational_power_point(x: float, numerator_power: int, root_power: int) -> Interval:
+    """Enclose ``x**(numerator_power/root_power)`` by exact rational tests."""
     if not (isinstance(numerator_power,int) and isinstance(root_power,int)
             and numerator_power > 0 and root_power > 0):
         raise ValueError("positive integer powers required")
@@ -36,6 +36,7 @@ def _bracket_monotone_root(x: float, *, numerator_power: int,
     if x == 0.0:
         return Interval.point(0.0)
     target=_q(x) ** numerator_power
+    seed=math.pow(x,float(numerator_power)/float(root_power))
     y=float(seed)
     if not (math.isfinite(y) and y > 0.0):
         y=1.0
@@ -43,7 +44,6 @@ def _bracket_monotone_root(x: float, *, numerator_power: int,
     def below_or_equal(v: float) -> bool:
         return Fraction.from_float(v) ** root_power <= target
 
-    # Find one certified lower grid point.
     if below_or_equal(y):
         lo=y
         while True:
@@ -66,49 +66,54 @@ def _bracket_monotone_root(x: float, *, numerator_power: int,
     hi=math.nextafter(lo, math.inf)
     if not math.isfinite(hi):
         raise OverflowError("root enclosure overflow")
-    if Fraction.from_float(hi) ** root_power <= target:
-        # This should be unreachable after the upward walk, but retain an exact
-        # correction loop so correctness is independent of the seed logic.
-        while Fraction.from_float(hi) ** root_power <= target:
-            lo=hi
-            hi=math.nextafter(hi, math.inf)
-            if not math.isfinite(hi):
-                raise OverflowError("root enclosure overflow")
+    while Fraction.from_float(hi) ** root_power <= target:
+        lo=hi
+        hi=math.nextafter(hi, math.inf)
+        if not math.isfinite(hi):
+            raise OverflowError("root enclosure overflow")
     return Interval(lo,hi)
 
 
+def rational_power_interval(x: Interval, numerator_power: int, root_power: int) -> Interval:
+    if not isinstance(x,Interval) or x.lo < 0.0:
+        raise ValueError("rational-power interval must be nonnegative")
+    return Interval(
+        rational_power_point(x.lo,numerator_power,root_power).lo,
+        rational_power_point(x.hi,numerator_power,root_power).hi,
+    )
+
+
 def sqrt_point(x: float) -> Interval:
-    x=float(x)
-    seed=math.sqrt(x) if x >= 0.0 else math.nan
-    return _bracket_monotone_root(x,numerator_power=1,root_power=2,seed=seed)
+    return rational_power_point(x,1,2)
 
 
 def pow_6_7_point(x: float) -> Interval:
-    x=float(x)
-    seed=math.pow(x,6.0/7.0) if x > 0.0 else 0.0
-    return _bracket_monotone_root(x,numerator_power=6,root_power=7,seed=seed)
+    return rational_power_point(x,6,7)
+
+
+def root_14_point(x: float) -> Interval:
+    return rational_power_point(x,1,14)
 
 
 def sqrt_interval(x: Interval) -> Interval:
-    if not isinstance(x,Interval) or x.lo < 0.0:
-        raise ValueError("sqrt interval must be nonnegative")
-    return Interval(sqrt_point(x.lo).lo, sqrt_point(x.hi).hi)
+    return rational_power_interval(x,1,2)
 
 
 def pow_6_7_interval(x: Interval) -> Interval:
-    if not isinstance(x,Interval) or x.lo < 0.0:
-        raise ValueError("6/7 power interval must be nonnegative")
-    return Interval(pow_6_7_point(x.lo).lo, pow_6_7_point(x.hi).hi)
+    return rational_power_interval(x,6,7)
+
+
+def root_14_interval(x: Interval) -> Interval:
+    return rational_power_interval(x,1,14)
 
 
 def validate_self_test() -> list[str]:
     failures=[]
     for x in (0.0,1e-12,0.125,1.0,2.0,10.0,1e6):
-        s=sqrt_point(x); p=pow_6_7_point(x)
         qx=_q(x)
-        if not (Fraction.from_float(s.lo)**2 <= qx <= Fraction.from_float(s.hi)**2):
-            failures.append(f"sqrt bracket failed at {x}")
-        tgt=qx**6
-        if not (Fraction.from_float(p.lo)**7 <= tgt <= Fraction.from_float(p.hi)**7):
-            failures.append(f"6/7 bracket failed at {x}")
+        for p,r,label in ((1,2,"sqrt"),(6,7,"6/7"),(1,14,"1/14")):
+            y=rational_power_point(x,p,r)
+            target=qx**p
+            if not (Fraction.from_float(y.lo)**r <= target <= Fraction.from_float(y.hi)**r):
+                failures.append(f"{label} bracket failed at {x}")
     return failures
