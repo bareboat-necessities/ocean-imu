@@ -1,0 +1,51 @@
+name: ou3-p4-reset-domain-binding
+on:
+  push:
+    paths: &paths
+      - "tools/stability/ou3_p4_reset_domain_binding.py"
+      - "tools/stability/ou3_p4_same_cell_correction_domain.py"
+      - "tools/stability/ou3_p4_reset_signed_absorption_diagnostic.py"
+      - "tools/stability/ou3_p4_reset_graph_iqc.py"
+      - "tools/stability/ou3_p4_exact_reset_joint_coordinate.py"
+      - "tools/stability/ou3_p4_exact_reset_lifted_qc.py"
+      - "tools/stability/ou3_brmm_riccati_tube_factored.py"
+      - "tools/stability/ou3_brmm_endpoint_covariance.py"
+      - ".github/workflows/ou3-p4-reset-domain-binding.yml"
+  pull_request:
+    paths: *paths
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  reset-domain:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with: {persist-credentials: false}
+      - name: Build reset-domain binding
+        run: python3 tools/stability/ou3_p4_reset_domain_binding.py --output /tmp/reset-domain-binding.json
+      - name: Report exact same-cell reset closure
+        run: |
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/reset-domain-binding.json'))
+          assert d['validation_pass'],d['validation_failures']
+          assert d['same_cell_Joseph_correction_domain_consumed']
+          assert d['exact_reset_joint_coordinate_consumed']
+          assert d['exact_reset_lifted_QCs_consumed']
+          assert not d['rowwise_K_bound_used'] and not d['independent_K_box_used']
+          assert not d['scalar_delta_used_as_independent_storage_port']
+          assert not d['P4_promoted_here']
+          print('RESET_DOMAIN_CLOSED',d['source_uniform_same_graph_correction_domain_closed'])
+          for mode,m in d['modes'].items():
+              print('RESET_DOMAIN',mode,'limiting=',m['limiting_event'],'delta=',m['correction_norm_upper'],
+                    'inside=',m['inside_exact_reset_utility_domain'],'mu=',m['reset_defect_over_correction_norm_upper'])
+          PY
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: ou3-p4-reset-domain-binding
+          path: /tmp/reset-domain-binding.json
+          retention-days: 7
+          if-no-files-found: warn
