@@ -1,0 +1,40 @@
+name: ou3-p4-reset-graph-iqc
+on:
+  push:
+    paths: &paths
+      - "tools/stability/ou3_p4_reset_graph_iqc.py"
+      - "tools/stability/ou3_p4_exact_reset_transport.py"
+      - "tools/stability/ou3_p4_rowwise_coefficient_enclosure_fast.py"
+      - "tools/stability/ou3_p4_hard_entry_set.py"
+      - ".github/workflows/ou3-p4-reset-graph-iqc.yml"
+  pull_request:
+    paths: *paths
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  iqc:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with: {persist-credentials: false}
+      - name: Build dense same-cell reset graph IQC
+        run: python3 tools/stability/ou3_p4_reset_graph_iqc.py --output /tmp/reset-iqc.json
+      - name: Enforce correlation-preserving scope
+        run: |
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/reset-iqc.json'))
+          assert d['validation_pass'],d['validation_failures']
+          assert d['same_cell_K_required'] and d['independent_correction_port_forbidden']
+          assert d['reset_defect_dense_IQC_available'] and d['reset_IQC_keeps_residual_direction_via_Etheta_K_Y']
+          assert not d['source_uniform_augmented_LDLT_closed_here'] and not d['P4_promoted_here']
+          for mode,m in d['modes'].items():
+              print('RESET_IQC_GAIN',mode,m['reset_defect_to_actual_correction_norm_gain_upper'])
+          PY
+      - uses: actions/upload-artifact@v6
+        with:
+          name: ou3-p4-reset-graph-iqc
+          path: /tmp/reset-iqc.json
+          retention-days: 7
