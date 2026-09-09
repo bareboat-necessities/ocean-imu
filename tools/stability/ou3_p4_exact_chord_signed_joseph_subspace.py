@@ -3,22 +3,27 @@
 
 For isotropic accelerometer/magnetometer R=r I, write A=R^-1/2 H P^1/2.
 The exact chord obeys ||q||^2>=k||p||^2 and ||q-p||^2=||p||^2-||q||^2
-<= (1-k)||p||^2.  Therefore
+<= (1-k)||p||^2. Therefore
 
  q^T S^-1 q - (q-p)^T R^-1(q-p)
  >= [ k/(1+a2) - (1-k) ] p^T R^-1 p,
 
-where a2>=||A||^2.  Unlike the rejected whole-state Ptrace/Smax bound, a2 is
+where a2>=||A||^2. Unlike the rejected whole-state Ptrace/Smax bound, a2 is
 formed only from covariance coordinates actually touched by that measurement H.
 This is still a diagnostic scalarization; a negative factor means the production
 proof must retain the dense same-history S/K direction in the augmented master.
 A positive factor is a valid source-uniform lower that can be fed back into the
 universal information composition.
+
+The covariance ceiling is taken from the canonical factored, endpoint-referenced
+Riccati tube. The older small-x adapter could fail numerically at the x=0.01
+branch boundary after recursive subdivision; that arithmetic artifact is not a
+signed-Joseph result and is not used here.
 """
 from __future__ import annotations
 import argparse,json,math
 from pathlib import Path
-import ou3_brmm_riccati_tube_smallx_scaled as TUBE
+import ou3_brmm_riccati_tube_factored as TUBE
 import ou3_p4_complete_brmm_exact_chord_joint_coordinate as CHORD
 
 
@@ -26,7 +31,8 @@ def up(x):return math.nextafter(float(x),math.inf)
 def down(x):return math.nextafter(float(x),-math.inf)
 
 def build():
-    t=TUBE.build_base();c=CHORD.build();vf=CHORD.validate(c)
+    t=TUBE.build();tv=TUBE.validate(t);c=CHORD.build();vf=CHORD.validate(c)
+    if tv:raise RuntimeError('factored Riccati tube invalid: '+repr(tv))
     if vf:raise RuntimeError('chord invalid: '+repr(vf))
     k=float(c['information_retention_factor_lower_full_entry'])
     # Config/runtime vector bounds.
@@ -45,16 +51,19 @@ def build():
             events[ev]={'HPHt_lambda_max_upper_relevant_subspace':hph,'normalized_A_norm_squared_upper':a2,
               'signed_chord_information_factor_lower':factor,'nonnegative':factor>=0}
         modes[mode]={'attitude_Pii_max':patt,'aw_trace_upper':paw,'ba_trace_upper':pba,'events':events}
-    return {'qualification':'OU3_P4_EXACT_CHORD_SIGNED_JOSEPH_RELEVANT_SUBSPACE_V1','canonical_source':'COMPLETE_BRMM_NORMAL_LIVE_WORD',
+    return {'qualification':'OU3_P4_EXACT_CHORD_SIGNED_JOSEPH_RELEVANT_SUBSPACE_V2','canonical_source':'COMPLETE_BRMM_NORMAL_LIVE_WORD',
+      'canonical_factored_endpoint_referenced_Riccati_tube_used':True,'smallx_recursive_tube_used':False,
       'full_entry_chord_k_lower':k,'whole_state_Ptrace_not_used':True,'relevant_H_subspace_only':True,
       'dense_same_history_master_still_preferred_if_negative':True,'modes':modes,
       'all_event_scalar_factors_nonnegative':all(e['nonnegative'] for m in modes.values() for e in m['events'].values()),
       'P4_promoted_here':False}
 def validate(d):
     f=[]
-    for k in ('whole_state_Ptrace_not_used','relevant_H_subspace_only','dense_same_history_master_still_preferred_if_negative'):
+    if d.get('qualification')!='OU3_P4_EXACT_CHORD_SIGNED_JOSEPH_RELEVANT_SUBSPACE_V2':f.append('qualification mismatch')
+    for k in ('canonical_factored_endpoint_referenced_Riccati_tube_used','whole_state_Ptrace_not_used','relevant_H_subspace_only','dense_same_history_master_still_preferred_if_negative'):
         if d.get(k) is not True:f.append(k+' not true')
-    if d.get('P4_promoted_here') is not False:f.append('P4 promoted')
+    for k in ('smallx_recursive_tube_used','P4_promoted_here'):
+        if d.get(k) is not False:f.append(k+' not false')
     for mode,m in d['modes'].items():
         for ev,e in m['events'].items():
             for k in ('HPHt_lambda_max_upper_relevant_subspace','normalized_A_norm_squared_upper','signed_chord_information_factor_lower'):
