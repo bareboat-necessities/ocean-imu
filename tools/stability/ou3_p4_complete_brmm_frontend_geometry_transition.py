@@ -1,34 +1,23 @@
 #!/usr/bin/env python3
 """Frontend/geometry transition contract for the complete-BRMM P4 source cover.
 
-This module connects the existing WavePeriodEstimator source-causality lemma,
-the executable outward estimator moment-state recurrence, and the conditional
-vector-PE certificate to the theorem-facing P4 source cover.  It is strict about
-what is and is not currently materialized.
+This layer combines the WavePeriodEstimator state recurrence, the canonical
+dynamic adaptive invariant, the correlated deployed target-cell map, and the
+conditional vector-PE contract.
 
-Closed here:
-
-* the two shipping frequency modes (fixed prior, then one-way usable-period
-  takeover) and their one-sample tuner causal edge;
-* the exact fixed-prior frequency cell;
-* the monotone/clamped shipping frequency -> tau_target map on any supplied
-  same-source frequency interval;
-* the deployed two-high-pass/leaky-integrator/EW-moment state transition,
-  conditional on a same-source private-complementary input interval; and
-* the required same-history vector-geometry payload plus configured PE norm,
-  separation, packet-gap and body-rate hypotheses.
+Materialized here:
+* fixed-prior and one-way usable-period frontend modes;
+* frequency -> tau target;
+* same-cell (frequency, raw sigma) -> (tau, T_S, SpectralMSE R_S) target map;
+* two-high-pass/leaky-integrator/EW-moment estimator state recurrence;
+* the vector-geometry cell API and PE admissibility predicates.
 
 Still open:
-
-* the BRMM/raw-IMU -> private Mahony vertical-input attachment;
-* a correlated positive moment-variance enclosure strong enough to divide the
-  moment ratio and propagate raw/log period plus the usable-period latch;
-* the corresponding sigma_target and SpectralMSE R_S_target source histories;
-* a source-uniform physical rotation/vector trajectory producing the actual
-  f_hat/R_hat/m_body used by each Joseph event.
-
-A point RAO trace, surface Tz, or independently selected geometry box may not
-fill those coordinates.
+* BRMM/raw IMU -> private complementary vertical-input attachment;
+* correlated finite-time moment-ratio/log-period valid-update enclosure (quiet
+  continuation may hold the already-usable period rather than update it);
+* source-uniform physical rotation/vector geometry producing actual
+  f_hat/R_hat/m_body for each Joseph event.
 """
 from __future__ import annotations
 
@@ -45,17 +34,18 @@ import ou3_brmm_wave_period_frontend as FRONTEND
 import ou3_brmm_dynamic_source_certificate as DYNAMIC
 import ou3_vector_uco_certificate as VECTOR
 import ou3_p4_wave_period_interval_transition as WAVE
+import ou3_p4_complete_brmm_target_cell as TARGET
 import ou3_source_domain_contract as SOURCE
 
 REPO = Path(__file__).resolve().parents[2]
 WRAPPER = REPO / "src" / "kalman_ou_iii" / "SeaStateFusionFilter_OU_III.h"
 DEFAULT_DOMAIN = REPO / "tools" / "stability" / "ou3_proof_operating_domain.json"
-SCHEMA = 2
-QUALIFICATION = "OU3_P4_COMPLETE_BRMM_FRONTEND_GEOMETRY_TRANSITION_V2"
+SCHEMA = 3
+QUALIFICATION = "OU3_P4_COMPLETE_BRMM_FRONTEND_GEOMETRY_TRANSITION_V3"
 
 
 def I(x: float) -> Interval:
-    return Interval.outward_bounds(float(x), float(x))
+    return Interval.point(float(x))
 
 
 def _finite(x: Interval, positive: bool=False) -> bool:
@@ -77,21 +67,20 @@ def _member_float(text:str,name:str)->float:
 def _clamp_interval(x:Interval,lo:float,hi:float)->Interval:
     if not _finite(x): raise ValueError("nonfinite interval")
     if not (math.isfinite(lo) and math.isfinite(hi) and lo<=hi): raise ValueError("invalid clamp")
-    return Interval.outward_bounds(max(lo,min(hi,x.lo)),max(lo,min(hi,x.hi)))
+    return Interval(max(lo,min(hi,x.lo)),max(lo,min(hi,x.hi)))
 
 
 def frequency_screen(frontend:dict)->Interval:
     x=frontend["declared_inputs"]["screened_tuning_frequency_hz"]
-    return Interval.outward_bounds(float(x[0]),float(x[1]))
+    return Interval(float(x[0]),float(x[1]))
 
 
 def prior_frequency(frontend:dict)->Interval:
     x=frontend["declared_inputs"]["fixed_tuning_frequency_prior_hz"]
-    return Interval.outward_bounds(float(x[0]),float(x[1]))
+    return Interval(float(x[0]),float(x[1]))
 
 
 def tau_target_from_frequency(freq:Interval)->Interval:
-    """Literal monotone/clamped target tau = tau_coeff*0.5/f."""
     if not _finite(freq,positive=True): raise ValueError("frequency must be finite positive")
     text=WRAPPER.read_text(encoding="utf-8")
     coeff=_member_float(text,"tau_coeff_")
@@ -104,7 +93,7 @@ def tau_target_from_frequency(freq:Interval)->Interval:
 class FrontendModeCell:
     source_token:str
     predecessor_token:str|None
-    mode:str  # fixed_prior | usable_period
+    mode:str
     frequency_for_current_tuner:Interval
     newly_usable_after_current_tuner:bool=False
 
@@ -117,12 +106,10 @@ def validate_frontend_cell(cell:FrontendModeCell,frontend:dict)->list[str]:
     if not _finite(cell.frequency_for_current_tuner,positive=True):f.append("invalid tuner frequency interval")
     elif cell.mode=="fixed_prior":
         p=prior_frequency(frontend)
-        if cell.frequency_for_current_tuner.lo < p.lo or cell.frequency_for_current_tuner.hi > p.hi:
-            f.append("fixed-prior cell detached from shipping prior")
+        if cell.frequency_for_current_tuner.lo < p.lo or cell.frequency_for_current_tuner.hi > p.hi:f.append("fixed-prior cell detached from shipping prior")
     else:
         s=frequency_screen(frontend)
-        if cell.frequency_for_current_tuner.lo < s.lo or cell.frequency_for_current_tuner.hi > s.hi:
-            f.append("usable-period frequency outside shipping screen")
+        if cell.frequency_for_current_tuner.lo < s.lo or cell.frequency_for_current_tuner.hi > s.hi:f.append("usable-period frequency outside shipping screen")
     return f
 
 
@@ -131,9 +118,6 @@ def takeover_successors(cell:FrontendModeCell,frontend:dict)->list[FrontendModeC
     if cell.mode=="usable_period": return [cell]
     if not cell.newly_usable_after_current_tuner:
         return [FrontendModeCell(cell.source_token,cell.source_token,"fixed_prior",prior_frequency(frontend),False)]
-    # The current tuner sample still used the prior.  The next usable-period
-    # frequency must be supplied by the correlated raw/log-period transition;
-    # emitting an arbitrary screened interval here would detach the history.
     return []
 
 
@@ -170,7 +154,8 @@ def build(domain_path:Path=DEFAULT_DOMAIN)->dict:
     dynamic=DYNAMIC.build(domain_path); df=DYNAMIC.validate(dynamic)
     vector=VECTOR.build(); vf=VECTOR.validate(vector)
     wave=WAVE.build(); wf=WAVE.validate(wave)
-    bad={k:v for k,v in (("frontend",ff),("dynamic",df),("vector",vf),("wave_state",wf)) if v}
+    target=TARGET.build(domain_path); tf=TARGET.validate(target)
+    bad={k:v for k,v in (("frontend",ff),("dynamic",df),("vector",vf),("wave_state",wf),("target",tf)) if v}
     if bad: raise RuntimeError("frontend/geometry prerequisites failed: "+repr(bad))
 
     prior=prior_frequency(frontend)
@@ -187,6 +172,7 @@ def build(domain_path:Path=DEFAULT_DOMAIN)->dict:
         "canonical_source":"COMPLETE_BRMM_NORMAL_LIVE_WORD",
         "frontend_subcertificate_consumed":True,
         "dynamic_adaptive_contract_consumed":True,
+        "correlated_target_cell_consumed":True,
         "conditional_vector_PE_contract_consumed":True,
         "wave_period_interval_state_transition_consumed":True,
         "fixed_prior_branch_materialized":prior_ok,
@@ -194,6 +180,10 @@ def build(domain_path:Path=DEFAULT_DOMAIN)->dict:
         "fixed_prior_tau_target_s":tau_prior.as_list(),
         "screened_frequency_to_tau_target_map_materialized":tau_screen_inside,
         "screened_frequency_tau_target_image_s":tau_screen.as_list(),
+        "same_cell_frequency_sigma_to_tau_TS_RS_materialized":bool(target["full_dynamic_target_rectangle_image_valid"]),
+        "SpectralMSE_RS_target_same_source_transition_materialized_here":bool(target["SpectralMSE_RS_is_same_tau_sigma_image"]),
+        "independent_RS_target_forbidden":bool(target["independent_RS_target_forbidden"]),
+        "quiet_sigma_target_admitted":bool(target["quiet_sigma_target_admitted"]),
         "prior_to_usable_takeover_is_one_way":bool(startup["wave_period_startup_takeover_is_one_way_latched"]),
         "tuner_consumes_previous_sample_period_state":bool(startup["tuner_consumes_previous_sample_wave_period_state"]),
         "newly_usable_period_affects_tuner_no_earlier_than_next_sample":bool(startup["first_newly_usable_wave_period_can_affect_tuner_no_earlier_than_next_valid_sample"]),
@@ -210,13 +200,12 @@ def build(domain_path:Path=DEFAULT_DOMAIN)->dict:
         "raw_period_ratio_transition_materialized_here":False,
         "log_period_EMA_transition_materialized_here":False,
         "usable_period_latch_transition_materialized_here":False,
-        "sigma_target_same_source_transition_materialized_here":False,
-        "SpectralMSE_RS_target_same_source_transition_materialized_here":False,
+        "sigma_target_physical_frontend_relation_materialized_here":False,
         "physical_rotation_vector_geometry_transition_materialized_here":False,
         "complete_frontend_geometry_transition_closed_here":False,
         "P4_promoted_here":False,
         "next_obligation":(
-            "attach BRMM/raw IMU to the private complementary vertical input; retain correlated moment variance to enclose raw/log period and usable takeover; separately materialize correlated physical rotation/vector geometry; then feed same-source frequency/sigma/R_S and f_hat/R_hat/m_body cells into the adaptive/source-cover recurrences"
+            "attach BRMM/raw IMU to the private complementary vertical input and sigma-band statistics; enclose valid raw/log-period updates while preserving invalid-update hold; separately materialize correlated physical rotation/vector geometry; then emit full same-history SourceCoverCell sequences"
         ),
     }
 
@@ -224,9 +213,9 @@ def build(domain_path:Path=DEFAULT_DOMAIN)->dict:
 def validate(d:dict)->list[str]:
     f=[]
     if d.get("schema")!=SCHEMA or d.get("qualification")!=QUALIFICATION:f.append("schema/qualification mismatch")
-    for k in ("frontend_subcertificate_consumed","dynamic_adaptive_contract_consumed","conditional_vector_PE_contract_consumed","wave_period_interval_state_transition_consumed","fixed_prior_branch_materialized","screened_frequency_to_tau_target_map_materialized","prior_to_usable_takeover_is_one_way","tuner_consumes_previous_sample_period_state","newly_usable_period_affects_tuner_no_earlier_than_next_sample","vector_PE_norm_separation_gap_rate_requirements_attached","component_boxes_may_not_replace_correlated_vector_norms","finite_EW_moment_state_transition_materialized","moment_start_branch_preserved"):
+    for k in ("frontend_subcertificate_consumed","dynamic_adaptive_contract_consumed","correlated_target_cell_consumed","conditional_vector_PE_contract_consumed","wave_period_interval_state_transition_consumed","fixed_prior_branch_materialized","screened_frequency_to_tau_target_map_materialized","same_cell_frequency_sigma_to_tau_TS_RS_materialized","SpectralMSE_RS_target_same_source_transition_materialized_here","independent_RS_target_forbidden","quiet_sigma_target_admitted","prior_to_usable_takeover_is_one_way","tuner_consumes_previous_sample_period_state","newly_usable_period_affects_tuner_no_earlier_than_next_sample","vector_PE_norm_separation_gap_rate_requirements_attached","component_boxes_may_not_replace_correlated_vector_norms","finite_EW_moment_state_transition_materialized","moment_start_branch_preserved"):
         if d.get(k) is not True:f.append(k+" not true")
-    for k in ("surface_Tz_may_replace_estimator_period","independent_geometry_box_may_promote_cover","point_RAO_trace_may_promote_cover","physical_BRMM_to_private_complementary_input_attached_here","positive_correlated_moment_variance_proved_here","raw_period_ratio_transition_materialized_here","log_period_EMA_transition_materialized_here","usable_period_latch_transition_materialized_here","sigma_target_same_source_transition_materialized_here","SpectralMSE_RS_target_same_source_transition_materialized_here","physical_rotation_vector_geometry_transition_materialized_here","complete_frontend_geometry_transition_closed_here","P4_promoted_here"):
+    for k in ("surface_Tz_may_replace_estimator_period","independent_geometry_box_may_promote_cover","point_RAO_trace_may_promote_cover","physical_BRMM_to_private_complementary_input_attached_here","positive_correlated_moment_variance_proved_here","raw_period_ratio_transition_materialized_here","log_period_EMA_transition_materialized_here","usable_period_latch_transition_materialized_here","sigma_target_physical_frontend_relation_materialized_here","physical_rotation_vector_geometry_transition_materialized_here","complete_frontend_geometry_transition_closed_here","P4_promoted_here"):
         if d.get(k) is not False:f.append(k+" not false")
     for key in ("fixed_prior_tau_target_s","screened_frequency_tau_target_image_s"):
         x=d.get(key,[])
@@ -238,6 +227,6 @@ def main()->int:
     ap=argparse.ArgumentParser();ap.add_argument("--domain",type=Path,default=DEFAULT_DOMAIN);ap.add_argument("--output",type=Path,required=True);a=ap.parse_args()
     d=build(a.domain);f=validate(d);d["validation_pass"]=not f;d["validation_failures"]=f
     a.output.parent.mkdir(parents=True,exist_ok=True);a.output.write_text(json.dumps(d,indent=2,sort_keys=True)+"\n")
-    print(json.dumps({"prior":d["fixed_prior_branch_materialized"],"frequency_tau":d["screened_frequency_to_tau_target_map_materialized"],"moment_state":d["finite_EW_moment_state_transition_materialized"],"ratio":d["raw_period_ratio_transition_materialized_here"],"geometry_transition":d["physical_rotation_vector_geometry_transition_materialized_here"],"failures":f},sort_keys=True))
+    print(json.dumps({"prior":d["fixed_prior_branch_materialized"],"target_cell":d["same_cell_frequency_sigma_to_tau_TS_RS_materialized"],"moment_state":d["finite_EW_moment_state_transition_materialized"],"ratio":d["raw_period_ratio_transition_materialized_here"],"geometry_transition":d["physical_rotation_vector_geometry_transition_materialized_here"],"failures":f},sort_keys=True))
     return int(bool(f))
 if __name__=="__main__":raise SystemExit(main())
