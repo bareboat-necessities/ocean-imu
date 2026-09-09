@@ -14,6 +14,14 @@ on:
       - "tools/stability/ou3_p4_rowwise_coefficient_enclosure_fast.py"
       - "tools/stability/ou3_p4_finite_angle_h18_universal.py"
       - "tools/stability/ou3_p4_finite_angle_a21_universal.py"
+      - "tools/stability/ou3_p4_same_cell_correction_domain.py"
+      - "tools/stability/ou3_p4_reset_domain_binding.py"
+      - "tools/stability/ou3_p4_reset_signed_absorption_diagnostic.py"
+      - "tools/stability/ou3_p4_reset_graph_iqc.py"
+      - "tools/stability/ou3_p4_exact_reset_joint_coordinate.py"
+      - "tools/stability/ou3_p4_exact_reset_lifted_qc.py"
+      - "tools/stability/ou3_p4_affine_hard_tube_iqc.py"
+      - "tools/stability/ou3_p4_kalman_reset_binary32_iss.py"
       - ".github/workflows/ou3-p4-exact-chord-signed-master.yml"
   pull_request:
     paths: *paths
@@ -37,25 +45,38 @@ jobs:
           assert d['validation_pass'],d['validation_failures']
           assert d['same_canonical_source_across_chord_signed_master']
           assert d['universal_full_entry_finite_angle_differential_backbone_closed']
-          assert d['exact_chord_graph_ready_for_augmented_master']
+          assert d['exact_chord_parameterized_reset_affine_graph_ready_for_augmented_master']
+          assert d['parameterized_same_cell_reset_IQC_primitive_ready']
+          assert d['same_cell_reset_domain_binding_clean']
+          assert d['affine_hard_entry_correction_and_prefix_IQC_ready']
           assert d['joint_ISS_master_ready_for_BIAS1_and_roundoff']
-          assert d['physical_BIAS1_projection_and_coefficient_prerequisites_ready']
+          assert d['physical_BIAS1_projection_and_Joseph_prerequisites_ready']
           assert d['joseph_favorable_q_u_cross_term_retained']
           assert d['mixed_c_cross_aw_retained_as_explicit_coordinate']
           assert d['finite_reset_cross_and_defect_terms_retained']
           assert d['actual_same_history_K_required_not_independent_row_box']
+          assert d['rowwise_K_reset_domain_forbidden']
           assert not d['packet_count_multiplier_used'] and not d['standalone_eta_Rinv_budget_used']
+          assert not d['scalar_correction_radius_used_for_storage']
+          # Correction-domain is independently closable.  Even if true, the
+          # production endpoint/prefix/retention certificates remain mandatory.
+          assert isinstance(d['source_uniform_same_graph_correction_domain_closed'],bool)
           assert not d['source_uniform_exact_graph_endpoint_augmented_LDLT_closed']
           assert not d['source_uniform_exact_graph_every_prefix_augmented_LDLT_closed']
           assert not d['same_graph_every_prefix_hard_domain_retention_closed']
-          assert not d['P4_MOTION_PASS'] and not d['P4_PASS']
+          assert not d['P4_MOTION_PASS'] and not d['P4_PASS'] and not d['P5_MAY_START']
           print('EXACT_CHORD_SIGNED_MASTER_READY',d['full_declared_entry_chord_information_retention_lower'])
           print('H18_PIVOT',d['universal_H18_worst_LDLT_pivot_lower'])
           print('A21_BA_MARGIN',d['universal_A21_first_active_ba_margin_lower'])
+          print('RESET_DOMAIN_CLOSED',d['source_uniform_same_graph_correction_domain_closed'])
+          for mode,m in d['same_cell_reset_domain_modes'].items():
+              print('RESET_DOMAIN',mode,'delta',m['correction_norm_upper'],'event',m['limiting_event'],'valid',m['uniform_reset_gain_over_zero_to_ceiling'])
           print('NEXT',d['next_obligation'])
           PY
       - uses: actions/upload-artifact@v6
+        if: always()
         with:
           name: ou3-p4-exact-chord-signed-master
           path: /tmp/bridge.json
           retention-days: 7
+          if-no-files-found: warn
