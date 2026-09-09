@@ -1,0 +1,42 @@
+name: ou3-p4-signed-ledger-headroom
+on:
+  push:
+    paths: &paths
+      - "tools/stability/ou3_p4_signed_ledger_headroom.py"
+      - "tools/stability/ou3_p4_complete_brmm_residual_sector.py"
+      - "tools/stability/ou3_brmm_h18_information_composition.py"
+      - "tools/stability/ou3_p4_hard_entry_set.py"
+      - "tools/stability/ou3_p4_closure_domain.json"
+      - ".github/workflows/ou3-p4-signed-ledger-headroom.yml"
+  pull_request:
+    paths: *paths
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  headroom:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+        with: {persist-credentials: false}
+      - name: Build full-entry signed-ledger headroom diagnostic
+        run: python3 tools/stability/ou3_p4_signed_ledger_headroom.py --output /tmp/ou3-p4-signed-ledger-headroom.json
+      - name: Enforce non-promotion
+        run: |
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/ou3-p4-signed-ledger-headroom.json'))
+          assert d['validation_pass'],d['validation_failures']
+          assert d['non_promoting'] and d['same_history_joint_LDLT_still_required']
+          assert not d['P4_MOTION_PASS'] and not d['P4_PASS'] and not d['P5_MAY_START']
+          print('SIGNED_HEADROOM_ATT',d['attitude_eta_to_eta6_information_ratio'])
+          print('SIGNED_HEADROOM_AW',d['aw_eta_to_aw_directional_information_ratio'])
+          print('SIGNED_HEADROOM_WEAKEST',d['weakest_scalar_information_ratio'])
+          print('SCALAR_DOMINATION_INDICATED',d['scalar_full_entry_residual_domination_indicated'])
+          PY
+      - uses: actions/upload-artifact@v6
+        with:
+          name: ou3-p4-signed-ledger-headroom
+          path: /tmp/ou3-p4-signed-ledger-headroom.json
+          retention-days: 7
