@@ -1,0 +1,58 @@
+name: ou3-p4-closure-prerequisites
+on:
+  push:
+    paths:
+      - "tools/stability/ou3_p4_bias1_family.py"
+      - "tools/stability/ou3_p4_hard_entry_set.py"
+      - "tools/stability/ou3_p4_p3_execution_admission.py"
+      - "tools/stability/ou3_p4_rowwise_coefficient_enclosure.py"
+      - "tools/stability/ou3_p4_closure_domain.json"
+      - ".github/workflows/ou3-p4-closure-prerequisites.yml"
+  pull_request:
+    paths:
+      - "tools/stability/ou3_p4_bias1_family.py"
+      - "tools/stability/ou3_p4_hard_entry_set.py"
+      - "tools/stability/ou3_p4_p3_execution_admission.py"
+      - "tools/stability/ou3_p4_rowwise_coefficient_enclosure.py"
+      - "tools/stability/ou3_p4_closure_domain.json"
+      - ".github/workflows/ou3-p4-closure-prerequisites.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  prerequisites:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with: {persist-credentials: false}
+      - name: Build independent closure prerequisites
+        run: |
+          python3 tools/stability/ou3_p4_bias1_family.py --output /tmp/bias1.json
+          python3 tools/stability/ou3_p4_hard_entry_set.py --output /tmp/entry.json
+          python3 tools/stability/ou3_p4_p3_execution_admission.py --output /tmp/p3admit.json
+          python3 tools/stability/ou3_p4_rowwise_coefficient_enclosure.py --output /tmp/coeff.json
+      - name: Enforce fail-honest scope
+        run: |
+          python3 - <<'PY'
+          import json
+          b=json.load(open('/tmp/bias1.json')); e=json.load(open('/tmp/entry.json')); p=json.load(open('/tmp/p3admit.json')); c=json.load(open('/tmp/coeff.json'))
+          assert b['BIAS1_SOURCE_ADMISSION_PASS'] and not b['deployment_hardware_admission_pass']
+          assert e['entry_set_declared_and_membership_checkable'] and e['scale_of_declared_handoff_envelope'] >= .01
+          assert not e['covariance_ellipsoid_used'] and not e['startup_reachability_proved_here']
+          assert p['P3_SCOPED_EXECUTION_ADMISSION_PASS'] and not p['P3_DEPLOYMENT_PASS']
+          assert c['coefficient_family_outwardly_bounded'] and not c['consecutive_storage_closed_here']
+          for mode,m in c['modes'].items():
+            print('COEFF',mode,json.dumps(m['rows'],sort_keys=True))
+          print('BIAS1_W',b['driver_increment_norm_upper_mps2'])
+          print('ENTRY',e['coordinate_radii'])
+          PY
+      - uses: actions/upload-artifact@v6
+        with:
+          name: ou3-p4-closure-prerequisites
+          path: |
+            /tmp/bias1.json
+            /tmp/entry.json
+            /tmp/p3admit.json
+            /tmp/coeff.json
+          retention-days: 7
