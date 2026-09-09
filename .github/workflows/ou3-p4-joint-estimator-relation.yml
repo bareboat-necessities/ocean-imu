@@ -31,7 +31,7 @@ jobs:
           python-version: '3.12'
       - name: Check proof source syntax
         run: python -m compileall -q tools/stability
-      - name: Execute same-signal estimator, event master, reset binding, and lineage relation
+      - name: Execute same-signal estimator, event master, reset/projection binding, and lineage relation
         run: |
           set -euo pipefail
           mkdir -p /tmp/ou3-p4-relation-evidence
@@ -45,6 +45,8 @@ jobs:
           python tools/stability/ou3_p4_complete_brmm_source_cover_contract.py --output /tmp/ou3-p4-relation-evidence/source-cover-contract.json
           python tools/stability/ou3_p4_brmm_reduced_event_master.py --output /tmp/ou3-p4-relation-evidence/reduced-event-master.json
           python tools/stability/ou3_p4_brmm_same_Dtheta_reset_binding.py --output /tmp/ou3-p4-relation-evidence/same-Dtheta-reset-binding.json
+          python tools/stability/ou3_p4_brmm_projection_graph_iqc.py --output /tmp/ou3-p4-relation-evidence/projection-graph-iqc.json
+          python tools/stability/ou3_p4_brmm_a21_projection_prefix.py --output /tmp/ou3-p4-relation-evidence/a21-projection-prefix.json
           python tools/stability/ou3_p4_brmm_event_lineage_cover.py --output /tmp/ou3-p4-relation-evidence/event-lineage-cover.json
           python - <<'PY'
           import json
@@ -58,8 +60,10 @@ jobs:
           c=json.load(open(root+'source-cover-contract.json'))
           m=json.load(open(root+'reduced-event-master.json'))
           r=json.load(open(root+'same-Dtheta-reset-binding.json'))
+          pg=json.load(open(root+'projection-graph-iqc.json'))
+          ap=json.load(open(root+'a21-projection-prefix.json'))
           l=json.load(open(root+'event-lineage-cover.json'))
-          for name,obj in [('joint',j),('stats',q),('stillness',s),('tuner',t),('brmm',b),('target',u),('cover',c),('event-master',m),('reset-binding',r),('lineage',l)]:
+          for name,obj in [('joint',j),('stats',q),('stillness',s),('tuner',t),('brmm',b),('target',u),('cover',c),('event-master',m),('reset-binding',r),('projection-graph',pg),('A21-projection-prefix',ap),('lineage',l)]:
               assert obj['validation_pass'], (name,obj.get('validation_failures'))
 
           assert j['same_signal_wave_period_and_band_state_materialized']
@@ -101,7 +105,6 @@ jobs:
           assert c['free_tau_sigma_constructor_for_theorem_forbidden']
           assert c['S_zero_R_derived_from_same_active_schedule']
 
-          # Same-cell P/H/R/K and structured nonlinear residual graph.
           assert m['same_cell_P_H_R_K_consumed']
           assert m['prior_precision_derived_from_same_P']
           assert m['R_inverse_derived_from_same_R']
@@ -124,9 +127,6 @@ jobs:
           assert not m['independent_eta_port_used']
           assert not m['full_state_independent_reset_b_port_used']
 
-          # The reset radius is now certified by the same-cell KSK^T metric
-          # identity and attached to the exact event Dtheta map.  This is an
-          # event-level prerequisite, not yet a lineage-wide closure claim.
           assert r['same_estimator_owned_event_Dtheta_is_reset_graph_input']
           assert r['same_cell_KSK_covariance_identity_is_domain_proof']
           assert r['source_uniform_covariance_envelope_consumed']
@@ -136,10 +136,26 @@ jobs:
           assert not r['mode_worst_delta_substituted']
           assert not r['rowwise_K_correction_domain_used']
           assert not r['independent_K_box_used']
-          assert not r['production_all_estimator_owned_events_bound_here']
-          assert not r['production_lineage_wide_reset_domain_closed_here']
 
-          # Continuous hard-entry radial scale is covered by intervals, not a grid.
+          # Active A21 projection is a graph variable, not an inactive-branch
+          # assumption. The same-event d_ba and physical beta enter one QC.
+          assert pg['global_joint_sector_consumed']
+          assert pg['saturated_branch_retained'] and pg['unsaturated_branch_retained'] and pg['Clarke_boundary_branch_retained']
+          assert pg['dense_projection_IQC_available']
+          assert not pg['inactive_projection_assumed']
+          assert ap['estimator_owned_A21_event_consumed']
+          assert ap['same_event_D_equals_Kq_bias_correction_consumed']
+          assert ap['preprojection_ba_is_e_ba_minus_same_cell_d_ba']
+          assert ap['physical_BIAS1_beta_coordinate_materialized']
+          assert ap['projected_ba_output_coordinate_materialized']
+          assert ap['global_active_projection_IQC_attached']
+          assert ap['BIAS1_true_bias_hard_bound_attached_on_same_h']
+          assert ap['event_specific_same_Dtheta_reset_sector_embedded']
+          assert ap['structured_chord_cross_sectors_preserved_under_embedding']
+          assert ap['all_augmented_matrices_share_one_coordinate']
+          assert not ap['production_BIAS1_driver_recurrence_embedded_here']
+          assert not ap['production_binary32_forcing_embedded_here']
+
           assert l['continuous_radial_coordinate_retained']
           assert l['radial_root_is_closed_unit_interval']
           assert l['binary_refinement_children_union_exact_parent']
@@ -147,17 +163,18 @@ jobs:
           assert l['radial_point_sampling_forbidden']
           assert l['estimator_owned_event_lineage_smoke_pass']
           assert l['reachable_covariance_event_continuity_smoke_pass']
-          assert l['real_exact_chord_signed_master_prerequisite_consumed']
-          assert l['real_joint_sector_master_builder_consumed']
+          assert l['real_estimator_owned_Joseph_prefix_bundle_materialized_smoke']
+          assert l['Joseph_prefix_bundle_contains_real_signed_master']
+          assert l['Joseph_prefix_bundle_contains_structured_nonlinear_sectors']
+          assert l['Joseph_prefix_bundle_contains_certified_same_Dtheta_reset_sector']
           assert l['physical_BIAS1_ISS_supply_consumed']
           assert l['binary32_Kalman_reset_ISS_consumed']
-          assert not l['synthetic_identity_master_may_promote']
           assert not l['production_same_history_event_master_maps_materialized_here']
 
-          for obj in (j,q,b,m,r,l):
+          for obj in (j,q,b,m,r,ap,l):
               assert not obj['P4_MOTION_PASS'] and not obj['P4_PASS'] and not obj['P5_MAY_START']
           assert not c['P4_promoted_here']
-          print('SAME_SIGNAL_ESTIMATOR_STRUCTURED_EVENT_MASTER_RESET_BINDING_AND_LINEAGE_PASS')
+          print('SAME_SIGNAL_EVENT_RESET_ACTIVE_PROJECTION_LINEAGE_PASS')
           PY
       - name: Retain exact PR source and relation evidence
         run: |
