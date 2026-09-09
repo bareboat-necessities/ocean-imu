@@ -52,14 +52,16 @@ These are prerequisites and partial lemmas, not P4 closure. Semantic binding is 
 
 The next conversation should continue only along this path:
 
-1. Extend the exact-chord signed master bridge past its BIAS1-only projection/Joseph prerequisites so `BIAS0` and `BIAS2` reach the same-history graph; the driver recurrences alone do not.
-2. Prove a uniform `BIAS2` separation constant `mu_sep` on that graph, or establish that the non-relaxing family cannot close without one.
-3. Complete the same-signal BRMM estimator cover so the input history jointly generates frequency, tau, raw/effective sigma, `T_S`, and SpectralMSE `R_S` while preserving candidate/active EMA, staged commits, and scheduler semantics.
-4. Emit correlated same-history source cells for every admitted BRMM continuation, bias family, and hard-entry radial segment.
-5. Derive `K` only from the same reachable `P/H/R` cell and retain exact reset transport/projection coupling.
-6. Form source-correlated endpoint and literal-every-prefix augmented matrices for all three bias families. Run these per family: BIAS0 carries the largest admitted supply and BIAS2 the non-relaxing truth, so a budget that survives BIAS1 says nothing about either.
-7. Run outward LDLT with finite-precision ISS charges and prove the full retained-coordinate budgets.
-8. Only after **all three bias families plus the adaptive BRMM source cover** close may the final gate be changed to report their closure bits true.
+1. Replace the independent 300 m`*`s integral-displacement entry ball with a correlated one derived from the deployed S=0 regulation. `entry-block-retention.json` shows it is the worst single entry ball for five of six H18 coordinates and that with it the H18 attitude coordinate leaves the declared Cayley chart, so no every-prefix retention statement survives it. Kinematics alone will not supply it: `S_next=S+dt*p+dt^2/2*v` is unleaked, so `|e_S|` reaches `20*T_handoff`, above 600 m`*`s at the declared live-entry timing floor.
+2. Declare the enlarged working domain that every-prefix retention is actually stated against, and carry the nonlinear majorants on it. Retention against the ENTRY radii is false: a 30 degree attitude entry error mis-resolves gravity by 4.903 m/s^2, i.e. 14.7 m/s over the word against a 5 m/s velocity radius, so velocity needs roughly 4.0 (H18) and 4.9 (A21) times its entry radius. Only attitude carries a chart constraint and it already fits at .9411 / .6537.
+3. Extend the exact-chord signed master bridge past its BIAS1-only projection/Joseph prerequisites so `BIAS0` and `BIAS2` reach the same-history graph; the driver recurrences alone do not.
+4. Prove a uniform `BIAS2` separation constant `mu_sep` on that graph, or establish that the non-relaxing family cannot close without one.
+5. Complete the same-signal BRMM estimator cover so the input history jointly generates frequency, tau, raw/effective sigma, `T_S`, and SpectralMSE `R_S` while preserving candidate/active EMA, staged commits, and scheduler semantics.
+6. Emit correlated same-history source cells for every admitted BRMM continuation, bias family, and hard-entry radial segment.
+7. Derive `K` only from the same reachable `P/H/R` cell and retain exact reset transport/projection coupling.
+8. Form source-correlated endpoint and literal-every-prefix augmented matrices for all three bias families. Run these per family: BIAS0 carries the largest admitted supply and BIAS2 the non-relaxing truth, so a budget that survives BIAS1 says nothing about either.
+9. Run outward LDLT with finite-precision ISS charges and prove the full retained-coordinate budgets.
+10. Only after **all three bias families plus the adaptive BRMM source cover** close may the final gate be changed to report their closure bits true.
 
 ## Invalid routes
 

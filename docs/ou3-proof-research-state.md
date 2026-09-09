@@ -76,10 +76,75 @@ projection gives `B_error <= B_true + R`, without assuming bias convergence
 or zero active motion-to-bias feedback. The captured binary32 radius is
 .4000000059604645. Shipping rounding remains a separate enclosure obligation.
 
+### Which declared entry ball actually limits retention
+
+`entry-block-retention.json` switches each declared entry ball on ALONE and
+maximizes over every completed prefix of the same attached capture, so the
+subadditive total that `domain-retention.json` reports per coordinate is split
+into the terms that produce it. The capture is reproduced bit-for-bit from
+`ou3-source-endpoint.cpp` against the pinned generator
+e442150682f560384be427df4cc7815956a091c5; all four capture hashes match the
+retained record, as do every number the two experiments share.
+
+Two facts follow that the total cannot show.
+
+The accelerometer-bias entry ball limits **no** coordinate, not merely not the
+total: its worst single-ball reach is .1544 (H18) and .2335 (A21) of a radius
+over both modes and all six motion coordinates. Together with the .2382
+same-graph result this closes the bias entry ball as a retention limiter.
+
+The declared 300 m*s integral-displacement ball is the worst single ball for
+five of six H18 coordinates and four of six in A21, reaching 32.50 velocity
+radii in H18 on its own. With it the H18 attitude coordinate reaches Cayley
+norm 4.5788 against the declared chart bound 1.0, so the declared product box
+drives the state out of the chart the frozen map is expanded in and that
+configuration invalidates its own linearization. Without that one ball the
+chart is retained in both modes, at .9411 (H18) and .6537 (A21).
+
+The minimal working radii this word retains at every completed prefix, as
+multiples of the declared entry radii and with the independent integral ball
+removed, are
+
+| Coordinate | H18 | A21 |
+| --- | ---: | ---: |
+| attitude | 1.756 | 1.220 |
+| gyro bias | 2.315 | 1.428 |
+| velocity | 4.033 | 4.921 |
+| position | 1.027 | 2.237 |
+| integral displacement | 1.000 | 1.000 |
+| latent acceleration | 1.935 | 2.199 |
+
+These are a working domain strictly LARGER than the entry set, never a reduced
+entry set: the entry radii are unchanged and the retention target is enlarged,
+which makes every downstream nonlinear obligation harder. Only attitude carries
+a chart constraint, and it is the row that already fits.
+
+The velocity row is physically forced and no correlated-entry argument removes
+it: a 30 degree attitude entry error mis-resolves gravity by g*sin(30)=4.903
+m/s^2, which over the 3 s word is 14.7 m/s against a 5 m/s declared velocity
+radius. The attitude ball alone reaches 2.9178 velocity radii in A21, which is
+that number. Every-prefix retention stated against the ENTRY radii is therefore
+false independently of the bias family, the integral ball and any correlated
+entry set; it can only be stated against enlarged working radii.
+
+The integral state is the exact unleaked running integral of position in the
+deployed factors, `S_next=S+dt*p+dt^2/2*v`, so the position/integral
+correlation is hard kinematics rather than a covariance fact. That alone does
+not supply the missing correlated ball: with `e_S(0)=0` at power-on the
+reachable `|e_S|` grows as `20*T_handoff`, and the declared live-entry timing
+floor (`4/lambda` with `lambda=2*pi*.02`, plus one period) puts `T_handoff`
+above 30 s, i.e. above 600 m*s rather than under the declared 300. The ball can
+only be justified from the deployed S=0 regulation during startup, which is
+P5 capture material, not P4.
+
 ## Current limiter and failure analysis
 
 The controlling unresolved quantity is a useful **uniform, consecutive-word
-motion supply and retention bound**, not exact-real bias compactness.
+motion supply and retention bound**, not exact-real bias compactness. The
+retention half is now split: against enlarged working radii it holds on this
+word for every coordinate once the independent integral ball is replaced, and
+the open items are the correlated integral ball, the enlarged working-domain
+declaration and its nonlinear majorants, and outward uniformity.
 Pointwise `rho(T)<1` and existence of a metric for each T do not imply
 compatible contraction along a nonlinear source continuation. A pair of
 Schur matrices with an unstable product is included only as a logical

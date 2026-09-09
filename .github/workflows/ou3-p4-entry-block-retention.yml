@@ -1,0 +1,108 @@
+name: ou3-p4-entry-block-retention
+on:
+  push:
+    paths: &paths
+      - "tests/kalman_ou_iii/ou3_p4_entry_block_retention.py"
+      - "tests/validation/test_ou3_p4_entry_block_retention.py"
+      - "tools/stability/ou3-source-endpoint.cpp"
+      - "tools/stability/ou3_proof_operating_domain.json"
+      - ".github/workflows/ou3-p4-entry-block-retention.yml"
+  pull_request:
+    paths: *paths
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  entry-block-retention:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v6
+        with: {persist-credentials: false}
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-numpy g++ libeigen3-dev
+
+      - name: Checkout pinned physical source generator
+        uses: actions/checkout@v6
+        with:
+          repository: bareboat-necessities/oceanography-waves-lib
+          ref: e442150682f560384be427df4cc7815956a091c5
+          path: _physical-sea-generator
+          persist-credentials: false
+
+      - name: Run the producer algebra tests
+        working-directory: tests/validation
+        run: python3 -m unittest -v test_ou3_p4_entry_block_retention
+
+      - name: Capture one unmodified shipping source history
+        run: |
+          g++ -std=c++20 -O2 -Wall -Wextra -Werror \
+            -I src -isystem /usr/include/eigen3 -isystem _physical-sea-generator/src \
+            tools/stability/ou3-source-endpoint.cpp -o /tmp/ou3-source-endpoint
+          /tmp/ou3-source-endpoint /tmp/ou3-source-endpoint
+
+      - name: Attach every shipping subevent to the same continuation
+        run: |
+          python3 tests/kalman_ou_iii/ou3_p4_trace_overlay.py \
+            --repository . --output /tmp/ou3-motion-trace-overlay
+          g++ -std=c++20 -O2 -Wall -Wextra -Werror -DOU3_SOURCE_EVENT_TRACE \
+            -I /tmp/ou3-motion-trace-overlay -I src \
+            -isystem /usr/include/eigen3 -isystem _physical-sea-generator/src \
+            tools/stability/ou3-source-endpoint.cpp -o /tmp/ou3-source-events
+          /tmp/ou3-source-events /tmp/ou3-source-events
+          python3 tests/kalman_ou_iii/ou3_p4_connected_motion.py \
+            --prefix /tmp/ou3-source-events --baseline-prefix /tmp/ou3-source-endpoint \
+            --manifest /tmp/ou3-motion-trace-overlay/trace-manifest.json \
+            --output /tmp/ou3-connected-motion.json
+
+      - name: Retention of every declared entry ball taken alone
+        env:
+          OPENBLAS_NUM_THREADS: 1
+          OMP_NUM_THREADS: 1
+        run: |
+          python3 tests/kalman_ou_iii/ou3_p4_entry_block_retention.py \
+            --prefix /tmp/ou3-source-events \
+            --attachment /tmp/ou3-connected-motion.json \
+            --output /tmp/entry-block-retention.json
+
+      - name: Enforce the recorded findings and fail-honest scope
+        run: |
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/entry-block-retention.json'))
+          r=json.load(open('reports/results/rao_stability/entry-block-retention.json'))
+          assert d['capture_sha256']==r['capture_sha256'], 'capture drifted from the retained record'
+          assert not d['entry_radii_reduced'] and not d['filter_changed']
+          assert not d['source_or_coefficient_search_used']
+          assert not d['P4_MOTION_PASS'] and not d['P4_PASS'] and not d['P5_MAY_START']
+          for mode,m in d['modes'].items():
+              e=r['modes'][mode]
+              assert m['sample_count']==600 and m['completed_prefix_count']==e['completed_prefix_count']
+              # The accelerometer-bias entry ball limits no coordinate in either mode.
+              assert m['accelerometer_bias_ball_limits_no_coordinate']
+              assert m['accelerometer_bias_ball_worst_single_reach']<0.25
+              # The declared chart is left only with the independent integral ball.
+              assert m['without_integral_ball_stays_inside_declared_chart']
+              assert not m['entry_radii_reduced'] and m['working_domain_is_larger_than_entry_set']
+              assert m['frozen_point_binary64_diagnostic_not_outward_certificate']
+              assert not m['P4_MOTION_PASS'] and not m['P4_PASS'] and not m['P5_MAY_START']
+              for k in ('accelerometer_bias_ball_worst_single_reach',
+                        'attitude_cayley_norm_reached_declared_box',
+                        'attitude_cayley_norm_reached_without_integral_ball'):
+                  assert abs(m[k]-e[k])<=1e-9*max(1.0,abs(e[k])),(mode,k,m[k],e[k])
+              print('ENTRY_BLOCK',mode,'bias_ball_worst=',m['accelerometer_bias_ball_worst_single_reach'],
+                    'chart_box=',m['attitude_cayley_norm_reached_declared_box'],
+                    'chart_no_integral=',m['attitude_cayley_norm_reached_without_integral_ball'])
+              print('   worst single ball per coordinate:',m['worst_single_ball_per_coordinate'])
+              print('   minimal working inflation (no integral ball):',
+                    m['minimal_working_radius_inflation_without_integral_ball'])
+          PY
+
+      - uses: actions/upload-artifact@v6
+        with:
+          name: ou3-p4-entry-block-retention
+          path: /tmp/entry-block-retention.json
+          retention-days: 7
