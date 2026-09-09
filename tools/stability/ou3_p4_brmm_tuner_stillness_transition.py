@@ -3,7 +3,7 @@
 
 The base BRMM tuner transition already owns AdaptiveWaveBandPass, p00/p01/p11,
 debiased first/second moments, (f,tau,sigma,R_S), candidate EMA, staging and
-commit.  This module changes only the one source-visible omission: the current
+commit. This module changes only the one source-visible omission: the current
 same-history StillnessAdapter attenuation multiplies de-noised ``var_wave``
 before the 1e-6 variance floor, exactly as deployed.
 """
@@ -16,7 +16,7 @@ import ou3_brmm_tuner_scheduler_step as BASE
 SCHEMA=1
 QUALIFICATION='OU3_P4_BRMM_TUNER_STILLNESS_TRANSITION_V1'
 
-def I(x):return BASE.I(float(x))
+def I(x):return Interval.point(float(x))
 def targets(state:BASE.TunerState,still_attenuation:Interval,c:BASE.Constants)->BASE.CandidateState:
     if still_attenuation.lo<0 or still_attenuation.hi>1:raise ValueError('still attenuation must lie in [0,1]')
     f=BASE.clamp_interval(state.moments.frequency_hz,c.tune_freq_min,c.tune_freq_max)
