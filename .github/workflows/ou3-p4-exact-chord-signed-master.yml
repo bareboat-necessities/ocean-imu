@@ -8,6 +8,10 @@ on:
       - "tools/stability/ou3_p4_complete_brmm_signed_information_ledger.py"
       - "tools/stability/ou3_p4_complete_brmm_joint_sector_master.py"
       - "tools/stability/ou3_p4_joint_iss_augmented_master.py"
+      - "tools/stability/ou3_p4_joseph_reset_reduced_signed_identity.py"
+      - "tools/stability/ou3_p4_reduced_signed_event_master.py"
+      - "tools/stability/ou3_p4_exact_reset_covariance_frame.py"
+      - "tools/stability/ou3_p4_universal_finite_angle_strict_blocks.py"
       - "tools/stability/ou3_p4_bias1_family.py"
       - "tools/stability/ou3_p4_bias1_joint_iss_supply.py"
       - "tools/stability/ou3_p4_projection_sector.py"
@@ -35,16 +39,28 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with: {persist-credentials: false}
+      - name: Build reduced same-cell event quadratic
+        run: python3 tools/stability/ou3_p4_reduced_signed_event_master.py --output /tmp/reduced-event.json
       - name: Build exact-chord signed-master bridge
         run: python3 tools/stability/ou3_p4_exact_chord_signed_master_bridge.py --output /tmp/bridge.json
       - name: Enforce correlation-preserving fail-closed state
         run: |
           python3 - <<'PY'
           import json
+          r=json.load(open('/tmp/reduced-event.json'))
           d=json.load(open('/tmp/bridge.json'))
+          assert r['validation_pass'],r['validation_failures']
+          assert r['augmented_matrix_API_available'] and r['full_Joseph_correction_d_retained']
+          assert r['dense_q_eta_d_b_e_cross_terms_retained']
+          assert not r['S_inverse_used'] and not r['posterior_precision_used']
+          assert not r['independent_K_box_used'] and not r['independent_reset_norm_port_used']
+          assert r['algebra_smoke_quadratic_defect'] < 1e-10
           assert d['validation_pass'],d['validation_failures']
           assert d['same_canonical_source_across_chord_signed_master']
           assert d['universal_full_entry_finite_angle_differential_backbone_closed']
+          assert d['reduced_same_cell_Joseph_reset_identity_ready']
+          assert d['reset_covariance_frame_identity_ready']
+          assert d['universal_strict_interval_blocks_materialized']
           assert d['exact_chord_parameterized_reset_affine_graph_ready_for_augmented_master']
           assert d['parameterized_same_cell_reset_IQC_primitive_ready']
           assert d['same_cell_reset_domain_binding_clean']
@@ -58,13 +74,12 @@ jobs:
           assert d['rowwise_K_reset_domain_forbidden']
           assert not d['packet_count_multiplier_used'] and not d['standalone_eta_Rinv_budget_used']
           assert not d['scalar_correction_radius_used_for_storage']
-          # Correction-domain is independently closable.  Even if true, the
-          # production endpoint/prefix/retention certificates remain mandatory.
           assert isinstance(d['source_uniform_same_graph_correction_domain_closed'],bool)
           assert not d['source_uniform_exact_graph_endpoint_augmented_LDLT_closed']
           assert not d['source_uniform_exact_graph_every_prefix_augmented_LDLT_closed']
           assert not d['same_graph_every_prefix_hard_domain_retention_closed']
           assert not d['P4_MOTION_PASS'] and not d['P4_PASS'] and not d['P5_MAY_START']
+          print('REDUCED_EVENT_DEFECT',r['algebra_smoke_quadratic_defect'])
           print('EXACT_CHORD_SIGNED_MASTER_READY',d['full_declared_entry_chord_information_retention_lower'])
           print('H18_PIVOT',d['universal_H18_worst_LDLT_pivot_lower'])
           print('A21_BA_MARGIN',d['universal_A21_first_active_ba_margin_lower'])
@@ -77,6 +92,8 @@ jobs:
         if: always()
         with:
           name: ou3-p4-exact-chord-signed-master
-          path: /tmp/bridge.json
+          path: |
+            /tmp/bridge.json
+            /tmp/reduced-event.json
           retention-days: 7
           if-no-files-found: warn
