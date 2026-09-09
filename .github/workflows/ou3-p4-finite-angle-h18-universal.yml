@@ -1,0 +1,42 @@
+name: ou3-p4-finite-angle-h18-universal
+on:
+  push:
+    paths: &paths
+      - "tools/stability/ou3_p4_finite_angle_h18_universal.py"
+      - "tools/stability/ou3_p4_cayley_sector_certificate.py"
+      - "tools/stability/ou3_brmm_h18_information_composition.py"
+      - "tools/stability/ou3_brmm_h18_prior_free_completion.py"
+      - "tools/stability/ou3_brmm_riccati_tube.py"
+      - ".github/workflows/ou3-p4-finite-angle-h18-universal.yml"
+  pull_request:
+    paths: *paths
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  finite-angle-h18:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with: {persist-credentials: false}
+      - name: Build universal finite-angle H18 backbone
+        run: python3 tools/stability/ou3_p4_finite_angle_h18_universal.py --output /tmp/h18.json
+      - name: Enforce full-entry non-promoting result
+        run: |
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/h18.json'))
+          assert d['validation_pass'],d['validation_failures']
+          assert d['full_declared_45deg_entry_covered']
+          assert d['universal_H18_finite_angle_prior_free_LDLT_closed']
+          assert d['finite_angle_information_above_P3_delta']
+          assert not d['source_enumeration_used'] and not d['domain_shrunk']
+          assert not d['finite_map_endpoint_closed_here'] and not d['P4_PASS']
+          print('FINITE_ANGLE_H18',d['finite_angle_vector_information_retention_lower'],d['finite_angle_H18_information_lower'],d['worst_full_H18_LDLT_pivot_lower'])
+          PY
+      - uses: actions/upload-artifact@v6
+        with:
+          name: ou3-p4-finite-angle-h18-universal
+          path: /tmp/h18.json
+          retention-days: 7
