@@ -14,9 +14,10 @@ The deployed SpectralMSE law is
     sigma_aB = max(sigma_target_raw / c_sigma, 1e-6).
 
 All non-integer positive powers use exact-rationally certified binary64 endpoint
-brackets from ``ou3_validated_positive_roots``.  Arithmetic between them uses
-``Interval`` outward operations.  The final shipping clamps are exact set maps
-and therefore do not widen beyond their hard bounds.
+brackets from ``ou3_validated_positive_roots``. Arithmetic between them uses
+``Interval`` outward operations. Hard shipping clamps are exact set maps and
+therefore remove proof slack that lies outside physically reachable clamped
+values before the dependent image is formed.
 """
 from __future__ import annotations
 
@@ -35,8 +36,8 @@ import ou3_validated_positive_roots as ROOTS
 REPO=Path(__file__).resolve().parents[2]
 WRAPPER=REPO/"src"/"kalman_ou_iii"/"SeaStateFusionFilter_OU_III.h"
 DEFAULT_DOMAIN=REPO/"tools"/"stability"/"ou3_proof_operating_domain.json"
-SCHEMA=1
-QUALIFICATION="OU3_P4_COMPLETE_BRMM_CORRELATED_TARGET_CELL_V1"
+SCHEMA=2
+QUALIFICATION="OU3_P4_COMPLETE_BRMM_CORRELATED_TARGET_CELL_V2"
 
 
 def I(x:float)->Interval:
@@ -76,9 +77,21 @@ def constants()->dict:
     return c
 
 
-def tau_from_frequency(freq:Interval,c:dict)->Interval:
+def clamped_frequency(freq:Interval,c:dict)->Interval:
+    """Literal wrapper f_tune clamp as a set map.
+
+    The dynamic invariant outward-widens hard endpoints for storage. Those ulps
+    are proof slack, not values shipping can pass beyond this clamp. Reapply the
+    source clamp before the reciprocal tau image so that slack cannot be
+    magnified into a fictitious tau value outside the shipping target family.
+    """
     if not finite(freq,True): raise ValueError("frequency interval must be positive")
-    raw=I(0.5*c["tau_coeff"])/freq
+    return clamp_interval(freq,c["MIN_TUNE_FREQ_HZ"],c["MAX_TUNE_FREQ_HZ"])
+
+
+def tau_from_frequency(freq:Interval,c:dict)->Interval:
+    f=clamped_frequency(freq,c)
+    raw=I(0.5*c["tau_coeff"])/f
     return clamp_interval(raw,c["MIN_TAU_S"],c["MAX_TAU_S"])
 
 
@@ -145,9 +158,6 @@ def validate_target_cell(cell:TargetCell,dynamic:dict)->list[str]:
                      (cell.rs_target,inv["R_S_applied"],"R_S_target")):
         if not finite(x,True) or not subset(x,b):f.append(name+" outside invariant")
     c=constants()
-    # Recompute from the same source coordinates. Containment rather than exact
-    # equality tolerates harmless additional outward slack while forbidding a
-    # detached independently supplied image.
     for actual,recomputed,name in ((cell.tau_target_s,tau_from_frequency(cell.frequency_hz,c),"tau"),
                                    (cell.pseudo_period_s,pseudo_period_from_tau(cell.tau_target_s,c),"T_S"),
                                    (cell.rs_target,spectral_mse_rs(cell.tau_target_s,cell.sigma_target_raw_mps2,c),"R_S")):
@@ -165,9 +175,12 @@ def build(domain_path:Path=DEFAULT_DOMAIN)->dict:
         a,b=map(float,bounds); return I(0.5*(a+b))
     smoke=make_target_cell("TARGET_CELL_SMOKE",None,mid(inv["tuning_frequency_hz"]),mid(inv["sigma_target_raw_mps2"]),dynamic)
     full=make_target_cell("TARGET_CELL_FULL",None,Interval(*map(float,inv["tuning_frequency_hz"])),Interval(*map(float,inv["sigma_target_raw_mps2"])),dynamic)
+    c=constants(); fclamp=clamped_frequency(full.frequency_hz,c)
     return {"schema":SCHEMA,"qualification":QUALIFICATION,
             "canonical_source":"COMPLETE_BRMM_NORMAL_LIVE_WORD",
             "same_source_frequency_sigma_inputs_required":True,
+            "shipping_frequency_clamp_reapplied_before_reciprocal":True,
+            "proof_slack_outside_hard_frequency_clamp_removed_before_tau_image":True,
             "tau_target_is_shipping_frequency_image":True,
             "pseudo_period_is_same_tau_image":True,
             "SpectralMSE_RS_is_same_tau_sigma_image":True,
@@ -177,7 +190,8 @@ def build(domain_path:Path=DEFAULT_DOMAIN)->dict:
             "quiet_sigma_target_admitted":float(inv["sigma_target_raw_mps2"][0])<0.05,
             "full_dynamic_target_rectangle_image_valid":not validate_target_cell(full,dynamic),
             "point_smoke_valid":not validate_target_cell(smoke,dynamic),
-            "full_frequency_image_hz":full.frequency_hz.as_list(),
+            "full_frequency_enclosure_hz":full.frequency_hz.as_list(),
+            "full_frequency_after_shipping_clamp_hz":fclamp.as_list(),
             "full_sigma_target_raw_mps2":full.sigma_target_raw_mps2.as_list(),
             "full_tau_target_s":full.tau_target_s.as_list(),
             "full_pseudo_period_s":full.pseudo_period_s.as_list(),
@@ -190,7 +204,7 @@ def build(domain_path:Path=DEFAULT_DOMAIN)->dict:
 def validate(d:dict)->list[str]:
     f=[]
     if d.get("schema")!=SCHEMA or d.get("qualification")!=QUALIFICATION:f.append("schema/qualification mismatch")
-    for k in ("same_source_frequency_sigma_inputs_required","tau_target_is_shipping_frequency_image","pseudo_period_is_same_tau_image","SpectralMSE_RS_is_same_tau_sigma_image","validated_positive_roots_used","independent_RS_target_forbidden","independent_pseudo_period_forbidden","quiet_sigma_target_admitted","full_dynamic_target_rectangle_image_valid","point_smoke_valid"):
+    for k in ("same_source_frequency_sigma_inputs_required","shipping_frequency_clamp_reapplied_before_reciprocal","proof_slack_outside_hard_frequency_clamp_removed_before_tau_image","tau_target_is_shipping_frequency_image","pseudo_period_is_same_tau_image","SpectralMSE_RS_is_same_tau_sigma_image","validated_positive_roots_used","independent_RS_target_forbidden","independent_pseudo_period_forbidden","quiet_sigma_target_admitted","full_dynamic_target_rectangle_image_valid","point_smoke_valid"):
         if d.get(k) is not True:f.append(k+" not true")
     for k in ("physical_frontend_frequency_sigma_relation_materialized_here","complete_BRMM_target_source_cover_closed_here","P4_promoted_here"):
         if d.get(k) is not False:f.append(k+" not false")
@@ -201,6 +215,6 @@ def main()->int:
     p=argparse.ArgumentParser();p.add_argument("--domain",type=Path,default=DEFAULT_DOMAIN);p.add_argument("--output",type=Path,required=True);a=p.parse_args()
     d=build(a.domain);f=validate(d);d["validation_pass"]=not f;d["validation_failures"]=f
     a.output.parent.mkdir(parents=True,exist_ok=True);a.output.write_text(json.dumps(d,indent=2,sort_keys=True)+"\n")
-    print(json.dumps({"target_cell":d["full_dynamic_target_rectangle_image_valid"],"rs":d["full_RS_target"],"quiet_sigma":d["quiet_sigma_target_admitted"],"failures":f},sort_keys=True))
+    print(json.dumps({"target_cell":d["full_dynamic_target_rectangle_image_valid"],"f_clamped":d["full_frequency_after_shipping_clamp_hz"],"rs":d["full_RS_target"],"quiet_sigma":d["quiet_sigma_target_admitted"],"failures":f},sort_keys=True))
     return int(bool(f))
 if __name__=="__main__":raise SystemExit(main())
