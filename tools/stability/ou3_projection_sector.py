@@ -13,6 +13,13 @@ the saturation boundary,
     ||F_R(e1,beta1)-F_R(e2,beta2)||^2
        <= ||e1-e2||^2 + ||beta1-beta2||^2.
 
+Away from the boundary the Euclidean projection Jacobian J is symmetric with
+0<=J<=I.  At the boundary every Clarke generalized Jacobian is a convex
+combination of the one-sided limits and has the same property.  Therefore
+
+    dF = J de + (I-J) dbeta,
+    [J,I-J][J,I-J]^T = J^2+(I-J)^2 <= I.
+
 The proof is analytical. The helpers below are dependency-free regression
 checks only; the retained stability package intentionally does not require
 numpy merely to import its theorem modules.
@@ -85,32 +92,47 @@ def projection_jacobian(estimate_pre, radius):
     raise ValueError("classical Jacobian is set-valued on projection boundary")
 
 
-def _sym_eig_bounds_for_projection_j(j):
-    """Return exact regression bounds for the known projection-J structure.
+def _det3(a):
+    return (a[0][0]*(a[1][1]*a[2][2]-a[1][2]*a[2][1])
+            -a[0][1]*(a[1][0]*a[2][2]-a[1][2]*a[2][0])
+            +a[0][2]*(a[1][0]*a[2][1]-a[1][1]*a[2][0]))
 
-    Every representative J used here is symmetric. Gershgorin is enough to
-    assert its spectrum is inside [0,1] for these regression matrices; the
-    theorem itself uses the analytical eigenvalue formula in the docstring.
-    """
-    n=len(j)
-    if n == 0 or any(len(row)!=n for row in j):
-        raise ValueError("square Jacobian required")
-    lo=math.inf; hi=-math.inf
-    for i,row in enumerate(j):
-        rad=sum(abs(row[k]) for k in range(n) if k!=i)
-        lo=min(lo,row[i]-rad); hi=max(hi,row[i]+rad)
-    return lo,hi
+
+def _psd3(a, tol=2e-14):
+    """Regression-only PSD test by the 3x3 principal-minor criterion."""
+    if len(a)!=3 or any(len(row)!=3 for row in a):
+        raise ValueError("projection regression matrix must be 3x3")
+    for i in range(3):
+        for j in range(3):
+            if not math.isfinite(float(a[i][j])):
+                return False
+            if abs(float(a[i][j])-float(a[j][i])) > tol:
+                return False
+    scale=max(1.0,max(abs(float(x)) for row in a for x in row))
+    eps=tol*scale*scale*scale
+    if any(float(a[i][i]) < -eps for i in range(3)):
+        return False
+    for i,j in ((0,1),(0,2),(1,2)):
+        minor=float(a[i][i])*float(a[j][j])-float(a[i][j])*float(a[j][i])
+        if minor < -eps:
+            return False
+    return _det3(a) >= -eps
 
 
 def stacked_sector_ratio(jacobian):
-    """Certified upper for ||[J,I-J]||_2^2 when 0<=J<=I.
+    """Certified analytical upper for ||[J,I-J]||_2^2.
 
-    For symmetric J with spectrum in [0,1], the squared singular values of the
-    stack are lambda^2+(1-lambda)^2 <= 1. The helper verifies the spectral
-    precondition for the representative regression matrices and returns one.
+    The theorem proves this is at most one whenever J and I-J are PSD.  This
+    helper checks that precondition for the 3D regression matrix by principal
+    minors.  Unlike Gershgorin, that check does not falsely reject valid
+    off-axis rank-two radial projection Jacobians.
     """
-    lo,hi=_sym_eig_bounds_for_projection_j(jacobian)
-    if lo < -1e-14 or hi > 1.0+1e-14:
+    j=[[float(x) for x in row] for row in jacobian]
+    if len(j)!=3 or any(len(row)!=3 for row in j):
+        raise ValueError("projection Jacobian must be 3x3")
+    I=_eye(3)
+    imj=[[I[i][k]-j[i][k] for k in range(3)] for i in range(3)]
+    if not _psd3(j) or not _psd3(imj):
         raise ValueError("representative Jacobian lost 0<=J<=I")
     return 1.0
 
@@ -144,7 +166,9 @@ def build_report(radius):
         "floating_point_rounding_enclosed":False,
         "source_dependent_coefficients_enclosed":False,
         "word_entry_set_qualified":False,
-        "P4_MOTION_PASS":False,"P4_PASS":False,"P5_MAY_START":False,
+        "P4_MOTION_PASS":False,
+        "P4_PASS":False,
+        "P5_MAY_START":False,
     }
 
 
@@ -157,6 +181,7 @@ def main():
     args.output.parent.mkdir(parents=True,exist_ok=True)
     args.output.write_text(json.dumps(report,indent=2,sort_keys=True)+"\n")
     print(json.dumps(report,sort_keys=True))
+
 
 if __name__=="__main__":
     main()
