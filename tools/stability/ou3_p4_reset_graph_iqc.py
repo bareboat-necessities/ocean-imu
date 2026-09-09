@@ -7,26 +7,33 @@ For one accepted shipping update let
     P_J = P-K S K^T,
     b = G(d_theta)^-1 rho,
 
-where rho is the exact Cayley/quaternion reset defect.  The reset transport
-already proves ||G^-1||_2=1.  On a hard attitude cell ||c||<=q and correction
-cell ||d_theta||<=delta_max, its parametric bound is homogeneous in the actual
-correction after taking the worst coefficient on [0,delta_max]:
+where rho is the exact Cayley/quaternion reset defect. The reset transport
+proves ||G^-1||_2=1. On the full hard attitude cell and every correction from
+zero through the source-uniform ceiling, the homogeneous reset certificate
+proves
 
-    ||b|| <= gamma_reset ||d_theta||.
+    ||rho|| <= mu_R ||d_theta||,
+    ||b||   <= mu_R ||d_theta||.
 
-Crucially d_theta is NOT an independent radius in the production master.  If
-Y maps the common augmented coordinate z to the physical residual y and B maps
-z to b, then D=E_theta K Y uses the same P/H/R/K cell and the graph obeys
+Crucially d_theta is NOT an independent radius in the production master. If Y
+maps the common augmented coordinate z to the physical residual y and B maps z
+to b, then D=E_theta K Y uses the same P/H/R/K cell and the graph obeys
 
-    z^T [ gamma_reset^2 D^T D - B^T B ] z >= 0.
+    z^T [ mu_R^2 D^T D - B^T B ] z >= 0.
+
+The uniform mu_R is not the endpoint ratio rho(delta_max)/delta_max: it is the
+worst-branch homogeneous gain over the entire correction interval, including
+the polynomial/axis-angle implementation switch. Rowwise K bounds are used
+only to certify the correction ceiling on which this gain is valid; they never
+replace D in the storage inequality.
 
 The module also records the exact Kalman identity
 
     K^T P_J^-1 K = R^-1 - S^-1,
 
 which follows from the information-form posterior and ties correction energy to
-the same Joseph event.  It is an algebra/IQC primitive; it cannot promote P4
-without the source-correlated event cells and the full augmented LDLT.
+the same Joseph event. It is an algebra/IQC primitive; it cannot promote P4
+without source-correlated event cells and the full augmented LDLT.
 """
 from __future__ import annotations
 import argparse,json,math
@@ -37,9 +44,9 @@ from ou3_interval import Interval,matrix_mul,matrix_sub,matrix_transpose
 from ou3_interval_linear_algebra import matrix_symmetric_hull
 import ou3_p4_hard_entry_set as ENTRY
 import ou3_p4_rowwise_coefficient_enclosure_fast as COEFF
-import ou3_p4_exact_reset_transport as RESET
+import ou3_p4_reset_signed_absorption_diagnostic as RESET_SECTOR
 
-QUALIFICATION='OU3_P4_SAME_CELL_FINITE_RESET_GRAPH_IQC_V1'
+QUALIFICATION='OU3_P4_SAME_CELL_FINITE_RESET_GRAPH_IQC_V2'
 
 def _shape(A):return len(A),len(A[0]) if A else 0
 def _scale(A,a):
@@ -71,13 +78,17 @@ def kalman_correction_information_identity(PJinv,K,Rinv,Sinv):
 def _zero_contained(A):return all(v.lo<=0<=v.hi for row in A for v in row)
 
 def build():
-    e=ENTRY.build();c=COEFF.build();bad={'entry':ENTRY.validate(e),'coeff':COEFF.validate(c)};bad={k:v for k,v in bad.items() if v}
+    e=ENTRY.build();c=COEFF.build();rs=RESET_SECTOR.build()
+    bad={'entry':ENTRY.validate(e),'coeff':COEFF.validate(c),'reset_sector':RESET_SECTOR.validate(rs)};bad={k:v for k,v in bad.items() if v}
     if bad:raise RuntimeError('reset IQC prerequisites failed: '+repr(bad))
     q=float(e['coordinate_radii']['attitude_cayley_norm']);modes={}
     for mode in ('H18','A21'):
         delta=float(c['modes'][mode]['attitude_correction_norm_upper'])
-        rb=RESET.reset_defect_bound(q,delta);rho=float(rb['reset_attitude_defect_norm_upper'])
-        gamma=math.nextafter(rho/delta if delta>0 else 0.0,math.inf)
+        sr=rs['modes'][mode]
+        if abs(float(sr['correction_norm_upper'])-delta) > 8*math.ulp(max(1.0,delta)):
+            raise RuntimeError(mode+' reset sector/correction ceiling detached')
+        gamma=math.nextafter(float(sr['reset_defect_over_correction_norm_upper']),math.inf)
+        rho=float(sr['endpoint_absolute_reset_defect_norm_upper'])
         # Pure algebra smoke with a non-axis same-cell-shaped correction map.
         n=8;Y=[[Interval.point(0.0) for _ in range(n)] for _ in range(3)]
         for i in range(3):Y[i][i]=Interval.point(1.0)
@@ -87,31 +98,39 @@ def build():
         B=[[Interval.point(0.0) for _ in range(n)] for _ in range(3)]
         for i in range(3):B[i][i]=Interval.point(gamma*(0.25+0.05*i))
         Pi=reset_sector_matrix(D,B,gamma)
-        # With B=gamma D the smoke sector is exactly zero up to outward arithmetic.
         smoke=_zero_contained(Pi)
         modes[mode]={
-          'full_declared_attitude_cayley_norm_upper':q,'source_uniform_attitude_correction_norm_upper':delta,
-          'reset_defect_norm_upper':rho,'reset_defect_to_actual_correction_norm_gain_upper':gamma,
-          'cayley_composition_denominator_lower':rb['cayley_composition_denominator_lower'],
+          'full_declared_attitude_cayley_norm_upper':q,
+          'source_uniform_attitude_correction_norm_upper':delta,
+          'endpoint_absolute_reset_defect_norm_upper':rho,
+          'reset_defect_to_actual_correction_norm_gain_upper':gamma,
+          'uniform_gain_from_homogeneous_exact_reset_sector':True,
+          'endpoint_ratio_used_as_uniform_gain':False,
+          'homogeneous_sector_dominates_endpoint_absolute_bound':bool(sr['homogeneous_sector_dominates_endpoint_absolute_bound']),
+          'cayley_composition_denominator_lower':sr['cayley_composition_denominator_lower'],
           'same_cell_Dtheta_equals_Etheta_K_Y_required':True,'reset_graph_IQC_available':True,
-          'reset_sector_smoke_zero_contained':smoke,'chart_safe':rb['chart_safe']}
+          'reset_sector_smoke_zero_contained':smoke,'chart_safe':sr['chart_safe']}
     return {'qualification':QUALIFICATION,'canonical_source':'COMPLETE_BRMM_NORMAL_LIVE_WORD',
       'exact_K_PJinv_K_identity':'K^T*P_J^-1*K=R^-1-S^-1','same_cell_K_required':True,
       'independent_correction_port_forbidden':True,'reset_defect_dense_IQC_available':True,
       'reset_IQC_keeps_residual_direction_via_Etheta_K_Y':True,'reset_inverse_operator_norm_upper':1.0,
+      'uniform_gain_from_homogeneous_exact_reset_sector':True,
+      'rowwise_K_used_only_for_uniform_correction_ceiling':True,
+      'rowwise_K_may_not_replace_same_cell_Dmap_in_storage':True,
       'modes':modes,'source_uniform_augmented_LDLT_closed_here':False,'P4_promoted_here':False}
 
 def validate(d):
     f=[]
     if d.get('qualification')!=QUALIFICATION:f.append('qualification mismatch')
-    for k in ('same_cell_K_required','independent_correction_port_forbidden','reset_defect_dense_IQC_available','reset_IQC_keeps_residual_direction_via_Etheta_K_Y'):
+    for k in ('same_cell_K_required','independent_correction_port_forbidden','reset_defect_dense_IQC_available','reset_IQC_keeps_residual_direction_via_Etheta_K_Y','uniform_gain_from_homogeneous_exact_reset_sector','rowwise_K_used_only_for_uniform_correction_ceiling','rowwise_K_may_not_replace_same_cell_Dmap_in_storage'):
         if d.get(k) is not True:f.append(k+' not true')
     for k in ('source_uniform_augmented_LDLT_closed_here','P4_promoted_here'):
         if d.get(k) is not False:f.append(k+' not false')
     if d.get('reset_inverse_operator_norm_upper')!=1.0:f.append('reset inverse norm changed')
     for mode,m in d['modes'].items():
-        for k in ('same_cell_Dtheta_equals_Etheta_K_Y_required','reset_graph_IQC_available','reset_sector_smoke_zero_contained','chart_safe'):
+        for k in ('same_cell_Dtheta_equals_Etheta_K_Y_required','reset_graph_IQC_available','reset_sector_smoke_zero_contained','chart_safe','uniform_gain_from_homogeneous_exact_reset_sector','homogeneous_sector_dominates_endpoint_absolute_bound'):
             if m.get(k) is not True:f.append(mode+' '+k+' not true')
+        if m.get('endpoint_ratio_used_as_uniform_gain') is not False:f.append(mode+' endpoint ratio still used as uniform gain')
         g=float(m.get('reset_defect_to_actual_correction_norm_gain_upper',math.nan))
         if not (math.isfinite(g) and g>=0):f.append(mode+' reset gain invalid')
         if not float(m.get('cayley_composition_denominator_lower',0))>0:f.append(mode+' reset denominator nonpositive')
