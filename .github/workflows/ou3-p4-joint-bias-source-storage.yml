@@ -6,7 +6,6 @@ on:
       - "src/**"
       - "tools/stability/ou3-source-endpoint.cpp"
       - "tools/stability/ou3_proof_operating_domain.json"
-      - "tests/kalman_ou_iii/ou3_p4_bounded_bias_cocycle.py"
       - "tests/kalman_ou_iii/ou3_p4_joint_bias_source_storage.py"
       - "tests/kalman_ou_iii/ou3_p4_motion_gain.py"
       - "tests/kalman_ou_iii/ou3_p4_connected_motion.py"
@@ -88,6 +87,9 @@ jobs:
           python3 - <<'PY'
           import json
           d=json.load(open('/tmp/ou3-joint-bias-source-storage.json'))
+          assert d['proof_state_dimension'] == 24
+          assert d['shipping_error_state_dimension'] == 21
+          assert not d['shipping_filter_changed']
           assert not d['independent_bias_energy_slots_used']
           assert not d['independent_source_ports_used']
           assert not d['fresh_metric_per_sample_used']
@@ -96,9 +98,11 @@ jobs:
               assert m['boundary_count'] == 600
               assert m['physical_bias_recurrence']['recurrence_reconstruction_pass']
               assert m['physical_bias_recurrence']['zero_driver_is_not_uniform_BIAS1_coverage']
-              assert m['actual_bias_sequence_lift_defect'] < 1e-10
+              assert m['joint_error_lift_defect'] < 1e-10
+              assert m['joint_physical_bias_lift_defect'] < 1e-10
               assert m['cyclic_metric_closure_relative'] < 2e-8
               assert m['max_actual_minus_bound'] <= 5e-8*max(1,m['endpoint_actual_storage'])
+              assert not m['joint_augmentation']['nonzero_driver_lift_present']
               assert not m['source_dependent_metric_uniformly_enclosed']
               assert not m['nonzero_BIAS1_driver_uniformly_enclosed']
               assert not m['active_projection_uniformly_enclosed']
