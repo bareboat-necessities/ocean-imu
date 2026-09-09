@@ -21,16 +21,20 @@ retired as the chart limiter; this retires the bias ENTRY ball as a limiter of
 every individual coordinate too.
 
 Second, the reach is compared against the declared Cayley chart bound rather
-than only against the entry radii.  With the full declared box the H18 attitude
-coordinate leaves the chart the frozen map is expanded in, so that
-configuration invalidates its own linearization; with the independent
-integral-displacement ball removed it stays inside.
+than only against the entry radii, because that is what the theorem's level
+hypothesis actually constrains.  With the full declared box the H18 attitude
+coordinate leaves the chart the frozen map is expanded in, so no chart-valid
+L_chart exists and the hypothesis is unsatisfiable at that entry set; with the
+independent integral-displacement ball removed it stays inside and a
+chart-valid L_chart does exist.
 
 The minimal working radii reported here are the smallest radii this word
-retains at every completed prefix.  They are a working domain STRICTLY LARGER
-than the entry set, never a reduced entry set: the entry radii are unchanged
-and the retention target is enlarged, which makes every downstream nonlinear
-obligation harder, not easier.
+retains at every completed prefix.  They are a candidate chart-valid level
+L_chart for `thm:brmm-bounded-bias-motion`, whose retention hypothesis is
+`Gamma*L + C_p < L_chart` with `L` the entry level: an excursion above an entry
+radius is not a failure of that hypothesis, and only the attitude row carries a
+chart constraint.  They enlarge the retention target and never reduce the entry
+set, so every downstream nonlinear obligation becomes harder, not easier.
 
 Binary64 point arithmetic on one captured word with frozen coefficients.  It is
 a diagnostic, not an outward certificate, and promotes nothing.

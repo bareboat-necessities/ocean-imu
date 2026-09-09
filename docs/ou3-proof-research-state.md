@@ -135,13 +135,29 @@ entry set: the entry radii are unchanged and the retention target is enlarged,
 which makes every downstream nonlinear obligation harder. Only attitude carries
 a chart constraint, and it is the row that already fits.
 
-The velocity row is physically forced and no correlated-entry argument removes
-it: a 30 degree attitude entry error mis-resolves gravity by g*sin(30)=4.903
-m/s^2, which over the 3 s word is 14.7 m/s against a 5 m/s declared velocity
-radius. The attitude ball alone reaches 2.9178 velocity radii in A21, which is
-that number. Every-prefix retention stated against the ENTRY radii is therefore
-false independently of the bias family, the integral ball and any correlated
-entry set; it can only be stated against enlarged working radii.
+These ratios are normalized by the ENTRY radii, which is the producer's
+convention and not the theorem's requirement. `thm:brmm-bounded-bias-motion`
+already separates the entry level `L` from a chart-valid level `L_chart` and
+asks only for `Gamma*L+C_p < L_chart`, so a prefix excursion above an entry
+radius is not by itself a failure. What the excursion must not do is leave the
+chart on which the nonlinear majorants are declared.
+
+That is where the declared box fails, and it fails the theorem's own
+hypothesis rather than a bookkeeping convention. With `L` the declared product
+box the H18 prefix excursion reaches Cayley norm 4.5788 against the declared
+chart bound 1.0, so no chart-valid `L_chart` satisfies `Gamma*L+C_p<L_chart`
+and the hypothesis is unsatisfiable at that entry set. Removing the one
+independent integral-displacement ball makes it satisfiable: the excursion is
+.9411 (H18) and .6537 (A21), so a chart-valid `L_chart` exists, with 5.9%
+margin in H18.
+
+The velocity row is physically forced, and is a statement about how large
+`L_chart` must be in the coordinates that carry no chart constraint, not an
+obstruction: a 30 degree attitude entry error mis-resolves gravity by
+g*sin(30)=4.903 m/s^2, which over the 3 s word is 14.7 m/s against a 5 m/s
+entry radius, and the attitude ball alone reaches 2.9178 velocity radii in A21,
+which is that number. Velocity carries no chart, so absorbing it is a
+declaration, not a lemma.
 
 The integral state is the exact unleaked running integral of position in the
 deployed factors, `S_next=S+dt*p+dt^2/2*v`, so the position/integral
