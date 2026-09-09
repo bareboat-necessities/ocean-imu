@@ -197,6 +197,66 @@ These are the frozen capture's own transitions. Existence of a contracting
 storage here is not a uniform certificate over words, sources or the nonlinear
 coefficient dependence, and it promotes nothing.
 
+## The bounded-bias theorem form, analytically
+
+The unit eigenvalue above says strict contraction of the full state is the
+wrong target. The right one is bounded bias, and it has a standard analytic
+form once the word is split as
+
+    x+ = A x + G b + r,    b+ = C x + Phi b.
+
+H18 is an **exact cascade**: its bias-from-motion block `C` is `0` in every one
+of the 2593 per-step factors, not merely in their product, because that mode
+never updates the bias. Cascade ISS then applies directly. Choosing `P` to
+attain `||A||_P = rho(A) < 1` and iterating over words gives, for any bias
+ball `||b|| <= beta`,
+
+    limsup ||x||_P <= (||G||_P * beta + ||r||_P) / (1 - ||A||_P).
+
+| Constant | H18 | A21 |
+|---|---:|---:|
+| Per-step bias-from-motion defect | 0 exactly | 2.171e-3 |
+| `rho(A) = ||A||_P` | .997663961 | .960813214 |
+| `||A||_2` (non-normality) | 32.76 (32.8x) | 81.61 (84.9x) |
+| `||Phi||` | 1.000000000 | .998728897 |
+| `||G||_P` | 12.05 | 125.4 |
+| ISS gain `1/(1-||A||_P)` | 428 | 25.5 |
+| ISS limit at `beta = .4` | 3020.5 | 1317.5 |
+
+Three things follow, and the third is the reason this is recorded rather than
+promoted.
+
+The theorem form is settled: bounded bias, not strict contraction, and A21
+needs the perturbed form since its `C` does not vanish.
+
+The severe non-normality, `||A||_2` about 33x and 85x `rho(A)`, is the single
+explanation for the failed metrics and for every prefix ratio above one. A map
+can contract asymptotically while amplifying transiently by that factor, which
+is exactly what the prefix maxima 1.003245112 / 1.000001212 record.
+
+The constants are loose. The same bias ball and the same word give a direct
+reachable-set excursion of at most .2382 of any declared bound, against an ISS
+limit of 3020.5, because ISS worst-cases the bias as adversarial and persistent
+in the worst direction at every step and leans on submultiplicativity. The
+analytic route supplies the architecture; the direct computation supplies the
+numbers.
+
+### What the lemma reduces P4 to
+
+Its hypotheses are uniform, and this capture supplies them only pointwise. A
+uniform certificate needs, over every admissible word `w`:
+
+1. `rho(A_w) <= alpha < 1` **in a common metric** `P`, not a per-word one;
+2. `||Phi_w|| <= 1`;
+3. `||G_w|| <= G_max`;
+4. `||r_w|| <= R_max`.
+
+Only the pointwise versions are measured here, in per-word metrics of
+condition 4.2e3 and 2.9e4. Pointwise spectral radius below one does not imply
+uniform stability for a time-varying family, which is the classical gap and is
+precisely where P4 sits. The lemma therefore localises the open problem to
+these four bounds rather than closing it.
+
 ## Every route executed on this capture
 
 The list below is the routes executed, not a claim that the space is
@@ -218,6 +278,7 @@ exhausted. The last row is the one that bounds the rest.
 | Correlated covariance ellipsoid | word growth at most 7.2%; critical 4.974 / 27.452 sigma | open; needs covariance consistency |
 | Forcing template alone | at most .0470 / .00472 | not the obstruction |
 | Optimal quadratic storage, closed form | motion rho(T) .997663961 / .960813214; full 1.0 / .999399433 | metric was never the motion-block obstruction |
+| Cascade ISS, analytic | H18 exact cascade, ISS limit 3020.5 vs direct .2382 | theorem form settled; constants loose; four uniform bounds open |
 
 ## Scope
 

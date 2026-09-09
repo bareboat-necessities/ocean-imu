@@ -180,6 +180,17 @@ jobs:
                         best['spectral_radius'],
                         best['best_achievable_complete_word_ratio'],
                         best['a_contracting_quadratic_storage_exists'])
+              # H18's exact cascade is a structural fact worth regressing on:
+              # its bias-from-motion block vanishes in every per-step factor.
+              cascade = m['cascade_structure']
+              assert not cascade['P4_PASS']
+              if mode == 'H18':
+                  assert cascade['exact_cascade'], cascade
+                  assert cascade['per_step_bias_from_motion_defect'] == 0.
+              print('CASCADE', mode, cascade['exact_cascade'],
+                    cascade['motion_spectral_radius'],
+                    cascade['motion_non_normality'],
+                    cascade.get('iss_limit'))
               print('DOMAIN_RETENTION', mode, m['limiting_group'],
                     m['limiting_certified_retention_ratio'],
                     'largest_retained_similar_box',

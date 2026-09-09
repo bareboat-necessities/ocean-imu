@@ -325,8 +325,38 @@ is the wrong target for the full state while boundedness is the right one,
 which is what the BRMM hypothesis at the top of this ledger already assumes.
 
 These are the frozen capture's own transitions, so a contracting storage here
-is not a uniform certificate over words or sources. Two modelling obligations
-remain, and neither can be closed by arithmetic here:
+is not a uniform certificate over words or sources.
+
+## Bounded-bias theorem form
+
+Splitting the word as `x+ = A x + G b + r`, `b+ = C x + Phi b`, H18 is an
+exact cascade: `C` is 0 in every one of its 2593 per-step factors, not merely
+in their product, because that mode never updates the bias. Cascade ISS then
+gives, for any bias ball `||b|| <= beta`,
+`limsup ||x||_P <= (||G||_P*beta + ||r||_P)/(1-||A||_P)` with `P` attaining
+`||A||_P = rho(A)`. A21 needs the perturbed form, its per-step defect being
+2.171e-3.
+
+The constants are .997663961 / .960813214 for `rho(A)`, 1.0 / .998728897 for
+`||Phi||`, 12.05 / 125.4 for `||G||_P`, giving ISS gains 428 / 25.5 and limits
+3020.5 / 1317.5 at beta = .4. `||A||_2` is 32.76 and 81.61, so the map is
+non-normal by factors of 33 and 85; that single fact explains both the failed
+metrics and every prefix ratio above one.
+
+The limits are loose: the same ball and word give a direct reachable-set
+excursion of at most .2382 of any declared bound. ISS supplies the
+architecture, the direct computation supplies the numbers.
+
+The lemma's hypotheses are uniform and this capture supplies them only
+pointwise, in per-word metrics of condition 4.2e3 and 2.9e4. A uniform
+certificate needs, over every admissible word: `rho(A_w) <= alpha < 1` in a
+**common** metric, `||Phi_w|| <= 1`, `||G_w|| <= G_max`, `||r_w|| <= R_max`.
+Pointwise spectral radius below one does not imply uniform stability for a
+time-varying family. The lemma localises P4 to those four bounds; it does not
+close it.
+
+Two modelling obligations remain, and neither can be closed by arithmetic
+here:
 
 1. **A qualified initial-error set.** The declared product box is not a
    reachable set and this word does not retain it. The covariance ellipsoid is

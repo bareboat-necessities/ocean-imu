@@ -339,6 +339,60 @@ def optimal_quadratic_storage(transition):
             "P4_PASS": False}
 
 
+def cascade_structure(steps, transition, response, bias_ball=.4):
+    """The (motion, bias) block structure the bounded-bias theorem needs.
+
+    Split the word transition as
+
+        x+ = A x + G b + r,    b+ = C x + Phi b.
+
+    When `C` vanishes the word is an exact cascade and standard cascade ISS
+    applies: pick `P` attaining `||A||_P = rho(A) < 1` and iterate
+
+        limsup ||x||_P <= (||G||_P * beta + ||r||_P) / (1 - ||A||_P)
+
+    for any bias ball `||b|| <= beta`. That is a bounded-bias statement rather
+    than strict contraction of the full state, which is what the retained BRMM
+    hypothesis assumes and what a unit eigenvalue on an unobserved bias forces.
+
+    `C` is reported from the per-step factors, not only from their product, so
+    an exact cascade is distinguishable from one that merely cancels at the
+    endpoint. The reported ISS limit is the constant this argument yields; it
+    is deliberately comparable with the direct reachable-set rows above, which
+    are far tighter because they use the composed map instead of worst-casing
+    the bias as adversarial and persistent at every step.
+    """
+    a, g = transition[:18, :18], transition[:18, 18:]
+    c, phi = transition[18:, :18], transition[18:, 18:]
+    defect = max(float(np.linalg.norm(step["A"][18:, :18], 2)) for step in steps)
+    values, basis = np.linalg.eig(a)
+    spectral = float(np.max(np.abs(values)))
+    root = np.linalg.cholesky(G.sym(
+        (np.linalg.inv(basis).conj().T @ np.linalg.inv(basis)).real))
+    weighted = float(np.linalg.norm(root.T @ a @ np.linalg.inv(root.T), 2))
+    report = {
+        "exact_cascade": defect == 0.,
+        "per_step_bias_from_motion_defect": defect,
+        "endpoint_bias_from_motion_norm": float(np.linalg.norm(c, 2)),
+        "motion_spectral_radius": spectral,
+        "motion_euclidean_norm": float(np.linalg.norm(a, 2)),
+        "motion_non_normality": float(np.linalg.norm(a, 2))/spectral,
+        "motion_weighted_norm": weighted,
+        "bias_spectral_radius": float(np.max(np.abs(np.linalg.eigvals(phi)))),
+        "bias_euclidean_norm": float(np.linalg.norm(phi, 2)),
+        "bias_to_motion_weighted_gain": float(np.linalg.norm(root.T @ g, 2)),
+        "bias_ball": bias_ball,
+        "cascade_iss_applies": defect == 0. and weighted < 1.,
+        "P4_PASS": False}
+    forcing = float(np.linalg.norm(root.T @ response[:18], 2))
+    report["forcing_weighted_norm"] = forcing
+    if weighted < 1.:
+        report["iss_gain"] = 1./(1.-weighted)
+        report["iss_limit"] = (
+            report["bias_to_motion_weighted_gain"]*bias_ball + forcing)/(1.-weighted)
+    return report
+
+
 def audit_mode(root, rows, points, mode):
     """Run every initial set of this experiment against one attached word.
 
@@ -398,6 +452,8 @@ def audit_mode(root, rows, points, mode):
     result["optimal_quadratic_storage"] = {
         "motion_18": optimal_quadratic_storage(transitions[-1][:18, :18]),
         "full_21": optimal_quadratic_storage(transitions[-1])}
+    result["cascade_structure"] = cascade_structure(
+        steps, transitions[-1], responses[-1])
     return result
 
 

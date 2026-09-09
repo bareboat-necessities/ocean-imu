@@ -228,5 +228,58 @@ class DomainRetentionTests(unittest.TestCase):
             D.optimal_quadratic_storage(transition)["spectral_radius"], places=9)
 
 
+    def cascade_word(self, coupling):
+        """A two-step word whose bias couples back into motion by `coupling`."""
+        rng = np.random.default_rng(211)
+        factor = np.zeros((21, 21))
+        factor[:18, :18] = np.linalg.qr(rng.normal(size=(18, 18)))[0]*.9
+        factor[:18, 18:] = rng.normal(size=(18, 3))/10
+        factor[18:, 18:] = np.eye(3)*.999
+        factor[18:, :18] = coupling
+        steps = [{"A": factor}, {"A": factor}]
+        return steps, factor@factor, np.zeros(21)
+
+    def test_zero_coupling_is_reported_as_an_exact_cascade(self):
+        """A vanishing bias<-motion block in every factor is a cascade."""
+        steps, transition, response = self.cascade_word(np.zeros((3, 18)))
+        out = D.cascade_structure(steps, transition, response)
+        self.assertTrue(out["exact_cascade"])
+        self.assertEqual(out["per_step_bias_from_motion_defect"], 0.)
+        self.assertTrue(out["cascade_iss_applies"])
+        self.assertAlmostEqual(out["iss_gain"], 1/(1-out["motion_weighted_norm"]),
+                               places=9)
+        self.assertFalse(out["P4_PASS"])
+
+    def test_nonzero_coupling_is_not_reported_as_a_cascade(self):
+        """Any per-step coupling disqualifies the exact-cascade claim."""
+        coupling = np.zeros((3, 18))
+        coupling[0, 0] = 1e-6
+        steps, transition, response = self.cascade_word(coupling)
+        out = D.cascade_structure(steps, transition, response)
+        self.assertFalse(out["exact_cascade"])
+        self.assertFalse(out["cascade_iss_applies"])
+        self.assertGreater(out["per_step_bias_from_motion_defect"], 0.)
+
+    def test_endpoint_cancellation_does_not_pass_as_a_cascade(self):
+        """Per-step factors decide, so endpoint cancellation cannot hide."""
+        a = np.eye(21)
+        a[18, 0] = 1.
+        b = np.eye(21)
+        b[18, 0] = -1.
+        steps = [{"A": a}, {"A": b}]
+        product = b @ a
+        self.assertEqual(np.linalg.norm(product[18:, :18], 2), 0.)
+        out = D.cascade_structure(steps, product, np.zeros(21))
+        self.assertFalse(out["exact_cascade"])
+
+    def test_iss_limit_scales_with_the_bias_ball(self):
+        """The bounded-bias limit is linear in the ball it is given."""
+        steps, transition, response = self.cascade_word(np.zeros((3, 18)))
+        one = D.cascade_structure(steps, transition, response, bias_ball=.4)
+        two = D.cascade_structure(steps, transition, response, bias_ball=.8)
+        gain = one["bias_to_motion_weighted_gain"]/(1-one["motion_weighted_norm"])
+        self.assertAlmostEqual(two["iss_limit"]-one["iss_limit"], gain*.4, places=9)
+
+
 if __name__ == "__main__":
     unittest.main()
