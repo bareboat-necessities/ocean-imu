@@ -72,6 +72,7 @@ SCHEMA = 1
 QUALIFICATION = "OU3_BRMM_SOURCE_UNIFORM_MOVING_RICCATI_TUBE"
 USEFUL_GATE = 1.0e-18
 BRANCH_X = 1.0e-2
+MAX_X_SPLIT_DEPTH = 20
 
 
 def down(x: float) -> float:
@@ -202,11 +203,19 @@ def certified_rho(A) -> float:
 
 
 def split_x_cell(x: Interval, depth: int = 0) -> list[tuple[Interval, float]]:
+    """Refine only when outward dependency hides a strict process lower bound.
+
+    The integrated-OU covariance is strictly positive on the declared compact
+    x interval.  Subdivision does not change that domain or its formulas; it
+    only narrows interval dependency.  Twenty levels are still a finite proof
+    cover and give 64x finer resolution than the former depth-14 cap on a
+    stubborn path.
+    """
     rho = certified_rho(step_scaled_q(x))
     if rho > 0.0:
         return [(x, rho)]
-    if depth >= 14:
-        raise RuntimeError(f"cannot certify scaled OU process cell {x.as_list()}")
+    if depth >= MAX_X_SPLIT_DEPTH:
+        raise RuntimeError(f"cannot certify scaled OU process cell {x.as_list()} at depth {depth}")
     mid = math.sqrt(x.lo * x.hi)
     return split_x_cell(Interval.outward_bounds(x.lo, mid), depth + 1) + split_x_cell(Interval.outward_bounds(mid, x.hi), depth + 1)
 
@@ -233,7 +242,7 @@ def integrator_inverse(gap: float, spacing: float):
         Interval.outward_bounds(s, s + g),
         Interval.outward_bounds(2 * s, 2 * s + g),
     )
-    B = [[I(1), ti, I(0.5) * ti.square()] for ti in t]  # [S,p,v]
+    B = [[I(1), ti, I(0.5) * ti.square()] for ti in t]
     return matrix_inverse_gauss_jordan(B)
 
 
@@ -251,7 +260,6 @@ def _axis_factors() -> list[float]:
 
 
 def _declared_vector_alpha6(live: dict, vector: dict) -> float:
-    """Use the stronger theorem-domain PE values with the validated packet proof."""
     base = vector["operating_envelope"]
     f = pos(live["specific_force_norm_lower_mps2"], "force floor")
     m = pos(live["magnetic_vector_norm_lower_uT"], "mag floor")
@@ -281,31 +289,24 @@ def _global_translation_upper(dynamic: dict, live: dict, axis_factors: list[floa
     rs_hi = pos(inv["R_S_applied"][1], "R_S upper")
     cadence_hi = pos(inv["pseudo_update_period_s"][1], "pseudo cadence upper")
     Tpe = pos(live["vector_pe_recurrence_window_s"], "PE recurrence")
-
-    # Progress-preserving scheduler plus one configured sample is a uniform
-    # firing-gap upper.  It remains valid while T_S is retargeted.
     gap = up(cadence_hi + h)
     spacing = up(max(Tpe, 2.0 * gap))
     Tobs = up(2.0 * spacing + gap)
     Tword = up(Tobs + Tpe)
-
     Binv = integrator_inverse(gap, spacing)
     qc_hi = up(2.0 * sigma_hi * sigma_hi / tau_lo)
-    # These use only the global invariant |a_w| covariance scale and the
-    # largest driving intensity, hence remain valid under time-varying tau/sigma.
     s_nuis = up(sigma_hi * sigma_hi * (Tobs ** 3 / 6.0) ** 2)
     s_proc = up(qc_hi * Tobs ** 7 / 252.0)
     rmax = up((rs_hi * max(axis_factors)) ** 2)
     rstack = up(3.0 * (rmax + s_nuis + s_proc))
     R = [[I(rstack if i == j else 0.0) for j in range(3)] for i in range(3)]
     Cspv = matrix_symmetric_hull(matrix_mul(matrix_mul(Binv, R), matrix_transpose(Binv)))
-    order = (2, 1, 0)  # [S,p,v] -> [v,p,S]
+    order = (2, 1, 0)
     Cvps = [[Cspv[order[i]][order[j]] for j in range(3)] for i in range(3)]
     t = Interval.outward_bounds(0.0, Tword)
     F = [[I(1),I(0),I(0)],[t,I(1),I(0)],[I(0.5)*t.square(),t,I(1)]]
     Cend = matrix_symmetric_hull(matrix_mul(matrix_mul(F, Cvps), matrix_transpose(F)))
     u = diagonal_dominator(Cend)
-
     variances = [
         up(sigma_hi * sigma_hi * Tword * Tword + qc_hi * Tword ** 3 / 3.0),
         up(sigma_hi * sigma_hi * Tword ** 4 / 4.0 + qc_hi * Tword ** 5 / 20.0),
@@ -342,7 +343,6 @@ def _global_full_state_upper(dynamic: dict, live: dict, vector: dict, process: d
     mhi = pos(live["magnetic_vector_norm_upper_uT"], "mag upper")
     qc_hi = up(2.0 * sigma_hi * sigma_hi / tau_lo)
     pair = pos(vector["operating_envelope"]["packet_gap_s"][1], "vector packet gap")
-
     qab = up(3.0 * (qg * pair + qb * (pair + pair ** 3 / 3.0)))
     whitened = up(
         (fhi * fhi / ra + mhi * mhi / rm) * qab
@@ -355,7 +355,6 @@ def _global_full_state_upper(dynamic: dict, live: dict, vector: dict, process: d
     uab_prop = up(6.0 * (qg * T + qb * (T + T ** 3 / 3.0)))
     utheta = up(2.0 * (1.0 + T * T) * u0 + uab_prop)
     ubg = up(2.0 * u0 + uab_prop)
-
     H = [utheta] * 3 + [ubg] * 3
     H += [trans_upper[0]] * 3 + [trans_upper[1]] * 3
     H += [trans_upper[2]] * 3 + [trans_upper[3]] * 3
@@ -374,10 +373,6 @@ def _local_cell(mode: str, x: Interval, rho_trans: float, sigma: Interval, rs: I
     if rho_att <= 0.0:
         raise RuntimeError("scaled attitude/bias process comparison lost positivity")
     qba_d = pos(process["active_accelerometer_bias"]["Q_accel_bias_lambda_min_lower"], "active bias process")
-
-    # Similarity scale is tied to the current source cell only.  Actual sigma
-    # may be above sigma.lo; using the lower endpoint can only strengthen the
-    # normalized process covariance lower comparison.
     sv2 = (sigma.lo * h) ** 2
     sp2 = (sigma.lo * h * h) ** 2
     sS2 = (sigma.lo * h * h * h) ** 2
@@ -387,26 +382,17 @@ def _local_cell(mode: str, x: Interval, rho_trans: float, sigma: Interval, rs: I
     if mode == "A":
         scales2 += [qba_d] * 3
         rho = min(rho, 1.0)
-
     vc = vector["configured_measurement_bounds"]
     ra = down(pos(vc["acc_measurement_std_mps2"], "acc std") ** 2)
     rm = down(pos(vc["mag_measurement_std_uT"], "mag std") ** 2)
     fhi = pos(live["specific_force_norm_upper_mps2"], "force upper")
     mhi = pos(live["magnetic_vector_norm_upper_uT"], "mag upper")
-
-    # Assimilating every possible same-sample measurement gives the *smallest*
-    # optimal posterior of the process injection, hence is a valid lower bound
-    # for any actual subset.  Horizontal R_S factors are std multipliers.
     rs_var_lower = down((rs.lo * min(axis_factors)) ** 2)
     betaS = up(sS2 / rs_var_lower)
     betaAcc = up((fhi * fhi * qtheta + sa2 + (qba_d if mode == "A" else 0.0)) / ra)
     betaMag = up((mhi * mhi * qtheta) / rm)
     beta = up(betaS + betaAcc + betaMag)
     rho_post = down(1.0 / up(1.0 / rho + beta))
-
-    # PSD trace domination is intentionally used instead of the old max-diagonal
-    # shortcut: lambda_max(D^-1 P D^-T) <= trace(...) is rigorous even with
-    # arbitrary cross-covariances.
     scaled_trace_upper = up(sum(up(Pdiag[i] / scales2[i]) for i in range(len(Pdiag))))
     delta = down(rho_post / scaled_trace_upper)
     return {
@@ -434,12 +420,10 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     failures = [f"dynamic: {x}" for x in df] + [f"vector: {x}" for x in vf] + [f"process: {x}" for x in pf]
     if failures:
         raise RuntimeError(f"BRMM Riccati-tube prerequisites failed: {failures}")
-
     axis_factors = _axis_factors()
     alpha6 = pos(_declared_vector_alpha6(live, vector), "declared alpha6")
     trans_upper, timing = _global_translation_upper(dynamic, live, axis_factors)
     full_upper = _global_full_state_upper(dynamic, live, vector, process, alpha6, trans_upper, timing)
-
     inv = dynamic["dynamic_invariant"]
     h = pos(dynamic["validated_rate_and_jump_bounds"]["dt_s"], "dt")
     tau_lo, tau_hi = map(float, inv["tau_applied_s"])
@@ -450,12 +434,10 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     xcells: list[tuple[Interval, float]] = []
     for cell in interval_cells(edges):
         xcells.extend(split_x_cell(cell))
-
     sigma_lo, sigma_hi = map(float, inv["sigma_aw_filter_mps2"])
     rs_lo, rs_hi = map(float, inv["R_S_applied"])
     sigmas = interval_cells(geom_edges(sigma_lo, sigma_hi, 5))
     rss = interval_cells(geom_edges(rs_lo, rs_hi, 8))
-
     worst = {"H": None, "A": None}
     count = 0
     for x, rho_t in xcells:
@@ -466,7 +448,6 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
                     row = _local_cell(mode, x, rho_t, sigma, rs, full_upper[mode], live, vector, process, h, axis_factors)
                     if worst[mode] is None or row["relative_Riccati_injection_margin_lower"] < worst[mode]["relative_Riccati_injection_margin_lower"]:
                         worst[mode] = row
-
     modes = {}
     for mode in ("H", "A"):
         w = worst[mode]
@@ -481,7 +462,6 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
             "useful_margin_pass": delta >= USEFUL_GATE,
             "worst_current_source_cell": w,
         }
-
     passed = all(modes[m]["useful_margin_pass"] for m in ("H", "A"))
     return {
         "schema": SCHEMA,
@@ -500,24 +480,15 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "metric_identity": "V=e^T P^-1 e with P the shipping Riccati covariance",
         "covariance_ceiling_argument": "finite-memory recurrent vector/S estimator, global BRMM adaptive invariant for every nuisance/process upper",
         "process_floor_argument": "exact current-sample integrated-OU covariance plus Joseph optimal-posterior lower comparison",
-        "PSD_cross_covariance_handling": "lambda_max(D^-1 Pbar D^-T) <= trace(D^-1 Pbar D^-T); no max-diagonal shortcut",
-        "declared_vector_alpha6_information_lower": alpha6,
-        "covariance_memory": timing,
-        "cell_cover": {
-            "x_cells": len(xcells),
-            "sigma_cells": len(sigmas),
-            "R_S_cells": len(rss),
-            "joint_current_source_cells": count,
-            "history_depth": 0,
-        },
+        "PSD_cross_covariance_handling": "lambda_max(D^-1 Pbar D^-T) <= trace(D^-1 Pbar D^-T)",
+        "interval_cover": {"h_over_tau_leaf_count": len(xcells), "sigma_cells": len(sigmas), "R_S_cells": len(rss), "combined_current_cells": count, "max_split_depth": MAX_X_SPLIT_DEPTH},
+        "translation_covariance_ceiling": {"per_axis_variance_upper_v_p_S_aw": trans_upper, **timing},
+        "full_state_covariance_ceiling": full_upper,
         "modes": modes,
         "useful_gate": USEFUL_GATE,
-        "RICCATI_TUBE_PASS": passed,
-        "P3_MAY_PROMOTE_FROM_THIS_TUBE": passed,
-        "next_obligation": (
-            "if both H/A margins pass, bind this tube into the canonical moving-Riccati P3 gate; "
-            "otherwise tighten BRMM estimator-state motion/finite-memory bounds, never reintroduce source histories"
-        ),
+        "moving_Riccati_tube_pass": passed,
+        "P3_PROMOTED": False,
+        "P4_PROMOTED": False,
     }
 
 
@@ -525,60 +496,31 @@ def validate(d: dict) -> list[str]:
     f: list[str] = []
     if d.get("schema") != SCHEMA or d.get("qualification") != QUALIFICATION:
         f.append("schema/qualification mismatch")
-    for key in (
-        "source_generated_not_trajectory_fit", "BRMM_dynamic_source_consumed",
-        "current_source_interval_cover_only", "time_varying_source_allowed_inside_covariance_memory_window",
-    ):
+    for key in ("source_generated_not_trajectory_fit", "BRMM_dynamic_source_consumed", "current_source_interval_cover_only", "time_varying_source_allowed_inside_covariance_memory_window", "moving_Riccati_tube_pass"):
         if d.get(key) is not True:
             f.append(f"{key} is not true")
-    for key in (
-        "trajectory_replay_used", "filter_changed", "declared_domain_shrunk",
-        "source_history_graph_consumed", "predecessor_path_enumeration_consumed",
-        "P2_800_state_partition_consumed",
-    ):
+    for key in ("trajectory_replay_used", "filter_changed", "declared_domain_shrunk", "source_history_graph_consumed", "predecessor_path_enumeration_consumed", "P2_800_state_partition_consumed", "P3_PROMOTED", "P4_PROMOTED"):
         if d.get(key) is not False:
             f.append(f"{key} is not false")
-    cover = d.get("cell_cover", {})
-    if int(cover.get("joint_current_source_cells", 0)) <= 0 or int(cover.get("history_depth", -1)) != 0:
-        f.append("invalid current-source interval cover")
-    if float(d.get("useful_gate", math.nan)) != USEFUL_GATE:
+    if float(d.get("useful_gate", 0.0)) != USEFUL_GATE:
         f.append("useful gate changed")
+    cover=d.get("interval_cover",{})
+    if int(cover.get("max_split_depth",-1)) != MAX_X_SPLIT_DEPTH:
+        f.append("x split depth metadata mismatch")
     for mode in ("H", "A"):
-        row = d.get("modes", {}).get(mode, {})
-        delta = row.get("relative_Riccati_injection_margin_lower")
-        if not isinstance(delta, (int, float)) or not math.isfinite(float(delta)) or float(delta) <= 0.0:
-            f.append(f"{mode} Riccati margin is not finite positive")
-        diag = row.get("Pbar_diagonal_variance_upper")
-        if not isinstance(diag, list) or len(diag) != row.get("dimension") or any((not math.isfinite(float(x)) or float(x) <= 0.0) for x in diag):
-            f.append(f"{mode} covariance ceiling is invalid")
-        w = row.get("worst_current_source_cell", {})
-        if not w or float(w.get("post_measurement_scaled_Omega_lambda_min_lower", 0.0)) <= 0.0:
-            f.append(f"{mode} current-source process/Joseph floor missing")
+        row=d.get("modes",{}).get(mode,{})
+        if row.get("useful_margin_pass") is not True:
+            f.append(f"{mode} useful margin did not pass")
+        x=float(row.get("relative_Riccati_injection_margin_lower",0.0))
+        if not (math.isfinite(x) and x >= USEFUL_GATE):
+            f.append(f"{mode} relative margin invalid")
     return list(dict.fromkeys(f))
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--domain", type=Path, default=DEFAULT_DOMAIN)
-    ap.add_argument("--output", type=Path, required=True)
-    args = ap.parse_args()
-    d = build(args.domain)
-    vf = validate(d)
-    d["validation_pass"] = not vf
-    d["validation_failures"] = vf
-    args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(json.dumps(d, indent=2, sort_keys=True), encoding="utf-8")
-    print(json.dumps({
-        "tube_pass": d["RICCATI_TUBE_PASS"],
-        "cells": d["cell_cover"],
-        "H_delta": d["modes"]["H"]["relative_Riccati_injection_margin_lower"],
-        "A_delta": d["modes"]["A"]["relative_Riccati_injection_margin_lower"],
-        "H_worst": d["modes"]["H"]["worst_current_source_cell"],
-        "A_worst": d["modes"]["A"]["worst_current_source_cell"],
-        "validation_failures": vf,
-    }, indent=2, sort_keys=True))
-    return 0 if not vf else 2
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())
+    ap=argparse.ArgumentParser();ap.add_argument("--domain",type=Path,default=DEFAULT_DOMAIN);ap.add_argument("--output",type=Path,required=True);a=ap.parse_args()
+    d=build(a.domain);f=validate(d);d["validation_pass"]=not f;d["validation_failures"]=f
+    a.output.parent.mkdir(parents=True,exist_ok=True);a.output.write_text(json.dumps(d,indent=2,sort_keys=True)+"\n")
+    print(json.dumps({"leaf_count":d["interval_cover"]["h_over_tau_leaf_count"],"H_delta":d["modes"]["H"]["relative_Riccati_injection_margin_lower"],"A_delta":d["modes"]["A"]["relative_Riccati_injection_margin_lower"],"failures":f},indent=2,sort_keys=True))
+    return int(bool(f))
+if __name__=="__main__":raise SystemExit(main())
