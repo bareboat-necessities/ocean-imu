@@ -27,7 +27,9 @@ jobs:
           import json
           d=json.load(open('/tmp/chord-joseph.json'))
           assert d['validation_pass'],d['validation_failures']
-          assert d['canonical_factored_endpoint_referenced_Riccati_tube_used']
+          assert d['canonical_endpoint_referenced_covariance_envelope_used']
+          assert not d['failed_moving_Riccati_relative_margin_consumed']
+          assert not d['moving_Riccati_tube_pass_claimed']
           assert not d['smallx_recursive_tube_used']
           assert not d['P4_promoted_here']
           for mode,m in d['modes'].items():
