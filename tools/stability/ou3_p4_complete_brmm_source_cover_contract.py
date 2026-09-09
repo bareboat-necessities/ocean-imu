@@ -12,9 +12,9 @@ variance statistic. Only then may the dependent chain
     T -> f=1/T -> tau(f) -> T_S(tau)
     signal,f -> sigma -> R_S(tau,sigma,T_S)
 
-feed the active EMA/commit/scheduler recurrence. A clamp-defined (f,sigma)
-rectangle is retained only as a coarse sanity enclosure and cannot close the
-coefficient-source obligation.
+feed the active EMA/commit/scheduler recurrence. The joint estimator transition
+is now materialized, but it is not yet attached to every admitted BRMM/private
+observer history. A clamp-defined (f,sigma) rectangle remains non-promoting.
 """
 from __future__ import annotations
 
@@ -35,8 +35,8 @@ import ou3_p4_complete_brmm_universal_target_relation as TARGET_REL
 
 REPO = Path(__file__).resolve().parents[2]
 DEFAULT_DOMAIN = REPO / "tools" / "stability" / "ou3_proof_operating_domain.json"
-SCHEMA = 3
-QUALIFICATION = "OU3_P4_COMPLETE_BRMM_SAME_HISTORY_SOURCE_COVER_CONTRACT_V3"
+SCHEMA = 4
+QUALIFICATION = "OU3_P4_COMPLETE_BRMM_SAME_HISTORY_SOURCE_COVER_CONTRACT_V4"
 EVENT_KINDS = ("prediction", "aw_floor", "S_zero", "accelerometer", "magnetometer", "H_to_A")
 
 
@@ -127,7 +127,7 @@ def joseph_event_kwargs(cell:SourceCoverCell)->dict:
 def build(domain_path:Path=DEFAULT_DOMAIN)->dict:
     path=Path(domain_path).resolve()
     source=COMPLETE.build(path);literal=WORD.build(path);entry=ENTRY.build();bias1=BIAS1.build();target_rel=TARGET_REL.build(path)
-    bad={"complete_source":COMPLETE.validate(source),"literal_word":WORD.validate(literal),"hard_entry":ENTRY.validate(entry),"BIAS1":BIAS1.validate(bias1),"coarse_target_relation":TARGET_REL.validate(target_rel)}
+    bad={"complete_source":COMPLETE.validate(source),"literal_word":WORD.validate(literal),"hard_entry":ENTRY.validate(entry),"BIAS1":BIAS1.validate(bias1),"target_relation":TARGET_REL.validate(target_rel)}
     bad={k:v for k,v in bad.items() if v}
     if bad:raise RuntimeError("source-cover contract prerequisites failed: "+repr(bad))
     realization=source["BRMM_dynamic_realization"]
@@ -154,6 +154,7 @@ def build(domain_path:Path=DEFAULT_DOMAIN)->dict:
       "coarse_frequency_sigma_rectangle_may_promote_P4":False,
       "coefficient_target_inclusion_closed":bool(target_rel["coefficient_target_inclusion_closed"]),
       "joint_estimator_relation_materialized":bool(target_rel["joint_estimator_relation_materialized_here"]),
+      "joint_estimator_physical_BRMM_attachment_closed":bool(target_rel["joint_transition_physical_BRMM_attachment_closed"]),
       "tau_TS_SpectralMSE_RS_same_cell_relation_available":bool(target_rel["tau_TS_RS_are_correlated_same_cell_images"]),
       "raw_effective_sigma_split_preserved":bool(target_rel["raw_and_effective_sigma_coordinates_preserved"]),
       "trajectory_replay_or_pinned_generator_may_establish_uniform_cover":False,"finite_harmonic_source_may_replace_BRMM":False,
@@ -161,16 +162,16 @@ def build(domain_path:Path=DEFAULT_DOMAIN)->dict:
       "source_cover_transition_operator_materialized":False,"source_cover_all_BRMM_continuations_covered":False,
       "source_cover_every_radial_segment_covered":False,"source_cover_all_Joseph_cells_correlated":False,
       "SOURCE_UNIFORM_COMPLETE_BRMM_COVER_CLOSED":False,"P4_promoted_here":False,
-      "next_obligation":"materialize one joint same-signal estimator transition: physical/private vertical signal -> WavePeriodEstimator moments -> T/f and the period-scaled AdaptiveWaveBandPass + variance/noise subtraction -> sigma; then derive tau,T_S,R_S and propagate the active schedule before attempting further P4 contraction closure",
+      "next_obligation":"attach the admitted BRMM/private-observer vertical-acceleration and stillness branches to the materialized joint estimator, recursively split dependency-lost cells, then carry only emitted joint targets into the active scheduler/Riccati/Joseph source-cover sequence before endpoint/every-prefix augmented LDLT",
     }
 
 
 def validate(d:dict)->list[str]:
     f=[]
     if d.get("schema")!=SCHEMA or d.get("qualification")!=QUALIFICATION:f.append("schema/qualification mismatch")
-    for k in ("same_history_source_token_required","literal_predecessor_relation_required","reachable_shipping_Riccati_P_required","same_cell_state_P_geometry_R_tuner_scheduler_required","actual_applied_RS_provenance_required","A21_same_source_true_bias_and_projection_required","all_radial_segments_zero_to_full_hard_entry_required","every_valid_IMU_prediction_and_accelerometer_required","all_due_S_and_asynchronous_vector_events_required","complete_BRMM_single_history_required","same_history_drives_translation_rotation_frontend_tuner_geometry","hard_entry_full_declared_scale_required","BIAS1_one_common_root_driver_history_required","independent_P_H_R_K_boxes_forbidden","independent_tuner_RS_schedule_forbidden","independent_frequency_sigma_coordinates_forbidden","same_signal_history_must_generate_period_and_sigma","wave_period_moments_must_be_retained","period_scaled_sigma_band_must_be_retained","sigma_variance_statistic_must_be_retained","period_frequency_reciprocal_relation_must_be_retained","tau_TS_SpectralMSE_RS_same_cell_relation_available","raw_effective_sigma_split_preserved","marginal_Pbar_only_cover_forbidden","point_trace_schema_can_regress_interface_only"):
+    for k in ("same_history_source_token_required","literal_predecessor_relation_required","reachable_shipping_Riccati_P_required","same_cell_state_P_geometry_R_tuner_scheduler_required","actual_applied_RS_provenance_required","A21_same_source_true_bias_and_projection_required","all_radial_segments_zero_to_full_hard_entry_required","every_valid_IMU_prediction_and_accelerometer_required","all_due_S_and_asynchronous_vector_events_required","complete_BRMM_single_history_required","same_history_drives_translation_rotation_frontend_tuner_geometry","hard_entry_full_declared_scale_required","BIAS1_one_common_root_driver_history_required","independent_P_H_R_K_boxes_forbidden","independent_tuner_RS_schedule_forbidden","independent_frequency_sigma_coordinates_forbidden","same_signal_history_must_generate_period_and_sigma","wave_period_moments_must_be_retained","period_scaled_sigma_band_must_be_retained","sigma_variance_statistic_must_be_retained","period_frequency_reciprocal_relation_must_be_retained","joint_estimator_relation_materialized","tau_TS_SpectralMSE_RS_same_cell_relation_available","raw_effective_sigma_split_preserved","marginal_Pbar_only_cover_forbidden","point_trace_schema_can_regress_interface_only"):
         if d.get(k) is not True:f.append(k+" not true")
-    for k in ("coarse_frequency_sigma_rectangle_may_promote_P4","coefficient_target_inclusion_closed","joint_estimator_relation_materialized","trajectory_replay_or_pinned_generator_may_establish_uniform_cover","finite_harmonic_source_may_replace_BRMM","point_trace_can_promote_source_uniform_cover","source_cover_transition_operator_materialized","source_cover_all_BRMM_continuations_covered","source_cover_every_radial_segment_covered","source_cover_all_Joseph_cells_correlated","SOURCE_UNIFORM_COMPLETE_BRMM_COVER_CLOSED","P4_promoted_here"):
+    for k in ("coarse_frequency_sigma_rectangle_may_promote_P4","coefficient_target_inclusion_closed","joint_estimator_physical_BRMM_attachment_closed","trajectory_replay_or_pinned_generator_may_establish_uniform_cover","finite_harmonic_source_may_replace_BRMM","point_trace_can_promote_source_uniform_cover","source_cover_transition_operator_materialized","source_cover_all_BRMM_continuations_covered","source_cover_every_radial_segment_covered","source_cover_all_Joseph_cells_correlated","SOURCE_UNIFORM_COMPLETE_BRMM_COVER_CLOSED","P4_promoted_here"):
         if d.get(k) is not False:f.append(k+" not false")
     return list(dict.fromkeys(f))
 
@@ -178,6 +179,6 @@ def validate(d:dict)->list[str]:
 def main()->int:
     ap=argparse.ArgumentParser();ap.add_argument("--output",type=Path,required=True);a=ap.parse_args();d=build();f=validate(d);d["validation_pass"]=not f;d["validation_failures"]=f
     a.output.parent.mkdir(parents=True,exist_ok=True);a.output.write_text(json.dumps(d,indent=2,sort_keys=True)+"\n")
-    print(json.dumps({"contract_ready":not f,"joint_estimator_relation":d["joint_estimator_relation_materialized"],"coefficient_target_inclusion":d["coefficient_target_inclusion_closed"],"uniform_cover_closed":d["SOURCE_UNIFORM_COMPLETE_BRMM_COVER_CLOSED"],"next":d["next_obligation"],"failures":f},sort_keys=True))
+    print(json.dumps({"contract_ready":not f,"joint_estimator_relation":d["joint_estimator_relation_materialized"],"physical_attachment":d["joint_estimator_physical_BRMM_attachment_closed"],"coefficient_target_inclusion":d["coefficient_target_inclusion_closed"],"uniform_cover_closed":d["SOURCE_UNIFORM_COMPLETE_BRMM_COVER_CLOSED"],"next":d["next_obligation"],"failures":f},sort_keys=True))
     return int(bool(f))
 if __name__=="__main__":raise SystemExit(main())
