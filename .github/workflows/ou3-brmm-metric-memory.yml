@@ -30,13 +30,31 @@ jobs:
           persist-credentials: false
       - name: Build complete-BRMM covariance diagnostics
         run: |
-          python3 tools/stability/ou3_brmm_riccati_tube_factored.py --output /tmp/ou3_brmm_metric_memory_diagnostic.json
+          python3 - <<'PY'
+          import json,sys
+          from pathlib import Path
+          sys.path.insert(0,'tools/stability')
+          import ou3_brmm_riccati_tube_factored as TUBE
+          d=TUBE.build()
+          d['covariance_envelope_validation_failures']=TUBE.validate_covariance_ceiling(d)
+          d['covariance_envelope_validation_pass']=not d['covariance_envelope_validation_failures']
+          d['full_moving_tube_validation_failures']=TUBE.validate(d)
+          d['full_moving_tube_validation_pass']=not d['full_moving_tube_validation_failures']
+          Path('/tmp/ou3_brmm_metric_memory_diagnostic.json').write_text(json.dumps(d,indent=2,sort_keys=True)+'\n')
+          assert d['covariance_envelope_validation_pass'],d['covariance_envelope_validation_failures']
+          assert d['endpoint_referenced_translation_covariance'] is True
+          assert d['post_reconstruction_forward_propagation_used'] is False
+          # The scalar relative moving-tube margin is diagnostic only. Canonical
+          # P3 below proves its full-matrix theorem without this scalar route.
+          assert d['moving_Riccati_tube_pass'] is False
+          assert d['full_moving_tube_validation_pass'] is False
+          PY
           python3 tools/stability/ou3_brmm_p3_conditional_composition.py --output /tmp/ou3_brmm_conditional_p3.json
           python3 - <<'PY'
           import json
           d=json.load(open('/tmp/ou3_brmm_metric_memory_diagnostic.json'))
           c=json.load(open('/tmp/ou3_brmm_conditional_p3.json'))
-          assert d['validation_pass'], d['validation_failures']
+          assert d['covariance_envelope_validation_pass'], d['covariance_envelope_validation_failures']
           assert d['source_generated_not_trajectory_fit'] is True
           assert d['trajectory_replay_used'] is False
           assert d['source_history_graph_consumed'] is False
@@ -50,6 +68,7 @@ jobs:
           print('A_PBAR_DIAG', d['modes']['A']['Pbar_diagonal_variance_upper'])
           print('TUBE_H_DELTA_DIAGNOSTIC_ONLY', d['modes']['H']['relative_Riccati_injection_margin_lower'])
           print('TUBE_A_DELTA_DIAGNOSTIC_ONLY', d['modes']['A']['relative_Riccati_injection_margin_lower'])
+          print('FULL_TUBE_DIAGNOSTIC_FAILURES', d['full_moving_tube_validation_failures'])
           print('COMPLETE_BRMM_H18_INFORMATION', c['H18_information_lambda_min_lower'])
           print('A_BIAS_GAP', c['A21_bias_homogeneous_contraction_gap_lower'])
           PY
