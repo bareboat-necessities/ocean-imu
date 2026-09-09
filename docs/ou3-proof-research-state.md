@@ -68,8 +68,9 @@ chart .0703 (H18) and .0041 (A21) of its radius, velocity .1713 / .2382,
 position .0444 / .0844, and latent acceleration .1431 / .1397. Route 1's
 sufficient storages 6.4111 / 2.2693 are quadratic, so their linear equivalents
 are 2.532 / 1.506 chart radii, a factor 36.0 / 364 above these. On the rows
-that carry this conclusion the attained bound is within 1.3% of the certified
-one, so it is a tight comparison, not a looser enclosure.
+that carry this conclusion the attained bound is within .37% of the certified
+one in H18 and within 4.65% in A21; every one of them is at most .2382 of its
+declared ball on either bound, so the enclosure width changes no conclusion.
 
 Classification: route 1's chart failure is a proof-method (scalarization)
 failure. Charging a bias-driven velocity and displacement excursion to

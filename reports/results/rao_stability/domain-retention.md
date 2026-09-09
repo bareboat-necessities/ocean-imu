@@ -44,10 +44,12 @@ large margin.
 | Accelerometer-bias ball | 1.0000 | 1.0004 |
 
 The rows are certified upper bounds. On the four that carry the conclusion —
-velocity, position, the integral state and the chart — the attained bound is
-within 1.3% of them, so those are tight numbers rather than a loose enclosure.
-The gyro-bias row is the widest, 19.3% in H18, and both of its bounds are two
-orders of magnitude inside the declared ball either way.
+velocity, position, the integral state and the chart — the attained bound sits
+within .37% of them in H18 and within 4.65% in A21, the widest of those being
+A21's chart row. The gyro-bias row is wider still, 19.27% in H18. Every one of
+these rows is at most .2382 of its declared ball on either bound, so the
+enclosure width changes no conclusion; it is reported so the reader can see
+which rows are tight and which are not.
 
 Route 1 reports the same initial set as a sufficient storage 6.4111 (H18) and
 2.2693 (A21) times the 30-degree chart level. Storage is quadratic, so the
