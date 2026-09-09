@@ -1,0 +1,24 @@
+{
+  "boundary_clarke_branch_included_analytically": true,
+  "estimate_ball_invariant_exact_real": true,
+  "exact_real_operator_sector_closed": true,
+  "fixed_multiplier_required": false,
+  "floating_point_rounding_enclosed": false,
+  "lemma": "OU3_RADIAL_BIAS_PROJECTION_JOINT_SECTOR_V1",
+  "map": "F_R(e,beta)=beta-Pi_R(beta-e)",
+  "P4_MOTION_PASS": false,
+  "P4_PASS": false,
+  "P5_MAY_START": false,
+  "projection_radius": 0.4,
+  "representative_stacked_sector_ratios": {
+    "boundary_clarke_midpoint": 1.0,
+    "inside": 1.0,
+    "outside": 1.0
+  },
+  "saturated_branch_included_analytically": true,
+  "saturation_pattern_enumeration_required": false,
+  "sector": "||Delta F||^2 <= ||Delta e||^2 + ||Delta beta||^2",
+  "source_dependent_coefficients_enclosed": false,
+  "unsaturated_branch_included_analytically": true,
+  "word_entry_set_qualified": false
+}
