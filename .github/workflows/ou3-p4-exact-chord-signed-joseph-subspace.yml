@@ -3,7 +3,8 @@ on:
   push:
     paths: &paths
       - "tools/stability/ou3_p4_exact_chord_signed_joseph_subspace.py"
-      - "tools/stability/ou3_brmm_riccati_tube_smallx_scaled.py"
+      - "tools/stability/ou3_brmm_riccati_tube_factored.py"
+      - "tools/stability/ou3_brmm_endpoint_covariance.py"
       - "tools/stability/ou3_p4_complete_brmm_exact_chord_joint_coordinate.py"
       - ".github/workflows/ou3-p4-exact-chord-signed-joseph-subspace.yml"
   pull_request:
@@ -26,6 +27,8 @@ jobs:
           import json
           d=json.load(open('/tmp/chord-joseph.json'))
           assert d['validation_pass'],d['validation_failures']
+          assert d['canonical_factored_endpoint_referenced_Riccati_tube_used']
+          assert not d['smallx_recursive_tube_used']
           assert not d['P4_promoted_here']
           for mode,m in d['modes'].items():
             for ev,e in m['events'].items(): print('CHORD_JOSEPH',mode,ev,e['normalized_A_norm_squared_upper'],e['signed_chord_information_factor_lower'])
