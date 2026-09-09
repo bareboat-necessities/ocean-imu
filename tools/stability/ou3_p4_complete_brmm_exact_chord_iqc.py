@@ -22,7 +22,6 @@ from __future__ import annotations
 
 import argparse,json,math
 from pathlib import Path
-from typing import Sequence
 
 from ou3_interval import Interval, matrix_add, matrix_mul, matrix_sub, matrix_transpose
 from ou3_interval_linear_algebra import matrix_symmetric_hull
@@ -55,7 +54,6 @@ def exact_chord_iqcs(P,Q,k_lower:float):
       "lower_retention":matrix_symmetric_hull(matrix_sub(qq,_scale(pp,k_lower))),
       "upper_retention":matrix_symmetric_hull(matrix_sub(pp,qq)),
     }
-
 def cross_product_iqcs(Cmap,Dmap,Rmap,c_norm_upper:float,d_norm_upper:float):
     """Outer quadratic graph for r=c x d using valid norm/orthogonality facts."""
     cr,n=_shape(Cmap);dr,n2=_shape(Dmap);rr,n3=_shape(Rmap)
@@ -69,9 +67,7 @@ def cross_product_iqcs(Cmap,Dmap,Rmap,c_norm_upper:float,d_norm_upper:float):
       "r_dot_c_plus":rc,"r_dot_c_minus":_scale(rc,-1.0),
       "r_dot_d_plus":rd,"r_dot_d_minus":_scale(rd,-1.0),
     }
-
 def _selector(n,offset):
-    A=_zero(3)
     # Return 3xn, not square.
     A=[[Interval.point(0.0) for _ in range(n)] for _ in range(3)]
     for i in range(3):A[i][offset+i]=Interval.point(1.0)
@@ -86,7 +82,14 @@ def build():
     cross=cross_product_iqcs(C,D,R,float(ch["full_declared_entry_cayley_norm_upper"]),2.941995)
     allm=list(chord.values())+list(cross.values())
     finite=all(math.isfinite(x.lo) and math.isfinite(x.hi) for A in allm for row in A for x in row)
-    sym=all(all(A[i][j].lo==A[j][i].lo and A[i][j].hi==A[j][i].hi for j in range(len(A))) for i in range(len(A))) for A in allm)
+    sym=all(
+        all(
+            A[i][j].lo==A[j][i].lo and A[i][j].hi==A[j][i].hi
+            for j in range(len(A))
+        )
+        for A in allm
+        for i in range(len(A))
+    )
     return {
       "schema":SCHEMA,"qualification":QUALIFICATION,"canonical_source":"COMPLETE_BRMM_NORMAL_LIVE_WORD",
       "full_declared_entry_retention":ch["information_retention_factor_lower_full_entry"],
@@ -102,7 +105,6 @@ def build():
       "packet_count_multiplier_used":False,"standalone_eta_Rinv_budget_used":False,
       "endpoint_augmented_LDLT_closed_here":False,"every_prefix_augmented_LDLT_closed_here":False,"P4_promoted_here":False,
     }
-
 def validate(d):
     f=[]
     if d.get("schema")!=SCHEMA or d.get("qualification")!=QUALIFICATION:f.append("schema/qualification mismatch")
