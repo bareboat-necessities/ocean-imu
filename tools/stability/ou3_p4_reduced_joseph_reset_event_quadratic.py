@@ -42,7 +42,10 @@ def mm(A,B):
 def madd(A,B):
     if shape(A)!=shape(B):raise ValueError('matrix add mismatch')
     return [[A[i][j]+B[i][j] for j in range(len(A[0]))] for i in range(len(A))]
-def mscale(A,c):return [[c*x for x in row] for row in A]
+# Multiply on the matrix-entry side.  This keeps the helper generic for both
+# exact Fraction arithmetic and the outward Interval type, whose supported
+# scalar multiplication is x*c rather than relying on scalar __rmul__.
+def mscale(A,c):return [[x*c for x in row] for row in A]
 def symcross(A,W,B):
     """Matrix whose quadratic is (Az)'W(Bz), with symmetry made explicit."""
     X=mm(mm(mt(A),W),B);Xt=mt(X)
