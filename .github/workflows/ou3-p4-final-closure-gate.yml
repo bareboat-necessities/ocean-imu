@@ -1,0 +1,47 @@
+name: ou3-p4-final-closure-gate
+on:
+  push:
+    paths: &paths
+      - "tools/stability/ou3_p4_final_closure_gate.py"
+      - "tools/stability/ou3_p4_exact_chord_signed_master_bridge.py"
+      - "tools/stability/ou3_p4_kalman_reset_binary32_iss.py"
+      - "tools/stability/ou3_p4_hard_entry_set.py"
+      - "tools/stability/ou3_p4_bias1_family.py"
+      - "tools/stability/ou3_p4_p3_execution_admission.py"
+      - ".github/workflows/ou3-p4-final-closure-gate.yml"
+  pull_request:
+    paths: *paths
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with: {persist-credentials: false}
+      - name: Build final P4 closure gate
+        run: python3 tools/stability/ou3_p4_final_closure_gate.py --output /tmp/p4-final-gate.json
+      - name: Enforce current fail-closed state
+        run: |
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/p4-final-gate.json'))
+          assert d['validation_pass'],d['validation_failures']
+          assert d['hard_entry_set_admitted_without_covariance_membership']
+          assert d['exact_chord_projection_BIAS1_same_history_graph_ready']
+          assert not d['point_capture_can_promote']
+          assert not d['rowwise_coefficient_boxes_can_promote']
+          assert not d['source_uniform_endpoint_augmented_LDLT_closed']
+          assert not d['source_uniform_every_prefix_augmented_LDLT_closed']
+          assert not d['source_uniform_every_prefix_hard_domain_retention_closed']
+          assert not d['full_shipping_finite_precision_additive_ISS_closed']
+          assert not d['P4_MOTION_PASS'] and not d['P4_PASS'] and not d['P5_MAY_START']
+          print('P4_FINAL_BLOCKERS',*d['remaining_blockers'],sep='\n- ')
+          PY
+      - uses: actions/upload-artifact@v6
+        with:
+          name: ou3-p4-final-closure-gate
+          path: /tmp/p4-final-gate.json
+          retention-days: 7
