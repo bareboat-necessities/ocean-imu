@@ -1,0 +1,85 @@
+name: ou3-p4-uniform-closure
+
+on:
+  push:
+    paths: &paths
+      - "tools/stability/ou3_p4_uniform_closure.py"
+      - "tools/stability/ou3_p4_closure_domain.json"
+      - "tools/stability/ou3_p4_projection_sector.py"
+      - "tools/stability/ou3_projection_sector.py"
+      - "tools/stability/ou3_brmm_riccati_metric_p3.py"
+      - "tools/stability/ou3_brmm_riccati_tube.py"
+      - "tools/stability/ou3_full_process_ucc.py"
+      - "tools/stability/ou3_brmm_dynamic_source_certificate.py"
+      - "tools/stability/ou3_proof_operating_domain.json"
+      - "tests/validation/test_ou3_p4_uniform_closure.py"
+      - ".github/workflows/ou3-p4-uniform-closure.yml"
+  pull_request:
+    paths: *paths
+  workflow_dispatch:
+
+concurrency:
+  group: ou3-p4-uniform-closure-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  uniform-closure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Install numpy
+        run: sudo apt-get update && sudo apt-get install -y python3-numpy
+
+      - name: Build source-uniform closure
+        run: |
+          python3 tools/stability/ou3_p4_uniform_closure.py \
+            --output /tmp/ou3-p4-uniform-closure.json
+
+      - name: Test source-uniform closure
+        working-directory: tests/validation
+        run: python3 -m unittest -v test_ou3_p4_uniform_closure
+
+      - name: Enforce promoted scoped P4 contract
+        run: |
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/ou3-p4-uniform-closure.json'))
+          assert d['validation_pass'], d['validation_failures']
+          assert d['P3_delta_consumed'] == 1e-18
+          assert d['P3_scoped_physical_source_admission_closed']
+          assert not d['global_SEA0_to_BRMM_left_inclusion_claimed']
+          assert d['BIAS1_SOURCE_ADMISSION_PASS']
+          assert d['source_uniform_Kalman_reset_coefficient_family_enclosed']
+          assert d['consecutive_compatible_storage_inequality_closed']
+          assert d['qualified_hard_entry_error_set_closed']
+          assert not d['shipping_covariance_used_as_entry_membership_test']
+          assert d['finite_precision_enclosure_closed']
+          assert d['finite_precision']['closed_as_explicit_ISS_forcing']
+          assert not d['finite_precision']['zero_floor_contraction_claimed']
+          assert d['P4_MOTION_PASS'] and d['P4_PASS'] and d['P5_MAY_START']
+          for mode,m in d['modes'].items():
+              assert m['certified_hard_entry_scale'] > 0
+              assert m['consecutive_compatible_storage_closed']
+              print('UNIFORM_P4', mode,
+                    'scale=',m['certified_hard_entry_scale'],
+                    'radius=',m['certified_hard_entry_Euclidean_radius'],
+                    'delta=',m['source_uniform_linear_Riccati_margin_lower'],
+                    'nonlinear_charge=',m['nonlinear_relative_charge_upper'],
+                    'fp_word_l2=',m['finite_precision_600_sample_l2_forcing_upper'])
+          PY
+
+      - name: Upload closure evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: ou3-p4-uniform-closure
+          path: /tmp/ou3-p4-uniform-closure.json
+          if-no-files-found: warn
+          retention-days: 7
