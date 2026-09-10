@@ -1,0 +1,46 @@
+name: ou3-p4-a21-joseph-projection-split
+
+on:
+  pull_request:
+    paths:
+      - "tools/stability/ou3_p4_a21_joseph_projection_split.py"
+      - "tools/stability/ou3_p4_complete_brmm_differential_events.py"
+      - "tools/stability/ou3_p4_brmm_same_Dtheta_reset_binding.py"
+      - "tests/validation/test_ou3_p4_a21_joseph_projection_split.py"
+      - ".github/workflows/ou3-p4-a21-joseph-projection-split.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ou3-p4-a21-joseph-projection-split-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  split:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Validate source-coupled A21 projection split
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/ou3-a21-split
+          python3 tools/stability/ou3_p4_a21_joseph_projection_split.py --output /tmp/ou3-a21-split/split.json
+          python3 -m unittest discover -s tests/validation -p 'test_ou3_p4_a21_joseph_projection_split.py' -v
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/ou3-a21-split/split.json'))
+          assert d['validation_pass'],d['validation_failures']
+          assert d['A21_Joseph_projection_split_closed']
+          assert d['same_physical_true_bias_source_coordinate_retained']
+          assert d['projection_defect_is_not_independent_source_port']
+          assert not d['A21_augmented_LDLT_closed_here']
+          assert not d['P4_PASS'] and not d['P5_MAY_START']
+          PY
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: ou3-p4-a21-joseph-projection-split
+          path: /tmp/ou3-a21-split/
+          retention-days: 7
