@@ -1,74 +1,81 @@
 name: ou3-entry-basin-audit
 on:
   push:
-    branches: ['proof/live-entry-correlated-basin']
-    paths: ['.github/workflows/ou3-entry-basin-audit.yml']
+    paths: &paths
+      - '.github/workflows/ou3-entry-basin-audit.yml'
+      - 'src/kalman_ou_iii/**'
+      - 'src/kalman_common/SeaStateFusionFilterCommon.h'
+      - 'src/wave_spectrum/**'
+      - 'tools/stability/ou3_p4_live_entry_graph.py'
+      - 'tools/stability/ou3_p4_brmm_same_signal_statistics.py'
+      - 'tools/stability/ou3_p4_joint_brmm_frontend_transition.py'
+      - 'tools/stability/ou3_brmm_wpe_state_step.py'
+      - 'tools/stability/ou3_brmm_wave_period_frontend.py'
+      - 'tools/stability/ou3_p4_hard_entry_set.py'
+      - 'tools/stability/ou3_p4_final_closure_gate.py'
+      - 'tools/stability/ou3_p4_closure_domain.json'
+      - 'tools/stability/ou3_proof_operating_domain.json'
+      - 'tests/kalman_ou_iii/live_entry_audit-test.cpp'
+      - 'tests/validation/test_ou3_p4_live_entry_graph.py'
+      - 'tests/validation/test_ou3_brmm_wave_period_frontend.py'
+  pull_request:
+    paths: *paths
+  workflow_dispatch:
 permissions:
-  contents: write
+  contents: read
 jobs:
-  apply:
+  entry-source-graph:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v6
-        with:
-          ref: proof/live-entry-correlated-basin
-          fetch-depth: 0
-          persist-credentials: true
-      - name: Apply reviewed proof-only source edits with exact before and after hashes
+        with: {persist-credentials: false, fetch-depth: 0}
+      - name: Install native dependency
+        run: sudo apt-get update -qq && sudo apt-get install -y --no-install-recommends libeigen3-dev
+      - name: Exercise unchanged shipping startup, reset, and release code
         run: |
-          python3 - <<'PY'
-          import base64, hashlib, json, lzma, pathlib, subprocess
-          expected_parts = ['721b833f4ca5b680c6b2fe40e14ef8973c3427d372d5a7707efcf138a1d2715e', '6645a0b0e521fd6bf76173b2be704d7eb3798c892f36bddfa4f83640974d3c1f', '1b399d07879b22f6a383463ca7242e35bd92259d773d3348a2ea08d430ee4ef7', 'c47b25925229a3a6fe7cc644e8ce6930e64543aa6f27a7b5a27dfe9294d566bc']
-          pieces=[]
-          for i, expected in enumerate(expected_parts, 1):
-              data=pathlib.Path(f'.proof-transfer/entry-{i}.b64').read_text().strip()
-              assert hashlib.sha256(data.encode()).hexdigest()==expected, f'transport segment {i}'
-              pieces.append(data)
-          raw=lzma.decompress(base64.b64decode(''.join(pieces), validate=True))
-          assert hashlib.sha256(raw).hexdigest()=='5c60bdc37b60e3e9100bed9b6681d6a516c578d409dd0b7956c33b6644ebc64e'
-          edits=json.loads(raw)
-          assert len(edits)==22 and len({e['path'] for e in edits})==22
-          outputs=[]
-          for e in edits:
-              p=pathlib.Path(e['path'])
-              assert not p.is_absolute() and '..' not in p.parts
-              assert p.parts[0] in {'tools','tests','docs','doc','reports'}, str(p)
-              if e['old'] is None:
-                  assert not p.exists(), str(p)
-                  old=b''
-              else:
-                  old=p.read_bytes()
-                  assert hashlib.sha256(old).hexdigest()==e['old'], str(p)
-              lines=old.decode().splitlines(keepends=True)
-              previous=len(lines)+1
-              for start,end,text in reversed(e['ops']):
-                  assert 0<=start<=end<=len(lines) and end<=previous, str(p)
-                  lines[start:end]=text.splitlines(keepends=True)
-                  previous=start
-              new=''.join(lines).encode()
-              assert hashlib.sha256(new).hexdigest()==e['new'], str(p)
-              outputs.append((p,new))
-          for p,new in outputs:
-              p.parent.mkdir(parents=True,exist_ok=True)
-              p.write_bytes(new)
-          subprocess.run(['git','add','--']+[str(p) for p,_ in outputs],check=True)
-          subprocess.run(['git','rm','--']+[f'.proof-transfer/entry-{i}.b64' for i in range(1,5)],check=True)
-          print('All 22 proof/test/document files match reviewed SHA-256; shipping sources untouched.')
-          PY
+          g++ -O1 -g0 -std=c++20 -fno-finite-math-only -I src -isystem /usr/include/eigen3 tests/kalman_ou_iii/live_entry_audit-test.cpp -o /tmp/live-entry-audit
+          /tmp/live-entry-audit | tee /tmp/live-entry-audit.txt
+          grep -qx 'LIVE_ENTRY_AUDIT_PASS=true' /tmp/live-entry-audit.txt
+      - name: Exact origin cancellation and branch-cover regressions
+        run: |
           python3 -m unittest discover -s tests/validation -p 'test_ou3_p4_live_entry_graph.py' -v
-          git diff --cached --check
-          test -z "$(git diff --cached --name-only -- src)"
-          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'Correct fresh Live-entry source graph and preserve all WPE validity branches'
-          git push origin HEAD:proof/live-entry-correlated-basin
-      - name: Trace original integral-error declaration across file relocations
-        if: always()
+          python3 -m unittest discover -s tests/validation -p '*frontend*.py' -v
+          python3 -m unittest discover -s tests/validation -p 'test_ou3_brmm_wpe_state_step.py' -v
+          python3 -m unittest discover -s tests/validation -p 'test_ou3_p4_bias_family_driver_recurrences.py' -v
+          python3 -m unittest discover -s tests/validation -p 'test_wave_period_live_entry_parity.py' -v
+      - name: Produce source-bound evidence without promoting P4
         run: |
-          git log --follow --format=fuller -p -S 'integral_displacement_error_norm_upper_m_s' -- tools/stability/ou3_proof_operating_domain.json > /tmp/entry-radius-history.txt
-          cat /tmp/entry-radius-history.txt
+          python3 tools/stability/ou3_p4_live_entry_graph.py --native-log /tmp/live-entry-audit.txt --output /tmp/live-entry-graph.json
+          python3 tools/stability/ou3_p4_brmm_same_signal_statistics.py --output /tmp/central-statistics.json
+          python3 tools/stability/ou3_p4_joint_brmm_frontend_transition.py --output /tmp/joint-frontend.json
+          python3 tools/stability/ou3_p4_final_closure_gate.py --output /tmp/p4-final-gate.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/p4-final-gate.json'))
+          assert d['validation_pass'],d['validation_failures']
+          assert d['fresh_live_entry_graph']['cancellation']['coefficient_residuals_exactly_zero']
+          assert d['fresh_live_entry_graph']['cancellation']['formal_gain_coefficients_checked']==117
+          assert not d['legacy_independent_entry_box_can_promote_fresh_startup']
+          assert all(d['bias_family_source_uniform_same_history_closed'].values())
+          assert not d['BIAS2_separation_required_for_bounded_bias_objective']
+          if d['remaining_mathematical_P4_blockers']:
+              assert not d['P4_PASS'] and not d['P4_MOTION_PASS'] and not d['P5_MAY_START']
+          print('P4_PASS',d['P4_PASS'],'P5_MAY_START',d['P5_MAY_START'])
+          PY
+      - name: Retain declaration ancestry for the entry-domain audit
+        if: always()
+        run: git log --follow --format=fuller -p -S 'integral_displacement_error_norm_upper_m_s' -- tools/stability/ou3_proof_operating_domain.json > /tmp/entry-radius-history.txt
       - uses: actions/upload-artifact@v6
         if: always()
         with:
-          name: ou3-entry-declaration-ancestry
-          path: /tmp/entry-radius-history.txt
-          retention-days: 7
+          name: ou3-live-entry-source-graph
+          path: |
+            /tmp/live-entry-audit.txt
+            /tmp/live-entry-graph.json
+            /tmp/central-statistics.json
+            /tmp/joint-frontend.json
+            /tmp/p4-final-gate.json
+            /tmp/entry-radius-history.txt
+          if-no-files-found: error
+          retention-days: 14
