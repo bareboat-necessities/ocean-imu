@@ -4,6 +4,7 @@ on:
   push:
     paths: &paths
       - 'tests/kalman_ou_iii/ou3_p4_motion18_word_feasibility.py'
+      - 'tests/kalman_ou_iii/ou3_p4_motion18_bias_iss_feasibility.py'
       - 'tests/kalman_ou_iii/ou3_p4_complete_brmm_word_feasibility.py'
       - 'tests/kalman_ou_iii/ou3_p4_frozen_gain_shadow_feasibility.py'
       - 'tests/kalman_ou_iii/ou3-operation-ledger-sim.cpp'
@@ -67,6 +68,22 @@ jobs:
               print('MOTION18_LINEAR',mode,'rho=',w['rho_linear'],'margin=',w['distance_to_one'],
                     't0=',w['t0'],'ba_root=',w['maximizing_direction']['group_euclidean_norms']['ba'])
           PY
+      - name: Quantify explicit point bounded-bias ISS gain
+        run: |
+          python3 tests/kalman_ou_iii/ou3_p4_motion18_bias_iss_feasibility.py \
+            --map /tmp/ou3_motion18_maps.bin --cov /tmp/ou3_motion18_cov.bin \
+            --motion-json /tmp/ou3_motion18_linear.json \
+            --output /tmp/ou3_motion18_bias_iss.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/ou3_motion18_bias_iss.json'))
+          assert d['validation_pass'],d['validation_failures']
+          assert d['complete_21_state_word_partitioned_only_after_composition']
+          for mode in ('H18','A21'):
+              m=d['modes'][mode]
+              print('MOTION18_BIAS_ISS',mode,'rho0=',m['rho0'],'rho=',m['rho_target'],
+                    'g2=',m['g2'],'gamma_bias=',m['gamma_bias'],'t0=',m['t0'])
+          PY
       - name: Test exact-Cayley finite-amplitude shadow on motion-only directions
         run: |
           python3 tests/kalman_ou_iii/ou3_p4_frozen_gain_shadow_feasibility.py \
@@ -96,5 +113,6 @@ jobs:
           name: ou3-p4-motion18-feasibility
           path: |
             /tmp/ou3_motion18_linear.json
+            /tmp/ou3_motion18_bias_iss.json
             /tmp/ou3_motion18_shadow.json
           retention-days: 7
