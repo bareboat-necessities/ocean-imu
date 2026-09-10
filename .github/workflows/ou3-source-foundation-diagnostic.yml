@@ -1,0 +1,72 @@
+name: ou3-source-foundation-diagnostic
+
+on:
+  push:
+    paths: &paths
+      - "tools/stability/ou3_*.py"
+      - "tools/stability/ou3_*.json"
+      - "tests/validation/test_ou3_*.py"
+      - ".github/workflows/ou3-source-foundation-diagnostic.yml"
+  pull_request:
+    paths: *paths
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Compile proof tooling
+        run: make -C tests/validation build
+      - name: Run source-foundation tests individually
+        shell: bash
+        run: |
+          set +e
+          tests=(
+            test_ou3_stability_package_integrity
+            test_ou3_p4_coordinate_transport_algebra
+            test_ou3_p4_complete_brmm_correction_information_bound
+            test_ou3_result_determinism
+            test_ou3_source_domain_contract
+            test_ou3_proof_cleanup
+            test_ou3_translational_uco_ucc
+            test_ou3_full_process_ucc
+            test_ou3_vector_uco_certificate
+            test_ou3_p3_pseudo_scheduler_progress_certificate
+            test_ou3_brmm_dynamic_source_certificate
+            test_ou3_brmm_private_mahony_discrete_comparison
+            test_ou3_brmm_riccati_tube
+            test_ou3_brmm_spectral_moment_bridge
+            test_ou3_brmm_wave_period_frontend
+          )
+          : > /tmp/source-foundation-diagnostic.log
+          failed=0
+          cd tests/validation
+          for t in "${tests[@]}"; do
+            echo "===== $t =====" | tee -a /tmp/source-foundation-diagnostic.log
+            python3 -m unittest -v "$t" 2>&1 | tee -a /tmp/source-foundation-diagnostic.log
+            rc=${PIPESTATUS[0]}
+            echo "RESULT $t $rc" | tee -a /tmp/source-foundation-diagnostic.log
+            if [ "$rc" -ne 0 ]; then failed=1; fi
+          done
+          echo "$failed" > /tmp/source-foundation-diagnostic.status
+          exit 0
+      - name: Upload source-foundation diagnostic
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: ou3-source-foundation-diagnostic
+          path: |
+            /tmp/source-foundation-diagnostic.log
+            /tmp/source-foundation-diagnostic.status
+          retention-days: 7
+      - name: Preserve fail-closed diagnostic status
+        if: always()
+        run: |
+          test "$(cat /tmp/source-foundation-diagnostic.status)" = "0"

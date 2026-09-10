@@ -71,10 +71,16 @@ def wide_exp(x: Interval) -> Interval:
     if not (math.isfinite(x.lo) and math.isfinite(x.hi)):
         raise ValueError("finite exponential interval required")
     scale = 1
-    m = max(abs(x.lo), abs(x.hi))
-    while m / scale > VT.MAX_ABS_ARGUMENT:
+    # Check the OUTWARD reduced interval, not a nearest-rounded scalar. At
+    # powers of two, interval division can put the upper endpoint just above
+    # the primitive's closed |argument| <= 0.5 domain. One more exact halving
+    # fixes the enclosure without altering the shipping exponential.
+    while True:
+        reduced = x / I(float(scale))
+        if max(abs(reduced.lo), abs(reduced.hi)) <= VT.MAX_ABS_ARGUMENT:
+            break
         scale *= 2
-    y = VT.exp_interval(x / I(float(scale)))
+    y = VT.exp_interval(reduced)
     s = scale
     while s > 1:
         y = y.square()
@@ -148,8 +154,8 @@ class WPEState:
     elevation_sq: Interval
     weight: Interval
     elapsed_s: Interval
-    raw_period_s: Interval
-    log_period_s: Interval
+    raw_period_s: Interval | None
+    log_period_s: Interval | None
     usable_period: bool
     last_moment_horizon_s: Interval
     last_log_horizon_s: Interval

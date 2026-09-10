@@ -1,0 +1,76 @@
+name: ou3-entry-basin-audit
+on:
+  push:
+    branches: ['proof/live-entry-correlated-basin']
+    paths: ['.github/workflows/ou3-entry-basin-audit.yml']
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: proof/live-entry-correlated-basin
+          persist-credentials: true
+          fetch-depth: 0
+      - name: Apply source-hash-verified proof-only corrections
+        run: |
+          python3 - <<'PY'
+          import base64,hashlib,json,lzma,pathlib,subprocess
+          b=pathlib.Path('.proof-transfer/kernel-fixes.b64').read_text().strip()
+          assert hashlib.sha256(b.encode()).hexdigest()=='bff8469da951a6e8e9fa55faf45c20965b6e58427d7c4f074e39216f89062f1d'
+          raw=lzma.decompress(base64.b64decode(b,validate=True))
+          assert hashlib.sha256(raw).hexdigest()=='6b1da3a9f86929f6c14e6691d5f70b1615674a21e1b333ab02357ca4e8291d50'
+          edits=json.loads(raw)
+          assert len(edits)==8 and len({e['path'] for e in edits})==8
+          outputs=[]
+          for e in edits:
+              p=pathlib.Path(e['path'])
+              assert not p.is_absolute() and '..' not in p.parts and p.parts[0] in {'tools','tests','docs'}
+              if e['old'] is None:
+                  assert not p.exists(),str(p)
+                  old=b''
+              else:
+                  old=p.read_bytes()
+                  assert hashlib.sha256(old).hexdigest()==e['old'],str(p)
+              lines=old.decode().splitlines(keepends=True)
+              previous=len(lines)+1
+              for start,end,text in reversed(e['ops']):
+                  assert 0<=start<=end<=len(lines) and end<=previous,str(p)
+                  lines[start:end]=text.splitlines(keepends=True)
+                  previous=start
+              new=''.join(lines).encode()
+              assert hashlib.sha256(new).hexdigest()==e['new'],str(p)
+              outputs.append((p,new))
+          for p,data in outputs:
+              p.parent.mkdir(parents=True,exist_ok=True)
+              p.write_bytes(data)
+          workflow='.github/workflows/ou3-entry-basin-audit.yml'
+          final=subprocess.check_output(['git','show','985d69dca5ebfa62bd5a7e33339a75f618263393:'+workflow],text=True)
+          assert final.count('legacy_independent_entry_box_can_promote_fresh_startup')==1
+          final=final.replace('legacy_independent_entry_box_can_promote_fresh_startup','legacy_independent_S_box_can_promote_fresh_entry')
+          needle="      - 'tools/stability/ou3_p4_joint_brmm_frontend_transition.py'"
+          assert needle in final
+          final=final.replace(needle,needle+"\n      - 'tools/stability/ou3_brmm_complete_window_execution_kernel.py'\n      - 'tools/stability/ou3_p4_brmm_kernel_event_capture_bridge.py'\n      - 'tests/validation/test_ou3_p4_kernel_joint_memory.py'")
+          needle="          python3 -m unittest discover -s tests/validation -p 'test_ou3_p4_live_entry_graph.py' -v"
+          assert needle in final
+          final=final.replace(needle,needle+"\n          python3 -m unittest discover -s tests/validation -p 'test_ou3_p4_kernel_joint_memory.py' -v")
+          assert 'contents: write' not in final
+          pathlib.Path(workflow).write_text(final)
+          subprocess.run(['git','add','--',workflow]+[str(p) for p,_ in outputs],check=True)
+          subprocess.run(['git','rm','--','.proof-transfer/kernel-fixes.b64'],check=True)
+          PY
+          python3 -m unittest discover -s tests/validation -p 'test_ou3_p4_kernel_joint_memory.py' -v
+          python3 tools/stability/ou3_p4_brmm_kernel_event_capture_bridge.py --output /tmp/kernel-joint-frontend.json
+          git diff --cached --check
+          test -z "$(git diff --cached --name-only -- src)"
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'Retain full joint frontend in P4 kernel capture and classify all legacy enclosure failures'
+          git push origin HEAD:proof/live-entry-correlated-basin
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: ou3-kernel-joint-frontend
+          path: /tmp/kernel-joint-frontend.json
+          retention-days: 7

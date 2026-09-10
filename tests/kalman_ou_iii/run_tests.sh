@@ -16,6 +16,7 @@ W3D_COLLECT_ALL_GATES=1 ./kalman_ou_iii-sim || sim_status=$?
 ./wave_band_sigma-test
 ./iss_contract-test
 ./rs_law-test
+./live_entry_audit-test
 ./startup_init-test
 
 exit "$sim_status"

@@ -449,3 +449,68 @@ that floor to be zero, nor does it claim that the upper bound is the attained
 error. Observed percentage errors are performance evidence, not numerical
 theorem constants until the relevant output normalization, source family and
 gain bound have been certified.
+
+
+\paragraph{Shared integral-origin reduction at the fresh handoff.}
+\label{sec:brmm-shared-S-origin}
+Let $c=S_m(t_L)$ and define, once for the entire Live continuation,
+$S_L(t)=S_m(t)-c$ and $e_{S,L}(t)=e_S(t)-c$.
+This changes a proof reference, not a shipping state, sensor sample,
+physical motion, or regularizer. At fresh entry $S_L(t_L)=e_{S,L}(t_L)=0$,
+while $p_m(t_L)$ and $v_m(t_L)$ retain their same-source values.
+For the actual zero-integral measurement,
+\[
+ r_S=-\hat S=e_S-S_m=e_{S,L}-S_L.
+\]
+Consequently the entire finite shipping event map is invariant to the common
+translation $(S_m,e_S)\mapsto(S_m+c,e_S+c)$. In the signed error/source
+ledger, with $E_S$ selecting the three integral coordinates, this is the
+coefficientwise identity
+\[
+ (I-KH_S)E_S+K=E_S.
+\]
+It holds for the actual same-event $K$, without an independent gain box.
+Prediction has $FE_S=E_S$; accelerometer and magnetometer geometries have
+$HE_S=0$. Every residual, finite quaternion correction, reset transport,
+radial bias projection, covariance update and scheduling decision is unchanged.
+Thus the common-origin column remains $E_S$ at every literal prefix and is
+zero after the reference row operation $e_{S,L}=e_S-c$. Since the origin
+is not supplied to the executable, its binary32 trajectory is identical;
+this cancellation adds no arithmetic error channel. Other arithmetic
+qualification obligations are not discharged by this identity.
+
+No independent $300\,\mathrm{m\,s}$ integral-error entrance ball represents
+this graph. The earlier product may be used only as a conditional diagnostic
+or a candidate working-domain scale. Removing a dependent entrance column
+is not removing the three integral-error states from the retained 18-state
+motion metric, and does not permit re-zeroing at successive word boundaries.
+For $h\geq0$ the same physical continuation obeys
+\[
+ S_L(t_L+h)=h p_m(t_L)+\tfrac12h^2v_m(t_L)
+       +\int_0^h\tfrac12(h-s)^2a_m(t_L+s)\,ds.
+\]
+Working/prefix bounds must retain this graph and its Joseph residual. For
+admitted uniform primitive bounds, a consequence is
+\[
+ \|S_L(t_L+h)\|\leq
+ \min\{hP_m,\ h\|p_m(t_L)\|+\tfrac12h^2\|v_m(t_L)\|
+                    +\tfrac16 A_mh^3,\ 2S_m^{\max}\}.
+\]
+Any source-energy charge must also transform with its signed cross term:
+$\int\|S_m-c\|^2=\int\|S_m\|^2-2c^\top\int S_m+T\|c\|^2$.
+The original-reference error bound is recovered by
+$\|e_S\|\leq\|e_{S,L}\|+\|c\|$; a uniform original-reference ultimate
+bound therefore still requires an admitted uniform origin bound. Reanchoring
+position is not the same harmless constant translation: it introduces the
+secular term $-h p_m(t_L)$ into the integral reference and cannot be used to
+assert $e_p(t_L)=0$ while retaining an indefinite bounded-primitive premise.
+
+This exact reduction proves neither a common compatible metric nor endpoint
+contraction. Those still require a source-uniform reachable entry and
+continuation cover, coercivity, endpoint and literal-every-prefix outward
+augmented LDLT, all retained domains, and finite-precision ISS charges. The
+frozen-map values $4.5788$ and $0.9411/0.6537$ diagnose the old independent
+entry factor, not an admissible nonlinear chart exit or a closed P4 theorem.
+P4 and finite-time startup capture remain unclosed until these obligations
+are certified for prior/measured adaptation, all BIAS families, and every
+allowed hybrid transition.

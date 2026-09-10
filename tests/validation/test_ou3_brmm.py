@@ -2,11 +2,15 @@
 from fractions import Fraction as F
 import importlib.util
 from pathlib import Path
+import sys
 import unittest
 
 import numpy as np
 
 ROOT = Path(__file__).resolve().parents[2]
+STABILITY = ROOT / "tools" / "stability"
+if str(STABILITY) not in sys.path:
+    sys.path.insert(0, str(STABILITY))
 
 
 def module(path):

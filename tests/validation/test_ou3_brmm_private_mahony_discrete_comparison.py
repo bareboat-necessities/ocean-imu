@@ -17,9 +17,11 @@ class BrmmPrivateMahonyDiscreteComparisonTest(unittest.TestCase):
         self.assertGreater(d["discrete_metric_decrease_lower"], 0.0)
         self.assertTrue(d["same_BRMM_forcing_as_continuous_invariant"])
 
-    def test_binary32_composition_remains_fail_closed(self):
+    def test_binary32_source_order_composition_is_closed_but_toolchain_generalization_remains_fail_closed(self):
         d = mod.build()
-        self.assertFalse(d["shipping_binary32_quaternion_map_error_composed"])
+        self.assertTrue(d["shipping_binary32_quaternion_map_error_composed"])
+        self.assertTrue(d["shipping_source_order_binary32_discrete_invariant_closed"])
+        self.assertFalse(d["toolchain_independent_binary32_invariant_closed"])
         self.assertFalse(d["complete_BRMM_family_materialized_here"])
         self.assertFalse(d["P3_promoted"])
         self.assertFalse(d["source_generator"])

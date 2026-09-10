@@ -1,0 +1,50 @@
+name: ou3-p4-brmm-frontend-predecessor-invariant
+on:
+  push:
+    paths: &paths
+      - "tools/stability/ou3_p4_brmm_frontend_predecessor_invariant.py"
+      - "tools/stability/ou3_brmm_*.py"
+      - "tools/stability/ou3_proof_operating_domain.json"
+      - "src/tuner/**"
+      - "src/kalman_ou_iii/**"
+      - ".github/workflows/ou3-p4-brmm-frontend-predecessor-invariant.yml"
+  pull_request:
+    paths: *paths
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  invariant:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+        with: {persist-credentials: false}
+      - name: Execute source-uniform frontend predecessor invariant
+        run: |
+          python3 tools/stability/ou3_p4_brmm_frontend_predecessor_invariant.py --output /tmp/frontend-predecessor.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/frontend-predecessor.json'))
+          assert d['validation_pass'], d['validation_failures']
+          assert d['complete_BRMM_predecessor_state_family_covered']
+          assert d['complete_BRMM_predecessor_family_compact_modulo_elapsed_guard_quotient']
+          assert d['all_component_predecessor_invariants_closed']
+          assert not d['source_generator']
+          assert not d['trajectory_replay_used']
+          assert not d['independent_sample_boxes_used_to_generate_coefficients']
+          assert d['coefficient_history_still_must_come_from_joint_transition']
+          assert d['outer_bounds_may_not_generate_independent_f_sigma_tau_TS_RS']
+          assert d['WPE_invariant']['actual_elapsed_need_not_be_bounded']
+          assert d['WPE_invariant']['elapsed_quotient_preserves_all_shipping_guards']
+          assert not d['P4_promoted_here']
+          print('FRONTEND_PREDECESSOR_CLOSED',d['complete_BRMM_predecessor_state_family_covered'])
+          print('VERTICAL_BOUND',d['vertical_acceleration_abs_upper_mps2'])
+          print('WPE_PERIOD',d['WPE_invariant']['valid_raw_period_s'])
+          print('WPE_FREQUENCY',d['WPE_invariant']['canonical_frequency_hz'])
+          PY
+      - uses: actions/upload-artifact@v6
+        with:
+          name: ou3-p4-brmm-frontend-predecessor-invariant
+          path: /tmp/frontend-predecessor.json
+          retention-days: 7

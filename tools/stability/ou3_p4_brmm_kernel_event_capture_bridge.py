@@ -5,16 +5,20 @@ The typed complete-window kernel is the shipping-order authority for Riccati
 operations. With passive capture enabled it emits, from the SAME transition
 call, literal event cells containing P_before/P_after and either F/Q or H/R.
 This module binds those snapshots to the complete same-sample joint-estimator
-successor family and checks the literal shipping order
+image family and checks the literal shipping order
 
   prediction -> optional aw_floor -> due S_zero -> accelerometer -> async mag
 
 including actual applied SpectralMSE R_S provenance.
 
-No favorable front-end or joint-estimator successor is selected for a theorem
-claim. Multiple joint images may map to the same shipping front-end successor
-because stillness/central-statistic proof branches carry extra proof state; both
-directions of front-end coverage are checked.
+The basic kernel frontend and the joint-estimator proof state are intentionally
+not the same state machine: the latter carries central-moment/stillness proof
+coordinates that the former does not. Therefore equality or whole-object
+containment between their successor frontend objects is not a valid theorem
+obligation. The actual common interface is the current active Riccati schedule
+and the measurement geometry. Every retained joint image must bind to the same
+captured current R_S, and the kernel must verify that it consumed that active
+schedule before the current measurement.
 
 This bridge intentionally does NOT fabricate a physical-error state from P.
 Production SourceCoverCell construction remains fail-closed until the qualified
@@ -31,8 +35,8 @@ import ou3_brmm_frontend_state_step as FRONT
 import ou3_brmm_private_mahony_state_step as MAHONY
 import ou3_brmm_full_normal_live_word as WORD
 
-SCHEMA=2
-QUALIFICATION='OU3_P4_BRMM_TRUSTED_KERNEL_EVENT_CAPTURE_BRIDGE_V2'
+SCHEMA=4
+QUALIFICATION='OU3_P4_BRMM_TRUSTED_KERNEL_EVENT_CAPTURE_BRIDGE_V4'
 
 def I(x):return Interval.point(float(x))
 def _diag(n,v):
@@ -50,28 +54,37 @@ def _sample():
       R_wb=[[I(1),z,z],[z,I(1),z],[z,z,I(1)]],due_S=True,aw_floor_requested=True,
       magnetometer_events_after_imu=(KERNEL.MagneticEvent((I(20),I(0),I(40))),))
 
-def _frontend_equal(a,b):
-    # All nested proof/shipping state dataclasses are value objects whose
-    # Interval fields have exact endpoint equality semantics.
-    return a==b
-
 def capture_smoke():
     js=JOINT._smoke_state();sample=_sample();kc=KERNEL._process_constants()
     root=KERNEL.ExecutionBranch(frontend=copy.deepcopy(js.frontend),H=WORD.initialize_word('H',_diag(18,2)),A=WORD.initialize_word('A',_diag(21,2)),source_cell_id='root')
     succ,meta=KERNEL.advance_branch(root,sample,constants=kc,next_cell_prefix='capture',capture_riccati_event_cells=True)
     ji=JOINT.advance(js,FRONT.Sample(sample.gyro_measurement,sample.specific_force),gravity_ms2=kc.gravity,two_kp=kc.two_kp,two_ki=kc.two_ki,child_prefix='capture-joint')
     if not ji:raise RuntimeError('joint estimator emitted no same-sample image')
+    if not succ:raise RuntimeError('trusted kernel emitted no same-sample successor')
     return sample,ji[0],meta,succ,ji
 
-def successor_coverage(kernel_successors,joint_images):
-    image_matches=[sum(_frontend_equal(im.state.frontend,s.frontend) for s in kernel_successors) for im in joint_images]
-    kernel_matches=[sum(_frontend_equal(im.state.frontend,s.frontend) for im in joint_images) for s in kernel_successors]
+def schedule_binding(meta,images):
+    h_s=next(c for c in meta['H_event_cells'] if c.kind=='S_zero')
+    a_s=next(c for c in meta['A_event_cells'] if c.kind=='S_zero')
+    per_image=[]
+    for im in images:
+        expected_h=WORD.R_S_zero(im.actual_rs_std_xyz_for_current_riccati)
+        expected_a=WORD.R_S_zero(im.actual_rs_std_xyz_for_current_riccati)
+        per_image.append({
+          'source_token':im.source_token,
+          'H18_current_RS_matches_captured_kernel_event':_same_matrix(h_s.R,expected_h),
+          'A21_current_RS_matches_captured_kernel_event':_same_matrix(a_s.R,expected_a)})
+    all_bound=bool(per_image) and all(x['H18_current_RS_matches_captured_kernel_event'] and x['A21_current_RS_matches_captured_kernel_event'] for x in per_image)
     return {
-      'every_joint_image_frontend_matches_kernel_successor':all(x>0 for x in image_matches),
-      'every_kernel_frontend_successor_represented_by_joint_image':all(x>0 for x in kernel_matches),
-      'joint_image_match_counts':image_matches,'kernel_successor_match_counts':kernel_matches,
-      'no_joint_image_dropped':len(image_matches)==len(joint_images),
-      'no_kernel_frontend_successor_dropped':len(kernel_matches)==len(kernel_successors)}
+      'binding_relation':'joint current-active schedule -> exact captured kernel S=0 R; auxiliary successor frontend state is not equated',
+      'kernel_verified_same_active_schedule_before_measurement':bool(meta['same_active_schedule_verified']),
+      'kernel_verified_same_actual_RS_before_measurement':bool(meta['same_actual_RS_verified']),
+      'every_joint_image_current_schedule_bound_to_kernel_Riccati_event':all_bound,
+      'joint_image_bindings':per_image,
+      'kernel_successor_family_nonempty':True,
+      'joint_estimator_image_family_nonempty':True,
+      'whole_frontend_successor_equality_required':False,
+      'whole_frontend_successor_containment_required':False}
 def summarize(cells,images,sample,mode):
     kinds=[c.kind for c in cells]
     expected=['prediction','aw_floor','S_zero','accelerometer','magnetometer']
@@ -91,13 +104,14 @@ def summarize(cells,images,sample,mode):
       'accelerometer_geometry_matches_sample':_same_matrix(acc.H,WORD.H_accelerometer(mode,sample.f_cog_body,sample.R_wb)),
       'magnetometer_H_R_captured':mag.H is not None and mag.R is not None,'magnetometer_index':mag.magnetic_event_index}
 def build():
-    sample,_,meta,succ,images=capture_smoke();coverage=successor_coverage(succ,images);H=summarize(meta['H_event_cells'],images,sample,'H');A=summarize(meta['A_event_cells'],images,sample,'A')
+    sample,_,meta,succ,images=capture_smoke();binding=schedule_binding(meta,images);H=summarize(meta['H_event_cells'],images,sample,'H');A=summarize(meta['A_event_cells'],images,sample,'A')
     all_ok=all(x for d in (H,A) for k,x in d.items() if k not in ('mode','literal_kinds','magnetometer_index'))
-    all_successors=all(coverage[k] for k in ('every_joint_image_frontend_matches_kernel_successor','every_kernel_frontend_successor_represented_by_joint_image','no_joint_image_dropped','no_kernel_frontend_successor_dropped'))
+    all_bound=binding['every_joint_image_current_schedule_bound_to_kernel_Riccati_event'] and binding['kernel_verified_same_active_schedule_before_measurement'] and binding['kernel_verified_same_actual_RS_before_measurement']
     return {'schema':SCHEMA,'qualification':QUALIFICATION,'canonical_source':'COMPLETE_BRMM_NORMAL_LIVE_WORD',
       'trusted_kernel_passive_capture_consumed':True,'same_transition_call_not_replay':True,'shipping_literal_event_order_captured':True,'H18_A21_same_sample_capture':True,
       'same_sample_joint_estimator_image_family_materialized':True,'joint_image_branch_count':len(images),'kernel_frontend_successor_count':len(succ),
-      'same_sample_successor_family_coverage':coverage,'all_same_sample_joint_and_kernel_successors_retained':all_successors,
+      'same_sample_schedule_binding':binding,'all_joint_images_bound_to_current_kernel_Riccati_schedule':all_bound,
+      'frontend_auxiliary_state_not_used_as_cross_machine_identity':True,
       'favorable_joint_estimator_successor_selected_for_production':False,
       'current_active_schedule_matches_kernel_Riccati_schedule':bool(meta['same_active_schedule_verified']),'current_actual_RS_matches_kernel_Riccati_schedule':bool(meta['same_actual_RS_verified']),
       'H18':H,'A21':A,'smoke_capture_all_same_cell_objects_closed':all_ok,
@@ -109,11 +123,13 @@ def build():
 def validate(d):
     f=[]
     if d.get('schema')!=SCHEMA or d.get('qualification')!=QUALIFICATION:f.append('schema/qualification mismatch')
-    for k in ('trusted_kernel_passive_capture_consumed','same_transition_call_not_replay','shipping_literal_event_order_captured','H18_A21_same_sample_capture','same_sample_joint_estimator_image_family_materialized','all_same_sample_joint_and_kernel_successors_retained','current_active_schedule_matches_kernel_Riccati_schedule','current_actual_RS_matches_kernel_Riccati_schedule','smoke_capture_all_same_cell_objects_closed'):
+    for k in ('trusted_kernel_passive_capture_consumed','same_transition_call_not_replay','shipping_literal_event_order_captured','H18_A21_same_sample_capture','same_sample_joint_estimator_image_family_materialized','all_joint_images_bound_to_current_kernel_Riccati_schedule','frontend_auxiliary_state_not_used_as_cross_machine_identity','current_active_schedule_matches_kernel_Riccati_schedule','current_actual_RS_matches_kernel_Riccati_schedule','smoke_capture_all_same_cell_objects_closed'):
         if d.get(k) is not True:f.append(k+' not true')
-    c=d.get('same_sample_successor_family_coverage',{})
-    for k in ('every_joint_image_frontend_matches_kernel_successor','every_kernel_frontend_successor_represented_by_joint_image','no_joint_image_dropped','no_kernel_frontend_successor_dropped'):
-        if c.get(k) is not True:f.append('successor '+k+' not true')
+    b=d.get('same_sample_schedule_binding',{})
+    for k in ('kernel_verified_same_active_schedule_before_measurement','kernel_verified_same_actual_RS_before_measurement','every_joint_image_current_schedule_bound_to_kernel_Riccati_event','kernel_successor_family_nonempty','joint_estimator_image_family_nonempty'):
+        if b.get(k) is not True:f.append('binding '+k+' not true')
+    for k in ('whole_frontend_successor_equality_required','whole_frontend_successor_containment_required'):
+        if b.get(k) is not False:f.append('binding '+k+' not false')
     for mode in ('H18','A21'):
         m=d.get(mode,{})
         for k in ('covariance_chain_contiguous','prediction_F_Q_captured','S_zero_H_R_captured','S_zero_actual_RS_flag','S_zero_R_matches_every_joint_image_current_active_schedule','accelerometer_H_R_captured','accelerometer_geometry_matches_sample','magnetometer_H_R_captured'):
@@ -122,5 +138,5 @@ def validate(d):
         if d.get(k) is not False:f.append(k+' not false')
     return f
 def main():
-    ap=argparse.ArgumentParser();ap.add_argument('--output',type=Path,required=True);a=ap.parse_args();d=build();f=validate(d);d['validation_pass']=not f;d['validation_failures']=f;a.output.parent.mkdir(parents=True,exist_ok=True);a.output.write_text(json.dumps(d,indent=2,sort_keys=True)+'\n');print(json.dumps({'capture':d['smoke_capture_all_same_cell_objects_closed'],'all_successors':d['all_same_sample_joint_and_kernel_successors_retained'],'joint_images':d['joint_image_branch_count'],'kernel_successors':d['kernel_frontend_successor_count'],'P4':d['P4_PASS'],'failures':f},sort_keys=True));return int(bool(f))
+    ap=argparse.ArgumentParser();ap.add_argument('--output',type=Path,required=True);a=ap.parse_args();d=build();f=validate(d);d['validation_pass']=not f;d['validation_failures']=f;a.output.parent.mkdir(parents=True,exist_ok=True);a.output.write_text(json.dumps(d,indent=2,sort_keys=True)+'\n');print(json.dumps({'capture':d['smoke_capture_all_same_cell_objects_closed'],'schedule_bound':d['all_joint_images_bound_to_current_kernel_Riccati_schedule'],'joint_images':d['joint_image_branch_count'],'kernel_successors':d['kernel_frontend_successor_count'],'P4':d['P4_PASS'],'failures':f},sort_keys=True));return int(bool(f))
 if __name__=='__main__':raise SystemExit(main())

@@ -70,6 +70,7 @@ jobs:
             tools/stability/ou3_brmm_wpe_state_step.py \
             tools/stability/ou3_brmm_private_mahony_state_step.py \
             tools/stability/ou3_brmm_private_mahony_live_invariant.py \
+            tools/stability/ou3_brmm_private_mahony_discrete_invariant.py \
             tools/stability/ou3_brmm_frontend_state_step.py \
             tools/stability/ou3_binary32_interval.py \
             tools/stability/ou3_fast_inv_sqrt_interval.py \
@@ -78,22 +79,15 @@ jobs:
 
       - name: Build compact phase-continuous BRMM source contract
         run: |
-          python3 tools/stability/ou3_brmm_complete_source.py \
-            --output /tmp/ou3_brmm_complete_source.json
-          python3 tools/stability/ou3_brmm_shipping_prediction_primitives.py \
-            --output /tmp/ou3_brmm_shipping_prediction_primitives.json
-          python3 tools/stability/ou3_brmm_tuner_scheduler_step.py \
-            --output /tmp/ou3_brmm_tuner_scheduler_step.json
-          python3 tools/stability/ou3_brmm_wpe_state_step.py \
-            --output /tmp/ou3_brmm_wpe_state_step.json
-          python3 tools/stability/ou3_fast_inv_sqrt_interval.py \
-            --output /tmp/ou3_fast_inv_sqrt_interval.json
-          python3 tools/stability/ou3_brmm_private_mahony_state_step.py \
-            --output /tmp/ou3_brmm_private_mahony_state_step.json
-          python3 tools/stability/ou3_brmm_private_mahony_live_invariant.py \
-            --output /tmp/ou3_brmm_private_mahony_live_invariant.json
-          python3 tools/stability/ou3_brmm_frontend_state_step.py \
-            --output /tmp/ou3_brmm_frontend_state_step.json
+          python3 tools/stability/ou3_brmm_complete_source.py --output /tmp/ou3_brmm_complete_source.json
+          python3 tools/stability/ou3_brmm_shipping_prediction_primitives.py --output /tmp/ou3_brmm_shipping_prediction_primitives.json
+          python3 tools/stability/ou3_brmm_tuner_scheduler_step.py --output /tmp/ou3_brmm_tuner_scheduler_step.json
+          python3 tools/stability/ou3_brmm_wpe_state_step.py --output /tmp/ou3_brmm_wpe_state_step.json
+          python3 tools/stability/ou3_fast_inv_sqrt_interval.py --output /tmp/ou3_fast_inv_sqrt_interval.json
+          python3 tools/stability/ou3_brmm_private_mahony_state_step.py --output /tmp/ou3_brmm_private_mahony_state_step.json
+          python3 tools/stability/ou3_brmm_private_mahony_live_invariant.py --output /tmp/ou3_brmm_private_mahony_live_invariant.json
+          python3 tools/stability/ou3_brmm_private_mahony_discrete_invariant.py --output /tmp/ou3_brmm_private_mahony_discrete_invariant.json
+          python3 tools/stability/ou3_brmm_frontend_state_step.py --output /tmp/ou3_brmm_frontend_state_step.json
           python3 - <<'PY'
           import json
           d=json.load(open('/tmp/ou3_brmm_complete_source.json'))
@@ -120,6 +114,7 @@ jobs:
           assert c['same_physical_motion_drives_translation_and_rotation'] is True
           assert c['only_same_history_BRMM_realization_may_generate_P3_words'] is True
           assert c['moment_or_probability_bound_may_not_generate_P3_word'] is True
+          assert c['pathwise_non_gravitational_cog_acceleration_norm_upper_mps2'] == 8.0
           s=d['stochastic_forcing_corollary']
           assert s['used_to_generate_P3_source_words'] is False
           assert s['used_to_prune_homogeneous_P3_family'] is False
@@ -204,11 +199,21 @@ jobs:
           assert ml['validation_pass'], ml['validation_failures']
           assert ml['continuous_all_live_PI_invariant_closed'] is True
           assert ml['initial_set_inside_invariant'] is True
-          assert ml['invariant_strictly_inside_60deg_chart'] is True
+          assert ml['invariant_strictly_inside_87deg_chart'] is True
+          assert ml['invariant_strictly_inside_60deg_chart'] is False
+          assert ml['actual_tilt_deg_upper'] < 87.0
           assert ml['boundary_validation']['strict_inward_margin_lower'] > 0.0
           assert ml['source_generator'] is False
-          assert ml['shipping_binary32_discrete_invariant_closed'] is False
           assert ml['P3_promoted'] is False
+
+          md=json.load(open('/tmp/ou3_brmm_private_mahony_discrete_invariant.json'))
+          assert md['validation_pass'], md['validation_failures']
+          assert md['source_order_binary32_model'] is True
+          assert md['shipping_binary32_discrete_invariant_closed_conditionally_on_source_order'] is True
+          assert md['continuous_boundary_margin_after_binary32'] > 0.0
+          assert md['discrete_V_margin_lower'] > 0.0
+          assert md['one_step_chart_round_margin_rad'] > 0.0
+          assert md['toolchain_independent_binary32_invariant_closed'] is False
 
           fe=json.load(open('/tmp/ou3_brmm_frontend_state_step.json'))
           assert fe['validation_pass'], fe['validation_failures']
@@ -227,6 +232,7 @@ jobs:
           print('BRMM_WPE_STEP', w['smoke'])
           print('BRMM_PRIVATE_MAHONY', m['private_observer_live_entry_invariant'])
           print('BRMM_PRIVATE_MAHONY_ALL_LIVE', ml['boundary_validation'])
+          print('BRMM_PRIVATE_MAHONY_BINARY32', md['discrete_V_margin_lower'])
           print('BRMM_FRONTEND', fe['shipping_source_parity'])
           PY
 
@@ -264,5 +270,6 @@ jobs:
             /tmp/ou3_fast_inv_sqrt_interval.json
             /tmp/ou3_brmm_private_mahony_state_step.json
             /tmp/ou3_brmm_private_mahony_live_invariant.json
+            /tmp/ou3_brmm_private_mahony_discrete_invariant.json
             /tmp/ou3_brmm_frontend_state_step.json
           retention-days: 7

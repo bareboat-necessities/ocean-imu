@@ -198,6 +198,14 @@ def _source_startup_parity(filter_text: str, tuner_text: str) -> dict[str, bool]
     out["tuner_update_precedes_current_sample_wave_period_update"] = (
         tuner_pos >= 0 and period_pos >= 0 and tuner_pos < period_pos
     )
+    handoff_start = filter_text.find("void maybeHandOffToMekf_()")
+    handoff_end = filter_text.find("void handOffToMekf_()", handoff_start)
+    handoff = " ".join(filter_text[handoff_start:handoff_end].split())
+    out["outer_quality_handoff_requires_tuner_ready"] = (
+        "north_ready && impl_.isTunerReady();" in handoff)
+    out["outer_timeout_handoff_does_not_require_period"] = (
+        "proxy_ready && (t_ >= timeout_sec) && mag_gravity_aligned_branch_;" in handoff
+        and "if (!ready_by_quality && !ready_by_timeout) return;" in handoff)
     out["tuner_frequency_input_is_stored_immediately"] = (
         "frequency_hz = f_eff;" in compact_tuner
     )
@@ -303,11 +311,11 @@ def build(repo_root: Path = REPO) -> dict[str, Any]:
             startup_domain.get("tuner_ready_requires_wave_period_estimator_ready")
             is False
         ),
-        "domain_requires_usable_period_before_live": (
+        "domain_retains_timeout_before_measured_period": (
             startup_domain.get("live_entry_requires_wave_period_estimator_usable")
-            is True and startup_domain.get(
+            is False and startup_domain.get(
                 "live_entry_may_precede_wave_period_estimator_first_valid_period"
-            ) is False
+            ) is True
         ),
     }
 
@@ -368,8 +376,8 @@ def build(repo_root: Path = REPO) -> dict[str, Any]:
             ],
             "tuner_ready_requires_wave_period_estimator_usable": True,
             "tuner_ready_requires_wave_period_estimator_ready": False,
-            "live_entry_requires_wave_period_estimator_usable": True,
-            "live_entry_may_precede_wave_period_estimator_first_valid_period": False,
+            "live_entry_requires_wave_period_estimator_usable": False,
+            "live_entry_may_precede_wave_period_estimator_first_valid_period": True,
             "wave_period_takeover_waits_for_hasUsablePeriod": True,
             "wave_period_startup_takeover_is_one_way_latched": True,
             "wave_period_takeover_waits_for_isReady": False,
@@ -452,10 +460,10 @@ def validate(payload: dict[str, Any]) -> list[str]:
         failures.append("TunerReady no longer requires WavePeriodEstimator::hasUsablePeriod")
     if startup.get("tuner_ready_requires_wave_period_estimator_ready") is not False:
         failures.append("TunerReady was incorrectly tied to strict WavePeriodEstimator::isReady")
-    if startup.get("live_entry_requires_wave_period_estimator_usable") is not True:
-        failures.append("Live entry no longer requires a startup-usable measured period")
-    if startup.get("live_entry_may_precede_wave_period_estimator_first_valid_period") is not False:
-        failures.append("Live entry may again precede the measured period")
+    if startup.get("live_entry_requires_wave_period_estimator_usable") is not False:
+        failures.append("runtime Live was incorrectly equated with measured-period qualification")
+    if startup.get("live_entry_may_precede_wave_period_estimator_first_valid_period") is not True:
+        failures.append("shipping timeout branch was omitted")
     if startup.get("wave_period_takeover_waits_for_hasUsablePeriod") is not True:
         failures.append("wave-period takeover no longer waits for hasUsablePeriod")
     if startup.get("wave_period_startup_takeover_is_one_way_latched") is not True:

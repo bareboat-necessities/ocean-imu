@@ -44,7 +44,12 @@ jobs:
           python tools/stability/ou3_p4_complete_brmm_universal_target_relation.py --output /tmp/ou3-p4-relation-evidence/target-relation.json
           python tools/stability/ou3_p4_complete_brmm_source_cover_contract.py --output /tmp/ou3-p4-relation-evidence/source-cover-contract.json
           python tools/stability/ou3_p4_brmm_reduced_event_master.py --output /tmp/ou3-p4-relation-evidence/reduced-event-master.json
-          python tools/stability/ou3_p4_brmm_same_Dtheta_reset_binding.py --output /tmp/ou3-p4-relation-evidence/same-Dtheta-reset-binding.json
+          # The historical same_Dtheta top-level diagnostic intentionally uses a
+          # detached marginal route and is fenced off after its huge S=0 bound.
+          # Relation CI must consume the current dense same-cell reset graph,
+          # whose production delta is required to come from the same D=Etheta*K*Y
+          # map. Event-specific bind_event() remains available to the A21 prefix.
+          python tools/stability/ou3_p4_reset_graph_iqc.py --output /tmp/ou3-p4-relation-evidence/reset-graph-iqc.json
           python tools/stability/ou3_p4_brmm_projection_graph_iqc.py --output /tmp/ou3-p4-relation-evidence/projection-graph-iqc.json
           python tools/stability/ou3_p4_brmm_a21_projection_prefix.py --output /tmp/ou3-p4-relation-evidence/a21-projection-prefix.json
           python tools/stability/ou3_p4_brmm_bias1_prediction_lift.py --output /tmp/ou3-p4-relation-evidence/bias1-prediction-lift.json
@@ -52,11 +57,11 @@ jobs:
           python - <<'PY'
           import json
           root='/tmp/ou3-p4-relation-evidence/'
-          names=['joint-estimator','same-signal-statistics','sigma-stillness','tuner-stillness','joint-brmm-frontend','target-relation','source-cover-contract','reduced-event-master','same-Dtheta-reset-binding','projection-graph-iqc','a21-projection-prefix','bias1-prediction-lift','event-lineage-cover']
+          names=['joint-estimator','same-signal-statistics','sigma-stillness','tuner-stillness','joint-brmm-frontend','target-relation','source-cover-contract','reduced-event-master','reset-graph-iqc','projection-graph-iqc','a21-projection-prefix','bias1-prediction-lift','event-lineage-cover']
           data={name:json.load(open(root+name+'.json')) for name in names}
           for name,obj in data.items():
               assert obj['validation_pass'], (name,obj.get('validation_failures'))
-          j=data['joint-estimator'];q=data['same-signal-statistics'];s=data['sigma-stillness'];t=data['tuner-stillness'];b=data['joint-brmm-frontend'];u=data['target-relation'];c=data['source-cover-contract'];m=data['reduced-event-master'];r=data['same-Dtheta-reset-binding'];pg=data['projection-graph-iqc'];ap=data['a21-projection-prefix'];bl=data['bias1-prediction-lift'];l=data['event-lineage-cover']
+          j=data['joint-estimator'];q=data['same-signal-statistics'];s=data['sigma-stillness'];t=data['tuner-stillness'];b=data['joint-brmm-frontend'];u=data['target-relation'];c=data['source-cover-contract'];m=data['reduced-event-master'];r=data['reset-graph-iqc'];pg=data['projection-graph-iqc'];ap=data['a21-projection-prefix'];bl=data['bias1-prediction-lift'];l=data['event-lineage-cover']
 
           assert j['same_signal_wave_period_and_band_state_materialized']
           assert j['exact_same_history_central_moment_ghost_recurrence_materialized']
@@ -88,11 +93,19 @@ jobs:
           assert not m['independent_K_coordinate_or_box_used']
           assert not m['independent_eta_port_used']
 
-          assert r['same_estimator_owned_event_Dtheta_is_reset_graph_input']
-          assert r['same_cell_KSK_covariance_identity_is_domain_proof']
-          assert r['event_specific_delta_bound_attached']
-          assert r['smoke_event_specific_same_Dtheta_reset_domain_closed']
-          assert not r['rowwise_K_correction_domain_used']
+          # Current reset relation: keep D=Etheta*K*Y and direction in one dense
+          # graph. The smoke is algebra-only; production delta/source closure is
+          # deliberately still false and cannot be promoted by this workflow.
+          assert r['same_cell_K_required']
+          assert r['parameterized_reset_defect_dense_IQC_available']
+          assert r['reset_IQC_keeps_residual_direction_via_Etheta_K_Y']
+          assert r['production_delta_must_be_certified_from_same_Dmap']
+          assert r['affine_correction_domain_target_available']
+          assert r['rowwise_K_correction_domain_forbidden']
+          assert r['parameterized_homogeneous_reset_sector_consumed']
+          assert not r['production_same_graph_correction_domain_closed_here']
+          assert not r['source_uniform_augmented_LDLT_closed_here']
+          assert not r['P4_promoted_here']
 
           assert pg['global_joint_sector_consumed']
           assert pg['saturated_branch_retained'] and pg['unsaturated_branch_retained'] and pg['Clarke_boundary_branch_retained']
@@ -105,7 +118,6 @@ jobs:
           assert ap['BIAS1_true_bias_hard_bound_attached_on_same_h']
           assert ap['all_augmented_matrices_share_one_coordinate']
 
-          # Physical BIAS1 prediction recurrence is now a literal outward map.
           assert bl['outward_A_matrix_materialized']
           assert bl['outward_B_matrix_materialized']
           assert bl['same_w_columns_enter_error_and_true_bias']
@@ -125,7 +137,7 @@ jobs:
           assert l['Joseph_prefix_bundle_contains_certified_same_Dtheta_reset_sector']
           assert not l['production_same_history_event_master_maps_materialized_here']
 
-          for obj in (j,q,b,m,r,ap,bl,l):
+          for obj in (j,q,b,m,ap,bl,l):
               assert not obj['P4_MOTION_PASS'] and not obj['P4_PASS'] and not obj['P5_MAY_START']
           assert not c['P4_promoted_here']
           print('SAME_SIGNAL_EVENT_RESET_PROJECTION_BIAS1_LINEAGE_PASS')

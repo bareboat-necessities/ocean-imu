@@ -81,7 +81,6 @@ def advance(state:State,sample:FRONT.Sample,*,gravity_ms2:Interval,two_kp:Interv
     if not state.source_token or not child_prefix:raise ValueError('source lineage tokens required')
     tc=TUNER.constants();wc=WPE.constants(tc.dt);sc=STILL.constants()
     if abs(sc.dt-tc.dt)>0:raise ValueError('stillness/tuner sample periods differ')
-    if not state.frontend.wpe.usable_period:raise ValueError('normal-Live source requires usable WPE')
 
     committed=TUNER.commit_if_pending(state.frontend.tuner,tc)
     active=committed.active
@@ -96,7 +95,7 @@ def advance(state:State,sample:FRONT.Sample,*,gravity_ms2:Interval,two_kp:Interv
     # The theorem frequency is the same-signal WPE estimate carried by the
     # correlation state.  It equals the shipping log-period state at the root
     # and is advanced by the algebraically equivalent central statistic.
-    f_previous=STATS.frequency(state.statistics)
+    f_previous=STATS.frequency(state.statistics,usable_period=state.frontend.wpe.usable_period)
     wpe_images=STATS.advance_wpe(state.frontend.wpe,state.statistics,a_vertical,wc)
 
     out=[];ordinal=0
