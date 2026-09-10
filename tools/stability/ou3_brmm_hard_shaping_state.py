@@ -1,19 +1,19 @@
 #!/usr/bin/env python3
-"""Fail-closed contract for the deterministic complete-BRMM shaping state.
+"""Fail-closed contract for deterministic complete-BRMM hard shaping.
 
-BRMM is already the compact theorem-domain sea family. The continuum phase
-coordinate and its no-reseed propagation are closed. The finite sampled target
-B^601_BRMM is compact, and a new validated correlated deterministic outer set
-O^601_BRMM now closes the alternative hard finite-window route
+BRMM is already the compact theorem-domain sea family. Continuum phase/no-reseed
+propagation is closed, B^601_BRMM is compact, and the validated correlated
+outer set O^601_BRMM closes B^601_BRMM subset O^601_BRMM without Cartesianizing
+samples or axes.
 
-    B^601_BRMM subset O^601_BRMM.
-
-That outer set preserves cross-sample primitive recurrence, the all-axis
-acceleration-moment IQC, SO(3)/rate constraints and the coupled lambda relation;
-it is not an independent bounded-input box. The remaining open source-side
-obligation is to materialize this relation through the joint translational /
-rotational 601-sample output map consumed by the typed estimator/Riccati
-executor. Until that is closed this module remains fail-closed for P3/P4.
+The exact joint source/filter-state -> typed-executor coordinate map is now also
+materialized. It preserves shipping WORLD->BODY' geometry, positive-down world
+gravity, raw-vs-corrected gyro separation, truth-vs-nominal accelerometer
+geometry, and explicit sensor/bias forcing coordinates. Therefore the hard
+shaping/excitation representation itself is closed. This does NOT materialize
+the complete 601-sample provider: source/filter-state transitions, event-local
+Riccati ancestry, BIAS forcing and radial lineages must still be propagated
+through the typed executor before P3/P4 can promote.
 """
 from __future__ import annotations
 
@@ -23,21 +23,20 @@ from pathlib import Path
 
 import ou3_brmm_continuum_phase_state as PHASE
 import ou3_brmm_hard_window_behavior as BEHAVIOR
+import ou3_brmm_joint_executor_coordinate_map as OUTPUT
 
 REPO = Path(__file__).resolve().parents[2]
 THEOREM = REPO / "doc" / "kalman_ou_iii" / "w3d-marine-reference-models.tex-part"
 COMPLETE_SOURCE = REPO / "tools" / "stability" / "ou3_brmm_complete_source.py"
-SCHEMA = 5
-QUALIFICATION = "OU3_BRMM_HARD_SHAPING_STATE_CONTRACT_V5"
+SCHEMA = 6
+QUALIFICATION = "OU3_BRMM_HARD_SHAPING_STATE_CONTRACT_V6"
 
 CONTINUUM_PHASE_COORDINATE_SET_CLOSED = PHASE.CONTINUUM_PHASE_COORDINATE_SET_CLOSED
 PHASE_CONTINUOUS_PROPAGATION_CLOSED = PHASE.PHASE_CONTINUOUS_PROPAGATION_CLOSED
-# Exact continuum spectral-driver membership is not required once a validated
-# deterministic correlated outer enclosure is available.
 HARD_SPECTRAL_DRIVER_SET_CLOSED = False
 CORRELATED_OUTER_ENCLOSURE_CLOSED = True
 COMPLETE_BRMM_LEFT_INCLUSION_CLOSED = True
-JOINT_SOURCE_OUTPUT_MAP_CLOSED = False
+JOINT_SOURCE_OUTPUT_MAP_CLOSED = True
 
 HARD_SHAPING_STATE_OR_EXCITATION_BOUND_CLOSED = all((
     CONTINUUM_PHASE_COORDINATE_SET_CLOSED,
@@ -58,11 +57,13 @@ def build() -> dict:
     complete = COMPLETE_SOURCE.read_text(encoding="utf-8")
     phase = PHASE.build()
     behavior = BEHAVIOR.build()
+    output = OUTPUT.build()
     phase_failures = PHASE.validate(phase)
     behavior_failures = BEHAVIOR.validate(behavior)
-    if phase_failures or behavior_failures:
+    output_failures = OUTPUT.validate(output)
+    if phase_failures or behavior_failures or output_failures:
         raise RuntimeError(
-            f"BRMM shaping prerequisites failed: phase={phase_failures}, behavior={behavior_failures}"
+            f"BRMM shaping prerequisites failed: phase={phase_failures}, behavior={behavior_failures}, output={output_failures}"
         )
 
     theorem_has_shaping_system = (
@@ -94,8 +95,18 @@ def build() -> dict:
         and behavior["correlated_outer_left_inclusion_closed"]
         and behavior["correlated_outer_retains_cross_sample_and_axis_dependence"]
     )
+    joint_output = bool(
+        output["joint_source_output_map_closed"]
+        and output["source_filter_joint_coordinate_map_materialized"]
+        and output["measurement_coordinates_and_nominal_geometry_distinct"]
+        and output["raw_gyro_and_corrected_rate_distinct"]
+        and output["corrected_rate_depends_on_current_estimated_gyro_bias"]
+        and output["same_joint_witness_required_for_all_coordinates"]
+    )
     if not correlated_outer:
         raise RuntimeError("validated correlated BRMM outer enclosure disappeared")
+    if not joint_output:
+        raise RuntimeError("joint source/filter-state executor coordinate map disappeared")
 
     executable = {
         "continuum_phase_coordinate_set_closed": CONTINUUM_PHASE_COORDINATE_SET_CLOSED,
@@ -103,7 +114,7 @@ def build() -> dict:
         "hard_spectral_driver_set_closed": HARD_SPECTRAL_DRIVER_SET_CLOSED,
         "correlated_outer_enclosure_closed": correlated_outer,
         "complete_BRMM_left_inclusion_closed": COMPLETE_BRMM_LEFT_INCLUSION_CLOSED,
-        "joint_source_output_map_closed": JOINT_SOURCE_OUTPUT_MAP_CLOSED,
+        "joint_source_output_map_closed": joint_output,
     }
     return {
         "schema": SCHEMA,
@@ -140,6 +151,15 @@ def build() -> dict:
             "correlated_outer_set_symbol": behavior["correlated_outer_set_symbol"],
             "correlated_outer_left_inclusion_closed": behavior["correlated_outer_left_inclusion_closed"],
         },
+        "joint_executor_coordinate_map": {
+            "qualification": output["qualification"],
+            "closed": output["joint_source_output_map_closed"],
+            "raw_gyro_and_corrected_rate_distinct": output["raw_gyro_and_corrected_rate_distinct"],
+            "truth_attitude_and_nominal_R_hat_distinct": output["truth_attitude_and_nominal_R_hat_distinct"],
+            "truth_acceleration_and_nominal_a_w_hat_distinct": output["truth_acceleration_and_nominal_a_w_hat_distinct"],
+            "sensor_forcing_hard_bound_closed_here": output["sensor_forcing_hard_bound_closed_here"],
+            "BIAS0_assembled_sensor_qualification_closed_here": output["BIAS0_assembled_sensor_qualification_closed_here"],
+        },
         "exact_spectral_membership_oracle_required_for_P4": False,
         "correlated_outer_enclosure_route_used": True,
         "power_spectrum_alone_is_hard_pathwise_bound": False,
@@ -158,7 +178,7 @@ def build() -> dict:
         "complete_BRMM_family_materialized_here": False,
         "P3_promoted": False,
         "next_obligation": (
-            "left inclusion into the correlated hard finite-window outer relation is closed; materialize that same relation through the joint source-output/typed 601-sample executor without Cartesianizing samples or axes"
+            "hard shaping/output representation is closed; propagate the joint source/filter-state map through all 601 correlated outer-set transitions with BIAS/forcing, estimator and Riccati ancestry to materialize the canonical provider"
         ),
     }
 
@@ -174,6 +194,7 @@ def validate(d: dict) -> list[str]:
         "theorem_separates_probabilistic_random_sea_corollary",
         "complete_source_rejects_gaussian_word_generator",
         "correlated_outer_enclosure_route_used",
+        "hard_shaping_state_or_excitation_bound_closed",
     ):
         if d.get(key) is not True:
             failures.append(f"{key} is not true")
@@ -195,12 +216,18 @@ def validate(d: dict) -> list[str]:
     for key in ("normal_live_caps_are_membership_sufficient", "independent_sample_boxes_define_behavior_set", "validated_membership_or_separation_oracle_closed"):
         if behavior.get(key) is not False:
             failures.append(f"sampled behavior target falsely closes/reintroduces {key}")
+    output = d.get("joint_executor_coordinate_map", {})
+    for key in ("closed", "raw_gyro_and_corrected_rate_distinct", "truth_attitude_and_nominal_R_hat_distinct", "truth_acceleration_and_nominal_a_w_hat_distinct"):
+        if output.get(key) is not True:
+            failures.append(f"joint executor coordinate map lost {key}")
+    for key in ("sensor_forcing_hard_bound_closed_here", "BIAS0_assembled_sensor_qualification_closed_here"):
+        if output.get(key) is not False:
+            failures.append(f"joint executor coordinate map falsely closes {key}")
     for key in (
         "power_spectrum_alone_is_hard_pathwise_bound", "spectral_moments_alone_may_close_xs",
         "gaussian_good_event_may_close_xs", "replay_may_close_xs",
         "seeded_128_frequency_generator_may_close_xs", "finite_RAO_grid_may_close_xs",
-        "arbitrary_bounded_input_box_may_close_xs", "hard_shaping_state_or_excitation_bound_closed",
-        "complete_BRMM_family_materialized_here", "P3_promoted",
+        "arbitrary_bounded_input_box_may_close_xs", "complete_BRMM_family_materialized_here", "P3_promoted",
     ):
         if d.get(key) is not False:
             failures.append(f"{key} is not false")
@@ -210,7 +237,7 @@ def validate(d: dict) -> list[str]:
         "hard_spectral_driver_set_closed": False,
         "correlated_outer_enclosure_closed": True,
         "complete_BRMM_left_inclusion_closed": True,
-        "joint_source_output_map_closed": False,
+        "joint_source_output_map_closed": True,
     }
     if d.get("executable_ingredients") != expected:
         failures.append("hard shaping executable ingredient gates drifted")
@@ -230,8 +257,7 @@ def main() -> int:
     print(json.dumps({
         "BRMM_compact": d["reference_parameter_domain_compact"],
         "correlated_outer": d["sampled_behavior_target"]["validated_correlated_outer_enclosure_closed"],
-        "left_inclusion": d["sampled_behavior_target"]["correlated_outer_left_inclusion_closed"],
-        "executable_ingredients": d["executable_ingredients"],
+        "joint_output": d["joint_executor_coordinate_map"]["closed"],
         "hard_shaping_closed": d["hard_shaping_state_or_excitation_bound_closed"],
         "next_obligation": d["next_obligation"],
         "failures": failures,
