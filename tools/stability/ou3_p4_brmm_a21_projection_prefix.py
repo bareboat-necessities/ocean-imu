@@ -64,8 +64,6 @@ def build_augmented_prefix(cell,corr):
     rb=RESETBIND.bind_event(em,corr)
     if not rb.get('closed'):raise RuntimeError('event-specific reset binding failed: '+repr(rb))
     n0=em.coordinate_dimension;beta0=n0;f0=n0+3;n=n0+6
-    # Base event objects are embedded unchanged; new beta/f coordinates are
-    # graph auxiliaries, not independent energy ports.
     master=embed_square(em.master,n)
     nonlinear=tuple((name,embed_square(Pi,n)) for name,Pi in em.nonlinear_sectors)
     reset_sector=embed_square(rb['reset_sector'],n)
@@ -86,7 +84,10 @@ def build_augmented_prefix(cell,corr):
 
 def _smoke_cell():
     im=EVENT._smoke_image();n=21;x=[I(0) for _ in range(n)];P=EVENT._identity(n);R=EVENT._identity(3);Rhat=EVENT._identity(3);f=[I(.2),I(-.1),I(-9.7)];beta=[I(.02),I(-.01),I(.015)]
-    return EVENT.COVER.source_cell_from_joint_image(im,mode='A',sample_index=0,event_ordinal=3,kind='accelerometer',state=x,P=P,dt_s=I(.005),pseudo_elapsed_s=I(.015),radial_scale=Interval(0,1),event_source_token=im.source_token+':a21e3',event_predecessor_token=im.source_token+':a21e2',R=R,f_hat=f,R_hat=Rhat,true_bias=beta,bias_projection_limit=.4)
+    # Literal event descendants must keep the estimator token as their owner.
+    # The source-cover contract intentionally accepts only <estimator>:e...
+    # children so an event prefix cannot silently fork into another ancestry.
+    return EVENT.COVER.source_cell_from_joint_image(im,mode='A',sample_index=0,event_ordinal=3,kind='accelerometer',state=x,P=P,dt_s=I(.005),pseudo_elapsed_s=I(.015),radial_scale=Interval(0,1),event_source_token=im.source_token+':e3',event_predecessor_token=im.source_token+':e2',R=R,f_hat=f,R_hat=Rhat,true_bias=beta,bias_projection_limit=.4)
 def build():
     proj=PROJIQC.build();pf=PROJIQC.validate(proj);corr=CORR.build();cf=CORR.validate(corr)
     if pf or cf:raise RuntimeError(f'projection prefix prerequisites failed projection={pf} correction={cf}')
