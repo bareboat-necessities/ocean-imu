@@ -101,7 +101,7 @@ class BrmmHardFiniteWindowSourceTest(unittest.TestCase):
         self.assertTrue(d["reference_compact_transition_relation"])
         ingredients = d["executable_provider_ingredients"]
         self.assertTrue(ingredients["machine_readable_R_lambda_closed"])
-        self.assertFalse(ingredients["hard_shaping_state_or_excitation_bound_closed"])
+        self.assertTrue(ingredients["hard_shaping_state_or_excitation_bound_closed"])
         self.assertFalse(ingredients["joint_translational_rotational_shaping_closed"])
         rlambda = d["R_lambda_certificate"]
         self.assertTrue(rlambda["actual_rate_bounded_R_lambda_subset_Rhat"])
