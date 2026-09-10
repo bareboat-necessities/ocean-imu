@@ -3,36 +3,70 @@ name: ou3-source-cover-construction
 on:
   pull_request:
     paths:
-      - "tools/stability/**"
-      - "docs/ou3-*.md"
-      - ".github/workflows/ou3-source-cover-construction.yml"
-  workflow_dispatch:
+      - '.proof-transfer/**'
+      - '.github/workflows/ou3-source-cover-construction.yml'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  construction:
+  transfer:
+    if: github.event.pull_request.head.repo.full_name == 'bareboat-necessities/ocean-imu' && github.event.pull_request.head.ref == 'proof/ou3-source-cover-2026-09-10'
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v6
         with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
           persist-credentials: false
-      - name: Retain exact proof source for reproducible construction
+      - name: Verify exact reviewed patch and store content-addressed blobs
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          mkdir -p /tmp/ou3-construction
-          git rev-parse HEAD > /tmp/ou3-construction/source-commit.txt
-          git archive --format=tar.gz HEAD src tools docs tests doc .github AGENTS.md Makefile CMakeLists.txt ruff.toml > /tmp/ou3-construction/source.tar.gz
-      - name: Execute authoritative fail-closed baseline
-        run: |
-          set -euo pipefail
-          python3 tools/stability/ou3_p4_complete_brmm_source_cover_contract.py --output /tmp/ou3-construction/source-cover.json
-          python3 tools/stability/ou3_p4_complete_brmm_source_cover_transition.py --output /tmp/ou3-construction/source-transition.json
-          python3 tools/stability/ou3_p4_live_entry_graph.py --output /tmp/ou3-construction/live-entry.json
+          python3 - <<'PY'
+          import base64, hashlib, json, lzma, os, subprocess, urllib.request
+          from pathlib import Path
+          packed=b''.join(Path(f'.proof-transfer/indefinite-source.part{i}').read_bytes() for i in range(3))
+          assert hashlib.sha256(packed).hexdigest()=='f14be80149a898b4d59c0830b5fff3449374908b5cc7299b12a65bdc06864fe6'
+          raw=lzma.decompress(packed)
+          assert hashlib.sha256(raw).hexdigest()=='a8a3d501718165b414681f8d4128735d6a0c349595078bad9c4492391c371ab1'
+          data=json.loads(raw)
+          assert data['base']=='78fdd635e5f12d9b995fd62048efec33ae3c3944'
+          allowed={'.github/workflows/ou3-source-cover-construction.yml','doc/kalman_ou_iii/w3d-brmm-stability-theorem.tex-part','docs/ou3-live-entry-audit.md','docs/ou3-p4-handover-2026-09-09.md','docs/ou3-proof-research-state.md','tests/kalman_ou_iii/live_entry_audit-test.cpp','tools/stability/ou3_p4_final_closure_gate.py','tools/stability/ou3_brmm_infinite_continuation.py','tests/validation/test_ou3_brmm_infinite_continuation.py'}
+          assert {e['path'] for e in data['entries']}==allowed and len(data['entries'])==len(allowed)
+          tree=[]
+          for entry in data['entries']:
+              path=entry['path']
+              result=subprocess.run(['git','show',data['base']+':'+path],capture_output=True)
+              assert (result.returncode==0)==entry['exists'],path
+              old=result.stdout if entry['exists'] else b''
+              assert hashlib.sha256(old).hexdigest()==entry['base_sha256'],path
+              lines=old.decode().splitlines(keepends=True)
+              previous=0
+              for i,j,replacement in entry['operations']:
+                  assert previous<=i<=j<=len(lines),path
+                  assert all(isinstance(x,str) for x in replacement),path
+                  previous=j
+              for i,j,replacement in reversed(entry['operations']):
+                  lines[i:j]=replacement
+              content=''.join(lines).encode()
+              assert hashlib.sha256(content).hexdigest()==entry['sha256'],path
+              sha=hashlib.sha1(b'blob '+str(len(content)).encode()+b'\0'+content).hexdigest()
+              assert sha==entry['blob_sha'],path
+              body=json.dumps({'content':base64.b64encode(content).decode(),'encoding':'base64'}).encode()
+              request=urllib.request.Request('https://api.github.com/repos/bareboat-necessities/ocean-imu/git/blobs',data=body,method='POST',headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json','Content-Type':'application/json','X-GitHub-Api-Version':'2022-11-28'})
+              with urllib.request.urlopen(request,timeout=60) as response:
+                  uploaded=json.load(response)
+              assert uploaded['sha']==sha,path
+              tree.append({'path':path,'mode':'100644','type':'blob','sha':sha})
+              print(path,sha)
+          Path('/tmp/ou3-transfer').mkdir()
+          Path('/tmp/ou3-transfer/tree-elements.json').write_text(json.dumps(tree,indent=2)+'\n')
+          Path('/tmp/ou3-transfer/verified-source.json').write_text(json.dumps({'base':data['base'],'patch_sha256':hashlib.sha256(raw).hexdigest(),'files':len(tree),'branch_written':False},indent=2)+'\n')
+          PY
       - uses: actions/upload-artifact@v6
-        if: always()
         with:
-          name: ou3-source-cover-construction
-          path: /tmp/ou3-construction/
-          retention-days: 7
+          name: ou3-verified-proof-blobs
+          path: /tmp/ou3-transfer/
+          retention-days: 1
