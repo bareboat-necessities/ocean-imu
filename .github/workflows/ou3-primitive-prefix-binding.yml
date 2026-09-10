@@ -8,7 +8,9 @@ on:
       - "tools/stability/ou3_brmm_centered_primitive_transition.py"
       - "tools/stability/ou3_brmm_acceleration_moment_iqc.py"
       - "tools/stability/ou3_p4_acceleration_moment_iqc_sector.py"
+      - "tools/stability/ou3_brmm_correlated_window_outer_enclosure.py"
       - "tests/validation/test_ou3_p4_brmm_primitive_prefix_binding.py"
+      - "tests/validation/test_ou3_brmm_correlated_window_outer_enclosure.py"
       - ".github/workflows/ou3-primitive-prefix-binding.yml"
   workflow_dispatch:
 
@@ -41,6 +43,24 @@ jobs:
           assert d['one_live_centered_S_origin_retained_indefinitely']
           assert d['production_prefix_requires_coupled_moment_sector']
           assert not d['production_complete_provider_lineages_bound_here']
+          assert not d['P4_PASS'] and not d['P5_MAY_START']
+          assert d['P3_delta']==1e-18
+          PY
+      - name: Validate correlated 601-sample BRMM outer enclosure
+        run: |
+          set -euo pipefail
+          python3 tools/stability/ou3_brmm_correlated_window_outer_enclosure.py --output /tmp/ou3-primitive-prefix/outer-enclosure.json
+          python3 -m unittest discover -s tests/validation -p 'test_ou3_brmm_correlated_window_outer_enclosure.py' -v
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/ou3-primitive-prefix/outer-enclosure.json'))
+          assert d['validation_pass'], d['validation_failures']
+          assert d['left_inclusion_closed']
+          assert d['validated_correlated_outer_enclosure_closed']
+          assert d['correlation_retained_across_samples']
+          assert d['correlation_retained_across_axes']
+          assert d['correlation_retained_between_translation_and_moments']
+          assert not d['executor_601_sample_relation_materialized_here']
           assert not d['P4_PASS'] and not d['P5_MAY_START']
           assert d['P3_delta']==1e-18
           PY
