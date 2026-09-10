@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Shipping execution and matrix premises for conditional BRMM P3.
 
-BRMM is the physical hypothesis. The reference harmonic provider below remains
-an unclosed diagnostic and is not a membership requirement. The P3 implication
-uses the explicit runtime/vector/process assumptions and exact event algebra.
-Declaration validation does not prove that a physical execution meets them.
+BRMM is the physical hypothesis. The reference harmonic provider remains a
+non-membership diagnostic. The P3 implication uses explicit runtime/vector/
+process assumptions and exact event algebra. Hard-shaping representation may
+be closed independently of the still-open 601-sample provider materialization.
 """
 from __future__ import annotations
 
@@ -109,12 +109,6 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     }
     source_failures = [k for k, v in source_parity.items() if not v]
 
-    # These are semantic paper checks, not magic-token checks.  The paper writes
-    # the compact BRMM source through the implemented compact ranges, the
-    # source state machine, the measurement-only front-end candidate, and the
-    # sample-and-hold schedule.  Requiring an internal Python identifier such as
-    # ``zeta`` or ``R_lambda`` to appear verbatim in TeX made equivalent theorem
-    # text fail CI and did not strengthen the proof.
     paper_markers = {
         "strict_source_reachable_family": "strict source-reachable family" in paper,
         "finite_window_asynchronous_PE": "finite-window asynchronous conditions" in paper,
@@ -311,8 +305,11 @@ def validate(d: dict) -> list[str]:
         f.append("P3 preconditions lost the complete BRMM hard realization set")
     if sea0.get("machine_readable_R_lambda_closed") is not True:
         f.append("P3 preconditions lost machine-readable R_lambda closure")
+    # Hard shaping is now a proved representation property.  It is deliberately
+    # distinct from provider execution/materialization, which remains open.
+    if sea0.get("hard_shaping_state_or_excitation_bound_closed") is not True:
+        f.append("SEA0 execution status lost closed hard shaping representation")
     for key in (
-        "hard_shaping_state_or_excitation_bound_closed",
         "joint_translational_rotational_shaping_closed",
         "provider_implementation_closed",
         "source_reachable_event_family_materialized",
