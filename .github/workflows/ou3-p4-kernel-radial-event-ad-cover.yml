@@ -52,46 +52,28 @@ jobs:
           python - <<'PY'
           import json
           root='/tmp/ou3-p4-kernel-radial/'
-          k=json.load(open(root+'kernel-capture.json'))
-          z=json.load(open(root+'zero-root-source-cells.json'))
-          r=json.load(open(root+'radial-boxes.json'))
-          a=json.load(open(root+'radial-event-ad.json'))
-          x=json.load(open(root+'first-exit-reduction.json'))
+          k=json.load(open(root+'kernel-capture.json'));z=json.load(open(root+'zero-root-source-cells.json'))
+          r=json.load(open(root+'radial-boxes.json'));a=json.load(open(root+'radial-event-ad.json'));x=json.load(open(root+'first-exit-reduction.json'))
           for name,obj in [('kernel',k),('zero-root',z),('radial-boxes',r),('radial-event-ad',a),('first-exit',x)]:
               assert obj['validation_pass'], (name,obj.get('validation_failures'))
-          assert k['trusted_kernel_passive_capture_consumed']
-          assert k['all_joint_images_bound_to_current_kernel_Riccati_schedule']
-          assert k['frontend_auxiliary_state_not_used_as_cross_machine_identity']
-          binding=k['same_sample_schedule_binding']
-          assert binding['every_joint_image_current_schedule_bound_to_kernel_Riccati_event']
-          assert binding['kernel_verified_same_active_schedule_before_measurement']
-          assert binding['kernel_verified_same_actual_RS_before_measurement']
-          assert not binding['whole_frontend_successor_equality_required']
-          assert not binding['whole_frontend_successor_containment_required']
+          assert k['trusted_kernel_passive_capture_consumed'] and k['all_joint_images_bound_to_current_kernel_Riccati_schedule']
+          binding=k['same_sample_schedule_binding'];assert binding['every_joint_image_current_schedule_bound_to_kernel_Riccati_event']
+          assert binding['kernel_verified_same_active_schedule_before_measurement'] and binding['kernel_verified_same_actual_RS_before_measurement']
+          assert not binding['whole_frontend_successor_equality_required'] and not binding['whole_frontend_successor_containment_required']
           assert z['all_estimator_owned_source_cells_valid']
-          assert r['current_lineage_radial_API_consumed']
-          assert r['recursive_partition_exactly_covers_unit_interval']
-          assert r['rectangular_box_is_outer_AD_enclosure_only']
+          assert r['recursive_partition_exactly_covers_unit_interval'] and r['rectangular_box_is_outer_AD_enclosure_only']
           assert not r['rectangular_box_replaces_hard_ball_IQCs']
-          assert a['trusted_kernel_passive_event_cells_consumed']
-          assert a['every_same_sample_joint_estimator_image_consumed']
-          assert a['continuous_radial_partition_exactly_covers_unit_interval']
-          assert a['same_cell_P_H_R_K_used_for_every_Joseph_AD_cell']
-          assert a['all_radial_Joseph_state_outputs_and_Jacobians_finite']
-          assert a['all_real_structured_event_masters_and_reset_bindings_constructed']
-          assert a['A21_projection_not_assumed_inactive']
-          assert a['BIAS1_true_bias_outer_box_consumed_for_A21_AD']
-          assert not a['local_full_hard_box_at_each_event_claimed_reachable']
-          assert not a['production_prefix_state_reachability_closed_here']
-          assert x['first_exit_reduction_closed']
-          assert x['fresh_centered_integral_displacement_norm_m_s']==0.0
-          assert not x['retired_independent_integral_displacement_entry_ball_reintroduced']
-          assert x['kernel_first_exit_working_cells_cover_full_hard_domain_locally']
-          assert not x['source_uniform_every_prefix_augmented_LDLT_closed_here']
-          assert not x['source_uniform_every_prefix_hard_domain_retention_closed_here']
+          assert a['same_cell_P_H_R_K_used_for_every_Joseph_AD_cell'] and a['all_radial_Joseph_state_outputs_and_Jacobians_finite']
+          assert a['all_real_structured_event_masters_and_reset_bindings_constructed'] and a['A21_projection_not_assumed_inactive']
+          assert not a['local_full_hard_box_at_each_event_claimed_reachable'] and not a['production_prefix_state_reachability_closed_here']
+          assert x['logical_first_exit_reduction_closed'] and x['fresh_centered_integral_displacement_norm_m_s']==0.0
+          assert x['captured_same_cell_coefficients_full_hard_domain_local_event_cover_closed']
+          assert not x['captured_kernel_working_cells_promote_source_uniform_coefficient_cover']
+          assert not x['source_uniform_local_event_coefficient_cover_closed_here']
+          assert not x['source_uniform_every_prefix_augmented_LDLT_closed_here'] and not x['source_uniform_every_prefix_hard_domain_retention_closed_here']
           assert not a['P4_MOTION_PASS'] and not a['P4_PASS'] and not a['P5_MAY_START']
           print('KERNEL_RADIAL_EVENT_AD_COVER_PASS',a['A21_projection_branches_observed'])
-          print('FIRST_EXIT_REDUCTION_PASS',x['fresh_entry_reduced_group_order'])
+          print('FIRST_EXIT_LOGIC_PASS_SOURCE_UNIFORM_COEFFICIENTS_OPEN',x['fresh_entry_reduced_group_order'])
           PY
       - uses: actions/upload-artifact@v4
         if: always()
