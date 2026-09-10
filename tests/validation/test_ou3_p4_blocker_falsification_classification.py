@@ -92,6 +92,35 @@ class BlockerFalsificationClassificationTest(unittest.TestCase):
         self.assertFalse(fp["host_arithmetic_check_is_deployment_qualification"])
         self.assertTrue(fp["remaining_deployment_blockers"])
 
+    def test_every_blocker_the_gate_can_emit_is_classifiable(self):
+        # The gate emits three BIAS-family strings the moment a family flag
+        # regresses. They must be classifiable so the producer reports the
+        # regression instead of aborting before it writes anything.
+        for family in ("BIAS0", "BIAS1", "BIAS2"):
+            key = "source-uniform %s same-history physical-driver family" % family
+            with self.subTest(family=family):
+                self.assertIn(key, CLASS.BLOCKER_CLASSES)
+                self.assertIn(key, CLASS.BLOCKER_REASONS)
+                self.assertEqual(CLASS.BLOCKER_CLASSES[key], "E")
+        self.assertEqual(set(CLASS.BLOCKER_CLASSES), set(CLASS.BLOCKER_REASONS))
+
+    def test_coverage_helper_reports_a_gap_instead_of_raising(self):
+        self.assertEqual(CLASS.every_gate_blocker_is_classifiable(
+            {"remaining_mathematical_P4_blockers": list(CLASS.BLOCKER_CLASSES)}), [])
+        self.assertEqual(CLASS.every_gate_blocker_is_classifiable(
+            {"remaining_mathematical_P4_blockers": ["a blocker nobody classified"]}),
+            ["a blocker nobody classified"])
+
+    def test_class_and_reason_maps_must_agree(self):
+        d = dict(self.d)
+        original = dict(CLASS.BLOCKER_REASONS)
+        try:
+            CLASS.BLOCKER_REASONS.pop(next(iter(CLASS.BLOCKER_REASONS)))
+            self.assertIn("blocker class and reason maps disagree", CLASS.validate(d))
+        finally:
+            CLASS.BLOCKER_REASONS.clear()
+            CLASS.BLOCKER_REASONS.update(original)
+
     def test_unknown_blocker_text_is_rejected_rather_than_ignored(self):
         d = dict(self.d)
         d["remaining_mathematical_P4_blockers"] = ["a blocker nobody classified"]

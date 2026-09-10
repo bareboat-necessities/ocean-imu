@@ -68,6 +68,13 @@ CLASSES = ("A", "B", "C", "D", "E")
 # Blocker text is keyed exactly as the final gate emits it, so a renamed or
 # retired blocker fails validation instead of silently losing its attribution.
 BLOCKER_CLASSES = {
+    # The three bias families are closed today, so the gate does not emit these.
+    # It emits them the moment any family flag regresses, and an unclassified
+    # blocker aborts this producer before it can report anything.  Classifying
+    # them here keeps a regression legible instead of turning it into a crash.
+    "source-uniform BIAS0 same-history physical-driver family": "E",
+    "source-uniform BIAS1 same-history physical-driver family": "E",
+    "source-uniform BIAS2 same-history physical-driver family": "E",
     "COMPLETE BRMM same-signal estimator/source cover with signal-derived tau and sigma": "E",
     "interdependent (tau,sigma,T_S)->R_S with literal adaptation/commit/scheduler history": "E",
     "source-uniform same-cell Joseph correction/reset domain": "C",
@@ -75,7 +82,14 @@ BLOCKER_CLASSES = {
     "source-uniform exact-graph every-prefix augmented LDLT": "E",
     "same exact graph every-prefix hard-domain retention": "C",
 }
+_BIAS_FAMILY_REASON = (
+    "the family lost one of its own admission, materialized joint ISS supply or "
+    "family-parametric same-history graph prerequisites; it is a regression of a "
+    "certificate that was closed, never an inference from another family")
 BLOCKER_REASONS = {
+    "source-uniform BIAS0 same-history physical-driver family": _BIAS_FAMILY_REASON,
+    "source-uniform BIAS1 same-history physical-driver family": _BIAS_FAMILY_REASON,
+    "source-uniform BIAS2 same-history physical-driver family": _BIAS_FAMILY_REASON,
     "COMPLETE BRMM same-signal estimator/source cover with signal-derived tau and sigma":
         "the joint estimator relation is materialized on one admitted BRMM predecessor only; "
         "the estimator-owned transition operator is not propagated over every admitted "
@@ -271,10 +285,23 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     }
 
 
+def every_gate_blocker_is_classifiable(gate: dict) -> list[str]:
+    """Gate blocker strings this producer could not classify.
+
+    The gate is the only source of blocker text, so any string it can emit has
+    to appear in both maps.  Callers use this to fail on a coverage gap instead
+    of discovering it as a RuntimeError on the day a prerequisite regresses.
+    """
+    emitted = set(gate.get("remaining_mathematical_P4_blockers", ()))
+    return sorted(emitted - (set(BLOCKER_CLASSES) & set(BLOCKER_REASONS)))
+
+
 def validate(d: dict) -> list[str]:
     f = []
     if d.get("qualification") != QUALIFICATION:
         f.append("qualification mismatch")
+    if set(BLOCKER_CLASSES) != set(BLOCKER_REASONS):
+        f.append("blocker class and reason maps disagree")
     if d.get("gate_qualification") != GATE.QUALIFICATION:
         f.append("classification is not bound to the current final gate")
     if tuple(d.get("declared_classes", ())) != CLASSES:

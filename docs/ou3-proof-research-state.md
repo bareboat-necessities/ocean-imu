@@ -357,37 +357,28 @@ integral ball destroys the certificate, never a disproof of P4.
 
 ### The correction/reset blocker is a dependency loss, not infeasibility
 
-The same-cell magnitude certificate is
-`||d_theta||^2 <= trace(P^-_theta) * y^T R^{-1} y`. Two quantities decide it.
+**Blocker.** `source-uniform same-cell Joseph correction/reset domain`, class C.
 
-The integral entry ball is NOT its limiter. Feeding the correlated 3.2020 m*s
+**Limiter.** The attitude covariance envelope, not the entry set. The retained
+endpoint-referenced value is 3.99983e8 rad^2 per axis, **6.4485e11** above the
+prior-independent accelerometer posterior cap. Feeding the correlated integral
 relation instead of the 300 m*s ball moves the S=0 ceiling from 9.6223e7 to
-9.9481e5, and the ACCELEROMETER event then limits at 2.4091e6. Both remain far
-outside the exact reset utility domain 3.0, so the entry set is not what blocks
-this obligation.
+9.9481e5 and leaves the accelerometer event limiting at 2.4091e6, so the entry
+set is not what blocks this.
 
-The attitude covariance envelope is its limiter, and it is a conditioning
-artifact. The retained endpoint-referenced envelope gives an attitude variance
-upper of 3.99983e8 rad^2 per axis, 1.19995e9 as a trace. But the accelerometer
-Joseph event admits a prior-INDEPENDENT posterior cap: for a scalar angle
-measurement with gain `|f|` and noise variance `r`,
-`P^+ = P^- r/(P^- |f|^2 + r) <= r/|f|^2` whatever `P^-` was, and the declared
-Normal-Live invariant executes that update at EVERY valid IMU sample. With
-`R_acc = .04` and `|f| >= 5.80665` this caps the two directions transverse to
-the specific force at 1.18634e-3 rad^2 each. The envelope in use therefore
-exceeds what the deployed event structure permits by **6.4485e11**, which is
-the endpoint-referenced Lagrange/Vandermonde inversion losing conditioning over
-its .775 s observation window, not a physical bound.
+**Retained.** At the transverse cap the `R^{-1}` relaxation gives 3.3876 against
+the reset utility limit 3.0, while the same-cell `S^{-1}` gives 2.3954: the route
+closes on the two directions transverse to the specific force.
 
-One lossy step then remains in the magnitude route itself. At the transverse
-cap the `R^{-1}` relaxation gives an accelerometer ceiling of 3.3876, just above
-the reset utility limit 3.0, while retaining the same-cell
-`S^{-1} = (H P H^T + R)^{-1}` gives 2.3954, because at the cap `H P H^T` equals
-`R` exactly and the innovation covariance is twice `R`. So the route closes on
-the two transverse directions once `S^{-1}` is kept. The third direction,
-rotation about the specific force, is not observed by the accelerometer at all
-and needs the asynchronous magnetometer plus gyro-bias transport; that is not
-established and stays open.
+**Open.** Rotation about the specific force, which the accelerometer does not
+observe.
+
+**Next experiment.** Carry the per-sample accelerometer cap into the envelope,
+keep `S^{-1}`, and settle whether `vector_pe_recurrence_window_s` bounds the
+magnetometer inter-event gap; the yaw growth term needs a gyro-bias covariance
+bound with the same conditioning defect.
+
+Derivation in `docs/ou3-end-to-end-stability-theorem.md`.
 
 ### Finite-precision status
 

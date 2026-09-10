@@ -82,6 +82,26 @@ class EndToEndStabilityGateTest(unittest.TestCase):
         self.assertTrue(
             self.d["P4_invariance_obligations"]["all_bias_families_closed"]["established"])
 
+    def test_deployment_pass_is_validated_as_its_own_conjunction(self):
+        d = dict(self.d)
+        d["END_TO_END_DEPLOYMENT_PASS"] = True
+        failures = E2E.validate(d)
+        self.assertIn("deployment pass set while the end-to-end theorem is open", failures)
+        self.assertIn("deployment pass set while deployment blockers remain", failures)
+
+    def test_mirrored_P4_bits_cannot_disagree_with_their_blocker_list(self):
+        d = dict(self.d)
+        d["P4_PASS"] = True
+        self.assertIn("P4 pass set while mathematical blockers remain", E2E.validate(d))
+        d = dict(self.d)
+        d["P4_MOTION_PASS"] = True
+        failures = E2E.validate(d)
+        self.assertIn("P4 motion pass set while mathematical blockers remain", failures)
+        self.assertIn("mirrored P4_MOTION_PASS disagrees with its own invariance row", failures)
+        d = dict(self.d)
+        d["P5_MAY_START"] = True
+        self.assertIn("P5 may start while P4 is false", E2E.validate(d))
+
     def test_theorem_invariants_are_unchanged(self):
         self.assertEqual(self.d["P3_delta"], 1e-18)
         self.assertFalse(self.d["filter_changed"])

@@ -48,7 +48,8 @@ composition fail-closed. `END_TO_END_STABILITY_PASS = false`.
 * The adaptive coefficients are pinned: `T_S = clamp(pseudo_ratio*tau)`,
   `R_S_target = SpectralMSE(tau,sigma)`, applied `R_S` is the ray
   `(.72r,.72r,r)`, and the clamped target box is forward invariant for the
-  candidate and active schedules.
+  candidate and active schedules given initial membership, which the producer
+  checks (`candidate_ema` does not clamp, so the premise is not free).
 * No class A counterexample and no rigorous class B infeasibility exists. The
   4.5788 frozen-word Cayley value is not a lower bound on the true nonlinear
   trajectory and must not be quoted as a disproof.

@@ -19,12 +19,15 @@ ray, not a box.  On the non-saturated branch the pinning inverts: a ``T_S``
 strictly inside its rails fixes ``tau`` exactly, hence fixes the tuning
 frequency.
 
-One prior-independent invariance certificate, which needs no reachable-set
-argument at all: every shipping target is clamped, and the candidate/active
-recurrence is an EMA, i.e. a convex combination of the previous candidate and
-the current target.  Therefore the clamped target box is FORWARD INVARIANT for
-the candidate, and the staged commit copies the candidate, so it is forward
-invariant for the active schedule too.
+One invariance certificate that needs no reachable-set argument: every shipping
+target is clamped, and the candidate/active recurrence is an EMA, i.e. a convex
+combination of the previous candidate and the current target.  The clamped
+target box is therefore FORWARD INVARIANT for the candidate, and the staged
+commit copies the candidate, so it is forward invariant for the active schedule
+too.  ``candidate_ema`` does not clamp, so a convex combination keeps the state
+inside the box only if it starts inside: the invariance is conditional on
+initial membership, and that premise is checked against the deployed initial
+schedule here rather than left implicit.
 
 A finite geometric cover of the reachable ``(f, sigma)`` rectangle is then
 mapped through the deployed interval transitions.  Its purpose is quantitative:
@@ -53,18 +56,38 @@ from pathlib import Path
 
 import ou3_brmm_complete_source as COMPLETE
 import ou3_brmm_dynamic_source_certificate as DYNAMIC
+import ou3_brmm_frontend_state_step as FRONT
 import ou3_brmm_tuner_scheduler_step as TUNER
 import ou3_brmm_wpe_state_step as WPE
 import ou3_validated_transcendentals as VT
 from ou3_interval import Interval
+
+TUNER_SOURCE = Path(TUNER.__file__).read_text(encoding="utf-8")
 
 REPO = Path(__file__).resolve().parents[2]
 DEFAULT_DOMAIN = REPO / "tools" / "stability" / "ou3_proof_operating_domain.json"
 QUALIFICATION = "OU3_P4_COEFFICIENT_DEPENDENCY_COVER_V1"
 DEFAULT_CELLS = 192
 
-# Shipping raw sigma target floor: min(sigma_coeff*sqrt(max(var,1e-6)), sigma_max).
-RAW_SIGMA_FLOOR = 0.0009
+# Deployed variance floor inside targets():
+#   sigma = min(sigma_coeff * sqrt(max(var_wave, VARIANCE_FLOOR)), sigma_max)
+# so the reachable raw sigma floor is sigma_coeff*sqrt(VARIANCE_FLOOR).  It is
+# derived rather than hardcoded: a lower deployed floor would otherwise leave
+# reachable sigma outside the cover and understate the residual bound.
+DEPLOYED_VARIANCE_FLOOR = 1e-6
+DEPLOYED_SIGMA_FLOOR_EXPRESSION = (
+    "sigma = min_interval(I(c.sigma_coeff) * sqrt_interval(max_interval(var_wave, 1e-6)), c.sigma_max)")
+
+
+def raw_sigma_floor(c: TUNER.Constants) -> float:
+    """Reachable lower rail of the deployed raw sigma target, outward-rounded down."""
+    floor = TUNER.min_interval(
+        TUNER.I(c.sigma_coeff) * TUNER.sqrt_interval(
+            TUNER.max_interval(TUNER.I(0.0), DEPLOYED_VARIANCE_FLOOR)),
+        c.sigma_max)
+    if not floor.lo > 0.0:
+        raise RuntimeError("deployed raw sigma floor lost positivity")
+    return down(floor.lo)
 
 
 def up(x: float) -> float:
@@ -169,6 +192,13 @@ def build(domain_path: Path = DEFAULT_DOMAIN, cells: int = DEFAULT_CELLS) -> dic
     c = TUNER.constants()
     w = WPE.constants(c.dt)
 
+    # Parity: the derived floor has to be the sigma the deployed expression
+    # produces at the minimum variance, and that expression has to still be the
+    # one shipping evaluates.
+    sigma_floor = raw_sigma_floor(c)
+    if DEPLOYED_SIGMA_FLOOR_EXPRESSION not in TUNER_SOURCE:
+        raise RuntimeError("deployed raw sigma target expression changed; rederive the floor")
+
     # --- prior-independent forward-invariant coefficient box -----------------
     # Every shipping target is clamped, and candidate = old + alpha*(target-old)
     # with alpha in (0,1) is a convex combination, so the clamped target box is
@@ -177,12 +207,34 @@ def build(domain_path: Path = DEFAULT_DOMAIN, cells: int = DEFAULT_CELLS) -> dic
     tau_target_lo = max(c.tau_min, min(c.tau_max, down(c.tau_coeff * 0.5 / c.tune_freq_max)))
     tau_target_hi = max(c.tau_min, min(c.tau_max, up(c.tau_coeff * 0.5 / c.tune_freq_min)))
     ts_invariant = TUNER.pseudo_period(Interval(tau_target_lo, tau_target_hi), c)
+    # candidate_ema() interpolates from the previous candidate WITHOUT clamping,
+    # and commit_if_pending() copies the candidate straight into ActiveSchedule.
+    # A convex combination stays inside a set only if it starts inside it, so
+    # forward invariance here is conditional on initial membership.  That premise
+    # is checked against the deployed initial schedule rather than assumed.
+    def _inside(x, lo, hi):
+        return bool(x.lo >= lo and x.hi <= hi)
+
+    initial = FRONT._point_state().tuner
+    membership = {
+        "candidate_tau": _inside(initial.candidate.tau, tau_target_lo, tau_target_hi),
+        "candidate_sigma": _inside(initial.candidate.sigma, sigma_floor, c.sigma_max),
+        "candidate_R_S": _inside(initial.candidate.rs, c.rs_min, c.rs_max),
+        "active_tau": _inside(initial.active.tau, tau_target_lo, tau_target_hi),
+        "active_sigma": _inside(initial.active.sigma, sigma_floor, c.sigma_max),
+        "active_R_S": _inside(initial.active.rs_base, c.rs_min, c.rs_max),
+        "active_T_S": _inside(initial.active.pseudo_period, ts_invariant.lo, ts_invariant.hi),
+    }
     invariant_box = {
         "tau_s": [tau_target_lo, tau_target_hi],
-        "sigma_mps2": [RAW_SIGMA_FLOOR, c.sigma_max],
+        "sigma_mps2": [sigma_floor, c.sigma_max],
         "R_S_base_m_s": [c.rs_min, c.rs_max],
         "T_S_s": [ts_invariant.lo, ts_invariant.hi],
-        "argument": "clamped target box plus EMA convex combination plus staged commit copy",
+        "argument": ("clamped target box plus EMA convex combination plus staged commit copy, "
+                     "conditional on the initial candidate/active schedule lying inside it"),
+        "invariance_is_conditional_on_initial_membership": True,
+        "initial_schedule_membership": membership,
+        "initial_schedule_inside_box": all(membership.values()),
         "needs_reachable_set_argument": False,
         "tau_lower_rail_active": bool(tau_target_lo <= c.tau_min),
         "tau_upper_rail_active": bool(tau_target_hi >= c.tau_max),
@@ -232,7 +284,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN, cells: int = DEFAULT_CELLS) -> dic
 
     # --- finite geometric cover of the reachable (f, sigma) rectangle --------
     f_tiles = _geometric_tiling(c.tune_freq_min, c.tune_freq_max, cells)
-    s_tiles = _geometric_tiling(RAW_SIGMA_FLOOR, c.sigma_max, cells)
+    s_tiles = _geometric_tiling(sigma_floor, c.sigma_max, cells)
     rs_x = c.rs_x_factor
     joint_scale = 0.0
     joint_witness = None
@@ -380,6 +432,18 @@ def validate(d: dict) -> list[str]:
     inv = d.get("forward_invariant_coefficient_box", {})
     if inv.get("needs_reachable_set_argument") is not False:
         f.append("invariant coefficient box claims to need a reachable-set argument")
+    # The convex-combination argument is only as good as its initial-membership
+    # premise, so the premise has to be recorded AND checked, never implied.
+    if inv.get("invariance_is_conditional_on_initial_membership") is not True:
+        f.append("invariant box dropped its initial-membership premise")
+    membership = inv.get("initial_schedule_membership", {})
+    if not membership:
+        f.append("invariant box records no initial-membership check")
+    if bool(inv.get("initial_schedule_inside_box")) != all(bool(v) for v in membership.values()):
+        f.append("initial-membership summary disagrees with its own checks")
+    if not inv.get("initial_schedule_inside_box"):
+        f.append("deployed initial schedule is outside the claimed invariant box: " +
+                 repr(sorted(k for k, v in membership.items() if not v)))
     lo, hi = inv.get("tau_s", (0.0, 0.0))
     if not (0.0 < lo < hi):
         f.append("invariant tau box is not a positive ordered interval")

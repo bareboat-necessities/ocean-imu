@@ -141,7 +141,10 @@ rectangle, and on the non-saturated branch a `T_S` strictly inside its rails
 fixes `tau`, hence the tuning frequency. The clamped target box is also forward
 invariant for the candidate and active schedules, because every EMA step is a
 convex combination and the staged commit copies the candidate; no reachable-set
-argument is needed for that.
+argument is needed for that. `candidate_ema` does not clamp, so a convex
+combination stays inside only if it starts inside: the invariance is conditional
+on initial membership, and the producer checks that premise against the deployed
+initial schedule rather than leaving it implicit.
 
 Evaluating the joint `S=0` residual scale `(T_S+dt)/(.72 R_S)` on cells where
 cadence and applied covariance come from the SAME schedule gives .9709, against

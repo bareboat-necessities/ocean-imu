@@ -275,6 +275,23 @@ def validate(d: dict) -> list[str]:
         f.append("end-to-end promotion is not the exact conjunction")
     if d.get("END_TO_END_STABILITY_PASS") and not d.get("P4_PASS"):
         f.append("end-to-end passed while P4 is false")
+    # END_TO_END_DEPLOYMENT_PASS is the strongest bit in the payload, so it needs
+    # its own conjunction check rather than riding on the stability one.
+    if d.get("END_TO_END_DEPLOYMENT_PASS") and not d.get("END_TO_END_STABILITY_PASS"):
+        f.append("deployment pass set while the end-to-end theorem is open")
+    if d.get("END_TO_END_DEPLOYMENT_PASS") and d.get("remaining_deployment_blockers"):
+        f.append("deployment pass set while deployment blockers remain")
+    # The bits mirrored from the P4 gate must stay consistent with the blocker
+    # list they are mirrored alongside.
+    if d.get("P4_PASS") and d.get("remaining_P4_mathematical_blockers"):
+        f.append("P4 pass set while mathematical blockers remain")
+    if d.get("P4_MOTION_PASS") and d.get("remaining_P4_mathematical_blockers"):
+        f.append("P4 motion pass set while mathematical blockers remain")
+    if d.get("P5_MAY_START") and not d.get("P4_PASS"):
+        f.append("P5 may start while P4 is false")
+    if bool(d.get("P4_MOTION_PASS")) != bool(
+            d.get("P4_invariance_obligations", {}).get("P4_motion_practical_ISS", {}).get("established")):
+        f.append("mirrored P4_MOTION_PASS disagrees with its own invariance row")
     basin = d.get("certified_basin", {})
     if basin.get("entry_radii_reduced_for_proof_convenience") is not False:
         f.append("basin was reduced for proof convenience")
