@@ -3,16 +3,17 @@
 
 This audit separates four logically different obligations:
 
-1. the full declared hard word-entry error set, independent of covariance;
+1. the shipping-reachable hard word-entry fiber, independent of covariance;
 2. conditional BIAS1 and canonical P3 execution-premise admission;
 3. source-uniform same-history Kalman/reset coefficients plus consecutive
    compatible-storage/signed-information domination; and
 4. finite precision.
 
-Exact-real and binary32 bias projection are now separately enclosed.  The
-complete Eigen/Kalman/reset arithmetic remains fail-closed until an event-level
-shipping arithmetic enclosure is available.  No fractional entry-domain shrink
-or point replay can promote P4.
+The entrance fiber is distinct from the larger working/prefix domain. Exact-real
+and binary32 bias projection are separately enclosed. The complete
+Eigen/Kalman/reset arithmetic remains fail-closed until an event-level shipping
+arithmetic enclosure is available. No fractional entry-domain shrink, replay,
+or legacy independent p/S startup box can promote P4.
 """
 from __future__ import annotations
 
@@ -24,6 +25,7 @@ from pathlib import Path
 import ou3_brmm_p3_premises as PREMISES
 import ou3_brmm_riccati_metric_p3 as P3
 import ou3_mems_bias_contract as BIAS
+import ou3_p4_hard_entry_set as ENTRY
 import ou3_p4_projection_sector as PROJ
 import ou3_p4_projection_binary32_enclosure as PROJFP
 import ou3_p4_complete_brmm_differential_events as EVENTS
@@ -36,8 +38,8 @@ import ou3_p4_strong_linear_margin as STRONG
 REPO = Path(__file__).resolve().parents[2]
 DEFAULT_DOMAIN = REPO / "tools" / "stability" / "ou3_proof_operating_domain.json"
 DEFAULT_CLOSURE = REPO / "tools" / "stability" / "ou3_p4_closure_domain.json"
-SCHEMA = 3
-QUALIFICATION = "OU3_P4_SOURCE_UNIFORM_CLOSURE_AUDIT_V3"
+SCHEMA = 4
+QUALIFICATION = "OU3_P4_SOURCE_UNIFORM_CLOSURE_AUDIT_V4"
 
 
 def _finite_nonnegative(x, label: str) -> float:
@@ -48,46 +50,63 @@ def _finite_nonnegative(x, label: str) -> float:
 
 
 def _declared_hard_entry(domain: dict) -> dict:
-    startup = domain["startup"]["physical_handoff_coordinate_bounds"]
-    entrance = domain["initial_filter_entrance"]
-    hs = float(entrance["position"]["significant_wave_height_Hs_upper_m"])
-    theta = math.radians(float(entrance["attitude"]["full_attitude_error_upper_deg"]))
-    cayley = 2.0 * math.tan(theta / 2.0)
-    position_component = float(entrance["position"]["component_abs_error_upper_Hs_factor"]) * hs
+    """Return the executable shipping-reachable entrance fiber.
+
+    ``domain`` is retained in the signature for callers but may not restore the
+    historical independent startup p/S box. The larger p/S radii live in the
+    entry module's working-prefix domain.
+    """
+    e = ENTRY.build()
+    bad = ENTRY.validate(e)
+    if bad:
+        raise RuntimeError(f"shipping-reachable hard entry failed: {bad}")
+    r = e["coordinate_radii"]
+    w = e["working_prefix_coordinate_radii"]
     return {
-        "qualification": "DECLARED_HARD_P4_WORD_ENTRY_SET",
-        "source": "ou3_proof_operating_domain.json",
-        "attitude_cayley_norm_upper": cayley,
-        "gyro_bias_error_norm_upper_rad_s": float(startup["gyro_bias_error_norm_upper_rad_s"]),
-        "velocity_error_norm_upper_mps": float(startup["velocity_error_norm_upper_mps"]),
-        "position_component_abs_error_upper_m": position_component,
-        "integral_displacement_error_norm_upper_m_s": float(startup["integral_displacement_error_norm_upper_m_s"]),
-        "latent_acceleration_error_norm_upper_mps2": float(startup["latent_acceleration_error_norm_upper_mps2"]),
-        "accelerometer_bias_error_norm_upper_mps2": float(startup["accelerometer_bias_error_norm_upper_mps2"]),
+        "qualification": e["qualification"],
+        "source": e["source"],
+        "attitude_cayley_norm_upper": float(r["attitude_cayley_norm"]),
+        "gyro_bias_error_norm_upper_rad_s": float(r["gyro_bias_norm_rad_s"]),
+        "velocity_error_norm_upper_mps": float(r["velocity_norm_mps"]),
+        "position_error_norm_upper_m": float(r["position_norm_m"]),
+        "integral_displacement_error_norm_upper_m_s": float(r["integral_displacement_norm_m_s"]),
+        "latent_acceleration_error_norm_upper_mps2": float(r["latent_acceleration_norm_mps2"]),
+        "accelerometer_bias_error_norm_upper_mps2": float(r["accelerometer_bias_error_norm_mps2"]),
+        "entry_exact_constraints": e["entry_exact_constraints"],
+        "working_prefix_position_norm_upper_m": float(w["position_norm_m"]),
+        "working_prefix_integral_displacement_norm_upper_m_s": float(w["integral_displacement_norm_m_s"]),
+        "legacy_independent_S_entry_ball_promotable": False,
+        "entry_is_correlated_fiber_not_cartesian_box": True,
         "covariance_ellipsoid_used_for_membership": False,
         "replay_fit_used_for_membership": False,
-        "declared_theorem_entry_assumption": True,
+        "regional_P4_entry_hypothesis": True,
         "physical_reachability_from_arbitrary_startup_proved_here": False,
     }
 
 
 def _hard_entry_matches_closure_contract(entry: dict, closure: dict) -> bool:
+    """Check only the coordinates that remain free entrance radii.
+
+    p and S are exact handoff-fiber equalities. Their historical closure-domain
+    values are checked as working/prefix capacities, not entrance radii.
+    """
     search = closure["hard_entry_search"]
     b = search["base_coordinate_radii"]
-    # Position is declared componentwise |dp_i|<=4.25 m.  The closure-domain
-    # base stores the implied Euclidean norm sqrt(3)*4.25.
-    position_norm = math.sqrt(3.0) * entry["position_component_abs_error_upper_m"]
     return bool(
         math.isclose(entry["attitude_cayley_norm_upper"], float(b["attitude_cayley_norm"]), rel_tol=0.0, abs_tol=2e-16)
         and entry["gyro_bias_error_norm_upper_rad_s"] == float(b["gyro_bias_norm_rad_s"])
         and entry["velocity_error_norm_upper_mps"] == float(b["velocity_norm_mps"])
-        and math.isclose(position_norm, float(b["position_norm_m"]), rel_tol=0.0, abs_tol=2e-15)
-        and entry["integral_displacement_error_norm_upper_m_s"] == float(b["integral_displacement_norm_m_s"])
+        and entry["position_error_norm_upper_m"] == 0.0
+        and entry["integral_displacement_error_norm_upper_m_s"] == 0.0
+        and math.isclose(entry["working_prefix_position_norm_upper_m"], float(b["position_norm_m"]), rel_tol=0.0, abs_tol=2e-15)
+        and entry["working_prefix_integral_displacement_norm_upper_m_s"] >= float(b["integral_displacement_norm_m_s"])
         and entry["latent_acceleration_error_norm_upper_mps2"] == float(b["latent_acceleration_norm_mps2"])
-        and entry["accelerometer_bias_error_norm_upper_mps2"] == float(b["accelerometer_bias_error_norm_mps2"])
+        and entry["accelerometer_bias_error_norm_upper_mps2"] == float(b["accelerometer_bias_norm_mps2"])
         and float(search["minimum_certified_scale"]) == 1.0
         and list(map(float, search["candidate_scale_factors"])) == [1.0]
         and search["requires_full_declared_scale"] is True
+        and entry["legacy_independent_S_entry_ball_promotable"] is False
+        and entry["entry_is_correlated_fiber_not_cartesian_box"] is True
     )
 
 
@@ -183,9 +202,6 @@ def build(domain_path: Path=DEFAULT_DOMAIN, closure_path: Path=DEFAULT_CLOSURE) 
     entry=_declared_hard_entry(domain); entry_declared=_hard_entry_matches_closure_contract(entry,closure)
     bias1=_bias1_conditional_admission(closure); p3_admission=_p3_conditional_admission(p3,premises,closure)
 
-    # These are the real word-level obligations. Norm bounds on individual K/G
-    # coefficients are useful prerequisites but are not substituted for this
-    # same-history generalized-Jacobian/joint-sector closure.
     coefficient_family=bool(
         events["source_uniform_finite_angle_event_Jacobians_closed"]
         and word["source_uniform_complete_word_Jacobian_enclosed"]
@@ -202,8 +218,6 @@ def build(domain_path: Path=DEFAULT_DOMAIN, closure_path: Path=DEFAULT_CLOSURE) 
 
     fp_cfg=closure["finite_precision"]
     projection_fp_closed=bool(projection_fp["projection_finite_precision_enclosure_closed"])
-    # Full filter arithmetic remains false by explicit contract, despite the
-    # now-closed projection subroutine enclosure.
     finite_precision=bool(
         projection_fp_closed and fp_cfg["complete_Eigen_expression_evaluation_order_enclosed"]
         and fp_cfg["complete_shipping_Kalman_reset_roundoff_enclosed"])
@@ -219,7 +233,7 @@ def build(domain_path: Path=DEFAULT_DOMAIN, closure_path: Path=DEFAULT_CLOSURE) 
     if not coefficient_family: blockers.append("same-history source-uniform finite-angle Kalman/reset generalized-Jacobian and joint-sector enclosure is not closed")
     if not consecutive_storage: blockers.append("source-uniform endpoint/every-prefix compatible-storage signed-information inequality is not closed")
     if not finite_precision: blockers.append("projection binary32 is enclosed, but complete shipping Eigen/Kalman/reset arithmetic is not")
-    if not entry_declared: blockers.append("full declared hard entry set no longer matches theorem operating domain")
+    if not entry_declared: blockers.append("shipping-reachable hard entry fiber no longer matches closure contract")
     if not bias1["conditional_BIAS1_SOURCE_ADMISSION_PASS"]: blockers.append("conditional BIAS1 driver family is not admitted")
     if not p3_admission["conditional_execution_premises_admitted"]: blockers.append("canonical conditional P3 execution premises are not admitted")
 
@@ -231,6 +245,8 @@ def build(domain_path: Path=DEFAULT_DOMAIN, closure_path: Path=DEFAULT_CLOSURE) 
         "filter_changed":False,"declared_main_operating_domain_shrunk":False,"quality_gates_changed":False,
         "P3_delta_consumed":1e-18,"hard_entry_error_set":entry,
         "qualified_hard_entry_error_set_as_declared_theorem_assumption":entry_declared,
+        "hard_entry_is_shipping_reachable_fiber":entry["entry_is_correlated_fiber_not_cartesian_box"],
+        "legacy_independent_S_entry_ball_consumed":False,
         "hard_entry_reachability_from_arbitrary_startup_claimed":False,
         "shipping_covariance_used_as_entry_membership_test":False,
         "BIAS1_admission":bias1,"P3_execution_admission":p3_admission,
@@ -252,10 +268,10 @@ def validate(d: dict) -> list[str]:
     if d.get("schema")!=SCHEMA or d.get("qualification")!=QUALIFICATION:f.append("schema/qualification mismatch")
     if d.get("canonical_source")!="COMPLETE_BRMM_NORMAL_LIVE_WORD":f.append("canonical source changed")
     if float(d.get("P3_delta_consumed",0))!=1e-18:f.append("canonical P3 delta changed")
-    for k in ("qualified_hard_entry_error_set_as_declared_theorem_assumption","projection_global_nonlinear_sector_consumed","projection_finite_precision_closed"):
+    for k in ("qualified_hard_entry_error_set_as_declared_theorem_assumption","hard_entry_is_shipping_reachable_fiber","projection_global_nonlinear_sector_consumed","projection_finite_precision_closed"):
         if d.get(k) is not True:f.append(k+" is not true")
     for k in ("filter_changed","declared_main_operating_domain_shrunk","quality_gates_changed",
-              "hard_entry_reachability_from_arbitrary_startup_claimed","shipping_covariance_used_as_entry_membership_test",
+              "legacy_independent_S_entry_ball_consumed","hard_entry_reachability_from_arbitrary_startup_claimed","shipping_covariance_used_as_entry_membership_test",
               "source_uniform_Kalman_reset_coefficient_family_enclosed","consecutive_compatible_storage_inequality_closed",
               "complete_filter_finite_precision_enclosure_closed","finite_precision_enclosure_closed",
               "P4_MOTION_PASS","P4_PASS","P5_MAY_START"):
