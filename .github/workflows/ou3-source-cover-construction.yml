@@ -6,6 +6,7 @@ on:
       - "tools/stability/**"
       - "tests/validation/test_ou3_brmm_infinite_continuation.py"
       - "tests/validation/test_ou3_brmm_centered_S_recurrence.py"
+      - "tests/validation/test_ou3_brmm_translation_observation_kernel.py"
       - "tests/validation/test_ou3_p4_live_entry_graph.py"
       - "tests/kalman_ou_iii/live_entry_audit-test.cpp"
       - "docs/ou3-*.md"
@@ -35,21 +36,31 @@ jobs:
           git rev-parse HEAD > /tmp/ou3-construction/source-commit.txt
           python3 tools/stability/ou3_brmm_infinite_continuation.py --output /tmp/ou3-construction/infinite-continuation.json
           python3 tools/stability/ou3_brmm_centered_S_recurrence.py --output /tmp/ou3-construction/centered-S-recurrence.json
+          python3 tools/stability/ou3_brmm_translation_observation_kernel.py --output /tmp/ou3-construction/translation-observation-kernel.json
           python3 -m unittest discover -s tests/validation -p 'test_ou3_brmm_infinite_continuation.py' -v
           python3 -m unittest discover -s tests/validation -p 'test_ou3_brmm_centered_S_recurrence.py' -v
+          python3 -m unittest discover -s tests/validation -p 'test_ou3_brmm_translation_observation_kernel.py' -v
           python3 -m unittest discover -s tests/validation -p 'test_ou3_p4_live_entry_graph.py' -v
           python3 - <<'PY'
           import json
-          d=json.load(open('/tmp/ou3-construction/centered-S-recurrence.json'))
-          assert d['validation_pass']
-          assert d['condition_is_origin_invariant']
-          assert d['condition_bounds_every_handoff_centered_S']
-          assert d['condition_excludes_nonzero_constant_position_history']
-          assert d['D_S_max_m_s'] is None
-          assert not d['D_S_numeric_qualification_closed']
-          assert not d['COMPLETE_BRMM_INDEFINITE_S_QUALIFIED']
-          assert not d['P4_PASS'] and not d['P5_MAY_START']
-          assert d['P3_delta']==1e-18
+          r=json.load(open('/tmp/ou3-construction/centered-S-recurrence.json'))
+          k=json.load(open('/tmp/ou3-construction/translation-observation-kernel.json'))
+          assert r['validation_pass']
+          assert r['condition_is_origin_invariant']
+          assert r['condition_bounds_every_handoff_centered_S']
+          assert r['condition_excludes_nonzero_constant_position_history']
+          assert r['D_S_max_m_s'] is None
+          assert r['D_S_retention_search_upper_m_s']==r['S_working_radius_m_s']==300.0
+          assert not r['D_S_numeric_qualification_closed']
+          assert not r['COMPLETE_BRMM_INDEFINITE_S_QUALIFIED']
+          assert k['validation_pass']
+          assert k['translation_zero_output_kernel_dimension_before_indefinite_primitives_per_axis']==2
+          assert k['translation_zero_output_kernel_dimension_after_bounded_position_per_axis']==1
+          assert k['translation_zero_output_kernel_dimension_after_centered_S_recurrence_per_axis']==0
+          assert k['D_S_numeric_value_used'] is None
+          assert not r['P4_PASS'] and not r['P5_MAY_START']
+          assert not k['P4_PASS'] and not k['P5_MAY_START']
+          assert r['P3_delta']==k['P3_delta']==1e-18
           PY
       - name: Preserve source, startup and fail-closed mathematical gates
         run: |
