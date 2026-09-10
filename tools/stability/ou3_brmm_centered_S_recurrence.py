@@ -18,35 +18,42 @@ for one uniform finite D_S.  This is invariant to the absolute S origin and give
 necessary observation-equivalence-class condition, but unlike an absolute S ball
 it is a genuine recurrence property of the physical history.
 
-The executable object below deliberately leaves D_S_max unfrozen.  A numerical
-value may be promoted only after the source-cover/retention calculation computes
-the largest value compatible with the certified P4 tube.  Thus this module
-materializes the missing theorem coordinate and its exact implications without
-silently shrinking the source family for proof convenience.
+A numerical D_S is not guessed here.  The existing 300 m*s number is read only as
+the current *working/retention* radius.  Sign symmetry of the norm-defined BRMM
+source gives a necessary feasibility ceiling D_S<=R_work for the strengthened
+symmetric source family: an indistinguishable p/-p pair can separate centered S
+by 2 D_S while two errors inside the same radius-R_work tube can separate by at
+most 2 R_work.  The real admissible D_S may be smaller after Joseph/reset, prefix
+and storage margins are included.  It may be frozen only by that calculation.
 """
 from __future__ import annotations
 
 import argparse
 import json
-import math
 from pathlib import Path
 
 import ou3_brmm_contract as BRMM
 import ou3_brmm_infinite_continuation as OBSTRUCTION
 
-SCHEMA = 1
-QUALIFICATION = "OU3_BRMM_CENTERED_S_RECURRENCE_V1"
+REPO = Path(__file__).resolve().parents[2]
+CLOSURE = REPO / "tools" / "stability" / "ou3_p4_closure_domain.json"
+SCHEMA = 2
+QUALIFICATION = "OU3_BRMM_CENTERED_S_RECURRENCE_V2"
 
 
 def build() -> dict:
     source = BRMM.build()
     obstruction = OBSTRUCTION.build()
+    closure = json.loads(CLOSURE.read_text())
     if BRMM.validate(source):
         raise RuntimeError("BRMM source declaration failed")
     if not obstruction["bounded_all18_indefinite_target_refuted_under_finite_window_definition"]:
         raise RuntimeError("indefinite-S obstruction prerequisite lost")
     if obstruction["P3_delta"] != 1e-18:
         raise RuntimeError("canonical P3 changed")
+    work = float(closure["hard_entry_search"]["base_coordinate_radii"]["integral_displacement_norm_m_s"])
+    if not (work > 0.0):
+        raise RuntimeError("positive S working radius required")
 
     return {
         "schema": SCHEMA,
@@ -69,6 +76,7 @@ def build() -> dict:
         "condition_is_origin_invariant": True,
         "condition_bounds_every_handoff_centered_S": True,
         "condition_excludes_nonzero_constant_position_history": True,
+        "strengthened_source_is_sign_symmetric": True,
         "bounded_finite_word_DeltaS_alone_is_sufficient": False,
         "bounded_position_alone_is_sufficient": False,
         "finite_harmonic_zero_mean_position_is_nonempty_example": True,
@@ -76,6 +84,10 @@ def build() -> dict:
             "for p=sum(A_i cos(w_i t)+B_i sin(w_i t)), "
             "D_S <= 2*sum((||A_i||+||B_i||)/w_i)"
         ),
+        "S_working_radius_m_s": work,
+        "D_S_retention_search_lower_m_s": 0.0,
+        "D_S_retention_search_upper_m_s": work,
+        "search_upper_is_working_tube_necessary_ceiling_not_source_assumption": True,
         "D_S_max_m_s": None,
         "D_S_numeric_qualification_closed": False,
         "COMPLETE_BRMM_INDEFINITE_S_QUALIFIED": False,
@@ -84,9 +96,9 @@ def build() -> dict:
         "P4_PASS": False,
         "P5_MAY_START": False,
         "next_obligation": (
-            "compute the largest admissible D_S from the same-history joint24 "
-            "endpoint/prefix first-exit calculation; only then freeze COMPLETE-BRMM(D_S) "
-            "and resume universal source-cover promotion"
+            "search D_S in [0,S_working_radius] with the same-history joint24 endpoint, "
+            "literal-prefix and first-exit construction; freeze only the largest rigorously "
+            "retained D_S, then resume universal source-cover promotion"
         ),
     }
 
@@ -102,7 +114,9 @@ def validate(d: dict) -> list[str]:
         "condition_is_origin_invariant",
         "condition_bounds_every_handoff_centered_S",
         "condition_excludes_nonzero_constant_position_history",
+        "strengthened_source_is_sign_symmetric",
         "finite_harmonic_zero_mean_position_is_nonempty_example",
+        "search_upper_is_working_tube_necessary_ceiling_not_source_assumption",
         "source_uniform_transition_cover_may_resume_after_D_S_qualification",
     ):
         if d.get(k) is not True:
@@ -120,6 +134,13 @@ def validate(d: dict) -> list[str]:
     ):
         if d.get(k) is not False:
             f.append(k + " not false")
+    work = float(d.get("S_working_radius_m_s", -1.0))
+    if work <= 0.0:
+        f.append("working radius invalid")
+    if d.get("D_S_retention_search_lower_m_s") != 0.0:
+        f.append("D_S search lower bound changed")
+    if d.get("D_S_retention_search_upper_m_s") != work:
+        f.append("D_S search ceiling detached from working radius")
     if d.get("D_S_max_m_s") is not None:
         f.append("D_S_max must remain unfrozen until retention computes it")
     if d.get("P3_delta") != 1e-18:
@@ -139,6 +160,7 @@ def main() -> int:
     a.output.write_text(json.dumps(d, indent=2, sort_keys=True) + "\n")
     print(json.dumps({
         "centered_S_recurrence_materialized": True,
+        "D_S_search_upper_m_s": d["D_S_retention_search_upper_m_s"],
         "D_S_numeric_closed": d["D_S_numeric_qualification_closed"],
         "P4": d["P4_PASS"],
         "failures": f,
