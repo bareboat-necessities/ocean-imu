@@ -18,7 +18,9 @@ class BrmmPrivateMahonyLiveInvariantTest(unittest.TestCase):
         self.assertEqual(mod.validate(self.d), [])
         self.assertTrue(self.d["continuous_all_live_PI_invariant_closed"])
         self.assertTrue(self.d["initial_set_inside_invariant"])
-        self.assertTrue(self.d["invariant_strictly_inside_60deg_chart"])
+        self.assertTrue(self.d["invariant_strictly_inside_87deg_chart"])
+        self.assertFalse(self.d["invariant_strictly_inside_60deg_chart"])
+        self.assertLess(self.d["actual_tilt_deg_upper"], 87.0)
         self.assertGreater(
             self.d["boundary_validation"]["strict_inward_margin_lower"], 0.0
         )
@@ -26,6 +28,7 @@ class BrmmPrivateMahonyLiveInvariantTest(unittest.TestCase):
     def test_same_brmm_forcing_not_an_alternate_source(self):
         self.assertTrue(self.d["same_BRMM_specific_force_direction_required"])
         self.assertTrue(self.d["same_BRMM_gyro_bias_forcing_required"])
+        self.assertTrue(self.d["same_history_direction_primitive_required"])
         self.assertFalse(self.d["source_generator"])
         self.assertFalse(self.d["trajectory_replay_used"])
         self.assertFalse(self.d["arbitrary_bounded_input_source_used"])
