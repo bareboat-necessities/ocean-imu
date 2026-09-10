@@ -6,7 +6,7 @@ on:
       - "tools/stability/ou3_brmm_gravity_direction_forcing_qualification.py"
       - "tools/stability/ou3_brmm_private_mahony_live_invariant.py"
       - "tools/stability/ou3_brmm_private_mahony_discrete_invariant.py"
-      - "tools/stability/ou3_p5_startup_timeout_capture.py"
+      - "tools/stability/ou3_startup_timeout_capture.py"
       - "tools/stability/ou3_proof_operating_domain.json"
       - "src/ahrs/Mahony_AHRS.h"
       - "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h"
@@ -17,7 +17,7 @@ on:
       - "tools/stability/ou3_brmm_gravity_direction_forcing_qualification.py"
       - "tools/stability/ou3_brmm_private_mahony_live_invariant.py"
       - "tools/stability/ou3_brmm_private_mahony_discrete_invariant.py"
-      - "tools/stability/ou3_p5_startup_timeout_capture.py"
+      - "tools/stability/ou3_startup_timeout_capture.py"
       - "tools/stability/ou3_proof_operating_domain.json"
       - "src/ahrs/Mahony_AHRS.h"
       - "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h"
@@ -46,14 +46,14 @@ jobs:
             tools/stability/ou3_brmm_gravity_direction_forcing_qualification.py \
             tools/stability/ou3_brmm_private_mahony_live_invariant.py \
             tools/stability/ou3_brmm_private_mahony_discrete_invariant.py \
-            tools/stability/ou3_p5_startup_timeout_capture.py
+            tools/stability/ou3_startup_timeout_capture.py
       - name: Execute widened source and startup capture certificates
         run: |
           mkdir -p /tmp/ou3-p5-startup
           python3 tools/stability/ou3_brmm_gravity_direction_forcing_qualification.py --output /tmp/ou3-p5-startup/direction.json
           python3 tools/stability/ou3_brmm_private_mahony_live_invariant.py --output /tmp/ou3-p5-startup/continuous.json
           python3 tools/stability/ou3_brmm_private_mahony_discrete_invariant.py --output /tmp/ou3-p5-startup/discrete.json
-          python3 tools/stability/ou3_p5_startup_timeout_capture.py --output /tmp/ou3-p5-startup/capture.json
+          python3 tools/stability/ou3_startup_timeout_capture.py --output /tmp/ou3-p5-startup/capture.json
           python3 - <<'PY'
           import json
           root='/tmp/ou3-p5-startup/'
