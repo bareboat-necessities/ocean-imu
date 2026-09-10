@@ -36,11 +36,21 @@ class StartupCaptureGateTests(unittest.TestCase):
 
     def test_timeout_is_live_handoff_not_p4_capture(self):
         t = self.d["shipping_timeout_semantics"]
-        self.assertEqual(t["live_handoff_upper_bound_s_under_aligned_branch"], 150.0)
+        self.assertEqual(t["live_handoff_upper_bound_s_under_declared_aligned_branch"], 150.0)
         self.assertFalse(t["requires_tuner_ready"])
         self.assertFalse(t["requires_magnetic_north_when_with_mag"])
         self.assertTrue(t["requires_aligned_gravity_branch"])
         self.assertFalse(t["goLive_equals_P4_capture"])
+
+    def test_magnetic_observability_is_explicitly_separate(self):
+        m = self.d["magnetic_observability"]
+        self.assertTrue(m["structural_yaw_obstruction_proved"])
+        self.assertFalse(m["current_source_forces_finite_north_acquisition"])
+        self.assertTrue(m["ungauged_gravity_quotient_capture_is_still_meaningful"])
+        self.assertTrue(m["full_attitude_capture_requires_north_event"])
+        self.assertEqual(m["shipping_min_accepted_mag_samples"], 128)
+        self.assertEqual(m["shipping_min_accepted_mag_window_s"], 15.0)
+        self.assertEqual(m["counterexample_minimax_full_attitude_error_deg"], 45.0)
 
     def test_translation_entry_is_correlated_handoff_fiber(self):
         e = self.d["entry_translation_fiber"]
