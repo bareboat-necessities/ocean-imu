@@ -138,10 +138,10 @@ def build(domain_path: Path = OUTER.DEFAULT_DOMAIN) -> dict:
         and kernel["covariance_floor_increment_computed_from_current_mode_P"]
     )
     selector_relation = bool(
-        selectors["branch_correlated_prefix_selectors_available"]
-        and selectors["event_local_Riccati_cells_available"]
-        and selectors["literal_event_order_retained"]
-        and selectors["same_actual_RS_provenance_retained"]
+        selectors["branch_correlated_every_prefix_selector_available"]
+        and selectors["event_local_same_P_H_R_cells_materialized_on_typed_execution"]
+        and selectors["exact_shipping_event_slice_retained_per_transition"]
+        and selectors["actual_applied_anisotropic_RS_retained_per_transition"]
     )
     radial_relation = bool(
         entry["full_declared_scale_enforced"]
