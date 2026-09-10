@@ -1,0 +1,124 @@
+name: ou3-end-to-end-stability-gate
+
+on:
+  push:
+    branches: [main]
+    paths: &paths
+      - 'src/kalman_ou_iii/**'
+      - 'tools/stability/ou3_end_to_end_stability_gate.py'
+      - 'tools/stability/ou3_p5_live_entry_reachability.py'
+      - 'tools/stability/ou3_p4_basin_frontier.py'
+      - 'tools/stability/ou3_p4_coefficient_dependency_cover.py'
+      - 'tools/stability/ou3_p4_final_closure_gate.py'
+      - 'tools/stability/ou3_proof_operating_domain.json'
+      - 'reports/results/rao_stability/entry-block-retention.json'
+      - 'tests/validation/test_ou3_end_to_end_stability_gate.py'
+      - 'tests/validation/test_ou3_p5_live_entry_reachability.py'
+      - 'tests/validation/test_ou3_p4_basin_frontier.py'
+      - 'tests/validation/test_ou3_p4_coefficient_dependency_cover.py'
+      - '.github/workflows/ou3-end-to-end-stability-gate.yml'
+  pull_request:
+    paths: *paths
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ou3-end-to-end-stability-gate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  end-to-end:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Build the deployed Live-entry reachability lemma
+        run: python3 tools/stability/ou3_p5_live_entry_reachability.py --output /tmp/live-entry.json
+      - name: Build the maximal chart-retaining basin frontier
+        run: python3 tools/stability/ou3_p4_basin_frontier.py --output /tmp/basin-frontier.json
+      - name: Build the adaptive coefficient dependency cover
+        run: python3 tools/stability/ou3_p4_coefficient_dependency_cover.py --cells 96 --output /tmp/coefficient-cover.json
+      - name: Build the end-to-end stability gate
+        run: python3 tools/stability/ou3_end_to_end_stability_gate.py --output /tmp/end-to-end.json
+      - name: Enforce fail-closed end-to-end semantics
+        run: |
+          python3 - <<'PY'
+          import json
+          reach=json.load(open('/tmp/live-entry.json'))
+          basin=json.load(open('/tmp/basin-frontier.json'))
+          cover=json.load(open('/tmp/coefficient-cover.json'))
+          e2e=json.load(open('/tmp/end-to-end.json'))
+          for name,d in (('live-entry',reach),('basin',basin),('cover',cover),('end-to-end',e2e)):
+              assert d['validation_pass'],(name,d['validation_failures'])
+
+          # The Live-entry pinning is a statement about the shipping sources.
+          # If the startup path changes so that the MEKF linear block is driven
+          # before goLive, or the attitude/linear cross covariance stops being
+          # zeroed, the pinning is void and must be re-derived, not patched.
+          assert reach['shipping_source_parity_pass'],reach['shipping_source_parity']
+          assert reach['mekf_linear_block_propagated_before_go_live'] is False
+          assert reach['attitude_linear_cross_covariance_zeroed_at_go_live'] is True
+          assert reach['deployed_live_entry_relation']['coordinates_are_independent'] is False
+          assert reach['reachability_argument_is_replay_or_fit'] is False
+          assert reach['P5_capture_assumed'] is False
+          assert reach['inventing_primitive_values_here'] is False
+
+          # The basin is a maximisation and stays a diagnostic until the outward
+          # certificate closes on it.
+          assert basin['entry_radii_reduced_for_proof_convenience'] is False
+          assert basin['frozen_map_binary64_diagnostic_not_outward_certificate'] is True
+          assert basin['outward_nonlinear_certificate_closed_here'] is False
+
+          # The adaptive coefficients are never an independent rectangle.
+          assert cover['independent_tau_sigma_TS_RS_rectangle_used'] is False
+          assert cover['SOURCE_UNIFORM_COMPLETE_BRMM_COVER_CLOSED'] is False
+          cc=cover['coefficient_cover']
+          assert cc['joint_S_zero_residual_scale_upper'] < cc['independent_corner_residual_scale']
+
+          # End-to-end promotion is the exact conjunction and no stage may be skipped.
+          assert e2e['transition_coverage']['startup_to_live_teleport_permitted'] is False
+          assert e2e['END_TO_END_STABILITY_PASS'] == (
+              e2e['P5_CAPTURE_PASS'] and e2e['P4_INVARIANCE_PASS'])
+          if e2e['remaining_P5_capture_obligations'] or e2e['remaining_P4_mathematical_blockers']:
+              assert not e2e['END_TO_END_STABILITY_PASS']
+              assert not e2e['END_TO_END_DEPLOYMENT_PASS']
+          for name,row in e2e['P5_capture_obligations'].items():
+              assert row['established'] or row['class'] in ('A','B','C','D','E'),name
+
+          print('LIVE_ENTRY_PINNED',json.dumps(
+              {k:v['equals'] for k,v in reach['pinned_entry_coordinates'].items()},sort_keys=True))
+          print('UNINSTANTIATED_BRMM_PRIMITIVES',*reach['uninstantiated_BRMM_primitives'])
+          print('DECLARED_BOX_CHART_OVERSHOOT_H18',basin['modes']['H18']['declared_box_overshoot_factor'])
+          print('MAX_UNIFORM_SCALE',basin['max_uniform_scale_over_modes'])
+          print('MAX_VOLUME_RADII_H18',json.dumps(basin['modes']['H18']['max_volume_radii'],sort_keys=True))
+          print('MAX_INTEGRAL_RADIUS_OTHERS_DECLARED',basin['max_integral_radius_with_others_declared_m_s'])
+          print('JOINT_S_ZERO_SCALE',cc['joint_S_zero_residual_scale_upper'],
+                'INDEPENDENT_CORNER',cc['independent_corner_residual_scale'])
+          print('ADMISSIBLE_S_M_UPPER',cover['S_zero_correction_consequence']['admissible_BRMM_S_m_upper_m_s'])
+          print('END_TO_END_STABILITY_PASS',e2e['END_TO_END_STABILITY_PASS'])
+          print('P5_CAPTURE_OBLIGATIONS_OPEN',*e2e['remaining_P5_capture_obligations'],sep='\n- ')
+          print('P4_BLOCKERS_OPEN',*e2e['remaining_P4_mathematical_blockers'],sep='\n- ')
+          PY
+      - name: Run the producer unit tests
+        run: |
+          python3 -m unittest -v \
+            tests.validation.test_ou3_p5_live_entry_reachability \
+            tests.validation.test_ou3_p4_basin_frontier \
+            tests.validation.test_ou3_p4_coefficient_dependency_cover \
+            tests.validation.test_ou3_end_to_end_stability_gate
+      - uses: actions/upload-artifact@v6
+        with:
+          name: ou3-end-to-end-stability-gate
+          path: |
+            /tmp/live-entry.json
+            /tmp/basin-frontier.json
+            /tmp/coefficient-cover.json
+            /tmp/end-to-end.json
+          retention-days: 7

@@ -1,5 +1,26 @@
 # OU-III proof research state
 
+## Target theorem
+
+The goal is the end-to-end shipping statement, not "P4 passes":
+
+> for every admitted BRMM motion, every admitted BIAS0/BIAS1/BIAS2 history and
+> every admitted sensor disturbance, the shipping implementation started from
+> the declared startup uncertainty reaches a certified Live basin in finite time
+> through its actual Mahony/proxy startup, and then stays there with practical
+> ISS.
+
+P4 is the Live invariance half, P5 the finite-time capture half, and P3 supplies
+covariance/observability along the admitted execution rather than being the
+stability statement. The composition is held fail-closed by
+`ou3_end_to_end_stability_gate.py`, and the full status lives in
+`docs/ou3-end-to-end-stability-theorem.md`.
+
+The design rule for the basin is **maximise, never shrink**. Width certified in
+P4 is width the capture stage does not have to achieve, so the basin is carried
+as a correlated polytope with an explicit trade-off surface rather than as one
+convenient product box.
+
 ## Current hypothesis
 
 BRMM is the primary physical source. The target is bounded accelerometer-bias
@@ -92,72 +113,41 @@ projection gives `B_error <= B_true + R`, without assuming bias convergence
 or zero active motion-to-bias feedback. The captured binary32 radius is
 .4000000059604645. Shipping rounding remains a separate enclosure obligation.
 
-### Which declared entry ball actually limits retention
+### Which declared entry ball limits retention
 
 `entry-block-retention.json` switches each declared entry ball on ALONE and
-maximizes over every completed prefix of the same attached capture, so the
-subadditive total that `domain-retention.json` reports per coordinate is split
-into the terms that produce it. The capture is reproduced bit-for-bit from
-`ou3-source-endpoint.cpp` against the pinned generator
-e442150682f560384be427df4cc7815956a091c5; all four capture hashes match the
-retained record, as do every number the two experiments share.
+maximizes over every completed prefix of the same attached capture, reproduced
+bit-for-bit from `ou3-source-endpoint.cpp` against the pinned generator
+e442150682f560384be427df4cc7815956a091c5.
 
-Two facts follow that the total cannot show.
-
-The accelerometer-bias entry ball limits **no** coordinate, not merely not the
-total: its worst single-ball reach is .1544 (H18) and .2335 (A21) of a radius
-over both modes and all six motion coordinates. Together with the .2382
-same-graph result this closes the bias entry ball as a retention limiter.
+The accelerometer-bias entry ball limits **no** coordinate: its worst
+single-ball reach is .1544 (H18) and .2335 (A21) of a radius over both modes and
+all six motion coordinates.
 
 The declared 300 m*s integral-displacement ball is the worst single ball for
-five of six H18 coordinates and four of six in A21, reaching 32.50 velocity
-radii in H18 on its own. With it the H18 attitude coordinate reaches Cayley
-norm 4.5788 against the declared chart bound 1.0, so the declared product box
-drives the state out of the chart the frozen map is expanded in and that
-configuration invalidates its own linearization. Without that one ball the
-chart is retained in both modes, at .9411 (H18) and .6537 (A21).
+five of six H18 coordinates and four of six in A21. With it the H18 attitude
+coordinate reaches Cayley norm 4.5788 against the declared chart bound 1.0, so
+the declared product box drives the state out of the chart the frozen map is
+expanded in; without it the chart is retained at .9411 (H18) and .6537 (A21).
+That is evidence against the independent ball, never a disproof of P4: outside
+its chart the frozen expansion is not valid, so the 4.5788 value cannot be
+promoted into a lower bound on the true nonlinear trajectory.
 
-The minimal working radii this word retains at every completed prefix, as
-multiples of the declared entry radii and with the independent integral ball
-removed, are
+`thm:brmm-bounded-bias-motion` separates the entry level `L` from a chart-valid
+level `L_chart` and asks only for `Gamma*L+C_p < L_chart`, so a prefix excursion
+above an entry radius is not itself a failure; leaving the chart is. The working
+radii this word retains, with the independent integral ball removed, are larger
+than the entry set in every coordinate but the integral one -- attitude 1.756 /
+1.220, gyro bias 2.315 / 1.428, velocity 4.033 / 4.921, position 1.027 / 2.237,
+latent acceleration 1.935 / 2.199 -- which enlarges the retention target and
+makes every downstream nonlinear obligation harder, never easier. The velocity
+row is physically forced: a 30 degree attitude entry error mis-resolves gravity
+by g*sin(30)=4.903 m/s^2, i.e. 14.7 m/s over the 3 s word against a 5 m/s entry
+radius, and velocity carries no chart.
 
-| Coordinate | H18 | A21 |
-| --- | ---: | ---: |
-| attitude | 1.756 | 1.220 |
-| gyro bias | 2.315 | 1.428 |
-| velocity | 4.033 | 4.921 |
-| position | 1.027 | 2.237 |
-| integral displacement | 1.000 | 1.000 |
-| latent acceleration | 1.935 | 2.199 |
-
-These are a working domain strictly LARGER than the entry set, never a reduced
-entry set: the entry radii are unchanged and the retention target is enlarged,
-which makes every downstream nonlinear obligation harder. Only attitude carries
-a chart constraint, and it is the row that already fits.
-
-These ratios are normalized by the ENTRY radii, which is the producer's
-convention and not the theorem's requirement. `thm:brmm-bounded-bias-motion`
-already separates the entry level `L` from a chart-valid level `L_chart` and
-asks only for `Gamma*L+C_p < L_chart`, so a prefix excursion above an entry
-radius is not by itself a failure. What the excursion must not do is leave the
-chart on which the nonlinear majorants are declared.
-
-That is where the declared box fails, and it fails the theorem's own
-hypothesis rather than a bookkeeping convention. With `L` the declared product
-box the H18 prefix excursion reaches Cayley norm 4.5788 against the declared
-chart bound 1.0, so no chart-valid `L_chart` satisfies `Gamma*L+C_p<L_chart`
-and the hypothesis is unsatisfiable at that entry set. Removing the one
-independent integral-displacement ball makes it satisfiable: the excursion is
-.9411 (H18) and .6537 (A21), so a chart-valid `L_chart` exists, with 5.9%
-margin in H18.
-
-The velocity row is physically forced, and is a statement about how large
-`L_chart` must be in the coordinates that carry no chart constraint, not an
-obstruction: a 30 degree attitude entry error mis-resolves gravity by
-g*sin(30)=4.903 m/s^2, which over the 3 s word is 14.7 m/s against a 5 m/s
-entry radius, and the attitude ball alone reaches 2.9178 velocity radii in A21,
-which is that number. Velocity carries no chart, so absorbing it is a
-declaration, not a lemma.
+`ou3_p4_basin_frontier.py` turns this into the trade-off surface the basin
+should be maximised over rather than one number; see
+`docs/ou3-end-to-end-stability-theorem.md`.
 
 ### The correlated integral entry relation
 
@@ -196,17 +186,30 @@ per-prefix sum, so `total <= without_S + s*alone_S` at every prefix, and H18 is
 the binding mode at 4.5664 m*s. It is a frozen-map diagnostic threshold, not an
 outward certificate.
 
-What is NOT established is an unconditional anchor. The S=0 update is a
-non-expansion of `S_hat` in the `R_S`-weighted norm for every cell, because
-`I-K_S` is similar to a symmetric operator with norm `1/(1+mu)` and `mu>=0`.
-A uniform CONTRACTION needs a uniform positive `mu`, hence a reachable `P_SS`
-lower bound. The only source-uniform one available is `P^->=Q` over one
-prediction step, which gives `q_SS >= sigma^2*dt^7*(1-x/4)^2/(126*tau)` and
-`mu >= 1.3e-26` against `R_S <= 100` -- above 1e25 events per e-fold. So the
-deployed S=0 regulation cannot anchor `e_S` uniformly over the admitted cell
-family, and an unconditional correlated entry set needs either a proved
-reachable `P_SS` lower bound far above the process floor or the P5 capture
-argument. That is reported as class E rather than assumed inside P4.
+The S=0 update is a non-expansion of `S_hat` in the `R_S`-weighted norm for
+every cell, because `I-K_S` is similar to a symmetric operator with norm
+`1/(1+mu)` and `mu>=0`. It is NOT a uniform contraction: the only source-uniform
+`P_SS` lower bound available is `P^->=Q` over one prediction step, giving
+`q_SS >= sigma^2*dt^7*(1-x/4)^2/(126*tau)` and `mu >= 1.3e-26` against
+`R_S <= 100`, above 1e25 events per e-fold. So the regulation cannot anchor
+`e_S` by contraction.
+
+It does not have to. `ou3_p5_live_entry_reachability.py` settles the entry value
+from the deployed startup path instead: `updateFrontEnd` runs the front end with
+`drive_mekf=false` and every MEKF drive call sits inside that guard, so the
+translational block is never propagated before `goLive` and stays at the
+constructor zero, while `goLive` zeroes the whole attitude-to-linear cross
+covariance. Hence at the Live entrance instant `T`
+
+    e_v=-v_true(T), e_p=-p_true(T), e_S=-S_true(T), e_aw=-a_w_true(T),
+    e_bg=-b_g_true(T), e_b=-b_true(T),  P_theta,lin=0,  K_theta,S=0,
+
+with attitude the only coordinate startup has to earn. The reachable integral
+entry radius is therefore not an estimator accumulation at all: it is the BRMM
+bounded-integral-displacement primitive `S_m`, which the physical contract
+declares and leaves `None`, together with `V_m` and `P_m`. Instantiating those
+three is the class-E qualification; the dwell relation above remains the
+fallback description when no primitive is supplied.
 
 ## Current limiter and failure analysis
 
@@ -417,4 +420,17 @@ independent integral entry ball, which the correlated relation replaces on the
 chart threshold. Both are class C, and both have a stated constructive repair
 rather than an infeasibility.
 
-**P4_MOTION_PASS=false, P4_PASS=false. P5-motion and P5 may not start.**
+## Where this sits in the end-to-end theorem
+
+P4 is one half. The other half is finite-time Mahony/proxy capture into the
+basin, whose obligations are enumerated in
+`docs/ou3-end-to-end-stability-theorem.md` and held by
+`ou3_end_to_end_stability_gate.py`. Of the six deployed capture obligations only
+the `Cold -> TunerWarm` elapsed-time warmup is discharged; the rest are class E.
+The basin itself is carried as a maximisation: the H18 declared product box
+overshoots the chart by 5.0388, the largest uniform inflation that retains it is
+.19793, and the maximum-volume frontier point keeps velocity above its declared
+radius while admitting an 11.03 m*s integral radius.
+
+**END_TO_END_STABILITY_PASS=false. P4_MOTION_PASS=false, P4_PASS=false.
+P5-motion and P5 may not start.**
