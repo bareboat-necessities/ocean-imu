@@ -1,0 +1,38 @@
+name: ou3-source-cover-construction
+
+on:
+  pull_request:
+    paths:
+      - "tools/stability/**"
+      - "docs/ou3-*.md"
+      - ".github/workflows/ou3-source-cover-construction.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  construction:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Retain exact proof source for reproducible construction
+        run: |
+          mkdir -p /tmp/ou3-construction
+          git rev-parse HEAD > /tmp/ou3-construction/source-commit.txt
+          git archive --format=tar.gz HEAD src tools docs tests doc .github AGENTS.md Makefile CMakeLists.txt ruff.toml > /tmp/ou3-construction/source.tar.gz
+      - name: Execute authoritative fail-closed baseline
+        run: |
+          set -euo pipefail
+          python3 tools/stability/ou3_p4_complete_brmm_source_cover_contract.py --output /tmp/ou3-construction/source-cover.json
+          python3 tools/stability/ou3_p4_complete_brmm_source_cover_transition.py --output /tmp/ou3-construction/source-transition.json
+          python3 tools/stability/ou3_p4_live_entry_graph.py --output /tmp/ou3-construction/live-entry.json
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: ou3-source-cover-construction
+          path: /tmp/ou3-construction/
+          retention-days: 7
