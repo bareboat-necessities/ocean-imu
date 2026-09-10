@@ -9,8 +9,14 @@ on:
       - "tools/stability/ou3_brmm_acceleration_moment_iqc.py"
       - "tools/stability/ou3_p4_acceleration_moment_iqc_sector.py"
       - "tools/stability/ou3_brmm_correlated_window_outer_enclosure.py"
+      - "tools/stability/ou3_brmm_joint_executor_coordinate_map.py"
+      - "tools/stability/ou3_brmm_hard_window_behavior.py"
+      - "tools/stability/ou3_brmm_hard_shaping_state.py"
       - "tests/validation/test_ou3_p4_brmm_primitive_prefix_binding.py"
       - "tests/validation/test_ou3_brmm_correlated_window_outer_enclosure.py"
+      - "tests/validation/test_ou3_brmm_joint_executor_coordinate_map.py"
+      - "tests/validation/test_ou3_brmm_hard_shaping_state.py"
+      - "tests/validation/test_ou3_brmm_hard_finite_window_source.py"
       - ".github/workflows/ou3-primitive-prefix-binding.yml"
   workflow_dispatch:
 
@@ -63,6 +69,29 @@ jobs:
           assert not d['executor_601_sample_relation_materialized_here']
           assert not d['P4_PASS'] and not d['P5_MAY_START']
           assert d['P3_delta']==1e-18
+          PY
+      - name: Validate exact joint source/filter executor coordinate map
+        run: |
+          set -euo pipefail
+          python3 tools/stability/ou3_brmm_joint_executor_coordinate_map.py --output /tmp/ou3-primitive-prefix/joint-executor-map.json
+          python3 tools/stability/ou3_brmm_hard_shaping_state.py --output /tmp/ou3-primitive-prefix/hard-shaping.json
+          python3 -m unittest discover -s tests/validation -p 'test_ou3_brmm_joint_executor_coordinate_map.py' -v
+          python3 -m unittest discover -s tests/validation -p 'test_ou3_brmm_hard_shaping_state.py' -v
+          python3 -m unittest discover -s tests/validation -p 'test_ou3_brmm_hard_finite_window_source.py' -v
+          python3 - <<'PY'
+          import json
+          m=json.load(open('/tmp/ou3-primitive-prefix/joint-executor-map.json'))
+          h=json.load(open('/tmp/ou3-primitive-prefix/hard-shaping.json'))
+          assert m['validation_pass'],m['validation_failures']
+          assert m['joint_source_output_map_closed']
+          assert m['raw_gyro_and_corrected_rate_distinct']
+          assert m['measurement_coordinates_and_nominal_geometry_distinct']
+          assert not m['complete_601_sample_provider_materialized_here']
+          assert h['validation_pass'],h['validation_failures']
+          assert h['hard_shaping_state_or_excitation_bound_closed']
+          assert h['executable_ingredients']['joint_source_output_map_closed']
+          assert not h['complete_BRMM_family_materialized_here']
+          assert not h['P3_promoted']
           PY
       - uses: actions/upload-artifact@v6
         if: always()
