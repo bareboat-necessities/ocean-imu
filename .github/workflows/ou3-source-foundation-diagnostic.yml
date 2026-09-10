@@ -2,11 +2,13 @@ name: ou3-source-foundation-diagnostic
 
 on:
   push:
-    paths:
+    paths: &paths
       - "tools/stability/ou3_*.py"
       - "tools/stability/ou3_*.json"
       - "tests/validation/test_ou3_*.py"
       - ".github/workflows/ou3-source-foundation-diagnostic.yml"
+  pull_request:
+    paths: *paths
   workflow_dispatch:
 
 permissions:
