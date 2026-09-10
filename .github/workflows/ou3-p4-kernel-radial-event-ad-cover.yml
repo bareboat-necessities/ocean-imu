@@ -56,7 +56,14 @@ jobs:
           for name,obj in [('kernel',k),('zero-root',z),('radial-boxes',r),('radial-event-ad',a)]:
               assert obj['validation_pass'], (name,obj.get('validation_failures'))
           assert k['trusted_kernel_passive_capture_consumed']
-          assert k['all_same_sample_joint_and_kernel_successors_retained']
+          assert k['all_joint_images_bound_to_current_kernel_Riccati_schedule']
+          assert k['frontend_auxiliary_state_not_used_as_cross_machine_identity']
+          binding=k['same_sample_schedule_binding']
+          assert binding['every_joint_image_current_schedule_bound_to_kernel_Riccati_event']
+          assert binding['kernel_verified_same_active_schedule_before_measurement']
+          assert binding['kernel_verified_same_actual_RS_before_measurement']
+          assert not binding['whole_frontend_successor_equality_required']
+          assert not binding['whole_frontend_successor_containment_required']
           assert z['all_estimator_owned_source_cells_valid']
           assert r['current_lineage_radial_API_consumed']
           assert r['recursive_partition_exactly_covers_unit_interval']
