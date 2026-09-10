@@ -1,0 +1,82 @@
+name: ou3-p5-startup-capture
+
+on:
+  push:
+    paths:
+      - "tools/stability/ou3_brmm_gravity_direction_forcing_qualification.py"
+      - "tools/stability/ou3_brmm_private_mahony_live_invariant.py"
+      - "tools/stability/ou3_brmm_private_mahony_discrete_invariant.py"
+      - "tools/stability/ou3_p5_startup_timeout_capture.py"
+      - "tools/stability/ou3_proof_operating_domain.json"
+      - "src/ahrs/Mahony_AHRS.h"
+      - "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h"
+      - "src/kalman_common/SeaStateFusionFilterCommon.h"
+      - ".github/workflows/ou3-p5-startup-capture.yml"
+  pull_request:
+    paths:
+      - "tools/stability/ou3_brmm_gravity_direction_forcing_qualification.py"
+      - "tools/stability/ou3_brmm_private_mahony_live_invariant.py"
+      - "tools/stability/ou3_brmm_private_mahony_discrete_invariant.py"
+      - "tools/stability/ou3_p5_startup_timeout_capture.py"
+      - "tools/stability/ou3_proof_operating_domain.json"
+      - "src/ahrs/Mahony_AHRS.h"
+      - "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h"
+      - "src/kalman_common/SeaStateFusionFilterCommon.h"
+      - ".github/workflows/ou3-p5-startup-capture.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: ou3-p5-startup-capture-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  startup-capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Compile startup proof sources
+        run: |
+          python3 -m py_compile \
+            tools/stability/ou3_brmm_gravity_direction_forcing_qualification.py \
+            tools/stability/ou3_brmm_private_mahony_live_invariant.py \
+            tools/stability/ou3_brmm_private_mahony_discrete_invariant.py \
+            tools/stability/ou3_p5_startup_timeout_capture.py
+      - name: Execute widened source and startup capture certificates
+        run: |
+          mkdir -p /tmp/ou3-p5-startup
+          python3 tools/stability/ou3_brmm_gravity_direction_forcing_qualification.py --output /tmp/ou3-p5-startup/direction.json
+          python3 tools/stability/ou3_brmm_private_mahony_live_invariant.py --output /tmp/ou3-p5-startup/continuous.json
+          python3 tools/stability/ou3_brmm_private_mahony_discrete_invariant.py --output /tmp/ou3-p5-startup/discrete.json
+          python3 tools/stability/ou3_p5_startup_timeout_capture.py --output /tmp/ou3-p5-startup/capture.json
+          python3 - <<'PY'
+          import json
+          root='/tmp/ou3-p5-startup/'
+          d=json.load(open(root+'direction.json')); c=json.load(open(root+'continuous.json')); b=json.load(open(root+'discrete.json')); p=json.load(open(root+'capture.json'))
+          for name,x in [('direction',d),('continuous',c),('discrete',b),('capture',p)]:
+              assert x['validation_pass'], (name,x['validation_failures'])
+          assert d['pointwise_8mps2_cap_retained'] is True
+          assert 54.0 < d['instantaneous_direction_angle_upper_deg'] < 55.0
+          assert c['continuous_all_live_PI_invariant_closed'] is True
+          assert c['invariant_strictly_inside_87deg_chart'] is True
+          assert c['invariant_strictly_inside_60deg_chart'] is False
+          assert c['boundary_validation']['strict_inward_margin_lower'] > 0.0
+          assert b['shipping_binary32_discrete_invariant_closed_conditionally_on_source_order'] is True
+          assert b['continuous_boundary_margin_after_binary32'] > 0.0
+          assert b['discrete_V_margin_lower'] > 0.0
+          assert p['QUALIFIED_LIVE_HANDOFF_BY_150S_CLOSED'] is True
+          assert p['timeout_aligned_branch_margin_rad'] > 0.0
+          assert p['P4_basin_reached_here'] is False
+          assert p['P5_end_to_end_closed_here'] is False
+          print('P5_STARTUP_CAPTURE_8MPS2_PASS',p['qualified_proxy_tilt_upper_deg'],p['timeout_aligned_branch_margin_deg'])
+          PY
+      - uses: actions/upload-artifact@v6
+        with:
+          name: ou3-p5-startup-capture
+          path: /tmp/ou3-p5-startup/
+          retention-days: 7
