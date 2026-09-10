@@ -1,10 +1,10 @@
 {
-  "schema": 3,
-  "qualification": "OU3_P4_EXPLICIT_CLOSURE_DOMAIN_V3",
+  "schema": 4,
+  "qualification": "OU3_P4_EXPLICIT_CLOSURE_DOMAIN_V4",
   "trajectory_fit": false,
   "scope": "conditional Normal-Live COMPLETE_BRMM theorem domain; not a replay-derived deployment claim",
   "hard_entry_search": {
-    "definition": "the full already-declared physical P4 word-entry envelope; no PR-created fractional shrink is authorized",
+    "definition": "shipping-reachable P4 entrance fiber with full declared non-translation radii; legacy p/S radii are working-prefix capacities, not independent startup errors",
     "candidate_scale_factors": [1.0],
     "minimum_certified_scale": 1.0,
     "base_coordinate_radii": {
@@ -14,11 +14,17 @@
       "position_norm_m": 7.361215932167728,
       "integral_displacement_norm_m_s": 300.0,
       "latent_acceleration_norm_mps2": 2.941995,
-      "accelerometer_bias_error_norm_mps2": 0.4
+      "accelerometer_bias_error_norm_mps2": 0.4,
+      "accelerometer_bias_norm_mps2": 0.4
     },
-    "base_radius_provenance": "45 degree SO(3) entrance, startup physical handoff norms, and Euclidean position norm implied by |dp_i|<=0.5*Hs with Hs<=8.5 m from ou3_proof_operating_domain.json",
+    "base_radius_provenance": "45 degree SO(3) entrance and same-history BRMM velocity/latent-acceleration/bias bounds; position and S values are retained only as working-prefix capacities after the handoff-local p=S=0 entrance equalities",
     "requires_full_declared_scale": true,
-    "shipping_covariance_is_not_entry_set": true
+    "shipping_covariance_is_not_entry_set": true,
+    "entry_position_error_is_exact_zero_in_handoff_gauge": true,
+    "entry_integral_displacement_error_is_exact_zero_in_handoff_gauge": true,
+    "legacy_position_radius_is_working_prefix_only": true,
+    "legacy_integral_displacement_radius_is_working_prefix_only": true,
+    "compatibility_accelerometer_bias_alias_present": true
   },
   "BIAS0_family": {
     "model": "b_true(t)=beta_gm(t)+b0+K_T*dT(t)+K_strain*strain(t)+d_nonGM(t)",
@@ -57,15 +63,16 @@
   },
   "BIAS2_family": {
     "model": "b_true(t) is bounded-variation drift admitting no relaxation root; tau_true is unbounded above",
-    "family_role": "non-relaxing drift family whose ISS closure needs the separation sector; never inferred from BIAS0/BIAS1",
+    "family_role": "non-relaxing bounded-drift family; bounded accelerometer-bias error plus practical motion ISS does not require positive true/model root separation",
     "component_abs_upper_mps2": 0.13,
     "rate_abs_upper_mps3": 0.0002,
     "tau_true_lower_s": 2400.0,
     "tau_true_upper_is_infinite": true,
     "driver_increment_definition": "w_i=b_true(t_i)-phi_true*b_true(t_{i-1}) for every admitted phi_true in [exp(-dt/tau_true_lower_s), 1]",
-    "separation_sector": "Pi_sep=C_y^T W C_y-mu_sep X on the exact full-state same-history graph",
+    "separation_sector": "optional sharpening sector Pi_sep=C_y^T W C_y-mu_sep X on the exact full-state same-history graph",
     "uniform_separation_constant_lower": null,
-    "separation_sector_required_for_ISS_closure": true,
+    "separation_sector_required_for_declared_bounded_bias_plus_practical_motion_ISS": false,
+    "positive_true_separation_required": false,
     "one_drift_history_required": true,
     "independent_per_sample_bias_slots_forbidden": true,
     "assembled_sensor_hardware_qualified": false
