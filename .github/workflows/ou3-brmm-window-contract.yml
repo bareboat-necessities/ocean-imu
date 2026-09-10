@@ -187,8 +187,9 @@ jobs:
           assert s['R_lambda_certificate']['rate_constants_fitted_or_invented'] is False
           assert s['hard_shaping_certificate']['qualification'] == h['qualification']
           assert s['hard_shaping_certificate']['hard_shaping_state_or_excitation_bound_closed'] is True
-          assert s['hard_shaping_certificate']['BRMM_to_correlated_outer_left_inclusion_closed'] is True
-          assert s['hard_shaping_certificate']['global_physical_deployment_left_inclusion_closed_here'] is False
+          # The compact embedded hard-shaping summary deliberately omits the
+          # parent BRMM->outer/deployment inclusion keys.  Those are checked on
+          # the authoritative hard-shaping certificate above, not duplicated.
           assert s['hard_shaping_certificate']['power_spectrum_alone_is_hard_pathwise_bound'] is False
           assert s['hard_shaping_certificate']['gaussian_good_event_may_close_xs'] is False
           assert s['hard_shaping_certificate']['seeded_128_frequency_generator_may_close_xs'] is False
