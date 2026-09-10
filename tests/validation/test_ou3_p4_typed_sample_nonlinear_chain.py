@@ -1,4 +1,5 @@
 import copy
+import dataclasses
 import pathlib
 import sys
 import unittest
@@ -113,8 +114,7 @@ class TypedSampleNonlinearChainTests(unittest.TestCase):
     def test_prediction_uses_typed_corrected_rate_not_raw_measurement(self):
         selector, cells = self._fixture()
         out = CHAIN.materialize_sample_chain(selector, cells, mode="H")
-        altered = copy.deepcopy(selector)
-        altered.sample_coordinates = KERNEL.SampleCoordinates(
+        altered_sample = KERNEL.SampleCoordinates(
             gyro_measurement=selector.sample_coordinates.gyro_measurement,
             omega_body_corrected=(I(.109), I(-.019), I(.004)),
             specific_force=selector.sample_coordinates.specific_force,
@@ -124,6 +124,7 @@ class TypedSampleNonlinearChainTests(unittest.TestCase):
             aw_floor_requested=False,
             magnetometer_events_after_imu=(),
         )
+        altered = dataclasses.replace(selector, sample_coordinates=altered_sample)
         with self.assertRaisesRegex(ValueError, "detached from previous exact/outward state_out"):
             CHAIN.materialize_sample_chain(altered, cells, mode="H")
         self.assertEqual(out["prediction_count"], 1)
