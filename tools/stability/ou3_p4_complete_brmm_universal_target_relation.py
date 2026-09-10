@@ -1,19 +1,15 @@
 #!/usr/bin/env python3
 """Same-history BRMM estimator relation plus universal coefficient inclusion.
 
-The theorem still requires one physical history to generate WPE/stillness/tuner
-and the actual committed schedule.  The deployed clamp/invariant rectangle is
-used only as a *set inclusion* for the universal matrix certificate: it may not
-generate fictitious independent (f,sigma,R_S) histories.  This distinction
-allows a source-uniform coefficient proof even when the persistent WPE state is
-not represented by one small box.
+The theorem requires one physical history to generate WPE/stillness/tuner and
+the actual committed schedule. The deployed clamp/invariant rectangle is used
+only as a set inclusion for the universal matrix certificate: it may not
+generate fictitious independent (f,sigma,R_S) histories.
 
-For the uniformly qualified BRMM source, every physical sample is finite and in
-the existing Normal-Live caps. The branch-complete frontend transition maps the
-same sample/history into the joint estimator image; shipping clamps then place
-every image inside the dynamic coefficient invariant. Thus every actual
-coefficient lineage is contained in the universal cover while retaining its
-same-history provenance.
+For the uniformly qualified BRMM source, every physical sample is checked
+against the *declared* Normal-Live caps from the operating domain. No historical
+4 m/s^2 literal is permitted to redefine that source after the domain has been
+widened to 8 m/s^2.
 """
 from __future__ import annotations
 import argparse,json
@@ -27,21 +23,26 @@ import ou3_brmm_finite_window_primitive_qualification as PRIMITIVE
 
 REPO=Path(__file__).resolve().parents[2]
 DEFAULT_DOMAIN=REPO/'tools'/'stability'/'ou3_proof_operating_domain.json'
-SCHEMA=5
-QUALIFICATION='OU3_P4_COMPLETE_BRMM_JOINT_RELATION_PLUS_UNIVERSAL_INCLUSION_V5'
+SCHEMA=6
+QUALIFICATION='OU3_P4_COMPLETE_BRMM_JOINT_RELATION_PLUS_UNIVERSAL_INCLUSION_V6'
 
 def build(domain_path=DEFAULT_DOMAIN):
-    dynamic=DYNAMIC.build(domain_path);target=TARGET.build(domain_path);adapt=ADAPT.build(domain_path);joint=JOINT.build();bj=BRMM_JOINT.build();primitive=PRIMITIVE.build()
+    path=Path(domain_path).resolve();domain=json.loads(path.read_text())
+    dynamic=DYNAMIC.build(path);target=TARGET.build(path);adapt=ADAPT.build(path);joint=JOINT.build();bj=BRMM_JOINT.build();primitive=PRIMITIVE.build(path)
     bad={'dynamic':DYNAMIC.validate(dynamic),'target':TARGET.validate(target),'adaptive':ADAPT.validate(adapt),'joint':JOINT.validate(joint),'brmm_joint':BRMM_JOINT.validate(bj),'primitive':PRIMITIVE.validate(primitive)};bad={k:v for k,v in bad.items() if v}
     if bad:raise RuntimeError('target-relation prerequisites failed: '+repr(bad))
-    parity=dynamic['source_parity'];inv=dynamic['dynamic_invariant'];u=primitive['uniform_physical_primitives']
-    source_inside_normal=(float(u['acceleration_norm_upper_mps2'])<=4.0 and float(u['body_rate_norm_upper_deg_s'])<=30.0)
+    parity=dynamic['source_parity'];inv=dynamic['dynamic_invariant'];u=primitive['uniform_physical_primitives'];live=domain['normal_live']
+    declared_A=float(live['non_gravitational_cog_acceleration_norm_upper_mps2']);declared_W=float(live['body_rate_norm_upper_deg_s'])
+    source_inside_normal=(float(u['acceleration_norm_upper_mps2'])<=declared_A and float(u['body_rate_norm_upper_deg_s'])<=declared_W)
     joint_materialized=bool(joint['joint_f_tau_sigma_TS_RS_image_materialized'] and bj['same_private_Mahony_vertical_drives_stillness_tuner_and_WPE'] and bj['joint_raw_f_tau_sigma_TS_RS_tuple_emitted'])
     clamp_inclusion=bool(parity['normal_live_measured_period_selector_present'] and parity['raw_sigma_target_uses_1e_minus6_variance_floor'] and target['full_dynamic_target_rectangle_image_valid'] and adapt['EMA_candidate_transition_available'] and adapt['staged_commit_transition_available'] and adapt['scheduler_due_not_due_branch_preserved'])
     physical_attachment=bool(primitive['equivalent_hard_finite_window_dynamic_constraint_closed'] and source_inside_normal and joint_materialized)
     coefficient_closed=bool(physical_attachment and clamp_inclusion)
     return {
       'schema':SCHEMA,'qualification':QUALIFICATION,'canonical_source':'COMPLETE_BRMM_NORMAL_LIVE_WORD',
+      'declared_Normal_Live_acceleration_cap_mps2':declared_A,'declared_Normal_Live_body_rate_cap_deg_s':declared_W,
+      'qualified_source_acceleration_cap_mps2':float(u['acceleration_norm_upper_mps2']),'qualified_source_body_rate_cap_deg_s':float(u['body_rate_norm_upper_deg_s']),
+      'historical_4mps2_literal_used_for_source_inclusion':False,
       'finite_frontend_history_required':True,'all_shipping_tuning_frequency_outputs_enclosed':bool(parity['normal_live_measured_period_selector_present']),'all_shipping_raw_sigma_targets_enclosed':bool(parity['raw_sigma_target_uses_1e_minus6_variance_floor']),'quiet_continuation_enclosed':bool(dynamic['normal_live_contract']['quiet_case_admitted']),
       'frequency_raw_sigma_target_rectangle':{'frequency_hz':inv['tuning_frequency_hz'],'sigma_target_raw_mps2':inv['sigma_target_raw_mps2']},
       'tau_TS_RS_are_correlated_same_cell_images':bool(target['full_dynamic_target_rectangle_image_valid']),'SpectralMSE_RS_same_cell_map':bool(target['SpectralMSE_RS_is_same_tau_sigma_image']),'independent_RS_target_forbidden':bool(target['independent_RS_target_forbidden']),
@@ -51,12 +52,9 @@ def build(domain_path=DEFAULT_DOMAIN):
       'joint_estimator_relation_materialized_here':bool(joint['joint_f_tau_sigma_TS_RS_image_materialized']),'joint_transition_rejects_independent_f_sigma':not bool(joint['independent_f_sigma_rectangle_accepted_by_transition']),'joint_transition_requires_split_on_dependency_loss':bool(joint['unresolved_wide_cells_require_source_split']),
       'same_BRMM_sample_joint_frontend_transition_materialized':joint_materialized,'same_BRMM_current_applied_schedule_retained':bool(bj['current_Riccati_active_schedule_precedes_current_measurement'] and bj['actual_applied_RS_xyz_retained_from_same_active_schedule']),
       'qualified_source_inside_existing_Normal_Live_physical_caps':source_inside_normal,
-      'branch_complete_frontend_transition_induction_used':True,
-      'shipping_clamp_invariant_is_postimage_outer_cover':clamp_inclusion,
-      'joint_transition_physical_BRMM_attachment_closed':physical_attachment,
-      'complete_BRMM_predecessor_family_covered':physical_attachment,
-      'coefficient_target_inclusion_closed':coefficient_closed,
-      'physical_vector_geometry_transition_closed_here':source_inside_normal,
+      'branch_complete_frontend_transition_induction_used':True,'shipping_clamp_invariant_is_postimage_outer_cover':clamp_inclusion,
+      'joint_transition_physical_BRMM_attachment_closed':physical_attachment,'complete_BRMM_predecessor_family_covered':physical_attachment,
+      'coefficient_target_inclusion_closed':coefficient_closed,'physical_vector_geometry_transition_closed_here':source_inside_normal,
       'complete_source_cover_closed_here':False,'P4_promoted_here':False,
     }
 def validate(d):
@@ -64,13 +62,15 @@ def validate(d):
     if d.get('schema')!=SCHEMA or d.get('qualification')!=QUALIFICATION:f.append('schema/qualification mismatch')
     for k in ('finite_frontend_history_required','all_shipping_tuning_frequency_outputs_enclosed','all_shipping_raw_sigma_targets_enclosed','quiet_continuation_enclosed','tau_TS_RS_are_correlated_same_cell_images','SpectralMSE_RS_same_cell_map','independent_RS_target_forbidden','active_schedule_connected_by_shipping_EMA','active_schedule_connected_by_staged_commit','pseudo_event_incidence_connected_by_scheduler','raw_and_effective_sigma_coordinates_preserved','full_rectangle_is_outer_inclusion_only','independent_frequency_sigma_coordinates_forbidden','same_signal_history_must_generate_period_and_sigma','wave_period_moments_must_be_retained','period_scaled_sigma_band_must_be_retained','sigma_variance_statistic_must_be_retained','period_frequency_reciprocal_relation_must_be_retained','joint_estimator_relation_materialized_here','joint_transition_rejects_independent_f_sigma','joint_transition_requires_split_on_dependency_loss','same_BRMM_sample_joint_frontend_transition_materialized','same_BRMM_current_applied_schedule_retained','qualified_source_inside_existing_Normal_Live_physical_caps','branch_complete_frontend_transition_induction_used','shipping_clamp_invariant_is_postimage_outer_cover','joint_transition_physical_BRMM_attachment_closed','complete_BRMM_predecessor_family_covered','coefficient_target_inclusion_closed','physical_vector_geometry_transition_closed_here'):
         if d.get(k) is not True:f.append(k+' not true')
-    for k in ('outer_rectangle_may_generate_theorem_history','target_pair_may_span_full_rectangle_in_theorem','complete_source_cover_closed_here','P4_promoted_here'):
+    for k in ('historical_4mps2_literal_used_for_source_inclusion','outer_rectangle_may_generate_theorem_history','target_pair_may_span_full_rectangle_in_theorem','complete_source_cover_closed_here','P4_promoted_here'):
         if d.get(k) is not False:f.append(k+' not false')
+    if float(d.get('declared_Normal_Live_acceleration_cap_mps2',0))!=8.0:f.append('declared acceleration cap is not 8 m/s^2')
+    if float(d.get('qualified_source_acceleration_cap_mps2',0))!=8.0:f.append('qualified source acceleration cap is not 8 m/s^2')
     box=d.get('frequency_raw_sigma_target_rectangle',{})
     for k in ('frequency_hz','sigma_target_raw_mps2'):
         x=box.get(k,[])
         if len(x)!=2 or not 0<float(x[0])<=float(x[1]):f.append(k+' invalid')
     return f
 def main():
-    p=argparse.ArgumentParser();p.add_argument('--domain',type=Path,default=DEFAULT_DOMAIN);p.add_argument('--output',type=Path,required=True);a=p.parse_args();d=build(a.domain);f=validate(d);d['validation_pass']=not f;d['validation_failures']=f;a.output.parent.mkdir(parents=True,exist_ok=True);a.output.write_text(json.dumps(d,indent=2,sort_keys=True)+'\n');print(json.dumps({'joint':d['joint_estimator_relation_materialized_here'],'physical_attachment':d['joint_transition_physical_BRMM_attachment_closed'],'coefficient_closed':d['coefficient_target_inclusion_closed'],'failures':f},sort_keys=True));return int(bool(f))
+    p=argparse.ArgumentParser();p.add_argument('--domain',type=Path,default=DEFAULT_DOMAIN);p.add_argument('--output',type=Path,required=True);a=p.parse_args();d=build(a.domain);f=validate(d);d['validation_pass']=not f;d['validation_failures']=f;a.output.parent.mkdir(parents=True,exist_ok=True);a.output.write_text(json.dumps(d,indent=2,sort_keys=True)+'\n');print(json.dumps({'joint':d['joint_estimator_relation_materialized_here'],'physical_attachment':d['joint_transition_physical_BRMM_attachment_closed'],'coefficient_closed':d['coefficient_target_inclusion_closed'],'A_source':d['qualified_source_acceleration_cap_mps2'],'A_domain':d['declared_Normal_Live_acceleration_cap_mps2'],'failures':f},sort_keys=True));return int(bool(f))
 if __name__=='__main__':raise SystemExit(main())
