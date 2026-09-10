@@ -2,80 +2,101 @@
 
 ## Current hypothesis
 
-Use the actual fresh startup graph and one common physical history, not the
-legacy independent entry product. At first Live, additive estimates are zero
-carried from construction. Keep physical v/p/aw, proxy attitude and biases,
-learned tuner, full reachable P and scheduler jointly. Reanchor the physical-S
-and error-S origin ONCE at handoff. Their shared-origin residual cancels exactly
-at every completed event prefix. Working S and signed source energy still evolve.
-The objective remains regional practical ISS of 18 motion errors and bounded
-BA for COMPLETE-BRMM and each of BIAS0/BIAS1/BIAS2. P3 delta stays 1e-18.
+Use only shipping-reachable hybrid entry/transition graphs and one common physical
+history. Fresh Live is not the legacy independent product: held estimates and the
+physical source share exact relations, while tuner, scheduler, covariance, bias
+families and every literal Riccati event remain on one lineage. P3 stays fixed at
+`delta=1e-18`. P4/P5 stay false until a source-uniform nonlinear certificate closes.
 
 ## Evidence and exact failure analysis
 
-* Native unchanged-wrapper audit: v/p/S/aw/bg/ba held at zero pre-Live;
-  goLive preserves nonzero sentinels on a previously driven inner path;
-  covariance/cross resets and H18/A21 mean preservation tested.
-* Independent S<=300 is not a reachable-entry theorem. A smooth periodic quiet
-  physical source gives session S error 328.285 or 545.632 m*s at actual fresh
-  handoff with S_hat=0. **D: entry-model failure**, not filter instability.
-* The 4.5788 frozen Cayley result extrapolates beyond its own chart. It neither
-  proves nonlinear escape nor supplies a valid infeasibility result. Deleting
-  that factor's diagnostic contribution (.9411/.6537) alone is not P4 closure.
-* Exact signed identity (I-KH_S)E_S+K=E_S cancels the shared constant origin.
-  Physical jet and energy cross term are retained; no independent K box is used.
-* Initial experiment predicted ideal rest would use the timeout. It instead
-  acquired a period from a small shipping proxy-normalization transient at
-  90.245 s. This invalidated that proposed witness, not the timeout source path.
-  A bounded sensor sequence producing exactly zero actual proxy then reached
-  timeout Live at 150.0007477 s with no usable period. **F** for a measured-only
-  capture target, not failure of runtime startup or the Live filter.
-* WPE variance/omega guard straddles formerly discarded a possible valid branch.
-  Both are retained; shared moment weight cancels before ratio enclosure.
-  Prior Live and first-valid/takeover transitions are now materialized.
-* New threshold tests exposed wide_exp reducing to an outward endpoint just
-  above 0.5. It now checks the actual reduced interval and halves again.
-  **C: enclosure-primitive domain failure**; no shipping arithmetic changed.
+* Fresh-wrapper audit: v/p/S/aw/bg/ba estimates are held at construction values
+  before first Live; `goLive()` does not generally reset already-driven linear
+  means. The independent `S<=300 m*s` factor is therefore not a fresh-Live
+  reachability theorem. Shared physical/error S origin gives exact cancellation
+  of the constant-origin residual while retaining physical jet/source energy.
+* Same-signal period/sigma/tau/T_S/R_S relation and shipping-order frontend state
+  are materialized; independent coefficient boxes remain non-promoting.
+* Two current CI failures were infrastructure, not theorem failures: the
+  source-cover smoke outward-rounded the exact radial domain endpoints outside
+  `[0,1]`, and the kernel/joint bridge demanded bit-identical interval endpoints
+  from algebraically equivalent expression trees. The fixes use exact closed
+  radial endpoints and recursive outward containment, respectively.
+* Complete 3 s point feasibility on one genuine same-history shipping word is
+  strict in both modes: H18 worst linear rho=0.9995136399194533 and A21 worst
+  linear rho=0.9959857178394912. Independent event-ledger accumulation gives
+  H18 rho=0.9995155929942543 and A21 rho=0.9959806199048538.
+* **Important failure:** the frozen-gain nonlinear shadow of the same A21 word is
+  not contractive over the whole formerly declared product scale. The first
+  reliable rho>=1 crossing is at absolute scale 5.5; worst reliable values are
+  raw rho=1.10491633415 and full-Phi rho=1.10309267044. The linear maximizing
+  direction is dominated by accelerometer-bias error. H18 remains strict on all
+  reliable tested scales (worst full-Phi rho=0.999539196491).
+* Classification: **proof-formulation / regional-basin failure**, not a demonstrated
+  instability of the shipping filter. It invalidates the hypothesis that the
+  existing full-product A21 3 s complete-word storage contracts throughout its
+  declared radial scale. A >10% point expansion is too large to repair by tighter
+  interval subdivision or finite-precision bookkeeping.
+* The simplest unlock-only repair is insufficient. Shipping keeps estimated b_a
+  exactly frozen while learning is disabled (`phi_b=1`, frozen Kalman rows), so
+  H18->A21 release starts with `e_ba=beta_true`; however the observed failing word
+  is around t=1183 s, long after release. Reachable release correlation remains
+  useful for capture/induction, but cannot alone prove every later 3 s A21 map.
 
-## Retained closed facts
+## What the failure does not invalidate
 
-The three physical bias families keep separate recurrences, joint driver supply
-and family-parametric projection/Joseph graph. BIAS2 phi_true=1 needs no positive
-separation for bounded bias plus practical motion ISS. Exact same-event reset,
-projection and signed Joseph lemmas remain. Target arithmetic qualification is
-separate from conditional algebra. No physical source or quality gate is weakened.
+It does not invalidate local A21 contraction, H18 contraction, the three bias
+families, projection/Joseph graph identities, the same-signal source relation,
+or practical stability over a longer/hybrid horizon. It is also not evidence for
+positive BIAS2 separation, a filter change, a weaker P3 threshold, or source/domain
+exclusion. The current point shadow freezes shipping gains/acceptance and is a
+falsifier for this storage/word formulation, not a universal nonlinear trajectory.
 
 ## Current limiter
 
-There is no source-uniform reachable entry/continuation cover tying all physical
-primitives, prior/measured adaptation states, P/H/R/K, scheduler and every literal
-prefix. Numerical BRMM primitive/forcing constants remain unqualified. Hence no
-outward endpoint/every-prefix augmented LDLT, compatible coercive storage, retained
-nonlinear domain or finite uniform T_capture has been completed. P4/P5 stay false.
+A21 finite-amplitude bias/error coupling is now the controlling mathematical
+limiter. The old full-product 3 s storage has a real point expansion before any
+rigorous interval pessimism. Separately, universal BRMM/source-prefix attachment
+and full binary32 Eigen/Kalman/reset enclosure are still incomplete, but tightening
+them cannot rescue a formulation whose point nonlinear rho already exceeds one.
 
 ## Alternatives and critic pass
 
-1. Preserve the physical-origin null direction analytically before any matrix
-   enclosure, then transport a source-correlated full metric and its signed supply.
-2. Construct a common graph/IQC storage for prior/measured and Q/O transitions,
-   rather than choosing an unrelated Stein metric for each word.
-3. Use reachable-flow/Taylor models with shared physical acceleration moments and
-   joint covariance/frontend roots, rather than Cartesian source/gain boxes.
+Strongest reason to abandon the current architecture: its own same-history point
+shadow reaches rho~1.10, so further subdivision of the same 3 s/full-product
+quadratic certificate attacks the wrong quantity.
 
-The first option removes the exact offending entrance dependency; it does not
-justify subdivisions of the former independent-S product. The next falsifiable
-experiment must assemble a complete corrected signed word, including the shifted
-physical-S supply and prior branch, before tuning a metric. A point feasibility
-result still cannot substitute for universal source coverage.
+Qualitatively different alternatives:
+
+1. **Longer/hybrid A21 word:** allow bounded transient 3 s growth and certify net
+   contraction over a source-contiguous 6/9 s word, with every shorter prefix kept
+   inside a retained tube. This changes the theorem composition, not the filter.
+2. **Physical bias-source storage:** carry `(e_ba,beta_true)` jointly with the
+   BIAS-family recurrence/projection and use a storage with their cross term,
+   instead of judging A21 only in the marginal error metric. This targets the
+   observed bias-dominated direction directly.
+3. **Consecutive source-dependent metric:** retain the shipping covariance/source
+   cell as metric memory and prove compatibility between consecutive cells rather
+   than one fixed full-product metric for every A21 word.
+4. **Hybrid H18->A21 induction:** use the exact unlock graph `e_ba=beta_true` as
+   the only A21 admission and prove subsequent reachable A21 states remain in a
+   smaller invariant graph generated by the source dynamics, without declaring an
+   arbitrary Cartesian radius reduction.
+
+## Next falsifiable experiment
+
+First inspect the already-running source-contiguous 6 s and 9 s physical finite-map
+experiments. If A21 remains rho>=1 there, freeze the longer-word tactic as a dead
+end and test a joint `(e_ba,beta_true)` storage on the identified t~1183 s word.
+If the longer endpoint becomes strict, quantify the worst literal prefix excursion
+and determine whether the existing hard working tube contains it before any
+rigorous enclosure work. No additional scalar norm/subdivision refinement is
+permitted without that feasibility result.
 
 ## Dead ends
 
-No covariance ellipsoid as a hard error set; no 300-to-smaller arbitrary radius;
-no claim S integrates covariance uncertainty while the MEKF is held; no claim
-4.5788 proves nonlinear instability; no independent f/sigma/tau/T_S/R_S or K/P/H/R
-families; no quiet-state exclusion merely to force a measured period; no replay or
-pinned source promoted to a universal theorem. General infeasibility has NOT been
-established and all dependency-preserving options have NOT been exhausted.
-
-See `docs/ou3-live-entry-audit.md` for executable paths and the exact reference
-lemma; machine evidence is `reports/results/rao_stability/live-entry-graph.json`.
+No covariance ellipsoid as hard true-error membership; no arbitrary 300-to-smaller
+S radius; no independent f/sigma/tau/T_S/R_S or K/P/H/R boxes; no replay promoted
+to a universal source theorem; no claim that 4.5788 or the new A21 shadow alone
+proves shipping instability; no refinement of the same 3 s/full-product A21
+certificate after its point rho>1 failure. P4/P5 remain fail-closed.
