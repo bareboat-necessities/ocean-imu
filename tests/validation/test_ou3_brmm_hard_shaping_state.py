@@ -23,6 +23,8 @@ class HardShapingStateContractTest(unittest.TestCase):
         self.assertTrue(d["theorem_rejects_statistical_or_seeded_surrogates"])
         self.assertTrue(d["theorem_separates_probabilistic_random_sea_corollary"])
         self.assertTrue(d["complete_source_rejects_gaussian_word_generator"])
+        self.assertTrue(d["correlated_outer_enclosure_route_used"])
+        self.assertFalse(d["exact_spectral_membership_oracle_required_for_P4"])
         self.assertEqual(d["hard_realization_set_symbol"], "X^s_ref(lambda_{0:N_W})")
         phase = d["continuum_phase_certificate"]
         self.assertTrue(phase["continuum_phase_coordinate_set_closed"])
@@ -32,12 +34,14 @@ class HardShapingStateContractTest(unittest.TestCase):
         self.assertFalse(phase["phase_reset_on_lambda_transition_allowed"])
         behavior = d["sampled_behavior_target"]
         self.assertEqual(behavior["symbol"], "B^601_BRMM")
+        self.assertEqual(behavior["correlated_outer_set_symbol"], "O^601_BRMM")
         self.assertTrue(behavior["compact"])
         self.assertTrue(behavior["membership_requires_common_BRMM_witness"])
+        self.assertTrue(behavior["validated_correlated_outer_enclosure_closed"])
+        self.assertTrue(behavior["correlated_outer_left_inclusion_closed"])
         self.assertFalse(behavior["normal_live_caps_are_membership_sufficient"])
         self.assertFalse(behavior["independent_sample_boxes_define_behavior_set"])
         self.assertFalse(behavior["validated_membership_or_separation_oracle_closed"])
-        self.assertFalse(behavior["validated_correlated_outer_enclosure_closed"])
         self.assertFalse(d["hard_shaping_state_or_excitation_bound_closed"])
         self.assertFalse(d["complete_BRMM_family_materialized_here"])
         self.assertFalse(d["P3_promoted"])
@@ -55,7 +59,7 @@ class HardShapingStateContractTest(unittest.TestCase):
         ):
             self.assertFalse(d[key], key)
 
-    def test_phase_is_closed_but_driver_and_output_remain_open(self) -> None:
+    def test_outer_route_closes_left_inclusion_but_output_map_remains_open(self) -> None:
         d = SHAPING.build()
         self.assertEqual(
             d["executable_ingredients"],
@@ -63,7 +67,8 @@ class HardShapingStateContractTest(unittest.TestCase):
                 "continuum_phase_coordinate_set_closed": True,
                 "phase_continuous_propagation_closed": True,
                 "hard_spectral_driver_set_closed": False,
-                "complete_BRMM_left_inclusion_closed": False,
+                "correlated_outer_enclosure_closed": True,
+                "complete_BRMM_left_inclusion_closed": True,
                 "joint_source_output_map_closed": False,
             },
         )
