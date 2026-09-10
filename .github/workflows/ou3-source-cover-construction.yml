@@ -5,6 +5,7 @@ on:
     paths:
       - "tools/stability/**"
       - "tests/validation/test_ou3_brmm_infinite_continuation.py"
+      - "tests/validation/test_ou3_brmm_centered_S_recurrence.py"
       - "tests/validation/test_ou3_p4_live_entry_graph.py"
       - "tests/kalman_ou_iii/live_entry_audit-test.cpp"
       - "docs/ou3-*.md"
@@ -27,14 +28,29 @@ jobs:
       - uses: actions/checkout@v6
         with:
           persist-credentials: false
-      - name: Exact indefinite-source obstruction and mutation tests
+      - name: Exact indefinite-source obstruction and centered-S qualification
         run: |
           set -euo pipefail
           mkdir -p /tmp/ou3-construction
           git rev-parse HEAD > /tmp/ou3-construction/source-commit.txt
           python3 tools/stability/ou3_brmm_infinite_continuation.py --output /tmp/ou3-construction/infinite-continuation.json
+          python3 tools/stability/ou3_brmm_centered_S_recurrence.py --output /tmp/ou3-construction/centered-S-recurrence.json
           python3 -m unittest discover -s tests/validation -p 'test_ou3_brmm_infinite_continuation.py' -v
+          python3 -m unittest discover -s tests/validation -p 'test_ou3_brmm_centered_S_recurrence.py' -v
           python3 -m unittest discover -s tests/validation -p 'test_ou3_p4_live_entry_graph.py' -v
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/ou3-construction/centered-S-recurrence.json'))
+          assert d['validation_pass']
+          assert d['condition_is_origin_invariant']
+          assert d['condition_bounds_every_handoff_centered_S']
+          assert d['condition_excludes_nonzero_constant_position_history']
+          assert d['D_S_max_m_s'] is None
+          assert not d['D_S_numeric_qualification_closed']
+          assert not d['COMPLETE_BRMM_INDEFINITE_S_QUALIFIED']
+          assert not d['P4_PASS'] and not d['P5_MAY_START']
+          assert d['P3_delta']==1e-18
+          PY
       - name: Preserve source, startup and fail-closed mathematical gates
         run: |
           set -euo pipefail
