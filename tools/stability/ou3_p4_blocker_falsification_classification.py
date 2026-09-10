@@ -191,6 +191,8 @@ def _transverse_attitude_cap(domain: dict) -> dict:
         "refutation_exceedance_factor": float(capd["refutation"]["exceedance_factor"]),
         "conditional_on_joint_latent_bias_block": True,
         "joint_latent_bias_lambda_max": float(capd["joint_latent_bias_lambda_max"]),
+        "latent_lambda_max": float(capd["latent_lambda_max"]),
+        "bias_lambda_max": float(capd["bias_lambda_max"]),
         "lambda_max_source": "certified BRMM covariance ceiling, mode A",
         "per_sample_accelerometer_update_declared": True,
         "accelerometer_std_lower_mps2": r_acc,
@@ -330,6 +332,21 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
             "joint_latent_bias_shortfall_factor":
                 up(lam_now / down(lam_star)) if lam_star > 0.0 else float("inf"),
             "requirement_is_achievable_in_principle": bool(lam_star > 0.0),
+            # Which half of the joint block owes the shortfall. The certified
+            # ceiling puts essentially all of it in the latent acceleration:
+            # the accelerometer-bias block is orders of magnitude below the
+            # target on its own, so nothing is gained by tightening it. The
+            # obligation is a bound on the LATENT ACCELERATION posterior, and
+            # that is what the window argument has to deliver.
+            "latent_block_lambda_max": float(cap["latent_lambda_max"]),
+            "bias_block_lambda_max": float(cap["bias_lambda_max"]),
+            "bias_block_alone_meets_the_target": bool(
+                float(cap["bias_lambda_max"]) <= lam_star),
+            "latent_block_alone_meets_the_target": bool(
+                float(cap["latent_lambda_max"]) <= lam_star),
+            "binding_block": ("latent_acceleration"
+                              if float(cap["latent_lambda_max"]) > float(cap["bias_lambda_max"])
+                              else "accelerometer_bias"),
         })
     else:
         threshold["required_transverse_variance_per_axis_rad2"] = None

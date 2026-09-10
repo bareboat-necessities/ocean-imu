@@ -388,7 +388,11 @@ same-cell `S^{-1}` route gives 3.38698, so it does NOT close.
 transverse attitude variance is bounded by `P*`, and the conditional cap is
 776.85 times too loose. Equivalently the target is
 `lambda_max(P_(a_w,b_a)) <= 5.27063e-2` against 56.4621 certified, a shortfall
-of 1071.3.
+of 1071.3. The shortfall is entirely the latent-acceleration block: the
+accelerometer-bias half of that ceiling is 6.25e-4, already 84 times inside the
+target, while the latent half is 56.4615. So the open quantity is a bound on the
+`a_w` posterior variance -- the very state the accelerometer residual cannot
+separate from attitude in one event.
 
 **Open.** That shortfall, plus rotation about the specific force, which the
 accelerometer does not observe at all.

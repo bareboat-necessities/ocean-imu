@@ -118,6 +118,17 @@ class BlockerFalsificationClassificationTest(unittest.TestCase):
         self.assertLess(th["required_joint_latent_bias_lambda_max"],
                         th["attained_joint_latent_bias_lambda_max"])
         self.assertGreater(th["joint_latent_bias_shortfall_factor"], 1.0)
+        # The target must be attributable to one block, or it is not actionable.
+        # On the certified ceiling the accelerometer-bias block already meets it
+        # on its own and the latent acceleration owes the whole shortfall, so the
+        # window argument has a single quantity to bound.
+        self.assertEqual(th["binding_block"], "latent_acceleration")
+        self.assertTrue(th["bias_block_alone_meets_the_target"])
+        self.assertFalse(th["latent_block_alone_meets_the_target"])
+        self.assertGreater(th["latent_block_lambda_max"], th["bias_block_lambda_max"])
+        self.assertAlmostEqual(th["attained_joint_latent_bias_lambda_max"],
+                               th["latent_block_lambda_max"] + th["bias_block_lambda_max"],
+                               delta=1e-9)
 
     def test_correlated_relation_summary_is_carried_through(self):
         rel = self.d["correlated_integral_relation"]

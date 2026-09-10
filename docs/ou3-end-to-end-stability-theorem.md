@@ -257,7 +257,19 @@ lambda_max(P_(a_w,b_a)) <= (P* f^2 - sigma_a^2)/2 = 5.27063e-2,
 
 against the 56.4621 now certified: a shortfall of 1071.3. All of these are
 rounded outward by the producer, so the stated `P*` and `lambda*` are safe to
-aim at rather than optimistic. That target is the
+aim at rather than optimistic.
+
+That target is attributable to one block. On the certified ceiling the
+accelerometer-bias half contributes 6.25e-4 and the latent-acceleration half
+56.4615, so the bias block already meets the target on its own by a factor of 84
+and the latent acceleration owes the entire shortfall. The open obligation is
+therefore not "tighten the covariance ceiling" in general -- it is a bound on the
+LATENT ACCELERATION posterior variance, which is precisely the state the
+accelerometer residual cannot separate from attitude in one event. The circularity
+is the finding: the attitude bound needs the `a_w` bound, and the `a_w` ceiling is
+loose for the same confounding reason. Breaking it needs the window, where
+attitude, `a_w` and `b_a` separate because their dynamics differ -- attitude drifts
+with the gyro bias, `a_w` mean-reverts at rate `1/tau`, and `b_a` is constant. That target is the
 concrete statement of what remains, and it is achievable in principle rather
 than excluded.
 

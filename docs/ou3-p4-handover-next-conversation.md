@@ -85,7 +85,11 @@ composition fail-closed. `END_TO_END_STABILITY_PASS = false`.
    What it does give is a sharp target. The route closes iff the transverse
    attitude variance is below `P* = 4.31271e-3` rad^2 per axis, equivalently iff
    `lambda_max(P_(a_w,b_a)) <= 5.27063e-2` against 56.4621 certified -- a
-   shortfall of 1071.3. Get that from the uniform observability/detectability
+   shortfall of 1071.3. All of that shortfall is the latent-acceleration block
+   (56.4615); the accelerometer-bias block is 6.25e-4 and already meets the
+   target 84 times over, so the quantity to bound is the `a_w` posterior
+   variance and nothing else.
+   Get that from the uniform observability/detectability
    machinery, where attitude and `a_w` are separated over a WINDOW rather than
    at one event; one event provably cannot separate them.
    The third direction, rotation about the specific force, still has a route
