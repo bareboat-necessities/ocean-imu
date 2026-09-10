@@ -194,7 +194,7 @@ every cell, because `I-K_S` is similar to a symmetric operator with norm
 `R_S <= 100`, above 1e25 events per e-fold. So the regulation cannot anchor
 `e_S` by contraction.
 
-It does not have to. `ou3_p5_live_entry_reachability.py` settles the entry value
+It does not have to. `ou3_p4_live_entry_reachability.py` settles the entry value
 from the deployed startup path instead: `updateFrontEnd` runs the front end with
 `drive_mekf=false` and every MEKF drive call sits inside that guard, so the
 translational block is never propagated before `goLive` and stays at the

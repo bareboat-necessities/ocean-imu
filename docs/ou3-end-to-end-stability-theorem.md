@@ -78,7 +78,7 @@ physically attainable, because the deployed radial projection keeps
 
 ## What the deployed startup actually hands to Live
 
-`tools/stability/ou3_p5_live_entry_reachability.py` settles the entry-set
+`tools/stability/ou3_p4_live_entry_reachability.py` settles the entry-set
 question from the shipping sources rather than by choosing radii. Three parity
 facts, all checked against `SeaStateFusionFilter_OU_III.h` and
 `Kalman3D_Wave_OU_III.h`:

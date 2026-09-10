@@ -75,7 +75,7 @@ REPO = Path(__file__).resolve().parents[2]
 DEFAULT_DOMAIN = REPO / "tools" / "stability" / "ou3_proof_operating_domain.json"
 FUSION = REPO / "src" / "kalman_ou_iii" / "SeaStateFusionFilter_OU_III.h"
 MEKF = REPO / "src" / "kalman_ou_iii" / "Kalman3D_Wave_OU_III.h"
-QUALIFICATION = "OU3_P5_DEPLOYED_LIVE_ENTRY_REACHABILITY_V1"
+QUALIFICATION = "OU3_P4_DEPLOYED_LIVE_ENTRY_REACHABILITY_V1"
 
 # Entry coordinates the deployed handoff pins to the negated physical truth.
 PINNED_COORDINATES = ("velocity", "position", "integral_displacement",

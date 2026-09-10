@@ -45,7 +45,7 @@ Findings, all reproduced by ``build()``:
     either a proved reachable ``P_SS`` lower bound far above the process floor
     or the P5 capture argument.  That is reported, not smuggled into P4.
 
-Relationship to the deployed pinning.  ``ou3_p5_live_entry_reachability``
+Relationship to the deployed pinning.  ``ou3_p4_live_entry_reachability``
 settles the entry VALUE from the startup path: the MEKF linear block is never
 propagated before ``goLive``, so ``e_S`` at Live entrance is exactly
 ``-S_true(T)`` and its radius is the BRMM primitive ``S_m``.  This module stays

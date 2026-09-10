@@ -30,7 +30,7 @@ The three groups are
 The basin is deliberately handled as a MAXIMISATION.  Width certified in P4 is
 width the capture stage does not have to achieve, so the gate carries the
 frontier from ``ou3_p4_basin_frontier`` and the deployed Live-entry pinning from
-``ou3_p5_live_entry_reachability`` rather than a single convenient radius.
+``ou3_p4_live_entry_reachability`` rather than a single convenient radius.
 """
 from __future__ import annotations
 
@@ -41,7 +41,7 @@ from pathlib import Path
 import ou3_p4_basin_frontier as FRONTIER
 import ou3_p4_correlated_entry_relation as ENTRYREL
 import ou3_p4_final_closure_gate as P4GATE
-import ou3_p5_live_entry_reachability as P5REACH
+import ou3_p4_live_entry_reachability as P5REACH
 
 REPO = Path(__file__).resolve().parents[2]
 DEFAULT_DOMAIN = REPO / "tools" / "stability" / "ou3_proof_operating_domain.json"

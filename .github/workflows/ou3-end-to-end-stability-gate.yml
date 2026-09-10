@@ -12,7 +12,7 @@ on:
       - 'tools/stability/**'
       - 'reports/results/rao_stability/entry-block-retention.json'
       - 'tests/validation/test_ou3_end_to_end_stability_gate.py'
-      - 'tests/validation/test_ou3_p5_live_entry_reachability.py'
+      - 'tests/validation/test_ou3_p4_live_entry_reachability.py'
       - 'tests/validation/test_ou3_p4_basin_frontier.py'
       - 'tests/validation/test_ou3_p4_coefficient_dependency_cover.py'
       - '.github/workflows/ou3-end-to-end-stability-gate.yml'
@@ -39,7 +39,7 @@ jobs:
         with:
           python-version: '3.12'
       - name: Build the deployed Live-entry reachability lemma
-        run: python3 tools/stability/ou3_p5_live_entry_reachability.py --output /tmp/live-entry.json
+        run: python3 tools/stability/ou3_p4_live_entry_reachability.py --output /tmp/live-entry.json
       - name: Build the maximal chart-retaining basin frontier
         run: python3 tools/stability/ou3_p4_basin_frontier.py --output /tmp/basin-frontier.json
       - name: Build the adaptive coefficient dependency cover
@@ -108,7 +108,7 @@ jobs:
       - name: Run the producer unit tests
         run: |
           python3 -m unittest -v \
-            tests.validation.test_ou3_p5_live_entry_reachability \
+            tests.validation.test_ou3_p4_live_entry_reachability \
             tests.validation.test_ou3_p4_basin_frontier \
             tests.validation.test_ou3_p4_coefficient_dependency_cover \
             tests.validation.test_ou3_end_to_end_stability_gate

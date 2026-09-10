@@ -7,7 +7,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools"))
 sys.path.insert(0, str(ROOT / "tools" / "stability"))
 
-import ou3_p5_live_entry_reachability as REACH
+import ou3_p4_live_entry_reachability as REACH
 
 
 class LiveEntryReachabilityTest(unittest.TestCase):

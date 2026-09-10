@@ -27,7 +27,7 @@ composition fail-closed. `END_TO_END_STABILITY_PASS = false`.
    whole frontier to choose from, not one number.
 2. **Never assert unreachability, prove it.** Removing coordinate combinations
    the implementation cannot generate is legitimate and is NOT domain shrinking,
-   but only with a reachability argument. `ou3_p5_live_entry_reachability.py`
+   but only with a reachability argument. `ou3_p4_live_entry_reachability.py`
    is the template: it reads the shipping sources and checks parity strings.
 
 ## What is already settled — do not redo it
