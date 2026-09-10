@@ -75,7 +75,11 @@ jobs:
               state=[I(0.0) for _ in range(n)], P=P,
               dt_s=I(0.005), tau_applied_s=I(2.0), sigma_aw_mps2=I(1.0),
               pseudo_elapsed_s=I(0.015), R=R, R_provenance=E.ACTUAL_RS_PROVENANCE,
-              radial_scale=Interval.outward_bounds(0.0,1.0))
+              # This is the exact closed parameter domain [0,1], not the
+              # outward enclosure of two already-exact domain endpoints. Using
+              # outward_bounds(0,1) would intentionally create values outside
+              # the declared radial domain and make the smoke self-contradictory.
+              radial_scale=Interval(0.0,1.0))
           assert C.validate_cell(cell)==[], C.validate_cell(cell)
           ev=E.source_joseph_event(**C.joseph_event_kwargs(cell))
           assert ev['same_P_H_R_cell']
@@ -103,8 +107,6 @@ jobs:
               ('tuner-stillness',ts),('brmm-joint',bj),('brmm-prefix',bp)]:
               assert obj['validation_pass'], (name,obj.get('validation_failures'))
 
-          # Hard P4 invariant: the theorem coefficient family is the image of one
-          # physical estimator history.  No independent f/sigma/tau/TS/RS boxes.
           assert j['same_signal_wave_period_and_band_state_materialized']
           assert j['tuner_precedes_current_sample_wave_period_update']
           assert j['newly_usable_period_affects_tuner_only_next_sample']
@@ -141,8 +143,6 @@ jobs:
           assert u['same_BRMM_sample_joint_frontend_transition_materialized']
           assert u['same_BRMM_current_applied_schedule_retained']
 
-          # The production cover and production LDLTs remain deliberately false
-          # until every admitted BRMM/radial predecessor lineage is covered.
           assert not bj['complete_BRMM_predecessor_state_family_covered_here']
           assert not bj['all_radial_hard_entry_segments_covered_here']
           assert not u['joint_transition_physical_BRMM_attachment_closed']
