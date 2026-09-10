@@ -5,6 +5,11 @@ The nonlinear event machinery consumes one outward SAME-CELL tuple
 
     (state, P, H-geometry, R, true bias, committed tuner/scheduler state).
 
+Fresh-Live entry is NOT the legacy independent 300 m*s error product. Its
+physical S and S-error must use ou3_p4_live_entry_graph's shared origin, and
+prior-frequency timeout Live must be covered as well as measured-period Live.
+The cell API below is not that full cover; its build result remains false.
+
 Tuner coefficients are not free coordinates. The same physical signal history
 must generate WavePeriodEstimator period/frequency and the period-scaled sigma
 variance statistic before the dependent chain

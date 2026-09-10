@@ -52,12 +52,9 @@ def build():
       and g['joint_ISS_master_ready_for_BIAS1_and_roundoff']
       and g['physical_BIAS1_projection_and_Joseph_prerequisites_ready'])
 
-    # Each bias family is admitted and lifted from its own authoritative module;
-    # none is inferred from another. What separates BIAS1 from BIAS0/BIAS2 here
-    # is the same-history graph: the exact-chord signed master bridge exposes
-    # BIAS1 projection/Joseph prerequisites only, so BIAS0 and BIAS2 still need
-    # their own source-uniform same-history certificates. BIAS2 additionally
-    # needs a uniform separation constant, which is not proved.
+    # Every family is admitted and lifted from its OWN physical-driver module.
+    # Projection/Joseph prerequisites are family-parametric; positive BIAS2
+    # separation is optional for this bounded-bias/practical-motion objective.
     family_admission={
       'BIAS0':bool(b0['BIAS0_SOURCE_ADMISSION_PASS']),
       'BIAS1':bool(b['BIAS1_SOURCE_ADMISSION_PASS']),
@@ -110,6 +107,14 @@ def build():
       and src['joint_estimator_physical_BRMM_attachment_closed']
       and src['SOURCE_UNIFORM_COMPLETE_BRMM_COVER_CLOSED'])
 
+    # A hypothetical Cartesian product is not the fresh shipping handoff.
+    # The exact shared-origin lemma removes its independent S factor, but the
+    # remaining reachable attitude/P/tuner/scheduler cover must still be built.
+    fresh_entry=e['fresh_live_entry_graph']
+    fresh_entry_cover=bool(
+      fresh_entry['source_uniform_reachable_other_entry_coordinates_closed']
+      and adaptive_source_cover_closed)
+
     correction=bool(rb['source_uniform_same_graph_correction_domain_closed'])
     reset_iqc=bool(rb['homogeneous_same_cell_reset_IQC_consumed'])
     reset_gain=bool(rb['reset_gain_uniform_over_zero_to_correction_ceiling'])
@@ -119,7 +124,7 @@ def build():
     arithmetic=bool(fp['full_shipping_Kalman_reset_finite_precision_enclosure_closed_conditionally'] and fp['additive_ISS_channel_complete_for_conditional_P4'])
     platform_qualified=bool(fp['deployment_finite_precision_qualification_closed'])
 
-    motion=bool(admissions and backbone and graph_ready and all_bias_families_closed and adaptive_source_cover_closed
+    motion=bool(fresh_entry_cover and admissions and backbone and graph_ready and all_bias_families_closed and adaptive_source_cover_closed
                 and correction and reset_iqc and reset_gain and endpoint and prefixes and hard_prefix and arithmetic)
     return {
       'qualification':QUALIFICATION,'canonical_source':'COMPLETE_BRMM_NORMAL_LIVE_WORD','declared_domain_shrunk':False,
@@ -145,6 +150,9 @@ def build():
       'adaptive_same_signal_source_contract_ready':adaptive_source_contract,
       'adaptive_same_signal_source_uniform_cover_closed':adaptive_source_cover_closed,
       'hard_entry_set_admitted_without_covariance_membership':admissions,
+      'fresh_live_entry_graph':fresh_entry,
+      'fresh_live_entry_cover_closed':fresh_entry_cover,
+      'legacy_independent_S_box_can_promote_fresh_entry':False,
       'universal_full_entry_finite_angle_differential_backbone_closed':backbone,
       'H18_finite_angle_worst_LDLT_pivot_lower':g['universal_H18_worst_LDLT_pivot_lower'],
       'A21_first_active_ba_margin_lower':g['universal_A21_first_active_ba_margin_lower'],
@@ -163,6 +171,7 @@ def build():
       'point_capture_can_promote':False,'rowwise_coefficient_boxes_can_promote':False,'differential_backbone_alone_can_promote':False,
       'P4_MOTION_PASS':motion,'P4_PASS':motion,'P5_MAY_START':motion,
       'remaining_mathematical_P4_blockers':[x for x,ok in (
+        ('reachable fresh-Live correlated entry including prior-frequency timeout branch',fresh_entry_cover),
         ('source-uniform BIAS0 same-history physical-driver family',bias_family_closed['BIAS0']),
         ('source-uniform BIAS1 same-history physical-driver family',bias_family_closed['BIAS1']),
         ('source-uniform BIAS2 same-history physical-driver family',bias_family_closed['BIAS2']),
@@ -196,13 +205,14 @@ def validate(d):
     for k in ('declared_domain_shrunk','filter_changed','quality_gates_changed','point_capture_can_promote',
               'rowwise_coefficient_boxes_can_promote','differential_backbone_alone_can_promote',
               'independent_tau_sigma_TS_RS_boxes_can_promote','independent_frequency_sigma_coordinates_can_promote',
-              'BIAS0_or_BIAS2_inferred_from_BIAS1','BIAS2_separation_required_for_bounded_bias_objective'):
+              'BIAS0_or_BIAS2_inferred_from_BIAS1','BIAS2_separation_required_for_bounded_bias_objective',
+              'legacy_independent_S_box_can_promote_fresh_entry'):
         if d.get(k) is not False:f.append(k+' not false')
     for k in ('H18_finite_angle_worst_LDLT_pivot_lower','A21_first_active_ba_margin_lower'):
         if float(d.get(k,0))<=0:f.append(k+' not positive')
 
     required=all(bool(d[k]) for k in (
-      'hard_entry_set_admitted_without_covariance_membership','universal_full_entry_finite_angle_differential_backbone_closed',
+      'fresh_live_entry_cover_closed','hard_entry_set_admitted_without_covariance_membership','universal_full_entry_finite_angle_differential_backbone_closed',
       'exact_chord_projection_BIAS1_same_history_graph_ready','all_required_bias_families_closed',
       'adaptive_same_signal_source_uniform_cover_closed','source_uniform_same_graph_correction_domain_closed',
       'homogeneous_same_cell_reset_IQC_consumed','reset_gain_uniform_over_zero_to_correction_ceiling',

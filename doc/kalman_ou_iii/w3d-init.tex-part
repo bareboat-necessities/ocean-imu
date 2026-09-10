@@ -6,8 +6,8 @@
 Startup keeps attitude initialization outside the MEKF.  The measurement-only
 Mahony observer of Sec.~\ref{sec:vertical-proxy} runs from the first sample
 while the MEKF remains untouched; wave-period and acceleration-variance
-estimators converge in parallel.  Once the source gates are satisfied, the
-proxy solution initializes the MEKF in Live mode.  The accepted handoff is
+estimators converge in parallel.  The proxy solution initializes the MEKF at a quality or aligned-timeout
+handoff. Runtime Live is not by itself a certified P4 entrance.  The accepted handoff is
 represented by the compact set $\mathcal H$ and is propagated directly by the
 regional theorem of Sec.~\ref{sec:finite-live-capture}.
 
@@ -32,7 +32,7 @@ Normal handoff requires: (i) \SI{2}{s} of proxy gravity agreement with
 sine-angle error below \num{0.075} on the aligned branch and gyro magnitude
 below \SI{30}{\degree\per\second}; (ii) a magnetic gauge when a magnetometer is
 present and full-heading operation is requested; and (iii) tuner readiness.  A
-minimum \SI{8}{s} startup prevents a quiet initial interval from passing
+minimum \SI{30}{s} startup prevents a quiet initial interval from passing
 prematurely.  The Mahony contribution to gate entry is bounded by $T_Q$ in
 Eq.~\eqref{eq:semiglobal-quality-entry-time}.
 
@@ -87,9 +87,12 @@ offset $b_{\psi,\mathrm{ref}}$ contributes to true-north error through
 Eq.~\eqref{eq:iss-true-yaw-error} but does not enter the gauge-referenced
 stability radius.
 
-Those attitude bounds and independent finite physical bounds on
-$(b_g,v,p,S,a_w,b_a)$ define the compact handoff set $\mathcal H$ of
-Sec.~\ref{sec:semiglobal-handoff}.  The Live interface condition is
+The true handoff set must retain one common startup/source history rather
+than independent coordinate uncertainties. In particular the fresh nominal
+linear states are zero but the session-origin physical primitives generally
+are not; see the exact entry graph below. The conditional compact set
+$\mathcal H$ of Sec.~\ref{sec:semiglobal-handoff} needs a verified inclusion
+of this reachable graph, not a covariance-confidence assumption.  The Live interface condition is
 \begin{equation}
  \mathcal H_{k_H}\subset\mathcal D_{k_H},
  \label{eq:init-handoff-safe}
@@ -161,3 +164,45 @@ Eq.~\eqref{eq:widen-hybrid-mu},
 Theorem~\ref{thm:widen-hybrid-small-gain} gives a practical exponential bound on
 the reset-to-reset sequence rather than requiring complete recovery before each
 possible reset.
+
+\subsection{Executable fresh-entry graph and reference origin}
+\label{sec:exact-live-entry-graph}
+For a fresh outer \texttt{begin}, the inner MEKF is constructed with
+$\hat v=\hat p=\hat S=\hat a_w=\hat b_g=\hat b_a=0$.
+Pre-Live updates advance the private Mahony observer and adaptation states,
+not the MEKF motion prediction or its measurement corrections. These zeros
+are therefore carried into the first \texttt{goLive}; that method does not
+reset previously propagated linear states. A caller which directly drives
+the inner MEKF before \texttt{goLive} requires a different reachable graph.
+At the fresh boundary $t_L$, before the next completed Live event,
+\[
+(e_v,e_p,e_S,e_a,e_g,e_b)
+=(v_m(t_L),p_m(t_L),S_m(t_L),a_m(t_L),b_g(t_L),\beta(t_L)).
+\]
+There is no executable truth-position or truth-integral rebase at this boundary.
+With the session convention $S_m(t)=\int_0^t p_m(s)\,ds$, neither $e_p=0$
+nor $e_S=0$ follows from a zero estimate. Velocity is the instantaneous physical
+wave velocity, not a vessel-at-rest hypothesis. Proxy integral feedback is
+not copied into the MEKF gyro-bias estimate.
+
+The fresh $v,p,S$ covariance blocks are respectively $I,400I,2500I$, with
+zero mutual cross-blocks. These are filter initialization choices, not hard
+bounds on physical error. Attitude initialization clears attitude/bias
+cross-blocks and the entire base/linear cross-block. Live entry replaces
+$P_{aa}$ by the same active stationary OU covariance and clears all its
+cross-blocks. Candidate/active tuner history is retained and committed.
+The pseudo scheduler has zero accumulated progress while the MEKF is held;
+parameter retargeting does not create a prediction tick. Later H18-to-A21
+release preserves nominal states and motion covariance, while flooring the
+accelerometer-bias covariance diagonal. Subsequent covariance and all
+cross-covariances are part of the same-history proof state.
+
+The aligned timeout does not require tuner readiness or a usable measured
+period. It can enter Live with the fixed $0.2\,\mathrm{Hz}$ tuner prior.
+A finite log-period before the usable latch also leaves this selector on its
+prior. Only a valid moment-ratio update can set the one-way latch; that
+sample's tuner still uses the predecessor selector. Therefore a theorem that
+requires a measured period at every runtime-Live entrance omits a shipping
+branch. Quiet BRMM is admitted and must not be excluded solely to force a
+period estimate. An end-to-end P5 claim requires finite capture into a P4
+basin covering the actual branch, not merely expiration of the timeout.

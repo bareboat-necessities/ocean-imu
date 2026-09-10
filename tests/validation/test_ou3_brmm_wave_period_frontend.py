@@ -62,8 +62,8 @@ class BrmmWavePeriodFrontendTest(unittest.TestCase):
 
         self.assertTrue(startup["tuner_ready_requires_wave_period_estimator_usable"])
         self.assertFalse(startup["tuner_ready_requires_wave_period_estimator_ready"])
-        self.assertTrue(startup["live_entry_requires_wave_period_estimator_usable"])
-        self.assertFalse(startup["live_entry_may_precede_wave_period_estimator_first_valid_period"])
+        self.assertFalse(startup["live_entry_requires_wave_period_estimator_usable"])
+        self.assertTrue(startup["live_entry_may_precede_wave_period_estimator_first_valid_period"])
         self.assertTrue(startup["wave_period_takeover_waits_for_hasUsablePeriod"])
         self.assertTrue(startup["wave_period_startup_takeover_is_one_way_latched"])
         self.assertFalse(startup["wave_period_takeover_waits_for_isReady"])

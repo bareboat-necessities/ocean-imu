@@ -42,7 +42,7 @@
     "tune_frequency_prior_hz": 0.2,
     "wave_period_estimator_high_pass_hz": 0.02,
     "tuner_ready_requires_wave_period_estimator_ready": false,
-    "live_entry_may_precede_wave_period_estimator_first_valid_period": false,
+    "live_entry_may_precede_wave_period_estimator_first_valid_period": true,
     "tuning_frequency_source_before_first_valid_wave_period": "fixed TUNE_FREQ_PRIOR_HZ until WavePeriodEstimator::hasUsablePeriod()",
     "tuning_frequency_takeover_condition": "WavePeriodEstimator::hasUsablePeriod(); does not wait for WavePeriodEstimator::isReady()",
     "physical_handoff_coordinate_bounds": {
@@ -59,7 +59,10 @@
     "wave_period_estimator_usable_time_floor_definition": "4/lambda plus at least one current estimated period of accumulated moment history",
     "wave_period_estimator_strict_ready_time_floor_definition": "6/lambda plus debiased moment weight > 0.5",
     "tuner_ready_requires_wave_period_estimator_usable": true,
-    "live_entry_requires_wave_period_estimator_usable": true
+    "live_entry_requires_wave_period_estimator_usable": false,
+    "quality_handoff_requires_tuner_ready_and_usable_period": true,
+    "timeout_handoff_requires_aligned_branch_not_measured_period": true,
+    "physical_handoff_coordinate_bounds_role": "legacy conditional diagnostic box, not established fresh-wrapper reachability; use ou3_p4_live_entry_graph.py"
   },
   "initial_filter_entrance": {
     "scope": "DECLARED_ERROR_SET_PRESENTED_TO_P5_CAPTURE",

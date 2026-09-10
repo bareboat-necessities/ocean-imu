@@ -23,7 +23,7 @@ and R_S are deterministic dependent images of that target.
 """
 from __future__ import annotations
 from dataclasses import dataclass,replace
-import argparse,json,math
+import argparse,json,math,re
 from pathlib import Path
 
 from ou3_interval import Interval
@@ -51,7 +51,7 @@ def central_update(C,m,w,x,alpha):
     if C.lo<0:raise ValueError('central numerator lost nonnegativity')
     r=ONE-alpha
     if w.lo<=0:
-        if w.hi<=1e-15:return I(0)
+        if w.lo==0 and w.hi==0 and C.lo==0 and C.hi==0 and m.lo==0 and m.hi==0:return I(0)
         raise RuntimeError('central weight straddles zero; split predecessor source cell')
     centered=x-m/w
     return nonnegative(r.square()*C+r*alpha*(C/w+w*centered.square()))
@@ -65,7 +65,7 @@ class State:
     wpe_velocity_C:Interval
     wpe_elevation_C:Interval
     tuner_band_C:Interval
-    theorem_log_period_s:Interval
+    theorem_log_period_s:Interval|None
 
 @dataclass(frozen=True)
 class Target:
@@ -92,11 +92,24 @@ def from_shipping(wpe:WPE.WPEState,tuner:TUNER.TunerState)->State:
         wpe.log_period_s,
     )
 
-def frequency(state:State)->Interval:
+def frequency(state:State, *, usable_period:bool=True)->Interval:
+    """The shipping selector, not an independently selectable frequency.
+
+    None represents the shipping not-yet-initialized NaN log state. The fixed
+    configured prior is used until the one-way usable latch, even if logT is
+    already finite. This module covers the declared default configuration.
+    """
+    if not usable_period:
+        source=(Path(__file__).resolve().parents[2]/'src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h').read_text()
+        match=re.search(r'constexpr\s+float\s+TUNE_FREQ_PRIOR_HZ\s*=\s*([0-9.eE+-]+)f',source)
+        if not match:raise RuntimeError('shipping tuner prior definition changed')
+        return I(float(match.group(1)))
+    if state.theorem_log_period_s is None:
+        raise ValueError('usable WPE cannot have an uninitialized canonical log period')
     return WPE.wide_exp(-state.theorem_log_period_s)
 
 def _wpe_alpha(state:WPE.WPEState,c:WPE.Constants):
-    period=WPE.wide_exp(state.log_period_s)
+    period=I(6) if state.log_period_s is None else WPE.wide_exp(state.log_period_s)
     h=WPE.clamp_interval(I(c.moment_horizon_periods)*period,c.min_horizon_s,c.max_horizon_s)
     return ONE-VT.exp_interval(-(I(c.dt)/h)),h
 
@@ -117,36 +130,68 @@ def _wpe_physical_and_moments(state:WPE.WPEState,a_vertical:Interval,c:WPE.Const
     return base,alpha,velocity_new,elevation_new
 
 def advance_wpe(wpe:WPE.WPEState,corr:State,a_vertical:Interval,c:WPE.Constants)->list[WPESuccessor]:
-    if not wpe.usable_period:raise ValueError('Normal-Live WPE must already be usable')
+    """Post-moment-start transition including prior Live and every guard branch.
+
+    Each returned interval is a conservative image of its named guard; unions
+    cover all predecessors. In particular a straddling validity guard MUST NOT
+    return only the hold image. Closed threshold intersections are intentional:
+    using nextafter(threshold,+inf) could drop real points before binary32 is
+    enclosed. No target-platform rounding qualification is inferred here.
+    """
+    lam=TWO*PI*I(c.high_pass_hz)
+    if wpe.elapsed_s.lo < (I(3)/lam).hi:
+        raise ValueError('pre-moment-start source needs the startup transition')
+    if wpe.log_period_s != corr.theorem_log_period_s:
+        raise ValueError('shipping and correlated log-period states detached')
+    if wpe.usable_period and wpe.log_period_s is None:
+        raise ValueError('usable WPE with uninitialized log period')
     base,alpha,v,e=_wpe_physical_and_moments(wpe,a_vertical,c)
     Cv=central_update(corr.wpe_velocity_C,wpe.velocity_mean,wpe.weight,v,alpha)
     Ce=central_update(corr.wpe_elevation_C,wpe.elevation_mean,wpe.weight,e,alpha)
+    cs=replace(corr,wpe_velocity_C=Cv,wpe_elevation_C=Ce)
+    if base.weight.lo<=1e-3:
+        # Explicit noncoverage, never silently promote a subset of this guard.
+        raise RuntimeError('weight qualification straddles 1e-3; split source cell')
     vv=variance(Cv,base.weight);ev=variance(Ce,base.weight)
-    lam=TWO*PI*I(c.high_pass_hz)
     out=[]
-    invalid_possible=vv.lo<=1e-12 or ev.lo<=1e-12
-    if invalid_possible:
-        cs=replace(corr,wpe_velocity_C=Cv,wpe_elevation_C=Ce)
+    if vv.lo<=1e-12 or ev.lo<=1e-12:
         out.append(WPESuccessor(base,cs,None,'hold_invalid_variance'))
     if vv.hi<=1e-12 or ev.hi<=1e-12:return out
-    # A theorem cell is split if positivity is not strict; do not divide a
-    # dependency-lost interval that straddles the validity predicate.
-    if vv.lo<=1e-12 or ev.lo<=1e-12:return out
-    omega2=vv/ev-lam.square()
+    # Both variances share EXACTLY the same debiasing weight: vv/ev=Cv/Ce.
+    # Intersect the valid branch before division, retaining the central states
+    # alongside the output. This removes a duplicated independent weight ratio.
+    floor=(I(1e-12)*base.weight.square()).lo
+    cv_valid=Interval(max(Cv.lo,floor),Cv.hi)
+    ce_valid=Interval(max(Ce.lo,floor),Ce.hi)
+    omega2=cv_valid/ce_valid-lam.square()
     if omega2.lo<=1e-8:
-        cs=replace(corr,wpe_velocity_C=Cv,wpe_elevation_C=Ce)
         out.append(WPESuccessor(base,cs,None,'hold_invalid_omega'))
-        return out
+    if omega2.hi<=1e-8:return out
+    omega2=Interval(max(omega2.lo,1e-8),omega2.hi)
     raw=TWO*PI/WPE.sqrt_positive(omega2);log_raw=VLOG.log_interval(raw)
-    if c.log_smoothing_periods<=0:
+    if corr.theorem_log_period_s is None:
+        log_new=log_raw;log_h=I(0)
+    elif c.log_smoothing_periods<=0:
         log_new=log_raw;log_h=I(c.dt)
     else:
         requested=I(c.log_smoothing_periods)*WPE.wide_exp(corr.theorem_log_period_s)
         log_h=WPE.clamp_interval(requested,max(c.dynamic_horizon_min_s,c.dt),c.dynamic_horizon_max_s)
         al=ONE-VT.exp_interval(-(I(c.dt)/log_h));log_new=corr.theorem_log_period_s+al*(log_raw-corr.theorem_log_period_s)
     shipping=replace(base,raw_period_s=raw,log_period_s=log_new,last_log_horizon_s=log_h)
-    cs=replace(corr,wpe_velocity_C=Cv,wpe_elevation_C=Ce,theorem_log_period_s=log_new)
-    out.append(WPESuccessor(shipping,cs,raw,'valid_period'))
+    cs=replace(cs,theorem_log_period_s=log_new)
+    if wpe.usable_period:
+        out.append(WPESuccessor(shipping,cs,raw,'valid_period'))
+        return out
+    # The latch is evaluated ONLY after a valid raw-period update.
+    age=base.elapsed_s-I(3)/lam
+    floor_age=base.elapsed_s-I(4)/lam
+    age_margin=age-WPE.wide_exp(log_new)
+    can_latch=floor_age.hi>=0 and age_margin.hi>=0
+    must_latch=floor_age.lo>=0 and age_margin.lo>=0
+    if not must_latch:
+        out.append(WPESuccessor(shipping,cs,raw,'valid_period_prior'))
+    if can_latch:
+        out.append(WPESuccessor(replace(shipping,usable_period=True),cs,raw,'valid_period_takeover'))
     return out
 
 def _tuner_alpha(m:TUNER.MomentState,f_wave:Interval,c:TUNER.Constants):

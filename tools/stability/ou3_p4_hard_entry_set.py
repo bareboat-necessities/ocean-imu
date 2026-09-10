@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
-"""Deterministic hard P4 entry set, independent of covariance consistency.
+"""Legacy conditional product and the exact fresh-Live source entry graph.
 
-The entry set is the full physical-coordinate envelope already declared in the
-operating-domain contract. Membership is a hard state-error hypothesis, not a
-probabilistic covariance ellipsoid and not a replay-fit radius. Reachability of
-this set from startup is a separate hybrid/P5 obligation; P4 is the regional
-implication from this set. No fractional proof-domain shrink is permitted.
+The legacy radii remain available to reproduce earlier non-promoting diagnostics
+and as candidate working-domain scales. They are not startup reachability facts.
+Fresh entry uses the shipping initialization and shared physical-S origin graph;
+its uniform reachable attitude/covariance/tuner cover is still an obligation.
+No covariance-confidence ellipsoid is used as a true-error set.
 """
 from __future__ import annotations
 import argparse, json, math
+import ou3_p4_live_entry_graph as LIVE_ENTRY
 from pathlib import Path
 
 REPO=Path(__file__).resolve().parents[2]
@@ -24,7 +25,10 @@ def build(path: Path=CLOSURE):
     r={k:math.nextafter(v,math.inf) for k,v in b.items()}
     return {
       'qualification':'OU3_P4_DETERMINISTIC_HARD_ENTRY_SET_V2',
-      'source':'full predeclared physical startup/handoff P4 entry envelope',
+      'source':'legacy conditional diagnostic/working product; not fresh-Live reachability',
+      'legacy_box_is_certified_fresh_live_entry':False,
+      'fresh_live_entry_graph':LIVE_ENTRY.build(),
+      'S_radius_role':'legacy conditional diagnostic only; not independent fresh-entry uncertainty',
       'trajectory_fit':False,'covariance_ellipsoid_used':False,
       'shipping_covariance_membership_used':False,
       'hard_state_error_membership_required':True,
