@@ -3,7 +3,7 @@
 
 Exact membership in the continuum spectral BRMM is unnecessary for a robust P4
 proof: it is sufficient to prove P4 on a deterministic superset that contains
-every BRMM sampled history.  This module constructs such a superset without
+every BRMM sampled history. This module constructs such a superset without
 Cartesianizing samples or axes.
 
 The outer relation retains, on one source history:
@@ -16,8 +16,8 @@ The outer relation retains, on one source history:
 
 Every COMPLETE-BRMM history satisfies these constraints by construction of the
 existing source contracts, so the left inclusion B^601_BRMM subset O^601_BRMM
-is analytical.  O^601_BRMM is intentionally larger than BRMM; no converse is
-claimed.  This closes a correlated outer-enclosure obligation, not the final
+is analytical. O^601_BRMM is intentionally larger than BRMM; no converse is
+claimed. This closes a correlated outer-enclosure obligation, not the final
 601-sample executor materialization or P4.
 """
 from __future__ import annotations
@@ -95,7 +95,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
                 "one_live_centered_S_origin_for_all_samples": True,
             },
             "acceleration_moments": {
-                "normalized_coordinate_order": moment["normalized_coordinate_order"],
+                "normalized_coordinates": moment["normalized_coordinates"],
                 "gram_inverse": moment["gram_inverse"],
                 "joint_three_axis_supply_upper_mps4": acc * acc,
                 "same_transition_witness_as_translation": True,
@@ -180,8 +180,13 @@ def validate(d: dict) -> list[str]:
     m = c.get("acceleration_moments", {})
     if m.get("same_transition_witness_as_translation") is not True:
         f.append("moment witness detached from translation")
-    if m.get("gram_inverse") != MOMENT.build()["gram_inverse"]:
+    reference_moment = MOMENT.build()
+    if m.get("gram_inverse") != reference_moment["gram_inverse"]:
         f.append("moment IQC Gram inverse changed")
+    if m.get("normalized_coordinates") != reference_moment["normalized_coordinates"]:
+        f.append("normalized moment coordinates changed")
+    if m.get("independent_J0_J1_J2_forbidden") is not True or m.get("independent_axes_forbidden") is not True:
+        f.append("moment correlation weakened")
     r = c.get("rotation", {})
     if r.get("R_wb_in_SO3_each_sample") is not True or r.get("same_body_rate_history_drives_rotation") is not True:
         f.append("rotation relation weakened")
