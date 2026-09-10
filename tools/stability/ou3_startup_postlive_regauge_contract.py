@@ -1,60 +1,57 @@
 #!/usr/bin/env python3
 """Shipping timeout handoff -> early-Live magnetic regauge contract.
 
-This is a theorem-architecture certificate, not a numerical convergence proof.
-It closes the semantic question that a timeout handoff need not already possess
-north: P5 may enter Live in H18 tilt-only and consume the existing Normal-Live
-vector recurrence after handoff, provided the shipping wrapper continues to
-accept magnetometer packets and update the MEKF magnetic reference/correction in
-Live.
+The timeout path may enter Live/H18 without north.  The shipping wrapper keeps
+running the same MagAutoTuner after handoff and performs a yaw-only MEKF rewrite
+when first north becomes available.
 
-The certificate is deliberately fail-closed on the remaining source-admission
-and finite-time state-capture obligations.
+Normal-Live vector PE is enough for *post-lock* observability but is not, by
+itself, a first-lock progress theorem: rejected attempts do not advance
+``accepted_window_sec_``.  This contract therefore consumes the minimal literal
+accepted-count/accepted-time admission from
+``ou3_p5_magnetic_progress_admission``.  Under that admission, first north is a
+finite hybrid event; the yaw-landing accuracy is a separate obligation.
 """
 from __future__ import annotations
 
 import json
 from pathlib import Path
 
+import ou3_p5_magnetic_progress_admission as MAGPROG
+
 REPO = Path(__file__).resolve().parents[2]
 WRAPPER = REPO / "src" / "kalman_ou_iii" / "SeaStateFusionFilter_OU_III.h"
 DOMAIN = REPO / "tools" / "stability" / "ou3_proof_operating_domain.json"
-SCHEMA = 1
-QUALIFICATION = "OU3_TIMEOUT_POSTLIVE_REGAUGE_CONTRACT_V1"
+SCHEMA = 2
+QUALIFICATION = "OU3_TIMEOUT_POSTLIVE_REGAUGE_CONTRACT_V2"
 
 
 def build() -> dict:
     text = WRAPPER.read_text(encoding="utf-8")
     domain = json.loads(DOMAIN.read_text(encoding="utf-8"))
     normal = domain["normal_live"]
+    progress = MAGPROG.build()
+    if MAGPROG.validate(progress):
+        raise RuntimeError("magnetic progress admission invalid")
 
-    # Structural source checks. These strings intentionally target deployed
-    # code paths rather than comments in this proof module.
-    live_dispatch_present = (
-        "stage_ == Stage::Live" in text
-        or "Stage::Live" in text
-    )
-    mag_update_present = (
-        "updateMag" in text
-        or "update_mag" in text
-        or "mag_world_ref" in text
-        or "set_mag_world_ref" in text
-    )
-    magnetic_lock_event_named = (
-        "magnetic_lock" in json.dumps(normal)
-        or "magnetic_regauge_refinement" in json.dumps(normal)
+    live_dispatch_present = "stage_ == Stage::Live" in text or "Stage::Live" in text
+    postlive_acquisition_present = (
+        "if (!mag_ref_set_)" in text
+        and "mag_auto_tuner_.addSampleWithTiltQuatDt(" in text
+        and "if (stage_ != Stage::Live)" in text
+        and "impl_.mekf().set_quaternion_boat(q_new);" in text
+        and "mag_ref_set_ = true;" in text
     )
 
     pe_window = float(normal["vector_pe_recurrence_window_s"])
     sine_sep = float(normal["vector_sine_separation_lower"])
     mag_lo = float(normal["magnetic_vector_norm_lower_uT"])
+    normal_live_pe_declared = pe_window > 0.0 and sine_sep > 0.0 and mag_lo > 0.0
 
-    normal_live_pe_declared = (
-        pe_window > 0.0 and sine_sep > 0.0 and mag_lo > 0.0
-    )
-
-    structural_postlive_regauge_path = (
-        live_dispatch_present and mag_update_present and normal_live_pe_declared
+    finite_north_under_admission = bool(
+        live_dispatch_present
+        and postlive_acquisition_present
+        and progress["FINITE_NORTH_EVENT_UNDER_ADMISSION_CLOSED"]
     )
 
     return {
@@ -65,22 +62,23 @@ def build() -> dict:
         "timeout_handoff_may_be_ungauged": True,
         "P5_may_extend_past_goLive": True,
         "postlive_H18_tilt_only_mode_required": True,
+        "shipping_live_dispatch_present": live_dispatch_present,
+        "shipping_postlive_first_north_path_present": postlive_acquisition_present,
+        "normal_live_vector_PE_declared": normal_live_pe_declared,
         "normal_live_vector_PE_window_s": pe_window,
         "normal_live_vector_sine_separation_lower": sine_sep,
         "normal_live_magnetic_norm_lower_uT": mag_lo,
-        "shipping_live_dispatch_present": live_dispatch_present,
-        "shipping_live_magnetometer_update_path_present": mag_update_present,
-        "normal_live_magnetic_hybrid_event_named": magnetic_lock_event_named,
-        "normal_live_vector_PE_declared": normal_live_pe_declared,
-        "STRUCTURAL_POSTLIVE_REGAUGE_PATH_CLOSED": structural_postlive_regauge_path,
+        "normal_live_PE_alone_implies_first_north": False,
+        "accepted_progress_admission": progress["admission"],
+        "accepted_progress_horizon_s": progress["finite_north_event_time_upper_from_progress_origin_s"],
+        "FINITE_POSTLIVE_NORTH_EVENT_UNDER_ADMISSION_CLOSED": finite_north_under_admission,
         "startup_magnetic_PE_required_for_timeout_branch": False,
-        "postlive_vector_PE_may_supply_first_heading_gauge": structural_postlive_regauge_path,
-        "source_admission_closed_here": False,
-        "finite_time_regauge_bound_closed_here": False,
+        "finite_north_event_is_yaw_accuracy_certificate": False,
+        "late_north_yaw_landing_bound_still_required": True,
         "P4_capture_closed_here": False,
         "P5_PASS": False,
         "next_obligation": (
-            "materialize the admitted COMPLETE-BRMM early-Live source family and prove that its accepted magnetic-packet recurrence drives the exact shipping H18 magnetic update/regauge map into the widened P4 basin in a finite source-uniform time"
+            "bound the yaw gauge generated by the same accepted MagAutoTuner history, then compose its exact yaw-only MEKF rewrite with the early-Live H18 capture tube"
         ),
     }
 
@@ -93,26 +91,32 @@ def validate(d: dict) -> list[str]:
         "timeout_handoff_may_be_ungauged",
         "P5_may_extend_past_goLive",
         "postlive_H18_tilt_only_mode_required",
+        "shipping_live_dispatch_present",
+        "shipping_postlive_first_north_path_present",
         "normal_live_vector_PE_declared",
-        "STRUCTURAL_POSTLIVE_REGAUGE_PATH_CLOSED",
-        "postlive_vector_PE_may_supply_first_heading_gauge",
+        "FINITE_POSTLIVE_NORTH_EVENT_UNDER_ADMISSION_CLOSED",
+        "late_north_yaw_landing_bound_still_required",
     ):
         if d.get(key) is not True:
             failures.append(f"{key} is not true")
     for key in (
+        "filter_changed",
+        "quality_gates_changed",
+        "normal_live_PE_alone_implies_first_north",
         "startup_magnetic_PE_required_for_timeout_branch",
-        "source_admission_closed_here",
-        "finite_time_regauge_bound_closed_here",
+        "finite_north_event_is_yaw_accuracy_certificate",
         "P4_capture_closed_here",
         "P5_PASS",
     ):
         if d.get(key) is not False:
-            failures.append(f"{key} must remain false")
+            failures.append(f"{key} must be false")
+    if not (float(d.get("accepted_progress_horizon_s") or 0.0) > 0.0):
+        failures.append("accepted magnetic progress horizon is not finite positive")
     return failures
 
 
 if __name__ == "__main__":
     d = build()
     failures = validate(d)
-    print(json.dumps({**d, "validation_pass": not failures, "validation_failures": failures}, indent=2))
+    print(json.dumps({**d, "validation_pass": not failures, "validation_failures": failures}, indent=2, sort_keys=True))
     raise SystemExit(1 if failures else 0)
