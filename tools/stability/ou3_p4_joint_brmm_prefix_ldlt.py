@@ -13,6 +13,14 @@ their event tokens must form a literal predecessor chain.  This is required for
 endpoint AND every-prefix augmented LDLT.  The existing full interval ISS LDLT
 backend is reused; no endpoint substitution or independent coefficient box is
 accepted.
+
+The physical BRMM acceleration primitive is also retained on this SAME augmented
+coordinate.  Production PrefixInput objects must provide the nine normalized
+same-history moment coordinates (J0/h,J1/h^2,J2/h^3 for all three axes) and the
+single source radial coordinate.  The exact acceleration-moment IQC is then
+inserted as one additional graph sector before LDLT.  It is never converted into
+independent J0/J1/J2 or per-axis boxes and is not charged as an unrelated ISS
+source port.
 """
 from __future__ import annotations
 from dataclasses import dataclass
@@ -23,9 +31,11 @@ from ou3_interval import Interval
 import ou3_p4_joint_brmm_frontend_transition as JOINT
 import ou3_p4_complete_brmm_source_cover_contract as COVER
 import ou3_p4_joint_iss_augmented_master as ISS
+import ou3_p4_acceleration_moment_iqc_sector as MOMSECTOR
+import ou3_brmm_acceleration_moment_iqc as MOM
 
-SCHEMA=2
-QUALIFICATION='OU3_P4_JOINT_BRMM_EVENT_PREFIX_AUGMENTED_LDLT_V2'
+SCHEMA=3
+QUALIFICATION='OU3_P4_JOINT_BRMM_EVENT_PREFIX_AUGMENTED_LDLT_V3'
 
 @dataclass(frozen=True)
 class PrefixInput:
@@ -38,6 +48,13 @@ class PrefixInput:
     gamma_s:float=0.0
     fp_map:Sequence[Sequence[Interval]]|None=None
     gamma_n:float=0.0
+    # Production physical-source binding.  Both maps act on the same augmented
+    # coordinate as ``master``.  moment_multiplier is an ordinary nonnegative
+    # S-procedure multiplier; None is allowed only for non-production interface
+    # diagnostics that are already fail-closed.
+    normalized_acceleration_moment_map:Sequence[Sequence[Interval]]|None=None
+    source_radial_scale_map:Sequence[Sequence[Interval]]|None=None
+    moment_multiplier:float|None=None
 
 def _shape(A):
     r=len(A);c=len(A[0]) if r else 0
@@ -46,7 +63,29 @@ def _shape(A):
 
 def _same_interval(a,b):return isinstance(a,Interval) and isinstance(b,Interval) and a.lo==b.lo and a.hi==b.hi
 
-def validate_sequence(cells):
+def _moment_binding_failures(c:PrefixInput,n:int,prefix:int)->list[str]:
+    f=[]
+    mm=c.normalized_acceleration_moment_map
+    rm=c.source_radial_scale_map
+    lam=c.moment_multiplier
+    supplied=(mm is not None,rm is not None,lam is not None)
+    if any(supplied) and not all(supplied):
+        return [f'prefix {prefix}: moment/radial/multiplier binding is incomplete']
+    if not all(supplied):
+        return []
+    if _shape(mm)!=(9,n):f.append(f'prefix {prefix}: normalized acceleration moment map must be 9x{n}')
+    if _shape(rm)!=(1,n):f.append(f'prefix {prefix}: source radial scale map must be 1x{n}')
+    try:
+        x=float(lam)
+        if not (x>=0.0 and x<math.inf):f.append(f'prefix {prefix}: moment multiplier invalid')
+    except Exception:
+        f.append(f'prefix {prefix}: moment multiplier invalid')
+    return f
+
+# import kept local in validation helper path above to avoid changing public API
+import math
+
+def validate_sequence(cells,*,require_physical_moment_sector=False):
     f=[]
     if not cells:return ['nonempty literal prefix sequence required']
     seen=set()
@@ -72,21 +111,42 @@ def validate_sequence(cells):
         if not c.sectors or len(c.sectors)!=len(c.multipliers):f.append(f'prefix {i}: sectors/multipliers missing')
         if c.source_map is None:f.append(f'prefix {i}: BIAS1/source map missing')
         if c.fp_map is None:f.append(f'prefix {i}: binary32 finite-precision map missing')
+        f.extend(_moment_binding_failures(c,n,i))
+        if require_physical_moment_sector and c.normalized_acceleration_moment_map is None:
+            f.append(f'prefix {i}: production same-history acceleration moment sector missing')
+        # One source_cell radial interval owns the same source scale whose linear
+        # coordinate is selected by source_radial_scale_map.  The map cannot be
+        # silently supplied while the theorem cell itself loses its radial set.
+        if c.source_radial_scale_map is not None and sc.radial_scale is None:
+            f.append(f'prefix {i}: radial map detached from source cell radial ancestry')
     return list(dict.fromkeys(f))
 
-def certify(cells):
-    f=validate_sequence(cells)
+def _sectors_with_physical_moment(c:PrefixInput):
+    sectors=list(c.sectors); multipliers=list(c.multipliers)
+    if c.normalized_acceleration_moment_map is not None:
+        Amax=float(MOM.build()['A_max_mps2'])
+        sectors.append(MOMSECTOR.moment_sector(
+            c.normalized_acceleration_moment_map,
+            c.source_radial_scale_map,
+            Amax))
+        multipliers.append(float(c.moment_multiplier))
+    return sectors,multipliers
+
+def certify(cells,*,require_physical_moment_sector=False):
+    f=validate_sequence(cells,require_physical_moment_sector=require_physical_moment_sector)
     if f:return {'closed':False,'validation_failures':f,'endpoint_closed':False,'every_prefix_closed':False,'prefixes':[]}
     rec=[]
     for i,c in enumerate(cells):
-        ok,piv=ISS.certify_iss(c.master,c.sectors,c.multipliers,c.source_map,c.gamma_s,c.fp_map,c.gamma_n)
-        rec.append({'prefix_length':i+1,'event_token':c.source_cell.source_token,'event_predecessor_token':c.source_cell.predecessor_token,'estimator_token':c.image.source_token,'ldlt_closed':bool(ok),'pivot_lowers':piv})
+        sectors,multipliers=_sectors_with_physical_moment(c)
+        ok,piv=ISS.certify_iss(c.master,sectors,multipliers,c.source_map,c.gamma_s,c.fp_map,c.gamma_n)
+        rec.append({'prefix_length':i+1,'event_token':c.source_cell.source_token,'event_predecessor_token':c.source_cell.predecessor_token,'estimator_token':c.image.source_token,'physical_moment_sector_consumed':c.normalized_acceleration_moment_map is not None,'ldlt_closed':bool(ok),'pivot_lowers':piv})
     every=all(x['ldlt_closed'] for x in rec);endpoint=bool(rec[-1]['ldlt_closed'])
     return {'closed':bool(every and endpoint),'validation_failures':[],'endpoint_closed':endpoint,'every_prefix_closed':every,'prefixes':rec}
 
 def build():
     j=JOINT.build();jf=JOINT.validate(j);c=COVER.build();cf=COVER.validate(c)
-    bad={k:v for k,v in (('joint',jf),('cover',cf)) if v}
+    q=MOM.build();qf=MOM.validate(q);s=MOMSECTOR.build();sf=MOMSECTOR.validate(s)
+    bad={k:v for k,v in (('joint',jf),('cover',cf),('moment_iqc',qf),('moment_sector',sf)) if v}
     if bad:raise RuntimeError('BRMM event-prefix prerequisite failed: '+repr(bad))
     return {'schema':SCHEMA,'qualification':QUALIFICATION,'canonical_source':'COMPLETE_BRMM_NORMAL_LIVE_WORD',
       'BRMM_attached_joint_image_required_at_every_prefix':True,
@@ -96,19 +156,23 @@ def build():
       'current_applied_schedule_retained_at_every_prefix':True,
       'raw_joint_f_tau_sigma_TS_RS_retained_at_every_prefix':True,
       'same_cell_augmented_master_sector_source_fp_maps_required':True,
+      'same_history_acceleration_moment_joint_sector_consumable':True,
+      'same_radial_coordinate_required_for_moment_sector_and_source_cell':True,
+      'independent_J0_J1_J2_or_axis_boxes_forbidden':True,
+      'physical_moment_sector_required_for_production_prefix_certificate':True,
       'full_interval_ISS_LDLT_backend_reused':True,'endpoint_cannot_substitute_for_every_prefix':True,
       'BIAS1_source_map_required_for_production':True,'binary32_fp_map_required_for_production':True,
-      'production_complete_source_lineages_supplied_here':False,'production_endpoint_closed_here':False,'production_every_prefix_closed_here':False,
+      'production_complete_source_lineages_supplied_here':False,'production_physical_moment_maps_bound_here':False,'production_endpoint_closed_here':False,'production_every_prefix_closed_here':False,
       'P4_MOTION_PASS':False,'P4_PASS':False,'P5_MAY_START':False,
-      'next_obligation':'generate one PrefixInput per literal event for every retained BRMM/radial lineage; each source_cell must be built from its estimator image and carry reachable P/H/R/K/bias/projection plus nonempty BIAS1 and binary32 ISS maps, then require certify(...).closed for every lineage'}
+      'next_obligation':'bind the accepted provider primitive/moment witness into each literal PrefixInput common augmented coordinate; then require certify(...,require_physical_moment_sector=True).closed for every COMPLETE-BRMM/radial/BIAS lineage'}
 def validate(d):
     f=[]
     if d.get('schema')!=SCHEMA or d.get('qualification')!=QUALIFICATION:f.append('schema/qualification mismatch')
-    for k in ('BRMM_attached_joint_image_required_at_every_prefix','estimator_owned_source_cell_required_at_every_prefix','literal_previous_prefix_ancestry_required','multiple_events_may_share_one_estimator_image','current_applied_schedule_retained_at_every_prefix','raw_joint_f_tau_sigma_TS_RS_retained_at_every_prefix','same_cell_augmented_master_sector_source_fp_maps_required','full_interval_ISS_LDLT_backend_reused','endpoint_cannot_substitute_for_every_prefix','BIAS1_source_map_required_for_production','binary32_fp_map_required_for_production'):
+    for k in ('BRMM_attached_joint_image_required_at_every_prefix','estimator_owned_source_cell_required_at_every_prefix','literal_previous_prefix_ancestry_required','multiple_events_may_share_one_estimator_image','current_applied_schedule_retained_at_every_prefix','raw_joint_f_tau_sigma_TS_RS_retained_at_every_prefix','same_cell_augmented_master_sector_source_fp_maps_required','same_history_acceleration_moment_joint_sector_consumable','same_radial_coordinate_required_for_moment_sector_and_source_cell','independent_J0_J1_J2_or_axis_boxes_forbidden','physical_moment_sector_required_for_production_prefix_certificate','full_interval_ISS_LDLT_backend_reused','endpoint_cannot_substitute_for_every_prefix','BIAS1_source_map_required_for_production','binary32_fp_map_required_for_production'):
         if d.get(k) is not True:f.append(k+' not true')
-    for k in ('production_complete_source_lineages_supplied_here','production_endpoint_closed_here','production_every_prefix_closed_here','P4_MOTION_PASS','P4_PASS','P5_MAY_START'):
+    for k in ('production_complete_source_lineages_supplied_here','production_physical_moment_maps_bound_here','production_endpoint_closed_here','production_every_prefix_closed_here','P4_MOTION_PASS','P4_PASS','P5_MAY_START'):
         if d.get(k) is not False:f.append(k+' not false')
     return f
 def main():
-    ap=argparse.ArgumentParser();ap.add_argument('--output',type=Path,required=True);a=ap.parse_args();d=build();f=validate(d);d['validation_pass']=not f;d['validation_failures']=f;a.output.parent.mkdir(parents=True,exist_ok=True);a.output.write_text(json.dumps(d,indent=2,sort_keys=True)+'\n');print(json.dumps({'event_prefix_bridge':d['estimator_owned_source_cell_required_at_every_prefix'],'production_prefix':d['production_every_prefix_closed_here'],'P4':d['P4_PASS'],'failures':f},sort_keys=True));return int(bool(f))
+    ap=argparse.ArgumentParser();ap.add_argument('--output',type=Path,required=True);a=ap.parse_args();d=build();f=validate(d);d['validation_pass']=not f;d['validation_failures']=f;a.output.parent.mkdir(parents=True,exist_ok=True);a.output.write_text(json.dumps(d,indent=2,sort_keys=True)+'\n');print(json.dumps({'event_prefix_bridge':d['estimator_owned_source_cell_required_at_every_prefix'],'moment_sector':d['same_history_acceleration_moment_joint_sector_consumable'],'production_prefix':d['production_every_prefix_closed_here'],'P4':d['P4_PASS'],'failures':f},sort_keys=True));return int(bool(f))
 if __name__=='__main__':raise SystemExit(main())
