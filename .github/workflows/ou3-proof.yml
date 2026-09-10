@@ -422,6 +422,14 @@ jobs:
         with:
           persist-credentials: false
 
+      # The test_ou3_p4_*.py discovery glob below now reaches
+      # test_ou3_p4_entry_block_retention.py, whose frozen-map diagnostic is
+      # written against numpy like the rest of that experiment.
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-numpy
+
       - name: Validate retained 0.8-rad geometry
         run: |
           python3 tools/stability/ou3_p4_cayley_sector_certificate.py \
