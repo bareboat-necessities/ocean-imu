@@ -8,7 +8,9 @@ on:
       - 'tools/stability/ou3_p4_brmm_kernel_source_cell_smoke.py'
       - 'tools/stability/ou3_p4_hard_entry_radial_ad_boxes.py'
       - 'tools/stability/ou3_p4_brmm_kernel_radial_event_ad_cover.py'
+      - 'tools/stability/ou3_p4_fresh_entry_first_exit_bridge.py'
       - 'tools/stability/ou3_p4_complete_brmm_source_cover_contract.py'
+      - 'tools/stability/ou3_p4_complete_brmm_source_cover_transition.py'
       - 'tools/stability/ou3_p4_complete_brmm_differential_events.py'
       - 'tools/stability/ou3_p4_brmm_reduced_event_master.py'
       - 'tools/stability/ou3_p4_brmm_same_Dtheta_reset_binding.py'
@@ -46,6 +48,7 @@ jobs:
           python tools/stability/ou3_p4_brmm_kernel_source_cell_smoke.py --output /tmp/ou3-p4-kernel-radial/zero-root-source-cells.json
           python tools/stability/ou3_p4_hard_entry_radial_ad_boxes.py --output /tmp/ou3-p4-kernel-radial/radial-boxes.json
           python tools/stability/ou3_p4_brmm_kernel_radial_event_ad_cover.py --output /tmp/ou3-p4-kernel-radial/radial-event-ad.json
+          python tools/stability/ou3_p4_fresh_entry_first_exit_bridge.py --output /tmp/ou3-p4-kernel-radial/first-exit-reduction.json
           python - <<'PY'
           import json
           root='/tmp/ou3-p4-kernel-radial/'
@@ -53,7 +56,8 @@ jobs:
           z=json.load(open(root+'zero-root-source-cells.json'))
           r=json.load(open(root+'radial-boxes.json'))
           a=json.load(open(root+'radial-event-ad.json'))
-          for name,obj in [('kernel',k),('zero-root',z),('radial-boxes',r),('radial-event-ad',a)]:
+          x=json.load(open(root+'first-exit-reduction.json'))
+          for name,obj in [('kernel',k),('zero-root',z),('radial-boxes',r),('radial-event-ad',a),('first-exit',x)]:
               assert obj['validation_pass'], (name,obj.get('validation_failures'))
           assert k['trusted_kernel_passive_capture_consumed']
           assert k['all_joint_images_bound_to_current_kernel_Riccati_schedule']
@@ -79,8 +83,15 @@ jobs:
           assert a['BIAS1_true_bias_outer_box_consumed_for_A21_AD']
           assert not a['local_full_hard_box_at_each_event_claimed_reachable']
           assert not a['production_prefix_state_reachability_closed_here']
+          assert x['first_exit_reduction_closed']
+          assert x['fresh_centered_integral_displacement_norm_m_s']==0.0
+          assert not x['retired_independent_integral_displacement_entry_ball_reintroduced']
+          assert x['kernel_first_exit_working_cells_cover_full_hard_domain_locally']
+          assert not x['source_uniform_every_prefix_augmented_LDLT_closed_here']
+          assert not x['source_uniform_every_prefix_hard_domain_retention_closed_here']
           assert not a['P4_MOTION_PASS'] and not a['P4_PASS'] and not a['P5_MAY_START']
           print('KERNEL_RADIAL_EVENT_AD_COVER_PASS',a['A21_projection_branches_observed'])
+          print('FIRST_EXIT_REDUCTION_PASS',x['fresh_entry_reduced_group_order'])
           PY
       - uses: actions/upload-artifact@v4
         if: always()
