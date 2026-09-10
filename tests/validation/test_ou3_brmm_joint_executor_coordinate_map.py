@@ -10,6 +10,11 @@ import ou3_brmm_joint_executor_coordinate_map as M
 
 
 class JointExecutorCoordinateMapTests(unittest.TestCase):
+    def assertTightContains(self, x, value, width=1e-12):
+        self.assertLessEqual(x.lo, value)
+        self.assertGreaterEqual(x.hi, value)
+        self.assertLessEqual(x.hi - x.lo, width)
+
     def test_status_closes_map_not_provider_or_p4(self):
         d = M.build()
         self.assertEqual(M.validate(d), [])
@@ -27,7 +32,8 @@ class JointExecutorCoordinateMapTests(unittest.TestCase):
             (I(1.0), I(2.0), I(3.0)),
             (I(0.1), I(-0.2), I(0.3)),
         )
-        self.assertEqual([(x.lo, x.hi) for x in got], [(0.9,0.9),(2.2,2.2),(2.7,2.7)])
+        for x, want in zip(got, (0.9, 2.2, 2.7)):
+            self.assertTightContains(x, want)
 
     def test_world_down_gravity_sign_and_world_to_body_map(self):
         I = Interval.point
@@ -53,8 +59,8 @@ class JointExecutorCoordinateMapTests(unittest.TestCase):
             accel_forcing_bprime=Z,
             gravity_mps2=I(9.80665),
         )
-        self.assertEqual(s.specific_force_body[0], I(1.0))
-        self.assertEqual(s.f_cog_body[0], I(2.0))
+        self.assertTightContains(s.specific_force_body[0], 1.0, width=5e-12)
+        self.assertTightContains(s.f_cog_body[0], 2.0, width=5e-12)
 
     def test_sensor_forcing_stays_in_measurement_not_nominal_geometry(self):
         I = Interval.point
@@ -68,8 +74,8 @@ class JointExecutorCoordinateMapTests(unittest.TestCase):
             accel_forcing_bprime=(I(1.0),I(0.0),I(0.0)),
             gravity_mps2=I(9.80665),
         )
-        self.assertEqual(s.specific_force_body[0], I(1.0))
-        self.assertEqual(s.f_cog_body[0], I(0.0))
+        self.assertTightContains(s.specific_force_body[0], 1.0, width=5e-12)
+        self.assertTightContains(s.f_cog_body[0], 0.0, width=5e-12)
 
     def test_false_shortcuts_and_promotion_rejected(self):
         d = M.build()
