@@ -152,7 +152,8 @@ jobs:
           assert b['independent_sample_boxes_define_behavior_set'] is False
           assert b['independent_axis_boxes_define_behavior_set'] is False
           assert b['validated_membership_or_separation_oracle_closed'] is False
-          assert b['validated_correlated_outer_enclosure_closed'] is False
+          assert b['validated_correlated_outer_enclosure_closed'] is True
+          assert b['correlated_outer_left_inclusion_closed'] is True
           assert b['P3_promoted'] is False
           assert h['validation_pass'], h['validation_failures']
           assert h['reference_parameter_domain_compact'] is True
@@ -164,11 +165,15 @@ jobs:
             'continuum_phase_coordinate_set_closed': True,
             'phase_continuous_propagation_closed': True,
             'hard_spectral_driver_set_closed': False,
+            'correlated_outer_enclosure_closed': True,
+            'BRMM_to_correlated_outer_left_inclusion_closed': True,
             'complete_BRMM_left_inclusion_closed': False,
-            'joint_source_output_map_closed': False,
+            'joint_source_output_map_closed': True,
           }
           assert h['continuum_phase_certificate']['qualification'] == p['qualification']
-          assert h['hard_shaping_state_or_excitation_bound_closed'] is False
+          assert h['hard_shaping_state_or_excitation_bound_closed'] is True
+          assert h['BRMM_to_correlated_outer_left_inclusion_closed'] is True
+          assert h['global_physical_deployment_left_inclusion_closed_here'] is False
           assert h['power_spectrum_alone_is_hard_pathwise_bound'] is False
           assert h['gaussian_good_event_may_close_xs'] is False
           assert h['seeded_128_frequency_generator_may_close_xs'] is False
@@ -181,7 +186,9 @@ jobs:
           assert s['R_lambda_certificate']['actual_rate_bounded_R_lambda_subset_Rhat'] is True
           assert s['R_lambda_certificate']['rate_constants_fitted_or_invented'] is False
           assert s['hard_shaping_certificate']['qualification'] == h['qualification']
-          assert s['hard_shaping_certificate']['hard_shaping_state_or_excitation_bound_closed'] is False
+          assert s['hard_shaping_certificate']['hard_shaping_state_or_excitation_bound_closed'] is True
+          assert s['hard_shaping_certificate']['BRMM_to_correlated_outer_left_inclusion_closed'] is True
+          assert s['hard_shaping_certificate']['global_physical_deployment_left_inclusion_closed_here'] is False
           assert s['hard_shaping_certificate']['power_spectrum_alone_is_hard_pathwise_bound'] is False
           assert s['hard_shaping_certificate']['gaussian_good_event_may_close_xs'] is False
           assert s['hard_shaping_certificate']['seeded_128_frequency_generator_may_close_xs'] is False
@@ -189,7 +196,7 @@ jobs:
           assert s['executor_payload_contract']['precomputed_aw_covariance_floor_increment_allowed'] is False
           assert s['executable_provider_ingredients'] == {
             'machine_readable_R_lambda_closed': True,
-            'hard_shaping_state_or_excitation_bound_closed': False,
+            'hard_shaping_state_or_excitation_bound_closed': True,
             'joint_translational_rotational_shaping_closed': False,
           }
           assert s['provider_implementation_closed'] is False
