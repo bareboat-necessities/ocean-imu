@@ -13,7 +13,7 @@ import ou3_brmm_hard_shaping_state as SHAPING
 
 
 class HardShapingStateContractTest(unittest.TestCase):
-    def test_contract_is_valid_but_not_promoted(self) -> None:
+    def test_contract_is_valid_but_provider_not_promoted(self) -> None:
         d = SHAPING.build()
         self.assertEqual(SHAPING.validate(d), [])
         self.assertTrue(d["reference_parameter_domain_compact"])
@@ -42,7 +42,14 @@ class HardShapingStateContractTest(unittest.TestCase):
         self.assertFalse(behavior["normal_live_caps_are_membership_sufficient"])
         self.assertFalse(behavior["independent_sample_boxes_define_behavior_set"])
         self.assertFalse(behavior["validated_membership_or_separation_oracle_closed"])
-        self.assertFalse(d["hard_shaping_state_or_excitation_bound_closed"])
+        output = d["joint_executor_coordinate_map"]
+        self.assertTrue(output["closed"])
+        self.assertTrue(output["raw_gyro_and_corrected_rate_distinct"])
+        self.assertTrue(output["truth_attitude_and_nominal_R_hat_distinct"])
+        self.assertTrue(output["truth_acceleration_and_nominal_a_w_hat_distinct"])
+        self.assertFalse(output["sensor_forcing_hard_bound_closed_here"])
+        self.assertFalse(output["BIAS0_assembled_sensor_qualification_closed_here"])
+        self.assertTrue(d["hard_shaping_state_or_excitation_bound_closed"])
         self.assertFalse(d["complete_BRMM_family_materialized_here"])
         self.assertFalse(d["P3_promoted"])
 
@@ -59,7 +66,7 @@ class HardShapingStateContractTest(unittest.TestCase):
         ):
             self.assertFalse(d[key], key)
 
-    def test_outer_route_closes_left_inclusion_but_output_map_remains_open(self) -> None:
+    def test_outer_and_joint_output_routes_close_hard_shaping(self) -> None:
         d = SHAPING.build()
         self.assertEqual(
             d["executable_ingredients"],
@@ -69,9 +76,10 @@ class HardShapingStateContractTest(unittest.TestCase):
                 "hard_spectral_driver_set_closed": False,
                 "correlated_outer_enclosure_closed": True,
                 "complete_BRMM_left_inclusion_closed": True,
-                "joint_source_output_map_closed": False,
+                "joint_source_output_map_closed": True,
             },
         )
+        self.assertTrue(d["hard_shaping_state_or_excitation_bound_closed"])
 
 
 if __name__ == "__main__":
