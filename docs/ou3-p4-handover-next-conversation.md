@@ -58,21 +58,40 @@ composition fail-closed. `END_TO_END_STABILITY_PASS = false`.
 
 1. **Instantiate `V_m`, `P_m`, `S_m`** in the physical BRMM contract from the
    declared source class. They are the entry radii now, and they are `None`.
-   The certificate currently admits `S_m <= 7.3537 m*s` from the same-cell
-   correction ceiling and `4.566 m*s` from the chart frontier with the other
-   coordinates at their declared radii, rising to `11.03 m*s` at the
-   maximum-volume basin point. If the qualified `S_m` lands above those, the
-   magnitude-only route has no headroom and the proof must retain the same-cell
-   attitude/S cross-covariance direction instead of the Cauchy-Schwarz product.
-2. **Repair the attitude covariance envelope.** The endpoint-referenced
-   Lagrange/Vandermonde inversion gives 3.99983e8 rad^2 per axis, 6.4485e11
-   above the prior-independent accelerometer posterior cap `r/|f|^2`. That one
-   number is what blocks the correction/reset domain, not the entry set. Carry
-   the per-sample accelerometer cap into the envelope and keep the same-cell
-   `S^{-1}` instead of relaxing to `R^{-1}`.
-   The third direction, rotation about the specific force, has a route rather
-   than a wall: the same prior-independent argument applies to the magnetometer
-   event in the two directions transverse to `m`, and the declared
+   The chart frontier admits `4.566 m*s` with the other coordinates at their
+   declared radii, rising to `11.03 m*s` at the maximum-volume basin point. The
+   same-cell correction ceiling admits NO `S_m` at all: it once appeared to
+   admit `7.3537 m*s`, but that rested on the retracted prior-independent
+   attitude cap (item 2), and under the conditional cap the allowed residual
+   scale is 1.639 against a dwell term of 19.43. So the magnitude-only route
+   already has no headroom, independently of what `S_m` is qualified to, and the
+   proof must retain the same-cell attitude/S cross-covariance direction instead
+   of the Cauchy-Schwarz product.
+2. **Repair the attitude covariance envelope -- and note a retraction.** The
+   endpoint-referenced Lagrange/Vandermonde inversion gives 3.99983e8 rad^2 per
+   axis, 6.4485e11 above the trace `C^2/E_acc` the reset domain admits. That one
+   number is what blocks the correction/reset domain, not the entry set.
+   An earlier revision proposed repairing it with a prior-INDEPENDENT
+   accelerometer posterior cap `r/|f|^2`. **That cap is false for the deployed
+   filter** and is retracted: it holds only when attitude is the sole state in
+   the residual, whereas `measurement_update_acc_only` also carries the
+   latent-acceleration and bias blocks. See
+   `tools/stability/ou3_p4_attitude_measurement_cap.py`, which refutes it on the
+   deployed structure by 2.4743e9, and holds the conditional replacement
+   `(sigma_a^2 + 2 lambda_max(P_(a_w,b_a)))/|f|^2 = 3.35035` rad^2 per axis.
+   The one-shot measurement route is therefore a DEAD END here: keeping the
+   same-cell `S^{-1}` gives 3.38698 against the reset utility limit 3.0, and the
+   ceiling saturates at 3.38758, so no attitude bound rescues it by saturation.
+   What it does give is a sharp target. The route closes iff the transverse
+   attitude variance is below `P* = 4.31271e-3` rad^2 per axis, equivalently iff
+   `lambda_max(P_(a_w,b_a)) <= 5.27063e-2` against 56.4621 certified -- a
+   shortfall of 1071.3. Get that from the uniform observability/detectability
+   machinery, where attitude and `a_w` are separated over a WINDOW rather than
+   at one event; one event provably cannot separate them.
+   The third direction, rotation about the specific force, still has a route
+   rather than a wall, but the same correction applies to it: the magnetometer
+   event bounds the two directions transverse to `m` only conditionally on the
+   states sharing ITS residual, and the declared
    `vector_sine_separation_lower = .1` means `f` and `m` are never parallel, so
    the two transverse pairs span all three directions. What is missing is a
    maximum magnetometer inter-event gap. The domain declares the magnetometer an
@@ -121,6 +140,8 @@ Do not spend time on these unless new structure materially changes them.
 > `docs/ou3-end-to-end-stability-theorem.md` as the canonical handoff. The
 > target is the end-to-end theorem, not P4 alone. Maximise the certified basin
 > rather than shrinking it, instantiate the BRMM `V_m`/`P_m`/`S_m` primitives,
-> repair the attitude covariance envelope with the prior-independent
-> accelerometer posterior cap, then finish the source cover and the capture
+> repair the attitude covariance envelope by bounding
+> `lambda_max(P_(a_w,b_a))` over a window (the one-shot accelerometer cap is a
+> dead end and its prior-independent form is retracted), then finish the source
+> cover and the capture
 > half. Keep every promotion bit false unless the full certificate closes.

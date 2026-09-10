@@ -149,41 +149,128 @@ initial schedule rather than leaving it implicit.
 Evaluating the joint `S=0` residual scale `(T_S+dt)/(.72 R_S)` on cells where
 cadence and applied covariance come from the SAME schedule gives .9709, against
 1.4352 at the independent `(T_S_max, R_S_min)` corner an independent rectangle
-would license: a 1.478 over-approximation in scale and 2.185 in energy. With
-the prior-independent transverse attitude cap below, the same-cell correction
-ceiling then admits
+would license: a 1.478 over-approximation in scale and 2.185 in energy.
 
-```
-S_m <= 7.3537 m*s.
-```
+Turning that into an admissible `S_m` requires dividing by the transverse
+attitude variance, and this is where the retraction in the next section bites.
+Under the retracted prior-independent cap the same-cell correction ceiling
+admitted `S_m <= 7.3537 m*s`. Under the conditional cap that actually holds, the
+allowed residual scale falls from 87.10 to 1.639 while the dwell term from the
+declared pre-entry position envelope is 19.43, so the headroom is NEGATIVE and
+the magnitude-only route admits no `S_m` whatever. The producer reports the
+budget as absent rather than as a number.
 
-The chart frontier admits 4.566 m*s with all other coordinates at their declared
-radii, and 11.03 m*s at the maximum-volume basin point. So the qualification
-target is an `S_m` of order a few m*s, and whether the declared BRMM class
-supplies one is the open question.
+The chart frontier still admits 4.566 m*s with all other coordinates at their
+declared radii, and 11.03 m*s at the maximum-volume basin point, so the geometry
+is not what fails. What fails is the magnitude-only Cauchy-Schwarz accounting,
+and the recorded fallback is the one that survives: retain the same-cell
+attitude/`S` cross-covariance direction instead of the `lambda_max` product.
 
-## The prior-independent attitude covariance cap
+## The attitude covariance cap, and a retraction
 
-`tools/stability/ou3_p4_blocker_falsification_classification.py` records why the
-same-cell Joseph correction/reset blocker is a dependency loss rather than an
-infeasibility. The retained endpoint-referenced envelope carries an attitude
-variance upper of 3.99983e8 rad^2 per axis. But the accelerometer Joseph event
-admits a prior-INDEPENDENT posterior cap: for a scalar angle measurement with
-gain `|f|` and noise variance `r`,
+An earlier revision of this document, and of
+`tools/stability/ou3_p4_blocker_falsification_classification.py`, asserted a
+prior-INDEPENDENT cap on the attitude variance transverse to the specific force:
+for a scalar angle measurement with gain `|f|` and noise variance `r`,
 
 ```
 P^+ = P^- r / (P^- |f|^2 + r) <= r / |f|^2    for every prior P^-,
 ```
 
-and the declared Normal-Live invariant executes that update at every valid IMU
-sample. With `R_acc = .04` and `|f| >= 5.80665` the two directions transverse to
-the specific force are capped at 1.18634e-3 rad^2 each, so the envelope in use
-exceeds what the deployed event structure permits by 6.4485e11. At that cap the
-`R^{-1}` relaxation gives an accelerometer ceiling of 3.3876 against the reset
-utility limit 3.0, while retaining the same-cell `S^{-1} = (H P H^T + R)^{-1}`
-gives 2.3954. Rotation about the specific force is not accelerometer-observed
-and needs the asynchronous magnetometer plus gyro-bias transport; that stays
-open.
+giving 1.18634e-3 rad^2 per axis at `R_acc = .04`, `|f| >= 5.80665`, executed at
+every valid IMU sample by the declared Normal-Live invariant.
+
+**That claim is false for the deployed filter and is retracted.** The scalar
+identity holds only when attitude is the sole state in the residual.
+`measurement_update_acc_only` builds `J_att = -skew(f_cog_b)` alongside a
+latent-acceleration block and an accelerometer-bias block, so a transverse
+attitude error and an `a_w` error produce the SAME residual; one update cannot
+separate them, and the attitude MARGINAL of the full-state posterior is not
+capped by anything. `tools/stability/ou3_p4_attitude_measurement_cap.py`
+exhibits the refutation directly: on the deployed residual structure at a
+latent-acceleration prior of 1e8 the transverse attitude marginal is 1.0291e6
+rad^2, exceeding the claimed cap by 2.4743e9. The verdict is taken outside the
+covariance-cancellation noise floor, and the degenerate attitude-only case is
+checked to still satisfy the scalar identity, so the refutation is the residual
+structure and not an arithmetic artifact.
+
+### What holds instead
+
+Through the variational form of the posterior,
+
+```
+c^T P^+ c = min_k [ (c - H^T k)^T P (c - H^T k) + k^T R k ],
+```
+
+take `c = (e,0,0)` with `e` a unit vector orthogonal to `f`, and choose
+`k = -(f x e)/|f|^2`. Then `H_theta^T k = e` exactly and `|k| = 1/|f|`, leaving
+`c - H^T k = (0, -R^T k, -k)`, so for every prior and every such `e`
+
+```
+e^T P^+_theta,theta e  <=  (sigma_a^2 + 2 lambda_max(P_(a_w,b_a))) / |f|^2 .
+```
+
+The bound is CONDITIONAL on the joint latent/bias covariance block, taken from
+the certified BRMM covariance ceiling rather than assumed:
+`lambda_max(P_(a_w,b_a)) <= 56.4621`, using
+`lambda_max([[A,B],[B^T,D]]) <= lambda_max(A) + lambda_max(D)` for PSD blocks.
+That gives 3.35035 rad^2 per axis. It is tight rather than merely true, and the
+evidence is reproducible from the repo: `sweep()` in the cap module searches the
+full nine-state residual with random specific force, random carried rotation and
+prior condition numbers over many decades, runs on every build, finds no
+violation, and attains about 91% of the bound. Cases where the variational
+identity fails to reproduce `c^T P^+ c` to a relative 1e-8 are rejected rather
+than counted either way, since at those condition numbers the posterior
+subtraction loses the answer outright. A larger out-of-repo sweep of 188609
+validated cases attains 99.75%.
+
+### Consequence for the correction/reset blocker
+
+The retracted cap made the same-cell `S^{-1} = (H P H^T + R)^{-1}` accounting
+appear to close the accelerometer correction inside the reset utility domain.
+Under the conditional cap it does not: the ceiling is 3.38698 against the reset
+utility limit 3.0, and the `R^{-1}` relaxation gives 180.024.
+
+That near miss is not luck, and it is sharp. Retaining the same-cell `S^{-1}`,
+
+```
+ceiling(P)^2 = 2 P E_acc r / (f^2 P + r),      P = transverse variance per axis,
+```
+
+is strictly increasing in `P` with supremum `sqrt(2 E_acc r / f^2) = 3.38758`.
+The supremum EXCEEDS 3.0, so the route does not close for free by saturation;
+but because it is finite and increasing there is an exact threshold,
+
+```
+P* = C^2 r / (2 E_acc r - C^2 f^2) = 4.31271e-3 rad^2 per axis   (C = 3.0),
+```
+
+i.e. 6.5671e-2 rad, 3.7627 deg one-sigma. So this obligation closes through
+this route if and only if the transverse attitude variance is bounded by `P*`,
+and the conditional cap is 776.85 times too loose. Propagating `P*` back through the
+cap turns the blocker into one scalar target on the certified latent/bias
+ceiling:
+
+```
+lambda_max(P_(a_w,b_a)) <= (P* f^2 - sigma_a^2)/2 = 5.27063e-2,
+```
+
+against the 56.4621 now certified: a shortfall of 1071.3. All of these are
+rounded outward by the producer, so the stated `P*` and `lambda*` are safe to
+aim at rather than optimistic. That target is the
+concrete statement of what remains, and it is achievable in principle rather
+than excluded.
+
+The separate observation that the retained endpoint-referenced envelope
+(3.99983e8 rad^2 per axis) exceeds the trace the reset domain admits by 6.4485e11
+is unaffected by the retraction -- it compares the envelope against
+`C^2/E_acc`, not against the retracted cap -- and it is why the blocker stays
+class C. What the retraction removes is the claim that the one-shot measurement
+event by itself repairs the envelope. It does not, and it cannot: the bound has
+to come from the uniform observability/detectability machinery, where the
+latent-acceleration and bias states are separated over a WINDOW instead of at a
+single event. Rotation about the specific force is not accelerometer-observed at
+all and still needs the asynchronous magnetometer plus gyro-bias transport.
 
 ## Obligation status
 

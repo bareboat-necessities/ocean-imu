@@ -361,22 +361,45 @@ integral ball destroys the certificate, never a disproof of P4.
 
 **Limiter.** The attitude covariance envelope, not the entry set. The retained
 endpoint-referenced value is 3.99983e8 rad^2 per axis, **6.4485e11** above the
-prior-independent accelerometer posterior cap. Feeding the correlated integral
+trace `C^2/E_acc` the reset domain admits. Feeding the correlated integral
 relation instead of the 300 m*s ball moves the S=0 ceiling from 9.6223e7 to
 9.9481e5 and leaves the accelerometer event limiting at 2.4091e6, so the entry
 set is not what blocks this.
 
-**Retained.** At the transverse cap the `R^{-1}` relaxation gives 3.3876 against
-the reset utility limit 3.0, while the same-cell `S^{-1}` gives 2.3954: the route
-closes on the two directions transverse to the specific force.
+**Retracted.** An earlier revision claimed a prior-INDEPENDENT accelerometer
+posterior cap `r/|f|^2 = 1.18634e-3` rad^2 per axis and concluded that the
+same-cell `S^{-1}` route closed the two transverse directions at 2.3954 against
+the reset utility limit 3.0. **That cap is false for the deployed filter.** It
+holds only when attitude is the sole state in the residual; the deployed
+accelerometer residual also carries the latent-acceleration and bias blocks, so
+a transverse attitude error and an `a_w` error are indistinguishable in one
+update. `tools/stability/ou3_p4_attitude_measurement_cap.py` refutes it on the
+deployed structure by 2.4743e9.
 
-**Open.** Rotation about the specific force, which the accelerometer does not
-observe.
+**Retained.** The CONDITIONAL cap
+`(sigma_a^2 + 2 lambda_max(P_(a_w,b_a)))/|f|^2 = 3.35035` rad^2 per axis, proved
+from the variational posterior at `k = -(f x e)/|f|^2` and verified tight to
+99.75%, with `lambda_max` taken from the certified BRMM ceiling. At that cap the
+same-cell `S^{-1}` route gives 3.38698, so it does NOT close.
 
-**Next experiment.** Carry the per-sample accelerometer cap into the envelope,
-keep `S^{-1}`, and settle whether `vector_pe_recurrence_window_s` bounds the
-magnetometer inter-event gap; the yaw growth term needs a gyro-bias covariance
-bound with the same conditioning defect.
+**Sharp threshold.** `ceiling(P)^2 = 2 P E_acc r/(f^2 P + r)` is increasing in
+`P` with supremum 3.38758 > 3.0, so the route has an exact threshold
+`P* = 4.31271e-3` rad^2 per axis (3.7627 deg one-sigma): it closes iff the
+transverse attitude variance is bounded by `P*`, and the conditional cap is
+776.85 times too loose. Equivalently the target is
+`lambda_max(P_(a_w,b_a)) <= 5.27063e-2` against 56.4621 certified, a shortfall
+of 1071.3.
+
+**Open.** That shortfall, plus rotation about the specific force, which the
+accelerometer does not observe at all.
+
+**Next experiment.** Not the one-shot measurement route -- it is a dead end for
+this obligation, because the bound has to separate attitude from `a_w` and one
+event cannot. Bound `lambda_max(P_(a_w,b_a))` through the uniform
+observability/detectability machinery over a window, and settle whether
+`vector_pe_recurrence_window_s` bounds the magnetometer inter-event gap; the yaw
+growth term needs a gyro-bias covariance bound with the same conditioning
+defect.
 
 Derivation in `docs/ou3-end-to-end-stability-theorem.md`.
 
@@ -405,8 +428,9 @@ cell. A captured word cannot supply it and the contract forbids trying:
 The other two, the correction/reset domain and the every-prefix hard-domain
 retention, are now separately attributed. Neither is limited by the cover
 alone: the correction domain is limited by an attitude covariance envelope
-6.4485e11 above what the deployed accelerometer event permits, plus the
-`R^{-1}` relaxation of the same-cell `S^{-1}`; the retention is limited by the
+6.4485e11 above the trace the reset domain admits, which reduces to the single
+target `lambda_max(P_(a_w,b_a)) <= 5.27063e-2` against 56.4621 certified; the
+retention is limited by the
 independent integral entry ball, which the correlated relation replaces on the
 chart threshold. Both are class C, and both have a stated constructive repair
 rather than an infeasibility.

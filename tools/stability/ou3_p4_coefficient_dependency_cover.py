@@ -331,9 +331,22 @@ def build(domain_path: Path = DEFAULT_DOMAIN, cells: int = DEFAULT_CELLS) -> dic
     # pre-entry envelope, matching ou3_p4_correlated_entry_relation.
     per_second = up(up(p_env + up(h * 0.5 * v_env)) + up(h * h / 6.0 * a_env))
 
-    r_acc = min(map(float, domain["configured_runtime"]["measurement_noise_std"]["accelerometer_mps2"]))
-    f_min = float(domain["normal_live"]["specific_force_norm_lower_mps2"])
-    transverse = up(up(r_acc * r_acc) / down(f_min * f_min))
+    # The transverse attitude variance this consequence divides by used to be
+    # the prior-independent r/|f|^2. That claim is retracted -- it holds only if
+    # attitude is the sole state in the accelerometer residual, and the deployed
+    # residual also carries the latent-acceleration and bias blocks. See
+    # ou3_p4_attitude_measurement_cap for the refutation and for the conditional
+    # bound used here. The conditional cap is roughly 2800 times larger, so this
+    # consequence is correspondingly weaker and must not be reported as if it
+    # still rested on the retracted number.
+    import ou3_p4_attitude_measurement_cap as CAP
+    capd = CAP.build()
+    cap_failures = CAP.validate(capd)
+    if cap_failures:
+        raise RuntimeError("attitude measurement cap invalid: " + repr(cap_failures))
+    if capd["prior_independent_transverse_cap_holds_for_the_deployed_filter"] is not False:
+        raise RuntimeError("attitude cap module no longer records the refutation")
+    transverse = float(capd["conditional_transverse_cap_rad2"])
     reset_cap = 3.0
     allowed = down(reset_cap / up(math.sqrt(transverse)))
     dwell_term = up(joint_scale * per_second)
@@ -365,7 +378,10 @@ def build(domain_path: Path = DEFAULT_DOMAIN, cells: int = DEFAULT_CELLS) -> dic
     contract_s_m = source["physical_BRMM_contract"]["unfrozen_physical_constants"].get("S_m")
     consequence = {
         "reset_utility_norm_max": reset_cap,
-        "prior_independent_transverse_attitude_variance_rad2": transverse,
+        "conditional_transverse_attitude_variance_rad2": transverse,
+        "transverse_attitude_variance_is_prior_independent": False,
+        "retracted_prior_independent_transverse_variance_rad2": float(
+            capd["prior_independent_transverse_cap_claimed"]),
         "allowed_residual_scale_at_transverse_cap": allowed,
         "dwell_term_from_declared_position_envelope": dwell_term,
         "headroom_for_true_integral_displacement": headroom,
@@ -373,6 +389,8 @@ def build(domain_path: Path = DEFAULT_DOMAIN, cells: int = DEFAULT_CELLS) -> dic
         "contract_S_m_value": contract_s_m,
         "contract_S_m_instantiated": contract_s_m is not None,
         "S_m_is_the_missing_source_primitive": bool(contract_s_m is None),
+        "magnitude_only_route_has_headroom": bool(headroom > 0.0),
+        "no_admissible_S_m_on_the_magnitude_only_route": bool(s_m_budget is None),
         "fallback_if_qualified_S_m_exceeds_budget": (
             "retain the same-cell attitude/S cross-covariance direction instead of the "
             "Cauchy-Schwarz lambda_max product; the magnitude-only route has no headroom left"),
@@ -491,6 +509,12 @@ def validate(d: dict) -> list[str]:
     budget = cons.get("admissible_BRMM_S_m_upper_m_s")
     if budget is not None and not (math.isfinite(float(budget)) and float(budget) > 0.0):
         f.append("admissible S_m budget invalid")
+    if cons.get("transverse_attitude_variance_is_prior_independent") is not False:
+        f.append("S_m consequence claims a prior-independent attitude cap again")
+    if (budget is None) != bool(cons.get("no_admissible_S_m_on_the_magnitude_only_route")):
+        f.append("S_m budget presence disagrees with the recorded headroom verdict")
+    if (budget is None) == bool(cons.get("magnitude_only_route_has_headroom")):
+        f.append("S_m headroom flag disagrees with the computed budget")
     return list(dict.fromkeys(f))
 
 

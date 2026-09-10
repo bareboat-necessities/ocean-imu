@@ -54,26 +54,70 @@ class BlockerFalsificationClassificationTest(unittest.TestCase):
                 self.assertFalse(row["closes_on_correlated_relation_alone"])
                 self.assertGreater(row["attitude_trace_excess_factor"], 1e9)
 
-    def test_transverse_attitude_cap_is_prior_independent_and_partial(self):
-        cap = self.d["prior_independent_transverse_attitude_cap"]
-        self.assertTrue(cap["prior_independent"])
+    def test_transverse_attitude_cap_is_conditional_not_prior_independent(self):
+        # The prior-independent form of this cap was asserted in an earlier
+        # revision and is false for the deployed residual, which carries the
+        # latent-acceleration and accelerometer-bias blocks alongside attitude.
+        # This test pins the retraction so the claim cannot come back silently.
+        cap = self.d["conditional_transverse_attitude_cap"]
+        self.assertFalse(cap["prior_independent"])
+        self.assertTrue(cap["conditional_on_joint_latent_bias_block"])
+        self.assertGreater(cap["refutation_exceedance_factor"], 1.0)
+        self.assertGreater(cap["refutation_achieved_marginal_rad2"],
+                           cap["retracted_prior_independent_value_rad2"])
         self.assertTrue(cap["per_sample_accelerometer_update_declared"])
         self.assertFalse(cap["yaw_about_specific_force_capped_here"])
         self.assertTrue(cap["yaw_needs_asynchronous_magnetometer_and_gyro_bias_transport"])
         r = cap["accelerometer_std_lower_mps2"]
         f = cap["specific_force_norm_lower_mps2"]
-        self.assertGreaterEqual(cap["transverse_variance_upper_per_axis_rad2"], r * r / (f * f))
-        self.assertLess(cap["transverse_trace_upper_two_axes_rad2"], 1e-2)
+        lam = cap["joint_latent_bias_lambda_max"]
+        self.assertGreaterEqual(cap["transverse_variance_upper_per_axis_rad2"],
+                                (r * r + 2.0 * lam) / (f * f))
+        # And it is far above the retracted value, so nothing downstream may
+        # keep treating the attitude block as capped at 1e-3 rad^2.
+        self.assertGreater(cap["transverse_variance_upper_per_axis_rad2"], 1e-2)
 
-    def test_same_cell_Sinverse_is_what_closes_the_transverse_route(self):
+    def test_one_shot_measurement_route_does_not_close_the_transverse_route(self):
+        # With the retracted cap this route appeared to close under the same-cell
+        # S^{-1} accounting. Under the conditional cap that conclusion does not
+        # survive: the S/R discount grows with the cap, so the product saturates
+        # and a looser attitude bound cannot be traded back for a tighter
+        # ceiling. Recorded so the retraction is visible in the executable gate.
         route = self.d["magnitude_route_after_transverse_cap"]
         cap = route["reset_utility_norm_max"]
         self.assertGreater(route["accelerometer_ceiling_with_Rinverse_relaxation"], cap)
-        self.assertLess(route["accelerometer_ceiling_retaining_same_cell_Sinverse"], cap)
         self.assertFalse(route["Rinverse_relaxation_alone_closes_accelerometer"])
-        self.assertTrue(route["same_cell_Sinverse_closes_accelerometer"])
         self.assertGreaterEqual(route["same_cell_S_over_R_lower"], 1.0)
         self.assertTrue(route["third_attitude_direction_still_open"])
+        self.assertFalse(route["one_shot_measurement_route_closes_the_correction_domain"])
+
+    def test_one_shot_route_carries_a_sharp_threshold_not_just_a_failure(self):
+        # The value of the retraction is that the route has an exact threshold:
+        # ceiling(P)^2 = 2 P E r/(f^2 P + r) is increasing with a finite
+        # supremum, and that supremum is above the reset utility cap, so there
+        # is a P* at which the route would close. Recording P* -- and the
+        # lambda_max(P_(a_w,b_a)) target it implies -- is what turns this open
+        # blocker into a checkable objective.
+        th = self.d["magnitude_route_after_transverse_cap"]["one_shot_route_threshold"]
+        cap = self.d["magnitude_route_after_transverse_cap"]["reset_utility_norm_max"]
+        self.assertTrue(th["supremum_exceeds_reset_utility_cap"])
+        self.assertFalse(th["saturates_below_reset_cap_for_free"])
+        self.assertGreater(th["ceiling_supremum_over_all_attitude_bounds"], cap)
+        # The attained same-cell ceiling must sit below the supremum and above
+        # the cap: that is exactly the near miss the threshold explains.
+        attained = self.d["magnitude_route_after_transverse_cap"][
+            "accelerometer_ceiling_retaining_same_cell_Sinverse"]
+        self.assertGreater(attained, cap)
+        self.assertLessEqual(attained, th["ceiling_supremum_over_all_attitude_bounds"])
+        self.assertTrue(th["requirement_is_achievable_in_principle"])
+        self.assertGreater(th["required_transverse_variance_per_axis_rad2"], 0.0)
+        self.assertLess(th["required_transverse_variance_per_axis_rad2"],
+                        th["attained_transverse_variance_per_axis_rad2"])
+        self.assertGreater(th["transverse_variance_shortfall_factor"], 1.0)
+        self.assertGreater(th["required_joint_latent_bias_lambda_max"], 0.0)
+        self.assertLess(th["required_joint_latent_bias_lambda_max"],
+                        th["attained_joint_latent_bias_lambda_max"])
+        self.assertGreater(th["joint_latent_bias_shortfall_factor"], 1.0)
 
     def test_correlated_relation_summary_is_carried_through(self):
         rel = self.d["correlated_integral_relation"]

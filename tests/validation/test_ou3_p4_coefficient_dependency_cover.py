@@ -92,8 +92,23 @@ class CoefficientDependencyCoverTest(unittest.TestCase):
         self.assertIsNone(cons["contract_S_m_value"])
         self.assertFalse(cons["contract_S_m_instantiated"])
         self.assertTrue(cons["S_m_is_the_missing_source_primitive"])
-        self.assertGreater(cons["admissible_BRMM_S_m_upper_m_s"], 0.0)
-        self.assertGreater(cons["headroom_for_true_integral_displacement"], 0.0)
+        # The budget divides by the transverse attitude variance. That variance
+        # was once taken as the prior-independent r/|f|^2, which is retracted;
+        # under the conditional cap the magnitude-only route has no headroom, so
+        # the honest budget is absent rather than 7.35 m*s. Either outcome is
+        # admissible here, but the two must agree with each other.
+        self.assertFalse(cons["transverse_attitude_variance_is_prior_independent"])
+        self.assertGreater(cons["conditional_transverse_attitude_variance_rad2"],
+                           cons["retracted_prior_independent_transverse_variance_rad2"])
+        budget = cons["admissible_BRMM_S_m_upper_m_s"]
+        self.assertEqual(budget is None, cons["no_admissible_S_m_on_the_magnitude_only_route"])
+        self.assertEqual(budget is not None, cons["magnitude_only_route_has_headroom"])
+        if budget is not None:
+            self.assertGreater(budget, 0.0)
+        else:
+            self.assertLessEqual(cons["headroom_for_true_integral_displacement"], 0.0)
+            self.assertIn("magnitude-only route has no headroom",
+                          cons["fallback_if_qualified_S_m_exceeds_budget"])
 
     def test_tiling_is_a_gapless_closed_cover(self):
         tiles = COVER._geometric_tiling(0.5, 4.0, 7)

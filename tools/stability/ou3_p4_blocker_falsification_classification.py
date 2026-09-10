@@ -26,24 +26,45 @@ correction/reset blocker.
     ball moves the S=0 ceiling but leaves the ACCELEROMETER event limiting at
     about 2.4e6, so the integral entry ball is NOT the limiter of this blocker.
 
-2.  The accelerometer Joseph event admits a prior-INDEPENDENT posterior cap on
-    the two attitude directions transverse to the specific force.  For a scalar
-    measurement of angle with gain ``|f|`` and noise variance ``r``,
-    ``P^+ = P^- r/(P^- |f|^2 + r) <= r/|f|^2`` whatever ``P^-`` was, and the
-    declared Normal-Live invariant executes that update at EVERY valid IMU
-    sample.  So the reachable transverse attitude variance is at most
-    ``R_acc/|f|_min^2``, about 1.19e-3 rad^2 per axis: the envelope in use
-    exceeds what the deployed event structure permits by about 6.4e11.  That is
-    a conditioning artifact of the endpoint-referenced Lagrange/Vandermonde
-    inversion, not a physical bound, which makes the blocker class C.
+2.  The retained envelope carries about 1.2e9 rad^2 of attitude trace against
+    the ``C^2/E_acc`` the reset domain admits, an excess of about 6.4e11.  That
+    excess is a conditioning artifact of the endpoint-referenced
+    Lagrange/Vandermonde inversion rather than a physical bound, which is what
+    makes the blocker class C.
 
-The module also quantifies the one remaining lossy step of the magnitude route:
-at the transverse cap the ``R^{-1}`` relaxation gives 3.39, just above the exact
-reset utility limit 3.0, while retaining the same-cell ``S^{-1} = (HPH^T+R)^{-1}``
-gives 2.40.  The route therefore closes on the two transverse directions once
-``S^{-1}`` is kept; the third (yaw about the specific force) is not capped by
-the accelerometer at all and needs the asynchronous magnetometer plus gyro-bias
-transport, which is not established here and is reported open.
+    RETRACTION.  An earlier revision repaired that excess with a
+    prior-INDEPENDENT accelerometer posterior cap ``r/|f|^2``, from the scalar
+    identity ``P^+ = P^- r/(P^- |f|^2 + r)``, and concluded that the route
+    closed on the two transverse directions.  The identity holds only when
+    attitude is the sole state in the residual, and the deployed accelerometer
+    residual also carries the latent-acceleration and bias blocks, so a
+    transverse attitude error and an ``a_w`` error produce the same residual.
+    ``ou3_p4_attitude_measurement_cap`` refutes the claim on the deployed
+    structure and supplies the CONDITIONAL replacement
+    ``(sigma_a^2 + 2 lambda_max(P_(a_w,b_a)))/|f|^2``, about 3.35 rad^2 per
+    axis, which is roughly 2800 times larger.
+
+Under the conditional cap the magnitude route no longer closes: the ``R^{-1}``
+relaxation gives 180.0 and retaining the same-cell ``S^{-1} = (HPH^T+R)^{-1}``
+gives 3.387, against the exact reset utility limit 3.0.  The near miss is sharp
+rather than accidental, and the module records why.  Retaining ``S^{-1}``,
+
+    ceiling(P)^2 = 2 P E_acc r / (f^2 P + r),
+
+is increasing in the transverse variance ``P`` with supremum
+``sqrt(2 E_acc r/f^2) = 3.3876``.  That supremum is ABOVE 3.0, so the route does
+not close for free; but being finite and increasing it yields an exact
+threshold ``P* = C^2 r/(2 E_acc r - C^2 f^2) = 4.313e-3`` rad^2 per axis.  The
+obligation closes through this route if and only if the transverse attitude
+variance is bounded by ``P*``, equivalently if and only if
+``lambda_max(P_(a_w,b_a)) <= 5.27e-2`` against the 56.46 currently certified.
+
+So the one-shot measurement route is a dead end for this blocker -- one event
+provably cannot separate attitude from ``a_w`` -- but it leaves a single scalar
+target for the uniform observability/detectability machinery, which separates
+them over a window.  The third direction, yaw about the specific force, is not
+accelerometer-observed at all and needs the asynchronous magnetometer plus
+gyro-bias transport, which is not established here and is reported open.
 
 Nothing in this module promotes anything.  It consumes the fail-closed gate and
 must report ``P4_MOTION_PASS`` exactly as the gate does.
@@ -55,6 +76,7 @@ import json
 import math
 from pathlib import Path
 
+import ou3_p4_attitude_measurement_cap as CAP
 import ou3_p4_correlated_entry_relation as ENTRYREL
 import ou3_p4_exact_reset_transport as RESET
 import ou3_p4_final_closure_gate as GATE
@@ -120,27 +142,56 @@ def down(x: float) -> float:
 
 
 def _transverse_attitude_cap(domain: dict) -> dict:
-    """Prior-independent accelerometer posterior cap on transverse attitude variance.
+    """Accelerometer posterior cap on transverse attitude variance.
 
-    A scalar angle measurement with gain ``|f|`` and noise variance ``r`` gives
-    ``P^+ = P^- r/(P^- |f|^2 + r)``, which is increasing in ``P^-`` with
-    supremum ``r/|f|^2``.  The bound holds for every prior, so it is a
-    reachability cap rather than a Riccati fixed point, and the declared
-    Normal-Live invariant runs the accelerometer Joseph update at every valid
-    IMU sample.  Only the two directions transverse to ``f`` are observed; the
-    rotation about ``f`` is not.
+    RETRACTION.  An earlier revision of this function asserted a PRIOR-INDEPENDENT
+    cap ``r/|f|^2``, from the scalar identity ``P^+ = P^- r/(P^- |f|^2 + r)``.
+    That identity holds only when attitude is the sole state in the residual.  The
+    deployed ``measurement_update_acc_only`` builds ``J_att = -skew(f_cog_b)``
+    alongside a latent-acceleration block and an accelerometer-bias block, so a
+    transverse attitude error and an ``a_w`` error produce the same residual and
+    one update cannot separate them.  ``ou3_p4_attitude_measurement_cap`` refutes
+    the prior-independent claim numerically on the deployed residual structure.
+
+    What holds instead is CONDITIONAL on the joint latent/bias covariance block,
+
+        e^T P^+_theta,theta e <= (sigma_a^2 + 2 lambda_max(P_(a_w,b_a))) / |f|^2
+
+    for every prior and every unit ``e`` orthogonal to ``f``, proved from the
+    variational posterior identity at ``k = -(f x e)/|f|^2``.  ``lambda_max`` is
+    taken from the certified BRMM covariance ceiling, so the cap is a genuine
+    bound on the admitted execution rather than an assumption, but it is roughly
+    three orders of magnitude larger than the retracted value.  Only the two
+    directions transverse to ``f`` are bounded here; the rotation about ``f`` is
+    not.
     """
-    noise = domain["configured_runtime"]["measurement_noise_std"]["accelerometer_mps2"]
-    r_acc = min(map(float, noise))
+    r_acc = float(CAP.build()["sigma_accelerometer"])
     f_min = float(domain["normal_live"]["specific_force_norm_lower_mps2"])
     if not (r_acc > 0.0 and f_min > 0.0):
         raise RuntimeError("configured accelerometer std / specific-force lower lost positivity")
     if domain["normal_live"]["accelerometer_update_required_each_valid_imu_sample_after_live_entry"] is not True:
         raise RuntimeError("per-sample accelerometer Joseph invariant not declared")
-    per_axis = up(up(r_acc * r_acc) / down(f_min * f_min))
+    capd = CAP.build()
+    cap_failures = CAP.validate(capd)
+    if cap_failures:
+        raise RuntimeError("attitude measurement cap invalid: " + repr(cap_failures))
+    if capd["prior_independent_transverse_cap_holds_for_the_deployed_filter"] is not False:
+        raise RuntimeError("attitude cap module no longer records the refutation")
+    per_axis = float(capd["conditional_transverse_cap_rad2"])
     return {
-        "argument": "P^+ = P^- r/(P^- |f|^2 + r) <= r/|f|^2 for every prior P^-",
-        "prior_independent": True,
+        "argument": (
+            "e^T P^+_theta,theta e <= (sigma_a^2 + 2 lambda_max(P_(a_w,b_a)))/|f|^2 "
+            "from c^T P^+ c = min_k [(c-H^T k)^T P (c-H^T k) + k^T R k] at k = -(f x e)/|f|^2"),
+        "prior_independent": False,
+        "retracted_prior_independent_claim": "P^+ <= r/|f|^2 for every prior",
+        "retracted_prior_independent_value_rad2": float(
+            capd["prior_independent_transverse_cap_claimed"]),
+        "refutation_achieved_marginal_rad2": float(
+            capd["refutation"]["achieved_transverse_attitude_marginal"]),
+        "refutation_exceedance_factor": float(capd["refutation"]["exceedance_factor"]),
+        "conditional_on_joint_latent_bias_block": True,
+        "joint_latent_bias_lambda_max": float(capd["joint_latent_bias_lambda_max"]),
+        "lambda_max_source": "certified BRMM covariance ceiling, mode A",
         "per_sample_accelerometer_update_declared": True,
         "accelerometer_std_lower_mps2": r_acc,
         "specific_force_norm_lower_mps2": f_min,
@@ -206,9 +257,12 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     tv_trace = float(cap["transverse_trace_upper_two_axes_rad2"])
     r_acc2 = down(float(cap["accelerometer_std_lower_mps2"]) ** 2)
     f_min2 = down(float(cap["specific_force_norm_lower_mps2"]) ** 2)
-    # Same-cell innovation covariance on the transverse block: S = H P H^T + R.
-    # At the cap H P H^T equals R exactly, so S^{-1} halves the residual energy
-    # that the R^{-1} relaxation charges.
+    # Same-cell innovation covariance on the transverse block: S = H P H^T + R,
+    # so retaining S^{-1} instead of relaxing to R^{-1} discounts the charged
+    # residual energy by S/R.  Note this discount grows with the cap, so the
+    # product tv_trace/(S/R) saturates: the S^{-1} route cannot be rescued by a
+    # looser attitude bound, which is why the conditional cap does not close
+    # this obligation.
     hph = up(f_min2 * float(cap["transverse_variance_upper_per_axis_rad2"]))
     s_over_r = down(up(hph + r_acc2) / up(r_acc2))
     magnitude_route = {
@@ -228,6 +282,65 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         magnitude_route["accelerometer_ceiling_retaining_same_cell_Sinverse"] <= reset_cap)
     magnitude_route["transverse_directions_only"] = True
     magnitude_route["third_attitude_direction_still_open"] = True
+    # Under the retracted prior-independent cap the same-cell S^{-1} accounting
+    # appeared to bring the accelerometer ceiling inside the reset utility
+    # domain. It does not under the conditional cap, and it cannot be made to:
+    # S/R grows in proportion to the cap, so tv_trace/(S/R) saturates.
+    # --- the sharp threshold the one-shot route needs -------------------------
+    # Retaining the same-cell S^{-1} the charged accelerometer correction is
+    #
+    #     ceiling(P)^2 = 2 P E_acc r / (f^2 P + r),   P = transverse variance/axis,
+    #
+    # strictly increasing in P with supremum sqrt(2 E_acc r / f^2).  Two facts
+    # follow, and they are what actually decide this obligation.
+    #
+    #  (a) The supremum EXCEEDS the reset utility cap, so no attitude bound makes
+    #      this route close by saturation -- the route has a genuine threshold
+    #      rather than an asymptote below the cap.
+    #  (b) Setting ceiling(P) = C and solving gives the exact threshold
+    #      P* = C^2 r / (2 E_acc r - C^2 f^2), positive precisely because of (a).
+    #      The obligation closes through this route iff the transverse attitude
+    #      variance is bounded by P*.
+    #
+    # Propagating P* back through the conditional cap (sigma_a^2 + 2 lambda)/f^2
+    # turns the open blocker into a single scalar target on the certified
+    # latent/bias covariance ceiling: lambda <= (P* f^2 - sigma_a^2)/2.
+    two_E_r = down(2.0 * down(acc_energy * r_acc2))
+    c2 = down(reset_cap * reset_cap)
+    denom = two_E_r - up(c2 * f_min2)
+    route_sup = up(math.sqrt(up(two_E_r / down(f_min2))))
+    threshold = {
+        "ceiling_supremum_over_all_attitude_bounds": route_sup,
+        "supremum_exceeds_reset_utility_cap": bool(route_sup > reset_cap),
+        "saturates_below_reset_cap_for_free": bool(route_sup <= reset_cap),
+    }
+    if denom > 0.0:
+        p_star = down(down(c2 * r_acc2) / up(denom))
+        lam_star = down(down(down(p_star * f_min2) - up(r_acc2)) / 2.0)
+        lam_now = float(cap["joint_latent_bias_lambda_max"])
+        threshold.update({
+            "required_transverse_variance_per_axis_rad2": p_star,
+            "required_transverse_std_per_axis_rad": down(math.sqrt(down(p_star))),
+            "attained_transverse_variance_per_axis_rad2":
+                float(cap["transverse_variance_upper_per_axis_rad2"]),
+            "transverse_variance_shortfall_factor":
+                up(float(cap["transverse_variance_upper_per_axis_rad2"]) / down(p_star)),
+            "required_joint_latent_bias_lambda_max": lam_star,
+            "attained_joint_latent_bias_lambda_max": lam_now,
+            "joint_latent_bias_shortfall_factor":
+                up(lam_now / down(lam_star)) if lam_star > 0.0 else float("inf"),
+            "requirement_is_achievable_in_principle": bool(lam_star > 0.0),
+        })
+    else:
+        threshold["required_transverse_variance_per_axis_rad2"] = None
+        threshold["requirement_is_achievable_in_principle"] = False
+    magnitude_route["one_shot_route_threshold"] = threshold
+
+    magnitude_route["one_shot_measurement_route_closes_the_correction_domain"] = bool(
+        magnitude_route["same_cell_Sinverse_closes_accelerometer"]
+        and magnitude_route["magnetometer_ceiling_with_Rinverse_relaxation"] <= reset_cap
+        and magnitude_route["S_zero_ceiling_with_correlated_relation_and_transverse_cap"] <= reset_cap
+        and not magnitude_route["third_attitude_direction_still_open"])
 
     per_blocker = {
         b: {
@@ -257,7 +370,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "correction_domain_attribution": attribution,
         "integral_entry_ball_limits_correction_domain": bool(
             any(v["integral_entry_ball_is_the_limiter"] for v in attribution.values())),
-        "prior_independent_transverse_attitude_cap": cap,
+        "conditional_transverse_attitude_cap": cap,
         "magnitude_route_after_transverse_cap": magnitude_route,
 
         "correlated_integral_relation": {
@@ -337,9 +450,13 @@ def validate(d: dict) -> list[str]:
             pass
         else:
             f.append("promotion bit set while blockers remain")
-    cap = d.get("prior_independent_transverse_attitude_cap", {})
-    if cap.get("prior_independent") is not True:
-        f.append("transverse attitude cap lost prior independence")
+    cap = d.get("conditional_transverse_attitude_cap", {})
+    if cap.get("prior_independent") is not False:
+        f.append("transverse attitude cap claims prior independence again")
+    if cap.get("conditional_on_joint_latent_bias_block") is not True:
+        f.append("transverse attitude cap dropped its latent/bias conditioning")
+    if not (float(cap.get("refutation_exceedance_factor", 0.0)) > 1.0):
+        f.append("retracted prior-independent cap is no longer shown to be refuted")
     if cap.get("yaw_about_specific_force_capped_here") is not False:
         f.append("yaw direction was claimed capped by the accelerometer event")
     x = float(cap.get("transverse_variance_upper_per_axis_rad2", -1.0))
@@ -349,6 +466,28 @@ def validate(d: dict) -> list[str]:
     for k in ("transverse_directions_only", "third_attitude_direction_still_open"):
         if route.get(k) is not True:
             f.append("magnitude_route." + k + " not true")
+    if route.get("one_shot_measurement_route_closes_the_correction_domain") is not False:
+        f.append("one-shot measurement route reported as closing the correction domain")
+    th = route.get("one_shot_route_threshold", {})
+    sup = float(th.get("ceiling_supremum_over_all_attitude_bounds", -1.0))
+    if not (math.isfinite(sup) and sup > 0.0):
+        f.append("one-shot route supremum is not a positive finite bound")
+    # The threshold is only meaningful because the supremum sits above the reset
+    # utility cap. If that ever inverts the route closes by saturation and this
+    # whole attribution has to be redone rather than reported as-is.
+    if bool(th.get("supremum_exceeds_reset_utility_cap")) == bool(
+            th.get("saturates_below_reset_cap_for_free")):
+        f.append("one-shot route saturation verdict is not a dichotomy")
+    if th.get("supremum_exceeds_reset_utility_cap") is True:
+        pstar = th.get("required_transverse_variance_per_axis_rad2")
+        if pstar is None or not (float(pstar) > 0.0):
+            f.append("one-shot route threshold missing while the supremum exceeds the cap")
+        elif float(th.get("attained_transverse_variance_per_axis_rad2", 0.0)) <= float(pstar):
+            # Attaining the threshold would close the route, which contradicts
+            # the flag above; refuse to publish both.
+            f.append("attitude cap meets the threshold yet the route is reported open")
+        elif not (float(th.get("transverse_variance_shortfall_factor", 0.0)) > 1.0):
+            f.append("threshold shortfall factor disagrees with the attained cap")
     return list(dict.fromkeys(f))
 
 
@@ -370,7 +509,7 @@ def main() -> int:
         "integral_ball_limits_correction_domain": d["integral_entry_ball_limits_correction_domain"],
         "attitude_trace_excess_factor": {m: v["attitude_trace_excess_factor"]
                                          for m, v in d["correction_domain_attribution"].items()},
-        "transverse_cap_rad2": d["prior_independent_transverse_attitude_cap"]["transverse_trace_upper_two_axes_rad2"],
+        "transverse_cap_rad2": d["conditional_transverse_attitude_cap"]["transverse_trace_upper_two_axes_rad2"],
         "acc_ceiling_Rinv": d["magnitude_route_after_transverse_cap"]["accelerometer_ceiling_with_Rinverse_relaxation"],
         "acc_ceiling_Sinv": d["magnitude_route_after_transverse_cap"]["accelerometer_ceiling_retaining_same_cell_Sinverse"],
         "P4_MOTION_PASS": d["P4_MOTION_PASS"],

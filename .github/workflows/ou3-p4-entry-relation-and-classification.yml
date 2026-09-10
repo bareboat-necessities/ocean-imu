@@ -10,6 +10,7 @@ on:
       # this gate stale if only the named files trigger it.
       - 'tools/stability/**'
       - 'reports/results/rao_stability/entry-block-retention.json'
+      - 'tests/validation/test_ou3_p4_attitude_measurement_cap.py'
       - 'tests/validation/test_ou3_p4_correlated_entry_relation.py'
       - 'tests/validation/test_ou3_p4_blocker_falsification_classification.py'
       - '.github/workflows/ou3-p4-entry-relation-and-classification.yml'
@@ -35,6 +36,8 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
+      - name: Build the attitude measurement cap and its refutation
+        run: python3 tools/stability/ou3_p4_attitude_measurement_cap.py --output /tmp/attitude-cap.json
       - name: Build the correlated integral entry relation
         run: python3 tools/stability/ou3_p4_correlated_entry_relation.py --output /tmp/entry-relation.json
       - name: Build the A-E blocker falsification classification
@@ -43,8 +46,29 @@ jobs:
         run: |
           python3 - <<'PY'
           import json
+          capm=json.load(open('/tmp/attitude-cap.json'))
           rel=json.load(open('/tmp/entry-relation.json'))
           cls=json.load(open('/tmp/blocker-classification.json'))
+          assert capm['validation_pass'],capm['validation_failures']
+          # The prior-independent transverse attitude cap is RETRACTED. It is false
+          # for the deployed residual, which carries the latent-acceleration and bias
+          # blocks alongside attitude. This gate exists so it cannot come back.
+          assert capm['prior_independent_transverse_cap_holds_for_the_deployed_filter'] is False
+          assert capm['refutation']['refutation_is_outside_the_noise_floor'] is True
+          assert capm['cap_closes_the_correction_reset_domain'] is False
+          assert capm['envelope_shown_to_be_loose_by_this_argument'] is False
+          assert capm['one_shot_information_route_is_a_dead_end_for_the_correction_domain'] is True
+          sw=capm['sweep']
+          assert sw['violations']==0,sw
+          assert sw['max_achieved_over_bound']<=1.0
+          assert sw['max_achieved_over_bound']>=capm['conditional_bound_tightness_floor']
+          print('SWEEP_KEPT',sw['numerically_valid_cases_kept'],
+                'REJECTED',sw['ill_conditioned_cases_rejected'],
+                'VIOLATIONS',sw['violations'],
+                'MAX_ACHIEVED_OVER_BOUND',sw['max_achieved_over_bound'])
+          print('REFUTED_CAP_RAD2',capm['prior_independent_transverse_cap_claimed'],
+                'ACHIEVED',capm['refutation']['achieved_transverse_attitude_marginal'],
+                'CONDITIONAL_CAP_RAD2',capm['conditional_transverse_cap_rad2'])
           assert rel['validation_pass'],rel['validation_failures']
           assert cls['validation_pass'],cls['validation_failures']
 
@@ -94,19 +118,35 @@ jobs:
                     'limiter_correlated',row['limiting_event_with_correlated_integral_relation'],
                     'attitude_trace_excess',row['attitude_trace_excess_factor'])
           route=cls['magnitude_route_after_transverse_cap']
-          print('TRANSVERSE_CAP_RAD2',cls['prior_independent_transverse_attitude_cap']['transverse_trace_upper_two_axes_rad2'])
+          capd=cls['conditional_transverse_attitude_cap']
+          assert capd['prior_independent'] is False
+          assert capd['conditional_on_joint_latent_bias_block'] is True
+          assert capd['refutation_exceedance_factor'] > 1.0
+          assert route['one_shot_measurement_route_closes_the_correction_domain'] is False
+          th=route['one_shot_route_threshold']
+          assert th['supremum_exceeds_reset_utility_cap'] is True
+          assert th['requirement_is_achievable_in_principle'] is True
+          print('ONE_SHOT_ROUTE_SUP',th['ceiling_supremum_over_all_attitude_bounds'],
+                'REQUIRED_P_STAR_RAD2',th['required_transverse_variance_per_axis_rad2'],
+                'REQUIRED_LAMBDA_MAX',th['required_joint_latent_bias_lambda_max'],
+                'LAMBDA_SHORTFALL',th['joint_latent_bias_shortfall_factor'])
+          print('CONDITIONAL_TRANSVERSE_CAP_RAD2',capd['transverse_trace_upper_two_axes_rad2'],
+                'RETRACTED_PRIOR_INDEPENDENT',capd['retracted_prior_independent_value_rad2'],
+                'REFUTATION_EXCEEDANCE',capd['refutation_exceedance_factor'])
           print('ACC_CEILING_RINV',route['accelerometer_ceiling_with_Rinverse_relaxation'])
           print('ACC_CEILING_SINV',route['accelerometer_ceiling_retaining_same_cell_Sinverse'])
           PY
       - name: Run the producer unit tests
         run: |
           python3 -m unittest -v \
+            tests.validation.test_ou3_p4_attitude_measurement_cap \
             tests.validation.test_ou3_p4_correlated_entry_relation \
             tests.validation.test_ou3_p4_blocker_falsification_classification
       - uses: actions/upload-artifact@v6
         with:
           name: ou3-p4-entry-relation-and-classification
           path: |
+            /tmp/attitude-cap.json
             /tmp/entry-relation.json
             /tmp/blocker-classification.json
           retention-days: 7
