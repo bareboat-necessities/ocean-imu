@@ -3,70 +3,71 @@ name: ou3-source-cover-construction
 on:
   pull_request:
     paths:
-      - '.proof-transfer/**'
-      - '.github/workflows/ou3-source-cover-construction.yml'
+      - "tools/stability/**"
+      - "tests/validation/test_ou3_brmm_infinite_continuation.py"
+      - "tests/validation/test_ou3_p4_live_entry_graph.py"
+      - "tests/kalman_ou_iii/live_entry_audit-test.cpp"
+      - "docs/ou3-*.md"
+      - "doc/kalman_ou_iii/w3d-brmm-stability-theorem.tex-part"
+      - ".github/workflows/ou3-source-cover-construction.yml"
+  workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
+
+concurrency:
+  group: ou3-source-cover-construction-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  transfer:
-    if: github.event.pull_request.head.repo.full_name == 'bareboat-necessities/ocean-imu' && github.event.pull_request.head.ref == 'proof/ou3-source-cover-2026-09-10'
+  construction:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v6
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          fetch-depth: 0
           persist-credentials: false
-      - name: Verify exact reviewed patch and store content-addressed blobs
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - name: Exact indefinite-source obstruction and mutation tests
         run: |
+          set -euo pipefail
+          mkdir -p /tmp/ou3-construction
+          git rev-parse HEAD > /tmp/ou3-construction/source-commit.txt
+          python3 tools/stability/ou3_brmm_infinite_continuation.py --output /tmp/ou3-construction/infinite-continuation.json
+          python3 -m unittest discover -s tests/validation -p 'test_ou3_brmm_infinite_continuation.py' -v
+          python3 -m unittest discover -s tests/validation -p 'test_ou3_p4_live_entry_graph.py' -v
+      - name: Preserve source, startup and fail-closed mathematical gates
+        run: |
+          set -euo pipefail
+          python3 tools/stability/ou3_p4_complete_brmm_source_cover_contract.py --output /tmp/ou3-construction/source-cover.json
+          python3 tools/stability/ou3_p4_complete_brmm_source_cover_transition.py --output /tmp/ou3-construction/source-transition.json
+          python3 tools/stability/ou3_p4_live_entry_graph.py --output /tmp/ou3-construction/live-entry.json
+          python3 tools/stability/ou3_startup_timeout_capture.py --output /tmp/ou3-construction/startup.json
+          python3 tools/stability/ou3_p4_final_closure_gate.py --output /tmp/ou3-construction/final-gate.json
           python3 - <<'PY'
-          import base64, hashlib, json, lzma, os, subprocess, urllib.request
+          import json
           from pathlib import Path
-          packed=b''.join(Path(f'.proof-transfer/indefinite-source.part{i}').read_bytes() for i in range(3))
-          assert hashlib.sha256(packed).hexdigest()=='f14be80149a898b4d59c0830b5fff3449374908b5cc7299b12a65bdc06864fe6'
-          raw=lzma.decompress(packed)
-          assert hashlib.sha256(raw).hexdigest()=='a8a3d501718165b414681f8d4128735d6a0c349595078bad9c4492391c371ab1'
-          data=json.loads(raw)
-          assert data['base']=='78fdd635e5f12d9b995fd62048efec33ae3c3944'
-          allowed={'.github/workflows/ou3-source-cover-construction.yml','doc/kalman_ou_iii/w3d-brmm-stability-theorem.tex-part','docs/ou3-live-entry-audit.md','docs/ou3-p4-handover-2026-09-09.md','docs/ou3-proof-research-state.md','tests/kalman_ou_iii/live_entry_audit-test.cpp','tools/stability/ou3_p4_final_closure_gate.py','tools/stability/ou3_brmm_infinite_continuation.py','tests/validation/test_ou3_brmm_infinite_continuation.py'}
-          assert {e['path'] for e in data['entries']}==allowed and len(data['entries'])==len(allowed)
-          tree=[]
-          for entry in data['entries']:
-              path=entry['path']
-              result=subprocess.run(['git','show',data['base']+':'+path],capture_output=True)
-              assert (result.returncode==0)==entry['exists'],path
-              old=result.stdout if entry['exists'] else b''
-              assert hashlib.sha256(old).hexdigest()==entry['base_sha256'],path
-              lines=old.decode().splitlines(keepends=True)
-              previous=0
-              for i,j,replacement in entry['operations']:
-                  assert previous<=i<=j<=len(lines),path
-                  assert all(isinstance(x,str) for x in replacement),path
-                  previous=j
-              for i,j,replacement in reversed(entry['operations']):
-                  lines[i:j]=replacement
-              content=''.join(lines).encode()
-              assert hashlib.sha256(content).hexdigest()==entry['sha256'],path
-              sha=hashlib.sha1(b'blob '+str(len(content)).encode()+b'\0'+content).hexdigest()
-              assert sha==entry['blob_sha'],path
-              body=json.dumps({'content':base64.b64encode(content).decode(),'encoding':'base64'}).encode()
-              request=urllib.request.Request('https://api.github.com/repos/bareboat-necessities/ocean-imu/git/blobs',data=body,method='POST',headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json','Content-Type':'application/json','X-GitHub-Api-Version':'2022-11-28'})
-              with urllib.request.urlopen(request,timeout=60) as response:
-                  uploaded=json.load(response)
-              assert uploaded['sha']==sha,path
-              tree.append({'path':path,'mode':'100644','type':'blob','sha':sha})
-              print(path,sha)
-          Path('/tmp/ou3-transfer').mkdir()
-          Path('/tmp/ou3-transfer/tree-elements.json').write_text(json.dumps(tree,indent=2)+'\n')
-          Path('/tmp/ou3-transfer/verified-source.json').write_text(json.dumps({'base':data['base'],'patch_sha256':hashlib.sha256(raw).hexdigest(),'files':len(tree),'branch_written':False},indent=2)+'\n')
+          p=Path('/tmp/ou3-construction')
+          d=json.loads((p/'final-gate.json').read_text())
+          s=json.loads((p/'startup.json').read_text())
+          assert d['validation_pass'],d['validation_failures']
+          assert d['indefinite_source_necessary_condition']['classification']=='B'
+          assert not d['indefinite_source_target_compatible']
+          assert not d['P4_PASS'] and not d['P5_MAY_START']
+          assert d['P3_delta']==1e-18
+          assert s['QUALIFIED_LIVE_HANDOFF_BY_150S_CLOSED']
+          assert not s['P4_basin_reached_here']
           PY
+      - name: Install native test dependency
+        run: sudo apt-get update && sudo apt-get install -y libeigen3-dev
+      - name: Native paired-history and fresh-entry regression
+        run: |
+          set -euo pipefail
+          clang++ -std=c++20 -O1 -Wall -Wextra -Werror -I src -isystem /usr/include/eigen3 tests/kalman_ou_iii/live_entry_audit-test.cpp -o /tmp/ou3-construction/live-entry-native
+          /tmp/ou3-construction/live-entry-native | tee /tmp/ou3-construction/live-entry-native.log
+          rm /tmp/ou3-construction/live-entry-native
       - uses: actions/upload-artifact@v6
+        if: always()
         with:
-          name: ou3-verified-proof-blobs
-          path: /tmp/ou3-transfer/
-          retention-days: 1
+          name: ou3-source-cover-construction
+          path: /tmp/ou3-construction/
+          retention-days: 7

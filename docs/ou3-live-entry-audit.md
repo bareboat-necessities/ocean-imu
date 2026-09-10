@@ -185,8 +185,11 @@ direction has no correction/chart restriction, but the other boundaries still
 require a joint reachable cover: attitude/gyro bias from the actual proxy;
 v/p/aw from the same physical history; BA from its own family and radial
 projection; and tuner/P/scheduler from the actual startup and transitions.
-The numerical BRMM V_m, P_m, S_m and recurrence/excitation budgets remain
-unfrozen in `ou3_brmm_contract.py`. Do not infer their values from Hs or covariance.
+The current finite-window primitive qualification fixes V_m=5 m/s and
+P_m=7.361215932167728 m as source applicability constants. It supplies S_dot=p
+and short-window increments, but no global S_m or uniform absolute-S forcing
+budget. Recurrence/excitation admission still has separate obligations; none of
+these constants establishes covariance-confidence error membership.
 
 The missing source-uniform cover must include prior/measured adaptation,
 Q/O/mixed motion, all BIAS histories, physical S forcing, reachable P/H/R and
@@ -195,9 +198,19 @@ storage, coercivity, rho_H<1, Gamma, C/C_p, first-exit retention and all domains
 must then be checked by outward augmented LDLT. The current producers do not
 supply those matrices. No local lemma or point diagnostic closes them.
 
-Failure classification: **D** for the independent fresh-entry model; **C** for
+The exact indefinite-source necessary-condition certificate is
+`tools/stability/ou3_brmm_infinite_continuation.py`. Under the finite-window-only
+source definition, the quiet histories p=+d and p=-d are indistinguishable to the
+shipping sensor path and give e_S,L^+-e_S,L^-=2 h d after the common handoff.
+Thus no finite coercive all-18 working tube can contain both indefinitely. This
+is **B for that source/target combination**, not a counterexample to a stronger
+source with a qualified uniform S/forcing bound. Such an additional intended
+premise is a qualification obligation **E**, not something supplied by Delta S.
+
+Other failure classifications remain **D** for the independent fresh-entry model; **C** for
 lost WPE branches and enclosure primitive boundary failures; **E** for missing
 source qualification/full cover; **F** for capture into a measured-only subset
 on admitted quiet disturbances. No admissible nonlinear instability (**A**) is
-established. A claim of exhaustive infeasibility of all compatible-storage
-constructions (**B**) would also be unsupported.
+established. The new B result concerns the finite-window-only infinite bound, not
+exhaustive infeasibility of compatible-storage constructions for a properly
+qualified bounded-forcing source.

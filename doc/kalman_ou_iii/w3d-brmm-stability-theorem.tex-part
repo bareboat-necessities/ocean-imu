@@ -514,3 +514,109 @@ entry factor, not an admissible nonlinear chart exit or a closed P4 theorem.
 P4 and finite-time startup capture remain unclosed until these obligations
 are certified for prior/measured adaptation, all BIAS families, and every
 allowed hybrid transition.
+
+
+\paragraph{Indefinite-source obstruction not removed by the common origin.}
+\label{sec:brmm-indefinite-S-obstruction}
+The executable finite-window primitive qualification fixes
+$V_m=5\,\mathrm{m/s}$ and $P_m=7.361215932167728\,\mathrm m$, and retains
+$\dot S_m=p_m$ with $\|S_m(t+h)-S_m(t)\|\le hP_m$. It does not supply a
+uniform bound on $S_L$ for an entire continuation. An informal reference to
+``bounded primitives or forcing budgets'' must not be confused with such a
+qualified bound. The following necessary-condition result applies to the
+\emph{finite-window-only} definition. An additional bounded-$S$/forcing
+admission premise would require its own qualification and change its scope.
+
+\begin{lemma}[Quiet-source ambiguity and finite all-18 bounds]
+\label{prop:brmm-indefinite-S-obstruction}
+Suppose the physical source admits both histories
+$p_m^\pm(t)=\pm d$, $v_m^\pm=a_m^\pm=\omega^\pm=0$, $R^\pm=I$, for a
+fixed $0<\|d\|<P_m$, with the same sensor records, configuration and
+initial executable state. No deterministic sensor-only execution can give
+both histories an eventually finite centered integral-error bound. In
+particular they cannot both enter, in finite time, a finite working tube
+for an all-18 storage satisfying Eq.~\eqref{eq:brmm-motion-storage} and
+remain there indefinitely.
+\end{lemma}
+\begin{proof}
+The two physical histories satisfy the finite-window primitive equations,
+all pointwise motion caps, zero acceleration DC, every Q energy/impulse
+inequality, and the gravity-direction forcing qualification. Take zero
+sensor noise and fixed magnetic field $(20,0,40)\,\mu\mathrm T$. Its
+squared norm is $2000$ and squared sine separation from gravity is $1/5$;
+these physical vector properties do not assert acceptance of every future
+executable event. Zero physical bias belongs separately to each family:
+set every BIAS0 component to zero, the BIAS1 root/amplitude/deterministic
+component to zero, or the BIAS2 bounded-variation drift to zero. Each own
+recurrence then gives $0=\phi_{\rm true}0+0$, including BIAS2's factor one.
+
+Position and its integral are not inputs to the shipping IMU/magnetic
+wrapper. The sensor histories are identical, so all private observers,
+WPE/statistics, candidate/active/staged tuner states, scheduler states,
+reachable covariances, geometries, measurement covariances, gains and
+branch decisions are identical by induction over the actual completed
+events. This is an equality of entire executions, not independent choices
+of $P,H,R,K$ or $f,\sigma,\tau,T_S,R_S$. If that common execution fails an
+indefinite required domain or is undefined, the requested conclusion has
+already failed. Otherwise it has the same $t_L$ and nominal $\hat S$.
+
+Apply the established origin reduction separately at that common handoff.
+For $h=t-t_L\ge0$,
+\[
+ S_L^\pm(t_L+h)=\pm h d,\qquad
+ e_{S,L}^\pm(t_L+h)=\pm h d-\hat S(t_L+h).
+\]
+Both centered errors are zero at fresh entry. At every later completed
+event,
+\begin{equation}
+ e_{S,L}^+-e_{S,L}^-=2h d,\qquad
+ \max\{\|e_{S,L}^+\|,\|e_{S,L}^-\|\}\ge h\|d\|.
+ \label{eq:brmm-S-ambiguity-lower}
+\end{equation}
+In a shared source/error graph the position column is
+$B(h)=E_p+hE_S$. Physical prediction sends it to $B(h+\Delta t)$.
+For S Joseph events, $H_SB(h)-hI=0$; vector events have $HB(h)=0$.
+Consequently every actual correction has the same residual for the two
+histories. Finite reset/projection, covariance floors, H18-to-A21 release,
+late north/tilt reinitialization and not-due/rejected branches act on the
+same executable state and preserve the difference. No small-angle or
+linearized reset argument is needed. Identical binary32 inputs and state
+also give identical rounding; the physical source column is not rounded
+into the executable. Deployment arithmetic qualification is not claimed.
+
+If both histories had finite eventual bounds, choose $h$ larger than
+both finite capture times and the sum of those bounds divided by
+$2\|d\|$. Equation~\eqref{eq:brmm-S-ambiguity-lower} is a contradiction.
+At least one \emph{fixed} history therefore has unbounded limsup. Different
+source-dependent metrics do not help: uniform coercivity implies
+$\max(W_+,W_-)\ge m_-h^2\|d\|^2$ in fixed units. The same statement holds
+with the corresponding fixed S-coordinate scale. It cannot be absorbed
+by compatible metric transport into a finite invariant storage level.
+\end{proof}
+
+For $\|d\|=1/8\,\mathrm m$, every 3 s increment is only
+$3/8\,\mathrm{m\,s}$, yet at least one of the pair exceeds a
+$300\,\mathrm{m\,s}$ \emph{working} integral-error radius when
+$h>2400\,\mathrm s$. This is not an independent S entrance ball or a
+claim of attitude/Cayley chart escape. The continuous physical-S energy is
+\[
+ \int_h^{h+3}\|s d\|^2\,ds
+   =\|d\|^2(3h^2+9h+9),
+\]
+which also illustrates why a bounded increment cannot be substituted for
+an indefinite absolute-source budget. This illustrative energy does not
+replace the actual signed discrete ISS port cost. A conditional ISS
+inequality with an unbounded physical-S input may still hold; it does not
+yield the requested finite ultimate bound or first-exit constants.
+
+This is classification B for the finite-window-only infinite target,
+not an established unstable nominal trajectory or a counterexample to
+conditional P3. If a stronger bounded-S/forcing source was intended, its
+missing qualification is E. At minimum, every class of indistinguishable
+admitted histories must have eventually bounded centered-S diameter; a
+uniform working tube requires a uniform diameter bound. A qualified
+uniform $S_L$ bound can remove this obstruction but is not sufficient to
+close P4, hybrid transport or finite capture. No such new premise, source
+exclusion, repeated origin reset, performance-output change or estimator
+change is imposed here. The complete nonlinear source cover and the
+positive endpoint/prefix/capture theorem remain unclosed.
