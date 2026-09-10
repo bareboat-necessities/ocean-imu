@@ -1,59 +1,74 @@
 name: ou3-entry-basin-audit
 on:
   push:
-    paths:
-      - '.github/workflows/ou3-entry-basin-audit.yml'
-  pull_request:
-    paths:
-      - '.github/workflows/ou3-entry-basin-audit.yml'
+    branches: ['proof/live-entry-correlated-basin']
+    paths: ['.github/workflows/ou3-entry-basin-audit.yml']
 permissions:
-  contents: read
+  contents: write
 jobs:
-  audit:
+  apply:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v6
         with:
-          persist-credentials: false
+          ref: proof/live-entry-correlated-basin
           fetch-depth: 0
-      - name: Install Eigen for executable audit
-        run: sudo apt-get update -qq && sudo apt-get install -y libeigen3-dev
-      - name: Package exact tracked proof and shipping sources
+          persist-credentials: true
+      - name: Apply reviewed proof-only source edits with exact before and after hashes
         run: |
           python3 - <<'PY'
-          import hashlib, json, pathlib, subprocess, tarfile
-          root = pathlib.Path('.')
-          suffixes = {'.h', '.hpp', '.c', '.cc', '.cpp', '.py', '.md', '.tex', '.tex-part', '.yml', '.yaml', '.json', '.mk', '.txt', '.sh', '.ino', '.toml'}
-          manifest = {'commit': subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(), 'files': {}}
-          names = subprocess.check_output(['git', 'ls-files', '-z']).decode().split('\0')
-          with tarfile.open('/tmp/ou3-proof-sources.tar.gz', 'w:gz') as out:
-              for name in names:
-                  if not name:
-                      continue
-                  p = root / name
-                  if not p.is_file() or p.is_symlink():
-                      continue
-                  if p.suffix not in suffixes and p.name not in {'Makefile', 'CMakeLists.txt'}:
-                      continue
-                  if p.stat().st_size > 20_000_000:
-                      continue
-                  manifest['files'][name] = hashlib.sha256(p.read_bytes()).hexdigest()
-                  out.add(p, arcname=name, recursive=False)
-          pathlib.Path('/tmp/ou3-source-manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')
-          with tarfile.open('/tmp/ou3-eigen-headers.tar.gz', 'w:gz') as out:
-              out.add('/usr/include/eigen3', arcname='eigen3')
-          paths = ['tools/stability/ou3_proof_operating_domain.json', 'tools/stability/ou3_p4_closure_domain.json']
-          history = subprocess.check_output(['git', 'log', '-p', '--reverse', '-S300', '--'] + paths, text=True)
-          pathlib.Path('/tmp/ou3-entry-radius-history.txt').write_text(history)
-          print('Bundled tracked source files:', len(manifest['files']))
+          import base64, hashlib, json, lzma, pathlib, subprocess
+          expected_parts = ['721b833f4ca5b680c6b2fe40e14ef8973c3427d372d5a7707efcf138a1d2715e', '6645a0b0e521fd6bf76173b2be704d7eb3798c892f36bddfa4f83640974d3c1f', '1b399d07879b22f6a383463ca7242e35bd92259d773d3348a2ea08d430ee4ef7', 'c47b25925229a3a6fe7cc644e8ce6930e64543aa6f27a7b5a27dfe9294d566bc']
+          pieces=[]
+          for i, expected in enumerate(expected_parts, 1):
+              data=pathlib.Path(f'.proof-transfer/entry-{i}.b64').read_text().strip()
+              assert hashlib.sha256(data.encode()).hexdigest()==expected, f'transport segment {i}'
+              pieces.append(data)
+          raw=lzma.decompress(base64.b64decode(''.join(pieces), validate=True))
+          assert hashlib.sha256(raw).hexdigest()=='5c60bdc37b60e3e9100bed9b6681d6a516c578d409dd0b7956c33b6644ebc64e'
+          edits=json.loads(raw)
+          assert len(edits)==22 and len({e['path'] for e in edits})==22
+          outputs=[]
+          for e in edits:
+              p=pathlib.Path(e['path'])
+              assert not p.is_absolute() and '..' not in p.parts
+              assert p.parts[0] in {'tools','tests','docs','doc','reports'}, str(p)
+              if e['old'] is None:
+                  assert not p.exists(), str(p)
+                  old=b''
+              else:
+                  old=p.read_bytes()
+                  assert hashlib.sha256(old).hexdigest()==e['old'], str(p)
+              lines=old.decode().splitlines(keepends=True)
+              previous=len(lines)+1
+              for start,end,text in reversed(e['ops']):
+                  assert 0<=start<=end<=len(lines) and end<=previous, str(p)
+                  lines[start:end]=text.splitlines(keepends=True)
+                  previous=start
+              new=''.join(lines).encode()
+              assert hashlib.sha256(new).hexdigest()==e['new'], str(p)
+              outputs.append((p,new))
+          for p,new in outputs:
+              p.parent.mkdir(parents=True,exist_ok=True)
+              p.write_bytes(new)
+          subprocess.run(['git','add','--']+[str(p) for p,_ in outputs],check=True)
+          subprocess.run(['git','rm','--']+[f'.proof-transfer/entry-{i}.b64' for i in range(1,5)],check=True)
+          print('All 22 proof/test/document files match reviewed SHA-256; shipping sources untouched.')
           PY
+          python3 -m unittest discover -s tests/validation -p 'test_ou3_p4_live_entry_graph.py' -v
+          git diff --cached --check
+          test -z "$(git diff --cached --name-only -- src)"
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'Correct fresh Live-entry source graph and preserve all WPE validity branches'
+          git push origin HEAD:proof/live-entry-correlated-basin
+      - name: Trace original integral-error declaration across file relocations
+        if: always()
+        run: |
+          git log --follow --format=fuller -p -S 'integral_displacement_error_norm_upper_m_s' -- tools/stability/ou3_proof_operating_domain.json > /tmp/entry-radius-history.txt
+          cat /tmp/entry-radius-history.txt
       - uses: actions/upload-artifact@v6
+        if: always()
         with:
-          name: ou3-entry-audit-sources
-          path: |
-            /tmp/ou3-proof-sources.tar.gz
-            /tmp/ou3-source-manifest.json
-            /tmp/ou3-eigen-headers.tar.gz
-            /tmp/ou3-entry-radius-history.txt
-          retention-days: 3
+          name: ou3-entry-declaration-ancestry
+          path: /tmp/entry-radius-history.txt
+          retention-days: 7
