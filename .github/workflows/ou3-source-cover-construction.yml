@@ -7,6 +7,7 @@ on:
       - "tests/validation/test_ou3_brmm_infinite_continuation.py"
       - "tests/validation/test_ou3_brmm_centered_S_recurrence.py"
       - "tests/validation/test_ou3_brmm_translation_observation_kernel.py"
+      - "tests/validation/test_ou3_brmm_centered_primitive_transition.py"
       - "tests/validation/test_ou3_p4_live_entry_graph.py"
       - "tests/kalman_ou_iii/live_entry_audit-test.cpp"
       - "docs/ou3-*.md"
@@ -37,14 +38,17 @@ jobs:
           python3 tools/stability/ou3_brmm_infinite_continuation.py --output /tmp/ou3-construction/infinite-continuation.json
           python3 tools/stability/ou3_brmm_centered_S_recurrence.py --output /tmp/ou3-construction/centered-S-recurrence.json
           python3 tools/stability/ou3_brmm_translation_observation_kernel.py --output /tmp/ou3-construction/translation-observation-kernel.json
+          python3 tools/stability/ou3_brmm_centered_primitive_transition.py --output /tmp/ou3-construction/centered-primitive-transition.json
           python3 -m unittest discover -s tests/validation -p 'test_ou3_brmm_infinite_continuation.py' -v
           python3 -m unittest discover -s tests/validation -p 'test_ou3_brmm_centered_S_recurrence.py' -v
           python3 -m unittest discover -s tests/validation -p 'test_ou3_brmm_translation_observation_kernel.py' -v
+          python3 -m unittest discover -s tests/validation -p 'test_ou3_brmm_centered_primitive_transition.py' -v
           python3 -m unittest discover -s tests/validation -p 'test_ou3_p4_live_entry_graph.py' -v
           python3 - <<'PY'
           import json
           r=json.load(open('/tmp/ou3-construction/centered-S-recurrence.json'))
           k=json.load(open('/tmp/ou3-construction/translation-observation-kernel.json'))
+          p=json.load(open('/tmp/ou3-construction/centered-primitive-transition.json'))
           assert r['validation_pass']
           assert r['condition_is_origin_invariant']
           assert r['condition_bounds_every_handoff_centered_S']
@@ -58,9 +62,15 @@ jobs:
           assert k['translation_zero_output_kernel_dimension_after_bounded_position_per_axis']==1
           assert k['translation_zero_output_kernel_dimension_after_centered_S_recurrence_per_axis']==0
           assert k['D_S_numeric_value_used'] is None
+          assert p['validation_pass']
+          assert p['primitive_transition_operator_materialized']
+          assert not p['same_history_acceleration_moments']['may_be_selected_independently']
+          assert p['cross_word_primitive_out_is_next_word_primitive_in_required']
+          assert p['centered_S_origin_id_is_invariant_under_advance']
           assert not r['P4_PASS'] and not r['P5_MAY_START']
           assert not k['P4_PASS'] and not k['P5_MAY_START']
-          assert r['P3_delta']==k['P3_delta']==1e-18
+          assert not p['P4_PASS'] and not p['P5_MAY_START']
+          assert r['P3_delta']==k['P3_delta']==p['P3_delta']==1e-18
           PY
       - name: Preserve source, startup and fail-closed mathematical gates
         run: |
