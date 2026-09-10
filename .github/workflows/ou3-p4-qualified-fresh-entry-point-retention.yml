@@ -1,0 +1,64 @@
+name: ou3-p4-qualified-fresh-entry-point-retention
+on:
+  push:
+    paths: &paths
+      - "tests/kalman_ou_iii/ou3_p4_qualified_fresh_entry_point_retention.py"
+      - "tools/stability/ou3_p4_qualified_fresh_entry.py"
+      - "tools/stability/ou3_p4_hard_entry_set.py"
+      - "tools/stability/ou3_p4_closure_domain.json"
+      - "tools/stability/ou3-source-endpoint.cpp"
+      - ".github/workflows/ou3-p4-qualified-fresh-entry-point-retention.yml"
+  pull_request:
+    paths: *paths
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  retention:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with: {persist-credentials: false}
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-numpy g++ libeigen3-dev
+      - name: Checkout pinned physical source generator
+        uses: actions/checkout@v6
+        with:
+          repository: bareboat-necessities/oceanography-waves-lib
+          ref: e442150682f560384be427df4cc7815956a091c5
+          path: _physical-sea-generator
+          persist-credentials: false
+      - name: Capture one unmodified shipping source history
+        run: |
+          g++ -std=c++20 -O2 -Wall -Wextra -Werror -I src -isystem /usr/include/eigen3 -isystem _physical-sea-generator/src tools/stability/ou3-source-endpoint.cpp -o /tmp/ou3-source-endpoint
+          /tmp/ou3-source-endpoint /tmp/ou3-source-endpoint
+          python3 tests/kalman_ou_iii/ou3_p4_trace_overlay.py --repository . --output /tmp/ou3-motion-trace-overlay
+          g++ -std=c++20 -O2 -Wall -Wextra -Werror -DOU3_SOURCE_EVENT_TRACE -I /tmp/ou3-motion-trace-overlay -I src -isystem /usr/include/eigen3 -isystem _physical-sea-generator/src tools/stability/ou3-source-endpoint.cpp -o /tmp/ou3-source-events
+          /tmp/ou3-source-events /tmp/ou3-source-events
+          python3 tests/kalman_ou_iii/ou3_p4_connected_motion.py --prefix /tmp/ou3-source-events --baseline-prefix /tmp/ou3-source-endpoint --manifest /tmp/ou3-motion-trace-overlay/trace-manifest.json --output /tmp/ou3-connected-motion.json
+      - name: Propagate qualified fresh entry through every literal prefix
+        env:
+          OPENBLAS_NUM_THREADS: 1
+          OMP_NUM_THREADS: 1
+        run: |
+          python3 tests/kalman_ou_iii/ou3_p4_qualified_fresh_entry_point_retention.py --prefix /tmp/ou3-source-events --attachment /tmp/ou3-connected-motion.json --output /tmp/qualified-fresh-entry-retention.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/qualified-fresh-entry-retention.json'))
+          assert d['fresh_centered_S_exact_zero']
+          assert not d['covariance_membership_used']
+          assert not d['legacy_300_m_s_entry_factor_used']
+          assert d['binary64_point_diagnostic_only']
+          assert not d['P4_MOTION_PASS'] and not d['P4_PASS'] and not d['P5_MAY_START']
+          for mode,m in d['modes'].items():
+              print('QUALIFIED_FRESH_ENTRY',mode,'inside=',m['all_coordinates_inside_working_tube'],'ratios=',m['maximum_working_tube_ratios'],'hard70=',m['attitude_inside_70deg_hard_reinit_guard'])
+          PY
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: ou3-p4-qualified-fresh-entry-point-retention
+          path: /tmp/qualified-fresh-entry-retention.json
+          retention-days: 7
