@@ -60,6 +60,11 @@ def build(path: Path=CLOSURE):
       'shipping_covariance_membership_used':False,
       'hard_state_error_membership_required':True,
       'entry_is_correlated_fiber_not_cartesian_box':True,
+      # Kept for downstream gate compatibility.  It now means no fractional
+      # shrink of the remaining declared coordinates; p/S are exact fiber
+      # equalities, not shrunken legacy balls.
+      'scale_of_declared_handoff_envelope':scale,
+      'full_declared_scale_enforced':True,
       'coordinate_radii':entry,
       'working_prefix_coordinate_radii':working,
       'entry_exact_constraints':{
@@ -88,13 +93,14 @@ def validate(d):
     f=[]
     for k in ('hard_state_error_membership_required','entry_is_correlated_fiber_not_cartesian_box',
               'working_prefix_may_be_larger_than_entry','non_translation_declared_scale_enforced',
-              'entry_set_declared_and_membership_checkable','P4_may_use_as_regional_entry_hypothesis',
-              'P4_may_promote_only_on_same_history_reachability'):
+              'full_declared_scale_enforced','entry_set_declared_and_membership_checkable',
+              'P4_may_use_as_regional_entry_hypothesis','P4_may_promote_only_on_same_history_reachability'):
         if d.get(k) is not True:f.append(k+' not true')
     for k in ('trajectory_fit','covariance_ellipsoid_used','shipping_covariance_membership_used',
               'startup_reachability_proved_here','proof_domain_shrunk',
               'legacy_independent_S_entry_ball_promotable','legacy_independent_position_entry_ball_promotable'):
         if d.get(k) is not False:f.append(k+' not false')
+    if float(d.get('scale_of_declared_handoff_envelope',0)) != 1.0:f.append('remaining hard-entry scale is not full declared scale')
     r=d.get('coordinate_radii',{})
     if float(r.get('position_norm_m',-1)) != 0.0:f.append('entry position radius is not exact zero')
     if float(r.get('integral_displacement_norm_m_s',-1)) != 0.0:f.append('entry S radius is not exact zero')
