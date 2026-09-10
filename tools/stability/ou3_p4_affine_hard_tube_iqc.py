@@ -4,7 +4,7 @@
 A finite regional theorem is not homogeneous in the physical state because its
 entry and retention sets have fixed radii.  Introduce one lift coordinate h and
 work with the cone over the hard set.  For a three-coordinate selector E_g and
-radius r_g,
+radius r_g >= 0,
 
     ||E_g x|| <= r_g h
 
@@ -13,6 +13,11 @@ is represented by the quadratic IQC
     z^T Pi_g z >= 0,
     Pi_g = r_g^2 e_h e_h^T - E_g^T E_g,
     z = [h; x; graph/source/roundoff auxiliaries].
+
+The r_g=0 case is intentional and exact: -||E_g x||^2 >= 0 is equivalent to
+E_g x=0.  This is how the shipping-reachable handoff fiber represents
+position and integral-displacement error at its local origin.  It must not be
+replaced by an epsilon-radius ball.
 
 No probabilistic covariance membership is involved.  The same construction
 expresses a SAME-CELL correction-domain obligation
@@ -30,15 +35,10 @@ Given premise IQCs Pi_j, a sufficient outward certificate for a target T is
 The implementation uses strict outward LDLT for production numerical checks.
 A non-strict analytical boundary can be handled only by a separate exact
 factorization; this file does not silently add epsilon to make a failure pass.
-
-This is the missing affine lift needed to prove both reset-chart admission and
-literal-prefix retention from the SAME augmented graph.  It does not choose a
-correction radius and does not promote P4 by itself.
 """
 from __future__ import annotations
 import argparse,json,math
 from fractions import Fraction
-from pathlib import Path
 from typing import Sequence
 
 from ou3_interval import Interval,matrix_mul,matrix_sub,matrix_transpose,symmetric_positive_definite_ldlt
@@ -46,7 +46,7 @@ from ou3_interval_linear_algebra import matrix_symmetric_hull
 import ou3_p4_hard_entry_set as ENTRY
 import ou3_p4_bias1_family as BIAS1
 
-QUALIFICATION='OU3_P4_AFFINE_HOMOGENEOUS_HARD_TUBE_IQC_V1'
+QUALIFICATION='OU3_P4_AFFINE_HOMOGENEOUS_HARD_TUBE_IQC_V2'
 GROUPS={
  'attitude_cayley_norm':(0,1,2),
  'gyro_bias_norm_rad_s':(3,4,5),
@@ -59,7 +59,6 @@ GROUPS={
 
 def _shape(A):return len(A),len(A[0]) if A else 0
 
-def _zero(n):return [[Interval.point(0.0) for _ in range(n)] for _ in range(n)]
 def _scale(A,a):
     c=Interval.point(float(a));return [[c*x for x in row] for row in A]
 def _gram(A):return matrix_mul(matrix_transpose(A),A)
@@ -71,9 +70,9 @@ def selector(n:int,indices:Sequence[int]):
     return A
 
 def ball_iqc(n:int,h_index:int,indices:Sequence[int],radius:float):
-    """Pi with z'Pi z = r^2 h^2-||E z||^2."""
+    """Pi with z'Pi z = r^2 h^2-||E z||^2, including exact r=0."""
     r=float(radius)
-    if not (math.isfinite(r) and r>0 and 0<=h_index<n):raise ValueError('invalid hard-ball radius/lift index')
+    if not (math.isfinite(r) and r>=0 and 0<=h_index<n):raise ValueError('invalid hard-ball/fiber radius or lift index')
     E=selector(n,indices);Pi=[list(row) for row in _scale(_gram(E),-1.0)]
     Pi[h_index][h_index]=Pi[h_index][h_index]+Interval.point(r*r)
     return matrix_symmetric_hull(Pi)
@@ -130,10 +129,18 @@ def build():
                          and all(rem[i][j].lo<=0.0<=rem[i][j].hi for i in range(n) for j in range(n) if i!=j))
     lam=Fraction(4,25);h_slack=Fraction(9,10)**2-lam*Fraction(2)**2;x_slack=-Fraction(2,5)**2+lam
     smoke_semidefinite=bool(h_slack>0 and x_slack==0 and interval_consistent)
+
+    # Exact-zero fiber smoke: Pi=-E'E has z'Pi z>=0 iff selected state is zero.
+    zero_pi=ball_iqc(2,0,(1,),0.0)
+    zero_fiber_exact=(zero_pi[0][0].lo==0.0==zero_pi[0][0].hi
+                      and zero_pi[1][1].lo==-1.0==zero_pi[1][1].hi)
     return {
       'qualification':QUALIFICATION,'canonical_source':'COMPLETE_BRMM_NORMAL_LIVE_WORD',
       'lift_coordinate':'z=[h; physical_error; chord/reset/projection/source/roundoff auxiliaries]',
       'hard_entry_full_declared_scale_consumed':e['full_declared_scale_enforced'],
+      'hard_entry_correlated_fiber_consumed':e['entry_is_correlated_fiber_not_cartesian_box'],
+      'exact_zero_radius_fiber_IQC_supported':True,
+      'exact_zero_radius_fiber_smoke_closed':zero_fiber_exact,
       'covariance_membership_used':False,'trajectory_fit_used':False,'domain_shrunk':False,
       'hard_entry_ball_IQC_available':True,'same_graph_correction_domain_target_available':True,
       'same_graph_every_prefix_ball_target_available':True,'nonnegative_multiplier_Sprocedure_available':True,
@@ -146,7 +153,12 @@ def build():
 def validate(d):
     f=[]
     if d.get('qualification')!=QUALIFICATION:f.append('qualification mismatch')
-    for k in ('hard_entry_full_declared_scale_consumed','hard_entry_ball_IQC_available','same_graph_correction_domain_target_available','same_graph_every_prefix_ball_target_available','nonnegative_multiplier_Sprocedure_available','strict_outward_LDLT_checker_available','BIAS1_true_bias_bound_available_for_source_lift','smoke_semidefinite_implication_closed_exact_diagonal'):
+    for k in ('hard_entry_full_declared_scale_consumed','hard_entry_correlated_fiber_consumed',
+              'exact_zero_radius_fiber_IQC_supported','exact_zero_radius_fiber_smoke_closed',
+              'hard_entry_ball_IQC_available','same_graph_correction_domain_target_available',
+              'same_graph_every_prefix_ball_target_available','nonnegative_multiplier_Sprocedure_available',
+              'strict_outward_LDLT_checker_available','BIAS1_true_bias_bound_available_for_source_lift',
+              'smoke_semidefinite_implication_closed_exact_diagonal'):
         if d.get(k) is not True:f.append(k+' not true')
     for k in ('covariance_membership_used','trajectory_fit_used','domain_shrunk','epsilon_added_to_force_semidefinite_pass','production_same_cell_correction_domain_closed_here','production_every_prefix_hard_domain_closed_here','P4_promoted_here'):
         if d.get(k) is not False:f.append(k+' not false')
