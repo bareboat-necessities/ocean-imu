@@ -2,51 +2,39 @@
 """Affine-homogeneous hard-entry/correction/prefix IQCs for P4.
 
 A finite regional theorem is not homogeneous in the physical state because its
-entry and retention sets have fixed radii.  Introduce one lift coordinate h and
-work with the cone over the hard set.  For a three-coordinate selector E_g and
-radius r_g >= 0,
+entry and retention sets have fixed radii. Introduce one lift coordinate h and
+work with the cone over the hard set. For a selector E_g and radius r_g >= 0,
 
     ||E_g x|| <= r_g h
 
-is represented by the quadratic IQC
+is represented by
 
     z^T Pi_g z >= 0,
-    Pi_g = r_g^2 e_h e_h^T - E_g^T E_g,
-    z = [h; x; graph/source/roundoff auxiliaries].
+    Pi_g = r_g^2 e_h e_h^T - E_g^T E_g.
 
 The r_g=0 case is intentional and exact: -||E_g x||^2 >= 0 is equivalent to
-E_g x=0.  This is how the shipping-reachable handoff fiber represents
-position and integral-displacement error at its local origin.  It must not be
-replaced by an epsilon-radius ball.
+E_g x=0. This is how the shipping-reachable handoff fiber represents position
+and integral-displacement error at its local origin. It must not be replaced by
+an epsilon-radius ball.
 
-No probabilistic covariance membership is involved.  The same construction
-expresses a SAME-CELL correction-domain obligation
-
-    ||D_theta z|| <= delta h
-
-and every-prefix hard-domain obligations
-
-    ||O_{ell,g} z|| <= r_g h.
-
-Given premise IQCs Pi_j, a sufficient outward certificate for a target T is
-
-    T - sum_j lambda_j Pi_j >= 0,    lambda_j >= 0.
-
-The implementation uses strict outward LDLT for production numerical checks.
-A non-strict analytical boundary can be handled only by a separate exact
-factorization; this file does not silently add epsilon to make a failure pass.
+Selector-ball IQCs are constructed directly on their known diagonal structure.
+Using generic outward interval matrix multiplication for E^T E needlessly
+widens structural zeros to tiny signed intervals; at r=0 that would turn an
+exact equality fiber into a numerical fuzzy cone. Direct construction retains
+exact zero and exact -1 coefficients, while a nonzero r^2 coefficient alone is
+outward rounded.
 """
 from __future__ import annotations
 import argparse,json,math
 from fractions import Fraction
 from typing import Sequence
 
-from ou3_interval import Interval,matrix_mul,matrix_sub,matrix_transpose,symmetric_positive_definite_ldlt
+from ou3_interval import Interval,down,up,matrix_mul,matrix_sub,matrix_transpose,symmetric_positive_definite_ldlt
 from ou3_interval_linear_algebra import matrix_symmetric_hull
 import ou3_p4_hard_entry_set as ENTRY
 import ou3_p4_bias1_family as BIAS1
 
-QUALIFICATION='OU3_P4_AFFINE_HOMOGENEOUS_HARD_TUBE_IQC_V2'
+QUALIFICATION='OU3_P4_AFFINE_HOMOGENEOUS_HARD_TUBE_IQC_V3'
 GROUPS={
  'attitude_cayley_norm':(0,1,2),
  'gyro_bias_norm_rad_s':(3,4,5),
@@ -65,17 +53,30 @@ def _gram(A):return matrix_mul(matrix_transpose(A),A)
 
 def selector(n:int,indices:Sequence[int]):
     if n<=0 or not indices or any(i<0 or i>=n for i in indices):raise ValueError('selector indices outside coordinate')
+    if len(set(indices)) != len(tuple(indices)):raise ValueError('selector indices must be unique')
     A=[[Interval.point(0.0) for _ in range(n)] for _ in indices]
     for r,i in enumerate(indices):A[r][i]=Interval.point(1.0)
     return A
 
 def ball_iqc(n:int,h_index:int,indices:Sequence[int],radius:float):
-    """Pi with z'Pi z = r^2 h^2-||E z||^2, including exact r=0."""
-    r=float(radius)
+    """Exact selector IQC r^2 h^2-sum(x_i^2), including exact r=0 fiber.
+
+    ``E`` is a coordinate selector, so E^T E is known exactly and no interval
+    matrix product is needed. Structural zeros and -1 coefficients are point
+    intervals. Only a positive binary64 radius-square is outward rounded.
+    """
+    r=float(radius);idx=tuple(indices)
     if not (math.isfinite(r) and r>=0 and 0<=h_index<n):raise ValueError('invalid hard-ball/fiber radius or lift index')
-    E=selector(n,indices);Pi=[list(row) for row in _scale(_gram(E),-1.0)]
-    Pi[h_index][h_index]=Pi[h_index][h_index]+Interval.point(r*r)
-    return matrix_symmetric_hull(Pi)
+    if not idx or any(i<0 or i>=n for i in idx) or len(set(idx))!=len(idx):raise ValueError('invalid/duplicate hard-ball selector')
+    if h_index in idx:raise ValueError('lift coordinate may not be one of the selected physical coordinates')
+    Pi=[[Interval.point(0.0) for _ in range(n)] for _ in range(n)]
+    for i in idx:Pi[i][i]=Interval.point(-1.0)
+    if r==0.0:
+        Pi[h_index][h_index]=Interval.point(0.0)
+    else:
+        rr=r*r
+        Pi[h_index][h_index]=Interval(down(rr),up(rr))
+    return Pi
 
 def mapped_ball_target(Dmap:Sequence[Sequence[Interval]],h_index:int,radius:float):
     """T with z'Tz = r^2 h^2-||D z||^2."""
@@ -96,7 +97,6 @@ def sprocedure_remainder(target,premises,multipliers):
     return out
 
 def certify_strict_target(target,premises,multipliers):
-    """Strict sufficient certificate T-sum(lambda Pi)>0 by outward LDLT."""
     R=sprocedure_remainder(target,premises,multipliers);ok,p=symmetric_positive_definite_ldlt(R)
     return bool(ok),[float(x.lo) for x in p]
 
@@ -115,11 +115,6 @@ def hard_entry_iqcs(mode:str,n:int,h_index:int=0,state_offset:int=1):
 def build():
     e=ENTRY.build();b=BIAS1.build();bad={'entry':ENTRY.validate(e),'bias1':BIAS1.validate(b)};bad={k:v for k,v in bad.items() if v}
     if bad:raise RuntimeError('affine hard-tube prerequisites failed: '+repr(bad))
-    # Smoke coordinate [h,x0,x1,x2]. Premise ||x||<=2h implies target
-    # ||0.4x||<=0.9h with multiplier 0.16. The exact remainder is
-    # diag(0.17,0,0,0), so its zero pivots must not be rejected merely because
-    # outward interval rounding straddles zero. Production strict LDLT below is
-    # unchanged and is used only where callers provide strict slack.
     n=4;Pi=ball_iqc(n,0,(1,2,3),2.0)
     D=[[Interval.point(0.0) for _ in range(n)] for _ in range(3)]
     for i in range(3):D[i][1+i]=Interval.point(0.4)
@@ -130,15 +125,17 @@ def build():
     lam=Fraction(4,25);h_slack=Fraction(9,10)**2-lam*Fraction(2)**2;x_slack=-Fraction(2,5)**2+lam
     smoke_semidefinite=bool(h_slack>0 and x_slack==0 and interval_consistent)
 
-    # Exact-zero fiber smoke: Pi=-E'E has z'Pi z>=0 iff selected state is zero.
     zero_pi=ball_iqc(2,0,(1,),0.0)
-    zero_fiber_exact=(zero_pi[0][0].lo==0.0==zero_pi[0][0].hi
-                      and zero_pi[1][1].lo==-1.0==zero_pi[1][1].hi)
+    zero_fiber_exact=(zero_pi[0][0]==Interval.point(0.0)
+                      and zero_pi[1][1]==Interval.point(-1.0)
+                      and zero_pi[0][1]==Interval.point(0.0)
+                      and zero_pi[1][0]==Interval.point(0.0))
     return {
       'qualification':QUALIFICATION,'canonical_source':'COMPLETE_BRMM_NORMAL_LIVE_WORD',
       'lift_coordinate':'z=[h; physical_error; chord/reset/projection/source/roundoff auxiliaries]',
       'hard_entry_full_declared_scale_consumed':e['full_declared_scale_enforced'],
       'hard_entry_correlated_fiber_consumed':e['entry_is_correlated_fiber_not_cartesian_box'],
+      'selector_gram_built_directly_not_by_interval_product':True,
       'exact_zero_radius_fiber_IQC_supported':True,
       'exact_zero_radius_fiber_smoke_closed':zero_fiber_exact,
       'covariance_membership_used':False,'trajectory_fit_used':False,'domain_shrunk':False,
@@ -154,7 +151,7 @@ def validate(d):
     f=[]
     if d.get('qualification')!=QUALIFICATION:f.append('qualification mismatch')
     for k in ('hard_entry_full_declared_scale_consumed','hard_entry_correlated_fiber_consumed',
-              'exact_zero_radius_fiber_IQC_supported','exact_zero_radius_fiber_smoke_closed',
+              'selector_gram_built_directly_not_by_interval_product','exact_zero_radius_fiber_IQC_supported','exact_zero_radius_fiber_smoke_closed',
               'hard_entry_ball_IQC_available','same_graph_correction_domain_target_available',
               'same_graph_every_prefix_ball_target_available','nonnegative_multiplier_Sprocedure_available',
               'strict_outward_LDLT_checker_available','BIAS1_true_bias_bound_available_for_source_lift',
