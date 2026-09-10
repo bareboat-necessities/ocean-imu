@@ -40,6 +40,12 @@ class BrmmHardFiniteWindowSourceTest(unittest.TestCase):
                     "specific_force_body_interval": zero3,
                     "f_cog_body_interval": zero3,
                     "R_wb_interval": eye3,
+                    "velocity_ned_mps_interval": zero3,
+                    "position_ned_m_interval": zero3,
+                    "centered_S_ned_m_s_interval": zero3,
+                    "primitive_in_id": f"primitive-{k}",
+                    "primitive_out_id": f"primitive-{k+1}",
+                    "centered_S_origin_witness_id": "live-S-origin",
                 },
                 "source_events": {
                     "source_transition_witness_id": tr,
@@ -80,6 +86,9 @@ class BrmmHardFiniteWindowSourceTest(unittest.TestCase):
             "provider_generated_source_family": True,
             "front_end_entry_witness_id": "frontend-entry",
             "live_covariance_seed_witness_id": "live-seed",
+            "primitive_ingress_id": "primitive-0",
+            "primitive_egress_id": f"primitive-{SEA0.SAMPLES}",
+            "centered_S_origin_witness_id": "live-S-origin",
             "front_end_entry": {},
             "live_covariance_seed": {},
             "transitions": transitions,
@@ -99,6 +108,9 @@ class BrmmHardFiniteWindowSourceTest(unittest.TestCase):
         self.assertFalse(rlambda["rate_constants_fitted_or_invented"])
         self.assertFalse(rlambda["fixed_lambda_word_used"])
         self.assertTrue(d["executor_payload_contract"]["raw_gyro_and_corrected_rate_are_distinct_coordinates"])
+        self.assertTrue(d["executor_payload_contract"]["physical_velocity_position_centered_S_ancestry_required"])
+        self.assertTrue(d["executor_payload_contract"]["physical_primitive_chain_must_cross_word_boundary"])
+        self.assertTrue(d["executor_payload_contract"]["one_centered_S_origin_witness_per_history"])
         self.assertFalse(d["executor_payload_contract"]["precomputed_aw_covariance_floor_increment_allowed"])
         self.assertFalse(d["provider_implementation_closed"])
         self.assertFalse(d["source_reachable_event_family_materialized"])
@@ -157,6 +169,38 @@ class BrmmHardFiniteWindowSourceTest(unittest.TestCase):
                 del d["transitions"][3]["joint_physical_output"][key]
                 failures = SEA0.validate_candidate_structure(d)
                 self.assertTrue(any(key in x for x in failures), failures)
+
+    def test_physical_primitive_chain_is_cross_word_and_same_origin(self):
+        d = self._candidate()
+        self.assertEqual(SEA0.validate_candidate_structure(d), [])
+        self.assertEqual(
+            d["transitions"][0]["joint_physical_output"]["primitive_in_id"],
+            d["primitive_ingress_id"],
+        )
+        self.assertEqual(
+            d["transitions"][-1]["joint_physical_output"]["primitive_out_id"],
+            d["primitive_egress_id"],
+        )
+        self.assertTrue(
+            all(t["joint_physical_output"]["centered_S_origin_witness_id"] == "live-S-origin"
+                for t in d["transitions"])
+        )
+
+    def test_broken_physical_primitive_history_is_rejected(self):
+        d = self._candidate()
+        d["transitions"][137]["joint_physical_output"]["primitive_in_id"] = "detached"
+        failures = SEA0.validate_candidate_structure(d)
+        self.assertTrue(any("physical v/p/S_L primitive continuity" in x for x in failures), failures)
+
+        d = self._candidate()
+        d["transitions"][220]["joint_physical_output"]["centered_S_origin_witness_id"] = "rezeroed"
+        failures = SEA0.validate_candidate_structure(d)
+        self.assertTrue(any("changed centered-S origin" in x for x in failures), failures)
+
+        d = self._candidate()
+        d["primitive_egress_id"] = "wrong-egress"
+        failures = SEA0.validate_candidate_structure(d)
+        self.assertTrue(any("cross-word egress" in x for x in failures), failures)
 
     def test_wrong_window_length_is_rejected(self):
         d = self._candidate()
