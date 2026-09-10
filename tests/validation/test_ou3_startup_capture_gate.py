@@ -41,16 +41,24 @@ class StartupCaptureGateTests(unittest.TestCase):
         self.assertFalse(t["requires_magnetic_north_when_with_mag"])
         self.assertTrue(t["requires_aligned_gravity_branch"])
         self.assertFalse(t["goLive_equals_P4_capture"])
+        self.assertTrue(t["postlive_first_north_path_validated"])
 
-    def test_magnetic_observability_is_explicitly_separate(self):
+    def test_raw_magnetic_obstruction_and_capture_admission_are_separate(self):
         m = self.d["magnetic_observability"]
         self.assertTrue(m["structural_yaw_obstruction_proved"])
-        self.assertFalse(m["current_source_forces_finite_north_acquisition"])
+        self.assertFalse(m["raw_COMPLETE_BRMM_source_forces_finite_north_acquisition"])
+        self.assertFalse(m["normal_live_PE_alone_forces_first_north"])
+        self.assertTrue(m["explicit_capture_admission_added"])
+        self.assertFalse(m["capture_admission_changes_BRMM_motion_caps"])
+        self.assertFalse(m["capture_admission_changes_BIAS_family"])
+        self.assertTrue(m["finite_north_event_under_explicit_capture_admission_closed"])
         self.assertTrue(m["ungauged_gravity_quotient_capture_is_still_meaningful"])
         self.assertTrue(m["full_attitude_capture_requires_north_event"])
         self.assertEqual(m["shipping_min_accepted_mag_samples"], 128)
         self.assertEqual(m["shipping_min_accepted_mag_window_s"], 15.0)
-        self.assertEqual(m["counterexample_minimax_full_attitude_error_deg"], 45.0)
+        self.assertEqual(m["counterexample_minimax_full_attitude_error_deg_without_progress_admission"], 45.0)
+        self.assertTrue(self.d["FINITE_NORTH_EVENT_UNDER_EXPLICIT_CAPTURE_ADMISSION_CLOSED"])
+        self.assertFalse(self.d["UNCONDITIONAL_FINITE_NORTH_FROM_RAW_COMPLETE_BRMM_CLOSED"])
 
     def test_translation_entry_is_correlated_handoff_fiber(self):
         e = self.d["entry_translation_fiber"]
