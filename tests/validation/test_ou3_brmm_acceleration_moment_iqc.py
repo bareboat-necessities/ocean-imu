@@ -34,13 +34,12 @@ class AccelerationMomentIQCTests(unittest.TestCase):
 
     def test_three_axes_share_one_supply(self):
         A=F(8)
-        # Splitting the same vector-cap supply equally between two axes stays on
-        # the joint energy boundary; assigning a full boundary history to both
-        # axes would violate the one-vector-acceleration IQC.
-        half=(A/F(2).sqrt() if False else None)
+        # Assigning a full boundary history to two axes would violate the one
+        # vector-acceleration supply even though each axis separately saturates.
         one=(A,A/F(2),A/F(6))
-        self.assertEqual(Q.joint_normalized_moment_energy((one,(F(0),)*3,(F(0),)*3)),A*A)
-        self.assertEqual(Q.joint_normalized_moment_energy((one,one,(F(0),)*3)),2*A*A)
+        zero=(F(0),F(0),F(0))
+        self.assertEqual(Q.joint_normalized_moment_energy((one,zero,zero)),A*A)
+        self.assertEqual(Q.joint_normalized_moment_energy((one,one,zero)),2*A*A)
 
     def test_mutation_or_false_promotion_rejected(self):
         d=Q.build()
