@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import argparse,json,math
 from pathlib import Path
+import numpy as np
 
 import ou3_p4_complete_brmm_word_feasibility as WORD
 
@@ -52,6 +53,11 @@ def analyze(map_path:Path,cov_path:Path)->dict:
         # In A21 this retains the round-trip coupling through b_a when the root
         # b_a perturbation is zero; it is not a product of 18x18 subevent blocks.
         rho,d18=WORD._linear_ratio(m['M'][:18,:18],c['P0'][:18,:18],c['P1'][:18,:18])
+        # The frozen nonlinear shadow executes the full 21-state shipping word
+        # and therefore requires a 21-component root perturbation. Embed the
+        # 18-state maximizing direction with an exact zero b_a tail. This is the
+        # same mathematical direction, not a renormalization or domain shrink.
+        d21=np.zeros(21,dtype=float);d21[:18]=d18
         rows.append({
           'record':i,'mode':mode,'t0':float(m['t0']),'t1':float(m['t1']),
           'rho_linear':rho,'distance_to_one':1.0-rho,
@@ -59,7 +65,7 @@ def analyze(map_path:Path,cov_path:Path)->dict:
           'tau_start':float(m['tau0']),'tau_end':float(m['tau1']),'sigma_start':float(m['sigma0']),'sigma_end':float(m['sigma1']),
           'RS_scalar_start':float(m['rs0']),'RS_scalar_end':float(m['rs1']),
           'exact_map_linearization_recovery_residual':float(m['linearization_residual']),
-          'maximizing_direction':WORD._direction_json(d18,18)})
+          'maximizing_direction':WORD._direction_json(d21,21)})
     modes={}
     for mode in ('H18','A21'):
         rr=[x for x in rows if x['mode']==mode]
@@ -67,7 +73,7 @@ def analyze(map_path:Path,cov_path:Path)->dict:
         worst=max(rr,key=lambda x:x['rho_linear'])
         modes[mode]={'legal_blocks':len(rr),'rho_min':min(x['rho_linear'] for x in rr),'rho_max':worst['rho_linear'],'worst':worst}
     return {
-      'qualification':'NON_PROMOTING_COMPLETE_BRMM_P4_BOUNDED_BIAS_MOTION18_FEASIBILITY_V1',
+      'qualification':'NON_PROMOTING_COMPLETE_BRMM_P4_BOUNDED_BIAS_MOTION18_FEASIBILITY_V2',
       'canonical_source':'COMPLETE_BRMM_NORMAL_LIVE_WORD','point_same_history_diagnostic_only':True,
       'P4_promoted':False,'P4_MOTION_PASS':False,'source_family_materialized':False,
       'filter_changed':False,'declared_domain_changed':False,
@@ -75,6 +81,7 @@ def analyze(map_path:Path,cov_path:Path)->dict:
       'full_21_state_word_composed_before_motion_selection':True,
       'A21_root_accelerometer_bias_perturbation_zero_for_backbone_test':True,
       'A21_within_word_motion_bias_motion_feedback_retained':True,
+      'shadow_direction_embedded_in_21_state_coordinate_with_zero_ba_tail':True,
       'bounded_bias_supply_still_required_separately':True,
       'covariance_membership_used_as_true_error_set':False,
       'map_stride_samples':ms,'word_horizon_s':EXPECTED_HORIZON_S,
@@ -84,14 +91,17 @@ def analyze(map_path:Path,cov_path:Path)->dict:
 
 def validate(d):
     f=[]
-    for k in ('point_same_history_diagnostic_only','full_21_state_word_composed_before_motion_selection','A21_root_accelerometer_bias_perturbation_zero_for_backbone_test','A21_within_word_motion_bias_motion_feedback_retained','bounded_bias_supply_still_required_separately','actual_applied_RS_used_inside_each_S_gain','all_valid_accelerometer_updates_required','all_due_S_updates_required'):
+    for k in ('point_same_history_diagnostic_only','full_21_state_word_composed_before_motion_selection','A21_root_accelerometer_bias_perturbation_zero_for_backbone_test','A21_within_word_motion_bias_motion_feedback_retained','shadow_direction_embedded_in_21_state_coordinate_with_zero_ba_tail','bounded_bias_supply_still_required_separately','actual_applied_RS_used_inside_each_S_gain','all_valid_accelerometer_updates_required','all_due_S_updates_required'):
         if d.get(k) is not True:f.append(k+' not true')
     for k in ('P4_promoted','P4_MOTION_PASS','source_family_materialized','filter_changed','declared_domain_changed','covariance_membership_used_as_true_error_set'):
         if d.get(k) is not False:f.append(k+' not false')
     for mode in ('H18','A21'):
         if d.get('modes',{}).get(mode,{}).get('legal_blocks',0)<=0:f.append(mode+' has no legal block')
         w=d.get('modes',{}).get(mode,{}).get('worst')
-        if w and float(w['maximizing_direction']['group_euclidean_norms']['ba'])!=0.0:f.append(mode+' motion direction has nonzero root ba')
+        if w:
+            comps=w['maximizing_direction'].get('components',[])
+            if len(comps)!=21:f.append(mode+' shadow direction is not 21-state')
+            if float(w['maximizing_direction']['group_euclidean_norms']['ba'])!=0.0:f.append(mode+' motion direction has nonzero root ba')
     return f
 
 def main()->int:
