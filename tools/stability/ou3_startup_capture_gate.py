@@ -1,34 +1,27 @@
 #!/usr/bin/env python3
 """End-to-end startup -> P4 capture gate for the shipping OU-III estimator.
 
-This gate intentionally rejects two historical shortcuts:
-
-1. treating the declared Mahony chart as if startup dynamics had proved entry
-   into / retention of that chart; and
-2. treating ``goLive()`` as synonymous with P4 capture.
-
-The outer wrapper can take its 150 s timeout while north and TunerReady are
-still absent.  Thus the theorem is hybrid and the capture interval may extend
-into early Live/H18.  P5 can promote only after a SAME-COMPLETE-BRMM reachable
-startup tube intersects a source-uniform P4-H18 invariant basin and every
-allowed handoff path is covered.
+The gate follows the actual hybrid shipping path.  It does not use the declared
+Mahony chart as a reachability premise, does not equate goLive() with P4
+membership, and does not demand a full-yaw conclusion before magnetic
+observability exists.
 """
 from __future__ import annotations
 
 import json
-import math
 import re
 from pathlib import Path
 
 import ou3_startup_p4_reachable_handoff as HANDOFF
 import ou3_startup_proxy_initial_tilt_bound as INIT_TILT
 import ou3_brmm_private_mahony_state_step as MAHONY
+import ou3_startup_magnetic_observability as MAGOBS
 
 REPO = Path(__file__).resolve().parents[2]
 WRAPPER = REPO / "src" / "kalman_ou_iii" / "SeaStateFusionFilter_OU_III.h"
 DOMAIN = REPO / "tools" / "stability" / "ou3_proof_operating_domain.json"
-SCHEMA = 1
-QUALIFICATION = "OU3_SHIPPING_STARTUP_TO_P4_CAPTURE_GATE_V1"
+SCHEMA = 2
+QUALIFICATION = "OU3_SHIPPING_STARTUP_TO_P4_CAPTURE_GATE_V2"
 
 
 def _config_float(text: str, name: str) -> float:
@@ -44,12 +37,9 @@ def build() -> dict:
     handoff = HANDOFF.build()
     init = INIT_TILT.build()
     mahony = MAHONY.build()
+    magobs = MAGOBS.build()
 
     hold = _config_float(wrapper, "mag_gravity_align_hold_sec")
-    # good_sec is capped at 10 s and decays at 2 seconds of credit per second
-    # of a bad sample.  Therefore a saturated hold can remain >= hold for this
-    # long after the last good sample.  This is shipping semantics, not a proof
-    # pessimism invented here.
     max_good_credit = 10.0
     bad_tail_s = max(0.0, (max_good_credit - hold) / 2.0)
 
@@ -64,13 +54,15 @@ def build() -> dict:
         ),
     }
 
-    # The current private Mahony module closes arithmetic boundedness but its
-    # 150 s branch proof consumes the *declared* 60 deg chart.  It therefore
-    # cannot be used as the missing reachable-chart/capture implication.
     circular_chart_dependency = bool(
         mahony.get("declared_startup_chart_implies_gravity_aligned_branch")
         and mahony.get("declared_domain_live_entry_upper_bound_closed")
         and not mahony.get("complete_BRMM_family_materialized_here")
+    )
+
+    magnetic_obstruction = bool(
+        magobs.get("structural_observability_obstruction_proved")
+        and not magobs.get("UNCONDITIONAL_FULL_ATTITUDE_FINITE_CAPTURE_FROM_CURRENT_SOURCE")
     )
 
     return {
@@ -86,6 +78,16 @@ def build() -> dict:
         "mahony_arithmetic_boundedness_is_capture": False,
         "legacy_declared_mahony_chart_may_establish_capture": False,
         "existing_mahony_timeout_argument_has_circular_chart_dependency": circular_chart_dependency,
+        "magnetic_observability": {
+            "structural_yaw_obstruction_proved": magnetic_obstruction,
+            "current_source_forces_finite_north_acquisition": False,
+            "ungauged_gravity_quotient_capture_is_still_meaningful": True,
+            "full_attitude_capture_requires_north_event": True,
+            "shipping_min_accepted_mag_samples": magobs["shipping_magnetic_acquisition"]["min_accepted_samples"],
+            "shipping_min_accepted_mag_window_s": magobs["shipping_magnetic_acquisition"]["min_accepted_window_s"],
+            "counterexample_minimax_full_attitude_error_deg": magobs["yaw_indistinguishability_witness"]["minimax_full_attitude_error_lower_deg"],
+            "weakest_source_extension": magobs["weakest_required_source_extension"],
+        },
         "quality_gate_memory": {
             "good_counter_cap_s": max_good_credit,
             "required_hold_s": hold,
@@ -95,7 +97,7 @@ def build() -> dict:
             "proof_requirement": "propagate same-history proxy error from the last certified good sample through the entire leaky-hold tail",
         },
         "shipping_timeout_semantics": {
-            "live_handoff_upper_bound_s_under_aligned_branch": handoff["deployed_live_handoff_upper_bound_s"],
+            "live_handoff_upper_bound_s_under_declared_aligned_branch": handoff["deployed_live_handoff_upper_bound_s"],
             "requires_tuner_ready": False,
             "requires_magnetic_north_when_with_mag": False,
             "requires_aligned_gravity_branch": True,
@@ -104,13 +106,24 @@ def build() -> dict:
         "domain_text_audit": {
             "stale_live_entry_requires_WPE_usable_claim": stale_domain_claims["live_entry_requires_wave_period_estimator_usable"],
             "shipping_timeout_contradicts_unconditional_WPE_usable_entry": True,
-            "normal_live_magnetic_PE_is_not_yet_a_startup_PE_proof": True,
+            "normal_live_magnetic_PE_is_not_startup_acquisition": True,
             "normal_live_vector_PE_window_s": float(normal["vector_pe_recurrence_window_s"]),
         },
+        "corrected_theorem_chain": [
+            "STARTUP_PROXY_GRAVITY_QUOTIENT_REACHABLE_TUBE",
+            "SHIPPING_LIVE_HANDOFF_FIBER",
+            "EARLY_LIVE_H18_GRAVITY_QUOTIENT_CAPTURE",
+            "MAGNETIC_NORTH_ACQUISITION_EVENT_WHEN_WITH_MAG",
+            "LATE_NORTH_HYBRID_YAW_RESET_IF_ALREADY_LIVE",
+            "P4_H18_FULL_ATTITUDE_INVARIANT_BASIN",
+            "H18_TO_A21_RELEASE_WHEN_ENABLED",
+            "P4_A21_INVARIANT_BASIN",
+        ],
         "capture_modes_required": [
             "QUALITY_GAUGED_HANDOFF",
             "TIMEOUT_UNGAUGED_OR_UNTUNED_HANDOFF",
-            "EARLY_LIVE_H18_TO_P4_H18",
+            "EARLY_LIVE_H18_GRAVITY_QUOTIENT_CAPTURE",
+            "LATE_MAGNETIC_GAUGE_RESET",
             "H18_TO_A21_RELEASE_WHEN_ENABLED",
         ],
         "required_reachable_state": [
@@ -132,6 +145,9 @@ def build() -> dict:
             "independent_300_m_s_S_entry_allowed": False,
         },
         "STARTUP_REACHABLE_TUBE_CLOSED": False,
+        "UNGauged_GRAVITY_QUOTIENT_CAPTURE_CLOSED": False,
+        "FINITE_NORTH_ACQUISITION_FROM_CURRENT_SOURCE_CLOSED": False,
+        "LATE_NORTH_HYBRID_RESET_CLOSED": False,
         "EARLY_LIVE_H18_CAPTURE_TUBE_CLOSED": False,
         "P4_REACHABLE_BASIN_OVERLAP_CLOSED": False,
         "FINITE_CAPTURE_BOUND_CLOSED": False,
@@ -139,16 +155,18 @@ def build() -> dict:
         "P5_PASS": False,
         "failure_classification": {
             "current_primary": "E/F",
-            "E": "COMPLETE-BRMM startup source/observability qualification and materialized same-history source tube remain incomplete",
-            "F": "shipping Mahony/proxy finite-time capture into the eventual P4 basin has not yet been established",
+            "E": "current COMPLETE-BRMM declaration does not force finite startup magnetic acquisition and its global source-family materialization remains open",
+            "F": "source-uniform proxy/early-Live quotient capture and late-north reset into the eventual P4 basin remain to be established",
             "not_filter_instability": True,
         },
         "next_mathematical_obligations": [
-            "derive a source-uniform discrete quotient storage/ISS inequality for the exact binary32 Mahony PI recurrence without assuming the 60 deg chart",
+            "prove the widest source-uniform gravity-quotient handoff/capture tube without assuming the 60 deg chart",
             "cover the leaky gravity-hold tail and timeout aligned-branch path",
-            "materialize the same COMPLETE-BRMM startup frontend/tuner/magnetic continuation",
-            "construct the widened source-uniform P4-H18 basin from the corrected correlated handoff fiber",
-            "prove finite intersection of every startup/early-Live reachable tube with that P4-H18 basin",
+            "add/derive the weakest finite accepted-magnetic acquisition recurrence for with_mag=true",
+            "certify the exact late-north shipping yaw-reset map into the full-attitude basin",
+            "materialize the same COMPLETE-BRMM frontend/tuner continuation",
+            "construct and maximize the source-uniform P4-H18 basin from the corrected correlated handoff fiber",
+            "prove finite intersection of every admitted startup/early-Live tube with that P4-H18 basin",
         ],
     }
 
@@ -165,12 +183,22 @@ def validate(d: dict) -> list[str]:
     ):
         if d.get(key) is not True:
             f.append(f"{key} is not true")
+    mo = d.get("magnetic_observability", {})
+    if mo.get("structural_yaw_obstruction_proved") is not True:
+        f.append("missing structural yaw-observability obstruction")
+    if mo.get("current_source_forces_finite_north_acquisition") is not False:
+        f.append("current source falsely claims finite north acquisition")
+    if mo.get("counterexample_minimax_full_attitude_error_deg") != 45.0:
+        f.append("unexpected yaw counterexample lower bound")
     if d.get("quality_gate_memory", {}).get("max_bad_tail_after_last_good_sample_s") != 4.0:
         f.append("unexpected leaky quality-gate bad tail")
     for key in (
         "mahony_arithmetic_boundedness_is_capture",
         "legacy_declared_mahony_chart_may_establish_capture",
         "STARTUP_REACHABLE_TUBE_CLOSED",
+        "UNGauged_GRAVITY_QUOTIENT_CAPTURE_CLOSED",
+        "FINITE_NORTH_ACQUISITION_FROM_CURRENT_SOURCE_CLOSED",
+        "LATE_NORTH_HYBRID_RESET_CLOSED",
         "EARLY_LIVE_H18_CAPTURE_TUBE_CLOSED",
         "P4_REACHABLE_BASIN_OVERLAP_CLOSED",
         "FINITE_CAPTURE_BOUND_CLOSED",
