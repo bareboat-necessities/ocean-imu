@@ -7,6 +7,8 @@ on:
       - "tools/stability/ou3_startup_handoff_tilt_hemisphere.py"
       - "tools/stability/ou3_startup_capture_gate.py"
       - "tools/stability/ou3_startup_magnetic_observability.py"
+      - "tools/stability/ou3_p5_magnetic_progress_admission.py"
+      - "tools/stability/ou3_startup_postlive_regauge_contract.py"
       - "tools/stability/ou3_p5_wide_handoff_h18_backbone.py"
       - "tools/stability/ou3_p5_late_north_yaw_reset.py"
       - "tools/stability/ou3_brmm_private_mahony_state_step.py"
@@ -23,6 +25,8 @@ on:
       - "tests/validation/test_ou3_startup_handoff_tilt_hemisphere.py"
       - "tests/validation/test_ou3_startup_capture_gate.py"
       - "tests/validation/test_ou3_startup_magnetic_observability.py"
+      - "tests/validation/test_ou3_p5_magnetic_progress_admission.py"
+      - "tests/validation/test_ou3_startup_postlive_regauge_contract.py"
       - "tests/validation/test_ou3_p5_wide_handoff_h18_backbone.py"
       - "tests/validation/test_ou3_p5_late_north_yaw_reset.py"
       - ".github/workflows/ou3-startup-p4-capture.yml"
@@ -45,6 +49,8 @@ jobs:
             tests.validation.test_ou3_startup_proxy_initial_tilt_bound \
             tests.validation.test_ou3_startup_handoff_tilt_hemisphere \
             tests.validation.test_ou3_startup_magnetic_observability \
+            tests.validation.test_ou3_p5_magnetic_progress_admission \
+            tests.validation.test_ou3_startup_postlive_regauge_contract \
             tests.validation.test_ou3_p5_wide_handoff_h18_backbone \
             tests.validation.test_ou3_p5_late_north_yaw_reset \
             tests.validation.test_ou3_startup_capture_gate
@@ -54,6 +60,8 @@ jobs:
           python3 tools/stability/ou3_startup_proxy_initial_tilt_bound.py > /tmp/ou3-startup-initial-tilt.json
           python3 tools/stability/ou3_startup_handoff_tilt_hemisphere.py > /tmp/ou3-startup-handoff-tilt.json
           python3 tools/stability/ou3_startup_magnetic_observability.py > /tmp/ou3-startup-mag-observability.json
+          python3 tools/stability/ou3_p5_magnetic_progress_admission.py > /tmp/ou3-p5-mag-progress.json
+          python3 tools/stability/ou3_startup_postlive_regauge_contract.py > /tmp/ou3-postlive-regauge.json
           python3 tools/stability/ou3_p5_wide_handoff_h18_backbone.py > /tmp/ou3-p5-wide-h18.json
           python3 tools/stability/ou3_p5_late_north_yaw_reset.py > /tmp/ou3-p5-late-north-reset.json
           python3 tools/stability/ou3_startup_capture_gate.py > /tmp/ou3-startup-capture.json
@@ -65,6 +73,8 @@ jobs:
             /tmp/ou3-startup-initial-tilt.json
             /tmp/ou3-startup-handoff-tilt.json
             /tmp/ou3-startup-mag-observability.json
+            /tmp/ou3-p5-mag-progress.json
+            /tmp/ou3-postlive-regauge.json
             /tmp/ou3-p5-wide-h18.json
             /tmp/ou3-p5-late-north-reset.json
             /tmp/ou3-startup-capture.json
