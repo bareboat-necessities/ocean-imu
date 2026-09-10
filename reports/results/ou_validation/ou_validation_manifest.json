@@ -167,8 +167,8 @@
       }
     }
   },
-  "git_branch": "claude/ou3-stability-p4-closure-8wtaeg",
-  "git_commit": "608908f0c90a79fb7f6671b7ce256d73407b84b2",
+  "git_branch": "main",
+  "git_commit": "19e72f1e2f20e0312490efd6bce445d4ce53e364",
   "git_diff_stat": "reports/results/ou_validation/ou_validation.json   | 77247 +++++++++----------\n .../ou_validation/ou_validation_attitude.svg       |   704 +-\n .../ou_validation/ou_validation_covsync.svg        |   736 +-\n .../ou_validation/ou_validation_displacement.svg   |   700 +-\n .../results/ou_validation/ou_validation_macros.tex |    16 +-\n .../ou_validation/ou_validation_paired_effects.csv |  4720 +-\n .../ou_validation/ou_validation_publication.tex    |     6 +-\n .../results/ou_validation/ou_validation_raw.csv    |   672 +-\n .../ou_validation/ou_validation_summary.csv        |  5064 +-\n .../ou_validation/ou_validation_vertical.svg       |   712 +-\n 10 files changed, 45288 insertions(+), 45289 deletions(-)",
   "implementation_files": {
     "src/ahrs/FrameConversions.h": {
@@ -463,8 +463,8 @@
       "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
       "python": "3.12.3 (main, Jul 15 2026, 23:46:41) [GCC 13.3.0]"
     },
-    "generated_at": "2026-09-10T00:06:24+00:00",
-    "git_commit": "608908f0c90a79fb7f6671b7ce256d73407b84b2",
+    "generated_at": "2026-09-09T23:25:44+00:00",
+    "git_commit": "19e72f1e2f20e0312490efd6bce445d4ce53e364",
     "implementation_files": {
       "src/ahrs/FrameConversions.h": {
         "sha256": "7d402b7a283a21df7c739ca6d3a15782fec68eeedf745949a18cff807458d78d",
@@ -651,8 +651,8 @@
     "workflow_run": {
       "job": "commit",
       "run_attempt": "1",
-      "run_id": "34417323581",
-      "workflow": "ou-full-evidence-branch"
+      "run_id": "34412255940",
+      "workflow": "build"
     }
   },
   "result_files": {
