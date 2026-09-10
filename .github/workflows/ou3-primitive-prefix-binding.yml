@@ -1,0 +1,52 @@
+name: ou3-primitive-prefix-binding
+
+on:
+  pull_request:
+    paths:
+      - "tools/stability/ou3_p4_brmm_primitive_prefix_binding.py"
+      - "tools/stability/ou3_p4_joint_brmm_prefix_ldlt.py"
+      - "tools/stability/ou3_brmm_centered_primitive_transition.py"
+      - "tools/stability/ou3_brmm_acceleration_moment_iqc.py"
+      - "tools/stability/ou3_p4_acceleration_moment_iqc_sector.py"
+      - "tests/validation/test_ou3_p4_brmm_primitive_prefix_binding.py"
+      - ".github/workflows/ou3-primitive-prefix-binding.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ou3-primitive-prefix-binding-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  binding:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Validate primitive to literal-prefix ancestry
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/ou3-primitive-prefix
+          python3 tools/stability/ou3_p4_brmm_primitive_prefix_binding.py --output /tmp/ou3-primitive-prefix/binding.json
+          python3 -m unittest discover -s tests/validation -p 'test_ou3_p4_brmm_primitive_prefix_binding.py' -v
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/ou3-primitive-prefix/binding.json'))
+          assert d['validation_pass'], d['validation_failures']
+          assert d['same_provider_transition_owns_primitives_and_acceleration_moments']
+          assert d['cross_sample_primitive_out_equals_next_primitive_in_required']
+          assert d['one_live_centered_S_origin_retained_indefinitely']
+          assert d['production_prefix_requires_coupled_moment_sector']
+          assert not d['production_complete_provider_lineages_bound_here']
+          assert not d['P4_PASS'] and not d['P5_MAY_START']
+          assert d['P3_delta']==1e-18
+          PY
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: ou3-primitive-prefix-binding
+          path: /tmp/ou3-primitive-prefix/
+          retention-days: 7
