@@ -1,10 +1,17 @@
 #!/usr/bin/env python3
 """End-to-end startup -> P4 capture gate for the shipping OU-III estimator.
 
-The gate follows the actual hybrid shipping path.  It does not use the declared
+The gate follows the actual hybrid shipping path. It does not use the declared
 Mahony chart as a reachability premise, does not equate goLive() with P4
 membership, and does not demand a full-yaw conclusion before magnetic
 observability exists.
+
+The theorem-facing startup terminal section is now the *actual shipping handoff
+predicate*: at the sample that enters Live, the world-frame gravity branch is
+strictly aligned. Together with the declared same-history averaged-gravity
+direction error this gives a wide, chart-free tilt quotient bound. Early Live
+H18, not the private Mahony proxy, is responsible for contracting that set into
+the eventual P4 basin.
 """
 from __future__ import annotations
 
@@ -14,14 +21,15 @@ from pathlib import Path
 
 import ou3_startup_p4_reachable_handoff as HANDOFF
 import ou3_startup_proxy_initial_tilt_bound as INIT_TILT
+import ou3_startup_handoff_tilt_hemisphere as HANDOFF_TILT
 import ou3_brmm_private_mahony_state_step as MAHONY
 import ou3_startup_magnetic_observability as MAGOBS
 
 REPO = Path(__file__).resolve().parents[2]
 WRAPPER = REPO / "src" / "kalman_ou_iii" / "SeaStateFusionFilter_OU_III.h"
 DOMAIN = REPO / "tools" / "stability" / "ou3_proof_operating_domain.json"
-SCHEMA = 2
-QUALIFICATION = "OU3_SHIPPING_STARTUP_TO_P4_CAPTURE_GATE_V2"
+SCHEMA = 3
+QUALIFICATION = "OU3_SHIPPING_STARTUP_TO_P4_CAPTURE_GATE_V3"
 
 
 def _config_float(text: str, name: str) -> float:
@@ -36,6 +44,7 @@ def build() -> dict:
     domain = json.loads(DOMAIN.read_text(encoding="utf-8"))
     handoff = HANDOFF.build()
     init = INIT_TILT.build()
+    handoff_tilt = HANDOFF_TILT.build()
     mahony = MAHONY.build()
     magobs = MAGOBS.build()
 
@@ -78,6 +87,16 @@ def build() -> dict:
         "mahony_arithmetic_boundedness_is_capture": False,
         "legacy_declared_mahony_chart_may_establish_capture": False,
         "existing_mahony_timeout_argument_has_circular_chart_dependency": circular_chart_dependency,
+        "actual_shipping_handoff_tilt_section": {
+            "validated": not HANDOFF_TILT.validate(handoff_tilt),
+            "representation": handoff_tilt["handoff_tilt_set_representation"],
+            "true_gravity_quotient_tilt_strict_upper_deg": handoff_tilt["true_gravity_quotient_tilt_strict_upper_deg"],
+            "historical_60_deg_mahony_chart_consumed": handoff_tilt["historical_60_deg_mahony_chart_consumed"],
+            "yaw_gauge_required": handoff_tilt["yaw_gauge_required"],
+            "applies_to_quality_and_timeout_handoff_samples": handoff_tilt["applies_to_quality_and_timeout_handoff_samples"],
+            "this_is_conditional_on_handoff_occurring": True,
+            "early_live_contracts_this_set_to_P4": True,
+        },
         "magnetic_observability": {
             "structural_yaw_obstruction_proved": magnetic_obstruction,
             "current_source_forces_finite_north_acquisition": False,
@@ -110,8 +129,8 @@ def build() -> dict:
             "normal_live_vector_PE_window_s": float(normal["vector_pe_recurrence_window_s"]),
         },
         "corrected_theorem_chain": [
-            "STARTUP_PROXY_GRAVITY_QUOTIENT_REACHABLE_TUBE",
-            "SHIPPING_LIVE_HANDOFF_FIBER",
+            "STARTUP_PROXY_REACHABILITY_TO_SHIPPING_HANDOFF_PREDICATE",
+            "SHIPPING_LIVE_HANDOFF_FIBER_WITH_TILT_LT_91P146_DEG",
             "EARLY_LIVE_H18_GRAVITY_QUOTIENT_CAPTURE",
             "MAGNETIC_NORTH_ACQUISITION_EVENT_WHEN_WITH_MAG",
             "LATE_NORTH_HYBRID_YAW_RESET_IF_ALREADY_LIVE",
@@ -144,8 +163,9 @@ def build() -> dict:
             "e_aw_at_handoff": "a_w_true(t_h)",
             "independent_300_m_s_S_entry_allowed": False,
         },
-        "STARTUP_REACHABLE_TUBE_CLOSED": False,
-        "UNGauged_GRAVITY_QUOTIENT_CAPTURE_CLOSED": False,
+        "HANDOFF_TILT_SECTION_CLOSED": bool(handoff_tilt["HANDOFF_TILT_HEMISPHERE_BOUND_CLOSED"]),
+        "FINITE_REACHABILITY_OF_HANDOFF_PREDICATE_CLOSED": False,
+        "UNGAUGED_GRAVITY_QUOTIENT_CAPTURE_CLOSED": False,
         "FINITE_NORTH_ACQUISITION_FROM_CURRENT_SOURCE_CLOSED": False,
         "LATE_NORTH_HYBRID_RESET_CLOSED": False,
         "EARLY_LIVE_H18_CAPTURE_TUBE_CLOSED": False,
@@ -156,13 +176,13 @@ def build() -> dict:
         "failure_classification": {
             "current_primary": "E/F",
             "E": "current COMPLETE-BRMM declaration does not force finite startup magnetic acquisition and its global source-family materialization remains open",
-            "F": "source-uniform proxy/early-Live quotient capture and late-north reset into the eventual P4 basin remain to be established",
+            "F": "finite reachability of the shipping handoff predicate plus early-Live quotient capture and late-north reset into the eventual P4 basin remain to be established",
             "not_filter_instability": True,
         },
         "next_mathematical_obligations": [
-            "prove the widest source-uniform gravity-quotient handoff/capture tube without assuming the 60 deg chart",
-            "cover the leaky gravity-hold tail and timeout aligned-branch path",
-            "add/derive the weakest finite accepted-magnetic acquisition recurrence for with_mag=true",
+            "prove finite source-uniform reachability of the actual shipping aligned-branch handoff predicate; do not replace it by the old 60 deg chart",
+            "prove H18 gravity-quotient contraction from the certified <91.146 deg handoff section into the widest production P4 finite-angle basin",
+            "add/derive the weakest finite accepted-magnetic acquisition progress condition for with_mag=true",
             "certify the exact late-north shipping yaw-reset map into the full-attitude basin",
             "materialize the same COMPLETE-BRMM frontend/tuner continuation",
             "construct and maximize the source-uniform P4-H18 basin from the corrected correlated handoff fiber",
@@ -180,9 +200,17 @@ def validate(d: dict) -> list[str]:
         "physical_first_sample_tilt_lemma_validated",
         "mahony_one_sample_binary32_map_validated",
         "existing_mahony_timeout_argument_has_circular_chart_dependency",
+        "HANDOFF_TILT_SECTION_CLOSED",
     ):
         if d.get(key) is not True:
             f.append(f"{key} is not true")
+    hs = d.get("actual_shipping_handoff_tilt_section", {})
+    if hs.get("validated") is not True:
+        f.append("shipping handoff tilt section is not validated")
+    if not (91.0 < float(hs.get("true_gravity_quotient_tilt_strict_upper_deg", 0.0)) < 92.0):
+        f.append("shipping handoff tilt section is not the expected wide hemisphere")
+    if hs.get("historical_60_deg_mahony_chart_consumed") is not False or hs.get("yaw_gauge_required") is not False:
+        f.append("handoff tilt section reintroduced old chart/yaw")
     mo = d.get("magnetic_observability", {})
     if mo.get("structural_yaw_obstruction_proved") is not True:
         f.append("missing structural yaw-observability obstruction")
@@ -195,8 +223,8 @@ def validate(d: dict) -> list[str]:
     for key in (
         "mahony_arithmetic_boundedness_is_capture",
         "legacy_declared_mahony_chart_may_establish_capture",
-        "STARTUP_REACHABLE_TUBE_CLOSED",
-        "UNGauged_GRAVITY_QUOTIENT_CAPTURE_CLOSED",
+        "FINITE_REACHABILITY_OF_HANDOFF_PREDICATE_CLOSED",
+        "UNGAUGED_GRAVITY_QUOTIENT_CAPTURE_CLOSED",
         "FINITE_NORTH_ACQUISITION_FROM_CURRENT_SOURCE_CLOSED",
         "LATE_NORTH_HYBRID_RESET_CLOSED",
         "EARLY_LIVE_H18_CAPTURE_TUBE_CLOSED",
