@@ -81,7 +81,7 @@ def _same_word(a: WORD.LiteralWordState, b: WORD.LiteralWordState) -> bool:
         and a.imu_samples == b.imu_samples
         and a.accel_updates == b.accel_updates
         and a.S_updates == b.S_updates
-        and a.vector_updates == b.vector_updates
+        and a.mag_updates == b.mag_updates
         and a.aw_floor_applications == b.aw_floor_applications
     )
 
