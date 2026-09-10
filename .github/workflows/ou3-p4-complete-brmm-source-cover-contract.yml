@@ -6,6 +6,7 @@ on:
       - "tools/stability/ou3_p4_complete_brmm_source_cover_contract.py"
       - "tools/stability/ou3_p4_complete_brmm_source_cover_transition.py"
       - "tools/stability/ou3_p4_complete_brmm_universal_target_relation.py"
+      - "tools/stability/ou3_p4_brmm_frontend_predecessor_invariant.py"
       - "tools/stability/ou3_p4_joint_brmm_frontend_transition.py"
       - "tools/stability/ou3_p4_joint_brmm_prefix_ldlt.py"
       - "tools/stability/ou3_p4_joint_estimator_transition.py"
@@ -28,9 +29,10 @@ jobs:
       - uses: actions/checkout@v6
         with:
           persist-credentials: false
-      - name: Validate fail-closed same-history source-cover chain
+      - name: Validate same-history source-cover chain
         run: |
           set -euo pipefail
+          python3 tools/stability/ou3_p4_brmm_frontend_predecessor_invariant.py --output /tmp/predecessor.json
           python3 tools/stability/ou3_p4_joint_estimator_transition.py --output /tmp/joint-estimator.json
           python3 tools/stability/ou3_p4_joint_estimator_prefix_ldlt.py --output /tmp/joint-prefix.json
           python3 tools/stability/ou3_p4_joint_brmm_frontend_transition.py --output /tmp/brmm-frontend.json
@@ -40,24 +42,29 @@ jobs:
           python3 tools/stability/ou3_p4_complete_brmm_source_cover_transition.py --output /tmp/source-transition.json
           python3 - <<'PY'
           import json
-          paths={'joint':'/tmp/joint-estimator.json','joint-prefix':'/tmp/joint-prefix.json','brmm-frontend':'/tmp/brmm-frontend.json','brmm-prefix':'/tmp/brmm-prefix.json','target':'/tmp/target-relation.json','cover':'/tmp/source-cover.json','transition':'/tmp/source-transition.json'}
+          paths={'predecessor':'/tmp/predecessor.json','joint':'/tmp/joint-estimator.json','joint-prefix':'/tmp/joint-prefix.json','brmm-frontend':'/tmp/brmm-frontend.json','brmm-prefix':'/tmp/brmm-prefix.json','target':'/tmp/target-relation.json','cover':'/tmp/source-cover.json','transition':'/tmp/source-transition.json'}
           d={k:json.load(open(v)) for k,v in paths.items()}
           for name,obj in d.items(): assert obj['validation_pass'],(name,obj.get('validation_failures'))
-          u=d['target'];c=d['cover'];bj=d['brmm-frontend'];bp=d['brmm-prefix'];t=d['transition']
+          pre=d['predecessor'];u=d['target'];c=d['cover'];bj=d['brmm-frontend'];bp=d['brmm-prefix'];t=d['transition']
+          assert pre['complete_BRMM_predecessor_state_family_covered']
+          assert pre['all_component_predecessor_invariants_closed']
+          assert pre['complete_BRMM_predecessor_family_compact_modulo_elapsed_guard_quotient']
           assert u['joint_estimator_relation_materialized_here']
           assert u['same_BRMM_sample_joint_frontend_transition_materialized']
           assert u['coefficient_outer_postimage_cover_available']
           assert u['one_step_frontend_transition_is_not_predecessor_family_induction']
           assert not bj['complete_BRMM_predecessor_state_family_covered_here']
-          assert not u['branch_complete_frontend_transition_induction_used']
-          assert not u['joint_transition_physical_BRMM_attachment_closed']
-          assert not u['complete_BRMM_predecessor_family_covered']
-          assert not u['coefficient_target_inclusion_closed']
+          assert u['branch_complete_frontend_transition_induction_used']
+          assert u['joint_transition_physical_BRMM_attachment_closed']
+          assert u['complete_BRMM_predecessor_family_covered']
+          assert u['coefficient_target_inclusion_closed']
           assert c['joint_estimator_relation_materialized']
           assert c['coefficient_outer_postimage_cover_available']
-          assert not c['joint_estimator_physical_BRMM_attachment_closed']
-          assert not c['complete_BRMM_predecessor_family_covered']
-          assert not c['coefficient_target_inclusion_closed']
+          assert c['joint_estimator_physical_BRMM_attachment_closed']
+          assert c['complete_BRMM_predecessor_family_covered']
+          assert c['coefficient_target_inclusion_closed']
+          # These are the remaining proof obligations; this workflow must not
+          # promote them merely from frontend compactness.
           assert not c['SOURCE_UNIFORM_COMPLETE_BRMM_COVER_CLOSED']
           assert not c['source_cover_all_BRMM_continuations_covered']
           assert not c['source_cover_every_radial_segment_covered']
@@ -66,16 +73,17 @@ jobs:
           assert not bp['production_every_prefix_closed_here']
           assert not t['complete_BRMM_source_transition_cover_closed_here']
           assert not c['P4_promoted_here']
-          print('ONE_STEP_FRONTEND',u['same_BRMM_sample_joint_frontend_transition_materialized'])
-          print('OUTER_COEFFICIENT_COVER',u['coefficient_outer_postimage_cover_available'])
           print('PREDECESSOR_FAMILY',u['complete_BRMM_predecessor_family_covered'])
-          print('SOURCE_UNIFORM_COVER',c['SOURCE_UNIFORM_COMPLETE_BRMM_COVER_CLOSED'])
+          print('PHYSICAL_ATTACHMENT',u['joint_transition_physical_BRMM_attachment_closed'])
+          print('COEFFICIENT_TARGET',u['coefficient_target_inclusion_closed'])
+          print('SOURCE_UNIFORM_EVENT_COVER',c['SOURCE_UNIFORM_COMPLETE_BRMM_COVER_CLOSED'])
           PY
       - uses: actions/upload-artifact@v6
         if: always()
         with:
           name: ou3-p4-complete-brmm-source-cover-contract
           path: |
+            /tmp/predecessor.json
             /tmp/joint-estimator.json
             /tmp/joint-prefix.json
             /tmp/brmm-frontend.json
