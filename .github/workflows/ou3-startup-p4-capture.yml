@@ -5,15 +5,19 @@ on:
       - "tools/stability/ou3_startup_p4_reachable_handoff.py"
       - "tools/stability/ou3_startup_proxy_initial_tilt_bound.py"
       - "tools/stability/ou3_startup_capture_gate.py"
+      - "tools/stability/ou3_startup_magnetic_observability.py"
       - "tools/stability/ou3_brmm_private_mahony_state_step.py"
+      - "tools/stability/ou3_brmm_complete_source.py"
       - "tools/stability/ou3_proof_operating_domain.json"
       - "src/tuner/VerticalAccelComplementary.h"
+      - "src/tuner/MagAutoTuner.h"
       - "src/ahrs/Mahony_AHRS.h"
       - "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h"
       - "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h"
       - "tests/validation/test_ou3_startup_p4_reachable_handoff.py"
       - "tests/validation/test_ou3_startup_proxy_initial_tilt_bound.py"
       - "tests/validation/test_ou3_startup_capture_gate.py"
+      - "tests/validation/test_ou3_startup_magnetic_observability.py"
       - ".github/workflows/ou3-startup-p4-capture.yml"
   pull_request:
     paths: *paths
@@ -32,11 +36,13 @@ jobs:
           python3 -m unittest \
             tests.validation.test_ou3_startup_p4_reachable_handoff \
             tests.validation.test_ou3_startup_proxy_initial_tilt_bound \
+            tests.validation.test_ou3_startup_magnetic_observability \
             tests.validation.test_ou3_startup_capture_gate
       - name: Emit startup capture evidence
         run: |
           python3 tools/stability/ou3_startup_p4_reachable_handoff.py > /tmp/ou3-startup-handoff.json
           python3 tools/stability/ou3_startup_proxy_initial_tilt_bound.py > /tmp/ou3-startup-initial-tilt.json
+          python3 tools/stability/ou3_startup_magnetic_observability.py > /tmp/ou3-startup-mag-observability.json
           python3 tools/stability/ou3_startup_capture_gate.py > /tmp/ou3-startup-capture.json
       - uses: actions/upload-artifact@v6
         with:
@@ -44,5 +50,6 @@ jobs:
           path: |
             /tmp/ou3-startup-handoff.json
             /tmp/ou3-startup-initial-tilt.json
+            /tmp/ou3-startup-mag-observability.json
             /tmp/ou3-startup-capture.json
           retention-days: 7
