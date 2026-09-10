@@ -72,7 +72,11 @@ jobs:
           assert bi['validation_pass'],bi['validation_failures']
           assert bi['same_w_enters_error_and_true_bias'] and not bi['independent_per_sample_bias_state_slots_used']
           assert e['entry_set_declared_and_membership_checkable'] and e['scale_of_declared_handoff_envelope'] == 1.0
-          assert not e['covariance_ellipsoid_used'] and not e['startup_reachability_proved_here']
+          # Fresh Live reachability is now a proved prerequisite: the qualified
+          # BRMM source maps v/p directly, shares the S origin exactly, and
+          # covers both measured-period and timeout-prior handoff branches.
+          assert not e['covariance_ellipsoid_used'] and e['startup_reachability_proved_here']
+          assert e['qualified_fresh_live_entry']['fresh_live_entry_cover_closed']
           assert p['P3_SCOPED_EXECUTION_ADMISSION_PASS'] and not p['P3_DEPLOYMENT_PASS']
           assert c['validation_pass'],c['validation_failures']
           assert c['Kalman_and_reset_coefficient_family_outwardly_bounded']
