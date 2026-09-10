@@ -10,6 +10,7 @@ on:
       - "tests/validation/test_ou3_brmm_centered_primitive_transition.py"
       - "tests/validation/test_ou3_brmm_acceleration_moment_iqc.py"
       - "tests/validation/test_ou3_p4_acceleration_moment_iqc_sector.py"
+      - "tests/validation/test_ou3_p4_source_uniform_estimator_event_attachment.py"
       - "tests/validation/test_ou3_p4_live_entry_graph.py"
       - "tests/kalman_ou_iii/live_entry_audit-test.cpp"
       - "docs/ou3-*.md"
@@ -95,6 +96,8 @@ jobs:
           set -euo pipefail
           python3 tools/stability/ou3_p4_complete_brmm_source_cover_contract.py --output /tmp/ou3-construction/source-cover.json
           python3 tools/stability/ou3_p4_complete_brmm_source_cover_transition.py --output /tmp/ou3-construction/source-transition.json
+          python3 tools/stability/ou3_p4_source_uniform_estimator_event_attachment.py --output /tmp/ou3-construction/source-uniform-event-attachment.json
+          python3 -m unittest discover -s tests/validation -p 'test_ou3_p4_source_uniform_estimator_event_attachment.py' -v
           python3 tools/stability/ou3_p4_live_entry_graph.py --output /tmp/ou3-construction/live-entry.json
           python3 tools/stability/ou3_startup_timeout_capture.py --output /tmp/ou3-construction/startup.json
           python3 tools/stability/ou3_p4_final_closure_gate.py --output /tmp/ou3-construction/final-gate.json
@@ -104,6 +107,12 @@ jobs:
           p=Path('/tmp/ou3-construction')
           d=json.loads((p/'final-gate.json').read_text())
           s=json.loads((p/'startup.json').read_text())
+          a=json.loads((p/'source-uniform-event-attachment.json').read_text())
+          assert a['validation_pass'],a['validation_failures']
+          assert a['source_uniform_estimator_owned_event_attachment_relation_closed']
+          assert a['trusted_event_local_P_H_R_imported_without_reconstruction']
+          assert a['exact_nonlinear_state_succession_materialized_between_literal_events']
+          assert not a['P4_PASS'] and not a['P5_MAY_START']
           assert d['validation_pass'],d['validation_failures']
           assert d['indefinite_source_necessary_condition']['classification']=='B'
           assert not d['indefinite_source_target_compatible']
