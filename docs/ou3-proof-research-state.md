@@ -2,108 +2,101 @@
 
 ## Current hypothesis and controlling inequality
 
-The finite-window source definition is insufficient for the requested indefinite
-finite bound on all 18 motion errors. Before enclosing a full source cover, test
-whether a finite uniformly coercive working tube can contain every admitted
-continuation. The controlling necessary inequality is `W <= L < infinity`, not a
-frozen-word spectral radius. Canonical P3 remains `delta=1e-18`; P4/P5 remain false.
+The published finite-window COMPLETE-BRMM primitive qualification is insufficient
+for a finite indefinite bound on all 18 motion errors because it bounds only
+short-window `Delta S`, not the indefinite displacement primitive. The exact
+quiet-source ambiguity certificate remains valid. Canonical P3 is unchanged at
+`delta=1e-18`; P4/P5 remain false.
 
-## Executed result and exact failure analysis
+The positive continuation is now an origin-invariant recurrence qualification,
+not an independent fresh-entry S ball. For the real Live handoff time `t_L`, keep
+PR #513's one-time coordinate `S_L(t)=S(t)-S(t_L)`. A physical sufficient source
+condition is a uniform finite constant `D_S` satisfying
 
-`ou3_brmm_infinite_continuation.py` materializes the exact quiet-source ambiguity
-column `B(h)=E_p+h E_S`, with one closed radial position parameter retained for
-all time. Its polynomial event identities cover H18, A21 and the joint 24-state
-coordinate. Prediction advances physical time; S Joseph residuals cancel against
-the SAME physical S column; vector updates, finite common resets/projections,
-release, reinitialization and identity branches preserve the ambiguity. No
-independent gain, covariance, tuner coefficient or residual box is used.
+`||integral_u^t p(s) ds|| <= D_S` for every admitted history and all `t,u>=t_L`.
 
-The published primitive qualification freezes V_m and P_m but explicitly supplies
-only `S_dot=p` and short-window Delta S, not an indefinite S bound. It admits
-`p=+d` and `p=-d`, `v=a=omega=0`, fixed attitude and identical sensors. Zero bias is
-separately admitted from each BIAS0/1/2 module. Fresh entry still has centered
-`e_S,L=0`. Thereafter the same shipping estimate gives
+This is equivalent to a uniform bound on the diameter of each physical S
+trajectory after removing only its constant origin. It preserves `e_S,L(t_L)=0`,
+does not re-anchor position, and does not re-zero S at later words.
+
+## Exact failure retained
+
+`ou3_brmm_infinite_continuation.py` materializes the indistinguishable quiet pair
+`p=+d` and `p=-d`, `v=a=omega=0`, fixed attitude and identical sensors. The same
+shipping estimate then gives
 
 `e_S,L^+ - e_S,L^- = 2 h d`,
 
-so `max(||e_S,L^+||,||e_S,L^-||) >= h ||d||`. At least one fixed-sign history has
-unbounded limsup. Uniform coercivity gives `max(W_+,W_-) >= m_- h^2 ||d||^2` in
-fixed units, even with different source-dependent metrics and compatible metric
-memory. For a 1/8 m witness, any 300 m*s WORKING radius fails for at least one of
-the pair after 2400 s post-Live. This is not a fresh-entry radius counterexample.
-The continuous physical-S energy on a 3 s word is
-`||d||^2 (3 h^2+9 h+9)`, despite every Delta S being at most `3 ||d||`.
+hence `max(||e_S,L^+||,||e_S,L^-||) >= h||d||`. Uniform coercivity gives the
+corresponding quadratic storage lower bound. This is classification **B** for the
+finite-window-only indefinite target. If the intended source includes a bounded
+indefinite S primitive, the missing numerical/source qualification is **E**.
+No nominal filter instability, P3 failure or fresh-entry 300 m*s counterexample is
+claimed.
 
-Classification **B for the finite-window-only indefinite target**: no finite
-ultimate bound/working tube follows from that source definition. If the broader
-phrase “bounded primitives or explicit forcing budgets” was intended to impose
-an additional uniform S bound, its missing qualification is **E**; the witness
-is not claimed to satisfy such an added premise. The source declaration's
-Normal-Live admission flag remains false. This is not an established nominal
-filter instability, a P3 counterexample, or a refutation of conditional ISS with
-an unbounded physical-S input. The exact common-S-origin lemma remains valid.
+## New materialized source condition
 
-## Native experiment failure and replan
+`ou3_brmm_centered_S_recurrence.py` now encodes the missing recurrence coordinate
+and consumes the exact obstruction. It explicitly rejects:
 
-The first paired-wrapper regression assumed H18->A21 release within 3 s after
-Live. It failed only that assertion; states, covariance and source-error
-identities stayed equal. The shipping default holds accelerometer bias until
-magnetic-reference refinement completes its **30 s** window. The invalidated
-hypothesis is the test's release deadline, not the symbolic event identity or
-a runtime capture theorem. The revised regression follows that unchanged guard
-for 33 s, without forcing release or modifying filter constants, and passes
-6,600 post-Live IMU samples and 3,300 magnetic callbacks with an actual A21
-release. All eight new exact/mutation tests and fourteen existing entry tests
-pass; the theorem-input LaTeX smoke build also passes. These finite tests
-regress the implementation binding, not the infinite-time conclusion.
+* an absolute S-origin bound;
+* the legacy 300 m*s value as a fresh-entry premise;
+* position re-anchoring;
+* wordwise S re-zeroing;
+* promotion from bounded position or bounded 3 s `Delta S` alone.
 
-## Validation compatibility
+The stronger source remains sign-symmetric. Therefore the existing 300 m*s
+**working/retention** radius supplies a necessary search ceiling, not a source
+assumption: a symmetric indistinguishable pair can separate by `2 D_S`, whereas
+two errors inside a radius-300 S tube can separate by at most 600. Consequently
+the positive retention search is restricted to
 
-The source/runtime audit suites initially failed on unchanged main fixtures:
-`unfrozen_physical_constants` no longer exists in the V4 declaration, and a
-5 m/s^2 test signal no longer exceeds its 8 m/s^2 acceleration cap. These are
-stale test assumptions, not proof or runtime failures. The source test now
-checks V_m/P_m/A_m against the qualified primitive object, keeps the remaining
-constants including S_m unresolved, and rejects mutations/promotion. The runtime
-test places positive and negative controls on opposite sides of the actual
-acceleration/body-rate caps. Both suites pass without changing source constants,
-shipping code or audit thresholds.
+`0 <= D_S <= 300 m*s`.
 
-## Retained facts and frozen dead ends
+The true admissible maximum can be smaller once Joseph/reset, compatible-storage,
+every-prefix and first-exit margins are included. `D_S_max` therefore remains
+unfrozen and `COMPLETE_BRMM_INDEFINITE_S_QUALIFIED=false`.
 
-Fresh v/p/S/aw/bg/ba means are held zero; one common S-origin is removed only once.
-BIAS0/1/2 keep separate driver lifts and bounded-bias projection proofs; BIAS2
-separation is not mandatory. Qualified runtime Live/H18 timeout is 150 s, not a
-P4 capture time. Conditional binary32 ISS remains separate from deployment.
+## Retained positive facts
 
-The joint 24-state compatible-storage candidate retains useful point rates
-H18=0.9996524356, A21=0.9959531012. The A21 marginal-motion covariance route
-(rho about 10.119) and full-product nonlinear 3 s route (rho about 1.103 at
-scale 5.5) remain rejected. Those failures do not justify weakening P3 or losing
-motion/bias cross-information. Nor can longer words or tighter interval arithmetic
-remove the exact position/S ambiguity lower bound.
+Fresh v/p/S/aw/bg/ba estimator means are held zero on the fresh wrapper path; the
+common S origin is removed exactly once. BIAS0/1/2 retain independent physical
+driver recurrences and bounded-bias projection proofs; positive BIAS2 separation
+is optional. The qualified runtime Live/H18 handoff remains at most 150 s and is
+not P4 capture. Conditional binary32 mathematics remains separate from deployment.
 
-## Alternatives and independent critic pass
+The joint 24-state compatible-storage point candidate remains the useful route:
+H18 product rate about 0.9996524356 and A21 about 0.9959531012. The A21 18-state
+marginal covariance storage and the full-product 3 s nonlinear route remain dead
+ends; neither invalidates the joint error/physical-bias architecture.
 
-The strongest objection to the negative result is that a *stronger* intended
-source already bounds S or its forcing uniformly. The certificate explicitly
-limits its negative conclusion to the published finite-window definition and
-must not be presented as a counterexample to that stronger theorem.
+## Current limiter
 
-Three qualitatively different resolutions are: qualify an actual same-history
-uniform centered-S/forcing bound; change the performance objective to a specified
-observable/regulated-reference output; or add physical position information to
-the estimator. The latter two change the requested theorem or shipping filter
-and are not made here. Shrinking the fresh-entry set or re-zeroing S every word
-is not a resolution. A bounded S increment alone does not qualify the first option.
+The next controlling quantity is no longer whether an indefinite S premise is
+necessary; that is settled. It is the largest `D_S` that the actual same-history
+joint24 endpoint/prefix/first-exit construction can retain while preserving all
+other declared source coordinates and literal shipping events.
+
+The source transition must carry, on one history, physical `p/S_L`, frontend/WPE,
+raw and effective sigma, tau, T_S, anisotropic R_S, scheduler/commit state,
+reachable P/H/R/K, Joseph correction, finite reset, BIAS0/1/2 projection and the
+successor storage cell. Independent per-word `Delta S` ports are forbidden.
 
 ## Next falsifiable experiment
 
-Establish the intended source's indefinite primitive/forcing premise from actual
-physical assumptions, including Q, rather than supplying an arbitrary S cap.
-At minimum every observation-equivalence class must have eventually bounded
-centered-S diameter; a uniform working tube requires a uniform diameter bound.
-Only after that scope is justified can full continuation coverage feed the joint
-24-state compatible endpoint/prefix masters, first exit and H18 capture.
-No complete source cover, numerical maximum P4 basin, endpoint/prefix margin,
-post-Live capture time or end-to-end theorem is certified by the obstruction.
+Parameterize the existing joint24 reachable-prefix construction by one
+source-history centered-S recurrence coordinate `D_S`, then search outward over
+`[0,300] m*s`. For every candidate require the same source cell to close:
+
+1. endpoint compatible-storage contraction including metric-transition penalty;
+2. every literal prefix augmented positivity certificate;
+3. correction/reset chart validity;
+4. hard first-exit retention;
+5. all BIAS0/1/2 driver and projection branches; and
+6. conditional binary32 additive ISS enclosure.
+
+Report the first limiting event/source lineage and the largest rigorously retained
+`D_S`. Only that result may freeze the COMPLETE-BRMM indefinite-S qualification.
+Afterward resume full source-uniform cover, P4 basin maximization, H18 capture and
+H18->A21 transport. No endpoint margin, maximum P4 basin or capture time is yet
+certified.
