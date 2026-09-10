@@ -13,8 +13,10 @@ including actual applied SpectralMSE R_S provenance.
 
 No favorable front-end or joint-estimator successor is selected for a theorem
 claim. Multiple joint images may map to the same shipping front-end successor
-because stillness/central-statistic proof branches carry extra proof state; both
-directions of front-end coverage are checked.
+because stillness/central-statistic proof branches carry extra proof state. The
+joint proof image is an outward enclosure, so coverage is checked by recursive
+containment of the trusted shipping successor, not by endpoint equality between
+two algebraically equivalent interval evaluation orders.
 
 This bridge intentionally does NOT fabricate a physical-error state from P.
 Production SourceCoverCell construction remains fail-closed until the qualified
@@ -22,6 +24,7 @@ hard-entry physical-error set is propagated through the literal event sequence.
 """
 from __future__ import annotations
 import argparse,copy,json
+from dataclasses import fields,is_dataclass
 from pathlib import Path
 
 from ou3_interval import Interval
@@ -31,8 +34,8 @@ import ou3_brmm_frontend_state_step as FRONT
 import ou3_brmm_private_mahony_state_step as MAHONY
 import ou3_brmm_full_normal_live_word as WORD
 
-SCHEMA=2
-QUALIFICATION='OU3_P4_BRMM_TRUSTED_KERNEL_EVENT_CAPTURE_BRIDGE_V2'
+SCHEMA=3
+QUALIFICATION='OU3_P4_BRMM_TRUSTED_KERNEL_EVENT_CAPTURE_BRIDGE_V3'
 
 def I(x):return Interval.point(float(x))
 def _diag(n,v):
@@ -50,10 +53,17 @@ def _sample():
       R_wb=[[I(1),z,z],[z,I(1),z],[z,z,I(1)]],due_S=True,aw_floor_requested=True,
       magnetometer_events_after_imu=(KERNEL.MagneticEvent((I(20),I(0),I(40))),))
 
-def _frontend_equal(a,b):
-    # All nested proof/shipping state dataclasses are value objects whose
-    # Interval fields have exact endpoint equality semantics.
-    return a==b
+def _contains(outer,inner):
+    """True when the proof-side object outwardly contains the trusted object."""
+    if isinstance(outer,Interval) and isinstance(inner,Interval):
+        return outer.lo<=inner.lo and inner.hi<=outer.hi
+    if is_dataclass(outer) and is_dataclass(inner) and type(outer) is type(inner):
+        return all(_contains(getattr(outer,f.name),getattr(inner,f.name)) for f in fields(outer))
+    if isinstance(outer,(tuple,list)) and isinstance(inner,type(outer)) and len(outer)==len(inner):
+        return all(_contains(a,b) for a,b in zip(outer,inner))
+    if isinstance(outer,dict) and isinstance(inner,dict) and outer.keys()==inner.keys():
+        return all(_contains(outer[k],inner[k]) for k in outer)
+    return outer==inner
 
 def capture_smoke():
     js=JOINT._smoke_state();sample=_sample();kc=KERNEL._process_constants()
@@ -64,11 +74,19 @@ def capture_smoke():
     return sample,ji[0],meta,succ,ji
 
 def successor_coverage(kernel_successors,joint_images):
-    image_matches=[sum(_frontend_equal(im.state.frontend,s.frontend) for s in kernel_successors) for im in joint_images]
-    kernel_matches=[sum(_frontend_equal(im.state.frontend,s.frontend) for im in joint_images) for s in kernel_successors]
+    # The joint estimator evaluates exact central-moment identities in a
+    # different interval expression tree from the trusted shipping first/second
+    # moment code. Endpoint equality is therefore neither expected nor required.
+    # What is required for a theorem enclosure is that each trusted shipping
+    # successor lies in at least one joint proof image, while each joint image
+    # covers at least one trusted successor (so no spurious disconnected branch
+    # is silently promoted).
+    image_matches=[sum(_contains(im.state.frontend,s.frontend) for s in kernel_successors) for im in joint_images]
+    kernel_matches=[sum(_contains(im.state.frontend,s.frontend) for im in joint_images) for s in kernel_successors]
     return {
-      'every_joint_image_frontend_matches_kernel_successor':all(x>0 for x in image_matches),
-      'every_kernel_frontend_successor_represented_by_joint_image':all(x>0 for x in kernel_matches),
+      'coverage_relation':'joint proof frontend recursively contains trusted kernel frontend',
+      'every_joint_image_frontend_contains_kernel_successor':all(x>0 for x in image_matches),
+      'every_kernel_frontend_successor_contained_by_joint_image':all(x>0 for x in kernel_matches),
       'joint_image_match_counts':image_matches,'kernel_successor_match_counts':kernel_matches,
       'no_joint_image_dropped':len(image_matches)==len(joint_images),
       'no_kernel_frontend_successor_dropped':len(kernel_matches)==len(kernel_successors)}
@@ -93,11 +111,12 @@ def summarize(cells,images,sample,mode):
 def build():
     sample,_,meta,succ,images=capture_smoke();coverage=successor_coverage(succ,images);H=summarize(meta['H_event_cells'],images,sample,'H');A=summarize(meta['A_event_cells'],images,sample,'A')
     all_ok=all(x for d in (H,A) for k,x in d.items() if k not in ('mode','literal_kinds','magnetometer_index'))
-    all_successors=all(coverage[k] for k in ('every_joint_image_frontend_matches_kernel_successor','every_kernel_frontend_successor_represented_by_joint_image','no_joint_image_dropped','no_kernel_frontend_successor_dropped'))
+    all_successors=all(coverage[k] for k in ('every_joint_image_frontend_contains_kernel_successor','every_kernel_frontend_successor_contained_by_joint_image','no_joint_image_dropped','no_kernel_frontend_successor_dropped'))
     return {'schema':SCHEMA,'qualification':QUALIFICATION,'canonical_source':'COMPLETE_BRMM_NORMAL_LIVE_WORD',
       'trusted_kernel_passive_capture_consumed':True,'same_transition_call_not_replay':True,'shipping_literal_event_order_captured':True,'H18_A21_same_sample_capture':True,
       'same_sample_joint_estimator_image_family_materialized':True,'joint_image_branch_count':len(images),'kernel_frontend_successor_count':len(succ),
       'same_sample_successor_family_coverage':coverage,'all_same_sample_joint_and_kernel_successors_retained':all_successors,
+      'coverage_uses_outward_containment_not_endpoint_identity':True,
       'favorable_joint_estimator_successor_selected_for_production':False,
       'current_active_schedule_matches_kernel_Riccati_schedule':bool(meta['same_active_schedule_verified']),'current_actual_RS_matches_kernel_Riccati_schedule':bool(meta['same_actual_RS_verified']),
       'H18':H,'A21':A,'smoke_capture_all_same_cell_objects_closed':all_ok,
@@ -109,10 +128,10 @@ def build():
 def validate(d):
     f=[]
     if d.get('schema')!=SCHEMA or d.get('qualification')!=QUALIFICATION:f.append('schema/qualification mismatch')
-    for k in ('trusted_kernel_passive_capture_consumed','same_transition_call_not_replay','shipping_literal_event_order_captured','H18_A21_same_sample_capture','same_sample_joint_estimator_image_family_materialized','all_same_sample_joint_and_kernel_successors_retained','current_active_schedule_matches_kernel_Riccati_schedule','current_actual_RS_matches_kernel_Riccati_schedule','smoke_capture_all_same_cell_objects_closed'):
+    for k in ('trusted_kernel_passive_capture_consumed','same_transition_call_not_replay','shipping_literal_event_order_captured','H18_A21_same_sample_capture','same_sample_joint_estimator_image_family_materialized','all_same_sample_joint_and_kernel_successors_retained','coverage_uses_outward_containment_not_endpoint_identity','current_active_schedule_matches_kernel_Riccati_schedule','current_actual_RS_matches_kernel_Riccati_schedule','smoke_capture_all_same_cell_objects_closed'):
         if d.get(k) is not True:f.append(k+' not true')
     c=d.get('same_sample_successor_family_coverage',{})
-    for k in ('every_joint_image_frontend_matches_kernel_successor','every_kernel_frontend_successor_represented_by_joint_image','no_joint_image_dropped','no_kernel_frontend_successor_dropped'):
+    for k in ('every_joint_image_frontend_contains_kernel_successor','every_kernel_frontend_successor_contained_by_joint_image','no_joint_image_dropped','no_kernel_frontend_successor_dropped'):
         if c.get(k) is not True:f.append('successor '+k+' not true')
     for mode in ('H18','A21'):
         m=d.get(mode,{})
