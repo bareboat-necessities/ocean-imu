@@ -79,11 +79,17 @@ jobs:
           assert e['qualified_fresh_live_entry']['fresh_live_entry_cover_closed']
           assert p['P3_SCOPED_EXECUTION_ADMISSION_PASS'] and not p['P3_DEPLOYMENT_PASS']
           assert c['validation_pass'],c['validation_failures']
-          assert c['Kalman_and_reset_coefficient_family_outwardly_bounded']
+          # Rowwise K is only a source-uniform gain magnitude enclosure.  The
+          # reset map is deliberately NOT certified from an independent rowbox;
+          # its correction/chart domain must come from the same D_theta graph.
+          assert c['Joseph_gain_family_outwardly_bounded']
+          assert not c['Kalman_and_reset_coefficient_family_outwardly_bounded']
+          assert c['rowwise_K_reset_correction_domain_forbidden']
+          assert c['reset_coefficient_family_requires_same_graph_correction_domain']
           assert c['smallx_scaled_dependency_reduction_used'] and c['base_certificate_unchanged']
           assert not c['consecutive_storage_closed_here']
           for mode,m in c['modes'].items():
-            print('COEFF',mode,'correction=',m['attitude_correction_norm_upper'],'limiting=',m['limiting_correction_event'])
+            print('COEFF',mode,'correction_diagnostic=',m['independent_rowbox_attitude_correction_norm_upper_diagnostic'])
             print('RESET',mode,json.dumps(m['reset_enclosure'],sort_keys=True))
           for name in ab['required_bias_families']:
             f=bf['family_supply'][name]
