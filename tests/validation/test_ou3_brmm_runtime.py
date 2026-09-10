@@ -55,13 +55,22 @@ class RuntimeAuditTests(unittest.TestCase):
 
     def test_live_does_not_hide_cap_or_config_failures(self):
         source, samples, events, domain = copy.deepcopy(self.data)
-        source.loc[300:309, 'acc_x'] = 5
-        source.loc[600:609, 'gyro_y'] = 1
+        nl = domain['normal_live']
+        acceleration_cap = nl['non_gravitational_cog_acceleration_norm_upper_mps2']
+        rate_cap = np.deg2rad(nl['body_rate_norm_upper_deg_s'])
+        # Place both negative controls strictly inside and positive controls
+        # strictly outside the current declared caps, away from rounding ties.
+        source.loc[280:289, 'acc_x'] = acceleration_cap / 2
+        source.loc[300:309, 'acc_x'] = acceleration_cap + 1
+        source.loc[580:589, 'gyro_y'] = rate_cap / 2
+        source.loc[600:609, 'gyro_y'] = rate_cap + 1
         events.loc[(events.kind == 'acc') & (events['index'] == 700), 'R00'] = .001
         r, masks = audit.analyze(source, samples, events, domain)
         self.assertEqual(r['regimes']['A21']['samples'], 2200)
         self.assertEqual(r['violations']['physical_acceleration_above_cap']['A21']['samples'], 10)
         self.assertEqual(r['violations']['physical_body_rate_above_cap']['A21']['samples'], 10)
+        self.assertFalse(masks['physical_acceleration_above_cap'][280:290].any())
+        self.assertFalse(masks['physical_body_rate_above_cap'][580:590].any())
         self.assertTrue(masks['acc_configured_R_mismatch'][700])
         self.assertEqual(r['source_samples_pruned'], 0)
 

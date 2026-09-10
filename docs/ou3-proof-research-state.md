@@ -57,6 +57,18 @@ release. All eight new exact/mutation tests and fourteen existing entry tests
 pass; the theorem-input LaTeX smoke build also passes. These finite tests
 regress the implementation binding, not the infinite-time conclusion.
 
+## Validation compatibility
+
+The source/runtime audit suites initially failed on unchanged main fixtures:
+`unfrozen_physical_constants` no longer exists in the V4 declaration, and a
+5 m/s^2 test signal no longer exceeds its 8 m/s^2 acceleration cap. These are
+stale test assumptions, not proof or runtime failures. The source test now
+checks V_m/P_m/A_m against the qualified primitive object, keeps the remaining
+constants including S_m unresolved, and rejects mutations/promotion. The runtime
+test places positive and negative controls on opposite sides of the actual
+acceleration/body-rate caps. Both suites pass without changing source constants,
+shipping code or audit thresholds.
+
 ## Retained facts and frozen dead ends
 
 Fresh v/p/S/aw/bg/ba means are held zero; one common S-origin is removed only once.
