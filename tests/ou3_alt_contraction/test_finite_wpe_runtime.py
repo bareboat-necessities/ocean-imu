@@ -31,14 +31,15 @@ class Tests(unittest.TestCase):
                           elevation_mean=0,elevation_sq=1,log_period=log_period,
                           last_moment_horizon=4)
 
-    def test_valid_moment_ratio_builds_first_canonical_log_period(self):
+    def test_valid_moment_ratio_builds_first_canonical_log_period_and_post_output(self):
         s=self.moment_state()
         out=W.update(s,cfg(),dt=F(1,10),vertical_accel=0,decay=W.ExpWitness(1),
-                     moment_decay=W.ExpWitness(1),
-                     period_witness=W.PeriodWitness(2,3,7))
+                     moment_decay=W.ExpWitness(1),period_witness=W.PeriodWitness(2,3,7),
+                     post_output=W.CanonicalOutputWitness(3,F(1,3)))
         self.assertTrue(out.produced_period)
         self.assertEqual(out.state.raw_period,3)
         self.assertEqual(out.state.log_period,7)
+        self.assertEqual((out.period,out.frequency),(3,F(1,3)))
         self.assertEqual(out.state.last_log_horizon,0)
         self.assertFalse(out.state.usable_period)
 
@@ -46,25 +47,32 @@ class Tests(unittest.TestCase):
         with self.assertRaises(ValueError):
             W.update(self.moment_state(),cfg(),dt=F(1,10),vertical_accel=0,
                      decay=W.ExpWitness(1),moment_decay=W.ExpWitness(1),
-                     period_witness=W.PeriodWitness(3,3,7))
+                     period_witness=W.PeriodWitness(3,3,7),
+                     post_output=W.CanonicalOutputWitness(3,F(1,3)))
 
-    def test_existing_canonical_state_drives_same_log_horizon_and_ema(self):
+    def test_existing_canonical_state_drives_same_log_horizon_and_post_latch(self):
         s=self.moment_state(log_period=2)
         out=W.update(s,cfg(),dt=F(1,10),vertical_accel=0,decay=W.ExpWitness(1),
                      moment_decay=W.ExpWitness(1),period_witness=W.PeriodWitness(2,3,4),
                      log_witness=W.LogUpdateWitness(5,F(1,2),3),
-                     current_period=5,current_frequency=F(1,5))
+                     current_period=5,current_frequency=F(1,5),
+                     post_output=W.CanonicalOutputWitness(1,1))
         self.assertEqual(out.state.log_period,3)
         self.assertEqual(out.state.last_log_horizon,F(5,2))
+        self.assertEqual((out.period,out.frequency),(1,1))
         self.assertTrue(out.state.usable_period)
 
-    def test_period_and_frequency_are_one_canonical_reciprocal_pair(self):
+    def test_entry_period_and_frequency_are_one_canonical_reciprocal_pair(self):
         with self.assertRaises(ValueError):
             W.update(self.moment_state(log_period=2),cfg(),dt=F(1,10),vertical_accel=0,
                      decay=W.ExpWitness(1),moment_decay=W.ExpWitness(1),
                      period_witness=W.PeriodWitness(2,3,4),
                      log_witness=W.LogUpdateWitness(5,F(1,2),3),
-                     current_period=5,current_frequency=F(1,4))
+                     current_period=5,current_frequency=F(1,4),
+                     post_output=W.CanonicalOutputWitness(1,1))
+
+    def test_post_output_must_also_be_reciprocal(self):
+        with self.assertRaises(ValueError): W.CanonicalOutputWitness(2,2)
 
     def test_degenerate_moments_do_not_invent_period(self):
         s=W.WPEState(weight=1,elapsed=4,velocity_sq=0,elevation_sq=1,last_moment_horizon=4)
@@ -77,6 +85,7 @@ class Tests(unittest.TestCase):
         r=W.readiness()
         self.assertTrue(r['two_high_pass_stages_materialized'])
         self.assertTrue(r['moment_ratio_period_branch_materialized'])
+        self.assertTrue(r['post_log_output_and_one_way_usable_latch_materialized'])
         self.assertFalse(r['exp_log_sqrt_pi_binary32_ancestry_attached'])
         self.assertFalse(r['vertical_accel_frontend_same_history_attached'])
         self.assertFalse(r['complete_word_finite_identity'])
