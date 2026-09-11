@@ -2,20 +2,16 @@
 """Exact BRMM physical-source response at every literal H18/A21 prefix.
 
 Each shipping prediction receives one 15D same-history acceleration witness
-q_k=[a0,a1,J0,J1,J2].  The exact true-minus-estimate forcing map is generated
-from the same committed tau/h as the homogeneous OU prediction.  One q_k block
+q_k=[a0,a1,J0,J1,J2]. The exact true-minus-estimate forcing map is generated
+from the same committed tau/h as the homogeneous OU prediction. One q_k block
 is appended only at that prediction; all older q blocks are propagated through
 the exact later nonlinear event Jacobians.
 
-H18 returns an 18 x (15*Npred) response.  A21 returns the all-bias 24-state
+H18 returns an 18 x (15*Npred) response. A21 returns the all-bias 24-state
 response [e_A21;b_true]; physical acceleration forcing enters only the first 21
-shipping-error rows and never the proof-only true-bias rows.  A21 Joseph/reset/
-projection maps use the family-specific same-prefix true-bias recurrence.
-
-This is the missing physical finite-error source channel.  It retains raw q_k
-coordinates so their joint endpoint/moment sectors can be embedded later in the
-same augmented LDLT coordinate; it never replaces q_k by independent dv/dp/dS/
-daw boxes.
+shipping-error rows and never the proof-only true-bias rows. A21 Joseph/reset/
+projection maps use the family-specific same-prefix true-bias recurrence already
+stored in the estimator-owned SourceCoverCell.
 """
 from __future__ import annotations
 import argparse
@@ -31,7 +27,6 @@ import ou3_p4_brmm_physical_prediction_forcing as PHYS
 import ou3_p4_brmm_physical_acceleration_witness_sector as SECTOR
 import ou3_p4_a21_bias1_24state_event_lift as LIFT
 import ou3_p4_source_uniform_bias_prefix_lineage as BIAS
-import ou3_p4_same_history_nonlinear_graph_lineage as GRAPH
 import ou3_brmm_complete_window_execution_kernel as KERNEL
 
 SCHEMA=1
@@ -53,14 +48,8 @@ def propagate(A,C,G=None):
 
 @dataclass(frozen=True)
 class PhysicalSourcePrefixResponse:
-    mode:str
-    family:str|None
-    prefix_ordinal:int
-    source_cell_id:str
-    event_token:str
-    kind:str
-    prediction_witness_ids:tuple[str,...]
-    response:tuple[tuple[Interval,...],...]
+    mode:str;family:str|None;prefix_ordinal:int;source_cell_id:str;event_token:str;kind:str
+    prediction_witness_ids:tuple[str,...];response:tuple[tuple[Interval,...],...]
 
 def _joseph_H(cell):
     ev=EVENTS.source_joseph_event(**ATTACH.COVER.joseph_event_kwargs(cell));return ev['J_state']
@@ -73,31 +62,24 @@ def materialize(samples:Sequence[ATTACH.AttachedSampleLineage],*,mode:str,family
     if any(s.mode!=mode for s in samples):raise ValueError('attached sample mode mismatch')
     if mode=='A' and family not in BIAS.FAMILIES:raise ValueError('A21 requires BIAS0/BIAS1/BIAS2')
     if mode=='H' and family is not None:raise ValueError('H18 physical response has no accelerometer-bias family')
-    constants=KERNEL._process_constants(domain_path);projection=GRAPH._projection_limit(domain_path)
-    n=18 if mode=='H' else 24;C=zero(n,0);records=[];witness_ids=[];state=list(samples[0].cells[0].state);ordinal=0
-    bias_boxes=BIAS.prefix_component_boxes(family,len(samples)) if mode=='A' else None
+    constants=KERNEL._process_constants(domain_path);n=18 if mode=='H' else 24
+    phi_true=BIAS.family_parameters(family)['phi'] if mode=='A' else None
+    C=zero(n,0);records=[];witness_ids=[];state=list(samples[0].cells[0].state);ordinal=0
     for si,sample in enumerate(samples):
         if sample.selector.sample_index!=si:raise RuntimeError('sample lineage index is not consecutive')
-        beta=(bias_boxes[si],)*3 if bias_boxes is not None else None
         for cell in sample.cells:
             if tuple(cell.state)!=tuple(state):raise RuntimeError('physical response state detached from exact nonlinear lineage')
             G=None
             if cell.kind=='prediction':
                 pred=PRED.prediction_event(mode,state,sample.selector.sample_coordinates.omega_body_corrected,cell.dt_s,cell.tau_applied_s,tau_ba=constants.accel_bias_tau_s if mode=='A' else None)
                 if mode=='H':A=pred['J_state']
-                else:A,_=LIFT.prediction_lift(pred['J_state'],BIAS.FAMILIES[family]['phi_true'] if isinstance(BIAS.FAMILIES,dict) else BIAS._spec(family).phi_true)
+                else:A,_=LIFT.prediction_lift(pred['J_state'],phi_true)
                 M=PHYS.source_matrix(cell.tau_applied_s,cell.dt_s);G0=PHYS.inject_error_state(mode,M);G=G0 if mode=='H' else embed_A24(G0)
-                witness_ids.append(f'{sample.selector.source_cell_id}:physical-acceleration')
-                state=list(pred['state_out'])
-            elif cell.kind=='aw_floor':
-                A=matrix_identity(n)
+                witness_ids.append(f'{sample.selector.source_cell_id}:physical-acceleration');state=list(pred['state_out'])
+            elif cell.kind=='aw_floor':A=matrix_identity(n)
             elif cell.kind in ('S_zero','accelerometer','magnetometer'):
-                if mode=='A':
-                    # Cell already carries the same-prefix true-bias interval from production attachment.
-                    A=_joseph_A(cell)
-                    ev=EVENTS.source_joseph_event(**ATTACH.COVER.joseph_event_kwargs(cell));state=list(ev['state_out'])
-                else:
-                    A=_joseph_H(cell);ev=EVENTS.source_joseph_event(**ATTACH.COVER.joseph_event_kwargs(cell));state=list(ev['state_out'])
+                A=_joseph_A(cell) if mode=='A' else _joseph_H(cell)
+                ev=EVENTS.source_joseph_event(**ATTACH.COVER.joseph_event_kwargs(cell));state=list(ev['state_out'])
             else:raise RuntimeError('unsupported literal event '+cell.kind)
             C=propagate(A,C,G);ordinal+=1
             if shape(C)!=(n,15*len(witness_ids)):raise RuntimeError('physical source response dimension drift')
