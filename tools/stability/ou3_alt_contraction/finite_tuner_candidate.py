@@ -1,10 +1,9 @@
 """Finite default SeaStateAutoTuner candidate/smoothing relation for ALT.
 
-The shipping-level entry consumes the finite adaptive-band/statistics successor:
-its bounded tuner frequency, acceleration variance readiness/value and propagated
-band-noise sigma all come from one same-history frontend state. It then applies
-the deployed SpectralMSE/default-slew-zero target and EMA logic before the staged
-commit. Stillness and transcendental binary32 ancestry remain open obligations.
+The shipping-level entry consumes finite adaptive-band/statistics and stillness
+successors. Bounded tuner frequency, acceleration variance, propagated band-noise
+sigma, stillness flag/time and variance attenuation therefore come from one
+same-history runtime graph before SpectralMSE target and EMA logic.
 """
 from __future__ import annotations
 from dataclasses import dataclass
@@ -13,6 +12,7 @@ from fractions import Fraction as F
 from tools.stability.ou3_alt_contraction import finite_prediction_graph as P
 from tools.stability.ou3_alt_contraction import finite_wpe_runtime as WPE
 from tools.stability.ou3_alt_contraction import finite_band_variance_runtime as BAND
+from tools.stability.ou3_alt_contraction import finite_stillness_runtime as STILL
 from tools.stability.ou3_alt_contraction.finite_tuner_commit import TuneState, clamp
 
 EMA_SCALE_MIN, EMA_SCALE_MAX = F(1,2), F(6)
@@ -160,18 +160,25 @@ def step(previous:TuneState,sample:WaveBandSample,cfg:CandidateConfig,*,dt,time,
     return CandidateResult(target.frequency,target.variance_wave,target.tau_target,target.sigma_target,rs_t,nxt,fire,time if fire else last_adapt_time,adapt_h,RS_h)
 
 
+def sample_from_runtime(front:BAND.FrontendResult,still:STILL.Result,*,sigma_wave_sqrt):
+    if not isinstance(front,BAND.FrontendResult): raise TypeError('finite band/statistics successor required')
+    if not isinstance(still,STILL.Result): raise TypeError('finite stillness successor required')
+    return WaveBandSample(front.current_tuner_frequency,front.variance_ready,front.accel_variance,
+                          front.band_noise_sigma,still.state.last_is_still,still.state.still_time,
+                          still.variance_attenuation,sigma_wave_sqrt)
+
+
+def step_from_runtime(previous:TuneState,front:BAND.FrontendResult,still:STILL.Result,cfg:CandidateConfig,*,
+                      sigma_wave_sqrt,dt,time,last_adapt_time,spectral:SpectralWitness,ema:EmaWitness):
+    return step(previous,sample_from_runtime(front,still,sigma_wave_sqrt=sigma_wave_sqrt),cfg,
+                dt=dt,time=time,last_adapt_time=last_adapt_time,spectral=spectral,ema=ema)
+
+
 def sample_from_frontend(front:BAND.FrontendResult,*,still,still_time,still_attenuation,sigma_wave_sqrt):
+    """Older conditional helper; shipping-level proof should use sample_from_runtime."""
     if not isinstance(front,BAND.FrontendResult): raise TypeError('finite band/statistics successor required')
     return WaveBandSample(front.current_tuner_frequency,front.variance_ready,front.accel_variance,
                           front.band_noise_sigma,still,still_time,still_attenuation,sigma_wave_sqrt)
-
-
-def step_from_frontend(previous:TuneState,front:BAND.FrontendResult,cfg:CandidateConfig,*,
-                       still,still_time,still_attenuation,sigma_wave_sqrt,
-                       dt,time,last_adapt_time,spectral:SpectralWitness,ema:EmaWitness):
-    sample=sample_from_frontend(front,still=still,still_time=still_time,
-                                still_attenuation=still_attenuation,sigma_wave_sqrt=sigma_wave_sqrt)
-    return step(previous,sample,cfg,dt=dt,time=time,last_adapt_time=last_adapt_time,spectral=spectral,ema=ema)
 
 
 def step_from_wpe(previous:TuneState,wpe:WPE.UpdateResult,sample:WaveBandSample,cfg:CandidateConfig,*,
@@ -190,7 +197,8 @@ def readiness():
       'tau_sigma_and_RS_EMA_recurrence':True,
       'sample_vs_commit_cadence_separated':True,
       'band_variance_tuner_frequency_same_history_attached':True,
-      'stillness_state_attached':False,
+      'stillness_state_same_history_attached':True,
+      'frontend_tracker_and_vertical_measurement_attached':False,
       'exp_sqrt_pow_binary32_enclosed':False,
       'complete_word_finite_identity':False,
       'ALT_LIVE_PASS':False,
