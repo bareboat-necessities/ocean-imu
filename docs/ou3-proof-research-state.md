@@ -288,3 +288,42 @@ Selected next experiment: bind the already implemented exact finite solve
 increment graph to the analytic same-history shipping source, then run the
 full-word high-precision feasibility experiment before any interval refinement.
 All ALT and existing final theorem gates remain false/unpromoted.
+
+### ALT continuation experiment — source attachment and rank-three product ports
+
+The next falsifiable attachment experiment was executed without changing the
+shipping filter or the original P2/P3/P4/P5 route. The event-local
+estimator-owned JOINT/kernel relation executes for both H18 and A21: H/A cells
+bind, literal event orders agree, and the authoritative next frontend is the
+JOINT image. However, invoking the inherited theorem-facing source-selector
+builder pulls in the separate Mahony startup invariant and currently stops at
+`continuous_all_live_PI_invariant_closed` / `initial seed angle not closed`.
+Classification: proof-architecture coupling, not an ALT Live theorem failure.
+It invalidates reuse of that theorem-facing wrapper as the ALT Live attachment;
+it does not invalidate the inverse-free finite-increment algebra, the joint24
+bounded-supply target, or the independently continuable original proof.
+
+The attachment gap is now sharper. The available relation is
+single-execution/differential: it does not supply paired admissible estimator,
+covariance, frontend/tuner and guard states with same-history `r0/r1`, `N0/N1`,
+`S0/S1`, and `q0/q1`. Therefore `deltaN` and `deltaS` are not yet tied to one
+paired COMPLETE-BRMM continuation and
+`ALT_ACTUAL_SOURCE_UNIFORM_FINITE_INCREMENT_WORD_ATTACHED=false`.
+
+Rank-three structure is retained only as an exact representation optimization.
+The new thin kernels use `Psi+ = Psi-K(H Psi)`, the actual-numerator Joseph
+polynomial, and the rank-at-most-six storage correction without discarding any
+state or cross term. The endogenous increment master can carry
+`u_S=deltaS*q0` and `u_N=deltaN*q0`; for joint24 this reduces the local lifted
+coordinate count from 87 to 33. This is exact only when hard same-history
+product graphs enforce both identities. The ports may not be treated as
+independent bounded disturbances.
+
+Critic: the strongest reason to abandon the inherited wrapper is that it makes
+a Live-word feasibility experiment depend on an unrelated, still-open startup
+theorem. The selected alternative is a Live-only paired JOINT+kernel transition,
+not more refinement of that wrapper. Current limiter and next falsifiable
+experiment: take two estimator states over one admitted COMPLETE-BRMM source
+continuation, emit paired literal H18/A21 event cells, bind both inverse-free
+solves, and enforce hard `u_S/u_N` same-history product graphs. Startup remains
+a separate later theorem. All ALT and original P4/P5 gates remain fail-closed.

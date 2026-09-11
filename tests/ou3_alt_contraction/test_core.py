@@ -1,5 +1,4 @@
 """Host algebra and anti-shortcut tests; none is a universal stability gate."""
-import importlib.util
 from pathlib import Path
 import sys
 import unittest
