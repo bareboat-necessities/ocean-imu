@@ -3,8 +3,9 @@
 
 The deployed filter is physically 21-state even while the proof calls the held
 mode H18.  When bias learning is disabled shipping zeros every BA cross block,
-uses phi_b=1 with no BA process covariance, omits BA from the accelerometer
-innovation and freezes BA gain rows.  Hence the hidden held covariance is
+uses phi_b=1 with no BA process covariance, omits BA from the accelerometer gain
+numerator and freezes BA gain rows, but retains its uncertainty in the
+innovation covariance.  Hence the hidden held covariance is
 
     P_hold21 = diag_block(P_H18, sigma_bacc0^2 I3).
 
@@ -47,18 +48,22 @@ def held_covariance_from_H18(P18,sigma_bacc0=DEFAULT_SIGMA_BACC0):
     P=zero(21,21)
     for i in range(18):
         for j in range(18):P[i][j]=P18[i][j]
-    v=I(s*s)
+    v=I(s).square()  # Outward real product; a point at rounded s*s is not an enclosure.
     for i in range(3):P[18+i][18+i]=v
     return P
 
 def enable_covariance_floor(P21,sigma_bacc0=DEFAULT_SIGMA_BACC0):
     """Outward image of the three deployed diagonal max operations."""
     if _shape(P21)!=(21,21):raise ValueError('held covariance must be 21x21')
-    floor=float(sigma_bacc0)**2; out=[list(r) for r in P21]
+    s=float(sigma_bacc0)
+    if not(math.isfinite(s) and s>=0):raise ValueError('finite nonnegative sigma_bacc0 required')
+    floor=I(s).square(); out=[list(r) for r in P21]
     for i in range(3):
         x=P21[18+i][18+i]
         # exact image of max(x,floor) for interval x
-        out[18+i][18+i]=Interval.outward_bounds(max(x.lo,floor),max(x.hi,floor))
+        out[18+i][18+i]=Interval(max(x.lo,floor.lo),max(x.hi,floor.hi))
+        # max selects existing endpoints exactly. No extra arithmetic rounding
+        # is needed, and widening here would destroy the represented fixed point.
     return out
 
 def joint24_mean_edge():

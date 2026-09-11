@@ -1,18 +1,17 @@
 #!/usr/bin/env python3
-"""First common-M outward certificate on the corrected inverse-free endpoint family.
+"""Guarded common-M attempt; inverse-free gains do not supply a finite-state bridge.
 
-The same source-independent coercive 24x24 diagonal candidate is tested against
-all H/A x BIAS0/1/2 600-step endpoint outers.  Only outward projected LDLT can
-close an endpoint candidate.  Async magnetometer nonexpansiveness remains a
-separate same-M obligation, so this module never promotes ALT_LIVE_PASS alone.
+The derivative endpoint family is not yet the actual finite error map. Require
+that bridge before building an endpoint outer or testing any common metric.
 """
 from __future__ import annotations
-from tools.stability.ou3_alt_contraction import inverse_free_endpoint_outer_attempt as END
 from tools.stability.ou3_alt_contraction import first_common_metric_attempt as BASE
-from tools.stability.ou3_alt_contraction import projected_storage_certificate as CERT
 QUALIFICATION='OU3_ALT_INVERSE_FREE_COMMON_JOINT24_METRIC_ATTEMPT_V1'
 RHO=(0.9,0.99,0.999,0.9999,0.99999)
 def build():
+    BASE.PLAN.assert_finite_storage_master(BASE.WORD.finite_storage_readiness())
+    from tools.stability.ou3_alt_contraction import inverse_free_endpoint_outer_attempt as END
+    from tools.stability.ou3_alt_contraction import projected_storage_certificate as CERT
     ep=END.build();ef=END.validate(ep)
     if ef:raise RuntimeError('inverse-free endpoint prerequisite invalid: '+repr(ef))
     M,scales=BASE.normalized_diagonal_metric();attempts=[];winner=None;finite=ep['all_endpoint_outers_finite']

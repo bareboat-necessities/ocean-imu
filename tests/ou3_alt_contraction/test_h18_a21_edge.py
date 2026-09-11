@@ -1,4 +1,5 @@
 import unittest
+from fractions import Fraction as F
 from ou3_interval import Interval
 from tools.stability.ou3_alt_contraction import h18_a21_edge as E
 
@@ -19,6 +20,25 @@ class H18A21EdgeTests(unittest.TestCase):
             for j in range(18):
                 self.assertEqual((p[18+i][j].lo,p[18+i][j].hi),(0,0))
                 self.assertEqual((p[j][18+i].lo,p[j][18+i].hi),(0,0))
+    def test_seed_variance_encloses_exact_real_product(self):
+        s=E.DEFAULT_SIGMA_BACC0
+        exact=F.from_float(s)**2
+        v=E.held_covariance_from_H18(P18())[18][18]
+        self.assertLessEqual(F.from_float(v.lo),exact)
+        self.assertGreaterEqual(F.from_float(v.hi),exact)
+    def test_enable_floor_handles_values_below_crossing_and_above(self):
+        seed=E.held_covariance_from_H18(P18())[18][18]
+        p=E.held_covariance_from_H18(P18())
+        p[18][18]=Interval(0,seed.lo/2)
+        p[19][19]=Interval(0,seed.hi*2)
+        p[20][20]=Interval(seed.hi*3,seed.hi*4)
+        q=E.enable_covariance_floor(p)
+        self.assertEqual(q[18][18],seed)
+        self.assertEqual(q[19][19],Interval(seed.lo,seed.hi*2))
+        self.assertEqual(q[20][20],p[20][20])
+    def test_negative_seed_rejected_at_both_entry_points(self):
+        with self.assertRaises(ValueError):E.held_covariance_from_H18(P18(),-.1)
+        with self.assertRaises(ValueError):E.enable_covariance_floor(E.held_covariance_from_H18(P18()),-.1)
     def test_joint24_mean_edge_is_identity(self):
         A=E.joint24_mean_edge();self.assertEqual((len(A),len(A[0])),(24,24))
         for i in range(24):

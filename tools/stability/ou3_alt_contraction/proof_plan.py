@@ -32,3 +32,21 @@ def assert_storage_search_allowed(status: dict) -> None:
               "physical_S_residual_attached","all_bias_families_attached",
               "all_literal_branches_attached","H18_A21_edge_attached") if status.get(k) is not True]
         raise RuntimeError("ALT storage search blocked; incomplete theorem word: "+", ".join(missing))
+
+
+def assert_finite_storage_master(status: dict) -> None:
+    """Reject a Jacobian/metadata assembly as input to a finite-state rho search.
+
+    This is an additional process guard, not mathematical evidence. A finite
+    identity and its source coverage must be proved by the supplying builder.
+    In particular the older six assembly flags cannot imply these obligations.
+    """
+    required = ('finite_error_identity_for_every_event',
+                'physical_reference_forcing_retained',
+                'all_coefficient_product_graphs_retained',
+                'all_configured_branches_bound_to_finite_graph')
+    missing = [k for k in required if status.get(k) is not True]
+    if status.get('map_representation') != 'finite_physical_descriptor':
+        missing.insert(0, 'finite_physical_descriptor (not a Jacobian cocycle)')
+    if missing:
+        raise RuntimeError('ALT finite-state storage blocked: '+', '.join(missing))

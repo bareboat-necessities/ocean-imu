@@ -58,7 +58,7 @@ def driver_ball_iqc(contract: BiasFamilyContract):
     if not (math.isfinite(W) and W>=0):
         raise ValueError("finite nonnegative driver norm bound required")
     Q=[[I(0) for _ in range(4)] for _ in range(4)]
-    Q[0][0]=I(W*W)
+    Q[0][0]=I(W).square()
     for i in range(3): Q[1+i][1+i]=I(-1)
     return Q
 
@@ -69,7 +69,7 @@ def true_bias_ball_iqc(contract: BiasFamilyContract):
     if not (math.isfinite(B) and B>=0):
         raise ValueError("finite nonnegative true-bias norm bound required")
     Q=[[I(0) for _ in range(4)] for _ in range(4)]
-    Q[0][0]=I(B*B)
+    Q[0][0]=I(B).square()
     for i in range(3): Q[1+i][1+i]=I(-1)
     return Q
 
@@ -88,7 +88,7 @@ def _contract(name, module):
         raise RuntimeError(name+" lost one-history source requirement")
     c=BiasFamilyContract(
         name=name, qualification=str(d['qualification']),
-        phi_true=Interval.outward_bounds(lo,hi),
+        phi_true=Interval(lo,hi),  # Already-certified source endpoints; phi=1 is exact.
         driver_component_bound=float(d['driver_increment_component_abs_upper_mps2']),
         driver_norm_bound=float(d['driver_increment_norm_upper_mps2']),
         true_bias_component_bound=float(d['true_bias_component_abs_upper_mps2']),

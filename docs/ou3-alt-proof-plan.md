@@ -139,20 +139,37 @@ If (1) has no concrete answer, do not run it.  If (2) is diagnostic-only, run it
 only when it can falsify the *current complete theorem candidate*; never open a
 proof PR whose main deliverable is such a diagnostic.
 
+### G13 — A derivative cocycle is not a finite physical master
+
+The six Phase-1 assembly flags are necessary bookkeeping, not an equality for
+finite errors. Before a common-M, rho, high-precision or endpoint-refinement
+attempt, `proof_plan.assert_finite_storage_master` must validate the declared
+representation. A Jacobian product, a source token, or a collection of TRUE
+metadata fields cannot replace an exact finite graph or a proved anchored
+mean-value representation. Nonzero physical S and other reference offsets must
+remain present, as must all coefficient product and branch graphs.
+
+The common-metric entry point and its candidate helper invoke this guard before
+building a covariance outer or loading fresh-entry scales. They reject the
+current `physical_word` Jacobian cocycle. Substituting a thinner gain enclosure
+or a different metric does not discharge this missing identity.
+
 ## Current physical-map obligation
 
-The immediate ALT work is Phase 1, not storage search.  Shared main already has
-rigorous same-history translational forcing and its joint 15D physical source
-sector.  ALT must consume those facts and complete the missing physical
-reference terms:
+The accepted, finite, real-arithmetic accelerometer, magnetometer and S graphs
+are proved in [the finite measurement note](ou3-alt-finite-measurement-proof.md).
+They include the exact Cayley injection, both quaternion branches, same-beta
+radial projection and a thin-factor full joint24 storage identity. In held mode,
+BA uncertainty remains in the innovation: the reduced accelerometer covariance
+uses R_acc+B0, not bare R_acc. This is not an error-state reduction.
 
-- preserve the exact prediction forcing generated from the same committed tau;
-- use `r_S=e_S-S_phys` at every due S event with the same centered primitive;
-- preserve the BIAS0/1/2 true-bias/error recurrence and H18 held-bias residual;
-- bind all of the above to the estimator-owned source cells and literal event
-  order, including accepted/rejected branches.
-
-Only after this complete finite physical word is materialized may Phase 3 begin.
+The complete finite word remains OPEN. Connect these graphs to the actual
+covariance/frontend successors, preserve physical continuous-rotation versus
+sampled-gyro prediction forcing, and cover every configured accepted/rejected
+and asynchronous branch with the same source/primitive/bias ancestry. Either
+compose finite descriptors directly or prove the complete anchored mean-value
+bridge. Do not present pointwise Jacobian products as the finite endpoint map.
+Only a closed finite master may enter the first common joint24 storage search.
 
 ## Promotion state
 

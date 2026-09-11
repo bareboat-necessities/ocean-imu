@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-"""Universal physical joint24 word induction for the ALT Live theorem.
+"""Joint24 derivative-word assembly retained for the ALT Live construction.
+
+Scope correction: the code below assembles pointwise state/source Jacobian
+data. Its legacy assembly labels do not prove an anchored finite error-map
+identity. The finite_storage_readiness guard therefore blocks its use as the
+finite endpoint in a common-storage search. See the finite-measurement proof
+for the missing bridge and the exact accepted-event replacement.
 
 The theorem is relational, not an enumeration.  For every endpoint path of the
 regional universal Normal-Live relation, apply the source-uniform local cocycle
@@ -117,6 +123,7 @@ def compose_endpoint_lineage(lineages:Sequence,*,bias_contract:BIAS.BiasFamilyCo
     qblocks=[b for b in blocks if b.kind=='BRMM_q15_prediction'];sblocks=[b for b in blocks if b.kind=='physical_centered_S']
     return {
       'mode':mode,'transitions_composed':len(lineages),'J_joint24':Psi,'source_blocks':tuple(blocks),
+      'map_representation':'pointwise_state_Jacobian_cocycle','finite_error_identity_established':False,
       'endpoint_source_cell_id':prev_selector.source_cell_id,'generator_id':prev_primitive.generator_id,'live_origin_id':prev_primitive.live_origin_id,
       'selector_ancestry_continuous':True,'primitive_transition_continuity':True,'one_generator_over_word':True,'one_Live_S_origin_over_word':True,
       'global_physical_relation':GLOBAL_PHYSICAL_RELATION,'all_physical_blocks_tied_to_global_relation':all(b.global_relation==GLOBAL_PHYSICAL_RELATION for b in blocks),
@@ -139,6 +146,7 @@ def induction_theorem():
     # endpoint are covered. No numerical source enumeration is required.
     return {
       'qualification':QUALIFICATION,'canonical_source':'COMPLETE_BRMM_NORMAL_LIVE_WORD','global_source_relation':GLOBAL_PHYSICAL_RELATION,
+      'map_representation':'pointwise_state_Jacobian_cocycle','finite_error_identity_established':False,
       'source_samples':SOURCE_SAMPLES,'word_transitions':TRANSITIONS,
       'regional_root_set_closed':source['regional_frontend_predecessor_invariant_consumed'],
       'universal_transition_relation_closed':source['regional_universal_Normal_Live_source_relation_closed'],
@@ -168,3 +176,20 @@ def validate(d):
     for k in ('hybrid_H18_A21_word_closed','H18_A21_edge_attached','all_literal_hybrid_branches_attached','storage_search_allowed','ALT_LIVE_PASS','replay_or_finite_source_enumeration_used','independent_sample_source_boxes_used'):
         if d.get(k) is not False:f.append(k+' not false')
     return f
+
+
+def finite_storage_readiness():
+    """Actual limitation of this module's J products, not inferred PASS labels.
+
+    compose_endpoint_lineage composes pointwise state Jacobians and source
+    derivatives. It does not yet compose the finite descriptors proved in
+    finite_measurement_graph or a complete anchored mean-value identity.
+    The existing induction/ancestry report cannot replace that missing bridge.
+    """
+    return {
+        'map_representation': 'pointwise_state_Jacobian_cocycle',
+        'finite_error_identity_for_every_event': False,
+        'physical_reference_forcing_retained': False,
+        'all_coefficient_product_graphs_retained': False,
+        'all_configured_branches_bound_to_finite_graph': False,
+    }

@@ -1,4 +1,5 @@
 import unittest
+from fractions import Fraction as F
 from tools.stability.ou3_alt_contraction import bias_families as B
 
 class BiasFamilyContractTests(unittest.TestCase):
@@ -11,6 +12,17 @@ class BiasFamilyContractTests(unittest.TestCase):
             Q=B.driver_ball_iqc(c);self.assertEqual((len(Q),len(Q[0])),(4,4));self.assertGreater(Q[0][0].lo,0)
             T=B.true_bias_ball_iqc(c);self.assertGreater(T[0][0].lo,0)
         self.assertTrue(next(c for c in cs if c.name=='BIAS2').phi_true.contains(1.0))
+    def test_BIAS2_nonrelaxing_endpoint_is_exact_not_widened_above_one(self):
+        c=next(c for c in B.contracts() if c.name=='BIAS2')
+        self.assertEqual(c.phi_true.hi,1.0)
+        self.assertTrue(c.non_relaxing_limit_admitted)
+        self.assertEqual(c.phi_true.lo,B.BIAS2.build()['phi_true_interval'][0])
+    def test_quadratic_supply_coefficients_enclose_exact_squares(self):
+        for c in B.contracts():
+            for Q,bound in ((B.driver_ball_iqc(c),c.driver_norm_bound),(B.true_bias_ball_iqc(c),c.true_bias_norm_bound)):
+                exact=F.from_float(bound)**2
+                self.assertLessEqual(F.from_float(Q[0][0].lo),exact)
+                self.assertGreaterEqual(F.from_float(Q[0][0].hi),exact)
     def test_build_does_not_import_broken_fresh_live_aggregate(self):
         d=B.build();self.assertEqual(B.validate(d),[]);self.assertTrue(d['three_families_invoked_separately']);self.assertTrue(d['one_persistent_parameter_token_per_family']);self.assertFalse(d['aggregate_fresh_Live_entry_builder_consumed']);self.assertFalse(d['all_bias_families_attached_to_complete_word']);self.assertFalse(d['ALT_LIVE_PASS'])
 

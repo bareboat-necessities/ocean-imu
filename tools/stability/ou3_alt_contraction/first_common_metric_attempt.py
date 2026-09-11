@@ -1,43 +1,37 @@
 #!/usr/bin/env python3
-"""First actual common-joint24 storage certificate attempt for ALT.
+"""Guarded entry to the first ALT common-joint24 storage calculation.
 
-The candidate M is deliberately source-independent: a diagonal normalization
-from the declared deterministic regional error scales, extended by positive
-weights on the two physical bias/reference blocks.  It is not fitted to a
-trajectory, endpoint sample, or individual word.
+The retained candidate calculation is not allowed to run on the current
+Jacobian cocycle. A finite physical descriptor with reference forcing and all
+branch/product graphs is a prerequisite. The assembly flags alone do not
+establish that prerequisite. See docs/ou3-alt-finite-measurement-proof.md.
 
-For each rho candidate, the exact same M is tested against every finite H18/A21
-x BIAS0/1/2 600-step IMU-core endpoint outer using
-``projected_storage_certificate``.  Promotion requires outward interval LDLT on
-ALL six families.  A failed candidate is evidence only about this M / coarse
-outer representation and leaves ALT_LIVE_PASS false.
-
-Asynchronous magnetometer star closure is intentionally separate and remains
-required with the SAME M even if the IMU-core endpoint passes.
+If a valid complete finite master is attached, the same source-independent M
+must be checked for every H18/A21 x BIAS family and asynchronous event branch.
 """
 from __future__ import annotations
 
 import math
 import numpy as np
-import ou3_p4_hard_entry_set as ENTRY
-from tools.stability.ou3_alt_contraction import bias_families as BIAS
-from tools.stability.ou3_alt_contraction import coarse_endpoint_outer_attempt as ENDPOINT
-from tools.stability.ou3_alt_contraction import projected_storage_certificate as CERT
+from tools.stability.ou3_alt_contraction import proof_plan as PLAN
+from tools.stability.ou3_alt_contraction import physical_word as WORD
 
 QUALIFICATION='OU3_ALT_FIRST_COMMON_JOINT24_METRIC_ATTEMPT_V1'
 RHO_CANDIDATES=(0.9,0.99,0.999,0.9999,0.99999)
 
 
 def normalized_diagonal_metric():
+    PLAN.assert_finite_storage_master(WORD.finite_storage_readiness())
+    # Imports remain behind the finite-word guard in build(); a hard-entry
+    # builder and a covariance outer cannot repair a missing finite identity.
+    import ou3_p4_hard_entry_set as ENTRY
+    from tools.stability.ou3_alt_contraction import bias_families as BIAS
     e=ENTRY.build();f=ENTRY.validate(e)
     if f:raise RuntimeError('hard regional scale prerequisite failed: '+repr(f))
     r=e['coordinate_radii']
     scales=[]
     for name in ('attitude_cayley_norm','gyro_bias_norm_rad_s','velocity_norm_mps','position_norm_m','integral_displacement_norm_m_s','latent_acceleration_norm_mps2'):
         scales.extend([float(r[name])]*3)
-    # Use one common neutral/reference scale large enough for every declared
-    # family. These coordinates remain part of coercive M even though the
-    # Finsler strictness test projects their bounded input directions.
     contracts=BIAS.contracts()
     beta=max(c.true_bias_norm_bound for c in contracts)
     eba=max(float(r['accelerometer_bias_error_norm_mps2']), beta+float(r['accelerometer_bias_error_norm_mps2']))
@@ -48,6 +42,9 @@ def normalized_diagonal_metric():
     return M,scales
 
 def build():
+    PLAN.assert_finite_storage_master(WORD.finite_storage_readiness())
+    from tools.stability.ou3_alt_contraction import coarse_endpoint_outer_attempt as ENDPOINT
+    from tools.stability.ou3_alt_contraction import projected_storage_certificate as CERT
     ep=ENDPOINT.build();ef=ENDPOINT.validate(ep)
     if ef:raise RuntimeError('endpoint outer prerequisite failed: '+repr(ef))
     M,scales=normalized_diagonal_metric();attempts=[];winner=None
