@@ -1,8 +1,8 @@
 """Finite attitude/gyro-bias covariance runtime descriptor for ALT.
 
-This follows the shipping with_gyro_bias=true path.  It removes arbitrary
+This follows the shipping with_gyro_bias=true path. It removes arbitrary
 ``F_AA,Q_AA`` at the next composition layer by reconstructing them from angular
-rate, Qbase and explicit branch witnesses.  Trigonometric values and Eigen LDLT
+rate, Qbase and explicit branch witnesses. Trigonometric values and Eigen LDLT
 outcomes are still runtime/source/finite-precision obligations; their presence
 is explicit and cannot be mistaken for a universal certificate.
 """
@@ -91,7 +91,7 @@ def is_isotropic_shipping(Q):
 
 
 def simpson_R(runtime:AngularRuntime,Q):
-    Q=M.mat(Q,3,3); I=M.eye(3); Rm,_=runtime.rot_B(runtime.h/2,None if runtime.small_rate else runtime.half); R1,_=runtime.rot_B(runtime.h,None if runtime.small_rate else runtime.full)
+    Q=M.mat(Q,3,3); Rm,_=runtime.rot_B(runtime.h/2,None if runtime.small_rate else runtime.half); R1,_=runtime.rot_B(runtime.h,None if runtime.small_rate else runtime.full)
     return M.scaled(M.plus(M.plus(Q,M.scaled(M.mm(M.mm(Rm,Q),M.transpose(Rm)),4)),M.mm(M.mm(R1,Q),M.transpose(R1))),runtime.h/6)
 
 
@@ -113,21 +113,14 @@ def structured_Q_pre_hygiene(runtime:AngularRuntime,Qbase):
 
 
 def psd_hygiene_6(S, *, first_ldlt_success, second_ldlt_success=None, eps=EPS_PSD):
-    """Literal finite-value 6x6 project_psd_ou_iii control branches.
-
-    Nonfinite replacement is a deployment-roundoff obligation and therefore not
-    silently modeled here: exact rational S is finite.  LDLT success booleans
-    remain explicit runtime witnesses.
-    """
+    """Literal finite-value 6x6 project_psd_ou_iii control branches."""
     S=M.mat(S,6,6); eps=P.rational(eps)
     if eps <= 0 or not isinstance(first_ldlt_success,bool): raise ValueError('positive eps and literal first LDLT outcome required')
     out=M.scaled(M.plus(S,M.transpose(S)),F(1,2))
     if first_ldlt_success:
         if second_ldlt_success is not None: raise ValueError('unused second LDLT outcome')
         return out
-    lb=[]
-    for i in range(6): lb.append(out[i][i]-sum(abs(out[i][j]) for j in range(6) if j!=i))
-    min_lb=min(lb)
+    min_lb=min(out[i][i]-sum(abs(out[i][j]) for j in range(6) if j!=i) for i in range(6))
     if not (min_lb > eps):
         shift=eps-min_lb
         for i in range(6): out[i][i]+=shift
@@ -152,6 +145,21 @@ def attitude_blocks(runtime:AngularRuntime,Qbase,*,use_exact_Q=True,
     return runtime.F_AA(),q
 
 
+def runtime_paired_prediction(state,segment,*,gyro_body,angular:AngularRuntime,Qbase,
+                              ou,bias,qaxis_unit=None,sigma_aw=None,
+                              independent_qaxis=None,use_exact_Q=True,
+                              first_ldlt_success=True,second_ldlt_success=None):
+    """Highest current prediction entry: no free F_AA/Q_AA/F_LL/Q_BB/phi."""
+    if angular.h != segment.h: raise ValueError('attitude runtime step detached from physical segment duration')
+    from tools.stability.ou3_alt_contraction import finite_ou_runtime_primitives as O
+    FA,QA=attitude_blocks(angular,Qbase,use_exact_Q=use_exact_Q,
+                          first_ldlt_success=first_ldlt_success,
+                          second_ldlt_success=second_ldlt_success)
+    return O.runtime_paired_prediction(state,segment,gyro_body=gyro_body,ou=ou,bias=bias,
+                                       F_AA=FA,Q_AA=QA,qaxis_unit=qaxis_unit,
+                                       sigma_aw=sigma_aw,independent_qaxis=independent_qaxis)
+
+
 def readiness():
     return {
       'F_AA_constant_rate_structure_materialized':True,
@@ -159,6 +167,7 @@ def readiness():
       'fast_Q_AA_branch_materialized':True,
       'isotropic_Qg_branch_predicate_materialized':True,
       'Q_AA_psd_hygiene_control_branches_materialized':True,
+      'free_F_AA_Q_AA_removed_at_runtime_entry':True,
       'trig_values_same_runtime_source_attached':False,
       'Eigen_LDLT_outcomes_finite_precision_attached':False,
       'nonfinite_replacement_finite_precision_attached':False,
