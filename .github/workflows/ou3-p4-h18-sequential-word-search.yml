@@ -3,12 +3,14 @@ name: ou3-p4-h18-sequential-word-search
 on:
   push:
     paths: &paths
+      - 'tools/stability/ou3_interval_linear_algebra.py'
       - 'tools/stability/ou3_p4_h18_sequential_word_search.py'
       - 'tools/stability/ou3_p4_h18_sequential_multiplier_refinement.py'
       - 'tools/stability/ou3_p4_h18_sequential_every_prefix_search.py'
       - 'tools/stability/ou3_p4_h18_sequential_source_fp_schur.py'
       - 'tools/stability/ou3_p4_h18_post_prediction_word.py'
       - 'tools/stability/ou3_p4_h18_source_indexed_prefix_transport.py'
+      - 'tests/validation/test_ou3_interval_spd_ldlt.py'
       - 'tests/validation/test_ou3_p4_h18_sequential_word_search.py'
       - 'tests/validation/test_ou3_p4_h18_sequential_multiplier_refinement.py'
       - 'tests/validation/test_ou3_p4_h18_sequential_every_prefix_search.py'
@@ -28,6 +30,8 @@ jobs:
       - uses: actions/checkout@v6
         with:
           persist-credentials: false
+      - name: Validate interval SPD solver
+        run: python3 -m unittest -v tests.validation.test_ou3_interval_spd_ldlt
       - name: Run sequential word search tests
         run: |
           python3 -m unittest -v tests.validation.test_ou3_p4_h18_sequential_word_search
