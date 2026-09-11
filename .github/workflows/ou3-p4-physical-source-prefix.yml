@@ -6,12 +6,14 @@ on:
       - 'tools/stability/ou3_p4_brmm_physical_prediction_forcing.py'
       - 'tools/stability/ou3_p4_brmm_physical_acceleration_witness_sector.py'
       - 'tools/stability/ou3_p4_brmm_physical_source_prefix_response.py'
+      - 'tools/stability/ou3_p4_h18_binary32_prefix_response.py'
       - 'tools/stability/ou3_p4_acceleration_moment_iqc_sector.py'
       - 'tools/stability/ou3_p4_source_reachable_selector_family.py'
       - 'tools/stability/ou3_p4_joint_brmm_prefix_ldlt.py'
       - 'tests/validation/test_ou3_p4_brmm_physical_prediction_forcing.py'
       - 'tests/validation/test_ou3_p4_brmm_physical_acceleration_witness_sector.py'
       - 'tests/validation/test_ou3_p4_brmm_physical_source_prefix_response.py'
+      - 'tests/validation/test_ou3_p4_h18_binary32_prefix_response.py'
       - 'tests/validation/test_ou3_p4_acceleration_moment_iqc_sector.py'
       - '.github/workflows/ou3-p4-physical-source-prefix.yml'
   workflow_dispatch:
@@ -37,23 +39,27 @@ jobs:
           python3 tools/stability/ou3_p4_acceleration_moment_iqc_sector.py --output /tmp/ou3-physical-source-prefix/moment-sector.json
           python3 tools/stability/ou3_p4_brmm_physical_acceleration_witness_sector.py --output /tmp/ou3-physical-source-prefix/source-sector.json
           python3 tools/stability/ou3_p4_brmm_physical_source_prefix_response.py --output /tmp/ou3-physical-source-prefix/prefix-response.json
+          python3 tools/stability/ou3_p4_h18_binary32_prefix_response.py --output /tmp/ou3-physical-source-prefix/h18-fp-prefix.json
           python3 -m unittest -v \
             tests.validation.test_ou3_p4_brmm_physical_prediction_forcing \
             tests.validation.test_ou3_p4_brmm_physical_acceleration_witness_sector \
             tests.validation.test_ou3_p4_brmm_physical_source_prefix_response \
+            tests.validation.test_ou3_p4_h18_binary32_prefix_response \
             tests.validation.test_ou3_p4_acceleration_moment_iqc_sector
           python3 - <<'PY'
           import json
           root='/tmp/ou3-physical-source-prefix/'
-          f=json.load(open(root+'forcing.json'));m=json.load(open(root+'moment-sector.json'));s=json.load(open(root+'source-sector.json'));p=json.load(open(root+'prefix-response.json'))
-          for name,d in [('forcing',f),('moment',m),('sector',s),('prefix',p)]: assert d['validation_pass'],(name,d['validation_failures'])
+          f=json.load(open(root+'forcing.json'));m=json.load(open(root+'moment-sector.json'));s=json.load(open(root+'source-sector.json'));p=json.load(open(root+'prefix-response.json'));n=json.load(open(root+'h18-fp-prefix.json'))
+          for name,d in [('forcing',f),('moment',m),('sector',s),('prefix',p),('h18-fp',n)]: assert d['validation_pass'],(name,d['validation_failures'])
           assert f['physical_source_forcing_matrix_materialized']
           assert m['physical_source_scale_independent_of_hard_entry_radial']
           assert not m['hard_entry_radial_used_for_physical_source_bound']
           assert s['joint_15D_source_quadratic_outer_relation_closed']
           assert p['H18_physical_source_prefix_response_materializable']
           assert p['A21_all_BIAS0_BIAS1_BIAS2_physical_source_prefix_response_materializable']
-          assert not p['P4_PASS']
+          assert n['H18_every_prefix_binary32_response_materializable']
+          assert not n['deployment_toolchain_qualification_closed_here']
+          assert not p['P4_PASS'] and not n['P4_PASS']
           PY
       - uses: actions/upload-artifact@v6
         if: always()
