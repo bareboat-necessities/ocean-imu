@@ -3,14 +3,14 @@
 
 This diagnostic executes the existing two-sample source-uniform H18 smoke path
 with only the measurement inverse operation replaced by the already-validated
-3x3 PSD-plus-R enclosure.  It does NOT change the canonical Riccati backend and
-cannot promote P4/P5.  Its purpose is falsification: determine what obstruction
-appears immediately after the false singular member of the entrywise innovation
-box is removed.
+3x3 PSD-plus-R enclosure. It cannot promote P4/P5. Its purpose is falsification:
+determine the exact obstruction immediately after the false singular member of
+the entrywise innovation box is removed.
 """
 from __future__ import annotations
 
 import json
+import traceback
 
 from ou3_interval import matrix_add, matrix_identity, matrix_mul, matrix_sub, matrix_transpose
 from ou3_interval_linear_algebra import matrix_inverse_gauss_jordan, matrix_symmetric_hull
@@ -59,6 +59,7 @@ def build() -> dict:
                 "two_sample_execution_completed": True,
                 "failure_type": None,
                 "failure_message": None,
+                "failure_traceback": None,
                 "smoke": smoke,
             }
         except Exception as exc:  # diagnostic records the next fail-closed obstruction
@@ -66,13 +67,14 @@ def build() -> dict:
                 "two_sample_execution_completed": False,
                 "failure_type": type(exc).__name__,
                 "failure_message": str(exc),
+                "failure_traceback": traceback.format_exc(),
                 "smoke": None,
             }
     finally:
         BACKEND.joseph_measurement = original
     return {
-        "qualification": "OU3_P4_INNOVATION_PROVENANCE_CONTINUATION_DIAGNOSTIC_V1",
-        "canonical_backend_changed": False,
+        "qualification": "OU3_P4_INNOVATION_PROVENANCE_CONTINUATION_DIAGNOSTIC_V2",
+        "diagnostic_does_not_mutate_repository_backend": True,
         "shipping_filter_changed": False,
         "rectangular_singular_innovation_admitted": False,
         "same_history_K_dependency_closed_here": False,
@@ -84,8 +86,8 @@ def build() -> dict:
 
 def validate(d: dict) -> list[str]:
     f = []
-    if d.get("canonical_backend_changed") is not False:
-        f.append("diagnostic altered canonical backend")
+    if d.get("diagnostic_does_not_mutate_repository_backend") is not True:
+        f.append("diagnostic mutated canonical backend")
     if d.get("shipping_filter_changed") is not False:
         f.append("diagnostic altered shipping filter")
     if d.get("rectangular_singular_innovation_admitted") is not False:
