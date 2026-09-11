@@ -1,5 +1,10 @@
 # Parallel OU-III whole-word dissipativity proof
 
+> **Continuation:** after PR #517, start a NEW PR from latest `main` and read
+> [`ou3-alt-contraction-handover.md`](ou3-alt-contraction-handover.md) first.
+> The existing P2/P3/P4/P5 route remains independently continuable through
+> [`ou3-brmm-main-handover.md`](ou3-brmm-main-handover.md).
+
 ## Status and coexistence
 
 This is the independent **ALT** proof route. Its current research question is:
