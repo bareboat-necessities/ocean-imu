@@ -53,6 +53,10 @@ jobs:
         run: |
           python3 tools/stability/ou3_alt_contraction/source_uniform_attachment.py \
             --output /tmp/ou3-alt-source-attachment.json
+      - name: Execute paired Live finite-increment product graph without promotion
+        run: |
+          python3 tools/stability/ou3_alt_contraction/paired_live_word.py \
+            --output /tmp/ou3-alt-paired-live-word.json
       - name: Fetch existing coupled source and build unchanged shipping observer
         run: |
           make ensure-sim-data
@@ -119,6 +123,7 @@ jobs:
           name: ou3-alt-experiment-${{ github.run_id }}
           path: |
             /tmp/ou3-alt-source-attachment.json
+            /tmp/ou3-alt-paired-live-word.json
             /tmp/ou3-alt-maps.bin
             /tmp/ou3-alt-cov.bin
             /tmp/ou3-alt-baseline.json
