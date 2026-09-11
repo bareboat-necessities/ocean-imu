@@ -1,9 +1,9 @@
 """Finite default SeaStateAutoTuner candidate/smoothing relation for ALT.
 
 This bridges one already-materialized wave-band summary sample to the staged
-``TuneState`` consumed by ``finite_tuner_commit``.  It follows the deployed
+``TuneState`` consumed by ``finite_tuner_commit``. It follows the deployed
 SpectralMSE/default-slew-zero path and retains every clamp and commit-cadence
-edge.  WPE, adaptive bandpass, variance-EMA and transcendental binary32
+edge. WPE, adaptive bandpass, variance-EMA and transcendental binary32
 calculations remain upstream/runtime witnesses; this module does not admit them
 as arbitrary independent parameters or claim finite-precision closure.
 """
@@ -41,7 +41,6 @@ class CandidateConfig:
         if self.min_tau<=0 or self.max_tau<self.min_tau or self.max_sigma<0: raise ValueError('invalid tau/sigma clamps')
         if self.pseudo_tau_ratio<=0 or self.pseudo_min<=0 or self.pseudo_max<self.pseudo_min: raise ValueError('invalid pseudo cadence')
         if self.max_RS<self.min_RS or self.rs_mse_coeff<=0 or self.accel_noise_density<=0 or self.qeff_pow<=0: raise ValueError('invalid SpectralMSE configuration')
-        # Cached shipping q_eff^(1/14) must belong to this SAME sensor density.
         if self.qeff_pow**14 != 2*self.accel_noise_density: raise ValueError('qeff_pow detached from same accel-noise density')
         if self.adapt_tau_sec<=0 or self.adapt_tau_sea_periods<0 or self.adapt_RS_mult<=0 or self.adapt_RS_slew_log!=0 or self.adapt_every_sec<0:
             raise ValueError('this finite lemma covers deployed slew_log=0 and valid horizons')
@@ -63,6 +62,14 @@ class WaveBandSample:
         if not isinstance(self.variance_ready,bool) or not isinstance(self.still,bool): raise TypeError('literal variance/stillness branches required')
         if self.accel_variance<0 or self.band_noise_sigma<0 or self.still_time<0 or not 0<=self.still_attenuation<=1 or self.sigma_wave_sqrt<0: raise ValueError('invalid wave-band sample witness')
         if not self.still and self.still_attenuation != 1: raise ValueError('non-still branch must not attenuate variance')
+
+
+@dataclass(frozen=True)
+class TargetState:
+    frequency: F
+    variance_wave: F
+    tau_target: F
+    sigma_target: F
 
 
 @dataclass(frozen=True)
@@ -104,21 +111,8 @@ def _horizon_lo(dt):
 def _clamp_horizon(x,dt): return clamp(P.rational(x),_horizon_lo(dt),EMA_HORIZON_MAX)
 
 
-def _spectral_RS(cfg:CandidateConfig,tau,sigma,w:SpectralWitness):
-    TS=clamp(cfg.pseudo_tau_ratio*tau,cfg.pseudo_min,cfg.pseudo_max)
-    if w.sqrt_TS*w.sqrt_TS != TS: raise ValueError('sqrt(T_S) witness detached from SAME tau-derived cadence')
-    c_sigma=cfg.sigma_coeff if cfg.sigma_coeff>0 else F(1)
-    sigma_aB=max(sigma/c_sigma,SIGMA_AB_MIN)
-    u=sigma_aB*tau**4
-    if w.u_pow_6_7**7 != u**6: raise ValueError('6/7 power witness detached from SAME tau/sigma target')
-    return cfg.rs_mse_coeff*cfg.qeff_pow*w.u_pow_6_7/w.sqrt_TS
-
-
-def step(previous:TuneState,sample:WaveBandSample,cfg:CandidateConfig,*,dt,time,last_adapt_time,
-         spectral:SpectralWitness,ema:EmaWitness):
-    """One physical sample: target construction, smoothing, and pending bit."""
-    dt,time,last_adapt_time=map(P.rational,(dt,time,last_adapt_time))
-    if dt<=0 or time<last_adapt_time: raise ValueError('positive dt and monotone tuner time required')
+def targets(sample:WaveBandSample,cfg:CandidateConfig):
+    """Wave-band summary -> f/tau/sigma targets, before SpectralMSE."""
     f=clamp(sample.frequency_hz,cfg.min_freq,cfg.max_freq)
     noise_var=sample.band_noise_sigma**2
     total=max(F(0),sample.accel_variance) if sample.variance_ready else noise_var
@@ -132,27 +126,41 @@ def step(previous:TuneState,sample:WaveBandSample,cfg:CandidateConfig,*,dt,time,
         sigma_t=min(sample.sigma_wave_sqrt*cfg.sigma_coeff,cfg.max_sigma)
     else:
         tau_t=tau_raw; sigma_t=sample.sigma_wave_sqrt*cfg.sigma_coeff
-    rs_raw=_spectral_RS(cfg,tau_t,sigma_t,spectral)
-    rs_t=clamp(rs_raw,cfg.min_RS,cfg.max_RS) if cfg.clamp_enabled else rs_raw
+    return TargetState(f,wave,tau_t,sigma_t)
 
-    sea_time=F(1,2)/f
+
+def spectral_RS(cfg:CandidateConfig,target:TargetState,w:SpectralWitness):
+    TS=clamp(cfg.pseudo_tau_ratio*target.tau_target,cfg.pseudo_min,cfg.pseudo_max)
+    if w.sqrt_TS*w.sqrt_TS != TS: raise ValueError('sqrt(T_S) witness detached from SAME tau-derived cadence')
+    sigma_aB=max(target.sigma_target/cfg.sigma_coeff,SIGMA_AB_MIN)
+    u=sigma_aB*target.tau_target**4
+    if w.u_pow_6_7**7 != u**6: raise ValueError('6/7 power witness detached from SAME tau/sigma target')
+    raw=cfg.rs_mse_coeff*cfg.qeff_pow*w.u_pow_6_7/w.sqrt_TS
+    return clamp(raw,cfg.min_RS,cfg.max_RS) if cfg.clamp_enabled else raw
+
+
+def step(previous:TuneState,sample:WaveBandSample,cfg:CandidateConfig,*,dt,time,last_adapt_time,
+         spectral:SpectralWitness,ema:EmaWitness):
+    """One physical sample: target construction, smoothing, and pending bit."""
+    dt,time,last_adapt_time=map(P.rational,(dt,time,last_adapt_time))
+    if dt<=0 or time<last_adapt_time: raise ValueError('positive dt and monotone tuner time required')
+    target=targets(sample,cfg)
+    rs_t=spectral_RS(cfg,target,spectral)
+    sea_time=F(1,2)/target.frequency
     if cfg.adapt_tau_sea_periods>0:
         safe=clamp(sea_time,EMA_SCALE_MIN,EMA_SCALE_MAX)
         adapt_h=_clamp_horizon(cfg.adapt_tau_sea_periods*safe,dt)
     else: adapt_h=cfg.adapt_tau_sec
-    # exp(-dt/horizon) remains a deployed transcendental witness; its use is
-    # shared by tau/sigma and cannot be replaced by an independent alpha.
     a=1-ema.decay_tau_sigma
-    tune_tau=previous.tau_applied+a*(tau_t-previous.tau_applied)
-    tune_sigma=previous.sigma_applied+a*(sigma_t-previous.sigma_applied)
-
-    safe_tau=clamp(tau_t,EMA_SCALE_MIN,EMA_SCALE_MAX)
-    RS_h=_clamp_horizon(cfg.adapt_RS_mult*safe_tau,dt)  # deployed slew_log=0
+    tune_tau=previous.tau_applied+a*(target.tau_target-previous.tau_applied)
+    tune_sigma=previous.sigma_applied+a*(target.sigma_target-previous.sigma_applied)
+    safe_tau=clamp(target.tau_target,EMA_SCALE_MIN,EMA_SCALE_MAX)
+    RS_h=_clamp_horizon(cfg.adapt_RS_mult*safe_tau,dt)
     aRS=1-ema.decay_RS
     tune_RS=previous.RS_applied+aRS*(rs_t-previous.RS_applied)
     nxt=TuneState(tune_tau,tune_sigma,tune_RS)
     fire=(time-last_adapt_time)>cfg.adapt_every_sec
-    return CandidateResult(f,wave,tau_t,sigma_t,rs_t,nxt,fire,time if fire else last_adapt_time,adapt_h,RS_h)
+    return CandidateResult(target.frequency,target.variance_wave,target.tau_target,target.sigma_target,rs_t,nxt,fire,time if fire else last_adapt_time,adapt_h,RS_h)
 
 
 def readiness():
