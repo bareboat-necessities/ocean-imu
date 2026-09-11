@@ -15,11 +15,13 @@ For a 3x3 innovation the adjugate formula then provides an outward inverse
 box without admitting singular matrices that exist only in the rectangular
 entrywise hull.  Hadamard's inequality supplies det(S) <= prod_i S_ii.
 
-The cofactor numerators are still evaluated outwardly from the ordinary S box;
-only the determinant denominator uses the retained PSD-plus-R provenance.
-Thus this is deliberately conservative but mathematically valid.  It is a
-bridge diagnostic, not permission to treat S, K, P, H, or R independently in
-the final same-history proof.
+The ordinary validated interval inverse remains the preferred path whenever it
+closes: this preserves its tighter dependency information.  PSD-plus-R is used
+only after that path rejects an entrywise hull because a pivot contains zero.
+The fallback cofactor numerators are still evaluated outwardly from the ordinary
+S box; only the determinant denominator uses retained covariance provenance.
+This is deliberately conservative and does not close the final same-history
+S/K/P/H/R dependency.
 """
 from __future__ import annotations
 
@@ -69,17 +71,30 @@ def innovation_inverse_psd_plus_R_3x3(
     S: Sequence[Sequence[Interval]],
     R: Sequence[Sequence[Interval]],
 ) -> tuple[IntervalMatrix, dict]:
-    """Enclose S^-1 for the retained family S=Q+R, Q PSD, R uniformly SPD.
+    """Enclose S^-1 for S=Q+R, preferring the tighter generic proof.
 
-    `S` remains the ordinary entrywise hull.  The caller must establish the
-    structural identity Q=H P H^T with actual P PSD on the same history.  This
-    routine contributes only the consequent determinant lower bound.
+    If the ordinary validated inverse rejects the rectangular hull, the caller
+    must establish Q=H P H^T with actual P PSD on the same history.  Only then
+    is the determinant lower bound from S>=R consumed by the fallback.
     """
     if _shape(S) != (3, 3) or _shape(R) != (3, 3):
         raise ValueError("3x3 innovation and R required")
     S = matrix_symmetric_hull(S)
-    det_lo, r_pivots = _uniform_R_det_lower(R)
+    try:
+        inv = matrix_inverse_gauss_jordan(S)
+        return inv, {
+            "inverse_mode": "GENERIC_VALIDATED_INTERVAL",
+            "generic_validated_inverse_succeeded": True,
+            "PSD_plus_R_fallback_used": False,
+            "singular_entrywise_hull_members_are_not_admitted": True,
+            "same_history_K_dependency_closed_here": False,
+            "P4_PASS": False,
+            "P5_MAY_START": False,
+        }
+    except IntervalPivotError as exc:
+        generic_failure = str(exc)
 
+    det_lo, r_pivots = _uniform_R_det_lower(R)
     diag_hi = [S[i][i].hi for i in range(3)]
     if any((not math.isfinite(x)) or x <= 0.0 for x in diag_hi):
         raise ValueError("S diagonal upper bounds must be finite positive")
@@ -112,6 +127,10 @@ def innovation_inverse_psd_plus_R_3x3(
     ]
     inv = [[adj[i][j] / det for j in range(3)] for i in range(3)]
     return matrix_symmetric_hull(inv), {
+        "inverse_mode": "PSD_PLUS_R_3X3_FALLBACK",
+        "generic_validated_inverse_succeeded": False,
+        "generic_failure": generic_failure,
+        "PSD_plus_R_fallback_used": True,
         "retained_identity": "S=H P H^T+R",
         "required_P_property": "P>=0 on the same physical/source history",
         "derived_Q_property": "H P H^T>=0",
@@ -181,6 +200,7 @@ def validate(d: dict) -> list[str]:
     if not d.get("provenance_aware_inverse_finite"): f.append("provenance-aware inverse was not finite")
     if not d.get("point_regression_inverses_contained"): f.append("point inverse escaped enclosure")
     p=d.get("proof",{})
+    if p.get("PSD_plus_R_fallback_used") is not True: f.append("pathological hull did not consume PSD-plus-R fallback")
     if p.get("uniform_R_SPD_validated") is not True: f.append("R SPD validation missing")
     if p.get("singular_entrywise_hull_members_are_not_admitted") is not True: f.append("singular hull classification missing")
     if p.get("same_history_K_dependency_closed_here") is not False: f.append("diagnostic overclaims K dependency closure")
