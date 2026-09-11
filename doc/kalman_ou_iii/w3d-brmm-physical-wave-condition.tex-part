@@ -86,6 +86,13 @@ that particular realization.  Any other deterministic representation may be
 used if it proves the same all-time bounded-wave condition and preserves the
 same-history $p_m,v_m,a_m$ and centered-primitive ancestry.
 
+The executable proof tooling currently implements the spectral/amplitude and
+shaping-state certificate routes.  Accordingly, later phrases such as
+``generator certificate'', ``generator condition'', or ``generator state'' in
+implementation-oriented proof text refer only to the internal representation
+used by one of those certificate routes.  They do \emph{not} redefine the
+physical COMPLETE-BRMM admissibility condition stated in this section.
+
 The historical PR~\#515 witness $p_m(t)=d\ne0$, $v_m=a_m=0$ was admitted only
 because the former finite-window source omitted this physical condition.  It
 satisfies local displacement and short-window increment caps, but
