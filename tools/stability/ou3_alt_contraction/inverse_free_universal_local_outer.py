@@ -1,17 +1,16 @@
 #!/usr/bin/env python3
 """Universal physical joint24 local-event outer using inverse-free gain bounds.
 
-This supersedes the earlier experimental covariance-box local outer.  Actual
+This supersedes the earlier experimental covariance-box local outer. Actual
 same-cell Kalman gains are enclosed by ``inverse_free_gain_outer`` from a proved
 event-local covariance norm and S>=R; no endpoint covariance is reused locally.
+The state domain comes from ALT's conditional regional Normal-Live binding and
+does not execute or assume startup reachability.
 
-For each H/A x BIAS family this module emits:
-  * prediction homogeneous outer;
-  * finite physical S event outer using qualified D_S=1100 m*s;
-  * accelerometer physical Joseph/reset outer;
-  * magnetometer physical Joseph/reset outer;
-  * two finite IMU-core patterns: pred->acc and pred->S->acc.
-The magnetometer map remains separate for arbitrary-finite star composition.
+For each H/A x BIAS family this module emits prediction, physical S,
+accelerometer, and magnetometer homogeneous outers. The two IMU-core patterns
+are pred->acc and pred->S->acc. Magnetometer remains a separate event outer for
+arbitrary-finite star composition.
 """
 from __future__ import annotations
 import json,math
@@ -19,17 +18,17 @@ from pathlib import Path
 from ou3_interval import Interval,matrix_identity,matrix_mul
 import ou3_p4_complete_brmm_differential_prediction as PRED
 import ou3_p4_complete_brmm_differential_events as EVENTS
-import ou3_p4_hard_entry_set as ENTRY
 import ou3_brmm_complete_window_execution_kernel as KERNEL
 import ou3_brmm_tuner_scheduler_step as TUNER
 from tools.stability.ou3_alt_contraction import joint24_events as J24
 from tools.stability.ou3_alt_contraction import bias_families as BIAS
 from tools.stability.ou3_alt_contraction import physical_numeric_bounds as PHYS
 from tools.stability.ou3_alt_contraction import inverse_free_gain_outer as GAIN
+from tools.stability.ou3_alt_contraction import regional_error_domain as REGION
 
 REPO=Path(__file__).resolve().parents[3]
 DOMAIN=REPO/'tools/stability/ou3_proof_operating_domain.json'
-QUALIFICATION='OU3_ALT_INVERSE_FREE_UNIVERSAL_LOCAL_PHYSICAL_OUTER_V1'
+QUALIFICATION='OU3_ALT_INVERSE_FREE_UNIVERSAL_LOCAL_PHYSICAL_OUTER_V2'
 def I(x):return Interval.point(float(x))
 def B(x):x=float(x);return Interval.outward_bounds(-x,x)
 def _zero(r,c):return [[I(0) for _ in range(c)] for _ in range(r)]
@@ -73,10 +72,10 @@ def _a_event(kind,state,K,beta,radius,*,f=None,Rhat=None,m=None,Sphys=None):
     for i in range(3):row=[I(0) for _ in range(total)];row[21+i]=I(1);J.append(row)
     return [r[:24] for r in J]
 def build():
-    gain=GAIN.build();gf=GAIN.validate(gain);phys=PHYS.build();pf=PHYS.validate(phys);entry=ENTRY.build();ef=ENTRY.validate(entry)
-    if gf or pf or ef:raise RuntimeError(f'local outer prerequisites failed gain={gf} phys={pf} entry={ef}')
+    gain=GAIN.build();gf=GAIN.validate(gain);phys=PHYS.build();pf=PHYS.validate(phys);region=REGION.build();rf=REGION.validate(region)
+    if gf or pf or rf:raise RuntimeError(f'local outer prerequisites failed gain={gf} phys={pf} region={rf}')
     d=json.loads(DOMAIN.read_text())['normal_live'];kc=KERNEL._process_constants(DOMAIN);tc=TUNER.constants();tau=Interval.outward_bounds(tc.tau_min,tc.tau_max);omega=[B(math.radians(float(phys['body_rate_norm_upper_deg_s'])))]*3
-    f=[B(float(phys['specific_force_norm_upper_mps2']))]*3;Rhat=[[Interval(-1.0,1.0) for _ in range(3)] for _ in range(3)];m=[B(float(d['magnetic_vector_norm_upper_uT']))]*3;Sphys=[B(float(phys['centered_S_norm_upper_m_s']))]*3;radii=entry['coordinate_radii'];radius=float(d['active_accelerometer_bias_projection_limit_mps2']);reports={}
+    f=[B(float(phys['specific_force_norm_upper_mps2']))]*3;Rhat=[[Interval(-1.0,1.0) for _ in range(3)] for _ in range(3)];m=[B(float(d['magnetic_vector_norm_upper_uT']))]*3;Sphys=[B(float(phys['centered_S_norm_upper_m_s']))]*3;radii=region['coordinate_radii'];radius=float(d['active_accelerometer_bias_projection_limit_mps2']);reports={}
     for mode in ('H','A'):
         state=_state_box(mode,radii);reports[mode]={}
         for contract in BIAS.contracts():
@@ -89,20 +88,19 @@ def build():
                 attempt('S_zero',lambda:_h_event('S_zero',state,Krow['S_zero']['K'],held,beta,Sphys=Sphys));attempt('accelerometer',lambda:_h_event('accelerometer',state,Krow['accelerometer']['K'],held,beta,f=f,Rhat=Rhat));attempt('magnetometer',lambda:_h_event('magnetometer',state,Krow['magnetometer']['K'],held,beta,m=m))
             else:
                 attempt('S_zero',lambda:_a_event('S_zero',state,Krow['S_zero']['K'],beta,radius,Sphys=Sphys));attempt('accelerometer',lambda:_a_event('accelerometer',state,Krow['accelerometer']['K'],beta,radius,f=f,Rhat=Rhat));attempt('magnetometer',lambda:_a_event('magnetometer',state,Krow['magnetometer']['K'],beta,radius,m=m))
-            core=all(row.get(k+'_finite') for k in ('prediction','S_zero','accelerometer'));mag=bool(row.get('magnetometer_finite'))
-            row['imu_core_family']=[]
+            core=all(row.get(k+'_finite') for k in ('prediction','S_zero','accelerometer'));mag=bool(row.get('magnetometer_finite'));row['imu_core_family']=[]
             if core:
                 P=row['maps']['prediction'];S=row['maps']['S_zero'];A=row['maps']['accelerometer'];Id=matrix_identity(24);row['imu_core_family']=[_compose(P,Id,A),_compose(P,S,A)]
-            row['imu_core_family_finite']=core and all(_finite(x) for x in row['imu_core_family']);row['magnetometer_event_outer_finite']=mag
-            reports[mode][contract.name]=row
+            row['imu_core_family_finite']=core and all(_finite(x) for x in row['imu_core_family']);row['magnetometer_event_outer_finite']=mag;reports[mode][contract.name]=row
     core_closed=all(r['imu_core_family_finite'] for rows in reports.values() for r in rows.values());mag_closed=all(r['magnetometer_event_outer_finite'] for rows in reports.values() for r in rows.values())
-    return {'qualification':QUALIFICATION,'canonical_source':'COMPLETE_BRMM_NORMAL_LIVE_WORD','inverse_free_gain_outer_consumed':True,'endpoint_Pbar_used_for_local_gain':False,'independent_covariance_box_used':False,'physical_D_S_bound_m_s':phys['centered_S_norm_upper_m_s'],'reports':reports,'all_IMU_core_local_outers_finite':core_closed,'all_single_magnetometer_local_outers_finite':mag_closed,'local_physical_outer_materialized':core_closed and mag_closed,'magnetometer_count_assumption_used':False,'ALT_LIVE_PASS':False,'next_obligation':'induct IMU-core family over 600 steps; common-M certificate must also make every separate magnetometer event outer nonexpansive so arbitrary finite async tuples close'}
+    return {'qualification':QUALIFICATION,'canonical_source':'COMPLETE_BRMM_NORMAL_LIVE_WORD','inverse_free_gain_outer_consumed':True,'regional_error_domain_consumed_without_startup':True,'fresh_startup_reachability_consumed':False,'endpoint_Pbar_used_for_local_gain':False,'independent_covariance_box_used':False,'physical_D_S_bound_m_s':phys['centered_S_norm_upper_m_s'],'reports':reports,'all_IMU_core_local_outers_finite':core_closed,'all_single_magnetometer_local_outers_finite':mag_closed,'local_physical_outer_materialized':core_closed and mag_closed,'magnetometer_count_assumption_used':False,'ALT_LIVE_PASS':False,'next_obligation':'induct IMU-core family over 600 steps; common-M certificate must also make every separate magnetometer event outer nonexpansive so arbitrary finite async tuples close'}
 def summary(d):return {m:{f:{'failures':r['failures'],'imu_core':r['imu_core_family_finite'],'mag':r['magnetometer_event_outer_finite']} for f,r in rows.items()} for m,rows in d['reports'].items()}
 def validate(d):
     f=[]
     if d.get('qualification')!=QUALIFICATION:f.append('qualification mismatch')
-    if d.get('inverse_free_gain_outer_consumed') is not True:f.append('inverse-free gain not consumed')
-    for k in ('endpoint_Pbar_used_for_local_gain','independent_covariance_box_used','magnetometer_count_assumption_used','ALT_LIVE_PASS'):
+    for k in ('inverse_free_gain_outer_consumed','regional_error_domain_consumed_without_startup'):
+        if d.get(k) is not True:f.append(k+' not true')
+    for k in ('fresh_startup_reachability_consumed','endpoint_Pbar_used_for_local_gain','independent_covariance_box_used','magnetometer_count_assumption_used','ALT_LIVE_PASS'):
         if d.get(k) is not False:f.append(k+' not false')
     if float(d.get('physical_D_S_bound_m_s',0))!=1100.0:f.append('physical D_S drifted')
     return f
