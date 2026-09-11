@@ -11,95 +11,72 @@ finite-precision certificates.
 
 For one shipping step `h`, post-clamp time constant `tau`, and scalar decay
 `alpha=exp(-h/tau)`, `finite_ou_runtime_primitives.py` generates the same mean
-coefficients used by shipping:
-
-- `phi_va=tau(1-alpha)`;
-- the literal `|h/tau|<0.01` polynomial branch for `phi_pa,phi_Sa`;
-- otherwise the closed form using `expm1(-h/tau)=alpha-1`.
-
-That tuple feeds both the finite mean recurrence and `F_LL`; a caller at the
-runtime entry cannot provide a detached second set.
+coefficients used by shipping: `phi_va=tau(1-alpha)`, the literal
+`|h/tau|<0.01` polynomial branch for `phi_pa,phi_Sa`, or the closed form using
+`expm1(-h/tau)=alpha-1`. The same tuple feeds the finite mean recurrence and
+`F_LL`; the runtime entry cannot provide a detached second set.
 
 For active BA, one `(tau_b,phi_b,Q_bacc)` root supplies both the mean factor and
-
-`Q_BB = Q_bacc * tau_b/2 * (1-phi_b^2)`,
-
-which is exactly the shipping `-tau_b/2*expm1(-2h/tau_b)` relation when
+`Q_BB=Q_bacc*tau_b/2*(1-phi_b^2)`, exactly the shipping relation when
 `phi_b=exp(-h/tau_b)`. Both BA cross-covariance blocks use the same `phi_b`.
 H18 remains the exact held branch `phi_b=1,Q_BB=0`.
+
+The held mean/error recurrence is important: holding `b_a_hat` does NOT mean
+`e_ba` receives the physical driver alone. Since `e_ba=beta_true-b_a_hat`,
+
+`e_ba+ = e_ba + (phi_true-1) beta_true + u_b`.
+
+A regression in this PR initially asserted `e_ba+=e_ba+u_b`; focused CI caught
+that test error. The finite predictor was already using the correct recurrence.
+The corrected regression now checks invariance of `b_a_hat=beta_true-e_ba`.
 
 ## Attitude/gyro-bias covariance runtime
 
 `finite_attitude_runtime.py` materializes the shipping constant-rate attitude
-covariance primitives for `with_gyro_bias=true`:
-
-- the small-rate and trigonometric `R(w,t),B(w,t)` branches;
-- `F_AA=[[R,B],[0,I]]`;
-- structured `Q_AA` with isotropic-Qg fast integral or anisotropic Simpson
-  `R Q R'`, Simpson `B Qbg B'`, and the closed `integral_B` cross term;
-- the optional fast `Qbase*h` branch;
-- the finite-valued 6x6 PSD-hygiene control branches.
-
-Trig values and Eigen branch outcomes are explicit witnesses. They are not
-silently asserted to be the deployed binary values.
+covariance primitives for `with_gyro_bias=true`: the small-rate and trigonometric
+`R(w,t),B(w,t)` branches; `F_AA=[[R,B],[0,I]]`; structured `Q_AA` with isotropic
+or Simpson gyro-noise integration, Simpson bias-noise integration and the closed
+`integral_B` cross term; the optional fast `Qbase*h` branch; and finite-valued
+6x6 PSD-hygiene control. Trig values and Eigen branch outcomes remain explicit
+runtime witnesses, not deployment certificates.
 
 ## Integrated-OU Qaxis runtime
 
 `finite_qaxis_runtime.py` materializes the literal
 `IntegratedOUChain<T,3>::process_covariance` relation used by
-`QdAxis4x1_analytic`:
+`QdAxis4x1_analytic`: small-`x` polynomial and general alpha-dependent formulas,
+the nested 3x3 v/p/a marginal regularization, S cross/marginal terms, and final
+4x4 `regularize_psd_if_needed` branch.
 
-- the small-`x` polynomial formulas;
-- the general alpha-dependent formulas;
-- the nested 3x3 v/p/a marginal regularization;
-- S cross/marginal formulas;
-- the final 4x4 `regularize_psd_if_needed` branch.
-
-`finite_prediction_runtime.py` composes this with the attitude and OU/BA
-runtime descriptors. Its highest prediction entry accepts no precomputed
-shipping `F_AA,Q_AA,F_LL,Q_LL,Q_BB` or free decay factor. It also requires the
-attitude covariance angular rate to equal the SAME bias-corrected gyro used by
+`finite_prediction_runtime.py` composes this with attitude and OU/BA runtime
+descriptors. Its highest prediction entry accepts no precomputed shipping
+`F_AA,Q_AA,F_LL,Q_LL,Q_BB` or free decay factor. It additionally enforces that
+the attitude covariance angular rate equals the SAME bias-corrected gyro used by
 the nominal quaternion prediction.
 
 ## Post-prediction and measurement control
 
-`finite_post_prediction.py` materializes the literal post-prediction order:
+`finite_post_prediction.py` materializes optional pending `a_w` covariance
+positive-part synchronization, covariance symmetry hygiene, periodic S scheduler
+elapsed credit, and due S=0 service. No-pending, eigensolver-failure and success
+branches are explicit; not-due S is an identity suffix.
 
-1. optional pending `a_w` covariance synchronization by adding the positive
-   spectral part of `target-P_aw` only to the `a_w` block;
-2. covariance symmetry hygiene;
-3. periodic S scheduler elapsed-credit update;
-4. if due, S=0 service through the shipping safe-LDLT runtime branch.
-
-The floor covers no-pending, eigensolver-failure and successful positive-part
-branches. The scheduler covers due/not-due and overshoot remainder. A not-due S
-edge is an identity suffix.
-
-`finite_measurement_runtime.py` wraps the existing finite measurement algebra in
-shipping's `safe_ldlt3_` control:
-
-- first LDLT success: no innovation shift;
-- first failure: exactly one bump
-  `max(machine_epsilon,1e-6*(noise_scale+1))` and retry;
-- second failure: reject without state/covariance update.
-
-On an accepted retry the same shifted innovation is used by the inverse-free
-gain and Joseph covariance relation.
+`finite_measurement_runtime.py` wraps the finite measurement algebra in shipping
+`safe_ldlt3_`: first success, one bump
+`max(machine_epsilon,1e-6*(noise_scale+1))` and retry, or second failure with no
+state/covariance update. On an accepted retry the same shifted innovation is used
+by gain and Joseph arithmetic.
 
 ## Remaining source/runtime obligations
 
 The finite formulas above remove detached transition/process matrices but do not
-yet supply the universal runtime history. Remaining work includes:
-
-- bind exp/trig evaluations, matrix factorization/eigensolver outcomes and
-  machine epsilon to rigorous deployment arithmetic;
-- bind `tau,Sigma_aw,tau_b,Q_bacc`, a_w floor target, scheduler period,
-  `R_acc,R_mag,R_S` and all relevant guards to the SAME frontend/tuner state;
-- materialize WPE, adaptive bandpass, sigma statistic, candidate/active tuner
-  state and staged commits;
-- materialize asynchronous magnetometer continuation, all measurement/nonfinite
-  rejection branches and every H18/A21 hybrid edge/prefix;
-- attach corrected COMPLETE-BRMM and BIAS0/1/2 admission to that graph.
+yet supply the universal runtime history. Remaining work includes binding
+exp/trig evaluations and numerical factorization/eigensolver outcomes; binding
+`tau,Sigma_aw,tau_b,Q_bacc`, a_w floor target, scheduler period,
+`R_acc,R_mag,R_S` and guards to one frontend/tuner predecessor; materializing
+WPE/bandpass/sigma/tuner candidate/active staged commits, asynchronous
+magnetometer continuation, all reject/nonfinite branches and H18/A21 hybrid
+edges; and attaching corrected COMPLETE-BRMM plus BIAS0/1/2 admission.
 
 Until that complete source-uniform finite word is closed, storage feasibility,
 rho, retained basin, startup capture and all ALT final gates remain fail-closed.
