@@ -43,6 +43,39 @@ power spectrum, significant wave height, a finite replay, or independent
 pointwise bounds on $p_m,v_m,a_m$.  A zero-mean statement alone is insufficient
 because it does not prevent arbitrarily long deterministic excursions.
 
+\paragraph{Numerical COMPLETE-BRMM proof envelope.}
+For the current deterministic theorem scope, the $H_s=8.5\,\mathrm m$ reference
+sea and its existing hard physical reference limits are used as engineering
+anchors and padded \emph{before} attempting P4 closure.  The padding is therefore
+part of the declared theorem domain, not a quantity tuned until a certificate
+passes.  We use a 10\% amplitude/kinematic margin and widen the reference
+$[0.02,0.8]\,\mathrm{Hz}$ harmonic support by 10\% on both edges.  After simple
+outward rounding, COMPLETE-BRMM requires
+\[
+ \begin{gathered}
+ H_s\le9.35\,\mathrm m,\qquad
+ \|p_m\|\le8.10\,\mathrm m,\qquad
+ \|v_m\|\le5.50\,\mathrm{m/s},\\
+ \|a_m\|\le8.80\,\mathrm{m/s^2},\qquad
+ \|\omega_b\|\le35^\circ/\mathrm s,\qquad
+ f\in[0.018,0.88]\,\mathrm{Hz},\\
+ D_S\le1100\,\mathrm{m\,s}.
+ \end{gathered}
+ \label{eq:brmm-padded-physical-envelope}
+\]
+The acceleration padding deliberately remains below standard gravity, leaving
+$\|a_m-g\|\ge 9.80665-8.80=1.00665\,\mathrm{m/s^2}$ for the gravity-direction
+part of the proof.  The centered-primitive bound is obtained outwardly from the
+finite-harmonic 28-ft reference bound $D_{S,8.5}\le863.7794\,\mathrm{m\,s}$ by
+applying the 10\% amplitude margin and the 10\% downward frequency-edge margin:
+\[
+ D_S\le D_{S,8.5}\frac{1.10}{0.90}<1056\,\mathrm{m\,s},
+\]
+then rounding to $1100\,\mathrm{m\,s}$.  No $300\,\mathrm{m\,s}$ proof radius
+enters this derivation.  Histories outside Eq.~\eqref{eq:brmm-padded-physical-envelope}
+are simply outside the present theorem scope; this is a regional physical
+claim, not a claim covering all conceivable marine motion.
+
 At the actual Live time $t_L$, the one-time centered coordinate is
 \[
  S_L(t)=\int_{t_L}^{t}p_m(s)\,ds,
