@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - "tools/stability/ou3_p4_source_indexed_phi_rebase.py"
+      - "tools/stability/ou3_p4_structural_prefix_transport.py"
       - "tools/stability/ou3_p4_complete_brmm_measurement_linearizing_aw_coordinate.py"
       - "tools/stability/ou3_p4_complete_word_endpoint_transport.py"
       - "tools/stability/ou3_p4_complete_word_prefix_transport.py"
