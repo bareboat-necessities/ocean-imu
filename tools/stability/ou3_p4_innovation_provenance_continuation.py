@@ -74,6 +74,7 @@ def build() -> dict:
         BACKEND.joseph_measurement = original
     return {
         "qualification": "OU3_P4_INNOVATION_PROVENANCE_CONTINUATION_DIAGNOSTIC_V2",
+        "canonical_backend_changed": False,
         "diagnostic_does_not_mutate_repository_backend": True,
         "shipping_filter_changed": False,
         "rectangular_singular_innovation_admitted": False,
@@ -86,6 +87,8 @@ def build() -> dict:
 
 def validate(d: dict) -> list[str]:
     f = []
+    if d.get("canonical_backend_changed") is not False:
+        f.append("diagnostic altered canonical backend")
     if d.get("diagnostic_does_not_mutate_repository_backend") is not True:
         f.append("diagnostic mutated canonical backend")
     if d.get("shipping_filter_changed") is not False:
