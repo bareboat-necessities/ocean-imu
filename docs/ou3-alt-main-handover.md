@@ -10,11 +10,12 @@ Read it with `AGENTS.md`, the normative
 section of `ou3-proof-research-state.md`.
 
 The finite physical/measurement algebra is now composed through explicit
-prediction-runtime descriptors for attitude F/Q, integrated-OU Qaxis, BA decay,
-full covariance, pending a_w covariance synchronization, scheduler service and
-safe-LDLT accept/retry/reject branches. The highest prediction entry accepts no
-precomputed shipping transition/process matrices and requires one bias-corrected
-gyro for nominal and covariance attitude propagation.
+prediction-runtime descriptors for attitude F/Q, the literal integrated-OU
+Qaxis formulas and nested PSD hygiene, BA decay, full covariance, pending a_w
+covariance synchronization, scheduler service and safe-LDLT accept/retry/reject
+branches. The highest prediction entry accepts no precomputed shipping
+transition/process matrices and requires one bias-corrected gyro for nominal and
+covariance attitude propagation.
 
 The remaining decisive gap is same-history attachment of these runtime witnesses
 to the actual frontend/tuner/hybrid state over every admitted COMPLETE-BRMM and
