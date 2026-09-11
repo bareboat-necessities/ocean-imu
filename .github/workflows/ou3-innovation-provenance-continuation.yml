@@ -1,0 +1,50 @@
+name: ou3-innovation-provenance-continuation
+
+on:
+  pull_request:
+    paths:
+      - 'tools/stability/ou3_p4_innovation_provenance_continuation.py'
+      - 'tools/stability/ou3_innovation_psd_plus_R_inverse.py'
+      - 'tools/stability/ou3_brmm_full_word_riccati_backend.py'
+      - 'tools/stability/ou3_brmm_complete_window_execution_kernel.py'
+      - 'tools/stability/ou3_p4_source_uniform_event_lineage_sequence.py'
+      - '.github/workflows/ou3-innovation-provenance-continuation.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ou3-innovation-provenance-continuation-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  diagnostic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Compile diagnostic modules
+        run: python3 -m compileall -q tools/stability
+      - name: Continue exact two-sample H18 path with PSD-plus-R innovation inverse
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/ou3-innovation-provenance
+          python3 tools/stability/ou3_p4_innovation_provenance_continuation.py | tee /tmp/ou3-innovation-provenance/result.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/ou3-innovation-provenance/result.json'))
+          assert d['validation_pass']
+          assert not d['canonical_backend_changed']
+          assert not d['shipping_filter_changed']
+          assert not d['same_history_K_dependency_closed_here']
+          assert not d['P4_PASS'] and not d['P5_MAY_START']
+          PY
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: ou3-innovation-provenance-continuation
+          path: /tmp/ou3-innovation-provenance/
+          retention-days: 7
