@@ -1,0 +1,58 @@
+name: ou3-p4-post-prediction-storage
+
+on:
+  pull_request:
+    paths:
+      - 'tools/stability/ou3_p4_information_storage_coercivity.py'
+      - 'tools/stability/ou3_p4_post_prediction_linear_storage_contraction.py'
+      - 'tools/stability/ou3_p4_h18_post_prediction_word.py'
+      - 'tools/stability/ou3_p4_h18_post_prediction_endpoint_ldlt_diagnostic.py'
+      - 'tests/validation/test_ou3_p4_information_storage_coercivity.py'
+      - 'tests/validation/test_ou3_p4_h18_post_prediction_word.py'
+      - '.github/workflows/ou3-p4-post-prediction-storage.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ou3-p4-post-prediction-storage-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Validate storage and post-prediction H18 word
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/ou3-post-prediction
+          python3 tools/stability/ou3_p4_information_storage_coercivity.py --output /tmp/ou3-post-prediction/coercivity.json
+          python3 tools/stability/ou3_p4_post_prediction_linear_storage_contraction.py --output /tmp/ou3-post-prediction/linear.json
+          python3 tools/stability/ou3_p4_h18_post_prediction_word.py --output /tmp/ou3-post-prediction/h18-word.json
+          python3 tools/stability/ou3_p4_h18_post_prediction_endpoint_ldlt_diagnostic.py --output /tmp/ou3-post-prediction/h18-endpoint.json
+          python3 -m unittest -v tests.validation.test_ou3_p4_information_storage_coercivity tests.validation.test_ou3_p4_h18_post_prediction_word
+          python3 - <<'PY'
+          import json
+          root='/tmp/ou3-post-prediction/'
+          c=json.load(open(root+'coercivity.json'));l=json.load(open(root+'linear.json'));w=json.load(open(root+'h18-word.json'));e=json.load(open(root+'h18-endpoint.json'))
+          for name,d in [('coercivity',c),('linear',l),('word',w),('endpoint',e)]: assert d['validation_pass'],(name,d.get('validation_failures'))
+          assert c['uniform_word_boundary_storage_coercivity_closed'] and c['consecutive_word_metric_comparison_mu']==1.0
+          assert l['linear_consecutive_word_storage_contraction_closed']
+          assert l['rho0_exact_numerator']==10**18-1 and l['rho0_exact_denominator']==10**18
+          assert w['H18_post_prediction_word_transport_closed'] and w['metric_comparison_mu']==1.0
+          assert not e['production_endpoint_LDLT_promoted_here']
+          assert not e['P4_PASS'] and not e['P5_MAY_START']
+          print('H18_POST_PREDICTION_HOMOGENEOUS_ENDPOINT_CLOSE',e['homogeneous_endpoint_LDLT_closes_on_smoke'])
+          print('H18_POST_PREDICTION_ENDPOINT_RESULT',e['endpoint_result'])
+          PY
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: ou3-p4-post-prediction-storage
+          path: /tmp/ou3-post-prediction/
+          retention-days: 7
