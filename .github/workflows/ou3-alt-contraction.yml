@@ -120,3 +120,57 @@ jobs:
             /tmp/ou3-alt-ledger-*.csv
           if-no-files-found: warn
           retention-days: 14
+
+  actual-finite-word:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Install actual-word probe dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libeigen3-dev python3-numpy python3-scipy python3-mpmath
+      - name: Test observation-only source attachment
+        run: python3 -m unittest discover -s tests/ou3_alt_contraction -v
+      - name: Execute all three analytic bias histories through shipping startup
+        run: |
+          python3 tools/stability/ou3_alt_contraction/shipping_probe.py \
+            --output /tmp/ou3-alt-actual --family 0
+          python3 tools/stability/ou3_alt_contraction/shipping_probe.py \
+            --output /tmp/ou3-alt-actual --family 1 --skip-build
+          python3 tools/stability/ou3_alt_contraction/shipping_probe.py \
+            --output /tmp/ou3-alt-actual --family 2 --skip-build --detailed-direction -5
+      - name: Run uninstrumented shipping control with identical compiler options
+        run: |
+          python3 tools/stability/ou3_alt_contraction/shipping_probe.py \
+            --output /tmp/ou3-alt-control --family 2 --uninstrumented
+      - name: Evaluate actual finite words and endogenous solve graphs without promotion
+        run: |
+          for family in 0 1; do
+            python3 tools/stability/ou3_alt_contraction/word_diagnostic.py \
+              --directory /tmp/ou3-alt-actual/BIAS${family} \
+              --output /tmp/ou3-alt-actual/BIAS${family}/diagnostic.json
+          done
+          python3 tools/stability/ou3_alt_contraction/word_diagnostic.py \
+            --directory /tmp/ou3-alt-actual/BIAS2 \
+            --output /tmp/ou3-alt-actual/BIAS2/diagnostic.json --solves \
+            --control-directory /tmp/ou3-alt-control/BIAS2
+      - name: Retain source identity and actual finite-word evidence
+        if: always()
+        run: |
+          mkdir -p /tmp/ou3-alt-actual
+          git rev-parse HEAD > /tmp/ou3-alt-actual/source-sha.txt
+          tar -C /tmp/ou3-alt-actual -czf /tmp/ou3-alt-actual-tapes.tar.gz \
+            --exclude='shipping-word-probe' --exclude='include' .
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ou3-alt-actual-word-${{ github.run_id }}
+          path: |
+            /tmp/ou3-alt-actual-tapes.tar.gz
+            /tmp/ou3-alt-actual/provenance.json
+            /tmp/ou3-alt-actual/BIAS*/diagnostic.json
+          if-no-files-found: error
+          retention-days: 14

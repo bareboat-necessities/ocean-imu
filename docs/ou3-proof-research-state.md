@@ -255,36 +255,100 @@ and validator separately, preserve their exact shared-error/truth recurrence
 in the new lift, and report aggregate entry admission as false. No change to
 the shared builder or admission gate is authorized by this experiment.
 
-Local `make all` is infrastructure-blocked at `tests/ahrs/ahrs-qmekf-sim.cpp`
-because `Eigen/Dense` is absent from `/usr/include/eigen3`. This is not a
-mathematical failure. The independent CI installs Eigen before the unchanged
-shipping observer is built.
+Local default `make all` fails at `tests/ahrs/ahrs-qmekf-sim.cpp`: fatal
+`Eigen/Dense: No such file or directory` at the default include path. The
+non-default Eigen build is not a completed full-suite validation. Separately,
+`make ensure-sim-data` fails in `tools/sim_dataset.py::fetch`: the release
+archive `curl` command exits 6 (could not resolve host). These are infrastructure
+failures, not mathematical failures. The independent CI installs Eigen; the new
+analytic-word experiment does not require the simulation-data archive.
 
-### Current ALT evidence and next experiment
+### Actual-word attachment experiment and failure analysis
 
-The separate BIAS0/BIAS1/BIAS2 definition validators all pass; this does not
-close aggregate hard-entry or hardware admission. Fifteen ALT algebra tests
-pass, including exact finite gain/innovation increments and a rational
-masked-update analogue with joint cross storage and bounded neutral supply.
-The analogue is not a shipping certificate.
+The host-only ALT probe now branches the complete running shipping process at
+literal Live word entries. It keeps the real covariance, frontend, staged tuner,
+guards and scheduler, rather than the old reconstructed/frozen observer. Physical
+bias-root variations restart at boot, with their own one-time Live S origin.
+This is a conditional analytic-source probe, not a source-uniform admission or
+fresh-Live hard-entry proof. No shared proof source or production expression is
+changed.
 
-The captured observer contains 29 H18 and 359 A21 retained three-second words.
-Re-evaluation of its stored products at 80/120 digits gives worst ratios
-0.9995136399194538514 and 0.9959857178394911698. The existing H18 ratio fixes
-held-bias error at zero, while A21 retains all 21 estimated-error coordinates.
-No metric is fitted to this replay. The limiting observed frozen-map margin
-is H18's approximately 0.00048636.
+The predeclared common diagnostic metric uses scales
+`(.1,.01,1,1,10,1,.1,.1)` for the eight three-vector blocks, with normalized
+`e_ba/beta` cross term 1/4. These are diagnostic units, not basin radii. On the
+BIAS2 probe its worst tested unsupplied finite-secant ratios are approximately
+H18=21.5756 (initial e_S,y), A21=9.93982 (initial e_theta,x), and
+H18->A21=9.73054 (initial e_v,z). No metric was fitted to the resulting tapes.
 
-A new attachment limitation is explicit: the observer reconstructs H=P^-1 N
-and accumulates a binary32 homogeneous map, not the complete endogenous
-nonlinear joint24 finite-increment map. Treating it as the latter would be a
-proof/implementation correspondence error. Its strict ratios do not justify
-outward certification of the unsupplied ALT master. The strongest critic is
-that high precision cannot restore omitted physics or gain dependence.
-Alternatives: instrument actual finite increments; derive an analytic graph
-of actual N/S/residual/tuner operations; or prove a fixed-trajectory nonlinear
-storage identity that legitimately avoids incremental gain derivatives.
-Selected next experiment: bind the already implemented exact finite solve
-increment graph to the analytic same-history shipping source, then run the
-full-word high-precision feasibility experiment before any interval refinement.
-All ALT and existing final theorem gates remain false/unpromoted.
+Failure analysis:
+
+1. Failed quantity: the candidate's *unsupplied incremental* endpoint ratio is
+   above one. No qualified supply was subtracted, and no common-storage LMI was
+   solved. These are finite directions, not a generalized-eigenvalue maximum.
+2. Classification: diagnostic metric/proof-method failure, not a theorem,
+   source-enclosure, or shipping-implementation instability result.
+3. Invalidated: using this fixed scaled metric as an unsupplied incremental
+   contraction witness, or promoting actual-word contraction from these tests.
+4. Not invalidated: joint storage with a justified supply, another analytically
+   constructed metric, regional motion ISS, or the original P2/P3/P4/P5 route.
+5. Limiter: joint motion redistribution and endogenous/hybrid transport in the
+   literal word. Some boot-root variants also change event timing; their
+   operation ledgers cannot be aligned by silently dropping events.
+6. Next falsifiable experiment: evaluate the exact finite solve-increment graph
+   on the actual recorded N/S/r/K/P operands of these words, including nonzero
+   nominal residuals, covariance changes and measured binary32 solve defects.
+   Do not refine intervals or tune this rejected metric to the tapes.
+
+Critic: a deliberately simple metric says little about existence of the desired
+storage, and captured directions cannot qualify all source histories. The
+strongest reason to abandon a z-only frozen coefficient continuation is that it
+loses endogenous covariance and guard transport. Alternatives are (1) an
+analytic source-family common-storage master with explicit finite increment
+ports, (2) storage augmented by the necessary internal/covariance increments,
+and (3) a same-trajectory nonlinear error identity retaining the physical
+reference defect rather than comparing unrelated estimator trajectories.
+First attach and measure the actual graph; choose among these architectures
+from that evidence. No metric-fitting refinement is authorized by this failure.
+
+The actual-operand graph experiment succeeded on nine aligned BIAS2
+measurement-pair tapes (three initial directions across H18, A21 and the
+release word). It records N/S/r/K/P directly before the shipping correction.
+At 80 digits the solve-increment identity residual is below 8e-81. Nonzero
+`delta_N*q0` and `delta_S*q0` are observed, including an omitted frozen-gain
+correction norm about 6.8281e-6 in the H18 attitude-direction probe. The
+recorded-gain versus ideal-solve discrepancy alone reaches about 8.2452e-9.
+The full literal mean-update defect reaches 9.3577e-7 once multiply/add
+rounding is included. Selected graph maxima agree at the reported binary64
+precision when re-evaluated at 80/120 digits. These are raw mixed-coordinate
+diagnostics, not certified supply bounds. Small identity residuals verify evaluation of the algebra, not
+universal shipping correspondence or a full nonlinear proof.
+
+All three analytic bias variants were executed independently. Individual
+family-definition validators still pass; the aggregate fresh-Live hard-entry
+builder still fails with its original membership errors. Existing source
+contracts and old-route files remain unchanged. The observation overlay is
+reversible: stripping only its added callbacks reproduces the shipping header
+byte for byte. An uninstrumented same-compiler control matches all 50,775
+recorded wrapper states across 75 BIAS2 words bitwise. This does not enclose
+deployment arithmetic. Twenty-three ALT tests pass.
+
+A diagnostic correspondence defect was identified and repaired: multiplying
+recorded binary32 K and r at high precision is not the literal binary32
+matrix-vector product and state addition. Classification: diagnostic
+implementation defect, not a shipping defect. It invalidates calling that
+quantity the complete mean-update roundoff port. The exact solve identity
+remains valid. The corrected experiment tapes both pre- and post-update means
+and tests the separate solve and multiply/add defect ports. A universal
+roundoff bound is still absent.
+
+Next falsifiable experiment: formulate a source-family compatible storage
+master that keeps the now-measured endogenous covariance/guard dependence and
+separately justified reference/neutral supply. Do not fit a metric to the
+retained tapes. Decide explicitly between internal-state incremental storage
+and a same-trajectory error identity before implementing further enclosure.
+The complete source-uniform attachment and high-precision *nonlinear* master
+are still open; 80/120-digit evaluation of recorded operands is not that master.
+
+All ALT and existing final theorem gates remain false/unpromoted. The new
+probe does not close source-uniform word attachment, qualified supply, every-
+prefix domains, deployment roundoff, or actual startup capture.
