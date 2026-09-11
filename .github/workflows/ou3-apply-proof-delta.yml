@@ -1,0 +1,99 @@
+name: ou3-apply-proof-delta
+
+on:
+  push:
+    branches: ["proof/brmm-physical-primitive-2026-09-11"]
+    paths: [".github/workflows/ou3-apply-proof-delta.yml"]
+
+permissions:
+  contents: write
+
+jobs:
+  publish-reviewed-delta:
+    if: github.repository == 'bareboat-necessities/ocean-imu'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Apply exact reviewed delta, verify complete tree and publish on this branch only
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EXPECTED_HEAD: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import base64,hashlib,json,lzma,os,subprocess,urllib.request
+          from pathlib import Path,PurePosixPath
+          repo='bareboat-necessities/ocean-imu'
+          branch='proof/brmm-physical-primitive-2026-09-11'
+          base='e6fb98d821afb5b54dafc299b578045b62a229a9'
+          expected_tree='5df67b17bacdf86e4340f40dc9bd16d0718ea61d'
+          temporary='.github/workflows/ou3-apply-proof-delta.yml'
+          blobs=['4af95af61ff93a381fecaf44706429823bf31f2a','43fa12533ff83eca19b3fc86a8f4d8a2bae5aa97','6ec02bb4937985bf773a43e0859ce22df788f5dd']
+          def git(*args):
+              return subprocess.check_output(['git',*args]).decode().strip()
+          def blob_sha(b):
+              return hashlib.sha1(b'blob '+str(len(b)).encode()+b'\0'+b).hexdigest()
+          assert os.environ['GITHUB_REF']=='refs/heads/'+branch
+          assert git('rev-parse','HEAD')==os.environ['EXPECTED_HEAD']
+          assert git('rev-parse','HEAD^')==base
+          assert git('diff','--name-only',base,'HEAD')==temporary
+          parts=[]
+          for blob in blobs:
+              request=urllib.request.Request('https://api.github.com/repos/'+repo+'/git/blobs/'+blob,
+                  headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28'})
+              with urllib.request.urlopen(request,timeout=30) as response:
+                  item=json.load(response)
+              assert item['encoding']=='base64' and item['sha']==blob
+              part=base64.b64decode(item['content'])
+              assert blob_sha(part)==blob
+              parts.append(part)
+          compressed=b''.join(parts)
+          assert hashlib.sha256(compressed).hexdigest()=='7a1dcc4713f3185d707b5d160fe525616e4f885c21e2c232698221f7b36a9ab3'
+          delta=json.loads(lzma.decompress(compressed))
+          assert delta['version']==1 and delta['base_commit']==base and delta['expected_tree']==expected_tree
+          assert len(delta['entries'])==34
+          paths=[]
+          for entry in delta['entries']:
+              name=entry['path'];path=PurePosixPath(name)
+              assert not path.is_absolute() and '..' not in path.parts
+              assert name.startswith(('tools/stability/ou3_','tests/validation/test_ou3_','docs/ou3-','doc/kalman_ou_iii/')) or name in ('.github/workflows/ou3-brmm-physical-source.yml','.github/workflows/ou3-source-cover-construction.yml')
+              assert name not in paths and entry['mode']=='100644'
+              paths.append(name)
+              target=Path(name)
+              if entry['old_blob'] is None:
+                  assert not target.exists()
+                  old=b''
+              else:
+                  old=target.read_bytes()
+                  assert blob_sha(old)==entry['old_blob'],name
+              lines=old.decode('utf-8').splitlines(keepends=True)
+              previous_end=0
+              for a,b,s in entry['edits']:
+                  assert previous_end<=a<=b<=len(lines) and isinstance(s,str)
+                  previous_end=b
+              for a,b,s in reversed(entry['edits']):
+                  lines[a:b]=s.splitlines(keepends=True)
+              new=''.join(lines).encode('utf-8')
+              assert blob_sha(new)==entry['new_blob'],name
+              target.parent.mkdir(parents=True,exist_ok=True)
+              target.write_bytes(new)
+              target.chmod(0o644)
+          Path(temporary).unlink()
+          subprocess.run(['git','add','--',*paths,temporary],check=True)
+          tree=git('write-tree')
+          assert tree==expected_tree,tree
+          assert git('rev-parse',tree+':src')==git('rev-parse',base+':src')
+          subprocess.run(['git','diff','--cached','--check'],check=True)
+          subprocess.run(['git','config','user.name','github-actions[bot]'],check=True)
+          subprocess.run(['git','config','user.email','41898282+github-actions[bot]@users.noreply.github.com'],check=True)
+          message='proof(brmm): derive physical wave primitive, preserve ancestry and reject legacy DC witness\n\nRepair the physical wave-source theorem without a chosen S cap or shipping filter change. Retain the historical obstruction, exact generator certificates, prior-frequency ancestry and joint24 fail-closed gates. Record numerical source qualification E and correlated innovation enclosure C; P3 delta remains 1e-18; P4/P5 remain false.\n'
+          commit=subprocess.check_output(['git','commit-tree',tree,'-p',base],input=message.encode()).decode().strip()
+          subprocess.run(['git','push','--force-with-lease=refs/heads/'+branch+':'+os.environ['EXPECTED_HEAD'],'origin',commit+':refs/heads/'+branch],check=True)
+          print('PUBLISHED_COMMIT='+commit)
+          print('VERIFIED_TREE='+tree)
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as summary:
+              summary.write('Published verified 34-file proof continuation: `'+commit+'`.\n\nTree: `'+tree+'`. Shipping source unchanged; P4/P5 remain false.\n')
+          PY
