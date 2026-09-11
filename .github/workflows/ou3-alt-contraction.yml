@@ -6,12 +6,14 @@ on:
       - "tools/stability/ou3_alt_contraction/**"
       - "tests/ou3_alt_contraction/**"
       - "docs/ou3-alt-contraction.md"
+      - "docs/ou3-alt-contraction-handover.md"
       - ".github/workflows/ou3-alt-contraction.yml"
   pull_request:
     paths:
       - "tools/stability/ou3_alt_contraction/**"
       - "tests/ou3_alt_contraction/**"
       - "docs/ou3-alt-contraction.md"
+      - "docs/ou3-alt-contraction-handover.md"
       - ".github/workflows/ou3-alt-contraction.yml"
   workflow_dispatch:
 
@@ -44,9 +46,27 @@ jobs:
       - name: Install host diagnostic dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libeigen3-dev python3-numpy python3-scipy python3-mpmath
+          sudo apt-get install -y libeigen3-dev clang python3-numpy python3-scipy python3-mpmath
       - name: Test independent inverse-free and joint-bias algebra
         run: python3 -m unittest discover -s tests/ou3_alt_contraction -v
+      - name: Attach actual finite-increment words and check observation transparency
+        env:
+          CXX: clang++
+        run: |
+          python3 tools/stability/ou3_alt_contraction/shipping_word.py \
+            --work /tmp/ou3-alt-finite-word \
+            --output /tmp/ou3-alt-finite-word.json \
+            --verify-uninstrumented
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ou3-alt-finite-word-${{ github.run_id }}
+          path: |
+            /tmp/ou3-alt-finite-word.json
+            /tmp/ou3-alt-finite-word/manifest.json
+            /tmp/ou3-alt-finite-word/producer.json
+          if-no-files-found: warn
+          retention-days: 14
       - name: Fetch existing coupled source and build unchanged shipping observer
         run: |
           make ensure-sim-data
