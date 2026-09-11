@@ -228,19 +228,160 @@ not bound the rank of that derivative. The contribution can be summed inside
 the one physical word with its hard constraints before deciding the sign. There is no claim that individual
 measurements must be contractive.
 
+## 6. Finite physical prediction, not a sampled shadow truth
+
+`finite_physical_prediction.py` supplies the physical predictor. Let q_t and
+q_h be the physical and estimated world-to-body quaternions at the same time,
+and c their Cayley error. Let
+
+```
+Q_phys = q_t(t+h) conjugate(q_t(t)),
+Q_nom  = actual shipping quaternion increment from the conditioned gyro,
+(W,V)  = Q_phys (2,c) conjugate(Q_nom).
+```
+
+Nonzero projective scaling is harmless. Exactly, `W c_next = 2 V` when W is
+nonzero. To prove this, substitute `q_t ~ (2,c) q_h` in the two attitude updates.
+Their relative quaternion is
+
+```
+q_t_next conjugate(q_h_next)
+  ~ Q_phys (2,c) q_h conjugate(q_h) conjugate(Q_nom)
+  = ||q_h||^2 Q_phys (2,c) conjugate(Q_nom).
+```
+
+The common scalar cancels in Cayley coordinates. The test expands this equality
+for all 15 independent polynomial variables (c, q_h, Q_phys, Q_nom), rather than
+sampling attitudes. Thus the relation is finite, not its derivative, and its
+value at zero error is not silently assumed to vanish.
+
+The physical increment is NOT a second call to the estimator's quaternion
+propagator. For a source-defined sampled physical increment Q_sample, retain
+
+```
+D_omega = Q_phys conjugate(Q_sample),
+Q_phys ~ D_omega Q_sample.
+```
+
+The quaternion product ordering is checked by a second all-coefficient identity.
+D_omega retains continuous angular integration, conditioning/frame changes and
+sampling/model defects. It is not set to identity. If a proposed decomposition
+of D_omega contains an unknown estimation error, that term must remain in the
+state graph; it is not an independently bounded disturbance. The source/gyro
+relation must also retain `omega_hat=omega_sample+e_bg+n_g`. The earlier
+`finite_prediction_deployed_step` evaluates a sampled shadow and, by itself,
+does not provide this physical increment.
+
+For one translation axis, define the SAME physical integrals
+
+```
+J0 = integral_0^h a(s) ds,
+J1 = integral_0^h (h-s) a(s) ds,
+J2 = integral_0^h (h-s)^2 a(s)/2 ds.
+```
+
+Writing va, pa, Sa and alpha for the actual shipping mean coefficients gives
+
+```
+e_v_next  = e_v + va e_aw + J0 - va a0,
+e_p_next  = e_p + h e_v + pa e_aw + J1 - pa a0,
+e_S_next  = e_S + h e_p + h^2 e_v/2 + Sa e_aw + J2 - Sa a0,
+e_aw_next = alpha e_aw + a1 - alpha a0.
+```
+
+These follow by subtracting the actual mean prediction from the physical
+kinematic equations. All 17 polynomial indeterminates are checked coefficient
+by coefficient. In particular, pa and Sa are the **shipping** coefficients,
+including `safe_phi_A_coeffs`' small-step polynomial branch, not silently the
+ideal exponential integrals. The physical discrepancy remains in the formula.
+The moments are not independent inputs: the global corrected COMPLETE-BRMM
+relation, including `D_S<=1100 m*s`, must still constrain them jointly.
+
+`PhysicalSegment` enforces positive segment duration and one persistent
+Live origin, consecutive physical v/p/S moment equations, and the shared true
+bias recurrence. The joint24 predictor additionally checks that beta in z is
+that predecessor's beta. It retains
+
+```
+e_bg_next = e_bg + bg_true_next - bg_true,
+beta_next = phi_true beta + u_b,
+e_ba_next = phi_hat e_ba + (phi_true-phi_hat) beta + u_b.
+```
+
+H18 sets phi_hat=1; A21 uses its actual estimator factor. BIAS2's phi_true=1
+endpoint is retained. Neither this algebra nor a consistent finite segment
+qualifies BIAS0, BIAS1, BIAS2 or an all-time physical history. In particular a
+finite moment-consistency check alone cannot enforce the all-time primitive
+bound. The same beta goes on to the measurement and radial projection graph.
+
+## 7. Branch-correct rank-three covariance arithmetic
+
+On the symmetric real accepted branch, the actual inverse-free gain relation
+`K Sigma=N` implies, for arbitrary N,
+
+```
+P-K N'-N K'+K Sigma K' = P-K N'.
+```
+
+This is a direct polynomial substitution. It does not require `N=P H'`, an
+optimal gain, or an information-form replacement, so the actual masked H18
+numerator is allowed. `solved_joseph_covariance` checks the solve relation
+exactly before applying the thin expression. An all-coefficient entrywise
+proof and exact full-21 covariance regressions cover held and active masks.
+With a numerical solve defect E=K Sigma-N, the omitted term would be E K'; the
+routine rejects nonzero E instead of pretending to enclose deployment arithmetic.
+
+`benchmark_finite_rank3.py` compares time and peak Python allocation, and checks
+zero **exact rational** entrywise difference using the same P/N/Sigma/K operands.
+It does not rectangularize any coefficient. Source-uniform enclosure width,
+subdivision count and certificate margin have not been benchmarked; no claim
+about their improvement follows from a faster rational evaluation.
+
+## 8. What the composed implementation checks establish
+
+`shipping_finite_identity.py` builds both the unchanged runtime and a passive
+observation overlay. Erasing only the added observation statements recovers
+the shipping source modulo whitespace. The two builds must produce bit-identical
+**recorded** sample state, including the frontend audit coordinates. Neither
+build overwrites a tracked shipping header or sets a synthetic gain, covariance,
+mode, scheduler, or startup state.
+
+One analytical oscillatory sensor history drives the real startup and runtime.
+The checker obtains a 600-step H18 window, a 600-step A21 window and a 600-step
+window across the actual release guard. It verifies physical prediction, finite
+sensor/S residuals, masked N and full Sigma, inverse-free solves, Joseph,
+quaternion injection, covariance reset, same-beta projection, queued a_w floor,
+S due/not-due service credit, and the observed H18->A21 setter. Consecutive
+observed core states/covariances are checked against each other; the Live S
+origin is never restarted. The first H18 window checks fresh centered e_S=0.
+
+These are implementation correspondence regressions, NOT universal word or
+stability evidence. Binary64 evaluations of formulas are compared to host
+binary32 values using explicitly labelled regression tolerances; those
+numbers are not rigorous roundoff bounds. The finite polynomial identities
+above are the algebraic theorem contribution. The finite traces neither
+qualify the analytic source family nor fit a metric.
+
 ## Remaining bridge and non-promotion
 
-These identities close the finite accepted-measurement algebra. They do not
-close continuous physical attitude-versus-sampled-gyro prediction forcing,
-all covariance/frontend successors and repairs, the asynchronous branch family,
-or a complete finite endpoint/prefix certificate. The current
-`physical_word.compose_endpoint_lineage` produces Jacobian products; those
-must not be submitted as the finite map in a storage search. The executable
-finite-master guard rejects that representation before the coarse endpoint
-or metric calculation starts.
+The complete source-uniform finite word remains OPEN. The source-independent
+algebra can be composed by substitution once **every** event's runtime operands
+and guard have been bound to the same physical predecessor and successor. A
+collection of locally correct events or a recorded execution is not that
+binding. In particular the finite relation must still materialize all
+frontend/tuner/covariance successors, angular-defect source constraints,
+innovation-repair/rejection and watchdog branches, asynchronous magnetic
+history, and every legal H18/A21 edge. Finite core observations are not a proof
+of complete literal runtime-prefix coverage.
 
-Binary32 row-wise LDLT solves, raw innovation asymmetry, scalar accumulation,
-normalization, projection and covariance updates need their actual numerical
-residual relations. The real formulas above do not bound them. BIAS family
-admission, a useful ultimate bound, startup capture and all final ALT gates
-remain separate. Original P2/P3/P4/P5 machinery is unchanged.
+No high-precision feasibility diagnostic, common metric search, worst rho,
+retention radius or startup capture bound is authorized by these regressions.
+`physical_word.compose_endpoint_lineage` remains a rejected pointwise-Jacobian
+representation. Do not submit either that representation or these captured
+operands to a source-uniform storage search.
+
+Binary32 row-wise LDLT solves, innovation asymmetry, accumulation, normalization,
+projection, floors, scheduler and frontend arithmetic still need their numerical
+residual relations. BIAS admission, a useful ultimate bound and startup capture
+remain separate. All final ALT gates remain false. Original P2/P3/P4/P5
+machinery is unchanged.

@@ -25,105 +25,79 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  exploratory-word:
+  algebra-regressions:
+    name: Full inherited ALT regression suite
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v6
         with:
           persist-credentials: false
-      - name: Preserve exact experiment source for reproduction
-        run: |
-          git rev-parse HEAD > /tmp/ou3-alt-source-sha.txt
-          git archive --format=tar.gz --output=/tmp/ou3-alt-source.tar.gz HEAD
-      - uses: actions/upload-artifact@v4
-        with:
-          name: ou3-alt-source-${{ github.run_id }}
-          path: |
-            /tmp/ou3-alt-source.tar.gz
-            /tmp/ou3-alt-source-sha.txt
-          retention-days: 7
-      - name: Install host diagnostic dependencies
+      - name: Install proof-test dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libeigen3-dev python3-numpy python3-scipy python3-mpmath
-      - name: Test independent inverse-free and joint-bias algebra
-        run: python3 -m unittest discover -s tests/ou3_alt_contraction -v
-      - name: Audit source-uniform finite-increment attachment without promotion
+          sudo apt-get install -y python3-numpy python3-scipy python3-mpmath
+      - name: Run the full ALT suite without weakening shared prerequisites
         run: |
-          python3 tools/stability/ou3_alt_contraction/source_uniform_attachment.py \
-            --output /tmp/ou3-alt-source-attachment.json
-      - name: Fetch existing coupled source and build unchanged shipping observer
+          set -o pipefail
+          python3 -m unittest discover -s tests/ou3_alt_contraction -v 2>&1 | tee /tmp/ou3-alt-tests.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ou3-alt-tests-${{ github.run_id }}
+          path: /tmp/ou3-alt-tests.log
+          if-no-files-found: warn
+          retention-days: 14
+
+  finite-physical-identities:
+    name: Finite physical identities (not stability qualification)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      OPENBLAS_NUM_THREADS: "1"
+      OMP_NUM_THREADS: "1"
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Install correspondence-test dependencies
         run: |
-          make ensure-sim-data
-          make -C tests/kalman_ou_iii -j2 ou3-operation-ledger-sim
-      - name: Execute unchanged 3-second shipping words
-        working-directory: tests/kalman_ou_iii
-        env:
-          OU3_LEDGER_MAP_TRACE: /tmp/ou3-alt-maps.bin
-          OU3_LEDGER_COV_TRACE: /tmp/ou3-alt-cov.bin
-          OU3_LEDGER_MAP_STRIDE: "600"
-          W3D_WRITE_TIMESERIES: "0"
-          W3D_VALIDATION_WINDOW_SEC: "0"
+          sudo apt-get update
+          sudo apt-get install -y g++ libeigen3-dev python3-numpy time
+      - name: Prove finite algebra and test anti-promotion guards
         run: |
-          ./ou3-operation-ledger-sim --input wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv
-      - name: Read-only baseline complete-word feasibility, never a proof gate
+          export PYTHONPATH="$PWD:$PWD/tools/stability:$PWD/tests/ou3_alt_contraction"
+          python3 -m unittest test_finite_physical_prediction \
+            test_finite_measurement_graph test_finite_covariance_rank3 \
+            test_shipping_finite_identity test_core test_proof_plan test_bias_families -v
+      - name: Verify actual shipping event correspondence without source promotion
         run: |
-          python3 tests/kalman_ou_iii/ou3_p4_complete_brmm_word_feasibility.py \
-            --map /tmp/ou3-alt-maps.bin --cov /tmp/ou3-alt-cov.bin \
-            --output /tmp/ou3-alt-baseline.json
-      - name: Execute independent ALT diagnostics without promotion
+          python3 tools/stability/ou3_alt_contraction/shipping_finite_identity.py \
+            --output /tmp/ou3-alt-finite-identity.json
+      - name: Benchmark exact masked rank-three covariance arithmetic
         run: |
-          python3 tools/stability/ou3_alt_contraction/diagnose.py \
-            --maps /tmp/ou3-alt-maps.bin --cov /tmp/ou3-alt-cov.bin \
-            --output /tmp/ou3-alt-diagnostic.json
-      - name: Record signed operation margins on the same worst words
+          python3 tools/stability/ou3_alt_contraction/benchmark_finite_rank3.py \
+            --output /tmp/ou3-alt-rank3.json
+      - name: Keep all theorem and storage-readiness results fail-closed
         run: |
           python3 - <<'PYCODE'
-          import csv, json, os, pathlib, subprocess
-          baseline=json.load(open('/tmp/ou3-alt-baseline.json'))
-          sim=pathlib.Path('tests/kalman_ou_iii/ou3-operation-ledger-sim').resolve()
-          inp=pathlib.Path('tests/kalman_ou_iii/wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv').resolve()
-          report={'qualification':'FROZEN_MAP_SIGNED_LEDGER_ONLY','ALT_LIVE_PASS':False,'modes':{}}
-          for mode in ('H18','A21'):
-              w=baseline['modes'][mode]['worst']
-              env=os.environ.copy()
-              env.pop('OU3_LEDGER_MAP_TRACE',None)
-              env.pop('OU3_LEDGER_COV_TRACE',None)
-              path=f'/tmp/ou3-alt-ledger-{mode}.csv'
-              env.update(OU3_LEDGER_TRACE=path, OU3_LEDGER_T0=str(w['t0']),
-                         OU3_LEDGER_T1=str(w['t1']), OU3_LEDGER_MODE=mode,
-                         OU3_LEDGER_DIRECTION=w['maximizing_direction']['csv'],
-                         W3D_WRITE_TIMESERIES='0', W3D_VALIDATION_WINDOW_SEC='0')
-              subprocess.run([str(sim),'--input',str(inp)],env=env,check=True)
-              with open(path,newline='') as f:
-                  rows=list(csv.DictReader(f))
-              assert rows, mode
-              counts={k:sum(r['event']==k for r in rows) for k in ('prediction','aw_floor','S_zero','accelerometer','vector')}
-              assert counts['prediction']==600 and counts['accelerometer']==600, counts
-              assert counts['S_zero']==w['S_update_count'] and counts['vector']==w['mag_count'], counts
-              delta={k:sum(float(r['delta_V']) for r in rows if r['event']==k) for k in counts}
-              v0=float(rows[0]['V_before']); v1=float(rows[-1]['V_after'])
-              telescope=sum(delta.values())-(v1-v0)
-              assert abs(telescope)<=5e-6*max(1.0,abs(v0)), telescope
-              report['modes'][mode]={'rho_selected_direction':v1/v0,'counts':counts,
-                  'signed_delta_by_operation':delta,'telescope_error':telescope,
-                  'prefix_chart_retention_certified':False}
-          with open('/tmp/ou3-alt-ledger.json','w') as f:
-              json.dump(report,f,indent=2,sort_keys=True)
-          print(json.dumps(report,indent=2))
+          import json
+          for path in ('/tmp/ou3-alt-finite-identity.json', '/tmp/ou3-alt-rank3.json'):
+              report = json.load(open(path))
+              for gate in ('ALT_LIVE_PASS', 'ALT_STARTUP_PASS', 'ALT_END_TO_END_PASS'):
+                  assert report[gate] is False, (path, gate)
+          report = json.load(open('/tmp/ou3-alt-finite-identity.json'))
+          assert report['source_uniform_word_qualified'] is False
+          assert report['storage_feasibility_attempted'] is False
+          assert report['recorded_sample_states_bit_identical'] is True
+          assert report['deployment_roundoff_enclosed'] is False
           PYCODE
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: ou3-alt-experiment-${{ github.run_id }}
+          name: ou3-alt-finite-identities-${{ github.run_id }}
           path: |
-            /tmp/ou3-alt-source-attachment.json
-            /tmp/ou3-alt-maps.bin
-            /tmp/ou3-alt-cov.bin
-            /tmp/ou3-alt-baseline.json
-            /tmp/ou3-alt-diagnostic.json
-            /tmp/ou3-alt-ledger.json
-            /tmp/ou3-alt-ledger-*.csv
+            /tmp/ou3-alt-finite-identity.json
+            /tmp/ou3-alt-rank3.json
           if-no-files-found: warn
           retention-days: 14

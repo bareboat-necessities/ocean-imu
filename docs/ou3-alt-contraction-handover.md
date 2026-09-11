@@ -1,87 +1,129 @@
 # OU-III parallel ALT proof handover
 
-## Where to resume
+## Resume point and independent scope
 
-This is the canonical handover for the independent whole-word joint24 hybrid dissipativity proof introduced by PR #517. After PR #517 is merged, start the next ALT continuation as a NEW PR from the latest `main`. Read, in order:
+Read `AGENTS.md`, `docs/ou3-alt-proof-plan.md`, this handover,
+`docs/ou3-alt-finite-measurement-proof.md`, `docs/ou3-alt-contraction.md`, the
+ALT section of `docs/ou3-proof-research-state.md`, and
+`docs/ou3-brmm-main-handover.md`. Continue the open ALT PR on its branch; after
+it is merged, start a new PR from latest main.
 
-1. `AGENTS.md`
-2. `docs/ou3-alt-contraction-handover.md` (this file)
-3. `docs/ou3-alt-contraction.md`
-4. the ALT section of `docs/ou3-proof-research-state.md`
-5. `docs/ou3-brmm-main-handover.md` for the shared physical/runtime contracts
+The original P2/P3/P4/P5 route remains independently continuable and unchanged.
+Its PASS labels do not discharge ALT obligations. The shipping implementation,
+P3 threshold `1e-18`, physical source and original gates are not modified here.
 
-The existing P2/P3/P4/P5 proof is a separate, independently continuable route. Do not delete, rewrite, bypass, or silently make it depend on ALT. Likewise, ALT must not consume old PASS labels as proof of its own master inequality. Shared source/runtime facts may be reused only with their actual hypotheses and same-history ancestry.
+## Target and immutable physical contracts
 
-## Immutable shared constraints
+Retain `z=(c,e_bg,e_v,e_p,e_S,e_aw,e_ba,beta)` in R^24, all motion/bias cross
+terms, and coercive storage satisfying
 
-Preserve the unchanged shipping implementation and corrected COMPLETE-BRMM physics from main: padded `||a_wave|| <= 8.8 m/s^2`, `D_S <= 1100 m*s`, one-time Live S origin, zero/disabled lever arm in current proof scope, actual anisotropic `R_S`, same-signal WPE -> sigma -> tau -> T_S -> R_S relation, staged tuner/scheduler state, actual Joseph/reset/projection path, BIAS0/BIAS1/BIAS2 ancestry, H18 and A21, and deployment finite precision as a theorem obligation. P3 remains frozen at `1e-18`. No replay fitting, finite-seed qualification, wordwise S re-zeroing, covariance consistency as hard entry membership, or filter changes for proof convenience.
+`V_next <= rho V + w'Gamma w + c_supply'Beta c_supply`, `0 < rho < 1`.
 
-## ALT theorem target
+Held H18 bias and nonrelaxing BIAS2 truth may use independently justified
+bounded supply. Unknown motion errors may not be renamed as bounded inputs.
+Keep physical forcing and correlated state/source ports inside the finite graph.
 
-Use the full true-minus-estimate augmented state
+Corrected COMPLETE-BRMM retains the padded acceleration bound 8.8 m/s^2,
+all-time centered primitive bound D_S <= 1100 m*s, one-time Live S origin,
+zero lever arm, actual anisotropic R_S, same-signal WPE/bandpass/sigma/tau/T_S
+ancestry, staged tuner commits, scheduler guards, and separate BIAS0/1/2
+physical histories. Fresh centered e_S=0 is not an arbitrary 300 m*s entry ball.
+The remaining hard entry coordinates must come from actual startup and truth,
+not filter zero initialization or covariance consistency.
 
-`z = (e_theta,e_bg,e_v,e_p,e_S,e_aw,e_ba,beta_true) in R^24`.
+## Proved finite algebra
 
-Do NOT demand strict homogeneous contraction of every coordinate. H18 held bias and BIAS2 constant physical bias provide neutral/persistent directions. The selected target is coercive joint storage with a justified supply:
+The finite measurement note is the supplying derivation for these conditional
+real-arithmetic identities:
 
-`m||z||^2 <= V(z,xi) <= Mbar||z||^2`
+- finite inverse-free measurement, residual secants, both quaternion injection
+  branches and same-beta radial projection on full joint24;
+- physical prediction with the actual physical rotation increment, nonzero
+  angular/model defect, correlated q15 translation moments, gyro-bias drift,
+  and one driver shared by e_ba and beta;
+- masked-branch Joseph cancellation using K Sigma=N, without assuming N=P H'.
 
-`V(z_next,xi_next) <= rho V(z,xi) + w^T Gamma w + c^T Beta c`, with `0 < rho < 1`.
+`finite_physical_prediction.py` is the physical prediction implementation.
+Its attitude and translation identities have all-coefficient polynomial checks.
+The older `finite_prediction_graph.py` / `finite_prediction_deployed_step.py`
+attitude routines describe a sampled shadow; they do not replace a continuous
+physical increment or prove its defect vanishes. Their retained algebra callers
+are not a physical-word supplying lemma.
 
-Only independently bounded physical/bias/reference quantities may enter `c`; unknown motion errors may not be relabeled as bounded inputs. Keep motion/bias cross terms in storage. The ultimate bound must be quantitatively useful, not merely finite.
+H18 still needs the full latent BA covariance in accelerometer innovation.
+On the held zero-cross-block invariant the reduced covariance uses R_acc+B0,
+not bare R_acc. The error/storage state is never reduced to 18 coordinates.
+The checked rank-three Joseph evaluator rejects a nonzero solve defect rather
+than dropping its E K' contribution. No deployment roundoff bound is supplied.
 
-## Implemented proof primitives
+## Implementation correspondence, not source qualification
 
-`tools/stability/ou3_alt_contraction/core.py` contains non-promoting algebra for:
+`shipping_finite_identity.py` builds the actual wrapper twice from startup.
+One temporary include overlay adds passive observations at selected core
+boundaries; the other build is uninstrumented. Observation calls must erase to
+the original source and the recorded sample states must match bit-for-bit.
+No runtime state, covariance, gain, schedule or mode is forced by the harness.
 
-- inverse-free measurement graph `S q = r`, correction `N q`, where `N` is the ACTUAL shipping numerator after masks;
-- exact finite endogenous innovation increments
-  `S1*dq + dS*q0 = dr`, `dcorrection = N1*dq + dN*q0`;
-- joint24 bias prediction retaining `(phi_true-phi_hat)*beta` inside the state map and the SAME physical driver in bias error and true bias;
-- a radial projection IQC retaining the same true bias on both sides;
-- sign-correct descriptor/IQC dissipativity assembly;
-- exact structural regressions showing why strict full-state homogeneous contraction and unqualified H18 information-form replacement are invalid shortcuts;
-- an exact rational two-state masked-update analogue showing that joint storage plus bounded neutral supply can close despite a neutral coordinate. This analogue is not a shipping certificate.
+The regression checks three 600-step windows: H18, A21 and an actual H18->A21
+release. It checks prediction, covariance/floor, physical S residuals, full
+innovation/numerator, Joseph, finite reset, same-beta projection, due/not-due S
+scheduling, and consecutive core ancestry. It retains one Live origin and
+fresh centered e_S=0. The audit records selected frontend fields, not a complete
+frontend transition relation. Unseen repair/rejection, active radial projection,
+watchdog and other guards remain explicitly unqualified. A test trajectory is
+not a universal physical source cover or startup/capture proof.
 
-`tests/ou3_alt_contraction/test_core.py` has 15 algebra/anti-shortcut tests. The independent `ou3-alt-contraction` workflow passed on PR #517.
+Run the isolated checks without the old frozen-word observer:
 
-## Executed diagnostic evidence
+```sh
+PYTHONPATH="$PWD:$PWD/tools/stability:$PWD/tests/ou3_alt_contraction" \
+  python3 -m unittest test_finite_physical_prediction \
+  test_finite_measurement_graph test_finite_covariance_rank3 \
+  test_shipping_finite_identity test_core test_proof_plan test_bias_families -v
+python3 tools/stability/ou3_alt_contraction/shipping_finite_identity.py \
+  --output /tmp/ou3-alt-finite-identity.json
+python3 tools/stability/ou3_alt_contraction/benchmark_finite_rank3.py \
+  --output /tmp/ou3-alt-rank3.json
+```
 
-The unchanged shipping observer produced 29 retained H18 and 359 retained A21 approximately three-second same-mode words. Worst stored-map ratios were approximately:
+The rank-three benchmark reports runtime, peak memory and exact rational
+entrywise equality for H18 and A21. It does not report source-uniform enclosure
+quality, subdivision savings or a dissipativity margin. The independent
+`finite-physical-identities` CI job retains these reports. The inherited broad
+ALT suite is separate; its shared Mahony prerequisite can fail as recorded in
+the research ledger. A green isolated job must not hide that failure.
 
-- H18: `0.999513639919454`, margin about `4.8636e-4`
-- A21: `0.995985717839491`, margin about `4.0143e-3`
+## Decisive missing object and next work
 
-The selected-direction signed ledgers also contracted. Treat these only as falsification/exploratory evidence. The observer reconstructs H from covariance/PCt, freezes endogenous gain dependence, accumulates a binary32 homogeneous product, and H18's 18-state ratio fixes held-bias error at zero. Re-evaluating that stored matrix at 80/120 digits does NOT produce the missing actual nonlinear joint24 word or a source-uniform certificate. No metric was fitted to replay.
+**The requested source-uniform finite 600-step word is NOT materialized.**
+Local finite identities plus observed same-history operands do not supply the
+analytic frontend/tuner/covariance/guard graph. The present `physical_word.py`
+Jacobian cocycle remains rejected by `assert_finite_storage_master`.
+No high-precision finite-word feasibility or common-storage search is authorized
+by the regression reports, and none is claimed here.
 
-## Current blockers
+Bind the finite predictor and measurement descriptors to explicit actual runtime
+successors over the analytic source family. Preserve physical angular defects,
+all correlated moments and bias histories, every coefficient product, all
+accepted/rejected/not-due branches, floors, conditioning, asynchronous events,
+and the actual H18->A21 release guard. Expose every completed literal prefix;
+selected observation points are not that complete prefix graph.
 
-1. **Primary ALT blocker — actual source-uniform joint24 word attachment.** The exact finite solve-increment algebra exists, but `dN`, `dS`, residual, covariance, frontend/tuner, guards, true-bias recurrence, source forcing and all event branches are not yet bound together as one same-history source-uniform word.
-2. **Fresh-Live hard entry is not closed.** The shared aggregate bias-supply builder currently stops with `qualified fresh-entry source failed` and reports hard-coordinate membership / source-uniform other-coordinate / fresh-Live-cover failures. Do not bypass it. The individual BIAS0/BIAS1/BIAS2 definition validators pass, but that is not startup/hardware admission.
-3. **Uniform storage is not solved.** No common, parameter-dependent, or piecewise joint24 storage has yet been certified for the actual family. Search common joint storage with bounded neutral supply first; only then move down the hierarchy.
-4. **Nonlinear/hybrid closure is open.** Hard finite-horizon IQCs or equivalent exact graph constraints for finite-angle attitude/reset/chord/floor/clamps/acceptance branches, compatible H18/A21 and H18->A21 edges, and literal every-prefix chart/domain retention remain open.
-5. **Startup is separate and open.** The actual Mahony/proxy/learning path must be proved to land in the ALT Live basin in finite time for both measured-period takeover and prior-frequency timeout under the padded physical family.
-6. **Finite precision is open.** Real-arithmetic solve identities do not enclose LDLT, Eigen, reset, projection, covariance-floor, and other deployment roundoff defects.
-7. The existing proof's PE/vector-domain consistency problem remains separate; ALT should not inherit it unless a shared lemma is actually required.
+Only after that object closes, run its high-precision feasibility diagnostic
+and first common joint24 storage search with bounded neutral/source supply.
+Then proceed to rigorous source cover, endpoint dissipativity, every-prefix
+retention, the physics-compatible Live basin, hybrid landing, aggregate fresh
+entry, both startup paths, and finite precision. The two-strike architecture
+review rule still applies; no common-storage attempt or strike is implied by
+an incomplete graph or an inherited startup-validation failure.
 
-## Next falsifiable sequence
+## Gate status and failure classification
 
-1. Build an **actual source-uniform finite-increment joint24 shipping word**. Preserve nonzero nominal residual, endogenous `N/S`, true bias, physical source, frontend/tuner and guard ancestry. Instrument or derive missing actual finite increments rather than inferring them from the old frozen observer.
-2. Before rigorous interval/outward work, run a high-precision complete-word feasibility diagnostic of THAT graph. It must report worst H18/A21 directions, bias/source supply ports, operation-by-operation margin consumption, hybrid edges, and distance to `rho=1`. If rho is above 1, abandon that formulation rather than refining unrelated bounds.
-3. Search the common joint-storage + bounded-neutral-supply master first. If it fails twice by the same mechanism, obey the AGENTS two-strike rule: record failure analysis, compare at least three qualitatively different alternatives, and perform an architecture review before more refinement.
-4. If a full master is feasible, make it rigorous over the analytic source family: source cover, metric coercivity/compatibility, hard nonlinear graph constraints, every-prefix reachability, first-exit/domain retention, and finite precision.
-5. Determine the largest physics-compatible ALT Live basin and its quantitative ultimate bound.
-6. Separately prove actual Mahony/proxy finite-time capture and H18->A21 landing into that basin.
-7. Only after all obligations close may ALT claim an end-to-end theorem. Do not promote existing P4/P5 merely because ALT closes; reconcile theorem/gate policy explicitly in a later PR.
+`ALT_LIVE_PASS=false`, `ALT_STARTUP_PASS=false`, `ALT_END_TO_END_PASS=false`.
+Original `P4_PASS` / `P5_MAY_START` remain untouched by ALT.
 
-## Fail-closed status at PR #517 handover
-
-`ALT_LIVE_PASS=false`
-
-`ALT_STARTUP_PASS=false`
-
-`ALT_END_TO_END_PASS=false`
-
-Existing `P4_PASS=false` / `P5_MAY_START=false` remain untouched by this route.
-
-The purpose of merging PR #517 is to preserve a tested second proof architecture and its falsifiable continuation path on main, not to claim the stability theorem is finished.
+The current gap is C/E (finite representation / missing source attachment), not
+A (filter instability) or a proved infeasible common metric. There is no certified
+rho, ultimate bound, retained basin or finite capture time yet. Do not substitute
+more seeds, thinner boxes, a frozen observer, wordwise S reset, position reanchor,
+or a smaller entry set for the missing finite source-uniform relation.

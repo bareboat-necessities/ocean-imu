@@ -163,6 +163,15 @@ radial projection and a thin-factor full joint24 storage identity. In held mode,
 BA uncertainty remains in the innovation: the reduced accelerometer covariance
 uses R_acc+B0, not bare R_acc. This is not an error-state reduction.
 
+The physical predictor in `finite_physical_prediction.py` retains the actual
+physical quaternion increment and its nonzero defect, correlated translation
+moments and the shared bias recurrence. All-coefficient polynomial checks prove
+the local finite algebra. The older sampled-shadow predictor is not a physical
+truth model. Passive shipping traces check implementation correspondence only;
+they do not satisfy G2, G6 or G13 or authorize a storage search. The branch-correct
+rank-three Joseph identity also remains conditional on the actual inverse-free
+solve; it cannot cancel a deployment solve defect.
+
 The complete finite word remains OPEN. Connect these graphs to the actual
 covariance/frontend successors, preserve physical continuous-rotation versus
 sampled-gyro prediction forcing, and cover every configured accepted/rejected

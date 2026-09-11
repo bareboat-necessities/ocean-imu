@@ -1,6 +1,6 @@
 # Parallel OU-III whole-word dissipativity proof
 
-> **Continuation:** after PR #517, start a NEW PR from latest `main` and read
+> **Continuation:** follow the current ALT PR or start from latest `main`; read
 > [`ou3-alt-contraction-handover.md`](ou3-alt-contraction-handover.md) first.
 > The existing P2/P3/P4/P5 route remains independently continuable through
 > [`ou3-brmm-main-handover.md`](ou3-brmm-main-handover.md).
@@ -19,12 +19,15 @@ contracts are consumed read-only. The [research ledger](ou3-proof-research-state
 contains separate ALT failure analysis. Neither route's tests substitute for
 the other route's certificates.
 
-**Current result:** exact inverse-free algebra, shared-bias lifts, a projection
-IQC, structural anti-shortcut regressions, and a captured frozen-map diagnostic
-are executable. A source-uniform shipping joint24 master has NOT been solved.
-`ALT_LIVE_PASS`, `ALT_STARTUP_PASS`, and `ALT_END_TO_END_PASS` are false.
-Existing P4/P5 are not promoted. A green exploratory workflow means successful
-execution of the experiments, not proof completion.
+**Current result:** finite physical prediction and accepted measurement/reset/
+projection identities have exact coefficient checks, with branch-correct thin
+Joseph arithmetic and non-promoting shipping correspondence tests. See the
+[finite identity derivation](ou3-alt-finite-measurement-proof.md) and current
+[handover](ou3-alt-contraction-handover.md). The source-uniform finite joint24
+runtime word is NOT complete, and no common-storage feasibility on that object
+is claimed. ALT_LIVE_PASS, ALT_STARTUP_PASS and ALT_END_TO_END_PASS remain false.
+Existing P4/P5 are not promoted. The retained frozen-map observer is historical
+exploration, not the new finite word or permission to search its storage.
 
 ## 1. The right state and target
 
@@ -235,74 +238,51 @@ error bound. Do not import fresh-Live membership as an assumed success.
 
 ## 6. Executable evidence and current blockers
 
+The exact finite physical identities and their implementation correspondence
+checks are described in [the supplying note](ou3-alt-finite-measurement-proof.md).
 Run from the repository root:
 
 ```sh
-python -m unittest discover -s tests/ou3_alt_contraction -v
-python tools/stability/ou3_alt_contraction/diagnose.py --output /tmp/ou3-alt.json
+PYTHONPATH="$PWD:$PWD/tools/stability:$PWD/tests/ou3_alt_contraction" \
+  python3 -m unittest test_finite_physical_prediction \
+  test_finite_measurement_graph test_finite_covariance_rank3 \
+  test_shipping_finite_identity test_core test_proof_plan test_bias_families -v
+python3 tools/stability/ou3_alt_contraction/shipping_finite_identity.py \
+  --output /tmp/ou3-alt-finite-identity.json
+python3 tools/stability/ou3_alt_contraction/benchmark_finite_rank3.py \
+  --output /tmp/ou3-alt-rank3.json
 ```
 
-With paired traces from the unchanged observer:
+The workflow keeps the full inherited ALT regression suite and the isolated
+finite-identity job separate. It does not run the old frozen-map/rho experiment.
+That observer, its stored-map high-precision reevaluation and its 18-state H18
+ratios are not the actual finite joint24 word and cannot authorize storage work.
+The original P2/P3/P4/P5 workflow and proof code are not changed.
 
-```sh
-python tools/stability/ou3_alt_contraction/diagnose.py \
-  --maps /tmp/ou3-alt-maps.bin --cov /tmp/ou3-alt-cov.bin \
-  --output /tmp/ou3-alt-diagnostic.json
-```
+The passive correspondence harness runs the actual wrapper from startup, with
+no forced estimator/covariance/tuner/mode roots. It checks finite events in
+three 600-step windows and recorded sample-state equality across instrumented
+and uninstrumented builds. These checks do not cover the entire physical
+family, all runtime branches or every literal prefix. Their binary32/binary64
+comparison tolerances are not a deployment disturbance enclosure.
 
-The workflow `ou3-alt-contraction` creates those traces and retains source
-fingerprints, diagnostic JSON and signed operation ledgers. Captured words
-are only falsification/exploratory evidence: no replay fitting or promotion.
-The high-precision option re-evaluates the STORED binary32 word product at
-80 and 120 digits; it does not reconstruct high-precision nonlinear events.
+The current primary gap remains the explicit finite same-history runtime/source
+graph: frontend/tuner/guard/covariance successors and physical moment/bias
+ancestry must be constrained together, not supplied as independent event data.
+`physical_word.compose_endpoint_lineage` remains a rejected derivative cocycle.
+No source-uniform finite-word rho, common storage, every-prefix bound, useful
+ultimate bound, Live basin, H18->A21 landing or finite capture time is certified.
 
-Current algebra tests check masked/unmasked solve graphs, finite endogenous
-increments, shared bias recurrence, retained joint cross terms, IQC sign and
-fail-closed status. An exact rational two-state masked-update analogue has
+After the finite master exists, run its high-precision feasibility diagnostic,
+then search common joint24 storage with justified bounded neutral/source supply.
+Only a feasible complete master authorizes rigorous enclosure work. Do not infer
+common-storage infeasibility from the missing graph, a failed source validator,
+or an old frozen observer. Preserve the two-strike/architecture-review rule.
 
-```
-A = [[2/3,-1/3],[0,1]], M = [[1,1/4],[1/4,1]], rho=9/10,
-A^T M A-rho M-diag(0,1)
-  = [[-41/90,-101/360],[-101/360,-43/45]] < 0.
-```
-
-Its determinant is 1027/2880>0 and first diagonal negative, while det(M)=15/16.
-This proves bounded-supply joint storage resolves the neutral-direction
-obstruction in that analogue, NOT in the shipping filter.
-
-The captured baseline has 29 H18 and 359 A21 retained same-mode words; worst
-stored-map ratios are approximately 0.999513639919454 and 0.995985717839491.
-H18 uses its existing 18-state homogeneous map with held error zero; A21 keeps
-all 21 estimated-error states. The observer reconstructs H from P^-1 N and
-freezes gain dependence. Neither result is full actual joint24 feasibility,
-a source-uniform metric, a chart-retention proof or a hybrid-edge certificate.
-The H18 margin of about 0.00048636 is the tighter observed frozen-map margin,
-not an available budget for an unbound nonlinear master.
-
-All three individual bias definition validators pass. The shared aggregate
-supply builder currently fails fresh-entry hard-coordinate membership; ALT
-reports that failure, leaves its source unchanged and does not claim entry.
-The existing PE/vector domain consistency issue remains separately open.
-
-### Next falsifiable work, in order
-
-1. Attach a **source-uniform actual** finite-increment joint24 word, retaining
-   N/S endogenous increments, true bias, frontend/tuner and guard ancestry.
-   Reuse old validated source facts read-only, not old PASS labels.
-2. Before rigorous enclosure, run a high-precision complete-word feasibility
-   diagnostic of THAT graph. Report worst H/A directions, bias/source ports,
-   every operation's margin consumption and hybrid edges. Current captured
-   frozen-map ratios do not meet this requirement.
-3. Search the common-storage/bounded-supply formulation first. If it fails,
-   record the exact limiting direction and compare genuinely different metric
-   or source-graph choices before refining. Use the repository two-strike rule.
-4. Only after a feasible full master exists: outward-check its source cover,
-   compatible endpoints, all prefix reachability, physical working tube,
-   projection/bias bounds and finite precision. Then prove startup landing.
-
-No rigorous full-word margin, uniform ultimate bound, certified basin radius,
-finite capture time or H18->A21 landing is presently supplied by ALT. The
-original proof can continue independently while these obligations are pursued.
+Individual BIAS0/1/2 definition validators remain separate from aggregate
+fresh-Live admission. The inherited shared Mahony prerequisite failure recorded
+in the research ledger is not bypassed to make ALT tests green. All ALT final
+gates remain false, and the original proof remains independently continuable.
 
 ## Reference
 

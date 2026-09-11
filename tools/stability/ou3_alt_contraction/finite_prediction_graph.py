@@ -10,7 +10,7 @@ The finite attitude error uses homogeneous quaternions.  If
   q_e ~ (2,c) for current Cayley error,
   q_n = shipping step for (-omega_hat) h,
 
-then the true-minus-estimate relative attitude after prediction is represented
+then the relative attitude for that SAMPLED SHADOW is represented
 exactly by
 
   q_plus ~ q_s * q_e * conj(q_n),
@@ -19,6 +19,11 @@ exactly by
 provided w_plus != 0.  Normalization of each step quaternion cancels in this
 projective identity, so both deployed quat_from_delta_theta branches can be
 retained as hard graph variables rather than linearized.
+
+This is physical attitude only if an additional source identity establishes
+q_s as the continuous physical increment. In general it does not. Use
+finite_physical_prediction for the actual increment and retain its angular
+defect; do not silently promote this sampled shadow to physical truth.
 
 Translation uses the already-proved same-history q15 forcing recurrence, and
 accelerometer-bias truth/error uses one shared physical driver w_b.  No source
