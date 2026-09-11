@@ -33,7 +33,7 @@ and the dense congruence in exact rational arithmetic and requires entrywise
 equality. The equality is polynomial in the block entries and predecessor P, so
 its proof is not a sampled stability experiment.
 
-## Same mean coefficients
+## Same mean/covariance coefficients
 
 `F_LL` is no longer a free matrix. The constructor consumes the SAME per-axis
 `(phi_va,phi_pa,phi_Sa,alpha,h)` tuple already used by the finite mean predictor:
@@ -45,21 +45,29 @@ its proof is not a sampled stability experiment.
 [0    0 0 alpha]
 ```
 
-Thus the mean and covariance linear transitions cannot silently use unrelated
-OU coefficients. For correlated `a_w`, `Q_LL` is assembled exactly as shipping:
-each 3x3 group block is `Sigma_aw * Qaxis_unit[g,h]`. The independent-axis
-fallback is also represented without cross-axis terms.
+For correlated `a_w`, `Q_LL` is assembled exactly as shipping: each 3x3 group
+block is `Sigma_aw * Qaxis_unit[g,h]`; the independent-axis fallback has no
+cross-axis terms.
+
+`paired_prediction` now composes this structured covariance relation with the
+existing physical finite mean predictor. It rejects a covariance `F_LL` that is
+not generated from the exact same mean coefficient tuple, rejects a covariance
+held/active branch different from the finite mean branch, and requires the BA
+factor in the covariance cross-blocks to be the exact same `phi_hat` used by the
+mean/error recurrence. It only then lowers the structured blocks to a dense
+matrix for reuse of the already-checked paired-state API. Thus the old arbitrary
+full `F21,Q21` operands are not supplying premises of this lemma.
 
 ## What remains conditional
 
 This closes a structural covariance-composition gap, not the runtime/source
 graph. The actual source relation still has to generate `F_AA,Q_AA`, the
-analytic `Qaxis` values, active BA `phi_b/Q_BB`, and the same-history tuner
-quantities from the runtime predecessor. The exact-attitude-Q branch includes
-trigonometric/Simpson and PSD-hygiene decisions; these are not replaced by free
-noise rectangles. Pending `a_w` inflation, symmetry/nonfinite repairs and
-periodic S=0 scheduling remain separate events that must be composed literally.
-Finite-precision effects remain open.
+analytic `Qaxis` values, active BA `phi_b/Q_BB`, and same-history tuner quantities
+from the runtime predecessor. The exact-attitude-Q branch includes trigonometric/
+Simpson and PSD-hygiene decisions; these are not replaced by free noise
+rectangles. Pending `a_w` inflation, symmetry/nonfinite repairs and periodic S=0
+scheduling remain separate events that must be composed literally. Finite-
+precision effects remain open.
 
 Consequently the source-uniform 600-step word, common storage, rho, retained
 basin and startup theorem remain unproved. All ALT gates remain false. The

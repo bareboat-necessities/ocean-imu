@@ -18,20 +18,19 @@ def linear_transition(axis_coefficients):
     """Shipping [v,p,S,a_w] 12x12 transition from the SAME mean coefficients."""
     if len(axis_coefficients) != 3:
         raise ValueError('three axis coefficient tuples required')
-    out = M.zeros(NL, NL); idx = (0, 3, 6, 9)
+    out=M.zeros(NL,NL); idx=(0,3,6,9)
     for axis, raw in enumerate(axis_coefficients):
-        va, pa, Sa, alpha, h = P.vec(raw, 5)
-        phi = [[1,0,0,va], [h,1,0,pa], [h*h/F(2),h,1,Sa], [0,0,0,alpha]]
+        va,pa,Sa,alpha,h=P.vec(raw,5)
+        phi=[[1,0,0,va],[h,1,0,pa],[h*h/F(2),h,1,Sa],[0,0,0,alpha]]
         for i in range(4):
-            for j in range(4): out[idx[i]+axis][idx[j]+axis] = phi[i][j]
+            for j in range(4): out[idx[i]+axis][idx[j]+axis]=phi[i][j]
     return out
 
 
 def correlated_linear_process(qaxis_unit, sigma_aw):
     """Literal correlated-Q assembly: each group block is Sigma_aw*qaxis[g,h]."""
-    q, sig = M.mat(qaxis_unit,4,4), M.mat(sigma_aw,3,3)
-    if q != M.transpose(q) or sig != M.transpose(sig):
-        raise ValueError('symmetric qaxis and Sigma_aw required')
+    q,sig=M.mat(qaxis_unit,4,4),M.mat(sigma_aw,3,3)
+    if q != M.transpose(q) or sig != M.transpose(sig): raise ValueError('symmetric qaxis and Sigma_aw required')
     out=M.zeros(NL,NL); goff=(0,3,6,9)
     for g in range(4):
         for h in range(4):
@@ -44,7 +43,7 @@ def independent_linear_process(qaxis):
     """Literal independent-axis Q assembly used by the shipping fallback branch."""
     if len(qaxis) != 3: raise ValueError('three per-axis Qd matrices required')
     out=M.zeros(NL,NL); idx=(0,3,6,9)
-    for axis, qa in enumerate(qaxis):
+    for axis,qa in enumerate(qaxis):
         qa=M.mat(qa,4,4)
         if qa != M.transpose(qa): raise ValueError('symmetric per-axis Qd required')
         for i in range(4):
@@ -57,19 +56,13 @@ class Blocks:
     F_AA: tuple; Q_AA: tuple; F_LL: tuple; Q_LL: tuple
     phi_b: F; Q_BB: tuple; active_bias: bool
     def __post_init__(self):
-        fa=M.mat(self.F_AA,NA,NA); qa=M.mat(self.Q_AA,NA,NA)
-        fl=M.mat(self.F_LL,NL,NL); ql=M.mat(self.Q_LL,NL,NL)
-        qb=M.mat(self.Q_BB,NB,NB); ph=P.rational(self.phi_b)
-        if qa != M.transpose(qa) or ql != M.transpose(ql) or qb != M.transpose(qb):
-            raise ValueError('symmetric process covariance blocks required')
+        fa=M.mat(self.F_AA,NA,NA); qa=M.mat(self.Q_AA,NA,NA); fl=M.mat(self.F_LL,NL,NL); ql=M.mat(self.Q_LL,NL,NL); qb=M.mat(self.Q_BB,NB,NB); ph=P.rational(self.phi_b)
+        if qa != M.transpose(qa) or ql != M.transpose(ql) or qb != M.transpose(qb): raise ValueError('symmetric process covariance blocks required')
         if not isinstance(self.active_bias,bool): raise TypeError('literal held/active bias branch required')
         if self.active_bias:
             if not 0 < ph <= 1: raise ValueError('active bias factor must lie in (0,1]')
-        elif ph != 1 or any(any(x for x in row) for row in qb):
-            raise ValueError('held H18 BA covariance must use phi_b=1 and Q_BB=0')
-        object.__setattr__(self,'F_AA',tuple(map(tuple,fa))); object.__setattr__(self,'Q_AA',tuple(map(tuple,qa)))
-        object.__setattr__(self,'F_LL',tuple(map(tuple,fl))); object.__setattr__(self,'Q_LL',tuple(map(tuple,ql)))
-        object.__setattr__(self,'Q_BB',tuple(map(tuple,qb))); object.__setattr__(self,'phi_b',ph)
+        elif ph != 1 or any(any(x for x in row) for row in qb): raise ValueError('held H18 BA covariance must use phi_b=1 and Q_BB=0')
+        object.__setattr__(self,'F_AA',tuple(map(tuple,fa))); object.__setattr__(self,'Q_AA',tuple(map(tuple,qa))); object.__setattr__(self,'F_LL',tuple(map(tuple,fl))); object.__setattr__(self,'Q_LL',tuple(map(tuple,ql))); object.__setattr__(self,'Q_BB',tuple(map(tuple,qb))); object.__setattr__(self,'phi_b',ph)
 
 
 def dense_FQ(blocks):
@@ -88,8 +81,7 @@ def shipping_block_successor(covariance, blocks):
     """Shipping block order, before pending-aw inflation/symmetrize/S service."""
     P0=M.mat(covariance,N,N)
     if P0 != M.transpose(P0): raise ValueError('symmetric predecessor covariance required')
-    FA,QA=list(map(list,blocks.F_AA)),list(map(list,blocks.Q_AA)); FL,QL=list(map(list,blocks.F_LL)),list(map(list,blocks.Q_LL))
-    QB,ph=list(map(list,blocks.Q_BB)),blocks.phi_b; out=[r[:] for r in P0]
+    FA,QA=list(map(list,blocks.F_AA)),list(map(list,blocks.Q_AA)); FL,QL=list(map(list,blocks.F_LL)),list(map(list,blocks.Q_LL)); QB,ph=list(map(list,blocks.Q_BB)),blocks.phi_b; out=[r[:] for r in P0]
     aa=M.plus(M.mm(M.mm(FA,[r[:NA] for r in P0[:NA]]),M.transpose(FA)),QA)
     for i in range(NA): out[i][:NA]=aa[i]
     ll=M.plus(M.mm(M.mm(FL,[r[OFF_L:OFF_L+NL] for r in P0[OFF_L:OFF_L+NL]]),M.transpose(FL)),QL)
@@ -108,8 +100,7 @@ def shipping_block_successor(covariance, blocks):
 
 
 def dense_successor(covariance, blocks):
-    Fm,Qm=dense_FQ(blocks)
-    return M.plus(M.mm(M.mm(Fm,covariance),M.transpose(Fm)),Qm)
+    Fm,Qm=dense_FQ(blocks); return M.plus(M.mm(M.mm(Fm,covariance),M.transpose(Fm)),Qm)
 
 
 def validate_shipping_identity(covariance, blocks):
@@ -118,10 +109,25 @@ def validate_shipping_identity(covariance, blocks):
     return a
 
 
+def paired_prediction(state, segment, *, gyro_body, axis_coefficients, covariance_blocks, phi_hat=None):
+    """Bind finite mean prediction to the SAME structured covariance transition.
+
+    This intentionally routes through finite_core.prediction only after replacing
+    its legacy arbitrary full-F/Q operands by the literal blocks assembled here.
+    It still stops before pending a_w inflation and periodic S service.
+    """
+    from tools.stability.ou3_alt_contraction import finite_core as CORE
+    if not isinstance(covariance_blocks, Blocks): raise TypeError('structured covariance blocks required')
+    if covariance_blocks.active_bias != (state.mode == 'A'): raise ValueError('mean and covariance use different H18/A21 bias branches')
+    actual_fll=linear_transition(axis_coefficients)
+    if list(map(list,covariance_blocks.F_LL)) != actual_fll: raise ValueError('covariance F_LL detached from SAME mean OU coefficients')
+    ph=F(1) if state.mode == 'H' else P.rational(phi_hat)
+    if covariance_blocks.phi_b != ph: raise ValueError('mean and covariance use different BA prediction factor')
+    F21,Q21=dense_FQ(covariance_blocks)
+    out=CORE.prediction(state,segment,gyro_body=gyro_body,axis_coefficients=axis_coefficients,F21=F21,Q21=Q21,phi_hat=phi_hat)
+    if list(map(list,out.covariance)) != shipping_block_successor(state.covariance,covariance_blocks): raise AssertionError('paired finite mean/covariance successor mismatch')
+    return out
+
+
 def readiness():
-    return {'shipping_covariance_block_identity':True,'full_F21_Q21_free_operands_removed_by_this_lemma':True,
-            'linear_F_from_same_mean_coefficients':True,'correlated_and_independent_Q_LL_assemblies':True,
-            'held_BA_branch_exactly_identity':True,'attitude_F_Q_primitives_source_attached':False,
-            'Qaxis_analytic_primitives_source_attached':False,'active_BA_qd_scale_source_attached':False,
-            'pending_aw_covariance_inflation_attached':False,'periodic_S_service_attached':False,
-            'finite_precision_attached':False,'complete_word_finite_identity':False,'ALT_LIVE_PASS':False}
+    return {'shipping_covariance_block_identity':True,'full_F21_Q21_free_operands_removed_by_this_lemma':True,'linear_F_from_same_mean_coefficients':True,'paired_mean_covariance_factor_consistency':True,'correlated_and_independent_Q_LL_assemblies':True,'held_BA_branch_exactly_identity':True,'attitude_F_Q_primitives_source_attached':False,'Qaxis_analytic_primitives_source_attached':False,'active_BA_qd_scale_source_attached':False,'pending_aw_covariance_inflation_attached':False,'periodic_S_service_attached':False,'finite_precision_attached':False,'complete_word_finite_identity':False,'ALT_LIVE_PASS':False}

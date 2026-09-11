@@ -5,19 +5,20 @@ import sys, unittest
 ROOT=Path(__file__).resolve().parents[2]; sys.path.insert(0,str(ROOT))
 from tools.stability.ou3_alt_contraction import finite_measurement_graph as M
 from tools.stability.ou3_alt_contraction import finite_prediction_covariance as C
+import test_finite_core as FC
 
 def sym_cov(n=21):
     u=[F((i%5)-2,17) for i in range(n)]
     return M.plus(M.scaled(M.eye(n),F(3,2)),[[x*y for y in u] for x in u])
 
-def blocks(active=True,corr=True):
+def blocks(active=True,corr=True,coeff=None,phi=None):
     faa=M.eye(6); faa[0][3]=faa[1][4]=faa[2][5]=F(1,200); qaa=M.scaled(M.eye(6),F(1,100000))
-    coeff=[(F(1,201),F(1,81000),F(1,48100000),F(99,100),F(1,200))]*3; fll=C.linear_transition(coeff)
+    if coeff is None: coeff=[(F(1,201),F(1,81000),F(1,48100000),F(99,100),F(1,200))]*3
+    fll=C.linear_transition(coeff)
     if corr:
-        qu=M.scaled(M.eye(4),F(1,10000)); qu[0][3]=qu[3][0]=F(1,20000); sig=M.eye(3); sig[0][1]=sig[1][0]=F(1,10)
-        qll=C.correlated_linear_process(qu,sig)
+        qu=M.scaled(M.eye(4),F(1,10000)); qu[0][3]=qu[3][0]=F(1,20000); sig=M.eye(3); sig[0][1]=sig[1][0]=F(1,10); qll=C.correlated_linear_process(qu,sig)
     else: qll=C.independent_linear_process([M.scaled(M.eye(4),F(i+1,10000)) for i in range(3)])
-    ph=F(199,200) if active else F(1); qbb=M.scaled(M.eye(3),F(1,1000000)) if active else M.zeros(3,3)
+    ph=(F(199,200) if active else F(1)) if phi is None else phi; qbb=M.scaled(M.eye(3),F(1,1000000)) if active else M.zeros(3,3)
     return C.Blocks(faa,qaa,fll,qll,ph,qbb,active)
 
 class Tests(unittest.TestCase):
@@ -54,7 +55,19 @@ class Tests(unittest.TestCase):
     def test_rejects_asymmetric_process_blocks(self):
         b=blocks(True); bad=[list(r) for r in b.Q_LL]; bad[0][1]+=1
         with self.assertRaises(ValueError): C.Blocks(b.F_AA,b.Q_AA,b.F_LL,bad,b.phi_b,b.Q_BB,True)
+    def test_paired_prediction_uses_same_mean_and_covariance_coefficients(self):
+        for mode in ('H','A'):
+            with self.subTest(mode=mode):
+                s=FC.root(mode); segment,kw=FC.physical_successor(s); ph=F(1) if mode=='H' else kw['phi_hat']; b=blocks(mode=='A',coeff=kw['axis_coefficients'],phi=ph)
+                out=C.paired_prediction(s,segment,gyro_body=kw['gyro_body'],axis_coefficients=kw['axis_coefficients'],covariance_blocks=b,phi_hat=kw['phi_hat'])
+                self.assertEqual(list(map(list,out.covariance)),C.shipping_block_successor(s.covariance,b)); self.assertEqual(out.reference,segment.after)
+    def test_paired_prediction_rejects_detached_FLL_and_bias_factor(self):
+        s=FC.root('A'); segment,kw=FC.physical_successor(s); b=blocks(True,coeff=kw['axis_coefficients'],phi=kw['phi_hat'])
+        badF=[list(r) for r in b.F_LL]; badF[0][0]+=1; detached=C.Blocks(b.F_AA,b.Q_AA,badF,b.Q_LL,b.phi_b,b.Q_BB,True)
+        with self.assertRaises(ValueError): C.paired_prediction(s,segment,gyro_body=kw['gyro_body'],axis_coefficients=kw['axis_coefficients'],covariance_blocks=detached,phi_hat=kw['phi_hat'])
+        wrong=C.Blocks(b.F_AA,b.Q_AA,b.F_LL,b.Q_LL,F(1),b.Q_BB,True)
+        with self.assertRaises(ValueError): C.paired_prediction(s,segment,gyro_body=kw['gyro_body'],axis_coefficients=kw['axis_coefficients'],covariance_blocks=wrong,phi_hat=kw['phi_hat'])
     def test_readiness_is_fail_closed(self):
-        r=C.readiness(); self.assertTrue(r['shipping_covariance_block_identity']); self.assertFalse(r['attitude_F_Q_primitives_source_attached']); self.assertFalse(r['pending_aw_covariance_inflation_attached']); self.assertFalse(r['periodic_S_service_attached']); self.assertFalse(r['complete_word_finite_identity']); self.assertFalse(r['ALT_LIVE_PASS'])
+        r=C.readiness(); self.assertTrue(r['shipping_covariance_block_identity']); self.assertTrue(r['paired_mean_covariance_factor_consistency']); self.assertFalse(r['attitude_F_Q_primitives_source_attached']); self.assertFalse(r['pending_aw_covariance_inflation_attached']); self.assertFalse(r['periodic_S_service_attached']); self.assertFalse(r['complete_word_finite_identity']); self.assertFalse(r['ALT_LIVE_PASS'])
 
 if __name__=='__main__': unittest.main()
