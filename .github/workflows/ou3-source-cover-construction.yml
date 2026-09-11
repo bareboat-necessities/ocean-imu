@@ -89,7 +89,11 @@ jobs:
           assert q['detached_scalar_box_corner_iqc_ratio']=='193'
           assert qs['validation_pass']
           assert qs['moment_sector_matrix_available']
-          assert qs['same_radial_coordinate_must_parameterize_entire_source_history']
+          assert not qs['same_radial_coordinate_must_parameterize_entire_source_history']
+          assert qs['physical_source_scale_independent_of_hard_entry_radial']
+          assert qs['zero_initial_error_may_have_nonzero_physical_source']
+          assert qs['physical_source_scale_value_for_production']==1.0
+          assert not qs['hard_entry_radial_used_for_physical_source_bound']
           assert qs['detached_box_corner_strictly_excluded']
           assert not qs['independent_source_supply_port_used']
           for x in (r,k,p,q,qs):
