@@ -1,9 +1,9 @@
 """Finite AdaptiveWaveBandPass + SeaStateAutoTuner variance recurrence.
 
 Preserves shipping timing: the adaptive band's corner uses the previous tuner
-frequency when that state is ready, otherwise the current WPE frequency.  The
+frequency when that state is ready, otherwise the current WPE frequency. The
 resulting band sample is then fed to SeaStateAutoTuner with the current WPE
-frequency.  Thus band coefficients are one-sample predictable while the moment
+frequency. Thus band coefficients are one-sample predictable while the moment
 statistics consume every valid physical sample.
 
 Transcendental exp/sqrt binary32 ancestry is explicit but not yet enclosed.
@@ -114,10 +114,10 @@ def band_step(s:BandState,cfg:BandConfig,*,x,dt,f_ref,decay:BandDecayWitness):
     x,dt,f_ref=map(R,(x,dt,f_ref))
     if dt<=0 or f_ref<=0: raise ValueError('positive band dt/frequency required')
     upper=min(cfg.max_hz,F(45,100)/dt)
-    if upper<=cfg.min_hz: raise ValueError('shipping band no-update upper-limit branch must be represented separately')
+    if upper<=cfg.min_hz: return s
     low=max(cfg.min_hz,cfg.low_ratio*f_ref); low=min(low,upper/F(105,100))
     high=min(upper,cfg.high_ratio*f_ref); high=max(high,low*F(105,100)); high=min(high,upper)
-    if high<=low: raise ValueError('shipping band no-update corner branch must be represented separately')
+    if high<=low: return s
     ql,qh=decay.q_low,decay.q_high; al,ah=1-ql,1-qh
     low_new=ql*s.lowpass_low+al*x
     hp=ql*(x-s.lowpass_low)
@@ -156,7 +156,6 @@ def frontend_step(band:BandState,stats:StatsState,wpe:WPE.UpdateResult,*,vertica
     if not isinstance(wpe,WPE.UpdateResult) or wpe.frequency is None:
         raise ValueError('current canonical WPE frequency required')
     current_f=wpe.frequency
-    # Wrapper chooses previous tuner frequency when ready; otherwise current WPE.
     fref=stats.frequency if stats.freq_ready else current_f
     fref=clamp(fref,band_cfg.tune_freq_floor,band_cfg.tune_freq_ceil)
     bnext=band_step(band,band_cfg,x=vertical_accel,dt=dt,f_ref=fref,decay=band_decay)
@@ -171,6 +170,7 @@ def frontend_step(band:BandState,stats:StatsState,wpe:WPE.UpdateResult,*,vertica
 def readiness():
     return {
       'adaptive_band_state_and_covariance_materialized':True,
+      'adaptive_band_identity_branches_materialized':True,
       'previous_tuner_frequency_drives_band_corner':True,
       'current_WPE_frequency_drives_variance_horizon':True,
       'debiased_first_second_moments_materialized':True,
