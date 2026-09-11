@@ -6,6 +6,11 @@ on:
       - "tools/stability/ou3_alt_contraction/**"
       - "tests/ou3_alt_contraction/**"
       - "docs/ou3-alt-contraction.md"
+      - "docs/ou3-alt-contraction-handover.md"
+      - "docs/ou3-alt-finite-core-composition.md"
+      - "docs/ou3-alt-finite-measurement-proof.md"
+      - "docs/ou3-alt-runtime-primitives.md"
+      - "docs/ou3-alt-proof-plan.md"
       - "docs/ou3-proof-research-state.md"
       - ".github/workflows/ou3-alt-contraction.yml"
   pull_request:
@@ -13,6 +18,11 @@ on:
       - "tools/stability/ou3_alt_contraction/**"
       - "tests/ou3_alt_contraction/**"
       - "docs/ou3-alt-contraction.md"
+      - "docs/ou3-alt-contraction-handover.md"
+      - "docs/ou3-alt-finite-core-composition.md"
+      - "docs/ou3-alt-finite-measurement-proof.md"
+      - "docs/ou3-alt-runtime-primitives.md"
+      - "docs/ou3-alt-proof-plan.md"
       - "docs/ou3-proof-research-state.md"
       - ".github/workflows/ou3-alt-contraction.yml"
   workflow_dispatch:
