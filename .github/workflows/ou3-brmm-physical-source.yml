@@ -1,0 +1,44 @@
+name: ou3-brmm-physical-source
+
+on:
+  push:
+    branches: ["proof/brmm-physical-primitive-2026-09-11"]
+  pull_request:
+    paths:
+      - "tools/stability/**"
+      - "tests/validation/test_ou3_brmm_*.py"
+      - "docs/ou3-*.md"
+      - "doc/kalman_ou_iii/**"
+      - ".github/workflows/ou3-brmm-physical-source.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ou3-brmm-physical-source-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  physical-source:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Record reproducible proof input
+        run: |
+          mkdir -p /tmp/ou3-physical-source
+          git rev-parse HEAD > /tmp/ou3-physical-source/source-commit.txt
+          git archive --format=tar.gz HEAD > /tmp/ou3-physical-source/proof-input.tar.gz
+      - name: Validate retained source machinery
+        run: |
+          python3 tools/stability/ou3_brmm_centered_S_recurrence.py --output /tmp/ou3-physical-source/centered-S.json
+          python3 -m unittest discover -s tests/validation -p 'test_ou3_brmm_centered_S_recurrence.py' -v
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: ou3-brmm-physical-source
+          path: /tmp/ou3-physical-source/
+          retention-days: 7
