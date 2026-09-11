@@ -4,8 +4,25 @@ import sys,unittest
 from pathlib import Path
 TOOLS=Path(__file__).resolve().parents[2]/'tools'/'stability';sys.path.insert(0,str(TOOLS))
 import ou3_p4_source_indexed_phi_rebase as R
+from ou3_interval import Interval
 
 class SourceIndexedPhiRebaseTest(unittest.TestCase):
+    def test_structural_zero_rows_and_uncertain_source_difference(self):
+        e=[[Interval(-1.,1.)] for _ in range(3)]
+        for mode, n in (("H",18),("A",21)):
+            event=R.rebase_event(mode,e,e)
+            for j in range(n):
+                if 15<=j<18:
+                    self.assertEqual(event["xi"][j][0],e[j-15][0]-e[j-15][0])
+                    self.assertNotEqual(event["xi"][j][0],Interval.point(0.))
+                else:
+                    self.assertEqual(event["xi"][j][0],Interval.point(0.))
+            self.assertTrue(event["physical_defect_exactly_zero"])
+        with self.assertRaises(ValueError):
+            R.rebase_event("H",e[:2],e)
+        with self.assertRaises(ValueError):
+            R.rebase_event("H",[[0.],[0.],[0.]],e)
+
     def test_exact_rebase_algebra(self):
         d=R.build();self.assertEqual(R.validate(d),[])
         self.assertTrue(d['source_coordinate_rebase_exact_algebra_closed'])

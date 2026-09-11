@@ -32,11 +32,12 @@ import ou3_brmm_finite_window_primitive_qualification as PRIMITIVE
 import ou3_brmm_centered_primitive_transition as TRANSITION
 import ou3_brmm_acceleration_moment_iqc as MOMENT
 import ou3_brmm_rlambda_transition as RLAMBDA
+import ou3_brmm_physical_wave_source as WAVE
 
 REPO = Path(__file__).resolve().parents[2]
 DEFAULT_DOMAIN = REPO / "tools" / "stability" / "ou3_proof_operating_domain.json"
-SCHEMA = 1
-QUALIFICATION = "OU3_BRMM_CORRELATED_601_SAMPLE_OUTER_ENCLOSURE_V1"
+SCHEMA = 2
+QUALIFICATION = "OU3_BRMM_CORRELATED_601_SAMPLE_OUTER_ENCLOSURE_V2"
 N = 601
 DT = 0.005
 P3_DELTA = 1.0e-18
@@ -87,7 +88,13 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "same_history_required_for_entire_window": True,
         "constraints": {
             "translation": {
-                "state": "(v_k,p_k,S_L,k)",
+                "state": "(x_s,k,phi_k,phi_L,v_k,p_k,S_L,k)",
+                "physical_wave_generator_contract": WAVE.build(),
+                "potential_identity": "S_L,k=phi(x_s,k)-phi_L; dphi/dt=p",
+                "potential_out_is_next_potential_in": True,
+                "generator_state_invariant_required": True,
+                "potential_is_not_an_independent_S_supply_port": True,
+                "numeric_generator_family_envelope_qualified": False,
                 "uniform_velocity_norm_upper_mps": float(pm["V_m_norm_upper_mps"]),
                 "uniform_position_norm_upper_m": float(pm["P_m_norm_upper_m"]),
                 "recurrence": transition["exact_recurrence"],
@@ -177,6 +184,15 @@ def validate(d: dict) -> list[str]:
         f.append("translation primitive continuity lost")
     if t.get("one_live_centered_S_origin_for_all_samples") is not True:
         f.append("centered-S origin continuity lost")
+    f.extend(WAVE.validate(t.get("physical_wave_generator_contract", {})))
+    for key in ("potential_out_is_next_potential_in", "generator_state_invariant_required",
+                "potential_is_not_an_independent_S_supply_port"):
+        if t.get(key) is not True:
+            f.append("physical wave primitive constraint lost: "+key)
+    if t.get("potential_identity") != "S_L,k=phi(x_s,k)-phi_L; dphi/dt=p":
+        f.append("physical wave potential identity lost")
+    if t.get("numeric_generator_family_envelope_qualified") is not False:
+        f.append("numeric physical generator family falsely promoted")
     m = c.get("acceleration_moments", {})
     if m.get("same_transition_witness_as_translation") is not True:
         f.append("moment witness detached from translation")

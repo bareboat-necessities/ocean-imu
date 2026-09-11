@@ -1,0 +1,223 @@
+{
+  "P3_DEPLOYMENT_PASS": false,
+  "P3_SCOPED_EXECUTION_ADMISSION_PASS": true,
+  "P3_delta": 1e-18,
+  "P4_PASS": false,
+  "P5_MAY_START": false,
+  "article_edited_BRMM_section": {
+    "compiled": true,
+    "full_article_build_claim": false,
+    "pages": 6,
+    "rendered": true
+  },
+  "article_full_build": {
+    "limiter": "missing generated spectrum_jonswap_medium_3d.pgf",
+    "passed": false
+  },
+  "base_main_commit": "f7123bd874f0adeb508b9308b1586e7a39264da6",
+  "coupled_H18_A21_two_sample_diagnostic": {
+    "BIAS0": {
+      "classification": "C",
+      "error": "pivot 1 contains zero: [-6.741051843328836, 7.659816852449009]",
+      "status": "failed"
+    },
+    "BIAS1": {
+      "classification": "C",
+      "error": "pivot 1 contains zero: [-6.741051843328836, 7.659816852449009]",
+      "status": "failed"
+    },
+    "BIAS2": {
+      "classification": "C",
+      "error": "pivot 1 contains zero: [-6.741051843328836, 7.659816852449009]",
+      "status": "failed"
+    }
+  },
+  "diagnostic_first_failure": "second sample H18 accelerometer Joseph innovation, before A21 completion",
+  "end_to_end_theorem_closed": false,
+  "innovation_enclosure_falsification": {
+    "S_interval": [
+      [
+        [
+          0.08277038819285414,
+          0.8343420045839994
+        ],
+        [
+          -0.7515461436606138,
+          0.7515968886551426
+        ],
+        [
+          -0.7515222464167312,
+          0.7516207835346088
+        ]
+      ],
+      [
+        [
+          -0.7515461436606138,
+          0.7515968886551426
+        ],
+        [
+          0.08382714261822825,
+          0.8353986566569186
+        ],
+        [
+          -0.7516100050995717,
+          0.7515330228105165
+        ]
+      ],
+      [
+        [
+          -0.7515222464167312,
+          0.7516207835346088
+        ],
+        [
+          -0.7516100050995717,
+          0.7515330228105165
+        ],
+        [
+          0.08036734458417273,
+          0.8319388585369315
+        ]
+      ]
+    ],
+    "classification": "C",
+    "diagnostic_not_positive_certificate": true,
+    "error": "pivot 1 contains zero: [-6.741051843328836, 7.659816852449009]",
+    "exact_singular_member_of_independent_entrywise_hull": {
+      "all_entries": "1/10",
+      "determinant": "0",
+      "membership_checked_as_exact_rationals": true,
+      "not_an_admissible_same_history_innovation_claim": true,
+      "rank": 1,
+      "reason": "all three columns are identical"
+    },
+    "inverse_call": 38,
+    "midpoint_preconditioned_infinity_residual_diagnostic": 4.119862533437607,
+    "preconditioner": [
+      [
+        2.1807578275819806,
+        -0.00012040640873062565,
+        -0.00023555124315154295
+      ],
+      [
+        -0.00012040640873062564,
+        2.1757440030747492,
+        0.0001836067952647823
+      ],
+      [
+        -0.00023555124315154292,
+        0.00018360679526478233,
+        2.1922464524550884
+      ]
+    ],
+    "residual_row_sums_diagnostic": [
+      4.098157592915342,
+      4.0886392599742605,
+      4.119862533437607
+    ]
+  },
+  "input_sha256": {
+    ".github/workflows/ou3-brmm-physical-source.yml": "9c0a6076a7474cca040a09b69916860828e5886de8d4f56bde25cb4703bf3c89",
+    ".github/workflows/ou3-source-cover-construction.yml": "02239f96f39fb7828553a7643e2c3f7f90be1d018ec9a8978c6f166cb092ad93",
+    "doc/kalman_ou_iii/w3d-brmm-period-bridge.tex-part": "2d788f3f4d72e61e522536c99882793e9bba63a8d51075e5630f214ed2abe442",
+    "doc/kalman_ou_iii/w3d-brmm-stability-theorem.tex-part": "2e14eb4f7aff5cc3ed9e3a6dab1b085c7614851e6fa15efe6fe0a523eb4c4064",
+    "doc/kalman_ou_iii/w3d-marine-reference-models.tex-part": "9f3042566480816bc197e645a4e23f0ca653bf464d9abcd14ed40f224f13b7f8",
+    "doc/kalman_ou_iii/w3d-mems-bias-preconditions.tex-part": "9183d314a4324d82e7c5432d40423b3cabeb1fde9be1d472c436aeebff3df8d0",
+    "doc/kalman_ou_iii/w3d-stability-widening-source-path.tex-part": "c7633c29a1f9df218821158658a1a77f608788337155e8c97c58a2bfc6485467",
+    "docs/ou3-p4-handover-2026-09-09.md": "34640ddf4a7af4877532d1e27a91f41535ca175c2c5e4ab2a19aa4a5bf4bdfd9",
+    "docs/ou3-proof-research-state.md": "fab3497b5d00d5806715e684257a3e28724b8fa510e62cce6c836a7613e3c7da",
+    "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h": "c9ed955ef998992e33b253ed0d5d49673852b87413a8c560479a9b482786d64b",
+    "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": "1008e931734f226f93f52e46a1408503a7c1be9b364c0756da64a19788ece5ed",
+    "tests/validation/test_ou3_brmm_centered_S_recurrence.py": "af98823122b5a181776256ded6f596c881a4284dd70dd09ca1f909423b8c473a",
+    "tests/validation/test_ou3_brmm_hard_finite_window_source.py": "f02c2691eef705fbe20b3646d57242f34e77fab50d0b19d298baded115838b86",
+    "tests/validation/test_ou3_brmm_physical_wave_source.py": "1c038425fd240553fc49f10d244027d45f8b00a55e8f81c6fa98daec6105ef93",
+    "tests/validation/test_ou3_brmm_window_artifact_codec.py": "daa43fb904c53f002d35713ef51d84b7ee04b1deec5742e9d32baca1f48b2456",
+    "tests/validation/test_ou3_p4_source_indexed_phi_rebase.py": "498a57d76d372c47427b3cabcb0608739fb17f9711248b4d05ae533d05aff540",
+    "tests/validation/test_ou3_p4_source_uniform_estimator_event_attachment.py": "77a76203169d587a86b9b36f6a6d8a342581242d9001b7b90ac7603ba3f1e3f9",
+    "tools/stability/ou3_brmm_centered_S_recurrence.py": "e19a9fa12ec7e45e3888df844f0d5355c9c8a8b6370e6f14d7483c56b930cc5a",
+    "tools/stability/ou3_brmm_complete_source.py": "b55eb0d1c3a9f894ff6c9db8664d68c8583dd114ba354ae0e6ecf1e7ff1e47aa",
+    "tools/stability/ou3_brmm_complete_window_execution_kernel.py": "7a55bf2a22da51b4cb89b7ad8ec78df7c644e9d9af098b7d541c2d2e3a2bbdd8",
+    "tools/stability/ou3_brmm_contract.py": "68f0309378f3cd9e79a60f19d89142a39a0572243f10c7e1a42e3d2ac1c58474",
+    "tools/stability/ou3_brmm_correlated_window_outer_enclosure.py": "31feb76b0fb148dff9f107bdc42ce5b6f7bf932dae439e78102855e2a332aa86",
+    "tools/stability/ou3_brmm_finite_window_primitive_qualification.py": "325883aaa0154522d8887898c6c28ee58dd439f01e9206943f1ad3481a5281fb",
+    "tools/stability/ou3_brmm_hard_finite_window_source.py": "74149e9285accac8e08a273a9469d91047763a20cc791db3635b22926318b8d8",
+    "tools/stability/ou3_brmm_hard_shaping_state.py": "dd7f5399a7a0a4cc8be45e123af6764ff07af0bfbd311243569d75da09db900a",
+    "tools/stability/ou3_brmm_infinite_continuation.py": "0e185a93950eba9532dab39e0df6728404e230081b388055722bed9787d20656",
+    "tools/stability/ou3_brmm_physical_wave_source.py": "7a084a1eae421a7e17191b7a9bd50fbbb6b5aa8ccd5d53681806508f12181d9c",
+    "tools/stability/ou3_brmm_wave_primitive_binding.py": "d9da3a9f7cec348751aa38a5e0a8c4cc92b1019007d1cae925b04303788e3799",
+    "tools/stability/ou3_brmm_window_artifact_codec.py": "68d7ceaa4fffee41af393ffca0ab1e846d9f73c8372e063bc49a92693b90109d",
+    "tools/stability/ou3_p4_complete_brmm_source_cover_contract.py": "4634bce9d6398b184f5cee1d1b7b48da71d0d23e920141f44d3ef56d099277e5",
+    "tools/stability/ou3_p4_final_closure_gate.py": "589ab151f70fa2da3ac1f1aef800b3867a7c39eb3fd3cbe99a48914aab7b7f28",
+    "tools/stability/ou3_p4_source_indexed_phi_rebase.py": "84238b005a99edaad328e80846ca2ddf3b19ecf54093133031c772dcc416e244",
+    "tools/stability/ou3_p4_source_uniform_estimator_event_attachment.py": "0e7ecdeb6021cddb88fb00906d626cc96ca1bacc37f3ba8241453037c68c2369",
+    "tools/stability/ou3_p4_typed_sample_source_cell_binding.py": "41e2f1805bef05b51c14e97d4eec9ba39a287517d434a03da10e801dff7fcdcc"
+  },
+  "kind": "local-research-evidence-not-stability-certificate",
+  "make_all": {
+    "limiter": "missing Eigen/Dense in local environment",
+    "returncode": 2
+  },
+  "physical_generator_numeric_qualification_closed": false,
+  "physical_generator_theorem_compatible": true,
+  "remaining_mathematical_P4_blockers": [
+    "E: hard numerical physical generator envelope and derived centered-S bound",
+    "reachable fresh-Live correlated entry including prior-frequency timeout branch",
+    "COMPLETE BRMM same-signal estimator/source cover with signal-derived tau and sigma",
+    "interdependent (tau,sigma,T_S)->R_S with literal adaptation/commit/scheduler history",
+    "source-uniform same-cell Joseph correction/reset domain",
+    "source-uniform exact-graph endpoint augmented LDLT",
+    "source-uniform exact-graph every-prefix augmented LDLT",
+    "same exact graph every-prefix hard-domain retention"
+  ],
+  "shipping_filter_changed": false,
+  "tests": [
+    {
+      "passed": true,
+      "seconds": 0.017,
+      "suite": "physical-source-tests",
+      "tests": 14
+    },
+    {
+      "passed": true,
+      "seconds": 0.059,
+      "suite": "old-obstruction-tests",
+      "tests": 8
+    },
+    {
+      "passed": true,
+      "seconds": 0.199,
+      "suite": "centered-S-tests",
+      "tests": 5
+    },
+    {
+      "passed": true,
+      "seconds": 7.639,
+      "suite": "hard-provider-tests",
+      "tests": 14
+    },
+    {
+      "passed": true,
+      "seconds": 0.117,
+      "suite": "artifact-codec-tests-final",
+      "tests": 8
+    },
+    {
+      "passed": true,
+      "seconds": 70.325,
+      "suite": "rebase-tests",
+      "tests": 2
+    },
+    {
+      "passed": true,
+      "seconds": 6.856,
+      "suite": "complete-source-tests",
+      "tests": 4
+    },
+    {
+      "passed": true,
+      "seconds": 192.783,
+      "suite": "attachment-tests",
+      "tests": 3
+    }
+  ],
+  "working_radius_sets_physical_source_budget": false
+}

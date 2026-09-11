@@ -59,6 +59,25 @@ class MagneticEvent:
 
 
 @dataclass(frozen=True)
+class WavePrimitivePayload:
+    """Proof-only physical ancestry; never an extra estimator input.
+
+    Retaining intervals does not certify their generator/output identities.
+    The hard provider must establish those on the same continuous source.
+    """
+    generator_id: str
+    primitive_in_id: str
+    primitive_out_id: str
+    live_origin_id: str
+    velocity: tuple[Interval, Interval, Interval]
+    position: tuple[Interval, Interval, Interval]
+    centered_S: tuple[Interval, Interval, Interval]
+    potential_in: tuple[Interval, Interval, Interval]
+    potential_out: tuple[Interval, Interval, Interval]
+    live_potential: tuple[Interval, Interval, Interval]
+
+
+@dataclass(frozen=True)
 class SampleCoordinates:
     """One provider-certified source transition payload.
 
@@ -74,6 +93,7 @@ class SampleCoordinates:
     due_S: bool
     aw_floor_requested: bool
     magnetometer_events_after_imu: tuple[MagneticEvent, ...] = ()
+    wave_primitive: WavePrimitivePayload | None = None
 
 
 @dataclass
@@ -332,13 +352,14 @@ def _apply_magnetic_event(
     )
 
 
-def advance_branch(
+def _advance_branch_impl(
     branch: ExecutionBranch,
     sample: SampleCoordinates,
     *,
     constants: KernelConstants,
     next_cell_prefix: str,
     capture_riccati_event_cells: bool = False,
+    _owned_frontend_factory=None,
 ) -> tuple[list[ExecutionBranch], dict]:
     """Advance one connected source cell without selecting a front-end branch."""
     committed = TUNER.commit_if_pending(branch.frontend.tuner, constants.tuner)
@@ -370,7 +391,7 @@ def advance_branch(
     # Mahony/tuner/WPE transition after the accelerometer correction.  Magnetic
     # updates are external calls, so events declared "after_imu" are applied
     # only after this front-end successor family has been formed.
-    frontend_successors = FRONTEND.advance(
+    frontend_successors = _owned_frontend_factory() if _owned_frontend_factory is not None else FRONTEND.advance(
         branch.frontend,
         FRONTEND.Sample(sample.gyro_measurement, sample.specific_force),
         gravity_ms2=constants.gravity,
@@ -421,6 +442,55 @@ def advance_branch(
         "H_event_cells": H_cells if H_cells is not None else [],
         "A_event_cells": A_cells if A_cells is not None else [],
     }
+
+
+def advance_branch(
+    branch: ExecutionBranch, sample: SampleCoordinates, *, constants: KernelConstants,
+    next_cell_prefix: str, capture_riccati_event_cells: bool = False,
+) -> tuple[list[ExecutionBranch], dict]:
+    """Retained measured-period typed executor; not a complete prior-root codec."""
+    return _advance_branch_impl(
+        branch, sample, constants=constants, next_cell_prefix=next_cell_prefix,
+        capture_riccati_event_cells=capture_riccati_event_cells,
+    )
+
+
+def advance_branch_with_joint_frontend(
+    branch: ExecutionBranch, sample: SampleCoordinates, *, joint_state,
+    constants: KernelConstants, next_cell_prefix: str, joint_child_prefix: str,
+    capture_riccati_event_cells: bool = False,
+):
+    """Execute the code-owned same-signal frontend, including prior takeover.
+
+    No caller-supplied successor list is accepted. Every JOINT successor is
+    evaluated after the IMU corrections and before asynchronous magnetometer
+    events. The current active schedule remains committed before prediction;
+    the shared implementation verifies every successor against that schedule.
+    """
+    import ou3_p4_joint_brmm_frontend_transition as JOINT
+    if not isinstance(joint_state, JOINT.State) or joint_state.frontend != branch.frontend:
+        raise ValueError("joint and kernel predecessors must share the same frontend")
+    images = []
+
+    def owned_frontend():
+        images.extend(JOINT.advance(
+            joint_state, FRONTEND.Sample(sample.gyro_measurement, sample.specific_force),
+            gravity_ms2=constants.gravity, two_kp=constants.two_kp, two_ki=constants.two_ki,
+            child_prefix=joint_child_prefix,
+        ))
+        return tuple(FRONTEND.Successor(
+            image.state.frontend, image.active_schedule_for_current_riccati,
+            tuple(image.actual_rs_std_xyz_for_current_riccati),
+            image.vertical_acceleration, image.frequency_hz,
+        ) for image in images)
+
+    children, meta = _advance_branch_impl(
+        branch, sample, constants=constants, next_cell_prefix=next_cell_prefix,
+        capture_riccati_event_cells=capture_riccati_event_cells,
+        _owned_frontend_factory=owned_frontend,
+    )
+    meta["frontend_family_owner"] = "same_signal_joint_transition"
+    return children, meta, tuple(images)
 
 
 def execute_typed_window(

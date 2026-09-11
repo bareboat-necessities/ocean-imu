@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Uniform physical-primitive qualification for the complete BRMM source.
+"""Necessary finite-window primitive consequences of corrected COMPLETE-BRMM.
 
 The previous BRMM declaration required each admitted history to possess bounded
 velocity/displacement primitives, but left the family-wide constants unfrozen.
-That is not enough for a uniform finite P4 tube.  This module completes the
-*applicability definition* of the deterministic theorem source without fitting a
-trajectory and without replacing one physical history by independent sample
-boxes.
+These local constraints alone are not the complete physical source. The
+additional all-time generator potential is required by ou3_brmm_contract. This
+module retains the valid finite-window consequences without fitting a trajectory
+or replacing one physical history by independent sample boxes.
 
 The qualified Normal-Live source carries one wave-frame physical jet
 
@@ -77,6 +77,8 @@ def build(domain_path:Path=DOMAIN,closure_path:Path=CLOSURE)->dict:
       'schema':SCHEMA,'qualification':QUALIFICATION,
       'canonical_source':'COMPLETE_BRMM_NORMAL_LIVE_WORD',
       'source_applicability_refined':True,
+      'finite_window_only_is_sufficient_for_complete_BRMM_admission':False,
+      'corrected_physical_generator_required_separately':True,
       'trajectory_replay_used':False,'trajectory_extrema_used':False,
       'independent_sample_boxes_used':False,'independent_primitive_ports_used':False,
       'same_history_dynamic_constraint_used':True,

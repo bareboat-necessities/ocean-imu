@@ -1,6 +1,12 @@
 \section{MEMS residual-bias qualification and complete-word constraints}
 \label{sec:mems-bias-preconditions}
 
+For every COMPLETE-BRMM statement in this section, physical admission includes
+Section~\ref{sec:brmm-physical-wave-generator}, its fixed hard family budgets,
+and the same generator potential across successive words. Finite-window
+compactness alone is not a replacement for that condition.
+
+
 The following sensor premises accompany the complete BRMM motion source.
 They do not replace its joint translational/rotational realization, certify an
 assembled sensor, or assert a positive nonlinear P4 margin.  Throughout this

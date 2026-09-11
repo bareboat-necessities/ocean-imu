@@ -1,6 +1,12 @@
 \subsection{Peak-period to zero-crossing-period bridge}
 \label{sec:brmm-tp-tz-bridge}
 
+For every COMPLETE-BRMM statement in this section, physical admission includes
+Section~\ref{sec:brmm-physical-wave-generator}, its fixed hard family budgets,
+and the same generator potential across successive words. Finite-window
+compactness alone is not a replacement for that condition.
+
+
 When a spectral model is used to interpret a BRMM history, its components may
 be parameterized by peak periods $T_{p,r}$, but the deployed tuner does \emph{not} estimate a peak
 period.  Its measurement-derived canonical period state is the zero-crossing/
