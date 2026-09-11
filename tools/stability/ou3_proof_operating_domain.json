@@ -2,7 +2,7 @@
   "schema": 1,
   "qualification": "DECLARED_OU3_DEPLOYMENT_THEOREM_OPERATING_DOMAIN",
   "trajectory_fit": false,
-  "note": "These are theorem/deployment assumptions, not extrema fitted from the eight reference replays. The current COMPLETE-BRMM physical envelope is anchored to the Hs=8.5 m reference case and padded outward before P4 closure: Hs<=9.35 m, ||p_wave||<=8.10 m, ||v_wave||<=5.50 m/s, ||a_wave||<=8.80 m/s^2, ||omega_body||<=35 deg/s, f in [0.018,0.88] Hz, and centered primitive D_S<=1100 m*s. Existing replay remains a regression/falsification layer and may disprove this envelope but cannot establish it.",
+  "note": "These are theorem/deployment assumptions, not extrema fitted from the eight reference replays. The physical COMPLETE-BRMM source is anchored to the Hs=8.5 m reference case and padded outward before P4 closure. Physical source bounds and estimator error-entry bounds are distinct objects.",
   "complete_brmm_physical_envelope": {
     "reference_Hs_m": 8.5,
     "engineering_amplitude_padding_factor": 1.1,
@@ -16,7 +16,8 @@
     "frequency_support_hz": [0.018, 0.88],
     "centered_primitive_D_S_upper_m_s": 1100.0,
     "padding_chosen_independently_of_P4": true,
-    "legacy_300_m_s_used_to_set_physics": false
+    "legacy_300_m_s_used_to_set_physics": false,
+    "these_are_physical_source_bounds_not_error_bounds": true
   },
   "configured_runtime": {
     "imu_dt_s": 0.005,
@@ -54,14 +55,14 @@
     "tuning_frequency_takeover_condition": "WavePeriodEstimator::hasUsablePeriod(); does not wait for WavePeriodEstimator::isReady()",
     "physical_handoff_coordinate_bounds": {
       "gyro_bias_error_norm_upper_rad_s": 0.01,
-      "velocity_error_norm_upper_mps": 5.5,
+      "velocity_error_norm_upper_mps": 5.0,
       "position_error_norm_upper_m": 20.0,
-      "integral_displacement_error_norm_upper_m_s": 1100.0,
-      "latent_acceleration_error_norm_upper_mps2": 3.2,
+      "integral_displacement_error_norm_upper_m_s": 300.0,
+      "latent_acceleration_error_norm_upper_mps2": 2.941995,
       "accelerometer_bias_error_norm_upper_mps2": 0.4
     },
-    "latent_acceleration_error_bound_role": "DECLARED_PADDED_STARTUP_WAVE_ERROR_ENVELOPE_NOT_REPLAY_FIT_OR_PROOF_RETUNING",
-    "latent_acceleration_error_fraction_g": 0.3263090638175462,
+    "latent_acceleration_error_bound_role": "DECLARED_STARTUP_WAVE_ERROR_ENVELOPE_0P3G_NOT_REPLAY_FIT_OR_PROOF_RETUNING",
+    "latent_acceleration_error_fraction_g": 0.3,
     "wave_period_estimator_moment_start_time_definition": "3/lambda, lambda=2*pi*high_pass_hz",
     "wave_period_estimator_usable_time_floor_definition": "4/lambda plus at least one current estimated period of accumulated moment history",
     "wave_period_estimator_strict_ready_time_floor_definition": "6/lambda plus debiased moment weight > 0.5",
@@ -69,7 +70,7 @@
     "live_entry_requires_wave_period_estimator_usable": false,
     "quality_handoff_requires_tuner_ready_and_usable_period": true,
     "timeout_handoff_requires_aligned_branch_not_measured_period": true,
-    "physical_handoff_coordinate_bounds_role": "padded conditional theorem box; fresh-wrapper reachability remains a separate obligation; use ou3_p4_live_entry_graph.py"
+    "physical_handoff_coordinate_bounds_role": "legacy conditional diagnostic error box, not the physical wave-state envelope and not established fresh-wrapper reachability; use ou3_p4_live_entry_graph.py"
   },
   "initial_filter_entrance": {
     "scope": "DECLARED_ERROR_SET_PRESENTED_TO_P5_CAPTURE",
@@ -96,7 +97,7 @@
       "Ts_role": "positive characteristic sea period used only as a coordinate scale unless a separate theorem bound is declared"
     },
     "additional_hard_sea_scaled_bounds_declared": false,
-    "note": "The 45 deg attitude and |delta p_i| <= 0.5 Hs conditions are entrance assumptions, not a claim that the earlier startup interval preserves them automatically. The current numerical theorem envelope declares 0 < Hs <= 9.35 m by padding the 8.5 m reference sea before P4 closure. P1 retains its conservative source handoff structure with the padded latent-acceleration entry bound declared separately."
+    "note": "The 45 deg attitude and |delta p_i| <= 0.5 Hs conditions are error entrance assumptions. The physical source envelope is separately padded from the 8.5 m reference sea to Hs<=9.35 m before P4 closure."
   },
   "certificate_search": {
     "p4_complete_word_full_attitude_candidate_deg": [30.0, 25.0, 20.0, 15.0],
