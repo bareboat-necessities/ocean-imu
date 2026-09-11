@@ -1,18 +1,18 @@
 """Finite default SeaStateAutoTuner candidate/smoothing relation for ALT.
 
-This bridges one already-materialized wave-band summary sample to the staged
-``TuneState`` consumed by ``finite_tuner_commit``. It follows the deployed
-SpectralMSE/default-slew-zero path and retains every clamp and commit-cadence
-edge. The WPE frequency can now be bound directly from the same finite WPE
-successor; adaptive-band variance and transcendental binary32 ancestry remain
-upstream obligations. This module does not claim source admission or stability.
+The shipping-level entry consumes the finite adaptive-band/statistics successor:
+its bounded tuner frequency, acceleration variance readiness/value and propagated
+band-noise sigma all come from one same-history frontend state. It then applies
+the deployed SpectralMSE/default-slew-zero target and EMA logic before the staged
+commit. Stillness and transcendental binary32 ancestry remain open obligations.
 """
 from __future__ import annotations
-from dataclasses import dataclass, replace
+from dataclasses import dataclass
 from fractions import Fraction as F
 
 from tools.stability.ou3_alt_contraction import finite_prediction_graph as P
 from tools.stability.ou3_alt_contraction import finite_wpe_runtime as WPE
+from tools.stability.ou3_alt_contraction import finite_band_variance_runtime as BAND
 from tools.stability.ou3_alt_contraction.finite_tuner_commit import TuneState, clamp
 
 EMA_SCALE_MIN, EMA_SCALE_MAX = F(1,2), F(6)
@@ -108,7 +108,6 @@ class CandidateResult:
 def _horizon_lo(dt):
     dt=P.rational(dt); return min(dt,EMA_HORIZON_MAX) if dt>EMA_HORIZON_MIN else EMA_HORIZON_MIN
 
-
 def _clamp_horizon(x,dt): return clamp(P.rational(x),_horizon_lo(dt),EMA_HORIZON_MAX)
 
 
@@ -143,8 +142,7 @@ def step(previous:TuneState,sample:WaveBandSample,cfg:CandidateConfig,*,dt,time,
          spectral:SpectralWitness,ema:EmaWitness):
     dt,time,last_adapt_time=map(P.rational,(dt,time,last_adapt_time))
     if dt<=0 or time<last_adapt_time: raise ValueError('positive dt and monotone tuner time required')
-    target=targets(sample,cfg)
-    rs_t=spectral_RS(cfg,target,spectral)
+    target=targets(sample,cfg); rs_t=spectral_RS(cfg,target,spectral)
     sea_time=F(1,2)/target.frequency
     if cfg.adapt_tau_sea_periods>0:
         safe=clamp(sea_time,EMA_SCALE_MIN,EMA_SCALE_MAX)
@@ -162,14 +160,26 @@ def step(previous:TuneState,sample:WaveBandSample,cfg:CandidateConfig,*,dt,time,
     return CandidateResult(target.frequency,target.variance_wave,target.tau_target,target.sigma_target,rs_t,nxt,fire,time if fire else last_adapt_time,adapt_h,RS_h)
 
 
+def sample_from_frontend(front:BAND.FrontendResult,*,still,still_time,still_attenuation,sigma_wave_sqrt):
+    if not isinstance(front,BAND.FrontendResult): raise TypeError('finite band/statistics successor required')
+    return WaveBandSample(front.current_tuner_frequency,front.variance_ready,front.accel_variance,
+                          front.band_noise_sigma,still,still_time,still_attenuation,sigma_wave_sqrt)
+
+
+def step_from_frontend(previous:TuneState,front:BAND.FrontendResult,cfg:CandidateConfig,*,
+                       still,still_time,still_attenuation,sigma_wave_sqrt,
+                       dt,time,last_adapt_time,spectral:SpectralWitness,ema:EmaWitness):
+    sample=sample_from_frontend(front,still=still,still_time=still_time,
+                                still_attenuation=still_attenuation,sigma_wave_sqrt=sigma_wave_sqrt)
+    return step(previous,sample,cfg,dt=dt,time=time,last_adapt_time=last_adapt_time,spectral=spectral,ema=ema)
+
+
 def step_from_wpe(previous:TuneState,wpe:WPE.UpdateResult,sample:WaveBandSample,cfg:CandidateConfig,*,
                   dt,time,last_adapt_time,spectral:SpectralWitness,ema:EmaWitness):
-    """Bind the tuner frequency to the immediately preceding WPE successor."""
+    """Conditional shortcut valid only when SeaStateAutoTuner's f clamp is inactive."""
     if not isinstance(wpe,WPE.UpdateResult): raise TypeError('finite WPE successor required')
-    if wpe.frequency is None or wpe.period is None:
-        raise ValueError('tuner WPE path requires a finite canonical WPE output')
-    if sample.frequency_hz != wpe.frequency:
-        raise ValueError('tuner frequency detached from SAME post-update WPE state')
+    if wpe.frequency is None or wpe.period is None: raise ValueError('finite canonical WPE output required')
+    if sample.frequency_hz != wpe.frequency: raise ValueError('conditional WPE shortcut has active/detached tuner frequency clamp')
     return step(previous,sample,cfg,dt=dt,time=time,last_adapt_time=last_adapt_time,spectral=spectral,ema=ema)
 
 
@@ -179,10 +189,9 @@ def readiness():
       'default_SpectralMSE_target_same_tau_sigma_cadence':True,
       'tau_sigma_and_RS_EMA_recurrence':True,
       'sample_vs_commit_cadence_separated':True,
-      'post_WPE_frequency_same_history_attached':True,
-      'adaptive_band_variance_state_attached':False,
+      'band_variance_tuner_frequency_same_history_attached':True,
+      'stillness_state_attached':False,
       'exp_sqrt_pow_binary32_enclosed':False,
-      'stillness_exponential_attached':False,
       'complete_word_finite_identity':False,
       'ALT_LIVE_PASS':False,
     }
