@@ -203,3 +203,88 @@ Do not:
 
 Use failure classes A/B/C/D/E/F/G exactly as established. The old DC-position
 witness is outside corrected COMPLETE-BRMM and may not be recycled as A or B.
+
+## Parallel ALT contraction/dissipativity track
+
+The independent track is specified in `docs/ou3-alt-contraction.md`. The
+existing architecture, its next sequence above, and all P2/P3/P4/P5 gates remain
+unchanged. ALT does not promote those gates. The current ALT research question
+is whether an inverse-free whole-word joint24 dissipation formulation is a
+viable alternative, not whether isolated algebra tests establish stability.
+
+### Current hypothesis and exact architecture failures
+
+Keep a coercive joint24 storage, but charge non-decaying held-error/true-bias
+coordinates through bounded, same-history supply ports. Seek strict decay of
+the motion performance with finite ultimate bounds, not contraction of the
+physical source itself.
+
+The stricter common-metric target fails structurally: a held coordinate or
+BIAS2 constant truth supplies an identity block. If `A v = v != 0`, then
+`v^T(A^T M A - rho M)v = (1-rho)v^T M v > 0` for every SPD common M and
+`rho < 1`. This invalidates strict homogeneous contraction of the entire
+augmented state; it does not invalidate motion ISS or the existing proof.
+Limiter: an exact neutral direction, not interval width. The independent
+critic's strongest objection is that merely renaming P4 as contraction cannot
+remove that direction. Alternatives are (1) bounded-bias supply with full
+joint storage, (2) a quotient/incremental metric at fixed physical source,
+and (3) finite-duration held-mode storage followed by active-mode performance
+storage. The first is selected without dropping bias cross-information.
+
+A second shortcut fails at the shipping H18 gain mask: the actual `PCt` is not
+unconditionally the full residual Jacobian's `P H^T`. The unqualified full-state
+information-addition identity is therefore not an allowed rewrite. Retain
+`S q = r`, `delta_e = -N q`, with actual `N=PCt`, and the implemented Joseph
+polynomial. An effective H18 information model requires its own invariant
+bridge. This is a proof-method mismatch, not a filter defect.
+
+### Shared-contract execution failure
+
+`ou3_p4_bias_family_joint_iss_supply.build()` currently stops in
+`ou3_p4_hard_entry_set.build()` with:
+
+`qualified fresh-entry source failed: ['all_hard_entry_coordinates_inside_full_scale not true', 'source_uniform_reachable_other_entry_coordinates_closed not true', 'fresh_live_entry_cover_closed not true', 'one or more coordinate memberships failed']`.
+
+Classification: entry/working-domain qualification failure. This invalidates
+using the aggregate supply builder as already-qualified ALT entry evidence.
+It does not invalidate the separately defined BIAS0/BIAS1/BIAS2 recurrences.
+Limiter: fresh-Live hard membership, not covariance consistency. Critic:
+consuming the aggregate as a successful theorem would import an unproved
+startup assumption. Next falsifiable experiment: invoke each family definition
+and validator separately, preserve their exact shared-error/truth recurrence
+in the new lift, and report aggregate entry admission as false. No change to
+the shared builder or admission gate is authorized by this experiment.
+
+Local `make all` is infrastructure-blocked at `tests/ahrs/ahrs-qmekf-sim.cpp`
+because `Eigen/Dense` is absent from `/usr/include/eigen3`. This is not a
+mathematical failure. The independent CI installs Eigen before the unchanged
+shipping observer is built.
+
+### Current ALT evidence and next experiment
+
+The separate BIAS0/BIAS1/BIAS2 definition validators all pass; this does not
+close aggregate hard-entry or hardware admission. Fifteen ALT algebra tests
+pass, including exact finite gain/innovation increments and a rational
+masked-update analogue with joint cross storage and bounded neutral supply.
+The analogue is not a shipping certificate.
+
+The captured observer contains 29 H18 and 359 A21 retained three-second words.
+Re-evaluation of its stored products at 80/120 digits gives worst ratios
+0.9995136399194538514 and 0.9959857178394911698. The existing H18 ratio fixes
+held-bias error at zero, while A21 retains all 21 estimated-error coordinates.
+No metric is fitted to this replay. The limiting observed frozen-map margin
+is H18's approximately 0.00048636.
+
+A new attachment limitation is explicit: the observer reconstructs H=P^-1 N
+and accumulates a binary32 homogeneous map, not the complete endogenous
+nonlinear joint24 finite-increment map. Treating it as the latter would be a
+proof/implementation correspondence error. Its strict ratios do not justify
+outward certification of the unsupplied ALT master. The strongest critic is
+that high precision cannot restore omitted physics or gain dependence.
+Alternatives: instrument actual finite increments; derive an analytic graph
+of actual N/S/residual/tuner operations; or prove a fixed-trajectory nonlinear
+storage identity that legitimately avoids incremental gain derivatives.
+Selected next experiment: bind the already implemented exact finite solve
+increment graph to the analytic same-history shipping source, then run the
+full-word high-precision feasibility experiment before any interval refinement.
+All ALT and existing final theorem gates remain false/unpromoted.
