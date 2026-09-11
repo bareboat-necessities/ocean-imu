@@ -1,91 +1,105 @@
-# ALT shared OU runtime primitive lemma
+# ALT finite runtime primitive status
 
 ## Scope
 
-The finite prediction path carries one physical segment, one full 21-state
-covariance and one joint24 error/true-bias state.  This lemma removes three
-previously conditional prediction operands from the higher-level runtime entry:
-per-axis OU mean coefficients, active accelerometer-bias decay `phi_hat`, and
-active accelerometer-bias process covariance `Q_BB`.
+This note records the finite real-arithmetic runtime descriptors now composed on
+PR #523. They are proof relations for the current shipping implementation, not
+COMPLETE-BRMM/BIAS admission, contraction, startup capture or deployment
+finite-precision certificates.
 
-It is an algebraic runtime relation, not COMPLETE-BRMM/BIAS admission, finite
-precision, contraction or storage feasibility.
+## Shared OU and accelerometer-bias roots
 
-## Integrated OU mean coefficients
+For one shipping step `h`, post-clamp time constant `tau`, and scalar decay
+`alpha=exp(-h/tau)`, `finite_ou_runtime_primitives.py` generates the same mean
+coefficients used by shipping:
 
-For one shipping step `h`, post-clamp time constant `tau`, and the scalar runtime
-decay
+- `phi_va=tau(1-alpha)`;
+- the literal `|h/tau|<0.01` polynomial branch for `phi_pa,phi_Sa`;
+- otherwise the closed form using `expm1(-h/tau)=alpha-1`.
 
-`alpha = exp(-h/tau)`, `x=h/tau`,
+That tuple feeds both the finite mean recurrence and `F_LL`; a caller at the
+runtime entry cannot provide a detached second set.
 
-the current shipping implementation uses
+For active BA, one `(tau_b,phi_b,Q_bacc)` root supplies both the mean factor and
 
-`phi_va = tau (1-alpha)`.
+`Q_BB = Q_bacc * tau_b/2 * (1-phi_b^2)`,
 
-For `|x| < 0.01`, `safe_phi_A_coeffs` uses the literal polynomial branch
+which is exactly the shipping `-tau_b/2*expm1(-2h/tau_b)` relation when
+`phi_b=exp(-h/tau_b)`. Both BA cross-covariance blocks use the same `phi_b`.
+H18 remains the exact held branch `phi_b=1,Q_BB=0`.
 
-`phi_pa = tau^2 (x^2/2 - x^3/6 + x^4/24)`,
+## Attitude/gyro-bias covariance runtime
 
-`phi_Sa = tau^3 (x^3/6 - x^4/24 + x^5/120)`.
+`finite_attitude_runtime.py` materializes the shipping constant-rate attitude
+covariance primitives for `with_gyro_bias=true`:
 
-Otherwise it uses, with `expm1(-x)=alpha-1`,
+- the small-rate and trigonometric `R(w,t),B(w,t)` branches;
+- `F_AA=[[R,B],[0,I]]`;
+- structured `Q_AA` with isotropic-Qg fast integral or anisotropic Simpson
+  `R Q R'`, Simpson `B Qbg B'`, and the closed `integral_B` cross term;
+- the optional fast `Qbase*h` branch;
+- the finite-valued 6x6 PSD-hygiene control branches.
 
-`phi_pa = tau^2 (x + alpha - 1)`,
+Trig values and Eigen branch outcomes are explicit witnesses. They are not
+silently asserted to be the deployed binary values.
 
-`phi_Sa = tau^3 (x^2/2 - x - alpha + 1)`.
+## Integrated-OU Qaxis runtime
 
-The same tuple `(phi_va,phi_pa,phi_Sa,alpha,h)` is used on all three axes in
-the current shared-tau shipping configuration.  `finite_ou_runtime_primitives`
-constructs these coefficients and feeds exactly those values into both the
-finite mean predictor and `F_LL`; callers cannot supply a second coefficient
-set at that entry point.
+`finite_qaxis_runtime.py` materializes the literal
+`IntegratedOUChain<T,3>::process_covariance` relation used by
+`QdAxis4x1_analytic`:
 
-The remaining source obligation is to bind `alpha` itself to the deployed
-`exp(-h/tau)` evaluation and to the same tuner/runtime predecessor.  The finite
-real-arithmetic lemma does not claim a binary32 exponential enclosure.
+- the small-`x` polynomial formulas;
+- the general alpha-dependent formulas;
+- the nested 3x3 v/p/a marginal regularization;
+- S cross/marginal formulas;
+- the final 4x4 `regularize_psd_if_needed` branch.
 
-## Accelerometer-bias mean/covariance root
+`finite_prediction_runtime.py` composes this with the attitude and OU/BA
+runtime descriptors. Its highest prediction entry accepts no precomputed
+shipping `F_AA,Q_AA,F_LL,Q_LL,Q_BB` or free decay factor. It also requires the
+attitude covariance angular rate to equal the SAME bias-corrected gyro used by
+the nominal quaternion prediction.
 
-When BA updates are active, shipping uses
+## Post-prediction and measurement control
 
-`phi_b = exp(-h/tau_b)`
+`finite_post_prediction.py` materializes the literal post-prediction order:
 
-and
+1. optional pending `a_w` covariance synchronization by adding the positive
+   spectral part of `target-P_aw` only to the `a_w` block;
+2. covariance symmetry hygiene;
+3. periodic S scheduler elapsed-credit update;
+4. if due, S=0 service through the shipping safe-LDLT runtime branch.
 
-`qd_scale = -tau_b/2 expm1(-2h/tau_b)`.
+The floor covers no-pending, eigensolver-failure and successful positive-part
+branches. The scheduler covers due/not-due and overshoot remainder. A not-due S
+edge is an identity suffix.
 
-Therefore, in exact real arithmetic,
+`finite_measurement_runtime.py` wraps the existing finite measurement algebra in
+shipping's `safe_ldlt3_` control:
 
-`qd_scale = tau_b/2 (1-phi_b^2)`.
+- first LDLT success: no innovation shift;
+- first failure: exactly one bump
+  `max(machine_epsilon,1e-6*(noise_scale+1))` and retry;
+- second failure: reject without state/covariance update.
 
-The runtime primitive constructor uses this identity directly and builds
+On an accepted retry the same shifted innovation is used by the inverse-free
+gain and Joseph covariance relation.
 
-`Q_BB = Q_bacc * tau_b/2 * (1-phi_b^2)`.
+## Remaining source/runtime obligations
 
-Consequently the finite BA mean/error recurrence, BA covariance block, and both
-BA cross-covariance blocks consume one and the same `phi_b`.  H18 is the literal
-held branch `phi_b=1`, `Q_BB=0`.  The post-clamp requirement `tau_b>=1e-3` is
-retained.
+The finite formulas above remove detached transition/process matrices but do not
+yet supply the universal runtime history. Remaining work includes:
 
-This removes an independent `Q_BB` matrix and an independent `phi_hat` from the
-higher-level paired runtime predictor.  It does not yet prove that the deployed
-exponential, tuner state, `Q_bacc` and branch guard are reached from every
-admitted source history.
+- bind exp/trig evaluations, matrix factorization/eigensolver outcomes and
+  machine epsilon to rigorous deployment arithmetic;
+- bind `tau,Sigma_aw,tau_b,Q_bacc`, a_w floor target, scheduler period,
+  `R_acc,R_mag,R_S` and all relevant guards to the SAME frontend/tuner state;
+- materialize WPE, adaptive bandpass, sigma statistic, candidate/active tuner
+  state and staged commits;
+- materialize asynchronous magnetometer continuation, all measurement/nonfinite
+  rejection branches and every H18/A21 hybrid edge/prefix;
+- attach corrected COMPLETE-BRMM and BIAS0/1/2 admission to that graph.
 
-## Remaining prediction attachment
-
-The ordinary covariance block identity and this runtime-root lemma now leave the
-following prediction obligations open:
-
-- actual `F_AA,Q_AA`, including the constant-rate rotation/B matrix, fast versus
-  structured process-noise branch, Simpson evaluations and PSD hygiene;
-- analytic `Qaxis` construction and its regularization branch;
-- same-history tuner/frontend ancestry for `tau`, `Sigma_aw`, `tau_b`, `Q_bacc`
-  and the scalar decays;
-- pending `a_w` covariance positive-part inflation, final covariance hygiene and
-  periodic S service;
-- deployment floating-point residuals.
-
-Until these and the remaining measurement/frontend/hybrid branches are composed
-into the complete finite runtime word, storage search remains forbidden and all
-ALT final gates remain false.
+Until that complete source-uniform finite word is closed, storage feasibility,
+rho, retained basin, startup capture and all ALT final gates remain fail-closed.
