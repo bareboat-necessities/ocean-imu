@@ -255,36 +255,68 @@ and validator separately, preserve their exact shared-error/truth recurrence
 in the new lift, and report aggregate entry admission as false. No change to
 the shared builder or admission gate is authorized by this experiment.
 
-Local `make all` is infrastructure-blocked at `tests/ahrs/ahrs-qmekf-sim.cpp`
-because `Eigen/Dense` is absent from `/usr/include/eigen3`. This is not a
-mathematical failure. The independent CI installs Eigen before the unchanged
-shipping observer is built.
+The default local `make all` include path is infrastructure-blocked at
+`tests/ahrs/ahrs-qmekf-sim.cpp`: `fatal error: Eigen/Dense: No such file or directory`.
+This is not a mathematical failure. The actual finite-word experiment accepts
+`--eigen` for a nondefault installation; independent CI installs Eigen.
 
-### Current ALT evidence and next experiment
+### Current ALT attachment experiment and failure analysis
 
-The separate BIAS0/BIAS1/BIAS2 definition validators all pass; this does not
-close aggregate hard-entry or hardware admission. Fifteen ALT algebra tests
-pass, including exact finite gain/innovation increments and a rational
-masked-update analogue with joint cross storage and bounded neutral supply.
-The analogue is not a shipping certificate.
+The executable `tools/stability/ou3_alt_contraction/shipping_word.py` drives
+unchanged default Fusion startup/frontend with an analytic harmonic physical
+source and separate BIAS0/BIAS1/BIAS2 examples. At each actual H18, H18->A21,
+and A21 root it preserves all private runtime memory and runs literal
+600-step finite perturbations. No metric is fitted. These examples are not a
+source cover, hard entry qualification, or high-precision nonlinear word.
 
-The captured observer contains 29 H18 and 359 A21 retained three-second words.
-Re-evaluation of its stored products at 80/120 digits gives worst ratios
-0.9995136399194538514 and 0.9959857178394911698. The existing H18 ratio fixes
-held-bias error at zero, while A21 retains all 21 estimated-error coordinates.
-No metric is fitted to this replay. The limiting observed frozen-map margin
-is H18's approximately 0.00048636.
+**Current failed shortcut (dependency/representation, class C):** an
+incremental graph on delta-z24 alone is not closed when covariance memory is
+allowed to vary independently. In all nine covariance-only probes delta-z0=0
+but delta-zN is nonzero with the same physical history and matching recorded
+event path. Nonzero nominal residual multiplies the endogenous gain increment.
+The injected covariance roots have NOT been proved source reachable, so this
+is a witness against that relaxed graph, not a COMPLETE-BRMM counterexample
+or a failure of the nonincremental error-to-truth theorem.
 
-A new attachment limitation is explicit: the observer reconstructs H=P^-1 N
-and accumulates a binary32 homogeneous map, not the complete endogenous
-nonlinear joint24 finite-increment map. Treating it as the latter would be a
-proof/implementation correspondence error. Its strict ratios do not justify
-outward certification of the unsupplied ALT master. The strongest critic is
-that high precision cannot restore omitted physics or gain dependence.
-Alternatives: instrument actual finite increments; derive an analytic graph
-of actual N/S/residual/tuner operations; or prove a fixed-trajectory nonlinear
-storage identity that legitimately avoids incremental gain derivatives.
-Selected next experiment: bind the already implemented exact finite solve
-increment graph to the analytic same-history shipping source, then run the
-full-word high-precision feasibility experiment before any interval refinement.
-All ALT and existing final theorem gates remain false/unpromoted.
+**Invalidated:** dropping covariance/frontend increments merely because xi
+is called a source parameter; a frozen-gain incremental observer as the actual
+word. **Not invalidated:** fixed-trajectory joint storage with physical supply,
+a memory-augmented incremental theorem, or a correctly constrained same-history
+pair graph. Limiter: missing reachable joint memory relation, not interval
+precision or a measured rho. No contraction ratio is claimed for this graph.
+
+**Independent critic:** the handover already warned against freezing xi;
+a covariance-only injected probe does not resolve its reachable relation.
+Do not spend a refinement on proving this known dependency with tighter norms.
+Three distinct alternatives are: (1) augment incremental storage with Riccati
+and frontend memory; (2) use a same-trajectory error-to-truth dissipation graph
+that legitimately avoids comparing arbitrary covariance histories; (3) derive
+a reachable pair invariant that constrains memory differences jointly with
+state and physical inputs. Continue the current attachment question by deriving
+and checking actual state-to-N/S/residual relations and retained common-driver
+ports. Before a later metric search, select among these alternatives using an
+actual closed master. Do not treat a trace as that master.
+
+**Attachment implementation check:** temperature centering depends on
+`T - T_ref = 0`, not on the temperature coefficient itself being zero. The
+initial diagnostic rejected the nonzero default coefficient at the reference
+temperature; that diagnostic precondition is corrected without touching runtime.
+This is an instrumentation defect, not a bias-model or filter failure.
+
+**Retained execution evidence:** 33 algebra/binding tests pass. Conditional
+state-to-N/S/residual, Joseph/reset/projection and shared bias-driver checks run
+on 27 paired words plus nine baselines. The default continuous hard-iron
+correction explains why raw magnetic input is not the actual innovation input;
+its same-history value and the learned reference are explicitly captured.
+No independent coefficient rectangles, frozen gain, replay-fit metric or
+wordwise S origin is used. Measured numerical defects are not uniform bounds.
+
+**Next falsifiable experiment:** form a closed same-trajectory error-to-truth
+master with actual covariance/frontend/source recurrence and physical reference
+forcing, rather than a relaxed comparison with freely varying covariance.
+Search common joint24 storage plus bounded neutral supply first. If that graph
+cannot close its dependencies, compare the retained augmented-memory and
+reachable-pair alternatives before any interval work. Only a closed master may
+produce the requested high-precision H/A/edge ratios, generalized directions,
+per-operation margins and useful supply bound.
+All ALT gates and existing P4/P5 remain false/unpromoted.

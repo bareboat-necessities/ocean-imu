@@ -1,6 +1,6 @@
 # Parallel OU-III whole-word dissipativity proof
 
-> **Continuation:** after PR #517, start a NEW PR from latest `main` and read
+> **Continuation:** start a NEW PR from latest `main` and read
 > [`ou3-alt-contraction-handover.md`](ou3-alt-contraction-handover.md) first.
 > The existing P2/P3/P4/P5 route remains independently continuable through
 > [`ou3-brmm-main-handover.md`](ou3-brmm-main-handover.md).
@@ -19,12 +19,13 @@ contracts are consumed read-only. The [research ledger](ou3-proof-research-state
 contains separate ALT failure analysis. Neither route's tests substitute for
 the other route's certificates.
 
-**Current result:** exact inverse-free algebra, shared-bias lifts, a projection
-IQC, structural anti-shortcut regressions, and a captured frozen-map diagnostic
-are executable. A source-uniform shipping joint24 master has NOT been solved.
+**Current result:** inverse-free algebra and conditional shipping operand
+bindings are executable. Actual finite paired words now retain endogenous
+gain/covariance changes, shared true-bias drivers, frontend evolution and natural
+H18->A21 release. A source-uniform joint24 master has NOT been solved.
 `ALT_LIVE_PASS`, `ALT_STARTUP_PASS`, and `ALT_END_TO_END_PASS` are false.
-Existing P4/P5 are not promoted. A green exploratory workflow means successful
-execution of the experiments, not proof completion.
+Existing P4/P5 are not promoted. Green exploratory CI means execution, not
+proof completion.
 
 ## 1. The right state and target
 
@@ -233,76 +234,89 @@ padded physical family. A timeout proves a scheduler event occurs, not that
 its state lies in the certified basin. Covariance consistency is not a hard
 error bound. Do not import fresh-Live membership as an assumed success.
 
-## 6. Executable evidence and current blockers
+## 6. Actual finite-increment attachment experiment
 
-Run from the repository root:
+Run the algebra tests and the Linux host experiment:
 
 ```sh
 python -m unittest discover -s tests/ou3_alt_contraction -v
-python tools/stability/ou3_alt_contraction/diagnose.py --output /tmp/ou3-alt.json
+CXX=clang++ python tools/stability/ou3_alt_contraction/shipping_word.py \
+  --work /tmp/ou3-alt-finite-word \
+  --output /tmp/ou3-alt-finite-word.json --verify-uninstrumented
 ```
 
-With paired traces from the unchanged observer:
+`--eigen PATH` selects a nondefault Eigen installation. The experiment requires
+no downloaded wave dataset. Temporary headers expose actual operation operands
+without editing deployed files; an uninstrumented build checks sample-boundary
+bit identity for these executions. The full default Fusion startup/frontend is
+run on continuous analytic physical motion with separate BIAS0/BIAS1/BIAS2
+examples. Fork preserves all private state at actual H18, H18->A21 and A21 roots.
+Nine baseline words and three perturbations per word give 27 finite paired
+600-step experiments. Injected roots are NOT a hard entry set or a reachable
+source-uniform pair cover. Kinematic/bias parameter checks are not full BRMM/PE
+or hardware admission.
 
-```sh
-python tools/stability/ou3_alt_contraction/diagnose.py \
-  --maps /tmp/ou3-alt-maps.bin --cov /tmp/ou3-alt-cov.bin \
-  --output /tmp/ou3-alt-diagnostic.json
+`shipping_graph.py` binds accepted accelerometer, magnetometer and S operations
+through their actual pre-state, deriving H from the measurement model rather
+than P^-1 N. It retains H18 numerator masks, full bias uncertainty in S, learned
+magnetic reference, continuous hard-iron correction, anisotropic R_S and the
+same true-bias driver. Predicted bias, mean injection, Joseph, reset covariance
+and projection are checked against their recorded successors. Observed defects
+are reported rather than hidden as exact deployment identities. Attempts and
+returns preserve rejection evidence instead of dropping unmatched events.
+
+### Actual inverse-free row-solve graph
+
+Shipping computes K by solving each numerator row, then forms K*r. With the
+symmetric matrix `S^L` read by Eigen's LDLT Lower view and measured defect E,
+
+```
+S_i^L K_i^T = N_i^T + E_i,
+S_1^L delta_K^T + delta_S^L K_0^T = delta_N^T + delta_E,
+delta(Kr) = K_0 delta_r + delta_K r_1.
 ```
 
-The workflow `ou3-alt-contraction` creates those traces and retains source
-fingerprints, diagnostic JSON and signed operation ledgers. Captured words
-are only falsification/exploratory evidence: no replay fitting or promotion.
-The high-precision option re-evaluates the STORED binary32 word product at
-80 and 120 digits; it does not reconstruct high-precision nonlinear events.
+These finite identities retain the nonzero nominal residual and endogenous
+terms without reconstructing an inverse. Raw S remains separate for the actual
+upper-triangle Joseph write/mirror. In real exact symmetric arithmetic these
+relations are compatible with the innovation-q formulation in section 2;
+measured row-solve/correction defects are additional ports, not a theorem-level
+roundoff bound. The report's 80/120-digit checks verify these recorded finite
+identities only. They are NOT a high-precision nonlinear complete-word run.
 
-Current algebra tests check masked/unmasked solve graphs, finite endogenous
-increments, shared bias recurrence, retained joint cross terms, IQC sign and
-fail-closed status. An exact rational two-state masked-update analogue has
+### The current dependency obstruction
 
-```
-A = [[2/3,-1/3],[0,1]], M = [[1,1/4],[1/4,1]], rho=9/10,
-A^T M A-rho M-diag(0,1)
-  = [[-41/90,-101/360],[-101/360,-43/45]] < 0.
-```
+Covariance-only probes have zero initial joint24 state increment yet nonzero
+final state increments on the same physical history. Therefore an incremental
+master measuring only delta-z24 cannot allow arbitrary initial covariance
+variation without a retained memory relation or supply. A metric depending on
+xi still vanishes when delta-z24=0; it does not repair a discarded memory
+coordinate. This is an obstruction to that relaxed graph, not a physical
+COMPLETE-BRMM counterexample: source reachability of the injected roots remains
+unproved. It does not invalidate same-trajectory error-to-truth dissipativity.
+The [research ledger](ou3-proof-research-state.md) records the critic and three
+qualitatively different alternatives.
 
-Its determinant is 1027/2880>0 and first diagonal negative, while det(M)=15/16.
-This proves bounded-supply joint storage resolves the neutral-direction
-obstruction in that analogue, NOT in the shipping filter.
+No source-uniform rho, maximizing generalized direction, signed storage margin,
+ultimate bound or basin is claimed. Those report fields remain null rather than
+using mixed-unit Euclidean ratios. Before a metric search, close either an
+augmented-memory incremental graph, a reachable pair invariant, or the selected
+same-trajectory error-to-truth graph. Search common joint storage with justified
+neutral supply first. Preserve the physical reference-map defect, actual source
+continuation and every-prefix nonlinear obligations.
 
-The captured baseline has 29 H18 and 359 A21 retained same-mode words; worst
-stored-map ratios are approximately 0.999513639919454 and 0.995985717839491.
-H18 uses its existing 18-state homogeneous map with held error zero; A21 keeps
-all 21 estimated-error states. The observer reconstructs H from P^-1 N and
-freezes gain dependence. Neither result is full actual joint24 feasibility,
-a source-uniform metric, a chart-retention proof or a hybrid-edge certificate.
-The H18 margin of about 0.00048636 is the tighter observed frozen-map margin,
-not an available budget for an unbound nonlinear master.
+The independent ALT workflow retains report/manifest/compiler fingerprints.
+The earlier `diagnose.py` captured frozen-map baseline remains available as a
+separate falsification tool: its stored-map ratios approximately 0.99951364
+(H18, held-bias error fixed to zero) and 0.99598572 (A21) are not the full ALT
+master or an available nonlinear margin. No replay is used for metric fitting.
 
-All three individual bias definition validators pass. The shared aggregate
-supply builder currently fails fresh-entry hard-coordinate membership; ALT
-reports that failure, leaves its source unchanged and does not claim entry.
-The existing PE/vector domain consistency issue remains separately open.
-
-### Next falsifiable work, in order
-
-1. Attach a **source-uniform actual** finite-increment joint24 word, retaining
-   N/S endogenous increments, true bias, frontend/tuner and guard ancestry.
-   Reuse old validated source facts read-only, not old PASS labels.
-2. Before rigorous enclosure, run a high-precision complete-word feasibility
-   diagnostic of THAT graph. Report worst H/A directions, bias/source ports,
-   every operation's margin consumption and hybrid edges. Current captured
-   frozen-map ratios do not meet this requirement.
-3. Search the common-storage/bounded-supply formulation first. If it fails,
-   record the exact limiting direction and compare genuinely different metric
-   or source-graph choices before refining. Use the repository two-strike rule.
-4. Only after a feasible full master exists: outward-check its source cover,
-   compatible endpoints, all prefix reachability, physical working tube,
-   projection/bias bounds and finite precision. Then prove startup landing.
-
-No rigorous full-word margin, uniform ultimate bound, certified basin radius,
-finite capture time or H18->A21 landing is presently supplied by ALT. The
-original proof can continue independently while these obligations are pursued.
+All three individual bias definition validators pass for the current examples;
+the aggregate hard-entry builder still fails fresh-Live membership. No startup
+capture, source-uniform storage, all-prefix basin retention, hybrid landing or
+deployment finite-precision theorem is supplied by these experiments. Continue
+through [the ALT handover](ou3-alt-contraction-handover.md), while the original
+P2/P3/P4/P5 route remains independently continuable.
 
 ## Reference
 
