@@ -1,0 +1,56 @@
+name: ou3-post-live-correlated-numerics
+
+on:
+  push:
+    branches: ["proof/brmm-physical-primitive-2026-09-11"]
+  pull_request:
+    paths:
+      - 'tools/stability/ou3_p4_post_live_correlated_numerics.py'
+      - 'tools/stability/ou3_correlated_innovation_family.py'
+      - 'tools/stability/ou3_brmm_h18_information_composition.py'
+      - 'tools/stability/ou3_brmm_four_s_translation_information_tight.py'
+      - 'tools/stability/ou3_brmm_windowed_vector_pe.py'
+      - 'tools/stability/ou3_proof_operating_domain.json'
+      - '.github/workflows/ou3-post-live-correlated-numerics.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  numerics:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Compile proof sources
+        run: python3 -m compileall -q tools/stability
+      - name: Report post-Live correlated-innovation numerical certificate
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/ou3-post-live-numerics
+          python3 tools/stability/ou3_p4_post_live_correlated_numerics.py | tee /tmp/ou3-post-live-numerics/result.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/ou3-post-live-numerics/result.json'))
+          assert d['validation_pass']
+          assert d['innovation_covariance_rectangular_singularity_removed']
+          assert d['same_P_H_R_used_through_S_inverse_K']
+          assert d['H18_information_strictly_positive']
+          assert d['P3_delta']==1e-18
+          assert not d['P4_PASS'] and not d['P5_MAY_START']
+          print('H18_INFORMATION_LOWER',d['H18_information_lambda_min_lower'])
+          print('H18_INFORMATION_TO_1E18_GATE_RATIO',d['H18_information_to_gate_ratio'])
+          print('H18_GATE_PASS',d['H18_information_gate_pass'])
+          print('DIRECTIONAL_TRANSLATION',d['directional_translation_information_lower'])
+          print('COUPLED_ETA6_AW',d['coupled_eta6_aw_lambda_min_lower'])
+          print('NON_AW_TRANSLATION',d['non_aw_translation_lambda_min_lower'])
+          PY
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: ou3-post-live-correlated-numerics
+          path: /tmp/ou3-post-live-numerics/
+          retention-days: 7
