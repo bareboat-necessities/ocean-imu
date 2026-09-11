@@ -6,6 +6,7 @@ import unittest
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "tools" / "stability"))
 import ou3_brmm_physical_wave_condition as PHYS
 import ou3_brmm_physical_wave_source as CERT
+import ou3_brmm_complete_physical_envelope as ENV
 
 
 class PhysicalWaveConditionTests(unittest.TestCase):
@@ -36,9 +37,19 @@ class PhysicalWaveConditionTests(unittest.TestCase):
         self.assertEqual(d["physical_source_specification_omission_classification"], "E")
         self.assertFalse(d["shipping_filter_instability_claimed"])
 
-    def test_complete_family_numeric_bound_remains_fail_closed(self):
+    def test_complete_family_numeric_bound_is_fixed_from_padded_8p5_reference(self):
+        e = ENV.build()
+        self.assertEqual(ENV.validate(e), [])
+        self.assertTrue(e["full_COMPLETE_BRMM_numeric_physical_envelope_closed"])
+        self.assertEqual(e["reference_case"]["Hs_m"], 8.5)
+        self.assertEqual(e["complete_BRMM_hard_bounds"]["Hs_upper_m"], 9.35)
+        self.assertEqual(e["complete_BRMM_hard_bounds"]["centered_primitive_D_S_upper_m_s"], 1100.0)
+        self.assertGreater(e["complete_BRMM_hard_bounds"]["specific_force_norm_lower_mps2"], 0.0)
+        self.assertFalse(e["D_S_derivation"]["legacy_300_m_s_used"])
+
         d = PHYS.build()
-        self.assertFalse(d["physical_D_S_numeric_qualification_closed_for_complete_family"])
+        self.assertTrue(d["physical_D_S_numeric_qualification_closed_for_complete_family"])
+        self.assertEqual(d["numeric_D_S_m_s"], 1100.0)
         self.assertFalse(d["P4_PASS"])
         self.assertFalse(d["P5_MAY_START"])
         self.assertEqual(d["P3_delta"], 1e-18)
