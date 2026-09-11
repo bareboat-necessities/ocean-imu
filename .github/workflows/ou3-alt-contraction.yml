@@ -83,9 +83,10 @@ jobs:
             test_finite_attitude_runtime test_finite_qaxis_runtime \
             test_finite_prediction_runtime test_finite_post_prediction \
             test_finite_measurement_runtime test_finite_wpe_runtime \
-            test_finite_band_variance_runtime test_finite_tuner_candidate \
-            test_finite_tuner_commit test_finite_runtime_parameters \
-            test_shipping_finite_identity test_core test_proof_plan test_bias_families -v
+            test_finite_band_variance_runtime test_finite_stillness_runtime \
+            test_finite_tuner_candidate test_finite_tuner_commit \
+            test_finite_runtime_parameters test_shipping_finite_identity \
+            test_core test_proof_plan test_bias_families -v
       - name: Verify actual shipping event correspondence without source promotion
         run: |
           python3 tools/stability/ou3_alt_contraction/shipping_finite_identity.py \
