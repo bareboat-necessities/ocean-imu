@@ -6,6 +6,14 @@ A round-to-nearest midpoint inverse may be used only as a *fixed numerical left
 preconditioner*: if the resulting interval Gauss--Jordan pivots cannot exclude
 zero, the solve is rejected.  The floating result is therefore never accepted
 as an inverse or certificate by itself.
+
+For matrices whose theorem provenance guarantees symmetry and positive
+definiteness (notably innovation covariance S=H P H^T+R with R>0), this module
+also provides a fixed-order interval LDL^T solve.  It performs the complete
+factorization and triangular solves in outward interval arithmetic and requires
+every diagonal D interval to remain strictly positive.  No midpoint factor or
+floating Cholesky result is trusted.  This avoids dependency loss introduced by
+generic row elimination while preserving fail-closed semantics.
 """
 from __future__ import annotations
 
@@ -94,6 +102,87 @@ def matrix_solve_gauss_jordan(
             aug[i][k] = zero
 
     return [[aug[i][n + j] for j in range(cb)] for i in range(n)]
+
+
+def matrix_solve_spd_ldlt(
+    A: Sequence[Sequence[Interval]],
+    B: Sequence[Sequence[Interval]],
+) -> IntervalMatrix:
+    """Enclose X=A^{-1}B with a validated fixed-order interval LDL^T solve.
+
+    The caller must have theorem provenance that every point matrix represented
+    by ``A`` is symmetric positive definite.  This routine independently checks
+    the interval factorization condition needed for the computation: every
+    diagonal D_k obtained by outward interval LDL^T must have ``D_k.lo > 0``.
+    If dependency growth prevents that check, it raises ``IntervalPivotError``.
+
+    All arithmetic used in the accepted factorization and solves is interval
+    arithmetic.  No floating midpoint factor is consumed as evidence.
+    """
+    n, m = shape(A)
+    rb, cb = shape(B)
+    if n != m:
+        raise ValueError("interval SPD solve requires a square coefficient matrix")
+    if rb != n:
+        raise ValueError(f"SPD solve shape mismatch {(n, m)} and {(rb, cb)}")
+    if n == 0:
+        return []
+
+    S = matrix_symmetric_hull(A)
+    zero = Interval.point(0.0)
+    one = Interval.point(1.0)
+    L: IntervalMatrix = [[zero for _ in range(n)] for _ in range(n)]
+    D = [zero for _ in range(n)]
+    for i in range(n):
+        L[i][i] = one
+
+    # A = L D L^T, unit lower-triangular L.
+    for j in range(n):
+        dj = S[j][j]
+        for k in range(j):
+            dj = dj - L[j][k] * L[j][k] * D[k]
+        if not (math.isfinite(dj.lo) and math.isfinite(dj.hi)) or dj.lo <= 0.0:
+            raise IntervalPivotError(
+                f"SPD LDLT diagonal {j} not strictly positive: [{dj.lo!r}, {dj.hi!r}]"
+            )
+        D[j] = dj
+        for i in range(j + 1, n):
+            num = S[i][j]
+            for k in range(j):
+                num = num - L[i][k] * L[j][k] * D[k]
+            L[i][j] = num / D[j]
+
+    # L Y = B.
+    Y: IntervalMatrix = [[zero for _ in range(cb)] for _ in range(n)]
+    for i in range(n):
+        for c in range(cb):
+            y = B[i][c]
+            for k in range(i):
+                y = y - L[i][k] * Y[k][c]
+            Y[i][c] = y
+
+    # D Z = Y.
+    Z: IntervalMatrix = [[Y[i][c] / D[i] for c in range(cb)] for i in range(n)]
+
+    # L^T X = Z.
+    X: IntervalMatrix = [[zero for _ in range(cb)] for _ in range(n)]
+    for i in reversed(range(n)):
+        for c in range(cb):
+            x = Z[i][c]
+            for k in range(i + 1, n):
+                x = x - L[k][i] * X[k][c]
+            X[i][c] = x
+    return X
+
+
+def matrix_inverse_spd_ldlt(
+    A: Sequence[Sequence[Interval]],
+) -> IntervalMatrix:
+    """Validated interval inverse for an SPD-provenance matrix."""
+    n, m = shape(A)
+    if n != m:
+        raise ValueError("interval SPD inverse requires a square matrix")
+    return matrix_solve_spd_ldlt(A, matrix_identity(n))
 
 
 def _midpoint_float_inverse(A: Sequence[Sequence[Interval]]) -> list[list[float]] | None:
