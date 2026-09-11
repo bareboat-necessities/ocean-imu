@@ -4,6 +4,7 @@ from pathlib import Path
 import sys, unittest
 ROOT=Path(__file__).resolve().parents[2]; sys.path.insert(0,str(ROOT))
 from tools.stability.ou3_alt_contraction import finite_tuner_candidate as C
+from tools.stability.ou3_alt_contraction import finite_wpe_runtime as W
 from tools.stability.ou3_alt_contraction.finite_tuner_commit import TuneState
 
 
@@ -16,6 +17,10 @@ def sample(**kw):
     d.update(kw); return C.WaveBandSample(**d)
 
 
+def wpe(freq=F(1,2)):
+    return W.UpdateResult(W.WPEState(log_period=1),True,freq,1/freq,None,None)
+
+
 class Tests(unittest.TestCase):
     def test_same_sample_generates_tau_sigma_spectral_RS_targets(self):
         prev=TuneState(F(1,2),F(1,2),F(1,2)); out=C.step(prev,sample(),cfg(),dt=F(1,100),time=F(1,5),last_adapt_time=0,spectral=C.SpectralWitness(1,1),ema=C.EmaWitness(F(9,10),F(4,5)))
@@ -23,6 +28,15 @@ class Tests(unittest.TestCase):
         self.assertEqual((out.tau_target,out.sigma_target,out.RS_target),(1,1,1))
         self.assertEqual(out.tune_next.tau_applied,F(11,20)); self.assertEqual(out.tune_next.sigma_applied,F(11,20)); self.assertEqual(out.tune_next.RS_applied,F(3,5))
         self.assertTrue(out.pending_after); self.assertEqual(out.last_adapt_time_after,F(1,5))
+
+    def test_post_wpe_frequency_is_the_tuner_frequency(self):
+        prev=TuneState(F(1,2),F(1,2),F(1,2))
+        out=C.step_from_wpe(prev,wpe(),sample(),cfg(),dt=F(1,100),time=F(1,5),last_adapt_time=0,
+                            spectral=C.SpectralWitness(1,1),ema=C.EmaWitness(1,1))
+        self.assertEqual(out.frequency,F(1,2))
+        with self.assertRaises(ValueError):
+            C.step_from_wpe(prev,wpe(F(1,3)),sample(),cfg(),dt=F(1,100),time=0,last_adapt_time=0,
+                            spectral=C.SpectralWitness(1,1),ema=C.EmaWitness(1,1))
 
     def test_not_ready_variance_uses_noise_only_then_wave_floor(self):
         s=sample(variance_ready=False,accel_variance=100,band_noise_sigma=F(1,5),sigma_wave_sqrt=F(1,1000))
@@ -53,6 +67,6 @@ class Tests(unittest.TestCase):
         with self.assertRaises(ValueError): C.targets(sample(sigma_wave_sqrt=2),c)
 
     def test_readiness_stays_fail_closed_upstream(self):
-        r=C.readiness(); self.assertTrue(r['frequency_variance_to_tau_sigma_targets']); self.assertTrue(r['default_SpectralMSE_target_same_tau_sigma_cadence']); self.assertFalse(r['WPE_bandpass_variance_state_attached']); self.assertFalse(r['exp_sqrt_pow_binary32_enclosed']); self.assertFalse(r['complete_word_finite_identity']); self.assertFalse(r['ALT_LIVE_PASS'])
+        r=C.readiness(); self.assertTrue(r['frequency_variance_to_tau_sigma_targets']); self.assertTrue(r['default_SpectralMSE_target_same_tau_sigma_cadence']); self.assertTrue(r['post_WPE_frequency_same_history_attached']); self.assertFalse(r['adaptive_band_variance_state_attached']); self.assertFalse(r['exp_sqrt_pow_binary32_enclosed']); self.assertFalse(r['complete_word_finite_identity']); self.assertFalse(r['ALT_LIVE_PASS'])
 
 if __name__=='__main__': unittest.main()
