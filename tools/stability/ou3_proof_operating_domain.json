@@ -1,8 +1,8 @@
 {
-  "schema": 2,
-  "qualification": "DECLARED_OU3_DEPLOYMENT_THEOREM_OPERATING_DOMAIN_PADDED_BRMM_V2",
+  "schema": 1,
+  "qualification": "DECLARED_OU3_DEPLOYMENT_THEOREM_OPERATING_DOMAIN",
   "trajectory_fit": false,
-  "note": "The current COMPLETE-BRMM theorem domain is anchored to the 8.5 m reference sea and padded outward before P4 closure. The hard physical envelope is Hs<=9.35 m, ||p_wave||<=8.10 m, ||v_wave||<=5.50 m/s, ||a_wave||<=8.80 m/s^2, ||omega_body||<=35 deg/s, f in [0.018,0.88] Hz, D_S<=1100 m*s. These are theorem/deployment assumptions, not extrema fitted from replay and not values selected to make P4 pass.",
+  "note": "These are theorem/deployment assumptions, not extrema fitted from the eight reference replays. The current COMPLETE-BRMM physical envelope is anchored to the Hs=8.5 m reference case and padded outward before P4 closure: Hs<=9.35 m, ||p_wave||<=8.10 m, ||v_wave||<=5.50 m/s, ||a_wave||<=8.80 m/s^2, ||omega_body||<=35 deg/s, f in [0.018,0.88] Hz, and centered primitive D_S<=1100 m*s. Existing replay remains a regression/falsification layer and may disprove this envelope but cannot establish it.",
   "complete_brmm_physical_envelope": {
     "reference_Hs_m": 8.5,
     "engineering_amplitude_padding_factor": 1.1,
@@ -25,7 +25,7 @@
     "accelerometer_vibration_guard_initial_engagement": 0.0,
     "accelerometer_vibration_guard_detector_rms_upper_mps2": 0.03,
     "accelerometer_vibration_guard_active_branch_certified": false,
-    "accelerometer_vibration_guard_note": "PR #426 armed a 14 Hz stateful accelerometer prefilter by default. The pre-existing source model remains exact only on the source branch where its detector stays at or below the 0.03 m/s^2 lower engagement rail and the guard starts at zero engagement, for which shipping code returns the raw accelerometer bit-for-bit. Active/transitioning guard dynamics, impacts and slamming are separate source/hybrid proof obligations.",
+    "accelerometer_vibration_guard_note": "PR #426 armed a 14 Hz stateful accelerometer prefilter by default. The pre-existing P1-P5 source model remains exact only on the source branch where its detector stays at or below the 0.03 m/s^2 lower engagement rail and the guard starts at zero engagement, for which shipping code returns the raw accelerometer bit-for-bit. Active/transitioning guard dynamics, impacts and slamming are separate source/hybrid proof obligations and are not promoted by this domain.",
     "measurement_noise_std": {
       "accelerometer_mps2": [0.2, 0.2, 0.2],
       "magnetometer_uT": [0.3, 0.3, 0.3],
@@ -48,15 +48,10 @@
     "online_tune_warmup_source": "outer SeaStateFusion_OU_III::Config default forwarded by setOnlineTuneWarmupSec; overrides inner ONLINE_TUNE_WARMUP_SEC=5 s",
     "tune_frequency_prior_hz": 0.2,
     "wave_period_estimator_high_pass_hz": 0.02,
-    "wave_period_estimator_usable_time_floor_definition": "4/lambda plus at least one current estimated period of accumulated moment history",
-    "wave_period_estimator_strict_ready_time_floor_definition": "6/lambda plus debiased moment weight > 0.5",
     "tuner_ready_requires_wave_period_estimator_ready": false,
     "live_entry_may_precede_wave_period_estimator_first_valid_period": true,
     "tuning_frequency_source_before_first_valid_wave_period": "fixed TUNE_FREQ_PRIOR_HZ until WavePeriodEstimator::hasUsablePeriod()",
     "tuning_frequency_takeover_condition": "WavePeriodEstimator::hasUsablePeriod(); does not wait for WavePeriodEstimator::isReady()",
-    "live_entry_requires_wave_period_estimator_usable": false,
-    "quality_handoff_requires_tuner_ready_and_usable_period": true,
-    "timeout_handoff_requires_aligned_branch_not_measured_period": true,
     "physical_handoff_coordinate_bounds": {
       "gyro_bias_error_norm_upper_rad_s": 0.01,
       "velocity_error_norm_upper_mps": 5.5,
@@ -66,8 +61,15 @@
       "accelerometer_bias_error_norm_upper_mps2": 0.4
     },
     "latent_acceleration_error_bound_role": "DECLARED_PADDED_STARTUP_WAVE_ERROR_ENVELOPE_NOT_REPLAY_FIT_OR_PROOF_RETUNING",
+    "latent_acceleration_error_fraction_g": 0.3263090638175462,
     "wave_period_estimator_moment_start_time_definition": "3/lambda, lambda=2*pi*high_pass_hz",
-    "physical_handoff_coordinate_bounds_role": "declared padded theorem envelope; reachable fresh-wrapper entry remains a separate proof obligation"
+    "wave_period_estimator_usable_time_floor_definition": "4/lambda plus at least one current estimated period of accumulated moment history",
+    "wave_period_estimator_strict_ready_time_floor_definition": "6/lambda plus debiased moment weight > 0.5",
+    "tuner_ready_requires_wave_period_estimator_usable": true,
+    "live_entry_requires_wave_period_estimator_usable": false,
+    "quality_handoff_requires_tuner_ready_and_usable_period": true,
+    "timeout_handoff_requires_aligned_branch_not_measured_period": true,
+    "physical_handoff_coordinate_bounds_role": "padded conditional theorem box; fresh-wrapper reachability remains a separate obligation; use ou3_p4_live_entry_graph.py"
   },
   "initial_filter_entrance": {
     "scope": "DECLARED_ERROR_SET_PRESENTED_TO_P5_CAPTURE",
@@ -94,7 +96,7 @@
       "Ts_role": "positive characteristic sea period used only as a coordinate scale unless a separate theorem bound is declared"
     },
     "additional_hard_sea_scaled_bounds_declared": false,
-    "note": "The 45 deg attitude and |delta p_i| <= 0.5 Hs conditions are entrance assumptions. The physical source envelope is now padded from the 8.5 m reference sea to Hs<=9.35 m before P4 closure; this is not replay fitting."
+    "note": "The 45 deg attitude and |delta p_i| <= 0.5 Hs conditions are entrance assumptions, not a claim that the earlier startup interval preserves them automatically. The current numerical theorem envelope declares 0 < Hs <= 9.35 m by padding the 8.5 m reference sea before P4 closure. P1 retains its conservative source handoff structure with the padded latent-acceleration entry bound declared separately."
   },
   "certificate_search": {
     "p4_complete_word_full_attitude_candidate_deg": [30.0, 25.0, 20.0, 15.0],
@@ -127,12 +129,12 @@
       "accepted_packet_separation_max_s": 1.0,
       "non_gravitational_specific_force_norm_upper_mps2": 8.8,
       "axial_gyro_bias_is_neutral_input": true,
-      "note": "Conditional gravity-only theorem hypothesis uses the same padded 8.8 m/s^2 non-gravitational acceleration envelope."
+      "note": "Conditional gravity-only theorem hypothesis: before magnetic regauging, every quotient word contains two accepted accelerometer packets separated inside the declared interval and satisfying the same padded 8.8 m/s^2 non-gravitational CoG acceleration envelope."
     },
-    "pe_scope_note": "The full-heading theorem is for normal ocean-wave/ship motion at the CoG, not impact/slam dynamics. Its padded physical acceleration assumption is ||a_non-grav|| <= 8.8 m/s^2. With g=9.80665 m/s^2 and lever arm disabled, triangle inequality gives 1.00665 <= ||a_w-g|| <= 18.60665 m/s^2. Active vibration guard, impacts/slams, nonzero lever arm and hard attitude rewrites remain separate obligations.",
+    "pe_scope_note": "The full-heading theorem is for normal ocean-wave/ship motion at the CoG, not impact/slam dynamics. Its primary padded physical acceleration assumption is ||a_non-grav|| <= 8.8 m/s^2. With g=9.80665 m/s^2 and lever arm disabled, triangle inequality gives 1.00665 <= ||a_w-g|| <= 18.60665 m/s^2. The 10 uT magnetic floor and 0.1 vector-sine separation remain PE assumptions. Active/transitioning vibration guard, impacts/slams, nonzero lever arm, and hard attitude rewrites remain separate hybrid/domain obligations. The primary bounded-bias theorem covers the closed estimate projection ball; P3 covariance identity at projection does not close nonlinear P4 retention.",
     "accelerometer_update_required_each_valid_imu_sample_after_live_entry": true,
     "accelerometer_rejection_in_normal_live_scope": false,
-    "accelerometer_update_scope_note": "After entry into Normal Live, every valid IMU sample executes the accelerometer Kalman update. Numerical innovation-factorization failure is outside the normal theorem domain.",
+    "accelerometer_update_scope_note": "After entry into Normal Live, every valid IMU sample executes the accelerometer Kalman update. The certified source language therefore contains no rejected/missing accelerometer branch; numerical innovation-factorization failure is outside the normal theorem domain. Magnetometer timing and rejection remain asynchronous.",
     "hard_attitude_rewrite_inside_word": false,
     "hybrid_events_inside_same_mode_word": [],
     "hybrid_events_separate_from_P3_word": ["startup_handoff", "held_to_active", "magnetic_lock", "magnetic_regauge_refinement", "tilt_reset", "tilt_relock", "cooldown_reentry"],
