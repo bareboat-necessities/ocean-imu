@@ -32,10 +32,11 @@ jobs:
           mkdir -p /tmp/ou3-physical-source
           git rev-parse HEAD > /tmp/ou3-physical-source/source-commit.txt
           git archive --format=tar.gz HEAD > /tmp/ou3-physical-source/proof-input.tar.gz
-      - name: Exact physical generator, old witness, ancestry and rebase regressions
+      - name: Physical wave condition, certificate methods, old witness, ancestry and rebase regressions
         run: |
           set -euo pipefail
           for test in \
+            test_ou3_brmm_physical_wave_condition.py \
             test_ou3_brmm_physical_wave_source.py \
             test_ou3_brmm_infinite_continuation.py \
             test_ou3_brmm_centered_S_recurrence.py \
@@ -44,10 +45,11 @@ jobs:
             test_ou3_p4_source_indexed_phi_rebase.py; do
             python3 -m unittest discover -s tests/validation -p "$test" -v
           done
-      - name: Regenerate physical source and fail-closed P3 P4 evidence
+      - name: Regenerate physical condition, certificate evidence and fail-closed P3 P4 evidence
         run: |
           set -euo pipefail
           for module in \
+            ou3_brmm_physical_wave_condition \
             ou3_brmm_physical_wave_source \
             ou3_brmm_centered_S_recurrence \
             ou3_brmm_complete_source \
@@ -59,9 +61,14 @@ jobs:
           import json
           from pathlib import Path
           p=Path('/tmp/ou3-physical-source')
+          c=json.loads((p/'ou3_brmm_physical_wave_condition.json').read_text())
           w=json.loads((p/'ou3_brmm_physical_wave_source.json').read_text())
           g=json.loads((p/'ou3_p4_final_closure_gate.json').read_text())
-          assert w['validation_pass'] and g['validation_pass']
+          assert c['validation_pass'] and w['validation_pass'] and g['validation_pass']
+          assert c['physics_is_primary']
+          assert c['certificate_methods_are_sufficient_not_definitional']
+          assert not c['constant_nonzero_position_zero_velocity_history_admitted']
+          assert not c['physical_D_S_numeric_qualification_closed_for_complete_family']
           assert w['old_witness_excluded_by_corrected_physical_theorem']
           assert not w['constant_nonzero_position_zero_velocity_history_admitted']
           assert g['indefinite_source_target_compatible']
