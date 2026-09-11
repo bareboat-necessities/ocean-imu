@@ -194,7 +194,15 @@ marine inertial wave-motion estimation.  The 21-state estimator couples attitude
 and sensor biases with an OU-driven translational chain comprising velocity,
 oscillatory displacement, integral displacement, and latent world acceleration.
 A zero pseudo-measurement on the integral state provides low-frequency
-regularization. The BRMM physical source excludes persistent acceleration DC through a bounded velocity primitive, while allowing constant measurement bias and quiet water. The primary nonlinear stability target is conditional bounded
+regularization. BRMM defines wave displacement physically as bounded oscillatory
+vessel motion about a local equilibrium, separated from current, propulsion,
+leeway, secular translation, and arbitrary global-position origin. Its hard
+pathwise bounded-primitive condition excludes a permanent displacement DC
+component without equating zero mean with boundedness; harmonic/spectral and
+shaping-state representations are only sufficient ways to certify that physical
+condition. The BRMM source also excludes persistent acceleration DC through a
+bounded velocity primitive while allowing constant measurement bias and quiet
+water. The primary nonlinear stability target is conditional bounded
 accelerometer-bias error and regional practical stability of the other 18
 errors in both held and active modes. The active estimator remains 21-state,
 including all covariance cross terms and finite resets. Projection bounds the
@@ -252,6 +260,7 @@ extended Kalman filter, inertial navigation, IMU, marine Motion Reference Unit, 
 \input{w3d-init.tex-part}
 \input{w3d-mag-hard-iron.tex-part}
 \input{w3d-mems-bias-preconditions.tex-part}
+\input{w3d-brmm-physical-wave-condition.tex-part}
 \input{w3d-brmm-stability-theorem.tex-part}
 \input{w3d-brmm-period-bridge.tex-part}
 \input{w3d-iss-stability.tex-part}
