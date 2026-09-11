@@ -98,8 +98,8 @@ def build() -> dict:
             "measurement_dimension": 3,
             "inverse_free_form": "S*q=r, correction=N*q",
             "thin_increment_ports": "u_S=delta_S*q0; u_N=delta_N*q0",
-            "thin_master_port_dimension_A21": 33,
-            "old_vec_increment_dimension_A21": 105,
+            "thin_master_port_dimension_joint24": 33,
+            "old_vec_increment_dimension_joint24": 87,
             "storage_measurement_delta_rank_upper": 6,
             "full_state_reduction_permitted": False,
             "A21_motion_bias_cross_terms_retained": True,
@@ -149,8 +149,8 @@ def validate(d: dict) -> list[str]:
     r = d.get("rank3_structure_safe_to_use", {})
     if r.get("measurement_dimension") != 3 or r.get("full_state_reduction_permitted") is not False:
         f.append("rank-three structure mischaracterized")
-    if not int(r.get("thin_master_port_dimension_A21", 999)) < int(
-        r.get("old_vec_increment_dimension_A21", 0)
+    if not int(r.get("thin_master_port_dimension_joint24", 999)) < int(
+        r.get("old_vec_increment_dimension_joint24", 0)
     ):
         f.append("thin product-port representation did not reduce lifted dimension")
     return f
