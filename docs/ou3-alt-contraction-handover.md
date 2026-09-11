@@ -56,6 +56,15 @@ not bare R_acc. The error/storage state is never reduced to 18 coordinates.
 The checked rank-three Joseph evaluator rejects a nonzero solve defect rather
 than dropping its E K' contribution. No deployment roundoff bound is supplied.
 
+The [conditional paired-core composition lemma](ou3-alt-finite-core-composition.md)
+and `finite_core.py` connect finite mean/error, nominal quaternion, current full
+P, accepted-event residual/gain/Joseph/reset/projection and the persistent
+physical reference. Prediction reuses `PhysicalSegment`; its F/Q and actual
+applied-R/repair/controller bindings remain conditional. This closes the local
+accepted-event pairing algebra, NOT the source-uniform runtime word. Continue
+by binding those operands and missing branches, not by feeding this conditional
+core or a successful rational trace into a storage search.
+
 ## Implementation correspondence, not source qualification
 
 `shipping_finite_identity.py` builds the actual wrapper twice from startup.
@@ -78,7 +87,7 @@ Run the isolated checks without the old frozen-word observer:
 ```sh
 PYTHONPATH="$PWD:$PWD/tools/stability:$PWD/tests/ou3_alt_contraction" \
   python3 -m unittest test_finite_physical_prediction \
-  test_finite_measurement_graph test_finite_covariance_rank3 \
+  test_finite_measurement_graph test_finite_covariance_rank3 test_finite_core \
   test_shipping_finite_identity test_core test_proof_plan test_bias_families -v
 python3 tools/stability/ou3_alt_contraction/shipping_finite_identity.py \
   --output /tmp/ou3-alt-finite-identity.json

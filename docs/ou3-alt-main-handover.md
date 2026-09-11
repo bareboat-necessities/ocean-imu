@@ -5,6 +5,7 @@ The canonical current continuation state is
 Read it with `AGENTS.md`, the normative
 [`ou3-alt-proof-plan.md`](ou3-alt-proof-plan.md), the finite identities in
 [`ou3-alt-finite-measurement-proof.md`](ou3-alt-finite-measurement-proof.md),
+[`ou3-alt-finite-core-composition.md`](ou3-alt-finite-core-composition.md),
 and the ALT section of `ou3-proof-research-state.md`.
 
 Physical prediction and accepted measurement identities are available, with

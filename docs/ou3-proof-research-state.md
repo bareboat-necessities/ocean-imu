@@ -228,6 +228,14 @@ inverse-free `K Sigma=N` relation, without assuming `N=P H'`. The implementation
 checks that equality before cancelling; a nonzero solve defect is not dropped.
 This is exact arithmetic on the full covariance, not a state/storage reduction.
 
+The conditional paired-core lemma in `docs/ou3-alt-finite-core-composition.md`
+now substitutes the preceding finite mean AND full covariance into each
+accepted residual/gain/Joseph/reset/projection. Prediction reuses the physical
+segment and carries its conditional covariance recurrence. Exact prefix/suffix
+composition follows by induction, not a Jacobian product. Actual F/Q, applied R,
+repair decisions and complete runtime/frontend branches remain unattached;
+source-uniform finite-word/storage readiness is unchanged.
+
 ### Evidence and its limits
 
 A passive observer runs the real wrapper from startup without setting synthetic

@@ -68,7 +68,7 @@ jobs:
         run: |
           export PYTHONPATH="$PWD:$PWD/tools/stability:$PWD/tests/ou3_alt_contraction"
           python3 -m unittest test_finite_physical_prediction \
-            test_finite_measurement_graph test_finite_covariance_rank3 \
+            test_finite_measurement_graph test_finite_covariance_rank3 test_finite_core \
             test_shipping_finite_identity test_core test_proof_plan test_bias_families -v
       - name: Verify actual shipping event correspondence without source promotion
         run: |
