@@ -1,0 +1,58 @@
+name: ou3-p4-a21-source-indexed-prefix-transport
+
+on:
+  pull_request:
+    paths:
+      - 'tools/stability/ou3_p4_a21_source_indexed_prefix_transport.py'
+      - 'tools/stability/ou3_p4_a21_joseph_projection_split.py'
+      - 'tools/stability/ou3_p4_source_uniform_event_lineage_sequence.py'
+      - 'tools/stability/ou3_p4_source_uniform_bias_prefix_lineage.py'
+      - 'tools/stability/ou3_p4_a21_bias1_24state_event_lift.py'
+      - 'tests/validation/test_ou3_p4_a21_source_indexed_prefix_transport.py'
+      - '.github/workflows/ou3-p4-a21-source-indexed-prefix-transport.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ou3-p4-a21-source-indexed-prefix-transport-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Run A21 all-bias source-indexed transport
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/ou3-a21-source-indexed
+          python3 tools/stability/ou3_p4_a21_source_indexed_prefix_transport.py --output /tmp/ou3-a21-source-indexed/transport.json
+          python3 -m unittest -v tests.validation.test_ou3_p4_a21_source_indexed_prefix_transport
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/ou3-a21-source-indexed/transport.json'))
+          assert d['validation_pass'],d['validation_failures']
+          assert d['all_BIAS0_BIAS1_BIAS2_recurrences_composed']
+          assert d['A21_Joseph_reset_and_projection_are_distinct_prefixes']
+          assert d['A21_every_subevent_prefix_transport_constructor_closed']
+          assert d['projection_has_exact_zero_Phi_interior_shift']
+          assert d['one_shared_w_and_mtau_supply_block_per_prediction']
+          assert not d['production_BRMM_moment_radial_sector_attached_here']
+          assert not d['production_binary32_prefix_map_attached_here']
+          assert not d['production_compatible_storage_attached_here']
+          assert not d['A21_endpoint_augmented_LDLT_closed_here']
+          assert not d['A21_every_prefix_augmented_LDLT_closed_here']
+          assert not d['P4_PASS'] and not d['P5_MAY_START']
+          assert d['P3_delta']==1e-18
+          PY
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: ou3-p4-a21-source-indexed-prefix-transport
+          path: /tmp/ou3-a21-source-indexed/
+          retention-days: 7

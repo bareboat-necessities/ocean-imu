@@ -1,0 +1,53 @@
+name: ou3-p4-source-indexed-phi-rebase
+
+on:
+  pull_request:
+    paths:
+      - "tools/stability/ou3_p4_source_indexed_phi_rebase.py"
+      - "tools/stability/ou3_p4_structural_prefix_transport.py"
+      - "tools/stability/ou3_p4_complete_brmm_measurement_linearizing_aw_coordinate.py"
+      - "tools/stability/ou3_p4_complete_word_endpoint_transport.py"
+      - "tools/stability/ou3_p4_complete_word_prefix_transport.py"
+      - "tools/stability/ou3_p4_brmm_primitive_prefix_binding.py"
+      - "tests/validation/test_ou3_p4_source_indexed_phi_rebase.py"
+      - ".github/workflows/ou3-p4-source-indexed-phi-rebase.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ou3-p4-source-indexed-phi-rebase-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  rebase:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Exact source-indexed Phi rebase
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/ou3-phi-rebase
+          python3 tools/stability/ou3_p4_source_indexed_phi_rebase.py --output /tmp/ou3-phi-rebase/rebase.json
+          python3 -m unittest discover -s tests/validation -p 'test_ou3_p4_source_indexed_phi_rebase.py' -v
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/ou3-phi-rebase/rebase.json'))
+          assert d['validation_pass'],d['validation_failures']
+          assert d['source_coordinate_rebase_exact_algebra_closed']
+          assert d['C_equals_L_identity_for_rebase']
+          assert d['rebase_has_no_interior_epsilon_transport']
+          assert d['epsilon_packetwise_rezero_forbidden']
+          assert not d['source_uniform_rebase_defect_bound_closed_here']
+          assert not d['P4_PASS'] and not d['P5_MAY_START']
+          PY
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: ou3-p4-source-indexed-phi-rebase
+          path: /tmp/ou3-phi-rebase/
+          retention-days: 7

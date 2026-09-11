@@ -8,7 +8,10 @@ on:
       - 'tools/stability/ou3_p4_brmm_kernel_source_cell_smoke.py'
       - 'tools/stability/ou3_p4_hard_entry_radial_ad_boxes.py'
       - 'tools/stability/ou3_p4_brmm_kernel_radial_event_ad_cover.py'
+      - 'tools/stability/ou3_p4_all_bias_radial_working_cells.py'
+      - 'tools/stability/ou3_p4_all_bias_correction_chart_cover.py'
       - 'tools/stability/ou3_p4_fresh_entry_first_exit_bridge.py'
+      - 'tools/stability/ou3_p4_source_uniform_event_lineage_induction.py'
       - 'tools/stability/ou3_p4_S_origin_literal_prefix_invariant.py'
       - 'tools/stability/ou3_p4_complete_brmm_source_cover_contract.py'
       - 'tools/stability/ou3_p4_complete_brmm_source_cover_transition.py'
@@ -16,6 +19,8 @@ on:
       - 'tools/stability/ou3_p4_brmm_reduced_event_master.py'
       - 'tools/stability/ou3_p4_brmm_same_Dtheta_reset_binding.py'
       - 'tools/stability/ou3_p4_brmm_event_lineage_cover.py'
+      - 'tests/validation/test_ou3_p4_all_bias_radial_working_cells.py'
+      - 'tests/validation/test_ou3_p4_all_bias_correction_chart_cover.py'
       - '.github/workflows/ou3-p4-kernel-radial-event-ad-cover.yml'
   pull_request:
     paths: *paths
@@ -49,6 +54,10 @@ jobs:
           python tools/stability/ou3_p4_brmm_kernel_source_cell_smoke.py --output /tmp/ou3-p4-kernel-radial/zero-root-source-cells.json
           python tools/stability/ou3_p4_hard_entry_radial_ad_boxes.py --output /tmp/ou3-p4-kernel-radial/radial-boxes.json
           python tools/stability/ou3_p4_brmm_kernel_radial_event_ad_cover.py --output /tmp/ou3-p4-kernel-radial/radial-event-ad.json
+          python tools/stability/ou3_p4_all_bias_radial_working_cells.py --output /tmp/ou3-p4-kernel-radial/all-bias-working-cells.json
+          python tools/stability/ou3_p4_all_bias_correction_chart_cover.py --output /tmp/ou3-p4-kernel-radial/all-bias-charts.json
+          python -m unittest -v tests.validation.test_ou3_p4_all_bias_radial_working_cells
+          python -m unittest -v tests.validation.test_ou3_p4_all_bias_correction_chart_cover
           python tools/stability/ou3_p4_fresh_entry_first_exit_bridge.py --output /tmp/ou3-p4-kernel-radial/first-exit-reduction.json
           python tools/stability/ou3_p4_S_origin_literal_prefix_invariant.py --output /tmp/ou3-p4-kernel-radial/S-origin-prefix.json
           python - <<'PY'
@@ -56,8 +65,9 @@ jobs:
           root='/tmp/ou3-p4-kernel-radial/'
           k=json.load(open(root+'kernel-capture.json'));z=json.load(open(root+'zero-root-source-cells.json'))
           r=json.load(open(root+'radial-boxes.json'));a=json.load(open(root+'radial-event-ad.json'))
+          b=json.load(open(root+'all-bias-working-cells.json'));c=json.load(open(root+'all-bias-charts.json'))
           x=json.load(open(root+'first-exit-reduction.json'));s=json.load(open(root+'S-origin-prefix.json'))
-          for name,obj in [('kernel',k),('zero-root',z),('radial-boxes',r),('radial-event-ad',a),('first-exit',x),('S-origin',s)]:
+          for name,obj in [('kernel',k),('zero-root',z),('radial-boxes',r),('radial-event-ad',a),('all-bias-working',b),('all-bias-charts',c),('first-exit',x),('S-origin',s)]:
               assert obj['validation_pass'], (name,obj.get('validation_failures'))
           assert k['trusted_kernel_passive_capture_consumed'] and k['all_joint_images_bound_to_current_kernel_Riccati_schedule']
           binding=k['same_sample_schedule_binding'];assert binding['every_joint_image_current_schedule_bound_to_kernel_Riccati_event']
@@ -69,10 +79,19 @@ jobs:
           assert a['same_cell_P_H_R_K_used_for_every_Joseph_AD_cell'] and a['all_radial_Joseph_state_outputs_and_Jacobians_finite']
           assert a['all_real_structured_event_masters_and_reset_bindings_constructed'] and a['A21_projection_not_assumed_inactive']
           assert not a['local_full_hard_box_at_each_event_claimed_reachable'] and not a['production_prefix_state_reachability_closed_here']
+          assert b['A21_BIAS0_BIAS1_BIAS2_cells_materialized_separately']
+          assert set(b['A21_family_counts'])=={'BIAS0','BIAS1','BIAS2'} and len(set(b['A21_family_counts'].values()))==1
+          assert b['all_working_cells_valid'] and b['all_Szero_cells_use_actual_applied_RS']
+          assert not b['BIAS0_or_BIAS2_inferred_from_BIAS1'] and not b['captured_source_image_promoted_to_COMPLETE_BRMM_family']
+          assert c['BIAS0_BIAS1_BIAS2_certified_separately'] and c['shared_component_envelope_lemma_consumed']
+          assert c['same_estimator_owned_P_H_R_retained'] and c['actual_applied_RS_retained']
+          assert not c['family_driver_recurrences_collapsed_into_one'] and not c['BIAS0_or_BIAS2_inferred_from_BIAS1']
           assert x['logical_first_exit_reduction_closed'] and x['fresh_centered_integral_displacement_norm_m_s']==0.0
           assert x['captured_same_cell_coefficients_full_hard_domain_local_event_cover_closed']
           assert not x['captured_kernel_working_cells_promote_source_uniform_coefficient_cover']
-          assert not x['source_uniform_local_event_coefficient_cover_closed_here']
+          assert x['source_uniform_local_event_coefficient_cover_closed_here']
+          assert x['source_uniform_local_event_cover_uses_branch_complete_induction']
+          assert x['source_uniform_local_event_cover_retains_actual_RS']
           assert s['finite_literal_prefix_composition_closed_by_induction']
           assert s['common_origin_column_may_be_quotiented_after_joint_graph_assembly']
           assert not s['original_300m_s_error_ball_may_bound_S_zero_residual']
@@ -80,7 +99,9 @@ jobs:
           assert not x['source_uniform_every_prefix_augmented_LDLT_closed_here'] and not x['source_uniform_every_prefix_hard_domain_retention_closed_here']
           assert not a['P4_MOTION_PASS'] and not a['P4_PASS'] and not a['P5_MAY_START']
           print('KERNEL_RADIAL_EVENT_AD_COVER_PASS',a['A21_projection_branches_observed'])
-          print('FIRST_EXIT_LOGIC_PASS_SOURCE_UNIFORM_COEFFICIENTS_OPEN',x['fresh_entry_reduced_group_order'])
+          print('ALL_BIAS_RADIAL_WORKING_CELLS_PASS',b['A21_family_counts'])
+          print('ALL_BIAS_CORRECTION_CHART_COVER',c['same_graph_correction_and_reset_chart_closed_all_families'])
+          print('FIRST_EXIT_LOGIC_AND_SOURCE_UNIFORM_LOCAL_EVENT_COVER_PASS',x['fresh_entry_reduced_group_order'])
           print('S_ORIGIN_LITERAL_PREFIX_INVARIANT_PASS')
           PY
       - uses: actions/upload-artifact@v4

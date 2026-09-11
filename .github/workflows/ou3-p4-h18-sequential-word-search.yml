@@ -1,0 +1,69 @@
+name: ou3-p4-h18-sequential-word-search
+
+on:
+  push:
+    paths: &paths
+      - 'tools/stability/ou3_interval_linear_algebra.py'
+      - 'tools/stability/ou3_p4_h18_sequential_word_search.py'
+      - 'tools/stability/ou3_p4_h18_sequential_multiplier_refinement.py'
+      - 'tools/stability/ou3_p4_h18_sequential_every_prefix_search.py'
+      - 'tools/stability/ou3_p4_h18_sequential_source_fp_schur.py'
+      - 'tools/stability/ou3_p4_h18_post_prediction_word.py'
+      - 'tools/stability/ou3_p4_h18_source_indexed_prefix_transport.py'
+      - 'tests/validation/test_ou3_interval_spd_ldlt.py'
+      - 'tests/validation/test_ou3_p4_h18_sequential_word_search.py'
+      - 'tests/validation/test_ou3_p4_h18_sequential_multiplier_refinement.py'
+      - 'tests/validation/test_ou3_p4_h18_sequential_every_prefix_search.py'
+      - '.github/workflows/ou3-p4-h18-sequential-word-search.yml'
+  pull_request:
+    paths: *paths
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Validate interval SPD solver
+        run: python3 -m unittest -v tests.validation.test_ou3_interval_spd_ldlt
+      - name: Run sequential word search tests
+        run: |
+          python3 -m unittest -v tests.validation.test_ou3_p4_h18_sequential_word_search
+          python3 -m unittest -v tests.validation.test_ou3_p4_h18_sequential_multiplier_refinement
+          python3 -m unittest -v tests.validation.test_ou3_p4_h18_sequential_every_prefix_search
+      - name: Materialize search evidence
+        run: |
+          mkdir -p /tmp/ou3-p4-h18-sequential-word-search
+          python3 tools/stability/ou3_p4_h18_sequential_word_search.py --output /tmp/ou3-p4-h18-sequential-word-search/evidence.json
+          python3 tools/stability/ou3_p4_h18_sequential_multiplier_refinement.py --output /tmp/ou3-p4-h18-sequential-word-search/refinement.json
+          python3 tools/stability/ou3_p4_h18_sequential_every_prefix_search.py --output /tmp/ou3-p4-h18-sequential-word-search/prefixes.json
+          python3 - <<'PY'
+          import json
+          root='/tmp/ou3-p4-h18-sequential-word-search/'
+          d=json.load(open(root+'evidence.json'))
+          r=json.load(open(root+'refinement.json'))
+          p=json.load(open(root+'prefixes.json'))
+          assert d['validation_pass'] and r['validation_pass'] and p['validation_pass']
+          assert d['search']['attempts'] > 0
+          assert 'candidate_found' in r['refinement']
+          assert p['diagnostic']['prefix_count'] > 0
+          assert not d['production_endpoint_augmented_LDLT_closed_here']
+          assert not r['production_endpoint_augmented_LDLT_closed_here']
+          assert not p['production_every_prefix_augmented_LDLT_closed_here']
+          assert not d['P4_PASS'] and not r['P4_PASS'] and not p['P4_PASS']
+          print('SEQUENTIAL_SEARCH', d['search'])
+          print('ASYMMETRIC_REFINEMENT', r['refinement'])
+          print('EVERY_PREFIX_SEARCH', p['diagnostic'])
+          PY
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: ou3-p4-h18-sequential-word-search
+          path: /tmp/ou3-p4-h18-sequential-word-search/
+          retention-days: 7

@@ -28,18 +28,19 @@ import ou3_p4_exact_chord_signed_master_bridge as BRIDGE
 import ou3_p4_reset_domain_binding as RESETBIND
 import ou3_p4_kalman_reset_binary32_iss as FP
 import ou3_p4_complete_brmm_source_cover_contract as SOURCE
+import ou3_brmm_infinite_continuation as INFINITE
 
-QUALIFICATION='OU3_P4_FINAL_FAIL_CLOSED_GATE_V8'
+QUALIFICATION='OU3_P4_FINAL_FAIL_CLOSED_GATE_V9'
 REQUIRED_BIAS_FAMILIES=('BIAS0','BIAS1','BIAS2')
 
 
 def build():
     e=ENTRY.build();b0=BIAS0.build();b=BIAS1.build();b2=BIAS2.build();bs=BIASISS.build()
-    p=P3A.build();g=BRIDGE.build();rb=RESETBIND.build();fp=FP.build();src=SOURCE.build()
+    p=P3A.build();g=BRIDGE.build();rb=RESETBIND.build();fp=FP.build();src=SOURCE.build();infinite=INFINITE.build()
     bad={'entry':ENTRY.validate(e),'bias0':BIAS0.validate(b0),'bias1':BIAS1.validate(b),
          'bias2':BIAS2.validate(b2),'bias_family_supply':BIASISS.validate(bs),'p3':P3A.validate(p),
          'bridge':BRIDGE.validate(g),'reset_binding':RESETBIND.validate(rb),'fp':FP.validate(fp),
-         'source_contract':SOURCE.validate(src)}
+         'source_contract':SOURCE.validate(src),'indefinite_source':INFINITE.validate(infinite)}
     bad={k:v for k,v in bad.items() if v}
     if bad:raise RuntimeError('final P4 prerequisite validation failed: '+repr(bad))
 
@@ -124,11 +125,18 @@ def build():
     arithmetic=bool(fp['full_shipping_Kalman_reset_finite_precision_enclosure_closed_conditionally'] and fp['additive_ISS_channel_complete_for_conditional_P4'])
     platform_qualified=bool(fp['deployment_finite_precision_qualification_closed'])
 
-    motion=bool(fresh_entry_cover and admissions and backbone and graph_ready and all_bias_families_closed and adaptive_source_cover_closed
+    # A short-window increment bound is not an indefinite S/forcing bound.
+    # The exact quiet-source obstruction is a mathematical scope failure, not
+    # an interval failure or a deployment qualification requirement.
+    infinite_source_compatible=not infinite['bounded_all18_indefinite_target_refuted_under_finite_window_definition']
+
+    motion=bool(infinite_source_compatible and fresh_entry_cover and admissions and backbone and graph_ready and all_bias_families_closed and adaptive_source_cover_closed
                 and correction and reset_iqc and reset_gain and endpoint and prefixes and hard_prefix and arithmetic)
     return {
       'qualification':QUALIFICATION,'canonical_source':'COMPLETE_BRMM_NORMAL_LIVE_WORD','declared_domain_shrunk':False,
       'filter_changed':False,'quality_gates_changed':False,'P3_delta':1e-18,
+      'indefinite_source_necessary_condition':infinite,
+      'indefinite_source_target_compatible':infinite_source_compatible,
       'required_bias_families':list(REQUIRED_BIAS_FAMILIES),
       'bias_family_source_admission':family_admission,
       'bias_family_joint_ISS_supply_materialized':family_supply_materialized,
@@ -171,6 +179,7 @@ def build():
       'point_capture_can_promote':False,'rowwise_coefficient_boxes_can_promote':False,'differential_backbone_alone_can_promote':False,
       'P4_MOTION_PASS':motion,'P4_PASS':motion,'P5_MAY_START':motion,
       'remaining_mathematical_P4_blockers':[x for x,ok in (
+        ('B: finite-window BRMM primitives admit unbounded centered-S ambiguity; an additional S/forcing qualification would be E until proved',infinite_source_compatible),
         ('reachable fresh-Live correlated entry including prior-frequency timeout branch',fresh_entry_cover),
         ('source-uniform BIAS0 same-history physical-driver family',bias_family_closed['BIAS0']),
         ('source-uniform BIAS1 same-history physical-driver family',bias_family_closed['BIAS1']),
@@ -211,7 +220,13 @@ def validate(d):
     for k in ('H18_finite_angle_worst_LDLT_pivot_lower','A21_first_active_ba_margin_lower'):
         if float(d.get(k,0))<=0:f.append(k+' not positive')
 
+    infinite=d.get('indefinite_source_necessary_condition',{})
+    f.extend('indefinite source: '+x for x in INFINITE.validate(infinite))
+    compatible=not infinite.get('bounded_all18_indefinite_target_refuted_under_finite_window_definition',True)
+    if d.get('indefinite_source_target_compatible') is not compatible:f.append('indefinite source compatibility changed')
+
     required=all(bool(d[k]) for k in (
+      'indefinite_source_target_compatible',
       'fresh_live_entry_cover_closed','hard_entry_set_admitted_without_covariance_membership','universal_full_entry_finite_angle_differential_backbone_closed',
       'exact_chord_projection_BIAS1_same_history_graph_ready','all_required_bias_families_closed',
       'adaptive_same_signal_source_uniform_cover_closed','source_uniform_same_graph_correction_domain_closed',

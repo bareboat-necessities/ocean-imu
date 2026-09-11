@@ -22,8 +22,13 @@ class HardWindowBehaviorTest(unittest.TestCase):
         self.assertTrue(d["continuum_phase_coordinate_set_closed"])
         self.assertTrue(d["phase_continuous_propagation_closed"])
         self.assertTrue(d["machine_readable_R_lambda_closed"])
+        # Exact membership/separation remains intentionally open.  The positive
+        # proof route now uses the validated correlated outer enclosure instead;
+        # these are distinct obligations and must not be conflated.
         self.assertFalse(d["validated_membership_or_separation_oracle_closed"])
-        self.assertFalse(d["validated_correlated_outer_enclosure_closed"])
+        self.assertTrue(d["validated_correlated_outer_enclosure_closed"])
+        self.assertTrue(d["correlated_outer_left_inclusion_closed"])
+        self.assertTrue(d["correlated_outer_retains_cross_sample_and_axis_dependence"])
         self.assertFalse(d["P3_promoted"])
 
     def test_norm_caps_do_not_become_a_source_generator(self) -> None:

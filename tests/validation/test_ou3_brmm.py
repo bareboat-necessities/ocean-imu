@@ -100,12 +100,25 @@ class BrmmTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             audit.windows(np.zeros((50, 3)), sample_hz=5)
 
-    def test_no_legacy_promotion_or_parameter_freezing(self):
+    def test_qualified_primitives_do_not_promote_remaining_source_obligations(self):
         d = contract.build()
         self.assertEqual(contract.validate(d), [])
         self.assertFalse(d["spectral_membership_required"])
         self.assertEqual(d["P3_delta"], 1e-18)
-        self.assertTrue(all(v is None for v in d["unfrozen_physical_constants"].values()))
+        physical = d["physical_constants"]
+        primitives = d["uniform_primitive_qualification"]["uniform_physical_primitives"]
+        self.assertTrue(d["BRMM_PRIMITIVE_QUALIFICATION_PASS"])
+        self.assertEqual(physical["V_m"], primitives["V_m_norm_upper_mps"])
+        self.assertEqual(physical["P_m"], primitives["P_m_norm_upper_m"])
+        self.assertEqual(physical["A_m"], primitives["acceleration_norm_upper_mps2"])
+        self.assertGreater(physical["V_m"], 0)
+        self.assertGreater(physical["P_m"], 0)
+        self.assertTrue(all(physical[key] is None for key in
+                            ("T_R", "E_q", "V_R", "E_min", "J_min", "chi", "V_a", "S_m")))
+        self.assertFalse(d["sampled_audit_sets_physical_theorem_constants"])
+        for key in ("V_m", "P_m", "A_m", "S_m"):
+            changed = {**physical, key: 1.0}
+            self.assertTrue(contract.validate({**d, "physical_constants": changed}))
         for gate in ("BRMM_SOURCE_UNIFORM_PASS", "source_declaration_is_P3_certificate", "BRMM_P4_MOTION_PASS",
                      "BRMM_P5_MOTION_MAY_START"):
             self.assertTrue(contract.validate({**d, gate: True}))

@@ -2,6 +2,7 @@
 #define EIGEN_NON_ARDUINO
 #include <algorithm>
 #include <cmath>
+#include <cstring>
 #include <iomanip>
 #include <iostream>
 #include <limits>
@@ -122,9 +123,71 @@ static void test_fresh_wrapper(bool mag, bool zero_proxy) {
     f.update(.005f,V3::Zero(),V3(0,0,-g_std));
     require(!same(f.raw().mekf().covariance_full(),before),"first post-Live IMU sample propagates/updates covariance");
 }
+
+// Same IMU/magnetic stream, two distinct physical position references. Truth is
+// never passed to either wrapper. The infinite-time conclusion comes from the
+// exact symbolic certificate, not extrapolation of this finite native test.
+template<class A, class B> static bool same_bits(const A& a, const B& b) {
+    return a.rows()==b.rows() && a.cols()==b.cols() &&
+        std::memcmp(a.data(), b.data(), static_cast<std::size_t>(a.size())*sizeof(typename A::Scalar))==0;
+}
+static void compare_quiet_pair(const Outer& plus, const Outer& minus, double h) {
+    const auto& a=plus.raw(); const auto& b=minus.raw();
+    const auto& ma=a.mekf(); const auto& mb=b.mekf();
+    require(same_bits(ma.xext,mb.xext), "position truth does not enter nominal state");
+    require(same_bits(ma.covariance_full(),mb.covariance_full()), "same reachable P, not independent P boxes");
+    require(same_bits(ma.quaternion().coeffs(),mb.quaternion().coeffs()), "same finite quaternion/reset execution");
+    require(ma.xext.allFinite() && ma.covariance_full().allFinite(), "quiet pair remains finite in native regression");
+    require(same_bits(ma.R_S,mb.R_S), "same actual anisotropic R_S");
+    require(ma.pseudo_update_elapsed_s_==mb.pseudo_update_elapsed_s_, "same scheduler elapsed");
+    require(ma.acc_bias_updates_enabled()==mb.acc_bias_updates_enabled(), "same H18/A21 branch");
+    require(a.wavePeriodUsable()==b.wavePeriodUsable(), "same WPE usable branch");
+    require(a.tune_.tau_applied==b.tune_.tau_applied && a.tune_.sigma_applied==b.tune_.sigma_applied &&
+            a.tune_.RS_applied==b.tune_.RS_applied, "same candidate EMA");
+    require(a.online_tune_apply_pending_==b.online_tune_apply_pending_, "same staged commit");
+    const double sh=ma.get_integral_displacement().z();
+    const double eplus=h/8.0-sh, eminus=-h/8.0-sh;
+    require(std::abs((eplus-eminus)-h/4.0)<1e-10, "centered S difference is 2*h*d");
+    require(std::max(std::abs(eplus),std::abs(eminus))+1e-10>=h/8.0, "pairwise unavoidable S-error lower bound");
+}
+static void test_quiet_position_ambiguity() {
+    Outer plus, minus; Outer::Config config; config.with_mag=true;
+    plus.begin(config); minus.begin(config);
+    int sample=0;
+    for(; sample<40000 && !plus.isLive(); ++sample) {
+        plus.update(.005f,V3::Zero(),V3(0,0,-g_std));
+        minus.update(.005f,V3::Zero(),V3(0,0,-g_std));
+        if(sample>=1400 && sample%2==0) {
+            plus.updateMag(V3(20,0,40)); minus.updateMag(V3(20,0,40));
+        }
+        require(plus.isLive()==minus.isLive(), "same actual runtime Live handoff");
+    }
+    require(plus.isLive() && minus.isLive(), "quiet pair reaches Live");
+    require(plus.liveTimeSec()==minus.liveTimeSec(), "same handoff time for both physical histories");
+    require(!plus.raw().mekf().acc_bias_updates_enabled(), "fresh pair starts in H18");
+    compare_quiet_pair(plus,minus,0.0);
+    // Default magnetic refinement holds bias for 30 s after its Live start.
+    bool active_seen=false;
+    for(int k=1; k<=6600; ++k) {
+        const double h=.005*static_cast<double>(k);
+        plus.update(.005f,V3::Zero(),V3(0,0,-g_std));
+        minus.update(.005f,V3::Zero(),V3(0,0,-g_std));
+        compare_quiet_pair(plus,minus,h);
+        if(k%2==0) {
+            plus.updateMag(V3(20,0,40)); minus.updateMag(V3(20,0,40));
+            compare_quiet_pair(plus,minus,h);
+        }
+        active_seen=active_seen || plus.raw().mekf().acc_bias_updates_enabled();
+    }
+    require(active_seen,"quiet pair executes actual H18 to A21 release");
+    std::cout<<"QUIET_POSITION_AMBIGUITY native_imu_samples=6600 mag_callbacks=3300 A21="<<active_seen
+             <<" exact_pair_difference_at_33s=8.25 unavoidable_pair_error_lower=4.125\n";
+}
+
 int main() {
     std::cout<<std::setprecision(10);
     test_go_live_is_not_a_linear_reset();
+    test_quiet_position_ambiguity();
     test_fresh_wrapper(false,false); test_fresh_wrapper(true,false);
     test_fresh_wrapper(false,true); test_fresh_wrapper(true,true);
     std::cout<<"LIVE_ENTRY_AUDIT_PASS="<<(failures==0?"true":"false")<<'\n';

@@ -1,0 +1,60 @@
+name: ou3-p4-source-uniform-event-lineage
+
+on:
+  pull_request:
+    paths:
+      - "tools/stability/ou3_p4_source_uniform_estimator_event_attachment.py"
+      - "tools/stability/ou3_p4_source_uniform_event_lineage_sequence.py"
+      - "tests/validation/test_ou3_p4_source_uniform_estimator_event_attachment.py"
+      - "tests/validation/test_ou3_p4_source_uniform_event_lineage_sequence.py"
+      - ".github/workflows/ou3-p4-source-uniform-event-lineage.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ou3-p4-source-uniform-event-lineage-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lineage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Validate synchronized event attachment and cross-sample ancestry
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/ou3-source-uniform-lineage
+          python3 tools/stability/ou3_p4_source_uniform_estimator_event_attachment.py \
+            --output /tmp/ou3-source-uniform-lineage/attachment.json
+          python3 tools/stability/ou3_p4_source_uniform_event_lineage_sequence.py \
+            --output /tmp/ou3-source-uniform-lineage/lineage.json
+          python3 -m unittest discover -s tests/validation \
+            -p 'test_ou3_p4_source_uniform_estimator_event_attachment.py' -v
+          python3 -m unittest discover -s tests/validation \
+            -p 'test_ou3_p4_source_uniform_event_lineage_sequence.py' -v
+          python3 - <<'PY'
+          import json
+          a=json.load(open('/tmp/ou3-source-uniform-lineage/attachment.json'))
+          l=json.load(open('/tmp/ou3-source-uniform-lineage/lineage.json'))
+          assert a['validation_pass'], a['validation_failures']
+          assert a['source_uniform_estimator_owned_event_attachment_relation_closed']
+          assert not a['favorable_successor_selected']
+          assert not a['branch_ordinal_correspondence_assumed']
+          assert l['validation_pass'], l['validation_failures']
+          assert l['global_literal_event_lineage_constructor_closed']
+          assert l['sample_selector_and_literal_event_ancestry_kept_distinct']
+          assert l['first_event_of_next_sample_points_to_previous_literal_event']
+          assert l['estimator_predecessor_remains_previous_selector_child']
+          assert not l['P4_PASS'] and not l['P5_MAY_START']
+          PY
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: ou3-p4-source-uniform-event-lineage
+          path: /tmp/ou3-source-uniform-lineage/
+          retention-days: 7

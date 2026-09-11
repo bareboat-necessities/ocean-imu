@@ -1,0 +1,61 @@
+name: ou3-source-uniform-event-lineage
+
+on:
+  pull_request:
+    paths:
+      - 'tools/stability/ou3_p4_source_uniform_estimator_event_attachment.py'
+      - 'tools/stability/ou3_p4_source_uniform_event_lineage_induction.py'
+      - 'tools/stability/ou3_p4_source_reachable_selector_family.py'
+      - 'tools/stability/ou3_p4_brmm_primitive_prefix_binding.py'
+      - 'tools/stability/ou3_p4_source_uniform_bias_prefix_lineage.py'
+      - 'tests/validation/test_ou3_p4_source_uniform_estimator_event_attachment.py'
+      - 'tests/validation/test_ou3_p4_source_uniform_event_lineage_induction.py'
+      - '.github/workflows/ou3-source-uniform-event-lineage.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ou3-source-uniform-event-lineage-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Compile proof modules
+        run: python3 -m compileall -q tools/stability
+      - name: Validate synchronized attachment and induction
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/ou3-source-uniform-lineage
+          python3 tools/stability/ou3_p4_source_uniform_estimator_event_attachment.py --output /tmp/ou3-source-uniform-lineage/attachment.json
+          python3 tools/stability/ou3_p4_source_uniform_event_lineage_induction.py --output /tmp/ou3-source-uniform-lineage/induction.json
+          python3 -m unittest -v tests.validation.test_ou3_p4_source_uniform_estimator_event_attachment
+          python3 -m unittest -v tests.validation.test_ou3_p4_source_uniform_event_lineage_induction
+          python3 - <<'PY'
+          import json
+          a=json.load(open('/tmp/ou3-source-uniform-lineage/attachment.json'))
+          i=json.load(open('/tmp/ou3-source-uniform-lineage/induction.json'))
+          assert a['validation_pass'] and i['validation_pass']
+          assert a['source_uniform_estimator_owned_event_attachment_relation_closed']
+          assert i['literal_P_H_R_state_attachment_closed_by_induction']
+          assert i['source_uniform_local_event_coefficient_cover_closed']
+          assert i['primitive_prefix_structural_premises_consumed']
+          assert not i['numeric_D_S_qualification_closed_here']
+          assert not i['endpoint_augmented_LDLT_closed_here']
+          assert not i['every_prefix_augmented_LDLT_closed_here']
+          assert not i['P4_PASS'] and not i['P5_MAY_START']
+          assert i['P3_delta']==1e-18
+          PY
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: ou3-source-uniform-event-lineage
+          path: /tmp/ou3-source-uniform-lineage/
+          retention-days: 7

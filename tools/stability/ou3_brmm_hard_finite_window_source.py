@@ -105,6 +105,14 @@ _PHYSICAL_FIELDS = (
     "specific_force_body_interval",
     "f_cog_body_interval",
     "R_wb_interval",
+    # The primitive coordinates are proof-only source ancestry.  They are not
+    # additional estimator inputs and must descend from this same transition.
+    "velocity_ned_mps_interval",
+    "position_ned_m_interval",
+    "centered_S_ned_m_s_interval",
+    "primitive_in_id",
+    "primitive_out_id",
+    "centered_S_origin_witness_id",
 )
 
 _EVENT_FIELDS = (
@@ -131,6 +139,9 @@ def _payload_failures(k: int, sample: dict[str, Any]) -> list[str]:
             f.append(f"sample {k} physical output detached from source transition witness")
         if physical.get("joint_response_witness_id") != response_id:
             f.append(f"sample {k} physical output detached from joint response witness")
+        for key in ("primitive_in_id", "primitive_out_id", "centered_S_origin_witness_id"):
+            if not isinstance(physical.get(key), str) or not physical[key]:
+                f.append(f"sample {k} missing physical primitive ancestry {key}")
 
     if not isinstance(events, dict):
         f.append(f"sample {k} missing source_events")
@@ -157,6 +168,7 @@ def _continuity_failures(samples: Any) -> list[str]:
         return [f"window must contain exactly {SAMPLES} source transitions"]
     previous: dict[str, Any] | None = None
     source_id: str | None = None
+    centered_S_origin_id: str | None = None
     for k, sample in enumerate(samples):
         if not isinstance(sample, dict):
             f.append(f"sample {k} is not an object")
@@ -176,11 +188,22 @@ def _continuity_failures(samples: Any) -> list[str]:
         ):
             if not isinstance(sample.get(key), str) or not sample[key]:
                 f.append(f"sample {k} missing {key}")
+        physical = sample.get("joint_physical_output")
+        if isinstance(physical, dict):
+            origin = physical.get("centered_S_origin_witness_id")
+            if centered_S_origin_id is None and isinstance(origin, str) and origin:
+                centered_S_origin_id = origin
+            elif centered_S_origin_id is not None and origin != centered_S_origin_id:
+                f.append(f"sample {k} changed centered-S origin inside one history")
         if previous is not None:
             if previous.get("xs_out_id") != sample.get("xs_in_id"):
                 f.append(f"sample {k} broke x^s phase continuity")
             if previous.get("lambda_out_id") != sample.get("lambda_in_id"):
                 f.append(f"sample {k} broke lambda transition continuity")
+            prev_physical = previous.get("joint_physical_output")
+            if isinstance(prev_physical, dict) and isinstance(physical, dict):
+                if prev_physical.get("primitive_out_id") != physical.get("primitive_in_id"):
+                    f.append(f"sample {k} broke physical v/p/S_L primitive continuity")
         f.extend(_payload_failures(k, sample))
         previous = sample
     return f
@@ -218,7 +241,23 @@ def validate_candidate_structure(d: dict[str, Any]) -> list[str]:
         f.append("missing provider-certified front_end_entry payload")
     if not isinstance(d.get("live_covariance_seed"), dict):
         f.append("missing provider-certified live_covariance_seed payload")
-    f.extend(_continuity_failures(d.get("transitions")))
+    if not isinstance(d.get("primitive_ingress_id"), str) or not d.get("primitive_ingress_id"):
+        f.append("missing cross-word primitive ingress id")
+    if not isinstance(d.get("primitive_egress_id"), str) or not d.get("primitive_egress_id"):
+        f.append("missing cross-word primitive egress id")
+    if not isinstance(d.get("centered_S_origin_witness_id"), str) or not d.get("centered_S_origin_witness_id"):
+        f.append("missing one-time centered-S origin witness")
+    transitions = d.get("transitions")
+    f.extend(_continuity_failures(transitions))
+    if isinstance(transitions, list) and len(transitions) == SAMPLES:
+        first = transitions[0].get("joint_physical_output", {}) if isinstance(transitions[0], dict) else {}
+        last = transitions[-1].get("joint_physical_output", {}) if isinstance(transitions[-1], dict) else {}
+        if first.get("primitive_in_id") != d.get("primitive_ingress_id"):
+            f.append("first physical primitive is detached from cross-word ingress")
+        if last.get("primitive_out_id") != d.get("primitive_egress_id"):
+            f.append("last physical primitive is detached from cross-word egress")
+        if first.get("centered_S_origin_witness_id") != d.get("centered_S_origin_witness_id"):
+            f.append("sample centered-S origin is detached from branch origin witness")
     return list(dict.fromkeys(f))
 
 
@@ -313,6 +352,9 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict[str, Any]:
             "raw_gyro_and_corrected_rate_are_distinct_coordinates": True,
             "payloads_must_repeat_same_transition_witness_id": True,
             "physical_payload_must_repeat_same_joint_response_witness_id": True,
+            "physical_velocity_position_centered_S_ancestry_required": True,
+            "physical_primitive_chain_must_cross_word_boundary": True,
+            "one_centered_S_origin_witness_per_history": True,
             "precomputed_aw_covariance_floor_increment_allowed": False,
         },
         "executable_provider_ingredients": executable,
@@ -390,6 +432,12 @@ def validate_status(d: dict[str, Any]) -> list[str]:
         f.append("executor payload lost transition-witness identity")
     if contract.get("physical_payload_must_repeat_same_joint_response_witness_id") is not True:
         f.append("physical payload lost joint-response identity")
+    if contract.get("physical_velocity_position_centered_S_ancestry_required") is not True:
+        f.append("executor payload lost physical v/p/S_L ancestry")
+    if contract.get("physical_primitive_chain_must_cross_word_boundary") is not True:
+        f.append("executor payload lost cross-word primitive chain")
+    if contract.get("one_centered_S_origin_witness_per_history") is not True:
+        f.append("executor payload permits centered-S re-zeroing")
     if contract.get("precomputed_aw_covariance_floor_increment_allowed") is not False:
         f.append("executor payload permits precomputed covariance-floor increment")
     ingredients = d.get("executable_provider_ingredients", {})

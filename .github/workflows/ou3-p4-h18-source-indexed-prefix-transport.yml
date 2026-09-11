@@ -1,0 +1,55 @@
+name: ou3-p4-h18-source-indexed-prefix-transport
+
+on:
+  pull_request:
+    paths:
+      - "tools/stability/ou3_p4_h18_source_indexed_prefix_transport.py"
+      - "tools/stability/ou3_p4_source_indexed_phi_rebase.py"
+      - "tools/stability/ou3_p4_source_uniform_estimator_event_attachment.py"
+      - "tools/stability/ou3_p4_source_uniform_event_lineage_sequence.py"
+      - "tools/stability/ou3_p4_complete_word_endpoint_transport.py"
+      - "tools/stability/ou3_p4_complete_word_prefix_transport.py"
+      - "tests/validation/test_ou3_p4_h18_source_indexed_prefix_transport.py"
+      - ".github/workflows/ou3-p4-h18-source-indexed-prefix-transport.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ou3-p4-h18-source-indexed-prefix-transport-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  transport:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Exact H18 source-indexed prefix transport
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/ou3-h18-prefix-transport
+          python3 tools/stability/ou3_p4_h18_source_indexed_prefix_transport.py --output /tmp/ou3-h18-prefix-transport/transport.json
+          python3 -m unittest discover -s tests/validation -p 'test_ou3_p4_h18_source_indexed_prefix_transport.py' -v
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/ou3-h18-prefix-transport/transport.json'))
+          assert d['validation_pass'],d['validation_failures']
+          assert d['H18_every_prefix_transport_constructor_closed']
+          assert d['cross_sample_Phi_rebase_consumed']
+          assert d['only_accelerometer_has_interior_epsilon_transport']
+          assert d['smoke']['rebase_count']==1
+          assert d['smoke']['prediction_count']==2
+          assert d['smoke']['accelerometer_count']==2
+          assert not d['H18_endpoint_augmented_LDLT_closed_here']
+          assert not d['P4_PASS'] and not d['P5_MAY_START']
+          PY
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: ou3-p4-h18-source-indexed-prefix-transport
+          path: /tmp/ou3-h18-prefix-transport/
+          retention-days: 7

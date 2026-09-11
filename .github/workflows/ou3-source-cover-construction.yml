@@ -1,0 +1,137 @@
+name: ou3-source-cover-construction
+
+on:
+  pull_request:
+    paths:
+      - "tools/stability/**"
+      - "tests/validation/test_ou3_brmm_infinite_continuation.py"
+      - "tests/validation/test_ou3_brmm_centered_S_recurrence.py"
+      - "tests/validation/test_ou3_brmm_translation_observation_kernel.py"
+      - "tests/validation/test_ou3_brmm_centered_primitive_transition.py"
+      - "tests/validation/test_ou3_brmm_acceleration_moment_iqc.py"
+      - "tests/validation/test_ou3_p4_acceleration_moment_iqc_sector.py"
+      - "tests/validation/test_ou3_p4_source_uniform_estimator_event_attachment.py"
+      - "tests/validation/test_ou3_p4_live_entry_graph.py"
+      - "tests/kalman_ou_iii/live_entry_audit-test.cpp"
+      - "docs/ou3-*.md"
+      - "doc/kalman_ou_iii/w3d-brmm-stability-theorem.tex-part"
+      - ".github/workflows/ou3-source-cover-construction.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ou3-source-cover-construction-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  construction:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Exact indefinite-source obstruction and centered-S qualification
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/ou3-construction
+          git rev-parse HEAD > /tmp/ou3-construction/source-commit.txt
+          python3 tools/stability/ou3_brmm_infinite_continuation.py --output /tmp/ou3-construction/infinite-continuation.json
+          python3 tools/stability/ou3_brmm_centered_S_recurrence.py --output /tmp/ou3-construction/centered-S-recurrence.json
+          python3 tools/stability/ou3_brmm_translation_observation_kernel.py --output /tmp/ou3-construction/translation-observation-kernel.json
+          python3 tools/stability/ou3_brmm_centered_primitive_transition.py --output /tmp/ou3-construction/centered-primitive-transition.json
+          python3 tools/stability/ou3_brmm_acceleration_moment_iqc.py --output /tmp/ou3-construction/acceleration-moment-iqc.json
+          python3 tools/stability/ou3_p4_acceleration_moment_iqc_sector.py --output /tmp/ou3-construction/acceleration-moment-sector.json
+          python3 -m unittest discover -s tests/validation -p 'test_ou3_brmm_infinite_continuation.py' -v
+          python3 -m unittest discover -s tests/validation -p 'test_ou3_brmm_centered_S_recurrence.py' -v
+          python3 -m unittest discover -s tests/validation -p 'test_ou3_brmm_translation_observation_kernel.py' -v
+          python3 -m unittest discover -s tests/validation -p 'test_ou3_brmm_centered_primitive_transition.py' -v
+          python3 -m unittest discover -s tests/validation -p 'test_ou3_brmm_acceleration_moment_iqc.py' -v
+          python3 -m unittest discover -s tests/validation -p 'test_ou3_p4_acceleration_moment_iqc_sector.py' -v
+          python3 -m unittest discover -s tests/validation -p 'test_ou3_p4_live_entry_graph.py' -v
+          python3 - <<'PY'
+          import json
+          r=json.load(open('/tmp/ou3-construction/centered-S-recurrence.json'))
+          k=json.load(open('/tmp/ou3-construction/translation-observation-kernel.json'))
+          p=json.load(open('/tmp/ou3-construction/centered-primitive-transition.json'))
+          q=json.load(open('/tmp/ou3-construction/acceleration-moment-iqc.json'))
+          qs=json.load(open('/tmp/ou3-construction/acceleration-moment-sector.json'))
+          assert r['validation_pass']
+          assert r['condition_is_origin_invariant']
+          assert r['condition_bounds_every_handoff_centered_S']
+          assert r['condition_excludes_nonzero_constant_position_history']
+          assert r['D_S_max_m_s'] is None
+          assert r['D_S_retention_search_upper_m_s']==r['S_working_radius_m_s']==300.0
+          assert not r['D_S_numeric_qualification_closed']
+          assert not r['COMPLETE_BRMM_INDEFINITE_S_QUALIFIED']
+          assert k['validation_pass']
+          assert k['translation_zero_output_kernel_dimension_before_indefinite_primitives_per_axis']==2
+          assert k['translation_zero_output_kernel_dimension_after_bounded_position_per_axis']==1
+          assert k['translation_zero_output_kernel_dimension_after_centered_S_recurrence_per_axis']==0
+          assert k['D_S_numeric_value_used'] is None
+          assert p['validation_pass']
+          assert p['primitive_transition_operator_materialized']
+          assert not p['same_history_acceleration_moments']['may_be_selected_independently']
+          assert p['cross_word_primitive_out_is_next_word_primitive_in_required']
+          assert p['centered_S_origin_id_is_invariant_under_advance']
+          assert q['validation_pass']
+          assert q['acceleration_moment_iqc_materialized']
+          assert q['J0_J1_J2_same_history_dependency_retained']
+          assert q['all_three_spatial_axes_jointly_coupled']
+          assert not q['independent_moment_boxes_used']
+          assert q['detached_scalar_box_corner_iqc_ratio']=='193'
+          assert qs['validation_pass']
+          assert qs['moment_sector_matrix_available']
+          assert qs['same_radial_coordinate_must_parameterize_entire_source_history']
+          assert qs['detached_box_corner_strictly_excluded']
+          assert not qs['independent_source_supply_port_used']
+          for x in (r,k,p,q,qs):
+              assert not x['P4_PASS'] and not x['P5_MAY_START']
+              assert x['P3_delta']==1e-18
+          PY
+      - name: Preserve source, startup and fail-closed mathematical gates
+        run: |
+          set -euo pipefail
+          python3 tools/stability/ou3_p4_complete_brmm_source_cover_contract.py --output /tmp/ou3-construction/source-cover.json
+          python3 tools/stability/ou3_p4_complete_brmm_source_cover_transition.py --output /tmp/ou3-construction/source-transition.json
+          python3 tools/stability/ou3_p4_source_uniform_estimator_event_attachment.py --output /tmp/ou3-construction/source-uniform-event-attachment.json
+          python3 -m unittest discover -s tests/validation -p 'test_ou3_p4_source_uniform_estimator_event_attachment.py' -v
+          python3 tools/stability/ou3_p4_live_entry_graph.py --output /tmp/ou3-construction/live-entry.json
+          python3 tools/stability/ou3_startup_timeout_capture.py --output /tmp/ou3-construction/startup.json
+          python3 tools/stability/ou3_p4_final_closure_gate.py --output /tmp/ou3-construction/final-gate.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path('/tmp/ou3-construction')
+          d=json.loads((p/'final-gate.json').read_text())
+          s=json.loads((p/'startup.json').read_text())
+          a=json.loads((p/'source-uniform-event-attachment.json').read_text())
+          assert a['validation_pass'],a['validation_failures']
+          assert a['source_uniform_estimator_owned_event_attachment_relation_closed']
+          assert a['trusted_event_local_P_H_R_imported_without_reconstruction']
+          assert a['exact_nonlinear_state_succession_materialized_between_literal_events']
+          assert not a['P4_PASS'] and not a['P5_MAY_START']
+          assert d['validation_pass'],d['validation_failures']
+          assert d['indefinite_source_necessary_condition']['classification']=='B'
+          assert not d['indefinite_source_target_compatible']
+          assert not d['P4_PASS'] and not d['P5_MAY_START']
+          assert d['P3_delta']==1e-18
+          assert s['QUALIFIED_LIVE_HANDOFF_BY_150S_CLOSED']
+          assert not s['P4_basin_reached_here']
+          PY
+      - name: Install native test dependency
+        run: sudo apt-get update && sudo apt-get install -y libeigen3-dev
+      - name: Native paired-history and fresh-entry regression
+        run: |
+          set -euo pipefail
+          clang++ -std=c++20 -O1 -Wall -Wextra -Werror -I src -isystem /usr/include/eigen3 tests/kalman_ou_iii/live_entry_audit-test.cpp -o /tmp/ou3-construction/live-entry-native
+          /tmp/ou3-construction/live-entry-native | tee /tmp/ou3-construction/live-entry-native.log
+          rm /tmp/ou3-construction/live-entry-native
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: ou3-source-cover-construction
+          path: /tmp/ou3-construction/
+          retention-days: 7

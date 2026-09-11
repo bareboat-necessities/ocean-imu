@@ -72,11 +72,11 @@ class CompleteBrmmInvariantAwCoordinateTests(unittest.TestCase):
         self.assertTrue(f["uses_already_declared_P4_error_domain"])
         self.assertFalse(f["new_source_assumption_added"])
         self.assertFalse(f["replay_extrema_used"])
-        self.assertAlmostEqual(13.80665, f["true_specific_force_upper_mps2"], places=6)
+        self.assertAlmostEqual(17.80665, f["true_specific_force_upper_mps2"], places=6)
         self.assertAlmostEqual(2.941995, f["declared_delta_aw_error_upper_mps2"], places=6)
-        self.assertGreaterEqual(f["nominal_specific_force_upper_mps2"], 16.748645)
-        self.assertGreaterEqual(f["nominal_aw_norm_upper_mps2"], 26.555295)
-        self.assertLess(f["nominal_aw_norm_upper_mps2"], 27.0)
+        self.assertGreaterEqual(f["nominal_specific_force_upper_mps2"], 20.748645)
+        self.assertGreaterEqual(f["nominal_aw_norm_upper_mps2"], 30.555295)
+        self.assertLess(f["nominal_aw_norm_upper_mps2"], 31.0)
 
     def test_candidate_eta_bounds_are_widened_before_reuse(self):
         self.assertFalse(self.d["measurement_linearizing_shift_bounds_reused_without_widening"])

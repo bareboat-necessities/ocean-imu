@@ -28,6 +28,13 @@ qualified hard true-error set.  Therefore a favorable point margin identifies
 a quantitative covariance-consistency/entry-set target but cannot promote P4.
 Nonzero physical-bias driver coverage and nonlinear coefficient/projection
 outward enclosure also remain open.
+
+For the integral-displacement group this diagnostic additionally reports the
+minimum literal-prefix Euclidean headroom remaining after the one-sigma root
+image.  That number is only a *candidate scale* for the new origin-invariant
+centered-S recurrence D_S.  It is not a D_S certificate: the rigorous source
+cover must propagate the same physical p/S_L history through every event and
+cannot inject an independent additive S port at each prefix.
 """
 from __future__ import annotations
 
@@ -87,11 +94,14 @@ def audit_mode(root, rows, points, mode, radii):
                 center_norm = float(np.linalg.norm(center[sl]))
                 radius = float(radii[3*group])
                 headroom = radius-center_norm
+                one_sigma_total = center_norm+gain
+                one_sigma_extra_headroom = radius-one_sigma_total
                 critical = (headroom/gain if gain > 0 and headroom > 0
                             else (float("inf") if gain == 0 and headroom > 0 else 0.))
                 groups[name] = {"center_norm": center_norm,
                                 "one_sigma_deviation_gain": gain,
-                                "one_sigma_retention_ratio": (center_norm+gain)/radius,
+                                "one_sigma_retention_ratio": one_sigma_total/radius,
+                                "one_sigma_extra_euclidean_headroom": one_sigma_extra_headroom,
                                 "critical_initial_sigma_level": critical,
                                 "declared_radius": radius}
             prefixes.append({"sample": i, "index": step["index"],
@@ -112,6 +122,9 @@ def audit_mode(root, rows, points, mode, radii):
         crit_values = [(p["groups"][name]["critical_initial_sigma_level"], j, p)
                        for j, p in enumerate(prefixes)]
         critical, cordinal, limiting = min(crit_values, key=lambda x: x[0])
+        headroom_values = [(p["groups"][name]["one_sigma_extra_euclidean_headroom"], j, p)
+                           for j, p in enumerate(prefixes)]
+        extra_headroom, hord, hlim = min(headroom_values, key=lambda x: x[0])
         all_critical.append((critical, name, cordinal, limiting))
         summary[name] = {"maximum_one_sigma_retention_ratio": ratio,
                          "worst_prefix_ordinal": ordinal,
@@ -122,11 +135,17 @@ def audit_mode(root, rows, points, mode, radii):
                          "critical_prefix_ordinal": cordinal,
                          "critical_index": limiting["index"],
                          "critical_stage": limiting["stage"],
-                         "critical_kind": limiting["kind"]}
+                         "critical_kind": limiting["kind"],
+                         "minimum_one_sigma_extra_euclidean_headroom": extra_headroom,
+                         "headroom_prefix_ordinal": hord,
+                         "headroom_index": hlim["index"],
+                         "headroom_stage": hlim["stage"],
+                         "headroom_kind": hlim["kind"]}
     critical, limiting_name, ordinal, limiting = min(all_critical, key=lambda x: x[0])
     max_storage = max(x["one_sigma_storage_level"] for x in boundary_storage)
     endpoint_storage = boundary_storage[-1]["one_sigma_storage_level"]
     one_sigma_retained = all(v["maximum_one_sigma_retention_ratio"] <= 1. for v in summary.values())
+    sdiag = summary["integral_displacement"]
     return {**metric_summary, "counts": dict(counts),
             "joint_augmentation": augmentation,
             "root_covariance_condition": float(np.linalg.cond(covariance)),
@@ -140,6 +159,15 @@ def audit_mode(root, rows, points, mode, radii):
             "limiting_stage": limiting["stage"],
             "limiting_kind": limiting["kind"],
             "groups": summary,
+            "point_centered_S_candidate": {
+                "minimum_one_sigma_additive_headroom_m_s": sdiag["minimum_one_sigma_extra_euclidean_headroom"],
+                "limiting_prefix_ordinal": sdiag["headroom_prefix_ordinal"],
+                "limiting_index": sdiag["headroom_index"],
+                "limiting_stage": sdiag["headroom_stage"],
+                "limiting_kind": sdiag["headroom_kind"],
+                "independent_S_port_used_for_promotion": False,
+                "candidate_only_not_D_S_certificate": True,
+            },
             "boundary_storage": boundary_storage,
             "maximum_one_sigma_compatible_storage_level": max_storage,
             "endpoint_one_sigma_compatible_storage_level": endpoint_storage,
@@ -147,6 +175,7 @@ def audit_mode(root, rows, points, mode, radii):
             "nonzero_BIAS1_driver_uniformly_enclosed": False,
             "active_projection_uniformly_enclosed": False,
             "source_dependent_coefficients_uniformly_enclosed": False,
+            "centered_S_same_history_recurrence_uniformly_enclosed": False,
             "P4_MOTION_PASS": False, "P4_PASS": False, "P5_MAY_START": False}
 
 
@@ -185,6 +214,7 @@ def main():
               "independent_source_ports_used": False,
               "fresh_metric_per_sample_used": False,
               "covariance_ellipsoid_promoted_to_true_error_set": False,
+              "point_centered_S_headroom_can_promote_D_S": False,
               "P4_MOTION_PASS": False, "P4_PASS": False, "P5_MAY_START": False,
               "modes": {}}
     for mode in ("H18", "A21"):
@@ -195,7 +225,9 @@ def main():
         print("JOINT_CORRELATED_ROOT", mode,
               "retained", m["one_sigma_motion_coordinate_retained"],
               "critical_sigma", m["critical_initial_sigma_level"],
-              "limiting", m["limiting_group"], flush=True)
+              "limiting", m["limiting_group"],
+              "S_candidate_headroom", m["point_centered_S_candidate"]["minimum_one_sigma_additive_headroom_m_s"],
+              flush=True)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(report, indent=2, allow_nan=False)+"\n")
 
