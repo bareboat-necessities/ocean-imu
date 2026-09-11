@@ -25,7 +25,6 @@ from __future__ import annotations
 
 import json
 import math
-from pathlib import Path
 from typing import Sequence
 
 from ou3_interval import Interval, IntervalMatrix, symmetric_positive_definite_ldlt
