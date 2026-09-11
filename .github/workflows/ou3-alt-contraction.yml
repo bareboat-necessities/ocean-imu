@@ -70,8 +70,8 @@ jobs:
           python3 -m unittest test_finite_physical_prediction \
             test_finite_measurement_graph test_finite_covariance_rank3 test_finite_core \
             test_finite_prediction_covariance test_finite_ou_runtime_primitives \
-            test_finite_post_prediction test_shipping_finite_identity \
-            test_core test_proof_plan test_bias_families -v
+            test_finite_attitude_runtime test_finite_post_prediction \
+            test_shipping_finite_identity test_core test_proof_plan test_bias_families -v
       - name: Verify actual shipping event correspondence without source promotion
         run: |
           python3 tools/stability/ou3_alt_contraction/shipping_finite_identity.py \
