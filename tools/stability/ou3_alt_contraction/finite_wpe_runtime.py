@@ -1,14 +1,14 @@
 """Finite WavePeriodEstimator runtime recurrence for the ALT same-history word.
 
-This is a literal finite-state representation of the shipping WPE update.  It
+This is a literal finite-state representation of the shipping WPE update. It
 keeps the two shared high-pass stages, leaky velocity/elevation proxies,
 period-scaled moment horizon, weighted moments, moment-ratio period extraction,
 canonical log-period smoothing and the one-way usable-period latch on one
 history.
 
 The deployed exp/log/sqrt evaluations are represented by explicit runtime
-witnesses.  Algebraic relations that can be checked exactly are checked here;
-transcendental ancestry and binary32 roundoff remain open obligations.  This is
+witnesses. Algebraic relations that can be checked exactly are checked here;
+transcendental ancestry and binary32 roundoff remain open obligations. This is
 therefore finite runtime attachment, not source admission or a stability gate.
 """
 from __future__ import annotations
@@ -70,7 +70,6 @@ class WPEState:
 
 @dataclass(frozen=True)
 class ExpWitness:
-    """Witness for one deployed exp evaluation; ancestry/roundoff is still open."""
     value: F
     def __post_init__(self):
         v=R(self.value)
@@ -101,6 +100,18 @@ class LogUpdateWitness:
 
 
 @dataclass(frozen=True)
+class CanonicalOutputWitness:
+    """Post-update exp(log_period) and exp(-log_period) outputs."""
+    period: F
+    frequency: F
+    def __post_init__(self):
+        p,f=R(self.period),R(self.frequency)
+        if p<=0 or f<=0 or p*f!=1:
+            raise ValueError('canonical WPE period/frequency must be positive reciprocals')
+        object.__setattr__(self,'period',p); object.__setattr__(self,'frequency',f)
+
+
+@dataclass(frozen=True)
 class UpdateResult:
     state: WPEState
     produced_period: bool
@@ -110,21 +121,20 @@ class UpdateResult:
     moment_alpha: F|None
 
 
-def _period_for_horizon(s:WPEState, current_period:F|None):
-    # Shipping uses getPeriodSec(); before a finite log-period it falls back 6 s.
+def _period_for_horizon(current_period:F|None):
     return current_period if current_period is not None and current_period>0 else F(6)
 
 
 def update(s:WPEState,cfg:WPEConfig,*,dt,vertical_accel,decay:ExpWitness,
            moment_decay:ExpWitness|None=None,period_witness:PeriodWitness|None=None,
            log_witness:LogUpdateWitness|None=None,current_period:F|None=None,
-           current_frequency:F|None=None):
+           current_frequency:F|None=None,post_output:CanonicalOutputWitness|None=None):
     """One literal valid-input shipping WPE update.
 
-    ``current_period/current_frequency`` are the exp(log_period) and reciprocal
-    outputs visible at this update boundary.  If log_period is finite they must
-    be supplied together and exactly reciprocal.  Their transcendental ancestry
-    is deliberately not promoted here.
+    ``current_*`` are outputs of the canonical log state on entry. ``post_output``
+    is the output of the post-update log state and therefore the value consumed
+    by ``hasUsablePeriod`` and downstream tuning on this sample. Their exp/log
+    ancestry remains an explicit finite-precision obligation.
     """
     dt=R(dt); x=R(vertical_accel)
     if dt<=0: raise ValueError('shipping-valid positive dt required')
@@ -139,10 +149,8 @@ def update(s:WPEState,cfg:WPEConfig,*,dt,vertical_accel,decay:ExpWitness,
             raise ValueError('finite log state requires period/frequency witnesses')
         cp,cf=R(current_period),R(current_frequency)
         if cp<=0 or cf<=0 or cp*cf!=1:
-            raise ValueError('shipping WPE period/frequency must be exact reciprocals at real-arithmetic layer')
+            raise ValueError('entry WPE period/frequency must be reciprocal')
 
-    # gain=(1-decay)/lambda for deployed lambda>1e-9 branch.  WPE lambda is
-    # configured above 1e-9 in shipping; retain the exact shared decay.
     gain=(1-d)/cfg.lambda_
     stage1=d*(s.hp1+x-s.accel_prev)
     stage2=d*(s.hp2+stage1-s.hp1_prev)
@@ -154,11 +162,11 @@ def update(s:WPEState,cfg:WPEConfig,*,dt,vertical_accel,decay:ExpWitness,
 
     moment_start=F(3)/cfg.lambda_
     if elapsed < moment_start:
-        if any(w is not None for w in (moment_decay,period_witness,log_witness)):
+        if any(w is not None for w in (moment_decay,period_witness,log_witness,post_output)):
             raise ValueError('pre-moment-start branch consumes no moment/period witnesses')
         return UpdateResult(base,False,cf,cp,None,None)
 
-    requested=cfg.moment_horizon_periods*_period_for_horizon(s,cp)
+    requested=cfg.moment_horizon_periods*_period_for_horizon(cp)
     horizon=clamp(requested,cfg.min_horizon_sec,cfg.max_horizon_sec)
     if moment_decay is None: raise ValueError('moment branch requires exp(-dt/horizon) witness')
     md=moment_decay.value
@@ -172,7 +180,7 @@ def update(s:WPEState,cfg:WPEConfig,*,dt,vertical_accel,decay:ExpWitness,
     base=replace(base,weight=weight,velocity_mean=vm,velocity_sq=vs,
                  elevation_mean=em,elevation_sq=es,last_moment_horizon=horizon)
     if weight <= F(1,1000):
-        if period_witness is not None or log_witness is not None:
+        if any(w is not None for w in (period_witness,log_witness,post_output)):
             raise ValueError('insufficient-weight branch consumes no period witness')
         return UpdateResult(base,False,cf,cp,horizon,alpha)
 
@@ -180,20 +188,19 @@ def update(s:WPEState,cfg:WPEConfig,*,dt,vertical_accel,decay:ExpWitness,
     vvar=max(F(0),vs/weight-vmean*vmean)
     evar=max(F(0),es/weight-emean*emean)
     if evar<=F(1,10**12) or vvar<=F(1,10**12):
-        if period_witness is not None or log_witness is not None:
+        if any(w is not None for w in (period_witness,log_witness,post_output)):
             raise ValueError('degenerate-moment branch consumes no period witness')
         return UpdateResult(base,False,cf,cp,horizon,alpha)
     omega_sq=vvar/evar-cfg.lambda_*cfg.lambda_
     if omega_sq<=F(1,10**8):
-        if period_witness is not None or log_witness is not None:
+        if any(w is not None for w in (period_witness,log_witness,post_output)):
             raise ValueError('nonpositive omega branch consumes no period witness')
         return UpdateResult(base,False,cf,cp,horizon,alpha)
-    if period_witness is None: raise ValueError('valid moment ratio requires period witness')
+    if period_witness is None or post_output is None:
+        raise ValueError('valid moment ratio requires period and post-canonical witnesses')
     pw=period_witness
     if pw.sqrt_omega_sq*pw.sqrt_omega_sq != omega_sq:
         raise ValueError('sqrt(omega_sq) witness detached from same WPE moments')
-    # raw_period = 2*pi/sqrt(omega_sq). pi and log are deployed transcendental
-    # constants/functions; finite ancestry is retained as witness, not certified.
     raw=pw.raw_period
 
     if s.log_period is None:
@@ -213,18 +220,14 @@ def update(s:WPEState,cfg:WPEConfig,*,dt,vertical_accel,decay:ExpWitness,
         if lw.next_log_period != expected: raise ValueError('log-period EMA successor detached from same state/raw period')
         logp=expected
 
-    # Usable-period latch checks getPeriodSec() AFTER the log update.  The caller
-    # supplies that post-update exponential only as an explicit witness below by
-    # reusing raw period on first initialization when convenient; transcendental
-    # ancestry remains open.  We conservatively leave the latch false unless the
-    # current boundary period already exists and satisfies the literal time gate.
+    pp,pf=post_output.period,post_output.frequency
     usable=s.usable_period
-    if not usable and cp is not None:
+    if not usable:
         usable_floor=F(4)/cfg.lambda_
         history=elapsed-moment_start
-        if elapsed>=usable_floor and history>=cp: usable=True
+        if elapsed>=usable_floor and history>=pp: usable=True
     nxt=replace(base,raw_period=raw,log_period=logp,usable_period=usable,last_log_horizon=log_h)
-    return UpdateResult(nxt,True,cf,cp,horizon,alpha)
+    return UpdateResult(nxt,True,pf,pp,horizon,alpha)
 
 
 def readiness():
@@ -234,7 +237,7 @@ def readiness():
       'period_scaled_weighted_moments_materialized':True,
       'moment_ratio_period_branch_materialized':True,
       'canonical_log_period_state_materialized':True,
-      'one_way_usable_period_latch_materialized':True,
+      'post_log_output_and_one_way_usable_latch_materialized':True,
       'exp_log_sqrt_pi_binary32_ancestry_attached':False,
       'vertical_accel_frontend_same_history_attached':False,
       'adaptive_band_variance_state_attached':False,
