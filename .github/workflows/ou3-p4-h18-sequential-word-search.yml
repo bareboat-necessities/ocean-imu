@@ -4,10 +4,12 @@ on:
   push:
     paths: &paths
       - 'tools/stability/ou3_p4_h18_sequential_word_search.py'
+      - 'tools/stability/ou3_p4_h18_sequential_multiplier_refinement.py'
       - 'tools/stability/ou3_p4_h18_sequential_source_fp_schur.py'
       - 'tools/stability/ou3_p4_h18_post_prediction_word.py'
       - 'tools/stability/ou3_p4_h18_source_indexed_prefix_transport.py'
       - 'tests/validation/test_ou3_p4_h18_sequential_word_search.py'
+      - 'tests/validation/test_ou3_p4_h18_sequential_multiplier_refinement.py'
       - '.github/workflows/ou3-p4-h18-sequential-word-search.yml'
   pull_request:
     paths: *paths
@@ -25,24 +27,31 @@ jobs:
         with:
           persist-credentials: false
       - name: Run sequential word search tests
-        run: python3 -m unittest -v tests.validation.test_ou3_p4_h18_sequential_word_search
+        run: |
+          python3 -m unittest -v tests.validation.test_ou3_p4_h18_sequential_word_search
+          python3 -m unittest -v tests.validation.test_ou3_p4_h18_sequential_multiplier_refinement
       - name: Materialize search evidence
         run: |
           mkdir -p /tmp/ou3-p4-h18-sequential-word-search
           python3 tools/stability/ou3_p4_h18_sequential_word_search.py --output /tmp/ou3-p4-h18-sequential-word-search/evidence.json
+          python3 tools/stability/ou3_p4_h18_sequential_multiplier_refinement.py --output /tmp/ou3-p4-h18-sequential-word-search/refinement.json
           python3 - <<'PY'
           import json
-          p='/tmp/ou3-p4-h18-sequential-word-search/evidence.json'
-          d=json.load(open(p))
-          assert d['validation_pass']
+          root='/tmp/ou3-p4-h18-sequential-word-search/'
+          d=json.load(open(root+'evidence.json'))
+          r=json.load(open(root+'refinement.json'))
+          assert d['validation_pass'] and r['validation_pass']
           assert d['search']['attempts'] > 0
+          assert 'candidate_found' in r['refinement']
           assert not d['production_endpoint_augmented_LDLT_closed_here']
-          assert not d['P4_PASS'] and not d['P5_MAY_START']
+          assert not r['production_endpoint_augmented_LDLT_closed_here']
+          assert not d['P4_PASS'] and not r['P4_PASS']
           print('SEQUENTIAL_SEARCH', d['search'])
+          print('ASYMMETRIC_REFINEMENT', r['refinement'])
           PY
       - uses: actions/upload-artifact@v6
         if: always()
         with:
           name: ou3-p4-h18-sequential-word-search
-          path: /tmp/ou3-p4-h18-sequential-word-search/evidence.json
+          path: /tmp/ou3-p4-h18-sequential-word-search/
           retention-days: 7
