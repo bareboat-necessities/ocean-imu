@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 """Structural interval-safe wrapper for complete-word/prefix Phi transport.
 
-The canonical endpoint identity is algebraic.  Blind interval subtraction can
-lose that algebra: for a non-point Interval X, ``X-X`` is not [0,0].  Therefore
-an interval implementation must not rediscover known exact identities such as
-C=L by subtracting two copies of the same enclosure.
+The canonical endpoint identity is algebraic. Blind interval subtraction can
+lose that algebra: for a non-point Interval X, ``X-X`` is not [0,0]. Likewise,
+blind interval multiplication can widen an exact structural zero because the
+outward arithmetic implementation rounds every primitive operation. Therefore
+known exact identities must be eliminated symbolically before either
+subtraction or downstream matrix multiplication.
 
 Production event records may provide either:
 
@@ -15,8 +17,8 @@ Production event records may provide either:
 
 This module evaluates the same variation-of-constants formula as
 ``ou3_p4_complete_word_endpoint_transport`` while preserving those structural
-identities.  It also creates exact zero/one scalar constants for Interval input
-instead of forming x-x.  No theorem assumption is added: callers are responsible
+identities. It also creates exact zero/one scalar constants for Interval input
+instead of forming x-x. No theorem assumption is added: callers are responsible
 for constructing the witnesses from the actual shipping operation.
 """
 from __future__ import annotations
@@ -29,8 +31,8 @@ from typing import Any,Sequence
 from ou3_interval import Interval
 import ou3_p4_complete_word_endpoint_transport as END
 
-SCHEMA=1
-QUALIFICATION='OU3_P4_STRUCTURAL_INTERVAL_PREFIX_TRANSPORT_V1'
+SCHEMA=2
+QUALIFICATION='OU3_P4_STRUCTURAL_INTERVAL_PREFIX_TRANSPORT_V2'
 P3_DELTA=1.0e-18
 
 
@@ -73,7 +75,14 @@ def endpoint_decomposition(events,embeddings,eps_nodes):
         direct=END._add(direct,END._mv(suffix[k+1],xi))
         rword=END._add(rword,END._mv(suffix[k+1],event['rho']))
         D=_difference_map(event,z)
-        weighted=END._mm(suffix[k+1],END._mm(D,embeddings[k]))
+        # Preserve a theorem-provided exact C-L=0 before generic interval
+        # matrix multiplication.  Multiplying an exact-zero interval matrix by
+        # non-point intervals can otherwise acquire tiny outward-rounding width
+        # and fabricate an interior epsilon term that is algebraically absent.
+        if _is_exact_zero_matrix(D,z):
+            weighted=_zeros(final_dim,_shape(embeddings[k])[1],z)
+        else:
+            weighted=END._mm(suffix[k+1],END._mm(D,embeddings[k]))
         if not _is_exact_zero_matrix(weighted,z):
             indices.append(k);interior=END._add(interior,END._mv(weighted,eps_nodes[k]))
             if event.get('kind')!='accelerometer':raise ValueError(f"non-accelerometer event {k} has nonzero structural interior epsilon transport")
@@ -89,20 +98,29 @@ def prefix_decompositions(events,embeddings,eps_nodes):
     if not events:raise ValueError('nonempty events required')
     return [{'prefix_length':ell,'terminal_kind':events[ell-1].get('kind'),'transport':endpoint_decomposition(events[:ell],embeddings[:ell+1],eps_nodes[:ell+1])} for ell in range(1,len(events)+1)]
 def _smoke():
-    # Non-point intervals are deliberate: naive C-L would be nonzero.
+    # Non-point intervals are deliberate: naive C-L would be nonzero, and
+    # generic multiplication of the structural zero must not resurrect it.
     x=Interval(.8,.9);z=Interval.point(0);o=Interval.point(1)
     C=[[x,z],[z,x]];E=[[[o],[z]],[[o],[z]]];eps=[[Interval(.1,.2)],[Interval(.15,.25)]]
     r=endpoint_decomposition([{'kind':'prediction','C':C,'L':C,'rho':[z,z],'C_equals_L_exact':True}],E,eps)
     rational=prefix_decompositions([{'kind':'prediction','C':[[Fraction(9,10)]],'L':[[Fraction(9,10)]],'rho':[Fraction(0)],'C_equals_L_exact':True}],[[[Fraction(1)]],[[Fraction(1)]]],[[Fraction(1,10)],[Fraction(1,12)]])[0]['transport']
+    # Negative control: a genuinely nonzero prediction C-L is still rejected.
+    rejected=False
+    try:
+        endpoint_decomposition([{'kind':'prediction','C':C,'L':[[Interval(.7,.8),z],[z,x]],'rho':[z,z]}],E,eps)
+    except ValueError:
+        rejected=True
     return {'interval_prediction_has_no_interior':r['interior_event_indices']==[],
             'interval_identity_residual_contains_zero':r['identity_residual_contains_zero'],
-            'rational_identity_exact':rational['identity_residual']==[Fraction(0)]}
+            'rational_identity_exact':rational['identity_residual']==[Fraction(0)],
+            'nonzero_prediction_interior_negative_control_rejected':rejected}
 def build():
     e=END.build();ef=END.validate(e)
     if ef:raise RuntimeError('canonical endpoint prerequisite failed: '+repr(ef))
     s=_smoke();closed=all(s.values())
     return {'schema':SCHEMA,'qualification':QUALIFICATION,'canonical_source':'COMPLETE_BRMM_NORMAL_LIVE_WORD','P3_delta':P3_DELTA,
       'canonical_variation_of_constants_identity_retained':True,'interval_x_minus_x_not_used_for_structural_equalities':True,
+      'exact_zero_difference_eliminated_before_interval_matrix_multiplication':True,
       'explicit_C_minus_L_map_supported':True,'exact_C_equals_L_witness_supported':True,'Interval_zero_one_constants_exact':True,
       'structural_prefix_transport_closed':closed,'smoke':s,'new_physical_assumption_added':False,'packetwise_norm_budget_used':False,
       'production_source_uniform_prefix_LDLT_closed_here':False,'P4_PASS':False,'P5_MAY_START':False}
@@ -110,10 +128,11 @@ def validate(d):
     f=[]
     if d.get('schema')!=SCHEMA or d.get('qualification')!=QUALIFICATION:f.append('schema/qualification mismatch')
     if d.get('P3_delta')!=P3_DELTA:f.append('P3 delta changed')
-    for k in ('canonical_variation_of_constants_identity_retained','interval_x_minus_x_not_used_for_structural_equalities','explicit_C_minus_L_map_supported','exact_C_equals_L_witness_supported','Interval_zero_one_constants_exact','structural_prefix_transport_closed'):
+    for k in ('canonical_variation_of_constants_identity_retained','interval_x_minus_x_not_used_for_structural_equalities','exact_zero_difference_eliminated_before_interval_matrix_multiplication','explicit_C_minus_L_map_supported','exact_C_equals_L_witness_supported','Interval_zero_one_constants_exact','structural_prefix_transport_closed'):
         if d.get(k) is not True:f.append(k+' not true')
     for k in ('new_physical_assumption_added','packetwise_norm_budget_used','production_source_uniform_prefix_LDLT_closed_here','P4_PASS','P5_MAY_START'):
         if d.get(k) is not False:f.append(k+' not false')
+    if d.get('smoke',{}).get('nonzero_prediction_interior_negative_control_rejected') is not True:f.append('prediction negative control failed')
     return f
 def main():
     p=argparse.ArgumentParser();p.add_argument('--output',type=Path,required=True);a=p.parse_args();d=build();f=validate(d);d['validation_pass']=not f;d['validation_failures']=f;a.output.parent.mkdir(parents=True,exist_ok=True);a.output.write_text(json.dumps(d,indent=2,sort_keys=True)+'\n');print(json.dumps({'structural':d['structural_prefix_transport_closed'],'smoke':d['smoke'],'failures':f},sort_keys=True));return int(bool(f))
