@@ -3,15 +3,16 @@
 This bridges one already-materialized wave-band summary sample to the staged
 ``TuneState`` consumed by ``finite_tuner_commit``. It follows the deployed
 SpectralMSE/default-slew-zero path and retains every clamp and commit-cadence
-edge. WPE, adaptive bandpass, variance-EMA and transcendental binary32
-calculations remain upstream/runtime witnesses; this module does not admit them
-as arbitrary independent parameters or claim finite-precision closure.
+edge. The WPE frequency can now be bound directly from the same finite WPE
+successor; adaptive-band variance and transcendental binary32 ancestry remain
+upstream obligations. This module does not claim source admission or stability.
 """
 from __future__ import annotations
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from fractions import Fraction as F
 
 from tools.stability.ou3_alt_contraction import finite_prediction_graph as P
+from tools.stability.ou3_alt_contraction import finite_wpe_runtime as WPE
 from tools.stability.ou3_alt_contraction.finite_tuner_commit import TuneState, clamp
 
 EMA_SCALE_MIN, EMA_SCALE_MAX = F(1,2), F(6)
@@ -112,7 +113,6 @@ def _clamp_horizon(x,dt): return clamp(P.rational(x),_horizon_lo(dt),EMA_HORIZON
 
 
 def targets(sample:WaveBandSample,cfg:CandidateConfig):
-    """Wave-band summary -> f/tau/sigma targets, before SpectralMSE."""
     f=clamp(sample.frequency_hz,cfg.min_freq,cfg.max_freq)
     noise_var=sample.band_noise_sigma**2
     total=max(F(0),sample.accel_variance) if sample.variance_ready else noise_var
@@ -141,7 +141,6 @@ def spectral_RS(cfg:CandidateConfig,target:TargetState,w:SpectralWitness):
 
 def step(previous:TuneState,sample:WaveBandSample,cfg:CandidateConfig,*,dt,time,last_adapt_time,
          spectral:SpectralWitness,ema:EmaWitness):
-    """One physical sample: target construction, smoothing, and pending bit."""
     dt,time,last_adapt_time=map(P.rational,(dt,time,last_adapt_time))
     if dt<=0 or time<last_adapt_time: raise ValueError('positive dt and monotone tuner time required')
     target=targets(sample,cfg)
@@ -163,13 +162,25 @@ def step(previous:TuneState,sample:WaveBandSample,cfg:CandidateConfig,*,dt,time,
     return CandidateResult(target.frequency,target.variance_wave,target.tau_target,target.sigma_target,rs_t,nxt,fire,time if fire else last_adapt_time,adapt_h,RS_h)
 
 
+def step_from_wpe(previous:TuneState,wpe:WPE.UpdateResult,sample:WaveBandSample,cfg:CandidateConfig,*,
+                  dt,time,last_adapt_time,spectral:SpectralWitness,ema:EmaWitness):
+    """Bind the tuner frequency to the immediately preceding WPE successor."""
+    if not isinstance(wpe,WPE.UpdateResult): raise TypeError('finite WPE successor required')
+    if wpe.frequency is None or wpe.period is None:
+        raise ValueError('tuner WPE path requires a finite canonical WPE output')
+    if sample.frequency_hz != wpe.frequency:
+        raise ValueError('tuner frequency detached from SAME post-update WPE state')
+    return step(previous,sample,cfg,dt=dt,time=time,last_adapt_time=last_adapt_time,spectral=spectral,ema=ema)
+
+
 def readiness():
     return {
       'frequency_variance_to_tau_sigma_targets':True,
       'default_SpectralMSE_target_same_tau_sigma_cadence':True,
       'tau_sigma_and_RS_EMA_recurrence':True,
       'sample_vs_commit_cadence_separated':True,
-      'WPE_bandpass_variance_state_attached':False,
+      'post_WPE_frequency_same_history_attached':True,
+      'adaptive_band_variance_state_attached':False,
       'exp_sqrt_pow_binary32_enclosed':False,
       'stillness_exponential_attached':False,
       'complete_word_finite_identity':False,
