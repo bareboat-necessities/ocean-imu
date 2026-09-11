@@ -1,0 +1,88 @@
+name: ou3-brmm-physical-source
+
+on:
+  push:
+    branches: ["proof/brmm-physical-primitive-2026-09-11"]
+  pull_request:
+    paths:
+      - "tools/stability/**"
+      - "tests/validation/test_ou3_brmm_*.py"
+      - "docs/ou3-*.md"
+      - "doc/kalman_ou_iii/**"
+      - ".github/workflows/ou3-brmm-physical-source.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ou3-brmm-physical-source-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  physical-source:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Record reproducible proof input
+        run: |
+          mkdir -p /tmp/ou3-physical-source
+          git rev-parse HEAD > /tmp/ou3-physical-source/source-commit.txt
+          git archive --format=tar.gz HEAD > /tmp/ou3-physical-source/proof-input.tar.gz
+      - name: Physical wave condition, padded envelope, certificate methods, old witness and ancestry regressions
+        run: |
+          set -euo pipefail
+          python3 tools/stability/ou3_brmm_complete_physical_envelope.py
+          for test in \
+            test_ou3_brmm_physical_wave_condition.py \
+            test_ou3_brmm_physical_wave_source.py \
+            test_ou3_brmm_infinite_continuation.py \
+            test_ou3_brmm_centered_S_recurrence.py \
+            test_ou3_brmm_hard_finite_window_source.py \
+            test_ou3_brmm_window_artifact_codec.py \
+            test_ou3_p4_source_indexed_phi_rebase.py; do
+            python3 -m unittest discover -s tests/validation -p "$test" -v
+          done
+      - name: Regenerate physical condition, certificate evidence and fail-closed P3 P4 evidence
+        run: |
+          set -euo pipefail
+          for module in \
+            ou3_brmm_physical_wave_condition \
+            ou3_brmm_physical_wave_source \
+            ou3_brmm_centered_S_recurrence \
+            ou3_brmm_complete_source \
+            ou3_p4_p3_execution_admission \
+            ou3_p4_final_closure_gate; do
+            python3 tools/stability/$module.py --output /tmp/ou3-physical-source/$module.json
+          done
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path('/tmp/ou3-physical-source')
+          c=json.loads((p/'ou3_brmm_physical_wave_condition.json').read_text())
+          w=json.loads((p/'ou3_brmm_physical_wave_source.json').read_text())
+          s=json.loads((p/'ou3_brmm_centered_S_recurrence.json').read_text())
+          g=json.loads((p/'ou3_p4_final_closure_gate.json').read_text())
+          assert c['validation_pass'] and w['validation_pass'] and s['validation_pass'] and g['validation_pass']
+          assert c['physics_is_primary']
+          assert c['certificate_methods_are_sufficient_not_definitional']
+          assert not c['constant_nonzero_position_zero_velocity_history_admitted']
+          assert c['physical_D_S_numeric_qualification_closed_for_complete_family']
+          assert c['numeric_D_S_m_s'] == 1100.0
+          assert w['old_witness_excluded_by_corrected_physical_theorem']
+          assert not w['constant_nonzero_position_zero_velocity_history_admitted']
+          assert s['D_S_numeric_qualification_closed'] and s['D_S_max_m_s'] == 1100.0
+          assert g['indefinite_source_target_compatible']
+          assert g['physical_wave_numeric_source_qualification_closed']
+          assert not g['P4_PASS'] and not g['P5_MAY_START']
+          assert g['P3_delta']==1e-18
+          PY
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: ou3-brmm-physical-source
+          path: /tmp/ou3-physical-source/
+          retention-days: 7

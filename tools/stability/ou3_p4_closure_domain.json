@@ -5,20 +5,18 @@
   "scope": "conditional Normal-Live COMPLETE_BRMM theorem domain; not a replay-derived deployment claim",
   "hard_entry_search": {
     "definition": "legacy conditional product domain for diagnostics/working normalization; NOT the reachable fresh-Live entrance",
-    "candidate_scale_factors": [
-      1.0
-    ],
+    "candidate_scale_factors": [1.0],
     "minimum_certified_scale": 1.0,
     "base_coordinate_radii": {
       "attitude_cayley_norm": 0.8284271247461901,
       "gyro_bias_norm_rad_s": 0.01,
       "velocity_norm_mps": 5.0,
-      "position_norm_m": 7.361215932167728,
+      "position_norm_m": 8.0973375253845,
       "integral_displacement_norm_m_s": 300.0,
       "latent_acceleration_norm_mps2": 2.941995,
       "accelerometer_bias_error_norm_mps2": 0.4
     },
-    "base_radius_provenance": "legacy declared error budgets, not shipping-state resets or physical-source reachability; S=300 is a declaration copied into the closure domain by c8e54b7, not a derived shipping reset bound",
+    "base_radius_provenance": "error-domain scales, not physical wave-state caps. position_norm_m=sqrt(3)*(9.35/2) follows the declared componentwise |delta p_i|<=0.5 Hs entry rule after padding Hs from 8.5 to 9.35 m. S=300 remains only a legacy error working scale and is not the physical D_S=1100 m*s source bound.",
     "requires_full_declared_scale": true,
     "shipping_covariance_is_not_entry_set": true,
     "fresh_live_entry_source": "ou3_p4_live_entry_graph.py: e_S and S_true share one origin; centered fresh e_S=0; all subsequent words retain propagated S",
@@ -29,10 +27,7 @@
     "model": "b_true(t)=beta_gm(t)+b0+K_T*dT(t)+K_strain*strain(t)+d_nonGM(t)",
     "family_role": "composite physical-composition family; distinct from BIAS1 and never inferred from it",
     "gauss_markov_component_abs_upper_mps2": 0.02,
-    "gauss_markov_tau_true_s": [
-      300.0,
-      3600.0
-    ],
+    "gauss_markov_tau_true_s": [300.0,3600.0],
     "gauss_markov_pathwise_increment_component_abs_upper_mps2": 0.0005,
     "gauss_markov_stationary_sigma_descriptive_mps2": 0.02,
     "gauss_markov_pathwise_increment_cap_is_declared_hypothesis": true,
@@ -52,19 +47,10 @@
   "BIAS1_family": {
     "model": "beta(t)=beta0*exp(-(t-t0)/tau_true)+a*sin(omega*(t-t0)+phase)+d_det(t)",
     "root_component_abs_upper_mps2": 0.1,
-    "tau_true_s": [
-      600.0,
-      2400.0
-    ],
+    "tau_true_s": [600.0,2400.0],
     "sinusoid_component_amplitude_abs_upper_mps2": 0.02,
-    "sinusoid_period_s": [
-      300.0,
-      1200.0
-    ],
-    "phase_rad": [
-      -3.141592653589793,
-      3.141592653589793
-    ],
+    "sinusoid_period_s": [300.0,1200.0],
+    "phase_rad": [-3.141592653589793,3.141592653589793],
     "deterministic_mismatch_component_abs_upper_mps2": 0.01,
     "deterministic_mismatch_derivative_component_abs_upper_mps3": 0.0001,
     "driver_increment_definition": "w_i=beta(t_i)-phi_true*beta(t_{i-1})",

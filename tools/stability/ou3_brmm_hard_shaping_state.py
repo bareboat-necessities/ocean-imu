@@ -10,8 +10,10 @@ That BRMM->outer inclusion is NOT the separate physical/deployment->BRMM left
 inclusion. The latter remains false until full source admission is proved.
 
 The exact joint source/filter-state -> typed-executor coordinate map is also
-materialized. The hard shaping/excitation representation is therefore closed,
-while provider execution/materialization and deployment admission remain open.
+materialized. The finite-window outer representation is therefore closed. It is not the
+new physical generator invariant or its uniform numerical qualification. The
+provider must retain the corrected potential; full execution/materialization
+and physical admission remain open.
 """
 from __future__ import annotations
 import argparse,json
@@ -52,7 +54,7 @@ def build():
  'joint_executor_coordinate_map':{'qualification':output['qualification'],'closed':output['joint_source_output_map_closed'],'raw_gyro_and_corrected_rate_distinct':output['raw_gyro_and_corrected_rate_distinct'],'truth_attitude_and_nominal_R_hat_distinct':output['truth_attitude_and_nominal_R_hat_distinct'],'truth_acceleration_and_nominal_a_w_hat_distinct':output['truth_acceleration_and_nominal_a_w_hat_distinct'],'sensor_forcing_hard_bound_closed_here':output['sensor_forcing_hard_bound_closed_here'],'BIAS0_assembled_sensor_qualification_closed_here':output['BIAS0_assembled_sensor_qualification_closed_here']},
  'exact_spectral_membership_oracle_required_for_P4':False,'correlated_outer_enclosure_route_used':True,'BRMM_to_correlated_outer_left_inclusion_closed':True,'global_physical_deployment_left_inclusion_closed_here':False,
  'power_spectrum_alone_is_hard_pathwise_bound':False,'spectral_moments_alone_may_close_xs':False,'gaussian_good_event_may_close_xs':False,'replay_may_close_xs':False,'seeded_128_frequency_generator_may_close_xs':False,'finite_RAO_grid_may_close_xs':False,'arbitrary_bounded_input_box_may_close_xs':False,
- 'allowed_closure_forms':['validated_compact_oscillator_or_shaping_state_with_hard_driver_set','validated_equivalent_hard_finite_window_dynamic_constraint'],'executable_ingredients':executable,'hard_shaping_state_or_excitation_bound_closed':True,'complete_BRMM_family_materialized_here':False,'P3_promoted':False,'next_obligation':'hard shaping and BRMM->outer inclusion are closed; physical deployment admission and 601-sample provider execution remain separate open obligations'}
+ 'allowed_closure_forms':['validated_compact_oscillator_or_shaping_state_with_hard_driver_set_and_bounded_potential','validated_equivalent_hard_finite_window_dynamic_constraint_with_same_bounded_generator_potential'],'executable_ingredients':executable,'hard_shaping_state_or_excitation_bound_closed':True,'finite_window_representation_is_not_indefinite_physical_qualification':True,'complete_BRMM_family_materialized_here':False,'P3_promoted':False,'next_obligation':'hard shaping and BRMM->outer inclusion are closed; physical deployment admission and 601-sample provider execution remain separate open obligations'}
 def validate(d):
  f=[]
  if d.get('schema')!=SCHEMA or d.get('qualification')!=QUALIFICATION:f.append('schema/qualification mismatch')

@@ -33,11 +33,13 @@ jobs:
       - uses: actions/checkout@v6
         with:
           persist-credentials: false
-      - name: Exact indefinite-source obstruction and centered-S qualification
+      - name: Historical DC obstruction and derived physical centered-S theorem
         run: |
           set -euo pipefail
           mkdir -p /tmp/ou3-construction
           git rev-parse HEAD > /tmp/ou3-construction/source-commit.txt
+          python3 tools/stability/ou3_brmm_physical_wave_source.py --output /tmp/ou3-construction/physical-wave-source.json
+          python3 -m unittest discover -s tests/validation -p 'test_ou3_brmm_physical_wave_source.py' -v
           python3 tools/stability/ou3_brmm_infinite_continuation.py --output /tmp/ou3-construction/infinite-continuation.json
           python3 tools/stability/ou3_brmm_centered_S_recurrence.py --output /tmp/ou3-construction/centered-S-recurrence.json
           python3 tools/stability/ou3_brmm_translation_observation_kernel.py --output /tmp/ou3-construction/translation-observation-kernel.json
@@ -63,7 +65,10 @@ jobs:
           assert r['condition_bounds_every_handoff_centered_S']
           assert r['condition_excludes_nonzero_constant_position_history']
           assert r['D_S_max_m_s'] is None
-          assert r['D_S_retention_search_upper_m_s']==r['S_working_radius_m_s']==300.0
+          assert r['COMPLETE_BRMM_INDEFINITE_S_THEOREM_CLOSED']
+          assert not r['working_radius_sets_physical_D_S']
+          assert not r['constant_nonzero_position_zero_velocity_history_admitted']
+          assert 'D_S_retention_search_upper_m_s' not in r
           assert not r['D_S_numeric_qualification_closed']
           assert not r['COMPLETE_BRMM_INDEFINITE_S_QUALIFIED']
           assert k['validation_pass']
@@ -84,7 +89,11 @@ jobs:
           assert q['detached_scalar_box_corner_iqc_ratio']=='193'
           assert qs['validation_pass']
           assert qs['moment_sector_matrix_available']
-          assert qs['same_radial_coordinate_must_parameterize_entire_source_history']
+          assert not qs['same_radial_coordinate_must_parameterize_entire_source_history']
+          assert qs['physical_source_scale_independent_of_hard_entry_radial']
+          assert qs['zero_initial_error_may_have_nonzero_physical_source']
+          assert qs['physical_source_scale_value_for_production']==1.0
+          assert not qs['hard_entry_radial_used_for_physical_source_bound']
           assert qs['detached_box_corner_strictly_excluded']
           assert not qs['independent_source_supply_port_used']
           for x in (r,k,p,q,qs):
@@ -115,7 +124,9 @@ jobs:
           assert not a['P4_PASS'] and not a['P5_MAY_START']
           assert d['validation_pass'],d['validation_failures']
           assert d['indefinite_source_necessary_condition']['classification']=='B'
-          assert not d['indefinite_source_target_compatible']
+          assert d['indefinite_source_target_compatible']
+          assert not d['physical_wave_numeric_source_qualification_closed']
+          assert d['corrected_physical_wave_primitive']['current_missing_numeric_source_qualification_classification']=='E'
           assert not d['P4_PASS'] and not d['P5_MAY_START']
           assert d['P3_delta']==1e-18
           assert s['QUALIFIED_LIVE_HANDOFF_BY_150S_CLOSED']

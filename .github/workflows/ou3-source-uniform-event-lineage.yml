@@ -8,6 +8,8 @@ on:
       - 'tools/stability/ou3_p4_source_reachable_selector_family.py'
       - 'tools/stability/ou3_p4_brmm_primitive_prefix_binding.py'
       - 'tools/stability/ou3_p4_source_uniform_bias_prefix_lineage.py'
+      - 'tools/stability/ou3_p4_innovation_provenance_continuation.py'
+      - 'tools/stability/ou3_innovation_psd_plus_R_inverse.py'
       - 'tests/validation/test_ou3_p4_source_uniform_estimator_event_attachment.py'
       - 'tests/validation/test_ou3_p4_source_uniform_event_lineage_induction.py'
       - '.github/workflows/ou3-source-uniform-event-lineage.yml'
@@ -30,6 +32,19 @@ jobs:
           persist-credentials: false
       - name: Compile proof modules
         run: python3 -m compileall -q tools/stability
+      - name: Diagnose continuation past rectangular innovation singularity
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/ou3-source-uniform-lineage
+          python3 tools/stability/ou3_p4_innovation_provenance_continuation.py | tee /tmp/ou3-source-uniform-lineage/innovation-provenance-continuation.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/ou3-source-uniform-lineage/innovation-provenance-continuation.json'))
+          assert d['validation_pass']
+          assert not d['canonical_backend_changed']
+          assert not d['shipping_filter_changed']
+          assert not d['P4_PASS'] and not d['P5_MAY_START']
+          PY
       - name: Validate synchronized attachment and induction
         run: |
           set -euo pipefail

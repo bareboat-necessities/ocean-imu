@@ -2,7 +2,23 @@
   "schema": 1,
   "qualification": "DECLARED_OU3_DEPLOYMENT_THEOREM_OPERATING_DOMAIN",
   "trajectory_fit": false,
-  "note": "These are theorem/deployment assumptions, not extrema fitted from the eight reference replays. Existing replay remains a regression/falsification layer and may disprove this envelope but cannot establish it.",
+  "note": "These are theorem/deployment assumptions, not extrema fitted from the eight reference replays. The physical COMPLETE-BRMM source is anchored to the Hs=8.5 m reference case and padded outward before P4 closure. Physical source bounds and estimator error-entry bounds are distinct objects.",
+  "complete_brmm_physical_envelope": {
+    "reference_Hs_m": 8.5,
+    "engineering_amplitude_padding_factor": 1.1,
+    "frequency_lower_edge_factor": 0.9,
+    "frequency_upper_edge_factor": 1.1,
+    "significant_wave_height_Hs_upper_m": 9.35,
+    "wave_position_norm_upper_m": 8.1,
+    "wave_velocity_norm_upper_mps": 5.5,
+    "wave_acceleration_norm_upper_mps2": 8.8,
+    "body_rate_norm_upper_deg_s": 35.0,
+    "frequency_support_hz": [0.018, 0.88],
+    "centered_primitive_D_S_upper_m_s": 1100.0,
+    "padding_chosen_independently_of_P4": true,
+    "legacy_300_m_s_used_to_set_physics": false,
+    "these_are_physical_source_bounds_not_error_bounds": true
+  },
   "configured_runtime": {
     "imu_dt_s": 0.005,
     "imu_lever_arm_enabled": false,
@@ -21,7 +37,7 @@
   },
   "startup": {
     "gravity_mps2": 9.80665,
-    "initial_non_gravitational_specific_force_norm_upper_mps2": 8.0,
+    "initial_non_gravitational_specific_force_norm_upper_mps2": 8.8,
     "initial_tangent_gyro_bias_norm_upper_rad_s": 0.01,
     "effective_deterministic_gyro_transport_disturbance_upper_rad_s": 0.0001,
     "effective_deterministic_bias_transport_disturbance_upper_rad_s2": 1e-05,
@@ -54,7 +70,7 @@
     "live_entry_requires_wave_period_estimator_usable": false,
     "quality_handoff_requires_tuner_ready_and_usable_period": true,
     "timeout_handoff_requires_aligned_branch_not_measured_period": true,
-    "physical_handoff_coordinate_bounds_role": "legacy conditional diagnostic box, not established fresh-wrapper reachability; use ou3_p4_live_entry_graph.py"
+    "physical_handoff_coordinate_bounds_role": "legacy conditional diagnostic error box, not the physical wave-state envelope and not established fresh-wrapper reachability; use ou3_p4_live_entry_graph.py"
   },
   "initial_filter_entrance": {
     "scope": "DECLARED_ERROR_SET_PRESENTED_TO_P5_CAPTURE",
@@ -69,8 +85,8 @@
       "truth_error_not_estimate_magnitude": true,
       "component_abs_error_upper_Hs_factor": 0.5,
       "significant_wave_height_Hs_positive_required": true,
-      "significant_wave_height_Hs_upper_m": 8.5,
-      "Hs_upper_role": "DECLARED_CURRENT_PROOF_DEPLOYMENT_ENVELOPE_NOT_REPLAY_FIT",
+      "significant_wave_height_Hs_upper_m": 9.35,
+      "Hs_upper_role": "DECLARED_PADDED_CURRENT_PROOF_DEPLOYMENT_ENVELOPE_NOT_REPLAY_FIT",
       "widening_beyond_current_envelope": "SEPARATE_DOMAIN_WIDENING_OBLIGATION"
     },
     "sea_scaled_translation_coordinates": {
@@ -81,7 +97,7 @@
       "Ts_role": "positive characteristic sea period used only as a coordinate scale unless a separate theorem bound is declared"
     },
     "additional_hard_sea_scaled_bounds_declared": false,
-    "note": "The 45 deg attitude and |delta p_i| <= 0.5 Hs conditions are entrance assumptions, not a claim that the earlier startup interval preserves them automatically. The current numerical theorem envelope additionally declares 0 < Hs <= 8.5 m so the componentwise position entrance is finite for CI; 8.5 m is the present proof/deployment envelope and widening it is a separate theorem-domain task, not an inference from replay extrema. P1 retains its conservative source handoff box except that the latent-acceleration error component is explicitly declared as ||delta a_w|| <= 0.3 g = 2.941995 m/s^2 for startup in waves."
+    "note": "The 45 deg attitude and |delta p_i| <= 0.5 Hs conditions are error entrance assumptions. The physical source envelope is separately padded from the 8.5 m reference sea to Hs<=9.35 m before P4 closure."
   },
   "certificate_search": {
     "p4_complete_word_full_attitude_candidate_deg": [30.0, 25.0, 20.0, 15.0],
@@ -91,19 +107,19 @@
   },
   "normal_live": {
     "vector_pe_recurrence_window_s": 1.0,
-    "non_gravitational_cog_acceleration_norm_upper_mps2": 8.0,
-    "non_gravitational_cog_acceleration_fraction_g": 0.8157729703823426,
+    "non_gravitational_cog_acceleration_norm_upper_mps2": 8.8,
+    "non_gravitational_cog_acceleration_fraction_g": 0.8973500150414285,
     "specific_force_norm_definition": "norm of CoG accelerometer model vector a_w-g before accelerometer bias/noise; lever arm disabled in this proof branch",
     "specific_force_bounds_derived_from_gravity_and_non_gravitational_acceleration": true,
-    "specific_force_norm_lower_mps2": 1.80665,
-    "specific_force_norm_upper_mps2": 17.80665,
-    "specific_force_norm_lower_fraction_g": 0.18422702961765736,
-    "specific_force_norm_upper_fraction_g": 1.8157729703823424,
+    "specific_force_norm_lower_mps2": 1.00665,
+    "specific_force_norm_upper_mps2": 18.60665,
+    "specific_force_norm_lower_fraction_g": 0.10264998495857148,
+    "specific_force_norm_upper_fraction_g": 1.8973500150414285,
     "impact_slam_acceleration_in_normal_live_P1_P5_scope": false,
     "magnetic_vector_norm_lower_uT": 10.0,
     "magnetic_vector_norm_upper_uT": 200.0,
     "vector_sine_separation_lower": 0.1,
-    "body_rate_norm_upper_deg_s": 30.0,
+    "body_rate_norm_upper_deg_s": 35.0,
     "active_accelerometer_bias_state_norm_upper_mps2": 0.35,
     "active_accelerometer_bias_interior_scope": "auxiliary interior-only nonlinear certificates; not the primary bounded-bias theorem or covariance-only P3 algebra",
     "primary_bounded_bias_estimate_domain": "closed projection ball of radius 0.4 m/s^2; nonlinear P4 boundary retention remains open",
@@ -112,11 +128,11 @@
       "accepted_packet_recurrence_window_s": 1.0,
       "accepted_packet_separation_min_s": 0.04,
       "accepted_packet_separation_max_s": 1.0,
-      "non_gravitational_specific_force_norm_upper_mps2": 8.0,
+      "non_gravitational_specific_force_norm_upper_mps2": 8.8,
       "axial_gyro_bias_is_neutral_input": true,
-      "note": "Conditional gravity-only theorem hypothesis: before magnetic regauging, every quotient word contains two accepted accelerometer packets separated inside the declared interval and satisfying the same 8.0 m/s^2 non-gravitational CoG acceleration envelope."
+      "note": "Conditional gravity-only theorem hypothesis: before magnetic regauging, every quotient word contains two accepted accelerometer packets separated inside the declared interval and satisfying the same padded 8.8 m/s^2 non-gravitational CoG acceleration envelope."
     },
-    "pe_scope_note": "The full-heading theorem is for normal ocean-wave/ship motion at the CoG, not impact/slam dynamics. Its primary physical acceleration assumption is ||a_non-grav|| <= 8.0 m/s^2 = 0.816 g. With g=9.80665 m/s^2 and lever arm disabled, triangle inequality gives the derived total CoG specific-force envelope 1.80665 <= ||a_w-g|| <= 17.80665 m/s^2 (0.184 to 1.816 g). The 10 uT magnetic floor and 0.1 vector-sine separation remain PE assumptions. Active/transitioning vibration guard, impacts/slams, nonzero lever arm, and hard attitude rewrites remain separate hybrid/domain obligations. The primary bounded-bias theorem covers the closed estimate projection ball; P3 covariance identity at projection does not close nonlinear P4 retention.",
+    "pe_scope_note": "The full-heading theorem is for normal ocean-wave/ship motion at the CoG, not impact/slam dynamics. Its primary padded physical acceleration assumption is ||a_non-grav|| <= 8.8 m/s^2. With g=9.80665 m/s^2 and lever arm disabled, triangle inequality gives 1.00665 <= ||a_w-g|| <= 18.60665 m/s^2. The 10 uT magnetic floor and 0.1 vector-sine separation remain PE assumptions. Active/transitioning vibration guard, impacts/slams, nonzero lever arm, and hard attitude rewrites remain separate hybrid/domain obligations. The primary bounded-bias theorem covers the closed estimate projection ball; P3 covariance identity at projection does not close nonlinear P4 retention.",
     "accelerometer_update_required_each_valid_imu_sample_after_live_entry": true,
     "accelerometer_rejection_in_normal_live_scope": false,
     "accelerometer_update_scope_note": "After entry into Normal Live, every valid IMU sample executes the accelerometer Kalman update. The certified source language therefore contains no rejected/missing accelerometer branch; numerical innovation-factorization failure is outside the normal theorem domain. Magnetometer timing and rejection remain asynchronous.",

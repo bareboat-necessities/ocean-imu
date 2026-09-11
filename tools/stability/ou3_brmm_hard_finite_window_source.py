@@ -12,7 +12,7 @@ translation/rotation, the private measurement-only front end, the tuner and
 scheduler, and hence the complete H18/A21 Riccati word.
 
 The BRMM theorem permits either an oscillator/shaping realization or an
-equivalent hard finite-window dynamic constraint.  Both are represented by the
+equivalent hard finite-window dynamic constraint WITH the same bounded generator potential. Both are represented by the
 same transition-witness contract below.  A replay, a Gaussian good event,
 spectral moments alone, arbitrary per-sample boxes, a fixed-lambda word, a
 finite RAO grid, or an independently selected tuner schedule cannot satisfy
@@ -50,11 +50,12 @@ import ou3_brmm_directional_response_family as RESPONSE
 import ou3_brmm_hard_shaping_state as SHAPING
 import ou3_brmm_physical_admissibility as PHYSICAL
 import ou3_brmm_rlambda_transition as RLAMBDA
+import ou3_brmm_physical_wave_source as WAVE
 
 REPO = Path(__file__).resolve().parents[2]
 DEFAULT_DOMAIN = REPO / "tools" / "stability" / "ou3_proof_operating_domain.json"
-SCHEMA = 4
-QUALIFICATION = "OU3_BRMM_HARD_FINITE_WINDOW_REALIZATION_V4"
+SCHEMA = 5
+QUALIFICATION = "OU3_BRMM_HARD_FINITE_WINDOW_REALIZATION_V5"
 CANONICAL_SOURCE = "COMPLETE_BRMM_NORMAL_LIVE_WORD"
 HORIZON_S = 3.0
 DT_S = 0.005
@@ -66,10 +67,17 @@ HARD_SHAPING_STATE_OR_EXCITATION_BOUND_CLOSED = (
     SHAPING.HARD_SHAPING_STATE_OR_EXCITATION_BOUND_CLOSED
 )
 JOINT_TRANSLATIONAL_ROTATIONAL_SHAPING_CLOSED = False
+# Neither JSON interval continuity nor an independently valid generator
+# certificate proves its output is this IMU/source continuation. These are
+# distinct code-owned obligations, not provider-supplied promotion booleans.
+UNIFORM_PHYSICAL_WAVE_ENVELOPE_QUALIFIED = False
+SAME_HISTORY_WAVE_GENERATOR_OUTPUT_ATTACHMENT_CLOSED = False
 PROVIDER_IMPLEMENTATION_CLOSED = (
     MACHINE_READABLE_R_LAMBDA_CLOSED
     and HARD_SHAPING_STATE_OR_EXCITATION_BOUND_CLOSED
     and JOINT_TRANSLATIONAL_ROTATIONAL_SHAPING_CLOSED
+    and UNIFORM_PHYSICAL_WAVE_ENVELOPE_QUALIFIED
+    and SAME_HISTORY_WAVE_GENERATOR_OUTPUT_ATTACHMENT_CLOSED
 )
 
 _FORBIDDEN_TRUE_FLAGS = (
@@ -113,6 +121,10 @@ _PHYSICAL_FIELDS = (
     "primitive_in_id",
     "primitive_out_id",
     "centered_S_origin_witness_id",
+    "physical_wave_generator_id",
+    "wave_potential_in_interval",
+    "wave_potential_out_interval",
+    "wave_live_potential_interval",
 )
 
 _EVENT_FIELDS = (
@@ -209,6 +221,27 @@ def _continuity_failures(samples: Any) -> list[str]:
     return f
 
 
+def _finite_interval_vec3(value: Any) -> bool:
+    return (isinstance(value, list) and len(value) == 3
+            and all(isinstance(row, list) and len(row) == 2
+                    and all(isinstance(v, (int, float)) and not isinstance(v, bool)
+                            and math.isfinite(v) for v in row)
+                    and row[0] <= row[1] for row in value))
+
+
+def validate_successive_wave_windows(previous: dict, following: dict) -> list[str]:
+    """Necessary cross-word ancestry check; it cannot promote source admission."""
+    f = []
+    for key in ("physical_wave_generator_id", "centered_S_origin_witness_id", "wave_live_potential_interval"):
+        if previous.get(key) is None or previous.get(key) != following.get(key):
+            f.append("cross-word physical source changed "+key)
+    if previous.get("primitive_egress_id") != following.get("primitive_ingress_id"):
+        f.append("cross-word physical primitive state detached")
+    if previous.get("wave_potential_egress_interval") != following.get("wave_potential_ingress_interval"):
+        f.append("cross-word generator potential detached")
+    return f
+
+
 def validate_candidate_structure(d: dict[str, Any]) -> list[str]:
     """Validate artifact shape and anti-shortcut semantics, but not SEA0 math."""
     f: list[str] = []
@@ -247,8 +280,41 @@ def validate_candidate_structure(d: dict[str, Any]) -> list[str]:
         f.append("missing cross-word primitive egress id")
     if not isinstance(d.get("centered_S_origin_witness_id"), str) or not d.get("centered_S_origin_witness_id"):
         f.append("missing one-time centered-S origin witness")
+    certificate = d.get("physical_wave_generator_certificate")
+    generator_id = None
+    if not isinstance(certificate, dict):
+        f.append("missing hard physical wave generator certificate (finite-window constraints alone are insufficient)")
+    else:
+        wf = WAVE.verify_certificate(certificate)
+        f.extend("physical wave generator: "+x for x in wf)
+        if not wf:
+            generator_id = WAVE.certificate_id(certificate)
+            if d.get("physical_wave_generator_id") != generator_id:
+                f.append("physical wave generator id does not bind its derived certificate")
     transitions = d.get("transitions")
     f.extend(_continuity_failures(transitions))
+    if isinstance(transitions, list) and generator_id is not None:
+        live_potential = d.get("wave_live_potential_interval")
+        previous_potential = d.get("wave_potential_ingress_interval")
+        for k, sample in enumerate(transitions):
+            if not isinstance(sample, dict):
+                continue
+            physical = sample.get("joint_physical_output", {})
+            if not isinstance(physical, dict):
+                continue
+            if physical.get("physical_wave_generator_id") != generator_id:
+                f.append(f"sample {k} changed physical wave generator without a qualified switch")
+            if physical.get("wave_live_potential_interval") != live_potential:
+                f.append(f"sample {k} changed the one-time Live potential")
+            if physical.get("wave_potential_in_interval") != previous_potential:
+                f.append(f"sample {k} broke same-history physical potential continuity")
+            previous_potential = physical.get("wave_potential_out_interval")
+            for field in ("wave_potential_in_interval", "wave_potential_out_interval", "wave_live_potential_interval"):
+                value = physical.get(field)
+                if not _finite_interval_vec3(value):
+                    f.append(f"sample {k} malformed {field}")
+        if previous_potential != d.get("wave_potential_egress_interval"):
+            f.append("physical potential egress detached from last sample")
     if isinstance(transitions, list) and len(transitions) == SAMPLES:
         first = transitions[0].get("joint_physical_output", {}) if isinstance(transitions[0], dict) else {}
         last = transitions[-1].get("joint_physical_output", {}) if isinstance(transitions[-1], dict) else {}
@@ -319,6 +385,9 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict[str, Any]:
                 "coupled_peak_steepness_retained"
             ],
         },
+        "physical_wave_generator_contract": WAVE.build(),
+        "uniform_physical_wave_envelope_qualified": UNIFORM_PHYSICAL_WAVE_ENVELOPE_QUALIFIED,
+        "same_history_wave_generator_output_attachment_closed": SAME_HISTORY_WAVE_GENERATOR_OUTPUT_ATTACHMENT_CLOSED,
         "hard_shaping_certificate": {
             "qualification": shaping["qualification"],
             "reference_parameter_domain_compact": shaping["reference_parameter_domain_compact"],
@@ -355,6 +424,10 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict[str, Any]:
             "physical_velocity_position_centered_S_ancestry_required": True,
             "physical_primitive_chain_must_cross_word_boundary": True,
             "one_centered_S_origin_witness_per_history": True,
+            "physical_wave_generator_certificate_recomputed": True,
+            "physical_potential_and_Live_potential_carried_across_words": True,
+            "potential_intervals_alone_establish_generator_output_relation": False,
+            "exact_generator_primitive_binding_module": "ou3_brmm_wave_primitive_binding.py",
             "precomputed_aw_covariance_floor_increment_allowed": False,
         },
         "executable_provider_ingredients": executable,
@@ -384,7 +457,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict[str, Any]:
 
 
 def validate_status(d: dict[str, Any]) -> list[str]:
-    f: list[str] = []
+    f: list[str] = WAVE.validate(d.get("physical_wave_generator_contract", {}))
     if d.get("schema") != SCHEMA or d.get("qualification") != QUALIFICATION:
         f.append("schema/qualification mismatch")
     if d.get("canonical_source") != CANONICAL_SOURCE:

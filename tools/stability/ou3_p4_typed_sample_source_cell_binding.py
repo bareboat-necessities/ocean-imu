@@ -72,6 +72,8 @@ def validate_event_cells_against_selector(
         if c.estimator_source_token != selector.source_cell_id:
             f.append(f"event {i}: estimator/source ancestry detached from trusted selector")
 
+        if c.wave_primitive != selector.sample_coordinates.wave_primitive:
+            f.append(f"event {i}: physical wave potential/primitive ancestry detached from typed sample")
         trusted = expected_cells[i]
         if not _same_mat(c.P, trusted.P_before):
             f.append(f"event {i}: source-cell P is not trusted event P_before")

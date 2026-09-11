@@ -1,0 +1,136 @@
+\section{Physical BRMM wave coordinate}
+\label{sec:brmm-physical-wave-condition}
+
+BRMM first specifies the \emph{physics} of the wave coordinate.  The vessel
+translation is decomposed as
+\[
+ x_{\rm CoG}(t)=x_{\rm eq}(t)+p_m(t),\qquad
+ v_m=\dot p_m,\qquad a_m=\dot v_m,
+\]
+where $p_m$ is wave-induced vessel displacement about a local equilibrium or
+slow reference, not absolute global position. Current, propulsion, leeway,
+secular translation, an arbitrary global-position origin, and other slow
+reference motion belong to $x_{\rm eq}$ rather than to a permanent DC component
+of $p_m$.  This decomposition does not remove physical acceleration from the
+IMU: any nonzero $\ddot x_{\rm eq}$ must be explicitly compensated or retained
+in the declared same-history model/disturbance budget.
+
+\paragraph{Primary hard wave condition.}
+A COMPLETE-BRMM wave history is a bounded oscillatory displacement history
+about this local equilibrium.  In addition to the pointwise, window, bias,
+attitude, and execution premises stated below, its same-history physical jet
+must satisfy
+\[
+ \dot p_m=v_m,\qquad \dot v_m=a_m
+\]
+a.e., and the admitted physical family must possess a finite constant $D_S$
+for which
+\begin{equation}
+ \left\|\int_u^t p_m(s)\,ds\right\|\le D_S
+ \qquad\text{for every relevant }u,t
+ \label{eq:brmm-primary-bounded-primitive}
+\end{equation}
+uniformly over every successive admitted continuation.  Equation
+\eqref{eq:brmm-primary-bounded-primitive} is the pathwise mathematical content
+of ``bounded oscillatory wave displacement'' needed by the OU--III theorem.
+It rules out a permanent nonzero displacement offset being integrated forever
+as wave motion, while still allowing quiet water and finite flat segments.
+
+The bound $D_S$ is a property of the physical wave family.  It is not the old
+$300\,\mathrm{m\,s}$ P4 working radius, is not selected because a stability
+certificate happens to pass, and is not implied by asymptotic zero mean, a
+power spectrum, significant wave height, a finite replay, or independent
+pointwise bounds on $p_m,v_m,a_m$.  A zero-mean statement alone is insufficient
+because it does not prevent arbitrarily long deterministic excursions.
+
+\paragraph{Numerical COMPLETE-BRMM proof envelope.}
+For the current deterministic theorem scope, the $H_s=8.5\,\mathrm m$ reference
+sea and its existing hard physical reference limits are used as engineering
+anchors and padded \emph{before} attempting P4 closure.  The padding is therefore
+part of the declared theorem domain, not a quantity tuned until a certificate
+passes.  We use a 10\% amplitude/kinematic margin and widen the reference
+$[0.02,0.8]\,\mathrm{Hz}$ harmonic support by 10\% on both edges.  After simple
+outward rounding, COMPLETE-BRMM requires
+\[
+ \begin{gathered}
+ H_s\le9.35\,\mathrm m,\qquad
+ \|p_m\|\le8.10\,\mathrm m,\qquad
+ \|v_m\|\le5.50\,\mathrm{m/s},\\
+ \|a_m\|\le8.80\,\mathrm{m/s^2},\qquad
+ \|\omega_b\|\le35^\circ/\mathrm s,\qquad
+ f\in[0.018,0.88]\,\mathrm{Hz},\\
+ D_S\le1100\,\mathrm{m\,s}.
+ \end{gathered}
+ \label{eq:brmm-padded-physical-envelope}
+\]
+The acceleration padding deliberately remains below standard gravity, leaving
+$\|a_m-g\|\ge 9.80665-8.80=1.00665\,\mathrm{m/s^2}$ for the gravity-direction
+part of the proof.  The centered-primitive bound is obtained outwardly from the
+finite-harmonic 28-ft reference bound $D_{S,8.5}\le863.7794\,\mathrm{m\,s}$ by
+applying the 10\% amplitude margin and the 10\% downward frequency-edge margin:
+\[
+ D_S\le D_{S,8.5}\frac{1.10}{0.90}<1056\,\mathrm{m\,s},
+\]
+then rounding to $1100\,\mathrm{m\,s}$.  No $300\,\mathrm{m\,s}$ proof radius
+enters this derivation.  Histories outside Eq.~\eqref{eq:brmm-padded-physical-envelope}
+are simply outside the present theorem scope; this is a regional physical
+claim, not a claim covering all conceivable marine motion.
+
+At the actual Live time $t_L$, the one-time centered coordinate is
+\[
+ S_L(t)=\int_{t_L}^{t}p_m(s)\,ds,
+ \qquad S_L(t_L)=0,
+\]
+and the primary physical condition gives $\|S_L(t)\|\le D_S$.  This is a
+single change of proof origin.  Position is not re-anchored and $S_L$ is not
+re-zeroed at later proof words or hybrid transitions.
+
+\paragraph{How the physical condition may be certified.}
+Harmonic/spectral and shaping-state models are not the definition of BRMM
+wave motion.  They are sufficient mathematical constructions for proving that
+a concrete physical wave family satisfies Eq.~\eqref{eq:brmm-primary-bounded-primitive}
+and for computing a hard $D_S$.
+
+For example, a positive-frequency hard amplitude representation
+\[
+ p_m(t)=\int\cos(\omega t)\,dA(\omega)
+       +\int\sin(\omega t)\,dB(\omega)
+\]
+with finite inverse-frequency amplitude moment
+\[
+ M_{-1}=\int\omega^{-1}\bigl(d|A|+d|B|\bigr)<\infty
+\]
+has the bounded primitive
+\[
+ \phi_w(t)=\int\frac{\sin(\omega t)\,dA(\omega)
+                         -\cos(\omega t)\,dB(\omega)}{\omega},
+\qquad \dot\phi_w=p_m,
+\]
+and therefore $D_S\le2M_{-1}$.  A separately qualified hard cutoff
+$\omega\ge\omega_{\min}>0$ and amplitude mass $M_0$ imply
+$D_S\le2M_0/\omega_{\min}$.  These are deterministic amplitude bounds, not
+PSD or Gaussian high-probability arguments.
+
+Likewise, a bounded shaping-state representation can certify the same physical
+condition when it proves an exact potential identity $\dot\phi_w=p_m$ and a
+uniform hard bound on $\phi_w$.  Such a representation is one proof method;
+it is not a requirement that every physically admissible sea be described by
+that particular realization.  Any other deterministic representation may be
+used if it proves the same all-time bounded-wave condition and preserves the
+same-history $p_m,v_m,a_m$ and centered-primitive ancestry.
+
+The executable proof tooling currently implements the spectral/amplitude and
+shaping-state certificate routes.  Accordingly, later phrases such as
+``generator certificate'', ``generator condition'', or ``generator state'' in
+implementation-oriented proof text refer only to the internal representation
+used by one of those certificate routes.  They do \emph{not} redefine the
+physical COMPLETE-BRMM admissibility condition stated in this section.
+
+The historical PR~\#515 witness $p_m(t)=d\ne0$, $v_m=a_m=0$ was admitted only
+because the former finite-window source omitted this physical condition.  It
+satisfies local displacement and short-window increment caps, but
+$\|\int_u^t p_m\,ds\|=(t-u)\|d\|$ violates every finite $D_S$ for sufficiently
+large $t-u$.  Thus it remains a regression witness for the old definition,
+classified as obstruction B there and as source-specification omission E
+relative to the intended physics.  It is not evidence that the nominal
+shipping filter is unstable.

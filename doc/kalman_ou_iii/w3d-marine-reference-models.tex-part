@@ -10,7 +10,10 @@ conservative than the physical deployment class because instantaneous source
 bounds alone permit sample-to-sample combinations that no directional sea can
 produce. This section retains the spectral specialization and its stronger
 full-state conditional target. Spectral membership is not a prerequisite
-of the primary BRMM theorem.
+of the primary BRMM theorem, but its corrected hard-generator condition in
+Section~\ref{sec:brmm-physical-wave-generator} is required. Both this extension
+and any equivalent finite-window representation must retain the same bounded
+potential across the complete continuation.
 
 The result below is a \emph{conditional target theorem}.  Its composition
 argument is complete once the listed SEA0/P1--P5 certificates are available,
@@ -113,13 +116,16 @@ components.
 
 For deterministic certification SEA0 supplies an outward enclosure of this
 family by an oscillator/shaping state or an equivalent hard finite-window
-dynamic constraint,
+dynamic constraint intersected with the corrected all-time physical generator
+condition of Lemma~\ref{lem:brmm-derived-centered-primitive},
 \begin{align}
  x^s_{k+1}&=A_s(\lambda_k)x^s_k+B_s(\lambda_k)w_k, \nonumber\\
  u^s_k&=C_s(\lambda_k)x^s_k,
  \label{eq:marine-reference-shaping-system}
 \end{align}
-with the oscillatory blocks preserving phase continuity.  The compact reference-model
+with the oscillatory blocks preserving phase continuity and every parameter
+transition transporting the same physical potential and its uniform invariant.
+Phase continuity or compactness of one window alone is not sufficient.  The compact reference-model
 domain includes this deterministic realization coordinate; over a
 finite sea window we write it as the coupled history set
 \begin{equation}
@@ -193,9 +199,11 @@ estimated period of moment history.  Its stricter \texttt{isReady()} diagnostic
 still requires at least $6/\lambda$ and the existing debiased-moment weight.
 The tuner update for sample $k$ executes before the current sample advances the
 WavePeriodEstimator, so a newly usable period estimate can affect the tuner no
-earlier than the following valid sample.  Filter \texttt{TunerReady} and Live
-entry require this startup-usable measured period, but do \emph{not} wait for
-\texttt{WavePeriodEstimator::isReady()}.  BRMM/P2 must retain the prior-driven
+earlier than the following valid sample.  The measured-period \texttt{TunerReady} path uses this startup-usable
+period without waiting for \texttt{WavePeriodEstimator::isReady()}. The
+actual outer wrapper also has a prior-frequency timeout Live path that does
+not require a usable measured period. Neither Normal-Live admission nor
+finite capture may silently discard that path.  BRMM/P2 must retain the prior-driven
 and startup-usable estimator-driven source modes and their one-sample takeover
 edge.
 

@@ -204,6 +204,7 @@ def _event_cells(
             radial_scale=radial_scale,
             event_source_token=token,
             event_predecessor_token=predecessor,
+            wave_primitive=selector.sample_coordinates.wave_primitive,
         )
         if mode == "A":
             kwargs["true_bias"] = list(true_bias or ())
@@ -265,14 +266,11 @@ def synchronize_sample(
     if branch.frontend != joint_state.frontend:
         raise ValueError("kernel and JOINT predecessors do not share the same shipping frontend state")
 
-    children, meta = KERNEL.advance_branch(
-        branch, sample, constants=constants, next_cell_prefix=next_cell_prefix + ":kernel",
+    children, meta, images = KERNEL.advance_branch_with_joint_frontend(
+        branch, sample, joint_state=joint_state, constants=constants,
+        next_cell_prefix=next_cell_prefix + ":kernel",
+        joint_child_prefix=next_cell_prefix + ":joint",
         capture_riccati_event_cells=True,
-    )
-    images = JOINT.advance(
-        joint_state, FRONT.Sample(sample.gyro_measurement, sample.specific_force),
-        gravity_ms2=constants.gravity, two_kp=constants.two_kp, two_ki=constants.two_ki,
-        child_prefix=next_cell_prefix + ":joint",
     )
     if not images:
         raise RuntimeError("JOINT transition emitted an empty successor family")
@@ -347,6 +345,9 @@ def build() -> dict:
         "schema":SCHEMA,"qualification":QUALIFICATION,"canonical_source":"COMPLETE_BRMM_NORMAL_LIVE_WORD",
         "source_reachable_selector_family_relation_consumed":True,
         "same_predecessor_same_sample_kernel_and_joint_execution":True,
+        "obsolete_measured_only_frontend_not_used_in_joint_attachment":True,
+        "physical_wave_payload_retained_in_every_literal_event_cell":True,
+        "physical_generator_to_joint24_forcing_attachment_closed_here":False,
         "kernel_authoritative_for_current_Riccati_slice_only":True,
         "JOINT_image_authoritative_for_next_frontend_state":True,
         "current_schedule_committed_before_post_measurement_adaptation":True,

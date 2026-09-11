@@ -2,9 +2,11 @@
 """Complete BRMM history contract for conditional OU-III P3.
 
 The physical source is bounded recurrent marine motion, with a bounded
-same-history velocity primitive excluding fixed physical acceleration DC in
-quiet, oscillatory and mixed windows. A spectrum, partition count, vessel
-response model or finite oscillator realization is not a membership premise.
+same-history velocity primitive excluding acceleration DC, and a bounded
+physical wave-generator potential excluding displacement DC. A particular
+spectrum or finite oscillator model is not required: a qualified bounded
+shaping realization is also allowed. Finite-window constraints alone are
+not sufficient source admission.
 Reference-model enclosures below are explicitly scoped diagnostic metadata.
 
 One physical continuation generates acceleration, rotation, frontend, vector
@@ -36,6 +38,7 @@ import ou3_brmm_dynamic_source_certificate as DYNAMIC
 import ou3_p3_pseudo_scheduler_progress_certificate as SCHED
 import ou3_mems_bias_contract as BIAS
 import ou3_brmm_contract as BRMM
+import ou3_brmm_physical_wave_source as WAVE
 
 REPO = Path(__file__).resolve().parents[2]
 DEFAULT_DOMAIN = REPO / "tools" / "stability" / "ou3_proof_operating_domain.json"
@@ -190,7 +193,8 @@ def build(
             "a_m=dv_m/dt in one fixed world frame, sup_t ||v_m||<=V_m",
             "bounded CoG acceleration, body rate and same-history rotation",
             "BRMM Q/O recurrence, opposing O lobes, and mixed-window continuation",
-            "same-history displacement/S primitives or explicit forcing budgets",
+            "p=dphi/dt from the same bounded physical wave generator; S_L=phi-phi_at_Live",
+            "generator state and one-time Live potential retained across every continuation",
         ],
         "true_bias": ["BIAS0 deterministic terms", "BIAS1 residual root and forcing history"],
         "front_end_state": [
@@ -246,6 +250,9 @@ def build(
         "reference_models_are_physical_membership_requirements": False,
         "BRMM_SOURCE_ADMISSION_PASS": False,
         "reference_response_union": UNION.build(),
+        "physical_wave_generator_contract": WAVE.build(),
+        "physical_wave_primitive_must_be_generator_derived": True,
+        "finite_window_only_source_admission_forbidden": True,
         "source_coordinates": source_coordinates,
         "no_fallback_generators": no_fallback,
         "trajectory_replay_used": False,
@@ -278,8 +285,8 @@ def build(
         },
         "BRMM_dynamic_realization": {
             "single_history_required": True,
-            "physical_root_state": "bounded same-history motion primitives and continuation",
-            "continuation_relation": "BRMM-0 and recurrence on every Q/O/mixed window",
+            "physical_root_state": "bounded physical wave generator, its potential, one Live potential and same-history motion primitives",
+            "continuation_relation": "physical wave generator and BRMM-0 with recurrence on every Q/O/mixed window; no generator-potential reset",
             "augmented_source_state": "zeta=(motion_primitives,R,frontend,tuner,scheduler,geometry,b_true,bias_parameters)",
             "same_realization_drives_translation_rotation_frontend_tuner_geometry": True,
             "hard_pathwise_acceleration_and_body_rate_conditions_retained": True,
@@ -393,7 +400,11 @@ def build(
 
 
 def validate(d: dict) -> list[str]:
-    f: list[str] = []
+    f: list[str] = WAVE.validate(d.get("physical_wave_generator_contract", {}))
+    if d.get("physical_wave_primitive_must_be_generator_derived") is not True:
+        f.append("physical wave generator derivative condition lost")
+    if d.get("finite_window_only_source_admission_forbidden") is not True:
+        f.append("finite-window-only source admission reintroduced")
     f.extend(BRMM.validate(d.get("physical_BRMM_contract", {})))
     for key in ("spectral_membership_required", "reference_models_are_physical_membership_requirements", "BRMM_SOURCE_ADMISSION_PASS"):
         if d.get(key) is not False:

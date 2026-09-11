@@ -1,0 +1,65 @@
+name: ou3-innovation-provenance-continuation
+
+on:
+  pull_request:
+    paths:
+      - 'tools/stability/ou3_p4_innovation_provenance_continuation.py'
+      - 'tools/stability/ou3_correlated_innovation_family.py'
+      - 'tools/stability/ou3_brmm_full_word_riccati_correlated.py'
+      - 'tools/stability/ou3_innovation_psd_plus_R_inverse.py'
+      - 'tools/stability/ou3_brmm_full_word_riccati_backend.py'
+      - 'tools/stability/ou3_brmm_full_normal_live_word.py'
+      - 'tools/stability/ou3_brmm_complete_window_execution_kernel.py'
+      - 'tools/stability/ou3_p4_source_uniform_event_lineage_sequence.py'
+      - 'tests/validation/test_ou3_correlated_innovation_family.py'
+      - '.github/workflows/ou3-innovation-provenance-continuation.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ou3-innovation-provenance-continuation-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  diagnostic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Compile proof modules
+        run: python3 -m compileall -q tools/stability
+      - name: Test correlated innovation primitive
+        run: python3 -m unittest -v tests.validation.test_ou3_correlated_innovation_family
+      - name: Continue exact two-sample H18 A21 path with correlated P H R innovation map
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/ou3-innovation-provenance
+          python3 tools/stability/ou3_p4_innovation_provenance_continuation.py | tee /tmp/ou3-innovation-provenance/result.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/ou3-innovation-provenance/result.json'))
+          assert d['validation_pass']
+          assert not d['shipping_filter_changed']
+          c=d['correlated_innovation_contract']
+          assert not c['S_external_independent_rectangle_allowed']
+          assert c['same_P_H_R_used_through_S_inverse_K']
+          assert c['same_family_K_used_in_Joseph_update']
+          assert not c['rectangular_singular_innovation_admitted']
+          assert d['same_history_K_dependency_closed_here']
+          assert not d['endpoint_augmented_LDLT_closed_here']
+          assert not d['every_prefix_augmented_LDLT_closed_here']
+          assert not d['P4_PASS'] and not d['P5_MAY_START']
+          print('TWO_SAMPLE_COMPLETED',d['diagnostic']['two_sample_execution_completed'])
+          print('NEXT_FAILURE_TYPE',d['diagnostic']['failure_type'])
+          print('NEXT_FAILURE_MESSAGE',d['diagnostic']['failure_message'])
+          PY
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: ou3-innovation-provenance-continuation
+          path: /tmp/ou3-innovation-provenance/
+          retention-days: 7

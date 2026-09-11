@@ -17,7 +17,7 @@ Riccati covariance after prediction.
 from __future__ import annotations
 
 import argparse
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 import json
 import math
 from pathlib import Path
@@ -31,8 +31,8 @@ import ou3_brmm_private_mahony_state_step as MAHONY
 import ou3_brmm_tuner_scheduler_step as TUNER
 import ou3_brmm_wpe_state_step as WPE
 
-SCHEMA = 1
-QUALIFICATION = "OU3_BRMM_COMPLETE_WINDOW_ARTIFACT_CODEC_V1"
+SCHEMA = 2
+QUALIFICATION = "OU3_BRMM_COMPLETE_WINDOW_ARTIFACT_CODEC_V2"
 
 
 @dataclass(frozen=True)
@@ -149,16 +149,22 @@ def wpe_from_json(value: Any) -> WPE.WPEState:
         "accel_prev", "high_pass_1", "high_pass_1_prev", "high_pass_2",
         "velocity", "elevation", "velocity_mean", "velocity_sq",
         "elevation_mean", "elevation_sq", "weight", "elapsed_s",
-        "raw_period_s", "log_period_s", "last_moment_horizon_s",
+        "last_moment_horizon_s",
         "last_log_horizon_s",
     )
     vals = {
         name: interval_from_json(d.get(name), f"wpe.{name}")
         for name in interval_names
     }
+    # The real timeout Live path can retain the prior with no WPE period.
+    # Null encodes absent state, never NaN and never a manufactured period.
+    for name in ("raw_period_s", "log_period_s"):
+        if name not in d:
+            raise ValueError("wpe." + name + " must be present (null when absent)")
+        vals[name] = None if d[name] is None else interval_from_json(d[name], "wpe." + name)
     usable = _bool(d.get("usable_period"), "wpe.usable_period")
-    if not usable:
-        raise ValueError("canonical Normal-Live front-end entry must have usable WPE")
+    if usable and (vals["log_period_s"] is None or vals["raw_period_s"] is None):
+        raise ValueError("usable WPE state requires its retained raw and log period")
     return WPE.WPEState(
         accel_prev=vals["accel_prev"],
         high_pass_1=vals["high_pass_1"],
@@ -183,7 +189,10 @@ def wpe_to_json(state: WPE.WPEState) -> dict[str, Any]:
         "raw_period_s", "log_period_s", "last_moment_horizon_s",
         "last_log_horizon_s",
     )
-    out = {name: interval_to_json(getattr(state, name)) for name in names}
+    out = {
+        name: (None if name in ("raw_period_s", "log_period_s") and getattr(state, name) is None
+               else interval_to_json(getattr(state, name))) for name in names
+    }
     out["usable_period"] = bool(state.usable_period)
     return out
 
@@ -328,6 +337,38 @@ def live_seed_to_json(
     }
 
 
+def _wave_primitive_from_json(physical: dict[str, Any]) -> KERNEL.WavePrimitivePayload | None:
+    # Standalone point fixtures predate physical source admission. They may omit
+    # this entire payload, but canonical parse_window_artifact cannot: its hard
+    # provider validator requires every field before decoding. Partial payloads
+    # must never silently drop physical ancestry.
+    names = {
+        "generator_id": "physical_wave_generator_id",
+        "primitive_in_id": "primitive_in_id",
+        "primitive_out_id": "primitive_out_id",
+        "live_origin_id": "centered_S_origin_witness_id",
+    }
+    vectors = {
+        "velocity": "velocity_ned_mps_interval",
+        "position": "position_ned_m_interval",
+        "centered_S": "centered_S_ned_m_s_interval",
+        "potential_in": "wave_potential_in_interval",
+        "potential_out": "wave_potential_out_interval",
+        "live_potential": "wave_live_potential_interval",
+    }
+    if not any(key in physical for key in (*names.values(), *vectors.values())):
+        return None
+    values = {}
+    for field, key in names.items():
+        value = physical.get(key)
+        if not isinstance(value, str) or not value:
+            raise ValueError(f"physical wave ancestry missing {key}")
+        values[field] = value
+    for field, key in vectors.items():
+        values[field] = vec3_from_json(physical.get(key), key)
+    return KERNEL.WavePrimitivePayload(**values)
+
+
 def sample_from_transition(value: Any) -> KERNEL.SampleCoordinates:
     sample = _dict(value, "transition")
     transition_id = sample.get("source_transition_witness_id")
@@ -377,6 +418,7 @@ def sample_from_transition(value: Any) -> KERNEL.SampleCoordinates:
             "aw_covariance_floor_requested",
         ),
         magnetometer_events_after_imu=tuple(mags),
+        wave_primitive=_wave_primitive_from_json(physical),
     )
 
 
@@ -401,6 +443,20 @@ def sample_to_payload(
         "f_cog_body_interval": vec3_to_json(sample.f_cog_body),
         "R_wb_interval": matrix_to_json(sample.R_wb),
     }
+    if sample.wave_primitive is not None:
+        wave = sample.wave_primitive
+        physical.update({
+            "physical_wave_generator_id": wave.generator_id,
+            "primitive_in_id": wave.primitive_in_id,
+            "primitive_out_id": wave.primitive_out_id,
+            "centered_S_origin_witness_id": wave.live_origin_id,
+            "velocity_ned_mps_interval": vec3_to_json(wave.velocity),
+            "position_ned_m_interval": vec3_to_json(wave.position),
+            "centered_S_ned_m_s_interval": vec3_to_json(wave.centered_S),
+            "wave_potential_in_interval": vec3_to_json(wave.potential_in),
+            "wave_potential_out_interval": vec3_to_json(wave.potential_out),
+            "wave_live_potential_interval": vec3_to_json(wave.live_potential),
+        })
     events = {
         "source_transition_witness_id": transition_witness_id,
         "magnetometer_events_after_imu": [
@@ -437,6 +493,8 @@ def build() -> dict[str, Any]:
     front = FRONTEND._point_state()  # codec fixture only; never source evidence
     encoded_front = frontend_to_json(front, "front-fixture")
     decoded_front = frontend_from_json(encoded_front, "front-fixture")
+    prior = replace(front, wpe=replace(front.wpe, raw_period_s=None, log_period_s=None, usable_period=False))
+    decoded_prior = frontend_from_json(frontend_to_json(prior, "prior-fixture"), "prior-fixture")
 
     PH = _diag(18, 2.0)
     PA = _diag(21, 2.0)
@@ -470,6 +528,7 @@ def build() -> dict[str, Any]:
 
     smoke = {
         "frontend_roundtrip_exact": decoded_front == front,
+        "prior_without_period_roundtrip_exact": decoded_prior == prior,
         "H_seed_roundtrip_exact": PH2 == PH,
         "A_seed_roundtrip_exact": PA2 == PA,
         "sample_roundtrip_exact": decoded_sample == sample,
@@ -478,6 +537,10 @@ def build() -> dict[str, Any]:
         "schema": SCHEMA,
         "qualification": QUALIFICATION,
         "source_generator": False,
+        "physical_wave_ancestry_retained_in_typed_samples": True,
+        "prior_frequency_frontend_representation_supported": True,
+        "physical_generator_output_identities_proved_by_codec": False,
+        "prior_frequency_frontend_codec_and_kernel_coverage_closed": False,
         "trajectory_replay_used": False,
         "establishes_source_reachability": False,
         "requires_provider_acceptance_before_canonical_use": True,
@@ -501,6 +564,8 @@ def validate(d: dict[str, Any]) -> list[str]:
         f.append("schema/qualification mismatch")
     for key in (
         "requires_provider_acceptance_before_canonical_use",
+        "prior_frequency_frontend_representation_supported",
+        "physical_wave_ancestry_retained_in_typed_samples",
         "raw_gyro_and_corrected_rate_kept_distinct",
         "live_seed_requires_full_H18_and_A21_interval_SPD",
         "strict_codec_ready",
@@ -511,6 +576,8 @@ def validate(d: dict[str, Any]) -> list[str]:
         "source_generator", "trajectory_replay_used", "establishes_source_reachability",
         "re_widens_provider_interval_endpoints", "precomputed_aw_floor_increment_accepted",
         "P3_promoted",
+        "physical_generator_output_identities_proved_by_codec",
+        "prior_frequency_frontend_codec_and_kernel_coverage_closed",
     ):
         if d.get(key) is not False:
             f.append(f"{key} is not false")

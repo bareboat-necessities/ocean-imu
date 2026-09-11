@@ -2,7 +2,7 @@
 """Exact obstruction to bounded all-18 errors under the finite-window source.
 
 This is a necessary-condition certificate, NOT an endpoint/P4 certificate.
-The current source bounds p and every short-window Delta S, but not S_L for
+The OLD finite-window-only source bounded p and every short-window Delta S, but not S_L for
 an entire continuation.  The admitted quiet subfamily p=d, v=a=0 has S_L=h*d.
 All d in one closed position cell drive the SAME shipping sensor execution.
 Consequently e_p=d-p_hat and e_S,L=h*d-S_hat at every completed event.
@@ -23,24 +23,19 @@ import hashlib
 import json
 from pathlib import Path
 
-import ou3_brmm_contract as BRMM
+import ou3_brmm_physical_wave_source as WAVE
 import ou3_p4_bias0_family as B0
 import ou3_p4_bias1_family as B1
 import ou3_p4_bias2_family as B2
 
 ROOT = Path(__file__).resolve().parents[2]
 QUALIFICATION = 'OU3_BRMM_INDEFINITE_S_NECESSARY_CONDITION_V1'
-# Pins bind the reviewed sensor/entry semantics and source definition. They are
+# Pins bind unchanged shipping sensor/entry semantics. They are
 # NOT a substitute for the proof in w3d-brmm-stability-theorem.tex-part.
 AUDITED = {
     'src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h': '1008e931734f226f93f52e46a1408503a7c1be9b364c0756da64a19788ece5ed',
     'src/kalman_ou_iii/Kalman3D_Wave_OU_III.h': 'c9ed955ef998992e33b253ed0d5d49673852b87413a8c560479a9b482786d64b',
     'src/kalman_common/SeaStateFusionFilterCommon.h': 'f76b6266ab4f403d2cce61058a79f1fdb5bb55aab1355c62ce2adaf516d7ea9f',
-    'tools/stability/ou3_brmm_contract.py': 'd3c9e75447fc5a7d4a895c5f85252b746aa5ae7180b1535add2a7aaea8ac917e',
-    'tools/stability/ou3_brmm_complete_source.py': '1018a684d2d509448074bca06941889507b6107762247bc0391a8cfa350562df',
-    'tools/stability/ou3_brmm_finite_window_primitive_qualification.py': 'd988268b3dc22c4f8f6ff4e7e0984670199a0944c01cc47eca4e2e723cff6462',
-    'tools/stability/ou3_p4_closure_domain.json': '294902042d07d32e08c955ad62f779b5029ed1e8ed7413838e8bacaee29d240f',
-    'tools/stability/ou3_proof_operating_domain.json': 'c8ac62be018a3f2051733077b8e7c949a2598c18f3c335b24277d601739df191',
 }
 
 # Sparse exact polynomials over Q, with sorted tuples of variable names as
@@ -183,14 +178,15 @@ def build():
     changed = [p for p in AUDITED if hashes[p] != AUDITED[p]]
     if changed:
         raise ValueError('re-audit the source/observation semantics after changes: '+repr(changed))
-    source = BRMM.build()
-    primitive = source['uniform_primitive_qualification']
-    if (source['qualification'] != 'OU3_COMPLETE_BRMM_BOUNDED_BIAS_MOTION_V4'
-            or source['physical_constants']['S_m'] is not None
-            or primitive['uniform_physical_primitives']['S_m_independent_global_bound'] is not None):
-        raise ValueError('this obstruction must be requalified for a changed S source definition')
-    d = F(1, 8)  # A witness subset, NOT a reduction of the admitted entrance.
-    pm = F(str(source['physical_constants']['P_m']))
+    # Historical definition at main f7123bd8: p'=v, v'=a, S'=p,
+    # bounded p/v and short-window increments only. The constant d is
+    # independently checked against a conservative subset of its position cap.
+    # Do NOT import current BRMM admission here and call this an admitted witness.
+    d = F(1, 8)
+    pm = F(7)  # strictly below the old sqrt(3)*8.5/2 position cap
+    wave = WAVE.build()
+    rejection = WAVE.constant_history_admission((d, 0, 0),
+        wave['analytic_examples_not_full_source_qualification']['continuum_band'])
     if not 0 < d < pm:
         raise ValueError('quiet witness must be inside the unchanged position domain')
     events = [event_certificate(n) for n in (18, 21, 24)]
@@ -207,7 +203,12 @@ def build():
     return {
         'qualification': QUALIFICATION,
         'audited_sha256': hashes,
-        'source_scope': 'published uniform finite-window COMPLETE-BRMM primitive definition; no unlisted S bound',
+        'source_scope': 'OLD finite-window-only definition at f7123bd8; not current physical COMPLETE-BRMM admission',
+        'old_source_definition': "p_dot=v; v_dot=a; S_dot=p; bounded p/v; bounded every short-window Delta S; no generator potential",
+        'constant_nonzero_position_zero_velocity_history_admitted': False,
+        'corrected_source_rejection': rejection,
+        'old_witness_excluded_by_corrected_physical_theorem': wave['old_witness_excluded_by_corrected_physical_theorem'],
+        'classification_under_intended_physical_semantics': 'E',
         'quiet_source_cell': {
             'parameter': 'd_vec in closed ball ||d_vec||<=1/8 m, retained once for the entire history',
             'p': 'd_vec', 'v': '0', 'a': '0', 'omega': '0', 'rotation': 'I',
@@ -230,7 +231,7 @@ def build():
         'general_working_radius_R_exit_after_s': 'R/||d_vec||; at least one fixed-sign history has unbounded limsup',
         'classification': 'B',
         'bounded_all18_indefinite_target_refuted_under_finite_window_definition': exact and not gap,
-        'scope_limit': 'If an additional uniform S/forcing premise was intended, this exposes missing qualification E; it is not silently added.',
+        'scope_limit': 'Historical B under the old definition; source-specification omission E under intended physics; the corrected generator theorem excludes this witness. No physical filter instability is asserted.',
         'conditional_ISS_with_unbounded_S_input_refuted': False,
         'nominal_filter_instability_established': False,
         'full_Normal_Live_source_admission_claimed': False,

@@ -1,127 +1,205 @@
 # OU-III proof research state
 
-## Current hypothesis and controlling inequality
+## Status after PR #516
 
-The published finite-window COMPLETE-BRMM primitive qualification is insufficient
-for a finite indefinite bound on all 18 motion errors because it bounds only
-short-window `Delta S`, not the indefinite displacement primitive. The exact
-quiet-source ambiguity certificate remains valid. Canonical P3 is unchanged at
-`delta=1e-18`; P4/P5 remain false.
+PR #516 repairs the BRMM source-definition omission exposed by PR #515 and
+continues the OU-III proof without changing the shipping filter or the frozen
+`P3 delta = 1e-18` requirement. The next continuation must start from latest
+`main`, read `docs/ou3-brmm-main-handover.md`, and open a new PR.
 
-The positive continuation is an origin-invariant recurrence qualification, not an
-independent fresh-entry S ball. For the real Live handoff time `t_L`, keep PR
-#513's one-time coordinate `S_L(t)=S(t)-S(t_L)`. A physical sufficient source
-condition is a uniform finite constant `D_S` satisfying
+The end-to-end theorem is still open. `P4_PASS=false` and
+`P5_MAY_START=false` remain intentional fail-closed outputs.
 
-`||integral_u^t p(s) ds|| <= D_S` for every admitted history and all `t,u>=t_L`.
+## Physics-first COMPLETE-BRMM
 
-This preserves `e_S,L(t_L)=0`, does not re-anchor position, and does not re-zero S
-at later words.
+The theorem now defines the physics before any mathematical source
+construction. BRMM wave displacement `p_wave` is bounded oscillatory vessel
+response about a local equilibrium, not absolute/global vessel translation.
+Current, propulsion, leeway, secular drift, arbitrary global origin offsets and
+other slow/global translation are outside `p_wave`.
 
-## Exact failure retained
+The hard deterministic wave property is a bounded centered primitive:
 
-`ou3_brmm_infinite_continuation.py` materializes the indistinguishable quiet pair
-`p=+d` and `p=-d`, `v=a=omega=0`, fixed attitude and identical sensors. The same
-shipping estimate gives
+`|| integral_u^t p_wave(s) ds || <= D_S`
 
-`e_S,L^+ - e_S,L^- = 2 h d`,
+for every admitted history and relevant `u,t`. Zero mean alone is not used as a
+substitute. Harmonic/spectral and bounded shaping-state representations are
+only sufficient certificate methods for the physical condition.
 
-so `max(||e_S,L^+||,||e_S,L^-||) >= h||d||`. Uniform coercivity gives the
-corresponding quadratic storage lower bound. This is classification **B** for the
-finite-window-only indefinite target. If the intended source includes a bounded
-indefinite S primitive, the missing numerical/source qualification is **E**.
-No nominal filter instability, P3 failure or fresh-entry 300 m*s counterexample is
-claimed.
+The old exact `p=d != 0, v=0, a=0` witness is retained as a regression for the
+old finite-window source. Its historical classification is B under the old
+formal source surface and E as the intended physical source-specification
+omission. Under corrected COMPLETE-BRMM it is excluded by theorem, not by an ad
+hoc flag. No shipping-filter instability is inferred from that witness.
 
-## Materialized strengthened-source facts
+## Quantified physical envelope
 
-`ou3_brmm_centered_S_recurrence.py` encodes the missing recurrence coordinate and
-consumes the exact obstruction. It rejects an absolute S-origin bound, the legacy
-300 m*s value as a fresh-entry premise, position re-anchoring, wordwise S
-re-zeroing, and promotion from bounded position or bounded 3 s `Delta S` alone.
+Using the existing Hs=8.5 m reference family with fixed outward engineering
+padding, the current hard proof envelope is:
 
-For the sign-symmetric strengthened source, the existing 300 m*s
-**working/retention** radius gives a necessary search ceiling, not a source
-assumption. Hence the positive search is `0 <= D_S <= 300 m*s`; `D_S_max` remains
-unfrozen until the full same-history retention calculation closes.
+- `Hs <= 9.35 m`
+- `||p_wave|| <= 8.10 m`
+- `||v_wave|| <= 5.50 m/s`
+- `||a_wave|| <= 8.80 m/s^2`
+- `||omega_body|| <= 35 deg/s`
+- `f in [0.018, 0.88] Hz`
+- `D_S <= 1100 m*s`
 
-`ou3_brmm_translation_observation_kernel.py` closes the exact integration-constant
-kernel conditional on finite `D_S`. For two identical-acceleration histories,
-per axis
+For the 28-ft finite-harmonic reference, the deterministic primitive derivation
+gives `D_S <= 863.7794 m*s`. Applying the declared amplitude and lower-frequency
+padding gives `<1056 m*s`, rounded outward to 1100. The old 300 m*s P4 value is
+not a physical source cap and must not be used to define admissibility.
 
-`delta v=c_v`, `delta p=c_p+h c_v`,
-`delta S_L=h c_p + h^2 c_v/2`.
+The one-time Live coordinate remains `S_L(t)=S(t)-S(t_L)`. There is no wordwise
+S reset and no position reanchor.
 
-Uniform bounded position forces `c_v=0`; finite centered-S recurrence then forces
-`c_p=0`. Thus the two-dimensional translational zero-output kernel per axis drops
-to one dimension under the position primitive and to zero under the centered-S
-primitive. This uses no numerical value of `D_S`, no covariance membership and no
-absolute S-origin bound. It removes the exact ambiguity mechanism but does not
-prove contraction for nonzero source variations.
+## Correlated innovation result
 
-## Point feasibility after the repair
+The proof now preserves covariance provenance through one correlated
+measurement object:
 
-The non-promoting same-history joint24 diagnostic on the unmodified captured
-shipping graph is strongly feasible in the S coordinate. At one correlated
-covariance-root sigma it reports minimum extra Euclidean integral-displacement
-headroom:
+`(P,H,R) -> PHt -> S=HPH^T+R -> S^-1 -> K -> Joseph`.
 
-* H18: `299.2550971262734 m*s`, limiting at sample 6603 prediction;
-* A21: `299.51436721585696 m*s`, limiting at sample 228612 prediction.
+This removes the earlier artificial innovation singularity caused by replacing
+`S` with an independent entrywise rectangle. Structural `P >= 0` and `R > 0`
+are retained in the inversion argument; impossible singular members of the
+rectangular hull are no longer interpreted as physical source histories.
 
-The point S retention ratios are only about `0.00248301` H18 and `0.00161878`
-A21. The actual correlated-root limiter is instead H18 velocity, with critical
-initial level `4.4551206340521015 sigma`; A21 is limited by latent acceleration at
-`112.42280878895119 sigma`. The compatible-storage product rates remain
-H18=`0.9996524355874086` and A21=`0.9959531012474646`.
+This repair is proof machinery only. It is not a filter change.
 
-These numbers justify continuing the joint24 route, but they do **not** qualify
-`D_S`: the captured history has zero physical-bias driver and is not the universal
-COMPLETE-BRMM family. An independent additive S port is still forbidden.
+## H18 eta6/a_w information certificate
 
-## Retained positive facts
+After removal of the false singularity, the first quantitative H18 lower was
 
-Fresh v/p/S/aw/bg/ba estimator means are held zero on the fresh wrapper path; the
-common S origin is removed exactly once. BIAS0/1/2 retain independent physical
-driver recurrences and bounded-bias projection proofs; positive BIAS2 separation
-is optional. The qualified runtime Live/H18 handoff remains at most 150 s and is
-not P4 capture. Conditional binary32 mathematics remains separate from deployment.
+`7.092471820569811e-19`,
 
-The joint 24-state compatible-storage route remains preferred. The A21 18-state
-marginal covariance storage and the full-product 3 s nonlinear route remain dead
-ends; neither invalidates the joint error/physical-bias architecture.
+which was strictly positive but only 70.9247% of the frozen 1e-18 gate. The
+limiter was the coupled `eta6/a_w` block; other translation directions had large
+headroom.
 
-## Current limiter
+Two same-history proof tightenings are now canonical:
 
-The limiting construction is now the **same-history nonzero-source continuation**,
-not S point capacity. It must carry one physical `p/S_L` history and the same
-acceleration/rotation sample into frontend/WPE, raw/effective sigma, tau, T_S,
-anisotropic R_S, scheduler/commit state, reachable P/H/R/K, Joseph correction,
-finite reset, BIAS0/1/2 driver/projection and successor compatible-storage cell.
+1. Four guaranteed actual S=0 firings are selected from scheduler windows
+   `[0,g]`, `[4g,5g]`, `[8g,9g]`, `[12g,13g]`. The last ends by
+   `1.9499999564 s` inside the same 3 s word. All other due S updates stay in
+   the literal word. OU response and process-noise charges are recomputed over
+   the longer selected horizon.
+2. The second PE accelerometer occurrence retains the homogeneous OU attenuation
+   of the same initial `a_w` coordinate. It is not conservatively re-created
+   with unit sensitivity as though it belonged to an independent history.
 
-The existing 601-sample typed execution kernel is downstream-ready, but the hard
-source provider still lacks a validated correlated COMPLETE-BRMM window oracle.
-For the primary BRMM theorem the indefinite centered-S recurrence also needs a
-numerical/source qualification; for the retained directional-sea SEA0 extension
-the hard spectral-driver/output oracle remains separately open. Neither may be
-replaced by replay or independent sample boxes.
+The canonical post-Live correlated-numerics CI now reports:
 
-## Next falsifiable experiment
+- `H18_information_lambda_min_lower = 4.253919518541475e-18`
+- frozen gate = `1e-18`
+- gate ratio = `4.253919518541474`
+- `coupled_eta6_aw_lambda_min_lower = 4.253919518541476e-18`
+- `accelerometer_translation_cross_norm_squared_upper = 3767421.6507477993`
 
-Construct the origin-invariant centered-S history as a retained coordinate of the
-hard source transition, not as a per-word supply port. Parameterize the same-history
-joint24 endpoint/prefix graph by `D_S` and search outward over `[0,300] m*s`.
-For every candidate source cell require:
+Directional translation lower bounds are:
 
-1. endpoint compatible-storage contraction including metric-transition penalty;
-2. every literal prefix augmented positivity certificate;
-3. correction/reset chart validity;
-4. hard first-exit retention;
-5. all BIAS0/1/2 driver and projection branches; and
-6. conditional binary32 additive ISS enclosure.
+- `S = 1.8434197928164813e-11`
+- `g*p = 2.3086404646316095e-11`
+- `g^2*v = 4.447787288026003e-10`
+- `g^3*a_w = 3.615365438779952e-08`
 
-Report the first limiting event/source lineage and the largest rigorously retained
-`D_S`. Only that result may freeze the strengthened COMPLETE-BRMM indefinite-S
-qualification. Afterward resume full source-uniform cover, P4 basin maximization,
-finite H18 capture and H18->A21 transport. No universal endpoint margin, maximum
-P4 basin or capture time is yet certified.
+The former eta6/a_w blocker is therefore closed at the unchanged gate. This is
+about a 5.9978x improvement over the preceding H18 lower and does not promote
+P4/P5 by itself.
+
+## Current failure analysis
+
+### C/D — PE / metric-memory domain consistency
+
+A current metric-memory path fails before its intended diagnostic at
+
+`RuntimeError: declared PE does not refine vector certificate`
+
+from `ou3_brmm_riccati_tube.py::_declared_vector_alpha6`.
+
+This is presently a proof-domain/representation consistency issue. It is
+separate from the now-gate-passing H18 eta6/a_w information certificate. Do not
+lower the 1e-18 gate or retune the filter to hide it. Inspect which declared PE
+object and vector certificate are being compared, preserve same-history source
+ancestry, and determine whether this is C (dependency/enclosure) or D
+(entry/working-domain modeling).
+
+### F — padded-family startup/Mahony requalification
+
+The physical acceleration cap was widened from the earlier 8.0 m/s^2 proof
+surface to 8.8 m/s^2. The real private Mahony/proxy runtime handoff still needs
+a rigorous invariant/capture requalification over that padded family. Preserve
+both measured-period takeover and prior-frequency timeout Live entry. Do not
+make measured-period availability a hidden theorem prerequisite.
+
+### C/G — downstream same-history joint24 closure
+
+The controlling P4 theorem remains the complete-word, same-history joint24
+error/true-bias inequality with compatible consecutive storage. Required
+remaining pieces include actual source forcing, H18/A21 prior-free and
+finite-bias transport, source-uniform endpoint contraction, every-prefix
+augmented LDLT, hybrid metric compatibility, and finite precision.
+
+No source-uniform worst endpoint rho, every-prefix gain, maximum retained basin,
+finite H18 capture time or H18->A21 basin landing is yet certified.
+
+## Retained proof architecture
+
+Preserve:
+
+- branch-complete production lineage;
+- source-reachable selector family;
+- H18 source-indexed prefix transport;
+- A21 joint24 source-indexed prefix transport;
+- BIAS0/BIAS1/BIAS2 separate recurrences and same true-bias ancestry;
+- actual-applied anisotropic `R_S`;
+- same-signal `f -> sigma -> tau -> T_S -> R_S` relation;
+- candidate/active tuner and staged commit/scheduler state;
+- correlated same-history P/H/R/K;
+- Joseph/reset/projection splitting;
+- one-time Live S-origin handling;
+- finite-precision obligations;
+- joint24 compatible storage.
+
+Do not resurrect the A21 18-state marginal-motion storage. Prior diagnostics
+showed that discarding motion/bias cross-information can make the marginal
+storage catastrophically noncontractive while the full joint storage remains
+useful.
+
+## Dead ends / forbidden shortcuts
+
+Do not:
+
+- choose `D_S` because a P4 search likes it;
+- assert `S <= 300 m*s` as a physical premise;
+- use zero asymptotic mean as an all-time bounded-primitive proof;
+- use replay, captured trajectories or finite seed sets as universal source
+  qualification;
+- multiply independent coefficient rectangles that destroy same-history
+  dependence;
+- wordwise re-zero S or re-anchor p;
+- use Gaussian/high-probability source events in a deterministic theorem;
+- use covariance consistency as hard entry membership;
+- lower P3 delta below `1e-18`;
+- change the shipping filter merely to stabilize the excluded DC-position
+  history.
+
+## Next falsifiable sequence
+
+1. Fix/classify `declared PE does not refine vector certificate` while retaining
+   the now-canonical H18 information construction.
+2. Requalify Mahony/proxy startup for the 8.8 m/s^2 padded physical family.
+3. Complete continuous same-history physical source -> IMU/frontend -> tuner ->
+   P/H/R/K attachment for every allowed word and BIAS family.
+4. Close the consecutive compatible joint24 endpoint inequality
+   `W_next <= rho W + C`, `rho < 1`, with explicit coercivity and metric-change
+   bounds.
+5. Close literal every-prefix augmented LDLT for every shipping subevent.
+6. Prove first-exit chart/domain retention and determine the largest certifiable
+   P4 basin from physics, not convenience.
+7. Prove finite H18 capture, actual H18->A21 release/guard transport, and
+   indefinite continuation.
+8. Add deployment finite-precision enclosure and compose the end-to-end theorem.
+
+Use failure classes A/B/C/D/E/F/G exactly as established. The old DC-position
+witness is outside corrected COMPLETE-BRMM and may not be recycled as A or B.

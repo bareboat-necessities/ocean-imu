@@ -26,8 +26,8 @@ import ou3_p4_complete_brmm_measurement_linearizing_aw_coordinate as AW
 import ou3_p4_structural_prefix_transport as STRUCT
 import ou3_p4_brmm_primitive_prefix_binding as PRIMITIVE
 
-SCHEMA=2
-QUALIFICATION='OU3_P4_SOURCE_INDEXED_PHI_REBASE_V2'
+SCHEMA=3
+QUALIFICATION='OU3_P4_SOURCE_INDEXED_PHI_REBASE_V3'
 P3_DELTA=1.0e-18
 
 def I(x:float)->Interval:return Interval.point(float(x))
@@ -36,7 +36,16 @@ def rebase_event(mode:str,epsilon_before,epsilon_after):
     n=18 if mode=='H' else 21 if mode=='A' else 0
     if not n:raise ValueError('mode must be H/A')
     C=matrix_identity(n);L=matrix_identity(n);rho=zero_vec(n)
-    xi=AW.evaluate_full_shift_transport(C,rho,epsilon_before,epsilon_after)
+    # This map is *known algebraically* to be the identity. Do not evaluate
+    # C*E_aw using generic interval products: multiplying uncertain values by
+    # structural zeros creates tiny artificial nonzero rows. Keep uncertain
+    # epsilon differences outward; equal-looking intervals are not aliases.
+    for name, values in (("epsilon_before", epsilon_before), ("epsilon_after", epsilon_after)):
+        if len(values) != 3 or any(len(row) != 1 or not isinstance(row[0], Interval) for row in values):
+            raise ValueError(name + " must be a three-by-one interval vector")
+    xi=zero_vec(n)
+    for j in range(3):
+        xi[15+j]=[epsilon_after[j][0]-epsilon_before[j][0]]
     return {'kind':'source_coordinate_rebase','C':C,'L':L,'rho':[row[0] for row in rho],
             'epsilon_before':epsilon_before,'epsilon_after':epsilon_after,'xi':xi,
             'physical_state_map_identity':True,'C_equals_L_exactly':C==L,
@@ -59,7 +68,7 @@ def build():
     if af or sf or pf:raise RuntimeError(f'Phi rebase prerequisites failed aw={af} structural={sf} primitive={pf}')
     H=_smoke('H');A=_smoke('A');closed=all(H.values()) and all(A.values())
     return {'schema':SCHEMA,'qualification':QUALIFICATION,'canonical_source':'COMPLETE_BRMM_NORMAL_LIVE_WORD','P3_delta':P3_DELTA,
-      'source_indexed_Phi_requires_cross_sample_rebase':True,'physical_state_unchanged_by_rebase':True,'physical_rebase_map':'I','physical_rebase_defect':'0','Phi_rebase_defect':'E_aw*(epsilon_new-epsilon_old)',
+      'sparse_identity_embedding_exact':True,'source_indexed_Phi_requires_cross_sample_rebase':True,'physical_state_unchanged_by_rebase':True,'physical_rebase_map':'I','physical_rebase_defect':'0','Phi_rebase_defect':'E_aw*(epsilon_new-epsilon_old)',
       'C_equals_L_identity_for_rebase':True,'rebase_has_no_interior_epsilon_transport':True,'structural_interval_transport_used':True,'legacy_interval_plus_scalar_endpoint_path_used':False,
       'same_provider_transition_must_own_old_and_new_source_coordinates':True,'cross_sample_primitive_continuity_contract_consumed':True,'epsilon_packetwise_rezero_forbidden':True,'independent_rebase_disturbance_port_used':False,
       'source_coordinate_rebase_exact_algebra_closed':closed,'H18_smoke':H,'A21_smoke':A,'source_uniform_rebase_defect_bound_closed_here':False,'production_rebases_inserted_between_all_samples_here':False,
@@ -69,7 +78,7 @@ def validate(d):
     f=[]
     if d.get('schema')!=SCHEMA or d.get('qualification')!=QUALIFICATION:f.append('schema/qualification mismatch')
     if d.get('P3_delta')!=P3_DELTA:f.append('P3 delta changed')
-    for k in ('source_indexed_Phi_requires_cross_sample_rebase','physical_state_unchanged_by_rebase','C_equals_L_identity_for_rebase','rebase_has_no_interior_epsilon_transport','structural_interval_transport_used','same_provider_transition_must_own_old_and_new_source_coordinates','cross_sample_primitive_continuity_contract_consumed','epsilon_packetwise_rezero_forbidden','source_coordinate_rebase_exact_algebra_closed'):
+    for k in ('sparse_identity_embedding_exact','source_indexed_Phi_requires_cross_sample_rebase','physical_state_unchanged_by_rebase','C_equals_L_identity_for_rebase','rebase_has_no_interior_epsilon_transport','structural_interval_transport_used','same_provider_transition_must_own_old_and_new_source_coordinates','cross_sample_primitive_continuity_contract_consumed','epsilon_packetwise_rezero_forbidden','source_coordinate_rebase_exact_algebra_closed'):
         if d.get(k) is not True:f.append(k+' not true')
     for k in ('legacy_interval_plus_scalar_endpoint_path_used','independent_rebase_disturbance_port_used','source_uniform_rebase_defect_bound_closed_here','production_rebases_inserted_between_all_samples_here','endpoint_augmented_LDLT_closed_here','every_prefix_augmented_LDLT_closed_here','P4_MOTION_PASS','P4_PASS','P5_MAY_START'):
         if d.get(k) is not False:f.append(k+' not false')

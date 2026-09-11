@@ -65,6 +65,7 @@ from ou3_interval_linear_algebra import matrix_inverse_gauss_jordan
 import ou3_interval_ad as AD
 import ou3_brmm_complete_source as COMPLETE
 import ou3_brmm_full_normal_live_word as WORD
+import ou3_innovation_psd_plus_R_inverse as INNOV
 
 REPO = Path(__file__).resolve().parents[2]
 DEFAULT_DOMAIN = REPO / "tools" / "stability" / "ou3_proof_operating_domain.json"
@@ -122,13 +123,19 @@ def _matvec_const(K: Sequence[Sequence[Interval]], y: Sequence[AD.AD]):
 
 
 def source_joseph_gain(P, H, R):
-    """Outward K,S from one SAME source P/H/R operation cell."""
+    """Outward K,S from one SAME source P/H/R operation cell.
+
+    The physical covariance represented by P is PSD even when its entrywise
+    interval hull contains non-PSD matrices.  The shipping measurement is 3D,
+    so use the same generic-first, PSD-plus-R fallback certificate as the
+    canonical Riccati backend rather than re-admitting singular S boxes here.
+    """
     n, n2 = _shape(P)
     if n == 0 or n != n2 or _shape(H) != (3, n) or _shape(R) != (3, 3):
         raise ValueError("source Joseph P/H/R dimensions do not match")
     PCt = matrix_mul(P, matrix_transpose(H))
     S = matrix_add(matrix_mul(H, PCt), R)
-    Sinv = matrix_inverse_gauss_jordan(S)
+    Sinv, _ = INNOV.innovation_inverse_psd_plus_R_3x3(S, R)
     K = matrix_mul(PCt, Sinv)
     return K, S
 

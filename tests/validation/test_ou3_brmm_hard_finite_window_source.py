@@ -9,11 +9,14 @@ if str(TOOLS) not in sys.path:
     sys.path.insert(0, str(TOOLS / "stability"))
 
 import ou3_brmm_hard_finite_window_source as SEA0
+import ou3_brmm_physical_wave_source as WAVE
 
 
 class BrmmHardFiniteWindowSourceTest(unittest.TestCase):
     def _candidate(self):
         transitions = []
+        wave = WAVE.spectral_certificate(())
+        generator_id = WAVE.certificate_id(wave)
         zero3 = [[0.0, 0.0], [0.0, 0.0], [0.0, 0.0]]
         eye3 = [
             [[1.0, 1.0], [0.0, 0.0], [0.0, 0.0]],
@@ -46,6 +49,10 @@ class BrmmHardFiniteWindowSourceTest(unittest.TestCase):
                     "primitive_in_id": f"primitive-{k}",
                     "primitive_out_id": f"primitive-{k+1}",
                     "centered_S_origin_witness_id": "live-S-origin",
+                    "physical_wave_generator_id": generator_id,
+                    "wave_potential_in_interval": zero3,
+                    "wave_potential_out_interval": zero3,
+                    "wave_live_potential_interval": zero3,
                 },
                 "source_events": {
                     "source_transition_witness_id": tr,
@@ -92,7 +99,37 @@ class BrmmHardFiniteWindowSourceTest(unittest.TestCase):
             "front_end_entry": {},
             "live_covariance_seed": {},
             "transitions": transitions,
+            "physical_wave_generator_certificate": wave,
+            "physical_wave_generator_id": generator_id,
+            "wave_potential_ingress_interval": zero3,
+            "wave_potential_egress_interval": zero3,
+            "wave_live_potential_interval": zero3,
         }
+
+    def test_old_finite_window_only_candidate_is_rejected(self):
+        d = self._candidate()
+        del d["physical_wave_generator_certificate"]
+        self.assertTrue(any("missing hard physical wave generator" in x
+                            for x in SEA0.validate_candidate_structure(d)))
+
+    def test_generator_or_live_potential_cannot_be_reset_inside_word(self):
+        for key, value in (("physical_wave_generator_id", "unrelated"),
+                           ("wave_live_potential_interval", [[1, 1], [0, 0], [0, 0]])):
+            d = self._candidate()
+            d["transitions"][17]["joint_physical_output"][key] = value
+            self.assertTrue(SEA0.validate_candidate_structure(d))
+
+    def test_source_D_S_cannot_be_chosen_to_fit_a_working_tube(self):
+        d = self._candidate()
+        d["physical_wave_generator_certificate"]["D_S_upper_m_s"] = "300"
+        self.assertTrue(SEA0.validate_candidate_structure(d))
+
+    def test_cross_word_source_potential_and_origin_are_retained(self):
+        first = self._candidate(); second = self._candidate()
+        second["primitive_ingress_id"] = first["primitive_egress_id"]
+        self.assertEqual(SEA0.validate_successive_wave_windows(first, second), [])
+        second["wave_live_potential_interval"] = [[1, 1], [0, 0], [0, 0]]
+        self.assertTrue(SEA0.validate_successive_wave_windows(first, second))
 
     def test_status_preserves_compact_brmm_and_fails_closed(self):
         d = SEA0.build()

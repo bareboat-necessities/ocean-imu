@@ -1,41 +1,56 @@
 # OU-III P4 continuation status
 
-Current executable startup/error-coordinate analysis and exact shared-origin
-lemma are in `docs/ou3-live-entry-audit.md`. Current failure classification and
-research alternatives are in `docs/ou3-proof-research-state.md`.
+Start with `docs/ou3-proof-research-state.md`,
+`docs/ou3-live-entry-audit.md`, and the physical-wave-generator lemma in
+`doc/kalman_ou_iii/w3d-brmm-stability-theorem.tex-part`.
 
-The independent 300 m*s entrance model, pre-Live S propagation claim and
-interpretation of 4.5788 as nonlinear chart escape are not valid. Fresh outer
-startup holds the core states, and runtime Live can use the prior-frequency
-timeout branch without a usable measured period.
+## Corrected source, not an altered estimator
 
-Keep the separate closed BIAS0/BIAS1/BIAS2 driver and projection/Joseph work.
-Positive BIAS2 separation is not required for bounded bias/practical motion ISS.
-Preserve same physical/estimator/covariance/scheduler ancestry and P3 delta=1e-18.
-P4/P5 remain false: the full source-uniform correlated cover, compatible storage,
-endpoint and literal-every-prefix augmented LDLT, retention and finite-time actual
-startup capture are not yet certified. No captured word or API can promote them.
+COMPLETE-BRMM now requires wave displacement relative to an equilibrium and a
+qualified spectral or bounded shaping realization. Its potential derivative is
+p, so `S_L(t)=phi(t)-phi(t_L)` follows by the fundamental theorem of calculus.
+The exact backend is `ou3_brmm_physical_wave_source.py`; the correlated boundary
+binding is `ou3_brmm_wave_primitive_binding.py`. The latter is a necessary outer
+bridge, not a substitute for continuous generator/output qualification.
 
+The source's numerical inverse-frequency amplitude or shaping-state budget is
+not yet qualified for the entire family. Consequently D_S and the comparison
+with the 300 m*s working radius remain unresolved. Do not choose D_S by searching
+that working radius. The old `p=+/-d` obstruction stays in
+`ou3_brmm_infinite_continuation.py`: B for the old source, E for the intended
+physical omission, and excluded by the corrected physical theorem.
 
-## Indefinite-source necessary condition
+## Retained execution and proof graph
 
-Run `python3 tools/stability/ou3_brmm_infinite_continuation.py --output /tmp/infinite.json`
-before treating a finite-window source cover as sufficient for the infinite-time
-target. The exact quiet source column is `B(h)=E_p+h E_S`: two constant bounded
-positions +/-d produce the same shipping sensor execution but centered S-errors
-differing by `2 h d`. Fresh centered S is still zero. The finite-window primitive
-qualification has no uniform S bound, and bounded Delta S does not provide one.
+The fresh entry removes the common S origin once. Position is not re-anchored;
+S is not reset at later words. Zero estimator means at fresh Live do not imply
+zero physical displacement or velocity. The measured-period and prior-frequency
+Live paths remain distinct and both need complete capture coverage.
 
-The certificate gives **B for the finite-window-only finite all-18 bound**, not
-an internal-filter instability or a failure of the common-S-origin lemma. If an
-additional bounded-S/forcing premise is intended, it must be explicitly qualified
-(**E** until then); the negative result does not cover that stronger source.
-The final gate consumes this necessary-condition certificate. No source family,
-P3 threshold, shipping filter, entry radius or bias recurrence is changed.
+The event attachment uses the code-owned same-signal JOINT frontend, including
+prior-frequency evolution, after the current IMU events and before external
+magnetometer handling. Every event cell retains its typed physical-potential
+payload. The codec preserves absent prior WPE values as null; the legacy canonical
+typed-window executor still requires the measured-period slice. Complete
+prior-root windows and continuous physical output attachment remain open;
+structural payload checks cannot close them.
 
-A useful next construction must resolve the indefinite physical primitive/forcing
-scope without excluding Q by fiat, then resume the joint 24-state compatible
-source-cover/endpoint/prefix/capture work. Longer words, source subdivision, metric
-jumps or a smaller fresh-entry box cannot eliminate the exact ambiguity lower
-bound. The native paired-wrapper test is finite event-parity evidence only; the
-infinite conclusion is the algebraic induction and coercivity argument.
+Retain branch-complete production lineage, source-indexed H18/A21 prefixes,
+separate BIAS0/1/2 recurrences, true-bias ancestry, same-history P/H/R/K,
+Joseph/reset/projection splitting, the candidate/active tuner and scheduler,
+and conditional finite-precision inputs. Use compatible joint24 storage; do not
+resurrect the failed A21 marginal18 motion metric.
+
+## Fail-closed continuation
+
+P3 delta is `1e-18`. The corrected physical lemma removes the obsolete current
+DC-source obstruction but does not close numerical source qualification, the
+601-sample source-uniform cover, joint24 forcing attachment, endpoint and every
+literal-prefix augmented LDLT, first-exit retention, a maximum P4 basin, finite
+H18 capture, or H18/A21 basin transport. P4/P5 remain false.
+
+Regenerate the source, centered-S and final-gate JSONs. Run the physical-source,
+old obstruction, correlated boundary, prior-frequency attachment and exact
+source-indexed rebase regressions. Keep any failed innovation enclosure separate
+from a physical counterexample. The research ledger records the current limiter,
+critic alternatives and next falsifiable complete-word experiment.

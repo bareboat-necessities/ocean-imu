@@ -88,6 +88,13 @@ must be enclosed by the assembler rather than silently treated as independent.
 The theorem-level contraction test remains full-matrix interval LDL^T. No
 one-step ratio, determinant/trace scalarization, scalar beta, blockwise minimum,
 or source-history graph can promote through this backend.
+
+For the shipping three-component measurement updates, innovation inversion
+retains the structural covariance provenance S=H P H^T+R with actual P PSD and
+uniformly SPD R.  This excludes singular matrices introduced only by an
+entrywise interval hull.  The inverse is still an outward interval enclosure;
+this does not close the remaining same-history P/H/R/S/K dependency or promote
+P4/P5.
 """
 from __future__ import annotations
 
@@ -111,6 +118,7 @@ from ou3_interval_linear_algebra import (
     matrix_inverse_gauss_jordan,
     matrix_symmetric_hull,
 )
+import ou3_innovation_psd_plus_R_inverse as INNOV
 
 REPO = Path(__file__).resolve().parents[2]
 MEKF = REPO / "src" / "kalman_ou_iii" / "Kalman3D_Wave_OU_III.h"
@@ -141,6 +149,38 @@ def _contains_zero(A: Sequence[Sequence[Interval]]) -> bool:
 
 def _copy(A: Sequence[Sequence[Interval]]) -> IntervalMatrix:
     return [[x for x in row] for row in A]
+
+
+def _innovation_inverse(
+    S: Sequence[Sequence[Interval]],
+    R: Sequence[Sequence[Interval]],
+) -> tuple[IntervalMatrix, dict]:
+    """Invert one innovation without discarding covariance PSD provenance.
+
+    JointWordState.P denotes an actual covariance family by construction:
+    initialization is from the source-reachable covariance seed, prediction is
+    F P F^T+Q, Joseph is A P A^T+K R K^T, and covariance floors are PSD
+    additions. PriorFreeBatchState.Qc has the same invariant starting from zero.
+    Thus every actual three-dimensional innovation satisfies H P H^T>=0.
+    The interval box for P need not itself consist only of PSD matrices.
+    """
+    rows, cols = _shape(S)
+    if rows != cols or _shape(R) != (rows, rows):
+        raise ValueError("innovation/R dimension mismatch")
+    if rows == 3:
+        Sinv, proof = INNOV.innovation_inverse_psd_plus_R_3x3(S, R)
+        return Sinv, {
+            "mode": "PSD_PLUS_R_3X3",
+            "covariance_PSD_provenance": "structural Riccati covariance invariant",
+            "same_history_K_dependency_closed_here": False,
+            "proof": proof,
+        }
+    return matrix_inverse_gauss_jordan(S), {
+        "mode": "GENERIC_VALIDATED_INTERVAL",
+        "covariance_PSD_provenance": "not consumed by this fallback",
+        "same_history_K_dependency_closed_here": False,
+        "proof": None,
+    }
 
 
 def shipping_source_parity() -> dict[str, bool]:
@@ -398,7 +438,7 @@ def joseph_measurement(
     Ht = matrix_transpose(H)
     PHt = matrix_mul(state.P, Ht)
     S = matrix_symmetric_hull(matrix_add(matrix_mul(H, PHt), R))
-    Sinv = matrix_inverse_gauss_jordan(S)
+    Sinv, inverse_provenance = _innovation_inverse(S, R)
     K = matrix_mul(PHt, Sinv)
     A = matrix_sub(matrix_identity(n), matrix_mul(K, H))
     At = matrix_transpose(A)
@@ -415,7 +455,7 @@ def joseph_measurement(
     state.measurements += 1
     if not decomposition_identity_enclosed(state):
         raise RuntimeError("P/Psi/Omega identity lost after Joseph measurement")
-    return {"S": S, "K": K, "A": A}
+    return {"S": S, "K": K, "A": A, "inverse_provenance": inverse_provenance}
 
 
 def prior_free_measurement(
@@ -431,7 +471,7 @@ def prior_free_measurement(
     Ht = matrix_transpose(H)
     QcHt = matrix_mul(state.Qc, Ht)
     S0 = matrix_symmetric_hull(matrix_add(matrix_mul(H, QcHt), R))
-    S0inv = matrix_inverse_gauss_jordan(S0)
+    S0inv, inverse_provenance = _innovation_inverse(S0, R)
     J = matrix_mul(H, state.T)
     state.D = matrix_symmetric_hull(
         matrix_add(
@@ -449,7 +489,8 @@ def prior_free_measurement(
     )
     state.events += 1
     state.measurements += 1
-    return {"S0": S0, "K0": K0, "A0": A0, "J": J}
+    return {"S0": S0, "K0": K0, "A0": A0, "J": J,
+            "inverse_provenance": inverse_provenance}
 
 
 def add_psd_floor(
