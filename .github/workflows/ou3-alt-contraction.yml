@@ -1,0 +1,76 @@
+name: ou3-alt-contraction
+
+on:
+  push:
+    paths:
+      - "tools/stability/ou3_alt_contraction/**"
+      - "tests/ou3_alt_contraction/**"
+      - "docs/ou3-alt-contraction.md"
+      - ".github/workflows/ou3-alt-contraction.yml"
+  pull_request:
+    paths:
+      - "tools/stability/ou3_alt_contraction/**"
+      - "tests/ou3_alt_contraction/**"
+      - "docs/ou3-alt-contraction.md"
+      - ".github/workflows/ou3-alt-contraction.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ou3-alt-contraction-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  exploratory-word:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Preserve exact experiment source for reproduction
+        run: |
+          git rev-parse HEAD > /tmp/ou3-alt-source-sha.txt
+          git archive --format=tar.gz --output=/tmp/ou3-alt-source.tar.gz HEAD
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ou3-alt-source-${{ github.run_id }}
+          path: |
+            /tmp/ou3-alt-source.tar.gz
+            /tmp/ou3-alt-source-sha.txt
+          retention-days: 7
+      - name: Install host diagnostic dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libeigen3-dev python3-numpy python3-scipy python3-mpmath
+      - name: Fetch existing coupled source and build unchanged shipping observer
+        run: |
+          make ensure-sim-data
+          make -C tests/kalman_ou_iii -j2 ou3-operation-ledger-sim
+      - name: Execute unchanged 3-second shipping words
+        working-directory: tests/kalman_ou_iii
+        env:
+          OU3_LEDGER_MAP_TRACE: /tmp/ou3-alt-maps.bin
+          OU3_LEDGER_COV_TRACE: /tmp/ou3-alt-cov.bin
+          OU3_LEDGER_MAP_STRIDE: "600"
+          W3D_WRITE_TIMESERIES: "0"
+          W3D_VALIDATION_WINDOW_SEC: "0"
+        run: |
+          ./ou3-operation-ledger-sim --input wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv
+      - name: Read-only baseline complete-word feasibility, never a proof gate
+        run: |
+          python3 tests/kalman_ou_iii/ou3_p4_complete_brmm_word_feasibility.py \
+            --map /tmp/ou3-alt-maps.bin --cov /tmp/ou3-alt-cov.bin \
+            --output /tmp/ou3-alt-baseline.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ou3-alt-experiment-${{ github.run_id }}
+          path: |
+            /tmp/ou3-alt-maps.bin
+            /tmp/ou3-alt-cov.bin
+            /tmp/ou3-alt-baseline.json
+          if-no-files-found: warn
+          retention-days: 14
