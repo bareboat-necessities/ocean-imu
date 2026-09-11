@@ -67,8 +67,10 @@ class Rank3Tests(unittest.TestCase):
             N1 @ q1 - N0 @ q0,
             atol=1e-12,
         )
+        old_vec_lift_size = m + n*m + m*m + m
+        self.assertEqual(old_vec_lift_size, 87)
         self.assertEqual(chi.size, 33)
-        self.assertLess(chi.size, 105)
+        self.assertLess(chi.size, old_vec_lift_size)
 
 
 if __name__ == '__main__':
