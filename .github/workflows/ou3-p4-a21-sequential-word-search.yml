@@ -1,0 +1,53 @@
+name: ou3-p4-a21-sequential-word-search
+
+on:
+  push:
+    paths: &paths
+      - 'tools/stability/ou3_p4_a21_sequential_source_bias_fp_schur.py'
+      - 'tools/stability/ou3_p4_a21_sequential_word_search.py'
+      - 'tools/stability/ou3_p4_a21_post_prediction_word.py'
+      - 'tools/stability/ou3_p4_a21_source_indexed_prefix_transport.py'
+      - 'tests/validation/test_ou3_p4_a21_sequential_source_bias_fp_schur.py'
+      - 'tests/validation/test_ou3_p4_a21_sequential_word_search.py'
+      - '.github/workflows/ou3-p4-a21-sequential-word-search.yml'
+  pull_request:
+    paths: *paths
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Run A21 sequential search tests
+        run: |
+          python3 -m unittest -v tests.validation.test_ou3_p4_a21_sequential_source_bias_fp_schur
+          python3 -m unittest -v tests.validation.test_ou3_p4_a21_sequential_word_search
+      - name: Materialize A21 all-bias search evidence
+        run: |
+          mkdir -p /tmp/ou3-p4-a21-sequential-word-search
+          python3 tools/stability/ou3_p4_a21_sequential_source_bias_fp_schur.py --output /tmp/ou3-p4-a21-sequential-word-search/operator.json
+          python3 tools/stability/ou3_p4_a21_sequential_word_search.py --output /tmp/ou3-p4-a21-sequential-word-search/search.json
+          python3 - <<'PY'
+          import json
+          root='/tmp/ou3-p4-a21-sequential-word-search/'
+          op=json.load(open(root+'operator.json')); d=json.load(open(root+'search.json'))
+          assert op['validation_pass'] and d['validation_pass']
+          assert set(d['family_search'])=={'BIAS0','BIAS1','BIAS2'}
+          for row in d['family_search'].values(): assert row['attempts']>0
+          assert not d['production_endpoint_augmented_LDLT_closed_here']
+          assert not d['P4_PASS'] and not d['P5_MAY_START']
+          print('A21_ALL_BIAS_SEARCH',d['family_search'])
+          PY
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: ou3-p4-a21-sequential-word-search
+          path: /tmp/ou3-p4-a21-sequential-word-search/
+          retention-days: 7
