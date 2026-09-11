@@ -2,33 +2,20 @@
 """Primary physical COMPLETE-BRMM wave condition.
 
 The theorem is about *physical wave histories*, not about a preferred signal
-construction.  A wave displacement p_wave is defined relative to a local
-slowly varying equilibrium/reference.  Current, propulsion, leeway, secular
-translation and arbitrary global-position origin offsets belong to the
-reference coordinate, not to p_wave.
+construction. A wave displacement p_wave is defined relative to a local slowly
+varying equilibrium/reference. Current, propulsion, leeway, secular translation
+and arbitrary global-position origin offsets belong to the reference coordinate,
+not to p_wave.
 
-Every admitted complete wave history must satisfy the hard pathwise condition
+Every admitted complete wave history satisfies a hard pathwise bounded-wave
+condition. Harmonic/spectral and bounded shaping-state realizations are merely
+sufficient certificate methods for that condition; they are not the physics.
 
-    p_wave is an oscillatory bounded displacement about that local equilibrium,
-    v_wave = d p_wave / dt,
-    a_wave = d v_wave / dt,
-    and there is a finite family constant D_S such that
-
-        || integral_u^t p_wave(s) ds || <= D_S
-
-    for every relevant u,t on every successive admissible continuation.
-
-The bounded primitive is part of the physical BRMM condition because it rules
-out a permanent displacement DC component without banning finite flat segments
-or quiet water.  It is not an arbitrary S cap and it is not chosen from the P4
-working radius.
-
-Harmonic/spectral amplitude measures and bounded shaping-state realizations are
-only sufficient *certificate methods* for proving that a concrete wave family
-satisfies this physical condition and for deriving D_S.  They do not define
-what wave motion is.  Other deterministic representations are admissible when
-they prove the same hard physical condition and preserve the same-history
-p/v/a/primitive ancestry.
+For the current theorem scope the abstract physical condition is accompanied by
+one explicit numerical COMPLETE-BRMM envelope in
+ou3_brmm_complete_physical_envelope.py. That envelope uses the 8.5 m reference
+sea and existing reference physical limits as anchors and pads them outward by
+fixed engineering margins chosen independently of P4 closure.
 """
 from __future__ import annotations
 
@@ -38,8 +25,9 @@ from pathlib import Path
 from typing import Sequence
 
 import ou3_brmm_physical_wave_source as CERT
+import ou3_brmm_complete_physical_envelope as ENVELOPE
 
-QUALIFICATION = "OU3_BRMM_PHYSICAL_WAVE_CONDITION_V1"
+QUALIFICATION = "OU3_BRMM_PHYSICAL_WAVE_CONDITION_V2"
 CANONICAL_SOURCE = "COMPLETE_BRMM_NORMAL_LIVE_WORD"
 
 
@@ -107,20 +95,22 @@ def qualify_with_certificate(cert: dict) -> dict:
 
 def constant_history_admitted(displacement: Sequence, cert: dict) -> bool:
     """Regression for PR #515: derive rejection from the bounded-wave condition."""
-    q = qualify_with_certificate(cert)
+    qualify_with_certificate(cert)
     d = tuple(_r(x) for x in displacement)
     if len(d) != 3:
         raise ValueError("displacement must have three components")
     if all(x == 0 for x in d):
         return True
-    # A permanent d != 0 has ||int_0^t p ds|| growing linearly and violates
-    # every finite derived D_S.  CERT computes the exact contradiction horizon.
     return bool(CERT.constant_history_admission(d, cert)["admitted_by_physical_wave_condition"])
 
 
 def build() -> dict:
     example = CERT.spectral_certificate((CERT.SpectralBand(F(1, 10), F(2), F(3)),))
     qualification = qualify_with_certificate(example)
+    envelope = ENVELOPE.build()
+    ef = ENVELOPE.validate(envelope)
+    if ef:
+        raise RuntimeError("COMPLETE-BRMM physical envelope invalid: " + repr(ef))
     return {
         **physical_condition(),
         "certificate_example": qualification,
@@ -129,7 +119,10 @@ def build() -> dict:
         "historical_old_finite_window_classification": "B",
         "physical_source_specification_omission_classification": "E",
         "shipping_filter_instability_claimed": False,
-        "physical_D_S_numeric_qualification_closed_for_complete_family": False,
+        "complete_BRMM_numeric_physical_envelope": envelope,
+        "physical_D_S_numeric_qualification_closed_for_complete_family":
+            envelope["full_COMPLETE_BRMM_numeric_physical_envelope_closed"],
+        "numeric_D_S_m_s": envelope["complete_BRMM_hard_bounds"]["centered_primitive_D_S_upper_m_s"],
         "P3_delta": 1e-18,
         "P4_PASS": False,
         "P5_MAY_START": False,
@@ -156,6 +149,8 @@ def main() -> int:
     print(json.dumps({
         "physics_is_primary": d["physics_is_primary"],
         "dc_history_admitted": d["constant_nonzero_position_zero_velocity_history_admitted"],
+        "numeric_D_S_m_s": d["numeric_D_S_m_s"],
+        "numeric_complete_family_closed": d["physical_D_S_numeric_qualification_closed_for_complete_family"],
         "P4_PASS": d["P4_PASS"],
         "failures": failures,
     }, sort_keys=True))
