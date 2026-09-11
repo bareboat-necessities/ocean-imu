@@ -2,7 +2,7 @@
 
 Composes physical mean, attitude F/Q, integrated-OU Qaxis, BA decay and full
 21-state covariance without accepting precomputed F_AA/Q_AA/F_LL/Q_LL/Q_BB or
-phi factors.  Remaining witnesses are literal runtime branch outcomes/values,
+phi factors. Remaining witnesses are literal runtime branch outcomes/values,
 not detached covariance matrices and not source admission.
 """
 from __future__ import annotations
@@ -32,7 +32,6 @@ class QAxisBranch:
         object.__setattr__(self,'sigma_aw',tuple(map(tuple,sig))); object.__setattr__(self,'machine_epsilon',eps)
 
     def matrices(self,ou):
-        """Build exactly the Qaxis operand(s) consumed by shipping Q_LL assembly."""
         if self.correlated:
             unit=QX.qaxis4(ou.tau,ou.h,1,ou.alpha,marginal_psd=self.marginal_psd[0],final_psd=self.final_psd[0],machine_epsilon=self.machine_epsilon)
             return dict(qaxis_unit=unit,sigma_aw=self.sigma_aw,independent_qaxis=None)
@@ -49,6 +48,12 @@ def prediction(state,segment,*,gyro_body,angular,Qbase,ou,bias,qaxis:QAxisBranch
     """Finite prediction with no free shipping transition/process matrices."""
     if not isinstance(qaxis,QAxisBranch): raise TypeError('Qaxis runtime branch required')
     if angular.h != ou.h or ou.h != segment.h: raise ValueError('attitude, OU and physical segment must share one step')
+    g=P.vec(gyro_body,3); ref=state.reference
+    # Shipping uses last_gyr_bias_corrected = gyr - b_g_hat.  Since
+    # e_bg = b_g_true-b_g_hat, b_g_hat=b_g_true-e_bg.  The covariance
+    # attitude transition and nominal quaternion MUST use this same omega.
+    omega_hat=[g[i]-(ref.gyro_bias[i]-state.z[3+i]) for i in range(3)]
+    if list(angular.w) != omega_hat: raise ValueError('attitude covariance angular rate detached from SAME nominal gyro prediction')
     qkw=qaxis.matrices(ou)
     return ATT.runtime_paired_prediction(
         state,segment,gyro_body=gyro_body,angular=angular,Qbase=Qbase,ou=ou,bias=bias,
@@ -60,6 +65,7 @@ def readiness():
     return {
       'free_prediction_transition_matrices_at_entry':False,
       'physical_mean_and_covariance_same_step':True,
+      'same_bias_corrected_gyro_for_nominal_and_covariance':True,
       'attitude_F_Q_runtime_graph_composed':True,
       'OU_mean_BA_runtime_graph_composed':True,
       'Qaxis_runtime_graph_composed':True,
