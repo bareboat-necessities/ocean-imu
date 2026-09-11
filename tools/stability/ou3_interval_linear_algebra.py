@@ -7,13 +7,13 @@ preconditioner*: if the resulting interval Gauss--Jordan pivots cannot exclude
 zero, the solve is rejected.  The floating result is therefore never accepted
 as an inverse or certificate by itself.
 
-For matrices whose theorem provenance guarantees symmetry and positive
-definiteness (notably innovation covariance S=H P H^T+R with R>0), this module
-also provides a fixed-order interval LDL^T solve.  It performs the complete
-factorization and triangular solves in outward interval arithmetic and requires
-every diagonal D interval to remain strictly positive.  No midpoint factor or
-floating Cholesky result is trusted.  This avoids dependency loss introduced by
-generic row elimination while preserving fail-closed semantics.
+For exactly symmetric interval matrices, the generic inverse first attempts a
+fixed-order interval LDL^T solve.  This is particularly important for theorem
+matrices with known SPD provenance such as innovation covariance
+S=H P H^T+R.  Every accepted LDL^T diagonal interval must remain strictly
+positive.  If that condition cannot be certified, the implementation falls back
+to the existing preconditioned/raw Gauss--Jordan paths; it never assumes SPD
+merely from symmetry.
 """
 from __future__ import annotations
 
@@ -58,6 +58,16 @@ def matrix_symmetric_hull(A: Sequence[Sequence[Interval]]) -> IntervalMatrix:
             out[i][j] = x
             out[j][i] = x
     return out
+
+
+def _exactly_symmetric(A: Sequence[Sequence[Interval]]) -> bool:
+    n, m = shape(A)
+    if n != m:
+        return False
+    return all(
+        A[i][j].lo == A[j][i].lo and A[i][j].hi == A[j][i].hi
+        for i in range(n) for j in range(i + 1, n)
+    )
 
 
 def matrix_solve_gauss_jordan(
@@ -110,14 +120,10 @@ def matrix_solve_spd_ldlt(
 ) -> IntervalMatrix:
     """Enclose X=A^{-1}B with a validated fixed-order interval LDL^T solve.
 
-    The caller must have theorem provenance that every point matrix represented
-    by ``A`` is symmetric positive definite.  This routine independently checks
-    the interval factorization condition needed for the computation: every
-    diagonal D_k obtained by outward interval LDL^T must have ``D_k.lo > 0``.
-    If dependency growth prevents that check, it raises ``IntervalPivotError``.
-
-    All arithmetic used in the accepted factorization and solves is interval
-    arithmetic.  No floating midpoint factor is consumed as evidence.
+    Acceptance is self-certifying: the outward interval LDL^T factorization must
+    produce strictly positive D intervals.  Therefore callers need not trust a
+    floating factorization.  If interval dependency prevents strict positivity,
+    ``IntervalPivotError`` is raised and no inverse claim is produced.
     """
     n, m = shape(A)
     rb, cb = shape(B)
@@ -136,7 +142,6 @@ def matrix_solve_spd_ldlt(
     for i in range(n):
         L[i][i] = one
 
-    # A = L D L^T, unit lower-triangular L.
     for j in range(n):
         dj = S[j][j]
         for k in range(j):
@@ -152,7 +157,6 @@ def matrix_solve_spd_ldlt(
                 num = num - L[i][k] * L[j][k] * D[k]
             L[i][j] = num / D[j]
 
-    # L Y = B.
     Y: IntervalMatrix = [[zero for _ in range(cb)] for _ in range(n)]
     for i in range(n):
         for c in range(cb):
@@ -161,10 +165,8 @@ def matrix_solve_spd_ldlt(
                 y = y - L[i][k] * Y[k][c]
             Y[i][c] = y
 
-    # D Z = Y.
     Z: IntervalMatrix = [[Y[i][c] / D[i] for c in range(cb)] for i in range(n)]
 
-    # L^T X = Z.
     X: IntervalMatrix = [[zero for _ in range(cb)] for _ in range(n)]
     for i in reversed(range(n)):
         for c in range(cb):
@@ -178,7 +180,6 @@ def matrix_solve_spd_ldlt(
 def matrix_inverse_spd_ldlt(
     A: Sequence[Sequence[Interval]],
 ) -> IntervalMatrix:
-    """Validated interval inverse for an SPD-provenance matrix."""
     n, m = shape(A)
     if n != m:
         raise ValueError("interval SPD inverse requires a square matrix")
@@ -229,24 +230,24 @@ def _raw_inverse(A: Sequence[Sequence[Interval]]) -> IntervalMatrix:
 def matrix_inverse_gauss_jordan(
     A: Sequence[Sequence[Interval]],
 ) -> IntervalMatrix:
-    """Enclose every inverse, using a validated preconditioned solve when useful.
+    """Enclose A^{-1}, preferring a validated symmetric LDL^T path when possible.
 
-    Let C be any fixed nonsingular point matrix.  Solving
-
-        (C A) X = C
-
-    is algebraically identical to ``A X = I``.  We choose C from an ordinary
-    midpoint inverse only to improve conditioning, represent its binary64
-    entries as exact point intervals, and then perform the *entire accepted
-    solve* with the same outward interval Gauss--Jordan routine.  If a pivot of
-    the preconditioned interval family touches zero, no claim is made from C;
-    the legacy raw interval solve is attempted and may itself fail closed.
+    Exact symmetry alone is never accepted as a proof of positive definiteness:
+    the LDL^T path is used only when every outward D interval is strictly
+    positive.  On failure it falls through to the prior midpoint-preconditioned
+    and raw interval Gauss--Jordan implementation.
     """
     n, m = shape(A)
     if n != m:
         raise ValueError("interval inverse requires a square matrix")
     if n == 0:
         return []
+
+    if _exactly_symmetric(A):
+        try:
+            return matrix_inverse_spd_ldlt(A)
+        except IntervalPivotError:
+            pass
 
     approx = _midpoint_float_inverse(A)
     if approx is not None:
