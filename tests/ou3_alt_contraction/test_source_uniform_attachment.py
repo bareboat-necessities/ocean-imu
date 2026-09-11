@@ -18,8 +18,8 @@ class SourceUniformAttachmentTests(unittest.TestCase):
         self.assertFalse(d['ALT_ACTUAL_SOURCE_UNIFORM_FINITE_INCREMENT_WORD_ATTACHED'])
         self.assertFalse(d['ALT_LIVE_PASS'])
         self.assertFalse(d['rank3_structure_safe_to_use']['full_state_reduction_permitted'])
-        self.assertEqual(d['rank3_structure_safe_to_use']['thin_master_port_dimension_A21'], 33)
-        self.assertEqual(d['rank3_structure_safe_to_use']['old_vec_increment_dimension_A21'], 105)
+        self.assertEqual(d['rank3_structure_safe_to_use']['thin_master_port_dimension_joint24'], 33)
+        self.assertEqual(d['rank3_structure_safe_to_use']['old_vec_increment_dimension_joint24'], 87)
         missing = [k for k, v in d['paired_finite_increment_requirements'].items() if not v]
         self.assertIn('deltaN_and_deltaS_bound_to_same_paired_history', missing)
         self.assertIn('paired_guard_outcomes_or_hard_guard_graph', missing)
