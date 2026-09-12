@@ -1,18 +1,23 @@
 """Finite raw-IMU -> tracker-free tuner-candidate sample prefix.
 
-This is the adaptation-side sample composer for ALT. It keeps persistent
-private-Mahony, WPE, adaptive-band/statistics, tracker-input LPF, projected
-stillness, TuneState, adaptation clock, and the staged pending bit. A single
-RawImuSample supplies the private vertical observer. That same vertical
-successor supplies WPE, sigma-band and LPF. The tuner-relevant stillness
-projection is computed from the LPF output without any dominant-frequency
-tracker state, then the same band/statistics and stillness successors generate
-the tau/sigma/R_S candidate.
+This is the post-warm adaptation-side sample composer for ALT.  It keeps
+persistent private-Mahony, WPE, adaptive-band/statistics, tracker-input LPF,
+projected stillness, TuneState, adaptation clock, and the staged pending bit.
 
-Shipping applies a pending candidate at the beginning of the next IMU sample.
-Accordingly this sample step FAILS CLOSED when ``pending`` is already true: a
-caller must first execute the boundary-commit bridge rather than silently run a
-second frontend sample with stale active OU parameters.
+The literal shipping order is enforced:
+  1. the current raw packet advances the private vertical observer;
+  2. tracker LPF and tuner-relevant stillness advance from that vertical sample;
+  3. the adaptive sigma band/statistics and tuner candidate use a READ-ONLY view
+     of the WPE state carried into the sample (or the fixed prior);
+  4. only AFTER the candidate is formed does the same current vertical sample
+     advance WPE, making its new period available to the NEXT sample.
+
+Thus y_k cannot change the WPE frequency used by its own tuning candidate.
+Shipping applies a pending candidate at the beginning of the next IMU sample;
+accordingly this sample step fails closed when ``pending`` is already true.
+Cold/TunerWarm early-return semantics are intentionally not represented here;
+this object is for TunerReady/Live adaptation and the startup-stage prefix
+remains a separate proof obligation.
 """
 from __future__ import annotations
 from dataclasses import dataclass
@@ -63,11 +68,12 @@ class Result:
     state: State
     raw_sample: RAW.RawImuSample
     vertical: V.Result
-    wpe: WPE.UpdateResult
+    preupdate_wpe: BAND.WPEFrequencyView
     band: BAND.FrontendResult
     tracker_lpf: FRONT.LPFResult
     stillness: STILL.Result
     candidate: CAND.CandidateResult
+    wpe: WPE.UpdateResult
 
 
 def step(state:State,sample:RAW.RawImuSample,*,dt,
@@ -99,35 +105,50 @@ def step(state:State,sample:RAW.RawImuSample,*,dt,
 
     vertical=RAW.vertical_step_from_raw(state.vertical,vertical_cfg,sample,dt=dt,
         accel_invnorm=accel_invnorm,quat_invnorm=quat_invnorm,seed=seed)
-    wpe=FRONT.wpe_step_from_vertical(state.wpe,wpe_cfg,vertical,dt=dt,decay=wpe_decay,
-        moment_decay=wpe_moment_decay,period_witness=wpe_period_witness,
-        log_witness=wpe_log_witness,current_period=wpe_current_period,
-        current_frequency=wpe_current_frequency,post_output=wpe_post_output)
-    band=FRONT.band_step_from_vertical(state.band,state.stats,wpe,vertical,dt=dt,
-        band_cfg=band_cfg,stats_cfg=stats_cfg,band_decay=band_decay,
-        variance_decay=variance_decay,bench_noise_sigma=bench_noise_sigma,noise_sqrt=noise_sqrt)
+
+    # These current-period witnesses describe the WPE state at sample entry.
+    # If the usable latch is still false, shipping ignores getFrequencyHz() for
+    # tuning even when a log-period state already exists.
+    view=FRONT.wpe_view(state.wpe,
+        current_period=wpe_current_period if state.wpe.usable_period else None,
+        current_frequency=wpe_current_frequency if state.wpe.usable_period else None)
+
     lpf=FRONT.tracker_lpf_step(state.tracker_lpf,vertical,decay=tracker_lpf_decay)
     still=STILL.step(state.stillness,still_cfg,a_vert_up_lp=lpf.output,dt=dt,
                      attenuation=still_attenuation)
+    band=FRONT.band_step_from_vertical_view(state.band,state.stats,view,vertical,dt=dt,
+        band_cfg=band_cfg,stats_cfg=stats_cfg,band_decay=band_decay,
+        variance_decay=variance_decay,bench_noise_sigma=bench_noise_sigma,noise_sqrt=noise_sqrt)
+
     now=state.time+dt
     cand=BRIDGE.step(state.tune,band,still,candidate_cfg,sigma_wave_sqrt=sigma_wave_sqrt,
                      dt=dt,time=now,last_adapt_time=state.last_adapt_time,
                      spectral=spectral,ema=ema)
+
+    # Shipping advances WPE only after update_tuner() has consumed the view above.
+    wpe=FRONT.wpe_step_from_vertical(state.wpe,wpe_cfg,vertical,dt=dt,decay=wpe_decay,
+        moment_decay=wpe_moment_decay,period_witness=wpe_period_witness,
+        log_witness=wpe_log_witness,current_period=wpe_current_period,
+        current_frequency=wpe_current_frequency,post_output=wpe_post_output)
+
     nxt=State(vertical.state,wpe.state,band.band_state,band.stats_state,lpf.state,
               still.state,cand.tune_next,cand.last_adapt_time_after,
               cand.pending_after,state.sample_index+1,now)
-    return Result(nxt,sample,vertical,wpe,band,lpf,still,cand)
+    return Result(nxt,sample,vertical,view,band,lpf,still,cand,wpe)
 
 
 def readiness():
     return {
       'raw_IMU_to_private_vertical_same_packet':True,
-      'same_vertical_WPE_band_tracker_LPF':True,
+      'same_vertical_band_tracker_LPF_and_later_WPE':True,
+      'tuner_uses_WPE_state_from_sample_entry':True,
+      'current_sample_WPE_update_cannot_feed_own_candidate':True,
       'tracker_free_tuner_stillness_projection':True,
       'band_statistics_and_stillness_generate_candidate_same_sample':True,
       'TuneState_adapt_clock_and_pending_persist_across_samples':True,
       'pending_boundary_cannot_be_skipped':True,
       'dominant_frequency_tracker_absent_from_OU_tuner_prefix':True,
+      'Cold_TunerWarm_early_return_semantics_attached':False,
       'next_boundary_staged_commit_composed':False,
       'sensor_residual_source_bounds_attached':False,
       'transcendental_binary32_attached':False,
