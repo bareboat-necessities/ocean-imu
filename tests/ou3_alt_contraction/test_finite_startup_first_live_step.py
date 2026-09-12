@@ -96,11 +96,15 @@ class Tests(unittest.TestCase):
         self.assertEqual(out.tuner_suffix.state.sample_index,before.sample_index+1)
         self.assertEqual(out.tuner_suffix.stage_before,'Live')
 
-    def test_detached_first_packet_fails_before_live_algebra(self):
-        s=startup(); raw,segment,_,_,_,_=physical_step(s)
-        other=replace(raw,physical=segment.after)
+    def test_valid_packet_at_wrong_endpoint_fails_startup_ancestry_guard(self):
+        s=startup(); _,segment,_,_,_,_=physical_step(s); p=segment.after
+        inertial=tuple(p.acceleration[i]-(0,0,G)[i] for i in range(3))
+        fbody=SENSOR.q_rotate(p.q_world_to_body,inertial)
+        wrong=SENSOR.RawImuSample(
+            p,(0,0,0),(0,0,0),(0,0,0),tuple(p.gyro_bias),
+            tuple(fbody[i]+p.beta[i] for i in range(3)),(0,0,G))
         with self.assertRaisesRegex(ValueError,'detached'):
-            X.step(s,other,segment)
+            X.step(s,wrong,segment)
 
     def test_readiness_keeps_async_reset_precision_and_indefinite_word_open(self):
         r=X.readiness()
