@@ -8,7 +8,10 @@ integration/normalization and the levelled up-acceleration readout.
 
 The float fast-inverse-sqrt results and first-sample FromTwoVectors seed remain
 explicit runtime witnesses.  They are not silently replaced by exact sqrt or a
-free attitude.  Euler outputs are omitted because VerticalAccelComplementary
+free attitude. The optional named binary32 profile instead computes the
+initialized branch with its exact bit/Newton normalization and rounding ledger;
+it does not qualify the target compiler or startup seed. Euler outputs are
+omitted because VerticalAccelComplementary
 computes them but does not consume them for its state or vertical output.
 """
 from __future__ import annotations
@@ -75,7 +78,13 @@ class Result:
 def step(s:State,cfg:Config,*,dt,gyro,acc,
          accel_invnorm:InvSqrtWitness|None=None,
          quat_invnorm:InvSqrtWitness|None=None,
-         seed:SeedWitness|None=None):
+         seed:SeedWitness|None=None, arithmetic_profile:str|None=None):
+    if arithmetic_profile is not None:
+        if any(w is not None for w in (accel_invnorm,quat_invnorm,seed)):
+            raise ValueError('binary32 profile computes normalization; no free witnesses allowed')
+        from tools.stability.ou3_alt_contraction import finite_binary32_mahony as B32
+        return B32.step_initialized(s,cfg,dt=dt,gyro=gyro,acc=acc,
+                                    profile=arithmetic_profile).vertical
     dt=R(dt); g=tuple(R(x) for x in gyro); a_raw=tuple(R(x) for x in acc)
     if dt<=0 or len(g)!=3 or len(a_raw)!=3: raise ValueError('positive dt and 3-vectors required')
     q=s.q; initialized=s.initialized
@@ -137,6 +146,7 @@ def readiness():
       'mahony_feedback_and_quaternion_recurrence_materialized':True,
       'vertical_levelled_output_materialized':True,
       'first_sample_FromTwoVectors_seed_attached':False,
+      'profile_specific_initialized_binary32_available':True,
       'fast_inv_sqrt_binary32_attached':False,
       'raw_sensor_BRMM_disturbance_relation_attached':False,
       'complete_word_finite_identity':False,
