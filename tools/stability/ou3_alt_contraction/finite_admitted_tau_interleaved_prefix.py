@@ -5,12 +5,19 @@ The lower prefix already owns admitted BRMM, BIAS, bounded IMU ISS, one t_L
 origin and IMU/MAG/HOLD ordering. This layer adds a persistent dual-compiler
 tau ledger.
 
-Every Live IMU edge must provide the *actual* stored tuner-frequency object and
+Every Live IMU edge must provide the actual stored tuner-frequency object and
 the binary32 std::exp result used by the tau EMA. After executing the existing
 same-history event, we require the exact tuner candidate frequency, target and
 EMA decay to be the same values consumed by the deployment ledger. The separate
 and FMA machine tracks then advance from their own persistent predecessors. MAG
 and HOLD preserve the ledger exactly.
+
+``imu_step_from_wpe`` is the strongest frequency-source entry. It requires the
+binary32 tuner frequency to be derived from the exact WPE state carried into
+THIS sample: literal 0.2f prior before the usable latch, or the separate
+``std::exp(-log_period)`` getter result afterwards. Thus a free StoredFrequency
+can remain available for component algebra without counting as theorem-source
+provenance.
 
 ``begin_from_goLive`` is the strong construction path. It accepts the tau ledger
 carried across the startup goLive edge only when the lower admitted product
@@ -18,8 +25,8 @@ contains the exact same ``finite_live_imu_prefix.State``. The generic ``begin``
 remains available for component algebra, but readiness does not treat that path
 as startup provenance.
 
-WPE->StoredFrequency and target-libm exp correspondence remain open, so this is
-not deployment closure or storage authorization.
+Binary32 WPE log-state production and target-libm correctness remain open, so
+this is not deployment closure or storage authorization.
 """
 from __future__ import annotations
 from dataclasses import dataclass
@@ -33,6 +40,7 @@ from tools.stability.ou3_alt_contraction import finite_shipping_tau_target_binar
 from tools.stability.ou3_alt_contraction import finite_complete_word_tau_qualification as QUAL
 from tools.stability.ou3_alt_contraction import finite_startup_live_tau_bridge as GO
 from tools.stability.ou3_alt_contraction import finite_source_continuation as SOURCE
+from tools.stability.ou3_alt_contraction import finite_wpe_frequency_binary32 as WPEF
 
 
 @dataclass(frozen=True)
@@ -104,7 +112,15 @@ def _candidate(lower_out):
     return cand
 
 
+def _entry_wpe(state:State):
+    try:
+        return state.prefix.prefix.live.live_word.live.live.live.tuner.wpe
+    except AttributeError as exc:
+        raise TypeError('strong admitted tau product lost sample-entry WPE state') from exc
+
+
 def imu_step(state:State,*,stored_frequency:FREQ.StoredFrequency,tau_exp_decay,**kwargs):
+    """Component entry with an already-derived StoredFrequency."""
     if not isinstance(state,State): raise TypeError('admitted tau interleaved State required')
     if not isinstance(stored_frequency,FREQ.StoredFrequency): raise TypeError('actual StoredFrequency required')
     ema=kwargs.get('ema')
@@ -120,6 +136,17 @@ def imu_step(state:State,*,stored_frequency:FREQ.StoredFrequency,tau_exp_decay,*
     cfg=state.prefix.prefix.live.live_word.runtime.candidate_cfg
     tau_step=LEDGER.step(state.tau,stored_frequency,cfg,dt=LEDGER.DT,exp_decay=tau_exp_decay)
     return ImuResult(State(nxt_prefix,tau_step.state,state.live_entry_tau_updates),out,tau_step)
+
+
+def imu_step_from_wpe(state:State,*,tuner_frequency:WPEF.TunerFrequencyResult,
+                      tau_exp_decay,**kwargs):
+    """Strong theorem entry deriving the tau frequency from THIS sample's WPE entry state."""
+    if not isinstance(state,State) or not isinstance(tuner_frequency,WPEF.TunerFrequencyResult):
+        raise TypeError('admitted tau state and WPE tuner-frequency source required')
+    if tuner_frequency.shadow != _entry_wpe(state):
+        raise ValueError('binary32 tuner frequency detached from carried sample-entry WPE state')
+    return imu_step(state,stored_frequency=tuner_frequency.stored,
+                    tau_exp_decay=tau_exp_decay,**kwargs)
 
 
 def mag_step(state:State,**kwargs):
@@ -139,7 +166,7 @@ def complete(state:State):
 
 
 def readiness():
-    ledger=LEDGER.readiness(); qual=QUAL.readiness(); go=GO.readiness()
+    ledger=LEDGER.readiness(); qual=QUAL.readiness(); go=GO.readiness(); wf=WPEF.readiness()
     return {
       'admitted_BRMM_BIAS_ISS_interleaver_consumed':True,
       'tau_relevant_persistent_runtime_config_source_qualified':qual['tau_relevant_persistent_runtime_config_source_qualified'],
@@ -147,11 +174,14 @@ def readiness():
       'strong_Live_constructor_requires_exact_goLive_filter_frontend_state_and_tau_ledger':True,
       'goLive_tau_ledger_identity_bridge_available':go['goLive_preserves_binary32_tau_ledger_by_identity'],
       'each_Live_IMU_requires_same_candidate_frequency_target_and_decay_as_tau_ledger':True,
+      'strong_Live_IMU_frequency_source_bound_to_sample_entry_WPE_or_prior':True,
+      'WPE_getter_to_tuner_store_topology_available':wf['WPE_frequency_getter_to_tuner_binary32_store_topology_closed'],
       'each_Live_IMU_retains_both_binary32_tau_roundoff_certificates':True,
       'MAG_and_HOLD_preserve_tau_ledger_exactly':True,
       'complete_word_requires_exactly_600_tau_updates_after_Live_entry':True,
       'admitted_startup_reachability_with_tau_ledger_closed':False,
-      'upstream_WPE_to_StoredFrequency_binary32_correspondence_closed':ledger['upstream_WPE_to_StoredFrequency_binary32_correspondence_closed'],
+      'WPE_binary32_log_period_production_closed':wf['WPE_binary32_log_period_production_closed'],
+      'upstream_WPE_to_StoredFrequency_binary32_correspondence_closed':False,
       'tuner_exp_libm_binary32_correspondence_closed':ledger['tuner_exp_libm_binary32_correspondence_closed'],
       'all_event_arithmetic_witnesses_source_uniformly_qualified':False,
       'source_uniform_complete_600_step_word_qualified':False,
