@@ -32,7 +32,7 @@ def wpe_source_for(state,dynamic):
     exact_f=F(dynamic['wpe_current_frequency'])
     frequency=B32.rn32(exact_f)
     log=WPEF.bind_log_state(entry,B32.rn32(entry.log_period))
-    getter=WPEF.getters(log,period_exp=B32.rn32(F(1,frequency)),frequency_exp=frequency)
+    getter=WPEF.getters(log,period_exp=B32.rn32(F(1)/frequency),frequency_exp=frequency)
     return WPEF.tuner_frequency(entry,min_hz=TARGET.FLOOR,max_hz=TARGET.CEIL,getter=getter)
 
 
