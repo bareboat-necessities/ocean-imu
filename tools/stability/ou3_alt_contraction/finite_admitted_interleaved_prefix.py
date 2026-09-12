@@ -1,20 +1,17 @@
 """Finite interleaving induction over the strongest admitted-source ALT edges.
 
-This is the structural prefix composer needed before a source-uniform 600-step
-word can exist. It folds the strongest current theorem-facing events without
-restarting state:
+The product persistently carries the canonical t_L restriction of the same
+admitted COMPLETE-BRMM history.  That origin is checked against the fresh MEKF
+physical Reference at ``begin`` and transition 1 must start from it.  Thereafter
+all IMU/MAG/HOLD successors preserve the origin and both admitted histories.
 
-* IMU: admitted BRMM+BIAS kth restriction -> source-bound coefficients ->
-  shipping successor + retained IMU forcing;
-* MAG: same current admitted endpoint (or explicit t_L origin at sample zero) ->
-  shipping magnetic successor + retained correlated magnetic forcing;
-* HOLD: literal external hold-control event, preserving both admitted histories.
+IMU uses the canonical admitted BRMM+BIAS strong edge with source-bound runtime
+coefficients and retained forcing; MAG uses the admitted magnetic edge and
+retained correlated forcing; HOLD changes no physical-source ordinal.
 
-The composer proves by construction that only IMU events advance the source
-ordinal and that every successor is the predecessor of the next event. It does
-NOT quantify/close all deployment arithmetic witnesses or sensor admissibility,
-so a 600-transition trace is representable but not yet a certified universal
-shipping word. No storage search is authorized.
+All deployment arithmetic witnesses and startup reachability remain open, so a
+600-transition trace is structurally representable but not a certified
+source-uniform shipping word. No storage search is authorized.
 """
 from __future__ import annotations
 from dataclasses import dataclass
@@ -22,6 +19,8 @@ from dataclasses import dataclass
 from tools.stability.ou3_alt_contraction import finite_admitted_source_live_word as LIVE
 from tools.stability.ou3_alt_contraction import finite_admitted_source_imu_word as IMU
 from tools.stability.ou3_alt_contraction import finite_admitted_source_mag_word as MAG
+from tools.stability.ou3_alt_contraction import finite_admitted_brmm_restriction as ABRMM
+from tools.stability.ou3_alt_contraction import finite_admitted_startup_origin as START
 from tools.stability.ou3_alt_contraction import finite_source_continuation as SOURCE
 
 
@@ -41,14 +40,25 @@ class EventRecord:
 @dataclass(frozen=True)
 class State:
     live: LIVE.State
+    origin: ABRMM.RestrictedOrigin
     events: tuple[EventRecord,...]=()
     def __post_init__(self):
-        if not isinstance(self.live,LIVE.State):
-            raise TypeError('joint admitted Live state required')
+        if not isinstance(self.live,LIVE.State) or not isinstance(self.origin,ABRMM.RestrictedOrigin):
+            raise TypeError('joint admitted Live state and canonical t_L origin required')
         object.__setattr__(self,'events',tuple(self.events))
+        if self.origin.history != self.live.admitted_history:
+            raise ValueError('interleaved origin detached from carried admitted history')
+        root=self.live.live_word.source.root
+        ABRMM.qualify_origin(root,self.origin)
         n=len(self.live.live_word.source.steps)
-        if n>SOURCE.TRANSITIONS:
-            raise ValueError('more than canonical 600 source transitions')
+        if n>SOURCE.TRANSITIONS: raise ValueError('more than canonical 600 source transitions')
+        if n:
+            if self.live.live_word.source.steps[0].segment.before != self.origin.endpoint:
+                raise ValueError('interleaved source chain did not start at admitted t_L origin')
+        else:
+            ref=self.live.live_word.live.live.live.mekf.reference
+            if ref != self.origin.endpoint:
+                raise ValueError('fresh interleaved Reference is not admitted t_L origin')
         if self.events:
             if self.events[-1].source_steps_after != n:
                 raise ValueError('event ledger detached from carried source continuation')
@@ -61,23 +71,36 @@ class State:
     def complete_source_horizon(self): return self.imu_steps==SOURCE.TRANSITIONS
 
 
-def begin(live:LIVE.State): return State(live,())
+def begin(live:LIVE.State, origin:ABRMM.RestrictedOrigin):
+    # Reuse the dedicated startup binder so the fresh joint24 physical Reference
+    # and canonical admitted-history origin have one identity check.
+    START.bind(live,origin)
+    return State(live,origin,())
 
 
 def imu_step(state:State, **kwargs):
     if not isinstance(state,State): raise TypeError('interleaved admitted prefix required')
+    restricted=kwargs.get('restricted')
+    if not isinstance(restricted,ABRMM.RestrictedSegment):
+        raise TypeError('interleaved IMU requires admitted BRMM restriction')
+    if state.imu_steps==0 and restricted.segment.before != state.origin.endpoint:
+        raise ValueError('first interleaved IMU restriction does not start at admitted t_L origin')
     before=state.imu_steps
     out=IMU.imu_step(state.live,**kwargs)
     record=EventRecord('imu',before,len(out.state.live_word.source.steps))
-    return State(out.state,state.events+(record,)),out
+    return State(out.state,state.origin,state.events+(record,)),out
 
 
 def mag_step(state:State, **kwargs):
     if not isinstance(state,State): raise TypeError('interleaved admitted prefix required')
+    if 'origin' in kwargs:
+        raise TypeError('interleaved prefix owns the admitted origin')
     before=state.imu_steps
-    out=MAG.mag_step(state.live,**kwargs)
+    mkw=dict(kwargs)
+    if before==0: mkw['origin']=state.origin
+    out=MAG.mag_step(state.live,**mkw)
     record=EventRecord('mag',before,len(out.state.live_word.source.steps))
-    return State(out.state,state.events+(record,)),out
+    return State(out.state,state.origin,state.events+(record,)),out
 
 
 def set_hold(state:State, *, hold):
@@ -85,18 +108,21 @@ def set_hold(state:State, *, hold):
     before=state.imu_steps
     out=LIVE.set_hold(state.live,hold=hold)
     record=EventRecord('hold',before,len(out.state.live_word.source.steps))
-    return State(out.state,state.events+(record,)),out
+    return State(out.state,state.origin,state.events+(record,)),out
 
 
 def readiness():
-    i=IMU.readiness(); m=MAG.readiness()
+    i=IMU.readiness(); m=MAG.readiness(); s=START.readiness()
     return {
       'finite_successor_induction_over_IMU_MAG_HOLD_closed':True,
+      'canonical_admitted_tL_origin_persistent_in_interleaved_product':True,
+      'startup_sample_zero_identity_consumed_before_interleaving':s['startup_sample_zero_equal_to_admitted_history_restriction_proved'],
+      'first_IMU_forced_to_start_at_same_admitted_tL_origin':True,
       'only_IMU_advances_admitted_source_ordinal':True,
       'IMU_successor_uses_strong_admitted_source_edge':i['physical_moments_sensor_forcing_and_model_roots_share_one_event'],
       'MAG_successor_retains_same_event_correlated_forcing':m['same_event_correlated_magnetic_forcing_retained'],
-      'sample_zero_MAG_requires_explicit_admitted_origin':m['fresh_sample_zero_magnetic_edge_requires_explicit_admitted_tL_origin'],
-      'both_admitted_histories_persist_through_all_three_event_types':True,
+      'sample_zero_MAG_uses_persistent_admitted_origin':True,
+      'both_admitted_histories_and_origin_persist_through_all_event_types':True,
       'canonical_600_transition_source_horizon_representable':True,
       'all_event_arithmetic_witnesses_source_uniformly_qualified':False,
       'sensor_disturbance_admissibility_attached':False,
