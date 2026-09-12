@@ -101,32 +101,57 @@ same-history closure.
 
 ## MAG-BMM150-DET-v1 deterministic magnetic admission
 
-ALT now declares the following engineering source class for a commissioned
-BMM150 installation. These are theorem admission limits, not Bosch guarantees
-for arbitrary mounting environments:
+ALT declares the following engineering source class for a commissioned BMM150
+installation. These are theorem admission limits, not Bosch guarantees for
+arbitrary mounting environments:
 
 - `20 uT <= ||B_W||_2 <= 75 uT`;
 - `||(B_W.x, B_W.y)||_2 >= 15 uT`;
-- `||b_HI_body||_2 <= 10 uT`;
-- `||n_mag_body||_2 <= 3 uT` for every accepted theorem sample.
+- `||b_HI_body||_2 <= 5 uT`;
+- `||n_mag_body||_2 <= 2 uT` for every accepted theorem sample.
 
 The total-field range encloses ordinary terrestrial geomagnetic magnitudes with
 margin while remaining far inside the BMM150 electrical range. The horizontal
 lower bound is separate and essential: without a nonzero horizontal field no
-uniform deterministic north/yaw capture theorem is possible. Hard-iron and
-residual limits are commissioned-installation/source requirements; a history
-that violates them is outside the theorem rather than silently absorbed into
-`R_mag`.
+uniform deterministic north/yaw capture theorem is possible. The 5 uT hard-iron
+limit is a commissioned-placement requirement. The 2 uT deterministic residual
+limit remains materially wider than the BMM150 RMS output-noise values of the
+normal presets, but unlike RMS noise it is a hard theorem admission limit. A
+history that violates either condition is outside the theorem rather than being
+silently absorbed into `R_mag`.
 
 `finite_mag_source_qualification` checks the named assumption with exact norm
-witnesses, and the theorem-facing startup magnetic edge now refuses an
-unqualified sample before it can mutate the tuner or magnetic wrapper clock.
-This closes the prior missing-magnetic-envelope E blocker, but it does NOT yet
-qualify an entire asynchronous magnetic history: the event/call schedule,
-same-history persistence, startup averaging/capture error bound and binary32
-correspondence still have to be closed.
+witnesses, and the theorem-facing startup magnetic edge refuses an unqualified
+sample before it can mutate the tuner or magnetic wrapper clock. This closes the
+prior missing-magnetic-envelope E blocker, but it does NOT yet qualify the whole
+asynchronous magnetic schedule.
 
-## Current startup blockers after magnetic-envelope closure
+## Deterministic startup north capture now obtained
+
+The canonical operating domain already declares startup world-averaged gravity
+direction error `<= 0.02 rad`. Using `sin(x) <= x`, the tilt-frame chord term is
+therefore bounded without a floating transcendental witness by
+
+`2 * 75 uT * sin(0.02/2) <= 1.5 uT`.
+
+Under MAG-BMM150-DET-v1 the complete deterministic perturbation of the startup
+magnetic mean is consequently
+
+`E <= 5 + 2 + 1.5 = 8.5 uT`.
+
+No `1/sqrt(N)` factor is used: deterministic hard iron/residual may remain
+coherent across all tuner samples. Since the true horizontal field is at least
+15 uT, the learned horizontal mean cannot vanish and the exact source-uniform
+direction relation gives
+
+`|sin(delta_yaw)| <= 8.5/15 = 17/30`.
+
+This is now a proved finite capture supply relation. It is not yet the complete
+startup theorem: the corresponding `atan2`/binary32 angle enclosure and its
+composition with the 0.02 rad tilt error must still be certified against the
+declared 45-degree full-SO(3) fresh-entry radius.
+
+## Current startup blockers
 
 The immediate startup blockers are now:
 
@@ -137,8 +162,8 @@ The immediate startup blockers are now:
   quaternion normalization, norm gates and the handoff reset;
 - source-qualify the asynchronous magnetometer call schedule through tuner ready
   and the subsequent refinement/Live path;
-- prove a finite startup north/yaw capture bound from the accepted same-history
-  magnetic average under MAG-BMM150-DET-v1 plus the Mahony tilt-error bound;
+- turn `|sin(delta_yaw)| <= 17/30` plus the 0.02 rad tilt bound into a rigorous
+  binary32/full-SO(3) `<45 deg` handoff-entry certificate;
 - compose `goLive`/`enterLive_`, fresh H18 entry and the existing Live word on the
   same physical/source history.
 
