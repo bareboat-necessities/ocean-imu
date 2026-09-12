@@ -12,7 +12,9 @@ actual shipping transcendental topology:
   exp(-x) and expm1(-x) results are separately constrained by rigorous real
   enclosures at that SAME h/tau argument;
 * Qaxis Sigma_aw comes from TuneState and regularization epsilon is fixed by
-  the shipping ``Kalman3D_Wave_OU_III<float>`` instantiation to 2^-23;
+  the shipping ``Kalman3D_Wave_OU_III<float>`` instantiation to 2^-23. Its
+  polynomial/general formula decision is derived from exact binary32 rounding
+  of those same source-owned h/tau operands, rather than from exact-real h/tau;
 * residual BA tau/Q are the current shipping core defaults. H18 consumes no BA
   transcendental; A21 retains distinct exp and expm1 results and constrains each
   to its literal h/tau_b or 2h/tau_b source argument;
@@ -20,9 +22,9 @@ actual shipping transcendental topology:
   k_a=(0.002,0.002,0.002) at tempC_ref=35 C. The caller supplies only the
   actual temperature input; it cannot replace k_a or lever-arm conditioning.
 
-Binary32/libm correspondence, temperature-history admissibility, PSD solver
-outcomes and quantitative deployment roundoff remain open. This is not storage
-or a stability certificate.
+Binary32/libm coefficient correspondence, tuner-commit storage correspondence,
+temperature-history admissibility, PSD solver outcomes and quantitative
+roundoff remain open. This is not storage or a stability certificate.
 """
 from __future__ import annotations
 from dataclasses import dataclass
@@ -36,6 +38,7 @@ from tools.stability.ou3_alt_contraction import finite_source_bound_attitude_tri
 from tools.stability.ou3_alt_contraction import finite_source_bound_exp_enclosure as EXP
 from tools.stability.ou3_alt_contraction import finite_ou_runtime_primitives as OU
 from tools.stability.ou3_alt_contraction import finite_prediction_runtime as PRED
+from tools.stability.ou3_alt_contraction import finite_qaxis_binary32_branch as QB
 
 SHIPPING_BA_TAU = F(5000)
 SHIPPING_BA_Q = tuple(tuple(F(1,4_000_000) if i == j else F(0)
@@ -55,7 +58,6 @@ class Roots:
 
 
 def _bias_root(core, *, h=None, bias_phi=None, bias_em1_2=None):
-    """Literal shipping BA prediction topology with no fake exp identity."""
     active = core.mode == 'A'
     if active:
         if bias_phi is None or bias_em1_2 is None or h is None:
@@ -73,7 +75,6 @@ def _bias_root(core, *, h=None, bias_phi=None, bias_em1_2=None):
 
 
 def _accel_conditioning(temperature_c):
-    """Current zero-lever shipping accelerometer model at one actual tempC."""
     temp=SENSOR.R(temperature_c)
     return SENSOR.AccelConditioning(temp-SHIPPING_TEMP_REF_C, SHIPPING_KA, ZERO3)
 
@@ -107,9 +108,10 @@ def build(state: WORD.State, physical: SOURCE.QualifiedPhysicalSegment,
     active = state.live.live.live.active
     ou = OU.OUDecay(segment.h, active.tau, ou_alpha, em1=ou_em1)
     EXP.validate_ou(ou)
+    coefficient_branch=QB.branch(active.tau,segment.h)
     qaxis = PRED.QAxisBranch(False, active.Sigma_aw,
                              tuple(qaxis_marginal_psd), tuple(qaxis_final_psd),
-                             SHIPPING_FLOAT_EPSILON)
+                             SHIPPING_FLOAT_EPSILON, coefficient_branch)
     active.require_prediction(ou=ou, qaxis=qaxis)
     bias = _bias_root(core,h=segment.h,bias_phi=bias_phi,bias_em1_2=bias_em1_2)
     return Roots(angular, ou, qaxis, bias)
@@ -146,7 +148,7 @@ def imu_step(state: WORD.State, *, witness: SOURCE.StepWitness,
 
 
 def readiness():
-    lower = WORD.readiness(); trig=TRIG.readiness(); exp=EXP.readiness()
+    lower = WORD.readiness(); trig=TRIG.readiness(); exp=EXP.readiness(); qb=QB.readiness()
     return {
       'source_owned_next_transition_required': True,
       'attitude_omega_reconstructed_from_same_raw_packet_and_current_bias_error': True,
@@ -160,6 +162,10 @@ def readiness():
       'Qaxis_Sigma_aw_from_same_carried_active_TuneState': True,
       'shipping_independent_Qaxis_branch_fixed_by_active_parameter_contract': True,
       'Qaxis_machine_epsilon_bound_to_shipping_binary32': True,
+      'Qaxis_formula_branch_derived_from_binary32_rounding_of_same_source_tau_h': bool(
+          qb['shipping_nested_and_final_Qaxis_share_literal_tau_h_branch_shape'] and
+          qb['small_general_comparison_binary32_attached']),
+      'Qaxis_source_tau_commit_binary32_correspondence_closed':False,
       'prediction_angular_OU_Qaxis_roots_bound_to_same_source_continuation': True,
       'shipping_BA_tau_Q_defaults_bound_at_prediction_entry': True,
       'shipping_BA_hold_active_branch_derived_from_current_MEKF_mode': True,
