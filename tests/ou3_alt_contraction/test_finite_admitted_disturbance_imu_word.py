@@ -35,11 +35,13 @@ class Tests(unittest.TestCase):
 
     def test_small_symbolic_bound_rejects_actual_executed_supply(self):
         s=root(0); witness,segment,raw,r,b,dynamic=BASE.operands(s.live)
-        # Change one same-packet gyro residual and raw gyro consistently.  This
-        # is an arbitrary bounded ISS input, not a covariance-derived sigma cap.
+        # Perturb the same-packet accelerometer residual, not gyro.  This keeps
+        # the attitude prediction on the original branch while still making the
+        # executed ISS forcing nonzero, so this regression isolates the carried
+        # disturbance-bound guard rather than requiring unrelated trig witnesses.
         residual=(F(1),0,0)
-        raw2=replace(raw,gyro_residual_internal=residual,
-                     raw_gyro_body=(raw.raw_gyro_body[0]+1,raw.raw_gyro_body[1],raw.raw_gyro_body[2]))
+        raw2=replace(raw,accel_residual_internal=residual,
+                     raw_accel_body=(raw.raw_accel_body[0]+1,raw.raw_accel_body[1],raw.raw_accel_body[2]))
         with self.assertRaisesRegex(ValueError,'exceeds carried theorem bound'):
             X.imu_step(s,restricted=r,bias_restricted=b,witness=witness,raw=raw2,
                        packet_id='imu-1',**PBASE.root_args(),**dynamic)
