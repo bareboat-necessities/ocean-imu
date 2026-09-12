@@ -1,43 +1,51 @@
 # OU-III ALT continuation entry point
 
-## Start here after merged PR #523
+Read `AGENTS.md`, the normative [`ou3-alt-proof-plan.md`](ou3-alt-proof-plan.md),
+[`ou3-alt-contraction-handover.md`](ou3-alt-contraction-handover.md), the ALT
+section of `ou3-proof-research-state.md`, and
+[`ou3-alt-live-magnetic-word.md`](ou3-alt-live-magnetic-word.md).
+Continue an explicitly named active PR; after merge, start a new PR from latest
+`main`. The original P2/P3/P4/P5 route remains independently continuable through
+`ou3-brmm-main-handover.md`; `P3=1e-18` is frozen.
 
-The canonical continuation state is [`ou3-alt-contraction-handover.md`](ou3-alt-contraction-handover.md). A new conversation should sync latest `main` and open a **new PR** from it.
+## Current checkpoint
 
-Read this file with `AGENTS.md`, the normative [`ou3-alt-proof-plan.md`](ou3-alt-proof-plan.md), the ALT section of `ou3-proof-research-state.md`, the finite identities in [`ou3-alt-finite-measurement-proof.md`](ou3-alt-finite-measurement-proof.md), [`ou3-alt-finite-core-composition.md`](ou3-alt-finite-core-composition.md), [`ou3-alt-runtime-primitives.md`](ou3-alt-runtime-primitives.md), and [`ou3-alt-mahony-binary32.md`](ou3-alt-mahony-binary32.md).
+ALT excludes wind heel: `wind_heel_rad_==0` from construction onward and no
+`update_wind_heel()` events. Shipping is unchanged. The product composer also
+rejects nonidentity IMU de-heel maps at every represented boundary.
 
-The original P2/P3/P4/P5 proof route remains separate through [`ou3-brmm-main-handover.md`](ou3-brmm-main-handover.md). Do not weaken it or make it depend on ALT. `P3=1e-18` remains frozen.
+The finite graph now joins the exact gauged H18 startup bridge to successive
+IMU, asynchronous magnetic and hold events. The magnetic path includes raw
+physical source qualification, the default continuous hard-iron estimator,
+refinement/reset clocks, same-mean reference and yaw writes, coupled offset /
+reference application, full measurement/covariance successor, and count/hold
+logic. Continuous magnetic memory starts before startup admission and is not
+restarted at Live. All full-21 covariance blocks and joint24 coordinates persist.
 
-## Scope
+The finite-real calibration lemma gives raw norm <=82 uT, accepted/applied
+continuous offset <=28.7 uT and active reference/corrected observation <=110.7
+uT. These are boundedness results, not contraction or calibration accuracy.
+The exact same-history magnetic discrepancy is retained for storage work.
 
-ALT excludes wind heel. Certified histories require `wind_heel_rad_==0` from construction onward and no `update_wind_heel()` events. Shipping is unchanged. Under this scope B'=B and no wind-heel retarget belongs to the hybrid word.
-
-## Current ALT checkpoint
-
-PR #523 advanced ALT from disconnected finite primitives to an explicit startup-rooted runtime graph:
-
-- physical prediction, full 21-state covariance, runtime attitude F/Q, integrated-OU Qaxis, BA decay, pending a_w floor, S scheduler/service, SafeLDLT branches and Joseph/reset are represented;
-- private Mahony, WPE, adaptive band/statistics, stillness, vibration guard/R_acc and staged tuner memory are represented on the same sample ordering;
-- deterministic magnetic startup admission/capture is declared and the real-arithmetic startup attitude bound is `<0.63 rad < pi/4`;
-- the gauged zero-heel `goLive` handoff produces an exact fresh H18 joint24 `finite_core.State` instead of an assumed error box;
-- the TunerReady frontend/tuner/guard memory is preserved through `goLive`, with the same carried `TuneState` supplying active tau/Sigma_aw/pseudo period/Live R_S;
-- the first actual Live prediction/S/accelerometer/tuner-WPE prefix now starts directly from that startup-produced H18 state; the former synthetic Live root is removed;
-- H18/A21 hybrid control is explicit: internal unlock is forced by the qualified mag-call schedule, while arbitrary external hold may keep H18 indefinitely; release gives the literal H18->A21 edge.
-
-The handoff quaternion convention is important: shipping accepts boat-to-world `q_BW`, while the MEKF internal nominal attitude is world-to-body `q_WB=conjugate(q_BW)` under zero heel. Keep the nontrivial regression that enforces this.
+The corrected timing theorem proves internal unlock by ten seconds on the
+existing default call schedule. Call 250 need not satisfy the strict one-second
+guard; a later call can do so. External hold may keep H18 indefinitely.
+Finite-prefix deadline checks never certify infinite coverage.
 
 ## Next work
 
-Do **not** start storage/rho search yet. The complete source-uniform 600-step shipping word is still missing.
+Do not start storage/rho search. Bind the remaining literal IMU/source/BIAS,
+magnetic arithmetic and startup/ungauged paths into the complete source-uniform
+600-step word. The firing tilt-watchdog composer is carried structurally, but
+its actual angle and preserve-yaw quaternion/covariance-axis operands still need
+same-expression qualification. Close libm/casts/Eigen/nonfinite branches and
+lifetime clock/counter arithmetic, including the shipping signed magnetic count.
 
-Next, compose successive Live prefixes with asynchronous magnetometer interleaving, reference refinement/generation changes, accepted/rejected mag updates, and wrapper count/time bookkeeping on the same physical history. Then compose the firing Live tilt-reset branch (`initialize_from_acc_preserve_yaw`), finish remaining magnetic/hard-iron source paths retained in scope, and close deployment finite precision/libm/Eigen solver and hygiene branches.
-
-After every literal prefix is attached to corrected COMPLETE-BRMM, BIAS0/1/2 and declared disturbances, allow `assert_finite_storage_master` to decide whether the representation is complete enough for the first high-precision/common joint24 storage search.
-
-Traces, random seeds, frozen gains, independent coefficient boxes, Jacobian products, covariance-consistency assumptions and convenient fresh-entry sets are not substitutes.
-
-## Gate state
+Only after `assert_finite_storage_master` accepts that complete representation
+may high-precision/common joint24 storage search begin, followed by every-prefix
+retention and the ultimate bound. Traces, random seeds, frozen gains, independent
+boxes, covariance-consistency entry assumptions and convenient error sets do
+not replace these obligations.
 
 `ALT_LIVE_PASS=false`, `ALT_STARTUP_PASS=false`, `ALT_END_TO_END_PASS=false`.
-
-No certified common storage, contraction factor, retained basin, ultimate bound, or end-to-end theorem is available yet.
+No certified rho, storage basin, ultimate bound or end-to-end theorem is claimed.

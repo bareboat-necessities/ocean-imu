@@ -3,7 +3,8 @@
 Shipping increments ``mag_updates_applied_`` on every post-delay updateMag call
 immediately after invoking the MEKF magnetometer update; the count is not gated
 on innovation acceptance.  ALT therefore admits a deployment call schedule,
-separate from magnetic-value/source qualification:
+separate from magnetic-value/source qualification. Calls are locally finite
+and continue over unbounded physical time (not a Zeno list):
 
     after magnetically gauged Live, first updateMag call <= 0.04 s,
     and every subsequent updateMag call gap <= 0.04 s.
@@ -47,11 +48,18 @@ def default_schedule(): return Schedule()
 def release_reachability(schedule:Schedule|None=None,unlock_count=DEFAULT_UNLOCK_COUNT):
     s=default_schedule() if schedule is None else schedule
     if not isinstance(s,Schedule): raise TypeError('qualified magnetometer call schedule required')
-    n=int(unlock_count)
-    if n<1: raise ValueError('positive unlock count required')
-    elapsed=(n-1)*s.gap_max
+    if not isinstance(unlock_count,int) or isinstance(unlock_count,bool) or unlock_count<1:
+        raise ValueError('positive integer unlock count required')
+    n=unlock_count
+    # An upper inter-call bound supplies NO lower bound on t_(n-1)-t_0.
+    # Count n may arrive before the strict guard. In that case the first call
+    # strictly after t_0+1 already has count >= n and occurs within one gap.
+    # Existence uses continued, time-unbounded, locally finite call coverage.
+    count_deadline=(n-1)*s.gap_max
+    guard_deadline=DEFAULT_STRICT_GUARD+s.gap_max
+    elapsed=max(count_deadline,guard_deadline)
     total=s.first_after_live_max+elapsed
-    strict=elapsed>DEFAULT_STRICT_GUARD
+    strict=True
     return Reachability(n,s.first_after_live_max,elapsed,total,strict)
 
 
@@ -59,6 +67,41 @@ def require_release_reachable(r:Reachability):
     if not isinstance(r,Reachability) or not r.strict_one_second_guard_satisfied:
         raise ValueError('call schedule does not force the strict one-second unlock guard')
     return True
+
+
+@dataclass(frozen=True)
+class Clock:
+    live_time:F
+    last_time:F|None=None
+    calls:int=0
+    def __post_init__(self):
+        t=F(self.live_time)
+        if t<0 or not isinstance(self.calls,int) or isinstance(self.calls,bool) or self.calls<0:
+            raise ValueError('valid persistent Live magnetic clock required')
+        object.__setattr__(self,'live_time',t)
+        if self.last_time is not None:
+            last=F(self.last_time)
+            if last<t: raise ValueError('magnetic call cannot precede Live')
+            object.__setattr__(self,'last_time',last)
+        if (self.calls==0)!=(self.last_time is None):
+            raise ValueError('magnetic count and last-call clock must agree')
+
+
+def check_prefix(clock:Clock,schedule:Schedule,*,time):
+    """Validate finite-prefix timing only; never infer infinite coverage."""
+    if not isinstance(clock,Clock) or not isinstance(schedule,Schedule):
+        raise TypeError('persistent magnetic clock and schedule required')
+    t=F(time)
+    start=clock.live_time if clock.last_time is None else clock.last_time
+    gap=schedule.first_after_live_max if clock.last_time is None else schedule.gap_max
+    if t<start: raise ValueError('magnetic physical clock moved backwards')
+    if t>start+gap: raise ValueError('declared magnetic call-schedule deadline missed')
+    return True
+
+
+def record_call(clock:Clock,schedule:Schedule,*,time):
+    check_prefix(clock,schedule,time=time)
+    return Clock(clock.live_time,F(time),clock.calls+1)
 
 
 def readiness():
@@ -70,6 +113,8 @@ def readiness():
       'default_250_count_elapsed_from_first_s':r.elapsed_first_to_unlock_max,
       'default_250_count_reached_within_Live_s':r.live_to_unlock_max,
       'strict_one_second_guard_forced':r.strict_one_second_guard_satisfied,
+      'count_threshold_call_itself_need_not_satisfy_time_guard':True,
+      'locally_finite_time_unbounded_call_coverage_required':True,
       'innovation_acceptance_not_used_for_shipping_counter':True,
       'external_acc_bias_hold_excluded_here':False,
       'H18_A21_complete_word_edge_attached':False,

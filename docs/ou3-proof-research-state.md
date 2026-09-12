@@ -208,90 +208,91 @@ witness is outside corrected COMPLETE-BRMM and may not be recycled as A or B.
 
 ### Current hypothesis
 
-Construct the finite physical joint24 runtime word before searching coercive
-storage with bounded neutral/source supply. Keep the original route above
-independently continuable. `docs/ou3-alt-proof-plan.md` is normative; the ALT
-handover and supplying finite notes specify the current representation boundary.
+Construct the actual finite source/runtime joint24 word before searching
+coercive storage with bounded source supply. Preserve the independent original
+route above. `ou3-alt-proof-plan.md` is normative; the current magnetic
+composition and finite-real bound are in `ou3-alt-live-magnetic-word.md`.
 
-### Retained facts and representation
+### Retained facts
 
-Finite physical prediction retains continuous attitude increments/angular defect,
-correlated q15 translation moments, gyro-bias drift, one shared accelerometer-
-bias driver and one Live S origin. Finite measurement descriptors retain the
-nonhomogeneous physical S residual, full H18/A21 covariance, inverse-free
-innovation relation, masked Joseph identity, finite injection and same-beta
-projection. Prediction covariance/runtime and frontend/tuner temporal composers
-remain conditional where their arithmetic, source or branch inputs are unbound.
-None is the completed source-uniform 600-step master.
+The existing physical predictor, inverse-free measurement/Joseph/reset graph,
+full-21 covariance, same-beta projection, source-rooted fresh H18 bridge,
+frontend/tuner memory and initialized private-Mahony binary32 profile remain.
+No wordwise S origin, gain snapshot or covariance-consistency entry assumption
+is introduced.
 
-The private observer now has an optional **profile-specific initialized
-binary32 graph**, supplied by `finite_binary32_mahony.py` and
-`docs/ou3-alt-mahony-binary32.md`. Exact integer/rational nearest-even rounding,
-an independent midpoint-cell checker, the literal bit seed/Newton normalization,
-and the initialized Mahony/readout program remove free reciprocal choices on
-that path. Every rounding defect belongs to its actual operands. The existing
-vertical-result type feeds the same downstream consumers. This does not qualify
-the actual target compiler, initial seed or nonfinite branches; the default
-conditional real helper is not silently relabeled as a deployed float proof.
+Successive IMU/magnetic/hold prefixes now share one product state. The default
+continuous magnetic estimator accumulates raw packets before startup admission
+and retains its memory across Live. Refinement and continuous reference writes,
+yaw overwrite, hold release, magnetic correction and count/time bookkeeping
+follow the shipping order. Both reference rewrites may occur on one call.
+
+The exact-real normal matrix is a weighted rotation variance, not an independent
+box. Source norms and the shipping bias-fraction/slew/anchored-reference laws
+give accepted/applied calibration <=28.7 uT and active reference / corrected
+measurement <=110.7 uT. The coarse discrepancy <=221.4 uT is boundedness only;
+no useful storage margin or calibration accuracy is claimed. Keep the exact
+same-history vector expression for the eventual storage inequality.
+
+### Failure analysis: timing proof logic
+
+The invalid implication was `(n-1)*gap_max > 1` => "the n-th call is more
+than one second after the first". An upper gap bound supplies no lower bound;
+250 clustered calls falsify it. This is a proof-logic/implementation defect,
+not shipping-filter instability or a failure of the ten-second conclusion.
+The limiter is `count>=250 AND elapsed>1`, not count alone.
+
+The repaired argument uses continued, locally finite, time-unbounded calls:
+`unlock_deadline = first_gap + max((n-1)*gap,1+gap)`. The default result remains
+ten seconds. A regression executes the actual control recurrence with clustered
+calls, a call exactly at the strict boundary and a later call. It does not
+infer infinite coverage from a finite prefix or impose an eventual hold release.
+This correction creates no contraction-tactic strike.
 
 ### Evidence and validation boundary
 
-All 13 new local tests and the existing private-vertical/core/BIAS tests pass
-(39 combined). Native correspondence observes the actual headers from public
-startup/update calls, never installs a synthetic runtime root, and checks 767
-scalar normalization boundary cases and 51 initialized observer steps. These
-are implementation checks, not source admission, state-domain invariance or
-storage evidence. The all-input profile theorem is the operation-by-operation
-identity in the supplying note, not an inference from those cases.
+The focused finite-identity CI selection passes all 470 tests, including the
+new calibration/source/timing/interleave regressions. Native correspondence
+passes with bit-identical observed/plain sample states and unchanged tracked
+shipping headers. These remain implementation/identity checks, separate from
+all-history arithmetic closure and source-uniform stability.
+The full inherited discovery run reached pre-existing shared-source failures;
+the baseline reproduces the exact `continuous Mahony invariant invalid` error
+with `continuous_all_live_PI_invariant_closed is not true` and
+`initial seed angle not closed`. No shared prerequisite was weakened.
 
-The default local `make all` stops while compiling
-`tests/ahrs/ahrs-qmekf-sim.cpp`: `Eigen/Dense: No such file or directory` on the
-configured `/usr/include/eigen3` path. The native binding regression uses an
-available Eigen include directory explicitly and passes. This is an environment
-failure, not a mathematical failure, and no complete local build is claimed.
-The next build check is the unchanged primary build with its proper Eigen/data
-prerequisites. Focused CI and the inherited full suite remain separate; passing
-one does not qualify the other or the theorem.
+Default `make all` stops compiling `tests/ahrs/ahrs-qmekf-sim.cpp` with
+`Eigen/Dense: No such file or directory` on `/usr/include/eigen3`. A separately
+available Eigen include can serve native checks, but is not a full-build PASS.
 
-### Current limiter: C/E, plus unqualified deployment arithmetic
+### Current limiter and independent critic
 
-The actual complete finite source/runtime relation is still missing. Remaining
-work includes all unconditional frontend/tuner/sensor-model bindings, numerical
-factorization and transcendental branches, asynchronous magnetic histories,
-every H18/A21 edge and literal prefix, corrected COMPLETE-BRMM/BIAS admission,
-and a same-history uniform deployment-roundoff enclosure. Initial seeding and
-compiler/FMA/reduction-profile qualification are explicit on the new Mahony path.
-A returned finite map does not establish indefinite retention on its domain.
+The full source-uniform 600-step finite word is still missing: complete startup /
+ungauged paths, literal tilt/reset operands, remaining IMU/BIAS/source bindings,
+magnetic libm/casts/Eigen/nonfinite branches and deployment lifetime arithmetic.
+The shipping signed magnetic counter increments after unlock; Python's unbounded
+integer does not settle its lifetime behavior. No certified rho, basin, ultimate
+bound or end-to-end capture time is available.
 
-There is no certified rho, retained basin, ultimate bound or capture time. No
-storage attempt, common-metric impossibility or new metric-failure strike is
-implied by this representation work.
-
-### Critic and alternatives
-
-The strongest objection is model drift: a Python evaluator plus successful host
-traces could miss a different deployed expression/reduction profile. Keep exact
-rounding-cell checks and source correspondence, but do not promote host equality
-to deployment qualification. Remaining normalization/roundoff alternatives are
-an exact profile-bound program (current choice), the existing outward scalar
-contract on the SAME operand graph, or a verified bit-vector/compiler extraction.
-These are attachment methods, not permission for another frozen observer or a
-new proof track. No route is selected merely because a tighter box looks better.
+The strongest objection remains model drift: even exact local Python equations
+and successful native samples are not a certificate for every deployed branch.
+Three distinct binding routes remain a profile-bound exact program, outward
+same-operand arithmetic relations, or verified compiler/bit-vector extraction.
+The current choice is literal finite composition plus explicit arithmetic holes;
+none is permission for frozen traces or another independent coefficient box.
 
 ### DEAD_ENDS and next falsifiable work
 
-Do not revive derivative cocycles as finite maps, independently boxed operands,
-frozen/replayed words, more-seed source qualification, wordwise S resets, position
-reanchoring, an 18-state A21 marginal, or covariance-consistency entry assumptions.
+Do not revive derivative cocycles as finite maps, replay/frozen gains, independent
+coefficient boxes, more-seed source qualification, wordwise S resets, an 18-state
+A21 marginal, convenient fresh-entry sets or covariance-consistency assumptions.
 The two-strike rule and `assert_finite_storage_master` remain in force.
 
-Complete the remaining same-predecessor runtime bindings and actual target
-arithmetic profile; verify the generated finite event/prefix graph against its
-supplying source without freely chosen numerical outputs. Attach one physical
-and bias history through the complete word. Only after that relation satisfies
-the finite-master guard run the high-precision feasibility diagnostic and common
-joint24 storage search. Then close useful supply, every-prefix retention,
-H18/A21 transport, fresh entry, startup capture and deployment precision.
+Bind the firing Live tilt angle/reset quaternion/down axis to the actual guarded
+packet and predecessor, then finish the remaining complete same-history
+arithmetic/source graph. Test detached operands and every firing/rejection edge.
+Only after the finite-master guard accepts that relation may common joint24
+storage feasibility begin, followed by retention and disturbance bounds.
 
 `ALT_LIVE_PASS=false`, `ALT_STARTUP_PASS=false`, `ALT_END_TO_END_PASS=false`.
-Original P4/P5 are not promoted by ALT.
+Original P4/P5 remain independent and unpromoted.

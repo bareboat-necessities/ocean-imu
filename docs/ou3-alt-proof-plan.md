@@ -51,7 +51,7 @@ deployment arithmetic residuals and explicit zero-heel scope ancestry.
 
 ## Current finite-runtime advancement
 
-PR #523 has finite descriptors for physical prediction, accepted/rejected
+The graph has finite descriptors for physical prediction, accepted/rejected
 measurements, full covariance, runtime OU/BA roots, attitude F/Q, integrated-OU
 Qaxis, pending a_w synchronization, S scheduling/service, SafeLDLT branches,
 accelerometer vibration guard/Racc, held-sample forcing, private Mahony,
@@ -114,12 +114,23 @@ held accelerometer event and tuner/WPE suffix therefore start from startup
 ancestry rather than a synthetic Live root. This is still a conditional
 real-arithmetic prefix, not the complete source-uniform word.
 
+`finite_live_interleave.py` now extends that startup bridge to successive IMU,
+magnetic and external-hold events. The magnetic graph includes the default
+continuous estimator carried from startup, literal refinement/reset clocks,
+reference/yaw writes, coupled hard-iron/reference application and same-packet
+measurement/count logic. `ou3-alt-live-magnetic-word.md` supplies the finite
+composition theorem and uniform finite-real calibration bounds. These remove
+detached calibration/reference operands; they do not qualify the complete word
+or permit a storage search.
+
 ## H18/A21 hybrid language
 
 `MAG-CALL-SCHEDULE-v1` requires first post-Live mag call <=40 ms and later gaps
 <=40 ms. Shipping counts attempted post-delay `updateMag()` calls independent of
-innovation acceptance, so its 250-count internal lock clears within 10 s and
-the strict >1 s guard is automatically met.
+innovation acceptance, so its internal lock clears within 10 s. The 250th call can occur before the
+strict >1 s guard: the corrected proof uses
+`first_gap + max(249*gap, 1+gap)` and continued, locally finite call coverage.
+Finite-prefix checks do not prove the infinite schedule.
 
 Do not assume eventual A21 under arbitrary external hold. The graph retains:
 no hold -> exact H18->A21 floor edge; held -> H18 may persist indefinitely;
@@ -132,13 +143,15 @@ The immediate blockers are now:
 
 - deployment/binary32 correspondence for startup yaw extraction, atan2,
   AngleAxis, quaternion normalization, handoff setters and clocks;
-- compose asynchronous magnetometer events and the firing Live tilt-reset edge
-  into startup-rooted successive Live prefixes, not only as separate local maps;
+- bind the actual tilt angle and preserve-yaw reset operands in the existing
+  startup-rooted IMU/magnetic/hold product composer;
 - source-qualify the complete provisional/refinement/continuous-hard-iron
-  magnetic schedule required by the declared scope;
+  history and its remaining arithmetic/solver branches; bounded finite-real
+  calibration is not proof of calibration accuracy or a useful ISS margin;
 - carry COMPLETE-BRMM/BIAS ancestry and every solver/hygiene/finite-precision
   branch through an arbitrary 600-step word, including both H18 and A21/hold
-  continuations;
+  continuations; signed magnetic counter overflow and floating-clock lifetime
+  behavior must not be replaced by unbounded Python integers/rationals;
 - prove the exact fresh/source-produced states land in a retained storage basin;
   only after the complete finite master passes its guard may common joint24
   storage/rho feasibility be attempted.
