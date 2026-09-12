@@ -69,7 +69,7 @@ jobs:
             test_finite_mag_call_schedule test_finite_h18_a21_reachability \
             test_finite_h18_a21_transition test_finite_live_async_mag \
             test_finite_continuous_mag_runtime test_finite_live_magnetic_word \
-            test_finite_live_interleave \
+            test_finite_live_interleave test_finite_source_origin_interleave \
             test_shipping_finite_identity test_core test_proof_plan test_bias_families -q
           git add docs/ou3-alt-main-handover.md docs/ou3-alt-proof-plan.md \
                   docs/ou3-alt-source-continuation.md docs/ou3-proof-research-state.md \
@@ -81,4 +81,6 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git commit -m 'proof(ou3-alt): restrict primary COMPLETE-BRMM physics to finite word'
+          git fetch origin proof/ou3-alt-live-mag-composition
+          git rebase origin/proof/ou3-alt-live-mag-composition
           git push origin HEAD:refs/heads/proof/ou3-alt-live-mag-composition
