@@ -10,8 +10,8 @@ from tools.stability.ou3_alt_contraction import finite_stillness_runtime as S
 from tools.stability.ou3_alt_contraction.finite_tuner_commit import TuneState
 
 
-def cfg():
-    return C.CandidateConfig(F(1,10),2,1,1,F(1,10),2,2,1,F(1,100),2,F(1,10),2,1,F(1,2),1,1,F(2,5),F(3,2),0,F(1,10),True)
+def cfg(clamp_enabled=True,sigma_coeff=1):
+    return C.CandidateConfig(F(1,10),2,1,sigma_coeff,F(1,10),2,2,1,F(1,100),2,F(1,10),2,1,F(1,2),1,1,F(2,5),F(3,2),0,F(1,10),clamp_enabled)
 
 
 def sample(**kw):
@@ -67,9 +67,18 @@ class Tests(unittest.TestCase):
         with self.assertRaises(ValueError):
             C.step_from_wpe(prev,wpe(F(1,3)),sample(),cfg(),dt=F(1,100),time=0,last_adapt_time=0,spectral=C.SpectralWitness(1,1),ema=C.EmaWitness(1,1))
 
-    def test_not_ready_variance_uses_noise_only_then_wave_floor(self):
+    def test_not_ready_variance_uses_noise_only_wave_floor_then_shipping_sigma_floor(self):
         s=sample(variance_ready=False,accel_variance=100,band_noise_sigma=F(1,5),sigma_wave_sqrt=F(1,1000))
-        out=C.targets(s,cfg()); self.assertEqual(out.variance_wave,F(1,10**6))
+        out=C.targets(s,cfg())
+        self.assertEqual(out.variance_wave,F(1,10**6))
+        self.assertEqual(out.sigma_target,F(1,5))
+        s2=sample(variance_ready=False,accel_variance=100,band_noise_sigma=0,sigma_wave_sqrt=F(1,1000))
+        self.assertEqual(C.targets(s2,cfg()).sigma_target,F(1,20))
+
+    def test_unclamped_shipping_sigma_is_raw_band_rms_not_sigma_coeff_scaled(self):
+        c=cfg(False,sigma_coeff=2)
+        out=C.targets(sample(),c)
+        self.assertEqual(out.sigma_target,1)
 
     def test_frequency_and_target_clamps_are_literal(self):
         s=sample(frequency_hz=F(1,100),accel_variance=4,sigma_wave_sqrt=2)
@@ -90,6 +99,6 @@ class Tests(unittest.TestCase):
         with self.assertRaises(ValueError): C.targets(sample(sigma_wave_sqrt=2),c)
 
     def test_readiness_stays_fail_closed_upstream(self):
-        r=C.readiness(); self.assertTrue(r['frequency_variance_to_tau_sigma_targets']); self.assertTrue(r['default_SpectralMSE_target_same_tau_sigma_cadence']); self.assertTrue(r['band_variance_tuner_frequency_same_history_attached']); self.assertTrue(r['stillness_state_same_history_attached']); self.assertFalse(r['frontend_tracker_and_vertical_measurement_attached']); self.assertFalse(r['exp_sqrt_pow_binary32_enclosed']); self.assertFalse(r['complete_word_finite_identity']); self.assertFalse(r['ALT_LIVE_PASS'])
+        r=C.readiness(); self.assertTrue(r['frequency_variance_to_tau_sigma_targets']); self.assertTrue(r['variance_not_ready_sigma_floor_materialized']); self.assertTrue(r['clamp_disabled_sigma_branch_matches_shipping']); self.assertTrue(r['default_SpectralMSE_target_same_tau_sigma_cadence']); self.assertTrue(r['band_variance_tuner_frequency_same_history_attached']); self.assertTrue(r['stillness_state_same_history_attached']); self.assertFalse(r['frontend_tracker_and_vertical_measurement_attached']); self.assertFalse(r['exp_sqrt_pow_binary32_enclosed']); self.assertFalse(r['complete_word_finite_identity']); self.assertFalse(r['ALT_LIVE_PASS'])
 
 if __name__=='__main__': unittest.main()
