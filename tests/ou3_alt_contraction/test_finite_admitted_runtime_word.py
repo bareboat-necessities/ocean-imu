@@ -99,7 +99,8 @@ class Tests(unittest.TestCase):
                     'prediction_model_roots_cannot_bypass_admitted_history_edge',
                     'same_event_IMU_ISS_supply_attached_to_admitted_step',
                     'same_event_magnetic_ISS_supply_attached_to_admitted_product',
-                    'BIAS_generating_history_attached'):
+                    'BIAS_generating_history_attached',
+                    'canonical_5ms_wrapper_clock_prefix_binary32_closed'):
             self.assertTrue(r[key])
         for key in ('finite_tokens_used_as_source_membership_oracle',
                     'sensor_or_temperature_amplitude_bound_invented',
@@ -107,9 +108,12 @@ class Tests(unittest.TestCase):
                     'bounded_input_history_qualified',
                     'one_radian_attitude_guard_closed_for_every_admitted_prefix',
                     'deployment_exp_expm1_trig_Eigen_LDLT_closed',
+                    'wrapper_clock_arbitrary_dt_closed',
+                    'wrapper_clock_indefinite_lifetime_closed',
                     'mag_schedule_supplies_uniform_call_count_upper',
                     'shipping_signed_mag_counter_lifetime_closed',
                     'complete_600_step_shipping_word_composed_from_restrictions',
+                    'successive_600_step_words_tiled_without_restarting_Live_origin',
                     'storage_search_allowed','ALT_LIVE_PASS','ALT_STARTUP_PASS','ALT_END_TO_END_PASS'):
             self.assertFalse(r[key])
 
