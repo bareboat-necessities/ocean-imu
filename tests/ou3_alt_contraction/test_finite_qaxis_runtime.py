@@ -32,6 +32,11 @@ class Tests(unittest.TestCase):
             for j in range(3): self.assertEqual(out[idx[i]][idx[j]],marg[i][j])
         self.assertEqual(out,M.transpose(out))
 
+    def test_ldlt_accept_cannot_bypass_same_matrix_inertia(self):
+        S=[[1,0,0],[0,-2,0],[0,0,3]]
+        with self.assertRaisesRegex(ValueError,'LDLT-accept witness detached'):
+            Q.regularize_psd(S,Q.PSDWitness(True),machine_epsilon=F(1,10**7))
+
     def test_psd_eigen_branch_clips_negative_eigenvalues(self):
         S=[[1,0,0],[0,-2,0],[0,0,3]]; w=Q.PSDWitness(False,True,tuple(map(tuple,M.eye(3))),(1,-2,3))
         out=Q.regularize_psd(S,w,machine_epsilon=F(1,10**7)); self.assertEqual(out,[[1,0,0],[0,0,0],[0,0,3]])
@@ -46,6 +51,13 @@ class Tests(unittest.TestCase):
         with self.assertRaises(ValueError): Q.regularize_psd(S,w,machine_epsilon=F(1,10**7))
 
     def test_readiness_stays_fail_closed(self):
-        r=Q.readiness(); self.assertTrue(r['free_Qaxis_matrix_removed_by_this_lemma']); self.assertFalse(r['alpha_exp_runtime_source_attached']); self.assertFalse(r['Eigen_LDLT_eigensolver_outcomes_attached']); self.assertFalse(r['complete_word_finite_identity']); self.assertFalse(r['ALT_LIVE_PASS'])
+        r=Q.readiness()
+        self.assertTrue(r['free_Qaxis_matrix_removed_by_this_lemma'])
+        self.assertTrue(r['LDLT_accept_branch_has_same_matrix_exact_inertia_guard'])
+        self.assertFalse(r['arbitrary_LDLT_accept_boolean_can_bypass_matrix_relation'])
+        self.assertFalse(r['alpha_exp_runtime_source_attached'])
+        self.assertFalse(r['Eigen_LDLT_eigensolver_outcomes_attached'])
+        self.assertFalse(r['complete_word_finite_identity'])
+        self.assertFalse(r['ALT_LIVE_PASS'])
 
 if __name__=='__main__': unittest.main()
