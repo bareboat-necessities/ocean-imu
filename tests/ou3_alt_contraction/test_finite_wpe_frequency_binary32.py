@@ -9,9 +9,8 @@ from tools.stability.ou3_alt_contraction import finite_wpe_runtime as WPE
 
 
 class Tests(unittest.TestCase):
-    def shadow(self):
-        return WPE.WPEState(log_period=F(7,10),usable_period=True)
-
+    def shadow(self): return WPE.WPEState(log_period=F(7,10),usable_period=True)
+    def exact_frequency(self): return F(1,2)
     def getter(self):
         log=X.bind_log_state(self.shadow(),B.rn32(F(7,10)))
         return X.getters(log,period_exp=B.rn32(F(201,100)),frequency_exp=B.rn32(F(497,1000)))
@@ -22,23 +21,26 @@ class Tests(unittest.TestCase):
         self.assertEqual(out.frequency_argument,-out.log.stored_log_period)
         self.assertNotEqual(out.period_result*out.frequency_result,1)
 
-    def test_usable_preupdate_WPE_getter_is_exact_input_to_tuner_store(self):
+    def test_usable_preupdate_WPE_retains_machine_minus_exact_frequency_supply(self):
         shadow=self.shadow(); out=self.getter()
-        q=X.tuner_frequency(shadow,min_hz=B.rn32(F(3,100)),max_hz=B.rn32(F(6,5)),getter=out)
-        self.assertEqual(q.branch,'wpe')
-        self.assertIsInstance(q.stored,STORE.StoredFrequency)
+        q=X.tuner_frequency(shadow,min_hz=B.rn32(F(3,100)),max_hz=B.rn32(F(6,5)),
+                            getter=out,shadow_frequency=self.exact_frequency())
+        self.assertEqual(q.branch,'wpe'); self.assertIsInstance(q.stored,STORE.StoredFrequency)
         self.assertEqual(q.stored.input_hz,out.frequency_result)
-        self.assertEqual(q.stored.stored_hz,out.frequency_result)
+        self.assertEqual(q.exact_clamped_frequency,self.exact_frequency())
+        self.assertEqual(q.machine_minus_shadow,q.stored.stored_hz-q.exact_clamped_frequency)
+        self.assertNotEqual(q.machine_minus_shadow,0)
 
-    def test_preusable_WPE_uses_literal_prior_and_consumes_no_getter(self):
+    def test_preusable_WPE_uses_literal_prior_and_retains_constant_rounding_supply(self):
         shadow=WPE.WPEState()
         q=X.tuner_frequency(shadow,min_hz=B.rn32(F(3,100)),max_hz=B.rn32(F(6,5)))
-        self.assertEqual(q.branch,'prior')
-        self.assertIsNone(q.getter)
+        self.assertEqual(q.branch,'prior'); self.assertIsNone(q.getter)
+        self.assertEqual(q.exact_shadow_frequency,X.PRIOR_EXACT)
         self.assertEqual(q.stored.input_hz,X.PRIOR)
-        self.assertEqual(q.stored.stored_hz,X.PRIOR)
+        self.assertEqual(q.machine_minus_shadow,q.stored.stored_hz-X.PRIOR_EXACT)
         with self.assertRaisesRegex(ValueError,'consumes no getter'):
-            X.tuner_frequency(shadow,min_hz=B.rn32(F(3,100)),max_hz=B.rn32(F(6,5)),getter=self.getter())
+            X.tuner_frequency(shadow,min_hz=B.rn32(F(3,100)),max_hz=B.rn32(F(6,5)),
+                              getter=self.getter(),shadow_frequency=self.exact_frequency())
 
     def test_log_state_and_getter_arguments_cannot_be_spliced(self):
         shadow=self.shadow()
@@ -46,11 +48,11 @@ class Tests(unittest.TestCase):
             X.StoredLogPeriod(shadow.log_period,B.rn32(F(7,10)),0)
         log=X.bind_log_state(shadow,B.rn32(F(7,10)))
         with self.assertRaisesRegex(ValueError,'arguments detached'):
-            X.GetterResult(log,log.stored_log_period,log.stored_log_period,
-                           B.rn32(2),B.rn32(F(1,2)))
+            X.GetterResult(log,log.stored_log_period,log.stored_log_period,B.rn32(2),B.rn32(F(1,2)))
         other=WPE.WPEState(log_period=F(4,5),usable_period=True)
         with self.assertRaisesRegex(ValueError,'preupdate canonical'):
-            X.tuner_frequency(other,min_hz=B.rn32(F(3,100)),max_hz=B.rn32(F(6,5)),getter=self.getter())
+            X.tuner_frequency(other,min_hz=B.rn32(F(3,100)),max_hz=B.rn32(F(6,5)),
+                              getter=self.getter(),shadow_frequency=self.exact_frequency())
 
     def test_getter_requires_binary32_results_without_claiming_libm_correctness(self):
         log=X.bind_log_state(self.shadow(),B.rn32(F(7,10)))
@@ -58,15 +60,13 @@ class Tests(unittest.TestCase):
             X.getters(log,period_exp=F(2),frequency_exp=F(1,3))
         r=X.readiness()
         self.assertTrue(r['shipping_WPE_dual_exp_and_tuner_source_shape_matches'])
-        self.assertTrue(r['period_and_frequency_getters_share_same_stored_binary32_log_state'])
-        self.assertTrue(r['preusable_WPE_uses_literal_binary32_0p2_prior_without_exp'])
-        self.assertTrue(r['usable_WPE_frequency_getter_bound_to_sample_entry_log_state'])
+        self.assertTrue(r['machine_minus_exact_tuner_frequency_supply_exposed'])
         self.assertTrue(r['WPE_frequency_getter_to_tuner_binary32_store_topology_closed'])
         self.assertFalse(r['binary32_period_frequency_bit_reciprocity_assumed'])
         self.assertFalse(r['WPE_binary32_log_period_production_closed'])
         self.assertFalse(r['WPE_frequency_exp_target_libm_correspondence_closed'])
-        self.assertFalse(r['storage_search_allowed'])
-        self.assertFalse(r['ALT_LIVE_PASS'])
+        self.assertFalse(r['source_uniform_WPE_frequency_supply_bound_closed'])
+        self.assertFalse(r['storage_search_allowed']); self.assertFalse(r['ALT_LIVE_PASS'])
 
 
 if __name__=='__main__': unittest.main()
