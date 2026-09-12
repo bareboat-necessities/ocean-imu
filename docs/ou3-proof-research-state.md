@@ -225,6 +225,12 @@ rotation chord/rate bound, exact BIAS envelope endpoints and one actual selected
 bias factor are checked before an IMU event. These are necessary outer
 constraints, not complete BRMM/BIAS generating-history membership.
 
+The fresh Live origin now has a separate checked outer endpoint: sample-zero
+magnetic calls consume the actual fresh `Reference` without manufacturing a
+predecessor transition, and leave source ordinal 1 available to the first IMU.
+This removes the sample-zero topology gap but does not establish generator/QO or
+full BIAS-history membership.
+
 The magnetic graph retains default continuous calibration, refinement and
 coupled offset/reference writes, including rejected-branch bookkeeping.
 Real-arithmetic calibration <=28.7 uT and active reference/corrected observation
@@ -282,8 +288,9 @@ use an existing separate Eigen include. No full-build PASS is claimed.
 
 The complete finite source-uniform word remains open: bounded generator/
 potential and Q/O continuation, full BIAS driver/parameter histories, remaining
-same-source exp/trig/Eigen/roundoff branches, sample-zero magnetic binding,
-startup/ungauged capture and continuation beyond the current 600-step container.
+same-source exp/trig/Eigen/roundoff branches, full sample-zero generator membership (the checked outer endpoint topology is
+closed), startup/ungauged capture and continuation beyond the current
+600-step container.
 The firing tilt/reset operands are no longer free; their deployment boundary
 and nonfinite behavior still need proof. Floating clocks and the signed magnetic
 counter cannot be replaced indefinitely by Python rationals/integers.

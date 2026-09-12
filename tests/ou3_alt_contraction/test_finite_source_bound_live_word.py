@@ -77,10 +77,27 @@ class Tests(unittest.TestCase):
         self.assertEqual(event.state.source.root,before.root)
         self.assertEqual(event.state.bias_history_id,s.bias_history_id)
 
-    def test_sample_zero_mag_bridge_stays_explicitly_open(self):
-        s=root_state()
-        with self.assertRaisesRegex(NotImplementedError,'sample-zero'):
-            X.mag_step(s,**mag_kwargs(s))
+    def test_sample_zero_mag_uses_actual_fresh_origin_without_advancing_source(self):
+        s=root_state(); before=s.source
+        event=X.mag_step(s,**mag_kwargs(s))
+        self.assertIs(event.state.source,before)
+        self.assertEqual(len(event.state.source.steps),0)
+        self.assertEqual(event.state.source.next_ordinal,1)
+        self.assertEqual(event.state.live.live.live.mekf.reference.time,s.source.root.live_origin)
+        first=imu(event.state)
+        self.assertEqual(first.state.source.steps[0].witness.ordinal,1)
+
+    def test_sample_zero_mag_rejects_fresh_reference_outside_physical_outer_cap(self):
+        s=root_state(); core=s.live.live.live.mekf
+        bad=replace(core,reference=replace(core.reference,acceleration=(100,0,0)))
+        live=replace(s.live,live=replace(s.live.live,live=replace(s.live.live.live,mekf=bad)))
+        # Constructing the source-owning product is intentionally allowed to
+        # keep checks at literal source-consuming edges; the mag edge must fail
+        # before any magnetic state mutation.
+        q=replace(s,live=live)
+        with self.assertRaisesRegex(ValueError,'acceleration vector cap'):
+            X.mag_step(q,**mag_kwargs(q))
+        self.assertEqual(q.live.magnetic.control.updates,0)
 
     def test_physical_source_constraint_runs_before_shipping_event(self):
         s=root_state(); witness,q,raw,kw=next_imu_operands(s)
@@ -151,6 +168,10 @@ class Tests(unittest.TestCase):
         self.assertTrue(r['theorem_IMU_dt_owned_by_qualified_physical_segment'])
         self.assertTrue(r['magnetic_and_hold_events_preserve_current_source_endpoint'])
         self.assertTrue(r['physical_reference_forcing_retained_in_finite_master_status'])
+        self.assertTrue(r['sample_zero_startup_to_checked_outer_endpoint_bridge_closed'])
+        self.assertTrue(r['sample_zero_magnetic_entry_uses_checked_fresh_physical_origin'])
+        self.assertTrue(r['sample_zero_magnetic_entry_advances_no_source_ordinal'])
+        self.assertFalse(r['sample_zero_full_source_membership_proved'])
         self.assertFalse(r['sample_zero_startup_to_COMPLETE_BRMM_endpoint_bridge_closed'])
         self.assertFalse(r['finite_estimator_coefficients_bound_to_same_source_continuation'])
         self.assertFalse(r['source_uniform_complete_600_step_word_qualified'])

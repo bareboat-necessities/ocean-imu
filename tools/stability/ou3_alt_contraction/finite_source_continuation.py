@@ -146,6 +146,37 @@ class QualifiedPhysicalEndpoint:
 
 
 @dataclass(frozen=True)
+class QualifiedPhysicalOrigin:
+    """Checked fresh-Live endpoint without fabricating a predecessor transition.
+
+    This is only a necessary outer-source endpoint.  The object proves neither
+    generator/QO membership nor that every checked endpoint extends to an
+    admitted COMPLETE-BRMM history.
+    """
+    root: SourceRoot
+    endpoint: PHYS.PhysicalKinematics
+    def __post_init__(self):
+        if not isinstance(self.root,SourceRoot) or not isinstance(self.endpoint,PHYS.PhysicalKinematics):
+            raise TypeError('source root and fresh finite physical endpoint required')
+        p=self.endpoint
+        if p.time != self.root.live_origin or p.live_origin != self.root.live_origin:
+            raise ValueError('fresh physical endpoint must be the one-time Live origin')
+        if any(p.centered_S):
+            raise ValueError('fresh physical endpoint must have zero centered S')
+        if getattr(p,'history_id',self.root.history_id) != self.root.history_id:
+            raise ValueError('fresh physical endpoint detached from carried history root')
+        if getattr(p,'bias_family',self.root.bias_family) != self.root.bias_family:
+            raise ValueError('fresh physical endpoint detached from selected BIAS family')
+        c=_contract(self.root.bias_family)
+        for beta in (p.beta,):
+            if any(abs(x) > F.from_float(c.true_bias_component_bound) for x in beta):
+                raise ValueError('fresh true accelerometer bias exceeds family component contract')
+            if not _le_float_bound_square(beta,c.true_bias_norm_bound):
+                raise ValueError('fresh true accelerometer bias exceeds family hard norm contract')
+        MOMENTS.check_endpoint(p)
+
+
+@dataclass(frozen=True)
 class QualifiedRawImuSample:
     physical: QualifiedPhysicalSegment
     sensor_root: SensorDisturbanceRoot
@@ -228,6 +259,11 @@ def endpoint(physical:QualifiedPhysicalSegment,side:str):
     return QualifiedPhysicalEndpoint(physical,side)
 
 
+def origin_endpoint(root:SourceRoot,physical:PHYS.PhysicalKinematics):
+    """Check sample-zero physical ancestry without inventing a 5 ms segment."""
+    return QualifiedPhysicalOrigin(root,physical)
+
+
 def begin(root: SourceRoot):
     return Continuation(root,())
 
@@ -248,6 +284,8 @@ def readiness():
       'complete_600_transition_continuation_shape_materialized':True,
       'qualified_async_endpoint_comes_from_admitted_transition':False,
       'qualified_async_endpoint_comes_from_checked_outer_transition':True,
+      'sample_zero_checked_outer_endpoint_available_without_fake_transition':True,
+      'sample_zero_full_source_membership_proved':False,
       'physical_vector_caps_and_joint_moment_IQC_checked':True,
       'prefix_moments_and_derived_energy_not_independent_supply':True,
       'actual_bias_factor_persistent_at_fixed_sample_period':True,

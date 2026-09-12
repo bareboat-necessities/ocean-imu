@@ -59,9 +59,12 @@ restarts. See [`ou3-alt-source-continuation.md`](ou3-alt-source-continuation.md)
 for the real-arithmetic projection/induction proof and its limits.
 
 The legacy `Qualified*` names do NOT establish COMPLETE-BRMM/O^601_BRMM or full
-BIAS generating-history membership. Source labels are ancestry, not admission;
-the generator/potential/QO graph, source-to-runtime arithmetic and sample-zero
-magnetic endpoint remain open. Do not promote their former admission label.
+BIAS generating-history membership. Source labels are ancestry, not admission.
+The fresh Live origin itself is now checked directly against the carried root,
+physical vector caps and BIAS envelope, so an asynchronous magnetic call may occur
+before IMU transition 1 without fabricating a predecessor segment or advancing
+source time/ordinal. Full generator/potential/QO membership of that origin and
+the later continuation remains open. Do not promote the outer check to admission.
 
 The older `phase1_closure.py` is now explicitly a source/Jacobian ledger, not a
 finite-storage gate. Its old pointwise Jacobian cocycle is useful ancestry but
@@ -74,10 +77,11 @@ search.
 Do not start storage/rho search. The immediate blocker is narrower now: bind all
 finite estimator-owned coefficient/product graphs (frontend/tuner/guard/Racc,
 prediction Q/F, S service, accel/mag innovation/K/Joseph/reset decisions) to the
-same checked physical continuation plus its still-required full source membership at every literal branch. Bind the
-magnetic physical-history root to that same continuation rather than only an
-independent matching history string. Then close the remaining startup/ungauged
-and deployment-arithmetic paths.
+same checked physical continuation plus its still-required full source membership at every literal branch. The magnetic sample-zero endpoint and all later represented magnetic endpoints
+now consume the same carried root/reference object; the remaining source task is
+full generator/potential/QO and BIAS-history membership plus the estimator-owned
+coefficient/product graph at every branch. Then close startup/ungauged and
+deployment-arithmetic paths.
 
 For deployment correspondence, finish sqrt/acos/asin/atan2/AngleAxis and
 normalization/cutoff/nonfinite branches, floating clocks, Eigen decisions, and

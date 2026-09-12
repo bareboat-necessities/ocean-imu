@@ -132,10 +132,16 @@ def mag_step(state: State, **kwargs):
     return Result(State(live, out.state, clock, state.schedule), out)
 
 
-def mag_step_source_qualified(state: State, endpoint: SOURCE.QualifiedPhysicalEndpoint, **kwargs):
-    """Theorem-facing async magnetic edge at an admitted physical endpoint."""
-    if not isinstance(state,State) or not isinstance(endpoint,SOURCE.QualifiedPhysicalEndpoint):
-        raise TypeError('interleaved state and source-qualified physical endpoint required')
+def mag_step_source_qualified(state: State, endpoint, **kwargs):
+    """Theorem-facing async magnetic edge at a checked outer physical endpoint.
+
+    The endpoint may be a represented transition endpoint or the fresh Live
+    origin.  Neither form upgrades necessary outer checks to full source
+    admission.
+    """
+    endpoint_types=(SOURCE.QualifiedPhysicalEndpoint,SOURCE.QualifiedPhysicalOrigin)
+    if not isinstance(state,State) or not isinstance(endpoint,endpoint_types):
+        raise TypeError('interleaved state and source-checked physical endpoint required')
     core=state.live.live.mekf; root=endpoint.root
     if root.history_id != core.reference.history_id or root.history_id != state.magnetic.memory.history_id:
         raise ValueError('qualified magnetic endpoint detached from persistent physical history')
@@ -169,6 +175,10 @@ def readiness():
         'source_qualified_raw_IMU_packet_owned_by_same_physical_step': src['raw_IMU_packet_bound_to_same_qualified_physical_predecessor'],
         'persistent_sensor_residual_histories_required': src['persistent_gyro_and_accel_residual_history_tokens_required'],
         'source_qualified_async_magnetic_endpoint_entry_available': src['qualified_async_endpoint_comes_from_admitted_transition'],
+        'source_checked_async_magnetic_endpoint_entry_available': bool(
+            src['qualified_async_endpoint_comes_from_checked_outer_transition']
+            and src['sample_zero_checked_outer_endpoint_available_without_fake_transition']),
+        'sample_zero_full_source_membership_proved': src['sample_zero_full_source_membership_proved'],
         'correlated_COMPLETE_BRMM_left_inclusion_consumed': src['correlated_COMPLETE_BRMM_left_inclusion_consumed'],
         'persistent_BIAS_parameter_token_available': src['one_bias_family_parameter_token_over_word_required'],
         'external_hold_and_count_release_feed_next_IMU_mode': True,

@@ -170,9 +170,13 @@ def imu_step(state:State, *, witness:SOURCE.StepWitness,
 
 def mag_step(state:State, **kwargs):
     if not isinstance(state,State): raise TypeError('source-owning Live state required')
-    if not state.source.steps:
-        raise NotImplementedError('sample-zero startup-to-COMPLETE-BRMM magnetic endpoint bridge remains open')
-    endpoint=SOURCE.endpoint(state.source.steps[-1],'after')
+    if state.source.steps:
+        endpoint=SOURCE.endpoint(state.source.steps[-1],'after')
+    else:
+        # A magnetic call may occur at the fresh Live origin before the first
+        # IMU transition.  Check the ACTUAL fresh Reference directly; do not
+        # manufacture a predecessor segment or advance source ordinal/time.
+        endpoint=SOURCE.origin_endpoint(state.source.root,state.live.live.live.mekf.reference)
     event=LIVE.mag_step_source_qualified(state.live,endpoint,**kwargs)
     return Result(State(event.state,state.source,state.sensor_root,state.bias_history_id,state.runtime),event)
 
@@ -212,9 +216,13 @@ def readiness():
       'theorem_IMU_event_cannot_override_static_runtime_configuration':True,
       'theorem_IMU_dt_owned_by_qualified_physical_segment':True,
       'magnetic_and_hold_events_preserve_current_source_endpoint':True,
-      'qualified_post_first_IMU_magnetic_entry_available':lower['source_qualified_async_magnetic_endpoint_entry_available'],
+      'qualified_post_first_IMU_magnetic_entry_available':lower['source_checked_async_magnetic_endpoint_entry_available'],
+      'sample_zero_magnetic_entry_uses_checked_fresh_physical_origin':src['sample_zero_checked_outer_endpoint_available_without_fake_transition'],
+      'sample_zero_magnetic_entry_advances_no_source_ordinal':True,
+      'sample_zero_full_source_membership_proved':False,
       'one_bias_parameter_token_carried_over_word':src['one_bias_family_parameter_token_over_word_required'],
       'physical_reference_forcing_retained_in_finite_master_status':master['physical_reference_forcing_retained'],
+      'sample_zero_startup_to_checked_outer_endpoint_bridge_closed':True,
       'sample_zero_startup_to_COMPLETE_BRMM_endpoint_bridge_closed':False,
       'quantitative_sensor_residual_ISS_envelope_attached':False,
       'finite_estimator_coefficients_bound_to_same_source_continuation':False,

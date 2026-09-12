@@ -99,6 +99,14 @@ an endpoint alone does not reset S or prove a new wave potential. The universal
 argument is over real moment vectors; exact-rational executions are algebraic
 checks, not a restriction of the physical source to rational-valued histories.
 
+At the fresh Live origin there is intentionally no predecessor segment.
+`QualifiedPhysicalOrigin` checks that actual endpoint directly: its time and
+Live origin coincide, centered S is zero, the carried history/BIAS labels agree,
+and the same physical vector and true-bias caps hold. This lets an asynchronous
+magnetic event at sample zero use the real endpoint while leaving transition 1
+unconsumed. It is a necessary outer-source check, not a proof that the endpoint
+extends to an admitted generator history.
+
 ## Executable necessary physical constraints
 
 The finite source constructor checks the existing declared physical vector caps:

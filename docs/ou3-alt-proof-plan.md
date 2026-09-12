@@ -151,6 +151,13 @@ explicitly open. Do not label scalar bounds, parameter tokens, or an exact
 kinematic recurrence as physical admission. These checks cannot authorize rho
 search, shrink the filter-error domain, or replace native arithmetic closure.
 
+The source-owning Live word also has a dedicated fresh-origin endpoint. It checks
+the actual sample-zero `Reference` at `time == live_origin`, requires centered
+S=0, retains the same history/BIAS root and physical vector/bias caps, and permits
+a magnetic call before transition 1 without inventing a 5 ms segment. That call
+does not advance source ordinal or time. This closes only the checked outer
+endpoint topology; complete source membership at sample zero remains false.
+
 ## H18/A21 hybrid language
 
 `MAG-CALL-SCHEDULE-v1` requires first post-Live mag call <=40 ms and later gaps

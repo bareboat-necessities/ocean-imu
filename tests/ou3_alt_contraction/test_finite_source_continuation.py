@@ -1,3 +1,4 @@
+from dataclasses import replace
 from fractions import Fraction as F
 from pathlib import Path
 import sys, unittest
@@ -99,6 +100,16 @@ class Tests(unittest.TestCase):
         with self.assertRaises(ValueError):
             X.qualify_raw_imu(q1,X.SensorDisturbanceRoot(other,'g','a'),raw_for(q1),'imu-wrong-root')
 
+
+    def test_fresh_origin_is_checked_without_fabricating_transition(self):
+        r=root(); p=kin(0)
+        origin=X.origin_endpoint(r,p)
+        self.assertEqual(origin.endpoint,p); self.assertEqual(origin.root,r)
+        with self.assertRaisesRegex(ValueError,'one-time Live origin'):
+            X.origin_endpoint(r,kin(F(1,200)))
+        with self.assertRaisesRegex(ValueError,'acceleration vector cap'):
+            X.origin_endpoint(r,replace(p,acceleration=(100,0,0)))
+
     def test_async_endpoint_is_not_a_free_matching_state(self):
         r=root(); q=qseg(r)
         before=X.endpoint(q,'before'); after=X.endpoint(q,'after')
@@ -114,6 +125,8 @@ class Tests(unittest.TestCase):
         self.assertTrue(d['source_cell_parent_child_and_primitive_continuity_checked'])
         self.assertFalse(d['qualified_async_endpoint_comes_from_admitted_transition'])
         self.assertTrue(d['qualified_async_endpoint_comes_from_checked_outer_transition'])
+        self.assertTrue(d['sample_zero_checked_outer_endpoint_available_without_fake_transition'])
+        self.assertFalse(d['sample_zero_full_source_membership_proved'])
         self.assertFalse(d['full_O601_membership_qualified_by_tokens_or_finite_checks'])
         self.assertTrue(d['raw_IMU_packet_bound_to_same_qualified_physical_predecessor'])
         self.assertTrue(d['persistent_gyro_and_accel_residual_history_tokens_required'])
