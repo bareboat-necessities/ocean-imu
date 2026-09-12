@@ -14,9 +14,14 @@ from tools.stability.ou3_alt_contraction import finite_tuner_candidate as C
 import test_finite_guarded_tuner_prefix as BASE
 
 
+def seeded_tuner(stage='Live',**changes):
+    t=BASE.tuner_state()
+    t=replace(t,tune=replace(t.tune,tau_applied=LEDGER.INITIAL),stage=stage,**changes)
+    return t
+
+
 def cold_state():
-    t=replace(BASE.tuner_state(),stage='Cold',stage_time=0,warmup_sec=5)
-    return X.State(FRONT.State(G.State(),t),LEDGER.initial())
+    return X.State(FRONT.State(G.State(),seeded_tuner('Cold',stage_time=0,warmup_sec=5)),LEDGER.initial())
 
 
 def cold_kwargs():
@@ -28,9 +33,6 @@ def cold_kwargs():
 
 def live_kwargs(decay):
     k=BASE.kwargs()
-    # Make the pre-WPE external frequency .5 Hz.  The carried stats state is
-    # already ready at .5 Hz, so the same .5 reaches SeaStateAutoTuner and the
-    # candidate.  Source tau target is then exactly .5/.5 = 1 s.
     k['band_cfg']=replace(k['band_cfg'],tune_freq_prior=F(1,2))
     c=k['candidate_cfg']
     k['candidate_cfg']=replace(c,min_freq=TARGET.FLOOR,max_freq=TARGET.CEIL,
@@ -61,9 +63,8 @@ class Tests(unittest.TestCase):
                    stored_frequency='detached',tau_exp_decay=1,**cold_kwargs())
 
     def test_source_qualified_live_candidate_advances_both_tau_tracks(self):
-        # x=.005/.4=.0125; this binary32 value lies in the rigorous exp enclosure.
         decay=B32.rn32(F(98755,100000))
-        s=X.State(FRONT.State(G.State(),BASE.tuner_state()),LEDGER.initial())
+        s=X.State(FRONT.State(G.State(),seeded_tuner()),LEDGER.initial())
         out=X.step(s,BASE.packet(),dt=BASE.DT,guard_cfg=G.Config(),
                    stored_frequency=stored_half(),tau_exp_decay=decay,
                    **live_kwargs(decay))
@@ -73,24 +74,33 @@ class Tests(unittest.TestCase):
         self.assertEqual(out.state.tau.updates,1)
         self.assertEqual(out.state.tau.separate,out.tau_step.separate_step.next_separate)
         self.assertEqual(out.state.tau.fma,out.tau_step.fma_step.next_fma)
+        exact=out.state.frontend.tuner.tune.tau_applied
+        self.assertLessEqual(abs(out.state.tau.separate-exact),out.state.tau.updates*X.ROUND.UNIFORM_RESIDUAL_MAX)
+        self.assertLessEqual(abs(out.state.tau.fma-exact),out.state.tau.updates*X.ROUND.UNIFORM_RESIDUAL_MAX)
+
+    def test_random_machine_tau_cannot_be_spliced_into_exact_frontend(self):
+        bad=LEDGER.State(B32.rn32(2),B32.rn32(2),1)
+        with self.assertRaisesRegex(ValueError,'detached from exact frontend recurrence envelope'):
+            X.State(FRONT.State(G.State(),seeded_tuner()),bad)
 
     def test_postcold_exp_witness_must_equal_exact_candidate_decay(self):
         decay=B32.rn32(F(98755,100000))
-        s=X.State(FRONT.State(G.State(),BASE.tuner_state()),LEDGER.initial())
+        s=X.State(FRONT.State(G.State(),seeded_tuner()),LEDGER.initial())
         with self.assertRaisesRegex(ValueError,'detached from exact candidate'):
             X.step(s,BASE.packet(),dt=BASE.DT,guard_cfg=G.Config(),
                    stored_frequency=stored_half(),tau_exp_decay=B32.rn32(F(99,100)),
                    **live_kwargs(decay))
 
     def test_initial_wrapper_uses_shipping_tau_seed(self):
-        raw=FRONT.State(G.State(),replace(BASE.tuner_state(),stage='Cold'))
+        raw=FRONT.State(G.State(),seeded_tuner('Cold'))
         s=X.initial(raw)
         self.assertEqual(s.tau,LEDGER.initial())
 
     def test_readiness_keeps_upstream_machine_facts_open(self):
         r=X.readiness()
-        self.assertTrue(r['Cold_noncandidate_branch_preserves_tau_ledger'])
-        self.assertTrue(r['postCold_candidate_advances_both_global_compiler_tau_tracks'])
+        self.assertTrue(r['shipping_tau_ledger_begins_at_same_1p1f_exact_frontend_seed'])
+        self.assertTrue(r['exact_frontend_vs_each_machine_tau_track_error_envelope_inductively_checked'])
+        self.assertTrue(r['arbitrary_machine_tau_frontend_splice_forbidden'])
         self.assertFalse(r['upstream_WPE_to_StoredFrequency_binary32_correspondence_closed'])
         self.assertFalse(r['tuner_exp_libm_binary32_correspondence_closed'])
         self.assertFalse(r['admitted_startup_source_history_carries_this_frontend_product'])
