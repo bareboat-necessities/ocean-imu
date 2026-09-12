@@ -1,32 +1,17 @@
 """Admitted BRMM/BIAS/ISS Live interleaver with persistent binary32 tau ledger.
 
-This is the theorem-facing Live attachment for the tau deployment recurrence.
-The lower prefix already owns admitted BRMM, BIAS, bounded IMU ISS, one t_L
-origin and IMU/MAG/HOLD ordering. This layer adds a persistent dual-compiler
-tau ledger.
+This theorem-facing layer joins the exact finite Live word to the machine tau
+recurrence without identifying exact-real tuner inputs with their binary32
+counterparts.  A WPE-derived machine frequency carries an explicit
+machine-minus-shadow supply; its induced exact tau-target displacement and the
+machine-vs-shadow EMA-decay displacement are retained separately from ordinary
+binary32 arithmetic roundoff.
 
-Every Live IMU edge must provide the actual stored tuner-frequency object and
-the binary32 std::exp result used by the tau EMA. After executing the existing
-same-history event, we require the exact tuner candidate frequency, target and
-EMA decay to be the same values consumed by the deployment ledger. The separate
-and FMA machine tracks then advance from their own persistent predecessors. MAG
-and HOLD preserve the ledger exactly.
-
-``imu_step_from_wpe`` is the strongest frequency-source entry. It requires the
-binary32 tuner frequency to be derived from the exact WPE state carried into
-THIS sample: literal 0.2f prior before the usable latch, or the separate
-``std::exp(-log_period)`` getter result afterwards. Thus a free StoredFrequency
-can remain available for component algebra without counting as theorem-source
-provenance.
-
-``begin_from_goLive`` is the strong construction path. It accepts the tau ledger
-carried across the startup goLive edge only when the lower admitted product
-contains the exact same ``finite_live_imu_prefix.State``. The generic ``begin``
-remains available for component algebra, but readiness does not treat that path
-as startup provenance.
-
-Binary32 WPE log-state production and target-libm correctness remain open, so
-this is not deployment closure or storage authorization.
+The current ``imu_step_from_wpe`` path is a single/common-machine-input bridge:
+it is useful for source ancestry, but does not prove that the global separate
+and FMA compiler histories share one WPE frequency.  The deployment ledger now
+supports mode-specific frequencies; full theorem promotion waits for the dual
+WPE-log compiler ledger to be composed into this product.
 """
 from __future__ import annotations
 from dataclasses import dataclass
@@ -58,7 +43,6 @@ class State:
         if self.live_entry_tau_updates > LEDGER.MAX_UPDATES-SOURCE.TRANSITIONS:
             raise ValueError('Live-entry tau ledger leaves no certified room for 600-step word')
         QUAL.qualify_runtime(self.prefix.prefix.live.live_word.runtime)
-
     @property
     def imu_steps(self): return self.prefix.imu_steps
 
@@ -68,6 +52,13 @@ class ImuResult:
     state:State
     event:object
     tau_step:LEDGER.StepResult
+    frequency_supply:F|None=None
+    target_input_supply:F|None=None
+    decay_input_supply:F|None=None
+    def __post_init__(self):
+        for n in ('frequency_supply','target_input_supply','decay_input_supply'):
+            v=getattr(self,n)
+            if v is not None: object.__setattr__(self,n,F(v))
 
 
 @dataclass(frozen=True)
@@ -84,43 +75,35 @@ class CompleteWord:
 
 
 def begin(prefix:BASE.State,tau:LEDGER.State):
-    """Generic component constructor; not startup provenance evidence."""
     if not isinstance(tau,LEDGER.State): raise TypeError('startup-carried tau ledger required')
     return State(prefix,tau,tau.updates)
 
 
 def begin_from_goLive(prefix:BASE.State,go:GO.Result):
-    """Strong Live constructor consuming the exact startup/goLive tau product."""
     if not isinstance(prefix,BASE.State) or not isinstance(go,GO.Result):
         raise TypeError('admitted ISS prefix and goLive tau bridge result required')
-    try:
-        embedded=prefix.prefix.live.live_word.live.live.live
-    except AttributeError as exc:
-        raise TypeError('admitted Live product lost embedded goLive IMU state') from exc
+    try: embedded=prefix.prefix.live.live_word.live.live.live
+    except AttributeError as exc: raise TypeError('admitted Live product lost embedded goLive IMU state') from exc
     if embedded != go.live.state:
         raise ValueError('admitted Live product detached from exact goLive frontend/filter state')
     return State(prefix,go.tau,go.tau.updates)
 
 
 def _candidate(lower_out):
-    try:
-        cand=lower_out.event.event.event.live.tuner_suffix.candidate
-    except AttributeError as exc:
-        raise TypeError('strong admitted IMU result lost executed Live tuner candidate') from exc
+    try: cand=lower_out.event.event.event.live.tuner_suffix.candidate
+    except AttributeError as exc: raise TypeError('strong admitted IMU result lost executed Live tuner candidate') from exc
     if not isinstance(cand,CAND.CandidateResult):
         raise ValueError('Live IMU edge did not execute tuner candidate recurrence')
     return cand
 
 
 def _entry_wpe(state:State):
-    try:
-        return state.prefix.prefix.live.live_word.live.live.live.tuner.wpe
-    except AttributeError as exc:
-        raise TypeError('strong admitted tau product lost sample-entry WPE state') from exc
+    try: return state.prefix.prefix.live.live_word.live.live.live.tuner.wpe
+    except AttributeError as exc: raise TypeError('strong admitted tau product lost sample-entry WPE state') from exc
 
 
 def imu_step(state:State,*,stored_frequency:FREQ.StoredFrequency,tau_exp_decay,**kwargs):
-    """Component entry with an already-derived StoredFrequency."""
+    """Common-input component entry retaining the historical equality fixture."""
     if not isinstance(state,State): raise TypeError('admitted tau interleaved State required')
     if not isinstance(stored_frequency,FREQ.StoredFrequency): raise TypeError('actual StoredFrequency required')
     ema=kwargs.get('ema')
@@ -130,23 +113,33 @@ def imu_step(state:State,*,stored_frequency:FREQ.StoredFrequency,tau_exp_decay,*
     nxt_prefix,out=BASE.imu_step(state.prefix,**kwargs)
     cand=_candidate(out); target=TARGET.evaluate(stored_frequency.stored_hz)
     if F(cand.frequency)!=F(stored_frequency.stored_hz):
-        raise ValueError('Live candidate frequency detached from stored binary32 tuner frequency')
+        raise ValueError('component candidate frequency detached from stored binary32 tuner frequency')
     if F(cand.tau_target)!=F(target.exact_target):
-        raise ValueError('Live candidate tau target detached from source-locked machine-operand target')
+        raise ValueError('component candidate tau target detached from machine-operand exact target')
     cfg=state.prefix.prefix.live.live_word.runtime.candidate_cfg
     tau_step=LEDGER.step(state.tau,stored_frequency,cfg,dt=LEDGER.DT,exp_decay=tau_exp_decay)
-    return ImuResult(State(nxt_prefix,tau_step.state,state.live_entry_tau_updates),out,tau_step)
+    return ImuResult(State(nxt_prefix,tau_step.state,state.live_entry_tau_updates),out,tau_step,F(0),F(0),F(0))
 
 
 def imu_step_from_wpe(state:State,*,tuner_frequency:WPEF.TunerFrequencyResult,
                       tau_exp_decay,**kwargs):
-    """Strong theorem entry deriving the tau frequency from THIS sample's WPE entry state."""
+    """Source bridge that keeps exact WPE and machine frequency/decay distinct."""
     if not isinstance(state,State) or not isinstance(tuner_frequency,WPEF.TunerFrequencyResult):
         raise TypeError('admitted tau state and WPE tuner-frequency source required')
     if tuner_frequency.shadow != _entry_wpe(state):
         raise ValueError('binary32 tuner frequency detached from carried sample-entry WPE state')
-    return imu_step(state,stored_frequency=tuner_frequency.stored,
-                    tau_exp_decay=tau_exp_decay,**kwargs)
+    ema=kwargs.get('ema')
+    if not isinstance(ema,CAND.EmaWitness): raise TypeError('same-event exact tuner EmaWitness required')
+    nxt_prefix,out=BASE.imu_step(state.prefix,**kwargs); cand=_candidate(out)
+    if F(cand.frequency)!=F(tuner_frequency.exact_clamped_frequency):
+        raise ValueError('exact Live candidate frequency detached from exact WPE shadow frequency')
+    machine_target=TARGET.evaluate(tuner_frequency.stored.stored_hz)
+    target_supply=F(machine_target.exact_target)-F(cand.tau_target)
+    decay_supply=F(tau_exp_decay)-F(ema.decay_tau_sigma)
+    cfg=state.prefix.prefix.live.live_word.runtime.candidate_cfg
+    tau_step=LEDGER.step(state.tau,tuner_frequency.stored,cfg,dt=LEDGER.DT,exp_decay=tau_exp_decay)
+    return ImuResult(State(nxt_prefix,tau_step.state,state.live_entry_tau_updates),out,tau_step,
+                     tuner_frequency.machine_minus_shadow,target_supply,decay_supply)
 
 
 def mag_step(state:State,**kwargs):
@@ -161,8 +154,7 @@ def set_hold(state:State,*,hold):
     return State(nxt,state.tau,state.live_entry_tau_updates),event
 
 
-def complete(state:State):
-    return CompleteWord(state,BASE.complete(state.prefix))
+def complete(state:State): return CompleteWord(state,BASE.complete(state.prefix))
 
 
 def readiness():
@@ -173,20 +165,23 @@ def readiness():
       'Live_product_carries_persistent_dual_compiler_tau_ledger':True,
       'strong_Live_constructor_requires_exact_goLive_filter_frontend_state_and_tau_ledger':True,
       'goLive_tau_ledger_identity_bridge_available':go['goLive_preserves_binary32_tau_ledger_by_identity'],
-      'each_Live_IMU_requires_same_candidate_frequency_target_and_decay_as_tau_ledger':True,
-      'strong_Live_IMU_frequency_source_bound_to_sample_entry_WPE_or_prior':True,
+      'component_common_frequency_tau_edge_retained':True,
+      'WPE_source_edge_keeps_exact_candidate_and_machine_frequency_distinct':True,
+      'WPE_machine_minus_shadow_frequency_supply_attached':wf['machine_minus_exact_tuner_frequency_supply_exposed'],
+      'machine_exact_target_minus_exact_candidate_target_supply_attached':True,
+      'machine_tau_decay_minus_exact_candidate_decay_supply_attached':True,
       'WPE_getter_to_tuner_store_topology_available':wf['WPE_frequency_getter_to_tuner_binary32_store_topology_closed'],
       'each_Live_IMU_retains_both_binary32_tau_roundoff_certificates':True,
       'MAG_and_HOLD_preserve_tau_ledger_exactly':True,
       'complete_word_requires_exactly_600_tau_updates_after_Live_entry':True,
+      'global_compiler_tau_tracks_accept_distinct_WPE_inputs':ledger['global_compiler_tracks_accept_mode_coherent_distinct_WPE_frequencies'],
+      'global_compiler_WPE_log_tracks_composed_into_Live_product':False,
       'admitted_startup_reachability_with_tau_ledger_closed':False,
       'WPE_binary32_log_period_production_closed':wf['WPE_binary32_log_period_production_closed'],
-      'upstream_WPE_to_StoredFrequency_binary32_correspondence_closed':False,
+      'source_uniform_WPE_frequency_supply_bound_closed':False,
       'tuner_exp_libm_binary32_correspondence_closed':ledger['tuner_exp_libm_binary32_correspondence_closed'],
       'all_event_arithmetic_witnesses_source_uniformly_qualified':False,
       'source_uniform_complete_600_step_word_qualified':False,
       'storage_search_allowed':False,
-      'ALT_LIVE_PASS':False,
-      'ALT_STARTUP_PASS':False,
-      'ALT_END_TO_END_PASS':False,
+      'ALT_LIVE_PASS':False,'ALT_STARTUP_PASS':False,'ALT_END_TO_END_PASS':False,
     }
