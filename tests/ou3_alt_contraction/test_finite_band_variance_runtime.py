@@ -23,6 +23,16 @@ class Tests(unittest.TestCase):
         out=B.band_step(s,cfg,x=9,dt=1,f_ref=F(1,2),decay=B.BandDecayWitness(F(1,2),F(1,2)))
         self.assertEqual(out,s)
 
+    def test_preupdate_view_requires_canonical_pair_only_after_usable_latch(self):
+        cold=W.WPEState(log_period=1,usable_period=False)
+        view=B.wpe_frequency_view(cold)
+        self.assertEqual(B.tuner_frequency(view,bcfg()),F(1,5))
+        with self.assertRaises(ValueError): B.wpe_frequency_view(cold,period=2,frequency=F(1,2))
+        live=W.WPEState(log_period=1,usable_period=True)
+        view=B.wpe_frequency_view(live,period=2,frequency=F(1,2))
+        self.assertEqual(B.tuner_frequency(view,bcfg()),F(1,2))
+        with self.assertRaises(ValueError): B.wpe_frequency_view(live)
+
     def test_previous_tuner_frequency_drives_band_usable_wpe_drives_stats(self):
         prev_stats=B.StatsState(frequency=F(1,4))
         out=B.frontend_step(B.BandState(),prev_stats,wpe(F(1,2),True),vertical_accel=2,dt=F(1,10),band_cfg=bcfg(),stats_cfg=scfg(),band_decay=B.BandDecayWitness(F(1,2),F(1,2)),variance_decay=B.VarianceDecayWitness(F(1,2)),bench_noise_sigma=2,noise_sqrt=B.NoiseSqrtWitness(F(1,4)))
@@ -53,6 +63,6 @@ class Tests(unittest.TestCase):
         s=B.StatsState(frequency=F(1,2),mean_value=1,mean_weight=1,sq_value=5,sq_weight=1); self.assertEqual(B.variance(s),4)
 
     def test_readiness_fail_closed_at_frontend_and_transcendentals(self):
-        r=B.readiness(); self.assertTrue(r['adaptive_band_state_and_covariance_materialized']); self.assertTrue(r['adaptive_band_identity_branches_materialized']); self.assertTrue(r['unready_band_noise_floor_branch_materialized']); self.assertTrue(r['WPE_usable_gate_and_tune_frequency_prior_materialized']); self.assertTrue(r['previous_tuner_frequency_drives_band_corner']); self.assertFalse(r['band_exp_and_noise_sqrt_binary32_ancestry_attached']); self.assertFalse(r['vertical_accel_frontend_same_history_attached']); self.assertFalse(r['complete_word_finite_identity']); self.assertFalse(r['ALT_LIVE_PASS'])
+        r=B.readiness(); self.assertTrue(r['adaptive_band_state_and_covariance_materialized']); self.assertTrue(r['adaptive_band_identity_branches_materialized']); self.assertTrue(r['unready_band_noise_floor_branch_materialized']); self.assertTrue(r['pre_update_WPE_usable_gate_and_tune_frequency_prior_materialized']); self.assertTrue(r['tuner_before_current_WPE_update_materialized']); self.assertTrue(r['previous_tuner_frequency_drives_band_corner']); self.assertFalse(r['band_exp_and_noise_sqrt_binary32_ancestry_attached']); self.assertFalse(r['vertical_accel_frontend_same_history_attached']); self.assertFalse(r['complete_word_finite_identity']); self.assertFalse(r['ALT_LIVE_PASS'])
 
 if __name__=='__main__': unittest.main()
