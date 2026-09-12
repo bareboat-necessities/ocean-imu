@@ -3,20 +3,25 @@
 The exact-real tuner state is useful for algebra but is not the machine state.
 This ledger carries the actual binary32 ``tau_applied`` recurrence in parallel.
 Because compiler FP contraction is not yet qualified, it carries two coherent
-tracks rather than selecting one per sample:
+GLOBAL tracks rather than selecting one per sample:
 
   * ``separate`` always uses rounded multiply then rounded add;
   * ``fma`` always uses the contracted FMA shape.
 
 The compiler choice is global, so two tracks are sufficient; there is no 2^N
-branch explosion.  Each tuner update consumes one actual stored-frequency
-object and one same-argument binary32 exp witness, derives the source-locked tau
-target, advances both tracks, and retains the uniform roundoff certificates.
-Cold/other branches that execute no ``adapt_mekf`` call use ``hold`` and consume
-no arithmetic witness.
+branch explosion.  Importantly, the two global histories are allowed to consume
+different stored frequencies and exp results.  Once WPE log-period smoothing is
+modeled in binary32, its state may itself depend on the global contraction mode;
+forcing both tau tracks to share one WPE frequency would splice two incompatible
+machine histories.
 
-This ledger is not yet wired into the startup/Live master product.  WPE->stored
-frequency binary32/libm correspondence and exp libm correctness remain open.
+``step_tracks`` is therefore the theorem-facing primitive.  ``step`` is only a
+common-input convenience for component tests and delegates to ``step_tracks``.
+Each mode derives its own source-locked tau target and retains its own uniform
+roundoff certificate.  Cold/other branches that execute no ``adapt_mekf`` call
+use ``hold`` and consume no arithmetic witness.
+
+WPE binary32 log-state production and target-libm correctness remain open.
 """
 from __future__ import annotations
 from dataclasses import dataclass
@@ -50,11 +55,18 @@ class State:
 @dataclass(frozen=True)
 class StepResult:
     state:State
-    target:TARGET.TargetPair
+    separate_target:TARGET.TargetPair
+    fma_target:TARGET.TargetPair
     separate_step:TAU.TauStep
     fma_step:TAU.TauStep
     separate_certificate:ROUND.BoundCertificate
     fma_certificate:ROUND.BoundCertificate
+    @property
+    def target(self):
+        """Compatibility view only when both mode histories used one target."""
+        if self.separate_target != self.fma_target:
+            raise ValueError('compiler-mode tau targets differ; no common target exists')
+        return self.separate_target
 
 
 def initial(): return State()
@@ -77,29 +89,45 @@ def hold(state:State):
     return state
 
 
-def step(state:State,stored:FREQ.StoredFrequency,cfg:CAND.CandidateConfig,*,dt,exp_decay):
+def step_tracks(state:State,*,separate_frequency:FREQ.StoredFrequency,
+                fma_frequency:FREQ.StoredFrequency,cfg:CAND.CandidateConfig,dt,
+                separate_exp_decay,fma_exp_decay):
+    """Advance the two coherent global compiler histories independently."""
     if not isinstance(state,State): raise TypeError('tau deployment State required')
     if state.updates>=MAX_UPDATES: raise ValueError('tau deployment ledger exceeded bounded startup+word horizon')
     qualify_config(cfg)
     if B.rn32(dt)!=DT: raise ValueError('tau deployment ledger requires canonical shipping 5 ms update')
-    if not isinstance(stored,FREQ.StoredFrequency): raise TypeError('actual stored tuner frequency required')
-    target=TARGET.evaluate(stored.stored_hz)
-    sep=TAU.step_from_stored_frequency(state.separate,stored,cfg,dt=dt,exp_decay=exp_decay)
-    fma=TAU.step_from_stored_frequency(state.fma,stored,cfg,dt=dt,exp_decay=exp_decay)
-    cs=ROUND.certify_source_target(sep,target); cf=ROUND.certify_source_target(fma,target)
+    if not isinstance(separate_frequency,FREQ.StoredFrequency) or not isinstance(fma_frequency,FREQ.StoredFrequency):
+        raise TypeError('actual stored tuner frequency required for each compiler track')
+    st=TARGET.evaluate(separate_frequency.stored_hz)
+    ft=TARGET.evaluate(fma_frequency.stored_hz)
+    sep=TAU.step_from_stored_frequency(state.separate,separate_frequency,cfg,dt=dt,
+                                       exp_decay=separate_exp_decay)
+    fma=TAU.step_from_stored_frequency(state.fma,fma_frequency,cfg,dt=dt,
+                                       exp_decay=fma_exp_decay)
+    cs=ROUND.certify_source_target(sep,st); cf=ROUND.certify_source_target(fma,ft)
     nxt=State(sep.next_separate,fma.next_fma,state.updates+1)
-    return StepResult(nxt,target,sep,fma,cs,cf)
+    return StepResult(nxt,st,ft,sep,fma,cs,cf)
+
+
+def step(state:State,stored:FREQ.StoredFrequency,cfg:CAND.CandidateConfig,*,dt,exp_decay):
+    """Common-input component helper; not evidence that global WPE tracks coincide."""
+    return step_tracks(state,separate_frequency=stored,fma_frequency=stored,cfg=cfg,dt=dt,
+                       separate_exp_decay=exp_decay,fma_exp_decay=exp_decay)
 
 
 def readiness():
     return {
       'shipping_tau_initial_binary32_seed_materialized':True,
       'global_separate_and_FMA_compiler_tracks_persist_without_branch_explosion':True,
+      'global_compiler_tracks_accept_mode_coherent_distinct_WPE_frequencies':True,
+      'global_compiler_tracks_accept_mode_coherent_distinct_exp_results':True,
+      'common_frequency_across_compiler_tracks_assumed':False,
       'cold_or_nonadapting_identity_branch_materialized':True,
-      'each_update_requires_actual_StoredFrequency_object':True,
-      'each_update_requires_same_argument_binary32_exp_witness':True,
-      'each_update_retains_source_locked_target_and_both_roundoff_certificates':True,
+      'each_update_requires_actual_StoredFrequency_object_per_compiler_track':True,
+      'each_update_retains_source_locked_target_and_roundoff_certificate_per_track':True,
       'bounded_startup_plus_600_update_cap_enforced':True,
+      'global_compiler_track_coherence_includes_WPE_log_state':False,
       'upstream_WPE_to_StoredFrequency_binary32_correspondence_closed':False,
       'tuner_exp_libm_binary32_correspondence_closed':False,
       'startup_master_product_carries_tau_ledger':False,
