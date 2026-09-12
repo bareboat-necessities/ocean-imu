@@ -20,11 +20,11 @@ def sample(**kw):
 
 
 def wpe(freq=F(1,2)):
-    return W.UpdateResult(W.WPEState(log_period=1),True,freq,1/freq,None,None)
+    return W.UpdateResult(W.WPEState(log_period=1,usable_period=True),True,freq,1/freq,None,None)
 
 
 def frontend(freq=F(1,2),var=1,noise=0,ready=True):
-    return B.FrontendResult(B.BandState(),B.StatsState(frequency=freq),freq,freq,0,ready,F(var),F(noise))
+    return B.FrontendResult(B.BandState(),B.StatsState(frequency=freq),freq,freq,freq,0,ready,F(var),F(noise))
 
 
 def moving_stillness():
