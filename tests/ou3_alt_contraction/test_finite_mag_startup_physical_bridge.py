@@ -7,26 +7,30 @@ ROOT=Path(__file__).resolve().parents[2]; sys.path.insert(0,str(ROOT))
 
 from tools.stability.ou3_alt_contraction import finite_mag_startup_physical_bridge as X
 from tools.stability.ou3_alt_contraction import finite_mag_startup_source as M
-import test_finite_core as FC
+from tools.stability.ou3_alt_contraction import finite_physical_prediction as P
+
+
+def physical():
+    return P.PhysicalKinematics(
+        time=F(7),live_origin=F(0),q_world_to_body=(1,0,0,0),
+        velocity=(0,0,0),position=(0,0,0),centered_S=(0,0,0),
+        acceleration=(0,0,0),gyro_bias=(0,0,0),beta=(0,0,0))
 
 
 class Tests(unittest.TestCase):
-    def physical(self):
-        return FC.root('H').reference
-
     def test_endpoint_time_and_true_attitude_are_derived_from_same_finite_physical_object(self):
-        p=self.physical(); e=X.endpoint(p,'hist')
+        p=physical(); e=X.endpoint(p,'hist')
         self.assertEqual(e.time,p.time); self.assertEqual(e.q_world_to_body,p.q_world_to_body)
         self.assertEqual(e.history_id,'hist')
 
     def test_source_sample_is_constructed_from_main_endpoint_not_free_duplicate(self):
-        p=self.physical(); model=M.Model((3,4,0),(0,0,0),'model')
+        p=physical(); model=M.Model((3,4,0),(0,0,0),'model')
         s=X.sample(p,'hist',model,(0,0,0),'mag-1')
         self.assertTrue(X.assert_same_endpoint(p,s,'hist'))
         self.assertEqual(s.raw_body,(3,4,0))
 
     def test_time_attitude_or_history_detachment_fails(self):
-        p=self.physical(); model=M.Model((3,4,0),(0,0,0),'model')
+        p=physical(); model=M.Model((3,4,0),(0,0,0),'model')
         s=X.sample(p,'hist',model,(0,0,0),'mag-1')
         p_time=replace(p,time=p.time+F(1,200))
         with self.assertRaisesRegex(ValueError,'detached'):
