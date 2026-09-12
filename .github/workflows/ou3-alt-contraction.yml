@@ -101,7 +101,7 @@ jobs:
             test_finite_bias_history_restriction test_finite_admitted_startup_origin \
             test_finite_admitted_source_live_word test_finite_admitted_source_imu_word \
             test_finite_admitted_imu_disturbance test_finite_admitted_disturbance_imu_word \
-            test_finite_admitted_source_mag_word test_finite_admitted_interleaved_prefix test_finite_admitted_runtime_word \
+            test_finite_admitted_source_mag_word test_finite_admitted_interleaved_prefix test_finite_admitted_iss_interleaved_prefix test_finite_admitted_runtime_word \
             test_finite_source_origin_interleave test_finite_source_bound_prediction_word test_finite_source_bound_imu_forcing test_finite_source_bound_mag_forcing \
             test_finite_measurement_graph test_finite_covariance_rank3 test_finite_core \
             test_finite_prediction_covariance test_finite_ou_runtime_primitives \
