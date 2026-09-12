@@ -1,4 +1,4 @@
-"""Admitted-history + origin-bound strong-runtime composition regressions."""
+"""Admitted-history + canonical-origin strong-runtime composition regressions."""
 from dataclasses import replace
 import unittest
 
@@ -36,7 +36,7 @@ class Tests(unittest.TestCase):
         self.assertEqual(out.state.admitted.bias_history,s.admitted.bias_history)
         self.assertEqual(out.state.origin,s.origin)
         self.assertEqual(out.state.admitted.live_word.source.steps[-1].witness.ordinal,1)
-        self.assertEqual(out.state.admitted.live_word.source.steps[0].segment.before,s.origin.reference)
+        self.assertEqual(out.state.admitted.live_word.source.steps[0].segment.before,s.origin.endpoint)
         self.assertEqual(out.state.admitted.live_word.live.live.live.mekf.reference,r.segment.after)
         self.assertEqual(out.forcing.gyro_residual_internal,raw.gyro_residual_internal)
 
@@ -45,20 +45,16 @@ class Tests(unittest.TestCase):
         wrong_before=replace(r.segment.before,position=(1,0,0))
         wrong_segment=replace(r.segment,before=wrong_before)
         bad=A.RestrictedSegment(s.admitted.admitted_history,r.ordinal,wrong_segment)
-        # BIAS restriction cannot be reused because the physical segments must agree;
-        # constructing the matching BIAS restriction still must not bypass origin.
         badb=B.RestrictedBiasStep(s.admitted.bias_history,b.ordinal,wrong_segment)
         with self.assertRaisesRegex(ValueError,'sample zero'):
             X.imu_step(s,restricted=bad,bias_restricted=badb,witness=witness,
                        raw=raw,packet_id='bad-origin',**runtime)
 
-    def test_detached_BRMM_history_cannot_reach_strong_runtime(self):
-        s=self.root(); witness,r,b,raw,runtime=self.next_operands(s)
-        bad=A.RestrictedSegment(A.AdmittedHistory('other-history'),r.ordinal,r.segment)
-        with self.assertRaisesRegex(ValueError,'detached from carried admitted history'):
-            X.imu_step(s,restricted=bad,bias_restricted=b,witness=witness,
-                       raw=raw,packet_id='bad',**runtime)
-        self.assertEqual(len(s.admitted.live_word.source.steps),0)
+    def test_canonical_restriction_rejects_detached_BRMM_history_before_runtime(self):
+        s=self.root(); witness,r,_,_,_=self.next_operands(s)
+        other=A.AdmittedHistory('other-history')
+        with self.assertRaisesRegex(ValueError,'detached from quantified admitted history'):
+            A.RestrictedSegment(other,witness.ordinal,r.segment)
 
     def test_detached_BIAS_history_cannot_reach_strong_runtime(self):
         s=self.root(); witness,r,b,raw,runtime=self.next_operands(s)
@@ -88,7 +84,7 @@ class Tests(unittest.TestCase):
         r=X.readiness()
         for key in ('admitted_COMPLETE_BRMM_history_and_strong_runtime_joined',
                     'admitted_BIAS_history_and_strong_runtime_joined',
-                    'admitted_sample_zero_origin_persists_in_runtime_product',
+                    'canonical_admitted_sample_zero_origin_persists_in_runtime_product',
                     'first_restriction_forced_to_start_at_admitted_sample_zero',
                     'startup_sample_zero_equal_to_admitted_history_restriction_proved',
                     'each_IMU_event_requires_same_admitted_BRMM_BIAS_and_source_ordinal',
