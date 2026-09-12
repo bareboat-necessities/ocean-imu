@@ -8,9 +8,26 @@ P2/P3/P4/P5 proof track. Keep that route independently continuable.
 
 The target remains an end-to-end theorem for every admitted corrected
 COMPLETE-BRMM history, every admitted BIAS0/BIAS1/BIAS2 history and every
-declared disturbance/finite-precision history. ALT must preserve the actual
-Mahony/proxy/startup path, H18/A21 hybrid logic, frontend/tuner memory, full
-21-state covariance and joint24 motion/error/true-bias state.
+declared disturbance/finite-precision history inside the declared ALT deployment
+scope. ALT preserves the actual Mahony/proxy/startup path, H18/A21 hybrid logic,
+frontend/tuner memory, full 21-state covariance and joint24
+motion/error/true-bias state.
+
+## Deployment-scope exclusion: no wind heel
+
+The optional shipping wind-heel retarget feature is excluded from ALT.
+The certified deployment language requires `wind_heel_rad_ == 0` from
+construction onward and zero calls to `update_wind_heel()`.
+
+This is a theorem-scope restriction, not a shipping change: shipping initializes
+`wind_heel_rad_` to zero. On this scope B'=B, `deheel_vector_` is the identity,
+and there is no wind-heel/body-frame retarget event in the hybrid language.
+Executions with nonzero wind heel or any dynamic wind-heel update are outside
+ALT until a future proof explicitly widens the theorem.
+
+`deployment_scope.py` encodes this fail-closed assumption, and the storage guards
+now require `zero_wind_heel_scope_enforced=true`; a later storage search cannot
+silently reintroduce the excluded branch.
 
 ## Intended architecture
 
@@ -41,7 +58,9 @@ runtime/source relation:
   theorem disturbance envelope;
 - storage/rho searches before the complete finite master passes the
   representation guard;
-- changing the shipping filter solely to make the proof easier.
+- changing the shipping filter solely to make the proof easier;
+- reintroducing the excluded wind-heel branch without an explicit theorem-scope
+  widening and proof of its retarget event.
 
 If a proposed experiment cannot falsify or close a stated theorem obligation,
 do not spend proof effort on it. The two-strike architecture-review rule applies
@@ -67,11 +86,12 @@ The finite graph must retain at least:
 - frontend/WPE/bandpass/sigma/tuner memory and staged commits;
 - asynchronous magnetic state, scheduler credit and every H18/A21 edge;
 - every completed literal runtime prefix;
-- deployment arithmetic residuals before final theorem promotion.
+- deployment arithmetic residuals before final theorem promotion;
+- explicit zero-wind-heel deployment-scope ancestry.
 
 ## Current finite-runtime advancement
 
-PR #523 now has exact/local descriptors for physical prediction, accepted finite
+PR #523 has exact/local descriptors for physical prediction, accepted finite
 measurements, full covariance composition, runtime OU/BA roots, attitude F/Q,
 integrated-OU Qaxis, pending a_w covariance synchronization, scheduler/S service
 and safe-LDLT branches. The highest prediction entry accepts no precomputed
@@ -92,9 +112,13 @@ reset zeroes the attitude error state, replaces the attitude 3x3 covariance by
 the tilt/yaw projector split, zeroes only attitude<->gyro-bias covariance, and
 preserves the remaining state/covariance entries.
 
-This materially advances the finite-map stage but does NOT satisfy the universal
-source quantifier. Deployment roundoff, remaining hybrid/runtime branches and
-same-history event/source admission still require closure.
+Under the zero-wind-heel scope, the remaining B' correspondence disappears:
+for a unit accepted boat quaternion q=(w,x,y,z), the covariance yaw axis is now
+attached directly as
+
+`u_down_body = R(q)^T e_z = (2(xz-wy), 2(yz+wx), 1-2(x^2+y^2))`.
+
+No nontrivial body-prime rotation is admitted in ALT.
 
 ## MAG-BMM150-DET-v1 deterministic magnetic admission
 
@@ -107,17 +131,9 @@ arbitrary mounting environments:
 - `||b_HI_body||_2 <= 5 uT`;
 - `||n_mag_body||_2 <= 2 uT` for every accepted theorem sample.
 
-The total-field range encloses ordinary terrestrial geomagnetic magnitudes with
-margin while remaining far inside the BMM150 electrical range. The horizontal
-lower bound is essential for deterministic north/yaw observability. The 5 uT
-hard-iron limit is a commissioned-placement requirement. The 2 uT deterministic
-residual limit remains materially wider than normal BMM150 RMS output noise but,
-unlike RMS noise, is a hard theorem admission limit. A violating history is
-outside the theorem rather than being silently absorbed into `R_mag`.
-
-`finite_mag_source_qualification` checks the named assumption with exact norm
-witnesses, and the theorem-facing startup magnetic edge refuses an unqualified
-sample before it can mutate the tuner or magnetic wrapper clock.
+The horizontal lower bound is essential for deterministic north/yaw
+observability. The hard-iron and residual limits are commissioned source
+requirements, not replacements for `R_mag`.
 
 ## Deterministic startup north and real-arithmetic attitude capture closed
 
@@ -136,32 +152,53 @@ No `1/sqrt(N)` factor is used. Since the true horizontal field is at least
 
 `|sin(delta_yaw)| <= 8.5/15 = 17/30`.
 
-The real-arithmetic 45-degree fresh-attitude entrance is also now closed without
-floating `asin`: for `x=0.61`, the alternating Taylor lower bound gives
+For `x=0.61`, the alternating Taylor lower bound gives
 
 `sin(x) >= x - x^3/6 > 17/30`,
 
 so `|delta_yaw| < 0.61 rad`. SO(3) geodesic triangle inequality with the 0.02 rad
-tilt bound gives total attitude error `< 0.63 rad`; `pi > 3` then gives
-`0.63 < 0.75 < pi/4`. Thus the source-qualified real-arithmetic startup attitude
-enters the declared 45-degree radius. Deployment `atan2`/AngleAxis/quaternion
-normalization and binary32 correspondence remain open and prevent promotion.
+tilt bound gives total attitude error `< 0.63 rad < pi/4`. Thus the
+source-qualified real-arithmetic startup attitude enters the declared 45-degree
+radius. Deployment `atan2`/AngleAxis/quaternion normalization and binary32
+correspondence remain open and prevent promotion.
 
-## Current startup blockers
+## Fresh real-arithmetic H18 Live entry now composed
 
-The immediate startup blockers are now:
+The zero-heel gauged handoff is now composed through shipping `goLive` and
+`enterLive_` at the exact real-arithmetic state/covariance level.
 
-- attach the `initialize_from_attitude` world-down axis to the accepted boat
-  quaternion through the actual wind-heel/body-prime conversion and Eigen
-  normalization;
+The composition retains shipping order:
+
+1. `initialize_from_attitude` installs the accepted handoff quaternion and
+   attitude covariance;
+2. `enterLive_` commits the qualified tuner operating point;
+3. `reset_aw_covariance_to_stationary()` replaces `P_aw,aw` by the SAME committed
+   `Sigma_aw` and clears every a_w cross-covariance;
+4. because wrapper `goLive` passes `allow_acc_bias=false` and the startup bias
+   lock is still engaged, accelerometer-bias learning remains disabled;
+5. Live `R_S` is required from the same committed parameter state;
+6. startup stage becomes Live with stage timer zero.
+
+Therefore the fresh scoped real-arithmetic entry is explicitly an H18 entry,
+not an assumed covariance-consistency set. This still does not prove the first
+binary32/deployed Live prefix or the eventual H18->A21 release.
+
+## Current blockers
+
+The immediate blockers are now:
+
 - close deployment/binary32 correspondence for startup yaw extraction, `atan2`,
   AngleAxis, quaternion normalization, norm gates and the handoff reset;
-- source-qualify the asynchronous magnetometer call schedule through tuner ready
-  and the subsequent refinement/Live path;
-- compose `goLive`/`enterLive_`, fresh H18 entry and the existing Live word on the
-  same physical/source history;
-- retain the newly certified real-arithmetic `<45 deg` entrance through the
-  deployment arithmetic enclosure without replacing it by a covariance claim.
+- attach the wrapper `stage_=Live`, `live_time_sec_=t_` and inner-stage transition
+  to one same-history finite event including binary32 clock arithmetic;
+- source-qualify the complete asynchronous magnetometer call schedule through
+  tuner-ready, provisional lock, Live refinement and subsequent updates;
+- connect the fresh H18 state above to the already materialized first literal
+  Live IMU/pseudo/mag prefix without a gap in frontend/tuner/scheduler ancestry;
+- close the eventual H18->A21 release edge with the required accepted magnetic
+  count/time guard and same-history source continuation;
+- complete deployment arithmetic residuals and remaining solver/hygiene branches
+  before any storage search.
 
 None of these may be replaced by trace replay, statistical concentration, or an
 assumed fresh-entry covariance-consistency condition.
