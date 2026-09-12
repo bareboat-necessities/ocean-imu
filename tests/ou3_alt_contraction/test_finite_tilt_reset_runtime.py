@@ -91,6 +91,21 @@ class Tests(unittest.TestCase):
                    for j in range(3)] for i in range(3)]
         self.assertEqual([list(r[:3]) for r in reset.covariance[:3]],expected)
 
+    def test_near_parallel_axis_uses_shipping_strict_real_cutoff(self):
+        # Rational unit vector parameterization. Its transverse component is
+        # about 2e-9, hence norm_axis < 1e-8 although it is not exactly zero.
+        t=F(1,10**9); d=1+t*t
+        y=2*t/d; z=(1-t*t)/d
+        acc=(F(0),-y,-z)  # norm exactly one, so target=(0,y,z)
+        self.assertEqual(M.dot(acc,acc),F(1))
+        self.assertGreater(M.dot((y,0,0),(y,0,0)),0)
+        self.assertLess(y*y,X.AXIS_NORM_CUTOFF2)
+        near=X.AccTiltWitness(T.SqrtWitness(F(1),F(1)))
+        self.assertEqual(X._qref_from_acc(acc,near),(F(1),F(0),F(0),F(0)))
+        with self.assertRaises(ValueError):
+            X._qref_from_acc(acc,X.AccTiltWitness(
+                T.SqrtWitness(F(1),F(1)),T.SqrtWitness(y*y,y),F(1),F(0)))
+
     def test_wrong_old_yaw_or_acc_norm_is_rejected(self):
         st=core((F(3,5),F(4,5),0,0)); sample=guarded(st)
         aw=X.AccTiltWitness(T.SqrtWitness(GRAV*GRAV,GRAV))
@@ -114,8 +129,10 @@ class Tests(unittest.TestCase):
         r=X.readiness()
         self.assertTrue(r['free_final_preserve_yaw_quaternion_removed_from_theorem_entry'])
         self.assertTrue(r['watchdog_threshold_rigorous_cosine_enclosure'])
+        self.assertTrue(r['preserve_yaw_axis_norm_strict_cutoff_materialized_real'])
         self.assertTrue(r['reset_covariance_axis_comes_from_accel_only_intermediate_before_yaw_restore'])
         self.assertTrue(r['final_yaw_restore_does_not_reseed_covariance'])
+        self.assertFalse(r['near_parallel_cutoff_binary32_closed'])
         self.assertFalse(r['watchdog_boundary_sliver_and_binary32_libm_closed'])
         self.assertFalse(r['complete_word_finite_identity']); self.assertFalse(r['ALT_LIVE_PASS'])
 
