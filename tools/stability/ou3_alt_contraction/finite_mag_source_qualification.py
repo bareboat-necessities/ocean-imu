@@ -9,15 +9,18 @@ BMM150 installation, not a Bosch guarantee for arbitrary installations:
 
     20 uT <= ||B_W||_2 <= 75 uT,
     ||(B_Wx,B_Wy)||_2 >= 15 uT,
-    ||b_HI||_2 <= 10 uT,
-    ||n_m||_2 <= 3 uT per accepted sample.
+    ||b_HI||_2 <= 5 uT,
+    ||n_m||_2 <= 2 uT per accepted sample.
 
 The Earth-field interval encloses the NOAA/WMM surface total-field range with
-margin.  The hard-iron and residual limits are installation/source admission
-requirements: samples outside them are outside the theorem, even though they
-remain far inside the BMM150 electrical measurement range.  The horizontal
-lower bound is required for deterministic yaw observability; a total-field
-bound alone cannot prove north capture near a magnetic pole.
+margin.  The hard-iron and residual limits are commissioned-installation/source
+requirements.  They are intentionally deterministic and materially wider than
+BMM150 RMS output noise, but tight enough to preserve a useful horizontal-north
+capture margin under the already-declared 0.02 rad startup tilt-direction error.
+Samples outside them are outside the theorem even when the sensor itself is far
+from electrical saturation.  The horizontal lower bound is required for
+deterministic yaw observability; a total-field bound alone cannot prove north
+capture near a magnetic pole.
 
 Rmag remains a stochastic/model covariance and is never used as a deterministic
 source bound.
@@ -36,8 +39,8 @@ ASSUMPTION_ID='MAG-BMM150-DET-v1'
 DEFAULT_WORLD_FIELD_NORM_MIN=F(20)
 DEFAULT_WORLD_FIELD_NORM_MAX=F(75)
 DEFAULT_WORLD_FIELD_HORIZONTAL_MIN=F(15)
-DEFAULT_HARD_IRON_NORM_MAX=F(10)
-DEFAULT_RESIDUAL_NORM_MAX=F(3)
+DEFAULT_HARD_IRON_NORM_MAX=F(5)
+DEFAULT_RESIDUAL_NORM_MAX=F(2)
 
 
 @dataclass(frozen=True)
