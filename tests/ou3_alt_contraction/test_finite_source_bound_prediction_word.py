@@ -24,6 +24,9 @@ def operands(state):
 
 
 def root_args():
+    # For the fixture tau=1 and h=1/200.  These values are the rigorous
+    # alternating-series lower bounds for exp(-x) and expm1(-x), not claims
+    # about the target libm's rounded outputs.
     return dict(temperature_c=F(35),ou_alpha=F(199,200),ou_em1=F(-1,200),
                 qaxis_marginal_psd=(PASS,PASS,PASS),
                 qaxis_final_psd=(PASS,PASS,PASS))
@@ -54,6 +57,17 @@ class Tests(unittest.TestCase):
         self.assertEqual(out.state.source.steps[-1].witness.ordinal,1)
         self.assertEqual(out.state.live.live.live.mekf.reference,segment.after)
 
+    def test_detached_OU_transcendental_roots_are_rejected(self):
+        s=BASE.root_state(); witness,segment,raw,_=operands(s)
+        physical=SOURCE.QualifiedPhysicalSegment(s.source.root,witness,segment)
+        args=root_args(); args.pop('temperature_c')
+        bad=dict(args); bad['ou_alpha']=F(9,10)
+        with self.assertRaisesRegex(ValueError,'exp root detached'):
+            X.build(s,physical,raw,**bad)
+        bad=dict(args); bad['ou_em1']=F(-1,10)
+        with self.assertRaisesRegex(ValueError,'expm1 root detached'):
+            X.build(s,physical,raw,**bad)
+
     def test_temperature_input_builds_shipping_conditioning_not_free_coefficient(self):
         c=X._accel_conditioning(F(37))
         self.assertIsInstance(c,SENSOR.AccelConditioning)
@@ -79,17 +93,22 @@ class Tests(unittest.TestCase):
                            **root_args(),**bad)
 
     def test_H18_consumes_no_BA_transcendentals_and_A21_requires_both(self):
-        held=X._bias_root(SimpleNamespace(mode='H'))
+        h=F(1,200)
+        held=X._bias_root(SimpleNamespace(mode='H'),h=h)
         self.assertFalse(held.active); self.assertEqual(held.phi_b,1); self.assertEqual(held.em1_2,0)
         with self.assertRaisesRegex(ValueError,'consumes no exp/expm1'):
-            X._bias_root(SimpleNamespace(mode='H'),bias_phi=F(9,10),bias_em1_2=F(-1,5))
-        with self.assertRaisesRegex(ValueError,'requires exp and expm1'):
-            X._bias_root(SimpleNamespace(mode='A'),bias_phi=F(999999,1000000))
-        active=X._bias_root(SimpleNamespace(mode='A'),bias_phi=F(999999,1000000),
-                            bias_em1_2=F(-1,500000))
+            X._bias_root(SimpleNamespace(mode='H'),h=h,bias_phi=F(9,10),bias_em1_2=F(-1,5))
+        with self.assertRaisesRegex(ValueError,'requires h plus exp and expm1'):
+            X._bias_root(SimpleNamespace(mode='A'),h=h,bias_phi=F(999999,1000000))
+        # The fixture uses conservative real enclosure endpoints around the
+        # distinct h/tau_b and 2h/tau_b shipping calls.
+        active=X._bias_root(SimpleNamespace(mode='A'),h=h,
+                            bias_phi=F(999999,1000000),bias_em1_2=F(-1,500000))
         self.assertTrue(active.active); self.assertEqual(active.tau_b,F(5000))
         self.assertEqual(active.phi_b,F(999999,1000000)); self.assertEqual(active.em1_2,F(-1,500000))
         self.assertEqual(active.Q_bacc,X.SHIPPING_BA_Q)
+        with self.assertRaisesRegex(ValueError,'BA exp root detached'):
+            X._bias_root(SimpleNamespace(mode='A'),h=h,bias_phi=F(99,100),bias_em1_2=F(-1,500000))
 
     def test_shipping_BA_temperature_and_zero_lever_defaults_are_source_locked(self):
         self.assertEqual(X.SHIPPING_BA_TAU,F(5000))
@@ -120,11 +139,13 @@ class Tests(unittest.TestCase):
         r=X.readiness()
         for key in ('prediction_angular_OU_Qaxis_roots_bound_to_same_source_continuation',
                     'OU_exp_and_expm1_shipping_results_retained_separately',
+                    'OU_exp_expm1_real_enclosed_at_same_source_argument',
                     'Qaxis_machine_epsilon_bound_to_shipping_binary32',
                     'shipping_BA_tau_Q_defaults_bound_at_prediction_entry',
                     'shipping_BA_hold_active_branch_derived_from_current_MEKF_mode',
                     'held_H18_BA_phi_exactly_one_without_transcendental_witness',
                     'active_A21_BA_exp_and_expm1_results_retained_separately',
+                    'active_A21_BA_exp_expm1_real_enclosed_at_literal_arguments',
                     'accelerometer_temperature_coefficient_bound_to_shipping_default',
                     'zero_lever_accelerometer_scope_enforced_at_source_bound_entry',
                     'temperature_is_explicit_per_sample_input_not_free_model_coefficient',
