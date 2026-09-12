@@ -1,10 +1,11 @@
 """Finite AdaptiveWaveBandPass + SeaStateAutoTuner variance recurrence.
 
 Preserves shipping timing: the adaptive band's corner uses the previous tuner
-frequency when that state is ready, otherwise the current WPE frequency. The
-resulting band sample is then fed to SeaStateAutoTuner with the current WPE
-frequency. Thus band coefficients are one-sample predictable while the moment
-statistics consume every valid physical sample.
+frequency when that state is ready, otherwise ``tuner_frequency_hz_()``.  That
+external frequency is the fixed prior until the WPE's one-way usable-period
+latch clears, and only then becomes the current canonical WPE frequency.  The
+resulting band sample is fed to SeaStateAutoTuner with that same external
+frequency.
 
 The band-noise floor follows shipping literally: before the adaptive band has
 completed a valid step it is the raw bench noise sigma; only a ready band uses
@@ -28,13 +29,14 @@ EMA_HORIZON_MIN,EMA_HORIZON_MAX=F(1,20),F(35)
 @dataclass(frozen=True)
 class BandConfig:
     low_ratio:F; high_ratio:F; min_hz:F; max_hz:F
-    tune_freq_floor:F; tune_freq_ceil:F
+    tune_freq_floor:F; tune_freq_ceil:F; tune_freq_prior:F=F(1,5)
     def __post_init__(self):
-        for n in ('low_ratio','high_ratio','min_hz','max_hz','tune_freq_floor','tune_freq_ceil'):
+        for n in ('low_ratio','high_ratio','min_hz','max_hz','tune_freq_floor','tune_freq_ceil','tune_freq_prior'):
             object.__setattr__(self,n,R(getattr(self,n)))
         if self.low_ratio<=0 or self.high_ratio<=self.low_ratio or self.min_hz<=0 or self.max_hz<=self.min_hz:
             raise ValueError('invalid adaptive band configuration')
-        if self.tune_freq_floor<=0 or self.tune_freq_ceil<self.tune_freq_floor: raise ValueError('invalid tune frequency bounds')
+        if self.tune_freq_floor<=0 or self.tune_freq_ceil<self.tune_freq_floor or self.tune_freq_prior<=0:
+            raise ValueError('invalid tune frequency bounds/prior')
 
 
 @dataclass(frozen=True)
@@ -105,6 +107,7 @@ class FrontendResult:
     band_state:BandState
     stats_state:StatsState
     band_reference_frequency:F
+    external_tuner_frequency:F
     current_tuner_frequency:F
     filtered_accel:F
     variance_ready:bool
@@ -131,8 +134,8 @@ def band_step(s:BandState,cfg:BandConfig,*,x,dt,f_ref,decay:BandDecayWitness):
     return BandState(low_new,band_new,p00,p01,p11,low,high,True)
 
 
-def stats_step(s:StatsState,cfg:StatsConfig,*,dt,accel,current_wpe_frequency,decay:VarianceDecayWitness):
-    dt,a,f=map(R,(dt,accel,current_wpe_frequency))
+def stats_step(s:StatsState,cfg:StatsConfig,*,dt,accel,external_frequency,decay:VarianceDecayWitness):
+    dt,a,f=map(R,(dt,accel,external_frequency))
     if dt<=0 or f<=0: raise ValueError('positive tuner-stat dt/frequency required')
     fe=clamp(f,cfg.f_min,cfg.f_max)
     sea=clamp(F(1,2)/fe,EMA_SCALE_MIN,EMA_SCALE_MAX)
@@ -152,16 +155,21 @@ def variance(s:StatsState):
     return max(F(0),s.sq_value/s.sq_weight-mu*mu)
 
 
+def tuner_frequency(wpe:WPE.UpdateResult,cfg:BandConfig):
+    if not isinstance(wpe,WPE.UpdateResult): raise TypeError('finite WPE successor required')
+    if wpe.state.usable_period and wpe.frequency is not None and wpe.frequency>0:
+        return wpe.frequency
+    return cfg.tune_freq_prior
+
+
 def frontend_step(band:BandState,stats:StatsState,wpe:WPE.UpdateResult,*,vertical_accel,dt,
                   band_cfg:BandConfig,stats_cfg:StatsConfig,band_decay:BandDecayWitness,
                   variance_decay:VarianceDecayWitness,bench_noise_sigma,noise_sqrt:NoiseSqrtWitness|None=None):
-    if not isinstance(wpe,WPE.UpdateResult) or wpe.frequency is None:
-        raise ValueError('current canonical WPE frequency required')
-    current_f=wpe.frequency
-    fref=stats.frequency if stats.freq_ready else current_f
+    external_f=tuner_frequency(wpe,band_cfg)
+    fref=stats.frequency if stats.freq_ready else external_f
     fref=clamp(fref,band_cfg.tune_freq_floor,band_cfg.tune_freq_ceil)
     bnext=band_step(band,band_cfg,x=vertical_accel,dt=dt,f_ref=fref,decay=band_decay)
-    snext=stats_step(stats,stats_cfg,dt=dt,accel=bnext.band,current_wpe_frequency=current_f,decay=variance_decay)
+    snext=stats_step(stats,stats_cfg,dt=dt,accel=bnext.band,external_frequency=external_f,decay=variance_decay)
     bench=R(bench_noise_sigma)
     if bench<0: raise ValueError('bench noise sigma must be nonnegative')
     if not bnext.ready:
@@ -172,7 +180,7 @@ def frontend_step(band:BandState,stats:StatsState,wpe:WPE.UpdateResult,*,vertica
         if noise_sqrt.sqrt_gain*noise_sqrt.sqrt_gain != max(F(0),bnext.p11):
             raise ValueError('band-noise sqrt detached from same covariance recurrence')
         noise=bench*noise_sqrt.sqrt_gain
-    return FrontendResult(bnext,snext,fref,snext.frequency,bnext.band,snext.var_ready,variance(snext),noise)
+    return FrontendResult(bnext,snext,fref,external_f,snext.frequency,bnext.band,snext.var_ready,variance(snext),noise)
 
 
 def readiness():
@@ -180,8 +188,9 @@ def readiness():
       'adaptive_band_state_and_covariance_materialized':True,
       'adaptive_band_identity_branches_materialized':True,
       'unready_band_noise_floor_branch_materialized':True,
+      'WPE_usable_gate_and_tune_frequency_prior_materialized':True,
       'previous_tuner_frequency_drives_band_corner':True,
-      'current_WPE_frequency_drives_variance_horizon':True,
+      'external_prior_or_WPE_frequency_drives_variance_horizon':True,
       'debiased_first_second_moments_materialized':True,
       'band_noise_variance_gain_materialized':True,
       'band_exp_and_noise_sqrt_binary32_ancestry_attached':False,
