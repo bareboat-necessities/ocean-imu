@@ -2,13 +2,17 @@
 
 Scope: certified zero-wind-heel deployment and the magnetically gauged handoff.
 The wrapper calls inner ``goLive(..., allow_acc_bias=false)``; inner goLive first
-executes ``initialize_from_attitude`` and then ``enterLive_``.  ``enterLive_``
+executes ``initialize_from_attitude`` and then ``enterLive_``. ``enterLive_``
 commits the already-qualified tuner operating point, seats the a_w covariance on
 the committed stationary covariance, clears all a_w cross-covariances, keeps
 accelerometer-bias learning held, installs Live R_S and enters StartupStage::Live.
 
+The accepted handoff quaternion is retained explicitly so the theorem-facing
+fresh-entry bridge can derive the actual joint24 attitude/error coordinates from
+the SAME physical endpoint instead of postulating an entry-error box.
+
 This module captures the exact real-arithmetic state/covariance mutation after
-the handoff reset.  Binary32 setter/normalization correspondence and wrapper
+the handoff reset. Binary32 setter/normalization correspondence and wrapper
 clock/event arithmetic remain separate obligations.
 """
 from __future__ import annotations
@@ -28,6 +32,7 @@ N=21
 class Result:
     x:tuple
     P:tuple
+    q_hat:tuple
     active:ACTIVE.ActiveParameters
     startup_stage:str
     startup_stage_t:F
@@ -64,8 +69,8 @@ def enter_live(handoff:INIT.Result,active:ACTIVE.ActiveParameters,*,scope:SCOPE.
     if active.R_S is None:
         raise ValueError('fresh Live entry requires committed Live R_S')
 
-    return Result(tuple(x),tuple(tuple(r) for r in P),active,'Live',F(0),False,
-                  True,True)
+    return Result(tuple(x),tuple(tuple(r) for r in P),tuple(handoff.q_seed),active,
+                  'Live',F(0),False,True,True)
 
 
 def readiness():
@@ -76,6 +81,7 @@ def readiness():
       'fresh_aw_cross_covariances_zeroed':True,
       'fresh_accelerometer_bias_gate_remains_H18':True,
       'committed_Live_RS_required':True,
+      'handoff_quaternion_retained_for_joint24_entry':True,
       'fresh_real_arithmetic_H18_entry_composed':True,
       'wrapper_live_clock_binary32_attached':False,
       'setter_and_normalization_binary32_attached':False,
