@@ -1,13 +1,15 @@
 """Literal safe-LDLT control graph around the finite accepted measurement.
 
 The exact mean/covariance measurement algebra lives in finite_core. This layer
-adds shipping's first-attempt / one-bump retry / rejection semantics. Its
-accelerometer shipping entry now consumes the same RawImuSample used by private
-Mahony/prediction and derives finite_core's temperature-removed de-heeled
-observation through finite_sensor_source_runtime.
+adds shipping's first-attempt / one-bump retry / rejection semantics. The full
+shipping accelerometer entry consumes a ``GuardedImuSample``: the immutable raw
+packet establishes COMPLETE-BRMM sensor ancestry, while the guard descendant is
+the exact ``acc_in`` used by private Mahony and the MEKF.
 
-Eigen LDLT outcomes, floating Frobenius ``noise_scale``, temperature/k_a runtime
-ancestry and deployment roundoff remain explicit open obligations.
+The older raw entry is retained only as a lower-level unguarded identity branch.
+Eigen LDLT outcomes, floating Frobenius ``noise_scale``, vibration-guard
+transcendentals, temperature/k_a runtime ancestry and deployment roundoff remain
+explicit open obligations.
 """
 from __future__ import annotations
 from dataclasses import dataclass
@@ -57,17 +59,12 @@ def measurement(state, kind, *, ldlt:SafeLDLT, **kwargs):
     return MeasurementRuntimeResult(accepted.state,True,ldlt,accepted)
 
 
-def accelerometer_from_raw(state,sample:SENSOR.RawImuSample,conditioning:SENSOR.AccelConditioning,*,
-                           ldlt:SafeLDLT,R,gravity=None,**kwargs):
-    """Shipping accelerometer event rooted in one raw B-frame IMU packet.
-
-    ``finite_core`` expects the de-heeled observation with the modeled
-    temperature term removed. This helper derives exactly that value and keeps
-    the safe-LDLT accept/retry/reject control graph unchanged.
-    """
-    if not isinstance(sample,SENSOR.RawImuSample): raise TypeError('RawImuSample required')
+def _accel_event(state,sample,conditioning,*,ldlt,R,gravity=None,guarded=False,**kwargs):
     if sample.physical != state.reference: raise ValueError('accelerometer packet detached from SAME physical reference')
-    SENSOR.assert_acc_measurement_input(sample,sample.raw_accel_body)
+    if guarded:
+        SENSOR.assert_guarded_acc_measurement_input(sample,sample.conditioned_accel_body)
+    else:
+        SENSOR.assert_acc_measurement_input(sample,sample.raw_accel_body)
     packet=SENSOR.finite_accel_core_observation(sample,conditioning)
     if gravity is None:
         if sample.gravity_world[0] or sample.gravity_world[1]:
@@ -75,9 +72,27 @@ def accelerometer_from_raw(state,sample:SENSOR.RawImuSample,conditioning:SENSOR.
         gravity=sample.gravity_world[2]
     else:
         gravity=P.rational(gravity)
-        if sample.gravity_world != (0,0,gravity): raise ValueError('core gravity detached from raw sensor physical model')
-    if 'observed' in kwargs or 'kind' in kwargs: raise TypeError('accelerometer observation/kind are owned by raw sensor bridge')
+        if sample.gravity_world != (0,0,gravity): raise ValueError('core gravity detached from sensor physical model')
+    if 'observed' in kwargs or 'kind' in kwargs: raise TypeError('accelerometer observation/kind are owned by sensor bridge')
     return measurement(state,'accelerometer',ldlt=ldlt,R=R,observed=packet.observed,gravity=gravity,**kwargs)
+
+
+def accelerometer_from_raw(state,sample:SENSOR.RawImuSample,conditioning:SENSOR.AccelConditioning,*,
+                           ldlt:SafeLDLT,R,gravity=None,**kwargs):
+    """Lower-level unguarded identity branch retained for exact unit tests."""
+    if not isinstance(sample,SENSOR.RawImuSample): raise TypeError('RawImuSample required')
+    return _accel_event(state,sample,conditioning,ldlt=ldlt,R=R,gravity=gravity,guarded=False,**kwargs)
+
+
+def accelerometer_from_guarded(state,sample:SENSOR.GuardedImuSample,conditioning:SENSOR.AccelConditioning,*,
+                               ldlt:SafeLDLT,R,gravity=None,**kwargs):
+    """Full shipping accelerometer event rooted in the same guarded ``acc_in``.
+
+    The effective post-guard residual is derived by ``GuardedImuSample`` from the
+    raw physical packet and guard recurrence; callers cannot supply it freely.
+    """
+    if not isinstance(sample,SENSOR.GuardedImuSample): raise TypeError('GuardedImuSample required')
+    return _accel_event(state,sample,conditioning,ldlt=ldlt,R=R,gravity=gravity,guarded=True,**kwargs)
 
 
 def readiness():
@@ -87,9 +102,11 @@ def readiness():
       'double_LDLT_failure_rejection_branch':True,
       'rejected_measurement_preserves_state_covariance':True,
       'same_retry_shift_used_by_gain_and_Joseph':True,
-      'accelerometer_observation_from_same_raw_packet':True,
-      'accelerometer_deheel_and_temperature_removal_attached':True,
+      'accelerometer_observation_from_same_guarded_packet':True,
+      'accelerometer_guard_deheel_and_temperature_removal_attached':True,
+      'guard_effective_residual_is_derived_not_free':True,
       'temperature_and_k_a_runtime_ancestry_attached':False,
+      'guard_exp_sqrt_binary32_ancestry_attached':False,
       'noise_scale_frobenius_runtime_source_attached':False,
       'Eigen_LDLT_outcomes_finite_precision_attached':False,
       'machine_epsilon_deployment_attached':False,
