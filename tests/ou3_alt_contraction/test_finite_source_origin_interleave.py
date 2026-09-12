@@ -11,6 +11,7 @@ import unittest
 
 from tools.stability.ou3_alt_contraction import finite_live_interleave as X
 from tools.stability.ou3_alt_contraction import finite_physical_prediction as PHYS
+from tools.stability.ou3_alt_contraction import finite_magnetic_wrapper_clock as WCLOCK
 from tools.stability.ou3_alt_contraction import bias_families as BIAS
 import test_finite_live_interleave as LIVEFIX
 import test_finite_live_magnetic_word as MAG
@@ -30,8 +31,9 @@ def mag_kwargs(state):
     kw=MAG.live_kwargs(state.magnetic)
     memory=state.magnetic.memory
     if memory.cfg.continuous_enabled:
-        now=state.live.live.mekf.reference.time
-        dt=now-memory.last_hi_time if memory.last_hi_time is not None and now>memory.last_hi_time else memory.cfg.sample_dt
+        physical=state.live.live.mekf.reference.time
+        ts=WCLOCK.at_physical_time(physical)
+        dt=WCLOCK.shipping_elapsed(ts,memory.last_hi_time,fallback_dt=memory.cfg.sample_dt)
         kw['hi_decay']=MAG.HI.Decay(dt,memory.cfg.continuous.memory,1)
     return kw
 
@@ -55,9 +57,6 @@ class Tests(unittest.TestCase):
         self.assertEqual(mag.state.clock.calls,1)
 
         raw,segment,kw=LIVEFIX.imu_operands(mag.state)
-        # LIVEFIX constructs a generic physical step.  The source-qualified
-        # regression must use the actual fixed decay admitted by the selected
-        # BIAS family rather than silently borrowing that generic fixture phi.
         segment=PHYS.PhysicalSegment(segment.before,segment.after,segment.J0,
             segment.J1,segment.J2,family_phi(root.bias_family),segment.bias_driver)
         witness=X.SOURCE.StepWitness(1,'root','cell-1','primitive-0','primitive-1')
@@ -76,6 +75,7 @@ class Tests(unittest.TestCase):
         r=X.readiness()
         self.assertIsInstance(origin,X.SOURCE.QualifiedPhysicalOrigin)
         self.assertTrue(r['source_checked_async_magnetic_endpoint_entry_available'])
+        self.assertTrue(r['live_magnetic_outer_inner_dual_clock_composed'])
         self.assertFalse(r['sample_zero_full_source_membership_proved'])
         self.assertFalse(r['finite_magnetic_source_bound_to_same_COMPLETE_BRMM_history'])
         self.assertFalse(r['source_uniform_complete_600_step_word_qualified'])
