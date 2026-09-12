@@ -1,29 +1,24 @@
 """First composed default-policy Live IMU sample prefix for ALT.
 
-This module joins the previously separate same-history relations in the shipping
-sample order, while remaining deliberately conditional on the still-open hybrid
-and finite-precision branches.
+This module joins the previously separate same-history relations in shipping
+sample order.  It remains conditional on explicitly open hybrid/source/precision
+branches and therefore is not a stability certificate.
 
 Represented coupled order:
-  1. apply a tuner candidate pending from sample k-1; if T_S changes, retarget
-     scheduler credit with shipping's progress-preserving rule;
-  2. advance one persistent AccelVibrationGuard from the raw predecessor packet;
-  3. advance private Mahony from that exact guarded ``acc_in``;
-  4. compute pre-measurement Racc from the same guard excess and PRE-UPDATE WPE /
-     TuneState schedule;
-  5. execute the active-parameter-rooted MEKF prediction, queued a_w floor,
-     scheduler/S service, and held guarded accelerometer correction;
-  6. execute the measurement-only tracker-free tuner suffix using the already
-     computed Mahony successor; current WPE update remains last;
-  7. execute the deployed periodic aw-sync request recurrence.  It commutes with
-     the measurement-only suffix because it reads only time/current ActiveSigma
-     and writes a disjoint aw-sync state; critically, any request snapshots the
-     OLD/current active Sigma for the next sample.
+  1. staged tuner commit and progress-preserving S-scheduler retarget;
+  2. persistent accelerometer vibration guard;
+  3. private Mahony from the exact guarded ``acc_in`` (either the exact-rational
+     witness API or the named initialized binary32 profile already certified by
+     its separate correspondence layer);
+  4. pre-measurement Racc from the same guard excess and pre-update tuner/WPE;
+  5. active-rooted prediction, queued a_w floor, S service, and held guarded
+     accelerometer correction;
+  6. tracker-free tuner suffix reusing that exact Mahony successor, then WPE;
+  7. deployed periodic a_w synchronization request/snapshot recurrence.
 
-Not represented here: a firing Live tilt watchdog reset, async magnetometer
-calls, legacy/congruent immediate aw-sync policies, direction sidecar state,
-source-uniform COMPLETE-BRMM bounds, or remaining deployment floating-point
-branches.  Consequently this is a finite identity prefix, NOT ALT_LIVE_PASS.
+Not represented here: a firing Live tilt reset, async magnetometer calls,
+direction sidecar state, non-default aw-sync policies, source-uniform COMPLETE-
+BRMM bounds, or remaining deployment floating-point branches.
 """
 from __future__ import annotations
 from dataclasses import dataclass
@@ -93,6 +88,7 @@ def step(state:State,raw:SENSOR.RawImuSample,segment:PHYS.PhysicalSegment,*,dt,
          boundary_noise_sqrt=None,rs_sqrt_scale=None,scheduler_park=None,
          guard_cfg:GUARD.Config,guard_decay=None,guard_rms=None,
          vertical_cfg:VERT.Config,accel_invnorm=None,quat_invnorm=None,seed=None,
+         vertical_arithmetic_profile=None,
          band_cfg:BAND.BandConfig,
          preupdate_period=None,preupdate_frequency=None,
          racc_cfg:RACC.Config,nominal_racc_std,rao_witness=None,racc_sqrt=None,
@@ -119,7 +115,6 @@ def step(state:State,raw:SENSOR.RawImuSample,segment:PHYS.PhysicalSegment,*,dt,
     if state.tuner.pending and boundary_noise_sqrt is None and state.tuner.band.ready:
         raise ValueError('pending boundary with ready band requires its boundary noise sqrt witness')
 
-    # Boundary transaction from data through k-1 only.
     boundary=BOUND.apply(state.tuner,commit_cfg,bench_noise_sigma=boundary_bench_noise_sigma,
                          noise_sqrt=boundary_noise_sqrt,rs_sqrt_scale=rs_sqrt_scale)
     tuner_entry=boundary.state
@@ -130,27 +125,28 @@ def step(state:State,raw:SENSOR.RawImuSample,segment:PHYS.PhysicalSegment,*,dt,
     elif scheduler_park is not None:
         raise ValueError('no tuner period commit consumes no scheduler-retarget witness')
 
-    # One accelerometer ingress and one private-Mahony successor.
     guarded=SENSOR.guarded_sample(raw,state.guard,guard_cfg,dt=dt,decay=guard_decay,rms=guard_rms)
-    vertical=SENSOR.vertical_step_from_guarded(tuner_entry.vertical,vertical_cfg,guarded,dt=dt,
-                                               accel_invnorm=accel_invnorm,quat_invnorm=quat_invnorm,seed=seed)
+    vkw=dict(dt=dt,accel_invnorm=accel_invnorm,quat_invnorm=quat_invnorm,seed=seed)
+    if vertical_arithmetic_profile is not None:
+        if any(x is not None for x in (accel_invnorm,quat_invnorm,seed)):
+            raise ValueError('named binary32 Mahony profile consumes no free normalization/seed witnesses')
+        vkw['arithmetic_profile']=vertical_arithmetic_profile
+    vertical=SENSOR.vertical_step_from_guarded(tuner_entry.vertical,vertical_cfg,guarded,**vkw)
     view=FRONT.wpe_view(tuner_entry.wpe,
         current_period=preupdate_period if tuner_entry.wpe.usable_period else None,
         current_frequency=preupdate_frequency if tuner_entry.wpe.usable_period else None)
     f_pre=BAND.tuner_frequency(view,band_cfg)
 
-    # Racc uses the just-updated guard but the previous tuner/WPE schedule.
     rr=RACC.step(state.racc,racc_cfg,guarded.guard,nominal_std=nominal_racc_std,
                  tune=tuner_entry.tune,preupdate_frequency=f_pre,live=True,
                  rao_witness=rao_witness,effective_sqrt=racc_sqrt)
 
-    # Prediction and internal post-prediction services.
     pred=WORD.prediction_from_active(active,state.mekf,segment,raw,angular=angular,Qbase=Qbase,
           ou=ou,bias=bias,qaxis=qaxis,use_exact_attitude_Q=use_exact_attitude_Q,
           attitude_first_ldlt_success=attitude_first_ldlt_success,
           attitude_second_ldlt_success=attitude_second_ldlt_success)
     target=AWSYNC.floor_target(state.aw_sync)
-    if target is None: target=active.Sigma_aw  # ignored by literal non-pending floor branch
+    if target is None: target=active.Sigma_aw
     post=WORD.post_prediction_from_active(pred,h=dt,pending_aw_floor=state.aw_sync.pending,
           aw_floor_target=target,scheduler=scheduler,floor_solver_success=floor_solver_success,
           floor_eigenvectors=floor_eigenvectors,floor_eigenvalues=floor_eigenvalues)
@@ -166,7 +162,6 @@ def step(state:State,raw:SENSOR.RawImuSample,segment:PHYS.PhysicalSegment,*,dt,
     if tilt_reset_due:
         raise NotImplementedError('Live initialize_from_acc_preserve_yaw reset branch is not yet composed')
 
-    # Measurement-only suffix; it must reuse the exact Mahony successor above.
     suffix=TUNER.continue_after_vertical(tuner_entry,guarded,vertical,dt=dt,
           wpe_cfg=wpe_cfg,wpe_decay=wpe_decay,wpe_moment_decay=wpe_moment_decay,
           wpe_period_witness=wpe_period_witness,wpe_log_witness=wpe_log_witness,
@@ -178,7 +173,6 @@ def step(state:State,raw:SENSOR.RawImuSample,segment:PHYS.PhysicalSegment,*,dt,
           still_attenuation=still_attenuation,candidate_cfg=candidate_cfg,
           sigma_wave_sqrt=sigma_wave_sqrt,spectral=spectral,ema=ema)
 
-    # This tick commutes with the measurement-only suffix in the product state.
     due=(suffix.state.time-aw_after_prediction.last_sync_time)>R(aw_sync_adapt_every)
     sync=AWSYNC.tick(aw_after_prediction,time=suffix.state.time,
           adapt_every=aw_sync_adapt_every,live=True,
@@ -195,6 +189,7 @@ def readiness():
       'boundary_commit_to_active_prediction_same_history':True,
       'period_commit_retargets_persistent_S_scheduler':True,
       'one_guarded_accel_feeds_Mahony_and_postprediction_accel_update':True,
+      'named_initialized_binary32_Mahony_profile_composable':True,
       'Racc_uses_same_guard_and_preupdate_tuner_schedule':True,
       'queued_aw_floor_uses_snapshotted_precommit_target':True,
       'S_service_uses_same_active_period_and_RS':True,
