@@ -47,35 +47,67 @@ jobs:
             tools/stability/ou3_brmm_private_mahony_live_invariant.py \
             tools/stability/ou3_brmm_private_mahony_discrete_invariant.py \
             tools/stability/ou3_startup_timeout_capture.py
-      - name: Execute widened source and startup capture certificates
+      - name: Execute padded source qualification
         run: |
           mkdir -p /tmp/ou3-p5-startup
           python3 tools/stability/ou3_brmm_gravity_direction_forcing_qualification.py --output /tmp/ou3-p5-startup/direction.json
-          python3 tools/stability/ou3_brmm_private_mahony_live_invariant.py --output /tmp/ou3-p5-startup/continuous.json
-          python3 tools/stability/ou3_brmm_private_mahony_discrete_invariant.py --output /tmp/ou3-p5-startup/discrete.json
-          python3 tools/stability/ou3_startup_timeout_capture.py --output /tmp/ou3-p5-startup/capture.json
           python3 - <<'PY'
           import json
-          root='/tmp/ou3-p5-startup/'
-          d=json.load(open(root+'direction.json')); c=json.load(open(root+'continuous.json')); b=json.load(open(root+'discrete.json')); p=json.load(open(root+'capture.json'))
-          for name,x in [('direction',d),('continuous',c),('discrete',b),('capture',p)]:
-              assert x['validation_pass'], (name,x['validation_failures'])
-          assert d['pointwise_8mps2_cap_retained'] is True
-          assert 54.0 < d['instantaneous_direction_angle_upper_deg'] < 55.0
-          assert c['continuous_all_live_PI_invariant_closed'] is True
-          assert c['invariant_strictly_inside_87deg_chart'] is True
-          assert c['invariant_strictly_inside_60deg_chart'] is False
-          assert c['boundary_validation']['strict_inward_margin_lower'] > 0.0
-          assert b['shipping_binary32_discrete_invariant_closed_conditionally_on_source_order'] is True
-          assert b['continuous_boundary_margin_after_binary32'] > 0.0
-          assert b['discrete_V_margin_lower'] > 0.0
-          assert p['QUALIFIED_LIVE_HANDOFF_BY_150S_CLOSED'] is True
-          assert p['timeout_aligned_branch_margin_rad'] > 0.0
-          assert p['P4_basin_reached_here'] is False
-          assert p['P5_end_to_end_closed_here'] is False
-          print('P5_STARTUP_CAPTURE_8MPS2_PASS',p['qualified_proxy_tilt_upper_deg'],p['timeout_aligned_branch_margin_deg'])
+          d=json.load(open('/tmp/ou3-p5-startup/direction.json'))
+          assert d['validation_pass'], d['validation_failures']
+          assert d['pointwise_padded_acceleration_cap_retained'] is True
+          assert d['padded_acceleration_cap_mps2'] == 8.8
+          assert 63.0 < d['instantaneous_direction_angle_upper_deg'] < 64.0
+          assert d['low_frequency_false_gravity_is_explicitly_bounded'] is True
+          assert d['P4_promoted_here'] is False and d['P5_promoted_here'] is False
+          print('PADDED_DIRECTION_ANGLE_DEG', d['instantaneous_direction_angle_upper_deg'])
           PY
+      - name: Record padded Mahony startup obstruction fail-closed
+        run: |
+          # The certificate is expected to fail at the padded envelope.  CI
+          # records the exact obstruction instead of crashing on a stale
+          # constant: the level needed to contain the accelerometer seed and the
+          # largest level inside the 87 deg chart form an empty window.
+          python3 tools/stability/ou3_brmm_private_mahony_live_invariant.py --output /tmp/ou3-p5-startup/continuous.json || true
+          python3 - <<'PY'
+          import json
+          c=json.load(open('/tmp/ou3-p5-startup/continuous.json'))
+          assert c['validation_pass'] is False, 'padded Mahony invariant unexpectedly closed; update this gate deliberately'
+          assert c['continuous_all_live_PI_invariant_closed'] is False
+          assert c['initial_set_inside_invariant'] is False
+          w=c['admissible_level_window']
+          assert w['window_nonempty'] is False
+          assert w['emptiness_factor'] > 1.0
+          g=c['BRMM_direction_geometry']
+          assert g['initial_seed_angle_closed'] is True
+          assert abs(g['initial_seed_tilt_rad_upper'] - 1.1137282529726653) < 1e-12
+          # Retained geometry that a successor certificate may still consume.
+          assert c['invariant_strictly_inside_87deg_chart'] is True
+          assert c['boundary_validation']['strict_inward_margin_lower'] > 0.0
+          print('SEED_TILT_DEG', g['initial_seed_tilt_deg_upper'])
+          print('LEVEL_WINDOW', w['level_lower_required_to_contain_seed'], w['level_upper_allowed_by_proof_chart'])
+          print('EMPTINESS_FACTOR', w['emptiness_factor'])
+          PY
+      - name: Require the downstream startup chain to refuse, not compose
+        run: |
+          set +e
+          python3 tools/stability/ou3_brmm_private_mahony_discrete_invariant.py --output /tmp/ou3-p5-startup/discrete.json 2>/tmp/ou3-p5-startup/discrete.err
+          test $? -ne 0 || { echo 'discrete invariant must refuse on an unclosed continuous invariant'; exit 1; }
+          python3 tools/stability/ou3_startup_timeout_capture.py --output /tmp/ou3-p5-startup/capture.json 2>/tmp/ou3-p5-startup/capture.err
+          test $? -ne 0 || { echo 'timeout capture must refuse on an unclosed continuous invariant'; exit 1; }
+          set -e
+          grep -q 'continuous Mahony invariant invalid' /tmp/ou3-p5-startup/discrete.err
+          grep -q 'continuous Mahony invariant invalid' /tmp/ou3-p5-startup/capture.err
+          echo 'P5_STARTUP_CAPTURE_PADDED_FAIL_CLOSED'
+      - name: Test startup certificates
+        working-directory: tests/validation
+        run: |
+          python3 -m unittest -v \
+            test_ou3_brmm_private_mahony_live_invariant \
+            test_ou3_brmm_private_mahony_discrete_comparison \
+            test_ou3_brmm_private_mahony_state_step
       - uses: actions/upload-artifact@v6
+        if: always()
         with:
           name: ou3-p5-startup-capture
           path: /tmp/ou3-p5-startup/

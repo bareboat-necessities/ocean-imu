@@ -1,0 +1,122 @@
+name: ou3-brmm-magnetic-assumptions
+
+on:
+  push:
+    paths:
+      - "tools/stability/ou3_brmm_magnetic_source_envelope.py"
+      - "tools/stability/ou3_brmm_magnetic_call_schedule.py"
+      - "tools/stability/ou3_brmm_magnetic_startup_yaw_capture.py"
+      - "tools/stability/ou3_brmm_private_mahony_live_invariant.py"
+      - "tools/stability/ou3_brmm_gravity_direction_forcing_qualification.py"
+      - "tools/stability/ou3_proof_operating_domain.json"
+      - "tests/validation/test_ou3_brmm_magnetic_assumptions.py"
+      - "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h"
+      - "src/tuner/MagAutoTuner.h"
+      - ".github/workflows/ou3-brmm-magnetic-assumptions.yml"
+  pull_request:
+    paths:
+      - "tools/stability/ou3_brmm_magnetic_source_envelope.py"
+      - "tools/stability/ou3_brmm_magnetic_call_schedule.py"
+      - "tools/stability/ou3_brmm_magnetic_startup_yaw_capture.py"
+      - "tools/stability/ou3_brmm_private_mahony_live_invariant.py"
+      - "tools/stability/ou3_brmm_gravity_direction_forcing_qualification.py"
+      - "tools/stability/ou3_proof_operating_domain.json"
+      - "tests/validation/test_ou3_brmm_magnetic_assumptions.py"
+      - "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h"
+      - "src/tuner/MagAutoTuner.h"
+      - ".github/workflows/ou3-brmm-magnetic-assumptions.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: ou3-brmm-magnetic-assumptions-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  magnetic-assumptions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Compile magnetic assumption sources
+        run: |
+          python3 -m py_compile \
+            tools/stability/ou3_brmm_magnetic_source_envelope.py \
+            tools/stability/ou3_brmm_magnetic_call_schedule.py \
+            tools/stability/ou3_brmm_magnetic_startup_yaw_capture.py
+      - name: Execute the named magnetic certificates
+        run: |
+          mkdir -p /tmp/ou3-brmm-magnetic
+          python3 tools/stability/ou3_brmm_magnetic_source_envelope.py --output /tmp/ou3-brmm-magnetic/envelope.json
+          python3 tools/stability/ou3_brmm_magnetic_call_schedule.py --output /tmp/ou3-brmm-magnetic/schedule.json
+          python3 tools/stability/ou3_brmm_magnetic_startup_yaw_capture.py --output /tmp/ou3-brmm-magnetic/capture.json
+          python3 - <<'PY'
+          import json
+          root='/tmp/ou3-brmm-magnetic/'
+          e=json.load(open(root+'envelope.json'))
+          s=json.load(open(root+'schedule.json'))
+          c=json.load(open(root+'capture.json'))
+          for name,d in (('envelope',e),('schedule',s),('capture',c)):
+              assert d['validation_pass'], (name, d['validation_failures'])
+
+          # --- closed here -------------------------------------------------
+          assert e['assumption_id'] == 'MAG-BMM150-DET-v1'
+          assert e['measured_body_field_norm_lower_uT'] == 13.0
+          assert e['declared_PE_magnetic_floor_is_now_derived'] is True
+          assert e['declared_PE_magnetic_ceiling_is_now_derived'] is True
+          assert e['shipping_mag_norm_guard_cleared_unconditionally'] is True
+          assert s['assumption_id'] == 'MAG-CALL-SCHEDULE-v1'
+          assert s['H18_A21_RELEASE_TIME_CLOSED'] is True
+          assert abs(s['H18_A21_release_time_upper_s'] - 10.0) < 1e-12
+          assert s['release']['strict_one_second_guard_forced'] is True
+          assert c['DECLARED_SUPPLY_ENTRANCE_CLOSED'] is True
+          assert c['declared_supply_branch']['sin_yaw_error_upper_exact'] == '17/30'
+          assert abs(c['declared_supply_branch']['full_attitude_rad_upper'] - 0.63) < 1e-12
+          assert c['declared_supply_branch']['full_attitude_deg_upper'] < c['declared_entrance_full_attitude_deg']
+
+          # --- still open, fail-closed -------------------------------------
+          assert e['norm_ratio_gate']['universal_sample_admission_forced'] is False
+          assert e['accumulation_frame_error_supply_is_open_obligation'] is True
+          assert e['declared_startup_direction_error_is_the_accumulation_frame_error'] is False
+          assert e['magnetic_vector_sine_separation_derivable_from_this_class'] is False
+          assert s['eventual_A21_under_arbitrary_external_acc_bias_hold_claimed'] is False
+          assert s['H18_A21_covariance_transport_closed_here'] is False
+          assert c['CERTIFIED_SUPPLY_ENTRANCE_CLOSED'] is False
+          assert c['accumulation_frame_tilt_supply_discharged'] is False
+          assert c['timeout_branch_yaw_gauge_forced'] is False
+          assert c['certified_supply_branch']['magnetic_capture_forced_from_certified_supply'] is False
+          assert c['certified_supply_branch']['gate_shortfall_factor'] > 1.0
+          assert c['forcing_scaling_argument']['metric_refinement_alone_cannot_reach_requirement'] is True
+          assert len(c['alternatives']) >= 3
+          for d in (e, s, c):
+              assert d['filter_changed'] is False
+              assert d['quality_gates_changed'] is False
+              assert d['trajectory_replay_used'] is False
+          assert e['P4_promoted_here'] is False and e['P5_promoted_here'] is False
+          assert c['P4_basin_reached_here'] is False and c['P5_end_to_end_closed_here'] is False
+
+          r=e['derived_tilt_requirements']
+          print('BINDING_GATE', r['binding_requirement'])
+          print('REQUIRED_TILT_DEG', r['max_tilt_deg_for_horizontal_fraction_gate'])
+          print('NORTH_CAPTURE_TILT_DEG', r['max_tilt_deg_for_north_capture'])
+          print('CERTIFIED_TILT_DEG', c['certified_supply_branch']['certified_tilt_deg_upper'])
+          print('GATE_SHORTFALL_FACTOR', c['certified_supply_branch']['gate_shortfall_factor'])
+          print('METRIC_FREE_FLOOR_DEG', c['forcing_scaling_argument']['metric_free_tilt_floor_deg'])
+          print('METRIC_FREE_SHORTFALL_FACTOR', c['forcing_scaling_argument']['shortfall_factor'])
+          print('UNIVERSAL_ADMISSION_BUDGET_UT', e['norm_ratio_gate']['universal_admission_perturbation_budget_uT'])
+          print('H18_A21_RELEASE_S', s['H18_A21_release_time_upper_s'])
+          print('DECLARED_SUPPLY_FULL_ATTITUDE_DEG', c['declared_supply_branch']['full_attitude_deg_upper'])
+          PY
+      - name: Test magnetic assumption certificates
+        working-directory: tests/validation
+        run: python3 -m unittest -v test_ou3_brmm_magnetic_assumptions
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: ou3-brmm-magnetic-assumptions
+          path: /tmp/ou3-brmm-magnetic/
+          retention-days: 7

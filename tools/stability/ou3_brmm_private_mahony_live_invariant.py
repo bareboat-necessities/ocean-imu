@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validated all-Live PI invariant for the private Mahony observer at a_m<=8.
+"""Validated all-Live PI invariant for the private Mahony observer.
 
 The widened BRMM source permits large instantaneous orbital acceleration, so the
 old proof that treated the normalized gravity-direction error as an arbitrary
@@ -23,6 +23,14 @@ quadratic metric P=R^T R is used at sqrt(C)=1.21. A rational stereographic
 cover of the boundary, outward interval arithmetic, and the endpoint sector
 s in [sinc(87 deg),1] prove strict inward flow. The actual tilt is recovered
 as theta=z_theta-0.1 xi and remains strictly below the 87 degree proof chart.
+
+The first-sample accelerometer seed angle is the source's own instantaneous
+gravity-direction angle `asin(||a_ng||/g)`, taken from the qualification module
+rather than frozen as a constant. At the padded 8.8 m/s^2 envelope that seed is
+1.1137 rad, and this certificate reports fail-closed: the level needed to
+contain the seed and the largest level that still fits inside the 87 degree
+chart form an empty window, so no level of this fixed metric closes the
+invariant for the padded family. See `admissible_level_window` in the output.
 """
 from __future__ import annotations
 import argparse,json,math
@@ -38,7 +46,6 @@ SCHEMA=2
 QUALIFICATION='OU3_BRMM_PRIVATE_MAHONY_ALL_LIVE_PI_INVARIANT_V2'
 P11=1.0;P12=-6.5;P22=163.25;DET_P=121.0
 SQRT_C=1.21;C_LEVEL=SQRT_C*SQRT_C
-INITIAL_TILT_RAD_UPPER=0.955
 CELLS_PER_CHART=8192
 
 def I(x):return Interval.outward_bounds(float(x),float(x))
@@ -52,13 +59,20 @@ def _source_constants(domain):
   'bias_transport':float(s['effective_deterministic_bias_transport_disturbance_upper_rad_s2']),
   'initial_bias':float(s['initial_tangent_gyro_bias_norm_upper_rad_s']),
   'mean_chord':float(q['mean_direction_chord_norm_upper']),'xi':float(q['direction_primitive_norm_upper_s']),
-  'chart_deg':float(q['private_mahony_proof_chart_deg']),'instant_chord':float(q['instantaneous_direction_chord_upper'])}
+  'chart_deg':float(q['private_mahony_proof_chart_deg']),'instant_chord':float(q['instantaneous_direction_chord_upper']),
+  'seed_tilt':float(q['instantaneous_direction_angle_upper_rad'])}
 
 def _direction_bounds(c):
- rho=I(c['a_ng'])/I(c['g']);sin_seed=VT.sin_point(INITIAL_TILT_RAD_UPPER)
+ # The seed angle is the source's own instantaneous gravity-direction angle.
+ # The check is now a cross-verification: the validated sine of the derived seed
+ # must enclose rho=||a_ng||/g, i.e. the seed really is asin(rho) and not a
+ # constant that has fallen behind the padded envelope.
+ rho=I(c['a_ng'])/I(c['g']);seed=c['seed_tilt'];sin_seed=VT.sin_point(seed)
  return {'rho_a_over_g':rho.as_list(),'instantaneous_direction_chord_upper':c['instant_chord'],
-  'initial_seed_tilt_rad_upper':INITIAL_TILT_RAD_UPPER,'sin_initial_seed_bound':sin_seed.as_list(),
-  'initial_seed_angle_closed':sin_seed.lo>rho.hi,'mean_direction_chord_norm_upper':c['mean_chord'],
+  'initial_seed_tilt_rad_upper':seed,'initial_seed_tilt_deg_upper':math.degrees(seed),
+  'sin_initial_seed_bound':sin_seed.as_list(),
+  'initial_seed_angle_closed':sin_seed.lo<=rho.hi and sin_seed.hi>=rho.lo,
+  'mean_direction_chord_norm_upper':c['mean_chord'],
   'direction_primitive_norm_upper_s':c['xi'],'same_history_decomposition_retained':True}
 
 def _sector_lower(chart_deg):
@@ -95,9 +109,16 @@ def _verify_boundary(c,sector_lower):
 
 def build():
  domain=json.loads(DOMAIN.read_text());wrapper=WRAPPER.read_text();c=_source_constants(domain);direction=_direction_bounds(c);sector=_sector_lower(c['chart_deg'])
- zth=INITIAL_TILT_RAD_UPPER+0.1*c['xi'];zb=c['initial_bias']+0.01*c['xi']
+ zth=c['seed_tilt']+0.1*c['xi'];zb=c['initial_bias']+0.01*c['xi']
  initial_metric_upper=P11*zth*zth+2*abs(P12)*zth*zb+P22*zb*zb;initial_inside=initial_metric_upper<C_LEVEL
  ztheta_sq=C_LEVEL*P22/DET_P;theta_upper=math.sqrt(ztheta_sq)+0.1*c['xi'];chart_rad=math.radians(c['chart_deg']);chart_contained=theta_upper<chart_rad
+ # Largest level whose z-theta projection still fits strictly inside the chart.
+ chart_level_upper=((chart_rad-0.1*c['xi'])**2)*DET_P/P22
+ window={'level_lower_required_to_contain_seed':initial_metric_upper,
+  'level_upper_allowed_by_proof_chart':chart_level_upper,
+  'declared_level_C':C_LEVEL,
+  'window_nonempty':initial_metric_upper<chart_level_upper,
+  'emptiness_factor':initial_metric_upper/chart_level_upper}
  boundary=_verify_boundary(c,sector.lo)
  parity={'deployed_two_kp_0p2':'STARTUP_PROXY_TWO_KP_DEFAULT = 0.2f;' in wrapper,'deployed_two_ki_0p02':'STARTUP_PROXY_TWO_KI_DEFAULT = 0.02f;' in wrapper,'first_sample_accelerometer_seed':True}
  closed=bool(direction['initial_seed_angle_closed'] and direction['same_history_decomposition_retained'] and initial_inside and chart_contained and boundary['closed'])
@@ -106,6 +127,7 @@ def build():
   'deployed_gain_parity':parity,'BRMM_direction_geometry':direction,'chart_deg':c['chart_deg'],'sector_sinc_lower':sector.as_list(),
   'metric_P':[[P11,P12],[P12,P22]],'metric_det':DET_P,'metric_cholesky_R':[[1.0,-6.5],[0.0,11.0]],'invariant_level_C':C_LEVEL,'sqrt_C':SQRT_C,
   'transformed_state':'z=x-B*xi','initial_metric_upper':initial_metric_upper,'initial_set_inside_invariant':initial_inside,
+  'admissible_level_window':window,
   'z_tilt_projection_sq_upper':ztheta_sq,'actual_tilt_rad_upper':theta_upper,'actual_tilt_deg_upper':math.degrees(theta_upper),'chart_radius_rad':chart_rad,
   'invariant_strictly_inside_87deg_chart':chart_contained,'invariant_strictly_inside_60deg_chart':False,'boundary_validation':boundary,
   'continuous_all_live_PI_invariant_closed':closed,'shipping_binary32_discrete_invariant_closed':False,'complete_BRMM_family_materialized_here':False,'P3_promoted':False,
@@ -117,7 +139,11 @@ def validate(d):
  for k in ('same_BRMM_specific_force_direction_required','same_BRMM_gyro_bias_forcing_required','same_history_direction_primitive_required','initial_set_inside_invariant','invariant_strictly_inside_87deg_chart','continuous_all_live_PI_invariant_closed'):
   if d.get(k) is not True:f.append(k+' is not true')
  if not all(d.get('deployed_gain_parity',{}).values()):f.append('deployed Mahony gain parity failed')
- if d.get('BRMM_direction_geometry',{}).get('initial_seed_angle_closed') is not True:f.append('initial seed angle not closed')
+ g=d.get('BRMM_direction_geometry',{})
+ if g.get('initial_seed_angle_closed') is not True:f.append('initial seed angle not closed')
+ wnd=d.get('admissible_level_window',{})
+ if wnd.get('window_nonempty') is not True:
+  f.append('no metric level contains the seed inside the proof chart (emptiness factor %.6f)'%float(wnd.get('emptiness_factor',float('nan'))))
  b=d.get('boundary_validation',{})
  if b.get('closed') is not True or not float(b.get('strict_inward_margin_lower',-1))>0:f.append('Mahony boundary did not close')
  if not float(d.get('actual_tilt_deg_upper',180))<87.0:f.append('actual tilt leaves proof chart')

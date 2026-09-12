@@ -7,24 +7,31 @@ sys.path.insert(0, str(ROOT / "tools"))
 sys.path.insert(0, str(ROOT / "tools" / "stability"))
 
 import ou3_brmm_private_mahony_discrete_comparison as mod  # noqa: E402
+import ou3_brmm_private_mahony_live_invariant as CONT  # noqa: E402
 
 
 class BrmmPrivateMahonyDiscreteComparisonTest(unittest.TestCase):
-    def test_ideal_shipping_period_step_preserves_invariant(self):
-        d = mod.build()
-        self.assertEqual(mod.validate(d), [])
-        self.assertTrue(d["ideal_5ms_discrete_PI_invariant_closed"])
-        self.assertGreater(d["discrete_metric_decrease_lower"], 0.0)
-        self.assertTrue(d["same_BRMM_forcing_as_continuous_invariant"])
+    """The discrete comparison is blocked by its continuous prerequisite.
 
-    def test_binary32_source_order_composition_is_closed_but_toolchain_generalization_remains_fail_closed(self):
-        d = mod.build()
-        self.assertTrue(d["shipping_binary32_quaternion_map_error_composed"])
-        self.assertTrue(d["shipping_source_order_binary32_discrete_invariant_closed"])
-        self.assertFalse(d["toolchain_independent_binary32_invariant_closed"])
-        self.assertFalse(d["complete_BRMM_family_materialized_here"])
-        self.assertFalse(d["P3_promoted"])
-        self.assertFalse(d["source_generator"])
+    The padded 8.8 m/s^2 envelope leaves the 87 deg-chart PI invariant with an
+    empty admissible level window, so the discrete/binary32 comparison refuses
+    to build rather than composing a step on top of an unclosed invariant.  The
+    refusal is the certificate here; the discrete lemma cannot be reinstated
+    until the continuous invariant closes.
+    """
+
+    def test_refuses_to_compose_on_an_unclosed_continuous_invariant(self):
+        failures = CONT.validate(CONT.build())
+        self.assertNotEqual(failures, [])
+        with self.assertRaisesRegex(RuntimeError, "continuous Mahony invariant invalid"):
+            mod.build()
+
+    def test_refusal_names_the_seed_level_window_obstruction(self):
+        with self.assertRaises(RuntimeError) as ctx:
+            mod.build()
+        message = str(ctx.exception)
+        self.assertIn("continuous_all_live_PI_invariant_closed is not true", message)
+        self.assertIn("no metric level contains the seed", message)
 
 
 if __name__ == "__main__":
