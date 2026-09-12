@@ -9,15 +9,70 @@ canonical wrapper-clock descendant from ``finite_magnetic_wrapper_clock``.
 The original finite_live_magnetic_word remains useful conditional finite-real
 algebra. This stronger entry corrects its clock provenance from the FIRST
 startup magnetic call, so accumulated sufficient statistics are never repaired
-post hoc. Binary32 exp/libm/Eigen correspondence is still open.
+post hoc.  ``CertifiedStartupState`` is an inductive theorem object: it can only
+be rooted at a pristine pre-magnetic startup state and only this module can
+construct successors, each through the literal dual-clock startup_call below.
+Binary32 exp/libm/Eigen correspondence is still open.
 """
 from __future__ import annotations
-from dataclasses import replace
+from dataclasses import dataclass, replace
 from fractions import Fraction as F
 
 from tools.stability.ou3_alt_contraction import finite_live_magnetic_word as BASE
 from tools.stability.ou3_alt_contraction import finite_magnetic_wrapper_clock as WCLOCK
 from tools.stability.ou3_alt_contraction import finite_mag_startup_prefix as PREFIX
+
+_CERT_TOKEN=object()
+
+
+class CertifiedStartupState:
+    """Inductive proof object for startup history executed only by this module.
+
+    The constructor token deliberately prevents another theorem layer from
+    wrapping an already-mutated BASE.StartupState and thereby laundering old
+    single-clock ancestry into the dual-clock theorem path.
+    """
+    __slots__=('state','calls')
+    def __init__(self,state,calls,*,_token=None):
+        if _token is not _CERT_TOKEN:
+            raise TypeError('dual-clock startup certificate is constructed only by certified entry/step')
+        if not isinstance(state,BASE.StartupState):
+            raise TypeError('BASE.StartupState required')
+        if not isinstance(calls,int) or isinstance(calls,bool) or calls<0:
+            raise ValueError('nonnegative certified startup call count required')
+        self.state=state; self.calls=calls
+
+
+def _pristine_startup(state:BASE.StartupState):
+    """Require certificate creation before ANY magnetic startup mutation."""
+    if not isinstance(state,BASE.StartupState):
+        raise TypeError('persistent startup magnetic product state required')
+    word=state.word; memory=state.memory
+    if state.ready is not None:
+        raise ValueError('dual-clock startup certificate must precede ready/reference capture')
+    if (word.mag.tuner != BASE.TUNER.State() or word.mag.last_mag_time is not None
+            or word.source_model_root is not None or word.source_history_id is not None):
+        raise ValueError('dual-clock startup certificate cannot wrap an already-used magnetic word')
+    if (memory.continuous != BASE.HI.State() or memory.last_hi_time is not None
+            or memory.applied != BASE.HI.Applied()):
+        raise ValueError('dual-clock startup certificate must precede continuous magnetic accumulation/application')
+    return state
+
+
+def certify_fresh_startup(state:BASE.StartupState):
+    """Root the dual-clock induction at the literal pre-magnetic startup state."""
+    return CertifiedStartupState(_pristine_startup(state),0,_token=_CERT_TOKEN)
+
+
+@dataclass(frozen=True)
+class CertifiedStartupResult:
+    state: CertifiedStartupState
+    event: BASE.StartupResult
+    def __post_init__(self):
+        if not isinstance(self.state,CertifiedStartupState) or not isinstance(self.event,BASE.StartupResult):
+            raise TypeError('certified dual-clock startup successor and event required')
+        if self.state.state != self.event.state:
+            raise ValueError('certified startup successor detached from executed dual-clock event')
 
 
 def _accumulate(memory, source, proxy, tilt, timestamp:WCLOCK.Timestamp, *,
@@ -65,8 +120,6 @@ def startup_call(state:BASE.StartupState,physical,*,residual_body=None,packet_id
     memory,continuous=_accumulate(state.memory,source,proxy,tilt,ts,
         decay=hi_decay,eigen_success=hi_eigen_success,spectrum=hi_spectrum)
 
-    # The startup tuner packet's wrapper_time is the outer float clock, while
-    # its source relation remains attached to the unchanged physical endpoint.
     packet=PREFIX.Packet(wt,source.raw_body,source.packet_id)
     base=BASE.START.update_mag_call(
         state.word,cfg.gravity,cfg.tuner,packet,begun=begun,
@@ -91,6 +144,15 @@ def startup_call(state:BASE.StartupState,physical,*,residual_body=None,packet_id
     elif ready_yaw_half is not None:
         raise ValueError('no provisional reference write consumes no gauge witness')
     return BASE.StartupResult(BASE.StartupState(out.state,memory,ready),out,continuous,qualified)
+
+
+def certified_startup_call(cert:CertifiedStartupState, physical, **kwargs):
+    """Advance the inductive startup certificate by one literal dual-clock call."""
+    if not isinstance(cert,CertifiedStartupState):
+        raise TypeError('certified dual-clock startup predecessor required')
+    out=startup_call(cert.state,physical,**kwargs)
+    nxt=CertifiedStartupState(out.state,cert.calls+1,_token=_CERT_TOKEN)
+    return CertifiedStartupResult(nxt,out)
 
 
 def live_call(state:BASE.LiveState,core,proxy,*,residual_body=None,packet_id=None,
@@ -150,7 +212,6 @@ def live_call(state:BASE.LiveState,core,proxy,*,residual_body=None,packet_id=Non
         raise ValueError('inactive refinement consumes no acquisition/yaw operands')
 
     after_refinement=core
-    # Applied.last_time is also an outer-wrapper float timestamp in shipping.
     applied=BASE.HI.apply(memory.applied,memory.continuous,active.model.world_reference,
         time=wt,sample_dt=cfg.sample_dt,fraction=cfg.apply_fraction,slew_tau=cfg.slew_tau,
         enabled=cfg.continuous_enabled,refinement_enabled=cfg.refinement_enabled,
@@ -166,8 +227,6 @@ def live_call(state:BASE.LiveState,core,proxy,*,residual_body=None,packet_id=Non
     nu=tuple(rotated_difference[i]+source.model.hard_iron_body[i]
              -memory.applied.total_bias[i]+source.residual_body[i] for i in range(3))
     packet=BASE.MAG.Sample(core.reference,corrected,nu,active.model)
-    # Inner updateMag uses the inner filter time, represented by physical time;
-    # its magnetic delay is zero in the outer wrapper deployment path.
     measured=BASE.ASYNC.update_mag_call(BASE.ASYNC.State(core,control,active),cfg.gate,
         time=pt,live=True,sample=packet,ldlt=ldlt,alpha=alpha,radius=radius)
     nxt=BASE.LiveState(memory,tuner,last,active,measured.state.control,started,done,done_time)
@@ -182,6 +241,9 @@ def readiness():
       'startup_outer_delay_uses_exact_binary32_wrapper_clock':True,
       'startup_continuous_statistics_use_binary32_wrapper_elapsed_time':True,
       'startup_tuner_packet_clock_uses_binary32_wrapper_time':True,
+      'fresh_startup_dual_clock_induction_object_available':True,
+      'already_mutated_single_clock_startup_cannot_be_certified':True,
+      'certified_startup_successor_only_from_dual_clock_call':True,
       'live_refinement_start_and_elapsed_use_binary32_wrapper_clock':True,
       'live_continuous_sample_and_apply_clocks_use_binary32_wrapper_clock':True,
       'inner_MEKF_magnetic_call_retains_physical_inner_time':True,
