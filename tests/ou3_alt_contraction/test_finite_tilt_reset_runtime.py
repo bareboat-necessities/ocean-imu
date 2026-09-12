@@ -26,13 +26,24 @@ def core(qhat=(1,0,0,0)):
     return C.State('H',tuple(z),cov,qhat,ref)
 
 
-def guarded(st):
-    raw=S.RawImuSample(st.reference,(0,0,0),(0,0,0),(0,0,0),(0,0,0),(0,0,-GRAV),(0,0,GRAV))
+def guarded(st, acc=(None,None,None)):
+    if acc[0] is None:
+        acc=(F(0),F(0),-GRAV)
+    acc=tuple(F(x) for x in acc)
+    # Physical acceleration is zero, so the no-bias/no-noise specific-force
+    # baseline is (0,0,-g). Choose the source residual required to make this
+    # exact raw packet, then let the zero-cutoff guard pass the same packet.
+    residual=(acc[0],acc[1],acc[2]+GRAV)
+    raw=S.RawImuSample(st.reference,(0,0,0),(0,0,0),residual,(0,0,0),acc,(0,0,GRAV))
     return S.guarded_sample(raw,G.State(),G.Config(cutoff_hz=0),dt=F(1,200))
 
 
+def yaw_half(c=F(1),s=F(0),ch=F(1),sh=F(0)):
+    return T.YawHalfWitness(c,s,T.SqrtWitness(c*c+s*s,F(1)),ch,sh)
+
+
 def atan_zero():
-    return T.YawHalfWitness(F(1),F(0),T.SqrtWitness(F(1),F(1)),F(1),F(0))
+    return yaw_half()
 
 
 class Tests(unittest.TestCase):
@@ -53,6 +64,32 @@ class Tests(unittest.TestCase):
         reset=W.preserve_yaw_reset(st,sample,out)
         self.assertEqual(reset.q_hat,(1,0,0,0))
         self.assertEqual(reset.z[:3],(0,0,0))
+
+    def test_covariance_axis_is_accel_intermediate_before_yaw_restore(self):
+        # Rational 3-4-5 half angles avoid numerical/trigonometric oracles.
+        # Old BODY->WORLD is a yaw with half-angle (4/5,3/5). The guarded
+        # accelerometer yields accel-only qref=(4/5,-3/5,0,0), hence shipping
+        # reseeds P about down_body=(0,24/25,7/25) *before* restoring yaw.
+        st=core((F(4,5),0,0,F(-3,5)))
+        acc=(F(0),-F(24,25)*GRAV,-F(7,25)*GRAV)
+        sample=guarded(st,acc)
+        old_yaw=yaw_half(F(7,25),F(24,25),F(4,5),F(3,5))
+        aw=X.AccTiltWitness(
+            T.SqrtWitness(GRAV*GRAV,GRAV),
+            T.SqrtWitness(F(576,625),F(24,25)),F(4,5),F(3,5))
+        pitch=X.SignedHalfWitness(F(0),F(1),F(1),F(0))
+        roll=yaw_half(F(7,25),F(24,25),F(4,5),F(3,5))
+        out=X.preserve_yaw_witness(st,sample,
+            old_q_norm=T.SqrtWitness(1,1),old_yaw_half=old_yaw,acc_tilt=aw,
+            pitch_cos=T.SqrtWitness(1,1),pitch_half=pitch,roll_half=roll)
+        self.assertEqual(out.down_body_unit,(0,F(24,25),F(7,25)))
+        self.assertEqual(out.q_new_hat,(F(16,25),F(-12,25),F(-9,25),F(-12,25)))
+        reset=W.preserve_yaw_reset(st,sample,out)
+        u=out.down_body_unit
+        ts,ys=F(35,1000),F(15708,10000)
+        expected=[[ts*ts*((1 if i==j else 0)-u[i]*u[j])+ys*ys*u[i]*u[j]
+                   for j in range(3)] for i in range(3)]
+        self.assertEqual([list(r[:3]) for r in reset.covariance[:3]],expected)
 
     def test_wrong_old_yaw_or_acc_norm_is_rejected(self):
         st=core((F(3,5),F(4,5),0,0)); sample=guarded(st)
@@ -77,6 +114,8 @@ class Tests(unittest.TestCase):
         r=X.readiness()
         self.assertTrue(r['free_final_preserve_yaw_quaternion_removed_from_theorem_entry'])
         self.assertTrue(r['watchdog_threshold_rigorous_cosine_enclosure'])
+        self.assertTrue(r['reset_covariance_axis_comes_from_accel_only_intermediate_before_yaw_restore'])
+        self.assertTrue(r['final_yaw_restore_does_not_reseed_covariance'])
         self.assertFalse(r['watchdog_boundary_sliver_and_binary32_libm_closed'])
         self.assertFalse(r['complete_word_finite_identity']); self.assertFalse(r['ALT_LIVE_PASS'])
 
