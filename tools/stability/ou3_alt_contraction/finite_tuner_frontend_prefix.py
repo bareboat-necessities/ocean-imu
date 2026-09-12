@@ -1,26 +1,18 @@
 """Finite IMU -> tracker-free tuner sample prefix.
 
-Persistent state carries the private Mahony observer, WPE, adaptive band and
-statistics, tracker-input LPF, tuner-relevant StillnessAdapter projection,
-TuneState, adaptation clock/pending bit, and the shipping startup stage clock.
+Persistent state carries private Mahony, WPE, adaptive band/statistics,
+tracker-input LPF, tuner-relevant stillness, TuneState, adaptation clock/pending
+bit and startup-stage clock.
 
-Literal shipping order is enforced:
-  1. the current IMU packet advances private vertical; the full shipping entry
-     supplies a GuardedImuSample so Mahony sees exactly ``acc_in``;
-  2. tracker LPF/stillness and adaptive band/statistics advance, with the tuner
-     reading a READ-ONLY view of the WPE state carried into the sample;
-  3. Cold/TunerWarm/TunerReady/Live stage logic decides whether the candidate
-     EMA executes; Cold always returns after the frontend update, while
-     TunerWarm executes adaptation as soon as tuner frequency is ready and
-     promotes to TunerReady only when variance is ready and the PRE-UPDATE WPE
-     usable latch is already true;
-  4. only after that does the current vertical sample advance WPE for the next
-     IMU sample.
+Shipping has a mathematically important interleave after private Mahony: in Live,
+Racc selection, MEKF prediction and the accelerometer correction execute before
+the tracker/tuner/WPE suffix.  ``continue_after_vertical`` exposes exactly that
+cut.  The convenience ``step`` still performs Mahony then immediately continues,
+so existing frontend-only proofs retain identical behavior.
 
-A pending online candidate must be committed at the next IMU boundary before
-this function may consume another sample. goLive()/attitude handoff remains an
-external hybrid transition.  The raw-only entry remains for lower-level identity
-tests; full shipping composition uses the guard-persistent wrapper.
+Suffix order is literal shipping order: tracker LPF/stillness and band/statistics
+use a READ-ONLY WPE entry view; startup/tuner candidate logic executes; only then
+does the current vertical sample advance WPE for the next sample.
 """
 from __future__ import annotations
 from dataclasses import dataclass
@@ -87,39 +79,39 @@ class Result:
     stage_after: str
 
 
-def step(state:State,sample:RAW.RawImuSample|RAW.GuardedImuSample,*,dt,
-         vertical_cfg:V.Config,accel_invnorm:V.InvSqrtWitness|None,
-         quat_invnorm:V.InvSqrtWitness|None,seed:V.SeedWitness|None,
-         wpe_cfg:WPE.WPEConfig,wpe_decay:WPE.ExpWitness,
-         wpe_moment_decay:WPE.ExpWitness|None=None,
-         wpe_period_witness:WPE.PeriodWitness|None=None,
-         wpe_log_witness:WPE.LogUpdateWitness|None=None,
-         wpe_current_period=None,wpe_current_frequency=None,
-         wpe_post_output:WPE.CanonicalOutputWitness|None=None,
-         band_cfg:BAND.BandConfig=None,stats_cfg:BAND.StatsConfig=None,
-         band_decay:BAND.BandDecayWitness=None,
-         variance_decay:BAND.VarianceDecayWitness=None,
-         bench_noise_sigma=F(0),noise_sqrt:BAND.NoiseSqrtWitness|None=None,
-         tracker_lpf_decay:FRONT.LPFDecayWitness=None,
-         still_cfg:STILL_FULL.Config=None,
-         still_attenuation:STILL_FULL.AttenuationWitness|None=None,
-         candidate_cfg:CAND.CandidateConfig|None=None,sigma_wave_sqrt=None,
-         spectral:CAND.SpectralWitness|None=None,ema:CAND.EmaWitness|None=None):
-    if not isinstance(state,State) or not isinstance(sample,(RAW.RawImuSample,RAW.GuardedImuSample)):
-        raise TypeError('finite tuner-prefix state and raw/guarded IMU sample required')
+def continue_after_vertical(state:State,sample:RAW.RawImuSample|RAW.GuardedImuSample,
+                            vertical:V.Result,*,dt,
+                            wpe_cfg:WPE.WPEConfig,wpe_decay:WPE.ExpWitness,
+                            wpe_moment_decay:WPE.ExpWitness|None=None,
+                            wpe_period_witness:WPE.PeriodWitness|None=None,
+                            wpe_log_witness:WPE.LogUpdateWitness|None=None,
+                            wpe_current_period=None,wpe_current_frequency=None,
+                            wpe_post_output:WPE.CanonicalOutputWitness|None=None,
+                            band_cfg:BAND.BandConfig=None,stats_cfg:BAND.StatsConfig=None,
+                            band_decay:BAND.BandDecayWitness=None,
+                            variance_decay:BAND.VarianceDecayWitness=None,
+                            bench_noise_sigma=F(0),noise_sqrt:BAND.NoiseSqrtWitness|None=None,
+                            tracker_lpf_decay:FRONT.LPFDecayWitness=None,
+                            still_cfg:STILL_FULL.Config=None,
+                            still_attenuation:STILL_FULL.AttenuationWitness|None=None,
+                            candidate_cfg:CAND.CandidateConfig|None=None,sigma_wave_sqrt=None,
+                            spectral:CAND.SpectralWitness|None=None,ema:CAND.EmaWitness|None=None):
+    """Continue one sample after its exact private-Mahony successor exists.
+
+    This function deliberately does NOT accept alternative vertical/acceleration
+    values for individual suffix consumers.  The same ``vertical`` object drives
+    LPF/stillness, band/statistics and later WPE.  A full Live composer may run
+    MEKF events before calling this function without recomputing Mahony.
+    """
+    if not isinstance(state,State) or not isinstance(sample,(RAW.RawImuSample,RAW.GuardedImuSample)) or not isinstance(vertical,V.Result):
+        raise TypeError('state, raw/guarded sample and private vertical successor required')
     if state.pending:
-        raise ValueError('pending tuner state must be committed at next IMU boundary before another sample')
+        raise ValueError('pending tuner state must be committed at next IMU boundary before suffix continuation')
     dt=R(dt)
     if dt<=0: raise ValueError('positive dt required')
     required_front=(band_cfg,stats_cfg,band_decay,variance_decay,tracker_lpf_decay,still_cfg)
     if any(x is None for x in required_front): raise TypeError('all represented frontend configs/witnesses required')
 
-    if isinstance(sample,RAW.GuardedImuSample):
-        vertical=RAW.vertical_step_from_guarded(state.vertical,vertical_cfg,sample,dt=dt,
-            accel_invnorm=accel_invnorm,quat_invnorm=quat_invnorm,seed=seed)
-    else:
-        vertical=RAW.vertical_step_from_raw(state.vertical,vertical_cfg,sample,dt=dt,
-            accel_invnorm=accel_invnorm,quat_invnorm=quat_invnorm,seed=seed)
     view=FRONT.wpe_view(state.wpe,
         current_period=wpe_current_period if state.wpe.usable_period else None,
         current_frequency=wpe_current_frequency if state.wpe.usable_period else None)
@@ -164,10 +156,29 @@ def step(state:State,sample:RAW.RawImuSample|RAW.GuardedImuSample,*,dt,
     return Result(nxt,sample,vertical,view,band,lpf,still,cand,wpe,state.stage,stage_after)
 
 
+def step(state:State,sample:RAW.RawImuSample|RAW.GuardedImuSample,*,dt,
+         vertical_cfg:V.Config,accel_invnorm:V.InvSqrtWitness|None,
+         quat_invnorm:V.InvSqrtWitness|None,seed:V.SeedWitness|None,**suffix_kwargs):
+    if not isinstance(state,State) or not isinstance(sample,(RAW.RawImuSample,RAW.GuardedImuSample)):
+        raise TypeError('finite tuner-prefix state and raw/guarded IMU sample required')
+    if state.pending:
+        raise ValueError('pending tuner state must be committed at next IMU boundary before another sample')
+    dt=R(dt)
+    if dt<=0: raise ValueError('positive dt required')
+    if isinstance(sample,RAW.GuardedImuSample):
+        vertical=RAW.vertical_step_from_guarded(state.vertical,vertical_cfg,sample,dt=dt,
+            accel_invnorm=accel_invnorm,quat_invnorm=quat_invnorm,seed=seed)
+    else:
+        vertical=RAW.vertical_step_from_raw(state.vertical,vertical_cfg,sample,dt=dt,
+            accel_invnorm=accel_invnorm,quat_invnorm=quat_invnorm,seed=seed)
+    return continue_after_vertical(state,sample,vertical,dt=dt,**suffix_kwargs)
+
+
 def readiness():
     return {
       'raw_or_guarded_IMU_to_private_vertical_same_packet':True,
       'guarded_shipping_entry_uses_conditioned_accel':True,
+      'post_Mahony_shipping_interleave_exposed':True,
       'same_vertical_band_tracker_LPF_and_later_WPE':True,
       'tuner_uses_WPE_state_from_sample_entry':True,
       'current_sample_WPE_update_cannot_feed_own_candidate':True,
