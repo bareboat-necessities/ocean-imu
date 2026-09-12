@@ -41,7 +41,6 @@ def imu_operands(state):
       qaxis=FIRST.PR.QAxisBranch(False,s.active.Sigma_aw,
             (FIRST.PASS,)*3,(FIRST.PASS,)*3,F(1,10**7)),
       accel_conditioning=FIRST.SENSOR.AccelConditioning(0,z),accel_ldlt=MAG.REJECT,
-      tilt_deg=0,
       wpe_cfg=FIRST.W.WPEConfig(1,4,F(1,2),1,180),wpe_decay=FIRST.W.ExpWitness(1),
       stats_cfg=FIRST.B.StatsConfig(4,F(3,10),60,F(1,20),5),
       band_decay=FIRST.B.BandDecayWitness(1,1),variance_decay=FIRST.B.VarianceDecayWitness(1),
@@ -80,9 +79,8 @@ class Tests(unittest.TestCase):
         self.assertIs(event.state.live.live.tuner,before.live.live.tuner)
         self.assertIs(event.state.live.live.scheduler,before.live.live.scheduler)
         second=imu(event.state)
-        # Direct substitution of the same successor, not a copied P/K stream.
         raw,segment,kw=imu_operands(event.state)
-        direct=X.LIVE.step(event.state.live,raw,segment,**kw)
+        direct=X.LIVE.step_from_shipping_operands(event.state.live,raw,segment,**kw)
         self.assertEqual(second.state.live,direct.state)
         without_mag=imu(before)
         self.assertNotEqual(second.state.live.live.mekf.covariance,
@@ -110,7 +108,7 @@ class Tests(unittest.TestCase):
         out=mag(s,**MAG.refine_kwargs())
         self.assertTrue(out.state.magnetic.refinement_done)
         self.assertFalse(out.state.magnetic.control.hold)
-        self.assertTrue(out.state.magnetic.control.locked) # count/time still short
+        self.assertTrue(out.state.magnetic.control.locked)
         self.assertEqual(out.state.live.live.mekf.mode,'H')
         self.assertEqual(out.state.magnetic.active.generation,1)
         nxt=imu(out.state)
@@ -169,11 +167,14 @@ class Tests(unittest.TestCase):
 
     def test_zero_heel_scope_is_enforced_at_each_IMU_boundary(self):
         s=root(); raw,segment,kw=imu_operands(s)
-        # Proper 180-degree yaw rotation leaves this level raw packet valid,
-        # but is not the allowed identity de-heel map.
         bad=replace(raw,deheel_body_to_internal=((-1,0,0),(0,-1,0),(0,0,1)))
         with self.assertRaisesRegex(ValueError,'zero-wind-heel'):
             X.imu_step(s,bad,segment,**kw)
+
+    def test_free_tilt_and_reset_outputs_are_forbidden_in_product_word(self):
+        s=root(); raw,segment,kw=imu_operands(s)
+        with self.assertRaisesRegex(TypeError,'free tilt/reset'):
+            X.imu_step(s,raw,segment,tilt_deg=0,**kw)
 
     def test_future_calibration_clock_is_not_a_valid_current_product_state(self):
         s=root()
@@ -183,6 +184,8 @@ class Tests(unittest.TestCase):
 
     def test_readiness_cannot_promote_finite_prefixes_to_universal_word(self):
         r=X.readiness()
+        self.assertTrue(r['interleaved_IMU_uses_same_operand_tilt_reset_entry'])
+        self.assertTrue(r['free_watchdog_angle_and_reset_quaternion_forbidden'])
         for key in ('infinite_schedule_qualified_by_finite_prefix',
                     'source_uniform_complete_600_step_word_qualified','storage_search_allowed',
                     'ALT_STARTUP_PASS','ALT_LIVE_PASS','ALT_END_TO_END_PASS'):
