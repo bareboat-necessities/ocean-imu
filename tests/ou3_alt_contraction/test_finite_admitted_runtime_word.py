@@ -107,6 +107,8 @@ class Tests(unittest.TestCase):
                     'bounded_input_history_qualified',
                     'one_radian_attitude_guard_closed_for_every_admitted_prefix',
                     'deployment_exp_expm1_trig_Eigen_LDLT_closed',
+                    'mag_schedule_supplies_uniform_call_count_upper',
+                    'shipping_signed_mag_counter_lifetime_closed',
                     'complete_600_step_shipping_word_composed_from_restrictions',
                     'storage_search_allowed','ALT_LIVE_PASS','ALT_STARTUP_PASS','ALT_END_TO_END_PASS'):
             self.assertFalse(r[key])
