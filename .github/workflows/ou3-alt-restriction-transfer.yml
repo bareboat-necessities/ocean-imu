@@ -1,0 +1,81 @@
+name: ou3-alt-restriction-checked-transfer
+on:
+  push:
+    branches: [proof/ou3-alt-live-mag-composition]
+    paths:
+      - '.proof-transfer/ou3-alt-restriction.b64'
+      - '.github/workflows/ou3-alt-restriction-transfer.yml'
+permissions:
+  contents: write
+jobs:
+  apply-tested-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.sha }}
+      - name: Verify, apply and test primary-physics restriction patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import base64,bz2,hashlib,pathlib,subprocess
+          encoded=pathlib.Path('.proof-transfer/ou3-alt-restriction.b64').read_text().strip()
+          patch=bz2.decompress(base64.b64decode(encoded,validate=True))
+          assert hashlib.sha256(patch).hexdigest()=='f97509a51041ec72bb06949c73eec5598b78a4465d0297eb560287e2e505fe02'
+          target=pathlib.Path('/tmp/ou3-restriction.patch'); target.write_bytes(patch)
+          subprocess.run(['git','apply','--check',str(target)],check=True)
+          subprocess.run(['git','apply',str(target)],check=True)
+          subprocess.run(['git','diff','--check'],check=True)
+          subprocess.run(['python3','-m','compileall','-q','tools/stability/ou3_alt_contraction','tests/ou3_alt_contraction'],check=True)
+          PY
+          export PYTHONPATH="$PWD:$PWD/tools/stability:$PWD/tests/ou3_alt_contraction"
+          export OU3_ALT_REQUIRE_NATIVE=1 OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1
+          python3 -m unittest \
+            test_finite_physical_prediction \
+            test_finite_brmm_moment_prefix test_finite_complete_brmm_restriction test_finite_source_continuation test_finite_source_bound_live_word \
+            test_finite_measurement_graph test_finite_covariance_rank3 test_finite_core \
+            test_finite_prediction_covariance test_finite_ou_runtime_primitives \
+            test_finite_attitude_runtime test_finite_qaxis_runtime \
+            test_finite_accel_guard_runtime test_finite_sensor_source_runtime \
+            test_finite_racc_runtime test_finite_held_accel_runtime \
+            test_finite_prediction_runtime test_finite_post_prediction \
+            test_finite_periodic_aw_sync test_finite_measurement_runtime \
+            test_finite_vertical_complementary_runtime test_finite_binary32_mahony \
+            test_finite_frontend_runtime test_finite_frontend_prefix \
+            test_finite_guarded_tuner_prefix test_finite_wpe_runtime \
+            test_finite_band_variance_runtime test_finite_stillness_runtime \
+            test_finite_tuner_stillness_projection test_finite_tuner_candidate \
+            test_finite_tuner_projection_bridge test_finite_tuner_frontend_prefix \
+            test_finite_tuner_commit test_finite_tuner_boundary_commit \
+            test_finite_runtime_parameters test_finite_active_runtime_word \
+            test_finite_live_imu_prefix test_finite_tilt_watchdog \
+            test_finite_tilt_reset_runtime test_finite_live_tilt_prefix \
+            test_finite_mag_bias_gate test_finite_mag_runtime \
+            test_finite_mag_reference_runtime test_finite_mag_reference_events \
+            test_finite_mag_accumulator test_finite_mag_gauge_fix test_finite_mag_tilt_frame \
+            test_finite_mag_tuner_default test_finite_mag_gravity_gate \
+            test_finite_mag_startup_prefix test_finite_mag_startup_source \
+            test_finite_mag_startup_physical_bridge test_finite_mag_startup_word \
+            test_finite_mag_source_qualification test_finite_mag_startup_capture_bound \
+            test_finite_startup_handoff_seed test_finite_startup_handoff_init \
+            test_finite_startup_live_entry test_finite_fresh_joint24_entry \
+            test_finite_startup_live_runtime_bridge test_finite_startup_first_live_step \
+            test_finite_mag_call_schedule test_finite_h18_a21_reachability \
+            test_finite_h18_a21_transition test_finite_live_async_mag \
+            test_finite_continuous_mag_runtime test_finite_live_magnetic_word \
+            test_finite_live_interleave \
+            test_shipping_finite_identity test_core test_proof_plan test_bias_families -q
+          git add .github/workflows/ou3-alt-contraction.yml \
+                  docs/ou3-alt-main-handover.md docs/ou3-alt-proof-plan.md \
+                  docs/ou3-alt-source-continuation.md docs/ou3-proof-research-state.md \
+                  tests/ou3_alt_contraction/test_finite_complete_brmm_restriction.py \
+                  tests/ou3_alt_contraction/test_finite_source_continuation.py \
+                  tools/stability/ou3_alt_contraction/finite_complete_brmm_restriction.py \
+                  tools/stability/ou3_alt_contraction/finite_source_continuation.py
+          git diff --cached --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'proof(ou3-alt): restrict primary COMPLETE-BRMM physics to finite word'
+          git push origin HEAD:refs/heads/proof/ou3-alt-live-mag-composition
