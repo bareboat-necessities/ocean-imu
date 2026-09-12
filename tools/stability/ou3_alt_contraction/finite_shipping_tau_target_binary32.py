@@ -1,7 +1,7 @@
 """Source-locked binary32 tau-target correspondence for the default shipping tuner.
 
 The exact shadow used for deployment roundoff must start from the *compiled
-binary32 operands*, not from ideal decimal spellings.  Shipping evaluates
+binary32 operands*, not from ideal decimal spellings. Shipping evaluates
 
     f = clamp(f_source, 0.03f, 1.2f)
     tau_raw = 1.0f * 0.5f / f
@@ -9,12 +9,13 @@ binary32 operands*, not from ideal decimal spellings.  Shipping evaluates
 
 This module interprets those binary32 operands as exact rationals, evaluates the
 same expression once in exact arithmetic and once with RNE after each shipping
-operation, and proves the target discrepancy fits one conservative 2^-19 s
-rounding cell.  The multiplication 1.0f*0.5f is exact; only division can create
-a target discrepancy before the common clamp.
+operation. On the only unclamped target range, 0.5/f is in (0.4,12), hence below
+16 and one binary32 division has absolute RNE error <=2^-21. Above 12 both
+branches share the 12f clamp except within that same final half-ulp cell. The
+multiplication 1.0f*0.5f is exact.
 
 This is independent of WPE/libm correctness: ``f_source`` is merely required to
-be an already-stored finite positive binary32 value.  Upstream production of
+be an already-stored finite positive binary32 value. Upstream production of
 that value remains a separate obligation.
 """
 from __future__ import annotations
@@ -28,8 +29,8 @@ SOURCE=Path(__file__).resolve().parents[3]/'src/kalman_ou_iii/SeaStateFusionFilt
 FLOOR=B.rn32(F(3,100)); CEIL=B.rn32(F(6,5))
 TAU_COEFF=B.rn32(1); HALF=B.rn32(F(1,2))
 TAU_MIN=B.rn32(F(1,50)); TAU_MAX=B.rn32(12)
-TARGET_ERROR_MAX=F(1,1<<19)
-QUALIFICATION='OU3_ALT_SHIPPING_TAU_TARGET_BINARY32_V1'
+TARGET_ERROR_MAX=F(1,1<<21)
+QUALIFICATION='OU3_ALT_SHIPPING_TAU_TARGET_BINARY32_V2'
 
 
 def clamp(x,lo,hi): return min(max(x,lo),hi)
@@ -61,7 +62,6 @@ def evaluate(source_frequency):
     if not B.is_binary32(f0) or f0<=0:
         raise ValueError('positive stored binary32 source frequency required')
     f=clamp(f0,FLOOR,CEIL)
-    # Exact shadow of the machine operands: no ideal-decimal substitution.
     exact_raw=(TAU_COEFF*HALF)/f
     exact_target=clamp(exact_raw,TAU_MIN,TAU_MAX)
     binary_raw=B.div(B.mul(TAU_COEFF,HALF),f)
