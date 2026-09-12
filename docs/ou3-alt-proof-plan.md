@@ -78,26 +78,23 @@ and safe-LDLT branches. The highest prediction entry accepts no precomputed
 shipping transition/process matrices and enforces one bias-corrected gyro across
 nominal and covariance attitude propagation.
 
-The startup magnetic path is now structurally attached through the persistent
+The startup magnetic path is structurally attached through the persistent
 Mahony proxy, world-frame gravity-alignment gate, literal asynchronous admission
 clock, default MagAutoTuner accept/reject/ready recurrence, yaw-stripped tilt
 frame, raw true-field/hard-iron/residual source identity, and the same main
-`PhysicalKinematics` endpoint used by the finite physical word. The learned
-magnetic reference cannot be freely reselected per event.
+`PhysicalKinematics` endpoint used by the finite physical word.
 
-The startup north-ready path also retains the literal generation-zero
-`setMagWorldRef_` write, pending absolute-yaw gauge, proxy-to-MEKF handoff seed,
-shipping 0.035 rad tilt covariance, 0.087 rad gauged yaw covariance versus
-1.5708 rad free-yaw covariance, and the real-arithmetic core of
-`initialize_from_attitude`. The latter zeroes the attitude error state, replaces
-the attitude 3x3 covariance by the tilt/yaw projector split, zeroes only the
-attitude<->gyro-bias covariance, and preserves the remaining state/covariance
-entries.
+The startup north-ready path retains the generation-zero `setMagWorldRef_`
+write, pending absolute-yaw gauge, proxy-to-MEKF handoff seed, shipping 0.035 rad
+tilt covariance, 0.087 rad gauged yaw covariance versus 1.5708 rad free-yaw
+covariance, and the real-arithmetic core of `initialize_from_attitude`. That
+reset zeroes the attitude error state, replaces the attitude 3x3 covariance by
+the tilt/yaw projector split, zeroes only attitude<->gyro-bias covariance, and
+preserves the remaining state/covariance entries.
 
 This materially advances the finite-map stage but does NOT satisfy the universal
-source quantifier. Exp/trig and numerical factorization witnesses, deployment
-roundoff, remaining hybrid/runtime branches and source admission still require
-same-history closure.
+source quantifier. Deployment roundoff, remaining hybrid/runtime branches and
+same-history event/source admission still require closure.
 
 ## MAG-BMM150-DET-v1 deterministic magnetic admission
 
@@ -112,44 +109,43 @@ arbitrary mounting environments:
 
 The total-field range encloses ordinary terrestrial geomagnetic magnitudes with
 margin while remaining far inside the BMM150 electrical range. The horizontal
-lower bound is separate and essential: without a nonzero horizontal field no
-uniform deterministic north/yaw capture theorem is possible. The 5 uT hard-iron
-limit is a commissioned-placement requirement. The 2 uT deterministic residual
-limit remains materially wider than the BMM150 RMS output-noise values of the
-normal presets, but unlike RMS noise it is a hard theorem admission limit. A
-history that violates either condition is outside the theorem rather than being
-silently absorbed into `R_mag`.
+lower bound is essential for deterministic north/yaw observability. The 5 uT
+hard-iron limit is a commissioned-placement requirement. The 2 uT deterministic
+residual limit remains materially wider than normal BMM150 RMS output noise but,
+unlike RMS noise, is a hard theorem admission limit. A violating history is
+outside the theorem rather than being silently absorbed into `R_mag`.
 
 `finite_mag_source_qualification` checks the named assumption with exact norm
 witnesses, and the theorem-facing startup magnetic edge refuses an unqualified
-sample before it can mutate the tuner or magnetic wrapper clock. This closes the
-prior missing-magnetic-envelope E blocker, but it does NOT yet qualify the whole
-asynchronous magnetic schedule.
+sample before it can mutate the tuner or magnetic wrapper clock.
 
-## Deterministic startup north capture now obtained
+## Deterministic startup north and real-arithmetic attitude capture closed
 
-The canonical operating domain already declares startup world-averaged gravity
-direction error `<= 0.02 rad`. Using `sin(x) <= x`, the tilt-frame chord term is
-therefore bounded without a floating transcendental witness by
+The canonical operating domain declares startup world-averaged gravity direction
+error `<= 0.02 rad`. Using `sin(x) <= x`,
 
 `2 * 75 uT * sin(0.02/2) <= 1.5 uT`.
 
-Under MAG-BMM150-DET-v1 the complete deterministic perturbation of the startup
-magnetic mean is consequently
+Therefore the complete deterministic perturbation of the startup magnetic mean
+is
 
 `E <= 5 + 2 + 1.5 = 8.5 uT`.
 
-No `1/sqrt(N)` factor is used: deterministic hard iron/residual may remain
-coherent across all tuner samples. Since the true horizontal field is at least
-15 uT, the learned horizontal mean cannot vanish and the exact source-uniform
-direction relation gives
+No `1/sqrt(N)` factor is used. Since the true horizontal field is at least
+15 uT, the learned horizontal mean cannot vanish and
 
 `|sin(delta_yaw)| <= 8.5/15 = 17/30`.
 
-This is now a proved finite capture supply relation. It is not yet the complete
-startup theorem: the corresponding `atan2`/binary32 angle enclosure and its
-composition with the 0.02 rad tilt error must still be certified against the
-declared 45-degree full-SO(3) fresh-entry radius.
+The real-arithmetic 45-degree fresh-attitude entrance is also now closed without
+floating `asin`: for `x=0.61`, the alternating Taylor lower bound gives
+
+`sin(x) >= x - x^3/6 > 17/30`,
+
+so `|delta_yaw| < 0.61 rad`. SO(3) geodesic triangle inequality with the 0.02 rad
+tilt bound gives total attitude error `< 0.63 rad`; `pi > 3` then gives
+`0.63 < 0.75 < pi/4`. Thus the source-qualified real-arithmetic startup attitude
+enters the declared 45-degree radius. Deployment `atan2`/AngleAxis/quaternion
+normalization and binary32 correspondence remain open and prevent promotion.
 
 ## Current startup blockers
 
@@ -158,14 +154,14 @@ The immediate startup blockers are now:
 - attach the `initialize_from_attitude` world-down axis to the accepted boat
   quaternion through the actual wind-heel/body-prime conversion and Eigen
   normalization;
-- close binary32 correspondence for startup yaw extraction, `atan2`, AngleAxis,
-  quaternion normalization, norm gates and the handoff reset;
+- close deployment/binary32 correspondence for startup yaw extraction, `atan2`,
+  AngleAxis, quaternion normalization, norm gates and the handoff reset;
 - source-qualify the asynchronous magnetometer call schedule through tuner ready
   and the subsequent refinement/Live path;
-- turn `|sin(delta_yaw)| <= 17/30` plus the 0.02 rad tilt bound into a rigorous
-  binary32/full-SO(3) `<45 deg` handoff-entry certificate;
 - compose `goLive`/`enterLive_`, fresh H18 entry and the existing Live word on the
-  same physical/source history.
+  same physical/source history;
+- retain the newly certified real-arithmetic `<45 deg` entrance through the
+  deployment arithmetic enclosure without replacing it by a covariance claim.
 
 None of these may be replaced by trace replay, statistical concentration, or an
 assumed fresh-entry covariance-consistency condition.
