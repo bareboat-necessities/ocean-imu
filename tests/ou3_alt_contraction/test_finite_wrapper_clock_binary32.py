@@ -22,6 +22,14 @@ class Tests(unittest.TestCase):
         self.assertEqual(r.max_three_second_elapsed_error_start_step,25607)
         self.assertLess(r.max_three_second_elapsed_error,F(1,250))  # < 4 ms
 
+    def test_exact_late_time_stall_witness_blocks_indefinite_clock_claim(self):
+        self.assertEqual(X.STALL_WITNESS_TIME,F(1<<17))
+        self.assertEqual(X.STALL_WITNESS_NEXT,X.STALL_WITNESS_TIME)
+        r=X.readiness()
+        self.assertTrue(r['late_time_2pow17_stall_witness_present'])
+        self.assertEqual(r['late_time_stall_witness_s'],F(1<<17))
+        self.assertFalse(r['indefinite_wrapper_clock_lifetime_closed'])
+
     def test_readiness_closes_only_canonical_prefix_not_indefinite_lifetime(self):
         r=X.readiness()
         self.assertTrue(r['shipping_outer_clock_is_float_and_incremented_by_dt'])
