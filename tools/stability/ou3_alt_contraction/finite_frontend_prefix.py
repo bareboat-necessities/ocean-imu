@@ -1,15 +1,16 @@
 """Finite same-history raw-IMU -> frontend prefix for ALT.
 
-This is the first temporal composer for the measurement-only source side. One
-``RawImuSample`` owns the body-frame gyro/accelerometer packet. The same packet
-feeds the private Mahony vertical observer; that one vertical successor then
-feeds WPE, adaptive sigma-band/statistics, and tracker LPF. Stillness consumes
-only the tracker LPF successor and the declared tracker-output witness.
+One ``RawImuSample`` owns the body-frame gyro/accelerometer packet.  The same
+packet advances the private Mahony vertical observer.  Shipping then uses that
+vertical successor in two causally different ways: tracker/stillness and the
+sigma tuner run first using a READ-ONLY view of the WPE state carried into the
+sample; the current vertical sample advances WPE only later.  This module keeps
+that exact ordering while retaining the full StillnessAdapter tracker-frequency
+state for correspondence tests.
 
 No source bound, tracker algorithm, transcendental binary32 result, or stability
-property is invented here. Those remain explicit obligations. The point of
-this module is causality/ancestry: callers cannot choose separate acceleration
-histories for WPE and sigma tuning or separate raw packets for Mahony and MEKF.
+property is invented here.  The stability-side tuner prefix projects out the
+tracker-frequency state entirely.
 """
 from __future__ import annotations
 from dataclasses import dataclass
@@ -54,11 +55,12 @@ class Result:
     state: State
     raw_sample: RAW.RawImuSample
     vertical: V.Result
-    wpe: WPE.UpdateResult
+    preupdate_wpe: BAND.WPEFrequencyView
     band: BAND.FrontendResult
     tracker_lpf: FRONT.LPFResult
     stillness: STILL.Result
     tracker: FRONT.TrackerOutputWitness
+    wpe: WPE.UpdateResult
 
 
 def step(state:State, sample:RAW.RawImuSample, *, dt,
@@ -86,27 +88,26 @@ def step(state:State, sample:RAW.RawImuSample, *, dt,
     if any(x is None for x in (band_cfg,stats_cfg,band_decay,variance_decay,tracker_lpf_decay,tracker,still_cfg)):
         raise TypeError('all runtime configs/branch witnesses required')
 
-    vertical=RAW.vertical_step_from_raw(
-        state.vertical,vertical_cfg,sample,dt=dt,
+    vertical=RAW.vertical_step_from_raw(state.vertical,vertical_cfg,sample,dt=dt,
         accel_invnorm=accel_invnorm,quat_invnorm=quat_invnorm,seed=seed)
-    wpe=FRONT.wpe_step_from_vertical(
-        state.wpe,wpe_cfg,vertical,dt=dt,decay=wpe_decay,
-        moment_decay=wpe_moment_decay,period_witness=wpe_period_witness,
-        log_witness=wpe_log_witness,current_period=wpe_current_period,
-        current_frequency=wpe_current_frequency,post_output=wpe_post_output)
-    band=FRONT.band_step_from_vertical(
-        state.band,state.stats,wpe,vertical,dt=dt,
+    view=FRONT.wpe_view(state.wpe,
+        current_period=wpe_current_period if state.wpe.usable_period else None,
+        current_frequency=wpe_current_frequency if state.wpe.usable_period else None)
+    lpf=FRONT.tracker_lpf_step(state.tracker_lpf,vertical,decay=tracker_lpf_decay)
+    still=FRONT.stillness_step_from_vertical(state.stillness,still_cfg,lpf,tracker,dt=dt,
+        relax=still_relax,attenuation=still_attenuation)
+    band=FRONT.band_step_from_vertical_view(state.band,state.stats,view,vertical,dt=dt,
         band_cfg=band_cfg,stats_cfg=stats_cfg,band_decay=band_decay,
         variance_decay=variance_decay,bench_noise_sigma=bench_noise_sigma,
         noise_sqrt=noise_sqrt)
-    lpf=FRONT.tracker_lpf_step(state.tracker_lpf,vertical,decay=tracker_lpf_decay)
-    still=FRONT.stillness_step_from_vertical(
-        state.stillness,still_cfg,lpf,tracker,dt=dt,
-        relax=still_relax,attenuation=still_attenuation)
+    wpe=FRONT.wpe_step_from_vertical(state.wpe,wpe_cfg,vertical,dt=dt,decay=wpe_decay,
+        moment_decay=wpe_moment_decay,period_witness=wpe_period_witness,
+        log_witness=wpe_log_witness,current_period=wpe_current_period,
+        current_frequency=wpe_current_frequency,post_output=wpe_post_output)
 
     nxt=State(vertical.state,wpe.state,band.band_state,band.stats_state,
               lpf.state,still.state,state.sample_index+1,state.time+dt)
-    return Result(nxt,sample,vertical,wpe,band,lpf,still,tracker)
+    return Result(nxt,sample,vertical,view,band,lpf,still,tracker,wpe)
 
 
 def assert_prediction_packet(result:Result, mekf_state, gyro_body_raw):
@@ -122,7 +123,8 @@ def assert_measurement_packet(result:Result, accel_body_raw):
 def readiness():
     return {
       'same_raw_packet_private_vertical_and_MEKF_bindable':True,
-      'same_vertical_successor_WPE_sigma_band_tracker_LPF':True,
+      'same_vertical_successor_tuner_LPF_and_later_WPE':True,
+      'tuner_uses_preupdate_WPE_state':True,
       'WPE_prior_takeover_band_stats_temporal_state_carried':True,
       'stillness_temporal_state_carried':True,
       'successive_frontend_samples_compose_without_state_restart':True,
