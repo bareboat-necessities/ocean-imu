@@ -6,6 +6,7 @@ import sys, unittest
 ROOT=Path(__file__).resolve().parents[2]; sys.path.insert(0,str(ROOT))
 from tools.stability.ou3_alt_contraction import finite_sensor_source_runtime as S
 from tools.stability.ou3_alt_contraction import finite_vertical_complementary_runtime as V
+from tools.stability.ou3_alt_contraction import finite_accel_guard_runtime as AG
 import test_finite_core as FC
 G=F(196133,20000)
 
@@ -41,6 +42,36 @@ class Tests(unittest.TestCase):
         self.assertEqual(out.observed,tuple(sample.internal_accel[i]-modeled[i] for i in range(3)))
         self.assertEqual(out.nu_acc,(F(1,100),F(-1,20),F(1,25)))
 
+    def test_guarded_descendant_keeps_raw_packet_and_derives_effective_residual(self):
+        _,raw=self.make()
+        gs=AG.State(stages=((0,0,0),)*4,detect_stages=((0,0,0),(0,0,0)),removed_ms=(0,0,0),weight=1,initialized=True)
+        # Fully engaged two-pole LP with alpha=1/2 produces a conditioned packet
+        # different from raw while preserving the original raw sensor relation.
+        guarded=S.guarded_sample(raw,gs,AG.Config(),dt=F(1,200),
+                                 decay=AG.DecayWitness(F(1,2),1,0,0),rms=AG.RmsWitness(0))
+        self.assertIs(guarded.raw,raw)
+        self.assertNotEqual(guarded.conditioned_accel_body,raw.raw_accel_body)
+        inertial=[raw.physical.acceleration[i]-raw.gravity_world[i] for i in range(3)]
+        phys=S.q_rotate(raw.physical.q_world_to_body,inertial)
+        self.assertEqual(guarded.internal_accel,
+                         tuple(phys[i]+raw.physical.beta[i]+guarded.effective_accel_residual_internal[i] for i in range(3)))
+
+    def test_guarded_private_vertical_and_core_observation_share_same_conditioned_accel(self):
+        state,_=self.make(); phys=replace(state.reference,acceleration=(0,0,0),beta=(0,0,0),gyro_bias=(0,0,0))
+        raw=S.RawImuSample(phys,(0,0,0),(0,0,0),(0,0,0),(0,0,0),(0,0,-G),(0,0,G))
+        guarded=S.guarded_sample(raw,AG.State(),AG.Config(),dt=F(1,200))
+        out=S.vertical_step_from_guarded(V.State(initialized=True),V.Config(0,0,G,20),guarded,dt=F(1,200),accel_invnorm=V.InvSqrtWitness(G*G,1/G),quat_invnorm=V.InvSqrtWitness(1,1))
+        self.assertEqual(out.vertical_accel,0)
+        self.assertEqual(S.assert_guarded_acc_measurement_input(guarded,guarded.conditioned_accel_body),guarded.internal_accel)
+        packet=S.finite_accel_core_observation(guarded,S.AccelConditioning(0,(0,0,0)))
+        self.assertEqual(packet.observed,guarded.internal_accel)
+
+    def test_guarded_measurement_rejects_raw_accel_when_guard_changes_sample(self):
+        _,raw=self.make()
+        gs=AG.State(stages=((0,0,0),)*4,detect_stages=((0,0,0),(0,0,0)),removed_ms=(0,0,0),weight=1,initialized=True)
+        guarded=S.guarded_sample(raw,gs,AG.Config(),dt=F(1,200),decay=AG.DecayWitness(F(1,2),1,0,0),rms=AG.RmsWitness(0))
+        with self.assertRaises(ValueError): S.assert_guarded_acc_measurement_input(guarded,raw.raw_accel_body)
+
     def test_finite_acc_bridge_enforces_declared_zero_lever_branch(self):
         _,sample=self.make()
         with self.assertRaises(ValueError): S.finite_accel_core_observation(sample,S.AccelConditioning(0,(0,0,0),(1,0,0)))
@@ -59,6 +90,6 @@ class Tests(unittest.TestCase):
         out=S.vertical_step_from_raw(V.State(initialized=True),V.Config(0,0,G,20),sample,dt=F(1,200),accel_invnorm=V.InvSqrtWitness(G*G,1/G),quat_invnorm=V.InvSqrtWitness(1,1)); self.assertEqual(out.vertical_accel,0)
 
     def test_readiness_fail_closed(self):
-        r=S.readiness(); self.assertTrue(r['raw_body_to_internal_deheel_map_materialized']); self.assertTrue(r['raw_accel_to_temperature_removed_core_observation_bridge']); self.assertTrue(r['nu_acc_from_same_raw_residual_and_temperature_model']); self.assertTrue(r['zero_lever_theorem_branch_enforced']); self.assertFalse(r['temperature_and_k_a_runtime_ancestry_attached']); self.assertFalse(r['sensor_residual_source_bounds_attached']); self.assertFalse(r['complete_word_finite_identity']); self.assertFalse(r['ALT_LIVE_PASS'])
+        r=S.readiness(); self.assertTrue(r['raw_body_to_internal_deheel_map_materialized']); self.assertTrue(r['guarded_accel_to_temperature_removed_core_observation_bridge']); self.assertTrue(r['nu_acc_from_same_guarded_residual_and_temperature_model']); self.assertTrue(r['guarded_effective_residual_not_free_source']); self.assertTrue(r['zero_lever_theorem_branch_enforced']); self.assertFalse(r['guard_exp_sqrt_binary32_ancestry_attached']); self.assertFalse(r['temperature_and_k_a_runtime_ancestry_attached']); self.assertFalse(r['sensor_residual_source_bounds_attached']); self.assertFalse(r['complete_word_finite_identity']); self.assertFalse(r['ALT_LIVE_PASS'])
 
 if __name__=='__main__': unittest.main()
