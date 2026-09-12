@@ -148,7 +148,37 @@ What they do not close:
 - eventual A21 under an arbitrary external `acc_bias_hold_`, and the
   `H18 -> A21` joint24 covariance transport itself.
 
-## Startup tilt supply is the limiting quantity
+## Two-phase private Mahony certificate
+
+The single-level formulation was infeasible at the padded `8.8 m/s^2` envelope:
+with the seed angle taken from the source's own `asin(8.8/g) = 1.1137 rad`, seed
+containment needed `C >= 1.8540056` while the 87 deg chart allowed
+`C < 1.4912551`. The boundary flow still closed with margin `0.0357940`, so the
+formulation, not the enclosure, was at fault.
+
+Because `q` and `sup` in
+
+`Vdot = -sqrt(C) [ sqrt(C) q - 2 sup ]`
+
+are level-*independent*, inward flow is a lower bound on the level and holds on
+*every* level above `W_in = 2 sup_max/q_min`. The certificate therefore uses two
+nested levels of one better-conditioned metric `p=3, c=11`
+(`P=[[1,-3],[-3,130]]`, `det=121`):
+
+- seed `1.6707881129` <= outer `1.7689` < chart ceiling `1.8726722863`
+  (headroom `5.5414%`), outer margin `0.0262974`;
+- inner level `sqrt(C_in)=1`, margin `0.0134738`, `W_in = 0.8578833`;
+- capture rate `q_min/2 = 0.0193788 /s`, time constant `51.6029 s`.
+
+Certified tilt: all-time `84.7161 deg`, at the deployed 150 s horizon
+`58.2102 deg`, asymptotic `56.6779 deg`. The dependent chain closes again —
+binary32/discrete charge, frontend transition, `ou3_startup_timeout_capture`
+(branch margin `4.1379 deg`) and `ou3_p4_brmm_frontend_predecessor_invariant`.
+
+Keep the metric read from the continuous certificate, never hardcoded, and keep
+the first-order decrease at **one** factor of `sqrt(C)`.
+
+## The private observer cannot supply the magnetic gates
 
 The shipping accumulation frame is the private observer's own tilt
 (`tiltOnlyQuatFromBoatQuat_(attitudeReferenceQuat_())`) and the handoff seed is
@@ -159,38 +189,46 @@ the rationals:
 - `min_horizontal_fraction = 0.05` binds at `delta <= 0.0495289` rad
   `= 2.8378 deg`;
 - non-vanishing north binds at `delta < 0.1067173` rad `= 6.1145 deg`;
-- the certified proxy tilt is `86.2567 deg`: shortfall `30.3957x` and
-  `14.1094x`, and `1.9168x` against the declared 45 deg entrance on its own.
+- certified all-time `84.7161 deg` (shortfall `29.8528x` / `13.8551x`) and
+  asymptotic `56.6779 deg` (`19.9725x` / `9.2695x`); the certified tilt alone
+  exceeds the declared 45 deg entrance by `1.8826x`, so no yaw gauge, however
+  accurate, repairs the entrance from this supply.
 
 The declared `world_averaged_gravity_direction_error = 0.02 rad` satisfies the
 binding requirement but is the low-passed world-gravity direction error, not the
 private observer's tilt error. Do not identify the two.
 
-The private Mahony level-set route is frozen. At the padded `8.8 m/s^2`
-envelope the seed angle is `asin(8.8/9.80665) = 1.1137 rad`, the level needed to
-contain it is `1.8540056`, the largest level inside the 87 deg chart is
-`1.4912551`, and the admissible level window is empty with factor `1.2432518`.
-The boundary flow still closes with margin `0.0357940`, so the obstruction is the
-level-set formulation, not the enclosure. A metric-free floor of
-`m/s_min + 0.1*xi = 0.17603 rad = 10.0855 deg` — `3.5540x` the binding
-requirement — rules out any further metric or subdivision work. The three
-permitted alternatives are recorded in `docs/ou3-proof-research-state.md`.
+This is a dead end for the whole route, not just for a metric choice. The
+certificate quantifies over the sector value `s` as an independent parameter, so
+its conclusion must hold for `s=1`, where the deployed gains give
+
+`theta/r = -(0.01 + 0.1 j w)/(0.01 s - w^2 + 0.1 s j w)`.
+
+An admitted primitive-bounded sinusoid peaks *inside* the declared band, at
+`0.0186 Hz` against `[0.018, 0.88] Hz`, contributing `0.14678877` rad; an
+admitted DC mean chord superposes `0.05` rad. So no metric, level or subdivision
+depth can certify a tilt below `0.19678877 rad = 11.2752 deg` — `3.9732x` the
+binding requirement and `1.8440x` north capture. Do not retry a static quadratic
+metric for the magnetic gates.
 
 ## Fail-closed state and next work
 
 `P4_PASS=false` and `P5_MAY_START=false`. Do not infer theorem closure from the
-H18 information lemma, the magnetic certificates, or green CI.
+H18 information lemma, the magnetic or startup certificates, or green CI.
 
 Immediate open items for the next PR are:
 
-1. Pick one of the three recorded startup-tilt alternatives and requalify the
-   private Mahony/proxy startup for the padded `||a_wave|| <= 8.8 m/s^2` family,
-   preserving both measured-period takeover and prior-frequency timeout paths.
-   Do not reopen the metric route.
-2. Discharge or replace the private-observer accumulation tilt-frame supply, and
-   close the ungauged 150 s timeout branch: `ready_by_timeout` does not require
-   `north_ready`, so that handoff still takes
-   `proxy_handoff_yaw_sigma_free_rad` with no yaw gauge at all.
+1. Attempt the tilt certificate with a frequency-dependent multiplier/IQC on the
+   primitive channel and measure the distance to the `11.2752 deg` floor. The
+   existing `ou3_p4_affine_hard_tube_iqc.py` and
+   `ou3_brmm_acceleration_moment_iqc.py` carry that machinery.
+2. Decide the magnetic side: narrow `MAG-BMM150-DET-v1` to a commissioned band
+   that forces the gates at the achieved tilt (`<= 55 uT` total needs
+   `>= 21.4462 uT` horizontal at the floor; all four tabulated rows in the
+   research state are feasible), or tighten the forcing qualification from the
+   COMPLETE-BRMM spectral support. Then close the ungauged 150 s timeout branch:
+   `ready_by_timeout` does not require `north_ready`, so that handoff still
+   takes `proxy_handoff_yaw_sigma_free_rad` with no yaw gauge at all.
 3. Complete same-history physical source attachment through frontend/tuner and
    actual P/H/R/K lineage for every H18/A21 word.
 4. Close downstream H18/A21 prior-free and finite-bias composition for

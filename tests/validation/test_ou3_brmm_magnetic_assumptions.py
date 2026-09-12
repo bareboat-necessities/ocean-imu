@@ -1,4 +1,5 @@
 from pathlib import Path
+import math
 import sys
 import unittest
 from fractions import Fraction as F
@@ -144,36 +145,94 @@ class StartupYawCaptureTests(unittest.TestCase):
 
     def test_certified_supply_branch_stays_fail_closed_with_a_reported_gap(self):
         c = self.d["certified_supply_branch"]
-        self.assertFalse(c["invariant_closed_at_padded_envelope"])
+        # The two-phase Mahony certificate now closes, so the supply exists -
+        # it is simply far too weak, which is a different fact and is reported
+        # as such rather than as a missing certificate.
+        self.assertTrue(c["invariant_closed_at_padded_envelope"])
+        self.assertEqual(c["invariant_validation_failures"], [])
+        self.assertTrue(c["two_phase_certificate_consumed"])
         self.assertFalse(c["magnetic_capture_forced_from_certified_supply"])
+        self.assertFalse(c["magnetic_capture_forced_from_ultimate_supply"])
         self.assertFalse(c["certified_tilt_alone_inside_declared_entrance_set"])
         self.assertFalse(c["perfect_yaw_gauge_would_repair_entrance"])
         self.assertGreater(c["gate_shortfall_factor"], 1.0)
+        self.assertGreater(c["ultimate_gate_shortfall_factor"], 1.0)
+        self.assertGreater(c["ultimate_north_capture_shortfall_factor"], 1.0)
         self.assertGreater(c["entrance_shortfall_factor"], 1.0)
-        self.assertTrue(c["bound_is_level_set_radius_not_accuracy_bound"])
+        # The accumulation frame can start well before the deployed horizon, so
+        # the sound supply is the all-time bound, not the asymptotic one.
+        self.assertTrue(c["accumulation_frame_may_start_before_the_horizon"])
+        self.assertTrue(c["sound_supply_for_accumulation_frame_is_all_time_bound"])
+        self.assertLess(c["certified_ultimate_tilt_deg_upper"], c["certified_tilt_deg_upper"])
         self.assertFalse(self.d["CERTIFIED_SUPPLY_ENTRANCE_CLOSED"])
         self.assertFalse(self.d["accumulation_frame_tilt_supply_discharged"])
         self.assertFalse(self.d["timeout_branch_yaw_gauge_forced"])
 
-    def test_scaling_argument_rules_out_metric_refinement_alone(self):
-        s = self.d["forcing_scaling_argument"]
-        self.assertTrue(s["is_scaling_argument_not_certificate"])
-        self.assertTrue(s["metric_refinement_alone_cannot_reach_requirement"])
+    def test_formulation_floor_rules_out_the_whole_route_not_just_a_metric(self):
+        s = self.d["declared_formulation_tilt_floor"]
+        self.assertTrue(s["is_formulation_lower_bound_not_physical_claim"])
+        self.assertTrue(s["frozen_sector_member_s_equals_one"])
+        self.assertTrue(s["no_metric_or_level_can_reach_requirement"])
         self.assertGreater(s["shortfall_factor"], 1.0)
-        # theta_ss = -m/s from the observer's own integral channel, plus the
-        # 0.1*xi primitive term carried by z = x - B*xi.
+        # The floor is the in-band primitive-channel peak plus an admitted DC
+        # mean chord; both are superposed on the linear z-dynamics.
+        self.assertTrue(s["peak_frequency_inside_declared_wave_band"])
+        lo, hi = s["declared_wave_band_hz"]
+        self.assertLessEqual(lo, s["peak_frequency_hz"])
+        self.assertLessEqual(s["peak_frequency_hz"], hi)
         self.assertAlmostEqual(
-            s["metric_free_tilt_floor_rad"],
-            s["declared_mean_direction_chord_norm_upper"] / s["endpoint_sector_s_lower"]
-            + 0.1 * s["declared_direction_primitive_norm_upper_s"],
+            s["declared_formulation_tilt_floor_rad"],
+            s["primitive_channel_tilt_floor_rad"] + s["mean_chord_tilt_floor_rad"],
             places=12,
         )
+        # It must also dominate the weaker north-capture requirement.
+        self.assertGreater(
+            math.degrees(s["declared_formulation_tilt_floor_rad"]),
+            self.d["certified_supply_branch"]["required_tilt_deg_for_north_capture"],
+        )
+        self.assertFalse(self.d["private_observer_can_supply_the_declared_gates"])
+        self.assertTrue(self.d["quadratic_metric_class_ruled_out"])
 
-    def test_three_qualitatively_different_alternatives_are_recorded(self):
+    def test_required_envelope_narrowing_is_quantified_at_the_floor(self):
+        n = self.d["required_envelope_narrowing_at_the_floor"]
+        self.assertAlmostEqual(
+            n["supplied_tilt_rad"],
+            self.d["declared_formulation_tilt_floor"]["declared_formulation_tilt_floor_rad"],
+            places=12,
+        )
+        self.assertEqual(n["declared_combined_perturbation_uT"], 7.0)
+        self.assertAlmostEqual(n["shipping_min_horizontal_fraction"], 0.05)
+        rows = n["rows"]
+        self.assertGreaterEqual(len(rows), 3)
+        # A narrower total-field ceiling needs a lower horizontal floor, and
+        # every declared row must stay inside its own total field.
+        for row in rows:
+            self.assertTrue(row["feasible_within_total_field"], row)
+            self.assertGreater(
+                row["required_horizontal_floor_uT"], n["declared_envelope_row"]["declared_horizontal_floor_uT"]
+            )
+        ceilings = [r["world_field_norm_upper_uT"] for r in rows]
+        floors = [r["required_horizontal_floor_uT"] for r in rows]
+        self.assertEqual(ceilings, sorted(ceilings))
+        self.assertEqual(floors, sorted(floors))
+
+    def test_rational_sqrt_lower_bound_is_sound(self):
+        from fractions import Fraction as Frac
+
+        for x in (Frac(2), Frac(1, 3), Frac(157, 1000), Frac(0)):
+            lo = CAP._sqrt_lower(x)
+            self.assertLessEqual(lo * lo, x, x)               # sound
+            step = Frac(1, 10**28)
+            self.assertGreater((lo + step) * (lo + step), x, x)  # and tight
+        with self.assertRaises(ValueError):
+            CAP._sqrt_lower(Frac(-1))
+
+    def test_qualitatively_different_alternatives_are_recorded(self):
         self.assertGreaterEqual(len(self.d["alternatives"]), 3)
+        self.assertIn("IQC", " ".join(self.d["alternatives"]))
         self.assertEqual(
             self.d["limiting_quantity"],
-            "private-observer accumulation tilt-frame error bound",
+            "declared gravity-direction forcing pair (mean chord, primitive) and the commissioned magnetic band",
         )
 
     def test_shipping_handoff_parity_is_observed_not_assumed(self):

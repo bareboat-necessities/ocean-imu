@@ -7,31 +7,40 @@ sys.path.insert(0, str(ROOT / "tools"))
 sys.path.insert(0, str(ROOT / "tools" / "stability"))
 
 import ou3_brmm_private_mahony_discrete_comparison as mod  # noqa: E402
-import ou3_brmm_private_mahony_live_invariant as CONT  # noqa: E402
+import ou3_brmm_private_mahony_discrete_invariant as DISC  # noqa: E402
 
 
 class BrmmPrivateMahonyDiscreteComparisonTest(unittest.TestCase):
-    """The discrete comparison is blocked by its continuous prerequisite.
+    def test_ideal_shipping_period_step_preserves_invariant(self):
+        d = mod.build()
+        self.assertEqual(mod.validate(d), [])
+        self.assertTrue(d["ideal_5ms_discrete_PI_invariant_closed"])
+        self.assertGreater(d["discrete_metric_decrease_lower"], 0.0)
+        self.assertTrue(d["same_BRMM_forcing_as_continuous_invariant"])
 
-    The padded 8.8 m/s^2 envelope leaves the 87 deg-chart PI invariant with an
-    empty admissible level window, so the discrete/binary32 comparison refuses
-    to build rather than composing a step on top of an unclosed invariant.  The
-    refusal is the certificate here; the discrete lemma cannot be reinstated
-    until the continuous invariant closes.
-    """
+    def test_binary32_source_order_composition_is_closed_but_toolchain_generalization_remains_fail_closed(self):
+        d = mod.build()
+        self.assertTrue(d["shipping_binary32_quaternion_map_error_composed"])
+        self.assertTrue(d["shipping_source_order_binary32_discrete_invariant_closed"])
+        self.assertFalse(d["toolchain_independent_binary32_invariant_closed"])
+        self.assertFalse(d["complete_BRMM_family_materialized_here"])
+        self.assertFalse(d["P3_promoted"])
+        self.assertFalse(d["source_generator"])
 
-    def test_refuses_to_compose_on_an_unclosed_continuous_invariant(self):
-        failures = CONT.validate(CONT.build())
-        self.assertNotEqual(failures, [])
-        with self.assertRaisesRegex(RuntimeError, "continuous Mahony invariant invalid"):
-            mod.build()
-
-    def test_refusal_names_the_seed_level_window_obstruction(self):
-        with self.assertRaises(RuntimeError) as ctx:
-            mod.build()
-        message = str(ctx.exception)
-        self.assertIn("continuous_all_live_PI_invariant_closed is not true", message)
-        self.assertIn("no metric level contains the seed", message)
+    def test_binary32_charge_reads_the_metric_instead_of_hardcoding_it(self):
+        d = DISC.build()
+        self.assertEqual(DISC.validate(d), [])
+        self.assertTrue(d["metric_read_from_continuous_certificate"])
+        # dot(V) <= -sqrt(C)[sqrt(C) q - 2 sup] carries ONE factor of sqrt(C);
+        # the retired form used two and claimed twice the proved decrease.
+        self.assertTrue(d["first_order_decrease_carries_single_sqrt_C"])
+        self.assertAlmostEqual(
+            d["guaranteed_first_order_V_decrease_lower"],
+            d["continuous_boundary_margin_after_binary32"] * d["dt_s"] * 1.33,
+            places=9,
+        )
+        self.assertGreater(d["discrete_V_margin_lower"], 0.0)
+        self.assertGreater(d["one_step_chart_round_margin_rad"], 0.0)
 
 
 if __name__ == "__main__":

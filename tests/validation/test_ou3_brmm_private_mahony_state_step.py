@@ -60,13 +60,23 @@ class BrmmPrivateMahonyStateStepTest(unittest.TestCase):
         self.assertGreater(inv["raw_quaternion_norm2_lower"], inv["raw_quaternion_norm2_guard"][0])
         self.assertIn("Mahony -> WPE -> tuner/scheduler", d["next_obligation"])
 
-    def test_connected_frontend_transition_is_blocked_by_its_prerequisite(self):
-        # The frontend transition consumes the private-Mahony live-entry
-        # invariant, which has an empty admissible level window at the padded
-        # 8.8 m/s^2 envelope.  It therefore refuses to build rather than
-        # composing the connected path on an unclosed invariant.
-        with self.assertRaisesRegex(RuntimeError, "continuous Mahony invariant invalid"):
-            frontend.build()
+    def test_connected_frontend_transition_is_same_brmm_path(self):
+        d = frontend.build()
+        self.assertEqual(frontend.validate(d), [])
+        self.assertTrue(d["shipping_source_parity_pass"])
+        self.assertTrue(d["same_BRMM_sample_drives_Mahony_tuner_WPE"])
+        self.assertTrue(d["private_Mahony_live_entry_invariant_consumed"])
+        self.assertTrue(d["current_Riccati_schedule_exported_before_current_measurement"])
+        self.assertTrue(d["actual_applied_per_axis_RS_exported_from_same_active_schedule"])
+        self.assertTrue(d["tuner_consumes_previous_WPE_state"])
+        self.assertTrue(d["same_current_vertical_acceleration_consumed_by_tuner_and_WPE"])
+        self.assertFalse(d["source_generator"])
+        self.assertFalse(d["independent_vertical_acceleration_input_allowed"])
+        self.assertFalse(d["independent_wave_frequency_input_allowed"])
+        self.assertFalse(d["independent_tuner_schedule_input_allowed"])
+        self.assertFalse(d["complete_BRMM_family_materialized_here"])
+        self.assertFalse(d["P3_promoted"])
+
 
     def test_point_step_is_finite_but_cannot_promote(self):
         d = mod.build()

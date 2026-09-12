@@ -11,65 +11,98 @@ import ou3_brmm_private_mahony_live_invariant as mod  # noqa: E402
 import ou3_brmm_gravity_direction_forcing_qualification as DIR  # noqa: E402
 
 
-class BrmmPrivateMahonyLiveInvariantTest(unittest.TestCase):
-    """The 87 deg-chart PI invariant does not close for the padded envelope.
+class BrmmPrivateMahonyTwoPhaseInvariantTest(unittest.TestCase):
+    """Two nested levels of one metric close at the padded 8.8 m/s^2 envelope.
 
-    The certificate is retained as evidence, not as a passing lemma: the level
-    needed to contain the first-sample accelerometer seed and the largest level
-    that still fits inside the proof chart form an empty window.  Any future
-    closure attempt must move the metric or the forcing qualification, and must
-    consciously update these assertions.
+    The retired single-level formulation could not: the level needed to contain
+    the first-sample accelerometer seed exceeded the largest level fitting
+    inside the 87 deg proof chart.  The replacement keeps one metric and splits
+    the roles - an outer level for seed containment and chart retention, an
+    inner level for the ultimate bound - which works because inward flow holds
+    on every level above the minimal certifiable one, not only on a boundary.
     """
 
     @classmethod
     def setUpClass(cls):
         cls.d = mod.build()
 
-    def test_seed_angle_is_bound_to_the_padded_source_not_a_constant(self):
-        g = self.d["BRMM_direction_geometry"]
-        q = DIR.build()
-        self.assertAlmostEqual(
-            g["initial_seed_tilt_rad_upper"],
-            q["instantaneous_direction_angle_upper_rad"],
-            places=15,
-        )
-        # asin(8.8/9.80665) = 1.1137 rad, not the retired 0.955 rad constant.
-        self.assertAlmostEqual(g["initial_seed_tilt_rad_upper"], 1.1137282529726653, places=12)
-        self.assertTrue(g["initial_seed_angle_closed"])
-        self.assertTrue(g["same_history_decomposition_retained"])
-
-    def test_admissible_level_window_is_empty_at_the_padded_envelope(self):
-        w = self.d["admissible_level_window"]
-        self.assertFalse(w["window_nonempty"])
-        self.assertGreater(w["level_lower_required_to_contain_seed"], w["level_upper_allowed_by_proof_chart"])
-        self.assertGreater(w["emptiness_factor"], 1.0)
-        self.assertAlmostEqual(w["declared_level_C"], 1.4641, places=12)
-
-    def test_invariant_stays_fail_closed_with_its_failures_recorded(self):
-        failures = mod.validate(self.d)
-        self.assertFalse(self.d["initial_set_inside_invariant"])
-        self.assertFalse(self.d["continuous_all_live_PI_invariant_closed"])
-        self.assertIn("initial_set_inside_invariant is not true", failures)
-        self.assertTrue(any("no metric level contains the seed" in f for f in failures))
-
-    def test_retained_geometry_is_still_certified(self):
-        # The boundary flow and chart containment of the declared level are
-        # unaffected by the seed obstruction and stay available to a successor.
+    def test_certificate_closes(self):
+        self.assertEqual(mod.validate(self.d), [])
+        self.assertTrue(self.d["continuous_all_live_PI_invariant_closed"])
         self.assertTrue(self.d["invariant_strictly_inside_87deg_chart"])
         self.assertFalse(self.d["invariant_strictly_inside_60deg_chart"])
-        self.assertLess(self.d["actual_tilt_deg_upper"], 87.0)
-        self.assertGreater(self.d["boundary_validation"]["strict_inward_margin_lower"], 0.0)
 
-    def test_certified_tilt_is_a_level_radius_far_above_magnetic_needs(self):
-        # The certified number is the ellipse radius, not an accuracy bound, and
-        # it is what the magnetic capture composition has to consume.
-        self.assertGreater(self.d["actual_tilt_deg_upper"], 80.0)
-        self.assertAlmostEqual(
-            self.d["actual_tilt_rad_upper"],
-            math.sqrt(self.d["z_tilt_projection_sq_upper"])
-            + 0.1 * self.d["BRMM_direction_geometry"]["direction_primitive_norm_upper_s"],
-            places=12,
+    def test_seed_angle_is_bound_to_the_padded_source_not_a_constant(self):
+        g = self.d["BRMM_direction_geometry"]
+        # The declared rational bound must dominate the source's own angle.
+        self.assertTrue(g["seed_tilt_dominates_source_angle"])
+        self.assertGreaterEqual(
+            g["seed_tilt_rad_upper"], DIR.build()["instantaneous_direction_angle_upper_rad"]
         )
+        # asin(8.8/9.80665) = 1.1137 rad, not the retired 0.955 rad constant.
+        self.assertLess(g["seed_tilt_rad_upper"], 1.115)
+        self.assertGreater(g["seed_tilt_deg_upper"], 63.0)
+        self.assertTrue(g["same_history_decomposition_retained"])
+
+    def test_three_level_constraints_are_jointly_satisfied(self):
+        lv = self.d["two_phase_levels"]
+        self.assertLessEqual(lv["seed_level_required"], lv["outer_level_C"])
+        self.assertLess(lv["outer_level_C"], lv["chart_level_ceiling"])
+        self.assertTrue(lv["seed_contained_in_outer_level"])
+        self.assertTrue(lv["outer_level_inside_chart"])
+        self.assertGreater(lv["chart_headroom_relative"], 0.0)
+        self.assertLess(lv["inner_level_C"], lv["outer_level_C"])
+
+    def test_both_level_boundaries_have_strict_inward_flow(self):
+        for key in ("boundary_validation", "inner_boundary_validation"):
+            b = self.d[key]
+            self.assertTrue(b["closed"], key)
+            self.assertGreater(b["strict_inward_margin_lower"], 0.0, key)
+            self.assertEqual(b["cells_per_chart"], mod.CELLS_PER_CHART)
+            self.assertEqual(b["endpoint_sector_checks"], 2)
+
+    def test_capture_is_exponential_and_reaches_the_inner_level(self):
+        cap = self.d["capture"]
+        self.assertTrue(cap["inner_level_above_minimal"])
+        self.assertGreater(cap["contraction_rate_lower_per_s"], 0.0)
+        self.assertTrue(cap["monotone_decrease_above_inner_level"])
+        # W_in = 2*support/q, and the rate is q/2.
+        self.assertAlmostEqual(
+            cap["minimal_certifiable_sqrt_level"],
+            2.0 * cap["support_upper_ceiling"] / cap["q_lower_floor"],
+            places=9,
+        )
+        self.assertAlmostEqual(
+            cap["contraction_rate_lower_per_s"], cap["q_lower_floor"] / 2.0, places=12
+        )
+        self.assertLess(cap["sqrt_level_at_horizon_upper"], self.d["sqrt_C"])
+        self.assertFalse(cap["capture_uses_deployed_timeout_as_hypothesis"])
+
+    def test_tilt_bounds_are_ordered_and_inside_the_chart(self):
+        self.assertLess(
+            self.d["ultimate_tilt_deg_upper"], self.d["tilt_at_deployed_horizon_deg_upper"]
+        )
+        self.assertLess(
+            self.d["tilt_at_deployed_horizon_deg_upper"], self.d["actual_tilt_deg_upper"]
+        )
+        self.assertLess(self.d["actual_tilt_deg_upper"], 87.0)
+        self.assertLess(self.d["actual_tilt_rad_upper"], self.d["chart_radius_rad"])
+
+    def test_metric_is_generic_and_consistent(self):
+        p = self.d["metric_skew_p"]
+        c = self.d["metric_scale_c"]
+        self.assertEqual(self.d["metric_cholesky_R"], [[1.0, -p], [0.0, c]])
+        self.assertEqual(self.d["metric_P"], [[1.0, -p], [-p, p * p + c * c]])
+        self.assertAlmostEqual(self.d["metric_det"], c * c, places=12)
+        self.assertFalse(self.d["metric_tuned_toward_magnetic_requirement"])
+
+    def test_exp_bound_is_outward_and_composed(self):
+        # exp(-x) for x beyond the validated half-step range.
+        for x in (0.25, 1.0, 3.0, 4.0):
+            self.assertGreaterEqual(mod._exp_neg_upper(x), math.exp(-x))
+            self.assertLess(mod._exp_neg_upper(x), math.exp(-x) * 1.01)
+        with self.assertRaises(ValueError):
+            mod._exp_neg_upper(-1.0)
 
     def test_same_brmm_forcing_not_an_alternate_source(self):
         self.assertTrue(self.d["same_BRMM_specific_force_direction_required"])
@@ -79,7 +112,7 @@ class BrmmPrivateMahonyLiveInvariantTest(unittest.TestCase):
         self.assertFalse(self.d["trajectory_replay_used"])
         self.assertFalse(self.d["arbitrary_bounded_input_source_used"])
 
-    def test_discrete_shipping_composition_remains_fail_closed(self):
+    def test_downstream_obligations_remain_fail_closed(self):
         self.assertFalse(self.d["shipping_binary32_discrete_invariant_closed"])
         self.assertFalse(self.d["complete_BRMM_family_materialized_here"])
         self.assertFalse(self.d["P3_promoted"])

@@ -88,9 +88,29 @@ jobs:
           assert c['CERTIFIED_SUPPLY_ENTRANCE_CLOSED'] is False
           assert c['accumulation_frame_tilt_supply_discharged'] is False
           assert c['timeout_branch_yaw_gauge_forced'] is False
-          assert c['certified_supply_branch']['magnetic_capture_forced_from_certified_supply'] is False
-          assert c['certified_supply_branch']['gate_shortfall_factor'] > 1.0
-          assert c['forcing_scaling_argument']['metric_refinement_alone_cannot_reach_requirement'] is True
+          assert c['private_observer_can_supply_the_declared_gates'] is False
+          assert c['quadratic_metric_class_ruled_out'] is True
+          cb=c['certified_supply_branch']
+          # The two-phase Mahony certificate closes, so the supply exists and is
+          # consumed; it is simply far too weak for the gates.
+          assert cb['invariant_closed_at_padded_envelope'] is True
+          assert cb['invariant_validation_failures'] == []
+          assert cb['two_phase_certificate_consumed'] is True
+          assert cb['magnetic_capture_forced_from_certified_supply'] is False
+          assert cb['magnetic_capture_forced_from_ultimate_supply'] is False
+          assert cb['gate_shortfall_factor'] > 1.0
+          assert cb['ultimate_gate_shortfall_factor'] > 1.0
+          assert cb['ultimate_north_capture_shortfall_factor'] > 1.0
+          # The formulation floor rules out any metric or level, not just one.
+          fl=c['declared_formulation_tilt_floor']
+          assert fl['is_formulation_lower_bound_not_physical_claim'] is True
+          assert fl['no_metric_or_level_can_reach_requirement'] is True
+          assert fl['peak_frequency_inside_declared_wave_band'] is True
+          import math as _m
+          assert _m.degrees(fl['declared_formulation_tilt_floor_rad']) > cb['required_tilt_deg_for_north_capture']
+          # Alternative 2 is quantified rather than asserted.
+          nar=c['required_envelope_narrowing_at_the_floor']
+          assert all(r['feasible_within_total_field'] for r in nar['rows'])
           assert len(c['alternatives']) >= 3
           for d in (e, s, c):
               assert d['filter_changed'] is False
@@ -103,10 +123,15 @@ jobs:
           print('BINDING_GATE', r['binding_requirement'])
           print('REQUIRED_TILT_DEG', r['max_tilt_deg_for_horizontal_fraction_gate'])
           print('NORTH_CAPTURE_TILT_DEG', r['max_tilt_deg_for_north_capture'])
-          print('CERTIFIED_TILT_DEG', c['certified_supply_branch']['certified_tilt_deg_upper'])
-          print('GATE_SHORTFALL_FACTOR', c['certified_supply_branch']['gate_shortfall_factor'])
-          print('METRIC_FREE_FLOOR_DEG', c['forcing_scaling_argument']['metric_free_tilt_floor_deg'])
-          print('METRIC_FREE_SHORTFALL_FACTOR', c['forcing_scaling_argument']['shortfall_factor'])
+          print('CERTIFIED_TILT_ALL_TIME_DEG', cb['certified_tilt_deg_upper'])
+          print('CERTIFIED_TILT_AT_150S_DEG', cb['certified_tilt_at_deployed_horizon_deg_upper'])
+          print('CERTIFIED_TILT_ULTIMATE_DEG', cb['certified_ultimate_tilt_deg_upper'])
+          print('GATE_SHORTFALL_FACTOR', cb['gate_shortfall_factor'])
+          print('ULTIMATE_GATE_SHORTFALL_FACTOR', cb['ultimate_gate_shortfall_factor'])
+          print('FORMULATION_FLOOR_DEG', fl['declared_formulation_tilt_floor_deg'])
+          print('FORMULATION_FLOOR_SHORTFALL_FACTOR', fl['shortfall_factor'])
+          print('PEAK_FREQUENCY_HZ', fl['peak_frequency_hz'], 'BAND', fl['declared_wave_band_hz'])
+          print('REQUIRED_NARROWING_AT_FLOOR', [(x['world_field_norm_upper_uT'], x['required_horizontal_floor_uT']) for x in nar['rows']])
           print('UNIVERSAL_ADMISSION_BUDGET_UT', e['norm_ratio_gate']['universal_admission_perturbation_budget_uT'])
           print('H18_A21_RELEASE_S', s['H18_A21_release_time_upper_s'])
           print('DECLARED_SUPPLY_FULL_ATTITUDE_DEG', c['declared_supply_branch']['full_attitude_deg_upper'])
