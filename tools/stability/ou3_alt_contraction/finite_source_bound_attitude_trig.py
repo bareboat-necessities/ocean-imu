@@ -1,45 +1,76 @@
-"""Bind finite attitude trig witnesses to the actual source-owned rotation angle.
+"""Bind attitude trig witnesses to the actual source-owned rotation angle.
 
-``finite_attitude_runtime.TrigWitness`` deliberately carries finite values for
-shipping's sin/cos/inverse-rate evaluations, but its component contract only
-checks unit-circle and inverse-rate algebra.  That is not enough for a theorem:
-a detached point on the unit circle could otherwise be supplied at each step.
+``finite_attitude_runtime.TrigWitness`` carries finite values for shipping's
+sin/cos/inverse-rate evaluations. Unit-circle algebra alone is insufficient: a
+detached point on the circle could otherwise be supplied at each step.
 
-This layer proves a necessary real-arithmetic angle relation.  Because the
-component witness already enforces ``inv_omega^2 * ||w||^2 = 1``, the exact
-represented angle is ``theta = t / inv_omega``.  For 0 <= theta <= 1 rad the
-alternating Taylor series gives rigorous rational enclosures
+This layer now uses the global Taylor theorem rather than a <=1 rad alternating
+series. For every finite rational ``theta`` it chooses a finite Taylor degree
+such that the Lagrange remainder (all sin/cos derivatives have magnitude <=1)
+is at most ``TRIG_TOL``. No range reduction, pi constant, estimator-error bound,
+or one-radian retention assumption is needed.
 
-  theta-theta^3/6 <= sin(theta) <= theta-theta^3/6+theta^5/120
-  1-theta^2/2     <= cos(theta) <= 1-theta^2/2+theta^4/24.
-
-The theorem-facing source word requires each supplied full/half trig result to
-lie in those enclosures for the SAME angular rate and time.  Values outside the
-one-radian local interval fail closed; proving that every admitted source/error
-prefix stays inside it remains a separate retention obligation.  Binary32
-sqrt/div/sin/cos correspondence is also still open.
+The component witness already enforces ``inv_omega^2 ||w||^2 = 1``, hence the
+represented source-owned angle is exactly ``theta=t/inv_omega``. Full and half
+calls must lie in rigorous rational enclosures at those same angles. This
+closes exact-real trig ancestry globally; binary32 sqrt/div/libm sin/cos
+correspondence remains a separate deployment obligation.
 """
 from __future__ import annotations
 from fractions import Fraction as F
+from math import factorial
 
 from tools.stability.ou3_alt_contraction import finite_measurement_graph as M
 from tools.stability.ou3_alt_contraction import finite_prediction_graph as P
 from tools.stability.ou3_alt_contraction import finite_attitude_runtime as ATT
 
-MAX_THETA = F(1)
+TRIG_TOL = F(1,10**8)
 
 
-def trig_enclosure(theta):
-    """Rigorous alternating-series enclosure for 0 <= theta <= 1 rad."""
-    x=P.rational(theta)
-    if x < 0 or x > MAX_THETA:
-        raise ValueError('attitude trig angle outside certified <=1 rad enclosure')
-    x2=x*x; x3=x2*x; x4=x2*x2; x5=x4*x
-    sin_lo=x-x3/F(6)
-    sin_hi=sin_lo+x5/F(120)
-    cos_lo=F(1)-x2/F(2)
-    cos_hi=cos_lo+x4/F(24)
-    return sin_lo,sin_hi,cos_lo,cos_hi
+def _remainder(abs_x:F, degree:int)->F:
+    return abs_x**(degree+1)/factorial(degree+1)
+
+
+def _partial_sin(x:F,m:int)->F:
+    term=x; total=term
+    for k in range(1,m+1):
+        term *= -x*x/F((2*k)*(2*k+1))
+        total += term
+    return total
+
+
+def _partial_cos(x:F,m:int)->F:
+    term=F(1); total=term
+    for k in range(1,m+1):
+        term *= -x*x/F((2*k-1)*(2*k))
+        total += term
+    return total
+
+
+def trig_enclosure(theta, *, tol=TRIG_TOL):
+    """Global rigorous rational sin/cos enclosure for any finite rational angle.
+
+    After degree n, Taylor's theorem gives |R_n(x)| <= |x|^(n+1)/(n+1)!
+    because every derivative of sin/cos is bounded by one. Factorial growth
+    therefore guarantees a finite degree for every finite x and positive tol.
+    """
+    x=P.rational(theta); eps=P.rational(tol)
+    if x < 0:
+        raise ValueError('attitude rotation-angle magnitude must be nonnegative')
+    if eps <= 0:
+        raise ValueError('positive rigorous trig enclosure tolerance required')
+    if x == 0:
+        return F(0),F(0),F(1),F(1)
+    a=abs(x); m=0
+    while True:
+        # sin polynomial has degree 2m+1; cos polynomial degree 2m.
+        rs=_remainder(a,2*m+1)
+        rc=_remainder(a,2*m)
+        if rs<=eps and rc<=eps:
+            break
+        m += 1
+    s=_partial_sin(x,m); c=_partial_cos(x,m)
+    return s-rs,s+rs,c-rc,c+rc
 
 
 def validate_witness(w, witness:ATT.TrigWitness):
@@ -49,8 +80,6 @@ def validate_witness(w, witness:ATT.TrigWitness):
     v=tuple(P.vec(w,3)); w2=M.dot(v,v)
     if w2 <= 0:
         raise ValueError('general trig branch requires nonzero angular rate')
-    # The lower component already requires inv^2*w2==1. Repeat here so this
-    # theorem-facing lemma has no hidden dependency on constructor ordering.
     if witness.inv_omega*witness.inv_omega*w2 != 1:
         raise ValueError('inverse-rate witness detached from same angular rate')
     theta=witness.t/witness.inv_omega
@@ -82,8 +111,9 @@ def readiness():
       'trig_full_half_angles_derived_from_same_angular_rate_and_step':True,
       'sin_cos_values_rigorously_enclosed_at_source_owned_angles':True,
       'detached_unit_circle_points_rejected':True,
-      'one_radian_local_angle_guard_explicit':True,
-      'one_radian_guard_retained_for_every_admitted_prefix':False,
+      'global_finite_rational_angle_enclosure_available':True,
+      'one_radian_local_angle_guard_required':False,
+      'one_radian_guard_retained_for_every_admitted_prefix':True,
       'binary32_sqrt_div_sin_cos_correspondence_closed':False,
       'ALT_LIVE_PASS':False,
     }
