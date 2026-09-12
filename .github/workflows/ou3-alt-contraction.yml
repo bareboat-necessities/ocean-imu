@@ -97,7 +97,8 @@ jobs:
             test_finite_tuner_projection_bridge test_finite_tuner_frontend_prefix \
             test_finite_tuner_commit test_finite_tuner_boundary_commit \
             test_finite_runtime_parameters test_finite_active_runtime_word \
-            test_finite_live_imu_prefix test_shipping_finite_identity \
+            test_finite_live_imu_prefix test_finite_tilt_watchdog \
+            test_finite_live_tilt_prefix test_shipping_finite_identity \
             test_core test_proof_plan test_bias_families -v
       - name: Verify actual shipping event correspondence without source promotion
         run: |
