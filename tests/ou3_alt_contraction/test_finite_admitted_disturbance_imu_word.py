@@ -35,16 +35,14 @@ class Tests(unittest.TestCase):
 
     def test_small_symbolic_bound_rejects_actual_executed_supply(self):
         s=root(0); witness,segment,raw,r,b,dynamic=BASE.operands(s.live)
-        # Perturb the same-packet accelerometer residual, not gyro.  This keeps
-        # the attitude prediction on the original branch while still making the
-        # executed ISS forcing nonzero, so this regression isolates the carried
-        # disturbance-bound guard rather than requiring unrelated trig witnesses.
-        residual=(F(1),0,0)
-        raw2=replace(raw,accel_residual_internal=residual,
-                     raw_accel_body=(raw.raw_accel_body[0]+1,raw.raw_accel_body[1],raw.raw_accel_body[2]))
+        # Exercise a forcing coordinate that is explicitly retained by the
+        # executed-word supply layer but cannot change attitude/prediction
+        # topology: shipping k_a*(T-35 C).  At T=36 C the thermal coordinate is
+        # nonzero, so a theorem history with W=0 must reject the actual event.
+        args=PBASE.root_args(); args['temperature_c']=F(36)
         with self.assertRaisesRegex(ValueError,'exceeds carried theorem bound'):
-            X.imu_step(s,restricted=r,bias_restricted=b,witness=witness,raw=raw2,
-                       packet_id='imu-1',**PBASE.root_args(),**dynamic)
+            X.imu_step(s,restricted=r,bias_restricted=b,witness=witness,raw=raw,
+                       packet_id='imu-1',**args,**dynamic)
         self.assertEqual(len(s.live.live_word.source.steps),0)
 
     def test_readiness_does_not_promote_storage(self):
