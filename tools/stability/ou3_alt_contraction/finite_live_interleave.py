@@ -6,10 +6,12 @@ The next IMU consumes that exact successor, including all 21 covariance rows.
 No covariance, reference, physical origin, model or tuner is restarted.
 
 The IMU edge uses the theorem-facing tilt-reset composer: no caller may choose a
-free watchdog angle or final preserve-yaw reset quaternion. Finite-prefix timing
-checks are not qualification of an infinite schedule. The supplying component
-arithmetic/source premises remain open, and this module cannot enable the
-source-uniform master/storage gate.
+free watchdog angle or final preserve-yaw reset quaternion.  For theorem-word
+assembly, ``imu_step_source_qualified`` additionally requires the exact physical
+segment to carry one persistent O^601_BRMM/BIAS ancestry token.  The lower-level
+``imu_step`` remains a conditional finite-algebra primitive and is not itself
+source admission. Finite-prefix timing checks are not qualification of an
+infinite schedule. This module cannot enable storage by itself.
 """
 from __future__ import annotations
 from dataclasses import dataclass, replace
@@ -23,6 +25,7 @@ from tools.stability.ou3_alt_contraction import finite_startup_handoff_seed as S
 from tools.stability.ou3_alt_contraction import finite_live_magnetic_word as MAG
 from tools.stability.ou3_alt_contraction import finite_mag_bias_gate as GATE
 from tools.stability.ou3_alt_contraction import finite_mag_call_schedule as SCHEDULE
+from tools.stability.ou3_alt_contraction import finite_source_continuation as SOURCE
 
 
 @dataclass(frozen=True)
@@ -91,6 +94,7 @@ def from_startup(bridge: START.Result, magnetic: MAG.StartupState, *,
 
 
 def imu_step(state: State, raw, segment, **kwargs):
+    """Conditional finite-algebra IMU step; not source admission by itself."""
     if not isinstance(state, State):
         raise TypeError('startup-rooted interleaved state required')
     if not isinstance(raw,SENSOR.RawImuSample):
@@ -101,6 +105,27 @@ def imu_step(state: State, raw, segment, **kwargs):
         raise TypeError('interleaved theorem word accepts no free tilt/reset output')
     out = LIVE.step_from_shipping_operands(state.live, raw, segment, **kwargs)
     return Result(State(out.state, state.magnetic, state.clock, state.schedule), out)
+
+
+def imu_step_source_qualified(state: State, raw, qualified: SOURCE.QualifiedPhysicalSegment, **kwargs):
+    """Theorem-facing IMU edge bound to one persistent BRMM/BIAS continuation.
+
+    This closes the distinction between an arbitrary algebraically consistent
+    ``PhysicalSegment`` and a segment carrying the retained source ancestry. It
+    still does not prove that all runtime/tuner coefficient-product graphs are
+    source-uniformly generated from that continuation; that remains the finite
+    master blocker.
+    """
+    if not isinstance(state,State) or not isinstance(qualified,SOURCE.QualifiedPhysicalSegment):
+        raise TypeError('interleaved state and source-qualified physical segment required')
+    core=state.live.live.mekf
+    if qualified.root.history_id != core.reference.history_id:
+        raise ValueError('qualified COMPLETE-BRMM history detached from current Live state')
+    if qualified.root.live_origin != core.reference.live_origin:
+        raise ValueError('qualified source restarted the one-time Live S origin')
+    if qualified.segment.before != core.reference:
+        raise ValueError('qualified source segment does not start at current physical endpoint')
+    return imu_step(state,raw,qualified.segment,**kwargs)
 
 
 def mag_step(state: State, **kwargs):
@@ -127,6 +152,7 @@ def set_hold(state: State, *, hold):
 
 
 def readiness():
+    src=SOURCE.readiness()
     return {
         'startup_gauge_and_private_observer_attached_at_Live_entry': True,
         'successive_IMU_mag_IMU_events_share_full_state_covariance': True,
@@ -134,9 +160,14 @@ def readiness():
         'magnetic_refinement_and_continuous_application_composed': True,
         'interleaved_IMU_uses_same_operand_tilt_reset_entry': True,
         'free_watchdog_angle_and_reset_quaternion_forbidden': True,
+        'source_qualified_finite_IMU_entry_available': True,
+        'correlated_COMPLETE_BRMM_left_inclusion_consumed': src['correlated_COMPLETE_BRMM_left_inclusion_consumed'],
+        'persistent_BIAS_parameter_token_available': src['one_bias_family_parameter_token_over_word_required'],
         'external_hold_and_count_release_feed_next_IMU_mode': True,
         'same_history_every_represented_event_successor_exposed': True,
         'finite_prefix_mag_call_deadlines_checked': True,
+        'finite_estimator_coefficients_bound_to_same_source_continuation': False,
+        'finite_magnetic_source_bound_to_same_COMPLETE_BRMM_history': False,
         'infinite_schedule_qualified_by_finite_prefix': False,
         'source_uniform_complete_600_step_word_qualified': False,
         'storage_search_allowed': False,
