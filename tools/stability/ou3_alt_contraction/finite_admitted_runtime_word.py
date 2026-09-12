@@ -24,8 +24,10 @@ from tools.stability.ou3_alt_contraction import finite_source_continuation as SO
 from tools.stability.ou3_alt_contraction import finite_sensor_source_runtime as SENSOR
 from tools.stability.ou3_alt_contraction import finite_source_bound_imu_forcing as IMU
 from tools.stability.ou3_alt_contraction import finite_source_bound_mag_forcing as MAG
+from tools.stability.ou3_alt_contraction import finite_source_bound_attitude_trig as TRIG
 from tools.stability.ou3_alt_contraction import finite_mag_call_schedule as MAGSCHEDULE
 from tools.stability.ou3_alt_contraction import finite_wrapper_clock_binary32 as CLOCK
+from tools.stability.ou3_alt_contraction import finite_magnetic_wrapper_clock as MAGCLOCK
 
 
 @dataclass(frozen=True)
@@ -120,7 +122,7 @@ def set_hold(state:State, *, hold):
 
 def readiness():
     admitted=ADMITTED.readiness(); origin=ORIGIN.readiness(); imu=IMU.readiness(); mag=MAG.readiness()
-    counter=MAGSCHEDULE.counter_lifetime(); clock=CLOCK.readiness()
+    trig=TRIG.readiness(); counter=MAGSCHEDULE.counter_lifetime(); clock=CLOCK.readiness(); magclock=MAGCLOCK.readiness()
     return {
       'admitted_COMPLETE_BRMM_history_and_strong_runtime_joined':True,
       'admitted_BIAS_history_and_strong_runtime_joined':True,
@@ -137,11 +139,14 @@ def readiness():
       'sensor_or_temperature_amplitude_bound_invented':False,
       'startup_reachability_for_every_admitted_history_proved':False,
       'bounded_input_history_qualified':False,
-      'one_radian_attitude_guard_closed_for_every_admitted_prefix':False,
+      'global_exact_real_attitude_trig_ancestry_closed':trig['global_finite_rational_angle_enclosure_available'],
+      'one_radian_attitude_guard_closed_for_every_admitted_prefix':not trig['one_radian_local_angle_guard_required'],
       'deployment_exp_expm1_trig_Eigen_LDLT_closed':False,
       'canonical_5ms_wrapper_clock_prefix_binary32_closed':clock['canonical_5ms_wrapper_clock_prefix_binary32_closed'],
       'wrapper_clock_arbitrary_dt_closed':clock['arbitrary_dt_wrapper_clock_closed'],
       'wrapper_clock_indefinite_lifetime_closed':clock['indefinite_wrapper_clock_lifetime_closed'],
+      'outer_magnetic_wrapper_clock_operands_materialized':magclock['exact_binary32_wrapper_timestamp_derived_from_canonical_physical_endpoint'],
+      'dual_clock_magnetic_word_composed':magclock['dual_clock_magnetic_word_composed'],
       'deployment_roundoff_supply_attached':False,
       'mag_schedule_supplies_uniform_call_count_upper':counter.uniform_call_count_upper is not None,
       'shipping_signed_mag_counter_lifetime_closed':counter.no_signed_overflow_proved,
