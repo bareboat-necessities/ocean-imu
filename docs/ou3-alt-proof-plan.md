@@ -37,6 +37,8 @@ runtime/source relation:
 - independently boxed coefficients that destroy same-history ancestry;
 - wordwise S reset, position reanchor or a convenience entry set;
 - Gaussian/high-probability replacements for deterministic source admission;
+- measurement covariance or sensor statistics substituted for a deterministic
+  theorem disturbance envelope;
 - storage/rho searches before the complete finite master passes the
   representation guard;
 - changing the shipping filter solely to make the proof easier.
@@ -76,10 +78,38 @@ and safe-LDLT branches. The highest prediction entry accepts no precomputed
 shipping transition/process matrices and enforces one bias-corrected gyro across
 nominal and covariance attitude propagation.
 
+The startup magnetic path is now structurally attached through the persistent
+Mahony proxy, world-frame gravity-alignment gate, literal asynchronous admission
+clock, default MagAutoTuner accept/reject/ready recurrence, yaw-stripped tilt
+frame, raw true-field/hard-iron/residual source identity, and the same main
+`PhysicalKinematics` endpoint used by the finite physical word. The learned
+magnetic reference cannot be freely reselected per event.
+
 This materially advances the finite-map stage but does NOT satisfy the universal
-source quantifier. Exp/trig and numerical factorization witnesses, applied tuner
-parameters/R values, frontend candidate/active state, hybrid guards and source
-admission still require same-history attachment.
+source quantifier. Exp/trig and numerical factorization witnesses, deployment
+roundoff, remaining hybrid/runtime branches and source admission still require
+same-history closure.
+
+## Explicit magnetic source-specification blocker
+
+The current canonical COMPLETE-BRMM/BIAS assumptions bound vessel motion and the
+bias families, but the ALT source audit has not found a declared deterministic
+envelope for all three quantities entering the startup magnetic identity:
+
+`m_raw_B = R_true B_world + b_HI_body + n_mag_body`.
+
+In particular, no current canonical theorem assumption has been identified that
+gives a finite bound for the world magnetic-field magnitude, body-fixed hard
+iron, and deterministic magnetometer residual. `R_mag`, bench statistics,
+simulation values and sensor datasheet typical noise are not interchangeable
+with such deterministic source assumptions.
+
+Therefore `finite_mag_source_qualification` is intentionally fail-closed:
+local finite identities may continue, but magnetic source qualification,
+complete-word qualification and storage search must remain false until named
+source/theorem assumptions provide those envelopes. Do not invent numerical
+values merely to unblock the proof. This is an E-type source-specification
+obligation unless an already-authoritative assumption is located and attached.
 
 ## Promotion state
 
