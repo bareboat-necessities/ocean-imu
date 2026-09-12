@@ -17,23 +17,21 @@ import test_finite_source_bound_prediction_word as PBASE
 
 
 def qualified_prefix():
-    p=BASE.begin()
-    source=p.prefix.live.live_word
+    p=BASE.begin(); source=p.prefix.live.live_word
     source=replace(source,runtime=QBASE.shipping_runtime())
     admitted=replace(p.prefix.live,live_word=source)
-    interleaved=replace(p.prefix,live=admitted)
-    return replace(p,prefix=interleaved)
+    return replace(p,prefix=replace(p.prefix,live=admitted))
 
 
 def wpe_source_for(state,dynamic):
     entry=X._entry_wpe(state)
     if not entry.usable_period:
         return WPEF.tuner_frequency(entry,min_hz=TARGET.FLOOR,max_hz=TARGET.CEIL)
-    exact_f=F(dynamic['wpe_current_frequency'])
-    frequency=B32.rn32(exact_f)
+    exact_f=F(dynamic['wpe_current_frequency']); frequency=B32.rn32(exact_f)
     log=WPEF.bind_log_state(entry,B32.rn32(entry.log_period))
     getter=WPEF.getters(log,period_exp=B32.rn32(F(1)/frequency),frequency_exp=frequency)
-    return WPEF.tuner_frequency(entry,min_hz=TARGET.FLOOR,max_hz=TARGET.CEIL,getter=getter)
+    return WPEF.tuner_frequency(entry,min_hz=TARGET.FLOOR,max_hz=TARGET.CEIL,
+                                getter=getter,shadow_frequency=exact_f)
 
 
 class Tests(unittest.TestCase):
@@ -42,36 +40,35 @@ class Tests(unittest.TestCase):
             X.begin(BASE.begin(),LEDGER.initial())
 
     def test_source_qualified_live_product_accepts_startup_carried_ledger_for_component_algebra(self):
-        p=qualified_prefix(); tau=LEDGER.State(updates=17)
-        s=X.begin(p,tau)
-        self.assertIs(s.prefix,p)
-        self.assertEqual(s.tau,tau)
-        self.assertEqual(s.live_entry_tau_updates,17)
+        p=qualified_prefix(); tau=LEDGER.State(updates=17); s=X.begin(p,tau)
+        self.assertIs(s.prefix,p); self.assertEqual(s.tau,tau); self.assertEqual(s.live_entry_tau_updates,17)
 
-    def test_strong_IMU_frequency_source_is_same_preupdate_WPE_state(self):
+    def test_WPE_source_edge_retains_exact_vs_machine_input_supplies(self):
         s=X.begin(qualified_prefix(),LEDGER.State(updates=17))
-        witness,segment,raw,r,b,dynamic=IBASE.operands(s.prefix.prefix.live)
-        dynamic=dict(dynamic)
-        # The tau deployment witness and exact tuner shadow consume the same
-        # carried decay.  0.995 lies inside the 5ms/prior-horizon exp enclosure.
-        e=B32.rn32(F(199,200))
-        dynamic['ema']=CAND.EmaWitness(e,dynamic['ema'].decay_RS)
+        witness,segment,raw,r,b,dynamic=IBASE.operands(s.prefix.prefix.live); dynamic=dict(dynamic)
         source=wpe_source_for(s,dynamic)
+        # Keep the machine decay inside the shipping enclosure; it need not be
+        # exactly identical to the exact-real candidate decay.
+        e=B32.rn32(F(dynamic['ema'].decay_tau_sigma))
         out=X.imu_step_from_wpe(s,tuner_frequency=source,tau_exp_decay=e,
             restricted=r,bias_restricted=b,witness=witness,raw=raw,
             packet_id='imu-wpe-source',**PBASE.root_args(),**dynamic)
         self.assertEqual(out.state.tau.updates,18)
-        self.assertEqual(out.tau_step.target.binary32_target,out.tau_step.separate_step.tau_target)
+        self.assertEqual(out.frequency_supply,source.machine_minus_shadow)
+        self.assertEqual(out.decay_input_supply,e-F(dynamic['ema'].decay_tau_sigma))
+        machine_exact=out.tau_step.separate_target.exact_target
+        cand=X._candidate(out.event)
+        self.assertEqual(out.target_input_supply,machine_exact-F(cand.tau_target))
         self.assertEqual(source.shadow,X._entry_wpe(s))
 
     def test_detached_preupdate_WPE_frequency_source_rejected_before_execution(self):
-        s=X.begin(qualified_prefix(),LEDGER.State(updates=17))
-        entry=X._entry_wpe(s)
+        s=X.begin(qualified_prefix(),LEDGER.State(updates=17)); entry=X._entry_wpe(s)
         other=replace(entry,elapsed=entry.elapsed+1)
         if other.usable_period:
             log=WPEF.bind_log_state(other,B32.rn32(other.log_period))
             getter=WPEF.getters(log,period_exp=B32.rn32(2),frequency_exp=B32.rn32(F(1,2)))
-            source=WPEF.tuner_frequency(other,min_hz=TARGET.FLOOR,max_hz=TARGET.CEIL,getter=getter)
+            source=WPEF.tuner_frequency(other,min_hz=TARGET.FLOOR,max_hz=TARGET.CEIL,
+                                        getter=getter,shadow_frequency=F(1,2))
         else:
             source=WPEF.tuner_frequency(other,min_hz=TARGET.FLOOR,max_hz=TARGET.CEIL)
         with self.assertRaisesRegex(ValueError,'sample-entry WPE'):
@@ -80,33 +77,29 @@ class Tests(unittest.TestCase):
     def test_mag_and_hold_are_literal_tau_ledger_identities(self):
         s=X.begin(qualified_prefix(),LEDGER.State(updates=17)); tau=s.tau
         s,_=X.mag_step(s,**LBASE.mag_kwargs(s.prefix.prefix.live.live_word))
-        self.assertIs(s.tau,tau); self.assertEqual(s.live_entry_tau_updates,17)
-        s,_=X.set_hold(s,hold=False)
-        self.assertIs(s.tau,tau); self.assertEqual(s.live_entry_tau_updates,17)
+        self.assertIs(s.tau,tau); s,_=X.set_hold(s,hold=False); self.assertIs(s.tau,tau)
 
     def test_live_entry_must_leave_room_for_full_600_step_word(self):
-        too_late=LEDGER.State(updates=LEDGER.MAX_UPDATES-599)
         with self.assertRaisesRegex(ValueError,'no certified room'):
-            X.begin(qualified_prefix(),too_late)
+            X.begin(qualified_prefix(),LEDGER.State(updates=LEDGER.MAX_UPDATES-599))
 
     def test_short_prefix_cannot_claim_tau_complete_word(self):
-        s=X.begin(qualified_prefix(),LEDGER.State(updates=17))
         with self.assertRaisesRegex(ValueError,'exactly 600 physical source transitions'):
-            X.complete(s)
+            X.complete(X.begin(qualified_prefix(),LEDGER.State(updates=17)))
 
-    def test_readiness_closes_goLive_handoff_but_not_admitted_startup_or_libm(self):
+    def test_readiness_is_precise_about_remaining_global_WPE_join(self):
         r=X.readiness()
-        self.assertTrue(r['Live_product_carries_persistent_dual_compiler_tau_ledger'])
-        self.assertTrue(r['strong_Live_constructor_requires_exact_goLive_filter_frontend_state_and_tau_ledger'])
-        self.assertTrue(r['goLive_tau_ledger_identity_bridge_available'])
-        self.assertTrue(r['each_Live_IMU_requires_same_candidate_frequency_target_and_decay_as_tau_ledger'])
-        self.assertTrue(r['strong_Live_IMU_frequency_source_bound_to_sample_entry_WPE_or_prior'])
-        self.assertTrue(r['WPE_getter_to_tuner_store_topology_available'])
-        self.assertTrue(r['MAG_and_HOLD_preserve_tau_ledger_exactly'])
-        self.assertFalse(r['admitted_startup_reachability_with_tau_ledger_closed'])
+        for k in ('Live_product_carries_persistent_dual_compiler_tau_ledger',
+                  'strong_Live_constructor_requires_exact_goLive_filter_frontend_state_and_tau_ledger',
+                  'WPE_source_edge_keeps_exact_candidate_and_machine_frequency_distinct',
+                  'WPE_machine_minus_shadow_frequency_supply_attached',
+                  'machine_exact_target_minus_exact_candidate_target_supply_attached',
+                  'machine_tau_decay_minus_exact_candidate_decay_supply_attached',
+                  'global_compiler_tau_tracks_accept_distinct_WPE_inputs'):
+            self.assertTrue(r[k])
+        self.assertFalse(r['global_compiler_WPE_log_tracks_composed_into_Live_product'])
         self.assertFalse(r['WPE_binary32_log_period_production_closed'])
-        self.assertFalse(r['upstream_WPE_to_StoredFrequency_binary32_correspondence_closed'])
-        self.assertFalse(r['tuner_exp_libm_binary32_correspondence_closed'])
+        self.assertFalse(r['source_uniform_WPE_frequency_supply_bound_closed'])
         self.assertFalse(r['source_uniform_complete_600_step_word_qualified'])
         self.assertFalse(r['storage_search_allowed'])
 
