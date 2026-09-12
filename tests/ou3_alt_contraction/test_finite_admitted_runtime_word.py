@@ -43,20 +43,17 @@ class Tests(unittest.TestCase):
     def test_first_restriction_must_start_at_admitted_origin(self):
         s=self.root(); witness,r,b,raw,runtime=self.next_operands(s)
         wrong_before=replace(r.segment.before,position=(1,0,0))
-        wrong_segment=replace(r.segment,before=wrong_before)
-        bad=A.RestrictedSegment(s.admitted.admitted_history,r.ordinal,wrong_segment)
-        badb=B.RestrictedBiasStep(s.admitted.bias_history,b.ordinal,wrong_segment)
-        with self.assertRaisesRegex(ValueError,'sample zero'):
-            X.imu_step(s,restricted=bad,bias_restricted=badb,witness=witness,
-                       raw=raw,packet_id='bad-origin',**runtime)
+        # The physical segment constructor itself now enforces the moment/bias
+        # recurrence, so the detached sample-zero predecessor cannot be built.
+        with self.assertRaisesRegex(ValueError,'physical moment/bias recurrence is not one history'):
+            replace(r.segment,before=wrong_before)
+        self.assertEqual(len(s.admitted.live_word.source.steps),0)
 
-    def test_detached_BRMM_history_rejected_at_composition_not_coordinate_constructor(self):
+    def test_detached_BRMM_history_rejected_at_constructor(self):
         s=self.root(); witness,r,b,raw,runtime=self.next_operands(s)
         other=A.AdmittedHistory('other-history')
-        detached=A.RestrictedSegment(other,witness.ordinal,r.segment)
-        with self.assertRaisesRegex(ValueError,'detached from carried admitted history'):
-            X.imu_step(s,restricted=detached,bias_restricted=b,witness=witness,
-                       raw=raw,packet_id='bad-brmm-history',**runtime)
+        with self.assertRaisesRegex(ValueError,'detached from quantified admitted history'):
+            A.RestrictedSegment(other,witness.ordinal,r.segment)
         self.assertEqual(len(s.admitted.live_word.source.steps),0)
 
     def test_detached_BIAS_history_cannot_reach_strong_runtime(self):
