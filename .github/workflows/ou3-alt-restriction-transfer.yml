@@ -71,8 +71,7 @@ jobs:
             test_finite_continuous_mag_runtime test_finite_live_magnetic_word \
             test_finite_live_interleave \
             test_shipping_finite_identity test_core test_proof_plan test_bias_families -q
-          git add .github/workflows/ou3-alt-contraction.yml \
-                  docs/ou3-alt-main-handover.md docs/ou3-alt-proof-plan.md \
+          git add docs/ou3-alt-main-handover.md docs/ou3-alt-proof-plan.md \
                   docs/ou3-alt-source-continuation.md docs/ou3-proof-research-state.md \
                   tests/ou3_alt_contraction/test_finite_complete_brmm_restriction.py \
                   tests/ou3_alt_contraction/test_finite_source_continuation.py \
