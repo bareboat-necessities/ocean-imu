@@ -1,34 +1,34 @@
-"""Persistent COMPLETE-BRMM/BIAS ancestry for finite Live physical segments.
+"""Persistent COMPLETE-BRMM/BIAS/sensor ancestry for finite Live segments.
 
 ``finite_physical_prediction.PhysicalSegment`` proves an exact physical
-recurrence but deliberately does *not* certify source admission.  This module
-adds the missing theorem-facing ancestry layer without converting the correlated
+recurrence but deliberately does *not* certify source admission. This module
+adds the theorem-facing ancestry layer without converting the correlated
 601-sample source relation into independent per-sample boxes.
 
-A qualified continuation carries:
-  * one O^601_BRMM source-history/root token and one physical generator token;
-  * one one-time Live S origin;
-  * one BIAS0/BIAS1/BIAS2 contract and its persistent parameter token;
-  * consecutive source-cell and primitive-in/primitive-out identities; and
-  * the exact finite ``PhysicalSegment`` consumed by the shipping event graph.
+A qualified continuation carries one O^601_BRMM source-history/generator root,
+one Live S origin, one BIAS0/BIAS1/BIAS2 contract/token, consecutive source-cell
+and physical-primitive identities, and the exact finite ``PhysicalSegment``.
+A qualified raw IMU packet additionally carries persistent gyro- and
+accelerometer-residual history tokens and is forced to use that segment's exact
+predecessor physical endpoint and the ALT identity de-heel map.
 
-The BIAS recurrence is checked numerically/algebraically on every concrete
-segment against the analytic family contract.  COMPLETE-BRMM membership itself
-is represented by membership in the already-proved correlated outer relation;
-this module never re-tests that membership with independent scalar boxes.  The
-remaining missing bridge is estimator ownership: every tuner/guard/measurement
-coefficient product in the finite shipping event still has to be generated from
-this same qualified continuation.  Therefore this module cannot enable storage.
+The residual values remain explicit ISS/finite-horizon forcing. This module does
+NOT reinterpret configured Racc/Rmag covariance standard deviations as hard
+pathwise sensor-noise bounds. Quantitative sensor residual envelopes and target
+conversion roundoff remain open. The remaining decisive bridge is estimator
+ownership: every tuner/guard/measurement/prediction coefficient product in the
+finite shipping event still has to be generated from this same qualified
+continuation. Therefore this module cannot enable storage.
 """
 from __future__ import annotations
 from dataclasses import dataclass
 from fractions import Fraction as F
-from math import sqrt
 
 import ou3_brmm_correlated_window_outer_enclosure as OUTER
 from tools.stability.ou3_alt_contraction import bias_families as BIAS
 from tools.stability.ou3_alt_contraction import finite_measurement_graph as M
 from tools.stability.ou3_alt_contraction import finite_physical_prediction as PHYS
+from tools.stability.ou3_alt_contraction import finite_sensor_source_runtime as SENSOR
 
 OUTER_RELATION = 'O^601_BRMM'
 TRANSITIONS = 600
@@ -79,6 +79,27 @@ class SourceRoot:
 
 
 @dataclass(frozen=True)
+class SensorDisturbanceRoot:
+    """Persistent identity of the two raw IMU residual histories.
+
+    These tokens prevent a proof from selecting a new unrelated residual process
+    at each event. They intentionally carry no numerical bound: the declared
+    theorem currently treats the realizations as ISS/finite-horizon forcing,
+    while Racc is a covariance/model parameter rather than a hard sample cap.
+    """
+    source_root: SourceRoot
+    gyro_residual_history_id: str
+    accel_residual_history_id: str
+    conversion_profile: str='ALT_ZERO_HEEL_RAW_BODY_V1'
+    def __post_init__(self):
+        if not isinstance(self.source_root,SourceRoot): raise TypeError('physical source root required')
+        for x in (self.gyro_residual_history_id,self.accel_residual_history_id,self.conversion_profile):
+            if not isinstance(x,str) or not x: raise ValueError('persistent sensor disturbance/profile id required')
+        if self.conversion_profile!='ALT_ZERO_HEEL_RAW_BODY_V1':
+            raise ValueError('unsupported theorem sensor conversion profile')
+
+
+@dataclass(frozen=True)
 class StepWitness:
     ordinal: int
     parent_source_cell_id: str
@@ -108,7 +129,7 @@ class QualifiedPhysicalSegment:
         expected_before=self.root.live_origin + (self.witness.ordinal-1)*DT
         if s.before.time != expected_before or s.after.time != expected_before+DT:
             raise ValueError('segment clock detached from 601-sample source ordinal')
-        # Same analytic BIAS family over the whole word.  The exact segment
+        # Same analytic BIAS family over the whole word. The exact segment
         # constructor already enforces beta+ = phi_true beta + bias_driver.
         phi=R(s.phi_true)
         lo=R(str(c.phi_true.lo)); hi=R(str(c.phi_true.hi))
@@ -122,6 +143,26 @@ class QualifiedPhysicalSegment:
         for beta in (s.before.beta,s.after.beta):
             if not _le_float_bound_square(beta,c.true_bias_norm_bound):
                 raise ValueError('true accelerometer bias exceeds family hard norm contract')
+
+
+@dataclass(frozen=True)
+class QualifiedRawImuSample:
+    """One actual raw packet owned by one qualified physical transition."""
+    physical: QualifiedPhysicalSegment
+    sensor_root: SensorDisturbanceRoot
+    raw: SENSOR.RawImuSample
+    packet_id: str
+    def __post_init__(self):
+        if not isinstance(self.physical,QualifiedPhysicalSegment) or not isinstance(self.sensor_root,SensorDisturbanceRoot) or not isinstance(self.raw,SENSOR.RawImuSample):
+            raise TypeError('qualified physical step, sensor root and raw IMU packet required')
+        if self.sensor_root.source_root != self.physical.root:
+            raise ValueError('sensor residual histories detached from COMPLETE-BRMM/BIAS root')
+        if self.raw.physical != self.physical.segment.before:
+            raise ValueError('raw IMU packet detached from qualified physical predecessor')
+        if self.raw.deheel_body_to_internal != SENSOR.IDENTITY3:
+            raise ValueError('ALT source-qualified packet requires zero-heel identity map')
+        if not isinstance(self.packet_id,str) or not self.packet_id:
+            raise ValueError('persistent raw packet identity required')
 
 
 @dataclass(frozen=True)
@@ -171,6 +212,11 @@ def append(cont: Continuation, *, witness: StepWitness, segment: PHYS.PhysicalSe
     return Continuation(cont.root,cont.steps+(q,))
 
 
+def qualify_raw_imu(physical:QualifiedPhysicalSegment,sensor_root:SensorDisturbanceRoot,
+                    raw:SENSOR.RawImuSample,packet_id:str):
+    return QualifiedRawImuSample(physical,sensor_root,raw,packet_id)
+
+
 def begin(root: SourceRoot):
     return Continuation(root,())
 
@@ -189,6 +235,11 @@ def readiness():
       'bias_phi_driver_and_true_beta_hard_contracts_checked_per_segment':True,
       'source_cell_parent_child_and_primitive_continuity_checked':True,
       'complete_600_transition_continuation_shape_materialized':True,
+      'raw_IMU_packet_bound_to_same_qualified_physical_predecessor':True,
+      'persistent_gyro_and_accel_residual_history_tokens_required':True,
+      'Racc_covariance_not_reinterpreted_as_hard_sensor_noise_bound':True,
+      'quantitative_sensor_residual_ISS_envelope_attached':False,
+      'sensor_conversion_binary32_attached':False,
       'finite_estimator_coefficients_bound_to_same_source_continuation':False,
       'finite_magnetic_source_bound_to_same_COMPLETE_BRMM_history':False,
       'all_configured_hybrid_branches_bound_to_finite_source_graph':False,
