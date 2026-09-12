@@ -145,11 +145,17 @@ BIAS component/norm envelopes. Consecutive segments retain one actual phi.
 from the same segments using the exact Gramian concatenation identity; the
 proof is in `ou3-alt-source-continuation.md`.
 
-These are necessary outer constraints, not full COMPLETE-BRMM/BIAS membership.
-Keep generator/potential/QO continuation and actual BIAS generating functions
-explicitly open. Do not label scalar bounds, parameter tokens, or an exact
-kinematic recurrence as physical admission. These checks cannot authorize rho
-search, shrink the filter-error domain, or replace native arithmetic closure.
+These executable checks are necessary outer constraints, not a runtime
+membership oracle. `finite_complete_brmm_restriction.py` closes the universal
+physical-source implication separately: the primary theorem source is the same
+bounded physical history with bounded centered primitive, and restricting any
+admitted history to the 5 ms grid yields the finite caps, primitive recurrence,
+coupled moment IQC and rotation bound. A common spectral/shaping generator is
+explicitly not required because those constructions are only sufficient
+certificate methods. Matching labels still cannot admit an arbitrary runtime
+trace. The frequency/frontend relation, actual BIAS generating functions and
+deployment arithmetic remain open. None of this authorizes rho search, shrinks
+the filter-error domain, or replaces native arithmetic closure.
 
 The source-owning Live word also has a dedicated fresh-origin endpoint. It checks
 the actual sample-zero `Reference` at `time == live_origin`, requires centered

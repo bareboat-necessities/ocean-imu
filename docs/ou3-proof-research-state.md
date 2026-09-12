@@ -272,6 +272,8 @@ storage-true expectation corrected to false. Shared P2/P3/P4/P5 code is untouche
 
 ### Evidence and validation boundary
 
+The first checked-transfer run for the primary-history restriction failed for CI infrastructure only: its temporary workflow did not install `numpy` and the native Mahony correspondence prerequisites. It stopped after 502 tests with `ModuleNotFoundError: numpy` and `required native Mahony correspondence prerequisites missing`. This invalidates only the transfer-workflow environment assumption; it does not invalidate the restriction lemma or the normal finite-identity job, whose dependency installation is unchanged. The falsifiable retry is the identical 518-test selection after installing the same proof/native dependencies as the normal job.
+
 The full focused finite-identity selection passes 511 tests with native checks
 required. The native shipping finite-identity check passes with bit-identical
 observed/plain sample states. Native preserve-yaw reset regression passes,
@@ -286,10 +288,8 @@ use an existing separate Eigen include. No full-build PASS is claimed.
 
 ### Current limiter, DEAD_ENDS and next falsifiable work
 
-The complete finite source-uniform word remains open: bounded generator/
-potential and Q/O continuation, full BIAS driver/parameter histories, remaining
-same-source exp/trig/Eigen/roundoff branches, full sample-zero generator membership (the checked outer endpoint topology is
-closed), startup/ungauged capture and continuation beyond the current
+The complete finite source-uniform word remains open: the physical frequency/frontend relation, full BIAS driver/parameter histories, remaining
+same-source exp/trig/Eigen/roundoff branches, primary-history membership at sample zero is a theorem premise rather than a runtime token check (the checked endpoint topology is closed), startup/ungauged capture and continuation beyond the current
 600-step container.
 The firing tilt/reset operands are no longer free; their deployment boundary
 and nonfinite behavior still need proof. Floating clocks and the signed magnetic
@@ -300,10 +300,12 @@ independent coefficient boxes, more-seed source qualification, wordwise S resets
 18-state A21 marginal storage, convenient entry sets or covariance consistency.
 The two-strike rule and `assert_finite_storage_master` remain in force.
 
-Next bind a verified source realization or symbolic same-history source graph
-to the checked moments, BIAS driver and every runtime operand; demonstrate
-universal inclusion and all branch successors rather than more matching labels.
-Only a complete finite master may authorize common joint24 storage search,
-followed by every-prefix retention, capture and an ultimate bound.
+The attempted universal-generator interpretation is now frozen as a proof-method dead end. `ou3_brmm_physical_wave_source.py` intentionally has no single numerical generator envelope for the complete family; requiring one would narrow the theorem to one certificate representation. This is not a theorem failure: `ou3_brmm_physical_wave_condition.py` makes bounded oscillatory physical history plus a uniformly bounded centered primitive primary, with spectral/shaping realizations only sufficient certificates and with the padded complete-family physical envelope already closed.
+
+Independent critic alternatives were: (1) restrict the primary physical history directly to the finite sampling grid; (2) prove only certificate-specific spectral/shaping corollaries; or (3) carry an abstract continuous source-function object through every shipping event. Route (1) is chosen because it preserves the declared theorem class and supplies exactly the physical ports of the future storage inequality without a representation assumption. Routes (2) and (3) remain available if a later arithmetic/interface obligation genuinely requires them.
+
+`finite_complete_brmm_restriction.py` now proves that every admitted primary COMPLETE-BRMM physical history, restricted to a 600-transition 5 ms word, inherits the exact finite endpoint caps, one-Live-origin centered-S bound, p/v/S recurrence, coupled acceleration-moment IQC and projective rotation-chord bound. The finite constants are checked against the primary complete-family envelope, including the outward `35 deg/s -> 11/18 rad/s` rate enclosure. Matching runtime tokens still do not prove history membership; the frequency/frontend relation, complete BIAS generating histories, and deployment arithmetic remain open.
+
+Next bind the still-open frequency/estimator coefficient products and full BIAS generating-history relation to this primary-history restriction, rather than introducing another source representation. Only a complete finite master may authorize common joint24 storage search, followed by every-prefix retention, capture and an ultimate bound.
 
 `ALT_LIVE_PASS=false`, `ALT_STARTUP_PASS=false`, `ALT_END_TO_END_PASS=false`.

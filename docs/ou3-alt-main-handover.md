@@ -58,13 +58,24 @@ by exact Gramian/kernel concatenation, without independent source boxes or S
 restarts. See [`ou3-alt-source-continuation.md`](ou3-alt-source-continuation.md)
 for the real-arithmetic projection/induction proof and its limits.
 
-The legacy `Qualified*` names do NOT establish COMPLETE-BRMM/O^601_BRMM or full
-BIAS generating-history membership. Source labels are ancestry, not admission.
-The fresh Live origin itself is now checked directly against the carried root,
-physical vector caps and BIAS envelope, so an asynchronous magnetic call may occur
-before IMU transition 1 without fabricating a predecessor segment or advancing
-source time/ordinal. Full generator/potential/QO membership of that origin and
-the later continuation remains open. Do not promote the outer check to admission.
+The legacy `Qualified*` names do NOT make arbitrary runtime objects admitted
+COMPLETE-BRMM/BIAS histories. Source labels are ancestry, not admission. The
+fresh Live origin itself is checked directly against the carried root, physical
+vector caps and BIAS envelope, so an asynchronous magnetic call may occur before
+IMU transition 1 without fabricating a predecessor segment or advancing source
+time/ordinal.
+
+`finite_complete_brmm_restriction.py` now closes the universal physical-source
+restriction that this graph needs. COMPLETE-BRMM's primary definition is one
+bounded physical p/v/a/attitude history with a uniformly bounded centered
+primitive; spectral and shaping-state constructions are only sufficient
+certificate methods. Restricting any admitted primary history to the 5 ms grid
+therefore yields the finite p/v/a/S caps, one-origin S bound, exact primitive
+recurrence, coupled moment IQC and necessary rotation-chord bound. No common
+numerical generator representation is required or assumed. Runtime token
+matching still does not prove membership of an arbitrary object; the remaining
+frequency/frontend, full BIAS-history and deployment-arithmetic relations stay
+open.
 
 The older `phase1_closure.py` is now explicitly a source/Jacobian ledger, not a
 finite-storage gate. Its old pointwise Jacobian cocycle is useful ancestry but
@@ -74,14 +85,15 @@ search.
 
 ## Next work
 
-Do not start storage/rho search. The immediate blocker is narrower now: bind all
-finite estimator-owned coefficient/product graphs (frontend/tuner/guard/Racc,
-prediction Q/F, S service, accel/mag innovation/K/Joseph/reset decisions) to the
-same checked physical continuation plus its still-required full source membership at every literal branch. The magnetic sample-zero endpoint and all later represented magnetic endpoints
-now consume the same carried root/reference object; the remaining source task is
-full generator/potential/QO and BIAS-history membership plus the estimator-owned
-coefficient/product graph at every branch. Then close startup/ungauged and
-deployment-arithmetic paths.
+Do not start storage/rho search. The primary physical-history -> finite-word
+restriction is now closed without a common generator assumption. The immediate
+blocker is to bind the remaining physical frequency relation, full BIAS
+generating histories, and finite estimator-owned coefficient/product graphs
+(frontend/tuner/guard/Racc, prediction Q/F, S service, accel/mag
+innovation/K/Joseph/reset decisions) to that same admitted history at every
+literal branch. The magnetic sample-zero endpoint and all later represented
+magnetic endpoints already consume the same carried root/reference object. Then
+close startup/ungauged and deployment-arithmetic paths.
 
 For deployment correspondence, finish sqrt/acos/asin/atan2/AngleAxis and
 normalization/cutoff/nonfinite branches, floating clocks, Eigen decisions, and

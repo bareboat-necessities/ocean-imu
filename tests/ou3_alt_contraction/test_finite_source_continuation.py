@@ -121,6 +121,9 @@ class Tests(unittest.TestCase):
     def test_readiness_closes_ancestry_but_not_finite_master(self):
         d=X.readiness()
         self.assertTrue(d['correlated_COMPLETE_BRMM_left_inclusion_consumed'])
+        self.assertTrue(d['primary_COMPLETE_BRMM_physical_condition_restriction_closed'])
+        self.assertTrue(d['primary_COMPLETE_BRMM_requires_no_common_generator_representation'])
+        self.assertTrue(d['bounded_primitive_maps_to_same_Live_origin_prefix_S'])
         self.assertTrue(d['bias_phi_driver_and_true_beta_hard_contracts_checked_per_segment'])
         self.assertTrue(d['source_cell_parent_child_and_primitive_continuity_checked'])
         self.assertFalse(d['qualified_async_endpoint_comes_from_admitted_transition'])

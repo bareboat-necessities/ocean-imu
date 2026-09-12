@@ -22,6 +22,7 @@ from tools.stability.ou3_alt_contraction import finite_measurement_graph as M
 from tools.stability.ou3_alt_contraction import finite_physical_prediction as PHYS
 from tools.stability.ou3_alt_contraction import finite_sensor_source_runtime as SENSOR
 from tools.stability.ou3_alt_contraction import finite_brmm_moment_prefix as MOMENTS
+from tools.stability.ou3_alt_contraction import finite_complete_brmm_restriction as RESTRICT
 
 OUTER_RELATION = 'O^601_BRMM'
 TRANSITIONS = 600
@@ -270,10 +271,14 @@ def begin(root: SourceRoot):
 
 def readiness():
     outer=OUTER.build(); of=OUTER.validate(outer); bias=BIAS.build(); bf=BIAS.validate(bias)
-    if of or bf: raise RuntimeError('finite source ancestry prerequisite failed')
+    restriction=RESTRICT.build(); rf=RESTRICT.validate(restriction)
+    if of or bf or rf: raise RuntimeError('finite source ancestry prerequisite failed')
     return {
       'qualification':QUALIFICATION,
       'correlated_COMPLETE_BRMM_left_inclusion_consumed':outer['left_inclusion_closed'],
+      'primary_COMPLETE_BRMM_physical_condition_restriction_closed':restriction['same_history_restriction_required'],
+      'primary_COMPLETE_BRMM_requires_no_common_generator_representation':not restriction['common_generator_representation_required'],
+      'bounded_primitive_maps_to_same_Live_origin_prefix_S':restriction['bounded_primitive_implies_every_prefix_S_cap'],
       'one_outer_history_required_for_all_601_samples':outer['same_history_required_for_entire_window'],
       'independent_per_sample_BRMM_boxes_forbidden':True,
       'one_bias_family_parameter_token_over_word_required':True,

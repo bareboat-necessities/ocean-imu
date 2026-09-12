@@ -135,10 +135,34 @@ exactly, avoiding an inward decimal conversion. BIAS2 retains phi=1 exactly.
 A recurrence and these necessary envelopes do not establish the full generating
 function, thermal/strain history, or BIAS1 sinusoidal-parameter membership.
 
+## Universal restriction from the primary physical condition
+
+The universal theorem does **not** require one numerical spectral or
+shaping-state generator for all admitted seas. `ou3_brmm_physical_wave_condition.py`
+defines the source directly as one bounded physical wave history about the local
+equilibrium, with `p_dot=v`, `v_dot=a`, bounded body rate and
+`||integral_u^t p||<=D_S` for every `u,t`. Generator constructions are sufficient
+certificates only.
+
+`finite_complete_brmm_restriction.py` validates that the finite graph uses
+exactly the padded complete-family constants and proves the restriction
+implication. Choosing `u=t_L` gives the same one-origin
+`||S_L(t)||<=D_S` at every prefix. Integrating the jet relation gives the exact
+J0/J1/J2 translation recurrence. Orthogonal projection of that one acceleration
+history gives the coupled moment IQC, and the pointwise acceleration cap gives
+its segment/prefix budget. The body-rate cap gives the projective quaternion
+chord inequality; `pi<22/7` encloses 35 deg/s by `11/18 rad/s`.
+
+This closes the source-representation question but not a runtime membership
+oracle: arbitrary objects do not become admitted histories because their labels
+match. The remaining finite-word proof is conditional on one admitted primary
+physical history and must still attach its frequency relation, full BIAS
+generating history and all estimator/deployment arithmetic to that same history.
+
 ## Unclosed boundary
 
 No complete physical-source membership is inferred. The remaining obligations
-include generator/potential realization and Q/O continuation, the full BIAS
+include the physical frequency/frontend relation, the full BIAS
 parameter/driver graph, source-to-runtime exp/trig/solver/roundoff correspondence,
 the sample-zero magnetic endpoint, startup/ungauged capture, and continuation
 beyond the currently represented 600-transition container. Native clock and
