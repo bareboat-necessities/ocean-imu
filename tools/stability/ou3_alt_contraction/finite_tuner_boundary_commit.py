@@ -5,8 +5,13 @@ If its pending bit is false, shipping's boundary service is an identity and no
 noise-floor/sqrt witness is consumed.  If pending is true, the commit consumes
 that SAME persisted TuneState and derives ``band_noise_floor_sigma()`` from the
 carried adaptive-band state: raw bench sigma before band readiness, otherwise
-bench_sigma*sqrt(p11).  The resulting CommitResult is immediately converted to
-``ActiveParameters`` used by prediction, S scheduling and Live R_S.
+bench_sigma*sqrt(p11).
+
+The R_S branch is NOT a free boolean: shipping applies R_S at this boundary only
+when the carried startup stage is Live.  ``live`` may be supplied as an audit
+assertion by tests/callers, but any value detached from ``state.stage`` is
+rejected.  The resulting CommitResult is immediately converted to the existing
+``ActiveParameters`` object used by prediction, S scheduling and Live R_S.
 
 This closes candidate -> pending -> next-boundary active-parameter ancestry in
 exact real arithmetic.  Binary32 sqrt/commit rounding remains open.
@@ -46,19 +51,22 @@ def _noise_floor(state:PREFIX.State,*,bench_noise_sigma,noise_sqrt:BAND.NoiseSqr
     return bench*noise_sqrt.sqrt_gain
 
 
-def apply(state:PREFIX.State,cfg:COMMIT.CommitConfig,*,live,bench_noise_sigma,
-          noise_sqrt:BAND.NoiseSqrtWitness|None=None,rs_sqrt_scale=None,
+def apply(state:PREFIX.State,cfg:COMMIT.CommitConfig,*,bench_noise_sigma,
+          live=None,noise_sqrt:BAND.NoiseSqrtWitness|None=None,rs_sqrt_scale=None,
           sync_covariance=False,rs_scale=1):
     if not isinstance(state,PREFIX.State) or not isinstance(cfg,COMMIT.CommitConfig):
         raise TypeError('persisted tuner-prefix state and commit config required')
-    if not isinstance(live,bool) or not isinstance(sync_covariance,bool):
-        raise TypeError('literal live/sync branches required')
+    if not isinstance(sync_covariance,bool): raise TypeError('literal sync branch required')
+    stage_live=(state.stage == 'Live')
+    if live is not None:
+        if not isinstance(live,bool): raise TypeError('live audit assertion must be literal bool')
+        if live != stage_live: raise ValueError('Live commit branch detached from carried startup stage')
     if not state.pending:
         if noise_sqrt is not None or rs_sqrt_scale is not None:
             raise ValueError('no-pending boundary consumes no commit witnesses')
         return Result(state,None,None,None)
     nf=_noise_floor(state,bench_noise_sigma=bench_noise_sigma,noise_sqrt=noise_sqrt)
-    c=COMMIT.commit(state.tune,cfg,pending=True,live=live,band_noise_floor_sigma=nf,
+    c=COMMIT.commit(state.tune,cfg,pending=True,live=stage_live,band_noise_floor_sigma=nf,
                     rs_sqrt_scale=rs_sqrt_scale,sync_covariance=sync_covariance,rs_scale=rs_scale)
     if not isinstance(c,COMMIT.CommitResult) or c.pending_after:
         raise AssertionError('pending shipping commit did not clear pending bit')
@@ -71,6 +79,7 @@ def readiness():
       'persisted_TuneState_consumed_at_next_boundary':True,
       'persisted_pending_bit_consumed_and_cleared':True,
       'band_noise_floor_derived_from_carried_band_state':True,
+      'Live_RS_commit_branch_derived_from_carried_startup_stage':True,
       'commit_immediately_promoted_to_existing_ActiveParameters':True,
       'no_pending_boundary_is_literal_identity':True,
       'candidate_to_active_parameter_ancestry_closed':True,
