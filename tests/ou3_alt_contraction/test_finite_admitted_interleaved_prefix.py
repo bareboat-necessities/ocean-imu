@@ -1,4 +1,5 @@
 """Strong admitted interleaving prefix regressions; not stability evidence."""
+from dataclasses import replace
 import unittest
 
 from tools.stability.ou3_alt_contraction import finite_admitted_brmm_restriction as ABRMM
@@ -8,26 +9,47 @@ import test_finite_source_bound_live_word as BASE
 import test_finite_source_bound_prediction_word as PBASE
 
 
+def begin():
+    live=IBASE.root()
+    ref=live.live_word.live.live.live.mekf.reference
+    origin=ABRMM.RestrictedOrigin(live.admitted_history,ref)
+    return X.begin(live,origin)
+
+
 class Tests(unittest.TestCase):
     def test_sample0_MAG_then_IMU_then_MAG_then_HOLD_is_one_successor_chain(self):
-        t=X.begin(IBASE.root())
-        ref=t.live.live_word.live.live.live.mekf.reference
-        origin=ABRMM.RestrictedOrigin(t.live.admitted_history,ref)
-        t,m0=X.mag_step(t,origin=origin,**BASE.mag_kwargs(t.live.live_word))
-        self.assertEqual(t.imu_steps,0)
+        t=begin(); origin=t.origin
+        t,m0=X.mag_step(t,**BASE.mag_kwargs(t.live.live_word))
+        self.assertEqual(t.imu_steps,0); self.assertEqual(t.origin,origin)
 
         witness,segment,raw,r,b,dynamic=IBASE.operands(t.live)
         t,i1=X.imu_step(t,restricted=r,bias_restricted=b,witness=witness,raw=raw,
                         packet_id='imu-1',**PBASE.root_args(),**dynamic)
-        self.assertEqual(t.imu_steps,1)
+        self.assertEqual(t.imu_steps,1); self.assertEqual(t.origin,origin)
+        self.assertEqual(t.live.live_word.source.steps[0].segment.before,origin.endpoint)
         before=t.live.live_word.source
         t,m1=X.mag_step(t,**BASE.mag_kwargs(t.live.live_word))
-        self.assertIs(t.live.live_word.source,before)
+        self.assertIs(t.live.live_word.source,before); self.assertEqual(t.origin,origin)
         t,h=X.set_hold(t,hold=False)
-        self.assertEqual(t.imu_steps,1)
+        self.assertEqual(t.imu_steps,1); self.assertEqual(t.origin,origin)
         self.assertEqual(tuple(e.kind for e in t.events),('mag','imu','mag','hold'))
         self.assertEqual(tuple((e.source_steps_before,e.source_steps_after) for e in t.events),
                          ((0,0),(0,1),(1,1),(1,1)))
+
+    def test_caller_cannot_replace_persistent_origin_on_mag_edge(self):
+        t=begin()
+        with self.assertRaisesRegex(TypeError,'owns the admitted origin'):
+            X.mag_step(t,origin=t.origin,**BASE.mag_kwargs(t.live.live_word))
+
+    def test_first_IMU_must_start_at_persistent_origin(self):
+        t=begin(); witness,segment,raw,r,b,dynamic=IBASE.operands(t.live)
+        wrong=replace(segment,before=replace(segment.before,position=(1,0,0)))
+        rr=ABRMM.RestrictedSegment(t.live.admitted_history,witness.ordinal,wrong)
+        # BIAS construction may reject before interleave if recurrence breaks; use
+        # the ordinary BIAS restriction only to prove BRMM origin is checked first.
+        with self.assertRaisesRegex(ValueError,'admitted t_L origin'):
+            X.imu_step(t,restricted=rr,bias_restricted=b,witness=witness,raw=raw,
+                       packet_id='bad-origin',**PBASE.root_args(),**dynamic)
 
     def test_event_record_rejects_non_IMU_source_advance(self):
         with self.assertRaisesRegex(ValueError,'ordinal accounting'):
@@ -37,9 +59,15 @@ class Tests(unittest.TestCase):
 
     def test_readiness_distinguishes_composable_horizon_from_qualified_word(self):
         r=X.readiness()
-        self.assertTrue(r['finite_successor_induction_over_IMU_MAG_HOLD_closed'])
-        self.assertTrue(r['only_IMU_advances_admitted_source_ordinal'])
-        self.assertTrue(r['canonical_600_transition_source_horizon_representable'])
+        for key in ('finite_successor_induction_over_IMU_MAG_HOLD_closed',
+                    'canonical_admitted_tL_origin_persistent_in_interleaved_product',
+                    'startup_sample_zero_identity_consumed_before_interleaving',
+                    'first_IMU_forced_to_start_at_same_admitted_tL_origin',
+                    'only_IMU_advances_admitted_source_ordinal',
+                    'sample_zero_MAG_uses_persistent_admitted_origin',
+                    'both_admitted_histories_and_origin_persist_through_all_event_types',
+                    'canonical_600_transition_source_horizon_representable'):
+            self.assertTrue(r[key])
         self.assertFalse(r['all_event_arithmetic_witnesses_source_uniformly_qualified'])
         self.assertFalse(r['sensor_disturbance_admissibility_attached'])
         self.assertFalse(r['startup_reachability_to_admitted_fresh_state_closed'])
