@@ -5,6 +5,7 @@ import unittest
 
 from tools.stability.ou3_alt_contraction import finite_live_interleave as X
 from tools.stability.ou3_alt_contraction import finite_physical_prediction as PHYS
+from tools.stability.ou3_alt_contraction import finite_magnetic_wrapper_clock as WCLOCK
 import test_finite_live_magnetic_word as MAG
 import test_finite_startup_first_live_step as FIRST
 
@@ -62,9 +63,10 @@ def imu(state):
 
 def mag(state,**overrides):
     kw=MAG.live_kwargs(state.magnetic)
-    memory=state.magnetic.memory; now=state.live.live.mekf.reference.time
+    memory=state.magnetic.memory; physical=state.live.live.mekf.reference.time
     if memory.cfg.continuous_enabled:
-        dt=now-memory.last_hi_time if memory.last_hi_time is not None and now>memory.last_hi_time else memory.cfg.sample_dt
+        ts=WCLOCK.at_physical_time(physical)
+        dt=WCLOCK.shipping_elapsed(ts,memory.last_hi_time,fallback_dt=memory.cfg.sample_dt)
         kw['hi_decay']=MAG.HI.Decay(dt,memory.cfg.continuous.memory,1)
     kw.update(overrides)
     return X.mag_step(state,**kw)
@@ -186,6 +188,9 @@ class Tests(unittest.TestCase):
         r=X.readiness()
         self.assertTrue(r['interleaved_IMU_uses_same_operand_tilt_reset_entry'])
         self.assertTrue(r['free_watchdog_angle_and_reset_quaternion_forbidden'])
+        self.assertTrue(r['live_magnetic_outer_inner_dual_clock_composed'])
+        self.assertTrue(r['live_magnetic_wrapper_clock_prefix_arithmetic_closed'])
+        self.assertFalse(r['startup_magnetic_dual_clock_history_required_at_handoff'])
         for key in ('infinite_schedule_qualified_by_finite_prefix',
                     'source_uniform_complete_600_step_word_qualified','storage_search_allowed',
                     'ALT_STARTUP_PASS','ALT_LIVE_PASS','ALT_END_TO_END_PASS'):
