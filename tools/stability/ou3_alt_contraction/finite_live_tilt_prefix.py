@@ -108,6 +108,10 @@ def readiness():
       'theorem_entry_derives_watchdog_predicate_from_post_accel_attitude':True,
       'theorem_entry_derives_reset_quaternion_from_same_guarded_sample':True,
       'nonfiring_edge_consumes_no_reset_witness':True,
+      # Retain the older fail-closed key for downstream ledgers/tests while the
+      # more precise key below records that only threshold/libm correspondence
+      # remains open, not the state dependency itself.
+      'watchdog_tilt_acos_binary32_attached':False,
       'watchdog_threshold_boundary_and_binary32_attached':False,
       'preserve_yaw_atan_asin_angleaxis_binary32_attached':False,
       'async_magnetometer_branch_attached':False,
