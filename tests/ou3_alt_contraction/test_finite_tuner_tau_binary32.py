@@ -41,10 +41,11 @@ class Tests(unittest.TestCase):
         binary=T.step(previous,sample(),cfg(),dt=F(1,100),exp_decay=e)
         exact=exact_candidate(previous,e)
         supply=T.roundoff_supply(binary,exact)
+        self.assertEqual(supply.exact_real_next,T.canonical_exact_shadow(binary,exact))
         self.assertEqual(supply.residual_separate,
-                         binary.next_separate-exact.tune_next.tau_applied)
+                         binary.next_separate-supply.exact_real_next)
         self.assertEqual(supply.residual_fma,
-                         binary.next_fma-exact.tune_next.tau_applied)
+                         binary.next_fma-supply.exact_real_next)
 
     def test_roundoff_bridge_rejects_detached_exact_frequency(self):
         e=B.rn32(F(9753,10000)); previous=B.rn32(F(1,2))
@@ -52,6 +53,13 @@ class Tests(unittest.TestCase):
         exact=replace(exact_candidate(previous,e),frequency=F(2,5))
         with self.assertRaisesRegex(ValueError,'frequency detached'):
             T.roundoff_supply(binary,exact)
+
+    def test_roundoff_bridge_rejects_candidate_from_different_predecessor(self):
+        e=B.rn32(F(9753,10000)); previous=B.rn32(F(1,2))
+        binary=T.step(previous,sample(),cfg(),dt=F(1,100),exp_decay=e)
+        detached=exact_candidate(F(3,4),e)
+        with self.assertRaisesRegex(ValueError,'successor detached from deployed predecessor/decay'):
+            T.roundoff_supply(binary,detached)
 
     def test_previous_tau_must_be_actual_stored_binary32(self):
         e=B.rn32(F(9753,10000))
@@ -71,6 +79,7 @@ class Tests(unittest.TestCase):
         self.assertTrue(r['pending_commit_passes_stored_tau_directly_to_MEKF_setter'])
         self.assertTrue(r['source_frontend_frequency_binary32_storage_correspondence_closed'])
         self.assertTrue(r['local_tau_binary32_minus_exact_shadow_supply_exposed'])
+        self.assertTrue(r['tau_exact_shadow_rooted_at_same_deployed_predecessor_and_decay'])
         self.assertFalse(r['source_uniform_tau_roundoff_supply_bound_closed'])
         self.assertFalse(r['tuner_exp_libm_binary32_correspondence_closed'])
         self.assertFalse(r['shipping_compiler_FP_contraction_mode_qualified'])
