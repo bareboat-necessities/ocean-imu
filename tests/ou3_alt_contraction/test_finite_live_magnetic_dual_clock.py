@@ -30,7 +30,8 @@ class Tests(unittest.TestCase):
             mag_norm=OLD.X.TUNER.SqrtWitness(900,30),mean_norm=OLD.X.TUNER.SqrtWitness(900,30),
             horizontal_sqrt=OLD.GAUGE.HorizontalSqrt(900,30),ready_yaw_half=OLD.zero_yaw(30))
         self.assertEqual(out.state.memory.last_hi_time,ts.wrapper_time)
-        self.assertEqual(out.startup.admission.wrapper_time,ts.wrapper_time)
+        self.assertEqual(out.startup.state.gate.eligible_t0,ts.wrapper_time)
+        self.assertEqual(out.startup.magnetic.packet.wrapper_time,ts.wrapper_time)
 
     def test_90_second_refinement_uses_outer_binary32_not_physical_clock(self):
         # At sample zero physical and wrapper clocks agree, so this conditional
@@ -58,7 +59,7 @@ class Tests(unittest.TestCase):
         core=self._core_at(bridge.state.mekf,90)
         out=X.live_call(live,core,bridge.state.tuner.vertical,**OLD.live_kwargs(live))
         self.assertEqual(out.measurement.state.filter.reference.time,F(90))
-        self.assertEqual(out.state.memory.applied.last_time,None)  # blocked before refinement completes
+        self.assertIsNone(out.state.memory.applied.last_time)
 
     def test_readiness_closes_dual_clock_topology_only(self):
         r=X.readiness()
