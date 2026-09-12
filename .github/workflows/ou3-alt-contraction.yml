@@ -108,9 +108,10 @@ jobs:
             test_finite_mag_source_qualification test_finite_mag_startup_capture_bound \
             test_finite_startup_handoff_seed test_finite_startup_handoff_init \
             test_finite_startup_live_entry test_finite_fresh_joint24_entry \
-            test_finite_mag_call_schedule test_finite_h18_a21_reachability \
-            test_finite_h18_a21_transition test_finite_live_async_mag \
-            test_shipping_finite_identity test_core test_proof_plan test_bias_families -v
+            test_finite_startup_live_runtime_bridge test_finite_mag_call_schedule \
+            test_finite_h18_a21_reachability test_finite_h18_a21_transition \
+            test_finite_live_async_mag test_shipping_finite_identity \
+            test_core test_proof_plan test_bias_families -v
       - name: Verify actual shipping event correspondence without source promotion
         run: |
           python3 tools/stability/ou3_alt_contraction/shipping_finite_identity.py \
