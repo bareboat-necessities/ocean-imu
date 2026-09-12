@@ -6,8 +6,12 @@ forcing history.  IMU consumes the exact kth forcing through
 ``finite_admitted_disturbance_imu_word``; asynchronous MAG and HOLD preserve the
 same disturbance-history object and consume no IMU disturbance ordinal.
 
-This remains finite structural composition.  Deployment arithmetic, counter
-lifetime, startup reachability and a storage inequality are still open.
+``complete`` strengthens a prefix into a canonical 600-transition object.  It
+is intentionally a structural certificate only: it proves that one and the
+same admitted COMPLETE-BRMM, BIAS and bounded-ISS histories supplied all 600
+ordered physical transitions and that asynchronous MAG/HOLD edges did not
+silently consume source ordinals.  Deployment arithmetic, counter lifetime,
+startup reachability and a storage inequality remain open.
 """
 from __future__ import annotations
 from dataclasses import dataclass
@@ -15,6 +19,7 @@ from dataclasses import dataclass
 from tools.stability.ou3_alt_contraction import finite_admitted_interleaved_prefix as BASE
 from tools.stability.ou3_alt_contraction import finite_admitted_disturbance_imu_word as IMU
 from tools.stability.ou3_alt_contraction import finite_admitted_imu_disturbance as DIST
+from tools.stability.ou3_alt_contraction import finite_source_continuation as SOURCE
 
 
 @dataclass(frozen=True)
@@ -32,6 +37,45 @@ class State:
     def imu_steps(self): return self.prefix.imu_steps
     @property
     def complete_source_horizon(self): return self.prefix.complete_source_horizon
+
+
+@dataclass(frozen=True)
+class CompleteWord:
+    """Canonical all-600-transition structural word; construct via ``complete``."""
+    state: State
+
+    def __post_init__(self):
+        if not isinstance(self.state,State):
+            raise TypeError('complete word requires ISS interleaved state')
+        if self.state.imu_steps != SOURCE.TRANSITIONS:
+            raise ValueError('complete word requires exactly 600 physical source transitions')
+        steps=self.state.prefix.live.live_word.source.steps
+        if len(steps) != SOURCE.TRANSITIONS:
+            raise ValueError('complete word source continuation length mismatch')
+        if tuple(s.witness.ordinal for s in steps) != tuple(range(1,SOURCE.TRANSITIONS+1)):
+            raise ValueError('complete word source ordinals are not exactly 1..600')
+        events=self.state.prefix.events
+        imu_events=tuple(e for e in events if e.kind=='imu')
+        if len(imu_events) != SOURCE.TRANSITIONS:
+            raise ValueError('complete word event ledger does not contain exactly 600 IMU edges')
+        if tuple(e.source_steps_before for e in imu_events) != tuple(range(SOURCE.TRANSITIONS)):
+            raise ValueError('complete word IMU ledger does not consume consecutive source predecessors')
+        if tuple(e.source_steps_after for e in imu_events) != tuple(range(1,SOURCE.TRANSITIONS+1)):
+            raise ValueError('complete word IMU ledger does not consume consecutive source successors')
+        # State/BASE constructors already enforce that MAG/HOLD preserve source
+        # ordinals, the first segment starts at the persistent t_L origin, and
+        # all source restrictions carry the same admitted BRMM/BIAS histories.
+        if steps[0].segment.before != self.state.prefix.origin.endpoint:
+            raise ValueError('complete word first physical segment detached from t_L origin')
+        if not self.state.complete_source_horizon:
+            raise AssertionError('complete word horizon invariant failed')
+
+    @property
+    def events(self): return self.state.prefix.events
+    @property
+    def source_steps(self): return self.state.prefix.live.live_word.source.steps
+    @property
+    def disturbance(self): return self.state.disturbance
 
 
 def begin(prefix:BASE.State, disturbance:DIST.BoundedHistory):
@@ -60,6 +104,11 @@ def set_hold(state:State, *, hold):
     return State(nxt,state.disturbance),event
 
 
+def complete(state:State):
+    """Strengthen only an actually completed 600-transition prefix."""
+    return CompleteWord(state)
+
+
 def readiness():
     b=BASE.readiness(); d=IMU.readiness()
     return {
@@ -70,6 +119,10 @@ def readiness():
       'Racc_not_reinterpreted_as_pathwise_bound':d['Racc_covariance_not_used_as_pathwise_bound'],
       'canonical_600_transition_source_horizon_representable':b['canonical_600_transition_source_horizon_representable'],
       'bounded_input_history_structurally_attached':True,
+      'complete_600_transition_strengthening_requires_actual_full_horizon':True,
+      'complete_600_transition_strengthening_checks_exact_1_to_600_ordinals':True,
+      'complete_600_transition_strengthening_checks_IMU_ledger_consecutivity':True,
+      'complete_600_transition_strengthening_preserves_same_BRMM_BIAS_ISS_product':True,
       'all_event_arithmetic_witnesses_source_uniformly_qualified':False,
       'magnetic_counter_lifetime_closed':False,
       'startup_reachability_to_admitted_fresh_state_closed':False,
