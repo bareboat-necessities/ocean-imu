@@ -1,22 +1,25 @@
 """Binary32 WPE getter topology and tuner-frequency handoff for ALT.
 
 The exact-real WPE shadow legitimately uses one reciprocal period/frequency
-pair.  Shipping does something more specific at deployment: it stores one
-binary32 ``log_period_sec_`` and evaluates two distinct libm calls
+pair. Shipping stores one binary32 ``log_period_sec_`` and evaluates two
+distinct libm calls
 
     std::exp( log_period_sec_)
     std::exp(-log_period_sec_)
 
-for period and frequency.  Their returned floats are therefore retained as two
-independent binary32 witnesses.  No bit-level reciprocal identity is assumed.
+for period and frequency. Their returned floats are retained as independent
+binary32 witnesses; no bit-level reciprocal identity is assumed.
 
-This module closes only the ancestry/topology edge
+The SeaState wrapper consumes the WPE frequency from the SAMPLE-ENTRY state.
+Until ``hasUsablePeriod()`` latches it uses the literal 0.2f prior; afterwards
+it calls ``getFrequencyHz()`` and passes that float to ``SeaStateAutoTuner``.
+This module represents both branches and closes the topology
 
-    stored binary32 log_period -> exp(-log_period) result
+    preupdate WPE state -> [prior | exp(-stored log_period)]
       -> SeaStateAutoTuner binary32 clamp/store.
 
 It does NOT prove how the binary32 log-period state was produced and it does NOT
-prove target-libm correctness for either exp call.  Those remain deployment
+prove target-libm correctness for either exp call. Those remain deployment
 supplies/obligations before the complete 600-step word can be promoted.
 """
 from __future__ import annotations
@@ -29,7 +32,9 @@ from tools.stability.ou3_alt_contraction import finite_tuner_frequency_binary32 
 from tools.stability.ou3_alt_contraction import finite_wpe_runtime as WPE
 
 SOURCE=Path(__file__).resolve().parents[3]/'src/tuner/WavePeriodEstimator.h'
-QUALIFICATION='OU3_ALT_WPE_BINARY32_GETTER_TO_TUNER_STORE_V1'
+WRAPPER=Path(__file__).resolve().parents[3]/'src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h'
+PRIOR=B.rn32(F(1,5))
+QUALIFICATION='OU3_ALT_WPE_BINARY32_GETTER_TO_TUNER_STORE_V2'
 
 
 @dataclass(frozen=True)
@@ -71,6 +76,36 @@ class GetterResult:
         object.__setattr__(self,'frequency_result',fr)
 
 
+@dataclass(frozen=True)
+class TunerFrequencyResult:
+    """Exact source of the frequency consumed by one tuner sample."""
+    shadow:WPE.WPEState
+    branch:str
+    getter:GetterResult|None
+    stored:STORE.StoredFrequency
+    def __post_init__(self):
+        if not isinstance(self.shadow,WPE.WPEState) or not isinstance(self.stored,STORE.StoredFrequency):
+            raise TypeError('preupdate WPE state and StoredFrequency required')
+        if self.branch not in ('prior','wpe'):
+            raise ValueError('unknown tuner-frequency source branch')
+        if self.branch=='prior':
+            if self.shadow.usable_period:
+                raise ValueError('usable WPE state cannot take fixed-prior tuner branch')
+            if self.getter is not None:
+                raise ValueError('fixed-prior tuner branch consumes no WPE exp getter')
+            if self.stored.input_hz!=PRIOR:
+                raise ValueError('fixed-prior tuner branch detached from shipping 0.2f prior')
+        else:
+            if not self.shadow.usable_period or self.shadow.log_period is None:
+                raise ValueError('WPE tuner branch requires usable canonical log-period state')
+            if not isinstance(self.getter,GetterResult):
+                raise TypeError('WPE tuner branch requires binary32 getter result')
+            if self.getter.log.shadow_log_period != F(self.shadow.log_period):
+                raise ValueError('WPE getter detached from sample-entry canonical log-period shadow')
+            if self.stored.input_hz != self.getter.frequency_result:
+                raise ValueError('tuner store detached from same WPE frequency getter result')
+
+
 def bind_log_state(shadow:WPE.WPEState, stored_log_period):
     if not isinstance(shadow,WPE.WPEState) or shadow.log_period is None:
         raise TypeError('WPE state with canonical log period required')
@@ -91,22 +126,45 @@ def store_frequency(result:GetterResult,min_hz,max_hz):
     return STORE.store(result.frequency_result,min_hz,max_hz)
 
 
+def tuner_frequency(shadow:WPE.WPEState, *, min_hz, max_hz, getter:GetterResult|None=None):
+    """Literal sample-entry branch used by ``tuner_frequency_hz_()`` and tuner store."""
+    if not isinstance(shadow,WPE.WPEState): raise TypeError('preupdate WPE state required')
+    if shadow.usable_period:
+        if getter is None: raise TypeError('usable WPE tuner branch requires getter witness')
+        if shadow.log_period is None or getter.log.shadow_log_period!=F(shadow.log_period):
+            raise ValueError('WPE getter detached from preupdate canonical log-period state')
+        stored=STORE.store(getter.frequency_result,min_hz,max_hz)
+        return TunerFrequencyResult(shadow,'wpe',getter,stored)
+    if getter is not None:
+        raise ValueError('pre-usable WPE branch consumes no getter witness')
+    stored=STORE.store(PRIOR,min_hz,max_hz)
+    return TunerFrequencyResult(shadow,'prior',None,stored)
+
+
 def _source_shape_matches():
-    s=SOURCE.read_text()
+    s=SOURCE.read_text(); w=WRAPPER.read_text()
     return all(n in s for n in (
       'return std::isfinite(log_period_sec_) ? std::exp(log_period_sec_) : NAN;',
       'return std::isfinite(log_period_sec_) ? std::exp(-log_period_sec_) : NAN;',
-      'float log_period_sec_ = NAN;'))
+      'float log_period_sec_ = NAN;')) and all(n in w for n in (
+      'const float wave_hz = wave_period_.getFrequencyHz();',
+      'if (wave_period_.hasUsablePeriod() &&',
+      'return wave_hz;',
+      'return tune_freq_prior_hz_;',
+      'float tune_freq_prior_hz_     = TUNE_FREQ_PRIOR_HZ;',
+      'constexpr float TUNE_FREQ_PRIOR_HZ = 0.2f;'))
 
 
 def readiness():
     st=STORE.readiness()
     return {
       'qualification':QUALIFICATION,
-      'shipping_WPE_dual_exp_getter_source_shape_matches':_source_shape_matches(),
+      'shipping_WPE_dual_exp_and_tuner_source_shape_matches':_source_shape_matches(),
       'period_and_frequency_getters_share_same_stored_binary32_log_state':True,
       'period_and_frequency_libm_results_retained_separately':True,
       'binary32_period_frequency_bit_reciprocity_assumed':False,
+      'preusable_WPE_uses_literal_binary32_0p2_prior_without_exp':True,
+      'usable_WPE_frequency_getter_bound_to_sample_entry_log_state':True,
       'WPE_frequency_getter_to_tuner_binary32_store_topology_closed': bool(
           st['frequency_clamp_and_store_exact_binary32'] and
           st['getFrequencyHz_is_identity_on_stored_binary32']),
