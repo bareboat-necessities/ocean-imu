@@ -8,6 +8,7 @@ from tools.stability.ou3_alt_contraction import finite_mag_startup_word as X
 from tools.stability.ou3_alt_contraction import finite_mag_gravity_gate as G
 from tools.stability.ou3_alt_contraction import finite_mag_startup_prefix as P
 from tools.stability.ou3_alt_contraction import finite_mag_startup_source as S
+from tools.stability.ou3_alt_contraction import finite_mag_source_qualification as Q
 from tools.stability.ou3_alt_contraction import finite_physical_prediction as PHYS
 from tools.stability.ou3_alt_contraction import finite_mag_tuner_default as T
 from tools.stability.ou3_alt_contraction import finite_mag_tilt_frame as TF
@@ -17,6 +18,8 @@ from tools.stability.ou3_alt_contraction import finite_vertical_complementary_ru
 def groot(v): return G.SqrtWitness(v*v,v)
 def troot(v): return TF.SqrtWitness(v*v,v)
 def mroot(v): return T.SqrtWitness(v*v,v)
+def qroot(v,n): return Q.NormWitness(v,F(n))
+def qhroot(v,n): return Q.HorizontalNormWitness(tuple(v[:2]),F(n))
 def proxy(): return V.State((1,0,0,0),(0,0,0),True,F(2),0)
 def zero_yaw(): return TF.YawHalfWitness(1,0,troot(1),1,0)
 
@@ -74,19 +77,38 @@ class Tests(unittest.TestCase):
         self.assertEqual(out.state.source_model_root,'model'); self.assertEqual(out.state.source_history_id,'hist')
         self.assertEqual(out.state.mag.tuner.last_world_sample,(3,4,0))
 
-    def test_theorem_entry_derives_source_from_same_main_physical_endpoint(self):
+    def test_theorem_entry_derives_and_qualifies_source_from_same_main_physical_endpoint(self):
         gate=G.State((0,0,-10),True,5,2,True,0)
         st=X.State(gate,P.State(proxy()))
-        model=S.Model((3,4,0),(0,0,0),'model')
+        model=S.Model((36,27,0),(0,0,0),'model')
         p=physical(7)
-        out=X.update_mag_physical_call(st,G.Config(mag_delay=0,hold_sec=2),T.Config(min_samples=10,min_window=0),
-                                       p,'hist',model,(0,0,0),'phys-mag',begun=True,have_last_imu=True,
-                                       sample_dt=F(1,200),boat_q_norm=troot(1),yaw_half=zero_yaw(),mag_norm=mroot(5))
+        out=X.update_mag_physical_call(
+            st,G.Config(mag_delay=0,hold_sec=2),T.Config(min_samples=10,min_window=0),
+            p,'hist',model,(0,0,0),'phys-mag',
+            field_norm=qroot(model.world_field,45),horizontal_field_norm=qhroot(model.world_field,45),
+            hard_iron_norm=qroot(model.hard_iron_body,0),residual_norm=qroot((0,0,0),0),
+            begun=True,have_last_imu=True,sample_dt=F(1,200),
+            boat_q_norm=troot(1),yaw_half=zero_yaw(),mag_norm=mroot(45))
         self.assertTrue(out.admission.admitted); self.assertIsNotNone(out.source)
+        self.assertIsNotNone(out.qualification); self.assertTrue(out.qualification.qualified)
+        self.assertEqual(out.qualification.envelope.assumption_id,'MAG-BMM150-DET-v1')
         self.assertEqual(out.source.physical.time,p.time)
         self.assertEqual(out.source.physical.q_world_to_body,p.q_world_to_body)
         self.assertEqual(out.state.source_history_id,'hist')
-        self.assertEqual(out.state.mag.tuner.last_world_sample,(3,4,0))
+        self.assertEqual(out.state.mag.tuner.last_world_sample,(36,27,0))
+
+    def test_theorem_entry_rejects_out_of_envelope_magnetic_source_before_tuner(self):
+        gate=G.State((0,0,-10),True,5,2,True,0)
+        st=X.State(gate,P.State(proxy()))
+        model=S.Model((64,48,0),(0,0,0),'model') # 80 uT > 75 uT theorem maximum
+        with self.assertRaisesRegex(ValueError,'world field violates'):
+            X.update_mag_physical_call(
+                st,G.Config(mag_delay=0,hold_sec=2),T.Config(),physical(7),'hist',model,(0,0,0),'too-high',
+                field_norm=qroot(model.world_field,80),horizontal_field_norm=qhroot(model.world_field,80),
+                hard_iron_norm=qroot(model.hard_iron_body,0),residual_norm=qroot((0,0,0),0),
+                begun=True,have_last_imu=True,sample_dt=F(1,200))
+        self.assertIsNone(st.mag.last_mag_time)
+        self.assertEqual(st.mag.tuner.accumulator.accepted_count,0)
 
     def test_source_model_or_physical_history_cannot_restart(self):
         gate=G.State((0,0,-10),True,5,2,True,0)
@@ -120,13 +142,14 @@ class Tests(unittest.TestCase):
         self.assertFalse(out.admission.admitted); self.assertEqual(out.admission.reason,'no_last_imu')
         self.assertEqual(out.state.mag,s.mag)
 
-    def test_readiness_keeps_bounds_schedule_and_roundoff_open(self):
+    def test_readiness_keeps_schedule_and_roundoff_open(self):
         r=X.readiness()
         self.assertTrue(r['admitted_updateMag_composes_literal_wrapper_gate_to_tuner'])
         self.assertTrue(r['startup_raw_mag_physical_source_relation_attached'])
         self.assertTrue(r['startup_source_model_and_physical_history_roots_persist'])
         self.assertTrue(r['startup_mag_endpoint_from_main_PhysicalKinematics'])
-        self.assertFalse(r['startup_mag_noise_field_hardiron_bounds_attached'])
+        self.assertTrue(r['startup_MAG_BMM150_DET_v1_bounds_attached'])
+        self.assertTrue(r['theorem_facing_startup_mag_requires_source_qualification'])
         self.assertFalse(r['startup_mag_call_schedule_source_attached'])
         self.assertFalse(r['complete_word_finite_identity']); self.assertFalse(r['ALT_STARTUP_PASS'])
 
