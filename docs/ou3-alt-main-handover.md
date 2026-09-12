@@ -43,15 +43,25 @@ branches are materialized. Native shipping regression now exercises both the
 24-7-25 retained-yaw reset and a nonzero sub-1e-8 near-parallel axis; universal
 binary32/libm/cutoff/nonfinite correspondence remains fail-closed.
 
-`finite_source_continuation.py` now separates source admission from mere segment
-algebra. A theorem-facing Live IMU segment carries one persistent `O^601_BRMM`
-history/generator root, one Live S origin, consecutive source-cell and physical
-primitive identities, and exactly one BIAS0/1/2 parameter token. Every concrete
-segment must be 5 ms, satisfy the exact `PhysicalSegment` recurrence, and satisfy
-the selected family's phi, driver and true-beta hard contracts. The continuation
-forbids source-cell, primitive, endpoint, generator or bias-root restart.
-`finite_live_interleave.imu_step_source_qualified` consumes that qualified
-segment; the lower `imu_step` remains conditional algebra only.
+`finite_source_bound_live_word.py` carries the source continuation, concrete
+bias history, sensor history identities and persistent runtime configuration
+alongside the actual Live product. Its IMU call appends the next source segment
+before running the filter; magnetic and hold calls preserve the same endpoint.
+The inherited source-product fixture now uses the actual `J0/J1/J2` fields.
+
+`finite_source_continuation.py` checks physical p/v/a/S vector caps, the coupled
+three-axis moment IQC, a necessary rotation chord bound, physical sampled rate,
+and the analytic BIAS envelopes. It carries the same actual bias factor over
+consecutive 5 ms segments and preserves exact outward contract endpoints.
+`finite_brmm_moment_prefix.py` derives the prefix moments and their energy budget
+by exact Gramian/kernel concatenation, without independent source boxes or S
+restarts. See [`ou3-alt-source-continuation.md`](ou3-alt-source-continuation.md)
+for the real-arithmetic projection/induction proof and its limits.
+
+The legacy `Qualified*` names do NOT establish COMPLETE-BRMM/O^601_BRMM or full
+BIAS generating-history membership. Source labels are ancestry, not admission;
+the generator/potential/QO graph, source-to-runtime arithmetic and sample-zero
+magnetic endpoint remain open. Do not promote their former admission label.
 
 The older `phase1_closure.py` is now explicitly a source/Jacobian ledger, not a
 finite-storage gate. Its old pointwise Jacobian cocycle is useful ancestry but
@@ -64,7 +74,7 @@ search.
 Do not start storage/rho search. The immediate blocker is narrower now: bind all
 finite estimator-owned coefficient/product graphs (frontend/tuner/guard/Racc,
 prediction Q/F, S service, accel/mag innovation/K/Joseph/reset decisions) to the
-same qualified `O^601_BRMM`/BIAS continuation at every literal branch. Bind the
+same checked physical continuation plus its still-required full source membership at every literal branch. Bind the
 magnetic physical-history root to that same continuation rather than only an
 independent matching history string. Then close the remaining startup/ungauged
 and deployment-arithmetic paths.

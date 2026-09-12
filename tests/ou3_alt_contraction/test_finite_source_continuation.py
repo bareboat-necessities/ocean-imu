@@ -9,7 +9,7 @@ from tools.stability.ou3_alt_contraction import finite_physical_prediction as P
 from tools.stability.ou3_alt_contraction import finite_sensor_source_runtime as S
 
 BIAS0=next(c for c in BIAS.contracts() if c.name=='BIAS0')
-VALID_PHI=F(str(BIAS0.phi_true.lo))
+VALID_PHI=F.from_float(BIAS0.phi_true.lo)
 G=F(980665,100000)
 
 
@@ -112,7 +112,9 @@ class Tests(unittest.TestCase):
         self.assertTrue(d['correlated_COMPLETE_BRMM_left_inclusion_consumed'])
         self.assertTrue(d['bias_phi_driver_and_true_beta_hard_contracts_checked_per_segment'])
         self.assertTrue(d['source_cell_parent_child_and_primitive_continuity_checked'])
-        self.assertTrue(d['qualified_async_endpoint_comes_from_admitted_transition'])
+        self.assertFalse(d['qualified_async_endpoint_comes_from_admitted_transition'])
+        self.assertTrue(d['qualified_async_endpoint_comes_from_checked_outer_transition'])
+        self.assertFalse(d['full_O601_membership_qualified_by_tokens_or_finite_checks'])
         self.assertTrue(d['raw_IMU_packet_bound_to_same_qualified_physical_predecessor'])
         self.assertTrue(d['persistent_gyro_and_accel_residual_history_tokens_required'])
         self.assertTrue(d['Racc_covariance_not_reinterpreted_as_hard_sensor_noise_bound'])

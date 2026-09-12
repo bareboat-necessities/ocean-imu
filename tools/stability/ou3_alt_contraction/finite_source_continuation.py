@@ -1,31 +1,19 @@
-"""Persistent COMPLETE-BRMM/BIAS/sensor ancestry for finite Live segments.
+"""Persistent finite source ancestry with executable necessary BRMM constraints.
 
-``finite_physical_prediction.PhysicalSegment`` proves an exact physical
-recurrence but deliberately does *not* certify source admission. This module
-adds the theorem-facing ancestry layer without converting the correlated
-601-sample source relation into independent per-sample boxes.
+The legacy Qualified* names mean checked finite OUTER constraints, not admitted
+COMPLETE-BRMM or BIAS generating histories. A matching history/generator token
+never establishes membership in O^601_BRMM. The constructor checks vector
+p/v/a/S bounds, the coupled three-axis acceleration-moment IQC, a necessary
+rotation chord bound, and the selected analytic BIAS envelope. Continuation
+also carries the exact prefix moment/energy graph and one actual bias factor.
 
-A qualified continuation carries one O^601_BRMM source-history/generator root,
-one Live S origin, one BIAS0/BIAS1/2 contract/token, consecutive source-cell and
-physical-primitive identities, and the exact finite ``PhysicalSegment``. A
-qualified raw IMU packet additionally carries persistent gyro- and
-accelerometer-residual history tokens and is forced to use that segment's exact
-predecessor physical endpoint and the ALT identity de-heel map. A qualified
-physical endpoint is obtained only as the ``before`` or ``after`` endpoint of
-one such admitted transition; asynchronous events can therefore attach to an
-actual member of the correlated source continuation rather than a matching time
-or history string alone.
-
-The residual values remain explicit ISS/finite-horizon forcing. This module does
-NOT reinterpret configured Racc/Rmag covariance standard deviations as hard
-pathwise sensor-noise bounds. Quantitative sensor residual envelopes and target
-conversion roundoff remain open. The remaining decisive bridge is estimator
-ownership: every tuner/guard/measurement/prediction coefficient product in the
-finite shipping event still has to be generated from this same qualified
-continuation. Therefore this module cannot enable storage.
+Generator/potential realization, Q/O recurrence, same continuous angular-rate
+history and full BIAS generating-function membership remain open. Raw sensor
+residuals remain explicit forcing; Racc is not a hard sample cap. This graph
+cannot authorize storage or promote a theorem gate.
 """
 from __future__ import annotations
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from fractions import Fraction as F
 
 import ou3_brmm_correlated_window_outer_enclosure as OUTER
@@ -33,6 +21,7 @@ from tools.stability.ou3_alt_contraction import bias_families as BIAS
 from tools.stability.ou3_alt_contraction import finite_measurement_graph as M
 from tools.stability.ou3_alt_contraction import finite_physical_prediction as PHYS
 from tools.stability.ou3_alt_contraction import finite_sensor_source_runtime as SENSOR
+from tools.stability.ou3_alt_contraction import finite_brmm_moment_prefix as MOMENTS
 
 OUTER_RELATION = 'O^601_BRMM'
 TRANSITIONS = 600
@@ -55,7 +44,7 @@ def _norm2(v):
 
 
 def _le_float_bound_square(v, bound: float) -> bool:
-    b=R(str(float(bound)))
+    b=F.from_float(float(bound))
     return _norm2(v) <= b*b
 
 
@@ -124,22 +113,25 @@ class QualifiedPhysicalSegment:
         if s.before.time != expected_before or s.after.time != expected_before+DT:
             raise ValueError('segment clock detached from 601-sample source ordinal')
         phi=R(s.phi_true)
-        lo=R(str(c.phi_true.lo)); hi=R(str(c.phi_true.hi))
+        lo=F.from_float(c.phi_true.lo); hi=F.from_float(c.phi_true.hi)
         if not lo <= phi <= hi:
             raise ValueError('physical beta decay detached from selected BIAS family')
-        cb=R(str(c.driver_component_bound))
+        cb=F.from_float(c.driver_component_bound)
         if any(abs(x)>cb for x in s.bias_driver):
             raise ValueError('bias driver exceeds family component contract')
         if not _le_float_bound_square(s.bias_driver,c.driver_norm_bound):
             raise ValueError('bias driver exceeds family norm contract')
         for beta in (s.before.beta,s.after.beta):
+            if any(abs(x) > F.from_float(c.true_bias_component_bound) for x in beta):
+                raise ValueError('true accelerometer bias exceeds family component contract')
             if not _le_float_bound_square(beta,c.true_bias_norm_bound):
                 raise ValueError('true accelerometer bias exceeds family hard norm contract')
+        MOMENTS.check_segment(s)
 
 
 @dataclass(frozen=True)
 class QualifiedPhysicalEndpoint:
-    """An endpoint that is proven to belong to one admitted source transition."""
+    """An endpoint of a checked necessary outer transition; admission is not proved."""
     physical: QualifiedPhysicalSegment
     side: str
     def __post_init__(self):
@@ -168,6 +160,8 @@ class QualifiedRawImuSample:
             raise ValueError('raw IMU packet detached from qualified physical predecessor')
         if self.raw.deheel_body_to_internal != SENSOR.IDENTITY3:
             raise ValueError('ALT source-qualified packet requires zero-heel identity map')
+        if MOMENTS.norm2(self.raw.omega_sample_internal) > MOMENTS.BOUNDS.angular_rate_upper**2:
+            raise ValueError('BRMM physical sampled angular-rate cap exceeded')
         if not isinstance(self.packet_id,str) or not self.packet_id:
             raise ValueError('persistent raw packet identity required')
 
@@ -176,10 +170,12 @@ class QualifiedRawImuSample:
 class Continuation:
     root: SourceRoot
     steps: tuple[QualifiedPhysicalSegment,...]
+    moment_prefix: MOMENTS.Prefix = field(init=False)
     def __post_init__(self):
         if not isinstance(self.root,SourceRoot): raise TypeError('source root required')
         if len(self.steps)>TRANSITIONS: raise ValueError('more than 600 transitions')
-        prev=None
+        object.__setattr__(self,'steps',tuple(self.steps))
+        prev=None; moments=MOMENTS.Prefix()
         for k,q in enumerate(self.steps,1):
             if not isinstance(q,QualifiedPhysicalSegment) or q.root!=self.root:
                 raise ValueError('source continuation restarted its root')
@@ -195,7 +191,11 @@ class Continuation:
                     raise ValueError('physical primitive continuity broken')
                 if q.segment.before!=prev.segment.after:
                     raise ValueError('finite physical endpoint continuity broken')
+                if q.segment.phi_true != prev.segment.phi_true:
+                    raise ValueError('physical BIAS factor changed inside one parameter history')
+            moments=MOMENTS.append(moments,q.segment)
             prev=q
+        object.__setattr__(self,'moment_prefix',moments)
     @property
     def complete(self): return len(self.steps)==TRANSITIONS
     @property
@@ -203,6 +203,7 @@ class Continuation:
 
 
 def certified_root(*,history_id,generator_id,live_origin,bias_family):
+    """Validate the declaration, not membership of the newly named history."""
     outer=OUTER.build(); failures=OUTER.validate(outer)
     if failures: raise RuntimeError('correlated COMPLETE-BRMM outer relation invalid: '+repr(failures))
     if not (outer['left_inclusion_closed'] and outer['same_history_required_for_entire_window']
@@ -245,7 +246,14 @@ def readiness():
       'bias_phi_driver_and_true_beta_hard_contracts_checked_per_segment':True,
       'source_cell_parent_child_and_primitive_continuity_checked':True,
       'complete_600_transition_continuation_shape_materialized':True,
-      'qualified_async_endpoint_comes_from_admitted_transition':True,
+      'qualified_async_endpoint_comes_from_admitted_transition':False,
+      'qualified_async_endpoint_comes_from_checked_outer_transition':True,
+      'physical_vector_caps_and_joint_moment_IQC_checked':True,
+      'prefix_moments_and_derived_energy_not_independent_supply':True,
+      'actual_bias_factor_persistent_at_fixed_sample_period':True,
+      'source_contract_float_endpoints_converted_exactly':True,
+      'full_O601_membership_qualified_by_tokens_or_finite_checks':False,
+      'generator_potential_and_QO_membership_attached':False,
       'raw_IMU_packet_bound_to_same_qualified_physical_predecessor':True,
       'persistent_gyro_and_accel_residual_history_tokens_required':True,
       'Racc_covariance_not_reinterpreted_as_hard_sensor_noise_bound':True,

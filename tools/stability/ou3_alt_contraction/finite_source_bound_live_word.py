@@ -6,7 +6,7 @@ For the universal word that is still too weak in two ways: independently valid
 source transitions could be spliced, and persistent shipping configuration could
 be silently changed between events.
 
-This module therefore carries both the O^601_BRMM/BIAS continuation and the
+This module carries a checked necessary BRMM/BIAS outer continuation and the
 static runtime configuration in the theorem product state. Every IMU event
 appends exactly the next source transition and injects the same carried Qbase,
 nominal Racc, guard/WPE/band/stillness/tuner configs and bench-noise constants.
@@ -15,7 +15,8 @@ witnesses remain per-event, but their component modules check them against the
 same carried state expressions.
 
 Magnetic and external-hold events do not advance the physical source. The
-initial Live endpoint is inherited from startup; membership of that sample-zero
+initial Live endpoint is inherited from startup. The source checks are only
+necessary conditions, not full generator/O^601_BRMM membership; that sample-zero
 handoff in O^601_BRMM remains explicitly open. Quantitative sensor ISS bounds
 and deployment arithmetic correspondence also remain open, so storage and all
 ALT theorem gates remain false.
@@ -200,6 +201,9 @@ def readiness():
     lower=LIVE.readiness(); src=SOURCE.readiness(); master=finite_storage_status()
     return {
       'source_continuation_is_part_of_theorem_product_state':True,
+      'physical_caps_and_coupled_moments_checked_before_IMU_execution':src['physical_vector_caps_and_joint_moment_IQC_checked'],
+      'correlated_prefix_energy_derived_from_same_physical_segments':src['prefix_moments_and_derived_energy_not_independent_supply'],
+      'full_source_membership_follows_from_history_tokens':False,
       'every_IMU_event_appends_exactly_next_source_ordinal':True,
       'source_cell_and_physical_primitive_chains_advance_with_filter_state':True,
       'raw_IMU_sensor_histories_advance_with_same_source_transition':True,

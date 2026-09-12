@@ -206,93 +206,97 @@ witness is outside corrected COMPLETE-BRMM and may not be recycled as A or B.
 
 ## Parallel ALT contraction/dissipativity track
 
-### Current hypothesis
+### Current hypothesis and retained facts
 
 Construct the actual finite source/runtime joint24 word before searching
-coercive storage with bounded source supply. Preserve the independent original
-route above. `ou3-alt-proof-plan.md` is normative; the current magnetic
-composition and finite-real bound are in `ou3-alt-live-magnetic-word.md`.
+coercive storage with bounded source supply. Preserve the original route above;
+`ou3-alt-proof-plan.md` is normative. Full-21 covariance, exact physical
+prediction, inverse-free innovation/Joseph/reset, same-beta projection,
+startup-rooted H18 and persistent frontend/calibration/control state remain.
+The same-operand finite-real tilt reset is attached; universal deployment
+arithmetic correspondence is not.
 
-### Retained facts
+`ou3-alt-source-continuation.md` proves the moment concatenation identity
+`G(a+b)=T(b)G(a)T(b)' + G(b)` and its nonnegative projection loss. Therefore
+`E(J_prefix,H) <= sum_i E(J_i,h_i) <= A_max^2 H` on every finite prefix.
+The actual physical segments drive this derived budget and the existing finite
+predictor. Endpoint vector caps, the coupled nine-moment IQC, a necessary
+rotation chord/rate bound, exact BIAS envelope endpoints and one actual selected
+bias factor are checked before an IMU event. These are necessary outer
+constraints, not complete BRMM/BIAS generating-history membership.
 
-The existing physical predictor, inverse-free measurement/Joseph/reset graph,
-full-21 covariance, same-beta projection, source-rooted fresh H18 bridge,
-frontend/tuner memory and initialized private-Mahony binary32 profile remain.
-No wordwise S origin, gain snapshot or covariance-consistency entry assumption
-is introduced.
+The magnetic graph retains default continuous calibration, refinement and
+coupled offset/reference writes, including rejected-branch bookkeeping.
+Real-arithmetic calibration <=28.7 uT and active reference/corrected observation
+<=110.7 uT are boundedness results, not calibration accuracy or contraction.
+The corrected unlock theorem uses continued locally finite calls and
+`first_gap + max((n-1)*gap,1+gap)`; default internal unlock remains within 10 s.
+An upper gap bound never forces the n-th call to satisfy the strict >1 s guard,
+and arbitrary external hold does not imply eventual A21.
 
-Successive IMU/magnetic/hold prefixes now share one product state. The default
-continuous magnetic estimator accumulates raw packets before startup admission
-and retains its memory across Live. Refinement and continuous reference writes,
-yaw overwrite, hold release, magnetic correction and count/time bookkeeping
-follow the shipping order. Both reference rewrites may occur on one call.
+### Failure analysis and independent critic
 
-The exact-real normal matrix is a weighted rotation variance, not an independent
-box. Source norms and the shipping bias-fraction/slew/anchored-reference laws
-give accepted/applied calibration <=28.7 uT and active reference / corrected
-measurement <=110.7 uT. The coarse discrepancy <=221.4 uT is boundedness only;
-no useful storage margin or calibration accuracy is claimed. Keep the exact
-same-history vector expression for the eventual storage inequality.
+The source-product fixture referenced nonexistent `PhysicalSegment.delta_theta`
+/ `delta_velocity` / `delta_position`, not the actual coupled `J0/J1/J2`.
+This test implementation defect is repaired without changing runtime physics.
 
-### Failure analysis: timing proof logic
+The earlier source constructor checked labels, clocks and bias envelopes but
+not physical vector/moment constraints. Matching generator/history strings
+cannot certify O^601_BRMM membership. An algebraically consistent 100 m/s^2
+endpoint, or an independent-sign moment corner with energy 193*h*A_max^2,
+passed the missing checks. These are source-binding regression inputs, NOT
+admitted shipping instability counterexamples. The checks now reject them.
 
-The invalid implication was `(n-1)*gap_max > 1` => "the n-th call is more
-than one second after the first". An upper gap bound supplies no lower bound;
-250 clustered calls falsify it. This is a proof-logic/implementation defect,
-not shipping-filter instability or a failure of the ten-second conclusion.
-The limiter is `count>=250 AND elapsed>1`, not count alone.
+The critic's strongest objection is model drift through qualification metadata.
+Alternatives are (1) an executable necessary correlated outer graph with honest
+open membership, (2) a verified admitted-generator evaluator, and (3) symbolic
+source-function substitution into shipping code. Use (1) to attach the already
+declared physical conditions; (2)/(3) remain the full-source binding obligation.
+This constructs ports in the controlling storage inequality, not a refinement
+of an unproved rho margin. No storage feasibility or contraction strike follows.
 
-The repaired argument uses continued, locally finite, time-unbounded calls:
-`unlock_deadline = first_gap + max((n-1)*gap,1+gap)`. The default result remains
-ten seconds. A regression executes the actual control recurrence with clustered
-calls, a call exactly at the strict boundary and a later call. It does not
-infer infinite coverage from a finite prefix or impose an eventual hold release.
-This correction creates no contraction-tactic strike.
+The focused guard integration exposed an unchanged legacy serialization defect:
+`ou3_p4_brmm_physical_acceleration_witness_sector.build` calls
+`float(mom['A_max_mps2'])` on the exact string `'44/5'`. This is an implementation
+failure before any storage inequality, not a negative contraction margin.
+The pure finite-storage barrier is independently tested without pretending a
+source builder passed. Full `phase1_closure.build/validate` still execute every
+source prerequisite; the inherited integration test remains, with its obsolete
+storage-true expectation corrected to false. Shared P2/P3/P4/P5 code is untouched.
 
 ### Evidence and validation boundary
 
-The focused finite-identity CI selection passes all 470 tests, including the
-new calibration/source/timing/interleave regressions. Native correspondence
-passes with bit-identical observed/plain sample states and unchanged tracked
-shipping headers. These remain implementation/identity checks, separate from
-all-history arithmetic closure and source-uniform stability.
-The full inherited discovery run reached pre-existing shared-source failures;
-the baseline reproduces the exact `continuous Mahony invariant invalid` error
-with `continuous_all_live_PI_invariant_closed is not true` and
-`initial seed angle not closed`. No shared prerequisite was weakened.
+The full focused finite-identity selection passes 511 tests with native checks
+required. The native shipping finite-identity check passes with bit-identical
+observed/plain sample states. Native preserve-yaw reset regression passes,
+including its intermediate covariance axis and near-parallel branch. These are
+implementation/algebra regressions, not all-history deployment qualification.
+The full inherited ALT integration suite is not claimed passing; the shared
+`float('44/5')` failure remains exposed by its source-building path.
 
 Default `make all` stops compiling `tests/ahrs/ahrs-qmekf-sim.cpp` with
-`Eigen/Dense: No such file or directory` on `/usr/include/eigen3`. A separately
-available Eigen include can serve native checks, but is not a full-build PASS.
+`Eigen/Dense: No such file or directory` on `/usr/include/eigen3`. Native checks
+use an existing separate Eigen include. No full-build PASS is claimed.
 
-### Current limiter and independent critic
+### Current limiter, DEAD_ENDS and next falsifiable work
 
-The full source-uniform 600-step finite word is still missing: complete startup /
-ungauged paths, literal tilt/reset operands, remaining IMU/BIAS/source bindings,
-magnetic libm/casts/Eigen/nonfinite branches and deployment lifetime arithmetic.
-The shipping signed magnetic counter increments after unlock; Python's unbounded
-integer does not settle its lifetime behavior. No certified rho, basin, ultimate
-bound or end-to-end capture time is available.
+The complete finite source-uniform word remains open: bounded generator/
+potential and Q/O continuation, full BIAS driver/parameter histories, remaining
+same-source exp/trig/Eigen/roundoff branches, sample-zero magnetic binding,
+startup/ungauged capture and continuation beyond the current 600-step container.
+The firing tilt/reset operands are no longer free; their deployment boundary
+and nonfinite behavior still need proof. Floating clocks and the signed magnetic
+counter cannot be replaced indefinitely by Python rationals/integers.
 
-The strongest objection remains model drift: even exact local Python equations
-and successful native samples are not a certificate for every deployed branch.
-Three distinct binding routes remain a profile-bound exact program, outward
-same-operand arithmetic relations, or verified compiler/bit-vector extraction.
-The current choice is literal finite composition plus explicit arithmetic holes;
-none is permission for frozen traces or another independent coefficient box.
-
-### DEAD_ENDS and next falsifiable work
-
-Do not revive derivative cocycles as finite maps, replay/frozen gains, independent
-coefficient boxes, more-seed source qualification, wordwise S resets, an 18-state
-A21 marginal, convenient fresh-entry sets or covariance-consistency assumptions.
+Do not revive derivative cocycles as finite maps, frozen gains/replays,
+independent coefficient boxes, more-seed source qualification, wordwise S resets,
+18-state A21 marginal storage, convenient entry sets or covariance consistency.
 The two-strike rule and `assert_finite_storage_master` remain in force.
 
-Bind the firing Live tilt angle/reset quaternion/down axis to the actual guarded
-packet and predecessor, then finish the remaining complete same-history
-arithmetic/source graph. Test detached operands and every firing/rejection edge.
-Only after the finite-master guard accepts that relation may common joint24
-storage feasibility begin, followed by retention and disturbance bounds.
+Next bind a verified source realization or symbolic same-history source graph
+to the checked moments, BIAS driver and every runtime operand; demonstrate
+universal inclusion and all branch successors rather than more matching labels.
+Only a complete finite master may authorize common joint24 storage search,
+followed by every-prefix retention, capture and an ultimate bound.
 
 `ALT_LIVE_PASS=false`, `ALT_STARTUP_PASS=false`, `ALT_END_TO_END_PASS=false`.
-Original P4/P5 remain independent and unpromoted.

@@ -134,6 +134,23 @@ The >70-degree test uses a rigorous rational enclosure of the shipping
 `acos(cos_tilt)*57.295779513f` threshold. The tiny enclosure boundary and actual
 binary32/libm branch correspondence remain explicitly fail-closed.
 
+## Physical source-prefix graph
+
+`finite_source_bound_live_word.py` carries physical source and sensor ancestry
+with the runtime state. Source qualification cannot follow from matching tokens.
+The finite constructor now checks existing physical vector caps, the joint
+nine-component acceleration-moment IQC, necessary rotation/rate constraints and
+BIAS component/norm envelopes. Consecutive segments retain one actual phi.
+`finite_brmm_moment_prefix.py` derives cumulative moments and the prefix budget
+from the same segments using the exact Gramian concatenation identity; the
+proof is in `ou3-alt-source-continuation.md`.
+
+These are necessary outer constraints, not full COMPLETE-BRMM/BIAS membership.
+Keep generator/potential/QO continuation and actual BIAS generating functions
+explicitly open. Do not label scalar bounds, parameter tokens, or an exact
+kinematic recurrence as physical admission. These checks cannot authorize rho
+search, shrink the filter-error domain, or replace native arithmetic closure.
+
 ## H18/A21 hybrid language
 
 `MAG-CALL-SCHEDULE-v1` requires first post-Live mag call <=40 ms and later gaps

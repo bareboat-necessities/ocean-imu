@@ -2,6 +2,7 @@
 from dataclasses import replace
 from fractions import Fraction as F
 import unittest
+from unittest.mock import patch
 
 from tools.stability.ou3_alt_contraction import bias_families as BIAS
 from tools.stability.ou3_alt_contraction import finite_source_bound_live_word as X
@@ -11,7 +12,7 @@ from tools.stability.ou3_alt_contraction import proof_plan as PLAN
 import test_finite_live_interleave as BASE
 
 BIAS0=next(c for c in BIAS.contracts() if c.name=='BIAS0')
-PHI=F(str(BIAS0.phi_true.lo))
+PHI=F.from_float(BIAS0.phi_true.lo)
 
 
 def root_state():
@@ -25,8 +26,8 @@ def root_state():
 
 def next_imu_operands(state):
     raw,seg,kw=BASE.imu_operands(state.live)
-    qualified_seg=PHYS.PhysicalSegment(seg.before,seg.after,seg.delta_theta,
-        seg.delta_velocity,seg.delta_position,PHI,seg.bias_driver)
+    qualified_seg=PHYS.PhysicalSegment(seg.before,seg.after,seg.J0,
+        seg.J1,seg.J2,PHI,seg.bias_driver)
     k=state.source.next_ordinal
     parent='root' if k==1 else state.source.steps[-1].witness.source_cell_id
     pin='p0' if k==1 else state.source.steps[-1].witness.primitive_out_id
@@ -80,6 +81,15 @@ class Tests(unittest.TestCase):
         s=root_state()
         with self.assertRaisesRegex(NotImplementedError,'sample-zero'):
             X.mag_step(s,**mag_kwargs(s))
+
+    def test_physical_source_constraint_runs_before_shipping_event(self):
+        s=root_state(); witness,q,raw,kw=next_imu_operands(s)
+        q=replace(q,after=replace(q.after,acceleration=(100,0,0)))
+        with patch.object(X.LIVE,'imu_step_source_qualified') as event:
+            with self.assertRaisesRegex(ValueError,'acceleration vector cap'):
+                X.imu_step(s,witness=witness,segment=q,raw=raw,packet_id='invalid-source',**kw)
+            event.assert_not_called()
+        self.assertEqual(len(s.source.steps),0)
 
     def test_wrong_ordinal_fails_before_shipping_event(self):
         s=root_state(); _,segment,raw,kw=next_imu_operands(s)

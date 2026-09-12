@@ -1,4 +1,5 @@
 import unittest
+from unittest.mock import patch
 from tools.stability.ou3_alt_contraction import proof_plan as P
 
 class PlanGuardTests(unittest.TestCase):
@@ -19,13 +20,15 @@ class PlanGuardTests(unittest.TestCase):
             P.assert_finite_storage_master(W.finite_storage_readiness())
     def test_legacy_phase1_ledger_cannot_unlock_storage(self):
         from tools.stability.ou3_alt_contraction import phase1_closure as L
-        d=L.build()
-        self.assertTrue(d['legacy_source_ancestry_ledger_closed'])
-        self.assertFalse(d['finite_storage_master_closed'])
-        self.assertFalse(d['storage_search_allowed'])
-        self.assertTrue(d['common_joint24_storage_must_wait_for_finite_master'])
-        self.assertIn('finite-state storage blocked',d['finite_storage_gate_error'])
-        self.assertEqual(L.validate(d),[])
+        # No mocked success premise and no source-admission assertion: this
+        # process guard must be callable without executing the legacy builder.
+        with patch.object(L.SOURCE,'build',side_effect=AssertionError('source builder must not run')):
+            status,error=L.finite_storage_barrier()
+        self.assertEqual(status['map_representation'],'pointwise_state_Jacobian_cocycle')
+        self.assertFalse(status['finite_error_identity_for_every_event'])
+        self.assertIn('finite-state storage blocked',error)
+        with self.assertRaisesRegex(RuntimeError,'finite-state storage blocked'):
+            P.assert_finite_storage_master(status)
     def test_finite_guard_requires_every_branch_reference_and_zeroheel_scope(self):
         s=dict(map_representation='finite_physical_descriptor',finite_error_identity_for_every_event=True,
                physical_reference_forcing_retained=True,all_coefficient_product_graphs_retained=True,

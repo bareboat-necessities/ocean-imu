@@ -31,6 +31,32 @@ DOMAIN=REPO/'tools/stability/ou3_proof_operating_domain.json'
 QUALIFICATION='OU3_ALT_PHASE1_SOURCE_JACOBIAN_LEDGER_V2'
 
 
+def finite_storage_barrier():
+    """Pure anti-promotion barrier; never assumes a legacy source builder passed.
+
+    Full build/validate still execute every original source prerequisite. This
+    small guard is independently testable even when those prerequisites fail.
+    """
+    finite=WORD.finite_storage_readiness()
+    finite_status={
+      'map_representation':finite['map_representation'],
+      'finite_error_identity_for_every_event':finite['finite_error_identity_for_every_event'],
+      'physical_reference_forcing_retained':finite['physical_reference_forcing_retained'],
+      'all_coefficient_product_graphs_retained':finite['all_coefficient_product_graphs_retained'],
+      'all_configured_branches_bound_to_finite_graph':finite['all_configured_branches_bound_to_finite_graph'],
+      'zero_wind_heel_scope_enforced':True,
+    }
+    finite_gate_error=None
+    try:
+        PLAN.assert_finite_storage_master(finite_status)
+    except RuntimeError as exc:
+        finite_gate_error=str(exc)
+    else:
+        raise AssertionError('Jacobian-only Phase-1 ledger unexpectedly passed finite storage gate')
+
+    return finite_status, finite_gate_error
+
+
 def build():
     source=SOURCE.build(); sf=SOURCE.validate(source)
     word=WORD.induction_theorem(); wf=WORD.validate(word)
@@ -63,22 +89,7 @@ def build():
       'zero_wind_heel_scope_enforced':True,
     }
 
-    finite=WORD.finite_storage_readiness()
-    finite_status={
-      'map_representation':finite['map_representation'],
-      'finite_error_identity_for_every_event':finite['finite_error_identity_for_every_event'],
-      'physical_reference_forcing_retained':finite['physical_reference_forcing_retained'],
-      'all_coefficient_product_graphs_retained':finite['all_coefficient_product_graphs_retained'],
-      'all_configured_branches_bound_to_finite_graph':finite['all_configured_branches_bound_to_finite_graph'],
-      'zero_wind_heel_scope_enforced':True,
-    }
-    finite_gate_error=None
-    try:
-        PLAN.assert_finite_storage_master(finite_status)
-    except RuntimeError as exc:
-        finite_gate_error=str(exc)
-    else:
-        raise AssertionError('Jacobian-only Phase-1 ledger unexpectedly passed finite storage gate')
+    finite_status,finite_gate_error=finite_storage_barrier()
 
     return {
       'qualification':QUALIFICATION,
