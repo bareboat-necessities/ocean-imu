@@ -25,14 +25,16 @@ class Tests(unittest.TestCase):
         self.assertEqual(X.UNIFORM_RESIDUAL_MAX,F(1,1<<20))
 
     def test_source_locked_target_pair_defines_supply_without_free_exact_candidate(self):
-        # Build the binary edge from the actual source constants at f=0.5.
         f=B.rn32(F(1,2)); target=TARGET.evaluate(f)
         cfg=BASE.cfg(); cfg=type(cfg)(TARGET.FLOOR,TARGET.CEIL,B.rn32(1),cfg.sigma_coeff,
             TARGET.TAU_MIN,TARGET.TAU_MAX,cfg.max_sigma,cfg.pseudo_tau_ratio,cfg.pseudo_min,
             cfg.pseudo_max,cfg.min_RS,cfg.max_RS,cfg.rs_mse_coeff,cfg.accel_noise_density,
             cfg.qeff_pow,cfg.adapt_tau_sec,cfg.adapt_tau_sea_periods,cfg.adapt_RS_mult,
             cfg.adapt_RS_slew_log,cfg.adapt_every_sec,True)
-        e=B.rn32(F(99,100)); binary=T._step_from_frequency(B.rn32(F(11,10)),f,cfg,dt=F(1,200),exp_decay=e)
+        # dt=.005, f=.5 and 0.4 sea-period multiplier give adapt=.4 and x=.0125;
+        # this binary32 witness lies inside the certified same-argument exp enclosure.
+        e=B.rn32(F(98755,100000))
+        binary=T._step_from_frequency(B.rn32(F(11,10)),f,cfg,dt=F(1,200),exp_decay=e)
         cert=X.certify_source_target(binary,target)
         self.assertLessEqual(abs(cert.supply.residual_separate),X.UNIFORM_RESIDUAL_MAX)
         self.assertLessEqual(abs(cert.supply.residual_fma),X.UNIFORM_RESIDUAL_MAX)
