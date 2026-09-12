@@ -1,5 +1,6 @@
 """Prediction-root provenance regressions; not storage/contraction evidence."""
 from fractions import Fraction as F
+from types import SimpleNamespace
 import unittest
 
 from tools.stability.ou3_alt_contraction import finite_source_bound_prediction_word as X
@@ -12,9 +13,10 @@ PASS=QX.PSDWitness(True)
 
 def operands(state):
     witness,segment,raw,dynamic=BASE.next_imu_operands(state)
-    # Existing stationary fixture has zero bias-corrected rate, so no trig
-    # witnesses are consumed by the exact small-rate branch.
-    dynamic.pop('angular',None); dynamic.pop('ou',None); dynamic.pop('qaxis',None)
+    # These roots are now owned by the stronger theorem-facing entry rather
+    # than accepted from the lower component fixture.
+    for key in ('angular','ou','qaxis','bias'):
+        dynamic.pop(key,None)
     return witness,segment,raw,dynamic
 
 
@@ -32,6 +34,10 @@ class Tests(unittest.TestCase):
         self.assertEqual(r.ou.tau,active.tau)
         self.assertEqual(r.qaxis.sigma_aw,active.Sigma_aw)
         self.assertFalse(r.qaxis.correlated)
+        self.assertFalse(r.bias.active)
+        self.assertEqual(r.bias.tau_b,F(5000))
+        self.assertEqual(r.bias.phi_b,F(1))
+        self.assertEqual(r.bias.Q_bacc,X.SHIPPING_BA_Q)
 
     def test_source_bound_entry_executes_without_free_prediction_roots(self):
         s=BASE.root_state(); witness,segment,raw,dynamic=operands(s)
@@ -54,18 +60,41 @@ class Tests(unittest.TestCase):
 
     def test_prediction_roots_cannot_be_overridden_by_theorem_caller(self):
         s=BASE.root_state(); witness,segment,raw,dynamic=operands(s)
-        dynamic['ou']='detached'
-        with self.assertRaisesRegex(TypeError,'cannot be overridden'):
-            X.imu_step(s,witness=witness,segment=segment,raw=raw,packet_id='bad',
-                       ou_alpha=F(199,200),qaxis_marginal_psd=(PASS,PASS,PASS),
-                       qaxis_final_psd=(PASS,PASS,PASS),machine_epsilon=F(1,10**7),
-                       **dynamic)
+        for key in ('ou','bias'):
+            bad=dict(dynamic); bad[key]='detached'
+            with self.assertRaisesRegex(TypeError,'cannot be overridden'):
+                X.imu_step(s,witness=witness,segment=segment,raw=raw,packet_id='bad',
+                           ou_alpha=F(199,200),qaxis_marginal_psd=(PASS,PASS,PASS),
+                           qaxis_final_psd=(PASS,PASS,PASS),machine_epsilon=F(1,10**7),
+                           **bad)
+
+    def test_H18_consumes_no_BA_exp_witness_and_A21_requires_one(self):
+        held=X._bias_root(SimpleNamespace(mode='H'))
+        self.assertFalse(held.active); self.assertEqual(held.phi_b,1)
+        with self.assertRaisesRegex(ValueError,'consumes no exp'):
+            X._bias_root(SimpleNamespace(mode='H'),bias_phi=F(9,10))
+        with self.assertRaisesRegex(ValueError,'requires exp'):
+            X._bias_root(SimpleNamespace(mode='A'))
+        active=X._bias_root(SimpleNamespace(mode='A'),bias_phi=F(999999,1000000))
+        self.assertTrue(active.active)
+        self.assertEqual(active.tau_b,F(5000))
+        self.assertEqual(active.phi_b,F(999999,1000000))
+        self.assertEqual(active.Q_bacc,X.SHIPPING_BA_Q)
+
+    def test_shipping_BA_defaults_match_current_core_constants(self):
+        self.assertEqual(X.SHIPPING_BA_TAU,F(5000))
+        self.assertEqual(X.SHIPPING_BA_Q,
+            ((F(1,4_000_000),0,0),(0,F(1,4_000_000),0),(0,0,F(1,4_000_000))))
 
     def test_readiness_advances_only_prediction_root_provenance(self):
         r=X.readiness()
         self.assertTrue(r['prediction_angular_OU_Qaxis_roots_bound_to_same_source_continuation'])
-        self.assertTrue(r['caller_cannot_override_angular_OU_Qaxis_roots'])
-        self.assertFalse(r['accelerometer_bias_prediction_root_bound_here'])
+        self.assertTrue(r['shipping_BA_tau_Q_defaults_bound_at_prediction_entry'])
+        self.assertTrue(r['shipping_BA_hold_active_branch_derived_from_current_MEKF_mode'])
+        self.assertTrue(r['held_H18_BA_phi_exactly_one_without_exp_witness'])
+        self.assertTrue(r['accelerometer_bias_prediction_root_bound_here'])
+        self.assertTrue(r['caller_cannot_override_prediction_roots'])
+        self.assertFalse(r['BA_exp_arithmetic_deployment_closed'])
         self.assertFalse(r['all_estimator_coefficients_bound_to_same_source_continuation'])
         self.assertFalse(r['source_uniform_complete_600_step_word_qualified'])
         self.assertFalse(r['storage_search_allowed'])
