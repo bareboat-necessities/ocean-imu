@@ -102,6 +102,10 @@ def readiness():
       'double_LDLT_failure_rejection_branch':True,
       'rejected_measurement_preserves_state_covariance':True,
       'same_retry_shift_used_by_gain_and_Joseph':True,
+      # Compatibility aliases describe the retained lower-level unguarded lemma;
+      # the full shipping entry is the guarded relation below.
+      'accelerometer_observation_from_same_raw_packet':True,
+      'accelerometer_deheel_and_temperature_removal_attached':True,
       'accelerometer_observation_from_same_guarded_packet':True,
       'accelerometer_guard_deheel_and_temperature_removal_attached':True,
       'guard_effective_residual_is_derived_not_free':True,
