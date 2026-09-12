@@ -17,11 +17,18 @@ same rounded argument by a rigorous real enclosure.  The final EMA supports
 both separate mul/add and contracted FMA evaluation, because compiler FP
 contraction has not yet been qualified for the shipping MCU build.
 
-This module therefore closes the arithmetic *shape* and commit identity, not
-libm correctness or compiler contraction selection.
+The strongest entry consumes ``StoredFrequency`` from
+``finite_tuner_frequency_binary32``.  Consequently no theorem caller can
+silently quantize an exact-real frequency at the tau edge: the value must
+already be the actual float stored by ``SeaStateAutoTuner``.  Production of the
+upstream WPE float remains open.
+
+This module therefore closes the arithmetic *shape* and downstream stored
+frequency/commit identity, not WPE/libm correctness or compiler contraction
+selection.
 """
 from __future__ import annotations
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from fractions import Fraction as F
 from pathlib import Path
 
@@ -29,13 +36,14 @@ from tools.stability.ou3_alt_contraction import finite_binary32_arithmetic as B
 from tools.stability.ou3_alt_contraction import finite_source_bound_exp_enclosure as EXP
 from tools.stability.ou3_alt_contraction import finite_tuner_candidate as CAND
 from tools.stability.ou3_alt_contraction import finite_tuner_commit as COMMIT
+from tools.stability.ou3_alt_contraction import finite_tuner_frequency_binary32 as FREQ
 
 SOURCE=Path(__file__).resolve().parents[3]/'src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h'
 HALF=B.rn32(F(1,2)); ONE=B.rn32(1)
 SEA_MIN=B.rn32(F(1,2)); SEA_MAX=B.rn32(6)
 HORIZON_MIN=B.rn32(F(1,20)); HORIZON_MAX=B.rn32(35)
 MEKF_TAU_FLOOR=B.rn32(F(1,1000))
-QUALIFICATION='OU3_ALT_TUNER_TAU_BINARY32_V1'
+QUALIFICATION='OU3_ALT_TUNER_TAU_BINARY32_V2'
 
 
 def clamp(x,lo,hi): return min(max(x,lo),hi)
@@ -59,11 +67,11 @@ class TauStep:
         if self.previous<=0 or self.frequency<=0 or self.tau_target<=0 or self.adapt_sec<=0: raise ValueError('positive tuner tau operands required')
 
 
-def _floats(sample:CAND.WaveBandSample,cfg:CAND.CandidateConfig,dt):
-    if not isinstance(sample,CAND.WaveBandSample) or not isinstance(cfg,CAND.CandidateConfig):
-        raise TypeError('finite tuner sample/config required')
+def _floats_from_frequency(frequency,cfg:CAND.CandidateConfig,dt):
+    if not isinstance(cfg,CAND.CandidateConfig): raise TypeError('finite tuner config required')
     if not cfg.clamp_enabled: raise ValueError('shipping default clamped tuner branch required')
-    f0=B.rn32(sample.frequency_hz)
+    f0=F(frequency)
+    if not B.is_binary32(f0): raise ValueError('tau edge requires already-stored binary32 tuner frequency')
     f=clamp(f0,B.rn32(cfg.min_freq),B.rn32(cfg.max_freq))
     coeff=B.rn32(cfg.tau_coeff)
     tau_raw=B.div(B.mul(coeff,HALF),f)
@@ -81,10 +89,10 @@ def _floats(sample:CAND.WaveBandSample,cfg:CAND.CandidateConfig,dt):
     return f,tau_target,sea,adapt
 
 
-def step(previous,sample:CAND.WaveBandSample,cfg:CAND.CandidateConfig,*,dt,exp_decay):
-    prev=B.rn32(previous)
-    if prev != F(previous): raise ValueError('previous tau_applied is not an actual binary32 stored value')
-    f,target,sea,adapt=_floats(sample,cfg,dt)
+def _step_from_frequency(previous,frequency,cfg:CAND.CandidateConfig,*,dt,exp_decay):
+    prev=F(previous)
+    if not B.is_binary32(prev): raise ValueError('previous tau_applied is not an actual binary32 stored value')
+    f,target,sea,adapt=_floats_from_frequency(frequency,cfg,dt)
     dtf=B.rn32(dt); x=B.div(dtf,adapt)
     e=F(exp_decay)
     if not B.is_binary32(e) or not 0<e<=1: raise ValueError('binary32 std::exp result witness required')
@@ -96,13 +104,23 @@ def step(previous,sample:CAND.WaveBandSample,cfg:CAND.CandidateConfig,*,dt,exp_d
     return TauStep(prev,f,target,sea,adapt,e,alpha,sep,fused)
 
 
+def step(previous,sample:CAND.WaveBandSample,cfg:CAND.CandidateConfig,*,dt,exp_decay):
+    """Legacy/local entry; explicitly quantizes the exact-real sample frequency."""
+    if not isinstance(sample,CAND.WaveBandSample): raise TypeError('finite tuner sample required')
+    return _step_from_frequency(previous,B.rn32(sample.frequency_hz),cfg,dt=dt,exp_decay=exp_decay)
+
+
+def step_from_stored_frequency(previous,stored:FREQ.StoredFrequency,cfg:CAND.CandidateConfig,*,dt,exp_decay):
+    """Strong theorem entry consuming the actual SeaStateAutoTuner stored float."""
+    if not isinstance(stored,FREQ.StoredFrequency): raise TypeError('StoredFrequency required')
+    return _step_from_frequency(previous,FREQ.get_frequency_hz(stored),cfg,dt=dt,exp_decay=exp_decay)
+
+
 def committed_tau(result:TauStep,*,contracted:bool):
     """Value passed to set_aw_time_constant at the next pending commit."""
     if not isinstance(result,TauStep): raise TypeError('TauStep required')
     if not isinstance(contracted,bool): raise TypeError('literal compiler contraction branch required')
     tau=result.next_fma if contracted else result.next_separate
-    # Shipping setter is tau_aw=max(1e-3f,tau_seconds).  The admitted tuner
-    # range is well above that floor; retain the max literally anyway.
     return max(MEKF_TAU_FLOOR,tau)
 
 
@@ -119,7 +137,7 @@ def _source_shape_matches():
 
 
 def readiness():
-    b=B.readiness()
+    b=B.readiness(); fs=FREQ.readiness()
     return {
       'qualification':QUALIFICATION,
       'shipping_tau_target_EMA_commit_source_shape_matches':_source_shape_matches(),
@@ -129,9 +147,14 @@ def readiness():
       'tau_EMA_separate_mul_add_result_materialized':b['separate_mul_add_EMA_shape_materialized'],
       'tau_EMA_contracted_fma_result_materialized':b['contracted_fma_EMA_shape_materialized'],
       'pending_commit_passes_stored_tau_directly_to_MEKF_setter':True,
+      'source_tuner_frequency_binary32_store_to_tau_edge_closed': bool(
+          fs['shipping_frequency_store_source_shape_matches'] and
+          fs['frequency_clamp_and_store_exact_binary32'] and
+          fs['getFrequencyHz_is_identity_on_stored_binary32']),
       'tuner_exp_libm_binary32_correspondence_closed':False,
       'shipping_compiler_FP_contraction_mode_qualified':False,
-      'source_frontend_frequency_binary32_storage_correspondence_closed':False,
+      'upstream_WPE_binary32_frequency_production_closed':False,
+      'source_frontend_frequency_binary32_storage_correspondence_closed':True,
       'complete_word_finite_identity':False,
       'ALT_LIVE_PASS':False,
     }
