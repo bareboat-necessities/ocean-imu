@@ -9,18 +9,20 @@ actual shipping transcendental topology:
   nonzero-rate sin/cos witnesses must also lie in rigorous rational enclosures
   at that SAME source-owned rotation angle;
 * OU h/tau comes from the source segment and carried TuneState; distinct
-  exp(-x) and expm1(-x) results remain same-argument arithmetic witnesses;
+  exp(-x) and expm1(-x) results are separately constrained by rigorous real
+  enclosures at that SAME h/tau argument;
 * Qaxis Sigma_aw comes from TuneState and regularization epsilon is fixed by
   the shipping ``Kalman3D_Wave_OU_III<float>`` instantiation to 2^-23;
 * residual BA tau/Q are the current shipping core defaults. H18 consumes no BA
-  transcendental; A21 retains distinct exp and expm1 results;
+  transcendental; A21 retains distinct exp and expm1 results and constrains each
+  to its literal h/tau_b or 2h/tau_b source argument;
 * accelerometer temperature-model coefficient is the shipping core default
   k_a=(0.002,0.002,0.002) at tempC_ref=35 C. The caller supplies only the
   actual temperature input; it cannot replace k_a or lever-arm conditioning.
 
-Temperature-history admissibility, transcendental correspondence, PSD solver
-outcomes and quantitative sensor forcing remain open. This is not storage or a
-stability certificate.
+Binary32/libm correspondence, temperature-history admissibility, PSD solver
+outcomes and quantitative deployment roundoff remain open. This is not storage
+or a stability certificate.
 """
 from __future__ import annotations
 from dataclasses import dataclass
@@ -31,6 +33,7 @@ from tools.stability.ou3_alt_contraction import finite_source_continuation as SO
 from tools.stability.ou3_alt_contraction import finite_sensor_source_runtime as SENSOR
 from tools.stability.ou3_alt_contraction import finite_attitude_runtime as ATT
 from tools.stability.ou3_alt_contraction import finite_source_bound_attitude_trig as TRIG
+from tools.stability.ou3_alt_contraction import finite_source_bound_exp_enclosure as EXP
 from tools.stability.ou3_alt_contraction import finite_ou_runtime_primitives as OU
 from tools.stability.ou3_alt_contraction import finite_prediction_runtime as PRED
 
@@ -51,19 +54,22 @@ class Roots:
     bias: OU.BiasDecay
 
 
-def _bias_root(core, *, bias_phi=None, bias_em1_2=None):
+def _bias_root(core, *, h=None, bias_phi=None, bias_em1_2=None):
     """Literal shipping BA prediction topology with no fake exp identity."""
     active = core.mode == 'A'
     if active:
-        if bias_phi is None or bias_em1_2 is None:
-            raise ValueError('active A21 bias prediction requires exp and expm1 arithmetic witnesses')
+        if bias_phi is None or bias_em1_2 is None or h is None:
+            raise ValueError('active A21 bias prediction requires h plus exp and expm1 arithmetic witnesses')
         phi = bias_phi
     else:
         if bias_phi is not None or bias_em1_2 is not None:
             raise ValueError('held H18 bias prediction consumes no exp/expm1 arithmetic witness')
         phi = F(1)
-    return OU.BiasDecay(active, SHIPPING_BA_TAU, phi, SHIPPING_BA_Q,
-                        em1_2=bias_em1_2)
+    out=OU.BiasDecay(active, SHIPPING_BA_TAU, phi, SHIPPING_BA_Q,
+                     em1_2=bias_em1_2)
+    if active:
+        EXP.validate_bias(out,h)
+    return out
 
 
 def _accel_conditioning(temperature_c):
@@ -100,11 +106,12 @@ def build(state: WORD.State, physical: SOURCE.QualifiedPhysicalSegment,
     TRIG.validate(angular)
     active = state.live.live.live.active
     ou = OU.OUDecay(segment.h, active.tau, ou_alpha, em1=ou_em1)
+    EXP.validate_ou(ou)
     qaxis = PRED.QAxisBranch(False, active.Sigma_aw,
                              tuple(qaxis_marginal_psd), tuple(qaxis_final_psd),
                              SHIPPING_FLOAT_EPSILON)
     active.require_prediction(ou=ou, qaxis=qaxis)
-    bias = _bias_root(core, bias_phi=bias_phi, bias_em1_2=bias_em1_2)
+    bias = _bias_root(core,h=segment.h,bias_phi=bias_phi,bias_em1_2=bias_em1_2)
     return Roots(angular, ou, qaxis, bias)
 
 
@@ -139,7 +146,7 @@ def imu_step(state: WORD.State, *, witness: SOURCE.StepWitness,
 
 
 def readiness():
-    lower = WORD.readiness(); trig=TRIG.readiness()
+    lower = WORD.readiness(); trig=TRIG.readiness(); exp=EXP.readiness()
     return {
       'source_owned_next_transition_required': True,
       'attitude_omega_reconstructed_from_same_raw_packet_and_current_bias_error': True,
@@ -147,6 +154,9 @@ def readiness():
       'detached_attitude_unit_circle_points_rejected': trig['detached_unit_circle_points_rejected'],
       'OU_h_tau_argument_from_same_source_and_active_TuneState': True,
       'OU_exp_and_expm1_shipping_results_retained_separately': True,
+      'OU_exp_expm1_real_enclosed_at_same_source_argument': bool(
+          exp['OU_exp_root_real_enclosed_at_same_h_over_tau'] and
+          exp['OU_expm1_root_real_enclosed_at_same_h_over_tau']),
       'Qaxis_Sigma_aw_from_same_carried_active_TuneState': True,
       'shipping_independent_Qaxis_branch_fixed_by_active_parameter_contract': True,
       'Qaxis_machine_epsilon_bound_to_shipping_binary32': True,
@@ -155,6 +165,7 @@ def readiness():
       'shipping_BA_hold_active_branch_derived_from_current_MEKF_mode': True,
       'held_H18_BA_phi_exactly_one_without_transcendental_witness': True,
       'active_A21_BA_exp_and_expm1_results_retained_separately': True,
+      'active_A21_BA_exp_expm1_real_enclosed_at_literal_arguments':exp['BA_exp_and_expm1_distinct_arguments_real_enclosed'],
       'accelerometer_temperature_coefficient_bound_to_shipping_default': True,
       'zero_lever_accelerometer_scope_enforced_at_source_bound_entry': True,
       'temperature_is_explicit_per_sample_input_not_free_model_coefficient': True,
