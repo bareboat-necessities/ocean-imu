@@ -85,31 +85,65 @@ frame, raw true-field/hard-iron/residual source identity, and the same main
 `PhysicalKinematics` endpoint used by the finite physical word. The learned
 magnetic reference cannot be freely reselected per event.
 
+The startup north-ready path also retains the literal generation-zero
+`setMagWorldRef_` write, pending absolute-yaw gauge, proxy-to-MEKF handoff seed,
+shipping 0.035 rad tilt covariance, 0.087 rad gauged yaw covariance versus
+1.5708 rad free-yaw covariance, and the real-arithmetic core of
+`initialize_from_attitude`. The latter zeroes the attitude error state, replaces
+the attitude 3x3 covariance by the tilt/yaw projector split, zeroes only the
+attitude<->gyro-bias covariance, and preserves the remaining state/covariance
+entries.
+
 This materially advances the finite-map stage but does NOT satisfy the universal
 source quantifier. Exp/trig and numerical factorization witnesses, deployment
 roundoff, remaining hybrid/runtime branches and source admission still require
 same-history closure.
 
-## Explicit magnetic source-specification blocker
+## MAG-BMM150-DET-v1 deterministic magnetic admission
 
-The current canonical COMPLETE-BRMM/BIAS assumptions bound vessel motion and the
-bias families, but the ALT source audit has not found a declared deterministic
-envelope for all three quantities entering the startup magnetic identity:
+ALT now declares the following engineering source class for a commissioned
+BMM150 installation. These are theorem admission limits, not Bosch guarantees
+for arbitrary mounting environments:
 
-`m_raw_B = R_true B_world + b_HI_body + n_mag_body`.
+- `20 uT <= ||B_W||_2 <= 75 uT`;
+- `||(B_W.x, B_W.y)||_2 >= 15 uT`;
+- `||b_HI_body||_2 <= 10 uT`;
+- `||n_mag_body||_2 <= 3 uT` for every accepted theorem sample.
 
-In particular, no current canonical theorem assumption has been identified that
-gives a finite bound for the world magnetic-field magnitude, body-fixed hard
-iron, and deterministic magnetometer residual. `R_mag`, bench statistics,
-simulation values and sensor datasheet typical noise are not interchangeable
-with such deterministic source assumptions.
+The total-field range encloses ordinary terrestrial geomagnetic magnitudes with
+margin while remaining far inside the BMM150 electrical range. The horizontal
+lower bound is separate and essential: without a nonzero horizontal field no
+uniform deterministic north/yaw capture theorem is possible. Hard-iron and
+residual limits are commissioned-installation/source requirements; a history
+that violates them is outside the theorem rather than silently absorbed into
+`R_mag`.
 
-Therefore `finite_mag_source_qualification` is intentionally fail-closed:
-local finite identities may continue, but magnetic source qualification,
-complete-word qualification and storage search must remain false until named
-source/theorem assumptions provide those envelopes. Do not invent numerical
-values merely to unblock the proof. This is an E-type source-specification
-obligation unless an already-authoritative assumption is located and attached.
+`finite_mag_source_qualification` checks the named assumption with exact norm
+witnesses, and the theorem-facing startup magnetic edge now refuses an
+unqualified sample before it can mutate the tuner or magnetic wrapper clock.
+This closes the prior missing-magnetic-envelope E blocker, but it does NOT yet
+qualify an entire asynchronous magnetic history: the event/call schedule,
+same-history persistence, startup averaging/capture error bound and binary32
+correspondence still have to be closed.
+
+## Current startup blockers after magnetic-envelope closure
+
+The immediate startup blockers are now:
+
+- attach the `initialize_from_attitude` world-down axis to the accepted boat
+  quaternion through the actual wind-heel/body-prime conversion and Eigen
+  normalization;
+- close binary32 correspondence for startup yaw extraction, `atan2`, AngleAxis,
+  quaternion normalization, norm gates and the handoff reset;
+- source-qualify the asynchronous magnetometer call schedule through tuner ready
+  and the subsequent refinement/Live path;
+- prove a finite startup north/yaw capture bound from the accepted same-history
+  magnetic average under MAG-BMM150-DET-v1 plus the Mahony tilt-error bound;
+- compose `goLive`/`enterLive_`, fresh H18 entry and the existing Live word on the
+  same physical/source history.
+
+None of these may be replaced by trace replay, statistical concentration, or an
+assumed fresh-entry covariance-consistency condition.
 
 ## Promotion state
 
