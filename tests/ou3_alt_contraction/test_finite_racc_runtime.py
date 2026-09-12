@@ -16,7 +16,8 @@ def guard(excess=0):
 
 class Tests(unittest.TestCase):
     def test_deployed_default_dormant_branch_is_literal_no_write(self):
-        state=X.State(False,(1,1,1)); cfg=X.Config(vibration_gain=0)
+        state=X.State(False,(1,1,1)); cfg=X.Config()
+        self.assertEqual(cfg.vibration_gain,F(3,4))
         out=X.step(state,cfg,guard(),nominal_std=(1,1,1),tune=TuneState(1,1,1),
                    preupdate_frequency=F(1,5),live=True)
         self.assertIs(out.state,state); self.assertFalse(out.wrote_Racc)
@@ -47,7 +48,6 @@ class Tests(unittest.TestCase):
                         horizontal_x_tau=0,horizontal_y_tau=0,
                         heave_period=1,heave_damping=F(1,2),two_pi=1)
         cfg=X.Config(vibration_gain=0,sigma_coeff=1,rao=rao)
-        # sigma_applied=0 -> SNR=0 -> smoothstep weight 1 -> scale=max=2.
         out=X.step(X.State(False,(1,1,1)),cfg,guard(),nominal_std=(1,1,1),
                    tune=TuneState(1,0,1),preupdate_frequency=1,live=True,
                    rao_witness=X.RaoWitness(1,2,2),
@@ -75,6 +75,7 @@ class Tests(unittest.TestCase):
 
     def test_readiness_stays_fail_closed_at_precision_and_stage_ancestry(self):
         r=X.readiness()
+        self.assertTrue(r['shipping_default_vibration_gain_three_quarters'])
         self.assertTrue(r['same_guard_excess_RMS_drives_Racc'])
         self.assertTrue(r['effective_std_to_diagonal_covariance_matches_set_Racc_std'])
         self.assertFalse(r['hypot_and_sqrt_binary32_ancestry_attached'])
