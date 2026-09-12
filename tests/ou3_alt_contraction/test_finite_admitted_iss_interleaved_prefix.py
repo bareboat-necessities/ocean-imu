@@ -43,12 +43,26 @@ class Tests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'detached from carried sensor residual histories'):
             X.begin(p,other)
 
+    def test_complete_word_cannot_be_claimed_from_short_prefix(self):
+        t=begin()
+        with self.assertRaisesRegex(ValueError,'exactly 600 physical source transitions'):
+            X.complete(t)
+        witness,segment,raw,r,b,dynamic=IBASE.operands(t.prefix.live)
+        t,_=X.imu_step(t,restricted=r,bias_restricted=b,witness=witness,raw=raw,
+                       packet_id='imu-1',**PBASE.root_args(),**dynamic)
+        with self.assertRaisesRegex(ValueError,'exactly 600 physical source transitions'):
+            X.complete(t)
+
     def test_readiness_keeps_complete_word_and_storage_closed(self):
         r=X.readiness()
         self.assertTrue(r['one_bounded_IMU_ISS_history_persists_through_entire_prefix'])
         self.assertTrue(r['only_IMU_consumes_kth_bounded_forcing_restriction'])
         self.assertTrue(r['MAG_and_HOLD_preserve_bounded_IMU_history_without_consumption'])
         self.assertTrue(r['bounded_input_history_structurally_attached'])
+        self.assertTrue(r['complete_600_transition_strengthening_requires_actual_full_horizon'])
+        self.assertTrue(r['complete_600_transition_strengthening_checks_exact_1_to_600_ordinals'])
+        self.assertTrue(r['complete_600_transition_strengthening_checks_IMU_ledger_consecutivity'])
+        self.assertTrue(r['complete_600_transition_strengthening_preserves_same_BRMM_BIAS_ISS_product'])
         self.assertFalse(r['all_event_arithmetic_witnesses_source_uniformly_qualified'])
         self.assertFalse(r['magnetic_counter_lifetime_closed'])
         self.assertFalse(r['source_uniform_complete_600_step_word_qualified'])
