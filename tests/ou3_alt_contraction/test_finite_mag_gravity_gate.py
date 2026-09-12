@@ -20,7 +20,8 @@ class Tests(unittest.TestCase):
         self.assertFalse(out.gravity_good_now)
 
     def test_warm_world_average_closes_gravity_good_and_caps_at_ten(self):
-        s=X.State((0,0,-10),True,F(5),F(999,100),True)
+        # Start close enough that one 200 Hz good sample genuinely crosses 10 s.
+        s=X.State((0,0,-10),True,F(5),F(9999,1000),True)
         cfg=X.Config(world_warmup=5,max_align_sin=F(3,40),extreme_gyro_dps=30)
         exp=X.LpfExpWitness(F(1,200),12,1)  # alpha=0 keeps same exact average
         out=X.imu_step(s,cfg,q_proxy_bw=(1,0,0,0),acc_body=(0,0,-10),gyro_body=(0,0,0),dt=F(1,200),
