@@ -18,6 +18,14 @@ def raw_for(state,acc_res=(0,0,0)):
     return S.RawImuSample(ref,omega,(0,0,0),acc_res,gyro,acc,(0,0,G))
 
 
+def raw_for_reference(ref,acc_res=(0,0,0)):
+    omega=(0,0,0); gyro=ref.gyro_bias
+    inertial=(ref.acceleration[0],ref.acceleration[1],ref.acceleration[2]-G)
+    f=S.q_rotate(ref.q_world_to_body,inertial)
+    acc=tuple(f[i]+ref.beta[i]+F(acc_res[i]) for i in range(3))
+    return S.RawImuSample(ref,omega,(0,0,0),acc_res,gyro,acc,(0,0,G))
+
+
 class Tests(unittest.TestCase):
     def test_first_success_uses_no_shift(self):
         b=R.SafeLDLT(True,None,F(3,2),F(1,10**7)); self.assertEqual(b.innovation_shift,0); self.assertTrue(b.accepted)
@@ -35,9 +43,12 @@ class Tests(unittest.TestCase):
         s=FC.root('A'); raw=raw_for(s); cond=S.AccelConditioning(0,(0,0,0))
         with self.assertRaises(ValueError):
             R.accelerometer_from_raw(s,raw,cond,ldlt=R.SafeLDLT(True,None,1,F(1,10**7)),R=M.eye(3),gravity=10)
-        s2=FC.root('H')
+        # A separately constructed root can be value-equal to this root.  Use
+        # an actual physical successor so the packet has a valid but detached
+        # physical predecessor and reaches the shipping reference guard.
+        seg,_=FC.physical_successor(s); raw2=raw_for_reference(seg.after)
         with self.assertRaises(ValueError):
-            R.accelerometer_from_raw(s2,raw,cond,ldlt=R.SafeLDLT(True,None,1,F(1,10**7)),R=M.eye(3))
+            R.accelerometer_from_raw(s,raw2,cond,ldlt=R.SafeLDLT(True,None,1,F(1,10**7)),R=M.eye(3))
 
     def test_retry_bump_is_literal_max_formula(self):
         b=R.SafeLDLT(False,True,F(2),F(1,10**9)); self.assertEqual(b.bump,F(3,10**6)); self.assertEqual(b.innovation_shift,b.bump)
