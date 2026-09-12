@@ -3,15 +3,15 @@
 This theorem-facing product requires, simultaneously:
 * one quantified admitted COMPLETE-BRMM history;
 * one quantified admitted BIAS0/1/2 history;
-* the exact sample-zero restriction of that admitted physical history, equal to
-  the fresh startup joint24 physical Reference;
+* the canonical sample-zero restriction of that admitted physical history,
+  equal to the fresh startup joint24 physical Reference;
 * source-bound shipping prediction/model roots;
 * same-event IMU and magnetic ISS forcing coordinates.
 
-Thus later runtime events cannot bypass either admission ancestry or the startup
-sample-zero identity. Deployment exp/expm1/trig/Eigen/LDLT correspondence,
-finite clocks/counters, startup reachability and the complete 600-step hybrid
-word remain open. Storage remains forbidden.
+Thus later runtime events cannot bypass admission ancestry or startup sample-zero
+identity. Deployment exp/expm1/trig/Eigen/LDLT correspondence, finite
+clocks/counters, startup reachability and the complete 600-step hybrid word
+remain open. Storage remains forbidden.
 """
 from __future__ import annotations
 from dataclasses import dataclass
@@ -32,18 +32,19 @@ class State:
     origin: ORIGIN.RestrictedOrigin
     def __post_init__(self):
         if not isinstance(self.admitted,ADMITTED.State) or not isinstance(self.origin,ORIGIN.RestrictedOrigin):
-            raise TypeError('admitted Live product and admitted sample-zero origin required')
+            raise TypeError('admitted Live product and canonical admitted origin required')
         if self.origin.history != self.admitted.admitted_history:
             raise ValueError('admitted runtime origin detached from carried admitted history')
         root=self.admitted.live_word.source.root
-        if root.history_id != self.origin.history.history_id or root.live_origin != self.origin.reference.live_origin:
+        if root.history_id != self.origin.history.history_id or root.live_origin != self.origin.endpoint.live_origin:
             raise ValueError('finite source root detached from admitted runtime origin')
+        BRMM.qualify_origin(root,self.origin)
         if self.admitted.live_word.source.steps:
-            if self.admitted.live_word.source.steps[0].segment.before != self.origin.reference:
+            if self.admitted.live_word.source.steps[0].segment.before != self.origin.endpoint:
                 raise ValueError('runtime source chain did not start at admitted sample zero')
         else:
             ref=self.admitted.live_word.live.live.live.mekf.reference
-            if ref != self.origin.reference:
+            if ref != self.origin.endpoint:
                 raise ValueError('fresh runtime Reference is not admitted sample zero')
 
 
@@ -83,7 +84,7 @@ def _qualify_step(state:State, *, restricted:BRMM.RestrictedSegment,
         raise ValueError('BRMM/BIAS/source restriction ordinals differ')
     if restricted.segment != bias_restricted.segment:
         raise ValueError('BRMM and BIAS restrictions must describe the same physical segment')
-    if restricted.ordinal == 1 and restricted.segment.before != state.origin.reference:
+    if restricted.ordinal == 1 and restricted.segment.before != state.origin.endpoint:
         raise ValueError('first admitted restriction does not start at admitted sample zero')
     return BRMM.qualify_step(admitted.live_word.source.root,restricted,witness)
 
@@ -120,7 +121,7 @@ def readiness():
     return {
       'admitted_COMPLETE_BRMM_history_and_strong_runtime_joined':True,
       'admitted_BIAS_history_and_strong_runtime_joined':True,
-      'admitted_sample_zero_origin_persists_in_runtime_product':True,
+      'canonical_admitted_sample_zero_origin_persists_in_runtime_product':True,
       'first_restriction_forced_to_start_at_admitted_sample_zero':True,
       'startup_sample_zero_equal_to_admitted_history_restriction_proved':origin['startup_sample_zero_equal_to_admitted_history_restriction_proved'],
       'each_IMU_event_requires_same_admitted_BRMM_BIAS_and_source_ordinal':True,
