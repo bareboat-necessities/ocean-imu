@@ -1,66 +1,43 @@
-# OU-III ALT post-merge handover
+# OU-III ALT continuation entry point
 
-Resume from latest `main` after PR #522. Read, in order:
+## Start here after merged PR #523
 
-1. `AGENTS.md`
-2. `docs/ou3-alt-proof-plan.md`
-3. `docs/ou3-alt-finite-measurement-proof.md`
-4. `docs/ou3-alt-contraction.md`
-5. the ALT section of `docs/ou3-proof-research-state.md`
-6. `docs/ou3-brmm-main-handover.md`
+The canonical continuation state is [`ou3-alt-contraction-handover.md`](ou3-alt-contraction-handover.md). A new conversation should sync latest `main` and open a **new PR** from it.
 
-The original P2/P3/P4/P5 proof remains an independently continuable route. ALT must not rewrite it, consume its PASS labels as ALT proof, or import its PE/vector mismatch unless ALT genuinely needs that lemma.
+Read this file with `AGENTS.md`, the normative [`ou3-alt-proof-plan.md`](ou3-alt-proof-plan.md), the ALT section of `ou3-proof-research-state.md`, the finite identities in [`ou3-alt-finite-measurement-proof.md`](ou3-alt-finite-measurement-proof.md), [`ou3-alt-finite-core-composition.md`](ou3-alt-finite-core-composition.md), [`ou3-alt-runtime-primitives.md`](ou3-alt-runtime-primitives.md), and [`ou3-alt-mahony-binary32.md`](ou3-alt-mahony-binary32.md).
 
-## What is genuinely proved on ALT
+The original P2/P3/P4/P5 proof route remains separate through [`ou3-brmm-main-handover.md`](ou3-brmm-main-handover.md). Do not weaken it or make it depend on ALT. `P3=1e-18` remains frozen.
 
-- Exact finite accepted-measurement algebra on joint24, including finite Cayley reset, exact secant residuals, physical `r_S=e_S-S_phys`, actual H18/A21 gain masking, radial bias projection, and thin rank-3 storage contribution without state reduction.
-- Exact H18 held-covariance invariant and conditional H18->A21 covariance map: BA cross blocks stay zero, the hidden BA marginal stays at the configured seed variance, and the enable-floor is a fixed point on that invariant.
-- Separate analytic BIAS0/1/2 contracts with one persistent physical history/root token and one shared driver entering both `e_ba` and `beta`.
-- Exact finite prediction algebra for attitude, translation, and physical accelerometer bias. Translation uses the existing correlated q15 `(a0,a1,J0,J1,J2)` forcing relation.
-- The deployed quaternion predictor is source-uniformly inside the polynomial branch on the declared regional Live domain: the worst shadow increment is about `0.00311 rad < 0.01 rad`.
-- Regional Live/source lineage machinery is separated from startup capture. Startup remains a separate theorem.
-- Anti-dead-end guards are executable: replay, unreachable perturbations, Jacobian cocycles, incomplete source tokens, and premature common-metric/rho searches are blocked from promotion.
+## Scope
 
-## What is NOT proved
+ALT excludes wind heel. Certified histories require `wind_heel_rad_==0` from construction onward and no `update_wind_heel()` events. Shipping is unchanged. Under this scope B'=B and no wind-heel retarget belongs to the hybrid word.
 
-- The complete finite 600-step physical word is still OPEN. `physical_word.py` currently composes pointwise Jacobians/source responses and is explicitly not a finite endpoint identity.
-- The exact finite measurement and prediction descriptors have not yet been composed through all literal covariance/frontend successors, due-S events, asynchronous magnetometer events, H18/A21 branches, and the H18->A21 splice into one source-uniform finite word.
-- No common joint24 storage, source-uniform rho, useful ultimate bound, every-prefix chart-retention certificate, deployment finite-precision enclosure, startup capture, or end-to-end theorem exists yet.
-- `ALT_LIVE_PASS=false`, `ALT_STARTUP_PASS=false`, `ALT_END_TO_END_PASS=false`.
-- Original P4/P5 remain unpromoted by ALT.
+## Current ALT checkpoint
 
-## Next theorem obligation — do this first
+PR #523 advanced ALT from disconnected finite primitives to an explicit startup-rooted runtime graph:
 
-Build a **finite physical word composer**, replacing the remaining derivative/Jacobian word representation. It must compose the exact finite prediction and measurement descriptors along the already-admitted same-history source relation while retaining:
+- physical prediction, full 21-state covariance, runtime attitude F/Q, integrated-OU Qaxis, BA decay, pending a_w floor, S scheduler/service, SafeLDLT branches and Joseph/reset are represented;
+- private Mahony, WPE, adaptive band/statistics, stillness, vibration guard/R_acc and staged tuner memory are represented on the same sample ordering;
+- deterministic magnetic startup admission/capture is declared and the real-arithmetic startup attitude bound is `<0.63 rad < pi/4`;
+- the gauged zero-heel `goLive` handoff produces an exact fresh H18 joint24 `finite_core.State` instead of an assumed error box;
+- the TunerReady frontend/tuner/guard memory is preserved through `goLive`, with the same carried `TuneState` supplying active tau/Sigma_aw/pseudo period/Live R_S;
+- the first actual Live prediction/S/accelerometer/tuner-WPE prefix now starts directly from that startup-produced H18 state; the former synthetic Live root is removed;
+- H18/A21 hybrid control is explicit: internal unlock is forced by the qualified mag-call schedule, while arbitrary external hold may keep H18 indefinitely; release gives the literal H18->A21 edge.
 
-1. one BRMM generator and one Live S origin over the full word;
-2. the correlated q15 forcing relation, never independent per-step boxes;
-3. one BIAS-family root/history token and the same driver in truth/error recurrences;
-4. actual covariance/frontend/tuner successors and actual anisotropic `R_S`;
-5. H18 held covariance with BA uncertainty retained in innovation, then the exact H18->A21 covariance splice when the literal release guard fires;
-6. every configured due-S and accelerometer event and all admitted asynchronous magnetometer branches;
-7. finite Cayley reset/projection branch graphs and chart denominators;
-8. physical reference forcing, especially `S_phys` and continuous-physical-vs-sampled-gyro attitude forcing.
+The handoff quaternion convention is important: shipping accepts boat-to-world `q_BW`, while the MEKF internal nominal attitude is world-to-body `q_WB=conjugate(q_BW)` under zero heel. Keep the nontrivial regression that enforces this.
 
-Only when the finite-word guard closes may the first common coercive joint24 storage search run. Search one common `M` first. Parameter-dependent or piecewise storage is allowed only after a genuine falsified common-M attempt on the complete finite master. Rank-3 structure is an exact arithmetic optimization only.
+## Next work
 
-## Dead-end guards to preserve
+Do **not** start storage/rho search yet. The complete source-uniform 600-step shipping word is still missing.
 
-Do not:
+Next, compose successive Live prefixes with asynchronous magnetometer interleaving, reference refinement/generation changes, accepted/rejected mag updates, and wrapper count/time bookkeeping on the same physical history. Then compose the firing Live tilt-reset branch (`initialize_from_acc_preserve_yaw`), finish remaining magnetic/hard-iron source paths retained in scope, and close deployment finite precision/libm/Eigen solver and hygiene branches.
 
-- use replay or finite seeds as theorem evidence;
-- perturb unreachable covariance/frontend roots and call that physical admission;
-- freeze `K`, `P`, frontend, tuner, or guard state;
-- replace the finite map by products of Jacobians;
-- Cartesianize correlated source variables or bias history;
-- reset `S` per word or re-anchor physical displacement;
-- marginalize A21 to motion-only storage;
-- import the old PE/vector mismatch unless ALT actually requires that lemma;
-- shrink the declared source/error domain or lower the frozen P3 delta;
-- run common-metric/rho/high-precision refinement before the complete finite physical word exists.
+After every literal prefix is attached to corrected COMPLETE-BRMM, BIAS0/1/2 and declared disturbances, allow `assert_finite_storage_master` to decide whether the representation is complete enough for the first high-precision/common joint24 storage search.
 
-## Handover validation state
+Traces, random seeds, frozen gains, independent coefficient boxes, Jacobian products, covariance-consistency assumptions and convenient fresh-entry sets are not substitutes.
 
-PR #522 was mergeable at handover preparation. Its head immediately before adding this file was `8c5f460c170ae92dbebac87ea42dda117046f026`; this handover commit advances that head. CI for the preceding head had started but was still pending/queued, so merging must not be interpreted as an all-CI-green claim. Earlier focused finite-map tests passed; broader-suite/environment limitations are documented in PR #522. The shipping filter itself is unchanged by ALT proof tooling.
+## Gate state
 
-For the next conversation, start a new PR from latest `main` and continue only the finite-word obligation above. Do not resurrect superseded PRs #519/#520/#521 or their replay/finite-perturbation diagnostics as theorem evidence.
+`ALT_LIVE_PASS=false`, `ALT_STARTUP_PASS=false`, `ALT_END_TO_END_PASS=false`.
+
+No certified common storage, contraction factor, retained basin, ultimate bound, or end-to-end theorem is available yet.

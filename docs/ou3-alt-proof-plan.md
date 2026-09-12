@@ -1,175 +1,150 @@
-# OU-III ALT proof execution plan — theorem work only
+# OU-III ALT proof plan
 
-This plan is normative for the parallel ALT route.  It exists to prevent
-research time being spent on attractive diagnostics that cannot discharge the
-shipping stability theorem.  The original P2/P3/P4/P5 route remains separate
-and independently continuable.
+## Independent scope
 
-## Target theorem chain
+This is a parallel proof architecture for the current shipping OU-III filter.
+It does not replace, weaken, delete or become a prerequisite of the existing
+P2/P3/P4/P5 proof track. Keep that route independently continuable.
 
-ALT work proceeds only through this dependency chain:
+The target remains an end-to-end theorem for every admitted corrected
+COMPLETE-BRMM history, every admitted BIAS0/BIAS1/BIAS2 history and every
+declared disturbance/finite-precision history inside the declared ALT deployment
+scope. ALT preserves the actual Mahony/proxy/startup path, H18/A21 hybrid logic,
+frontend/tuner memory, full 21-state covariance and joint24
+motion/error/true-bias state.
 
-1. **Physical finite error map.**  Materialize the true-minus-estimate shipping
-   map on the corrected COMPLETE-BRMM source, including model mismatch,
-   physical-reference forcing, BIAS0/1/2 ancestry, actual covariance/frontend
-   coefficients and every shipping branch.
-2. **Literal source-uniform Live word.**  Compose every prediction, floor,
-   due/rejected S update, accelerometer, magnetometer, reset, projection,
-   clamp/acceptance branch and H18/A21 mode edge on one same-history source.
-3. **Common joint24 storage feasibility.**  Only after (2), search one common
-   coercive joint24 metric with bounded neutral/source supply.  Use rank-three
-   arithmetic as an exact implementation optimization, never as a state
-   reduction.
-4. **Rigorous source-uniform certificate.**  Outward-check the common storage,
-   all source sectors, endpoint and every-prefix inequalities, metric
-   compatibility, first-exit/chart retention and finite precision.
-5. **Live basin and hybrid continuation.**  Certify H18, A21, H18->A21 and
-   every allowed subsequent edge indefinitely.
-6. **Startup capture.**  Separately prove Mahony/proxy/learning reaches the
-   certified Live basin for both measured-period takeover and prior-frequency
-   timeout.  Only then compose an end-to-end theorem.
+## Deployment-scope exclusion: no wind heel
 
-No later phase may be started because an earlier one “looks numerically good.”
+The optional shipping wind-heel retarget feature is excluded from ALT.
+The certified deployment language requires `wind_heel_rad_ == 0` from
+construction onward and zero calls to `update_wind_heel()`.
 
-## Mandatory anti-dead-end guards
+This is a theorem-scope restriction, not a shipping change: shipping initializes
+`wind_heel_rad_` to zero. On this scope B'=B, `deheel_vector_` is the identity,
+and there is no wind-heel/body-frame retarget event in the hybrid language.
+Executions with nonzero wind heel or any dynamic wind-heel update are outside
+ALT until a future proof explicitly widens the theorem.
 
-Every ALT task, commit and PR must name the theorem obligation it changes from
-OPEN toward CLOSED.  If it cannot do that, it is not ALT proof work.
+`deployment_scope.py` encodes this fail-closed assumption, and the storage guards
+require `zero_wind_heel_scope_enforced=true`; a later storage search cannot
+silently reintroduce the excluded branch.
 
-### G1 — Physical admissibility
+## Intended architecture and anti-dead-end guard
 
-Proof evidence must quantify the corrected COMPLETE-BRMM family and one of the
-admitted BIAS0/BIAS1/BIAS2 histories.  Replay, finite seeds, synthetic
-unreachable state/covariance perturbations and captured trajectories may only
-falsify an algebraic implementation; they can never qualify a theorem set,
-metric, source bound or basin.
+Construct the actual finite same-history runtime word first, then prove a
+coercive dissipativity/storage inequality
 
-### G2 — Same-history ancestry
+`V_next <= rho V + w'Gamma w + c'Beta c`, `0<rho<1`.
 
-Physical source, true bias, estimator state, covariance, frontend/tuner,
-scheduler/guards, geometry, actual R_S and every event coefficient must descend
-from one source lineage.  Independent P/H/R/K, f/sigma/tau/T_S/R_S, source
-moment or guard boxes are forbidden unless a proved outer-relation theorem
-explicitly permits the relaxation.
+Do not substitute random seeds, captured/replayed traces, frozen gains,
+pointwise Jacobian products, independent coefficient boxes, covariance
+consistency, statistical source events, wordwise resets or storage/rho searches
+for a missing runtime/source relation. Unknown state errors may not be relabeled
+as bounded disturbances. The complete finite master must pass
+`proof_plan.assert_finite_storage_master` before any common-M search begins.
 
-### G3 — No homogeneous-truth shortcut
+The finite graph must retain actual physical attitude increments and defects,
+correlated v/p/S/a moments, one Live S origin, joint24 state, full 21 covariance,
+one BIAS root, literal prediction/measurement/hygiene branches, frontend/WPE/
+band/tuner memory, async magnetic state, scheduler credit, every H18/A21 edge,
+deployment arithmetic residuals and explicit zero-heel scope ancestry.
 
-A filter model is not a physical truth model.  Prediction must retain the exact
-same-history defect.  For translation this includes
+## Current finite-runtime advancement
 
-`u=[J0-phi_va a0, J1-phi_pa a0, J2-phi_Sa a0, a1-alpha a0]`.
+PR #523 has finite descriptors for physical prediction, accepted/rejected
+measurements, full covariance, runtime OU/BA roots, attitude F/Q, integrated-OU
+Qaxis, pending a_w synchronization, S scheduling/service, SafeLDLT branches,
+accelerometer vibration guard/Racc, held-sample forcing, private Mahony,
+WPE/band/stillness and staged tuner commits.
 
-The existing joint 15D `(a0,a1,J0,J1,J2)` sector is the required source object;
-its moments may not be Cartesianized.  A homogeneous error prediction is
-allowed only where a source identity proves its defect is zero.
+The startup magnetic path is structurally attached through persistent Mahony,
+world-frame gravity admission, async wrapper clocks, default MagAutoTuner,
+yaw-stripped tilt frame, physical magnetic source and the same
+`PhysicalKinematics` ancestry as the finite physical word.
 
-### G4 — Physical S=0 residual
+Under zero heel, the accepted boat quaternion directly supplies the covariance
+yaw axis
 
-For `e_S=S_phys-S_hat`, the shipping pseudo-measurement residual is
+`u_down_body = R(q)^T e_z = (2(xz-wy), 2(yz+wx), 1-2(x^2+y^2))`.
 
-`r_S = -S_hat = e_S - S_phys`,
+## MAG-BMM150-DET-v1 and startup capture
 
-not `e_S`.  `S_phys` must retain the one-time Live origin and physical primitive
-ancestry.  Wordwise re-zeroing, the legacy 300 m*s error ball, or silently
-setting `S_phys=0` is forbidden.
+ALT admits commissioned installations satisfying:
 
-### G5 — Bias is one physical history
+- `20 <= ||B_W|| <= 75 uT`;
+- horizontal field `>=15 uT`;
+- body hard iron `<=5 uT`;
+- deterministic residual `<=2 uT` per theorem sample.
 
-The true bias and bias-error recurrences share one driver/root.  Equivalently,
-for an estimator factor `phi_hat`,
+With startup gravity-direction error <=0.02 rad, tilt contributes <=1.5 uT,
+so total deterministic horizontal perturbation is <=8.5 uT and
+`|sin(delta_yaw)| <= 17/30`. Since
+`sin(0.61) >= 0.61-0.61^3/6 > 17/30`, yaw error is <0.61 rad. The SO(3)
+triangle inequality gives total startup attitude error <0.63 rad <pi/4. No
+`1/sqrt(N)` statistical reduction is used. Deployment atan2/AngleAxis/
+normalization correspondence remains open.
 
-`e_ba+ = phi_hat e_ba + beta+ - phi_hat beta`.
+## Fresh H18 and first Live sample now composed
 
-H18 hold is `phi_hat=1`.  H18 accelerometer residuals retain the held
-`e_ba`; A21 retains the projection and true-bias cross information.  Two
-independent bias drivers or fresh per-sample truth slots are forbidden.
+The zero-heel gauged handoff is composed through shipping
+`goLive -> initialize_from_attitude -> enterLive_`. It installs the attitude
+covariance, seats `P_aw,aw` on the SAME committed `Sigma_aw`, clears every a_w
+cross covariance, requires the same committed Live `R_S` and keeps BA learning
+disabled.
 
-### G6 — Complete word before storage
+`finite_fresh_joint24_entry.py` derives the actual H18 joint24 coordinates from
+the SAME physical `Reference` and estimator state:
 
-No rho search, common metric optimization, parameter-dependent metric search,
-or high-precision contraction calculation is allowed until the literal
-physical word graph contains every shipping event/branch and its source
-forcing.  High precision cannot repair a missing term.
+`c=Cayley(q_true_WB*conjugate(q_hat_WB))`,
+`e_bg=b_g-b_g_hat`, `e_v=v-v_hat`, `e_p=p-p_hat`,
+`e_S=S_centered-S_hat`, `e_aw=a-a_w_hat`,
+`e_ba=beta-b_a_hat`, final coordinates `beta=beta_true`.
 
-### G7 — Common storage first
+The one-time Live origin and fresh centered physical S=0 are enforced. No
+fresh-entry covariance-consistency assumption or independent error box is used.
 
-Once the master is complete, search a single common joint24 storage with
-bounded neutral/source supply first.  Metrics may not be fitted to replay.
-If two source-uniform attempts fail by the same limiting mechanism, stop and
-perform the AGENTS architecture review: record the failure, compare at least
-three qualitatively different alternatives, and only then consider
-source-dependent or piecewise storage.
+`finite_startup_live_runtime_bridge.py` preserves TunerReady Mahony/WPE/band/
+stats/stillness/vibration-guard memory across goLive, derives active parameters
+from the SAME carried TuneState, retargets the persistent S scheduler and
+preserves any online pending-tune bit into the first Live boundary.
 
-### G8 — Rank-three means arithmetic, not theorem reduction
+`finite_startup_first_live_step.py` now substitutes that exact bridge into the
+existing Live IMU prefix. The first represented prediction, S-service decision,
+held accelerometer event and tuner/WPE suffix therefore start from startup
+ancestry rather than a synthetic Live root. This is still a conditional
+real-arithmetic prefix, not the complete source-uniform word.
 
-Use `Psi-K(H Psi)`, thin Joseph factors, 3D innovation variables and rank-at-most
-six storage corrections where exactly equivalent.  Never drop state
-coordinates, covariance/source dependencies, motion-bias cross terms,
-`delta N*q`, `delta S*q`, or finite reset/projection coupling merely because a
-measurement has dimension three.
+## H18/A21 hybrid language
 
-### G9 — Hybrid and prefix closure
+`MAG-CALL-SCHEDULE-v1` requires first post-Live mag call <=40 ms and later gaps
+<=40 ms. Shipping counts attempted post-delay `updateMag()` calls independent of
+innovation acceptance, so its 250-count internal lock clears within 10 s and
+the strict >1 s guard is automatically met.
 
-Endpoint decay alone cannot promote ALT.  Every literal prefix must remain in
-its nonlinear/chart domain, every accepted/rejected branch must be covered,
-and H18/A21 plus H18->A21 storage/guard compatibility must close.  No hidden
-metric restart, bias root restart or S-origin restart is permitted.
+Do not assume eventual A21 under arbitrary external hold. The graph retains:
+no hold -> exact H18->A21 floor edge; held -> H18 may persist indefinitely;
+first later release while Live -> exact H18->A21 edge; asserting hold in A21 ->
+H18 with BA cross-covariances zeroed.
 
-### G10 — Finite precision is a promotion prerequisite
+## Current blockers
 
-Real-arithmetic identities are intermediate lemmas only.  ALT_LIVE_PASS cannot
-become true until actual binary32 Eigen/LDLT, Joseph, reset, projection, floor
-and relevant frontend numerical defects have an outward additive enclosure.
+The immediate blockers are now:
 
-### G11 — Startup remains downstream of a real Live basin
+- deployment/binary32 correspondence for startup yaw extraction, atan2,
+  AngleAxis, quaternion normalization, handoff setters and clocks;
+- compose asynchronous magnetometer events and the firing Live tilt-reset edge
+  into startup-rooted successive Live prefixes, not only as separate local maps;
+- source-qualify the complete provisional/refinement/continuous-hard-iron
+  magnetic schedule required by the declared scope;
+- carry COMPLETE-BRMM/BIAS ancestry and every solver/hygiene/finite-precision
+  branch through an arbitrary 600-step word, including both H18 and A21/hold
+  continuations;
+- prove the exact fresh/source-produced states land in a retained storage basin;
+  only after the complete finite master passes its guard may common joint24
+  storage/rho feasibility be attempted.
 
-Live-word proof work must not import Mahony startup or the old route's PE/vector
-mismatch.  Startup is addressed only after a quantitative ALT Live basin exists,
-and must cover both measured-period takeover and prior-frequency timeout.
-
-### G12 — Stop rule
-
-Before executing a computation, answer both questions:
-
-1. Which theorem obligation can this make strictly stronger or close?
-2. Is every input an admitted analytic/source-uniform object, or is the result
-   only diagnostic?
-
-If (1) has no concrete answer, do not run it.  If (2) is diagnostic-only, run it
-only when it can falsify the *current complete theorem candidate*; never open a
-proof PR whose main deliverable is such a diagnostic.
-
-### G13 — A derivative cocycle is not a finite physical master
-
-The six Phase-1 assembly flags are necessary bookkeeping, not an equality for
-finite errors. Before a common-M, rho, high-precision or endpoint-refinement
-attempt, `proof_plan.assert_finite_storage_master` must validate the declared
-representation. A Jacobian product, a source token, or a collection of TRUE
-metadata fields cannot replace an exact finite graph or a proved anchored
-mean-value representation. Nonzero physical S and other reference offsets must
-remain present, as must all coefficient product and branch graphs.
-
-The common-metric entry point and its candidate helper invoke this guard before
-building a covariance outer or loading fresh-entry scales. They reject the
-current `physical_word` Jacobian cocycle. Substituting a thinner gain enclosure
-or a different metric does not discharge this missing identity.
-
-## Current physical-map obligation
-
-The accepted, finite, real-arithmetic accelerometer, magnetometer and S graphs
-are proved in [the finite measurement note](ou3-alt-finite-measurement-proof.md).
-They include the exact Cayley injection, both quaternion branches, same-beta
-radial projection and a thin-factor full joint24 storage identity. In held mode,
-BA uncertainty remains in the innovation: the reduced accelerometer covariance
-uses R_acc+B0, not bare R_acc. This is not an error-state reduction.
-
-The complete finite word remains OPEN. Connect these graphs to the actual
-covariance/frontend successors, preserve physical continuous-rotation versus
-sampled-gyro prediction forcing, and cover every configured accepted/rejected
-and asynchronous branch with the same source/primitive/bias ancestry. Either
-compose finite descriptors directly or prove the complete anchored mean-value
-bridge. Do not present pointwise Jacobian products as the finite endpoint map.
-Only a closed finite master may enter the first common joint24 storage search.
+None may be replaced by trace replay, statistical concentration, or a
+convenience entry set.
 
 ## Promotion state
 
@@ -179,5 +154,4 @@ Only a closed finite master may enter the first common joint24 storage search.
 
 `ALT_END_TO_END_PASS=false`
 
-Existing `P4_PASS` / `P5_MAY_START` are not controlled by ALT and remain
-untouched by this plan.
+Existing `P4_PASS` / `P5_MAY_START` remain independent and untouched.

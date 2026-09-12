@@ -255,3 +255,24 @@ def finite_storage_change(M, z, q, B, *, alpha):
     Mp = projected_metric(M, alpha)
     MB = mm(Mp, B)
     return dot(z, mv(plus(Mp, M, -1), z))-2*dot(z, mv(MB, q))+dot(q, mv(mm(transpose(B), MB), q))
+
+
+def solved_joseph_covariance(P, N, Sigma, K):
+    """Exact rank-3 Joseph value, after checking the ACTUAL solve relation.
+
+    K Sigma = N and symmetric Sigma imply
+      P-K N'-N K'+K Sigma K' = P-K N'.
+    No N=P H' or information-form/optimal-gain identity is assumed. Thus this
+    applies to the masked H18 numerator too, on the symmetric real branch.
+    Numerical solve residuals invalidate the cancellation unless retained;
+    callers cannot use this routine as a binary32 covariance enclosure.
+    """
+    P, N, Sigma, K = mat(P, 21, 21), mat(N, 21, 3), mat(Sigma, 3, 3), mat(K, 21, 3)
+    if P != transpose(P) or Sigma != transpose(Sigma):
+        raise ValueError('symmetric real covariance/innovation required')
+    if mm(K, Sigma) != N:
+        raise ValueError('actual inverse-free gain relation K Sigma = N is required')
+    result = plus(P, mm(K, transpose(N)), -1)
+    if result != transpose(result):
+        raise AssertionError('symmetric solve identity lost')
+    return result

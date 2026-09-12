@@ -6,8 +6,10 @@ polynomial branch.  Therefore no free quaternion coefficient remains here:
 q_nominal and q_shadow are generated from the same omega_hat, e_bg and h that
 feed the prediction.
 
-This is exact real arithmetic. Binary32 FMA and normalization residuals remain
-separate deployment supplies.
+This is exact real arithmetic for the sampled-shadow relation, not a
+continuous physical attitude identity. finite_physical_prediction retains the
+actual physical increment and its angular integration/model defect. Binary32
+FMA and normalization residuals remain separate deployment obligations.
 """
 from __future__ import annotations
 from fractions import Fraction as F
