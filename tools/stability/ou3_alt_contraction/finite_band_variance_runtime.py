@@ -6,7 +6,9 @@ resulting band sample is then fed to SeaStateAutoTuner with the current WPE
 frequency. Thus band coefficients are one-sample predictable while the moment
 statistics consume every valid physical sample.
 
-Transcendental exp/sqrt binary32 ancestry is explicit but not yet enclosed.
+The band-noise floor follows shipping literally: before the adaptive band has
+completed a valid step it is the raw bench noise sigma; only a ready band uses
+bench_sigma*sqrt(p11). Transcendental exp/sqrt binary32 ancestry remains open.
 """
 from __future__ import annotations
 from dataclasses import dataclass
@@ -152,7 +154,7 @@ def variance(s:StatsState):
 
 def frontend_step(band:BandState,stats:StatsState,wpe:WPE.UpdateResult,*,vertical_accel,dt,
                   band_cfg:BandConfig,stats_cfg:StatsConfig,band_decay:BandDecayWitness,
-                  variance_decay:VarianceDecayWitness,bench_noise_sigma,noise_sqrt:NoiseSqrtWitness):
+                  variance_decay:VarianceDecayWitness,bench_noise_sigma,noise_sqrt:NoiseSqrtWitness|None=None):
     if not isinstance(wpe,WPE.UpdateResult) or wpe.frequency is None:
         raise ValueError('current canonical WPE frequency required')
     current_f=wpe.frequency
@@ -160,17 +162,24 @@ def frontend_step(band:BandState,stats:StatsState,wpe:WPE.UpdateResult,*,vertica
     fref=clamp(fref,band_cfg.tune_freq_floor,band_cfg.tune_freq_ceil)
     bnext=band_step(band,band_cfg,x=vertical_accel,dt=dt,f_ref=fref,decay=band_decay)
     snext=stats_step(stats,stats_cfg,dt=dt,accel=bnext.band,current_wpe_frequency=current_f,decay=variance_decay)
-    if noise_sqrt.sqrt_gain*noise_sqrt.sqrt_gain != max(F(0),bnext.p11):
-        raise ValueError('band-noise sqrt detached from same covariance recurrence')
     bench=R(bench_noise_sigma)
     if bench<0: raise ValueError('bench noise sigma must be nonnegative')
-    return FrontendResult(bnext,snext,fref,snext.frequency,bnext.band,snext.var_ready,variance(snext),bench*noise_sqrt.sqrt_gain)
+    if not bnext.ready:
+        if noise_sqrt is not None: raise ValueError('unready adaptive band consumes no sqrt(gain) witness')
+        noise=bench
+    else:
+        if noise_sqrt is None: raise ValueError('ready adaptive band requires sqrt(gain) witness')
+        if noise_sqrt.sqrt_gain*noise_sqrt.sqrt_gain != max(F(0),bnext.p11):
+            raise ValueError('band-noise sqrt detached from same covariance recurrence')
+        noise=bench*noise_sqrt.sqrt_gain
+    return FrontendResult(bnext,snext,fref,snext.frequency,bnext.band,snext.var_ready,variance(snext),noise)
 
 
 def readiness():
     return {
       'adaptive_band_state_and_covariance_materialized':True,
       'adaptive_band_identity_branches_materialized':True,
+      'unready_band_noise_floor_branch_materialized':True,
       'previous_tuner_frequency_drives_band_corner':True,
       'current_WPE_frequency_drives_variance_horizon':True,
       'debiased_first_second_moments_materialized':True,
