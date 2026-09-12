@@ -2,8 +2,9 @@
 
 Composes physical mean, attitude F/Q, integrated-OU Qaxis, BA decay and full
 21-state covariance without accepting precomputed F_AA/Q_AA/F_LL/Q_LL/Q_BB or
-phi factors. Remaining witnesses are literal runtime branch outcomes/values,
-not detached covariance matrices and not source admission.
+phi factors. The shipping-level source entry additionally accepts a RawImuSample
+so the nominal/covariance prediction cannot use a gyro detached from the same
+physical/source predecessor.
 """
 from __future__ import annotations
 from dataclasses import dataclass
@@ -13,6 +14,7 @@ from tools.stability.ou3_alt_contraction import finite_measurement_graph as M
 from tools.stability.ou3_alt_contraction import finite_prediction_graph as P
 from tools.stability.ou3_alt_contraction import finite_qaxis_runtime as QX
 from tools.stability.ou3_alt_contraction import finite_attitude_runtime as ATT
+from tools.stability.ou3_alt_contraction import finite_sensor_source_runtime as SENSOR
 
 
 @dataclass(frozen=True)
@@ -45,13 +47,10 @@ class QAxisBranch:
 def prediction(state,segment,*,gyro_body,angular,Qbase,ou,bias,qaxis:QAxisBranch,
                use_exact_attitude_Q=True,attitude_first_ldlt_success=True,
                attitude_second_ldlt_success=None):
-    """Finite prediction with no free shipping transition/process matrices."""
+    """Finite conditional predictor; gyro provenance is checked by prediction_from_raw."""
     if not isinstance(qaxis,QAxisBranch): raise TypeError('Qaxis runtime branch required')
     if angular.h != ou.h or ou.h != segment.h: raise ValueError('attitude, OU and physical segment must share one step')
     g=P.vec(gyro_body,3); ref=state.reference
-    # Shipping uses last_gyr_bias_corrected = gyr - b_g_hat.  Since
-    # e_bg = b_g_true-b_g_hat, b_g_hat=b_g_true-e_bg.  The covariance
-    # attitude transition and nominal quaternion MUST use this same omega.
     omega_hat=[g[i]-(ref.gyro_bias[i]-state.z[3+i]) for i in range(3)]
     if list(angular.w) != omega_hat: raise ValueError('attitude covariance angular rate detached from SAME nominal gyro prediction')
     qkw=qaxis.matrices(ou)
@@ -61,15 +60,35 @@ def prediction(state,segment,*,gyro_body,angular,Qbase,ou,bias,qaxis:QAxisBranch
         second_ldlt_success=attitude_second_ldlt_success,**qkw)
 
 
+def prediction_from_raw(state,segment,sample:SENSOR.RawImuSample,*,angular,Qbase,ou,bias,qaxis:QAxisBranch,
+                        use_exact_attitude_Q=True,attitude_first_ldlt_success=True,
+                        attitude_second_ldlt_success=None):
+    """Shipping-level prediction entry with one physical/source raw gyro sample."""
+    if not isinstance(sample,SENSOR.RawImuSample): raise TypeError('RawImuSample required')
+    if sample.physical != segment.before:
+        raise ValueError('raw IMU physical predecessor detached from prediction segment')
+    g=SENSOR.assert_prediction_gyro(sample,state,sample.raw_gyro)
+    expected=sample.required_bias_corrected_relation(state.z[3:6])
+    if list(angular.w) != list(expected):
+        raise ValueError('attitude runtime omega detached from omega_sample+e_bg+n_g')
+    return prediction(state,segment,gyro_body=g,angular=angular,Qbase=Qbase,ou=ou,bias=bias,qaxis=qaxis,
+                      use_exact_attitude_Q=use_exact_attitude_Q,
+                      attitude_first_ldlt_success=attitude_first_ldlt_success,
+                      attitude_second_ldlt_success=attitude_second_ldlt_success)
+
+
 def readiness():
     return {
       'free_prediction_transition_matrices_at_entry':False,
       'physical_mean_and_covariance_same_step':True,
       'same_bias_corrected_gyro_for_nominal_and_covariance':True,
+      'raw_gyro_source_provenance_attached_at_shipping_entry':True,
+      'omega_sample_e_bg_n_g_relation_attached':True,
       'attitude_F_Q_runtime_graph_composed':True,
       'OU_mean_BA_runtime_graph_composed':True,
       'Qaxis_runtime_graph_composed':True,
       'runtime_exp_trig_values_source_attached':False,
+      'sensor_residual_source_bounds_attached':False,
       'PSD_LDLT_eigensolver_finite_precision_attached':False,
       'same_history_tuner_parameters_attached':False,
       'post_prediction_prefixes_attached_separately':True,
