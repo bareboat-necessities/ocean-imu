@@ -17,20 +17,22 @@ WRAPPER=ROOT/'src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h'
 
 def operands(state):
     witness,segment,raw,dynamic=BASE.next_imu_operands(state)
-    # These roots are now owned by the stronger theorem-facing entry rather
-    # than accepted from the lower component fixture.
     for key in ('angular','ou','qaxis','bias'):
         dynamic.pop(key,None)
     return witness,segment,raw,dynamic
+
+
+def root_args():
+    return dict(ou_alpha=F(199,200),
+                qaxis_marginal_psd=(PASS,PASS,PASS),
+                qaxis_final_psd=(PASS,PASS,PASS))
 
 
 class Tests(unittest.TestCase):
     def test_prediction_roots_are_derived_from_same_source_and_active_state(self):
         s=BASE.root_state(); witness,segment,raw,_=operands(s)
         physical=SOURCE.QualifiedPhysicalSegment(s.source.root,witness,segment)
-        r=X.build(s,physical,raw,ou_alpha=F(199,200),
-                  qaxis_marginal_psd=(PASS,PASS,PASS),
-                  qaxis_final_psd=(PASS,PASS,PASS),machine_epsilon=F(1,10**7))
+        r=X.build(s,physical,raw,**root_args())
         core=s.live.live.live.mekf; active=s.live.live.live.active
         self.assertEqual(r.angular.w,raw.required_bias_corrected_relation(core.z[3:6]))
         self.assertEqual(r.angular.h,segment.h)
@@ -38,6 +40,7 @@ class Tests(unittest.TestCase):
         self.assertEqual(r.ou.tau,active.tau)
         self.assertEqual(r.qaxis.sigma_aw,active.Sigma_aw)
         self.assertFalse(r.qaxis.correlated)
+        self.assertEqual(r.qaxis.machine_epsilon,F(1,1 << 23))
         self.assertFalse(r.bias.active)
         self.assertEqual(r.bias.tau_b,F(5000))
         self.assertEqual(r.bias.phi_b,F(1))
@@ -46,10 +49,7 @@ class Tests(unittest.TestCase):
     def test_source_bound_entry_executes_without_free_prediction_roots(self):
         s=BASE.root_state(); witness,segment,raw,dynamic=operands(s)
         out=X.imu_step(s,witness=witness,segment=segment,raw=raw,packet_id='imu-1',
-                       ou_alpha=F(199,200),
-                       qaxis_marginal_psd=(PASS,PASS,PASS),
-                       qaxis_final_psd=(PASS,PASS,PASS),machine_epsilon=F(1,10**7),
-                       **dynamic)
+                       **root_args(),**dynamic)
         self.assertEqual(out.state.source.steps[-1].witness.ordinal,1)
         self.assertEqual(out.state.live.live.live.mekf.reference,segment.after)
 
@@ -58,19 +58,15 @@ class Tests(unittest.TestCase):
         bad=SOURCE.StepWitness(2,'root','c2','p0','p2')
         with self.assertRaisesRegex(ValueError,'next source ordinal'):
             X.imu_step(s,witness=bad,segment=segment,raw=raw,packet_id='bad',
-                       ou_alpha=F(199,200),qaxis_marginal_psd=(PASS,PASS,PASS),
-                       qaxis_final_psd=(PASS,PASS,PASS),machine_epsilon=F(1,10**7),
-                       **dynamic)
+                       **root_args(),**dynamic)
 
     def test_prediction_roots_cannot_be_overridden_by_theorem_caller(self):
         s=BASE.root_state(); witness,segment,raw,dynamic=operands(s)
-        for key in ('ou','bias'):
-            bad=dict(dynamic); bad[key]='detached'
+        for key,value in (('ou','detached'),('bias','detached'),('machine_epsilon',F(1,10**7))):
+            bad=dict(dynamic); bad[key]=value
             with self.assertRaisesRegex(TypeError,'cannot be overridden'):
                 X.imu_step(s,witness=witness,segment=segment,raw=raw,packet_id='bad',
-                           ou_alpha=F(199,200),qaxis_marginal_psd=(PASS,PASS,PASS),
-                           qaxis_final_psd=(PASS,PASS,PASS),machine_epsilon=F(1,10**7),
-                           **bad)
+                           **root_args(),**bad)
 
     def test_H18_consumes_no_BA_exp_witness_and_A21_requires_one(self):
         held=X._bias_root(SimpleNamespace(mode='H'))
@@ -99,15 +95,22 @@ class Tests(unittest.TestCase):
                        'set_acc_bias_ou_stationary_std('):
             self.assertNotIn(setter,wrapper)
 
+    def test_shipping_float_instantiation_locks_qaxis_machine_epsilon(self):
+        wrapper=WRAPPER.read_text()
+        self.assertGreaterEqual(wrapper.count('Kalman3D_Wave_OU_III<float>'),3)
+        self.assertEqual(X.SHIPPING_FLOAT_EPSILON,F(1,1 << 23))
+
     def test_readiness_advances_only_prediction_root_provenance(self):
         r=X.readiness()
         self.assertTrue(r['prediction_angular_OU_Qaxis_roots_bound_to_same_source_continuation'])
+        self.assertTrue(r['Qaxis_machine_epsilon_bound_to_shipping_binary32'])
         self.assertTrue(r['shipping_BA_tau_Q_defaults_bound_at_prediction_entry'])
         self.assertTrue(r['shipping_BA_hold_active_branch_derived_from_current_MEKF_mode'])
         self.assertTrue(r['held_H18_BA_phi_exactly_one_without_exp_witness'])
         self.assertTrue(r['accelerometer_bias_prediction_root_bound_here'])
         self.assertTrue(r['caller_cannot_override_prediction_roots'])
         self.assertFalse(r['BA_exp_arithmetic_deployment_closed'])
+        self.assertFalse(r['Qaxis_PSD_regularization_deployment_closed'])
         self.assertFalse(r['all_estimator_coefficients_bound_to_same_source_continuation'])
         self.assertFalse(r['source_uniform_complete_600_step_word_qualified'])
         self.assertFalse(r['storage_search_allowed'])
