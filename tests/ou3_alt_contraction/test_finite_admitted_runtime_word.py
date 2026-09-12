@@ -99,7 +99,8 @@ class Tests(unittest.TestCase):
                     'global_exact_real_attitude_trig_ancestry_closed',
                     'one_radian_attitude_guard_closed_for_every_admitted_prefix',
                     'canonical_5ms_wrapper_clock_prefix_binary32_closed',
-                    'outer_magnetic_wrapper_clock_operands_materialized'):
+                    'outer_magnetic_wrapper_clock_operands_materialized',
+                    'dual_clock_live_magnetic_edge_composed'):
             self.assertTrue(r[key])
         for key in ('finite_tokens_used_as_source_membership_oracle',
                     'sensor_or_temperature_amplitude_bound_invented',
@@ -108,6 +109,7 @@ class Tests(unittest.TestCase):
                     'deployment_exp_expm1_trig_Eigen_LDLT_closed',
                     'wrapper_clock_arbitrary_dt_closed',
                     'wrapper_clock_indefinite_lifetime_closed',
+                    'dual_clock_startup_history_feeds_master',
                     'dual_clock_magnetic_word_composed',
                     'mag_schedule_supplies_uniform_call_count_upper',
                     'shipping_signed_mag_counter_lifetime_closed',
