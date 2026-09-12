@@ -10,6 +10,8 @@ from fractions import Fraction as F
 import unittest
 
 from tools.stability.ou3_alt_contraction import finite_live_interleave as X
+from tools.stability.ou3_alt_contraction import finite_physical_prediction as PHYS
+from tools.stability.ou3_alt_contraction import bias_families as BIAS
 import test_finite_live_interleave as LIVEFIX
 import test_finite_live_magnetic_word as MAG
 
@@ -34,6 +36,11 @@ def mag_kwargs(state):
     return kw
 
 
+def family_phi(name):
+    contract=next(c for c in BIAS.contracts() if c.name==name)
+    return F.from_float(contract.phi_true.lo)
+
+
 class Tests(unittest.TestCase):
     def test_sample_zero_mag_does_not_consume_first_physical_transition(self):
         s=LIVEFIX.root()
@@ -48,6 +55,11 @@ class Tests(unittest.TestCase):
         self.assertEqual(mag.state.clock.calls,1)
 
         raw,segment,kw=LIVEFIX.imu_operands(mag.state)
+        # LIVEFIX constructs a generic physical step.  The source-qualified
+        # regression must use the actual fixed decay admitted by the selected
+        # BIAS family rather than silently borrowing that generic fixture phi.
+        segment=PHYS.PhysicalSegment(segment.before,segment.after,segment.J0,
+            segment.J1,segment.J2,family_phi(root.bias_family),segment.bias_driver)
         witness=X.SOURCE.StepWitness(1,'root','cell-1','primitive-0','primitive-1')
         cont1=X.SOURCE.append(cont,witness=witness,segment=segment)
         sensor_root=X.SOURCE.SensorDisturbanceRoot(root,'gyro-residual-history','accel-residual-history')
