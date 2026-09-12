@@ -23,7 +23,7 @@ STARTUP_TIMEOUT_STEPS=150*200
 STARTUP_MIN_STEPS=8*200
 WORD_STEPS=600
 MAX_STEPS=STARTUP_TIMEOUT_STEPS+WORD_STEPS
-SOURCE=Path(__file__).resolve().parents[2]/'src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h'
+SOURCE=Path(__file__).resolve().parents[3]/'src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h'
 QUALIFICATION='OU3_ALT_WRAPPER_CLOCK_BINARY32_CANONICAL_5MS_V1'
 
 
