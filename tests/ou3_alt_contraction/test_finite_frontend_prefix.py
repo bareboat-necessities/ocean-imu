@@ -35,7 +35,8 @@ def runtime_state():
 def packet():
     state=FC.root('A')
     phys=replace(state.reference,acceleration=(0,0,0),beta=(0,0,0),gyro_bias=(0,0,0))
-    state=replace(state,reference=phys)
+    z=list(state.z); z[21:24]=[F(0),F(0),F(0)]
+    state=replace(state,z=tuple(z),reference=phys)
     sample=RAW.RawImuSample(phys,(0,0,0),(0,0,0),(0,0,0),(0,0,0),(0,0,-G),(0,0,G))
     return state,sample
 
