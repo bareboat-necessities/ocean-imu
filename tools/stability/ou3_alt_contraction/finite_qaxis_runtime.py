@@ -1,20 +1,20 @@
 """Finite IntegratedOUChain<3> process covariance used by shipping OU-III.
 
 This is the real-arithmetic formula graph behind QdAxis4x1_analytic. It carries
-the nested 3x3 marginal and final 4x4 PSD-hygiene branches explicitly. Runtime
-exp values, machine epsilon and Eigen LDLT/eigensolver outcomes remain declared
-witnesses until deployment finite precision is enclosed.
+the nested 3x3 marginal and final 4x4 PSD-hygiene branches explicitly.
 
-The accepted-LDLT branch is no longer a free boolean: before a witness may claim
-that shipping returned from ``regularize_psd_if_needed`` after LDLT, the SAME
-rational matrix must pass an exact symmetric LDL^T inertia check with the same
-``-tol`` acceptance threshold. This is deliberately conservative with respect
-to Eigen pivoting and does not claim binary32/Eigen correspondence.
+Two details matter for the theorem-facing graph:
 
-The coefficient formula may additionally be selected by an externally derived
-``small_branch`` Boolean. The strongest source-bound path supplies that Boolean
-from the exact binary32 h/tau branch graph rather than re-deciding it from the
-real-rational h/tau quotient. Legacy/local formula tests may omit it.
+* the coefficient formula branch can be forced by the exact deployed binary32
+  h/tau decision rather than re-decided from exact-real h/tau; and
+* in the general branch shipping evaluates ``std::exp(-x)`` separately inside
+  the nested 3x3 covariance and again inside the 4x4 covariance.  Optional
+  ``marginal_alpha`` and ``final_alpha`` therefore override the legacy shared
+  alpha independently.  The strongest source-bound path supplies both.
+
+The accepted-LDLT branch is also not a free boolean: a claimed accept must pass
+an exact same-matrix symmetric LDL^T inertia/tolerance guard.  Binary32 formula
+roundoff and actual Eigen/libm correspondence remain open.
 """
 from __future__ import annotations
 from dataclasses import dataclass
@@ -95,7 +95,6 @@ def _branch(x, small_branch):
 
 
 def marginal_raw(tau,h,sigma2,alpha,*,small_branch=None):
-    """Literal IntegratedOUChain<T,2> formula under the selected deployed branch."""
     tau,h,sigma2,alpha=map(P.rational,(tau,h,sigma2,alpha))
     if tau < F(1,10**7) or h <= 0 or sigma2 < 0 or not 0 < alpha <= 1: raise ValueError('post-clamp tau, positive h, sigma2>=0, valid exp root required')
     inv=1/tau; x=h*inv; i2=inv*inv; i3=i2*inv; i4=i3*inv; i5=i4*inv; i6=i5*inv; i7=i6*inv; i8=i7*inv; i9=i8*inv
@@ -121,11 +120,15 @@ def marginal_raw(tau,h,sigma2,alpha,*,small_branch=None):
     return Q
 
 
-def qaxis4(tau,h,sigma2,alpha,*,marginal_psd:PSDWitness,final_psd:PSDWitness,machine_epsilon,small_branch=None):
-    """Literal IntegratedOUChain<T,3> graph under one shared formula branch."""
+def qaxis4(tau,h,sigma2,alpha,*,marginal_psd:PSDWitness,final_psd:PSDWitness,
+           machine_epsilon,small_branch=None,marginal_alpha=None,final_alpha=None):
+    """Literal IntegratedOUChain<T,3> graph with two optional covariance exp roots."""
     tau,h,sigma2,alpha=map(P.rational,(tau,h,sigma2,alpha)); inv=1/tau; x=h*inv
     small=_branch(x,small_branch)
-    marginal=regularize_psd(marginal_raw(tau,h,sigma2,alpha,small_branch=small),marginal_psd,machine_epsilon=machine_epsilon)
+    ma=alpha if marginal_alpha is None else P.rational(marginal_alpha)
+    fa=alpha if final_alpha is None else P.rational(final_alpha)
+    if not 0<ma<=1 or not 0<fa<=1: raise ValueError('valid Qaxis covariance exp roots required')
+    marginal=regularize_psd(marginal_raw(tau,h,sigma2,ma,small_branch=small),marginal_psd,machine_epsilon=machine_epsilon)
     Q=M.zeros(4,4); idx=(0,1,3)
     for i in range(3):
         for j in range(3): Q[idx[i]][idx[j]]=marginal[i][j]
@@ -137,7 +140,7 @@ def qaxis4(tau,h,sigma2,alpha,*,marginal_psd:PSDWitness,final_psd:PSDWitness,mac
         qSS=sigma2*(F(1,126)*h7*inv-F(1,288)*h8*i2+F(13,12960)*h9*i3)
         qSa=sigma2*(F(1,12)*h4*inv-F(1,12)*h5*i2+F(2,45)*h6*i3-F(1,60)*h7*i4+F(11,2240)*h8*i5-F(73,60480)*h9*i6)
     else:
-        a=alpha; a2=a*a; qc=2*sigma2*inv; t4=tau**4; t5=tau**5; t6=tau**6; t7=tau**7; x2=x*x; x3=x2*x; x4=x3*x; x5=x4*x
+        a=fa; a2=a*a; qc=2*sigma2*inv; t4=tau**4; t5=tau**5; t6=tau**6; t7=tau**7; x2=x*x; x3=x2*x; x4=x3*x; x5=x4*x
         K02=t5*(-3*a2+3*a*(x2+4)+x3-3*x2+6*x-9)/6
         K12=t6*(a2/2+a*(-x2+2*x-2)/2+x4/8-x3/2+x2-x+F(1,2))
         K22=t7*(-a2/2+a*x2+2*a+x5/20-x4/4+F(2,3)*x3-x2+x-F(3,2))
@@ -152,12 +155,13 @@ def readiness():
       'Qaxis_small_branch_formula_materialized':True,
       'Qaxis_general_branch_formula_materialized':True,
       'nested_marginal_and_final_formula_branch_can_be_forced_from_one_deployed_decision':True,
+      'nested_and_final_Qaxis_general_exp_roots_can_be_retained_separately':True,
       'nested_marginal_psd_hygiene_materialized':True,
       'final_Qaxis_psd_hygiene_materialized':True,
       'free_Qaxis_matrix_removed_by_this_lemma':True,
       'LDLT_accept_branch_has_same_matrix_exact_inertia_guard':True,
       'arbitrary_LDLT_accept_boolean_can_bypass_matrix_relation':False,
-      'alpha_exp_runtime_source_attached':False,
+      'Qaxis_covariance_exp_runtime_source_attached':False,
       'machine_epsilon_deployment_attached':False,
       'Eigen_LDLT_eigensolver_outcomes_attached':False,
       'nonfinite_replacement_attached':False,
