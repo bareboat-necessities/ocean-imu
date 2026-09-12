@@ -47,9 +47,12 @@ class Tests(unittest.TestCase):
 
     def test_detached_endpoint_and_free_ldlt_are_rejected(self):
         s,m=self.sample()
-        after,_=FC.physical_successor(s)
+        # Use another internally valid finite state rooted at a different
+        # physical history.  Do not manufacture an inconsistent State merely
+        # to reach the endpoint guard: CORE.State itself must remain fail-closed.
+        other=FC.root('H','BIAS2')
         with self.assertRaisesRegex(ValueError,'current physical endpoint'):
-            X.update(FC.replace(s,reference=after.after),m,ldlt=MR.SafeLDLT(True,None,1,F(1,10**7)))
+            X.update(other,m,ldlt=MR.SafeLDLT(True,None,1,F(1,10**7)))
         with self.assertRaisesRegex(TypeError,'requires safe-LDLT'):
             X.update(s,m)
 
