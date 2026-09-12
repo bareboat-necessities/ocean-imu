@@ -50,6 +50,7 @@ jobs:
       - name: Run the full ALT suite without weakening shared prerequisites
         run: |
           set -o pipefail
+          export PYTHONPATH="$PWD:$PWD/tools/stability:$PWD/tests/ou3_alt_contraction"
           python3 -m unittest discover -s tests/ou3_alt_contraction -v 2>&1 | tee /tmp/ou3-alt-tests.log
       - uses: actions/upload-artifact@v4
         if: always()
