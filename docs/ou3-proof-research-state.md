@@ -206,97 +206,92 @@ witness is outside corrected COMPLETE-BRMM and may not be recycled as A or B.
 
 ## Parallel ALT contraction/dissipativity track
 
-The independently continuable ALT route targets a finite physical joint24 word
-and coercive dissipativity storage with bounded neutral/source supply. The
-original P2/P3/P4/P5 route above is unchanged. The normative plan is
-`docs/ou3-alt-proof-plan.md`; continuation status is in
-`docs/ou3-alt-contraction-handover.md`.
+### Current hypothesis
 
-### Current hypothesis and proved algebra
+Construct the finite physical joint24 runtime word before searching coercive
+storage with bounded neutral/source supply. Keep the original route above
+independently continuable. `docs/ou3-alt-proof-plan.md` is normative; the ALT
+handover and supplying finite notes specify the current representation boundary.
 
-Use exact finite descriptors, not a product of local derivatives. Accepted
-measurement/reset/projection identities retain physical `r_S=e_S-S_phys`,
-held e_ba, full 21-state covariance and H18's latent BA innovation contribution.
-The physical predictor now uses the actual continuous physical rotation
-increment, retains angular/model forcing, all correlated q15 translation
-moments, gyro-bias drift, and the same physical accelerometer-bias driver in
-both e_ba and beta. Quaternion/translation identities are proved by exact
-all-coefficient polynomial checks. See `docs/ou3-alt-finite-measurement-proof.md`.
+### Retained facts and representation
 
-A branch-correct rank-three Joseph simplification follows from the ACTUAL
-inverse-free `K Sigma=N` relation, without assuming `N=P H'`. The implementation
-checks that equality before cancelling; a nonzero solve defect is not dropped.
-This is exact arithmetic on the full covariance, not a state/storage reduction.
+Finite physical prediction retains continuous attitude increments/angular defect,
+correlated q15 translation moments, gyro-bias drift, one shared accelerometer-
+bias driver and one Live S origin. Finite measurement descriptors retain the
+nonhomogeneous physical S residual, full H18/A21 covariance, inverse-free
+innovation relation, masked Joseph identity, finite injection and same-beta
+projection. Prediction covariance/runtime and frontend/tuner temporal composers
+remain conditional where their arithmetic, source or branch inputs are unbound.
+None is the completed source-uniform 600-step master.
 
-The conditional paired-core lemma in `docs/ou3-alt-finite-core-composition.md`
-now substitutes the preceding finite mean AND full covariance into each
-accepted residual/gain/Joseph/reset/projection. Prediction reuses the physical
-segment and carries its conditional covariance recurrence. Exact prefix/suffix
-composition follows by induction, not a Jacobian product. Actual F/Q, applied R,
-repair decisions and complete runtime/frontend branches remain unattached;
-source-uniform finite-word/storage readiness is unchanged.
+The private observer now has an optional **profile-specific initialized
+binary32 graph**, supplied by `finite_binary32_mahony.py` and
+`docs/ou3-alt-mahony-binary32.md`. Exact integer/rational nearest-even rounding,
+an independent midpoint-cell checker, the literal bit seed/Newton normalization,
+and the initialized Mahony/readout program remove free reciprocal choices on
+that path. Every rounding defect belongs to its actual operands. The existing
+vertical-result type feeds the same downstream consumers. This does not qualify
+the actual target compiler, initial seed or nonfinite branches; the default
+conditional real helper is not silently relabeled as a deployed float proof.
 
-### Evidence and its limits
+### Evidence and validation boundary
 
-A passive observer runs the real wrapper from startup without setting synthetic
-state/covariance/gain/mode values. Three 600-step windows exercise H18, A21 and
-an actual H18->A21 release. Core finite identities, consecutive state/covariance
-ancestry, nonzero physical S residuals, H18 latent BA, both observed quaternion
-branches, floor, due/not-due scheduler and same-beta projection are checked.
-The first H18 window retains fresh centered e_S=0. Observation statements erase
-to the original source, and the two host builds must have bit-identical recorded
-sample states. These are implementation regressions, not source admission,
-complete branch coverage, contraction evidence or deployment qualification.
+All 13 new local tests and the existing private-vertical/core/BIAS tests pass
+(39 combined). Native correspondence observes the actual headers from public
+startup/update calls, never installs a synthetic runtime root, and checks 767
+scalar normalization boundary cases and 51 initialized observer steps. These
+are implementation checks, not source admission, state-domain invariance or
+storage evidence. The all-input profile theorem is the operation-by-operation
+identity in the supplying note, not an inference from those cases.
 
-### C/E — controlling limiter
+The default local `make all` stops while compiling
+`tests/ahrs/ahrs-qmekf-sim.cpp`: `Eigen/Dense: No such file or directory` on the
+configured `/usr/include/eigen3` path. The native binding regression uses an
+available Eigen include directory explicitly and passes. This is an environment
+failure, not a mathematical failure, and no complete local build is claimed.
+The next build check is the unchanged primary build with its proper Eigen/data
+prerequisites. Focused CI and the inherited full suite remain separate; passing
+one does not qualify the other or the theorem.
 
-The missing object is still the complete FINITE same-history source-uniform
-runtime graph. Exact local algebra and recorded operand ancestry do not supply
-all coefficient/product/guard equations over the entire analytic family. The
-frontend/tuner/covariance successors, physical angular-defect source relation,
-repair/rejection/watchdog branches and all asynchronous/hybrid continuations
-must be bound, rather than substituted by snapshots, tokens or independent boxes.
+### Current limiter: C/E, plus unqualified deployment arithmetic
 
-This is a finite representation/source-attachment gap (C/E), NOT instability.
-No common-storage formulation has been tested on a complete finite master in
-this continuation. There is no worst rho, failed common-M impossibility, metric
-strike, certified basin or capture time to report. Interval refinement and
-storage search remain blocked.
+The actual complete finite source/runtime relation is still missing. Remaining
+work includes all unconditional frontend/tuner/sensor-model bindings, numerical
+factorization and transcendental branches, asynchronous magnetic histories,
+every H18/A21 edge and literal prefix, corrected COMPLETE-BRMM/BIAS admission,
+and a same-history uniform deployment-roundoff enclosure. Initial seeding and
+compiler/FMA/reduction-profile qualification are explicit on the new Mahony path.
+A returned finite map does not establish indefinite retention on its domain.
 
-### Critic, retained facts and alternatives
+There is no certified rho, retained basin, ultimate bound or capture time. No
+storage attempt, common-metric impossibility or new metric-failure strike is
+implied by this representation work.
 
-The strongest objection is that another successful trace only checks another
-execution; it cannot close the missing universal quantifier. Increasing seed
-count, precision, interval subdivision or metric complexity would not repair
-that gap. Retain the finite local identities and passive correspondence checks
-as tests of the actual future runtime graph, never as its source cover.
+### Critic and alternatives
 
-The alternatives remain (1) direct finite descriptors with explicit runtime
-successors, (2) a complete anchored mean-value construction retaining F(0), or
-(3) incremental storage with runtime memory and a separately proved physical-truth
-bridge. Continue (1); do not start another route merely because the source
-attachment requires work. The two-strike/architecture-review rule remains in force.
+The strongest objection is model drift: a Python evaluator plus successful host
+traces could miss a different deployed expression/reduction profile. Keep exact
+rounding-cell checks and source correspondence, but do not promote host equality
+to deployment qualification. Remaining normalization/roundoff alternatives are
+an exact profile-bound program (current choice), the existing outward scalar
+contract on the SAME operand graph, or a verified bit-vector/compiler extraction.
+These are attachment methods, not permission for another frozen observer or a
+new proof track. No route is selected merely because a tighter box looks better.
 
-### Validation boundary
+### DEAD_ENDS and next falsifiable work
 
-The broad inherited ALT suite still reaches a shared startup prerequisite and
-can fail with `continuous Mahony invariant invalid: ['continuous_all_live_PI_invariant_closed is not true', 'initial seed angle not closed']`.
-The failure is reproduced by the unchanged `test_coarse_endpoint_outer_attempt`
-path. Do not weaken that shared original-route premise to make ALT green. The
-finite-identity job is independent and must not interpret its own success as
-success of the broad suite or source qualification.
+Do not revive derivative cocycles as finite maps, independently boxed operands,
+frozen/replayed words, more-seed source qualification, wordwise S resets, position
+reanchoring, an 18-state A21 marginal, or covariance-consistency entry assumptions.
+The two-strike rule and `assert_finite_storage_master` remain in force.
 
-### Next falsifiable theorem work
+Complete the remaining same-predecessor runtime bindings and actual target
+arithmetic profile; verify the generated finite event/prefix graph against its
+supplying source without freely chosen numerical outputs. Attach one physical
+and bias history through the complete word. Only after that relation satisfies
+the finite-master guard run the high-precision feasibility diagnostic and common
+joint24 storage search. Then close useful supply, every-prefix retention,
+H18/A21 transport, fresh entry, startup capture and deployment precision.
 
-Attach the finite predictor and measurement graphs to the actual endogenous
-covariance/frontend/tuner successors and every configured guard, with one
-physical segment chain, one Live origin and one BIAS0/1/2 history per word.
-Recompute geometry and operands from each finite predecessor; do not reuse the
-sampled-shadow predictor or derivative lineage as a physical endpoint.
-After the full finite master passes the existing representation guard, and only
-then, run its high-precision feasibility diagnostic and first common joint24
-storage search with justified supply.
-
-Fresh-Live aggregate admission, useful storage/ultimate bound, every-prefix
-retention, actual H18/A21 hybrid closure, startup capture and finite precision
-remain OPEN. All ALT final gates remain false; original P4/P5 are unpromoted.
+`ALT_LIVE_PASS=false`, `ALT_STARTUP_PASS=false`, `ALT_END_TO_END_PASS=false`.
+Original P4/P5 are not promoted by ALT.
