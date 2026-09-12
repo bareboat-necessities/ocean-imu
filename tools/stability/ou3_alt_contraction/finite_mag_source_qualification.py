@@ -130,6 +130,32 @@ def qualify(sample:SOURCE.Sample,envelope:Envelope|None=None,*,field_norm:NormWi
     return Qualification(sample,envelope,True)
 
 
+def qualify_squared(sample:SOURCE.Sample,envelope:Envelope|None=None):
+    """The SAME source envelope without freely supplied square-root witnesses.
+
+    All thresholds are nonnegative, so squaring each norm inequality is an
+    exact equivalence over the finite-real graph. This also covers rational
+    vectors whose norm is irrational; no admissible packet is lost for want
+    of an exactly rational square root. It is not a binary32 norm theorem.
+    """
+    if not isinstance(sample,SOURCE.Sample):
+        raise TypeError('physical magnetic source sample required')
+    envelope=default_envelope() if envelope is None else envelope
+    if not isinstance(envelope,Envelope) or envelope.assumption_id!=ASSUMPTION_ID:
+        raise ValueError('declared MAG-BMM150-DET-v1 envelope required')
+    field=sample.model.world_field
+    n2=M.dot(field,field)
+    if not envelope.world_field_norm_min**2<=n2<=envelope.world_field_norm_max**2:
+        raise ValueError('world field violates declared deterministic source envelope')
+    if M.dot(field[:2],field[:2])<envelope.world_field_horizontal_min**2:
+        raise ValueError('horizontal field violates deterministic yaw-observability envelope')
+    for vec,bound,label in ((sample.model.hard_iron_body,envelope.hard_iron_norm_max,'hard iron'),
+                            (sample.residual_body,envelope.residual_norm_max,'mag residual')):
+        if M.dot(vec,vec)>bound**2:
+            raise ValueError(f'{label} exceeds declared deterministic source envelope')
+    return Qualification(sample,envelope,True)
+
+
 def assert_source_qualified(q:Qualification|None):
     if not isinstance(q,Qualification) or not q.qualified:
         raise ValueError('unqualified magnetic source cannot enter finite master/storage boundary')

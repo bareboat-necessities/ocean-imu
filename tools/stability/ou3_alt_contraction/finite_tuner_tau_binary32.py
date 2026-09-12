@@ -1,0 +1,186 @@
+"""Binary32 tau-target and tau-EMA graph for shipping SeaStateAutoTuner.
+
+This isolates the deployment-critical scalar that selects the Integrated-OU
+Qaxis coefficient branch. Shipping computes the tau target, dynamic EMA horizon,
+exp decay and tau EMA in float. Ordinary arithmetic and clamp decisions are
+exact RNE-binary32 here; the std::exp result remains an explicit binary32
+witness constrained to the same rounded argument.
+
+The strongest entry consumes ``StoredFrequency`` from
+``finite_tuner_frequency_binary32``. The exact-real tuner recurrence remains a
+mathematical shadow, not the deployed state. ``roundoff_supply`` therefore
+retains the exact deployed-minus-shadow tau discrepancy for BOTH legal compiler
+evaluation shapes instead of forcing a false equality. Crucially, that shadow is
+now reconstructed from the SAME deployed predecessor, SAME stored frequency and
+SAME decay witness; a CandidateResult produced from another predecessor cannot
+masquerade as finite-precision supply evidence.
+
+The compiler contraction mode and target libm are still open deployment facts.
+"""
+from __future__ import annotations
+from dataclasses import dataclass
+from fractions import Fraction as F
+from pathlib import Path
+
+from tools.stability.ou3_alt_contraction import finite_binary32_arithmetic as B
+from tools.stability.ou3_alt_contraction import finite_source_bound_exp_enclosure as EXP
+from tools.stability.ou3_alt_contraction import finite_tuner_candidate as CAND
+from tools.stability.ou3_alt_contraction import finite_tuner_frequency_binary32 as FREQ
+
+SOURCE=Path(__file__).resolve().parents[3]/'src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h'
+HALF=B.rn32(F(1,2)); ONE=B.rn32(1)
+SEA_MIN=B.rn32(F(1,2)); SEA_MAX=B.rn32(6)
+HORIZON_MIN=B.rn32(F(1,20)); HORIZON_MAX=B.rn32(35)
+MEKF_TAU_FLOOR=B.rn32(F(1,1000))
+QUALIFICATION='OU3_ALT_TUNER_TAU_BINARY32_V4'
+
+
+def clamp(x,lo,hi): return min(max(x,lo),hi)
+
+
+@dataclass(frozen=True)
+class TauStep:
+    previous:F; frequency:F; tau_target:F; sea_time:F; adapt_sec:F
+    exp_decay:F; alpha:F; next_separate:F; next_fma:F
+    def __post_init__(self):
+        names=('previous','frequency','tau_target','sea_time','adapt_sec','exp_decay','alpha','next_separate','next_fma')
+        vals=[F(getattr(self,n)) for n in names]
+        for n,v in zip(names,vals): object.__setattr__(self,n,v)
+        if not all(B.is_binary32(v) for v in vals): raise ValueError('TauStep stores deployed binary32 values only')
+        if self.previous<=0 or self.frequency<=0 or self.tau_target<=0 or self.adapt_sec<=0: raise ValueError('positive tuner tau operands required')
+
+
+@dataclass(frozen=True)
+class TauRoundoffSupply:
+    """Exact local deployment discrepancy relative to one canonical real shadow."""
+    exact_real_next:F
+    binary32_next_separate:F
+    binary32_next_fma:F
+    residual_separate:F
+    residual_fma:F
+    def __post_init__(self):
+        names=('exact_real_next','binary32_next_separate','binary32_next_fma','residual_separate','residual_fma')
+        vals=[F(getattr(self,n)) for n in names]
+        for n,v in zip(names,vals): object.__setattr__(self,n,v)
+        if self.residual_separate != self.binary32_next_separate-self.exact_real_next:
+            raise ValueError('separate tau roundoff residual detached from same candidate')
+        if self.residual_fma != self.binary32_next_fma-self.exact_real_next:
+            raise ValueError('FMA tau roundoff residual detached from same candidate')
+
+
+def _floats_from_frequency(frequency,cfg:CAND.CandidateConfig,dt):
+    if not isinstance(cfg,CAND.CandidateConfig): raise TypeError('finite tuner config required')
+    if not cfg.clamp_enabled: raise ValueError('shipping default clamped tuner branch required')
+    f0=F(frequency)
+    if not B.is_binary32(f0): raise ValueError('tau edge requires already-stored binary32 tuner frequency')
+    f=clamp(f0,B.rn32(cfg.min_freq),B.rn32(cfg.max_freq))
+    coeff=B.rn32(cfg.tau_coeff)
+    tau_raw=B.div(B.mul(coeff,HALF),f)
+    tau_target=clamp(tau_raw,B.rn32(cfg.min_tau),B.rn32(cfg.max_tau))
+    sea=B.div(HALF,f)
+    periods=B.rn32(cfg.adapt_tau_sea_periods)
+    if periods>0 and sea>0:
+        safe=clamp(sea,SEA_MIN,SEA_MAX)
+        requested=B.mul(periods,safe)
+        dtf=B.rn32(dt); lo=max(dtf,HORIZON_MIN)
+        adapt=clamp(requested,lo,HORIZON_MAX)
+    else:
+        adapt=B.rn32(cfg.adapt_tau_sec)
+    return f,tau_target,sea,adapt
+
+
+def _step_from_frequency(previous,frequency,cfg:CAND.CandidateConfig,*,dt,exp_decay):
+    prev=F(previous)
+    if not B.is_binary32(prev): raise ValueError('previous tau_applied is not an actual binary32 stored value')
+    f,target,sea,adapt=_floats_from_frequency(frequency,cfg,dt)
+    dtf=B.rn32(dt); x=B.div(dtf,adapt)
+    e=F(exp_decay)
+    if not B.is_binary32(e) or not 0<e<=1: raise ValueError('binary32 std::exp result witness required')
+    lo,hi,_,_=EXP.enclosure(x)
+    if not lo<=e<=hi: raise ValueError('tuner exp witness detached from SAME rounded -dt/adapt_sec argument')
+    alpha=B.sub(ONE,e)
+    sep=B.ema(prev,target,alpha,contracted=False)
+    fused=B.ema(prev,target,alpha,contracted=True)
+    return TauStep(prev,f,target,sea,adapt,e,alpha,sep,fused)
+
+
+def step(previous,sample:CAND.WaveBandSample,cfg:CAND.CandidateConfig,*,dt,exp_decay):
+    """Legacy/local entry; explicitly quantizes the exact-real sample frequency."""
+    if not isinstance(sample,CAND.WaveBandSample): raise TypeError('finite tuner sample required')
+    return _step_from_frequency(previous,B.rn32(sample.frequency_hz),cfg,dt=dt,exp_decay=exp_decay)
+
+
+def step_from_stored_frequency(previous,stored:FREQ.StoredFrequency,cfg:CAND.CandidateConfig,*,dt,exp_decay):
+    """Strong theorem entry consuming the actual SeaStateAutoTuner stored float."""
+    if not isinstance(stored,FREQ.StoredFrequency): raise TypeError('StoredFrequency required')
+    return _step_from_frequency(previous,FREQ.get_frequency_hz(stored),cfg,dt=dt,exp_decay=exp_decay)
+
+
+def canonical_exact_shadow(binary:TauStep, exact:CAND.CandidateResult):
+    """Return the unique exact tau successor rooted at the deployed predecessor.
+
+    ``exact`` supplies the same-history exact target produced by the exact-real
+    tuner graph. The predecessor and decay are NOT taken from that object: they
+    are fixed by the deployed TauStep so a detached previous TuneState cannot
+    alter the finite-precision supply.
+    """
+    if not isinstance(binary,TauStep) or not isinstance(exact,CAND.CandidateResult):
+        raise TypeError('TauStep and exact CandidateResult required')
+    if exact.frequency != binary.frequency:
+        raise ValueError('exact-real candidate frequency detached from stored binary32 tuner frequency')
+    a=F(1)-binary.exp_decay
+    expected=binary.previous+a*(F(exact.tau_target)-binary.previous)
+    if F(exact.tune_next.tau_applied) != expected:
+        raise ValueError('exact-real tau successor detached from deployed predecessor/decay')
+    return expected
+
+
+def roundoff_supply(binary:TauStep, exact:CAND.CandidateResult):
+    """Expose deployed tau error against the SAME canonical exact-real successor."""
+    real_next=canonical_exact_shadow(binary,exact)
+    return TauRoundoffSupply(real_next,binary.next_separate,binary.next_fma,
+                             binary.next_separate-real_next,binary.next_fma-real_next)
+
+
+def committed_tau(result:TauStep,*,contracted:bool):
+    if not isinstance(result,TauStep): raise TypeError('TauStep required')
+    if not isinstance(contracted,bool): raise TypeError('literal compiler contraction branch required')
+    tau=result.next_fma if contracted else result.next_separate
+    return max(MEKF_TAU_FLOOR,tau)
+
+
+def _source_shape_matches():
+    s=SOURCE.read_text()
+    needles=('float tau_raw = tau_coeff_ * 0.5f / f_tune;',
+      'const float sea_time_sec = 0.5f / f_tune;',
+      'const float alpha = 1.0f - std::exp(-dt / adapt_sec);',
+      'tune_.tau_applied   += alpha    * (tau_t   - tune_.tau_applied);',
+      'mekf_->set_aw_time_constant(tune_.tau_applied);')
+    return all(n in s for n in needles)
+
+
+def readiness():
+    b=B.readiness(); fs=FREQ.readiness()
+    return {
+      'qualification':QUALIFICATION,
+      'shipping_tau_target_EMA_commit_source_shape_matches':_source_shape_matches(),
+      'tau_target_float_clamp_graph_materialized':True,
+      'dynamic_tau_EMA_horizon_float_graph_materialized':True,
+      'tau_EMA_exp_result_bound_to_same_rounded_argument':True,
+      'tau_EMA_separate_mul_add_result_materialized':b['separate_mul_add_EMA_shape_materialized'],
+      'tau_EMA_contracted_fma_result_materialized':b['contracted_fma_EMA_shape_materialized'],
+      'pending_commit_passes_stored_tau_directly_to_MEKF_setter':True,
+      'source_tuner_frequency_binary32_store_to_tau_edge_closed': bool(
+          fs['shipping_frequency_store_source_shape_matches'] and
+          fs['frequency_clamp_and_store_exact_binary32'] and
+          fs['getFrequencyHz_is_identity_on_stored_binary32']),
+      'local_tau_binary32_minus_exact_shadow_supply_exposed':True,
+      'tau_exact_shadow_rooted_at_same_deployed_predecessor_and_decay':True,
+      'tuner_exp_libm_binary32_correspondence_closed':False,
+      'shipping_compiler_FP_contraction_mode_qualified':False,
+      'upstream_WPE_binary32_frequency_production_closed':False,
+      'source_frontend_frequency_binary32_storage_correspondence_closed':True,
+      'source_uniform_tau_roundoff_supply_bound_closed':False,
+      'complete_word_finite_identity':False,
+      'ALT_LIVE_PASS':False,
+    }

@@ -1,4 +1,5 @@
 import unittest
+from unittest.mock import patch
 from tools.stability.ou3_alt_contraction import proof_plan as P
 
 class PlanGuardTests(unittest.TestCase):
@@ -17,6 +18,17 @@ class PlanGuardTests(unittest.TestCase):
         from tools.stability.ou3_alt_contraction import physical_word as W
         with self.assertRaisesRegex(RuntimeError,'not a Jacobian cocycle'):
             P.assert_finite_storage_master(W.finite_storage_readiness())
+    def test_legacy_phase1_ledger_cannot_unlock_storage(self):
+        from tools.stability.ou3_alt_contraction import phase1_closure as L
+        # No mocked success premise and no source-admission assertion: this
+        # process guard must be callable without executing the legacy builder.
+        with patch.object(L.SOURCE,'build',side_effect=AssertionError('source builder must not run')):
+            status,error=L.finite_storage_barrier()
+        self.assertEqual(status['map_representation'],'pointwise_state_Jacobian_cocycle')
+        self.assertFalse(status['finite_error_identity_for_every_event'])
+        self.assertIn('finite-state storage blocked',error)
+        with self.assertRaisesRegex(RuntimeError,'finite-state storage blocked'):
+            P.assert_finite_storage_master(status)
     def test_finite_guard_requires_every_branch_reference_and_zeroheel_scope(self):
         s=dict(map_representation='finite_physical_descriptor',finite_error_identity_for_every_event=True,
                physical_reference_forcing_retained=True,all_coefficient_product_graphs_retained=True,
@@ -26,8 +38,12 @@ class PlanGuardTests(unittest.TestCase):
             q=dict(s);q.pop(key)
             with self.assertRaises(RuntimeError):P.assert_finite_storage_master(q)
     def test_storage_guard_names_every_required_closure(self):
+        # Legacy guard remains available for old source-ledger callers, but it
+        # is insufficient for finite storage and MUST NOT be used by Phase-1.
         s={k:True for k in ('same_history_complete_BRMM_word','physical_prediction_forcing_attached','physical_S_residual_attached','all_bias_families_attached','all_literal_branches_attached','H18_A21_edge_attached','zero_wind_heel_scope_enforced')}
         self.assertTrue(P.storage_search_allowed(s));P.assert_storage_search_allowed(s)
+        with self.assertRaisesRegex(RuntimeError,'finite-state storage blocked'):
+            P.assert_finite_storage_master(s)
     def test_windheel_scope_cannot_be_omitted(self):
         s={k:True for k in ('same_history_complete_BRMM_word','physical_prediction_forcing_attached','physical_S_residual_attached','all_bias_families_attached','all_literal_branches_attached','H18_A21_edge_attached')}
         self.assertFalse(P.storage_search_allowed(s))

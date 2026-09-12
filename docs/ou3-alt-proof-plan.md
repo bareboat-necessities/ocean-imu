@@ -51,7 +51,7 @@ deployment arithmetic residuals and explicit zero-heel scope ancestry.
 
 ## Current finite-runtime advancement
 
-PR #523 has finite descriptors for physical prediction, accepted/rejected
+The graph has finite descriptors for physical prediction, accepted/rejected
 measurements, full covariance, runtime OU/BA roots, attitude F/Q, integrated-OU
 Qaxis, pending a_w synchronization, S scheduling/service, SafeLDLT branches,
 accelerometer vibration guard/Racc, held-sample forcing, private Mahony,
@@ -114,12 +114,64 @@ held accelerometer event and tuner/WPE suffix therefore start from startup
 ancestry rather than a synthetic Live root. This is still a conditional
 real-arithmetic prefix, not the complete source-uniform word.
 
+`finite_live_interleave.py` now extends that startup bridge to successive IMU,
+magnetic and external-hold events. The magnetic graph includes the default
+continuous estimator carried from startup, literal refinement/reset clocks,
+reference/yaw writes, coupled hard-iron/reference application and same-packet
+measurement/count logic. `ou3-alt-live-magnetic-word.md` supplies the finite
+composition theorem and uniform finite-real calibration bounds. These remove
+detached calibration/reference operands; they do not qualify the complete word
+or permit a storage search.
+
+The interleaved IMU edge now uses `step_from_shipping_operands` in
+`finite_live_tilt_prefix.py`. `finite_tilt_reset_runtime.py` derives the watchdog
+predicate from the actual post-accelerometer nominal quaternion and derives a
+firing `initialize_from_acc_preserve_yaw` quaternion/down axis from that same
+pre-reset attitude and the exact guarded accelerometer. The ideal-real
+preserve-yaw graph is algebraic through normalized gravity and half-angle
+identities; the final reset quaternion is no longer a free theorem operand.
+The >70-degree test uses a rigorous rational enclosure of the shipping
+`acos(cos_tilt)*57.295779513f` threshold. The tiny enclosure boundary and actual
+binary32/libm branch correspondence remain explicitly fail-closed.
+
+## Physical source-prefix graph
+
+`finite_source_bound_live_word.py` carries physical source and sensor ancestry
+with the runtime state. Source qualification cannot follow from matching tokens.
+The finite constructor now checks existing physical vector caps, the joint
+nine-component acceleration-moment IQC, necessary rotation/rate constraints and
+BIAS component/norm envelopes. Consecutive segments retain one actual phi.
+`finite_brmm_moment_prefix.py` derives cumulative moments and the prefix budget
+from the same segments using the exact Gramian concatenation identity; the
+proof is in `ou3-alt-source-continuation.md`.
+
+These executable checks are necessary outer constraints, not a runtime
+membership oracle. `finite_complete_brmm_restriction.py` closes the universal
+physical-source implication separately: the primary theorem source is the same
+bounded physical history with bounded centered primitive, and restricting any
+admitted history to the 5 ms grid yields the finite caps, primitive recurrence,
+coupled moment IQC and rotation bound. A common spectral/shaping generator is
+explicitly not required because those constructions are only sufficient
+certificate methods. Matching labels still cannot admit an arbitrary runtime
+trace. The frequency/frontend relation, actual BIAS generating functions and
+deployment arithmetic remain open. None of this authorizes rho search, shrinks
+the filter-error domain, or replaces native arithmetic closure.
+
+The source-owning Live word also has a dedicated fresh-origin endpoint. It checks
+the actual sample-zero `Reference` at `time == live_origin`, requires centered
+S=0, retains the same history/BIAS root and physical vector/bias caps, and permits
+a magnetic call before transition 1 without inventing a 5 ms segment. That call
+does not advance source ordinal or time. This closes only the checked outer
+endpoint topology; complete source membership at sample zero remains false.
+
 ## H18/A21 hybrid language
 
 `MAG-CALL-SCHEDULE-v1` requires first post-Live mag call <=40 ms and later gaps
 <=40 ms. Shipping counts attempted post-delay `updateMag()` calls independent of
-innovation acceptance, so its 250-count internal lock clears within 10 s and
-the strict >1 s guard is automatically met.
+innovation acceptance, so its internal lock clears within 10 s. The 250th call can occur before the
+strict >1 s guard: the corrected proof uses
+`first_gap + max(249*gap, 1+gap)` and continued, locally finite call coverage.
+Finite-prefix checks do not prove the infinite schedule.
 
 Do not assume eventual A21 under arbitrary external hold. The graph retains:
 no hold -> exact H18->A21 floor edge; held -> H18 may persist indefinitely;
@@ -132,13 +184,17 @@ The immediate blockers are now:
 
 - deployment/binary32 correspondence for startup yaw extraction, atan2,
   AngleAxis, quaternion normalization, handoff setters and clocks;
-- compose asynchronous magnetometer events and the firing Live tilt-reset edge
-  into startup-rooted successive Live prefixes, not only as separate local maps;
+- close deployment correspondence for the now-bound Live tilt reset, including
+  the threshold-boundary sliver, normalization cutoff, sqrt/atan2/asin/
+  AngleAxis/libm execution and nonfinite branches; do not reintroduce a free
+  final reset quaternion;
 - source-qualify the complete provisional/refinement/continuous-hard-iron
-  magnetic schedule required by the declared scope;
+  history and its remaining arithmetic/solver branches; bounded finite-real
+  calibration is not proof of calibration accuracy or a useful ISS margin;
 - carry COMPLETE-BRMM/BIAS ancestry and every solver/hygiene/finite-precision
   branch through an arbitrary 600-step word, including both H18 and A21/hold
-  continuations;
+  continuations; signed magnetic counter overflow and floating-clock lifetime
+  behavior must not be replaced by unbounded Python integers/rationals;
 - prove the exact fresh/source-produced states land in a retained storage basin;
   only after the complete finite master passes its guard may common joint24
   storage/rho feasibility be attempted.

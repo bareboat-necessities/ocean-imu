@@ -482,92 +482,106 @@ witness is outside corrected COMPLETE-BRMM and may not be recycled as A or B.
 
 ## Parallel ALT contraction/dissipativity track
 
-### Current hypothesis
+### Current hypothesis and retained facts
 
-Construct the finite physical joint24 runtime word before searching coercive
-storage with bounded neutral/source supply. Keep the original route above
-independently continuable. `docs/ou3-alt-proof-plan.md` is normative; the ALT
-handover and supplying finite notes specify the current representation boundary.
+Construct the actual finite source/runtime joint24 word before searching
+coercive storage with bounded source supply. Preserve the original route above;
+`ou3-alt-proof-plan.md` is normative. Full-21 covariance, exact physical
+prediction, inverse-free innovation/Joseph/reset, same-beta projection,
+startup-rooted H18 and persistent frontend/calibration/control state remain.
+The same-operand finite-real tilt reset is attached; universal deployment
+arithmetic correspondence is not.
 
-### Retained facts and representation
+`ou3-alt-source-continuation.md` proves the moment concatenation identity
+`G(a+b)=T(b)G(a)T(b)' + G(b)` and its nonnegative projection loss. Therefore
+`E(J_prefix,H) <= sum_i E(J_i,h_i) <= A_max^2 H` on every finite prefix.
+The actual physical segments drive this derived budget and the existing finite
+predictor. Endpoint vector caps, the coupled nine-moment IQC, a necessary
+rotation chord/rate bound, exact BIAS envelope endpoints and one actual selected
+bias factor are checked before an IMU event. These are necessary outer
+constraints, not complete BRMM/BIAS generating-history membership.
 
-Finite physical prediction retains continuous attitude increments/angular defect,
-correlated q15 translation moments, gyro-bias drift, one shared accelerometer-
-bias driver and one Live S origin. Finite measurement descriptors retain the
-nonhomogeneous physical S residual, full H18/A21 covariance, inverse-free
-innovation relation, masked Joseph identity, finite injection and same-beta
-projection. Prediction covariance/runtime and frontend/tuner temporal composers
-remain conditional where their arithmetic, source or branch inputs are unbound.
-None is the completed source-uniform 600-step master.
+The fresh Live origin now has a separate checked outer endpoint: sample-zero
+magnetic calls consume the actual fresh `Reference` without manufacturing a
+predecessor transition, and leave source ordinal 1 available to the first IMU.
+This removes the sample-zero topology gap but does not establish generator/QO or
+full BIAS-history membership.
 
-The private observer now has an optional **profile-specific initialized
-binary32 graph**, supplied by `finite_binary32_mahony.py` and
-`docs/ou3-alt-mahony-binary32.md`. Exact integer/rational nearest-even rounding,
-an independent midpoint-cell checker, the literal bit seed/Newton normalization,
-and the initialized Mahony/readout program remove free reciprocal choices on
-that path. Every rounding defect belongs to its actual operands. The existing
-vertical-result type feeds the same downstream consumers. This does not qualify
-the actual target compiler, initial seed or nonfinite branches; the default
-conditional real helper is not silently relabeled as a deployed float proof.
+The magnetic graph retains default continuous calibration, refinement and
+coupled offset/reference writes, including rejected-branch bookkeeping.
+Real-arithmetic calibration <=28.7 uT and active reference/corrected observation
+<=110.7 uT are boundedness results, not calibration accuracy or contraction.
+The corrected unlock theorem uses continued locally finite calls and
+`first_gap + max((n-1)*gap,1+gap)`; default internal unlock remains within 10 s.
+An upper gap bound never forces the n-th call to satisfy the strict >1 s guard,
+and arbitrary external hold does not imply eventual A21.
+
+### Failure analysis and independent critic
+
+The source-product fixture referenced nonexistent `PhysicalSegment.delta_theta`
+/ `delta_velocity` / `delta_position`, not the actual coupled `J0/J1/J2`.
+This test implementation defect is repaired without changing runtime physics.
+
+The earlier source constructor checked labels, clocks and bias envelopes but
+not physical vector/moment constraints. Matching generator/history strings
+cannot certify O^601_BRMM membership. An algebraically consistent 100 m/s^2
+endpoint, or an independent-sign moment corner with energy 193*h*A_max^2,
+passed the missing checks. These are source-binding regression inputs, NOT
+admitted shipping instability counterexamples. The checks now reject them.
+
+The critic's strongest objection is model drift through qualification metadata.
+Alternatives are (1) an executable necessary correlated outer graph with honest
+open membership, (2) a verified admitted-generator evaluator, and (3) symbolic
+source-function substitution into shipping code. Use (1) to attach the already
+declared physical conditions; (2)/(3) remain the full-source binding obligation.
+This constructs ports in the controlling storage inequality, not a refinement
+of an unproved rho margin. No storage feasibility or contraction strike follows.
+
+The focused guard integration exposed an unchanged legacy serialization defect:
+`ou3_p4_brmm_physical_acceleration_witness_sector.build` calls
+`float(mom['A_max_mps2'])` on the exact string `'44/5'`. This is an implementation
+failure before any storage inequality, not a negative contraction margin.
+The pure finite-storage barrier is independently tested without pretending a
+source builder passed. Full `phase1_closure.build/validate` still execute every
+source prerequisite; the inherited integration test remains, with its obsolete
+storage-true expectation corrected to false. Shared P2/P3/P4/P5 code is untouched.
 
 ### Evidence and validation boundary
 
-All 13 new local tests and the existing private-vertical/core/BIAS tests pass
-(39 combined). Native correspondence observes the actual headers from public
-startup/update calls, never installs a synthetic runtime root, and checks 767
-scalar normalization boundary cases and 51 initialized observer steps. These
-are implementation checks, not source admission, state-domain invariance or
-storage evidence. The all-input profile theorem is the operation-by-operation
-identity in the supplying note, not an inference from those cases.
+The first checked-transfer run for the primary-history restriction failed for CI infrastructure only: its temporary workflow did not install `numpy` and the native Mahony correspondence prerequisites. It stopped after 502 tests with `ModuleNotFoundError: numpy` and `required native Mahony correspondence prerequisites missing`. This invalidates only the transfer-workflow environment assumption; it does not invalidate the restriction lemma or the normal finite-identity job, whose dependency installation is unchanged. The falsifiable retry is the identical 518-test selection after installing the same proof/native dependencies as the normal job.
 
-The default local `make all` stops while compiling
-`tests/ahrs/ahrs-qmekf-sim.cpp`: `Eigen/Dense: No such file or directory` on the
-configured `/usr/include/eigen3` path. The native binding regression uses an
-available Eigen include directory explicitly and passes. This is an environment
-failure, not a mathematical failure, and no complete local build is claimed.
-The next build check is the unchanged primary build with its proper Eigen/data
-prerequisites. Focused CI and the inherited full suite remain separate; passing
-one does not qualify the other or the theorem.
+The full focused finite-identity selection passes 511 tests with native checks
+required. The native shipping finite-identity check passes with bit-identical
+observed/plain sample states. Native preserve-yaw reset regression passes,
+including its intermediate covariance axis and near-parallel branch. These are
+implementation/algebra regressions, not all-history deployment qualification.
+The full inherited ALT integration suite is not claimed passing; the shared
+`float('44/5')` failure remains exposed by its source-building path.
 
-### Current limiter: C/E, plus unqualified deployment arithmetic
+Default `make all` stops compiling `tests/ahrs/ahrs-qmekf-sim.cpp` with
+`Eigen/Dense: No such file or directory` on `/usr/include/eigen3`. Native checks
+use an existing separate Eigen include. No full-build PASS is claimed.
 
-The actual complete finite source/runtime relation is still missing. Remaining
-work includes all unconditional frontend/tuner/sensor-model bindings, numerical
-factorization and transcendental branches, asynchronous magnetic histories,
-every H18/A21 edge and literal prefix, corrected COMPLETE-BRMM/BIAS admission,
-and a same-history uniform deployment-roundoff enclosure. Initial seeding and
-compiler/FMA/reduction-profile qualification are explicit on the new Mahony path.
-A returned finite map does not establish indefinite retention on its domain.
+### Current limiter, DEAD_ENDS and next falsifiable work
 
-There is no certified rho, retained basin, ultimate bound or capture time. No
-storage attempt, common-metric impossibility or new metric-failure strike is
-implied by this representation work.
+The complete finite source-uniform word remains open: the physical frequency/frontend relation, full BIAS driver/parameter histories, remaining
+same-source exp/trig/Eigen/roundoff branches, primary-history membership at sample zero is a theorem premise rather than a runtime token check (the checked endpoint topology is closed), startup/ungauged capture and continuation beyond the current
+600-step container.
+The firing tilt/reset operands are no longer free; their deployment boundary
+and nonfinite behavior still need proof. Floating clocks and the signed magnetic
+counter cannot be replaced indefinitely by Python rationals/integers.
 
-### Critic and alternatives
-
-The strongest objection is model drift: a Python evaluator plus successful host
-traces could miss a different deployed expression/reduction profile. Keep exact
-rounding-cell checks and source correspondence, but do not promote host equality
-to deployment qualification. Remaining normalization/roundoff alternatives are
-an exact profile-bound program (current choice), the existing outward scalar
-contract on the SAME operand graph, or a verified bit-vector/compiler extraction.
-These are attachment methods, not permission for another frozen observer or a
-new proof track. No route is selected merely because a tighter box looks better.
-
-### DEAD_ENDS and next falsifiable work
-
-Do not revive derivative cocycles as finite maps, independently boxed operands,
-frozen/replayed words, more-seed source qualification, wordwise S resets, position
-reanchoring, an 18-state A21 marginal, or covariance-consistency entry assumptions.
+Do not revive derivative cocycles as finite maps, frozen gains/replays,
+independent coefficient boxes, more-seed source qualification, wordwise S resets,
+18-state A21 marginal storage, convenient entry sets or covariance consistency.
 The two-strike rule and `assert_finite_storage_master` remain in force.
 
-Complete the remaining same-predecessor runtime bindings and actual target
-arithmetic profile; verify the generated finite event/prefix graph against its
-supplying source without freely chosen numerical outputs. Attach one physical
-and bias history through the complete word. Only after that relation satisfies
-the finite-master guard run the high-precision feasibility diagnostic and common
-joint24 storage search. Then close useful supply, every-prefix retention,
-H18/A21 transport, fresh entry, startup capture and deployment precision.
+The attempted universal-generator interpretation is now frozen as a proof-method dead end. `ou3_brmm_physical_wave_source.py` intentionally has no single numerical generator envelope for the complete family; requiring one would narrow the theorem to one certificate representation. This is not a theorem failure: `ou3_brmm_physical_wave_condition.py` makes bounded oscillatory physical history plus a uniformly bounded centered primitive primary, with spectral/shaping realizations only sufficient certificates and with the padded complete-family physical envelope already closed.
+
+Independent critic alternatives were: (1) restrict the primary physical history directly to the finite sampling grid; (2) prove only certificate-specific spectral/shaping corollaries; or (3) carry an abstract continuous source-function object through every shipping event. Route (1) is chosen because it preserves the declared theorem class and supplies exactly the physical ports of the future storage inequality without a representation assumption. Routes (2) and (3) remain available if a later arithmetic/interface obligation genuinely requires them.
+
+`finite_complete_brmm_restriction.py` now proves that every admitted primary COMPLETE-BRMM physical history, restricted to a 600-transition 5 ms word, inherits the exact finite endpoint caps, one-Live-origin centered-S bound, p/v/S recurrence, coupled acceleration-moment IQC and projective rotation-chord bound. The finite constants are checked against the primary complete-family envelope, including the outward `35 deg/s -> 11/18 rad/s` rate enclosure. Matching runtime tokens still do not prove history membership; the frequency/frontend relation, complete BIAS generating histories, and deployment arithmetic remain open.
+
+Next bind the still-open frequency/estimator coefficient products and full BIAS generating-history relation to this primary-history restriction, rather than introducing another source representation. Only a complete finite master may authorize common joint24 storage search, followed by every-prefix retention, capture and an ultimate bound.
 
 `ALT_LIVE_PASS=false`, `ALT_STARTUP_PASS=false`, `ALT_END_TO_END_PASS=false`.
-Original P4/P5 are not promoted by ALT.

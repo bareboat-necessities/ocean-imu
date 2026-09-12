@@ -1,9 +1,20 @@
 """Finite IntegratedOUChain<3> process covariance used by shipping OU-III.
 
 This is the real-arithmetic formula graph behind QdAxis4x1_analytic. It carries
-the nested 3x3 marginal and final 4x4 PSD-hygiene branches explicitly. Runtime
-exp values, machine epsilon and Eigen LDLT/eigensolver outcomes remain declared
-witnesses until deployment finite precision is enclosed.
+the nested 3x3 marginal and final 4x4 PSD-hygiene branches explicitly.
+
+Two details matter for the theorem-facing graph:
+
+* the coefficient formula branch can be forced by the exact deployed binary32
+  h/tau decision rather than re-decided from exact-real h/tau; and
+* in the general branch shipping evaluates ``std::exp(-x)`` separately inside
+  the nested 3x3 covariance and again inside the 4x4 covariance.  Optional
+  ``marginal_alpha`` and ``final_alpha`` therefore override the legacy shared
+  alpha independently.  The strongest source-bound path supplies both.
+
+The accepted-LDLT branch is also not a free boolean: a claimed accept must pass
+an exact same-matrix symmetric LDL^T inertia/tolerance guard.  Binary32 formula
+roundoff and actual Eigen/libm correspondence remain open.
 """
 from __future__ import annotations
 from dataclasses import dataclass
@@ -19,9 +30,25 @@ def diag(v):
     return out
 
 
+def _exact_ldlt_min_d(S):
+    n=len(S); A=M.mat(S,n,n)
+    if A != M.transpose(A): raise ValueError('exact LDLT requires symmetric input')
+    L=M.eye(n); D=[F(0)]*n
+    for j in range(n):
+        d=A[j][j]-sum((L[j][k]*L[j][k]*D[k] for k in range(j)),F(0))
+        D[j]=d
+        for i in range(j+1,n):
+            r=A[i][j]-sum((L[i][k]*L[j][k]*D[k] for k in range(j)),F(0))
+            if d==0:
+                if r!=0: return None
+                L[i][j]=F(0)
+            else:
+                L[i][j]=r/d
+    return min(D) if D else F(0)
+
+
 @dataclass(frozen=True)
 class PSDWitness:
-    """One regularize_psd_if_needed control branch for a finite matrix."""
     ldlt_accepts: bool
     eigensolver_success: bool | None = None
     eigenvectors: tuple | None = None
@@ -40,12 +67,15 @@ class PSDWitness:
 
 
 def regularize_psd(S,witness:PSDWitness,*,machine_epsilon):
-    """Finite-valued branch of shipping regularize_psd_if_needed for N<=4."""
     n=len(S); S=M.mat(S,n,n); eps=P.rational(machine_epsilon)
     if n not in (3,4) or eps <= 0: raise ValueError('N=3/4 and positive machine epsilon required')
     S=M.scaled(M.plus(S,M.transpose(S)),F(1,2))
     scale=max(F(1),max(abs(x) for row in S for x in row)); tol=64*eps*scale
-    if witness.ldlt_accepts: return S
+    if witness.ldlt_accepts:
+        min_d=_exact_ldlt_min_d(S)
+        if min_d is None or min_d < -tol:
+            raise ValueError('LDLT-accept witness detached from SAME PSD-hygiene matrix/tolerance')
+        return S
     if not witness.eigensolver_success:
         out=[r[:] for r in S]
         for i in range(n): out[i][i]+=tol
@@ -58,14 +88,19 @@ def regularize_psd(S,witness:PSDWitness,*,machine_epsilon):
     return M.scaled(M.plus(out,M.transpose(out)),F(1,2))
 
 
-def marginal_raw(tau,h,sigma2,alpha):
-    """Literal IntegratedOUChain<T,2>::process_covariance pre-hygiene matrix."""
+def _branch(x, small_branch):
+    if small_branch is None: return abs(x) < F(1,100)
+    if not isinstance(small_branch,bool): raise TypeError('literal Qaxis coefficient branch required')
+    return small_branch
+
+
+def marginal_raw(tau,h,sigma2,alpha,*,small_branch=None):
     tau,h,sigma2,alpha=map(P.rational,(tau,h,sigma2,alpha))
     if tau < F(1,10**7) or h <= 0 or sigma2 < 0 or not 0 < alpha <= 1: raise ValueError('post-clamp tau, positive h, sigma2>=0, valid exp root required')
     inv=1/tau; x=h*inv; i2=inv*inv; i3=i2*inv; i4=i3*inv; i5=i4*inv; i6=i5*inv; i7=i6*inv; i8=i7*inv; i9=i8*inv
     h2=h*h; h3=h2*h; h4=h3*h; h5=h4*h; h6=h5*h; h7=h6*h; h8=h7*h; h9=h8*h
     Q=M.zeros(3,3)
-    if abs(x) < F(1,100):
+    if _branch(x,small_branch):
         Q[0][0]=sigma2*(F(2,3)*h3*inv-F(1,2)*h4*i2+F(7,30)*h5*i3-F(1,12)*h6*i4+F(31,1260)*h7*i5-F(1,160)*h8*i6+F(127,90720)*h9*i7)
         Q[0][1]=sigma2*(F(1,4)*h4*inv-F(1,6)*h5*i2+F(5,72)*h6*i3-F(1,45)*h7*i4+F(17,2880)*h8*i5-F(41,30240)*h9*i6)
         Q[0][2]=sigma2*(h2*inv-h3*i2+F(7,12)*h4*i3-F(1,4)*h5*i4+F(31,360)*h6*i5-F(1,40)*h7*i6+F(127,20160)*h8*i7-F(17,12096)*h9*i8)
@@ -85,14 +120,19 @@ def marginal_raw(tau,h,sigma2,alpha):
     return Q
 
 
-def qaxis4(tau,h,sigma2,alpha,*,marginal_psd:PSDWitness,final_psd:PSDWitness,machine_epsilon):
-    """Literal IntegratedOUChain<T,3>::process_covariance including hygiene."""
+def qaxis4(tau,h,sigma2,alpha,*,marginal_psd:PSDWitness,final_psd:PSDWitness,
+           machine_epsilon,small_branch=None,marginal_alpha=None,final_alpha=None):
+    """Literal IntegratedOUChain<T,3> graph with two optional covariance exp roots."""
     tau,h,sigma2,alpha=map(P.rational,(tau,h,sigma2,alpha)); inv=1/tau; x=h*inv
-    marginal=regularize_psd(marginal_raw(tau,h,sigma2,alpha),marginal_psd,machine_epsilon=machine_epsilon)
+    small=_branch(x,small_branch)
+    ma=alpha if marginal_alpha is None else P.rational(marginal_alpha)
+    fa=alpha if final_alpha is None else P.rational(final_alpha)
+    if not 0<ma<=1 or not 0<fa<=1: raise ValueError('valid Qaxis covariance exp roots required')
+    marginal=regularize_psd(marginal_raw(tau,h,sigma2,ma,small_branch=small),marginal_psd,machine_epsilon=machine_epsilon)
     Q=M.zeros(4,4); idx=(0,1,3)
     for i in range(3):
         for j in range(3): Q[idx[i]][idx[j]]=marginal[i][j]
-    if abs(x) < F(1,100):
+    if small:
         i2=inv*inv; i3=i2*inv; i4=i3*inv; i5=i4*inv; i6=i5*inv
         h2=h*h; h3=h2*h; h4=h3*h; h5=h4*h; h6=h5*h; h7=h6*h; h8=h7*h; h9=h8*h
         qvS=sigma2*(F(1,15)*h5*inv-F(1,24)*h6*i2+F(41,2520)*h7*i3-F(7,1440)*h8*i4+F(109,90720)*h9*i5)
@@ -100,7 +140,7 @@ def qaxis4(tau,h,sigma2,alpha,*,marginal_psd:PSDWitness,final_psd:PSDWitness,mac
         qSS=sigma2*(F(1,126)*h7*inv-F(1,288)*h8*i2+F(13,12960)*h9*i3)
         qSa=sigma2*(F(1,12)*h4*inv-F(1,12)*h5*i2+F(2,45)*h6*i3-F(1,60)*h7*i4+F(11,2240)*h8*i5-F(73,60480)*h9*i6)
     else:
-        a=alpha; a2=a*a; qc=2*sigma2*inv; t4=tau**4; t5=tau**5; t6=tau**6; t7=tau**7; x2=x*x; x3=x2*x; x4=x3*x; x5=x4*x
+        a=fa; a2=a*a; qc=2*sigma2*inv; t4=tau**4; t5=tau**5; t6=tau**6; t7=tau**7; x2=x*x; x3=x2*x; x4=x3*x; x5=x4*x
         K02=t5*(-3*a2+3*a*(x2+4)+x3-3*x2+6*x-9)/6
         K12=t6*(a2/2+a*(-x2+2*x-2)/2+x4/8-x3/2+x2-x+F(1,2))
         K22=t7*(-a2/2+a*x2+2*a+x5/20-x4/4+F(2,3)*x3-x2+x-F(3,2))
@@ -114,10 +154,14 @@ def readiness():
     return {
       'Qaxis_small_branch_formula_materialized':True,
       'Qaxis_general_branch_formula_materialized':True,
+      'nested_marginal_and_final_formula_branch_can_be_forced_from_one_deployed_decision':True,
+      'nested_and_final_Qaxis_general_exp_roots_can_be_retained_separately':True,
       'nested_marginal_psd_hygiene_materialized':True,
       'final_Qaxis_psd_hygiene_materialized':True,
       'free_Qaxis_matrix_removed_by_this_lemma':True,
-      'alpha_exp_runtime_source_attached':False,
+      'LDLT_accept_branch_has_same_matrix_exact_inertia_guard':True,
+      'arbitrary_LDLT_accept_boolean_can_bypass_matrix_relation':False,
+      'Qaxis_covariance_exp_runtime_source_attached':False,
       'machine_epsilon_deployment_attached':False,
       'Eigen_LDLT_eigensolver_outcomes_attached':False,
       'nonfinite_replacement_attached':False,
