@@ -1,24 +1,24 @@
-"""Bind prediction coefficient roots to the same source-owning Live word.
+"""Bind shipping IMU coefficient roots to the same source-owning Live word.
 
 ``finite_source_bound_live_word`` owns the next physical transition, raw IMU
 packet, active TuneState-derived parameters and static runtime config. This
 layer removes independently injectable coefficient roots while retaining the
 actual shipping transcendental topology:
 
-* attitude angular rate is reconstructed from the exact raw packet and current
-  gyro-bias error;
-* OU h/tau is reconstructed from the exact source segment and carried active
-  tau; the distinct exp(-x) and expm1(-x) results remain arithmetic witnesses
-  of that same argument until binary32/libm correspondence is enclosed;
-* the independent-axis Q branch is reconstructed from carried Sigma_aw and its
-  regularization epsilon is fixed by Kalman3D_Wave_OU_III<float> to 2^-23;
-* residual accelerometer-bias OU ownership is the shipping core's fixed
-  tau_bacc_=5000 s and Q_bacc_=2.5e-7 I. H18 has phi_b=1 exactly. A21 retains
-  separate exp(-h/tau_b) and expm1(-2h/tau_b) arithmetic results.
+* attitude angular rate comes from the exact raw packet/current gyro-bias error;
+* OU h/tau comes from the source segment and carried TuneState; distinct
+  exp(-x) and expm1(-x) results remain same-argument arithmetic witnesses;
+* Qaxis Sigma_aw comes from TuneState and regularization epsilon is fixed by
+  the shipping ``Kalman3D_Wave_OU_III<float>`` instantiation to 2^-23;
+* residual BA tau/Q are the current shipping core defaults. H18 consumes no BA
+  transcendental; A21 retains distinct exp and expm1 results;
+* accelerometer temperature-model coefficient is the shipping core default
+  k_a=(0.002,0.002,0.002) at tempC_ref=35 C. The caller supplies only the
+  actual temperature input; it cannot replace k_a or lever-arm conditioning.
 
-No equality between separately rounded exp/expm1 calls is silently assumed.
-Their common mathematical arguments are source-owned here; their deployment
-error relation remains fail-closed. This is not a storage certificate.
+Temperature-history admissibility, transcendental correspondence, PSD solver
+outcomes and quantitative sensor forcing remain open. This is not storage or a
+stability certificate.
 """
 from __future__ import annotations
 from dataclasses import dataclass
@@ -35,6 +35,9 @@ SHIPPING_BA_TAU = F(5000)
 SHIPPING_BA_Q = tuple(tuple(F(1,4_000_000) if i == j else F(0)
                             for j in range(3)) for i in range(3))
 SHIPPING_FLOAT_EPSILON = F(1, 1 << 23)
+SHIPPING_TEMP_REF_C = F(35)
+SHIPPING_KA = (F(1,500), F(1,500), F(1,500))
+ZERO3 = (F(0),F(0),F(0))
 
 
 @dataclass(frozen=True)
@@ -58,6 +61,12 @@ def _bias_root(core, *, bias_phi=None, bias_em1_2=None):
         phi = F(1)
     return OU.BiasDecay(active, SHIPPING_BA_TAU, phi, SHIPPING_BA_Q,
                         em1_2=bias_em1_2)
+
+
+def _accel_conditioning(temperature_c):
+    """Current zero-lever shipping accelerometer model at one actual tempC."""
+    temp=SENSOR.R(temperature_c)
+    return SENSOR.AccelConditioning(temp-SHIPPING_TEMP_REF_C, SHIPPING_KA, ZERO3)
 
 
 def build(state: WORD.State, physical: SOURCE.QualifiedPhysicalSegment,
@@ -85,29 +94,27 @@ def build(state: WORD.State, physical: SOURCE.QualifiedPhysicalSegment,
     omega_hat = raw.required_bias_corrected_relation(core.z[3:6])
     angular = ATT.AngularRuntime(tuple(omega_hat), segment.h,
                                  full=angular_full, half=angular_half)
-
     active = state.live.live.live.active
     ou = OU.OUDecay(segment.h, active.tau, ou_alpha, em1=ou_em1)
-
     qaxis = PRED.QAxisBranch(False, active.Sigma_aw,
                              tuple(qaxis_marginal_psd), tuple(qaxis_final_psd),
                              SHIPPING_FLOAT_EPSILON)
     active.require_prediction(ou=ou, qaxis=qaxis)
-
     bias = _bias_root(core, bias_phi=bias_phi, bias_em1_2=bias_em1_2)
     return Roots(angular, ou, qaxis, bias)
 
 
 def imu_step(state: WORD.State, *, witness: SOURCE.StepWitness,
              segment, raw: SENSOR.RawImuSample, packet_id: str,
-             ou_alpha, ou_em1, bias_phi=None, bias_em1_2=None,
+             temperature_c, ou_alpha, ou_em1,
+             bias_phi=None, bias_em1_2=None,
              angular_full=None, angular_half=None,
              qaxis_marginal_psd, qaxis_final_psd,
              **dynamic):
-    """Execute one source-owning IMU edge with source-bound prediction roots."""
-    forbidden = {'angular','ou','qaxis','bias','machine_epsilon'} & set(dynamic)
+    """Execute one source-owning IMU edge with source-bound model roots."""
+    forbidden = {'angular','ou','qaxis','bias','machine_epsilon','accel_conditioning'} & set(dynamic)
     if forbidden:
-        raise TypeError('source-bound prediction roots cannot be overridden '+repr(sorted(forbidden)))
+        raise TypeError('source-bound IMU roots cannot be overridden '+repr(sorted(forbidden)))
     if not isinstance(state, WORD.State):
         raise TypeError('source-owning Live state required')
     if not isinstance(witness, SOURCE.StepWitness):
@@ -120,9 +127,11 @@ def imu_step(state: WORD.State, *, witness: SOURCE.StepWitness,
                   angular_full=angular_full, angular_half=angular_half,
                   qaxis_marginal_psd=qaxis_marginal_psd,
                   qaxis_final_psd=qaxis_final_psd)
+    conditioning=_accel_conditioning(temperature_c)
     return WORD.imu_step(state, witness=witness, segment=segment, raw=raw,
                          packet_id=packet_id, angular=roots.angular,
-                         ou=roots.ou, qaxis=roots.qaxis, bias=roots.bias, **dynamic)
+                         ou=roots.ou, qaxis=roots.qaxis, bias=roots.bias,
+                         accel_conditioning=conditioning, **dynamic)
 
 
 def readiness():
@@ -140,8 +149,12 @@ def readiness():
       'shipping_BA_hold_active_branch_derived_from_current_MEKF_mode': True,
       'held_H18_BA_phi_exactly_one_without_transcendental_witness': True,
       'active_A21_BA_exp_and_expm1_results_retained_separately': True,
-      'caller_cannot_override_prediction_roots': True,
+      'accelerometer_temperature_coefficient_bound_to_shipping_default': True,
+      'zero_lever_accelerometer_scope_enforced_at_source_bound_entry': True,
+      'temperature_is_explicit_per_sample_input_not_free_model_coefficient': True,
+      'caller_cannot_override_prediction_or_accel_model_roots': True,
       'sample_zero_origin_bridge_preserved': lower['sample_zero_startup_to_checked_outer_endpoint_bridge_closed'],
+      'temperature_history_admissibility_attached': False,
       'OU_exp_expm1_binary32_relation_closed': False,
       'BA_exp_expm1_binary32_relation_closed': False,
       'attitude_trig_arithmetic_deployment_closed': False,
