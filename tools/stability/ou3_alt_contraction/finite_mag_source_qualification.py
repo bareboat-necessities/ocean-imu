@@ -1,19 +1,26 @@
-"""Fail-closed magnetic source qualification guard for the ALT theorem.
+"""Deterministic magnetic source qualification for the ALT theorem.
 
-The finite startup magnetic graph now retains the exact source identity
+The finite startup magnetic graph retains the exact source identity
 
     m_raw_B = R_true B_W + b_HI + n_m.
 
-That is not yet a deterministic theorem source class.  The current canonical
-COMPLETE-BRMM/BIAS assumptions do not declare finite envelopes for the magnetic
-world field, body-fixed hard iron, or magnetometer residual.  This module makes
-that omission explicit: local finite identities may use the source graph, but a
-source-qualified finite master cannot consume it until named deterministic
-bounds are supplied by theorem/source assumptions.
+MAG-BMM150-DET-v1 is an engineering admission class for a commissioned
+BMM150 installation, not a Bosch guarantee for arbitrary installations:
 
-No numerical values are inferred from simulation, sensor datasheets, Rmag, or
-sample statistics here.  Measurement covariance is not a deterministic source
-bound.
+    20 uT <= ||B_W||_2 <= 75 uT,
+    ||(B_Wx,B_Wy)||_2 >= 15 uT,
+    ||b_HI||_2 <= 10 uT,
+    ||n_m||_2 <= 3 uT per accepted sample.
+
+The Earth-field interval encloses the NOAA/WMM surface total-field range with
+margin.  The hard-iron and residual limits are installation/source admission
+requirements: samples outside them are outside the theorem, even though they
+remain far inside the BMM150 electrical measurement range.  The horizontal
+lower bound is required for deterministic yaw observability; a total-field
+bound alone cannot prove north capture near a magnetic pole.
+
+Rmag remains a stochastic/model covariance and is never used as a deterministic
+source bound.
 """
 from __future__ import annotations
 from dataclasses import dataclass
@@ -25,19 +32,35 @@ from tools.stability.ou3_alt_contraction import finite_mag_startup_source as SOU
 
 def R(x): return M.rational(x)
 
+ASSUMPTION_ID='MAG-BMM150-DET-v1'
+DEFAULT_WORLD_FIELD_NORM_MIN=F(20)
+DEFAULT_WORLD_FIELD_NORM_MAX=F(75)
+DEFAULT_WORLD_FIELD_HORIZONTAL_MIN=F(15)
+DEFAULT_HARD_IRON_NORM_MAX=F(10)
+DEFAULT_RESIDUAL_NORM_MAX=F(3)
+
+
 @dataclass(frozen=True)
 class Envelope:
-    world_field_norm_max:F
-    hard_iron_norm_max:F
-    residual_norm_max:F
-    assumption_id:str
+    world_field_norm_min:F=DEFAULT_WORLD_FIELD_NORM_MIN
+    world_field_norm_max:F=DEFAULT_WORLD_FIELD_NORM_MAX
+    world_field_horizontal_min:F=DEFAULT_WORLD_FIELD_HORIZONTAL_MIN
+    hard_iron_norm_max:F=DEFAULT_HARD_IRON_NORM_MAX
+    residual_norm_max:F=DEFAULT_RESIDUAL_NORM_MAX
+    assumption_id:str=ASSUMPTION_ID
     def __post_init__(self):
-        for n in ('world_field_norm_max','hard_iron_norm_max','residual_norm_max'):
+        for n in ('world_field_norm_min','world_field_norm_max','world_field_horizontal_min',
+                  'hard_iron_norm_max','residual_norm_max'):
             v=R(getattr(self,n))
             if v<0: raise ValueError('nonnegative deterministic magnetic source envelope required')
             object.__setattr__(self,n,v)
+        if self.world_field_norm_min>self.world_field_norm_max:
+            raise ValueError('magnetic field lower bound cannot exceed upper bound')
+        if self.world_field_horizontal_min>self.world_field_norm_max:
+            raise ValueError('horizontal field lower bound cannot exceed total-field upper bound')
         if not isinstance(self.assumption_id,str) or not self.assumption_id:
             raise ValueError('named theorem/source assumption id required')
+
 
 @dataclass(frozen=True)
 class NormWitness:
@@ -48,6 +71,19 @@ class NormWitness:
         if n<0 or n*n!=M.dot(v,v): raise ValueError('exact vector norm witness required')
         object.__setattr__(self,'vector',v); object.__setattr__(self,'norm',n)
 
+
+@dataclass(frozen=True)
+class HorizontalNormWitness:
+    xy:tuple
+    norm:F
+    def __post_init__(self):
+        if len(self.xy)!=2: raise ValueError('two horizontal field components required')
+        xy=tuple(R(x) for x in self.xy); n=R(self.norm)
+        if n<0 or n*n!=xy[0]*xy[0]+xy[1]*xy[1]:
+            raise ValueError('exact horizontal-field norm witness required')
+        object.__setattr__(self,'xy',xy); object.__setattr__(self,'norm',n)
+
+
 @dataclass(frozen=True)
 class Qualification:
     sample:SOURCE.Sample
@@ -55,14 +91,31 @@ class Qualification:
     qualified:bool
 
 
-def qualify(sample:SOURCE.Sample,envelope:Envelope|None,*,field_norm:NormWitness|None=None,
+def default_envelope():
+    return Envelope()
+
+
+def qualify(sample:SOURCE.Sample,envelope:Envelope|None=None,*,field_norm:NormWitness|None=None,
+            horizontal_norm:HorizontalNormWitness|None=None,
             hard_iron_norm:NormWitness|None=None,residual_norm:NormWitness|None=None):
     if not isinstance(sample,SOURCE.Sample): raise TypeError('startup magnetic source sample required')
-    if envelope is None:
-        raise ValueError('magnetic source envelopes are undeclared; theorem source qualification must fail closed')
+    envelope=default_envelope() if envelope is None else envelope
     if not isinstance(envelope,Envelope): raise TypeError('magnetic source envelope required')
+    if envelope.assumption_id!=ASSUMPTION_ID:
+        raise ValueError('ALT magnetic source promotion requires MAG-BMM150-DET-v1')
+
+    if not isinstance(field_norm,NormWitness) or field_norm.vector!=tuple(sample.model.world_field):
+        raise ValueError('world field norm witness detached from same source sample')
+    if not (envelope.world_field_norm_min<=field_norm.norm<=envelope.world_field_norm_max):
+        raise ValueError('world field violates declared deterministic source envelope')
+
+    xy=tuple(sample.model.world_field[:2])
+    if not isinstance(horizontal_norm,HorizontalNormWitness) or horizontal_norm.xy!=xy:
+        raise ValueError('horizontal field norm witness detached from same source sample')
+    if horizontal_norm.norm<envelope.world_field_horizontal_min:
+        raise ValueError('horizontal field violates deterministic yaw-observability envelope')
+
     triples=(
-      (field_norm,sample.model.world_field,envelope.world_field_norm_max,'world field'),
       (hard_iron_norm,sample.model.hard_iron_body,envelope.hard_iron_norm_max,'hard iron'),
       (residual_norm,sample.residual_body,envelope.residual_norm_max,'mag residual'),
     )
@@ -77,6 +130,8 @@ def qualify(sample:SOURCE.Sample,envelope:Envelope|None,*,field_norm:NormWitness
 def assert_source_qualified(q:Qualification|None):
     if not isinstance(q,Qualification) or not q.qualified:
         raise ValueError('unqualified magnetic source cannot enter finite master/storage boundary')
+    if q.envelope.assumption_id!=ASSUMPTION_ID:
+        raise ValueError('wrong magnetic theorem-source assumption')
     return True
 
 
@@ -84,9 +139,10 @@ def readiness():
     return {
       'magnetic_source_identity_is_separate_from_source_envelope':True,
       'Rmag_is_not_used_as_deterministic_noise_bound':True,
-      'missing_magnetic_envelope_fails_closed':True,
-      'named_assumption_required_before_source_promotion':True,
-      'canonical_theorem_currently_declares_magnetic_envelope':False,
+      'named_BMM150_deterministic_envelope_declared':True,
+      'horizontal_yaw_observability_lower_bound_declared':True,
+      'canonical_theorem_currently_declares_magnetic_envelope':True,
+      'individual_magnetic_sample_can_be_source_qualified':True,
       'source_uniform_magnetic_word_qualified':False,
       'complete_word_finite_identity':False,
       'storage_search_allowed':False,
