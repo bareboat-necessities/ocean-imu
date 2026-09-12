@@ -1,9 +1,8 @@
 # BRMM stability proof handover
 
-This is the canonical handover for the continuation after PR #516. Read
-`AGENTS.md`, this file, and `docs/ou3-proof-research-state.md` before changing
-proof code. Start the next continuation from the latest `main` after #516 and
-open a new PR.
+This is the canonical handover for the non-ALT (BRMM) route. Read `AGENTS.md`,
+this file, and `docs/ou3-proof-research-state.md` before changing proof code.
+Start the next continuation from the latest `main` and open a new PR.
 
 ## Shipping/runtime invariants
 
@@ -105,20 +104,140 @@ with gate ratio `4.253919518541474`. The coupled `eta6/a_w` lower is
 Thus the eta6/a_w H18 information bottleneck is closed without changing the
 filter, source family, or 1e-18 gate.
 
+## Named magnetometer theorem classes
+
+The route carries two named magnetic classes with their own modules and no ALT
+dependency. Keep the value class and the call-cadence class separate.
+
+`MAG-BMM150-DET-v1` (`ou3_brmm_magnetic_source_envelope.py`) admits a
+commissioned installation with `20 <= ||B_W|| <= 75 uT`, horizontal field
+`>= 15 uT`, `||b_HI|| <= 5 uT` and `||n_m|| <= 2 uT` per theorem sample, for the
+exact identity `m_body = R_true B_W + b_HI + n_m`. It is an engineering source
+requirement, not a datasheet guarantee. `Rmag` is a model covariance and is
+never read as a deterministic bound.
+
+`MAG-CALL-SCHEDULE-v1` (`ou3_brmm_magnetic_call_schedule.py`) requires the first
+post-Live `updateMag()` call within 0.04 s and every later gap at most 0.04 s.
+That is 25 Hz, deliberately weaker than the sensor.
+
+What they close, at unchanged gates and with no filter change:
+
+- the declared magnetic PE band becomes a consequence. `||m_body||` lies in
+  `[13, 82] uT`, so `normal_live.magnetic_vector_norm_lower_uT = 10` and upper
+  `200` follow and the shipping `mag_init_min_mag_norm` guard clears
+  unconditionally;
+- the startup yaw *algebra*. At a supplied accumulation-frame excursion
+  `E = ||b_HI|| + ||n_m|| + 2 Bmax sin(delta/2)` and
+  `|sin(theta_yaw)| <= E/H_min`. At `delta <= 0.02` rad this is `E <= 8.5 uT`,
+  `|sin(theta_yaw)| <= 17/30`, `theta_yaw < 0.61` rad and a full attitude error
+  `< 0.63` rad `= 36.0962 deg`, inside the declared 45 deg
+  `initial_filter_entrance.attitude` set. No `1/sqrt(N)` statistical reduction
+  is used anywhere on this path;
+- the `H18 -> A21` release time **after north lock**: `<= 10.0 s`, by a case
+  split on whether the 250-count or the strict 1 s guard binds last.
+
+What they do not close:
+
+- universal per-sample admission at `max_sample_norm_ratio_from_mean = 0.35`
+  needs combined hard iron + residual `<= 7 Bmin/47 = 2.9787 uT` against the
+  declared `7 uT`;
+- the vector sine separation stays a declared PE hypothesis; it is not
+  derivable from this class;
+- eventual A21 under an arbitrary external `acc_bias_hold_`, and the
+  `H18 -> A21` joint24 covariance transport itself;
+- the release **from Live**. The counter-owning call sits behind
+  `if (mag_ref_set_ && stage_ == Stage::Live)`, so the admitted ungauged timeout
+  path never advances it. North lock is the shared unmet prerequisite of the
+  yaw gauge and the A21 release;
+- the *supply* for the yaw algebra. `tiltOnlyQuatFromBoatQuat_` strips the
+  estimator's yaw, not the vessel's, so the accumulation frame turns with the
+  boat and a legal heading excursion smears the mean. The parameter is the total
+  excursion `delta_tilt + delta_heading`, and nothing declared bounds the
+  heading part, so `DECLARED_SUPPLY_ENTRANCE_CLOSED` is false. Never charge a
+  heading excursion as tilt, and never read
+  `world_averaged_gravity_direction_error` as a total excursion.
+
+## Two-phase private Mahony certificate
+
+The single-level formulation was infeasible at the padded `8.8 m/s^2` envelope:
+with the seed angle taken from the source's own `asin(8.8/g) = 1.1137 rad`, seed
+containment needed `C >= 1.8540056` while the 87 deg chart allowed
+`C < 1.4912551`. The boundary flow still closed with margin `0.0357940`, so the
+formulation, not the enclosure, was at fault.
+
+Because `q` and `sup` in
+
+`Vdot = -sqrt(C) [ sqrt(C) q - 2 sup ]`
+
+are level-*independent*, inward flow is a lower bound on the level and holds on
+*every* level above `W_in = 2 sup_max/q_min`. The certificate therefore uses two
+nested levels of one better-conditioned metric `p=3, c=11`
+(`P=[[1,-3],[-3,130]]`, `det=121`):
+
+- seed `1.6707881129` <= outer `1.7689` < chart ceiling `1.8726722863`
+  (headroom `5.5414%`), outer margin `0.0262974`;
+- inner level `sqrt(C_in)=1`, margin `0.0134738`, `W_in = 0.8578833`;
+- capture rate `q_min/2 = 0.0193788 /s`, time constant `51.6029 s`.
+
+Certified tilt: all-time `84.7161 deg`, at the deployed 150 s horizon
+`58.2102 deg`, asymptotic `56.6779 deg`. The dependent chain closes again —
+binary32/discrete charge, frontend transition, `ou3_startup_timeout_capture`
+(branch margin `4.1379 deg`) and `ou3_p4_brmm_frontend_predecessor_invariant`.
+
+Keep the metric read from the continuous certificate, never hardcoded, and keep
+the first-order decrease at **one** factor of `sqrt(C)`.
+
+## The private observer cannot supply the magnetic gates
+
+The shipping accumulation frame is the private observer's own tilt
+(`tiltOnlyQuatFromBoatQuat_(attitudeReferenceQuat_())`) and the handoff seed is
+`boatQuatWithAbsoluteYaw_(q_proxy, pending_yaw_abs_rad_)`, so the proxy tilt
+drives both the gauge error and the seed tilt. Derived requirements, exact over
+the rationals:
+
+- `min_horizontal_fraction = 0.05` binds at `delta <= 0.0495289` rad
+  `= 2.8378 deg`;
+- non-vanishing north binds at `delta < 0.1067173` rad `= 6.1145 deg`;
+- certified all-time `84.7161 deg` (shortfall `29.8528x` / `13.8551x`) and
+  asymptotic `56.6779 deg` (`19.9725x` / `9.2695x`); the certified tilt alone
+  exceeds the declared 45 deg entrance by `1.8826x`, so no yaw gauge, however
+  accurate, repairs the entrance from this supply.
+
+The declared `world_averaged_gravity_direction_error = 0.02 rad` satisfies the
+binding requirement but is the low-passed world-gravity direction error, not the
+private observer's tilt error. Do not identify the two.
+
+This is a dead end for the whole route, not just for a metric choice. The
+certificate quantifies over the sector value `s` as an independent parameter, so
+its conclusion must hold for `s=1`, where the deployed gains give
+
+`theta/r = -(0.01 + 0.1 j w)/(0.01 s - w^2 + 0.1 s j w)`.
+
+An admitted primitive-bounded sinusoid peaks *inside* the declared band, at
+`0.0186 Hz` against `[0.018, 0.88] Hz`, contributing `0.14678877` rad; an
+admitted DC mean chord superposes `0.05` rad. So no metric, level or subdivision
+depth can certify a tilt below `0.19678877 rad = 11.2752 deg` — `3.9732x` the
+binding requirement and `1.8440x` north capture. Do not retry a static quadratic
+metric for the magnetic gates.
+
 ## Fail-closed state and next work
 
 `P4_PASS=false` and `P5_MAY_START=false`. Do not infer theorem closure from the
-H18 information lemma or green CI.
+H18 information lemma, the magnetic or startup certificates, or green CI.
 
 Immediate open items for the next PR are:
 
-1. Reconcile the current metric-memory/PE domain consistency failure:
-   `declared PE does not refine vector certificate` in
-   `ou3_brmm_riccati_tube.py::_declared_vector_alpha6`. Treat it as a proof
-   representation/domain issue until evidence shows otherwise.
-2. Requalify the actual private Mahony/proxy startup invariant for the padded
-   `||a_wave|| <= 8.8 m/s^2` family and preserve both measured-period takeover
-   and prior-frequency timeout paths.
+1. Attempt the tilt certificate with a frequency-dependent multiplier/IQC on the
+   primitive channel and measure the distance to the `11.2752 deg` floor. The
+   existing `ou3_p4_affine_hard_tube_iqc.py` and
+   `ou3_brmm_acceleration_moment_iqc.py` carry that machinery.
+2. Decide the magnetic side: narrow `MAG-BMM150-DET-v1` to a commissioned band
+   that forces the gates at the achieved tilt (`<= 55 uT` total needs
+   `>= 21.4462 uT` horizontal at the floor; all four tabulated rows in the
+   research state are feasible), or tighten the forcing qualification from the
+   COMPLETE-BRMM spectral support. Then close the ungauged 150 s timeout branch:
+   `ready_by_timeout` does not require `north_ready`, so that handoff still
+   takes `proxy_handoff_yaw_sigma_free_rad` with no yaw gauge at all.
 3. Complete same-history physical source attachment through frontend/tuner and
    actual P/H/R/K lineage for every H18/A21 word.
 4. Close downstream H18/A21 prior-free and finite-bias composition for
@@ -130,7 +249,8 @@ Immediate open items for the next PR are:
    rejected/not-due and tuner/scheduler transitions.
 7. Prove first-exit/domain retention over a physics-compatible working tube,
    determine the largest rigorously certifiable P4 basin, then prove finite H18
-   capture and H18->A21 transport.
+   capture and the H18->A21 joint24 covariance transport; only its release
+   timing is closed.
 8. Close deployment finite-precision enclosure and compose the indefinite
    end-to-end theorem.
 

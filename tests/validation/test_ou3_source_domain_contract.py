@@ -29,7 +29,12 @@ class SourceDomainContractTests(unittest.TestCase):
  def test_contract_names_every_hybrid_transition_required_for_deployment(self):
   d=mod.build(mod.DEFAULT_HEADER); self.assertEqual(set(d["hybrid_obligations"]),{"startup_handoff","held_to_active","magnetic_lock","magnetic_regauge_refinement","tilt_reset","tilt_relock","cooldown_reentry","periodic_aw_covariance_sync"}); self.assertEqual(d["periodic_aw_covariance_sync_proof"]["required_mode"],"PSD_NONEXPANSIVE")
  def test_physical_height_period_coupling_remains_fail_closed(self):
-  d=brmm_phys.build(); self.assertEqual(brmm_phys.validate(d),[]); self.assertTrue(d["three_partition_contract"]["independent_H_r_and_T_p_rectangular_extrema_forbidden"]); self.assertEqual(d["repository_total_Hs_upper_m"],8.5); self.assertFalse(d["left_language_inclusion_closed"])
+  # The total Hs cap is the declared padded deployment envelope, read from the
+  # domain rather than pinned to the unpadded 8.5 m reference sea, so the
+  # assertion cannot fall behind the next outward padding.
+  import json
+  expected=float(json.loads(brmm_phys.DEFAULT_DOMAIN.read_text(encoding="utf-8"))["initial_filter_entrance"]["position"]["significant_wave_height_Hs_upper_m"])
+  d=brmm_phys.build(); self.assertEqual(brmm_phys.validate(d),[]); self.assertTrue(d["three_partition_contract"]["independent_H_r_and_T_p_rectangular_extrema_forbidden"]); self.assertEqual(d["repository_total_Hs_upper_m"],expected); self.assertGreaterEqual(expected,9.35); self.assertFalse(d["left_language_inclusion_closed"])
  def test_cartesian_sea_x_rao_domain_is_forbidden_by_source_semantics_before_p1(self):
   d=brmm_p1.build(); self.assertEqual(brmm_p1.validate(d),[]); self.assertFalse(d["cartesian_product_refuted_by_analytical_witness"]); self.assertFalse(d["cartesian_product_refutation_required_for_canonical_BRMM"]); self.assertTrue(d["coupled_BRMM_domain_required"]); self.assertIsNone(d["independent_cartesian_sea_x_RAO_domain_is_P1_sound"]); self.assertTrue(d["coupled_domain_contract"]["sea_and_RAO_parameters_may_not_be_selected_independently"]); self.assertFalse(d["finite_window_realization_certificate_closed"]); self.assertFalse(d["L_actual_sea_subset_Lhat_BRMM_closed"])
  def test_wave_period_leak_subtraction_identity_stays_source_bound(self):

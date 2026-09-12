@@ -114,7 +114,13 @@ jobs:
           assert c['same_physical_motion_drives_translation_and_rotation'] is True
           assert c['only_same_history_BRMM_realization_may_generate_P3_words'] is True
           assert c['moment_or_probability_bound_may_not_generate_P3_word'] is True
-          assert c['pathwise_non_gravitational_cog_acceleration_norm_upper_mps2'] == 8.0
+          # The pathwise cap comes from the operating domain, so the assertion
+          # tracks the declared padded envelope rather than pinning the retired
+          # 8.0 m/s^2 surface.
+          _declared=json.load(open('tools/stability/ou3_proof_operating_domain.json'))['normal_live']['non_gravitational_cog_acceleration_norm_upper_mps2']
+          assert c['pathwise_non_gravitational_cog_acceleration_norm_upper_mps2'] == _declared, (
+              c['pathwise_non_gravitational_cog_acceleration_norm_upper_mps2'], _declared)
+          assert _declared >= 8.8
           s=d['stochastic_forcing_corollary']
           assert s['used_to_generate_P3_source_words'] is False
           assert s['used_to_prune_homogeneous_P3_family'] is False

@@ -172,7 +172,12 @@ def validate(d: dict) -> list[str]:
         if d.get(key) is not True: failures.append(f"{key} is not true")
     for key in ("historical_4mps2_force_shell_used","ideal_inverse_sqrt_substituted","compiler_reassociation_or_FMA_closed","P3_promoted"):
         if d.get(key) is not False: failures.append(f"{key} is not false")
-    if float(d.get('normalization_shell_checks',{}).get('declared_non_gravitational_acceleration_cap_mps2',0))!=8.0: failures.append('physical force shell is not for 8 m/s^2')
+    # The cap is read from the operating domain by _physical_force_norm_bounds,
+    # so the check must track the declared padded envelope rather than pin the
+    # retired 8.0 m/s^2 surface.
+    declared=float(json.loads(DOMAIN.read_text(encoding='utf-8'))['normal_live']['non_gravitational_cog_acceleration_norm_upper_mps2'])
+    if float(d.get('normalization_shell_checks',{}).get('declared_non_gravitational_acceleration_cap_mps2',0))!=declared:
+        failures.append(f'physical force shell is not for the declared {declared} m/s^2 cap')
     return failures
 
 

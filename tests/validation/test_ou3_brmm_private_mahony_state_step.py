@@ -77,6 +77,7 @@ class BrmmPrivateMahonyStateStepTest(unittest.TestCase):
         self.assertFalse(d["complete_BRMM_family_materialized_here"])
         self.assertFalse(d["P3_promoted"])
 
+
     def test_point_step_is_finite_but_cannot_promote(self):
         d = mod.build()
         self.assertTrue(d["smoke"]["finite"])

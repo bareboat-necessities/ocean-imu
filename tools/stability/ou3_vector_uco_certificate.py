@@ -12,7 +12,14 @@ restricted to the following *operating-envelope hypothesis*:
 
 * each proof packet has nonzero specific-force and magnetic vectors;
 * their sine separation is at least 0.01 (about 0.57 deg);
-* body rate over the two-packet interval is at most 30 deg/s.
+* body rate over the two-packet interval is at most the padded COMPLETE-BRMM
+  ceiling of 35 deg/s.
+
+The body-rate hypothesis is bound to
+``ou3_brmm_complete_physical_envelope.BODY_RATE_NORM_MAX_DEG_S`` so that it
+cannot silently fall behind the padded physical envelope again.  It previously
+carried the unpadded 30 deg/s reference value, which made every declared
+COMPLETE-BRMM PE domain fail to refine this certificate.
 
 The norm floor is only 1e-3 in physical units.  The magnetic value is no stronger
 than the wrapper's own ``mag_init_min_mag_norm`` guard, and the acceleration
@@ -49,6 +56,7 @@ import re
 # Imported for its side effect: the contract module validates the source
 # domain at import time.
 import ou3_source_domain_contract as SOURCE  # noqa: F401
+import ou3_brmm_complete_physical_envelope as ENVELOPE
 
 REPO = Path(__file__).resolve().parents[2]
 WRAPPER = REPO / "src" / "kalman_ou_iii" / "SeaStateFusionFilter_OU_III.h"
@@ -61,7 +69,10 @@ SCHEMA = 1
 PE = {
     "specific_force_norm_lower_mps2": 1.0e-3,
     "vector_sine_separation_lower": 1.0e-2,
-    "body_rate_norm_upper_deg_s": 30.0,
+    # The padded COMPLETE-BRMM body-rate ceiling, not the unpadded 30 deg/s
+    # reference: a declared source domain may not exceed this certificate's own
+    # hypothesis, so the hypothesis must admit the whole padded family.
+    "body_rate_norm_upper_deg_s": ENVELOPE.BODY_RATE_NORM_MAX_DEG_S,
     "gyro_bias_time_scale_s": 1.0,
 }
 
