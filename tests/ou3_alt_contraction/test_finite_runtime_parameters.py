@@ -34,6 +34,21 @@ class Tests(unittest.TestCase):
         active=committed(); self.assertTrue(active.require_scheduler(PP.Scheduler(active.pseudo_period,0)))
         with self.assertRaises(ValueError): active.require_scheduler(PP.Scheduler(active.pseudo_period+1,0))
 
+    def test_period_retarget_preserves_elapsed_credit_below_new_deadline(self):
+        active=committed(); old=PP.Scheduler(2,F(1,3),F(1,1000))
+        new=R.retarget_scheduler(active,old)
+        self.assertEqual(new.period,active.pseudo_period); self.assertEqual(new.elapsed,F(1,3)); self.assertEqual(new.tolerance,F(1,1000))
+
+    def test_overdue_retarget_requires_explicit_nextafter_witness(self):
+        active=committed(); old=PP.Scheduler(2,F(3,2))
+        # committed() has new period 3/2, so equality is already due/overdue.
+        with self.assertRaisesRegex(ValueError,'nextafter witness'):
+            R.retarget_scheduler(active,old)
+        parked=R.retarget_scheduler(active,old,park=R.NextafterParkWitness(F(149,100)))
+        self.assertEqual(parked.period,F(3,2)); self.assertEqual(parked.elapsed,F(149,100))
+        with self.assertRaises(ValueError):
+            R.retarget_scheduler(active,old,park=R.NextafterParkWitness(F(3,2)))
+
     def test_live_commit_forces_same_RS(self):
         active=committed(True); self.assertTrue(active.require_RS(active.R_S))
         with self.assertRaises(ValueError): active.require_RS(M.eye(3))
@@ -41,6 +56,6 @@ class Tests(unittest.TestCase):
         with self.assertRaises(ValueError): cold.require_RS(M.eye(3))
 
     def test_readiness_fail_closed(self):
-        r=R.readiness(); self.assertTrue(r['tuner_commit_forces_independent_Qaxis_branch']); self.assertTrue(r['committed_live_RS_to_S_measurement']); self.assertFalse(r['TuneState_frontend_history_attached']); self.assertFalse(r['complete_word_finite_identity']); self.assertFalse(r['ALT_LIVE_PASS'])
+        r=R.readiness(); self.assertTrue(r['tuner_commit_forces_independent_Qaxis_branch']); self.assertTrue(r['committed_live_RS_to_S_measurement']); self.assertTrue(r['period_change_preserves_subdeadline_elapsed_credit']); self.assertFalse(r['nextafter_binary32_ancestry_attached']); self.assertFalse(r['TuneState_frontend_history_attached']); self.assertFalse(r['complete_word_finite_identity']); self.assertFalse(r['ALT_LIVE_PASS'])
 
 if __name__=='__main__': unittest.main()
