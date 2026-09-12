@@ -43,13 +43,13 @@ class Tests(unittest.TestCase):
 
     def test_first_IMU_must_start_at_persistent_origin(self):
         t=begin(); witness,segment,raw,r,b,dynamic=IBASE.operands(t.live)
-        wrong=replace(segment,before=replace(segment.before,position=(1,0,0)))
-        rr=ABRMM.RestrictedSegment(t.live.admitted_history,witness.ordinal,wrong)
-        # BIAS construction may reject before interleave if recurrence breaks; use
-        # the ordinary BIAS restriction only to prove BRMM origin is checked first.
-        with self.assertRaisesRegex(ValueError,'admitted t_L origin'):
-            X.imu_step(t,restricted=rr,bias_restricted=b,witness=witness,raw=raw,
-                       packet_id='bad-origin',**PBASE.root_args(),**dynamic)
+        # Mutating the physical predecessor alone now violates the lower-level
+        # moment/bias same-history recurrence.  That is the earliest valid
+        # rejection point and is stronger than waiting for the interleave origin guard.
+        with self.assertRaisesRegex(ValueError,'physical moment/bias recurrence is not one history'):
+            replace(segment,before=replace(segment.before,position=(1,0,0)))
+        self.assertEqual(t.imu_steps,0)
+        self.assertEqual(t.origin.endpoint,segment.before)
 
     def test_event_record_rejects_non_IMU_source_advance(self):
         with self.assertRaisesRegex(ValueError,'ordinal accounting'):
