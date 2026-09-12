@@ -97,7 +97,7 @@ def readiness():
       'mag_physical_world_reference_residual_identity':True,
       'same_mag_packet_supplies_observation_and_residual':True,
       'Rmag_diagonal_from_configured_sigma_only':True,
-      'mag_norm_gt_1e6_threshold_inverse_square_materialized':True,
+      'mag_norm_gt_1e_minus_6_threshold_squared_materialized':True,
       'safe_LDLT_accept_retry_reject_reused':True,
       'mag_world_reference_startup_ancestry_attached':False,
       'mag_sigma_constructor_runtime_ancestry_attached':False,
