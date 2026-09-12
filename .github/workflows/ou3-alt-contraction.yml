@@ -111,10 +111,10 @@ jobs:
             test_finite_tuner_commit test_finite_tuner_boundary_commit \
             test_finite_runtime_parameters test_finite_active_runtime_word \
             test_finite_live_imu_prefix test_finite_tilt_watchdog \
-            test_finite_live_tilt_prefix test_finite_mag_bias_gate \
-            test_finite_mag_runtime test_finite_mag_reference_runtime \
-            test_finite_mag_reference_events test_finite_mag_accumulator \
-            test_finite_mag_gauge_fix test_finite_mag_tilt_frame \
+            test_finite_tilt_reset_runtime test_finite_live_tilt_prefix \
+            test_finite_mag_bias_gate test_finite_mag_runtime \
+            test_finite_mag_reference_runtime test_finite_mag_reference_events \
+            test_finite_mag_accumulator test_finite_mag_gauge_fix test_finite_mag_tilt_frame \
             test_finite_mag_tuner_default test_finite_mag_gravity_gate \
             test_finite_mag_startup_prefix test_finite_mag_startup_source \
             test_finite_mag_startup_physical_bridge test_finite_mag_startup_word \
