@@ -3,8 +3,12 @@ from pathlib import Path
 import sys, unittest
 ROOT=Path(__file__).resolve().parents[2]; sys.path.insert(0,str(ROOT))
 
+from tools.stability.ou3_alt_contraction import bias_families as BIAS
 from tools.stability.ou3_alt_contraction import finite_source_continuation as X
 from tools.stability.ou3_alt_contraction import finite_physical_prediction as P
+
+BIAS0=next(c for c in BIAS.contracts() if c.name=='BIAS0')
+VALID_PHI=F(str(BIAS0.phi_true.lo))
 
 
 def kin(t, *, live=F(0), beta=(0,0,0)):
@@ -12,7 +16,7 @@ def kin(t, *, live=F(0), beta=(0,0,0)):
                                 (0,0,0),(0,0,0),beta,F(live))
 
 
-def seg(k, *, phi=F(1), driver=(0,0,0), beta0=(0,0,0), beta1=None):
+def seg(k, *, phi=VALID_PHI, driver=(0,0,0), beta0=(0,0,0), beta1=None):
     t0=F(k-1,200); t1=F(k,200)
     if beta1 is None:
         beta1=tuple(F(phi)*F(beta0[i])+F(driver[i]) for i in range(3))
@@ -40,8 +44,12 @@ class Tests(unittest.TestCase):
 
     def test_bias_family_phi_is_not_free_per_segment(self):
         r=root()
+        # BIAS0 is a relaxing physical family. phi=1 is therefore outside its
+        # certified interval and must not be substituted merely because the
+        # zero-beta recurrence would remain algebraically consistent.
+        self.assertLess(BIAS0.phi_true.hi,1.0)
         with self.assertRaises(ValueError):
-            X.QualifiedPhysicalSegment(r,wit(1,'root','c1','p0','p1'),seg(1,phi=F(1,2)))
+            X.QualifiedPhysicalSegment(r,wit(1,'root','c1','p0','p1'),seg(1,phi=F(1)))
 
     def test_source_cell_and_primitive_chains_are_hard(self):
         r=root(); c=X.begin(r)
@@ -59,7 +67,7 @@ class Tests(unittest.TestCase):
                                (0,0,0),(0,0,0),(0,0,0),0)
         a=P.PhysicalKinematics(F(2,200),(0,1,0,0),(0,0,0),(0,0,0),(0,0,0),
                                (0,0,0),(0,0,0),(0,0,0),0)
-        s2=P.PhysicalSegment(b,a,(0,0,0),(0,0,0),(0,0,0),1,(0,0,0))
+        s2=P.PhysicalSegment(b,a,(0,0,0),(0,0,0),(0,0,0),VALID_PHI,(0,0,0))
         q2=X.QualifiedPhysicalSegment(r,wit(2,'c1','c2','p1','p2'),s2)
         with self.assertRaises(ValueError): X.Continuation(r,(q1,q2))
 
