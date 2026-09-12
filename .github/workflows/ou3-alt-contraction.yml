@@ -74,6 +74,15 @@ jobs:
       - uses: actions/checkout@v6
         with:
           persist-credentials: false
+      - name: Retain exact source snapshot for independent correspondence checks
+        run: |
+          git archive --format=tar.gz --output=/tmp/ou3-alt-source.tar.gz HEAD
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ou3-alt-source-${{ github.run_id }}
+          path: /tmp/ou3-alt-source.tar.gz
+          if-no-files-found: error
+          retention-days: 14
       - name: Install correspondence-test dependencies
         run: |
           sudo apt-get update
