@@ -25,6 +25,7 @@ from tools.stability.ou3_alt_contraction import finite_sensor_source_runtime as 
 from tools.stability.ou3_alt_contraction import finite_source_bound_imu_forcing as IMU
 from tools.stability.ou3_alt_contraction import finite_source_bound_mag_forcing as MAG
 from tools.stability.ou3_alt_contraction import finite_mag_call_schedule as MAGSCHEDULE
+from tools.stability.ou3_alt_contraction import finite_wrapper_clock_binary32 as CLOCK
 
 
 @dataclass(frozen=True)
@@ -119,7 +120,7 @@ def set_hold(state:State, *, hold):
 
 def readiness():
     admitted=ADMITTED.readiness(); origin=ORIGIN.readiness(); imu=IMU.readiness(); mag=MAG.readiness()
-    counter=MAGSCHEDULE.counter_lifetime()
+    counter=MAGSCHEDULE.counter_lifetime(); clock=CLOCK.readiness()
     return {
       'admitted_COMPLETE_BRMM_history_and_strong_runtime_joined':True,
       'admitted_BIAS_history_and_strong_runtime_joined':True,
@@ -138,10 +139,14 @@ def readiness():
       'bounded_input_history_qualified':False,
       'one_radian_attitude_guard_closed_for_every_admitted_prefix':False,
       'deployment_exp_expm1_trig_Eigen_LDLT_closed':False,
+      'canonical_5ms_wrapper_clock_prefix_binary32_closed':clock['canonical_5ms_wrapper_clock_prefix_binary32_closed'],
+      'wrapper_clock_arbitrary_dt_closed':clock['arbitrary_dt_wrapper_clock_closed'],
+      'wrapper_clock_indefinite_lifetime_closed':clock['indefinite_wrapper_clock_lifetime_closed'],
       'deployment_roundoff_supply_attached':False,
       'mag_schedule_supplies_uniform_call_count_upper':counter.uniform_call_count_upper is not None,
       'shipping_signed_mag_counter_lifetime_closed':counter.no_signed_overflow_proved,
       'complete_600_step_shipping_word_composed_from_restrictions':False,
+      'successive_600_step_words_tiled_without_restarting_Live_origin':False,
       'storage_search_allowed':False,
       'ALT_LIVE_PASS':False,
       'ALT_STARTUP_PASS':False,
