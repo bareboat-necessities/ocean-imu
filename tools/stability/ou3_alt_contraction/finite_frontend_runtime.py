@@ -1,13 +1,16 @@
 """Shared measurement-only frontend composition for the OU-III ALT word.
 
 Shipping computes one private-Mahony vertical acceleration and reuses it for the
-WavePeriodEstimator, the adaptive sigma band, and the tracker-input LPF.  This
-module makes those aliases structural: callers cannot supply three different
-vertical samples at the composed entry points.
+adaptive sigma band, tracker-input LPF, and—later in the same sample—the WPE.
+The ordering matters: sigma/tuner reads a read-only view of the WPE state carried
+into the sample, while ``wave_period_.update`` consumes the current vertical
+sample only after tuning and direction work.  This module makes both the shared
+vertical alias and that causal split structural.
 
 The dominant-frequency tracker itself remains an explicit runtime output witness
-used only by StillnessAdapter/direction.  Its algorithmic recurrence and all
-frontend transcendental binary32 evaluations remain later obligations.
+only for the full StillnessAdapter/direction helper.  The stability-side tuner
+projection removes it exactly elsewhere.  Frontend transcendental binary32
+evaluations remain later obligations.
 """
 from __future__ import annotations
 from dataclasses import dataclass
@@ -66,13 +69,29 @@ def tracker_lpf_step(s:LPFState,vertical:V.Result,*,decay:LPFDecayWitness):
     return LPFResult(LPFState(y,True),y)
 
 
+def wpe_view(wpe_state:W.WPEState,*,current_period=None,current_frequency=None):
+    """Tuner-visible WPE view BEFORE this sample advances WPE."""
+    if not isinstance(wpe_state,W.WPEState): raise TypeError('carried WPE state required')
+    if wpe_state.usable_period:
+        return B.wpe_frequency_view(wpe_state,period=current_period,frequency=current_frequency)
+    return B.wpe_frequency_view(wpe_state)
+
+
 def wpe_step_from_vertical(wpe_state:W.WPEState,wpe_cfg:W.WPEConfig,vertical:V.Result,**kwargs):
     if not isinstance(vertical,V.Result): raise TypeError('private vertical successor required')
     if 'vertical_accel' in kwargs: raise TypeError('vertical acceleration is owned by private observer')
     return W.update(wpe_state,wpe_cfg,vertical_accel=vertical.vertical_accel,**kwargs)
 
 
+def band_step_from_vertical_view(band:B.BandState,stats:B.StatsState,view:B.WPEFrequencyView,vertical:V.Result,**kwargs):
+    if not isinstance(vertical,V.Result): raise TypeError('private vertical successor required')
+    if not isinstance(view,B.WPEFrequencyView): raise TypeError('pre-update WPE tuner view required')
+    if 'vertical_accel' in kwargs: raise TypeError('vertical acceleration is owned by private observer')
+    return B.frontend_step_from_view(band,stats,view,vertical_accel=vertical.vertical_accel,**kwargs)
+
+
 def band_step_from_vertical(band:B.BandState,stats:B.StatsState,wpe:W.UpdateResult,vertical:V.Result,**kwargs):
+    """Legacy isolated helper; shipping temporal word uses *_from_vertical_view."""
     if not isinstance(vertical,V.Result): raise TypeError('private vertical successor required')
     if 'vertical_accel' in kwargs: raise TypeError('vertical acceleration is owned by private observer')
     return B.frontend_step(band,stats,wpe,vertical_accel=vertical.vertical_accel,**kwargs)
@@ -88,7 +107,9 @@ def stillness_step_from_vertical(still:S.State,still_cfg:S.Config,lpf:LPFResult,
 
 def readiness():
     return {
-      'one_private_vertical_output_shared_by_WPE_and_sigma_band':True,
+      'one_private_vertical_output_shared_by_tuner_LPF_and_later_WPE':True,
+      'tuner_uses_preupdate_WPE_state':True,
+      'current_vertical_advances_WPE_only_after_tuner_entry':True,
       'same_private_vertical_output_drives_tracker_input_LPF':True,
       'tracker_input_LPF_materialized':True,
       'tracker_output_algorithm_attached':False,
