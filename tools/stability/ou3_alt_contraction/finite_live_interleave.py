@@ -6,12 +6,13 @@ The next IMU consumes that exact successor, including all 21 covariance rows.
 No covariance, reference, physical origin, model or tuner is restarted.
 
 The IMU edge uses the theorem-facing tilt-reset composer: no caller may choose a
-free watchdog angle or final preserve-yaw reset quaternion.  For theorem-word
-assembly, ``imu_step_source_qualified`` additionally requires the exact physical
-segment to carry one persistent O^601_BRMM/BIAS ancestry token.  The lower-level
-``imu_step`` remains a conditional finite-algebra primitive and is not itself
-source admission. Finite-prefix timing checks are not qualification of an
-infinite schedule. This module cannot enable storage by itself.
+free watchdog angle or final preserve-yaw reset quaternion. For theorem-word
+assembly, ``imu_step_source_qualified`` requires one object containing BOTH the
+exact physical segment and the raw IMU packet, owned by the same persistent
+O^601_BRMM/BIAS source root and sensor-disturbance histories. The lower-level
+``imu_step`` remains conditional finite algebra and is not source admission.
+Finite-prefix timing checks are not qualification of an infinite schedule. This
+module cannot enable storage by itself.
 """
 from __future__ import annotations
 from dataclasses import dataclass, replace
@@ -107,25 +108,26 @@ def imu_step(state: State, raw, segment, **kwargs):
     return Result(State(out.state, state.magnetic, state.clock, state.schedule), out)
 
 
-def imu_step_source_qualified(state: State, raw, qualified: SOURCE.QualifiedPhysicalSegment, **kwargs):
-    """Theorem-facing IMU edge bound to one persistent BRMM/BIAS continuation.
+def imu_step_source_qualified(state: State, packet: SOURCE.QualifiedRawImuSample, **kwargs):
+    """Theorem-facing IMU edge with physical and sensor ancestry in one object.
 
     This closes the distinction between an arbitrary algebraically consistent
-    ``PhysicalSegment`` and a segment carrying the retained source ancestry. It
-    still does not prove that all runtime/tuner coefficient-product graphs are
-    source-uniformly generated from that continuation; that remains the finite
-    master blocker.
+    ``PhysicalSegment``/raw packet pair and an event carrying the retained
+    COMPLETE-BRMM/BIAS plus persistent sensor-residual ancestry. It still does
+    not prove quantitative residual ISS bounds or that all tuner/runtime
+    coefficient-product graphs are source-uniformly generated from this
+    continuation; those remain finite-master blockers.
     """
-    if not isinstance(state,State) or not isinstance(qualified,SOURCE.QualifiedPhysicalSegment):
-        raise TypeError('interleaved state and source-qualified physical segment required')
-    core=state.live.live.mekf
+    if not isinstance(state,State) or not isinstance(packet,SOURCE.QualifiedRawImuSample):
+        raise TypeError('interleaved state and source-qualified raw IMU packet required')
+    qualified=packet.physical; core=state.live.live.mekf
     if qualified.root.history_id != core.reference.history_id:
         raise ValueError('qualified COMPLETE-BRMM history detached from current Live state')
     if qualified.root.live_origin != core.reference.live_origin:
         raise ValueError('qualified source restarted the one-time Live S origin')
     if qualified.segment.before != core.reference:
         raise ValueError('qualified source segment does not start at current physical endpoint')
-    return imu_step(state,raw,qualified.segment,**kwargs)
+    return imu_step(state,packet.raw,qualified.segment,**kwargs)
 
 
 def mag_step(state: State, **kwargs):
@@ -161,11 +163,14 @@ def readiness():
         'interleaved_IMU_uses_same_operand_tilt_reset_entry': True,
         'free_watchdog_angle_and_reset_quaternion_forbidden': True,
         'source_qualified_finite_IMU_entry_available': True,
+        'source_qualified_raw_IMU_packet_owned_by_same_physical_step': src['raw_IMU_packet_bound_to_same_qualified_physical_predecessor'],
+        'persistent_sensor_residual_histories_required': src['persistent_gyro_and_accel_residual_history_tokens_required'],
         'correlated_COMPLETE_BRMM_left_inclusion_consumed': src['correlated_COMPLETE_BRMM_left_inclusion_consumed'],
         'persistent_BIAS_parameter_token_available': src['one_bias_family_parameter_token_over_word_required'],
         'external_hold_and_count_release_feed_next_IMU_mode': True,
         'same_history_every_represented_event_successor_exposed': True,
         'finite_prefix_mag_call_deadlines_checked': True,
+        'quantitative_sensor_residual_ISS_envelope_attached': False,
         'finite_estimator_coefficients_bound_to_same_source_continuation': False,
         'finite_magnetic_source_bound_to_same_COMPLETE_BRMM_history': False,
         'infinite_schedule_qualified_by_finite_prefix': False,
