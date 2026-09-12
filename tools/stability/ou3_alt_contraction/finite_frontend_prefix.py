@@ -1,13 +1,13 @@
 """Finite same-history raw-IMU -> frontend prefix for ALT.
 
-This is the first temporal composer for the measurement-only source side.  One
-``RawImuSample`` owns the body-frame gyro/accelerometer packet.  The same packet
+This is the first temporal composer for the measurement-only source side. One
+``RawImuSample`` owns the body-frame gyro/accelerometer packet. The same packet
 feeds the private Mahony vertical observer; that one vertical successor then
-feeds WPE, adaptive sigma-band/statistics, and tracker LPF.  Stillness consumes
+feeds WPE, adaptive sigma-band/statistics, and tracker LPF. Stillness consumes
 only the tracker LPF successor and the declared tracker-output witness.
 
 No source bound, tracker algorithm, transcendental binary32 result, or stability
-property is invented here.  Those remain explicit obligations.  The point of
+property is invented here. Those remain explicit obligations. The point of
 this module is causality/ancestry: callers cannot choose separate acceleration
 histories for WPE and sigma tuning or separate raw packets for Mahony and MEKF.
 """
@@ -69,7 +69,7 @@ def step(state:State, sample:RAW.RawImuSample, *, dt,
          wpe_period_witness:WPE.PeriodWitness|None=None,
          wpe_log_witness:WPE.LogUpdateWitness|None=None,
          wpe_current_period=None, wpe_current_frequency=None,
-         wpe_post_period=None, wpe_post_frequency=None,
+         wpe_post_output:WPE.CanonicalOutputWitness|None=None,
          band_cfg:BAND.BandConfig=None, stats_cfg:BAND.StatsConfig=None,
          band_decay:BAND.BandDecayWitness=None,
          variance_decay:BAND.VarianceDecayWitness=None,
@@ -93,8 +93,7 @@ def step(state:State, sample:RAW.RawImuSample, *, dt,
         state.wpe,wpe_cfg,vertical,dt=dt,decay=wpe_decay,
         moment_decay=wpe_moment_decay,period_witness=wpe_period_witness,
         log_witness=wpe_log_witness,current_period=wpe_current_period,
-        current_frequency=wpe_current_frequency,post_period=wpe_post_period,
-        post_frequency=wpe_post_frequency)
+        current_frequency=wpe_current_frequency,post_output=wpe_post_output)
     band=FRONT.band_step_from_vertical(
         state.band,state.stats,wpe,vertical,dt=dt,
         band_cfg=band_cfg,stats_cfg=stats_cfg,band_decay=band_decay,
@@ -111,13 +110,11 @@ def step(state:State, sample:RAW.RawImuSample, *, dt,
 
 
 def assert_prediction_packet(result:Result, mekf_state, gyro_body_raw):
-    """Bind a finite MEKF prediction to the same packet already used by frontend."""
     if not isinstance(result,Result): raise TypeError('frontend prefix result required')
     return RAW.assert_prediction_gyro(result.raw_sample,mekf_state,gyro_body_raw)
 
 
 def assert_measurement_packet(result:Result, accel_body_raw):
-    """Bind a finite accelerometer event to the same packet already used by frontend."""
     if not isinstance(result,Result): raise TypeError('frontend prefix result required')
     return RAW.assert_acc_measurement_input(result.raw_sample,accel_body_raw)
 
