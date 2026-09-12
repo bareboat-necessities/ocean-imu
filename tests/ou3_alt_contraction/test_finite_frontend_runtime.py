@@ -45,6 +45,15 @@ class Tests(unittest.TestCase):
             X.stillness_step_from_vertical(S.State(),S.Config(gravity=1),lpf,tracker,dt=1,a_vert_up_lp=9,attenuation=S.AttenuationWitness(F(1,2)))
 
     def test_readiness_fail_closed_at_tracker_and_sensor_ancestry(self):
-        r=X.readiness(); self.assertTrue(r['one_private_vertical_output_shared_by_WPE_and_sigma_band']); self.assertTrue(r['same_private_vertical_output_drives_tracker_input_LPF']); self.assertFalse(r['tracker_output_algorithm_attached']); self.assertFalse(r['private_vertical_seed_and_fast_inv_sqrt_attached']); self.assertFalse(r['raw_sensor_BRMM_disturbance_relation_attached']); self.assertFalse(r['complete_word_finite_identity']); self.assertFalse(r['ALT_LIVE_PASS'])
+        r=X.readiness()
+        self.assertTrue(r['one_private_vertical_output_shared_by_tuner_LPF_and_later_WPE'])
+        self.assertTrue(r['tuner_uses_preupdate_WPE_state'])
+        self.assertTrue(r['current_vertical_advances_WPE_only_after_tuner_entry'])
+        self.assertTrue(r['same_private_vertical_output_drives_tracker_input_LPF'])
+        self.assertFalse(r['tracker_output_algorithm_attached'])
+        self.assertFalse(r['private_vertical_seed_and_fast_inv_sqrt_attached'])
+        self.assertFalse(r['raw_sensor_BRMM_disturbance_relation_attached'])
+        self.assertFalse(r['complete_word_finite_identity'])
+        self.assertFalse(r['ALT_LIVE_PASS'])
 
 if __name__=='__main__': unittest.main()
