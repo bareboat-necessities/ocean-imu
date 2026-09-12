@@ -1,4 +1,5 @@
 """Binary32 tuner tau target/EMA/commit regressions."""
+from dataclasses import replace
 from fractions import Fraction as F
 import unittest
 
@@ -13,6 +14,12 @@ def cfg():
 
 def sample(freq=F(1,2)):
     return C.WaveBandSample(freq,True,1,0,False,0,1,1)
+
+
+def exact_candidate(previous,decay):
+    return C.step(C.TuneState(previous,F(1,2),F(1,2)),sample(),cfg(),
+                  dt=F(1,100),time=F(1,5),last_adapt_time=0,
+                  spectral=C.SpectralWitness(1,1),ema=C.EmaWitness(decay,1))
 
 
 class Tests(unittest.TestCase):
@@ -32,9 +39,7 @@ class Tests(unittest.TestCase):
     def test_exact_real_shadow_difference_is_retained_as_roundoff_supply(self):
         e=B.rn32(F(9753,10000)); previous=B.rn32(F(1,2))
         binary=T.step(previous,sample(),cfg(),dt=F(1,100),exp_decay=e)
-        exact=C.step(C.TuneState(previous,F(1,2),F(1,2)),sample(),cfg(),
-                     dt=F(1,100),time=F(1,5),last_adapt_time=0,
-                     spectral=C.SpectralWitness(1,1),ema=C.EmaWitness(e,1))
+        exact=exact_candidate(previous,e)
         supply=T.roundoff_supply(binary,exact)
         self.assertEqual(supply.residual_separate,
                          binary.next_separate-exact.tune_next.tau_applied)
@@ -44,9 +49,7 @@ class Tests(unittest.TestCase):
     def test_roundoff_bridge_rejects_detached_exact_frequency(self):
         e=B.rn32(F(9753,10000)); previous=B.rn32(F(1,2))
         binary=T.step(previous,sample(),cfg(),dt=F(1,100),exp_decay=e)
-        exact=C.step(C.TuneState(previous,F(1,2),F(1,2)),sample(F(2,5)),cfg(),
-                     dt=F(1,100),time=F(1,5),last_adapt_time=0,
-                     spectral=C.SpectralWitness(1,1),ema=C.EmaWitness(e,1))
+        exact=replace(exact_candidate(previous,e),frequency=F(2,5))
         with self.assertRaisesRegex(ValueError,'frequency detached'):
             T.roundoff_supply(binary,exact)
 
