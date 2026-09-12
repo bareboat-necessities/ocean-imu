@@ -2,20 +2,13 @@
 
 Shipping calls ``apply_racc_vibration_inflation_`` after the current
 AccelVibrationGuard step and before ``measurement_update_acc_only``.  This
-module materializes that exact control relation in real arithmetic:
+module materializes that exact control relation in real arithmetic.  The
+shipping default vibration gain is 0.75; quiet operation is nevertheless an
+exact no-write path because guard ``excessRms`` is zero below engagement.
 
-* optional no-op when neither vibration gain nor vessel weighting is armed and
-  no previous inflation needs restoring;
-* positive nominal-standard-deviation guard;
-* optional Live-only VesselRaoNoiseWeighting horizontal scales, driven by the
-  PRE-CURRENT-SAMPLE tuner schedule;
-* same-sample guard ``excessRms`` vibration inflation;
-* one-time restoration of nominal Racc when both drives become dormant;
-* ``set_Racc_std`` covariance = diag(effective_std_i^2).
-
-The RAO ``hypot`` and both sqrt evaluations are exact witnesses tied to the
-same expressions.  Their binary32 ancestry remains open.  No measurement noise
-operand may be chosen independently once this relation is used.
+Optional vessel-RAO weighting is Live-only and uses the previous measurement-
+only schedule.  The RAO hypot and sqrt evaluations and the final effective-std
+sqrt are exact witnesses; deployed binary32 ancestry remains open.
 """
 from __future__ import annotations
 from dataclasses import dataclass
@@ -50,7 +43,7 @@ class RaoConfig:
 
 @dataclass(frozen=True)
 class Config:
-    vibration_gain:F=F(0)
+    vibration_gain:F=F(3,4)
     sigma_coeff:F=F(9,10)
     rao:RaoConfig=RaoConfig()
     def __post_init__(self):
@@ -139,8 +132,6 @@ def step(state:State,cfg:Config,guard:GUARD.Result,*,nominal_std,tune:TuneState,
     if not isinstance(state,State) or not isinstance(cfg,Config) or not isinstance(guard,GUARD.Result) or not isinstance(tune,TuneState):
         raise TypeError('Racc state/config, same guard result and previous TuneState required')
     base=V(nominal_std); f=R(preupdate_frequency)
-    # Literal outer early-return policy.  A prior inflated state must still be
-    # serviced so it can restore nominal covariance.
     if cfg.vibration_gain<=0 and cfg.rao.max_std_scale<=1 and not state.inflated:
         if rao_witness is not None or effective_sqrt is not None: raise ValueError('fully dormant Racc branch consumes no witnesses')
         return Result(state,state.effective_std,_diag_sq(state.effective_std),ONE,guard.excess_rms,False,False)
@@ -172,6 +163,7 @@ def step(state:State,cfg:Config,guard:GUARD.Result,*,nominal_std,tune:TuneState,
 
 def readiness():
     return {
+      'shipping_default_vibration_gain_three_quarters':True,
       'same_guard_excess_RMS_drives_Racc':True,
       'previous_TuneState_drives_low_wave_scale':True,
       'preupdate_frequency_drives_low_wave_scale':True,
