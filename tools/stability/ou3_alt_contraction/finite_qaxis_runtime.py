@@ -4,6 +4,13 @@ This is the real-arithmetic formula graph behind QdAxis4x1_analytic. It carries
 the nested 3x3 marginal and final 4x4 PSD-hygiene branches explicitly. Runtime
 exp values, machine epsilon and Eigen LDLT/eigensolver outcomes remain declared
 witnesses until deployment finite precision is enclosed.
+
+The accepted-LDLT branch is no longer a free boolean: before a witness may claim
+that shipping returned from ``regularize_psd_if_needed`` after LDLT, the SAME
+rational matrix must pass an exact symmetric LDL^T inertia check with the same
+``-tol`` acceptance threshold.  This is deliberately conservative with respect
+to Eigen pivoting and does not claim binary32/Eigen correspondence; failure of
+the exact check forces the proof to use the explicit eigensolver branch.
 """
 from __future__ import annotations
 from dataclasses import dataclass
@@ -17,6 +24,32 @@ def diag(v):
     out=M.zeros(len(v),len(v))
     for i,x in enumerate(v): out[i][i]=x
     return out
+
+
+def _exact_ldlt_min_d(S):
+    """Exact no-pivot LDL^T inertia certificate for a symmetric rational matrix.
+
+    For a positive-semidefinite matrix this succeeds (zero pivots may occur only
+    with zero remaining column residuals).  If a zero pivot carries a nonzero
+    residual, the no-pivot factorization is inconclusive and returns None; the
+    theorem must then take the explicit eigensolver branch rather than invent an
+    accepted Eigen outcome.  By Sylvester inertia, a completed factorization's
+    D signs are a same-matrix necessary acceptance check.
+    """
+    n=len(S); A=M.mat(S,n,n)
+    if A != M.transpose(A): raise ValueError('exact LDLT requires symmetric input')
+    L=M.eye(n); D=[F(0)]*n
+    for j in range(n):
+        d=A[j][j]-sum((L[j][k]*L[j][k]*D[k] for k in range(j)),F(0))
+        D[j]=d
+        for i in range(j+1,n):
+            r=A[i][j]-sum((L[i][k]*L[j][k]*D[k] for k in range(j)),F(0))
+            if d==0:
+                if r!=0: return None
+                L[i][j]=F(0)
+            else:
+                L[i][j]=r/d
+    return min(D) if D else F(0)
 
 
 @dataclass(frozen=True)
@@ -45,7 +78,11 @@ def regularize_psd(S,witness:PSDWitness,*,machine_epsilon):
     if n not in (3,4) or eps <= 0: raise ValueError('N=3/4 and positive machine epsilon required')
     S=M.scaled(M.plus(S,M.transpose(S)),F(1,2))
     scale=max(F(1),max(abs(x) for row in S for x in row)); tol=64*eps*scale
-    if witness.ldlt_accepts: return S
+    if witness.ldlt_accepts:
+        min_d=_exact_ldlt_min_d(S)
+        if min_d is None or min_d < -tol:
+            raise ValueError('LDLT-accept witness detached from SAME PSD-hygiene matrix/tolerance')
+        return S
     if not witness.eigensolver_success:
         out=[r[:] for r in S]
         for i in range(n): out[i][i]+=tol
@@ -117,6 +154,8 @@ def readiness():
       'nested_marginal_psd_hygiene_materialized':True,
       'final_Qaxis_psd_hygiene_materialized':True,
       'free_Qaxis_matrix_removed_by_this_lemma':True,
+      'LDLT_accept_branch_has_same_matrix_exact_inertia_guard':True,
+      'arbitrary_LDLT_accept_boolean_can_bypass_matrix_relation':False,
       'alpha_exp_runtime_source_attached':False,
       'machine_epsilon_deployment_attached':False,
       'Eigen_LDLT_eigensolver_outcomes_attached':False,
