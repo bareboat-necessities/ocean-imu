@@ -24,6 +24,7 @@ from tools.stability.ou3_alt_contraction import finite_source_continuation as SO
 from tools.stability.ou3_alt_contraction import finite_sensor_source_runtime as SENSOR
 from tools.stability.ou3_alt_contraction import finite_source_bound_imu_forcing as IMU
 from tools.stability.ou3_alt_contraction import finite_source_bound_mag_forcing as MAG
+from tools.stability.ou3_alt_contraction import finite_mag_call_schedule as MAGSCHEDULE
 
 
 @dataclass(frozen=True)
@@ -118,6 +119,7 @@ def set_hold(state:State, *, hold):
 
 def readiness():
     admitted=ADMITTED.readiness(); origin=ORIGIN.readiness(); imu=IMU.readiness(); mag=MAG.readiness()
+    counter=MAGSCHEDULE.counter_lifetime()
     return {
       'admitted_COMPLETE_BRMM_history_and_strong_runtime_joined':True,
       'admitted_BIAS_history_and_strong_runtime_joined':True,
@@ -137,6 +139,8 @@ def readiness():
       'one_radian_attitude_guard_closed_for_every_admitted_prefix':False,
       'deployment_exp_expm1_trig_Eigen_LDLT_closed':False,
       'deployment_roundoff_supply_attached':False,
+      'mag_schedule_supplies_uniform_call_count_upper':counter.uniform_call_count_upper is not None,
+      'shipping_signed_mag_counter_lifetime_closed':counter.no_signed_overflow_proved,
       'complete_600_step_shipping_word_composed_from_restrictions':False,
       'storage_search_allowed':False,
       'ALT_LIVE_PASS':False,
