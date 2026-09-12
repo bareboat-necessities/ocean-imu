@@ -22,8 +22,6 @@ def root_state():
 
 def next_imu_operands(state):
     raw,seg,kw=BASE.imu_operands(state.live)
-    # The component fixture uses phi=1 because beta=0 makes that algebraically
-    # valid. Source admission must instead use the selected BIAS-family phi.
     qualified_seg=PHYS.PhysicalSegment(seg.before,seg.after,seg.delta_theta,
         seg.delta_velocity,seg.delta_position,PHI,seg.bias_driver)
     k=state.source.next_ordinal
@@ -61,6 +59,7 @@ class Tests(unittest.TestCase):
         self.assertEqual(second.state.source.steps[1].witness.parent_source_cell_id,'c1')
         self.assertEqual(second.state.source.steps[1].witness.primitive_in_id,'p1')
         self.assertEqual(second.state.live.live.live.mekf.reference.time,F(1,100))
+        self.assertEqual(second.state.bias_history_id,s.bias_history_id)
 
     def test_post_first_IMU_mag_event_cannot_advance_or_restart_source(self):
         s=imu(root_state()).state
@@ -69,6 +68,7 @@ class Tests(unittest.TestCase):
         self.assertIs(event.state.source,before)
         self.assertEqual(event.state.live.live.live.mekf.reference,before.steps[-1].segment.after)
         self.assertEqual(event.state.source.root,before.root)
+        self.assertEqual(event.state.bias_history_id,s.bias_history_id)
 
     def test_sample_zero_mag_bridge_stays_explicitly_open(self):
         s=root_state()
@@ -88,6 +88,7 @@ class Tests(unittest.TestCase):
         out=X.set_hold(s,hold=False)
         self.assertIs(out.state.source,s.source)
         self.assertIs(out.state.sensor_root,s.sensor_root)
+        self.assertEqual(out.state.bias_history_id,s.bias_history_id)
         self.assertEqual(out.state.live.live.live.mekf.reference,s.source.steps[-1].segment.after)
 
     def test_detached_sensor_root_is_rejected_by_product_state(self):
@@ -95,12 +96,20 @@ class Tests(unittest.TestCase):
             s.source.root.live_origin,'BIAS0',BIAS0.parameter_token)
         sensors=SOURCE.SensorDisturbanceRoot(other,'g','a')
         with self.assertRaisesRegex(ValueError,'sensor histories detached'):
-            X.State(s.live,s.source,sensors)
+            X.State(s.live,s.source,sensors,s.bias_history_id)
+
+    def test_same_family_but_restarted_bias_history_is_rejected(self):
+        s=root_state(); core=s.live.live.live.mekf
+        changed=replace(core,reference=replace(core.reference,bias_root='new-bias-history'))
+        live=replace(s.live,live=replace(s.live.live,live=replace(s.live.live.live,mekf=changed)))
+        with self.assertRaisesRegex(ValueError,'bias history restarted'):
+            X.State(live,s.source,s.sensor_root,s.bias_history_id)
 
     def test_readiness_advances_structure_without_promoting_master(self):
         r=X.readiness()
         self.assertTrue(r['source_continuation_is_part_of_theorem_product_state'])
         self.assertTrue(r['every_IMU_event_appends_exactly_next_source_ordinal'])
+        self.assertTrue(r['analytic_BIAS_family_token_and_concrete_bias_history_both_persist'])
         self.assertTrue(r['magnetic_and_hold_events_preserve_current_source_endpoint'])
         self.assertFalse(r['sample_zero_startup_to_COMPLETE_BRMM_endpoint_bridge_closed'])
         self.assertFalse(r['finite_estimator_coefficients_bound_to_same_source_continuation'])
