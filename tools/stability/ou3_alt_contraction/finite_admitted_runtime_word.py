@@ -8,10 +8,11 @@ This theorem-facing product requires, simultaneously:
 * source-bound shipping prediction/model roots;
 * same-event IMU and magnetic ISS forcing coordinates.
 
-Thus later runtime events cannot bypass admission ancestry or startup sample-zero
-identity. Deployment exp/expm1/trig/Eigen/LDLT correspondence, finite
-clocks/counters, startup reachability and the complete 600-step hybrid word
-remain open. Storage remains forbidden.
+Live magnetic successors now use the source-qualified dual-clock edge: exact
+binary32 outer-wrapper time for outer magnetic control/calibration and physical
+inner-MEKF time for the Kalman call. The startup history entering this master is
+still produced by the older startup interleave, so end-to-end dual-clock startup
+ancestry remains fail-closed. Storage remains forbidden.
 """
 from __future__ import annotations
 from dataclasses import dataclass
@@ -23,7 +24,7 @@ from tools.stability.ou3_alt_contraction import finite_admitted_bias_history as 
 from tools.stability.ou3_alt_contraction import finite_source_continuation as SOURCE
 from tools.stability.ou3_alt_contraction import finite_sensor_source_runtime as SENSOR
 from tools.stability.ou3_alt_contraction import finite_source_bound_imu_forcing as IMU
-from tools.stability.ou3_alt_contraction import finite_source_bound_mag_forcing as MAG
+from tools.stability.ou3_alt_contraction import finite_source_bound_mag_dual_clock as MAG
 from tools.stability.ou3_alt_contraction import finite_source_bound_attitude_trig as TRIG
 from tools.stability.ou3_alt_contraction import finite_mag_call_schedule as MAGSCHEDULE
 from tools.stability.ou3_alt_contraction import finite_wrapper_clock_binary32 as CLOCK
@@ -64,7 +65,7 @@ class ImuResult:
 class MagResult:
     state: State
     event: object
-    forcing: MAG.MagForcing | None
+    forcing: object
     runtime_word: object
 
 
@@ -133,7 +134,7 @@ def readiness():
       'same_admitted_segment_drives_source_bound_prediction_and_measurement':True,
       'prediction_model_roots_cannot_bypass_admitted_history_edge':True,
       'same_event_IMU_ISS_supply_attached_to_admitted_step':imu['forcing_supply_derived_from_executed_source_owned_IMU_event'],
-      'same_event_magnetic_ISS_supply_attached_to_admitted_product':mag['magnetic_effective_residual_derived_from_same_qualified_event'],
+      'same_event_magnetic_ISS_supply_attached_to_admitted_product':mag['same_event_correlated_magnetic_ISS_forcing_retained'],
       'BIAS_generating_history_attached':admitted['BIAS_generating_history_attached'],
       'finite_tokens_used_as_source_membership_oracle':False,
       'sensor_or_temperature_amplitude_bound_invented':False,
@@ -146,7 +147,11 @@ def readiness():
       'wrapper_clock_arbitrary_dt_closed':clock['arbitrary_dt_wrapper_clock_closed'],
       'wrapper_clock_indefinite_lifetime_closed':clock['indefinite_wrapper_clock_lifetime_closed'],
       'outer_magnetic_wrapper_clock_operands_materialized':magclock['exact_binary32_wrapper_timestamp_derived_from_canonical_physical_endpoint'],
-      'dual_clock_magnetic_word_composed':magclock['dual_clock_magnetic_word_composed'],
+      'dual_clock_live_magnetic_edge_composed':mag['outer_binary32_and_inner_physical_magnetic_clocks_composed_on_Live_edge'],
+      'dual_clock_startup_history_feeds_master':mag['startup_dual_clock_history_feeds_this_master_edge'],
+      'dual_clock_magnetic_word_composed':bool(
+          mag['outer_binary32_and_inner_physical_magnetic_clocks_composed_on_Live_edge']
+          and mag['startup_dual_clock_history_feeds_this_master_edge']),
       'deployment_roundoff_supply_attached':False,
       'mag_schedule_supplies_uniform_call_count_upper':counter.uniform_call_count_upper is not None,
       'shipping_signed_mag_counter_lifetime_closed':counter.no_signed_overflow_proved,
