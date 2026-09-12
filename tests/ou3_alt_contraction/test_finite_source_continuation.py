@@ -46,7 +46,6 @@ def qseg(r,k=1):
 def raw_for(q, *, gyro_res=(0,0,0), accel_res=(0,0,0)):
     p=q.segment.before
     gyro=tuple(p.gyro_bias[i]+F(gyro_res[i]) for i in range(3))
-    # identity attitude, zero inertial acceleration and NED +g gravity
     acc=(F(accel_res[0]),F(accel_res[1]),-G+F(accel_res[2]))
     return S.RawImuSample(p,(0,0,0),gyro_res,accel_res,gyro,acc)
 
@@ -61,8 +60,7 @@ class Tests(unittest.TestCase):
         self.assertEqual(c.steps[0].segment.after,c.steps[1].segment.before)
 
     def test_bias_family_phi_is_not_free_per_segment(self):
-        r=root()
-        self.assertLess(BIAS0.phi_true.hi,1.0)
+        r=root(); self.assertLess(BIAS0.phi_true.hi,1.0)
         with self.assertRaises(ValueError):
             X.QualifiedPhysicalSegment(r,wit(1,'root','c1','p0','p1'),seg(1,phi=F(1)))
 
@@ -79,7 +77,7 @@ class Tests(unittest.TestCase):
         b=P.PhysicalKinematics(F(1,200),(0,1,0,0),(0,0,0),(0,0,0),(0,0,0),
                                (0,0,0),(0,0,0),(0,0,0),0)
         a=P.PhysicalKinematics(F(2,200),(0,1,0,0),(0,0,0),(0,0,0),(0,0,0),
-                               (0,0,0),(0,0,0),(0,0,0),(0,0,0),0)
+                               (0,0,0),(0,0,0),(0,0,0),0)
         s2=P.PhysicalSegment(b,a,(0,0,0),(0,0,0),(0,0,0),VALID_PHI,(0,0,0))
         q2=X.QualifiedPhysicalSegment(r,wit(2,'c1','c2','p1','p2'),s2)
         with self.assertRaises(ValueError): X.Continuation(r,(q1,q2))
@@ -101,11 +99,20 @@ class Tests(unittest.TestCase):
         with self.assertRaises(ValueError):
             X.qualify_raw_imu(q1,X.SensorDisturbanceRoot(other,'g','a'),raw_for(q1),'imu-wrong-root')
 
+    def test_async_endpoint_is_not_a_free_matching_state(self):
+        r=root(); q=qseg(r)
+        before=X.endpoint(q,'before'); after=X.endpoint(q,'after')
+        self.assertEqual(before.endpoint,q.segment.before)
+        self.assertEqual(after.endpoint,q.segment.after)
+        self.assertEqual(before.root,r); self.assertEqual(after.root,r)
+        with self.assertRaises(ValueError): X.endpoint(q,'middle')
+
     def test_readiness_closes_ancestry_but_not_finite_master(self):
         d=X.readiness()
         self.assertTrue(d['correlated_COMPLETE_BRMM_left_inclusion_consumed'])
         self.assertTrue(d['bias_phi_driver_and_true_beta_hard_contracts_checked_per_segment'])
         self.assertTrue(d['source_cell_parent_child_and_primitive_continuity_checked'])
+        self.assertTrue(d['qualified_async_endpoint_comes_from_admitted_transition'])
         self.assertTrue(d['raw_IMU_packet_bound_to_same_qualified_physical_predecessor'])
         self.assertTrue(d['persistent_gyro_and_accel_residual_history_tokens_required'])
         self.assertTrue(d['Racc_covariance_not_reinterpreted_as_hard_sensor_noise_bound'])
