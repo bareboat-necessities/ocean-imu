@@ -75,7 +75,9 @@ class Tests(unittest.TestCase):
                 gyro_residual_history_id='g',accel_residual_history_id='a',
                 runtime=BASE.root_state().runtime,
                 proxy_q_norm=MAGBASE.X.TILT.SqrtWitness(1,1),proxy_yaw_half=MAGBASE.zero_yaw())
-        with self.assertRaisesRegex(ValueError,'already-used magnetic word'):
+        # Fresh-startup certification now detects prior ready/reference capture
+        # directly; this is the stronger form of the old already-used-word guard.
+        with self.assertRaisesRegex(ValueError,'must precede ready/reference capture'):
             DUAL.certify_fresh_startup(old)
 
     def test_next_IMU_consumes_same_kth_BRMM_and_BIAS_restriction(self):
@@ -91,11 +93,11 @@ class Tests(unittest.TestCase):
     def test_different_admitted_BRMM_history_cannot_supply_next_segment(self):
         s=self.root(); witness,segment,raw,dynamic=BASE.next_imu_operands(s.live_word)
         other=A.AdmittedHistory('different-primary-history')
-        restricted=A.RestrictedSegment(other,witness.ordinal,segment)
-        bias_restricted=B.RestrictedBiasStep(s.bias_history,witness.ordinal,segment)
-        with self.assertRaisesRegex(ValueError,'detached from carried admitted history'):
-            X.imu_step(s,restricted=restricted,bias_restricted=bias_restricted,
-                       witness=witness,raw=raw,packet_id='bad',**dynamic)
+        # RestrictedSegment itself now proves history ancestry and therefore
+        # rejects this detached history before the shipping composer is called.
+        with self.assertRaisesRegex(ValueError,'detached from quantified admitted history'):
+            A.RestrictedSegment(other,witness.ordinal,segment)
+        self.assertEqual(len(s.live_word.source.steps),0)
 
     def test_different_admitted_BIAS_history_cannot_supply_next_segment(self):
         s=self.root(); witness,segment,raw,dynamic=BASE.next_imu_operands(s.live_word)
