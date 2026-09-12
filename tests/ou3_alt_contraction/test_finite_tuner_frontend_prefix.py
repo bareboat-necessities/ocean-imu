@@ -21,15 +21,11 @@ G=F(196133,20000); DT=F(1,200)
 
 
 def candidate_cfg():
-    # Shipping-shaped branch with exact unit spectral witnesses at f=0.2:
-    # tau_target=(2/5)*(1/2)/(1/5)=1, sigma_target=1, T_S=1, u=1.
     return C.CandidateConfig(F(1,10),2,F(2,5),1,F(1,10),2,2,1,F(1,100),2,
                              F(1,10),2,1,F(1,2),1,1,F(2,5),F(3,2),0,F(1,10),True)
 
 
 def state():
-    # Keep an already-ready zero-gain adaptive band and exact variance=1 so the
-    # candidate algebra can be checked without irrational sqrt/power witnesses.
     band=B.BandState(band=0,p00=0,p01=0,p11=0,ready=True)
     stats=B.StatsState(frequency=F(1,2),mean_value=0,mean_weight=1,sq_value=1,sq_weight=1)
     return X.State(V.State(initialized=True),W.WPEState(),band,stats,FRONT.LPFState(),SP.State(),TuneState(1,1,1))
@@ -63,7 +59,7 @@ class Tests(unittest.TestCase):
         self.assertEqual(out.candidate.frequency,F(1,5))
         self.assertEqual(out.candidate.variance_wave,1)
         self.assertEqual((out.candidate.tau_target,out.candidate.sigma_target,out.candidate.RS_target),(1,1,1))
-        self.assertEqual(out.state.tune,TuneState(1,1,1))
+        self.assertEqual(out.state.tune,TuneState(1,1,1)); self.assertFalse(out.state.pending)
 
     def test_two_samples_preserve_all_adaptation_memory(self):
         first=do_step(state()); second=do_step(first.state)
@@ -73,16 +69,22 @@ class Tests(unittest.TestCase):
         self.assertGreater(second.state.stillness.still_time,first.state.stillness.still_time)
         self.assertEqual(second.candidate.frequency,F(1,5))
 
-    def test_candidate_commit_clock_is_carried_not_restarted(self):
-        # At dt=5 ms and 100 ms cadence, first samples do not fire a commit.
+    def test_candidate_commit_clock_and_pending_are_carried(self):
         first=do_step(state()); second=do_step(first.state)
         self.assertFalse(first.candidate.pending_after); self.assertFalse(second.candidate.pending_after)
+        self.assertFalse(first.state.pending); self.assertFalse(second.state.pending)
         self.assertEqual(first.state.last_adapt_time,0); self.assertEqual(second.state.last_adapt_time,0)
+
+    def test_pending_boundary_cannot_be_skipped(self):
+        s=replace(state(),pending=True)
+        with self.assertRaisesRegex(ValueError,'committed at next IMU boundary'):
+            do_step(s)
 
     def test_readiness_fail_closed_at_next_boundary_and_precision(self):
         r=X.readiness()
         self.assertTrue(r['dominant_frequency_tracker_absent_from_OU_tuner_prefix'])
-        self.assertTrue(r['TuneState_and_adapt_clock_persist_across_samples'])
+        self.assertTrue(r['TuneState_adapt_clock_and_pending_persist_across_samples'])
+        self.assertTrue(r['pending_boundary_cannot_be_skipped'])
         self.assertFalse(r['next_boundary_staged_commit_composed'])
         self.assertFalse(r['sensor_residual_source_bounds_attached'])
         self.assertFalse(r['transcendental_binary32_attached'])
