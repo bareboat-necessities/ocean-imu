@@ -8,6 +8,7 @@ from tools.stability.ou3_alt_contraction import finite_mag_startup_word as X
 from tools.stability.ou3_alt_contraction import finite_mag_gravity_gate as G
 from tools.stability.ou3_alt_contraction import finite_mag_startup_prefix as P
 from tools.stability.ou3_alt_contraction import finite_mag_startup_source as S
+from tools.stability.ou3_alt_contraction import finite_physical_prediction as PHYS
 from tools.stability.ou3_alt_contraction import finite_mag_tuner_default as T
 from tools.stability.ou3_alt_contraction import finite_mag_tilt_frame as TF
 from tools.stability.ou3_alt_contraction import finite_vertical_complementary_runtime as V
@@ -23,6 +24,11 @@ def source(time=7,packet='src',model=None,history='hist'):
     p=S.PhysicalEndpoint(time,(1,0,0,0),history)
     m=model or S.Model((3,4,0),(0,0,0),'model')
     return S.make_sample(p,m,(0,0,0),packet)
+
+def physical(time=7):
+    return PHYS.PhysicalKinematics(time=F(time),live_origin=0,q_world_to_body=(1,0,0,0),
+        velocity=(0,0,0),position=(0,0,0),centered_S=(0,0,0),acceleration=(0,0,0),
+        gyro_bias=(0,0,0),beta=(0,0,0))
 
 
 class Tests(unittest.TestCase):
@@ -68,6 +74,20 @@ class Tests(unittest.TestCase):
         self.assertEqual(out.state.source_model_root,'model'); self.assertEqual(out.state.source_history_id,'hist')
         self.assertEqual(out.state.mag.tuner.last_world_sample,(3,4,0))
 
+    def test_theorem_entry_derives_source_from_same_main_physical_endpoint(self):
+        gate=G.State((0,0,-10),True,5,2,True,0)
+        st=X.State(gate,P.State(proxy()))
+        model=S.Model((3,4,0),(0,0,0),'model')
+        p=physical(7)
+        out=X.update_mag_physical_call(st,G.Config(mag_delay=0,hold_sec=2),T.Config(min_samples=10,min_window=0),
+                                       p,'hist',model,(0,0,0),'phys-mag',begun=True,have_last_imu=True,
+                                       sample_dt=F(1,200),boat_q_norm=troot(1),yaw_half=zero_yaw(),mag_norm=mroot(5))
+        self.assertTrue(out.admission.admitted); self.assertIsNotNone(out.source)
+        self.assertEqual(out.source.physical.time,p.time)
+        self.assertEqual(out.source.physical.q_world_to_body,p.q_world_to_body)
+        self.assertEqual(out.state.source_history_id,'hist')
+        self.assertEqual(out.state.mag.tuner.last_world_sample,(3,4,0))
+
     def test_source_model_or_physical_history_cannot_restart(self):
         gate=G.State((0,0,-10),True,5,2,True,0)
         st=X.State(gate,P.State(proxy()))
@@ -105,6 +125,7 @@ class Tests(unittest.TestCase):
         self.assertTrue(r['admitted_updateMag_composes_literal_wrapper_gate_to_tuner'])
         self.assertTrue(r['startup_raw_mag_physical_source_relation_attached'])
         self.assertTrue(r['startup_source_model_and_physical_history_roots_persist'])
+        self.assertTrue(r['startup_mag_endpoint_from_main_PhysicalKinematics'])
         self.assertFalse(r['startup_mag_noise_field_hardiron_bounds_attached'])
         self.assertFalse(r['startup_mag_call_schedule_source_attached'])
         self.assertFalse(r['complete_word_finite_identity']); self.assertFalse(r['ALT_STARTUP_PASS'])
