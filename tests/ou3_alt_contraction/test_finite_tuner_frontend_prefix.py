@@ -25,10 +25,10 @@ def candidate_cfg():
                              F(1,10),2,1,F(1,2),1,1,F(2,5),F(3,2),0,F(1,10),True)
 
 
-def state():
+def state(wpe=None):
     band=B.BandState(band=0,p00=0,p01=0,p11=0,ready=True)
     stats=B.StatsState(frequency=F(1,2),mean_value=0,mean_weight=1,sq_value=1,sq_weight=1)
-    return X.State(V.State(initialized=True),W.WPEState(),band,stats,FRONT.LPFState(),SP.State(),TuneState(1,1,1))
+    return X.State(V.State(initialized=True),wpe or W.WPEState(),band,stats,FRONT.LPFState(),SP.State(),TuneState(1,1,1))
 
 
 def packet():
@@ -36,8 +36,8 @@ def packet():
     return RAW.RawImuSample(phys,(0,0,0),(0,0,0),(0,0,0),(0,0,0),(0,0,-G),(0,0,G))
 
 
-def do_step(s):
-    return X.step(s,packet(),dt=DT,
+def do_step(s,**extra):
+    kw=dict(
         vertical_cfg=V.Config(0,0,G,20),accel_invnorm=V.InvSqrtWitness(G*G,1/G),
         quat_invnorm=V.InvSqrtWitness(1,1),seed=None,
         wpe_cfg=W.WPEConfig(1,4,F(1,2),1,180),wpe_decay=W.ExpWitness(1),
@@ -48,6 +48,8 @@ def do_step(s):
         tracker_lpf_decay=FRONT.LPFDecayWitness(1),still_cfg=SF.Config(),
         still_attenuation=SF.AttenuationWitness(1),candidate_cfg=candidate_cfg(),
         sigma_wave_sqrt=1,spectral=C.SpectralWitness(1,1),ema=C.EmaWitness(1,1))
+    kw.update(extra)
+    return X.step(s,packet(),dt=DT,**kw)
 
 
 class Tests(unittest.TestCase):
@@ -60,6 +62,21 @@ class Tests(unittest.TestCase):
         self.assertEqual(out.candidate.variance_wave,1)
         self.assertEqual((out.candidate.tau_target,out.candidate.sigma_target,out.candidate.RS_target),(1,1,1))
         self.assertEqual(out.state.tune,TuneState(1,1,1)); self.assertFalse(out.state.pending)
+
+    def test_current_sample_that_makes_WPE_usable_cannot_feed_own_candidate(self):
+        # Entry WPE has enough moment history to create and latch its first
+        # canonical period on THIS sample, but has no usable period at entry.
+        # Shipping's tuner must therefore still see the fixed 0.2 Hz prior.
+        w=W.WPEState(weight=1,elapsed=10,velocity_mean=0,velocity_sq=5,
+                     elevation_mean=0,elevation_sq=1,last_moment_horizon=4)
+        out=do_step(state(w),wpe_moment_decay=W.ExpWitness(1),
+                    wpe_period_witness=W.PeriodWitness(2,3,7),
+                    wpe_post_output=W.CanonicalOutputWitness(3,F(1,3)))
+        self.assertFalse(out.preupdate_wpe.state.usable_period)
+        self.assertEqual(out.band.external_tuner_frequency,F(1,5))
+        self.assertEqual(out.candidate.frequency,F(1,5))
+        self.assertTrue(out.wpe.state.usable_period)
+        self.assertEqual(out.wpe.frequency,F(1,3))
 
     def test_two_samples_preserve_all_adaptation_memory(self):
         first=do_step(state()); second=do_step(first.state)
@@ -80,11 +97,14 @@ class Tests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'committed at next IMU boundary'):
             do_step(s)
 
-    def test_readiness_fail_closed_at_next_boundary_and_precision(self):
+    def test_readiness_fail_closed_at_startup_boundary_and_precision(self):
         r=X.readiness()
         self.assertTrue(r['dominant_frequency_tracker_absent_from_OU_tuner_prefix'])
         self.assertTrue(r['TuneState_adapt_clock_and_pending_persist_across_samples'])
         self.assertTrue(r['pending_boundary_cannot_be_skipped'])
+        self.assertTrue(r['tuner_uses_WPE_state_from_sample_entry'])
+        self.assertTrue(r['current_sample_WPE_update_cannot_feed_own_candidate'])
+        self.assertFalse(r['Cold_TunerWarm_early_return_semantics_attached'])
         self.assertFalse(r['next_boundary_staged_commit_composed'])
         self.assertFalse(r['sensor_residual_source_bounds_attached'])
         self.assertFalse(r['transcendental_binary32_attached'])
