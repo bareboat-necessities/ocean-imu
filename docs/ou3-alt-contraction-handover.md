@@ -2,98 +2,103 @@
 
 ## Resume point and independent scope
 
-Read `AGENTS.md`, `docs/ou3-alt-proof-plan.md`, this handover,
-`docs/ou3-alt-finite-measurement-proof.md`, `docs/ou3-alt-finite-core-composition.md`,
-`docs/ou3-alt-runtime-primitives.md`, the ALT section of
-`docs/ou3-proof-research-state.md`, and `docs/ou3-brmm-main-handover.md`.
-Continue PR #523 on its branch. The original P2/P3/P4/P5 route remains
-independently continuable and unchanged; `P3=1e-18` remains frozen.
+Continue PR #523 on its current branch, preserving concurrent commits. Read
+`AGENTS.md`, `docs/ou3-alt-proof-plan.md`, this handover, the ALT research ledger,
+`docs/ou3-alt-finite-measurement-proof.md`,
+`docs/ou3-alt-finite-core-composition.md`, `docs/ou3-alt-runtime-primitives.md`,
+`docs/ou3-alt-mahony-binary32.md`, and `docs/ou3-brmm-main-handover.md`.
+The original P2/P3/P4/P5 route remains independently continuable; its premises
+and gates must not be weakened. `P3=1e-18` remains frozen.
 
 ## Immutable physical contracts
 
 Retain joint24 `z=(c,e_bg,e_v,e_p,e_S,e_aw,e_ba,beta)`, full 21-state covariance,
 all motion/bias cross terms, one persistent Live S origin and the corrected
-COMPLETE-BRMM physical envelope including acceleration <=8.8 m/s^2 and all-time
-centered primitive `D_S<=1100 m*s`. Preserve same-signal WPE/bandpass/sigma/tau/
-T_S ancestry, staged tuner state and separate BIAS0/1/2 histories. Unknown state
+COMPLETE-BRMM envelope including acceleration <=8.8 m/s^2 and all-time centered
+primitive `D_S<=1100 m*s`. Preserve same-signal WPE/bandpass/sigma/tau/T_S
+ancestry, staged tuner state and separate BIAS0/1/2 histories. Unknown state
 errors may not be renamed as bounded disturbances.
 
-## Finite graph now represented
+## Available finite graph components
 
-The supplying finite identities retain actual continuous physical attitude
-increments and angular/model defect, correlated physical translation moments,
-gyro-bias drift, one shared physical accelerometer-bias driver, finite
-accelerometer/magnetometer/S residual secants, inverse-free `K Sigma=N`, both
-quaternion injection branches, same-beta radial projection and full Joseph/reset
-covariance. H18 retains latent BA covariance; no 18-state marginal substitute is
-used.
+The local identities retain actual continuous physical attitude increments and
+angular/model defect, correlated physical translation moments, gyro-bias drift,
+one shared accelerometer-bias driver, finite accelerometer/magnetometer/S
+residual secants, inverse-free `K Sigma=N`, quaternion injection, same-beta
+projection and full Joseph/reset covariance. H18 retains latent BA covariance;
+there is no 18-state A21 storage substitute.
 
-`finite_core.py` recursively carries finite joint24 mean/error, nominal attitude,
-full covariance and physical predecessor through represented prefixes.
+`finite_core.py` carries finite mean/error, nominal attitude, full covariance and
+physical predecessor. Prediction modules generate AA/linear/BA covariance
+blocks from mean/runtime coefficients and retain OU/BA roots, structured/fast
+attitude Q, IntegratedOUChain Qaxis, masks and numerical-hygiene branches.
+`finite_post_prediction.py` retains pending a_w sync, scheduler credit/due
+recurrence and S service. `finite_measurement_runtime.py` retains first LDLT
+success, deterministic bump/retry and double-failure rejection. Numerical
+factorization witnesses are conditional, not freely admitted source variables.
 
-The prediction runtime is composed through:
+Source-side modules represent raw packet/de-heel/temperature-model relations,
+private vertical observation, WPE, adaptive band/noise gain, debiased variance,
+stillness and tuner candidate/commit boundaries. Temporal composers and active-
+parameter interfaces retain these outputs across represented events. A type,
+provenance token, local equality or completed trace does not qualify the entire
+physical source history or establish complete runtime-prefix coverage.
 
-- `finite_prediction_covariance.py`: full AA/linear/BA covariance congruence;
-- `finite_ou_runtime_primitives.py`: one OU decay root for mean/F_LL and one BA
-  root for mean, BA cross factors and Q_BB; H18 held branch exact;
-- `finite_attitude_runtime.py`: constant-rate R/B, structured/fast attitude Q,
-  isotropic/Simpson branches, integral-B cross term and 6x6 PSD hygiene;
-- `finite_qaxis_runtime.py`: literal small/general IntegratedOUChain<3> Qaxis
-  formulas, nested 3x3 marginal hygiene and final 4x4 hygiene;
-- `finite_prediction_runtime.py`: highest prediction entry, accepting no
-  precomputed shipping transition/process matrices and requiring the SAME
-  bias-corrected gyro for nominal and covariance attitude propagation.
+The staged commit must keep one candidate TuneState as the ancestor of applied
+OU tau, stationary Sigma_aw, pseudo-update cadence and anisotropic R_S. Online
+`apply_ou_tune_(false)` does not queue posterior a_w synchronization; discrete
+sync remains separate. H18 holds the estimated bias, so its error satisfies
+`e_ba+ = e_ba + (phi_true-1) beta + u_b`, not merely `e_ba += u_b`.
 
-Post-prediction and measurement control includes:
+## Initialized private-Mahony numerical binding
 
-- `finite_post_prediction.py`: pending a_w positive-part covariance sync,
-  symmetry hygiene, scheduler credit/due recurrence and due S service;
-- `finite_measurement_runtime.py`: safe-LDLT first success, one deterministic
-  bump/retry and double-failure rejection; retry uses the same shifted innovation
-  in gain/Joseph, rejection preserves state/covariance.
+`finite_binary32_mahony.py` supplies an exact finite initialized observer graph
+under `binary32-rne-gradual-no-fma-eigen3-scalar`. It computes, rather than
+accepts, both normalization reciprocals from the same rounded norm sums using
+the literal integer seed and Newton program. An independent midpoint-cell
+checker verifies basic-operation rounding; each exact rounding defect retains
+its own operands. Zero/subnormal norm sums are represented.
 
-`finite_tuner_commit.py` now materializes the next-sample staged commit boundary.
-One pending `TuneState` supplies the OU tau, stationary Sigma_aw, realized
-pseudo-update period, and—when Live—the anisotropic applied R_S. The period uses
-the same applied tau. The cubic cadence normalization is represented by an
-explicit same-period square-root witness. Periodic online adaptation uses
-`apply_ou_tune_(false)`, so it changes the stationary process covariance but does
-not queue posterior a_w synchronization; discrete sync remains a separate branch.
+The existing vertical API accepts `arithmetic_profile` for this path, returns
+the same `V.Result`, and rejects supplied seed/reciprocal witnesses. The raw
+packet bridge forwards that option; subsequent WPE/band consumers can share the
+one output. The default real helper remains conditional. Initial seeding,
+nonfinite/overflow branches and actual target compiler/FMA/reduction-profile
+qualification remain OPEN. Do not replace the norm-defective float quaternion
+by a unit quaternion, or promote host correspondence to deployment proof.
 
-A focused-CI regression initially expected held H18 `e_ba += u_b`; that was a
-test error, not a predictor error. The correct held estimator relation is
-`e_ba+ = e_ba + (phi_true-1) beta + u_b`, equivalently constant
-`b_a_hat=beta-e_ba`. The regression was corrected to assert that invariant.
+Run the new exact/native checks with:
 
-## What remains open
+```sh
+PYTHONPATH="$PWD:$PWD/tools/stability:$PWD/tests/ou3_alt_contraction" \
+  python3 -m unittest test_finite_binary32_mahony \
+  test_finite_vertical_complementary_runtime test_core test_bias_families -v
+```
 
-**The complete source-uniform finite 600-step runtime word is still NOT
-materialized.** Current limiter remains C/E same-history source/runtime
-attachment, not demonstrated instability or failed common storage.
+Native correspondence uses g++ and Eigen, observes real startup/update calls,
+and never forces a runtime root. Focused CI requires the native dependency;
+local runs can specify `EIGEN_INCLUDE_DIR`. Tests are regressions, not physical
+source admission or contraction evidence.
 
-Remaining major attachments:
+## Decisive remaining object
 
-1. derive the `TuneState` candidate/smoothed state from the actual same-history
-   WPE, adaptive bandpass, sigma statistic and commit cadence;
-2. bind exp/trig and matrix factorization/eigensolver witnesses to deployed
-   arithmetic and later rigorous finite-precision residuals;
-3. bind applied R_acc/R_mag, band-noise floor, scheduler tolerance and all guards
-   to the same frontend/runtime predecessor;
-4. materialize asynchronous magnetometer continuation, all nonfinite/rejection
-   branches, actual H18->A21 release and every literal runtime prefix;
-5. attach corrected COMPLETE-BRMM and BIAS0/1/2 admission to the finite graph.
+**The complete source-uniform finite 600-step runtime word is still open.**
+The limiter remains C/E source/runtime attachment, not demonstrated instability
+or failed common storage. Complete the remaining same-predecessor operands and
+branches behind the available components, including applied R_acc/R_mag,
+transcendental and solver arithmetic, asynchronous magnetic continuation,
+all H18/A21 transitions and every literal prefix. Attach the corrected physical
+and bias admission to that graph. A finite branch map alone proves neither that
+startup reaches it nor that subsequent execution remains there.
 
-Only after that master passes `assert_finite_storage_master` may the required
-high-precision feasibility diagnostic and first common joint24 storage search
-run. No rho/metric search is authorized earlier.
+Only after the complete master passes `assert_finite_storage_master` may the
+high-precision feasibility diagnostic and common joint24 storage search run.
+Then close useful supply/ultimate bound, every-prefix retention, hybrid landing,
+fresh entry, both startup paths and deployment finite precision. No rho search
+is authorized by the numerical binding's successful tests.
 
-## Gates
+## Gate state
 
-`ALT_LIVE_PASS=false`
-
-`ALT_STARTUP_PASS=false`
-
-`ALT_END_TO_END_PASS=false`
-
-Original P4/P5 gates remain untouched. There is no certified rho, ultimate
-bound, retained basin or capture time yet.
+`ALT_LIVE_PASS=false`, `ALT_STARTUP_PASS=false`, `ALT_END_TO_END_PASS=false`.
+Original P4/P5 are not promoted by ALT. No certified rho, retained basin,
+ultimate bound or finite capture time is available yet.
