@@ -4,6 +4,13 @@ The shipping-level entry consumes finite adaptive-band/statistics and stillness
 successors. Bounded tuner frequency, acceleration variance, propagated band-noise
 sigma, stillness flag/time and variance attenuation therefore come from one
 same-history runtime graph before SpectralMSE target and EMA logic.
+
+The variance-not-ready sigma floor is literal shipping order: first construct
+and (when enabled) clamp the ordinary sigma target, then raise it to at least
+max(0.05, band_noise_sigma).  This floor is intentionally AFTER max_sigma, just
+as in shipping, so an unusually large startup noise floor may exceed max_sigma.
+The clamp-disabled branch also follows shipping literally: sigma_target is the
+physical band RMS itself, not c_sigma times that RMS.
 """
 from __future__ import annotations
 from dataclasses import dataclass
@@ -19,6 +26,7 @@ EMA_SCALE_MIN, EMA_SCALE_MAX = F(1,2), F(6)
 EMA_HORIZON_MIN, EMA_HORIZON_MAX = F(1,20), F(35)
 VAR_WAVE_MIN = F(1,10**6)
 SIGMA_AB_MIN = F(1,10**6)
+STARTUP_SIGMA_TARGET_MIN = F(1,20)  # shipping 0.05 m/s^2
 
 
 @dataclass(frozen=True)
@@ -124,7 +132,10 @@ def targets(sample:WaveBandSample,cfg:CandidateConfig):
         tau_t=clamp(tau_raw,cfg.min_tau,cfg.max_tau)
         sigma_t=min(sample.sigma_wave_sqrt*cfg.sigma_coeff,cfg.max_sigma)
     else:
-        tau_t=tau_raw; sigma_t=sample.sigma_wave_sqrt*cfg.sigma_coeff
+        tau_t=tau_raw
+        sigma_t=sample.sigma_wave_sqrt
+    if not sample.variance_ready:
+        sigma_t=max(sigma_t,STARTUP_SIGMA_TARGET_MIN,sample.band_noise_sigma)
     return TargetState(f,wave,tau_t,sigma_t)
 
 
@@ -193,6 +204,8 @@ def step_from_wpe(previous:TuneState,wpe:WPE.UpdateResult,sample:WaveBandSample,
 def readiness():
     return {
       'frequency_variance_to_tau_sigma_targets':True,
+      'variance_not_ready_sigma_floor_materialized':True,
+      'clamp_disabled_sigma_branch_matches_shipping':True,
       'default_SpectralMSE_target_same_tau_sigma_cadence':True,
       'tau_sigma_and_RS_EMA_recurrence':True,
       'sample_vs_commit_cadence_separated':True,
