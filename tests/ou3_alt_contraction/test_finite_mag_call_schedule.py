@@ -62,10 +62,29 @@ class Tests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'must agree'):
             X.Clock(7,calls=1)
 
+    def test_current_schedule_does_not_prove_signed_counter_lifetime(self):
+        c=X.counter_lifetime()
+        self.assertEqual(c.horizon,F(3))
+        self.assertEqual(c.signed_max,(1<<31)-1)
+        self.assertFalse(c.schedule_supplies_positive_min_gap)
+        self.assertIsNone(c.uniform_call_count_upper)
+        self.assertFalse(c.no_signed_overflow_proved)
+        with self.assertRaisesRegex(ValueError,'does not bound signed counter lifetime'):
+            X.require_counter_lifetime_closed(c)
+        # Equal-timestamp calls are legal in V1, so no rate ceiling can be
+        # inferred from the 40 ms maximum-gap requirement.
+        s=X.default_schedule(); clock=X.Clock(0)
+        for _ in range(1000):
+            clock=X.record_call(clock,s,time=0)
+        self.assertEqual(clock.calls,1000)
+
     def test_readiness_does_not_claim_complete_edge(self):
         r=X.readiness()
         self.assertTrue(r['named_deterministic_mag_call_schedule_declared'])
         self.assertTrue(r['strict_one_second_guard_forced'])
+        self.assertFalse(r['schedule_supplies_positive_minimum_call_gap'])
+        self.assertIsNone(r['uniform_call_count_upper_on_canonical_3s_window'])
+        self.assertFalse(r['shipping_signed_mag_counter_lifetime_closed'])
         self.assertFalse(r['external_acc_bias_hold_excluded_here'])
         self.assertFalse(r['H18_A21_complete_word_edge_attached'])
         self.assertFalse(r['ALT_LIVE_PASS'])
