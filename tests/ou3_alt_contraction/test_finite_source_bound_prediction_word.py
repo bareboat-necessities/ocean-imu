@@ -1,5 +1,6 @@
 """Prediction-root provenance regressions; not storage/contraction evidence."""
 from fractions import Fraction as F
+from pathlib import Path
 from types import SimpleNamespace
 import unittest
 
@@ -9,6 +10,9 @@ from tools.stability.ou3_alt_contraction import finite_qaxis_runtime as QX
 import test_finite_source_bound_live_word as BASE
 
 PASS=QX.PSDWitness(True)
+ROOT=Path(__file__).resolve().parents[2]
+CORE=ROOT/'src/kalman_ou_iii/Kalman3D_Wave_OU_III.h'
+WRAPPER=ROOT/'src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h'
 
 
 def operands(state):
@@ -81,10 +85,19 @@ class Tests(unittest.TestCase):
         self.assertEqual(active.phi_b,F(999999,1000000))
         self.assertEqual(active.Q_bacc,X.SHIPPING_BA_Q)
 
-    def test_shipping_BA_defaults_match_current_core_constants(self):
+    def test_shipping_BA_defaults_and_wrapper_ownership_are_source_locked(self):
         self.assertEqual(X.SHIPPING_BA_TAU,F(5000))
         self.assertEqual(X.SHIPPING_BA_Q,
             ((F(1,4_000_000),0,0),(0,F(1,4_000_000),0),(0,0,F(1,4_000_000))))
+        core=CORE.read_text(); wrapper=WRAPPER.read_text()
+        self.assertEqual(core.count('Matrix3 Q_bacc_ = Matrix3::Identity() * T(2.5e-7);'),1)
+        self.assertEqual(core.count('T tau_bacc_ = T(5000.0);'),1)
+        self.assertIn('const T tau_b = std::max(T(1e-3), tau_bacc_);',core)
+        self.assertIn('const T phi_b = acc_bias_updates_enabled_ ? std::exp(-Ts / tau_b) : T(1);',core)
+        self.assertIn('const T qd_scale = -T(0.5) * tau_b * std::expm1(-T(2) * Ts / tau_b);',core)
+        for setter in ('set_acc_bias_time_constant(', 'set_Q_bacc_rw(',
+                       'set_acc_bias_ou_stationary_std('):
+            self.assertNotIn(setter,wrapper)
 
     def test_readiness_advances_only_prediction_root_provenance(self):
         r=X.readiness()
