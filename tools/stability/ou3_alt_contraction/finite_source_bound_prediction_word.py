@@ -90,6 +90,15 @@ def imu_step(state: WORD.State, *, witness: SOURCE.StepWitness,
     forbidden = {'angular','ou','qaxis'} & set(dynamic)
     if forbidden:
         raise TypeError('source-bound prediction roots cannot be overridden '+repr(sorted(forbidden)))
+    if not isinstance(state, WORD.State):
+        raise TypeError('source-owning Live state required')
+    if not isinstance(witness, SOURCE.StepWitness):
+        raise TypeError('checked source step witness required')
+    # Ordinal ownership is a theorem-product invariant. Reject a skipped or
+    # duplicated transition before constructing any lower-level physical cell,
+    # so a malformed caller cannot select a different validation path first.
+    if witness.ordinal != state.source.next_ordinal:
+        raise ValueError('prediction roots require exactly the next source ordinal')
     # Build exactly the same checked next transition that WORD.imu_step will
     # append. Constructing it here is a pure necessary-source validation.
     physical = SOURCE.QualifiedPhysicalSegment(state.source.root, witness, segment)
