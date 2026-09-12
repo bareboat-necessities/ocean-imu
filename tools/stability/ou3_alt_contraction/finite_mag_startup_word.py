@@ -1,13 +1,16 @@
-"""Compose startup magnetic gravity admission, source, and tuner prefix.
+"""Compose startup magnetic gravity admission, physical source, and tuner prefix.
 
 The wrapper has two distinct event types:
   * IMU samples advance the persistent gravity-alignment certificate;
   * asynchronous updateMag calls inspect that certificate and, only when the
     literal wrapper admission gate opens, advance the magnetic tuner/clock.
 
-The source-bound entry additionally requires the startup raw magnetometer packet
-to descend from one persistent true-field/hard-iron physical source model.  This
-prevents a free per-event magnetic vector from entering the startup word.
+The theorem-facing entry derives its raw magnetic packet from the SAME main
+``PhysicalKinematics`` endpoint used by the finite physical word.  Thus startup
+north learning cannot carry a duplicate time/true-attitude history.  Magnetic
+world-field/hard-iron roots and the external physical-history token remain
+persistent, while COMPLETE-BRMM admission and numerical magnetic envelopes are
+separate fail-closed obligations.
 """
 from __future__ import annotations
 from dataclasses import dataclass
@@ -15,6 +18,8 @@ from dataclasses import dataclass
 from tools.stability.ou3_alt_contraction import finite_mag_gravity_gate as GATE
 from tools.stability.ou3_alt_contraction import finite_mag_startup_prefix as MAG
 from tools.stability.ou3_alt_contraction import finite_mag_startup_source as SOURCE
+from tools.stability.ou3_alt_contraction import finite_mag_startup_physical_bridge as BRIDGE
+from tools.stability.ou3_alt_contraction import finite_physical_prediction as PHYS
 from tools.stability.ou3_alt_contraction import finite_mag_tuner_default as TUNER
 from tools.stability.ou3_alt_contraction import finite_mag_tilt_frame as TILT
 from tools.stability.ou3_alt_contraction import finite_mag_gauge_fix as GAUGE
@@ -69,7 +74,7 @@ def update_mag_call(state:State,gate_cfg:GATE.Config,tuner_cfg:TUNER.Config,
                     mag_norm:TUNER.SqrtWitness|None=None,
                     mean_norm:TUNER.SqrtWitness|None=None,
                     horizontal_sqrt:GAUGE.HorizontalSqrt|None=None):
-    """Lower-level wrapper updateMag edge; source-bound theorem uses update_mag_source_call."""
+    """Lower-level wrapper updateMag edge; theorem code uses update_mag_physical_call."""
     admission=GATE.startup_mag_admission(
         state.gate,gate_cfg,wrapper_time=packet.wrapper_time,begun=begun,
         have_last_imu=have_last_imu,mag_ref_set=mag_ref_set)
@@ -94,7 +99,7 @@ def update_mag_source_call(state:State,gate_cfg:GATE.Config,tuner_cfg:TUNER.Conf
                            mag_norm:TUNER.SqrtWitness|None=None,
                            mean_norm:TUNER.SqrtWitness|None=None,
                            horizontal_sqrt:GAUGE.HorizontalSqrt|None=None):
-    """The theorem-facing startup updateMag edge with persistent physical source roots."""
+    """Lower-level source-bound edge retained for component tests."""
     if not isinstance(source,SOURCE.Sample): raise TypeError('startup physical magnetic source sample required')
     root=source.model.model_root; history=source.physical.history_id
     if state.source_model_root is not None:
@@ -106,12 +111,27 @@ def update_mag_source_call(state:State,gate_cfg:GATE.Config,tuner_cfg:TUNER.Conf
                          sample_dt=sample_dt,boat_q_norm=boat_q_norm,yaw_half=yaw_half,
                          mag_norm=mag_norm,mean_norm=mean_norm,
                          horizontal_sqrt=horizontal_sqrt)
-    # The source root is latched on the first wrapper call, admitted or not: an
-    # external call is part of one physical sensor history even when gating
-    # prevents the tuner from consuming its value.
     nxt=State(base.state.gate,base.state.mag,
               state.source_model_root or root,state.source_history_id or history)
     return MagResult(nxt,base.admission,base.magnetic,source)
+
+
+def update_mag_physical_call(state:State,gate_cfg:GATE.Config,tuner_cfg:TUNER.Config,
+                             physical:PHYS.PhysicalKinematics,history_id:str,
+                             model:SOURCE.Model,residual_body,packet_id:str,*,
+                             begun,have_last_imu,mag_ref_set=False,sample_dt,
+                             boat_q_norm:TILT.SqrtWitness|None=None,
+                             yaw_half:TILT.YawHalfWitness|None=None,
+                             mag_norm:TUNER.SqrtWitness|None=None,
+                             mean_norm:TUNER.SqrtWitness|None=None,
+                             horizontal_sqrt:GAUGE.HorizontalSqrt|None=None):
+    """Theorem-facing updateMag edge rooted in the main finite physical object."""
+    source=BRIDGE.sample(physical,history_id,model,residual_body,packet_id)
+    return update_mag_source_call(
+        state,gate_cfg,tuner_cfg,source,begun=begun,have_last_imu=have_last_imu,
+        mag_ref_set=mag_ref_set,sample_dt=sample_dt,boat_q_norm=boat_q_norm,
+        yaw_half=yaw_half,mag_norm=mag_norm,mean_norm=mean_norm,
+        horizontal_sqrt=horizontal_sqrt)
 
 
 def readiness():
@@ -123,6 +143,7 @@ def readiness():
       'gravity_gate_and_tuner_states_persist_jointly':True,
       'startup_raw_mag_physical_source_relation_attached':True,
       'startup_source_model_and_physical_history_roots_persist':True,
+      'startup_mag_endpoint_from_main_PhysicalKinematics':True,
       'startup_mag_noise_field_hardiron_bounds_attached':False,
       'startup_mag_call_schedule_source_attached':False,
       'gravity_gate_binary32_closed':False,
