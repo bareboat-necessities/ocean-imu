@@ -1,9 +1,11 @@
 """Admitted BRMM/BIAS restriction composition regressions; not stability evidence."""
 from dataclasses import replace
+from fractions import Fraction as F
 import unittest
 
 from tools.stability.ou3_alt_contraction import finite_admitted_brmm_restriction as A
 from tools.stability.ou3_alt_contraction import finite_admitted_bias_history as B
+from tools.stability.ou3_alt_contraction import finite_bias_history_restriction as BR
 from tools.stability.ou3_alt_contraction import finite_admitted_source_live_word as X
 import test_finite_source_bound_live_word as BASE
 
@@ -54,11 +56,16 @@ class Tests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'ordinal detached'):
             A.qualify_step(s.live_word.source.root,restricted,bad)
 
-    def test_bias_restriction_rejects_wrong_same_history_recurrence(self):
+    def test_bias_restriction_rejects_factor_detached_from_one_history(self):
         s=self.root(); witness,segment,_,_=BASE.next_imu_operands(s.live_word)
-        broken=replace(segment,after=replace(segment.after,beta=(1,0,0)))
-        with self.assertRaisesRegex(ValueError,'beta recurrence'):
-            B.RestrictedBiasStep(s.bias_history,witness.ordinal,broken)
+        family=next(r for r in BR.restrictions() if r.name==s.bias_history.family)
+        other_phi=F.from_float(family.phi_hi)
+        if other_phi == s.bias_history.phi_true:
+            other_phi=F.from_float(family.phi_lo)
+        self.assertNotEqual(other_phi,s.bias_history.phi_true)
+        other=B.AdmittedBiasHistory(s.bias_history.history_id,s.bias_history.family,other_phi)
+        with self.assertRaisesRegex(ValueError,'factor detached'):
+            B.RestrictedBiasStep(other,witness.ordinal,segment)
 
     def test_history_is_theorem_quantifier_not_runtime_admission_flag(self):
         h=A.AdmittedHistory('H')
