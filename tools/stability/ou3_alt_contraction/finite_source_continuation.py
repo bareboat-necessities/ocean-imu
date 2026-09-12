@@ -6,11 +6,15 @@ adds the theorem-facing ancestry layer without converting the correlated
 601-sample source relation into independent per-sample boxes.
 
 A qualified continuation carries one O^601_BRMM source-history/generator root,
-one Live S origin, one BIAS0/BIAS1/BIAS2 contract/token, consecutive source-cell
-and physical-primitive identities, and the exact finite ``PhysicalSegment``.
-A qualified raw IMU packet additionally carries persistent gyro- and
+one Live S origin, one BIAS0/BIAS1/2 contract/token, consecutive source-cell and
+physical-primitive identities, and the exact finite ``PhysicalSegment``. A
+qualified raw IMU packet additionally carries persistent gyro- and
 accelerometer-residual history tokens and is forced to use that segment's exact
-predecessor physical endpoint and the ALT identity de-heel map.
+predecessor physical endpoint and the ALT identity de-heel map. A qualified
+physical endpoint is obtained only as the ``before`` or ``after`` endpoint of
+one such admitted transition; asynchronous events can therefore attach to an
+actual member of the correlated source continuation rather than a matching time
+or history string alone.
 
 The residual values remain explicit ISS/finite-horizon forcing. This module does
 NOT reinterpret configured Racc/Rmag covariance standard deviations as hard
@@ -51,9 +55,6 @@ def _norm2(v):
 
 
 def _le_float_bound_square(v, bound: float) -> bool:
-    # Contract bounds originate in validated/outward source modules as finite
-    # floats. Convert through decimal text to avoid silently tightening them by
-    # a binary->rational exact conversion.
     b=R(str(float(bound)))
     return _norm2(v) <= b*b
 
@@ -80,13 +81,6 @@ class SourceRoot:
 
 @dataclass(frozen=True)
 class SensorDisturbanceRoot:
-    """Persistent identity of the two raw IMU residual histories.
-
-    These tokens prevent a proof from selecting a new unrelated residual process
-    at each event. They intentionally carry no numerical bound: the declared
-    theorem currently treats the realizations as ISS/finite-horizon forcing,
-    while Racc is a covariance/model parameter rather than a hard sample cap.
-    """
     source_root: SourceRoot
     gyro_residual_history_id: str
     accel_residual_history_id: str
@@ -129,8 +123,6 @@ class QualifiedPhysicalSegment:
         expected_before=self.root.live_origin + (self.witness.ordinal-1)*DT
         if s.before.time != expected_before or s.after.time != expected_before+DT:
             raise ValueError('segment clock detached from 601-sample source ordinal')
-        # Same analytic BIAS family over the whole word. The exact segment
-        # constructor already enforces beta+ = phi_true beta + bias_driver.
         phi=R(s.phi_true)
         lo=R(str(c.phi_true.lo)); hi=R(str(c.phi_true.hi))
         if not lo <= phi <= hi:
@@ -146,8 +138,23 @@ class QualifiedPhysicalSegment:
 
 
 @dataclass(frozen=True)
+class QualifiedPhysicalEndpoint:
+    """An endpoint that is proven to belong to one admitted source transition."""
+    physical: QualifiedPhysicalSegment
+    side: str
+    def __post_init__(self):
+        if not isinstance(self.physical,QualifiedPhysicalSegment):
+            raise TypeError('qualified physical segment required')
+        if self.side not in ('before','after'):
+            raise ValueError("endpoint side must be 'before' or 'after'")
+    @property
+    def root(self): return self.physical.root
+    @property
+    def endpoint(self): return getattr(self.physical.segment,self.side)
+
+
+@dataclass(frozen=True)
 class QualifiedRawImuSample:
-    """One actual raw packet owned by one qualified physical transition."""
     physical: QualifiedPhysicalSegment
     sensor_root: SensorDisturbanceRoot
     raw: SENSOR.RawImuSample
@@ -196,7 +203,6 @@ class Continuation:
 
 
 def certified_root(*,history_id,generator_id,live_origin,bias_family):
-    """Create a root only after validating the retained analytic source theorems."""
     outer=OUTER.build(); failures=OUTER.validate(outer)
     if failures: raise RuntimeError('correlated COMPLETE-BRMM outer relation invalid: '+repr(failures))
     if not (outer['left_inclusion_closed'] and outer['same_history_required_for_entire_window']
@@ -217,6 +223,10 @@ def qualify_raw_imu(physical:QualifiedPhysicalSegment,sensor_root:SensorDisturba
     return QualifiedRawImuSample(physical,sensor_root,raw,packet_id)
 
 
+def endpoint(physical:QualifiedPhysicalSegment,side:str):
+    return QualifiedPhysicalEndpoint(physical,side)
+
+
 def begin(root: SourceRoot):
     return Continuation(root,())
 
@@ -235,6 +245,7 @@ def readiness():
       'bias_phi_driver_and_true_beta_hard_contracts_checked_per_segment':True,
       'source_cell_parent_child_and_primitive_continuity_checked':True,
       'complete_600_transition_continuation_shape_materialized':True,
+      'qualified_async_endpoint_comes_from_admitted_transition':True,
       'raw_IMU_packet_bound_to_same_qualified_physical_predecessor':True,
       'persistent_gyro_and_accel_residual_history_tokens_required':True,
       'Racc_covariance_not_reinterpreted_as_hard_sensor_noise_bound':True,
