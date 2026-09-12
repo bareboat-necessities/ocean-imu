@@ -104,9 +104,9 @@ jobs:
             test_finite_mag_gauge_fix test_finite_mag_tilt_frame \
             test_finite_mag_tuner_default test_finite_mag_gravity_gate \
             test_finite_mag_startup_prefix test_finite_mag_startup_source \
-            test_finite_mag_startup_word test_finite_mag_source_qualification \
-            test_finite_live_async_mag test_shipping_finite_identity \
-            test_core test_proof_plan test_bias_families -v
+            test_finite_mag_startup_physical_bridge test_finite_mag_startup_word \
+            test_finite_mag_source_qualification test_finite_live_async_mag \
+            test_shipping_finite_identity test_core test_proof_plan test_bias_families -v
       - name: Verify actual shipping event correspondence without source promotion
         run: |
           python3 tools/stability/ou3_alt_contraction/shipping_finite_identity.py \
