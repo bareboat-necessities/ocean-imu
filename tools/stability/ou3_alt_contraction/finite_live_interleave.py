@@ -10,8 +10,10 @@ the exact physical transition and raw IMU packet. The theorem-facing magnetic
 edge consumes a physical endpoint obtained as the before/after endpoint of an
 admitted O^601_BRMM/BIAS transition, rather than relying only on a matching
 history string. Lower-level ``imu_step``/``mag_step`` remain conditional finite
-algebra and are not source admission. This module cannot enable storage by
-itself.
+algebra and are not source admission. The Live magnetic edge uses the stronger
+dual-clock composer: physical/inner-MEKF time and the outer binary32 wrapper
+clock remain distinct all the way through delay/refinement/continuous-calibration
+and same-packet measurement. This module cannot enable storage by itself.
 """
 from __future__ import annotations
 from dataclasses import dataclass, replace
@@ -23,6 +25,7 @@ from tools.stability.ou3_alt_contraction import finite_tilt_watchdog as WATCH
 from tools.stability.ou3_alt_contraction import finite_startup_live_runtime_bridge as START
 from tools.stability.ou3_alt_contraction import finite_startup_handoff_seed as SEED
 from tools.stability.ou3_alt_contraction import finite_live_magnetic_word as MAG
+from tools.stability.ou3_alt_contraction import finite_live_magnetic_dual_clock as MAGCLOCK
 from tools.stability.ou3_alt_contraction import finite_mag_bias_gate as GATE
 from tools.stability.ou3_alt_contraction import finite_mag_call_schedule as SCHEDULE
 from tools.stability.ou3_alt_contraction import finite_source_continuation as SOURCE
@@ -52,12 +55,17 @@ class State:
             raise ValueError('first magnetic attempt timestamp detached from count')
         if c.first_time is not None and not self.clock.live_time <= c.first_time <= self.clock.last_time:
             raise ValueError('first magnetic attempt clock detached from Live call history')
+        # These three timestamps are outer-wrapper clock coordinates.  Comparing
+        # them with the current physical endpoint is only a causal upper check;
+        # they are deliberately not identified with the physical clock.
         for time in (self.magnetic.last_mag_time, self.magnetic.memory.last_hi_time,
                      self.magnetic.memory.applied.last_time):
             if time is not None and time > core.reference.time:
                 raise ValueError('magnetic memory comes from a future physical endpoint')
         if (c.locked or c.hold) != (core.mode == 'H'):
             raise ValueError('H18/A21 state detached from bias lock/hold control')
+        # The declared call schedule is indexed by physical source endpoints;
+        # shipping magnetic branch timing itself is handled by MAGCLOCK.
         SCHEDULE.check_prefix(self.clock, self.schedule, time=core.reference.time)
 
 
@@ -120,13 +128,15 @@ def imu_step_source_qualified(state: State, packet: SOURCE.QualifiedRawImuSample
 
 
 def mag_step(state: State, **kwargs):
-    """Conditional magnetic finite algebra; not source admission by itself."""
+    """Conditional dual-clock magnetic algebra; not source admission by itself."""
     if not isinstance(state, State):
         raise TypeError('startup-rooted interleaved state required')
-    out = MAG.live_call(state.magnetic, state.live.live.mekf,
-                        state.live.live.tuner.vertical, **kwargs)
+    out = MAGCLOCK.live_call(state.magnetic, state.live.live.mekf,
+                             state.live.live.tuner.vertical, **kwargs)
     clock = state.clock
     if out.measurement is not None and out.measurement.wrapper_attempted:
+        # This ledger constrains the physical endpoint cadence.  The event's
+        # internal outer-wrapper timestamps were already derived by MAGCLOCK.
         clock = SCHEDULE.record_call(clock, state.schedule, time=out.filter.reference.time)
     live = replace(state.live, live=replace(state.live.live, mekf=out.filter))
     return Result(State(live, out.state, clock, state.schedule), out)
@@ -137,7 +147,8 @@ def mag_step_source_qualified(state: State, endpoint, **kwargs):
 
     The endpoint may be a represented transition endpoint or the fresh Live
     origin.  Neither form upgrades necessary outer checks to full source
-    admission.
+    admission.  Once qualified, the literal magnetic successor is evaluated by
+    the dual-clock composer rather than identifying wrapper and physical time.
     """
     endpoint_types=(SOURCE.QualifiedPhysicalEndpoint,SOURCE.QualifiedPhysicalOrigin)
     if not isinstance(state,State) or not isinstance(endpoint,endpoint_types):
@@ -163,12 +174,14 @@ def set_hold(state: State, *, hold):
 
 
 def readiness():
-    src=SOURCE.readiness()
+    src=SOURCE.readiness(); magclock=MAGCLOCK.readiness()
     return {
         'startup_gauge_and_private_observer_attached_at_Live_entry': True,
         'successive_IMU_mag_IMU_events_share_full_state_covariance': True,
         'continuous_magnetic_memory_not_restarted_at_Live': True,
         'magnetic_refinement_and_continuous_application_composed': True,
+        'live_magnetic_outer_inner_dual_clock_composed':magclock['dual_clock_magnetic_word_composed'],
+        'live_magnetic_wrapper_clock_prefix_arithmetic_closed':magclock['canonical_prefix_wrapper_clock_arithmetic_closed'],
         'interleaved_IMU_uses_same_operand_tilt_reset_entry': True,
         'free_watchdog_angle_and_reset_quaternion_forbidden': True,
         'source_qualified_finite_IMU_entry_available': True,
@@ -189,6 +202,7 @@ def readiness():
         # The qualified entry exists, but the complete master has not yet been
         # rewritten to forbid every lower-level conditional magnetic call.
         'finite_magnetic_source_bound_to_same_COMPLETE_BRMM_history': False,
+        'startup_magnetic_dual_clock_history_required_at_handoff': False,
         'infinite_schedule_qualified_by_finite_prefix': False,
         'source_uniform_complete_600_step_word_qualified': False,
         'storage_search_allowed': False,
