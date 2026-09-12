@@ -11,16 +11,16 @@ from tools.stability.ou3_alt_contraction import finite_runtime_parameters as A
 from tools.stability.ou3_alt_contraction import deployment_scope as D
 
 
-def handoff():
-    seed=S.Result((1,0,0,0),S.TILT_SIGMA,S.YAW_SIGMA_GAUGED,False,True)
-    x=tuple(F(i+1,100) for i in range(21))
-    P=[[F((i+1)*100+(j+1),100000) for j in range(21)] for i in range(21)]
-    return I.initialize_from_gauged_seed_zero_heel(seed,x,P,scope=D.certified_scope())
-
 def active():
     sig=((F(1),0,0),(0,F(2),0),(0,0,F(3)))
     rs=((F(4),0,0),(0,F(5),0),(0,0,F(6)))
     return A.ActiveParameters(F(11,10),sig,F(3,200),rs)
+
+def handoff(q=(1,0,0,0)):
+    seed=S.Result(q,S.TILT_SIGMA,S.YAW_SIGMA_GAUGED,False,True)
+    x=tuple(F(i+1,100) for i in range(21))
+    P=[[F((i+1)*100+(j+1),100000) for j in range(21)] for i in range(21)]
+    return I.initialize_from_gauged_seed_zero_heel(seed,x,P,scope=D.certified_scope())
 
 class Tests(unittest.TestCase):
     def test_fresh_entry_is_H18_and_seats_aw_covariance(self):
@@ -33,6 +33,11 @@ class Tests(unittest.TestCase):
                     self.assertEqual(o.P[i][j],0);self.assertEqual(o.P[j][i],0)
         self.assertEqual(tuple(tuple(r[15:18]) for r in o.P[15:18]),a.Sigma_aw)
         self.assertEqual(o.x,h.x)
+
+    def test_handoff_body_to_world_seed_is_stored_as_world_to_body_qhat(self):
+        h=handoff((F(3,5),F(4,5),0,0))
+        o=X.enter_live(h,active(),scope=D.certified_scope())
+        self.assertEqual(o.q_hat,(F(3,5),F(-4,5),0,0))
 
     def test_other_covariance_entries_survive_aw_seating(self):
         h=handoff();o=X.enter_live(h,active(),scope=D.certified_scope())
@@ -52,6 +57,7 @@ class Tests(unittest.TestCase):
 
     def test_readiness_remains_fail_closed(self):
         r=X.readiness();self.assertTrue(r['fresh_real_arithmetic_H18_entry_composed'])
+        self.assertTrue(r['internal_world_to_body_handoff_quaternion_retained'])
         self.assertFalse(r['complete_same_history_startup_to_Live_word'])
         self.assertFalse(r['ALT_STARTUP_PASS']);self.assertFalse(r['ALT_LIVE_PASS'])
 
