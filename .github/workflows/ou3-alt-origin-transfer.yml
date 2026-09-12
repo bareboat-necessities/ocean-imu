@@ -1,0 +1,51 @@
+name: ou3-alt-origin-checked-transfer
+on:
+  push:
+    branches: [proof/ou3-alt-live-mag-composition]
+    paths:
+      - '.proof-transfer/ou3-alt-origin.b64'
+      - '.github/workflows/ou3-alt-origin-transfer.yml'
+permissions:
+  contents: write
+jobs:
+  apply-tested-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.sha }}
+      - name: Verify, apply and test source-origin patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import base64,bz2,hashlib,pathlib,subprocess
+          encoded=pathlib.Path('.proof-transfer/ou3-alt-origin.b64').read_text().strip()
+          patch=bz2.decompress(base64.b64decode(encoded,validate=True))
+          assert hashlib.sha256(patch).hexdigest()=='ccf9260cd313e1e6975d07963049a9250f5bd810b40ab578c76f5f6fba29736b'
+          target=pathlib.Path('/tmp/ou3-origin.patch'); target.write_bytes(patch)
+          subprocess.run(['git','apply','--check',str(target)],check=True)
+          subprocess.run(['git','apply',str(target)],check=True)
+          subprocess.run(['git','diff','--check'],check=True)
+          subprocess.run(['python3','-m','compileall','-q','tools/stability/ou3_alt_contraction','tests/ou3_alt_contraction'],check=True)
+          PY
+          export PYTHONPATH="$PWD:$PWD/tools/stability:$PWD/tests/ou3_alt_contraction"
+          python3 -m unittest \
+            test_finite_brmm_moment_prefix test_finite_source_continuation \
+            test_finite_source_bound_live_word test_finite_live_interleave \
+            test_finite_live_magnetic_word test_finite_mag_source_qualification \
+            test_finite_startup_live_runtime_bridge test_finite_fresh_joint24_entry \
+            test_proof_plan -v
+          git add tools/stability/ou3_alt_contraction/finite_source_continuation.py \
+                  tools/stability/ou3_alt_contraction/finite_live_interleave.py \
+                  tools/stability/ou3_alt_contraction/finite_source_bound_live_word.py \
+                  tests/ou3_alt_contraction/test_finite_source_continuation.py \
+                  tests/ou3_alt_contraction/test_finite_source_bound_live_word.py \
+                  docs/ou3-alt-main-handover.md docs/ou3-alt-proof-plan.md \
+                  docs/ou3-alt-source-continuation.md docs/ou3-proof-research-state.md
+          git diff --cached --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'proof(ou3-alt): bind sample-zero magnetic call to fresh physical origin'
+          git push origin HEAD:refs/heads/proof/ou3-alt-live-mag-composition
