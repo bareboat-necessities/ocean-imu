@@ -7,6 +7,7 @@ from tools.stability.ou3_alt_contraction import bias_families as BIAS
 from tools.stability.ou3_alt_contraction import finite_source_bound_live_word as X
 from tools.stability.ou3_alt_contraction import finite_source_continuation as SOURCE
 from tools.stability.ou3_alt_contraction import finite_physical_prediction as PHYS
+from tools.stability.ou3_alt_contraction import proof_plan as PLAN
 import test_finite_live_interleave as BASE
 
 BIAS0=next(c for c in BIAS.contracts() if c.name=='BIAS0')
@@ -105,12 +106,24 @@ class Tests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'bias history restarted'):
             X.State(live,s.source,s.sensor_root,s.bias_history_id)
 
+    def test_finite_master_status_closes_only_physical_forcing(self):
+        status=X.finite_storage_status()
+        self.assertEqual(status['map_representation'],'finite_physical_descriptor')
+        self.assertTrue(status['physical_reference_forcing_retained'])
+        self.assertTrue(status['zero_wind_heel_scope_enforced'])
+        self.assertFalse(status['finite_error_identity_for_every_event'])
+        self.assertFalse(status['all_coefficient_product_graphs_retained'])
+        self.assertFalse(status['all_configured_branches_bound_to_finite_graph'])
+        with self.assertRaisesRegex(RuntimeError,'finite-state storage blocked'):
+            PLAN.assert_finite_storage_master(status)
+
     def test_readiness_advances_structure_without_promoting_master(self):
         r=X.readiness()
         self.assertTrue(r['source_continuation_is_part_of_theorem_product_state'])
         self.assertTrue(r['every_IMU_event_appends_exactly_next_source_ordinal'])
         self.assertTrue(r['analytic_BIAS_family_token_and_concrete_bias_history_both_persist'])
         self.assertTrue(r['magnetic_and_hold_events_preserve_current_source_endpoint'])
+        self.assertTrue(r['physical_reference_forcing_retained_in_finite_master_status'])
         self.assertFalse(r['sample_zero_startup_to_COMPLETE_BRMM_endpoint_bridge_closed'])
         self.assertFalse(r['finite_estimator_coefficients_bound_to_same_source_continuation'])
         self.assertFalse(r['source_uniform_complete_600_step_word_qualified'])
