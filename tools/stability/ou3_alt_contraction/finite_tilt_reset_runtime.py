@@ -30,6 +30,9 @@ from tools.stability.ou3_alt_contraction import finite_mag_tilt_frame as TILT
 from tools.stability.ou3_alt_contraction import finite_tilt_watchdog as WATCH
 
 R = P.rational
+ACC_NORM_CUTOFF = F(1, 10**8)
+AXIS_NORM_CUTOFF = F(1, 10**8)
+AXIS_NORM_CUTOFF2 = AXIS_NORM_CUTOFF * AXIS_NORM_CUTOFF
 
 
 # Shipping compares acos(cos_tilt)*57.295779513f > 70. The float literal is
@@ -98,7 +101,7 @@ class AccTiltWitness:
 
 def _normalize_quaternion(q, norm:TILT.SqrtWitness):
     q=tuple(M.vec(q,4)); q2=M.dot(q,q)
-    if not isinstance(norm,TILT.SqrtWitness) or norm.radicand!=q2 or norm.value<=F(1,10**8):
+    if not isinstance(norm,TILT.SqrtWitness) or norm.radicand!=q2 or norm.value<=ACC_NORM_CUTOFF:
         raise ValueError('quaternion normalization witness detached/tiny')
     qn=tuple(x/norm.value for x in q)
     if M.dot(qn,qn)!=1: raise AssertionError('normalized quaternion lost unit norm')
@@ -106,22 +109,31 @@ def _normalize_quaternion(q, norm:TILT.SqrtWitness):
 
 
 def _qref_from_acc(acc_body, witness:AccTiltWitness):
+    """Ideal-real ``initialize_from_acc``/``quaternion_from_acc`` branch graph.
+
+    The outer initializer rejects only ``anorm < 1e-8`` (strict). After the
+    accelerometer has been normalized, shipping forms ``axis=ez cross -an`` and
+    takes its almost-parallel branch when ``norm_axis < 1e-8``. Squaring that
+    nonnegative comparison yields the exact-real cutoff below and avoids adding
+    an otherwise free sqrt. Target binary32 sqrt/comparison behavior remains a
+    separate deployment correspondence obligation.
+    """
     acc=tuple(M.vec(acc_body,3)); a2=M.dot(acc,acc)
     if not isinstance(witness,AccTiltWitness) or not isinstance(witness.acc_norm,TILT.SqrtWitness):
         raise TypeError('accelerometer tilt witnesses required')
-    if witness.acc_norm.radicand!=a2 or witness.acc_norm.value<=F(1,10**8):
-        raise ValueError('accelerometer norm witness detached/tiny')
+    if witness.acc_norm.radicand!=a2 or witness.acc_norm.value<ACC_NORM_CUTOFF:
+        raise ValueError('accelerometer norm witness detached/below shipping cutoff')
     an=tuple(x/witness.acc_norm.value for x in acc)
     target=tuple(-x for x in an)
     c=target[2]
     axis=(-target[1],target[0],F(0))
     aaxis2=M.dot(axis,axis)
-    if aaxis2==0:
+    if aaxis2 < AXIS_NORM_CUTOFF2:
         if witness.axis_norm is not None or witness.cos_half is not None or witness.sin_half is not None:
-            raise ValueError('parallel accelerometer branch consumes no axis/half-angle witnesses')
+            raise ValueError('near-parallel accelerometer branch consumes no axis/half-angle witnesses')
         return (F(1),F(0),F(0),F(0)) if c>0 else (F(0),F(1),F(0),F(0))
-    if not isinstance(witness.axis_norm,TILT.SqrtWitness) or witness.axis_norm.radicand!=aaxis2 or witness.axis_norm.value<=0:
-        raise ValueError('accelerometer rotation-axis norm witness detached')
+    if not isinstance(witness.axis_norm,TILT.SqrtWitness) or witness.axis_norm.radicand!=aaxis2 or witness.axis_norm.value<AXIS_NORM_CUTOFF:
+        raise ValueError('accelerometer rotation-axis norm witness detached from general branch')
     ch,sh=R(witness.cos_half),R(witness.sin_half)
     if ch<0 or sh<0 or ch*ch+sh*sh!=1 or ch*ch-sh*sh!=c:
         raise ValueError('accelerometer half-angle witness detached from same gravity direction')
@@ -212,13 +224,15 @@ def readiness():
       'watchdog_threshold_rigorous_cosine_enclosure':True,
       'preserve_yaw_old_heading_tied_to_same_pre_reset_attitude':True,
       'preserve_yaw_accel_tilt_tied_to_same_guarded_accelerometer':True,
+      'preserve_yaw_acc_norm_strict_cutoff_materialized_real':True,
+      'preserve_yaw_axis_norm_strict_cutoff_materialized_real':True,
       'preserve_yaw_pitch_roll_reconstruction_algebraically_bound':True,
       'reset_covariance_axis_comes_from_accel_only_intermediate_before_yaw_restore':True,
       'final_yaw_restore_does_not_reseed_covariance':True,
       'free_final_preserve_yaw_quaternion_removed_from_theorem_entry':True,
       'watchdog_boundary_sliver_and_binary32_libm_closed':False,
       'sqrt_atan2_asin_angleaxis_binary32_libm_closed':False,
-      'tiny_parallel_branch_binary32_closed':False,
+      'near_parallel_cutoff_binary32_closed':False,
       'complete_word_finite_identity':False,
       'ALT_LIVE_PASS':False,
     }
