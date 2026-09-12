@@ -18,7 +18,9 @@ def root_state():
     live=BASE.root(); ref=live.live.live.mekf.reference
     root=SOURCE.SourceRoot(ref.history_id,'generator',ref.live_origin,'BIAS0',BIAS0.parameter_token)
     sensors=SOURCE.SensorDisturbanceRoot(root,'gyro-history','accel-history')
-    return X.from_live(live,root,sensors)
+    _,_,kw=BASE.imu_operands(live)
+    runtime=X.RuntimeConfig.from_step_kwargs(kw)
+    return X.from_live(live,root,sensors,runtime)
 
 
 def next_imu_operands(state):
@@ -29,7 +31,8 @@ def next_imu_operands(state):
     parent='root' if k==1 else state.source.steps[-1].witness.source_cell_id
     pin='p0' if k==1 else state.source.steps[-1].witness.primitive_out_id
     witness=SOURCE.StepWitness(k,parent,f'c{k}',pin,f'p{k}')
-    return witness,qualified_seg,raw,kw
+    dynamic=X.dynamic_kwargs(kw); dynamic.pop('dt',None)
+    return witness,qualified_seg,raw,dynamic
 
 
 def imu(state):
@@ -61,12 +64,14 @@ class Tests(unittest.TestCase):
         self.assertEqual(second.state.source.steps[1].witness.primitive_in_id,'p1')
         self.assertEqual(second.state.live.live.live.mekf.reference.time,F(1,100))
         self.assertEqual(second.state.bias_history_id,s.bias_history_id)
+        self.assertIs(second.state.runtime,s.runtime)
 
     def test_post_first_IMU_mag_event_cannot_advance_or_restart_source(self):
         s=imu(root_state()).state
         before=s.source
         event=X.mag_step(s,**mag_kwargs(s))
         self.assertIs(event.state.source,before)
+        self.assertIs(event.state.runtime,s.runtime)
         self.assertEqual(event.state.live.live.live.mekf.reference,before.steps[-1].segment.after)
         self.assertEqual(event.state.source.root,before.root)
         self.assertEqual(event.state.bias_history_id,s.bias_history_id)
@@ -84,11 +89,20 @@ class Tests(unittest.TestCase):
         self.assertEqual(len(s.source.steps),0)
         self.assertEqual(s.live.live.live.mekf.reference.time,s.source.root.live_origin)
 
+    def test_static_runtime_config_and_dt_cannot_be_overridden_per_event(self):
+        s=root_state(); witness,segment,raw,kw=next_imu_operands(s)
+        with self.assertRaisesRegex(TypeError,'cannot override carried runtime config'):
+            X.imu_step(s,witness=witness,segment=segment,raw=raw,packet_id='bad',
+                       commit_cfg=s.runtime.commit_cfg,**kw)
+        with self.assertRaisesRegex(TypeError,'dt is owned'):
+            X.imu_step(s,witness=witness,segment=segment,raw=raw,packet_id='bad',dt=segment.h,**kw)
+
     def test_hold_event_preserves_source_continuation(self):
         s=imu(root_state()).state
         out=X.set_hold(s,hold=False)
         self.assertIs(out.state.source,s.source)
         self.assertIs(out.state.sensor_root,s.sensor_root)
+        self.assertIs(out.state.runtime,s.runtime)
         self.assertEqual(out.state.bias_history_id,s.bias_history_id)
         self.assertEqual(out.state.live.live.live.mekf.reference,s.source.steps[-1].segment.after)
 
@@ -97,14 +111,14 @@ class Tests(unittest.TestCase):
             s.source.root.live_origin,'BIAS0',BIAS0.parameter_token)
         sensors=SOURCE.SensorDisturbanceRoot(other,'g','a')
         with self.assertRaisesRegex(ValueError,'sensor histories detached'):
-            X.State(s.live,s.source,sensors,s.bias_history_id)
+            X.State(s.live,s.source,sensors,s.bias_history_id,s.runtime)
 
     def test_same_family_but_restarted_bias_history_is_rejected(self):
         s=root_state(); core=s.live.live.live.mekf
         changed=replace(core,reference=replace(core.reference,bias_root='new-bias-history'))
         live=replace(s.live,live=replace(s.live.live,live=replace(s.live.live.live,mekf=changed)))
         with self.assertRaisesRegex(ValueError,'bias history restarted'):
-            X.State(live,s.source,s.sensor_root,s.bias_history_id)
+            X.State(live,s.source,s.sensor_root,s.bias_history_id,s.runtime)
 
     def test_finite_master_status_closes_only_physical_forcing(self):
         status=X.finite_storage_status()
@@ -122,6 +136,9 @@ class Tests(unittest.TestCase):
         self.assertTrue(r['source_continuation_is_part_of_theorem_product_state'])
         self.assertTrue(r['every_IMU_event_appends_exactly_next_source_ordinal'])
         self.assertTrue(r['analytic_BIAS_family_token_and_concrete_bias_history_both_persist'])
+        self.assertTrue(r['persistent_static_runtime_configuration_carried_in_product_state'])
+        self.assertTrue(r['theorem_IMU_event_cannot_override_static_runtime_configuration'])
+        self.assertTrue(r['theorem_IMU_dt_owned_by_qualified_physical_segment'])
         self.assertTrue(r['magnetic_and_hold_events_preserve_current_source_endpoint'])
         self.assertTrue(r['physical_reference_forcing_retained_in_finite_master_status'])
         self.assertFalse(r['sample_zero_startup_to_COMPLETE_BRMM_endpoint_bridge_closed'])
