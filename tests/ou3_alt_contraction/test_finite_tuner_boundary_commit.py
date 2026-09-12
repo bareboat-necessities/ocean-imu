@@ -18,15 +18,15 @@ def cfg():
     return T.CommitConfig(1,F(1,100),2,F(1,10),False,False,F(1,10),2,1,1,1)
 
 
-def state(*,pending=True,ready=True,p11=F(1,4)):
+def state(*,pending=True,ready=True,p11=F(1,4),stage='Live'):
     band=B.BandState(p11=p11,ready=ready)
     return PREFIX.State(V.State(),W.WPEState(),band,B.StatsState(),FRONT.LPFState(),
-                        STILL.State(),T.TuneState(1,1,1),0,pending,7,F(7,200))
+                        STILL.State(),T.TuneState(1,1,1),0,pending,7,F(7,200),stage)
 
 
 class Tests(unittest.TestCase):
-    def test_pending_candidate_uses_carried_band_noise_and_becomes_active(self):
-        out=X.apply(state(),cfg(),live=True,bench_noise_sigma=F(3,25),noise_sqrt=B.NoiseSqrtWitness(F(1,2)))
+    def test_pending_live_candidate_uses_carried_band_noise_and_becomes_active(self):
+        out=X.apply(state(stage='Live'),cfg(),bench_noise_sigma=F(3,25),noise_sqrt=B.NoiseSqrtWitness(F(1,2)))
         self.assertFalse(out.state.pending)
         self.assertEqual(out.band_noise_floor_sigma,F(3,50))
         self.assertEqual(out.commit.tau,1); self.assertEqual(out.commit.pseudo_period,F(1,10))
@@ -35,27 +35,34 @@ class Tests(unittest.TestCase):
         self.assertEqual(out.active.tau,1); self.assertEqual(out.active.Sigma_aw,out.commit.Sigma_aw)
         self.assertEqual(out.active.pseudo_period,F(1,10)); self.assertEqual(out.active.R_S,out.commit.R_S)
 
-    def test_unready_band_uses_raw_bench_noise_without_sqrt(self):
-        out=X.apply(state(ready=False,p11=0),cfg(),live=False,bench_noise_sigma=F(3,25))
+    def test_pre_live_stage_commits_OU_but_not_RS(self):
+        out=X.apply(state(ready=False,p11=0,stage='TunerReady'),cfg(),bench_noise_sigma=F(3,25))
         self.assertEqual(out.band_noise_floor_sigma,F(3,25)); self.assertIsNone(out.commit.R_S); self.assertIsNone(out.active.R_S)
         with self.assertRaises(ValueError):
-            X.apply(state(ready=False,p11=0),cfg(),live=False,bench_noise_sigma=F(3,25),noise_sqrt=B.NoiseSqrtWitness(0))
+            X.apply(state(ready=False,p11=0,stage='TunerReady'),cfg(),bench_noise_sigma=F(3,25),noise_sqrt=B.NoiseSqrtWitness(0))
+
+    def test_free_live_branch_detached_from_stage_is_rejected(self):
+        with self.assertRaisesRegex(ValueError,'detached from carried startup stage'):
+            X.apply(state(stage='TunerWarm'),cfg(),live=True,bench_noise_sigma=F(3,25),noise_sqrt=B.NoiseSqrtWitness(F(1,2)))
+        with self.assertRaisesRegex(ValueError,'detached from carried startup stage'):
+            X.apply(state(stage='Live'),cfg(),live=False,bench_noise_sigma=F(3,25),noise_sqrt=B.NoiseSqrtWitness(F(1,2)))
 
     def test_ready_band_rejects_detached_covariance_sqrt(self):
         with self.assertRaisesRegex(ValueError,'detached'):
-            X.apply(state(),cfg(),live=True,bench_noise_sigma=F(3,25),noise_sqrt=B.NoiseSqrtWitness(F(1,3)))
+            X.apply(state(),cfg(),bench_noise_sigma=F(3,25),noise_sqrt=B.NoiseSqrtWitness(F(1,3)))
 
     def test_no_pending_boundary_is_exact_identity_and_consumes_no_witness(self):
         s=state(pending=False)
-        out=X.apply(s,cfg(),live=True,bench_noise_sigma=F(3,25))
+        out=X.apply(s,cfg(),bench_noise_sigma=F(3,25))
         self.assertIs(out.state,s); self.assertIsNone(out.commit); self.assertIsNone(out.active); self.assertIsNone(out.band_noise_floor_sigma)
         with self.assertRaisesRegex(ValueError,'no-pending'):
-            X.apply(s,cfg(),live=True,bench_noise_sigma=F(3,25),noise_sqrt=B.NoiseSqrtWitness(F(1,2)))
+            X.apply(s,cfg(),bench_noise_sigma=F(3,25),noise_sqrt=B.NoiseSqrtWitness(F(1,2)))
 
     def test_readiness_fail_closed_only_at_roundoff_and_complete_word(self):
         r=X.readiness()
         self.assertTrue(r['candidate_to_active_parameter_ancestry_closed'])
         self.assertTrue(r['band_noise_floor_derived_from_carried_band_state'])
+        self.assertTrue(r['Live_RS_commit_branch_derived_from_carried_startup_stage'])
         self.assertFalse(r['commit_sqrt_and_binary32_roundoff_attached'])
         self.assertFalse(r['complete_word_finite_identity']); self.assertFalse(r['ALT_LIVE_PASS'])
 
