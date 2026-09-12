@@ -123,6 +123,17 @@ composition theorem and uniform finite-real calibration bounds. These remove
 detached calibration/reference operands; they do not qualify the complete word
 or permit a storage search.
 
+The interleaved IMU edge now uses `step_from_shipping_operands` in
+`finite_live_tilt_prefix.py`. `finite_tilt_reset_runtime.py` derives the watchdog
+predicate from the actual post-accelerometer nominal quaternion and derives a
+firing `initialize_from_acc_preserve_yaw` quaternion/down axis from that same
+pre-reset attitude and the exact guarded accelerometer. The ideal-real
+preserve-yaw graph is algebraic through normalized gravity and half-angle
+identities; the final reset quaternion is no longer a free theorem operand.
+The >70-degree test uses a rigorous rational enclosure of the shipping
+`acos(cos_tilt)*57.295779513f` threshold. The tiny enclosure boundary and actual
+binary32/libm branch correspondence remain explicitly fail-closed.
+
 ## H18/A21 hybrid language
 
 `MAG-CALL-SCHEDULE-v1` requires first post-Live mag call <=40 ms and later gaps
@@ -143,8 +154,10 @@ The immediate blockers are now:
 
 - deployment/binary32 correspondence for startup yaw extraction, atan2,
   AngleAxis, quaternion normalization, handoff setters and clocks;
-- bind the actual tilt angle and preserve-yaw reset operands in the existing
-  startup-rooted IMU/magnetic/hold product composer;
+- close deployment correspondence for the now-bound Live tilt reset, including
+  the threshold-boundary sliver, normalization cutoff, sqrt/atan2/asin/
+  AngleAxis/libm execution and nonfinite branches; do not reintroduce a free
+  final reset quaternion;
 - source-qualify the complete provisional/refinement/continuous-hard-iron
   history and its remaining arithmetic/solver branches; bounded finite-real
   calibration is not proof of calibration accuracy or a useful ISS margin;
