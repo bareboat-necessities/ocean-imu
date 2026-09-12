@@ -23,7 +23,7 @@ class Tests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'detached from shipping binary32 default'):
             X.begin(BASE.begin(),LEDGER.initial())
 
-    def test_source_qualified_live_product_accepts_startup_carried_ledger(self):
+    def test_source_qualified_live_product_accepts_startup_carried_ledger_for_component_algebra(self):
         p=qualified_prefix(); tau=LEDGER.State(updates=17)
         s=X.begin(p,tau)
         self.assertIs(s.prefix,p)
@@ -47,12 +47,14 @@ class Tests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'exactly 600 physical source transitions'):
             X.complete(s)
 
-    def test_readiness_closes_live_attachment_not_startup_or_libm(self):
+    def test_readiness_closes_goLive_handoff_but_not_admitted_startup_or_libm(self):
         r=X.readiness()
         self.assertTrue(r['Live_product_carries_persistent_dual_compiler_tau_ledger'])
+        self.assertTrue(r['strong_Live_constructor_requires_exact_goLive_filter_frontend_state_and_tau_ledger'])
+        self.assertTrue(r['goLive_tau_ledger_identity_bridge_available'])
         self.assertTrue(r['each_Live_IMU_requires_same_candidate_frequency_target_and_decay_as_tau_ledger'])
         self.assertTrue(r['MAG_and_HOLD_preserve_tau_ledger_exactly'])
-        self.assertFalse(r['startup_master_product_derives_Live_entry_tau_ledger'])
+        self.assertFalse(r['admitted_startup_reachability_with_tau_ledger_closed'])
         self.assertFalse(r['upstream_WPE_to_StoredFrequency_binary32_correspondence_closed'])
         self.assertFalse(r['tuner_exp_libm_binary32_correspondence_closed'])
         self.assertFalse(r['source_uniform_complete_600_step_word_qualified'])
