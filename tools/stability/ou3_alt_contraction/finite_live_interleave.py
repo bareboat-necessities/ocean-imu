@@ -5,14 +5,13 @@ replaces ONLY the same product state's MEKF/control/calibration components.
 The next IMU consumes that exact successor, including all 21 covariance rows.
 No covariance, reference, physical origin, model or tuner is restarted.
 
-The IMU edge uses the theorem-facing tilt-reset composer: no caller may choose a
-free watchdog angle or final preserve-yaw reset quaternion. For theorem-word
-assembly, ``imu_step_source_qualified`` requires one object containing BOTH the
-exact physical segment and the raw IMU packet, owned by the same persistent
-O^601_BRMM/BIAS source root and sensor-disturbance histories. The lower-level
-``imu_step`` remains conditional finite algebra and is not source admission.
-Finite-prefix timing checks are not qualification of an infinite schedule. This
-module cannot enable storage by itself.
+The theorem-facing IMU edge consumes one source-qualified object containing BOTH
+the exact physical transition and raw IMU packet. The theorem-facing magnetic
+edge consumes a physical endpoint obtained as the before/after endpoint of an
+admitted O^601_BRMM/BIAS transition, rather than relying only on a matching
+history string. Lower-level ``imu_step``/``mag_step`` remain conditional finite
+algebra and are not source admission. This module cannot enable storage by
+itself.
 """
 from __future__ import annotations
 from dataclasses import dataclass, replace
@@ -70,7 +69,6 @@ class Result:
 
 def from_startup(bridge: START.Result, magnetic: MAG.StartupState, *,
                  proxy_q_norm, proxy_yaw_half, schedule=None):
-    """Use carried startup magnetic state and the SAME gauged handoff, not a fake Live root."""
     if not isinstance(bridge, START.Result) or not isinstance(magnetic, MAG.StartupState):
         raise TypeError('startup Live bridge and startup magnetic history required')
     if magnetic.ready is None:
@@ -109,15 +107,6 @@ def imu_step(state: State, raw, segment, **kwargs):
 
 
 def imu_step_source_qualified(state: State, packet: SOURCE.QualifiedRawImuSample, **kwargs):
-    """Theorem-facing IMU edge with physical and sensor ancestry in one object.
-
-    This closes the distinction between an arbitrary algebraically consistent
-    ``PhysicalSegment``/raw packet pair and an event carrying the retained
-    COMPLETE-BRMM/BIAS plus persistent sensor-residual ancestry. It still does
-    not prove quantitative residual ISS bounds or that all tuner/runtime
-    coefficient-product graphs are source-uniformly generated from this
-    continuation; those remain finite-master blockers.
-    """
     if not isinstance(state,State) or not isinstance(packet,SOURCE.QualifiedRawImuSample):
         raise TypeError('interleaved state and source-qualified raw IMU packet required')
     qualified=packet.physical; core=state.live.live.mekf
@@ -131,6 +120,7 @@ def imu_step_source_qualified(state: State, packet: SOURCE.QualifiedRawImuSample
 
 
 def mag_step(state: State, **kwargs):
+    """Conditional magnetic finite algebra; not source admission by itself."""
     if not isinstance(state, State):
         raise TypeError('startup-rooted interleaved state required')
     out = MAG.live_call(state.magnetic, state.live.live.mekf,
@@ -142,8 +132,21 @@ def mag_step(state: State, **kwargs):
     return Result(State(live, out.state, clock, state.schedule), out)
 
 
+def mag_step_source_qualified(state: State, endpoint: SOURCE.QualifiedPhysicalEndpoint, **kwargs):
+    """Theorem-facing async magnetic edge at an admitted physical endpoint."""
+    if not isinstance(state,State) or not isinstance(endpoint,SOURCE.QualifiedPhysicalEndpoint):
+        raise TypeError('interleaved state and source-qualified physical endpoint required')
+    core=state.live.live.mekf; root=endpoint.root
+    if root.history_id != core.reference.history_id or root.history_id != state.magnetic.memory.history_id:
+        raise ValueError('qualified magnetic endpoint detached from persistent physical history')
+    if root.live_origin != core.reference.live_origin:
+        raise ValueError('qualified magnetic endpoint restarted Live origin')
+    if endpoint.endpoint != core.reference:
+        raise ValueError('asynchronous magnetic call not attached to current admitted endpoint')
+    return mag_step(state,**kwargs)
+
+
 def set_hold(state: State, *, hold):
-    """Compose a literal external setAccBiasHold event without inventing eventual release."""
     if not isinstance(state, State):
         raise TypeError('startup-rooted interleaved state required')
     event = GATE.set_hold(state.magnetic.control, state.live.live.mekf,
@@ -165,6 +168,7 @@ def readiness():
         'source_qualified_finite_IMU_entry_available': True,
         'source_qualified_raw_IMU_packet_owned_by_same_physical_step': src['raw_IMU_packet_bound_to_same_qualified_physical_predecessor'],
         'persistent_sensor_residual_histories_required': src['persistent_gyro_and_accel_residual_history_tokens_required'],
+        'source_qualified_async_magnetic_endpoint_entry_available': src['qualified_async_endpoint_comes_from_admitted_transition'],
         'correlated_COMPLETE_BRMM_left_inclusion_consumed': src['correlated_COMPLETE_BRMM_left_inclusion_consumed'],
         'persistent_BIAS_parameter_token_available': src['one_bias_family_parameter_token_over_word_required'],
         'external_hold_and_count_release_feed_next_IMU_mode': True,
@@ -172,6 +176,8 @@ def readiness():
         'finite_prefix_mag_call_deadlines_checked': True,
         'quantitative_sensor_residual_ISS_envelope_attached': False,
         'finite_estimator_coefficients_bound_to_same_source_continuation': False,
+        # The qualified entry exists, but the complete master has not yet been
+        # rewritten to forbid every lower-level conditional magnetic call.
         'finite_magnetic_source_bound_to_same_COMPLETE_BRMM_history': False,
         'infinite_schedule_qualified_by_finite_prefix': False,
         'source_uniform_complete_600_step_word_qualified': False,
