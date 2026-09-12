@@ -9,7 +9,9 @@ of both histories on the same physical segment.
 startup -> interleaved Live constructor, then requires that exact fresh H18
 physical reference to equal the explicit t_L restriction of the quantified
 admitted COMPLETE-BRMM history and the quantified BIAS history before creating
-the source-owned word. No synthetic Live root is inserted.
+the source-owned word.  Its magnetic startup operand is an inductive dual-clock
+certificate, so an already-mutated single-clock startup history cannot be
+laundered into this theorem-facing handoff. No synthetic Live root is inserted.
 """
 from __future__ import annotations
 from dataclasses import dataclass
@@ -21,7 +23,7 @@ from tools.stability.ou3_alt_contraction import finite_source_continuation as SO
 from tools.stability.ou3_alt_contraction import finite_sensor_source_runtime as SENSOR
 from tools.stability.ou3_alt_contraction import finite_live_interleave as INTER
 from tools.stability.ou3_alt_contraction import finite_startup_live_runtime_bridge as START
-from tools.stability.ou3_alt_contraction import finite_live_magnetic_word as MAGLIVE
+from tools.stability.ou3_alt_contraction import finite_live_magnetic_dual_clock as MAGDUAL
 
 
 @dataclass(frozen=True)
@@ -62,18 +64,20 @@ def from_live(live, history:ADMIT.AdmittedHistory, bias_history:ABIASS.AdmittedB
     return State(lower,history,bias_history)
 
 
-def from_startup(bridge:START.Result, magnetic:MAGLIVE.StartupState,
+def from_startup(bridge:START.Result, magnetic:MAGDUAL.CertifiedStartupState,
                  origin:ADMIT.RestrictedOrigin,
                  bias_history:ABIASS.AdmittedBiasHistory, *,
                  gyro_residual_history_id:str, accel_residual_history_id:str,
                  runtime:WORD.RuntimeConfig, proxy_q_norm, proxy_yaw_half,
                  schedule=None):
-    """Bind the actual startup-produced fresh interleaved state to admitted sources."""
-    if not isinstance(bridge,START.Result) or not isinstance(magnetic,MAGLIVE.StartupState):
-        raise TypeError('actual startup Live bridge and magnetic startup history required')
+    """Bind the dual-clock-certified startup state to admitted physical sources."""
+    if not isinstance(bridge,START.Result) or not isinstance(magnetic,MAGDUAL.CertifiedStartupState):
+        raise TypeError('actual startup Live bridge and certified dual-clock magnetic history required')
+    if magnetic.calls <= 0:
+        raise ValueError('admitted startup handoff requires an executed dual-clock magnetic history')
     if not isinstance(origin,ADMIT.RestrictedOrigin) or not isinstance(bias_history,ABIASS.AdmittedBiasHistory):
         raise TypeError('admitted BRMM origin and BIAS history required')
-    live=INTER.from_startup(bridge,magnetic,proxy_q_norm=proxy_q_norm,
+    live=INTER.from_startup(bridge,magnetic.state,proxy_q_norm=proxy_q_norm,
                             proxy_yaw_half=proxy_yaw_half,schedule=schedule)
     ref=live.live.live.mekf.reference
     if origin.endpoint != ref:
@@ -124,11 +128,13 @@ def set_hold(state:State, *, hold):
 
 
 def readiness():
-    a=ADMIT.readiness(); b=ABIASS.readiness(); lower=WORD.readiness()
+    a=ADMIT.readiness(); b=ABIASS.readiness(); lower=WORD.readiness(); mag=MAGDUAL.readiness()
     return {
       'universal_admitted_COMPLETE_BRMM_history_carried_in_Live_product':a['universal_theorem_quantifier_over_admitted_primary_history_explicit'],
       'admitted_BIAS_history_carried_in_same_Live_product':b['BIAS0_BIAS1_BIAS2_admitted_history_quantifier_available'],
       'actual_startup_interleave_constructor_consumed_by_admitted_source_factory':True,
+      'admitted_startup_requires_inductive_dual_clock_magnetic_history':mag['certified_startup_successor_only_from_dual_clock_call'],
+      'already_mutated_single_clock_startup_rejected_at_theorem_handoff':mag['already_mutated_single_clock_startup_cannot_be_certified'],
       'startup_fresh_H18_reference_must_equal_admitted_tL_origin':True,
       'startup_fresh_H18_reference_must_equal_admitted_BIAS_root':True,
       'synthetic_Live_root_inserted_by_source_bridge':False,
