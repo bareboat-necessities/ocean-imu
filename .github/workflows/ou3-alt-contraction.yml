@@ -131,6 +131,10 @@ jobs:
         run: |
           python3 tools/stability/ou3_alt_contraction/shipping_finite_identity.py \
             --output /tmp/ou3-alt-finite-identity.json
+      - name: Verify native preserve-yaw reset correspondence
+        run: |
+          python3 tools/stability/ou3_alt_contraction/shipping_tilt_reset_identity.py \
+            --output /tmp/ou3-alt-tilt-reset-identity.json
       - name: Benchmark exact masked rank-three covariance arithmetic
         run: |
           python3 tools/stability/ou3_alt_contraction/benchmark_finite_rank3.py \
@@ -139,7 +143,9 @@ jobs:
         run: |
           python3 - <<'PYCODE'
           import json
-          for path in ('/tmp/ou3-alt-finite-identity.json', '/tmp/ou3-alt-rank3.json'):
+          for path in ('/tmp/ou3-alt-finite-identity.json',
+                       '/tmp/ou3-alt-tilt-reset-identity.json',
+                       '/tmp/ou3-alt-rank3.json'):
               report = json.load(open(path))
               for gate in ('ALT_LIVE_PASS', 'ALT_STARTUP_PASS', 'ALT_END_TO_END_PASS'):
                   assert report[gate] is False, (path, gate)
@@ -148,6 +154,12 @@ jobs:
           assert report['storage_feasibility_attempted'] is False
           assert report['recorded_sample_states_bit_identical'] is True
           assert report['deployment_roundoff_enclosed'] is False
+          tilt = json.load(open('/tmp/ou3-alt-tilt-reset-identity.json'))
+          assert tilt['same_shipping_header_executed'] is True
+          assert tilt['all_input_libm_binary32_correspondence_qualified'] is False
+          assert tilt['source_uniform_word_qualified'] is False
+          assert tilt['storage_feasibility_attempted'] is False
+          assert tilt['deployment_roundoff_enclosed'] is False
           PYCODE
       - uses: actions/upload-artifact@v4
         if: always()
@@ -155,6 +167,7 @@ jobs:
           name: ou3-alt-finite-identities-${{ github.run_id }}
           path: |
             /tmp/ou3-alt-finite-identity.json
+            /tmp/ou3-alt-tilt-reset-identity.json
             /tmp/ou3-alt-rank3.json
           if-no-files-found: warn
           retention-days: 14
