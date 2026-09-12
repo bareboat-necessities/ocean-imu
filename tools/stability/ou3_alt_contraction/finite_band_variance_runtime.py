@@ -1,15 +1,17 @@
 """Finite AdaptiveWaveBandPass + SeaStateAutoTuner variance recurrence.
 
-Preserves shipping timing: the adaptive band's corner uses the previous tuner
-frequency when that state is ready, otherwise ``tuner_frequency_hz_()``.  That
-external frequency is the fixed prior until the WPE's one-way usable-period
-latch clears, and only then becomes the current canonical WPE frequency.  The
-resulting band sample is fed to SeaStateAutoTuner with that same external
-frequency.
+Shipping timing is deliberately asymmetric inside one IMU sample.  The sigma
+band/tuner runs BEFORE ``wave_period_.update``.  Therefore its external tuning
+frequency is a read-only view of the WPE state carried into the sample: the
+fixed prior until that pre-sample WPE state has latched usable, then the
+canonical frequency represented by that state.  Only later does the current
+vertical sample advance WPE for the next IMU sample.
 
+The adaptive band's corner uses the previous SeaStateAutoTuner frequency when
+that state is ready, otherwise the pre-update WPE/prior external frequency.
 The band-noise floor follows shipping literally: before the adaptive band has
 completed a valid step it is the raw bench noise sigma; only a ready band uses
-bench_sigma*sqrt(p11). Transcendental exp/sqrt binary32 ancestry remains open.
+bench_sigma*sqrt(p11).  Transcendental exp/sqrt binary32 ancestry remains open.
 """
 from __future__ import annotations
 from dataclasses import dataclass
@@ -103,6 +105,31 @@ class NoiseSqrtWitness:
 
 
 @dataclass(frozen=True)
+class WPEFrequencyView:
+    """Read-only tuner-visible output of the WPE state at sample entry."""
+    state: WPE.WPEState
+    period:F|None=None
+    frequency:F|None=None
+    def __post_init__(self):
+        if not isinstance(self.state,WPE.WPEState): raise TypeError('carried WPE state required')
+        p=None if self.period is None else R(self.period)
+        f=None if self.frequency is None else R(self.frequency)
+        if self.state.usable_period:
+            if self.state.log_period is None or p is None or f is None or p<=0 or f<=0 or p*f!=1:
+                raise ValueError('usable pre-update WPE state requires one canonical period/frequency pair')
+        else:
+            # Shipping ignores getFrequencyHz() until hasUsablePeriod(); do not
+            # let an unnecessary frequency witness influence the tuner branch.
+            if p is not None or f is not None:
+                raise ValueError('unusable pre-update WPE tuner view consumes no canonical output witness')
+        object.__setattr__(self,'period',p); object.__setattr__(self,'frequency',f)
+
+
+def wpe_frequency_view(state:WPE.WPEState,*,period=None,frequency=None):
+    return WPEFrequencyView(state,period,frequency)
+
+
+@dataclass(frozen=True)
 class FrontendResult:
     band_state:BandState
     stats_state:StatsState
@@ -155,17 +182,17 @@ def variance(s:StatsState):
     return max(F(0),s.sq_value/s.sq_weight-mu*mu)
 
 
-def tuner_frequency(wpe:WPE.UpdateResult,cfg:BandConfig):
-    if not isinstance(wpe,WPE.UpdateResult): raise TypeError('finite WPE successor required')
-    if wpe.state.usable_period and wpe.frequency is not None and wpe.frequency>0:
-        return wpe.frequency
-    return cfg.tune_freq_prior
+def tuner_frequency(view:WPEFrequencyView,cfg:BandConfig):
+    if not isinstance(view,WPEFrequencyView): raise TypeError('pre-update WPE tuner view required')
+    return view.frequency if view.state.usable_period else cfg.tune_freq_prior
 
 
-def frontend_step(band:BandState,stats:StatsState,wpe:WPE.UpdateResult,*,vertical_accel,dt,
-                  band_cfg:BandConfig,stats_cfg:StatsConfig,band_decay:BandDecayWitness,
-                  variance_decay:VarianceDecayWitness,bench_noise_sigma,noise_sqrt:NoiseSqrtWitness|None=None):
-    external_f=tuner_frequency(wpe,band_cfg)
+def frontend_step_from_view(band:BandState,stats:StatsState,view:WPEFrequencyView,*,vertical_accel,dt,
+                            band_cfg:BandConfig,stats_cfg:StatsConfig,band_decay:BandDecayWitness,
+                            variance_decay:VarianceDecayWitness,bench_noise_sigma,
+                            noise_sqrt:NoiseSqrtWitness|None=None):
+    """Literal shipping tuner step using the WPE state carried into this sample."""
+    external_f=tuner_frequency(view,band_cfg)
     fref=stats.frequency if stats.freq_ready else external_f
     fref=clamp(fref,band_cfg.tune_freq_floor,band_cfg.tune_freq_ceil)
     bnext=band_step(band,band_cfg,x=vertical_accel,dt=dt,f_ref=fref,decay=band_decay)
@@ -183,14 +210,29 @@ def frontend_step(band:BandState,stats:StatsState,wpe:WPE.UpdateResult,*,vertica
     return FrontendResult(bnext,snext,fref,external_f,snext.frequency,bnext.band,snext.var_ready,variance(snext),noise)
 
 
+def frontend_step(band:BandState,stats:StatsState,wpe:WPE.UpdateResult,**kwargs):
+    """Legacy conditional helper using a post-update WPE result.
+
+    It remains for isolated algebra tests.  Shipping temporal composition must
+    use ``frontend_step_from_view`` before the current WPE update.
+    """
+    if not isinstance(wpe,WPE.UpdateResult): raise TypeError('finite WPE result required')
+    if wpe.state.usable_period:
+        view=WPEFrequencyView(wpe.state,wpe.period,wpe.frequency)
+    else:
+        view=WPEFrequencyView(wpe.state)
+    return frontend_step_from_view(band,stats,view,**kwargs)
+
+
 def readiness():
     return {
       'adaptive_band_state_and_covariance_materialized':True,
       'adaptive_band_identity_branches_materialized':True,
       'unready_band_noise_floor_branch_materialized':True,
-      'WPE_usable_gate_and_tune_frequency_prior_materialized':True,
+      'pre_update_WPE_usable_gate_and_tune_frequency_prior_materialized':True,
+      'tuner_before_current_WPE_update_materialized':True,
       'previous_tuner_frequency_drives_band_corner':True,
-      'external_prior_or_WPE_frequency_drives_variance_horizon':True,
+      'external_prior_or_preupdate_WPE_frequency_drives_variance_horizon':True,
       'debiased_first_second_moments_materialized':True,
       'band_noise_variance_gain_materialized':True,
       'band_exp_and_noise_sqrt_binary32_ancestry_attached':False,
