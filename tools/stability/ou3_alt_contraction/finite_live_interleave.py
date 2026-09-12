@@ -5,9 +5,11 @@ replaces ONLY the same product state's MEKF/control/calibration components.
 The next IMU consumes that exact successor, including all 21 covariance rows.
 No covariance, reference, physical origin, model or tuner is restarted.
 
-Finite-prefix timing checks are not qualification of an infinite schedule.
-The supplying component arithmetic/source premises remain open, and this
-module cannot enable the source-uniform master/storage gate.
+The IMU edge uses the theorem-facing tilt-reset composer: no caller may choose a
+free watchdog angle or final preserve-yaw reset quaternion. Finite-prefix timing
+checks are not qualification of an infinite schedule. The supplying component
+arithmetic/source premises remain open, and this module cannot enable the
+source-uniform master/storage gate.
 """
 from __future__ import annotations
 from dataclasses import dataclass, replace
@@ -95,15 +97,15 @@ def imu_step(state: State, raw, segment, **kwargs):
         raise TypeError('same physical raw IMU packet required')
     if raw.deheel_body_to_internal != SENSOR.IDENTITY3:
         raise ValueError('nonzero deheel map violates existing ALT zero-wind-heel scope')
-    out = LIVE.step(state.live, raw, segment, **kwargs)
+    if 'tilt_deg' in kwargs or 'reset_witness' in kwargs:
+        raise TypeError('interleaved theorem word accepts no free tilt/reset output')
+    out = LIVE.step_from_shipping_operands(state.live, raw, segment, **kwargs)
     return Result(State(out.state, state.magnetic, state.clock, state.schedule), out)
 
 
 def mag_step(state: State, **kwargs):
     if not isinstance(state, State):
         raise TypeError('startup-rooted interleaved state required')
-    # Neither a new physical endpoint nor a second proxy can be supplied by a
-    # caller. The exact IMU predecessor supplies BOTH.
     out = MAG.live_call(state.magnetic, state.live.live.mekf,
                         state.live.live.tuner.vertical, **kwargs)
     clock = state.clock
@@ -130,6 +132,8 @@ def readiness():
         'successive_IMU_mag_IMU_events_share_full_state_covariance': True,
         'continuous_magnetic_memory_not_restarted_at_Live': True,
         'magnetic_refinement_and_continuous_application_composed': True,
+        'interleaved_IMU_uses_same_operand_tilt_reset_entry': True,
+        'free_watchdog_angle_and_reset_quaternion_forbidden': True,
         'external_hold_and_count_release_feed_next_IMU_mode': True,
         'same_history_every_represented_event_successor_exposed': True,
         'finite_prefix_mag_call_deadlines_checked': True,
