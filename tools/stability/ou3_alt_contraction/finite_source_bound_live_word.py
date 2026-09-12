@@ -118,8 +118,28 @@ def set_hold(state:State, *, hold):
     return Result(State(event.state,state.source,state.sensor_root,state.bias_history_id),event)
 
 
+def finite_storage_status():
+    """Current facts for ``proof_plan.assert_finite_storage_master``.
+
+    Physical reference forcing is now retained by construction for every
+    represented post-handoff source-owning event: IMU transitions carry the
+    exact PhysicalSegment and raw packet, while mag/hold events stay at the
+    carried endpoint. The other three finite-master obligations deliberately
+    remain false. In particular sample-zero/startup source membership and all
+    deployed arithmetic branches are not yet one universal finite identity.
+    """
+    return {
+      'map_representation':'finite_physical_descriptor',
+      'finite_error_identity_for_every_event':False,
+      'physical_reference_forcing_retained':True,
+      'all_coefficient_product_graphs_retained':False,
+      'all_configured_branches_bound_to_finite_graph':False,
+      'zero_wind_heel_scope_enforced':True,
+    }
+
+
 def readiness():
-    lower=LIVE.readiness(); src=SOURCE.readiness()
+    lower=LIVE.readiness(); src=SOURCE.readiness(); master=finite_storage_status()
     return {
       'source_continuation_is_part_of_theorem_product_state':True,
       'every_IMU_event_appends_exactly_next_source_ordinal':True,
@@ -129,6 +149,7 @@ def readiness():
       'magnetic_and_hold_events_preserve_current_source_endpoint':True,
       'qualified_post_first_IMU_magnetic_entry_available':lower['source_qualified_async_magnetic_endpoint_entry_available'],
       'one_bias_parameter_token_carried_over_word':src['one_bias_family_parameter_token_over_word_required'],
+      'physical_reference_forcing_retained_in_finite_master_status':master['physical_reference_forcing_retained'],
       'sample_zero_startup_to_COMPLETE_BRMM_endpoint_bridge_closed':False,
       'quantitative_sensor_residual_ISS_envelope_attached':False,
       'finite_estimator_coefficients_bound_to_same_source_continuation':False,
