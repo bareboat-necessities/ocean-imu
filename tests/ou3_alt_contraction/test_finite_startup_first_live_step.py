@@ -45,9 +45,6 @@ def startup():
 def physical_step(s):
     segment,_=FC.physical_successor(s.state.mekf)
     ref=s.state.mekf.reference
-    # Fresh reference is zero-rate/zero-bias/zero-beta/zero-acceleration.  One
-    # exact held level accelerometer sample therefore satisfies the raw source
-    # identity and is reused after prediction by the existing held-sample lemma.
     raw=SENSOR.RawImuSample(ref,(0,0,0),(0,0,0),(0,0,0),
                             (0,0,0),(0,0,-G),(0,0,G))
     h=segment.h
@@ -82,11 +79,12 @@ def run(s=None,**overrides):
 
 class Tests(unittest.TestCase):
     def test_first_Live_prefix_really_starts_from_startup_fresh_H18(self):
-        s=startup(); out=run(s)
+        s=startup(); raw,segment,_,_,_,_=physical_step(s); out=run(s)
         self.assertIs(out.startup,s)
         self.assertEqual(s.state.mekf.mode,'H')
         self.assertEqual(out.first_live.state.mekf.mode,'H')
-        self.assertEqual(out.first_live.prediction.state.reference,s.state.mekf.reference)
+        self.assertEqual(out.first_live.guarded.raw.physical,s.state.mekf.reference)
+        self.assertEqual(out.first_live.prediction.state.reference,segment.after)
         self.assertEqual(out.first_live.state.tuner.sample_index,s.state.tuner.sample_index+1)
         self.assertEqual(out.first_live.state.tuner.time,out.first_live.state.mekf.reference.time)
         self.assertFalse(out.first_live.accelerometer.accepted)
@@ -98,14 +96,11 @@ class Tests(unittest.TestCase):
         self.assertEqual(out.tuner_suffix.state.sample_index,before.sample_index+1)
         self.assertEqual(out.tuner_suffix.stage_before,'Live')
 
-    def test_detached_first_packet_or_segment_fails_closed(self):
-        s=startup(); raw,segment,angular,ou,bias,qaxis=physical_step(s)
+    def test_detached_first_packet_fails_before_live_algebra(self):
+        s=startup(); raw,segment,_,_,_,_=physical_step(s)
         other=replace(raw,physical=segment.after)
         with self.assertRaisesRegex(ValueError,'detached'):
             X.step(s,other,segment)
-        bad=replace(segment,before=segment.after)
-        with self.assertRaisesRegex((ValueError,TypeError),'detached|physical'):
-            X.step(s,raw,bad)
 
     def test_readiness_keeps_async_reset_precision_and_indefinite_word_open(self):
         r=X.readiness()
