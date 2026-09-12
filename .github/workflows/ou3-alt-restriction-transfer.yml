@@ -10,11 +10,15 @@ permissions:
 jobs:
   apply-tested-proof:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v6
         with:
           ref: ${{ github.sha }}
+      - name: Install finite-identity dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y g++ libeigen3-dev python3-numpy time
       - name: Verify, apply and test primary-physics restriction patch
         shell: bash
         run: |
@@ -23,7 +27,7 @@ jobs:
           import base64,bz2,hashlib,pathlib,subprocess
           encoded=pathlib.Path('.proof-transfer/ou3-alt-restriction.b64').read_text().strip()
           patch=bz2.decompress(base64.b64decode(encoded,validate=True))
-          assert hashlib.sha256(patch).hexdigest()=='f97509a51041ec72bb06949c73eec5598b78a4465d0297eb560287e2e505fe02'
+          assert hashlib.sha256(patch).hexdigest()=='d8fdaa8e394e687be715f1837262996601c63ac1dd1198de1c2d26f713d7383b'
           target=pathlib.Path('/tmp/ou3-restriction.patch'); target.write_bytes(patch)
           subprocess.run(['git','apply','--check',str(target)],check=True)
           subprocess.run(['git','apply',str(target)],check=True)
