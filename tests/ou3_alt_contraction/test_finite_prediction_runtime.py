@@ -43,7 +43,10 @@ class Tests(unittest.TestCase):
 
     def test_shipping_prediction_rejects_detached_physical_predecessor_and_omega(self):
         s,seg,g,a,ou,b,q=self.make('A',True); raw=self.raw_sample(s,g)
-        wrong_a=A.AngularRuntime((F(1,1000000),0,0),seg.h)
+        # Keep the perturbation in AngularRuntime's literal small-rate branch so
+        # construction succeeds and the prediction entry itself rejects the
+        # detached covariance angular rate.
+        wrong_a=A.AngularRuntime((F(1,100000000),0,0),seg.h)
         with self.assertRaises(ValueError):
             R.prediction_from_raw(s,seg,raw,angular=wrong_a,Qbase=M.zeros(6,6),ou=ou,bias=b,qaxis=q)
         end=seg.after; gyro2=end.gyro_bias
