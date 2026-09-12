@@ -1,16 +1,22 @@
 """Same-operand finite-real Live tilt-watchdog and preserve-yaw reset graph.
 
 This removes the two free operands that remained in ``finite_live_tilt_prefix``:
-the watchdog angle and the final preserve-yaw reset quaternion.  The watchdog
-angle witness is tied to the exact post-accelerometer nominal attitude.  When
+the watchdog angle and the final preserve-yaw reset quaternion. The watchdog
+angle witness is tied to the exact post-accelerometer nominal attitude. When
 the watchdog fires, the reset witness is derived from that same predecessor
 attitude and the exact guarded accelerometer sample consumed by the current IMU
 prefix.
 
-The ideal-real preserve-yaw construction is algebraic.  It uses the half-angle
+The ideal-real preserve-yaw construction is algebraic. It uses the half-angle
 identities corresponding to shipping's atan2/asin/AngleAxis calls, rather than
-accepting their final quaternion as an independent value.  Binary32/libm and
-Eigen normalization correspondence remain deployment obligations.
+accepting their final quaternion as an independent value. Shipping first calls
+``initialize_from_acc()``, which reseeds the attitude covariance about the
+world-down axis expressed in the *accel-only intermediate* qref, and only then
+restores yaw with ``set_quaternion_boat(q_new_bw)``. The latter does not reseed
+or rotate covariance. This module therefore carries that intermediate down axis
+explicitly instead of deriving the covariance axis from the final nominal
+quaternion. Binary32/libm and Eigen normalization correspondence remain
+separate deployment obligations.
 """
 from __future__ import annotations
 from dataclasses import dataclass
@@ -26,7 +32,7 @@ from tools.stability.ou3_alt_contraction import finite_tilt_watchdog as WATCH
 R = P.rational
 
 
-# Shipping compares acos(cos_tilt)*57.295779513f > 70.  The float literal is
+# Shipping compares acos(cos_tilt)*57.295779513f > 70. The float literal is
 # represented here by the exact decimal rational used by the finite-real layer.
 DEG_PER_RAD_SHIPPING = F(57295779513, 1000000000)
 THRESHOLD_RAD = F(70) / DEG_PER_RAD_SHIPPING
@@ -50,9 +56,11 @@ COS70_LO, COS70_HI = _cos_interval_alternating(THRESHOLD_RAD)
 def watchdog_over_limit(state:CORE.State):
     """Resolve the shipping >70deg branch from the exact current attitude.
 
-    The only unresolved case is the tiny rational enclosure containing the
-    transcendental threshold itself; it remains fail-closed for deployment
-    libm correspondence rather than accepting a free tilt scalar.
+    Shipping normalizes ``quaternion_boat()`` before rotating body +Z. The
+    homogeneous rotation below has the same exact-real action without choosing
+    a square root. The only unresolved case is the tiny rational enclosure
+    containing the transcendental threshold itself; it remains fail-closed for
+    deployment libm correspondence rather than accepting a free tilt scalar.
     """
     if not isinstance(state,CORE.State): raise TypeError('finite core required')
     qbw=P.quat_conj(state.q_hat)
@@ -129,7 +137,17 @@ def preserve_yaw_witness(state:CORE.State, sample:SENSOR.GuardedImuSample, *,
                          pitch_cos:TILT.SqrtWitness|None=None,
                          pitch_half:SignedHalfWitness|None=None,
                          roll_half:TILT.YawHalfWitness|None=None):
-    """Derive the ideal-real output of shipping initialize_from_acc_preserve_yaw."""
+    """Derive shipping's ideal-real preserve-yaw output and reset covariance axis.
+
+    The returned quaternion is the final yaw-restored nominal attitude. The
+    returned ``down_body_unit`` is intentionally taken from the accel-only
+    intermediate qref at the instant ``initialize_from_acc()`` calls
+    ``set_accel_only_attitude_covariance_``. Shipping's later
+    ``set_quaternion_boat(q_new_bw)`` zeros the attitude error bookkeeping but
+    does not touch P, so using a newly derived final-quaternion axis would model
+    a different reset order even though both axes coincide in exact arithmetic
+    away from singular branches.
+    """
     if not isinstance(state,CORE.State) or not isinstance(sample,SENSOR.GuardedImuSample):
         raise TypeError('finite core and same guarded sample required')
     if sample.physical.history_id!=state.reference.history_id:
@@ -146,7 +164,13 @@ def preserve_yaw_witness(state:CORE.State, sample:SENSOR.GuardedImuSample, *,
             raise ValueError('old-yaw witness detached from predecessor attitude')
         qyaw=(old_yaw_half.cos_half,F(0),F(0),old_yaw_half.sin_half)
 
+    # This is the WORLD->BODY' qref installed by initialize_from_acc(). Shipping
+    # computes the anisotropic accel-only covariance NOW, before yaw restoration.
     qref_tilt=_qref_from_acc(sample.conditioned_accel_body,acc_tilt)
+    down_cov=tuple(M.mv(CORE.rotation(qref_tilt),(F(0),F(0),F(1))))
+    if M.dot(down_cov,down_cov)!=1:
+        raise AssertionError('accel-only covariance down axis lost unit norm')
+
     tilt_bw=P.quat_conj(qref_tilt)
     tw,tx,ty,tz=tilt_bw
     sinp=max(F(-1),min(F(1),2*(tw*ty-tz*tx)))
@@ -171,9 +195,15 @@ def preserve_yaw_witness(state:CORE.State, sample:SENSOR.GuardedImuSample, *,
     if M.dot(qnew_bw,qnew_bw)!=1:
         raise AssertionError('preserve-yaw Euler composition lost unit norm')
     qnew_hat=tuple(P.quat_conj(qnew_bw))
-    down=tuple(M.mv(CORE.rotation(qnew_hat),(F(0),F(0),F(1))))
-    if M.dot(down,down)!=1: raise AssertionError('world-down body axis lost unit norm')
-    return WATCH.PreserveYawWitness(qnew_hat,down)
+
+    # This identity is useful but is NOT used to choose the covariance axis:
+    # a world-Z yaw restore leaves world-down expressed in body unchanged.
+    # Retaining the intermediate value above preserves shipping evaluation order
+    # for the later binary32/libm correspondence proof.
+    final_down=tuple(M.mv(CORE.rotation(qnew_hat),(F(0),F(0),F(1))))
+    if final_down!=down_cov:
+        raise AssertionError('ideal preserve-yaw restore changed gravity-axis direction')
+    return WATCH.PreserveYawWitness(qnew_hat,down_cov)
 
 
 def readiness():
@@ -183,7 +213,8 @@ def readiness():
       'preserve_yaw_old_heading_tied_to_same_pre_reset_attitude':True,
       'preserve_yaw_accel_tilt_tied_to_same_guarded_accelerometer':True,
       'preserve_yaw_pitch_roll_reconstruction_algebraically_bound':True,
-      'reset_down_axis_derived_from_same_final_quaternion':True,
+      'reset_covariance_axis_comes_from_accel_only_intermediate_before_yaw_restore':True,
+      'final_yaw_restore_does_not_reseed_covariance':True,
       'free_final_preserve_yaw_quaternion_removed_from_theorem_entry':True,
       'watchdog_boundary_sliver_and_binary32_libm_closed':False,
       'sqrt_atan2_asin_angleaxis_binary32_libm_closed':False,
