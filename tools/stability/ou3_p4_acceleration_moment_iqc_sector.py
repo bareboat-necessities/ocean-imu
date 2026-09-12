@@ -28,6 +28,7 @@ from __future__ import annotations
 
 import argparse
 import json
+from fractions import Fraction
 from typing import Sequence
 
 from ou3_interval import Interval, matrix_mul, matrix_sub, matrix_transpose
@@ -41,6 +42,11 @@ QUALIFICATION='OU3_P4_ACCELERATION_MOMENT_JOINT_SECTOR_V2'
 
 def _shape(A):
     return len(A), len(A[0]) if A else 0
+
+
+def _exact_number(x):
+    """Accept decimal or exact rational JSON scalars without changing semantics."""
+    return float(Fraction(str(x)))
 
 
 def _block_ginv():
@@ -88,7 +94,7 @@ def build():
     joint=JOINT.build(); jf=JOINT.validate(joint)
     if mf or jf:
         raise RuntimeError(f'prerequisite failure moment={mf} joint={jf}')
-    A=float(mom['A_max_mps2'])
+    A=_exact_number(mom['A_max_mps2'])
 
     # Common coordinate z=[h_source, x0x,x1x,x2x, x0y,...,x2z].
     # h_source=1 is a homogeneous physical-source coordinate, NOT entry radial.
