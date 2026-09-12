@@ -52,10 +52,6 @@ class Tests(unittest.TestCase):
 
     def test_detached_BRMM_history_rejected_at_composition_not_coordinate_constructor(self):
         s=self.root(); witness,r,b,raw,runtime=self.next_operands(s)
-        # PhysicalKinematics deliberately carries no proof metadata. Two theorem
-        # histories may share the same finite coordinate values, so constructing
-        # the restriction datum is valid; it must be rejected when composed with
-        # the state that carries a different quantified admitted history.
         other=A.AdmittedHistory('other-history')
         detached=A.RestrictedSegment(other,witness.ordinal,r.segment)
         with self.assertRaisesRegex(ValueError,'detached from carried admitted history'):
@@ -100,16 +96,19 @@ class Tests(unittest.TestCase):
                     'same_event_IMU_ISS_supply_attached_to_admitted_step',
                     'same_event_magnetic_ISS_supply_attached_to_admitted_product',
                     'BIAS_generating_history_attached',
-                    'canonical_5ms_wrapper_clock_prefix_binary32_closed'):
+                    'global_exact_real_attitude_trig_ancestry_closed',
+                    'one_radian_attitude_guard_closed_for_every_admitted_prefix',
+                    'canonical_5ms_wrapper_clock_prefix_binary32_closed',
+                    'outer_magnetic_wrapper_clock_operands_materialized'):
             self.assertTrue(r[key])
         for key in ('finite_tokens_used_as_source_membership_oracle',
                     'sensor_or_temperature_amplitude_bound_invented',
                     'startup_reachability_for_every_admitted_history_proved',
                     'bounded_input_history_qualified',
-                    'one_radian_attitude_guard_closed_for_every_admitted_prefix',
                     'deployment_exp_expm1_trig_Eigen_LDLT_closed',
                     'wrapper_clock_arbitrary_dt_closed',
                     'wrapper_clock_indefinite_lifetime_closed',
+                    'dual_clock_magnetic_word_composed',
                     'mag_schedule_supplies_uniform_call_count_upper',
                     'shipping_signed_mag_counter_lifetime_closed',
                     'complete_600_step_shipping_word_composed_from_restrictions',
