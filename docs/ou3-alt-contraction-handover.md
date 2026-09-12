@@ -138,15 +138,34 @@ unlock deadline remains ten seconds, under locally finite calls continuing
 through unbounded physical time. No eventual A21 is inferred under arbitrary
 external hold. Finite prefix timing checks do not establish infinite coverage.
 
+## Live tilt reset is now same-operand finite-real
+
+`finite_tilt_reset_runtime.py` removes the free watchdog angle and free final
+preserve-yaw quaternion from the theorem-facing Live edge. The watchdog predicate
+is derived from the actual post-accelerometer nominal attitude. A firing reset
+derives the old yaw from that same predecessor, derives accel-only tilt from the
+same guarded accelerometer already consumed by the sample, reconstructs shipping
+pitch/roll, composes yaw-pitch-roll, and derives the covariance down axis from
+that same final quaternion.
+
+`finite_live_tilt_prefix.step_from_shipping_operands` owns this edge, and
+`finite_live_interleave.imu_step` rejects attempts to inject `tilt_deg` or an
+independent reset output. The >70-degree comparison is resolved with a rigorous
+rational enclosure of the real threshold corresponding to
+`acos(cos_tilt)*57.295779513f`; the tiny enclosure boundary remains fail-closed.
+Near-parallel accelerometer cutoff behavior, nonfinite fallback, sqrt/acos/asin/
+atan2/AngleAxis/normalization rounding and target compiler/libm correspondence
+remain deployment obligations. They are not converted into theorem exclusions.
+
 ## Next proof target
 
 The decisive missing object remains the complete source-uniform finite 600-step
 shipping word. Continue from the product composer, not disconnected snapshots:
 
-1. bind the firing tilt-watchdog angle and preserve-yaw reset quaternion / down
-   axis to their actual same guarded sample and predecessor attitude;
-2. close the remaining startup/ungauged and magnetic arithmetic paths, including
-   libm, float/double casts, Eigen decisions and nonfinite outcomes;
+1. close deployment correspondence for the now-bound Live tilt reset and startup
+   attitude/magnetic arithmetic, including normalization cutoffs, libm,
+   float/double casts, Eigen decisions and nonfinite outcomes;
+2. finish the remaining startup/ungauged and magnetic source/history paths;
 3. attach corrected COMPLETE-BRMM, BIAS0/1/2 and all declared disturbances to
    every literal IMU/magnetic/hybrid prefix and deployment lifetime arithmetic;
 4. only after the finite-master guard accepts the complete source-uniform
@@ -160,19 +179,20 @@ Do not silently disable calibration or shrink the physical domain to get PASS.
 
 ## Validation boundary
 
-The focused finite-identity CI selection passes all 470 tests, including
-calibration equations, rejection side effects, source/clock continuity, yaw
-writes, H18/A21 control and IMU->mag->IMU covariance substitution. Native
-shipping correspondence passes with bit-identical observed/plain sample states
-and unchanged tracked headers. They are implementation/algebra checks,
-not source-uniform stability evidence. The full inherited suite is not green:
-the baseline reproduces `continuous Mahony invariant invalid` with
-`continuous_all_live_PI_invariant_closed is not true` and
-`initial seed angle not closed`. Those shared prerequisites remain unchanged.
+The pre-tilt continuation focused finite-identity selection had passed 470 tests,
+including calibration equations, rejection side effects, source/clock continuity,
+yaw writes, H18/A21 control and IMU->mag->IMU covariance substitution. The
+focused workflow now also includes `test_finite_tilt_reset_runtime`; latest-head
+CI must be read separately before claiming it passes. Native shipping
+correspondence on the prior tested tree passed with bit-identical observed/plain
+sample states and unchanged tracked headers. These are implementation/algebra
+checks, not source-uniform stability evidence.
 
-The default local `make all` stops at `tests/ahrs/ahrs-qmekf-sim.cpp` because
-`Eigen/Dense` is absent from `/usr/include/eigen3`. Native correspondence can
-use the separately available Eigen include path; it is not a full-build PASS.
+The full inherited suite is known not to be green on the shared baseline because
+of the existing continuous-Mahony/source prerequisites. Do not weaken those
+prerequisites to make ALT green. The prior local default `make all` environment
+also lacked `/usr/include/eigen3`; no full-build PASS is inferred from a focused
+native correspondence check.
 
 ## Gate state
 
