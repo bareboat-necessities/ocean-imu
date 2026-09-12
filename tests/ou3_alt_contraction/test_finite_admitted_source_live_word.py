@@ -7,6 +7,7 @@ from tools.stability.ou3_alt_contraction import finite_admitted_brmm_restriction
 from tools.stability.ou3_alt_contraction import finite_admitted_bias_history as B
 from tools.stability.ou3_alt_contraction import finite_bias_history_restriction as BR
 from tools.stability.ou3_alt_contraction import finite_admitted_source_live_word as X
+from tools.stability.ou3_alt_contraction import finite_live_magnetic_dual_clock as DUAL
 import test_finite_source_bound_live_word as BASE
 import test_finite_live_magnetic_word as MAGBASE
 
@@ -22,8 +23,31 @@ class Tests(unittest.TestCase):
         return (A.RestrictedSegment(s.admitted_history,witness.ordinal,segment),
                 B.RestrictedBiasStep(s.bias_history,witness.ordinal,segment))
 
+    def dual_startup(self):
+        bridge=MAGBASE.FIRST.startup()
+        cfg=MAGBASE.X.Config(gate=MAGBASE.X.GATE.Config(mag_delay=0),
+            gravity=MAGBASE.X.GRAVITY.Config(mag_delay=0),
+            tuner=MAGBASE.X.TUNER.Config(min_samples=1,min_window=0),
+            refinement_start=90,refinement_window=0,continuous_enabled=True)
+        model=MAGBASE.X.SOURCE.Model((30,0,0),(0,0,0),'fixed-physical-model')
+        proxy=bridge.frontend_before.tuner.vertical
+        word=MAGBASE.X.START.State(MAGBASE.X.GRAVITY.State(gravity_good=2,aligned_branch=True),
+                                   MAGBASE.PREFIX.State(proxy))
+        base=MAGBASE.X.begin_startup(word,cfg,model,bridge.state.mekf.reference.history_id,
+                                     'startup-reference')
+        cert=DUAL.certify_fresh_startup(base)
+        out=DUAL.certified_startup_call(cert,bridge.state.mekf.reference,
+            residual_body=(0,0,0),packet_id='startup',
+            proxy_q_norm=MAGBASE.X.TILT.SqrtWitness(1,1),proxy_yaw_half=MAGBASE.zero_yaw(),
+            hi_decay=MAGBASE.HI.Decay(F(1,200),600,1),
+            mag_norm=MAGBASE.X.TUNER.SqrtWitness(900,30),
+            mean_norm=MAGBASE.X.TUNER.SqrtWitness(900,30),
+            horizontal_sqrt=MAGBASE.GAUGE.HorizontalSqrt(900,30),
+            ready_yaw_half=MAGBASE.zero_yaw(30))
+        return bridge,out.state
+
     def test_actual_startup_interleave_binds_exact_admitted_tL_origin(self):
-        bridge,magnetic=MAGBASE.startup()
+        bridge,magnetic=self.dual_startup()
         ref=bridge.state.mekf.reference
         history=A.AdmittedHistory(ref.history_id)
         origin=A.RestrictedOrigin(history,ref)
@@ -39,6 +63,20 @@ class Tests(unittest.TestCase):
         self.assertEqual(s.admitted_history,history)
         self.assertEqual(s.bias_history,bias)
         self.assertEqual(len(s.live_word.source.steps),0)
+        self.assertEqual(magnetic.calls,1)
+
+    def test_old_single_clock_startup_state_cannot_enter_admitted_factory(self):
+        bridge,old=MAGBASE.startup()
+        ref=bridge.state.mekf.reference
+        history=A.AdmittedHistory(ref.history_id); origin=A.RestrictedOrigin(history,ref)
+        bias=B.AdmittedBiasHistory(ref.bias_root,ref.bias_family,BASE.PHI)
+        with self.assertRaisesRegex(TypeError,'certified dual-clock'):
+            X.from_startup(bridge,old,origin,bias,
+                gyro_residual_history_id='g',accel_residual_history_id='a',
+                runtime=BASE.root_state().runtime,
+                proxy_q_norm=MAGBASE.X.TILT.SqrtWitness(1,1),proxy_yaw_half=MAGBASE.zero_yaw())
+        with self.assertRaisesRegex(ValueError,'already-used magnetic word'):
+            DUAL.certify_fresh_startup(old)
 
     def test_next_IMU_consumes_same_kth_BRMM_and_BIAS_restriction(self):
         s=self.root(); witness,segment,raw,dynamic=BASE.next_imu_operands(s.live_word)
@@ -102,6 +140,8 @@ class Tests(unittest.TestCase):
         self.assertTrue(r['universal_admitted_COMPLETE_BRMM_history_carried_in_Live_product'])
         self.assertTrue(r['admitted_BIAS_history_carried_in_same_Live_product'])
         self.assertTrue(r['actual_startup_interleave_constructor_consumed_by_admitted_source_factory'])
+        self.assertTrue(r['admitted_startup_requires_inductive_dual_clock_magnetic_history'])
+        self.assertTrue(r['already_mutated_single_clock_startup_rejected_at_theorem_handoff'])
         self.assertTrue(r['startup_fresh_H18_reference_must_equal_admitted_tL_origin'])
         self.assertTrue(r['synthetic_Live_root_inserted_by_source_bridge'] is False)
         self.assertTrue(r['every_IMU_event_requires_same_BRMM_and_BIAS_restriction_ordinal'])
