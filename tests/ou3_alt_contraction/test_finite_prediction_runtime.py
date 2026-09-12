@@ -24,7 +24,6 @@ class Tests(unittest.TestCase):
         return s,segment,gyro,angular,ou,bias,qaxis
 
     def raw_sample(self,s,gyro):
-        # Root error has e_bg=0, so choose n_g=0 and omega_sample=gyro-b_g_true.
         omega=tuple(gyro[i]-s.reference.gyro_bias[i] for i in range(3))
         inertial=tuple(s.reference.acceleration[i]-(0,0,G)[i] for i in range(3))
         fbody=S.q_rotate(s.reference.q_world_to_body,inertial)
@@ -40,14 +39,13 @@ class Tests(unittest.TestCase):
         s,seg,g,a,ou,b,q=self.make('A',True); raw=self.raw_sample(s,g)
         out=R.prediction_from_raw(s,seg,raw,angular=a,Qbase=M.zeros(6,6),ou=ou,bias=b,qaxis=q)
         self.assertEqual(out.reference,seg.after)
-        self.assertEqual(raw.bias_corrected_gyro(s.z[3:6]),raw.required_bias_corrected_relation(s.z[3:6]))
+        self.assertEqual(raw.bias_corrected_internal_gyro(s.z[3:6]),raw.required_bias_corrected_relation(s.z[3:6]))
 
     def test_shipping_prediction_rejects_detached_physical_predecessor_and_omega(self):
         s,seg,g,a,ou,b,q=self.make('A',True); raw=self.raw_sample(s,g)
         wrong_a=A.AngularRuntime((F(1,1000000),0,0),seg.h)
         with self.assertRaises(ValueError):
             R.prediction_from_raw(s,seg,raw,angular=wrong_a,Qbase=M.zeros(6,6),ou=ou,bias=b,qaxis=q)
-        # A raw packet rooted at the segment endpoint is not the predictor's packet.
         end=seg.after; gyro2=end.gyro_bias
         inertial=tuple(end.acceleration[i]-(0,0,G)[i] for i in range(3))
         fbody=S.q_rotate(end.q_world_to_body,inertial); acc=tuple(fbody[i]+end.beta[i] for i in range(3))
@@ -79,6 +77,6 @@ class Tests(unittest.TestCase):
         with self.assertRaises(ValueError): R.QAxisBranch(False,M.eye(3),(PASS,),(PASS,),F(1,10**7))
 
     def test_readiness_fail_closed(self):
-        r=R.readiness(); self.assertFalse(r['free_prediction_transition_matrices_at_entry']); self.assertTrue(r['same_bias_corrected_gyro_for_nominal_and_covariance']); self.assertTrue(r['raw_gyro_source_provenance_attached_at_shipping_entry']); self.assertTrue(r['omega_sample_e_bg_n_g_relation_attached']); self.assertTrue(r['Qaxis_runtime_graph_composed']); self.assertFalse(r['sensor_residual_source_bounds_attached']); self.assertFalse(r['same_history_tuner_parameters_attached']); self.assertFalse(r['complete_word_finite_identity']); self.assertFalse(r['ALT_LIVE_PASS'])
+        r=R.readiness(); self.assertFalse(r['free_prediction_transition_matrices_at_entry']); self.assertTrue(r['same_bias_corrected_gyro_for_nominal_and_covariance']); self.assertTrue(r['raw_body_gyro_source_provenance_attached_at_shipping_entry']); self.assertTrue(r['shipping_deheel_map_before_internal_prediction_attached']); self.assertTrue(r['omega_sample_e_bg_n_g_relation_attached']); self.assertTrue(r['Qaxis_runtime_graph_composed']); self.assertFalse(r['deheel_sincos_binary32_ancestry_attached']); self.assertFalse(r['sensor_residual_source_bounds_attached']); self.assertFalse(r['complete_word_finite_identity']); self.assertFalse(r['ALT_LIVE_PASS'])
 
 if __name__=='__main__': unittest.main()
