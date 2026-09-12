@@ -17,9 +17,6 @@ def sample(freq=F(1,2)):
 
 class Tests(unittest.TestCase):
     def test_target_horizon_alpha_and_both_ema_evaluation_shapes(self):
-        # f=.5 -> tau target=1, sea_time=1, adapt horizon=.4, dt=.01,
-        # so rounded x is near .025.  0.9753 is a binary32 exp witness inside
-        # the rigorous [1-x,1-x+x^2/2] real enclosure.
         e=B.rn32(F(9753,10000))
         out=T.step(B.rn32(F(1,2)),sample(),cfg(),dt=F(1,100),exp_decay=e)
         self.assertEqual(out.frequency,B.rn32(F(1,2)))
@@ -31,6 +28,27 @@ class Tests(unittest.TestCase):
         self.assertTrue(B.is_binary32(out.next_fma))
         self.assertEqual(T.committed_tau(out,contracted=False),out.next_separate)
         self.assertEqual(T.committed_tau(out,contracted=True),out.next_fma)
+
+    def test_exact_real_shadow_difference_is_retained_as_roundoff_supply(self):
+        e=B.rn32(F(9753,10000)); previous=B.rn32(F(1,2))
+        binary=T.step(previous,sample(),cfg(),dt=F(1,100),exp_decay=e)
+        exact=C.step(C.TuneState(previous,F(1,2),F(1,2)),sample(),cfg(),
+                     dt=F(1,100),time=F(1,5),last_adapt_time=0,
+                     spectral=C.SpectralWitness(1,1),ema=C.EmaWitness(e,1))
+        supply=T.roundoff_supply(binary,exact)
+        self.assertEqual(supply.residual_separate,
+                         binary.next_separate-exact.tune_next.tau_applied)
+        self.assertEqual(supply.residual_fma,
+                         binary.next_fma-exact.tune_next.tau_applied)
+
+    def test_roundoff_bridge_rejects_detached_exact_frequency(self):
+        e=B.rn32(F(9753,10000)); previous=B.rn32(F(1,2))
+        binary=T.step(previous,sample(),cfg(),dt=F(1,100),exp_decay=e)
+        exact=C.step(C.TuneState(previous,F(1,2),F(1,2)),sample(F(2,5)),cfg(),
+                     dt=F(1,100),time=F(1,5),last_adapt_time=0,
+                     spectral=C.SpectralWitness(1,1),ema=C.EmaWitness(e,1))
+        with self.assertRaisesRegex(ValueError,'frequency detached'):
+            T.roundoff_supply(binary,exact)
 
     def test_previous_tau_must_be_actual_stored_binary32(self):
         e=B.rn32(F(9753,10000))
@@ -48,9 +66,12 @@ class Tests(unittest.TestCase):
         self.assertTrue(r['tau_EMA_separate_mul_add_result_materialized'])
         self.assertTrue(r['tau_EMA_contracted_fma_result_materialized'])
         self.assertTrue(r['pending_commit_passes_stored_tau_directly_to_MEKF_setter'])
+        self.assertTrue(r['source_frontend_frequency_binary32_storage_correspondence_closed'])
+        self.assertTrue(r['local_tau_binary32_minus_exact_shadow_supply_exposed'])
+        self.assertFalse(r['source_uniform_tau_roundoff_supply_bound_closed'])
         self.assertFalse(r['tuner_exp_libm_binary32_correspondence_closed'])
         self.assertFalse(r['shipping_compiler_FP_contraction_mode_qualified'])
-        self.assertFalse(r['source_frontend_frequency_binary32_storage_correspondence_closed'])
+        self.assertFalse(r['upstream_WPE_binary32_frequency_production_closed'])
         self.assertFalse(r['ALT_LIVE_PASS'])
 
 
