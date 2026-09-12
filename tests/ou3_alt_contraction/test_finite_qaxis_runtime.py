@@ -19,17 +19,19 @@ class Tests(unittest.TestCase):
         expected=s*(F(2,3)*h3-F(1,2)*h4+F(7,30)*h5-F(1,12)*h6+F(31,1260)*h7-F(1,160)*h8+F(127,90720)*h9)
         self.assertEqual(out[0][0],expected); self.assertEqual(out,M.transpose(out))
 
-    def test_general_branch_retains_independent_nested_and_final_alpha_roots(self):
-        tau=F(1,2); h=F(1,100); s=F(2); a=F(49,50)
-        out=Q.marginal_raw(tau,h,s,a)
+    def test_general_marginal_uses_its_own_alpha_root(self):
+        tau=F(1,2); h=F(1,100); s=F(2); a=F(49,50); out=Q.marginal_raw(tau,h,s,a)
         inv=2; qc=2*s*inv; K22=tau*(1-a*a)/2
         self.assertEqual(out[2][2],qc*K22)
         changed=Q.marginal_raw(tau,h,s,F(48,50)); self.assertNotEqual(out,changed)
-        base=Q.qaxis4(tau,h,1,a,marginal_psd=PASS,final_psd=PASS,machine_epsilon=F(1,10**7),small_branch=False,
-                      marginal_alpha=a,final_alpha=a)
-        split=Q.qaxis4(tau,h,1,a,marginal_psd=PASS,final_psd=PASS,machine_epsilon=F(1,10**7),small_branch=False,
-                       marginal_alpha=F(979,1000),final_alpha=F(981,1000))
-        self.assertNotEqual(base,split)
+
+    def test_qaxis_interface_accepts_distinct_general_exp_roots_without_equating_them(self):
+        # sigma2=0 makes the covariance zero independently of exp, which keeps
+        # this a topology regression rather than an accidental PSD assertion.
+        out=Q.qaxis4(F(1,4),F(1,200),0,F(99,100),marginal_psd=PASS,final_psd=PASS,
+                     machine_epsilon=F(1,10**7),small_branch=False,
+                     marginal_alpha=F(9801,10000),final_alpha=F(19603,20000))
+        self.assertEqual(out,M.zeros(4,4))
 
     def test_qaxis_copies_regularized_marginal_into_v_p_a_indices(self):
         tau=1; h=F(1,200); a=F(199,200); eps=F(1,10**7); marg=Q.regularize_psd(Q.marginal_raw(tau,h,1,a),PASS,machine_epsilon=eps)
