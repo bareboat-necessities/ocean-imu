@@ -83,7 +83,7 @@ jobs:
             test_finite_prediction_covariance test_finite_ou_runtime_primitives \
             test_finite_attitude_runtime test_finite_qaxis_runtime \
             test_finite_accel_guard_runtime test_finite_sensor_source_runtime \
-            test_finite_prediction_runtime test_finite_post_prediction \
+            test_finite_racc_runtime test_finite_prediction_runtime test_finite_post_prediction \
             test_finite_measurement_runtime test_finite_vertical_complementary_runtime \
             test_finite_frontend_runtime test_finite_frontend_prefix \
             test_finite_guarded_tuner_prefix test_finite_wpe_runtime \
