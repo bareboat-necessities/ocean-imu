@@ -8,10 +8,10 @@ and create a new PR from that head. Do not replace the independent proof track.
 Read, in this order:
 
 1. `AGENTS.md`;
-2. `docs/ou3-alt-main-handover.md`;
-3. this file;
-4. `docs/ou3-alt-proof-plan.md`;
-5. ALT section of `docs/ou3-proof-research-state.md`;
+2. `docs/ou3-alt-proof-plan.md`;
+3. this handover;
+4. ALT section of `docs/ou3-proof-research-state.md`;
+5. `docs/ou3-alt-contraction.md`;
 6. `docs/ou3-alt-finite-measurement-proof.md`;
 7. `docs/ou3-alt-finite-core-composition.md`;
 8. `docs/ou3-alt-runtime-primitives.md`;
@@ -21,74 +21,17 @@ Read, in this order:
 
 The original P2/P3/P4/P5 route remains independently continuable. Do not weaken, delete, rewrite, or make it depend on ALT. `P3=1e-18` remains frozen.
 
-## Certified ALT deployment scope: wind heel excluded
+## Immutable ALT scope
 
-ALT explicitly excludes the optional wind-heel retarget feature. Certified histories require
-
-- `wind_heel_rad_ == 0` from construction onward; and
-- zero calls to `update_wind_heel()`.
-
-Shipping is unchanged and already defaults heel to zero. Hence B'=B throughout the certified history, de-heeling is identity, and no wind-heel/body-frame retarget event belongs to the ALT hybrid language. `deployment_scope.py` and the storage guards fail closed if this scope is lost. Do not spend ALT proof effort on wind heel unless the theorem scope is explicitly widened in a future PR.
+ALT is the zero-wind-heel theorem branch. `wind_heel_rad_==0` from construction onward; no `update_wind_heel()` event is admitted. Shipping already defaults to zero heel, so this is not a filter change. Every theorem-facing IMU event also rejects a nonidentity de-heel map.
 
 Retain joint24 `z=(c,e_bg,e_v,e_p,e_S,e_aw,e_ba,beta)`, full 21-state covariance, all motion/bias cross terms, one persistent Live S origin and corrected COMPLETE-BRMM including acceleration `<=8.8 m/s^2` and all-time centered primitive `D_S<=1100 m*s`. Preserve same-signal WPE/bandpass/sigma/tau/T_S ancestry, staged tuner state and separate BIAS0/BIAS1/BIAS2 histories.
 
 ## Retained finite runtime and startup relations
 
-### Finite shipping runtime algebra
+The conditional finite graph already materializes prediction, covariance prediction, accel/mag/S measurement updates, Joseph/reset relations, accel-bias projection, periodic a_w covariance synchronization, held-bias semantics, runtime tuner application, frontend/private-Mahony/WPE/band/sigma/stillness state, startup magnetic acquisition/gauge, hard startup handoff, the first actual Live sample, H18/A21 control, and successive IMU/magnetic/hold substitution. These are finite identities and conditional relations, not source-uniform certification.
 
-The ALT graph now contains exact/local finite descriptors for:
-
-- physical attitude and translation prediction with same-history continuous physical increments;
-- full 21-state covariance prediction with runtime-generated attitude F/Q, literal integrated-OU Qaxis branches and BA decay;
-- pending a_w covariance floor, scheduler/S service and covariance hygiene branches;
-- inverse-free measurement relations `K Sigma = N`, SafeLDLT first-attempt/retry/reject, Joseph/reset/projection;
-- accelerometer vibration guard, applied R_acc and held-sample physical forcing;
-- private Mahony, WPE, adaptive band/statistics, stillness and staged tuner commit;
-- asynchronous magnetometer control and H18/A21 wrapper logic;
-- first ordinary Live IMU prefix.
-
-The initialized private-Mahony path also has a named exact binary32 graph under its stated arithmetic profile. Target compiler/libm/profile qualification remains open.
-
-### Deterministic magnetic startup source
-
-`MAG-BMM150-DET-v1` is the theorem-facing commissioned-installation source class:
-
-- `20 <= ||B_W|| <= 75 uT`;
-- horizontal field `>=15 uT`;
-- body hard iron `<=5 uT`;
-- deterministic residual `<=2 uT` per theorem sample.
-
-Together with the declared startup gravity-direction error `<=0.02 rad`, the real-arithmetic startup argument gives total horizontal perturbation `<=8.5 uT`, `|sin(delta_yaw)| <= 17/30`, yaw error `<0.61 rad`, and total attitude error `<0.63 rad < pi/4`. No statistical `1/sqrt(N)` reduction is used.
-
-### Exact fresh H18 joint24 entry
-
-The gauged zero-heel handoff is composed through shipping `goLive` / `initialize_from_attitude` / `enterLive_`.
-
-Important frame convention: shipping receives the accepted handoff as boat-to-world `q_BW`, while the internal MEKF nominal attitude is world-to-body `q_WB = conjugate(q_BW)` under the zero-heel scope. A nontrivial quaternion regression exists specifically to prevent accidentally reversing this convention.
-
-`finite_startup_live_entry.py` seats `P_aw,aw` on the same committed `Sigma_aw`, clears every a_w cross-covariance, requires the committed Live `R_S`, and keeps accelerometer-bias learning disabled.
-
-`finite_fresh_joint24_entry.py` derives the actual fresh state from the SAME physical `Reference` and estimator coordinates:
-
-`c = Cayley(q_true_WB * conjugate(q_hat_WB))`,
-`e_bg=b_g-b_g_hat`, `e_v=v-v_hat`, `e_p=p-p_hat`,
-`e_S=S_centered-S_hat`, `e_aw=a-a_w_hat`,
-`e_ba=beta-b_a_hat`, with final joint24 coordinates equal to the same true `beta`.
-
-The one-time Live origin and fresh centered physical S=0 are enforced. There is no assumed covariance-consistency entry set and no independently chosen fresh-entry error box.
-
-### Startup frontend memory is preserved through goLive
-
-`finite_startup_live_runtime_bridge.py` closes the control/memory bridge from TunerReady to Live:
-
-- Mahony/WPE/band/statistics/stillness/vibration-guard memory is preserved;
-- only startup stage/clock changes at handoff;
-- active tau/Sigma_aw/pseudo cadence/Live R_S are derived from the SAME carried `TuneState`;
-- the persistent S scheduler is retargeted to the committed pseudo period;
-- an online pending-tune bit is intentionally preserved into the first Live IMU boundary, matching shipping;
-- startup is forbidden from carrying a periodic Live-only a_w floor request.
-
-### First actual Live sample is now rooted in startup
+### First actual Live sample is rooted in startup
 
 `finite_startup_first_live_step.py` removes the synthetic Live root at the first represented sample. The first prediction/S-service/accelerometer/tuner-WPE prefix is invoked directly from the startup-produced H18 state, with the raw sensor packet and physical segment required to start at exactly that same fresh physical endpoint.
 
@@ -145,8 +88,18 @@ preserve-yaw quaternion from the theorem-facing Live edge. The watchdog predicat
 is derived from the actual post-accelerometer nominal attitude. A firing reset
 derives the old yaw from that same predecessor, derives accel-only tilt from the
 same guarded accelerometer already consumed by the sample, reconstructs shipping
-pitch/roll, composes yaw-pitch-roll, and derives the covariance down axis from
-that same final quaternion.
+pitch/roll, and composes yaw-pitch-roll.
+
+The covariance order now mirrors shipping exactly. `initialize_from_acc()` first
+installs the accel-only qref and immediately calls
+`set_accel_only_attitude_covariance_()`, so its anisotropic yaw axis is world-down
+expressed in that accel-only intermediate body frame. Only afterwards does
+`initialize_from_acc_preserve_yaw()` build the yaw-restored quaternion and call
+`set_quaternion_boat()`. That setter changes qref and zeros the attitude-error
+bookkeeping but does **not** rotate or reseed covariance. The finite graph carries
+the intermediate covariance axis explicitly; a rational 24-7-25 regression also
+checks that the ideal yaw restore leaves the gravity axis unchanged while
+preserving the actual shipping evaluation order for later binary32 proof.
 
 `finite_live_tilt_prefix.step_from_shipping_operands` owns this edge, and
 `finite_live_interleave.imu_step` rejects attempts to inject `tilt_deg` or an
@@ -182,11 +135,11 @@ Do not silently disable calibration or shrink the physical domain to get PASS.
 The pre-tilt continuation focused finite-identity selection had passed 470 tests,
 including calibration equations, rejection side effects, source/clock continuity,
 yaw writes, H18/A21 control and IMU->mag->IMU covariance substitution. The
-focused workflow now also includes `test_finite_tilt_reset_runtime`; latest-head
-CI must be read separately before claiming it passes. Native shipping
-correspondence on the prior tested tree passed with bit-identical observed/plain
-sample states and unchanged tracked headers. These are implementation/algebra
-checks, not source-uniform stability evidence.
+focused workflow includes `test_finite_tilt_reset_runtime`; latest-head CI must
+be read separately before claiming it passes. Native shipping correspondence on
+the prior tested tree passed with bit-identical observed/plain sample states and
+unchanged tracked headers. These are implementation/algebra checks, not
+source-uniform stability evidence.
 
 The full inherited suite is known not to be green on the shared baseline because
 of the existing continuous-Mahony/source prerequisites. Do not weaken those
