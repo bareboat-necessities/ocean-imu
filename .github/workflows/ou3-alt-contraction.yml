@@ -6,6 +6,8 @@ on:
       - "tools/stability/ou3_alt_contraction/**"
       - "tests/ou3_alt_contraction/**"
       - "docs/ou3-alt-contraction.md"
+      - "docs/ou3-alt-main-handover.md"
+      - "docs/ou3-alt-live-magnetic-word.md"
       - "docs/ou3-alt-contraction-handover.md"
       - "docs/ou3-alt-finite-core-composition.md"
       - "docs/ou3-alt-finite-measurement-proof.md"
@@ -19,6 +21,8 @@ on:
       - "tools/stability/ou3_alt_contraction/**"
       - "tests/ou3_alt_contraction/**"
       - "docs/ou3-alt-contraction.md"
+      - "docs/ou3-alt-main-handover.md"
+      - "docs/ou3-alt-live-magnetic-word.md"
       - "docs/ou3-alt-contraction-handover.md"
       - "docs/ou3-alt-finite-core-composition.md"
       - "docs/ou3-alt-finite-measurement-proof.md"
@@ -120,6 +124,8 @@ jobs:
             test_finite_startup_live_runtime_bridge test_finite_startup_first_live_step \
             test_finite_mag_call_schedule test_finite_h18_a21_reachability \
             test_finite_h18_a21_transition test_finite_live_async_mag \
+            test_finite_continuous_mag_runtime test_finite_live_magnetic_word \
+            test_finite_live_interleave \
             test_shipping_finite_identity test_core test_proof_plan test_bias_families -v
       - name: Verify actual shipping event correspondence without source promotion
         run: |
