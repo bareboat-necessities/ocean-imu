@@ -6,23 +6,17 @@ layer removes independently injectable coefficient roots while retaining the
 actual shipping transcendental topology:
 
 * attitude angular rate comes from the exact raw packet/current gyro-bias error;
-  nonzero-rate sin/cos witnesses must also lie in rigorous rational enclosures
-  at that SAME source-owned rotation angle;
-* OU h/tau comes from the source segment and carried TuneState; distinct
-  exp(-x) and expm1(-x) results are separately constrained by rigorous real
-  enclosures at that SAME h/tau argument;
-* Qaxis Sigma_aw comes from TuneState and regularization epsilon is fixed by
-  the shipping ``Kalman3D_Wave_OU_III<float>`` instantiation to 2^-23. Its
-  polynomial/general formula decision is derived from exact binary32 rounding
-  of those same source-owned h/tau operands, rather than from exact-real h/tau;
-* residual BA tau/Q are the current shipping core defaults. H18 consumes no BA
-  transcendental; A21 retains distinct exp and expm1 results and constrains each
-  to its literal h/tau_b or 2h/tau_b source argument;
-* accelerometer temperature-model coefficient is the shipping core default
-  k_a=(0.002,0.002,0.002) at tempC_ref=35 C. The caller supplies only the
-  actual temperature input; it cannot replace k_a or lever-arm conditioning.
+* OU h/tau comes from the source segment and carried TuneState; its exp and
+  expm1 calls are retained separately and real-enclosed at the same argument;
+* Qaxis Sigma_aw comes from TuneState, its polynomial/general branch comes from
+  exact binary32 h/tau arithmetic, and in the general branch the nested 3x3 and
+  final 4x4 covariance ``std::exp(-x)`` calls are retained separately from one
+  another and from the OU transition exp;
+* residual BA tau/Q are shipping defaults. H18 consumes no BA transcendental;
+  A21 retains distinct exp and expm1 results at their literal arguments;
+* accelerometer temperature-model coefficient is the shipping default.
 
-Binary32/libm coefficient correspondence, tuner-commit storage correspondence,
+Binary32/libm formula correspondence, tuner-commit storage correspondence,
 temperature-history admissibility, PSD solver outcomes and quantitative
 roundoff remain open. This is not storage or a stability certificate.
 """
@@ -39,6 +33,7 @@ from tools.stability.ou3_alt_contraction import finite_source_bound_exp_enclosur
 from tools.stability.ou3_alt_contraction import finite_ou_runtime_primitives as OU
 from tools.stability.ou3_alt_contraction import finite_prediction_runtime as PRED
 from tools.stability.ou3_alt_contraction import finite_qaxis_binary32_branch as QB
+from tools.stability.ou3_alt_contraction import finite_qaxis_exp_binary32 as QE
 
 SHIPPING_BA_TAU = F(5000)
 SHIPPING_BA_Q = tuple(tuple(F(1,4_000_000) if i == j else F(0)
@@ -79,13 +74,23 @@ def _accel_conditioning(temperature_c):
     return SENSOR.AccelConditioning(temp-SHIPPING_TEMP_REF_C, SHIPPING_KA, ZERO3)
 
 
+def _qaxis_exp_pair(branch, marginal, final):
+    if branch.small:
+        if marginal is not None or final is not None:
+            raise ValueError('small Qaxis branch executes no covariance std::exp calls')
+        return None
+    if marginal is None or final is None:
+        raise ValueError('general Qaxis branch requires nested and final covariance exp witnesses')
+    return QE.pair(branch,marginal=marginal,final=final)
+
+
 def build(state: WORD.State, physical: SOURCE.QualifiedPhysicalSegment,
           raw: SENSOR.RawImuSample, *, ou_alpha, ou_em1,
           bias_phi=None, bias_em1_2=None,
           angular_full: ATT.TrigWitness | None = None,
           angular_half: ATT.TrigWitness | None = None,
+          qaxis_marginal_exp=None, qaxis_final_exp=None,
           qaxis_marginal_psd, qaxis_final_psd):
-    """Construct prediction roots from one exact source predecessor."""
     if not isinstance(state, WORD.State):
         raise TypeError('source-owning Live state required')
     if not isinstance(physical, SOURCE.QualifiedPhysicalSegment):
@@ -109,9 +114,10 @@ def build(state: WORD.State, physical: SOURCE.QualifiedPhysicalSegment,
     ou = OU.OUDecay(segment.h, active.tau, ou_alpha, em1=ou_em1)
     EXP.validate_ou(ou)
     coefficient_branch=QB.branch(active.tau,segment.h)
+    covariance_exp=_qaxis_exp_pair(coefficient_branch,qaxis_marginal_exp,qaxis_final_exp)
     qaxis = PRED.QAxisBranch(False, active.Sigma_aw,
                              tuple(qaxis_marginal_psd), tuple(qaxis_final_psd),
-                             SHIPPING_FLOAT_EPSILON, coefficient_branch)
+                             SHIPPING_FLOAT_EPSILON, coefficient_branch, covariance_exp)
     active.require_prediction(ou=ou, qaxis=qaxis)
     bias = _bias_root(core,h=segment.h,bias_phi=bias_phi,bias_em1_2=bias_em1_2)
     return Roots(angular, ou, qaxis, bias)
@@ -122,9 +128,9 @@ def imu_step(state: WORD.State, *, witness: SOURCE.StepWitness,
              temperature_c, ou_alpha, ou_em1,
              bias_phi=None, bias_em1_2=None,
              angular_full=None, angular_half=None,
+             qaxis_marginal_exp=None, qaxis_final_exp=None,
              qaxis_marginal_psd, qaxis_final_psd,
              **dynamic):
-    """Execute one source-owning IMU edge with source-bound model roots."""
     forbidden = {'angular','ou','qaxis','bias','machine_epsilon','accel_conditioning'} & set(dynamic)
     if forbidden:
         raise TypeError('source-bound IMU roots cannot be overridden '+repr(sorted(forbidden)))
@@ -138,6 +144,7 @@ def imu_step(state: WORD.State, *, witness: SOURCE.StepWitness,
     roots = build(state, physical, raw, ou_alpha=ou_alpha,ou_em1=ou_em1,
                   bias_phi=bias_phi,bias_em1_2=bias_em1_2,
                   angular_full=angular_full, angular_half=angular_half,
+                  qaxis_marginal_exp=qaxis_marginal_exp,qaxis_final_exp=qaxis_final_exp,
                   qaxis_marginal_psd=qaxis_marginal_psd,
                   qaxis_final_psd=qaxis_final_psd)
     conditioning=_accel_conditioning(temperature_c)
@@ -148,7 +155,7 @@ def imu_step(state: WORD.State, *, witness: SOURCE.StepWitness,
 
 
 def readiness():
-    lower = WORD.readiness(); trig=TRIG.readiness(); exp=EXP.readiness(); qb=QB.readiness()
+    lower = WORD.readiness(); trig=TRIG.readiness(); exp=EXP.readiness(); qb=QB.readiness(); qe=QE.readiness()
     return {
       'source_owned_next_transition_required': True,
       'attitude_omega_reconstructed_from_same_raw_packet_and_current_bias_error': True,
@@ -165,6 +172,10 @@ def readiness():
       'Qaxis_formula_branch_derived_from_binary32_rounding_of_same_source_tau_h': bool(
           qb['shipping_nested_and_final_Qaxis_share_literal_tau_h_branch_shape'] and
           qb['small_general_comparison_binary32_attached']),
+      'Qaxis_nested_and_final_covariance_exp_calls_retained_separately': bool(
+          qe['shipping_nested_and_final_Qaxis_covariance_exp_calls_present'] and
+          not qe['Qaxis_nested_and_final_exp_bit_identity_assumed']),
+      'Qaxis_covariance_exp_results_real_enclosed_at_same_binary32_x':qe['both_Qaxis_exp_results_bound_to_same_binary32_x_real_enclosure'],
       'Qaxis_source_tau_commit_binary32_correspondence_closed':False,
       'prediction_angular_OU_Qaxis_roots_bound_to_same_source_continuation': True,
       'shipping_BA_tau_Q_defaults_bound_at_prediction_entry': True,
@@ -181,6 +192,7 @@ def readiness():
       'temperature_history_admissibility_attached': False,
       'OU_exp_expm1_binary32_relation_closed': False,
       'BA_exp_expm1_binary32_relation_closed': False,
+      'Qaxis_exp_libm_binary32_relation_closed': False,
       'attitude_trig_arithmetic_deployment_closed': False,
       'Qaxis_PSD_regularization_deployment_closed': False,
       'accelerometer_bias_prediction_root_bound_here': True,
