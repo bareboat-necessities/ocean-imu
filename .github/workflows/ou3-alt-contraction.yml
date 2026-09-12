@@ -101,7 +101,7 @@ jobs:
             test_finite_source_origin_interleave test_finite_source_bound_prediction_word \
             test_finite_measurement_graph test_finite_covariance_rank3 test_finite_core \
             test_finite_prediction_covariance test_finite_ou_runtime_primitives \
-            test_finite_attitude_runtime test_finite_qaxis_runtime \
+            test_finite_attitude_runtime test_finite_source_bound_attitude_trig test_finite_qaxis_runtime \
             test_finite_accel_guard_runtime test_finite_sensor_source_runtime \
             test_finite_racc_runtime test_finite_held_accel_runtime \
             test_finite_prediction_runtime test_finite_post_prediction \
