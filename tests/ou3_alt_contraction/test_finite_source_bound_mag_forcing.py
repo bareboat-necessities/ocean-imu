@@ -33,7 +33,7 @@ class Tests(unittest.TestCase):
     def test_supply_vector_retains_components_instead_of_collapsing_box(self):
         f=X.MagForcing((1,0,0),(0,1,0),(0,0,-1),(2,3,4),(3,4,3))
         self.assertEqual(f.supply_vector,
-                         (F(2),F(3),F(4),F(1),F(0),F(0),F(0),F(1),F(0),F(0),F(0),F(0),F(-1)))
+                         (F(2),F(3),F(4),F(1),F(0),F(0),F(0),F(1),F(0),F(0),F(0),F(-1)))
 
     def test_readiness_does_not_promote_magnetic_smallness_or_storage(self):
         r=X.readiness()
