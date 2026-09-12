@@ -4,12 +4,14 @@ The exact mean/covariance measurement algebra lives in finite_core. This layer
 adds shipping's first-attempt / one-bump retry / rejection semantics. The full
 shipping accelerometer entry consumes a ``GuardedImuSample``: the immutable raw
 packet establishes COMPLETE-BRMM sensor ancestry, while the guard descendant is
-the exact ``acc_in`` used by private Mahony and the MEKF.
+the exact ``acc_in`` used by private Mahony and the MEKF.  Its shipping-level
+Racc entry additionally consumes the exact pre-measurement ``finite_racc_runtime``
+result, so measurement covariance cannot be supplied independently.
 
-The older raw entry is retained only as a lower-level unguarded identity branch.
-Eigen LDLT outcomes, floating Frobenius ``noise_scale``, vibration-guard
-transcendentals, temperature/k_a runtime ancestry and deployment roundoff remain
-explicit open obligations.
+The older raw and guarded-with-explicit-R entries are retained as lower-level
+identity lemmas. Eigen LDLT outcomes, floating Frobenius ``noise_scale``, guard
+and Racc transcendental binary32 ancestry, temperature/k_a runtime ancestry and
+deployment roundoff remain explicit open obligations.
 """
 from __future__ import annotations
 from dataclasses import dataclass
@@ -18,6 +20,7 @@ from fractions import Fraction as F
 from tools.stability.ou3_alt_contraction import finite_prediction_graph as P
 from tools.stability.ou3_alt_contraction import finite_core as CORE
 from tools.stability.ou3_alt_contraction import finite_sensor_source_runtime as SENSOR
+from tools.stability.ou3_alt_contraction import finite_racc_runtime as RACC
 
 BUMP_SCALE = F(1,10**6)
 
@@ -86,13 +89,20 @@ def accelerometer_from_raw(state,sample:SENSOR.RawImuSample,conditioning:SENSOR.
 
 def accelerometer_from_guarded(state,sample:SENSOR.GuardedImuSample,conditioning:SENSOR.AccelConditioning,*,
                                ldlt:SafeLDLT,R,gravity=None,**kwargs):
-    """Full shipping accelerometer event rooted in the same guarded ``acc_in``.
-
-    The effective post-guard residual is derived by ``GuardedImuSample`` from the
-    raw physical packet and guard recurrence; callers cannot supply it freely.
-    """
+    """Guarded lower-level entry with explicit covariance for component tests."""
     if not isinstance(sample,SENSOR.GuardedImuSample): raise TypeError('GuardedImuSample required')
     return _accel_event(state,sample,conditioning,ldlt=ldlt,R=R,gravity=gravity,guarded=True,**kwargs)
+
+
+def accelerometer_from_guarded_racc(state,sample:SENSOR.GuardedImuSample,
+                                    conditioning:SENSOR.AccelConditioning,
+                                    racc:RACC.Result,*,ldlt:SafeLDLT,gravity=None,**kwargs):
+    """Shipping-level accelerometer event with no free Racc operand."""
+    if not isinstance(sample,SENSOR.GuardedImuSample): raise TypeError('GuardedImuSample required')
+    if not isinstance(racc,RACC.Result): raise TypeError('finite Racc runtime result required')
+    if 'R' in kwargs: raise TypeError('Racc covariance is owned by finite Racc runtime result')
+    return _accel_event(state,sample,conditioning,ldlt=ldlt,R=racc.covariance,
+                        gravity=gravity,guarded=True,**kwargs)
 
 
 def readiness():
@@ -102,15 +112,17 @@ def readiness():
       'double_LDLT_failure_rejection_branch':True,
       'rejected_measurement_preserves_state_covariance':True,
       'same_retry_shift_used_by_gain_and_Joseph':True,
-      # Compatibility aliases describe the retained lower-level unguarded lemma;
-      # the full shipping entry is the guarded relation below.
+      # Compatibility aliases describe retained lower-level lemmas.
       'accelerometer_observation_from_same_raw_packet':True,
       'accelerometer_deheel_and_temperature_removal_attached':True,
       'accelerometer_observation_from_same_guarded_packet':True,
       'accelerometer_guard_deheel_and_temperature_removal_attached':True,
       'guard_effective_residual_is_derived_not_free':True,
+      'shipping_accelerometer_Racc_from_same_runtime_result':True,
       'temperature_and_k_a_runtime_ancestry_attached':False,
       'guard_exp_sqrt_binary32_ancestry_attached':False,
+      'Racc_hypot_sqrt_binary32_ancestry_attached':False,
+      'nominal_Racc_stage_ancestry_attached':False,
       'noise_scale_frobenius_runtime_source_attached':False,
       'Eigen_LDLT_outcomes_finite_precision_attached':False,
       'machine_epsilon_deployment_attached':False,
