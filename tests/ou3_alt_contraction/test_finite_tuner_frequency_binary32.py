@@ -24,13 +24,14 @@ class Tests(unittest.TestCase):
 
     def test_tau_strong_entry_consumes_stored_float_without_requantizing(self):
         c=TC.cfg(); stored=X.store(B.rn32(F(1,2)),B.rn32(F(1,10)),B.rn32(2))
-        # Conservative binary32 exp witness inside the exact-real enclosure.
-        e=B.rn32(F(99,100))
+        # Here x=0.025, so RN32(0.975) lies in the rigorous
+        # [1-x, 1-x+x^2/2] enclosure used by the proof relation.
+        e=B.rn32(F(39,40))
         out=TAU.step_from_stored_frequency(B.rn32(F(1,2)),stored,c,dt=F(1,100),exp_decay=e)
         self.assertEqual(out.frequency,stored.stored_hz)
 
     def test_detached_or_nonbinary_frequency_cannot_reach_strong_tau_edge(self):
-        c=TC.cfg(); e=B.rn32(F(99,100))
+        c=TC.cfg(); e=B.rn32(F(39,40))
         with self.assertRaises(TypeError):
             TAU.step_from_stored_frequency(B.rn32(F(1,2)),F(1,2),c,dt=F(1,100),exp_decay=e)
 
