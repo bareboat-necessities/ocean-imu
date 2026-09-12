@@ -45,23 +45,25 @@ def call(watchdog,*,tilt_deg,reset_witness=None):
 
 class Tests(unittest.TestCase):
     def test_nonfiring_watchdog_persists_timer_and_cannot_consume_reset_witness(self):
-        out=call(WATCH.State(F(1,10),0),tilt_deg=60)
+        before=WATCH.State(F(1,10),0)
+        out=call(before,tilt_deg=60)
         self.assertFalse(out.reset_applied)
-        self.assertEqual(out.state.watchdog.over_limit,F(1,10)-2*out.live.prediction.state.reference.time)
+        # The exact fixture step is 1/200 s; recovery subtracts 2*dt.
+        self.assertEqual(out.state.watchdog.over_limit,before.over_limit-2*F(1,200))
         self.assertEqual(out.state.live.mekf,out.live.state.mekf)
         with self.assertRaisesRegex(ValueError,'nonfiring'):
             call(WATCH.State(),tilt_deg=0,
                  reset_witness=WATCH.PreserveYawWitness(BASE.fixture()[0].mekf.q_hat,(0,0,1)))
 
     def test_firing_watchdog_requires_reset_witness(self):
-        # The fixture step is 1/25 s.  0.34 + 0.04 crosses the 0.35 s hold.
+        # The fixture step is 1/200 s.  0.345 + 0.005 reaches the 0.35 s hold.
         with self.assertRaisesRegex(ValueError,'requires preserve-yaw'):
-            call(WATCH.State(F(17,50),0),tilt_deg=80)
+            call(WATCH.State(F(69,200),0),tilt_deg=80)
 
     def test_firing_watchdog_applies_covariance_reset_and_sets_cooldown(self):
         live,_,_,_,_,_,_=BASE.fixture()
         witness=WATCH.PreserveYawWitness(live.mekf.q_hat,(0,0,1))
-        out=call(WATCH.State(F(17,50),0),tilt_deg=80,reset_witness=witness)
+        out=call(WATCH.State(F(69,200),0),tilt_deg=80,reset_witness=witness)
         self.assertTrue(out.reset_applied); self.assertTrue(out.watchdog.fired)
         self.assertEqual(out.state.watchdog.cooldown,3)
         for i in range(3):
