@@ -91,7 +91,7 @@ class Tests(unittest.TestCase):
         self.assertEqual(active.phi_b,F(999999,1000000)); self.assertEqual(active.em1_2,F(-1,500000))
         self.assertEqual(active.Q_bacc,X.SHIPPING_BA_Q)
 
-    def test_shipping_BA_and_temperature_defaults_are_source_locked(self):
+    def test_shipping_BA_temperature_and_zero_lever_defaults_are_source_locked(self):
         self.assertEqual(X.SHIPPING_BA_TAU,F(5000))
         self.assertEqual(X.SHIPPING_BA_Q,
             ((F(1,4_000_000),0,0),(0,F(1,4_000_000),0),(0,0,F(1,4_000_000))))
@@ -101,11 +101,14 @@ class Tests(unittest.TestCase):
         self.assertEqual(core.count('T tau_bacc_ = T(5000.0);'),1)
         self.assertEqual(core.count('static constexpr T tempC_ref = T(35.0);'),1)
         self.assertEqual(core.count('Vector3 k_a_ = Vector3::Constant(T(0.002));'),1)
+        self.assertEqual(core.count('bool   use_imu_lever_arm_       = false;'),1)
+        self.assertEqual(core.count('Vector3 r_imu_wrt_cog_body_phys_ = Vector3::Zero();'),1)
         self.assertIn('const T tau_b = std::max(T(1e-3), tau_bacc_);',core)
         self.assertIn('const T phi_b = acc_bias_updates_enabled_ ? std::exp(-Ts / tau_b) : T(1);',core)
         self.assertIn('const T qd_scale = -T(0.5) * tau_b * std::expm1(-T(2) * Ts / tau_b);',core)
         for setter in ('set_acc_bias_time_constant(', 'set_Q_bacc_rw(',
-                       'set_acc_bias_ou_stationary_std(','set_accel_bias_temp_coeff('):
+                       'set_acc_bias_ou_stationary_std(','set_accel_bias_temp_coeff(',
+                       'set_imu_lever_arm_body('):
             self.assertNotIn(setter,wrapper)
 
     def test_shipping_float_instantiation_locks_qaxis_machine_epsilon(self):
