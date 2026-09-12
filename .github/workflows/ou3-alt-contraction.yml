@@ -102,7 +102,8 @@ jobs:
             test_finite_mag_runtime test_finite_mag_reference_runtime \
             test_finite_mag_reference_events test_finite_mag_accumulator \
             test_finite_mag_gauge_fix test_finite_mag_tilt_frame \
-            test_finite_mag_tuner_default test_finite_mag_startup_prefix \
+            test_finite_mag_tuner_default test_finite_mag_gravity_gate \
+            test_finite_mag_startup_prefix test_finite_mag_startup_word \
             test_finite_live_async_mag test_shipping_finite_identity \
             test_core test_proof_plan test_bias_families -v
       - name: Verify actual shipping event correspondence without source promotion
