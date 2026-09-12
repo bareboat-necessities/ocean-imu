@@ -6,6 +6,8 @@ layer removes independently injectable coefficient roots while retaining the
 actual shipping transcendental topology:
 
 * attitude angular rate comes from the exact raw packet/current gyro-bias error;
+  nonzero-rate sin/cos witnesses must also lie in rigorous rational enclosures
+  at that SAME source-owned rotation angle;
 * OU h/tau comes from the source segment and carried TuneState; distinct
   exp(-x) and expm1(-x) results remain same-argument arithmetic witnesses;
 * Qaxis Sigma_aw comes from TuneState and regularization epsilon is fixed by
@@ -28,6 +30,7 @@ from tools.stability.ou3_alt_contraction import finite_source_bound_live_word as
 from tools.stability.ou3_alt_contraction import finite_source_continuation as SOURCE
 from tools.stability.ou3_alt_contraction import finite_sensor_source_runtime as SENSOR
 from tools.stability.ou3_alt_contraction import finite_attitude_runtime as ATT
+from tools.stability.ou3_alt_contraction import finite_source_bound_attitude_trig as TRIG
 from tools.stability.ou3_alt_contraction import finite_ou_runtime_primitives as OU
 from tools.stability.ou3_alt_contraction import finite_prediction_runtime as PRED
 
@@ -94,6 +97,7 @@ def build(state: WORD.State, physical: SOURCE.QualifiedPhysicalSegment,
     omega_hat = raw.required_bias_corrected_relation(core.z[3:6])
     angular = ATT.AngularRuntime(tuple(omega_hat), segment.h,
                                  full=angular_full, half=angular_half)
+    TRIG.validate(angular)
     active = state.live.live.live.active
     ou = OU.OUDecay(segment.h, active.tau, ou_alpha, em1=ou_em1)
     qaxis = PRED.QAxisBranch(False, active.Sigma_aw,
@@ -135,10 +139,12 @@ def imu_step(state: WORD.State, *, witness: SOURCE.StepWitness,
 
 
 def readiness():
-    lower = WORD.readiness()
+    lower = WORD.readiness(); trig=TRIG.readiness()
     return {
       'source_owned_next_transition_required': True,
       'attitude_omega_reconstructed_from_same_raw_packet_and_current_bias_error': True,
+      'attitude_trig_full_half_bound_to_same_source_owned_rotation_angle': trig['trig_full_half_angles_derived_from_same_angular_rate_and_step'],
+      'detached_attitude_unit_circle_points_rejected': trig['detached_unit_circle_points_rejected'],
       'OU_h_tau_argument_from_same_source_and_active_TuneState': True,
       'OU_exp_and_expm1_shipping_results_retained_separately': True,
       'Qaxis_Sigma_aw_from_same_carried_active_TuneState': True,
@@ -154,6 +160,7 @@ def readiness():
       'temperature_is_explicit_per_sample_input_not_free_model_coefficient': True,
       'caller_cannot_override_prediction_or_accel_model_roots': True,
       'sample_zero_origin_bridge_preserved': lower['sample_zero_startup_to_checked_outer_endpoint_bridge_closed'],
+      'attitude_one_radian_local_angle_guard_retained_for_every_prefix': False,
       'temperature_history_admissibility_attached': False,
       'OU_exp_expm1_binary32_relation_closed': False,
       'BA_exp_expm1_binary32_relation_closed': False,
