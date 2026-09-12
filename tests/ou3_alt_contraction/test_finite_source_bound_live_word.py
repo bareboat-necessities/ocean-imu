@@ -8,6 +8,7 @@ from tools.stability.ou3_alt_contraction import bias_families as BIAS
 from tools.stability.ou3_alt_contraction import finite_source_bound_live_word as X
 from tools.stability.ou3_alt_contraction import finite_source_continuation as SOURCE
 from tools.stability.ou3_alt_contraction import finite_physical_prediction as PHYS
+from tools.stability.ou3_alt_contraction import finite_magnetic_wrapper_clock as WCLOCK
 from tools.stability.ou3_alt_contraction import proof_plan as PLAN
 import test_finite_live_interleave as BASE
 
@@ -44,9 +45,10 @@ def imu(state):
 
 def mag_kwargs(state):
     kw=BASE.MAG.live_kwargs(state.live.magnetic)
-    memory=state.live.magnetic.memory; now=state.live.live.live.mekf.reference.time
+    memory=state.live.magnetic.memory; physical=state.live.live.live.mekf.reference.time
     if memory.cfg.continuous_enabled:
-        dt=now-memory.last_hi_time if memory.last_hi_time is not None and now>memory.last_hi_time else memory.cfg.sample_dt
+        ts=WCLOCK.at_physical_time(physical)
+        dt=WCLOCK.shipping_elapsed(ts,memory.last_hi_time,fallback_dt=memory.cfg.sample_dt)
         kw['hi_decay']=BASE.MAG.HI.Decay(dt,memory.cfg.continuous.memory,1)
     return kw
 
@@ -91,9 +93,6 @@ class Tests(unittest.TestCase):
         s=root_state(); core=s.live.live.live.mekf
         bad=replace(core,reference=replace(core.reference,acceleration=(100,0,0)))
         live=replace(s.live,live=replace(s.live.live,live=replace(s.live.live.live,mekf=bad)))
-        # Constructing the source-owning product is intentionally allowed to
-        # keep checks at literal source-consuming edges; the mag edge must fail
-        # before any magnetic state mutation.
         q=replace(s,live=live)
         with self.assertRaisesRegex(ValueError,'acceleration vector cap'):
             X.mag_step(q,**mag_kwargs(q))
