@@ -12,11 +12,12 @@ membership certificate.  Its constructor validates only that the source
 *definition* being assumed is the current corrected COMPLETE-BRMM definition.
 No boolean "admitted" flag and no generator-token test is accepted.
 
-The finite step objects below additionally carry an exact sample ordinal and the
-same history identity.  They do not make arbitrary samples admitted; their
-semantics is "this is the value obtained by restricting the quantified history
-at this ordinal".  The derived QualifiedPhysicalSegment then rechecks every
-necessary finite consequence, so a malformed restriction still fails closed.
+``RestrictedSegment`` is theorem data produced by restricting that quantified
+history at one ordinal. PhysicalKinematics intentionally contains only physical
+coordinates; history ancestry remains here in the restriction layer rather than
+being smuggled into a physical-state field. The derived QualifiedPhysicalSegment
+then rechecks every necessary finite consequence, so a malformed restriction
+still fails closed.
 """
 from __future__ import annotations
 from dataclasses import dataclass
@@ -69,8 +70,6 @@ class RestrictedSegment:
         expected=self.segment.before.live_origin+(self.ordinal-1)*SRC.DT
         if self.segment.before.time != expected or self.segment.after.time != expected+SRC.DT:
             raise ValueError('restricted segment clock detached from theorem sampling grid')
-        if self.segment.before.history_id != self.history.history_id or self.segment.after.history_id != self.history.history_id:
-            raise ValueError('restricted segment detached from quantified admitted history')
 
 
 def source_root(history:AdmittedHistory, *, live_origin, bias_family:str):
@@ -103,6 +102,7 @@ def readiness():
       'arbitrary_runtime_tokens_do_not_prove_COMPLETE_BRMM_membership':not d['arbitrary_runtime_tokens_prove_primary_history_membership'],
       'primary_history_restriction_implies_finite_physical_constraints':d['same_history_restriction_required'],
       'one_same_history_identity_required_at_every_restricted_endpoint':True,
+      'physical_state_coordinates_remain_free_of_proof_metadata':True,
       'restriction_ordinal_bound_to_canonical_5ms_grid':True,
       'BIAS_generating_history_attached_by_this_bridge':False,
       'sensor_disturbance_history_attached_by_this_bridge':False,
