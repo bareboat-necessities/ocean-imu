@@ -1,18 +1,18 @@
 """Finite raw-IMU -> tracker-free tuner-candidate sample prefix.
 
-This is the adaptation-side sample composer for ALT.  It keeps persistent
+This is the adaptation-side sample composer for ALT. It keeps persistent
 private-Mahony, WPE, adaptive-band/statistics, tracker-input LPF, projected
-stillness, and TuneState memory.  A single RawImuSample supplies the private
-vertical observer.  That same vertical successor supplies WPE, sigma-band and
-LPF.  The tuner-relevant stillness projection is computed from the LPF output
-without any dominant-frequency tracker state, then the same band/statistics and
-stillness successors generate the tau/sigma/R_S candidate.
+stillness, TuneState, adaptation clock, and the staged pending bit. A single
+RawImuSample supplies the private vertical observer. That same vertical
+successor supplies WPE, sigma-band and LPF. The tuner-relevant stillness
+projection is computed from the LPF output without any dominant-frequency
+tracker state, then the same band/statistics and stillness successors generate
+the tau/sigma/R_S candidate.
 
-The staged commit at the *next* IMU boundary is intentionally not performed in
-this module.  This module proves the sample-k candidate ancestry; the existing
-finite_tuner_commit module proves the subsequent boundary transaction.  The
-next composition obligation is to connect those two states without inserting
-an independent TuneState or band-noise-floor value.
+Shipping applies a pending candidate at the beginning of the next IMU sample.
+Accordingly this sample step FAILS CLOSED when ``pending`` is already true: a
+caller must first execute the boundary-commit bridge rather than silently run a
+second frontend sample with stale active OU parameters.
 """
 from __future__ import annotations
 from dataclasses import dataclass
@@ -44,6 +44,7 @@ class State:
     stillness: STILL.State
     tune: TuneState
     last_adapt_time: F = F(0)
+    pending: bool = False
     sample_index: int = 0
     time: F = F(0)
     def __post_init__(self):
@@ -53,6 +54,7 @@ class State:
         if any(not isinstance(x,t) for x,t in types): raise TypeError('invalid tuner-prefix state component')
         object.__setattr__(self,'last_adapt_time',R(self.last_adapt_time)); object.__setattr__(self,'time',R(self.time))
         if self.last_adapt_time<0 or self.time<self.last_adapt_time: raise ValueError('invalid tuner-prefix clocks')
+        if not isinstance(self.pending,bool): raise TypeError('literal pending bit required')
         if not isinstance(self.sample_index,int) or self.sample_index<0: raise ValueError('nonnegative sample index required')
 
 
@@ -88,6 +90,8 @@ def step(state:State,sample:RAW.RawImuSample,*,dt,
          spectral:CAND.SpectralWitness=None,ema:CAND.EmaWitness=None):
     if not isinstance(state,State) or not isinstance(sample,RAW.RawImuSample):
         raise TypeError('finite tuner-prefix state and RawImuSample required')
+    if state.pending:
+        raise ValueError('pending tuner state must be committed at next IMU boundary before another sample')
     dt=R(dt)
     if dt<=0: raise ValueError('positive dt required')
     required=(band_cfg,stats_cfg,band_decay,variance_decay,tracker_lpf_decay,still_cfg,candidate_cfg,sigma_wave_sqrt,spectral,ema)
@@ -111,7 +115,7 @@ def step(state:State,sample:RAW.RawImuSample,*,dt,
                      spectral=spectral,ema=ema)
     nxt=State(vertical.state,wpe.state,band.band_state,band.stats_state,lpf.state,
               still.state,cand.tune_next,cand.last_adapt_time_after,
-              state.sample_index+1,now)
+              cand.pending_after,state.sample_index+1,now)
     return Result(nxt,sample,vertical,wpe,band,lpf,still,cand)
 
 
@@ -121,7 +125,8 @@ def readiness():
       'same_vertical_WPE_band_tracker_LPF':True,
       'tracker_free_tuner_stillness_projection':True,
       'band_statistics_and_stillness_generate_candidate_same_sample':True,
-      'TuneState_and_adapt_clock_persist_across_samples':True,
+      'TuneState_adapt_clock_and_pending_persist_across_samples':True,
+      'pending_boundary_cannot_be_skipped':True,
       'dominant_frequency_tracker_absent_from_OU_tuner_prefix':True,
       'next_boundary_staged_commit_composed':False,
       'sensor_residual_source_bounds_attached':False,
