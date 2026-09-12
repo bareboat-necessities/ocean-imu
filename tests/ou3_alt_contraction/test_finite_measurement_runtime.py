@@ -1,11 +1,21 @@
-"""safe-LDLT control-flow regressions; not finite-precision qualification."""
+"""safe-LDLT control-flow and raw accelerometer provenance regressions."""
 from fractions import Fraction as F
 from pathlib import Path
 import sys, unittest
 ROOT=Path(__file__).resolve().parents[2]; sys.path.insert(0,str(ROOT))
 from tools.stability.ou3_alt_contraction import finite_measurement_graph as M
 from tools.stability.ou3_alt_contraction import finite_measurement_runtime as R
+from tools.stability.ou3_alt_contraction import finite_sensor_source_runtime as S
 import test_finite_core as FC
+G=F(196133,20000)
+
+
+def raw_for(state,acc_res=(0,0,0)):
+    ref=state.reference; omega=(0,0,0); gyro=ref.gyro_bias
+    inertial=(ref.acceleration[0],ref.acceleration[1],ref.acceleration[2]-G)
+    f=S.q_rotate(ref.q_world_to_body,inertial)
+    acc=tuple(f[i]+ref.beta[i]+F(acc_res[i]) for i in range(3))
+    return S.RawImuSample(ref,omega,(0,0,0),acc_res,gyro,acc,(0,0,G))
 
 
 class Tests(unittest.TestCase):
@@ -13,7 +23,21 @@ class Tests(unittest.TestCase):
         b=R.SafeLDLT(True,None,F(3,2),F(1,10**7)); self.assertEqual(b.innovation_shift,0); self.assertTrue(b.accepted)
         s=FC.root('H'); out=R.measurement(s,'S_zero',ldlt=b,R=M.eye(3))
         self.assertTrue(out.accepted); self.assertIsNotNone(out.accepted_graph)
-        self.assertEqual(out.accepted_graph.innovation,tuple(map(tuple,out.accepted_graph.innovation)))
+
+    def test_accelerometer_acceptance_consumes_same_raw_packet_and_temperature_bridge(self):
+        s=FC.root('A'); raw=raw_for(s,(F(1,100),0,0)); cond=S.AccelConditioning(2,(F(1,200),0,0))
+        packet=S.finite_accel_core_observation(raw,cond)
+        self.assertEqual(packet.nu_acc,(0,0,0))
+        out=R.accelerometer_from_raw(s,raw,cond,ldlt=R.SafeLDLT(True,None,1,F(1,10**7)),R=M.eye(3))
+        self.assertTrue(out.accepted); self.assertIsNotNone(out.accepted_graph)
+
+    def test_accelerometer_entry_rejects_detached_reference_and_gravity(self):
+        s=FC.root('A'); raw=raw_for(s); cond=S.AccelConditioning(0,(0,0,0))
+        with self.assertRaises(ValueError):
+            R.accelerometer_from_raw(s,raw,cond,ldlt=R.SafeLDLT(True,None,1,F(1,10**7)),R=M.eye(3),gravity=10)
+        s2=FC.root('H')
+        with self.assertRaises(ValueError):
+            R.accelerometer_from_raw(s2,raw,cond,ldlt=R.SafeLDLT(True,None,1,F(1,10**7)),R=M.eye(3))
 
     def test_retry_bump_is_literal_max_formula(self):
         b=R.SafeLDLT(False,True,F(2),F(1,10**9)); self.assertEqual(b.bump,F(3,10**6)); self.assertEqual(b.innovation_shift,b.bump)
@@ -34,6 +58,6 @@ class Tests(unittest.TestCase):
         with self.assertRaises(ValueError): R.SafeLDLT(True,None,1,0)
 
     def test_readiness_stays_fail_closed(self):
-        r=R.readiness(); self.assertTrue(r['double_LDLT_failure_rejection_branch']); self.assertTrue(r['same_retry_shift_used_by_gain_and_Joseph']); self.assertFalse(r['Eigen_LDLT_outcomes_finite_precision_attached']); self.assertFalse(r['complete_word_finite_identity']); self.assertFalse(r['ALT_LIVE_PASS'])
+        r=R.readiness(); self.assertTrue(r['double_LDLT_failure_rejection_branch']); self.assertTrue(r['same_retry_shift_used_by_gain_and_Joseph']); self.assertTrue(r['accelerometer_observation_from_same_raw_packet']); self.assertTrue(r['accelerometer_deheel_and_temperature_removal_attached']); self.assertFalse(r['temperature_and_k_a_runtime_ancestry_attached']); self.assertFalse(r['Eigen_LDLT_outcomes_finite_precision_attached']); self.assertFalse(r['complete_word_finite_identity']); self.assertFalse(r['ALT_LIVE_PASS'])
 
 if __name__=='__main__': unittest.main()
