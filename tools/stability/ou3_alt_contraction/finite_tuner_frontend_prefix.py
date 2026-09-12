@@ -1,11 +1,12 @@
-"""Finite raw-IMU -> tracker-free tuner sample prefix.
+"""Finite IMU -> tracker-free tuner sample prefix.
 
 Persistent state carries the private Mahony observer, WPE, adaptive band and
 statistics, tracker-input LPF, tuner-relevant StillnessAdapter projection,
 TuneState, adaptation clock/pending bit, and the shipping startup stage clock.
 
 Literal shipping order is enforced:
-  1. current raw packet advances private vertical;
+  1. the current IMU packet advances private vertical; the full shipping entry
+     supplies a GuardedImuSample so Mahony sees exactly ``acc_in``;
   2. tracker LPF/stillness and adaptive band/statistics advance, with the tuner
      reading a READ-ONLY view of the WPE state carried into the sample;
   3. Cold/TunerWarm/TunerReady/Live stage logic decides whether the candidate
@@ -17,9 +18,9 @@ Literal shipping order is enforced:
      IMU sample.
 
 A pending online candidate must be committed at the next IMU boundary before
-this function may consume another sample.  goLive()/attitude handoff remains an
-external hybrid transition; this module represents the startup tuner stages on
-either side of that handoff but does not invent its attitude qualification.
+this function may consume another sample. goLive()/attitude handoff remains an
+external hybrid transition.  The raw-only entry remains for lower-level identity
+tests; full shipping composition uses the guard-persistent wrapper.
 """
 from __future__ import annotations
 from dataclasses import dataclass
@@ -74,7 +75,7 @@ class State:
 @dataclass(frozen=True)
 class Result:
     state: State
-    raw_sample: RAW.RawImuSample
+    raw_sample: RAW.RawImuSample | RAW.GuardedImuSample
     vertical: V.Result
     preupdate_wpe: BAND.WPEFrequencyView
     band: BAND.FrontendResult
@@ -86,7 +87,7 @@ class Result:
     stage_after: str
 
 
-def step(state:State,sample:RAW.RawImuSample,*,dt,
+def step(state:State,sample:RAW.RawImuSample|RAW.GuardedImuSample,*,dt,
          vertical_cfg:V.Config,accel_invnorm:V.InvSqrtWitness|None,
          quat_invnorm:V.InvSqrtWitness|None,seed:V.SeedWitness|None,
          wpe_cfg:WPE.WPEConfig,wpe_decay:WPE.ExpWitness,
@@ -104,8 +105,8 @@ def step(state:State,sample:RAW.RawImuSample,*,dt,
          still_attenuation:STILL_FULL.AttenuationWitness|None=None,
          candidate_cfg:CAND.CandidateConfig|None=None,sigma_wave_sqrt=None,
          spectral:CAND.SpectralWitness|None=None,ema:CAND.EmaWitness|None=None):
-    if not isinstance(state,State) or not isinstance(sample,RAW.RawImuSample):
-        raise TypeError('finite tuner-prefix state and RawImuSample required')
+    if not isinstance(state,State) or not isinstance(sample,(RAW.RawImuSample,RAW.GuardedImuSample)):
+        raise TypeError('finite tuner-prefix state and raw/guarded IMU sample required')
     if state.pending:
         raise ValueError('pending tuner state must be committed at next IMU boundary before another sample')
     dt=R(dt)
@@ -113,8 +114,12 @@ def step(state:State,sample:RAW.RawImuSample,*,dt,
     required_front=(band_cfg,stats_cfg,band_decay,variance_decay,tracker_lpf_decay,still_cfg)
     if any(x is None for x in required_front): raise TypeError('all represented frontend configs/witnesses required')
 
-    vertical=RAW.vertical_step_from_raw(state.vertical,vertical_cfg,sample,dt=dt,
-        accel_invnorm=accel_invnorm,quat_invnorm=quat_invnorm,seed=seed)
+    if isinstance(sample,RAW.GuardedImuSample):
+        vertical=RAW.vertical_step_from_guarded(state.vertical,vertical_cfg,sample,dt=dt,
+            accel_invnorm=accel_invnorm,quat_invnorm=quat_invnorm,seed=seed)
+    else:
+        vertical=RAW.vertical_step_from_raw(state.vertical,vertical_cfg,sample,dt=dt,
+            accel_invnorm=accel_invnorm,quat_invnorm=quat_invnorm,seed=seed)
     view=FRONT.wpe_view(state.wpe,
         current_period=wpe_current_period if state.wpe.usable_period else None,
         current_frequency=wpe_current_frequency if state.wpe.usable_period else None)
@@ -131,16 +136,12 @@ def step(state:State,sample:RAW.RawImuSample,*,dt,
     next_stage_clock=stage_clock
     cand=None
 
-    # update_tuner() has already updated band/statistics above before entering
-    # this switch, exactly as shipping does.
     if state.stage == 'Cold':
         if stage_clock >= state.warmup_sec:
             stage_after='TunerWarm'; next_stage_clock=F(0)
         if any(x is not None for x in (candidate_cfg,sigma_wave_sqrt,spectral,ema)):
             raise ValueError('Cold tuner branch returns before candidate operands are consumed')
     else:
-        # For the represented valid-frequency sample, SeaStateAutoTuner::update
-        # has just stored a positive bounded frequency, so isFreqReady is true.
         if state.stage == 'TunerWarm' and band.stats_state.var_ready and view.state.usable_period:
             stage_after='TunerReady'; next_stage_clock=F(0)
         if any(x is None for x in (candidate_cfg,sigma_wave_sqrt,spectral,ema)):
@@ -149,8 +150,6 @@ def step(state:State,sample:RAW.RawImuSample,*,dt,
                          dt=dt,time=now,last_adapt_time=state.last_adapt_time,
                          spectral=spectral,ema=ema)
 
-    # Current sample updates WPE after tuner/stage logic; its new usable latch is
-    # therefore invisible to the TunerWarm promotion above until next sample.
     wpe=FRONT.wpe_step_from_vertical(state.wpe,wpe_cfg,vertical,dt=dt,decay=wpe_decay,
         moment_decay=wpe_moment_decay,period_witness=wpe_period_witness,
         log_witness=wpe_log_witness,current_period=wpe_current_period,
@@ -167,7 +166,8 @@ def step(state:State,sample:RAW.RawImuSample,*,dt,
 
 def readiness():
     return {
-      'raw_IMU_to_private_vertical_same_packet':True,
+      'raw_or_guarded_IMU_to_private_vertical_same_packet':True,
+      'guarded_shipping_entry_uses_conditioned_accel':True,
       'same_vertical_band_tracker_LPF_and_later_WPE':True,
       'tuner_uses_WPE_state_from_sample_entry':True,
       'current_sample_WPE_update_cannot_feed_own_candidate':True,
@@ -182,6 +182,7 @@ def readiness():
       'dominant_frequency_tracker_absent_from_OU_tuner_prefix':True,
       'goLive_attitude_handoff_qualification_attached':False,
       'next_boundary_staged_commit_composed':False,
+      'guard_state_persisted_by_shipping_wrapper':False,
       'sensor_residual_source_bounds_attached':False,
       'transcendental_binary32_attached':False,
       'complete_word_finite_identity':False,
