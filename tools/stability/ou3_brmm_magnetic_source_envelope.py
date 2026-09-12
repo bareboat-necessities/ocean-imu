@@ -26,12 +26,30 @@ acquisition path and derives, exactly over the rationals:
 3. the combined hard-iron + residual budget the shipping
    `MagAutoTuner::max_sample_norm_ratio_from_mean` gate needs before *every*
    qualified sample is admitted;
-4. the accumulation tilt-frame error the shipping
+4. the accumulation-frame rotation excursion the shipping
    `MagAutoTuner::min_horizontal_fraction` gate and the non-vanishing-north
    condition need before the startup reference/yaw gauge can be forced.
 
 Items 3 and 4 are derived *requirements*, not assumptions: they are reported
 whether or not the declared class and the certified startup tilt satisfy them.
+
+## The excursion parameter is not a tilt bound
+
+The shipping accumulation frame is `tiltOnlyQuatFromBoatQuat_`, which strips the
+*estimator's* yaw so its arbitrary startup heading cannot leak into the learned
+reference. It does **not** remove the vessel's own heading: `q_tilt * m_body`
+is the field in a level frame that still turns with the boat, which is precisely
+why `getYawGaugeCorrectionRad()` returns north *relative to the boat*. A heading
+change during the accumulation window therefore rotates accepted samples in the
+horizontal plane and smears the mean, and a large enough excursion can cancel
+its horizontal component entirely.
+
+So the parameter these derivations take is the **total accumulation-frame
+rotation excursion** over the window, `delta = delta_tilt + delta_heading`
+by the SO(3) triangle inequality -- not the tilt error alone. MAG-BMM150-DET-v1
+bounds magnetic *values* and says nothing about heading, and no declared
+quantity in the operating domain bounds a startup heading excursion. That supply
+is recorded as missing rather than silently charged as tilt.
 """
 from __future__ import annotations
 import argparse,json,math,re
@@ -87,9 +105,14 @@ def _sin_half_upper_from_angle(theta:F)->F:
  return theta/2
 
 
-def derive(sin_half_tilt_upper:F,c:dict)->dict:
- """Deterministic magnetic derivations at a supplied sin(delta_tilt/2) bound."""
- s=F(sin_half_tilt_upper)
+def derive(sin_half_excursion_upper:F,c:dict)->dict:
+ """Deterministic magnetic derivations at a supplied sin(delta/2) bound.
+
+ `delta` is the TOTAL accumulation-frame rotation excursion over the window,
+ tilt error plus vessel heading excursion. Passing a tilt-only bound here
+ understates the perturbation; see the module docstring.
+ """
+ s=F(sin_half_excursion_upper)
  if s<0 or s>1:raise ValueError('sin(delta/2) bound must lie in [0,1]')
  P=HARD_IRON_NORM_MAX_UT+RESIDUAL_NORM_MAX_UT            # combined deterministic body perturbation
  rot=2*WORLD_FIELD_NORM_MAX_UT*s                          # ||(Rhat Rtrue' - I) B|| chord bound
@@ -108,7 +131,7 @@ def derive(sin_half_tilt_upper:F,c:dict)->dict:
  # Non-vanishing north condition: E < H.
  s_capture=(H-P)/(2*WORLD_FIELD_NORM_MAX_UT) if H>P else F(0)
  return {
-  'sin_half_tilt_upper':s,'combined_body_perturbation_upper_uT':P,
+  'sin_half_excursion_upper':s,'combined_body_perturbation_upper_uT':P,
   'earth_field_rotation_chord_upper_uT':rot,'mean_perturbation_upper_uT':E,
   'horizontal_true_lower_uT':H,
   'measured_body_norm_lower_uT':WORLD_FIELD_NORM_MIN_UT-P,
@@ -120,8 +143,9 @@ def derive(sin_half_tilt_upper:F,c:dict)->dict:
   'horizontal_fraction_gate_satisfied':E<H and (H-E)/(WORLD_FIELD_NORM_MAX_UT+E)>=f,
   'universal_sample_admission_perturbation_budget_uT':P_budget,
   'universal_sample_admission_forced':P<=P_budget,
-  'max_sin_half_tilt_for_horizontal_gate':s_horiz,
-  'max_sin_half_tilt_for_north_capture':s_capture,
+  'max_sin_half_excursion_for_horizontal_gate':s_horiz,
+  'max_sin_half_excursion_for_north_capture':s_capture,
+  'excursion_includes_vessel_heading':True,
  }
 
 
@@ -141,8 +165,8 @@ def build()->dict:
  # Tilt-parameterised part, evaluated at the declared startup direction error.
  declared=derive(_sin_half_upper_from_angle(declared_tilt),c)
  thresholds=derive(F(0),c)
- s_horiz=thresholds['max_sin_half_tilt_for_horizontal_gate']
- s_capture=thresholds['max_sin_half_tilt_for_north_capture']
+ s_horiz=thresholds['max_sin_half_excursion_for_horizontal_gate']
+ s_capture=thresholds['max_sin_half_excursion_for_north_capture']
  tilt_horiz_rad=2*_asin_upper(s_horiz);tilt_capture_rad=2*_asin_upper(s_capture)
  return {
   'schema':SCHEMA,'qualification':QUALIFICATION,'assumption_id':ASSUMPTION_ID,
@@ -169,12 +193,16 @@ def build()->dict:
    'universal_sample_admission_forced':thresholds['universal_sample_admission_forced'],
    'note':'sufficient condition 2P/(Bmin-P) <= ratio; a weaker necessary condition needs an accepted-sample supply assumption that is not declared'},
   'derived_tilt_requirements':{
+   'parameter':'TOTAL_ACCUMULATION_FRAME_ROTATION_EXCURSION_TILT_PLUS_HEADING',
    'max_sin_half_tilt_for_north_capture':float(s_capture),'max_tilt_rad_for_north_capture':tilt_capture_rad,
    'max_tilt_deg_for_north_capture':math.degrees(tilt_capture_rad),
    'max_sin_half_tilt_for_horizontal_fraction_gate':float(s_horiz),
    'max_tilt_rad_for_horizontal_fraction_gate':tilt_horiz_rad,
    'max_tilt_deg_for_horizontal_fraction_gate':math.degrees(tilt_horiz_rad),
    'binding_requirement':'min_horizontal_fraction' if s_horiz<s_capture else 'north_nonvanishing'},
+  'accumulation_frame_retains_vessel_heading':c['tilt_frame_is_private_observer_tilt'],
+  'heading_excursion_bounded_by_this_class':False,
+  'startup_heading_excursion_declared_in_operating_domain':False,
   'at_declared_startup_direction_error':{
    'declared_tilt_rad_upper':float(declared_tilt),'declared_tilt_deg_upper':math.degrees(float(declared_tilt)),
    'mean_perturbation_upper_uT':float(declared['mean_perturbation_upper_uT']),
@@ -182,8 +210,11 @@ def build()->dict:
    'sin_yaw_error_upper_exact':f"{declared['sin_yaw_error_upper'].numerator}/{declared['sin_yaw_error_upper'].denominator}",
    'horizontal_fraction_lower':float(declared['horizontal_fraction_lower']),
    'north_nonvanishing':declared['north_nonvanishing'],
-   'horizontal_fraction_gate_satisfied':declared['horizontal_fraction_gate_satisfied']},
+   'horizontal_fraction_gate_satisfied':declared['horizontal_fraction_gate_satisfied'],
+   'supply_covers_heading_excursion':False,
+   'row_is_conditional_on_a_total_excursion_supply':True},
   'declared_startup_direction_error_is_the_accumulation_frame_error':False,
+  'declared_startup_direction_error_carries_no_heading_content':True,
   'accumulation_frame_error_supply_is_open_obligation':True,
   'magnetic_vector_sine_separation_derivable_from_this_class':False,
   'sine_separation_remains_declared_PE_hypothesis':True,
@@ -199,10 +230,15 @@ def validate(d:dict)->list:
  if not all(d.get('shipping_parity',{}).values()):f.append('shipping magnetic acquisition parity failed')
  for k in ('declared_PE_magnetic_floor_is_now_derived','declared_PE_magnetic_ceiling_is_now_derived',
            'shipping_mag_norm_guard_cleared_unconditionally','accumulation_frame_error_supply_is_open_obligation',
-           'sine_separation_remains_declared_PE_hypothesis'):
+           'sine_separation_remains_declared_PE_hypothesis','accumulation_frame_retains_vessel_heading',
+           'declared_startup_direction_error_carries_no_heading_content'):
   if d.get(k) is not True:f.append(k+' not true')
+ if d.get('derived_tilt_requirements',{}).get('parameter')!='TOTAL_ACCUMULATION_FRAME_ROTATION_EXCURSION_TILT_PLUS_HEADING':
+  f.append('excursion parameter mislabelled as a tilt-only bound')
  for k in ('filter_changed','quality_gates_changed','trajectory_replay_used','Rmag_used_as_deterministic_bound',
            'declared_startup_direction_error_is_the_accumulation_frame_error',
+           'heading_excursion_bounded_by_this_class',
+           'startup_heading_excursion_declared_in_operating_domain',
            'magnetic_vector_sine_separation_derivable_from_this_class','P4_promoted_here','P5_promoted_here'):
   if d.get(k) is not False:f.append(k+' not false')
  t=d.get('derived_tilt_requirements',{})
@@ -211,6 +247,8 @@ def validate(d:dict)->list:
  a=d.get('at_declared_startup_direction_error',{})
  if a.get('north_nonvanishing') is not True or a.get('horizontal_fraction_gate_satisfied') is not True:
   f.append('declared startup direction error does not clear the shipping magnetic gates')
+ if a.get('supply_covers_heading_excursion') is not False:
+  f.append('declared-supply row must not claim heading coverage')
  return f
 
 

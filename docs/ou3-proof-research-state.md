@@ -126,18 +126,16 @@ Closed by them at the unchanged gates:
   `||m_body||` lies in `[13, 82] uT`, so the declared
   `normal_live.magnetic_vector_norm_lower_uT = 10` and upper `200` follow, and
   the shipping `mag_init_min_mag_norm = 1e-3` guard clears unconditionally;
-- the deterministic startup yaw capture: at a supplied tilt-frame error the mean
+- the startup yaw *algebra*: at a supplied accumulation-frame excursion the mean
   perturbation is `E = ||b_HI||+||n_m||+2 Bmax sin(delta/2)`, and
-  `|sin(theta_yaw)| <= E/H_min`. At the declared 0.02 rad startup direction
-  error `E <= 8.5 uT`, `|sin(theta_yaw)| <= 17/30`, and
-  `sin(0.61) >= 0.61 - 0.61^3/6 > 17/30` gives `theta_yaw < 0.61` rad. With the
-  SO(3) triangle inequality the full attitude error is `< 0.63` rad
-  `= 36.0962 deg`, strictly inside the declared 45 deg
-  `initial_filter_entrance.attitude` set. No `1/sqrt(N)` reduction is used;
-- finite-time `H18 -> A21` release timing: the shipping counter is incremented
-  on every post-delay `updateMag()` call regardless of innovation acceptance, so
-  250 counts are reached within `0.04 + 249*0.04 = 10.0 s` of Live and the
-  elapsed `9.96 s` strictly exceeds the 1 s guard.
+  `|sin(theta_yaw)| <= E/H_min`. At `delta <= 0.02` rad, `E <= 8.5 uT`,
+  `|sin(theta_yaw)| <= 17/30`, and `sin(0.61) >= 0.61 - 0.61^3/6 > 17/30` gives
+  `theta_yaw < 0.61` rad; the SO(3) triangle inequality gives a full attitude
+  error `< 0.63` rad `= 36.0962 deg`, inside the declared 45 deg
+  `initial_filter_entrance.attitude` set. No `1/sqrt(N)` reduction is used. The
+  algebra is closed; its *supply* is not -- see the heading finding below;
+- the `H18 -> A21` release time **after north lock**: `<= 10.0 s`, derived by a
+  case split on whether the 250-count or the strict 1 s guard binds last.
 
 Not closed by them, and explicitly fail-closed:
 
@@ -151,7 +149,39 @@ Not closed by them, and explicitly fail-closed:
   `B_W` within `asin(15/75) = 11.5` deg of it, so `0.1` stays a declared PE
   hypothesis;
 - eventual A21 under an arbitrary external `acc_bias_hold_` is not claimed, and
-  the `H18 -> A21` joint24 covariance transport edge is untouched.
+  the `H18 -> A21` joint24 covariance transport edge is untouched;
+- the release is **not** reachable from Live alone. The only call site of the
+  counter-owning inner method is
+  `if (mag_ref_set_ && stage_ == Stage::Live) { impl_.updateMag(...) }`, so a
+  host call schedule does not advance `mag_updates_applied_` until north lock.
+  On the admitted ungauged timeout path `mag_ref_set_` stays false and the
+  release is unreachable however fast the host calls. North lock is exactly
+  what the tilt floor below denies, so the yaw gauge and the A21 release share
+  one unmet prerequisite;
+- the accumulation mean is **not** bounded by a tilt error alone.
+  `tiltOnlyQuatFromBoatQuat_` strips the *estimator's* yaw, not the vessel's, so
+  `q_tilt * m_body` lives in a level frame that turns with the boat -- which is
+  why the gauge is north *relative to the boat*. A heading change during the
+  window rotates accepted samples in the horizontal plane and smears the mean,
+  and a large enough excursion cancels its horizontal component. The parameter
+  is therefore the total excursion `delta = delta_tilt + delta_heading`, and
+  neither MAG-BMM150-DET-v1 nor any declared operating-domain quantity bounds a
+  startup heading excursion. `DECLARED_SUPPLY_ENTRANCE_CLOSED` is false.
+
+### Corrections made to earlier claims in this route
+
+Three claims recorded earlier were unsound and have been retracted in place:
+
+1. the yaw/entrance certificate charged only tilt error into `E`, leaving a
+   legal heading excursion uncharged;
+2. the release certificate inferred the strict `> 1 s` guard from
+   `(n-1)*gap_max`, an *upper* bound on elapsed time -- 250 calls 1 ms apart
+   clear the count at `0.249 s` with the shipping predicate still false;
+3. the release certificate read parity from the *inner* method only and missed
+   the outer north-lock gate on its single call site.
+
+The discrete Mahony charge additionally claimed `2*sqrt(C)*margin` of
+first-order decrease where the derivation gives one factor of `sqrt(C)`.
 
 ## Current failure analysis
 
@@ -356,6 +386,15 @@ Do not:
   `instantaneous_direction_angle_upper_rad`;
 - claim a first-order Lyapunov decrease of `2*sqrt(C)*margin`: the derivation
   carries one factor of `sqrt(C)`;
+- charge a heading excursion as tilt error in the magnetic accumulation, or read
+  `world_averaged_gravity_direction_error` as a total accumulation-frame
+  excursion: it carries no heading content;
+- infer a strict elapsed-time guard from an upper bound on call spacing, or
+  claim the accelerometer-bias release from Live without north lock: the
+  counter-owning call sits behind `mag_ref_set_`;
+- certify shipping parity by loose token presence: compare the complete
+  assignment or condition so a branch cannot change semantics while the
+  certificate stays green;
 - read the declared `world_averaged_gravity_direction_error` as the private
   observer's accumulation tilt-frame error;
 - use `Rmag`, or any covariance, as a deterministic magnetic source bound;
@@ -421,6 +460,10 @@ Do not revisit the static-metric route for the magnetic gates: the
    forces the gates at the achieved tilt, or tighten the forcing qualification
    from the COMPLETE-BRMM spectral support. Then close the ungauged 150 s
    timeout branch.
+3. Supply the total accumulation-frame excursion: declare and justify a startup
+   heading-excursion bound over the window, or retain the heading history in the
+   accumulation so a legal turn cannot smear the mean. Without it the yaw
+   algebra has no input and the A21 release has no north lock.
 3. Complete continuous same-history physical source -> IMU/frontend -> tuner ->
    P/H/R/K attachment for every allowed word and BIAS family.
 4. Close the consecutive compatible joint24 endpoint inequality

@@ -29,7 +29,10 @@ Two supplies are compared:
   (0.02 rad). With MAG-BMM150-DET-v1 this yields `|sin(theta_yaw)| <= 17/30`,
   `theta_yaw < 0.61` rad by the alternating Taylor bound
   `sin(0.61) >= 0.61 - 0.61^3/6`, and a full attitude error `< 0.63` rad
-  `= 36.0962 deg`, strictly inside the declared 45 deg entrance set.
+  `= 36.0962 deg`, inside the declared 45 deg entrance set -- but only as a
+  *conditional* row, because that quantity is a gravity-direction error and the
+  perturbation bound needs the total accumulation-frame rotation excursion,
+  heading included. See below.
 
 * the route's own *certified* private-Mahony tilt bounds from the two-phase
   certificate: the all-time outer level, the bound at the deployed 150 s
@@ -39,6 +42,22 @@ Two supplies are compared:
 The declared 0.02 rad quantity is the low-passed world-gravity direction error,
 not the private observer's tilt error, so it is recorded as an unsupplied
 hypothesis rather than as a discharged one.
+
+## The accumulation frame turns with the vessel
+
+`tiltOnlyQuatFromBoatQuat_` strips the *estimator's* yaw, not the vessel's:
+`q_tilt * m_body` is the field in a level frame that still rotates with the
+boat, which is why the gauge is north *relative to the boat*. A heading change
+during the accumulation window therefore rotates accepted samples in the
+horizontal plane and smears the mean; a large enough excursion cancels its
+horizontal component. The perturbation bound consequently needs
+`delta = delta_tilt + delta_heading`, and neither MAG-BMM150-DET-v1 nor any
+declared operating-domain quantity bounds a startup heading excursion.
+
+Both supply rows are therefore conditional on a total-excursion bound that does
+not exist yet, and `DECLARED_SUPPLY_ENTRANCE_CLOSED` is false. The magnetic
+algebra itself -- `17/30`, `0.61` rad, `0.63` rad -- is unchanged and stays
+available to whatever supplies that excursion.
 
 ## Why the private observer can never supply it
 
@@ -207,7 +226,10 @@ def build()->dict:
   'full_attitude_rad_upper':float(full),'full_attitude_deg_upper':math.degrees(float(full)),
   'north_nonvanishing':declared['north_nonvanishing'],
   'horizontal_fraction_gate_satisfied':declared['horizontal_fraction_gate_satisfied'],
-  'inside_declared_entrance_set':yaw['yaw_strictly_below_test_angle'] and math.degrees(float(full))<declared_entrance_deg,
+  'inside_declared_entrance_set_if_supply_covered_heading':
+   yaw['yaw_strictly_below_test_angle'] and math.degrees(float(full))<declared_entrance_deg,
+  'supply_is_gravity_direction_error_only':True,
+  'supply_covers_total_excursion':False,
   'sqrtN_statistical_reduction_used':False}
 
  # Certified-supply branch.
@@ -231,10 +253,20 @@ def build()->dict:
   'certified_tilt_alone_inside_declared_entrance_set':proxy['certified_tilt_deg_upper']<declared_entrance_deg,
   'perfect_yaw_gauge_would_repair_entrance':False}
 
- parity={'timeout_branch_needs_only_aligned_branch':'mag_gravity_aligned_branch_;' in w and 'const bool ready_by_timeout' in w,
+ # Each flag compares the complete shipping expression, not a loose token, so a
+ # branch that changes semantics cannot leave the certificate green.
+ parity={
+  'timeout_branch_needs_only_aligned_branch':(
+   'const bool ready_by_timeout =\n            proxy_ready &&\n'
+   '            (t_ >= timeout_sec) &&\n            mag_gravity_aligned_branch_;' in w),
   'quality_branch_needs_north_ready':'const bool north_ready = !cfg_.with_mag || mag_ref_set_;' in w,
-  'seed_composes_proxy_tilt_with_gauge_yaw':'boatQuatWithAbsoluteYaw_(q_proxy, pending_yaw_abs_rad_)' in w,
-  'ungauged_seed_uses_free_yaw_sigma':'cfg_.proxy_handoff_yaw_sigma_free_rad' in w}
+  'seed_composes_proxy_tilt_with_gauge_yaw':(
+   'have_yaw_gauge\n                ? boatQuatWithAbsoluteYaw_(q_proxy, pending_yaw_abs_rad_)\n'
+   '                : q_proxy;' in w),
+  'ungauged_seed_uses_free_yaw_sigma':(
+   'const float yaw_sigma = have_yaw_gauge\n            ? cfg_.proxy_handoff_yaw_sigma_rad\n'
+   '            : cfg_.proxy_handoff_yaw_sigma_free_rad;' in w),
+  'parity_compares_complete_expressions_not_tokens':True}
 
  floor=_declared_formulation_tilt_floor(binding)
  narrowing=_required_envelope_narrowing(floor['declared_formulation_tilt_floor_rad'],c)
@@ -249,8 +281,11 @@ def build()->dict:
   'certified_supply_branch':certified_branch,
   'declared_formulation_tilt_floor':floor,
   'required_envelope_narrowing_at_the_floor':narrowing,
-  'DECLARED_SUPPLY_ENTRANCE_CLOSED':bool(declared_branch['inside_declared_entrance_set']),
+  'magnetic_algebra_closed':bool(declared_branch['inside_declared_entrance_set_if_supply_covered_heading']),
+  'DECLARED_SUPPLY_ENTRANCE_CLOSED':False,
   'CERTIFIED_SUPPLY_ENTRANCE_CLOSED':False,
+  'total_excursion_supply_exists':False,
+  'heading_excursion_charged_as_tilt':False,
   'accumulation_frame_tilt_supply_discharged':False,
   'timeout_branch_yaw_gauge_forced':False,
   'P4_basin_reached_here':False,'P5_end_to_end_closed_here':False,
@@ -261,7 +296,8 @@ def build()->dict:
    'tighten the gravity-direction forcing qualification: the primitive channel alone contributes w|theta/r||xi| at the in-band peak, so the declared (0.05, 1.0 s) pair must come down together and must be argued from the COMPLETE-BRMM spectral support',
    'narrow MAG-BMM150-DET-v1 to a commissioned geomagnetic band: the gates depend on Bmax and H_min, not tilt alone, and required_envelope_narrowing_at_the_floor gives the horizontal floor needed at each total-field ceiling',
    'replace the static quadratic storage with a frequency-dependent multiplier/IQC on the primitive channel: the obstruction is a frequency-response peak, which a static metric cannot see',
-   'prove that the shipping quality handoff cannot be preceded by the timeout handoff under the declared schedule, making north_ready a theorem consequence rather than an assumption'],
+   'prove that the shipping quality handoff cannot be preceded by the timeout handoff under the declared schedule, making north_ready a theorem consequence rather than an assumption',
+   'declare and justify a startup heading-excursion bound over the accumulation window, or retain the heading history in the accumulation so the mean is not smeared by a legal turn'],
   'next_obligation':'the private observer cannot supply the declared gates in this formulation; close either the forcing qualification or the commissioned band, and use an IQC rather than a static metric for the tilt certificate',
  }
 
@@ -270,13 +306,17 @@ def validate(d:dict)->list:
  f=[]
  if d.get('schema')!=SCHEMA or d.get('qualification')!=QUALIFICATION:f.append('schema/qualification mismatch')
  if not all(d.get('shipping_parity',{}).values()):f.append('shipping handoff parity failed')
- if d.get('DECLARED_SUPPLY_ENTRANCE_CLOSED') is not True:f.append('declared-supply entrance certificate not closed')
- for k in ('CERTIFIED_SUPPLY_ENTRANCE_CLOSED','accumulation_frame_tilt_supply_discharged',
+ if d.get('magnetic_algebra_closed') is not True:f.append('magnetic yaw algebra no longer closes')
+ for k in ('DECLARED_SUPPLY_ENTRANCE_CLOSED','CERTIFIED_SUPPLY_ENTRANCE_CLOSED',
+           'total_excursion_supply_exists','heading_excursion_charged_as_tilt',
+           'accumulation_frame_tilt_supply_discharged',
            'timeout_branch_yaw_gauge_forced','filter_changed','quality_gates_changed','trajectory_replay_used',
            'P4_basin_reached_here','P5_end_to_end_closed_here'):
   if d.get(k) is not False:f.append(k+' not false')
  b=d.get('declared_supply_branch',{})
  if b.get('sqrtN_statistical_reduction_used') is not False:f.append('statistical averaging gain used')
+ if b.get('supply_covers_total_excursion') is not False:f.append('declared supply must not claim heading coverage')
+ if b.get('supply_is_gravity_direction_error_only') is not True:f.append('declared supply mislabelled')
  if not 0.0<float(b.get('full_attitude_deg_upper',180.0))<float(d.get('declared_entrance_full_attitude_deg',0.0)):
   f.append('declared-supply full attitude bound not inside the declared entrance set')
  cb=d.get('certified_supply_branch',{})
@@ -306,6 +346,7 @@ def main()->int:
  a.output.write_text(json.dumps(d,indent=2,sort_keys=True)+'\n')
  print(json.dumps({'declared_supply_full_attitude_deg':d['declared_supply_branch']['full_attitude_deg_upper'],
   'declared_entrance_deg':d['declared_entrance_full_attitude_deg'],
+  'magnetic_algebra_closed':d['magnetic_algebra_closed'],
   'declared_supply_closed':d['DECLARED_SUPPLY_ENTRANCE_CLOSED'],
   'certified_tilt_deg':d['certified_supply_branch']['certified_tilt_deg_upper'],
   'required_tilt_deg':d['certified_supply_branch']['required_tilt_deg_for_binding_gate'],

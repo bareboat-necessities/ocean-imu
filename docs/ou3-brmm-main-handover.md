@@ -126,17 +126,15 @@ What they close, at unchanged gates and with no filter change:
   `[13, 82] uT`, so `normal_live.magnetic_vector_norm_lower_uT = 10` and upper
   `200` follow and the shipping `mag_init_min_mag_norm` guard clears
   unconditionally;
-- the deterministic startup yaw capture. At a supplied tilt-frame error
+- the startup yaw *algebra*. At a supplied accumulation-frame excursion
   `E = ||b_HI|| + ||n_m|| + 2 Bmax sin(delta/2)` and
-  `|sin(theta_yaw)| <= E/H_min`. At the declared 0.02 rad startup direction
-  error this is `E <= 8.5 uT`, `|sin(theta_yaw)| <= 17/30`, `theta_yaw < 0.61`
-  rad and a full attitude error `< 0.63` rad `= 36.0962 deg`, inside the
-  declared 45 deg `initial_filter_entrance.attitude` set. No `1/sqrt(N)`
-  statistical reduction is used anywhere on this path;
-- the finite `H18 -> A21` release *timing*. The shipping counter increments on
-  every post-delay `updateMag()` call regardless of innovation acceptance, so
-  250 counts land within `10.0 s` of Live and the elapsed `9.96 s` strictly
-  exceeds the 1 s guard.
+  `|sin(theta_yaw)| <= E/H_min`. At `delta <= 0.02` rad this is `E <= 8.5 uT`,
+  `|sin(theta_yaw)| <= 17/30`, `theta_yaw < 0.61` rad and a full attitude error
+  `< 0.63` rad `= 36.0962 deg`, inside the declared 45 deg
+  `initial_filter_entrance.attitude` set. No `1/sqrt(N)` statistical reduction
+  is used anywhere on this path;
+- the `H18 -> A21` release time **after north lock**: `<= 10.0 s`, by a case
+  split on whether the 250-count or the strict 1 s guard binds last.
 
 What they do not close:
 
@@ -146,7 +144,18 @@ What they do not close:
 - the vector sine separation stays a declared PE hypothesis; it is not
   derivable from this class;
 - eventual A21 under an arbitrary external `acc_bias_hold_`, and the
-  `H18 -> A21` joint24 covariance transport itself.
+  `H18 -> A21` joint24 covariance transport itself;
+- the release **from Live**. The counter-owning call sits behind
+  `if (mag_ref_set_ && stage_ == Stage::Live)`, so the admitted ungauged timeout
+  path never advances it. North lock is the shared unmet prerequisite of the
+  yaw gauge and the A21 release;
+- the *supply* for the yaw algebra. `tiltOnlyQuatFromBoatQuat_` strips the
+  estimator's yaw, not the vessel's, so the accumulation frame turns with the
+  boat and a legal heading excursion smears the mean. The parameter is the total
+  excursion `delta_tilt + delta_heading`, and nothing declared bounds the
+  heading part, so `DECLARED_SUPPLY_ENTRANCE_CLOSED` is false. Never charge a
+  heading excursion as tilt, and never read
+  `world_averaged_gravity_direction_error` as a total excursion.
 
 ## Two-phase private Mahony certificate
 

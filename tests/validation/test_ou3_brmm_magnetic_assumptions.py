@@ -48,6 +48,23 @@ class MagneticSourceEnvelopeTests(unittest.TestCase):
             g["universal_admission_perturbation_budget_uT"], 0.35 * 20.0 / 2.35, places=12
         )
 
+    def test_excursion_parameter_covers_vessel_heading(self):
+        r = self.d["derived_tilt_requirements"]
+        # The accumulation frame strips the estimator's yaw, not the vessel's,
+        # so a heading change during the window smears the mean.  The parameter
+        # is the total excursion and the heading supply is recorded as missing.
+        self.assertEqual(
+            r["parameter"], "TOTAL_ACCUMULATION_FRAME_ROTATION_EXCURSION_TILT_PLUS_HEADING"
+        )
+        self.assertTrue(self.d["accumulation_frame_retains_vessel_heading"])
+        self.assertFalse(self.d["heading_excursion_bounded_by_this_class"])
+        self.assertFalse(self.d["startup_heading_excursion_declared_in_operating_domain"])
+        self.assertTrue(self.d["declared_startup_direction_error_carries_no_heading_content"])
+        a = self.d["at_declared_startup_direction_error"]
+        self.assertFalse(a["supply_covers_heading_excursion"])
+        self.assertTrue(a["row_is_conditional_on_a_total_excursion_supply"])
+        self.assertTrue(ENV.derive(F(0), ENV.shipping_constants())["excursion_includes_vessel_heading"])
+
     def test_derived_tilt_requirements_are_exact_and_ordered(self):
         r = self.d["derived_tilt_requirements"]
         # min_horizontal_fraction: E <= (H - f*Bmax)/(1+f) = 75/7 uT, hence
@@ -91,16 +108,41 @@ class MagneticCallScheduleTests(unittest.TestCase):
     def setUpClass(cls):
         cls.d = SCHED.build()
 
-    def test_release_time_is_finite_and_forces_the_strict_guard(self):
+    def test_release_time_is_derived_by_a_case_split(self):
         self.assertEqual(SCHED.validate(self.d), [])
         self.assertEqual(self.d["assumption_id"], "MAG-CALL-SCHEDULE-v1")
         r = self.d["release"]
         self.assertEqual(r["unlock_count"], 250)
-        # 0.04 + 249*0.04 = 10.0 s from Live; 9.96 s from the first call.
-        self.assertAlmostEqual(r["live_to_unlock_upper_s"], 10.0, places=12)
-        self.assertAlmostEqual(r["elapsed_first_to_unlock_upper_s"], 9.96, places=12)
-        self.assertTrue(r["strict_one_second_guard_forced"])
-        self.assertTrue(self.d["H18_A21_RELEASE_TIME_CLOSED"])
+        # The gap bound is an UPPER bound, so `elapsed > guard` cannot be
+        # inferred from it: 250 calls 1 ms apart clear the count at 0.249 s with
+        # the shipping `> 1.0f` predicate still false.  Both conditions are
+        # monotone once true, so the release fires by the later of the two.
+        self.assertAlmostEqual(r["count_condition_satisfied_by_upper_s"], 10.0, places=12)
+        self.assertAlmostEqual(r["guard_condition_satisfied_by_upper_s"], 1.08, places=12)
+        self.assertAlmostEqual(
+            r["live_to_unlock_upper_s"],
+            max(r["count_condition_satisfied_by_upper_s"], r["guard_condition_satisfied_by_upper_s"]),
+            places=12,
+        )
+        self.assertEqual(r["binding_condition"], "count")
+        self.assertTrue(r["release_derived_by_case_split_not_upper_bound_comparison"])
+        self.assertFalse(r["lower_bound_on_call_spacing_assumed"])
+
+    def test_release_is_conditional_on_north_lock(self):
+        # The only call site of the counter-owning inner method sits behind
+        # `if (mag_ref_set_ && stage_ == Stage::Live)`, so a host call schedule
+        # alone does not advance the counter.
+        self.assertTrue(self.d["shipping_parity"]["counter_call_is_behind_north_lock_gate"])
+        self.assertTrue(self.d["H18_A21_RELEASE_TIME_CLOSED_AFTER_NORTH_LOCK"])
+        self.assertFalse(self.d["H18_A21_RELEASE_TIME_CLOSED_FROM_LIVE"])
+        self.assertFalse(self.d["counter_advances_without_north_lock"])
+        self.assertFalse(self.d["ungauged_timeout_path_reaches_the_release"])
+        self.assertTrue(self.d["north_lock_is_an_unmet_prerequisite_on_this_route"])
+        self.assertTrue(self.d["release"]["measured_from_north_lock_not_from_Live"])
+
+    def test_release_reachability_rejects_nonpositive_gap(self):
+        with self.assertRaises(ValueError):
+            SCHED.release_reachability(250, gap=F(0))
 
     def test_schedule_is_only_25_hz_and_separate_from_the_value_class(self):
         s = self.d["schedule"]
@@ -127,15 +169,24 @@ class StartupYawCaptureTests(unittest.TestCase):
     def setUpClass(cls):
         cls.d = CAP.build()
 
-    def test_declared_supply_lands_inside_the_declared_entrance_set(self):
+    def test_magnetic_algebra_closes_but_the_entrance_claim_is_retracted(self):
         self.assertEqual(CAP.validate(self.d), [])
         b = self.d["declared_supply_branch"]
         self.assertEqual(b["sin_yaw_error_upper_exact"], "17/30")
         self.assertAlmostEqual(b["yaw_rad_upper"], 0.61, places=12)
         self.assertAlmostEqual(b["full_attitude_rad_upper"], 0.63, places=12)
         self.assertLess(b["full_attitude_deg_upper"], self.d["declared_entrance_full_attitude_deg"])
-        self.assertTrue(self.d["DECLARED_SUPPLY_ENTRANCE_CLOSED"])
         self.assertFalse(b["sqrtN_statistical_reduction_used"])
+        # The algebra holds; the supply does not.  The declared quantity is a
+        # gravity-direction error and the perturbation bound needs the total
+        # accumulation-frame excursion, heading included.
+        self.assertTrue(self.d["magnetic_algebra_closed"])
+        self.assertTrue(b["inside_declared_entrance_set_if_supply_covered_heading"])
+        self.assertTrue(b["supply_is_gravity_direction_error_only"])
+        self.assertFalse(b["supply_covers_total_excursion"])
+        self.assertFalse(self.d["DECLARED_SUPPLY_ENTRANCE_CLOSED"])
+        self.assertFalse(self.d["total_excursion_supply_exists"])
+        self.assertFalse(self.d["heading_excursion_charged_as_tilt"])
 
     def test_taylor_bound_dominates_the_magnetic_sine_bound(self):
         lower = CAP._taylor_sin_lower(F(61, 100))
@@ -228,15 +279,18 @@ class StartupYawCaptureTests(unittest.TestCase):
             CAP._sqrt_lower(Frac(-1))
 
     def test_qualitatively_different_alternatives_are_recorded(self):
-        self.assertGreaterEqual(len(self.d["alternatives"]), 3)
-        self.assertIn("IQC", " ".join(self.d["alternatives"]))
+        self.assertGreaterEqual(len(self.d["alternatives"]), 4)
+        joined = " ".join(self.d["alternatives"])
+        self.assertIn("IQC", joined)
+        self.assertIn("heading-excursion", joined)
         self.assertEqual(
             self.d["limiting_quantity"],
             "declared gravity-direction forcing pair (mean chord, primitive) and the commissioned magnetic band",
         )
 
-    def test_shipping_handoff_parity_is_observed_not_assumed(self):
+    def test_shipping_handoff_parity_compares_complete_expressions(self):
         p = self.d["shipping_parity"]
+        self.assertTrue(p["parity_compares_complete_expressions_not_tokens"])
         self.assertTrue(p["seed_composes_proxy_tilt_with_gauge_yaw"])
         self.assertTrue(p["timeout_branch_needs_only_aligned_branch"])
         self.assertTrue(p["quality_branch_needs_north_ready"])
