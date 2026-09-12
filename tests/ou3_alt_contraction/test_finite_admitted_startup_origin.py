@@ -9,19 +9,19 @@ import test_finite_admitted_source_live_word as BASE
 
 class Tests(unittest.TestCase):
     def test_fresh_Live_reference_is_exact_admitted_sample_zero(self):
-        s=BASE.Tests().root()
-        ref=s.live_word.live.live.live.mekf.reference
+        s=BASE.Tests().root(); ref=s.live_word.live.live.live.mekf.reference
         origin=X.RestrictedOrigin(s.admitted_history,ref)
         bound=X.bind(s,origin)
-        self.assertEqual(bound.origin.reference,ref)
+        self.assertEqual(bound.origin.endpoint,ref)
         self.assertEqual(bound.admitted.live_word.source.next_ordinal,1)
 
     def test_different_admitted_history_cannot_claim_same_sample_zero(self):
         s=BASE.Tests().root(); ref=s.live_word.live.live.live.mekf.reference
+        # Canonical origin itself now rejects an endpoint carrying a different
+        # admitted-history identity, before the startup binder can consume it.
         other=A.AdmittedHistory('other-history')
-        origin=X.RestrictedOrigin(other,ref)
-        with self.assertRaisesRegex(ValueError,'detached from carried admitted history'):
-            X.bind(s,origin)
+        with self.assertRaisesRegex(ValueError,'detached from quantified admitted history'):
+            X.RestrictedOrigin(other,ref)
 
     def test_modified_physical_reference_is_not_startup_truth(self):
         s=BASE.Tests().root(); ref=s.live_word.live.live.live.mekf.reference
@@ -34,12 +34,12 @@ class Tests(unittest.TestCase):
         s=BASE.Tests().root(); ref=s.live_word.live.live.live.mekf.reference
         with self.assertRaisesRegex(ValueError,'one-time Live origin'):
             X.RestrictedOrigin(s.admitted_history,replace(ref,time=ref.time+1))
-        with self.assertRaisesRegex(ValueError,'centered S'):
+        with self.assertRaisesRegex(ValueError,'zero centered S'):
             X.RestrictedOrigin(s.admitted_history,replace(ref,centered_S=(1,0,0)))
 
     def test_readiness_closes_identity_not_reachability_or_storage(self):
         r=X.readiness()
-        self.assertTrue(r['admitted_history_sample_zero_restriction_datum_explicit'])
+        self.assertTrue(r['canonical_admitted_history_sample_zero_restriction_consumed'])
         self.assertTrue(r['fresh_joint24_physical_reference_equals_admitted_sample_zero'])
         self.assertTrue(r['startup_sample_zero_equal_to_admitted_history_restriction_proved'])
         self.assertFalse(r['finite_endpoint_checks_used_as_membership_oracle'])
