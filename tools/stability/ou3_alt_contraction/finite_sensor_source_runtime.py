@@ -1,22 +1,30 @@
 """Finite raw-IMU/source provenance for the ALT shipping word.
 
 No numerical sensor-noise bound is invented here. Shipping receives gyro and
-accelerometer vectors in physical body B. The OU-III MEKF de-heels them into
-virtual body B', while the private VerticalAccelComplementary observer consumes
-the original raw B-frame pair.
+accelerometer vectors in physical body B. The raw packet satisfies
 
   D_h gyro_raw = omega_sample_B' + b_g_true + n_g,
   D_h acc_raw  = R_true(a_true-g) + beta + n_a_internal.
 
-For the zero-lever theorem branch, shipping's finite accelerometer core removes
-its modeled temperature-bias term before the already-proved measurement graph:
+Shipping does not, however, feed ``acc_raw`` directly to private Mahony or the
+MEKF. ``AccelVibrationGuard::step`` first produces one conditioned body-frame
+sample ``acc_in`` and every accelerometer consumer sees that same descendant.
+This module therefore keeps the physical raw packet immutable and represents the
+guarded descendant separately.  Its effective post-guard residual is an exact
+identity, not a new free disturbance:
 
-  y_core = D_h acc_raw - k_a_hat * (T-T_ref),
-  nu_acc = n_a_internal - k_a_hat * (T-T_ref).
+  n_a_guard = D_h acc_in - R_true(a_true-g) - beta.
 
-Thus ``nu_acc`` is now an exact descendant of the same raw sample and the same
-temperature/model parameters; its source bound and those parameters' runtime
-ancestry remain open rather than being invented here.
+For the zero-lever theorem branch, the finite accelerometer core then removes
+its modeled temperature-bias term from that guarded sample:
+
+  y_core = D_h acc_in - k_a_hat * (T-T_ref),
+  nu_acc = n_a_guard - k_a_hat * (T-T_ref).
+
+Thus physical sensor residual, deterministic vibration conditioning, and the
+measurement-model residual remain distinguishable on one same-history graph.
+Their numerical source bounds, guard exp/sqrt binary32 ancestry, temperature
+parameters and deployment conversion roundoff remain open rather than invented.
 """
 from __future__ import annotations
 from dataclasses import dataclass
@@ -25,6 +33,7 @@ from fractions import Fraction as F
 from tools.stability.ou3_alt_contraction import finite_measurement_graph as M
 from tools.stability.ou3_alt_contraction import finite_physical_prediction as PHYS
 from tools.stability.ou3_alt_contraction import finite_vertical_complementary_runtime as VERT
+from tools.stability.ou3_alt_contraction import finite_accel_guard_runtime as GUARD
 
 
 def R(x): return M.rational(x)
@@ -84,6 +93,52 @@ class RawImuSample:
 
 
 @dataclass(frozen=True)
+class GuardedImuSample:
+    """Exact descendant of one raw packet after AccelVibrationGuard::step."""
+    raw: RawImuSample
+    guard: GUARD.Result
+    def __post_init__(self):
+        if not isinstance(self.raw,RawImuSample) or not isinstance(self.guard,GUARD.Result):
+            raise TypeError('raw packet and finite guard result required')
+
+    @property
+    def physical(self): return self.raw.physical
+    @property
+    def raw_gyro_body(self): return self.raw.raw_gyro_body
+    @property
+    def raw_accel_body(self): return self.raw.raw_accel_body
+    @property
+    def conditioned_accel_body(self): return self.guard.output
+    @property
+    def gravity_world(self): return self.raw.gravity_world
+    @property
+    def deheel_body_to_internal(self): return self.raw.deheel_body_to_internal
+    @property
+    def internal_gyro(self): return self.raw.internal_gyro
+    @property
+    def internal_accel(self): return mv3(self.deheel_body_to_internal,self.conditioned_accel_body)
+    @property
+    def effective_accel_residual_internal(self):
+        inertial=[self.physical.acceleration[i]-self.gravity_world[i] for i in range(3)]
+        physical=q_rotate(self.physical.q_world_to_body,inertial)
+        return tuple(self.internal_accel[i]-physical[i]-self.physical.beta[i] for i in range(3))
+
+
+def guarded_sample(raw:RawImuSample,guard_state:GUARD.State,guard_cfg:GUARD.Config,*,dt,
+                   decay:GUARD.DecayWitness|None=None,rms:GUARD.RmsWitness|None=None):
+    if not isinstance(raw,RawImuSample): raise TypeError('RawImuSample required')
+    result=GUARD.step(guard_state,guard_cfg,raw.raw_accel_body,dt,decay=decay,rms=rms)
+    out=GuardedImuSample(raw,result)
+    # Re-establish the conditioned physical identity explicitly at construction.
+    effective=out.effective_accel_residual_internal
+    inertial=[raw.physical.acceleration[i]-raw.gravity_world[i] for i in range(3)]
+    physical=q_rotate(raw.physical.q_world_to_body,inertial)
+    expected=tuple(physical[i]+raw.physical.beta[i]+effective[i] for i in range(3))
+    if out.internal_accel != expected: raise AssertionError('guarded accelerometer physical identity lost')
+    return out
+
+
+@dataclass(frozen=True)
 class AccelConditioning:
     """Shipping accelerometer model inputs at one measurement event."""
     temperature_delta: F
@@ -113,29 +168,46 @@ def assert_prediction_gyro(sample:RawImuSample,state,gyro_body_raw):
 
 
 def vertical_step_from_raw(vertical_state:VERT.State,vertical_cfg:VERT.Config,sample:RawImuSample,**kwargs):
+    """Legacy unguarded identity branch; full shipping composition uses guarded."""
     if 'gyro' in kwargs or 'acc' in kwargs: raise TypeError('private vertical IMU inputs are owned by RawImuSample')
     return VERT.step(vertical_state,vertical_cfg,gyro=sample.raw_gyro_body,acc=sample.raw_accel_body,**kwargs)
 
 
+def vertical_step_from_guarded(vertical_state:VERT.State,vertical_cfg:VERT.Config,sample:GuardedImuSample,**kwargs):
+    if not isinstance(sample,GuardedImuSample): raise TypeError('GuardedImuSample required')
+    if 'gyro' in kwargs or 'acc' in kwargs: raise TypeError('private vertical IMU inputs are owned by guarded sample')
+    return VERT.step(vertical_state,vertical_cfg,gyro=sample.raw_gyro_body,acc=sample.conditioned_accel_body,**kwargs)
+
+
 def assert_acc_measurement_input(sample:RawImuSample,acc_input_raw):
+    """Legacy raw identity assertion retained for existing lower-level tests."""
     a=tuple(M.vec(acc_input_raw,3))
     if a != sample.raw_accel_body: raise ValueError('MEKF accelerometer input detached from SAME raw IMU packet')
     return sample.internal_accel
 
 
-def finite_accel_core_observation(sample:RawImuSample,conditioning:AccelConditioning):
+def assert_guarded_acc_measurement_input(sample:GuardedImuSample,acc_input):
+    a=tuple(M.vec(acc_input,3))
+    if a != sample.conditioned_accel_body: raise ValueError('MEKF accelerometer input detached from SAME guarded IMU descendant')
+    return sample.internal_accel
+
+
+def finite_accel_core_observation(sample:RawImuSample|GuardedImuSample,conditioning:AccelConditioning):
     """Exact zero-lever bridge to finite_core accelerometer convention."""
     if not isinstance(conditioning,AccelConditioning): raise TypeError('AccelConditioning required')
     if conditioning.lever_internal != (0,0,0):
         raise ValueError('current finite measurement theorem is the declared zero-lever branch')
+    if not isinstance(sample,(RawImuSample,GuardedImuSample)): raise TypeError('raw or guarded IMU sample required')
     t=conditioning.temperature_delta; k=conditioning.k_a_hat_internal
     modeled=tuple(k[i]*t for i in range(3))
     observed=tuple(sample.internal_accel[i]-modeled[i] for i in range(3))
-    nu=tuple(sample.accel_residual_internal[i]-modeled[i] for i in range(3))
+    residual=(sample.effective_accel_residual_internal if isinstance(sample,GuardedImuSample)
+              else sample.accel_residual_internal)
+    nu=tuple(residual[i]-modeled[i] for i in range(3))
     inertial=[sample.physical.acceleration[i]-sample.gravity_world[i] for i in range(3)]
     physical=q_rotate(sample.physical.q_world_to_body,inertial)
     expected=tuple(physical[i]+sample.physical.beta[i]+nu[i] for i in range(3))
-    if observed != expected: raise AssertionError('raw->temperature-removed finite accelerometer observation identity lost')
+    if observed != expected: raise AssertionError('conditioned finite accelerometer observation identity lost')
     return AccelCoreObservation(observed,nu)
 
 
@@ -144,13 +216,16 @@ def readiness():
       'raw_body_to_internal_deheel_map_materialized':True,
       'internal_gyro_physical_bias_residual_identity':True,
       'internal_accel_physical_specific_force_bias_residual_identity':True,
+      'guarded_accel_is_exact_descendant_of_same_raw_packet':True,
+      'guarded_effective_residual_not_free_source':True,
       'same_raw_gyro_private_vertical_and_prediction_API':True,
-      'same_raw_accel_private_vertical_and_measurement_API':True,
+      'same_guarded_accel_private_vertical_and_measurement_API':True,
       'omega_hat_equals_omega_sample_plus_e_bg_plus_n_g_after_deheel':True,
-      'raw_accel_to_temperature_removed_core_observation_bridge':True,
-      'nu_acc_from_same_raw_residual_and_temperature_model':True,
+      'guarded_accel_to_temperature_removed_core_observation_bridge':True,
+      'nu_acc_from_same_guarded_residual_and_temperature_model':True,
       'zero_lever_theorem_branch_enforced':True,
       'deheel_sincos_binary32_ancestry_attached':False,
+      'guard_exp_sqrt_binary32_ancestry_attached':False,
       'temperature_and_k_a_runtime_ancestry_attached':False,
       'sensor_residual_source_bounds_attached':False,
       'binary32_sensor_conversion_attached':False,
