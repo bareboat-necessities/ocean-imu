@@ -10,8 +10,12 @@ The strongest entry consumes ``StoredFrequency`` from
 ``finite_tuner_frequency_binary32``. The exact-real tuner recurrence remains a
 mathematical shadow, not the deployed state. ``roundoff_supply`` therefore
 retains the exact deployed-minus-shadow tau discrepancy for BOTH legal compiler
-evaluation shapes instead of forcing a false equality. The compiler contraction
-mode and target libm are still open deployment facts.
+evaluation shapes instead of forcing a false equality. Crucially, that shadow is
+now reconstructed from the SAME deployed predecessor, SAME stored frequency and
+SAME decay witness; a CandidateResult produced from another predecessor cannot
+masquerade as finite-precision supply evidence.
+
+The compiler contraction mode and target libm are still open deployment facts.
 """
 from __future__ import annotations
 from dataclasses import dataclass
@@ -28,7 +32,7 @@ HALF=B.rn32(F(1,2)); ONE=B.rn32(1)
 SEA_MIN=B.rn32(F(1,2)); SEA_MAX=B.rn32(6)
 HORIZON_MIN=B.rn32(F(1,20)); HORIZON_MAX=B.rn32(35)
 MEKF_TAU_FLOOR=B.rn32(F(1,1000))
-QUALIFICATION='OU3_ALT_TUNER_TAU_BINARY32_V3'
+QUALIFICATION='OU3_ALT_TUNER_TAU_BINARY32_V4'
 
 
 def clamp(x,lo,hi): return min(max(x,lo),hi)
@@ -48,7 +52,7 @@ class TauStep:
 
 @dataclass(frozen=True)
 class TauRoundoffSupply:
-    """Exact local deployment discrepancy relative to one exact-real candidate."""
+    """Exact local deployment discrepancy relative to one canonical real shadow."""
     exact_real_next:F
     binary32_next_separate:F
     binary32_next_fma:F
@@ -112,18 +116,28 @@ def step_from_stored_frequency(previous,stored:FREQ.StoredFrequency,cfg:CAND.Can
     return _step_from_frequency(previous,FREQ.get_frequency_hz(stored),cfg,dt=dt,exp_decay=exp_decay)
 
 
-def roundoff_supply(binary:TauStep, exact:CAND.CandidateResult):
-    """Expose deployed tau error against the SAME exact-real tuner successor.
+def canonical_exact_shadow(binary:TauStep, exact:CAND.CandidateResult):
+    """Return the unique exact tau successor rooted at the deployed predecessor.
 
-    The exact shadow must see the same stored frequency and previous tau.  Its
-    other candidate channels may differ; this bridge only certifies the tau
-    coordinate and intentionally does not promote sigma/R_S precision.
+    ``exact`` supplies the same-history exact target produced by the exact-real
+    tuner graph. The predecessor and decay are NOT taken from that object: they
+    are fixed by the deployed TauStep so a detached previous TuneState cannot
+    alter the finite-precision supply.
     """
     if not isinstance(binary,TauStep) or not isinstance(exact,CAND.CandidateResult):
         raise TypeError('TauStep and exact CandidateResult required')
     if exact.frequency != binary.frequency:
         raise ValueError('exact-real candidate frequency detached from stored binary32 tuner frequency')
-    real_next=F(exact.tune_next.tau_applied)
+    a=F(1)-binary.exp_decay
+    expected=binary.previous+a*(F(exact.tau_target)-binary.previous)
+    if F(exact.tune_next.tau_applied) != expected:
+        raise ValueError('exact-real tau successor detached from deployed predecessor/decay')
+    return expected
+
+
+def roundoff_supply(binary:TauStep, exact:CAND.CandidateResult):
+    """Expose deployed tau error against the SAME canonical exact-real successor."""
+    real_next=canonical_exact_shadow(binary,exact)
     return TauRoundoffSupply(real_next,binary.next_separate,binary.next_fma,
                              binary.next_separate-real_next,binary.next_fma-real_next)
 
@@ -161,6 +175,7 @@ def readiness():
           fs['frequency_clamp_and_store_exact_binary32'] and
           fs['getFrequencyHz_is_identity_on_stored_binary32']),
       'local_tau_binary32_minus_exact_shadow_supply_exposed':True,
+      'tau_exact_shadow_rooted_at_same_deployed_predecessor_and_decay':True,
       'tuner_exp_libm_binary32_correspondence_closed':False,
       'shipping_compiler_FP_contraction_mode_qualified':False,
       'upstream_WPE_binary32_frequency_production_closed':False,
