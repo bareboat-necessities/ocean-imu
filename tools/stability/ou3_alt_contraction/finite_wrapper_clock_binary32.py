@@ -61,6 +61,31 @@ def binary32_positive(x)->F:
 DT_FLOAT=binary32_positive(DT_REAL)
 STALL_WITNESS_NEXT=binary32_positive(STALL_WITNESS_TIME+DT_FLOAT)
 
+
+def canonical_step_index(real_time)->int:
+    """Return the canonical 200 Hz boot-relative sample index."""
+    t=F(real_time); q=t/DT_REAL
+    if q.denominator!=1:
+        raise ValueError('canonical wrapper-clock lookup requires the 5 ms physical grid')
+    k=q.numerator
+    if not 0<=k<=MAX_STEPS:
+        raise ValueError('canonical wrapper-clock lookup outside startup plus one-word certificate')
+    return k
+
+
+def clock_at_step(step:int)->F:
+    """Exact shipping outer ``float t_`` after ``step`` canonical updates."""
+    if not isinstance(step,int) or isinstance(step,bool) or not 0<=step<=MAX_STEPS:
+        raise ValueError('clock step outside certified canonical prefix')
+    t=F(0)
+    for _ in range(step): t=binary32_positive(t+DT_FLOAT)
+    return t
+
+
+def clock_at_real_grid_time(real_time)->F:
+    return clock_at_step(canonical_step_index(real_time))
+
+
 @dataclass(frozen=True)
 class Report:
     dt_float:F
@@ -103,6 +128,7 @@ def readiness():
       'canonical_real_dt_s':DT_REAL,
       'canonical_binary32_dt_s':r.dt_float,
       'shipping_outer_clock_is_float_and_incremented_by_dt':r.shipping_source_shape_matches,
+      'exact_wrapper_clock_lookup_available_on_certified_grid':True,
       'all_binary32_clock_updates_strictly_advance_through_timeout_plus_one_word':r.all_updates_strictly_advance,
       'startup_timeout_clock_binary32':r.startup_timeout_clock,
       'latest_word_end_clock_binary32':r.latest_word_end_clock,
