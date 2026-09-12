@@ -17,6 +17,7 @@ def groot(v): return G.SqrtWitness(v*v,v)
 def troot(v): return TF.SqrtWitness(v*v,v)
 def mroot(v): return T.SqrtWitness(v*v,v)
 def proxy(): return V.State((1,0,0,0),(0,0,0),True,F(2),0)
+def zero_yaw(): return TF.YawHalfWitness(1,0,troot(1),1,0)
 
 def source(time=7,packet='src',model=None,history='hist'):
     p=S.PhysicalEndpoint(time,(1,0,0,0),history)
@@ -50,7 +51,7 @@ class Tests(unittest.TestCase):
         packet=P.Packet(7,(3,4,0),'admitted')
         out=X.update_mag_call(s,G.Config(mag_delay=0,hold_sec=2),T.Config(min_samples=10,min_window=0),packet,
                               begun=True,have_last_imu=True,sample_dt=F(1,200),
-                              boat_q_norm=troot(1),yaw_half=None,mag_norm=mroot(5))
+                              boat_q_norm=troot(1),yaw_half=zero_yaw(),mag_norm=mroot(5))
         self.assertTrue(out.admission.admitted); self.assertIsNotNone(out.magnetic)
         self.assertEqual(out.state.mag.last_mag_time,7)
         self.assertEqual(out.state.mag.tuner.accumulator.accepted_count,1)
@@ -62,7 +63,7 @@ class Tests(unittest.TestCase):
         src=source()
         out=X.update_mag_source_call(st,G.Config(mag_delay=0,hold_sec=2),T.Config(min_samples=10,min_window=0),src,
                                      begun=True,have_last_imu=True,sample_dt=F(1,200),
-                                     boat_q_norm=troot(1),yaw_half=None,mag_norm=mroot(5))
+                                     boat_q_norm=troot(1),yaw_half=zero_yaw(),mag_norm=mroot(5))
         self.assertTrue(out.admission.admitted); self.assertIs(out.source,src)
         self.assertEqual(out.state.source_model_root,'model'); self.assertEqual(out.state.source_history_id,'hist')
         self.assertEqual(out.state.mag.tuner.last_world_sample,(3,4,0))
@@ -72,7 +73,7 @@ class Tests(unittest.TestCase):
         st=X.State(gate,P.State(proxy()))
         first=X.update_mag_source_call(st,G.Config(mag_delay=0,hold_sec=2),T.Config(min_samples=10,min_window=0),source(),
                                        begun=True,have_last_imu=True,sample_dt=F(1,200),
-                                       boat_q_norm=troot(1),yaw_half=None,mag_norm=mroot(5))
+                                       boat_q_norm=troot(1),yaw_half=zero_yaw(),mag_norm=mroot(5))
         changed_model=S.Model((3,4,0),(0,0,0),'other-model')
         with self.assertRaisesRegex(ValueError,'restarted'):
             X.update_mag_source_call(first.state,G.Config(mag_delay=0),T.Config(),source(8,'m2',changed_model),
@@ -87,7 +88,7 @@ class Tests(unittest.TestCase):
         packet=P.Packet(35,(3,4,0),'fallback')
         out=X.update_mag_call(s,G.Config(mag_delay=0,fallback_sec=30),T.Config(min_samples=10,min_window=0),packet,
                               begun=True,have_last_imu=True,sample_dt=F(1,200),
-                              boat_q_norm=troot(1),yaw_half=None,mag_norm=mroot(5))
+                              boat_q_norm=troot(1),yaw_half=zero_yaw(),mag_norm=mroot(5))
         self.assertTrue(out.admission.fallback_ok); self.assertTrue(out.admission.admitted)
         self.assertEqual(out.state.gate.eligible_t0,5)
 
