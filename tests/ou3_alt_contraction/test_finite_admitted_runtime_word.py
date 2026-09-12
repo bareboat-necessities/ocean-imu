@@ -50,11 +50,18 @@ class Tests(unittest.TestCase):
             X.imu_step(s,restricted=bad,bias_restricted=badb,witness=witness,
                        raw=raw,packet_id='bad-origin',**runtime)
 
-    def test_canonical_restriction_rejects_detached_BRMM_history_before_runtime(self):
-        s=self.root(); witness,r,_,_,_=self.next_operands(s)
+    def test_detached_BRMM_history_rejected_at_composition_not_coordinate_constructor(self):
+        s=self.root(); witness,r,b,raw,runtime=self.next_operands(s)
+        # PhysicalKinematics deliberately carries no proof metadata. Two theorem
+        # histories may share the same finite coordinate values, so constructing
+        # the restriction datum is valid; it must be rejected when composed with
+        # the state that carries a different quantified admitted history.
         other=A.AdmittedHistory('other-history')
-        with self.assertRaisesRegex(ValueError,'detached from quantified admitted history'):
-            A.RestrictedSegment(other,witness.ordinal,r.segment)
+        detached=A.RestrictedSegment(other,witness.ordinal,r.segment)
+        with self.assertRaisesRegex(ValueError,'detached from carried admitted history'):
+            X.imu_step(s,restricted=detached,bias_restricted=b,witness=witness,
+                       raw=raw,packet_id='bad-brmm-history',**runtime)
+        self.assertEqual(len(s.admitted.live_word.source.steps),0)
 
     def test_detached_BIAS_history_cannot_reach_strong_runtime(self):
         s=self.root(); witness,r,b,raw,runtime=self.next_operands(s)
