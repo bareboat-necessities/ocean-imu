@@ -13,6 +13,7 @@ from fractions import Fraction as F
 from tools.stability.ou3_alt_contraction import finite_measurement_graph as M
 from tools.stability.ou3_alt_contraction import finite_prediction_graph as P
 from tools.stability.ou3_alt_contraction import finite_qaxis_runtime as QX
+from tools.stability.ou3_alt_contraction import finite_qaxis_binary32_branch as QB
 from tools.stability.ou3_alt_contraction import finite_attitude_runtime as ATT
 from tools.stability.ou3_alt_contraction import finite_sensor_source_runtime as SENSOR
 
@@ -24,6 +25,7 @@ class QAxisBranch:
     marginal_psd: tuple
     final_psd: tuple
     machine_epsilon: F
+    coefficient_branch: QB.Branch | None = None
     def __post_init__(self):
         if not isinstance(self.correlated,bool): raise TypeError('literal correlated/independent branch required')
         sig=M.mat(self.sigma_aw,3,3); eps=P.rational(self.machine_epsilon)
@@ -31,16 +33,23 @@ class QAxisBranch:
         expected=1 if self.correlated else 3
         if len(self.marginal_psd)!=expected or len(self.final_psd)!=expected: raise ValueError('Qaxis witness count must match shipping branch')
         if any(not isinstance(x,QX.PSDWitness) for x in self.marginal_psd+self.final_psd): raise TypeError('PSD runtime witnesses required')
+        if self.coefficient_branch is not None and not isinstance(self.coefficient_branch,QB.Branch):
+            raise TypeError('binary32 Qaxis coefficient branch required')
         object.__setattr__(self,'sigma_aw',tuple(map(tuple,sig))); object.__setattr__(self,'machine_epsilon',eps)
 
     def matrices(self,ou):
+        small=None
+        if self.coefficient_branch is not None:
+            if self.coefficient_branch.tau_input != ou.tau or self.coefficient_branch.h_input != ou.h:
+                raise ValueError('Qaxis binary32 formula branch detached from SAME OU tau/h operands')
+            small=self.coefficient_branch.small
         if self.correlated:
-            unit=QX.qaxis4(ou.tau,ou.h,1,ou.alpha,marginal_psd=self.marginal_psd[0],final_psd=self.final_psd[0],machine_epsilon=self.machine_epsilon)
+            unit=QX.qaxis4(ou.tau,ou.h,1,ou.alpha,marginal_psd=self.marginal_psd[0],final_psd=self.final_psd[0],machine_epsilon=self.machine_epsilon,small_branch=small)
             return dict(qaxis_unit=unit,sigma_aw=self.sigma_aw,independent_qaxis=None)
         qs=[]
         for axis in range(3):
             qs.append(QX.qaxis4(ou.tau,ou.h,self.sigma_aw[axis][axis],ou.alpha,
-                                marginal_psd=self.marginal_psd[axis],final_psd=self.final_psd[axis],machine_epsilon=self.machine_epsilon))
+                                marginal_psd=self.marginal_psd[axis],final_psd=self.final_psd[axis],machine_epsilon=self.machine_epsilon,small_branch=small))
         return dict(qaxis_unit=None,sigma_aw=None,independent_qaxis=qs)
 
 
@@ -78,6 +87,7 @@ def prediction_from_raw(state,segment,sample:SENSOR.RawImuSample,*,angular,Qbase
 
 
 def readiness():
+    qb=QB.readiness()
     return {
       'free_prediction_transition_matrices_at_entry':False,
       'physical_mean_and_covariance_same_step':True,
@@ -88,6 +98,7 @@ def readiness():
       'attitude_F_Q_runtime_graph_composed':True,
       'OU_mean_BA_runtime_graph_composed':True,
       'Qaxis_runtime_graph_composed':True,
+      'Qaxis_binary32_formula_branch_graph_available':qb['small_general_comparison_binary32_attached'],
       'runtime_exp_trig_values_source_attached':False,
       'deheel_sincos_binary32_ancestry_attached':False,
       'sensor_residual_source_bounds_attached':False,
