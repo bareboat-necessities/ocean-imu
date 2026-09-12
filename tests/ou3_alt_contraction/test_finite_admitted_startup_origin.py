@@ -34,7 +34,9 @@ class Tests(unittest.TestCase):
         s=BASE.Tests().root(); ref=s.live_word.live.live.live.mekf.reference
         with self.assertRaisesRegex(ValueError,'one-time Live origin'):
             X.RestrictedOrigin(s.admitted_history,replace(ref,time=ref.time+1))
-        with self.assertRaisesRegex(ValueError,'zero centered S'):
+        # The physical endpoint constructor now rejects the nonzero fresh S
+        # before RestrictedOrigin gets a chance to apply its redundant guard.
+        with self.assertRaisesRegex(ValueError,'centered physical S must be zero'):
             X.RestrictedOrigin(s.admitted_history,replace(ref,centered_S=(1,0,0)))
 
     def test_readiness_closes_identity_not_reachability_or_storage(self):
