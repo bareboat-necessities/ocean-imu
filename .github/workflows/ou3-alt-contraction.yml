@@ -10,6 +10,7 @@ on:
       - "docs/ou3-alt-finite-core-composition.md"
       - "docs/ou3-alt-finite-measurement-proof.md"
       - "docs/ou3-alt-runtime-primitives.md"
+      - "docs/ou3-alt-mahony-binary32.md"
       - "docs/ou3-alt-proof-plan.md"
       - "docs/ou3-proof-research-state.md"
       - ".github/workflows/ou3-alt-contraction.yml"
@@ -22,6 +23,7 @@ on:
       - "docs/ou3-alt-finite-core-composition.md"
       - "docs/ou3-alt-finite-measurement-proof.md"
       - "docs/ou3-alt-runtime-primitives.md"
+      - "docs/ou3-alt-mahony-binary32.md"
       - "docs/ou3-alt-proof-plan.md"
       - "docs/ou3-proof-research-state.md"
       - ".github/workflows/ou3-alt-contraction.yml"
@@ -67,6 +69,7 @@ jobs:
     env:
       OPENBLAS_NUM_THREADS: "1"
       OMP_NUM_THREADS: "1"
+      OU3_ALT_REQUIRE_NATIVE: "1"
     steps:
       - uses: actions/checkout@v6
         with:
@@ -86,6 +89,7 @@ jobs:
             test_finite_racc_runtime test_finite_held_accel_runtime \
             test_finite_prediction_runtime test_finite_post_prediction \
             test_finite_measurement_runtime test_finite_vertical_complementary_runtime \
+            test_finite_binary32_mahony \
             test_finite_frontend_runtime test_finite_frontend_prefix \
             test_finite_guarded_tuner_prefix test_finite_wpe_runtime \
             test_finite_band_variance_runtime test_finite_stillness_runtime \
