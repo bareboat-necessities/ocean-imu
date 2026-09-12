@@ -100,8 +100,8 @@ jobs:
             test_finite_live_imu_prefix test_finite_tilt_watchdog \
             test_finite_live_tilt_prefix test_finite_mag_bias_gate \
             test_finite_mag_runtime test_finite_mag_reference_runtime \
-            test_finite_live_async_mag test_shipping_finite_identity \
-            test_core test_proof_plan test_bias_families -v
+            test_finite_mag_reference_events test_finite_live_async_mag \
+            test_shipping_finite_identity test_core test_proof_plan test_bias_families -v
       - name: Verify actual shipping event correspondence without source promotion
         run: |
           python3 tools/stability/ou3_alt_contraction/shipping_finite_identity.py \
