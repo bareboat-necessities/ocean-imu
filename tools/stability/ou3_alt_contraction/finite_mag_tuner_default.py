@@ -8,10 +8,14 @@ solve) MagAutoTuner path around ``finite_mag_accumulator`` and
   accumulation -> count/window/effective-weight finalize gates -> mean norm /
   horizontal-field gates -> gauge-fixed reference.
 
-Binary32 allFinite/sqrt/quaternion-normalization correspondence and the physical
-source ancestry of the startup magnetic packet remain explicit open obligations.
-The optional quality-weighted and hard-iron branches are not silently replaced
-by this default branch.
+``step_from_boat_quaternion`` additionally composes the shipping wrapper's
+``tiltOnlyQuatFromBoatQuat_`` relation, so the startup tuner cannot receive a
+free yaw-stripped tilt quaternion.
+
+Binary32 allFinite/sqrt/atan2/AngleAxis/quaternion-normalization correspondence
+and the physical source ancestry of the startup magnetic packet remain explicit
+open obligations.  Optional quality weighting and hard-iron estimation are not
+silently replaced by this default branch.
 """
 from __future__ import annotations
 from dataclasses import dataclass
@@ -21,6 +25,7 @@ from tools.stability.ou3_alt_contraction import finite_measurement_graph as M
 from tools.stability.ou3_alt_contraction import finite_sensor_source_runtime as SENSOR
 from tools.stability.ou3_alt_contraction import finite_mag_accumulator as ACC
 from tools.stability.ou3_alt_contraction import finite_mag_gauge_fix as GAUGE
+from tools.stability.ou3_alt_contraction import finite_mag_tilt_frame as TILT
 
 
 def R(x): return M.rational(x)
@@ -113,7 +118,7 @@ def step(state:State,cfg:Config,*,q_tilt_bw,mag_body,dt,
         raise TypeError('default MagAutoTuner state/config required')
     q=tuple(M.vec(q_tilt_bw,4)); mag=tuple(M.vec(mag_body,3)); d=R(dt)
 
-    # Shipping returns immediately before inspecting any new sample once ready.
+    # MagAutoTuner itself returns immediately before inspecting a new sample once ready.
     if state.ready:
         if any(x is not None for x in (q_norm,mag_norm,mean_norm,horizontal_sqrt)):
             raise ValueError('ready MagAutoTuner latch consumes no new arithmetic witnesses')
@@ -139,9 +144,6 @@ def step(state:State,cfg:Config,*,q_tilt_bw,mag_body,dt,
         return _reject(state,'mag_norm')
 
     world=tuple(SENSOR.q_rotate(qn,mag))
-    # Unit quaternion rotation preserves the norm exactly.  Shipping computes a
-    # second norm after rotation; keeping this identity prevents a detached
-    # world-norm operand from entering the proof.
     if M.dot(world,world)!=m2:
         raise AssertionError('unit quaternion rotation lost magnetic norm')
     world_n=mag_norm.value
@@ -196,6 +198,25 @@ def step(state:State,cfg:Config,*,q_tilt_bw,mag_body,dt,
     return StepResult(out,True,True,None)
 
 
+def step_from_boat_quaternion(state:State,cfg:Config,*,q_boat_bw,mag_body,dt,
+                              boat_q_norm:TILT.SqrtWitness,
+                              yaw_half:TILT.YawHalfWitness|None,
+                              mag_norm:SqrtWitness|None=None,
+                              mean_norm:SqrtWitness|None=None,
+                              horizontal_sqrt:GAUGE.HorizontalSqrt|None=None):
+    """Shipping startup wrapper entry with no free tilt-frame quaternion."""
+    tilt=TILT.yaw_removed(q_boat_bw,q_norm=boat_q_norm,yaw_half=yaw_half)
+    if state.ready:
+        # The wrapper computed the tilt frame before MagAutoTuner's own ready
+        # latch; the tuner then returns without inspecting q/mag arithmetic.
+        if any(x is not None for x in (mag_norm,mean_norm,horizontal_sqrt)):
+            raise ValueError('ready startup tuner consumes no magnetic/finalization witnesses')
+        return StepResult(state,True,False,None)
+    return step(state,cfg,q_tilt_bw=tilt.q_tilt,mag_body=mag_body,dt=dt,
+                q_norm=SqrtWitness(F(1),F(1)),mag_norm=mag_norm,
+                mean_norm=mean_norm,horizontal_sqrt=horizontal_sqrt)
+
+
 def readiness():
     return {
       'default_ready_latch_precedes_new_sample_arithmetic':True,
@@ -206,9 +227,10 @@ def readiness():
       'accepted_accumulator_and_finalize_gate_composed':True,
       'mean_norm_horizontal_fraction_and_gauge_fix_composed':True,
       'raw_sample_acceptance_boolean_removed':True,
+      'startup_tilt_quaternion_runtime_ancestry_attached':True,
       'input_allFinite_binary32_attached':False,
       'sqrt_and_quaternion_normalization_binary32_attached':False,
-      'startup_tilt_quaternion_runtime_ancestry_attached':False,
+      'startup_tilt_atan2_AngleAxis_binary32_attached':False,
       'startup_mag_sensor_source_ancestry_attached':False,
       'optional_quality_weighted_branch_attached':False,
       'optional_hard_iron_branch_attached':False,
