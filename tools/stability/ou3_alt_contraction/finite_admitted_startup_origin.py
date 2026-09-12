@@ -1,42 +1,18 @@
-"""Bind the fresh startup Live truth to sample zero of an admitted history.
+"""Bind fresh startup Live truth to the canonical admitted-history sample zero.
 
-The theorem quantifies over an already admitted COMPLETE-BRMM physical history.
-A finite endpoint cannot prove that admission, but the theorem still needs an
-explicit restriction datum saying which value that admitted history has at the
-one-time Live origin.  This module carries exactly that datum and requires the
-fresh joint24 Reference produced by startup composition to be that same object.
-
-This closes an identity/ancestry edge only.  It does not infer admission from
-endpoint checks, prove startup reachability for every history, or enclose any
-deployment floating-point arithmetic.
+``finite_admitted_brmm_restriction.RestrictedOrigin`` is the unique theorem
+datum for the value of an already-admitted COMPLETE-BRMM history at t_L.  This
+module connects that datum to the exact fresh joint24 physical Reference.  It
+never infers history admission from endpoint checks.
 """
 from __future__ import annotations
 from dataclasses import dataclass
 
 from tools.stability.ou3_alt_contraction import finite_admitted_brmm_restriction as ADMIT
-from tools.stability.ou3_alt_contraction import finite_core as CORE
 from tools.stability.ou3_alt_contraction import finite_brmm_moment_prefix as MOMENTS
 from tools.stability.ou3_alt_contraction import finite_admitted_source_live_word as LIVE
 
-
-@dataclass(frozen=True)
-class RestrictedOrigin:
-    """Exact sample-zero value of one quantified admitted physical history."""
-    history: ADMIT.AdmittedHistory
-    reference: CORE.Reference
-    def __post_init__(self):
-        if not isinstance(self.history,ADMIT.AdmittedHistory):
-            raise TypeError('admitted COMPLETE-BRMM history required')
-        if not isinstance(self.reference,CORE.Reference):
-            raise TypeError('fresh physical Reference required')
-        r=self.reference
-        if r.time != r.live_origin:
-            raise ValueError('admitted sample zero must occur at the one-time Live origin')
-        if any(r.centered_S):
-            raise ValueError('admitted sample zero must have centered S = 0')
-        # These are necessary consequences of the primary physical definition,
-        # not a membership test for the history quantified above.
-        MOMENTS.check_endpoint(r)
+RestrictedOrigin = ADMIT.RestrictedOrigin
 
 
 @dataclass(frozen=True)
@@ -45,29 +21,31 @@ class State:
     origin: RestrictedOrigin
     def __post_init__(self):
         if not isinstance(self.admitted,LIVE.State) or not isinstance(self.origin,RestrictedOrigin):
-            raise TypeError('admitted Live state and admitted sample-zero restriction required')
+            raise TypeError('admitted Live state and canonical admitted origin required')
         if self.origin.history != self.admitted.admitted_history:
             raise ValueError('sample-zero restriction detached from carried admitted history')
         ref=self.admitted.live_word.live.live.live.mekf.reference
-        if ref != self.origin.reference:
+        if ref != self.origin.endpoint:
             raise ValueError('fresh Live physical Reference is not admitted-history sample zero')
         root=self.admitted.live_word.source.root
-        if root.history_id != self.origin.history.history_id:
-            raise ValueError('finite source root detached from admitted sample-zero history')
-        if root.live_origin != self.origin.reference.live_origin:
+        qualified=ADMIT.qualify_origin(root,self.origin)
+        if qualified.endpoint != ref:
+            raise AssertionError('canonical admitted origin qualification changed endpoint')
+        if root.live_origin != self.origin.endpoint.live_origin:
             raise ValueError('finite source Live origin detached from admitted sample zero')
         if self.admitted.live_word.source.steps:
             raise ValueError('sample-zero binding applies before the first IMU transition')
+        MOMENTS.check_endpoint(ref)
 
 
 def bind(admitted:LIVE.State, origin:RestrictedOrigin):
-    """Attach theorem sample-zero restriction to the exact fresh Live truth."""
     return State(admitted,origin)
 
 
 def readiness():
+    a=ADMIT.readiness()
     return {
-      'admitted_history_sample_zero_restriction_datum_explicit':True,
+      'canonical_admitted_history_sample_zero_restriction_consumed':a['same_admitted_history_has_explicit_tL_origin_restriction'],
       'fresh_joint24_physical_reference_equals_admitted_sample_zero':True,
       'same_one_time_Live_origin_shared_by_source_root_and_admitted_origin':True,
       'centered_S_zero_shared_at_fresh_admitted_origin':True,
