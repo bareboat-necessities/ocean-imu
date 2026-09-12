@@ -14,9 +14,9 @@ ALT excludes wind heel: `wind_heel_rad_==0` from construction onward and no
 `update_wind_heel()` events. Shipping is unchanged. The product composer also
 rejects nonidentity IMU de-heel maps at every represented boundary.
 
-The finite graph now joins the exact gauged H18 startup bridge to successive
-IMU, asynchronous magnetic and hold events. The magnetic path includes raw
-physical source qualification, the default continuous hard-iron estimator,
+The finite graph joins the exact gauged H18 startup bridge to successive IMU,
+asynchronous magnetic and hold events. The magnetic path includes raw physical
+source qualification, the default continuous hard-iron estimator,
 refinement/reset clocks, same-mean reference and yaw writes, coupled offset /
 reference application, full measurement/covariance successor, and count/hold
 logic. Continuous magnetic memory starts before startup admission and is not
@@ -32,14 +32,23 @@ existing default call schedule. Call 250 need not satisfy the strict one-second
 guard; a later call can do so. External hold may keep H18 indefinitely.
 Finite-prefix deadline checks never certify infinite coverage.
 
+The theorem-facing firing tilt-watchdog edge no longer accepts a free tilt angle
+or final reset quaternion. Its >70-degree predicate is derived from the same
+post-accelerometer nominal attitude, and preserve-yaw reconstruction is tied to
+the same predecessor and guarded accelerometer. The covariance reseed follows
+shipping order exactly: the anisotropic yaw axis is taken from the accel-only
+intermediate qref before yaw is restored; the later `set_quaternion_boat()` does
+not rotate or reseed P. Deployment libm/normalization/cutoff/nonfinite details
+remain fail-closed.
+
 ## Next work
 
-Do not start storage/rho search. Bind the remaining literal IMU/source/BIAS,
-magnetic arithmetic and startup/ungauged paths into the complete source-uniform
-600-step word. The firing tilt-watchdog composer is carried structurally, but
-its actual angle and preserve-yaw quaternion/covariance-axis operands still need
-same-expression qualification. Close libm/casts/Eigen/nonfinite branches and
-lifetime clock/counter arithmetic, including the shipping signed magnetic count.
+Do not start storage/rho search. Finish the remaining literal IMU/source/BIAS,
+startup/ungauged and deployment-arithmetic paths in the complete source-uniform
+600-step word. For the tilt edge, close the near-parallel cutoff and target
+binary32/libm correspondence rather than replacing them with an ideal branch.
+Close remaining libm/casts/Eigen/nonfinite branches and lifetime clock/counter
+arithmetic, including the shipping signed magnetic count.
 
 Only after `assert_finite_storage_master` accepts that complete representation
 may high-precision/common joint24 storage search begin, followed by every-prefix
