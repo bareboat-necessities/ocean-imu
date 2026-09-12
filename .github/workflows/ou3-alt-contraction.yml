@@ -119,6 +119,9 @@ jobs:
             test_finite_tuner_stillness_projection test_finite_tuner_candidate \
             test_finite_tuner_projection_bridge test_finite_tuner_frontend_prefix \
             test_finite_tuner_frequency_binary32 test_finite_tuner_tau_binary32 \
+            test_finite_shipping_tau_target_binary32 test_finite_tuner_tau_roundoff_bound \
+            test_finite_tuner_tau_600_domain test_finite_complete_word_tau_qualification \
+            test_finite_tuner_tau_deployment_ledger \
             test_finite_tuner_commit test_finite_tuner_boundary_commit \
             test_finite_runtime_parameters test_finite_active_runtime_word \
             test_finite_live_imu_prefix test_finite_tilt_watchdog \
