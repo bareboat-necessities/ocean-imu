@@ -32,7 +32,9 @@ def _root_enclosure(x,n:int,bits:int=DEFAULT_BITS):
     if x<0 or not isinstance(n,int) or n<=0: raise ValueError('nonnegative rational and positive root degree required')
     if not isinstance(bits,int) or bits<16: raise ValueError('at least 16 bisection bits required')
     if x==0: return F(0),F(0)
-    lo=F(0); hi=max(F(1),x)
+    # First find a compact dyadic upper bracket.  Starting at x itself is sound
+    # but destroys useful bisection bits for seventh roots of large x=u^6.
+    lo=F(0); hi=F(1)
     while hi**n < x: hi*=2
     for _ in range(bits):
         mid=(lo+hi)/2
