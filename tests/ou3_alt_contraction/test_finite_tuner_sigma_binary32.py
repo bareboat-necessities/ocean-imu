@@ -3,7 +3,6 @@ from fractions import Fraction as F
 import unittest
 
 from tools.stability.ou3_alt_contraction import finite_binary32_arithmetic as B
-from tools.stability.ou3_alt_contraction import finite_source_bound_exp_enclosure as EXP
 from tools.stability.ou3_alt_contraction import finite_tuner_deployment_config as D
 from tools.stability.ou3_alt_contraction import finite_tuner_sigma_binary32 as X
 from tools.stability.ou3_alt_contraction import finite_tuner_spectral_real_enclosure as ROOT
@@ -15,7 +14,7 @@ def sqrt_witness(x):
     lo,hi=ROOT.sqrt_enclosure(x); return B.rn32((lo+hi)/2)
 
 def exp_witness(x):
-    lo,hi,_,_=EXP.enclosure(x); return B.rn32((lo+hi)/2)
+    lo,hi=X.exp_minus_enclosure(x); return B.rn32((lo+hi)/2)
 
 
 class Tests(unittest.TestCase):
@@ -56,11 +55,20 @@ class Tests(unittest.TestCase):
                      still_time=B.rn32(F(1,2)),still_exp_result=B.rn32(F(1,2)),
                      sqrt_result=sqrt_witness(vw))
 
+    def test_exp_and_sqrt_are_rne_cell_relations_not_false_real_equalities(self):
+        st=B.rn32(F(1,2)); e=exp_witness(st); elo,ehi=X.exp_minus_enclosure(st)
+        self.assertFalse(elo <= e <= ehi)
+        self.assertTrue(X._interval_hits_rne_cell(elo,ehi,e))
+        x=B.rn32(F(6,25)); s=sqrt_witness(x); slo,shi=ROOT.sqrt_enclosure(x)
+        self.assertTrue(X._interval_hits_rne_cell(slo,shi,s))
+
     def test_readiness_keeps_upstream_and_libm_correspondence_open(self):
         r=X.readiness()
         for k in ('shipping_sigma_target_source_shape_matches','noise_variance_subtraction_and_zero_floor_binary32_materialized',
                   'optional_stillness_attenuation_binary32_multiply_materialized','variance_1e_minus6_floor_binary32_materialized',
-                  'sigma_sqrt_witness_bound_to_same_rounded_var_wave','sigma_gain_max_clamp_and_unready_floor_binary32_materialized'):
+                  'stillness_exp_tight_rational_enclosure_bound_to_same_argument','stillness_exp_binary32_result_related_by_exact_RNE_cell',
+                  'sigma_sqrt_witness_bound_to_same_rounded_var_wave','sigma_sqrt_binary32_result_related_by_exact_RNE_cell_not_false_real_equality',
+                  'sigma_gain_max_clamp_and_unready_floor_binary32_materialized'):
             self.assertTrue(r[k])
         for k in ('stillness_exp_target_libm_correspondence_closed','sigma_sqrt_target_libm_correspondence_closed',
                   'upstream_accel_variance_binary32_production_closed','upstream_band_noise_sigma_binary32_production_closed',
