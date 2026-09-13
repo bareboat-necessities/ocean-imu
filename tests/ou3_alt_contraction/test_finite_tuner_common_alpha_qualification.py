@@ -24,10 +24,16 @@ class Tests(unittest.TestCase):
         self.assertIs(q.step,step); self.assertIs(q.candidate_cfg,c); self.assertIs(q.deployment_cfg,d)
         self.assertEqual(q.alpha,step.alpha); self.assertEqual(q.dt,dt)
 
-    def test_detached_shared_sigma_scalar_is_rejected(self):
-        c,d,dt,step=objects(); bad=replace(c,sigma_coeff=c.sigma_coeff+1)
-        with self.assertRaisesRegex(ValueError,'common adaptation scalars'):
+    def test_detached_common_alpha_scalar_is_rejected(self):
+        c,d,dt,step=objects(); bad=replace(c,adapt_tau_sec=c.adapt_tau_sec+1)
+        with self.assertRaisesRegex(ValueError,'common-alpha scalars'):
             X.qualify(step,bad,d,dt=dt)
+
+    def test_sigma_target_scale_is_not_misclassified_as_alpha_input(self):
+        c,d,dt,step=objects(); changed=replace(c,sigma_coeff=c.sigma_coeff+1,max_sigma=c.max_sigma+1)
+        q=X.qualify(step,changed,d,dt=dt)
+        self.assertEqual(q.alpha,step.alpha)
+        self.assertTrue(X.readiness()['sigma_target_scale_and_clamp_deliberately_deferred_to_sigma_join'])
 
     def test_constructed_tau_step_with_detached_horizon_is_rejected(self):
         c,d,dt,step=objects()
