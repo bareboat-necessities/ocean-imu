@@ -36,9 +36,9 @@ class Tests(unittest.TestCase):
             X.qualify(bad,c,d,dt=dt)
 
     def test_detached_successor_shape_is_rejected(self):
-        c,d,dt,step=objects(); bad=replace(step,next_separate=B.rn32(step.next_separate+F(1,1<<20)))
-        if bad.next_separate==step.next_separate:
-            bad=replace(step,next_separate=B.next_up(step.next_separate))
+        c,d,dt,step=objects(); changed=B.rn32(step.next_separate+F(1,1<<20))
+        self.assertNotEqual(changed,step.next_separate)
+        bad=replace(step,next_separate=changed)
         with self.assertRaisesRegex(ValueError,'separate successor'):
             X.qualify(bad,c,d,dt=dt)
 
