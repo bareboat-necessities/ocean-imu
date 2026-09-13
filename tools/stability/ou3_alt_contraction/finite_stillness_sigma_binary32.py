@@ -33,7 +33,7 @@ from tools.stability.ou3_alt_contraction import finite_tuner_sigma_binary32 as E
 COMMON=Path(__file__).resolve().parents[3]/'src/tuner/SeaStateFusionTunerCommon.h'
 FILTER=Path(__file__).resolve().parents[3]/'src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h'
 ZERO=B.rn32(0); ONE=B.rn32(1); SIXTY=B.rn32(60)
-QUALIFICATION='OU3_ALT_STILLNESS_SIGMA_BINARY32_V1'; MAX_SAMPLES=30600
+QUALIFICATION='OU3_ALT_STILLNESS_SIGMA_BINARY32_V2'; MAX_SAMPLES=30600
 
 
 def _q(x,name):
@@ -70,6 +70,7 @@ class Step:
     state:State
     vertical_lp:F
     dt:F
+    threshold:F
     a_norm:F
     inst_energy:F
     energy_values:tuple
@@ -78,22 +79,20 @@ class Step:
     qualification:str=QUALIFICATION
     def __post_init__(self):
         if not isinstance(self.before,State) or not isinstance(self.state,State): raise TypeError('stillness predecessor/successor required')
-        for n in ('vertical_lp','dt','a_norm','inst_energy','attenuation'):
+        for n in ('vertical_lp','dt','threshold','a_norm','inst_energy','attenuation'):
             object.__setattr__(self,n,_q(getattr(self,n),n))
         vals=_uniq(self.energy_values); object.__setattr__(self,'energy_values',vals)
         if self.exp_result is not None: object.__setattr__(self,'exp_result',_q(self.exp_result,'stillness attenuation exp'))
         if self.qualification!=QUALIFICATION: raise ValueError('wrong stillness step qualification')
         if self.state.energy not in vals: raise ValueError('actual stillness energy outside local contraction set')
         if self.state.samples!=self.before.samples+1: raise ValueError('stillness sample count did not advance once')
-        if self.state.is_still!=(self.state.energy < _compiled_threshold(self._cfg)) if hasattr(self,'_cfg') else False:
-            pass
+        if self.state.is_still!=(self.state.energy < self.threshold): raise ValueError('still predicate detached from actual machine energy/threshold')
+        expected_time=min(B.add(self.before.still_time,self.dt),SIXTY) if self.state.is_still else ZERO
+        if self.state.still_time!=expected_time: raise ValueError('still time detached from actual machine predicate and source update')
         if self.state.is_still:
-            if self.exp_result is None or self.attenuation!=self.exp_result: raise ValueError('still branch attenuation detached from exp result')
+            if self.exp_result is None or self.attenuation!=min(max(self.exp_result,ZERO),ONE): raise ValueError('still branch attenuation detached from exp result')
         else:
             if self.exp_result is not None or self.attenuation!=ONE: raise ValueError('moving branch must use attenuation one and no exp witness')
-
-
-def _compiled_threshold(cfg:R.Config): return B.rn32(cfg.energy_thresh)
 
 
 def step(state:State,cfg:R.Config,*,vertical_lp,dt,energy_successor,attenuation_exp=None):
@@ -119,17 +118,7 @@ def step(state:State,cfg:R.Config,*,vertical_lp,dt,energy_successor,attenuation_
         if attenuation_exp is not None: raise ValueError('moving branch consumes no attenuation exp result')
         st=ZERO; atten=ONE; e=None
     nxt=State(en,st,still,state.samples+1)
-    # Construct manually rather than relying on hidden config state in Step.
-    out=Step.__new__(Step)
-    object.__setattr__(out,'before',state); object.__setattr__(out,'state',nxt)
-    object.__setattr__(out,'vertical_lp',a); object.__setattr__(out,'dt',h); object.__setattr__(out,'a_norm',an)
-    object.__setattr__(out,'inst_energy',inst); object.__setattr__(out,'energy_values',values)
-    object.__setattr__(out,'attenuation',atten); object.__setattr__(out,'exp_result',e); object.__setattr__(out,'qualification',QUALIFICATION)
-    # Explicit invariants not depending on a hidden cfg member.
-    if nxt.energy not in values or nxt.is_still!=(nxt.energy<threshold): raise AssertionError('stillness projection construction detached')
-    if nxt.is_still and (e is None or atten!=e): raise AssertionError('still attenuation construction detached')
-    if not nxt.is_still and (e is not None or atten!=ONE): raise AssertionError('moving attenuation construction detached')
-    return out
+    return Step(state,nxt,a,h,threshold,an,inst,values,atten,e)
 
 
 def _source_shape_matches():
