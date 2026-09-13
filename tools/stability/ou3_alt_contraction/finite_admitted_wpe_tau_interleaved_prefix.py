@@ -89,7 +89,10 @@ def begin(base:TAUJOIN.State,wpe:WPELOG.State):
 
 
 def _suffix(lower_out):
-    try: return lower_out.event.event.event.live.tuner_suffix
+    # Strongest admitted IMU result -> source-owned Live result -> tilt result
+    # -> literal finite_live_imu_prefix.Result.  The extra historical `.event`
+    # disappeared when the admitted ISS wrapper was strengthened.
+    try: return lower_out.event.event.live.tuner_suffix
     except AttributeError as exc: raise TypeError('admitted IMU result lost tuner/WPE suffix') from exc
 
 
