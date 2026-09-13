@@ -48,11 +48,25 @@ class Tests(unittest.TestCase):
         self.assertEqual(out.alpha_supply,alpha.alpha-ae)
         self.assertEqual(alpha.tau_target,joined.target.tau_target)
 
+    def test_theorem_join_keeps_both_compiler_histories(self):
+        joined=target_join(); alpha=alpha_for(joined)
+        prev=I.IntervalTuneState(F(11,10),F(1,2),F(49,100),F(51,100)); pm=B.rn32(F(1,2)); ae=F(1,100)
+        out=X.join_compiler_modes(prev,pm,joined,exact_alpha=ae,alpha_step=alpha)
+        self.assertIs(out.alpha_source,alpha)
+        self.assertEqual(out.machine.alpha_source,alpha)
+        self.assertEqual(out.separate_residual_lo,out.machine.next_separate-out.exact_next_hi)
+        self.assertEqual(out.separate_residual_hi,out.machine.next_separate-out.exact_next_lo)
+        self.assertEqual(out.fma_residual_lo,out.machine.next_fma-out.exact_next_hi)
+        self.assertEqual(out.fma_residual_hi,out.machine.next_fma-out.exact_next_lo)
+        self.assertEqual(out.alpha_supply,alpha.alpha-ae)
+
     def test_alpha_from_different_tau_candidate_is_rejected(self):
         joined=target_join(); detached=alpha_for(joined,tau=1)
         prev=I.IntervalTuneState(F(1),F(1),F(1,2),F(1,2))
         with self.assertRaisesRegex(ValueError,'SAME candidate tau'):
             X.join_from_alpha_step(prev,B.rn32(F(1,2)),joined,exact_alpha=F(1,100),alpha_step=detached)
+        with self.assertRaisesRegex(ValueError,'SAME candidate tau'):
+            X.join_compiler_modes(prev,B.rn32(F(1,2)),joined,exact_alpha=F(1,100),alpha_step=detached)
 
     def test_equal_alpha_is_allowed_but_not_assumed(self):
         prev=I.IntervalTuneState(F(1),F(1),F(1,2),F(1,2))
@@ -70,12 +84,13 @@ class Tests(unittest.TestCase):
         r=X.readiness()
         for k in ('exact_RS_interval_EMA_image_materialized','binary32_RS_EMA_step_composed_with_same_target_join',
                   'source_owned_binary32_RS_alpha_can_feed_persistent_recurrence','same_candidate_tau_owns_RS_alpha_horizon',
+                  'separate_and_FMA_RS_histories_both_joined_to_same_exact_interval','compiler_mode_not_guessed_by_theorem_join',
                   'machine_minus_exact_predecessor_RS_residual_carried','machine_alpha_minus_exact_alpha_supply_carried',
                   'machine_minus_exact_next_RS_residual_interval_exposed'):
             self.assertTrue(r[k])
-        for k in ('alpha_RS_target_libm_correspondence_closed','source_uniform_target_and_alpha_supply_bounds_closed',
-                  'binary32_RS_commit_correspondence_closed','source_uniform_complete_600_step_word_qualified',
-                  'storage_search_allowed','ALT_LIVE_PASS'):
+        for k in ('alpha_RS_target_libm_correspondence_closed','shipping_compiler_FP_contraction_mode_qualified',
+                  'source_uniform_target_and_alpha_supply_bounds_closed','binary32_RS_commit_correspondence_closed',
+                  'source_uniform_complete_600_step_word_qualified','storage_search_allowed','ALT_LIVE_PASS'):
             self.assertFalse(r[k])
 
 
