@@ -35,10 +35,10 @@ class Tests(unittest.TestCase):
         self.assertEqual(out.active_join.supply.pseudo_period,F(1,100))
         self.assertNotEqual(out.active_join.supply.R_S,((0,0,0),(0,0,0),(0,0,0)))
 
-    def test_machine_active_from_wrong_source_event_cannot_bypass_physical_ancestry(self):
+    def test_machine_active_cannot_detach_from_carried_source_root(self):
         s=BASE.root_state(); witness,segment,raw,_=PBASE.operands(s)
-        bad=SOURCE.StepWitness(witness.ordinal+1,witness.source_id,witness.cell_id,witness.before_id,witness.after_id)
-        physical=SOURCE.QualifiedPhysicalSegment(s.source.root,bad,segment)
+        other=replace(s.source.root,history_id='different-machine-root')
+        physical=SOURCE.QualifiedPhysicalSegment(other,witness,segment)
         args=PBASE.root_args(); args.pop('temperature_c')
         with self.assertRaisesRegex(ValueError,'next carried source transition'):
             X.build(s,physical,raw,s.live.live.live.active,mode='separate',**args)
