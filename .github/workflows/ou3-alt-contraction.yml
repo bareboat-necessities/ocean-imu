@@ -147,6 +147,15 @@ jobs:
             test_finite_continuous_mag_runtime test_finite_live_magnetic_word \
             test_finite_live_interleave \
             test_shipping_finite_identity test_core test_proof_plan test_bias_families -v
+          python3 -m unittest \
+            test_finite_tuner_rs_deployment_ledger test_finite_tuner_rs_boundary_deployment \
+            test_finite_tuner_sigma_binary32 test_finite_tuner_common_alpha_qualification \
+            test_finite_tuner_sigma_deployment_ledger test_finite_tuner_machine_tunestate_product \
+            test_finite_tuner_machine_boundary_commit \
+            test_finite_band_coefficients_binary32 test_finite_band_binary32_contraction \
+            test_finite_band_machine_ledger test_finite_band_noise_floor_binary32 \
+            test_finite_stats_binary32_runtime test_finite_machine_frontend_sigma_source \
+            test_finite_stillness_sigma_binary32 test_finite_sigma_target_machine_source -v
       - name: Verify actual shipping event correspondence without source promotion
         run: |
           python3 tools/stability/ou3_alt_contraction/shipping_finite_identity.py \
