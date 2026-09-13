@@ -1,24 +1,11 @@
 """Binary32 shipping sigma-target graph for the ALT deployment proof.
 
 Shipping derives sigma from the wave-band variance before the common tau/sigma
-EMA:
-
-    var_noise = band_noise_sigma * band_noise_sigma
-    var_total = var_ready ? max(0, accel_variance) : var_noise
-    var_wave  = max(0, var_total - var_noise)
-    if still: var_wave *= clamp(exp(-still_time),0,1)
-    var_wave  = max(var_wave, 1e-6f)
-    sigma_wave = sqrt(var_wave)
-    sigma_target = min(sigma_wave * sigma_coeff_, max_sigma_a_)
-    if !var_ready:
-        sigma_target = max(sigma_target, max(0.05f, band_noise_sigma))
-
-Every ordinary operation is exact binary32 here. ``sqrt`` and the optional
+EMA. Every ordinary operation is exact binary32 here. ``sqrt`` and the optional
 stillness ``exp`` are explicit witnesses bound to their SAME rounded arguments.
-For sqrt, a deployed binary32 result is related to the rigorous exact-real root
-through its exact RNE rounding cell; it is not falsely required to equal or lie
-inside the narrow exact-real root interval. Platform-libm correspondence remains
-open.
+Both transcendental results are related to rigorous exact-real intervals through
+their exact RNE rounding cells; machine values are never falsely identified with
+exact-real roots. Platform-libm correspondence remains open.
 """
 from __future__ import annotations
 from dataclasses import dataclass
@@ -27,12 +14,11 @@ from pathlib import Path
 
 from tools.stability.ou3_alt_contraction import finite_binary32_arithmetic as B
 from tools.stability.ou3_alt_contraction import finite_tuner_spectral_real_enclosure as ROOT
-from tools.stability.ou3_alt_contraction import finite_source_bound_exp_enclosure as EXP
 from tools.stability.ou3_alt_contraction import finite_tuner_deployment_config as D
 
 SOURCE=Path(__file__).resolve().parents[3]/'src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h'
 ZERO=B.rn32(0); ONE=B.rn32(1); VAR_FLOOR=B.rn32(F(1,10**6)); SIGMA_FLOOR=B.rn32(F(1,20))
-QUALIFICATION='OU3_ALT_SIGMA_BINARY32_V2'
+QUALIFICATION='OU3_ALT_SIGMA_BINARY32_V3'
 
 
 def _q(x,name):
@@ -42,26 +28,35 @@ def _q(x,name):
 
 
 def _positive_rne_cell(q:F):
-    """Closed nearest-even rounding cell around a positive normal binary32.
-
-    Closed tie boundaries are deliberately conservative: this helper proves
-    that an exact-real root interval intersects the machine value's legal RNE
-    cell. It does not assert which endpoint tie a platform sqrt implementation
-    selects, and therefore does not close target-libm correspondence.
-    """
+    """Closed nearest-even rounding cell around a positive normal binary32."""
     q=F(q)
     if q<=0 or not B.is_binary32(q): raise ValueError('positive normal binary32 required for RNE cell')
     e=B._floor_log2_positive(q); quantum=B._pow2(e-23)
-    # Immediately below an exact power of two the predecessor lies in the
-    # previous binade and has half the current-binade spacing.
     lower_step=quantum/2 if q==B._pow2(e) else quantum
     prev=q-lower_step; nxt=q+quantum
     return (prev+q)/2,(q+nxt)/2
 
 
-def _root_interval_hits_rne_cell(lo,hi,rounded):
+def _interval_hits_rne_cell(lo,hi,rounded):
     clo,chi=_positive_rne_cell(F(rounded))
     return max(F(lo),clo)<=min(F(hi),chi)
+
+
+def exp_minus_enclosure(x,terms=14):
+    """Tight rational enclosure of exp(-x) for 0<=x<=1.
+
+    The alternating Taylor terms decrease monotonically on this interval.  An
+    odd truncation is a lower bound and the preceding even truncation is an
+    upper bound. ``terms`` is the even upper truncation degree.
+    """
+    x=F(x)
+    if x<0 or x>1: raise ValueError('stillness exp argument outside certified [0,1] domain')
+    if not isinstance(terms,int) or terms<2 or terms%2: raise ValueError('even Taylor degree >=2 required')
+    total=F(1); term=F(1)
+    partial={0:total}
+    for n in range(1,terms+2):
+        term *= -x/F(n); total += term; partial[n]=total
+    return partial[terms+1],partial[terms]
 
 
 @dataclass(frozen=True)
@@ -107,10 +102,10 @@ def target(cfg:D.DeploymentConfig,*,var_ready,accel_variance,band_noise_sigma,
     pre=max(ZERO,B.sub(vt,vn))
     if still:
         if still_exp_result is None: raise TypeError('still branch requires exp attenuation witness')
-        arg=st  # STILL_VAR_DECAY_SEC is literal 1.0f, so -still_time/1 has magnitude still_time.
         e=_q(still_exp_result,'stillness exp result')
-        elo,ehi,_,_=EXP.enclosure(arg)
-        if not elo<=e<=ehi: raise ValueError('stillness exp witness detached from SAME rounded argument')
+        elo,ehi=exp_minus_enclosure(st)
+        if not _interval_hits_rne_cell(elo,ehi,e):
+            raise ValueError('stillness exp witness detached from SAME rounded argument RNE cell')
         atten=min(max(e,ZERO),ONE)
         attenuated=B.mul(pre,atten)
     else:
@@ -120,7 +115,7 @@ def target(cfg:D.DeploymentConfig,*,var_ready,accel_variance,band_noise_sigma,
     if sqrt_result is None: raise TypeError('sigma target requires sqrt(var_wave) witness')
     sr=_q(sqrt_result,'sigma sqrt result')
     slo,shi=ROOT.sqrt_enclosure(vw,bits)
-    if not _root_interval_hits_rne_cell(slo,shi,sr):
+    if not _interval_hits_rne_cell(slo,shi,sr):
         raise ValueError('sigma sqrt witness detached from SAME rounded var_wave RNE cell')
     sw=sr
     scaled=B.mul(sw,cfg.sigma_coeff)
@@ -150,6 +145,8 @@ def readiness():
       'noise_variance_subtraction_and_zero_floor_binary32_materialized':True,
       'optional_stillness_attenuation_binary32_multiply_materialized':True,
       'variance_1e_minus6_floor_binary32_materialized':True,
+      'stillness_exp_tight_rational_enclosure_bound_to_same_argument':True,
+      'stillness_exp_binary32_result_related_by_exact_RNE_cell':True,
       'sigma_sqrt_witness_bound_to_same_rounded_var_wave':True,
       'sigma_sqrt_binary32_result_related_by_exact_RNE_cell_not_false_real_equality':True,
       'sigma_gain_max_clamp_and_unready_floor_binary32_materialized':True,
