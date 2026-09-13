@@ -1,11 +1,14 @@
 """Coherent dual-compiler WPE-log -> frequency -> tau Live regressions."""
+from dataclasses import replace
 from fractions import Fraction as F
 import unittest
 
 from tools.stability.ou3_alt_contraction import finite_admitted_tau_interleaved_prefix as TAUJOIN
 from tools.stability.ou3_alt_contraction import finite_admitted_wpe_tau_interleaved_prefix as X
 from tools.stability.ou3_alt_contraction import finite_binary32_arithmetic as B
+from tools.stability.ou3_alt_contraction import finite_tuner_candidate as CAND
 from tools.stability.ou3_alt_contraction import finite_tuner_tau_deployment_ledger as LEDGER
+from tools.stability.ou3_alt_contraction import finite_wpe_frequency_binary32 as WPEF
 from tools.stability.ou3_alt_contraction import finite_wpe_log_binary32 as WPELOG
 import test_finite_admitted_source_imu_word as IBASE
 import test_finite_admitted_tau_interleaved_prefix as TBASE
@@ -13,8 +16,9 @@ import test_finite_source_bound_live_word as LBASE
 import test_finite_source_bound_prediction_word as PBASE
 
 
-def base_state():
-    p=TBASE.qualified_prefix(); return TAUJOIN.begin(p,LEDGER.State(updates=17))
+def base_state(*,usable=False):
+    p=TBASE.usable_half_prefix() if usable else TBASE.qualified_prefix()
+    return TAUJOIN.begin(p,LEDGER.State(updates=17))
 
 
 def machine_wpe_for(base):
@@ -24,28 +28,49 @@ def machine_wpe_for(base):
     return WPELOG.State(t,t,0)
 
 
-def tau_decay_for_prior():
-    # prior .2 Hz -> sea=2.5 s -> adapt=1.0 s -> x=.005
-    x=B.div(WPELOG.DT,B.rn32(1))
-    return B.rn32(F(1)-x+x*x/F(4))
+def half_getters(state):
+    exact=TAUJOIN._entry_wpe(state.base)
+    sl=WPEF.StoredLogPeriod(F(exact.log_period),state.wpe.separate.log_period,
+                            state.wpe.separate.log_period-F(exact.log_period))
+    fl=WPEF.StoredLogPeriod(F(exact.log_period),state.wpe.fma.log_period,
+                            state.wpe.fma.log_period-F(exact.log_period))
+    return (WPEF.getters(sl,period_exp=B.rn32(2),frequency_exp=B.rn32(F(1,2))),
+            WPEF.getters(fl,period_exp=B.rn32(2),frequency_exp=B.rn32(F(1,2))))
 
 
 class Tests(unittest.TestCase):
-    def test_preusable_entry_orders_frequency_tau_then_current_WPE_update(self):
-        b=base_state(); exact=TAUJOIN._entry_wpe(b)
-        self.assertFalse(exact.usable_period)
-        s=X.begin(b,machine_wpe_for(b))
+    def test_usable_entry_orders_frequency_tau_then_current_WPE_update(self):
+        # The exact SpectralMSE fixture has rational witnesses on this cell:
+        # f=.5 -> tau=sigma=T_S=1.  The real pre-usable 0.2-Hz prior is tested
+        # separately at the WPE/tuner source layer until sqrt/pow are enclosed
+        # rather than restricted to rational algebraic roots.
+        b=base_state(usable=True); s=X.begin(b,machine_wpe_for(b))
         witness,segment,raw,r,br,dynamic=IBASE.operands(s.base.prefix.prefix.live)
+        dynamic=dict(dynamic)
+        dynamic['wpe_current_period']=F(2); dynamic['wpe_current_frequency']=F(1,2)
+        dynamic['spectral']=CAND.SpectralWitness(1,1)
+        sg,fg=half_getters(s)
+        e=B.rn32(F(dynamic['ema'].decay_tau_sigma))
         before_wpe=s.wpe
-        e=tau_decay_for_prior()
-        out=X.imu_step(s,separate_tau_exp_decay=e,fma_tau_exp_decay=e,
+        out=X.imu_step(s,separate_getter=sg,fma_getter=fg,shadow_frequency=F(1,2),
+            separate_tau_exp_decay=e,fma_tau_exp_decay=e,
             restricted=r,bias_restricted=br,witness=witness,raw=raw,
             packet_id='imu-wpe-tau',**PBASE.root_args(),**dynamic)
         self.assertEqual(out.state.base.tau.updates,18)
         self.assertEqual(out.state.wpe.samples,before_wpe.samples+1)
         self.assertEqual(out.tau_step.separate_step.frequency,out.tau_step.fma_step.frequency)
-        self.assertEqual(out.separate_supply.frequency,out.fma_supply.frequency)
+        self.assertEqual(out.separate_supply.frequency,0); self.assertEqual(out.fma_supply.frequency,0)
         self.assertFalse(out.wpe_step.produced_period)
+
+    def test_preusable_frequency_source_is_prior_without_claiming_full_spectral_step(self):
+        b=base_state(); s=X.begin(b,machine_wpe_for(b)); exact=TAUJOIN._entry_wpe(s.base)
+        self.assertFalse(exact.usable_period)
+        sf,ff=X._frequency_sources(s,separate_getter=None,fma_getter=None,shadow_frequency=None)
+        self.assertEqual(sf.branch,'prior'); self.assertEqual(ff.branch,'prior')
+        self.assertEqual(sf.stored.stored_hz,WPEF.PRIOR); self.assertEqual(ff.stored.stored_hz,WPEF.PRIOR)
+        # No full candidate execution is claimed here: the legacy exact
+        # SpectralWitness cannot represent the irrational sqrt/pow roots of the
+        # real 0.2-Hz cell.  That is an explicit remaining transcendental gap.
 
     def test_mag_and_hold_preserve_both_machine_ledgers(self):
         b=base_state(); s=X.begin(b,machine_wpe_for(b)); w=s.wpe; t=s.base.tau
