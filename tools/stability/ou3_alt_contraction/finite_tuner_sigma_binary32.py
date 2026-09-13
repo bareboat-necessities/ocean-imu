@@ -15,7 +15,10 @@ EMA:
 
 Every ordinary operation is exact binary32 here. ``sqrt`` and the optional
 stillness ``exp`` are explicit witnesses bound to their SAME rounded arguments.
-Their platform-libm correspondence remains open.
+For sqrt, a deployed binary32 result is related to the rigorous exact-real root
+through its exact RNE rounding cell; it is not falsely required to equal or lie
+inside the narrow exact-real root interval. Platform-libm correspondence remains
+open.
 """
 from __future__ import annotations
 from dataclasses import dataclass
@@ -29,13 +32,36 @@ from tools.stability.ou3_alt_contraction import finite_tuner_deployment_config a
 
 SOURCE=Path(__file__).resolve().parents[3]/'src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h'
 ZERO=B.rn32(0); ONE=B.rn32(1); VAR_FLOOR=B.rn32(F(1,10**6)); SIGMA_FLOOR=B.rn32(F(1,20))
-QUALIFICATION='OU3_ALT_SIGMA_BINARY32_V1'
+QUALIFICATION='OU3_ALT_SIGMA_BINARY32_V2'
 
 
 def _q(x,name):
     q=F(x)
     if not B.is_binary32(q): raise ValueError(f'{name} must be actual binary32')
     return q
+
+
+def _positive_rne_cell(q:F):
+    """Closed nearest-even rounding cell around a positive normal binary32.
+
+    Closed tie boundaries are deliberately conservative: this helper proves
+    that an exact-real root interval intersects the machine value's legal RNE
+    cell. It does not assert which endpoint tie a platform sqrt implementation
+    selects, and therefore does not close target-libm correspondence.
+    """
+    q=F(q)
+    if q<=0 or not B.is_binary32(q): raise ValueError('positive normal binary32 required for RNE cell')
+    e=B._floor_log2_positive(q); quantum=B._pow2(e-23)
+    # Immediately below an exact power of two the predecessor lies in the
+    # previous binade and has half the current-binade spacing.
+    lower_step=quantum/2 if q==B._pow2(e) else quantum
+    prev=q-lower_step; nxt=q+quantum
+    return (prev+q)/2,(q+nxt)/2
+
+
+def _root_interval_hits_rne_cell(lo,hi,rounded):
+    clo,chi=_positive_rne_cell(F(rounded))
+    return max(F(lo),clo)<=min(F(hi),chi)
 
 
 @dataclass(frozen=True)
@@ -94,7 +120,8 @@ def target(cfg:D.DeploymentConfig,*,var_ready,accel_variance,band_noise_sigma,
     if sqrt_result is None: raise TypeError('sigma target requires sqrt(var_wave) witness')
     sr=_q(sqrt_result,'sigma sqrt result')
     slo,shi=ROOT.sqrt_enclosure(vw,bits)
-    if not slo<=sr<=shi: raise ValueError('sigma sqrt witness detached from SAME rounded var_wave')
+    if not _root_interval_hits_rne_cell(slo,shi,sr):
+        raise ValueError('sigma sqrt witness detached from SAME rounded var_wave RNE cell')
     sw=sr
     scaled=B.mul(sw,cfg.sigma_coeff)
     sig=min(scaled,cfg.max_sigma) if cfg.clamp_enabled else scaled
@@ -124,6 +151,7 @@ def readiness():
       'optional_stillness_attenuation_binary32_multiply_materialized':True,
       'variance_1e_minus6_floor_binary32_materialized':True,
       'sigma_sqrt_witness_bound_to_same_rounded_var_wave':True,
+      'sigma_sqrt_binary32_result_related_by_exact_RNE_cell_not_false_real_equality':True,
       'sigma_gain_max_clamp_and_unready_floor_binary32_materialized':True,
       'stillness_exp_target_libm_correspondence_closed':False,
       'sigma_sqrt_target_libm_correspondence_closed':False,
