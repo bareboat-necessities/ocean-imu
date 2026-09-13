@@ -7,8 +7,10 @@ constructible, so the sigma theorem must not trust its alpha field by type alone
 This module re-derives the frequency-dependent horizon from the declared tuner
 configuration, verifies the TauStep's target/sea-time/horizon/exp/alpha and BOTH
 compiler successors, and checks that the deployment SpectralMSE config carries
-the same scalar tau/sigma adaptation constants.  The qualified object can then
-be used as a source-owned common-alpha witness by the sigma machine ledger.
+the same scalar tau/sigma adaptation constants.  The legacy exact-rational
+``CandidateConfig`` is compared to the deployment configuration only after each
+shared scalar is compiled to binary32; exact-rational equality to a compiled
+float is not a shipping invariant.
 
 Target ``std::exp`` platform correspondence remains open; this proves ancestry
 and arithmetic shape, not libm implementation correctness.
@@ -23,7 +25,7 @@ from tools.stability.ou3_alt_contraction import finite_tuner_candidate as C
 from tools.stability.ou3_alt_contraction import finite_tuner_deployment_config as D
 from tools.stability.ou3_alt_contraction import finite_tuner_tau_binary32 as T
 
-QUALIFICATION='OU3_ALT_COMMON_ALPHA_QUALIFICATION_V1'
+QUALIFICATION='OU3_ALT_COMMON_ALPHA_QUALIFICATION_V2'
 
 
 @dataclass(frozen=True)
@@ -47,7 +49,10 @@ class Qualified:
 def _configs_match(c:C.CandidateConfig,d:D.DeploymentConfig):
     names=('min_freq','max_freq','tau_coeff','sigma_coeff','min_tau','max_tau','max_sigma',
            'adapt_tau_sec','adapt_tau_sea_periods')
-    return all(F(getattr(c,n))==F(getattr(d,n)) for n in names) and c.clamp_enabled==d.clamp_enabled
+    # CandidateConfig is an exact-rational algebra object.  Shipping consumes
+    # floats, so the theorem relation is equality after the candidate scalar is
+    # compiled to binary32, not equality of the two rational encodings.
+    return all(B.rn32(getattr(c,n))==F(getattr(d,n)) for n in names) and c.clamp_enabled==d.clamp_enabled
 
 
 def qualify(step:T.TauStep,candidate_cfg:C.CandidateConfig,deployment_cfg:D.DeploymentConfig,*,dt):
@@ -56,7 +61,7 @@ def qualify(step:T.TauStep,candidate_cfg:C.CandidateConfig,deployment_cfg:D.Depl
     h=F(dt)
     if not B.is_binary32(h) or h<=0: raise ValueError('common-alpha dt must be positive binary32')
     if not _configs_match(candidate_cfg,deployment_cfg):
-        raise ValueError('tau and SpectralMSE deployment configs disagree on common adaptation scalars')
+        raise ValueError('tau and SpectralMSE deployment configs disagree after binary32 compilation of common adaptation scalars')
     f,target,sea,adapt=T._floats_from_frequency(step.frequency,candidate_cfg,h)
     if (step.frequency,step.tau_target,step.sea_time,step.adapt_sec)!=(f,target,sea,adapt):
         raise ValueError('TauStep detached from declared common-alpha frequency/config horizon')
@@ -74,6 +79,8 @@ def qualify(step:T.TauStep,candidate_cfg:C.CandidateConfig,deployment_cfg:D.Depl
 
 def readiness():
     return {
+      'qualification':QUALIFICATION,
+      'candidate_common_scalars_compiled_to_binary32_before_deployment_comparison':True,
       'tau_step_rederived_from_declared_frequency_config_and_dt':True,
       'candidate_and_deployment_configs_share_common_tau_sigma_adaptation_scalars':True,
       'same_exp_decay_and_alpha_drive_verified_tau_successors':True,
