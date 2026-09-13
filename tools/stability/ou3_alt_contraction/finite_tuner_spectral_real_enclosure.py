@@ -1,30 +1,25 @@
-"""Exact rational enclosures for the real SpectralMSE sqrt/pow roots.
+"""Exact rational enclosures for the real SpectralMSE nonlinear roots.
 
-The older finite tuner shadow encoded the two nonlinear SpectralMSE roots by
-requiring rational witnesses ``r`` with
+The legacy exact tuner uses rational algebraic witnesses for sqrt(T_S),
+u^(6/7), and indirectly q_eff^(1/14).  Ordinary shipping cells make all of
+those roots irrational, while the deployed q_eff factor is additionally cached
+as a binary32 libm result.  This module keeps the mathematical roots and the
+machine cache distinct.
 
-    r^2 = T_S
-    p^7 = u^6.
-
-That is useful for hand-picked algebra fixtures but is not a universal proof:
-ordinary shipping cells (including the 0.2 Hz startup prior) make these roots
-irrational.  This module removes that artificial restriction at the REAL
-arithmetic layer.  It brackets both roots by exact dyadic rationals using only
-integer/Fraction comparisons, then propagates those intervals monotonically to
-an exact-real R_S target enclosure.
-
-No libm result is accepted here and no float value is substituted for an
-irrational root.  Binary32 ``sqrt``/``pow`` correspondence remains a separate
-deployment obligation.
+``enclose`` remains the exact-rational component path.  ``enclose_deployment``
+uses the deployment configuration's rigorous interval for the exact
+(2*r_a)^(1/14) root and propagates it monotonically with the sqrt/pow intervals.
+No libm result is substituted for any exact mathematical root here.
 """
 from __future__ import annotations
 from dataclasses import dataclass
 from fractions import Fraction as F
 
 from tools.stability.ou3_alt_contraction import finite_tuner_candidate as C
+from tools.stability.ou3_alt_contraction import finite_tuner_deployment_config as D
 
 DEFAULT_BITS=96
-QUALIFICATION='OU3_ALT_SPECTRAL_REAL_ROOT_ENCLOSURE_V1'
+QUALIFICATION='OU3_ALT_SPECTRAL_REAL_ROOT_ENCLOSURE_V2'
 
 
 def _root_enclosure(x,n:int,bits:int=DEFAULT_BITS):
@@ -32,8 +27,6 @@ def _root_enclosure(x,n:int,bits:int=DEFAULT_BITS):
     if x<0 or not isinstance(n,int) or n<=0: raise ValueError('nonnegative rational and positive root degree required')
     if not isinstance(bits,int) or bits<16: raise ValueError('at least 16 bisection bits required')
     if x==0: return F(0),F(0)
-    # First find a compact dyadic upper bracket.  Starting at x itself is sound
-    # but destroys useful bisection bits for seventh roots of large x=u^6.
     lo=F(0); hi=F(1)
     while hi**n < x: hi*=2
     for _ in range(bits):
@@ -64,6 +57,8 @@ class Enclosure:
     raw_RS_hi:F
     target_RS_lo:F
     target_RS_hi:F
+    qeff_root_lo:F|None=None
+    qeff_root_hi:F|None=None
     bits:int=DEFAULT_BITS
     qualification:str=QUALIFICATION
     def __post_init__(self):
@@ -71,37 +66,62 @@ class Enclosure:
         if self.qualification!=QUALIFICATION: raise ValueError('wrong spectral enclosure qualification')
         for n in ('TS','u','sqrt_TS_lo','sqrt_TS_hi','u_pow_6_7_lo','u_pow_6_7_hi','raw_RS_lo','raw_RS_hi','target_RS_lo','target_RS_hi'):
             object.__setattr__(self,n,F(getattr(self,n)))
+        if self.qeff_root_lo is not None: object.__setattr__(self,'qeff_root_lo',F(self.qeff_root_lo))
+        if self.qeff_root_hi is not None: object.__setattr__(self,'qeff_root_hi',F(self.qeff_root_hi))
         if not (0<self.sqrt_TS_lo<=self.sqrt_TS_hi and 0<=self.u_pow_6_7_lo<=self.u_pow_6_7_hi):
             raise ValueError('invalid root enclosure')
         if not self.sqrt_TS_lo**2<=self.TS<=self.sqrt_TS_hi**2:
             raise ValueError('sqrt(T_S) enclosure detached')
         if not self.u_pow_6_7_lo**7<=self.u**6<=self.u_pow_6_7_hi**7:
             raise ValueError('u^(6/7) enclosure detached')
+        if (self.qeff_root_lo is None)!=(self.qeff_root_hi is None):
+            raise ValueError('qeff root interval must be carried as a pair')
+        if self.qeff_root_lo is not None and not 0<self.qeff_root_lo<=self.qeff_root_hi:
+            raise ValueError('invalid qeff root interval')
         if not 0<=self.raw_RS_lo<=self.raw_RS_hi:
             raise ValueError('invalid raw R_S enclosure')
         if not self.target_RS_lo<=self.target_RS_hi:
             raise ValueError('invalid clamped R_S enclosure')
 
 
-def enclose(cfg:C.CandidateConfig,target:C.TargetState,*,bits:int=DEFAULT_BITS):
-    if not isinstance(cfg,C.CandidateConfig) or not isinstance(target,C.TargetState):
-        raise TypeError('CandidateConfig and TargetState required')
+def _geometry(cfg,target,bits):
     TS=C.clamp(cfg.pseudo_tau_ratio*target.tau_target,cfg.pseudo_min,cfg.pseudo_max)
     sigma_aB=max(target.sigma_target/cfg.sigma_coeff,C.SIGMA_AB_MIN)
     u=sigma_aB*target.tau_target**4
     slo,shi=sqrt_enclosure(TS,bits); plo,phi=pow_6_7_enclosure(u,bits)
+    return TS,u,slo,shi,plo,phi
+
+
+def enclose(cfg:C.CandidateConfig,target:C.TargetState,*,bits:int=DEFAULT_BITS):
+    """Legacy exact-rational coefficient path retained for component algebra."""
+    if not isinstance(cfg,C.CandidateConfig) or not isinstance(target,C.TargetState):
+        raise TypeError('CandidateConfig and TargetState required')
+    TS,u,slo,shi,plo,phi=_geometry(cfg,target,bits)
     k=cfg.rs_mse_coeff*cfg.qeff_pow
     raw_lo=k*plo/shi; raw_hi=k*phi/slo
     if cfg.clamp_enabled:
-        out_lo=C.clamp(raw_lo,cfg.min_RS,cfg.max_RS)
-        out_hi=C.clamp(raw_hi,cfg.min_RS,cfg.max_RS)
-    else:
-        out_lo,out_hi=raw_lo,raw_hi
-    return Enclosure(target,TS,u,slo,shi,plo,phi,raw_lo,raw_hi,out_lo,out_hi,bits)
+        out_lo=C.clamp(raw_lo,cfg.min_RS,cfg.max_RS); out_hi=C.clamp(raw_hi,cfg.min_RS,cfg.max_RS)
+    else: out_lo,out_hi=raw_lo,raw_hi
+    return Enclosure(target,TS,u,slo,shi,plo,phi,raw_lo,raw_hi,out_lo,out_hi,None,None,bits)
+
+
+def enclose_deployment(cfg:D.DeploymentConfig,target:C.TargetState,*,bits:int=DEFAULT_BITS):
+    """Deployment exact-real relation; cached binary32 qeff is not used here."""
+    if not isinstance(cfg,D.DeploymentConfig) or not isinstance(target,C.TargetState):
+        raise TypeError('DeploymentConfig and TargetState required')
+    TS,u,slo,shi,plo,phi=_geometry(cfg,target,bits)
+    qlo,qhi=cfg.qeff_exact_root_interval
+    # Every factor is positive.  Division is monotone increasing in the
+    # numerator and decreasing in the positive denominator.
+    raw_lo=cfg.rs_mse_coeff*qlo*plo/shi
+    raw_hi=cfg.rs_mse_coeff*qhi*phi/slo
+    if cfg.clamp_enabled:
+        out_lo=C.clamp(raw_lo,cfg.min_RS,cfg.max_RS); out_hi=C.clamp(raw_hi,cfg.min_RS,cfg.max_RS)
+    else: out_lo,out_hi=raw_lo,raw_hi
+    return Enclosure(target,TS,u,slo,shi,plo,phi,raw_lo,raw_hi,out_lo,out_hi,qlo,qhi,bits)
 
 
 def contains_legacy_exact_witness(cfg:C.CandidateConfig,target:C.TargetState,w:C.SpectralWitness,box:Enclosure):
-    """Regression bridge: exact-rational legacy witnesses are contained when they exist."""
     if not isinstance(w,C.SpectralWitness) or not isinstance(box,Enclosure): raise TypeError('spectral witness/enclosure required')
     if box.target!=target: raise ValueError('enclosure detached from target')
     exact=C.spectral_RS(cfg,target,w)
@@ -116,8 +136,11 @@ def readiness():
       'sqrt_TS_real_root_enclosed_by_exact_rationals':True,
       'u_pow_6_7_real_root_enclosed_by_exact_rationals':True,
       'SpectralMSE_real_RS_target_interval_propagated_monotonically':True,
+      'deployment_exact_qeff_fourteenth_root_interval_propagated_monotonically':True,
+      'deployment_exact_qeff_root_not_replaced_by_cached_binary32_value':True,
       'irrational_roots_do_not_require_fake_rational_equalities':True,
       'legacy_exact_rational_spectral_cells_embed_in_interval_theorem':True,
+      'binary32_qeff_pow_target_libm_correspondence_closed':False,
       'binary32_sqrt_target_libm_correspondence_closed':False,
       'binary32_pow_target_libm_correspondence_closed':False,
       'finite_tuner_candidate_interval_recurrence_composed':False,
