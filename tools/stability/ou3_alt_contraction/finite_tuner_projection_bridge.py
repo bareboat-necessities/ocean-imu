@@ -66,6 +66,10 @@ def readiness():
       'deployment_cached_qeff_not_substituted_into_exact_real_projection':interval['deployment_cached_qeff_machine_value_not_used_as_exact_real_coefficient'],
       'actual_0p2Hz_prior_requires_no_fake_rational_spectral_witness':True,
       'sigma_wave_sqrt_transcendental_attached':False,
+      # Backward-compatible fail-closed aggregate retained for existing theorem
+      # ledgers/tests.  The more precise key below records that cached q_eff is
+      # now also a distinct machine-libm obligation.
+      'binary32_sqrt_pow_exp_correspondence_closed':False,
       'binary32_qeff_sqrt_pow_exp_correspondence_closed':False,
       'complete_word_finite_identity':False,
       'ALT_LIVE_PASS':False,
