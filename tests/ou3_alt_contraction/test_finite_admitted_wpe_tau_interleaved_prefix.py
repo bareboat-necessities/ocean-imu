@@ -40,14 +40,12 @@ def half_getters(state):
 
 class Tests(unittest.TestCase):
     def test_usable_entry_orders_frequency_tau_then_current_WPE_update(self):
-        # The exact SpectralMSE fixture has rational witnesses on this cell:
-        # f=.5 -> tau=sigma=T_S=1.  The real pre-usable 0.2-Hz prior is tested
-        # separately at the WPE/tuner source layer until sqrt/pow are enclosed
-        # rather than restricted to rational algebraic roots.
+        # Component-only rational-root cell.  The carried WPE state owns the
+        # output; these preupdate operands are the exp witnesses consumed by it.
         b=base_state(usable=True); s=X.begin(b,machine_wpe_for(b))
         witness,segment,raw,r,br,dynamic=IBASE.operands(s.base.prefix.prefix.live)
         dynamic=dict(dynamic)
-        dynamic['wpe_current_period']=F(2); dynamic['wpe_current_frequency']=F(1,2)
+        dynamic['preupdate_period']=F(2); dynamic['preupdate_frequency']=F(1,2)
         dynamic['spectral']=CAND.SpectralWitness(1,1)
         sg,fg=half_getters(s)
         e=B.rn32(F(dynamic['ema'].decay_tau_sigma))
@@ -68,9 +66,8 @@ class Tests(unittest.TestCase):
         sf,ff=X._frequency_sources(s,separate_getter=None,fma_getter=None,shadow_frequency=None)
         self.assertEqual(sf.branch,'prior'); self.assertEqual(ff.branch,'prior')
         self.assertEqual(sf.stored.stored_hz,WPEF.PRIOR); self.assertEqual(ff.stored.stored_hz,WPEF.PRIOR)
-        # No full candidate execution is claimed here: the legacy exact
-        # SpectralWitness cannot represent the irrational sqrt/pow roots of the
-        # real 0.2-Hz cell.  That is an explicit remaining transcendental gap.
+        # Full deployment SpectralMSE now uses an interval exact-root relation;
+        # this legacy exact-rational component fixture intentionally does not.
 
     def test_mag_and_hold_preserve_both_machine_ledgers(self):
         b=base_state(); s=X.begin(b,machine_wpe_for(b)); w=s.wpe; t=s.base.tau
