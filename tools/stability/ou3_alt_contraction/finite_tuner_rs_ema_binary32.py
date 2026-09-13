@@ -39,7 +39,7 @@ class Step:
         for n in ('previous','target','alpha','delta','increment','next'):
             object.__setattr__(self,n,F(getattr(self,n)))
         if self.qualification!=QUALIFICATION: raise ValueError('wrong RS EMA qualification')
-        if not 0<=self.alpha<=1: raise ValueError('RS EMA alpha outside [0,1]')
+        if not 0<=self.alpha<=1: raise ValueError('alpha_RS outside [0,1]')
         if self.delta!=B.sub(self.target,self.previous): raise ValueError('RS EMA delta detached from source-order subtraction')
         if self.increment!=B.mul(self.alpha,self.delta): raise ValueError('RS EMA increment detached from source-order multiply')
         if self.next!=B.add(self.previous,self.increment): raise ValueError('RS EMA next detached from source-order addition')
@@ -47,7 +47,7 @@ class Step:
 
 def step(previous,target,alpha):
     p=_q(previous,'previous RS'); t=_q(target,'target RS'); a=_q(alpha,'alpha_RS')
-    if not 0<=a<=1: raise ValueError('RS EMA alpha outside [0,1]')
+    if not 0<=a<=1: raise ValueError('alpha_RS outside [0,1]')
     d=B.sub(t,p); inc=B.mul(a,d); nxt=B.add(p,inc)
     return Step(p,t,a,d,inc,nxt)
 
