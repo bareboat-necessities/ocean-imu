@@ -124,8 +124,10 @@ jobs:
             test_finite_tuner_tau_deployment_ledger \
             test_finite_tuner_spectral_binary32 test_finite_tuner_qeff_cache_binary32 \
             test_finite_tuner_deployment_config test_finite_tuner_spectral_machine_real_join \
-            test_finite_tuner_rs_alpha_binary32 test_finite_tuner_rs_ema_binary32 \
+            test_finite_tuner_rs_alpha_binary32 test_finite_tuner_rs_alpha_machine_real_join \
+            test_finite_tuner_rs_alpha_conditional_bound test_finite_tuner_rs_ema_binary32 \
             test_finite_tuner_rs_ema_compiler_modes test_finite_tuner_rs_ema_machine_real_join \
+            test_finite_tuner_rs_commit_binary32 \
             test_finite_tuner_commit test_finite_tuner_boundary_commit \
             test_finite_runtime_parameters test_finite_active_runtime_word \
             test_finite_live_imu_prefix test_finite_tilt_watchdog \
