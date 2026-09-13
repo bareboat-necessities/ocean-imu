@@ -1,28 +1,14 @@
 """Binary32 deployment graph for the shipping SpectralMSE R_S target.
 
-Shipping evaluates, in source order,
+Shipping evaluates the cadence, sigma division/floor, tau products, one per-
+candidate pow, one sqrt, and the final coefficient products/division in
+binary32.  Ordinary operations are modeled exactly with the shared RNE kernel;
+libm results remain explicit witnesses with exact same-argument error intervals.
 
-    T_S      = clamp(pseudo_ratio * tau, pseudo_min, pseudo_max)
-    sigma_aB = max(sigma / c_sigma, 1e-6f)
-    tau2     = tau * tau
-    u        = sigma_aB * tau2 * tau2
-    powered  = pow(u, 6.0f / 7.0f)
-    root_TS  = sqrt(T_S)
-    R_S      = rs_mse_coeff * rs_qeff_pow * powered / root_TS
-
-This module materializes every ordinary binary32 operation exactly with the
-shared RNE kernel.  The two target-libm calls are retained as explicit positive
-binary32 witnesses rooted at the exact machine arguments.  No correctness of
-``pow`` or ``sqrt`` is assumed.
-
-For each libm result we also expose an exact rational error INTERVAL relative to
-the true irrational root of the SAME rounded machine argument.  The interval is
-computed with exact dyadic root bisection; it is a supply coordinate, not yet a
-source-uniform bound on the target libm implementation.
-
-The cached ``rs_qeff_pow_`` is itself the result of another shipping ``pow``
-when the noise density is initialized/refreshed.  This graph treats the stored
-binary32 cache as an input and keeps its target-libm provenance explicitly open.
+The deployment entry consumes ``DeploymentConfig`` and therefore uses the
+actual cached binary32 q_eff pow value.  The exact-real theorem path uses the
+separate mathematical q_eff root interval; those two values are intentionally
+not identified here.
 """
 from __future__ import annotations
 from dataclasses import dataclass
@@ -31,12 +17,13 @@ from pathlib import Path
 
 from tools.stability.ou3_alt_contraction import finite_binary32_arithmetic as B
 from tools.stability.ou3_alt_contraction import finite_tuner_candidate as C
+from tools.stability.ou3_alt_contraction import finite_tuner_deployment_config as D
 from tools.stability.ou3_alt_contraction import finite_tuner_spectral_real_enclosure as ROOT
 
 SOURCE=Path(__file__).resolve().parents[3]/'src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h'
 SIGMA_AB_MIN=B.rn32(F(1,10**6))
 SIX=B.rn32(6); SEVEN=B.rn32(7); POW_EXPONENT=B.div(SIX,SEVEN)
-QUALIFICATION='OU3_ALT_SPECTRAL_BINARY32_GRAPH_V1'
+QUALIFICATION='OU3_ALT_SPECTRAL_BINARY32_GRAPH_V2'
 
 
 def _q(x,name):
@@ -88,27 +75,13 @@ class RootSupply:
 
 @dataclass(frozen=True)
 class Step:
-    tau:F
-    sigma:F
-    pseudo_ratio:F
-    pseudo_min:F
-    pseudo_max:F
-    c_sigma:F
-    rs_mse_coeff:F
-    rs_qeff_pow:F
-    requested_TS:F
-    TS:F
-    sigma_div:F
-    sigma_aB:F
-    tau2:F
-    u:F
-    pow_witness:LibmWitness
-    sqrt_witness:LibmWitness
-    pow_supply:RootSupply
-    sqrt_supply:RootSupply
-    coeff_product:F
-    powered_product:F
-    raw_RS:F
+    tau:F; sigma:F
+    pseudo_ratio:F; pseudo_min:F; pseudo_max:F
+    c_sigma:F; rs_mse_coeff:F; rs_qeff_pow:F
+    requested_TS:F; TS:F; sigma_div:F; sigma_aB:F; tau2:F; u:F
+    pow_witness:LibmWitness; sqrt_witness:LibmWitness
+    pow_supply:RootSupply; sqrt_supply:RootSupply
+    coeff_product:F; powered_product:F; raw_RS:F
     def __post_init__(self):
         for n in ('tau','sigma','pseudo_ratio','pseudo_min','pseudo_max','c_sigma','rs_mse_coeff','rs_qeff_pow',
                   'requested_TS','TS','sigma_div','sigma_aB','tau2','u','coeff_product','powered_product','raw_RS'):
@@ -133,26 +106,33 @@ def step(*,tau,sigma,pseudo_ratio,pseudo_min,pseudo_max,c_sigma,
     sig=_q(sigma,'sigma')
     if sig<0: raise ValueError('sigma must be nonnegative')
     if vals['pseudo_max']<vals['pseudo_min']: raise ValueError('invalid pseudo cadence bounds')
-
     requested=B.mul(vals['pseudo_ratio'],vals['tau'])
     TS=min(max(requested,vals['pseudo_min']),vals['pseudo_max'])
-    sdiv=B.div(sig,vals['c_sigma'])
-    sab=max(sdiv,SIGMA_AB_MIN)
+    sdiv=B.div(sig,vals['c_sigma']); sab=max(sdiv,SIGMA_AB_MIN)
     tau2=B.mul(vals['tau'],vals['tau'])
-    u=B.mul(B.mul(sab,tau2),tau2)  # literal left-associative sigma_aB*tau2*tau2
+    u=B.mul(B.mul(sab,tau2),tau2)
     pw=LibmWitness('pow',u,F(pow_result),POW_EXPONENT)
     sw=LibmWitness('sqrt',TS,F(sqrt_result))
     ps=_root_supply(pw,bits=bits); ss=_root_supply(sw,bits=bits)
     cp=B.mul(vals['rs_mse_coeff'],vals['rs_qeff_pow'])
-    pp=B.mul(cp,pw.result)
-    rs=B.div(pp,sw.result)
+    pp=B.mul(cp,pw.result); rs=B.div(pp,sw.result)
     return Step(vals['tau'],sig,vals['pseudo_ratio'],vals['pseudo_min'],vals['pseudo_max'],
                 vals['c_sigma'],vals['rs_mse_coeff'],vals['rs_qeff_pow'],requested,TS,sdiv,sab,tau2,u,
                 pw,sw,ps,ss,cp,pp,rs)
 
 
 def step_from_config(cfg:C.CandidateConfig,*,tau,sigma,pow_result,sqrt_result,bits:int=ROOT.DEFAULT_BITS):
+    """Legacy component entry; not the theorem representation of shipping defaults."""
     if not isinstance(cfg,C.CandidateConfig): raise TypeError('CandidateConfig required')
+    return step(tau=tau,sigma=sigma,pseudo_ratio=cfg.pseudo_tau_ratio,
+                pseudo_min=cfg.pseudo_min,pseudo_max=cfg.pseudo_max,c_sigma=cfg.sigma_coeff,
+                rs_mse_coeff=cfg.rs_mse_coeff,rs_qeff_pow=cfg.qeff_pow,
+                pow_result=pow_result,sqrt_result=sqrt_result,bits=bits)
+
+
+def step_from_deployment_config(cfg:D.DeploymentConfig,*,tau,sigma,pow_result,sqrt_result,bits:int=ROOT.DEFAULT_BITS):
+    """Shipping machine entry using the explicit produced binary32 qeff cache."""
+    if not isinstance(cfg,D.DeploymentConfig): raise TypeError('DeploymentConfig required')
     return step(tau=tau,sigma=sigma,pseudo_ratio=cfg.pseudo_tau_ratio,
                 pseudo_min=cfg.pseudo_min,pseudo_max=cfg.pseudo_max,c_sigma=cfg.sigma_coeff,
                 rs_mse_coeff=cfg.rs_mse_coeff,rs_qeff_pow=cfg.qeff_pow,
@@ -166,8 +146,7 @@ def _source_shape_matches():
       'const float sigma_aB = std::max(sigma / c_sigma, 1e-6f);',
       'const float tau2 = tau * tau;',
       'const float u = sigma_aB * tau2 * tau2;',
-      'std::pow(u, 6.0f / 7.0f)',
-      '/ std::sqrt(TS);',
+      'std::pow(u, 6.0f / 7.0f)', '/ std::sqrt(TS);',
       'rs_qeff_pow_ = std::pow(2.0f * r_a, 1.0f / 14.0f);')
     return all(x in s for x in needles)
 
@@ -180,6 +159,8 @@ def readiness():
       'sigma_div_floor_tau2_u_binary32_graph_materialized':True,
       'pow_and_sqrt_kept_as_distinct_same_argument_binary32_witnesses':True,
       'final_coefficient_multiply_multiply_divide_graph_materialized':True,
+      'deployment_entry_consumes_explicit_produced_qeff_binary32_cache':True,
+      'deployment_machine_qeff_cache_not_identified_with_exact_real_qeff_root':True,
       'pow_witness_error_interval_against_exact_root_of_same_machine_u_exposed':True,
       'sqrt_witness_error_interval_against_exact_root_of_same_machine_TS_exposed':True,
       'target_libm_pow_correspondence_closed':False,
