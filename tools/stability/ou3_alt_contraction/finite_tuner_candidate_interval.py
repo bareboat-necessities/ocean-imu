@@ -1,16 +1,13 @@
 """Interval-valued exact-real tuner candidate for general SpectralMSE cells.
 
-``finite_tuner_candidate`` is exact over rationals but its legacy
-``SpectralWitness`` can only express cells where sqrt(T_S) and u^(6/7) happen
-to be rational.  Real shipping cells generally do not.  This module keeps the
-same exact frequency/variance/tau/sigma target and cadence algebra, replaces
-only the irrational SpectralMSE target by the exact rational enclosure from
-``finite_tuner_spectral_real_enclosure``, and propagates that enclosure through
-the literal R_S EMA.
+The legacy ``step`` path is retained for exact-rational component fixtures.
+``step_deployment`` is the theorem-facing path for current shipping defaults:
+it uses ``DeploymentConfig`` and propagates the exact q_eff^(1/14) interval,
+never the cached binary32 libm value, through the real SpectralMSE target.
 
-Thus it is a rigorous relation for the real-arithmetic shipping tuner, not a
-sampled approximation.  It does not choose a representative R_S, mutate the
-shipping filter, or close binary32 sqrt/pow/exp correspondence.
+Both paths keep tau/sigma and clocks exact and propagate the R_S interval through
+the literal nonexpansive EMA.  Machine sqrt/pow/exp correspondence remains a
+separate deployment obligation.
 """
 from __future__ import annotations
 from dataclasses import dataclass
@@ -18,10 +15,11 @@ from fractions import Fraction as F
 
 from tools.stability.ou3_alt_contraction import finite_prediction_graph as P
 from tools.stability.ou3_alt_contraction import finite_tuner_candidate as C
+from tools.stability.ou3_alt_contraction import finite_tuner_deployment_config as D
 from tools.stability.ou3_alt_contraction import finite_tuner_spectral_real_enclosure as S
 from tools.stability.ou3_alt_contraction.finite_tuner_commit import TuneState, clamp
 
-QUALIFICATION='OU3_ALT_TUNER_INTERVAL_CANDIDATE_V1'
+QUALIFICATION='OU3_ALT_TUNER_INTERVAL_CANDIDATE_V2'
 
 
 @dataclass(frozen=True)
@@ -67,27 +65,24 @@ def _ema_interval(prev_lo,prev_hi,target_lo,target_hi,alpha):
     prev_lo,prev_hi,target_lo,target_hi,alpha=map(P.rational,(prev_lo,prev_hi,target_lo,target_hi,alpha))
     if not 0<=alpha<=1 or prev_lo>prev_hi or target_lo>target_hi:
         raise ValueError('invalid nonexpansive EMA interval')
-    # Coefficients 1-alpha and alpha are nonnegative, so the box image is exact.
     return ((1-alpha)*prev_lo+alpha*target_lo,
             (1-alpha)*prev_hi+alpha*target_hi)
 
 
-def step(previous:IntervalTuneState,sample:C.WaveBandSample,cfg:C.CandidateConfig,*,
-         dt,time,last_adapt_time,ema:C.EmaWitness,bits:int=S.DEFAULT_BITS):
-    if not isinstance(previous,IntervalTuneState): raise TypeError('IntervalTuneState required')
-    if not isinstance(sample,C.WaveBandSample) or not isinstance(cfg,C.CandidateConfig) or not isinstance(ema,C.EmaWitness):
-        raise TypeError('sample/config/EMA witness required')
+def _step(previous:IntervalTuneState,sample:C.WaveBandSample,cfg,*,dt,time,last_adapt_time,
+          ema:C.EmaWitness,bits:int,encloser):
+    if not isinstance(previous,IntervalTuneState) or not isinstance(sample,C.WaveBandSample) or not isinstance(ema,C.EmaWitness):
+        raise TypeError('interval state, sample and EMA witness required')
     dt,time,last_adapt_time=map(P.rational,(dt,time,last_adapt_time))
     if dt<=0 or time<last_adapt_time: raise ValueError('positive dt and monotone tuner time required')
     target=C.targets(sample,cfg)
-    spectral=S.enclose(cfg,target,bits=bits)
+    spectral=encloser(cfg,target,bits=bits)
 
     sea_time=F(1,2)/target.frequency
     if cfg.adapt_tau_sea_periods>0:
         safe=clamp(sea_time,C.EMA_SCALE_MIN,C.EMA_SCALE_MAX)
         adapt_h=C._clamp_horizon(cfg.adapt_tau_sea_periods*safe,dt)
-    else:
-        adapt_h=cfg.adapt_tau_sec
+    else: adapt_h=cfg.adapt_tau_sec
     alpha=1-ema.decay_tau_sigma
     tau_next=previous.tau_applied+alpha*(target.tau_target-previous.tau_applied)
     sigma_next=previous.sigma_applied+alpha*(target.sigma_target-previous.sigma_applied)
@@ -102,9 +97,22 @@ def step(previous:IntervalTuneState,sample:C.WaveBandSample,cfg:C.CandidateConfi
     return CandidateIntervalResult(target,spectral,nxt,fire,time if fire else last_adapt_time,adapt_h,rs_h)
 
 
+def step(previous:IntervalTuneState,sample:C.WaveBandSample,cfg:C.CandidateConfig,*,
+         dt,time,last_adapt_time,ema:C.EmaWitness,bits:int=S.DEFAULT_BITS):
+    if not isinstance(cfg,C.CandidateConfig): raise TypeError('legacy CandidateConfig required')
+    return _step(previous,sample,cfg,dt=dt,time=time,last_adapt_time=last_adapt_time,
+                 ema=ema,bits=bits,encloser=S.enclose)
+
+
+def step_deployment(previous:IntervalTuneState,sample:C.WaveBandSample,cfg:D.DeploymentConfig,*,
+                    dt,time,last_adapt_time,ema:C.EmaWitness,bits:int=S.DEFAULT_BITS):
+    if not isinstance(cfg,D.DeploymentConfig): raise TypeError('DeploymentConfig required')
+    return _step(previous,sample,cfg,dt=dt,time=time,last_adapt_time=last_adapt_time,
+                 ema=ema,bits=bits,encloser=S.enclose_deployment)
+
+
 def contains_legacy_exact(previous:TuneState,sample:C.WaveBandSample,cfg:C.CandidateConfig,*,
                           dt,time,last_adapt_time,spectral:C.SpectralWitness,ema:C.EmaWitness,bits:int=S.DEFAULT_BITS):
-    """When a rational exact cell exists, prove the old exact candidate lies inside this relation."""
     exact=C.step(previous,sample,cfg,dt=dt,time=time,last_adapt_time=last_adapt_time,spectral=spectral,ema=ema)
     box=step(IntervalTuneState.point(previous),sample,cfg,dt=dt,time=time,last_adapt_time=last_adapt_time,ema=ema,bits=bits)
     return (exact.frequency==box.target.frequency and exact.tau_target==box.target.tau_target and
@@ -122,13 +130,15 @@ def readiness():
       'qualification':QUALIFICATION,
       'same_frequency_variance_tau_sigma_targets_as_exact_tuner':True,
       'SpectralMSE_irrational_target_enclosure_consumed':s['SpectralMSE_real_RS_target_interval_propagated_monotonically'],
+      'deployment_exact_qeff_root_interval_consumed':s['deployment_exact_qeff_fourteenth_root_interval_propagated_monotonically'],
+      'deployment_cached_qeff_machine_value_not_used_as_exact_real_coefficient':True,
       'RS_interval_propagated_through_literal_nonexpansive_EMA':True,
       'tau_sigma_EMA_and_commit_pending_logic_remain_exact':True,
       'legacy_rational_exact_candidate_embeds_in_interval_relation':True,
       'actual_0p2Hz_prior_cell_representable_without_fake_rational_roots':True,
-      'binary32_sqrt_pow_correspondence_closed':False,
+      'binary32_qeff_sqrt_pow_correspondence_closed':False,
       'binary32_tuner_exp_correspondence_closed':False,
-      'startup_frontend_composed_with_interval_RS_state':False,
+      'startup_frontend_composed_with_deployment_interval_RS_state':False,
       'source_uniform_complete_600_step_word_qualified':False,
       'storage_search_allowed':False,
       'ALT_LIVE_PASS':False,
