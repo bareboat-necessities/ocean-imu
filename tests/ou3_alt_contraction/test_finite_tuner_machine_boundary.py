@@ -59,6 +59,12 @@ class Tests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'different update counts'):
             M.State(TAU.State(updates=1),SIG.State(updates=2),RS.State(updates=1),True)
 
+    def test_RS_ledger_covers_same_bounded_startup_plus_word_horizon(self):
+        self.assertEqual(RS.MAX_UPDATES,TAU.MAX_UPDATES)
+        self.assertEqual(RS.MAX_UPDATES,SIG.MAX_UPDATES)
+        M.State(TAU.State(updates=30600),SIG.State(updates=30600),RS.State(updates=30600),False)
+        with self.assertRaises(ValueError): RS.State(updates=30601)
+
     def test_readiness_closes_common_boundary_only(self):
         r=X.readiness()
         self.assertTrue(r['next_boundary_common_machine_commit_attached'])
