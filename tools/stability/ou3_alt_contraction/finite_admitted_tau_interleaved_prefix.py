@@ -90,7 +90,11 @@ def begin_from_goLive(prefix:BASE.State,go:GO.Result):
 
 
 def _candidate(lower_out):
-    try: cand=lower_out.event.event.event.live.tuner_suffix.candidate
+    # BASE.imu_step returns the strongest ISS wrapper.  Its ``event`` field is
+    # already the finite_live_tilt_prefix.Result; that typed result owns the
+    # executed finite_live_imu_prefix.Result in ``live``.  Do not hard-code the
+    # obsolete stack of generic ``event.event.event`` wrappers.
+    try: cand=lower_out.event.live.tuner_suffix.candidate
     except AttributeError as exc: raise TypeError('strong admitted IMU result lost executed Live tuner candidate') from exc
     if not isinstance(cand,CAND.CandidateResult):
         raise ValueError('Live IMU edge did not execute tuner candidate recurrence')
