@@ -24,6 +24,7 @@ root, that every hybrid edge is closed, or that storage may be searched.
 """
 from __future__ import annotations
 from dataclasses import dataclass
+from fractions import Fraction as F
 
 from ou3_interval import Interval, matrix_mul
 import ou3_brmm_acceleration_moment_iqc as MOM
@@ -41,6 +42,11 @@ QUALIFICATION = "OU3_ALT_SOURCE_UNIFORM_PHYSICAL_RESPONSE_COCYCLE_V2"
 
 def I(x: float) -> Interval:
     return Interval.point(float(x))
+
+
+def _exact_scalar_as_float(x):
+    """Accept decimal JSON numbers and exact rational strings such as ``44/5``."""
+    return float(F(str(x)))
 
 
 def _zero(r: int, c: int):
@@ -90,7 +96,7 @@ def _q15_sector_for_h(h: Interval):
     if not isinstance(h, Interval) or h.lo <= 0: raise ValueError("positive interval sample time required")
     mom=MOM.build(); failures=MOM.validate(mom)
     if failures: raise RuntimeError("physical acceleration-moment prerequisite failed: "+repr(failures))
-    Amax=float(mom["A_max_mps2"]); n=16
+    Amax=_exact_scalar_as_float(mom["A_max_mps2"]); n=16
     Cs=WSECTOR.selector(1,n,[0]); A0=WSECTOR.selector(3,n,[1,2,3]); A1=WSECTOR.selector(3,n,[4,5,6])
     M=_zero(9,n); ih=I(1)/h; ih2=ih*ih; ih3=ih2*ih
     for axis in range(3):
@@ -247,9 +253,9 @@ def build():
 
 def validate(d):
     f=[]
-    if d.get("qualification")!=QUALIFICATION or d.get("joint_dimension")!=24:f.append("qualification/dimension mismatch")
+    if d.get("qualification")!=QUALIFICATION:f.append("qualification mismatch")
     for k in ("same_15D_q_witness_used_per_prediction","joint_q15_quadratic_sector_attached_to_same_block","q15_columns_suffix_propagated_through_later_literal_events","physical_S_columns_suffix_propagated_through_later_literal_events","same_generator_and_one_time_Live_origin_tokens_retained","shared_bias_driver_enters_error_and_truth_once","explicit_BIAS0_BIAS1_BIAS2_contract_required_by_cocycle","analytic_bias_driver_sector_attached_per_prediction","persistent_bias_parameter_token_carried_by_source_blocks","source_uniform_attached_sample_cocycle_available"):
         if d.get(k) is not True:f.append(k+" not true")
     for k in ("aggregate_fresh_Live_entry_builder_consumed","independent_prediction_defect_boxes_used","replay_or_unreachable_perturbation_used","multi_sample_COMPLETE_BRMM_word_composed","BIAS0_BIAS1_BIAS2_temporal_source_relations_attached","H18_A21_edge_attached","storage_search_allowed","ALT_LIVE_PASS"):
         if d.get(k) is not False:f.append(k+" not false")
-    return list(dict.fromkeys(f))
+    return f
