@@ -5,21 +5,16 @@ propagated noise. The projected StillnessAdapter state supplies only shipping
 ``isStill``/``still_time`` plus the same variance attenuation. No dominant-
 frequency tracker state is an operand.
 
-Two theorem surfaces are exposed:
-
-* ``step`` keeps the older exact-rational SpectralWitness path for algebra cells
-  whose nonlinear roots happen to be rational;
-* ``step_interval`` uses the exact rational root enclosure and interval R_S EMA
-  for general shipping cells, including the real 0.2-Hz startup prior.
-
-The second path does not approximate or choose an R_S representative; it is an
-outer relation containing the exact real-arithmetic shipping candidate.
+Three surfaces are retained: legacy exact-rational component algebra, legacy
+interval component algebra, and the deployment-faithful interval path whose
+q_eff exact root is distinct from the cached binary32 libm value.
 """
 from __future__ import annotations
 
 from tools.stability.ou3_alt_contraction import finite_band_variance_runtime as BAND
 from tools.stability.ou3_alt_contraction import finite_tuner_candidate as CAND
 from tools.stability.ou3_alt_contraction import finite_tuner_candidate_interval as ICAND
+from tools.stability.ou3_alt_contraction import finite_tuner_deployment_config as D
 from tools.stability.ou3_alt_contraction import finite_tuner_stillness_projection as STILL
 from tools.stability.ou3_alt_contraction.finite_tuner_commit import TuneState
 
@@ -42,14 +37,19 @@ def step(previous:TuneState,front:BAND.FrontendResult,still:STILL.Result,cfg:CAN
 
 
 def step_interval(previous:ICAND.IntervalTuneState,front:BAND.FrontendResult,still:STILL.Result,
-                  cfg:CAND.CandidateConfig,*,sigma_wave_sqrt,dt,time,last_adapt_time,
+                  cfg,*,sigma_wave_sqrt,dt,time,last_adapt_time,
                   ema:CAND.EmaWitness,bits:int=96):
-    """Same shipping projection with general real SpectralMSE enclosure."""
+    """General exact-real interval path, dispatching by explicit config type."""
     if not isinstance(previous,ICAND.IntervalTuneState):
         raise TypeError('interval tuner state required')
     sample=sample_from_projection(front,still,sigma_wave_sqrt=sigma_wave_sqrt)
-    return ICAND.step(previous,sample,cfg,dt=dt,time=time,last_adapt_time=last_adapt_time,
-                      ema=ema,bits=bits)
+    if isinstance(cfg,D.DeploymentConfig):
+        return ICAND.step_deployment(previous,sample,cfg,dt=dt,time=time,
+            last_adapt_time=last_adapt_time,ema=ema,bits=bits)
+    if isinstance(cfg,CAND.CandidateConfig):
+        return ICAND.step(previous,sample,cfg,dt=dt,time=time,
+            last_adapt_time=last_adapt_time,ema=ema,bits=bits)
+    raise TypeError('CandidateConfig or DeploymentConfig required')
 
 
 def readiness():
@@ -62,9 +62,11 @@ def readiness():
       'general_SpectralMSE_interval_candidate_projection_available': bool(
           interval['SpectralMSE_irrational_target_enclosure_consumed'] and
           interval['RS_interval_propagated_through_literal_nonexpansive_EMA']),
+      'deployment_qeff_exact_root_interval_projection_available':interval['deployment_exact_qeff_root_interval_consumed'],
+      'deployment_cached_qeff_not_substituted_into_exact_real_projection':interval['deployment_cached_qeff_machine_value_not_used_as_exact_real_coefficient'],
       'actual_0p2Hz_prior_requires_no_fake_rational_spectral_witness':True,
       'sigma_wave_sqrt_transcendental_attached':False,
-      'binary32_sqrt_pow_exp_correspondence_closed':False,
+      'binary32_qeff_sqrt_pow_exp_correspondence_closed':False,
       'complete_word_finite_identity':False,
       'ALT_LIVE_PASS':False,
     }
