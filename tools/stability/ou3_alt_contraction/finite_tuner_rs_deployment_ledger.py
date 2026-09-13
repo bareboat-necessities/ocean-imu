@@ -19,6 +19,12 @@ Shipping seed is source-locked at ``TuneState::RS_applied = 0.5f``.  A hold
 sample (Cold branch/no tuner candidate) is literal identity.  Pending commit
 snapshotting is intentionally separate: this object proves persistent candidate
 state, not yet the next-sample MEKF commit transaction.
+
+The finite update counter is theorem bookkeeping, not a shipping counter.  Its
+horizon matches the already-certified tau/sigma bounded execution: at most
+30,000 pre-Live adaptation updates under the 150 s startup timeout plus the 600
+Live transitions of one canonical word.  A shorter arbitrary cap would silently
+exclude admitted late-startup histories from the coherent TuneState product.
 """
 from __future__ import annotations
 from dataclasses import dataclass
@@ -33,8 +39,10 @@ from tools.stability.ou3_alt_contraction import finite_tuner_spectral_machine_re
 
 SOURCE=Path(__file__).resolve().parents[3]/'src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h'
 SEED_RS=B.rn32(F(1,2))
-MAX_UPDATES=4096
-QUALIFICATION='OU3_ALT_RS_DEPLOYMENT_LEDGER_V1'
+PRELIVE_MAX_UPDATES=30000
+WORD_STEPS=600
+MAX_UPDATES=PRELIVE_MAX_UPDATES+WORD_STEPS
+QUALIFICATION='OU3_ALT_RS_DEPLOYMENT_LEDGER_V2'
 
 
 @dataclass(frozen=True)
@@ -135,6 +143,9 @@ def readiness():
       'compiler_histories_may_consume_distinct_alpha_RS_values':True,
       'each_track_alpha_bound_to_its_same_target_tau_and_config':True,
       'Cold_or_no_candidate_is_literal_RS_identity':True,
+      'bounded_startup_plus_600_update_cap_enforced':True,
+      'prelive_update_cap':PRELIVE_MAX_UPDATES,
+      'canonical_word_updates':WORD_STEPS,
       'pending_next_sample_commit_snapshot_attached':False,
       'startup_frontend_RS_machine_history_attached':False,
       'Live_600_step_RS_machine_history_attached':False,
