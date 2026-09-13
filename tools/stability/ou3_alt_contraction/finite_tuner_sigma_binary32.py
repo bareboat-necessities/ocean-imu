@@ -18,7 +18,7 @@ from tools.stability.ou3_alt_contraction import finite_tuner_deployment_config a
 
 SOURCE=Path(__file__).resolve().parents[3]/'src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h'
 ZERO=B.rn32(0); ONE=B.rn32(1); VAR_FLOOR=B.rn32(F(1,10**6)); SIGMA_FLOOR=B.rn32(F(1,20))
-QUALIFICATION='OU3_ALT_SIGMA_BINARY32_V3'
+QUALIFICATION='OU3_ALT_SIGMA_BINARY32_V4'
 
 
 def _q(x,name):
@@ -42,21 +42,39 @@ def _interval_hits_rne_cell(lo,hi,rounded):
     return max(F(lo),clo)<=min(F(hi),chi)
 
 
-def exp_minus_enclosure(x,terms=14):
-    """Tight rational enclosure of exp(-x) for 0<=x<=1.
-
-    The alternating Taylor terms decrease monotonically on this interval.  An
-    odd truncation is a lower bound and the preceding even truncation is an
-    upper bound. ``terms`` is the even upper truncation degree.
-    """
+def _exp_minus_unit_enclosure(x,terms=14):
+    """Alternating-series enclosure of exp(-x) on 0<=x<=1."""
     x=F(x)
-    if x<0 or x>1: raise ValueError('stillness exp argument outside certified [0,1] domain')
+    if x<0 or x>1: raise ValueError('unit exp argument outside [0,1]')
     if not isinstance(terms,int) or terms<2 or terms%2: raise ValueError('even Taylor degree >=2 required')
-    total=F(1); term=F(1)
-    partial={0:total}
+    total=F(1); term=F(1); partial={0:total}
     for n in range(1,terms+2):
         term *= -x/F(n); total += term; partial[n]=total
     return partial[terms+1],partial[terms]
+
+
+def exp_minus_enclosure(x,terms=14):
+    """Rigorous rational enclosure of exp(-x) for 0<=x<=60.
+
+    Range-reduce by a power of two: choose m=2^k with y=x/m<=1, enclose
+    exp(-y) by the alternating Taylor series, then use
+
+        exp(-x) = exp(-y)^m.
+
+    Since the base interval is nonnegative, powering both endpoints preserves
+    order exactly.  Repeated squaring is used only as exact rational algebra;
+    this is a proof enclosure, not a model of the target libm implementation.
+    """
+    x=F(x)
+    if x<0 or x>60: raise ValueError('stillness exp argument outside certified [0,60] domain')
+    if x<=1: return _exp_minus_unit_enclosure(x,terms)
+    m=1
+    while x>m: m*=2
+    lo,hi=_exp_minus_unit_enclosure(x/F(m),terms)
+    power=m
+    while power>1:
+        lo*=lo; hi*=hi; power//=2
+    return lo,hi
 
 
 @dataclass(frozen=True)
@@ -146,6 +164,7 @@ def readiness():
       'optional_stillness_attenuation_binary32_multiply_materialized':True,
       'variance_1e_minus6_floor_binary32_materialized':True,
       'stillness_exp_tight_rational_enclosure_bound_to_same_argument':True,
+      'stillness_exp_range_reduction_covers_full_0_to_60_second_machine_domain':True,
       'stillness_exp_binary32_result_related_by_exact_RNE_cell':True,
       'sigma_sqrt_witness_bound_to_same_rounded_var_wave':True,
       'sigma_sqrt_binary32_result_related_by_exact_RNE_cell_not_false_real_equality':True,
