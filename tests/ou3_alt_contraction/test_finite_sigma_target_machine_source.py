@@ -33,8 +33,10 @@ def still_one(): return calm_step(S.State())
 class Tests(unittest.TestCase):
     def test_first_machine_sample_owns_all_nonlibm_sigma_inputs(self):
         front=frontend_one(); still=still_one(); cfg=D.shipping_defaults(qeff_pow_result=B.rn32(1))
-        # First DebiasedEMA sample is not ready, so shipping subtracts its own
-        # band-noise variance from itself and reaches the literal 1e-6 floor.
+        # DebiasedEMA is already ready after the first default 5 ms update
+        # (weight > 1e-6f), but a single-sample central moment is exactly zero.
+        # Shipping therefore still reaches the same 1e-6 sigma variance floor,
+        # now through the ready branch rather than the unready-noise branch.
         out=X.derive(front,still,cfg,sqrt_result=sqrtw(T.VAR_FLOOR))
         self.assertIs(out.frontend,front); self.assertIs(out.stillness,still)
         self.assertEqual(out.target.accel_variance,front.accel_variance)
@@ -42,7 +44,8 @@ class Tests(unittest.TestCase):
         self.assertEqual(out.target.still,still.state.is_still)
         self.assertEqual(out.target.still_time,still.state.still_time)
         self.assertEqual(out.target.attenuation,still.attenuation)
-        self.assertFalse(out.target.var_ready)
+        self.assertTrue(out.target.var_ready)
+        self.assertEqual(out.target.var_wave,T.VAR_FLOOR)
 
     def test_different_sample_ordinals_cannot_splice(self):
         front=frontend_one()
