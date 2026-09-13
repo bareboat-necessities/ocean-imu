@@ -3,12 +3,11 @@ from dataclasses import replace
 from fractions import Fraction as F
 import unittest
 
-from tools.stability.ou3_alt_contraction import finite_accel_guard_runtime as G
-from tools.stability.ou3_alt_contraction import finite_guarded_tuner_prefix as GUARDED
+from tools.stability.ou3_alt_contraction import finite_binary32_arithmetic as B
 from tools.stability.ou3_alt_contraction import finite_tuner_candidate_interval as IC
+from tools.stability.ou3_alt_contraction import finite_tuner_deployment_config as D
 from tools.stability.ou3_alt_contraction import finite_tuner_frontend_interval_prefix as X
 import test_finite_guarded_tuner_prefix as BASE
-import test_finite_complete_word_tau_qualification as QBASE
 
 
 def state(stage='Live'):
@@ -18,33 +17,41 @@ def state(stage='Live'):
                    p.sample_index,p.time,stage,p.stage_time,p.warmup_sec)
 
 
-def kwargs():
-    k=BASE.kwargs()
-    k.pop('spectral',None)
-    # Use the theorem-facing shipping tuner config rather than the component
-    # fixture's convenient rational SpectralMSE constants.
-    k['candidate_cfg']=QBASE.shipping_runtime().candidate_cfg
+def deployment_cfg(cache_result=1):
+    # Explicit machine-cache witness; exact-real frontend consumes only the
+    # source-rooted qeff interval, not this unqualified binary32 result.
+    return D.shipping_defaults(qeff_pow_result=B.rn32(cache_result))
+
+
+def kwargs(cache_result=1):
+    k=BASE.kwargs(); k.pop('spectral',None)
+    k['candidate_cfg']=deployment_cfg(cache_result)
     return k
 
 
 class Tests(unittest.TestCase):
-    def test_real_postCold_prior_cell_executes_with_interval_RS(self):
-        s=state('Live')
-        out=X.step(s,BASE.packet(),dt=BASE.DT,**kwargs())
+    def test_real_postCold_prior_cell_executes_with_deployment_interval_RS(self):
+        s=state('Live'); out=X.step(s,BASE.packet(),dt=BASE.DT,**kwargs())
         self.assertIsNotNone(out.candidate)
         self.assertEqual(out.candidate.target.frequency,F(1,5))
         self.assertEqual(out.candidate.target.tau_target,F(5,2))
         self.assertLess(out.candidate.spectral.sqrt_TS_lo,out.candidate.spectral.sqrt_TS_hi)
         self.assertLess(out.candidate.spectral.u_pow_6_7_lo,out.candidate.spectral.u_pow_6_7_hi)
+        self.assertIsNotNone(out.candidate.spectral.qeff_root_lo)
         self.assertLessEqual(out.state.tune.RS_lo,out.state.tune.RS_hi)
         self.assertEqual(out.preupdate_wpe.state,s.wpe)
         self.assertEqual(out.state.sample_index,s.sample_index+1)
 
+    def test_machine_qeff_cache_change_cannot_move_exact_real_frontend_interval(self):
+        s=state('Live')
+        a=X.step(s,BASE.packet(),dt=BASE.DT,**kwargs(1))
+        b=X.step(s,BASE.packet(),dt=BASE.DT,**kwargs(2))
+        self.assertEqual(a.candidate.spectral.raw_RS_lo,b.candidate.spectral.raw_RS_lo)
+        self.assertEqual(a.candidate.spectral.raw_RS_hi,b.candidate.spectral.raw_RS_hi)
+
     def test_current_sample_WPE_cannot_feed_its_own_interval_candidate(self):
         s=state('Live'); out=X.step(s,BASE.packet(),dt=BASE.DT,**kwargs())
         self.assertEqual(out.candidate.target.frequency,F(1,5))
-        # The current WPE successor exists only after the candidate and cannot
-        # retroactively change the frequency used by this sample.
         self.assertIs(out.preupdate_wpe.state,s.wpe)
         self.assertEqual(out.wpe.state,out.state.wpe)
 
@@ -53,9 +60,8 @@ class Tests(unittest.TestCase):
         for n in ('candidate_cfg','sigma_wave_sqrt','ema'): k.pop(n,None)
         before=p.tune
         out=X.step(p,BASE.packet(),dt=BASE.DT,**k)
-        self.assertIs(out.state.tune,before)
-        self.assertIsNone(out.candidate)
-        bad=dict(k); bad['candidate_cfg']=QBASE.shipping_runtime().candidate_cfg
+        self.assertIs(out.state.tune,before); self.assertIsNone(out.candidate)
+        bad=dict(k); bad['candidate_cfg']=deployment_cfg()
         with self.assertRaisesRegex(ValueError,'Cold tuner branch'):
             X.step(p,BASE.packet(),dt=BASE.DT,**bad)
 
@@ -77,8 +83,7 @@ class Tests(unittest.TestCase):
         self.assertFalse(r['goLive_interval_RS_to_actual_MEKF_commit_closed'])
         self.assertFalse(r['binary32_sqrt_pow_exp_correspondence_closed'])
         self.assertFalse(r['source_uniform_complete_startup_reachability_closed'])
-        self.assertFalse(r['storage_search_allowed'])
-        self.assertFalse(r['ALT_STARTUP_PASS'])
+        self.assertFalse(r['storage_search_allowed']); self.assertFalse(r['ALT_STARTUP_PASS'])
 
 
 if __name__=='__main__': unittest.main()
