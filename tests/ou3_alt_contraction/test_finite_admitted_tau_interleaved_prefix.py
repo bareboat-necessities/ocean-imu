@@ -26,15 +26,11 @@ def qualified_prefix():
 def usable_half_prefix():
     """Same qualified product, with a pre-existing usable exact WPE output at 0.5 Hz.
 
-    The legacy exact SpectralMSE fixture represents sqrt/pow roots by rational
-    algebraic equalities and therefore cannot represent the real pre-usable
-    0.2 Hz shipping cell once tau=2.5 makes those roots irrational.  This helper
-    does NOT change shipping tuner constants.  It selects the already-covered
-    usable-WPE branch at 0.5 Hz, where the existing exact spectral fixture has
-    tau=1, sigma=1 and both algebraic witnesses equal to one.  The actual 0.2 Hz
-    prior branch remains covered by finite_wpe_frequency_binary32 and the Cold
-    startup product until transcendental enclosure replaces the rational-only
-    SpectralWitness abstraction.
+    This remains a component-only exact-rational SpectralMSE cell.  The carried
+    sample-entry WPE state owns the canonical output; the test supplies only the
+    preupdate exp witnesses consumed by that state and never a second free WPE
+    state.  Deployment-faithful irrational roots are covered by the interval
+    SpectralMSE path instead.
     """
     p=qualified_prefix(); word=p.prefix.live.live_word
     live=word.live; tilt=live.live; imu=tilt.live; tuner=imu.tuner
@@ -49,7 +45,7 @@ def wpe_source_for(state,dynamic):
     entry=X._entry_wpe(state)
     if not entry.usable_period:
         return WPEF.tuner_frequency(entry,min_hz=TARGET.FLOOR,max_hz=TARGET.CEIL)
-    exact_f=F(dynamic['wpe_current_frequency']); frequency=B32.rn32(exact_f)
+    exact_f=F(dynamic['preupdate_frequency']); frequency=B32.rn32(exact_f)
     log=WPEF.bind_log_state(entry,B32.rn32(entry.log_period))
     getter=WPEF.getters(log,period_exp=B32.rn32(F(1)/frequency),frequency_exp=frequency)
     return WPEF.tuner_frequency(entry,min_hz=TARGET.FLOOR,max_hz=TARGET.CEIL,
@@ -66,12 +62,11 @@ class Tests(unittest.TestCase):
         self.assertIs(s.prefix,p); self.assertEqual(s.tau,tau); self.assertEqual(s.live_entry_tau_updates,17)
 
     def test_WPE_source_edge_retains_exact_vs_machine_input_supplies(self):
-        # Use a valid exact SpectralMSE algebraic cell (f=.5 -> tau=sigma=T_S=1)
-        # so this regression tests the WPE/tau deployment join rather than
-        # pretending sqrt(2) has an exact rational witness on the 0.2-Hz prior.
+        # Component-only exact cell: the preupdate WPE exp witnesses are named
+        # with the current runtime API; they do not replace the carried WPE state.
         s=X.begin(usable_half_prefix(),LEDGER.State(updates=17))
         witness,segment,raw,r,b,dynamic=IBASE.operands(s.prefix.prefix.live); dynamic=dict(dynamic)
-        dynamic['wpe_current_period']=F(2); dynamic['wpe_current_frequency']=F(1,2)
+        dynamic['preupdate_period']=F(2); dynamic['preupdate_frequency']=F(1,2)
         dynamic['spectral']=CAND.SpectralWitness(1,1)
         source=wpe_source_for(s,dynamic)
         # Keep the machine decay inside the shipping enclosure; it need not be
