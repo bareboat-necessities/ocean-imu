@@ -31,12 +31,7 @@ def _exact_image(previous_exact,target,ae):
 
 
 def _exact_interval_image(previous_exact,target,alo,ahi):
-    """Exact box image of p + a*(t-p) over endpoint boxes.
-
-    The expression is multi-affine in (p,t,a), so every extremum on the compact
-    rectangular box occurs at a vertex.  Enumerating eight exact-rational
-    vertices is therefore an exact interval hull, not a sampled approximation.
-    """
+    """Exact box image of p + a*(t-p) over endpoint boxes."""
     vals=[]
     for p,t,a in product((previous_exact.RS_lo,previous_exact.RS_hi),
                          (target.exact.target_RS_lo,target.exact.target_RS_hi),
@@ -98,6 +93,30 @@ class CompilerModeJoin:
     fma_residual_lo:F
     fma_residual_hi:F
     qualification:str=QUALIFICATION
+    def __post_init__(self):
+        for n in ('previous_machine','exact_alpha','exact_next_lo','exact_next_hi','previous_residual_lo',
+                  'previous_residual_hi','alpha_supply','separate_residual_lo','separate_residual_hi',
+                  'fma_residual_lo','fma_residual_hi'):
+            object.__setattr__(self,n,F(getattr(self,n)))
+        if self.qualification!=QUALIFICATION: raise ValueError('wrong RS compiler-mode join qualification')
+        if not isinstance(self.previous_exact,I.IntervalTuneState) or not isinstance(self.target,T.Join):
+            raise TypeError('exact predecessor and target join required')
+        if not isinstance(self.alpha_source,A.Step) or not isinstance(self.machine,CM.Step):
+            raise TypeError('source-owned alpha and dual compiler-mode step required')
+        if not 0<=self.exact_alpha<=1: raise ValueError('exact alpha outside [0,1]')
+        if self.alpha_source.tau_target!=self.target.target.tau_target:
+            raise ValueError('RS alpha horizon detached from SAME candidate tau target')
+        if self.machine.previous!=self.previous_machine or self.machine.target!=self.target.machine_target_RS or self.machine.alpha_source!=self.alpha_source:
+            raise ValueError('compiler-mode machine step detached from same predecessor/target/alpha')
+        elo,ehi=_exact_image(self.previous_exact,self.target,self.exact_alpha)
+        if (self.exact_next_lo,self.exact_next_hi)!=(elo,ehi): raise ValueError('exact fixed-alpha EMA image detached')
+        if self.previous_residual_lo!=self.previous_machine-self.previous_exact.RS_hi or self.previous_residual_hi!=self.previous_machine-self.previous_exact.RS_lo:
+            raise ValueError('predecessor residual detached')
+        if self.alpha_supply!=self.alpha_source.alpha-self.exact_alpha: raise ValueError('alpha supply detached')
+        if self.separate_residual_lo!=self.machine.next_separate-self.exact_next_hi or self.separate_residual_hi!=self.machine.next_separate-self.exact_next_lo:
+            raise ValueError('separate residual detached')
+        if self.fma_residual_lo!=self.machine.next_fma-self.exact_next_hi or self.fma_residual_hi!=self.machine.next_fma-self.exact_next_lo:
+            raise ValueError('FMA residual detached')
 
 
 @dataclass(frozen=True)
