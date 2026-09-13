@@ -38,7 +38,10 @@ class Tests(unittest.TestCase):
         self.assertEqual(out.frequency,c.frequency); self.assertEqual(out.tau_var,c.tau_var)
         self.assertEqual(env.accel_sq,B.mul(a,a))
         self.assertEqual(env.decay,B.sub(B.rn32(1),c.alpha))
-        self.assertFalse(out.var_ready); self.assertEqual(X.variance(out),0)
+        # Shipping DebiasedEMA::isReady() is weight > 1e-6f.  At the default
+        # 5 ms update the first alpha already exceeds that threshold, so the
+        # first accepted sample is ready even though its debiased variance is 0.
+        self.assertTrue(out.var_ready); self.assertEqual(X.variance(out),0)
 
     def test_successive_sample_must_use_carried_machine_moments(self):
         c=coeff(); a=B.rn32(F(2,5)); s=X.State(); e1=X.envelope(s,c,accel=a); s1=successor_from_first(e1)
