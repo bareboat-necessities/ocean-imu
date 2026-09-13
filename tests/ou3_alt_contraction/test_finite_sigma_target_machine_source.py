@@ -17,18 +17,17 @@ def sqrtw(x):
 
 def expw(x):
     lo,hi=T.exp_minus_enclosure(x); return B.rn32((lo+hi)/2)
-
+def calm_step(state:S.State):
+    cfg=SR.Config(); a=B.rn32(0); alpha=B.rn32(cfg.energy_alpha)
+    vals=S._sum_products(B.sub(B.rn32(1),alpha),state.energy,alpha,B.rn32(0))
+    h=B.rn32(F(1,200)); st=min(B.add(state.still_time,h),S.SIXTY)
+    return S.step(state,cfg,vertical_lp=a,dt=h,energy_successor=vals[0],attenuation_exp=expw(st))
 def frontend_one():
     state=FB.X.initial(); x=B.rn32(F(1,2)); bc,bn,sc,sn,sg=FB.build_successors(state,x)
     return FB.X.step(state,band_coefficients=bc,band_input=x,band_successor=bn,
                      stats_coefficients=sc,stats_successor=sn,
                      bench_noise_sigma=B.rn32(F(3,100)),noise_sqrt_gain=sg)
-
-def still_one():
-    cfg=SR.Config(); state=S.State(); a=B.rn32(0); vals=FB.B and S._sum_products(B.sub(B.rn32(1),B.rn32(cfg.energy_alpha)),state.energy,
-                                      B.rn32(cfg.energy_alpha),B.rn32(0))
-    h=B.rn32(F(1,200)); st=B.add(state.still_time,h)
-    return S.step(state,cfg,vertical_lp=a,dt=h,energy_successor=vals[0],attenuation_exp=expw(st))
+def still_one(): return calm_step(S.State())
 
 
 class Tests(unittest.TestCase):
@@ -46,12 +45,11 @@ class Tests(unittest.TestCase):
         self.assertFalse(out.target.var_ready)
 
     def test_different_sample_ordinals_cannot_splice(self):
-        front=frontend_one(); still=still_one()
-        bad_state=S.State(still.state.energy,still.state.still_time,still.state.is_still,2)
-        bad=S.Step(still.before,bad_state,still.vertical_lp,still.dt,still.threshold,still.a_norm,
-                   still.inst_energy,still.energy_values,still.attenuation,still.exp_result)
-        with self.assertRaisesRegex(ValueError,'different sample ordinals|same sample ordinal'):
-            X.derive(front,bad,D.shipping_defaults(qeff_pow_result=B.rn32(1)),sqrt_result=sqrtw(T.VAR_FLOOR))
+        front=frontend_one()
+        second=calm_step(still_one().state)  # valid certificate at ordinal 2
+        self.assertEqual(second.state.samples,2)
+        with self.assertRaisesRegex(ValueError,'same sample ordinal'):
+            X.derive(front,second,D.shipping_defaults(qeff_pow_result=B.rn32(1)),sqrt_result=sqrtw(T.VAR_FLOOR))
 
     def test_readiness_closes_nonlibm_sigma_source_not_platform_or_master(self):
         r=X.readiness()
