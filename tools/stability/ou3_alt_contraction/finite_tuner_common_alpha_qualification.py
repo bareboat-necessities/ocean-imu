@@ -7,10 +7,17 @@ constructible, so the sigma theorem must not trust its alpha field by type alone
 This module re-derives the frequency-dependent horizon from the declared tuner
 configuration, verifies the TauStep's target/sea-time/horizon/exp/alpha and BOTH
 compiler successors, and checks that the deployment SpectralMSE config carries
-the same scalar tau/sigma adaptation constants.  The legacy exact-rational
-``CandidateConfig`` is compared to the deployment configuration only after each
-shared scalar is compiled to binary32; exact-rational equality to a compiled
-float is not a shipping invariant.
+the same scalars that actually determine this common alpha.  The legacy
+exact-rational ``CandidateConfig`` is compared to the deployment configuration
+only after each shared scalar is compiled to binary32; exact-rational equality
+to a compiled float is not a shipping invariant.
+
+Important separation: ``sigma_coeff`` and ``max_sigma`` determine the sigma
+TARGET, not the common tau/sigma EMA alpha.  They are therefore intentionally
+NOT prerequisites here.  Their same-source consistency is enforced by the
+sigma machine/real join and the coherent whole-TuneState product.  Mixing those
+obligations here would reject valid alpha ancestry for an unrelated target
+configuration difference and obscure which theorem actually failed.
 
 Target ``std::exp`` platform correspondence remains open; this proves ancestry
 and arithmetic shape, not libm implementation correctness.
@@ -25,7 +32,7 @@ from tools.stability.ou3_alt_contraction import finite_tuner_candidate as C
 from tools.stability.ou3_alt_contraction import finite_tuner_deployment_config as D
 from tools.stability.ou3_alt_contraction import finite_tuner_tau_binary32 as T
 
-QUALIFICATION='OU3_ALT_COMMON_ALPHA_QUALIFICATION_V2'
+QUALIFICATION='OU3_ALT_COMMON_ALPHA_QUALIFICATION_V3'
 
 
 @dataclass(frozen=True)
@@ -47,11 +54,11 @@ class Qualified:
 
 
 def _configs_match(c:C.CandidateConfig,d:D.DeploymentConfig):
-    names=('min_freq','max_freq','tau_coeff','sigma_coeff','min_tau','max_tau','max_sigma',
+    # Exactly the shipping fields that determine the frequency clamp, tau target,
+    # sea-period horizon and hence the ONE alpha shared by tau and sigma EMAs.
+    # Sigma-target scale/clamp fields are checked in SIGJOIN, not here.
+    names=('min_freq','max_freq','tau_coeff','min_tau','max_tau',
            'adapt_tau_sec','adapt_tau_sea_periods')
-    # CandidateConfig is an exact-rational algebra object.  Shipping consumes
-    # floats, so the theorem relation is equality after the candidate scalar is
-    # compiled to binary32, not equality of the two rational encodings.
     return all(B.rn32(getattr(c,n))==F(getattr(d,n)) for n in names) and c.clamp_enabled==d.clamp_enabled
 
 
@@ -61,7 +68,7 @@ def qualify(step:T.TauStep,candidate_cfg:C.CandidateConfig,deployment_cfg:D.Depl
     h=F(dt)
     if not B.is_binary32(h) or h<=0: raise ValueError('common-alpha dt must be positive binary32')
     if not _configs_match(candidate_cfg,deployment_cfg):
-        raise ValueError('tau and SpectralMSE deployment configs disagree after binary32 compilation of common adaptation scalars')
+        raise ValueError('tau and deployment configs disagree after binary32 compilation of common-alpha scalars')
     f,target,sea,adapt=T._floats_from_frequency(step.frequency,candidate_cfg,h)
     if (step.frequency,step.tau_target,step.sea_time,step.adapt_sec)!=(f,target,sea,adapt):
         raise ValueError('TauStep detached from declared common-alpha frequency/config horizon')
@@ -80,7 +87,8 @@ def qualify(step:T.TauStep,candidate_cfg:C.CandidateConfig,deployment_cfg:D.Depl
 def readiness():
     return {
       'qualification':QUALIFICATION,
-      'candidate_common_scalars_compiled_to_binary32_before_deployment_comparison':True,
+      'candidate_common_alpha_scalars_compiled_to_binary32_before_deployment_comparison':True,
+      'sigma_target_scale_and_clamp_deliberately_deferred_to_sigma_join':True,
       'tau_step_rederived_from_declared_frequency_config_and_dt':True,
       'candidate_and_deployment_configs_share_common_tau_sigma_adaptation_scalars':True,
       'same_exp_decay_and_alpha_drive_verified_tau_successors':True,
