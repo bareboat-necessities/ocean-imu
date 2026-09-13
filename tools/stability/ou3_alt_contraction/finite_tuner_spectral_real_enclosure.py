@@ -1,25 +1,25 @@
 """Exact rational enclosures for the real SpectralMSE nonlinear roots.
 
 The legacy exact tuner uses rational algebraic witnesses for sqrt(T_S),
-u^(6/7), and indirectly q_eff^(1/14).  Ordinary shipping cells make all of
-those roots irrational, while the deployed q_eff factor is additionally cached
-as a binary32 libm result.  This module keeps the mathematical roots and the
-machine cache distinct.
+u^(6/7), and indirectly q_eff^(1/14). Ordinary shipping cells make these
+roots irrational, while deployed q_eff is also cached as a binary32 libm result.
+This module keeps the mathematical roots and the machine cache distinct.
 
-``enclose`` remains the exact-rational component path.  ``enclose_deployment``
-uses the deployment configuration's rigorous interval for the exact
-(2*r_a)^(1/14) root and propagates it monotonically with the sqrt/pow intervals.
-No libm result is substituted for any exact mathematical root here.
+``enclose`` remains the exact-rational component path. ``enclose_deployment``
+consumes the deployment-qualified interface and uses its rigorous interval for
+the exact (2*r_a)^(1/14) root.  The higher candidate layer enforces the concrete
+DeploymentConfig class; this lower root primitive checks its qualification token
+to avoid a root->deployment->cache->root import cycle.
 """
 from __future__ import annotations
 from dataclasses import dataclass
 from fractions import Fraction as F
 
 from tools.stability.ou3_alt_contraction import finite_tuner_candidate as C
-from tools.stability.ou3_alt_contraction import finite_tuner_deployment_config as D
 
 DEFAULT_BITS=96
 QUALIFICATION='OU3_ALT_SPECTRAL_REAL_ROOT_ENCLOSURE_V2'
+DEPLOYMENT_QUALIFICATION='OU3_ALT_TUNER_DEPLOYMENT_CONFIG_V1'
 
 
 def _root_enclosure(x,n:int,bits:int=DEFAULT_BITS):
@@ -47,16 +47,11 @@ def pow_6_7_enclosure(u,bits:int=DEFAULT_BITS):
 @dataclass(frozen=True)
 class Enclosure:
     target:C.TargetState
-    TS:F
-    u:F
-    sqrt_TS_lo:F
-    sqrt_TS_hi:F
-    u_pow_6_7_lo:F
-    u_pow_6_7_hi:F
-    raw_RS_lo:F
-    raw_RS_hi:F
-    target_RS_lo:F
-    target_RS_hi:F
+    TS:F; u:F
+    sqrt_TS_lo:F; sqrt_TS_hi:F
+    u_pow_6_7_lo:F; u_pow_6_7_hi:F
+    raw_RS_lo:F; raw_RS_hi:F
+    target_RS_lo:F; target_RS_hi:F
     qeff_root_lo:F|None=None
     qeff_root_hi:F|None=None
     bits:int=DEFAULT_BITS
@@ -70,18 +65,12 @@ class Enclosure:
         if self.qeff_root_hi is not None: object.__setattr__(self,'qeff_root_hi',F(self.qeff_root_hi))
         if not (0<self.sqrt_TS_lo<=self.sqrt_TS_hi and 0<=self.u_pow_6_7_lo<=self.u_pow_6_7_hi):
             raise ValueError('invalid root enclosure')
-        if not self.sqrt_TS_lo**2<=self.TS<=self.sqrt_TS_hi**2:
-            raise ValueError('sqrt(T_S) enclosure detached')
-        if not self.u_pow_6_7_lo**7<=self.u**6<=self.u_pow_6_7_hi**7:
-            raise ValueError('u^(6/7) enclosure detached')
-        if (self.qeff_root_lo is None)!=(self.qeff_root_hi is None):
-            raise ValueError('qeff root interval must be carried as a pair')
-        if self.qeff_root_lo is not None and not 0<self.qeff_root_lo<=self.qeff_root_hi:
-            raise ValueError('invalid qeff root interval')
-        if not 0<=self.raw_RS_lo<=self.raw_RS_hi:
-            raise ValueError('invalid raw R_S enclosure')
-        if not self.target_RS_lo<=self.target_RS_hi:
-            raise ValueError('invalid clamped R_S enclosure')
+        if not self.sqrt_TS_lo**2<=self.TS<=self.sqrt_TS_hi**2: raise ValueError('sqrt(T_S) enclosure detached')
+        if not self.u_pow_6_7_lo**7<=self.u**6<=self.u_pow_6_7_hi**7: raise ValueError('u^(6/7) enclosure detached')
+        if (self.qeff_root_lo is None)!=(self.qeff_root_hi is None): raise ValueError('qeff root interval must be carried as a pair')
+        if self.qeff_root_lo is not None and not 0<self.qeff_root_lo<=self.qeff_root_hi: raise ValueError('invalid qeff root interval')
+        if not 0<=self.raw_RS_lo<=self.raw_RS_hi: raise ValueError('invalid raw R_S enclosure')
+        if not self.target_RS_lo<=self.target_RS_hi: raise ValueError('invalid clamped R_S enclosure')
 
 
 def _geometry(cfg,target,bits):
@@ -93,9 +82,7 @@ def _geometry(cfg,target,bits):
 
 
 def enclose(cfg:C.CandidateConfig,target:C.TargetState,*,bits:int=DEFAULT_BITS):
-    """Legacy exact-rational coefficient path retained for component algebra."""
-    if not isinstance(cfg,C.CandidateConfig) or not isinstance(target,C.TargetState):
-        raise TypeError('CandidateConfig and TargetState required')
+    if not isinstance(cfg,C.CandidateConfig) or not isinstance(target,C.TargetState): raise TypeError('CandidateConfig and TargetState required')
     TS,u,slo,shi,plo,phi=_geometry(cfg,target,bits)
     k=cfg.rs_mse_coeff*cfg.qeff_pow
     raw_lo=k*plo/shi; raw_hi=k*phi/slo
@@ -105,14 +92,16 @@ def enclose(cfg:C.CandidateConfig,target:C.TargetState,*,bits:int=DEFAULT_BITS):
     return Enclosure(target,TS,u,slo,shi,plo,phi,raw_lo,raw_hi,out_lo,out_hi,None,None,bits)
 
 
-def enclose_deployment(cfg:D.DeploymentConfig,target:C.TargetState,*,bits:int=DEFAULT_BITS):
+def enclose_deployment(cfg,target:C.TargetState,*,bits:int=DEFAULT_BITS):
     """Deployment exact-real relation; cached binary32 qeff is not used here."""
-    if not isinstance(cfg,D.DeploymentConfig) or not isinstance(target,C.TargetState):
-        raise TypeError('DeploymentConfig and TargetState required')
+    if getattr(cfg,'qualification',None)!=DEPLOYMENT_QUALIFICATION or not isinstance(target,C.TargetState):
+        raise TypeError('deployment-qualified tuner config and TargetState required')
+    try: qlo,qhi=cfg.qeff_exact_root_interval
+    except (AttributeError,TypeError,ValueError) as exc:
+        raise TypeError('deployment config lost exact qeff root interval') from exc
+    qlo,qhi=F(qlo),F(qhi)
+    if not 0<qlo<=qhi: raise ValueError('invalid deployment qeff root interval')
     TS,u,slo,shi,plo,phi=_geometry(cfg,target,bits)
-    qlo,qhi=cfg.qeff_exact_root_interval
-    # Every factor is positive.  Division is monotone increasing in the
-    # numerator and decreasing in the positive denominator.
     raw_lo=cfg.rs_mse_coeff*qlo*plo/shi
     raw_hi=cfg.rs_mse_coeff*qhi*phi/slo
     if cfg.clamp_enabled:
