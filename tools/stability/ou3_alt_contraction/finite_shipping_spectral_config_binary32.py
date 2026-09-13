@@ -7,7 +7,7 @@ This module pins those fields to the CURRENT SHIPPING DEFAULT source spellings
 and requires the cached q_eff value to descend from the explicit default-r_a
 cache-production witness.
 
-The cache witness's numerical pow correctness remains open.  Therefore this is
+The cache witness's numerical pow correctness remains open. Therefore this is
 configuration/provenance qualification, not full deployment correspondence.
 """
 from __future__ import annotations
@@ -61,15 +61,11 @@ def qualify(cfg:C.CandidateConfig,cache:Q.CacheWitness):
     if cache.r_a!=Q.default_r_a_binary32():
         raise ValueError('qeff cache r_a detached from shipping default source expression')
     Q.qualify_candidate_cache(cfg.qeff_pow,cache)
-    return Qualified.__new__(Qualified) if False else cfg
+    return cfg
 
 
 def bind(cfg:C.CandidateConfig,cache:Q.CacheWitness):
-    qualify(cfg,cache)
-    obj=object.__new__(Qualified)
-    object.__setattr__(obj,'cfg',cfg); object.__setattr__(obj,'qeff_cache',cache)
-    object.__setattr__(obj,'qualification',QUALIFICATION)
-    return obj
+    return Qualified(cfg,cache)
 
 
 def _source_shape_matches():
@@ -90,17 +86,17 @@ def _source_shape_matches():
 
 
 def readiness():
-    q=Q.readiness()
+    q=Q.readiness(); shape=_source_shape_matches()
     return {
       'qualification':QUALIFICATION,
-      'shipping_SpectralMSE_default_source_shape_matches':_source_shape_matches(),
+      'shipping_SpectralMSE_default_source_shape_matches':shape,
       'pseudo_cadence_compiled_binary32_defaults_pinned':True,
       'sigma_coefficient_compiled_binary32_default_pinned':True,
       'SpectralMSE_CJ_compiled_binary32_default_pinned':True,
       'RS_and_sigma_clamps_compiled_binary32_defaults_pinned':True,
       'default_r_a_source_expression_pinned':q['default_r_a_source_order_binary32_graph_materialized'],
       'candidate_qeff_cache_requires_explicit_default_r_a_cache_witness':True,
-      'SpectralMSE_default_law_source_shape_pinned':_source_shape_matches(),
+      'SpectralMSE_default_law_source_shape_pinned':shape,
       'qeff_cache_target_libm_correspondence_closed':False,
       'per_sample_sqrt_pow_target_libm_correspondence_closed':False,
       'shipping_SpectralMSE_machine_target_fully_qualified':False,
