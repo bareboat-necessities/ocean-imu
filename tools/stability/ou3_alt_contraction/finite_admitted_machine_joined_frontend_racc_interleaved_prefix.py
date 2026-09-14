@@ -135,7 +135,6 @@ def begin(base:LOWER.State,*,guard:GUARD.State,guard_cfg:GUARD.Config,separate_s
     return State(base,guard,guard_cfg,separate_source,fma_source,base.racc_steps,0)
 
 
-
 def begin_from_goLive(base:LOWER.State,go):
     """Substitute the joined startup histories, never caller-selected Live seeds.
 
@@ -161,6 +160,7 @@ def begin_from_goLive(base:LOWER.State,go):
     return begin(base,guard=source.guard,guard_cfg=source.guard_cfg,
                  separate_source=source.separate_source,fma_source=source.fma_source)
 
+
 def imu_step(state:State,*,machine_dt,machine_gyro_body,machine_acc_body,
              guard_lp_alpha_exp=None,guard_lp_successors=None,guard_detect_gamma_exp=None,guard_detect_successors=None,
              guard_removed_beta_exp=None,guard_removed_ms_successor=None,guard_removed_rms_sqrt=None,guard_slew_exp=None,guard_weight_successor=None,guard_output_successor=None,
@@ -173,7 +173,7 @@ def imu_step(state:State,*,machine_dt,machine_gyro_body,machine_acc_body,
     if restricted is None:
         raise TypeError('same admitted physical restriction required')
 
-    # Execute the one admitted Racc/measurement event first.  Everything below
+    # Execute the one admitted Racc/measurement event first. Everything below
     # is an arithmetic/source relation attached to this result, not a replay.
     lower=LOWER.imu_step(state.base,**kwargs)
     mtune=LOWER._mtune_result(lower.lower)
@@ -205,6 +205,20 @@ def imu_step(state:State,*,machine_dt,machine_gyro_body,machine_acc_body,
     VS.require_frontend_input(fma,mtune.fma_frontend)
     VS.require_sigma_stillness(sep,mtune.separate_sigma_join.machine)
     VS.require_sigma_stillness(fma,mtune.fma_sigma_join.machine)
+
+    # Strengthen the lower comparison shadow with the already-executed machine
+    # guard arithmetic. No source/filter event is replayed: only the proof-side
+    # Racc and held-accelerometer numerical relations are rebound to the same
+    # raw packet's binary32 conditioned sample and excess RMS.
+    lower=LOWER.rebind_machine_guard(state.base,lower,
+        guard_excess_rms=guarded.excess_rms,conditioned_accel_body=guarded.conditioned_acc,
+        separate_racc_accel_ldlt=kwargs['separate_racc_accel_ldlt'],
+        fma_racc_accel_ldlt=kwargs['fma_racc_accel_ldlt'],
+        separate_rao_witness=kwargs.get('separate_rao_witness'),
+        separate_racc_sqrt=kwargs.get('separate_racc_sqrt'),
+        fma_rao_witness=kwargs.get('fma_rao_witness'),fma_racc_sqrt=kwargs.get('fma_racc_sqrt'),
+        temperature_c=kwargs['temperature_c'],restricted=restricted,
+        accel_alpha=kwargs.get('accel_alpha',1),accel_radius=kwargs.get('accel_radius'))
 
     nxt=State(lower.state,guarded.state,state.guard_cfg,sep.state,fma.state,
               state.entry_racc_steps,state.source_steps+1)
@@ -238,6 +252,8 @@ def readiness():
       'same_executed_TuneState_event_supplies_frontend_and_sigma_join':True,
       'no_second_physical_or_filter_event_executed_for_frontend_ancestry':True,
       'common_machine_guard_and_private_Mahony_history_joined_to_Racc_word':True,
+      'machine_guard_excess_drives_machine_Racc_recurrence':True,
+      'machine_guard_conditioned_sample_drives_machine_accelerometer_relation':True,
       'machine_band_input_bound_to_frontend_consumed_by_Racc_word':True,
       'machine_sigma_stillness_bound_to_sigma_target_consumed_by_Racc_word':True,
       'machine_guard_runtime_config_bound_in_joined_word':cfg['machine_guard_runtime_config_ancestry_closed_for_current_word'],
