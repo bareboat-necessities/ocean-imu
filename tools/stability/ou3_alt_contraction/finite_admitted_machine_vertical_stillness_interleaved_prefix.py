@@ -23,6 +23,7 @@ from tools.stability.ou3_alt_contraction import finite_admitted_machine_tunestat
 from tools.stability.ou3_alt_contraction import finite_machine_vertical_stillness_source as VS
 from tools.stability.ou3_alt_contraction import finite_machine_accel_guard_binary32 as GUARD
 from tools.stability.ou3_alt_contraction import finite_binary32_mahony as MAHONY
+from tools.stability.ou3_alt_contraction import finite_binary32_mahony_startup as STARTUP
 from tools.stability.ou3_alt_contraction import finite_vertical_complementary_runtime as VERT
 from tools.stability.ou3_alt_contraction import finite_stillness_sigma_binary32 as STILL
 from tools.stability.ou3_alt_contraction import finite_binary32_arithmetic as B
@@ -92,7 +93,7 @@ def begin(base:LOWER.State,*,guard:GUARD.State,guard_cfg:GUARD.Config,separate_s
 
 def _source_step(source,guarded:GUARD.Result,runtime,h,*,lpf_alpha_exp,lpf_successor,still_energy_successor,still_attenuation_exp):
     hq=B.rn32(h); vcfg=_machine_vertical_cfg(runtime)
-    mah=MAHONY.step_initialized(source.vertical,vcfg,dt=hq,gyro=guarded.raw_gyro,acc=guarded.conditioned_acc)
+    mah=STARTUP.step(source.vertical,vcfg,dt=hq,gyro=guarded.raw_gyro,acc=guarded.conditioned_acc)
     band_input=B.rn32(mah.vertical.vertical_accel)
     lp=VS.lpf_step(source.lpf,x=band_input,dt=hq,alpha_exp=lpf_alpha_exp,successor=lpf_successor)
     st=STILL.step(source.stillness,runtime.still_cfg,vertical_lp=lp.state.value,dt=hq,energy_successor=still_energy_successor,attenuation_exp=still_attenuation_exp)
@@ -139,7 +140,8 @@ def readiness():
     low=LOWER.readiness(); guard=GUARD.readiness(); src=VS.readiness(); mah=MAHONY.readiness()
     return {
       'admitted_machine_TuneState_word_consumed':low['Live_600_step_machine_TuneState_product_attached'],
-      'one_common_binary32_guard_feeds_private_Mahony_and_Racc_guard_history':True,
+      'one_common_binary32_guard_feeds_private_Mahony_and_band_history':True,
+      'machine_guard_displacement_already_injected_into_Racc':False,
       'shipping_float_API_dt_gyro_accel_projection_is_mandatory':True,
       'same_machine_private_Mahony_vertical_feeds_band_and_tracker_LPF':True,
       'machine_band_input_bound_to_same_frontend_consumed_by_sigma_target':True,
@@ -148,10 +150,10 @@ def readiness():
       'guard_runtime_config_ancestry_closed':False,
       'private_Mahony_runtime_config_and_startup_ancestry_closed':False,
       'tracker_LPF_runtime_config_ancestry_closed':False,
-      'guard_exp_sqrt_compiler_correspondence_closed':guard['binary32_runtime_graph_correspondence_closed'],
-      'private_Mahony_compiler_profile_qualified':mah['compiler_profile_qualified_for_deployment'],
-      'tracker_LPF_exp_target_libm_correspondence_closed':src['tracker_LPF_exp_target_libm_correspondence_closed'],
-      'stillness_exp_sqrt_target_libm_correspondence_closed':src['stillness_exp_sqrt_target_libm_correspondence_closed'],
+      'guard_exp_sqrt_compiler_correspondence_closed':guard['target_libm_and_Eigen_expression_correspondence_closed'],
+      'private_Mahony_compiler_profile_qualified':mah['actual_target_compiler_profile_qualified'],
+      'tracker_LPF_exp_target_libm_correspondence_closed':src['target_libm_and_compiler_profile_correspondence_closed'],
+      'stillness_exp_sqrt_target_libm_correspondence_closed':src['target_libm_and_compiler_profile_correspondence_closed'],
       'source_uniform_machine_supply_bounds_closed':False,
       'source_uniform_complete_600_step_word_qualified':False,
       'storage_search_allowed':False,

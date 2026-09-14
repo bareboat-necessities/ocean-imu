@@ -135,6 +135,32 @@ def begin(base:LOWER.State,*,guard:GUARD.State,guard_cfg:GUARD.Config,separate_s
     return State(base,guard,guard_cfg,separate_source,fma_source,base.racc_steps,0)
 
 
+
+def begin_from_goLive(base:LOWER.State,go):
+    """Substitute the joined startup histories, never caller-selected Live seeds.
+
+    This is a conditional handoff identity. It does not establish that every
+    admitted startup reaches TunerReady or qualify missing deployment branches.
+    """
+    from tools.stability.ou3_alt_contraction import finite_startup_joined_machine_history as START
+    if not isinstance(go,START.GoLive):
+        raise TypeError('joined startup goLive result required')
+    mt=_mtune_state(base); source=go.startup; lower=go.lower
+    if _runtime(base)!=source.runtime or mt.deployment_cfg!=source.deployment_cfg:
+        raise ValueError('Live runtime configuration detached from joined startup')
+    if MTUNE._entry_live(mt.base)!=lower.live.state:
+        raise ValueError('Live exact state detached from joined startup goLive')
+    if (mt.machine,mt.base.wpe,mt.frontends)!=(lower.machine,lower.wpe,lower.frontends):
+        raise ValueError('Live machine TuneState/WPE/band memory detached from joined startup')
+    if (mt.separate_active,mt.fma_active)!=(lower.separate_active,lower.fma_active):
+        raise ValueError('Live active parameters detached from same machine goLive commits')
+    if base.racc_steps or mt.machine.tau.updates!=mt.live_entry_machine_updates:
+        raise ValueError('startup attachment must precede the first Live IMU event')
+    if base.separate_racc!=source.racc or base.fma_racc!=source.racc:
+        raise ValueError('Live Racc state detached from bootstrap identity history')
+    return begin(base,guard=source.guard,guard_cfg=source.guard_cfg,
+                 separate_source=source.separate_source,fma_source=source.fma_source)
+
 def imu_step(state:State,*,machine_dt,machine_gyro_body,machine_acc_body,
              guard_lp_alpha_exp=None,guard_lp_successors=None,guard_detect_gamma_exp=None,guard_detect_successors=None,
              guard_removed_beta_exp=None,guard_removed_ms_successor=None,guard_removed_rms_sqrt=None,guard_slew_exp=None,guard_weight_successor=None,guard_output_successor=None,
@@ -219,7 +245,8 @@ def readiness():
       'complete_word_requires_join_on_all_600_Racc_measurement_IMU_edges':True,
       'tracker_LPF_mutable_setter_ancestry_closed':False,
       'private_Mahony_mutable_config_setter_ancestry_closed':False,
-      'startup_joined_machine_history_attached':False,
+      'startup_joined_machine_history_attached':True,
+      'startup_attachment_is_conditional_not_universal_reachability':True,
       'target_libm_Eigen_and_compiler_profile_correspondence_closed':False,
       'source_uniform_machine_supply_bounds_closed':False,
       'source_uniform_complete_600_step_word_qualified':False,

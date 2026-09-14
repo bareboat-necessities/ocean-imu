@@ -31,7 +31,20 @@ def fixture():
         separate_still_energy_successor=sw['still_energy_successor'],separate_still_attenuation_exp=sw['still_attenuation_exp'],
         fma_lpf_alpha_exp=fw['lpf_alpha_exp'],fma_lpf_successor=fw['lpf_successor'],
         fma_still_energy_successor=fw['still_energy_successor'],fma_still_attenuation_exp=fw['still_attenuation_exp'])
-    return s,RBASE.event_operands(r),join,guarded,sep,fma
+    # Feed the real same-event Mahony output into the lower band/sigma graph;
+    # the old fixture supplied an unrelated zero vertical input here.
+    kw=RBASE.event_operands(r)
+    for mode,src,freq,tau in (('separate',sep,lower0.separate_frequency,lower0.tau_step.separate_step),
+                             ('fma',fma,lower0.fma_frequency,lower0.tau_step.fma_step)):
+        front=VBASE.MFBASE.source_step(getattr(mt.frontends,mode),band_cfg=runtime.band_cfg,
+            stats_cfg=runtime.stats_cfg,frequency=freq.external.stored.input_hz,
+            bench_noise_sigma=runtime.bench_noise_sigma,x=src.band_input,last=mode=='fma')
+        sigma=VBASE.sigma_target(mt,front,src)
+        kw[mode+'_frontend']=front; kw[mode+'_sigma_machine']=sigma
+        kw[mode+'_spectral_pow']=VBASE.MBASE.spectral_pow_for(tau.tau_target,sigma.sigma_target,mt.deployment_cfg)
+        kw[mode+'_spectral_sqrt']=VBASE.MBASE.spectral_sqrt_for(tau.tau_target,mt.deployment_cfg)
+        kw[mode+'_rs_exp_decay']=VBASE.MBASE.rs_exp(mt.deployment_cfg,tau.tau_target)
+    return s,kw,join,guarded,sep,fma
 
 
 class Tests(unittest.TestCase):
@@ -58,10 +71,8 @@ class Tests(unittest.TestCase):
 
     def test_detached_guard_runtime_config_is_rejected_before_join(self):
         s,_,_,_,_,_=fixture()
-        bad=replace(s,guard_cfg=replace(s.guard_cfg,cutoff_hz=B.rn32(13)))
         with self.assertRaisesRegex(ValueError,'guard configuration detached'):
-            X.State(bad.base,bad.guard,bad.guard_cfg,bad.separate_source,bad.fma_source,
-                    bad.entry_racc_steps,bad.source_steps)
+            replace(s,guard_cfg=replace(s.guard_cfg,cutoff_hz=B.rn32(13)))
 
     def test_MAG_and_HOLD_preserve_joined_machine_source_history(self):
         s,_,_,_,_,_=fixture(); g=s.guard; a=s.separate_source; n=s.source_steps
@@ -77,6 +88,8 @@ class Tests(unittest.TestCase):
 
     def test_readiness_closes_parallel_product_gap_only(self):
         r=X.readiness()
+        self.assertTrue(r['startup_joined_machine_history_attached'])
+        self.assertTrue(r['startup_attachment_is_conditional_not_universal_reachability'])
         for k in ('same_executed_TuneState_event_supplies_frontend_and_sigma_join',
                   'no_second_physical_or_filter_event_executed_for_frontend_ancestry',
                   'common_machine_guard_and_private_Mahony_history_joined_to_Racc_word',
@@ -87,7 +100,7 @@ class Tests(unittest.TestCase):
                   'complete_word_requires_join_on_all_600_Racc_measurement_IMU_edges'):
             self.assertTrue(r[k])
         for k in ('tracker_LPF_mutable_setter_ancestry_closed','private_Mahony_mutable_config_setter_ancestry_closed',
-                  'startup_joined_machine_history_attached','target_libm_Eigen_and_compiler_profile_correspondence_closed',
+                  'target_libm_Eigen_and_compiler_profile_correspondence_closed',
                   'source_uniform_complete_600_step_word_qualified','storage_search_allowed','ALT_LIVE_PASS','ALT_STARTUP_PASS','ALT_END_TO_END_PASS'):
             self.assertFalse(r[k])
 

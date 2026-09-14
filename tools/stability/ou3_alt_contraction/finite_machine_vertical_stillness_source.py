@@ -9,7 +9,7 @@ irrelevant to this narrow relation.
 
 Represented machine order:
 
-  guarded body IMU -> initialized private Mahony -> vertical_accel
+  guarded body IMU -> first-sample or initialized private Mahony -> vertical_accel
   vertical_accel -> FreqInputLPF -> a_vert_up_lp
   a_vert_up_lp -> stillness energy/predicate/time/attenuation
 
@@ -20,7 +20,10 @@ for the final sum are retained.  The exp result is tied to the same rounded
 argument by a rigorous real enclosure and its binary32 RNE cell.  Target libm
 and compiler contraction-profile correspondence remain open.  The mutable
 shipping LPF cutoff is carried by this local state but is not yet rooted in the
-theorem RuntimeConfig; that ancestry remains an explicit open obligation.
+theorem RuntimeConfig in this local component. The joined startup/Live wrappers
+fix the default cutoff; mutable setter ancestry remains open. The ordinary
+first-sample seed is attached here; nearly antiparallel SVD and nonfinite
+branches are still unqualified, not removed from the admitted source.
 """
 from __future__ import annotations
 from dataclasses import dataclass
@@ -29,6 +32,7 @@ from pathlib import Path
 
 from tools.stability.ou3_alt_contraction import finite_binary32_arithmetic as B
 from tools.stability.ou3_alt_contraction import finite_binary32_mahony as MAHONY
+from tools.stability.ou3_alt_contraction import finite_binary32_mahony_startup as STARTUP
 from tools.stability.ou3_alt_contraction import finite_vertical_complementary_runtime as VERT
 from tools.stability.ou3_alt_contraction import finite_sensor_source_runtime as SENSOR
 from tools.stability.ou3_alt_contraction import finite_stillness_runtime as STILL_CFG
@@ -140,7 +144,8 @@ class State:
     def __post_init__(self):
         if not isinstance(self.vertical,VERT.State) or not isinstance(self.lpf,LPFState) or not isinstance(self.stillness,STILL.State):
             raise TypeError('machine Mahony, LPF and stillness states required')
-        if not self.vertical.initialized: raise ValueError('this relation begins after private-Mahony startup initialization')
+        if not self.vertical.initialized and self.vertical != VERT.State():
+            raise ValueError('uninitialized machine observer lost its literal reset state')
         if self.lpf.samples!=self.stillness.samples or self.lpf.samples!=self.samples:
             raise ValueError('machine vertical frontend sample counts detached')
         if self.qualification!=QUALIFICATION: raise ValueError('wrong machine vertical/stillness qualification')
@@ -186,7 +191,7 @@ def step(state:State,guarded:SENSOR.GuardedImuSample,vertical_cfg:VERT.Config,st
     if not isinstance(state,State) or not isinstance(guarded,SENSOR.GuardedImuSample):
         raise TypeError('persistent machine source and SAME guarded sample required')
     h=_q(dt,'machine frontend dt')
-    mah=MAHONY.step_initialized(state.vertical,vertical_cfg,dt=h,
+    mah=STARTUP.step(state.vertical,vertical_cfg,dt=h,
         gyro=guarded.raw_gyro_body,acc=guarded.conditioned_accel_body,profile=profile)
     band_input=_q(mah.vertical.vertical_accel,'machine Mahony vertical')
     lp=lpf_step(state.lpf,x=band_input,dt=h,alpha_exp=lpf_alpha_exp,successor=lpf_successor)

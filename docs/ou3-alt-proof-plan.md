@@ -134,6 +134,24 @@ The >70-degree test uses a rigorous rational enclosure of the shipping
 `acos(cos_tilt)*57.295779513f` threshold. The tiny enclosure boundary and actual
 binary32/libm branch correspondence remain explicitly fail-closed.
 
+## Joined machine startup attachment
+
+`finite_startup_joined_machine_history.py` roots the guard/private-observer/
+LPF/stillness/band/TuneState product at reset. Ordinary first-sample seeding is
+computed from the same accelerometer by `finite_binary32_mahony_startup.py`;
+near-antiparallel Eigen SVD remains unqualified. Startup samples bind the same
+machine source to the consumed band and sigma events. Pending boundary and
+conditional goLive preserve upstream memory, and `admitted_live` substitutes
+that same result through the strong scheduler/prediction/measurement/Racc chain
+without new Live snapshots or a second goLive execution.
+
+Racc consumes pre-candidate TuneState sigma every sample, independently of the
+pending active-parameter commit, and uses the raw preupdate WPE getter/prior.
+The numerical machine-guard displacement into Racc/accelerometer remains open.
+Conditional attachment does not close universal startup capture, ungauged
+handoff, deployment arithmetic or the source-uniform 600-transition word.
+All finite-master/storage/theorem gates remain fail-closed.
+
 ## Physical source-prefix graph
 
 `finite_source_bound_live_word.py` carries physical source and sensor ancestry
