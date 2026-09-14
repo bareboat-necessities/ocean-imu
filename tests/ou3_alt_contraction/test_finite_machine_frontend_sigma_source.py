@@ -43,7 +43,79 @@ def build_successors(state:X.State,x):
     return bc,band,sc,stats,sg
 
 
+def source_step(state,*,band_cfg,stats_cfg,frequency,dt=F(1,200),bench_noise_sigma=0,x=0,last=False):
+    """Conditional finite-machine regression witness, not native libm evidence."""
+    f=B.rn32(frequency); h=B.rn32(dt)
+    fr=state.stats.frequency if state.stats.frequency is not None and state.stats.frequency>0 else f
+    fr=min(max(fr,B.rn32(band_cfg.tune_freq_floor)),B.rn32(band_cfg.tune_freq_ceil))
+    upper=min(B.rn32(band_cfg.max_hz),B.div(BC.NYQUIST_FACTOR,h))
+    low=min(max(B.rn32(band_cfg.min_hz),B.mul(B.rn32(band_cfg.low_ratio),fr)),B.div(upper,BC.SPACING))
+    high=min(max(min(upper,B.mul(B.rn32(band_cfg.high_ratio),fr)),B.mul(low,BC.SPACING)),upper)
+    bc=BC.produce(band_cfg,f_ref=fr,dt=h,
+        exp_low=expw(B.mul(B.mul(BC.TWO_PI,low),h)),exp_high=expw(B.mul(B.mul(BC.TWO_PI,high),h)))
+    env=BR.step(state.band.machine,x=B.rn32(x),q_low=bc.q_low,q_high=bc.q_high)
+    i=-1 if last else 0
+    bn=BR.State(env.lowpass_values[i],env.band_values[i],env.p00_values[i],env.p01_values[i],env.p11_values[i],True)
+    fe=min(max(f,B.rn32(stats_cfg.f_min)),B.rn32(stats_cfg.f_max))
+    sea=min(max(B.div(ST.HALF,fe),ST.TIME_MIN),ST.TIME_MAX)
+    req=min(max(B.mul(B.rn32(stats_cfg.K_periods),B.mul(ST.TWO,sea)),B.rn32(stats_cfg.tau_var_min)),B.rn32(stats_cfg.tau_var_max))
+    lo=ST.HORIZON_MIN if h<=ST.HORIZON_MIN else min(h,ST.HORIZON_MAX)
+    tau=min(max(req,lo),ST.HORIZON_MAX)
+    sc=ST.coefficients(stats_cfg,frequency=f,dt=h,exp_decay=expw(B.div(h,tau)))
+    se=ST.envelope(state.stats,sc,accel=bn.band)
+    sn=ST.State(sc.frequency,sc.tau_var,se.mean_values[i],se.mean_weights[i],se.sq_values[i],se.sq_weights[i],state.samples+1)
+    return X.step(state,band_coefficients=bc,band_input=B.rn32(x),band_successor=bn,
+        stats_coefficients=sc,stats_successor=sn,bench_noise_sigma=B.rn32(bench_noise_sigma),
+        noise_sqrt_gain=sqrtw(bn.p11),accel_variance=ST.variance_outcomes(sn)[i])
+
+
+def ready_pair(*,samples=0):
+    from tools.stability.ou3_alt_contraction import finite_band_machine_ledger as L
+    def one(gain):
+        return X.State(L.State(BR.State(p11=F(gain),ready=True),samples),ST.State(samples=samples))
+    return X.Pair(one(121),one(144))
+
+
 class Tests(unittest.TestCase):
+    def test_two_sample_source_join_retains_lagged_band_frequency(self):
+        from tools.stability.ou3_alt_contraction import finite_wpe_frequency_binary32 as W
+        from tools.stability.ou3_alt_contraction import finite_wpe_runtime as WP
+        from dataclasses import replace
+        word=BASE.root_state(); runtime=word.runtime
+        c=runtime.band_cfg; sc=runtime.stats_cfg
+        first=source_step(X.initial(),band_cfg=c,stats_cfg=sc,frequency=B.rn32(F(1,5)),x=F(1,2))
+        previous=first.state
+        shadow=WP.WPEState(log_period=F(7,10),usable_period=True)
+        getter=W.getters(W.bind_log_state(shadow,B.rn32(shadow.log_period)),period_exp=2,frequency_exp=F(1,2))
+        fr=W.through_statistics(W.tuner_frequency(shadow,min_hz=B.rn32(c.tune_freq_floor),max_hz=B.rn32(c.tune_freq_ceil),
+             getter=getter,shadow_frequency=F(1,2)),sc,exact_min_hz=c.tune_freq_floor,exact_max_hz=c.tune_freq_ceil)
+        out=source_step(previous,band_cfg=c,stats_cfg=sc,frequency=F(1,2),x=F(3,4))
+        self.assertIs(X.bind_step(previous,out,frequency=fr,band_cfg=c,stats_cfg=sc,dt=F(1,200),bench_noise_sigma=0),out)
+        self.assertEqual(out.band.coefficients.f_ref,previous.stats.frequency)
+        self.assertNotEqual(out.band.coefficients.f_ref,fr.stats_stored.stored_hz)
+        self.assertEqual(out.state.stats.frequency,fr.stats_stored.stored_hz)
+        with self.assertRaisesRegex(ValueError,'history detached'):
+            X.bind_step(X.initial(),out,frequency=fr,band_cfg=c,stats_cfg=sc,dt=F(1,200),bench_noise_sigma=0)
+        with self.assertRaisesRegex(ValueError,'re-executed source'):
+            X.bind_step(previous,out,frequency=fr,band_cfg=c,stats_cfg=sc,dt=F(1,200),bench_noise_sigma=F(1,10))
+        with self.assertRaisesRegex(ValueError,'SAME rounded argument'):
+            X.bind_step(previous,out,frequency=fr,band_cfg=replace(c,low_ratio=c.low_ratio/F(2)),stats_cfg=sc,dt=F(1,200),bench_noise_sigma=0)
+
+    def test_variance_readout_retains_separate_and_contracted_subtraction(self):
+        mu=B.rn32(1-F(3,1<<24))
+        state=ST.State(mean_value=mu,mean_weight=1,sq_value=1,sq_weight=1)
+        outcomes=ST.variance_outcomes(state)
+        self.assertEqual(len(outcomes),2)
+        self.assertIn(ST.variance(state),outcomes)
+        self.assertIn(B.fma(-mu,mu,1),outcomes)
+        self.assertTrue(all(B.is_binary32(x) and x>=0 for x in outcomes))
+
+    def test_unconsumed_boundary_does_not_read_new_or_old_band_covariance(self):
+        out=X.boundary_floors(ready_pair(),bench_noise_sigma=F(1,10),required=False)
+        self.assertEqual(out,(None,None))
+        with self.assertRaisesRegex(ValueError,'unconsumed boundary'):
+            X.boundary_floors(ready_pair(),bench_noise_sigma=F(1,10),required=False,separate_sqrt_gain=11)
+
     def test_same_new_band_output_feeds_stats_variance_and_noise(self):
         s=X.initial(); x=B.rn32(F(1,2)); bc,bn,sc,sn,sg=build_successors(s,x)
         out=X.step(s,band_coefficients=bc,band_input=x,band_successor=bn,

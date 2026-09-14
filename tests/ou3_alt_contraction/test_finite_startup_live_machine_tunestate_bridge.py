@@ -34,10 +34,11 @@ def startup(pending=True):
 class Tests(unittest.TestCase):
     def test_goLive_preserves_whole_machine_history_and_pending_identity(self):
         s,entry,fresh,active,scheduler=startup(True)
-        out=X.bridge(s,entry,fresh,separate_band_noise_floor_sigma=0,fma_band_noise_floor_sigma=0,scope=SCOPE.certified_scope(),commit_cfg=BASE.cfg(),
+        out=X.bridge(s,entry,fresh,scope=SCOPE.certified_scope(),commit_cfg=BASE.cfg(),
             bench_noise_sigma=0,noise_sqrt=BAND.NoiseSqrtWitness(0),
             scheduler=scheduler,racc=RACC.State(),aw_sync=AWSYNC.State())
         self.assertIs(out.machine,s.machine)
+        self.assertIs(out.frontends,s.frontends)
         self.assertEqual(out.wpe,s.lower.wpe)
         self.assertTrue(out.live.frontend_live.tuner.pending)
         self.assertTrue(out.machine.pending)
@@ -49,25 +50,29 @@ class Tests(unittest.TestCase):
 
     def test_goLive_applies_even_when_online_pending_is_false_and_preserves_false(self):
         s,entry,fresh,active,scheduler=startup(False)
-        out=X.bridge(s,entry,fresh,separate_band_noise_floor_sigma=0,fma_band_noise_floor_sigma=0,scope=SCOPE.certified_scope(),commit_cfg=BASE.cfg(),
+        out=X.bridge(s,entry,fresh,scope=SCOPE.certified_scope(),commit_cfg=BASE.cfg(),
             bench_noise_sigma=0,noise_sqrt=BAND.NoiseSqrtWitness(0),
             scheduler=scheduler,racc=RACC.State(),aw_sync=AWSYNC.State())
         self.assertFalse(out.machine.pending)
         self.assertFalse(out.live.frontend_live.tuner.pending)
         self.assertIsNotNone(out.separate_commit); self.assertIsNotNone(out.fma_commit)
 
-    def test_goLive_requires_explicit_mode_floors_instead_of_shadow_fallback(self):
+    def test_goLive_ready_band_requires_sqrt_of_its_own_covariance(self):
         s,entry,fresh,active,scheduler=startup(False)
-        with self.assertRaisesRegex(ValueError,'each compiler track'):
+        from test_finite_machine_frontend_sigma_source import ready_pair
+        s=replace(s,frontends=ready_pair())
+        with self.assertRaisesRegex(ValueError,'requires sqrt'):
             X.bridge(s,entry,fresh,scope=SCOPE.certified_scope(),commit_cfg=BASE.cfg(),
                 bench_noise_sigma=0,noise_sqrt=BAND.NoiseSqrtWitness(0),
                 scheduler=scheduler,racc=RACC.State(),aw_sync=AWSYNC.State())
 
     def test_goLive_retains_roundoff_and_distinct_mode_noise_floors(self):
         s,entry,fresh,active,scheduler=startup(False)
-        sb=B.rn32(F(11,10)); fb=B.rn32(F(6,5))
-        out=X.bridge(s,entry,fresh,separate_band_noise_floor_sigma=sb,fma_band_noise_floor_sigma=fb,
-            scope=SCOPE.certified_scope(),commit_cfg=BASE.cfg(),bench_noise_sigma=0,
+        from test_finite_machine_frontend_sigma_source import ready_pair
+        s=replace(s,frontends=ready_pair())
+        bench=B.rn32(F(1,10)); sb=B.mul(bench,11); fb=B.mul(bench,12)
+        out=X.bridge(s,entry,fresh,separate_noise_sqrt_gain=11,fma_noise_sqrt_gain=12,
+            scope=SCOPE.certified_scope(),commit_cfg=BASE.cfg(),bench_noise_sigma=bench,
             noise_sqrt=BAND.NoiseSqrtWitness(0),scheduler=scheduler,racc=RACC.State(),aw_sync=AWSYNC.State())
         self.assertIs(out.machine,s.machine); self.assertFalse(out.machine.pending)
         self.assertEqual(out.separate_active.Sigma_aw[2][2],B.mul(sb,sb))

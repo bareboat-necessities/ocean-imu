@@ -142,6 +142,46 @@ def tuner_frequency(shadow:WPE.WPEState, *, min_hz, max_hz, getter:GetterResult|
     return TunerFrequencyResult(shadow,'prior',None,PRIOR_EXACT,ec,stored,F(stored.stored_hz)-ec)
 
 
+@dataclass(frozen=True)
+class StatisticsFrequencyResult:
+    """WPE/prior -> statistics store -> outer tuning clamp (two operations)."""
+    external:TunerFrequencyResult
+    stats_cfg:object
+    exact_tune_bounds:tuple
+    stats_stored:STORE.StoredFrequency
+    stored:STORE.StoredFrequency
+    exact_clamped_frequency:F
+    machine_minus_shadow:F
+    def __post_init__(self):
+        from tools.stability.ou3_alt_contraction import finite_band_variance_runtime as R
+        if not isinstance(self.external,TunerFrequencyResult) or not isinstance(self.stats_cfg,R.StatsConfig):
+            raise TypeError('WPE frequency relation and carried StatsConfig required')
+        q=self.external; c=self.stats_cfg
+        lo,hi=map(F,self.exact_tune_bounds)
+        object.__setattr__(self,'exact_tune_bounds',(lo,hi))
+        if lo<=0 or hi<lo or (B.rn32(lo),B.rn32(hi))!=(q.stored.min_hz,q.stored.max_hz):
+            raise ValueError('exact and machine outer tuning bounds detached')
+        st=STORE.store(q.stored.input_hz,B.rn32(c.f_min),B.rn32(c.f_max))
+        final=STORE.store(st.stored_hz,q.stored.min_hz,q.stored.max_hz)
+        exact=clamp(clamp(q.exact_shadow_frequency,c.f_min,c.f_max),lo,hi)
+        if self.stats_stored!=st or self.stored!=final:
+            raise ValueError('frequency path detached from ordered statistics and tuning clamps')
+        if F(self.exact_clamped_frequency)!=exact or F(self.machine_minus_shadow)!=final.stored_hz-exact:
+            raise ValueError('two-clamp frequency supply detached from same shadow/machine inputs')
+
+
+def through_statistics(external:TunerFrequencyResult,stats_cfg,*,exact_min_hz,exact_max_hz):
+    """Do not collapse the tuner statistics bounds into the outer tune bounds."""
+    from tools.stability.ou3_alt_contraction import finite_band_variance_runtime as R
+    if not isinstance(external,TunerFrequencyResult) or not isinstance(stats_cfg,R.StatsConfig):
+        raise TypeError('WPE frequency relation and carried StatsConfig required')
+    st=STORE.store(external.stored.input_hz,B.rn32(stats_cfg.f_min),B.rn32(stats_cfg.f_max))
+    out=STORE.store(st.stored_hz,external.stored.min_hz,external.stored.max_hz)
+    lo,hi=F(exact_min_hz),F(exact_max_hz)
+    exact=clamp(clamp(external.exact_shadow_frequency,stats_cfg.f_min,stats_cfg.f_max),lo,hi)
+    return StatisticsFrequencyResult(external,stats_cfg,(lo,hi),st,out,exact,out.stored_hz-exact)
+
+
 def _source_shape_matches():
     s=SOURCE.read_text(); w=WRAPPER.read_text()
     return all(n in s for n in (
@@ -164,6 +204,8 @@ def readiness():
       'preusable_WPE_uses_literal_binary32_0p2_prior_without_exp':True,
       'usable_WPE_frequency_getter_bound_to_sample_entry_log_state':True,
       'machine_minus_exact_tuner_frequency_supply_exposed':True,
+      'statistics_store_and_outer_tuning_clamps_retained_in_order':True,
+      'exact_outer_bounds_not_identified_with_compiled_binary32_bounds':True,
       'WPE_frequency_getter_to_tuner_binary32_store_topology_closed': bool(
           st['frequency_clamp_and_store_exact_binary32'] and st['getFrequencyHz_is_identity_on_stored_binary32']),
       'WPE_binary32_log_period_production_closed':False,

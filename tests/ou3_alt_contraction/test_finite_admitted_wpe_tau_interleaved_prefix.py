@@ -64,7 +64,7 @@ class Tests(unittest.TestCase):
         b=base_state(); s=X.begin(b,machine_wpe_for(b)); exact=TAUJOIN._entry_wpe(s.base)
         self.assertFalse(exact.usable_period)
         sf,ff=X._frequency_sources(s,separate_getter=None,fma_getter=None,shadow_frequency=None)
-        self.assertEqual(sf.branch,'prior'); self.assertEqual(ff.branch,'prior')
+        self.assertEqual(sf.external.branch,'prior'); self.assertEqual(ff.external.branch,'prior')
         self.assertEqual(sf.stored.stored_hz,WPEF.PRIOR); self.assertEqual(ff.stored.stored_hz,WPEF.PRIOR)
         # Full deployment SpectralMSE now uses an interval exact-root relation;
         # this legacy exact-rational component fixture intentionally does not.

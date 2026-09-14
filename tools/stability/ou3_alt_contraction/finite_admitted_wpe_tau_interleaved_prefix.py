@@ -22,6 +22,7 @@ must not promote ALT gates or storage search.
 from __future__ import annotations
 from dataclasses import dataclass
 from fractions import Fraction as F
+from tools.stability.ou3_alt_contraction import finite_binary32_arithmetic as B
 
 from tools.stability.ou3_alt_contraction import finite_admitted_tau_interleaved_prefix as TAUJOIN
 from tools.stability.ou3_alt_contraction import finite_tuner_candidate as CAND
@@ -67,6 +68,8 @@ class ImuResult:
     wpe_step:WPELOG.StepResult
     separate_supply:ModeSupply
     fma_supply:ModeSupply
+    separate_frequency:WPEF.StatisticsFrequencyResult
+    fma_frequency:WPEF.StatisticsFrequencyResult
 
 
 @dataclass(frozen=True)
@@ -105,13 +108,12 @@ def _frequency_sources(state:State,*,separate_getter,fma_getter,shadow_frequency
             raise ValueError('separate WPE frequency getter detached from separate compiler log track')
         if not isinstance(fma_getter,WPEF.GetterResult) or fma_getter.log!=fl:
             raise ValueError('FMA WPE frequency getter detached from FMA compiler log track')
-        sf=WPEF.tuner_frequency(exact,min_hz=lo,max_hz=hi,getter=separate_getter,shadow_frequency=shadow_frequency)
-        ff=WPEF.tuner_frequency(exact,min_hz=lo,max_hz=hi,getter=fma_getter,shadow_frequency=shadow_frequency)
-        return sf,ff
+        sf=WPEF.tuner_frequency(exact,min_hz=B.rn32(lo),max_hz=B.rn32(hi),getter=separate_getter,shadow_frequency=shadow_frequency)
+        ff=WPEF.tuner_frequency(exact,min_hz=B.rn32(lo),max_hz=B.rn32(hi),getter=fma_getter,shadow_frequency=shadow_frequency)
+        return WPEF.through_statistics(sf,runtime.stats_cfg,exact_min_hz=lo,exact_max_hz=hi),WPEF.through_statistics(ff,runtime.stats_cfg,exact_min_hz=lo,exact_max_hz=hi)
     if separate_getter is not None or fma_getter is not None or shadow_frequency is not None:
         raise ValueError('preusable WPE branch consumes no getter/shadow frequency')
-    return (WPEF.tuner_frequency(exact,min_hz=lo,max_hz=hi),
-            WPEF.tuner_frequency(exact,min_hz=lo,max_hz=hi))
+    return tuple(WPEF.through_statistics(WPEF.tuner_frequency(exact,min_hz=B.rn32(lo),max_hz=B.rn32(hi)),runtime.stats_cfg,exact_min_hz=lo,exact_max_hz=hi) for _ in range(2))
 
 
 def _advance_wpe_machine(state:State,suffix,*,separate_log_witness,fma_log_witness):
@@ -148,7 +150,7 @@ def imu_step(state:State,*,separate_getter=None,fma_getter=None,shadow_frequency
     suffix=_suffix(out)
     wstep=_advance_wpe_machine(state,suffix,separate_log_witness=separate_log_witness,fma_log_witness=fma_log_witness)
     base_next=TAUJOIN.State(nxt_prefix,tau.state,state.base.live_entry_tau_updates)
-    return ImuResult(State(base_next,wstep.state,state.live_entry_wpe_samples),out,tau,wstep,ss,fs)
+    return ImuResult(State(base_next,wstep.state,state.live_entry_wpe_samples),out,tau,wstep,ss,fs,sf,ff)
 
 
 def mag_step(state:State,**kwargs):

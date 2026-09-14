@@ -27,7 +27,8 @@ from tools.stability.ou3_alt_contraction import finite_source_continuation as SO
 
 QUALIFICATION='OU3_ALT_ADMITTED_MACHINE_PREDICTION_SUPPLY_INTERLEAVER_V1'
 ROOT_KEYS=(
- 'ou_alpha','ou_em1','bias_phi','bias_em1_2','angular_full','angular_half',
+ 'ou_alpha','ou_em1','boundary_noise_sqrt','rs_sqrt_scale',
+ 'bias_phi','bias_em1_2','angular_full','angular_half',
  'qaxis_marginal_exp','qaxis_final_exp','qaxis_marginal_psd','qaxis_final_psd')
 
 

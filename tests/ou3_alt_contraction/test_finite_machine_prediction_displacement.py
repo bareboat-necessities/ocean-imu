@@ -50,7 +50,7 @@ class Tests(unittest.TestCase):
         # Changing the bias root type/identity must be rejected before paired
         # prediction comparison.  The comparison is reserved for tuner-only
         # coefficient displacement.
-        bad=replace(m,bias=replace(m.bias,tau_b=m.bias.tau_b+1))
+        bad=replace(m,bias=replace(m.bias,tau_b=m.bias.tau_b+1,em1_2=None))
         with self.assertRaisesRegex(ValueError,'BA-root discrepancy'):
             X.compare(s.live.live.live.mekf,segment,raw,e,bad,Qbase=s.runtime.Qbase)
 

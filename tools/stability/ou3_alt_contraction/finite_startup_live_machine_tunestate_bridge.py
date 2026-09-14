@@ -24,6 +24,8 @@ from tools.stability.ou3_alt_contraction import finite_tuner_machine_boundary as
 from tools.stability.ou3_alt_contraction import finite_runtime_parameters as ACTIVE
 from tools.stability.ou3_alt_contraction import finite_wpe_log_binary32 as WPE
 
+from tools.stability.ou3_alt_contraction import finite_machine_frontend_sigma_source as MF
+
 QUALIFICATION='OU3_ALT_STARTUP_LIVE_MACHINE_TUNESTATE_BRIDGE_V1'
 
 
@@ -38,6 +40,7 @@ class Result:
     fma_active:ACTIVE.ActiveParameters
     startup:START.State
     arithmetic:BOUND.Boundary
+    noise_floors:tuple
     qualification:str=QUALIFICATION
     def __post_init__(self):
         if not isinstance(self.live,LIVE.Result) or not isinstance(self.startup,START.State):
@@ -55,6 +58,7 @@ class Result:
             raise ValueError('goLive must apply Live R_S and synchronize a_w')
         if (self.separate_commit,self.fma_commit)!=(self.arithmetic.separate_commit,self.arithmetic.fma_commit):
             raise ValueError('goLive commits detached from binary32 transaction')
+        MF.require_boundary(self.startup.frontends,self.noise_floors,self.arithmetic)
         if self.qualification!=QUALIFICATION: raise ValueError('wrong whole-machine goLive qualification')
         if self.live.frontend_before!=self.startup.lower.frontend:
             raise ValueError('goLive result detached from whole-machine startup frontend')
@@ -67,9 +71,12 @@ class Result:
         if self.fma_active!=ACTIVE.ActiveParameters.from_commit(self.fma_commit):
             raise ValueError('FMA active parameters detached from goLive machine commit')
 
+    @property
+    def frontends(self): return self.startup.frontends
+
 
 def bridge(startup:START.State,entry,fresh,*,
-           separate_band_noise_floor_sigma=None,fma_band_noise_floor_sigma=None,
+           separate_noise_sqrt_gain=None,fma_noise_sqrt_gain=None,
            **kwargs):
     if not isinstance(startup,START.State): raise TypeError('whole machine startup product required')
     if startup.lower.frontend.tuner.stage!='TunerReady':
@@ -82,13 +89,15 @@ def bridge(startup:START.State,entry,fresh,*,
     # Force only the local commit selector: goLive applies even if the real
     # online pending bit is false.  Return the ORIGINAL machine state below;
     # its pending flag and all scalar histories cross goLive by identity.
+    floors=MF.boundary_floors(startup.frontends,bench_noise_sigma=kwargs['bench_noise_sigma'],required=True,
+        separate_sqrt_gain=separate_noise_sqrt_gain,fma_sqrt_gain=fma_noise_sqrt_gain)
     arithmetic=BOUND.imu_boundary(replace(startup.machine,pending=True),cfg,live=True,
-        separate_band_noise_floor_sigma=separate_band_noise_floor_sigma,
-        fma_band_noise_floor_sigma=fma_band_noise_floor_sigma,sync_covariance=True)
+        separate_band_noise_floor_sigma=floors[0].noise_sigma,
+        fma_band_noise_floor_sigma=floors[1].noise_sigma,sync_covariance=True)
     sc=arithmetic.separate_commit; fc=arithmetic.fma_commit
     return Result(exact,startup.machine,startup.lower.wpe,sc,fc,
                   ACTIVE.ActiveParameters.from_commit(sc),ACTIVE.ActiveParameters.from_commit(fc),
-                  startup,arithmetic)
+                  startup,arithmetic,floors)
 
 
 
@@ -101,6 +110,8 @@ def readiness():
       'goLive_unconditionally_commits_each_global_compiler_whole_TuneState':True,
       'machine_goLive_commits_synchronize_aw_covariance_like_shipping':True,
       'goLive_applied_parameters_come_from_binary32_commit_graph':True,
+      'goLive_preserves_startup_machine_band_stats_histories':True,
+      'goLive_noise_floors_derived_from_startup_machine_band':True,
       'exact_frontend_memory_and_control_goLive_bridge_retained':l['Mahony_WPE_band_stats_stillness_guard_memory_preserved_across_goLive'],
       'goLive_carries_whole_machine_TuneState_product':True,
       'machine_active_parameters_identified_with_exact_shadow_active_parameters':False,

@@ -15,6 +15,21 @@ def sqrtw(x):
 
 
 class Tests(unittest.TestCase):
+    def test_ready_zero_gain_has_exact_zero_sqrt(self):
+        band=L.State(C.State(p11=0,ready=True),3)
+        out=X.evaluate(band,bench_sigma=B.rn32(F(3,100)),sqrt_gain=0)
+        self.assertEqual(out.noise_sigma,0)
+        with self.assertRaisesRegex(ValueError,'zero stored p11'):
+            X.evaluate(band,bench_sigma=0,sqrt_gain=1)
+
+    def test_constructor_cannot_bypass_sqrt_ancestry_when_bench_is_zero(self):
+        from dataclasses import replace
+        band=L.State(C.State(p11=F(1,4),ready=True),3)
+        out=X.evaluate(band,bench_sigma=0,sqrt_gain=F(1,2))
+        # bench=0 makes the multiplication check alone accept ANY sqrt.
+        with self.assertRaisesRegex(ValueError,'sqrt witness detached'):
+            replace(out,sqrt_gain=F(3,4))
+
     def test_unready_band_returns_bench_sigma_exactly(self):
         s=L.initial(); bench=B.rn32(F(3,100))
         out=X.evaluate(s,bench_sigma=bench)

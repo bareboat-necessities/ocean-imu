@@ -15,6 +15,8 @@ import test_finite_source_bound_live_word as LBASE
 import test_finite_admitted_source_imu_word as IBASE
 import test_finite_source_bound_prediction_word as PBASE
 import test_finite_tuner_machine_candidate_step as MBASE
+from tools.stability.ou3_alt_contraction import finite_machine_frontend_sigma_source as MF
+from test_finite_machine_frontend_sigma_source import source_step, ready_pair
 from tools.stability.ou3_alt_contraction import finite_tuner_candidate as CAND
 from tools.stability.ou3_alt_contraction import finite_tuner_projection_bridge as PROJECTION
 from tools.stability.ou3_alt_contraction import finite_tuner_sigma_binary32 as SM
@@ -41,7 +43,7 @@ def state(*,usable=False,pending=False):
     # source. Compile its carried sigma scale and maximum consistently.
     c=b.base.prefix.prefix.live.live_word.runtime.candidate_cfg
     d=replace(dcfg(),sigma_coeff=B.rn32(c.sigma_coeff),max_sigma=B.rn32(c.max_sigma))
-    return X.begin(b,m,d,separate_active=exact.active,fma_active=exact.active)
+    return X.begin(b,m,d,separate_active=exact.active,fma_active=exact.active,frontends=MF.initial_pair())
 
 
 def event_operands(s):
@@ -63,13 +65,23 @@ def event_operands(s):
     sample=PROJECTION.sample_from_projection(suffix.band,suffix.stillness,
                                              sigma_wave_sqrt=kwargs['sigma_wave_sqrt'])
     assert sample.accel_variance==1 and sample.band_noise_sigma==0 and sample.still
+    runtime=s.base.base.prefix.prefix.live.live_word.runtime
     st=B.rn32(sample.still_time); lo,hi=SM.exp_minus_enclosure(st)
-    atten=B.rn32((lo+hi)/2); lo,hi=ROOT.sqrt_enclosure(atten)
-    sm=SM.target(s.deployment_cfg,var_ready=True,accel_variance=1,
-        band_noise_sigma=0,still=True,still_time=st,
-        still_exp_result=atten,sqrt_result=B.rn32((lo+hi)/2))
-    machine=dict(separate_sigma_machine=sm,fma_sigma_machine=sm)
+    atten=B.rn32((lo+hi)/2)
+    machine={}
+    for mode,fr in (('separate',lower.separate_frequency),('fma',lower.fma_frequency)):
+        source=source_step(getattr(s.frontends,mode),band_cfg=runtime.band_cfg,stats_cfg=runtime.stats_cfg,
+            frequency=fr.external.stored.input_hz,bench_noise_sigma=runtime.bench_noise_sigma,last=(mode=='fma'))
+        vn=B.mul(source.band_noise_sigma,source.band_noise_sigma)
+        pre=max(F(0),B.sub(source.accel_variance,vn))
+        var=max(SM.VAR_FLOOR,B.mul(pre,atten))
+        lo,hi=ROOT.sqrt_enclosure(var)
+        sm=SM.target(s.deployment_cfg,var_ready=source.state.stats.var_ready,accel_variance=source.accel_variance,
+            band_noise_sigma=source.band_noise_sigma,still=True,still_time=st,
+            still_exp_result=atten,sqrt_result=B.rn32((lo+hi)/2))
+        machine[mode+'_sigma_machine']=sm; machine[mode+'_frontend']=source
     for mode,step in (('separate',lower.tau_step.separate_step),('fma',lower.tau_step.fma_step)):
+        sm=machine[mode+'_sigma_machine']
         machine[mode+'_spectral_pow']=MBASE.spectral_pow_for(step.tau_target,sm.sigma_target,s.deployment_cfg)
         machine[mode+'_spectral_sqrt']=MBASE.spectral_sqrt_for(step.tau_target,s.deployment_cfg)
         machine[mode+'_rs_exp_decay']=MBASE.rs_exp(s.deployment_cfg,step.tau_target)
@@ -124,18 +136,28 @@ class Tests(unittest.TestCase):
         self.assertEqual(out.separate_sigma_join.exact_target.sigma_target,1)
 
     def test_executed_Live_pending_event_installs_rounded_mode_outputs(self):
-        s=state(usable=True,pending=True); kwargs,machine=event_operands(s)
-        sb,fb=B.rn32(F(3,10)),B.rn32(F(2,5))
+        s=state(usable=True,pending=True)
+        # Scalar boundary fixture with different carried machine gains; not an
+        # assertion these sample-zero states arise from real startup.
+        s=replace(s,frontends=ready_pair())
+        prefix=s.base.base.prefix; word=prefix.prefix.live.live_word
+        bench=B.rn32(F(1,10))
+        word=replace(word,runtime=replace(word.runtime,boundary_bench_noise_sigma=bench,bench_noise_sigma=bench))
+        admitted=replace(prefix.prefix.live,live_word=word)
+        prefix=replace(prefix,prefix=replace(prefix.prefix,live=admitted))
+        s=replace(s,base=replace(s.base,base=replace(s.base.base,prefix=prefix)))
+        kwargs,machine=event_operands(s)
+        sb,fb=B.mul(bench,11),B.mul(bench,12)
         out=X.imu_step(s,**machine,**kwargs,
-            separate_boundary_band_noise_floor_sigma=sb,
-            fma_boundary_band_noise_floor_sigma=fb)
+            separate_boundary_noise_sqrt_gain=11,fma_boundary_noise_sqrt_gain=12)
         self.assertTrue(out.machine_boundary.consumed)
         self.assertIs(out.machine_boundary.arithmetic.before,s.machine)
         self.assertEqual(out.state.separate_active.Sigma_aw[2][2],B.mul(sb,sb))
         self.assertEqual(out.state.fma_active.Sigma_aw[2][2],B.mul(fb,fb))
         self.assertNotEqual(out.state.separate_active.Sigma_aw[2][2],sb*sb)
         self.assertNotEqual(out.state.separate_active,out.state.fma_active)
-        self.assertEqual(out.state.machine.tau.updates,s.machine.tau.updates+1)
+        self.assertIs(out.noise_floors[0].band,s.frontends.separate.band)
+        self.assertEqual(out.state.frontends.samples,s.frontends.samples+1)
         self.assertEqual(out.state.machine.pending,X._entry_live(out.state.base).tuner.pending)
 
     def test_readiness_attaches_full_tuner_state_but_keeps_live_coefficients_open(self):

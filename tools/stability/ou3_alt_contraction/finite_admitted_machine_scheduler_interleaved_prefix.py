@@ -52,7 +52,7 @@ class State:
             raise ValueError('nonnegative integer scheduler counters required')
         self.base.base.separate_active.require_scheduler(self.separate_scheduler)
         self.base.base.fma_active.require_scheduler(self.fma_scheduler)
-        if LOWER._imu_steps(self.base)-self.entry_imu_steps!=self.scheduler_steps:
+        if LOWER._imu_steps(self.base.base)-self.entry_imu_steps!=self.scheduler_steps:
             raise ValueError('machine scheduler-step count detached from admitted IMU count')
 
 
@@ -101,7 +101,7 @@ class CompleteWord:
 
 def begin(base:LOWER.State,separate_scheduler:POST.Scheduler,fma_scheduler:POST.Scheduler):
     if not isinstance(base,LOWER.State): raise TypeError('admitted machine-prediction state required')
-    return State(base,separate_scheduler,fma_scheduler,LOWER._imu_steps(base),0)
+    return State(base,separate_scheduler,fma_scheduler,LOWER._imu_steps(base.base),0)
 
 
 def begin_from_goLive(base:LOWER.State,go:GO.Result,*,scheduler_before:POST.Scheduler,

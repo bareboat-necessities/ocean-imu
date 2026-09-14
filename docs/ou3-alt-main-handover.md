@@ -10,20 +10,44 @@ Continue an explicitly named active PR; after merge, start a new PR from latest
 
 ## Current checkpoint
 
-The whole-machine TuneState pending and goLive boundaries use
-`finite_tuner_machine_boundary_commit`, not the real-arithmetic commit formula.
-For each global compiler history, the runtime adapter packages the already
-rounded tau command, cadence, stationary-a_w covariance squares and Live R_S
-outputs. It requires distinct explicit machine band-noise-floor inputs; it
-never substitutes the exact shadow's floor. Ordinary boundaries clear pending
-without advancing candidate ledgers; goLive applies the transaction even with
-pending false while preserving the original pending bit and all histories.
-The admitted tau/WPE/TuneState layers share one typed executed-Live accessor,
-and sigma extraction uses the same tracker-free stillness projection as the
-actual exact candidate. Both sigma scale and maximum are checked after binary32
-compilation. Fifty-eight targeted tests pass; source ancestry for the machine
-floors, native setter arithmetic, higher scheduler/supply wrapper errors and
-source-uniform coefficient/supply bounds remain open. No storage is authorized.
+The strong startup/goLive/Live product carries a persistent machine adaptive
+band and DebiasedEMA statistics state for each tuner compiler track. Cold
+samples advance those states although tau/sigma/R_S candidates remain held;
+MAG/HOLD and goLive preserve them by identity. Live entry consumes the startup
+histories, not a newly synthesized band/statistics ledger.
+
+At sample entry, a pending commit reads each carried band's p11 and the same
+compiled bench sigma. After the band step, the new band output drives the
+statistics update, and the new variance/noise readouts drive sigma. The two
+readout times must not be exchanged. The scalar transaction still uses
+`finite_tuner_machine_boundary_commit` and retains rounded tau, cadence,
+stationary covariance squares and R_S. Ordinary boundaries clear pending;
+goLive commits unconditionally but preserves the original pending bit.
+
+The frequency graph retains both distinct clamps:
+
+`WPE/prior -> statistics clamp/store -> outer tuning clamp -> tau target`.
+
+Band corners instead read the previous statistics frequency, falling back to
+the sample-entry WPE/prior when unavailable. Exact bounds remain distinct from
+their compiled binary32 values. The statistics variance readout retains both
+separate multiply/subtract and contracted FMA possibilities. Ready p11=0 has
+sqrt=0; a zero bench sigma does not waive sqrt ancestry checks.
+
+Prediction roots derive the same pending transaction that the Live prefix
+executes before prediction. They may not use stale pre-boundary tau/Sigma.
+Executed regressions carry a changed pending covariance through both machine
+prediction-root families, the per-track scheduler and the full joint24/21x21
+prediction-displacement relation. The higher wrappers count the actual lower
+IMU ordinal. No second physical segment or Live-origin reset is introduced.
+
+The 938-test finite-map selection passes locally. Native build validation is
+blocked by missing Eigen headers in this environment; this is not a full CI or
+native correspondence PASS. The represented arithmetic relations still take
+conditional libm/contraction witnesses. Machine vertical-input and stillness
+production, compiler/nonfinite correspondence, source-uniform supply bounds,
+and post-prediction S/accelerometer propagation remain open. No storage search
+or stability promotion is authorized.
 
 ALT excludes wind heel: `wind_heel_rad_==0` from construction onward and no
 `update_wind_heel()` events. Shipping is unchanged. The product composer also
@@ -100,23 +124,24 @@ search.
 
 ## Next work
 
-Do not start storage/rho search. The primary physical-history -> finite-word
-restriction is now closed without a common generator assumption. The immediate
-blocker is to bind the remaining physical frequency relation, full BIAS
-generating histories, and finite estimator-owned coefficient/product graphs
-(frontend/tuner/guard/Racc, prediction Q/F, S service, accel/mag
-innovation/K/Joseph/reset decisions) to that same admitted history at every
-literal branch. The magnetic sample-zero endpoint and all later represented
-magnetic endpoints already consume the same carried root/reference object. Then
-close startup/ungauged and deployment-arithmetic paths.
+Do not start storage/rho search. The next finite-event obligations are to bind
+the machine band's vertical input and the sigma stillness operands to the same
+persistent guarded/private-Mahony machine history, then propagate the existing
+joint24/21x21 prediction displacement through pending covariance floors,
+per-track due/not-due S service, actual machine R_S, accelerometer correction
+and reset. Retain both track histories and all cross-covariances.
 
-For deployment correspondence, finish sqrt/acos/asin/atan2/AngleAxis and
-normalization/cutoff/nonfinite branches, floating clocks, Eigen decisions, and
-the finite-width signed magnetic counter. Only after the finite product graph is
-source-uniform and `assert_finite_storage_master` accepts it may common joint24
-storage search begin, followed by every-prefix retention and the ultimate bound.
-Traces, random seeds, frozen gains, independent boxes, covariance-consistency
-entry assumptions and convenient error sets do not replace these obligations.
+The WPE raw-period/log/exp, band/statistics/tuner libm, Q-axis operation-level
+roundoff, Eigen branches and nonfinite/threshold correspondence remain native
+deployment obligations. Bound their supplies on the admitted BRMM+BIAS+ISS
+family; do not replace same-history products by independent parameter boxes or
+use a successful component regression as all-history membership.
 
-`ALT_LIVE_PASS=false`, `ALT_STARTUP_PASS=false`, `ALT_END_TO_END_PASS=false`.
-No certified rho, storage basin, ultimate bound or end-to-end theorem is claimed.
+Universal startup capture, every-prefix retention, compatible joint24 storage
+and an ultimate bound remain open. Indefinite machine execution additionally
+has the retained floating-clock stall and unchecked signed magnetic-counter
+lifetime obstructions. Tiling finite words must preserve the one-time Live/S
+origin and all frontend/covariance/bias history; no wordwise reinitialization.
+
+`ALT_LIVE_PASS=false`, `ALT_STARTUP_PASS=false`, `ALT_END_TO_END_PASS=false`,
+`storage_search_allowed=false`.

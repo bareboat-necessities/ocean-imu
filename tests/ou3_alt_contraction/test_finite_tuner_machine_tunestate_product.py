@@ -94,17 +94,17 @@ class Tests(unittest.TestCase):
 
     def test_cross_mode_sigma_splice_is_rejected(self):
         out=build_sample(X.initial())
-        crossed=replace(out.sigma,separate=out.sigma.fma,fma=out.sigma.separate)
-        with self.assertRaisesRegex(ValueError,'compiler modes crossed|common-alpha source'):
+        with self.assertRaisesRegex(ValueError,'sigma compiler histories crossed'):
+            crossed=replace(out.sigma,separate=out.sigma.fma,fma=out.sigma.separate)
             X.compose_after_sample(X.initial(),tau=out.tau,sigma=crossed,rs=out.rs,pending_after=True)
 
     def test_rs_sigma_target_splice_is_rejected(self):
         out=build_sample(X.initial())
         bad_sep=replace(out.rs.separate.target.target,sigma_target=B.rn32(F(7,10)))
-        bad_join=replace(out.rs.separate.target,target=bad_sep)
-        bad_track=replace(out.rs.separate,target=bad_join)
-        bad_rs=replace(out.rs,separate=bad_track)
-        with self.assertRaisesRegex(ValueError,'SpectralMSE sigma target'):
+        with self.assertRaisesRegex(ValueError,'exact target detached from joined candidate'):
+            bad_join=replace(out.rs.separate.target,target=bad_sep)
+            bad_track=replace(out.rs.separate,target=bad_join)
+            bad_rs=replace(out.rs,separate=bad_track)
             X.compose_after_sample(X.initial(),tau=out.tau,sigma=out.sigma,rs=bad_rs,pending_after=True)
 
     def test_readiness_closes_joint_persistence_not_boundary_or_master(self):

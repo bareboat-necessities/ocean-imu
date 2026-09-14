@@ -20,7 +20,25 @@ def commit_cfg():
                                F(3,20),100,F(4,5),F(6,5),F(7,5))
 
 
+def cold_machine(s):
+    from test_finite_machine_frontend_sigma_source import source_step
+    k=BASE.cold_kwargs()
+    a=dict(band_cfg=k['band_cfg'],stats_cfg=k['stats_cfg'],frequency=B.rn32(F(1,5)),dt=RAW.DT,bench_noise_sigma=k['bench_noise_sigma'])
+    return dict(separate_frontend=source_step(s.frontends.separate,**a),fma_frontend=source_step(s.frontends.fma,**a,last=True))
+
+
 class Tests(unittest.TestCase):
+    def test_consecutive_Cold_samples_do_not_restart_machine_frontend(self):
+        s=X.initial(BASE.construction_frontend())
+        first=X.step(s,RAW.packet(),dt=RAW.DT,deployment_cfg=dcfg(),guard_cfg=G.Config(),**cold_machine(s),**BASE.cold_kwargs())
+        second=X.step(first.state,RAW.packet(),dt=RAW.DT,deployment_cfg=dcfg(),guard_cfg=G.Config(),
+            guard_decay=G.DecayWitness(1,1,0,0),guard_rms=G.RmsWitness(0),**cold_machine(first.state),**BASE.cold_kwargs())
+        self.assertEqual(second.state.frontends.samples,2)
+        self.assertIs(second.separate_frontend.before,first.state.frontends.separate)
+        self.assertEqual(second.state.machine,s.machine)
+        with self.assertRaisesRegex(ValueError,'sample count detached'):
+            replace(second.state,frontends=s.frontends)
+
     def test_construction_roots_whole_machine_product_without_synthetic_state(self):
         s=X.initial(BASE.construction_frontend())
         self.assertEqual(s.machine,PRODUCT.initial())
@@ -30,9 +48,11 @@ class Tests(unittest.TestCase):
 
     def test_cold_sample_advances_lower_WPE_but_holds_whole_TuneState(self):
         s=X.initial(BASE.construction_frontend()); before=s.machine
-        out=X.step(s,RAW.packet(),dt=RAW.DT,deployment_cfg=dcfg(),guard_cfg=G.Config(),**BASE.cold_kwargs())
+        out=X.step(s,RAW.packet(),dt=RAW.DT,deployment_cfg=dcfg(),guard_cfg=G.Config(),**cold_machine(s),**BASE.cold_kwargs())
         self.assertEqual(out.state.machine,before)
         self.assertEqual(out.state.lower.wpe.samples,1)
+        self.assertEqual(out.state.frontends.samples,1)
+        self.assertTrue(out.state.frontends.separate.band.machine.ready)
         self.assertIsNone(out.machine)
         self.assertIsNone(out.separate_sigma_join); self.assertIsNone(out.fma_sigma_join)
 
@@ -40,7 +60,7 @@ class Tests(unittest.TestCase):
         s=X.initial(BASE.construction_frontend())
         with self.assertRaisesRegex(ValueError,'consumes no sigma/R_S machine witnesses'):
             X.step(s,RAW.packet(),dt=RAW.DT,deployment_cfg=dcfg(),guard_cfg=G.Config(),
-                   separate_spectral_pow=B.rn32(1),**BASE.cold_kwargs())
+                   separate_spectral_pow=B.rn32(1),**cold_machine(s),**BASE.cold_kwargs())
 
     def test_product_state_rejects_pending_or_tau_detachment(self):
         s=X.initial(BASE.construction_frontend())
@@ -60,10 +80,12 @@ class Tests(unittest.TestCase):
         from test_finite_startup_live_machine_tunestate_bridge import startup
         from tools.stability.ou3_alt_contraction import finite_band_variance_runtime as BAND
         s,*_=startup(True)
-        sb,fb=B.rn32(F(11,10)),B.rn32(F(6,5))
-        out=X.boundary(s,commit_cfg(),bench_noise_sigma=0,
+        from test_finite_machine_frontend_sigma_source import ready_pair
+        s=replace(s,frontends=ready_pair())
+        bench=B.rn32(F(1,10)); sb,fb=B.mul(bench,11),B.mul(bench,12)
+        out=X.boundary(s,commit_cfg(),bench_noise_sigma=bench,
             exact_noise_sqrt=BAND.NoiseSqrtWitness(0),
-            separate_band_noise_floor_sigma=sb,fma_band_noise_floor_sigma=fb)
+            separate_noise_sqrt_gain=11,fma_noise_sqrt_gain=12)
         self.assertFalse(out.state.machine.pending)
         self.assertFalse(out.state.lower.frontend.tuner.pending)
         self.assertIs(out.state.machine.tau,s.machine.tau)

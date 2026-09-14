@@ -27,7 +27,8 @@ does not yet inject that displacement into prediction/measurement coefficients.
 Storage therefore remains hard blocked.
 """
 from __future__ import annotations
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from tools.stability.ou3_alt_contraction import finite_binary32_arithmetic as B
 
 from tools.stability.ou3_alt_contraction import finite_admitted_wpe_tau_interleaved_prefix as LOWER
 from tools.stability.ou3_alt_contraction import finite_admitted_tau_interleaved_prefix as TAUJOIN
@@ -43,6 +44,8 @@ from tools.stability.ou3_alt_contraction import finite_startup_live_machine_tune
 from tools.stability.ou3_alt_contraction import finite_active_parameter_machine_real_join as ACTIVEJOIN
 from tools.stability.ou3_alt_contraction import finite_runtime_parameters as ACTIVE
 from tools.stability.ou3_alt_contraction import finite_source_continuation as SOURCE
+
+from tools.stability.ou3_alt_contraction import finite_machine_frontend_sigma_source as MF
 
 QUALIFICATION='OU3_ALT_ADMITTED_MACHINE_TUNESTATE_INTERLEAVER_V2'
 
@@ -66,6 +69,7 @@ class State:
     separate_active:ACTIVE.ActiveParameters
     fma_active:ACTIVE.ActiveParameters
     live_entry_machine_updates:int
+    frontends:MF.Pair=field(default_factory=MF.initial_pair)
     qualification:str=QUALIFICATION
     def __post_init__(self):
         if not isinstance(self.base,LOWER.State) or not isinstance(self.machine,PRODUCT.State):
@@ -83,7 +87,11 @@ class State:
         entry=_entry_live(self.base)
         if self.machine.pending!=entry.tuner.pending:
             raise ValueError('whole machine pending bit detached from exact Live tuner state')
+        if not isinstance(self.frontends,MF.Pair) or self.frontends.samples!=self.base.wpe.samples:
+            raise ValueError('Live machine frontend count detached from WPE history')
         runtime=self.base.base.prefix.prefix.live.live_word.runtime
+        if B.rn32(runtime.boundary_bench_noise_sigma)!=B.rn32(runtime.bench_noise_sigma):
+            raise ValueError('boundary and candidate bench sigma must share one compiled configuration')
         if not SIGJOIN.configs_match(runtime.candidate_cfg,self.deployment_cfg):
             raise ValueError('deployment tuner config detached from carried shipping runtime scalars')
         # These joins are state invariants, not a claim that the supplies are
@@ -108,6 +116,20 @@ class ImuResult:
     fma_sigma_join:SIGJOIN.Join
     separate_active_join:ACTIVEJOIN.Join
     fma_active_join:ACTIVEJOIN.Join
+    noise_floors:tuple
+    separate_frontend:MF.Result
+    fma_frontend:MF.Result
+    def __post_init__(self):
+        if not isinstance(self.state,State) or not isinstance(self.lower,LOWER.ImuResult):
+            raise TypeError('machine TuneState successor and executed lower edge required')
+        if not isinstance(self.separate_frontend,MF.Result) or not isinstance(self.fma_frontend,MF.Result):
+            raise TypeError('both executed machine frontend steps required')
+        if self.state.base!=self.lower.state or self.state.frontends!=MF.Pair(self.separate_frontend.state,self.fma_frontend.state):
+            raise ValueError('Live successor detached from same frontend steps')
+        MF.require_boundary(MF.Pair(self.separate_frontend.before,self.fma_frontend.before),
+                            self.noise_floors,self.machine_boundary)
+        MF.require_sigma(self.separate_frontend,self.separate_sigma_join.machine)
+        MF.require_sigma(self.fma_frontend,self.fma_sigma_join.machine)
 
 
 @dataclass(frozen=True)
@@ -126,9 +148,9 @@ class CompleteWord:
 
 
 def begin(base:LOWER.State,machine:PRODUCT.State,deployment_cfg:D.DeploymentConfig,
-          *,separate_active:ACTIVE.ActiveParameters,fma_active:ACTIVE.ActiveParameters):
+          *,separate_active:ACTIVE.ActiveParameters,fma_active:ACTIVE.ActiveParameters,frontends:MF.Pair):
     if not isinstance(machine,PRODUCT.State): raise TypeError('whole machine TuneState required')
-    return State(base,machine,deployment_cfg,separate_active,fma_active,machine.tau.updates)
+    return State(base,machine,deployment_cfg,separate_active,fma_active,machine.tau.updates,frontends)
 
 
 def begin_from_goLive(base:LOWER.State,go:GO.Result,deployment_cfg:D.DeploymentConfig):
@@ -140,12 +162,13 @@ def begin_from_goLive(base:LOWER.State,go:GO.Result,deployment_cfg:D.DeploymentC
         raise ValueError('admitted Live product detached from exact whole-machine goLive state')
     if base.wpe!=go.wpe or base.base.tau!=go.machine.tau:
         raise ValueError('admitted Live WPE/tau ledgers detached from whole-machine goLive histories')
-    return State(base,go.machine,deployment_cfg,go.separate_active,go.fma_active,go.machine.tau.updates)
+    return State(base,go.machine,deployment_cfg,go.separate_active,go.fma_active,go.machine.tau.updates,go.frontends)
 
 
 def imu_step(state:State,*,
              separate_sigma_machine:SIGM.Target,fma_sigma_machine:SIGM.Target,
-             separate_boundary_band_noise_floor_sigma=None,fma_boundary_band_noise_floor_sigma=None,
+             separate_frontend:MF.Result,fma_frontend:MF.Result,
+             separate_boundary_noise_sqrt_gain=None,fma_boundary_noise_sqrt_gain=None,
              separate_spectral_pow,separate_spectral_sqrt,
              fma_spectral_pow,fma_spectral_sqrt,
              separate_rs_exp_decay,fma_rs_exp_decay,
@@ -157,15 +180,22 @@ def imu_step(state:State,*,
     lower=LOWER.imu_step(state.base,**kwargs)
     live=_live_result(lower)
     runtime=state.base.base.prefix.prefix.live.live_word.runtime
+    floors=MF.boundary_floors(state.frontends,bench_noise_sigma=runtime.boundary_bench_noise_sigma,required=state.machine.pending,
+        separate_sqrt_gain=separate_boundary_noise_sqrt_gain,fma_sqrt_gain=fma_boundary_noise_sqrt_gain)
     mb=MBOUND.imu_boundary(state.machine,runtime.commit_cfg,live=True,
-        separate_band_noise_floor_sigma=separate_boundary_band_noise_floor_sigma,
-        fma_band_noise_floor_sigma=fma_boundary_band_noise_floor_sigma)
+        separate_band_noise_floor_sigma=None if floors[0] is None else floors[0].noise_sigma,
+        fma_band_noise_floor_sigma=None if floors[1] is None else floors[1].noise_sigma)
     if mb.consumed:
         sep_active=ACTIVE.ActiveParameters.from_commit(mb.separate_commit)
         fma_active=ACTIVE.ActiveParameters.from_commit(mb.fma_commit)
     else:
         sep_active=state.separate_active; fma_active=state.fma_active
 
+    sep=MF.bind_step(state.frontends.separate,separate_frontend,frequency=lower.separate_frequency,
+        band_cfg=runtime.band_cfg,stats_cfg=runtime.stats_cfg,dt=SOURCE.DT,bench_noise_sigma=runtime.bench_noise_sigma)
+    fma=MF.bind_step(state.frontends.fma,fma_frontend,frequency=lower.fma_frequency,
+        band_cfg=runtime.band_cfg,stats_cfg=runtime.stats_cfg,dt=SOURCE.DT,bench_noise_sigma=runtime.bench_noise_sigma)
+    MF.require_sigma(sep,separate_sigma_machine); MF.require_sigma(fma,fma_sigma_machine)
     suffix=live.tuner_suffix; cand=suffix.candidate
     if not isinstance(cand,C.CandidateResult):
         raise TypeError('Live admitted event lost exact tuner candidate')
@@ -180,8 +210,8 @@ def imu_step(state:State,*,
         fma_spectral_pow=fma_spectral_pow,fma_spectral_sqrt=fma_spectral_sqrt,
         separate_rs_exp_decay=separate_rs_exp_decay,fma_rs_exp_decay=fma_rs_exp_decay)
     nxt=State(lower.state,mc.product.state,state.deployment_cfg,sep_active,fma_active,
-              state.live_entry_machine_updates)
-    return ImuResult(nxt,lower,mb,mc,sj,fj,nxt.separate_active_join,nxt.fma_active_join)
+              state.live_entry_machine_updates,MF.Pair(sep.state,fma.state))
+    return ImuResult(nxt,lower,mb,mc,sj,fj,nxt.separate_active_join,nxt.fma_active_join,floors,sep,fma)
 
 
 def mag_step(state:State,**kwargs):
@@ -189,7 +219,7 @@ def mag_step(state:State,**kwargs):
     base,event=LOWER.mag_step(state.base,**kwargs)
     machine=MBOUND.mag_or_hold(state.machine)
     return State(base,machine,state.deployment_cfg,state.separate_active,state.fma_active,
-                 state.live_entry_machine_updates),event
+                 state.live_entry_machine_updates,state.frontends),event
 
 
 def set_hold(state:State,*,hold):
@@ -197,7 +227,7 @@ def set_hold(state:State,*,hold):
     base,event=LOWER.set_hold(state.base,hold=hold)
     machine=MBOUND.mag_or_hold(state.machine)
     return State(base,machine,state.deployment_cfg,state.separate_active,state.fma_active,
-                 state.live_entry_machine_updates),event
+                 state.live_entry_machine_updates,state.frontends),event
 
 
 def complete(state:State): return CompleteWord(state,LOWER.complete(state.base))
@@ -212,6 +242,9 @@ def readiness():
       'exact_and_machine_pending_boundary_share_same_IMU_event':bound['next_boundary_common_machine_commit_attached'],
       'machine_applied_parameters_update_only_when_boundary_consumes_pending':True,
       'Live_pending_boundary_consumes_binary32_commit_graph':True,
+      'machine_band_stats_histories_carried_through_all_Live_events':True,
+      'Live_boundary_noise_reads_pre_sample_machine_band':True,
+      'Live_sigma_inputs_derived_from_same_machine_band_stats_successor':True,
       'same_exact_tuner_suffix_anchors_sigma_and_RS_machine_candidate':cand['one_exact_frontend_candidate_anchors_both_global_compiler_histories'],
       'exact_vs_machine_applied_parameter_supplies_exposed_every_Live_state':aj['tau_stationary_Sigma_pseudo_period_and_RS_displacements_exposed'],
       'MAG_and_HOLD_preserve_WPE_TuneState_and_applied_machine_parameters_by_identity':True,

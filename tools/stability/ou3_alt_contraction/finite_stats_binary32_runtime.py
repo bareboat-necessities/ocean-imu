@@ -150,6 +150,16 @@ def variance(state:State):
     return max(ZERO,B.sub(second,B.mul(mu,mu)))
 
 
+def variance_outcomes(state:State):
+    """No-reassociation results of A_sq.get() - mu*mu, including one FMA."""
+    if not isinstance(state,State): raise TypeError('stats machine State required')
+    if not state.var_ready: return (ZERO,)
+    mu=B.div(state.mean_value,state.mean_weight)
+    second=B.div(state.sq_value,state.sq_weight)
+    return _uniq((max(ZERO,B.sub(second,B.mul(mu,mu))),
+                  max(ZERO,B.fma(-mu,mu,second))))
+
+
 def _source_shape_matches():
     s=SOURCE.read_text()
     needles=('frequency_hz = f_eff;','const float sea_time_sec =',

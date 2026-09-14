@@ -9,6 +9,41 @@ from tools.stability.ou3_alt_contraction import finite_wpe_runtime as WPE
 
 
 class Tests(unittest.TestCase):
+    def test_statistics_clamp_precedes_distinct_outer_tuning_clamp(self):
+        from tools.stability.ou3_alt_contraction import finite_band_variance_runtime as R
+        from dataclasses import replace
+        cfg=R.StatsConfig(4,F(3,10),60,F(1,20),5)
+        shadow=self.shadow(); log=X.bind_log_state(shadow,B.rn32(shadow.log_period))
+        # The getter value remains a conditional libm witness. This tests the
+        # literal downstream clamp graph, not exp(log) accuracy.
+        getter=X.getters(log,period_exp=25,frequency_exp=B.rn32(F(1,25)))
+        external=X.tuner_frequency(shadow,min_hz=B.rn32(F(3,100)),max_hz=B.rn32(F(6,5)),
+            getter=getter,shadow_frequency=F(1,25))
+        out=X.through_statistics(external,cfg,exact_min_hz=F(3,100),exact_max_hz=F(6,5))
+        self.assertEqual(out.stats_stored.stored_hz,B.rn32(cfg.f_min))
+        self.assertEqual(out.stored.stored_hz,B.rn32(cfg.f_min))
+        self.assertNotEqual(out.stored.stored_hz,external.stored.stored_hz)
+        self.assertEqual(out.exact_clamped_frequency,cfg.f_min)
+        self.assertEqual(out.machine_minus_shadow,B.rn32(cfg.f_min)-cfg.f_min)
+        with self.assertRaisesRegex(ValueError,'ordered statistics'):
+            replace(out,stored=external.stored)
+
+    def test_stats_upper_and_tuning_upper_bounds_are_not_identified(self):
+        from tools.stability.ou3_alt_contraction import finite_band_variance_runtime as R
+        shadow=self.shadow(); log=X.bind_log_state(shadow,B.rn32(shadow.log_period))
+        external=X.tuner_frequency(shadow,min_hz=B.rn32(F(3,100)),max_hz=B.rn32(F(6,5)),
+            getter=X.getters(log,period_exp=1,frequency_exp=8),shadow_frequency=8)
+        out=X.through_statistics(external,R.StatsConfig(4,F(3,10),60,F(1,20),5),exact_min_hz=F(3,100),exact_max_hz=F(6,5))
+        self.assertEqual(out.stats_stored.input_hz,8)
+        self.assertEqual(out.stats_stored.stored_hz,5)
+        self.assertEqual(out.stored.input_hz,5)
+        self.assertEqual(out.stored.stored_hz,B.rn32(F(6,5)))
+        self.assertEqual(out.exact_clamped_frequency,F(6,5))
+        self.assertNotEqual(out.machine_minus_shadow,0)
+        from dataclasses import replace
+        with self.assertRaisesRegex(ValueError,'outer tuning bounds detached'):
+            replace(out,exact_tune_bounds=(F(3,100),F(7,5)))
+
     def shadow(self): return WPE.WPEState(log_period=F(7,10),usable_period=True)
     def exact_frequency(self): return F(1,2)
     def getter(self):

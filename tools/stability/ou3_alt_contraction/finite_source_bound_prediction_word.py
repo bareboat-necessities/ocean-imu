@@ -6,7 +6,8 @@ layer removes independently injectable coefficient roots while retaining the
 actual shipping transcendental topology:
 
 * attitude angular rate comes from the exact raw packet/current gyro-bias error;
-* OU h/tau comes from the source segment and carried TuneState; its exp and
+* OU h/tau comes from the source segment and the same pending-boundary
+  transaction as the executed Live prefix, not stale pre-boundary parameters; its exp and
   expm1 calls are retained separately and real-enclosed at the same argument;
 * Qaxis Sigma_aw comes from TuneState, its polynomial/general branch comes from
   exact binary32 h/tau arithmetic, and in the general branch the nested 3x3 and
@@ -34,6 +35,7 @@ from tools.stability.ou3_alt_contraction import finite_ou_runtime_primitives as 
 from tools.stability.ou3_alt_contraction import finite_prediction_runtime as PRED
 from tools.stability.ou3_alt_contraction import finite_qaxis_binary32_branch as QB
 from tools.stability.ou3_alt_contraction import finite_qaxis_exp_binary32 as QE
+from tools.stability.ou3_alt_contraction import finite_tuner_boundary_commit as BOUND
 
 SHIPPING_BA_TAU = F(5000)
 SHIPPING_BA_Q = tuple(tuple(F(1,4_000_000) if i == j else F(0)
@@ -86,6 +88,7 @@ def _qaxis_exp_pair(branch, marginal, final):
 
 def build(state: WORD.State, physical: SOURCE.QualifiedPhysicalSegment,
           raw: SENSOR.RawImuSample, *, ou_alpha, ou_em1,
+          boundary_noise_sqrt=None,rs_sqrt_scale=None,
           bias_phi=None, bias_em1_2=None,
           angular_full: ATT.TrigWitness | None = None,
           angular_half: ATT.TrigWitness | None = None,
@@ -110,7 +113,14 @@ def build(state: WORD.State, physical: SOURCE.QualifiedPhysicalSegment,
     angular = ATT.AngularRuntime(tuple(omega_hat), segment.h,
                                  full=angular_full, half=angular_half)
     TRIG.validate(angular)
-    active = state.live.live.live.active
+    # Derive exactly the same pending transaction that the Live prefix executes
+    # before prediction. This evaluates a pure coefficient relation; it neither
+    # consumes the source segment nor updates the persisted predecessor twice.
+    entry = state.live.live.live
+    boundary = BOUND.apply(entry.tuner,state.runtime.commit_cfg,
+        bench_noise_sigma=state.runtime.boundary_bench_noise_sigma,
+        noise_sqrt=boundary_noise_sqrt,rs_sqrt_scale=rs_sqrt_scale)
+    active = entry.active if boundary.active is None else boundary.active
     ou = OU.OUDecay(segment.h, active.tau, ou_alpha, em1=ou_em1)
     EXP.validate_ou(ou)
     coefficient_branch=QB.branch(active.tau,segment.h)
@@ -142,6 +152,8 @@ def imu_step(state: WORD.State, *, witness: SOURCE.StepWitness,
         raise ValueError('prediction roots require exactly the next source ordinal')
     physical = SOURCE.QualifiedPhysicalSegment(state.source.root, witness, segment)
     roots = build(state, physical, raw, ou_alpha=ou_alpha,ou_em1=ou_em1,
+                  boundary_noise_sqrt=dynamic.get('boundary_noise_sqrt'),
+                  rs_sqrt_scale=dynamic.get('rs_sqrt_scale'),
                   bias_phi=bias_phi,bias_em1_2=bias_em1_2,
                   angular_full=angular_full, angular_half=angular_half,
                   qaxis_marginal_exp=qaxis_marginal_exp,qaxis_final_exp=qaxis_final_exp,
@@ -162,6 +174,7 @@ def readiness():
       'attitude_trig_full_half_bound_to_same_source_owned_rotation_angle': trig['trig_full_half_angles_derived_from_same_angular_rate_and_step'],
       'detached_attitude_unit_circle_points_rejected': trig['detached_unit_circle_points_rejected'],
       'OU_h_tau_argument_from_same_source_and_active_TuneState': True,
+      'prediction_roots_derive_same_pending_commit_before_selecting_tau_Sigma':True,
       'OU_exp_and_expm1_shipping_results_retained_separately': True,
       'OU_exp_expm1_real_enclosed_at_same_source_argument': bool(
           exp['OU_exp_root_real_enclosed_at_same_h_over_tau'] and

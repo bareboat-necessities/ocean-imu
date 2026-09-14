@@ -45,8 +45,19 @@ class Result:
                 raise ValueError('unready band must return bench sigma exactly and consume no sqrt')
         else:
             if self.sqrt_gain is None: raise ValueError('ready band requires sqrt(gain) witness')
+            _check_sqrt(max(F(0),self.band.machine.p11),self.sqrt_gain)
             if self.noise_sigma!=B.mul(self.bench_sigma,self.sqrt_gain):
                 raise ValueError('band noise sigma detached from source-order bench*sqrt multiply')
+
+
+def _check_sqrt(gain,sg,bits=96):
+    if gain==0:
+        if sg!=0: raise ValueError('zero stored p11 requires exact zero sqrt gain')
+        return
+    if sg<=0: raise ValueError('positive stored p11 requires positive sqrt gain')
+    lo,hi=ROOT.sqrt_enclosure(gain,bits)
+    if not RNE._interval_hits_rne_cell(lo,hi,sg):
+        raise ValueError('band-noise sqrt witness detached from SAME stored p11 RNE cell')
 
 
 def evaluate(band:L.State,*,bench_sigma,sqrt_gain=None,bits=96):
@@ -58,10 +69,7 @@ def evaluate(band:L.State,*,bench_sigma,sqrt_gain=None,bits=96):
         return Result(band,bench,None,bench)
     if sqrt_gain is None: raise ValueError('ready machine band requires sqrt(gain) witness')
     sg=_q(sqrt_gain,'sqrt gain')
-    gain=max(B.rn32(0),band.machine.p11)
-    lo,hi=ROOT.sqrt_enclosure(gain,bits)
-    if not RNE._interval_hits_rne_cell(lo,hi,sg):
-        raise ValueError('band-noise sqrt witness detached from SAME stored p11 RNE cell')
+    _check_sqrt(max(F(0),band.machine.p11),sg,bits)
     return Result(band,bench,sg,B.mul(bench,sg))
 
 

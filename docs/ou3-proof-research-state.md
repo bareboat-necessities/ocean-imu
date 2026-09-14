@@ -208,155 +208,121 @@ witness is outside corrected COMPLETE-BRMM and may not be recycled as A or B.
 
 ### Current hypothesis and retained facts
 
-Construct the actual finite source/runtime joint24 word before searching
-coercive storage with bounded source supply. Preserve the original route above;
-`ou3-alt-proof-plan.md` is normative. Full-21 covariance, exact physical
-prediction, inverse-free innovation/Joseph/reset, same-beta projection,
-startup-rooted H18 and persistent frontend/calibration/control state remain.
-The same-operand finite-real tilt reset is attached; universal deployment
-arithmetic correspondence is not.
+Construct the complete finite source/runtime joint24 map before any storage
+search. The original proof route above remains independent;
+`ou3-alt-proof-plan.md` is normative. All ALT theorem gates and
+`storage_search_allowed` remain false.
 
-`ou3-alt-source-continuation.md` proves the moment concatenation identity
-`G(a+b)=T(b)G(a)T(b)' + G(b)` and its nonnegative projection loss. Therefore
-`E(J_prefix,H) <= sum_i E(J_i,h_i) <= A_max^2 H` on every finite prefix.
-The actual physical segments drive this derived budget and the existing finite
-predictor. Endpoint vector caps, the coupled nine-moment IQC, a necessary
-rotation chord/rate bound, exact BIAS envelope endpoints and one actual selected
-bias factor are checked before an IMU event. These are necessary outer
-constraints, not complete BRMM/BIAS generating-history membership.
+The admitted-history product retains corrected COMPLETE-BRMM, one BIAS0/1/2
+history, bounded symbolic IMU ISS forcing, full-21 covariance, the one-time
+Live/S origin, frontend/tuner state, continuous magnetic calibration and
+asynchronous control. Primary physical-history restriction, rather than a
+required spectral/shaping representation or token identity, supplies the
+finite endpoint/moment constraints. Moment concatenation retains
+`G(a+b)=T(b)G(a)T(b)' + G(b)` and the derived prefix energy inequality.
+The magnetic zero-IMU endpoint and source-owned tilt/reset operands are retained.
 
-The fresh Live origin now has a separate checked outer endpoint: sample-zero
-magnetic calls consume the actual fresh `Reference` without manufacturing a
-predecessor transition, and leave source ordinal 1 available to the first IMU.
-This removes the sample-zero topology gap but does not establish generator/QO or
-full BIAS-history membership.
+Each tuner compiler track now also carries its machine band/statistics state.
+Starting from construction, Cold and post-Cold samples advance that state once;
+goLive/MAG/HOLD preserve it. At one IMU sample k:
 
-The magnetic graph retains default continuous calibration, refinement and
-coupled offset/reference writes, including rejected-branch bookkeeping.
-Real-arithmetic calibration <=28.7 uT and active reference/corrected observation
-<=110.7 uT are boundedness results, not calibration accuracy or contraction.
-The corrected unlock theorem uses continued locally finite calls and
-`first_gap + max((n-1)*gap,1+gap)`; default internal unlock remains within 10 s.
-An upper gap bound never forces the n-th call to satisfy the strict >1 s guard,
-and arbitrary external hold does not imply eventual A21.
+1. A pending commit reads noise from carried band covariance B_k, then installs
+   rounded tau/cadence/Sigma/R_S without advancing candidate histories.
+2. Band corners use the previous statistics frequency, or the entry WPE/prior
+   if unavailable; the new band output drives the current statistics update.
+3. The current statistics clamp/store precedes the distinct outer tuning clamp.
+   The new statistics variance and B_(k+1) noise readout drive sigma tuning.
+4. Exact prediction roots evaluate the same pending transaction before choosing
+   tau/Sigma. Both machine prediction-root families and full joint24/21x21
+   displacement refer to that one executed exact prediction.
+
+Exact clamp bounds are not silently replaced by compiled floats. Sigma
+configuration, variance/readiness/noise ancestry, rounded covariance squares,
+pre-sample boundary readouts and both persistent sample counters are checked.
+The variance accessor retains separate and FMA subtraction outcomes; ready
+zero p11 requires zero sqrt. These are conditional finite arithmetic relations,
+not a certificate of actual target-libm or compiler execution.
 
 ### Failure analysis and independent critic
 
-The current finite deployment continuation exposed implementation/CI defects,
-not a failed contraction inequality: the machine boundary used exact-real
-squares of stored binary32 values; it silently shared the shadow noise floor
-across compiler modes; the sigma join checked EMA constants but omitted its
-own scale/maximum; and the admitted tau accessor expected `.event.live` where
-the executed ISS result owns `.event.event.live`. Startup/Live sigma extraction
-also requested the full stillness adapter instead of the carried tracker-free
-projection. The two tau event fixtures reused the toy shadow decay rather than
-a witness at the actual rounded machine argument. A fixed-cadence test also
-asserted a tau-scaled result. The broader Live event therefore failed before
-reaching its candidate, regardless of a storage metric. These failures
-invalidate the corresponding composition/fixture claims, not the shipping
-filter's dynamics or the retained scalar binary32 graph.
+The limiting object is still the complete finite deployment map feeding the
+future whole-word storage inequality. No rho or storage margin has been computed
+or promoted by these composition repairs.
 
-The controlling object remains the complete finite deployment map feeding the
-future wordwise storage inequality. The selected repair consumes the existing
-binary32 commit graph, preserves separate/FMA applied outputs, checks the sigma
-constants, and reads the one executed Live result through a shared typed
-accessor. No new interval refinement or rho search is justified by this work.
-The critic's strongest objection remains that explicitly supplied machine
-noise floors are not yet proved descendants of the persistent machine band
-state. Alternatives are to (1) connect the existing arithmetic graph (selected),
-(2) keep a real commit plus a certified operation-level residual, or (3) derive
-an independent machine interpreter. The latter two duplicate facts already
-available without resolving source ancestry. The next falsifiable check is a
-full admitted Live event plus startup/pending/goLive regressions: rounded
-outputs must reach active parameters, detached configs/results must fail, and
-all storage/theorem flags must remain false.
+Executing a changed pending sigma exposed
+`prediction Sigma_aw detached from committed stationary covariance`: the
+source-root builder selected stale pre-boundary parameters while the Live prefix
+correctly committed first. The unchanged-sigma fixture hid the defect. It is an
+ALT graph-ordering defect, not a failed contraction inequality or a shipping
+filter defect. The root builder now derives the same pending transaction from
+the carried predecessor; a changed-sigma regression reaches the full prediction
+supply and scheduler layer without a second physical transition.
 
-The source-product fixture referenced nonexistent `PhysicalSegment.delta_theta`
-/ `delta_velocity` / `delta_position`, not the actual coupled `J0/J1/J2`.
-This test implementation defect is repaired without changing runtime physics.
+Other exposed graph defects were a skipped statistics frequency clamp and
+higher scheduler wrappers passing their own State to a lower-State ordinal
+accessor. The band/statistics arithmetic existed but had not been carried
+through the strong startup/Live product. These invalidate the corresponding
+ancestry/composition claims, not BRMM physics or the scalar arithmetic lemmas.
 
-The earlier source constructor checked labels, clocks and bias envelopes but
-not physical vector/moment constraints. Matching generator/history strings
-cannot certify O^601_BRMM membership. An algebraically consistent 100 m/s^2
-endpoint, or an independent-sign moment corner with energy 193*h*A_max^2,
-passed the missing checks. These are source-binding regression inputs, NOT
-admitted shipping instability counterexamples. The checks now reject them.
+The critic's strongest remaining objection is that a finite graph can still
+carry an unqualified machine vertical input or stillness branch. Alternatives
+are (1) persist/re-execute the existing arithmetic modules with same-history
+joins, (2) derive one SSA/interpreter graph from shipping source, or (3) qualify
+an independent native interpreter. Route (1) is used for the available band,
+statistics, commit and prediction modules; it removes free ports rather than
+refining an unproved rho margin. The next falsifiable check is the same native
+vertical/stillness predecessor driving all new source operands and then the
+post-prediction measurement branches, with detached operands rejected.
 
-The critic's strongest objection is model drift through qualification metadata.
-Alternatives are (1) an executable necessary correlated outer graph with honest
-open membership, (2) a verified admitted-generator evaluator, and (3) symbolic
-source-function substitution into shipping code. Use (1) to attach the already
-declared physical conditions; (2)/(3) remain the full-source binding obligation.
-This constructs ports in the controlling storage inequality, not a refinement
-of an unproved rho margin. No storage feasibility or contraction strike follows.
-
-The focused guard integration exposed an unchanged legacy serialization defect:
-`ou3_p4_brmm_physical_acceleration_witness_sector.build` calls
-`float(mom['A_max_mps2'])` on the exact string `'44/5'`. This is an implementation
-failure before any storage inequality, not a negative contraction margin.
-The pure finite-storage barrier is independently tested without pretending a
-source builder passed. Full `phase1_closure.build/validate` still execute every
-source prerequisite; the inherited integration test remains, with its obsolete
-storage-true expectation corrected to false. Shared P2/P3/P4/P5 code is untouched.
+The broad finite run additionally exposed three inherited negative-test fixture
+errors: compiler/target constructors rejected a splice before the expected
+assertion, and replacing held-BA data re-supplied a normalized expm1 field as an
+active witness. Assertions now cover the rejecting constructor; the BA fixture
+preserves the held no-witness convention. No production guard was weakened.
 
 ### Evidence and validation boundary
 
-The current focused continuation selection passes 58 tests across the machine
-boundary/commit, whole-TuneState Live/startup/goLive, sigma config join, WPE/tau
-interleavers and machine-candidate modules. It includes an executed admitted
-Live event both with and without a pending commit: candidate updates advance
-once, separate/FMA rounded outputs become active only at the pending boundary,
-and the exact/machine discrepancy remains explicit. The pre-Live transaction
-clears both pending bits without writing R_S; goLive applies even when pending
-is false and preserves the original bit and candidate histories. Missing mode
-floors, detached configs, and substitution of exact-real covariance squares
-are rejected. These are conditional finite-map/algebra regressions, not
-all-history native arithmetic or startup-reachability certificates.
+The full `test_finite*.py` selection passes 938 tests locally, including executed
+pending/nonpending machine frontend -> tuner -> prediction -> scheduler ->
+full prediction-supply edges, consecutive Cold samples, frequency clamp order,
+lagged band corners, zero-gain sqrt and history/configuration splice rejection.
+These are finite-map/algebra regressions, not universal native arithmetic,
+source membership, startup reachability, retention or stability certificates.
+The inherited non-finite-pattern suite is separate and not claimed green.
 
-The full inherited ALT suite is not claimed passing. The archived starting
-head ran 1021 tests with 7 failures and 23 errors. A broader local finite-only
-run was interrupted during the native scalar-normalizer regression and is not
-a completed validation. A separate 14-test scheduler/prediction-supply check
-reproduced nine inherited errors: higher wrappers pass their own State to
-`finite_admitted_machine_prediction_interleaved_prefix._imu_steps`, which expects
-the lower whole-machine State. Those unchanged wrapper paths are outside this
-scalar-commit continuation; they remain blockers, not skipped PASS results.
-`compileall` and `git diff --check` pass for the current changes.
+`make all` stops while compiling `tests/ahrs/ahrs-qmekf-sim.cpp` with
+`src/ahrs/KalmanQMEKF.h:30:10: fatal error: Eigen/Dense: No such file or directory`,
+using `-I/usr/include/eigen3`. No native/full-build PASS is claimed locally.
+Python compilation and whitespace checks pass.
 
-`make all` stops at the unchanged command compiling
-`tests/ahrs/ahrs-qmekf-sim.cpp`: `src/ahrs/KalmanQMEKF.h:30:10: fatal error:
-Eigen/Dense: No such file or directory`, using `-I/usr/include/eigen3`.
-No native/full-build PASS is claimed for this environment.
+The shared original-track `float('44/5')` source-builder defect remains exposed;
+this continuation does not alter shared P2/P3/P4/P5 prerequisites or quality gates.
 
 ### Current limiter, DEAD_ENDS and next falsifiable work
 
-The machine scalar pending/goLive transaction now consumes the binary32 graph,
-but its per-mode band-noise floors still require a same-history connection to
-the persistent binary32 band covariance and sqrt output. The explicit
-applied-parameter supplies must then be consumed by the prediction/S-service/
-measurement word rather than merely recorded alongside its exact shadow.
-Correcting caller/result wrapper types must precede any use of the higher
-scheduler or prediction-supply completion counters. These finite composition
-obligations do not authorize storage or a claimed rho margin.
+Next bind the machine vertical input and stillness operands, and propagate the
+already represented prediction displacement through pending covariance floors,
+per-track S due/not-due branches and machine R_S, accelerometer correction and
+reset. Then qualify the remaining WPE/raw-period/log/exp, band/statistics/tuner,
+Q-axis/Eigen/trig/normalization/threshold/nonfinite arithmetic and bound supplies
+for the complete admitted BRMM+BIAS+ISS family. Do not treat RNE-cell witnesses
+as proved facts about the target library.
 
-The complete finite source-uniform word remains open: the physical frequency/frontend relation, full BIAS driver/parameter histories, remaining
-same-source exp/trig/Eigen/roundoff branches, primary-history membership at sample zero is a theorem premise rather than a runtime token check (the checked endpoint topology is closed), startup/ungauged capture and continuation beyond the current
-600-step container.
-The firing tilt/reset operands are no longer free; their deployment boundary
-and nonfinite behavior still need proof. Floating clocks and the signed magnetic
-counter cannot be replaced indefinitely by Python rationals/integers.
+Universal startup capture, the complete 600-transition deployment word,
+every-prefix chart retention, joint24 storage/rho and an ultimate bound remain
+open. The floating wrapper clock can stall and the signed magnetic counter has
+no uniform all-time call-count bound. Those finite-width lifetime obstructions
+are not dynamical-instability claims. Indefinite continuation cannot restart the
+one-time Live/S origin, covariance or frontend histories.
 
-Do not revive derivative cocycles as finite maps, frozen gains/replays,
-independent coefficient boxes, more-seed source qualification, wordwise S resets,
-18-state A21 marginal storage, convenient entry sets or covariance consistency.
-The two-strike rule and `assert_finite_storage_master` remain in force.
+Frozen dead ends/shortcuts: derivative cocycles presented as finite maps;
+frozen gains/replays or more seeds as universal source qualification;
+independent coefficient rectangles; A21 18-state marginal storage;
+covariance-consistency entry sets; artificial source/basin restrictions;
+wordwise S resets; and requiring one numerical generator for COMPLETE-BRMM.
+Primary physical motion plus bounded centered primitive remains authoritative;
+spectral/shaping models are only sufficient certificates. The two-strike rule
+and `assert_finite_storage_master` remain in force.
 
-The attempted universal-generator interpretation is now frozen as a proof-method dead end. `ou3_brmm_physical_wave_source.py` intentionally has no single numerical generator envelope for the complete family; requiring one would narrow the theorem to one certificate representation. This is not a theorem failure: `ou3_brmm_physical_wave_condition.py` makes bounded oscillatory physical history plus a uniformly bounded centered primitive primary, with spectral/shaping realizations only sufficient certificates and with the padded complete-family physical envelope already closed.
-
-Independent critic alternatives were: (1) restrict the primary physical history directly to the finite sampling grid; (2) prove only certificate-specific spectral/shaping corollaries; or (3) carry an abstract continuous source-function object through every shipping event. Route (1) is chosen because it preserves the declared theorem class and supplies exactly the physical ports of the future storage inequality without a representation assumption. Routes (2) and (3) remain available if a later arithmetic/interface obligation genuinely requires them.
-
-`finite_complete_brmm_restriction.py` now proves that every admitted primary COMPLETE-BRMM physical history, restricted to a 600-transition 5 ms word, inherits the exact finite endpoint caps, one-Live-origin centered-S bound, p/v/S recurrence, coupled acceleration-moment IQC and projective rotation-chord bound. The finite constants are checked against the primary complete-family envelope, including the outward `35 deg/s -> 11/18 rad/s` rate enclosure. Matching runtime tokens still do not prove history membership; the frequency/frontend relation, complete BIAS generating histories, and deployment arithmetic remain open.
-
-Next bind the still-open frequency/estimator coefficient products and full BIAS generating-history relation to this primary-history restriction, rather than introducing another source representation. Only a complete finite master may authorize common joint24 storage search, followed by every-prefix retention, capture and an ultimate bound.
-
-`ALT_LIVE_PASS=false`, `ALT_STARTUP_PASS=false`, `ALT_END_TO_END_PASS=false`.
+`ALT_LIVE_PASS=false`, `ALT_STARTUP_PASS=false`, `ALT_END_TO_END_PASS=false`,
+`storage_search_allowed=false`.

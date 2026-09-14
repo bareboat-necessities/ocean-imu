@@ -20,6 +20,7 @@ reachability; those gates remain fail-closed.
 from __future__ import annotations
 from dataclasses import dataclass
 from fractions import Fraction as F
+from tools.stability.ou3_alt_contraction import finite_binary32_arithmetic as B
 
 from tools.stability.ou3_alt_contraction import finite_guarded_tuner_prefix as FRONT
 from tools.stability.ou3_alt_contraction import finite_tuner_candidate as CAND
@@ -62,6 +63,8 @@ class Result:
     wpe_step:WPELOG.StepResult
     separate_supply:ModeSupply|None
     fma_supply:ModeSupply|None
+    separate_frequency:WPEF.StatisticsFrequencyResult
+    fma_frequency:WPEF.StatisticsFrequencyResult
 
 
 def initial(frontend:FRONT.State):
@@ -76,8 +79,10 @@ def initial(frontend:FRONT.State):
     return State(frontend,TAU.initial(),WPELOG.initial())
 
 
-def _frequency_sources(state:State,cfg:CAND.CandidateConfig,exact_frequency,*,separate_getter,fma_getter):
-    exact=state.frontend.tuner.wpe; lo,hi=F(cfg.min_freq),F(cfg.max_freq)
+def _frequency_sources(state:State,cfg,exact_frequency,*,separate_getter,fma_getter,band_cfg,stats_cfg):
+    exact=state.frontend.tuner.wpe
+    lo,hi=(F(cfg.min_freq),F(cfg.max_freq)) if cfg is not None else (F(band_cfg.tune_freq_floor),F(band_cfg.tune_freq_ceil))
+    def via(q): return WPEF.through_statistics(q,stats_cfg,exact_min_hz=lo,exact_max_hz=hi)
     if exact.usable_period:
         if exact_frequency is None: raise TypeError('usable startup WPE requires exact shadow frequency')
         if state.wpe.separate.log_period is None or state.wpe.fma.log_period is None:
@@ -88,11 +93,11 @@ def _frequency_sources(state:State,cfg:CAND.CandidateConfig,exact_frequency,*,se
             raise ValueError('startup separate getter detached from separate WPE log track')
         if not isinstance(fma_getter,WPEF.GetterResult) or fma_getter.log!=fl:
             raise ValueError('startup FMA getter detached from FMA WPE log track')
-        return (WPEF.tuner_frequency(exact,min_hz=lo,max_hz=hi,getter=separate_getter,shadow_frequency=exact_frequency),
-                WPEF.tuner_frequency(exact,min_hz=lo,max_hz=hi,getter=fma_getter,shadow_frequency=exact_frequency))
+        return (via(WPEF.tuner_frequency(exact,min_hz=B.rn32(lo),max_hz=B.rn32(hi),getter=separate_getter,shadow_frequency=exact_frequency)),
+                via(WPEF.tuner_frequency(exact,min_hz=B.rn32(lo),max_hz=B.rn32(hi),getter=fma_getter,shadow_frequency=exact_frequency)))
     if separate_getter is not None or fma_getter is not None or exact_frequency is not None:
         raise ValueError('preusable startup WPE consumes no getter/shadow-frequency witness')
-    return (WPEF.tuner_frequency(exact,min_hz=lo,max_hz=hi),WPEF.tuner_frequency(exact,min_hz=lo,max_hz=hi))
+    return (via(WPEF.tuner_frequency(exact,min_hz=B.rn32(lo),max_hz=B.rn32(hi))),via(WPEF.tuner_frequency(exact,min_hz=B.rn32(lo),max_hz=B.rn32(hi))))
 
 
 def _advance_wpe(state:State,out:FRONT.Result,*,separate_log_witness,fma_log_witness):
@@ -119,8 +124,10 @@ def step(state:State,raw,*,dt,separate_getter=None,fma_getter=None,
     # sourced from the WPE entry state because the lower recurrence enforces the
     # shipping preupdate ordering.
     out=FRONT.step(state.frontend,raw,dt=dt,**kwargs); cand=out.tuner.candidate
+    sf,ff=_frequency_sources(state,cfg,kwargs.get('preupdate_frequency') if state.frontend.tuner.wpe.usable_period else None,
+        separate_getter=separate_getter,fma_getter=fma_getter,band_cfg=kwargs['band_cfg'],stats_cfg=kwargs['stats_cfg'])
     if cand is None:
-        if any(x is not None for x in (separate_getter,fma_getter,separate_tau_exp_decay,fma_tau_exp_decay)):
+        if any(x is not None for x in (separate_tau_exp_decay,fma_tau_exp_decay)):
             raise ValueError('Cold/noncandidate startup branch consumes no tau deployment witnesses')
         tau=state.tau; ss=fs=None; tstep=None
     else:
@@ -129,8 +136,6 @@ def step(state:State,raw,*,dt,separate_getter=None,fma_getter=None,
         ema=kwargs.get('ema')
         if not isinstance(ema,CAND.EmaWitness): raise TypeError('post-Cold startup candidate requires exact EmaWitness')
         exact_freq=F(cand.frequency)
-        sf,ff=_frequency_sources(state,cfg,exact_freq if state.frontend.tuner.wpe.usable_period else None,
-                                 separate_getter=separate_getter,fma_getter=fma_getter)
         if exact_freq!=sf.exact_clamped_frequency or exact_freq!=ff.exact_clamped_frequency:
             raise ValueError('startup exact candidate detached from exact WPE/prior frequency')
         if separate_tau_exp_decay is None or fma_tau_exp_decay is None:
@@ -141,7 +146,7 @@ def step(state:State,raw,*,dt,separate_getter=None,fma_getter=None,
         ss=ModeSupply(sf.machine_minus_shadow,tstep.separate_target.exact_target-F(cand.tau_target),F(separate_tau_exp_decay)-F(ema.decay_tau_sigma))
         fs=ModeSupply(ff.machine_minus_shadow,tstep.fma_target.exact_target-F(cand.tau_target),F(fma_tau_exp_decay)-F(ema.decay_tau_sigma))
     wstep=_advance_wpe(state,out,separate_log_witness=separate_log_witness,fma_log_witness=fma_log_witness)
-    return Result(State(out.state,tau,wstep.state),out,tstep,wstep,ss,fs)
+    return Result(State(out.state,tau,wstep.state),out,tstep,wstep,ss,fs,sf,ff)
 
 
 def readiness():

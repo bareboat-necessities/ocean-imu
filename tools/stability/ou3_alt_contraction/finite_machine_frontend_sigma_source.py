@@ -72,7 +72,7 @@ class Result:
             raise ValueError('statistics input detached from SAME new machine band output')
         if self.noise.band!=self.state.band:
             raise ValueError('band-noise floor detached from SAME new machine band state')
-        if self.accel_variance!=STATS.variance(self.state.stats):
+        if self.accel_variance not in STATS.variance_outcomes(self.state.stats):
             raise ValueError('machine acceleration variance detached from carried statistics successor')
         if self.band_noise_sigma!=self.noise.noise_sigma:
             raise ValueError('machine band-noise sigma detached from carried band-noise result')
@@ -85,7 +85,7 @@ def initial(): return State(BAND.initial(),STATS.State())
 
 def step(state:State,*,band_coefficients:BC.Coefficients,band_input,
          band_successor:BR.State|None,stats_coefficients:STATS.Coefficients,
-         stats_successor:STATS.State,bench_noise_sigma,noise_sqrt_gain=None):
+         stats_successor:STATS.State,bench_noise_sigma,noise_sqrt_gain=None,accel_variance=None):
     if not isinstance(state,State): raise TypeError('machine frontend State required')
     if state.samples>=MAX_SAMPLES: raise ValueError('machine frontend exceeded bounded startup+word horizon')
     b=BAND.step(state.band,band_coefficients,x=band_input,successor=band_successor)
@@ -95,8 +95,99 @@ def step(state:State,*,band_coefficients:BC.Coefficients,band_input,
     snext,senv=STATS.step(state.stats,stats_coefficients,accel=accel,successor=stats_successor)
     nxt=State(b.state,snext)
     noise=NOISE.evaluate(nxt.band,bench_sigma=bench_noise_sigma,sqrt_gain=noise_sqrt_gain)
-    return Result(state,nxt,b,senv,noise,STATS.variance(snext),noise.noise_sigma)
+    av=STATS.variance(snext) if accel_variance is None else F(accel_variance)
+    return Result(state,nxt,b,senv,noise,av,noise.noise_sigma)
 
+
+@dataclass(frozen=True)
+class Pair:
+    separate:State
+    fma:State
+    def __post_init__(self):
+        if not isinstance(self.separate,State) or not isinstance(self.fma,State):
+            raise TypeError('two persistent machine frontend histories required')
+        if self.separate.samples!=self.fma.samples:
+            raise ValueError('compiler frontend sample counts differ')
+    @property
+    def samples(self): return self.separate.samples
+
+
+def initial_pair(): return Pair(initial(),initial())
+
+
+def bind_step(previous:State,result:Result,*,frequency,band_cfg,stats_cfg,dt,bench_noise_sigma):
+    """Re-execute the local graph with the carried WPE entry/config/history.
+
+    Band corners read the previous statistics frequency; the current statistics
+    read the WPE/prior input. Never use the current frequency for a ready band's
+    lagged corner. The vertical machine input remains explicit and unqualified.
+    """
+    from tools.stability.ou3_alt_contraction import finite_wpe_frequency_binary32 as W
+    if not isinstance(previous,State) or not isinstance(result,Result) or not isinstance(frequency,W.StatisticsFrequencyResult):
+        raise TypeError('persistent frontend, executed source result and two-clamp WPE frequency required')
+    if result.before!=previous: raise ValueError('machine frontend history detached from predecessor')
+    if frequency.stats_cfg!=stats_cfg: raise ValueError('machine statistics frequency config detached')
+    external=frequency.external.stored.input_hz
+    fref=previous.stats.frequency
+    if fref is None or fref<=0: fref=external
+    fref=min(max(fref,B.rn32(band_cfg.tune_freq_floor)),B.rn32(band_cfg.tune_freq_ceil))
+    old=result.band.coefficients
+    bc=BC.produce(band_cfg,f_ref=fref,dt=B.rn32(dt),exp_low=old.exp_low,exp_high=old.exp_high)
+    if bc!=old: raise ValueError('band coefficients detached from lagged statistics/WPE/config')
+    sc=STATS.coefficients(stats_cfg,frequency=external,dt=B.rn32(dt),exp_decay=result.stats_envelope.coefficients.exp_decay)
+    if sc!=result.stats_envelope.coefficients or sc.frequency!=frequency.stats_stored.stored_hz:
+        raise ValueError('statistics coefficients detached from current WPE entry/config')
+    checked=step(previous,band_coefficients=bc,
+        band_input=result.band.envelope.x if bc.active else B.rn32(0),
+        band_successor=result.state.band.machine if bc.active else None,
+        stats_coefficients=sc,stats_successor=result.state.stats,
+        bench_noise_sigma=B.rn32(bench_noise_sigma),noise_sqrt_gain=result.noise.sqrt_gain,
+        accel_variance=result.accel_variance)
+    if checked!=result: raise ValueError('machine frontend result detached from re-executed source graph')
+    return result
+
+
+def require_sigma(result:Result,target):
+    """Sigma's variance/readiness/noise must be outputs of this same sample."""
+    from tools.stability.ou3_alt_contraction import finite_tuner_sigma_binary32 as T
+    if not isinstance(result,Result) or not isinstance(target,T.Target):
+        raise TypeError('machine frontend result and sigma target required')
+    if (target.var_ready,target.accel_variance,target.band_noise_sigma)!=(
+            result.state.stats.var_ready,result.accel_variance,result.band_noise_sigma):
+        raise ValueError('sigma variance/readiness/noise detached from persistent machine frontend')
+
+
+def boundary_floors(pair:Pair,*,bench_noise_sigma,required,separate_sqrt_gain=None,fma_sqrt_gain=None):
+    """Read the pre-sample band covariance without advancing either history."""
+    if not isinstance(pair,Pair) or not isinstance(required,bool): raise TypeError('frontend pair and literal boundary selector required')
+    if not required:
+        if separate_sqrt_gain is not None or fma_sqrt_gain is not None:
+            raise ValueError('unconsumed boundary requires no machine noise sqrt witnesses')
+        return None,None
+    bench=B.rn32(bench_noise_sigma)
+    return (NOISE.evaluate(pair.separate.band,bench_sigma=bench,sqrt_gain=separate_sqrt_gain),
+            NOISE.evaluate(pair.fma.band,bench_sigma=bench,sqrt_gain=fma_sqrt_gain))
+
+
+
+def require_boundary(pair:Pair,floors,transaction):
+    """Reject detached readouts even when a result is reconstructed directly."""
+    from tools.stability.ou3_alt_contraction import finite_tuner_machine_boundary as T
+    if not isinstance(pair,Pair) or not isinstance(transaction,T.Boundary):
+        raise TypeError('persistent frontend pair and binary32 boundary required')
+    if not isinstance(floors,tuple) or len(floors)!=2:
+        raise TypeError('both retained boundary noise readouts required')
+    if not transaction.consumed:
+        if floors!=(None,None): raise ValueError('unconsumed boundary must retain no noise readouts')
+        return
+    for source,floor,commit in zip((pair.separate,pair.fma),floors,
+            (transaction.arithmetic.separate,transaction.arithmetic.fma)):
+        if not isinstance(floor,NOISE.Result) or floor.band!=source.band:
+            raise ValueError('boundary noise readout detached from pre-sample machine band')
+        if floor.noise_sigma!=commit.band_noise_floor_sigma:
+            raise ValueError('machine commit noise operand detached from same band readout')
+    if floors[0].bench_sigma!=floors[1].bench_sigma:
+        raise ValueError('compiler noise readouts must share the configured bench sigma')
 
 def readiness():
     return {
