@@ -15,16 +15,16 @@ remaining measurement part of that SAME IMU event:
     -> S=0 service with that compiler history's actual applied R_S
     -> held guarded accelerometer correction.
 
-The exact side is not recomputed or refitted.  It is the already executed lower
-shipping event.  Machine floor, S-LDLT and accelerometer-LDLT witnesses are kept
-separate because a covariance/R_S perturbation can change solver behavior.  A
+The exact side is not recomputed or refitted. It is the already executed lower
+shipping event. Machine floor, S-LDLT and accelerometer-LDLT witnesses are kept
+separate because a covariance/R_S perturbation can change solver behavior. A
 machine due/not-due branch is required to equal the persistent scheduler event
 already carried by the lower word.
 
 This is a finite same-event arithmetic-supply relation, not a second physical
-history and not a persistent emulation of a second filter.  In particular the
+history and not a persistent emulation of a second filter. In particular the
 machine Racc path, guard/private-Mahony floating arithmetic, native Eigen/libm
-correspondence and source-uniform supply bounds remain open.  No storage search
+correspondence and source-uniform supply bounds remain open. No storage search
 is authorized.
 """
 from __future__ import annotations
@@ -46,7 +46,7 @@ QUALIFICATION='OU3_ALT_ADMITTED_MACHINE_MEASUREMENT_SUPPLY_INTERLEAVER_V1'
 
 
 def _imu_steps(state):
-    return LOWER._imu_steps(state.base)
+    return LOWER._imu_steps(state.base.base)
 
 
 def _subvec(a,b): return tuple(F(x)-F(y) for x,y in zip(a,b))
@@ -137,7 +137,7 @@ class CompleteWord:
 
 def begin(base:LOWER.State):
     if not isinstance(base,LOWER.State): raise TypeError('admitted machine prediction-supply state required')
-    return State(base,_imu_steps(type('Q',(),{'base':base})()),0)
+    return State(base,LOWER._imu_steps(base.base),0)
 
 
 def _live_result(lower:LOWER.ImuResult):
@@ -185,7 +185,7 @@ def imu_step(state:State,*,
     restricted=kwargs.get('restricted'); temperature_c=kwargs.get('temperature_c')
     if restricted is None or temperature_c is None:
         raise TypeError('same admitted physical restriction and source-owned temperature required')
-    preword=LOWER._preword(state.base); segment=restricted.segment
+    preword=LOWER._preword(state.base.base); segment=restricted.segment
     lower=LOWER.imu_step(state.base,**kwargs)
     live=_live_result(lower)
     sched=lower.lower
