@@ -11,10 +11,10 @@ compiler histories. Separate/FMA histories begin only at the tracker LPF and
 stillness arithmetic, where permitted contraction choices may diverge.
 
 The finite-real theorem runtime stores physical configuration values. Their
-private-Mahony gains/gravity are explicitly projected through the binary32
-configuration store before entering the strict binary32 Mahony graph. Mutable
-configuration setter provenance remains open; the projection is not a claim
-that arbitrary exact-real values are executed directly by shipping C++.
+private-Mahony gains/gravity/settling time are explicitly projected through the
+binary32 configuration store before entering the strict binary32 Mahony graph.
+Mutable configuration setter provenance remains open; the projection is not a
+claim that arbitrary exact-real values are executed directly by shipping C++.
 """
 from __future__ import annotations
 from dataclasses import dataclass
@@ -38,7 +38,7 @@ def _runtime(base:LOWER.State):
 def _machine_vertical_cfg(runtime):
     """Actual float configuration store seen by the private Mahony graph."""
     c=runtime.vertical_cfg
-    return VERT.Config(B.rn32(c.two_kp),B.rn32(c.two_ki),B.rn32(c.gravity),B.rn32(c.accel_gate))
+    return VERT.Config(B.rn32(c.two_kp),B.rn32(c.two_ki),B.rn32(c.gravity),B.rn32(c.settle_sec))
 
 def _machine_imu_ordinal(base:LOWER.State):
     return base.machine.tau.updates-base.live_entry_machine_updates
@@ -136,27 +136,24 @@ def set_hold(state:State,*,hold):
 def complete(state:State): return CompleteWord(state,LOWER.complete(state.base))
 
 def readiness():
-    low=LOWER.readiness(); src=VS.readiness(); guard=GUARD.readiness()
+    low=LOWER.readiness(); guard=GUARD.readiness(); src=VS.readiness(); mah=MAHONY.readiness()
     return {
       'admitted_machine_TuneState_word_consumed':low['Live_600_step_machine_TuneState_product_attached'],
-      'binary32_filter_update_API_boundary_attached':guard['binary32_update_API_boundary_materialized'],
-      'binary32_private_Mahony_runtime_config_projection_attached':True,
-      'persistent_common_machine_guard_history_attached':True,
-      'shipping_guard_branch_structure_materialized':guard['conditioning_and_detector_cascades_materialized'],
-      'persistent_separate_and_FMA_machine_vertical_stillness_histories_attached':True,
-      'private_Mahony_source_is_common_across_compiler_histories':True,
-      'same_machine_guard_successor_drives_private_Mahony_histories':True,
-      'machine_band_input_bound_to_same_private_Mahony_successor':True,
-      'machine_sigma_stillness_bound_to_same_tracker_LPF_successor':True,
-      'machine_tracker_LPF_binary32_recurrence_materialized':src['FreqInputLPF_binary32_recurrence_materialized'],
-      'machine_stillness_binary32_projection_materialized':src['same_stored_LPF_output_drives_binary32_stillness_projection'],
+      'one_common_binary32_guard_feeds_private_Mahony_and_Racc_guard_history':True,
+      'shipping_float_API_dt_gyro_accel_projection_is_mandatory':True,
+      'same_machine_private_Mahony_vertical_feeds_band_and_tracker_LPF':True,
+      'machine_band_input_bound_to_same_frontend_consumed_by_sigma_target':True,
+      'machine_tracker_LPF_and_stillness_bound_to_same_sigma_target':True,
       'complete_word_requires_machine_source_on_all_600_IMU_edges':True,
-      'private_Mahony_mutable_config_setter_ancestry_closed':False,
-      'tracker_LPF_cutoff_runtime_ancestry_closed':False,
-      'machine_guard_runtime_config_ancestry_closed':False,
-      'startup_machine_guard_vertical_stillness_history_attached':False,
-      'target_libm_Eigen_and_compiler_profile_correspondence_closed':False,
+      'guard_runtime_config_ancestry_closed':False,
+      'private_Mahony_runtime_config_and_startup_ancestry_closed':False,
+      'tracker_LPF_runtime_config_ancestry_closed':False,
+      'guard_exp_sqrt_compiler_correspondence_closed':guard['binary32_runtime_graph_correspondence_closed'],
+      'private_Mahony_compiler_profile_qualified':mah['compiler_profile_qualified_for_deployment'],
+      'tracker_LPF_exp_target_libm_correspondence_closed':src['tracker_LPF_exp_target_libm_correspondence_closed'],
+      'stillness_exp_sqrt_target_libm_correspondence_closed':src['stillness_exp_sqrt_target_libm_correspondence_closed'],
       'source_uniform_machine_supply_bounds_closed':False,
       'source_uniform_complete_600_step_word_qualified':False,
-      'storage_search_allowed':False,'ALT_LIVE_PASS':False,'ALT_STARTUP_PASS':False,'ALT_END_TO_END_PASS':False,
+      'storage_search_allowed':False,
+      'ALT_LIVE_PASS':False,'ALT_STARTUP_PASS':False,'ALT_END_TO_END_PASS':False,
     }
