@@ -1,16 +1,22 @@
 """Source-owned prediction roots driven by carried machine ActiveParameters.
 
 The exact admitted Live word already derives attitude, OU, Q-axis and BA roots
-from one source-owned physical segment.  Deployment differs only in which
-applied tuner parameters feed the OU/Q-axis coefficient paths.  This module
+from one source-owned physical segment. Deployment differs only in which
+applied tuner parameters feed the OU/Q-axis coefficient paths. This module
 reuses the same source/packet ancestry and the existing primitive validators,
 but substitutes one carried global compiler-mode ``ActiveParameters`` object for
 ``tau`` and ``Sigma_aw``.
 
+A subtle ordering point matters: a pending tuner boundary is consumed BEFORE
+prediction on the same IMU sample. Therefore the exact ActiveParameters used by
+the executed prediction may differ from the ActiveParameters stored in the
+pre-boundary source-word state. ``build`` accepts that executed exact active
+state explicitly; omitting it retains the historical no-boundary/component
+behavior. The exact-vs-machine join is always formed against the selected
+executed active state, not silently against a stale pre-boundary shadow.
+
 This is not a parallel physical history and it does not execute a second source
-transition.  It is a coefficient relation on the SAME event.  The associated
-exact-vs-machine ActiveParameters join is retained so later finite-word algebra
-can charge coefficient displacement as a deployment supply.  Scheduler and R_S
+transition. It is a coefficient relation on the SAME event. Scheduler and R_S
 measurement effects are separate obligations.
 """
 from __future__ import annotations
@@ -29,7 +35,7 @@ from tools.stability.ou3_alt_contraction import finite_source_bound_prediction_w
 from tools.stability.ou3_alt_contraction import finite_runtime_parameters as ACTIVE
 from tools.stability.ou3_alt_contraction import finite_active_parameter_machine_real_join as JOIN
 
-QUALIFICATION='OU3_ALT_MACHINE_ACTIVE_PREDICTION_ROOTS_V1'
+QUALIFICATION='OU3_ALT_MACHINE_ACTIVE_PREDICTION_ROOTS_V2'
 
 
 @dataclass(frozen=True)
@@ -52,6 +58,7 @@ class Roots:
 
 def build(state:WORD.State,physical:SOURCE.QualifiedPhysicalSegment,
           raw:SENSOR.RawImuSample,machine_active:ACTIVE.ActiveParameters,*,mode,
+          exact_active:ACTIVE.ActiveParameters|None=None,
           ou_alpha,ou_em1,bias_phi=None,bias_em1_2=None,
           angular_full=None,angular_half=None,
           qaxis_marginal_exp=None,qaxis_final_exp=None,
@@ -66,7 +73,10 @@ def build(state:WORD.State,physical:SOURCE.QualifiedPhysicalSegment,
     if segment.before!=core.reference or raw.physical!=segment.before:
         raise ValueError('machine prediction roots detached from current physical predecessor')
 
-    exact_active=state.live.live.live.active
+    if exact_active is None:
+        exact_active=state.live.live.live.active
+    if not isinstance(exact_active,ACTIVE.ActiveParameters):
+        raise TypeError('executed exact ActiveParameters required')
     aj=JOIN.join(exact_active,machine_active,mode)
     omega_hat=raw.required_bias_corrected_relation(core.z[3:6])
     angular=ATT.AngularRuntime(tuple(omega_hat),segment.h,full=angular_full,half=angular_half)
@@ -91,6 +101,7 @@ def readiness():
       'attitude_and_BA_roots_reuse_same_source_owned_event':True,
       'small_general_Qaxis_branch_is_recomputed_from_machine_tau_not_shadow_tau':True,
       'exact_vs_machine_active_parameter_join_retained_with_roots':True,
+      'executed_post_boundary_exact_active_can_be_bound_explicitly':True,
       'machine_prediction_root_relation_attached':True,
       'machine_root_effect_injected_into_joint24_event_relation':False,
       'machine_pseudo_period_scheduler_effect_attached':False,
