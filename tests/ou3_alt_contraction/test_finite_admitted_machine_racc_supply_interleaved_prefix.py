@@ -14,7 +14,6 @@ import test_finite_admitted_machine_measurement_supply_interleaved_prefix as MBA
 import test_finite_admitted_machine_tunestate_interleaved_prefix as TBASE
 import test_finite_live_magnetic_word as MAG
 import test_finite_source_bound_live_word as LBASE
-import test_finite_live_imu_prefix as IMU
 from test_finite_machine_frontend_sigma_source import ready_pair
 
 
@@ -22,9 +21,10 @@ def state(): return X.begin(MBASE.state())
 
 
 def event_operands(s):
-    kw=MBASE.event_operands(s.base)
-    kw.update(racc_cfg=RACC.Config(),nominal_racc_std=(F(1),F(1),F(1)))
-    return dict(kw,separate_accel_ldlt=MAG.REJECT,fma_accel_ldlt=MAG.REJECT)
+    # Racc configuration and nominal std are persistent runtime state and must
+    # not be supplied as event-local operands.
+    return dict(MBASE.event_operands(s.base),
+                separate_accel_ldlt=MAG.REJECT,fma_accel_ldlt=MAG.REJECT)
 
 
 def pending_measurement_state():
@@ -72,10 +72,13 @@ class Tests(unittest.TestCase):
     def test_pending_boundary_source_of_raw_sigma_is_mode_stored_snapshot(self):
         ms=pending_measurement_state(); rs=X.begin(ms)
         # Execute the complete lower pending event and inspect the exact binary32
-        # boundary object used by this wrapper's update rule.
+        # boundary object used by this wrapper's update rule. Ready band states
+        # require their explicit same-expression sqrt(gain) witnesses.
         lower_kw=MBASE.event_operands(ms)
         lower=M.imu_step(ms,separate_accel_ldlt=MAG.REJECT,
-            fma_accel_ldlt=MAG.REJECT,**lower_kw)
+            fma_accel_ldlt=MAG.REJECT,
+            separate_boundary_noise_sqrt_gain=11,
+            fma_boundary_noise_sqrt_gain=12,**lower_kw)
         mt=X._mtune_result(lower)
         self.assertTrue(mt.machine_boundary.consumed)
         sep,fma=X._applied_sigmas(rs,mt)
@@ -106,7 +109,8 @@ class Tests(unittest.TestCase):
 
     def test_readiness_closes_machine_Racc_coefficient_path_but_not_native_or_storage(self):
         r=X.readiness()
-        for k in ('raw_applied_sigma_carried_separately_from_stationary_Sigma_aw',
+        for k in ('persistent_Racc_config_and_nominal_std_consumed_from_admitted_runtime',
+                  'raw_applied_sigma_carried_separately_from_stationary_Sigma_aw',
                   'pending_machine_boundary_updates_same_mode_applied_sigma_before_Racc',
                   'persistent_separate_and_FMA_Racc_states_attached',
                   'same_mode_preupdate_WPE_frequency_drives_machine_Racc',
