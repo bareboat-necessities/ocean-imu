@@ -14,6 +14,7 @@ import test_finite_admitted_machine_measurement_supply_interleaved_prefix as MBA
 import test_finite_admitted_machine_tunestate_interleaved_prefix as TBASE
 import test_finite_live_magnetic_word as MAG
 import test_finite_source_bound_live_word as LBASE
+import test_finite_live_imu_prefix as IMU
 from test_finite_machine_frontend_sigma_source import ready_pair
 
 
@@ -22,6 +23,7 @@ def state(): return X.begin(MBASE.state())
 
 def event_operands(s):
     kw=MBASE.event_operands(s.base)
+    kw.update(racc_cfg=RACC.Config(),nominal_racc_std=(F(1),F(1),F(1)))
     return dict(kw,separate_accel_ldlt=MAG.REJECT,fma_accel_ldlt=MAG.REJECT)
 
 
@@ -37,10 +39,10 @@ def pending_measurement_state():
     admitted=replace(prefix.prefix.live,live_word=word)
     prefix=replace(prefix,prefix=replace(prefix.prefix,live=admitted))
     mt=replace(mt,base=replace(mt.base,base=replace(mt.base.base,prefix=prefix)))
-    p=SCHED.PRED.begin(mt)
+    p=SCHED.LOWER.begin(mt)
     sa=p.base.separate_active; fa=p.base.fma_active
     ss=POST.Scheduler(sa.pseudo_period,F(0),F(0)); fs=POST.Scheduler(fa.pseudo_period,F(0),F(0))
-    sched=SCHED.X.begin(p,ss,fs)
+    sched=SCHED.begin(p,ss,fs)
     return M.begin(PRED.begin(sched))
 
 
