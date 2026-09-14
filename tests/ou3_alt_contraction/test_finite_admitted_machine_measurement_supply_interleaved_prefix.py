@@ -5,7 +5,6 @@ import unittest
 
 from tools.stability.ou3_alt_contraction import finite_admitted_machine_measurement_supply_interleaved_prefix as X
 from tools.stability.ou3_alt_contraction import finite_admitted_machine_prediction_supply_interleaved_prefix as PRED
-from tools.stability.ou3_alt_contraction import finite_admitted_machine_scheduler_interleaved_prefix as SCHED
 from tools.stability.ou3_alt_contraction import finite_post_prediction as POST
 import test_finite_admitted_machine_scheduler_interleaved_prefix as SBASE
 import test_finite_admitted_machine_tunestate_interleaved_prefix as TBASE
@@ -14,7 +13,14 @@ import test_finite_live_magnetic_word as MAG
 
 
 def state(*,machine_due=False):
-    s=SBASE.state()
+    # Executed-event fixtures require an actually usable WPE/log state.  The
+    # scheduler-only helper intentionally starts pre-usable because its own unit
+    # tests never execute the tuner event, so build the same stack explicitly.
+    p=SBASE.PRED.begin(TBASE.state(usable=True))
+    sa=p.base.separate_active; fa=p.base.fma_active
+    ss=POST.Scheduler(sa.pseudo_period,F(0),F(0))
+    fs=POST.Scheduler(fa.pseudo_period,F(0),F(0))
+    s=SBASE.X.begin(p,ss,fs)
     if machine_due:
         h=F(1,200)
         ss=POST.Scheduler(s.separate_scheduler.period,s.separate_scheduler.period-h,s.separate_scheduler.tolerance)
