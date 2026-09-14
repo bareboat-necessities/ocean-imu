@@ -59,10 +59,12 @@ class Tests(unittest.TestCase):
         s=state(); kw=event_operands(s)
         out=X.imu_step(s,separate_racc_accel_ldlt=MAG.REJECT,
             fma_racc_accel_ldlt=MAG.REJECT,**kw)
+        live=M._live_result(out.lower.lower)
         self.assertEqual(out.separate.applied_sigma,s.separate_applied_sigma)
         self.assertEqual(out.fma.applied_sigma,s.fma_applied_sigma)
         self.assertEqual(out.state.racc_steps,1)
-        self.assertEqual(out.separate.racc.excess_rms,out.lower.separate.accelerometer.guarded.guard.excess_rms if hasattr(out.lower.separate.accelerometer,'guarded') else out.separate.racc.excess_rms)
+        self.assertEqual(out.separate.racc.excess_rms,live.guarded.guard.excess_rms)
+        self.assertEqual(out.fma.racc.excess_rms,live.guarded.guard.excess_rms)
         self.assertFalse(out.separate.accelerometer.accepted)
 
     def test_pending_boundary_source_of_raw_sigma_is_mode_stored_snapshot(self):
@@ -93,12 +95,7 @@ class Tests(unittest.TestCase):
         with self.assertRaisesRegex(TypeError,'both machine-Racc accelerometer LDLT branches required'):
             X.imu_step(s,separate_racc_accel_ldlt=None,fma_racc_accel_ldlt=MAG.REJECT,**kw)
 
-    def test_explicit_sigma_Racc_adapter_matches_exact_TuneState_adapter(self):
-        exact=X._exact_live_state(state().base)
-        cfg=exact.tuner.runtime.racc_cfg if hasattr(exact.tuner,'runtime') else RACC.Config()
-        # Default dormant branch needs no libm witnesses; this is an algebraic
-        # adapter-equivalence regression, not native float certification.
-        guard=type('G',(),{})
+    def test_explicit_applied_sigma_adapter_is_part_of_Racc_proof_surface(self):
         self.assertTrue(RACC.readiness()['explicit_applied_sigma_adapter_available_for_machine_history'])
 
     def test_complete_cannot_skip_Racc_recurrence(self):
