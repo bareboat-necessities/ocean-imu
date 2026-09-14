@@ -45,9 +45,19 @@ class Tests(unittest.TestCase):
         self.assertIsNone(second.startup)
         self.assertEqual(second,M.step_initialized(first.vertical.state,CFG,dt=DT,gyro=(0,0,0),acc=a))
 
-    def test_near_antiparallel_branch_not_replaced_by_arbitrary_axis(self):
+    def test_near_antiparallel_branch_requires_and_binds_solver_axis(self):
+        acc=(X.rn(0),X.rn(0),CFG.gravity)
         with self.assertRaisesRegex(X.UnqualifiedSeedBranch,'JacobiSVD'):
-            X.step(V.State(),CFG,dt=DT,gyro=(0,0,0),acc=(0,0,CFG.gravity))
+            X.step(V.State(),CFG,dt=DT,gyro=(0,0,0),acc=acc)
+        svd=X.svd_witness((F(0),F(0),F(-1)),(F(0),F(0),F(1)),
+                          (X.rn(1),X.rn(0),X.rn(0)))
+        out=X.step(V.State(),CFG,dt=DT,gyro=(0,0,0),acc=acc,svd=svd)
+        self.assertEqual(out.startup.branch,'near-antiparallel-JacobiSVD')
+        self.assertEqual(out.startup.quaternion,(F(0),F(1),F(0),F(0)))
+        out.startup.validate()
+        bad=replace(svd,v0_dot=F(1))
+        with self.assertRaisesRegex(ValueError,'residuals detached'):
+            X.step(V.State(),CFG,dt=DT,gyro=(0,0,0),acc=acc,svd=bad)
 
     def test_uninitialized_nonreset_memory_and_unstored_inputs_rejected(self):
         with self.assertRaisesRegex(ValueError,'reset state'):
@@ -67,7 +77,8 @@ class Tests(unittest.TestCase):
     def test_readiness_keeps_all_source_and_target_obligations_open(self):
         r=X.readiness()
         self.assertTrue(r['both_shipping_accelerometer_normalizations_retained'])
-        for key in ('near_antiparallel_JacobiSVD_seed_branch_qualified',
+        self.assertTrue(r['near_antiparallel_JacobiSVD_branch_topology_materialized_with_solver_witness'])
+        for key in ('near_antiparallel_JacobiSVD_solver_correspondence_qualified',
                     'target_sqrt_Eigen_and_compiler_correspondence_closed',
                     'every_admitted_startup_history_covered','storage_search_allowed',
                     'ALT_STARTUP_PASS','ALT_LIVE_PASS','ALT_END_TO_END_PASS'):
