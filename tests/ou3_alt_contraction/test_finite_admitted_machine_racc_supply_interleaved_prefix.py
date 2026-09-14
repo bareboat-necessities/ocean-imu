@@ -31,8 +31,6 @@ def pending_measurement_state():
     """Build the same admitted wrapper stack from an existing pending MTUNE fixture."""
     mt=TBASE.state(usable=True,pending=True)
     mt=replace(mt,frontends=ready_pair())
-    # The pending machine boundary consumes the same compiled bench configuration
-    # in the exact and machine products, matching the existing MTUNE regression.
     prefix=mt.base.base.prefix; word=prefix.prefix.live.live_word
     bench=B.rn32(F(1,10))
     word=replace(word,runtime=replace(word.runtime,boundary_bench_noise_sigma=bench,bench_noise_sigma=bench))
@@ -51,8 +49,6 @@ class Tests(unittest.TestCase):
         s=state(); exact=X._exact_live_state(s.base)
         self.assertEqual(s.separate_applied_sigma,exact.tuner.tune.sigma_applied)
         self.assertEqual(s.fma_applied_sigma,exact.tuner.tune.sigma_applied)
-        # This scalar is intentionally independent state; no inverse from
-        # floored Sigma_aw is used to construct it.
         altered=replace(s,separate_applied_sigma=F(7,100))
         self.assertEqual(altered.separate_applied_sigma,F(7,100))
         self.assertEqual(altered.base,s.base)
@@ -71,15 +67,15 @@ class Tests(unittest.TestCase):
 
     def test_pending_boundary_source_of_raw_sigma_is_mode_stored_snapshot(self):
         ms=pending_measurement_state(); rs=X.begin(ms)
-        # Execute the complete lower pending event and inspect the exact binary32
-        # boundary object used by this wrapper's update rule. Ready band states
-        # require their explicit same-expression sqrt(gain) witnesses.
-        lower_kw=MBASE.event_operands(ms)
-        lower=M.imu_step(ms,separate_accel_ldlt=MAG.REJECT,
-            fma_accel_ldlt=MAG.REJECT,
+        # This test isolates the boundary-to-Racc state edge.  Prediction roots
+        # are a different obligation and, after a changed pending tau, require
+        # their own post-boundary exp witnesses.  Execute the same MTUNE event
+        # directly so the raw-sigma source cannot be obscured by that later edge.
+        mt_state=ms.base.base.base.base
+        kwargs,machine=TBASE.event_operands(mt_state)
+        mt=TBASE.X.imu_step(mt_state,**machine,**kwargs,
             separate_boundary_noise_sqrt_gain=11,
-            fma_boundary_noise_sqrt_gain=12,**lower_kw)
-        mt=X._mtune_result(lower)
+            fma_boundary_noise_sqrt_gain=12)
         self.assertTrue(mt.machine_boundary.consumed)
         sep,fma=X._applied_sigmas(rs,mt)
         self.assertEqual(sep,mt.machine_boundary.arithmetic.separate.stored_sigma)
