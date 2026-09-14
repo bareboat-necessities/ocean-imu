@@ -8,6 +8,7 @@ from tools.stability.ou3_alt_contraction import finite_guarded_tuner_machine_dep
 from tools.stability.ou3_alt_contraction import finite_tuner_tau_deployment_ledger as TAU
 from tools.stability.ou3_alt_contraction import finite_tuner_sigma_deployment_ledger as SIG
 from tools.stability.ou3_alt_contraction import finite_tuner_rs_deployment_ledger as RS
+from tools.stability.ou3_alt_contraction import finite_tuner_machine_tunestate_product as MACHINE
 import test_finite_guarded_tuner_prefix as BASE
 
 
@@ -52,7 +53,8 @@ class Tests(unittest.TestCase):
 
     def test_machine_tau_cannot_detach_from_lower_startup_history(self):
         s=X.initial(construction_frontend())
-        bad=replace(s.machine,tau=TAU.State(TAU.INITIAL,TAU.INITIAL,1))
+        bad=MACHINE.State(TAU.State(TAU.INITIAL,TAU.INITIAL,1),
+                          SIG.State(updates=1),RS.State(updates=1),False)
         with self.assertRaisesRegex(ValueError,'tau detached'):
             X.State(s.base,bad)
 
