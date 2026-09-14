@@ -94,9 +94,9 @@ def step(state:State,raw,*,sigma_result:SIGMA.Result|None=None,rs_result:RS.Resu
                                           sigma=sigma_result,rs=rs_result,
                                           pending_after=cand.pending_after)
     ss=ModeSupply(sigma_result.separate.target.sigma_target-F(cand.sigma_target),
-                  rs_result.separate.target.target.RS_target-F(cand.RS_target))
+                  rs_result.separate.target.machine_target_RS-F(cand.RS_target))
     fs=ModeSupply(sigma_result.fma.target.sigma_target-F(cand.sigma_target),
-                  rs_result.fma.target.target.RS_target-F(cand.RS_target))
+                  rs_result.fma.target.machine_target_RS-F(cand.RS_target))
     return Result(State(lower.state,composed.state),lower,composed,ss,fs)
 
 
