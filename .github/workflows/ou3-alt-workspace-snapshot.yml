@@ -1,0 +1,20 @@
+name: OU3 ALT workspace snapshot
+on:
+  push:
+    branches: [proof/ou3-alt-startup-machine-attachment]
+    paths: [.github/workflows/ou3-alt-workspace-snapshot.yml]
+permissions:
+  contents: read
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+      - name: Export tracked workspace
+        run: git archive --format=tar.gz --output=/tmp/ou3-alt-current.tar.gz HEAD
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ou3-alt-current
+          path: /tmp/ou3-alt-current.tar.gz
+          retention-days: 1
