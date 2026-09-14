@@ -14,8 +14,6 @@ import test_finite_source_bound_live_word as LBASE
 
 def fixture():
     r=RBASE.state(); mt=X._mtune_state(r); runtime=X._runtime(r)
-    # Reproduce only the arithmetic witnesses for the already-defined same MTUNE
-    # event so the joined source can be checked against the nested event result.
     tkw,_=TBASE.event_operands(mt); lower0=TBASE.LOWER.imu_step(mt.base,**tkw)
     live=TBASE.X._live_result(lower0); h=tkw['restricted'].segment.h
     api=VBASE.machine_api(live,h)
@@ -31,8 +29,6 @@ def fixture():
         separate_still_energy_successor=sw['still_energy_successor'],separate_still_attenuation_exp=sw['still_attenuation_exp'],
         fma_lpf_alpha_exp=fw['lpf_alpha_exp'],fma_lpf_successor=fw['lpf_successor'],
         fma_still_energy_successor=fw['still_energy_successor'],fma_still_attenuation_exp=fw['still_attenuation_exp'])
-    # Feed the real same-event Mahony output into the lower band/sigma graph;
-    # the old fixture supplied an unrelated zero vertical input here.
     kw=RBASE.event_operands(r)
     for mode,src,freq,tau in (('separate',sep,lower0.separate_frequency,lower0.tau_step.separate_step),
                              ('fma',fma,lower0.fma_frequency,lower0.tau_step.fma_step)):
@@ -59,12 +55,11 @@ class Tests(unittest.TestCase):
         self.assertEqual(mt.separate_sigma_join.machine.still_time,out.separate_source.stillness.state.still_time)
         self.assertEqual(out.state.source_steps,1)
         self.assertEqual(out.state.base.racc_steps,s.base.racc_steps+1)
+        self.assertEqual(out.lower.separate.racc.excess_rms,out.guard.excess_rms)
+        self.assertEqual(out.lower.fma.racc.excess_rms,out.guard.excess_rms)
 
     def test_frontend_input_splice_is_rejected_against_nested_Racc_TuneState_event(self):
         s,kw,join,_,_,_=fixture()
-        # The lower machine frontend is fixed by its own arithmetic witnesses;
-        # changing only the joined Mahony API source must fail at the same-event
-        # frontend equality rather than creating a second accepted history.
         bad=dict(join); a=list(bad['machine_acc_body']); a[2]=B.rn32(F(a[2])+F(1,100)); bad['machine_acc_body']=tuple(a)
         with self.assertRaises((ValueError,TypeError)):
             X.imu_step(s,separate_racc_accel_ldlt=MAG.REJECT,fma_racc_accel_ldlt=MAG.REJECT,**bad,**kw)
@@ -76,7 +71,7 @@ class Tests(unittest.TestCase):
 
     def test_MAG_and_HOLD_preserve_joined_machine_source_history(self):
         s,_,_,_,_,_=fixture(); g=s.guard; a=s.separate_source; n=s.source_steps
-        word=X._runtime(s.base)  # establish runtime path before async event
+        X._runtime(s.base)
         pre=X._mtune_state(s.base).base.base.prefix.prefix.live.live_word
         s,_=X.mag_step(s,**LBASE.mag_kwargs(pre)); self.assertIs(s.guard,g); self.assertIs(s.separate_source,a); self.assertEqual(s.source_steps,n)
         s,_=X.set_hold(s,hold=False); self.assertIs(s.guard,g); self.assertIs(s.separate_source,a); self.assertEqual(s.source_steps,n)
@@ -93,6 +88,8 @@ class Tests(unittest.TestCase):
         for k in ('same_executed_TuneState_event_supplies_frontend_and_sigma_join',
                   'no_second_physical_or_filter_event_executed_for_frontend_ancestry',
                   'common_machine_guard_and_private_Mahony_history_joined_to_Racc_word',
+                  'machine_guard_excess_drives_machine_Racc_recurrence',
+                  'machine_guard_conditioned_sample_drives_machine_accelerometer_relation',
                   'machine_band_input_bound_to_frontend_consumed_by_Racc_word',
                   'machine_sigma_stillness_bound_to_sigma_target_consumed_by_Racc_word',
                   'machine_guard_runtime_config_bound_in_joined_word',
