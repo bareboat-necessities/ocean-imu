@@ -35,6 +35,26 @@ class Tests(unittest.TestCase):
         self.assertEqual(out.active_join.supply.pseudo_period,F(1,100))
         self.assertNotEqual(out.active_join.supply.R_S,((0,0,0),(0,0,0),(0,0,0)))
 
+    def test_explicit_executed_active_overrides_stale_preboundary_shadow_only_in_join(self):
+        s=BASE.root_state(); witness,segment,raw,_=PBASE.operands(s)
+        physical=SOURCE.QualifiedPhysicalSegment(s.source.root,witness,segment)
+        pre=s.live.live.live.active
+        # Model the ordering fact of a just-consumed pending boundary: the exact
+        # prediction uses a new active tau/Sigma state even though the source-word
+        # predecessor still contains the old active object.
+        executed=ACTIVE.ActiveParameters(pre.tau+F(1,100),pre.Sigma_aw,pre.pseudo_period,pre.R_S)
+        machine=ACTIVE.ActiveParameters(executed.tau,executed.Sigma_aw,executed.pseudo_period,executed.R_S)
+        args=PBASE.root_args(); args.pop('temperature_c')
+        # The supplied OU witness belongs to pre.tau, so keep prediction tau equal
+        # in this regression and distinguish the executed state via cadence only.
+        executed=ACTIVE.ActiveParameters(pre.tau,pre.Sigma_aw,pre.pseudo_period+F(1,100),pre.R_S)
+        machine=ACTIVE.ActiveParameters(pre.tau,pre.Sigma_aw,pre.pseudo_period+F(1,50),pre.R_S)
+        out=X.build(s,physical,raw,machine,mode='separate',exact_active=executed,**args)
+        self.assertEqual(out.active_join.exact,executed)
+        self.assertEqual(out.active_join.machine,machine)
+        self.assertEqual(out.active_join.supply.pseudo_period,F(1,100))
+        self.assertNotEqual(out.active_join.exact,pre)
+
     def test_machine_active_cannot_detach_from_carried_source_root(self):
         s=BASE.root_state(); witness,segment,raw,_=PBASE.operands(s)
         other=replace(s.source.root,history_id='different-machine-root')
@@ -47,6 +67,7 @@ class Tests(unittest.TestCase):
         r=X.readiness()
         self.assertTrue(r['machine_prediction_root_relation_attached'])
         self.assertTrue(r['small_general_Qaxis_branch_is_recomputed_from_machine_tau_not_shadow_tau'])
+        self.assertTrue(r['executed_post_boundary_exact_active_can_be_bound_explicitly'])
         for k in ('machine_root_effect_injected_into_joint24_event_relation','machine_pseudo_period_scheduler_effect_attached',
                   'machine_RS_measurement_effect_attached','OU_Qaxis_target_libm_and_Eigen_correspondence_closed',
                   'source_uniform_machine_coefficient_supply_bound_closed','source_uniform_complete_600_step_word_qualified',
