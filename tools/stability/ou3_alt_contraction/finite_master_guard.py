@@ -12,6 +12,7 @@ from __future__ import annotations
 from tools.stability.ou3_alt_contraction import proof_plan as PLAN
 from tools.stability.ou3_alt_contraction import finite_admitted_startup_machine_tunestate_word as START
 from tools.stability.ou3_alt_contraction import finite_admitted_machine_clock_qualified_interleaved_prefix as LIVE
+from tools.stability.ou3_alt_contraction import finite_binary32_mahony_startup as STARTSEED
 from tools.stability.ou3_alt_contraction import finite_scheduler_nextafter_binary32 as NEXT
 from tools.stability.ou3_alt_contraction import finite_aw_sync_clock_binary64 as AWCLOCK
 from tools.stability.ou3_alt_contraction import finite_wpe_log_binary32 as WPELOG
@@ -22,13 +23,14 @@ QUALIFICATION='OU3_ALT_FINITE_MASTER_GUARD_V1'
 
 
 def build():
-    startup=START.readiness()
+    startup=START.readiness(); seed=STARTSEED.readiness()
     live=LIVE.readiness(); nxt=NEXT.readiness(); aw=AWCLOCK.readiness()
     wlog=WPELOG.readiness(); wfreq=WPEFREQ.readiness(); qexp=QEXP.readiness()
 
     closed={
       'startup_to_Live_machine_history_attachment': startup['startup_to_Live_machine_history_attachment_closed'],
       'admitted_source_private_Mahony_startup_to_Live_invariant': startup['admitted_source_private_Mahony_startup_to_Live_invariant_closed'],
+      'near_antiparallel_seed_branch_topology': seed['near_antiparallel_JacobiSVD_branch_topology_materialized_with_solver_witness'],
       'guard_Mahony_frontend_Racc_accelerometer_same_event_join': live['strong_joined_guard_frontend_Racc_word_consumed'],
       'scheduler_nextafter_binary32': nxt['machine_scheduler_nextafter_binary32_correspondence_closed'],
       'bounded_default_aw_sync_binary64_clock': aw['canonical_aw_sync_binary64_predicate_closed'],
@@ -36,6 +38,7 @@ def build():
     }
 
     open_obligations={
+      'near_antiparallel_Eigen_JacobiSVD_solver_correspondence': not seed['near_antiparallel_JacobiSVD_solver_correspondence_qualified'],
       'universal_startup_source_and_branch_reachability': not startup['every_admitted_startup_history_reaches_this_boundary_product'],
       'startup_source_uniform_deployment_supplies': not startup['source_uniform_startup_deployment_supply_bounds_closed'],
       'target_libm_and_compiler_profile_correspondence': not startup['all_target_libm_and_compiler_profile_correspondence_closed'],
@@ -49,9 +52,6 @@ def build():
       'arbitrary_dt_inner_clock': not live['arbitrary_dt_inner_clock_closed'],
     }
 
-    # The current graph is a genuine finite descriptor product, but not yet a
-    # complete source-uniform master.  Do not claim representation completion
-    # until every literal branch and arithmetic supply is qualified.
     finite_status={
       'map_representation':'finite_physical_descriptor_partial',
       'finite_error_identity_for_every_event':False,
