@@ -193,12 +193,12 @@ def imu_step(state:State,*,
                 accel_radius=kwargs.get('accel_radius',F(2,5)))
     sep=_mode(mode='separate',state_racc=state.separate_racc,
         old_sigma=state.separate_applied_sigma,new_sigma=sep_sigma,
-        frequency=freq.separate_frequency,lower_mode=lower.separate,
+        frequency=freq.separate_frequency.stored,lower_mode=lower.separate,
         rao_witness=separate_rao_witness,racc_sqrt=separate_racc_sqrt,
         accel_ldlt=separate_racc_accel_ldlt,**common)
     fma=_mode(mode='fma',state_racc=state.fma_racc,
         old_sigma=state.fma_applied_sigma,new_sigma=fma_sigma,
-        frequency=freq.fma_frequency,lower_mode=lower.fma,
+        frequency=freq.fma_frequency.stored,lower_mode=lower.fma,
         rao_witness=fma_rao_witness,racc_sqrt=fma_racc_sqrt,
         accel_ldlt=fma_racc_accel_ldlt,**common)
     nxt=State(lower.state,sep_sigma,fma_sigma,sep.racc.state,fma.racc.state,
