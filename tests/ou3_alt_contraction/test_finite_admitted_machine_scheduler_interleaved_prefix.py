@@ -5,7 +5,9 @@ import unittest
 from tools.stability.ou3_alt_contraction import finite_admitted_machine_scheduler_interleaved_prefix as X
 from tools.stability.ou3_alt_contraction import finite_admitted_machine_prediction_interleaved_prefix as PRED
 from tools.stability.ou3_alt_contraction import finite_runtime_parameters as ACTIVE
+from tools.stability.ou3_alt_contraction import finite_binary32_arithmetic as B
 from tools.stability.ou3_alt_contraction import finite_post_prediction as POST
+from tools.stability.ou3_alt_contraction import finite_scheduler_nextafter_binary32 as NEXT
 import test_finite_admitted_machine_tunestate_interleaved_prefix as BASE
 import test_finite_source_bound_live_word as LBASE
 
@@ -48,17 +50,20 @@ class Tests(unittest.TestCase):
         self.assertEqual(out.after_retarget.period,active.pseudo_period)
         self.assertEqual(out.after_step.elapsed,F(3,200))
 
-    def test_overdue_retarget_requires_explicit_nextafter_witness(self):
+    def test_overdue_retarget_requires_exact_nextafter_witness(self):
         s=state(); old=s.separate_scheduler.period
         before=POST.Scheduler(old,old-F(1,1000))
-        newp=old/F(2)
+        newp=B.rn32(old/F(2))
         active=ACTIVE.ActiveParameters(s.base.base.separate_active.tau,
              s.base.base.separate_active.Sigma_aw,newp,s.base.base.separate_active.R_S)
         with self.assertRaisesRegex(ValueError,'nextafter witness'):
             X._advance_one(before,active,boundary_consumed=True,h=F(1,200),park=None)
-        park=ACTIVE.NextafterParkWitness(newp-F(1,10000))
+        park=ACTIVE.NextafterParkWitness(NEXT.predecessor_positive(newp))
         out=X._advance_one(before,active,boundary_consumed=True,h=F(1,200),park=park)
         self.assertEqual(out.after_retarget.elapsed,park.parked_elapsed)
+        with self.assertRaisesRegex(ValueError,'exact binary32 predecessor'):
+            X._advance_one(before,active,boundary_consumed=True,h=F(1,200),
+                           park=ACTIVE.NextafterParkWitness(newp-F(1,10000)))
 
     def test_MAG_and_HOLD_preserve_both_machine_schedulers(self):
         s=state(); ss=s.separate_scheduler; fs=s.fma_scheduler
@@ -76,8 +81,8 @@ class Tests(unittest.TestCase):
         r=X.readiness()
         self.assertTrue(r['machine_pseudo_period_scheduler_effect_attached'])
         self.assertTrue(r['machine_due_not_due_branch_retained_per_compiler_history'])
+        self.assertTrue(r['scheduler_nextafter_binary32_correspondence_closed'])
         self.assertFalse(r['machine_RS_measurement_effect_attached'])
-        self.assertFalse(r['scheduler_nextafter_binary32_correspondence_closed'])
         self.assertFalse(r['machine_due_branch_S_measurement_composed'])
         self.assertFalse(r['source_uniform_complete_600_step_word_qualified'])
         self.assertFalse(r['storage_search_allowed']); self.assertFalse(r['ALT_LIVE_PASS'])
