@@ -17,7 +17,9 @@ A pending machine TuneState boundary atomically replaces the carried applied
 sigma from that compiler's binary32 stored-sigma snapshot; a nonpending boundary
 preserves it. Racc is then reexecuted from that sigma, that compiler's WPE-entry
 frequency and the same held guard result, before the accelerometer correction is
-reexecuted from the already-qualified machine post-S state.
+reexecuted from the already-qualified machine post-S state. The Racc config and
+nominal standard deviations are read from the persistent admitted runtime object;
+they are never accepted as per-event overrides.
 
 The exact shipping event remains the comparison shadow. Separate/FMA Racc
 hypot/sqrt witnesses and accelerometer LDLT branches remain distinct. Native
@@ -36,12 +38,19 @@ from tools.stability.ou3_alt_contraction import finite_source_bound_prediction_w
 from tools.stability.ou3_alt_contraction import finite_machine_prediction_displacement as DISP
 from tools.stability.ou3_alt_contraction import finite_source_continuation as SOURCE
 
-QUALIFICATION='OU3_ALT_ADMITTED_MACHINE_RACC_SUPPLY_INTERLEAVER_V1'
+QUALIFICATION='OU3_ALT_ADMITTED_MACHINE_RACC_SUPPLY_INTERLEAVER_V2'
 
 
 def _exact_live_state(base:LOWER.State):
     if not isinstance(base,LOWER.State): raise TypeError('machine measurement-supply state required')
     return LOWER._preword(base).live.live.live
+
+
+def _runtime(base:LOWER.State):
+    if not isinstance(base,LOWER.State): raise TypeError('machine measurement-supply state required')
+    runtime=LOWER._preword(base).runtime
+    if not isinstance(runtime.racc_cfg,RACC.Config): raise TypeError('persistent shipping Racc config required')
+    return runtime
 
 
 def _mtune_result(lower:LOWER.ImuResult):
@@ -167,9 +176,13 @@ def imu_step(state:State,*,
     if not isinstance(separate_racc_accel_ldlt,MEAS.SafeLDLT) or not isinstance(fma_racc_accel_ldlt,MEAS.SafeLDLT):
         raise TypeError('both machine-Racc accelerometer LDLT branches required')
     restricted=kwargs.get('restricted'); temperature_c=kwargs.get('temperature_c')
-    cfg=kwargs.get('racc_cfg'); nominal=kwargs.get('nominal_racc_std')
-    if restricted is None or temperature_c is None or not isinstance(cfg,RACC.Config) or nominal is None:
-        raise TypeError('same source, temperature and shipping Racc configuration required')
+    if restricted is None or temperature_c is None:
+        raise TypeError('same admitted source and source-owned temperature required')
+    runtime=_runtime(state.base)
+    cfg=runtime.racc_cfg; nominal=runtime.nominal_racc_std
+    # Persistent runtime configuration is already injected by the admitted lower
+    # word. Accepting event-local Racc config here would create a detached second
+    # execution surface, so the wrapper deliberately has no such parameters.
     lower=LOWER.imu_step(state.base,**kwargs)
     mtune=_mtune_result(lower); live=LOWER._live_result(lower.lower)
     sep_sigma,fma_sigma=_applied_sigmas(state,mtune)
@@ -213,6 +226,7 @@ def readiness():
     low=LOWER.readiness(); rr=RACC.readiness()
     return {
       'machine_measurement_supply_word_consumed':low['accelerometer_measurement_propagates_machine_prediction_supply'],
+      'persistent_Racc_config_and_nominal_std_consumed_from_admitted_runtime':True,
       'raw_applied_sigma_carried_separately_from_stationary_Sigma_aw':True,
       'pending_machine_boundary_updates_same_mode_applied_sigma_before_Racc':True,
       'nonpending_boundary_preserves_machine_applied_sigma':True,
