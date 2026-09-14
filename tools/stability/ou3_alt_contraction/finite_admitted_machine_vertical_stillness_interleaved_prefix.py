@@ -138,7 +138,7 @@ def complete(state:State): return CompleteWord(state,LOWER.complete(state.base))
 def readiness():
     low=LOWER.readiness(); guard=GUARD.readiness(); src=VS.readiness(); mah=MAHONY.readiness()
     native=bool(guard['target_libm_and_Eigen_expression_correspondence_closed'] and
-                mah['compiler_profile_qualified_for_deployment'] and
+                mah['actual_target_compiler_profile_qualified'] and
                 src['tracker_LPF_exp_target_libm_correspondence_closed'] and
                 src['stillness_exp_sqrt_target_libm_correspondence_closed'])
     return {
@@ -163,7 +163,7 @@ def readiness():
       'tracker_LPF_cutoff_runtime_ancestry_closed':False,
       'startup_machine_guard_vertical_stillness_history_attached':False,
       'guard_exp_sqrt_compiler_correspondence_closed':guard['target_libm_and_Eigen_expression_correspondence_closed'],
-      'private_Mahony_compiler_profile_qualified':mah['compiler_profile_qualified_for_deployment'],
+      'private_Mahony_compiler_profile_qualified':mah['actual_target_compiler_profile_qualified'],
       'tracker_LPF_exp_target_libm_correspondence_closed':src['tracker_LPF_exp_target_libm_correspondence_closed'],
       'stillness_exp_sqrt_target_libm_correspondence_closed':src['stillness_exp_sqrt_target_libm_correspondence_closed'],
       'target_libm_Eigen_and_compiler_profile_correspondence_closed':native,
