@@ -3,7 +3,7 @@
 A machine pseudo-period displacement is hybrid, not merely additive: at a
 sample-entry pending boundary shipping retargets the persistent S scheduler
 before prediction, and after prediction the scheduler may choose a different
-due/not-due branch.  Therefore a coefficient-only ``delta period`` supply is
+due/not-due branch. Therefore a coefficient-only ``delta period`` supply is
 insufficient.
 
 This layer strengthens ``finite_admitted_machine_prediction_interleaved_prefix``
@@ -17,9 +17,9 @@ Each scheduler:
 * retains its literal due/not-due decision as theorem data;
 * is unchanged by asynchronous MAG/HOLD events.
 
-No second filter transition is executed.  The machine S measurement itself is
+No second filter transition is executed. The machine S measurement itself is
 still open: this module stops at the scheduler branch and leaves R_S/LDLT
-composition to the next layer.  Binary32 ``nextafter`` correspondence remains
+composition to the next layer. Binary32 ``nextafter`` correspondence remains
 an explicit witness obligation on overdue retargets.
 """
 from __future__ import annotations
@@ -116,8 +116,6 @@ def begin_from_goLive(base:LOWER.State,go:GO.Result,*,scheduler_before:POST.Sche
         raise ValueError('declared startup scheduler predecessor detached from exact goLive scheduler')
     sep=ACTIVE.retarget_scheduler(go.separate_active,scheduler_before,park=separate_scheduler_park)
     fma=ACTIVE.retarget_scheduler(go.fma_active,scheduler_before,park=fma_scheduler_park)
-    # The lower admitted constructor already checks whole-machine goLive
-    # provenance.  Here only scheduler ancestry is added.
     return begin(base,sep,fma)
 
 
@@ -141,9 +139,9 @@ def imu_step(state:State,*,separate_scheduler_park=None,fma_scheduler_park=None,
     h=restricted.segment.h
     lower=LOWER.imu_step(state.base,**kwargs)
     mb=lower.lower.machine_boundary
-    sep=_advance_one(state.separate_scheduler,lower.state.base.base.separate_active,
+    sep=_advance_one(state.separate_scheduler,lower.state.base.separate_active,
                      boundary_consumed=mb.consumed,h=h,park=separate_scheduler_park)
-    fma=_advance_one(state.fma_scheduler,lower.state.base.base.fma_active,
+    fma=_advance_one(state.fma_scheduler,lower.state.base.fma_active,
                      boundary_consumed=mb.consumed,h=h,park=fma_scheduler_park)
     live=MTUNE._live_result(lower.lower.lower)
     exact_due=live.post_prediction.S_service_due
