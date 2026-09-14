@@ -1,4 +1,5 @@
 """Common machine TuneState boundary regressions."""
+from dataclasses import replace
 from fractions import Fraction as F
 import unittest
 
@@ -30,27 +31,55 @@ def state(*,pending=True):
 
 class Tests(unittest.TestCase):
     def test_pending_live_boundary_commits_each_whole_track_atomically(self):
-        s=state(); out=X.imu_boundary(s,cfg(),live=True,band_noise_floor_sigma=F(1,20))
+        s=state(); out=X.imu_boundary(s,cfg(),live=True,separate_band_noise_floor_sigma=B.rn32(F(1,20)),fma_band_noise_floor_sigma=B.rn32(F(3,50)))
         self.assertTrue(out.consumed); self.assertFalse(out.state.pending)
         self.assertEqual(out.separate_commit.tau,s.tau.separate)
         self.assertEqual(out.fma_commit.tau,s.tau.fma)
-        self.assertEqual(out.separate_commit.Sigma_aw[2][2],s.sigma.separate**2)
-        self.assertEqual(out.fma_commit.Sigma_aw[2][2],s.sigma.fma**2)
+        self.assertEqual(out.separate_commit.Sigma_aw[2][2],B.mul(s.sigma.separate,s.sigma.separate))
+        self.assertEqual(out.fma_commit.Sigma_aw[2][2],B.mul(s.sigma.fma,s.sigma.fma))
         self.assertNotEqual(out.separate_commit.R_S,out.fma_commit.R_S)
 
     def test_preLive_pending_consumes_common_transaction_but_writes_no_RS(self):
-        out=X.imu_boundary(state(),cfg(),live=False,band_noise_floor_sigma=F(1,20))
+        out=X.imu_boundary(state(),cfg(),live=False,separate_band_noise_floor_sigma=B.rn32(F(1,20)),fma_band_noise_floor_sigma=B.rn32(F(3,50)))
         self.assertTrue(out.consumed); self.assertFalse(out.state.pending)
         self.assertIsNone(out.separate_commit.R_S); self.assertIsNone(out.fma_commit.R_S)
         self.assertEqual(out.separate_commit.tau,B.rn32(1))
         self.assertEqual(out.fma_commit.tau,B.rn32(F(5,4)))
 
-    def test_nonpending_boundary_is_identity_and_consumes_no_RS_witness(self):
-        s=state(pending=False); out=X.imu_boundary(s,cfg(),live=True,band_noise_floor_sigma=F(1,20))
-        self.assertFalse(out.consumed); self.assertEqual(out.state,s)
+    def test_nonpending_boundary_is_identity_and_consumes_no_witness(self):
+        s=state(pending=False); out=X.imu_boundary(s,cfg(),live=True)
+        self.assertFalse(out.consumed); self.assertIs(out.state,s)
         self.assertIsNone(out.separate_commit); self.assertIsNone(out.fma_commit)
-        with self.assertRaisesRegex(ValueError,'nonpending boundary consumes no'):
-            X.imu_boundary(s,cfg(),live=True,band_noise_floor_sigma=F(1,20),separate_rs_sqrt_scale=1)
+        with self.assertRaisesRegex(ValueError,'no-pending boundary consumes no'):
+            X.imu_boundary(s,cfg(),live=True,separate_band_noise_floor_sigma=B.rn32(F(1,20)))
+
+    def test_missing_machine_floor_does_not_fall_back_to_exact_shadow(self):
+        with self.assertRaisesRegex(ValueError,'each compiler track'):
+            X.imu_boundary(state(),cfg(),live=True)
+        with self.assertRaisesRegex(ValueError,'each compiler track'):
+            X.imu_boundary(state(),cfg(),live=True,separate_band_noise_floor_sigma=B.rn32(F(1,20)))
+
+    def test_machine_floor_witnesses_and_rounded_squares_are_retained(self):
+        s=state(); sb=B.rn32(F(3,10)); fb=B.rn32(F(2,5))
+        out=X.imu_boundary(s,cfg(),live=True,separate_band_noise_floor_sigma=sb,fma_band_noise_floor_sigma=fb)
+        self.assertEqual(out.arithmetic.separate.band_noise_floor_sigma,sb)
+        self.assertEqual(out.arithmetic.fma.band_noise_floor_sigma,fb)
+        self.assertEqual(out.separate_commit.Sigma_aw[2][2],B.mul(sb,sb))
+        self.assertNotEqual(out.separate_commit.Sigma_aw[2][2],sb*sb)
+        self.assertEqual(out.fma_commit.Sigma_aw[2][2],B.mul(fb,fb))
+        old=C.commit(C.TuneState(s.tau.separate,s.sigma.separate,s.rs.separate),cfg(),
+                     pending=True,live=True,band_noise_floor_sigma=sb)
+        self.assertNotEqual(out.separate_commit.Sigma_aw,old.Sigma_aw)
+        with self.assertRaisesRegex(ValueError,'rounded binary32 outputs'):
+            replace(out,separate_commit=old)
+
+    def test_tau_floor_and_sync_use_the_same_rounded_commit(self):
+        s=state(); s=replace(s,tau=replace(s.tau,separate=B.rn32(F(1,10000))))
+        out=X.imu_boundary(s,cfg(),live=False,separate_band_noise_floor_sigma=B.rn32(F(1,20)),
+                           fma_band_noise_floor_sigma=B.rn32(F(1,20)),sync_covariance=True)
+        self.assertEqual(out.separate_commit.tau,B.rn32(F(1,1000)))
+        self.assertEqual(out.separate_commit.aw_floor_target,out.separate_commit.Sigma_aw)
+        self.assertIsNone(out.separate_commit.R_S)
 
     def test_MAG_and_HOLD_are_whole_product_identity(self):
         s=state(); self.assertIs(X.mag_or_hold(s),s)
@@ -68,6 +97,7 @@ class Tests(unittest.TestCase):
     def test_readiness_closes_common_boundary_only(self):
         r=X.readiness()
         self.assertTrue(r['next_boundary_common_machine_commit_attached'])
+        self.assertTrue(r['applied_parameters_packaged_from_binary32_operation_graph'])
         self.assertTrue(r['one_common_pending_bit_controls_tau_sigma_RS_transaction'])
         self.assertTrue(r['MAG_and_HOLD_preserve_whole_machine_TuneState_and_pending_by_identity'])
         for k in ('compiler_FP_contraction_mode_qualified','exact_commit_to_binary32_shipping_correspondence_closed',

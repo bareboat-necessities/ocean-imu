@@ -1,4 +1,5 @@
 """Same-source sigma exact/machine join regressions."""
+from dataclasses import replace
 from fractions import Fraction as F
 import unittest
 
@@ -59,6 +60,15 @@ class Tests(unittest.TestCase):
              c.adapt_RS_mult,c.adapt_RS_slew_log,B.rn32(F(1,5)),c.clamp_enabled)
         with self.assertRaisesRegex(ValueError,'detached from joined deployment config'):
             X.join(sample(),ccfg(),c2,m)
+
+    def test_sigma_target_constants_cannot_hide_behind_alpha_only_guard(self):
+        for name,value in (('sigma_coeff',F(4,5)),('max_sigma',F(3))):
+            with self.subTest(field=name):
+                d=replace(dcfg(),**{name:B.rn32(value)})
+                self.assertTrue(X.A._configs_match(ccfg(),d))
+                self.assertFalse(X.configs_match(ccfg(),d))
+                with self.assertRaisesRegex(ValueError,'configs disagree'):
+                    X.join(sample(),ccfg(),d,machine(d))
 
     def test_readiness_keeps_supply_bounds_and_storage_open(self):
         r=X.readiness()

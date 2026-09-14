@@ -32,13 +32,13 @@ from dataclasses import dataclass
 from tools.stability.ou3_alt_contraction import finite_admitted_wpe_tau_interleaved_prefix as LOWER
 from tools.stability.ou3_alt_contraction import finite_admitted_tau_interleaved_prefix as TAUJOIN
 from tools.stability.ou3_alt_contraction import finite_tuner_candidate as C
+from tools.stability.ou3_alt_contraction import finite_tuner_projection_bridge as PROJECTION
 from tools.stability.ou3_alt_contraction import finite_tuner_deployment_config as D
 from tools.stability.ou3_alt_contraction import finite_tuner_sigma_binary32 as SIGM
 from tools.stability.ou3_alt_contraction import finite_tuner_sigma_machine_real_join as SIGJOIN
 from tools.stability.ou3_alt_contraction import finite_tuner_machine_tunestate_product as PRODUCT
 from tools.stability.ou3_alt_contraction import finite_tuner_machine_candidate_step as CANDSTEP
 from tools.stability.ou3_alt_contraction import finite_tuner_machine_boundary as MBOUND
-from tools.stability.ou3_alt_contraction import finite_tuner_common_alpha_qualification as COMMON
 from tools.stability.ou3_alt_contraction import finite_startup_live_machine_tunestate_bridge as GO
 from tools.stability.ou3_alt_contraction import finite_active_parameter_machine_real_join as ACTIVEJOIN
 from tools.stability.ou3_alt_contraction import finite_runtime_parameters as ACTIVE
@@ -53,8 +53,9 @@ def _entry_live(base:LOWER.State):
 
 
 def _live_result(lower:LOWER.ImuResult):
-    try: return lower.event.event.event.live
-    except AttributeError as exc: raise TypeError('admitted whole-machine event lost finite Live IMU result') from exc
+    if not isinstance(lower,LOWER.ImuResult):
+        raise TypeError('admitted WPE/tau IMU result required')
+    return TAUJOIN._live_result(lower.event)
 
 
 @dataclass(frozen=True)
@@ -83,7 +84,7 @@ class State:
         if self.machine.pending!=entry.tuner.pending:
             raise ValueError('whole machine pending bit detached from exact Live tuner state')
         runtime=self.base.base.prefix.prefix.live.live_word.runtime
-        if not COMMON._configs_match(runtime.candidate_cfg,self.deployment_cfg):
+        if not SIGJOIN.configs_match(runtime.candidate_cfg,self.deployment_cfg):
             raise ValueError('deployment tuner config detached from carried shipping runtime scalars')
         # These joins are state invariants, not a claim that the supplies are
         # already small enough for storage.  They also enforce the same Live
@@ -144,7 +145,7 @@ def begin_from_goLive(base:LOWER.State,go:GO.Result,deployment_cfg:D.DeploymentC
 
 def imu_step(state:State,*,
              separate_sigma_machine:SIGM.Target,fma_sigma_machine:SIGM.Target,
-             separate_boundary_rs_sqrt_scale=None,fma_boundary_rs_sqrt_scale=None,
+             separate_boundary_band_noise_floor_sigma=None,fma_boundary_band_noise_floor_sigma=None,
              separate_spectral_pow,separate_spectral_sqrt,
              fma_spectral_pow,fma_spectral_sqrt,
              separate_rs_exp_decay,fma_rs_exp_decay,
@@ -155,14 +156,10 @@ def imu_step(state:State,*,
 
     lower=LOWER.imu_step(state.base,**kwargs)
     live=_live_result(lower)
-    exact_boundary=live.boundary
     runtime=state.base.base.prefix.prefix.live.live_word.runtime
-    nf=(runtime.boundary_bench_noise_sigma if exact_boundary.band_noise_floor_sigma is None
-        else exact_boundary.band_noise_floor_sigma)
     mb=MBOUND.imu_boundary(state.machine,runtime.commit_cfg,live=True,
-        band_noise_floor_sigma=nf,
-        separate_rs_sqrt_scale=separate_boundary_rs_sqrt_scale,
-        fma_rs_sqrt_scale=fma_boundary_rs_sqrt_scale)
+        separate_band_noise_floor_sigma=separate_boundary_band_noise_floor_sigma,
+        fma_band_noise_floor_sigma=fma_boundary_band_noise_floor_sigma)
     if mb.consumed:
         sep_active=ACTIVE.ActiveParameters.from_commit(mb.separate_commit)
         fma_active=ACTIVE.ActiveParameters.from_commit(mb.fma_commit)
@@ -172,7 +169,7 @@ def imu_step(state:State,*,
     suffix=live.tuner_suffix; cand=suffix.candidate
     if not isinstance(cand,C.CandidateResult):
         raise TypeError('Live admitted event lost exact tuner candidate')
-    exact_sample=C.sample_from_runtime(suffix.band,suffix.stillness,
+    exact_sample=PROJECTION.sample_from_projection(suffix.band,suffix.stillness,
                                        sigma_wave_sqrt=sigma_wave_sqrt)
     sj=SIGJOIN.join(exact_sample,runtime.candidate_cfg,state.deployment_cfg,separate_sigma_machine)
     fj=SIGJOIN.join(exact_sample,runtime.candidate_cfg,state.deployment_cfg,fma_sigma_machine)
@@ -214,6 +211,7 @@ def readiness():
       'candidate_memory_and_applied_machine_parameters_carried_separately':aj['candidate_state_not_confused_with_applied_active_state'],
       'exact_and_machine_pending_boundary_share_same_IMU_event':bound['next_boundary_common_machine_commit_attached'],
       'machine_applied_parameters_update_only_when_boundary_consumes_pending':True,
+      'Live_pending_boundary_consumes_binary32_commit_graph':True,
       'same_exact_tuner_suffix_anchors_sigma_and_RS_machine_candidate':cand['one_exact_frontend_candidate_anchors_both_global_compiler_histories'],
       'exact_vs_machine_applied_parameter_supplies_exposed_every_Live_state':aj['tau_stationary_Sigma_pseudo_period_and_RS_displacements_exposed'],
       'MAG_and_HOLD_preserve_WPE_TuneState_and_applied_machine_parameters_by_identity':True,

@@ -21,13 +21,22 @@ class Tests(unittest.TestCase):
 
     def test_preLive_pending_commits_tau_period_and_sigma_but_not_RS(self):
         s=replace(M.initial(),pending=True); bn=B.rn32(F(3,50))
-        out=X.apply(s,cfg(),live=False,separate_band_noise_floor_sigma=bn,fma_band_noise_floor_sigma=bn)
+        c=replace(cfg(),tau_scaled_cadence=True)
+        out=X.apply(s,c,live=False,separate_band_noise_floor_sigma=bn,fma_band_noise_floor_sigma=bn)
         self.assertFalse(out.state.pending); self.assertEqual(out.state.tau,s.tau); self.assertEqual(out.state.sigma,s.sigma); self.assertEqual(out.state.rs,s.rs)
         self.assertIsNone(out.separate.rs); self.assertIsNone(out.fma.rs)
         self.assertEqual(out.separate.tau_command,max(X.TAU_FLOOR,s.tau.separate))
-        q=X._cfg32(cfg()); requested=B.mul(q['pseudo_tau_ratio'],s.tau.separate)
+        q=X._cfg32(c); requested=B.mul(q['pseudo_tau_ratio'],s.tau.separate)
         self.assertEqual(out.separate.pseudo_requested,requested)
         floor=max(X.SIGMA_FLOOR,bn); self.assertEqual(out.separate.sigma_z,max(floor,s.sigma.separate))
+
+    def test_fixed_cadence_uses_literal_configured_period(self):
+        s=replace(M.initial(),pending=True); bn=B.rn32(F(3,50))
+        c=replace(cfg(),tau_scaled_cadence=False)
+        out=X.apply(s,c,live=False,separate_band_noise_floor_sigma=bn,fma_band_noise_floor_sigma=bn)
+        self.assertEqual(out.separate.pseudo_requested,B.rn32(c.pseudo_fixed_period))
+        self.assertEqual(out.separate.pseudo_period,B.rn32(c.pseudo_fixed_period))
+        self.assertEqual(out.fma.pseudo_period,out.separate.pseudo_period)
 
     def test_Live_pending_commits_RS_from_same_mode_snapshot(self):
         s=replace(M.initial(),pending=True); sb=B.rn32(F(1,20)); fb=B.rn32(F(3,50))

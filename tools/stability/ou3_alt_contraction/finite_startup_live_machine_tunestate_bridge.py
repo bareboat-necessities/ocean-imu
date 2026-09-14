@@ -14,12 +14,13 @@ injecting that exact-vs-machine active-parameter displacement into the Live word
 is a subsequent deployment obligation.
 """
 from __future__ import annotations
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 from tools.stability.ou3_alt_contraction import finite_guarded_tuner_machine_tunestate_deployment as START
 from tools.stability.ou3_alt_contraction import finite_startup_live_runtime_bridge as LIVE
 from tools.stability.ou3_alt_contraction import finite_tuner_machine_tunestate_product as PRODUCT
 from tools.stability.ou3_alt_contraction import finite_tuner_commit as C
+from tools.stability.ou3_alt_contraction import finite_tuner_machine_boundary as BOUND
 from tools.stability.ou3_alt_contraction import finite_runtime_parameters as ACTIVE
 from tools.stability.ou3_alt_contraction import finite_wpe_log_binary32 as WPE
 
@@ -36,6 +37,7 @@ class Result:
     separate_active:ACTIVE.ActiveParameters
     fma_active:ACTIVE.ActiveParameters
     startup:START.State
+    arithmetic:BOUND.Boundary
     qualification:str=QUALIFICATION
     def __post_init__(self):
         if not isinstance(self.live,LIVE.Result) or not isinstance(self.startup,START.State):
@@ -46,6 +48,13 @@ class Result:
             raise TypeError('both global compiler goLive commits required')
         if not isinstance(self.separate_active,ACTIVE.ActiveParameters) or not isinstance(self.fma_active,ACTIVE.ActiveParameters):
             raise TypeError('both global compiler active parameter states required')
+        if not isinstance(self.arithmetic,BOUND.Boundary): raise TypeError('binary32 goLive transaction required')
+        if self.arithmetic.arithmetic.before!=replace(self.machine,pending=True):
+            raise ValueError('goLive transaction detached from same machine snapshot')
+        if not self.arithmetic.arithmetic.live or not self.arithmetic.sync_covariance:
+            raise ValueError('goLive must apply Live R_S and synchronize a_w')
+        if (self.separate_commit,self.fma_commit)!=(self.arithmetic.separate_commit,self.arithmetic.fma_commit):
+            raise ValueError('goLive commits detached from binary32 transaction')
         if self.qualification!=QUALIFICATION: raise ValueError('wrong whole-machine goLive qualification')
         if self.live.frontend_before!=self.startup.lower.frontend:
             raise ValueError('goLive result detached from whole-machine startup frontend')
@@ -59,16 +68,8 @@ class Result:
             raise ValueError('FMA active parameters detached from goLive machine commit')
 
 
-def _tune(machine:PRODUCT.State,mode):
-    if mode=='separate':
-        return C.TuneState(machine.tau.separate,machine.sigma.separate,machine.rs.separate)
-    if mode=='fma':
-        return C.TuneState(machine.tau.fma,machine.sigma.fma,machine.rs.fma)
-    raise ValueError('unknown global compiler mode')
-
-
 def bridge(startup:START.State,entry,fresh,*,
-           separate_machine_rs_sqrt_scale=None,fma_machine_rs_sqrt_scale=None,
+           separate_band_noise_floor_sigma=None,fma_band_noise_floor_sigma=None,
            **kwargs):
     if not isinstance(startup,START.State): raise TypeError('whole machine startup product required')
     if startup.lower.frontend.tuner.stage!='TunerReady':
@@ -76,20 +77,19 @@ def bridge(startup:START.State,entry,fresh,*,
     exact=LIVE.bridge(entry,fresh,startup.lower.frontend,**kwargs)
     cfg=kwargs.get('commit_cfg')
     if not isinstance(cfg,C.CommitConfig): raise TypeError('goLive CommitConfig required')
-    nf=exact.band_noise_floor_sigma
-    rs_scale=kwargs.get('rs_scale',1)
-    # goLive applies current TuneState unconditionally, independent of the
-    # online pending bit, and synchronizes posterior P_aw to stationary Sigma.
-    sc=C.commit(_tune(startup.machine,'separate'),cfg,pending=True,live=True,
-                band_noise_floor_sigma=nf,rs_sqrt_scale=separate_machine_rs_sqrt_scale,
-                sync_covariance=True,rs_scale=rs_scale)
-    fc=C.commit(_tune(startup.machine,'fma'),cfg,pending=True,live=True,
-                band_noise_floor_sigma=nf,rs_sqrt_scale=fma_machine_rs_sqrt_scale,
-                sync_covariance=True,rs_scale=rs_scale)
-    if not isinstance(sc,C.CommitResult) or not isinstance(fc,C.CommitResult):
-        raise AssertionError('unconditional machine goLive commit missing')
+    if kwargs.get('rs_scale',1)!=1:
+        raise ValueError('shipping goLive uses literal R_S scale one')
+    # Force only the local commit selector: goLive applies even if the real
+    # online pending bit is false.  Return the ORIGINAL machine state below;
+    # its pending flag and all scalar histories cross goLive by identity.
+    arithmetic=BOUND.imu_boundary(replace(startup.machine,pending=True),cfg,live=True,
+        separate_band_noise_floor_sigma=separate_band_noise_floor_sigma,
+        fma_band_noise_floor_sigma=fma_band_noise_floor_sigma,sync_covariance=True)
+    sc=arithmetic.separate_commit; fc=arithmetic.fma_commit
     return Result(exact,startup.machine,startup.lower.wpe,sc,fc,
-                  ACTIVE.ActiveParameters.from_commit(sc),ACTIVE.ActiveParameters.from_commit(fc),startup)
+                  ACTIVE.ActiveParameters.from_commit(sc),ACTIVE.ActiveParameters.from_commit(fc),
+                  startup,arithmetic)
+
 
 
 def readiness():
@@ -100,6 +100,7 @@ def readiness():
       'goLive_preserves_tau_sigma_RS_and_common_pending_bit_by_identity':True,
       'goLive_unconditionally_commits_each_global_compiler_whole_TuneState':True,
       'machine_goLive_commits_synchronize_aw_covariance_like_shipping':True,
+      'goLive_applied_parameters_come_from_binary32_commit_graph':True,
       'exact_frontend_memory_and_control_goLive_bridge_retained':l['Mahony_WPE_band_stats_stillness_guard_memory_preserved_across_goLive'],
       'goLive_carries_whole_machine_TuneState_product':True,
       'machine_active_parameters_identified_with_exact_shadow_active_parameters':False,

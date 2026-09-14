@@ -242,6 +242,35 @@ and arbitrary external hold does not imply eventual A21.
 
 ### Failure analysis and independent critic
 
+The current finite deployment continuation exposed implementation/CI defects,
+not a failed contraction inequality: the machine boundary used exact-real
+squares of stored binary32 values; it silently shared the shadow noise floor
+across compiler modes; the sigma join checked EMA constants but omitted its
+own scale/maximum; and the admitted tau accessor expected `.event.live` where
+the executed ISS result owns `.event.event.live`. Startup/Live sigma extraction
+also requested the full stillness adapter instead of the carried tracker-free
+projection. The two tau event fixtures reused the toy shadow decay rather than
+a witness at the actual rounded machine argument. A fixed-cadence test also
+asserted a tau-scaled result. The broader Live event therefore failed before
+reaching its candidate, regardless of a storage metric. These failures
+invalidate the corresponding composition/fixture claims, not the shipping
+filter's dynamics or the retained scalar binary32 graph.
+
+The controlling object remains the complete finite deployment map feeding the
+future wordwise storage inequality. The selected repair consumes the existing
+binary32 commit graph, preserves separate/FMA applied outputs, checks the sigma
+constants, and reads the one executed Live result through a shared typed
+accessor. No new interval refinement or rho search is justified by this work.
+The critic's strongest objection remains that explicitly supplied machine
+noise floors are not yet proved descendants of the persistent machine band
+state. Alternatives are to (1) connect the existing arithmetic graph (selected),
+(2) keep a real commit plus a certified operation-level residual, or (3) derive
+an independent machine interpreter. The latter two duplicate facts already
+available without resolving source ancestry. The next falsifiable check is a
+full admitted Live event plus startup/pending/goLive regressions: rounded
+outputs must reach active parameters, detached configs/results must fail, and
+all storage/theorem flags must remain false.
+
 The source-product fixture referenced nonexistent `PhysicalSegment.delta_theta`
 / `delta_velocity` / `delta_position`, not the actual coupled `J0/J1/J2`.
 This test implementation defect is repaired without changing runtime physics.
@@ -272,21 +301,43 @@ storage-true expectation corrected to false. Shared P2/P3/P4/P5 code is untouche
 
 ### Evidence and validation boundary
 
-The first checked-transfer run for the primary-history restriction failed for CI infrastructure only: its temporary workflow did not install `numpy` and the native Mahony correspondence prerequisites. It stopped after 502 tests with `ModuleNotFoundError: numpy` and `required native Mahony correspondence prerequisites missing`. This invalidates only the transfer-workflow environment assumption; it does not invalidate the restriction lemma or the normal finite-identity job, whose dependency installation is unchanged. The falsifiable retry is the identical 518-test selection after installing the same proof/native dependencies as the normal job.
+The current focused continuation selection passes 58 tests across the machine
+boundary/commit, whole-TuneState Live/startup/goLive, sigma config join, WPE/tau
+interleavers and machine-candidate modules. It includes an executed admitted
+Live event both with and without a pending commit: candidate updates advance
+once, separate/FMA rounded outputs become active only at the pending boundary,
+and the exact/machine discrepancy remains explicit. The pre-Live transaction
+clears both pending bits without writing R_S; goLive applies even when pending
+is false and preserves the original bit and candidate histories. Missing mode
+floors, detached configs, and substitution of exact-real covariance squares
+are rejected. These are conditional finite-map/algebra regressions, not
+all-history native arithmetic or startup-reachability certificates.
 
-The full focused finite-identity selection passes 511 tests with native checks
-required. The native shipping finite-identity check passes with bit-identical
-observed/plain sample states. Native preserve-yaw reset regression passes,
-including its intermediate covariance axis and near-parallel branch. These are
-implementation/algebra regressions, not all-history deployment qualification.
-The full inherited ALT integration suite is not claimed passing; the shared
-`float('44/5')` failure remains exposed by its source-building path.
+The full inherited ALT suite is not claimed passing. The archived starting
+head ran 1021 tests with 7 failures and 23 errors. A broader local finite-only
+run was interrupted during the native scalar-normalizer regression and is not
+a completed validation. A separate 14-test scheduler/prediction-supply check
+reproduced nine inherited errors: higher wrappers pass their own State to
+`finite_admitted_machine_prediction_interleaved_prefix._imu_steps`, which expects
+the lower whole-machine State. Those unchanged wrapper paths are outside this
+scalar-commit continuation; they remain blockers, not skipped PASS results.
+`compileall` and `git diff --check` pass for the current changes.
 
-Default `make all` stops compiling `tests/ahrs/ahrs-qmekf-sim.cpp` with
-`Eigen/Dense: No such file or directory` on `/usr/include/eigen3`. Native checks
-use an existing separate Eigen include. No full-build PASS is claimed.
+`make all` stops at the unchanged command compiling
+`tests/ahrs/ahrs-qmekf-sim.cpp`: `src/ahrs/KalmanQMEKF.h:30:10: fatal error:
+Eigen/Dense: No such file or directory`, using `-I/usr/include/eigen3`.
+No native/full-build PASS is claimed for this environment.
 
 ### Current limiter, DEAD_ENDS and next falsifiable work
+
+The machine scalar pending/goLive transaction now consumes the binary32 graph,
+but its per-mode band-noise floors still require a same-history connection to
+the persistent binary32 band covariance and sqrt output. The explicit
+applied-parameter supplies must then be consumed by the prediction/S-service/
+measurement word rather than merely recorded alongside its exact shadow.
+Correcting caller/result wrapper types must precede any use of the higher
+scheduler or prediction-supply completion counters. These finite composition
+obligations do not authorize storage or a claimed rho margin.
 
 The complete finite source-uniform word remains open: the physical frequency/frontend relation, full BIAS driver/parameter histories, remaining
 same-source exp/trig/Eigen/roundoff branches, primary-history membership at sample zero is a theorem premise rather than a runtime token check (the checked endpoint topology is closed), startup/ungauged capture and continuation beyond the current

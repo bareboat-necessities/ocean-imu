@@ -56,6 +56,26 @@ class Tests(unittest.TestCase):
         self.assertIsNone(out.exact.commit)
         self.assertFalse(out.machine.consumed)
 
+    def test_preLive_pending_boundary_consumes_binary32_outputs_and_preserves_ledgers(self):
+        from test_finite_startup_live_machine_tunestate_bridge import startup
+        from tools.stability.ou3_alt_contraction import finite_band_variance_runtime as BAND
+        s,*_=startup(True)
+        sb,fb=B.rn32(F(11,10)),B.rn32(F(6,5))
+        out=X.boundary(s,commit_cfg(),bench_noise_sigma=0,
+            exact_noise_sqrt=BAND.NoiseSqrtWitness(0),
+            separate_band_noise_floor_sigma=sb,fma_band_noise_floor_sigma=fb)
+        self.assertFalse(out.state.machine.pending)
+        self.assertFalse(out.state.lower.frontend.tuner.pending)
+        self.assertIs(out.state.machine.tau,s.machine.tau)
+        self.assertIs(out.state.machine.sigma,s.machine.sigma)
+        self.assertIs(out.state.machine.rs,s.machine.rs)
+        self.assertIs(out.state.lower.wpe,s.lower.wpe)
+        self.assertEqual(out.machine.separate_commit.Sigma_aw[2][2],B.mul(sb,sb))
+        self.assertEqual(out.machine.fma_commit.Sigma_aw[2][2],B.mul(fb,fb))
+        self.assertIsNone(out.machine.separate_commit.R_S)
+        self.assertIsNone(out.machine.fma_commit.R_S)
+        self.assertNotEqual(out.machine.separate_commit.Sigma_aw,out.exact.commit.Sigma_aw)
+
     def test_readiness_attaches_startup_topology_but_not_reachability_or_storage(self):
         r=X.readiness()
         self.assertTrue(r['startup_frontend_machine_TuneState_product_attached'])

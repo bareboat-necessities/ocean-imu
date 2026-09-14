@@ -48,7 +48,7 @@ class Tests(unittest.TestCase):
         dynamic['preupdate_period']=F(2); dynamic['preupdate_frequency']=F(1,2)
         dynamic['spectral']=CAND.SpectralWitness(1,1)
         sg,fg=half_getters(s)
-        e=B.rn32(F(dynamic['ema'].decay_tau_sigma))
+        e=TBASE.machine_decay(F(1,2),s.base.prefix.prefix.live.live_word.runtime.candidate_cfg)
         before_wpe=s.wpe
         out=X.imu_step(s,separate_getter=sg,fma_getter=fg,shadow_frequency=F(1,2),
             separate_tau_exp_decay=e,fma_tau_exp_decay=e,

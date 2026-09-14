@@ -26,6 +26,7 @@ from tools.stability.ou3_alt_contraction import finite_complete_word_tau_qualifi
 from tools.stability.ou3_alt_contraction import finite_startup_live_tau_bridge as GO
 from tools.stability.ou3_alt_contraction import finite_source_continuation as SOURCE
 from tools.stability.ou3_alt_contraction import finite_wpe_frequency_binary32 as WPEF
+from tools.stability.ou3_alt_contraction import finite_live_imu_prefix as LIVEIMU
 
 
 @dataclass(frozen=True)
@@ -89,13 +90,22 @@ def begin_from_goLive(prefix:BASE.State,go:GO.Result):
     return State(prefix,go.tau,go.tau.updates)
 
 
+def _live_result(lower_out):
+    """Read the single executed Live IMU result from the admitted ISS edge."""
+    if not isinstance(lower_out,BASE.IMU.Result):
+        raise TypeError('admitted ISS IMU result required')
+    # The ISS wrapper retains the source-owned Live event. That result owns the
+    # tilt result in `event`, which owns the literal Live IMU result in `live`.
+    try: live=lower_out.event.event.live
+    except AttributeError as exc:
+        raise TypeError('strong admitted IMU result lost executed Live prefix') from exc
+    if not isinstance(live,LIVEIMU.Result):
+        raise TypeError('strong admitted IMU result has no typed Live prefix')
+    return live
+
+
 def _candidate(lower_out):
-    # BASE.imu_step returns the strongest ISS wrapper.  Its ``event`` field is
-    # already the finite_live_tilt_prefix.Result; that typed result owns the
-    # executed finite_live_imu_prefix.Result in ``live``.  Do not hard-code the
-    # obsolete stack of generic ``event.event.event`` wrappers.
-    try: cand=lower_out.event.live.tuner_suffix.candidate
-    except AttributeError as exc: raise TypeError('strong admitted IMU result lost executed Live tuner candidate') from exc
+    cand=_live_result(lower_out).tuner_suffix.candidate
     if not isinstance(cand,CAND.CandidateResult):
         raise ValueError('Live IMU edge did not execute tuner candidate recurrence')
     return cand

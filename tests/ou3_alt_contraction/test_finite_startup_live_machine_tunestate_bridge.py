@@ -1,7 +1,9 @@
 """Whole-machine TuneState goLive bridge regressions."""
+from dataclasses import replace
 from fractions import Fraction as F
 import unittest
 
+from tools.stability.ou3_alt_contraction import finite_binary32_arithmetic as B
 from tools.stability.ou3_alt_contraction import finite_guarded_tuner_machine_tunestate_deployment as START
 from tools.stability.ou3_alt_contraction import finite_guarded_tuner_wpe_tau_deployment as LOWER
 from tools.stability.ou3_alt_contraction import finite_tuner_tau_deployment_ledger as TAU
@@ -32,24 +34,48 @@ def startup(pending=True):
 class Tests(unittest.TestCase):
     def test_goLive_preserves_whole_machine_history_and_pending_identity(self):
         s,entry,fresh,active,scheduler=startup(True)
-        out=X.bridge(s,entry,fresh,scope=SCOPE.certified_scope(),commit_cfg=BASE.cfg(),
+        out=X.bridge(s,entry,fresh,separate_band_noise_floor_sigma=0,fma_band_noise_floor_sigma=0,scope=SCOPE.certified_scope(),commit_cfg=BASE.cfg(),
             bench_noise_sigma=0,noise_sqrt=BAND.NoiseSqrtWitness(0),
             scheduler=scheduler,racc=RACC.State(),aw_sync=AWSYNC.State())
         self.assertIs(out.machine,s.machine)
         self.assertEqual(out.wpe,s.lower.wpe)
         self.assertTrue(out.live.frontend_live.tuner.pending)
         self.assertTrue(out.machine.pending)
-        self.assertEqual(out.separate_active,active)
-        self.assertEqual(out.fma_active,active)
+        self.assertEqual(out.separate_active.tau,active.tau)
+        self.assertEqual(out.separate_active.pseudo_period,B.rn32(active.pseudo_period))
+        self.assertEqual(out.separate_active,out.fma_active)
+        self.assertEqual(out.separate_commit.aw_floor_target,out.separate_active.Sigma_aw)
+        self.assertIs(out.arithmetic.arithmetic.before.tau,s.machine.tau)
 
     def test_goLive_applies_even_when_online_pending_is_false_and_preserves_false(self):
         s,entry,fresh,active,scheduler=startup(False)
-        out=X.bridge(s,entry,fresh,scope=SCOPE.certified_scope(),commit_cfg=BASE.cfg(),
+        out=X.bridge(s,entry,fresh,separate_band_noise_floor_sigma=0,fma_band_noise_floor_sigma=0,scope=SCOPE.certified_scope(),commit_cfg=BASE.cfg(),
             bench_noise_sigma=0,noise_sqrt=BAND.NoiseSqrtWitness(0),
             scheduler=scheduler,racc=RACC.State(),aw_sync=AWSYNC.State())
         self.assertFalse(out.machine.pending)
         self.assertFalse(out.live.frontend_live.tuner.pending)
         self.assertIsNotNone(out.separate_commit); self.assertIsNotNone(out.fma_commit)
+
+    def test_goLive_requires_explicit_mode_floors_instead_of_shadow_fallback(self):
+        s,entry,fresh,active,scheduler=startup(False)
+        with self.assertRaisesRegex(ValueError,'each compiler track'):
+            X.bridge(s,entry,fresh,scope=SCOPE.certified_scope(),commit_cfg=BASE.cfg(),
+                bench_noise_sigma=0,noise_sqrt=BAND.NoiseSqrtWitness(0),
+                scheduler=scheduler,racc=RACC.State(),aw_sync=AWSYNC.State())
+
+    def test_goLive_retains_roundoff_and_distinct_mode_noise_floors(self):
+        s,entry,fresh,active,scheduler=startup(False)
+        sb=B.rn32(F(11,10)); fb=B.rn32(F(6,5))
+        out=X.bridge(s,entry,fresh,separate_band_noise_floor_sigma=sb,fma_band_noise_floor_sigma=fb,
+            scope=SCOPE.certified_scope(),commit_cfg=BASE.cfg(),bench_noise_sigma=0,
+            noise_sqrt=BAND.NoiseSqrtWitness(0),scheduler=scheduler,racc=RACC.State(),aw_sync=AWSYNC.State())
+        self.assertIs(out.machine,s.machine); self.assertFalse(out.machine.pending)
+        self.assertEqual(out.separate_active.Sigma_aw[2][2],B.mul(sb,sb))
+        self.assertEqual(out.fma_active.Sigma_aw[2][2],B.mul(fb,fb))
+        self.assertNotEqual(out.separate_active.Sigma_aw[2][2],sb*sb)
+        self.assertNotEqual(out.separate_active,out.fma_active)
+        with self.assertRaisesRegex(ValueError,'binary32 transaction'):
+            replace(out,separate_commit=replace(out.separate_commit,Sigma_aw=active.Sigma_aw))
 
     def test_readiness_does_not_identify_machine_and_exact_active_parameters_generally(self):
         r=X.readiness()

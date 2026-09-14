@@ -23,6 +23,9 @@ DT=B.rn32(F(1,200))
 def cfgs():
     c=QBASE.shipping_runtime().candidate_cfg
     d=D.shipping_defaults(qeff_pow_result=B.rn32(1))
+    # Match this component fixture rather than silently sharing shipping sigma
+    # constants with its distinct exact-rational candidate configuration.
+    d=replace(d,sigma_coeff=B.rn32(c.sigma_coeff),max_sigma=B.rn32(c.max_sigma))
     return c,d
 
 

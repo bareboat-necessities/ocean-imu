@@ -10,6 +10,21 @@ Continue an explicitly named active PR; after merge, start a new PR from latest
 
 ## Current checkpoint
 
+The whole-machine TuneState pending and goLive boundaries use
+`finite_tuner_machine_boundary_commit`, not the real-arithmetic commit formula.
+For each global compiler history, the runtime adapter packages the already
+rounded tau command, cadence, stationary-a_w covariance squares and Live R_S
+outputs. It requires distinct explicit machine band-noise-floor inputs; it
+never substitutes the exact shadow's floor. Ordinary boundaries clear pending
+without advancing candidate ledgers; goLive applies the transaction even with
+pending false while preserving the original pending bit and all histories.
+The admitted tau/WPE/TuneState layers share one typed executed-Live accessor,
+and sigma extraction uses the same tracker-free stillness projection as the
+actual exact candidate. Both sigma scale and maximum are checked after binary32
+compilation. Fifty-eight targeted tests pass; source ancestry for the machine
+floors, native setter arithmetic, higher scheduler/supply wrapper errors and
+source-uniform coefficient/supply bounds remain open. No storage is authorized.
+
 ALT excludes wind heel: `wind_heel_rad_==0` from construction onward and no
 `update_wind_heel()` events. Shipping is unchanged. The product composer also
 rejects nonidentity IMU de-heel maps at every represented boundary.

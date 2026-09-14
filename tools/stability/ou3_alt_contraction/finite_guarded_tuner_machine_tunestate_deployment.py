@@ -23,6 +23,7 @@ from dataclasses import dataclass
 from tools.stability.ou3_alt_contraction import finite_guarded_tuner_prefix as FRONT
 from tools.stability.ou3_alt_contraction import finite_guarded_tuner_wpe_tau_deployment as LOWER
 from tools.stability.ou3_alt_contraction import finite_tuner_candidate as C
+from tools.stability.ou3_alt_contraction import finite_tuner_projection_bridge as PROJECTION
 from tools.stability.ou3_alt_contraction import finite_tuner_deployment_config as D
 from tools.stability.ou3_alt_contraction import finite_tuner_sigma_binary32 as SIGM
 from tools.stability.ou3_alt_contraction import finite_tuner_sigma_machine_real_join as SIGJOIN
@@ -90,7 +91,7 @@ def initial(frontend:FRONT.State):
 
 def boundary(state:State,cfg:COMMIT.CommitConfig,*,bench_noise_sigma,
              exact_noise_sqrt=None,exact_rs_sqrt_scale=None,
-             separate_machine_rs_sqrt_scale=None,fma_machine_rs_sqrt_scale=None,
+             separate_band_noise_floor_sigma=None,fma_band_noise_floor_sigma=None,
              sync_covariance=False,rs_scale=1):
     """Execute one next-IMU pending transaction on exact and machine products."""
     if not isinstance(state,State): raise TypeError('guarded whole machine TuneState State required')
@@ -98,14 +99,11 @@ def boundary(state:State,cfg:COMMIT.CommitConfig,*,bench_noise_sigma,
         bench_noise_sigma=bench_noise_sigma,noise_sqrt=exact_noise_sqrt,
         rs_sqrt_scale=exact_rs_sqrt_scale,sync_covariance=sync_covariance,rs_scale=rs_scale)
     live=(state.lower.frontend.tuner.stage=='Live')
-    # Use the exact boundary's carried-band noise floor when pending.  On the
-    # no-pending identity branch the value is unused by machine commit.
-    nf=bench_noise_sigma if exact.band_noise_floor_sigma is None else exact.band_noise_floor_sigma
+    if rs_scale!=1: raise ValueError('shipping pending boundary uses literal R_S scale one')
     machine=MACHBOUND.imu_boundary(state.machine,cfg,live=live,
-        band_noise_floor_sigma=nf,
-        separate_rs_sqrt_scale=separate_machine_rs_sqrt_scale,
-        fma_rs_sqrt_scale=fma_machine_rs_sqrt_scale,
-        sync_covariance=sync_covariance,rs_scale=rs_scale)
+        separate_band_noise_floor_sigma=separate_band_noise_floor_sigma,
+        fma_band_noise_floor_sigma=fma_band_noise_floor_sigma,
+        sync_covariance=sync_covariance)
     next_front=FRONT.State(state.lower.frontend.guard,exact.state)
     next_lower=LOWER.State(next_front,state.lower.tau,state.lower.wpe)
     return BoundaryResult(State(next_lower,machine.state),exact,machine)
@@ -137,7 +135,7 @@ def step(state:State,raw,*,dt,deployment_cfg:D.DeploymentConfig,
     if not isinstance(deployment_cfg,D.DeploymentConfig): raise TypeError('DeploymentConfig required')
     if not isinstance(separate_sigma_machine,SIGM.Target) or not isinstance(fma_sigma_machine,SIGM.Target):
         raise TypeError('post-Cold startup requires both compiler-mode binary32 sigma targets')
-    exact_sample=C.sample_from_runtime(out.frontend.tuner.band,out.frontend.tuner.stillness,
+    exact_sample=PROJECTION.sample_from_projection(out.frontend.tuner.band,out.frontend.tuner.stillness,
                                        sigma_wave_sqrt=sigma_wave_sqrt)
     sj=SIGJOIN.join(exact_sample,c,deployment_cfg,separate_sigma_machine)
     fj=SIGJOIN.join(exact_sample,c,deployment_cfg,fma_sigma_machine)
@@ -159,6 +157,7 @@ def readiness():
       'postCold_tau_sigma_RS_machine_candidate_step_composed':m['tau_sigma_RS_scalar_ledgers_advance_once_before_pending_bit_is_attached'],
       'machine_and_exact_frontend_pending_bits_identical_in_product_state':True,
       'combined_next_IMU_boundary_clears_exact_and_machine_pending_together':b['next_boundary_common_machine_commit_attached'],
+      'startup_pending_boundary_consumes_binary32_commit_graph':True,
       'startup_frontend_machine_TuneState_product_attached':True,
       'upstream_frontend_binary32_correspondence_closed':False,
       'all_target_libm_correspondence_closed':False,

@@ -15,12 +15,20 @@ from __future__ import annotations
 from dataclasses import dataclass
 from fractions import Fraction as F
 
+from tools.stability.ou3_alt_contraction import finite_binary32_arithmetic as B
 from tools.stability.ou3_alt_contraction import finite_tuner_candidate as C
 from tools.stability.ou3_alt_contraction import finite_tuner_deployment_config as D
 from tools.stability.ou3_alt_contraction import finite_tuner_common_alpha_qualification as A
 from tools.stability.ou3_alt_contraction import finite_tuner_sigma_binary32 as M
 
 QUALIFICATION='OU3_ALT_SIGMA_MACHINE_REAL_JOIN_V1'
+
+
+def configs_match(candidate:C.CandidateConfig, deployment:D.DeploymentConfig):
+    """Common EMA ancestry plus the sigma TARGET's own compiled constants."""
+    return A._configs_match(candidate,deployment) and all(
+        B.rn32(getattr(candidate,n))==F(getattr(deployment,n))
+        for n in ('sigma_coeff','max_sigma'))
 
 
 @dataclass(frozen=True)
@@ -53,7 +61,7 @@ class Join:
         if not isinstance(self.machine,M.Target) or not isinstance(self.supply,Supply):
             raise TypeError('machine sigma target and explicit supply required')
         if self.qualification!=QUALIFICATION: raise ValueError('wrong sigma machine-real qualification')
-        if not A._configs_match(self.candidate_cfg,self.deployment_cfg):
+        if not configs_match(self.candidate_cfg,self.deployment_cfg):
             raise ValueError('sigma exact/machine configs disagree after binary32 compilation')
         if self.machine.cfg!=self.deployment_cfg:
             raise ValueError('machine sigma target detached from joined deployment config')
@@ -96,6 +104,7 @@ def readiness():
     return {
       'exact_frontend_sample_and_binary32_sigma_branch_joined':True,
       'candidate_and_deployment_common_scalars_compared_after_binary32_compilation':True,
+      'sigma_target_scale_and_maximum_compared_after_binary32_compilation':True,
       'variance_ready_and_stillness_branch_identity_enforced':True,
       'machine_minus_exact_variance_noise_time_attenuation_supplies_exposed':True,
       'machine_minus_exact_wave_variance_and_sigma_target_supplies_exposed':True,

@@ -9,6 +9,8 @@ from tools.stability.ou3_alt_contraction import finite_shipping_tau_target_binar
 from tools.stability.ou3_alt_contraction import finite_tuner_candidate as CAND
 from tools.stability.ou3_alt_contraction import finite_tuner_tau_deployment_ledger as LEDGER
 from tools.stability.ou3_alt_contraction import finite_wpe_frequency_binary32 as WPEF
+from tools.stability.ou3_alt_contraction import finite_tuner_tau_binary32 as TB
+from tools.stability.ou3_alt_contraction import finite_source_bound_exp_enclosure as EXP
 import test_finite_admitted_iss_interleaved_prefix as BASE
 import test_finite_admitted_source_imu_word as IBASE
 import test_finite_complete_word_tau_qualification as QBASE
@@ -52,6 +54,14 @@ def wpe_source_for(state,dynamic):
                                 getter=getter,shadow_frequency=exact_f)
 
 
+def machine_decay(frequency,cfg):
+    # A conditional machine witness from its own rounded argument, never the
+    # toy exact-shadow decay. Target-libm qualification remains open.
+    _,_,_,adapt=TB._floats_from_frequency(frequency,cfg,LEDGER.DT)
+    lo,hi,_,_=EXP.enclosure(B32.div(LEDGER.DT,adapt))
+    return B32.rn32((lo+hi)/2)
+
+
 class Tests(unittest.TestCase):
     def test_component_toy_runtime_cannot_enter_tau_theorem_product(self):
         with self.assertRaisesRegex(ValueError,'detached from shipping binary32 default'):
@@ -71,13 +81,16 @@ class Tests(unittest.TestCase):
         source=wpe_source_for(s,dynamic)
         # Keep the machine decay inside the shipping enclosure; it need not be
         # exactly identical to the exact-real candidate decay.
-        e=B32.rn32(F(dynamic['ema'].decay_tau_sigma))
+        e=machine_decay(source.stored.stored_hz,s.prefix.prefix.live.live_word.runtime.candidate_cfg)
         out=X.imu_step_from_wpe(s,tuner_frequency=source,tau_exp_decay=e,
             restricted=r,bias_restricted=b,witness=witness,raw=raw,
             packet_id='imu-wpe-source',**PBASE.root_args(),**dynamic)
         self.assertEqual(out.state.tau.updates,18)
         self.assertEqual(out.frequency_supply,source.machine_minus_shadow)
         self.assertEqual(out.decay_input_supply,e-F(dynamic['ema'].decay_tau_sigma))
+        self.assertNotEqual(out.decay_input_supply,0)
+        with self.assertRaisesRegex(TypeError,'admitted ISS IMU result'):
+            X._live_result(out.event.event)
         machine_exact=out.tau_step.separate_target.exact_target
         cand=X._candidate(out.event)
         self.assertEqual(cand.frequency,F(1,2)); self.assertEqual(cand.tau_target,F(1))
