@@ -18,7 +18,9 @@ The LPF source expression is literal binary32 shipping order
 ``(1-alpha)*x + alpha*state``.  Both legal no-reassociation contraction outcomes
 for the final sum are retained.  The exp result is tied to the same rounded
 argument by a rigorous real enclosure and its binary32 RNE cell.  Target libm
-and compiler contraction-profile correspondence remain open.
+and compiler contraction-profile correspondence remain open.  The mutable
+shipping LPF cutoff is carried by this local state but is not yet rooted in the
+theorem RuntimeConfig; that ancestry remains an explicit open obligation.
 """
 from __future__ import annotations
 from dataclasses import dataclass
@@ -240,6 +242,7 @@ def readiness():
       'same_stored_LPF_output_drives_binary32_stillness_projection':True,
       'sigma_stillness_operands_bindable_to_same_machine_successor':True,
       'machine_band_input_bindable_to_same_Mahony_successor':True,
+      'tracker_LPF_cutoff_runtime_ancestry_closed':False,
       'target_libm_and_compiler_profile_correspondence_closed':False,
       'guard_binary32_machine_history_attached':False,
       'startup_machine_history_attached':False,
