@@ -43,7 +43,8 @@ class Tests(unittest.TestCase):
 
     def test_MAG_and_HOLD_preserve_configuration_validation_ordinal(self):
         lower,_,_,_,_,_,_=BASE.executed_fixture(); s=X.begin(lower); n=s.config_steps
-        word=lower.base.base.prefix.prefix.live.live_word
+        # runtime-config -> vertical/stillness -> MTUNE -> WPE/tau -> admitted word
+        word=lower.base.base.base.prefix.prefix.live.live_word
         s,_=X.mag_step(s,**LBASE.mag_kwargs(word)); self.assertEqual(s.config_steps,n)
         s,_=X.set_hold(s,hold=False); self.assertEqual(s.config_steps,n)
 
