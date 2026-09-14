@@ -1,10 +1,12 @@
-name: OU3 ALT PR524 vertical stillness source check
+name: OU3 ALT PR524 guard vertical stillness source check
 on:
   push:
     branches: [proof/ou3-alt-live-mag-composition]
     paths:
+      - tools/stability/ou3_alt_contraction/finite_machine_accel_guard_binary32.py
       - tools/stability/ou3_alt_contraction/finite_machine_vertical_stillness_source.py
       - tools/stability/ou3_alt_contraction/finite_admitted_machine_vertical_stillness_interleaved_prefix.py
+      - tests/ou3_alt_contraction/test_finite_machine_accel_guard_binary32.py
       - tests/ou3_alt_contraction/test_finite_machine_vertical_stillness_source.py
       - tests/ou3_alt_contraction/test_finite_admitted_machine_vertical_stillness_interleaved_prefix.py
       - .github/workflows/ou3-alt-pr524-vertical-stillness-check.yml
@@ -22,13 +24,13 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y python3-numpy python3-scipy python3-mpmath libeigen3-dev g++
-      - name: Focused vertical stillness tests
+      - name: Focused guard vertical stillness tests
         shell: bash
         run: |
           set -euo pipefail
           export PYTHONPATH="$PWD:$PWD/tools/stability:$PWD/tests/ou3_alt_contraction"
           export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 OU3_ALT_REQUIRE_NATIVE=1
-          python3 -m unittest test_finite_machine_vertical_stillness_source test_finite_admitted_machine_vertical_stillness_interleaved_prefix -v
+          python3 -m unittest test_finite_machine_accel_guard_binary32 test_finite_machine_vertical_stillness_source test_finite_admitted_machine_vertical_stillness_interleaved_prefix -v
           python3 -m compileall -q tools/stability/ou3_alt_contraction
           git diff --check HEAD^
       - name: All finite-map regressions
