@@ -86,13 +86,18 @@ def bridge(entry:LIVE.Result,fresh:CORE.State,frontend:FRONT.State,*,scope:SCOPE
     if active != entry.active:
         raise ValueError('fresh Live active parameters detached from carried TunerReady TuneState')
 
-    # enterLive_ changes only startup stage/clock in the carried frontend state.
-    # The online pending bit intentionally survives and may be consumed by the
-    # first Live sample's ordinary boundary service.
+    # enterLive_ changes startup stage/clock and calls apply_ou_tune_(true).
+    # That discrete covariance synchronization executes
+    #     last_aw_cov_sync_sec_ = time_;
+    # before the first Live IMU sample. Startup cannot carry a queued periodic
+    # request, so the exact finite control state is re-anchored to the SAME
+    # carried frontend/filter time at goLive rather than inheriting reset zero.
+    # Deployed binary64 displacement of time_ is a separate arithmetic supply.
     tuner_live=replace(frontend.tuner,stage='Live',stage_time=F(0))
     front_live=FRONT.State(frontend.guard,tuner_live)
     sched=ACTIVE.retarget_scheduler(active,scheduler,park=scheduler_park)
-    state=LIVEWORD.State(fresh,front_live.guard,front_live.tuner,racc,active,sched,aw_sync)
+    aw_live=AWSYNC.State(False,frontend.tuner.time,None)
+    state=LIVEWORD.State(fresh,front_live.guard,front_live.tuner,racc,active,sched,aw_live)
     return Result(state,active,frontend,front_live,nf)
 
 
@@ -103,10 +108,12 @@ def readiness():
       'goLive_unconditional_active_parameters_derived_from_same_carried_TuneState':True,
       'goLive_live_RS_derived_from_same_carried_TuneState':True,
       'goLive_period_retargets_persistent_S_scheduler':True,
+      'goLive_resets_periodic_aw_sync_clock_to_current_filter_time':True,
       'online_pending_bit_preserved_across_goLive':True,
       'startup_periodic_aw_floor_pending_forbidden':True,
       'fresh_H18_CORE_state_connected_to_first_Live_prefix_shape':True,
       'commit_sqrt_nextafter_binary32_closed':False,
+      'inner_filter_clock_binary64_closed':False,
       'wrapper_clock_binary32_closed':False,
       'first_Live_sample_executed_from_fresh_entry':False,
       'complete_same_history_startup_to_Live_word':False,
