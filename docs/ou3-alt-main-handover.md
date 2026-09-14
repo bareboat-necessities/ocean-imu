@@ -41,13 +41,34 @@ prediction-root families, the per-track scheduler and the full joint24/21x21
 prediction-displacement relation. The higher wrappers count the actual lower
 IMU ordinal. No second physical segment or Live-origin reset is introduced.
 
-The 938-test finite-map selection passes locally. Native build validation is
-blocked by missing Eigen headers in this environment; this is not a full CI or
-native correspondence PASS. The represented arithmetic relations still take
-conditional libm/contraction witnesses. Machine vertical-input and stillness
-production, compiler/nonfinite correspondence, source-uniform supply bounds,
-and post-prediction S/accelerometer propagation remain open. No storage search
-or stability promotion is authorized.
+`finite_admitted_machine_measurement_supply_interleaved_prefix.py` now continues
+that same-event relation through the rest of the represented measurement word.
+Each separate/FMA machine history carries its own persistent periodic a_w-sync
+snapshot state. A queued floor target is the historical Sigma_aw from the event
+that requested it; it cannot be rewritten by a later tuner boundary and cannot
+be borrowed from the exact shadow after the compiler tracks diverge. At the
+next prediction the corresponding machine target is consumed before covariance
+hygiene, then that compiler history's persistent pseudo-S scheduler chooses its
+literal due/not-due branch, due S service uses that history's actual applied
+R_S, and the held guarded accelerometer correction consumes the resulting
+machine post-S state. End-of-sample a_w-sync requests snapshot that history's
+current machine Sigma_aw for a future prediction. MAG/HOLD preserve both
+machine snapshot histories by identity.
+
+This is still a coefficient/supply relation against the already executed exact
+shipping event, not a second physical history or a second persistent filter.
+The machine histories share the represented shipping a_w-sync request
+clock/predicate while retaining distinct historical target matrices. Native
+binary64 clock correspondence is still open. Machine Racc is also still held at
+the exact executed value in this isolated tuner-coefficient propagation, so the
+Racc machine displacement remains a separate obligation.
+
+The latest checked continuation runs with `OU3_ALT_REQUIRE_NATIVE=1`, installs
+Eigen, and passes 8 focused measurement-supply tests plus all **946** finite-map
+regressions. `compileall` and `git diff --check` pass in that job. This validates
+the represented finite maps and native tests they explicitly require; it does
+not certify all target libm/Eigen/compiler/nonfinite behavior or the complete
+600-edge theorem family.
 
 ALT excludes wind heel: `wind_heel_rad_==0` from construction onward and no
 `update_wind_heel()` events. Shipping is unchanged. The product composer also
@@ -124,24 +145,33 @@ search.
 
 ## Next work
 
-Do not start storage/rho search. The next finite-event obligations are to bind
-the machine band's vertical input and the sigma stillness operands to the same
-persistent guarded/private-Mahony machine history, then propagate the existing
-joint24/21x21 prediction displacement through pending covariance floors,
-per-track due/not-due S service, actual machine R_S, accelerometer correction
-and reset. Retain both track histories and all cross-covariances.
+Do not start storage/rho search. The represented tuner-induced machine
+prediction displacement is now propagated through each compiler history's
+historical pending a_w floor, covariance hygiene, pseudo-S due/not-due branch,
+actual applied R_S, S service and held accelerometer correction. The next
+finite-event coefficient obligation is the **machine Racc path**: derive its
+vibration/RAO/restore branch from the same persistent guarded/tuner machine
+history and propagate its discrepancy through the accelerometer innovation,
+without identifying it with the exact executed Racc.
+
+In parallel, bind the machine band's vertical input and sigma stillness operands
+to the same persistent guarded/private-Mahony machine history. Finish raw WPE
+period/log ancestry and keep its source-uniform frequency/log supply tight; do
+not fall back to the full clamp-width box.
 
 The WPE raw-period/log/exp, band/statistics/tuner libm, Q-axis operation-level
-roundoff, Eigen branches and nonfinite/threshold correspondence remain native
+roundoff, scheduler `nextafter`, periodic a_w-sync clock arithmetic, Eigen floor /
+LDLT/eigensolver branches and nonfinite/threshold correspondence remain native
 deployment obligations. Bound their supplies on the admitted BRMM+BIAS+ISS
 family; do not replace same-history products by independent parameter boxes or
 use a successful component regression as all-history membership.
 
-Universal startup capture, every-prefix retention, compatible joint24 storage
-and an ultimate bound remain open. Indefinite machine execution additionally
-has the retained floating-clock stall and unchecked signed magnetic-counter
-lifetime obstructions. Tiling finite words must preserve the one-time Live/S
-origin and all frontend/covariance/bias history; no wordwise reinitialization.
+Universal startup capture, qualification of every edge of the exact 600-step
+word, every-prefix retention, compatible joint24 storage and an ultimate bound
+remain open. Indefinite machine execution additionally has the retained
+floating-clock stall and unchecked signed magnetic-counter lifetime
+obstructions. Tiling finite words must preserve the one-time Live/S origin and
+all frontend/covariance/bias history; no wordwise reinitialization.
 
 `ALT_LIVE_PASS=false`, `ALT_STARTUP_PASS=false`, `ALT_END_TO_END_PASS=false`,
 `storage_search_allowed=false`.
