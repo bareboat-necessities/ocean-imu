@@ -137,21 +137,36 @@ def complete(state:State): return CompleteWord(state,LOWER.complete(state.base))
 
 def readiness():
     low=LOWER.readiness(); guard=GUARD.readiness(); src=VS.readiness(); mah=MAHONY.readiness()
+    native=bool(guard['target_libm_and_Eigen_expression_correspondence_closed'] and
+                mah['compiler_profile_qualified_for_deployment'] and
+                src['tracker_LPF_exp_target_libm_correspondence_closed'] and
+                src['stillness_exp_sqrt_target_libm_correspondence_closed'])
     return {
       'admitted_machine_TuneState_word_consumed':low['Live_600_step_machine_TuneState_product_attached'],
-      'one_common_binary32_guard_feeds_private_Mahony_and_Racc_guard_history':True,
-      'shipping_float_API_dt_gyro_accel_projection_is_mandatory':True,
+      'binary32_filter_update_API_boundary_attached':True,
+      'binary32_private_Mahony_runtime_config_projection_attached':True,
+      'persistent_common_machine_guard_history_attached':True,
+      'shipping_guard_branch_structure_materialized':guard['shipping_guard_source_shape_matches'],
+      'private_Mahony_source_is_common_across_compiler_histories':True,
+      'same_machine_guard_successor_drives_private_Mahony_histories':True,
       'same_machine_private_Mahony_vertical_feeds_band_and_tracker_LPF':True,
+      'machine_band_input_bound_to_same_private_Mahony_successor':True,
       'machine_band_input_bound_to_same_frontend_consumed_by_sigma_target':True,
+      'machine_sigma_stillness_bound_to_same_tracker_LPF_successor':True,
       'machine_tracker_LPF_and_stillness_bound_to_same_sigma_target':True,
       'complete_word_requires_machine_source_on_all_600_IMU_edges':True,
       'guard_runtime_config_ancestry_closed':False,
+      'machine_guard_runtime_config_ancestry_closed':False,
       'private_Mahony_runtime_config_and_startup_ancestry_closed':False,
+      'private_Mahony_mutable_config_setter_ancestry_closed':False,
       'tracker_LPF_runtime_config_ancestry_closed':False,
-      'guard_exp_sqrt_compiler_correspondence_closed':guard['binary32_runtime_graph_correspondence_closed'],
+      'tracker_LPF_cutoff_runtime_ancestry_closed':False,
+      'startup_machine_guard_vertical_stillness_history_attached':False,
+      'guard_exp_sqrt_compiler_correspondence_closed':guard['target_libm_and_Eigen_expression_correspondence_closed'],
       'private_Mahony_compiler_profile_qualified':mah['compiler_profile_qualified_for_deployment'],
       'tracker_LPF_exp_target_libm_correspondence_closed':src['tracker_LPF_exp_target_libm_correspondence_closed'],
       'stillness_exp_sqrt_target_libm_correspondence_closed':src['stillness_exp_sqrt_target_libm_correspondence_closed'],
+      'target_libm_Eigen_and_compiler_profile_correspondence_closed':native,
       'source_uniform_machine_supply_bounds_closed':False,
       'source_uniform_complete_600_step_word_qualified':False,
       'storage_search_allowed':False,
