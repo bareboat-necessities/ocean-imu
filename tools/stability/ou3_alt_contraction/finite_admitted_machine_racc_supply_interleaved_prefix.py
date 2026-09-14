@@ -167,14 +167,26 @@ def _racc_frequency(frequency):
 
 def _mode(*,mode,state_racc,old_sigma,new_sigma,frequency,lower_mode,live,segment,
           cfg,nominal_std,rao_witness,racc_sqrt,accel_ldlt,temperature_c,
+          guard_excess_rms=None,conditioned_accel_body=None,
           accel_alpha=1,accel_radius=F(2,5)):
-    rr=RACC.step_from_applied_sigma(state_racc,cfg,live.guarded.guard,
-        nominal_std=nominal_std,sigma_applied=new_sigma,
-        preupdate_frequency=frequency,live=True,rao_witness=rao_witness,
-        effective_sqrt=racc_sqrt)
+    if guard_excess_rms is None:
+        rr=RACC.step_from_applied_sigma(state_racc,cfg,live.guarded.guard,
+            nominal_std=nominal_std,sigma_applied=new_sigma,
+            preupdate_frequency=frequency,live=True,rao_witness=rao_witness,
+            effective_sqrt=racc_sqrt)
+    else:
+        rr=RACC.step_from_excess_rms(state_racc,cfg,excess_rms=guard_excess_rms,
+            nominal_std=nominal_std,sigma_applied=new_sigma,
+            preupdate_frequency=frequency,live=True,rao_witness=rao_witness,
+            effective_sqrt=racc_sqrt)
     conditioning=EXACTROOT._accel_conditioning(temperature_c)
-    accel=MEAS.accelerometer_from_held_guarded_racc(lower_mode.S_service.state,segment,
-        live.guarded,conditioning,rr,ldlt=accel_ldlt,alpha=accel_alpha,radius=accel_radius)
+    if conditioned_accel_body is None:
+        accel=MEAS.accelerometer_from_held_guarded_racc(lower_mode.S_service.state,segment,
+            live.guarded,conditioning,rr,ldlt=accel_ldlt,alpha=accel_alpha,radius=accel_radius)
+    else:
+        accel=MEAS.accelerometer_from_held_conditioned_racc(lower_mode.S_service.state,segment,
+            live.guarded.raw,conditioned_accel_body,conditioning,rr,ldlt=accel_ldlt,
+            alpha=accel_alpha,radius=accel_radius)
     return ModeEvent(mode,F(old_sigma),F(new_sigma),F(frequency),rr,accel,
                      _supply(accel.state,live.accelerometer.state))
 
@@ -217,6 +229,46 @@ def imu_step(state:State,*,
     return ImuResult(nxt,lower,sep,fma)
 
 
+def rebind_machine_guard(state:State,result:ImuResult,*,guard_excess_rms,conditioned_accel_body,
+                         separate_racc_accel_ldlt:MEAS.SafeLDLT,fma_racc_accel_ldlt:MEAS.SafeLDLT,
+                         separate_rao_witness=None,separate_racc_sqrt=None,
+                         fma_rao_witness=None,fma_racc_sqrt=None,temperature_c,restricted,
+                         accel_alpha=1,accel_radius=F(2,5)):
+    """Replace only the proof-side Racc/accelerometer arithmetic by machine guard operands.
+
+    ``result.lower`` is the already-executed same physical/filter event.  This
+    function does not execute the source, prediction, scheduler, tuner, or exact
+    filter a second time; it re-evaluates the compiler arithmetic relation from
+    the persistent predecessor Racc states using the attached binary32 guard
+    output and excess RMS.
+    """
+    if not isinstance(state,State) or not isinstance(result,ImuResult):
+        raise TypeError('machine Racc predecessor/result required')
+    if not isinstance(separate_racc_accel_ldlt,MEAS.SafeLDLT) or not isinstance(fma_racc_accel_ldlt,MEAS.SafeLDLT):
+        raise TypeError('both machine-Racc accelerometer LDLT branches required')
+    if result.state.base!=result.lower.state or result.state.racc_steps!=state.racc_steps+1:
+        raise ValueError('same executed lower event required for machine-guard rebind')
+    runtime=_runtime(state.base); live=LOWER._live_result(result.lower.lower)
+    if accel_radius is None: accel_radius=F(2,5)
+    common=dict(live=live,segment=restricted.segment,cfg=runtime.racc_cfg,
+        nominal_std=runtime.nominal_racc_std,temperature_c=temperature_c,
+        guard_excess_rms=guard_excess_rms,conditioned_accel_body=conditioned_accel_body,
+        accel_alpha=accel_alpha,accel_radius=accel_radius)
+    sep=_mode(mode='separate',state_racc=state.separate_racc,
+        old_sigma=state.separate_applied_sigma,new_sigma=result.separate.applied_sigma,
+        frequency=result.separate.frequency,lower_mode=result.lower.separate,
+        rao_witness=separate_rao_witness,racc_sqrt=separate_racc_sqrt,
+        accel_ldlt=separate_racc_accel_ldlt,**common)
+    fma=_mode(mode='fma',state_racc=state.fma_racc,
+        old_sigma=state.fma_applied_sigma,new_sigma=result.fma.applied_sigma,
+        frequency=result.fma.frequency,lower_mode=result.lower.fma,
+        rao_witness=fma_rao_witness,racc_sqrt=fma_racc_sqrt,
+        accel_ldlt=fma_racc_accel_ldlt,**common)
+    nxt=State(result.lower.state,sep.applied_sigma,fma.applied_sigma,sep.racc.state,fma.racc.state,
+              state.entry_imu_steps,state.racc_steps+1)
+    return ImuResult(nxt,result.lower,sep,fma)
+
+
 def mag_step(state:State,**kwargs):
     if not isinstance(state,State): raise TypeError('machine Racc State required')
     base,event=LOWER.mag_step(state.base,**kwargs)
@@ -245,7 +297,8 @@ def readiness():
       'every_Racc_event_reads_sample_entry_machine_TuneState_sigma':True,
       'Racc_frequency_bypasses_statistics_and_outer_tuning_clamps':True,
       'persistent_separate_and_FMA_Racc_states_attached':True,
-      'same_guard_drives_exact_and_both_machine_Racc_histories':rr['same_guard_excess_RMS_drives_Racc'],
+      'exact_guard_adapter_retained_for_lower_comparison_shadow':rr['same_guard_excess_RMS_drives_Racc'],
+      'machine_guard_excess_and_conditioned_sample_rebind_available':True,
       'same_mode_preupdate_WPE_frequency_drives_machine_Racc':True,
       'machine_Racc_coefficient_displacement_attached':True,
       'machine_Racc_effect_propagated_through_accelerometer':True,
