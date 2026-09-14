@@ -16,6 +16,7 @@ from dataclasses import dataclass
 from fractions import Fraction as F
 from tools.stability.ou3_alt_contraction import finite_prediction_graph as P
 from tools.stability.ou3_alt_contraction import finite_measurement_graph as M
+from tools.stability.ou3_alt_contraction import finite_aw_sync_clock_binary64 as CLOCK
 
 
 def R(x): return P.rational(x)
@@ -63,6 +64,18 @@ def tick(state:State,*,time,adapt_every,live,active_sigma=None,
     return Result(State(True,time,tuple(map(tuple,A))),True)
 
 
+def tick_canonical(state:State,*,time,adapt_every,live,active_sigma=None,
+                   enabled=True,congruent=False,legacy=False):
+    """Default 5 ms deployment tick with binary64 branch correspondence."""
+    q=CLOCK.qualify_exact_tick(time,state.last_sync_time,adapt_every)
+    out=tick(state,time=time,adapt_every=adapt_every,live=live,active_sigma=active_sigma,
+             enabled=enabled,congruent=congruent,legacy=legacy)
+    expected=bool(enabled and live and q['deployed_due'])
+    if out.requested_now!=expected:
+        raise AssertionError('binary64 aw-sync predicate detached from finite recurrence')
+    return out,q
+
+
 def floor_target(state:State):
     if not isinstance(state,State): raise TypeError('periodic aw-sync state required')
     return state.target if state.pending else None
@@ -83,7 +96,7 @@ def readiness():
       'prediction_consumes_pending_request':True,
       'legacy_immediate_replacement_branch_attached':False,
       'congruent_immediate_sync_branch_attached':False,
-      'clock_binary64_roundoff_attached':False,
+      'clock_binary64_roundoff_attached':CLOCK.readiness()['canonical_aw_sync_binary64_predicate_closed'],
       'complete_word_finite_identity':False,
       'ALT_LIVE_PASS':False,
     }
