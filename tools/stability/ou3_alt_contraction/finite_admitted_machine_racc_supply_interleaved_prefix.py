@@ -55,7 +55,8 @@ def _runtime(base:LOWER.State):
 
 def _mtune_result(lower:LOWER.ImuResult):
     if not isinstance(lower,LOWER.ImuResult): raise TypeError('machine measurement-supply result required')
-    out=lower.lower.lower.lower
+    # measurement -> prediction-supply -> scheduler -> machine-prediction -> TuneState
+    out=lower.lower.lower.lower.lower
     if not isinstance(out,MTUNE.ImuResult): raise TypeError('lower word lost same-event machine TuneState result')
     return out
 
