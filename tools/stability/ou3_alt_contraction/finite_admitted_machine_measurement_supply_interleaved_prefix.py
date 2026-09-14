@@ -10,22 +10,29 @@ This layer propagates each local machine-coefficient perturbation through the
 remaining measurement part of that SAME IMU event:
 
   machine prediction
-    -> pending a_w covariance floor + symmetry hygiene
+    -> nonpending covariance hygiene
     -> that compiler history's literal due/not-due S scheduler branch
     -> S=0 service with that compiler history's actual applied R_S
     -> held guarded accelerometer correction.
 
 The exact side is not recomputed or refitted. It is the already executed lower
-shipping event. Machine floor, S-LDLT and accelerometer-LDLT witnesses are kept
+shipping event. Machine S-LDLT and accelerometer-LDLT witnesses are kept
 separate because a covariance/R_S perturbation can change solver behavior. A
 machine due/not-due branch is required to equal the persistent scheduler event
 already carried by the lower word.
 
+A queued a_w floor target is historical state snapshotted from the THEN-active
+stationary covariance. The exact shadow's queued target therefore cannot be
+silently reused for a divergent machine ActiveParameters history. Until the two
+persistent machine aw-sync snapshot histories are carried explicitly, a pending
+aw-floor event fails closed here. This prevents a partial local supply from
+masquerading as a complete machine execution word.
+
 This is a finite same-event arithmetic-supply relation, not a second physical
 history and not a persistent emulation of a second filter. In particular the
-machine Racc path, guard/private-Mahony floating arithmetic, native Eigen/libm
-correspondence and source-uniform supply bounds remain open. No storage search
-is authorized.
+machine Racc path, machine aw-sync target history, guard/private-Mahony floating
+arithmetic, native Eigen/libm correspondence and source-uniform supply bounds
+remain open. No storage search is authorized.
 """
 from __future__ import annotations
 from dataclasses import dataclass
@@ -37,12 +44,11 @@ from tools.stability.ou3_alt_contraction import finite_machine_prediction_displa
 from tools.stability.ou3_alt_contraction import finite_active_runtime_word as WORD
 from tools.stability.ou3_alt_contraction import finite_post_prediction as POST
 from tools.stability.ou3_alt_contraction import finite_measurement_runtime as MEAS
-from tools.stability.ou3_alt_contraction import finite_periodic_aw_sync as AWSYNC
 from tools.stability.ou3_alt_contraction import finite_source_bound_prediction_word as EXACTROOT
 from tools.stability.ou3_alt_contraction import finite_runtime_parameters as ACTIVE
 from tools.stability.ou3_alt_contraction import finite_source_continuation as SOURCE
 
-QUALIFICATION='OU3_ALT_ADMITTED_MACHINE_MEASUREMENT_SUPPLY_INTERLEAVER_V1'
+QUALIFICATION='OU3_ALT_ADMITTED_MACHINE_MEASUREMENT_SUPPLY_INTERLEAVER_V2'
 
 
 def _imu_steps(state):
@@ -147,20 +153,18 @@ def _live_result(lower:LOWER.ImuResult):
 
 
 def _mode_event(*,mode,relation,scheduler_event,live,preword,segment,
-                floor_solver_success=None,floor_eigenvectors=None,floor_eigenvalues=None,
                 S_ldlt=None,accel_ldlt=None,S_alpha=1,S_radius=None,
                 accel_alpha=1,accel_radius=F(2,5),temperature_c):
     if mode not in ('separate','fma'): raise ValueError('invalid compiler mode')
     active=relation.machine_roots.active
     aw=preword.live.live.live.aw_sync
-    pending=aw.pending
-    target=AWSYNC.floor_target(aw)
-    if target is None: target=active.Sigma_aw
+    if aw.pending:
+        raise NotImplementedError('persistent machine queued aw-floor target history remains open')
     predicted=WORD.Predicted(active,relation.machine)
-    post=WORD.post_prediction_from_active(predicted,h=segment.h,pending_aw_floor=pending,
-        aw_floor_target=target,scheduler=scheduler_event.after_retarget,
-        floor_solver_success=floor_solver_success,floor_eigenvectors=floor_eigenvectors,
-        floor_eigenvalues=floor_eigenvalues)
+    # target is ignored on the nonpending branch, but keep it tied to this mode's
+    # same active state rather than borrowing any exact-shadow snapshot.
+    post=WORD.post_prediction_from_active(predicted,h=segment.h,pending_aw_floor=False,
+        aw_floor_target=active.Sigma_aw,scheduler=scheduler_event.after_retarget)
     if post.scheduler!=scheduler_event.after_step or post.S_service_due!=scheduler_event.due:
         raise ValueError('re-executed machine scheduler branch detached from carried scheduler event')
     serviced=WORD.service_S_from_active(active,post,ldlt=S_ldlt,alpha=S_alpha,radius=S_radius)
@@ -173,10 +177,7 @@ def _mode_event(*,mode,relation,scheduler_event,live,preword,segment,
         _supply(accel.state,live.accelerometer.state),mode)
 
 
-def imu_step(state:State,*,
-             separate_floor_solver_success=None,separate_floor_eigenvectors=None,separate_floor_eigenvalues=None,
-             fma_floor_solver_success=None,fma_floor_eigenvectors=None,fma_floor_eigenvalues=None,
-             separate_S_ldlt=None,fma_S_ldlt=None,
+def imu_step(state:State,*,separate_S_ldlt=None,fma_S_ldlt=None,
              separate_accel_ldlt:MEAS.SafeLDLT,fma_accel_ldlt:MEAS.SafeLDLT,
              **kwargs):
     if not isinstance(state,State): raise TypeError('admitted machine measurement-supply State required')
@@ -186,6 +187,8 @@ def imu_step(state:State,*,
     if restricted is None or temperature_c is None:
         raise TypeError('same admitted physical restriction and source-owned temperature required')
     preword=LOWER._preword(state.base.base); segment=restricted.segment
+    if preword.live.live.live.aw_sync.pending:
+        raise NotImplementedError('persistent machine queued aw-floor target history remains open')
     lower=LOWER.imu_step(state.base,**kwargs)
     live=_live_result(lower)
     sched=lower.lower
@@ -194,12 +197,8 @@ def imu_step(state:State,*,
                 accel_alpha=kwargs.get('accel_alpha',1),accel_radius=kwargs.get('accel_radius',F(2,5)),
                 temperature_c=temperature_c)
     sep=_mode_event(mode='separate',relation=lower.separate,scheduler_event=sched.separate,
-        floor_solver_success=separate_floor_solver_success,
-        floor_eigenvectors=separate_floor_eigenvectors,floor_eigenvalues=separate_floor_eigenvalues,
         S_ldlt=separate_S_ldlt,accel_ldlt=separate_accel_ldlt,**common)
     fma=_mode_event(mode='fma',relation=lower.fma,scheduler_event=sched.fma,
-        floor_solver_success=fma_floor_solver_success,
-        floor_eigenvectors=fma_floor_eigenvectors,floor_eigenvalues=fma_floor_eigenvalues,
         S_ldlt=fma_S_ldlt,accel_ldlt=fma_accel_ldlt,**common)
     nxt=State(lower.state,state.entry_imu_steps,state.measurement_steps+1)
     return ImuResult(nxt,lower,sep,fma)
@@ -224,18 +223,19 @@ def readiness():
     low=LOWER.readiness()
     return {
       'admitted_machine_prediction_supply_word_consumed':low['machine_root_effect_injected_into_joint24_prediction_relation'],
-      'machine_post_prediction_floor_and_hygiene_reexecuted_from_perturbed_covariance':True,
+      'machine_nonpending_post_prediction_hygiene_reexecuted_from_perturbed_covariance':True,
       'persistent_per_compiler_scheduler_due_not_due_branch_reused_and_checked':True,
       'machine_due_S_service_uses_same_compiler_applied_RS':True,
-      'machine_RS_measurement_effect_attached':True,
+      'machine_RS_measurement_effect_attached_on_nonpending_aw_floor_events':True,
       'held_guarded_accelerometer_reexecuted_from_machine_post_S_state':True,
-      'accelerometer_measurement_propagates_machine_prediction_supply':True,
+      'accelerometer_measurement_propagates_machine_prediction_supply_on_nonpending_aw_floor_events':True,
       'full_joint24_and_21x21_supply_retained_after_post_S_and_accelerometer':True,
-      'complete_word_requires_measurement_supply_on_all_600_IMU_edges':True,
+      'persistent_machine_aw_sync_snapshot_histories_attached':False,
+      'pending_machine_aw_floor_branch_closed':False,
       'machine_Racc_coefficient_displacement_attached':False,
       'machine_guard_private_Mahony_and_conditioning_float_correspondence_closed':False,
       'scheduler_nextafter_binary32_correspondence_closed':False,
-      'machine_floor_eigensolver_and_measurement_LDLT_finite_precision_closed':False,
+      'machine_measurement_LDLT_finite_precision_closed':False,
       'source_uniform_machine_event_supply_bound_closed':False,
       'all_target_libm_and_Eigen_correspondence_closed':False,
       'all_event_arithmetic_witnesses_source_uniformly_qualified':False,
