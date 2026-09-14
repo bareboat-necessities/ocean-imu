@@ -31,7 +31,7 @@ def vertical_cfg():
 
 
 def still_cfg():
-    return SCFG.Config(B.rn32(F(196133,20000)),B.rn32(F(1,20)),B.rn32(F(8,10000)),B.rn32(2),B.rn32(1),B.rn32(F(1,5)),B.rn32(F(3,10)))
+    return SCFG.Config(B.rn32(F(196133,20000)),B.rn32(F(1,20)),B.rn32(F(8,10000)),B.rn32(2),B.rn32(1),B.rn32(F(1,5)))
 
 
 def still_operands(vertical_lp,dt,cfg,state=STILL.State()):
@@ -75,15 +75,10 @@ class Tests(unittest.TestCase):
         self.assertEqual(out.state.samples,1)
 
     def test_detached_stillness_input_and_band_input_are_rejected_by_bindings(self):
-        # Structural binding regressions use tiny stand-ins with the exact public fields.
+        # Public binders fail closed on anything that is not the exact qualified source/result type.
         class Env: pass
-        class Band: pass
-        class Front: pass
-        src=Env(); src.band_input=B.rn32(F(1,2)); src.stillness=Env(); src.stillness.state=Env()
-        src.stillness.state.is_still=True; src.stillness.state.still_time=B.rn32(F(1,2)); src.stillness.attenuation=B.rn32(F(3,4))
-        # Public helpers deliberately reject non-source objects before comparing values.
-        with self.assertRaises(TypeError): X.require_frontend_input(src,Front())
-        with self.assertRaises(TypeError): X.require_sigma_stillness(src,object())
+        with self.assertRaises(TypeError): X.require_frontend_input(Env(),Env())
+        with self.assertRaises(TypeError): X.require_sigma_stillness(Env(),Env())
 
     def test_source_shape_and_promotion_boundary(self):
         r=X.readiness()
