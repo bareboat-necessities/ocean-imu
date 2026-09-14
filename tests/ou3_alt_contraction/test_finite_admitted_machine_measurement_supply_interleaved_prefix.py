@@ -13,7 +13,7 @@ import test_finite_live_magnetic_word as MAG
 
 
 def state(*,machine_due=False):
-    # Executed-event fixtures require an actually usable WPE/log state.  The
+    # Executed-event fixtures require an actually usable WPE/log state. The
     # scheduler-only helper intentionally starts pre-usable because its own unit
     # tests never execute the tuner event, so build the same stack explicitly.
     p=SBASE.PRED.begin(TBASE.state(usable=True))
@@ -91,16 +91,15 @@ class Tests(unittest.TestCase):
         with self.assertRaises((ValueError,TypeError)):
             X.complete(state())
 
-    def test_readiness_closes_local_RS_and_accel_propagation_but_not_storage(self):
+    def test_readiness_closes_nonpending_RS_and_accel_propagation_but_not_aw_floor_or_storage(self):
         r=X.readiness()
-        self.assertTrue(r['machine_RS_measurement_effect_attached'])
-        self.assertTrue(r['accelerometer_measurement_propagates_machine_prediction_supply'])
+        self.assertTrue(r['machine_RS_measurement_effect_attached_on_nonpending_aw_floor_events'])
+        self.assertTrue(r['accelerometer_measurement_propagates_machine_prediction_supply_on_nonpending_aw_floor_events'])
         self.assertTrue(r['full_joint24_and_21x21_supply_retained_after_post_S_and_accelerometer'])
-        for k in ('machine_Racc_coefficient_displacement_attached',
-                  'machine_floor_eigensolver_and_measurement_LDLT_finite_precision_closed',
-                  'source_uniform_machine_event_supply_bound_closed',
-                  'source_uniform_complete_600_step_word_qualified','storage_search_allowed',
-                  'ALT_LIVE_PASS','ALT_STARTUP_PASS','ALT_END_TO_END_PASS'):
+        for k in ('persistent_machine_aw_sync_snapshot_histories_attached','pending_machine_aw_floor_branch_closed',
+                  'machine_Racc_coefficient_displacement_attached','machine_measurement_LDLT_finite_precision_closed',
+                  'source_uniform_machine_event_supply_bound_closed','source_uniform_complete_600_step_word_qualified',
+                  'storage_search_allowed','ALT_LIVE_PASS','ALT_STARTUP_PASS','ALT_END_TO_END_PASS'):
             self.assertFalse(r[k])
 
 
