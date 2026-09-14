@@ -2,12 +2,12 @@
 
 The lower machine-measurement product already reexecutes each compiler history's
 prediction, historical a_w floor, S scheduler/service and accelerometer using the
-exact executed Racc object.  This wrapper removes that last tuner-coefficient
+exact executed Racc object. This wrapper removes that last tuner-coefficient
 identification without inventing a second physical history.
 
 Shipping Racc depends on the RAW applied tuner ``sigma_applied`` and on the
-pre-update WPE frequency.  Raw sigma is not reconstructible from stationary
-Sigma_aw because the latter contains the band/0.05 floor.  Therefore this layer
+pre-update WPE frequency. Raw sigma is not reconstructible from stationary
+Sigma_aw because the latter contains the band/0.05 floor. Therefore this layer
 carries, per compiler history:
 
 * the persistent raw applied sigma scalar;
@@ -15,14 +15,14 @@ carries, per compiler history:
 
 A pending machine TuneState boundary atomically replaces the carried applied
 sigma from that compiler's binary32 stored-sigma snapshot; a nonpending boundary
-preserves it.  Racc is then reexecuted from that sigma, that compiler's WPE-entry
+preserves it. Racc is then reexecuted from that sigma, that compiler's WPE-entry
 frequency and the same held guard result, before the accelerometer correction is
 reexecuted from the already-qualified machine post-S state.
 
-The exact shipping event remains the comparison shadow.  Separate/FMA Racc
-hypot/sqrt witnesses and accelerometer LDLT branches remain distinct.  Native
+The exact shipping event remains the comparison shadow. Separate/FMA Racc
+hypot/sqrt witnesses and accelerometer LDLT branches remain distinct. Native
 binary32 ancestry for the Racc arithmetic, guard arithmetic and RAO libm paths
-is still open, as are source-uniform supplies.  No storage search is authorized.
+is still open, as are source-uniform supplies. No storage search is authorized.
 """
 from __future__ import annotations
 from dataclasses import dataclass
@@ -41,12 +41,12 @@ QUALIFICATION='OU3_ALT_ADMITTED_MACHINE_RACC_SUPPLY_INTERLEAVER_V1'
 
 def _exact_live_state(base:LOWER.State):
     if not isinstance(base,LOWER.State): raise TypeError('machine measurement-supply state required')
-    return LOWER.LOWER._preword(base.base.base).live.live.live
+    return LOWER._preword(base).live.live.live
 
 
 def _mtune_result(lower:LOWER.ImuResult):
     if not isinstance(lower,LOWER.ImuResult): raise TypeError('machine measurement-supply result required')
-    out=lower.lower.lower.lower.lower
+    out=lower.lower.lower.lower
     if not isinstance(out,MTUNE.ImuResult): raise TypeError('lower word lost same-event machine TuneState result')
     return out
 
@@ -193,12 +193,14 @@ def imu_step(state:State,*,
 
 
 def mag_step(state:State,**kwargs):
+    if not isinstance(state,State): raise TypeError('machine Racc State required')
     base,event=LOWER.mag_step(state.base,**kwargs)
     return State(base,state.separate_applied_sigma,state.fma_applied_sigma,
                  state.separate_racc,state.fma_racc,state.entry_imu_steps,state.racc_steps),event
 
 
 def set_hold(state:State,*,hold):
+    if not isinstance(state,State): raise TypeError('machine Racc State required')
     base,event=LOWER.set_hold(state.base,hold=hold)
     return State(base,state.separate_applied_sigma,state.fma_applied_sigma,
                  state.separate_racc,state.fma_racc,state.entry_imu_steps,state.racc_steps),event
