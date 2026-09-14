@@ -4,7 +4,9 @@ on:
     branches: [proof/ou3-alt-live-mag-composition]
     paths:
       - tools/stability/ou3_alt_contraction/finite_machine_vertical_stillness_source.py
+      - tools/stability/ou3_alt_contraction/finite_admitted_machine_vertical_stillness_interleaved_prefix.py
       - tests/ou3_alt_contraction/test_finite_machine_vertical_stillness_source.py
+      - tests/ou3_alt_contraction/test_finite_admitted_machine_vertical_stillness_interleaved_prefix.py
       - .github/workflows/ou3-alt-pr524-vertical-stillness-check.yml
 permissions:
   contents: read
@@ -26,7 +28,7 @@ jobs:
           set -euo pipefail
           export PYTHONPATH="$PWD:$PWD/tools/stability:$PWD/tests/ou3_alt_contraction"
           export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 OU3_ALT_REQUIRE_NATIVE=1
-          python3 -m unittest test_finite_machine_vertical_stillness_source -v
+          python3 -m unittest test_finite_machine_vertical_stillness_source test_finite_admitted_machine_vertical_stillness_interleaved_prefix -v
           python3 -m compileall -q tools/stability/ou3_alt_contraction
           git diff --check HEAD^
       - name: All finite-map regressions
