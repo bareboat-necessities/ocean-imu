@@ -69,11 +69,11 @@ class Tests(unittest.TestCase):
 
     def test_pending_boundary_source_of_raw_sigma_is_mode_stored_snapshot(self):
         ms=pending_measurement_state(); rs=X.begin(ms)
-        # Execute the lower pending event first and inspect the exact binary32
+        # Execute the complete lower pending event and inspect the exact binary32
         # boundary object used by this wrapper's update rule.
-        kwargs,machine=TBASE.event_operands(ms.base.base.base.base)
-        lower_kw=dict(machine,**kwargs,separate_accel_ldlt=MAG.REJECT,fma_accel_ldlt=MAG.REJECT)
-        lower=M.imu_step(ms,**lower_kw)
+        lower_kw=MBASE.event_operands(ms)
+        lower=M.imu_step(ms,separate_accel_ldlt=MAG.REJECT,
+            fma_accel_ldlt=MAG.REJECT,**lower_kw)
         mt=X._mtune_result(lower)
         self.assertTrue(mt.machine_boundary.consumed)
         sep,fma=X._applied_sigmas(rs,mt)
