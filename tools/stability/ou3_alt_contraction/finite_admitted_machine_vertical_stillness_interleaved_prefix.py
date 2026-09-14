@@ -137,10 +137,9 @@ def complete(state:State): return CompleteWord(state,LOWER.complete(state.base))
 
 def readiness():
     low=LOWER.readiness(); guard=GUARD.readiness(); src=VS.readiness(); mah=MAHONY.readiness()
+    source_native=src['target_libm_and_compiler_profile_correspondence_closed']
     native=bool(guard['target_libm_and_Eigen_expression_correspondence_closed'] and
-                mah['actual_target_compiler_profile_qualified'] and
-                src['tracker_LPF_exp_target_libm_correspondence_closed'] and
-                src['stillness_exp_sqrt_target_libm_correspondence_closed'])
+                mah['actual_target_compiler_profile_qualified'] and source_native)
     return {
       'admitted_machine_TuneState_word_consumed':low['Live_600_step_machine_TuneState_product_attached'],
       'binary32_filter_update_API_boundary_attached':True,
@@ -164,8 +163,11 @@ def readiness():
       'startup_machine_guard_vertical_stillness_history_attached':False,
       'guard_exp_sqrt_compiler_correspondence_closed':guard['target_libm_and_Eigen_expression_correspondence_closed'],
       'private_Mahony_compiler_profile_qualified':mah['actual_target_compiler_profile_qualified'],
-      'tracker_LPF_exp_target_libm_correspondence_closed':src['tracker_LPF_exp_target_libm_correspondence_closed'],
-      'stillness_exp_sqrt_target_libm_correspondence_closed':src['stillness_exp_sqrt_target_libm_correspondence_closed'],
+      # The source module currently exposes one fail-closed aggregate for the
+      # LPF exp + stillness exp/sqrt + compiler-profile correspondence.  Keep
+      # the compatibility fields conservative rather than inventing finer PASS.
+      'tracker_LPF_exp_target_libm_correspondence_closed':source_native,
+      'stillness_exp_sqrt_target_libm_correspondence_closed':source_native,
       'target_libm_Eigen_and_compiler_profile_correspondence_closed':native,
       'source_uniform_machine_supply_bounds_closed':False,
       'source_uniform_complete_600_step_word_qualified':False,
