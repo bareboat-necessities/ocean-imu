@@ -1,0 +1,42 @@
+name: OU3 ALT PR524 joined frontend Racc check
+on:
+  push:
+    branches: [proof/ou3-alt-live-mag-composition]
+    paths:
+      - tools/stability/ou3_alt_contraction/finite_admitted_machine_vertical_stillness_interleaved_prefix.py
+      - tools/stability/ou3_alt_contraction/finite_admitted_machine_runtime_config_interleaved_prefix.py
+      - tools/stability/ou3_alt_contraction/finite_admitted_machine_joined_frontend_racc_interleaved_prefix.py
+      - tests/ou3_alt_contraction/test_finite_admitted_machine_runtime_config_interleaved_prefix.py
+      - tests/ou3_alt_contraction/test_finite_admitted_machine_joined_frontend_racc_interleaved_prefix.py
+      - .github/workflows/ou3-alt-pr524-joined-frontend-check.yml
+permissions:
+  contents: read
+concurrency:
+  group: ou3-alt-pr524-joined-frontend-check
+  cancel-in-progress: true
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      OPENBLAS_NUM_THREADS: "1"
+      OMP_NUM_THREADS: "1"
+      OU3_ALT_REQUIRE_NATIVE: "1"
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install proof dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-numpy python3-scipy python3-mpmath libeigen3-dev g++
+      - name: Focused joined machine word regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          export PYTHONPATH="$PWD:$PWD/tools/stability:$PWD/tests/ou3_alt_contraction"
+          python3 -m unittest \
+            test_finite_admitted_machine_runtime_config_interleaved_prefix \
+            test_finite_admitted_machine_joined_frontend_racc_interleaved_prefix \
+            test_finite_admitted_machine_vertical_stillness_interleaved_prefix \
+            test_finite_admitted_machine_racc_supply_interleaved_prefix -v
+          python3 -m compileall -q tools/stability/ou3_alt_contraction
+          git diff --check HEAD^

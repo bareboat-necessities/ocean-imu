@@ -482,92 +482,123 @@ witness is outside corrected COMPLETE-BRMM and may not be recycled as A or B.
 
 ## Parallel ALT contraction/dissipativity track
 
-### Current hypothesis
+### Current hypothesis and retained facts
 
-Construct the finite physical joint24 runtime word before searching coercive
-storage with bounded neutral/source supply. Keep the original route above
-independently continuable. `docs/ou3-alt-proof-plan.md` is normative; the ALT
-handover and supplying finite notes specify the current representation boundary.
+Construct the complete finite source/runtime joint24 map before any storage
+search. The original proof route above remains independent;
+`ou3-alt-proof-plan.md` is normative. All ALT theorem gates and
+`storage_search_allowed` remain false.
 
-### Retained facts and representation
+The admitted-history product retains corrected COMPLETE-BRMM, one BIAS0/1/2
+history, bounded symbolic IMU ISS forcing, full-21 covariance, the one-time
+Live/S origin, frontend/tuner state, continuous magnetic calibration and
+asynchronous control. Primary physical-history restriction, rather than a
+required spectral/shaping representation or token identity, supplies the
+finite endpoint/moment constraints. Moment concatenation retains
+`G(a+b)=T(b)G(a)T(b)' + G(b)` and the derived prefix energy inequality.
+The magnetic zero-IMU endpoint and source-owned tilt/reset operands are retained.
 
-Finite physical prediction retains continuous attitude increments/angular defect,
-correlated q15 translation moments, gyro-bias drift, one shared accelerometer-
-bias driver and one Live S origin. Finite measurement descriptors retain the
-nonhomogeneous physical S residual, full H18/A21 covariance, inverse-free
-innovation relation, masked Joseph identity, finite injection and same-beta
-projection. Prediction covariance/runtime and frontend/tuner temporal composers
-remain conditional where their arithmetic, source or branch inputs are unbound.
-None is the completed source-uniform 600-step master.
+Each tuner compiler track now also carries its machine band/statistics state.
+Starting from construction, Cold and post-Cold samples advance that state once;
+goLive/MAG/HOLD preserve it. At one IMU sample k:
 
-The private observer now has an optional **profile-specific initialized
-binary32 graph**, supplied by `finite_binary32_mahony.py` and
-`docs/ou3-alt-mahony-binary32.md`. Exact integer/rational nearest-even rounding,
-an independent midpoint-cell checker, the literal bit seed/Newton normalization,
-and the initialized Mahony/readout program remove free reciprocal choices on
-that path. Every rounding defect belongs to its actual operands. The existing
-vertical-result type feeds the same downstream consumers. This does not qualify
-the actual target compiler, initial seed or nonfinite branches; the default
-conditional real helper is not silently relabeled as a deployed float proof.
+1. A pending commit reads noise from carried band covariance B_k, then installs
+   rounded tau/cadence/Sigma/R_S without advancing candidate histories.
+2. Band corners use the previous statistics frequency, or the entry WPE/prior
+   if unavailable; the new band output drives the current statistics update.
+3. The current statistics clamp/store precedes the distinct outer tuning clamp.
+   The new statistics variance and B_(k+1) noise readout drive sigma tuning.
+4. Exact prediction roots evaluate the same pending transaction before choosing
+   tau/Sigma. Both machine prediction-root families and full joint24/21x21
+   displacement refer to that one executed exact prediction.
+
+Exact clamp bounds are not silently replaced by compiled floats. Sigma
+configuration, variance/readiness/noise ancestry, rounded covariance squares,
+pre-sample boundary readouts and both persistent sample counters are checked.
+The variance accessor retains separate and FMA subtraction outcomes; ready
+zero p11 requires zero sqrt. These are conditional finite arithmetic relations,
+not a certificate of actual target-libm or compiler execution.
+
+### Failure analysis and independent critic
+
+The limiting object is still the complete finite deployment map feeding the
+future whole-word storage inequality. No rho or storage margin has been computed
+or promoted by these composition repairs.
+
+Executing a changed pending sigma exposed
+`prediction Sigma_aw detached from committed stationary covariance`: the
+source-root builder selected stale pre-boundary parameters while the Live prefix
+correctly committed first. The unchanged-sigma fixture hid the defect. It is an
+ALT graph-ordering defect, not a failed contraction inequality or a shipping
+filter defect. The root builder now derives the same pending transaction from
+the carried predecessor; a changed-sigma regression reaches the full prediction
+supply and scheduler layer without a second physical transition.
+
+Other exposed graph defects were a skipped statistics frequency clamp and
+higher scheduler wrappers passing their own State to a lower-State ordinal
+accessor. The band/statistics arithmetic existed but had not been carried
+through the strong startup/Live product. These invalidate the corresponding
+ancestry/composition claims, not BRMM physics or the scalar arithmetic lemmas.
+
+The critic's strongest remaining objection is that a finite graph can still
+carry an unqualified machine vertical input or stillness branch. Alternatives
+are (1) persist/re-execute the existing arithmetic modules with same-history
+joins, (2) derive one SSA/interpreter graph from shipping source, or (3) qualify
+an independent native interpreter. Route (1) is used for the available band,
+statistics, commit and prediction modules; it removes free ports rather than
+refining an unproved rho margin. The next falsifiable check is the same native
+vertical/stillness predecessor driving all new source operands and then the
+post-prediction measurement branches, with detached operands rejected.
+
+The broad finite run additionally exposed three inherited negative-test fixture
+errors: compiler/target constructors rejected a splice before the expected
+assertion, and replacing held-BA data re-supplied a normalized expm1 field as an
+active witness. Assertions now cover the rejecting constructor; the BA fixture
+preserves the held no-witness convention. No production guard was weakened.
 
 ### Evidence and validation boundary
 
-All 13 new local tests and the existing private-vertical/core/BIAS tests pass
-(39 combined). Native correspondence observes the actual headers from public
-startup/update calls, never installs a synthetic runtime root, and checks 767
-scalar normalization boundary cases and 51 initialized observer steps. These
-are implementation checks, not source admission, state-domain invariance or
-storage evidence. The all-input profile theorem is the operation-by-operation
-identity in the supplying note, not an inference from those cases.
+The full `test_finite*.py` selection passes 938 tests locally, including executed
+pending/nonpending machine frontend -> tuner -> prediction -> scheduler ->
+full prediction-supply edges, consecutive Cold samples, frequency clamp order,
+lagged band corners, zero-gain sqrt and history/configuration splice rejection.
+These are finite-map/algebra regressions, not universal native arithmetic,
+source membership, startup reachability, retention or stability certificates.
+The inherited non-finite-pattern suite is separate and not claimed green.
 
-The default local `make all` stops while compiling
-`tests/ahrs/ahrs-qmekf-sim.cpp`: `Eigen/Dense: No such file or directory` on the
-configured `/usr/include/eigen3` path. The native binding regression uses an
-available Eigen include directory explicitly and passes. This is an environment
-failure, not a mathematical failure, and no complete local build is claimed.
-The next build check is the unchanged primary build with its proper Eigen/data
-prerequisites. Focused CI and the inherited full suite remain separate; passing
-one does not qualify the other or the theorem.
+`make all` stops while compiling `tests/ahrs/ahrs-qmekf-sim.cpp` with
+`src/ahrs/KalmanQMEKF.h:30:10: fatal error: Eigen/Dense: No such file or directory`,
+using `-I/usr/include/eigen3`. No native/full-build PASS is claimed locally.
+Python compilation and whitespace checks pass.
 
-### Current limiter: C/E, plus unqualified deployment arithmetic
+The shared original-track `float('44/5')` source-builder defect remains exposed;
+this continuation does not alter shared P2/P3/P4/P5 prerequisites or quality gates.
 
-The actual complete finite source/runtime relation is still missing. Remaining
-work includes all unconditional frontend/tuner/sensor-model bindings, numerical
-factorization and transcendental branches, asynchronous magnetic histories,
-every H18/A21 edge and literal prefix, corrected COMPLETE-BRMM/BIAS admission,
-and a same-history uniform deployment-roundoff enclosure. Initial seeding and
-compiler/FMA/reduction-profile qualification are explicit on the new Mahony path.
-A returned finite map does not establish indefinite retention on its domain.
+### Current limiter, DEAD_ENDS and next falsifiable work
 
-There is no certified rho, retained basin, ultimate bound or capture time. No
-storage attempt, common-metric impossibility or new metric-failure strike is
-implied by this representation work.
+Next bind the machine vertical input and stillness operands, and propagate the
+already represented prediction displacement through pending covariance floors,
+per-track S due/not-due branches and machine R_S, accelerometer correction and
+reset. Then qualify the remaining WPE/raw-period/log/exp, band/statistics/tuner,
+Q-axis/Eigen/trig/normalization/threshold/nonfinite arithmetic and bound supplies
+for the complete admitted BRMM+BIAS+ISS family. Do not treat RNE-cell witnesses
+as proved facts about the target library.
 
-### Critic and alternatives
+Universal startup capture, the complete 600-transition deployment word,
+every-prefix chart retention, joint24 storage/rho and an ultimate bound remain
+open. The floating wrapper clock can stall and the signed magnetic counter has
+no uniform all-time call-count bound. Those finite-width lifetime obstructions
+are not dynamical-instability claims. Indefinite continuation cannot restart the
+one-time Live/S origin, covariance or frontend histories.
 
-The strongest objection is model drift: a Python evaluator plus successful host
-traces could miss a different deployed expression/reduction profile. Keep exact
-rounding-cell checks and source correspondence, but do not promote host equality
-to deployment qualification. Remaining normalization/roundoff alternatives are
-an exact profile-bound program (current choice), the existing outward scalar
-contract on the SAME operand graph, or a verified bit-vector/compiler extraction.
-These are attachment methods, not permission for another frozen observer or a
-new proof track. No route is selected merely because a tighter box looks better.
+Frozen dead ends/shortcuts: derivative cocycles presented as finite maps;
+frozen gains/replays or more seeds as universal source qualification;
+independent coefficient rectangles; A21 18-state marginal storage;
+covariance-consistency entry sets; artificial source/basin restrictions;
+wordwise S resets; and requiring one numerical generator for COMPLETE-BRMM.
+Primary physical motion plus bounded centered primitive remains authoritative;
+spectral/shaping models are only sufficient certificates. The two-strike rule
+and `assert_finite_storage_master` remain in force.
 
-### DEAD_ENDS and next falsifiable work
-
-Do not revive derivative cocycles as finite maps, independently boxed operands,
-frozen/replayed words, more-seed source qualification, wordwise S resets, position
-reanchoring, an 18-state A21 marginal, or covariance-consistency entry assumptions.
-The two-strike rule and `assert_finite_storage_master` remain in force.
-
-Complete the remaining same-predecessor runtime bindings and actual target
-arithmetic profile; verify the generated finite event/prefix graph against its
-supplying source without freely chosen numerical outputs. Attach one physical
-and bias history through the complete word. Only after that relation satisfies
-the finite-master guard run the high-precision feasibility diagnostic and common
-joint24 storage search. Then close useful supply, every-prefix retention,
-H18/A21 transport, fresh entry, startup capture and deployment precision.
-
-`ALT_LIVE_PASS=false`, `ALT_STARTUP_PASS=false`, `ALT_END_TO_END_PASS=false`.
-Original P4/P5 are not promoted by ALT.
+`ALT_LIVE_PASS=false`, `ALT_STARTUP_PASS=false`, `ALT_END_TO_END_PASS=false`,
+`storage_search_allowed=false`.

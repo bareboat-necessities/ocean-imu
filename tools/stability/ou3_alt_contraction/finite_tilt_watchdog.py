@@ -45,12 +45,14 @@ class StepResult:
     fired:bool
 
 
-def step(state:State,*,dt,tilt_deg):
+def step_over_limit(state:State,*,dt,over_limit):
+    """Literal timer recurrence after the shipping tilt predicate is resolved."""
     if not isinstance(state,State): raise TypeError('tilt watchdog state required')
-    dt,tilt=R(dt),R(tilt_deg)
-    if dt<=0 or tilt<0: raise ValueError('positive dt and nonnegative tilt required')
+    if not isinstance(over_limit,bool): raise TypeError('literal tilt predicate required')
+    dt=R(dt)
+    if dt<=0: raise ValueError('positive dt required')
     cooldown=max(F(0),state.cooldown-dt) if state.cooldown>0 else F(0)
-    if tilt>THRESHOLD_DEG:
+    if over_limit:
         over=state.over_limit+dt
     else:
         over=max(F(0),state.over_limit-2*dt)
@@ -58,6 +60,13 @@ def step(state:State,*,dt,tilt_deg):
     if fire:
         return StepResult(State(F(0),COOLDOWN_SEC),True)
     return StepResult(State(over,cooldown),False)
+
+
+def step(state:State,*,dt,tilt_deg):
+    if not isinstance(state,State): raise TypeError('tilt watchdog state required')
+    tilt=R(tilt_deg)
+    if tilt<0: raise ValueError('nonnegative tilt required')
+    return step_over_limit(state,dt=dt,over_limit=tilt>THRESHOLD_DEG)
 
 @dataclass(frozen=True)
 class PreserveYawWitness:
@@ -100,14 +109,10 @@ def preserve_yaw_reset(state:CORE.State,sample:SENSOR.GuardedImuSample,witness:P
         raise TypeError('finite state, same guarded sample and preserve-yaw witness required')
     if sample.physical.history_id != state.reference.history_id:
         raise ValueError('tilt reset sample detached from same physical history')
-    # initialize_from_acc works on the current acc_in; require a nondegenerate
-    # conditioned packet before a reset witness may be used.
     if M.dot(sample.conditioned_accel_body,sample.conditioned_accel_body) <= F(1,10**16):
         raise ValueError('degenerate accelerometer cannot drive shipping tilt reset')
 
     q=witness.q_new_hat
-    # Recompute the finite true-minus-nominal attitude coordinate at the SAME
-    # physical endpoint; hard reset changes no physical truth.
     z=list(state.z)
     z[:3]=CORE.cayley(P.quat_mul(state.reference.q_world_to_body,P.quat_conj(q)))
 
@@ -118,17 +123,13 @@ def preserve_yaw_reset(state:CORE.State,sample:SENSOR.GuardedImuSample,witness:P
             cov[i][j]=F(0); cov[j][i]=F(0)
     for i in range(3):
         for j in range(3): cov[i][j]=Patt[i][j]
-    # This is exactly initialize_from_acc's covariance effect: all non-attitude
-    # marginals/cross-covariances among them survive; only attitude cross terms
-    # are discarded. set_quaternion_boat then changes qref and zeros only the
-    # filter's internal attitude-error bookkeeping, already represented here by
-    # recomputing finite true-minus-nominal z[:3].
     return CORE.State(state.mode,tuple(z),tuple(tuple(r) for r in cov),q,state.reference)
 
 
 def readiness():
     return {
       'tilt_threshold_strict_gt_70deg':True,
+      'predicate_separated_from_timer_recurrence':True,
       'hold_035s_and_recovery_2dt_materialized':True,
       'cooldown_3s_and_fire_reset_materialized':True,
       'same_guarded_accel_required_for_reset':True,

@@ -2,9 +2,10 @@
 
 This closes reachability of the *unlock guard*, not the entire H18->A21 word.
 The shipping counter advances on every post-delay updateMag call.  Under
-MAG-CALL-SCHEDULE-v1, call 250 occurs no later than 10 s after Live and more
-than one second after the first call, so the literal shipping guard clears
-``accel_bias_locked_``.  An external acc-bias hold can still prevent immediate
+MAG-CALL-SCHEDULE-v1, the count reaches 250 within 10 s after Live. Call 250
+need not satisfy the strict one-second guard. Continued, locally finite calls
+force both predicates by max(249*gap, 1+gap) after the first call; on the
+default gap this is 9.96 s, hence at most 10 s after Live.  An external acc-bias hold can still prevent immediate
 A21 enable and therefore remains a separate hybrid/source obligation.
 """
 from __future__ import annotations
@@ -25,8 +26,9 @@ class Result:
 def reach(*,schedule:S.Schedule|None=None,external_hold:bool):
     r=S.release_reachability(schedule)
     S.require_release_reachable(r)
-    # At the 250th counted call: Live is true by construction, count threshold
-    # holds, first time is finite, and elapsed is strictly >1 s.
+    # At some call by the corrected joint deadline: Live, count >= 250,
+    # finite first-time and elapsed > 1 all hold. The actual call index may
+    # exceed 250. mag_updates_applied records the guaranteed lower bound.
     clear=True
     return Result(r.unlock_count,True,r.elapsed_first_to_unlock_max,
                   r.live_to_unlock_max,clear,clear and not bool(external_hold))

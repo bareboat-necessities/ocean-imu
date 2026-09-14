@@ -24,6 +24,7 @@ Thus zero initial error may coexist with a full-amplitude admissible sea.
 """
 from __future__ import annotations
 import argparse,json
+from fractions import Fraction as F
 from typing import Sequence
 from ou3_interval import Interval,matrix_mul,matrix_sub,matrix_transpose
 from ou3_interval_linear_algebra import matrix_symmetric_hull
@@ -58,7 +59,6 @@ def selector(rows,n,indices):
     z=I(0);o=I(1);A=[[z for _ in range(n)] for _ in range(rows)]
     for r,c in enumerate(indices):A[r][c]=o
     return A
-
 def canonical_maps(h:float):
     """Coordinate z=[h_s,q15] with q order from physical forcing module."""
     if h<=0:raise ValueError('positive sample required')
@@ -73,7 +73,7 @@ def canonical_maps(h:float):
 def build():
     mom=MOM.build();mf=MOM.validate(mom);forcing=FORCING.build();ff=FORCING.validate(forcing);ms=MOMSECTOR.build();sf=MOMSECTOR.validate(ms)
     if mf or ff or sf:raise RuntimeError(f'witness sector prerequisites failed moment={mf} forcing={ff} sector={sf}')
-    h=.005;A=float(mom['A_max_mps2']);maps=canonical_maps(h);sectors=physical_witness_sectors(*maps,A)
+    h=.005;A=float(F(str(mom['A_max_mps2'])));maps=canonical_maps(h);sectors=physical_witness_sectors(*maps,A)
     if len(sectors)!=3 or any(shape(P)!=(16,16) for _,P in sectors):raise RuntimeError('witness sector shape failure')
     return {'schema':SCHEMA,'qualification':QUALIFICATION,'canonical_source':'COMPLETE_BRMM_NORMAL_LIVE_WORD','P3_delta':P3_DELTA,
       'physical_witness_coordinate_order':forcing['source_coordinate_order'],'physical_witness_dimension':15,'homogeneous_physical_source_scale_dimension':1,

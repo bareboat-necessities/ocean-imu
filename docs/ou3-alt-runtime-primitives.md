@@ -2,8 +2,7 @@
 
 ## Scope
 
-This note records the finite real-arithmetic runtime descriptors now composed on
-PR #523. They are proof relations for the current shipping implementation, not
+This note records the finite real-arithmetic runtime descriptors currently composed. They are proof relations for the current shipping implementation, not
 COMPLETE-BRMM/BIAS admission, contraction, startup capture or deployment
 finite-precision certificates.
 
@@ -67,16 +66,30 @@ branches are explicit; not-due S is an identity suffix.
 state/covariance update. On an accepted retry the same shifted innovation is used
 by gain and Joseph arithmetic.
 
+## Asynchronous magnetic product state
+
+`finite_live_interleave.py` joins the exact startup bridge to successive Live
+IMU, magnetic and external-hold events. `finite_live_magnetic_word.py` binds a
+fixed qualified physical field/hard-iron model, raw continuous accumulation,
+refinement, reference/yaw writes, hard-iron/reference application and the same
+corrected packet's measurement/count suffix. Full covariance and all frontend /
+calibration/scheduler memory persist between event types.
+
+`finite_continuous_mag_runtime.py` derives fit and reference from one moment
+state; failed due solves replace the estimate, and unsuccessful applications
+retain the shipping anchor/clock mutations. The finite-real bound and precise
+arithmetic/source limitations are in `ou3-alt-live-magnetic-word.md`.
+
 ## Remaining source/runtime obligations
 
 The finite formulas above remove detached transition/process matrices but do not
 yet supply the universal runtime history. Remaining work includes binding
 exp/trig evaluations and numerical factorization/eigensolver outcomes; binding
 `tau,Sigma_aw,tau_b,Q_bacc`, a_w floor target, scheduler period,
-`R_acc,R_mag,R_S` and guards to one frontend/tuner predecessor; materializing
-WPE/bandpass/sigma/tuner candidate/active staged commits, asynchronous
-magnetometer continuation, all reject/nonfinite branches and H18/A21 hybrid
-edges; and attaching corrected COMPLETE-BRMM plus BIAS0/1/2 admission.
+`R_acc,R_mag,R_S` and guards to one frontend/tuner predecessor; qualifying the composed
+WPE/bandpass/sigma/tuner candidate/active staged commits and asynchronous
+magnetometer continuation, remaining reject/nonfinite branches and H18/A21
+source conditions; and attaching corrected COMPLETE-BRMM plus BIAS0/1/2 admission.
 
 Until that complete source-uniform finite word is closed, storage feasibility,
 rho, retained basin, startup capture and all ALT final gates remain fail-closed.
