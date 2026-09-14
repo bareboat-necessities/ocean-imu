@@ -78,28 +78,47 @@ class Tests(unittest.TestCase):
         self.assertTrue(any(v!=0 for row in out.separate.S_supply.covariance for v in row))
         self.assertTrue(any(v!=0 for row in out.separate.accel_supply.covariance for v in row))
 
-    def test_MAG_and_HOLD_preserve_measurement_supply_counter(self):
-        s=state(); n=s.measurement_steps
+    def test_machine_aw_sync_control_and_snapshot_state_persist_across_event(self):
+        s=state(); exact_before=X._exact_aw(s)
+        self.assertEqual(s.separate_aw_sync,exact_before)
+        self.assertEqual(s.fma_aw_sync,exact_before)
+        out=X.imu_step(s,separate_accel_ldlt=MAG.REJECT,fma_accel_ldlt=MAG.REJECT,**event_operands(s))
+        exact_after=X._exact_aw(out.state)
+        self.assertEqual(out.state.separate_aw_sync.pending,exact_after.pending)
+        self.assertEqual(out.state.fma_aw_sync.pending,exact_after.pending)
+        self.assertEqual(out.state.separate_aw_sync.last_sync_time,exact_after.last_sync_time)
+        self.assertEqual(out.state.fma_aw_sync.last_sync_time,exact_after.last_sync_time)
+        self.assertEqual(out.separate.aw_after_prediction.pending,False)
+
+    def test_MAG_and_HOLD_preserve_measurement_supply_counter_and_aw_history(self):
+        s=state(); n=s.measurement_steps; sa=s.separate_aw_sync; fa=s.fma_aw_sync
         word=PRED._preword(s.base.base)
         import test_finite_source_bound_live_word as LBASE
         s,_=X.mag_step(s,**LBASE.mag_kwargs(word))
-        self.assertEqual(s.measurement_steps,n)
+        self.assertEqual(s.measurement_steps,n); self.assertEqual(s.separate_aw_sync,sa); self.assertEqual(s.fma_aw_sync,fa)
         s,_=X.set_hold(s,hold=False)
-        self.assertEqual(s.measurement_steps,n)
+        self.assertEqual(s.measurement_steps,n); self.assertEqual(s.separate_aw_sync,sa); self.assertEqual(s.fma_aw_sync,fa)
 
     def test_complete_cannot_skip_measurement_supply_recurrence(self):
         with self.assertRaises((ValueError,TypeError)):
             X.complete(state())
 
-    def test_readiness_closes_nonpending_RS_and_accel_propagation_but_not_aw_floor_or_storage(self):
+    def test_readiness_closes_local_aw_RS_and_accel_propagation_but_not_storage(self):
         r=X.readiness()
-        self.assertTrue(r['machine_RS_measurement_effect_attached_on_nonpending_aw_floor_events'])
-        self.assertTrue(r['accelerometer_measurement_propagates_machine_prediction_supply_on_nonpending_aw_floor_events'])
-        self.assertTrue(r['full_joint24_and_21x21_supply_retained_after_post_S_and_accelerometer'])
-        for k in ('persistent_machine_aw_sync_snapshot_histories_attached','pending_machine_aw_floor_branch_closed',
-                  'machine_Racc_coefficient_displacement_attached','machine_measurement_LDLT_finite_precision_closed',
-                  'source_uniform_machine_event_supply_bound_closed','source_uniform_complete_600_step_word_qualified',
-                  'storage_search_allowed','ALT_LIVE_PASS','ALT_STARTUP_PASS','ALT_END_TO_END_PASS'):
+        for k in ('persistent_separate_and_FMA_aw_sync_snapshot_histories_attached',
+                  'queued_machine_aw_floor_target_is_historical_same_mode_state',
+                  'pending_machine_aw_floor_branch_reexecuted_from_same_mode_snapshot',
+                  'machine_RS_measurement_effect_attached',
+                  'accelerometer_measurement_propagates_machine_prediction_supply',
+                  'full_joint24_and_21x21_supply_retained_after_post_S_and_accelerometer'):
+            self.assertTrue(r[k])
+        for k in ('machine_Racc_coefficient_displacement_attached',
+                  'machine_guard_private_Mahony_and_conditioning_float_correspondence_closed',
+                  'machine_aw_sync_clock_binary64_correspondence_closed',
+                  'machine_floor_eigensolver_and_measurement_LDLT_finite_precision_closed',
+                  'source_uniform_machine_event_supply_bound_closed',
+                  'source_uniform_complete_600_step_word_qualified','storage_search_allowed',
+                  'ALT_LIVE_PASS','ALT_STARTUP_PASS','ALT_END_TO_END_PASS'):
             self.assertFalse(r[k])
 
 
