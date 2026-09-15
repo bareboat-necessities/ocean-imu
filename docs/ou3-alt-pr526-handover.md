@@ -57,7 +57,11 @@ There is an inherited original P2/P3/P4/P5 source issue: the declared PE certifi
 
 ## Validation/status warning
 
-PR #526 is a proof-progress checkpoint, not an end-to-end PASS. Earlier branch CI showed the new startup-focused layers passing while the repository still had inherited failures in downstream/original proof and quality/build jobs. Treat current-main CI after merge as authoritative. Never convert inherited red checks into ALT PASS flags.
+This remains a proof-progress checkpoint, not an end-to-end PASS. Startup/WPE attachment, source-audit, master-guard and finite native correspondence regressions are separate from universal stability qualification. The original-track PE/vector refinement issue remains separate work; do not turn inherited red checks into ALT PASS flags. Exact validation commands, results and CI-run references are recorded in the PR discussion.
+
+The source-observation audit is bound to the current shipping header. The local `zhat` const reference aliases an already evaluated const `Vector3`, is read once by the magnetic residual, is never mutated and does not escape. The source-audit regression reconstructs the previous complete-file hash after reversing only that copy-to-reference change. A mismatched pin still raises a re-audit error. Regenerated native H18, H18-to-A21, A21 and sample traces agree byte-for-byte across that cleanup; this is finite implementation evidence, not source-uniform deployment arithmetic.
+
+Published replay/results provenance must be regenerated through its canonical evidence workflow after shipping-source changes. No historical replay fingerprint is made current by manually restamping its source hash. Full build validation still requires Eigen and the pinned simulation archive; consult current-main CI rather than assuming every repository check is green.
 
 ## Recommended next-conversation prompt
 

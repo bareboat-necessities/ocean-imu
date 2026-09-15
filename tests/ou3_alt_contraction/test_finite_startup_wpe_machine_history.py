@@ -1,4 +1,3 @@
-from fractions import Fraction as F
 import unittest
 from tools.stability.ou3_alt_contraction import finite_startup_wpe_machine_history as X
 from tools.stability.ou3_alt_contraction import finite_wpe_machine_binary32 as WM
