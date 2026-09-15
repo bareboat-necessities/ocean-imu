@@ -45,13 +45,16 @@ class Tests(unittest.TestCase):
         self.assertIsNone(second.startup)
         self.assertEqual(second,M.step_initialized(first.vertical.state,CFG,dt=DT,gyro=(0,0,0),acc=a))
 
-    def test_near_antiparallel_branch_requires_and_binds_solver_axis(self):
+    def test_near_antiparallel_branch_computes_and_binds_solver_axis(self):
         acc=(X.rn(0),X.rn(0),CFG.gravity)
-        with self.assertRaisesRegex(X.UnqualifiedSeedBranch,'JacobiSVD'):
-            X.step(V.State(),CFG,dt=DT,gyro=(0,0,0),acc=acc)
+        computed=X.step(V.State(),CFG,dt=DT,gyro=(0,0,0),acc=acc)
+        self.assertIsNotNone(computed.startup.solver)
+        self.assertEqual(computed.startup.solver.sweep_count,1)
+        computed.startup.validate()
         svd=X.svd_witness((F(0),F(0),F(-1)),(F(0),F(0),F(1)),
                           (X.rn(1),X.rn(0),X.rn(0)))
         out=X.step(V.State(),CFG,dt=DT,gyro=(0,0,0),acc=acc,svd=svd)
+        self.assertEqual(out.vertical,computed.vertical)
         self.assertEqual(out.startup.branch,'near-antiparallel-JacobiSVD')
         self.assertEqual(out.startup.quaternion,(F(0),F(1),F(0),F(0)))
         out.startup.validate()

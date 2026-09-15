@@ -7,8 +7,9 @@ supplied by the caller.  A too-small first sample preserves the observer; the
 outer guard/LPF/statistics event still advances.
 
 This is a conditional program identity, not startup admission.  The nearly
-opposite-vector JacobiSVD branch is materialized with an explicit solver-axis
-witness; target Eigen solver correspondence, sqrt/library/profile qualification
+opposite-vector JacobiSVD branch executes the pinned scalar QR/Jacobi graph
+when no legacy axis witness is supplied; target Eigen solver correspondence,
+sqrt/library/profile qualification
 and universal source-domain bounds remain fail-closed.  It is not legitimate to
 exclude that branch from COMPLETE-BRMM merely because the solver correspondence
 is not yet certified.
@@ -19,10 +20,6 @@ from fractions import Fraction as F
 
 from tools.stability.ou3_alt_contraction import finite_binary32_mahony as M
 from tools.stability.ou3_alt_contraction import finite_vertical_complementary_runtime as V
-
-
-class UnqualifiedSeedBranch(ValueError):
-    """An admitted source may take a branch not yet qualified by this module."""
 
 
 @dataclass(frozen=True)
@@ -154,10 +151,13 @@ class Seed:
     branch:str
     operations:tuple[Operation,...]
     svd:SVDWitness|None=None
+    solver:object|None=None
 
     def validate(self):
         for op in self.operations: op.validate()
-        if self!=seed(self.acc,svd=self.svd): raise ValueError('startup seed detached from same accelerometer')
+        if self.solver is not None: self.solver.validate()
+        if self!=seed(self.acc,svd=self.svd if self.solver is None else None):
+            raise ValueError('startup seed detached from same accelerometer')
 
 
 def seed(acc,*,svd:SVDWitness|None=None):
@@ -178,8 +178,10 @@ def seed(acc,*,svd:SVDWitness|None=None):
     c=a.dot3(v1,v0)
     cutoff=op('add',-1,rn(F(1,100000)))
     if c<cutoff:
+        solver=None
         if svd is None:
-            raise UnqualifiedSeedBranch('near-antiparallel Eigen JacobiSVD startup seed requires explicit solver witness')
+            from tools.stability.ou3_alt_contraction import finite_seed_eigen_svd as EIGEN
+            svd,solver=EIGEN.witness(v0,v1)
         if not isinstance(svd,SVDWitness): raise TypeError('JacobiSVD solver witness required')
         if svd != svd_witness(v0,v1,svd.axis):
             raise ValueError('JacobiSVD witness residuals detached from same normalized vectors')
@@ -189,7 +191,7 @@ def seed(acc,*,svd:SVDWitness|None=None):
         scale=op('sqrt',op('sub',1,w2))
         vec=tuple(op('mul',x,scale) for x in svd.axis)
         q=(w,*vec)
-        return Seed(acc,norm,v0,q,'near-antiparallel-JacobiSVD',tuple(a.operations),svd)
+        return Seed(acc,norm,v0,q,'near-antiparallel-JacobiSVD',tuple(a.operations),svd,solver)
     if svd is not None: raise ValueError('ordinary FromTwoVectors branch consumes no JacobiSVD witness')
     axis=tuple(op('sub',op('mul',v0[j],v1[k]),op('mul',v0[k],v1[j]))
                for j,k in ((1,2),(2,0),(0,1)))
@@ -230,6 +232,8 @@ def readiness():
         'too_small_first_accel_preserves_uninitialized_observer':True,
         'seed_quaternion_or_reciprocal_input_port_present':False,
         'near_antiparallel_JacobiSVD_branch_topology_materialized_with_solver_witness':True,
+        'near_antiparallel_JacobiSVD_axis_computed_from_same_vectors_when_no_witness_supplied':True,
+        'near_antiparallel_QR_Jacobi_loop_operation_ledger_retained':True,
         'near_antiparallel_JacobiSVD_solver_correspondence_qualified':False,
         'target_sqrt_Eigen_and_compiler_correspondence_closed':False,
         'every_admitted_startup_history_covered':False,

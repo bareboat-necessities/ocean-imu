@@ -24,7 +24,25 @@ or a consequence of arbitrary-bounded post-Live ISS. Every admitted sample
 passes the seed-norm test, but the retained Mahony capture certificate does
 not cover this larger sensor/seed set. Its original conditional result is
 kept separate. The bounded-input WPE induction is described in
-`ou3-alt-wpe-uniform-supplies.md`. Eleven master qualifications remain open.
+`ou3-alt-wpe-uniform-supplies.md`. The master records the remaining qualification dependencies.
+
+## Physical MEMS input domain
+
+The theorem quantifier intersects every Live source history with the actual
+binary32 filter API limits `max_i |gyro_body_i| <= 35 rad/s` and
+`max_i |accel_body_i| <= 160 m/s²`, after calibration and body-axis mapping.
+`ou3-alt-live-input-contract.md` and
+`tools/stability/ou3_alt_live_input_domain.json` define the profile. The
+source packet is admitted before execution; complete rounding cells are
+retained. Startup keeps its stricter residual and temporal requirements.
+
+The proof uses these bounds: the scalar Mahony integral has the forward
+invariant barrier 4096, so corrected rate stays below 4132 and the Euler norm
+sum below 5000 on every initialized finite prefix. Normalization preserves the
+quaternion bound, giving vertical acceleration below 322 and the WPE supply
+cap 512. This does not reset startup memory or assume the failed 150-second
+alignment deadline. Seed, target arithmetic and full MEKF/covariance totality
+remain separately required.
 
 ## Deployment-scope exclusion: no wind heel
 
@@ -252,6 +270,24 @@ first later release while Live -> exact H18->A21 edge; asserting hold in A21 ->
 H18 with BA cross-covariances zeroed.
 
 ## Current blockers
+
+The qualification-by-qualification result is in `ou3-alt-main-handover.md`.
+The master consumes each of the eleven qualification results. Retain these additional
+guards against repeating invalid routes:
+
+- A bounded raw Live residual does not prove arithmetic totality; the quiet
+  startup plus finite gyro-pulse overflow witness remains an outside-domain regression.
+  A produced finite forcing bound cannot justify its own production.
+- The continuous startup direction budget is not automatically a sampled
+  budget. Its exact aliasing witness does not itself prove finite-time
+  noncapture. Prove the actual discrete Mahony/LPF alignment predicate.
+- Every local coefficient-displacement CORE successor must be carried into
+  the next actual compiler-specific CORE/watchdog/magnetic/control event.
+  Six hundred local supplies rooted in exact shadows are not a machine word.
+- Verified compiler/package identities, a target compile, and mathematical
+  exp/log witnesses do not prove actual target rounding or solver totality.
+  Keep each conditional result's domain explicit, including the new
+  Mahony prefix and WPE amplitude envelopes.
 
 The attitude representation, conditional ungauged continuation, certified empty
 magnetic startup prefix and signed magnetic-counter safety are attached.

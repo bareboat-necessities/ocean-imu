@@ -15,7 +15,7 @@ history. Target libm/compiler qualification and source-uniform bounds remain
 explicitly open.
 """
 from __future__ import annotations
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from fractions import Fraction as F
 
 from tools.stability.ou3_alt_contraction import finite_binary32_arithmetic as B
@@ -75,6 +75,8 @@ class State:
     separate_usable:bool=False
     fma_usable:bool=False
     bounded_profile:bool=False
+    supply_scale_exponent:int=0
+    libm_profile:str=BOUNDS.RNE_PROFILE
     def __post_init__(self):
         if type(self.separate_usable) is not bool or type(self.fma_usable) is not bool:
             raise TypeError('literal per-compiler WPE usability latches required')
@@ -84,11 +86,38 @@ class State:
             raise ValueError('dual WPE machine sample counts detached')
         if self.qualification!=QUALIFICATION: raise ValueError('wrong WPE machine product qualification')
         if type(self.bounded_profile) is not bool: raise TypeError('literal WPE bounds qualification flag required')
+        if type(self.supply_scale_exponent) is not int or self.supply_scale_exponent<0:
+            raise ValueError('nonnegative integer WPE amplitude envelope required')
+        if not self.bounded_profile and self.supply_scale_exponent:
+            raise ValueError('unqualified WPE state cannot carry an amplitude certificate')
+        BOUNDS._profile_errors(self.libm_profile)
         if self.bounded_profile: BOUNDS.check_state(self)
 
 
-def initial(shadow_cfg:SHADOW.WPEConfig,*,bounded_profile=False):
-    return State(MOM.Config.from_shadow(shadow_cfg),bounded_profile=bounded_profile)
+def initial(shadow_cfg:SHADOW.WPEConfig,*,bounded_profile=False,libm_profile=BOUNDS.RNE_PROFILE):
+    return State(MOM.Config.from_shadow(shadow_cfg),bounded_profile=bounded_profile,libm_profile=libm_profile)
+
+
+def widen_supply(state:State,*,input_abs_upper):
+    """Weaken the quantitative envelope without changing any machine state.
+
+    This consumes a source-domain bound, not a trace-derived admission claim.
+    It is useful at goLive, whose sensor residual domain can exceed startup's.
+    """
+    if not isinstance(state,State) or not state.bounded_profile:
+        raise TypeError('previously qualified WPE history required for envelope widening')
+    exponent=max(state.supply_scale_exponent,BOUNDS.scale_for_input(input_abs_upper,state.libm_profile))
+    if exponent==state.supply_scale_exponent: return state
+    return replace(state,supply_scale_exponent=exponent)
+
+
+def same_machine_history(before:State,after:State):
+    """Only monotone proof-envelope metadata may change at the Live join."""
+    return (isinstance(before,State) and isinstance(after,State)
+            and all(getattr(before,k) is getattr(after,k) for k in ('cfg','separate','fma','logs'))
+            and all(getattr(before,k)==getattr(after,k) for k in
+                    ('separate_usable','fma_usable','bounded_profile','qualification','libm_profile'))
+            and after.supply_scale_exponent>=before.supply_scale_exponent)
 
 
 def _period(track:LOG.Track,w:HorizonPeriodWitness|None):
@@ -127,13 +156,15 @@ def step(state:State,*,dt,vertical_accel,separate:ModeWitnesses,fma:ModeWitnesse
     x=_q(vertical_accel,'common machine WPE vertical input'); h=_q(dt,'common machine WPE dt')
     if state.bounded_profile:
         BOUNDS.check_state(state)
-        if h!=BOUNDS.DT or abs(x)>BOUNDS.INPUT:
+        if h!=BOUNDS.DT or abs(x)>BOUNDS.build(state.supply_scale_exponent,state.libm_profile)['vertical_input_abs_upper']:
             raise ValueError('WPE source input exceeds bounded profile')
-        BOUNDS.check_mode_before(state.logs.separate,separate)
-        BOUNDS.check_mode_before(state.logs.fma,fma)
+        BOUNDS.check_mode_before(state.logs.separate,separate,state.supply_scale_exponent,state.libm_profile)
+        BOUNDS.check_mode_before(state.logs.fma,fma,state.supply_scale_exponent,state.libm_profile)
     sp=_period(state.logs.separate,separate.horizon); fp=_period(state.logs.fma,fma.horizon)
-    sr=MOM.step(state.separate,state.cfg,dt=h,vertical_accel=x,canonical_period=sp,**separate.moment)
-    fr=MOM.step(state.fma,state.cfg,dt=h,vertical_accel=x,canonical_period=fp,**fma.moment)
+    sr=MOM.step(state.separate,state.cfg,dt=h,vertical_accel=x,canonical_period=sp,
+                libm_profile=state.libm_profile,**separate.moment)
+    fr=MOM.step(state.fma,state.cfg,dt=h,vertical_accel=x,canonical_period=fp,
+                libm_profile=state.libm_profile,**fma.moment)
     sb,sw=_bind_log(sr,state.logs.separate,separate); fb,fw=_bind_log(fr,state.logs.fma,fma)
     logs=LOG.advance_modes(state.logs,separate_produced=sb,fma_produced=fb,
                            separate_witness=sw,fma_witness=fw)
@@ -144,7 +175,8 @@ def step(state:State,*,dt,vertical_accel,separate:ModeWitnesses,fma:ModeWitnesse
         log_period=logs.state.fma.log_period,elapsed=fr.state.elapsed,
         lambda_=state.cfg.lambda_,witness=fma.usable)
     nxt=State(state.cfg,sr.state,fr.state,logs.state,
-        separate_usable=sg.after,fma_usable=fg.after,bounded_profile=state.bounded_profile)
+        separate_usable=sg.after,fma_usable=fg.after,bounded_profile=state.bounded_profile,
+        supply_scale_exponent=state.supply_scale_exponent,libm_profile=state.libm_profile)
     return nxt,sr,fr,logs
 
 

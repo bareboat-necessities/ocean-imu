@@ -183,7 +183,7 @@ assuming accurate tilt. This supplies the conditional WPE induction in
 `ou3-alt-wpe-uniform-supplies.md`. Totality of the preceding observer operations
 and target/compiler correspondence remain open.
 
-The master has 32 closed components and 11 open top-level prerequisites.
-The new seed and WPE sublemmas do not close universal startup, complete
+The master retains conditional components and 11 open top-level prerequisites.
+The seed and WPE sublemmas do not close universal startup, complete
 source-uniform arithmetic or the complete 600-step word. Rho estimation and
 all ALT PASS gates remain blocked.

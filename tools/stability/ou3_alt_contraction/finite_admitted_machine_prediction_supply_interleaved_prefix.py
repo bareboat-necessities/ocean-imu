@@ -115,8 +115,10 @@ def imu_step(state:State,**kwargs):
         use_exact_attitude_Q=kwargs.get('use_exact_attitude_Q',True),
         attitude_first_ldlt_success=kwargs.get('attitude_first_ldlt_success',True),
         attitude_second_ldlt_success=kwargs.get('attitude_second_ldlt_success'))
-    sep=DISP.compare(pre_core,segment,raw,exact_roots,lower.lower.separate_roots,**common)
-    fma=DISP.compare(pre_core,segment,raw,exact_roots,lower.lower.fma_roots,**common)
+    sep=DISP.compare(pre_core,segment,raw,exact_roots,lower.lower.separate_roots,
+        machine_predecessor=kwargs.get('separate_machine_predecessor'),**common)
+    fma=DISP.compare(pre_core,segment,raw,exact_roots,lower.lower.fma_roots,
+        machine_predecessor=kwargs.get('fma_machine_predecessor'),**common)
     if sep.exact!=live.prediction.state or fma.exact!=live.prediction.state:
         raise ValueError('rebuilt exact prediction detached from executed admitted IMU event')
     nxt=State(lower.state,state.entry_imu_steps,state.supply_steps+1)

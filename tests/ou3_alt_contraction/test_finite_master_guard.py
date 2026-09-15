@@ -45,4 +45,15 @@ class Tests(unittest.TestCase):
         x['finite_storage_status']['finite_word_counter_safety_closed']=False
         self.assertIn('proved counter safety not consumed by storage guard',G.validate(x))
 
+    def test_conditional_component_evidence_does_not_remove_universal_obligations(self):
+        x=G.build()
+        self.assertEqual(len(x['open_obligations']),11)
+        self.assertTrue(x['conditional_Mahony_prefix_totality']['ordinary_seed_scalar_prefix_totality_closed'])
+        self.assertFalse(x['conditional_Mahony_prefix_totality']['every_startup_branch_totality_closed'])
+        self.assertTrue(x['pinned_Eigen_seed_axis_reduction']['returning_solver_axis_equals_QR_Q_column_2'])
+        self.assertFalse(x['pinned_Eigen_seed_axis_reduction']['source_uniform_Jacobi_loop_termination_closed'])
+        self.assertFalse(x['bounded_raw_Live_input_totality_obstruction']['nonfinite_execution_has_produced_RestrictedForcing'])
+        del x['open_obligations']['complete_source_uniform_600_step_word']
+        self.assertIn('open qualification inventory changed without proof',G.validate(x))
+
 if __name__=='__main__': unittest.main()

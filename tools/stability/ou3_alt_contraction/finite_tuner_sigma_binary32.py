@@ -28,18 +28,26 @@ def _q(x,name):
 
 
 def _positive_rne_cell(q:F):
-    """Closed nearest-even rounding cell around a positive normal binary32."""
+    """Cell endpoints around a positive finite binary32, including subnormals.
+
+    Endpoint ownership is determined by significand parity in
+    ``_interval_hits_rne_cell``; this helper returns only the endpoints.
+    """
     q=F(q)
-    if q<=0 or not B.is_binary32(q): raise ValueError('positive normal binary32 required for RNE cell')
-    e=B._floor_log2_positive(q); quantum=B._pow2(e-23)
-    lower_step=quantum/2 if q==B._pow2(e) else quantum
+    if q<=0 or not B.is_binary32(q): raise ValueError('positive finite binary32 required for RNE cell')
+    e=B._floor_log2_positive(q); quantum=B._pow2(max(-149,e-23))
+    lower_step=quantum/2 if e>-126 and q==B._pow2(e) else quantum
     prev=q-lower_step; nxt=q+quantum
     return (prev+q)/2,(q+nxt)/2
 
 
 def _interval_hits_rne_cell(lo,hi,rounded):
-    clo,chi=_positive_rne_cell(F(rounded))
-    return max(F(lo),clo)<=min(F(hi),chi)
+    q=F(rounded); clo,chi=_positive_rne_cell(q)
+    lower,upper=max(F(lo),clo),min(F(hi),chi)
+    if lower>upper: return False
+    if lower<upper or clo<lower<chi: return True
+    quantum=B._pow2(max(-149,B._floor_log2_positive(q)-23))
+    return (q/quantum).numerator%2==0
 
 
 def _exp_minus_unit_enclosure(x,terms=14):

@@ -81,11 +81,74 @@ Frequency and period are independent rounded exp calls, not exact reciprocals.
 Raw log is checked against the period derived from the same machine moments.
 Neither a detached finite witness nor a nonfinite return qualifies this model.
 
-## Open qualifications
+## Parameterized Live supplies
 
-The named RNE relation is a theorem arithmetic hypothesis, not a certificate
-for a device libm or compiler. Full source-to-observer totality, actual target
-correspondence, Live source continuation and the complete machine word are
-still required. `WPE_source_uniform_machine_supply_bounds` therefore remains
-open in the top-level master. The bounded-input theorem is a checked component
-available for that composition; storage search and rho estimation remain false.
+The same induction covers input envelopes `32·2^k`, for integers `k=0,...,5`.
+Linear states scale by `2^k`, squared moments by `4^k`, and the raw-period lower
+bound by `2^-k`. The raw-log lower bound becomes `-40-k`; the canonical stored
+log still satisfies `|log_period|<=48`. Every induction, logarithm and overflow
+margin remains strictly positive. At `k=5` the derived largest-intermediate
+enclosure is `3.022315e38`, below binary32's largest finite value by `3.805086e37`.
+For `k>=6` this enclosure cannot prove totality. That is a limitation of this
+bound, not physical source rejection or evidence about rho.
+
+The declared MEMS input contract admits raw body acceleration up to
+`160 m/s²` per axis and gyro up to `35 rad/s` per axis, before executing the
+filter. Under the retained transparent guard scope, the source-locked scalar
+observer proof gives `|vertical_accel| < 321.169 m/s²`. Thus the fixed `k=4`
+WPE envelope (`512 m/s²`) covers every admitted packet. This is the raw Mahony
+vertical value that directly drives WPE; the tracker LPF is a separate
+statistical descendant. The ISS disturbance parameter W is not capped or
+replaced by a startup sensor residual limit.
+
+The observer proof uses the exact all-time integral barrier `|I_i|<=4096`:
+the largest admissible increment is below half an ULP at that boundary, so
+RNE cannot cross it from construction zero. Its finite Euler norm and the
+normalization invariant consequently hold on every initialized finite prefix.
+No 30,602-sample startup deadline or reset of the Live integral is used.
+
+Every bounded startup WPE history automatically receives this physical Live
+envelope through `begin` and the canonical admitted startup constructor. The
+configuration, moment states and logs retain object identity; latches and
+counters retain their values. Only the monotone proof-envelope metadata widens.
+Each ensuing IMU edge admits the same raw packet before lower execution and
+checks transparent guard output, zero weight and the dormant removed-RMS
+predicate. The default enabled guard is permitted. MAG and HOLD retain the
+same envelope and machine history; complete words require all 600 WPE updates.
+
+The auxiliary `live_iss_certificate(W)` also proves the conditional inequality
+`||raw_residual|| <= sqrt(2) W <= 1.5 W`, using the separately retained
+`nu_acc` and thermal blocks. It is not used to impose a numeric W threshold on
+the physical source word.
+
+## Library-error envelope
+
+The persistent `libm_profile` can select the strict RNE enclosure or the named
+`exp-sqrt-relative-2^-20-log-absolute-2^-14` relation. The latter allows exp and
+sqrt relative error `2^-20`, log absolute error `2^-14`, and the final binary32
+rounding of enclosing endpoints. It does not assume correct rounding of libm.
+Every actual exp, log and sqrt operand remains bound to the same machine state
+and raw period. The profile is preserved across startup, goLive and every
+subsequent WPE transition.
+The canonical startup constructor selects the error-inclusive profile;
+standalone component constructors can still select the strict RNE relation.
+
+The exact induction recomputes all leak, gain, moment-alpha, log-alpha and root
+bounds for this error relation. At physical `k=4`, its high-pass margin exceeds
+`291`, log margin exceeds `0.0005648`, and all intermediate values are at least
+`2.647e38` below binary32 overflow. Both separate and permitted FMA outcomes are
+retained, including the target's fused `ratio - lambda*lambda` operation. The
+`target_error_profile_certificate` connects the pinned newlib approximation
+proofs directly: exp relative error is below `3.339e-7` on `[-60,60]`, and log
+absolute error is below `5.249e-6` on `[2^-62,2^16]`. Both fit the WPE allowance
+with a strict margin. Scalar/division/sqrt instruction semantics and the final
+firmware's selection of those objects remain separate deployment premises.
+
+## Remaining composition premises
+
+The WPE supply result consumes the declared input domain, the source-locked
+initialized observer induction, a valid startup seed, the transparent guard
+scope, and the scalar arithmetic profile. It establishes neither startup
+capture nor the complete MEKF/covariance/reset word. Those premises and actual
+target correspondence remain visible in their own gates. Bounded WPE supplies
+do not authorize storage search, rho estimation or ALT promotion by themselves.

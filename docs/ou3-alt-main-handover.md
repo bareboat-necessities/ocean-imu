@@ -11,7 +11,36 @@ Continue from a fresh branch off `main`. The research question is completion
 of the finite pre-rho qualifications, not estimation of rho. The numerical
 startup profile has already been selected and authorized; do not ask the next
 conversation to choose it again. This document is the current starting point;
-PR #528 contains the implementation and validation record.
+The active PR contains the implementation and validation record.
+
+## Current pre-rho result
+
+All eleven qualifications below have been investigated. None is universally
+closed. Two controlling issues now require attention: arbitrary bounded raw
+Live inputs do not imply finite deployment execution, and the local machine
+coefficient-displacement results do not yet form a persistent deployed MEKF/
+control recurrence. The latter cannot be solved by scalar arithmetic bounds
+alone. Keep the master and all ALT PASS flags false.
+
+| Qualification | Retained result | Remaining requirement |
+| --- | --- | --- |
+| 1. Timeout/alignment reachability | Exact timeout clock and conditional ordinary-seed totality | Prove actual discrete observer/LPF alignment by the deadline |
+| 2. Near-antiparallel Eigen SVD | Returning Eigen seed axis equals QR Q column 2; Jacobi sweeps never write that column | QR axis bounds/totality, Jacobi termination and target correspondence |
+| 3. Universal startup reachability | Startup/source/frontend attachment and seed norm margins | Capture for selected profiles; continuous direction budgets cannot be silently reused as discrete budgets |
+| 4. Startup deployment supplies | Full finite RNE lattice and conditional scalar Mahony totality through 30,602 steps | Every startup branch, guard/frontend/tuner/Racc and actual target arithmetic |
+| 5. Target compiler/libm profile | Verified pinned GCC/Eigen/SDK assets and target numerical-header compilation | Actual instruction/rounding/reduction semantics, Arduino wrapper/final linkage and libm/solver bounds |
+| 6. WPE target selection | Target compiler enables contraction and emits multiply-add instructions | Correspondence of actual expression-specific contractions with the carried WPE histories |
+| 7. WPE uniform supplies | Conditional Live envelope from existing ISS W; moments/logs persist across goLive and every qualified edge | Source-uniform observer/guard totality and target correspondence for all declared W |
+| 8. WPE log/exp libm | Exact same-argument mathematical enclosures and pinned target libm identity | Target error bounds composed through the actual recurrence |
+| 9. Qaxis exp libm | Uniform sufficient absolute error budget 2^-24 on the general branch | Prove both actual target exp calls satisfy that budget |
+| 10. All-event arithmetic | Subnormal defect repaired; exact/native bounded-raw-input overflow obstruction retained | Independent Live execution-domain qualification and all literal arithmetic/solver outcomes |
+| 11. Complete 600-step word | Local CORE successors retained and subsequent predecessor equality checked; missing control successors block completion | Feed actual per-compiler CORE, watchdog, magnetic and hold successors into every next event |
+
+Read `ou3-alt-startup-seed-arithmetic.md`,
+`ou3-alt-startup-direction-sampling.md`, `ou3-alt-target-arithmetic.md`,
+`ou3-alt-event-arithmetic-domain.md`, and
+`ou3-alt-machine-core-continuation.md` before continuing these branches.
+Conditional components are not universal closure.
 
 ## Controlling result
 
@@ -31,7 +60,7 @@ hardware admission is not inferred. Every admitted sample has a strictly
 positive seed-norm margin. The arbitrary-bounded startup obstruction remains
 a regression against conflating startup with post-Live ISS. The existing
 Mahony certificate's smaller seed region does not cover these profiles, so
-actual capture needs a new proof. The master has 32 closed components and
+actual capture needs a new proof. The master retains conditional components and
 11 open top-level qualifications.
 
 The finite runtime now represents every nonzero attitude error in a four-chart
@@ -117,14 +146,14 @@ Its current eleven `open_obligations` are:
 10. `all_event_arithmetic_witnesses_source_uniform`
 11. `complete_source_uniform_600_step_word`
 
-The 32 closed entries are subordinate components. Their count does not imply
+The closed entries are subordinate components. Their count does not imply
 that any of these eleven is closed. In particular, conditional WPE induction
 does not prove preceding Mahony totality or continuation of the startup sensor
 bounds on an arbitrary post-Live ISS word.
 
 ## Next falsifiable work
 
-Start with actual startup alignment/capture under the selected sensor and
+For startup, prove actual alignment/capture under the selected sensor and
 temporal contract. Before seed arithmetic, the two seed cones are approximately
 71.99 and 76.26 degrees. Even retaining the old temporal budgets, the old
 Mahony metric needs seed levels 2.05463 / 2.27142, exceeding both its 1.7689
@@ -141,6 +170,17 @@ In the arithmetic branch, attach the actual target/compiler/Eigen/libm profile
 and qualify the seed/SVD/nonfinite branches, guard/Racc/frontend/tuner supplies
 and complete magnetic history. Preserve the existing scalar and FMA branches,
 source/bias ancestry, atlas transport, saturated counters and frontend memory.
+The Live input contract also needs an independently justified execution domain:
+the arbitrary-bounded raw-residual extension permits a finite gyro pulse that
+overflows the unchanged host filter after ordinary startup while the guard
+remains dormant. No finite `RestrictedForcing` is claimed for that execution;
+its absence cannot supply the input-domain theorem. Do not silently continue
+startup sensor limits into Live or change shipping.
+
+The word retains local per-compiler CORE outputs and checks continuation, but
+these are coefficient-displacement evaluations rather than complete target
+arithmetic. Build the actual CORE/watchdog/magnetic/control successor product;
+returning to the exact shadow discards prior defects.
 Then compose the complete same-history 600-transition word and require the
 finite master to pass `assert_finite_storage_master` before storage or rho work.
 In charts 1..3 coordinate zero is a 180-degree error, not zero attitude error.
@@ -172,7 +212,7 @@ endpoint-partition and magnetic AD failures. The original live-entry audit
 still questions H18-to-A21 release and session-origin S. Keep these gates
 intact; finite component tests and host/MCU compilation do not establish target
 arithmetic or any of the universal proofs. Exact run results and links belong
-in PR #528, rather than being copied into a new historical handover file.
+in the active PR, rather than being copied into a new historical handover file.
 
 Zero wind heel, dormant guard, zero lever arm, full-21 covariance, joint24
 motion/bias information, actual-applied R_S, corrected COMPLETE-BRMM and frozen

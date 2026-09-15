@@ -1,11 +1,11 @@
 """Source-owned prediction roots driven by carried machine ActiveParameters.
 
-The exact admitted Live word already derives attitude, OU, Q-axis and BA roots
-from one source-owned physical segment. Deployment differs only in which
-applied tuner parameters feed the OU/Q-axis coefficient paths. This module
-reuses the same source/packet ancestry and the existing primitive validators,
-but substitutes one carried global compiler-mode ``ActiveParameters`` object for
-``tau`` and ``Sigma_aw``.
+The exact admitted Live word derives attitude, OU, Q-axis and BA roots from one
+source-owned physical segment. This module substitutes the carried compiler
+ActiveParameters for tau/Sigma_aw. When a persistent compiler CORE predecessor
+is supplied, its own bias-corrected gyro and H18/A21 state also determine the
+angular/BA roots. Source/packet ancestry remains common; the predecessor is
+retained in the root object and checked by the paired prediction relation.
 
 A subtle ordering point matters: a pending tuner boundary is consumed BEFORE
 prediction on the same IMU sample. Therefore the exact ActiveParameters used by
@@ -34,6 +34,7 @@ from tools.stability.ou3_alt_contraction import finite_qaxis_binary32_branch as 
 from tools.stability.ou3_alt_contraction import finite_source_bound_prediction_word as BASE
 from tools.stability.ou3_alt_contraction import finite_runtime_parameters as ACTIVE
 from tools.stability.ou3_alt_contraction import finite_active_parameter_machine_real_join as JOIN
+from tools.stability.ou3_alt_contraction import finite_core as CORE
 
 QUALIFICATION='OU3_ALT_MACHINE_ACTIVE_PREDICTION_ROOTS_V2'
 
@@ -47,6 +48,7 @@ class Roots:
     qaxis:PRED.QAxisBranch
     bias:OU.BiasDecay
     qualification:str=QUALIFICATION
+    predecessor:CORE.State|None=None
     def __post_init__(self):
         if not isinstance(self.active,ACTIVE.ActiveParameters) or not isinstance(self.active_join,JOIN.Join):
             raise TypeError('machine active parameters and exact/machine join required')
@@ -54,11 +56,14 @@ class Roots:
             raise ValueError('machine prediction roots detached from active-parameter join')
         if self.qualification!=QUALIFICATION: raise ValueError('wrong machine prediction-root qualification')
         self.active.require_prediction(ou=self.ou,qaxis=self.qaxis)
+        if self.predecessor is not None and not isinstance(self.predecessor,CORE.State):
+            raise TypeError('full compiler prediction predecessor required')
 
 
 def build(state:WORD.State,physical:SOURCE.QualifiedPhysicalSegment,
           raw:SENSOR.RawImuSample,machine_active:ACTIVE.ActiveParameters,*,mode,
           exact_active:ACTIVE.ActiveParameters|None=None,
+          machine_predecessor:CORE.State|None=None,
           ou_alpha,ou_em1,bias_phi=None,bias_em1_2=None,
           angular_full=None,angular_half=None,
           qaxis_marginal_exp=None,qaxis_final_exp=None,
@@ -69,7 +74,9 @@ def build(state:WORD.State,physical:SOURCE.QualifiedPhysicalSegment,
         raise TypeError('same-source raw packet and carried machine ActiveParameters required')
     if physical.root!=state.source.root or physical.witness.ordinal!=state.source.next_ordinal:
         raise ValueError('machine prediction roots detached from next carried source transition')
-    core=state.live.live.live.mekf; segment=physical.segment
+    core=state.live.live.live.mekf if machine_predecessor is None else machine_predecessor
+    if not isinstance(core,CORE.State): raise TypeError('full compiler prediction predecessor required')
+    segment=physical.segment
     if segment.before!=core.reference or raw.physical!=segment.before:
         raise ValueError('machine prediction roots detached from current physical predecessor')
 
@@ -90,7 +97,7 @@ def build(state:WORD.State,physical:SOURCE.QualifiedPhysicalSegment,
                            BASE.SHIPPING_FLOAT_EPSILON,coefficient_branch,covariance_exp)
     machine_active.require_prediction(ou=ou,qaxis=qaxis)
     bias=BASE._bias_root(core,h=segment.h,bias_phi=bias_phi,bias_em1_2=bias_em1_2)
-    return Roots(machine_active,aj,angular,ou,qaxis,bias)
+    return Roots(machine_active,aj,angular,ou,qaxis,bias,predecessor=core)
 
 
 def readiness():

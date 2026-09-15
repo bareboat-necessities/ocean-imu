@@ -231,7 +231,9 @@ class Tests(unittest.TestCase):
         for k in ('startup_source_membership_and_clock_reachability_closed','nearly_antiparallel_seed_SVD_closed',
                   'ungauged_timeout_machine_handoff_closed','source_uniform_complete_600_step_word_qualified',
                   'storage_search_allowed','ALT_LIVE_PASS','ALT_STARTUP_PASS','ALT_END_TO_END_PASS'): self.assertFalse(r[k])
-        with self.assertRaises(SEED.UnqualifiedSeedBranch): SEED.seed((0,0,B.rn32(10)))
+        computed=SEED.seed((0,0,B.rn32(10)))
+        self.assertIsNotNone(computed.solver)
+        self.assertEqual(computed.branch,'near-antiparallel-JacobiSVD')
 
 
 if __name__=='__main__': unittest.main()

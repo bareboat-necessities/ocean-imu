@@ -31,7 +31,8 @@ class State:
         if self.qualification!=QUALIFICATION: raise ValueError('wrong startup WPE-machine qualification')
         if self.wpe.bounded_profile!=(self.base.sensor_history is not None):
             raise ValueError('startup WPE bounds profile detached from carried sensor contract')
-        if self.base.base.frontends.samples==0 and self.wpe!=WPE.initial(self.base.runtime.wpe_cfg,bounded_profile=self.wpe.bounded_profile):
+        if self.base.base.frontends.samples==0 and self.wpe!=WPE.initial(self.base.runtime.wpe_cfg,
+                bounded_profile=self.wpe.bounded_profile,libm_profile=self.wpe.libm_profile):
             raise ValueError('startup full WPE state detached from literal reset')
         if self.wpe.logs!=self.base.base.lower.wpe:
             raise ValueError('full WPE machine log state detached from lower startup WPE log ledger')
@@ -39,9 +40,10 @@ class State:
             raise ValueError('full WPE machine sample count detached from startup Mahony source history')
 
 
-def initial(runtime,deployment_cfg,*,sensor_history=None):
+def initial(runtime,deployment_cfg,*,sensor_history=None,libm_profile=WPE.BOUNDS.ERROR_PROFILE):
     base=LOWER.initial(runtime,deployment_cfg,sensor_history=sensor_history)
-    return State(base,WPE.initial(runtime.wpe_cfg,bounded_profile=sensor_history is not None))
+    return State(base,WPE.initial(runtime.wpe_cfg,bounded_profile=sensor_history is not None,
+                                libm_profile=libm_profile))
 
 
 @dataclass(frozen=True)

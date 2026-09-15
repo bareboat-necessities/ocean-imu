@@ -111,7 +111,7 @@ jobs:
             test_finite_measurement_graph test_finite_covariance_rank3 test_finite_core \
             test_finite_prediction_covariance test_finite_ou_runtime_primitives \
             test_finite_attitude_runtime test_finite_source_bound_attitude_trig test_finite_qaxis_runtime \
-            test_finite_qaxis_binary32_branch test_finite_qaxis_exp_binary32 \
+            test_finite_qaxis_binary32_branch test_finite_qaxis_exp_binary32 test_finite_binary32_arithmetic \
             test_finite_accel_guard_runtime test_finite_sensor_source_runtime \
             test_finite_racc_runtime test_finite_held_accel_runtime \
             test_finite_prediction_runtime test_finite_post_prediction \
@@ -119,7 +119,10 @@ jobs:
             test_finite_vertical_complementary_runtime test_finite_binary32_mahony \
             test_finite_binary32_mahony_startup test_finite_startup_joined_machine_history \
             test_finite_startup_entry_obstruction test_finite_startup_disturbance_obstruction \
-            test_finite_startup_sensor_contract \
+            test_finite_startup_sensor_contract test_finite_mahony_prefix_totality \
+            test_finite_seed_svd_axis_reduction test_finite_seed_eigen_svd test_finite_startup_direction_sampling \
+            test_finite_startup_timeout_alignment_obstruction test_finite_live_input_contract test_target_libm_bounds \
+            test_finite_live_disturbance_overflow test_finite_machine_core_continuation \
             test_finite_startup_handoff_control test_finite_master_guard \
             test_finite_attitude_atlas test_finite_ungauged_live_word \
             test_finite_frontend_runtime test_finite_frontend_prefix \
