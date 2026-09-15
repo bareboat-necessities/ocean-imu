@@ -13,6 +13,19 @@ scope. ALT preserves the actual Mahony/proxy/startup path, H18/A21 hybrid logic,
 frontend/tuner memory, full 21-state covariance and joint24
 motion/error/true-bias state.
 
+Startup additionally uses the commissioned sensor domain in
+`tools/stability/ou3_alt_startup_sensor_domain.json`, documented with device
+evidence in `ou3-alt-startup-disturbance-contract.md`. The deterministic vector
+residual caps are 0.30 m/s² / 0.02 rad/s for BMI270 and 0.50 m/s² / 0.03 rad/s
+for MPU6886. The true BIAS0/1/2 envelope and physical acceleration cap 8.8 m/s²
+remain. A separate total direction-error mean/primitive premise is 0.10 / 1.5 s.
+These requirements hold throughout startup and are not a hardware guarantee
+or a consequence of arbitrary-bounded post-Live ISS. Every admitted sample
+passes the seed-norm test, but the retained Mahony capture certificate does
+not cover this larger sensor/seed set. Its original conditional result is
+kept separate. The bounded-input WPE induction is described in
+`ou3-alt-wpe-uniform-supplies.md`. Eleven master qualifications remain open.
+
 ## Deployment-scope exclusion: no wind heel
 
 The optional shipping wind-heel retarget feature is excluded from ALT.
@@ -49,6 +62,29 @@ one BIAS root, literal prediction/measurement/hygiene branches, frontend/WPE/
 band/tuner memory, async magnetic state, scheduler credit, every H18/A21 edge,
 deployment arithmetic residuals and explicit zero-heel scope ancestry.
 
+## Pre-rho attitude representation
+
+`ou3-alt-attitude-atlas.md` supplies the four-chart cover and exact transport
+used by the current finite runtime. It covers ungauged timeout entry, including
+true yaw pi, while preserving joint24 and the full 21-state shipping covariance.
+`ou3-alt-startup-pre-rho.md` retains the exact single-Cayley obstruction as a
+regression. Unknown attitude terms remain same-state rational graph functions;
+they may not be relabeled as independent bounded disturbances.
+
+The interleaver retains ungauged acquisition across Live and uses MEKF tilt for
+initial north acquisition after Live. Continuous calibration/refinement retain
+their own private-observer frame. Later north starts the magnetic service clock
+without resetting the physical Live/S origin or duplicating packet statistics.
+
+The guard still requires universal source/control reachability and source-uniform
+arithmetic. Finite-word magnetic counter safety is closed by saturation for
+all finite call counts; see `ou3-alt-deployment-prerequisite.md`. Measurement,
+statistics and release continue at the cap, including after threshold changes.
+The default RN32 timeout crossing is
+sample 30,002; shared finite budgets include 600 more updates, conditional on
+actual source-produced alignment. Coercive storage must respect the fact that
+coordinate zero in charts 1..3 is a 180-degree error, not zero error.
+
 ## Current finite-runtime advancement
 
 The graph has finite descriptors for physical prediction, accepted/rejected
@@ -76,13 +112,19 @@ ALT admits commissioned installations satisfying:
 - body hard iron `<=5 uT`;
 - deterministic residual `<=2 uT` per theorem sample.
 
-With startup gravity-direction error <=0.02 rad, tilt contributes <=1.5 uT,
-so total deterministic horizontal perturbation is <=8.5 uT and
-`|sin(delta_yaw)| <= 17/30`. Since
-`sin(0.61) >= 0.61-0.61^3/6 > 17/30`, yaw error is <0.61 rad. The SO(3)
-triangle inequality gives total startup attitude error <0.63 rad <pi/4. No
-`1/sqrt(N)` statistical reduction is used. Deployment atan2/AngleAxis/
-normalization correspondence remains open.
+The conditional magnetic calculation needs a full accumulation-to-handoff
+frame bound, including physical heading variation. Gravity-direction error
+<=0.02 rad alone does not supply it. With an independently established
+half-frame sine bound <=0.01 and handoff tilt <=0.02, the 8.5 uT perturbation,
+0.61-rad yaw and 0.63-rad full-angle bounds follow. Source qualification of those
+premises and deployment atan2/AngleAxis/normalization remain open.
+
+The finite atlas word does not require this small-angle accuracy certificate.
+It retains the full frame, nonzero quaternion and actual magnetic discrepancy.
+The universal proper-rotation chord bound 2 gives a finite mean-perturbation
+image bound of 157 uT; no north-nonvanishing or contraction claim follows.
+Small magnetic-frame accuracy is therefore a later basin/usefulness question,
+not an independent prerequisite for the current finite-word representation.
 
 ## Fresh H18 and first Live sample now composed
 
@@ -95,7 +137,7 @@ disabled.
 `finite_fresh_joint24_entry.py` derives the actual H18 joint24 coordinates from
 the SAME physical `Reference` and estimator state:
 
-`c=Cayley(q_true_WB*conjugate(q_hat_WB))`,
+`(chart,c)=Atlas(q_true_WB*conjugate(q_hat_WB))`,
 `e_bg=b_g-b_g_hat`, `e_v=v-v_hat`, `e_p=p-p_hat`,
 `e_S=S_centered-S_hat`, `e_aw=a-a_w_hat`,
 `e_ba=beta-b_a_hat`, final coordinates `beta=beta_true`.
@@ -147,10 +189,20 @@ without new Live snapshots or a second goLive execution.
 
 Racc consumes pre-candidate TuneState sigma every sample, independently of the
 pending active-parameter commit, and uses the raw preupdate WPE getter/prior.
-The numerical machine-guard displacement into Racc/accelerometer remains open.
+The joined Racc/accelerometer relation consumes the same machine-conditioned
+operand; its source-uniform arithmetic supply remains open.
 Conditional attachment does not close universal startup capture, ungauged
 handoff, deployment arithmetic or the source-uniform 600-transition word.
 All finite-master/storage/theorem gates remain fail-closed.
+
+Startup raw-IMU observability must be qualified separately from the post-Live
+arbitrary-bounded ISS quantifier. The latter permits no inference about the
+first-sample norm. `ou3-alt-startup-disturbance-contract.md` proves that an
+arbitrary bounded residual can keep that norm below the initialization
+threshold while preserving the correct gravity direction. A longer timeout,
+more Mahony bounds or magnetic service cannot initialize that proxy. Retain
+the obstruction and obtain the intended startup sensor contract; do not
+silently choose a residual cap or reinterpret covariance as one.
 
 ## Physical source-prefix graph
 
@@ -189,7 +241,10 @@ endpoint topology; complete source membership at sample zero remains false.
 innovation acceptance, so its internal lock clears within 10 s. The 250th call can occur before the
 strict >1 s guard: the corrected proof uses
 `first_gap + max(249*gap, 1+gap)` and continued, locally finite call coverage.
-Finite-prefix checks do not prove the infinite schedule.
+Finite-prefix checks do not prove the infinite schedule. The source-bound
+saturation invariant preserves every configurable count threshold for all finite
+prefixes. Other arithmetic operations and floating clocks require their own
+qualification before total shipping execution can be claimed.
 
 Do not assume eventual A21 under arbitrary external hold. The graph retains:
 no hold -> exact H18->A21 floor edge; held -> H18 may persist indefinitely;
@@ -198,7 +253,9 @@ H18 with BA cross-covariances zeroed.
 
 ## Current blockers
 
-The immediate blockers are now:
+The attitude representation, conditional ungauged continuation, certified empty
+magnetic startup prefix and signed magnetic-counter safety are attached.
+The unresolved qualifications are:
 
 - deployment/binary32 correspondence for startup yaw extraction, atan2,
   AngleAxis, quaternion normalization, handoff setters and clocks;
@@ -211,8 +268,8 @@ The immediate blockers are now:
   calibration is not proof of calibration accuracy or a useful ISS margin;
 - carry COMPLETE-BRMM/BIAS ancestry and every solver/hygiene/finite-precision
   branch through an arbitrary 600-step word, including both H18 and A21/hold
-  continuations; signed magnetic counter overflow and floating-clock lifetime
-  behavior must not be replaced by unbounded Python integers/rationals;
+  continuations; retain the proved saturated-counter projection and qualify
+  floating-clock behavior without substituting unbounded rational clocks;
 - prove the exact fresh/source-produced states land in a retained storage basin;
   only after the complete finite master passes its guard may common joint24
   storage/rho feasibility be attempted.

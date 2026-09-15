@@ -53,11 +53,18 @@ def mag_step(state:WORD.State, **kwargs):
     """Execute the source-owned magnetic edge and retain its actual forcing."""
     out=WORD.mag_step(state,**kwargs)
     event=out.event.event
-    # Outer-gated calls have no source packet and no MEKF magnetic forcing.
-    if event.qualification is None:
+    return Result(out,from_event(event))
+
+
+def from_event(event):
+    """Same-event forcing, absent while initial north is still being acquired."""
+    # Waiting acquisition can own a packet without any inner measurement.
+    if event.measurement is None:
         if event.effective_residual is not None:
             raise AssertionError('gated magnetic call unexpectedly produced effective residual')
-        return Result(out,None)
+        return None
+    if event.qualification is None:
+        raise AssertionError('inner magnetic event lost its qualified source')
     source=event.qualification.sample
     active=event.state.active
     memory=event.state.memory
@@ -68,7 +75,7 @@ def mag_step(state:WORD.State, **kwargs):
     correction=tuple(-x for x in memory.applied.total_bias)
     forcing=MagForcing(rotated,source.model.hard_iron_body,correction,
                        source.residual_body,event.effective_residual)
-    return Result(out,forcing)
+    return forcing
 
 
 def readiness():

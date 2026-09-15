@@ -64,7 +64,7 @@ class Tests(unittest.TestCase):
         self.assertTrue(r['complete_600_transition_strengthening_checks_IMU_ledger_consecutivity'])
         self.assertTrue(r['complete_600_transition_strengthening_preserves_same_BRMM_BIAS_ISS_product'])
         self.assertFalse(r['all_event_arithmetic_witnesses_source_uniformly_qualified'])
-        self.assertFalse(r['magnetic_counter_lifetime_closed'])
+        self.assertTrue(r['magnetic_counter_lifetime_closed'])
         self.assertFalse(r['source_uniform_complete_600_step_word_qualified'])
         self.assertFalse(r['storage_search_allowed'])
         self.assertFalse(r['ALT_LIVE_PASS'])

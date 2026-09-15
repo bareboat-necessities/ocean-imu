@@ -13,6 +13,42 @@ import test_finite_live_magnetic_word as MAGBASE
 
 
 class Tests(unittest.TestCase):
+    def test_certified_empty_startup_then_source_bound_waiting_IMU_and_north(self):
+        import test_finite_ungauged_live_word as U
+        import test_finite_admitted_source_imu_word as IBASE
+        import test_finite_source_bound_prediction_word as PBASE
+        from tools.stability.ou3_alt_contraction import finite_admitted_interleaved_prefix as INTER
+        bridge,magnetic=U.root(return_startup=True)
+        cert=DUAL.certify_fresh_startup(magnetic)
+        ref=bridge.state.mekf.reference
+        history=A.AdmittedHistory(ref.history_id); origin=A.RestrictedOrigin(history,ref)
+        bias=B.AdmittedBiasHistory(ref.bias_root,ref.bias_family,BASE.PHI)
+        s=X.from_startup(bridge,cert,origin,bias,
+            gyro_residual_history_id='gyro-history',accel_residual_history_id='accel-history',
+            runtime=BASE.root_state().runtime,proxy_q_norm=U.MAG.TILT.SqrtWitness(1,1),
+            proxy_yaw_half=None)
+        self.assertEqual(cert.calls,0)
+        prefix=INTER.begin(s,origin)
+        waiting,event=INTER.mag_step(prefix,**U.packet_kwargs(s.live_word.live))
+        self.assertIsNone(event.forcing)
+        witness,seg,raw,r,b,dynamic=IBASE.operands(waiting.live)
+        dynamic['gravity_witnesses']={'lpf_exp':None,'gyro_norm':U.MAG.GRAVITY.SqrtWitness(0,0)}
+        middle,_=INTER.imu_step(waiting,restricted=A.RestrictedSegment(history,1,seg),
+            bias_restricted=B.RestrictedBiasStep(bias,1,seg),witness=witness,raw=raw,
+            packet_id='imu-1',**PBASE.root_args(),**dynamic)
+        north,event=INTER.mag_step(middle,**U.packet_kwargs(middle.live.live_word.live,ready=True))
+        self.assertIsNotNone(event.forcing)
+        self.assertEqual(north.live.live_word.live.clock.live_time,seg.after.time)
+        self.assertEqual(north.origin,origin)
+        self.assertEqual(north.live.bias_history,bias)
+        self.assertEqual(north.live.live_word.live.live.live.mekf.reference.live_origin,ref.live_origin)
+        witness,seg2,raw,r,b,dynamic=IBASE.operands(north.live)
+        after,_=INTER.imu_step(north,restricted=A.RestrictedSegment(history,2,seg2),
+            bias_restricted=B.RestrictedBiasStep(bias,2,seg2),witness=witness,raw=raw,
+            packet_id='imu-2',**PBASE.root_args(),**dynamic)
+        self.assertEqual(after.imu_steps,2)
+        self.assertEqual(after.origin,origin)
+
     def root(self):
         lower=BASE.root_state()
         history=A.AdmittedHistory(lower.source.root.history_id)

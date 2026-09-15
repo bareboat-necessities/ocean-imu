@@ -10,6 +10,11 @@ its certified regional set from its physical first-sample seed through startup
 and Live, conditional on the declared source-order binary32 arithmetic model.
 It does *not* claim the much tighter magnetic accumulation-frame accuracy, FMA
 compiler equivalence, or complete deployment arithmetic.
+
+This retained certificate uses its original normalized-direction and seed
+premises. It does not cover the commissioned raw-sensor profiles declared in
+ou3_alt_startup_sensor_domain.json: their bias/noise seed angles need a new
+capture argument. The independent original certificate remains unchanged.
 """
 from __future__ import annotations
 
@@ -47,6 +52,7 @@ def build():
       'magnetic_accumulation_frame_accuracy_closed_by_this_invariant':False,
       'compiler_reassociation_or_FMA_closed':False,
       'complete_startup_deployment_arithmetic_closed':False,
+      'commissioned_startup_sensor_profiles_covered':False,
       'storage_search_allowed':False,
       'ALT_STARTUP_PASS':False,'ALT_LIVE_PASS':False,'ALT_END_TO_END_PASS':False,
     }
@@ -62,6 +68,7 @@ def validate(x):
               'admitted_source_private_Mahony_startup_to_Live_invariant_closed'):
         if x.get(k) is not True: f.append(k+' not true')
     for k in ('magnetic_accumulation_frame_accuracy_closed_by_this_invariant',
+              'commissioned_startup_sensor_profiles_covered',
               'compiler_reassociation_or_FMA_closed',
               'complete_startup_deployment_arithmetic_closed','storage_search_allowed',
               'ALT_STARTUP_PASS','ALT_LIVE_PASS','ALT_END_TO_END_PASS'):

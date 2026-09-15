@@ -20,6 +20,7 @@ silently replaced by this default branch.
 from __future__ import annotations
 from dataclasses import dataclass
 from fractions import Fraction as F
+from tools.stability.ou3_alt_contraction import finite_mag_counter_saturation as COUNT
 
 from tools.stability.ou3_alt_contraction import finite_measurement_graph as M
 from tools.stability.ou3_alt_contraction import finite_sensor_source_runtime as SENSOR
@@ -62,7 +63,7 @@ class Config:
             v=R(getattr(self,n))
             if v<0: raise ValueError('nonnegative MagAutoTuner configuration required')
             object.__setattr__(self,n,v)
-        if not isinstance(self.min_samples,int) or self.min_samples<0:
+        if type(self.min_samples) is not int or not 0 <= self.min_samples <= COUNT.SIGNED_MAX:
             raise ValueError('nonnegative integer min_samples required')
         if not isinstance(self.quality_weighting,bool) or not isinstance(self.estimate_hard_iron,bool):
             raise TypeError('literal MagAutoTuner branch flags required')
@@ -82,7 +83,7 @@ class State:
     last_world_sample:tuple=(F(0),F(0),F(0))
     def __post_init__(self):
         if not isinstance(self.accumulator,ACC.State): raise TypeError('Mag accumulator state required')
-        if not isinstance(self.rejected_count,int) or self.rejected_count<0:
+        if type(self.rejected_count) is not int or not 0 <= self.rejected_count <= COUNT.SIGNED_MAX:
             raise ValueError('nonnegative rejected count required')
         if not isinstance(self.ready,bool): raise TypeError('literal ready latch required')
         w=R(self.last_sample_weight)
@@ -107,7 +108,7 @@ class StepResult:
 
 
 def _reject(state:State,why:str):
-    return StepResult(State(state.accumulator,state.rejected_count+1,False,None,None,
+    return StepResult(State(state.accumulator,COUNT.after_attempts(state.rejected_count),False,None,None,
                             F(0),(F(0),F(0),F(0))),False,False,why)
 
 

@@ -18,6 +18,21 @@ class InfiniteContinuationTest(unittest.TestCase):
     def setUpClass(cls):
         cls.report = C.build()
 
+    def test_counter_reaudit_preserves_all_other_wrapper_source(self):
+        path = 'src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h'
+        source = (ROOT/path).read_bytes()
+        after = b'''        // Keep counting attempts up to the largest configurable threshold.
+        // Measurements and release checks continue after saturation.
+        if (mag_updates_applied_ < std::numeric_limits<int>::max()) {
+            ++mag_updates_applied_;
+        }'''
+        self.assertEqual(source.count(after), 1)
+        reconstructed = source.replace(after, b'        mag_updates_applied_++;')
+        reconstructed = reconstructed.replace(b'#include <limits>\n', b'')
+        self.assertEqual(hashlib.sha256(reconstructed).hexdigest(),
+            '1008e931734f226f93f52e46a1408503a7c1be9b364c0756da64a19788ece5ed')
+        self.assertEqual(hashlib.sha256(source).hexdigest(), C.AUDITED[path])
+
     def test_const_reference_reaudit_is_the_only_shipping_change(self):
         path = 'src/kalman_ou_iii/Kalman3D_Wave_OU_III.h'
         source = (ROOT/path).read_bytes()

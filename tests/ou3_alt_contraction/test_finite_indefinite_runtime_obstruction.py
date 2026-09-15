@@ -5,15 +5,15 @@ from tools.stability.ou3_alt_contraction import finite_indefinite_runtime_obstru
 
 
 class Tests(unittest.TestCase):
-    def test_current_shipping_exposes_both_indefinite_lifetime_blockers(self):
+    def test_counter_is_safe_while_indefinite_clock_remains_open(self):
         r=X.build()
         self.assertTrue(r.wrapper_clock_finite_prefix_closed)
         self.assertTrue(r.exact_clock_stall_witness_present)
         self.assertFalse(r.wrapper_clock_indefinite_closed)
         self.assertTrue(r.signed_mag_counter_increment_present)
-        self.assertFalse(r.signed_mag_counter_saturation_present)
+        self.assertTrue(r.signed_mag_counter_saturation_present)
         self.assertFalse(r.mag_schedule_uniform_call_upper_present)
-        self.assertFalse(r.signed_mag_counter_lifetime_closed)
+        self.assertTrue(r.signed_mag_counter_lifetime_closed)
         self.assertFalse(r.indefinite_current_shipping_execution_closed)
 
     def test_indefinite_promotion_guard_fails_closed(self):

@@ -11,11 +11,14 @@ No exact-real variance is substituted.  Upstream band-machine membership and
 target expf correspondence remain explicit obligations.
 """
 from __future__ import annotations
+
+from tools.stability.ou3_alt_contraction import finite_wrapper_clock_binary32 as HORIZON
 from dataclasses import dataclass
 from fractions import Fraction as F
 from pathlib import Path
 
 from tools.stability.ou3_alt_contraction import finite_binary32_arithmetic as B
+from tools.stability.ou3_alt_contraction import finite_tuner_frequency_binary32 as FREQ
 from tools.stability.ou3_alt_contraction import finite_band_variance_runtime as R
 from tools.stability.ou3_alt_contraction import finite_tuner_sigma_binary32 as E
 
@@ -23,7 +26,7 @@ SOURCE=Path(__file__).resolve().parents[3]/'src/tuner/SeaStateAutoTuner.h'
 ZERO=B.rn32(0); ONE=B.rn32(1); TWO=B.rn32(2); HALF=B.rn32(F(1,2))
 TIME_MIN=B.rn32(F(1,2)); TIME_MAX=B.rn32(6); HORIZON_MIN=B.rn32(F(1,20)); HORIZON_MAX=B.rn32(35)
 READY_WEIGHT=B.rn32(F(1,10**6))
-QUALIFICATION='OU3_ALT_STATS_BINARY32_RUNTIME_V1'; MAX_SAMPLES=30600
+QUALIFICATION='OU3_ALT_STATS_BINARY32_RUNTIME_V1'; MAX_SAMPLES=HORIZON.MAX_STEPS
 
 
 def _q(x,name):
@@ -74,7 +77,10 @@ class Coefficients:
     alpha:F
     qualification:str=QUALIFICATION
     def __post_init__(self):
-        for n in ('input_frequency','frequency','dt','sea_time','T_eff','tau_requested','tau_var','exp_decay','alpha'):
+        f=F(self.input_frequency)
+        if not FREQ.is_finite_input(f): raise ValueError('binary32 input frequency required')
+        object.__setattr__(self,'input_frequency',f)
+        for n in ('frequency','dt','sea_time','T_eff','tau_requested','tau_var','exp_decay','alpha'):
             object.__setattr__(self,n,_q(getattr(self,n),n))
         if self.qualification!=QUALIFICATION: raise ValueError('wrong stats coefficient qualification')
         if min(self.input_frequency,self.frequency,self.dt,self.tau_var,self.exp_decay)<=0 or not 0<=self.alpha<=1:
@@ -108,7 +114,8 @@ class Envelope:
 
 def coefficients(cfg:R.StatsConfig,*,frequency,dt,exp_decay):
     if not isinstance(cfg,R.StatsConfig): raise TypeError('StatsConfig required')
-    f=_q(frequency,'stats input frequency'); h=_q(dt,'stats dt')
+    f=F(frequency); h=_q(dt,'stats dt')
+    if not FREQ.is_finite_input(f): raise ValueError('binary32 stats input frequency required')
     if f<=0 or h<=0: raise ValueError('positive stats frequency/dt required')
     fmin=B.rn32(cfg.f_min); fmax=B.rn32(cfg.f_max); fe=min(max(f,fmin),fmax)
     sea=min(max(B.div(HALF,fe),TIME_MIN),TIME_MAX); teff=B.mul(TWO,sea)

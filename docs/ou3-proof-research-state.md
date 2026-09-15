@@ -517,14 +517,255 @@ Racc reads the SAMPLE-ENTRY machine TuneState sigma on every sample, before the
 candidate update, even when no pending commit fires. Its frequency is the raw
 preupdate WPE getter/prior, before statistics and tuning clamps. Active OU
 parameters remain separately held by the pending/goLive commit mechanism.
-The Racc comparison still uses the exact guarded operand: the numerical
-machine-guard displacement has NOT yet been injected into its accelerometer
-path. Source-uniform guard/Racc/libm supplies are therefore open.
+The joined Racc and accelerometer relations consume the same machine-guard
+conditioned operand. Source-uniform guard/Racc/libm supplies remain open.
 
 ### Failure analysis and independent critic
 
+* **Document-build infrastructure:** the full paper's LaTeX build stops before
+  reading the theorem text because `IEEEtran.cls` is absent. This is an
+  environment failure, not evidence against the new inequalities. Keep the
+  paper class unchanged; validate the edited theorem section with an isolated
+  standard-class harness and report the full-paper limitation separately.
+
+* **Commissioned startup sensor contract:** the user selected deterministic
+  errors throughout startup and authorized datasheet-informed numerical
+  assumptions. Use residual vector caps 0.30 m/s^2 and 0.02 rad/s for BMI270,
+  0.50 m/s^2 and 0.03 rad/s for MPU6886. These are commissioning requirements,
+  not hard guarantees inferred from RMS or production statistics. Preserve
+  every BIAS0/1/2 history and its 0.13 m/s^2 component envelope; calibration
+  actually applied must justify admission, not a hypothetical correction.
+  Keep the physical acceleration cap 8.8 m/s^2. Use explicit total measured
+  direction-error mean/primitive budgets 0.10 and 1.5 s, separately from raw error
+  magnitudes; neither is inferred from an arbitrary bounded residual.
+  The scalar seed audit gives norm floors 0.48065/0.28065 m/s^2 and tilt
+  bounds about 71.99/76.26 degrees before arithmetic. The retained old
+  Mahony metric needs seed levels 2.05463/2.27142, above its 1.7689 outer
+  level and 1.87267 chart ceiling even before enlarging temporal forcing.
+  This is a coverage failure of that conditional certificate, not a shipping
+  instability or justification to reduce the sensor caps. Do not promote
+  that old invariant to the new profile. Critic alternatives: a different
+  nonlinear observer storage; a same-history finite-time source/LPF argument;
+  or a longer informative-interval recovery theorem. Merely raising the old
+  quadratic level cannot fit its chart. The selected execution materializes
+  the source contract, proves both seed-norm margins, and bounds the persistent
+  WPE recurrence for every |vertical|<=32 sequence. Exhaustive mantissa-cell
+  coverage of the literal inverse square root, including zero/subnormal norm
+  inputs, gives ||q||²<1.112 after a defined scalar Mahony update. Its actual
+  same-packet projection supplies |vertical|<32 without a tilt-accuracy premise.
+  WPE moment and log induction margins are positive; raw period lies between
+  2^-57 and 2^16 and |log_period|<=48. These close two subordinate supply
+  components, leaving 11 master prerequisites. The current limiter is totality
+  and capture of the preceding source-driven observer, plus actual target
+  arithmetic. Next falsifiable experiment: use the new sensor/temporal budget
+  in a nonlinear or finite-time capture argument that covers both physical
+  seed cones and produces the literal gravity-alignment predicate. Do not
+  retry the rejected level expansion or infer device admission from RMS data.
+
+* **Magnetic frame prerequisite audit:** the small accumulation-to-handoff
+  frame premise belongs to the conditional 0.63-rad entry certificate. It is
+  not needed to define the current four-chart finite word. The earlier
+  tilt-only substitution failed because physical heading remains in the frame.
+  Alternatives are (1) prove all-source heading/lag accuracy, (2) delay the
+  word until separately proved accurate magnetic capture, or (3) retain the
+  full frame, arbitrary nonzero attitude and actual reference discrepancy in
+  the finite graph. Choose (3), already implemented by the atlas and magnetic
+  product. For proper rotations, ||A_i-G_L||<=2 universally; the existing
+  magnetic envelope gives mean perturbation <=157 uT without any small-angle
+  premise. This is a finite image bound, not a useful contraction margin.
+  Remove the obsolete accuracy gate from the pre-rho master, retain the
+  conditional accuracy lemma for later basin/usefulness work, and test gauged
+  180-degree fresh entry with its unchanged full covariance and physical
+  attitude. Target arithmetic and universal startup remain separate gates.
+
+* **Startup disturbance admission:** an arbitrary finite IMU residual bound
+  cannot imply the raw magnitude needed by the first-sample seed. For a level
+  stationary boat with zero BIAS0/1/2 bias, let epsilon=2^-11 m/s^2 and
+  n_a=(0,0,g-epsilon). Then a_raw=(0,0,-epsilon), its gravity direction is
+  correct, and the residual is bounded, but the literal `norm > 1e-3f` seed
+  predicate is false forever. The unchanged public wrapper remains unseeded
+  and non-Live through 30,602 samples. This falsifies extending universal
+  startup to arbitrary bounded IMU residuals; it does not falsify a specified
+  small-disturbance startup theorem, the original proof track, or Live ISS.
+  `BoundedHistory` currently binds executed post-Live forcing and supplies no
+  startup raw-input observability premise. A label or finite W cannot fill
+  that gap. The limiting quantity is the source-produced conditioned-accel
+  magnitude, before any seed-angle or timeout-alignment proof can apply.
+  Critic alternatives are (1) derive a startup magnitude/direction margin
+  from an explicit sensor/model residual contract, (2) state startup separately
+  from arbitrary-bounded-input Live ISS, or (3) prove eventual informative
+  samples from a declared recovery/persistence contract. Neither a longer
+  timeout nor more Mahony enclosure refinement addresses this obstruction.
+  The exact constant-input guard/observer induction, source identity and
+  native public-API correspondence pass. The commissioned startup profiles
+  exclude this example through their actual residual caps and prove a uniform
+  seed-norm margin. The master still rejects conflating the startup and Live
+  disturbance quantifiers; initialization magnitude alone does not prove
+  eventual source-produced alignment.
+  The exact guard induction exposed a separate implementation defect:
+  `_sqrt(0,0)` delegated to a positive-only rounding cell and rejected literal
+  zero detector RMS. This invalidates that arithmetic branch's coverage, not
+  the source family or shipping. Handle the exact zero-root identity before
+  positive cells, reject nonzero witnesses at zero, and re-run the same
+  constant-input induction. No norm threshold or source bound is changed.
+
+* **WPE branch attachment:** the preceding machine product rejected
+  any exact/machine usable-latch mismatch and the lower ledgers also required
+  simultaneous log initialization/production. This is a composition restriction,
+  not a proved property of every admitted source. Native boundary checks cannot
+  establish a uniform positive comparison margin. Three alternatives are:
+  (1) prove such margins for all WPE comparisons; (2) replace branch mismatch by
+  an additive perturbation envelope; (3) compose each literal branch separately
+  on the same source history. Choose (3): it retains the discontinuous control
+  and exact residual, whereas (1) has no source margin and (2) loses the program
+  decisions. The controlling prerequisite is equality to the finite shipping
+  word before rho, not a local contraction bound. The falsifiable check is that
+  different machine/exact initialization, production and takeover decisions
+  survive startup/Live composition without accepting detached log operands,
+  vertical inputs, frequencies, or successor states. The raw exact getter is
+  also bound before either clamp; matching final clamped values cannot justify
+  a different exact input to the lower event. Target accuracy and full
+  execution totality remain separate obligations.
+* **Frequency input lattice:** the getter and statistics-clamp relation used
+  the normal-only arithmetic predicate even though these operations only
+  select and compare their input. Host `expf(-100)` returns subnormal bits
+  `0x1b`; the wrapper selects that positive value after takeover and the
+  statistics clamp raises it to its normal floor. This is a component-domain
+  omission, not a reachable-source or stability counterexample. Reuse the exact
+  full binary32 lattice for getter/input validation and retain normal arithmetic
+  after the clamp. Check actual-header selection on NaN/overflow/underflow,
+  subnormal and ordinary outputs. No target libm accuracy is inferred.
+* **Inherited ALT CI:** the finite-identity job passes. The inherited suite has
+  five failures and nine errors, including unqualified phase-1 storage,
+  covariance bounds and source admission; it must not be repaired by promoting
+  those prerequisites. This does not invalidate the finite component identities.
+
+* **Python quality gate:** unused module-level `dataclasses.replace` imports
+  in two WPE regression modules caused F401/F811 findings; the frequency tests
+  already import the helper inside the methods that use it. This is test-code
+  hygiene, not a proof or shipping defect. Remove the unused imports and run
+  the unchanged Python quality gate plus the affected regressions. Do not
+  suppress lint rules or change any theorem qualification to clear this gate.
+
+* **WPE source-order and takeover audit:** the earlier moment graph replaced
+  `(alpha*v)*v` by `alpha*(v*v)`. With binary32 alpha=8589935/34359738368,
+  previous second moment=8589935/8589934592 and v=9369095/8388608, the literal
+  uncontracted result is 2816655/2147483648, outside the old graph's singleton
+  11266619/8589934592. This is an implementation/correspondence defect, not a
+  physical-source or stability counterexample. Separately, the persistent WPE
+  machine product previously omitted `usable_period_` and its post-log-update comparison.
+  Critic: more bounds on the old graph cannot certify shipping. Retain the
+  literal multiplication order and source-produced latch per compiler history;
+  do not infer machine takeover from the exact shadow. Next checks: native
+  second-moment correspondence, inclusive takeover boundaries, latch retention,
+  and disagreement between compiler histories without splicing their logs.
+  The corrected graph retains literal products and both machine latches. Native
+  header checks cover 200 second-moment updates and 18 latch boundary cases.
+  The full startup/Live product now projects its carried machine WPE entry
+  into frequency selection and checks each log successor against the same
+  moment update. Initialization, production and takeover can differ from the
+  exact shadow and between machine histories. The eager frequency getter and
+  invalid-result fallback are represented; target correspondence remains open.
+  Component regressions exercise different decisions through the full
+  frontend/tuner/Racc join and reject a frontend built for the wrong frequency.
+  They do not assert that their component predecessor is a reachable startup.
+* **Frequency range closure:** the final outer clamp maps every finite input
+  into its configured interval and nonfinite inputs to the floor. Interval
+  subtraction bounds machine-minus-shadow independently of WPE accuracy or
+  branch choices. The accepted statistics-update path has the tighter image of
+  its inner interval under the outer clamp. These are range proofs, not a
+  complete-execution or small-gain proof; the exact residual remains attached.
+  The controlling limiter is still the source-uniform machine word, so this
+  result does not authorize a storage or rho search.
+
+* **Authorized counter repair and composition audit:** the user explicitly
+  authorizes fixing shipping signed-counter overflow. The inner attempt and tuner accepted/rejected counts saturate
+  at INT_MAX; measurements, statistics and unlock checks still execute. The induction
+  c_n=min(INT_MAX,c_0+n) proves safety without a maximum event rate and preserves
+  every configurable threshold, including later increases. The native saturated
+  boundary passes the signed-overflow sanitizer and continues measurement and
+  bias release. This removes the old counter contradiction only.
+* **Remaining source-composition defects:** equating the mathematical event
+  count to the shipping count becomes false after saturation; use the exact
+  saturation projection. The source-bound magnetic adapter duplicates the
+  lower interleaver and omits its later-north service-clock initialization. Its
+  startup source constructor also demands a magnetic call, excluding the
+  already represented no-pre-Live-call timeout branch. These are implementation
+  and coverage defects, not physical counterexamples. Critic: consume the
+  shared event composer and the certified empty prefix instead of maintaining
+  a second clock update or inventing a pre-Live service premise. Next check:
+  saturated MAG-to-IMU composition and source-owned ungauged IMU-to-north-to-IMU,
+  preserving the same source, bias and Live/S origins.
+  The first source-qualified test exposed the second forcing adapter reading
+  `UngaugedLiveState.active` before north exists. A waiting calibration sample
+  has a physical source packet but no inner measurement forcing. Extract that
+  case once for both adapters; do not fabricate an active magnetic reference.
+* **Source-audit gate after the authorized fix:** the inherited BRMM sensor
+  argument rejects the changed wrapper hash. This is an expected provenance
+  gate, not a mathematical failure. The full shipping diff consists only of
+  `<limits>` and the guarded counter increment. Neither reads physical p/S or
+  changes sensor inputs; the saturation comparison equivalence preserves every
+  representable unlock threshold. Re-audit that dependency and retain the
+  exact-hash gate, with a regression reconstructing the preceding source bytes.
+  The independent magnetic schedule parity check also requires the obsolete
+  unchecked increment. Its failed boolean invalidates that source audit, not
+  the count/time release argument. Critic alternatives for this repeated
+  provenance issue are a complete-source hash plus manual re-audit, a normalized
+  method-body audit, or native behavior regressions alone. Use the first with
+  an explicit saturation/threshold argument; native checks alone cannot prove
+  all finite counts. Revalidate the original magnetic assumptions, retaining
+  its north-lock premise and independence from ALT.
+
+* **Ungauged Live composition gap:** the old interleaver rejects a timeout
+  entry without north. Shipping continues initial acquisition after Live, but
+  its `attitudeReferenceQuat_()` now selects the MEKF quaternion. Continuous
+  hard-iron accumulation and refinement independently keep the private proxy
+  tilt (`startupProxyTiltQuat()`). Reusing the startup frame for all three
+  operations would violate shipping's exact operands. This is a missing
+  runtime branch, not a failure of the four-chart cover or physical model.
+  Critic: preserve each operation's actual frame instead of one shared frame
+  chosen for convenience. Next check: distinct MEKF/private tilts during
+  delayed initial acquisition, with continuous statistics accumulated once
+  and the same packet entering the MEKF only after north is set.
+
 The controlling missing object is the source-uniform finite deployment word,
 not a storage margin. No rho/storage search has been run or authorized.
+
+* **Pre-rho entry representation failure:** the timeout does not require
+  `isTunerReady()` or magnetic north. A quiet, level, zero-bias source has
+  identical IMU history for every constant true heading. With no pre-Live
+  magnetic calls the proxy hands off identity, including when true yaw is pi.
+  The fresh joint24 definition then divides by the zero scalar component of
+  `q_true_WB * conjugate(q_hat_WB)`. This invalidates universal fresh entry in
+  one Cayley chart; it does not establish shipping instability or invalidate
+  the original gravity-quotient track. The exact limiter is a zero chart
+  denominator, not a loose enclosure. Test the unchanged wrapper from reset
+  and verify the analytic constant-heading family and its unbounded Cayley
+  limit. A TunerReady-only bridge also misses the literal timeout edge.
+* **Finite-horizon coverage defect:** exact RN32 accumulation of 0.005 first
+  reaches the default 150-second comparison at sample 30,002. The following
+  600 IMU transitions end at sample 30,602, outside the 30,600 machine-history
+  cap. Even this deadline remains conditional on the gravity-aligned branch;
+  merely enumerating the clock does not prove universal handoff reachability.
+* **Magnetic premise mismatch:** the conditional `E<=8.5 uT` calculation
+  substituted a gravity-direction bound for a full accumulation-to-handoff
+  frame bound. Even perfect tilt leaves physical heading in a yaw-stripped
+  sample. The exact north/south pair for B=(15,0,20) has mean (0,0,20), so
+  tilt alone cannot prove nonzero mean horizontal field. This falsifies the
+  premise substitution, not the conditional chord/mean inequality and not a
+  complete shipping capture trace. Retain heading excursion and handoff lag
+  in the frame relation; sampled means cannot qualify it universally.
+The critic alternative to further seed/SVD bounds is to address the startup
+representation first. Three distinct choices are (1) carry a gravity quotient
+and neutral yaw until source-qualified magnetic regauging, (2) retain a
+homogeneous quaternion or overlapping attitude charts with exact transport,
+or (3) supply a separately proved all-history magnetic capture theorem before
+entering the current chart. An unproved startup magnetic-cadence/heading
+restriction is not choice (3). None may shrink COMPLETE-BRMM, change shipping,
+or replace unknown yaw by an independently bounded Cayley disturbance. The selected four-chart architecture now covers every nonzero relative
+quaternion and carries exact finite event transport; the conditional ungauged
+Live composer retains initial acquisition and its later north transition.
+Universal source/control/deployment qualification still keeps the guard blocked.
 
 * **ALT implementation/order defect:** holding Racc sigma between pending
   commits contradicts shipping's per-sample pre-candidate TuneState read. The
@@ -538,7 +779,7 @@ not a storage margin. No rho/storage search has been run or authorized.
   literal reset. The ordinary source-bound seed now removes the free quaternion
   port. Unrepresented SVD/nonfinite branches, target sqrt/profile qualification
   and source-uniform supplies still prevent universal startup coverage. A
-  30,600-sample bookkeeping cap accommodates the existing startup+word graph;
+  30,602-sample bookkeeping cap accommodates the conditional startup+word graph;
   it is neither proof of a 150 s startup deadline nor clock-lifetime closure.
 * **ALT regression defects:** old joined fixtures supplied an independent zero
   band input instead of the same Mahony output; runtime/readiness accessors used
@@ -554,6 +795,17 @@ not a storage margin. No rho/storage search has been run or authorized.
   separately classified proof-construction/test failures, not permission to
   narrow outward intervals or assert the theorem false. Original-track modules
   remain untouched.
+* **Inherited build-gate failure:** `make all` stops at
+  `tests/kalman_ou_iii/live_entry_audit-test`: the quiet pair does not execute
+  H18-to-A21 release by its tested endpoint, and two quiet handoffs have
+  session-origin S=288.1474364 rather than the asserted S>300. The terminal
+  result is `LIVE_ENTRY_AUDIT_PASS=false`, `Makefile:56: run-tests Error 1`,
+  then `Makefile:36: test Error 2`. This is an unchanged original-audit assertion
+  failure, not evidence against the counter induction or attitude identities.
+  Critic: changing thresholds to make this PR green would obscure the original
+  entry question. Retain the failure; rederive those assertions against the
+  corrected source in that independent track. The limiting quantities and next
+  falsifiable check are the actual release time and session-origin S at handoff.
 
 The strongest critic objection is that an identity-preserving startup graph can
 still carry unqualified source/branch/arithmetic witnesses; conditional entry
@@ -582,26 +834,34 @@ continuous regional invariant or 35 deg/s PE refinement is still broken.
 Private observer accuracy, total startup accumulation-frame heading excursion,
 ungauged timeout and source-qualified deployment seed remain distinct issues.
 
-The inherited broad run recorded 1,089 tests with 5 failures and 15 errors before
-the joined regression repairs. It is not claimed green. Latest focused/native,
+The full inherited suite still has covariance-envelope, endpoint-partition and
+magnetic AD failures. It is not claimed green. Latest focused/native,
 finite-suite and build results are recorded in the PR validation report; none
 promotes source membership, capture, retention or stability.
 
 ### Current limiter, DEAD_ENDS and next falsifiable work
 
-First qualify the actual startup source continuation, seed/SVD/nonfinite and
-ungauged timeout branches, then substitute the machine guard displacement into
-Racc/accelerometer on that same history. Next qualify remaining raw WPE
-period/log ancestry, exp/log/sqrt, band/statistics/tuner, Q-axis, scheduler and
-a_w clocks, trig/normalization, Eigen solves/floors and comparisons. Every literal
-IMU/magnetic/hold/reset edge must retain these supplies and source ancestry.
-Only an accepted complete finite master can permit storage search.
+The four-chart runtime, conditional ungauged continuation and source-owned
+empty-startup/later-north composition close their representation/event gaps.
+All magnetic counts now have source-bound saturation safety on every finite
+prefix; the master consumes this fact. The current limiter is universal
+startup source/control reachability, full magnetic history and target arithmetic.
+Every nonzero quaternion is covered, but that does not certify a storage basin
+or finite capture. Storage must not identify different chart origins as the
+same zero physical error.
 
-Universal capture, source-uniform deployment of all 600 transitions,
-every-prefix retention, joint24 storage/rho and an ultimate bound remain open.
-Indefinite continuation additionally needs finite-width wrapper-clock/counter
-lifetime and tiling without restarting the one-time Live/S origin, covariance,
-frontend or bias history.
+Qualify the machine guard displacement into Racc/accelerometer, raw WPE
+exp/log/sqrt, band/statistics/tuner, Q-axis, clocks, trig/normalization, Eigen
+solves/floors, nonfinite branches and comparisons on every literal same-history
+IMU/magnetic/hold/reset edge. Preserve the saturated shipping count separately
+from the mathematical event ordinal. The shared 30,602-sample budget covers the
+first default timeout comparison plus 600 IMU edges only conditionally on the
+actual aligned-branch predicate.
+
+The master reports no falsified counter prerequisite; universal entry and
+arithmetic qualifications remain open. Every-prefix retention, joint24
+storage/rho, an ultimate bound and no-restart indefinite tiling remain later
+obligations. No larger clock horizon establishes missing startup capture.
 
 Frozen shortcuts: derivative cocycles presented as finite maps; frozen gains,
 replays or more seeds as universal admission; independent coefficient boxes;

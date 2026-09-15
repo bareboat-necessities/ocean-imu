@@ -22,6 +22,8 @@ attenuation exp is tied to the SAME stored still-time by a tight real enclosure
 and binary32 RNE cell. Platform expf/compiler correspondence remains open.
 """
 from __future__ import annotations
+
+from tools.stability.ou3_alt_contraction import finite_wrapper_clock_binary32 as HORIZON
 from dataclasses import dataclass
 from fractions import Fraction as F
 from pathlib import Path
@@ -33,7 +35,7 @@ from tools.stability.ou3_alt_contraction import finite_tuner_sigma_binary32 as E
 COMMON=Path(__file__).resolve().parents[3]/'src/tuner/SeaStateFusionTunerCommon.h'
 FILTER=Path(__file__).resolve().parents[3]/'src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h'
 ZERO=B.rn32(0); ONE=B.rn32(1); SIXTY=B.rn32(60)
-QUALIFICATION='OU3_ALT_STILLNESS_SIGMA_BINARY32_V2'; MAX_SAMPLES=30600
+QUALIFICATION='OU3_ALT_STILLNESS_SIGMA_BINARY32_V2'; MAX_SAMPLES=HORIZON.MAX_STEPS
 
 
 def _q(x,name):

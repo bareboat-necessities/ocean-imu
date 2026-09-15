@@ -114,7 +114,8 @@ def preserve_yaw_reset(state:CORE.State,sample:SENSOR.GuardedImuSample,witness:P
 
     q=witness.q_new_hat
     z=list(state.z)
-    z[:3]=CORE.cayley(P.quat_mul(state.reference.q_world_to_body,P.quat_conj(q)))
+    attitude=CORE.ATLAS.encode(P.quat_mul(state.reference.q_world_to_body,P.quat_conj(q)))
+    z[:3]=attitude.coordinates
 
     cov=[list(r) for r in state.covariance]
     Patt=_attitude_covariance(witness.down_body_unit,tilt_sigma,yaw_sigma)
@@ -123,7 +124,7 @@ def preserve_yaw_reset(state:CORE.State,sample:SENSOR.GuardedImuSample,witness:P
             cov[i][j]=F(0); cov[j][i]=F(0)
     for i in range(3):
         for j in range(3): cov[i][j]=Patt[i][j]
-    return CORE.State(state.mode,tuple(z),tuple(tuple(r) for r in cov),q,state.reference)
+    return CORE.State(state.mode,tuple(z),tuple(tuple(r) for r in cov),q,state.reference,attitude.chart)
 
 
 def readiness():

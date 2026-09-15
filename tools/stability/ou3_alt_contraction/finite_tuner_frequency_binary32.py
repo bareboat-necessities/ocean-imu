@@ -12,7 +12,8 @@ The theorem-facing use is therefore:
     WPE binary32 output (still open) -> store() -> stored frequency
       -> getFrequencyHz() identity -> tau target / EMA graph.
 
-NaN/Inf are excluded here by requiring a finite normal binary32 input; shipping
+NaN/Inf are excluded here by requiring a finite binary32 input; subnormal
+inputs are compared directly and clamped to the normal bounds. Shipping
 rejects non-finite inputs before the assignment.
 """
 from __future__ import annotations
@@ -21,9 +22,19 @@ from fractions import Fraction as F
 from pathlib import Path
 
 from tools.stability.ou3_alt_contraction import finite_binary32_arithmetic as B
+from tools.stability.ou3_alt_contraction import finite_binary32_mahony as LATTICE
 
 SOURCE=Path(__file__).resolve().parents[3]/'src/tuner/SeaStateAutoTuner.h'
 QUALIFICATION='OU3_ALT_TUNER_FREQUENCY_BINARY32_STORE_V1'
+
+
+def is_finite_input(value):
+    """Comparisons admit the full finite binary32 lattice, including subnormals."""
+    try:
+        LATTICE.exact_bits(F(value))
+        return True
+    except (ValueError,OverflowError):
+        return False
 
 
 @dataclass(frozen=True)
@@ -34,7 +45,7 @@ class StoredFrequency:
     stored_hz:F
     def __post_init__(self):
         vals=tuple(F(x) for x in (self.input_hz,self.min_hz,self.max_hz,self.stored_hz))
-        if not all(B.is_binary32(x) for x in vals):
+        if not is_finite_input(vals[0]) or not all(B.is_binary32(x) for x in vals[1:]):
             raise ValueError('tuner frequency store operands must be actual binary32 values')
         i,lo,hi,out=vals
         if i<=0 or lo<=0 or hi<lo:
@@ -49,7 +60,7 @@ class StoredFrequency:
 def store(input_hz, min_hz, max_hz):
     """One accepted ``SeaStateAutoTuner::update`` frequency assignment."""
     i,lo,hi=map(F,(input_hz,min_hz,max_hz))
-    if not all(B.is_binary32(x) for x in (i,lo,hi)):
+    if not is_finite_input(i) or not all(B.is_binary32(x) for x in (lo,hi)):
         raise ValueError('accepted shipping frequency operands must already be binary32')
     return StoredFrequency(i,lo,hi,max(lo,min(hi,i)))
 

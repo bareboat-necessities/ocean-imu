@@ -13,6 +13,8 @@ real enclosures.  Native target libm, Eigen expression evaluation and mutable
 runtime guard-configuration ancestry remain explicit open obligations.
 """
 from __future__ import annotations
+
+from tools.stability.ou3_alt_contraction import finite_wrapper_clock_binary32 as HORIZON
 from dataclasses import dataclass
 from fractions import Fraction as F
 from itertools import permutations
@@ -26,7 +28,7 @@ from tools.stability.ou3_alt_contraction import finite_tuner_spectral_real_enclo
 SRC=Path(__file__).resolve().parents[3]/'src/tuner/AccelVibrationGuard.h'
 QUALIFICATION='OU3_ALT_MACHINE_ACCEL_GUARD_BINARY32_V1'
 ZERO=B.rn32(0); ONE=B.rn32(1); TWO=B.rn32(2); PI_F=MAH.value(0x40490FDB)
-MAX_SAMPLES=30600  # same bounded 30000-startup + 600-Live budget as band/stats; not reachability
+MAX_SAMPLES=HORIZON.MAX_STEPS  # shared conditional timeout-crossing + 600 budget; not reachability
 Vec=tuple[F,F,F]
 
 
@@ -68,6 +70,9 @@ def _exp_minus(mag,witness,name):
 def _sqrt(v,witness,name):
     x=_q(v,name+' radicand'); w=_q(witness,name+' result')
     if x<0: raise ValueError(name+' negative radicand')
+    if x==0:
+        if w!=0: raise ValueError(name+' zero radicand requires zero result')
+        return ZERO
     lo,hi=ROOT.sqrt_enclosure(x)
     if not EXP._interval_hits_rne_cell(lo,hi,w): raise ValueError(name+' result detached from SAME radicand RNE cell')
     return w

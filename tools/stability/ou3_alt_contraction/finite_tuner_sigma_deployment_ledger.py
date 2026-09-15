@@ -11,6 +11,8 @@ common-alpha witnesses inherited from distinct WPE/tau histories.  They must
 still share one deployment configuration.
 """
 from __future__ import annotations
+
+from tools.stability.ou3_alt_contraction import finite_wrapper_clock_binary32 as HORIZON
 from dataclasses import dataclass
 from fractions import Fraction as F
 from pathlib import Path
@@ -20,7 +22,7 @@ from tools.stability.ou3_alt_contraction import finite_tuner_common_alpha_qualif
 from tools.stability.ou3_alt_contraction import finite_tuner_sigma_binary32 as S
 
 SOURCE=Path(__file__).resolve().parents[3]/'src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h'
-INITIAL=B.rn32(F(1,100)); MAX_UPDATES=30600
+INITIAL=B.rn32(F(1,100)); MAX_UPDATES=HORIZON.MAX_STEPS
 QUALIFICATION='OU3_ALT_SIGMA_DEPLOYMENT_LEDGER_V1'
 
 

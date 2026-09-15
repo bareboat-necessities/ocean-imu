@@ -34,10 +34,18 @@ class Tests(unittest.TestCase):
         omega=M.B.sub(M.B.div(vvar,evar),M.B.mul(s.cfg.lambda_,s.cfg.lambda_)); root=M.SQRT.sqrt32(omega)
         moment=dict(pre(),moment_decay_exp=md,moment_successors=ms,velocity_var_successor=vvar,elevation_var_successor=evar,sqrt_omega=root)
         raw=M.B.div(M.TWO_PI,root); lr=q(2)
-        w=X.ModeWitnesses(moment,raw_log=X.RawLogBinding(raw,lr),log=L.InitWitness(lr))
+        w=X.ModeWitnesses(moment,raw_log=X.RawLogBinding(raw,lr),log=L.InitWitness(lr),
+            usable=X.USABLE.PeriodWitness(lr,q(8)))
         n,sr,fr,_=X.step(s,dt=DT,vertical_accel=q(0),separate=w,fma=w)
         self.assertEqual((sr.raw_period,fr.raw_period),(raw,raw))
         self.assertEqual((n.logs.separate.log_period,n.logs.fma.log_period),(lr,lr))
+        self.assertFalse(n.separate_usable)
+        self.assertFalse(n.fma_usable)
+        from dataclasses import replace
+        different=replace(w,usable=X.USABLE.PeriodWitness(lr,q(1)))
+        mixed,_,_,_=X.step(s,dt=DT,vertical_accel=q(0),separate=different,fma=w)
+        self.assertTrue(mixed.separate_usable)
+        self.assertFalse(mixed.fma_usable)
         bad=X.ModeWitnesses(moment,raw_log=X.RawLogBinding(q(3),lr),log=L.InitWitness(lr))
         with self.assertRaisesRegex(ValueError,'raw period'):
             X.step(s,dt=DT,vertical_accel=q(0),separate=bad,fma=w)

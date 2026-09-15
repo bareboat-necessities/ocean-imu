@@ -79,8 +79,6 @@ def bridge(startup:START.State,entry,fresh,*,
            separate_noise_sqrt_gain=None,fma_noise_sqrt_gain=None,
            **kwargs):
     if not isinstance(startup,START.State): raise TypeError('whole machine startup product required')
-    if startup.lower.frontend.tuner.stage!='TunerReady':
-        raise ValueError('whole-machine goLive bridge requires TunerReady startup frontend')
     exact=LIVE.bridge(entry,fresh,startup.lower.frontend,**kwargs)
     cfg=kwargs.get('commit_cfg')
     if not isinstance(cfg,C.CommitConfig): raise TypeError('goLive CommitConfig required')

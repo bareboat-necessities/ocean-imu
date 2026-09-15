@@ -44,10 +44,6 @@ class State:
             raise ValueError('nonnegative Live-entry WPE sample count required')
         if self.wpe.samples < self.live_entry_wpe_samples:
             raise ValueError('WPE machine ledger sample count moved backward')
-        exact=TAUJOIN._entry_wpe(self.base)
-        initialized=exact.log_period is not None
-        if initialized != (self.wpe.separate.log_period is not None) or initialized != (self.wpe.fma.log_period is not None):
-            raise ValueError('machine WPE log initialization detached from exact carried WPE state')
 
 
 @dataclass(frozen=True)
@@ -94,9 +90,13 @@ def _suffix(lower_out):
     return TAUJOIN._live_result(lower_out).tuner_suffix
 
 
-def _frequency_sources(state:State,*,separate_getter,fma_getter,shadow_frequency):
+def _frequency_sources(state:State,*,separate_getter,fma_getter,shadow_frequency,machine_wpe_entry=None):
     exact=TAUJOIN._entry_wpe(state.base); runtime=state.base.prefix.prefix.live.live_word.runtime
     lo,hi=F(runtime.candidate_cfg.min_freq),F(runtime.candidate_cfg.max_freq)
+    if machine_wpe_entry is not None:
+        return WPEF.machine_frequencies(exact,machine_wpe_entry,logs=state.wpe,
+            separate_getter=separate_getter,fma_getter=fma_getter,shadow_frequency=shadow_frequency,
+            stats_cfg=runtime.stats_cfg,exact_min_hz=lo,exact_max_hz=hi)
     if exact.usable_period:
         if shadow_frequency is None: raise TypeError('usable WPE branch requires exact shadow frequency')
         if state.wpe.separate.log_period is None or state.wpe.fma.log_period is None:
@@ -115,7 +115,11 @@ def _frequency_sources(state:State,*,separate_getter,fma_getter,shadow_frequency
     return tuple(WPEF.through_statistics(WPEF.tuner_frequency(exact,min_hz=B.rn32(lo),max_hz=B.rn32(hi)),runtime.stats_cfg,exact_min_hz=lo,exact_max_hz=hi) for _ in range(2))
 
 
-def _advance_wpe_machine(state:State,suffix,*,separate_log_witness,fma_log_witness):
+def _advance_wpe_machine(state:State,suffix,*,separate_log_witness,fma_log_witness,machine_wpe_entry=None):
+    if machine_wpe_entry is not None:
+        return WPELOG.advance_modes(state.wpe,
+            separate_produced=separate_log_witness is not None,fma_produced=fma_log_witness is not None,
+            separate_witness=separate_log_witness,fma_witness=fma_log_witness)
     w=suffix.wpe
     if not w.produced_period:
         if separate_log_witness is not None or fma_log_witness is not None:
@@ -132,11 +136,15 @@ def _advance_wpe_machine(state:State,suffix,*,separate_log_witness,fma_log_witne
 
 def imu_step(state:State,*,separate_getter=None,fma_getter=None,shadow_frequency=None,
              separate_tau_exp_decay,fma_tau_exp_decay,
-             separate_log_witness=None,fma_log_witness=None,**kwargs):
+             separate_log_witness=None,fma_log_witness=None,machine_wpe_entry=None,**kwargs):
     if not isinstance(state,State): raise TypeError('admitted WPE/tau State required')
+    if TAUJOIN._entry_wpe(state.base).usable_period:
+        exact_input=kwargs.get('preupdate_frequency')
+        if shadow_frequency is None or exact_input is None or F(shadow_frequency)!=F(exact_input):
+            raise ValueError('raw exact WPE frequency detached from same lower sample-entry getter')
     ema=kwargs.get('ema')
     if not isinstance(ema,CAND.EmaWitness): raise TypeError('same-event exact tuner EmaWitness required')
-    sf,ff=_frequency_sources(state,separate_getter=separate_getter,fma_getter=fma_getter,shadow_frequency=shadow_frequency)
+    sf,ff=_frequency_sources(state,separate_getter=separate_getter,fma_getter=fma_getter,shadow_frequency=shadow_frequency,machine_wpe_entry=machine_wpe_entry)
     nxt_prefix,out=TAUJOIN.BASE.imu_step(state.base.prefix,**kwargs)
     cand=TAUJOIN._candidate(out)
     if F(cand.frequency)!=sf.exact_clamped_frequency or F(cand.frequency)!=ff.exact_clamped_frequency:
@@ -147,7 +155,7 @@ def imu_step(state:State,*,separate_getter=None,fma_getter=None,shadow_frequency
     ss=ModeSupply(sf.machine_minus_shadow,tau.separate_target.exact_target-F(cand.tau_target),F(separate_tau_exp_decay)-F(ema.decay_tau_sigma))
     fs=ModeSupply(ff.machine_minus_shadow,tau.fma_target.exact_target-F(cand.tau_target),F(fma_tau_exp_decay)-F(ema.decay_tau_sigma))
     suffix=_suffix(out)
-    wstep=_advance_wpe_machine(state,suffix,separate_log_witness=separate_log_witness,fma_log_witness=fma_log_witness)
+    wstep=_advance_wpe_machine(state,suffix,separate_log_witness=separate_log_witness,fma_log_witness=fma_log_witness,machine_wpe_entry=machine_wpe_entry)
     base_next=TAUJOIN.State(nxt_prefix,tau.state,state.base.live_entry_tau_updates)
     return ImuResult(State(base_next,wstep.state,state.live_entry_wpe_samples),out,tau,wstep,ss,fs,sf,ff)
 
@@ -184,7 +192,7 @@ def readiness():
       'startup_WPE_machine_ledger_provenance_closed':False,
       'WPE_log_std_log_target_libm_correspondence_closed':wl['WPE_log_std_log_target_libm_correspondence_closed'],
       'WPE_log_exp_target_libm_correspondence_closed':wl['WPE_log_exp_target_libm_correspondence_closed'],
-      'source_uniform_WPE_frequency_supply_bound_closed':False,
+      'source_uniform_WPE_frequency_supply_bound_closed':lower['source_uniform_WPE_frequency_supply_bound_closed'],
       'tuner_exp_libm_binary32_correspondence_closed':lower['tuner_exp_libm_binary32_correspondence_closed'],
       'all_event_arithmetic_witnesses_source_uniformly_qualified':False,
       'source_uniform_complete_600_step_word_qualified':False,

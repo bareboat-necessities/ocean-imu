@@ -7,7 +7,8 @@ persistent bounded disturbance history coexist in the same state.
 
 The bound W remains a symbolic theorem parameter.  Racc is not a pathwise cap.
 MAG/HOLD do not consume IMU forcing ordinals.  Deployment arithmetic, startup
-reachability, magnetic counter lifetime and storage remain open.
+reachability and storage remain open. Magnetic count saturation is qualified
+separately by the source-bound counter invariant.
 """
 from __future__ import annotations
 from dataclasses import dataclass

@@ -1,6 +1,7 @@
 """Binary32 SeaStateAutoTuner statistics regressions."""
 from fractions import Fraction as F
 import unittest
+from dataclasses import replace
 
 from tools.stability.ou3_alt_contraction import finite_binary32_arithmetic as B
 from tools.stability.ou3_alt_contraction import finite_stats_binary32_runtime as X
@@ -31,6 +32,15 @@ def successor_from_first(env:X.Envelope):
 
 
 class Tests(unittest.TestCase):
+    def test_positive_subnormal_input_is_clamped_before_normal_arithmetic(self):
+        floor=coeff(cfg().f_min)
+        tiny=F(27,1<<149)
+        actual=X.coefficients(cfg(),frequency=tiny,dt=floor.dt,exp_decay=floor.exp_decay)
+        self.assertEqual(actual,replace(floor,input_frequency=tiny))
+        self.assertEqual(actual.frequency,B.rn32(cfg().f_min))
+        with self.assertRaisesRegex(ValueError,'binary32 stats input frequency'):
+            X.coefficients(cfg(),frequency=F(1,1<<150),dt=floor.dt,exp_decay=floor.exp_decay)
+
     def test_first_sample_uses_same_alpha_for_mean_square_and_weights(self):
         s=X.State(); c=coeff(); a=B.rn32(F(1,2)); env=X.envelope(s,c,accel=a); nxt=successor_from_first(env)
         out,cert=X.step(s,c,accel=a,successor=nxt)

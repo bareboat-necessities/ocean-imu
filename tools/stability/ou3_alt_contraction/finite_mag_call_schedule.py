@@ -12,14 +12,14 @@ and continue over unbounded physical time (not a Zeno list):
 This is a deployment/source timing assumption, not a BMM150 electrical guarantee.
 It is only 25 Hz as a *minimum service cadence*: the inequalities are upper
 bounds on gaps, not an upper bound on call rate. In particular equal-timestamp
-calls are admitted by the current schedule. Therefore this assumption proves
-unlock reachability but does NOT by itself prove lifetime safety of shipping's
-signed ``int mag_updates_applied_``. A maximum call rate / positive minimum gap,
-or a saturating shipping counter, is a separate deployment obligation.
+calls are admitted by the current schedule. Shipping saturates its signed count
+at INT_MAX, so counter safety follows for every finite number of calls without
+a maximum call rate. Measurement and bias-release processing continue at the cap.
 """
 from __future__ import annotations
 from dataclasses import dataclass
 from fractions import Fraction as F
+from tools.stability.ou3_alt_contraction import finite_mag_counter_saturation as COUNT
 
 ASSUMPTION_ID='MAG-CALL-SCHEDULE-v1'
 DEFAULT_MAX_GAP=F(1,25)
@@ -63,7 +63,7 @@ def default_schedule(): return Schedule()
 def release_reachability(schedule:Schedule|None=None,unlock_count=DEFAULT_UNLOCK_COUNT):
     s=default_schedule() if schedule is None else schedule
     if not isinstance(s,Schedule): raise TypeError('qualified magnetometer call schedule required')
-    if not isinstance(unlock_count,int) or isinstance(unlock_count,bool) or unlock_count<1:
+    if not isinstance(unlock_count,int) or isinstance(unlock_count,bool) or not 1 <= unlock_count <= COUNT.SIGNED_MAX:
         raise ValueError('positive integer unlock count required')
     n=unlock_count
     # An upper inter-call bound supplies NO lower bound on t_(n-1)-t_0.
@@ -86,13 +86,10 @@ def require_release_reachable(r:Reachability):
 
 def counter_lifetime(schedule:Schedule|None=None, *, horizon=CANONICAL_ALT_WINDOW,
                      signed_max=TARGET_SIGNED_INT32_MAX):
-    """State exactly what the present schedule proves about the shipping count.
+    """Shipping saturation proves safety without a uniform call-count bound.
 
-    Local finiteness says each compact interval contains finitely many calls,
-    but supplies no *uniform* finite cardinality. Because V1 has no positive
-    minimum inter-call gap, for every N there is an admitted finite prefix with
-    N equal-timestamp calls. Hence no signed-counter safety theorem follows,
-    even on the three-second contraction window.
+    For each finite prefix, c_n=min(INT_MAX,c_0+n) stays representable. The
+    schedule still supplies no minimum gap or uniform upper event count.
     """
     s=default_schedule() if schedule is None else schedule
     if not isinstance(s,Schedule): raise TypeError('qualified magnetometer call schedule required')
@@ -100,12 +97,14 @@ def counter_lifetime(schedule:Schedule|None=None, *, horizon=CANONICAL_ALT_WINDO
     if h<=0: raise ValueError('positive lifetime horizon required')
     if not isinstance(signed_max,int) or isinstance(signed_max,bool) or signed_max<1:
         raise ValueError('positive signed counter maximum required')
-    return CounterLifetime(h,signed_max,False,None,False)
+    if signed_max != COUNT.SIGNED_MAX:
+        raise ValueError('current deployment uses the named signed-int32 maximum')
+    return CounterLifetime(h,signed_max,False,None,COUNT.build()['counter_lifetime_closed'])
 
 
 def require_counter_lifetime_closed(c:CounterLifetime):
     if not isinstance(c,CounterLifetime) or not c.no_signed_overflow_proved:
-        raise ValueError('current magnetic schedule does not bound signed counter lifetime')
+        raise ValueError('shipping magnetic counter lifetime is not qualified')
     return True
 
 

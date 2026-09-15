@@ -10,6 +10,7 @@ obligation.
 from __future__ import annotations
 from dataclasses import dataclass
 from fractions import Fraction as F
+from tools.stability.ou3_alt_contraction import finite_mag_counter_saturation as COUNT
 
 from tools.stability.ou3_alt_contraction import finite_measurement_graph as M
 
@@ -24,8 +25,8 @@ class Config:
     sample_dt:F=F(1,200)
     quality_weighting:bool=False
     def __post_init__(self):
-        if not isinstance(self.min_samples,int): raise TypeError('integer min_samples required')
-        if self.min_samples<0: raise ValueError('nonnegative min_samples required')
+        if type(self.min_samples) is not int: raise TypeError('integer min_samples required')
+        if not 0 <= self.min_samples <= COUNT.SIGNED_MAX: raise ValueError('nonnegative min_samples required')
         for n in ('min_window','max_window','sample_dt'):
             v=R(getattr(self,n))
             if v<0: raise ValueError('nonnegative magnetic window times required')
@@ -45,7 +46,7 @@ class State:
             v=R(getattr(self,n))
             if v<0: raise ValueError('nonnegative accumulator scalar required')
             object.__setattr__(self,n,v)
-        if not isinstance(self.accepted_count,int) or self.accepted_count<0:
+        if type(self.accepted_count) is not int or not 0 <= self.accepted_count <= COUNT.SIGNED_MAX:
             raise ValueError('nonnegative accepted count required')
 
 @dataclass(frozen=True)
@@ -64,7 +65,7 @@ def accepted_sample(state:State,cfg:Config,*,world_sample,world_norm,dt):
     # Shipping uses supplied positive finite dt, otherwise configured sample_dt.
     d_use=d if d>0 else cfg.sample_dt
     nxt=State(tuple(state.world_sum[i]+m[i] for i in range(3)),
-              state.norm_sum+n,state.accepted_count+1,
+              state.norm_sum+n,COUNT.after_attempts(state.accepted_count),
               state.accepted_window+d_use,state.weight_sum+1)
     count_ok=nxt.accepted_count>=max(1,cfg.min_samples)
     timed_out=cfg.max_window>0 and nxt.accepted_window>=cfg.max_window

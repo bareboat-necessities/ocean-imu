@@ -45,6 +45,9 @@ def assert_finite_storage_master(status: dict) -> None:
                 'physical_reference_forcing_retained',
                 'all_coefficient_product_graphs_retained',
                 'all_configured_branches_bound_to_finite_graph',
+                'all_admitted_startup_entries_represented',
+                'source_uniform_deployment_arithmetic_closed',
+                'finite_word_counter_safety_closed',
                 'zero_wind_heel_scope_enforced')
     missing = [k for k in required if status.get(k) is not True]
     if status.get('map_representation') != 'finite_physical_descriptor':

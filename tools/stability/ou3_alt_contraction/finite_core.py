@@ -14,6 +14,7 @@ from fractions import Fraction as F
 from tools.stability.ou3_alt_contraction import finite_measurement_graph as M
 from tools.stability.ou3_alt_contraction import finite_prediction_graph as P
 from tools.stability.ou3_alt_contraction import finite_physical_prediction as PHYSICAL
+from tools.stability.ou3_alt_contraction import finite_attitude_atlas as ATLAS
 from tools.stability.ou3_alt_contraction.finite_prediction_deployed_step import step_quaternion_polynomial
 
 
@@ -65,6 +66,7 @@ class State:
     covariance: tuple
     q_hat: tuple
     reference: Reference
+    attitude_chart: int = 0
 
     def __post_init__(self):
         if self.mode not in ('H', 'A'):
@@ -76,7 +78,9 @@ class State:
         if cov != M.transpose(cov):
             raise ValueError('full symmetric 21-state covariance required, also in H')
         qh = quaternion(self.q_hat)
-        if z[:3] != cayley(P.quat_mul(self.reference.q_world_to_body, P.quat_conj(qh))):
+        attitude = ATLAS.encode(P.quat_mul(self.reference.q_world_to_body, P.quat_conj(qh)),
+                                chart=self.attitude_chart)
+        if z[:3] != attitude.coordinates:
             raise ValueError('finite attitude error is not the physical/nominal relative rotation')
         if z[21:24] != self.reference.beta:
             raise ValueError('joint24 beta must be the SAME physical bias')
@@ -105,14 +109,18 @@ def prediction(state, segment, *, gyro_body, axis_coefficients, F21, Q21, phi_ha
     g = P.vec(gyro_body, 3)
     omega_hat = [g[i] - (before.gyro_bias[i]-state.z[3+i]) for i in range(3)]
     qn = step_quaternion_polynomial([-segment.h*x for x in omega_hat])
-    z = PHYSICAL.prediction(state.z, segment, nominal_step=qn,
-                            axis_coefficients=axis_coefficients,
-                            active_bias=state.mode == 'A', phi_hat=phi_hat)
+    attitude = ATLAS.transport(ATLAS.Point(state.attitude_chart, state.z[:3]),
+                               left=segment.physical_rotation_step, right=P.quat_conj(qn))
+    z = PHYSICAL.prediction_nonattitude(state.z, segment,
+                                       axis_coefficients=axis_coefficients,
+                                       active_bias=state.mode == 'A', phi_hat=phi_hat)
+    z[:3] = attitude.after.coordinates
     A, Q = M.mat(F21, 21, 21), M.mat(Q21, 21, 21)
     if Q != M.transpose(Q):
         raise ValueError('symmetric real process covariance required')
     cov = M.plus(M.mm(M.mm(A, state.covariance), M.transpose(A)), Q)
-    return State(state.mode, tuple(z), cov, P.quat_mul(qn, state.q_hat), after)
+    return State(state.mode, tuple(z), cov, P.quat_mul(qn, state.q_hat), after,
+                 attitude.after.chart)
 
 
 def solve3(S, rhs):
@@ -177,6 +185,7 @@ def measurement(state, kind, *, R, observed=None, magnetic_reference=None,
     the all-w,k finite identity remains available in finite_measurement_graph.
     """
     ref, z = state.reference, state.z
+    attitude = ATLAS.Point(state.attitude_chart, z[:3])
     Rh = rotation(state.q_hat)
     if kind == 'accelerometer':
         g = P.rational(gravity)
@@ -184,25 +193,25 @@ def measurement(state, kind, *, R, observed=None, magnetic_reference=None,
         fhat = M.mv(Rh, [aw_hat[0], aw_hat[1], aw_hat[2]-g])
         y = P.vec(observed, 3)
         residual = [y[i]-fhat[i]-(ref.beta[i]-z[18+i]) for i in range(3)]
-        H, Hb = M.residual_factors(kind, z[:3], f_hat=fhat, R_hat=Rh)
+        H, Hb, offset = ATLAS.residual_factors(kind, attitude, f_hat=fhat, R_hat=Rh)
         physical = M.mv(rotation(ref.q_world_to_body), [ref.acceleration[0], ref.acceleration[1], ref.acceleration[2]-g])
         nu = [y[i]-physical[i]-ref.beta[i] for i in range(3)]
     elif kind == 'magnetometer':
         mr, y = P.vec(magnetic_reference, 3), P.vec(observed, 3)
         mhat = M.mv(Rh, mr)
         residual = [y[i]-mhat[i] for i in range(3)]
-        H, Hb = M.residual_factors(kind, z[:3], m_hat=mhat)
+        H, Hb, offset = ATLAS.residual_factors(kind, attitude, m_hat=mhat)
         physical = M.mv(rotation(ref.q_world_to_body), mr)
         nu = [y[i]-physical[i] for i in range(3)]
     elif kind == 'S_zero':
         if observed is not None or magnetic_reference is not None:
             raise ValueError('S source comes only from the persistent physical primitive')
         residual = [z[12+i]-ref.centered_S[i] for i in range(3)]
-        H, Hb = M.residual_factors(kind, z[:3])
+        H, Hb, offset = ATLAS.residual_factors(kind, attitude)
         nu = [-x for x in ref.centered_S]
     else:
         raise ValueError('unsupported accepted measurement')
-    if residual != [x+y for x, y in zip(M.mv(Hb, z), nu)]:
+    if residual != [x+y+b for x, y, b in zip(M.mv(Hb, z), nu, offset)]:
         raise AssertionError('physical finite residual identity failed')
     N, S = M.measurement_operands(state.covariance, R, H, active_bias=state.mode == 'A')
     shift = P.rational(innovation_shift)
@@ -218,7 +227,7 @@ def measurement(state, kind, *, R, observed=None, magnetic_reference=None,
     epre = [z[18+i]-d[18+i] for i in range(3)]
     if not M.projection_graph_holds(epre, ref.beta, alpha, radius):
         raise ValueError('radial projection factor detached from the SAME physical beta')
-    graph = M.descriptor(z[:3], d[:3], w, k, N, S, Hb, alpha=alpha)
+    graph = ATLAS.descriptor(attitude, d[:3], w, k, N, S, Hb, offset, alpha=alpha)
     chi = list(z)+q+nu+[F(1)]
     if any(M.mv(graph.equality, chi)):
         raise AssertionError('finite descriptor equality failed')
@@ -228,7 +237,7 @@ def measurement(state, kind, *, R, observed=None, magnetic_reference=None,
     Pj = M.solved_joseph_covariance(state.covariance, N, S, K)
     cov = covariance_reset(Pj, d[:3])
     qhat = P.quat_mul([w, *[k*x for x in d[:3]]], state.q_hat)
-    nxt = State(state.mode, tuple(znext), cov, qhat, ref)
+    nxt = State(state.mode, tuple(znext), cov, qhat, ref, graph.transport.after.chart)
     return Accepted(nxt, tuple(map(tuple, S)), tuple(map(tuple, N)), tuple(map(tuple, K)),
                     tuple(q), tuple(d), graph.denominator)
 

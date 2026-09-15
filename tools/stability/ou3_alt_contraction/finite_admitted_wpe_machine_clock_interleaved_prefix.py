@@ -4,8 +4,9 @@ The lower clock-qualified joined product owns the literal IMU/magnetic/hold
 events. This wrapper executes no second physical/filter event. On every IMU edge
 it consumes the already-produced common machine Mahony vertical output and
 advances the persistent dual-compiler WPE moment/log product with the same
-binary32 API dt. The mode-specific log witnesses are injected into the lower
-TuneState word from this single WPE product, so they cannot be spliced.
+binary32 API dt. The carried machine latches/logs select frequency independently
+of the exact shadow. Mode-specific log witnesses are projected into the lower TuneState
+word and checked against this same moment update, so they cannot be spliced.
 
 A startup constructor accepts only the WPE state preserved by the joined
 startup/goLive product. ``complete`` requires exactly 600 additional WPE IMU
@@ -75,10 +76,10 @@ class ImuResult:
 
 def imu_step(state:State,*,separate_wpe:WPE.ModeWitnesses,fma_wpe:WPE.ModeWitnesses,**kwargs):
     if not isinstance(state,State): raise TypeError('admitted WPE-machine Live State required')
-    if 'separate_log_witness' in kwargs or 'fma_log_witness' in kwargs:
+    if {'separate_log_witness','fma_log_witness','machine_wpe_entry'} & set(kwargs):
         raise TypeError('Live log witnesses are owned by the full WPE machine product')
     lower=LOWER.imu_step(state.base,separate_log_witness=separate_wpe.log,
-                         fma_log_witness=fma_wpe.log,**kwargs)
+                         fma_log_witness=fma_wpe.log,machine_wpe_entry=state.wpe,**kwargs)
     joined=lower.lower
     if joined.separate_source.band_input!=joined.fma_source.band_input:
         raise ValueError('Live compiler histories lost common Mahony WPE input')
@@ -126,7 +127,8 @@ def readiness():
       'MAG_and_HOLD_preserve_full_WPE_machine_history_by_identity':True,
       'complete_word_requires_full_WPE_machine_step_on_all_600_IMU_edges':True,
       'Live_600_step_WPE_machine_history_attached':True,
-      'machine_vs_exact_WPE_period_branch_robustness_closed':False,
+      'machine_vs_exact_WPE_period_branch_agreement_required':False,
+      'independent_machine_WPE_production_and_frequency_branches_composed':True,
       'target_WPE_libm_and_compiler_profile_correspondence_closed':False,
       'source_uniform_WPE_machine_supply_bounds_closed':False,
       'source_uniform_complete_600_step_word_qualified':False,

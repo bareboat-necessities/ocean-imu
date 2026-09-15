@@ -11,15 +11,13 @@ Startup history still has to be rooted through the dual-clock startup composer
 before the complete master can claim an end-to-end dual-clock magnetic word.
 """
 from __future__ import annotations
-from dataclasses import dataclass, replace
+from dataclasses import dataclass
 
 from tools.stability.ou3_alt_contraction import finite_source_bound_live_word as WORD
 from tools.stability.ou3_alt_contraction import finite_source_continuation as SOURCE
 from tools.stability.ou3_alt_contraction import finite_live_interleave as LIVE
 from tools.stability.ou3_alt_contraction import finite_live_magnetic_dual_clock as DUAL
-from tools.stability.ou3_alt_contraction import finite_mag_call_schedule as SCHEDULE
 from tools.stability.ou3_alt_contraction import finite_source_bound_mag_forcing as FORCE
-from tools.stability.ou3_alt_contraction import finite_sensor_source_runtime as SENSOR
 
 
 @dataclass(frozen=True)
@@ -51,43 +49,15 @@ def _assert_endpoint(state:WORD.State, endpoint):
     return True
 
 
-def _forcing(event):
-    if event.qualification is None:
-        if event.effective_residual is not None:
-            raise AssertionError('gated magnetic call unexpectedly produced effective residual')
-        return None
-    source=event.qualification.sample
-    active=event.state.active
-    memory=event.state.memory
-    ref=event.filter.reference
-    field_difference=tuple(source.model.world_field[i]-active.model.world_reference[i]
-                           for i in range(3))
-    rotated=tuple(SENSOR.q_rotate(ref.q_world_to_body,field_difference))
-    correction=tuple(-x for x in memory.applied.total_bias)
-    return FORCE.MagForcing(rotated,source.model.hard_iron_body,correction,
-                            source.residual_body,event.effective_residual)
-
-
 def mag_step(state:WORD.State, **kwargs):
     if not isinstance(state,WORD.State):
         raise TypeError('source-owning Live word required')
     endpoint=_endpoint(state); _assert_endpoint(state,endpoint)
-    inter=state.live
-    event=DUAL.live_call(inter.magnetic,inter.live.live.mekf,
-                         inter.live.live.tuner.vertical,**kwargs)
-
-    # MAG-CALL-SCHEDULE-v1 is a deployment cadence condition in physical time;
-    # it is deliberately distinct from the binary32 outer-wrapper clock used
-    # inside DUAL.live_call.
-    clock=inter.clock
-    if event.measurement is not None and event.measurement.wrapper_attempted:
-        clock=SCHEDULE.record_call(clock,inter.schedule,time=event.filter.reference.time)
-
-    live=replace(inter.live,live=replace(inter.live.live,mekf=event.filter))
-    nxt_inter=LIVE.State(live,event.state,clock,inter.schedule)
-    nxt=WORD.State(nxt_inter,state.source,state.sensor_root,state.bias_history_id,state.runtime)
-    wrapped=WORD.Result(nxt,LIVE.Result(nxt_inter,event))
-    return Result(wrapped,_forcing(event))
+    # Consume the shared composer, including ungauged waiting, actual north
+    # acquisition, service-clock initialization and saturated counter projection.
+    out=LIVE.mag_step(state.live,**kwargs)
+    nxt=WORD.State(out.state,state.source,state.sensor_root,state.bias_history_id,state.runtime)
+    return Result(WORD.Result(nxt,out),FORCE.from_event(out.event))
 
 
 def readiness():
@@ -98,6 +68,7 @@ def readiness():
       'physical_MAG_CALL_SCHEDULE_clock_kept_distinct_from_wrapper_binary32_clock':True,
       'same_event_correlated_magnetic_ISS_forcing_retained':f['magnetic_effective_residual_derived_from_same_qualified_event'],
       'source_and_Live_origin_persist_across_dual_clock_magnetic_edge':True,
+      'ungauged_north_and_saturated_counter_use_shared_event_composer':True,
       'startup_dual_clock_history_feeds_this_master_edge':False,
       'binary32_exp_solver_roundoff_closed':False,
       'source_uniform_complete_600_step_word_qualified':False,

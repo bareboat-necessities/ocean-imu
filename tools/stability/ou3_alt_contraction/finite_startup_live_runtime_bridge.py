@@ -28,6 +28,7 @@ from tools.stability.ou3_alt_contraction import finite_periodic_aw_sync as AWSYN
 from tools.stability.ou3_alt_contraction import finite_racc_runtime as RACC
 from tools.stability.ou3_alt_contraction import finite_live_imu_prefix as LIVEWORD
 from tools.stability.ou3_alt_contraction import deployment_scope as SCOPE
+from tools.stability.ou3_alt_contraction import finite_startup_handoff_control as CONTROL
 
 
 def R(x): return P.rational(x)
@@ -58,13 +59,13 @@ def bridge(entry:LIVE.Result,fresh:CORE.State,frontend:FRONT.State,*,scope:SCOPE
            commit_cfg:COMMIT.CommitConfig,bench_noise_sigma,
            noise_sqrt:BAND.NoiseSqrtWitness|None=None,rs_sqrt_scale=None,rs_scale=1,
            scheduler:POST.Scheduler,racc:RACC.State,aw_sync:AWSYNC.State,
-           scheduler_park:ACTIVE.NextafterParkWitness|None=None):
+           scheduler_park:ACTIVE.NextafterParkWitness|None=None,
+           handoff_decision:CONTROL.Decision|None=None):
     if not isinstance(entry,LIVE.Result) or not isinstance(fresh,CORE.State):
         raise TypeError('startup Live entry and fresh CORE.State required')
     if not isinstance(frontend,FRONT.State) or not isinstance(frontend.tuner.stage,str):
         raise TypeError('persistent guarded frontend state required')
-    if frontend.tuner.stage!='TunerReady':
-        raise ValueError('goLive frontend bridge starts from TunerReady')
+    CONTROL.require_bridge(handoff_decision,frontend)
     if fresh.mode!='H' or fresh.covariance!=entry.P or fresh.q_hat!=entry.q_hat:
         raise ValueError('fresh H18 CORE state detached from startup Live entry')
     if fresh.reference.time != frontend.tuner.time:
@@ -103,6 +104,7 @@ def bridge(entry:LIVE.Result,fresh:CORE.State,frontend:FRONT.State,*,scope:SCOPE
 def readiness():
     return {
       'TunerReady_to_Live_frontend_stage_edge_materialized':True,
+      'timeout_from_Cold_or_TunerWarm_requires_attached_control_decision':True,
       'Mahony_WPE_band_stats_stillness_guard_memory_preserved_across_goLive':True,
       'goLive_unconditional_active_parameters_derived_from_same_carried_TuneState':True,
       'goLive_live_RS_derived_from_same_carried_TuneState':True,

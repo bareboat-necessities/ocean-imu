@@ -1,4 +1,5 @@
 import unittest
+from dataclasses import replace
 
 from tools.stability.ou3_alt_contraction import finite_source_bound_mag_dual_clock as X
 from tools.stability.ou3_alt_contraction import finite_magnetic_wrapper_clock as WC
@@ -6,6 +7,22 @@ import test_finite_source_bound_live_word as BASE
 
 
 class Tests(unittest.TestCase):
+    def test_saturated_machine_count_keeps_exact_total_event_ledger(self):
+        s=BASE.root_state(); inter=s.live
+        maximum=X.LIVE.GATE.SIGNED_COUNTER_MAX
+        t=inter.live.live.mekf.reference.time
+        control=replace(inter.magnetic.control,updates=maximum,first_time=t)
+        inter=replace(inter,magnetic=replace(inter.magnetic,control=control),
+            clock=replace(inter.clock,calls=maximum,last_time=t))
+        s=replace(s,live=inter)
+        out=X.mag_step(s,**BASE.mag_kwargs(s))
+        self.assertEqual(out.state.live.clock.calls,maximum+1)
+        self.assertEqual(out.state.live.magnetic.control.updates,maximum)
+        self.assertIsNotNone(out.forcing)
+        after=BASE.imu(out.state)
+        self.assertEqual(after.state.live.clock.calls,maximum+1)
+        self.assertEqual(after.state.live.magnetic.control.updates,maximum)
+
     def test_sample_zero_dual_clock_mag_preserves_source_and_forcing(self):
         s=BASE.root_state(); before=s.source
         out=X.mag_step(s,**BASE.mag_kwargs(s))

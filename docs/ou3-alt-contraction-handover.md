@@ -58,7 +58,12 @@ The initialized private-Mahony path also has a named exact binary32 graph under 
 - body hard iron `<=5 uT`;
 - deterministic residual `<=2 uT` per theorem sample.
 
-Together with the declared startup gravity-direction error `<=0.02 rad`, the real-arithmetic startup argument gives total horizontal perturbation `<=8.5 uT`, `|sin(delta_yaw)| <= 17/30`, yaw error `<0.61 rad`, and total attitude error `<0.63 rad < pi/4`. No statistical `1/sqrt(N)` reduction is used.
+The 8.5 uT / 0.63-rad startup estimate is a conditional arithmetic lemma.
+It requires a full accumulation-to-handoff frame bound, which the declared
+0.02-rad gravity-direction error does not establish. See
+`ou3-alt-startup-pre-rho.md` for the missing heading-history premise and the
+separate exact ungauged Cayley-entry obstruction. Current continuation order is
+in `ou3-alt-main-handover.md`.
 
 ### Exact fresh H18 joint24 entry
 
@@ -186,9 +191,9 @@ shipping word. Continue from the product composer, not disconnected snapshots:
    relation, attempt common joint24 storage, every-prefix retention and ultimate
    bounds.
 
-The shipping `int mag_updates_applied_` keeps incrementing after unlock. Its
-finite-width lifetime behavior and floating clocks are explicit open deployment
-obligations. Do not replace either with an unbounded Python arithmetic claim.
+The shipping magnetic counts saturate at INT_MAX while measurements continue.
+Their finite-prefix safety is proved by the audited saturation recurrence.
+Floating-clock lifetime remains a separate open deployment obligation.
 Do not silently disable calibration or shrink the physical domain to get PASS.
 
 ## Validation boundary

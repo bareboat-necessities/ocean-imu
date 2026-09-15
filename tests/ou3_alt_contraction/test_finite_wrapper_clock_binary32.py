@@ -11,8 +11,8 @@ class Tests(unittest.TestCase):
         r=X.build()
         self.assertTrue(r.shipping_source_shape_matches)
         self.assertTrue(r.all_updates_strictly_advance)
-        self.assertEqual(r.startup_timeout_clock,F(9829793,65536))
-        self.assertEqual(r.latest_word_end_clock,F(10026593,65536))
+        self.assertEqual(r.startup_timeout_clock,F(9830449,65536))
+        self.assertEqual(r.latest_word_end_clock,F(10027249,65536))
 
     def test_all_prefix_grid_and_three_second_elapsed_errors_are_bounded_exactly(self):
         r=X.build()
@@ -37,7 +37,7 @@ class Tests(unittest.TestCase):
         self.assertTrue(r['canonical_5ms_wrapper_clock_prefix_binary32_closed'])
         self.assertFalse(r['arbitrary_dt_wrapper_clock_closed'])
         self.assertFalse(r['indefinite_wrapper_clock_lifetime_closed'])
-        self.assertFalse(r['magnetic_counter_lifetime_closed'])
+        self.assertTrue(r['magnetic_counter_lifetime_closed'])
         self.assertFalse(r['ALT_LIVE_PASS'])
         self.assertFalse(r['ALT_END_TO_END_PASS'])
 

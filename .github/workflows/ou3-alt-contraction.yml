@@ -3,6 +3,8 @@ name: ou3-alt-contraction
 on:
   push:
     paths:
+      - "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h"
+      - "src/tuner/MagAutoTuner.h"
       - "tools/stability/ou3_alt_contraction/**"
       - "tests/ou3_alt_contraction/**"
       - "docs/ou3-alt-contraction.md"
@@ -19,6 +21,8 @@ on:
       - ".github/workflows/ou3-alt-contraction.yml"
   pull_request:
     paths:
+      - "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h"
+      - "src/tuner/MagAutoTuner.h"
       - "tools/stability/ou3_alt_contraction/**"
       - "tests/ou3_alt_contraction/**"
       - "docs/ou3-alt-contraction.md"
@@ -114,12 +118,19 @@ jobs:
             test_finite_periodic_aw_sync test_finite_measurement_runtime \
             test_finite_vertical_complementary_runtime test_finite_binary32_mahony \
             test_finite_binary32_mahony_startup test_finite_startup_joined_machine_history \
+            test_finite_startup_entry_obstruction test_finite_startup_disturbance_obstruction \
+            test_finite_startup_sensor_contract \
+            test_finite_startup_handoff_control test_finite_master_guard \
+            test_finite_attitude_atlas test_finite_ungauged_live_word \
             test_finite_frontend_runtime test_finite_frontend_prefix \
             test_finite_guarded_tuner_prefix test_finite_wpe_runtime test_finite_wpe_output_ancestry \
             test_finite_band_variance_runtime test_finite_stillness_runtime \
             test_finite_tuner_stillness_projection test_finite_tuner_candidate \
             test_finite_tuner_projection_bridge test_finite_tuner_frontend_prefix \
             test_finite_tuner_frequency_binary32 test_finite_tuner_tau_binary32 \
+            test_finite_wpe_moment_binary32 test_finite_wpe_usable_binary32 \
+            test_finite_wpe_machine_binary32 test_finite_wpe_frequency_binary32 test_finite_wpe_uniform_bounds \
+            test_finite_startup_wpe_machine_history test_finite_admitted_wpe_machine_clock_interleaved_prefix \
             test_finite_shipping_tau_target_binary32 test_finite_tuner_tau_roundoff_bound \
             test_finite_tuner_tau_600_domain test_finite_complete_word_tau_qualification \
             test_finite_tuner_tau_deployment_ledger \
@@ -133,7 +144,7 @@ jobs:
             test_finite_runtime_parameters test_finite_active_runtime_word \
             test_finite_live_imu_prefix test_finite_tilt_watchdog \
             test_finite_tilt_reset_runtime test_finite_live_tilt_prefix \
-            test_finite_mag_bias_gate test_finite_mag_runtime \
+            test_finite_mag_bias_gate test_finite_mag_counter_saturation test_finite_mag_runtime \
             test_finite_mag_reference_runtime test_finite_mag_reference_events \
             test_finite_mag_accumulator test_finite_mag_gauge_fix test_finite_mag_tilt_frame \
             test_finite_mag_tuner_default test_finite_mag_gravity_gate \
@@ -146,7 +157,7 @@ jobs:
             test_finite_mag_call_schedule test_finite_h18_a21_reachability \
             test_finite_h18_a21_transition test_finite_live_async_mag \
             test_finite_continuous_mag_runtime test_finite_live_magnetic_word \
-            test_finite_live_interleave \
+            test_finite_live_interleave test_finite_source_bound_mag_dual_clock \
             test_shipping_finite_identity test_core test_proof_plan test_bias_families -v
           python3 -m unittest \
             test_finite_tuner_rs_deployment_ledger test_finite_tuner_rs_boundary_deployment \
@@ -171,6 +182,8 @@ jobs:
             --output /tmp/ou3-alt-rank3.json
       - name: Keep all theorem and storage-readiness results fail-closed
         run: |
+          PYTHONPATH="$PWD:$PWD/tools/stability" python3 -m tools.stability.ou3_alt_contraction.finite_master_guard \
+            --output /tmp/ou3-alt-pre-rho.json
           python3 - <<'PYCODE'
           import json
           for path in ('/tmp/ou3-alt-finite-identity.json',
@@ -199,5 +212,6 @@ jobs:
             /tmp/ou3-alt-finite-identity.json
             /tmp/ou3-alt-tilt-reset-identity.json
             /tmp/ou3-alt-rank3.json
+            /tmp/ou3-alt-pre-rho.json
           if-no-files-found: warn
           retention-days: 14

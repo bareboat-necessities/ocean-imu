@@ -32,7 +32,9 @@ class PlanGuardTests(unittest.TestCase):
     def test_finite_guard_requires_every_branch_reference_and_zeroheel_scope(self):
         s=dict(map_representation='finite_physical_descriptor',finite_error_identity_for_every_event=True,
                physical_reference_forcing_retained=True,all_coefficient_product_graphs_retained=True,
-               all_configured_branches_bound_to_finite_graph=True,zero_wind_heel_scope_enforced=True)
+               all_configured_branches_bound_to_finite_graph=True,zero_wind_heel_scope_enforced=True,
+               all_admitted_startup_entries_represented=True,
+               source_uniform_deployment_arithmetic_closed=True,finite_word_counter_safety_closed=True)
         P.assert_finite_storage_master(s)
         for key in tuple(s):
             q=dict(s);q.pop(key)

@@ -14,9 +14,9 @@ BMM150 installation, not a Bosch guarantee for arbitrary installations:
 
 The Earth-field interval encloses the NOAA/WMM surface total-field range with
 margin.  The hard-iron and residual limits are commissioned-installation/source
-requirements.  They are intentionally deterministic and materially wider than
-BMM150 RMS output noise, but tight enough to preserve a useful horizontal-north
-capture margin under the already-declared 0.02 rad startup tilt-direction error.
+requirements. They are deterministic source bounds. A useful horizontal-north
+capture margin additionally requires a source-qualified full accumulation-to-
+handoff frame bound; a startup tilt-direction bound alone does not supply it.
 Samples outside them are outside the theorem even when the sensor itself is far
 from electrical saturation.  The horizontal lower bound is required for
 deterministic yaw observability; a total-field bound alone cannot prove north

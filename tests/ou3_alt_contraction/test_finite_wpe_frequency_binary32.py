@@ -1,6 +1,12 @@
 """WPE binary32 getter/tuner-store deployment regressions."""
 from fractions import Fraction as F
 import unittest
+import os
+from pathlib import Path
+import shutil
+import struct
+import subprocess
+import tempfile
 
 from tools.stability.ou3_alt_contraction import finite_binary32_arithmetic as B
 from tools.stability.ou3_alt_contraction import finite_tuner_frequency_binary32 as STORE
@@ -9,6 +15,59 @@ from tools.stability.ou3_alt_contraction import finite_wpe_runtime as WPE
 
 
 class Tests(unittest.TestCase):
+    def test_eager_machine_getter_and_exact_shadow_select_independent_branches(self):
+        for exact_usable in (False,True):
+            shadow=WPE.WPEState(log_period=F(0) if exact_usable else None,usable_period=exact_usable)
+            for machine_usable in (False,True):
+                for returned in (None,0,-1,B.rn32(F(1,2))):
+                    out=X.machine_frequency(shadow,log_period=B.rn32(0),usable=machine_usable,
+                        getter=X.FrequencyExp(0,returned),min_hz=B.rn32(F(3,100)),max_hz=B.rn32(F(6,5)),
+                        shadow_frequency=F(1) if exact_usable else None)
+                    expected=returned if machine_usable and returned is not None and returned>0 else X.PRIOR
+                    self.assertEqual(out.stored.input_hz,expected)
+                    self.assertEqual(out.exact_shadow_frequency,F(1) if exact_usable else F(1,5))
+                    self.assertEqual(out.machine_minus_shadow,out.stored.stored_hz-out.exact_clamped_frequency)
+                    self.assertEqual(out.machine_read.exp.result,returned)
+        # A prior-selected result does not erase the eager getter's ancestry.
+        with self.assertRaisesRegex(ValueError,'eager frequency exp detached'):
+            X.machine_frequency(WPE.WPEState(),log_period=0,usable=False,getter=None,min_hz=1,max_hz=2)
+        with self.assertRaisesRegex(ValueError,'eager frequency exp detached'):
+            X.MachineRead(0,False,X.FrequencyExp(1,1))
+        self.assertEqual(X.MachineRead(None,True,None).frequency,X.PRIOR)
+
+    def test_outer_supply_includes_nonfinite_and_retained_state(self):
+        lo,hi=F(3,100),F(6,5)
+        bound=X.outer_supply_bound(exact_min_hz=lo,exact_max_hz=hi)
+        ml,mh=map(B.rn32,(lo,hi))
+        for exact in (None,-1,0,F(1,5),100):
+            for machine in (None,-1,0,B.rn32(F(1,5)),100):
+                e=X.final_tuning_clamp(exact,min_hz=lo,max_hz=hi)
+                m=X.final_tuning_clamp(machine,min_hz=ml,max_hz=mh)
+                self.assertEqual(bound.check(e,m),m-e)
+        self.assertEqual(X.final_tuning_clamp(None,min_hz=ml,max_hz=mh),ml)
+
+
+    def test_uniform_supply_includes_rounded_endpoints_and_opposite_branches(self):
+        from tools.stability.ou3_alt_contraction import finite_band_variance_runtime as R
+        cfg=R.StatsConfig(4,F(3,10),60,F(1,20),5)
+        bound=X.statistics_supply_bound(cfg,exact_min_hz=F(3,100),exact_max_hz=F(6,5))
+        self.assertEqual(bound.exact_interval,(F(1,20),F(6,5)))
+        self.assertEqual(bound.machine_interval,(B.rn32(F(1,20)),B.rn32(F(6,5))))
+        lo,hi=bound.residual_interval
+        self.assertLess(lo,0); self.assertGreater(hi,F(23,20))
+        for e in bound.exact_interval:
+            for m in bound.machine_interval:
+                self.assertEqual(bound.check(e,m),m-e)
+        with self.assertRaises(ValueError): bound.check(6,B.rn32(F(1,5)))
+        with self.assertRaises(ValueError): bound.check(F(1,5),6)
+
+    def test_uniform_supply_handles_disjoint_clamp_ranges(self):
+        from tools.stability.ou3_alt_contraction import finite_band_variance_runtime as R
+        cfg=R.StatsConfig(4,F(3,10),60,2,5)
+        b=X.statistics_supply_bound(cfg,exact_min_hz=F(1,10),exact_max_hz=1)
+        self.assertEqual(b.exact_interval,(1,1))
+        self.assertEqual(b.machine_interval,(1,1))
+        self.assertEqual(b.residual_interval,(0,0))
     def test_statistics_clamp_precedes_distinct_outer_tuning_clamp(self):
         from tools.stability.ou3_alt_contraction import finite_band_variance_runtime as R
         from dataclasses import replace
@@ -25,6 +84,7 @@ class Tests(unittest.TestCase):
         self.assertNotEqual(out.stored.stored_hz,external.stored.stored_hz)
         self.assertEqual(out.exact_clamped_frequency,cfg.f_min)
         self.assertEqual(out.machine_minus_shadow,B.rn32(cfg.f_min)-cfg.f_min)
+        self.assertEqual(out.supply_bound.check(out.exact_clamped_frequency,out.stored.stored_hz),out.machine_minus_shadow)
         with self.assertRaisesRegex(ValueError,'ordered statistics'):
             replace(out,stored=external.stored)
 
@@ -100,8 +160,72 @@ class Tests(unittest.TestCase):
         self.assertFalse(r['binary32_period_frequency_bit_reciprocity_assumed'])
         self.assertFalse(r['WPE_binary32_log_period_production_closed'])
         self.assertFalse(r['WPE_frequency_exp_target_libm_correspondence_closed'])
-        self.assertFalse(r['source_uniform_WPE_frequency_supply_bound_closed'])
+        self.assertTrue(r['source_uniform_WPE_frequency_supply_bound_closed'])
         self.assertFalse(r['storage_search_allowed']); self.assertFalse(r['ALT_LIVE_PASS'])
+
+
+class NativeTests(unittest.TestCase):
+    def test_actual_wrapper_selection_and_statistics_clamp(self):
+        cxx=shutil.which(os.environ.get('CXX','g++'))
+        eigen=Path(os.environ.get('EIGEN_INCLUDE_DIR','/usr/include/eigen3'))
+        if not cxx or not (eigen/'Eigen/Dense').is_file():
+            if os.environ.get('OU3_ALT_REQUIRE_NATIVE')=='1': self.fail('required g++/Eigen unavailable')
+            self.skipTest('g++/Eigen unavailable')
+        root=Path(__file__).resolve().parents[2]
+        source=r"""
+#define EIGEN_NON_ARDUINO
+#include <algorithm>
+#include <cmath>
+#include <cstring>
+#include <iostream>
+#include <limits>
+#include <memory>
+#include <sstream>
+#include <vector>
+#include <bit>
+#include <cstdint>
+#include <Eigen/Dense>
+#include <Eigen/Geometry>
+#define private public
+#include "kalman_ou_iii/SeaStateFusionFilter_OU_III.h"
+#undef private
+const float g_std=9.80665f;
+unsigned bits(float x) { return std::bit_cast<uint32_t>(x); }
+int main() {
+    SeaStateFusionFilter_OU_III<TrackerType::KALMANF> f;
+    for (float lp : {NAN,INFINITY,-INFINITY,0.0f,std::log(2.0f),100.0f,-100.0f,1000.0f}) {
+        for (bool usable : {false,true}) {
+            f.wave_period_.log_period_sec_=lp;
+            f.wave_period_.usable_period_=usable;
+            const float returned=f.wave_period_.getFrequencyHz();
+            const float chosen=f.tuner_frequency_hz_();
+            f.tuner_.update(0.005f,0.0f,chosen);
+            std::cout << bits(lp) << " " << usable << " " << bits(returned) << " "
+                      << bits(chosen) << " " << bits(f.tuner_.getFrequencyHz()) << "\n";
+        }
+    }
+}
+"""
+        with tempfile.TemporaryDirectory() as td:
+            cpp=Path(td)/'frequency.cpp';exe=Path(td)/'frequency';cpp.write_text(source)
+            subprocess.run([cxx,'-std=c++20','-O1','-ffp-contract=off','-fno-fast-math',
+                '-DEIGEN_DONT_VECTORIZE',f'-I{eigen}',f'-I{root / "src"}',str(cpp),'-o',str(exe)],
+                check=True,capture_output=True,text=True,timeout=180)
+            run=subprocess.run([str(exe)],check=True,capture_output=True,text=True,timeout=30)
+        def decode(bits):
+            value=struct.unpack('!f',struct.pack('!I',int(bits)))[0]
+            return F(value) if value==value and abs(value)!=float('inf') else None
+        subnormal=False
+        rows=run.stdout.splitlines();self.assertEqual(len(rows),16)
+        for row in rows:
+            lb,ub,rb,cb,sb=row.split();lp,returned,chosen,stored=map(decode,(lb,rb,cb,sb))
+            exp=None if lp is None else X.FrequencyExp(-lp,returned)
+            read=X.MachineRead(lp,bool(int(ub)),exp)
+            self.assertEqual(read.frequency,chosen)
+            clamp=STORE.store(chosen,B.rn32(F(1,20)),B.rn32(5))
+            self.assertEqual(clamp.stored_hz,stored)
+            subnormal |= chosen>0 and chosen<F(1,1<<126)
+        self.assertTrue(subnormal,'native input class must include a selected subnormal getter')
 
 
 if __name__=='__main__': unittest.main()

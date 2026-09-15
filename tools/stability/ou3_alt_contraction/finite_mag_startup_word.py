@@ -74,7 +74,8 @@ def update_mag_call(state:State,gate_cfg:GATE.Config,tuner_cfg:TUNER.Config,
                     yaw_half:TILT.YawHalfWitness|None=None,
                     mag_norm:TUNER.SqrtWitness|None=None,
                     mean_norm:TUNER.SqrtWitness|None=None,
-                    horizontal_sqrt:GAUGE.HorizontalSqrt|None=None):
+                    horizontal_sqrt:GAUGE.HorizontalSqrt|None=None,
+                    live_core=None):
     """Lower-level wrapper updateMag edge; theorem code uses update_mag_physical_call."""
     admission=GATE.startup_mag_admission(
         state.gate,gate_cfg,wrapper_time=packet.wrapper_time,begun=begun,
@@ -88,7 +89,7 @@ def update_mag_call(state:State,gate_cfg:GATE.Config,tuner_cfg:TUNER.Config,
     out=MAG.eligible_update(
         state.mag,tuner_cfg,packet,sample_dt=sample_dt,
         boat_q_norm=boat_q_norm,yaw_half=yaw_half,mag_norm=mag_norm,
-        mean_norm=mean_norm,horizontal_sqrt=horizontal_sqrt)
+        mean_norm=mean_norm,horizontal_sqrt=horizontal_sqrt,live_core=live_core)
     return MagResult(State(admission.state,out.state,state.source_model_root,state.source_history_id),admission,out,None,None)
 
 

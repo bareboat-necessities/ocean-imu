@@ -3,23 +3,24 @@
 The outer ``SeaStateFusion_OU_III`` wrapper stores ``t_`` as ``float`` and
 updates it with ``t_ += dt``. The finite ALT graph previously treated that
 clock as exact real time. This module closes the arithmetic recurrence for the
-canonical 200 Hz source grid through the latest possible startup handoff
-(150 s) plus one 600-transition contraction word (3 s).
+canonical 200 Hz source grid through the first crossing of the default
+150-second timeout comparison plus one 600-transition word. This is a
+conditional horizon: shipping still requires the gravity-aligned branch.
 
 This is exact integer/rational IEEE-754 round-to-nearest-even arithmetic. It
 also records a concrete late-time obstruction to an unqualified indefinite
 clock theorem: at t=2^17 seconds, RN32(t+RN32(0.005))=t.
 """
 from __future__ import annotations
+from tools.stability.ou3_alt_contraction import finite_mag_counter_saturation as COUNT
 from dataclasses import dataclass
 from fractions import Fraction as F
 from pathlib import Path
 
 DT_REAL=F(1,200)
-STARTUP_TIMEOUT_STEPS=150*200
 STARTUP_MIN_STEPS=8*200
 WORD_STEPS=600
-MAX_STEPS=STARTUP_TIMEOUT_STEPS+WORD_STEPS
+DEFAULT_TIMEOUT=F(150)
 STALL_WITNESS_TIME=F(1<<17)
 SOURCE=Path(__file__).resolve().parents[3]/'src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h'
 QUALIFICATION='OU3_ALT_WRAPPER_CLOCK_BINARY32_CANONICAL_5MS_V1'
@@ -60,6 +61,21 @@ def binary32_positive(x)->F:
 
 DT_FLOAT=binary32_positive(DT_REAL)
 STALL_WITNESS_NEXT=binary32_positive(STALL_WITNESS_TIME+DT_FLOAT)
+
+
+def first_default_timeout_crossing():
+    """Exact finite enumeration, not a proof of the other handoff predicates."""
+    t=F(0)
+    for k in range(1,151*200+1):
+        nxt=binary32_positive(t+DT_FLOAT)
+        if nxt>=DEFAULT_TIMEOUT:
+            return k,t,nxt
+        t=nxt
+    raise AssertionError('default timeout comparison not reached within 151 s')
+
+
+STARTUP_TIMEOUT_STEPS, TIMEOUT_PREDECESSOR, TIMEOUT_CROSSING = first_default_timeout_crossing()
+MAX_STEPS=STARTUP_TIMEOUT_STEPS+WORD_STEPS
 
 
 def canonical_step_index(real_time)->int:
@@ -131,6 +147,13 @@ def readiness():
       'exact_wrapper_clock_lookup_available_on_certified_grid':True,
       'all_binary32_clock_updates_strictly_advance_through_timeout_plus_one_word':r.all_updates_strictly_advance,
       'startup_timeout_clock_binary32':r.startup_timeout_clock,
+      'default_timeout_first_crossing_step':STARTUP_TIMEOUT_STEPS,
+      'default_timeout_predecessor_clock':TIMEOUT_PREDECESSOR,
+      'default_timeout_crossing_physical_time_s':STARTUP_TIMEOUT_STEPS*DT_REAL,
+      'default_timeout_plus_word_last_step':MAX_STEPS,
+      'default_timeout_first_crossing_proved':TIMEOUT_PREDECESSOR<DEFAULT_TIMEOUT<=TIMEOUT_CROSSING,
+      'timeout_handoff_also_requires_source_qualified_aligned_branch':True,
+      'universal_startup_deadline_closed':False,
       'latest_word_end_clock_binary32':r.latest_word_end_clock,
       'max_absolute_clock_vs_ideal_grid_error_s':r.max_absolute_grid_error,
       'max_absolute_clock_vs_ideal_grid_error_step':r.max_absolute_grid_error_step,
@@ -141,6 +164,6 @@ def readiness():
       'late_time_stall_witness_s':STALL_WITNESS_TIME,
       'arbitrary_dt_wrapper_clock_closed':False,
       'indefinite_wrapper_clock_lifetime_closed':False,
-      'magnetic_counter_lifetime_closed':False,
+      'magnetic_counter_lifetime_closed':COUNT.build()['counter_lifetime_closed'],
       'ALT_LIVE_PASS':False,'ALT_STARTUP_PASS':False,'ALT_END_TO_END_PASS':False,
     }

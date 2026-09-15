@@ -1,5 +1,6 @@
 """Fresh H18 joint24 construction regressions."""
 from fractions import Fraction as F
+from dataclasses import replace
 from pathlib import Path
 import sys, unittest
 ROOT=Path(__file__).resolve().parents[2]; sys.path.insert(0,str(ROOT))
@@ -40,6 +41,19 @@ def reference(time=0):
 
 
 class Tests(unittest.TestCase):
+    def test_gauged_entry_retains_arbitrary_attitude_without_a_capture_radius(self):
+        # Conditional constructor coverage, not a claim of startup reachability
+        # for this component fixture or covariance consistency of its errors.
+        e=entry(); ordinary=X.build(e,reference(),scope=SCOPE.certified_scope())
+        r=replace(reference(),q_world_to_body=(0,0,0,1))
+        south=X.build(e,r,scope=SCOPE.certified_scope())
+        self.assertEqual((ordinary.attitude_chart,south.attitude_chart),(0,3))
+        self.assertEqual(south.z[:3],(0,0,0))
+        self.assertEqual(south.z[3:],ordinary.z[3:])
+        self.assertEqual(south.covariance,e.P)
+        self.assertIs(south.reference,r)
+        self.assertNotEqual(CORE.rotation(south.reference.q_world_to_body),CORE.rotation(south.q_hat))
+
     def test_builds_exact_CORE_H_state_without_entry_box(self):
         e=entry(); r=reference(); s=X.build(e,r,scope=SCOPE.certified_scope())
         self.assertEqual(s.mode,'H'); self.assertEqual(s.reference,r); self.assertEqual(s.q_hat,e.q_hat)

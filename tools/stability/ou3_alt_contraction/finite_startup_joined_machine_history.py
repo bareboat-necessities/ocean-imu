@@ -8,7 +8,7 @@ are substituted unchanged into goLive and the joined Live Racc word.
 This is a conditional finite graph, not a startup reachability certificate.
 The ordinary FromTwoVectors seed is represented; the nearly antiparallel SVD,
 source admission, timeout/ungauged handoff, clocks and deployment profile remain
-open. The finite 30600-sample ceiling is bookkeeping, not a startup time bound.
+open. The shared conditional sample ceiling is bookkeeping, not a startup time bound.
 """
 from __future__ import annotations
 from dataclasses import dataclass
@@ -34,6 +34,7 @@ from tools.stability.ou3_alt_contraction import finite_binary32_arithmetic as B
 from tools.stability.ou3_alt_contraction import finite_sensor_source_runtime as SENSOR
 from tools.stability.ou3_alt_contraction import finite_post_prediction as POST
 from tools.stability.ou3_alt_contraction import finite_runtime_parameters as ACTIVE
+from tools.stability.ou3_alt_contraction import finite_startup_sensor_contract as SENSOR_CONTRACT
 
 STARTUP_CONFIG_KEYS=frozenset(('guard_cfg','vertical_cfg','wpe_cfg','band_cfg',
     'stats_cfg','bench_noise_sigma','still_cfg','candidate_cfg'))
@@ -49,6 +50,7 @@ class State:
     fma_source: VS.State
     racc: RACC.State
     last_raw: SENSOR.RawImuSample | None = None
+    sensor_history: SENSOR_CONTRACT.History | None = None
 
     def __post_init__(self):
         if not isinstance(self.base,LOWER.State) or not isinstance(self.runtime,RUNTIME.RuntimeConfig):
@@ -65,6 +67,13 @@ class State:
             raise ValueError('startup physical packet memory detached from sample count')
         if self.last_raw is not None and not isinstance(self.last_raw,SENSOR.RawImuSample):
             raise TypeError('same last raw physical startup packet required')
+        if self.sensor_history is not None:
+            if not isinstance(self.sensor_history,SENSOR_CONTRACT.History):
+                raise TypeError('persistent commissioned startup sensor history required')
+            if B.rn32(self.runtime.vertical_cfg.gravity)!=B.rn32(SENSOR_CONTRACT.G):
+                raise ValueError('startup observer gravity detached from selected sensor domain')
+            if self.last_raw is not None:
+                SENSOR_CONTRACT.check_packet(self.sensor_history,self.last_raw,ordinal=n)
         if self.guard.samples!=n: raise ValueError('startup guard count detached from machine frontend')
         for source in (self.separate_source,self.fma_source):
             if not isinstance(source,VS.State): raise TypeError('persistent machine vertical/stillness source required')
@@ -82,7 +91,7 @@ class State:
     def guard_cfg(self): return CONFIG._machine_guard_cfg(self.runtime)
 
 
-def initial(runtime:RUNTIME.RuntimeConfig,deployment_cfg:D.DeploymentConfig):
+def initial(runtime:RUNTIME.RuntimeConfig,deployment_cfg:D.DeploymentConfig,*,sensor_history=None):
     """Literal default wrapper reset; no caller-provided frontend/observer seed."""
     if not CONFIG._default_tracker_cutoff_source_matches():
         raise RuntimeError('shipping tracker default/reset source shape changed')
@@ -95,7 +104,8 @@ def initial(runtime:RUNTIME.RuntimeConfig,deployment_cfg:D.DeploymentConfig):
         BAND.StatsState(),LPF.LPFState(),
         STILL.State(),tune,stage='Cold',warmup_sec=F(10)))
     src=VS.State(V.State(),VS.LPFState(cutoff_hz=CONFIG.DEFAULT_TRACKER_CUTOFF),MSTILL.State())
-    return State(LOWER.initial(frontend),runtime,deployment_cfg,GUARD.State(),src,src,RACC.State())
+    return State(LOWER.initial(frontend),runtime,deployment_cfg,GUARD.State(),src,src,RACC.State(),
+                 sensor_history=sensor_history)
 
 
 @dataclass(frozen=True)
@@ -121,7 +131,7 @@ class StepResult:
 
 def _with_base(state,base):
     return State(base,state.runtime,state.deployment_cfg,state.guard,
-                 state.separate_source,state.fma_source,state.racc,state.last_raw)
+                 state.separate_source,state.fma_source,state.racc,state.last_raw,state.sensor_history)
 
 
 def boundary(state:State,**witnesses):
@@ -138,6 +148,15 @@ def step(state:State,raw,*,dt,machine_dt,machine_gyro_body,machine_acc_body,
          guard_witnesses, separate_source_witnesses, fma_source_witnesses, **witnesses):
     if not isinstance(state,State): raise TypeError('joined startup state required')
     if not isinstance(raw,SENSOR.RawImuSample): raise TypeError('same physical raw startup packet required')
+    if state.sensor_history is not None:
+        SENSOR_CONTRACT.check_packet(state.sensor_history,raw,ordinal=state.guard.samples+1)
+        if F(dt)!=SENSOR_CONTRACT.DT:
+            raise ValueError('commissioned startup profile requires canonical 5ms sampling')
+        if state.last_raw is not None:
+            rate=F(SENSOR_CONTRACT.domain()['true_gyro_bias_rate_upper_rad_s2'])
+            delta=tuple(a-b for a,b in zip(raw.physical.gyro_bias,state.last_raw.physical.gyro_bias))
+            if SENSOR_CONTRACT.norm2(delta)>(rate*F(dt))**2:
+                raise ValueError('startup true gyro bias increment exceeds profile')
     physical=raw.physical
     if physical.time!=state.base.lower.frontend.tuner.time:
         raise ValueError('startup raw packet time detached from sample-entry clock')
@@ -155,14 +174,24 @@ def step(state:State,raw,*,dt,machine_dt,machine_gyro_body,machine_acc_body,
     forbidden={'raw_gyro','raw_acc','dt'} & set(guard_witnesses)
     if forbidden: raise TypeError('machine guard operands belong to the same raw startup packet')
     guard=GUARD.step(state.guard,state.guard_cfg,raw_gyro=gyro,raw_acc=acc,dt=h,**guard_witnesses)
+    if state.sensor_history is not None and (guard.conditioned_acc!=acc or guard.state.weight!=0 or
+            guard.removed_rms>state.guard_cfg.engage_lo):
+        raise ValueError('commissioned startup profile requires the retained dormant guard branch')
     sep=VERTICAL._source_step(state.separate_source,guard,state.runtime,dt,**separate_source_witnesses)
     fma=VERTICAL._source_step(state.fma_source,guard,state.runtime,dt,**fma_source_witnesses)
+    if state.sensor_history is not None:
+        cert=SENSOR_CONTRACT.vertical_supply_certificate(state.sensor_history.profile)
+        for source in (sep,fma):
+            if SENSOR_CONTRACT.norm2(source.state.vertical.q)>cert['computed_quaternion_norm2_upper']:
+                raise AssertionError('same scalar Mahony normalization exceeded proved shell')
+            if abs(source.band_input)>cert['vertical_abs_upper_after_defined_Mahony_update']:
+                raise AssertionError('same Mahony projection exceeded proved vertical bound')
     config={k:getattr(state.runtime,k) for k in STARTUP_CONFIG_KEYS}
     if state.base.lower.frontend.tuner.stage=='Cold':
         config.pop('candidate_cfg')  # shipping returns before the candidate read
     # Exactly one lower event; bind the already-consumed band/sigma operands.
     out=LOWER.step(state.base,raw,dt=dt,deployment_cfg=state.deployment_cfg,**config,**witnesses)
-    nxt=State(out.state,state.runtime,state.deployment_cfg,guard.state,sep.state,fma.state,state.racc,raw)
+    nxt=State(out.state,state.runtime,state.deployment_cfg,guard.state,sep.state,fma.state,state.racc,raw,state.sensor_history)
     return StepResult(nxt,out,guard,sep,fma)
 
 
@@ -193,7 +222,7 @@ class GoLive:
 
 
 def go_live(state:State,entry,fresh,**witnesses):
-    """Conditional TunerReady handoff; no universal/timeout capture inferred."""
+    """Conditional quality/timeout handoff; no universal capture inferred."""
     if not isinstance(state,State): raise TypeError('joined startup state required')
     if {'racc','commit_cfg','bench_noise_sigma'} & set(witnesses):
         raise TypeError('goLive cannot replace carried Racc/configuration history')
@@ -241,6 +270,9 @@ def readiness():
         'conditional_goLive_preserves_joined_machine_source_history':True,
         'admitted_Live_factory_substitutes_same_startup_without_new_snapshots':True,
         'same_physical_bias_history_identity_and_sample_clock_carried':True,
+        'commissioned_sensor_profile_checked_on_same_startup_packets':True,
+        'sensor_profile_preserved_by_pending_boundary_and_goLive':True,
+        'peak_sensor_checks_prove_temporal_direction_membership':False,
         'history_identity_alone_proves_admission':False,
         'startup_source_membership_and_clock_reachability_closed':False,
         'nearly_antiparallel_seed_SVD_closed':False,

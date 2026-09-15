@@ -167,6 +167,15 @@ def prediction(z, segment: PhysicalSegment, *, nominal_step, axis_coefficients,
     event (including safe_phi_A_coeffs' polynomial branch).  This algebra
     routine does not certify their runtime/tuner ancestry.
     """
+    out = prediction_nonattitude(z, segment, axis_coefficients=axis_coefficients,
+                                active_bias=active_bias, phi_hat=phi_hat)
+    out[:3] = attitude(z[:3], segment.physical_rotation_step, nominal_step)
+    return out
+
+
+def prediction_nonattitude(z, segment: PhysicalSegment, *, axis_coefficients,
+                          active_bias: bool, phi_hat=None):
+    """Shared exact motion/BIAS recurrence; preserve attitude for its own graph."""
     z = M.vec(z, 24)
     if z[21:24] != list(segment.before.beta):
         raise ValueError("joint24 truth is not this physical predecessor")
@@ -175,7 +184,6 @@ def prediction(z, segment: PhysicalSegment, *, nominal_step, axis_coefficients,
     if len(axis_coefficients) != 3:
         raise ValueError("three actual axis coefficient tuples required")
     out = list(z)
-    out[:3] = attitude(z[:3], segment.physical_rotation_step, nominal_step)
     for i in range(3):
         out[3+i] = z[3+i] + segment.after.gyro_bias[i]-segment.before.gyro_bias[i]
         va, pa, Sa, alpha, h = M.vec(axis_coefficients[i], 5)

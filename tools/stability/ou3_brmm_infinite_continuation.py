@@ -37,8 +37,12 @@ QUALIFICATION = 'OU3_BRMM_INDEFINITE_S_NECESSARY_CONDITION_V1'
 # copy-to-const-reference cleanup changes no sensor, p/S or entry semantics.
 # The regression reconstructs the previous complete-file hash to ensure this
 # was the only shipping change. All other edits still require a new audit.
+# Wrapper re-audit: the only semantic change saturates the magnetic attempt
+# count at INT_MAX. It adds no physical p/S input and does not change the common
+# sensor-execution information argument. Measurement calls continue and every
+# representable unlock comparison is preserved by min(INT_MAX,count).
 AUDITED = {
-    'src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h': '1008e931734f226f93f52e46a1408503a7c1be9b364c0756da64a19788ece5ed',
+    'src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h': 'fabd03e9c3eb6069df107c7413ffb4b33fbdcd1ce06d3923b0c1ceeb3bcd7359',
     'src/kalman_ou_iii/Kalman3D_Wave_OU_III.h': 'bbc1586529f2f21144cb91e34f3248569178ab6e7a8bb7a1c8a0977d1b06c170',
     'src/kalman_common/SeaStateFusionFilterCommon.h': 'f76b6266ab4f403d2cce61058a79f1fdb5bb55aab1355c62ce2adaf516d7ea9f',
 }
