@@ -13,11 +13,17 @@ class Tests(unittest.TestCase):
         self.assertEqual(out.separate.due,out.fma.due)
         self.assertEqual(out.separate.deployed_cadence,X.CLOCK.ADAPT_FLOAT)
 
-    def test_nondefault_cadence_fails_closed_before_claiming_clock_qualification(self):
+    def test_event_local_cadence_override_is_forbidden(self):
         base,kw,join,_,_,_=BASE.fixture(); s=X.begin(base)
-        with self.assertRaisesRegex(ValueError,'default 0.1'):
+        with self.assertRaisesRegex(TypeError,'carried by runtime'):
             X.imu_step(s,separate_racc_accel_ldlt=MAG.REJECT,fma_racc_accel_ldlt=MAG.REJECT,
                        aw_sync_adapt_every=F(1,5),**join,**kw)
+
+    def test_runtime_and_deployment_cadence_are_same_compiled_value(self):
+        base,_,_,_,_,_=BASE.fixture()
+        exact,deployed=X._carried_cadence(base)
+        self.assertEqual(exact,X.CLOCK.ADAPT_REAL)
+        self.assertEqual(deployed,X.CLOCK.ADAPT_FLOAT)
 
     def test_complete_cannot_skip_600_clock_qualified_edges(self):
         base,_,_,_,_,_=BASE.fixture(); s=X.begin(base)
@@ -27,6 +33,8 @@ class Tests(unittest.TestCase):
         r=X.readiness()
         self.assertTrue(r['default_aw_sync_due_partition_binary64_closed'])
         self.assertTrue(r['complete_word_requires_clock_qualification_on_all_600_IMU_edges'])
+        self.assertTrue(r['adapt_every_runtime_value_ancestry_closed_for_current_word'])
+        self.assertTrue(r['canonical_5ms_source_dt_ancestry_closed_for_current_word'])
         self.assertFalse(r['source_uniform_complete_600_step_word_qualified'])
         self.assertFalse(r['storage_search_allowed'])
 
