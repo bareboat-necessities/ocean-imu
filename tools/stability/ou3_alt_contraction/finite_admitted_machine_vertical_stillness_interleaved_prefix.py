@@ -91,9 +91,9 @@ class CompleteWord:
 def begin(base:LOWER.State,*,guard:GUARD.State,guard_cfg:GUARD.Config,separate_source:VS.State,fma_source:VS.State):
     return State(base,guard,guard_cfg,separate_source,fma_source,_machine_imu_ordinal(base),0)
 
-def _source_step(source,guarded:GUARD.Result,runtime,h,*,lpf_alpha_exp,lpf_successor,still_energy_successor,still_attenuation_exp):
+def _source_step(source,guarded:GUARD.Result,runtime,h,*,lpf_alpha_exp,lpf_successor,still_energy_successor,still_attenuation_exp,mahony_svd=None):
     hq=B.rn32(h); vcfg=_machine_vertical_cfg(runtime)
-    mah=STARTUP.step(source.vertical,vcfg,dt=hq,gyro=guarded.raw_gyro,acc=guarded.conditioned_acc)
+    mah=STARTUP.step(source.vertical,vcfg,dt=hq,gyro=guarded.raw_gyro,acc=guarded.conditioned_acc,svd=mahony_svd)
     band_input=B.rn32(mah.vertical.vertical_accel)
     lp=VS.lpf_step(source.lpf,x=band_input,dt=hq,alpha_exp=lpf_alpha_exp,successor=lpf_successor)
     st=STILL.step(source.stillness,runtime.still_cfg,vertical_lp=lp.state.value,dt=hq,energy_successor=still_energy_successor,attenuation_exp=still_attenuation_exp)
@@ -103,8 +103,8 @@ def _source_step(source,guarded:GUARD.Result,runtime,h,*,lpf_alpha_exp,lpf_succe
 def imu_step(state:State,*,machine_dt,machine_gyro_body,machine_acc_body,
              guard_lp_alpha_exp=None,guard_lp_successors=None,guard_detect_gamma_exp=None,guard_detect_successors=None,
              guard_removed_beta_exp=None,guard_removed_ms_successor=None,guard_removed_rms_sqrt=None,guard_slew_exp=None,guard_weight_successor=None,guard_output_successor=None,
-             separate_lpf_alpha_exp=None,separate_lpf_successor=None,separate_still_energy_successor,separate_still_attenuation_exp=None,
-             fma_lpf_alpha_exp=None,fma_lpf_successor=None,fma_still_energy_successor,fma_still_attenuation_exp=None,**kwargs):
+             separate_lpf_alpha_exp=None,separate_lpf_successor=None,separate_still_energy_successor,separate_still_attenuation_exp=None,separate_mahony_svd=None,
+             fma_lpf_alpha_exp=None,fma_lpf_successor=None,fma_still_energy_successor=None,fma_still_attenuation_exp=None,fma_mahony_svd=None,**kwargs):
     if not isinstance(state,State): raise TypeError('admitted machine vertical/stillness State required')
     restricted=kwargs.get('restricted')
     if restricted is None: raise TypeError('same admitted physical restriction required')
@@ -116,8 +116,8 @@ def imu_step(state:State,*,machine_dt,machine_gyro_body,machine_acc_body,
         lp_alpha_exp=guard_lp_alpha_exp,lp_successors=guard_lp_successors,detect_gamma_exp=guard_detect_gamma_exp,detect_successors=guard_detect_successors,
         removed_beta_exp=guard_removed_beta_exp,removed_ms_successor=guard_removed_ms_successor,removed_rms_sqrt=guard_removed_rms_sqrt,
         slew_exp=guard_slew_exp,weight_successor=guard_weight_successor,output_successor=guard_output_successor)
-    sep=_source_step(state.separate_source,guarded,runtime,h,lpf_alpha_exp=separate_lpf_alpha_exp,lpf_successor=separate_lpf_successor,still_energy_successor=separate_still_energy_successor,still_attenuation_exp=separate_still_attenuation_exp)
-    fma=_source_step(state.fma_source,guarded,runtime,h,lpf_alpha_exp=fma_lpf_alpha_exp,lpf_successor=fma_lpf_successor,still_energy_successor=fma_still_energy_successor,still_attenuation_exp=fma_still_attenuation_exp)
+    sep=_source_step(state.separate_source,guarded,runtime,h,lpf_alpha_exp=separate_lpf_alpha_exp,lpf_successor=separate_lpf_successor,still_energy_successor=separate_still_energy_successor,still_attenuation_exp=separate_still_attenuation_exp,mahony_svd=separate_mahony_svd)
+    fma=_source_step(state.fma_source,guarded,runtime,h,lpf_alpha_exp=fma_lpf_alpha_exp,lpf_successor=fma_lpf_successor,still_energy_successor=fma_still_energy_successor,still_attenuation_exp=fma_still_attenuation_exp,mahony_svd=fma_mahony_svd)
     if sep.mahony!=fma.mahony: raise ValueError('separate/FMA machine histories lost common private-Mahony source')
     VS.require_frontend_input(sep,lower.separate_frontend); VS.require_frontend_input(fma,lower.fma_frontend)
     VS.require_sigma_stillness(sep,lower.separate_sigma_join.machine); VS.require_sigma_stillness(fma,lower.fma_sigma_join.machine)
@@ -137,7 +137,7 @@ def set_hold(state:State,*,hold):
 def complete(state:State): return CompleteWord(state,LOWER.complete(state.base))
 
 def readiness():
-    low=LOWER.readiness(); guard=GUARD.readiness(); src=VS.readiness(); mah=MAHONY.readiness()
+    low=LOWER.readiness(); guard=GUARD.readiness(); src=VS.readiness(); mah=MAHONY.readiness(); seed=STARTUP.readiness()
     return {
       'admitted_machine_TuneState_word_consumed':low['Live_600_step_machine_TuneState_product_attached'],
       'one_common_binary32_guard_feeds_private_Mahony_and_band_history':True,
@@ -147,6 +147,7 @@ def readiness():
       'machine_band_input_bound_to_same_frontend_consumed_by_sigma_target':True,
       'machine_tracker_LPF_and_stillness_bound_to_same_sigma_target':True,
       'complete_word_requires_machine_source_on_all_600_IMU_edges':True,
+      'near_antiparallel_Mahony_seed_solver_witness_port_attached':seed['near_antiparallel_JacobiSVD_branch_topology_materialized_with_solver_witness'],
       'guard_runtime_config_ancestry_closed':False,
       'private_Mahony_runtime_config_and_startup_ancestry_closed':False,
       'tracker_LPF_runtime_config_ancestry_closed':False,
