@@ -1,0 +1,46 @@
+name: PR526 reconciliation workspace
+on:
+  push:
+    branches: [proof/ou3-alt-startup-machine-attachment]
+    paths: [.github/workflows/ou3-pr526-reconcile-workspace.yml]
+permissions:
+  contents: read
+jobs:
+  workspace:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 90
+          persist-credentials: false
+      - name: Fetch main and preserve real three-way merge conflicts
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags --depth=90 origin main:refs/remotes/origin/main
+          test "$(git rev-parse origin/main)" = 1a284166bed214082b60adb3760eaf1581827510
+          test "$(git merge-base HEAD origin/main)" = 8f964a88ca0beb023a109870f424214130faeba9
+          git config user.name 'Proof reconciliation'
+          git config user.email 'proof-reconciliation@users.noreply.github.com'
+          git rev-parse HEAD origin/main > /tmp/reconciliation-parents.txt
+          set +e
+          git merge --no-commit --no-ff origin/main > /tmp/merge.log 2>&1
+          rc=$?
+          set -e
+          cat /tmp/merge.log
+          test "$rc" -le 1
+          git status --short > /tmp/merge-status.txt
+          git diff --name-only --diff-filter=U > /tmp/conflicts.txt
+          cat /tmp/conflicts.txt
+          tar -czf /tmp/pr526-reconciliation-workspace.tar.gz .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pr526-reconciliation-workspace
+          path: |
+            /tmp/pr526-reconciliation-workspace.tar.gz
+            /tmp/reconciliation-parents.txt
+            /tmp/merge.log
+            /tmp/merge-status.txt
+            /tmp/conflicts.txt
+          retention-days: 3
