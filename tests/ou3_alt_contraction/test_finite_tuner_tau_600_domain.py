@@ -12,7 +12,7 @@ class Tests(unittest.TestCase):
         self.assertLess(X.upper_after(X.TOTAL_UPDATES),X.DOMAIN_ABS_MAX)
         self.assertEqual(X.lower_after(0),F(2,5))
         self.assertEqual(X.upper_after(0),F(12))
-        self.assertEqual(X.TOTAL_UPDATES,30600)
+        self.assertEqual(X.TOTAL_UPDATES,30602)
 
     def test_envelope_is_monotone_conservative_over_startup_and_word(self):
         self.assertGreater(X.lower_after(1),X.lower_after(X.TOTAL_UPDATES))

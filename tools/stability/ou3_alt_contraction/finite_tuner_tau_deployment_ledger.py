@@ -24,6 +24,8 @@ use ``hold`` and consume no arithmetic witness.
 WPE binary32 log-state production and target-libm correctness remain open.
 """
 from __future__ import annotations
+
+from tools.stability.ou3_alt_contraction import finite_wrapper_clock_binary32 as HORIZON
 from dataclasses import dataclass
 from fractions import Fraction as F
 
@@ -34,7 +36,7 @@ from tools.stability.ou3_alt_contraction import finite_tuner_tau_binary32 as TAU
 from tools.stability.ou3_alt_contraction import finite_shipping_tau_target_binary32 as TARGET
 from tools.stability.ou3_alt_contraction import finite_tuner_tau_roundoff_bound as ROUND
 
-DT=B.rn32(F(1,200)); INITIAL=B.rn32(F(11,10)); MAX_UPDATES=30600
+DT=B.rn32(F(1,200)); INITIAL=B.rn32(F(11,10)); MAX_UPDATES=HORIZON.MAX_STEPS
 ADAPT_SEC=B.rn32(F(9,5)); ADAPT_PERIODS=B.rn32(F(2,5))
 
 

@@ -526,6 +526,47 @@ path. Source-uniform guard/Racc/libm supplies are therefore open.
 The controlling missing object is the source-uniform finite deployment word,
 not a storage margin. No rho/storage search has been run or authorized.
 
+* **Pre-rho entry representation failure:** the timeout does not require
+  `isTunerReady()` or magnetic north. A quiet, level, zero-bias source has
+  identical IMU history for every constant true heading. With no pre-Live
+  magnetic calls the proxy hands off identity, including when true yaw is pi.
+  The fresh joint24 definition then divides by the zero scalar component of
+  `q_true_WB * conjugate(q_hat_WB)`. This invalidates universal fresh entry in
+  one Cayley chart; it does not establish shipping instability or invalidate
+  the original gravity-quotient track. The exact limiter is a zero chart
+  denominator, not a loose enclosure. Test the unchanged wrapper from reset
+  and verify the analytic constant-heading family and its unbounded Cayley
+  limit. A TunerReady-only bridge also misses the literal timeout edge.
+* **Finite-horizon coverage defect:** exact RN32 accumulation of 0.005 first
+  reaches the default 150-second comparison at sample 30,002. The following
+  600 IMU transitions end at sample 30,602, outside the 30,600 machine-history
+  cap. Even this deadline remains conditional on the gravity-aligned branch;
+  merely enumerating the clock does not prove universal handoff reachability.
+* **Magnetic premise mismatch:** the conditional `E<=8.5 uT` calculation
+  substituted a gravity-direction bound for a full accumulation-to-handoff
+  frame bound. Even perfect tilt leaves physical heading in a yaw-stripped
+  sample. The exact north/south pair for B=(15,0,20) has mean (0,0,20), so
+  tilt alone cannot prove nonzero mean horizontal field. This falsifies the
+  premise substitution, not the conditional chord/mean inequality and not a
+  complete shipping capture trace. Retain heading excursion and handoff lag
+  in the frame relation; sampled means cannot qualify it universally.
+* **Finite counter-safety prerequisite:** MAG-CALL-SCHEDULE-v1 has no minimum
+  gap. Its existing exact counter theorem therefore supplies no uniform call
+  count even within three seconds. This is already a finite-master deployment
+  obligation, not solely an indefinite-tiling issue. Do not invent a rate cap
+  or change the shipping counter to obtain proof readiness.
+
+The critic alternative to further seed/SVD bounds is to address the startup
+representation first. Three distinct choices are (1) carry a gravity quotient
+and neutral yaw until source-qualified magnetic regauging, (2) retain a
+homogeneous quaternion or overlapping attitude charts with exact transport,
+or (3) supply a separately proved all-history magnetic capture theorem before
+entering the current chart. An unproved startup magnetic-cadence/heading
+restriction is not choice (3). None may shrink COMPLETE-BRMM, change shipping,
+or replace unknown yaw by an independently bounded Cayley disturbance. First
+repair literal timeout attachment and record the exact obstruction; retain the
+guard until the chosen representation covers all admitted entry histories.
+
 * **ALT implementation/order defect:** holding Racc sigma between pending
   commits contradicts shipping's per-sample pre-candidate TuneState read. The
   limiting quantity is that exact scalar dependency, not a norm bound. The
@@ -582,26 +623,30 @@ continuous regional invariant or 35 deg/s PE refinement is still broken.
 Private observer accuracy, total startup accumulation-frame heading excursion,
 ungauged timeout and source-qualified deployment seed remain distinct issues.
 
-The inherited broad run recorded 1,089 tests with 5 failures and 15 errors before
-the joined regression repairs. It is not claimed green. Latest focused/native,
+The full inherited suite still has covariance-envelope, endpoint-partition and
+magnetic AD failures. It is not claimed green. Latest focused/native,
 finite-suite and build results are recorded in the PR validation report; none
 promotes source membership, capture, retention or stability.
 
 ### Current limiter, DEAD_ENDS and next falsifiable work
 
-First qualify the actual startup source continuation, seed/SVD/nonfinite and
-ungauged timeout branches, then substitute the machine guard displacement into
-Racc/accelerometer on that same history. Next qualify remaining raw WPE
-period/log ancestry, exp/log/sqrt, band/statistics/tuner, Q-axis, scheduler and
-a_w clocks, trig/normalization, Eigen solves/floors and comparisons. Every literal
-IMU/magnetic/hold/reset edge must retain these supplies and source ancestry.
-Only an accepted complete finite master can permit storage search.
+First resolve the exact ungauged entry obstruction described in
+`ou3-alt-startup-pre-rho.md`: a gravity quotient with neutral yaw and exact
+regauging or homogeneous/multiple-chart transport must cover the admitted
+constant-heading family. A single fresh Cayley chart cannot. Next prove
+startup source/control reachability and the full magnetic frame relation.
 
-Universal capture, source-uniform deployment of all 600 transitions,
-every-prefix retention, joint24 storage/rho and an ultimate bound remain open.
-Indefinite continuation additionally needs finite-width wrapper-clock/counter
-lifetime and tiling without restarting the one-time Live/S origin, covariance,
-frontend or bias history.
+Then qualify the machine guard displacement into Racc/accelerometer, raw WPE
+exp/log/sqrt, band/statistics/tuner, Q-axis, clocks, trig/normalization, Eigen
+solves/floors, nonfinite branches and comparisons on every literal same-history
+IMU/magnetic/hold/reset edge. Finite counter safety is required before storage,
+not deferred entirely to indefinite continuation. The shared 30,602-sample
+budget covers the first default timeout comparison plus 600 IMU edges only
+conditionally on the actual aligned-branch predicate.
+
+All universal entry/deployment/word gates remain open. Every-prefix retention,
+joint24 storage/rho, an ultimate bound and no-restart indefinite tiling remain
+later obligations. No larger clock horizon establishes missing startup capture.
 
 Frozen shortcuts: derivative cocycles presented as finite maps; frozen gains,
 replays or more seeds as universal admission; independent coefficient boxes;

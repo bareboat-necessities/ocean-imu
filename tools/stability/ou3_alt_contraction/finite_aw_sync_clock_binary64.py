@@ -17,14 +17,15 @@ from functools import lru_cache
 from pathlib import Path
 
 from tools.stability.ou3_alt_contraction import finite_binary32_arithmetic as B32
+from tools.stability.ou3_alt_contraction import finite_wrapper_clock_binary32 as WRAPPER
 
 DT_REAL=F(1,200)
 DT_FLOAT=B32.rn32(DT_REAL)
 ADAPT_REAL=F(1,10)
 ADAPT_FLOAT=B32.rn32(ADAPT_REAL)
-STARTUP_TIMEOUT_STEPS=150*200
-WORD_STEPS=600
-MAX_STEPS=STARTUP_TIMEOUT_STEPS+WORD_STEPS
+STARTUP_TIMEOUT_STEPS=WRAPPER.STARTUP_TIMEOUT_STEPS
+WORD_STEPS=WRAPPER.WORD_STEPS
+MAX_STEPS=WRAPPER.MAX_STEPS
 SOURCE=Path(__file__).resolve().parents[3]/'src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h'
 QUALIFICATION='OU3_ALT_AW_SYNC_CLOCK_BINARY64_CANONICAL_5MS_V1'
 

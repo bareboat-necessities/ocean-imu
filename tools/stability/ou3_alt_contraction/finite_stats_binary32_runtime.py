@@ -11,6 +11,8 @@ No exact-real variance is substituted.  Upstream band-machine membership and
 target expf correspondence remain explicit obligations.
 """
 from __future__ import annotations
+
+from tools.stability.ou3_alt_contraction import finite_wrapper_clock_binary32 as HORIZON
 from dataclasses import dataclass
 from fractions import Fraction as F
 from pathlib import Path
@@ -23,7 +25,7 @@ SOURCE=Path(__file__).resolve().parents[3]/'src/tuner/SeaStateAutoTuner.h'
 ZERO=B.rn32(0); ONE=B.rn32(1); TWO=B.rn32(2); HALF=B.rn32(F(1,2))
 TIME_MIN=B.rn32(F(1,2)); TIME_MAX=B.rn32(6); HORIZON_MIN=B.rn32(F(1,20)); HORIZON_MAX=B.rn32(35)
 READY_WEIGHT=B.rn32(F(1,10**6))
-QUALIFICATION='OU3_ALT_STATS_BINARY32_RUNTIME_V1'; MAX_SAMPLES=30600
+QUALIFICATION='OU3_ALT_STATS_BINARY32_RUNTIME_V1'; MAX_SAMPLES=HORIZON.MAX_STEPS
 
 
 def _q(x,name):

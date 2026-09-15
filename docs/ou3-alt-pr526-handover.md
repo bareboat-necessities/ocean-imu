@@ -1,5 +1,9 @@
 # OU-III ALT handoff after PR #526
 
+Current continuation: read `docs/ou3-alt-main-handover.md` and
+`docs/ou3-alt-startup-pre-rho.md` for the exact entry obstruction and corrected
+finite horizon before using this retained implementation handoff.
+
 Read `AGENTS.md` first. This file is the primary continuation handoff after PR #526. Then read `docs/ou3-alt-proof-plan.md`, `docs/ou3-alt-contraction-handover.md`, `docs/ou3-alt-contraction.md`, the ALT section of `docs/ou3-proof-research-state.md`, and `docs/ou3-brmm-main-handover.md`.
 
 ## Non-negotiable architecture

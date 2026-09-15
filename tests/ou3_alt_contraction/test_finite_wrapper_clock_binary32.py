@@ -11,8 +11,8 @@ class Tests(unittest.TestCase):
         r=X.build()
         self.assertTrue(r.shipping_source_shape_matches)
         self.assertTrue(r.all_updates_strictly_advance)
-        self.assertEqual(r.startup_timeout_clock,F(9829793,65536))
-        self.assertEqual(r.latest_word_end_clock,F(10026593,65536))
+        self.assertEqual(r.startup_timeout_clock,F(9830449,65536))
+        self.assertEqual(r.latest_word_end_clock,F(10027249,65536))
 
     def test_all_prefix_grid_and_three_second_elapsed_errors_are_bounded_exactly(self):
         r=X.build()

@@ -23,6 +23,11 @@ from tools.stability.ou3_alt_contraction import finite_wpe_machine_binary32 as W
 from tools.stability.ou3_alt_contraction import finite_wpe_log_binary32 as WPELOG
 from tools.stability.ou3_alt_contraction import finite_wpe_frequency_binary32 as WPEFREQ
 from tools.stability.ou3_alt_contraction import finite_qaxis_exp_binary32 as QEXP
+from tools.stability.ou3_alt_contraction import finite_startup_entry_obstruction as ENTRY
+from tools.stability.ou3_alt_contraction import finite_startup_handoff_control as CONTROL
+from tools.stability.ou3_alt_contraction import finite_wrapper_clock_binary32 as CLOCK
+from tools.stability.ou3_alt_contraction import finite_mag_startup_capture_bound as CAPTURE
+from tools.stability.ou3_alt_contraction import finite_mag_call_schedule as CALLS
 
 QUALIFICATION='OU3_ALT_FINITE_MASTER_GUARD_V1'
 
@@ -31,8 +36,12 @@ def build():
     startup=START.readiness(); seed=STARTSEED.readiness(); swpe=STARTWPE.readiness(); saw=STARTWPEADMIT.readiness()
     live=LIVE.readiness(); lwpe=LIVEWPE.readiness(); nxt=NEXT.readiness(); aw=AWCLOCK.readiness()
     wm=WPEMOM.readiness(); wmach=WPEMACHINE.readiness(); wlog=WPELOG.readiness(); wfreq=WPEFREQ.readiness(); qexp=QEXP.readiness()
+    entry=ENTRY.build(); control=CONTROL.readiness(); capture=CAPTURE.readiness()
+    clock=CLOCK.readiness(); counter=CALLS.counter_lifetime()
 
     closed={
+      'literal_quality_and_timeout_handoff_control':control['quality_and_timeout_predicates_materialized'],
+      'exact_default_timeout_clock_crossing':clock['default_timeout_first_crossing_proved'],
       'startup_to_Live_machine_history_attachment': startup['startup_to_Live_machine_history_attachment_closed'],
       'admitted_source_private_Mahony_startup_to_Live_invariant': startup['admitted_source_private_Mahony_startup_to_Live_invariant_closed'],
       'near_antiparallel_seed_branch_topology': seed['near_antiparallel_JacobiSVD_branch_topology_materialized_with_solver_witness'],
@@ -65,6 +74,10 @@ def build():
     }
 
     open_obligations={
+      'all_admitted_ungauged_entries_have_a_finite_attitude_representation': not entry['multi_chart_or_quotient_entry_closed'],
+      'startup_accumulation_to_handoff_full_frame_bound': not capture['full_accumulation_to_handoff_frame_bound_source_qualified'],
+      'source_uniform_timeout_aligned_branch_reachability': not clock['universal_startup_deadline_closed'],
+      'signed_magnetic_counter_safety_on_the_finite_word': not counter.no_signed_overflow_proved,
       'near_antiparallel_Eigen_JacobiSVD_solver_correspondence': not seed['near_antiparallel_JacobiSVD_solver_correspondence_qualified'],
       'universal_startup_source_and_branch_reachability': not startup['every_admitted_startup_history_reaches_this_boundary_product'],
       'startup_source_uniform_deployment_supplies': not startup['source_uniform_startup_deployment_supply_bounds_closed'],
@@ -85,6 +98,9 @@ def build():
       'physical_reference_forcing_retained':True,
       'all_coefficient_product_graphs_retained':False,
       'all_configured_branches_bound_to_finite_graph':False,
+      'all_admitted_startup_entries_represented':entry['multi_chart_or_quotient_entry_closed'],
+      'source_uniform_deployment_arithmetic_closed':False,
+      'finite_word_counter_safety_closed':counter.no_signed_overflow_proved,
       'zero_wind_heel_scope_enforced':True,
     }
     error=None
@@ -99,6 +115,8 @@ def build():
       'qualification':QUALIFICATION,
       'closed_subobligations':closed,
       'open_obligations':open_obligations,
+      'startup_entry_obstruction':entry,
+      'conditional_timeout_plus_word_last_sample':CLOCK.MAX_STEPS,
       'finite_storage_status':finite_status,
       'finite_storage_guard_error':error,
       'finite_master_guard_closed':False,
@@ -118,3 +136,26 @@ def validate(x):
     for k in ('finite_master_guard_closed','storage_search_allowed','ALT_STARTUP_PASS','ALT_LIVE_PASS','ALT_END_TO_END_PASS'):
         if x.get(k) is not False:f.append(k+' not false')
     return f
+
+
+def main():
+    import argparse
+    import json
+    from pathlib import Path
+
+    parser=argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--output',type=Path,required=True)
+    args=parser.parse_args()
+    report=build()
+    failures=validate(report)
+    report['validation_failures']=failures
+    args.output.parent.mkdir(parents=True,exist_ok=True)
+    args.output.write_text(json.dumps(report,indent=2,sort_keys=True,default=str)+'\n')
+    print(json.dumps({'storage_search_allowed':report['storage_search_allowed'],
+                      'open_obligations':list(report['open_obligations']),
+                      'validation_failures':failures},sort_keys=True))
+    return int(bool(failures))
+
+
+if __name__=='__main__':
+    raise SystemExit(main())

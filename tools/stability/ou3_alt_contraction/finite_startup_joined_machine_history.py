@@ -8,7 +8,7 @@ are substituted unchanged into goLive and the joined Live Racc word.
 This is a conditional finite graph, not a startup reachability certificate.
 The ordinary FromTwoVectors seed is represented; the nearly antiparallel SVD,
 source admission, timeout/ungauged handoff, clocks and deployment profile remain
-open. The finite 30600-sample ceiling is bookkeeping, not a startup time bound.
+open. The shared conditional sample ceiling is bookkeeping, not a startup time bound.
 """
 from __future__ import annotations
 from dataclasses import dataclass
@@ -193,7 +193,7 @@ class GoLive:
 
 
 def go_live(state:State,entry,fresh,**witnesses):
-    """Conditional TunerReady handoff; no universal/timeout capture inferred."""
+    """Conditional quality/timeout handoff; no universal capture inferred."""
     if not isinstance(state,State): raise TypeError('joined startup state required')
     if {'racc','commit_cfg','bench_noise_sigma'} & set(witnesses):
         raise TypeError('goLive cannot replace carried Racc/configuration history')

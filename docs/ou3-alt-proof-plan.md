@@ -49,6 +49,22 @@ one BIAS root, literal prediction/measurement/hygiene branches, frontend/WPE/
 band/tuner memory, async magnetic state, scheduler credit, every H18/A21 edge,
 deployment arithmetic residuals and explicit zero-heel scope ancestry.
 
+## Pre-rho entry obstruction
+
+`ou3-alt-startup-pre-rho.md` establishes that an admitted ungauged timeout can
+reach the pole of the current fresh Cayley chart, with an unbounded nearby
+constant-heading family. A universal finite single-chart entry bound is a dead
+end. Resolve this with a gravity quotient and exact regauging or homogeneous /
+overlapping attitude coordinates before resuming universal finite-master work.
+Do not assume a magnetic lock, shrink heading admission or convert unknown
+Cayley yaw into a bounded disturbance.
+
+The guard explicitly requires all admitted startup entries to be represented,
+source-uniform deployment arithmetic, and finite-word counter safety in addition
+to the existing finite-map/product/branch/source requirements. The default
+RN32 timeout crossing is sample 30,002; shared finite budgets include 600 more
+updates. This horizon is conditional on the actual aligned-branch predicate.
+
 ## Current finite-runtime advancement
 
 The graph has finite descriptors for physical prediction, accepted/rejected
@@ -76,13 +92,12 @@ ALT admits commissioned installations satisfying:
 - body hard iron `<=5 uT`;
 - deterministic residual `<=2 uT` per theorem sample.
 
-With startup gravity-direction error <=0.02 rad, tilt contributes <=1.5 uT,
-so total deterministic horizontal perturbation is <=8.5 uT and
-`|sin(delta_yaw)| <= 17/30`. Since
-`sin(0.61) >= 0.61-0.61^3/6 > 17/30`, yaw error is <0.61 rad. The SO(3)
-triangle inequality gives total startup attitude error <0.63 rad <pi/4. No
-`1/sqrt(N)` statistical reduction is used. Deployment atan2/AngleAxis/
-normalization correspondence remains open.
+The conditional magnetic calculation needs a full accumulation-to-handoff
+frame bound, including physical heading variation. Gravity-direction error
+<=0.02 rad alone does not supply it. With an independently established
+half-frame sine bound <=0.01 and handoff tilt <=0.02, the 8.5 uT perturbation,
+0.61-rad yaw and 0.63-rad full-angle bounds follow. Source qualification of those
+premises and deployment atan2/AngleAxis/normalization remain open.
 
 ## Fresh H18 and first Live sample now composed
 
@@ -198,7 +213,7 @@ H18 with BA cross-covariances zeroed.
 
 ## Current blockers
 
-The immediate blockers are now:
+First resolve the entry obstruction above. The remaining immediate blockers are:
 
 - deployment/binary32 correspondence for startup yaw extraction, atan2,
   AngleAxis, quaternion normalization, handoff setters and clocks;

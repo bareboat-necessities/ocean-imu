@@ -11,13 +11,15 @@ The target compiler/libm correspondence that says the deployed execution really
 belongs to these per-step relations remains fail-closed.
 """
 from __future__ import annotations
+
+from tools.stability.ou3_alt_contraction import finite_wrapper_clock_binary32 as HORIZON
 from dataclasses import dataclass
 
 from tools.stability.ou3_alt_contraction import finite_band_binary32_contraction as C
 from tools.stability.ou3_alt_contraction import finite_band_coefficients_binary32 as Q
 
 QUALIFICATION='OU3_ALT_BAND_MACHINE_LEDGER_V1'
-MAX_SAMPLES=30600
+MAX_SAMPLES=HORIZON.MAX_STEPS
 
 
 @dataclass(frozen=True)

@@ -37,8 +37,6 @@ class Result:
 def bridge(startup:START.State,entry,fresh,**kwargs):
     if not isinstance(startup,START.State):
         raise TypeError('startup frontend tau product required')
-    if startup.frontend.tuner.stage!='TunerReady':
-        raise ValueError('tau goLive bridge requires TunerReady startup frontend')
     out=LIVE.bridge(entry,fresh,startup.frontend,**kwargs)
     return Result(out,startup.tau,startup)
 

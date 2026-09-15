@@ -22,11 +22,13 @@ state, not yet the next-sample MEKF commit transaction.
 
 The finite update counter is theorem bookkeeping, not a shipping counter.  Its
 horizon matches the already-certified tau/sigma bounded execution: at most
-30,000 pre-Live adaptation updates under the 150 s startup timeout plus the 600
-Live transitions of one canonical word.  A shorter arbitrary cap would silently
+30,002 pre-Live samples through the first RN32 150-second timeout crossing
+plus 600 Live transitions, conditional on the other handoff predicates.  A shorter arbitrary cap would silently
 exclude admitted late-startup histories from the coherent TuneState product.
 """
 from __future__ import annotations
+
+from tools.stability.ou3_alt_contraction import finite_wrapper_clock_binary32 as HORIZON
 from dataclasses import dataclass
 from fractions import Fraction as F
 from pathlib import Path
@@ -38,7 +40,7 @@ from tools.stability.ou3_alt_contraction import finite_tuner_spectral_machine_re
 
 SOURCE=Path(__file__).resolve().parents[3]/'src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h'
 SEED_RS=B.rn32(F(1,2))
-PRELIVE_MAX_UPDATES=30000
+PRELIVE_MAX_UPDATES=HORIZON.STARTUP_TIMEOUT_STEPS
 WORD_STEPS=600
 MAX_UPDATES=PRELIVE_MAX_UPDATES+WORD_STEPS
 QUALIFICATION='OU3_ALT_RS_DEPLOYMENT_LEDGER_V2'

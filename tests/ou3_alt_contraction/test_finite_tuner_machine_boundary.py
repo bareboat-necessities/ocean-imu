@@ -91,8 +91,8 @@ class Tests(unittest.TestCase):
     def test_RS_ledger_covers_same_bounded_startup_plus_word_horizon(self):
         self.assertEqual(RS.MAX_UPDATES,TAU.MAX_UPDATES)
         self.assertEqual(RS.MAX_UPDATES,SIG.MAX_UPDATES)
-        M.State(TAU.State(updates=30600),SIG.State(updates=30600),RS.State(updates=30600),False)
-        with self.assertRaises(ValueError): RS.State(updates=30601)
+        M.State(TAU.State(updates=30602),SIG.State(updates=30602),RS.State(updates=30602),False)
+        with self.assertRaises(ValueError): RS.State(updates=30603)
 
     def test_readiness_closes_common_boundary_only(self):
         r=X.readiness()

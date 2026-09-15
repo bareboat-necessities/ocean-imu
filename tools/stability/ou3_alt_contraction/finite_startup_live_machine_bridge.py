@@ -42,8 +42,6 @@ class Result:
 def bridge(startup:START.State,entry,fresh,**kwargs):
     if not isinstance(startup,START.State):
         raise TypeError('coherent startup whole-machine product required')
-    if startup.base.frontend.tuner.stage!='TunerReady':
-        raise ValueError('coherent machine goLive bridge requires TunerReady startup frontend')
     out=LIVE.bridge(entry,fresh,startup.base.frontend,**kwargs)
     return Result(out,startup.machine,startup.base.wpe,startup)
 

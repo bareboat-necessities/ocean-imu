@@ -114,6 +114,7 @@ jobs:
             test_finite_periodic_aw_sync test_finite_measurement_runtime \
             test_finite_vertical_complementary_runtime test_finite_binary32_mahony \
             test_finite_binary32_mahony_startup test_finite_startup_joined_machine_history \
+            test_finite_startup_entry_obstruction test_finite_startup_handoff_control test_finite_master_guard \
             test_finite_frontend_runtime test_finite_frontend_prefix \
             test_finite_guarded_tuner_prefix test_finite_wpe_runtime test_finite_wpe_output_ancestry \
             test_finite_band_variance_runtime test_finite_stillness_runtime \
@@ -171,6 +172,8 @@ jobs:
             --output /tmp/ou3-alt-rank3.json
       - name: Keep all theorem and storage-readiness results fail-closed
         run: |
+          PYTHONPATH="$PWD:$PWD/tools/stability" python3 -m tools.stability.ou3_alt_contraction.finite_master_guard \
+            --output /tmp/ou3-alt-pre-rho.json
           python3 - <<'PYCODE'
           import json
           for path in ('/tmp/ou3-alt-finite-identity.json',
@@ -199,5 +202,6 @@ jobs:
             /tmp/ou3-alt-finite-identity.json
             /tmp/ou3-alt-tilt-reset-identity.json
             /tmp/ou3-alt-rank3.json
+            /tmp/ou3-alt-pre-rho.json
           if-no-files-found: warn
           retention-days: 14
