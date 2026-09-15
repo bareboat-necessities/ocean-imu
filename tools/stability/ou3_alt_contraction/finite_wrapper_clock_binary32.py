@@ -12,6 +12,7 @@ also records a concrete late-time obstruction to an unqualified indefinite
 clock theorem: at t=2^17 seconds, RN32(t+RN32(0.005))=t.
 """
 from __future__ import annotations
+from tools.stability.ou3_alt_contraction import finite_mag_counter_saturation as COUNT
 from dataclasses import dataclass
 from fractions import Fraction as F
 from pathlib import Path
@@ -163,6 +164,6 @@ def readiness():
       'late_time_stall_witness_s':STALL_WITNESS_TIME,
       'arbitrary_dt_wrapper_clock_closed':False,
       'indefinite_wrapper_clock_lifetime_closed':False,
-      'magnetic_counter_lifetime_closed':False,
+      'magnetic_counter_lifetime_closed':COUNT.build()['counter_lifetime_closed'],
       'ALT_LIVE_PASS':False,'ALT_STARTUP_PASS':False,'ALT_END_TO_END_PASS':False,
     }

@@ -14,7 +14,7 @@ from tools.stability.ou3_alt_contraction import finite_fresh_joint24_entry as FR
 from tools.stability.ou3_alt_contraction import deployment_scope as SCOPE
 
 
-def root(*,samples=2,refine=False,field=(30,0,0),south=True):
+def root(*,samples=2,refine=False,field=(30,0,0),south=True,return_startup=False):
     bridge=I.FIRST.startup(); core=bridge.state.mekf; proxy=bridge.frontend_before.tuner.vertical
     seed=SEED.seed(proxy,None)
     hand=INIT.initialize_from_seed_zero_heel(seed,(0,)*21,MAG.M.eye(21),
@@ -29,10 +29,12 @@ def root(*,samples=2,refine=False,field=(30,0,0),south=True):
     word=MAG.START.State(MAG.GRAVITY.State(gravity_good=10,aligned_branch=True),T.PREFIX.State(proxy))
     magnetic=MAG.begin_startup(word,cfg,MAG.SOURCE.Model(field,(0,0,0),'fixed-field'),
         core.reference.history_id,'same-reference-producer')
+    if return_startup:
+        return bridge,magnetic
     return X.from_startup(bridge,magnetic,proxy_q_norm=MAG.TILT.SqrtWitness(1,1))
 
 
-def packet(state,*,ready=False,norm=30,**kwargs):
+def packet_kwargs(state,*,ready=False,norm=30,**kwargs):
     ts=I.WCLOCK.at_physical_time(state.live.live.mekf.reference.time)
     dt=I.WCLOCK.shipping_elapsed(ts,state.magnetic.memory.last_hi_time,
                                  fallback_dt=state.magnetic.memory.cfg.sample_dt)
@@ -43,10 +45,14 @@ def packet(state,*,ready=False,norm=30,**kwargs):
             horizontal_sqrt=T.GAUGE.HorizontalSqrt(norm*norm,norm),
             gauge_half=MAG.TILT.YawHalfWitness(-norm,0,MAG.TILT.SqrtWitness(norm*norm,norm),0,1))
         kwargs.setdefault('ldlt',T.REJECT)
-    return X.mag_step(state,residual_body=(0,0,0),packet_id='same-packet',
+    return dict(residual_body=(0,0,0),packet_id='same-packet',
         proxy_q_norm=MAG.TILT.SqrtWitness(1,1),proxy_yaw_half=T.zero_yaw(),
         hi_decay=MAG.HI.Decay(dt,state.magnetic.memory.cfg.continuous.memory,1),
         initial=initial,**kwargs)
+
+
+def packet(state,**kwargs):
+    return X.mag_step(state,**packet_kwargs(state,**kwargs))
 
 
 class Tests(unittest.TestCase):

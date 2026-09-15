@@ -2,7 +2,7 @@
 
 ``SeaStateFusionFilter_OU_III::updateMag`` is an external event, not part of each
 IMU sample.  If magnetometry is enabled and wrapper time has reached the delay,
-it calls the MEKF magnetic measurement, then increments ``mag_updates_applied``
+it calls the MEKF magnetic measurement, then saturating-increments ``mag_updates_applied``
 regardless of whether the MEKF accepted that correction.  The first attempted
 update timestamps ``first_mag_update_time``.  Only after all of
 
@@ -24,11 +24,12 @@ from fractions import Fraction as F
 
 from tools.stability.ou3_alt_contraction import finite_core as CORE
 from tools.stability.ou3_alt_contraction import finite_prediction_graph as P
+from tools.stability.ou3_alt_contraction import finite_mag_counter_saturation as COUNT
 
 
 def R(x): return P.rational(x)
 OFF_BA=18
-SIGNED_COUNTER_MAX=(1 << 31)-1
+SIGNED_COUNTER_MAX=COUNT.SIGNED_MAX
 
 @dataclass(frozen=True)
 class Config:
@@ -39,7 +40,7 @@ class Config:
     def __post_init__(self):
         if not isinstance(self.with_mag,bool): raise TypeError('literal with_mag branch required')
         d,s=R(self.mag_delay),R(self.initial_ba_std)
-        if d<0 or s<0 or not isinstance(self.unlock_count,int) or self.unlock_count<0:
+        if d<0 or s<0 or type(self.unlock_count) is not int or not 0 <= self.unlock_count <= SIGNED_COUNTER_MAX:
             raise ValueError('valid mag delay/unlock count/BA std required')
         object.__setattr__(self,'mag_delay',d); object.__setattr__(self,'initial_ba_std',s)
 
@@ -112,12 +113,8 @@ def update_mag_call(control:State,filter_state:CORE.State,cfg:Config,*,time,live
     if measurement_state.reference != filter_state.reference:
         raise ValueError('mag measurement successor detached from same physical endpoint')
 
-    # C++ signed overflow has no defined successor. Do not extend shipping's
-    # partial machine relation with an unbounded Python integer or wraparound.
-    # This rejects an unsafe edge; it does NOT prove source histories avoid it.
-    if control.updates == SIGNED_COUNTER_MAX:
-        raise OverflowError('shipping mag_updates_applied_++ has no defined int32 successor')
-    n=control.updates+1
+    # Only the count saturates; measurement, timestamp and release continue.
+    n=COUNT.after_attempts(control.updates)
     first=t if control.first_time is None else control.first_time
     locked=control.locked
     unlocked=False
@@ -148,8 +145,8 @@ def readiness():
     return {
       'mag_delay_and_with_mag_gate_materialized':True,
       'attempt_count_independent_of_measurement_acceptance':True,
-      'undefined_signed_counter_successor_rejected':True,
-      'all_admitted_calls_avoid_signed_overflow_proved':False,
+      'signed_counter_saturation_materialized':True,
+      'all_admitted_calls_avoid_signed_overflow_proved':COUNT.build()['counter_lifetime_closed'],
       'first_attempt_timestamp_materialized':True,
       'unlock_count_and_strict_one_second_guard_materialized':True,
       'external_hold_blocks_unlock_enable_but_not_lock_clear':True,

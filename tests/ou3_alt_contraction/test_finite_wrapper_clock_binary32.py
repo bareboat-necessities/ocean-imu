@@ -37,7 +37,7 @@ class Tests(unittest.TestCase):
         self.assertTrue(r['canonical_5ms_wrapper_clock_prefix_binary32_closed'])
         self.assertFalse(r['arbitrary_dt_wrapper_clock_closed'])
         self.assertFalse(r['indefinite_wrapper_clock_lifetime_closed'])
-        self.assertFalse(r['magnetic_counter_lifetime_closed'])
+        self.assertTrue(r['magnetic_counter_lifetime_closed'])
         self.assertFalse(r['ALT_LIVE_PASS'])
         self.assertFalse(r['ALT_END_TO_END_PASS'])
 

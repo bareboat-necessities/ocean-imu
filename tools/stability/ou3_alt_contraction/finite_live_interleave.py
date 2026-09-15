@@ -53,7 +53,7 @@ class State:
             raise ValueError('magnetic clock detached from Live origin or the actual later north-lock edge')
         if not core.reference.live_origin <= expected_clock_origin <= core.reference.time:
             raise ValueError('north acquisition clock outside the same physical Live history')
-        if self.magnetic.control.updates != self.clock.calls:
+        if self.magnetic.control.updates != GATE.COUNT.after_attempts(0,self.clock.calls):
             raise ValueError('counted magnetic calls detached from literal control state')
         c = self.magnetic.control
         if (c.first_time is None) != (self.clock.calls == 0):

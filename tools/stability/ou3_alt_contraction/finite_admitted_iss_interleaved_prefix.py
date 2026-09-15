@@ -10,10 +10,11 @@ same disturbance-history object and consume no IMU disturbance ordinal.
 is intentionally a structural certificate only: it proves that one and the
 same admitted COMPLETE-BRMM, BIAS and bounded-ISS histories supplied all 600
 ordered physical transitions and that asynchronous MAG/HOLD edges did not
-silently consume source ordinals.  Deployment arithmetic, counter lifetime,
+silently consume source ordinals.  Source-uniform deployment arithmetic,
 startup reachability and a storage inequality remain open.
 """
 from __future__ import annotations
+from tools.stability.ou3_alt_contraction import finite_mag_counter_saturation as COUNT
 from dataclasses import dataclass
 
 from tools.stability.ou3_alt_contraction import finite_admitted_interleaved_prefix as BASE
@@ -124,7 +125,7 @@ def readiness():
       'complete_600_transition_strengthening_checks_IMU_ledger_consecutivity':True,
       'complete_600_transition_strengthening_preserves_same_BRMM_BIAS_ISS_product':True,
       'all_event_arithmetic_witnesses_source_uniformly_qualified':False,
-      'magnetic_counter_lifetime_closed':False,
+      'magnetic_counter_lifetime_closed':COUNT.build()['counter_lifetime_closed'],
       'startup_reachability_to_admitted_fresh_state_closed':False,
       'source_uniform_complete_600_step_word_qualified':False,
       'storage_search_allowed':False,

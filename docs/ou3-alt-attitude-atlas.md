@@ -90,8 +90,9 @@ not proof that every admitted physical history reaches north.
 ## Remaining qualification boundary
 
 The atlas removes the single-chart representation obstruction. It does not
-prove universal finite startup, magnetic accuracy, target arithmetic, counter
-safety, or a complete source-uniform 600-transition deployment word.
+prove universal finite startup, magnetic accuracy, target arithmetic or a
+complete source-uniform 600-transition deployment word. Magnetic counter safety
+is independently closed by the source-bound saturation invariant.
 
 Chart k>0 has its coordinate origin at a 180-degree rotation, not zero error.
 Consequently a common `z'Mz` with every chart origin treated as zero would not
@@ -99,10 +100,7 @@ be a coercive attitude storage. Any future storage must respect the actual
 rotation and compatible chart transport (for example using chart-dependent
 homogeneous/affine terms). No storage or rho search is authorized by this lemma.
 
-The magnetic control graph now rejects the undefined signed-int32 successor
-at INT_MAX. This is faithful partial program semantics, not a proof that all
-admitted histories avoid it. MAG-CALL-SCHEDULE-v1 still supplies no uniform
-upper call count. The AtomS3R sketch makes at most one updateMag call per
-updateFilter_ invocation, but using that bound requires attachment of that
-specific caller and its actual variable-dt/configuration/build profile. It is
-not silently substituted for the broader current asynchronous theorem language.
+The magnetic control graph uses the shipping saturated successor at INT_MAX.
+The projection from mathematical event ordinal is retained across MAG and IMU
+composition. No maximum call rate is required for this integer safety theorem;
+see `ou3-alt-deployment-prerequisite.md` for its source and arithmetic boundary.

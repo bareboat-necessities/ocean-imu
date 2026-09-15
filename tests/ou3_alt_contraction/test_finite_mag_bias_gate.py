@@ -18,18 +18,35 @@ def with_ba_cross(state):
 
 
 class Tests(unittest.TestCase):
-    def test_signed_counter_boundary_is_not_an_unbounded_integer_edge(self):
+    def test_signed_counter_saturates_and_keeps_measurement_successor(self):
         s=FC.root('H'); cfg=X.Config()
         pre=X.State(X.SIGNED_COUNTER_MAX-1,F(7),False,True)
         last=X.update_mag_call(pre,s,cfg,time=9,live=True,measurement_state=s)
         self.assertEqual(last.state.updates,X.SIGNED_COUNTER_MAX)
-        with self.assertRaisesRegex(OverflowError,'no defined int32 successor'):
-            X.update_mag_call(last.state,s,cfg,time=9,live=True,measurement_state=s)
+        changed=with_ba_cross(s)
+        for _ in range(4):
+            last=X.update_mag_call(last.state,s,cfg,time=9,live=True,measurement_state=changed)
+            self.assertEqual(last.state.updates,X.SIGNED_COUNTER_MAX)
+            self.assertEqual(last.filter_state,changed)
+            self.assertTrue(last.attempted)
         disabled=X.update_mag_call(last.state,s,X.Config(with_mag=False),time=9,live=True)
         self.assertEqual(disabled.state,last.state)
         for invalid in (True,-1,X.SIGNED_COUNTER_MAX+1):
             with self.assertRaisesRegex(ValueError,'signed int32'):
                 X.State(invalid)
+            with self.assertRaises(ValueError): X.Config(unlock_count=invalid)
+
+    def test_saturated_counter_still_checks_strict_time_and_external_hold(self):
+        s=FC.root('H'); cfg=X.Config(unlock_count=X.SIGNED_COUNTER_MAX)
+        c=X.State(X.SIGNED_COUNTER_MAX,F(7),True,True)
+        equal=X.update_mag_call(c,s,cfg,time=8,live=True,measurement_state=s)
+        self.assertTrue(equal.state.locked)
+        later=X.update_mag_call(equal.state,s,cfg,time=F(801,100),live=True,measurement_state=s)
+        self.assertFalse(later.state.locked)
+        self.assertEqual(later.filter_state.mode,'H')
+        released=X.set_hold(later.state,later.filter_state,cfg,hold=False,live=True)
+        self.assertEqual(released.filter_state.mode,'A')
+        self.assertEqual(released.state.updates,X.SIGNED_COUNTER_MAX)
 
     def test_delay_or_disabled_gate_consumes_no_measurement_successor(self):
         s=FC.root('H'); c=X.State(); cfg=X.Config(with_mag=True,mag_delay=7)

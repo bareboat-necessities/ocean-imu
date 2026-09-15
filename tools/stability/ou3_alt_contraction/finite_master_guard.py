@@ -31,7 +31,9 @@ from tools.stability.ou3_alt_contraction import finite_mag_call_schedule as CALL
 from tools.stability.ou3_alt_contraction import finite_attitude_atlas as ATLAS
 from tools.stability.ou3_alt_contraction import finite_fresh_joint24_entry as FRESH
 from tools.stability.ou3_alt_contraction import finite_live_interleave as INTERLEAVE
-from tools.stability.ou3_alt_contraction import finite_mag_counter_obstruction as COUNTER
+from tools.stability.ou3_alt_contraction import finite_mag_counter_saturation as COUNTER
+from tools.stability.ou3_alt_contraction import finite_admitted_source_live_word as ADLIVE
+from tools.stability.ou3_alt_contraction import finite_source_bound_mag_dual_clock as MAGWORD
 
 QUALIFICATION='OU3_ALT_FINITE_MASTER_GUARD_V1'
 
@@ -42,9 +44,14 @@ def build():
     wm=WPEMOM.readiness(); wmach=WPEMACHINE.readiness(); wlog=WPELOG.readiness(); wfreq=WPEFREQ.readiness(); qexp=QEXP.readiness()
     entry=ENTRY.build(); control=CONTROL.readiness(); capture=CAPTURE.readiness()
     clock=CLOCK.readiness(); counter=CALLS.counter_lifetime(); atlas=ATLAS.readiness()
-    counter_obstruction=COUNTER.build()
+    counter_certificate=COUNTER.build()
 
     closed={
+      'signed_magnetic_counter_safety_on_every_finite_prefix':counter_certificate['counter_lifetime_closed'],
+      'accepted_and_rejected_magnetic_sample_counter_safety':counter_certificate['accepted_and_rejected_magnetic_sample_counters_closed'],
+      'certified_empty_startup_and_later_north_in_admitted_source_word': bool(
+          ADLIVE.readiness()['certified_empty_magnetic_prefix_admitted_at_ungauged_timeout'] and
+          MAGWORD.readiness()['ungauged_north_and_saturated_counter_use_shared_event_composer']),
       'ungauged_Live_waiting_and_later_north_runtime_branch': INTERLEAVE.readiness()['ungauged_timeout_entry_and_later_north_acquisition_composed'],
       'all_nonzero_fresh_attitudes_represented_by_joint24_atlas': bool(
           atlas['all_nonzero_relative_quaternions_covered'] and
@@ -122,14 +129,11 @@ def build():
 
     return {
       'qualification':QUALIFICATION,
-      'research_outcome':'finite_master_prerequisite_falsified',
+      'research_outcome':'finite_master_qualification_incomplete',
       'closed_subobligations':closed,
       'open_obligations':open_obligations,
-      'falsified_prerequisites':{
-          'signed_magnetic_counter_safety_on_the_finite_word':
-              not counter_obstruction['total_defined_execution_for_current_schedule_possible'],
-      },
-      'counter_totality_obstruction':counter_obstruction,
+      'falsified_prerequisites':{},
+      'counter_saturation_certificate':counter_certificate,
       'startup_entry_obstruction':entry,
       'attitude_atlas':atlas,
       'conditional_timeout_plus_word_last_sample':CLOCK.MAX_STEPS,
@@ -148,12 +152,14 @@ def validate(x):
         if v is not True:f.append('closed subobligation regressed: '+k)
     if not x.get('open_obligations') or not all(v is True for v in x['open_obligations'].values()):
         f.append('open-obligation polarity mismatch')
-    if x.get('falsified_prerequisites') != {'signed_magnetic_counter_safety_on_the_finite_word':True}:
-        f.append('finite counter totality falsification missing')
-    if x.get('research_outcome') != 'finite_master_prerequisite_falsified':
-        f.append('research outcome obscures falsified prerequisite')
-    if x.get('counter_totality_obstruction') != COUNTER.build():
-        f.append('counter obstruction differs from audited source/schedule argument')
+    if x.get('falsified_prerequisites') != {}:
+        f.append('obsolete counter falsification retained')
+    if x.get('research_outcome') != 'finite_master_qualification_incomplete':
+        f.append('research outcome differs from current qualification')
+    if x.get('counter_saturation_certificate') != COUNTER.build():
+        f.append('counter certificate differs from audited shipping recurrence')
+    if x.get('finite_storage_status',{}).get('finite_word_counter_safety_closed') is not True:
+        f.append('proved counter safety not consumed by storage guard')
     if not x.get('finite_storage_guard_error'):f.append('finite storage guard did not fail closed')
     for k in ('finite_master_guard_closed','storage_search_allowed','ALT_STARTUP_PASS','ALT_LIVE_PASS','ALT_END_TO_END_PASS'):
         if x.get(k) is not False:f.append(k+' not false')

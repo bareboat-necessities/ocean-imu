@@ -73,8 +73,8 @@ def from_startup(bridge:START.Result, magnetic:MAGDUAL.CertifiedStartupState,
     """Bind the dual-clock-certified startup state to admitted physical sources."""
     if not isinstance(bridge,START.Result) or not isinstance(magnetic,MAGDUAL.CertifiedStartupState):
         raise TypeError('actual startup Live bridge and certified dual-clock magnetic history required')
-    if magnetic.calls <= 0:
-        raise ValueError('admitted startup handoff requires an executed dual-clock magnetic history')
+    # The certified empty prefix is an actual no-magnetic-call history. The
+    # timeout can enter Live ungauged; no pre-Live service premise is imposed.
     if not isinstance(origin,ADMIT.RestrictedOrigin) or not isinstance(bias_history,ABIASS.AdmittedBiasHistory):
         raise TypeError('admitted BRMM origin and BIAS history required')
     live=INTER.from_startup(bridge,magnetic.state,proxy_q_norm=proxy_q_norm,
@@ -134,6 +134,7 @@ def readiness():
       'admitted_BIAS_history_carried_in_same_Live_product':b['BIAS0_BIAS1_BIAS2_admitted_history_quantifier_available'],
       'actual_startup_interleave_constructor_consumed_by_admitted_source_factory':True,
       'admitted_startup_requires_inductive_dual_clock_magnetic_history':mag['certified_startup_successor_only_from_dual_clock_call'],
+      'certified_empty_magnetic_prefix_admitted_at_ungauged_timeout':True,
       'already_mutated_single_clock_startup_rejected_at_theorem_handoff':mag['already_mutated_single_clock_startup_cannot_be_certified'],
       'startup_fresh_H18_reference_must_equal_admitted_tL_origin':True,
       'startup_fresh_H18_reference_must_equal_admitted_BIAS_root':True,

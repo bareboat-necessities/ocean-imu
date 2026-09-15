@@ -63,11 +63,10 @@ initial north acquisition after Live. Continuous calibration/refinement retain
 their own private-observer frame. Later north starts the magnetic service clock
 without resetting the physical Live/S origin or duplicating packet statistics.
 
-The guard still requires universal source/control reachability, source-uniform
-arithmetic and finite-word counter safety. The last prerequisite is false for
-the current generic magnetic schedule: `ou3-alt-deployment-prerequisite.md`
-constructs an admitted finite burst that defeats total machine execution. The
-actual sketch's invocation bound is a distinct, still-unattached contract.
+The guard still requires universal source/control reachability and source-uniform
+arithmetic. Finite-word magnetic counter safety is closed by saturation for
+all finite call counts; see `ou3-alt-deployment-prerequisite.md`. Measurement,
+statistics and release continue at the cap, including after threshold changes.
 The default RN32 timeout crossing is
 sample 30,002; shared finite budgets include 600 more updates, conditional on
 actual source-produced alignment. Coercive storage must respect the fact that
@@ -212,10 +211,10 @@ endpoint topology; complete source membership at sample zero remains false.
 innovation acceptance, so its internal lock clears within 10 s. The 250th call can occur before the
 strict >1 s guard: the corrected proof uses
 `first_gap + max(249*gap, 1+gap)` and continued, locally finite call coverage.
-Finite-prefix checks do not prove the infinite schedule. This reachability
-statement is conditional on defined counter arithmetic; the current schedule
-also admits overflow before the release deadline. It cannot promote a total
-shipping execution theorem.
+Finite-prefix checks do not prove the infinite schedule. The source-bound
+saturation invariant preserves every configurable count threshold for all finite
+prefixes. Other arithmetic operations and floating clocks require their own
+qualification before total shipping execution can be claimed.
 
 Do not assume eventual A21 under arbitrary external hold. The graph retains:
 no hold -> exact H18->A21 floor edge; held -> H18 may persist indefinitely;
@@ -224,11 +223,9 @@ H18 with BA cross-covariances zeroed.
 
 ## Current blockers
 
-The attitude representation and conditional ungauged continuation are attached.
-Total finite machine execution over MAG-CALL-SCHEDULE-v1 is falsified. First
-resolve the actual-caller attachment described in
-`ou3-alt-deployment-prerequisite.md`; do not seek tighter numerical bounds for
-that contradiction. The other unresolved qualifications are:
+The attitude representation, conditional ungauged continuation, certified empty
+magnetic startup prefix and signed magnetic-counter safety are attached.
+The unresolved qualifications are:
 
 - deployment/binary32 correspondence for startup yaw extraction, atan2,
   AngleAxis, quaternion normalization, handoff setters and clocks;
@@ -241,8 +238,8 @@ that contradiction. The other unresolved qualifications are:
   calibration is not proof of calibration accuracy or a useful ISS margin;
 - carry COMPLETE-BRMM/BIAS ancestry and every solver/hygiene/finite-precision
   branch through an arbitrary 600-step word, including both H18 and A21/hold
-  continuations; signed magnetic counter overflow and floating-clock lifetime
-  behavior must not be replaced by unbounded Python integers/rationals;
+  continuations; retain the proved saturated-counter projection and qualify
+  floating-clock behavior without substituting unbounded rational clocks;
 - prove the exact fresh/source-produced states land in a retained storage basin;
   only after the complete finite master passes its guard may common joint24
   storage/rho feasibility be attempted.

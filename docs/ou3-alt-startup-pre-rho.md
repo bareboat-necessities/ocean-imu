@@ -113,12 +113,12 @@ source-qualified consequences of the gravity bound.
 3. Qualify all target/compiler arithmetic and supplies: WPE exp/log/sqrt,
    band/statistics/tuner, Q-axis, Racc/guard displacement, clocks/scheduler,
    trigonometry/normalization, Eigen LDLT/eigensolvers/floors, and comparisons.
-4. Prove finite counter safety and compose every literal event on one physical,
-   bias, disturbance, covariance and frontend history. This cannot succeed under
-   unchanged MAG-CALL-SCHEDULE-v1: the exact finite-burst totality contradiction
-   in `ou3-alt-deployment-prerequisite.md` falsifies the prerequisite. The actual
-   caller's different count/timestamp contract must be attached explicitly;
-   a maximum rate cannot be invented or shipping changed for proof convenience.
+4. Counter safety is closed by the source-bound saturation induction in
+   `ou3-alt-deployment-prerequisite.md`, including accepted/rejected acquisition
+   and refinement counts. Retain its projection from mathematical event count
+   and compose every literal event on one physical, bias, disturbance,
+   covariance and frontend history. The certified empty startup prefix and
+   subsequent north acquisition are attached to the admitted source word.
 5. Only after the complete master passes the guard may common joint24 storage
    and rho feasibility begin. Every-prefix retention, useful ultimate bounds,
    and indefinite no-restart tiling follow separately.

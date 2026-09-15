@@ -48,7 +48,7 @@ class Tests(unittest.TestCase):
         self.assertTrue(r['Racc_covariance_not_used_as_pathwise_noise_bound'])
         self.assertFalse(r['finite_horizon_probability_used_to_prune_disturbances'])
         self.assertFalse(r['deployment_exp_expm1_trig_Eigen_LDLT_closed'])
-        self.assertFalse(r['shipping_signed_mag_counter_lifetime_closed'])
+        self.assertTrue(r['shipping_signed_mag_counter_lifetime_closed'])
         self.assertFalse(r['complete_600_step_shipping_word_composed_from_restrictions'])
         self.assertFalse(r['storage_search_allowed'])
         self.assertFalse(r['ALT_LIVE_PASS'])

@@ -62,6 +62,7 @@
 #include <numbers>
 #include <memory>
 #include <algorithm>
+#include <limits>
 
 #include "freq/FirstOrderIIRSmoother.h"
 #include "freq/FrequencyTrackerPolicy.h"
@@ -857,7 +858,11 @@ public:
         if (time_ < mag_delay_sec_) return;
 
         mekf_->measurement_update_mag_only(mag_body_ned);
-        mag_updates_applied_++;
+        // Keep counting attempts up to the largest configurable threshold.
+        // Measurements and release checks continue after saturation.
+        if (mag_updates_applied_ < std::numeric_limits<int>::max()) {
+            ++mag_updates_applied_;
+        }
 
         if (!std::isfinite(first_mag_update_time_)) {
             first_mag_update_time_ = static_cast<float>(time_);

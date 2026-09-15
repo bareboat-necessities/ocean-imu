@@ -20,7 +20,7 @@ The supplying implementation is `src/tuner/ContinuousMagHardIronEstimator.h`
 and `src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h`. The finite relations are
 `finite_continuous_mag_runtime.py`, `finite_live_magnetic_word.py` and
 `finite_live_interleave.py` under `tools/stability/ou3_alt_contraction`.
-Shipping and the independent P2/P3/P4/P5 track are unchanged. The existing ALT
+Magnetic counters saturate; the independent P2/P3/P4/P5 mathematics is unchanged. The ALT
 zero-wind-heel scope remains in force; continuous calibration is **not** disabled.
 
 ## One product state and one physical magnetic source
@@ -185,7 +185,8 @@ not asserted small enough for a retained attitude chart or useful contraction.
 The graph retains the sharper same-history vector expression for subsequent
 storage work. No unknown main-filter state error is relabeled as sensor noise.
 A finite-precision perturbation bound, uniform accumulator size, and applicable
-clock/counter limits still have to be proved for deployment.
+clock limits still have to be proved for deployment; magnetic counter saturation
+is qualified separately.
 
 ## Corrected count-and-time reachability
 
@@ -208,12 +209,13 @@ refinement or an explicit later release applies the separate H18->A21 edge.
 `check_prefix` verifies elapsed deadlines and count continuity for finite
 prefixes only; it cannot certify infinite call coverage.
 
-This control theorem is over mathematical clocks and counters. Shipping uses
-`int mag_updates_applied_` and increments it after every attempted update even
-after unlock. Unbounded execution therefore also requires a target-qualified
-integer-overflow argument; an unbounded Python integer does not provide one.
-The floating-clock and signed-counter obligations remain open, not repaired by
-restricting the physical source or by changing shipping in this proof PR.
+Shipping uses `int mag_updates_applied_` and increments only below INT_MAX.
+The invariant `count=min(INT_MAX, attempted_calls)` preserves every configurable
+unlock threshold, including later increases. At saturation, measurements and
+release checks still execute. Accepted/rejected tuner counts use the same safe
+successor while statistics continue. `ou3-alt-deployment-prerequisite.md` gives
+the source-bound induction. Mathematical event ordinals remain unbounded proof
+bookkeeping; floating-clock qualification remains separate.
 
 ## Validation and remaining obligations
 

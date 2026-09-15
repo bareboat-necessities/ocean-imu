@@ -8,13 +8,12 @@ independently through `ou3-brmm-main-handover.md`.
 
 ## Controlling result
 
-The current generic ALT deployment language has a **falsified finite-master
-prerequisite**. After eligible gauged Live it admits a finite equal-timestamp
-burst forcing either an earlier undefined operation or signed magnetic-counter
-overflow. The exact compressed counter-projection argument is in
-`ou3-alt-deployment-prerequisite.md`. Total machine execution cannot be proved
-for this language, so rho estimation cannot proceed under its present premises.
-The guard distinguishes this falsification from the remaining open obligations.
+Signed magnetic-counter safety is closed for every finite event prefix. The
+shipping attempt, accepted-sample and rejected-sample counts saturate at INT_MAX;
+measurement, statistics and release checks continue. The exact induction and
+source audit are in `ou3-alt-deployment-prerequisite.md`. No maximum call rate
+was added. The master has no falsified counter prerequisite, but universal
+startup and source-uniform deployment arithmetic still block rho estimation.
 
 The finite runtime now represents every nonzero attitude error in a four-chart
 joint24 atlas. Maximum-component selection bounds each attitude coordinate by
@@ -31,9 +30,11 @@ establish north, refine, apply calibration and reach the inner MEKF without
 accumulating continuous statistics twice. The north-service clock starts at the
 actual gauge event without moving the physical Live/S origin.
 
-These are exact conditional program relations. They do not prove universal
-startup/capture or source-uniform arithmetic, and remain valid despite the
-separate event-language obstruction.
+The admitted source factory also accepts a certified empty pre-Live magnetic
+prefix. Its shared magnetic event composer carries waiting calls, later north
+and saturated counts into the following source-owned IMU event. These are exact
+conditional program relations; they do not prove universal startup/capture or
+source-uniform arithmetic.
 
 ## Retained work
 
@@ -47,29 +48,23 @@ startup-plus-600-IMU budgets end at 30,602. That deadline is conditional on
 source-produced gravity alignment. The magnetic 8.5-uT / 0.63-rad accuracy
 calculation still requires a full accumulation-to-handoff frame bound.
 
-The signed magnetic counter graph rejects INT_MAX increment instead of silently
-extending C++ with Python integers. Universal avoidance is false under
-MAG-CALL-SCHEDULE-v1. The actual AtomS3R caller has at most one magnetic call per
-IMU invocation, but its measured-dt and configured/build profiles have not been
-attached to the canonical exact-5-ms master. Do not silently substitute it.
-
 ## Continuation
 
-1. Replace the falsified generic caller premise only with a source-derived,
-   jointly attached real-caller timestamp, configuration and arithmetic contract.
-   The conditional 30,602-invocation count bound alone does not provide that.
+1. Keep the closed counter projection, atlas and certified empty magnetic
+   startup branch attached in every stronger source/machine layer. Mathematical
+   event ordinals keep increasing after the shipping count saturates.
 2. Prove startup source/control reachability, including seed/SVD/nonfinite
    branches, and qualify complete initial/refined/continuous magnetic history.
    Attach the actual target/compiler/Eigen/libm profile; close
-   source-uniform arithmetic supplies, comparison branches and finite counter
-   safety under the resulting deployment contract.
+   source-uniform arithmetic supplies and comparison branches under the resulting
+   deployment contract.
 3. Compose the entire same-history 600-transition machine word and require
    `finite_master_guard.build()` / `assert_finite_storage_master` to pass.
 4. Only then construct coercive storage respecting chart semantics and exact
    chart transport. In charts 1..3 coordinate zero is NOT zero attitude error;
    treating every chart origin as zero in one quadratic would be invalid.
 5. Every-prefix retention, ultimate bounds and indefinite no-restart tiling
-   follow; they still require clock/counter lifetime treatment.
+   follow; they still require wrapper-clock lifetime treatment.
 
 Zero wind heel, dormant guard, zero lever arm, full-21 covariance, joint24
 motion/bias information, actual-applied R_S, corrected COMPLETE-BRMM and frozen

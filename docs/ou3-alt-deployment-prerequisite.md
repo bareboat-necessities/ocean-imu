@@ -1,64 +1,62 @@
 # ALT finite-word deployment prerequisite
 
-## Result
+## Saturating magnetic counters
 
-The current MAG-CALL-SCHEDULE-v1 language cannot satisfy the finite master's
-requirement of defined shipping execution for every admitted event word. This
-is a falsified prerequisite, not an outstanding interval estimate. Consequently
-the current master cannot authorize rho estimation. The physical model, exact
-conditional finite identities, attitude atlas and independent P2/P3/P4/P5 track
-are unaffected. No dynamical instability claim follows.
+The shipping inner magnetic-attempt counter and MagAutoTuner's accepted and
+rejected sample counters saturate at `std::numeric_limits<int>::max()`. The
+named deployment proof uses signed int32, M=2^31-1. Resets set each count to zero;
+only a count strictly below M is incremented. No evaluated increment can exceed
+M. All acquisition/refinement rejection paths use the same guarded helper.
 
-## Exact finite schedule and counter induction
+For entry count c in [0,M] and n finite attempts on that counter,
 
-Consider an eligible gauged-Live endpoint: magnetometry is enabled, both delay
-gates have passed, north is set, the inner MEKF exists and the signed counter is
-c in [0, 2^31-1]. This is a conditional statement about any such entry, not a
-new basin restriction. A quiet public-API startup is a native reachability
-regression for this nonempty branch; it does not qualify all startup histories.
+`c_n = min(M, c+n)`.
 
-Let M=2^31-1 and N=M+1-c. At the existing physical endpoint, before IMU transition
-1, make N magnetic calls. Then make calls every 40 ms forever. This satisfies
-the literal schedule checker: first gap zero, burst gaps zero, tail gaps 40 ms.
-The endpoint composer explicitly admits magnetic calls at the fresh Live
-origin. No between-grid endpoint is introduced. All N calls use the same
-physical sample and disturbance value; no new independent source is inserted.
-A quiet zero-wave, zero-bias, zero-disturbance history can continue unchanged.
+Induction is exact: n=0 gives c. If c_n<M, the guarded successor is c_n+1<=M;
+if c_n=M, the successor is M. These cases give the formula at n+1 and preserve
+0<=c_n<=M for every finite n. No positive minimum call gap, uniform count cap,
+or replay of billions of events is needed. A reset simply starts another such
+prefix at zero. This closes integer safety, not floating-point totality.
 
-The schedule is locally finite. For t>=0 it has exactly
-N+floor(t/0.04) calls through t relative to this origin; for t<0 it has zero.
-Every compact interval therefore has finitely many calls, and the tail reaches
-unbounded physical time. Local finiteness does not give a *uniform* count bound.
-The burst lies in every positive finite horizon, including the 600-IMU word.
+For every representable unlock threshold u in [0,M],
 
-In the audited outer `updateMag`, continuous/refinement operations precede
-`impl_.updateMag`, but no duplicate-time suppression or counter reset blocks
-that call once gauged Live is reached. In the inner method the only early
-returns are the enable/MEKF and delay gates. A returning magnetic measurement
-is followed by the unchecked signed increment. Innovation rejection does not
-prevent it. The later H18/A21 unlock predicates do not guard the increment.
+`min(M,c+n) >= u  iff  c+n >= u`.
 
-Assume all N calls have defined execution. Induction gives counter c+j after
-each of the first j returning calls. At j=N-1 it equals M. The last call then
-requires M+1, which has no signed-int32 successor. This contradicts defined
-execution. If a continuous-calibration, measurement or other operation fails
-earlier, total execution already fails; the proof does not assume an arbitrary
-number of safe covariance updates. A Python exception rejecting this edge
-correctly models a partial relation but does not prove avoidance of the edge.
+If c+n<M the sides coincide; otherwise both hold since u<=M. The implication
+also holds after changing u through the public setter. Saturating at the
+current configured threshold would not preserve later threshold increases.
+MagAutoTuner uses the same fact with `max(1,min_samples)` and its positive-count
+checks. Rejected count is diagnostic and has no sample-acceptance gate.
 
-For c=0 the compressed witness has 2,147,483,648 calls. This is an event-language
-counterexample, not a claim that the AtomS3R can physically execute that many
-callbacks in three seconds. The finite-master guards may not conflate those
-two deployment languages.
+Only the counters stop increasing. Inner MEKF measurements, first-attempt time,
+strict elapsed-time comparison, H18/A21 release and external-hold handling still
+execute. Accepted magnetic samples continue updating sums, weight and window;
+rejected samples still follow the same rejection return path. Floating sums and
+windows need their separate arithmetic qualification.
 
-`finite_mag_counter_obstruction.py` retains this family without allocating or
-executing billions of events. Comment/whitespace-independent fingerprints bind
-the manual source-order argument to the inspected inner and outer methods.
-The native sanitizer regression first reaches gauged Live through public API
-calls on a constant physical source, then installs ONLY M-1 in the counter to
-test the last defined increment and the following undefined increment. This
-boundary installation is explicitly not a reset-to-overflow trajectory proof;
-the induction above supplies the arbitrary-length argument.
+## Source binding and composition
+
+`finite_mag_counter_saturation.py` binds the invariant to the complete wrapper
+and MagAutoTuner source hashes, including resets and configuration, and the
+normalized inner update body. A source change fails the audit until re-reviewed.
+The native regression checks the actual headers under signed-overflow UBSan:
+it reaches gauged Live through public calls, installs M-1 only for the boundary
+check, and verifies measurements and delayed release continue across saturation.
+It separately crosses accepted/rejected tuner boundaries and checks statistics
+continue. This is a boundary regression; the induction supplies arbitrary n.
+
+The finite control, acquisition and refinement relations use the same saturated
+successor. Proof bookkeeping retains an unbounded mathematical event ordinal;
+its relation to the shipping counter is `min(M, attempted_calls)`, not equality.
+The source-bound magnetic adapter consumes the shared event composer, retaining
+this projection across a subsequent IMU transition.
+
+A certified empty pre-Live magnetic prefix can enter the admitted source word
+at an ungauged timeout. Waiting calls have physical packets but no inner
+measurement forcing. Actual later north acquisition initializes the service
+clock at that event, preserves the Live/S origin and BIAS history, and joins the
+following source-owned IMU edge. Initial north uses MEKF tilt after Live;
+continuous calibration/refinement use private-observer tilt.
 
 ## Actual AtomS3R caller
 
@@ -74,8 +72,8 @@ It does not rule out unrelated arithmetic failures.
 If startup ended by invocation 30,002 and the following word had 600 such
 invocations, the total count would be at most 30,602, safely below INT_MAX.
 This is a useful caller theorem with explicit premises. It does not prove that
-startup ends then, attach this caller to the generic master, or cover indefinite
-execution.
+startup ends then or attach this caller to the generic master. Counter safety
+itself follows for every finite prefix from saturation, independent of K.
 
 | Committed caller/build fact | Consequence for attachment |
 | --- | --- |
@@ -94,16 +92,17 @@ requires its timestamp/source, configuration and target arithmetic contracts to
 be attached together. A one-call-per-step assertion alone cannot replace the
 broader asynchronous master or silently import exact 5 ms timing.
 
-## Research decision
+## Remaining prerequisite boundary
 
-Freeze attempts to prove totality of unchanged MAG-CALL-SCHEDULE-v1. Interval
-refinement, more trajectories and a different storage cannot change M+1>M.
-The constructive alternative is a source-derived actual-caller contract with
-measured-dt semantics, followed by the remaining startup/arithmetic composition.
-A theorem conditional on defined execution is a different, weaker theorem and
-does not satisfy the current guard. Changing the deployed counter is outside
-this proof PR's immutable scope. No arbitrary call-rate cap is adopted.
+`finite_master_guard` consumes the counter certificate as a closed prerequisite;
+`falsified_prerequisites` is empty. MAG-CALL-SCHEDULE-v1 retains its existing
+minimum-service semantics. Counter safety does not require replacing it with
+the actual caller or adding an artificial maximum rate.
 
-`finite_master_guard` reports counter safety under `falsified_prerequisites`,
-keeps the other unfinished qualifications under `open_obligations`, and leaves
-all ALT PASS flags and `storage_search_allowed` false.
+Universal startup/alignment/capture, Eigen and target/compiler/libm
+correspondence, source-uniform arithmetic supplies and the complete same-history
+600-step machine word remain unqualified. The master lists each dependency and
+keeps storage/rho search and all ALT PASS flags false. In particular a native
+host check cannot qualify ESP32 arithmetic, and source provenance alone cannot
+prove all admitted histories reach Live. The binary32 wrapper clock's late-time
+stall also remains a separate indefinite-continuation obligation.

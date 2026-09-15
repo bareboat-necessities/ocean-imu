@@ -43,6 +43,7 @@
 
 #include <cmath>
 #include <algorithm>
+#include <limits>
 
 #ifdef EIGEN_NON_ARDUINO
   #include <Eigen/Dense>
@@ -167,7 +168,7 @@ public:
     last_mag_world_sample_.setZero();
 
     if (!q_bw_in.coeffs().allFinite() || !mag_body_ned.allFinite()) {
-      ++rejected_count_;
+      incrementCount_(rejected_count_);
       return false;
     }
 
@@ -175,7 +176,7 @@ public:
     const float qn = q_bw.norm();
 
     if (!(qn > 1.0e-6f) || !std::isfinite(qn)) {
-      ++rejected_count_;
+      incrementCount_(rejected_count_);
       return false;
     }
 
@@ -183,7 +184,7 @@ public:
 
     const float mag_n = mag_body_ned.norm();
     if (!(mag_n > cfg_.mag_norm_min) || !std::isfinite(mag_n)) {
-      ++rejected_count_;
+      incrementCount_(rejected_count_);
       return false;
     }
 
@@ -222,7 +223,7 @@ public:
     if (ready_) return true;
 
     if (!q_tilt_bw_in.coeffs().allFinite() || !mag_body_ned.allFinite()) {
-      ++rejected_count_;
+      incrementCount_(rejected_count_);
       return false;
     }
 
@@ -230,7 +231,7 @@ public:
     const float qn = q.norm();
 
     if (!(qn > 1.0e-6f) || !std::isfinite(qn)) {
-      ++rejected_count_;
+      incrementCount_(rejected_count_);
       return false;
     }
 
@@ -238,7 +239,7 @@ public:
 
     const float mag_n = mag_body_ned.norm();
     if (!(mag_n > cfg_.mag_norm_min) || !std::isfinite(mag_n)) {
-      ++rejected_count_;
+      incrementCount_(rejected_count_);
       return false;
     }
 
@@ -264,7 +265,7 @@ public:
     if (ready_) return true;
 
     if (!down_body_in.allFinite() || !mag_body_ned.allFinite()) {
-      ++rejected_count_;
+      incrementCount_(rejected_count_);
       return false;
     }
 
@@ -272,7 +273,7 @@ public:
     const float dn = down_body.norm();
 
     if (!(dn > 1.0e-6f) || !std::isfinite(dn)) {
-      ++rejected_count_;
+      incrementCount_(rejected_count_);
       return false;
     }
 
@@ -280,7 +281,7 @@ public:
 
     const float mag_n = mag_body_ned.norm();
     if (!(mag_n > cfg_.mag_norm_min) || !std::isfinite(mag_n)) {
-      ++rejected_count_;
+      incrementCount_(rejected_count_);
       return false;
     }
 
@@ -288,7 +289,7 @@ public:
         levelQuatFromDownBody_(down_body);
 
     if (!q_level_bw.coeffs().allFinite()) {
-      ++rejected_count_;
+      incrementCount_(rejected_count_);
       return false;
     }
 
@@ -455,6 +456,12 @@ private:
     return q;
   }
 
+  static void incrementCount_(int& count) {
+    if (count < std::numeric_limits<int>::max()) {
+      ++count;
+    }
+  }
+
   bool addWorldSample_(float dt,
                        const Eigen::Vector3f& mag_world_i,
                        const Eigen::Quaternionf& q_bw,
@@ -466,14 +473,14 @@ private:
     last_mag_world_sample_.setZero();
 
     if (!mag_world_i.allFinite()) {
-      ++rejected_count_;
+      incrementCount_(rejected_count_);
       return false;
     }
 
     const float mag_world_n = mag_world_i.norm();
 
     if (!(mag_world_n > cfg_.mag_norm_min) || !std::isfinite(mag_world_n)) {
-      ++rejected_count_;
+      incrementCount_(rejected_count_);
       return false;
     }
 
@@ -487,7 +494,7 @@ private:
             cfg_.max_sample_norm_ratio_from_mean > 0.0f &&
             rel > cfg_.max_sample_norm_ratio_from_mean)
         {
-          ++rejected_count_;
+          incrementCount_(rejected_count_);
           return false;
         }
       }
@@ -500,14 +507,14 @@ private:
     }
 
     if (!std::isfinite(w)) {
-      ++rejected_count_;
+      incrementCount_(rejected_count_);
       return false;
     }
 
     w = clamp01_(w);
 
     if (w < cfg_.min_sample_weight) {
-      ++rejected_count_;
+      incrementCount_(rejected_count_);
       return false;
     }
 
@@ -530,7 +537,7 @@ private:
 
     weight_sum_ += w;
     accepted_window_sec_ += dt_use;
-    ++accepted_count_;
+    incrementCount_(accepted_count_);
 
     last_sample_weight_ = w;
     last_mag_world_sample_ = mag_world_i;

@@ -523,37 +523,35 @@ path. Source-uniform guard/Racc/libm supplies are therefore open.
 
 ### Failure analysis and independent critic
 
-* **Finite-word deployment-language contradiction:** after gauged Live and the
-  magnetic delay, every returning outer magnetic callback reaches the unchecked
-  signed `mag_updates_applied_++`, independently of innovation acceptance. For
-  any safe entry count c, MAG-CALL-SCHEDULE-v1 admits INT_MAX+1-c callbacks at
-  the fresh physical endpoint before transition 1, followed by 40 ms calls.
-  The schedule is locally finite and time-unbounded. If all preceding events
-  have defined execution, the last increment overflows; an earlier undefined
-  event already defeats the same total-execution prerequisite. The failed
-  quantity is c+N <= INT_MAX, not a numerical enclosure. This invalidates a
-  total finite machine word over the current asynchronous language, not the
-  physical source model, exact conditional identities or filter stability.
-  The actual AtomS3R sketch has one magnetic call site per IMU invocation, but
-  its measured timestamp dt is not the canonical exact-5-ms proof profile.
-  Its 35 ms fresh gate resets after an invalid sample, so it is not by itself
-  an unconditional minimum-gap theorem.
-  Critic: abandon attempts to prove totality of this overbroad event language.
-  Three distinct alternatives are (1) derive and attach the real caller's
-  event-count, timestamp and target-arithmetic contract, (2) study a partial
-  execution theorem explicitly conditional on defined operations, which does
-  not satisfy the present master, or (3) change the deployed counter, excluded
-  by this PR's immutable scope. The compressed exact burst certificate and
-  source-bound caller audit are present. The native public-API prefix reaches
-  gauged Live; after installing only INT_MAX-1 for a boundary regression, the
-  unchanged outer callback reaches INT_MAX and its next call triggers the
-  signed-overflow sanitizer. This is not a reset-to-INT_MAX replay.
-  Neither an arbitrary rate cap nor more interval
-  precision can resolve this contradiction. No rho calculation is justified.
-  Endpoint audit rejects a proposed between-grid burst placement: the current
-  composer consumes represented endpoints only. This invalidates that placement,
-  not the counter argument; its admitted sample-zero endpoint supplies the
-  corrected construction without advancing or inventing physical history.
+* **Authorized counter repair and composition audit:** the user explicitly
+  authorizes fixing shipping signed-counter overflow. The inner attempt and tuner accepted/rejected counts saturate
+  at INT_MAX; measurements, statistics and unlock checks still execute. The induction
+  c_n=min(INT_MAX,c_0+n) proves safety without a maximum event rate and preserves
+  every configurable threshold, including later increases. The native saturated
+  boundary passes the signed-overflow sanitizer and continues measurement and
+  bias release. This removes the old counter contradiction only.
+* **Remaining source-composition defects:** equating the mathematical event
+  count to the shipping count becomes false after saturation; use the exact
+  saturation projection. The source-bound magnetic adapter duplicates the
+  lower interleaver and omits its later-north service-clock initialization. Its
+  startup source constructor also demands a magnetic call, excluding the
+  already represented no-pre-Live-call timeout branch. These are implementation
+  and coverage defects, not physical counterexamples. Critic: consume the
+  shared event composer and the certified empty prefix instead of maintaining
+  a second clock update or inventing a pre-Live service premise. Next check:
+  saturated MAG-to-IMU composition and source-owned ungauged IMU-to-north-to-IMU,
+  preserving the same source, bias and Live/S origins.
+  The first source-qualified test exposed the second forcing adapter reading
+  `UngaugedLiveState.active` before north exists. A waiting calibration sample
+  has a physical source packet but no inner measurement forcing. Extract that
+  case once for both adapters; do not fabricate an active magnetic reference.
+* **Source-audit gate after the authorized fix:** the inherited BRMM sensor
+  argument rejects the changed wrapper hash. This is an expected provenance
+  gate, not a mathematical failure. The full shipping diff consists only of
+  `<limits>` and the guarded counter increment. Neither reads physical p/S or
+  changes sensor inputs; the saturation comparison equivalence preserves every
+  representable unlock threshold. Re-audit that dependency and retain the
+  exact-hash gate, with a regression reconstructing the preceding source bytes.
 
 * **Ungauged Live composition gap:** the old interleaver rejects a timeout
   entry without north. Shipping continues initial acquisition after Live, but
@@ -680,29 +678,27 @@ promotes source membership, capture, retention or stability.
 
 ### Current limiter, DEAD_ENDS and next falsifiable work
 
-The four-chart finite runtime and conditional ungauged continuation in
-`ou3-alt-attitude-atlas.md` close the representation/event gaps. The immediate
-limiter is the falsified total-execution premise for MAG-CALL-SCHEDULE-v1;
-see `ou3-alt-deployment-prerequisite.md`. Its unchecked counter is not a problem
-that more arithmetic lemmas can solve. A source-derived actual-caller contract
-must be jointly attached with measured-dt and configuration semantics. Universal
-startup source/control reachability, full magnetic history and target arithmetic
-then remain necessary. Every nonzero quaternion is covered;
-this does not certify a storage basin or finite capture. A future storage must
-not identify the different chart origins as the same zero physical error.
+The four-chart runtime, conditional ungauged continuation and source-owned
+empty-startup/later-north composition close their representation/event gaps.
+All magnetic counts now have source-bound saturation safety on every finite
+prefix; the master consumes this fact. The current limiter is universal
+startup source/control reachability, full magnetic history and target arithmetic.
+Every nonzero quaternion is covered, but that does not certify a storage basin
+or finite capture. Storage must not identify different chart origins as the
+same zero physical error.
 
-Then qualify the machine guard displacement into Racc/accelerometer, raw WPE
+Qualify the machine guard displacement into Racc/accelerometer, raw WPE
 exp/log/sqrt, band/statistics/tuner, Q-axis, clocks, trig/normalization, Eigen
 solves/floors, nonfinite branches and comparisons on every literal same-history
-IMU/magnetic/hold/reset edge. Finite counter safety is required before storage,
-not deferred entirely to indefinite continuation. The shared 30,602-sample
-budget covers the first default timeout comparison plus 600 IMU edges only
-conditionally on the actual aligned-branch predicate.
+IMU/magnetic/hold/reset edge. Preserve the saturated shipping count separately
+from the mathematical event ordinal. The shared 30,602-sample budget covers the
+first default timeout comparison plus 600 IMU edges only conditionally on the
+actual aligned-branch predicate.
 
-The generic deployment totality gate is falsified; other universal entry and
-arithmetic qualifications remain open. Every-prefix retention,
-joint24 storage/rho, an ultimate bound and no-restart indefinite tiling remain
-later obligations. No larger clock horizon establishes missing startup capture.
+The master reports no falsified counter prerequisite; universal entry and
+arithmetic qualifications remain open. Every-prefix retention, joint24
+storage/rho, an ultimate bound and no-restart indefinite tiling remain later
+obligations. No larger clock horizon establishes missing startup capture.
 
 Frozen shortcuts: derivative cocycles presented as finite maps; frozen gains,
 replays or more seeds as universal admission; independent coefficient boxes;
