@@ -4,17 +4,19 @@ on:
     branches: [proof/ou3-alt-startup-machine-attachment]
     paths: [.github/workflows/ou3-pr526-reconcile-workspace.yml]
 permissions:
-  contents: read
+  contents: write
 jobs:
   workspace:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
+    env:
+      OPENBLAS_NUM_THREADS: '1'
+      OMP_NUM_THREADS: '1'
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 90
-          persist-credentials: false
-      - name: Fetch main and preserve real three-way merge conflicts
+      - name: Real merge with the two reviewed conflict resolutions
         shell: bash
         run: |
           set -euo pipefail
@@ -29,18 +31,128 @@ jobs:
           rc=$?
           set -e
           cat /tmp/merge.log
-          test "$rc" -le 1
-          git status --short > /tmp/merge-status.txt
-          git diff --name-only --diff-filter=U > /tmp/conflicts.txt
-          cat /tmp/conflicts.txt
-          tar -czf /tmp/pr526-reconciliation-workspace.tar.gz .
+          test "$rc" = 1
+          python3 - <<'PY'
+          from pathlib import Path
+          import subprocess
+          expected = {
+            'tests/ou3_alt_contraction/test_finite_admitted_machine_joined_frontend_racc_interleaved_prefix.py',
+            'tools/stability/ou3_alt_contraction/finite_wpe_log_binary32.py',
+          }
+          actual = set(subprocess.check_output(['git','diff','--name-only','--diff-filter=U'],text=True).splitlines())
+          assert actual == expected, actual
+          for name in sorted(expected):
+              p=Path(name); text=p.read_text()
+              start=text.index('<<<<<<< HEAD\n'); end=text.index('>>>>>>> origin/main\n',start)+len('>>>>>>> origin/main\n')
+              block=text[start:end]
+              if name.startswith('tests/'):
+                  assert block == '<<<<<<< HEAD\n        X._runtime(s.base)\n=======\n        X._runtime(s.base)  # establish runtime path before async event\n>>>>>>> origin/main\n'
+                  replacement='        X._runtime(s.base)  # establish runtime path before async event\n'
+              else:
+                  assert block == '<<<<<<< HEAD\n    x=B.div(DT,horizon)\n=======\n    _x=B.div(DT,horizon)\n    # Numerical correctness of exp remains open, but its branch/domain is hard.\n>>>>>>> origin/main\n'
+                  replacement='    _x=B.div(DT,horizon)\n    # Numerical correctness of exp remains open, but its branch/domain is hard.\n'
+              p.write_text(text[:start]+replacement+text[end:])
+              subprocess.run(['git','add',name],check=True)
+          PY
+          test -z "$(git diff --name-only --diff-filter=U)"
+          git diff --cached --check
+      - name: Re-audit only the exact const-local reference cleanup
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib, subprocess
+          path='src/kalman_ou_iii/Kalman3D_Wave_OU_III.h'
+          before=subprocess.check_output(['git','show','8f964a88ca0beb023a109870f424214130faeba9:'+path])
+          after=Path(path).read_bytes()
+          old=b'const Vector3 zhat = v2hat;'; new=b'const Vector3& zhat = v2hat;'
+          assert before.count(old)==1 and after.count(new)==1 and before.replace(old,new)==after
+          assert hashlib.sha256(before).hexdigest()=='c9ed955ef998992e33b253ed0d5d49673852b87413a8c560479a9b482786d64b'
+          assert hashlib.sha256(after).hexdigest()=='bbc1586529f2f21144cb91e34f3248569178ab6e7a8bb7a1c8a0977d1b06c170'
+          p=Path('tools/stability/ou3_brmm_infinite_continuation.py'); s=p.read_text()
+          s=s.replace('# NOT a substitute for the proof in w3d-brmm-stability-theorem.tex-part.','# NOT a substitute for the proof in w3d-brmm-stability-theorem.tex-part.\n# Kalman source re-audit: zhat aliases the already evaluated local const\n# Vector3 v2hat. It is read once by r, never mutated and never escapes; the\n# copy-to-const-reference cleanup changes no sensor, p/S or entry semantics.\n# The regression reconstructs the previous complete-file hash to ensure this\n# was the only shipping change. All other edits still require a new audit.')
+          s=s.replace('c9ed955ef998992e33b253ed0d5d49673852b87413a8c560479a9b482786d64b','bbc1586529f2f21144cb91e34f3248569178ab6e7a8bb7a1c8a0977d1b06c170'); p.write_text(s)
+          p=Path('tests/validation/test_ou3_brmm_infinite_continuation.py'); s=p.read_text().replace('from fractions import Fraction as F','from fractions import Fraction as F\nimport hashlib').replace('import unittest','import unittest\nfrom unittest.mock import patch')
+          needle='    def test_full_radial_source_column_not_an_independent_S_ball(self):'
+          addition='''    def test_const_reference_reaudit_is_the_only_shipping_change(self):
+                  path = 'src/kalman_ou_iii/Kalman3D_Wave_OU_III.h'
+                  source = (ROOT/path).read_bytes()
+                  before = b'const Vector3 zhat = v2hat;'
+                  after = b'const Vector3& zhat = v2hat;'
+                  self.assertEqual(source.count(after), 1)
+                  reconstructed = source.replace(after, before)
+                  self.assertEqual(hashlib.sha256(reconstructed).hexdigest(),
+                      'c9ed955ef998992e33b253ed0d5d49673852b87413a8c560479a9b482786d64b')
+                  self.assertEqual(hashlib.sha256(source).hexdigest(), C.AUDITED[path])
+          
+              def test_source_hash_mismatch_still_requires_reaudit(self):
+                  # A stale or altered pin must not be accepted through the new binding.
+                  pins = dict(C.AUDITED)
+                  pins['src/kalman_ou_iii/Kalman3D_Wave_OU_III.h'] = '0'*64
+                  with patch.object(C, 'AUDITED', pins):
+                      with self.assertRaisesRegex(ValueError, 're-audit the source/observation semantics'):
+                          C.build()
+          
+          '''
+          # Strip the YAML/Python continuation indentation, preserving class indentation.
+          lines=addition.splitlines(True)
+          addition=lines[0]+''.join(line[10:] if line.startswith('          ') else line for line in lines[1:])
+          assert needle in s; p.write_text(s.replace(needle,addition+needle))
+          PY
+          python3 -m py_compile tests/validation/test_ou3_brmm_infinite_continuation.py
+          git add tools/stability/ou3_brmm_infinite_continuation.py tests/validation/test_ou3_brmm_infinite_continuation.py
+          git diff --cached --check
+      - name: Install native validation dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libeigen3-dev g++ python3-numpy python3-scipy python3-mpmath
+          python3 -m pip install ruff
+          tar -czf /tmp/eigen3-headers.tar.gz -C /usr/include eigen3
+          python3 -m pip download --no-deps ruff -d /tmp/ruff-wheel
+      - name: Validate audited source and reconciled startup WPE layers
+        run: |
+          set -o pipefail
+          export PYTHONPATH="$PWD:$PWD/tools/stability:$PWD/tests/ou3_alt_contraction:$PWD/tests/validation"
+          python3 -m unittest -v test_ou3_brmm_infinite_continuation test_finite_master_guard test_finite_admitted_machine_joined_frontend_racc_interleaved_prefix test_finite_admitted_machine_runtime_config_interleaved_prefix test_finite_startup_live_runtime_bridge test_finite_wpe_log_binary32 test_finite_wpe_machine_binary32 test_finite_startup_wpe_machine_history test_finite_admitted_startup_wpe_machine_word 2>&1 | tee /tmp/reconciliation-targeted.log
+          python3 tools/stability/ou3_brmm_infinite_continuation.py --output /tmp/infinite-continuation.json
+      - name: Regenerate native evidence and compare both shipping versions
+        run: |
+          set -euo pipefail
+          git worktree add --detach /tmp/pr526-before 7f792f839bfaa739b34ee40d0dc2494e4089f2e3
+          python3 /tmp/pr526-before/tools/stability/ou3_alt_contraction/shipping_finite_identity.py --output /tmp/native-before.json --work-dir /tmp/native-before
+          python3 tools/stability/ou3_alt_contraction/shipping_finite_identity.py --output /tmp/native-after.json --work-dir /tmp/native-after
+          for file in samples.bin H18.bin H18-A21.bin A21.bin; do
+            cmp /tmp/native-before/observed-data/$file /tmp/native-after/observed-data/$file
+          done
+          sha256sum /tmp/native-before/observed-data/*.bin /tmp/native-after/observed-data/*.bin > /tmp/native-comparison.txt
+          python3 -m ruff check tools tests/validation tests/ou3_alt_contraction plots --output-format json > /tmp/ruff-findings.json || test "$?" = 1
+      - name: Publish only the validated real two-parent merge without force
+        run: |
+          set -euo pipefail
+          git diff --check
+          git diff --cached --check
+          test -z "$(git diff --name-only --diff-filter=U)"
+          git commit -m 'Merge main into PR 526: reconcile CI cleanup and re-audit unchanged sensor semantics'
+          test "$(git rev-parse HEAD^2)" = 1a284166bed214082b60adb3760eaf1581827510
+          test "$(git rev-parse HEAD^1)" = "$GITHUB_SHA"
+          git show --stat --oneline HEAD > /tmp/reconciliation-commit.txt
+          git rev-parse HEAD HEAD^{tree} >> /tmp/reconciliation-commit.txt
+          git push origin HEAD:refs/heads/proof/ou3-alt-startup-machine-attachment
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
-          name: pr526-reconciliation-workspace
+          name: pr526-reconciliation-validation
           path: |
-            /tmp/pr526-reconciliation-workspace.tar.gz
             /tmp/reconciliation-parents.txt
             /tmp/merge.log
-            /tmp/merge-status.txt
-            /tmp/conflicts.txt
-          retention-days: 3
+            /tmp/reconciliation-targeted.log
+            /tmp/infinite-continuation.json
+            /tmp/native-before.json
+            /tmp/native-after.json
+            /tmp/native-comparison.txt
+            /tmp/ruff-findings.json
+            /tmp/reconciliation-commit.txt
+            /tmp/eigen3-headers.tar.gz
+            /tmp/ruff-wheel
+          retention-days: 7
