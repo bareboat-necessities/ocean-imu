@@ -125,7 +125,6 @@ def _smooth(track:Track,w:SmoothWitness,contracted:bool):
     requested=B.mul(LOG_SMOOTH_PERIODS,w.sea_period_exp)
     horizon=clamp(requested,HORIZON_MIN,HORIZON_MAX)
     x=B.div(DT,horizon)
-    # Numerical correctness of exp remains open, but its branch/domain is hard.
     if not 0<w.decay_exp<=1: raise ValueError('WPE log decay must be in (0,1]')
     alpha=B.sub(B.rn32(1),w.decay_exp)
     nxt=B.ema(track.log_period,w.log_raw,alpha,contracted=contracted)
@@ -149,6 +148,26 @@ def smooth_valid(state:State,*,separate:SmoothWitness,fma:SmoothWitness):
     return StepResult(State(ss.after,ff.after,state.samples+1),ss,ff,True)
 
 
+def advance_modes(state:State,*,separate_produced:bool,fma_produced:bool,
+                  separate_witness=None,fma_witness=None):
+    """Advance global compiler tracks without assuming identical period branches."""
+    if not isinstance(state,State): raise TypeError('WPE binary32 State required')
+    if not isinstance(separate_produced,bool) or not isinstance(fma_produced,bool):
+        raise TypeError('literal per-compiler WPE production branches required')
+    def one(track,produced,witness,contracted):
+        if not produced:
+            if witness is not None: raise ValueError('nonproducing WPE compiler branch consumes no log witness')
+            return track,None
+        if track.log_period is None:
+            if not isinstance(witness,InitWitness): raise TypeError('first valid compiler WPE branch requires InitWitness')
+            z=_init(track,witness,contracted); return z.after,z
+        if not isinstance(witness,SmoothWitness): raise TypeError('initialized valid compiler WPE branch requires SmoothWitness')
+        z=_smooth(track,witness,contracted); return z.after,z
+    st,ss=one(state.separate,separate_produced,separate_witness,False)
+    ft,ff=one(state.fma,fma_produced,fma_witness,True)
+    return StepResult(State(st,ft,state.samples+1),ss,ff,separate_produced or fma_produced)
+
+
 def _source_shape_matches():
     s=SOURCE.read_text()
     return all(n in s for n in (
@@ -170,6 +189,7 @@ def readiness():
       'positive_default_log_smoothing_binary32_graph_materialized_per_track':True,
       'mode_specific_log_raw_and_exp_results_retained_without_cross_track_identity':True,
       'nonproducing_WPE_sample_preserves_log_tracks':True,
+      'per_compiler_period_branch_divergence_representable':True,
       'WPE_log_std_log_target_libm_correspondence_closed':False,
       'WPE_log_exp_target_libm_correspondence_closed':False,
       'WPE_raw_period_binary32_production_closed':False,
