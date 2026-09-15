@@ -2,6 +2,7 @@ from pathlib import Path
 import math
 import sys
 import unittest
+from unittest.mock import patch
 from fractions import Fraction as F
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -152,7 +153,8 @@ class MagneticCallScheduleTests(unittest.TestCase):
 
     def test_counter_parity_and_open_downstream_obligations(self):
         p = self.d["shipping_parity"]
-        self.assertTrue(p["counter_increment_is_unconditional"])
+        self.assertTrue(p["counter_source_audited"])
+        self.assertTrue(p["counter_saturates_after_measurement_without_innovation_gate"])
         self.assertTrue(p["release_requires_live_stage"])
         self.assertTrue(p["external_hold_gates_enable"])
         self.assertFalse(self.d["innovation_acceptance_used_for_counter"])
@@ -160,8 +162,21 @@ class MagneticCallScheduleTests(unittest.TestCase):
         self.assertFalse(self.d["H18_A21_covariance_transport_closed_here"])
 
     def test_release_reachability_rejects_nonpositive_count(self):
-        with self.assertRaises(ValueError):
-            SCHED.release_reachability(0)
+        for n in (0, -1, True, SCHED.SIGNED_INT_MAX+1):
+            with self.assertRaises(ValueError):
+                SCHED.release_reachability(n)
+
+    def test_source_change_cannot_reuse_the_counter_reaudit(self):
+        with patch.object(SCHED,'AUDITED_WRAPPER_SHA','unreviewed'):
+            d=SCHED.build()
+        self.assertFalse(d['H18_A21_RELEASE_TIME_CLOSED_AFTER_NORTH_LOCK'])
+        self.assertIn('shipping magnetometer release parity failed',SCHED.validate(d))
+
+    def test_largest_representable_threshold_still_has_a_finite_count_case(self):
+        r=SCHED.release_reachability(SCHED.SIGNED_INT_MAX)
+        self.assertEqual(r['binding_condition'],'count')
+        self.assertEqual(r['count_condition_satisfied_by_upper_s'],
+            SCHED.FIRST_CALL_AFTER_LIVE_MAX_S+(SCHED.SIGNED_INT_MAX-1)*SCHED.CALL_GAP_MAX_S)
 
 
 class StartupYawCaptureTests(unittest.TestCase):

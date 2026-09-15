@@ -552,6 +552,14 @@ path. Source-uniform guard/Racc/libm supplies are therefore open.
   changes sensor inputs; the saturation comparison equivalence preserves every
   representable unlock threshold. Re-audit that dependency and retain the
   exact-hash gate, with a regression reconstructing the preceding source bytes.
+  The independent magnetic schedule parity check also requires the obsolete
+  unchecked increment. Its failed boolean invalidates that source audit, not
+  the count/time release argument. Critic alternatives for this repeated
+  provenance issue are a complete-source hash plus manual re-audit, a normalized
+  method-body audit, or native behavior regressions alone. Use the first with
+  an explicit saturation/threshold argument; native checks alone cannot prove
+  all finite counts. Revalidate the original magnetic assumptions, retaining
+  its north-lock premise and independence from ALT.
 
 * **Ungauged Live composition gap:** the old interleaver rejects a timeout
   entry without north. Shipping continues initial acquisition after Live, but

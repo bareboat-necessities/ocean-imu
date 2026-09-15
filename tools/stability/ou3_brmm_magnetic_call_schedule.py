@@ -15,14 +15,20 @@ rather than by proof.
 i.e. only 25 Hz. It is a call-cadence assumption on the host integration, kept
 strictly separate from the magnetic *value* class `MAG-BMM150-DET-v1`.
 
-Shipping `updateMag()` increments `mag_updates_applied_` immediately after the
-MEKF magnetometer update and does not gate that counter on innovation
+Shipping `updateMag()` saturating-increments `mag_updates_applied_` immediately
+after the MEKF magnetometer update and does not gate that counter on innovation
 acceptance, so the release predicate
 
     accel_bias_locked_ && Live && mag_updates_applied_ >= 250 &&
     (time_ - first_mag_update_time_) > 1.0
 
 is driven by call count and wall time alone.
+
+On the named int32 profile, the count after j returning measurements is
+min(INT_MAX,c_0+j). For every representable threshold n<=INT_MAX this is >=n
+exactly when c_0+j>=n. Saturation therefore preserves both the count case below
+and its persistence while waiting for the strict time guard. The native
+boundary regression is separate from this induction; no ALT lemma is imported.
 
 ## Two things the schedule alone does not give
 
@@ -54,6 +60,7 @@ arbitrary external hold is not claimed either.
 """
 from __future__ import annotations
 import argparse,json,re
+from hashlib import sha256
 from fractions import Fraction as F
 from pathlib import Path
 
@@ -63,6 +70,10 @@ DOMAIN=REPO/'tools/stability/ou3_proof_operating_domain.json'
 SCHEMA=1
 QUALIFICATION='OU3_BRMM_MAGNETIC_CALL_SCHEDULE_V1'
 ASSUMPTION_ID='MAG-CALL-SCHEDULE-v1'
+SIGNED_INT_MAX=(1<<31)-1
+# Re-audited complete source: reset, guarded increment, configurable threshold,
+# time predicate and outer north gate. Further edits require another audit.
+AUDITED_WRAPPER_SHA='fabd03e9c3eb6069df107c7413ffb4b33fbdcd1ce06d3923b0c1ceeb3bcd7359'
 
 FIRST_CALL_AFTER_LIVE_MAX_S=F(1,25)
 CALL_GAP_MAX_S=F(1,25)
@@ -76,12 +87,17 @@ def _one(pattern:str,text:str,label:str)->str:
 
 def shipping_constants()->dict:
  w=WRAPPER.read_text(encoding='utf-8')
+ compact=re.sub(r'\s+','',re.sub(r'/\*.*?\*/|//[^\n]*','',w,flags=re.S))
  return {
+  'counter_source_audited':sha256(WRAPPER.read_bytes()).hexdigest()==AUDITED_WRAPPER_SHA,
   'MAG_UPDATES_TO_UNLOCK':int(_one(r'static\s+constexpr\s+int\s+MAG_UPDATES_TO_UNLOCK\s*=\s*([0-9]+)\s*;',w,'MAG_UPDATES_TO_UNLOCK')),
   'acc_bias_unlock_mag_updates':int(_one(r'int\s+acc_bias_unlock_mag_updates\s*=\s*([0-9]+)\s*;',w,'acc_bias_unlock_mag_updates')),
   'MAG_DELAY_SEC':float(_one(r'constexpr\s+float\s+MAG_DELAY_SEC\s*=\s*([0-9.eE+-]+)f',w,'MAG_DELAY_SEC')),
   'strict_guard_sec':float(_one(r'first_mag_update_time_\)\s*>\s*([0-9.]+)f\)',w,'one-second guard')),
-  'counter_increment_is_unconditional':'mekf_->measurement_update_mag_only(mag_body_ned);\n        mag_updates_applied_++;' in w,
+  'counter_saturates_after_measurement_without_innovation_gate':(
+   'mekf_->measurement_update_mag_only(mag_body_ned);'
+   'if(mag_updates_applied_<std::numeric_limits<int>::max()){++mag_updates_applied_;}'
+   'if(!std::isfinite(first_mag_update_time_)){' in compact),
   'release_requires_live_stage':'startup_stage_ == StartupStage::Live &&' in w,
   'release_requires_count':'mag_updates_applied_ >= mag_updates_to_unlock_ &&' in w,
   'external_hold_gates_enable':'if (!acc_bias_hold_) {' in w,
@@ -109,7 +125,8 @@ def release_reachability(n:int,gap:F=CALL_GAP_MAX_S,first:F=FIRST_CALL_AFTER_LIV
  Both conditions are monotone once true, so the release fires no later than the
  maximum of the two, which is finite without any lower bound on spacing.
  """
- if n<1:raise ValueError('positive unlock count required')
+ if type(n) is not int or not 1<=n<=SIGNED_INT_MAX:
+  raise ValueError('positive representable int32 unlock count required')
  if gap<=0 or guard<0:raise ValueError('positive gap and nonnegative guard required')
  count_upper=first+(n-1)*gap              # Live -> n-th call, upper bound
  guard_upper=first+guard+gap              # Live -> first call past the guard
