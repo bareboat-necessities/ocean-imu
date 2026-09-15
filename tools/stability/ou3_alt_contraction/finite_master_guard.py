@@ -24,6 +24,7 @@ from tools.stability.ou3_alt_contraction import finite_wpe_log_binary32 as WPELO
 from tools.stability.ou3_alt_contraction import finite_wpe_frequency_binary32 as WPEFREQ
 from tools.stability.ou3_alt_contraction import finite_qaxis_exp_binary32 as QEXP
 from tools.stability.ou3_alt_contraction import finite_startup_entry_obstruction as ENTRY
+from tools.stability.ou3_alt_contraction import finite_startup_disturbance_obstruction as STARTDIST
 from tools.stability.ou3_alt_contraction import finite_startup_handoff_control as CONTROL
 from tools.stability.ou3_alt_contraction import finite_wrapper_clock_binary32 as CLOCK
 from tools.stability.ou3_alt_contraction import finite_mag_startup_capture_bound as CAPTURE
@@ -42,11 +43,17 @@ def build():
     startup=START.readiness(); seed=STARTSEED.readiness(); swpe=STARTWPE.readiness(); saw=STARTWPEADMIT.readiness()
     live=LIVE.readiness(); lwpe=LIVEWPE.readiness(); nxt=NEXT.readiness(); aw=AWCLOCK.readiness()
     wm=WPEMOM.readiness(); wmach=WPEMACHINE.readiness(); wlog=WPELOG.readiness(); wfreq=WPEFREQ.readiness(); qexp=QEXP.readiness()
-    entry=ENTRY.build(); control=CONTROL.readiness(); capture=CAPTURE.readiness()
+    entry=ENTRY.build(); startup_disturbance=STARTDIST.build()
+    control=CONTROL.readiness(); capture=CAPTURE.readiness()
     clock=CLOCK.readiness(); counter=CALLS.counter_lifetime(); atlas=ATLAS.readiness()
     counter_certificate=COUNTER.build()
 
     closed={
+      'full_magnetic_frame_represented_without_small_angle_capture': bool(
+          capture['unrestricted_full_frame_chord_bound_closed'] and
+          atlas['all_nonzero_relative_quaternions_covered'] and
+          FRESH.readiness()['independent_fresh_entry_error_box_removed'] and
+          not FRESH.readiness()['small_magnetic_capture_radius_required']),
       'independent_WPE_machine_and_exact_branches_composed': bool(
           swpe['independent_machine_WPE_production_and_frequency_branches_composed'] and
           lwpe['independent_machine_WPE_production_and_frequency_branches_composed'] and
@@ -98,7 +105,6 @@ def build():
     }
 
     open_obligations={
-      'startup_accumulation_to_handoff_full_frame_bound': not capture['full_accumulation_to_handoff_frame_bound_source_qualified'],
       'source_uniform_timeout_aligned_branch_reachability': not clock['universal_startup_deadline_closed'],
       'near_antiparallel_Eigen_JacobiSVD_solver_correspondence': not seed['near_antiparallel_JacobiSVD_solver_correspondence_qualified'],
       'universal_startup_source_and_branch_reachability': not startup['every_admitted_startup_history_reaches_this_boundary_product'],
@@ -139,6 +145,8 @@ def build():
       'falsified_prerequisites':{},
       'counter_saturation_certificate':counter_certificate,
       'startup_entry_obstruction':entry,
+      'startup_disturbance_obstruction':startup_disturbance,
+      'magnetic_frame_bounds':capture,
       'attitude_atlas':atlas,
       'conditional_timeout_plus_word_last_sample':CLOCK.MAX_STEPS,
       'finite_storage_status':finite_status,
@@ -158,6 +166,9 @@ def validate(x):
         f.append('open-obligation polarity mismatch')
     if x.get('falsified_prerequisites') != {}:
         f.append('obsolete counter falsification retained')
+    f.extend(STARTDIST.validate(x.get('startup_disturbance_obstruction',{})))
+    if x.get('magnetic_frame_bounds')!=CAPTURE.readiness():
+        f.append('magnetic frame bound or accuracy qualification changed')
     if x.get('research_outcome') != 'finite_master_qualification_incomplete':
         f.append('research outcome differs from current qualification')
     if x.get('counter_saturation_certificate') != COUNTER.build():

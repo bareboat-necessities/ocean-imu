@@ -522,6 +522,52 @@ conditioned operand. Source-uniform guard/Racc/libm supplies remain open.
 
 ### Failure analysis and independent critic
 
+* **Magnetic frame prerequisite audit:** the small accumulation-to-handoff
+  frame premise belongs to the conditional 0.63-rad entry certificate. It is
+  not needed to define the current four-chart finite word. The earlier
+  tilt-only substitution failed because physical heading remains in the frame.
+  Alternatives are (1) prove all-source heading/lag accuracy, (2) delay the
+  word until separately proved accurate magnetic capture, or (3) retain the
+  full frame, arbitrary nonzero attitude and actual reference discrepancy in
+  the finite graph. Choose (3), already implemented by the atlas and magnetic
+  product. For proper rotations, ||A_i-G_L||<=2 universally; the existing
+  magnetic envelope gives mean perturbation <=157 uT without any small-angle
+  premise. This is a finite image bound, not a useful contraction margin.
+  Remove the obsolete accuracy gate from the pre-rho master, retain the
+  conditional accuracy lemma for later basin/usefulness work, and test gauged
+  180-degree fresh entry with its unchanged full covariance and physical
+  attitude. Target arithmetic and universal startup remain separate gates.
+
+* **Startup disturbance admission:** an arbitrary finite IMU residual bound
+  cannot imply the raw magnitude needed by the first-sample seed. For a level
+  stationary boat with zero BIAS0/1/2 bias, let epsilon=2^-11 m/s^2 and
+  n_a=(0,0,g-epsilon). Then a_raw=(0,0,-epsilon), its gravity direction is
+  correct, and the residual is bounded, but the literal `norm > 1e-3f` seed
+  predicate is false forever. The unchanged public wrapper remains unseeded
+  and non-Live through 30,602 samples. This falsifies extending universal
+  startup to arbitrary bounded IMU residuals; it does not falsify a specified
+  small-disturbance startup theorem, the original proof track, or Live ISS.
+  `BoundedHistory` currently binds executed post-Live forcing and supplies no
+  startup raw-input observability premise. A label or finite W cannot fill
+  that gap. The limiting quantity is the source-produced conditioned-accel
+  magnitude, before any seed-angle or timeout-alignment proof can apply.
+  Critic alternatives are (1) derive a startup magnitude/direction margin
+  from an explicit sensor/model residual contract, (2) state startup separately
+  from arbitrary-bounded-input Live ISS, or (3) prove eventual informative
+  samples from a declared recovery/persistence contract. Neither a longer
+  timeout nor more Mahony enclosure refinement addresses this obstruction.
+  No new sensor bound is selected. The exact constant-input guard/observer
+  induction, source identity and native public-API correspondence pass; the
+  master rejects conflating the two disturbance quantifiers. The next step
+  requires the intended startup sensor/observability contract, then a check
+  of its source-produced seed magnitude and direction margins.
+  The exact guard induction exposed a separate implementation defect:
+  `_sqrt(0,0)` delegated to a positive-only rounding cell and rejected literal
+  zero detector RMS. This invalidates that arithmetic branch's coverage, not
+  the source family or shipping. Handle the exact zero-root identity before
+  positive cells, reject nonzero witnesses at zero, and re-run the same
+  constant-input induction. No norm threshold or source bound is changed.
+
 * **WPE branch attachment:** the preceding machine product rejected
   any exact/machine usable-latch mismatch and the lower ledgers also required
   simultaneous log initialization/production. This is a composition restriction,

@@ -20,12 +20,19 @@ class Tests(unittest.TestCase):
         self.assertTrue(x['closed_subobligations']['literal_per_compiler_WPE_usable_latch'])
         self.assertTrue(x['finite_storage_status']['finite_word_counter_safety_closed'])
         self.assertEqual(x['research_outcome'],'finite_master_qualification_incomplete')
-        self.assertTrue(x['open_obligations']['startup_accumulation_to_handoff_full_frame_bound'])
+        self.assertNotIn('startup_accumulation_to_handoff_full_frame_bound',x['open_obligations'])
+        self.assertTrue(x['closed_subobligations']['full_magnetic_frame_represented_without_small_angle_capture'])
+        self.assertFalse(x['magnetic_frame_bounds']['small_frame_accuracy_required_by_finite_atlas_word'])
+        self.assertFalse(x['magnetic_frame_bounds']['full_accumulation_to_handoff_frame_bound_source_qualified'])
         self.assertEqual(x['conditional_timeout_plus_word_last_sample'],30602)
         self.assertEqual(x['startup_entry_obstruction']['Cayley_denominator_at_south'],0)
+        self.assertTrue(x['startup_disturbance_obstruction']['finite_prefix_no_initialization_induction'])
+        self.assertFalse(x['startup_disturbance_obstruction']['post_Live_ISS_bound_supplies_startup_raw_norm_premise'])
         self.assertFalse(x['finite_master_guard_closed'])
         self.assertFalse(x['storage_search_allowed'])
         self.assertIn('finite-state storage blocked',x['finite_storage_guard_error'])
+        x['startup_disturbance_obstruction']['arbitrary_bounded_residuals_imply_universal_startup']=True
+        self.assertIn('arbitrary_bounded_residuals_imply_universal_startup differs from startup residual obstruction',G.validate(x))
 
     def test_closed_counter_prerequisite_must_reach_master_status(self):
         x=G.build()

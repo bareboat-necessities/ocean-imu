@@ -7,6 +7,18 @@ ROOT=Path(__file__).resolve().parents[2]; sys.path.insert(0,str(ROOT))
 from tools.stability.ou3_alt_contraction import finite_mag_startup_capture_bound as X
 
 class Tests(unittest.TestCase):
+    def test_unrestricted_frame_image_bound_does_not_claim_small_angle_capture(self):
+        b=X.unrestricted_frame_bound()
+        self.assertEqual(b.half_tilt_sin_max,1)
+        self.assertEqual(b.earth_rotation_error_max,150)
+        self.assertEqual(b.mean_perturbation_max,157)
+        self.assertFalse(b.capture_nonzero)
+        with self.assertRaisesRegex(ValueError,'erase horizontal north'):
+            X.require_capture(b)
+        r=X.readiness()
+        self.assertTrue(r['unrestricted_full_frame_chord_bound_closed'])
+        self.assertFalse(r['small_frame_accuracy_required_by_finite_atlas_word'])
+
     def test_current_envelope_exact_open_tilt_margin_is_four_over_75(self):
         self.assertEqual(X.default_tilt_margin_half_sin(),F(4,75))
         at=X.derive(F(4,75))

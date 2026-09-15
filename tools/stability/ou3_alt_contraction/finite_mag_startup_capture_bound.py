@@ -13,6 +13,10 @@ In particular the declared 0.02-rad gravity bound cannot be substituted for s.
 The conditional numerical example s=0.01 and handoff tilt <=0.02 gives E<=8.5,
 sin(yaw_error)<=17/30, yaw error<0.61 and total angle<0.63<pi/4. Its arithmetic
 is valid; the source-uniform frame and handoff premises are unproved.
+
+For the finite atlas word, no small-frame premise is necessary: proper
+rotations satisfy ||A-G||_2<=2, and derive(1) supplies the unrestricted mean
+image bound. This does not establish nonvanishing north or a storage basin.
 """
 from __future__ import annotations
 from dataclasses import dataclass
@@ -79,6 +83,17 @@ def default_tilt_margin_half_sin():
     return numerator/denominator
 
 
+def unrestricted_frame_bound(envelope:Q.Envelope|None=None):
+    """For every proper A,G and v, ||(A-G)v||<=||Av||+||Gv||=2||v||.
+
+    Apply this to each SAME physical field sample and then the positive-weight
+    mean. No heading excursion, handoff lag or observer-accuracy cap is added.
+    Exact finite transport retains the rotations and discrepancy themselves;
+    this image bound never replaces attitude error by independent forcing.
+    """
+    return derive(F(1),envelope)
+
+
 def conditional_fresh_attitude_certificate(*, half_frame_sin_max, handoff_tilt_rad_max):
     """Prove only the implication from explicitly supplied full-frame bounds."""
     b=derive(half_frame_sin_max); require_capture(b)
@@ -99,6 +114,7 @@ def conditional_fresh_attitude_certificate(*, half_frame_sin_max, handoff_tilt_r
 def readiness():
     c=conditional_fresh_attitude_certificate(half_frame_sin_max=F(1,100),
                                              handoff_tilt_rad_max=F(1,50))
+    coarse=unrestricted_frame_bound()
     return {
       'deterministic_average_does_not_claim_sqrtN_improvement':True,
       'earth_field_rotation_chord_bound_materialized':True,
@@ -107,6 +123,10 @@ def readiness():
       'yaw_sine_error_supply_bound_materialized':True,
       'current_envelope_half_tilt_sin_margin_is_4_over_75':default_tilt_margin_half_sin()==F(4,75),
       'conditional_full_frame_0p02_and_handoff_tilt_0p02_imply_pi_over_4_entry':c.below_pi_over_4,
+      'unrestricted_full_frame_chord_bound_closed':True,
+      'unrestricted_frame_operator_norm_upper':F(2),
+      'unrestricted_mean_perturbation_upper_uT':coarse.mean_perturbation_max,
+      'small_frame_accuracy_required_by_finite_atlas_word':False,
       'full_accumulation_to_handoff_frame_bound_source_qualified':False,
       'declared_startup_tilt_0p02_rad_attached_via_sin_x_le_x':False,
       'real_arithmetic_yaw_lt_0p61_rad_certified':False,

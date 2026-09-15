@@ -82,7 +82,7 @@ additional updates. None of this proves the aligned predicate for every source
 at the deadline. Later handoffs need either a separately proved deadline or
 longer/indefinite arithmetic supplies.
 
-## Magnetic capture needs the full frame history
+## Magnetic accuracy needs the full frame history
 
 For an accepted magnetic sample let
 `A_i=R_tilt_hat_i R_true_WB_i` and let `G_L=Rz(-psi_true_at_handoff)`.
@@ -102,14 +102,23 @@ The arithmetic implication from `s<=0.01` and handoff tilt `<=0.02` still gives
 requires those full-frame/handoff bounds explicitly and no longer labels them
 source-qualified consequences of the gravity bound.
 
+The finite atlas word does not need this small-angle accuracy premise.
+For every pair of proper rotations, ||A_i-G_L||_2<=2. The same arithmetic mean
+therefore has the unrestricted perturbation bound 157 uT. This bound need not
+keep north nonzero, but both the not-ready branch and every nonzero fresh
+attitude are represented. The actual frame and reference discrepancy remain
+in the graph. Small-angle magnetic accuracy may matter for a later basin or
+usefulness theorem; it is no longer an independent pre-rho master prerequisite.
+
 ## Remaining work, in dependency order
 
 1. The four-chart cover and conditional ungauged event continuation are
    attached. Keep their chart index and exact transport in every remaining
    source/machine layer; do not replace chart-dependent physical attitude by
    coordinate magnitude alone.
-2. Prove actual startup predicate production, seed/SVD/nonfinite branches,
-   magnetic accumulation-to-handoff frame relation, and finite reachability.
+2. Qualify the startup raw-IMU sensor/observability contract separately from
+   post-Live ISS, then prove actual predicate production, seed/SVD/nonfinite
+   branches and finite reachability. See `ou3-alt-startup-disturbance-contract.md`.
 3. Qualify all target/compiler arithmetic and supplies: WPE exp/log/sqrt,
    band/statistics/tuner, Q-axis, Racc/guard displacement, clocks/scheduler,
    trigonometry/normalization, Eigen LDLT/eigensolvers/floors, and comparisons.

@@ -70,6 +70,9 @@ def _exp_minus(mag,witness,name):
 def _sqrt(v,witness,name):
     x=_q(v,name+' radicand'); w=_q(witness,name+' result')
     if x<0: raise ValueError(name+' negative radicand')
+    if x==0:
+        if w!=0: raise ValueError(name+' zero radicand requires zero result')
+        return ZERO
     lo,hi=ROOT.sqrt_enclosure(x)
     if not EXP._interval_hits_rne_cell(lo,hi,w): raise ValueError(name+' result detached from SAME radicand RNE cell')
     return w

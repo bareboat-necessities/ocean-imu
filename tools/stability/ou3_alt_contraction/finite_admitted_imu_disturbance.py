@@ -15,6 +15,12 @@ bounded disturbance history.  This module makes that ISS quantifier explicit:
 Thus a later storage theorem may state an ultimate bound as a function of W,
 where ``||w_k|| <= W``.  No probability, sigma multiple, covariance-consistency
 assumption, replay, or independent disturbance box is introduced here.
+
+The restricted ordinals are post-Live events. This variable supplies no bound
+on raw startup accelerometer magnitude or seed direction. Extending it to
+universal startup under arbitrary bounded residuals is false; see
+``finite_startup_disturbance_obstruction``. Startup needs its own source-qualified
+sensor/observability contract before a goLive result exists to attach here.
 """
 from __future__ import annotations
 from dataclasses import dataclass

@@ -106,6 +106,13 @@ half-frame sine bound <=0.01 and handoff tilt <=0.02, the 8.5 uT perturbation,
 0.61-rad yaw and 0.63-rad full-angle bounds follow. Source qualification of those
 premises and deployment atan2/AngleAxis/normalization remain open.
 
+The finite atlas word does not require this small-angle accuracy certificate.
+It retains the full frame, nonzero quaternion and actual magnetic discrepancy.
+The universal proper-rotation chord bound 2 gives a finite mean-perturbation
+image bound of 157 uT; no north-nonvanishing or contraction claim follows.
+Small magnetic-frame accuracy is therefore a later basin/usefulness question,
+not an independent prerequisite for the current finite-word representation.
+
 ## Fresh H18 and first Live sample now composed
 
 The zero-heel gauged handoff is composed through shipping
@@ -169,10 +176,20 @@ without new Live snapshots or a second goLive execution.
 
 Racc consumes pre-candidate TuneState sigma every sample, independently of the
 pending active-parameter commit, and uses the raw preupdate WPE getter/prior.
-The numerical machine-guard displacement into Racc/accelerometer remains open.
+The joined Racc/accelerometer relation consumes the same machine-conditioned
+operand; its source-uniform arithmetic supply remains open.
 Conditional attachment does not close universal startup capture, ungauged
 handoff, deployment arithmetic or the source-uniform 600-transition word.
 All finite-master/storage/theorem gates remain fail-closed.
+
+Startup raw-IMU observability must be qualified separately from the post-Live
+arbitrary-bounded ISS quantifier. The latter permits no inference about the
+first-sample norm. `ou3-alt-startup-disturbance-contract.md` proves that an
+arbitrary bounded residual can keep that norm below the initialization
+threshold while preserving the correct gravity direction. A longer timeout,
+more Mahony bounds or magnetic service cannot initialize that proxy. Retain
+the obstruction and obtain the intended startup sensor contract; do not
+silently choose a residual cap or reinterpret covariance as one.
 
 ## Physical source-prefix graph
 

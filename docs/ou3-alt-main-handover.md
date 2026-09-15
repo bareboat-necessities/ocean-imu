@@ -15,6 +15,15 @@ source audit are in `ou3-alt-deployment-prerequisite.md`. No maximum call rate
 was added. The master has no falsified counter prerequisite, but universal
 startup and source-uniform deployment arithmetic still block rho estimation.
 
+Startup additionally needs an explicit sensor/observability contract. The
+post-Live arbitrary-bounded ISS variable does not provide one. A constant
+bounded residual can preserve the correct gravity direction while keeping the
+measured norm below the seed threshold forever; both handoff paths then remain
+blocked. `ou3-alt-startup-disturbance-contract.md` gives the exact source and
+guard/observer induction. This refutes the arbitrary-bounded startup extension,
+not a separately specified small-disturbance startup theorem. No sensor cap has
+been invented or hardware admission inferred. The master retains this result.
+
 The finite runtime now represents every nonzero attitude error in a four-chart
 joint24 atlas. Maximum-component selection bounds each attitude coordinate by
 2 and covers the admitted south-heading timeout entry. Prediction, accepted
@@ -46,7 +55,11 @@ rank-three covariance relations remain available.
 The RN32 clock reaches the default timeout comparison at sample 30,002; shared
 startup-plus-600-IMU budgets end at 30,602. That deadline is conditional on
 source-produced gravity alignment. The magnetic 8.5-uT / 0.63-rad accuracy
-calculation still requires a full accumulation-to-handoff frame bound.
+calculation remains conditional on a small accumulation-to-handoff frame bound.
+That accuracy premise is not needed by the finite atlas word: proper rotations
+give the universal chord bound 2 and the same-state mean perturbation bound
+157 uT. The graph retains the actual frame and magnetic discrepancy, without
+claiming this coarse bound proves nonvanishing north or useful contraction.
 
 ## WPE arithmetic qualification
 
@@ -56,7 +69,7 @@ clamps, including nonfinite fallback and retained statistics. For exact bounds
 [RN32(L)-U, RN32(U)-L]. This proof requires neither branch agreement nor a libm
 accuracy estimate. The two-clamp accepted-update relation additionally uses the
 statistics interval. Neither bound proves execution totality or a useful
-contraction margin. The master has 12 remaining open qualifications.
+contraction margin. The master has 11 remaining open qualifications.
 
 The moment graph retains shipping's literal `(alpha*v)*v` and `(alpha*eta)*eta`
 order. Each machine history carries its own post-log-update usable latch,
@@ -73,7 +86,8 @@ a prerequisite; source-uniform arithmetic and target qualification remain open.
 1. Keep the closed counter projection, atlas and certified empty magnetic
    startup branch attached in every stronger source/machine layer. Mathematical
    event ordinals keep increasing after the shipping count saturates.
-2. Prove startup source/control reachability, including seed/SVD/nonfinite
+2. Qualify a startup raw-IMU sensor/observability contract separately from the
+   post-Live ISS bound. Prove startup source/control reachability, including seed/SVD/nonfinite
    branches, and qualify complete initial/refined/continuous magnetic history.
    Attach the actual target/compiler/Eigen/libm profile; close
    source-uniform arithmetic supplies and comparison branches under the resulting

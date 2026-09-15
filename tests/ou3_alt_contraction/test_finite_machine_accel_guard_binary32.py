@@ -7,6 +7,11 @@ from tools.stability.ou3_alt_contraction import finite_binary32_arithmetic as B
 
 
 class Tests(unittest.TestCase):
+    def test_exact_zero_detector_rms_is_a_valid_machine_root(self):
+        self.assertEqual(X._sqrt(0,0,'RMS'),0)
+        with self.assertRaisesRegex(ValueError,'zero radicand requires zero result'):
+            X._sqrt(0,B.rn32(F(1,1000)),'RMS')
+
     def test_update_API_adapter_requires_exact_binary32_RNE_image(self):
         exact=(F(1,10),F(-2,10),F(3,10)); stored=tuple(B.rn32(x) for x in exact)
         self.assertEqual(X.api_vec(exact,stored,'acc'),stored)

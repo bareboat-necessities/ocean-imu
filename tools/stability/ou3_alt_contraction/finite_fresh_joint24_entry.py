@@ -72,6 +72,7 @@ def readiness():
       'full_21_state_covariance_retained_in_H18':True,
       'covariance_consistency_not_used_as_entry_assumption':True,
       'independent_fresh_entry_error_box_removed':True,
+      'small_magnetic_capture_radius_required':False,
       'deployment_binary32_correspondence_closed':False,
       'fresh_entry_inside_storage_basin_proved':False,
       'complete_same_history_startup_to_Live_word':False,

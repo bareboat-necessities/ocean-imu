@@ -7,6 +7,15 @@ are retained. No source heading is excluded.
 
 ## Universal cover
 
+Small magnetic capture error is not a premise of this representation. For any
+proper accumulation frame A_i and handoff frame G_L, triangle inequality gives
+||(A_i-G_L)v||<=2||v||. With the existing magnetic envelope this gives an
+unrestricted mean-perturbation bound 2*75+5+2=157 uT. It does not prove nonzero
+north, a small error or a useful storage margin. The graph retains its actual
+reference discrepancy and frame; the coarse bound never replaces attitude
+error with independent sensor forcing. The conditional 0.63-rad magnetic
+accuracy certificate remains available for later basin/usefulness work.
+
 For any nonzero relative quaternion q choose the smallest index k maximizing
 `abs(q[k])`. The chart coordinates are `c[j]=2*q[j]/q[k]`, in ascending order
 of the three indices other than k. Its homogeneous representative inserts 2
