@@ -522,6 +522,31 @@ conditioned operand. Source-uniform guard/Racc/libm supplies remain open.
 
 ### Failure analysis and independent critic
 
+* **Machine MEKF recurrence:** the strongest represented Live wrapper starts
+  each deployment prediction from its exact-shadow MEKF predecessor; the
+  previous machine prediction/accelerometer successor is returned as a local
+  supply but not retained as the next machine predecessor. This is a
+  composition failure, not evidence that the shipping filter is unstable.
+  It invalidates inferring a deployed 600-step recurrence from 600 local
+  supply checks, even if their individual bounds are established. The limiter
+  is machine-state continuity across IMU, MAG and HOLD boundaries. Critic
+  alternatives are a persistent product recurrence, an explicit finite-word
+  composition theorem with checked state-equality premises, or a machine-only
+  evaluator with a derived exact shadow. The next falsifiable check must reject
+  a second event rooted at the old exact shadow after a nonzero machine defect.
+
+* **Subnormal arithmetic domain:** `finite_binary32_arithmetic.rn32(2^-149)`
+  rejects a finite IEEE binary32 value although the admitted source has no
+  positive lower bound on nonzero components. This is a proof-model totality
+  defect; normal-input identities and shipping stability are not falsified.
+  Excluding small components cannot repair the universal quantifier. The
+  limiting quantity is the missing subnormal lattice, not enclosure width.
+  Critic alternatives are full gradual-underflow rounding, a separately
+  qualified target flush-to-zero relation, or migration to the existing
+  Mahony bit kernel. Extend the finite lattice and check signed ties, the
+  normal/subnormal boundary and API/EMA/stillness composition against the
+  independent bit kernel. Target arithmetic qualification remains separate.
+
 * **Document-build infrastructure:** the full paper's LaTeX build stops before
   reading the theorem text because `IEEEtran.cls` is absent. This is an
   environment failure, not evidence against the new inequalities. Keep the
