@@ -31,6 +31,7 @@ from tools.stability.ou3_alt_contraction import finite_mag_call_schedule as CALL
 from tools.stability.ou3_alt_contraction import finite_attitude_atlas as ATLAS
 from tools.stability.ou3_alt_contraction import finite_fresh_joint24_entry as FRESH
 from tools.stability.ou3_alt_contraction import finite_live_interleave as INTERLEAVE
+from tools.stability.ou3_alt_contraction import finite_mag_counter_obstruction as COUNTER
 
 QUALIFICATION='OU3_ALT_FINITE_MASTER_GUARD_V1'
 
@@ -41,6 +42,7 @@ def build():
     wm=WPEMOM.readiness(); wmach=WPEMACHINE.readiness(); wlog=WPELOG.readiness(); wfreq=WPEFREQ.readiness(); qexp=QEXP.readiness()
     entry=ENTRY.build(); control=CONTROL.readiness(); capture=CAPTURE.readiness()
     clock=CLOCK.readiness(); counter=CALLS.counter_lifetime(); atlas=ATLAS.readiness()
+    counter_obstruction=COUNTER.build()
 
     closed={
       'ungauged_Live_waiting_and_later_north_runtime_branch': INTERLEAVE.readiness()['ungauged_timeout_entry_and_later_north_acquisition_composed'],
@@ -85,7 +87,6 @@ def build():
     open_obligations={
       'startup_accumulation_to_handoff_full_frame_bound': not capture['full_accumulation_to_handoff_frame_bound_source_qualified'],
       'source_uniform_timeout_aligned_branch_reachability': not clock['universal_startup_deadline_closed'],
-      'signed_magnetic_counter_safety_on_the_finite_word': not counter.no_signed_overflow_proved,
       'near_antiparallel_Eigen_JacobiSVD_solver_correspondence': not seed['near_antiparallel_JacobiSVD_solver_correspondence_qualified'],
       'universal_startup_source_and_branch_reachability': not startup['every_admitted_startup_history_reaches_this_boundary_product'],
       'startup_source_uniform_deployment_supplies': not startup['source_uniform_startup_deployment_supply_bounds_closed'],
@@ -121,8 +122,14 @@ def build():
 
     return {
       'qualification':QUALIFICATION,
+      'research_outcome':'finite_master_prerequisite_falsified',
       'closed_subobligations':closed,
       'open_obligations':open_obligations,
+      'falsified_prerequisites':{
+          'signed_magnetic_counter_safety_on_the_finite_word':
+              not counter_obstruction['total_defined_execution_for_current_schedule_possible'],
+      },
+      'counter_totality_obstruction':counter_obstruction,
       'startup_entry_obstruction':entry,
       'attitude_atlas':atlas,
       'conditional_timeout_plus_word_last_sample':CLOCK.MAX_STEPS,
@@ -141,6 +148,12 @@ def validate(x):
         if v is not True:f.append('closed subobligation regressed: '+k)
     if not x.get('open_obligations') or not all(v is True for v in x['open_obligations'].values()):
         f.append('open-obligation polarity mismatch')
+    if x.get('falsified_prerequisites') != {'signed_magnetic_counter_safety_on_the_finite_word':True}:
+        f.append('finite counter totality falsification missing')
+    if x.get('research_outcome') != 'finite_master_prerequisite_falsified':
+        f.append('research outcome obscures falsified prerequisite')
+    if x.get('counter_totality_obstruction') != COUNTER.build():
+        f.append('counter obstruction differs from audited source/schedule argument')
     if not x.get('finite_storage_guard_error'):f.append('finite storage guard did not fail closed')
     for k in ('finite_master_guard_closed','storage_search_allowed','ALT_STARTUP_PASS','ALT_LIVE_PASS','ALT_END_TO_END_PASS'):
         if x.get(k) is not False:f.append(k+' not false')
@@ -161,6 +174,8 @@ def main():
     args.output.parent.mkdir(parents=True,exist_ok=True)
     args.output.write_text(json.dumps(report,indent=2,sort_keys=True,default=str)+'\n')
     print(json.dumps({'storage_search_allowed':report['storage_search_allowed'],
+                      'research_outcome':report['research_outcome'],
+                      'falsified_prerequisites':list(report['falsified_prerequisites']),
                       'open_obligations':list(report['open_obligations']),
                       'validation_failures':failures},sort_keys=True))
     return int(bool(failures))

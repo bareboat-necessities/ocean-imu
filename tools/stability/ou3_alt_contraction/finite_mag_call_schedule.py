@@ -16,6 +16,8 @@ calls are admitted by the current schedule. Therefore this assumption proves
 unlock reachability but does NOT by itself prove lifetime safety of shipping's
 signed ``int mag_updates_applied_``. A maximum call rate / positive minimum gap,
 or a saturating shipping counter, is a separate deployment obligation.
+The exact compressed counterexample in ``finite_mag_counter_obstruction``
+resolves total counter safety for this language as false, not merely unknown.
 """
 from __future__ import annotations
 from dataclasses import dataclass

@@ -11,12 +11,19 @@ class Tests(unittest.TestCase):
         self.assertNotIn('all_admitted_ungauged_entries_have_a_finite_attitude_representation',x['open_obligations'])
         self.assertTrue(x['finite_storage_status']['all_admitted_startup_entries_represented'])
         self.assertTrue(x['closed_subobligations']['all_nonzero_fresh_attitudes_represented_by_joint24_atlas'])
-        self.assertTrue(x['open_obligations']['signed_magnetic_counter_safety_on_the_finite_word'])
+        self.assertNotIn('signed_magnetic_counter_safety_on_the_finite_word',x['open_obligations'])
+        self.assertTrue(x['falsified_prerequisites']['signed_magnetic_counter_safety_on_the_finite_word'])
+        self.assertEqual(x['research_outcome'],'finite_master_prerequisite_falsified')
         self.assertTrue(x['open_obligations']['startup_accumulation_to_handoff_full_frame_bound'])
         self.assertEqual(x['conditional_timeout_plus_word_last_sample'],30602)
         self.assertEqual(x['startup_entry_obstruction']['Cayley_denominator_at_south'],0)
         self.assertFalse(x['finite_master_guard_closed'])
         self.assertFalse(x['storage_search_allowed'])
         self.assertIn('finite-state storage blocked',x['finite_storage_guard_error'])
+
+    def test_falsified_prerequisite_cannot_be_hidden_as_merely_open(self):
+        x=G.build()
+        x['falsified_prerequisites']={}
+        self.assertIn('finite counter totality falsification missing',G.validate(x))
 
 if __name__=='__main__': unittest.main()

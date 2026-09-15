@@ -10,8 +10,8 @@ being claimed at present:
    ceases to advance that shipping clock;
 2. ``mag_updates_applied_`` is a signed ``int`` incremented on every post-delay
    magnetometer call.  The current MAG-CALL-SCHEDULE-v1 gives only upper bounds
-   on call gaps, hence no uniform call-count upper bound and no signed-overflow
-   proof, even on a fixed compact window.
+   on call gaps. The compressed construction in finite_mag_counter_obstruction
+   falsifies total execution over that schedule even on a compact window.
 
 This is NOT a dynamical-instability counterexample.  It is a deployment-language
 obstruction: repeated finite words cannot be promoted to an indefinite theorem
@@ -86,6 +86,7 @@ def readiness():
       'indefinite_wrapper_clock_lifetime_closed':r.wrapper_clock_indefinite_closed,
       'indefinite_current_shipping_execution_closed':r.indefinite_current_shipping_execution_closed,
       'finite_word_contraction_invalidated_by_this_obstruction':False,
+      'total_generic_finite_machine_execution_invalidated':True,
       'dynamical_instability_claimed':False,
       'storage_search_allowed':False,
       'ALT_LIVE_PASS':False,

@@ -1,11 +1,20 @@
 # OU-III ALT current handover
 
-Read `AGENTS.md`, this file, `ou3-alt-attitude-atlas.md`,
+Read `AGENTS.md`, this file, `ou3-alt-deployment-prerequisite.md`,
+`ou3-alt-attitude-atlas.md`,
 `ou3-alt-startup-pre-rho.md`, `ou3-alt-proof-plan.md`, and the ALT section of
 `ou3-proof-research-state.md`. The original P2/P3/P4/P5 route continues
 independently through `ou3-brmm-main-handover.md`.
 
 ## Controlling result
+
+The current generic ALT deployment language has a **falsified finite-master
+prerequisite**. After eligible gauged Live it admits a finite equal-timestamp
+burst forcing either an earlier undefined operation or signed magnetic-counter
+overflow. The exact compressed counter-projection argument is in
+`ou3-alt-deployment-prerequisite.md`. Total machine execution cannot be proved
+for this language, so rho estimation cannot proceed under its present premises.
+The guard distinguishes this falsification from the remaining open obligations.
 
 The finite runtime now represents every nonzero attitude error in a four-chart
 joint24 atlas. Maximum-component selection bounds each attitude coordinate by
@@ -23,7 +32,8 @@ accumulating continuous statistics twice. The north-service clock starts at the
 actual gauge event without moving the physical Live/S origin.
 
 These are exact conditional program relations. They do not prove universal
-startup/capture, source-uniform arithmetic or counter safety. Rho remains blocked.
+startup/capture or source-uniform arithmetic, and remain valid despite the
+separate event-language obstruction.
 
 ## Retained work
 
@@ -38,17 +48,21 @@ source-produced gravity alignment. The magnetic 8.5-uT / 0.63-rad accuracy
 calculation still requires a full accumulation-to-handoff frame bound.
 
 The signed magnetic counter graph rejects INT_MAX increment instead of silently
-extending C++ with Python integers. Avoidance of that edge is unproved under
-MAG-CALL-SCHEDULE-v1, which has no uniform upper count.
+extending C++ with Python integers. Universal avoidance is false under
+MAG-CALL-SCHEDULE-v1. The actual AtomS3R caller has at most one magnetic call per
+IMU invocation, but its measured-dt and configured/build profiles have not been
+attached to the canonical exact-5-ms master. Do not silently substitute it.
 
 ## Continuation
 
-1. Prove startup source/control reachability, including seed/SVD/nonfinite
+1. Replace the falsified generic caller premise only with a source-derived,
+   jointly attached real-caller timestamp, configuration and arithmetic contract.
+   The conditional 30,602-invocation count bound alone does not provide that.
+2. Prove startup source/control reachability, including seed/SVD/nonfinite
    branches, and qualify complete initial/refined/continuous magnetic history.
-2. Attach the actual target/compiler/Eigen/libm and caller profile; close
+   Attach the actual target/compiler/Eigen/libm profile; close
    source-uniform arithmetic supplies, comparison branches and finite counter
-   safety. A sketch's one-mag-call-per-IMU bound cannot silently replace the
-   current broader asynchronous language.
+   safety under the resulting deployment contract.
 3. Compose the entire same-history 600-transition machine word and require
    `finite_master_guard.build()` / `assert_finite_storage_master` to pass.
 4. Only then construct coercive storage respecting chart semantics and exact

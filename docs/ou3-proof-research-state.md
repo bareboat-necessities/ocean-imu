@@ -523,6 +523,38 @@ path. Source-uniform guard/Racc/libm supplies are therefore open.
 
 ### Failure analysis and independent critic
 
+* **Finite-word deployment-language contradiction:** after gauged Live and the
+  magnetic delay, every returning outer magnetic callback reaches the unchecked
+  signed `mag_updates_applied_++`, independently of innovation acceptance. For
+  any safe entry count c, MAG-CALL-SCHEDULE-v1 admits INT_MAX+1-c callbacks at
+  the fresh physical endpoint before transition 1, followed by 40 ms calls.
+  The schedule is locally finite and time-unbounded. If all preceding events
+  have defined execution, the last increment overflows; an earlier undefined
+  event already defeats the same total-execution prerequisite. The failed
+  quantity is c+N <= INT_MAX, not a numerical enclosure. This invalidates a
+  total finite machine word over the current asynchronous language, not the
+  physical source model, exact conditional identities or filter stability.
+  The actual AtomS3R sketch has one magnetic call site per IMU invocation, but
+  its measured timestamp dt is not the canonical exact-5-ms proof profile.
+  Its 35 ms fresh gate resets after an invalid sample, so it is not by itself
+  an unconditional minimum-gap theorem.
+  Critic: abandon attempts to prove totality of this overbroad event language.
+  Three distinct alternatives are (1) derive and attach the real caller's
+  event-count, timestamp and target-arithmetic contract, (2) study a partial
+  execution theorem explicitly conditional on defined operations, which does
+  not satisfy the present master, or (3) change the deployed counter, excluded
+  by this PR's immutable scope. The compressed exact burst certificate and
+  source-bound caller audit are present. The native public-API prefix reaches
+  gauged Live; after installing only INT_MAX-1 for a boundary regression, the
+  unchanged outer callback reaches INT_MAX and its next call triggers the
+  signed-overflow sanitizer. This is not a reset-to-INT_MAX replay.
+  Neither an arbitrary rate cap nor more interval
+  precision can resolve this contradiction. No rho calculation is justified.
+  Endpoint audit rejects a proposed between-grid burst placement: the current
+  composer consumes represented endpoints only. This invalidates that placement,
+  not the counter argument; its admitted sample-zero endpoint supplies the
+  corrected construction without advancing or inventing physical history.
+
 * **Ungauged Live composition gap:** the old interleaver rejects a timeout
   entry without north. Shipping continues initial acquisition after Live, but
   its `attitudeReferenceQuat_()` now selects the MEKF quaternion. Continuous
@@ -562,12 +594,6 @@ not a storage margin. No rho/storage search has been run or authorized.
   premise substitution, not the conditional chord/mean inequality and not a
   complete shipping capture trace. Retain heading excursion and handoff lag
   in the frame relation; sampled means cannot qualify it universally.
-* **Finite counter-safety prerequisite:** MAG-CALL-SCHEDULE-v1 has no minimum
-  gap. Its existing exact counter theorem therefore supplies no uniform call
-  count even within three seconds. This is already a finite-master deployment
-  obligation, not solely an indefinite-tiling issue. Do not invent a rate cap
-  or change the shipping counter to obtain proof readiness.
-
 The critic alternative to further seed/SVD bounds is to address the startup
 representation first. Three distinct choices are (1) carry a gravity quotient
 and neutral yaw until source-qualified magnetic regauging, (2) retain a
@@ -608,6 +634,17 @@ Universal source/control/deployment qualification still keeps the guard blocked.
   separately classified proof-construction/test failures, not permission to
   narrow outward intervals or assert the theorem false. Original-track modules
   remain untouched.
+* **Inherited build-gate failure:** `make all` stops at
+  `tests/kalman_ou_iii/live_entry_audit-test`: the quiet pair does not execute
+  H18-to-A21 release by its tested endpoint, and two quiet handoffs have
+  session-origin S=288.1474364 rather than the asserted S>300. The terminal
+  result is `LIVE_ENTRY_AUDIT_PASS=false`, `Makefile:56: run-tests Error 1`,
+  then `Makefile:36: test Error 2`. This is an unchanged original-audit assertion
+  failure, not evidence against the counter induction or attitude identities.
+  Critic: changing thresholds to make this PR green would obscure the original
+  entry question. Retain the failure; rederive those assertions against the
+  corrected source in that independent track. The limiting quantities and next
+  falsifiable check are the actual release time and session-origin S at handoff.
 
 The strongest critic objection is that an identity-preserving startup graph can
 still carry unqualified source/branch/arithmetic witnesses; conditional entry
@@ -644,9 +681,13 @@ promotes source membership, capture, retention or stability.
 ### Current limiter, DEAD_ENDS and next falsifiable work
 
 The four-chart finite runtime and conditional ungauged continuation in
-`ou3-alt-attitude-atlas.md` close the representation/event gaps. The remaining
-limiter is universal startup source/control reachability, full magnetic history,
-and the target/caller arithmetic contract. Every nonzero quaternion is covered;
+`ou3-alt-attitude-atlas.md` close the representation/event gaps. The immediate
+limiter is the falsified total-execution premise for MAG-CALL-SCHEDULE-v1;
+see `ou3-alt-deployment-prerequisite.md`. Its unchecked counter is not a problem
+that more arithmetic lemmas can solve. A source-derived actual-caller contract
+must be jointly attached with measured-dt and configuration semantics. Universal
+startup source/control reachability, full magnetic history and target arithmetic
+then remain necessary. Every nonzero quaternion is covered;
 this does not certify a storage basin or finite capture. A future storage must
 not identify the different chart origins as the same zero physical error.
 
@@ -658,7 +699,8 @@ not deferred entirely to indefinite continuation. The shared 30,602-sample
 budget covers the first default timeout comparison plus 600 IMU edges only
 conditionally on the actual aligned-branch predicate.
 
-All universal entry/deployment/word gates remain open. Every-prefix retention,
+The generic deployment totality gate is falsified; other universal entry and
+arithmetic qualifications remain open. Every-prefix retention,
 joint24 storage/rho, an ultimate bound and no-restart indefinite tiling remain
 later obligations. No larger clock horizon establishes missing startup capture.
 

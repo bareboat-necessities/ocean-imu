@@ -64,7 +64,11 @@ their own private-observer frame. Later north starts the magnetic service clock
 without resetting the physical Live/S origin or duplicating packet statistics.
 
 The guard still requires universal source/control reachability, source-uniform
-arithmetic and finite-word counter safety. The default RN32 timeout crossing is
+arithmetic and finite-word counter safety. The last prerequisite is false for
+the current generic magnetic schedule: `ou3-alt-deployment-prerequisite.md`
+constructs an admitted finite burst that defeats total machine execution. The
+actual sketch's invocation bound is a distinct, still-unattached contract.
+The default RN32 timeout crossing is
 sample 30,002; shared finite budgets include 600 more updates, conditional on
 actual source-produced alignment. Coercive storage must respect the fact that
 coordinate zero in charts 1..3 is a 180-degree error, not zero error.
@@ -208,7 +212,10 @@ endpoint topology; complete source membership at sample zero remains false.
 innovation acceptance, so its internal lock clears within 10 s. The 250th call can occur before the
 strict >1 s guard: the corrected proof uses
 `first_gap + max(249*gap, 1+gap)` and continued, locally finite call coverage.
-Finite-prefix checks do not prove the infinite schedule.
+Finite-prefix checks do not prove the infinite schedule. This reachability
+statement is conditional on defined counter arithmetic; the current schedule
+also admits overflow before the release deadline. It cannot promote a total
+shipping execution theorem.
 
 Do not assume eventual A21 under arbitrary external hold. The graph retains:
 no hold -> exact H18->A21 floor edge; held -> H18 may persist indefinitely;
@@ -218,7 +225,10 @@ H18 with BA cross-covariances zeroed.
 ## Current blockers
 
 The attitude representation and conditional ungauged continuation are attached.
-The remaining immediate blockers are:
+Total finite machine execution over MAG-CALL-SCHEDULE-v1 is falsified. First
+resolve the actual-caller attachment described in
+`ou3-alt-deployment-prerequisite.md`; do not seek tighter numerical bounds for
+that contradiction. The other unresolved qualifications are:
 
 - deployment/binary32 correspondence for startup yaw extraction, atan2,
   AngleAxis, quaternion normalization, handoff setters and clocks;
