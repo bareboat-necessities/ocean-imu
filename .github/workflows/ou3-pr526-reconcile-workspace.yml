@@ -5,6 +5,9 @@ on:
     paths: [.github/workflows/ou3-pr526-reconcile-workspace.yml]
 permissions:
   contents: write
+concurrency:
+  group: pr526-reconciliation
+  cancel-in-progress: true
 jobs:
   workspace:
     runs-on: ubuntu-latest
@@ -95,9 +98,6 @@ jobs:
                           C.build()
           
           '''
-          # Strip the YAML/Python continuation indentation, preserving class indentation.
-          lines=addition.splitlines(True)
-          addition=lines[0]+''.join(line[10:] if line.startswith('          ') else line for line in lines[1:])
           assert needle in s; p.write_text(s.replace(needle,addition+needle))
           PY
           python3 -m py_compile tests/validation/test_ou3_brmm_infinite_continuation.py
