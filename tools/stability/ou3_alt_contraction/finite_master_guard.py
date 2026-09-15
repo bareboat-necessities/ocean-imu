@@ -13,6 +13,7 @@ from tools.stability.ou3_alt_contraction import proof_plan as PLAN
 from tools.stability.ou3_alt_contraction import finite_admitted_startup_machine_tunestate_word as START
 from tools.stability.ou3_alt_contraction import finite_admitted_machine_clock_qualified_interleaved_prefix as LIVE
 from tools.stability.ou3_alt_contraction import finite_binary32_mahony_startup as STARTSEED
+from tools.stability.ou3_alt_contraction import finite_startup_wpe_machine_history as STARTWPE
 from tools.stability.ou3_alt_contraction import finite_scheduler_nextafter_binary32 as NEXT
 from tools.stability.ou3_alt_contraction import finite_aw_sync_clock_binary64 as AWCLOCK
 from tools.stability.ou3_alt_contraction import finite_wpe_moment_binary32 as WPEMOM
@@ -25,7 +26,7 @@ QUALIFICATION='OU3_ALT_FINITE_MASTER_GUARD_V1'
 
 
 def build():
-    startup=START.readiness(); seed=STARTSEED.readiness()
+    startup=START.readiness(); seed=STARTSEED.readiness(); swpe=STARTWPE.readiness()
     live=LIVE.readiness(); nxt=NEXT.readiness(); aw=AWCLOCK.readiness()
     wm=WPEMOM.readiness(); wmach=WPEMACHINE.readiness(); wlog=WPELOG.readiness(); wfreq=WPEFREQ.readiness(); qexp=QEXP.readiness()
 
@@ -50,6 +51,10 @@ def build():
       'WPE_repeated_period_exp_bound_to_same_stored_log_state': bool(
           wmach['moment_horizon_period_bound_to_same_stored_log_state'] and
           wmach['same_exp_log_period_value_bound_across_horizon_and_log_smoothing']),
+      'WPE_full_machine_history_attached_to_startup_Mahony_vertical': bool(
+          swpe['startup_frontend_vertical_ancestry_attached'] and
+          swpe['full_WPE_machine_log_state_equals_existing_lower_WPE_ledger_after_each_attached_step']),
+      'WPE_full_machine_history_preserved_across_goLive': swpe['goLive_preserves_full_WPE_moment_log_machine_history_by_identity'],
     }
 
     open_obligations={
@@ -58,9 +63,9 @@ def build():
       'startup_source_uniform_deployment_supplies': not startup['source_uniform_startup_deployment_supply_bounds_closed'],
       'target_libm_and_compiler_profile_correspondence': not startup['all_target_libm_and_compiler_profile_correspondence_closed'],
       'WPE_machine_target_libm_and_compiler_selection': not (wmach['target_exp_log_sqrt_libm_correspondence_closed'] and wmach['compiler_profile_selection_closed']),
-      'WPE_startup_frontend_vertical_ancestry': not wmach['startup_frontend_vertical_ancestry_attached'],
-      'WPE_Live_600_step_machine_history_attachment': not wmach['Live_600_step_WPE_machine_history_attached'],
-      'WPE_source_uniform_machine_supply_bounds': not wmach['source_uniform_WPE_machine_supply_bounds_closed'],
+      'WPE_machine_vs_exact_period_branch_robustness': not swpe['machine_vs_exact_WPE_period_branch_robustness_closed'],
+      'WPE_Live_600_step_machine_history_attachment': not swpe['Live_600_step_WPE_machine_history_attached'],
+      'WPE_source_uniform_machine_supply_bounds': not swpe['source_uniform_startup_WPE_supply_bounds_closed'],
       'WPE_log_and_exp_libm_correspondence': not (wlog['WPE_log_std_log_target_libm_correspondence_closed'] and wlog['WPE_log_exp_target_libm_correspondence_closed']),
       'WPE_frequency_source_uniform_supply': not wfreq['source_uniform_WPE_frequency_supply_bound_closed'],
       'Qaxis_exp_libm_correspondence': not qexp['Qaxis_exp_libm_binary32_correspondence_closed'],
