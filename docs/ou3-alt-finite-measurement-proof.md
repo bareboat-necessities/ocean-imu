@@ -1,5 +1,9 @@
 # ALT finite physical measurement identity
 
+The Cayley derivation below is the chart-zero specialization. The current
+finite runtime also uses the exact four-chart descriptor and same-state rational
+attitude offset in `ou3-alt-attitude-atlas.md`.
+
 ## Scope and role in the master inequality
 
 The state is `z=(c,e_bg,e_v,e_p,e_S,e_aw,e_ba,beta)`, with

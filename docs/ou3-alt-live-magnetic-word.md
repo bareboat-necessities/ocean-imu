@@ -1,5 +1,10 @@
 # ALT same-history magnetic event composition
 
+The current interleaver also carries ungauged Live and delayed initial north
+acquisition, as detailed in `ou3-alt-attitude-atlas.md`. Initial acquisition after
+Live uses the MEKF tilt; continuous calibration and refinement use the private
+observer. The gauge event starts magnetic service timing without moving S.
+
 ## Obligation and representation boundary
 
 The controlling ALT obligation is the complete finite joint24/21-covariance

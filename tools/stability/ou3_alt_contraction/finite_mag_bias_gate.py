@@ -28,6 +28,7 @@ from tools.stability.ou3_alt_contraction import finite_prediction_graph as P
 
 def R(x): return P.rational(x)
 OFF_BA=18
+SIGNED_COUNTER_MAX=(1 << 31)-1
 
 @dataclass(frozen=True)
 class Config:
@@ -49,7 +50,8 @@ class State:
     locked:bool=True
     hold:bool=False
     def __post_init__(self):
-        if not isinstance(self.updates,int) or self.updates<0: raise ValueError('nonnegative mag update count required')
+        if type(self.updates) is not int or not 0 <= self.updates <= SIGNED_COUNTER_MAX:
+            raise ValueError('mag update count must be a nonnegative signed int32')
         if self.first_time is not None:
             t=R(self.first_time)
             if t<0: raise ValueError('nonnegative first-mag time required')
@@ -72,7 +74,7 @@ def _active(state:CORE.State,initial_std):
     floor=R(initial_std)**2
     cov=[list(r) for r in state.covariance]
     for i in range(3): cov[OFF_BA+i][OFF_BA+i]=max(cov[OFF_BA+i][OFF_BA+i],floor)
-    return CORE.State('A',state.z,tuple(tuple(r) for r in cov),state.q_hat,state.reference)
+    return CORE.State('A',state.z,tuple(tuple(r) for r in cov),state.q_hat,state.reference,state.attitude_chart)
 
 
 def _held(state:CORE.State):
@@ -84,7 +86,7 @@ def _held(state:CORE.State):
         for j in range(21):
             if OFF_BA <= j < OFF_BA+3: continue
             cov[k][j]=F(0); cov[j][k]=F(0)
-    return CORE.State('H',state.z,tuple(tuple(r) for r in cov),state.q_hat,state.reference)
+    return CORE.State('H',state.z,tuple(tuple(r) for r in cov),state.q_hat,state.reference,state.attitude_chart)
 
 
 def update_mag_call(control:State,filter_state:CORE.State,cfg:Config,*,time,live,
@@ -110,6 +112,11 @@ def update_mag_call(control:State,filter_state:CORE.State,cfg:Config,*,time,live
     if measurement_state.reference != filter_state.reference:
         raise ValueError('mag measurement successor detached from same physical endpoint')
 
+    # C++ signed overflow has no defined successor. Do not extend shipping's
+    # partial machine relation with an unbounded Python integer or wraparound.
+    # This rejects an unsafe edge; it does NOT prove source histories avoid it.
+    if control.updates == SIGNED_COUNTER_MAX:
+        raise OverflowError('shipping mag_updates_applied_++ has no defined int32 successor')
     n=control.updates+1
     first=t if control.first_time is None else control.first_time
     locked=control.locked
@@ -141,6 +148,8 @@ def readiness():
     return {
       'mag_delay_and_with_mag_gate_materialized':True,
       'attempt_count_independent_of_measurement_acceptance':True,
+      'undefined_signed_counter_successor_rejected':True,
+      'all_admitted_calls_avoid_signed_overflow_proved':False,
       'first_attempt_timestamp_materialized':True,
       'unlock_count_and_strict_one_second_guard_materialized':True,
       'external_hold_blocks_unlock_enable_but_not_lock_clear':True,

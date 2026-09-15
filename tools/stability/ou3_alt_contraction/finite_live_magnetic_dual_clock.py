@@ -160,8 +160,19 @@ def live_call(state:BASE.LiveState,core,proxy,*,residual_body=None,packet_id=Non
               mag_norm=None,mean_norm=None,horizontal_sqrt=None,
               gauge_half=None,mekf_q_norm=None,mekf_yaw_half=None,
               apply_decay=None,apply_new_norm=None,apply_anchor_norm=None,
-              ldlt=None,alpha=1,radius=None):
+              ldlt=None,alpha=1,radius=None,initial=None):
     """One Live magnetic call with outer and inner clocks kept distinct."""
+    if isinstance(state,BASE.UngaugedLiveState):
+        return _ungauged_call(state,core,proxy,initial=initial,
+            residual_body=residual_body,packet_id=packet_id,
+            proxy_q_norm=proxy_q_norm,proxy_yaw_half=proxy_yaw_half,
+            hi_decay=hi_decay,hi_eigen_success=hi_eigen_success,hi_spectrum=hi_spectrum,
+            mag_norm=mag_norm,mean_norm=mean_norm,horizontal_sqrt=horizontal_sqrt,
+            gauge_half=gauge_half,mekf_q_norm=mekf_q_norm,mekf_yaw_half=mekf_yaw_half,
+            apply_decay=apply_decay,apply_new_norm=apply_new_norm,apply_anchor_norm=apply_anchor_norm,
+            ldlt=ldlt,alpha=alpha,radius=radius)
+    if initial is not None:
+        raise ValueError('gauged Live consumes no initial-acquisition witnesses')
     if not isinstance(state,BASE.LiveState) or not isinstance(core,BASE.CORE.State) or not isinstance(proxy,BASE.VERT.State):
         raise TypeError('persistent Live magnetic/core/private observer states required')
     cfg=state.memory.cfg; pt=core.reference.time; ts=WCLOCK.at_physical_time(pt); wt=ts.wrapper_time
@@ -183,6 +194,22 @@ def live_call(state:BASE.LiveState,core,proxy,*,residual_body=None,packet_id=Non
     memory,continuous=_accumulate(state.memory,source,proxy,tilt,ts,
         decay=hi_decay,eigen_success=hi_eigen_success,spectrum=hi_spectrum)
 
+    return _gauged_suffix(state,core,ts,qualified,memory,continuous,tilt,
+        mag_norm=mag_norm,mean_norm=mean_norm,horizontal_sqrt=horizontal_sqrt,
+        gauge_half=gauge_half,mekf_q_norm=mekf_q_norm,mekf_yaw_half=mekf_yaw_half,
+        apply_decay=apply_decay,apply_new_norm=apply_new_norm,apply_anchor_norm=apply_anchor_norm,
+        ldlt=ldlt,alpha=alpha,radius=radius)
+
+
+def _gauged_suffix(state,core,ts,qualified,memory,continuous,tilt,*,
+                   mag_norm=None,mean_norm=None,horizontal_sqrt=None,
+                   gauge_half=None,mekf_q_norm=None,mekf_yaw_half=None,
+                   apply_decay=None,apply_new_norm=None,apply_anchor_norm=None,
+                   ldlt=None,alpha=1,radius=None):
+    """Same-packet suffix after the single continuous-accumulation event."""
+    cfg=memory.cfg; pt=core.reference.time; wt=ts.wrapper_time
+    source=qualified.sample
+    refining=cfg.refinement_enabled and not state.refinement_done and wt>=cfg.refinement_start
     active,control=state.active,state.control
     tuner,last=state.tuner,state.last_mag_time
     started,done,done_time=state.refinement_started,state.refinement_done,state.refinement_time
@@ -228,9 +255,64 @@ def live_call(state:BASE.LiveState,core,proxy,*,residual_body=None,packet_id=Non
     packet=BASE.MAG.Sample(core.reference,corrected,nu,active.model)
     measured=BASE.ASYNC.update_mag_call(BASE.ASYNC.State(core,control,active),cfg.gate,
         time=pt,live=True,sample=packet,ldlt=ldlt,alpha=alpha,radius=radius)
-    nxt=BASE.LiveState(memory,tuner,last,active,measured.state.control,started,done,done_time)
+    nxt=BASE.LiveState(memory,tuner,last,active,measured.state.control,started,done,done_time,state.north_lock_physical_time)
     return BASE.LiveResult(nxt,measured.state.filter,qualified,continuous,refinement,
         after_refinement,release,applied,measured,nu)
+
+
+def _ungauged_call(state,core,proxy,*,initial,residual_body,packet_id,
+                   proxy_q_norm,proxy_yaw_half,hi_decay,hi_eigen_success,hi_spectrum,**suffix):
+    """Live initial acquisition uses MEKF tilt; continuous/refinement use proxy."""
+    if not isinstance(core,BASE.CORE.State) or not isinstance(proxy,BASE.VERT.State):
+        raise TypeError('same finite MEKF and private observer required')
+    if proxy != state.startup.word.mag.proxy or core.mode != 'H':
+        raise ValueError('ungauged acquisition detached from current observer/H18 state')
+    cfg=state.memory.cfg; ts=WCLOCK.at_physical_time(core.reference.time); wt=ts.wrapper_time
+    initial={} if initial is None else dict(initial)
+    allowed={'q_norm','yaw_half','mag_norm','mean_norm','horizontal_sqrt','gauge_half'}
+    if set(initial)-allowed: raise ValueError('unknown initial-acquisition operand')
+    unused_suffix=lambda: any(v is not None for k,v in suffix.items() if k!='alpha') or suffix['alpha']!=1
+    if not cfg.gate.with_mag or wt<cfg.gate.mag_delay:
+        if (initial or unused_suffix() or any(x is not None for x in
+            (residual_body,packet_id,proxy_q_norm,proxy_yaw_half,hi_decay,hi_eigen_success,hi_spectrum))):
+            raise ValueError('outer-gated ungauged call consumes no operands')
+        return BASE.LiveResult(state,core,None,None,None,core,None,None,None,None)
+    qualified=BASE._source(state.memory,core.reference,residual_body,packet_id)
+    source=qualified.sample
+    private_tilt=BASE._tilt(proxy,q_norm=proxy_q_norm,yaw_half=proxy_yaw_half) if cfg.continuous_enabled and proxy.initialized else None
+    memory,continuous=_accumulate(state.memory,source,proxy,private_tilt,ts,
+        decay=hi_decay,eigen_success=hi_eigen_success,spectrum=hi_spectrum)
+    out=BASE.START.update_mag_call(state.startup.word,cfg.gravity,cfg.tuner,
+        PREFIX.Packet(wt,source.raw_body,source.packet_id),begun=True,have_last_imu=True,
+        sample_dt=cfg.sample_dt,boat_q_norm=initial.get('q_norm'),yaw_half=initial.get('yaw_half'),
+        mag_norm=initial.get('mag_norm'),mean_norm=initial.get('mean_norm'),
+        horizontal_sqrt=initial.get('horizontal_sqrt'),live_core=core)
+    old=state.startup.word
+    root,history=source.model.model_root,source.physical.history_id
+    if old.source_model_root is not None and (root!=old.source_model_root or history!=old.source_history_id):
+        raise ValueError('ungauged acquisition restarted magnetic source ancestry')
+    word=BASE.START.State(out.state.gate,out.state.mag,old.source_model_root or root,
+                          old.source_history_id or history)
+    ready=(out.magnetic is not None and out.magnetic.tuner_step.returned_ready
+           and BASE.M.dot(word.mag.tuner.world_reference,word.mag.tuner.world_reference)>cfg.min_reference_norm**2)
+    if not ready:
+        if unused_suffix() or initial.get('gauge_half') is not None:
+            raise ValueError('ungauged waiting event consumes no north-write or measurement suffix')
+        if private_tilt is None and (proxy_q_norm is not None or proxy_yaw_half is not None):
+            raise ValueError('unread private tilt consumes no witnesses')
+        nxt=BASE.UngaugedLiveState(BASE.StartupState(word,memory),state.control)
+        return BASE.LiveResult(nxt,core,qualified,continuous,None,core,None,None,None,None)
+    gauge=BASE.READY.transition(word.mag.tuner,
+        BASE.READY.Config(cfg.sigma_internal,memory.producer_root),yaw_half=initial.get('gauge_half'))
+    core=BASE._overwrite_absolute_yaw(core,word.mag.tuner.mean,initial.get('gauge_half'),
+                                      initial.get('q_norm'),initial.get('yaw_half'))
+    live=BASE.LiveState(memory,word.mag.tuner,word.mag.last_mag_time,gauge.active_reference,
+                        state.control,north_lock_physical_time=core.reference.time)
+    if cfg.refinement_enabled and wt>=cfg.refinement_start:
+        private_tilt=BASE._tilt(proxy,q_norm=proxy_q_norm,yaw_half=proxy_yaw_half)
+    elif private_tilt is None and (proxy_q_norm is not None or proxy_yaw_half is not None):
+        raise ValueError('unread private tilt consumes no witnesses')
+    return _gauged_suffix(live,core,ts,qualified,memory,continuous,private_tilt,**suffix)
 
 
 def readiness():
@@ -247,6 +329,8 @@ def readiness():
       'live_continuous_sample_and_apply_clocks_use_binary32_wrapper_clock':True,
       'inner_MEKF_magnetic_call_retains_physical_inner_time':True,
       'dual_clock_magnetic_word_composed':True,
+      'ungauged_Live_initial_acquisition_and_same_packet_north_transition':True,
+      'Live_initial_acquisition_uses_MEKF_continuous_and_refinement_use_private_proxy':True,
       'canonical_prefix_wrapper_clock_arithmetic_closed':c['canonical_prefix_wrapper_clock_arithmetic_closed'],
       'binary32_exp_solver_roundoff_closed':False,
       'source_uniform_complete_magnetic_word_qualified':False,

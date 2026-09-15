@@ -1,5 +1,9 @@
 # Conditional finite state/covariance composition
 
+The current runtime generalizes this local chart-zero construction with the
+four-chart transport and ungauged continuation in `ou3-alt-attitude-atlas.md`.
+The Cayley formulas below retain their stated local-chart meaning.
+
 ## Obligation and boundary
 
 This lemma advances the finite-map stage of the ALT plan: consecutive accepted

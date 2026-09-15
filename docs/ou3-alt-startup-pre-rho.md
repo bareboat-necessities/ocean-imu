@@ -1,9 +1,10 @@
 # ALT startup obligations before rho
 
-The current single-Cayley finite master cannot represent every admitted startup
-entry. This is an exact representation obstruction; it is not an instability
-result for shipping. `assert_finite_storage_master` remains closed. The original
-P2/P3/P4/P5 track is independent and unchanged.
+The single-Cayley entry obstruction is resolved by the four-chart finite
+runtime in `ou3-alt-attitude-atlas.md`, including ungauged Live and later north
+acquisition. The obstruction below explains why one chart is insufficient.
+`assert_finite_storage_master` remains blocked on universal source/deployment
+qualification. The original P2/P3/P4/P5 track is independent and unchanged.
 
 ## An admitted physical family that reaches the chart pole
 
@@ -43,7 +44,7 @@ qualification remains a separate obligation.
 
 Choose true world-to-body quaternion `(0,0,0,1)`, a perfectly valid 180-degree
 yaw with zero tilt. The fresh error quaternion then has scalar component zero.
-`finite_fresh_joint24_entry.build` calls `CORE.cayley`, which defines
+The local `CORE.cayley` operation defines
 
 `c = 2 q_error.vector / q_error.scalar`.
 
@@ -103,11 +104,10 @@ source-qualified consequences of the gravity bound.
 
 ## Remaining work, in dependency order
 
-1. Cover ungauged entry using a gravity quotient with neutral yaw and an exact
-   later regauging edge, or a homogeneous/multiple-chart attitude representation
-   with exact transport. A separately proved universal magnetic capture theorem
-   is another route, but present cadence/tilt assumptions do not provide it.
-   Carry the original joint motion/bias information through any new coordinates.
+1. The four-chart cover and conditional ungauged event continuation are
+   attached. Keep their chart index and exact transport in every remaining
+   source/machine layer; do not replace chart-dependent physical attitude by
+   coordinate magnitude alone.
 2. Prove actual startup predicate production, seed/SVD/nonfinite branches,
    magnetic accumulation-to-handoff frame relation, and finite reachability.
 3. Qualify all target/compiler arithmetic and supplies: WPE exp/log/sqrt,
@@ -122,6 +122,6 @@ source-qualified consequences of the gravity bound.
    and rho feasibility begin. Every-prefix retention, useful ultimate bounds,
    and indefinite no-restart tiling follow separately.
 
-The pole and its unbounded nearby family make further refinement of a universal
-single-Cayley fresh-entry bound a dead end. Better SVD or libm bounds cannot
-change a zero denominator. No rho has been estimated and no ALT PASS is claimed.
+The pole and nearby family remain regressions against a universal single-Cayley
+fresh-entry bound. The current atlas covers both. No rho has been estimated
+and no ALT PASS is claimed.

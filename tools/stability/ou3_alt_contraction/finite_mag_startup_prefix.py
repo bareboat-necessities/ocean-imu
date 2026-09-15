@@ -70,7 +70,8 @@ def eligible_update(state:State,cfg:TUNER.Config,packet:Packet,*,sample_dt,
                     yaw_half:TILT.YawHalfWitness|None,
                     mag_norm:TUNER.SqrtWitness|None=None,
                     mean_norm:TUNER.SqrtWitness|None=None,
-                    horizontal_sqrt:GAUGE.HorizontalSqrt|None=None):
+                    horizontal_sqrt:GAUGE.HorizontalSqrt|None=None,
+                    live_core=None):
     if not isinstance(state,State) or not isinstance(cfg,TUNER.Config) or not isinstance(packet,Packet):
         raise TypeError('startup mag state/config/packet required')
     fallback=R(sample_dt)
@@ -81,8 +82,13 @@ def eligible_update(state:State,cfg:TUNER.Config,packet:Packet,*,sample_dt,
             else fallback)
     # Wrapper stores last_mag_sample_t_ before calling addSampleWithTiltQuatDt,
     # hence this clock mutation survives both tuner acceptance and rejection.
+    q_boat_bw=state.proxy.q
+    if live_core is not None:
+        from . import finite_core as CORE
+        if not isinstance(live_core,CORE.State): raise TypeError('Live acquisition requires its finite MEKF state')
+        q_boat_bw=CORE.P.quat_conj(live_core.q_hat)
     out=TUNER.step_from_boat_quaternion(
-        state.tuner,cfg,q_boat_bw=state.proxy.q,mag_body=packet.raw_body,dt=dt_mag,
+        state.tuner,cfg,q_boat_bw=q_boat_bw,mag_body=packet.raw_body,dt=dt_mag,
         boat_q_norm=boat_q_norm,yaw_half=yaw_half,mag_norm=mag_norm,
         mean_norm=mean_norm,horizontal_sqrt=horizontal_sqrt)
     return Result(State(state.proxy,out.state,t),out,dt_mag,packet)

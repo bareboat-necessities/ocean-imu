@@ -523,6 +523,18 @@ path. Source-uniform guard/Racc/libm supplies are therefore open.
 
 ### Failure analysis and independent critic
 
+* **Ungauged Live composition gap:** the old interleaver rejects a timeout
+  entry without north. Shipping continues initial acquisition after Live, but
+  its `attitudeReferenceQuat_()` now selects the MEKF quaternion. Continuous
+  hard-iron accumulation and refinement independently keep the private proxy
+  tilt (`startupProxyTiltQuat()`). Reusing the startup frame for all three
+  operations would violate shipping's exact operands. This is a missing
+  runtime branch, not a failure of the four-chart cover or physical model.
+  Critic: preserve each operation's actual frame instead of one shared frame
+  chosen for convenience. Next check: distinct MEKF/private tilts during
+  delayed initial acquisition, with continuous statistics accumulated once
+  and the same packet entering the MEKF only after north is set.
+
 The controlling missing object is the source-uniform finite deployment word,
 not a storage margin. No rho/storage search has been run or authorized.
 
@@ -563,9 +575,10 @@ homogeneous quaternion or overlapping attitude charts with exact transport,
 or (3) supply a separately proved all-history magnetic capture theorem before
 entering the current chart. An unproved startup magnetic-cadence/heading
 restriction is not choice (3). None may shrink COMPLETE-BRMM, change shipping,
-or replace unknown yaw by an independently bounded Cayley disturbance. First
-repair literal timeout attachment and record the exact obstruction; retain the
-guard until the chosen representation covers all admitted entry histories.
+or replace unknown yaw by an independently bounded Cayley disturbance. The selected four-chart architecture now covers every nonzero relative
+quaternion and carries exact finite event transport; the conditional ungauged
+Live composer retains initial acquisition and its later north transition.
+Universal source/control/deployment qualification still keeps the guard blocked.
 
 * **ALT implementation/order defect:** holding Racc sigma between pending
   commits contradicts shipping's per-sample pre-candidate TuneState read. The
@@ -579,7 +592,7 @@ guard until the chosen representation covers all admitted entry histories.
   literal reset. The ordinary source-bound seed now removes the free quaternion
   port. Unrepresented SVD/nonfinite branches, target sqrt/profile qualification
   and source-uniform supplies still prevent universal startup coverage. A
-  30,600-sample bookkeeping cap accommodates the existing startup+word graph;
+  30,602-sample bookkeeping cap accommodates the conditional startup+word graph;
   it is neither proof of a 150 s startup deadline nor clock-lifetime closure.
 * **ALT regression defects:** old joined fixtures supplied an independent zero
   band input instead of the same Mahony output; runtime/readiness accessors used
@@ -630,11 +643,12 @@ promotes source membership, capture, retention or stability.
 
 ### Current limiter, DEAD_ENDS and next falsifiable work
 
-First resolve the exact ungauged entry obstruction described in
-`ou3-alt-startup-pre-rho.md`: a gravity quotient with neutral yaw and exact
-regauging or homogeneous/multiple-chart transport must cover the admitted
-constant-heading family. A single fresh Cayley chart cannot. Next prove
-startup source/control reachability and the full magnetic frame relation.
+The four-chart finite runtime and conditional ungauged continuation in
+`ou3-alt-attitude-atlas.md` close the representation/event gaps. The remaining
+limiter is universal startup source/control reachability, full magnetic history,
+and the target/caller arithmetic contract. Every nonzero quaternion is covered;
+this does not certify a storage basin or finite capture. A future storage must
+not identify the different chart origins as the same zero physical error.
 
 Then qualify the machine guard displacement into Racc/accelerometer, raw WPE
 exp/log/sqrt, band/statistics/tuner, Q-axis, clocks, trig/normalization, Eigen

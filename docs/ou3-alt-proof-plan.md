@@ -49,21 +49,25 @@ one BIAS root, literal prediction/measurement/hygiene branches, frontend/WPE/
 band/tuner memory, async magnetic state, scheduler credit, every H18/A21 edge,
 deployment arithmetic residuals and explicit zero-heel scope ancestry.
 
-## Pre-rho entry obstruction
+## Pre-rho attitude representation
 
-`ou3-alt-startup-pre-rho.md` establishes that an admitted ungauged timeout can
-reach the pole of the current fresh Cayley chart, with an unbounded nearby
-constant-heading family. A universal finite single-chart entry bound is a dead
-end. Resolve this with a gravity quotient and exact regauging or homogeneous /
-overlapping attitude coordinates before resuming universal finite-master work.
-Do not assume a magnetic lock, shrink heading admission or convert unknown
-Cayley yaw into a bounded disturbance.
+`ou3-alt-attitude-atlas.md` supplies the four-chart cover and exact transport
+used by the current finite runtime. It covers ungauged timeout entry, including
+true yaw pi, while preserving joint24 and the full 21-state shipping covariance.
+`ou3-alt-startup-pre-rho.md` retains the exact single-Cayley obstruction as a
+regression. Unknown attitude terms remain same-state rational graph functions;
+they may not be relabeled as independent bounded disturbances.
 
-The guard explicitly requires all admitted startup entries to be represented,
-source-uniform deployment arithmetic, and finite-word counter safety in addition
-to the existing finite-map/product/branch/source requirements. The default
-RN32 timeout crossing is sample 30,002; shared finite budgets include 600 more
-updates. This horizon is conditional on the actual aligned-branch predicate.
+The interleaver retains ungauged acquisition across Live and uses MEKF tilt for
+initial north acquisition after Live. Continuous calibration/refinement retain
+their own private-observer frame. Later north starts the magnetic service clock
+without resetting the physical Live/S origin or duplicating packet statistics.
+
+The guard still requires universal source/control reachability, source-uniform
+arithmetic and finite-word counter safety. The default RN32 timeout crossing is
+sample 30,002; shared finite budgets include 600 more updates, conditional on
+actual source-produced alignment. Coercive storage must respect the fact that
+coordinate zero in charts 1..3 is a 180-degree error, not zero error.
 
 ## Current finite-runtime advancement
 
@@ -110,7 +114,7 @@ disabled.
 `finite_fresh_joint24_entry.py` derives the actual H18 joint24 coordinates from
 the SAME physical `Reference` and estimator state:
 
-`c=Cayley(q_true_WB*conjugate(q_hat_WB))`,
+`(chart,c)=Atlas(q_true_WB*conjugate(q_hat_WB))`,
 `e_bg=b_g-b_g_hat`, `e_v=v-v_hat`, `e_p=p-p_hat`,
 `e_S=S_centered-S_hat`, `e_aw=a-a_w_hat`,
 `e_ba=beta-b_a_hat`, final coordinates `beta=beta_true`.
@@ -213,7 +217,8 @@ H18 with BA cross-covariances zeroed.
 
 ## Current blockers
 
-First resolve the entry obstruction above. The remaining immediate blockers are:
+The attitude representation and conditional ungauged continuation are attached.
+The remaining immediate blockers are:
 
 - deployment/binary32 correspondence for startup yaw extraction, atan2,
   AngleAxis, quaternion normalization, handoff setters and clocks;

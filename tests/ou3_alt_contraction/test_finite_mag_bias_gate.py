@@ -18,6 +18,19 @@ def with_ba_cross(state):
 
 
 class Tests(unittest.TestCase):
+    def test_signed_counter_boundary_is_not_an_unbounded_integer_edge(self):
+        s=FC.root('H'); cfg=X.Config()
+        pre=X.State(X.SIGNED_COUNTER_MAX-1,F(7),False,True)
+        last=X.update_mag_call(pre,s,cfg,time=9,live=True,measurement_state=s)
+        self.assertEqual(last.state.updates,X.SIGNED_COUNTER_MAX)
+        with self.assertRaisesRegex(OverflowError,'no defined int32 successor'):
+            X.update_mag_call(last.state,s,cfg,time=9,live=True,measurement_state=s)
+        disabled=X.update_mag_call(last.state,s,X.Config(with_mag=False),time=9,live=True)
+        self.assertEqual(disabled.state,last.state)
+        for invalid in (True,-1,X.SIGNED_COUNTER_MAX+1):
+            with self.assertRaisesRegex(ValueError,'signed int32'):
+                X.State(invalid)
+
     def test_delay_or_disabled_gate_consumes_no_measurement_successor(self):
         s=FC.root('H'); c=X.State(); cfg=X.Config(with_mag=True,mag_delay=7)
         out=X.update_mag_call(c,s,cfg,time=F(699,100),live=True)

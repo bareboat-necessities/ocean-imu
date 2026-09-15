@@ -4,7 +4,7 @@ No fresh-entry error box is postulated.  Given the SAME physical ``Reference``
 and the real-arithmetic shipping estimator state after ``goLive/enterLive_``, the
 joint24 coordinates are defined exactly as physical truth minus estimator:
 
-  c      = Cayley(q_true_WB * conjugate(q_hat_WB))
+  c      = Atlas(q_true_WB * conjugate(q_hat_WB)), with its chart index
   e_bg   = b_g,true - b_g,hat
   e_v    = v_true - v_hat
   e_p    = p_true - p_hat
@@ -27,6 +27,7 @@ from tools.stability.ou3_alt_contraction import finite_core as CORE
 from tools.stability.ou3_alt_contraction import finite_prediction_graph as P
 from tools.stability.ou3_alt_contraction import finite_startup_live_entry as LIVE
 from tools.stability.ou3_alt_contraction import deployment_scope as SCOPE
+from tools.stability.ou3_alt_contraction import finite_attitude_atlas as ATLAS
 
 
 def _sub(a,b): return tuple(x-y for x,y in zip(a,b))
@@ -47,7 +48,8 @@ def build(entry:LIVE.Result,reference:CORE.Reference,*,scope:SCOPE.Scope):
     # Shipping NX layout with gyro bias enabled and accelerometer bias present:
     # att[0:3], bg[3:6], v[6:9], p[9:12], S[12:15], aw[15:18], ba[18:21].
     relative=P.quat_mul(reference.q_world_to_body,P.quat_conj(entry.q_hat))
-    c=tuple(CORE.cayley(relative))
+    attitude=ATLAS.encode(relative)
+    c=attitude.coordinates
     z=(c+
        _sub(reference.gyro_bias,x[3:6])+
        _sub(reference.velocity,x[6:9])+
@@ -57,13 +59,14 @@ def build(entry:LIVE.Result,reference:CORE.Reference,*,scope:SCOPE.Scope):
        _sub(reference.beta,x[18:21])+
        tuple(reference.beta))
     if len(z)!=24: raise AssertionError('joint24 layout error')
-    return CORE.State('H',z,entry.P,entry.q_hat,reference)
+    return CORE.State('H',z,entry.P,entry.q_hat,reference,attitude.chart)
 
 
 def readiness():
     return {
       'fresh_entry_joint24_derived_from_truth_minus_estimator':True,
       'fresh_attitude_error_from_same_true_and_nominal_quaternions':True,
+      'all_nonzero_fresh_relative_attitudes_represented':True,
       'one_time_Live_origin_enforced_at_entry':True,
       'fresh_centered_physical_S_zero_enforced':True,
       'full_21_state_covariance_retained_in_H18':True,

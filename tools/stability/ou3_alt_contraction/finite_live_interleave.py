@@ -34,20 +34,25 @@ from tools.stability.ou3_alt_contraction import finite_source_continuation as SO
 @dataclass(frozen=True)
 class State:
     live: LIVE.State
-    magnetic: MAG.LiveState
+    magnetic: MAG.LiveState | MAG.UngaugedLiveState
     clock: SCHEDULE.Clock
     schedule: SCHEDULE.Schedule
 
     def __post_init__(self):
-        if not isinstance(self.live, LIVE.State) or not isinstance(self.magnetic, MAG.LiveState):
+        if not isinstance(self.live, LIVE.State) or not isinstance(self.magnetic, (MAG.LiveState,MAG.UngaugedLiveState)):
             raise TypeError('same Live/watchdog and magnetic product state required')
         if not isinstance(self.clock, SCHEDULE.Clock) or not isinstance(self.schedule, SCHEDULE.Schedule):
             raise TypeError('persistent declared magnetic schedule required')
         core = self.live.live.mekf
         if core.reference.history_id != self.magnetic.memory.history_id:
             raise ValueError('magnetic and IMU physical history detached')
-        if core.reference.live_origin != self.clock.live_time:
-            raise ValueError('magnetic clock cannot restart the one-time Live origin')
+        ungauged=isinstance(self.magnetic,MAG.UngaugedLiveState)
+        north_time=None if ungauged else self.magnetic.north_lock_physical_time
+        expected_clock_origin=core.reference.live_origin if north_time is None else north_time
+        if expected_clock_origin != self.clock.live_time:
+            raise ValueError('magnetic clock detached from Live origin or the actual later north-lock edge')
+        if not core.reference.live_origin <= expected_clock_origin <= core.reference.time:
+            raise ValueError('north acquisition clock outside the same physical Live history')
         if self.magnetic.control.updates != self.clock.calls:
             raise ValueError('counted magnetic calls detached from literal control state')
         c = self.magnetic.control
@@ -66,7 +71,8 @@ class State:
             raise ValueError('H18/A21 state detached from bias lock/hold control')
         # The declared call schedule is indexed by physical source endpoints;
         # shipping magnetic branch timing itself is handled by MAGCLOCK.
-        SCHEDULE.check_prefix(self.clock, self.schedule, time=core.reference.time)
+        if not ungauged:
+            SCHEDULE.check_prefix(self.clock, self.schedule, time=core.reference.time)
 
 
 @dataclass(frozen=True)
@@ -76,11 +82,9 @@ class Result:
 
 
 def from_startup(bridge: START.Result, magnetic: MAG.StartupState, *,
-                 proxy_q_norm, proxy_yaw_half, schedule=None):
+                 proxy_q_norm, proxy_yaw_half=None, schedule=None):
     if not isinstance(bridge, START.Result) or not isinstance(magnetic, MAG.StartupState):
         raise TypeError('startup Live bridge and startup magnetic history required')
-    if magnetic.ready is None:
-        raise NotImplementedError('nongauged startup/Live branch remains open')
     live = bridge.state
     if magnetic.word.mag.proxy != bridge.frontend_before.tuner.vertical:
         raise ValueError('magnetic handoff detached from the same startup private observer')
@@ -89,9 +93,18 @@ def from_startup(bridge: START.Result, magnetic: MAG.StartupState, *,
     for time in (magnetic.word.mag.last_mag_time, magnetic.memory.last_hi_time):
         if time is not None and time > live.mekf.reference.time:
             raise ValueError('startup magnetic state comes from a future sample')
-    seed = SEED.seed(magnetic.word.mag.proxy, magnetic.ready.pending_yaw,
-                     proxy_q_norm=proxy_q_norm, proxy_yaw_half=proxy_yaw_half)
-    if tuple(P.quat_conj(seed.q_seed)) != live.mekf.q_hat:
+    if magnetic.ready is None:
+        seed=SEED.seed(magnetic.word.mag.proxy,None)
+        if proxy_yaw_half is not None or not isinstance(proxy_q_norm,MAG.TILT.SqrtWitness):
+            raise ValueError('ungauged handoff requires only its same-proxy norm')
+        if proxy_q_norm.radicand!=MAG.M.dot(seed.q_seed,seed.q_seed) or proxy_q_norm.value<=P.rational('0.000001'):
+            raise ValueError('ungauged handoff norm detached from same proxy')
+        qseed=tuple(x/proxy_q_norm.value for x in seed.q_seed)
+    else:
+        seed = SEED.seed(magnetic.word.mag.proxy, magnetic.ready.pending_yaw,
+                         proxy_q_norm=proxy_q_norm, proxy_yaw_half=proxy_yaw_half)
+        qseed=seed.q_seed
+    if tuple(P.quat_conj(qseed)) != live.mekf.q_hat:
         raise ValueError('Live attitude detached from the actual pending magnetic yaw gauge')
     if live.mekf.mode != 'H' or live.mekf.reference.live_origin != live.mekf.reference.time:
         raise ValueError('fresh gauged Live begins in H18 at its one-time physical origin')
@@ -100,7 +113,7 @@ def from_startup(bridge: START.Result, magnetic: MAG.StartupState, *,
                  SCHEDULE.default_schedule() if schedule is None else schedule)
 
 
-def imu_step(state: State, raw, segment, **kwargs):
+def imu_step(state: State, raw, segment, *, gravity_witnesses=None, **kwargs):
     """Conditional finite-algebra IMU step; not source admission by itself."""
     if not isinstance(state, State):
         raise TypeError('startup-rooted interleaved state required')
@@ -111,7 +124,22 @@ def imu_step(state: State, raw, segment, **kwargs):
     if 'tilt_deg' in kwargs or 'reset_witness' in kwargs:
         raise TypeError('interleaved theorem word accepts no free tilt/reset output')
     out = LIVE.step_from_shipping_operands(state.live, raw, segment, **kwargs)
-    return Result(State(out.state, state.magnetic, state.clock, state.schedule), out)
+    magnetic=state.magnetic
+    if isinstance(magnetic,MAG.UngaugedLiveState):
+        if gravity_witnesses is None:
+            raise ValueError('ungauged Live IMU requires the continued gravity-gate arithmetic')
+        # After Live the gravity gate reads the current MEKF boat quaternion;
+        # the private observer separately remains the continuous/refinement frame.
+        gate=MAG.GRAVITY.imu_step(magnetic.startup.word.gate,magnetic.memory.cfg.gravity,
+            q_proxy_bw=P.quat_conj(out.state.live.mekf.q_hat),
+            acc_body=raw.raw_accel_body,gyro_body=raw.raw_gyro_body,dt=segment.h,
+            **gravity_witnesses)
+        prefix=replace(magnetic.startup.word.mag,proxy=out.state.live.tuner.vertical)
+        word=replace(magnetic.startup.word,gate=gate.state,mag=prefix)
+        magnetic=replace(magnetic,startup=replace(magnetic.startup,word=word))
+    elif gravity_witnesses is not None:
+        raise ValueError('gauged word does not consume initial-acquisition gravity witnesses')
+    return Result(State(out.state, magnetic, state.clock, state.schedule), out)
 
 
 def imu_step_source_qualified(state: State, packet: SOURCE.QualifiedRawImuSample, **kwargs):
@@ -134,6 +162,10 @@ def mag_step(state: State, **kwargs):
     out = MAGCLOCK.live_call(state.magnetic, state.live.live.mekf,
                              state.live.live.tuner.vertical, **kwargs)
     clock = state.clock
+    if isinstance(state.magnetic,MAG.UngaugedLiveState) and isinstance(out.state,MAG.LiveState):
+        # MAG-CALL-SCHEDULE-v1 starts after gauged Live. This event starts its
+        # service clock; the physical Reference and its Live/S origin stay fixed.
+        clock=SCHEDULE.Clock(out.state.north_lock_physical_time)
     if out.measurement is not None and out.measurement.wrapper_attempted:
         # This ledger constrains the physical endpoint cadence.  The event's
         # internal outer-wrapper timestamps were already derived by MAGCLOCK.
@@ -177,6 +209,7 @@ def readiness():
     src=SOURCE.readiness(); magclock=MAGCLOCK.readiness()
     return {
         'startup_gauge_and_private_observer_attached_at_Live_entry': True,
+        'ungauged_timeout_entry_and_later_north_acquisition_composed':True,
         'successive_IMU_mag_IMU_events_share_full_state_covariance': True,
         'continuous_magnetic_memory_not_restarted_at_Live': True,
         'magnetic_refinement_and_continuous_application_composed': True,

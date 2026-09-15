@@ -28,6 +28,9 @@ from tools.stability.ou3_alt_contraction import finite_startup_handoff_control a
 from tools.stability.ou3_alt_contraction import finite_wrapper_clock_binary32 as CLOCK
 from tools.stability.ou3_alt_contraction import finite_mag_startup_capture_bound as CAPTURE
 from tools.stability.ou3_alt_contraction import finite_mag_call_schedule as CALLS
+from tools.stability.ou3_alt_contraction import finite_attitude_atlas as ATLAS
+from tools.stability.ou3_alt_contraction import finite_fresh_joint24_entry as FRESH
+from tools.stability.ou3_alt_contraction import finite_live_interleave as INTERLEAVE
 
 QUALIFICATION='OU3_ALT_FINITE_MASTER_GUARD_V1'
 
@@ -37,9 +40,15 @@ def build():
     live=LIVE.readiness(); lwpe=LIVEWPE.readiness(); nxt=NEXT.readiness(); aw=AWCLOCK.readiness()
     wm=WPEMOM.readiness(); wmach=WPEMACHINE.readiness(); wlog=WPELOG.readiness(); wfreq=WPEFREQ.readiness(); qexp=QEXP.readiness()
     entry=ENTRY.build(); control=CONTROL.readiness(); capture=CAPTURE.readiness()
-    clock=CLOCK.readiness(); counter=CALLS.counter_lifetime()
+    clock=CLOCK.readiness(); counter=CALLS.counter_lifetime(); atlas=ATLAS.readiness()
 
     closed={
+      'ungauged_Live_waiting_and_later_north_runtime_branch': INTERLEAVE.readiness()['ungauged_timeout_entry_and_later_north_acquisition_composed'],
+      'all_nonzero_fresh_attitudes_represented_by_joint24_atlas': bool(
+          atlas['all_nonzero_relative_quaternions_covered'] and
+          FRESH.readiness()['all_nonzero_fresh_relative_attitudes_represented']),
+      'finite_attitude_left_right_and_chart_transport': atlas['finite_left_right_and_chart_transport_identity'],
+      'inverse_free_measurement_with_state_bound_chart_offset': atlas['inverse_free_measurement_descriptor_with_chart_transport'],
       'literal_quality_and_timeout_handoff_control':control['quality_and_timeout_predicates_materialized'],
       'exact_default_timeout_clock_crossing':clock['default_timeout_first_crossing_proved'],
       'startup_to_Live_machine_history_attachment': startup['startup_to_Live_machine_history_attachment_closed'],
@@ -74,7 +83,6 @@ def build():
     }
 
     open_obligations={
-      'all_admitted_ungauged_entries_have_a_finite_attitude_representation': not entry['multi_chart_or_quotient_entry_closed'],
       'startup_accumulation_to_handoff_full_frame_bound': not capture['full_accumulation_to_handoff_frame_bound_source_qualified'],
       'source_uniform_timeout_aligned_branch_reachability': not clock['universal_startup_deadline_closed'],
       'signed_magnetic_counter_safety_on_the_finite_word': not counter.no_signed_overflow_proved,
@@ -116,6 +124,7 @@ def build():
       'closed_subobligations':closed,
       'open_obligations':open_obligations,
       'startup_entry_obstruction':entry,
+      'attitude_atlas':atlas,
       'conditional_timeout_plus_word_last_sample':CLOCK.MAX_STEPS,
       'finite_storage_status':finite_status,
       'finite_storage_guard_error':error,

@@ -228,6 +228,7 @@ class LiveState:
     refinement_started: bool = False
     refinement_done: bool = False
     refinement_time: F | None = None
+    north_lock_physical_time: F | None = None
 
     def __post_init__(self):
         if not isinstance(self.memory, Memory) or not isinstance(self.tuner, TUNER.State):
@@ -236,7 +237,7 @@ class LiveState:
             raise TypeError('persistent active reference and bias gate required')
         if self.active.root != self.memory.producer_root or self.active.model.sigma_internal != self.memory.cfg.sigma_internal:
             raise ValueError('active reference detached from same producer/constructor Rmag')
-        for name in ('last_mag_time', 'refinement_time'):
+        for name in ('last_mag_time', 'refinement_time', 'north_lock_physical_time'):
             if getattr(self, name) is not None:
                 object.__setattr__(self, name, R(getattr(self, name)))
         if any(not isinstance(x, bool) for x in (self.refinement_started, self.refinement_done)):
@@ -249,15 +250,39 @@ class LiveState:
             raise ValueError('refinement completion and its timestamp must agree')
         if self.refinement_done and not self.refinement_started:
             raise ValueError('refinement cannot finish before starting')
+        if self.north_lock_physical_time is not None and self.north_lock_physical_time < 0:
+            raise ValueError('nonnegative physical north-lock time required')
+
+
+@dataclass(frozen=True)
+class UngaugedLiveState:
+    startup: StartupState
+    control: GATE.State
+
+    def __post_init__(self):
+        if not isinstance(self.startup, StartupState) or self.startup.ready is not None:
+            raise ValueError('ungauged Live must retain the not-yet-ready startup acquisition')
+        if not isinstance(self.control, GATE.State) or self.control.updates or self.control.first_time is not None:
+            raise ValueError('ungauged outer wrapper cannot have attempted inner magnetic updates')
+        if not self.control.locked:
+            raise ValueError('ungauged Live retains the internal bias lock')
+
+    @property
+    def memory(self): return self.startup.memory
+
+    @property
+    def last_mag_time(self): return self.startup.word.mag.last_mag_time
 
 
 def enter_live(state: StartupState):
-    if not isinstance(state, StartupState) or state.ready is None:
-        raise NotImplementedError('nongauged Live entry remains a separate shipping branch')
+    if not isinstance(state, StartupState):
+        raise TypeError('carried startup magnetic state required')
     # begin() calls setAccBiasHold(mag_refine_enabled). There have been no inner
     # MEKF updateMag calls before the outer handoff.
     control = GATE.State(0, None, True,
                          state.memory.cfg.gate.with_mag and state.memory.cfg.refinement_enabled)
+    if state.ready is None:
+        return UngaugedLiveState(state, control)
     return LiveState(state.memory, state.word.mag.tuner, state.word.mag.last_mag_time,
                      state.ready.active_reference, control)
 
@@ -269,10 +294,11 @@ def _overwrite_absolute_yaw(core, mean, gauge_half, q_norm, yaw_half):
     qa = (gauge_half.cos_half, F(0), F(0), -gauge_half.sin_half)
     q_hat = tuple(P.quat_conj(P.quat_mul(qa, tilt.q_tilt)))
     z = list(core.z)
-    z[:3] = CORE.cayley(P.quat_mul(core.reference.q_world_to_body, P.quat_conj(q_hat)))
+    attitude = CORE.ATLAS.encode(P.quat_mul(core.reference.q_world_to_body, P.quat_conj(q_hat)))
+    z[:3] = attitude.coordinates
     # set_quaternion_boat writes qref and zero local attitude slots ONLY. It
     # neither resets P nor reanchors any physical/motion/bias state.
-    return CORE.State(core.mode, tuple(z), core.covariance, q_hat, core.reference)
+    return CORE.State(core.mode, tuple(z), core.covariance, q_hat, core.reference, attitude.chart)
 
 
 @dataclass(frozen=True)
@@ -361,7 +387,8 @@ def live_call(state, core, proxy, *, residual_body=None, packet_id=None,
     packet = MAG.Sample(core.reference, corrected, nu, active.model)
     measured = ASYNC.update_mag_call(ASYNC.State(core, control, active), cfg.gate,
         time=t, live=True, sample=packet, ldlt=ldlt, alpha=alpha, radius=radius)
-    nxt = LiveState(memory, tuner, last, active, measured.state.control, started, done, done_time)
+    nxt = LiveState(memory, tuner, last, active, measured.state.control, started, done, done_time,
+                    state.north_lock_physical_time)
     return LiveResult(nxt, measured.state.filter, qualified, continuous, refinement,
                       after_refinement, release, applied, measured, nu)
 
