@@ -11,19 +11,24 @@ for period and frequency. Their returned floats are retained as independent
 binary32 witnesses; no bit-level reciprocal identity is assumed.
 
 The SeaState wrapper consumes the WPE frequency from the SAMPLE-ENTRY state.
-Until ``hasUsablePeriod()`` latches it uses the literal 0.2f prior; afterwards
-it calls ``getFrequencyHz()`` and passes that float to ``SeaStateAutoTuner``.
+It calls ``getFrequencyHz()`` before testing the usable latch and getter validity.
+The selected value is that getter only when both tests pass; otherwise it uses
+the literal 0.2f prior. The conditional relation below represents valid-getter
+WPE branches and preusable prior branches. Eager getter execution and invalid
+post-latch fallback still require the complete arithmetic composition.
 The machine frequency need not equal the exact-real shadow frequency.  Their
 post-clamp difference is retained explicitly as deployment supply instead of
 being silently identified.
 
-This module closes topology/ancestry only.  It does NOT prove how the binary32
+This module bounds the final clamped frequency discrepancy and retains the
+represented topology/ancestry. It does NOT prove how the binary32
 log-period state was produced and does NOT prove target-libm correctness.
 """
 from __future__ import annotations
 from dataclasses import dataclass
 from fractions import Fraction as F
 from pathlib import Path
+from hashlib import sha256
 
 from tools.stability.ou3_alt_contraction import finite_binary32_arithmetic as B
 from tools.stability.ou3_alt_contraction import finite_tuner_frequency_binary32 as STORE
@@ -31,11 +36,81 @@ from tools.stability.ou3_alt_contraction import finite_wpe_runtime as WPE
 
 SOURCE=Path(__file__).resolve().parents[3]/'src/tuner/WavePeriodEstimator.h'
 WRAPPER=Path(__file__).resolve().parents[3]/'src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h'
+AUDITED_WRAPPER_SHA256='fabd03e9c3eb6069df107c7413ffb4b33fbdcd1ce06d3923b0c1ceeb3bcd7359'
 PRIOR_EXACT=F(1,5); PRIOR=B.rn32(PRIOR_EXACT)
 QUALIFICATION='OU3_ALT_WPE_BINARY32_GETTER_TO_TUNER_STORE_V3'
 
 
 def clamp(x,lo,hi): return min(max(x,lo),hi)
+
+
+@dataclass(frozen=True)
+class FrequencySupplyBound:
+    exact_interval:tuple
+    machine_interval:tuple
+
+    def __post_init__(self):
+        for name in ('exact_interval','machine_interval'):
+            interval=tuple(map(F,getattr(self,name)))
+            if len(interval)!=2 or interval[0]>interval[1]:
+                raise ValueError('ordered frequency interval required')
+            object.__setattr__(self,name,interval)
+
+    @property
+    def residual_interval(self):
+        return (self.machine_interval[0]-self.exact_interval[1],
+                self.machine_interval[1]-self.exact_interval[0])
+
+    def check(self,exact,machine):
+        e,m=F(exact),F(machine)
+        if not self.exact_interval[0]<=e<=self.exact_interval[1]:
+            raise ValueError('exact frequency outside source-owned clamp range')
+        if not self.machine_interval[0]<=m<=self.machine_interval[1]:
+            raise ValueError('machine frequency outside source-owned clamp range')
+        lo,hi=self.residual_interval
+        if not lo<=m-e<=hi: raise AssertionError('ordered-interval subtraction failed')
+        return m-e
+
+
+def outer_supply_bound(*,exact_min_hz,exact_max_hz):
+    """All executions reaching the final tuning-frequency assignment.
+
+    Shipping first replaces a nonfinite/below-floor value by the floor, then
+    caps above-ceiling values. Thus even a reset NaN or a retained statistics
+    state lies in the outer interval. This statement does not require a WPE
+    getter to succeed or a statistics update to be accepted.
+    """
+    lo,hi=F(exact_min_hz),F(exact_max_hz)
+    if lo<=0 or hi<lo: raise ValueError('positive ordered tuning bounds required')
+    return FrequencySupplyBound((lo,hi),(B.rn32(lo),B.rn32(hi)))
+
+
+def final_tuning_clamp(value,*,min_hz,max_hz):
+    """Literal outer clamp; None denotes any nonfinite input class."""
+    lo,hi=F(min_hz),F(max_hz)
+    if lo<=0 or hi<lo: raise ValueError('positive ordered tuning bounds required')
+    f=lo if value is None or F(value)<lo else F(value)
+    return min(f,hi)
+
+
+def statistics_supply_bound(stats_cfg,*,exact_min_hz,exact_max_hz):
+    """Uniform discrepancy bound after the two actual clamps.
+
+    Clamp is monotone. The statistics clamp puts every accepted frequency in
+    [s_min,s_max]; applying the outer clamp maps that whole interval to its
+    clamped endpoints. This holds separately for real and rounded endpoints.
+    Subtracting the two ranges bounds machine-minus-shadow for ALL inputs and
+    branch choices, without asserting exp accuracy or branch agreement. The
+    exact same-history residual is retained; this range never replaces it.
+    """
+    from tools.stability.ou3_alt_contraction import finite_band_variance_runtime as R
+    if not isinstance(stats_cfg,R.StatsConfig): raise TypeError('carried StatsConfig required')
+    lo,hi=F(exact_min_hz),F(exact_max_hz)
+    if lo<=0 or hi<lo: raise ValueError('positive ordered tuning bounds required')
+    ml,mh=B.rn32(lo),B.rn32(hi)
+    exact=tuple(clamp(F(s),lo,hi) for s in (stats_cfg.f_min,stats_cfg.f_max))
+    machine=tuple(clamp(B.rn32(s),ml,mh) for s in (stats_cfg.f_min,stats_cfg.f_max))
+    return FrequencySupplyBound(exact,machine)
 
 
 @dataclass(frozen=True)
@@ -90,7 +165,7 @@ class TunerFrequencyResult:
         if self.branch not in ('prior','wpe'): raise ValueError('unknown tuner-frequency source branch')
         if self.branch=='prior':
             if self.shadow.usable_period: raise ValueError('usable WPE state cannot take fixed-prior tuner branch')
-            if self.getter is not None: raise ValueError('fixed-prior tuner branch consumes no WPE exp getter')
+            if self.getter is not None: raise ValueError('fixed-prior tuner branch consumes no WPE exp getter result')
             if ef!=PRIOR_EXACT or self.stored.input_hz!=PRIOR:
                 raise ValueError('fixed-prior tuner branch detached from shipping 0.2f prior')
         else:
@@ -168,6 +243,12 @@ class StatisticsFrequencyResult:
             raise ValueError('frequency path detached from ordered statistics and tuning clamps')
         if F(self.exact_clamped_frequency)!=exact or F(self.machine_minus_shadow)!=final.stored_hz-exact:
             raise ValueError('two-clamp frequency supply detached from same shadow/machine inputs')
+        self.supply_bound.check(exact,final.stored_hz)
+
+    @property
+    def supply_bound(self):
+        return statistics_supply_bound(self.stats_cfg,exact_min_hz=self.exact_tune_bounds[0],
+            exact_max_hz=self.exact_tune_bounds[1])
 
 
 def through_statistics(external:TunerFrequencyResult,stats_cfg,*,exact_min_hz,exact_max_hz):
@@ -201,7 +282,8 @@ def readiness():
       'period_and_frequency_getters_share_same_stored_binary32_log_state':True,
       'period_and_frequency_libm_results_retained_separately':True,
       'binary32_period_frequency_bit_reciprocity_assumed':False,
-      'preusable_WPE_uses_literal_binary32_0p2_prior_without_exp':True,
+      'preusable_WPE_uses_literal_binary32_0p2_prior_without_consuming_getter_result':True,
+      'eager_frequency_getter_and_invalid_post_latch_fallback_composed':False,
       'usable_WPE_frequency_getter_bound_to_sample_entry_log_state':True,
       'machine_minus_exact_tuner_frequency_supply_exposed':True,
       'statistics_store_and_outer_tuning_clamps_retained_in_order':True,
@@ -211,7 +293,12 @@ def readiness():
       'WPE_binary32_log_period_production_closed':False,
       'WPE_period_exp_target_libm_correspondence_closed':False,
       'WPE_frequency_exp_target_libm_correspondence_closed':False,
-      'source_uniform_WPE_frequency_supply_bound_closed':False,
+      'source_uniform_WPE_frequency_supply_bound_closed': bool(
+          _source_shape_matches() and st['shipping_frequency_store_source_shape_matches'] and
+          sha256(WRAPPER.read_bytes()).hexdigest()==AUDITED_WRAPPER_SHA256),
+      'frequency_supply_bound_requires_no_libm_accuracy_or_branch_agreement':True,
+      'outer_frequency_bound_includes_nonfinite_fallback_and_retained_statistics':True,
+      'frequency_supply_bound_proves_execution_totality':False,
       'upstream_WPE_binary32_frequency_production_closed':False,
       'complete_word_finite_identity':False,
       'storage_search_allowed':False,

@@ -1,4 +1,5 @@
 import unittest
+from dataclasses import replace
 from tools.stability.ou3_alt_contraction import finite_startup_wpe_machine_history as X
 from tools.stability.ou3_alt_contraction import finite_wpe_machine_binary32 as WM
 from tools.stability.ou3_alt_contraction import finite_wpe_moment_binary32 as M
@@ -21,6 +22,13 @@ def mode_witness(machine_state,vertical,dt):
 
 
 class Tests(unittest.TestCase):
+    def test_lower_frequency_branch_cannot_ignore_machine_latches(self):
+        b=BASE.initial(); wpe=WM.initial(b.runtime.wpe_cfg)
+        for changed in ('separate_usable','fma_usable'):
+            with self.assertRaisesRegex(ValueError,'usable latch differs'):
+                X.State(b,replace(wpe,**{changed:True}))
+
+
     def test_two_cold_samples_attach_full_wpe_to_same_mahony_vertical(self):
         b=BASE.initial(); s=X.State(b,WM.initial(b.runtime.wpe_cfg))
         for _ in range(2):

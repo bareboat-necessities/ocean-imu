@@ -99,6 +99,12 @@ broader asynchronous master or silently import exact 5 ms timing.
 minimum-service semantics. Counter safety does not require replacing it with
 the actual caller or adding an artificial maximum rate.
 
+The final clamped WPE frequency difference has an unconditional interval bound
+on every execution reaching that assignment, including its nonfinite fallback.
+The actual same-history residual remains in the graph. This closes the frequency
+supply-range obligation, not execution totality, branch correspondence, or a
+small enough disturbance margin for contraction.
+
 Universal startup/alignment/capture, Eigen and target/compiler/libm
 correspondence, source-uniform arithmetic supplies and the complete same-history
 600-step machine word remain unqualified. The master lists each dependency and

@@ -135,7 +135,7 @@ class Tests(unittest.TestCase):
             self.assertTrue(r[k])
         self.assertFalse(r['global_compiler_WPE_log_tracks_composed_into_Live_product'])
         self.assertFalse(r['WPE_binary32_log_period_production_closed'])
-        self.assertFalse(r['source_uniform_WPE_frequency_supply_bound_closed'])
+        self.assertTrue(r['source_uniform_WPE_frequency_supply_bound_closed'])
         self.assertFalse(r['source_uniform_complete_600_step_word_qualified'])
         self.assertFalse(r['storage_search_allowed'])
 

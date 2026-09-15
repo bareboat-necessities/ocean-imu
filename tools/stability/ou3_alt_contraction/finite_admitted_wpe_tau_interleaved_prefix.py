@@ -184,7 +184,7 @@ def readiness():
       'startup_WPE_machine_ledger_provenance_closed':False,
       'WPE_log_std_log_target_libm_correspondence_closed':wl['WPE_log_std_log_target_libm_correspondence_closed'],
       'WPE_log_exp_target_libm_correspondence_closed':wl['WPE_log_exp_target_libm_correspondence_closed'],
-      'source_uniform_WPE_frequency_supply_bound_closed':False,
+      'source_uniform_WPE_frequency_supply_bound_closed':lower['source_uniform_WPE_frequency_supply_bound_closed'],
       'tuner_exp_libm_binary32_correspondence_closed':lower['tuner_exp_libm_binary32_correspondence_closed'],
       'all_event_arithmetic_witnesses_source_uniformly_qualified':False,
       'source_uniform_complete_600_step_word_qualified':False,

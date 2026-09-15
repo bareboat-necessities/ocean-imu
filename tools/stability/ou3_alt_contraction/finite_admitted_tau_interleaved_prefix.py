@@ -192,7 +192,7 @@ def readiness():
       'global_compiler_WPE_log_tracks_composed_into_Live_product':False,
       'admitted_startup_reachability_with_tau_ledger_closed':False,
       'WPE_binary32_log_period_production_closed':wf['WPE_binary32_log_period_production_closed'],
-      'source_uniform_WPE_frequency_supply_bound_closed':False,
+      'source_uniform_WPE_frequency_supply_bound_closed':wf['source_uniform_WPE_frequency_supply_bound_closed'],
       'tuner_exp_libm_binary32_correspondence_closed':ledger['tuner_exp_libm_binary32_correspondence_closed'],
       'all_event_arithmetic_witnesses_source_uniformly_qualified':False,
       'source_uniform_complete_600_step_word_qualified':False,

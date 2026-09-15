@@ -47,6 +47,8 @@ def build():
     counter_certificate=COUNTER.build()
 
     closed={
+      'source_uniform_clamped_WPE_frequency_discrepancy':wfreq['source_uniform_WPE_frequency_supply_bound_closed'],
+      'literal_per_compiler_WPE_usable_latch':wmach['source_produced_per_compiler_usable_latches_retained'],
       'signed_magnetic_counter_safety_on_every_finite_prefix':counter_certificate['counter_lifetime_closed'],
       'accepted_and_rejected_magnetic_sample_counter_safety':counter_certificate['accepted_and_rejected_magnetic_sample_counters_closed'],
       'certified_empty_startup_and_later_north_in_admitted_source_word': bool(
@@ -102,7 +104,6 @@ def build():
       'WPE_machine_vs_exact_period_branch_robustness': not lwpe['machine_vs_exact_WPE_period_branch_robustness_closed'],
       'WPE_source_uniform_machine_supply_bounds': not lwpe['source_uniform_WPE_machine_supply_bounds_closed'],
       'WPE_log_and_exp_libm_correspondence': not (wlog['WPE_log_std_log_target_libm_correspondence_closed'] and wlog['WPE_log_exp_target_libm_correspondence_closed']),
-      'WPE_frequency_source_uniform_supply': not wfreq['source_uniform_WPE_frequency_supply_bound_closed'],
       'Qaxis_exp_libm_correspondence': not qexp['Qaxis_exp_libm_binary32_correspondence_closed'],
       'all_event_arithmetic_witnesses_source_uniform': not live['all_event_arithmetic_witnesses_source_uniformly_qualified'],
       'complete_source_uniform_600_step_word': not lwpe['source_uniform_complete_600_step_word_qualified'],

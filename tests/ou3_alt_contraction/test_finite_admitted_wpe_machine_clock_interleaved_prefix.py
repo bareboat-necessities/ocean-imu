@@ -22,8 +22,8 @@ def witness(wpe,vertical,dt):
     horizon=min(max(M.B.mul(cfg.moment_horizon_periods,period.period_exp),cfg.min_horizon_sec),cfg.max_horizon_sec)
     md=expw(M.B.div(h,horizon)); a=M.B.sub(M.ONE,md)
     ms=M.MomentSuccessors(M._ema(mom.weight,M.ONE,a)[0],M._ema(mom.velocity_mean,vel,a)[0],
-        M._ema(mom.velocity_sq,M.B.mul(vel,vel),a)[0],M._ema(mom.elevation_mean,elev,a)[0],
-        M._ema(mom.elevation_sq,M.B.mul(elev,elev),a)[0])
+        M._second_moment(mom.velocity_sq,vel,a)[0],M._ema(mom.elevation_mean,elev,a)[0],
+        M._second_moment(mom.elevation_sq,elev,a)[0])
     vm=M.B.div(ms.velocity_mean,ms.weight); em=M.B.div(ms.elevation_mean,ms.weight)
     vs=M.B.div(ms.velocity_sq,ms.weight); es=M.B.div(ms.elevation_sq,ms.weight)
     vv=max(M.ZERO,M.B.sub(vs,M.B.mul(vm,vm))); ev=max(M.ZERO,M.B.sub(es,M.B.mul(em,em)))
@@ -37,7 +37,11 @@ class Tests(unittest.TestCase):
         mt=JOIN._mtune_state(base.base)
         cfg=WM.MOM.Config.from_shadow(JOIN._runtime(base.base).wpe_cfg)
         mom=M.State(elapsed=M.B.rn32(3),samples=0)
-        wpe=WM.State(cfg,mom,mom,mt.base.wpe); s=X.begin(clock,wpe)
+        # Component fixture: the lower exact state already carries a usable period.
+        with self.assertRaisesRegex(ValueError,'usable latch differs'):
+            X.begin(clock,WM.State(cfg,mom,mom,mt.base.wpe))
+        wpe=WM.State(cfg,mom,mom,mt.base.wpe,separate_usable=True,fma_usable=True)
+        s=X.begin(clock,wpe)
         probe=JOIN.imu_step(base,separate_racc_accel_ldlt=MAG.REJECT,fma_racc_accel_ldlt=MAG.REJECT,**join,**kw)
         sw=witness(wpe,probe.separate_source.band_input,join['machine_dt'])
         fw=WM.ModeWitnesses(dict(sw.moment),horizon=WM.HorizonPeriodWitness(wpe.logs.fma.log_period,M.B.rn32(1)))
@@ -49,7 +53,7 @@ class Tests(unittest.TestCase):
     def test_complete_cannot_skip_wpe_edges(self):
         base,_,_,_,_,_=BASE.fixture(); clock=CLOCK.begin(base); mt=JOIN._mtune_state(base.base)
         cfg=WM.MOM.Config.from_shadow(JOIN._runtime(base.base).wpe_cfg); mom=M.State(elapsed=M.B.rn32(3),samples=0)
-        s=X.begin(clock,WM.State(cfg,mom,mom,mt.base.wpe))
+        s=X.begin(clock,WM.State(cfg,mom,mom,mt.base.wpe,separate_usable=True,fma_usable=True))
         with self.assertRaises((ValueError,TypeError)): X.complete(s)
 
     def test_readiness_attaches_all_600_edges_but_not_source_uniform_arithmetic(self):

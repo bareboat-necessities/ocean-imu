@@ -48,6 +48,23 @@ startup-plus-600-IMU budgets end at 30,602. That deadline is conditional on
 source-produced gravity alignment. The magnetic 8.5-uT / 0.63-rad accuracy
 calculation still requires a full accumulation-to-handoff frame bound.
 
+## WPE arithmetic qualification
+
+The final tuning-frequency discrepancy is uniformly bounded by the outer
+clamps, including nonfinite fallback and retained statistics. For exact bounds
+[L,U] and compiled bounds [RN32(L),RN32(U)], the same-history residual lies in
+[RN32(L)-U, RN32(U)-L]. This proof requires neither branch agreement nor a libm
+accuracy estimate. The two-clamp accepted-update relation additionally uses the
+statistics interval. Neither bound proves execution totality or a useful
+contraction margin. The master has 13 remaining open qualifications.
+
+The moment graph retains shipping's literal `(alpha*v)*v` and `(alpha*eta)*eta`
+order. Each machine history carries its own post-log-update usable latch,
+including both inclusive elapsed/history comparisons and the one-way retention
+rule. Startup and Live reject a mismatch with the lower exact frequency branch;
+they do not silently ignore the machine latch. Independent machine/exact
+production and frequency-branch composition remains open.
+
 ## Continuation
 
 1. Keep the closed counter projection, atlas and certified empty magnetic

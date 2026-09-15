@@ -9,6 +9,39 @@ from tools.stability.ou3_alt_contraction import finite_wpe_runtime as WPE
 
 
 class Tests(unittest.TestCase):
+    def test_outer_supply_includes_nonfinite_and_retained_state(self):
+        lo,hi=F(3,100),F(6,5)
+        bound=X.outer_supply_bound(exact_min_hz=lo,exact_max_hz=hi)
+        ml,mh=map(B.rn32,(lo,hi))
+        for exact in (None,-1,0,F(1,5),100):
+            for machine in (None,-1,0,B.rn32(F(1,5)),100):
+                e=X.final_tuning_clamp(exact,min_hz=lo,max_hz=hi)
+                m=X.final_tuning_clamp(machine,min_hz=ml,max_hz=mh)
+                self.assertEqual(bound.check(e,m),m-e)
+        self.assertEqual(X.final_tuning_clamp(None,min_hz=ml,max_hz=mh),ml)
+
+
+    def test_uniform_supply_includes_rounded_endpoints_and_opposite_branches(self):
+        from tools.stability.ou3_alt_contraction import finite_band_variance_runtime as R
+        cfg=R.StatsConfig(4,F(3,10),60,F(1,20),5)
+        bound=X.statistics_supply_bound(cfg,exact_min_hz=F(3,100),exact_max_hz=F(6,5))
+        self.assertEqual(bound.exact_interval,(F(1,20),F(6,5)))
+        self.assertEqual(bound.machine_interval,(B.rn32(F(1,20)),B.rn32(F(6,5))))
+        lo,hi=bound.residual_interval
+        self.assertLess(lo,0); self.assertGreater(hi,F(23,20))
+        for e in bound.exact_interval:
+            for m in bound.machine_interval:
+                self.assertEqual(bound.check(e,m),m-e)
+        with self.assertRaises(ValueError): bound.check(6,B.rn32(F(1,5)))
+        with self.assertRaises(ValueError): bound.check(F(1,5),6)
+
+    def test_uniform_supply_handles_disjoint_clamp_ranges(self):
+        from tools.stability.ou3_alt_contraction import finite_band_variance_runtime as R
+        cfg=R.StatsConfig(4,F(3,10),60,2,5)
+        b=X.statistics_supply_bound(cfg,exact_min_hz=F(1,10),exact_max_hz=1)
+        self.assertEqual(b.exact_interval,(1,1))
+        self.assertEqual(b.machine_interval,(1,1))
+        self.assertEqual(b.residual_interval,(0,0))
     def test_statistics_clamp_precedes_distinct_outer_tuning_clamp(self):
         from tools.stability.ou3_alt_contraction import finite_band_variance_runtime as R
         from dataclasses import replace
@@ -25,6 +58,7 @@ class Tests(unittest.TestCase):
         self.assertNotEqual(out.stored.stored_hz,external.stored.stored_hz)
         self.assertEqual(out.exact_clamped_frequency,cfg.f_min)
         self.assertEqual(out.machine_minus_shadow,B.rn32(cfg.f_min)-cfg.f_min)
+        self.assertEqual(out.supply_bound.check(out.exact_clamped_frequency,out.stored.stored_hz),out.machine_minus_shadow)
         with self.assertRaisesRegex(ValueError,'ordered statistics'):
             replace(out,stored=external.stored)
 
@@ -100,7 +134,7 @@ class Tests(unittest.TestCase):
         self.assertFalse(r['binary32_period_frequency_bit_reciprocity_assumed'])
         self.assertFalse(r['WPE_binary32_log_period_production_closed'])
         self.assertFalse(r['WPE_frequency_exp_target_libm_correspondence_closed'])
-        self.assertFalse(r['source_uniform_WPE_frequency_supply_bound_closed'])
+        self.assertTrue(r['source_uniform_WPE_frequency_supply_bound_closed'])
         self.assertFalse(r['storage_search_allowed']); self.assertFalse(r['ALT_LIVE_PASS'])
 
 

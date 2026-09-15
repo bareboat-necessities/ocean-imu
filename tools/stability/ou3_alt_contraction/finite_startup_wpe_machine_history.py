@@ -29,6 +29,7 @@ class State:
         if not isinstance(self.base,LOWER.State) or not isinstance(self.wpe,WPE.State):
             raise TypeError('joined startup and full WPE machine states required')
         if self.qualification!=QUALIFICATION: raise ValueError('wrong startup WPE-machine qualification')
+        WPE.require_shadow_usable(self.wpe,self.base.base.lower.frontend.tuner.wpe)
         if self.wpe.logs!=self.base.base.lower.wpe:
             raise ValueError('full WPE machine log state detached from lower startup WPE log ledger')
         if self.wpe.separate.samples!=self.base.separate_source.samples or self.wpe.fma.samples!=self.base.fma_source.samples:

@@ -126,6 +126,9 @@ jobs:
             test_finite_tuner_stillness_projection test_finite_tuner_candidate \
             test_finite_tuner_projection_bridge test_finite_tuner_frontend_prefix \
             test_finite_tuner_frequency_binary32 test_finite_tuner_tau_binary32 \
+            test_finite_wpe_moment_binary32 test_finite_wpe_usable_binary32 \
+            test_finite_wpe_machine_binary32 test_finite_wpe_frequency_binary32 \
+            test_finite_startup_wpe_machine_history test_finite_admitted_wpe_machine_clock_interleaved_prefix \
             test_finite_shipping_tau_target_binary32 test_finite_tuner_tau_roundoff_bound \
             test_finite_tuner_tau_600_domain test_finite_complete_word_tau_qualification \
             test_finite_tuner_tau_deployment_ledger \

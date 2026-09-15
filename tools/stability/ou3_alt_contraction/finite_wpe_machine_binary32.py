@@ -1,11 +1,14 @@
-"""Persistent dual-compiler binary32 WPE moment + log machine product.
+"""Persistent dual-compiler binary32 WPE moment, log and usability machine product.
 
 Each global compiler history carries its own full moment state and canonical
-log-period state from reset. Both histories consume the SAME machine vertical
+log-period state and one-way usable latch from reset. Both histories consume the SAME machine vertical
 sample and static WPE configuration, but their stored arithmetic may differ.
 The moment-horizon ``exp(log_period)`` witness is bound to the same stored log
 state and, on a valid smoothed update, must be exactly the same exp result used
 again by ``update_log_period_`` in that compiler history.
+
+The usable gate consumes each mode's post-update log getter and rounded
+elapsed/history comparisons. It is skipped on every nonproducing update.
 
 A valid raw period is therefore no longer detached from the log/tuner machine
 history. Target libm/compiler qualification and source-uniform bounds remain
@@ -19,6 +22,7 @@ from tools.stability.ou3_alt_contraction import finite_binary32_arithmetic as B
 from tools.stability.ou3_alt_contraction import finite_wpe_runtime as SHADOW
 from tools.stability.ou3_alt_contraction import finite_wpe_moment_binary32 as MOM
 from tools.stability.ou3_alt_contraction import finite_wpe_log_binary32 as LOG
+from tools.stability.ou3_alt_contraction import finite_wpe_usable_binary32 as USABLE
 
 QUALIFICATION='OU3_ALT_WPE_MACHINE_BINARY32_PRODUCT_V1'
 
@@ -55,6 +59,7 @@ class ModeWitnesses:
     horizon:HorizonPeriodWitness|None=None
     raw_log:RawLogBinding|None=None
     log:LOG.InitWitness|LOG.SmoothWitness|None=None
+    usable:USABLE.PeriodWitness|None=None
     def __post_init__(self):
         if not isinstance(self.moment,dict): raise TypeError('WPE moment witness dictionary required')
 
@@ -66,7 +71,11 @@ class State:
     fma:MOM.State=MOM.State()
     logs:LOG.State=LOG.State()
     qualification:str=QUALIFICATION
+    separate_usable:bool=False
+    fma_usable:bool=False
     def __post_init__(self):
+        if type(self.separate_usable) is not bool or type(self.fma_usable) is not bool:
+            raise TypeError('literal per-compiler WPE usability latches required')
         if not isinstance(self.cfg,MOM.Config) or not isinstance(self.separate,MOM.State) or not isinstance(self.fma,MOM.State) or not isinstance(self.logs,LOG.State):
             raise TypeError('machine WPE config/moment/log states required')
         if not (self.separate.samples==self.fma.samples==self.logs.samples):
@@ -118,12 +127,34 @@ def step(state:State,*,dt,vertical_accel,separate:ModeWitnesses,fma:ModeWitnesse
     sb,sw=_bind_log(sr,state.logs.separate,separate); fb,fw=_bind_log(fr,state.logs.fma,fma)
     logs=LOG.advance_modes(state.logs,separate_produced=sb,fma_produced=fb,
                            separate_witness=sw,fma_witness=fw)
-    nxt=State(state.cfg,sr.state,fr.state,logs.state)
+    sg=USABLE.update(state.separate_usable,produced_period=sb,
+        log_period=logs.state.separate.log_period,elapsed=sr.state.elapsed,
+        lambda_=state.cfg.lambda_,witness=separate.usable)
+    fg=USABLE.update(state.fma_usable,produced_period=fb,
+        log_period=logs.state.fma.log_period,elapsed=fr.state.elapsed,
+        lambda_=state.cfg.lambda_,witness=fma.usable)
+    nxt=State(state.cfg,sr.state,fr.state,logs.state,
+        separate_usable=sg.after,fma_usable=fg.after)
     return nxt,sr,fr,logs
+
+
+def require_shadow_usable(state:State,shadow:SHADOW.WPEState):
+    """Guard the current lower composer, whose frequency branch uses shadow.
+
+    Tracking machine latches alone does not authorize the lower composer to
+    ignore them. Until independent branch execution is composed, reject a
+    disagreement explicitly, including on the successor before goLive.
+    """
+    if not isinstance(state,State) or not isinstance(shadow,SHADOW.WPEState):
+        raise TypeError('machine and exact WPE states required')
+    if state.separate_usable!=shadow.usable_period or state.fma_usable!=shadow.usable_period:
+        raise ValueError('machine WPE usable latch differs from lower exact frequency branch')
+    return True
 
 
 def readiness():
     m=MOM.readiness(); l=LOG.readiness()
+    u=USABLE.readiness()
     return {
       'qualification':QUALIFICATION,
       'two_persistent_machine_moment_histories_rooted_at_reset':True,
@@ -133,6 +164,7 @@ def readiness():
       'moment_horizon_period_bound_to_same_stored_log_state':True,
       'same_exp_log_period_value_bound_across_horizon_and_log_smoothing':True,
       'per_compiler_period_branch_divergence_retained':l['per_compiler_period_branch_divergence_representable'],
+      'source_produced_per_compiler_usable_latches_retained':u['post_update_binary32_usability_predicates_materialized'],
       'dual_compiler_persistent_moment_history_attached':True,
       'WPE_raw_period_binary32_production_attached_to_log_history':True,
       'target_exp_log_sqrt_libm_correspondence_closed':False,

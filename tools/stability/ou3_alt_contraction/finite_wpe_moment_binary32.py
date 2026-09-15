@@ -63,6 +63,17 @@ def _exp_minus(arg,witness,name):
     return w
 
 
+def _second_moment(previous,value,alpha):
+    """Literal ``(1-alpha)*previous + (alpha*value)*value``.
+
+    The first multiplication on the right rounds before the final product.
+    Computing value*value first changes even uncontracted binary32 execution.
+    The outer sum retains the same permitted contraction choices as the other
+    moment updates; target compiler selection remains a separate obligation.
+    """
+    return _sum_products(B.sub(ONE,alpha),previous,B.mul(alpha,value),value)
+
+
 @dataclass(frozen=True)
 class Config:
     lambda_:F
@@ -188,11 +199,9 @@ def step(state:State,cfg:Config,*,dt,vertical_accel,decay_exp,
     ms=moment_successors
     if ms.weight not in _ema(state.weight,ONE,alpha): raise ValueError('WPE weight successor detached')
     if ms.velocity_mean not in _ema(state.velocity_mean,vel,alpha): raise ValueError('WPE velocity mean successor detached')
-    vel2=B.mul(vel,vel)
-    if ms.velocity_sq not in _ema(state.velocity_sq,vel2,alpha): raise ValueError('WPE velocity square successor detached')
+    if ms.velocity_sq not in _second_moment(state.velocity_sq,vel,alpha): raise ValueError('WPE velocity square successor detached')
     if ms.elevation_mean not in _ema(state.elevation_mean,elev,alpha): raise ValueError('WPE elevation mean successor detached')
-    elev2=B.mul(elev,elev)
-    if ms.elevation_sq not in _ema(state.elevation_sq,elev2,alpha): raise ValueError('WPE elevation square successor detached')
+    if ms.elevation_sq not in _second_moment(state.elevation_sq,elev,alpha): raise ValueError('WPE elevation square successor detached')
     base=replace(base,weight=ms.weight,velocity_mean=ms.velocity_mean,velocity_sq=ms.velocity_sq,
                  elevation_mean=ms.elevation_mean,elevation_sq=ms.elevation_sq,last_moment_horizon=horizon)
     if ms.weight<=WEIGHT_GATE:

@@ -523,6 +523,41 @@ path. Source-uniform guard/Racc/libm supplies are therefore open.
 
 ### Failure analysis and independent critic
 
+* **WPE source-order and takeover audit:** the machine moment graph replaces
+  `(alpha*v)*v` by `alpha*(v*v)`. With binary32 alpha=8589935/34359738368,
+  previous second moment=8589935/8589934592 and v=9369095/8388608, the literal
+  uncontracted result is 2816655/2147483648, outside the old graph's singleton
+  11266619/8589934592. This is an implementation/correspondence defect, not a
+  physical-source or stability counterexample. Separately, the persistent WPE
+  machine product previously omitted `usable_period_` and its post-log-update comparison.
+  Critic: more bounds on the old graph cannot certify shipping. Retain the
+  literal multiplication order and source-produced latch per compiler history;
+  do not infer machine takeover from the exact shadow. Next checks: native
+  second-moment correspondence, inclusive takeover boundaries, latch retention,
+  and disagreement between compiler histories without splicing their logs.
+  The corrected graph retains literal products and both machine latches. Native
+  header checks cover 200 second-moment updates and 18 latch boundary cases.
+  The lower exact-branch composer now explicitly rejects latch disagreement;
+  source-uniform branch coverage remains open. The wrapper also evaluates its
+  frequency getter before testing the latch and uses the prior on invalid
+  getter output even after latching. The old "prior without exp" status was
+  inaccurate; only non-consumption of its result is established in that branch.
+  The complete eager-getter/fallback arithmetic graph remains open.
+  The first attachment regression
+  rejected two legacy Live component fixtures: their exact state was usable,
+  while the previously absent machine latch defaulted false. This is a fixture
+  mismatch, not a source counterexample. The component fixtures now state their
+  retained true latch explicitly and also test rejection of the false latch;
+  no startup reachability claim follows from those snapshots.
+* **Frequency range closure:** the final outer clamp maps every finite input
+  into its configured interval and nonfinite inputs to the floor. Interval
+  subtraction bounds machine-minus-shadow independently of WPE accuracy or
+  branch choices. The accepted statistics-update path has the tighter image of
+  its inner interval under the outer clamp. These are range proofs, not a
+  complete-execution or small-gain proof; the exact residual remains attached.
+  The controlling limiter is still the source-uniform machine word, so this
+  result does not authorize a storage or rho search.
+
 * **Authorized counter repair and composition audit:** the user explicitly
   authorizes fixing shipping signed-counter overflow. The inner attempt and tuner accepted/rejected counts saturate
   at INT_MAX; measurements, statistics and unlock checks still execute. The induction

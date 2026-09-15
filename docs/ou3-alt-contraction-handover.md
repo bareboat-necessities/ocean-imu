@@ -191,9 +191,9 @@ shipping word. Continue from the product composer, not disconnected snapshots:
    relation, attempt common joint24 storage, every-prefix retention and ultimate
    bounds.
 
-The shipping `int mag_updates_applied_` keeps incrementing after unlock. Its
-finite-width lifetime behavior and floating clocks are explicit open deployment
-obligations. Do not replace either with an unbounded Python arithmetic claim.
+The shipping magnetic counts saturate at INT_MAX while measurements continue.
+Their finite-prefix safety is proved by the audited saturation recurrence.
+Floating-clock lifetime remains a separate open deployment obligation.
 Do not silently disable calibration or shrink the physical domain to get PASS.
 
 ## Validation boundary

@@ -21,6 +21,7 @@ from tools.stability.ou3_alt_contraction import finite_startup_wpe_machine_histo
 from tools.stability.ou3_alt_contraction import finite_startup_joined_machine_history as STARTLOW
 from tools.stability.ou3_alt_contraction import finite_wpe_machine_binary32 as WPE
 from tools.stability.ou3_alt_contraction import finite_source_continuation as SOURCE
+from tools.stability.ou3_alt_contraction import finite_admitted_tau_interleaved_prefix as TAUJOIN
 
 QUALIFICATION='OU3_ALT_ADMITTED_WPE_MACHINE_CLOCK_INTERLEAVER_V1'
 
@@ -44,6 +45,8 @@ class State:
         if self.qualification!=QUALIFICATION: raise ValueError('wrong admitted WPE-machine qualification')
         if not isinstance(self.entry_wpe_samples,int) or not isinstance(self.wpe_steps,int) or self.entry_wpe_samples<0 or self.wpe_steps<0:
             raise ValueError('nonnegative WPE counters required')
+        mt=JOIN._mtune_state(self.base.base.base)
+        WPE.require_shadow_usable(self.wpe,TAUJOIN._entry_wpe(mt.base.base))
         if self.wpe.logs!=_logs(self.base):
             raise ValueError('full WPE machine logs detached from lower admitted TuneState word')
         if self.wpe.separate.samples-self.entry_wpe_samples!=self.wpe_steps or self.wpe.fma.samples-self.entry_wpe_samples!=self.wpe_steps:
