@@ -116,12 +116,17 @@ usefulness theorem; it is no longer an independent pre-rho master prerequisite.
    attached. Keep their chart index and exact transport in every remaining
    source/machine layer; do not replace chart-dependent physical attitude by
    coordinate magnitude alone.
-2. Qualify the startup raw-IMU sensor/observability contract separately from
-   post-Live ISS, then prove actual predicate production, seed/SVD/nonfinite
-   branches and finite reachability. See `ou3-alt-startup-disturbance-contract.md`.
+2. Use the declared commissioned startup profiles and proved seed-norm margins
+   in `ou3-alt-startup-disturbance-contract.md`. Their larger seed set is not
+   covered by the original conditional Mahony invariant. Prove actual
+   alignment/predicate production, seed/SVD/nonfinite branches and finite
+   reachability without tightening the chosen sensor caps to fit that invariant.
 3. Qualify all target/compiler arithmetic and supplies: WPE exp/log/sqrt,
    band/statistics/tuner, Q-axis, Racc/guard displacement, clocks/scheduler,
    trigonometry/normalization, Eigen LDLT/eigensolvers/floors, and comparisons.
+   The bounded-input WPE induction and conditional source projection are in
+   `ou3-alt-wpe-uniform-supplies.md`; they leave upstream totality and target
+   correspondence open. There are 11 top-level prerequisites remaining.
 4. Counter safety is closed by the source-bound saturation induction in
    `ou3-alt-deployment-prerequisite.md`, including accepted/rejected acquisition
    and refinement counts. Retain its projection from mathematical event count

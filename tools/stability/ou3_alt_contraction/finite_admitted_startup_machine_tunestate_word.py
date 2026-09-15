@@ -88,7 +88,8 @@ def readiness():
       'startup_to_Live_machine_history_attachment_closed':True,
       'admitted_source_private_Mahony_startup_to_Live_invariant_closed':
           mah['admitted_source_private_Mahony_startup_to_Live_invariant_closed'],
-      'Mahony_invariant_no_longer_blocks_startup_finite_master':True,
+      'commissioned_startup_sensor_profiles_covered':mah['commissioned_startup_sensor_profiles_covered'],
+      'Mahony_invariant_no_longer_blocks_startup_finite_master':False,
       'every_admitted_startup_history_reaches_this_boundary_product':False,
       'source_uniform_startup_deployment_supply_bounds_closed':False,
       'all_target_libm_and_compiler_profile_correspondence_closed':False,

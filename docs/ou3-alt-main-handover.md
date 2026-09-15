@@ -15,14 +15,17 @@ source audit are in `ou3-alt-deployment-prerequisite.md`. No maximum call rate
 was added. The master has no falsified counter prerequisite, but universal
 startup and source-uniform deployment arithmetic still block rho estimation.
 
-Startup additionally needs an explicit sensor/observability contract. The
-post-Live arbitrary-bounded ISS variable does not provide one. A constant
-bounded residual can preserve the correct gravity direction while keeping the
-measured norm below the seed threshold forever; both handoff paths then remain
-blocked. `ou3-alt-startup-disturbance-contract.md` gives the exact source and
-guard/observer induction. This refutes the arbitrary-bounded startup extension,
-not a separately specified small-disturbance startup theorem. No sensor cap has
-been invented or hardware admission inferred. The master retains this result.
+Startup uses the commissioned sensor profiles in
+`ou3-alt-startup-disturbance-contract.md`: residual vector caps 0.30 m/s² and
+0.02 rad/s for BMI270, 0.50 m/s² and 0.03 rad/s for MPU6886, plus a separate
+same-history total direction-error mean/primitive budget 0.10 / 1.5 s.
+These are declared engineering requirements supported by datasheet evidence;
+hardware admission is not inferred. Every admitted sample has a strictly
+positive seed-norm margin. The arbitrary-bounded startup obstruction remains
+a regression against conflating startup with post-Live ISS. The existing
+Mahony certificate's smaller seed region does not cover these profiles, so
+actual capture needs a new proof. The master has 32 closed components and
+11 open top-level qualifications.
 
 The finite runtime now represents every nonzero attitude error in a four-chart
 joint24 atlas. Maximum-component selection bounds each attitude coordinate by
@@ -50,7 +53,9 @@ source-uniform arithmetic.
 The reset-rooted guard/private-Mahony/LPF/stillness/band/WPE/TuneState product
 crosses goLive without new frontend snapshots. Regional Mahony, physical source
 restriction, BIAS0/1/2, physical prediction, inverse-free measurements and
-rank-three covariance relations remain available.
+rank-three covariance relations remain available. Regional Mahony retains its
+original sensor/seed premises; it is not a certificate for the larger
+commissioned startup profiles.
 
 The RN32 clock reaches the default timeout comparison at sample 30,002; shared
 startup-plus-600-IMU budgets end at 30,602. That deadline is conditional on
@@ -81,13 +86,20 @@ successor. The eager getter and invalid-result prior fallback are retained.
 See `ou3-alt-wpe-branch-composition.md`. Agreement of comparisons is no longer
 a prerequisite; source-uniform arithmetic and target qualification remain open.
 
+`ou3-alt-wpe-uniform-supplies.md` supplies a reset-rooted induction for every
+bounded vertical input with |x|<=32, including moments, raw period and log/exp
+domains. The same sensor packet and literal Mahony normalization/projection
+give that input bound after each defined scalar observer update, without a
+tilt-accuracy assumption. Preceding observer totality, hardware arithmetic and
+the complete source word remain open; the large finite bounds are not ISS gains.
+
 ## Continuation
 
 1. Keep the closed counter projection, atlas and certified empty magnetic
    startup branch attached in every stronger source/machine layer. Mathematical
    event ordinals keep increasing after the shipping count saturates.
-2. Qualify a startup raw-IMU sensor/observability contract separately from the
-   post-Live ISS bound. Prove startup source/control reachability, including seed/SVD/nonfinite
+2. Under the declared commissioned startup contract, replace the inadequate
+   Mahony capture argument and prove startup source/control reachability, including seed/SVD/nonfinite
    branches, and qualify complete initial/refined/continuous magnetic history.
    Attach the actual target/compiler/Eigen/libm profile; close
    source-uniform arithmetic supplies and comparison branches under the resulting

@@ -241,3 +241,139 @@ disturbance transfer must be respected in an ISS/moment corollary.  Gaussian
 OU forcing has unbounded support and nondifferentiable sample paths; neither a
 deterministic amplitude/derivative cap nor a BRMM source restriction follows
 from its PSD.  Stochastic bias forcing remains separate from homogeneous P4.
+
+\subsection{Declared deterministic ALT startup sensor profiles}
+\label{sec:alt-startup-sensor-profiles}
+
+The following is an additional, conditional ALT startup scope. It does not
+replace the independent P2/P3/P4/P5 route or assert hardware qualification.
+From the first filter update through actual startup, require finite, fresh,
+correctly scaled, unsaturated samples at $h=0.005\,\mathrm{s}$, after sensor
+startup transients have settled, with no unreported missing samples. Retain
+zero wind heel, zero lever arm, the transparent dormant guard and every
+admitted BIAS0/BIAS1/BIAS2 history. For the same physical history,
+\begin{align}
+ a_{\rm raw}&=R^\top(a_w-ge_3)+b_a^{\rm true}+n_a,\nonumber\\
+ \omega_{\rm raw}&=\omega_b+b_g^{\rm true}+n_g,
+ \qquad g=9.80665\,\mathrm{m/s^2}.
+ \label{eq:alt-startup-sensor-model}
+\end{align}
+The deterministic residuals include fast error, residual scale/cross-axis
+effects, acquisition, conversion, delay and model error. True offset and
+slow drift remain in the physical bias history. No unapplied calibration is
+credited. Retain $\|a_w\|\le8.8\,\mathrm{m/s^2}$,
+$\|\omega_b\|\le35\pi/180\,\mathrm{rad/s}$ and
+$|(b_a^{\rm true})_i|\le0.13\,\mathrm{m/s^2}$, hence
+$\|b_a^{\rm true}\|\le\sqrt3(0.13)<0.226\,\mathrm{m/s^2}$.
+Require $\|b_g^{\rm true}(0)\|\le0.01\,\mathrm{rad/s}$,
+$\|b_g^{\rm true}(t)\|\le0.02\,\mathrm{rad/s}$ and
+$\|\dot b_g^{\rm true}\|\le10^{-5}\,\mathrm{rad/s^2}$.
+
+\begin{center}
+\begin{tabular}{lcc}
+\hline
+Commissioned profile & $\|n_a\|$ (m/s$^2$) & $\|n_g\|$ (rad/s)\\
+\hline
+BMI270 / AtomS3R & $0.30$ & $0.02$\\
+MPU6886 / AtomS3 & $0.50$ & $0.03$\\
+\hline
+\end{tabular}
+\end{center}
+These are vector-norm requirements selected with reference to the noise,
+offset and cross-axis data in the device tables
+\cite{BoschBMI270DS08,InvenSenseMPU6886DS11}. They are not absolute guarantees
+obtained from RMS noise, sigma multiples or characterization limits.
+In particular, uncommissioned board offsets can exceed the retained bias
+envelope. Admission requires an actual temperature, supply, mounting and
+applied-calibration record.
+
+For BMI270 the accelerometer budget is
+$0.005(g+8.8)+0.12+0.08=0.29303325<0.30$; for MPU6886 it is
+$0.01(g+8.8)+0.15+0.16=0.4960665<0.50$, in m/s$^2$.
+The first term bounds the commissioned residual scale/cross-axis operator;
+the remaining terms reserve fast error and acquisition/model error.
+
+Peak bounds do not ensure temporal gravity information. Define the total
+normalized direction error, including the same bias and residual,
+\begin{equation}
+ r(t)=\frac{R(t)(-a_{\rm raw}(t))}{\|a_{\rm raw}(t)\|}-e_3
+     =m(t)+\dot\xi(t),\qquad
+ \|m(t)\|\le0.10,\quad \|\xi(t)\|\le1.5\,\mathrm{s}.
+ \label{eq:alt-startup-direction-contract}
+\end{equation}
+Require one absolutely continuous $\xi$ on the same startup history, with
+the equality almost everywhere. This is a separate source premise, not a
+consequence of a datasheet, peak noise or translation alone. It does not
+require differentiating the noise. The startup constants can be used on a
+Live word only when they continue to hold; they do not follow from an
+arbitrary bounded post-Live ISS input.
+
+\begin{lemma}[Conditional ALT seed-magnitude margin]
+\label{lem:alt-startup-seed-magnitude}
+Under the declared profile and transparent guard, every startup sample
+passes the literal accelerometer seed-norm comparison in the named scalar
+binary32 RNE model with gradual underflow and correctly rounded square root.
+Conservative computed-norm lower bounds are
+$0.48064878\,\mathrm{m/s^2}$ for BMI270 and
+$0.28064880\,\mathrm{m/s^2}$ for MPU6886.
+\end{lemma}
+\begin{proof}
+The reverse triangle inequality gives
+$\|a_{\rm raw}\|\ge g-8.8-0.226-\|n_a\|$, respectively
+$0.48065$ and $0.28065\,\mathrm{m/s^2}$. With
+$u=2^{-24}$, $\eta=2^{-150}$ and
+$H=g+8.8+0.226+\|n_a\|$, API rounding changes the vector norm by at most
+$uH+2\eta$. Each nonnegative square/sum path has at most three rounded
+nodes. A lower bound for its computed squared norm is therefore
+$(1-u)^3(g-8.8-0.226-\|n_a\|-uH-2\eta)^2-6\eta$.
+An outward square-root enclosure and its final RNE charge give the displayed
+values, both strictly above the compiled $0.001$ threshold. Exact rational
+checks are in \texttt{finite\_startup\_sensor\_contract.py}.
+\end{proof}
+
+This magnitude lemma does not qualify the near-antiparallel Eigen SVD seed,
+prove source-uniform arithmetic totality or produce the later alignment
+predicate. The geometric seed-angle bounds
+$\arcsin((8.8+0.226+\|n_a\|)/g)$ are approximately
+$71.99^\circ$ and $76.26^\circ$ before arithmetic. The retained private
+Mahony certificate's original outer level does not contain these seed sets;
+that certificate is conditional on its original sensor premises. A new
+capture argument is required, without reducing these bounds to fit it.
+
+\begin{lemma}[Conditional ALT WPE finite arithmetic supply]
+\label{lem:alt-wpe-finite-supply}
+For the unchanged default WPE construction and the named rounded
+transcendental relations, every finite input sequence with
+$|a_{\rm vertical}|\le32\,\mathrm{m/s^2}$ and
+$h=\operatorname{RN}_{32}(0.005)$ has bounded machine moment and log states
+from reset, for all represented local FMA/separate moment outcomes.
+Whenever a raw period is produced,
+$2^{-57}<T_{\rm raw}<2^{16}$, and the initialized canonical log-period
+satisfies $|\ell|\le48$. No eventual period production is asserted.
+\end{lemma}
+\begin{proof}
+Apply $\mathcal R(z)=(1+u)z+\eta$ at each rounded node of the literal
+recurrence. The invariant absolute bounds for the first and second high-pass
+states, velocity and elevation are $2^{17},2^{29},2^{33},2^{37}$.
+Means are bounded by twice their corresponding state bounds, second moments
+by twice their squares and weight by two. The moment envelopes are affine
+in the smoothing coefficient, so their two endpoint checks cover all
+default horizons in $[20,180]$ seconds. The literal weight, variance and
+omega gates bound divisions on producing branches; the remaining branches
+retain their period state. Rigorous log enclosures give raw logs in
+$[-40,12]$, and the actual smoothing recurrence preserves $[-48,48]$.
+All intermediate magnitudes are below $2^{120}$. The rational inequalities,
+positive induction margins and same-argument exp/log checks are implemented
+in \texttt{finite\_wpe\_uniform\_bounds.py}.
+\end{proof}
+
+After a defined scalar Mahony update, exhaustive norm-word enclosure of the
+literal inverse square root (including zero and subnormal words) and its
+rounding give $\|q\|^2<1.112$. The identity
+$\|d(q)\|=\|q\|^2$ for its quadratic down row, with the actual source-order
+projection rounding and the same sensor packet, yields
+$|a_{\rm vertical}|<32$ for either profile. This attaches the WPE input
+implication without assuming accurate tilt. It does not prove that the
+preceding observer operations are defined for every source, or qualify the
+device libm/compiler. The complete finite master and all eleven remaining
+top-level qualifications are still required before any ALT $\rho$ estimate.

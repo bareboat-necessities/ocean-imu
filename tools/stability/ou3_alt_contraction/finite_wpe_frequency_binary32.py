@@ -260,6 +260,14 @@ def machine_frequencies(shadow,entry,*,logs,separate_getter,fma_getter,shadow_fr
         raise ValueError('full machine WPE entry detached from lower carried log ledger')
     lo,hi=F(exact_min_hz),F(exact_max_hz)
     def one(track,usable,getter):
+        if entry.bounded_profile and track.log_period is not None:
+            from tools.stability.ou3_alt_contraction import finite_wpe_uniform_bounds as U
+            if isinstance(getter,GetterResult):
+                U.check_exp(-track.log_period,getter.frequency_result)
+            elif isinstance(getter,FrequencyExp):
+                U.check_exp(-track.log_period,getter.result)
+            else:
+                raise ValueError('bounded WPE requires its eager frequency exp witness')
         q=machine_frequency(shadow,log_period=track.log_period,usable=usable,getter=getter,
             min_hz=B.rn32(lo),max_hz=B.rn32(hi),shadow_frequency=shadow_frequency)
         return through_statistics(q,stats_cfg,exact_min_hz=lo,exact_max_hz=hi)

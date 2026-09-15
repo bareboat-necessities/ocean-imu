@@ -13,6 +13,19 @@ scope. ALT preserves the actual Mahony/proxy/startup path, H18/A21 hybrid logic,
 frontend/tuner memory, full 21-state covariance and joint24
 motion/error/true-bias state.
 
+Startup additionally uses the commissioned sensor domain in
+`tools/stability/ou3_alt_startup_sensor_domain.json`, documented with device
+evidence in `ou3-alt-startup-disturbance-contract.md`. The deterministic vector
+residual caps are 0.30 m/s² / 0.02 rad/s for BMI270 and 0.50 m/s² / 0.03 rad/s
+for MPU6886. The true BIAS0/1/2 envelope and physical acceleration cap 8.8 m/s²
+remain. A separate total direction-error mean/primitive premise is 0.10 / 1.5 s.
+These requirements hold throughout startup and are not a hardware guarantee
+or a consequence of arbitrary-bounded post-Live ISS. Every admitted sample
+passes the seed-norm test, but the retained Mahony capture certificate does
+not cover this larger sensor/seed set. Its original conditional result is
+kept separate. The bounded-input WPE induction is described in
+`ou3-alt-wpe-uniform-supplies.md`. Eleven master qualifications remain open.
+
 ## Deployment-scope exclusion: no wind heel
 
 The optional shipping wind-heel retarget feature is excluded from ALT.

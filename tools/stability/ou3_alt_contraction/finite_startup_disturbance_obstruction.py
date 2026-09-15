@@ -145,7 +145,7 @@ def build():
         'specified_small_disturbance_startup_theorem_falsified':False,
         'hardware_residual_admission_claimed':False,
         'target_libm_compiler_qualification_claimed':False,
-        'startup_sensor_contract_selected':False,
+        'startup_sensor_contract_selected_by_this_obstruction':False,
         'storage_search_allowed':False,
         'ALT_STARTUP_PASS':False,'ALT_LIVE_PASS':False,'ALT_END_TO_END_PASS':False,
     }

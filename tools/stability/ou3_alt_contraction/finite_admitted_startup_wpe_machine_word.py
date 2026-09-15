@@ -41,6 +41,7 @@ def readiness():
       'full_WPE_machine_history_preserved_by_same_goLive_edge':s['goLive_preserves_full_WPE_moment_log_machine_history_by_identity'],
       'admitted_Live_constructor_accepts_only_startup_produced_WPE_state':l['startup_produced_full_WPE_state_constructor_available'],
       'admitted_source_private_Mahony_startup_to_Live_invariant_closed':mah['admitted_source_private_Mahony_startup_to_Live_invariant_closed'],
+      'commissioned_startup_sensor_profiles_covered':mah['commissioned_startup_sensor_profiles_covered'],
       'startup_guard_Mahony_WPE_machine_to_admitted_Live_attachment_closed':True,
       'every_admitted_startup_history_reaches_this_product':False,
       'source_uniform_startup_WPE_supply_bounds_closed':False,

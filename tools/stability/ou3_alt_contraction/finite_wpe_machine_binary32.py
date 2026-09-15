@@ -23,6 +23,7 @@ from tools.stability.ou3_alt_contraction import finite_wpe_runtime as SHADOW
 from tools.stability.ou3_alt_contraction import finite_wpe_moment_binary32 as MOM
 from tools.stability.ou3_alt_contraction import finite_wpe_log_binary32 as LOG
 from tools.stability.ou3_alt_contraction import finite_wpe_usable_binary32 as USABLE
+from tools.stability.ou3_alt_contraction import finite_wpe_uniform_bounds as BOUNDS
 
 QUALIFICATION='OU3_ALT_WPE_MACHINE_BINARY32_PRODUCT_V1'
 
@@ -73,6 +74,7 @@ class State:
     qualification:str=QUALIFICATION
     separate_usable:bool=False
     fma_usable:bool=False
+    bounded_profile:bool=False
     def __post_init__(self):
         if type(self.separate_usable) is not bool or type(self.fma_usable) is not bool:
             raise TypeError('literal per-compiler WPE usability latches required')
@@ -81,10 +83,12 @@ class State:
         if not (self.separate.samples==self.fma.samples==self.logs.samples):
             raise ValueError('dual WPE machine sample counts detached')
         if self.qualification!=QUALIFICATION: raise ValueError('wrong WPE machine product qualification')
+        if type(self.bounded_profile) is not bool: raise TypeError('literal WPE bounds qualification flag required')
+        if self.bounded_profile: BOUNDS.check_state(self)
 
 
-def initial(shadow_cfg:SHADOW.WPEConfig):
-    return State(MOM.Config.from_shadow(shadow_cfg))
+def initial(shadow_cfg:SHADOW.WPEConfig,*,bounded_profile=False):
+    return State(MOM.Config.from_shadow(shadow_cfg),bounded_profile=bounded_profile)
 
 
 def _period(track:LOG.Track,w:HorizonPeriodWitness|None):
@@ -121,6 +125,12 @@ def step(state:State,*,dt,vertical_accel,separate:ModeWitnesses,fma:ModeWitnesse
     if not isinstance(separate,ModeWitnesses) or not isinstance(fma,ModeWitnesses):
         raise TypeError('both compiler WPE witnesses required')
     x=_q(vertical_accel,'common machine WPE vertical input'); h=_q(dt,'common machine WPE dt')
+    if state.bounded_profile:
+        BOUNDS.check_state(state)
+        if h!=BOUNDS.DT or abs(x)>BOUNDS.INPUT:
+            raise ValueError('WPE source input exceeds bounded profile')
+        BOUNDS.check_mode_before(state.logs.separate,separate)
+        BOUNDS.check_mode_before(state.logs.fma,fma)
     sp=_period(state.logs.separate,separate.horizon); fp=_period(state.logs.fma,fma.horizon)
     sr=MOM.step(state.separate,state.cfg,dt=h,vertical_accel=x,canonical_period=sp,**separate.moment)
     fr=MOM.step(state.fma,state.cfg,dt=h,vertical_accel=x,canonical_period=fp,**fma.moment)
@@ -134,7 +144,7 @@ def step(state:State,*,dt,vertical_accel,separate:ModeWitnesses,fma:ModeWitnesse
         log_period=logs.state.fma.log_period,elapsed=fr.state.elapsed,
         lambda_=state.cfg.lambda_,witness=fma.usable)
     nxt=State(state.cfg,sr.state,fr.state,logs.state,
-        separate_usable=sg.after,fma_usable=fg.after)
+        separate_usable=sg.after,fma_usable=fg.after,bounded_profile=state.bounded_profile)
     return nxt,sr,fr,logs
 
 
@@ -142,6 +152,8 @@ def readiness():
     m=MOM.readiness(); l=LOG.readiness()
     u=USABLE.readiness()
     return {
+      'bounded_input_uniform_moment_raw_log_supplies_closed':BOUNDS.build()['reset_to_every_finite_prefix_bounded_input_induction_closed'],
+      'bounded_profile_checks_same_log_exp_arguments_without_target_promotion':True,
       'qualification':QUALIFICATION,
       'two_persistent_machine_moment_histories_rooted_at_reset':True,
       'same_machine_vertical_sample_drives_both_compiler_WPE_histories':True,

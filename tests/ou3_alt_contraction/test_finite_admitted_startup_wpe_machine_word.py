@@ -15,6 +15,7 @@ class Tests(unittest.TestCase):
             'startup_guard_Mahony_WPE_machine_to_admitted_Live_attachment_closed'):
             self.assertTrue(r[k],k)
         for k in (
+            'commissioned_startup_sensor_profiles_covered',
             'every_admitted_startup_history_reaches_this_product',
             'source_uniform_startup_WPE_supply_bounds_closed',
             'target_WPE_libm_and_compiler_profile_correspondence_closed',

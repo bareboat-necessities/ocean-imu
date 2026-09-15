@@ -522,6 +522,46 @@ conditioned operand. Source-uniform guard/Racc/libm supplies remain open.
 
 ### Failure analysis and independent critic
 
+* **Document-build infrastructure:** the full paper's LaTeX build stops before
+  reading the theorem text because `IEEEtran.cls` is absent. This is an
+  environment failure, not evidence against the new inequalities. Keep the
+  paper class unchanged; validate the edited theorem section with an isolated
+  standard-class harness and report the full-paper limitation separately.
+
+* **Commissioned startup sensor contract:** the user selected deterministic
+  errors throughout startup and authorized datasheet-informed numerical
+  assumptions. Use residual vector caps 0.30 m/s^2 and 0.02 rad/s for BMI270,
+  0.50 m/s^2 and 0.03 rad/s for MPU6886. These are commissioning requirements,
+  not hard guarantees inferred from RMS or production statistics. Preserve
+  every BIAS0/1/2 history and its 0.13 m/s^2 component envelope; calibration
+  actually applied must justify admission, not a hypothetical correction.
+  Keep the physical acceleration cap 8.8 m/s^2. Use explicit total measured
+  direction-error mean/primitive budgets 0.10 and 1.5 s, separately from raw error
+  magnitudes; neither is inferred from an arbitrary bounded residual.
+  The scalar seed audit gives norm floors 0.48065/0.28065 m/s^2 and tilt
+  bounds about 71.99/76.26 degrees before arithmetic. The retained old
+  Mahony metric needs seed levels 2.05463/2.27142, above its 1.7689 outer
+  level and 1.87267 chart ceiling even before enlarging temporal forcing.
+  This is a coverage failure of that conditional certificate, not a shipping
+  instability or justification to reduce the sensor caps. Do not promote
+  that old invariant to the new profile. Critic alternatives: a different
+  nonlinear observer storage; a same-history finite-time source/LPF argument;
+  or a longer informative-interval recovery theorem. Merely raising the old
+  quadratic level cannot fit its chart. The selected execution materializes
+  the source contract, proves both seed-norm margins, and bounds the persistent
+  WPE recurrence for every |vertical|<=32 sequence. Exhaustive mantissa-cell
+  coverage of the literal inverse square root, including zero/subnormal norm
+  inputs, gives ||q||²<1.112 after a defined scalar Mahony update. Its actual
+  same-packet projection supplies |vertical|<32 without a tilt-accuracy premise.
+  WPE moment and log induction margins are positive; raw period lies between
+  2^-57 and 2^16 and |log_period|<=48. These close two subordinate supply
+  components, leaving 11 master prerequisites. The current limiter is totality
+  and capture of the preceding source-driven observer, plus actual target
+  arithmetic. Next falsifiable experiment: use the new sensor/temporal budget
+  in a nonlinear or finite-time capture argument that covers both physical
+  seed cones and produces the literal gravity-alignment predicate. Do not
+  retry the rejected level expansion or infer device admission from RMS data.
+
 * **Magnetic frame prerequisite audit:** the small accumulation-to-handoff
   frame premise belongs to the conditional 0.63-rad entry certificate. It is
   not needed to define the current four-chart finite word. The earlier
@@ -556,11 +596,12 @@ conditioned operand. Source-uniform guard/Racc/libm supplies remain open.
   from arbitrary-bounded-input Live ISS, or (3) prove eventual informative
   samples from a declared recovery/persistence contract. Neither a longer
   timeout nor more Mahony enclosure refinement addresses this obstruction.
-  No new sensor bound is selected. The exact constant-input guard/observer
-  induction, source identity and native public-API correspondence pass; the
-  master rejects conflating the two disturbance quantifiers. The next step
-  requires the intended startup sensor/observability contract, then a check
-  of its source-produced seed magnitude and direction margins.
+  The exact constant-input guard/observer induction, source identity and
+  native public-API correspondence pass. The commissioned startup profiles
+  exclude this example through their actual residual caps and prove a uniform
+  seed-norm margin. The master still rejects conflating the startup and Live
+  disturbance quantifiers; initialization magnitude alone does not prove
+  eventual source-produced alignment.
   The exact guard induction exposed a separate implementation defect:
   `_sqrt(0,0)` delegated to a positive-only rounding cell and rejected literal
   zero detector RMS. This invalidates that arithmetic branch's coverage, not

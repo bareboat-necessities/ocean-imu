@@ -55,7 +55,7 @@ class Tests(unittest.TestCase):
         for key in ('arbitrary_bounded_residuals_imply_universal_startup',
                     'post_Live_ISS_bound_supplies_startup_raw_norm_premise',
                     'specified_small_disturbance_startup_theorem_falsified',
-                    'hardware_residual_admission_claimed','startup_sensor_contract_selected',
+                    'hardware_residual_admission_claimed','startup_sensor_contract_selected_by_this_obstruction',
                     'target_libm_compiler_qualification_claimed','storage_search_allowed'):
             self.assertFalse(report[key])
         report['post_Live_ISS_bound_supplies_startup_raw_norm_premise']=True

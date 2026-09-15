@@ -1,0 +1,57 @@
+{
+  "schema": 1,
+  "qualification": "OU3_ALT_COMMISSIONED_IMU_STARTUP_V1",
+  "scope": "conditional commissioned input profiles, throughout actual startup; reusable on a Live word only when the same bounds continue to hold",
+  "hardware_guarantee_from_datasheet": false,
+  "covariance_or_sigma_multiple_is_hard_bound": false,
+  "calibration_not_actually_applied_is_assumed": false,
+  "physical_acceleration_norm_upper_mps2": "8.8",
+  "gravity_mps2": "9.80665",
+  "imu_dt_s": "0.005",
+  "true_accel_bias_component_upper_mps2": "0.13",
+  "true_gyro_bias_initial_norm_upper_rad_s": "0.01",
+  "true_gyro_bias_norm_upper_rad_s": "0.02",
+  "true_gyro_bias_rate_upper_rad_s2": "0.00001",
+  "body_rate_norm_upper_deg_s": "35",
+  "total_direction_mean_chord_norm_upper": "0.10",
+  "total_direction_primitive_norm_upper_s": "1.5",
+  "direction_budget_definition": "Let u(t)=R(t)*(-a_raw(t))/||a_raw(t)|| in the true world frame, with world-down e3=(0,0,1). The total direction ERROR r(t)=u(t)-e3 satisfies r(t)=m(t)+d xi(t)/dt almost everywhere, with one absolutely continuous xi on the same startup history. The budgets include retained true bias and residual. This is an additional temporal source premise, not a consequence of peak noise or BRMM translation alone; no derivative of the noise itself is required.",
+  "validity": {
+    "finite_fresh_correctly_scaled_samples_from_first_update": true,
+    "startup_transient_settled_before_first_update": true,
+    "no_saturation_or_unreported_missing_sample": true,
+    "zero_wind_heel_and_zero_lever_arm": true,
+    "existing_dormant_guard_scope_retained": true,
+    "actual_temperature_supply_mounting_and_calibration_record_required": true
+  },
+  "profiles": {
+    "BMI270_COMMISSIONED_V1": {
+      "device": "BMI270 / AtomS3R",
+      "accel_residual_vector_norm_upper_mps2": "0.30",
+      "gyro_residual_vector_norm_upper_rad_s": "0.02",
+      "accel_residual_budget": {
+        "commissioned_scale_cross_axis_nonlinearity_operator_upper": "0.005",
+        "fast_error_vector_upper_mps2": "0.12",
+        "acquisition_conversion_delay_model_vector_upper_mps2": "0.08"
+      },
+      "datasheet_url": "https://www.bosch-sensortec.com/media/boschsensortec/downloads/datasheets/bst-bmi270-ds000.pdf",
+      "datasheet_revision": "BST-BMI270-DS000-08, revision 1.6, March 2026",
+      "datasheet_pages": [11, 12, 13, 14, 15],
+      "selection_basis": "RMS noise at 200 Hz is 1.51 mg for acceleration and 0.07/0.09 dps for gyro under the stated modes. The selected vector peaks include substantial headroom plus commissioned residual scale, cross-axis and acquisition errors. They are explicit engineering requirements, not statistical guarantees. Uncompensated offset and drift remain in BIAS0/1/2."
+    },
+    "MPU6886_COMMISSIONED_V1": {
+      "device": "MPU6886 / AtomS3",
+      "accel_residual_vector_norm_upper_mps2": "0.50",
+      "gyro_residual_vector_norm_upper_rad_s": "0.03",
+      "accel_residual_budget": {
+        "commissioned_scale_cross_axis_nonlinearity_operator_upper": "0.01",
+        "fast_error_vector_upper_mps2": "0.15",
+        "acquisition_conversion_delay_model_vector_upper_mps2": "0.16"
+      },
+      "datasheet_url": "https://m5stack.oss-cn-shenzhen.aliyuncs.com/resource/docs/datasheet/core/MPU-6886-000193%2Bv1.1_GHIC_en.pdf",
+      "datasheet_revision": "DS-000193, revision 1.1",
+      "datasheet_pages": [9, 10],
+      "selection_basis": "The table lists 1.0/1.7 mg RMS acceleration noise and 0.04/0.1 dps RMS gyro noise at 100 Hz bandwidth, with characterization qualifications. Larger residual peaks allow more scale/cross-axis/acquisition error than the BMI270 profile. Board offsets can exceed the retained BIAS envelope, so an uncommissioned board is not automatically admitted."
+    }
+  }
+}

@@ -8,5 +8,8 @@ class Tests(unittest.TestCase):
         self.assertTrue(x['admitted_source_private_Mahony_startup_to_Live_invariant_closed'])
         self.assertFalse(x['magnetic_accumulation_frame_accuracy_closed_by_this_invariant'])
         self.assertFalse(x['storage_search_allowed'])
+        self.assertFalse(x['commissioned_startup_sensor_profiles_covered'])
+        x['commissioned_startup_sensor_profiles_covered']=True
+        self.assertIn('commissioned_startup_sensor_profiles_covered not false',M.validate(x))
 
 if __name__=='__main__': unittest.main()

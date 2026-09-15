@@ -119,6 +119,7 @@ jobs:
             test_finite_vertical_complementary_runtime test_finite_binary32_mahony \
             test_finite_binary32_mahony_startup test_finite_startup_joined_machine_history \
             test_finite_startup_entry_obstruction test_finite_startup_disturbance_obstruction \
+            test_finite_startup_sensor_contract \
             test_finite_startup_handoff_control test_finite_master_guard \
             test_finite_attitude_atlas test_finite_ungauged_live_word \
             test_finite_frontend_runtime test_finite_frontend_prefix \
@@ -128,7 +129,7 @@ jobs:
             test_finite_tuner_projection_bridge test_finite_tuner_frontend_prefix \
             test_finite_tuner_frequency_binary32 test_finite_tuner_tau_binary32 \
             test_finite_wpe_moment_binary32 test_finite_wpe_usable_binary32 \
-            test_finite_wpe_machine_binary32 test_finite_wpe_frequency_binary32 \
+            test_finite_wpe_machine_binary32 test_finite_wpe_frequency_binary32 test_finite_wpe_uniform_bounds \
             test_finite_startup_wpe_machine_history test_finite_admitted_wpe_machine_clock_interleaved_prefix \
             test_finite_shipping_tau_target_binary32 test_finite_tuner_tau_roundoff_bound \
             test_finite_tuner_tau_600_domain test_finite_complete_word_tau_qualification \

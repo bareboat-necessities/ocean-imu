@@ -35,6 +35,8 @@ from tools.stability.ou3_alt_contraction import finite_live_interleave as INTERL
 from tools.stability.ou3_alt_contraction import finite_mag_counter_saturation as COUNTER
 from tools.stability.ou3_alt_contraction import finite_admitted_source_live_word as ADLIVE
 from tools.stability.ou3_alt_contraction import finite_source_bound_mag_dual_clock as MAGWORD
+from tools.stability.ou3_alt_contraction import finite_startup_sensor_contract as SENSOR_CONTRACT
+from tools.stability.ou3_alt_contraction import finite_wpe_uniform_bounds as WPEBOUNDS
 
 QUALIFICATION='OU3_ALT_FINITE_MASTER_GUARD_V1'
 
@@ -47,8 +49,12 @@ def build():
     control=CONTROL.readiness(); capture=CAPTURE.readiness()
     clock=CLOCK.readiness(); counter=CALLS.counter_lifetime(); atlas=ATLAS.readiness()
     counter_certificate=COUNTER.build()
+    sensor_contract=SENSOR_CONTRACT.build()
+    wpe_bounds=WPEBOUNDS.build()
 
     closed={
+      'commissioned_startup_source_uniform_seed_norm_margin':sensor_contract['source_uniform_seed_norm_margin_closed'],
+      'bounded_vertical_input_uniform_WPE_moment_raw_period_log_supplies':wpe_bounds['reset_to_every_finite_prefix_bounded_input_induction_closed'],
       'full_magnetic_frame_represented_without_small_angle_capture': bool(
           capture['unrestricted_full_frame_chord_bound_closed'] and
           atlas['all_nonzero_relative_quaternions_covered'] and
@@ -74,7 +80,7 @@ def build():
       'literal_quality_and_timeout_handoff_control':control['quality_and_timeout_predicates_materialized'],
       'exact_default_timeout_clock_crossing':clock['default_timeout_first_crossing_proved'],
       'startup_to_Live_machine_history_attachment': startup['startup_to_Live_machine_history_attachment_closed'],
-      'admitted_source_private_Mahony_startup_to_Live_invariant': startup['admitted_source_private_Mahony_startup_to_Live_invariant_closed'],
+      'conditional_legacy_private_Mahony_invariant_under_its_original_sensor_premises': startup['admitted_source_private_Mahony_startup_to_Live_invariant_closed'],
       'near_antiparallel_seed_branch_topology': seed['near_antiparallel_JacobiSVD_branch_topology_materialized_with_solver_witness'],
       'guard_Mahony_frontend_Racc_accelerometer_same_event_join': live['strong_joined_guard_frontend_Racc_word_consumed'],
       'scheduler_nextafter_binary32': nxt['machine_scheduler_nextafter_binary32_correspondence_closed'],
@@ -146,6 +152,8 @@ def build():
       'counter_saturation_certificate':counter_certificate,
       'startup_entry_obstruction':entry,
       'startup_disturbance_obstruction':startup_disturbance,
+      'startup_sensor_contract':sensor_contract,
+      'bounded_input_WPE_supplies':wpe_bounds,
       'magnetic_frame_bounds':capture,
       'attitude_atlas':atlas,
       'conditional_timeout_plus_word_last_sample':CLOCK.MAX_STEPS,
@@ -167,6 +175,8 @@ def validate(x):
     if x.get('falsified_prerequisites') != {}:
         f.append('obsolete counter falsification retained')
     f.extend(STARTDIST.validate(x.get('startup_disturbance_obstruction',{})))
+    f.extend(SENSOR_CONTRACT.validate(x.get('startup_sensor_contract',{})))
+    f.extend(WPEBOUNDS.validate(x.get('bounded_input_WPE_supplies',{})))
     if x.get('magnetic_frame_bounds')!=CAPTURE.readiness():
         f.append('magnetic frame bound or accuracy qualification changed')
     if x.get('research_outcome') != 'finite_master_qualification_incomplete':
