@@ -168,7 +168,7 @@ class CompleteWord:
 
 def begin(base:LOWER.State):
     if not isinstance(base,LOWER.State): raise TypeError('admitted machine prediction-supply state required')
-    probe=type('_Probe',(),{'base':base,'separate_aw_sync':AWSYNC.State(),'fma_aw_sync':AWSYNC.State()})()
+    _probe=type('_Probe',(),{'base':base,'separate_aw_sync':AWSYNC.State(),'fma_aw_sync':AWSYNC.State()})()
     exact=LOWER._preword(base.base).live.live.live.aw_sync
     return State(base,exact,exact,LOWER._imu_steps(base.base),0)
 

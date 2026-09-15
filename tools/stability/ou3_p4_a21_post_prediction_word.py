@@ -23,7 +23,6 @@ import argparse,copy,json
 from pathlib import Path
 from typing import Sequence
 
-from ou3_interval import Interval
 import ou3_p4_a21_source_indexed_prefix_transport as A21
 import ou3_p4_source_uniform_bias_prefix_lineage as BIAS
 import ou3_p4_structural_prefix_transport as STRUCT

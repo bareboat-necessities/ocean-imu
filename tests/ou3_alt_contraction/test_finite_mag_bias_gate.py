@@ -6,7 +6,6 @@ import sys, unittest
 ROOT=Path(__file__).resolve().parents[2]; sys.path.insert(0,str(ROOT))
 
 from tools.stability.ou3_alt_contraction import finite_mag_bias_gate as X
-from tools.stability.ou3_alt_contraction import finite_measurement_graph as M
 import test_finite_core as FC
 
 

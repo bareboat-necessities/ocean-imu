@@ -17,7 +17,6 @@ from dataclasses import dataclass, replace
 from fractions import Fraction as F
 
 from tools.stability.ou3_alt_contraction import finite_core as CORE
-from tools.stability.ou3_alt_contraction import finite_fresh_joint24_entry as FRESH
 from tools.stability.ou3_alt_contraction import finite_startup_live_entry as LIVE
 from tools.stability.ou3_alt_contraction import finite_guarded_tuner_prefix as FRONT
 from tools.stability.ou3_alt_contraction import finite_tuner_commit as COMMIT

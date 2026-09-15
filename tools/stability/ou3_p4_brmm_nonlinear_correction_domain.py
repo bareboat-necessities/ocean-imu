@@ -28,7 +28,7 @@ a strict outward-LDLT certificate.  Failure to find one is reported as an
 obstruction and never converted into a proof claim.
 """
 from __future__ import annotations
-import argparse,json,math
+import argparse,json
 from pathlib import Path
 
 import ou3_p4_brmm_reduced_event_master as EVENT

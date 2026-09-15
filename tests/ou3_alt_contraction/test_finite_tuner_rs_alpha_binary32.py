@@ -7,7 +7,11 @@ from tools.stability.ou3_alt_contraction import finite_source_bound_exp_enclosur
 from tools.stability.ou3_alt_contraction import finite_tuner_rs_alpha_binary32 as X
 
 
-def exp_witness(mult=B.rn32(F(3,2)),tau=B.rn32(F(5,2)),dt=B.rn32(F(1,200))):
+# rn32 returns an immutable Fraction; bind the witness defaults once (B008).
+MULT_DEFAULT=B.rn32(F(3,2)); TAU_DEFAULT=B.rn32(F(5,2)); DT_DEFAULT=B.rn32(F(1,200))
+
+
+def exp_witness(mult=MULT_DEFAULT,tau=TAU_DEFAULT,dt=DT_DEFAULT):
     safe=min(max(tau,X.TIME_MIN),X.TIME_MAX)
     requested=B.mul(mult,safe)
     lo=min(max(dt,X.HORIZON_MIN),X.HORIZON_MAX)

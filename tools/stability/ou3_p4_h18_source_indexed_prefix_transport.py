@@ -25,7 +25,7 @@ import argparse,copy,json
 from pathlib import Path
 from typing import Sequence
 
-from ou3_interval import Interval,matrix_add,matrix_identity,matrix_mul,matrix_sub
+from ou3_interval import Interval,matrix_add,matrix_identity,matrix_mul
 import ou3_brmm_complete_window_execution_kernel as KERNEL
 import ou3_brmm_full_normal_live_word as WORD
 import ou3_p4_complete_brmm_accelerometer_operation_coordinate as ACC

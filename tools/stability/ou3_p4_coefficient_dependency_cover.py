@@ -19,7 +19,7 @@ def build():
  c=TUNER.constants();initial=FRONT._point_state().tuner
  f_lo,f_hi=c.tune_freq_min,c.tune_freq_max
  tau_lo=max(c.tau_min,min(c.tau_max,c.tau_coeff*.5/f_hi));tau_hi=max(c.tau_min,min(c.tau_max,c.tau_coeff*.5/f_lo))
- ts=TUNER.pseudo_period(TUNER.Interval(tau_lo,tau_hi),c) if hasattr(TUNER,'Interval') else TUNER.pseudo_period(TUNER.I(tau_lo),c)
+ _ts=TUNER.pseudo_period(TUNER.Interval(tau_lo,tau_hi),c) if hasattr(TUNER,'Interval') else TUNER.pseudo_period(TUNER.I(tau_lo),c)
  # Derive raw sigma floor through the deployed target expression.
  sigma_floor=max(0.0,c.sigma_coeff*math.sqrt(1e-6))
  membership={

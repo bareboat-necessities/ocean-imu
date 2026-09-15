@@ -80,14 +80,17 @@ def build():
         state=_state_box(mode,radii);reports[mode]={}
         for contract in BIAS.contracts():
             held,beta=_bias_box(contract,radius);Krow=gain['reports'][mode];row={'failures':[],'maps':{}}
+            # attempt() and the lambdas below are invoked synchronously inside this
+            # iteration, so the loop variables they close over still hold this
+            # iteration's values; the B023 suppressions record that.
             def attempt(name,fn):
-                try:A=fn();row['maps'][name]=A;row[name+'_finite']=_finite(A);row['failures']+=[] if row[name+'_finite'] else [name+': nonfinite']
-                except Exception as exc:row['maps'][name]=None;row[name+'_finite']=False;row['failures'].append(name+': '+type(exc).__name__+': '+str(exc))
-            attempt('prediction',lambda:_prediction(mode,state,omega,kc,tau,contract))
+                try:A=fn();row['maps'][name]=A;row[name+'_finite']=_finite(A);row['failures']+=[] if row[name+'_finite'] else [name+': nonfinite']  # noqa: B023
+                except Exception as exc:row['maps'][name]=None;row[name+'_finite']=False;row['failures'].append(name+': '+type(exc).__name__+': '+str(exc))  # noqa: B023
+            attempt('prediction',lambda:_prediction(mode,state,omega,kc,tau,contract))  # noqa: B023
             if mode=='H':
-                attempt('S_zero',lambda:_h_event('S_zero',state,Krow['S_zero']['K'],held,beta,Sphys=Sphys));attempt('accelerometer',lambda:_h_event('accelerometer',state,Krow['accelerometer']['K'],held,beta,f=f,Rhat=Rhat));attempt('magnetometer',lambda:_h_event('magnetometer',state,Krow['magnetometer']['K'],held,beta,m=m))
+                attempt('S_zero',lambda:_h_event('S_zero',state,Krow['S_zero']['K'],held,beta,Sphys=Sphys));attempt('accelerometer',lambda:_h_event('accelerometer',state,Krow['accelerometer']['K'],held,beta,f=f,Rhat=Rhat));attempt('magnetometer',lambda:_h_event('magnetometer',state,Krow['magnetometer']['K'],held,beta,m=m))  # noqa: B023
             else:
-                attempt('S_zero',lambda:_a_event('S_zero',state,Krow['S_zero']['K'],beta,radius,Sphys=Sphys));attempt('accelerometer',lambda:_a_event('accelerometer',state,Krow['accelerometer']['K'],beta,radius,f=f,Rhat=Rhat));attempt('magnetometer',lambda:_a_event('magnetometer',state,Krow['magnetometer']['K'],beta,radius,m=m))
+                attempt('S_zero',lambda:_a_event('S_zero',state,Krow['S_zero']['K'],beta,radius,Sphys=Sphys));attempt('accelerometer',lambda:_a_event('accelerometer',state,Krow['accelerometer']['K'],beta,radius,f=f,Rhat=Rhat));attempt('magnetometer',lambda:_a_event('magnetometer',state,Krow['magnetometer']['K'],beta,radius,m=m))  # noqa: B023
             core=all(row.get(k+'_finite') for k in ('prediction','S_zero','accelerometer'));mag=bool(row.get('magnetometer_finite'));row['imu_core_family']=[]
             if core:
                 P=row['maps']['prediction'];S=row['maps']['S_zero'];A=row['maps']['accelerometer'];Id=matrix_identity(24);row['imu_core_family']=[_compose(P,Id,A),_compose(P,S,A)]

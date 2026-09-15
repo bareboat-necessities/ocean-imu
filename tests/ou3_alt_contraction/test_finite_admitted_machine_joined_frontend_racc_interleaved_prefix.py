@@ -65,7 +65,7 @@ class Tests(unittest.TestCase):
 
     def test_MAG_and_HOLD_preserve_joined_machine_source_history(self):
         s,_,_,_,_,_=fixture(); g=s.guard; a=s.separate_source; n=s.source_steps
-        word=X._runtime(s.base)  # establish runtime path before async event
+        X._runtime(s.base)  # establish runtime path before async event
         pre=X._mtune_state(s.base).base.base.prefix.prefix.live.live_word
         s,_=X.mag_step(s,**LBASE.mag_kwargs(pre)); self.assertIs(s.guard,g); self.assertIs(s.separate_source,a); self.assertEqual(s.source_steps,n)
         s,_=X.set_hold(s,hold=False); self.assertIs(s.guard,g); self.assertIs(s.separate_source,a); self.assertEqual(s.source_steps,n)

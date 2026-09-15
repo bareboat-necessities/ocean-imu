@@ -68,7 +68,7 @@ def build():
     corr=CORR.build();cf=CORR.validate(corr);bc=BIASISS.build();bf=BIASISS.validate(bc)
     if cf or bf:raise RuntimeError(f'chain prerequisites failed correction={cf} bias={bf}')
     cell=PROJP._smoke_cell();p=PROJP.build_augmented_prefix(cell,corr);c=compose_projection_to_prediction(p,bc)
-    n=c['coordinate_dimension'];Y=c['next_bias_true_map'];S=c['supply_map']
+    n=c['coordinate_dimension'];Y=c['next_bias_true_map'];_S=c['supply_map']
     # Structural checks: same w columns feed e_b and beta, m only e_b.
     w_shared=all(Y[i][c['source_offset']+i].contains(1) and Y[3+i][c['source_offset']+i].contains(1) for i in range(3))
     m_error_only=all(Y[i][c['source_offset']+3+i].contains(1) and Y[3+i][c['source_offset']+3+i].contains(0) for i in range(3))

@@ -1,6 +1,17 @@
 // Host-only finite implementation correspondence.  No stability assertion.
 // The probe headers are generated in a temporary include overlay; no shipping
 // implementation, access control, configuration, or state is changed in src/.
+// Host build: select the plain Eigen headers in KalmanOUCoreMath.h. Guarded
+// because shipping_finite_identity.py also passes -DEIGEN_NON_ARDUINO.
+#ifndef EIGEN_NON_ARDUINO
+#define EIGEN_NON_ARDUINO 1
+#endif
+// shipping_finite_identity.py always passes -DALT_OBSERVE=0/1; default to the
+// non-observing build so the TU also compiles standalone (warnings gate).
+#ifndef ALT_OBSERVE
+#define ALT_OBSERVE 0
+#endif
+
 #include <algorithm>
 #include <array>
 #include <cmath>

@@ -14,7 +14,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from fractions import Fraction as F
-from typing import Sequence
 
 from . import finite_measurement_graph as M
 from . import finite_prediction_graph as P

@@ -29,7 +29,7 @@ and an exact-rational transition map.  It is a necessary enclosure of the same
 physical history, not a source generator and not covariance membership.
 """
 from __future__ import annotations
-import argparse,json,math
+import argparse,json
 from fractions import Fraction as F
 from pathlib import Path
 from ou3_interval import Interval,symmetric_positive_definite_ldlt
@@ -75,7 +75,7 @@ def build():
     p=PRIM.build();pf=PRIM.validate(p)
     if pf:raise RuntimeError('primitive qualification invalid: '+repr(pf))
     A=float(p['uniform_physical_primitives']['acceleration_norm_upper_mps2'])
-    M=source_iqc_matrix(A);J=jet_transition_matrix()
+    _M=source_iqc_matrix(A);_J=jet_transition_matrix()
     # The negative moment block is strictly negative because G^-1 is SPD.
     GinvI=[[Iq(GINV[i][j]) for j in range(3)] for i in range(3)];ok,piv=symmetric_positive_definite_ldlt(GinvI)
     return {'schema':SCHEMA,'qualification':QUALIFICATION,'canonical_source':'COMPLETE_BRMM_NORMAL_LIVE_WORD','word_horizon_s':3.0,'acceleration_norm_upper_mps2':A,

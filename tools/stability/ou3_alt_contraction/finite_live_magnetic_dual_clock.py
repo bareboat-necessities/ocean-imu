@@ -16,7 +16,6 @@ Binary32 exp/libm/Eigen correspondence is still open.
 """
 from __future__ import annotations
 from dataclasses import dataclass, replace
-from fractions import Fraction as F
 
 from tools.stability.ou3_alt_contraction import finite_live_magnetic_word as BASE
 from tools.stability.ou3_alt_contraction import finite_magnetic_wrapper_clock as WCLOCK

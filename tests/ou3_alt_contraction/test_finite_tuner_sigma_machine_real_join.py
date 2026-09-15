@@ -41,7 +41,7 @@ class Tests(unittest.TestCase):
         self.assertEqual(j.supply.sigma_target,j.machine.sigma_target-j.exact_target.sigma_target)
 
     def test_machine_operand_change_is_supply_not_new_exact_history(self):
-        c=dcfg(); s=sample(); av=B.rn32(F(1,4)+F(1,1<<20))
+        c=dcfg(); _s=sample(); av=B.rn32(F(1,4)+F(1,1<<20))
         # Use the old .5 sqrt deliberately only if it remains in the legal RNE
         # cell; otherwise the machine target itself correctly fails first.
         with self.assertRaises(ValueError):

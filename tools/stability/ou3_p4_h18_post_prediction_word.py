@@ -26,7 +26,6 @@ from __future__ import annotations
 import argparse,json
 from typing import Sequence
 
-from ou3_interval import Interval
 import ou3_p4_h18_source_indexed_prefix_transport as HTR
 import ou3_p4_structural_prefix_transport as STRUCT
 import ou3_p4_information_storage_coercivity as STORAGE

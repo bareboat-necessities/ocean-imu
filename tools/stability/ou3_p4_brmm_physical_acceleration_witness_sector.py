@@ -25,7 +25,6 @@ Thus zero initial error may coexist with a full-amplitude admissible sea.
 from __future__ import annotations
 import argparse,json
 from fractions import Fraction as F
-from typing import Sequence
 from ou3_interval import Interval,matrix_mul,matrix_sub,matrix_transpose
 from ou3_interval_linear_algebra import matrix_symmetric_hull
 import ou3_brmm_acceleration_moment_iqc as MOM

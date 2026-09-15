@@ -8,7 +8,11 @@ from tools.stability.ou3_alt_contraction import finite_tuner_rs_alpha_binary32 a
 from tools.stability.ou3_alt_contraction import finite_tuner_rs_ema_compiler_modes as X
 
 
-def alpha(tau=B.rn32(F(5,2))):
+# rn32 returns an immutable Fraction; bind the default once (B008).
+TAU_DEFAULT=B.rn32(F(5,2))
+
+
+def alpha(tau=TAU_DEFAULT):
     mult=B.rn32(F(3,2)); dt=B.rn32(F(1,200))
     safe=min(max(tau,A.TIME_MIN),A.TIME_MAX); requested=B.mul(mult,safe)
     lo=min(max(dt,A.HORIZON_MIN),A.HORIZON_MAX); rssec=min(max(requested,lo),A.HORIZON_MAX)
