@@ -15,6 +15,7 @@ from tools.stability.ou3_alt_contraction import finite_admitted_machine_clock_qu
 from tools.stability.ou3_alt_contraction import finite_binary32_mahony_startup as STARTSEED
 from tools.stability.ou3_alt_contraction import finite_scheduler_nextafter_binary32 as NEXT
 from tools.stability.ou3_alt_contraction import finite_aw_sync_clock_binary64 as AWCLOCK
+from tools.stability.ou3_alt_contraction import finite_wpe_moment_binary32 as WPEMOM
 from tools.stability.ou3_alt_contraction import finite_wpe_log_binary32 as WPELOG
 from tools.stability.ou3_alt_contraction import finite_wpe_frequency_binary32 as WPEFREQ
 from tools.stability.ou3_alt_contraction import finite_qaxis_exp_binary32 as QEXP
@@ -25,7 +26,7 @@ QUALIFICATION='OU3_ALT_FINITE_MASTER_GUARD_V1'
 def build():
     startup=START.readiness(); seed=STARTSEED.readiness()
     live=LIVE.readiness(); nxt=NEXT.readiness(); aw=AWCLOCK.readiness()
-    wlog=WPELOG.readiness(); wfreq=WPEFREQ.readiness(); qexp=QEXP.readiness()
+    wm=WPEMOM.readiness(); wlog=WPELOG.readiness(); wfreq=WPEFREQ.readiness(); qexp=QEXP.readiness()
 
     closed={
       'startup_to_Live_machine_history_attachment': startup['startup_to_Live_machine_history_attachment_closed'],
@@ -37,6 +38,10 @@ def build():
       'all_600_IMU_edges_require_aw_sync_clock_qualification': live['complete_word_requires_clock_qualification_on_all_600_IMU_edges'],
       'aw_sync_cadence_bound_to_persistent_runtime_config': live['adapt_every_runtime_value_ancestry_closed_for_current_word'],
       'canonical_5ms_source_dt_bound_to_clock_word': live['canonical_5ms_source_dt_ancestry_closed_for_current_word'],
+      'WPE_raw_period_branch_topology_and_same_moment_arithmetic': bool(
+          wm['all_raw_period_early_return_branches_materialized'] and
+          wm['raw_period_has_no_independent_input_port'] and
+          wm['raw_period_derived_from_same_machine_moments_and_sqrt_result']),
     }
 
     open_obligations={
@@ -44,8 +49,10 @@ def build():
       'universal_startup_source_and_branch_reachability': not startup['every_admitted_startup_history_reaches_this_boundary_product'],
       'startup_source_uniform_deployment_supplies': not startup['source_uniform_startup_deployment_supply_bounds_closed'],
       'target_libm_and_compiler_profile_correspondence': not startup['all_target_libm_and_compiler_profile_correspondence_closed'],
+      'WPE_moment_exp_sqrt_target_libm_and_compiler_selection': not (wm['target_exp_sqrt_libm_correspondence_closed'] and wm['compiler_profile_selection_closed']),
+      'WPE_dual_compiler_persistent_moment_history_attachment': not wm['dual_compiler_persistent_moment_history_attached'],
+      'WPE_canonical_period_horizon_and_vertical_input_ancestry': not (wm['canonical_period_horizon_ancestry_closed'] and wm['same_machine_vertical_input_ancestry_closed']),
       'WPE_log_and_exp_libm_correspondence': not (wlog['WPE_log_std_log_target_libm_correspondence_closed'] and wlog['WPE_log_exp_target_libm_correspondence_closed']),
-      'WPE_raw_period_binary32_production': not wlog['WPE_raw_period_binary32_production_closed'],
       'WPE_frequency_source_uniform_supply': not wfreq['source_uniform_WPE_frequency_supply_bound_closed'],
       'Qaxis_exp_libm_correspondence': not qexp['Qaxis_exp_libm_binary32_correspondence_closed'],
       'all_event_arithmetic_witnesses_source_uniform': not live['all_event_arithmetic_witnesses_source_uniformly_qualified'],
