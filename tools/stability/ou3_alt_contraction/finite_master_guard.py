@@ -35,6 +35,8 @@ def build():
       'scheduler_nextafter_binary32': nxt['machine_scheduler_nextafter_binary32_correspondence_closed'],
       'bounded_default_aw_sync_binary64_clock': aw['canonical_aw_sync_binary64_predicate_closed'],
       'all_600_IMU_edges_require_aw_sync_clock_qualification': live['complete_word_requires_clock_qualification_on_all_600_IMU_edges'],
+      'aw_sync_cadence_bound_to_persistent_runtime_config': live['adapt_every_runtime_value_ancestry_closed_for_current_word'],
+      'canonical_5ms_source_dt_bound_to_clock_word': live['canonical_5ms_source_dt_ancestry_closed_for_current_word'],
     }
 
     open_obligations={
@@ -48,8 +50,6 @@ def build():
       'Qaxis_exp_libm_correspondence': not qexp['Qaxis_exp_libm_binary32_correspondence_closed'],
       'all_event_arithmetic_witnesses_source_uniform': not live['all_event_arithmetic_witnesses_source_uniformly_qualified'],
       'complete_source_uniform_600_step_word': not live['source_uniform_complete_600_step_word_qualified'],
-      'mutable_aw_sync_cadence_setter_ancestry': not live['mutable_adapt_every_setter_ancestry_closed'],
-      'arbitrary_dt_inner_clock': not live['arbitrary_dt_inner_clock_closed'],
     }
 
     finite_status={
