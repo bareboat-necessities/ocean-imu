@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from tools.stability.ou3_alt_contraction import proof_plan as PLAN
 from tools.stability.ou3_alt_contraction import finite_admitted_startup_machine_tunestate_word as START
+from tools.stability.ou3_alt_contraction import finite_admitted_startup_wpe_machine_word as STARTWPEADMIT
 from tools.stability.ou3_alt_contraction import finite_admitted_machine_clock_qualified_interleaved_prefix as LIVE
 from tools.stability.ou3_alt_contraction import finite_admitted_wpe_machine_clock_interleaved_prefix as LIVEWPE
 from tools.stability.ou3_alt_contraction import finite_binary32_mahony_startup as STARTSEED
@@ -27,7 +28,7 @@ QUALIFICATION='OU3_ALT_FINITE_MASTER_GUARD_V1'
 
 
 def build():
-    startup=START.readiness(); seed=STARTSEED.readiness(); swpe=STARTWPE.readiness()
+    startup=START.readiness(); seed=STARTSEED.readiness(); swpe=STARTWPE.readiness(); saw=STARTWPEADMIT.readiness()
     live=LIVE.readiness(); lwpe=LIVEWPE.readiness(); nxt=NEXT.readiness(); aw=AWCLOCK.readiness()
     wm=WPEMOM.readiness(); wmach=WPEMACHINE.readiness(); wlog=WPELOG.readiness(); wfreq=WPEFREQ.readiness(); qexp=QEXP.readiness()
 
@@ -56,6 +57,7 @@ def build():
           swpe['startup_frontend_vertical_ancestry_attached'] and
           swpe['full_WPE_machine_log_state_equals_existing_lower_WPE_ledger_after_each_attached_step']),
       'WPE_full_machine_history_preserved_across_goLive': swpe['goLive_preserves_full_WPE_moment_log_machine_history_by_identity'],
+      'WPE_startup_history_substituted_into_admitted_Live_without_snapshot': saw['startup_guard_Mahony_WPE_machine_to_admitted_Live_attachment_closed'],
       'WPE_full_machine_history_required_on_all_600_Live_IMU_edges': bool(
           lwpe['Live_600_step_WPE_machine_history_attached'] and
           lwpe['complete_word_requires_full_WPE_machine_step_on_all_600_IMU_edges']),
