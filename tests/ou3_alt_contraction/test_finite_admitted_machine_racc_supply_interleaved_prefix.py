@@ -47,13 +47,15 @@ def pending_measurement_state():
 class Tests(unittest.TestCase):
     def test_begin_carries_raw_sigma_separately_from_stationary_covariance(self):
         s=state(); exact=X._exact_live_state(s.base)
-        self.assertEqual(s.separate_applied_sigma,exact.tuner.tune.sigma_applied)
-        self.assertEqual(s.fma_applied_sigma,exact.tuner.tune.sigma_applied)
+        machine=X._mtune_state(s.base).machine
+        self.assertEqual(s.separate_applied_sigma,machine.sigma.separate)
+        self.assertEqual(s.fma_applied_sigma,machine.sigma.fma)
+        self.assertNotEqual(s.separate_applied_sigma,exact.tuner.tune.sigma_applied)
         altered=replace(s,separate_applied_sigma=F(7,100))
         self.assertEqual(altered.separate_applied_sigma,F(7,100))
         self.assertEqual(altered.base,s.base)
 
-    def test_nonpending_event_preserves_raw_sigma_and_reexecutes_Racc(self):
+    def test_nonpending_event_reads_pre_candidate_sigma_and_reexecutes_Racc(self):
         s=state(); kw=event_operands(s)
         out=X.imu_step(s,separate_racc_accel_ldlt=MAG.REJECT,
             fma_racc_accel_ldlt=MAG.REJECT,**kw)
@@ -64,6 +66,30 @@ class Tests(unittest.TestCase):
         self.assertEqual(out.separate.racc.excess_rms,live.guarded.guard.excess_rms)
         self.assertEqual(out.fma.racc.excess_rms,live.guarded.guard.excess_rms)
         self.assertFalse(out.separate.accelerometer.accepted)
+
+    def test_nonpending_event_does_not_hold_the_previous_Racc_readout(self):
+        s=replace(state(),separate_applied_sigma=F(3),fma_applied_sigma=F(4))
+        before=X._mtune_state(s.base).machine
+        self.assertFalse(before.pending)
+        out=X.imu_step(s,separate_racc_accel_ldlt=MAG.REJECT,
+            fma_racc_accel_ldlt=MAG.REJECT,**event_operands(s))
+        self.assertEqual(out.separate.applied_sigma_before,3)
+        self.assertEqual(out.fma.applied_sigma_before,4)
+        self.assertEqual(out.separate.applied_sigma,before.sigma.separate)
+        self.assertEqual(out.fma.applied_sigma,before.sigma.fma)
+        self.assertNotEqual(out.separate.applied_sigma,3)
+
+    def test_Racc_uses_raw_prior_not_the_later_statistics_clamp(self):
+        from tools.stability.ou3_alt_contraction import finite_wpe_frequency_binary32 as WF
+        from tools.stability.ou3_alt_contraction import finite_wpe_runtime as W
+        runtime=X._runtime(state().base)
+        lo,hi=B.rn32(F(1,10)),B.rn32(2)
+        external=WF.tuner_frequency(W.WPEState(),min_hz=lo,max_hz=hi)
+        stats=replace(runtime.stats_cfg,f_min=F(3,10),f_max=F(1))
+        frequency=WF.through_statistics(external,stats,exact_min_hz=lo,exact_max_hz=hi)
+        self.assertEqual(X._racc_frequency(frequency),B.rn32(F(1,5)))
+        self.assertEqual(frequency.stored.stored_hz,B.rn32(F(3,10)))
+        self.assertNotEqual(X._racc_frequency(frequency),frequency.stored.stored_hz)
 
     def test_pending_boundary_source_of_raw_sigma_is_mode_stored_snapshot(self):
         ms=pending_measurement_state(); rs=X.begin(ms)

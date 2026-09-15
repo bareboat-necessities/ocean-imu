@@ -5,21 +5,18 @@ prediction, historical a_w floor, S scheduler/service and accelerometer using th
 exact executed Racc object. This wrapper removes that last tuner-coefficient
 identification without inventing a second physical history.
 
-Shipping Racc depends on the RAW applied tuner ``sigma_applied`` and on the
-pre-update WPE frequency. Raw sigma is not reconstructible from stationary
-Sigma_aw because the latter contains the band/0.05 floor. Therefore this layer
-carries, per compiler history:
+Shipping Racc reads the SAMPLE-ENTRY TuneState ``sigma_applied`` on EVERY
+IMU call.  Despite its name, this field advances in the tuner candidate step
+on every post-Cold sample; it is not held until the next pending MEKF commit.
+The two sigma readouts below are the last values consumed by Racc, not a second
+held parameter state.  Each next event reads the carried machine TuneState
+again, before that event's candidate update.
 
-* the persistent raw applied sigma scalar;
-* the persistent Racc inflation/restore state.
-
-A pending machine TuneState boundary atomically replaces the carried applied
-sigma from that compiler's binary32 stored-sigma snapshot; a nonpending boundary
-preserves it. Racc is then reexecuted from that sigma, that compiler's WPE-entry
-frequency and the same held guard result, before the accelerometer correction is
-reexecuted from the already-qualified machine post-S state. The Racc config and
-nominal standard deviations are read from the persistent admitted runtime object;
-they are never accepted as per-event overrides.
+Racc likewise consumes ``tuner_frequency_hz_()`` directly: the same preupdate
+WPE getter/prior BEFORE statistics or outer tuning clamps.  The later band/tuner
+path retains its own two clamps.  Each compiler's Racc state persists, and its
+coefficient displacement is propagated through the same post-S accelerometer
+relation. Guard/libm displacement remains a separate deployment obligation.
 
 The exact shipping event remains the comparison shadow. Separate/FMA Racc
 hypot/sqrt witnesses and accelerometer LDLT branches remain distinct. Native
@@ -139,31 +136,57 @@ class CompleteWord:
             raise ValueError('machine Racc recurrence not attached to all 600 admitted IMU edges')
 
 
+def _mtune_state(base:LOWER.State):
+    if not isinstance(base,LOWER.State): raise TypeError('machine measurement-supply state required')
+    out=base.base.base.base.base
+    if not isinstance(out,MTUNE.State): raise TypeError('measurement word lost machine TuneState predecessor')
+    return out
+
+
 def begin(base:LOWER.State):
     exact=_exact_live_state(base)
-    sigma=F(exact.tuner.tune.sigma_applied)
-    return State(base,sigma,sigma,exact.racc,exact.racc,base.measurement_steps,0)
+    machine=_mtune_state(base).machine
+    return State(base,machine.sigma.separate,machine.sigma.fma,
+                 exact.racc,exact.racc,base.measurement_steps,0)
 
 
 def _applied_sigmas(state:State,mtune:MTUNE.ImuResult):
-    mb=mtune.machine_boundary
-    if not mb.consumed:
-        return state.separate_applied_sigma,state.fma_applied_sigma
-    sep=mb.arithmetic.separate; fma=mb.arithmetic.fma
-    if sep is None or fma is None: raise ValueError('consumed machine boundary lost compiler snapshots')
-    return F(sep.stored_sigma),F(fma.stored_sigma)
+    """Read the pre-candidate memory, regardless of the pending commit bit."""
+    previous=_mtune_state(state.base).machine
+    if mtune.machine_boundary.arithmetic.before!=previous:
+        raise ValueError('Racc sigma source detached from same sample-entry TuneState')
+    return F(previous.sigma.separate),F(previous.sigma.fma)
+
+
+def _racc_frequency(frequency):
+    from tools.stability.ou3_alt_contraction import finite_wpe_frequency_binary32 as WPEF
+    if not isinstance(frequency,WPEF.StatisticsFrequencyResult):
+        raise TypeError('same preupdate WPE/statistics frequency relation required')
+    return F(frequency.external.stored.input_hz)
 
 
 def _mode(*,mode,state_racc,old_sigma,new_sigma,frequency,lower_mode,live,segment,
           cfg,nominal_std,rao_witness,racc_sqrt,accel_ldlt,temperature_c,
+          guard_excess_rms=None,conditioned_accel_body=None,
           accel_alpha=1,accel_radius=F(2,5)):
-    rr=RACC.step_from_applied_sigma(state_racc,cfg,live.guarded.guard,
-        nominal_std=nominal_std,sigma_applied=new_sigma,
-        preupdate_frequency=frequency,live=True,rao_witness=rao_witness,
-        effective_sqrt=racc_sqrt)
+    if guard_excess_rms is None:
+        rr=RACC.step_from_applied_sigma(state_racc,cfg,live.guarded.guard,
+            nominal_std=nominal_std,sigma_applied=new_sigma,
+            preupdate_frequency=frequency,live=True,rao_witness=rao_witness,
+            effective_sqrt=racc_sqrt)
+    else:
+        rr=RACC.step_from_excess_rms(state_racc,cfg,excess_rms=guard_excess_rms,
+            nominal_std=nominal_std,sigma_applied=new_sigma,
+            preupdate_frequency=frequency,live=True,rao_witness=rao_witness,
+            effective_sqrt=racc_sqrt)
     conditioning=EXACTROOT._accel_conditioning(temperature_c)
-    accel=MEAS.accelerometer_from_held_guarded_racc(lower_mode.S_service.state,segment,
-        live.guarded,conditioning,rr,ldlt=accel_ldlt,alpha=accel_alpha,radius=accel_radius)
+    if conditioned_accel_body is None:
+        accel=MEAS.accelerometer_from_held_guarded_racc(lower_mode.S_service.state,segment,
+            live.guarded,conditioning,rr,ldlt=accel_ldlt,alpha=accel_alpha,radius=accel_radius)
+    else:
+        accel=MEAS.accelerometer_from_held_conditioned_racc(lower_mode.S_service.state,segment,
+            live.guarded.raw,conditioned_accel_body,conditioning,rr,ldlt=accel_ldlt,
+            alpha=accel_alpha,radius=accel_radius)
     return ModeEvent(mode,F(old_sigma),F(new_sigma),F(frequency),rr,accel,
                      _supply(accel.state,live.accelerometer.state))
 
@@ -193,17 +216,57 @@ def imu_step(state:State,*,
                 accel_radius=kwargs.get('accel_radius',F(2,5)))
     sep=_mode(mode='separate',state_racc=state.separate_racc,
         old_sigma=state.separate_applied_sigma,new_sigma=sep_sigma,
-        frequency=freq.separate_frequency.stored.stored_hz,lower_mode=lower.separate,
+        frequency=_racc_frequency(freq.separate_frequency),lower_mode=lower.separate,
         rao_witness=separate_rao_witness,racc_sqrt=separate_racc_sqrt,
         accel_ldlt=separate_racc_accel_ldlt,**common)
     fma=_mode(mode='fma',state_racc=state.fma_racc,
         old_sigma=state.fma_applied_sigma,new_sigma=fma_sigma,
-        frequency=freq.fma_frequency.stored.stored_hz,lower_mode=lower.fma,
+        frequency=_racc_frequency(freq.fma_frequency),lower_mode=lower.fma,
         rao_witness=fma_rao_witness,racc_sqrt=fma_racc_sqrt,
         accel_ldlt=fma_racc_accel_ldlt,**common)
     nxt=State(lower.state,sep_sigma,fma_sigma,sep.racc.state,fma.racc.state,
               state.entry_imu_steps,state.racc_steps+1)
     return ImuResult(nxt,lower,sep,fma)
+
+
+def rebind_machine_guard(state:State,result:ImuResult,*,guard_excess_rms,conditioned_accel_body,
+                         separate_racc_accel_ldlt:MEAS.SafeLDLT,fma_racc_accel_ldlt:MEAS.SafeLDLT,
+                         separate_rao_witness=None,separate_racc_sqrt=None,
+                         fma_rao_witness=None,fma_racc_sqrt=None,temperature_c,restricted,
+                         accel_alpha=1,accel_radius=F(2,5)):
+    """Replace only the proof-side Racc/accelerometer arithmetic by machine guard operands.
+
+    ``result.lower`` is the already-executed same physical/filter event.  This
+    function does not execute the source, prediction, scheduler, tuner, or exact
+    filter a second time; it re-evaluates the compiler arithmetic relation from
+    the persistent predecessor Racc states using the attached binary32 guard
+    output and excess RMS.
+    """
+    if not isinstance(state,State) or not isinstance(result,ImuResult):
+        raise TypeError('machine Racc predecessor/result required')
+    if not isinstance(separate_racc_accel_ldlt,MEAS.SafeLDLT) or not isinstance(fma_racc_accel_ldlt,MEAS.SafeLDLT):
+        raise TypeError('both machine-Racc accelerometer LDLT branches required')
+    if result.state.base!=result.lower.state or result.state.racc_steps!=state.racc_steps+1:
+        raise ValueError('same executed lower event required for machine-guard rebind')
+    runtime=_runtime(state.base); live=LOWER._live_result(result.lower.lower)
+    if accel_radius is None: accel_radius=F(2,5)
+    common=dict(live=live,segment=restricted.segment,cfg=runtime.racc_cfg,
+        nominal_std=runtime.nominal_racc_std,temperature_c=temperature_c,
+        guard_excess_rms=guard_excess_rms,conditioned_accel_body=conditioned_accel_body,
+        accel_alpha=accel_alpha,accel_radius=accel_radius)
+    sep=_mode(mode='separate',state_racc=state.separate_racc,
+        old_sigma=state.separate_applied_sigma,new_sigma=result.separate.applied_sigma,
+        frequency=result.separate.frequency,lower_mode=result.lower.separate,
+        rao_witness=separate_rao_witness,racc_sqrt=separate_racc_sqrt,
+        accel_ldlt=separate_racc_accel_ldlt,**common)
+    fma=_mode(mode='fma',state_racc=state.fma_racc,
+        old_sigma=state.fma_applied_sigma,new_sigma=result.fma.applied_sigma,
+        frequency=result.fma.frequency,lower_mode=result.lower.fma,
+        rao_witness=fma_rao_witness,racc_sqrt=fma_racc_sqrt,
+        accel_ldlt=fma_racc_accel_ldlt,**common)
+    nxt=State(result.lower.state,sep.applied_sigma,fma.applied_sigma,sep.racc.state,fma.racc.state,
+              state.entry_imu_steps,state.racc_steps+1)
+    return ImuResult(nxt,result.lower,sep,fma)
 
 
 def mag_step(state:State,**kwargs):
@@ -230,9 +293,12 @@ def readiness():
       'persistent_Racc_config_and_nominal_std_consumed_from_admitted_runtime':True,
       'raw_applied_sigma_carried_separately_from_stationary_Sigma_aw':True,
       'pending_machine_boundary_updates_same_mode_applied_sigma_before_Racc':True,
-      'nonpending_boundary_preserves_machine_applied_sigma':True,
+      'nonpending_boundary_preserves_machine_applied_sigma':False,
+      'every_Racc_event_reads_sample_entry_machine_TuneState_sigma':True,
+      'Racc_frequency_bypasses_statistics_and_outer_tuning_clamps':True,
       'persistent_separate_and_FMA_Racc_states_attached':True,
-      'same_guard_drives_exact_and_both_machine_Racc_histories':rr['same_guard_excess_RMS_drives_Racc'],
+      'exact_guard_adapter_retained_for_lower_comparison_shadow':rr['same_guard_excess_RMS_drives_Racc'],
+      'machine_guard_excess_and_conditioned_sample_rebind_available':True,
       'same_mode_preupdate_WPE_frequency_drives_machine_Racc':True,
       'machine_Racc_coefficient_displacement_attached':True,
       'machine_Racc_effect_propagated_through_accelerometer':True,

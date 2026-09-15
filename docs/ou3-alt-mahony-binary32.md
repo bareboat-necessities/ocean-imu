@@ -1,4 +1,4 @@
-# Initialized private-Mahony binary32 graph
+# Private-Mahony binary32 graph
 
 ## Place in the ALT word
 
@@ -35,7 +35,8 @@ nonfinite intermediate raises an explicit exception rather than being replaced
 by a finite point, a clipped value or an identity event. This domain is the
 conditional lemma's domain, NOT a smaller admitted BRMM source. Proving that the
 actual word stays on the domain, or representing the remaining branches, is
-still necessary. The first `FromTwoVectors` seed is not supplied here.
+still necessary. The initialized module does not supply the first seed; the separate ordinary
+startup branch below now supplies it conditionally.
 
 ## Lemma 1: exact nearest-even rounding
 
@@ -151,8 +152,46 @@ boundary cases in every finite exponent bin, zero/subnormal cases, both Ki
 branches, a public gain change, and zero-acceleration feedback skipping. These
 are correspondence tests; none admits its packets as COMPLETE-BRMM histories.
 
-Still open: target-profile qualification, initial seeding, overflow/nonfinite
+Still open: target-profile qualification, the nearly antiparallel seed, overflow/nonfinite
 branches, every upstream/downstream transcendental/solver binding, a uniform
 same-history defect enclosure, source admission, the complete 600-step word,
 compatible storage, retention and startup capture. All three ALT gates remain
 false. The independent original P2/P3/P4/P5 route is not changed by this lemma.
+
+## Ordinary first-sample seed and startup composition
+
+`finite_binary32_mahony_startup.py` extends the program relation from literal
+`VerticalAccelComplementary` reset. It does not replace the initialized lemma.
+It first computes the scalar-Eigen norm of the SAME rounded accelerometer. A
+norm not strictly greater than the compiled `1e-3f` threshold leaves the observer
+uninitialized. Otherwise it follows `seed_from_acc_(acc/acc_norm)` and Eigen's
+second normalization inside `FromTwoVectors`, then derives the ordinary
+cross-product quaternion from those operands. The same call subsequently
+executes the initialized Mahony update; it is not postponed until sample two.
+
+For a nonnegative binary32 radicand x, the proof evaluator finds adjacent
+nonnegative binary32 values l,u with `l*l <= x < u*u`. Correct rounding of sqrt
+is determined by comparing x with `((l+u)/2)^2`, breaking equality toward the
+even word. Monotonicity of squaring on nonnegative values proves this test even
+when sqrt(x) is irrational. Independent squared-cell checks validate each sqrt
+record. This specifies a correctly rounded sqrt profile, not a theorem about
+an unqualified target library. Basic-operation records retain their exact RNE
+cells; sqrt records retain the algebraic residual `y*y-x`, not a mislabeled
+additive sqrt error.
+
+On the ordinary Eigen branch, operation-order induction therefore determines
+the seed and first successor numerically from the same packet, without a free
+quaternion or reciprocal. The near-antiparallel predicate is evaluated at the
+compiled Eigen cutoff and raises `UnqualifiedSeedBranch`: its JacobiSVD path
+still needs representation. Neither the physical acceleration envelope nor an
+estimation-error entry radius licenses discarding absolute body orientations
+that can take that branch. Nonfinite outcomes remain explicit gaps as well.
+
+The joined startup product advances guard/observer/LPF/stillness and binds the
+already-executed band/sigma event to those outputs. From reset, induction over
+represented events proves history preservation; conditional goLive preserves
+these states without an EMA update and substitutes them into admitted Live.
+This implication still requires each branch/witness to be qualified and does
+not itself prove universal startup source admission or finite capture. The
+initialized scalar-profile entry point continues to reject uninitialized
+states; only the explicit startup wrapper handles the new ordinary seed.

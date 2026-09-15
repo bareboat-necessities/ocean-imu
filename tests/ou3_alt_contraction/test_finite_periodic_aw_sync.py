@@ -33,7 +33,6 @@ class Tests(unittest.TestCase):
     def test_later_active_sigma_cannot_rewrite_already_queued_target(self):
         s=X.State(True,F(1,5),SIG)
         self.assertEqual(X.floor_target(s),SIG)
-        # Until another due tick is actually executed, no new active Sigma is accepted.
         with self.assertRaises(ValueError):
             X.tick(s,time=F(1,4),adapt_every=F(1,10),live=True,
                    active_sigma=((9,0,0),(0,9,0),(0,0,9)))
@@ -53,7 +52,7 @@ class Tests(unittest.TestCase):
         self.assertTrue(r['next_boundary_tuner_commit_cannot_rewrite_queued_target'])
         self.assertFalse(r['legacy_immediate_replacement_branch_attached'])
         self.assertFalse(r['congruent_immediate_sync_branch_attached'])
-        self.assertFalse(r['clock_binary64_roundoff_attached'])
+        self.assertTrue(r['clock_binary64_roundoff_attached'])
         self.assertFalse(r['complete_word_finite_identity']); self.assertFalse(r['ALT_LIVE_PASS'])
 
 if __name__=='__main__': unittest.main()

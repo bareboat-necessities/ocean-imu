@@ -485,120 +485,130 @@ witness is outside corrected COMPLETE-BRMM and may not be recycled as A or B.
 ### Current hypothesis and retained facts
 
 Construct the complete finite source/runtime joint24 map before any storage
-search. The original proof route above remains independent;
+search. The original P2/P3/P4/P5 route above remains independent and unchanged.
 `ou3-alt-proof-plan.md` is normative. All ALT theorem gates and
 `storage_search_allowed` remain false.
 
 The admitted-history product retains corrected COMPLETE-BRMM, one BIAS0/1/2
 history, bounded symbolic IMU ISS forcing, full-21 covariance, the one-time
 Live/S origin, frontend/tuner state, continuous magnetic calibration and
-asynchronous control. Primary physical-history restriction, rather than a
-required spectral/shaping representation or token identity, supplies the
-finite endpoint/moment constraints. Moment concatenation retains
-`G(a+b)=T(b)G(a)T(b)' + G(b)` and the derived prefix energy inequality.
-The magnetic zero-IMU endpoint and source-owned tilt/reset operands are retained.
+asynchronous control. Primary physical-history restriction, not token identity
+or a required spectral generator, supplies the finite endpoint/moment constraints.
+The exact moment concatenation and source-owned tilt/reset relations remain.
 
-Each tuner compiler track now also carries its machine band/statistics state.
-Starting from construction, Cold and post-Cold samples advance that state once;
-goLive/MAG/HOLD preserve it. At one IMU sample k:
+`finite_startup_joined_machine_history.py` now roots the machine guard, private
+observer, default 6 Hz tracker LPF, stillness, band/statistics and TuneState at
+construction. Each represented startup event joins the machine vertical and
+stillness outputs to the SAME lower frontend/sigma event. Pending boundary and
+conditional TunerReady goLive preserve upstream memory. The admitted-Live
+factory substitutes the same goLive result into the strong joined Racc word;
+it accepts no replacement Live guard/observer/frontend/Racc/runtime snapshot.
+These are conditional program relations, not proof that every admitted startup
+history reaches the represented entry. Startup packet identities and clocks
+are checked, but identities alone do not prove BRMM/BIAS membership.
 
-1. A pending commit reads noise from carried band covariance B_k, then installs
-   rounded tau/cadence/Sigma/R_S without advancing candidate histories.
-2. Band corners use the previous statistics frequency, or the entry WPE/prior
-   if unavailable; the new band output drives the current statistics update.
-3. The current statistics clamp/store precedes the distinct outer tuning clamp.
-   The new statistics variance and B_(k+1) noise readout drive sigma tuning.
-4. Exact prediction roots evaluate the same pending transaction before choosing
-   tau/Sigma. Both machine prediction-root families and full joint24/21x21
-   displacement refer to that one executed exact prediction.
+The ordinary binary32 Eigen FromTwoVectors seed is now derived from the same
+rounded accelerometer, including both normalizations, followed by the actual
+first-sample Mahony update. The nearly antiparallel JacobiSVD branch is still
+explicitly unqualified, not excluded from the physical source. The initialized
+observer map and the independent original proof were not replaced.
 
-Exact clamp bounds are not silently replaced by compiled floats. Sigma
-configuration, variance/readiness/noise ancestry, rounded covariance squares,
-pre-sample boundary readouts and both persistent sample counters are checked.
-The variance accessor retains separate and FMA subtraction outcomes; ready
-zero p11 requires zero sqrt. These are conditional finite arithmetic relations,
-not a certificate of actual target-libm or compiler execution.
+Racc reads the SAMPLE-ENTRY machine TuneState sigma on every sample, before the
+candidate update, even when no pending commit fires. Its frequency is the raw
+preupdate WPE getter/prior, before statistics and tuning clamps. Active OU
+parameters remain separately held by the pending/goLive commit mechanism.
+The Racc comparison still uses the exact guarded operand: the numerical
+machine-guard displacement has NOT yet been injected into its accelerometer
+path. Source-uniform guard/Racc/libm supplies are therefore open.
 
 ### Failure analysis and independent critic
 
-The limiting object is still the complete finite deployment map feeding the
-future whole-word storage inequality. No rho or storage margin has been computed
-or promoted by these composition repairs.
+The controlling missing object is the source-uniform finite deployment word,
+not a storage margin. No rho/storage search has been run or authorized.
 
-Executing a changed pending sigma exposed
-`prediction Sigma_aw detached from committed stationary covariance`: the
-source-root builder selected stale pre-boundary parameters while the Live prefix
-correctly committed first. The unchanged-sigma fixture hid the defect. It is an
-ALT graph-ordering defect, not a failed contraction inequality or a shipping
-filter defect. The root builder now derives the same pending transaction from
-the carried predecessor; a changed-sigma regression reaches the full prediction
-supply and scheduler layer without a second physical transition.
+* **ALT implementation/order defect:** holding Racc sigma between pending
+  commits contradicts shipping's per-sample pre-candidate TuneState read. The
+  limiting quantity is that exact scalar dependency, not a norm bound. The
+  wrapper now reads the carried predecessor machine sigma unconditionally;
+  a no-pending changed-candidate regression distinguishes it from the former
+  held readout. Reading post-clamp frequency was likewise corrected to the
+  raw preupdate getter. These failures invalidate those old dependency claims,
+  not shipping stability, physical admission or the scalar arithmetic lemmas.
+* **Coverage/method gap:** the initialized-only Mahony map could not execute
+  literal reset. The ordinary source-bound seed now removes the free quaternion
+  port. Unrepresented SVD/nonfinite branches, target sqrt/profile qualification
+  and source-uniform supplies still prevent universal startup coverage. A
+  30,600-sample bookkeeping cap accommodates the existing startup+word graph;
+  it is neither proof of a 150 s startup deadline nor clock-lifetime closure.
+* **ALT regression defects:** old joined fixtures supplied an independent zero
+  band input instead of the same Mahony output; runtime/readiness accessors used
+  invalid nested paths/keys. Tests now consume the same source outputs and keep
+  the rejecting constructors. A new scheduler-splice test initially used an
+  invalid predecessor and was corrected to a valid, different service credit,
+  so the goLive ancestry check itself is exercised. No guard was weakened.
+* **Inherited certificate/conditioning failures:** the broad suite still fails
+  at `event_local_covariance_norm_envelope_closed` and dependent finite-master
+  prerequisites. The magnetic AD lineage also raises `AD derivative dimensions
+  differ`; an endpoint partition exact-equality assertion observes
+  `0.49999999999999983` rather than `0.5` under outward arithmetic. These are
+  separately classified proof-construction/test failures, not permission to
+  narrow outward intervals or assert the theorem false. Original-track modules
+  remain untouched.
 
-Other exposed graph defects were a skipped statistics frequency clamp and
-higher scheduler wrappers passing their own State to a lower-State ordinal
-accessor. The band/statistics arithmetic existed but had not been carried
-through the strong startup/Live product. These invalidate the corresponding
-ancestry/composition claims, not BRMM physics or the scalar arithmetic lemmas.
-
-The critic's strongest remaining objection is that a finite graph can still
-carry an unqualified machine vertical input or stillness branch. Alternatives
-are (1) persist/re-execute the existing arithmetic modules with same-history
-joins, (2) derive one SSA/interpreter graph from shipping source, or (3) qualify
-an independent native interpreter. Route (1) is used for the available band,
-statistics, commit and prediction modules; it removes free ports rather than
-refining an unproved rho margin. The next falsifiable check is the same native
-vertical/stillness predecessor driving all new source operands and then the
-post-prediction measurement branches, with detached operands rejected.
-
-The broad finite run additionally exposed three inherited negative-test fixture
-errors: compiler/target constructors rejected a splice before the expected
-assertion, and replacing held-BA data re-supplied a normalized expm1 field as an
-active witness. Assertions now cover the rejecting constructor; the BA fixture
-preserves the held no-witness convention. No production guard was weakened.
+The strongest critic objection is that an identity-preserving startup graph can
+still carry unqualified source/branch/arithmetic witnesses; conditional entry
+attachment is not universal finite capture. Three materially different routes
+remain: (1) complete source-bound seed/SVD and branch relations and compose the
+existing regional certificate, (2) generate a single source-order SSA/interpreter
+relation from shipping, or (3) independently verify a native interpreter with
+explicit compiler/library semantics. The current continuation uses (1) where
+actual modules exist. More seeds, scalar enclosure subdivision and storage/rho
+search do not address this missing relation and are not authorized.
 
 ### Evidence and validation boundary
 
-The full `test_finite*.py` selection passes 938 tests locally, including executed
-pending/nonpending machine frontend -> tuner -> prediction -> scheduler ->
-full prediction-supply edges, consecutive Cold samples, frequency clamp order,
-lagged band corners, zero-gain sqrt and history/configuration splice rejection.
-These are finite-map/algebra regressions, not universal native arithmetic,
-source membership, startup reachability, retention or stability certificates.
-The inherited non-finite-pattern suite is separate and not claimed green.
+The new startup tests execute consecutive Cold samples from literal reset;
+conditional goLive/admitted-origin tests separately verify memory, pending and
+scheduler substitution and reject splices. Their TunerReady fixture tests an
+implication, not an asserted capture trajectory. The first-seed native test
+compiles unchanged shipping headers with scalar Eigen/no FMA and observes
+public first and second updates without installing a quaternion. Host checks
+are correspondence regressions, not target ESP32 profile qualification.
 
-`make all` stops while compiling `tests/ahrs/ahrs-qmekf-sim.cpp` with
-`src/ahrs/KalmanQMEKF.h:30:10: fatal error: Eigen/Dense: No such file or directory`,
-using `-I/usr/include/eigen3`. No native/full-build PASS is claimed locally.
-Python compilation and whitespace checks pass.
+The unchanged current `live_mahony_regional` certificate validates with discrete
+margin `1.518757454127882e-4`; its startup-entry premise remains open. This is
+consistent with the newer shared two-level repair, not the stale claim that the
+continuous regional invariant or 35 deg/s PE refinement is still broken.
+Private observer accuracy, total startup accumulation-frame heading excursion,
+ungauged timeout and source-qualified deployment seed remain distinct issues.
 
-The shared original-track `float('44/5')` source-builder defect remains exposed;
-this continuation does not alter shared P2/P3/P4/P5 prerequisites or quality gates.
+The inherited broad run recorded 1,089 tests with 5 failures and 15 errors before
+the joined regression repairs. It is not claimed green. Latest focused/native,
+finite-suite and build results are recorded in the PR validation report; none
+promotes source membership, capture, retention or stability.
 
 ### Current limiter, DEAD_ENDS and next falsifiable work
 
-Next bind the machine vertical input and stillness operands, and propagate the
-already represented prediction displacement through pending covariance floors,
-per-track S due/not-due branches and machine R_S, accelerometer correction and
-reset. Then qualify the remaining WPE/raw-period/log/exp, band/statistics/tuner,
-Q-axis/Eigen/trig/normalization/threshold/nonfinite arithmetic and bound supplies
-for the complete admitted BRMM+BIAS+ISS family. Do not treat RNE-cell witnesses
-as proved facts about the target library.
+First qualify the actual startup source continuation, seed/SVD/nonfinite and
+ungauged timeout branches, then substitute the machine guard displacement into
+Racc/accelerometer on that same history. Next qualify remaining raw WPE
+period/log ancestry, exp/log/sqrt, band/statistics/tuner, Q-axis, scheduler and
+a_w clocks, trig/normalization, Eigen solves/floors and comparisons. Every literal
+IMU/magnetic/hold/reset edge must retain these supplies and source ancestry.
+Only an accepted complete finite master can permit storage search.
 
-Universal startup capture, the complete 600-transition deployment word,
-every-prefix chart retention, joint24 storage/rho and an ultimate bound remain
-open. The floating wrapper clock can stall and the signed magnetic counter has
-no uniform all-time call-count bound. Those finite-width lifetime obstructions
-are not dynamical-instability claims. Indefinite continuation cannot restart the
-one-time Live/S origin, covariance or frontend histories.
+Universal capture, source-uniform deployment of all 600 transitions,
+every-prefix retention, joint24 storage/rho and an ultimate bound remain open.
+Indefinite continuation additionally needs finite-width wrapper-clock/counter
+lifetime and tiling without restarting the one-time Live/S origin, covariance,
+frontend or bias history.
 
-Frozen dead ends/shortcuts: derivative cocycles presented as finite maps;
-frozen gains/replays or more seeds as universal source qualification;
-independent coefficient rectangles; A21 18-state marginal storage;
-covariance-consistency entry sets; artificial source/basin restrictions;
-wordwise S resets; and requiring one numerical generator for COMPLETE-BRMM.
-Primary physical motion plus bounded centered primitive remains authoritative;
-spectral/shaping models are only sufficient certificates. The two-strike rule
-and `assert_finite_storage_master` remain in force.
+Frozen shortcuts: derivative cocycles presented as finite maps; frozen gains,
+replays or more seeds as universal admission; independent coefficient boxes;
+A21 18-state marginal storage; covariance-consistency entry sets; artificial
+physical-domain/basin reduction; wordwise S resets; requiring a single generator
+for COMPLETE-BRMM. The two-strike rule and `assert_finite_storage_master` remain
+in force.
 
 `ALT_LIVE_PASS=false`, `ALT_STARTUP_PASS=false`, `ALT_END_TO_END_PASS=false`,
 `storage_search_allowed=false`.

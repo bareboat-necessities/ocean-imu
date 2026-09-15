@@ -19,8 +19,9 @@ Each scheduler:
 
 No second filter transition is executed. The machine S measurement itself is
 still open: this module stops at the scheduler branch and leaves R_S/LDLT
-composition to the next layer. Binary32 ``nextafter`` correspondence remains
-an explicit witness obligation on overdue retargets.
+composition to the next layer. Overdue machine retargets now require the exact
+binary32 predecessor of the current machine period, matching shipping
+``std::nextafter(period,0)`` on the represented positive-normal range.
 """
 from __future__ import annotations
 from dataclasses import dataclass
@@ -29,6 +30,7 @@ from tools.stability.ou3_alt_contraction import finite_admitted_machine_predicti
 from tools.stability.ou3_alt_contraction import finite_admitted_machine_tunestate_interleaved_prefix as MTUNE
 from tools.stability.ou3_alt_contraction import finite_startup_live_machine_tunestate_bridge as GO
 from tools.stability.ou3_alt_contraction import finite_runtime_parameters as ACTIVE
+from tools.stability.ou3_alt_contraction import finite_scheduler_nextafter_binary32 as NEXT
 from tools.stability.ou3_alt_contraction import finite_post_prediction as POST
 from tools.stability.ou3_alt_contraction import finite_source_continuation as SOURCE
 
@@ -104,6 +106,15 @@ def begin(base:LOWER.State,separate_scheduler:POST.Scheduler,fma_scheduler:POST.
     return State(base,separate_scheduler,fma_scheduler,LOWER._imu_steps(base.base),0)
 
 
+def _machine_retarget(active:ACTIVE.ActiveParameters,before:POST.Scheduler,park:ACTIVE.NextafterParkWitness|None):
+    if before.elapsed>=active.pseudo_period:
+        if park is None: raise ValueError('overdue machine period retarget requires nextafter witness')
+        NEXT.require_witness(active.pseudo_period,park.parked_elapsed)
+    elif park is not None:
+        raise ValueError('credit-preserving machine retarget consumes no nextafter witness')
+    return ACTIVE.retarget_scheduler(active,before,park=park)
+
+
 def begin_from_goLive(base:LOWER.State,go:GO.Result,*,scheduler_before:POST.Scheduler,
                       exact_scheduler_park:ACTIVE.NextafterParkWitness|None=None,
                       separate_scheduler_park:ACTIVE.NextafterParkWitness|None=None,
@@ -114,8 +125,8 @@ def begin_from_goLive(base:LOWER.State,go:GO.Result,*,scheduler_before:POST.Sche
     exact=ACTIVE.retarget_scheduler(go.live.active,scheduler_before,park=exact_scheduler_park)
     if exact!=go.live.state.scheduler:
         raise ValueError('declared startup scheduler predecessor detached from exact goLive scheduler')
-    sep=ACTIVE.retarget_scheduler(go.separate_active,scheduler_before,park=separate_scheduler_park)
-    fma=ACTIVE.retarget_scheduler(go.fma_active,scheduler_before,park=fma_scheduler_park)
+    sep=_machine_retarget(go.separate_active,scheduler_before,separate_scheduler_park)
+    fma=_machine_retarget(go.fma_active,scheduler_before,fma_scheduler_park)
     return begin(base,sep,fma)
 
 
@@ -123,7 +134,7 @@ def _advance_one(before:POST.Scheduler,active:ACTIVE.ActiveParameters,*,boundary
                  park:ACTIVE.NextafterParkWitness|None):
     if not isinstance(boundary_consumed,bool): raise TypeError('literal boundary-consumed flag required')
     if boundary_consumed:
-        rooted=ACTIVE.retarget_scheduler(active,before,park=park)
+        rooted=_machine_retarget(active,before,park)
     else:
         if park is not None: raise ValueError('no machine boundary retarget consumes no nextafter witness')
         active.require_scheduler(before)
@@ -177,7 +188,7 @@ def readiness():
       'complete_word_requires_both_scheduler_recurrences_on_all_600_IMU_edges':True,
       'machine_pseudo_period_scheduler_effect_attached':True,
       'machine_RS_measurement_effect_attached':False,
-      'scheduler_nextafter_binary32_correspondence_closed':False,
+      'scheduler_nextafter_binary32_correspondence_closed':NEXT.readiness()['machine_scheduler_nextafter_binary32_correspondence_closed'],
       'machine_due_branch_S_measurement_composed':False,
       'source_uniform_machine_coefficient_supply_bound_closed':False,
       'all_event_arithmetic_witnesses_source_uniformly_qualified':False,

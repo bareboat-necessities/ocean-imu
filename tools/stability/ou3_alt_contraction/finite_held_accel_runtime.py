@@ -43,18 +43,24 @@ def _specific_force(ref,gravity_world):
     return tuple(SENSOR.q_rotate(ref.q_world_to_body,inertial))
 
 
-def observation(sample:SENSOR.GuardedImuSample,segment:PHYS.PhysicalSegment,
-                conditioning:SENSOR.AccelConditioning):
-    if not isinstance(sample,SENSOR.GuardedImuSample) or not isinstance(segment,PHYS.PhysicalSegment):
-        raise TypeError('guarded sample and same-history PhysicalSegment required')
+def observation_from_conditioned(raw:SENSOR.RawImuSample,conditioned_accel_body,
+                               segment:PHYS.PhysicalSegment,
+                               conditioning:SENSOR.AccelConditioning):
+    """Held observation from an explicitly attached conditioned body sample.
+
+    Used by the binary32 guard relation. ``conditioned_accel_body`` is not a
+    free disturbance: the caller owns the same-packet machine guard recurrence.
+    """
+    if not isinstance(raw,SENSOR.RawImuSample) or not isinstance(segment,PHYS.PhysicalSegment):
+        raise TypeError('raw sample and same-history PhysicalSegment required')
     if not isinstance(conditioning,SENSOR.AccelConditioning): raise TypeError('AccelConditioning required')
     if conditioning.lever_internal != (0,0,0):
         raise ValueError('current finite measurement theorem is the declared zero-lever branch')
-    if sample.physical != segment.before:
+    if raw.physical != segment.before:
         raise ValueError('held accelerometer packet is not rooted at this segment predecessor')
+    conditioned=tuple(M.vec(conditioned_accel_body,3))
 
     before,after=segment.before,segment.after
-    # Preserve persistent source ancestry when the endpoints are CORE.Reference.
     for name in ('history_id','bias_root','bias_family'):
         if hasattr(before,name) or hasattr(after,name):
             if not (hasattr(before,name) and hasattr(after,name) and getattr(before,name)==getattr(after,name)):
@@ -62,15 +68,23 @@ def observation(sample:SENSOR.GuardedImuSample,segment:PHYS.PhysicalSegment,
 
     t=conditioning.temperature_delta; k=conditioning.k_a_hat_internal
     modeled=tuple(k[i]*t for i in range(3))
-    observed=tuple(sample.internal_accel[i]-modeled[i] for i in range(3))
-    guard_delta=tuple(sample.internal_accel[i]-sample.raw.internal_accel[i] for i in range(3))
-    fb=_specific_force(before,sample.gravity_world); fa=_specific_force(after,sample.gravity_world)
+    internal=SENSOR.mv3(raw.deheel_body_to_internal,conditioned)
+    observed=tuple(internal[i]-modeled[i] for i in range(3))
+    guard_delta=tuple(internal[i]-raw.internal_accel[i] for i in range(3))
+    fb=_specific_force(before,raw.gravity_world); fa=_specific_force(after,raw.gravity_world)
     hold=tuple(fb[i]+before.beta[i]-fa[i]-after.beta[i] for i in range(3))
-    nu=tuple(sample.raw.accel_residual_internal[i]-modeled[i]+guard_delta[i]+hold[i] for i in range(3))
+    nu=tuple(raw.accel_residual_internal[i]-modeled[i]+guard_delta[i]+hold[i] for i in range(3))
     expected=tuple(fa[i]+after.beta[i]+nu[i] for i in range(3))
     if observed != expected:
         raise AssertionError('held accelerometer same-history decomposition lost')
     return HeldObservation(observed,nu,guard_delta,hold)
+
+
+def observation(sample:SENSOR.GuardedImuSample,segment:PHYS.PhysicalSegment,
+                conditioning:SENSOR.AccelConditioning):
+    if not isinstance(sample,SENSOR.GuardedImuSample):
+        raise TypeError('guarded sample required')
+    return observation_from_conditioned(sample.raw,sample.conditioned_accel_body,segment,conditioning)
 
 
 def readiness():
@@ -79,6 +93,7 @@ def readiness():
       'pre_to_post_physical_specific_force_hold_term_retained':True,
       'pre_to_post_true_bias_change_retained':True,
       'guard_delta_retained_separately_from_raw_sensor_residual':True,
+      'explicit_conditioned_sample_adapter_available_for_machine_guard':True,
       'temperature_model_retained_in_post_prediction_residual':True,
       'held_accel_COMPLETE_BRMM_bound_attached':False,
       'guard_and_temperature_binary32_ancestry_attached':False,

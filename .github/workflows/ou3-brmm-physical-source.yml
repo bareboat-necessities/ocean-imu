@@ -42,6 +42,7 @@ jobs:
           python3 -m unittest -v \
             test_ou3_brmm_physical_wave_condition \
             test_ou3_brmm_physical_wave_source \
+            test_ou3_brmm_rao_finite_harmonic_DS_bound \
             test_ou3_brmm_infinite_continuation \
             test_ou3_brmm_centered_S_recurrence \
             test_ou3_brmm_hard_finite_window_source \

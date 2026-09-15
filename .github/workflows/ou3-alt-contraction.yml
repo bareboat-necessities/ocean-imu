@@ -113,6 +113,7 @@ jobs:
             test_finite_prediction_runtime test_finite_post_prediction \
             test_finite_periodic_aw_sync test_finite_measurement_runtime \
             test_finite_vertical_complementary_runtime test_finite_binary32_mahony \
+            test_finite_binary32_mahony_startup test_finite_startup_joined_machine_history \
             test_finite_frontend_runtime test_finite_frontend_prefix \
             test_finite_guarded_tuner_prefix test_finite_wpe_runtime test_finite_wpe_output_ancestry \
             test_finite_band_variance_runtime test_finite_stillness_runtime \

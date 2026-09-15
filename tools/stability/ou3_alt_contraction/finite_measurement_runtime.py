@@ -128,6 +128,26 @@ def accelerometer_from_held_guarded_racc(state,segment:PHYS.PhysicalSegment,
                        observed=packet.observed,gravity=g,**kwargs)
 
 
+def accelerometer_from_held_conditioned_racc(state,segment:PHYS.PhysicalSegment,
+                                             raw:SENSOR.RawImuSample,
+                                             conditioned_accel_body,
+                                             conditioning:SENSOR.AccelConditioning,
+                                             racc:RACC.Result,*,ldlt:SafeLDLT,
+                                             gravity=None,**kwargs):
+    """Post-prediction accelerometer event from the attached machine guard output."""
+    if not isinstance(segment,PHYS.PhysicalSegment) or not isinstance(raw,SENSOR.RawImuSample):
+        raise TypeError('PhysicalSegment and raw IMU sample required')
+    if not isinstance(racc,RACC.Result): raise TypeError('finite Racc runtime result required')
+    if raw.physical != segment.before or state.reference != segment.after:
+        raise ValueError('held accelerometer must span the exact prediction predecessor/successor')
+    packet=HELD.observation_from_conditioned(raw,conditioned_accel_body,segment,conditioning)
+    g=_gravity(raw,gravity)
+    if 'R' in kwargs or 'observed' in kwargs or 'kind' in kwargs:
+        raise TypeError('held accelerometer observation and Racc are owned by shipping runtime ancestry')
+    return measurement(state,'accelerometer',ldlt=ldlt,R=racc.covariance,
+                       observed=packet.observed,gravity=g,**kwargs)
+
+
 def readiness():
     return {
       'first_LDLT_success_branch':True,
@@ -142,6 +162,7 @@ def readiness():
       'guard_effective_residual_is_derived_not_free':True,
       'shipping_accelerometer_Racc_from_same_runtime_result':True,
       'held_predecessor_sample_to_postprediction_measurement_attached':True,
+      'machine_conditioned_held_sample_adapter_attached':True,
       'held_physical_evolution_forcing_retained':True,
       'temperature_and_k_a_runtime_ancestry_attached':False,
       'guard_exp_sqrt_binary32_ancestry_attached':False,

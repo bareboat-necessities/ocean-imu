@@ -5,7 +5,7 @@ import unittest
 from tools.stability.ou3_alt_contraction import finite_admitted_machine_vertical_stillness_interleaved_prefix as X
 from tools.stability.ou3_alt_contraction import finite_machine_vertical_stillness_source as VS
 from tools.stability.ou3_alt_contraction import finite_binary32_arithmetic as B
-from tools.stability.ou3_alt_contraction import finite_binary32_mahony as MAH
+from tools.stability.ou3_alt_contraction import finite_binary32_mahony_startup as MAH
 from tools.stability.ou3_alt_contraction import finite_vertical_complementary_runtime as V
 from tools.stability.ou3_alt_contraction import finite_stillness_sigma_binary32 as STILL
 from tools.stability.ou3_alt_contraction import finite_tuner_sigma_binary32 as SM
@@ -26,7 +26,7 @@ def machine_api(live,h):
     return dict(machine_dt=B.rn32(h),machine_gyro_body=tuple(B.rn32(F(x)) for x in live.guarded.raw_gyro_body),machine_acc_body=tuple(B.rn32(F(x)) for x in live.guarded.raw_accel_body))
 def source_witness(source,guarded,runtime,h,*,last=False):
     hq=B.rn32(h); vcfg=X._machine_vertical_cfg(runtime)
-    mah=MAH.step_initialized(source.vertical,vcfg,dt=hq,gyro=guarded.raw_gyro,acc=guarded.conditioned_acc)
+    mah=MAH.step(source.vertical,vcfg,dt=hq,gyro=guarded.raw_gyro,acc=guarded.conditioned_acc)
     x=B.rn32(mah.vertical.vertical_accel)
     if source.lpf.initialized:
         mag=B.mul(B.mul(B.mul(VS.TWO,VS.PI_F),source.lpf.cutoff_hz),hq); alpha=expw(mag)
@@ -82,6 +82,21 @@ class Tests(unittest.TestCase):
         with self.assertRaises((ValueError,TypeError)): X.complete(X.begin(mt,guard=X.GUARD.State(),guard_cfg=X.GUARD.Config(),separate_source=a,fma_source=a))
     def test_readiness_closes_composition_but_not_config_startup_or_native(self):
         r=X.readiness()
-        for k in ('binary32_filter_update_API_boundary_attached','binary32_private_Mahony_runtime_config_projection_attached','persistent_common_machine_guard_history_attached','shipping_guard_branch_structure_materialized','private_Mahony_source_is_common_across_compiler_histories','same_machine_guard_successor_drives_private_Mahony_histories','machine_band_input_bound_to_same_private_Mahony_successor','machine_sigma_stillness_bound_to_same_tracker_LPF_successor','complete_word_requires_machine_source_on_all_600_IMU_edges'): self.assertTrue(r[k])
-        for k in ('private_Mahony_mutable_config_setter_ancestry_closed','tracker_LPF_cutoff_runtime_ancestry_closed','machine_guard_runtime_config_ancestry_closed','startup_machine_guard_vertical_stillness_history_attached','target_libm_Eigen_and_compiler_profile_correspondence_closed','source_uniform_complete_600_step_word_qualified','storage_search_allowed','ALT_LIVE_PASS','ALT_STARTUP_PASS','ALT_END_TO_END_PASS'): self.assertFalse(r[k])
+        for k in ('admitted_machine_TuneState_word_consumed',
+                  'one_common_binary32_guard_feeds_private_Mahony_and_band_history',
+                  'shipping_float_API_dt_gyro_accel_projection_is_mandatory',
+                  'same_machine_private_Mahony_vertical_feeds_band_and_tracker_LPF',
+                  'machine_band_input_bound_to_same_frontend_consumed_by_sigma_target',
+                  'machine_tracker_LPF_and_stillness_bound_to_same_sigma_target',
+                  'complete_word_requires_machine_source_on_all_600_IMU_edges'):
+            self.assertTrue(r[k])
+        for k in ('guard_runtime_config_ancestry_closed',
+                  'private_Mahony_runtime_config_and_startup_ancestry_closed',
+                  'tracker_LPF_runtime_config_ancestry_closed',
+                  'guard_exp_sqrt_compiler_correspondence_closed',
+                  'private_Mahony_compiler_profile_qualified',
+                  'machine_guard_displacement_already_injected_into_Racc',
+                  'source_uniform_complete_600_step_word_qualified','storage_search_allowed',
+                  'ALT_LIVE_PASS','ALT_STARTUP_PASS','ALT_END_TO_END_PASS'):
+            self.assertFalse(r[k])
 if __name__=='__main__': unittest.main()

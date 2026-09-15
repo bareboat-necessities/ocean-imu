@@ -199,6 +199,7 @@ class StepResult:
     operations: tuple[Operation, ...]
     normalizations: tuple[Normalization, ...]
     profile: str = PROFILE
+    startup: object | None = None  # source-bound first-sample operation ledger
 
 
 def step_initialized(state, cfg, *, dt, gyro, acc, profile=PROFILE) -> StepResult:

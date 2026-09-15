@@ -57,6 +57,8 @@ class Tests(unittest.TestCase):
         self.assertEqual(out.frontend_live.tuner.wpe,front.tuner.wpe)
         self.assertEqual(out.frontend_live.tuner.band,front.tuner.band)
         self.assertEqual(out.frontend_live.tuner.vertical,front.tuner.vertical)
+        self.assertEqual(out.state.aw_sync.last_sync_time,front.tuner.time)
+        self.assertFalse(out.state.aw_sync.pending)
 
     def test_goLive_commit_must_equal_fresh_entry_active_parameters(self):
         front,entry,fresh,active,scheduler=objects(False)
@@ -79,7 +81,9 @@ class Tests(unittest.TestCase):
     def test_readiness_keeps_first_sample_and_precision_open(self):
         r=X.readiness()
         self.assertTrue(r['fresh_H18_CORE_state_connected_to_first_Live_prefix_shape'])
+        self.assertTrue(r['goLive_resets_periodic_aw_sync_clock_to_current_filter_time'])
         self.assertTrue(r['online_pending_bit_preserved_across_goLive'])
+        self.assertFalse(r['inner_filter_clock_binary64_closed'])
         self.assertFalse(r['first_Live_sample_executed_from_fresh_entry'])
         self.assertFalse(r['ALT_STARTUP_PASS']); self.assertFalse(r['ALT_LIVE_PASS'])
 

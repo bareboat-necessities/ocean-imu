@@ -26,7 +26,7 @@ from tools.stability.ou3_alt_contraction import finite_tuner_spectral_real_enclo
 SRC=Path(__file__).resolve().parents[3]/'src/tuner/AccelVibrationGuard.h'
 QUALIFICATION='OU3_ALT_MACHINE_ACCEL_GUARD_BINARY32_V1'
 ZERO=B.rn32(0); ONE=B.rn32(1); TWO=B.rn32(2); PI_F=MAH.value(0x40490FDB)
-MAX_SAMPLES=5000
+MAX_SAMPLES=30600  # same bounded 30000-startup + 600-Live budget as band/stats; not reachability
 Vec=tuple[F,F,F]
 
 

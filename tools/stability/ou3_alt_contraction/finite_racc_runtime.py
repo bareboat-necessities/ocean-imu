@@ -132,25 +132,32 @@ def _rao_scales(cfg:RaoConfig,*,live,vertical_std,frequency,nominal,witness:RaoW
     return tuple(out)
 
 
-def step_from_applied_sigma(state:State,cfg:Config,guard:GUARD.Result,*,nominal_std,
+def step_from_excess_rms(state:State,cfg:Config,*,excess_rms,nominal_std,
          sigma_applied,preupdate_frequency,live,rao_witness:RaoWitness|None=None,
          effective_sqrt:EffectiveSqrtWitness|None=None):
-    """Shipping Racc branch from an explicitly retained applied tuner sigma."""
-    if not isinstance(state,State) or not isinstance(cfg,Config) or not isinstance(guard,GUARD.Result):
-        raise TypeError('Racc state/config and same guard result required')
+    """Shipping Racc arithmetic from an explicitly retained guard excess RMS.
+
+    This adapter exists for the binary32 machine guard relation.  It does not
+    invent a second guard event: callers must attach ``excess_rms`` to the same
+    already-executed raw IMU packet.  The exact theorem-facing adapter below
+    delegates here with the exact guard result.
+    """
+    if not isinstance(state,State) or not isinstance(cfg,Config):
+        raise TypeError('Racc state/config required')
+    excess=R(excess_rms)
+    if excess<0: raise ValueError('nonnegative guard excess RMS required')
     sigma=R(sigma_applied)
     if sigma<0: raise ValueError('nonnegative applied tuner sigma required')
     base=V(nominal_std); f=R(preupdate_frequency)
     if cfg.vibration_gain<=0 and cfg.rao.max_std_scale<=1 and not state.inflated:
         if rao_witness is not None or effective_sqrt is not None: raise ValueError('fully dormant Racc branch consumes no witnesses')
-        return Result(state,state.effective_std,_diag_sq(state.effective_std),ONE,guard.excess_rms,False,False)
+        return Result(state,state.effective_std,_diag_sq(state.effective_std),ONE,excess,False,False)
     if min(base)<=0:
         if rao_witness is not None or effective_sqrt is not None: raise ValueError('unknown nominal Racc branch consumes no scale witnesses')
-        return Result(state,state.effective_std,_diag_sq(state.effective_std),ONE,guard.excess_rms,False,False)
+        return Result(state,state.effective_std,_diag_sq(state.effective_std),ONE,excess,False,False)
 
     vertical_std=sigma/cfg.sigma_coeff
     scales=_rao_scales(cfg.rao,live=live,vertical_std=vertical_std,frequency=f,nominal=base,witness=rao_witness)
-    excess=R(guard.excess_rms)
     if excess<=0 and max(scales)<=1:
         if effective_sqrt is not None: raise ValueError('dormant restore branch consumes no effective sqrt witness')
         if state.inflated:
@@ -170,6 +177,18 @@ def step_from_applied_sigma(state:State,cfg:Config,guard:GUARD.Result,*,nominal_
     return Result(nxt,eff,_diag_sq(eff),scales,excess,True,False)
 
 
+def step_from_applied_sigma(state:State,cfg:Config,guard:GUARD.Result,*,nominal_std,
+         sigma_applied,preupdate_frequency,live,rao_witness:RaoWitness|None=None,
+         effective_sqrt:EffectiveSqrtWitness|None=None):
+    """Shipping Racc branch from an explicitly retained applied tuner sigma."""
+    if not isinstance(guard,GUARD.Result):
+        raise TypeError('same exact guard result required')
+    return step_from_excess_rms(state,cfg,excess_rms=guard.excess_rms,
+        nominal_std=nominal_std,sigma_applied=sigma_applied,
+        preupdate_frequency=preupdate_frequency,live=live,rao_witness=rao_witness,
+        effective_sqrt=effective_sqrt)
+
+
 def step(state:State,cfg:Config,guard:GUARD.Result,*,nominal_std,tune:TuneState,
          preupdate_frequency,live,rao_witness:RaoWitness|None=None,
          effective_sqrt:EffectiveSqrtWitness|None=None):
@@ -186,6 +205,7 @@ def readiness():
       'same_guard_excess_RMS_drives_Racc':True,
       'previous_TuneState_drives_low_wave_scale':True,
       'explicit_applied_sigma_adapter_available_for_machine_history':True,
+      'explicit_guard_excess_RMS_adapter_available_for_machine_history':True,
       'preupdate_frequency_drives_low_wave_scale':True,
       'RAO_disabled_default_branch_materialized':True,
       'RAO_live_horizontal_smoothstep_branch_materialized':True,
