@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import copy
 import pathlib
 import sys
 import unittest
@@ -8,7 +7,6 @@ import unittest
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools" / "stability"))
 
-from ou3_interval import Interval
 import ou3_p4_complete_brmm_same_history_prefix_selectors as SELECTORS
 import ou3_p4_source_reachable_selector_family as FAMILY
 

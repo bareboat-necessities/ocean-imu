@@ -1,4 +1,3 @@
-from fractions import Fraction as F
 import unittest
 
 from tools.stability.ou3_alt_contraction import finite_source_bound_mag_dual_clock as X

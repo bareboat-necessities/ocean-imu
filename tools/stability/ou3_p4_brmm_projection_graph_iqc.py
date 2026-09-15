@@ -54,7 +54,7 @@ def build():
     finite=all(math.isfinite(x.lo) and math.isfinite(x.hi) for row in Pi for x in row)
     symmetric=all(Pi[i][j].lo==Pi[j][i].lo and Pi[i][j].hi==Pi[j][i].hi for i in range(n) for j in range(n))
     # Representative exact points exercise inactive and active branches.
-    base=p['base_report'];radius=float(p['projection_radius_mps2'])
+    _base=p['base_report'];radius=float(p['projection_radius_mps2'])
     cases=[]
     for e,beta in (([.1,-.05,.02],[.03,.01,-.02]),([.7,-.2,.1],[.08,-.04,.03])):
         f=__import__('ou3_projection_sector').bias_error_projection(e,beta,radius)

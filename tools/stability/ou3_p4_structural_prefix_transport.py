@@ -26,7 +26,6 @@ from __future__ import annotations
 import argparse,json
 from fractions import Fraction
 from pathlib import Path
-from typing import Any,Sequence
 
 from ou3_interval import Interval
 import ou3_p4_complete_word_endpoint_transport as END

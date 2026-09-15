@@ -4,7 +4,6 @@ from types import SimpleNamespace
 from ou3_interval import Interval
 import ou3_brmm_complete_window_execution_kernel as KERNEL
 import ou3_p4_complete_brmm_source_cover_contract as COVER
-import ou3_p4_complete_brmm_differential_events as EVENTS
 from tools.stability.ou3_alt_contraction import bias_families as BIAS
 from tools.stability.ou3_alt_contraction import physical_word as W
 

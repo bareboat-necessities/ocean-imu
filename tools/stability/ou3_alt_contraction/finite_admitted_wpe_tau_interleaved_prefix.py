@@ -27,7 +27,6 @@ from tools.stability.ou3_alt_contraction import finite_binary32_arithmetic as B
 from tools.stability.ou3_alt_contraction import finite_admitted_tau_interleaved_prefix as TAUJOIN
 from tools.stability.ou3_alt_contraction import finite_tuner_candidate as CAND
 from tools.stability.ou3_alt_contraction import finite_tuner_tau_deployment_ledger as TAULEDGER
-from tools.stability.ou3_alt_contraction import finite_shipping_tau_target_binary32 as TARGET
 from tools.stability.ou3_alt_contraction import finite_wpe_frequency_binary32 as WPEF
 from tools.stability.ou3_alt_contraction import finite_wpe_log_binary32 as WPELOG
 from tools.stability.ou3_alt_contraction import finite_source_continuation as SOURCE

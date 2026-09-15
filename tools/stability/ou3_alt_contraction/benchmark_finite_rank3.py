@@ -50,11 +50,14 @@ def benchmark(repeat=3):
                                   f_hat=[F(1, 5), F(-1, 4), -9], R_hat=G.eye(3))
         N, S = G.measurement_operands(P, G.eye(3), H, active_bias=active)
         K = [solve3(S, row) for row in N]
-        def raw():
+        # P/N/S/K are bound as defaults so the closure captures this
+        # iteration's operands rather than the loop variables (B023).
+        def raw(P=P, N=N, S=S, K=K):
             return G.plus(G.plus(G.plus(P, G.mm(K, G.transpose(N)), -1),
                           G.mm(N, G.transpose(K)), -1), G.mm(G.mm(K, S), G.transpose(K)))
         direct, r = measure(raw, repeat)
-        thin, t = measure(lambda: G.solved_joseph_covariance(P, N, S, K), repeat)
+        thin, t = measure(lambda P=P, N=N, S=S, K=K:
+                          G.solved_joseph_covariance(P, N, S, K), repeat)
         if thin != direct: raise AssertionError('rank-3 rewrite changed the exact covariance')
         reports['A21' if active else 'H18'] = {
             'raw_Joseph': r, 'solve_constrained_rank3': t,

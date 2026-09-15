@@ -2,9 +2,11 @@ from __future__ import annotations
 
 from copy import deepcopy
 from fractions import Fraction as F
+import hashlib
 from pathlib import Path
 import sys
 import unittest
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT/'tools'/'stability'))
@@ -15,6 +17,25 @@ class InfiniteContinuationTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.report = C.build()
+
+    def test_const_reference_reaudit_is_the_only_shipping_change(self):
+        path = 'src/kalman_ou_iii/Kalman3D_Wave_OU_III.h'
+        source = (ROOT/path).read_bytes()
+        before = b'const Vector3 zhat = v2hat;'
+        after = b'const Vector3& zhat = v2hat;'
+        self.assertEqual(source.count(after), 1)
+        reconstructed = source.replace(after, before)
+        self.assertEqual(hashlib.sha256(reconstructed).hexdigest(),
+            'c9ed955ef998992e33b253ed0d5d49673852b87413a8c560479a9b482786d64b')
+        self.assertEqual(hashlib.sha256(source).hexdigest(), C.AUDITED[path])
+
+    def test_source_hash_mismatch_still_requires_reaudit(self):
+        # A stale or altered pin must not be accepted through the new binding.
+        pins = dict(C.AUDITED)
+        pins['src/kalman_ou_iii/Kalman3D_Wave_OU_III.h'] = '0'*64
+        with patch.object(C, 'AUDITED', pins):
+            with self.assertRaisesRegex(ValueError, 're-audit the source/observation semantics'):
+                C.build()
 
     def test_full_radial_source_column_not_an_independent_S_ball(self):
         h = C.symbol('h')

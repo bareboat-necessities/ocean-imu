@@ -1,4 +1,3 @@
-from copy import deepcopy
 from fractions import Fraction as F
 from pathlib import Path
 import sys

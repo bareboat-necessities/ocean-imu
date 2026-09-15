@@ -32,9 +32,14 @@ ROOT = Path(__file__).resolve().parents[2]
 QUALIFICATION = 'OU3_BRMM_INDEFINITE_S_NECESSARY_CONDITION_V1'
 # Pins bind unchanged shipping sensor/entry semantics. They are
 # NOT a substitute for the proof in w3d-brmm-stability-theorem.tex-part.
+# Kalman source re-audit: zhat aliases the already evaluated local const
+# Vector3 v2hat. It is read once by r, never mutated and never escapes; the
+# copy-to-const-reference cleanup changes no sensor, p/S or entry semantics.
+# The regression reconstructs the previous complete-file hash to ensure this
+# was the only shipping change. All other edits still require a new audit.
 AUDITED = {
     'src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h': '1008e931734f226f93f52e46a1408503a7c1be9b364c0756da64a19788ece5ed',
-    'src/kalman_ou_iii/Kalman3D_Wave_OU_III.h': 'c9ed955ef998992e33b253ed0d5d49673852b87413a8c560479a9b482786d64b',
+    'src/kalman_ou_iii/Kalman3D_Wave_OU_III.h': 'bbc1586529f2f21144cb91e34f3248569178ab6e7a8bb7a1c8a0977d1b06c170',
     'src/kalman_common/SeaStateFusionFilterCommon.h': 'f76b6266ab4f403d2cce61058a79f1fdb5bb55aab1355c62ce2adaf516d7ea9f',
 }
 

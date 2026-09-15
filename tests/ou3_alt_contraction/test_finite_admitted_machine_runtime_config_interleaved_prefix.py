@@ -1,11 +1,9 @@
 """Machine guard/tracker-LPF runtime-configuration ancestry regressions."""
 from dataclasses import replace
-from fractions import Fraction as F
 import unittest
 
 from tools.stability.ou3_alt_contraction import finite_admitted_machine_runtime_config_interleaved_prefix as X
 from tools.stability.ou3_alt_contraction import finite_binary32_arithmetic as B
-from tools.stability.ou3_alt_contraction import finite_machine_vertical_stillness_source as VS
 import test_finite_admitted_machine_vertical_stillness_interleaved_prefix as BASE
 import test_finite_source_bound_live_word as LBASE
 

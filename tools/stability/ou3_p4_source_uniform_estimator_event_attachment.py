@@ -41,7 +41,6 @@ from typing import Sequence
 
 from ou3_interval import Interval
 import ou3_brmm_complete_window_execution_kernel as KERNEL
-import ou3_brmm_frontend_state_step as FRONT
 import ou3_brmm_full_normal_live_word as WORD
 import ou3_p4_joint_brmm_frontend_transition as JOINT
 import ou3_p4_complete_brmm_same_history_prefix_selectors as SELECTORS

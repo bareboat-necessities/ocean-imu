@@ -11,7 +11,6 @@ from tools.stability.ou3_alt_contraction import finite_accel_guard_runtime as GU
 from tools.stability.ou3_alt_contraction import finite_vertical_complementary_runtime as V
 from tools.stability.ou3_alt_contraction import finite_tuner_frontend_prefix as T
 from tools.stability.ou3_alt_contraction import finite_tuner_commit as TC
-from tools.stability.ou3_alt_contraction import finite_runtime_parameters as ACTIVE
 from tools.stability.ou3_alt_contraction import finite_post_prediction as POST
 from tools.stability.ou3_alt_contraction import finite_racc_runtime as RACC
 from tools.stability.ou3_alt_contraction import finite_periodic_aw_sync as AWSYNC

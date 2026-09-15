@@ -1,5 +1,4 @@
 import unittest
-from ou3_interval import Interval
 from tools.stability.ou3_alt_contraction import coarse_universal_local_outer as C
 
 

@@ -32,20 +32,21 @@ jobs:
           mkdir -p /tmp/ou3-physical-source
           git rev-parse HEAD > /tmp/ou3-physical-source/source-commit.txt
           git archive --format=tar.gz HEAD > /tmp/ou3-physical-source/proof-input.tar.gz
-      - name: Physical wave condition, padded envelope, certificate methods, old witness and ancestry regressions
+      - name: Padded envelope for the physical condition regressions
         run: |
           set -euo pipefail
           python3 tools/stability/ou3_brmm_complete_physical_envelope.py
-          for test in \
-            test_ou3_brmm_physical_wave_condition.py \
-            test_ou3_brmm_physical_wave_source.py \
-            test_ou3_brmm_infinite_continuation.py \
-            test_ou3_brmm_centered_S_recurrence.py \
-            test_ou3_brmm_hard_finite_window_source.py \
-            test_ou3_brmm_window_artifact_codec.py \
-            test_ou3_p4_source_indexed_phi_rebase.py; do
-            python3 -m unittest discover -s tests/validation -p "$test" -v
-          done
+      - name: Physical wave condition, certificate methods, old witness and ancestry regressions
+        working-directory: tests/validation
+        run: |
+          python3 -m unittest -v \
+            test_ou3_brmm_physical_wave_condition \
+            test_ou3_brmm_physical_wave_source \
+            test_ou3_brmm_infinite_continuation \
+            test_ou3_brmm_centered_S_recurrence \
+            test_ou3_brmm_hard_finite_window_source \
+            test_ou3_brmm_window_artifact_codec \
+            test_ou3_p4_source_indexed_phi_rebase
       - name: Regenerate physical condition, certificate evidence and fail-closed P3 P4 evidence
         run: |
           set -euo pipefail

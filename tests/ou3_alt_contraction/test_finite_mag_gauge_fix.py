@@ -1,5 +1,4 @@
 """MagAutoTuner gauge-fix boundary regressions."""
-from fractions import Fraction as F
 from pathlib import Path
 import sys, unittest
 ROOT=Path(__file__).resolve().parents[2]; sys.path.insert(0,str(ROOT))

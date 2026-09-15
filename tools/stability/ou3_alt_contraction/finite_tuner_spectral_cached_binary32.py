@@ -12,7 +12,6 @@ otherwise source-bound per-sample target.
 """
 from __future__ import annotations
 from dataclasses import dataclass
-from fractions import Fraction as F
 
 from tools.stability.ou3_alt_contraction import finite_tuner_candidate as C
 from tools.stability.ou3_alt_contraction import finite_tuner_qeff_cache_binary32 as Q
