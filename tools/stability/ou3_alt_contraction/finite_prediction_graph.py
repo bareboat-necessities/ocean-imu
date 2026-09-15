@@ -32,7 +32,6 @@ coordinate is independently re-boxed here.
 from __future__ import annotations
 from dataclasses import dataclass
 from fractions import Fraction as F
-from typing import Sequence
 
 NSTATE=24
 

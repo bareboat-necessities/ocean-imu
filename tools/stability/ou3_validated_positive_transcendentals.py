@@ -21,7 +21,7 @@ from __future__ import annotations
 from fractions import Fraction
 import math
 
-from ou3_interval import Interval, down, up
+from ou3_interval import Interval
 
 
 def _down_fraction(q: Fraction) -> float:

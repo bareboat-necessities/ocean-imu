@@ -40,9 +40,9 @@ def build():
     if pf or qf:
         raise RuntimeError('primary COMPLETE-BRMM prerequisite failed: '+repr({'physical':pf,'primitive':qf}))
 
-    condition = physical_condition = physical
+    condition = physical
     hard = condition['complete_BRMM_numeric_physical_envelope']['complete_BRMM_hard_bounds']
-    uniform = primitive['uniform_physical_primitives']
+    _uniform = primitive['uniform_physical_primitives']
     relation = primitive['exact_source_relation']
 
     expected = {

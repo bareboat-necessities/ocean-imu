@@ -124,7 +124,7 @@ def _smooth(track:Track,w:SmoothWitness,contracted:bool):
     if track.log_period is None: raise ValueError('WPE smoothing requires initialized log-period track')
     requested=B.mul(LOG_SMOOTH_PERIODS,w.sea_period_exp)
     horizon=clamp(requested,HORIZON_MIN,HORIZON_MAX)
-    x=B.div(DT,horizon)
+    _x=B.div(DT,horizon)
     # Numerical correctness of exp remains open, but its branch/domain is hard.
     if not 0<w.decay_exp<=1: raise ValueError('WPE log decay must be in (0,1]')
     alpha=B.sub(B.rn32(1),w.decay_exp)

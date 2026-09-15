@@ -75,10 +75,15 @@ def _initial_branch(joint_state: JOINT.State, P0_H, P0_A,
     )
 
 
+# Interval is a frozen dataclass, so the unit scale is safe to share as a
+# default instead of constructing it per call (B008).
+UNIT_RADIAL_SCALE = Interval(0.0, 1.0)
+
+
 def execute_lineages(*, joint_entry: JOINT.State, P0_H, P0_A,
                      H_state0: Sequence[Interval], A_state0: Sequence[Interval],
                      samples: Sequence[KERNEL.SampleCoordinates], family: str,
-                     radial_scale: Interval = Interval(0.0, 1.0),
+                     radial_scale: Interval = UNIT_RADIAL_SCALE,
                      branch_limit: int = 100000,
                      domain_path: Path = KERNEL.DEFAULT_DOMAIN) -> list[ProductionBranch]:
     """Retain every recursively compatible proof/estimator successor.

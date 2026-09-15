@@ -23,7 +23,6 @@ from dataclasses import dataclass
 from fractions import Fraction as F
 
 from tools.stability.ou3_alt_contraction import finite_core as CORE
-from tools.stability.ou3_alt_contraction import finite_measurement_graph as M
 from tools.stability.ou3_alt_contraction import finite_prediction_graph as P
 
 

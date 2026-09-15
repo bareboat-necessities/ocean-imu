@@ -15,7 +15,7 @@ class Tests(unittest.TestCase):
 
     def test_small_branch_marginal_matches_literal_leading_formula(self):
         tau=1; h=F(1,1000); s=F(3,2); a=F(999,1000); out=Q.marginal_raw(tau,h,s,a)
-        inv=F(1); h2=h*h; h3=h2*h; h4=h3*h; h5=h4*h; h6=h5*h; h7=h6*h; h8=h7*h; h9=h8*h
+        h2=h*h; h3=h2*h; h4=h3*h; h5=h4*h; h6=h5*h; h7=h6*h; h8=h7*h; h9=h8*h
         expected=s*(F(2,3)*h3-F(1,2)*h4+F(7,30)*h5-F(1,12)*h6+F(31,1260)*h7-F(1,160)*h8+F(127,90720)*h9)
         self.assertEqual(out[0][0],expected); self.assertEqual(out,M.transpose(out))
 

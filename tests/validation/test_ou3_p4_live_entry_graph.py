@@ -68,8 +68,12 @@ class LiveEntryGraphTest(unittest.TestCase):
         self.assertEqual(F(d['vertical_Hs_upper_via_4_std_le_4A_m']),F(42,5))
         self.assertTrue(d['all_continuous_window_starts_covered'])
 
+# Interval is frozen, so one shared point interval is safe as a default (B008).
+ZERO_I = I(0)
+
+
 class CentralBranchCoverageTest(unittest.TestCase):
-    def state(self, Cv=I(0), Ce=I(0), log=None, elapsed=150, usable=False):
+    def state(self, Cv=ZERO_I, Ce=ZERO_I, log=None, elapsed=150, usable=False):
         seed=FRONT._point_state()
         w=replace(seed.wpe,accel_prev=I(0),high_pass_1=I(0),high_pass_1_prev=I(0),
             high_pass_2=I(0),velocity=I(0),elevation=I(0),velocity_mean=I(0),

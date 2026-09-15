@@ -8,7 +8,6 @@ from test_finite_measurement_graph import Poly
 from tools.stability.ou3_alt_contraction import finite_brmm_moment_prefix as X
 from tools.stability.ou3_alt_contraction import finite_source_continuation as S
 from tools.stability.ou3_alt_contraction import finite_physical_prediction as P
-from tools.stability.ou3_alt_contraction import finite_sensor_source_runtime as RAW
 from tools.stability.ou3_alt_contraction import bias_families as BIAS
 import test_finite_source_continuation as BASE
 

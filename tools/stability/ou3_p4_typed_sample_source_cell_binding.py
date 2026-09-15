@@ -19,7 +19,6 @@ from pathlib import Path
 from typing import Sequence
 
 from ou3_interval import Interval
-import ou3_brmm_complete_window_execution_kernel as KERNEL
 import ou3_p4_complete_brmm_same_history_prefix_selectors as SELECTORS
 import ou3_p4_complete_brmm_source_cover_contract as COVER
 

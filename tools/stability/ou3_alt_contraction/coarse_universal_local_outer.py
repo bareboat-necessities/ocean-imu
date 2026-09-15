@@ -114,16 +114,19 @@ def build():
         state=error_state_box(mode,radii);P=psd_covariance_box_from_diagonal_upper(tube['modes'][mode]['Pbar_diagonal_variance_upper']);mode_rows={}
         for contract in BIAS.contracts():
             held,beta=_bias_domains(contract,radius);row={'bias_family':contract.name,'maps':{},'failures':[]}
+            # attempt() and the lambdas below are invoked synchronously inside this
+            # iteration, so the loop variables they close over still hold this
+            # iteration's values; the B023 suppressions record that.
             def attempt(name,fn):
                 try:
-                    A=fn();row['maps'][name]=A;row[name+'_finite']=_finite_matrix(A)
-                    if not row[name+'_finite']:row['failures'].append(name+': nonfinite interval map')
-                except Exception as exc:row['maps'][name]=None;row[name+'_finite']=False;row['failures'].append(name+': '+type(exc).__name__+': '+str(exc))
-            attempt('prediction',lambda:prediction_outer(mode,state,omega,kc.h,tau,kc.accel_bias_tau_s,contract))
+                    A=fn();row['maps'][name]=A;row[name+'_finite']=_finite_matrix(A)  # noqa: B023
+                    if not row[name+'_finite']:row['failures'].append(name+': nonfinite interval map')  # noqa: B023
+                except Exception as exc:row['maps'][name]=None;row[name+'_finite']=False;row['failures'].append(name+': '+type(exc).__name__+': '+str(exc))  # noqa: B023
+            attempt('prediction',lambda:prediction_outer(mode,state,omega,kc.h,tau,kc.accel_bias_tau_s,contract))  # noqa: B023
             if mode=='H':
-                attempt('S_zero',lambda:_h_joseph_outer('S_zero',state,P,RS,held,beta,Sphys=Sphys));attempt('accelerometer',lambda:_h_joseph_outer('accelerometer',state,P,kc.Racc,held,beta,f=f,Rhat=Rhat));attempt('magnetometer',lambda:_h_joseph_outer('magnetometer',state,P,kc.Rmag,held,beta,m=m))
+                attempt('S_zero',lambda:_h_joseph_outer('S_zero',state,P,RS,held,beta,Sphys=Sphys));attempt('accelerometer',lambda:_h_joseph_outer('accelerometer',state,P,kc.Racc,held,beta,f=f,Rhat=Rhat));attempt('magnetometer',lambda:_h_joseph_outer('magnetometer',state,P,kc.Rmag,held,beta,m=m))  # noqa: B023
             else:
-                attempt('S_zero',lambda:_a_joseph_outer('S_zero',state,P,RS,beta,radius,Sphys=Sphys));attempt('accelerometer',lambda:_a_joseph_outer('accelerometer',state,P,kc.Racc,beta,radius,f=f,Rhat=Rhat));attempt('magnetometer',lambda:_a_joseph_outer('magnetometer',state,P,kc.Rmag,beta,radius,m=m))
+                attempt('S_zero',lambda:_a_joseph_outer('S_zero',state,P,RS,beta,radius,Sphys=Sphys));attempt('accelerometer',lambda:_a_joseph_outer('accelerometer',state,P,kc.Racc,beta,radius,f=f,Rhat=Rhat));attempt('magnetometer',lambda:_a_joseph_outer('magnetometer',state,P,kc.Rmag,beta,radius,m=m))  # noqa: B023
             if all(row.get(k+'_finite') for k in ('prediction','S_zero','accelerometer','magnetometer')):
                 Pm=row['maps']['prediction'];Sm=row['maps']['S_zero'];Am=row['maps']['accelerometer'];Mm=row['maps']['magnetometer'];Id=matrix_identity(24);row['sample_family']=[_compose(Pm,s,Am,mx) for s in (Id,Sm) for mx in (Id,Mm)];row['sample_family_finite']=all(_finite_matrix(x) for x in row['sample_family'])
             else:row['sample_family']=[];row['sample_family_finite']=False

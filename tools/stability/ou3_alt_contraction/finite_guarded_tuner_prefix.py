@@ -14,7 +14,6 @@ second ``acc_in``.
 """
 from __future__ import annotations
 from dataclasses import dataclass
-from fractions import Fraction as F
 
 from tools.stability.ou3_alt_contraction import finite_accel_guard_runtime as GUARD
 from tools.stability.ou3_alt_contraction import finite_sensor_source_runtime as SENSOR

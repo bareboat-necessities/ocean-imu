@@ -28,7 +28,7 @@ def sigma_join():
     return SJ.join(exact_sample(),ccfg(),d,m)
 
 def tau_step():
-    c=ccfg(); f=B.rn32(F(1,2)); target=B.rn32(1); sea=B.rn32(1)
+    _c=ccfg(); f=B.rn32(F(1,2)); target=B.rn32(1); sea=B.rn32(1)
     adapt=B.rn32(F(2,5)); e=B.rn32(1); alpha=B.rn32(0); prev=B.rn32(F(11,10))
     # Structural fixture: the input join consumes the already-qualified TauStep;
     # tau arithmetic qualification itself has independent exhaustive tests.

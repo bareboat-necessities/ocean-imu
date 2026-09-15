@@ -27,7 +27,6 @@ from pathlib import Path
 from typing import Sequence
 
 from ou3_interval import Interval, matrix_identity
-import ou3_brmm_complete_window_execution_kernel as KERNEL
 import ou3_p4_complete_brmm_differential_events as EVENTS
 import ou3_p4_complete_brmm_differential_prediction as PRED
 import ou3_p4_complete_brmm_differential_word as DWORD

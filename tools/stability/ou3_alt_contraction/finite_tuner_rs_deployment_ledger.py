@@ -32,7 +32,6 @@ from fractions import Fraction as F
 from pathlib import Path
 
 from tools.stability.ou3_alt_contraction import finite_binary32_arithmetic as B
-from tools.stability.ou3_alt_contraction import finite_tuner_deployment_config as D
 from tools.stability.ou3_alt_contraction import finite_tuner_rs_alpha_machine_real_join as A
 from tools.stability.ou3_alt_contraction import finite_tuner_rs_ema_compiler_modes as EMA
 from tools.stability.ou3_alt_contraction import finite_tuner_spectral_machine_real_join as T

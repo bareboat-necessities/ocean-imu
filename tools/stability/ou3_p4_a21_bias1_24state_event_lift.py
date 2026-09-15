@@ -23,7 +23,7 @@ and beta itself remains unchanged.  Thus prediction and projection share one
 persistent physical beta coordinate through the literal event lineage.
 """
 from __future__ import annotations
-import argparse,json,math
+import argparse,json
 from pathlib import Path
 
 from ou3_interval import Interval

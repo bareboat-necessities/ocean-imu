@@ -3,7 +3,6 @@ from __future__ import annotations
 import sys,unittest
 from pathlib import Path
 TOOLS=Path(__file__).resolve().parents[2]/'tools'/'stability';sys.path.insert(0,str(TOOLS))
-from ou3_interval import Interval
 import ou3_p4_brmm_physical_prediction_forcing as F
 
 class PhysicalPredictionForcingTest(unittest.TestCase):

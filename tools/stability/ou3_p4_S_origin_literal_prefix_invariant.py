@@ -40,7 +40,7 @@ def blockdiag(A,B):
     return [A[i]+Z12[i] for i in range(r1)]+[Z21[i]+B[i] for i in range(r2)]
 def joint_measurement_map(n,H,K):
     # residual H(e-x_true); error <- e-K H(e-x_true), truth unchanged
-    I=eye(n);KH=mm(K,H);top=[I[i]+zeros(n,n)[i] for i in range(n)]
+    I=eye(n);KH=mm(K,H)
     out=zeros(2*n,2*n)
     for i in range(n):
         for j in range(n):

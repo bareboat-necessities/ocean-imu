@@ -30,7 +30,6 @@ from tools.stability.ou3_alt_contraction import finite_admitted_machine_vertical
 from tools.stability.ou3_alt_contraction import finite_admitted_machine_runtime_config_interleaved_prefix as CONFIG
 from tools.stability.ou3_alt_contraction import finite_machine_vertical_stillness_source as VS
 from tools.stability.ou3_alt_contraction import finite_machine_accel_guard_binary32 as GUARD
-from tools.stability.ou3_alt_contraction import finite_binary32_arithmetic as B
 from tools.stability.ou3_alt_contraction import finite_source_continuation as SOURCE
 
 QUALIFICATION='OU3_ALT_ADMITTED_MACHINE_JOINED_FRONTEND_RACC_INTERLEAVER_V1'

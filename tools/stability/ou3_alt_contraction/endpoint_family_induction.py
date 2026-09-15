@@ -25,7 +25,7 @@ must already have a source-uniform same-cell qualification.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Iterable, Sequence
+from typing import Sequence
 
 from ou3_interval import Interval, matrix_identity, matrix_mul
 from tools.stability.ou3_alt_contraction import phase1_closure as PHASE1

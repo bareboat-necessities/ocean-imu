@@ -20,7 +20,7 @@ tested through the same outward LDLT backend used by production.
 """
 from __future__ import annotations
 
-import argparse,json,math
+import argparse,json
 from pathlib import Path
 
 from ou3_interval import Interval,matrix_mul,matrix_sub,matrix_transpose

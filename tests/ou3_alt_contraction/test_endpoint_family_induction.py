@@ -1,5 +1,5 @@
 import unittest
-from ou3_interval import Interval, matrix_point
+from ou3_interval import matrix_point
 from tools.stability.ou3_alt_contraction import endpoint_family_induction as E
 
 

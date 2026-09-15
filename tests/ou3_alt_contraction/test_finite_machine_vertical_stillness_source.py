@@ -34,7 +34,12 @@ def still_cfg():
     return SCFG.Config(B.rn32(F(196133,20000)),B.rn32(F(1,20)),B.rn32(F(8,10000)),B.rn32(2),B.rn32(1),B.rn32(F(1,5)))
 
 
-def still_operands(vertical_lp,dt,cfg,state=STILL.State()):
+# Frozen dataclass; one module-level instance keeps it out of the argument
+# defaults (B008) without changing the value any caller sees.
+STILL_INIT=STILL.State()
+
+
+def still_operands(vertical_lp,dt,cfg,state=STILL_INIT):
     g=B.rn32(cfg.gravity); a=B.rn32(cfg.energy_alpha); threshold=B.rn32(cfg.energy_thresh)
     an=B.div(vertical_lp,g); inst=B.mul(an,an); decay=B.sub(B.rn32(1),a)
     vals=STILL._sum_products(decay,state.energy,a,inst); en=vals[0]
