@@ -8,8 +8,9 @@ shipping double ``time_ - last_aw_cov_sync_sec_ > adapt_every_secs_`` decision
 matches the exact 5 ms graph on every represented IMU edge.
 
 The certificate is deliberately limited to the current default 0.1 s cadence and
-the bounded startup+600-edge horizon. Mutable setter ancestry and indefinite
-clock lifetime remain fail-closed. No storage search is authorized.
+the bounded startup+600-edge horizon. The cadence is read from the persistent
+runtime/deployment tuner configuration; event-local overrides are forbidden.
+Indefinite clock lifetime remains fail-closed. No storage search is authorized.
 """
 from __future__ import annotations
 from dataclasses import dataclass
@@ -19,6 +20,7 @@ from tools.stability.ou3_alt_contraction import finite_admitted_machine_joined_f
 from tools.stability.ou3_alt_contraction import finite_admitted_machine_measurement_supply_interleaved_prefix as MEAS
 from tools.stability.ou3_alt_contraction import finite_aw_sync_clock_binary64 as CLOCK
 from tools.stability.ou3_alt_contraction import finite_source_continuation as SOURCE
+from tools.stability.ou3_alt_contraction import finite_binary32_arithmetic as B
 
 QUALIFICATION='OU3_ALT_ADMITTED_MACHINE_CLOCK_QUALIFIED_INTERLEAVER_V1'
 
@@ -76,8 +78,22 @@ class CompleteWord:
             raise ValueError('binary64 a_w-sync clock not qualified on all 600 IMU edges')
 
 
+def _carried_cadence(base:LOWER.State):
+    if not isinstance(base,LOWER.State): raise TypeError('joined frontend/Racc state required')
+    mt=LOWER._mtune_state(base.base)
+    runtime=LOWER._runtime(base.base)
+    exact=F(runtime.candidate_cfg.adapt_every_sec)
+    deployed=F(mt.deployment_cfg.adapt_every_sec)
+    if B.rn32(exact)!=deployed:
+        raise ValueError('a_w-sync cadence detached from carried runtime/deployment tuner config')
+    if exact!=CLOCK.ADAPT_REAL or deployed!=CLOCK.ADAPT_FLOAT:
+        raise ValueError('current bounded clock certificate requires carried shipping-default cadence')
+    return exact,deployed
+
+
 def begin(base:LOWER.State):
     if not isinstance(base,LOWER.State): raise TypeError('joined frontend/Racc state required')
+    _carried_cadence(base)
     return State(base,base.source_steps,0)
 
 
@@ -94,9 +110,10 @@ def _mode_clock(mode,event,time):
 
 def imu_step(state:State,**kwargs):
     if not isinstance(state,State): raise TypeError('clock-qualified State required')
-    if F(kwargs.get('aw_sync_adapt_every',CLOCK.ADAPT_REAL))!=CLOCK.ADAPT_REAL:
-        raise ValueError('bounded binary64 clock certificate requires shipping default 0.1 s cadence')
-    lower=LOWER.imu_step(state.base,**kwargs)
+    if 'aw_sync_adapt_every' in kwargs:
+        raise TypeError('a_w-sync cadence is carried by runtime configuration, not an event-local operand')
+    exact_cadence,_=_carried_cadence(state.base)
+    lower=LOWER.imu_step(state.base,aw_sync_adapt_every=exact_cadence,**kwargs)
     measurement=lower.lower.lower
     if not isinstance(measurement,MEAS.ImuResult):
         raise TypeError('joined word lost same-event machine measurement supply')
@@ -132,7 +149,10 @@ def readiness():
       'same_executed_event_aw_sync_clock_qualified':True,
       'complete_word_requires_clock_qualification_on_all_600_IMU_edges':True,
       'goLive_aw_sync_clock_reset_modeled_below':True,
-      'mutable_adapt_every_setter_ancestry_closed':False,
+      'adapt_every_runtime_value_ancestry_closed_for_current_word':True,
+      'per_event_adapt_every_override_forbidden':True,
+      'canonical_5ms_source_dt_ancestry_closed_for_current_word':True,
+      'mutable_adapt_every_setter_history_before_runtime_root_needed':False,
       'arbitrary_dt_inner_clock_closed':False,
       'indefinite_inner_clock_lifetime_closed':False,
       'all_event_arithmetic_witnesses_source_uniformly_qualified':False,
