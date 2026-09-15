@@ -1,5 +1,4 @@
 import unittest
-from dataclasses import replace
 from fractions import Fraction as F
 from tools.stability.ou3_alt_contraction import finite_admitted_wpe_machine_clock_interleaved_prefix as X
 from tools.stability.ou3_alt_contraction import finite_admitted_machine_clock_qualified_interleaved_prefix as CLOCK

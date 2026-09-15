@@ -640,6 +640,13 @@ conditioned operand. Source-uniform guard/Racc/libm supplies remain open.
   covariance bounds and source admission; it must not be repaired by promoting
   those prerequisites. This does not invalidate the finite component identities.
 
+* **Python quality gate:** unused module-level `dataclasses.replace` imports
+  in two WPE regression modules caused F401/F811 findings; the frequency tests
+  already import the helper inside the methods that use it. This is test-code
+  hygiene, not a proof or shipping defect. Remove the unused imports and run
+  the unchanged Python quality gate plus the affected regressions. Do not
+  suppress lint rules or change any theorem qualification to clear this gate.
+
 * **WPE source-order and takeover audit:** the earlier moment graph replaced
   `(alpha*v)*v` by `alpha*(v*v)`. With binary32 alpha=8589935/34359738368,
   previous second moment=8589935/8589934592 and v=9369095/8388608, the literal

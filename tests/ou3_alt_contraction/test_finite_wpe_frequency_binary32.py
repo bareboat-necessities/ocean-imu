@@ -7,7 +7,6 @@ import shutil
 import struct
 import subprocess
 import tempfile
-from dataclasses import replace
 
 from tools.stability.ou3_alt_contraction import finite_binary32_arithmetic as B
 from tools.stability.ou3_alt_contraction import finite_tuner_frequency_binary32 as STORE

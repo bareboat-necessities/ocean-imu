@@ -1,10 +1,17 @@
 # OU-III ALT current handover
 
 Read `AGENTS.md`, this file, `ou3-alt-deployment-prerequisite.md`,
-`ou3-alt-attitude-atlas.md`,
-`ou3-alt-startup-pre-rho.md`, `ou3-alt-proof-plan.md`, and the ALT section of
+`ou3-alt-attitude-atlas.md`, `ou3-alt-startup-disturbance-contract.md`,
+`ou3-alt-wpe-uniform-supplies.md`, `ou3-alt-startup-pre-rho.md`,
+`ou3-alt-proof-plan.md`, and the ALT section of
 `ou3-proof-research-state.md`. The original P2/P3/P4/P5 route continues
 independently through `ou3-brmm-main-handover.md`.
+
+Continue from a fresh branch off `main`. The research question is completion
+of the finite pre-rho qualifications, not estimation of rho. The numerical
+startup profile has already been selected and authorized; do not ask the next
+conversation to choose it again. This document is the current starting point;
+PR #528 contains the implementation and validation record.
 
 ## Controlling result
 
@@ -93,24 +100,79 @@ give that input bound after each defined scalar observer update, without a
 tilt-accuracy assumption. Preceding observer totality, hardware arithmetic and
 the complete source word remain open; the large finite bounds are not ISS gains.
 
-## Continuation
+## Exact open qualifications
 
-1. Keep the closed counter projection, atlas and certified empty magnetic
-   startup branch attached in every stronger source/machine layer. Mathematical
-   event ordinals keep increasing after the shipping count saturates.
-2. Under the declared commissioned startup contract, replace the inadequate
-   Mahony capture argument and prove startup source/control reachability, including seed/SVD/nonfinite
-   branches, and qualify complete initial/refined/continuous magnetic history.
-   Attach the actual target/compiler/Eigen/libm profile; close
-   source-uniform arithmetic supplies and comparison branches under the resulting
-   deployment contract.
-3. Compose the entire same-history 600-transition machine word and require
-   `finite_master_guard.build()` / `assert_finite_storage_master` to pass.
-4. Only then construct coercive storage respecting chart semantics and exact
-   chart transport. In charts 1..3 coordinate zero is NOT zero attitude error;
-   treating every chart origin as zero in one quadratic would be invalid.
-5. Every-prefix retention, ultimate bounds and indefinite no-restart tiling
-   follow; they still require wrapper-clock lifetime treatment.
+`tools/stability/ou3_alt_contraction/finite_master_guard.py` is authoritative.
+Its current eleven `open_obligations` are:
+
+1. `source_uniform_timeout_aligned_branch_reachability`
+2. `near_antiparallel_Eigen_JacobiSVD_solver_correspondence`
+3. `universal_startup_source_and_branch_reachability`
+4. `startup_source_uniform_deployment_supplies`
+5. `target_libm_and_compiler_profile_correspondence`
+6. `WPE_machine_target_libm_and_compiler_selection`
+7. `WPE_source_uniform_machine_supply_bounds`
+8. `WPE_log_and_exp_libm_correspondence`
+9. `Qaxis_exp_libm_correspondence`
+10. `all_event_arithmetic_witnesses_source_uniform`
+11. `complete_source_uniform_600_step_word`
+
+The 32 closed entries are subordinate components. Their count does not imply
+that any of these eleven is closed. In particular, conditional WPE induction
+does not prove preceding Mahony totality or continuation of the startup sensor
+bounds on an arbitrary post-Live ISS word.
+
+## Next falsifiable work
+
+Start with actual startup alignment/capture under the selected sensor and
+temporal contract. Before seed arithmetic, the two seed cones are approximately
+71.99 and 76.26 degrees. Even retaining the old temporal budgets, the old
+Mahony metric needs seed levels 2.05463 / 2.27142, exceeding both its 1.7689
+outer level and 1.87267 chart ceiling. Raising that quadratic level alone is
+a rejected route; reducing the chosen error caps to fit it is not justified.
+
+Compare a nonlinear observer storage, a same-history finite-time source/LPF
+argument and an informative-interval recovery argument against the literal
+gravity-alignment predicate. Any recovery premise beyond the selected contract
+must be stated and justified, not silently assumed. Follow the failure-analysis
+and critic protocol in `AGENTS.md` before refining a failed method.
+
+In the arithmetic branch, attach the actual target/compiler/Eigen/libm profile
+and qualify the seed/SVD/nonfinite branches, guard/Racc/frontend/tuner supplies
+and complete magnetic history. Preserve the existing scalar and FMA branches,
+source/bias ancestry, atlas transport, saturated counters and frontend memory.
+Then compose the complete same-history 600-transition word and require the
+finite master to pass `assert_finite_storage_master` before storage or rho work.
+In charts 1..3 coordinate zero is a 180-degree error, not zero attitude error.
+Every-prefix retention, useful ultimate bounds and indefinite no-restart tiling
+remain separate later requirements, including wrapper-clock lifetime treatment.
+
+## Reproduction and validation boundary
+
+From the repository root:
+
+```sh
+export PYTHONPATH="$PWD:$PWD/tools/stability:$PWD/tests/ou3_alt_contraction"
+python3 -m tools.stability.ou3_alt_contraction.finite_master_guard \
+  --output /tmp/ou3-alt-pre-rho.json
+python3 -m unittest test_finite_startup_sensor_contract \
+  test_finite_wpe_uniform_bounds -v
+```
+
+The master command should validate its report while keeping all ALT PASS and
+storage-readiness flags false. Report validation is not theorem completion.
+The exact finite-algebra CI selection is in `.github/workflows/ou3-alt-contraction.yml`.
+For native correspondence set `OU3_ALT_REQUIRE_NATIVE=1` and, when necessary,
+`EIGEN_INCLUDE_DIR` to the installed Eigen directory. `make all` is the required
+repository build; use `CPPFLAGS+=' -I<eigen-directory>'` if Eigen is not on the
+default include path. `tools/sim_dataset.py` fetches/verifies the simulation data.
+
+The inherited ALT suite still has phase-1 storage, covariance-envelope,
+endpoint-partition and magnetic AD failures. The original live-entry audit
+still questions H18-to-A21 release and session-origin S. Keep these gates
+intact; finite component tests and host/MCU compilation do not establish target
+arithmetic or any of the universal proofs. Exact run results and links belong
+in PR #528, rather than being copied into a new historical handover file.
 
 Zero wind heel, dormant guard, zero lever arm, full-21 covariance, joint24
 motion/bias information, actual-applied R_S, corrected COMPLETE-BRMM and frozen
