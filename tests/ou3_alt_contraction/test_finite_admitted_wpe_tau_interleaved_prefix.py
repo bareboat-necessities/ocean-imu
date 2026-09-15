@@ -38,6 +38,13 @@ def half_getters(state):
 
 
 class Tests(unittest.TestCase):
+    def test_equal_clamped_values_do_not_authorize_different_raw_exact_getters(self):
+        b=base_state(usable=True); state=X.begin(b,machine_wpe_for(b))
+        ceiling=b.prefix.prefix.live.live_word.runtime.candidate_cfg.max_freq
+        with self.assertRaisesRegex(ValueError,'raw exact WPE frequency detached'):
+            X.imu_step(state,shadow_frequency=ceiling+1,preupdate_frequency=ceiling+2,
+                separate_tau_exp_decay=1,fma_tau_exp_decay=1)
+
     def test_usable_entry_orders_frequency_tau_then_current_WPE_update(self):
         # Component-only rational-root cell.  The carried WPE state owns the
         # output; these preupdate operands are the exp witnesses consumed by it.
@@ -75,14 +82,21 @@ class Tests(unittest.TestCase):
         s,_=X.set_hold(s,hold=False)
         self.assertIs(s.wpe,w); self.assertIs(s.base.tau,t)
 
-    def test_machine_WPE_initialization_must_match_exact_carried_state(self):
+    def test_independent_machine_initialization_is_retained_but_log_projection_cannot_be_spliced(self):
+        from tools.stability.ou3_alt_contraction import finite_wpe_machine_binary32 as M
         b=base_state(); exact=TAUJOIN._entry_wpe(b)
-        if exact.log_period is None:
-            bad=WPELOG.State(WPELOG.Track(B.rn32(F(1,2)),1),WPELOG.Track(B.rn32(F(1,2)),1),0)
-        else:
-            bad=WPELOG.initial()
-        with self.assertRaisesRegex(ValueError,'initialization detached'):
-            X.begin(b,bad)
+        logs=WPELOG.State(WPELOG.Track(B.rn32(F(1,2)),1),WPELOG.Track(),0)
+        s=X.begin(b,logs)
+        cfg=b.prefix.prefix.live.live_word.runtime.wpe_cfg
+        entry=M.State(M.MOM.Config.from_shadow(cfg),logs=logs)
+        getter=WPEF.FrequencyExp(-B.rn32(F(1,2)),B.rn32(F(1,2)))
+        sf,ff=X._frequency_sources(s,separate_getter=getter,fma_getter=None,
+            shadow_frequency=None,machine_wpe_entry=entry)
+        self.assertEqual((sf.external.branch,ff.external.branch),('prior','prior'))
+        self.assertIsNone(exact.log_period)
+        with self.assertRaisesRegex(ValueError,'carried log ledger'):
+            X._frequency_sources(s,separate_getter=getter,fma_getter=None,
+                shadow_frequency=None,machine_wpe_entry=M.initial(cfg))
 
     def test_readiness_closes_global_history_topology_not_numerics(self):
         r=X.readiness()

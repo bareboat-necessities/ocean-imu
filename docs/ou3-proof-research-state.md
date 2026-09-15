@@ -517,13 +517,43 @@ Racc reads the SAMPLE-ENTRY machine TuneState sigma on every sample, before the
 candidate update, even when no pending commit fires. Its frequency is the raw
 preupdate WPE getter/prior, before statistics and tuning clamps. Active OU
 parameters remain separately held by the pending/goLive commit mechanism.
-The Racc comparison still uses the exact guarded operand: the numerical
-machine-guard displacement has NOT yet been injected into its accelerometer
-path. Source-uniform guard/Racc/libm supplies are therefore open.
+The joined Racc and accelerometer relations consume the same machine-guard
+conditioned operand. Source-uniform guard/Racc/libm supplies remain open.
 
 ### Failure analysis and independent critic
 
-* **WPE source-order and takeover audit:** the machine moment graph replaces
+* **WPE branch attachment:** the preceding machine product rejected
+  any exact/machine usable-latch mismatch and the lower ledgers also required
+  simultaneous log initialization/production. This is a composition restriction,
+  not a proved property of every admitted source. Native boundary checks cannot
+  establish a uniform positive comparison margin. Three alternatives are:
+  (1) prove such margins for all WPE comparisons; (2) replace branch mismatch by
+  an additive perturbation envelope; (3) compose each literal branch separately
+  on the same source history. Choose (3): it retains the discontinuous control
+  and exact residual, whereas (1) has no source margin and (2) loses the program
+  decisions. The controlling prerequisite is equality to the finite shipping
+  word before rho, not a local contraction bound. The falsifiable check is that
+  different machine/exact initialization, production and takeover decisions
+  survive startup/Live composition without accepting detached log operands,
+  vertical inputs, frequencies, or successor states. The raw exact getter is
+  also bound before either clamp; matching final clamped values cannot justify
+  a different exact input to the lower event. Target accuracy and full
+  execution totality remain separate obligations.
+* **Frequency input lattice:** the getter and statistics-clamp relation used
+  the normal-only arithmetic predicate even though these operations only
+  select and compare their input. Host `expf(-100)` returns subnormal bits
+  `0x1b`; the wrapper selects that positive value after takeover and the
+  statistics clamp raises it to its normal floor. This is a component-domain
+  omission, not a reachable-source or stability counterexample. Reuse the exact
+  full binary32 lattice for getter/input validation and retain normal arithmetic
+  after the clamp. Check actual-header selection on NaN/overflow/underflow,
+  subnormal and ordinary outputs. No target libm accuracy is inferred.
+* **Inherited ALT CI:** the finite-identity job passes. The inherited suite has
+  five failures and nine errors, including unqualified phase-1 storage,
+  covariance bounds and source admission; it must not be repaired by promoting
+  those prerequisites. This does not invalidate the finite component identities.
+
+* **WPE source-order and takeover audit:** the earlier moment graph replaced
   `(alpha*v)*v` by `alpha*(v*v)`. With binary32 alpha=8589935/34359738368,
   previous second moment=8589935/8589934592 and v=9369095/8388608, the literal
   uncontracted result is 2816655/2147483648, outside the old graph's singleton
@@ -537,18 +567,14 @@ path. Source-uniform guard/Racc/libm supplies are therefore open.
   and disagreement between compiler histories without splicing their logs.
   The corrected graph retains literal products and both machine latches. Native
   header checks cover 200 second-moment updates and 18 latch boundary cases.
-  The lower exact-branch composer now explicitly rejects latch disagreement;
-  source-uniform branch coverage remains open. The wrapper also evaluates its
-  frequency getter before testing the latch and uses the prior on invalid
-  getter output even after latching. The old "prior without exp" status was
-  inaccurate; only non-consumption of its result is established in that branch.
-  The complete eager-getter/fallback arithmetic graph remains open.
-  The first attachment regression
-  rejected two legacy Live component fixtures: their exact state was usable,
-  while the previously absent machine latch defaulted false. This is a fixture
-  mismatch, not a source counterexample. The component fixtures now state their
-  retained true latch explicitly and also test rejection of the false latch;
-  no startup reachability claim follows from those snapshots.
+  The full startup/Live product now projects its carried machine WPE entry
+  into frequency selection and checks each log successor against the same
+  moment update. Initialization, production and takeover can differ from the
+  exact shadow and between machine histories. The eager frequency getter and
+  invalid-result fallback are represented; target correspondence remains open.
+  Component regressions exercise different decisions through the full
+  frontend/tuner/Racc join and reject a frontend built for the wrong frequency.
+  They do not assert that their component predecessor is a reachable startup.
 * **Frequency range closure:** the final outer clamp maps every finite input
   into its configured interval and nonfinite inputs to the floor. Interval
   subtraction bounds machine-minus-shadow independently of WPE accuracy or

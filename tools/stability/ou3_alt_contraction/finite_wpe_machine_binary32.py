@@ -138,20 +138,6 @@ def step(state:State,*,dt,vertical_accel,separate:ModeWitnesses,fma:ModeWitnesse
     return nxt,sr,fr,logs
 
 
-def require_shadow_usable(state:State,shadow:SHADOW.WPEState):
-    """Guard the current lower composer, whose frequency branch uses shadow.
-
-    Tracking machine latches alone does not authorize the lower composer to
-    ignore them. Until independent branch execution is composed, reject a
-    disagreement explicitly, including on the successor before goLive.
-    """
-    if not isinstance(state,State) or not isinstance(shadow,SHADOW.WPEState):
-        raise TypeError('machine and exact WPE states required')
-    if state.separate_usable!=shadow.usable_period or state.fma_usable!=shadow.usable_period:
-        raise ValueError('machine WPE usable latch differs from lower exact frequency branch')
-    return True
-
-
 def readiness():
     m=MOM.readiness(); l=LOG.readiness()
     u=USABLE.readiness()

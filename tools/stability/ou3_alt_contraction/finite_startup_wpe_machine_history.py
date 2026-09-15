@@ -6,10 +6,10 @@ machine Mahony vertical output and binds the dual binary32 WPE moment/log produc
 to the same sample. The log witnesses supplied to this product are also the
 ones consumed by the lower tuner/WPE-log path.
 
-The current lower product still expects exact-shadow and both machine log-update
-branches to agree. This wrapper therefore fails closed if the newly materialized
-machine moment branches would update on a different sample. Proving that branch
-robustness source-uniformly is a remaining deployment obligation.
+The full machine predecessor owns frequency selection in the lower product.
+Exact and machine production/takeover branches can differ. Their log successors
+must agree with this same full moment update before the event is accepted.
+Target arithmetic and source-uniform execution remain separate obligations.
 """
 from __future__ import annotations
 from dataclasses import dataclass
@@ -29,7 +29,8 @@ class State:
         if not isinstance(self.base,LOWER.State) or not isinstance(self.wpe,WPE.State):
             raise TypeError('joined startup and full WPE machine states required')
         if self.qualification!=QUALIFICATION: raise ValueError('wrong startup WPE-machine qualification')
-        WPE.require_shadow_usable(self.wpe,self.base.base.lower.frontend.tuner.wpe)
+        if self.base.base.frontends.samples==0 and self.wpe!=WPE.initial(self.base.runtime.wpe_cfg):
+            raise ValueError('startup full WPE state detached from literal reset')
         if self.wpe.logs!=self.base.base.lower.wpe:
             raise ValueError('full WPE machine log state detached from lower startup WPE log ledger')
         if self.wpe.separate.samples!=self.base.separate_source.samples or self.wpe.fma.samples!=self.base.fma_source.samples:
@@ -53,10 +54,10 @@ class StepResult:
 
 def step(state:State,raw,*,separate_wpe:WPE.ModeWitnesses,fma_wpe:WPE.ModeWitnesses,**kwargs):
     if not isinstance(state,State): raise TypeError('startup WPE-machine State required')
-    if 'separate_log_witness' in kwargs or 'fma_log_witness' in kwargs:
+    if {'separate_log_witness','fma_log_witness','machine_wpe_entry'} & set(kwargs):
         raise TypeError('startup log witnesses are owned by the full WPE machine product')
     lower=LOWER.step(state.base,raw,separate_log_witness=separate_wpe.log,
-                     fma_log_witness=fma_wpe.log,**kwargs)
+                     fma_log_witness=fma_wpe.log,machine_wpe_entry=state.wpe,**kwargs)
     if lower.separate_source.band_input!=lower.fma_source.band_input:
         raise ValueError('startup compiler histories lost common Mahony vertical WPE input')
     h=kwargs.get('machine_dt')
@@ -107,7 +108,8 @@ def readiness():
       'startup_frontend_vertical_ancestry_attached': bool(
           w['same_machine_vertical_sample_drives_both_compiler_WPE_histories'] and
           low['Cold_and_postCold_machine_sources_joined_to_one_executed_frontend_event']),
-      'machine_vs_exact_WPE_period_branch_robustness_closed':False,
+      'machine_vs_exact_WPE_period_branch_agreement_required':False,
+      'independent_machine_WPE_production_and_frequency_branches_composed':True,
       'target_WPE_libm_and_compiler_profile_correspondence_closed':False,
       'source_uniform_startup_WPE_supply_bounds_closed':False,
       'Live_600_step_WPE_machine_history_attached':False,

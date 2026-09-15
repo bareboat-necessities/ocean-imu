@@ -14,6 +14,8 @@ class Tests(unittest.TestCase):
         self.assertNotIn('signed_magnetic_counter_safety_on_the_finite_word',x['open_obligations'])
         self.assertEqual(x['falsified_prerequisites'],{})
         self.assertNotIn('WPE_frequency_source_uniform_supply',x['open_obligations'])
+        self.assertNotIn('WPE_machine_vs_exact_period_branch_robustness',x['open_obligations'])
+        self.assertTrue(x['closed_subobligations']['independent_WPE_machine_and_exact_branches_composed'])
         self.assertTrue(x['closed_subobligations']['source_uniform_clamped_WPE_frequency_discrepancy'])
         self.assertTrue(x['closed_subobligations']['literal_per_compiler_WPE_usable_latch'])
         self.assertTrue(x['finite_storage_status']['finite_word_counter_safety_closed'])

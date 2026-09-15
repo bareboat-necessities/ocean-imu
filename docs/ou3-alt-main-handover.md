@@ -56,14 +56,17 @@ clamps, including nonfinite fallback and retained statistics. For exact bounds
 [RN32(L)-U, RN32(U)-L]. This proof requires neither branch agreement nor a libm
 accuracy estimate. The two-clamp accepted-update relation additionally uses the
 statistics interval. Neither bound proves execution totality or a useful
-contraction margin. The master has 13 remaining open qualifications.
+contraction margin. The master has 12 remaining open qualifications.
 
 The moment graph retains shipping's literal `(alpha*v)*v` and `(alpha*eta)*eta`
 order. Each machine history carries its own post-log-update usable latch,
 including both inclusive elapsed/history comparisons and the one-way retention
-rule. Startup and Live reject a mismatch with the lower exact frequency branch;
-they do not silently ignore the machine latch. Independent machine/exact
-production and frequency-branch composition remains open.
+rule. Startup and Live compose independent machine/exact production, initialization
+and frequency choices. The strong wrapper supplies its carried machine WPE
+state to the lower tuner, then checks the same source-driven moment/log
+successor. The eager getter and invalid-result prior fallback are retained.
+See `ou3-alt-wpe-branch-composition.md`. Agreement of comparisons is no longer
+a prerequisite; source-uniform arithmetic and target qualification remain open.
 
 ## Continuation
 

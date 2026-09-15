@@ -37,9 +37,9 @@ class State:
     def __post_init__(self):
         if not isinstance(self.frontend,FRONT.State) or not isinstance(self.tau,TAU.State) or not isinstance(self.wpe,WPELOG.State):
             raise TypeError('guarded frontend, tau ledger and WPE log ledger required')
-        exact=self.frontend.tuner.wpe; initialized=exact.log_period is not None
-        if initialized != (self.wpe.separate.log_period is not None) or initialized != (self.wpe.fma.log_period is not None):
-            raise ValueError('startup machine WPE log initialization detached from exact frontend WPE state')
+        if self.frontend.tuner.sample_index==0 and (
+                self.wpe.separate.log_period is not None or self.wpe.fma.log_period is not None):
+            raise ValueError('startup machine WPE initialization detached from reset')
         if self.tau.updates>self.frontend.tuner.sample_index:
             raise ValueError('startup tau updates cannot exceed physical frontend samples')
         if self.wpe.samples>self.frontend.tuner.sample_index:
@@ -79,9 +79,13 @@ def initial(frontend:FRONT.State):
     return State(frontend,TAU.initial(),WPELOG.initial())
 
 
-def _frequency_sources(state:State,cfg,exact_frequency,*,separate_getter,fma_getter,band_cfg,stats_cfg):
+def _frequency_sources(state:State,cfg,exact_frequency,*,separate_getter,fma_getter,band_cfg,stats_cfg,machine_wpe_entry=None):
     exact=state.frontend.tuner.wpe
     lo,hi=(F(cfg.min_freq),F(cfg.max_freq)) if cfg is not None else (F(band_cfg.tune_freq_floor),F(band_cfg.tune_freq_ceil))
+    if machine_wpe_entry is not None:
+        return WPEF.machine_frequencies(exact,machine_wpe_entry,logs=state.wpe,
+            separate_getter=separate_getter,fma_getter=fma_getter,shadow_frequency=exact_frequency,
+            stats_cfg=stats_cfg,exact_min_hz=lo,exact_max_hz=hi)
     def via(q): return WPEF.through_statistics(q,stats_cfg,exact_min_hz=lo,exact_max_hz=hi)
     if exact.usable_period:
         if exact_frequency is None: raise TypeError('usable startup WPE requires exact shadow frequency')
@@ -100,7 +104,11 @@ def _frequency_sources(state:State,cfg,exact_frequency,*,separate_getter,fma_get
     return (via(WPEF.tuner_frequency(exact,min_hz=B.rn32(lo),max_hz=B.rn32(hi))),via(WPEF.tuner_frequency(exact,min_hz=B.rn32(lo),max_hz=B.rn32(hi))))
 
 
-def _advance_wpe(state:State,out:FRONT.Result,*,separate_log_witness,fma_log_witness):
+def _advance_wpe(state:State,out:FRONT.Result,*,separate_log_witness,fma_log_witness,machine_wpe_entry=None):
+    if machine_wpe_entry is not None:
+        return WPELOG.advance_modes(state.wpe,
+            separate_produced=separate_log_witness is not None,fma_produced=fma_log_witness is not None,
+            separate_witness=separate_log_witness,fma_witness=fma_log_witness)
     w=out.tuner.wpe
     if not w.produced_period:
         if separate_log_witness is not None or fma_log_witness is not None:
@@ -117,7 +125,7 @@ def _advance_wpe(state:State,out:FRONT.Result,*,separate_log_witness,fma_log_wit
 
 def step(state:State,raw,*,dt,separate_getter=None,fma_getter=None,
          separate_tau_exp_decay=None,fma_tau_exp_decay=None,
-         separate_log_witness=None,fma_log_witness=None,**kwargs):
+         separate_log_witness=None,fma_log_witness=None,machine_wpe_entry=None,**kwargs):
     if not isinstance(state,State): raise TypeError('startup WPE/tau State required')
     cfg=kwargs.get('candidate_cfg')
     # Execute the exact guarded frontend first; its candidate is nevertheless
@@ -125,7 +133,7 @@ def step(state:State,raw,*,dt,separate_getter=None,fma_getter=None,
     # shipping preupdate ordering.
     out=FRONT.step(state.frontend,raw,dt=dt,**kwargs); cand=out.tuner.candidate
     sf,ff=_frequency_sources(state,cfg,kwargs.get('preupdate_frequency') if state.frontend.tuner.wpe.usable_period else None,
-        separate_getter=separate_getter,fma_getter=fma_getter,band_cfg=kwargs['band_cfg'],stats_cfg=kwargs['stats_cfg'])
+        separate_getter=separate_getter,fma_getter=fma_getter,band_cfg=kwargs['band_cfg'],stats_cfg=kwargs['stats_cfg'],machine_wpe_entry=machine_wpe_entry)
     if cand is None:
         if any(x is not None for x in (separate_tau_exp_decay,fma_tau_exp_decay)):
             raise ValueError('Cold/noncandidate startup branch consumes no tau deployment witnesses')
@@ -145,7 +153,7 @@ def step(state:State,raw,*,dt,separate_getter=None,fma_getter=None,
         tau=tstep.state
         ss=ModeSupply(sf.machine_minus_shadow,tstep.separate_target.exact_target-F(cand.tau_target),F(separate_tau_exp_decay)-F(ema.decay_tau_sigma))
         fs=ModeSupply(ff.machine_minus_shadow,tstep.fma_target.exact_target-F(cand.tau_target),F(fma_tau_exp_decay)-F(ema.decay_tau_sigma))
-    wstep=_advance_wpe(state,out,separate_log_witness=separate_log_witness,fma_log_witness=fma_log_witness)
+    wstep=_advance_wpe(state,out,separate_log_witness=separate_log_witness,fma_log_witness=fma_log_witness,machine_wpe_entry=machine_wpe_entry)
     return Result(State(out.state,tau,wstep.state),out,tstep,wstep,ss,fs,sf,ff)
 
 

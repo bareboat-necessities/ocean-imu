@@ -47,6 +47,10 @@ def build():
     counter_certificate=COUNTER.build()
 
     closed={
+      'independent_WPE_machine_and_exact_branches_composed': bool(
+          swpe['independent_machine_WPE_production_and_frequency_branches_composed'] and
+          lwpe['independent_machine_WPE_production_and_frequency_branches_composed'] and
+          wfreq['eager_frequency_getter_and_invalid_post_latch_fallback_composed']),
       'source_uniform_clamped_WPE_frequency_discrepancy':wfreq['source_uniform_WPE_frequency_supply_bound_closed'],
       'literal_per_compiler_WPE_usable_latch':wmach['source_produced_per_compiler_usable_latches_retained'],
       'signed_magnetic_counter_safety_on_every_finite_prefix':counter_certificate['counter_lifetime_closed'],
@@ -101,7 +105,6 @@ def build():
       'startup_source_uniform_deployment_supplies': not startup['source_uniform_startup_deployment_supply_bounds_closed'],
       'target_libm_and_compiler_profile_correspondence': not startup['all_target_libm_and_compiler_profile_correspondence_closed'],
       'WPE_machine_target_libm_and_compiler_selection': not (wmach['target_exp_log_sqrt_libm_correspondence_closed'] and wmach['compiler_profile_selection_closed']),
-      'WPE_machine_vs_exact_period_branch_robustness': not lwpe['machine_vs_exact_WPE_period_branch_robustness_closed'],
       'WPE_source_uniform_machine_supply_bounds': not lwpe['source_uniform_WPE_machine_supply_bounds_closed'],
       'WPE_log_and_exp_libm_correspondence': not (wlog['WPE_log_std_log_target_libm_correspondence_closed'] and wlog['WPE_log_exp_target_libm_correspondence_closed']),
       'Qaxis_exp_libm_correspondence': not qexp['Qaxis_exp_libm_binary32_correspondence_closed'],

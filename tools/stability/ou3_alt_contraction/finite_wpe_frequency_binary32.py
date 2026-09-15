@@ -13,9 +13,9 @@ binary32 witnesses; no bit-level reciprocal identity is assumed.
 The SeaState wrapper consumes the WPE frequency from the SAMPLE-ENTRY state.
 It calls ``getFrequencyHz()`` before testing the usable latch and getter validity.
 The selected value is that getter only when both tests pass; otherwise it uses
-the literal 0.2f prior. The conditional relation below represents valid-getter
-WPE branches and preusable prior branches. Eager getter execution and invalid
-post-latch fallback still require the complete arithmetic composition.
+the literal 0.2f prior. The strong machine-entry relation retains eager getter
+execution and invalid post-latch fallback separately from the exact shadow's selection. The legacy
+component entry retains its explicit matched-branch preconditions.
 The machine frequency need not equal the exact-real shadow frequency.  Their
 post-clamp difference is retained explicitly as deployment supply instead of
 being silently identified.
@@ -144,6 +144,44 @@ class GetterResult:
 
 
 @dataclass(frozen=True)
+class FrequencyExp:
+    """The eager frequency getter; None denotes any nonfinite result."""
+    argument:F
+    result:F|None
+    def __post_init__(self):
+        a=F(self.argument)
+        if not STORE.is_finite_input(a): raise ValueError('binary32 frequency-exp argument required')
+        object.__setattr__(self,'argument',a)
+        if self.result is not None:
+            r=F(self.result)
+            if not STORE.is_finite_input(r): raise ValueError('binary32 frequency-exp result required')
+            object.__setattr__(self,'result',r)
+
+
+@dataclass(frozen=True)
+class MachineRead:
+    log_period:F|None
+    usable:bool
+    exp:FrequencyExp|None
+    def __post_init__(self):
+        if type(self.usable) is not bool: raise TypeError('literal machine usable latch required')
+        if self.log_period is None:
+            if self.exp is not None: raise ValueError('nonfinite log executes no frequency exp')
+        else:
+            lp=F(self.log_period)
+            if not STORE.is_finite_input(lp): raise ValueError('binary32 machine log required')
+            object.__setattr__(self,'log_period',lp)
+            if not isinstance(self.exp,FrequencyExp) or self.exp.argument!=-lp:
+                raise ValueError('eager frequency exp detached from sample-entry machine log')
+    @property
+    def branch(self):
+        good=self.exp is not None and self.exp.result is not None and self.exp.result>0
+        return 'wpe' if self.usable and good else 'prior'
+    @property
+    def frequency(self): return self.exp.result if self.branch=='wpe' else PRIOR
+
+
+@dataclass(frozen=True)
 class TunerFrequencyResult:
     """Exact shadow and deployed frequency consumed by one tuner sample."""
     shadow:WPE.WPEState
@@ -153,6 +191,7 @@ class TunerFrequencyResult:
     exact_clamped_frequency:F
     stored:STORE.StoredFrequency
     machine_minus_shadow:F
+    machine_read:MachineRead|None=None
     def __post_init__(self):
         if not isinstance(self.shadow,WPE.WPEState) or not isinstance(self.stored,STORE.StoredFrequency):
             raise TypeError('preupdate WPE state and StoredFrequency required')
@@ -163,7 +202,16 @@ class TunerFrequencyResult:
         if r!=F(self.stored.stored_hz)-ec:
             raise ValueError('machine-minus-shadow tuner frequency supply detached')
         if self.branch not in ('prior','wpe'): raise ValueError('unknown tuner-frequency source branch')
-        if self.branch=='prior':
+        if self.machine_read is not None:
+            if not isinstance(self.machine_read,MachineRead): raise TypeError('machine frequency read required')
+            if self.getter is not None: raise ValueError('machine read owns the eager getter')
+            if self.branch!=self.machine_read.branch or self.stored.input_hz!=self.machine_read.frequency:
+                raise ValueError('tuner frequency detached from actual machine latch/getter decision')
+            if not self.shadow.usable_period and ef!=PRIOR_EXACT:
+                raise ValueError('exact preusable source must retain the exact prior')
+            if self.shadow.usable_period and self.shadow.log_period is None:
+                raise ValueError('exact usable source requires its own initialized log')
+        elif self.branch=='prior':
             if self.shadow.usable_period: raise ValueError('usable WPE state cannot take fixed-prior tuner branch')
             if self.getter is not None: raise ValueError('fixed-prior tuner branch consumes no WPE exp getter result')
             if ef!=PRIOR_EXACT or self.stored.input_hz!=PRIOR:
@@ -178,6 +226,45 @@ class TunerFrequencyResult:
                 raise ValueError('tuner store detached from same WPE frequency getter result')
         object.__setattr__(self,'exact_shadow_frequency',ef); object.__setattr__(self,'exact_clamped_frequency',ec)
         object.__setattr__(self,'machine_minus_shadow',r)
+
+
+def machine_frequency(shadow,*,log_period,usable,getter,min_hz,max_hz,shadow_frequency=None):
+    """Independent exact and machine choices, with no log-initialization equality."""
+    if not isinstance(shadow,WPE.WPEState): raise TypeError('same exact WPE entry required')
+    if shadow.usable_period:
+        if shadow_frequency is None: raise TypeError('exact usable branch requires exact frequency')
+        exact=F(shadow_frequency)
+    else:
+        if shadow_frequency is not None: raise ValueError('exact prior consumes no frequency witness')
+        exact=PRIOR_EXACT
+    if isinstance(getter,GetterResult):
+        if getter.log.stored_log_period!=log_period or getter.log.shadow_log_period!=shadow.log_period:
+            raise ValueError('legacy getter detached from machine/exact entry logs')
+        getter=FrequencyExp(getter.frequency_argument,getter.frequency_result)
+    read=MachineRead(log_period,usable,getter)
+    stored=STORE.store(read.frequency,min_hz,max_hz)
+    ec=clamp(exact,F(min_hz),F(max_hz))
+    return TunerFrequencyResult(shadow,read.branch,None,exact,ec,stored,stored.stored_hz-ec,read)
+
+
+def machine_frequencies(shadow,entry,*,logs,separate_getter,fma_getter,shadow_frequency,
+                        stats_cfg,exact_min_hz,exact_max_hz):
+    """Projection of the persistent full WPE predecessor into the lower tuner.
+
+    The strong startup/Live wrapper supplies entry directly from its carried
+    state. The lower log ledger must be identical. Current-sample production is
+    checked against the full moment update by that same wrapper on return.
+    """
+    from tools.stability.ou3_alt_contraction import finite_wpe_machine_binary32 as M
+    if not isinstance(entry,M.State) or entry.logs!=logs:
+        raise ValueError('full machine WPE entry detached from lower carried log ledger')
+    lo,hi=F(exact_min_hz),F(exact_max_hz)
+    def one(track,usable,getter):
+        q=machine_frequency(shadow,log_period=track.log_period,usable=usable,getter=getter,
+            min_hz=B.rn32(lo),max_hz=B.rn32(hi),shadow_frequency=shadow_frequency)
+        return through_statistics(q,stats_cfg,exact_min_hz=lo,exact_max_hz=hi)
+    return (one(logs.separate,entry.separate_usable,separate_getter),
+            one(logs.fma,entry.fma_usable,fma_getter))
 
 
 def bind_log_state(shadow:WPE.WPEState, stored_log_period):
@@ -283,7 +370,8 @@ def readiness():
       'period_and_frequency_libm_results_retained_separately':True,
       'binary32_period_frequency_bit_reciprocity_assumed':False,
       'preusable_WPE_uses_literal_binary32_0p2_prior_without_consuming_getter_result':True,
-      'eager_frequency_getter_and_invalid_post_latch_fallback_composed':False,
+      'eager_frequency_getter_and_invalid_post_latch_fallback_composed':True,
+      'machine_frequency_branch_independent_of_exact_usable_latch':True,
       'usable_WPE_frequency_getter_bound_to_sample_entry_log_state':True,
       'machine_minus_exact_tuner_frequency_supply_exposed':True,
       'statistics_store_and_outer_tuning_clamps_retained_in_order':True,
