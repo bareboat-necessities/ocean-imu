@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdlib>
+#include <cstring>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
@@ -37,7 +38,7 @@ static double yaw(double t){
 
 int main(int argc,char**argv){
  const int count=argc>2?std::atoi(argv[2]):30602;
- std::ofstream packets;if(argc>1)packets.open(argv[1]);
+ std::ofstream packets;if(argc>1 && std::string(argv[1])!="-")packets.open(argv[1]);
  using Wrapper=SeaStateFusion_OU_III<TrackerType::KALMANF>;
  Wrapper wrapper;Wrapper::Config cfg;wrapper.begin(cfg);
  VerticalAccelComplementary shadow(.2f,.02f,20.f);
@@ -47,6 +48,7 @@ int main(int argc,char**argv){
  Eigen::Vector3d reference, frozen;
  double max_noise=0,max_accel=0,max_angle=0,max_halferror=0,min_lpz=100;
  float max_guard=0,max_weight=0;bool integral_changed=false,live=false,shadow_differs=false;
+ unsigned long fixed_run=0,max_fixed_run=0;float prior_state[7]={};bool have_prior=false;
  for(int k=0;k<count;k++){
   const double time=k*.005, phase=omega*time-yaw(time);
   const double rate=k<dock?rates[std::min(k/1000,29)]:omega;
@@ -71,7 +73,6 @@ int main(int argc,char**argv){
       m.integralFBy+.02f*ey*dt,m.integralFBz+.02f*ez*dt);
    const Eigen::Vector3d total=next_i+Eigen::Vector3d(0,0,omega);
    const Eigen::Vector3d tangent=total-h.dot(total)*h;
-   // k*dt=.08: a radius .0003 tube has about .000024 inward margin.
    const Eigen::Vector3d residual=-tangent-.2*halferror+16.*reference.cross(h);
    gyro=(Eigen::Vector3d(0,0,omega)+residual).cast<float>();
    max_noise=std::max(max_noise,(gyro.cast<double>()-Eigen::Vector3d(0,0,omega)).norm());
@@ -83,6 +84,9 @@ int main(int argc,char**argv){
       <<' '<<acc.x()<<' '<<acc.y()<<' '<<acc.z()<<'\n';
   wrapper.update(dt,gyro,acc);shadow.update(dt,gyro,acc,g_std);
   shadow_differs|=(wrapper.raw().startupProxyQuat().coeffs()-shadow.quaternion().coeffs()).squaredNorm()!=0;
+  if(k>=dock){const auto& m=shadow.ahrs_;float state[7]={m.q0,m.q1,m.q2,m.q3,m.integralFBx,m.integralFBy,m.integralFBz};
+   if(have_prior && std::memcmp(state,prior_state,sizeof(state))==0)++fixed_run;else fixed_run=0;
+   max_fixed_run=std::max(max_fixed_run,fixed_run);std::memcpy(prior_state,state,sizeof(state));have_prior=true;}
   const auto leveled=seastate::common::accWorldFromBody(wrapper.raw().startupProxyQuat(),acc);
   if(k==0)lp=leveled;else lp+=alpha*(leveled-lp);
   max_guard=std::max(max_guard,wrapper.raw().accelVibrationRms());
@@ -101,7 +105,7 @@ int main(int argc,char**argv){
      <<" gyro "<<max_noise<<" accel "<<max_accel<<" angle "<<max_angle
      <<" halferror "<<max_halferror<<" guard "<<max_guard<<" weight "<<max_weight
      <<" integral_changed "<<integral_changed<<" shadow_differs "<<shadow_differs
-     <<" live "<<live<<"\n";
+     <<" live "<<live<<" fixedrun "<<max_fixed_run<<"\n";
  return count>dock && !live && !shadow_differs && !integral_changed && min_lpz>2
      && max_noise<.001 && max_accel<.01 && max_halferror<.000001
      && max_weight==0 && max_guard<.03 ? 0:2;
