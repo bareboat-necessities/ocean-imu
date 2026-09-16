@@ -1,0 +1,27 @@
+name: ou3-alt-shell-workspace
+on:
+  push:
+    branches: [codex/ou3-alt-quaternion-shell]
+    paths: [.github/workflows/ou3-alt-shell-workspace.yml]
+permissions:
+  contents: read
+jobs:
+  workspace:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare public source and Eigen workspace
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y libeigen3-dev
+          git archive HEAD -o /tmp/ou3-alt-source.tar
+          tar -C /usr/include -czf /tmp/ou3-alt-eigen.tar.gz eigen3
+          git rev-parse HEAD > /tmp/ou3-alt-source-sha.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ou3-alt-shell-workspace
+          path: |
+            /tmp/ou3-alt-source.tar
+            /tmp/ou3-alt-eigen.tar.gz
+            /tmp/ou3-alt-source-sha.txt
+          retention-days: 1
