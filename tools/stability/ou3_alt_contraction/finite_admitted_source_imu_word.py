@@ -6,6 +6,7 @@ This composes, on one event, the pieces that were previously parallel:
 * one quantified admitted BIAS0/1/2 history;
 * the same kth 5 ms restriction of both histories;
 * one source-qualified raw IMU packet;
+* the commissioned MEMS raw-input caps, checked before event execution;
 * prediction/model roots reconstructed by ``finite_source_bound_prediction_word``;
 * the exact post-guard IMU/thermal forcing consumed by the executed prefix.
 
@@ -28,6 +29,7 @@ from tools.stability.ou3_alt_contraction import finite_source_bound_prediction_w
 from tools.stability.ou3_alt_contraction import finite_source_bound_imu_forcing as FORCE
 from tools.stability.ou3_alt_contraction import finite_source_continuation as SOURCE
 from tools.stability.ou3_alt_contraction import finite_sensor_source_runtime as SENSOR
+from tools.stability.ou3_alt_contraction import finite_live_input_contract as INPUT
 
 
 @dataclass(frozen=True)
@@ -35,6 +37,7 @@ class Result:
     state: ADLIVE.State
     event: object
     forcing: FORCE.ImuForcing
+    input_admission: INPUT.PacketAdmission
 
 
 def _forcing(pred_result, temperature_c):
@@ -56,6 +59,7 @@ def imu_step(state:ADLIVE.State, *, restricted:ABRMM.RestrictedSegment,
              bias_restricted:ABIAS.RestrictedBiasStep,
              witness:SOURCE.StepWitness, raw:SENSOR.RawImuSample, packet_id:str,
              temperature_c, **dynamic):
+    input_admission=INPUT.check_packet(raw)
     if not isinstance(state,ADLIVE.State):
         raise TypeError('joint admitted BRMM/BIAS Live state required')
     if not isinstance(restricted,ABRMM.RestrictedSegment) or not isinstance(bias_restricted,ABIAS.RestrictedBiasStep):
@@ -78,7 +82,7 @@ def imu_step(state:ADLIVE.State, *, restricted:ABRMM.RestrictedSegment,
                        **dynamic)
     forcing=_forcing(pred,temperature_c)
     nxt=ADLIVE.State(pred.state,state.admitted_history,state.bias_history)
-    return Result(nxt,pred.event,forcing)
+    return Result(nxt,pred.event,forcing,input_admission)
 
 
 def readiness():
@@ -91,6 +95,7 @@ def readiness():
       'same_restriction_drives_source_bound_prediction_coefficients':True,
       'prediction_roots_caller_override_forbidden':pred['caller_cannot_override_prediction_or_accel_model_roots'],
       'same_executed_packet_forcing_retained':force['forcing_supply_derived_from_executed_source_owned_IMU_event'],
+      'commissioned_MEMS_raw_packet_checked_before_execution':True,
       'physical_moments_sensor_forcing_and_model_roots_share_one_event':True,
       'sensor_residual_admissibility_attached':False,
       'startup_sample_zero_admitted_history_equality_closed':False,

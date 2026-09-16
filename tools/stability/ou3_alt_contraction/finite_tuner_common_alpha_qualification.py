@@ -72,9 +72,8 @@ def qualify(step:T.TauStep,candidate_cfg:C.CandidateConfig,deployment_cfg:D.Depl
     f,target,sea,adapt=T._floats_from_frequency(step.frequency,candidate_cfg,h)
     if (step.frequency,step.tau_target,step.sea_time,step.adapt_sec)!=(f,target,sea,adapt):
         raise ValueError('TauStep detached from declared common-alpha frequency/config horizon')
-    x=B.div(h,adapt); elo,ehi,_,_=EXP.enclosure(x)
-    if not elo<=step.exp_decay<=ehi:
-        raise ValueError('TauStep exp witness detached from same rounded common-alpha argument')
+    x=B.div(h,adapt)
+    T.check_exp_result(x,step.exp_decay,step.exp_profile)
     alpha=B.sub(B.rn32(1),step.exp_decay)
     if step.alpha!=alpha: raise ValueError('TauStep alpha detached from 1-exp common coefficient')
     if step.next_separate!=B.ema(step.previous,step.tau_target,alpha,contracted=False):

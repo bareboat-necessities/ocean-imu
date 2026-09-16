@@ -49,7 +49,7 @@ class Tests(unittest.TestCase):
         r=X.readiness()
         for k in ('shipping_band_corner_and_decay_source_shape_matches','corner_clamp_and_nyquist_guard_binary32_graph_materialized',
                   'two_pi_corner_dt_arguments_binary32_source_order_materialized','low_and_high_exp_calls_retained_distinct',
-                  'exp_results_bound_to_same_arguments_by_tight_real_enclosure_and_RNE_cell','source_two_subtraction_alpha_q_rounding_materialized'):
+                  'exp_results_bound_to_same_arguments_by_tight_real_enclosure_and_error_profile','source_two_subtraction_alpha_q_rounding_materialized'):
             self.assertTrue(r[k])
         for k in ('target_exp_libm_correspondence_closed','reference_frequency_machine_production_closed',
                   'persistent_band_machine_history_composed','source_uniform_complete_600_step_word_qualified','storage_search_allowed','ALT_LIVE_PASS'):

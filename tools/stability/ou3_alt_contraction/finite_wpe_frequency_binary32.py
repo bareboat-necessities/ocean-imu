@@ -263,9 +263,9 @@ def machine_frequencies(shadow,entry,*,logs,separate_getter,fma_getter,shadow_fr
         if entry.bounded_profile and track.log_period is not None:
             from tools.stability.ou3_alt_contraction import finite_wpe_uniform_bounds as U
             if isinstance(getter,GetterResult):
-                U.check_exp(-track.log_period,getter.frequency_result)
+                U.check_exp(-track.log_period,getter.frequency_result,entry.libm_profile)
             elif isinstance(getter,FrequencyExp):
-                U.check_exp(-track.log_period,getter.result)
+                U.check_exp(-track.log_period,getter.result,entry.libm_profile)
             else:
                 raise ValueError('bounded WPE requires its eager frequency exp witness')
         q=machine_frequency(shadow,log_period=track.log_period,usable=usable,getter=getter,

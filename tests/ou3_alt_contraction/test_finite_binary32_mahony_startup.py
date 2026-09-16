@@ -45,19 +45,26 @@ class Tests(unittest.TestCase):
         self.assertIsNone(second.startup)
         self.assertEqual(second,M.step_initialized(first.vertical.state,CFG,dt=DT,gyro=(0,0,0),acc=a))
 
-    def test_near_antiparallel_branch_requires_and_binds_solver_axis(self):
+    def test_near_antiparallel_branch_computes_and_binds_solver_axis(self):
         acc=(X.rn(0),X.rn(0),CFG.gravity)
-        with self.assertRaisesRegex(X.UnqualifiedSeedBranch,'JacobiSVD'):
-            X.step(V.State(),CFG,dt=DT,gyro=(0,0,0),acc=acc)
+        computed=X.step(V.State(),CFG,dt=DT,gyro=(0,0,0),acc=acc)
+        self.assertIsNotNone(computed.startup.solver)
+        self.assertEqual(computed.startup.solver.sweep_count,1)
+        computed.startup.validate()
         svd=X.svd_witness((F(0),F(0),F(-1)),(F(0),F(0),F(1)),
                           (X.rn(1),X.rn(0),X.rn(0)))
         out=X.step(V.State(),CFG,dt=DT,gyro=(0,0,0),acc=acc,svd=svd)
+        self.assertEqual(out.vertical,computed.vertical)
         self.assertEqual(out.startup.branch,'near-antiparallel-JacobiSVD')
         self.assertEqual(out.startup.quaternion,(F(0),F(1),F(0),F(0)))
         out.startup.validate()
         bad=replace(svd,v0_dot=F(1))
         with self.assertRaisesRegex(ValueError,'residuals detached'):
             X.step(V.State(),CFG,dt=DT,gyro=(0,0,0),acc=acc,svd=bad)
+        # A different exact unit nullspace axis still is not Eigen's output.
+        alternate=X.svd_witness((0,0,-1),(0,0,1),(0,1,0))
+        with self.assertRaisesRegex(ValueError,'pinned scalar solver output'):
+            X.step(V.State(),CFG,dt=DT,gyro=(0,0,0),acc=acc,svd=alternate)
 
     def test_uninitialized_nonreset_memory_and_unstored_inputs_rejected(self):
         with self.assertRaisesRegex(ValueError,'reset state'):
@@ -74,10 +81,11 @@ class Tests(unittest.TestCase):
             X.Operation('sqrt',(F(2),),X.sqrt32(2),F(0)).validate()
         with self.assertRaises(ValueError): X.sqrt32(-1)
 
-    def test_readiness_keeps_all_source_and_target_obligations_open(self):
+    def test_readiness_separates_source_totality_and_target_correspondence(self):
         r=X.readiness()
         self.assertTrue(r['both_shipping_accelerometer_normalizations_retained'])
         self.assertTrue(r['near_antiparallel_JacobiSVD_branch_topology_materialized_with_solver_witness'])
+        self.assertTrue(r['near_antiparallel_source_uniform_QR_and_Jacobi_totality_closed'])
         for key in ('near_antiparallel_JacobiSVD_solver_correspondence_qualified',
                     'target_sqrt_Eigen_and_compiler_correspondence_closed',
                     'every_admitted_startup_history_covered','storage_search_allowed',
@@ -101,6 +109,7 @@ int main() {
     const float g=9.80665f;
     const Eigen::Vector3f inputs[]={
       {0,0,-g},{.4f,.2f,-g},{.4f,.2f,g},{.5f,0,0},
+      {0,0,g},{.001f,.002f,g},{-.001f,-.002f,g},
       {0,0,0},{0,0,-1e-5f},{0,0,-1e-3f},
       {0,0,-std::nextafter(1e-3f,1.0f)}};
     for (const auto& acc : inputs) {

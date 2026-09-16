@@ -149,7 +149,9 @@ def step(state:State,raw,*,dt,separate_getter=None,fma_getter=None,
         if separate_tau_exp_decay is None or fma_tau_exp_decay is None:
             raise TypeError('post-Cold startup candidate requires mode-specific tau exp witnesses')
         tstep=TAU.step_tracks(state.tau,separate_frequency=sf.stored,fma_frequency=ff.stored,cfg=cfg,dt=dt,
-                              separate_exp_decay=separate_tau_exp_decay,fma_exp_decay=fma_tau_exp_decay)
+                              separate_exp_decay=separate_tau_exp_decay,fma_exp_decay=fma_tau_exp_decay,
+                              exp_profile=TAU.TAU.LIBM.EXP_PROFILE if machine_wpe_entry is not None
+                                  and machine_wpe_entry.bounded_profile else 'legacy-enclosure')
         tau=tstep.state
         ss=ModeSupply(sf.machine_minus_shadow,tstep.separate_target.exact_target-F(cand.tau_target),F(separate_tau_exp_decay)-F(ema.decay_tau_sigma))
         fs=ModeSupply(ff.machine_minus_shadow,tstep.fma_target.exact_target-F(cand.tau_target),F(fma_tau_exp_decay)-F(ema.decay_tau_sigma))

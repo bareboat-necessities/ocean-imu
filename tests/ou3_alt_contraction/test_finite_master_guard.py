@@ -33,7 +33,13 @@ class Tests(unittest.TestCase):
         self.assertFalse(x['startup_sensor_contract']['old_Mahony_invariant_covers_new_profiles'])
         self.assertTrue(x['bounded_input_WPE_supplies']['reset_to_every_finite_prefix_bounded_input_induction_closed'])
         self.assertIn('WPE_source_uniform_machine_supply_bounds',x['open_obligations'])
+        self.assertFalse(x['open_obligations']['WPE_source_uniform_machine_supply_bounds'])
+        self.assertFalse(x['open_obligations']['WPE_machine_target_libm_and_compiler_selection'])
+        self.assertFalse(x['open_obligations']['WPE_log_and_exp_libm_correspondence'])
+        self.assertFalse(x['open_obligations']['Qaxis_exp_libm_correspondence'])
+        self.assertTrue(x['open_obligations']['target_libm_and_compiler_profile_correspondence'])
         self.assertIn('source_uniform_timeout_aligned_branch_reachability',x['open_obligations'])
+        self.assertFalse(x['open_obligations']['near_antiparallel_Eigen_JacobiSVD_solver_correspondence'])
         self.assertFalse(x['finite_master_guard_closed'])
         self.assertFalse(x['storage_search_allowed'])
         self.assertIn('finite-state storage blocked',x['finite_storage_guard_error'])
@@ -44,5 +50,29 @@ class Tests(unittest.TestCase):
         x=G.build()
         x['finite_storage_status']['finite_word_counter_safety_closed']=False
         self.assertIn('proved counter safety not consumed by storage guard',G.validate(x))
+
+    def test_conditional_component_evidence_does_not_remove_universal_obligations(self):
+        x=G.build()
+        self.assertEqual(len(x['open_obligations']),11)
+        self.assertTrue(x['commissioned_Live_MEMS_input_contract']['prefix']['all_initialized_finite_prefixes_totality_closed'])
+        self.assertTrue(x['library_closure_requires_separate_firmware_compiler_qualification'])
+        self.assertTrue(x['conditional_Mahony_prefix_totality']['ordinary_seed_scalar_prefix_totality_closed'])
+        self.assertFalse(x['conditional_Mahony_prefix_totality']['every_startup_branch_totality_closed'])
+        self.assertTrue(x['pinned_Eigen_seed_axis_reduction']['returning_solver_axis_equals_QR_Q_column_2'])
+        self.assertFalse(x['pinned_Eigen_seed_axis_reduction']['source_uniform_Jacobi_loop_termination_closed'])
+        self.assertTrue(x['pinned_Eigen_source_uniform_SVD']['source_uniform_QR_and_Jacobi_totality_closed'])
+        self.assertTrue(x['configured_frontend_uniform_supplies']['all_finite_prefixes_from_literal_frontend_reset_covered'])
+        self.assertTrue(x['configured_candidate_uniform_supplies']['candidate_arithmetic_totality_under_named_pow_range_closed'])
+        self.assertTrue(x['configured_candidate_uniform_supplies']['pinned_powf_positive_finite_range_under_scalar_profile_closed'])
+        self.assertTrue(x['source_owned_startup_CORE_constructor']['ungauged_machine_proxy_to_full_CORE_producer_available'])
+        self.assertTrue(x['pinned_WPE_compiler_profile']['pinned_WPE_compiler_profile_selection_closed'])
+        self.assertFalse(x['bounded_raw_Live_input_totality_obstruction']['nonfinite_execution_has_produced_RestrictedForcing'])
+        del x['open_obligations']['complete_source_uniform_600_step_word']
+        self.assertIn('open qualification inventory changed without proof',G.validate(x))
+
+    def test_library_component_cannot_erase_global_compiler_gate(self):
+        x=G.build()
+        x['open_obligations']['target_libm_and_compiler_profile_correspondence']=False
+        self.assertIn('open-obligation status differs from supplying proof components',G.validate(x))
 
 if __name__=='__main__': unittest.main()

@@ -36,5 +36,14 @@ class Tests(unittest.TestCase):
         self.assertFalse(r['Qaxis_exp_libm_binary32_correspondence_closed'])
         self.assertFalse(r['ALT_LIVE_PASS'])
 
+    def test_general_branch_roundoff_budget_uses_compiled_threshold(self):
+        r=Q.general_branch_exp_error_budget()
+        self.assertEqual(r['argument_interval'][0],QB.SMALL_THRESHOLD)
+        self.assertLess(QB.SMALL_THRESHOLD,F(1,100))
+        self.assertEqual(r['sufficient_absolute_exp_error'],F(1,2**24))
+        self.assertGreater(r['lower_boundary_slack_after_error'],0)
+        self.assertGreater(r['upper_boundary_slack_after_error'],0)
+        self.assertFalse(r['target_libm_satisfies_budget_proved'])
+
 
 if __name__=='__main__': unittest.main()

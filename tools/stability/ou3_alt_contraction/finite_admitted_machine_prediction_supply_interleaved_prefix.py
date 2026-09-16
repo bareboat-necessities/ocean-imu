@@ -99,7 +99,7 @@ def _exact_root_kwargs(kwargs):
     return {k:kwargs.get(k) for k in ROOT_KEYS}
 
 
-def imu_step(state:State,**kwargs):
+def imu_step(state:State,*,separate_attitude_solver=None,fma_attitude_solver=None,**kwargs):
     if not isinstance(state,State): raise TypeError('admitted machine prediction-supply State required')
     restricted=kwargs.get('restricted'); witness=kwargs.get('witness'); raw=kwargs.get('raw')
     if restricted is None or not isinstance(witness,SOURCE.StepWitness) or raw is None:
@@ -115,8 +115,12 @@ def imu_step(state:State,**kwargs):
         use_exact_attitude_Q=kwargs.get('use_exact_attitude_Q',True),
         attitude_first_ldlt_success=kwargs.get('attitude_first_ldlt_success',True),
         attitude_second_ldlt_success=kwargs.get('attitude_second_ldlt_success'))
-    sep=DISP.compare(pre_core,segment,raw,exact_roots,lower.lower.separate_roots,**common)
-    fma=DISP.compare(pre_core,segment,raw,exact_roots,lower.lower.fma_roots,**common)
+    sep=DISP.compare(pre_core,segment,raw,exact_roots,lower.lower.separate_roots,
+        machine_predecessor=kwargs.get('separate_machine_predecessor'),
+        machine_attitude_solver=separate_attitude_solver,**common)
+    fma=DISP.compare(pre_core,segment,raw,exact_roots,lower.lower.fma_roots,
+        machine_predecessor=kwargs.get('fma_machine_predecessor'),
+        machine_attitude_solver=fma_attitude_solver,**common)
     if sep.exact!=live.prediction.state or fma.exact!=live.prediction.state:
         raise ValueError('rebuilt exact prediction detached from executed admitted IMU event')
     nxt=State(lower.state,state.entry_imu_steps,state.supply_steps+1)

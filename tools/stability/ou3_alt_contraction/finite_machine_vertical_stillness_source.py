@@ -17,8 +17,8 @@ The LPF source expression is literal binary32 shipping order
 ``exp(-2*pi_f*fc*dt)`` followed by
 ``(1-alpha)*x + alpha*state``.  Both legal no-reassociation contraction outcomes
 for the final sum are retained.  The exp result is tied to the same rounded
-argument by a rigorous real enclosure and its binary32 RNE cell.  Target libm
-and compiler contraction-profile correspondence remain open.  The mutable
+argument by a rigorous real enclosure and the named relative2^-20 target
+error relation. Whole-firmware compiler/link correspondence remains open.  The mutable
 shipping LPF cutoff is carried by this local state but is not yet rooted in the
 theorem RuntimeConfig in this local component. The joined startup/Live wrappers
 fix the default cutoff; mutable setter ancestry remains open. The ordinary
@@ -122,8 +122,8 @@ def lpf_step(state:LPFState,*,x,dt,alpha_exp=None,successor=None):
     if alpha_exp is None: raise TypeError('initialized FreqInputLPF requires exp result')
     alpha=_q(alpha_exp,'LPF exp result')
     lo,hi=EXP.exp_minus_enclosure(mag)
-    if not EXP._interval_hits_rne_cell(lo,hi,alpha):
-        raise ValueError('LPF exp result detached from SAME rounded argument RNE cell')
+    if not EXP._interval_hits_exp_error_cell(lo,hi,alpha):
+        raise ValueError('LPF exp result detached from SAME rounded argument error profile')
     one_minus=B.sub(ONE,alpha)
     ax=B.mul(one_minus,xv); ap=B.mul(alpha,state.value)
     vals=_uniq((B.add(ax,ap),B.fma(one_minus,xv,ap),B.fma(alpha,state.value,ax)))
@@ -242,7 +242,7 @@ def readiness():
       'same_machine_Mahony_vertical_drives_band_and_tracker_LPF':True,
       'FreqInputLPF_binary32_recurrence_materialized':True,
       'FreqInputLPF_first_sample_exact_seed_materialized':True,
-      'FreqInputLPF_exp_bound_to_same_rounded_argument_RNE_cell':True,
+      'FreqInputLPF_exp_bound_to_same_rounded_argument_error_profile':True,
       'FreqInputLPF_contraction_choices_retained':True,
       'same_stored_LPF_output_drives_binary32_stillness_projection':True,
       'sigma_stillness_operands_bindable_to_same_machine_successor':True,

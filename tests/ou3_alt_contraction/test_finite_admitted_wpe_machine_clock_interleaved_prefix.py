@@ -144,12 +144,15 @@ class Tests(unittest.TestCase):
         s=X.begin(clock,WM.State(cfg,mom,mom,mt.base.wpe,separate_usable=True,fma_usable=True))
         with self.assertRaises((ValueError,TypeError)): X.complete(s)
 
-    def test_readiness_attaches_all_600_edges_but_not_source_uniform_arithmetic(self):
+    def test_readiness_attaches_all_600_edges_and_MEMS_WPE_supplies_not_complete_word(self):
         r=X.readiness()
         self.assertTrue(r['Live_600_step_WPE_machine_history_attached'])
         self.assertTrue(r['complete_word_requires_full_WPE_machine_step_on_all_600_IMU_edges'])
         self.assertFalse(r['machine_vs_exact_WPE_period_branch_agreement_required'])
         self.assertTrue(r['independent_machine_WPE_production_and_frequency_branches_composed'])
+        self.assertTrue(r['source_uniform_WPE_machine_supply_bounds_closed'])
+        self.assertTrue(r['WPE_supply_bound_requires_no_startup_deadline'])
+        self.assertTrue(r['target_exp_log_error_bounds_fit_WPE_supply_profile'])
         self.assertFalse(r['source_uniform_complete_600_step_word_qualified'])
         self.assertFalse(r['storage_search_allowed'])
 

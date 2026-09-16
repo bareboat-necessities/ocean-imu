@@ -26,6 +26,7 @@ from tools.stability.ou3_alt_contraction import finite_binary32_arithmetic as B
 from tools.stability.ou3_alt_contraction import finite_source_bound_exp_enclosure as EXP
 from tools.stability.ou3_alt_contraction import finite_tuner_candidate as CAND
 from tools.stability.ou3_alt_contraction import finite_tuner_frequency_binary32 as FREQ
+from tools.stability.ou3_alt_contraction import finite_tuner_sigma_binary32 as LIBM
 
 SOURCE=Path(__file__).resolve().parents[3]/'src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h'
 HALF=B.rn32(F(1,2)); ONE=B.rn32(1)
@@ -42,6 +43,7 @@ def clamp(x,lo,hi): return min(max(x,lo),hi)
 class TauStep:
     previous:F; frequency:F; tau_target:F; sea_time:F; adapt_sec:F
     exp_decay:F; alpha:F; next_separate:F; next_fma:F
+    exp_profile:str='legacy-enclosure'
     def __post_init__(self):
         names=('previous','frequency','tau_target','sea_time','adapt_sec','exp_decay','alpha','next_separate','next_fma')
         vals=[F(getattr(self,n)) for n in names]
@@ -89,31 +91,41 @@ def _floats_from_frequency(frequency,cfg:CAND.CandidateConfig,dt):
     return f,tau_target,sea,adapt
 
 
-def _step_from_frequency(previous,frequency,cfg:CAND.CandidateConfig,*,dt,exp_decay):
+def check_exp_result(argument,result,profile):
+    if profile==LIBM.EXP_PROFILE:
+        lo,hi=LIBM.exp_minus_enclosure(argument)
+        ok=LIBM._interval_hits_exp_error_cell(lo,hi,result)
+    elif profile=='legacy-enclosure':
+        lo,hi,_,_=EXP.enclosure(argument); ok=lo<=result<=hi
+    else:
+        raise ValueError('unknown candidate exponential relation')
+    if not ok: raise ValueError('tuner exp witness detached from SAME rounded argument/profile')
+
+
+def _step_from_frequency(previous,frequency,cfg:CAND.CandidateConfig,*,dt,exp_decay,exp_profile='legacy-enclosure'):
     prev=F(previous)
     if not B.is_binary32(prev): raise ValueError('previous tau_applied is not an actual binary32 stored value')
     f,target,sea,adapt=_floats_from_frequency(frequency,cfg,dt)
     dtf=B.rn32(dt); x=B.div(dtf,adapt)
     e=F(exp_decay)
     if not B.is_binary32(e) or not 0<e<=1: raise ValueError('binary32 std::exp result witness required')
-    lo,hi,_,_=EXP.enclosure(x)
-    if not lo<=e<=hi: raise ValueError('tuner exp witness detached from SAME rounded -dt/adapt_sec argument')
+    check_exp_result(x,e,exp_profile)
     alpha=B.sub(ONE,e)
     sep=B.ema(prev,target,alpha,contracted=False)
     fused=B.ema(prev,target,alpha,contracted=True)
-    return TauStep(prev,f,target,sea,adapt,e,alpha,sep,fused)
+    return TauStep(prev,f,target,sea,adapt,e,alpha,sep,fused,exp_profile)
 
 
-def step(previous,sample:CAND.WaveBandSample,cfg:CAND.CandidateConfig,*,dt,exp_decay):
+def step(previous,sample:CAND.WaveBandSample,cfg:CAND.CandidateConfig,*,dt,exp_decay,exp_profile='legacy-enclosure'):
     """Legacy/local entry; explicitly quantizes the exact-real sample frequency."""
     if not isinstance(sample,CAND.WaveBandSample): raise TypeError('finite tuner sample required')
-    return _step_from_frequency(previous,B.rn32(sample.frequency_hz),cfg,dt=dt,exp_decay=exp_decay)
+    return _step_from_frequency(previous,B.rn32(sample.frequency_hz),cfg,dt=dt,exp_decay=exp_decay,exp_profile=exp_profile)
 
 
-def step_from_stored_frequency(previous,stored:FREQ.StoredFrequency,cfg:CAND.CandidateConfig,*,dt,exp_decay):
+def step_from_stored_frequency(previous,stored:FREQ.StoredFrequency,cfg:CAND.CandidateConfig,*,dt,exp_decay,exp_profile='legacy-enclosure'):
     """Strong theorem entry consuming the actual SeaStateAutoTuner stored float."""
     if not isinstance(stored,FREQ.StoredFrequency): raise TypeError('StoredFrequency required')
-    return _step_from_frequency(previous,FREQ.get_frequency_hz(stored),cfg,dt=dt,exp_decay=exp_decay)
+    return _step_from_frequency(previous,FREQ.get_frequency_hz(stored),cfg,dt=dt,exp_decay=exp_decay,exp_profile=exp_profile)
 
 
 def canonical_exact_shadow(binary:TauStep, exact:CAND.CandidateResult):

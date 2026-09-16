@@ -99,7 +99,8 @@ def begin(base:LOWER.State):
     return State(base,_imu_steps(base),0)
 
 
-def imu_step(state:State,*,separate_machine_root_kwargs,fma_machine_root_kwargs,**kwargs):
+def imu_step(state:State,*,separate_machine_root_kwargs,fma_machine_root_kwargs,
+             separate_machine_predecessor=None,fma_machine_predecessor=None,machine_packet=None,**kwargs):
     """Execute one lower admitted IMU edge and attach both machine root families.
 
     ``*_machine_root_kwargs`` contain only machine-coefficient arithmetic
@@ -110,7 +111,7 @@ def imu_step(state:State,*,separate_machine_root_kwargs,fma_machine_root_kwargs,
     if not isinstance(state,State): raise TypeError('admitted machine-prediction State required')
     if not isinstance(separate_machine_root_kwargs,dict) or not isinstance(fma_machine_root_kwargs,dict):
         raise TypeError('both compiler machine-root witness dictionaries required')
-    forbidden={'state','physical','raw','machine_active','mode','exact_active'}
+    forbidden={'state','physical','raw','machine_active','mode','exact_active','machine_predecessor','machine_packet'}
     if forbidden & set(separate_machine_root_kwargs) or forbidden & set(fma_machine_root_kwargs):
         raise TypeError('machine-root dictionaries cannot override source/event ancestry')
 
@@ -125,9 +126,13 @@ def imu_step(state:State,*,separate_machine_root_kwargs,fma_machine_root_kwargs,
     live=LOWER._live_result(lower.lower)
     exact_active=live.prediction.active
     sep=MPRED.build(preword,physical,raw,lower.state.separate_active,
-                    mode='separate',exact_active=exact_active,**separate_machine_root_kwargs)
+                    mode='separate',exact_active=exact_active,
+                    machine_packet=machine_packet,
+                    machine_predecessor=separate_machine_predecessor,**separate_machine_root_kwargs)
     fma=MPRED.build(preword,physical,raw,lower.state.fma_active,
-                    mode='fma',exact_active=exact_active,**fma_machine_root_kwargs)
+                    mode='fma',exact_active=exact_active,
+                    machine_packet=machine_packet,
+                    machine_predecessor=fma_machine_predecessor,**fma_machine_root_kwargs)
     nxt=State(lower.state,state.entry_imu_steps,state.prediction_steps+1)
     return ImuResult(nxt,lower,sep,fma)
 

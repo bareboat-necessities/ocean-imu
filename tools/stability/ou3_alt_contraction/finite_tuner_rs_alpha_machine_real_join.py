@@ -68,13 +68,13 @@ class Join:
             raise ValueError('alpha residual interval detached')
 
 
-def join(cfg:D.DeploymentConfig,*,tau_target,dt,exp_decay,bits=None):
+def join(cfg:D.DeploymentConfig,*,tau_target,dt,exp_decay,bits=None,exp_profile='legacy-enclosure'):
     if not isinstance(cfg,D.DeploymentConfig): raise TypeError('DeploymentConfig required')
     tau=F(tau_target); h=F(dt)
     if not B.is_binary32(tau) or not B.is_binary32(h):
         raise ValueError('joined deployment tau and dt must be actual binary32 values')
     machine=M.step(mult=cfg.adapt_RS_mult,tau_target=tau,dt=h,exp_decay=exp_decay,
-                   slew_log=cfg.adapt_RS_slew_log)
+                   slew_log=cfg.adapt_RS_slew_log,exp_profile=exp_profile)
     # Exact-real source shadow uses the mathematical values of the same compiled
     # binary32 constants/operands, but no intermediate float rounding.
     safe=clamp(tau,REAL_TIME_MIN,REAL_TIME_MAX)

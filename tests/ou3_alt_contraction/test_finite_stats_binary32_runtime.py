@@ -81,7 +81,7 @@ class Tests(unittest.TestCase):
     def test_readiness_closes_machine_stats_topology_not_platform_correspondence(self):
         r=X.readiness()
         for k in ('shipping_tuner_stats_source_shape_matches','frequency_horizon_and_alpha_binary32_graph_materialized',
-                  'stats_exp_result_bound_to_same_dt_tau_argument_by_RNE_cell',
+                  'stats_exp_result_bound_to_same_dt_tau_argument_by_error_profile',
                   'actual_machine_mean_and_square_EMA_successors_bound_to_local_contraction_sets',
                   'mean_and_square_weights_use_same_alpha','binary32_debiased_variance_readout_materialized',
                   'no_exact_real_accel_variance_substituted'):

@@ -208,7 +208,9 @@ def imu_step(state:State,*,
         separate_sigma_join=sj,fma_sigma_join=fj,
         separate_spectral_pow=separate_spectral_pow,separate_spectral_sqrt=separate_spectral_sqrt,
         fma_spectral_pow=fma_spectral_pow,fma_spectral_sqrt=fma_spectral_sqrt,
-        separate_rs_exp_decay=separate_rs_exp_decay,fma_rs_exp_decay=fma_rs_exp_decay)
+        separate_rs_exp_decay=separate_rs_exp_decay,fma_rs_exp_decay=fma_rs_exp_decay,
+        uniform_supplies=bool(kwargs.get('machine_wpe_entry') is not None
+                              and kwargs['machine_wpe_entry'].bounded_profile))
     nxt=State(lower.state,mc.product.state,state.deployment_cfg,sep_active,fma_active,
               state.live_entry_machine_updates,MF.Pair(sep.state,fma.state))
     return ImuResult(nxt,lower,mb,mc,sj,fj,nxt.separate_active_join,nxt.fma_active_join,floors,sep,fma)

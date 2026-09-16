@@ -21,6 +21,15 @@ def base_step(state, x=0, **kw):
 
 
 class Tests(unittest.TestCase):
+    def test_contracted_omega_uses_same_operands_and_can_change_gate(self):
+        lam=F(2107225,16777216)
+        ratio=F(8469391,536870912)
+        separate,contracted=X.omega_sq_choices(ratio,lam)
+        self.assertEqual(separate,F(5,536870912))
+        self.assertEqual(contracted,F(2867983,281474976710656))
+        self.assertLessEqual(separate,X.OMEGA_GATE)
+        self.assertGreater(contracted,X.OMEGA_GATE)
+
     def test_pre_moment_start_is_literal_and_consumes_no_moment_witness(self):
         out=base_step(X.State())
         self.assertEqual(out.branch,'pre-moment-start')
@@ -49,6 +58,14 @@ class Tests(unittest.TestCase):
         out=base_step(s,moment_decay_exp=md,moment_successors=ms,velocity_var_successor=vvar,elevation_var_successor=evar,sqrt_omega=root)
         self.assertEqual(out.branch,'valid-period')
         self.assertEqual(out.raw_period,X.B.div(X.TWO_PI,root))
+        explicit=base_step(s,moment_decay_exp=md,moment_successors=ms,
+            velocity_var_successor=vvar,elevation_var_successor=evar,
+            omega_sq_successor=omega,sqrt_omega=root)
+        self.assertEqual(explicit,out)
+        with self.assertRaisesRegex(ValueError,'omega'):
+            base_step(s,moment_decay_exp=md,moment_successors=ms,
+                velocity_var_successor=vvar,elevation_var_successor=evar,
+                omega_sq_successor=q(7),sqrt_omega=root)
         with self.assertRaises(TypeError):
             X.step(s,CFG,dt=DT,vertical_accel=q(0),decay_exp=expw(X.B.mul(CFG.lambda_,DT)),
                    velocity_successor=q(0),elevation_successor=q(0),moment_decay_exp=md,moment_successors=ms,

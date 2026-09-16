@@ -29,6 +29,7 @@ from tools.stability.ou3_alt_contraction import finite_source_bound_attitude_tri
 from tools.stability.ou3_alt_contraction import finite_mag_call_schedule as MAGSCHEDULE
 from tools.stability.ou3_alt_contraction import finite_wrapper_clock_binary32 as CLOCK
 from tools.stability.ou3_alt_contraction import finite_magnetic_wrapper_clock as MAGCLOCK
+from tools.stability.ou3_alt_contraction import finite_live_input_contract as INPUT
 
 
 @dataclass(frozen=True)
@@ -98,6 +99,7 @@ def imu_step(state:State, *, restricted:BRMM.RestrictedSegment,
              bias_restricted:BIAS.RestrictedBiasStep,
              witness:SOURCE.StepWitness, raw:SENSOR.RawImuSample, packet_id:str,
              **runtime):
+    INPUT.check_packet(raw)
     qualified=_qualify_step(state,restricted=restricted,bias_restricted=bias_restricted,witness=witness)
     if qualified.segment != restricted.segment: raise AssertionError('qualified admitted segment identity lost')
     admitted=state.admitted
@@ -131,6 +133,7 @@ def readiness():
       'first_restriction_forced_to_start_at_admitted_sample_zero':True,
       'startup_sample_zero_equal_to_admitted_history_restriction_proved':origin['startup_sample_zero_equal_to_admitted_history_restriction_proved'],
       'each_IMU_event_requires_same_admitted_BRMM_BIAS_and_source_ordinal':True,
+      'commissioned_MEMS_raw_packet_checked_before_execution':True,
       'same_admitted_segment_drives_source_bound_prediction_and_measurement':True,
       'prediction_model_roots_cannot_bypass_admitted_history_edge':True,
       'same_event_IMU_ISS_supply_attached_to_admitted_step':imu['forcing_supply_derived_from_executed_source_owned_IMU_event'],

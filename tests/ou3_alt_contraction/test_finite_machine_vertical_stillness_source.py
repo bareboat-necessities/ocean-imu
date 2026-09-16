@@ -89,7 +89,7 @@ class Tests(unittest.TestCase):
         r=X.readiness()
         for k in ('shipping_vertical_LPF_stillness_source_shape_matches','initialized_private_Mahony_binary32_graph_consumed',
                   'same_machine_Mahony_vertical_drives_band_and_tracker_LPF','FreqInputLPF_binary32_recurrence_materialized',
-                  'FreqInputLPF_exp_bound_to_same_rounded_argument_RNE_cell','same_stored_LPF_output_drives_binary32_stillness_projection',
+                  'FreqInputLPF_exp_bound_to_same_rounded_argument_error_profile','same_stored_LPF_output_drives_binary32_stillness_projection',
                   'sigma_stillness_operands_bindable_to_same_machine_successor','machine_band_input_bindable_to_same_Mahony_successor'):
             self.assertTrue(r[k])
         for k in ('target_libm_and_compiler_profile_correspondence_closed','guard_binary32_machine_history_attached',
