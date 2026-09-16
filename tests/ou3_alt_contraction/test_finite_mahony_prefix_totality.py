@@ -32,6 +32,15 @@ class Tests(unittest.TestCase):
             self.assertEqual(s.branch, 'ordinary-FromTwoVectors')
             self.assertLessEqual(sum(q*q for q in s.quaternion), cert['ordinary_seed_norm2_upper'])
 
+    def test_first_SVD_seed_enters_the_all_time_normalized_invariant(self):
+        p=X.first_svd_seed_bridge()
+        self.assertLess(p['seed_norm2_upper'],128)
+        self.assertLess(p['first_integral_component_abs_upper'],F(3,200))
+        self.assertLess(p['first_Euler_norm_sum_upper'],2048)
+        self.assertLess(p['successor_quaternion_norm2_upper'],X.Q2)
+        self.assertLess(p['first_vertical_abs_upper'],322)
+        self.assertTrue(p['first_event_total_given_returning_QR_axis_bound'])
+
     def test_largest_certified_integral_still_returns_to_shell(self):
         r = X.prefix_certificate(X.SENSOR.profile('MPU6886_COMMISSIONED_V1'))
         cfg = V.Config(X.SEED.rn(F(1,5)), X.SEED.rn(F(1,50)), X.SEED.rn(X.SENSOR.G), 20)

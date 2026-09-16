@@ -4,8 +4,8 @@ This materializes the scalar graph before the contraction-sensitive state step:
 frequency/corner clamps, rounded ``2*pi*corner*dt`` arguments, the two distinct
 ``std::exp`` results, and the literal source construction
 ``alpha=1-exp; q=1-alpha``.  Exp witnesses are tied to tight exact-real
-``exp(-x)`` enclosures through binary32 RNE cells; platform-libm correspondence
-is deliberately still open.
+``exp(-x)`` enclosures with the named relative2^-20 target error relation.
+Whole-firmware compiler/link selection remains separate.
 """
 from __future__ import annotations
 from dataclasses import dataclass
@@ -82,8 +82,8 @@ def produce(cfg:R.BandConfig,*,f_ref,dt,exp_low=None,exp_high=None):
     el=_q(exp_low,'low-corner exp result'); eh=_q(exp_high,'high-corner exp result')
     for x,e,name in ((xl,el,'low'),(xh,eh,'high')):
         lo,hi=E.exp_minus_enclosure(x)
-        if not E._interval_hits_rne_cell(lo,hi,e):
-            raise ValueError(f'{name}-corner exp witness detached from SAME rounded argument RNE cell')
+        if not E._interval_hits_exp_error_cell(lo,hi,e):
+            raise ValueError(f'{name}-corner exp witness detached from SAME rounded argument error profile')
     al=B.sub(ONE,el); ah=B.sub(ONE,eh)
     ql=B.sub(ONE,al); qh=B.sub(ONE,ah)
     return Coefficients(True,f,h,upper,low,high,xl,xh,el,eh,al,ah,ql,qh)
@@ -109,7 +109,7 @@ def readiness():
       'corner_clamp_and_nyquist_guard_binary32_graph_materialized':True,
       'two_pi_corner_dt_arguments_binary32_source_order_materialized':True,
       'low_and_high_exp_calls_retained_distinct':True,
-      'exp_results_bound_to_same_arguments_by_tight_real_enclosure_and_RNE_cell':True,
+      'exp_results_bound_to_same_arguments_by_tight_real_enclosure_and_error_profile':True,
       'source_two_subtraction_alpha_q_rounding_materialized':True,
       'target_exp_libm_correspondence_closed':False,
       'reference_frequency_machine_production_closed':False,

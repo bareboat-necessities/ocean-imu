@@ -35,6 +35,15 @@ class Tests(unittest.TestCase):
             with self.assertRaises(AssertionError):
                 W.log_certificate()
 
+    def test_named_profile_closes_library_step_and_retains_firmware_obligation(self):
+        profile=W.profile_correspondence()
+        self.assertTrue(profile['pinned_WPE_exp_log_approximation_correspondence_closed'])
+        self.assertTrue(profile['pinned_WPE_sqrt_approximation_correspondence_closed'])
+        self.assertTrue(E.readiness()['Qaxis_pinned_libm_approximation_correspondence_closed'])
+        self.assertFalse(profile['whole_firmware_compiler_and_link_correspondence_closed'])
+        self.assertEqual(profile['rounding_premise'],
+                         'FCR.RM=0 throughout the admitted execution')
+
     def test_shared_target_premises_are_not_claimed_by_algebra(self):
         proof=W.certificate()
         self.assertFalse(proof['scalar_instruction_and_division_premises_discharged_here'])

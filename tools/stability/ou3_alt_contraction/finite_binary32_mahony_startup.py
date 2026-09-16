@@ -7,12 +7,10 @@ supplied by the caller.  A too-small first sample preserves the observer; the
 outer guard/LPF/statistics event still advances.
 
 This is a conditional program identity, not startup admission.  The nearly
-opposite-vector JacobiSVD branch executes the pinned scalar QR/Jacobi graph
-when no legacy axis witness is supplied; target Eigen solver correspondence,
-sqrt/library/profile qualification
-and universal source-domain bounds remain fail-closed.  It is not legitimate to
-exclude that branch from COMPLETE-BRMM merely because the solver correspondence
-is not yet certified.
+opposite-vector JacobiSVD branch always executes the pinned scalar QR/Jacobi
+graph; a supplied legacy witness must equal that computed result. Its source
+domain has a uniform two-sweep termination proof. Target compiler correspondence
+is a separate qualification; both seed branches remain in COMPLETE-BRMM.
 """
 from __future__ import annotations
 from dataclasses import dataclass, replace
@@ -178,13 +176,14 @@ def seed(acc,*,svd:SVDWitness|None=None):
     c=a.dot3(v1,v0)
     cutoff=op('add',-1,rn(F(1,100000)))
     if c<cutoff:
-        solver=None
-        if svd is None:
-            from tools.stability.ou3_alt_contraction import finite_seed_eigen_svd as EIGEN
-            svd,solver=EIGEN.witness(v0,v1)
-        if not isinstance(svd,SVDWitness): raise TypeError('JacobiSVD solver witness required')
-        if svd != svd_witness(v0,v1,svd.axis):
+        if svd is not None and not isinstance(svd,SVDWitness): raise TypeError('JacobiSVD solver witness required')
+        if svd is not None and svd != svd_witness(v0,v1,svd.axis):
             raise ValueError('JacobiSVD witness residuals detached from same normalized vectors')
+        from tools.stability.ou3_alt_contraction import finite_seed_eigen_svd as EIGEN
+        computed,solver=EIGEN.witness(v0,v1)
+        if svd is not None and svd!=computed:
+            raise ValueError('JacobiSVD witness differs from the pinned scalar solver output')
+        svd=computed
         cc=max(c,F(-1))
         w2=op('mul',op('add',1,cc),F(1,2))
         w=op('sqrt',w2)
@@ -234,6 +233,8 @@ def readiness():
         'near_antiparallel_JacobiSVD_branch_topology_materialized_with_solver_witness':True,
         'near_antiparallel_JacobiSVD_axis_computed_from_same_vectors_when_no_witness_supplied':True,
         'near_antiparallel_QR_Jacobi_loop_operation_ledger_retained':True,
+        'near_antiparallel_source_uniform_QR_and_Jacobi_totality_closed':True,
+        'near_antiparallel_axis_always_computed_legacy_witness_only_checks_equality':True,
         'near_antiparallel_JacobiSVD_solver_correspondence_qualified':False,
         'target_sqrt_Eigen_and_compiler_correspondence_closed':False,
         'every_admitted_startup_history_covered':False,

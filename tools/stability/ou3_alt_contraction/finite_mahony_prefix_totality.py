@@ -155,6 +155,57 @@ def prefix_certificate(p):
     }
 
 
+def first_svd_seed_bridge():
+    """One actual Mahony event from the coarse QR seed into Q2.
+
+    The raw input caps here are deliberately the broader deployed raw bounds:
+    max|gyro_i|<=35 rad/s, max|acc_i|<=160 m/s². The startup commissioned profiles
+    lie inside them. The first sample has zero integral feedback and the actual
+    gains/5ms dt. No incoming Q2 assumption is made for this event.
+    """
+    from tools.stability.ou3_alt_contraction import finite_seed_svd_roundoff as SVD
+    axis2=SVD.qr_bounds()['axis_norm2_upper']
+    # Both square roots in Eigen's special branch have inputs in [0,1], so
+    # their rounded outputs lie in [0,1]. The component products need eta.
+    seed2=1+(1+U)**2*axis2+64*ETA
+    assert seed2<128 and 128<12**2
+    half_gravity=(1+U)**4*F(128,2)+10*ETA
+    error=upper(2*upper(QP*half_gravity))
+    assert error<144
+    kp,ki=SEED.rn(F(1,5)),SEED.rn(F(1,50))
+    integral=upper(upper(upper(ki*error)*CLOCK.DT_FLOAT))
+    assert integral<F(3,200)
+    rate=upper(upper(35+integral)+upper(kp*error))
+    assert rate<64
+    scaled=upper(rate*SEED.rn(CLOCK.DT_FLOAT/2))
+    term=upper(12*scaled)
+    euler=upper(12+upper(upper(2*term)+term))
+    assert euler<20
+    norm=upper(upper(upper(2*upper(euler*euler))+upper(euler*euler))+upper(euler*euler))
+    assert norm<2048
+    normalized2,_,_=SENSOR._normalized_quaternion_bound()
+    assert normalized2<Q2
+    # The stored raw per-axis cap is 160, hence vector norm <280.
+    # Third-row polynomial and final
+    # dot/gravity errors are charged as in SENSOR.vertical_supply_certificate.
+    down_error=4*Q2*((1+U)**8-1)+16*ETA
+    vertical=(Q2+2*down_error)*280
+    for _ in range(8): vertical=upper(vertical)
+    vertical=upper(vertical+SEED.rn(SENSOR.G))
+    assert vertical<322
+    return {'raw_gyro_component_upper':F(35),'raw_accel_component_upper':F(160),
+            'QR_axis_norm2_upper':axis2,'seed_norm2_upper':seed2,
+            'first_feedback_component_abs_upper':error,
+            'first_integral_component_abs_upper':integral,
+            'first_corrected_rate_component_abs_upper':rate,
+            'first_Euler_component_abs_upper':euler,'first_Euler_norm_sum_upper':norm,
+            'successor_quaternion_norm2_upper':normalized2,
+            'first_vertical_abs_upper':vertical,
+            'first_event_total_given_returning_QR_axis_bound':True,
+            'solver_termination_proved_by_this_bridge':False,
+            'target_compiler_correspondence_proved_by_this_bridge':False}
+
+
 def build():
     root = Path(__file__).resolve().parents[3]
     sources = {**SENSOR.SOURCES, SOURCE: SOURCE_HASH}
@@ -168,6 +219,7 @@ def build():
         'arithmetic_profile': M.PROFILE,
         'reviewed_source_hashes': sources,
         'profiles': profiles,
+        'first_SVD_seed_event':first_svd_seed_bridge(),
         'ordinary_seed_scalar_prefix_totality_closed': all(
             p['ordinary_seed_and_scalar_state_prefix_totality_closed'] for p in profiles.values()),
         'every_startup_branch_totality_closed': False,

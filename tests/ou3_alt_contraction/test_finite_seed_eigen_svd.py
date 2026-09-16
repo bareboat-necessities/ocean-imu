@@ -58,8 +58,19 @@ class Tests(unittest.TestCase):
         r.validate()
         status=X.readiness()
         self.assertTrue(status['axis_computed_from_scaled_source_vectors_without_solver_input_port'])
-        self.assertFalse(status['source_uniform_Jacobi_termination_closed'])
+        self.assertTrue(status['source_uniform_Jacobi_termination_closed'])
+        certificate=status['source_uniform_totality_certificate']
+        self.assertEqual(certificate['maximum_Jacobi_sweeps'],2)
+        self.assertLess(certificate['second_sweep_residual_upper'],
+                        certificate['retained_termination_threshold_lower'])
         self.assertFalse(status['target_compiler_correspondence_closed'])
+
+    def test_source_domain_does_not_cover_arbitrary_solver_vectors(self):
+        self.assertTrue(X.in_source_domain((0,0,-1),(0,0,1)))
+        self.assertFalse(X.in_source_domain((1,0,-1),(0,0,1)))
+        self.assertFalse(X.in_source_domain((0,0,-1),(0,1,0)))
+        with self.assertRaisesRegex(ValueError,'source domain'):
+            X.witness((1,0,-1),(0,0,1))
 
 
 HARNESS = r'''

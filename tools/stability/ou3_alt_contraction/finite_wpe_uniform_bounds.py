@@ -366,7 +366,7 @@ def target_error_profile_certificate():
     are qualified separately. This bridge never assumes ideal libm rounding.
     """
     from tools.stability.ou3_alt_contraction import target_wpe_libm as TARGET
-    proof=TARGET.certificate()
+    proof=TARGET.certificate(); correspondence=TARGET.profile_correspondence()
     exp=proof['exp']; log=proof['log']; supply=build(4,ERROR_PROFILE)
     if not (exp['all_input_exp_error_bound_proved_under_scalar_premises']
             and log['all_input_log_error_bound_proved_under_scalar_premises']):
@@ -384,5 +384,9 @@ def target_error_profile_certificate():
             'log_absolute_error_upper':log['total_absolute_log_error'],
             'actual_WPE_arguments_covered_by_target_library_proof':True,
             'target_exp_log_satisfy_WPE_error_profile_under_scalar_and_link_premises':True,
+            'pinned_WPE_exp_log_approximation_correspondence_closed':correspondence[
+                'pinned_WPE_exp_log_approximation_correspondence_closed'],
+            'pinned_WPE_sqrt_approximation_correspondence_closed':correspondence[
+                'pinned_WPE_sqrt_approximation_correspondence_closed'],
             'transcendental_correct_rounding_assumed':False,
             'scalar_sqrt_ROM_and_firmware_link_qualification_supplied_here':False}

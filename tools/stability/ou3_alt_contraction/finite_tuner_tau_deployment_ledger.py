@@ -93,7 +93,7 @@ def hold(state:State):
 
 def step_tracks(state:State,*,separate_frequency:FREQ.StoredFrequency,
                 fma_frequency:FREQ.StoredFrequency,cfg:CAND.CandidateConfig,dt,
-                separate_exp_decay,fma_exp_decay):
+                separate_exp_decay,fma_exp_decay,exp_profile='legacy-enclosure'):
     """Advance the two coherent global compiler histories independently."""
     if not isinstance(state,State): raise TypeError('tau deployment State required')
     if state.updates>=MAX_UPDATES: raise ValueError('tau deployment ledger exceeded bounded startup+word horizon')
@@ -104,9 +104,9 @@ def step_tracks(state:State,*,separate_frequency:FREQ.StoredFrequency,
     st=TARGET.evaluate(separate_frequency.stored_hz)
     ft=TARGET.evaluate(fma_frequency.stored_hz)
     sep=TAU.step_from_stored_frequency(state.separate,separate_frequency,cfg,dt=dt,
-                                       exp_decay=separate_exp_decay)
+                                       exp_decay=separate_exp_decay,exp_profile=exp_profile)
     fma=TAU.step_from_stored_frequency(state.fma,fma_frequency,cfg,dt=dt,
-                                       exp_decay=fma_exp_decay)
+                                       exp_decay=fma_exp_decay,exp_profile=exp_profile)
     cs=ROUND.certify_source_target(sep,st); cf=ROUND.certify_source_target(fma,ft)
     nxt=State(sep.next_separate,fma.next_fma,state.updates+1)
     return StepResult(nxt,st,ft,sep,fma,cs,cf)

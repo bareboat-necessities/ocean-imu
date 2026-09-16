@@ -1,11 +1,9 @@
-# Startup seed and scalar Mahony arithmetic
+# Startup seed and Mahony arithmetic
 
-The scalar startup word has a conditional totality certificate in
-`finite_mahony_prefix_totality.py`. For both commissioned IMU profiles, an
-ordinary `FromTwoVectors` seed and the actual gains `two_kp=0.2f`,
-`two_ki=0.02f` give the following bounds through the existing 30,602-step
-timeout-plus-word horizon. They assume the named scalar binary32 profile,
-correctly rounded square root, and continuation of the same sensor bounds.
+`finite_mahony_prefix_totality.py` proves conditional scalar arithmetic
+bounds for both commissioned IMU profiles. An ordinary `FromTwoVectors` seed
+and the actual gains `two_kp=0.2f`, `two_ki=0.02f` satisfy the following bounds
+through the 30,602-step timeout-plus-word arithmetic horizon.
 
 | Quantity | Strict upper bound |
 | --- | ---: |
@@ -17,53 +15,52 @@ correctly rounded square root, and continuation of the same sensor bounds.
 | Absolute vertical output, m/s² | 32 |
 
 The ordinary-seed proof retains the cancellation in
-`(v0.x²+v0.y²)/(2(1+v0.z))`. It uses the rounded vector's norm defect jointly
-with the branch lower bound on `1+v0.z`; separate bounds on the cross product
-and reciprocal would lose this result near the branch boundary. The prefix
-proof bounds the actual integral recurrence, then the quaternion Euler update,
-then applies the exhaustive fast-inverse-square-root normalization bound to
-close the induction. It includes nonnegative zero/subnormal norm words. It
-does not use tilt accuracy or covariance as an error bound.
+`(v0.x²+v0.y²)/(2(1+v0.z))`. Its rounded-vector norm defect and branch lower
+bound on `1+v0.z` are used together. The prefix proof bounds the actual
+integral recurrence, then the Euler update, then applies the exhaustive
+fast-inverse-square-root normalization bound. Nonnegative zero/subnormal
+norm words are included. The arithmetic horizon does not establish startup
+timeout reachability.
 
-The finite horizon is a conditional arithmetic domain. It does not establish
-that startup reaches Live by the timeout. The discarded Mahony Euler-angle
-outputs and their library calls are outside this state/output dependency
-theorem. The near-antiparallel seed and actual compiler/library correspondence
-remain required for totality over every startup branch.
+## Near-antiparallel seed
 
-## Near-antiparallel solver reduction
+`finite_seed_eigen_svd.py` materializes the pinned Eigen 3.4.0 scalar QR/Jacobi
+producer. Both QR pivots, rank-one and rank-two inputs, tiny tails, the actual
+Jacobi loop and its IEEE special-value arithmetic are retained. The axis is
+computed from the normalized source vectors. A supplied legacy witness must
+equal that computed axis.
 
-The pinned Arduino Eigen 0.3.2 package contains Eigen 3.4.0. The reviewed
-`Quaternion.h`, `JacobiSVD.h`, `ColPivHouseholderQR.h`, `Householder.h` and
-`HouseholderSequence.h` hashes are in `finite_seed_svd_axis_reduction.py`.
-`audit_headers` rejects a different header payload even if its version label
-matches.
+The reviewed header hashes in `finite_seed_svd_axis_reduction.py` bind the
+source deduction. All post-QR rotations and sorting swaps touch only V columns
+0 and 1, so the requested third column is exactly the two-reflector QR column.
+`finite_seed_svd_roundoff.py` proves its squared norm below 100 and proves
+uniform return in at most two Jacobi sweeps. The complete operation-level
+argument and local-FMA arithmetic-family scope are in
+[the scalar SVD proof](ou3-alt-svd-scalar-termination.md).
 
-For the actual real `JacobiSVD<Matrix<float,2,3>>(m, ComputeFullV)`:
+`first_svd_seed_bridge()` handles the first Mahony event explicitly; it does
+not assume that the coarsely bounded seed is already in the normalized shell.
+With initial integral zero, the actual gains and 5ms dt, and raw stored
+per-component gyro/accel caps of 35 rad/s and 160 m/s², it proves:
 
-1. `diagSize=min(2,3)=2`. The preconditioner factors the scaled matrix's
-   3×2 adjoint with column-pivoted Householder QR and writes its full 3×3 Q to V.
-2. The Jacobi loop can rotate only columns `(1,0)` of V. The real sign
-   adjustment changes U only. Sorting can swap only columns `(0,1)` of V.
-3. Consequently V column 2 is unchanged after QR, bit for bit, on every
-   returning execution. This applies to rank-one and rank-two inputs and does
-   not need a singular-value gap or a unique nullspace axis.
-4. The axis consumed by `FromTwoVectors` therefore equals column 2 of the
-   two-reflector QR Q. No Jacobi rotation-roundoff accumulation enters that
-   axis.
+| Quantity | Strict upper bound |
+| --- | ---: |
+| SVD seed squared quaternion norm | 128 |
+| First feedback component | 144 |
+| First integral component | .015 |
+| First corrected rate component | 64 |
+| First squared-norm sum before normalization | 2048 |
+| Successor squared quaternion norm | 1.112 |
+| First absolute vertical output, m/s² | 322 |
 
-This reduces the axis proof to the scaled source input, pivot choice, two
-Householder constructions, and Q evaluation. It does not remove the need to
-prove termination of the shipping Jacobi loop: the function must return before
-the column is read. Replacing the solver by a cross product, an arbitrary
-unit nullspace axis, or an unqualified native result would not prove shipping
-correspondence.
+The common normalization theorem covers the scalar and permitted fused
+inverse-square-root correction. The first successor therefore meets the
+quaternion and integral premises of `finite_live_input_contract`'s all-time
+invariant. A too-small initial accelerometer norm preserves the default
+observer state until a qualifying sample arrives.
 
-The remaining limiting obligations are source-uniform QR arithmetic and
-axis bounds, source-uniform termination of the 2×2 Jacobi iteration, and actual
-target arithmetic correspondence. The next falsifiable step is to construct
-the two-reflector target operation graph and establish those bounds together
-with a finite iteration bound. A rank-deficient witness and a near-threshold
-input must be retained. Failure of that attempt would require reconsidering
-the solver proof architecture; subdivision or host replay alone would not
-resolve it.
+These source arithmetic theorems are distinct from actual target compiler
+correspondence and startup admission. Native comparisons are regression
+checks. Unused Euler-angle library outputs are outside the state/output
+dependency theorem. Target qualification and the complete-word proof must
+consume the relevant source and arithmetic-family premises explicitly.

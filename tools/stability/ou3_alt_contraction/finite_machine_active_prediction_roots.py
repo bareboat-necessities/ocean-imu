@@ -35,6 +35,7 @@ from tools.stability.ou3_alt_contraction import finite_source_bound_prediction_w
 from tools.stability.ou3_alt_contraction import finite_runtime_parameters as ACTIVE
 from tools.stability.ou3_alt_contraction import finite_active_parameter_machine_real_join as JOIN
 from tools.stability.ou3_alt_contraction import finite_core as CORE
+from tools.stability.ou3_alt_contraction import finite_live_input_contract as INPUT
 
 QUALIFICATION='OU3_ALT_MACHINE_ACTIVE_PREDICTION_ROOTS_V2'
 
@@ -49,6 +50,7 @@ class Roots:
     bias:OU.BiasDecay
     qualification:str=QUALIFICATION
     predecessor:CORE.State|None=None
+    machine_packet:INPUT.PacketAdmission|None=None
     def __post_init__(self):
         if not isinstance(self.active,ACTIVE.ActiveParameters) or not isinstance(self.active_join,JOIN.Join):
             raise TypeError('machine active parameters and exact/machine join required')
@@ -58,12 +60,40 @@ class Roots:
         self.active.require_prediction(ou=self.ou,qaxis=self.qaxis)
         if self.predecessor is not None and not isinstance(self.predecessor,CORE.State):
             raise TypeError('full compiler prediction predecessor required')
+        if self.machine_packet is not None:
+            if not isinstance(self.machine_packet,INPUT.PacketAdmission) or self.predecessor is None:
+                raise TypeError('source-linked machine API packet and predecessor required')
+            _,omega=projected_gyro(self.machine_packet,self.predecessor)
+            if tuple(self.angular.w)!=omega:
+                raise ValueError('machine angular roots detached from same rounded API packet')
+
+
+def projected_gyro(packet:INPUT.PacketAdmission,core:CORE.State):
+    """Retain the exact API projection defect in the physical gyro identity.
+
+    The subsequent de-heel and estimated-bias subtraction here are finite-real
+    event algebra. Their target arithmetic is a separate obligation; in the
+    declared zero-heel branch the de-heel matrix is exactly identity.
+    """
+    if not isinstance(packet,INPUT.PacketAdmission) or not isinstance(core,CORE.State):
+        raise TypeError('source-linked rounded API packet and full CORE required')
+    raw=packet.raw
+    if raw.physical!=core.reference:
+        raise ValueError('rounded API gyro detached from compiler physical predecessor')
+    gyro=SENSOR.mv3(raw.deheel_body_to_internal,packet.machine_gyro)
+    delta=SENSOR.mv3(raw.deheel_body_to_internal,
+                   tuple(x-y for x,y in zip(packet.machine_gyro,raw.raw_gyro_body)))
+    omega=tuple(gyro[i]-(core.reference.gyro_bias[i]-core.z[3+i]) for i in range(3))
+    expected=tuple(x+y for x,y in zip(raw.required_bias_corrected_relation(core.z[3:6]),delta))
+    if omega!=expected: raise AssertionError('source gyro identity lost its API projection defect')
+    return gyro,omega
 
 
 def build(state:WORD.State,physical:SOURCE.QualifiedPhysicalSegment,
           raw:SENSOR.RawImuSample,machine_active:ACTIVE.ActiveParameters,*,mode,
           exact_active:ACTIVE.ActiveParameters|None=None,
           machine_predecessor:CORE.State|None=None,
+          machine_packet:INPUT.PacketAdmission|None=None,
           ou_alpha,ou_em1,bias_phi=None,bias_em1_2=None,
           angular_full=None,angular_half=None,
           qaxis_marginal_exp=None,qaxis_final_exp=None,
@@ -85,7 +115,13 @@ def build(state:WORD.State,physical:SOURCE.QualifiedPhysicalSegment,
     if not isinstance(exact_active,ACTIVE.ActiveParameters):
         raise TypeError('executed exact ActiveParameters required')
     aj=JOIN.join(exact_active,machine_active,mode)
-    omega_hat=raw.required_bias_corrected_relation(core.z[3:6])
+    if machine_packet is not None:
+        if not isinstance(machine_packet,INPUT.PacketAdmission):
+            raise TypeError('source-linked rounded machine API packet required')
+        if machine_packet.raw!=raw:
+            raise ValueError('machine API projection belongs to another source packet')
+    omega_hat=(raw.required_bias_corrected_relation(core.z[3:6]) if machine_packet is None
+               else projected_gyro(machine_packet,core)[1])
     angular=ATT.AngularRuntime(tuple(omega_hat),segment.h,full=angular_full,half=angular_half)
     TRIG.validate(angular)
     ou=OU.OUDecay(segment.h,machine_active.tau,ou_alpha,em1=ou_em1)
@@ -97,7 +133,7 @@ def build(state:WORD.State,physical:SOURCE.QualifiedPhysicalSegment,
                            BASE.SHIPPING_FLOAT_EPSILON,coefficient_branch,covariance_exp)
     machine_active.require_prediction(ou=ou,qaxis=qaxis)
     bias=BASE._bias_root(core,h=segment.h,bias_phi=bias_phi,bias_em1_2=bias_em1_2)
-    return Roots(machine_active,aj,angular,ou,qaxis,bias,predecessor=core)
+    return Roots(machine_active,aj,angular,ou,qaxis,bias,predecessor=core,machine_packet=machine_packet)
 
 
 def readiness():
@@ -110,6 +146,7 @@ def readiness():
       'exact_vs_machine_active_parameter_join_retained_with_roots':True,
       'executed_post_boundary_exact_active_can_be_bound_explicitly':True,
       'machine_prediction_root_relation_attached':True,
+      'rounded_API_gyro_projection_defect_retained_with_source_packet':True,
       'machine_root_effect_injected_into_joint24_event_relation':False,
       'machine_pseudo_period_scheduler_effect_attached':False,
       'machine_RS_measurement_effect_attached':False,

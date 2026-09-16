@@ -245,6 +245,52 @@ def certificate():
     }
 
 
+
+def profile_correspondence():
+    """Compose proved library errors with the named pinned scalar profile.
+
+    The committed reports are reproducible target-program evidence. They do
+    not assert that an arbitrary firmware selected this profile. Whole-program
+    compiler/link correspondence remains its own ALT obligation.
+    """
+    root = Path(__file__).resolve().parents[1]
+    scalar = json.loads((root/'ou3_alt_target_scalar_profile.json').read_text())
+    link = json.loads((root/'ou3_alt_target_math_link.json').read_text())
+    scalar_ok = (
+        scalar.get('qualification') == 'OU3_ALT_XTENSA_SCALAR_PROFILE_V1'
+        and scalar.get('ROM_thunk_and_IEEE_divide_sequence_correspondence_closed') is True
+        and scalar.get('division_correctly_rounded_under_rounding_premise') is True
+        and scalar.get('scalar_add_sub_mul_and_fused_madd_msub_IEEE_semantics_closed') is True
+        and scalar.get('rounding_premise') == 'FCR.RM=0 throughout the admitted execution')
+    link_ok = (
+        link.get('qualification') == 'OU3_ALT_PINNED_MATH_NAMESPACE_LINK_V1'
+        and link.get('libm_sha256') == Q.LIBM_SHA256
+        and link.get('libgcc_sha256') == scalar.get('libgcc_sha256')
+        and link.get('sdk_rom_linker_sha256') == scalar.get('sdk_rom_linker_sha256')
+        and link.get('standalone_exp_log_sqrt_namespace_resolution_qualified') is True
+        and link.get('division_resolves_to_audited_SDK_ROM_entry') is True
+        and link.get('SDK_link_scripts_override_exp_log_sqrt') is False)
+    sqrt_ok = (scalar_ok and link_ok
+               and scalar.get('sqrt_correctly_rounded_under_rounding_and_link_premises') is True
+               and link.get('linked_sqrt_matches_audited_IEEE_sequence') is True)
+    exp, log = exp_certificate(), log_certificate()
+    return {
+        'qualification': QUALIFICATION,
+        'pinned_scalar_profile_attached': scalar_ok,
+        'pinned_math_namespace_attached': link_ok,
+        'pinned_WPE_exp_log_approximation_correspondence_closed': scalar_ok and link_ok,
+        'pinned_WPE_sqrt_approximation_correspondence_closed': sqrt_ok,
+        'exp_relative_error': exp['total_relative_exp_error'],
+        'log_absolute_error': log['total_absolute_log_error'],
+        'sqrt_relative_error_under_profile': U,
+        'exp_argument_interval': EXP_DOMAIN,
+        'log_argument_interval': LOG_DOMAIN,
+        'rounding_premise': 'FCR.RM=0 throughout the admitted execution',
+        'final_firmware_uses_pinned_math_namespace_required': True,
+        'whole_firmware_compiler_and_link_correspondence_closed': False,
+    }
+
+
 def audit(libm: Path, ar: Path, objdump: Path, source: Path):
     if hashlib.sha256(source.read_bytes()).hexdigest() != LOG_SOURCE_SHA256:
         raise ValueError('unqualified pinned logf source bytes')

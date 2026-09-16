@@ -10,7 +10,8 @@ QR norm downdates and singular-value sorting are omitted from the dependency
 slice: the second pivot has only one candidate; sorting touches columns 0/1
 only. Both loops have statically bounded lengths. The unbounded Jacobi loop
 is executed with cycle detection, not silently replaced by a fixed iteration
-count. A returning result is a per-input identity, not universal termination.
+count. The source-uniform bound is proved separately by the exact rational
+normalization/QR/two-sweep induction in finite_seed_svd_roundoff.
 """
 from __future__ import annotations
 from dataclasses import dataclass
@@ -289,8 +290,40 @@ def solve(v0,v1):
     return solve_bits(tuple(M.exact_bits(x) for x in v0),tuple(M.exact_bits(x) for x in v1))
 
 
+def in_source_domain(v0,v1):
+    """The normalized near-antiparallel branch, before QR scaling."""
+    from tools.stability.ou3_alt_contraction import finite_seed_svd_roundoff as R
+    if len(v0)!=3 or tuple(v1)!=(0,0,1): return False
+    n2=sum(F(x)**2 for x in v0)
+    delta=F(1,10**6)
+    return 1-delta<n2<1+delta and v0[2]<R.B32.add(-1,R.B32.rn32(F(1,100000)))
+
+
+def source_uniform_certificate():
+    from tools.stability.ou3_alt_contraction import finite_seed_svd_roundoff as R
+    theorem=R.build()
+    assert theorem['universal_termination_promoted']
+    return {'qualification':'OU3_ALT_EIGEN_340_NEAR_ANTIPARALLEL_TOTALITY_V1',
+            'reviewed_source':REDUCTION.build(),
+            'arithmetic_family':theorem['arithmetic_family'],
+            'maximum_Jacobi_sweeps':theorem['maximum_Jacobi_sweeps'],
+            'QR_axis_norm2_upper':theorem['QR']['axis_norm2_upper'],
+            'source_normalizations':theorem['source_and_order']['normalization'],
+            'second_sweep_residual_upper':theorem['second_sweep']['offdiagonal_error'],
+            'retained_termination_threshold_lower':theorem['second_sweep']['threshold_lower'],
+            'both_pivots_rank_one_rank_two_and_tiny_tails_covered':True,
+            'source_uniform_QR_and_Jacobi_totality_closed':True,
+            'axis_is_computed_QR_column_two':True,
+            'local_same_tree_FMA_contractions_covered':True,
+            'target_compiler_correspondence_proved_here':False}
+
+
 def witness(v0,v1):
+    if not in_source_domain(v0,v1):
+        raise ValueError('Eigen seed witness requires the normalized near-antiparallel source domain')
     result=solve(v0,v1)
+    if result.sweep_count>2:
+        raise AssertionError('scalar solver contradicts the uniform two-sweep theorem')
     return START.svd_witness(v0,v1,tuple(M.value(x) for x in result.axis)),result
 
 
@@ -303,7 +336,8 @@ def readiness():
         'Jacobi_2x2_operation_and_termination_predicate_graph_materialized': True,
         'discarded_Jacobi_nonfinite_arithmetic_retained': True,
         'per_input_result_is_universal_termination_certificate': False,
-        'source_uniform_Jacobi_termination_closed': False,
+        'source_uniform_Jacobi_termination_closed': True,
+        'source_uniform_totality_certificate':source_uniform_certificate(),
         'target_compiler_correspondence_closed': False,
         'storage_search_allowed': False,
     }

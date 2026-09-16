@@ -561,9 +561,15 @@ conditioned operand. Source-uniform guard/Racc/libm supplies remain open.
   source; construct an indefinitely noncapturing admissible history; or seek
   explicit authorization for an additional physical startup premise. Merely
   increasing the old quadratic Mahony level cannot remove this trajectory.
-  Next falsifiable experiment: extend legal yaw histories past the failed
-  timeout and test whether a later recovery bound survives before attempting
-  a new universal discrete capture argument.
+  The exact named scalar observer also has an inverted-axis zero-feedback
+  fixed point with canceled yaw integral. Its source reachability is unproved;
+  the observed timeout witness still has horizontal integral norm about
+  0.123 rad/s, above the available residual cancellation budget. The dedicated
+  source proof and scope are in `docs/ou3-alt-startup-timeout-witness.md`.
+  Next falsifiable experiment: construct a physical, primitive-preserving
+  steering path into an invariant unaligned set, or prove that actual startup
+  histories avoid those sets and enter the aligned branch by a later uniform
+  deadline. Larger deadline scans alone cannot establish either conclusion.
 
 * **Continuous startup budget is not a sampled budget:** a bounded 0.5 Hz
   physical wave plus continuous 200 Hz sensor residual satisfies the selected
@@ -606,6 +612,20 @@ conditioned operand. Source-uniform guard/Racc/libm supplies remain open.
   exp error budget `2^-24`; next work must establish the actual target error
   against that budget and WPE's separately required same-argument relations.
 
+* **FCR initialization is not established by the target ISA alone:** the
+  pinned ESP32-S3 ISA reference leaves the floating-point control register
+  reset value undefined, and the first-FPU-use task path inherits the active
+  CPU FCR rather than writing round-to-nearest. The SDK archive scan found the
+  lazy save/restore writers and no startup or ROM writer that supplies RM=0.
+  The target scalar, libm, and WPE certificates therefore remain conditional
+  on `FCR.RM=0` throughout the admitted execution; they cannot be promoted to
+  whole-firmware correspondence. This is a documented failed proof method,
+  not a claim that the hardware runs in a non-RNE mode. Critic alternatives:
+  qualify the complete Arduino/FreeRTOS startup and both-core context path,
+  add an authorized explicit FCR initialization in the shipping program, or
+  retain the rounding-mode premise as an execution assumption. Do not infer
+  RNE from reset, a zeroed task stack, or absence of `fesetround` calls.
+
 * **WPE frequency-ratio contraction:** pinned target compilation emits
   `msub.s` for `ratio_sq-lambda_*lambda_`, while the current moment graph
   rounds the product separately. This is a missing program branch, not a
@@ -617,6 +637,23 @@ conditioned operand. Source-uniform guard/Racc/libm supplies remain open.
   The alternative is exact instruction interpretation, which still needs
   hardware semantics. Choosing a no-FMA compiler flag would change deployment
   and is not the selected correction.
+
+* **Machine covariance is not exactly Joseph-nonincreasing:** unchanged
+  construction-rooted 600-step H18/A21 diagnostics with admitted raw inputs
+  (constant/alternating 35-rad/s gyro or a slow 150-m/s² acceleration ramp)
+  stayed finite with a dormant guard. The positive eigenvalue of
+  `P_after_Joseph-P_before` reached 6.98e-6 (H18) and 4.69e-7 (A21).
+  The source reset is `G=I+0.5[delta_theta]x`, so its norm is not one; a
+  measured A21 reset norm ratio reached 1.00001156. This invalidates a proof
+  that silently transfers exact-real Joseph nonincrease or orthogonal resets
+  to the machine recurrence; it is not a theorem instability result. The
+  limiter is source-correlated covariance/solve/reset roundoff. Critic routes:
+  the gyro-bias marginal (untouched by attitude reset) with an explicit
+  roundoff charge, a coupled gain/innovation energy inequality, or an exact
+  machine block invariant. Next derive the marginal bound with a quantified
+  charge before using it to bound corrected gyro; do not use sampled maxima
+  as universal ceilings. The abrupt acceleration step engaged the guard and
+  supplies no dormant-branch evidence.
 
 * **Machine MEKF recurrence:** the strongest represented Live wrapper starts
   each deployment prediction from its exact-shadow MEKF predecessor; the
@@ -927,6 +964,10 @@ Universal source/control/deployment qualification still keeps the guard blocked.
   entry question. Retain the failure; rederive those assertions against the
   corrected source in that independent track. The limiting quantities and next
   falsifiable check are the actual release time and session-origin S at handoff.
+  The same run also reports the pre-existing OU-III simulation quality gate
+  failures `accel_z_bias_percent_exceeded` (4.3921% and 4.46846% versus the
+  4.3% limit) for the two high-wave cases. Those numerical regressions are
+  outside this proof PR; no tolerance or shipping behavior was changed here.
 
 The strongest critic objection is that an identity-preserving startup graph can
 still carry unqualified source/branch/arithmetic witnesses; conditional entry

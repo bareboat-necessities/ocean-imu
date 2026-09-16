@@ -126,7 +126,7 @@ def coefficients(cfg:R.StatsConfig,*,frequency,dt,exp_decay):
     tau=min(max(req,lo),HORIZON_MAX)
     x=B.div(h,tau); e=_q(exp_decay,'stats exp decay')
     elo,ehi=E.exp_minus_enclosure(x)
-    if not E._interval_hits_rne_cell(elo,ehi,e): raise ValueError('stats exp witness detached from SAME rounded dt/tau argument RNE cell')
+    if not E._interval_hits_exp_error_cell(elo,ehi,e): raise ValueError('stats exp witness detached from SAME rounded dt/tau argument error profile')
     a=B.sub(ONE,e)
     return Coefficients(f,fe,h,sea,teff,req,tau,e,a)
 
@@ -182,7 +182,7 @@ def readiness():
       'qualification':QUALIFICATION,
       'shipping_tuner_stats_source_shape_matches':_source_shape_matches(),
       'frequency_horizon_and_alpha_binary32_graph_materialized':True,
-      'stats_exp_result_bound_to_same_dt_tau_argument_by_RNE_cell':True,
+      'stats_exp_result_bound_to_same_dt_tau_argument_by_error_profile':True,
       'actual_machine_mean_and_square_EMA_successors_bound_to_local_contraction_sets':True,
       'mean_and_square_weights_use_same_alpha':True,
       'binary32_debiased_variance_readout_materialized':True,

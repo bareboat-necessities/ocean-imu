@@ -71,7 +71,8 @@ class Relation:
             raise ValueError('paired predictions must share physical predecessor and successor')
         if self.machine_roots.predecessor!=machine_pre:
             raise ValueError('machine prediction roots detached from carried predecessor')
-        if machine_pre==self.predecessor and self.exact.q_hat!=self.machine.q_hat:
+        if (machine_pre==self.predecessor and self.machine_roots.machine_packet is None
+                and self.exact.q_hat!=self.machine.q_hat):
             raise ValueError('tuner-only prediction displacement unexpectedly changed nominal attitude')
         if self.supply.z!=_subvec(self.machine.z,self.exact.z):
             raise ValueError('joint24 prediction supply detached from paired successors')
@@ -82,6 +83,7 @@ class Relation:
 def compare(predecessor:CORE.State,segment:PHYS.PhysicalSegment,raw:SENSOR.RawImuSample,
             exact_roots:EXACTROOT.Roots,machine_roots:MACHROOT.Roots,*,Qbase,
             machine_predecessor:CORE.State|None=None,
+            machine_attitude_solver=None,
             use_exact_attitude_Q=True,attitude_first_ldlt_success=True,
             attitude_second_ldlt_success=None):
     if not isinstance(predecessor,CORE.State) or not isinstance(segment,PHYS.PhysicalSegment) or not isinstance(raw,SENSOR.RawImuSample):
@@ -93,7 +95,10 @@ def compare(predecessor:CORE.State,segment:PHYS.PhysicalSegment,raw:SENSOR.RawIm
         raise ValueError('machine predecessor detached from same physical source')
     if machine_roots.predecessor!=machine_pre:
         raise ValueError('machine prediction roots detached from carried predecessor')
-    if machine_pre==predecessor:
+    packet=machine_roots.machine_packet
+    if packet is not None and packet.raw!=raw:
+        raise ValueError('machine prediction API projection detached from same raw packet')
+    if machine_pre==predecessor and packet is None:
         if exact_roots.angular!=machine_roots.angular:
             raise ValueError('tuner prediction supply cannot absorb attitude-root discrepancy')
         if exact_roots.bias!=machine_roots.bias:
@@ -104,10 +109,21 @@ def compare(predecessor:CORE.State,segment:PHYS.PhysicalSegment,raw:SENSOR.RawIm
     common=dict(Qbase=Qbase,use_exact_attitude_Q=use_exact_attitude_Q,
                 attitude_first_ldlt_success=attitude_first_ldlt_success,
                 attitude_second_ldlt_success=attitude_second_ldlt_success)
+    machine_common=dict(common)
+    if machine_attitude_solver is not None:
+        allowed={'attitude_first_ldlt_success','attitude_second_ldlt_success'}
+        if not isinstance(machine_attitude_solver,dict) or set(machine_attitude_solver)-allowed:
+            raise TypeError('only same-mode attitude LDLT outcomes may differ')
+        machine_common.update(machine_attitude_solver)
     exact=PRED.prediction_from_raw(predecessor,segment,raw,angular=exact_roots.angular,
                                   ou=exact_roots.ou,bias=exact_roots.bias,qaxis=exact_roots.qaxis,**common)
-    machine=PRED.prediction_from_raw(machine_pre,segment,raw,angular=machine_roots.angular,
-                                    ou=machine_roots.ou,bias=machine_roots.bias,qaxis=machine_roots.qaxis,**common)
+    if packet is None:
+        machine=PRED.prediction_from_raw(machine_pre,segment,raw,angular=machine_roots.angular,
+                                        ou=machine_roots.ou,bias=machine_roots.bias,qaxis=machine_roots.qaxis,**machine_common)
+    else:
+        gyro,_=MACHROOT.projected_gyro(packet,machine_pre)
+        machine=PRED.prediction(machine_pre,segment,gyro_body=gyro,angular=machine_roots.angular,
+                                ou=machine_roots.ou,bias=machine_roots.bias,qaxis=machine_roots.qaxis,**machine_common)
     return Relation(predecessor,exact,machine,exact_roots,machine_roots,
                     Supply(_subvec(machine.z,exact.z),_submat(machine.covariance,exact.covariance)),
                     machine_predecessor=machine_pre)

@@ -44,7 +44,7 @@ class Tests(unittest.TestCase):
         r=X.readiness()
         for k in ('shipping_sigma_relevant_stillness_source_shape_matches','sigma_projection_independent_of_tracker_frequency_relaxation_state',
                   'energy_normalization_square_and_EMA_binary32_graph_materialized','actual_energy_successor_bound_to_all_local_contraction_choices',
-                  'still_predicate_and_capped_time_derived_from_actual_machine_energy','attenuation_exp_bound_to_same_stored_machine_still_time_by_RNE_cell',
+                  'still_predicate_and_capped_time_derived_from_actual_machine_energy','attenuation_exp_bound_to_same_stored_machine_still_time_by_error_profile',
                   'moving_branch_attenuation_is_literal_one'):
             self.assertTrue(r[k])
         for k in ('target_exp_libm_correspondence_closed','upstream_vertical_LP_machine_production_closed',

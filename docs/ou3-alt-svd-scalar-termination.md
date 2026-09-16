@@ -1,15 +1,32 @@
-# Scalar Eigen seed: uniform bounds under review
+# Eigen seed: uniform termination and scalar producer
 
-`finite_seed_eigen_svd.py` executes the pinned Eigen 3.4.0 dependency graph.
-Its named profile uses scalar binary32 RNE, gradual underflow, correctly rounded
-sqrt/division, and nontrapping IEEE special-value arithmetic. It computes both
-Householder reflectors, Q, the 2×2 work matrix, every Jacobi rotation and the
-actual loop predicate. Native comparisons are regression evidence; they do not
-establish the uniform bounds below. Universal termination remains unpromoted
-until this argument passes independent review.
+`finite_seed_eigen_svd.py` executes the pinned Arduino Eigen 0.3.2 / Eigen
+3.4.0 dependency graph for the actual real 2×3 `JacobiSVD` seed. It computes
+the scale, both QR pivots, two Householder reflectors, Q, work matrix, Jacobi
+rotations and retained loop predicate. The requested axis is always computed.
+A legacy axis witness is accepted only when equal to that result.
 
-Let `u=2^-24`, `eta=2^-150`, and `gamma(n)=nu/(1-nu)`. The two preceding
-accelerometer normalizations give
+`finite_seed_svd_roundoff.py` proves that every normalized near-antiparallel
+source input returns after at most two Jacobi sweeps. The exact rational
+argument has undergone independent review. Native bit comparisons check the
+implementation; they do not establish the quantified result.
+
+The proof uses binary32 round-to-nearest-even, gradual underflow, correctly
+rounded division/sqrt and nontrapping IEEE arithmetic. It also covers local
+multiply-add/subtract contractions within the same expression tree: deleting
+an internal rounding selects zero from its allowed error interval. It does
+not permit reassociation or cross-statement fusion. The exact Python producer
+computes the unfused trace. Coverage of the local-contraction family does not
+assert equality between its trace bits and a compiled target trace; target
+compiler/ABI qualification is a separate obligation.
+
+## Source and QR domain
+
+Put `u=2^-24`, `eta=2^-150`. A raw accelerometer component cap of 160 and the
+actual first norm guard `norm>.001f` make both source normalizations finite.
+For exact `S=sum(x_i²)`, the nonnegative dot product lies between
+`(1-u)^3*S-5eta` and `(1+u)^3*S+5eta`. Normal sqrt and component-division
+bounds then establish
 
 ```
 v1 = e3,
@@ -17,109 +34,79 @@ v1 = e3,
 v0.z < RN(-1+RN(10^-5)).
 ```
 
-These imply `-1.000001 < v0.z < -0.99998`, transverse norm below `.005`, and
-`||v0+e3|| < .006`. Scaling by the largest input component preserves these
-bounds with room to use `.007` for the last quantity. Neither pivot is excluded.
+After scaling, both column norms lie in `.99..1.01`, their last components
+have magnitude above `.99`, their transverse norms are below `.005`, and
+the norm of their sum is below `.007`. Both pivot outcomes are retained.
 
-## QR totality and a coarse axis bound
-
-The first pivot has norm between `.99` and `1.01`, and its last component has
-magnitude above `.99`. Thus its Householder norm root and cancellation-free
-denominator have magnitude above `.99`. Bounding the construction's component
-errors and the reflector application by `256u` gives
+The first reflector uses a cancellation-free denominator. Operation bounds
+for beta, its denominator, essential vector and tau give an application norm
+error below `256u`, establishing
 
 ```
 work = [[a,0],[b,c]],
-.99 < |a| < 1.01,   .98 < |b| < 1.02,   a*b < 0,   |c| < .02.
+.99 < |a| < 1.01,  .98 < |b| < 1.02,  a*b < 0,  |c| < .02.
 ```
 
-For the second reflector, a tail-square result at or below the smallest normal
-selects Eigen's exact identity reflector. Otherwise the tail-square exceeds
-`2^-126`. Its exact input norm squared is at least `2^-126(1-2u)`.
-Square/sum/root rounding therefore gives
-`beta² >= (1-8u)||x||²`; the normal sqrt output itself has no underflow charge.
-The signed beta choice makes `|RN(x0-beta)| >= (1-u)|beta|`. Component division
-and tau evaluation give
+For either reflector, a tail-square at or below `MIN_NORMAL` selects literal
+identity. Otherwise the exact input squared norm exceeds
+`MIN_NORMAL*(1-8u)` and the squared beta ratio lies in `1±16u`.
+The signed beta prevents cancellation in `x0-beta`. Thus
+`||essential||²<1+32u` and `0<=tau<2+32u`, including tiny nonzero tails.
+The stored reflector operator norm is at most `(2+32u)²-1`.
+
+`Bound` propagates the actual multiply/add node errors. Each applied output
+component has error below `32u*X+32eta` for input norm `X<=4`; the vector error
+is below `64u*X+64eta`. The error expression is affine in X, so the exact
+endpoint checks establish the entire interval. The effective reflector
+factor is below `3+256u`. Two applications to e3 give squared axis norm below
+`81.002<100`. This bound suffices for finite seeding without a sharp nullspace
+or orientation estimate.
+
+`finite_seed_svd_axis_reduction.py` proves the write-index invariant: all
+post-QR Jacobi rotations and sorting swaps touch V columns 0 and 1. V column 2
+is the unchanged QR column on every returning rank-one or rank-two run.
+
+## Two-sweep induction
+
+Eigen extracts the reversed block `[[c,b],[0,a]]`. Its first polar ratio is
+positive and bounded away from zero; both exact coefficients exceed `.68`.
+The symmetrized diagonal gap exceeds `1.3`, so the stable Jacobi tangent is
+below `.05`. The exact eigenvalue shifts and propagated diagonal errors give
 
 ```
-||essential||² <= 1+32u,
-0 <= tau <= 2+32u.
+|work01|, |work10| < E = 1024u,
+1.3 < |work00| < 2,
+|work11| < .03.
 ```
 
-These bounds also cover the first reflector. For the exact matrix represented
-by the stored reflector, its operator norm is at most
-`(2+32u)²-1`. The explicit scalar application contributes less than `64u` times
-the input norm, plus its underflow charges; use `3+192u` for the total factor.
-Two applications to e3 give axis norm below 10, hence squared norm below 100.
-This deliberately coarse bound suffices to establish finite Mahony seeding;
-it does not claim a sharp nullspace or orientation error. All QR scalar
-intermediates are finite. The omitted norm downdates have two statically bounded
-iterations and cannot affect either the second pivot index or Q.
+All coefficient error bounds are derived from the stable formula's individual
+rounding factors. Matrix multiplication uses exact magnitude identities and
+retains the same stored-work reference. In particular, the ideal polar output
+is symmetric; its lower offdiagonal supplies the small upper-offdiagonal bound
+without independently enclosing two canceling large terms.
 
-## Proposed two-sweep bound
+If a second sweep is active, its retained `maxDiag` is at least the initial
+`.99`, so its threshold exceeds `3u`. A nonzero rounded difference of active
+offdiagonals has magnitude at least `2^-48`; the polar quotient and its square
+cannot overflow. A zero difference selects literal identity, and the stored
+matrix is already symmetric. The ideal polar sine is below `2E`.
 
-For the initial work matrix above, Eigen extracts the reversed block
-`[[c,b],[0,a]]`. Its first polar ratio is `(a+c)/(-b)`, between `.95` and `1.06`
-and positive. The polar coefficients are therefore bounded away from zero.
-The symmetrized block has a large second diagonal and a small first diagonal.
-The stable Jacobi tangent formula preserves this order.
+The second symmetrized diagonal gap exceeds one. Its evaluated offdiagonal
+is below `2E`. For `|y|>=Y=2^-40`, all stable Jacobi coefficient operations are
+normal and finite. Their relative bounds yield absolute sine errors of order
+`uE`. `Bound` propagates these weighted errors through the actual composition
+and matrix-application nodes. The discrepancy between ideal polar symmetry
+and the symmetric matrix used by the exact Jacobi rotation is charged as
+`2*offdiag_error+8E*diag_error`, again of order `uE`.
 
-The proposed first-sweep ledger uses coefficient errors below `32u`, error
-below `128u` in the symmetrization identity, and below `128u` in the composed
-left rotation. The two matrix applications and asymmetry defect together fit
-within `1024u`. It gives, in the original work-matrix order,
+For `|y|<Y`, the guard can select identity. Otherwise an overflowing `tau²`
+produces infinite w and signed-zero tangent, also identity. In the remaining
+finite branch the stable same-sign denominator gives
+`|t_machine| <= (1+u)*2Y/(1-u)^2+eta <3Y`; the ideal tangent is below Y.
+The resulting absolute coefficient error is below `8Y`. Reapplying the same
+node graph proves an additional residual below `256Y`.
 
-```
-|work01|, |work10| <= E = 1024u,
-1.3 <= |work00| <= 2,
-|work11| <= .03.
-```
-
-The first two inequalities also follow from the approximately orthogonal
-left/right transformations, the initial norm/determinant, and the small
-offdiagonal remainder; the diagonal order must be retained in this argument.
-
-If Eigen requests a second sweep, its threshold is at least `3u`: maxDiag is
-already at least `.99` and the precision multiplier is `4u`. With one active
-offdiagonal above `3u`, any nonzero rounded difference of the offdiagonals is
-at least `2^-48`. Thus the second polar quotient cannot overflow. Its exact
-cosine has magnitude near one and its sine is below `2E`.
-
-Use the symmetrization identity and the *lower* offdiagonal to bound the
-evaluated upper offdiagonal by `2E`. A separate interval bound on two canceling
-products would be too large. The second symmetrized diagonal gap exceeds one.
-For `|y| >= Y=2^-40`, the Jacobi tangent graph has no overflow and the following
-weighted roundoff ledger is proposed:
-
-| Quantity | Absolute error bound |
-| --- | ---: |
-| Polar cosine | `32u` |
-| Polar sine | `128uE` |
-| Jacobi cosine | `32u` |
-| Jacobi sine | `128uE` |
-| Composed left cosine | `128u` |
-| Composed left sine | `1024uE` |
-| Left-applied diagonal | `512u` |
-| Left-applied offdiagonal | `4096uE` |
-| Final offdiagonal, including asymmetry | `16384uE` |
-
-The small sine bounds are essential: multiplying a generic coefficient error
-by a full diagonal would lose termination. The elementary errors must be
-charged on the actual scalar operands and signs in the implemented graph.
-
-For `|y| < Y`, the calculation may overflow in `tau²`, despite finite input.
-When this gives infinite w, the cancellation-free tangent denominator gives
-signed zero t. The remaining cosine/sine are finite. The finite-tau case has
-`|t| <= 4|y|`; either case is covered by an additional `256Y` bound. No
-nonfinite branch is deleted from the implemented graph.
-
-If every row of this ledger is verified, the second-sweep residual satisfies
-
-```
-16384u(1024u) + 256*2^-40 < 3u,
-```
-
-so the next loop predicate is false. The bound would prove at most two sweeps
-for every admitted normalized source input, including rank-one inputs. At
-present the exact operation graph is complete, but this uniform error ledger
-is still under review; it must not be replaced by the native sample result.
+The exact rational second-sweep residual is below `0.045402u`, while the
+retained next threshold exceeds `3.959999u`. Therefore the next predicate is
+false. All discarded special-value branches remain in the executable graph;
+no fixed iteration cutoff replaces the shipping loop.

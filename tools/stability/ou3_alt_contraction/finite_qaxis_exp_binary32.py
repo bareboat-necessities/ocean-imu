@@ -82,6 +82,8 @@ def pinned_target_graph_envelope():
     """
     from tools.stability.ou3_alt_contraction import target_qaxis_exp as TARGET
     proof=TARGET.error_certificate()
+    from tools.stability.ou3_alt_contraction import target_wpe_libm as LIBM
+    profile=LIBM.profile_correspondence()
     budget=general_branch_exp_error_budget()
     domain=proof['argument_x_interval']
     if domain[0]!=QB.SMALL_THRESHOLD or domain[1]!=F(1,4):
@@ -90,10 +92,14 @@ def pinned_target_graph_envelope():
         raise AssertionError('target exp graph exceeds Qaxis source envelope slack')
     return {
         'all_input_pinned_target_graph_exp_error_proved':True,
+        'Qaxis_pinned_libm_approximation_correspondence_closed':(
+            profile['pinned_scalar_profile_attached'] and profile['pinned_math_namespace_attached']),
         'target_graph_results_satisfy_original_Qaxis_envelope_under_scalar_link_premises':True,
         'argument_interval':domain,
         'absolute_exp_error':proof['total_absolute_exp_error'],
         'shared_scalar_and_final_link_premises_discharged_here':False,
+        'named_RNE_scalar_profile_attached':profile['pinned_scalar_profile_attached'],
+        'whole_firmware_compiler_and_link_correspondence_closed':False,
     }
 
 
@@ -115,6 +121,8 @@ def readiness():
       'both_Qaxis_exp_results_bound_to_same_binary32_x_real_enclosure':True,
       'Qaxis_general_branch_sufficient_libm_error_budget':general_branch_exp_error_budget(),
       'Qaxis_pinned_target_graph_real_envelope':pinned_target_graph_envelope(),
+      'Qaxis_pinned_libm_approximation_correspondence_closed':
+          pinned_target_graph_envelope()['Qaxis_pinned_libm_approximation_correspondence_closed'],
       'Qaxis_exp_libm_binary32_correspondence_closed':False,
       'ALT_LIVE_PASS':False,
     }

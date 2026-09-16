@@ -16,6 +16,8 @@ from dataclasses import dataclass
 
 from tools.stability.ou3_alt_contraction import finite_startup_joined_machine_history as LOWER
 from tools.stability.ou3_alt_contraction import finite_wpe_machine_binary32 as WPE
+from tools.stability.ou3_alt_contraction import finite_frontend_uniform_bounds as FRONT_SUPPLY
+from tools.stability.ou3_alt_contraction import finite_candidate_uniform_bounds as CAND_SUPPLY
 
 QUALIFICATION='OU3_ALT_STARTUP_WPE_MACHINE_HISTORY_V1'
 
@@ -38,6 +40,16 @@ class State:
             raise ValueError('full WPE machine log state detached from lower startup WPE log ledger')
         if self.wpe.separate.samples!=self.base.separate_source.samples or self.wpe.fma.samples!=self.base.fma_source.samples:
             raise ValueError('full WPE machine sample count detached from startup Mahony source history')
+        if self.wpe.bounded_profile:
+            runtime=self.base.runtime
+            CAND_SUPPLY.require_config(self.base.deployment_cfg)
+            CAND_SUPPLY.require_commit_config(runtime.commit_cfg)
+            CAND_SUPPLY.require_state(self.base.base.machine)
+            FRONT_SUPPLY.require_config(band_cfg=runtime.band_cfg,stats_cfg=runtime.stats_cfg,
+                still_cfg=runtime.still_cfg,cutoff_hz=self.base.separate_source.lpf.cutoff_hz,
+                dt=FRONT_SUPPLY.DT,bench_noise_sigma=WPE.B.rn32(runtime.bench_noise_sigma))
+            FRONT_SUPPLY.require_state(self.base.separate_source,self.base.base.frontends.separate)
+            FRONT_SUPPLY.require_state(self.base.fma_source,self.base.base.frontends.fma)
 
 
 def initial(runtime,deployment_cfg,*,sensor_history=None,libm_profile=WPE.BOUNDS.ERROR_PROFILE):
@@ -62,6 +74,11 @@ def step(state:State,raw,*,separate_wpe:WPE.ModeWitnesses,fma_wpe:WPE.ModeWitnes
         raise TypeError('startup log witnesses are owned by the full WPE machine product')
     lower=LOWER.step(state.base,raw,separate_log_witness=separate_wpe.log,
                      fma_log_witness=fma_wpe.log,machine_wpe_entry=state.wpe,**kwargs)
+    if state.wpe.bounded_profile:
+        for mode in ('separate','fma'):
+            sigma=None if lower.lower.machine is None else getattr(lower.lower,mode+'_sigma_join').machine
+            FRONT_SUPPLY.require_event(getattr(lower,mode+'_source'),
+                getattr(lower.lower,mode+'_frontend'),sigma_target=sigma)
     if lower.separate_source.band_input!=lower.fma_source.band_input:
         raise ValueError('startup compiler histories lost common Mahony vertical WPE input')
     h=kwargs.get('machine_dt')
@@ -116,6 +133,9 @@ def readiness():
       'independent_machine_WPE_production_and_frequency_branches_composed':True,
       'target_WPE_libm_and_compiler_profile_correspondence_closed':False,
       'source_uniform_startup_WPE_supply_bounds_closed':False,
+      'configured_frontend_uniform_supplies_attached_to_each_bounded_startup_event':True,
+      'frontend_supply_induction_requires_no_startup_deadline':True,
+      'candidate_and_commit_uniform_supplies_attached_to_bounded_startup':True,
       'Live_600_step_WPE_machine_history_attached':False,
       'storage_search_allowed':False,
       'ALT_STARTUP_PASS':False,'ALT_LIVE_PASS':False,

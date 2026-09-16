@@ -28,7 +28,8 @@ The actual firmware link map, instruction semantics (including subnormal and
 exception behavior), expression-specific contraction and Eigen reductions,
 and attachment of all-input library bounds are still required. The exp/log
 bounds below supply the library approximation step. WPE's two conditional
-compiler tracks do not by themselves prove that either track matches this object.
+compiler tracks are attached to this object by the expression-specific mapping
+below. Its use by the final firmware remains an independent premise.
 
 Reproduce against the verified extracted packages:
 
@@ -117,3 +118,97 @@ python3 -m tools.stability.ou3_alt_contraction.target_wpe_libm \
   --log-source /path/to/pinned/newlib/libm/math/ef_log.c \
   --output /tmp/ou3-target-wpe-libm.json
 ```
+
+## Scalar profile and math namespace attachment
+
+`target_scalar_profile.py` identifies the actual SDK ROM division entry
+`0x40002274`, follows its thunk to `0x40056124`, and verifies the complete
+instruction sequence against the pinned libgcc implementation. The
+[Cadence ISA manual](https://www.cadence.com/content/dam/cadence-www/global/en_US/documents/tools/silicon-solutions/compute-ip/isa-summary.pdf)
+specifies the IEEE divide and square-root sequences and final correction.
+The checked profile explicitly requires `FCR.RM=0` throughout execution.
+Initialization and preservation of that mode remain part of the complete
+execution qualification.
+
+`target_math_link.py` supplies a separate static namespace check. It compiles
+actual C++ `std::exp`, `std::log`, and `std::sqrt`, links the pinned libraries
+with the SDK ROM script, and verifies selection of the audited exp/log objects,
+the IEEE square-root body, and the ROM divide entry. All text and literal
+sections are placed together at the SDK instruction-segment origin
+`0x42000020`, keeping Xtensa windowed longcalls in the same 1 GB segment
+as the ROM entry.
+
+The namespace probe is not a complete firmware. Bare libc reports the missing
+`__getreent` runtime service; that diagnostic is retained, and runtime/full
+firmware readiness remains false. It is not executed and does not supply
+replacement math functions. Within the certified finite argument domains,
+exp/log/sqrt wrappers return their kernel values without entering errno paths.
+
+`target_wpe_libm.profile_correspondence()` composes the named scalar profile,
+verified namespace, and all-input exp/log error certificates. It also attaches
+the correctly-rounded IEEE sqrt result under the same profile. The narrow
+library obligations are now closed under that explicit execution profile:
+WPE exp/log approximation (qualification 8) and Qaxis exp error fitting the
+original enclosure (qualification 9). Complete firmware compiler/link
+correspondence is still qualification 5; this split does not promote it.
+
+```sh
+python3 -m tools.stability.ou3_alt_contraction.target_math_link \
+  --toolchain /path/to/xtensa-esp-elf --sdk /path/to/esp32s3-libs \
+  --output /tmp/ou3-target-math-link.json
+```
+
+## WPE compiler selection
+
+`target_wpe_compiler.py` compiles the pinned WPE header with the actual MCU
+flags and maps every contraction site to the existing binary32 relation.
+The mapping includes the complete method's eight MADD and three MSUB sites;
+source hashes, horizon-limit hashes, object identity, source-line register
+operands and all exp/log/sqrt/divide call sites are recorded.
+
+| WPE expression | Actual target evaluation |
+| --- | --- |
+| Two high-pass stages | Separate ADD, SUB, MUL |
+| Velocity/elevation integration | Round `gain*input`, then FMA `decay*old` into it |
+| Weight | FMA `(1-alpha)*old + alpha` |
+| First moments | Round `alpha*value`, then FMA `(1-alpha)*old` into it |
+| Second moments | Round `alpha*value`, round that times `value`, then FMA `(1-alpha)*old` into it |
+| Variances and omega squared | Fused subtraction of the same already-computed operand square |
+| Log-period EMA | Round `log_raw-log_previous`, then FMA with alpha and the previous log |
+
+The deterministic target-step constructor derives the selected successors,
+all early-return decisions, raw period, log update and usable latch from one
+persistent state and the same-argument library outputs. It checks each chosen
+moment transition through `finite_wpe_moment_binary32.step`, constructs the
+existing `ModeWitnesses`, and `attach_to_product` checks that the successor is
+exactly the product's persistent `.fma` projection. Reset initializes that
+projection, so induction gives the same target history at every prefix.
+The separate compiler track remains independently carried. The diagnostic
+reset-horizon marker has no effect on any transition and is explicitly
+projected out until the first horizon calculation.
+
+This closes the named WPE compiler-selection obligation (qualification 6)
+under the canonical 5 ms/default WPE configuration, the physical MEMS input
+contract and the qualified scalar profile. It does not claim that the full
+firmware uses this compiled object; that remains qualification 5. It also
+does not replace the frontend's input-supply proof or establish startup
+capture.
+
+```sh
+python3 -m tools.stability.ou3_alt_contraction.target_wpe_compiler \
+  --toolchain /path/to/xtensa-esp-elf --sdk /path/to/esp32s3-libs \
+  --output /tmp/ou3-target-wpe-compiler.json
+```
+
+## Tuner `powf` finite-range supply
+
+The candidate tuner has two compiled exponents, `6/7` and `1/14`. The pinned
+newlib `ef_pow.c` object is audited separately by
+`target_powf_range.py`. For the complete source-owned base interval
+`[2^-44, 2^17]`, its log2/reduction/exp2 graph has only finite normal
+intermediates and returns a strictly positive result in the conservative
+range `[2^-45, 2^18]`; both exponent constants are the actual binary32
+values. This is a range/totality result, not an approximation-accuracy or
+whole-firmware call-graph result. `finite_candidate_uniform_bounds.py`
+consumes it to keep tau, sigma and `R_S` candidates finite at every prefix.
+The target compiler/FCR and startup-root qualifications remain separate.

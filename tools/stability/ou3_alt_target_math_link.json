@@ -1,0 +1,49 @@
+{
+  "SDK_link_scripts_override_exp_log_sqrt": false,
+  "compiler_driver_sha256": "6d1f2028fac63b319f5ae7cd56fe6719377a0a5cd30d2cac5e7bad7b93949566",
+  "division_resolves_to_audited_SDK_ROM_entry": true,
+  "libgcc_sha256": "3a6f25f245105bb21aab5261c0244d72210293a9567b872d84f6bac9fd041638",
+  "libm_sha256": "98e35630b7908f49e8d845e2ba3b1f44920508d4774a41b80eee617a1592a6bb",
+  "linked_sqrt_matches_audited_IEEE_sequence": true,
+  "non_math_runtime_linker_diagnostic": "/toolchain/bin/../lib/gcc/xtensa-esp-elf/14.2.0/../../../../xtensa-esp-elf/bin/ld: /toolchain/bin/../lib/gcc/xtensa-esp-elf/14.2.0/../../../../xtensa-esp-elf/lib/esp32s3/libc.a(libc_a-errno.o):(.literal.__errno+0x0): warning: __getreent is not implemented and will always fail",
+  "probe_layout_sha256": "0ae21f5344a1e95636034114534be0f825716446cda8a031a98769f600fac953",
+  "probe_source_sha256": "b61699c3deaac049ae52aa69a261cd7273db9bceb1e73c6197646c6f1c09fcce",
+  "qualification": "OU3_ALT_PINNED_MATH_NAMESPACE_LINK_V1",
+  "resolved_symbols": {
+    "__divsf3": {
+      "address": "0x40002274",
+      "kind": "A"
+    },
+    "__ieee754_expf": {
+      "address": "0x420001e0",
+      "kind": "T"
+    },
+    "__ieee754_logf": {
+      "address": "0x4200039c",
+      "kind": "T"
+    },
+    "__ieee754_sqrtf": {
+      "address": "0x420005e8",
+      "kind": "T"
+    },
+    "expf": {
+      "address": "0x420000dc",
+      "kind": "T"
+    },
+    "logf": {
+      "address": "0x42000138",
+      "kind": "T"
+    },
+    "sqrtf": {
+      "address": "0x4200018c",
+      "kind": "T"
+    }
+  },
+  "sdk_cpp_flags_sha256": "3488ef11d79369f1684ce6a4145f17a62667ea09c49d7c8b26f9f1acbb8235b7",
+  "sdk_rom_linker_sha256": "12f69326e7449fe102b7df3d1d6582c4d7220daed6e852b129dc2c3ed77d7685",
+  "standalone_exp_log_sqrt_namespace_resolution_qualified": true,
+  "standalone_probe_elf_sha256": "30bd7181e7025af06da0ea300b4b544bff454759482121d02dc37f3f0b49d455",
+  "standalone_probe_runtime_complete": false,
+  "target_execution_observed": false,
+  "whole_firmware_link_resolution_qualified": false
+}

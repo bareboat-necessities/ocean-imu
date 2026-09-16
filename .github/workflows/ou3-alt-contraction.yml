@@ -120,8 +120,9 @@ jobs:
             test_finite_binary32_mahony_startup test_finite_startup_joined_machine_history \
             test_finite_startup_entry_obstruction test_finite_startup_disturbance_obstruction \
             test_finite_startup_sensor_contract test_finite_mahony_prefix_totality \
-            test_finite_seed_svd_axis_reduction test_finite_seed_eigen_svd test_finite_startup_direction_sampling \
-            test_finite_startup_timeout_alignment_obstruction test_finite_live_input_contract test_target_libm_bounds \
+            test_finite_seed_svd_axis_reduction test_finite_seed_eigen_svd test_finite_seed_svd_roundoff test_finite_startup_direction_sampling \
+            test_finite_startup_timeout_alignment_obstruction test_finite_live_input_contract test_target_libm_bounds test_target_wpe_compiler test_target_deployment_audits \
+            test_finite_frontend_uniform_bounds test_finite_candidate_uniform_bounds test_finite_bg_gain_energy test_finite_machine_startup_core \
             test_finite_live_disturbance_overflow test_finite_machine_core_continuation \
             test_finite_startup_handoff_control test_finite_master_guard \
             test_finite_attitude_atlas test_finite_ungauged_live_word \

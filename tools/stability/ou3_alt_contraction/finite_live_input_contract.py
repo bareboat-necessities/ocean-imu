@@ -145,6 +145,11 @@ def _finite_horizon_certificate():
     q2_actual,_,_=START._normalized_quaternion_bound()
     q2,qp=PREFIX.Q2,PREFIX.QP
     assert q2_actual<q2<qp**2
+    # Each bound uses absolute operands and at least as many rounding nodes
+    # as the uncontracted source tree. Replacing a multiply/add pair by one
+    # FMA removes an intermediate rounding and cannot exceed these majorants.
+    # Newton normalization is special: START separately encloses its fused
+    # 1.5-p*y0 correction on EVERY finite nonnegative input-bit cell.
     upper=PREFIX.upper
     # Every raw accel component is at most 160. The squared norm is finite,
     # nonnegative, and the all-finite-word inverse-sqrt lemma supplies Q2 for
@@ -257,6 +262,9 @@ def prefix_certificate():
         'vertical_abs_upper':sharp['vertical_abs_upper'],
         'initialized_scalar_Mahony_prefix_totality_closed':True,
         'all_initialized_finite_prefixes_totality_closed':True,
+        'literal_FMA_family_state_totality_bound_closed':True,
+        'literal_Newton_FMA_covered_on_every_finite_norm_cell':True,
+        'FMA_state_trace_equals_no_FMA_trace_asserted':False,
         'integral_rounding_lattice_invariant_closed':True,
         'elapsed_rounding_lattice_invariant_closed':True,
         'vertical_input_abs_512_closed_under_prefix_premises':True,

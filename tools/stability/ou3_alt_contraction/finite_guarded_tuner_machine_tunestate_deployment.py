@@ -168,7 +168,9 @@ def step(state:State,raw,*,dt,deployment_cfg:D.DeploymentConfig,
         separate_sigma_join=sj,fma_sigma_join=fj,
         separate_spectral_pow=separate_spectral_pow,separate_spectral_sqrt=separate_spectral_sqrt,
         fma_spectral_pow=fma_spectral_pow,fma_spectral_sqrt=fma_spectral_sqrt,
-        separate_rs_exp_decay=separate_rs_exp_decay,fma_rs_exp_decay=fma_rs_exp_decay)
+        separate_rs_exp_decay=separate_rs_exp_decay,fma_rs_exp_decay=fma_rs_exp_decay,
+        uniform_supplies=bool(kwargs.get('machine_wpe_entry') is not None
+                              and kwargs['machine_wpe_entry'].bounded_profile))
     return StepResult(State(out.state,m.product.state,pair),out,m,sj,fj,sep,fma)
 
 
