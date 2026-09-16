@@ -151,7 +151,9 @@ def imu_step(state:State,*,separate_getter=None,fma_getter=None,shadow_frequency
         raise ValueError('exact tuner candidate detached from exact WPE shadow frequency')
     cfg=state.base.prefix.prefix.live.live_word.runtime.candidate_cfg
     tau=TAULEDGER.step_tracks(state.base.tau,separate_frequency=sf.stored,fma_frequency=ff.stored,cfg=cfg,dt=TAULEDGER.DT,
-                              separate_exp_decay=separate_tau_exp_decay,fma_exp_decay=fma_tau_exp_decay)
+                              separate_exp_decay=separate_tau_exp_decay,fma_exp_decay=fma_tau_exp_decay,
+                              exp_profile=TAULEDGER.TAU.LIBM.EXP_PROFILE if machine_wpe_entry is not None
+                                  and machine_wpe_entry.bounded_profile else 'legacy-enclosure')
     ss=ModeSupply(sf.machine_minus_shadow,tau.separate_target.exact_target-F(cand.tau_target),F(separate_tau_exp_decay)-F(ema.decay_tau_sigma))
     fs=ModeSupply(ff.machine_minus_shadow,tau.fma_target.exact_target-F(cand.tau_target),F(fma_tau_exp_decay)-F(ema.decay_tau_sigma))
     suffix=_suffix(out)

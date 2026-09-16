@@ -1,180 +1,103 @@
 # OU-III ALT current handover
 
-Read `AGENTS.md`, this file, `ou3-alt-deployment-prerequisite.md`,
-`ou3-alt-attitude-atlas.md`, `ou3-alt-startup-disturbance-contract.md`,
-`ou3-alt-wpe-uniform-supplies.md`, `ou3-alt-startup-pre-rho.md`,
-`ou3-alt-proof-plan.md`, and the ALT section of
-`ou3-proof-research-state.md`. The original P2/P3/P4/P5 route continues
-independently through `ou3-brmm-main-handover.md`.
+The task is to qualify the complete finite source/runtime word before estimating
+rho. `AGENTS.md` and `ou3-alt-proof-plan.md` are normative. The independent
+P2/P3/P4/P5 route continues through `ou3-brmm-main-handover.md`; its thresholds
+and gates are unchanged. The ALT master still withholds storage search.
 
-Continue from a fresh branch off `main`. The research question is completion
-of the finite pre-rho qualifications, not estimation of rho. The numerical
-startup profile has already been selected and authorized; do not ask the next
-conversation to choose it again. This document is the current starting point;
-PR #528 contains the implementation and validation record.
+## Physical input theorem
 
-## Controlling result
+Every admitted Live history now satisfies the actual binary32 API bounds
+`max_i |gyro_body_i| <= 35 rad/s` and
+`max_i |accel_body_i| <= 160 m/s²`, after calibration and body-axis mapping.
+`ou3-alt-live-input-contract.md` gives the device evidence and exact profile.
+Checks occur before execution and retain complete rounding cells. Startup
+keeps the already selected BMI270/MPU6886 residual and temporal contracts;
+these must not be selected again or silently widened.
 
-Signed magnetic-counter safety is closed for every finite event prefix. The
-shipping attempt, accepted-sample and rejected-sample counts saturate at INT_MAX;
-measurement, statistics and release checks continue. The exact induction and
-source audit are in `ou3-alt-deployment-prerequisite.md`. No maximum call rate
-was added. The master has no falsified counter prerequisite, but universal
-startup and source-uniform deployment arithmetic still block rho estimation.
+The bounds enter the proof. The private Mahony integral has an all-prefix
+rounding barrier 4096, corrected rate stays below 4132, and Euler norm sum
+below 5000. Normalization returns the state to squared norm below 1.112,
+giving vertical acceleration below 322 and the WPE envelope 512. Startup
+memory is retained, with no finite capture deadline assumed. The normalization
+bound includes the literal fused Newton correction on every finite norm cell.
+State bounds do not imply bit identity between compiler modes or qualify
+unused Euler-angle outputs, seed reachability, or the complete MEKF.
 
-Startup uses the commissioned sensor profiles in
-`ou3-alt-startup-disturbance-contract.md`: residual vector caps 0.30 m/s² and
-0.02 rad/s for BMI270, 0.50 m/s² and 0.03 rad/s for MPU6886, plus a separate
-same-history total direction-error mean/primitive budget 0.10 / 1.5 s.
-These are declared engineering requirements supported by datasheet evidence;
-hardware admission is not inferred. Every admitted sample has a strictly
-positive seed-norm margin. The arbitrary-bounded startup obstruction remains
-a regression against conflating startup with post-Live ISS. The existing
-Mahony certificate's smaller seed region does not cover these profiles, so
-actual capture needs a new proof. The master has 32 closed components and
-11 open top-level qualifications.
-
-The finite runtime now represents every nonzero attitude error in a four-chart
-joint24 atlas. Maximum-component selection bounds each attitude coordinate by
-2 and covers the admitted south-heading timeout entry. Prediction, accepted
-measurement, tilt reset, magnetic yaw rewrite and H18/A21/hold transitions carry
-the chart correctly. All motion/bias information and full 21-state shipping
-covariance are retained. The local Cayley obstruction remains a regression,
-not an unresolved global representation problem.
-
-The interleaver now carries ungauged Live and delayed initial north acquisition.
-Initial acquisition and the gravity gate after Live use MEKF tilt; continuous
-calibration and refinement use private-observer tilt. The same packet can
-establish north, refine, apply calibration and reach the inner MEKF without
-accumulating continuous statistics twice. The north-service clock starts at the
-actual gauge event without moving the physical Live/S origin.
-
-The admitted source factory also accepts a certified empty pre-Live magnetic
-prefix. Its shared magnetic event composer carries waiting calls, later north
-and saturated counts into the following source-owned IMU event. These are exact
-conditional program relations; they do not prove universal startup/capture or
-source-uniform arithmetic.
-
-## Retained work
-
-The reset-rooted guard/private-Mahony/LPF/stillness/band/WPE/TuneState product
-crosses goLive without new frontend snapshots. Regional Mahony, physical source
-restriction, BIAS0/1/2, physical prediction, inverse-free measurements and
-rank-three covariance relations remain available. Regional Mahony retains its
-original sensor/seed premises; it is not a certificate for the larger
-commissioned startup profiles.
-
-The RN32 clock reaches the default timeout comparison at sample 30,002; shared
-startup-plus-600-IMU budgets end at 30,602. That deadline is conditional on
-source-produced gravity alignment. The magnetic 8.5-uT / 0.63-rad accuracy
-calculation remains conditional on a small accumulation-to-handoff frame bound.
-That accuracy premise is not needed by the finite atlas word: proper rotations
-give the universal chord bound 2 and the same-state mean perturbation bound
-157 uT. The graph retains the actual frame and magnetic discrepancy, without
-claiming this coarse bound proves nonvanishing north or useful contraction.
-
-## WPE arithmetic qualification
-
-The final tuning-frequency discrepancy is uniformly bounded by the outer
-clamps, including nonfinite fallback and retained statistics. For exact bounds
-[L,U] and compiled bounds [RN32(L),RN32(U)], the same-history residual lies in
-[RN32(L)-U, RN32(U)-L]. This proof requires neither branch agreement nor a libm
-accuracy estimate. The two-clamp accepted-update relation additionally uses the
-statistics interval. Neither bound proves execution totality or a useful
-contraction margin. The master has 11 remaining open qualifications.
-
-The moment graph retains shipping's literal `(alpha*v)*v` and `(alpha*eta)*eta`
-order. Each machine history carries its own post-log-update usable latch,
-including both inclusive elapsed/history comparisons and the one-way retention
-rule. Startup and Live compose independent machine/exact production, initialization
-and frequency choices. The strong wrapper supplies its carried machine WPE
-state to the lower tuner, then checks the same source-driven moment/log
-successor. The eager getter and invalid-result prior fallback are retained.
-See `ou3-alt-wpe-branch-composition.md`. Agreement of comparisons is no longer
-a prerequisite; source-uniform arithmetic and target qualification remain open.
-
-`ou3-alt-wpe-uniform-supplies.md` supplies a reset-rooted induction for every
-bounded vertical input with |x|<=32, including moments, raw period and log/exp
-domains. The same sensor packet and literal Mahony normalization/projection
-give that input bound after each defined scalar observer update, without a
-tilt-accuracy assumption. Preceding observer totality, hardware arithmetic and
-the complete source word remain open; the large finite bounds are not ISS gains.
-
-## Exact open qualifications
+## Eleven qualifications
 
 `tools/stability/ou3_alt_contraction/finite_master_guard.py` is authoritative.
-Its current eleven `open_obligations` are:
+Its inventory retains all eleven names; each value is derived from its
+supplying proof. A closed library or supply row uses the named shared
+execution premises. The independent firmware/compiler and source-reachability
+gates prevent those premises from being silently discarded.
 
-1. `source_uniform_timeout_aligned_branch_reachability`
-2. `near_antiparallel_Eigen_JacobiSVD_solver_correspondence`
-3. `universal_startup_source_and_branch_reachability`
-4. `startup_source_uniform_deployment_supplies`
-5. `target_libm_and_compiler_profile_correspondence`
-6. `WPE_machine_target_libm_and_compiler_selection`
-7. `WPE_source_uniform_machine_supply_bounds`
-8. `WPE_log_and_exp_libm_correspondence`
-9. `Qaxis_exp_libm_correspondence`
-10. `all_event_arithmetic_witnesses_source_uniform`
-11. `complete_source_uniform_600_step_word`
+| Qualification | Current result | Remaining requirement |
+| --- | --- | --- |
+| 1. Timeout/alignment reachability | The 30,002-sample deadline is falsified on a source-audited native wrapper history; that history first reaches Live at 33,447 | A valid universal startup argument; later recovery of one history is insufficient |
+| 2. Near-antiparallel Eigen SVD | Closed at the source-algorithm level: pinned 3x2 QR/Jacobi producer, both pivots/ranks/tiny tails, two-sweep termination, local same-tree FMA family, and first-seed bridge | Target whole-firmware/compiler/FCR correspondence remains a separate deployment row |
+| 3. Universal startup reachability | Both commissioned profiles admit the missed-deadline history; explicit bad equilibria are available as conditional constructions | Reachability or avoidance of the bad startup set from actual construction |
+| 4. Startup deployment supplies | MEMS all-prefix observer and configured frontend bounds, with actual state ancestry | Remaining startup initialization, Racc/MEKF arithmetic and target composition |
+| 5. Target compiler/libm profile | Component compiler, Eigen, libm, scalar namespace, and WPE expression maps are pinned | Whole-firmware call graph and FCR.RM=0 initialization/preservation are not qualified |
+| 6. WPE target selection | Closed for the pinned WPE machine graph: actual mixed FMA/MSUB sites map into the persistent FMA history | Whole-firmware compiler/FCR premise remains outside this component |
+| 7. WPE uniform supplies | Closed for the declared initialized MEMS/dormant-guard envelope; frontend, candidate tau/sigma/R_S and positive powf range are bounded without a startup deadline | Startup-root and whole-firmware premises remain separate |
+| 8. WPE log/exp libm | Closed for pinned newlib exp/log and IEEE sqrt error profiles under the named scalar/link premises | FCR/whole-firmware execution premise remains separate |
+| 9. Qaxis exp libm | Closed for pinned exp error below 2^-24 and the Q-axis envelope | FCR/whole-firmware execution premise remains separate |
+| 10. All-event arithmetic | Gradual underflow, input totality, and literal FMA state bounds are repaired | Source-uniform carried MEKF bias/state/covariance, solves and roundoff |
+| 11. Complete 600-step word | Each mode carries its own CORE, watchdog, MAG and HOLD successors; actual rounded packets and goLive a_w reset are attached; the sealed ungauged startup CORE constructor is now represented | Universal startup root, gauged pending-yaw ancestry, quaternion lower shell, and rounded full CORE/Eigen totality |
 
-The 32 closed entries are subordinate components. Their count does not imply
-that any of these eleven is closed. In particular, conditional WPE induction
-does not prove preceding Mahony totality or continuation of the startup sensor
-bounds on an arbitrary post-Live ISS word.
+## Startup evidence and its limits
 
-## Next falsifiable work
+`ou3-alt-startup-timeout-witness.md` supplies one analytic physical wave and
+bounded yaw/residual history. Every native API packet is audited against that
+same history, with zero BIAS0/1/2 driver, both commissioned sensor profiles,
+no installed filter state, and no pre-Live magnetic calls. The guard remains
+dormant. At both samples 30,002 and 30,602 the unchanged wrapper is not Live;
+it subsequently recovers. This refutes the assumed deadline, not eventual
+startup. Conditional inverted equilibria are not relabeled as reachable.
 
-Start with actual startup alignment/capture under the selected sensor and
-temporal contract. Before seed arithmetic, the two seed cones are approximately
-71.99 and 76.26 degrees. Even retaining the old temporal budgets, the old
-Mahony metric needs seed levels 2.05463 / 2.27142, exceeding both its 1.7689
-outer level and 1.87267 chart ceiling. Raising that quadratic level alone is
-a rejected route; reducing the chosen error caps to fit it is not justified.
+`ou3-alt-startup-direction-sampling.md` separately shows why the continuous
+direction mean/primitive budget cannot be reused unchanged as a sampled budget.
+Neither result permits a new input restriction for proof convenience.
 
-Compare a nonlinear observer storage, a same-history finite-time source/LPF
-argument and an informative-interval recovery argument against the literal
-gravity-alignment predicate. Any recovery premise beyond the selected contract
-must be stated and justified, not silently assumed. Follow the failure-analysis
-and critic protocol in `AGENTS.md` before refining a failed method.
+## Retained finite-word structure
 
-In the arithmetic branch, attach the actual target/compiler/Eigen/libm profile
-and qualify the seed/SVD/nonfinite branches, guard/Racc/frontend/tuner supplies
-and complete magnetic history. Preserve the existing scalar and FMA branches,
-source/bias ancestry, atlas transport, saturated counters and frontend memory.
-Then compose the complete same-history 600-transition word and require the
-finite master to pass `assert_finite_storage_master` before storage or rho work.
-In charts 1..3 coordinate zero is a 180-degree error, not zero attitude error.
-Every-prefix retention, useful ultimate bounds and indefinite no-restart tiling
-remain separate later requirements, including wrapper-clock lifetime treatment.
+The source product retains corrected COMPLETE-BRMM, one BIAS0/1/2 history,
+full 21-state covariance, joint24 motion/error/true-bias state, one Live/S
+origin, frontend/tuner memory, asynchronous magnetic state and all H18/A21
+edges. Four attitude charts cover every nonzero relative quaternion, including
+south-heading entry, without a small-angle capture premise. The optional
+wind-heel retarget and lever arm remain outside the declared scope.
 
-## Reproduction and validation boundary
+Signed magnetic counters are safe by saturation on every finite prefix.
+Certified empty startup magnetic histories, ungauged Live waiting and later
+north acquisition are represented. External hold may preserve H18 indefinitely;
+no eventual A21 transition is assumed. All source and machine predecessors
+must belong to the same carried history.
 
-From the repository root:
+The target arithmetic certificates intentionally retain the execution premise
+`FCR.RM=0`. The pinned ISA leaves FCR reset undefined and the first FPU use
+inherits the active register; absence of a startup writer is not an RNE proof.
+The FCR audit is therefore recorded as an explicit deployment blocker rather
+than silently promoted into the library/ compiler rows.
 
-```sh
-export PYTHONPATH="$PWD:$PWD/tools/stability:$PWD/tests/ou3_alt_contraction"
-python3 -m tools.stability.ou3_alt_contraction.finite_master_guard \
-  --output /tmp/ou3-alt-pre-rho.json
-python3 -m unittest test_finite_startup_sensor_contract \
-  test_finite_wpe_uniform_bounds -v
-```
+Read `ou3-alt-machine-core-continuation.md` for the remaining machine startup
+root, and `ou3-alt-target-arithmetic.md` for exact target/library qualifications.
+Read `ou3-alt-wpe-uniform-supplies.md` for the all-time WPE induction.
+`ou3-alt-event-arithmetic-domain.md` retains the giant-gyro overflow as an
+outside-domain regression; it is no longer the commissioned-input blocker.
 
-The master command should validate its report while keeping all ALT PASS and
-storage-readiness flags false. Report validation is not theorem completion.
-The exact finite-algebra CI selection is in `.github/workflows/ou3-alt-contraction.yml`.
-For native correspondence set `OU3_ALT_REQUIRE_NATIVE=1` and, when necessary,
-`EIGEN_INCLUDE_DIR` to the installed Eigen directory. `make all` is the required
-repository build; use `CPPFLAGS+=' -I<eigen-directory>'` if Eigen is not on the
-default include path. `tools/sim_dataset.py` fetches/verifies the simulation data.
+The wrapper's 30,602-sample clock/error certificate remains a conditional
+finite-horizon component. It cannot be used to prove that every admitted
+startup lies in that horizon. Integer source ordinals, machine clocks and
+literal branch predicates remain distinct. Finite clock lookup or an initialized
+observer bound does not prove indefinite clock progress.
 
-The inherited ALT suite still has phase-1 storage, covariance-envelope,
-endpoint-partition and magnetic AD failures. The original live-entry audit
-still questions H18-to-A21 release and session-origin S. Keep these gates
-intact; finite component tests and host/MCU compilation do not establish target
-arithmetic or any of the universal proofs. Exact run results and links belong
-in PR #528, rather than being copied into a new historical handover file.
+## Next controlling work
 
-Zero wind heel, dormant guard, zero lever arm, full-21 covariance, joint24
-motion/bias information, actual-applied R_S, corrected COMPLETE-BRMM and frozen
-P3 delta=1e-18 remain unchanged. All ALT PASS and storage-readiness gates are
-false. Validation results belong to the active PR description and CI logs.
+Finish universal startup classification, the quaternion lower shell/gauged
+pending-yaw producer, and the full machine covariance/solver envelope. Do not
+replace these with local coefficient boxes or sample maxima. The machine Joseph update can have a small
+positive covariance defect, and the literal first-order attitude reset is not
+orthogonal; both charges must be retained. A complete word must pass the
+finite-master guard before any storage or rho search.

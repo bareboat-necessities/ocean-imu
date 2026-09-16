@@ -22,6 +22,7 @@ from pathlib import Path
 
 from tools.stability.ou3_alt_contraction import finite_binary32_arithmetic as B
 from tools.stability.ou3_alt_contraction import finite_source_bound_exp_enclosure as EXP
+from tools.stability.ou3_alt_contraction import finite_tuner_tau_binary32 as TAU
 
 COMMON=Path(__file__).resolve().parents[3]/'src/kalman_common/SeaStateFusionFilterCommon.h'
 FILTER=Path(__file__).resolve().parents[3]/'src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h'
@@ -52,6 +53,7 @@ class Step:
     exp_decay:F
     alpha:F
     qualification:str=QUALIFICATION
+    exp_profile:str='legacy-enclosure'
     def __post_init__(self):
         for n in ('mult','tau_target','dt','safe_tau','requested_horizon','lower_horizon',
                   'RS_sec','exp_argument','exp_decay','alpha'):
@@ -76,7 +78,7 @@ class Step:
             raise ValueError('alpha_RS detached from 1-exp source operation')
 
 
-def step(*,mult,tau_target,dt,exp_decay,slew_log=0):
+def step(*,mult,tau_target,dt,exp_decay,slew_log=0,exp_profile='legacy-enclosure'):
     """Materialize deployed slew-disabled alpha_RS graph.
 
     ``target`` and ``applied`` are deliberately absent because source does not
@@ -94,11 +96,12 @@ def step(*,mult,tau_target,dt,exp_decay,slew_log=0):
     x=B.div(h,rssec)
     e=_q(exp_decay,'RS exp result')
     if not 0<e<=1: raise ValueError('RS exp result must lie in (0,1]')
-    elo,ehi,_,_=EXP.enclosure(x)
-    if not elo<=e<=ehi:
-        raise ValueError('RS exp witness detached from SAME rounded -dt/RS_sec argument')
+    try:
+        TAU.check_exp_result(x,e,exp_profile)
+    except ValueError as exc:
+        raise ValueError('RS exp witness detached from SAME rounded -dt/RS_sec argument/profile') from exc
     a=B.sub(ONE,e)
-    return Step(m,tau,h,safe,requested,lo,rssec,x,e,a)
+    return Step(m,tau,h,safe,requested,lo,rssec,x,e,a,exp_profile=exp_profile)
 
 
 def _source_shape_matches():

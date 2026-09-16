@@ -35,6 +35,7 @@ from tools.stability.ou3_alt_contraction import finite_sensor_source_runtime as 
 from tools.stability.ou3_alt_contraction import finite_post_prediction as POST
 from tools.stability.ou3_alt_contraction import finite_runtime_parameters as ACTIVE
 from tools.stability.ou3_alt_contraction import finite_startup_sensor_contract as SENSOR_CONTRACT
+from tools.stability.ou3_alt_contraction import finite_machine_startup_core as CORE_INIT
 
 STARTUP_CONFIG_KEYS=frozenset(('guard_cfg','vertical_cfg','wpe_cfg','band_cfg',
     'stats_cfg','bench_noise_sigma','still_cfg','candidate_cfg'))
@@ -51,6 +52,7 @@ class State:
     racc: RACC.State
     last_raw: SENSOR.RawImuSample | None = None
     sensor_history: SENSOR_CONTRACT.History | None = None
+    core_construction: CORE_INIT.Construction | None = None
 
     def __post_init__(self):
         if not isinstance(self.base,LOWER.State) or not isinstance(self.runtime,RUNTIME.RuntimeConfig):
@@ -86,6 +88,8 @@ class State:
             raise ValueError('bootstrap drive_mekf=false cannot advance Racc inflation state')
         if self.base.lower.frontend.tuner.stage=='Live':
             raise ValueError('startup product must cross goLive, not accept a Live snapshot')
+        if self.core_construction is not None and not isinstance(self.core_construction,CORE_INIT.Construction):
+            raise TypeError('source-owned default CORE construction required')
 
     @property
     def guard_cfg(self): return CONFIG._machine_guard_cfg(self.runtime)
@@ -105,7 +109,7 @@ def initial(runtime:RUNTIME.RuntimeConfig,deployment_cfg:D.DeploymentConfig,*,se
         STILL.State(),tune,stage='Cold',warmup_sec=F(10)))
     src=VS.State(V.State(),VS.LPFState(cutoff_hz=CONFIG.DEFAULT_TRACKER_CUTOFF),MSTILL.State())
     return State(LOWER.initial(frontend),runtime,deployment_cfg,GUARD.State(),src,src,RACC.State(),
-                 sensor_history=sensor_history)
+                 sensor_history=sensor_history,core_construction=CORE_INIT.literal_reset())
 
 
 @dataclass(frozen=True)
@@ -131,7 +135,7 @@ class StepResult:
 
 def _with_base(state,base):
     return State(base,state.runtime,state.deployment_cfg,state.guard,
-                 state.separate_source,state.fma_source,state.racc,state.last_raw,state.sensor_history)
+                 state.separate_source,state.fma_source,state.racc,state.last_raw,state.sensor_history,state.core_construction)
 
 
 def boundary(state:State,**witnesses):
@@ -191,7 +195,7 @@ def step(state:State,raw,*,dt,machine_dt,machine_gyro_body,machine_acc_body,
         config.pop('candidate_cfg')  # shipping returns before the candidate read
     # Exactly one lower event; bind the already-consumed band/sigma operands.
     out=LOWER.step(state.base,raw,dt=dt,deployment_cfg=state.deployment_cfg,**config,**witnesses)
-    nxt=State(out.state,state.runtime,state.deployment_cfg,guard.state,sep.state,fma.state,state.racc,raw,state.sensor_history)
+    nxt=State(out.state,state.runtime,state.deployment_cfg,guard.state,sep.state,fma.state,state.racc,raw,state.sensor_history,state.core_construction)
     return StepResult(nxt,out,guard,sep,fma)
 
 

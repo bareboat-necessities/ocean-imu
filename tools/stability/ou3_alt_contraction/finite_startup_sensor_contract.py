@@ -112,7 +112,7 @@ def _normalized_quaternion_bound():
     for exponent in range(255):
         for k in range(16):
             start=(exponent<<23)+k*(1<<19); end=start+(1<<19)-1
-            x,y=INV._cell_inverse_sqrt(start,end)
+            x,y=_inverse_sqrt_contraction_cell(start,end)
             if y.lo<=0: raise ArithmeticError('inverse-sqrt enclosure lost positive output')
             shell=max(shell,F(INV.F32.mul(INV.F32.mul(x,y),y).hi))
             ymax=max(ymax,F(y.hi))
@@ -125,6 +125,28 @@ def _normalized_quaternion_bound():
     actual=(1+U)**2*ideal+10*ETA  # four component multiplications
     assert actual<F(139,125)
     return actual,shell,ymax
+
+
+def _inverse_sqrt_contraction_cell(start,end):
+    """The retained Newton enclosure also contains the literal MSUB choice.
+
+    With reassociation disabled the only multiply/add contraction in invSqrt
+    is 1.5 - p*y0, where p=RN(RN(number*.5)*y0). All cell endpoints are exact
+    binary32 values. Rational endpoint products therefore certify the fused
+    correction without borrowing the separately rounded product's defect.
+    """
+    x,y=INV._cell_inverse_sqrt(start,end)
+    y0=INV.Interval(INV.F32.f32_from_bits(INV.MAGIC-(end>>1)),
+                    INV.F32.f32_from_bits(INV.MAGIC-(start>>1)))
+    p=INV.F32.mul(INV.F32.mul(x,INV.F32.point(.5)),y0)
+    products=[F(a)*F(b) for a in (p.lo,p.hi) for b in (y0.lo,y0.hi)]
+    correction_lo=B.rn32(F(3,2)-max(products))
+    correction_hi=B.rn32(F(3,2)-min(products))
+    outputs=[B.rn32(F(a)*b) for a in (y0.lo,y0.hi)
+             for b in (correction_lo,correction_hi)]
+    if not F(y.lo)<=min(outputs)<=max(outputs)<=F(y.hi):
+        raise ArithmeticError('literal fused Newton correction left retained cell enclosure')
+    return x,y
 
 
 def vertical_supply_certificate(p:Profile):

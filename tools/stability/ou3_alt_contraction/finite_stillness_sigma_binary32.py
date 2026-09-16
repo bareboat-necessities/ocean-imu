@@ -19,7 +19,7 @@ The energy multiply-add carries every local no-reassociation contraction choice.
 The actual stored energy successor is a witness constrained to that finite set;
 the still predicate is then evaluated from that actual successor.  The later
 attenuation exp is tied to the SAME stored still-time by a tight real enclosure
-and binary32 RNE cell. Platform expf/compiler correspondence remains open.
+and the named relative2^-20 error relation. Compiler/link selection remains open.
 """
 from __future__ import annotations
 
@@ -114,7 +114,7 @@ def step(state:State,cfg:R.Config,*,vertical_lp,dt,energy_successor,attenuation_
         if attenuation_exp is None: raise ValueError('still branch requires attenuation exp result')
         e=_q(attenuation_exp,'stillness attenuation exp')
         lo,hi=E.exp_minus_enclosure(st)
-        if not E._interval_hits_rne_cell(lo,hi,e): raise ValueError('stillness attenuation exp detached from SAME stored still-time RNE cell')
+        if not E._interval_hits_exp_error_cell(lo,hi,e): raise ValueError('stillness attenuation exp detached from SAME stored still-time error profile')
         atten=min(max(e,ZERO),ONE)
     else:
         if attenuation_exp is not None: raise ValueError('moving branch consumes no attenuation exp result')
@@ -144,7 +144,7 @@ def readiness():
       'energy_normalization_square_and_EMA_binary32_graph_materialized':True,
       'actual_energy_successor_bound_to_all_local_contraction_choices':True,
       'still_predicate_and_capped_time_derived_from_actual_machine_energy':True,
-      'attenuation_exp_bound_to_same_stored_machine_still_time_by_RNE_cell':True,
+      'attenuation_exp_bound_to_same_stored_machine_still_time_by_error_profile':True,
       'moving_branch_attenuation_is_literal_one':True,
       'target_exp_libm_correspondence_closed':False,
       'upstream_vertical_LP_machine_production_closed':False,

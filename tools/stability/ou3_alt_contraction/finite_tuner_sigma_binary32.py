@@ -3,9 +3,9 @@
 Shipping derives sigma from the wave-band variance before the common tau/sigma
 EMA. Every ordinary operation is exact binary32 here. ``sqrt`` and the optional
 stillness ``exp`` are explicit witnesses bound to their SAME rounded arguments.
-Both transcendental results are related to rigorous exact-real intervals through
-their exact RNE rounding cells; machine values are never falsely identified with
-exact-real roots. Platform-libm correspondence remains open.
+Exp uses the named relative2^-20 target error relation; sqrt retains its
+exact RNE cell relation. Neither machine value is identified with an exact-real
+transcendental. Whole-firmware compiler/link selection remains separate.
 """
 from __future__ import annotations
 from dataclasses import dataclass
@@ -19,6 +19,8 @@ from tools.stability.ou3_alt_contraction import finite_tuner_deployment_config a
 SOURCE=Path(__file__).resolve().parents[3]/'src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h'
 ZERO=B.rn32(0); ONE=B.rn32(1); VAR_FLOOR=B.rn32(F(1,10**6)); SIGMA_FLOOR=B.rn32(F(1,20))
 QUALIFICATION='OU3_ALT_SIGMA_BINARY32_V4'
+EXP_RELATIVE_ERROR=F(1,2**20)
+EXP_PROFILE='exp-relative-2^-20-same-argument'
 
 
 def _q(x,name):
@@ -28,18 +30,38 @@ def _q(x,name):
 
 
 def _positive_rne_cell(q:F):
-    """Closed nearest-even rounding cell around a positive normal binary32."""
+    """Cell endpoints around a positive finite binary32, including subnormals.
+
+    Endpoint ownership is determined by significand parity in
+    ``_interval_hits_rne_cell``; this helper returns only the endpoints.
+    """
     q=F(q)
-    if q<=0 or not B.is_binary32(q): raise ValueError('positive normal binary32 required for RNE cell')
-    e=B._floor_log2_positive(q); quantum=B._pow2(e-23)
-    lower_step=quantum/2 if q==B._pow2(e) else quantum
+    if q<=0 or not B.is_binary32(q): raise ValueError('positive finite binary32 required for RNE cell')
+    e=B._floor_log2_positive(q); quantum=B._pow2(max(-149,e-23))
+    lower_step=quantum/2 if e>-126 and q==B._pow2(e) else quantum
     prev=q-lower_step; nxt=q+quantum
     return (prev+q)/2,(q+nxt)/2
 
 
 def _interval_hits_rne_cell(lo,hi,rounded):
-    clo,chi=_positive_rne_cell(F(rounded))
-    return max(F(lo),clo)<=min(F(hi),chi)
+    q=F(rounded); clo,chi=_positive_rne_cell(q)
+    lower,upper=max(F(lo),clo),min(F(hi),chi)
+    if lower>upper: return False
+    if lower<upper or clo<lower<chi: return True
+    quantum=B._pow2(max(-149,B._floor_log2_positive(q)-23))
+    return (q/quantum).numerator%2==0
+
+
+def _interval_hits_exp_error_cell(lo,hi,rounded):
+    """Named target-error relation, retaining the actual exp argument.
+
+    The pinned target exp proof is strictly below2^-20 on[-60,60].
+    Enclosing output cells additionally account for final binary32 rounding;
+    ideal correctly-rounded transcendental evaluation is not assumed.
+    """
+    eta=F(1,2**150)
+    return _interval_hits_rne_cell((1-EXP_RELATIVE_ERROR)*F(lo)-eta,
+                                   (1+EXP_RELATIVE_ERROR)*F(hi)+eta,rounded)
 
 
 def _exp_minus_unit_enclosure(x,terms=14):
@@ -122,8 +144,8 @@ def target(cfg:D.DeploymentConfig,*,var_ready,accel_variance,band_noise_sigma,
         if still_exp_result is None: raise TypeError('still branch requires exp attenuation witness')
         e=_q(still_exp_result,'stillness exp result')
         elo,ehi=exp_minus_enclosure(st)
-        if not _interval_hits_rne_cell(elo,ehi,e):
-            raise ValueError('stillness exp witness detached from SAME rounded argument RNE cell')
+        if not _interval_hits_exp_error_cell(elo,ehi,e):
+            raise ValueError('stillness exp witness detached from SAME rounded argument error profile')
         atten=min(max(e,ZERO),ONE)
         attenuated=B.mul(pre,atten)
     else:
@@ -165,7 +187,7 @@ def readiness():
       'variance_1e_minus6_floor_binary32_materialized':True,
       'stillness_exp_tight_rational_enclosure_bound_to_same_argument':True,
       'stillness_exp_range_reduction_covers_full_0_to_60_second_machine_domain':True,
-      'stillness_exp_binary32_result_related_by_exact_RNE_cell':True,
+      'stillness_exp_binary32_result_related_by_target_error_profile':True,
       'sigma_sqrt_witness_bound_to_same_rounded_var_wave':True,
       'sigma_sqrt_binary32_result_related_by_exact_RNE_cell_not_false_real_equality':True,
       'sigma_gain_max_clamp_and_unready_floor_binary32_materialized':True,

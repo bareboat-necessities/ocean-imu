@@ -66,7 +66,7 @@ class Tests(unittest.TestCase):
         r=X.readiness()
         for k in ('shipping_sigma_target_source_shape_matches','noise_variance_subtraction_and_zero_floor_binary32_materialized',
                   'optional_stillness_attenuation_binary32_multiply_materialized','variance_1e_minus6_floor_binary32_materialized',
-                  'stillness_exp_tight_rational_enclosure_bound_to_same_argument','stillness_exp_binary32_result_related_by_exact_RNE_cell',
+                  'stillness_exp_tight_rational_enclosure_bound_to_same_argument','stillness_exp_binary32_result_related_by_target_error_profile',
                   'sigma_sqrt_witness_bound_to_same_rounded_var_wave','sigma_sqrt_binary32_result_related_by_exact_RNE_cell_not_false_real_equality',
                   'sigma_gain_max_clamp_and_unready_floor_binary32_materialized'):
             self.assertTrue(r[k])

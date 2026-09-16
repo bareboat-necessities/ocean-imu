@@ -522,6 +522,164 @@ conditioned operand. Source-uniform guard/Racc/libm supplies remain open.
 
 ### Failure analysis and independent critic
 
+* **Physical Live input domain and totality:** arbitrary bounded residuals
+  alone permitted a finite `2^80` gyro pulse that made the unchanged scalar
+  wrapper nonfinite. The user-authorized MEMS API domain now imposes per-axis
+  gyro 35 rad/s and accelerometer 160 m/s² bounds before execution; that pulse
+  is an outside-contract regression. The new finite-lattice induction proves
+  `|integral|<=4096` for every initialized finite prefix, since the largest
+  actual increment rounds back to 4096 at that boundary. Corrected gyro is
+  below 4132, Euler norm sum below 5000, and vertical acceleration below 322.
+  This closes the scalar observer supply under seed, dormant-guard and scalar
+  arithmetic premises without assuming a startup deadline or resetting Live
+  memory. It does not prove finite MEKF covariance/solver execution or target
+  expression correspondence. The next experiment is their actual same-state
+  composition; output forcing membership cannot substitute for input totality.
+
+* **Literal startup deadline fails on a physical yaw/wave history:** the
+  circular wave `a=(A cos(omega t), A sin(omega t),0)`, with
+  `A=3.313664 m/s^2`, `omega=0.64 rad/s`, has position norm 8.09 m,
+  velocity norm 5.1776 m/s and centered primitive 25.28125 m s. Zero true
+  bias solves every BIAS family. Continuous piecewise-linear yaw uses rates
+  0.2, 0.61, 0.41, -0.2 and 0.2 rad/s on intervals ending at 5, 125, 130
+  and 135 seconds. A 0.019 rad/s bounded gyro residual fits both commissioned
+  profiles. Its actual world direction mean/primitive bounds are below
+  0.053 and 0.501 s, with sensor-conversion allowance included. The unchanged
+  full host wrapper, constructed with default configuration and no pre-Live
+  magnetic calls, is still non-Live at sample 30,002: the initialized proxy's
+  literal averaged force has z=+2.84663 m/s^2. At sample 30,602 it remains
+  non-Live with z=+4.35638. The actual guard remains transparent, with RMS
+  below 0.000131 m/s^2. This is a finite timeout-alignment counterexample
+  on the tested scalar host profile, not an enclosure failure or an all-target
+  arithmetic claim. It invalidates the universal 30,002-step deadline and
+  using 30,602 as a source-uniform startup-plus-word horizon. It does not
+  invalidate eventual capture: this same source first reaches Live at sample
+  33,447 (167.235 s). The exact source/packet audit and native regression are
+  `finite_startup_timeout_alignment_obstruction.py`. The limiter is actual
+  body-axis integral/attitude/LPF evolution during legal yaw changes. Critic
+  alternatives: prove a later uniform recovery deadline from the unchanged
+  source; construct an indefinitely noncapturing admissible history; or seek
+  explicit authorization for an additional physical startup premise. Merely
+  increasing the old quadratic Mahony level cannot remove this trajectory.
+  The exact named scalar observer also has an inverted-axis zero-feedback
+  fixed point with canceled yaw integral. Its source reachability is unproved;
+  the observed timeout witness still has horizontal integral norm about
+  0.123 rad/s, above the available residual cancellation budget. The dedicated
+  source proof and scope are in `docs/ou3-alt-startup-timeout-witness.md`.
+  Next falsifiable experiment: construct a physical, primitive-preserving
+  steering path into an invariant unaligned set, or prove that actual startup
+  histories avoid those sets and enter the aligned branch by a later uniform
+  deadline. Larger deadline scans alone cannot establish either conclusion.
+
+* **Continuous startup budget is not a sampled budget:** a bounded 0.5 Hz
+  physical wave plus continuous 200 Hz sensor residual satisfies the selected
+  continuous mean/primitive limits, while the sampled mean exceeds 0.10.
+  The rational certificate is in `finite_startup_direction_sampling.py`.
+  This is a premise-transfer failure, not proof of failure to capture within
+  150 seconds. It invalidates unchanged all-time reuse of the continuous PI
+  budget. The limiter is the sampled forcing/primitive relation. Critic
+  alternatives: an explicit quadrature/aliasing bound from the declared
+  source, direct discrete observer/LPF capture, or an authorized sampled
+  observability premise. Next test must bound the actual 30,002-sample
+  alignment predicate, not merely extend the old regional Mahony metric.
+
+* **Standalone target math link placement:** a numerical-link probe using
+  the SDK ROM script failed with `windowed longcall crosses 1GB boundary`
+  because the default linker placed its text outside the MCU instruction
+  segment. This is an infrastructure failure, not a libm inequality failure.
+  Keep the actual ROM script and place probe text at the ESP32-S3 flash
+  instruction address 0x42000000; then inspect symbol resolution. The full
+  firmware remains a separate composition obligation.
+  The second default-script attempt moved only `.text`; `.text.expf` and
+  other function sections stayed outside the instruction segment and repeated
+  the relocation failure. Freeze default-script tweaking. Critic alternatives:
+  full SDK memory/sections plus runtime; an explicit standalone script placing
+  all `.literal*`/`.text*` in the real instruction segment; or a full Arduino
+  CI build/map. The selected static namespace probe uses the second, retaining
+  the SDK ROM script and explicitly withholding whole-firmware qualification.
+
+* **Target selection is not target arithmetic:** the verified pinned MCU GCC
+  uses `-ffp-contract=fast`; its numerical-header object contains ordinary and
+  multiply-add instructions. Scalar no-contraction identities and two abstract
+  WPE modes do not establish expression-specific target correspondence.
+  This is a deployment qualification gap, not instability evidence. Verified
+  Eigen/libm/compiler hashes retain program identity. Remaining limiters are
+  instruction semantics, final link resolution and all-input library/solver
+  error bounds. Alternatives are an instruction-level relation, source-level
+  compiler correspondence with retained expression choices, or a qualified
+  operation family retaining shared state. No source/firmware change is
+  authorized. The Qaxis general envelope has a proved sufficient absolute
+  exp error budget `2^-24`; next work must establish the actual target error
+  against that budget and WPE's separately required same-argument relations.
+
+* **FCR initialization is not established by the target ISA alone:** the
+  pinned ESP32-S3 ISA reference leaves the floating-point control register
+  reset value undefined, and the first-FPU-use task path inherits the active
+  CPU FCR rather than writing round-to-nearest. The SDK archive scan found the
+  lazy save/restore writers and no startup or ROM writer that supplies RM=0.
+  The target scalar, libm, and WPE certificates therefore remain conditional
+  on `FCR.RM=0` throughout the admitted execution; they cannot be promoted to
+  whole-firmware correspondence. This is a documented failed proof method,
+  not a claim that the hardware runs in a non-RNE mode. Critic alternatives:
+  qualify the complete Arduino/FreeRTOS startup and both-core context path,
+  add an authorized explicit FCR initialization in the shipping program, or
+  retain the rounding-mode premise as an execution assumption. Do not infer
+  RNE from reset, a zeroed task stack, or absence of `fesetround` calls.
+
+* **WPE frequency-ratio contraction:** pinned target compilation emits
+  `msub.s` for `ratio_sq-lambda_*lambda_`, while the current moment graph
+  rounds the product separately. This is a missing program branch, not a
+  stability failure. It invalidates claiming that the scalar moment relation
+  represents every compiler expression choice. The limiter is the same-state
+  omega-squared operand relation immediately before its positivity test.
+  Retain both legal expressions with their exact common operands and test a
+  near-threshold case; do not require agreement of the resulting branches.
+  The alternative is exact instruction interpretation, which still needs
+  hardware semantics. Choosing a no-FMA compiler flag would change deployment
+  and is not the selected correction.
+
+* **Machine covariance is not exactly Joseph-nonincreasing:** unchanged
+  construction-rooted 600-step H18/A21 diagnostics with admitted raw inputs
+  (constant/alternating 35-rad/s gyro or a slow 150-m/s² acceleration ramp)
+  stayed finite with a dormant guard. The positive eigenvalue of
+  `P_after_Joseph-P_before` reached 6.98e-6 (H18) and 4.69e-7 (A21).
+  The source reset is `G=I+0.5[delta_theta]x`, so its norm is not one; a
+  measured A21 reset norm ratio reached 1.00001156. This invalidates a proof
+  that silently transfers exact-real Joseph nonincrease or orthogonal resets
+  to the machine recurrence; it is not a theorem instability result. The
+  limiter is source-correlated covariance/solve/reset roundoff. Critic routes:
+  the gyro-bias marginal (untouched by attitude reset) with an explicit
+  roundoff charge, a coupled gain/innovation energy inequality, or an exact
+  machine block invariant. Next derive the marginal bound with a quantified
+  charge before using it to bound corrected gyro; do not use sampled maxima
+  as universal ceilings. The abrupt acceleration step engaged the guard and
+  supplies no dormant-branch evidence.
+
+* **Machine MEKF recurrence:** the strongest represented Live wrapper starts
+  each deployment prediction from its exact-shadow MEKF predecessor; the
+  previous machine prediction/accelerometer successor is returned as a local
+  supply but not retained as the next machine predecessor. This is a
+  composition failure, not evidence that the shipping filter is unstable.
+  It invalidates inferring a deployed 600-step recurrence from 600 local
+  supply checks, even if their individual bounds are established. The limiter
+  is machine-state continuity across IMU, MAG and HOLD boundaries. Critic
+  alternatives are a persistent product recurrence, an explicit finite-word
+  composition theorem with checked state-equality premises, or a machine-only
+  evaluator with a derived exact shadow. The next falsifiable check must reject
+  a second event rooted at the old exact shadow after a nonzero machine defect.
+
+* **Subnormal arithmetic domain:** `finite_binary32_arithmetic.rn32(2^-149)`
+  rejects a finite IEEE binary32 value although the admitted source has no
+  positive lower bound on nonzero components. This is a proof-model totality
+  defect; normal-input identities and shipping stability are not falsified.
+  Excluding small components cannot repair the universal quantifier. The
+  limiting quantity is the missing subnormal lattice, not enclosure width.
+  Critic alternatives are full gradual-underflow rounding, a separately
+  qualified target flush-to-zero relation, or migration to the existing
+  Mahony bit kernel. Extend the finite lattice and check signed ties, the
+  normal/subnormal boundary and API/EMA/stillness composition against the
+  independent bit kernel. Target arithmetic qualification remains separate.
+
 * **Document-build infrastructure:** the full paper's LaTeX build stops before
   reading the theorem text because `IEEEtran.cls` is absent. This is an
   environment failure, not evidence against the new inequalities. Keep the
@@ -806,6 +964,10 @@ Universal source/control/deployment qualification still keeps the guard blocked.
   entry question. Retain the failure; rederive those assertions against the
   corrected source in that independent track. The limiting quantities and next
   falsifiable check are the actual release time and session-origin S at handoff.
+  The same run also reports the pre-existing OU-III simulation quality gate
+  failures `accel_z_bias_percent_exceeded` (4.3921% and 4.46846% versus the
+  4.3% limit) for the two high-wave cases. Those numerical regressions are
+  outside this proof PR; no tolerance or shipping behavior was changed here.
 
 The strongest critic objection is that an identity-preserving startup graph can
 still carry unqualified source/branch/arithmetic witnesses; conditional entry

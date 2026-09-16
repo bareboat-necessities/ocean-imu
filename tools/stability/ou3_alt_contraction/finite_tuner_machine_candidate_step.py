@@ -33,6 +33,7 @@ from tools.stability.ou3_alt_contraction import finite_tuner_spectral_input_join
 from tools.stability.ou3_alt_contraction import finite_tuner_rs_alpha_machine_real_join as RSALPHA
 from tools.stability.ou3_alt_contraction import finite_tuner_rs_deployment_ledger as RS
 from tools.stability.ou3_alt_contraction import finite_tuner_machine_tunestate_product as PRODUCT
+from tools.stability.ou3_alt_contraction import finite_candidate_uniform_bounds as SUPPLY
 
 QUALIFICATION='OU3_ALT_MACHINE_TUNESTATE_CANDIDATE_STEP_V1'
 
@@ -95,12 +96,22 @@ def step(previous:PRODUCT.State,exact_candidate:C.CandidateResult,
          separate_sigma_join:SIGJOIN.Join,fma_sigma_join:SIGJOIN.Join,
          separate_spectral_pow,separate_spectral_sqrt,
          fma_spectral_pow,fma_spectral_sqrt,
-         separate_rs_exp_decay,fma_rs_exp_decay):
+         separate_rs_exp_decay,fma_rs_exp_decay,uniform_supplies=False):
     if not isinstance(previous,PRODUCT.State) or not isinstance(exact_candidate,C.CandidateResult):
         raise TypeError('machine TuneState predecessor and exact candidate required')
     if not isinstance(tau,TAU.StepResult): raise TypeError('same-sample dual tau StepResult required')
     if tau.separate_step.previous!=previous.tau.separate or tau.fma_step.previous!=previous.tau.fma:
         raise ValueError('dual tau result detached from whole machine TuneState predecessor')
+    if type(uniform_supplies) is not bool: raise TypeError('literal candidate supply qualification required')
+    if uniform_supplies:
+        SUPPLY.require_state(previous); SUPPLY.require_config(deployment_cfg)
+        if F(dt)!=SUPPLY.W.DT: raise ValueError('candidate finite supplies require canonical machine dt')
+        for t,sj,pw,sw in ((tau.separate_step,separate_sigma_join,separate_spectral_pow,separate_spectral_sqrt),
+                          (tau.fma_step,fma_sigma_join,fma_spectral_pow,fma_spectral_sqrt)):
+            if t.exp_profile!=SUPPLY.LIBM.EXP_PROFILE:
+                raise ValueError('bounded candidate requires target common-alpha profile')
+            SUPPLY.require_inputs(deployment_cfg,tau=t.tau_target,sigma=sj.machine.sigma_target,
+                                  pow_result=pw,sqrt_result=sw)
     expected=_exact_target(exact_candidate)
     for name,j in (('separate',separate_sigma_join),('fma',fma_sigma_join)):
         if not isinstance(j,SIGJOIN.Join): raise TypeError(name+' same-source sigma join required')
@@ -121,9 +132,11 @@ def step(previous:PRODUCT.State,exact_candidate:C.CandidateResult,
     fs=SPECIN.join(tau.fma_step,fma_sigma_join,
                    pow_result=fma_spectral_pow,sqrt_result=fma_spectral_sqrt)
     sra=RSALPHA.join(deployment_cfg,tau_target=tau.separate_step.tau_target,dt=h,
-                     exp_decay=separate_rs_exp_decay)
+                     exp_decay=separate_rs_exp_decay,
+                     exp_profile=SUPPLY.LIBM.EXP_PROFILE if uniform_supplies else 'legacy-enclosure')
     fra=RSALPHA.join(deployment_cfg,tau_target=tau.fma_step.tau_target,dt=h,
-                     exp_decay=fma_rs_exp_decay)
+                     exp_decay=fma_rs_exp_decay,
+                     exp_profile=SUPPLY.LIBM.EXP_PROFILE if uniform_supplies else 'legacy-enclosure')
     rs=RS.step(previous.rs,separate_target=ss.spectral,separate_alpha=sra,
                fma_target=fs.spectral,fma_alpha=fra)
 
@@ -131,7 +144,9 @@ def step(previous:PRODUCT.State,exact_candidate:C.CandidateResult,
                                        pending_after=exact_candidate.pending_after)
     sm=ModeResult(separate_sigma_join,sa,ss,sra,'separate')
     fm=ModeResult(fma_sigma_join,fa,fs,fra,'fma')
-    return Result(whole,sigma,rs,sm,fm,exact_candidate)
+    result=Result(whole,sigma,rs,sm,fm,exact_candidate)
+    if uniform_supplies: SUPPLY.require_result(previous,result)
+    return result
 
 
 def readiness():

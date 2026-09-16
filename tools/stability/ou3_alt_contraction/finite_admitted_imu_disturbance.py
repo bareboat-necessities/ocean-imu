@@ -2,13 +2,16 @@
 
 Configured Racc is a covariance and MUST NOT be reinterpreted as a pathwise
 sensor-noise cap.  The stability theorem instead quantifies over an arbitrary
-bounded disturbance history.  This module makes that ISS quantifier explicit:
+bounded disturbance history within the commissioned raw MEMS input domain.
+This module makes that ISS quantifier explicit:
 
 * one persistent pair of gyro/accelerometer residual-history identities is
   inherited from ``SensorDisturbanceRoot``;
 * one persistent temperature/model history identity is carried beside them;
 * ``supply_norm_upper`` is a symbolic theorem parameter, not a tuned numeric
   sensor envelope;
+* the fixed input profile is checked on the source-owned raw packet before
+  every theorem-facing Live event; it does not depend on execution succeeding;
 * each kth event is charged by the exact forcing vector produced by the
   executed shipping event after the vibration guard and temperature model.
 
@@ -29,6 +32,7 @@ from fractions import Fraction as F
 from tools.stability.ou3_alt_contraction import finite_measurement_graph as M
 from tools.stability.ou3_alt_contraction import finite_source_continuation as SOURCE
 from tools.stability.ou3_alt_contraction import finite_source_bound_imu_forcing as FORCE
+from tools.stability.ou3_alt_contraction import finite_live_input_contract as INPUT
 
 QUALIFICATION='OU3_ALT_BOUNDED_IMU_ISS_HISTORY_V1'
 TRANSITIONS=SOURCE.TRANSITIONS
@@ -46,6 +50,7 @@ class BoundedHistory:
     temperature_model_history_id: str
     supply_norm_upper: F
     qualification: str=QUALIFICATION
+    input_profile: str=INPUT.PROFILE
 
     def __post_init__(self):
         if not isinstance(self.sensor_root,SOURCE.SensorDisturbanceRoot):
@@ -57,6 +62,8 @@ class BoundedHistory:
             raise ValueError('nonnegative symbolic ISS forcing bound required')
         if self.qualification != QUALIFICATION:
             raise ValueError('wrong bounded IMU disturbance theorem qualification')
+        if self.input_profile != INPUT.PROFILE:
+            raise ValueError('bounded IMU history detached from commissioned raw input profile')
         object.__setattr__(self,'supply_norm_upper',b)
 
 
@@ -92,6 +99,8 @@ def readiness():
       'Racc_covariance_not_used_as_pathwise_noise_bound':True,
       'arbitrary_bounded_IMU_ISS_history_quantifier_available':True,
       'symbolic_supply_bound_not_fixed_sigma_multiple':True,
+      'commissioned_MEMS_raw_input_profile_carried':True,
+      'bounded_ISS_quantifier_intersects_raw_input_domain':True,
       'persistent_gyro_and_accel_history_ids_carried':True,
       'persistent_temperature_model_history_id_carried':True,
       'kth_bound_applies_to_exact_executed_post_guard_thermal_forcing':True,

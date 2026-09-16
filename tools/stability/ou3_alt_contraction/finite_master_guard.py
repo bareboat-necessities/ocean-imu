@@ -37,8 +37,70 @@ from tools.stability.ou3_alt_contraction import finite_admitted_source_live_word
 from tools.stability.ou3_alt_contraction import finite_source_bound_mag_dual_clock as MAGWORD
 from tools.stability.ou3_alt_contraction import finite_startup_sensor_contract as SENSOR_CONTRACT
 from tools.stability.ou3_alt_contraction import finite_wpe_uniform_bounds as WPEBOUNDS
+from tools.stability.ou3_alt_contraction import finite_mahony_prefix_totality as MAHONYTOTAL
+from tools.stability.ou3_alt_contraction import finite_seed_svd_axis_reduction as SVDAXIS
+from tools.stability.ou3_alt_contraction import finite_live_disturbance_overflow as LIVEOVERFLOW
+from tools.stability.ou3_alt_contraction import finite_startup_direction_sampling as SAMPLING
+from tools.stability.ou3_alt_contraction import finite_live_input_contract as INPUT
+from tools.stability.ou3_alt_contraction import target_wpe_libm as TARGETLIBM
+from tools.stability.ou3_alt_contraction import target_wpe_compiler as TARGETWPE
+from tools.stability.ou3_alt_contraction import finite_seed_eigen_svd as EIGENSVD
+from tools.stability.ou3_alt_contraction import finite_frontend_uniform_bounds as FRONTBOUNDS
+from tools.stability.ou3_alt_contraction import finite_startup_timeout_alignment_obstruction as TIMEOUT
+from tools.stability.ou3_alt_contraction import finite_candidate_uniform_bounds as CANDIDATE
+from tools.stability.ou3_alt_contraction import finite_machine_startup_core as CORESTART
 
 QUALIFICATION='OU3_ALT_FINITE_MASTER_GUARD_V1'
+OPEN_QUALIFICATIONS=(
+    'source_uniform_timeout_aligned_branch_reachability',
+    'near_antiparallel_Eigen_JacobiSVD_solver_correspondence',
+    'universal_startup_source_and_branch_reachability',
+    'startup_source_uniform_deployment_supplies',
+    'target_libm_and_compiler_profile_correspondence',
+    'WPE_machine_target_libm_and_compiler_selection',
+    'WPE_source_uniform_machine_supply_bounds',
+    'WPE_log_and_exp_libm_correspondence',
+    'Qaxis_exp_libm_correspondence',
+    'all_event_arithmetic_witnesses_source_uniform',
+    'complete_source_uniform_600_step_word',
+)
+
+
+def qualification_status():
+    startup=START.readiness(); seed=STARTSEED.readiness(); clock=CLOCK.readiness()
+    eigen=EIGENSVD.source_uniform_certificate()
+    live=LIVE.readiness(); lwpe=LIVEWPE.readiness()
+    wmach=WPEMACHINE.readiness(); wlog=WPELOG.readiness(); qexp=QEXP.readiness()
+    target=TARGETLIBM.profile_correspondence()
+    compiler=TARGETWPE.readiness()
+    error_profile=WPEBOUNDS.target_error_profile_certificate()
+    return {
+      'source_uniform_timeout_aligned_branch_reachability': not clock['universal_startup_deadline_closed'],
+      # The source-order QR/Jacobi proof is independent of the later target
+      # compiler/FCR gate. Keep that deployment qualification separate (#5).
+      'near_antiparallel_Eigen_JacobiSVD_solver_correspondence': not (
+          eigen['source_uniform_QR_and_Jacobi_totality_closed'] and
+          eigen['axis_is_computed_QR_column_two'] and
+          eigen['both_pivots_rank_one_rank_two_and_tiny_tails_covered']),
+      'universal_startup_source_and_branch_reachability': not startup['every_admitted_startup_history_reaches_this_boundary_product'],
+      'startup_source_uniform_deployment_supplies': not startup['source_uniform_startup_deployment_supply_bounds_closed'],
+      'target_libm_and_compiler_profile_correspondence': not startup['all_target_libm_and_compiler_profile_correspondence_closed'],
+      'WPE_machine_target_libm_and_compiler_selection': not (
+          compiler['pinned_WPE_compiler_profile_selection_closed'] and
+          target['pinned_WPE_exp_log_approximation_correspondence_closed'] and
+          target['pinned_WPE_sqrt_approximation_correspondence_closed'] and
+          error_profile['target_exp_log_satisfy_WPE_error_profile_under_scalar_and_link_premises']),
+      'WPE_source_uniform_machine_supply_bounds': not lwpe['source_uniform_WPE_machine_supply_bounds_closed'],
+      'WPE_log_and_exp_libm_correspondence': not (
+          target['pinned_WPE_exp_log_approximation_correspondence_closed'] and
+          target['pinned_WPE_sqrt_approximation_correspondence_closed'] and
+          error_profile['target_exp_log_satisfy_WPE_error_profile_under_scalar_and_link_premises']),
+      'Qaxis_exp_libm_correspondence': not qexp['Qaxis_pinned_libm_approximation_correspondence_closed'],
+      'all_event_arithmetic_witnesses_source_uniform': not live['all_event_arithmetic_witnesses_source_uniformly_qualified'],
+      'complete_source_uniform_600_step_word': not (
+          lwpe['source_uniform_complete_600_step_word_qualified'] and
+          lwpe['machine_CORE_and_control_successor_algorithms_attached']),
+    }
 
 
 def build():
@@ -51,8 +113,26 @@ def build():
     counter_certificate=COUNTER.build()
     sensor_contract=SENSOR_CONTRACT.build()
     wpe_bounds=WPEBOUNDS.build()
+    mahony_total=MAHONYTOTAL.build(); svd_axis=SVDAXIS.build()
+    eigen_svd=EIGENSVD.source_uniform_certificate()
+    frontend_bounds=FRONTBOUNDS.build()
+    candidate_bounds=CANDIDATE.build()
+    startup_core=CORESTART.readiness()
 
     closed={
+      'physical_MEMS_all_initialized_scalar_finite_prefix_totality':INPUT.prefix_certificate()['all_initialized_finite_prefixes_totality_closed'],
+      'near_antiparallel_source_uniform_QR_and_Jacobi_totality':eigen_svd['source_uniform_QR_and_Jacobi_totality_closed'],
+      'configured_frontend_all_finite_prefix_arithmetic_supplies':frontend_bounds['source_uniform_configured_frontend_arithmetic_totality_closed'],
+      'configured_candidate_tau_sigma_RS_powf_finite_supplies':candidate_bounds['candidate_arithmetic_totality_under_named_pow_range_closed'],
+      'source_owned_ungauged_startup_CORE_constructor_is_sealed':bool(
+          startup_core['default_retained_construction_from_selected_wrapper_and_app'] and
+          startup_core['ungauged_machine_proxy_to_full_CORE_producer_available'] and
+          not startup_core['caller_replacement_quaternion_or_covariance_port']),
+      'conditional_ordinary_seed_scalar_Mahony_prefix_totality':mahony_total['ordinary_seed_scalar_prefix_totality_closed'],
+      'returning_pinned_Eigen_SVD_seed_axis_equals_QR_third_column':svd_axis['returning_solver_axis_equals_QR_Q_column_2'],
+      'local_CORE_successors_retained_and_following_predecessors_checked':lwpe['machine_CORE_local_successors_persist_and_next_predecessors_checked'],
+      'complete_word_requires_CORE_and_control_successor_continuation':lwpe['complete_word_requires_machine_CORE_and_control_continuation'],
+      'Qaxis_general_branch_sufficient_exp_error_budget':qexp['Qaxis_general_branch_sufficient_libm_error_budget']['source_uniform_sufficient_error_budget_proved'],
       'commissioned_startup_source_uniform_seed_norm_margin':sensor_contract['source_uniform_seed_norm_margin_closed'],
       'bounded_vertical_input_uniform_WPE_moment_raw_period_log_supplies':wpe_bounds['reset_to_every_finite_prefix_bounded_input_induction_closed'],
       'full_magnetic_frame_represented_without_small_angle_capture': bool(
@@ -110,19 +190,7 @@ def build():
       'WPE_MAG_and_HOLD_preserve_full_machine_history': lwpe['MAG_and_HOLD_preserve_full_WPE_machine_history_by_identity'],
     }
 
-    open_obligations={
-      'source_uniform_timeout_aligned_branch_reachability': not clock['universal_startup_deadline_closed'],
-      'near_antiparallel_Eigen_JacobiSVD_solver_correspondence': not seed['near_antiparallel_JacobiSVD_solver_correspondence_qualified'],
-      'universal_startup_source_and_branch_reachability': not startup['every_admitted_startup_history_reaches_this_boundary_product'],
-      'startup_source_uniform_deployment_supplies': not startup['source_uniform_startup_deployment_supply_bounds_closed'],
-      'target_libm_and_compiler_profile_correspondence': not startup['all_target_libm_and_compiler_profile_correspondence_closed'],
-      'WPE_machine_target_libm_and_compiler_selection': not (wmach['target_exp_log_sqrt_libm_correspondence_closed'] and wmach['compiler_profile_selection_closed']),
-      'WPE_source_uniform_machine_supply_bounds': not lwpe['source_uniform_WPE_machine_supply_bounds_closed'],
-      'WPE_log_and_exp_libm_correspondence': not (wlog['WPE_log_std_log_target_libm_correspondence_closed'] and wlog['WPE_log_exp_target_libm_correspondence_closed']),
-      'Qaxis_exp_libm_correspondence': not qexp['Qaxis_exp_libm_binary32_correspondence_closed'],
-      'all_event_arithmetic_witnesses_source_uniform': not live['all_event_arithmetic_witnesses_source_uniformly_qualified'],
-      'complete_source_uniform_600_step_word': not lwpe['source_uniform_complete_600_step_word_qualified'],
-    }
+    open_obligations=qualification_status()
 
     finite_status={
       'map_representation':'finite_physical_descriptor_partial',
@@ -154,6 +222,19 @@ def build():
       'startup_disturbance_obstruction':startup_disturbance,
       'startup_sensor_contract':sensor_contract,
       'bounded_input_WPE_supplies':wpe_bounds,
+      'conditional_Mahony_prefix_totality':mahony_total,
+      'pinned_Eigen_seed_axis_reduction':svd_axis,
+      'pinned_Eigen_source_uniform_SVD':eigen_svd,
+      'configured_frontend_uniform_supplies':frontend_bounds,
+      'configured_candidate_uniform_supplies':candidate_bounds,
+      'source_owned_startup_CORE_constructor':startup_core,
+      'commissioned_Live_MEMS_input_contract':INPUT.build(),
+      'bounded_raw_Live_input_totality_obstruction':LIVEOVERFLOW.build(),
+      'continuous_to_sampled_startup_budget_audit':SAMPLING.build(),
+      'physical_timeout_alignment_witness':TIMEOUT.build(),
+      'pinned_target_library_profile':TARGETLIBM.profile_correspondence(),
+      'pinned_WPE_compiler_profile':TARGETWPE.readiness(),
+      'library_closure_requires_separate_firmware_compiler_qualification':True,
       'magnetic_frame_bounds':capture,
       'attitude_atlas':atlas,
       'conditional_timeout_plus_word_last_sample':CLOCK.MAX_STEPS,
@@ -170,13 +251,35 @@ def validate(x):
     if x.get('qualification')!=QUALIFICATION:f.append('qualification mismatch')
     for k,v in x.get('closed_subobligations',{}).items():
         if v is not True:f.append('closed subobligation regressed: '+k)
-    if not x.get('open_obligations') or not all(v is True for v in x['open_obligations'].values()):
-        f.append('open-obligation polarity mismatch')
+    if x.get('open_obligations') != qualification_status():
+        f.append('open-obligation status differs from supplying proof components')
+    if set(x.get('open_obligations',{})) != set(OPEN_QUALIFICATIONS):
+        f.append('open qualification inventory changed without proof')
     if x.get('falsified_prerequisites') != {}:
         f.append('obsolete counter falsification retained')
     f.extend(STARTDIST.validate(x.get('startup_disturbance_obstruction',{})))
     f.extend(SENSOR_CONTRACT.validate(x.get('startup_sensor_contract',{})))
     f.extend(WPEBOUNDS.validate(x.get('bounded_input_WPE_supplies',{})))
+    f.extend(MAHONYTOTAL.validate(x.get('conditional_Mahony_prefix_totality',{})))
+    f.extend(SVDAXIS.validate(x.get('pinned_Eigen_seed_axis_reduction',{})))
+    if x.get('pinned_Eigen_source_uniform_SVD') != EIGENSVD.source_uniform_certificate():
+        f.append('Eigen source-uniform certificate differs from supplying proof')
+    if x.get('configured_frontend_uniform_supplies') != FRONTBOUNDS.build():
+        f.append('frontend supply certificate differs from supplying proof')
+    if x.get('configured_candidate_uniform_supplies') != CANDIDATE.build():
+        f.append('candidate supply certificate differs from supplying proof')
+    if x.get('source_owned_startup_CORE_constructor') != CORESTART.readiness():
+        f.append('startup CORE construction certificate differs from supplying proof')
+    f.extend(INPUT.validate(x.get('commissioned_Live_MEMS_input_contract',{})))
+    f.extend(LIVEOVERFLOW.validate(x.get('bounded_raw_Live_input_totality_obstruction',{})))
+    f.extend(SAMPLING.validate(x.get('continuous_to_sampled_startup_budget_audit',{})))
+    f.extend(TIMEOUT.validate(x.get('physical_timeout_alignment_witness',{})))
+    if x.get('pinned_target_library_profile') != TARGETLIBM.profile_correspondence():
+        f.append('pinned library profile differs from target proof')
+    if x.get('pinned_WPE_compiler_profile') != TARGETWPE.readiness():
+        f.append('pinned WPE compiler profile differs from target proof')
+    if x.get('library_closure_requires_separate_firmware_compiler_qualification') is not True:
+        f.append('library approximation closure erased firmware compiler prerequisite')
     if x.get('magnetic_frame_bounds')!=CAPTURE.readiness():
         f.append('magnetic frame bound or accuracy qualification changed')
     if x.get('research_outcome') != 'finite_master_qualification_incomplete':
@@ -207,7 +310,8 @@ def main():
     print(json.dumps({'storage_search_allowed':report['storage_search_allowed'],
                       'research_outcome':report['research_outcome'],
                       'falsified_prerequisites':list(report['falsified_prerequisites']),
-                      'open_obligations':list(report['open_obligations']),
+                      'open_obligations':[k for k,v in report['open_obligations'].items() if v],
+                      'closed_qualifications':[k for k,v in report['open_obligations'].items() if not v],
                       'validation_failures':failures},sort_keys=True))
     return int(bool(failures))
 

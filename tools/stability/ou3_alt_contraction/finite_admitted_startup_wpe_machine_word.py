@@ -22,7 +22,7 @@ def build(go:START.GoLive,magnetic,origin,bias_history,**source_witnesses):
     if not isinstance(go,START.GoLive):
         raise TypeError('startup-rooted full-WPE goLive result required')
     out=LIVE.begin_from_startup(go,magnetic,origin,bias_history,**source_witnesses)
-    if out.wpe is not go.wpe:
+    if not LIVE.WPE.same_machine_history(go.wpe,out.wpe):
         raise ValueError('admitted Live word reseeded full WPE machine history')
     if out.entry_wpe_samples!=go.wpe.separate.samples or out.entry_wpe_samples!=go.wpe.fma.samples:
         raise ValueError('admitted Live WPE entry count detached from startup history')

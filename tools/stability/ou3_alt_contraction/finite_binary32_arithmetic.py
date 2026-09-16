@@ -1,4 +1,4 @@
-"""Exact finite normal IEEE-754 binary32 arithmetic for ALT deployment graphs.
+"""Exact finite IEEE-754 binary32 arithmetic for ALT deployment graphs.
 
 The ALT proof already had a positive-only round-to-nearest-even helper for the
 wrapper clock.  Tuner and covariance recurrences need signed differences and
@@ -6,9 +6,12 @@ must also distinguish an ordinary multiply/add evaluation from a contracted
 multiply-add.  This module provides that small arithmetic kernel over exact
 Fractions.
 
-Scope is deliberately finite normal binary32 plus zero.  Subnormals, infinities,
-NaNs and target-specific exception behaviour remain outside this primitive and
-must be ruled out by the source-domain proof before deployment closure.
+The finite lattice includes gradual underflow: admitted source coordinates and
+operation residuals have no positive lower bound. Infinities, NaNs, division by
+zero and target-specific exception behaviour still require qualification.
+Fractions identify the two signed zeros; use finite_binary32_mahony's bit ledger
+for sign-sensitive operations (including copysign, atan2 and division by zero).
+Target gradual-underflow/flush-to-zero correspondence is a separate obligation.
 """
 from __future__ import annotations
 from fractions import Fraction as F
@@ -36,13 +39,21 @@ def _rne_nonnegative_integer(x:F)->int:
 
 
 def rn32(x)->F:
-    """Round exact rational to nearest-even finite normal binary32 or zero."""
+    """Round an exact rational to the finite binary32 lattice, ties to even.
+
+    Below the smallest normal, the lattice spacing remains 2**-149.  A value
+    below half that spacing rounds to zero; a midpoint rounds to the even
+    integer lattice index, including the subnormal/normal boundary.
+    """
     x=F(x)
     if x==0: return F(0)
     sign=-1 if x<0 else 1; a=abs(x)
     e=_floor_log2_positive(a)
-    if e < -126 or e > 127:
-        raise ValueError('outside normal finite binary32 range used by this proof')
+    if e < -126:
+        quantum=_pow2(-149)
+        return sign*F(_rne_nonnegative_integer(a/quantum))*quantum
+    if e > 127:
+        raise ValueError('binary32 overflow')
     quantum=_pow2(e-23); m=_rne_nonnegative_integer(a/quantum)
     if m==(1<<24):
         m>>=1; e+=1
@@ -84,10 +95,14 @@ def ema(previous,target,alpha,*,contracted:bool):
 def readiness():
     return {
       'signed_normal_binary32_RNE_exact':True,
+      'finite_binary32_gradual_underflow_RNE_exact':True,
+      'subnormal_API_values_and_arithmetic_results_retained':True,
+      'two_signed_zeros_identified_in_rational_value_projection':True,
       'binary32_add_sub_mul_div_exact_under_nonexceptional_scope':True,
       'separate_mul_add_EMA_shape_materialized':True,
       'contracted_fma_EMA_shape_materialized':True,
       'compiler_FP_contraction_mode_qualified':False,
+      'target_gradual_underflow_correspondence_qualified':False,
       'subnormal_nan_inf_scope_closed':False,
       'ALT_LIVE_PASS':False,
     }

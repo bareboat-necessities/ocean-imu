@@ -54,12 +54,16 @@ def _ema(previous,target,alpha,*,successor=None):
     return y
 
 
-def _exp_minus(arg,witness,name):
+def _exp_minus(arg,witness,name,libm_profile='rne'):
     a=_q(arg,name+' argument'); w=_q(witness,name+' result')
     if a<0 or a>60: raise ValueError(name+' argument outside certified exp enclosure')
-    lo,hi=EXP.exp_minus_enclosure(a)
-    if not EXP._interval_hits_rne_cell(lo,hi,w):
-        raise ValueError(name+' result detached from same rounded exp argument RNE cell')
+    if libm_profile=='rne':
+        lo,hi=EXP.exp_minus_enclosure(a)
+        if not EXP._interval_hits_rne_cell(lo,hi,w):
+            raise ValueError(name+' result detached from same rounded exp argument RNE cell')
+    else:
+        from tools.stability.ou3_alt_contraction import finite_wpe_uniform_bounds as U
+        U.check_exp(-a,w,libm_profile)
     return w
 
 
@@ -72,6 +76,17 @@ def _second_moment(previous,value,alpha):
     moment updates; target compiler selection remains a separate obligation.
     """
     return _sum_products(B.sub(ONE,alpha),previous,B.mul(alpha,value),value)
+
+
+def omega_sq_choices(ratio,lambda_):
+    """Literal separate or contracted ratio-minus-square, same operands.
+
+    The pinned MCU compiler emits MSUB for this expression. Whether that
+    instruction realizes the fused profile requires target qualification;
+    neither a free omega nor agreement of its positivity branches is assumed.
+    """
+    ratio=_q(ratio,'WPE variance ratio'); lam=_q(lambda_,'WPE lambda')
+    return tuple(sorted(set((B.sub(ratio,B.mul(lam,lam)),B.fma(-lam,lam,ratio)))))
 
 
 @dataclass(frozen=True)
@@ -158,11 +173,12 @@ def _clamp(x,lo,hi): return min(max(x,lo),hi)
 
 def step(state:State,cfg:Config,*,dt,vertical_accel,decay_exp,
          canonical_period=None,moment_decay_exp=None,moment_successors:MomentSuccessors|None=None,
-         velocity_successor=None,elevation_successor=None,velocity_var_successor=None,elevation_var_successor=None,sqrt_omega=None):
+         velocity_successor=None,elevation_successor=None,velocity_var_successor=None,elevation_var_successor=None,sqrt_omega=None,
+         omega_sq_successor=None,libm_profile='rne'):
     if not isinstance(state,State) or not isinstance(cfg,Config): raise TypeError('machine WPE State/Config required')
     h=_q(dt,'WPE dt'); x=_q(vertical_accel,'WPE vertical acceleration')
     if h<=0: raise ValueError('positive WPE dt required')
-    lamdt=B.mul(cfg.lambda_,h); decay=_exp_minus(lamdt,decay_exp,'WPE leak decay')
+    lamdt=B.mul(cfg.lambda_,h); decay=_exp_minus(lamdt,decay_exp,'WPE leak decay',libm_profile)
     gain=B.div(B.sub(ONE,decay),cfg.lambda_) if cfg.lambda_>B.rn32(F(1,10**9)) else h
 
     t1=B.add(state.hp1,x); t1=B.sub(t1,state.accel_prev); hp1=B.mul(decay,t1)
@@ -181,7 +197,7 @@ def step(state:State,cfg:Config,*,dt,vertical_accel,decay_exp,
 
     moment_start=B.div(THREE,cfg.lambda_)
     if elapsed<moment_start:
-        if any(w is not None for w in (canonical_period,moment_decay_exp,moment_successors,sqrt_omega)):
+        if any(w is not None for w in (canonical_period,moment_decay_exp,moment_successors,sqrt_omega,omega_sq_successor)):
             raise ValueError('pre-moment-start WPE branch consumes no moment/period witnesses')
         return StepResult(state,base,x,h,decay,gain,None,None,None,'pre-moment-start')
 
@@ -193,7 +209,7 @@ def step(state:State,cfg:Config,*,dt,vertical_accel,decay_exp,
     requested=B.mul(cfg.moment_horizon_periods,period)
     horizon=_clamp(requested,cfg.min_horizon_sec,cfg.max_horizon_sec)
     if moment_decay_exp is None: raise TypeError('moment branch requires exp result')
-    mdarg=B.div(h,horizon); md=_exp_minus(mdarg,moment_decay_exp,'WPE moment decay')
+    mdarg=B.div(h,horizon); md=_exp_minus(mdarg,moment_decay_exp,'WPE moment decay',libm_profile)
     alpha=B.sub(ONE,md)
     if not isinstance(moment_successors,MomentSuccessors): raise TypeError('moment branch requires stored moment successors')
     ms=moment_successors
@@ -205,6 +221,7 @@ def step(state:State,cfg:Config,*,dt,vertical_accel,decay_exp,
     base=replace(base,weight=ms.weight,velocity_mean=ms.velocity_mean,velocity_sq=ms.velocity_sq,
                  elevation_mean=ms.elevation_mean,elevation_sq=ms.elevation_sq,last_moment_horizon=horizon)
     if ms.weight<=WEIGHT_GATE:
+        if omega_sq_successor is not None: raise ValueError('insufficient-weight branch consumes no omega result')
         if sqrt_omega is not None: raise ValueError('insufficient-weight WPE branch consumes no sqrt')
         return StepResult(state,base,x,h,decay,gain,horizon,md,alpha,'insufficient-weight')
 
@@ -220,16 +237,24 @@ def step(state:State,cfg:Config,*,dt,vertical_accel,decay_exp,
     if vvar not in vchoices or evar not in echoices:
         raise ValueError('WPE stored variance outside legal compiler arithmetic set')
     if evar<=VAR_GATE or vvar<=VAR_GATE:
+        if omega_sq_successor is not None: raise ValueError('degenerate-moments branch consumes no omega result')
         if sqrt_omega is not None: raise ValueError('degenerate WPE branch consumes no sqrt')
         return StepResult(state,base,x,h,decay,gain,horizon,md,alpha,'degenerate-moments',vvar,evar)
-    ratio=B.div(vvar,evar); lam2=B.mul(cfg.lambda_,cfg.lambda_); omega=B.sub(ratio,lam2)
+    ratio=B.div(vvar,evar)
+    # Preserve the existing explicitly separate profile by default. A target
+    # caller can supply the literal contracted result; membership binds it to
+    # these same machine moments and lambda, not an independent coefficient.
+    omega=(B.sub(ratio,B.mul(cfg.lambda_,cfg.lambda_)) if omega_sq_successor is None
+           else _q(omega_sq_successor,'WPE omega squared successor'))
+    if omega not in omega_sq_choices(ratio,cfg.lambda_):
+        raise ValueError('WPE omega squared detached from same variance ratio and lambda')
     if omega<=OMEGA_GATE:
         if sqrt_omega is not None: raise ValueError('nonpositive-omega WPE branch consumes no sqrt')
         return StepResult(state,base,x,h,decay,gain,horizon,md,alpha,'nonpositive-omega',vvar,evar,omega)
     if sqrt_omega is None: raise TypeError('valid WPE moment ratio requires sqrt result')
     root=_q(sqrt_omega,'WPE sqrt omega')
-    if root!=SQRT.sqrt32(omega):
-        raise ValueError('WPE sqrt result detached from same binary32 omega_sq RNE cell')
+    from tools.stability.ou3_alt_contraction import finite_wpe_uniform_bounds as U
+    U.check_sqrt(omega,root,libm_profile)
     raw=B.div(TWO_PI,root)
     nxt=replace(base,raw_period=raw)
     return StepResult(state,nxt,x,h,decay,gain,horizon,md,alpha,'valid-period',vvar,evar,omega,root,raw)
@@ -258,6 +283,7 @@ def readiness():
       'raw_period_derived_from_same_machine_moments_and_sqrt_result':True,
       'exp_witnesses_bound_to_same_rounded_arguments_RNE_cells':True,
       'sqrt_witness_bound_to_same_binary32_omega_RNE_cell':True,
+      'separate_and_contracted_omega_sq_use_same_variance_ratio_and_lambda':True,
       'target_exp_sqrt_libm_correspondence_closed':False,
       'compiler_profile_selection_closed':False,
       'canonical_period_horizon_ancestry_closed':False,
