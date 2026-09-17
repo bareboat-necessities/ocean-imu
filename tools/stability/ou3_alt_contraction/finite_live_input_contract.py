@@ -220,7 +220,7 @@ def prefix_certificate():
     """
     sharp=_finite_horizon_certificate()
     upper=PREFIX.upper
-    q2,qp=PREFIX.Q2,PREFIX.QP
+    qp=PREFIX.QP
     kp,ki=B.rn32(F(1,5)),B.rn32(F(1,50))
     dt=CLOCK.DT_FLOAT
     increment=upper(upper(ki*PREFIX.ERROR)*dt)

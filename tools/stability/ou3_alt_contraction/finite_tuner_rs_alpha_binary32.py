@@ -21,7 +21,6 @@ from fractions import Fraction as F
 from pathlib import Path
 
 from tools.stability.ou3_alt_contraction import finite_binary32_arithmetic as B
-from tools.stability.ou3_alt_contraction import finite_source_bound_exp_enclosure as EXP
 from tools.stability.ou3_alt_contraction import finite_tuner_tau_binary32 as TAU
 
 COMMON=Path(__file__).resolve().parents[3]/'src/kalman_common/SeaStateFusionFilterCommon.h'

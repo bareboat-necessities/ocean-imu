@@ -111,10 +111,15 @@ class BrmmTests(unittest.TestCase):
         self.assertEqual(physical["V_m"], primitives["V_m_norm_upper_mps"])
         self.assertEqual(physical["P_m"], primitives["P_m_norm_upper_m"])
         self.assertEqual(physical["A_m"], primitives["acceleration_norm_upper_mps2"])
+        # S_m is a qualified consequence of the centered primitive, not an
+        # independent S ball, so it is bound like V_m/P_m/A_m rather than left
+        # open. See S_primitive_contract in the declaration.
+        self.assertEqual(physical["S_m"], primitives["S_centered_primitive_norm_upper_m_s"])
         self.assertGreater(physical["V_m"], 0)
         self.assertGreater(physical["P_m"], 0)
+        self.assertGreater(physical["S_m"], 0)
         self.assertTrue(all(physical[key] is None for key in
-                            ("T_R", "E_q", "V_R", "E_min", "J_min", "chi", "V_a", "S_m")))
+                            ("T_R", "E_q", "V_R", "E_min", "J_min", "chi", "V_a")))
         self.assertFalse(d["sampled_audit_sets_physical_theorem_constants"])
         for key in ("V_m", "P_m", "A_m", "S_m"):
             changed = {**physical, key: 1.0}

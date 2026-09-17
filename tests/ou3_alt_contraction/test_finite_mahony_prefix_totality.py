@@ -1,5 +1,4 @@
 """Check the source-uniform inequalities and the boundaries they protect."""
-from dataclasses import replace
 from fractions import Fraction as F
 import unittest
 

@@ -6,6 +6,7 @@
 #include <Eigen/Geometry>
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
 #include <cstdlib>
 #include <cstring>
 #include <fstream>
@@ -26,6 +27,18 @@ static constexpr double rates[]={
  .584217236131,-.140746326636,.210382990552,.040083210406,.111985855580};
 static constexpr int dock=30002;
 static constexpr double amplitude=2.9, omega=.6;
+// "The observer did not move at all" is a bit-exact question, which is what
+// the memcmp this replaces meant. float has no unique object representation,
+// so the bit patterns are read out explicitly rather than compared as storage.
+static bool same_state(const float(&a)[7],const float(&b)[7]){
+ static_assert(sizeof(float)==sizeof(std::uint32_t),"float is not 32-bit");
+ for(int i=0;i<7;i++){
+  std::uint32_t x=0,y=0;
+  std::memcpy(&x,&a[i],sizeof x);std::memcpy(&y,&b[i],sizeof y);
+  if(x!=y)return false;
+ }
+ return true;
+}
 static double yaw(double t){
  double result=0;
  for(int j=0;j<30;j++){
@@ -37,7 +50,7 @@ static double yaw(double t){
 }
 
 int main(int argc,char**argv){
- const int count=argc>2?std::atoi(argv[2]):30602;
+ const int count=argc>2?int(std::strtol(argv[2],nullptr,10)):30602;
  std::ofstream packets;if(argc>1 && std::string(argv[1])!="-")packets.open(argv[1]);
  using Wrapper=SeaStateFusion_OU_III<TrackerType::KALMANF>;
  Wrapper wrapper;Wrapper::Config cfg;wrapper.begin(cfg);
@@ -45,7 +58,7 @@ int main(int argc,char**argv){
  const float dt=.005f, alpha=1.f-std::exp(-dt/12.f);
  const double magnitude=std::sqrt(amplitude*amplitude+double(g_std)*g_std);
  Eigen::Vector3f lp=Eigen::Vector3f::Zero();
- Eigen::Vector3d reference, frozen;
+ Eigen::Vector3d reference=Eigen::Vector3d::Zero(), frozen=Eigen::Vector3d::Zero();
  double max_noise=0,max_accel=0,max_angle=0,max_halferror=0,min_lpz=100;
  float max_guard=0,max_weight=0;bool integral_changed=false,live=false,shadow_differs=false;
  unsigned long fixed_run=0,max_fixed_run=0;float prior_state[7]={};bool have_prior=false;
@@ -85,7 +98,7 @@ int main(int argc,char**argv){
   wrapper.update(dt,gyro,acc);shadow.update(dt,gyro,acc,g_std);
   shadow_differs|=(wrapper.raw().startupProxyQuat().coeffs()-shadow.quaternion().coeffs()).squaredNorm()!=0;
   if(k>=dock){const auto& m=shadow.ahrs_;float state[7]={m.q0,m.q1,m.q2,m.q3,m.integralFBx,m.integralFBy,m.integralFBz};
-   if(have_prior && std::memcmp(state,prior_state,sizeof(state))==0)++fixed_run;else fixed_run=0;
+   if(have_prior && same_state(state,prior_state))++fixed_run;else fixed_run=0;
    max_fixed_run=std::max(max_fixed_run,fixed_run);std::memcpy(prior_state,state,sizeof(state));have_prior=true;}
   const auto leveled=seastate::common::accWorldFromBody(wrapper.raw().startupProxyQuat(),acc);
   if(k==0)lp=leveled;else lp+=alpha*(leveled-lp);

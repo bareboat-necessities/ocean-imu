@@ -27,7 +27,6 @@ from dataclasses import dataclass
 from fractions import Fraction as F
 
 from tools.stability.ou3_alt_contraction import finite_binary32_arithmetic as B
-from tools.stability.ou3_alt_contraction import finite_source_bound_exp_enclosure as EXP
 from tools.stability.ou3_alt_contraction import finite_tuner_candidate as C
 from tools.stability.ou3_alt_contraction import finite_tuner_deployment_config as D
 from tools.stability.ou3_alt_contraction import finite_tuner_tau_binary32 as T
