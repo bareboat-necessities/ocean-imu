@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import math
 import sys
 import unittest
@@ -53,7 +54,13 @@ class BrmmPhysicalAdmissibilityTest(unittest.TestCase):
         c = d["three_partition_contract"]
         self.assertTrue(c["independent_H_r_and_T_p_rectangular_extrema_forbidden"])
         self.assertTrue(c["independent_three_partition_H_maxima_forbidden"])
-        self.assertEqual(c["total_Hs_upper_m"], 8.5)
+        domain = json.loads(
+            (ROOT / "tools/stability/ou3_proof_operating_domain.json").read_text()
+        )
+        self.assertEqual(
+            c["total_Hs_upper_m"],
+            domain["complete_brmm_physical_envelope"]["significant_wave_height_Hs_upper_m"],
+        )
 
     def test_parameter_subcertificate_retains_compact_brmm_without_faking_realization(self) -> None:
         d = phys.build()
