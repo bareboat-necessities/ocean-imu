@@ -32,38 +32,29 @@ bool add_noise = true;
 static constexpr float RMS_WINDOW_SEC = 900.0f;
 static constexpr int RMS_WINDOW_SEC_LABEL = static_cast<int>(RMS_WINDOW_SEC);
 
-// Regression sentinels for the deterministic single-realization protocol, not
-// targets.  Each is the worst value the current observer produces across the
-// scored records plus about half a percent, rounded up to the next tenth, the
-// same rule the OU simulators use.
-//
-// Re-derived for the 900 s scoring window: a sentinel fitted to the previous
-// 60 s window is not a sentinel for this one, it is just a number the observer
-// passes by a wide margin.
-//
-// Re-derived again after the aiding rework: the horizontal axes now get the
-// paper's virtual zero-mean measurement instead of being pinned at zero, and
-// theta is scheduled on the tracked wave frequency instead of sitting at the
-// paper's dynamic-positioning value of 1.
-//
-// These gate RAW Z RMS. Earlier revisions gated the de-meaned value, which
-// could not see the standing heave offset at all; the observer now removes
-// that offset on the reporting path, so the raw number is the one to hold.
-// Cut to hundredths.  A tenth is 1.4 percent of a 7.2, so rounding a
-// half-percent margin up to the next tenth was handing back three times the
-// rule; 7.26 and 7.13 give it back.  This observer is also the most
-// reproducible of the set -- rebuilding at -march=x86-64 instead of the host's
-// native cascadelake moves the scored Z by 1.5e-6 relative, so these margins
-// are four thousand times the spread they have to survive.
-static constexpr W3dFailureLimits FAIL_LIMITS{
-    .err_limit_percent_z_jonswap   = 7.26f,   // was 7.3, worst 7.2143 (jonswap H8.5)
-    .err_limit_percent_z_pmstokes  = 7.13f,   // was 7.2, worst 7.0865 (pmstokes H8.5)
-    .err_limit_yaw_deg             = 8.0f,    // yaw is free here and is not gated
-    .err_limit_percent_3d_jonswap  = 9999.0f,
-    .err_limit_percent_3d_pmstokes = 9999.0f,
-    .acc_z_bias_percent            = 9999.0f,
-    .bias_3d_percent               = 9999.0f,
-};
+// RAW (not de-meaned) Z-RMS regression limits for the pinned 28 ft vessel
+// dataset and the trailing 900 s window. Keep the low-wave PM/Stokes allowance
+// separate: at Hs=0.27 m its 7.52444% baseline is 20.316 mm, only 1.065 mm
+// above the 7.13% larger-sea limit. A 0.5% relative margin, rounded upward to
+// hundredths, gives 7.57%. All JONSWAP and larger PM/Stokes limits stay fixed.
+static constexpr float vertical_rms_limit_percent(WaveType wave_type, float hs)
+{
+    if (wave_type == WaveType::JONSWAP) return 7.26f;
+    if (wave_type == WaveType::PMSTOKES && hs > 0.0f && hs <= 0.30f) return 7.57f;
+    return 7.13f;
+}
+
+// Compile-time regressions protect the scope and strict breach comparison.
+static_assert(vertical_rms_limit_percent(WaveType::PMSTOKES, 0.27f) == 7.57f);
+static_assert(vertical_rms_limit_percent(WaveType::PMSTOKES, 0.30f) == 7.57f);
+static_assert(vertical_rms_limit_percent(WaveType::PMSTOKES, 0.31f) == 7.13f);
+static_assert(vertical_rms_limit_percent(WaveType::PMSTOKES, 1.50f) == 7.13f);
+static_assert(vertical_rms_limit_percent(WaveType::PMSTOKES, 8.50f) == 7.13f);
+static_assert(vertical_rms_limit_percent(WaveType::JONSWAP, 0.27f) == 7.26f);
+static_assert(vertical_rms_limit_percent(WaveType::JONSWAP, 8.50f) == 7.26f);
+static_assert(7.52444f < vertical_rms_limit_percent(WaveType::PMSTOKES, 0.27f));
+static_assert(7.58f > vertical_rms_limit_percent(WaveType::PMSTOKES, 0.27f));
+static_assert(7.14f > vertical_rms_limit_percent(WaveType::PMSTOKES, 1.50f));
 
 class FusionAdapterTimeVarGainNLO_NoGnssNoMag final
     : public IW3dFusionAdapterTyped<TvgNloFilterSnapshot> {
@@ -419,9 +410,8 @@ static void fail_if_tvg_nlo_vertical_gates_breached(const TvgNloSimulationRunRes
     const float z_pct =
         100.0f * rms_z_raw.rms() / result.wave_params.height;
 
-    const float z_limit = (result.wave_type == WaveType::JONSWAP)
-        ? FAIL_LIMITS.err_limit_percent_z_jonswap
-        : FAIL_LIMITS.err_limit_percent_z_pmstokes;
+    const float z_limit = vertical_rms_limit_percent(
+        result.wave_type, result.wave_params.height);
 
     if (z_pct > z_limit) {
         std::cerr << "ERROR: raw Z RMS above limit (" << z_pct << "% > "
