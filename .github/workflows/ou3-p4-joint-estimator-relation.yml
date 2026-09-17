@@ -6,6 +6,7 @@ on:
     paths: &paths
       - 'src/**'
       - 'tools/stability/**'
+      - 'tests/validation/test_ou3_brmm_target_relation_caps.py'
       - '.github/workflows/ou3-p4-joint-estimator-relation.yml'
   pull_request:
     paths: *paths
@@ -142,6 +143,9 @@ jobs:
           assert not c['P4_promoted_here']
           print('SAME_SIGNAL_EVENT_RESET_PROJECTION_BIAS1_LINEAGE_PASS')
           PY
+      - name: Test canonical target-relation acceleration caps
+        working-directory: tests/validation
+        run: python -m unittest -v test_ou3_brmm_target_relation_caps
       - name: Retain exact PR source and relation evidence
         run: |
           set -euo pipefail
