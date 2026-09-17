@@ -34,6 +34,21 @@ a source-uniform shipping rho nor permission for interval refinement.
 continues through `ou3-brmm-main-handover.md`; its thresholds and gates are
 unchanged. The ALT master still withholds storage search and all PASS flags.
 
+## History-dependent capture alternative
+
+The optional weaker target is now explicit in
+`ou3-alt-nonuniform-capture-theorem.md`: assume some finite entry time for each
+history into a predeclared retained tail domain, then prove a history-specific
+strict tail factor, time-uniform tail coercivity and prefix bounds. The scalar
+comparison theorem is proved without any common deadline or computed maximum
+capture time. Truly time-varying factors additionally require initial-product
+decay and a bounded disturbance convolution, or a proved decrement-scaled
+supply. Capture alone and point ratios below one are insufficient.
+
+This weakens the requested conclusion to conditional history-wise eventual
+practical boundedness. It leaves the original uniform target available and
+keeps all filter theorem gates closed until their actual premises are proved.
+
 ## Physical input theorem
 
 Every admitted Live history now satisfies the actual binary32 API bounds

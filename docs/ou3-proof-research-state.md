@@ -14,6 +14,33 @@ changes nothing on this route.
 The end-to-end theorem is still open. `P4_PASS=false` and
 `P5_MAY_START=false` remain intentional fail-closed outputs.
 
+## ALT nonuniform capture comparison
+
+Current hypothesis: the user-selected weaker result assumes finite entry into
+a predeclared tail domain separately for each history, then establishes a
+history-specific strict tail contraction and coercivity. No common capture
+deadline or source-uniform rho is required for that conditional conclusion.
+The abstract comparison implication is proved in
+`ou3-alt-nonuniform-capture-theorem.md`; shipping premises remain open.
+
+Failed naive weakening: r_j<1 at every word does not imply product decay
+(product (n+2)/(2(n+1)) tends to 1/2). Even product decay does not control
+constant supply (r_j=(j+1)/(j+2), q_j=1 gives V_n=n(n+3)/(2(n+1))).
+Classification: false abstract implications, not a filter counterexample.
+They invalidate promotion from per-word strictness or product decay alone;
+they do not invalidate a fixed strict factor per history. Limiter: accumulated
+forcing, time-uniform tail coercivity and prefix retention, not a numeric
+capture deadline. Exact rational regressions retain both counterexamples.
+
+Critic: do not hide the desired stability conclusion inside "eventual entry"
+or allow a vanishing metric to manufacture decay. Alternatives are a fixed
+strict factor per history, a fading product with bounded convolution gain,
+or a proved supply proportional to the contraction decrement. The first is
+the selected initial route; the latter two are stated precisely as comparison
+corollaries. Next falsifiable shipping experiment remains the actual nonlinear
+moving-source word, plus an independently justified retained tail domain.
+The capture assumption is explicit and does not set ALT_STARTUP_PASS.
+
 ## ALT informative-service comparison and critic
 
 Current hypothesis: explicit accepted informative-service assumptions support

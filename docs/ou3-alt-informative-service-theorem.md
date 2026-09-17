@@ -49,6 +49,15 @@ instance T_B=1 s, h_B=0.01, alpha_B=1 and L_B=3 or 6 s is explicitly assumed;
 these constants were chosen before measurement, not fitted to its extrema.
 An infinite admissible history satisfying this instance is still an obligation.
 
+## Optional history-wise target
+
+`ou3-alt-nonuniform-capture-theorem.md` proves the conditional comparison result
+when finite capture is assumed separately for each history and the strict tail
+factor/coercivity constants may depend on that history. It needs no numerical
+maximum capture time. This is a weaker eventual practical boundedness target;
+it does not close shipping finite-error, coercivity or retention premises.
+Merely having each time-varying factor below one is insufficient.
+
 ## Corrected stability target
 
 Keep the prescribed compatible law M(P)=diag(P21^-1,I3). On every admitted
