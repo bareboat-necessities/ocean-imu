@@ -1,8 +1,4 @@
-import datetime as dt
-import importlib.util
-import os
 import unittest
-from unittest import mock
 from pathlib import Path
 
 P=Path(__file__).resolve().parents[2]/'.github/scripts/actions_history_cleanup.py'
