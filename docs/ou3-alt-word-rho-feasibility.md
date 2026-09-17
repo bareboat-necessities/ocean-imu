@@ -176,3 +176,8 @@ PYTHONPATH="$PWD:$PWD/tools/stability" python3 \
 `finite_master_guard` carries a short memoised probe of the same measurement in
 `complete_word_rho_feasibility` and lists the falsification under
 `falsified_prerequisites`. All ALT gates stay false.
+
+The table above is a recorded research artifact from a standalone 600-sample
+run. CI measures a 1 s word instead: the obstruction is established per sample
+and composes by induction, so a short word protects it, and the measured ratios
+are research numbers rather than a gate.

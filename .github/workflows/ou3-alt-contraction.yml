@@ -226,7 +226,7 @@ jobs:
   complete-word-rho-feasibility:
     name: Complete-word rho feasibility (non-promoting diagnostic)
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 45
     env:
       OPENBLAS_NUM_THREADS: "1"
       OMP_NUM_THREADS: "1"
@@ -242,11 +242,16 @@ jobs:
         run: |
           export PYTHONPATH="$PWD:$PWD/tools/stability:$PWD/tests/ou3_alt_contraction"
           python3 -m unittest test_finite_word_rho_diagnostic test_proof_plan -v
-      - name: Measure the canonical 3 s word rho floor in both modes
+      # The obstruction is established per sample and composes by induction, so
+      # a 1 s word protects it.  The canonical 3 s measurement in
+      # docs/ou3-alt-word-rho-feasibility.md is a recorded research artifact,
+      # run standalone; reproducing it here would cost most of an hour to
+      # re-derive numbers that are not a gate.
+      - name: Measure the word rho floor in both modes
         run: |
           PYTHONPATH="$PWD:$PWD/tools/stability" python3 \
             tools/stability/ou3_alt_contraction/finite_word_rho_diagnostic.py \
-            --samples 600 --output /tmp/ou3-alt-word-rho.json
+            --samples 200 --output /tmp/ou3-alt-word-rho.json
       - name: Keep the measurement non-promoting and retain the falsification
         run: |
           python3 - <<'PYCODE'

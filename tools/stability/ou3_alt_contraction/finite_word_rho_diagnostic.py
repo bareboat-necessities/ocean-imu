@@ -108,6 +108,7 @@ def mode_dimension(mode: str) -> int:
         return 21
     raise ValueError("word mode must be H or A")
 
+
 # Tuner schedule committed at the retained Live entrance, matching the
 # ActiveSchedule carried by ou3_brmm_frontend_state_step's point state.
 ACTIVE_TAU_S = 1.1
@@ -123,6 +124,10 @@ GRAVITY = 9.80665
 # domain; the true-bias envelope is the BIAS family component bound.
 BIAS_PROJECTION_LIMIT = 0.4
 TRUE_BIAS_COMPONENT = 0.35
+# Declared physical envelope every composed sample must stay inside.  A word
+# outside it is not an admitted history and would prove nothing.
+MAX_NON_GRAVITATIONAL_ACCEL = 8.8
+MAX_BODY_RATE_RAD_S = 35.0 * math.pi / 180.0
 
 
 def _I(x: float) -> Interval:
@@ -146,40 +151,60 @@ class SourcePhase:
     """One analytic source-reachable member of the admitted Live language."""
 
     name: str
+    quiet: bool
     gauged: bool
     description: str
 
     def sample(self, k: int, h: float):
-        if self.name.startswith("quiet"):
+        if self.quiet:
             # Quiet-zero COMPLETE-BRMM member: level boat at rest, zero wave
             # displacement and every centered primitive zero.  Admitted by the
             # corrected physical envelope and by BIAS0.
-            return (0.0, 0.0, 0.0), (0.0, 0.0, -GRAVITY)
-        t = k * h
-        omega = (0.05 * math.sin(2 * math.pi * 0.15 * t),
-                 -0.04 * math.cos(2 * math.pi * 0.12 * t),
-                 0.02 * math.sin(2 * math.pi * 0.08 * t))
-        force = (0.5 * math.sin(2 * math.pi * 0.12 * t),
-                 0.4 * math.cos(2 * math.pi * 0.10 * t),
-                 -GRAVITY + 0.8 * math.sin(2 * math.pi * 0.11 * t))
+            omega, force = (0.0, 0.0, 0.0), (0.0, 0.0, -GRAVITY)
+        else:
+            t = k * h
+            omega = (0.05 * math.sin(2 * math.pi * 0.15 * t),
+                     -0.04 * math.cos(2 * math.pi * 0.12 * t),
+                     0.02 * math.sin(2 * math.pi * 0.08 * t))
+            force = (0.5 * math.sin(2 * math.pi * 0.12 * t),
+                     0.4 * math.cos(2 * math.pi * 0.10 * t),
+                     -GRAVITY + 0.8 * math.sin(2 * math.pi * 0.11 * t))
+        assert_admitted_sample(omega, force)
         return omega, force
+
+
+def assert_admitted_sample(omega, force) -> None:
+    """Keep every composed sample inside the declared physical envelope.
+
+    A measurement taken outside the admitted language would prove nothing, so
+    this is checked on each sample rather than asserted in a comment.
+    """
+    rate = math.sqrt(sum(x * x for x in omega))
+    if rate > MAX_BODY_RATE_RAD_S:
+        raise ValueError(f"body rate {rate} rad/s leaves the declared envelope")
+    non_gravitational = math.sqrt(
+        force[0] ** 2 + force[1] ** 2 + (force[2] + GRAVITY) ** 2)
+    if non_gravitational > MAX_NON_GRAVITATIONAL_ACCEL:
+        raise ValueError(
+            f"non-gravitational acceleration {non_gravitational} m/s^2 "
+            "leaves the declared envelope")
 
 
 SOURCE_PHASES = (
     SourcePhase(
-        "quiet_ungauged", False,
+        "quiet_ungauged", True, False,
         "quiet-zero COMPLETE-BRMM member with no magnetic event in the word; "
         "admitted because the ungauged timeout path leaves mag_ref_set_ false "
         "and MAG-CALL-SCHEDULE-v1 imposes no pre-gauge acquisition deadline"),
     SourcePhase(
-        "wave_ungauged", False,
+        "wave_ungauged", False, False,
         "bounded oscillatory wave response inside the declared envelope with no "
         "magnetic event in the word"),
     SourcePhase(
-        "quiet_gauged", True,
+        "quiet_gauged", True, True,
         "quiet-zero member with 25 Hz magnetic service after north lock"),
     SourcePhase(
-        "wave_gauged", True,
+        "wave_gauged", False, True,
         "bounded oscillatory wave response with 25 Hz magnetic service"),
 )
 

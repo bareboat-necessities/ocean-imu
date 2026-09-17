@@ -64,6 +64,29 @@ class WordCompositionTests(unittest.TestCase):
         self.assertTrue(np.allclose(restriction, (expected + expected.T) / 2, atol=1e-9))
 
 
+class SourcePhaseTests(unittest.TestCase):
+    def test_every_phase_sample_stays_inside_the_declared_envelope(self):
+        for phase in RHO.SOURCE_PHASES:
+            for k in range(0, 600, 17):
+                with self.subTest(phase=phase.name, sample=k):
+                    phase.sample(k, 0.005)
+
+    def test_a_sample_outside_the_envelope_fails_closed(self):
+        with self.assertRaisesRegex(ValueError, 'body rate'):
+            RHO.assert_admitted_sample((10.0, 0.0, 0.0), (0.0, 0.0, -RHO.GRAVITY))
+        with self.assertRaisesRegex(ValueError, 'non-gravitational acceleration'):
+            RHO.assert_admitted_sample((0.0, 0.0, 0.0), (20.0, 0.0, -RHO.GRAVITY))
+
+    def test_quiet_phases_are_the_zero_member(self):
+        for phase in RHO.SOURCE_PHASES:
+            omega, force = phase.sample(5, 0.005)
+            if phase.quiet:
+                self.assertEqual(omega, (0.0, 0.0, 0.0))
+                self.assertEqual(force, (0.0, 0.0, -RHO.GRAVITY))
+            else:
+                self.assertNotEqual(omega, (0.0, 0.0, 0.0))
+
+
 class UngaugedObstructionTests(unittest.TestCase):
     def test_ungauged_yaw_pair_is_an_exactly_invariant_unipotent_block(self):
         """Checked at full joint24 width, so it holds in H18 and A21 alike."""
