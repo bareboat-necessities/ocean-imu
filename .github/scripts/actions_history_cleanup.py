@@ -218,11 +218,10 @@ if not DRY and budget > 0 and final > KEEP_FAILED:
         f"retention invariant not met after settle/requery: {final} failures remain"
     )
 
-# Cancelled/skipped retention. The previous implementation passed
-# exclude_pull_requests=true, which excluded exactly the large population this
-# repository accumulates when superseded PR checks are cancelled. Enumerate ALL
-# cancelled/skipped runs, preserve the newest run for each workflow+branch pair,
-# and drain the old remainder in explicit DELETE batches.
+# Cancelled/skipped retention. Enumerate ALL cancelled/skipped runs, including
+# the superseded PR checks that dominate this repository's backlog, preserve
+# the newest run for each workflow+branch pair, and drain the old remainder in
+# explicit DELETE batches.
 cutoff = dt.datetime.now(dt.timezone.utc) - dt.timedelta(minutes=MIN_AGE)
 pool = []
 for conclusion in ("cancelled", "skipped"):

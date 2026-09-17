@@ -14,6 +14,28 @@ changes nothing on this route.
 The end-to-end theorem is still open. `P4_PASS=false` and
 `P5_MAY_START=false` remain intentional fail-closed outputs.
 
+## ALT startup-tail critic and next experiment
+
+Current evidence: exact reset replay reaches the antialigned docking state
+at sample 30,002 (3,660,244 operations); a new source-audited native 600-step
+tail preserves non-Live operation with zero guard engagement. See
+`ou3-alt-startup-trap.md` and the current ALT handover.
+
+Failed inference: positive rational invariant margin with proposed 16u/64u
+rounding constants does not certify those constants or the whole wrapper.
+Classification: proof-method gap, not a theorem counterexample. It invalidates
+promotion of this finite witness into an infinite startup obstruction; it
+does not invalidate exact reachability or the local carried-storage diagnostic.
+The limiting quantities are the complete rounding defect and indefinite
+wrapper guard/gate composition. Closure and PASS flags remain false.
+
+Critic: abandon the infinite-tail claim if either majorant exceeds the
+3.1853e-6 radius slack or the wrapper can leave the modeled branch. Alternatives
+are a literal interval invariant for the full wrapper, a certified recovery
+argument, or a different admitted physical obstruction. Next experiment:
+audit the existing rounding graph before further radius refinement, then
+compose guard and gate invariants. No filter or source-domain change is allowed.
+
 ## Physics-first COMPLETE-BRMM
 
 The theorem now defines the physics before any mathematical source

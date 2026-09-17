@@ -42,6 +42,7 @@ import ou3_brmm_live_covariance_seed as LIVE
 import ou3_brmm_complete_window_execution_kernel as KERNEL
 import ou3_brmm_shipping_prediction_primitives as PRIM
 import ou3_brmm_tuner_scheduler_step as TUNER
+import ou3_brmm_riccati_tube as RTUBE
 import ou3_brmm_riccati_tube_factored as TUBE
 from tools.stability.ou3_alt_contraction import physical_numeric_bounds as PHYS
 
@@ -49,6 +50,12 @@ REPO=Path(__file__).resolve().parents[3]
 DOMAIN=REPO/'tools/stability/ou3_proof_operating_domain.json'
 QUALIFICATION='OU3_ALT_EVENT_LOCAL_COVARIANCE_OPERATOR_NORM_ENVELOPE_V2'
 TRANSITIONS=600
+# The configured tau range spans three decades. Evaluating the shipping
+# translation F/Q over it as one interval is dominated by dependency
+# overestimation rather than by the actual operator norms, so the declared
+# range is covered by geometric cells and the norms are maximised over that
+# cover. The true tau lies in one cell, so the maximum is a valid upper bound.
+TAU_CELLS=256
 
 def I(x):return Interval.outward_bounds(float(x),float(x))
 def B(r):r=float(r);return Interval.outward_bounds(-r,r)
@@ -98,10 +105,15 @@ def build():
     live=LIVE.build(DOMAIN);lf=LIVE.validate(live);phys=PHYS.build();pf=PHYS.validate(phys);tube=TUBE.build();tf=TUBE.validate_covariance_ceiling(tube)
     if lf or pf or tf:raise RuntimeError(f'local covariance prerequisites failed live={lf} phys={pf} tube={tf}')
     kc=KERNEL._process_constants(DOMAIN);tc=TUNER.constants();omega=[B(math.radians(float(phys['body_rate_norm_upper_deg_s'])))]*3;tau=Interval.outward_bounds(tc.tau_min,tc.tau_max);sigma_lo=max(float(tc.acc_noise_floor_sigma),1e-9);sigma_hi=float(tc.sigma_max);sigma=[Interval.outward_bounds(sigma_lo,sigma_hi)]*3
-    Faa,Qaa=PRIM.attitude_gyro_bias_F_Q(omega,kc.h,kc.gyro_variance_density_xyz,kc.gyro_bias_variance_density);Ft,Qt=PRIM.translation_F_Q(tau,kc.h,sigma);phi,Qba=PRIM.active_accel_bias_F_Q(kc.h,kc.accel_bias_tau_s,kc.accel_bias_process_variance_density)
+    Faa,Qaa=PRIM.attitude_gyro_bias_F_Q(omega,kc.h,kc.gyro_variance_density_xyz,kc.gyro_bias_variance_density);phi,Qba=PRIM.active_accel_bias_F_Q(kc.h,kc.accel_bias_tau_s,kc.accel_bias_process_variance_density)
+    tau_cells=RTUBE.interval_cells(RTUBE.geom_edges(float(tau.lo),float(tau.hi),TAU_CELLS))
     floor_add=math.nextafter(sigma_hi*sigma_hi,math.inf);pars={}
     for mode in ('H','A'):
-        F,Q=_assemble(mode,Faa,Qaa,Ft,Qt,phi,Qba);pars[mode]=(interval_matrix_norm2_upper(F),interval_matrix_norm2_upper(Q))
+        fn=0.0;qn=0.0
+        for cell in tau_cells:
+            Ft,Qt=PRIM.translation_F_Q(cell,kc.h,sigma);F,Q=_assemble(mode,Faa,Qaa,Ft,Qt,phi,Qba)
+            fn=max(fn,interval_matrix_norm2_upper(F));qn=max(qn,interval_matrix_norm2_upper(Q))
+        pars[mode]=(fn,qn)
     pbarH=_endpoint_norm_from_diag(tube['modes']['H']['Pbar_diagonal_variance_upper']);pbarA=_endpoint_norm_from_diag(tube['modes']['A']['Pbar_diagonal_variance_upper'])
     hseed=_live_H_seed_norm(live);h_end,h_early=_word_open_loop(hseed,*pars['H'],floor_add);h_steady=_advance(pbarH,*pars['H'],floor_add);hlocal=max(h_early,h_steady)
     ba_seed=float(live['held_ba']['seed_variance']);release_seed=math.nextafter(max(pbarH,ba_seed),math.inf);a_end,a_early=_word_open_loop(release_seed,*pars['A'],floor_add);a_steady=_advance(pbarA,*pars['A'],floor_add);alocal=max(a_early,a_steady)

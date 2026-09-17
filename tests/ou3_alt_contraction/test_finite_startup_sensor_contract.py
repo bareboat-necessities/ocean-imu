@@ -5,7 +5,36 @@ import unittest
 from tools.stability.ou3_alt_contraction import finite_startup_sensor_contract as S
 from tools.stability.ou3_alt_contraction import finite_startup_disturbance_obstruction as OBSTRUCTION
 from tools.stability.ou3_alt_contraction import finite_binary32_mahony_startup as SEED
+from tools.stability.ou3_alt_contraction import finite_binary32_arithmetic as B
+from tools.stability.ou3_alt_contraction import finite_frontend_uniform_bounds as FRONT
+from tools.stability.ou3_alt_contraction import finite_tuner_deployment_config as D
 import test_finite_startup_joined_machine_history as BASE
+
+
+# The inherited rational-root fixture is a component, not the shipping source.
+# A bounded (commissioned) profile attaches the configured candidate, commit and
+# frontend uniform supplies, so that regime has to be entered from the actual
+# compiled deployment constants rather than the component scalars.
+SHIPPING_TUNER_FIELDS=('min_freq','max_freq','tau_coeff','min_tau','max_tau',
+                       'adapt_tau_sec','adapt_tau_sea_periods','sigma_coeff','max_sigma')
+
+
+def shipping_deployment(cfg):
+    return replace(cfg,sigma_coeff=D.SIGMA_COEFF,max_sigma=D.MAX_SIGMA)
+
+
+def shipping_runtime(runtime,deployment_cfg,**overrides):
+    candidate=replace(runtime.candidate_cfg,
+        **{n:F(getattr(deployment_cfg,n)) for n in SHIPPING_TUNER_FIELDS},
+        clamp_enabled=deployment_cfg.clamp_enabled)
+    commit=replace(runtime.commit_cfg,tau_scaled_cadence=True,cubic_rs_law=False,
+        pseudo_tau_ratio=D.PSEUDO_RATIO,pseudo_period_min=D.PSEUDO_MIN,
+        pseudo_period_max=D.PSEUDO_MAX,pseudo_fixed_period=D.PSEUDO_NOMINAL,
+        min_R_S=D.MIN_RS,max_R_S=D.MAX_RS,S_factor=F(1),
+        R_S_x_factor=B.rn32(F(72,100)),R_S_y_factor=B.rn32(F(72,100)))
+    return replace(runtime,candidate_cfg=candidate,commit_cfg=commit,
+        bench_noise_sigma=FRONT.BENCH_SIGMA,boundary_bench_noise_sigma=FRONT.BENCH_SIGMA,
+        **overrides)
 
 
 def history(raw,name='BMI270_COMMISSIONED_V1'):
@@ -83,8 +112,9 @@ class Tests(unittest.TestCase):
         from test_finite_startup_wpe_machine_history import mode_witness
         from test_finite_wpe_uniform_bounds import config
         old=BASE.initial(); raw,_=BASE.cold_operands(old); h=history(raw)
-        runtime=replace(old.runtime,wpe_cfg=config())
-        s=X.initial(runtime,old.deployment_cfg,sensor_history=h)
+        deployment=shipping_deployment(old.deployment_cfg)
+        runtime=shipping_runtime(old.runtime,deployment,wpe_cfg=config())
+        s=X.initial(runtime,deployment,sensor_history=h)
         for _ in range(2):
             raw,kw=BASE.cold_operands(s.base)
             guard=BASE.X.GUARD.step(s.base.guard,s.base.guard_cfg,dt=kw['machine_dt'],

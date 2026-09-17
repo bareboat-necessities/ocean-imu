@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import contextlib
 import copy
 import csv
+import io
 import json
 import sys
 import tempfile
@@ -175,7 +177,12 @@ class ProvenanceAdversarialTests(unittest.TestCase):
         with self.assertRaisesRegex(provenance.ProvenanceError, "full replay is required"):
             provenance.begin_restatement("validation", self.bundle)
         self.assertEqual(self.manifest.read_bytes(), before)
-        self.assertNotEqual(contract._auto(("validation",)), 0)
+        # _auto prints the refusal it is being tested for. Capture it so a
+        # deliberate fixture rejection cannot be read as a real CI provenance
+        # failure in the job log.
+        with contextlib.redirect_stdout(io.StringIO()) as refusal:
+            self.assertNotEqual(contract._auto(("validation",)), 0)
+        self.assertIn("replay dependency differs", refusal.getvalue())
 
     def test_simulator_change_requires_full_replay(self):
         self.sim.write_text(self.sim.read_text(encoding="utf-8") + "// changed\n", encoding="utf-8")

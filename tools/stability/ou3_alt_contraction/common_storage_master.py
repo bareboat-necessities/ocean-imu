@@ -143,7 +143,11 @@ def build() -> dict:
     return {
         "qualification":QUALIFICATION,
         "canonical_source":"COMPLETE_BRMM_NORMAL_LIVE_WORD",
-        "phase1_storage_search_allowed_consumed":bool(phase1["storage_search_allowed"]),
+        # Phase-1 is permanently fail-closed for storage: the controlling gate is
+        # proof_plan.assert_finite_storage_master. What this module consumes is that
+        # barrier, not a permission, so record both and keep the permission false.
+        "phase1_storage_barrier_consumed":bool(phase1["common_joint24_storage_must_wait_for_finite_master"] and phase1["finite_storage_gate_error"]),
+        "phase1_storage_search_allowed":bool(phase1["storage_search_allowed"]),
         "joint_dimension":JOINT_DIM,"unsupplied_motion_dimension":MOTION_DIM,"bounded_neutral_dimension":NEUTRAL_DIM,
         "bounded_neutral_coordinates":"e_ba[3], beta_true[3]",
         "neutral_indices":list(NEUTRAL_INDICES),
@@ -166,9 +170,9 @@ def build() -> dict:
 def validate(d: dict) -> list[str]:
     f=[]
     if d.get("qualification")!=QUALIFICATION or d.get("canonical_source")!="COMPLETE_BRMM_NORMAL_LIVE_WORD": f.append("qualification/source mismatch")
-    for k in ("phase1_storage_search_allowed_consumed","selector_times_kernel_zero","full_joint24_storage_remains_coercive_required","held_bias_and_true_bias_may_enter_only_bounded_supply","finite_scalar_supply_completion_formula_available","physical_source_supply_magnitude_needed_for_ultimate_bound"):
+    for k in ("phase1_storage_barrier_consumed","selector_times_kernel_zero","full_joint24_storage_remains_coercive_required","held_bias_and_true_bias_may_enter_only_bounded_supply","finite_scalar_supply_completion_formula_available","physical_source_supply_magnitude_needed_for_ultimate_bound"):
         if d.get(k) is not True: f.append(k+" not true")
-    for k in ("motion_coordinates_moved_to_supply","physical_source_supply_magnitude_needed_for_metric_feasibility","common_M_source_uniform_search_closed","source_uniform_outward_projected_LDLT_closed","ALT_LIVE_PASS"):
+    for k in ("phase1_storage_search_allowed","motion_coordinates_moved_to_supply","physical_source_supply_magnitude_needed_for_metric_feasibility","common_M_source_uniform_search_closed","source_uniform_outward_projected_LDLT_closed","ALT_LIVE_PASS"):
         if d.get(k) is not False: f.append(k+" not false")
     if d.get("joint_dimension")!=24 or d.get("unsupplied_motion_dimension")!=18 or d.get("bounded_neutral_dimension")!=6: f.append("dimension mismatch")
     if d.get("neutral_indices")!=list(NEUTRAL_INDICES) or d.get("selector_rank")!=6 or d.get("kernel_dimension")!=18: f.append("selector/kernel mismatch")

@@ -39,9 +39,11 @@ def build() -> dict:
         and smoke["authoritative_next_frontend_is_joint"]
     )
 
-    # Deliberately try the inherited theorem-facing builder. On current main it
-    # reaches into the separate Mahony startup invariant. ALT Live-word
-    # attachment must not silently acquire that prerequisite.
+    # Deliberately try the inherited theorem-facing builder. Either it completes
+    # on its own, or it fails by reaching into the separate Mahony startup
+    # invariant, which is recorded as startup_coupled. ALT Live-word attachment
+    # must not silently acquire that prerequisite, and any other failure is
+    # unclassified and fails this audit.
     inherited = {"builder_completed": False, "startup_coupled": False, "error": None}
     try:
         d = ATTACH.build()
