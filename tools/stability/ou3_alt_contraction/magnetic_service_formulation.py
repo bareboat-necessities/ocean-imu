@@ -8,7 +8,6 @@ quotient is not permission to supply or discard axial gyro-bias error.
 from __future__ import annotations
 from dataclasses import dataclass
 import math
-from typing import Sequence
 import numpy as np
 QUALIFICATION="OU3_ALT_GRAVITY_QUOTIENT_MAGNETIC_SERVICE_V1"; JOINT_DIM=24; MOTION_DIM=18; NEUTRAL_INDICES=tuple(range(18,24)); FORMULATION="gravity_quotient_plus_informative_magnetic_superwords"
 def selection_status():
