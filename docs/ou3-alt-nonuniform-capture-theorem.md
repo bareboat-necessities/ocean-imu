@@ -156,6 +156,13 @@ alone does not imply capture, retention, or contraction. Without heading
 service, use the explicit transverse/centre target, not full-heading decay.
 Axial bias is still represented, and BIAS0/1/2 and all H18/A21 edges survive.
 
+For the actual binary32 covariance law, `ou3-alt-binary32-coercivity.md`
+now proves a format-wide coercivity bound on the finite symmetric SPD domain.
+Thus the qualitative coercivity requirement reduces to preservation of that
+domain, already part of the outstanding machine-arithmetic obligations. It no
+longer independently requires a useful history-specific covariance envelope.
+The existence lemma gives no useful numerical accuracy bound.
+
 What is proved here is the conditional comparison theorem. The shipping
 finite-error word inequality, history-wise tail coercivity and prefix
 retention/totality remain open. Capture is an assumption, not a newly proved

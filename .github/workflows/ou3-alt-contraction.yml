@@ -242,7 +242,7 @@ jobs:
         run: |
           export PYTHONPATH="$PWD:$PWD/tools/stability:$PWD/tests/ou3_alt_contraction"
           python3 -m unittest test_finite_word_rho_diagnostic test_proof_plan \
-            test_carried_storage_rho_diagnostic test_informative_superword_rho_diagnostic test_finite_startup_trap test_informative_service_theorem test_nonuniform_capture_theorem -v
+            test_carried_storage_rho_diagnostic test_informative_superword_rho_diagnostic test_finite_startup_trap test_informative_service_theorem test_nonuniform_capture_theorem test_binary32_covariance_coercivity -v
           python3 -m unittest tests.validation.test_ou3_p4_complete_brmm_source_cover_envelope -v
       - name: Measure prescribed storage on carried native magnetic histories
         run: |

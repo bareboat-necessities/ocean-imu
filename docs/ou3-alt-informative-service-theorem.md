@@ -136,10 +136,13 @@ The apparent full-storage contraction without any magnetic information is an
 important negative control: P can grow along the unobserved pair and reduce
 its inverse-covariance weight. The exact neutral/unipotent obstruction remains.
 Uniform coercivity is indispensable, even when every measured ratio is below 1.
+`ou3-alt-binary32-coercivity.md` now proves it on the actual finite-SPD binary32
+domain; infinite preservation of that domain remains open.
 
 Next falsifiable work is the nonzero-motion, finite-error map with actual
 rejected events at retained 40 ms cadence, and the quotient's transported
-physical gauge/centre coupling on that same history. Uniform coercivity,
+physical gauge/centre coupling on that same history. Preservation of the
+finite-SPD covariance domain (now sufficient for qualitative coercivity),
 all BIAS families, every hybrid edge and source/target arithmetic remain open.
 Do not start interval refinement of a stationary point and label it universal.
 

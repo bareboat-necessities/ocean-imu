@@ -49,6 +49,16 @@ This weakens the requested conclusion to conditional history-wise eventual
 practical boundedness. It leaves the original uniform target available and
 keeps all filter theorem gates closed until their actual premises are proved.
 
+## Coercivity reduction
+
+`ou3-alt-binary32-coercivity.md` proves that every finite symmetric SPD
+binary32 P21 yields `2^-133 I <= diag(P21^-1,I3) <= 2^5789 I`, including
+its minimum-energy quotient metric. This closes qualitative coercivity on
+that domain without fitting covariance bounds. Exact rational LDL/determinant
+checks pass at 36 native endpoints and all 18,586 recorded covariance event
+boundaries in the three retained-service histories. Infinite finite-SPD domain preservation
+remains an arithmetic obligation, and useful numerical bounds remain open.
+
 ## Physical input theorem
 
 Every admitted Live history now satisfies the actual binary32 API bounds
@@ -140,8 +150,9 @@ observer bound does not prove indefinite clock progress.
 ## Next controlling work
 
 Retain `M(P)=diag(P21^-1,I3)` as a prescribed compatible-storage candidate.
-The positive quiet-word margin is local tangent evidence. Establish its
-uniform coercivity and the finite same-history inequality over admitted
+The positive quiet-word margin is local tangent evidence. Establish preservation
+of the finite-SPD covariance domain (which now supplies qualitative coercivity)
+and the finite same-history inequality over admitted
 informative-service histories, preserving nonlinear correction/reset/projection,
 full covariance, actual frontend/tuner values, every H18/A21 edge and all BIAS
 families. No metric fitting, independent endpoint seeds, or covariance floors
@@ -192,8 +203,10 @@ premises. All remaining controlling obligations are:
    Establish deployment membership or retain it as a stated hypothesis; finite
    audits do not prove infinite recurrence or nonvacuity. Attempted calls alone
    supply no such theorem.
-8. Storage: prove uniform coercivity of the prescribed full carried-covariance
-   metric; covariance growth can otherwise mimic error decay.
+8. Storage: the binary32 finite-SPD domain now has a proved uniform coercivity
+   bound. Prove the actual carried covariance remains in that domain at every
+   required tail endpoint. Useful quantitative bounds remain separate; finite
+   point observations cannot establish infinite domain membership.
 9. Uniform finite-error rho: bound the nonlinear same-history complete map
    over nonzero motion, all BIAS families, H18/A21 and every hybrid edge,
    including projection, Joseph defect and nonorthogonal reset. The quiet

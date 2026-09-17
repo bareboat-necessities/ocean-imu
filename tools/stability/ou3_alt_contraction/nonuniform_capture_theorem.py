@@ -5,6 +5,8 @@ ou3-alt-nonuniform-capture-theorem.md for the proof and quantifier boundary.
 """
 from fractions import Fraction as F
 
+from tools.stability.ou3_alt_contraction import binary32_covariance_coercivity as COV
+
 
 def exact(value):
     if isinstance(value, (float, bool)):
@@ -66,6 +68,8 @@ def selection_status():
         'finite_capture_proved_for_shipping_filter': False,
         'shipping_nonlinear_word_inequality_proved': False,
         'history_wise_tail_coercivity_proved': False,
+        'finite_SPD_binary32_implies_tail_coercivity': COV.bounds()['conditional_format_coercivity_lemma_proved'],
+        'finite_SPD_binary32_tail_membership_proved': False,
         'history_wise_prefix_retention_proved': False,
         'variable_factors_below_one_alone_sufficient': False,
         'uniform_ISS_claimed': False,

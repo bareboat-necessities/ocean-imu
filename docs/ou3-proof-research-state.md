@@ -14,6 +14,26 @@ changes nothing on this route.
 The end-to-end theorem is still open. `P4_PASS=false` and
 `P5_MAY_START=false` remain intentional fail-closed outputs.
 
+## ALT format-wide coercivity reduction
+
+New mathematical fact: finite binary32 entries lie on q=2^-149 times the
+integers. For SPD P21, det(P)>=q^21 and lambda_max(P)<=21 Fmax. This proves
+`2^-133 I <= diag(P^-1,I3) <= 2^5789 I` on the full finite-SPD domain, including
+the minimum-energy quotient. It closes the qualitative coercivity implication;
+it does not repair the shipping covariance or prove domain preservation.
+Exact rational checks pass at 36 actual native endpoints and all 18,586
+recorded covariance event boundaries in the retained-service histories, without
+eigenvalue floors or fitted constants. See `ou3-alt-binary32-coercivity.md`.
+
+Critic: format compactness can yield uselessly large bounds and must not be
+sold as accuracy or contraction. The controlling remaining quantities are
+finite-SPD preservation and the nonlinear tail rho/supply inequality. This
+new fact justifies revisiting the *existence* of coercivity after the earlier
+unbounded-real-covariance objection; it does not reopen the rejected identity
+metric or full-heading ungauged contraction route. The finite recorded-operation check now passes. Next falsifiable test is
+rounded SPD preservation under nonzero residuals/motion and nonlinear word
+contraction, with any failed pivot reported before further certification.
+
 ## ALT nonuniform capture comparison
 
 Current hypothesis: the user-selected weaker result assumes finite entry into
