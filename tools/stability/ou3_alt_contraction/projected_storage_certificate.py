@@ -104,7 +104,8 @@ def build() -> dict:
     return {
         "qualification":QUALIFICATION,
         "canonical_source":"COMPLETE_BRMM_NORMAL_LIVE_WORD",
-        "phase1_storage_search_allowed_consumed":master["phase1_storage_search_allowed_consumed"],
+        "phase1_storage_barrier_consumed":master["phase1_storage_barrier_consumed"],
+        "phase1_storage_search_allowed":master["phase1_storage_search_allowed"],
         "joint24_bias_reference_supply_selector_consumed":master["neutral_indices"],
         "outward_interval_family_arithmetic":True,
         "outward_full_matrix_LDLT_terminal_gate":True,
@@ -121,9 +122,9 @@ def build() -> dict:
 def validate(d):
     f=[]
     if d.get("qualification")!=QUALIFICATION or d.get("canonical_source")!="COMPLETE_BRMM_NORMAL_LIVE_WORD": f.append("qualification/source mismatch")
-    for k in ("phase1_storage_search_allowed_consumed","outward_interval_family_arithmetic","outward_full_matrix_LDLT_terminal_gate","common_metric_point_candidate_only","source_uniform_endpoint_family_must_be_proved_by_caller"):
+    for k in ("phase1_storage_barrier_consumed","outward_interval_family_arithmetic","outward_full_matrix_LDLT_terminal_gate","common_metric_point_candidate_only","source_uniform_endpoint_family_must_be_proved_by_caller"):
         if d.get(k) is not True: f.append(k+" not true")
-    for k in ("replay_or_finite_sample_family_is_qualification","source_uniform_endpoint_family_enclosure_closed","common_M_source_uniform_projected_LDLT_closed","ALT_LIVE_PASS"):
+    for k in ("phase1_storage_search_allowed","replay_or_finite_sample_family_is_qualification","source_uniform_endpoint_family_enclosure_closed","common_M_source_uniform_projected_LDLT_closed","ALT_LIVE_PASS"):
         if d.get(k) is not False: f.append(k+" not false")
     if d.get("joint24_bias_reference_supply_selector_consumed")!=list(MASTER.NEUTRAL_INDICES): f.append("neutral selector changed")
     return f

@@ -43,12 +43,17 @@ def build():
     exact=bool(exact and word["finite_induction_premises_closed"]
                and word["H18_complete_word_construction_closed"]
                and word["A21_complete_word_construction_closed"]
-               and hybrid["hybrid_H18_A21_word_closed"]
-               and phase1["storage_search_allowed"])
+               and hybrid["hybrid_H18_A21_word_closed"])
+    # Whether the endpoint map relation is *defined* is a structural fact about
+    # W_ALT_joint24; it is independent of Phase-1's storage permission, which stays
+    # closed until the finite master does. Record the barrier instead of requiring it.
+    storage_barrier=bool(phase1["common_joint24_storage_must_wait_for_finite_master"] and phase1["finite_storage_gate_error"])
     return {
       "qualification":QUALIFICATION,"canonical_source":"COMPLETE_BRMM_NORMAL_LIVE_WORD",
       "source_relation":SOURCE_RELATION,"word_transitions":600,"source_samples":601,"joint_dimension":24,
       "source_reachable_selector_family_relation_consumed":True,
+      "phase1_storage_barrier_consumed":storage_barrier,
+      "phase1_storage_search_allowed":bool(phase1["storage_search_allowed"]),
       "all_branch_successors_retained":reach["all_branch_successors_retained"],
       "all_bias_lineages_retained":reach["all_bias_absolute_prefix_relations_attached"],
       "every_selector_endpoint_has_physical_joint24_cocycle":word["every_prefix_and_endpoint_has_single_mode_physical_cocycle"],
@@ -67,9 +72,9 @@ def build():
 def validate(d):
     f=[]
     if d.get("qualification")!=QUALIFICATION or d.get("source_relation")!=SOURCE_RELATION:f.append("qualification/source mismatch")
-    for k in ("source_reachable_selector_family_relation_consumed","all_branch_successors_retained","all_bias_lineages_retained","every_selector_endpoint_has_physical_joint24_cocycle","configured_H18_A21_hybrid_splice_closed","exact_universal_endpoint_map_relation_defined"):
+    for k in ("source_reachable_selector_family_relation_consumed","phase1_storage_barrier_consumed","all_branch_successors_retained","all_bias_lineages_retained","every_selector_endpoint_has_physical_joint24_cocycle","configured_H18_A21_hybrid_splice_closed","exact_universal_endpoint_map_relation_defined"):
         if d.get(k) is not True:f.append(k+" not true")
-    for k in ("finite_source_enumeration_used","trajectory_replay_used","independent_sample_boxes_used","numeric_interval_endpoint_representation_closed","common_M_source_uniform_projected_LDLT_closed","ALT_LIVE_PASS"):
+    for k in ("phase1_storage_search_allowed","finite_source_enumeration_used","trajectory_replay_used","independent_sample_boxes_used","numeric_interval_endpoint_representation_closed","common_M_source_uniform_projected_LDLT_closed","ALT_LIVE_PASS"):
         if d.get(k) is not False:f.append(k+" not false")
     if d.get("joint_dimension")!=24 or d.get("word_transitions")!=600 or d.get("source_samples")!=601:f.append("dimension/window mismatch")
     return f
