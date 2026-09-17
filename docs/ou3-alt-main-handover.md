@@ -1,18 +1,23 @@
 # OU-III ALT current handover
 
-rho has now been measured, and the declared joint24 contraction is falsified.
-`ou3-alt-word-rho-feasibility.md` is the controlling result: an admitted ungauged
-legal word -- one with no magnetic event -- carries an exactly invariant
-unipotent `(theta_z, bg_z)` block, so its motion-block spectral radius is one and
-no common storage with the declared `[e_ba, beta_true]` supply attains `rho<1`.
-The obstruction is the formulation, not an enclosure, and no subordinate lemma
-can move it.
+The selected replacement is gravity-quotient/centre dynamics during ungauged
+intervals plus informative magnetic-service superword dissipativity. Read
+`ou3-alt-observability-formulation.md` for the controlling target and measurement.
+The old universal per-word absolute-heading common-contraction target remains
+falsified by the quiet ungauged pair; retain `ou3-alt-word-rho-feasibility.md`
+as its structural negative control, not a positive storage certificate.
 
-The next task is therefore to choose a new formulation, not to finish the
-remaining qualifications. `AGENTS.md` and `ou3-alt-proof-plan.md` are normative.
-The independent P2/P3/P4/P5 route continues through
-`ou3-brmm-main-handover.md`; its thresholds and gates are unchanged. The ALT
-master still withholds storage search.
+A yaw-only quotient still leaves neutral axial gyro bias. Attempted magnetic
+calls <=40 ms apart do not establish accepted informative recurrence. The
+retained below-one gauged spectra do not measure a common-storage upper ratio.
+These distinctions are executable in `magnetic_service_formulation.py`.
+
+The next task is the corrected same-history superword storage measurement,
+not interval refinement or completion of the eleven subordinate qualifications.
+No new source-qualified shipping rho is recorded. `AGENTS.md` and
+`ou3-alt-proof-plan.md` remain normative. The independent P2/P3/P4/P5 route
+continues through `ou3-brmm-main-handover.md`; its thresholds and gates are
+unchanged. The ALT master still withholds storage search and all PASS flags.
 
 ## Physical input theorem
 
@@ -71,7 +76,7 @@ Neither result permits a new input restriction for proof convenience.
 
 ## Retained finite-word structure
 
-The source product retains corrected COMPLETE-BRMM, one BIAS0/1/2 history,
+The source product retains corrected COMPLETE-BRMM, one BIAS0/BIAS1/BIAS2 history,
 full 21-state covariance, joint24 motion/error/true-bias state, one Live/S
 origin, frontend/tuner memory, asynchronous magnetic state and all H18/A21
 edges. Four attitude charts cover every nonzero relative quaternion, including
@@ -104,18 +109,16 @@ observer bound does not prove indefinite clock progress.
 
 ## Next controlling work
 
-Pick a replacement formulation from the three routes in
-`ou3-alt-word-rho-feasibility.md` -- gravity-quotient storage, a declared Normal
-Live magnetic service class, or an independently bounded heading supply -- and
-re-measure rho before any enclosure work. The gauged floors are already below
-one with roughly `3.6e-3` distance per 3 s word, so for a gauging route the next
-question is whether interval enclosure over 600 steps fits inside that margin;
-measure the enclosure width before building it.
+The replacement is selected: gravity-quotient/centre evolution plus informative
+magnetic-service superwords, as specified in `ou3-alt-observability-formulation.md`.
+Measure the projected generalized-eigenvalue ratio for a specified common or
+compatible storage on same-history carried superwords. A yaw-only quotient
+leaves neutral axial bias; call cadence does not guarantee accepted service.
+The retained gauged spectral distance near `3.6e-3` is not yet a storage margin
+or an interval-error budget. No new source-qualified shipping rho is recorded.
 
-The eleven qualifications below stay open and correctly stated, but they are
-subordinate to `rho_w`. Do not resume them as the main task: finishing all of
-them would not reach the declared contraction. The machine Joseph update can
-have a small positive covariance defect, and the literal first-order attitude
-reset is not orthogonal; both charges must be retained by whatever formulation
-replaces the falsified one. A complete word must still pass the finite-master
-guard before any storage search.
+The eleven qualifications remain independently stated but subordinate to this
+measurement. Do not resume them or rigorous interval work as the main task.
+The machine Joseph covariance defect and nonorthogonal first-order reset must
+be retained in the eventual master. Diagnostic results cannot unlock storage
+search: a complete word must still pass the finite-master guard.
