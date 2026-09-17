@@ -7,11 +7,9 @@ Neither a zeroed task stack nor absence of fesetround proves initialization.
 from __future__ import annotations
 import argparse
 from concurrent.futures import ThreadPoolExecutor
-import hashlib
 import json
 from pathlib import Path
 import re
-import subprocess
 
 from tools.stability.ou3_alt_contraction import target_scalar_profile as S
 

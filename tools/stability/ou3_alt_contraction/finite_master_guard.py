@@ -20,7 +20,6 @@ from tools.stability.ou3_alt_contraction import finite_scheduler_nextafter_binar
 from tools.stability.ou3_alt_contraction import finite_aw_sync_clock_binary64 as AWCLOCK
 from tools.stability.ou3_alt_contraction import finite_wpe_moment_binary32 as WPEMOM
 from tools.stability.ou3_alt_contraction import finite_wpe_machine_binary32 as WPEMACHINE
-from tools.stability.ou3_alt_contraction import finite_wpe_log_binary32 as WPELOG
 from tools.stability.ou3_alt_contraction import finite_wpe_frequency_binary32 as WPEFREQ
 from tools.stability.ou3_alt_contraction import finite_qaxis_exp_binary32 as QEXP
 from tools.stability.ou3_alt_contraction import finite_startup_entry_obstruction as ENTRY
@@ -67,10 +66,10 @@ OPEN_QUALIFICATIONS=(
 
 
 def qualification_status():
-    startup=START.readiness(); seed=STARTSEED.readiness(); clock=CLOCK.readiness()
+    startup=START.readiness(); clock=CLOCK.readiness()
     eigen=EIGENSVD.source_uniform_certificate()
     live=LIVE.readiness(); lwpe=LIVEWPE.readiness()
-    wmach=WPEMACHINE.readiness(); wlog=WPELOG.readiness(); qexp=QEXP.readiness()
+    qexp=QEXP.readiness()
     target=TARGETLIBM.profile_correspondence()
     compiler=TARGETWPE.readiness()
     error_profile=WPEBOUNDS.target_error_profile_certificate()
@@ -106,7 +105,7 @@ def qualification_status():
 def build():
     startup=START.readiness(); seed=STARTSEED.readiness(); swpe=STARTWPE.readiness(); saw=STARTWPEADMIT.readiness()
     live=LIVE.readiness(); lwpe=LIVEWPE.readiness(); nxt=NEXT.readiness(); aw=AWCLOCK.readiness()
-    wm=WPEMOM.readiness(); wmach=WPEMACHINE.readiness(); wlog=WPELOG.readiness(); wfreq=WPEFREQ.readiness(); qexp=QEXP.readiness()
+    wm=WPEMOM.readiness(); wmach=WPEMACHINE.readiness(); wfreq=WPEFREQ.readiness(); qexp=QEXP.readiness()
     entry=ENTRY.build(); startup_disturbance=STARTDIST.build()
     control=CONTROL.readiness(); capture=CAPTURE.readiness()
     clock=CLOCK.readiness(); counter=CALLS.counter_lifetime(); atlas=ATLAS.readiness()

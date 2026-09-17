@@ -177,7 +177,7 @@ def audit(toolchain:Path,sdk:Path):
             '-Wl,-Map,'+str(mapping),obj,'-o',elf,'-lm','-lc','-lgcc'])
         for name in ('libm_a-ef_pow.o','libm_a-wf_pow.o'):
             if '('+name+')' not in mapping.read_text(): raise ValueError('powf namespace supplier changed')
-        dis=S.run([od,'-dr',member]); linked_dis=S.run([od,'-d',elf])
+        dis=S.run([od,'-dr',member]); S.run([od,'-d',elf])
         # Audit the actual normalized-log and reduced-exp instructions; the
         # source is built with contraction and the bound allows those fusions.
         operations={op:len(re.findall(r'\s'+re.escape(op)+r'\s',dis))
