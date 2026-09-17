@@ -3,9 +3,16 @@ name: actions-history-cleanup
 on:
   schedule:
     - cron: '17 4 * * 0'
-  # Run the cleanup fix once on this same-repository PR so the existing
-  # cancelled-run backlog is drained before merge. Path filtering prevents
-  # unrelated PR pushes from turning this into a general PR-side cleanup job.
+  # Temporary same-repository branch trigger used to drain the inherited
+  # cancelled-run backlog while this cleanup fix is under review. Remove it
+  # after the backlog drain; the branch name cannot match main after merge.
+  push:
+    branches:
+      - 'codex/fix-ci-nlo-rms-and-proof-validation'
+    paths:
+      - '.github/workflows/actions-history-cleanup.yml'
+      - '.github/scripts/actions_history_cleanup.py'
+      - 'tests/validation/test_actions_history_cleanup.py'
   pull_request:
     paths:
       - '.github/workflows/actions-history-cleanup.yml'
