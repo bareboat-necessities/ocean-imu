@@ -22,6 +22,9 @@ import ou3_p4_brmm_frontend_predecessor_invariant as PREDECESSOR
 
 REPO=Path(__file__).resolve().parents[2]
 DEFAULT_DOMAIN=REPO/'tools/stability/ou3_proof_operating_domain.json'
+# Bind validation to the canonical physical contract, not a stale literal.
+ACCELERATION_CAP=float(json.loads(DEFAULT_DOMAIN.read_text())['normal_live'][
+    'non_gravitational_cog_acceleration_norm_upper_mps2'])
 SCHEMA=8
 QUALIFICATION='OU3_P4_COMPLETE_BRMM_UNIVERSAL_SAME_HISTORY_TARGET_RELATION_V8'
 
@@ -71,8 +74,8 @@ def validate(d):
         if d.get(k) is not True:f.append(k+' not true')
     for k in ('historical_4mps2_literal_used_for_source_inclusion','outer_rectangle_may_generate_theorem_history','target_pair_may_span_full_rectangle_in_theorem','complete_source_cover_closed_here','P4_promoted_here'):
         if d.get(k) is not False:f.append(k+' not false')
-    if float(d.get('declared_Normal_Live_acceleration_cap_mps2',0))!=8.0:f.append('declared acceleration cap is not 8 m/s^2')
-    if float(d.get('qualified_source_acceleration_cap_mps2',0))!=8.0:f.append('qualified source acceleration cap is not 8 m/s^2')
+    if float(d.get('declared_Normal_Live_acceleration_cap_mps2',0))!=ACCELERATION_CAP:f.append('declared acceleration cap differs from canonical Normal/Live domain')
+    if float(d.get('qualified_source_acceleration_cap_mps2',0))!=ACCELERATION_CAP:f.append('qualified source acceleration cap differs from canonical Normal/Live domain')
     return f
 
 def main():

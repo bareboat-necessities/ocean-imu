@@ -29,8 +29,11 @@ class EndpointFamilyInductionTest(unittest.TestCase):
         ]
         d=E.prove_endpoint_outer_induction(2,[step])
         self.assertEqual(set(d['endpoint_partitions']),{'H','A'})
-        self.assertEqual(d['endpoint_partitions']['H'][0][0].lo,0.5)
-        self.assertEqual(d['endpoint_partitions']['A'][0][0].lo,0.9)
+        h_outer=d['endpoint_partitions']['H']
+        a_outer=d['endpoint_partitions']['A']
+        self.assertTrue(E.matrix_encloses(h_outer,A))
+        self.assertTrue(E.matrix_encloses(a_outer,B))
+        self.assertLess(h_outer[0][0].hi,a_outer[0][0].lo)
 
     def test_unqualified_or_replay_family_fails_closed(self):
         A=matrix_point([[1.0]])

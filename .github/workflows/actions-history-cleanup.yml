@@ -3,6 +3,21 @@ name: actions-history-cleanup
 on:
   schedule:
     - cron: '17 4 * * 0'
+  # Temporary same-repository branch trigger used to drain the inherited
+  # cancelled-run backlog while this cleanup fix is under review. Remove it
+  # after the backlog drain; the branch name cannot match main after merge.
+  push:
+    branches:
+      - 'codex/fix-ci-nlo-rms-and-proof-validation'
+    paths:
+      - '.github/workflows/actions-history-cleanup.yml'
+      - '.github/scripts/actions_history_cleanup.py'
+      - 'tests/validation/test_actions_history_cleanup.py'
+  pull_request:
+    paths:
+      - '.github/workflows/actions-history-cleanup.yml'
+      - '.github/scripts/actions_history_cleanup.py'
+      - 'tests/validation/test_actions_history_cleanup.py'
   workflow_dispatch:
     inputs:
       dry_run:
@@ -16,7 +31,11 @@ on:
       max_deletions:
         description: 'Safety cap per cleanup class on runs deleted in one run'
         type: string
-        default: '5000'
+        default: '20000'
+      delete_batch_size:
+        description: 'Number of run DELETE requests per bounded batch'
+        type: string
+        default: '250'
 
 # GitHub status-filtered workflow-run searches can report total_count larger than
 # the runs exposed through capped pagination. The cleanup implementation shards
@@ -31,7 +50,7 @@ concurrency:
 jobs:
   cleanup:
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: 180
     permissions:
       actions: write
     steps:
@@ -45,5 +64,6 @@ jobs:
           SELF_RUN_ID: ${{ github.run_id }}
           DRY_RUN: ${{ inputs.dry_run || false }}
           MIN_AGE_MINUTES: ${{ inputs.min_age_minutes || '60' }}
-          MAX_DELETIONS: ${{ inputs.max_deletions || '5000' }}
+          MAX_DELETIONS: ${{ inputs.max_deletions || '20000' }}
+          DELETE_BATCH_SIZE: ${{ inputs.delete_batch_size || '250' }}
         run: python3 .github/scripts/actions_history_cleanup.py
