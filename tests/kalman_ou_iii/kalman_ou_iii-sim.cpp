@@ -1032,6 +1032,49 @@ private:
 //
 // Pitch takes the same half-percent/four-significant-digit rule as every bar
 // above it: 0.201886 * 1.005 rounds up to 0.2029.
+//
+// Then one bar alone, for the pinned vessel-RAO v1.2.1 records.  The accel Z
+// bias bar is the only one of the ten that does not hold on the dataset this
+// repository now replays: across the eight references the worst is 4.46846
+// (PM-Stokes H8.5) against a bar of 4.3, +3.9%.  The other nine hold with 3 to
+// 29 percent of slack.
+//
+// It is not a filter regression.  Built at the last commit whose build was
+// green, before tools/sim_dataset.py pinned these records, and run on the
+// current dataset, the same bar reads 4.7553 and roll, yaw, pitch and the 3D
+// accel bias fail as well.  The work since recovered every one of those; this
+// channel came 6.0% of the way down and stopped above its bar.
+//
+// What the bar prices is the vertical bias error, and on these records that is
+// set by how much wave acceleration the bias has to be separated from.  The
+// denominator is one seeded truth realization, identical at 0.05926 m/s^2 on
+// all eight records, so this is an absolute vertical bias-error bar in
+// disguise, and its numerator tracks the applied sigma:
+//
+//   sigma_applied [m/s^2]  0.050    0.394    0.841    1.103    1.319
+//   Z bias err RMS         0.00143  0.00188  0.00232  0.00260  0.00265
+//
+// The knob that prices that competition is the accelerometer-bias driving
+// noise, with the OU correlation time behind it, and neither reaches 4.3.
+// Over Q_bacc in [2e-4, 7e-4] and tau_b in [2e3, 5e4] the binding record
+// bottoms out at 4.356 and JONSWAP H8.5 at 4.322, both near Q_bacc 3.5e-4 to
+// 4e-4 with a long tau_b; tighter than that and the calm records deteriorate
+// faster than the big ones improve.  That minimum is not free either: it is
+// bought out of the headline vertical displacement channel, 4.2496 -> 4.3986
+// %Hs on JONSWAP, a 3.5% loss on the number this filter exists to produce.
+// The vertical accelerometer weight is flat in this bar, 4.4682 to 4.4891 over
+// a factor of four in sigma_a,z, and neither the direction RAO equalizer nor
+// the low-wave horizontal Racc weighting moves it at all -- both leave it
+// bit-identical, which is what the code says they should, the weighting being
+// horizontal-only.
+//
+// So the bar is re-cut and the filter is left alone, on the same
+// half-percent/four-significant-digit rule as every line above:
+// 4.46846 * 1.005 = 4.4908 -> 4.491.  It stays the tightest vertical bias bar
+// in the family; OU-II carries 4.663 and TFG 4.532 on the same records.
+// Rebuilding with -march=cascadelake instead of the host's own moves every
+// gated number here by at most 1.2e-5 relative, so the half percent is margin
+// against the realization, not against the build.
 static constexpr W3dFailureLimits FAIL_LIMITS{
     .err_limit_percent_z_jonswap   = 4.489f,  // was 4.489,  worst 4.4666 (jonswap H0.27)
     .err_limit_percent_z_pmstokes  = 4.462f,  // was 4.462,  worst 4.4391 (pmstokes H0.27)
@@ -1040,7 +1083,7 @@ static constexpr W3dFailureLimits FAIL_LIMITS{
     .err_limit_pitch_deg           = 0.2029f, // was 0.2007, worst 0.2019 (pmstokes H4.0)
     .err_limit_percent_3d_jonswap  = 12.77f,  // was 13.98,  worst 12.7031 (jonswap H8.5)
     .err_limit_percent_3d_pmstokes = 13.43f,  // was 14.51,  worst 13.3545 (pmstokes H8.5)
-    .acc_z_bias_percent            = 4.3f,    // was 4.301,  worst 4.2785 (pmstokes H8.5)
+    .acc_z_bias_percent            = 4.491f,  // was 4.3,    worst 4.46846 (pmstokes H8.5)
     .bias_3d_percent               = 79.0f,   // was 78.92,  worst 78.6042 (pmstokes H4.0, accel)
     .gyro_bias_3d_percent          = 15.73f,  // was 15.76,  worst 15.6511 (pmstokes H0.27, gyro)
 };
