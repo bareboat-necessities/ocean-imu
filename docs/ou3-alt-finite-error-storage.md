@@ -94,22 +94,104 @@ invalid metric budgets. The example explains the available scale: roughly
 0.2% metric variations and a 0.1% norm remainder would fit inside the observed
 margin. None of those hypotheses has been proved for shipping histories.
 
-## Controlling next experiment
+## Coupled moving-source result
 
-Generate nonzero BRMM motion and physical BIAS1/2 histories through the same
-construction, compute the actual physical truth and supply, and evaluate the
-whole-word residual in the prescribed metric. Retain magnetic acceptance and
-all covariance/branch changes. The tested pulse directions do not cover the
-limiting translation direction of the earlier tangent supremum. A finite ratio
-above one would require checking the supply term before declaring a theorem
-failure. Source-uniform remainder/metric comparison and indefinite finite-SPD
-preservation remain the central blockers; no P4/P5 gate is promoted.
+`driven_storage_diagnostic.py` now tests a nonzero physical source from actual
+construction, independently for H18, A21 and actual release, BIAS0/1/2, and
+omega=1/2 or 1 rad/s. The single fixed source is
+
+`p(t)=(1/4)cos(omega t) d`, `d=(0,3/5,4/5)`,
+
+with its exact derivatives v,a, identity physical attitude, zero physical gyro
+bias, and constant horizontal magnetic field. The physical primitive is
+`U(t)=sin(omega t)d/(4 omega)`. The actual Live transition sets the one origin:
+`S(t)=U(t)-U(t_Live)`; the measurement root and later words never reset it.
+
+Each bias history acts along body y from t=0:
+
+| Family | Physical beta_y(t), SI units | Persistent family parameter |
+| --- | --- | --- |
+| BIAS0 | 0.02 + 0.005 sin(2 pi t/600) | zero GM channel, tau=600; turn-on offset plus non-GM channel |
+| BIAS1 | 0.08 exp(-t/1200) + 0.015 sin(2 pi t/600) | one root, tau=1200, period=600 |
+| BIAS2 | 0.05 + 0.01 sin(2 pi t/600) | non-relaxing phi_true=1 |
+
+The analytic member certificates consume the existing physical primitive and
+separate bias contracts. With 3<pi<22/7 they prove all-time magnitude, derivative
+and increment bounds, rather than checking only replay samples. For BIAS0,
+`|w|<=h(rate+B/600)`; for BIAS1 the exponential root cancels and
+`|w|<=h*0.015*(2pi/600+1/1200)`; for BIAS2 `|w|<=h*rate` with phi=1.
+The native h is the binary32 value of 0.005 and is less than 1/200, used in
+these bounds. The wave certificate gives `|S|<=1/(2 omega)` for any Live time.
+The frequency range is inside [0.018,0.88] Hz. This is a sufficient member
+construction, never a restriction of COMPLETE-BRMM to harmonics.
+
+All 18 histories reach the unlocked diagnostic root (samples 8,360..9,344).
+They produce another 54 complete words and 72 exactly SPD endpoints. The
+maximum **raw** ratio is **4.104252247690883**, for A21/BIAS0/omega=0.5 in
+samples 600..1200. Therefore the quiet unforced ratio does not extend to these
+forced words. This is not a counterexample to dissipativity with supply.
+
+To expose a necessary gain without fitting a certificate, predeclare a candidate
+physical supply vector `xi=(p,v,S,a,beta)`, each coordinate divided by one in
+its stated SI unit. Its analytic, all-time squared envelope is
+
+`D_phys^2 = (1+omega^2+omega^4)/16 + 1/(4 omega^2) + B^2`,
+
+where B=1/40,19/200,3/50 for the respective bias members. Proof: apply the
+unit-direction amplitude bounds to p,v,a, the endpoint-difference bound to S,
+and the all-time magnitude bound to beta; add their squared bounds. This
+supply contains physical quantities only, not error, P, or a replay-fitted
+state radius. The choice of unit scales is explicit; C depends on it.
+
+For this candidate convention, every inequality `V1<=rho V0+C D_phys^2` must
+satisfy `C>=max(0,V1-rho V0)/D_phys^2`. The report evaluates that **necessary**
+condition at predeclared rho targets 0.95,0.98,0.99; it does not select C to
+claim success. At rho=0.98, the strongest observed requirements are:
+
+| Family | Largest raw ratio | Necessary C, approximately |
+| --- | ---: | ---: |
+| BIAS0 | 4.104252 | 390.7913 |
+| BIAS1 | 1.658480 | 417.3145 |
+| BIAS2 | 2.209533 | 404.3313 |
+
+The largest required C occurs in H18/BIAS1/omega=1, samples 1200..1800:
+V rises from 511.66465 to 687.77272. The signed allocation `e_i(P^-1 e)_i`
+places about 442..444 in the held accelerometer-bias group, while the position
+allocation rises from 62.87 to 216.73 and S from -8.69 to 37.71. These are
+signed allocations retaining cross terms, not independent positive energies.
+The report includes every endpoint allocation. Dropping held-bias output
+energy would materially change the tested storage and is not permitted.
+
+These are host diagnostic values, not outward-rounded certificates. They
+include all 24 output coordinates, including beta energy and the complete P21
+inverse. The largest raw ratio and the largest C need not be the same word.
+If a theorem introduces a separate additive machine budget, that budget must
+be subtracted before claiming this same lower bound on its physical C.
+
+The analytic wave and bias bounds are proved for the ideal functions. Native
+sin/exp, physical-state serialization and binary32 sensor conversion still
+need rigorous attachment to the target arithmetic theorem. The trace reports
+sensor conversion residuals; that observation is not a libm qualification.
+Attempted magnetic callbacks do not certify informative accepted recurrence.
+No universal rho, upper bound on C, nonlinear basin, indefinite SPD preservation
+or P4/P5 gate is established by this diagnostic.
+
+## Controlling next proof obligation
+
+Bound the complete correlated nonlinear source-to-storage gain using the
+canonical word's forcing channels and compare it with the necessary values
+above under the same supply normalization. In particular attach the physical
+OU mismatch, S=0 reference supply, bias mismatch, magnetic ancestry and machine
+roundoff together. The original remainder/metric lemma remains valid, but its
+b coefficient cannot be guessed from the quiet tangent margin. An alternative
+source-driven reference theorem would additionally need a separate bound from
+that reference to physical truth; it must not erase persistent tracking error.
 
 Reproduce from the repository root:
 
 ```sh
-EIGEN_INCLUDE_DIR=/path/to/eigen OPENBLAS_NUM_THREADS=1 PYTHONPATH=. \
-python3 tools/stability/ou3_alt_contraction/finite_error_storage_diagnostic.py \
-  --work-directory /tmp/ou3-finite-errors \
-  --output reports/results/ou3_alt_storage/finite-errors.json
+EIGEN_INCLUDE_DIR=/path/to/eigen OPENBLAS_NUM_THREADS=1 PYTHONPATH=.:tools/stability \
+python3 tools/stability/ou3_alt_contraction/driven_storage_diagnostic.py \
+  --work-directory /tmp/ou3-driven-storage \
+  --output reports/results/ou3_alt_storage/driven-words.json
 ```

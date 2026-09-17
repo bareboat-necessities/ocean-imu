@@ -14,28 +14,43 @@ changes nothing on this route.
 The end-to-end theorem is still open. `P4_PASS=false` and
 `P5_MAY_START=false` remain intentional fail-closed outputs.
 
-## ALT finite-error storage feasibility
+## ALT nonlinear forced-word limiter
 
-Current hypothesis: the complete nonlinear carried-storage word admits a
-remainder/metric-variation budget inside the observed tangent margin.
-Evidence: 18 actual startup/pulse histories, H18/A21/release, 54 finite words,
-worst ratio 0.9744158786871832; 72 exact SPD endpoints. See
-`ou3-alt-finite-error-storage.md`. The disturbance creates the error through
-inputs; no state installation or covariance fitting occurs. No mathematical
-failure occurred in this experiment. Initial execution lacked the Eigen
-include path; setting EIGEN_INCLUDE_DIR resolved that infrastructure issue.
+Current hypothesis: finite nonlinear *dissipativity* with a physical supply,
+not an unforced contraction ratio on arbitrary moving-source words.
+Quiet pulse histories measured rho<=0.974416. The coupled nonzero-motion test
+now measures V_after/V_before=4.104252247690883 in A21, BIAS0, omega=0.5,
+word samples 600..1200 after the actual unlocked Live root. All 72 endpoints
+remain exactly SPD. Thus this is not an inverse-conditioning/SPD failure.
 
-Critic: pulse directions are not a supremum and do not excite every limiting
-translation direction. Quiet BIAS0 cannot certify BRMM/BIAS1/2. Rounded maps
-need explicit additive machine supply. Retained fact: finite nonlinear reset,
-projection and release did not destroy the sampled margin. Limiter: uniform
-same-history remainder and metric variation, plus indefinite SPD preservation.
-The conditional triangle/Young comparison now states exactly the needed
-budgets, with an illustrative rational subunit coefficient, not claimed native
-constants. Alternatives are direct nonlinear supply bounds, a retained local
-basin with proved entry, or a different storage if forced-motion residuals
-exhaust the margin. Next falsifiable experiment: actual nonzero motion and
-BIAS1/2 complete words with truth and supply accounted for.
+Failure classification: failure of the attempted extrapolation from quiet
+unforced contraction to moving physical sources. It invalidates using the
+quiet rho alone on driven words. It does NOT refute V_next<=rho V+C D^2,
+because the same physical waves and biases supply persistent forcing. The
+predeclared analytic physical-coordinate envelope gives a necessary C>=
+417.3144969365262 at rho=0.98 across the tested histories, not a sufficient
+certificate and not a fitted theorem constant. Machine supply is still open.
+
+Independent critic: a small homogeneous tangent ratio can coexist with a
+large physical ultimate radius; endlessly tightening the tangent misses the
+controlling gain. Alternatives: (1) bound the full correlated nonlinear
+source-to-storage gain; (2) prove attraction to a source-driven reference
+trajectory, then bound its physical tracking error separately; (3) use a
+phase-dependent storage/reference construction if an independently justified
+physical phase state is available. Choose (1), preserving current truth error,
+all output coordinates, single S origin and BIAS0/1/2. No interval refinement
+is justified until that complete supply gain is viable. Next falsifiable test:
+compare the canonical correlated word supply/operator bound against these
+necessary C values, retaining target roundoff and prefix retention. Source
+member/primitive and bias increment bounds are analytic all-time facts; the
+native traces and finite necessary-gain values are diagnostics only.
+The largest gain requirement is H18/BIAS1/omega=1, samples 1200..1800;
+held-bias storage is about 442..444 and position/S allocations drive the rise.
+An attempted cross-process reanalysis encountered a truncated scratch trace
+(column count changed at row 493): infrastructure failure, not a source or
+SPD failure. Regenerating and analyzing in one process reproduced all ratios
+and supplied the endpoint allocation without relying on that damaged file.
+
 
 ## ALT format-wide coercivity reduction
 
