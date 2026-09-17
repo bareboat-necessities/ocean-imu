@@ -138,7 +138,10 @@ def build():
     if f: raise RuntimeError("Phase-1 prerequisite failed: "+repr(f))
     return {
       "qualification":QUALIFICATION,"canonical_source":"COMPLETE_BRMM_NORMAL_LIVE_WORD",
-      "phase1_storage_search_allowed_consumed":bool(p["storage_search_allowed"]),
+      # Phase-1 forbids storage search until the finite master closes. This module
+      # consumes that barrier; it never needs the permission to be open.
+      "phase1_storage_barrier_consumed":bool(p["common_joint24_storage_must_wait_for_finite_master"] and p["finite_storage_gate_error"]),
+      "phase1_storage_search_allowed":bool(p["storage_search_allowed"]),
       "local_maps_must_be_estimator_owned_same_cell_before_hull":True,
       "replay_or_finite_sample_local_family_forbidden":True,
       "entrywise_hull_used_only_as_outer_union_inclusion":True,
@@ -155,8 +158,8 @@ def build():
 def validate(d):
     f=[]
     if d.get("qualification")!=QUALIFICATION or d.get("canonical_source")!="COMPLETE_BRMM_NORMAL_LIVE_WORD":f.append("qualification/source mismatch")
-    for k in ("phase1_storage_search_allowed_consumed","local_maps_must_be_estimator_owned_same_cell_before_hull","replay_or_finite_sample_local_family_forbidden","entrywise_hull_used_only_as_outer_union_inclusion","all_successors_required_each_induction_step","partitioned_hulls_supported","endpoint_outer_inclusion_induction_materialized"):
+    for k in ("phase1_storage_barrier_consumed","local_maps_must_be_estimator_owned_same_cell_before_hull","replay_or_finite_sample_local_family_forbidden","entrywise_hull_used_only_as_outer_union_inclusion","all_successors_required_each_induction_step","partitioned_hulls_supported","endpoint_outer_inclusion_induction_materialized"):
         if d.get(k) is not True:f.append(k+" not true")
-    for k in ("outer_hull_may_generate_theorem_history","actual_600_step_source_family_bound","ALT_LIVE_PASS"):
+    for k in ("phase1_storage_search_allowed","outer_hull_may_generate_theorem_history","actual_600_step_source_family_bound","ALT_LIVE_PASS"):
         if d.get(k) is not False:f.append(k+" not false")
     return f

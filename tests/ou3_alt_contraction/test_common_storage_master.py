@@ -47,7 +47,8 @@ class CommonStorageMasterTest(unittest.TestCase):
     def test_phase1_bound_reduction_remains_fail_closed(self):
         d=C.build(); f=C.validate(d)
         self.assertEqual(f,[])
-        self.assertTrue(d['phase1_storage_search_allowed_consumed'])
+        self.assertTrue(d['phase1_storage_barrier_consumed'])
+        self.assertFalse(d['phase1_storage_search_allowed'])
         self.assertFalse(d['common_M_source_uniform_search_closed'])
         self.assertFalse(d['source_uniform_outward_projected_LDLT_closed'])
         self.assertFalse(d['ALT_LIVE_PASS'])

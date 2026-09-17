@@ -43,11 +43,8 @@ def _h18(angle):
     h=copy.deepcopy(base);h['eta6_information_lower']=alpha;h['H18_information_useful_gate_pass']=D>=DELTA
     h['triangular_information_composition']['A_transpose_A_lower']=alpha;h['triangular_information_composition']['coupled_eta6_aw_scalar_2x2_trace_upper']=trace;h['triangular_information_composition']['coupled_eta6_aw_scalar_2x2_determinant_lower']=down(alpha*daw);h['triangular_information_composition']['coupled_eta6_aw_lambda_min_lower']=coupled;h['triangular_information_composition']['D_H18_lambda_min_lower']=D
     pbar=HPF._same_word_covariance_upper(Path(HPF.DEFAULT_DOMAIN).resolve(),dyn,proc,h);fnorm=HPF._prediction_norm_sq_upper(proc);penalty=up((DELTA**2/4.0)*fnorm*float(pbar['Pbar_trace_upper']))
-    rows=[];fail=[];worst=math.inf
-    for x in HPF._x_cover(dyn):
-        ok,row=HPF._full_H18_cell(x,process=proc,dynamic=dyn,penalty_physical=penalty);rows.append(row)
-        if ok:worst=min(worst,float(row['pivot_lower']))
-        else:fail.append(row)
+    certified,fail=HPF.certified_x_cover(dyn,process=proc,penalty_physical=penalty)
+    rows=[row for _cell,row in certified];worst=min((float(row['pivot_lower']) for row in rows),default=math.inf)
     preserve=event['full_matrix_margin_preservation'];suffix=all(bool(preserve[n]) for n in ('covers_prediction','covers_every_due_S_update','covers_every_Normal_Live_accelerometer_update','covers_asynchronous_magnetometer_update','covers_immediate_left_error_reset','covers_aw_covariance_floor','covers_not_due_or_rejected_identity_branches'))
     closed=bool(rows) and not fail and math.isfinite(worst) and worst>0 and suffix
     return {'outer_angle_rad':angle,'outer_angle_deg':angle*180/math.pi,'cayley_radius_upper':cay['cayley_radius_upper'],'entry_covered':cay['declared_filter_entrance_covered'],'vector_information_retention_lower':k,'eta6_information_lower':alpha,'D_H18_information_lower':D,'worst_LDLT_pivot_lower':worst if closed else None,'x_cells':len(rows),'failures':fail,'suffix_event_algebra':suffix,'closed':closed}

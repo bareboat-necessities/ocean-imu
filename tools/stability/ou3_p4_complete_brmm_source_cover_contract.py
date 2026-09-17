@@ -26,6 +26,12 @@ import ou3_p4_joint_brmm_frontend_transition as BRMM_JOINT
 
 REPO=Path(__file__).resolve().parents[2]
 DEFAULT_DOMAIN=REPO/'tools/stability/ou3_proof_operating_domain.json'
+# Bind the scalar source sanity checks to the canonical padded physical
+# envelope instead of pre-padding literals.
+ENVELOPE=json.loads(DEFAULT_DOMAIN.read_text())['complete_brmm_physical_envelope']
+V_M_UPPER_MPS=float(ENVELOPE['wave_velocity_norm_upper_mps'])
+P_M_UPPER_M=float(ENVELOPE['wave_position_norm_upper_m'])
+DELTA_S_3S_UPPER_M_S=math.nextafter(PRIMITIVE.HORIZON_S*P_M_UPPER_M,math.inf)
 SCHEMA=10
 QUALIFICATION='OU3_P4_COMPLETE_BRMM_SAME_HISTORY_SOURCE_COVER_CONTRACT_V10'
 EVENT_KINDS=('prediction','aw_floor','S_zero','accelerometer','magnetometer','H_to_A')
@@ -167,9 +173,9 @@ def validate(d):
     false=('physical_generator_constraints_consumed_in_joint24_master','BRMM_independent_S_m_used','coarse_frequency_sigma_rectangle_may_promote_P4','trajectory_replay_or_pinned_generator_may_establish_uniform_cover','finite_harmonic_source_may_replace_BRMM','point_trace_can_promote_source_uniform_cover','source_cover_transition_operator_materialized','source_cover_all_BRMM_continuations_covered','source_cover_every_radial_segment_covered','source_cover_all_Joseph_cells_correlated','SOURCE_UNIFORM_COMPLETE_BRMM_COVER_CLOSED','P4_promoted_here')
     for k in false:
         if d.get(k) is not False:f.append(k+' not false')
-    if not(0<float(d.get('BRMM_uniform_V_m_mps',0))<=5):f.append('V_m invalid')
-    if not(0<float(d.get('BRMM_uniform_P_m_m',0))<8):f.append('P_m invalid')
-    if not(0<float(d.get('BRMM_DeltaS_3s_norm_upper_m_s',0))<23):f.append('DeltaS invalid')
+    if not(0<float(d.get('BRMM_uniform_V_m_mps',0))<=V_M_UPPER_MPS):f.append('V_m invalid')
+    if not(0<float(d.get('BRMM_uniform_P_m_m',0))<=P_M_UPPER_M):f.append('P_m invalid')
+    if not(0<float(d.get('BRMM_DeltaS_3s_norm_upper_m_s',0))<=DELTA_S_3S_UPPER_M_S):f.append('DeltaS invalid')
     return list(dict.fromkeys(f))
 
 def main():

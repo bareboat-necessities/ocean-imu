@@ -97,6 +97,7 @@ SCHEMA = 1
 QUALIFICATION = "OU3_COMPLETE_BRMM_H18_PRIOR_FREE_FULL_MATRIX_COMPLETION"
 USEFUL_GATE = 1.0e-18
 HORIZON_S = 3.0
+X_REFINEMENT_DEPTH = 8
 
 OFF_V = 6
 OFF_P = 9
@@ -270,6 +271,66 @@ def _full_H18_cell(
     }
 
 
+def certify_x_cell(
+    x: Interval,
+    *,
+    process: dict,
+    dynamic: dict,
+    penalty_physical: float,
+    depth: int = X_REFINEMENT_DEPTH,
+) -> tuple[list[tuple[Interval, dict]], list[dict]]:
+    """Certify one x cell, bisecting it while the interval LDLT overestimates.
+
+    A pivot that turns negative on a wide cell is dependency overestimation in
+    the interval arithmetic, not a loss of positivity.  The declared remedy is
+    to subdivide the same BRMM x coordinate: the two outward halves enclose the
+    parent cell, so the cover is preserved, delta is never relaxed, and no
+    source family is enumerated.  The attitude-penalty rejection is a scalar
+    condition independent of x and is never refined.
+
+    Returns the certified ``(cell, row)`` pairs and the rejected rows.
+    """
+    ok, row = _full_H18_cell(
+        x, process=process, dynamic=dynamic, penalty_physical=penalty_physical
+    )
+    if ok:
+        return [(x, row)], []
+    mid = 0.5 * (x.lo + x.hi)
+    if depth <= 0 or "reason" in row or not x.lo < mid < x.hi:
+        return [], [row]
+    certified: list[tuple[Interval, dict]] = []
+    failures: list[dict] = []
+    for half in (Interval.outward_bounds(x.lo, mid), Interval.outward_bounds(mid, x.hi)):
+        cells, rejected = certify_x_cell(
+            half,
+            process=process,
+            dynamic=dynamic,
+            penalty_physical=penalty_physical,
+            depth=depth - 1,
+        )
+        certified.extend(cells)
+        failures.extend(rejected)
+    return certified, failures
+
+
+def certified_x_cover(
+    dynamic: dict,
+    *,
+    process: dict,
+    penalty_physical: float,
+) -> tuple[list[tuple[Interval, dict]], list[dict]]:
+    """The canonical x cover, refined where the interval LDLT overestimates."""
+    certified: list[tuple[Interval, dict]] = []
+    failures: list[dict] = []
+    for x in _x_cover(dynamic):
+        cells, rejected = certify_x_cell(
+            x, process=process, dynamic=dynamic, penalty_physical=penalty_physical
+        )
+        certified.extend(cells)
+        failures.extend(rejected)
+    return certified, failures
+
+
 def _x_cover(dynamic: dict) -> list[Interval]:
     h = float(dynamic["validated_rate_and_jump_bounds"]["dt_s"])
     tau_lo, tau_hi = map(float, dynamic["dynamic_invariant"]["tau_applied_s"])
@@ -320,17 +381,11 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     if not (math.isfinite(penalty) and penalty > 0.0):
         raise RuntimeError("prior-free completion penalty invalid")
 
-    leaves = _x_cover(dynamic)
-    rows = []
-    worst = math.inf
-    failures = []
-    for x in leaves:
-        ok, row = _full_H18_cell(x, process=process, dynamic=dynamic, penalty_physical=penalty)
-        rows.append(row)
-        if not ok:
-            failures.append(row)
-        else:
-            worst = min(worst, float(row["pivot_lower"]))
+    certified, failures = certified_x_cover(
+        dynamic, process=process, penalty_physical=penalty
+    )
+    rows = [row for _cell, row in certified]
+    worst = min((float(row["pivot_lower"]) for row in rows), default=math.inf)
     closed = not failures and bool(rows) and math.isfinite(worst) and worst > 0.0
 
     preserve = event["full_matrix_margin_preservation"]

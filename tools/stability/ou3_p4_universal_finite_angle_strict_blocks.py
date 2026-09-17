@@ -81,7 +81,11 @@ def raw_blocks(domain_path:Path=HPF.DEFAULT_DOMAIN):
     bad={'H18':H18FA.validate(h),'A21':A21FA.validate(a),'dynamic':DYNAMIC.validate(dyn),'process':PROCESS.validate(proc)};bad={k:v for k,v in bad.items() if v}
     if bad:raise RuntimeError('strict-block prerequisites failed: '+repr(bad))
     penalty=float(h['delta_squared_completion_penalty']);ba=float(a['first_active_ba_margin_lower']);rows=[]
-    for x in HPF._x_cover(dyn):
+    # Materialize on the same refined cover the canonical H18 completion certifies,
+    # so the blocks and their pivots are the ones the finite-angle producer reports.
+    certified,rejected=HPF.certified_x_cover(dyn,process=proc,penalty_physical=penalty)
+    if rejected:raise RuntimeError('canonical H18 x cover is not certified: '+repr(rejected))
+    for x,_row in certified:
         M18=_h18_matrix(x,process=proc,dynamic=dyn,penalty_physical=penalty);ok18,p18=symmetric_positive_definite_ldlt(M18)
         M21=_append_ba(M18,ba);ok21,p21=symmetric_positive_definite_ldlt(M21)
         if not(ok18 and ok21):raise RuntimeError('materialized finite-angle strict block failed LDLT on x='+repr(x.as_list()))
