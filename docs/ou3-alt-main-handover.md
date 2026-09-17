@@ -53,6 +53,15 @@ roundoff. Canonical supply attachment, source-uniform remainder, informative
 accepted recurrence and indefinite finite-SPD preservation remain open. No
 controlling blocker is marked closed from the native samples.
 
+The full-input cross-term conversion now has an exact conditional closure:
+metric triangle inequality moves independently bounded supplied bias
+coordinates into the additive gain without requiring a small relative input
+metric loss. See the full-input section of `ou3-alt-finite-error-storage.md`.
+Finite format supplies a qualitative bound on that gain on the finite-SPD,
+finite-state domain. It does not prove indefinite domain preservation, a
+useful gain, or the nonlinear word norm premise. A constant projected-bias
+radius yields a practical floor, not zero-physical-input convergence.
+
 ## History-dependent capture alternative
 
 The optional weaker target is now explicit in

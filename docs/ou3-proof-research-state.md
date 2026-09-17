@@ -14,6 +14,28 @@ changes nothing on this route.
 The end-to-end theorem is still open. `P4_PASS=false` and
 `P5_MAY_START=false` remain intentional fail-closed outputs.
 
+## ALT input cross-term closure
+
+A naive input restriction V(u,s)>=V(u,0) is false: the SPD matrix
+[[1,-99/100],[-99/100,1]] and u=s=1 give V=1/50 but V(u,0)=1.
+Classification: algebraic proof-method failure, not a reachable shipping
+counterexample. It invalidates discarding initial motion/bias cross terms;
+it does not invalidate the prescribed full covariance storage.
+
+Critic/alternatives: a relative input-metric loss can consume the entire
+quiet margin. Alternatives are (1) the metric triangle inequality with an
+independently bounded bias supply, (2) a minimum-energy Schur storage plus
+reconstruction bounds, or (3) a full joint operator/supply inequality. Choose
+(1): ||(u,0)||_M <= sqrt(V(u,s))+||(0,s)||_M. This preserves the homogeneous
+coefficient and charges the cross-term cost to supply. With the illustrative
+norm bound a+eps=99/100 and Young eta=1/100, rho=989901/1000000<1.
+These are conditional budget values, not established native bounds. The bias
+supply must have an independent bound; it cannot be the unknown storage
+itself. Finite binary32 ba_hat gives R=2^129 and the finite-SPD metric bound
+gives a qualitative embedding bound without another covariance box. Useful
+rounded projection bounds and the nonlinear word remainder remain unproved. A fixed projection-radius floor yields practical
+boundedness, not zero-physical-input convergence.
+
 ## ALT nonlinear forced-word limiter
 
 Current hypothesis: finite nonlinear *dissipativity* with a physical supply,

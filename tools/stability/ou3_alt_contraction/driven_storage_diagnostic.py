@@ -35,10 +35,25 @@ def source_certificate(omega, family):
         if module.validate(contract):
             raise ValueError('upstream bias contract invalid')
     contract = contracts[family]
+    domain = json.loads((NATIVE.ROOT/'tools/stability/ou3_proof_operating_domain.json').read_text())['complete_brmm_physical_envelope']
+    caps = {
+        'wave_position_norm_upper_m': F(1,4),
+        'wave_velocity_norm_upper_mps': w/4,
+        'wave_acceleration_norm_upper_mps2': w*w/4,
+        'body_rate_norm_upper_deg_s': F(0),
+        'centered_primitive_D_S_upper_m_s': F(1,2)/w,
+        # Hs=4*std(z)<=4*|z|<=4*|p| is sufficient here.
+        'significant_wave_height_Hs_upper_m': F(1),
+    }
+    flo,fhi = map(lambda x: F(str(x)), domain['frequency_support_hz'])
+    if any(bound > F(str(domain[key])) for key,bound in caps.items()) or not flo <= w*F(7,44) <= w/6 <= fhi:
+        raise ValueError('analytic wave member exceeds COMPLETE-BRMM envelope')
     # 3 < pi < 22/7 bounds the exact sinusoid derivative and frequency.
     wb_upper = F(44, 7*600)
     h = F(1,200)  # native binary32 h is smaller
     if family == 0:
+        if not contract['gauss_markov_tau_true_s'][0] <= 600 <= contract['gauss_markov_tau_true_s'][1]:
+            raise ValueError('BIAS0 persistent root outside family')
         magnitude = F(25,1000)
         rate = F(5,1000)*wb_upper
         driver = h*(rate+magnitude/F(600))
@@ -66,6 +81,7 @@ def source_certificate(omega, family):
     D2 = sum((x*x for x in bounds), F(0))
     return {'family': f'BIAS{family}', 'omega_rad_s': str(w),
             'source_qualification': physical,
+            'analytic_wave_bounds_within_COMPLETE_BRMM': True,
             'frequency_hz_enclosure': [str(w*F(7,44)), str(w/6)],
             'bias_magnitude_bound': str(magnitude), 'bias_derivative_bound': str(rate),
             'bias_driver_bound': str(driver),

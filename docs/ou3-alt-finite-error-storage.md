@@ -94,6 +94,62 @@ invalid metric budgets. The example explains the available scale: roughly
 0.2% metric variations and a 0.1% norm remainder would fit inside the observed
 margin. None of those hypotheses has been proved for shipping histories.
 
+## Full-input cross terms: conditional algebraic closure
+
+The input restriction in the preceding lemma must not be silently inferred
+from SPD. For example, M=[[1,-99/100],[-99/100,1]] is SPD, yet at u=s=1,
+V(u,s)=1/50 while V(u,0)=1. This is an exact algebraic counterexample, not
+an installed or claimed reachable estimator covariance.
+
+There is an alternative that needs **no relative input-metric loss**. Split
+the input x=Uu+Ss, with u the 18 motion errors and s=(e_ba,beta). Keep the
+full output storage. For the actual SPD input/output metrics M0,M1, suppose
+uniformly over the declared word domain that
+
+`||F(x,d)||_M1 <= (a+eps)||Uu||_M0 + b D`,
+
+and an independently justified supplied-coordinate estimate gives
+
+`||Ss||_M0 <= k D`.
+
+Here D must be a declared physical/machine/practical supply envelope, never
+sqrt(V) or an unknown tracking-error radius. Let alpha=a+eps. The metric
+triangle inequality gives
+
+`||Uu||_M0 = ||x-Ss||_M0 <= sqrt(V0)+||Ss||_M0`,
+
+so `sqrt(V1)<=alpha sqrt(V0)+(alpha k+b)D`. For any eta>0, Young gives
+
+`V1 <= (1+eta) alpha^2 V0 + (1+1/eta)(alpha k+b)^2 D^2`.
+
+Thus cross terms alter the supply gain, not the homogeneous coefficient
+before the chosen Young slack. No mean-value derivative of a rounded map is
+used. The complete word norm/remainder premise still needs proof; this result
+only closes its full-input cross-term conversion. `bias_supply_storage.py`
+evaluates the exact rational coefficients. For the illustrative alpha=99/100,
+eta=1/100, rho=989901/1000000<1. These are not certified native constants.
+
+The supplied-coordinate bound is noncircular if ||ba_hat||<=R is established
+independently and physical ||beta||<=B: then
+
+`||s||^2 <= (R+B)^2+B^2`.
+
+On the finite-SPD binary32 covariance domain, the already-proved format lemma
+gives `||Ss||_M0^2 <= 2^5789 ((R+B)^2+B^2)`. Merely for qualitative
+existence, finite binary32 ba_hat itself gives R=2^129 because each component
+has magnitude <2^128 and sqrt(3)<2. That route requires no new covariance box
+or rounded radial-projection lemma, but supplies a uselessly large constant.
+A useful R near the mathematical projection radius 0.4 requires the remaining
+rounded-machine projection qualification. Indefinite finite state/SPD
+preservation is still unproved in either case.
+
+Charging a fixed positive R as a constant supply creates a **practical floor**.
+This optional sufficient route does not prove convergence when physical
+forcing alone is zero or replace a requested vanishing-gain ISS theorem.
+That stronger conclusion must retain and prove the bias error dynamics.
+The same warning applies to a constant machine-roundoff supply. All strict
+word, retention, capture and target-execution obligations remain visible.
+
 ## Coupled moving-source result
 
 `driven_storage_diagnostic.py` now tests a nonzero physical source from actual
