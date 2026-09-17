@@ -46,6 +46,29 @@ class PlanGuardTests(unittest.TestCase):
         self.assertTrue(P.storage_search_allowed(s));P.assert_storage_search_allowed(s)
         with self.assertRaisesRegex(RuntimeError,'finite-state storage blocked'):
             P.assert_finite_storage_master(s)
+    def test_feasibility_diagnostic_runs_before_a_complete_word(self):
+        # AGENTS.md requires the rho measurement BEFORE rigorous enclosure work,
+        # so this phase must not be blocked by the missing complete word.
+        P.require_theorem_task(obligation='complete-word rho feasibility',
+                               evidence_kind='analytic_source_reachable_word_family',
+                               complete_physical_word=False,
+                               requested_phase='feasibility_diagnostic')
+        for phase in sorted(P.PROMOTING_PHASES):
+            with self.assertRaises(RuntimeError):
+                P.require_theorem_task(obligation='x',evidence_kind='analytic_source_reachable_word_family',
+                                       complete_physical_word=False,requested_phase=phase)
+    def test_non_promoting_report_must_stay_fail_closed(self):
+        clean=dict(phase='feasibility_diagnostic',storage_search_allowed=False,
+                   ALT_STARTUP_PASS=False,ALT_LIVE_PASS=False,ALT_END_TO_END_PASS=False)
+        P.assert_non_promoting_report(clean)
+        for key in ('storage_search_allowed','ALT_STARTUP_PASS','ALT_LIVE_PASS','ALT_END_TO_END_PASS'):
+            bad=dict(clean);bad[key]=True
+            with self.assertRaisesRegex(RuntimeError,'attempted to set '+key):
+                P.assert_non_promoting_report(bad)
+    def test_an_undeclared_phase_cannot_claim_the_non_promoting_exemption(self):
+        with self.assertRaisesRegex(RuntimeError,'not a declared non-promoting'):
+            P.assert_non_promoting_report(dict(clean_phase=None,phase='storage_search',
+                                               storage_search_allowed=False))
     def test_windheel_scope_cannot_be_omitted(self):
         s={k:True for k in ('same_history_complete_BRMM_word','physical_prediction_forcing_attached','physical_S_residual_attached','all_bias_families_attached','all_literal_branches_attached','H18_A21_edge_attached')}
         self.assertFalse(P.storage_search_allowed(s))

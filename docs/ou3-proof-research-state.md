@@ -6,6 +6,11 @@ The non-ALT (BRMM) route now carries the named magnetometer theorem classes and
 has a quantified startup obstruction. The next continuation must start from
 latest `main`, read `docs/ou3-brmm-main-handover.md`, and open a new PR.
 
+On the parallel ALT route, the complete-word rho floor is now measured and the
+declared joint24 contraction is falsified for an admitted ungauged word; see
+`docs/ou3-alt-word-rho-feasibility.md`. That result is confined to ALT and
+changes nothing on this route.
+
 The end-to-end theorem is still open. `P4_PASS=false` and
 `P5_MAY_START=false` remain intentional fail-closed outputs.
 
@@ -484,10 +489,14 @@ witness is outside corrected COMPLETE-BRMM and may not be recycled as A or B.
 
 ### Current hypothesis and retained facts
 
-Construct the complete finite source/runtime joint24 map before any storage
-search. The original P2/P3/P4/P5 route above remains independent and unchanged.
-`ou3-alt-proof-plan.md` is normative. All ALT theorem gates and
-`storage_search_allowed` remain false.
+The declared joint24 target is falsified. rho has been measured on the complete
+word ahead of the remaining qualifications, as `AGENTS.md` requires, and an
+admitted ungauged legal word gives `rho_floor = 1` for every common storage.
+The current hypothesis is therefore no longer "finish the finite map, then
+search storage" but "choose a formulation whose rho can be below one". See
+`ou3-alt-word-rho-feasibility.md`. The original P2/P3/P4/P5 route above remains
+independent and unchanged. `ou3-alt-proof-plan.md` is normative. All ALT theorem
+gates and `storage_search_allowed` remain false.
 
 The admitted-history product retains corrected COMPLETE-BRMM, one BIAS0/1/2
 history, bounded symbolic IMU ISS forcing, full-21 covariance, the one-time
@@ -521,6 +530,50 @@ The joined Racc and accelerometer relations consume the same machine-guard
 conditioned operand. Source-uniform guard/Racc/libm supplies remain open.
 
 ### Failure analysis and independent critic
+
+* **Complete-word rho floor is exactly one on an ungauged word (controlling):**
+  the failed inequality is the master inequality itself,
+  `A_w' M A_w < rho M` on `ker(C)` with `C` selecting `[e_ba, beta_true]`.
+  Every composed word map is block lower triangular in (motion, neutral) with
+  the neutral-to-motion block exactly zero, so the projected Finsler restriction
+  is exactly `A_mm' M_mm A_mm < rho M_mm` and no storage can beat
+  `spectral_radius(A_mm)^2`. For a word containing no magnetic event the pair
+  `(theta_z, bg_z)` is an exactly invariant subspace carrying `[[1,T],[0,1]]`
+  for the elapsed horizon `T`: `-skew(f)` annihilates the specific-force
+  direction, the S=0 rows touch only `S`, the prediction advances
+  `theta_z += h*bg_z`, and the seeded covariance keeps zero cross-covariance to
+  every observed coordinate so both Joseph gain rows are exactly zero. Spectral
+  radius is one for every word length. This is a **theorem failure**, not a
+  proof-method, enclosure, conditioning or implementation failure, and it is
+  read off exact algebra rather than a measured radius. It invalidates strict
+  `rho<1` for a common coercive joint24 storage whose only supply is
+  `[e_ba, beta_true]`, and it makes the eleven open qualifications subordinate:
+  finishing all of them would not reach the declared contraction. It does not
+  invalidate the shipping filter (heading is genuinely unobservable under
+  gravity alone), motion ISS with a supply, a gravity-quotient theorem, the
+  gauged word, or the independent P2/P3/P4/P5 route. The current limiting
+  quantity is the restricted spectral radius `1` on `(theta_z, bg_z)`, an exact
+  obstruction with no margin; heading stays limiting on the wave ungauged word,
+  and only 25 Hz magnetic service moves the limiter to weakly observable
+  surge/sway, at a 3 s ratio near `0.9964`. Three qualitatively
+  different next experiments -- gravity-quotient storage, a declared Normal Live
+  magnetic service class, or an independently bounded heading supply -- are in
+  `ou3-alt-word-rho-feasibility.md`; the gauging route is cheapest to falsify
+  because its next question is whether interval enclosure over 600 steps fits
+  inside `3.6e-3`. `finite_word_rho_diagnostic.py` is authoritative and cannot
+  promote a gate.
+
+* **Three joint24 event paths never composed (implementation defect):** the
+  H18 magnetometer and both A21 measurement events raised
+  `AD derivative dimensions differ`, because the shared residuals read their AD
+  derivative width from the state slice length rather than the joint24/joint27
+  lift width. No word containing a magnetic or A21 measurement event could be
+  built, so the complete-word obligation was unreachable for a reason unrelated
+  to its mathematics. The two notions are now read separately; behaviour is
+  unchanged wherever the lift width already equalled the slice length, so the
+  independent P4 route is untouched. This was an implementation defect, not
+  evidence about the theorem, and it is what made the gauged rho measurement
+  possible.
 
 * **Physical Live input domain and totality:** arbitrary bounded residuals
   alone permitted a finite `2^80` gyro pulse that made the unchanged scalar
@@ -1003,14 +1056,23 @@ promotes source membership, capture, retention or stability.
 
 ### Current limiter, DEAD_ENDS and next falsifiable work
 
+The current limiter is the master inequality, not a qualification. On the quiet
+ungauged legal word the restricted spectral radius on `(theta_z, bg_z)` is
+exactly one, so `rho_floor = 1` for every common storage, and heading stays the
+limiting direction on the wave ungauged word too; only under magnetic service
+does the limiter move to weakly observable surge/sway, at a 3 s ratio near
+`0.9964`. The next controlling
+work is choosing a replacement formulation and re-measuring rho, not resuming
+universal startup reachability, full magnetic history or target arithmetic.
+Those remain correctly stated and open, and whatever formulation replaces the
+falsified one still needs them.
+
 The four-chart runtime, conditional ungauged continuation and source-owned
 empty-startup/later-north composition close their representation/event gaps.
 All magnetic counts now have source-bound saturation safety on every finite
-prefix; the master consumes this fact. The current limiter is universal
-startup source/control reachability, full magnetic history and target arithmetic.
-Every nonzero quaternion is covered, but that does not certify a storage basin
-or finite capture. Storage must not identify different chart origins as the
-same zero physical error.
+prefix; the master consumes this fact. Every nonzero quaternion is covered, but
+that does not certify a storage basin or finite capture. Storage must not
+identify different chart origins as the same zero physical error.
 
 Qualify the machine guard displacement into Racc/accelerometer, raw WPE
 exp/log/sqrt, band/statistics/tuner, Q-axis, clocks, trig/normalization, Eigen
@@ -1020,12 +1082,16 @@ from the mathematical event ordinal. The shared 30,602-sample budget covers the
 first default timeout comparison plus 600 IMU edges only conditionally on the
 actual aligned-branch predicate.
 
-The master reports no falsified counter prerequisite; universal entry and
-arithmetic qualifications remain open. Every-prefix retention, joint24
-storage/rho, an ultimate bound and no-restart indefinite tiling remain later
+The master reports no falsified counter prerequisite, and now carries one
+falsified theorem prerequisite: `declared_joint24_common_storage_contraction`.
+Universal entry and arithmetic qualifications remain open. Every-prefix
+retention, an ultimate bound and no-restart indefinite tiling remain later
 obligations. No larger clock horizon establishes missing startup capture.
 
-Frozen shortcuts: derivative cocycles presented as finite maps; frozen gains,
+Frozen shortcuts: reviving strict full-state joint24 contraction with the
+`[e_ba, beta_true]` supply by sharpening subordinate lemmas; charging unknown
+heading error into the bounded supply, which is circular; derivative cocycles
+presented as finite maps; frozen gains,
 replays or more seeds as universal admission; independent coefficient boxes;
 A21 18-state marginal storage; covariance-consistency entry sets; artificial
 physical-domain/basin reduction; wordwise S resets; requiring a single generator

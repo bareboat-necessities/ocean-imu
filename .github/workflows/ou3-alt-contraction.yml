@@ -17,6 +17,7 @@ on:
       - "docs/ou3-alt-runtime-primitives.md"
       - "docs/ou3-alt-mahony-binary32.md"
       - "docs/ou3-alt-proof-plan.md"
+      - "docs/ou3-alt-word-rho-feasibility.md"
       - "docs/ou3-proof-research-state.md"
       - ".github/workflows/ou3-alt-contraction.yml"
   pull_request:
@@ -35,6 +36,7 @@ on:
       - "docs/ou3-alt-runtime-primitives.md"
       - "docs/ou3-alt-mahony-binary32.md"
       - "docs/ou3-alt-proof-plan.md"
+      - "docs/ou3-alt-word-rho-feasibility.md"
       - "docs/ou3-proof-research-state.md"
       - ".github/workflows/ou3-alt-contraction.yml"
   workflow_dispatch:
@@ -50,7 +52,7 @@ jobs:
   algebra-regressions:
     name: Full inherited ALT regression suite
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v6
         with:
@@ -75,7 +77,7 @@ jobs:
   finite-physical-identities:
     name: Finite physical identities (not stability qualification)
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
     env:
       OPENBLAS_NUM_THREADS: "1"
       OMP_NUM_THREADS: "1"
@@ -162,6 +164,7 @@ jobs:
             test_finite_h18_a21_transition test_finite_live_async_mag \
             test_finite_continuous_mag_runtime test_finite_live_magnetic_word \
             test_finite_live_interleave test_finite_source_bound_mag_dual_clock \
+            test_physical_lineage_event_paths \
             test_shipping_finite_identity test_core test_proof_plan test_bias_families -v
           python3 -m unittest \
             test_finite_tuner_rs_deployment_ledger test_finite_tuner_rs_boundary_deployment \
@@ -217,5 +220,66 @@ jobs:
             /tmp/ou3-alt-tilt-reset-identity.json
             /tmp/ou3-alt-rank3.json
             /tmp/ou3-alt-pre-rho.json
+          if-no-files-found: warn
+          retention-days: 14
+
+  complete-word-rho-feasibility:
+    name: Complete-word rho feasibility (non-promoting diagnostic)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      OPENBLAS_NUM_THREADS: "1"
+      OMP_NUM_THREADS: "1"
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Install diagnostic dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-numpy
+      - name: Test the diagnostic and its anti-promotion guards
+        run: |
+          export PYTHONPATH="$PWD:$PWD/tools/stability:$PWD/tests/ou3_alt_contraction"
+          python3 -m unittest test_finite_word_rho_diagnostic test_proof_plan -v
+      # The obstruction is established per sample and composes by induction, so
+      # a 1 s word protects it.  The canonical 3 s measurement in
+      # docs/ou3-alt-word-rho-feasibility.md is a recorded research artifact,
+      # run standalone; reproducing it here would cost most of an hour to
+      # re-derive numbers that are not a gate.
+      - name: Measure the word rho floor in both modes
+        run: |
+          PYTHONPATH="$PWD:$PWD/tools/stability" python3 \
+            tools/stability/ou3_alt_contraction/finite_word_rho_diagnostic.py \
+            --samples 200 --output /tmp/ou3-alt-word-rho.json
+      - name: Keep the measurement non-promoting and retain the falsification
+        run: |
+          python3 - <<'PYCODE'
+          import json
+          report = json.load(open('/tmp/ou3-alt-word-rho.json'))
+          assert report['validation_failures'] == [], report['validation_failures']
+          for gate in ('storage_search_allowed', 'ALT_LIVE_PASS',
+                       'ALT_STARTUP_PASS', 'ALT_END_TO_END_PASS'):
+              assert report[gate] is False, gate
+          # The ungauged legal word must still show the metric-independent
+          # obstruction; silently losing it would hide a theorem failure.
+          assert report['declared_joint24_contraction_falsified'] is True
+          assert report['failure_classification'] == 'theorem_failure'
+          assert report['rho_floor_source'] == 'exact_unipotent_subspace_algebra'
+          assert report['rho_floor_over_legal_words'] == 1.0
+          for mode, row in report['per_sample_unipotent_induction'].items():
+              assert row['length_independent'] is True, mode
+          # Both modes must still show the obstruction at full joint24 width.
+          for mode in ('H', 'A'):
+              quiet = report['words'][mode + ':quiet_ungauged']['ungauged_yaw_certificate']
+              assert quiet['subspace_is_exactly_invariant'] is True, mode
+              assert quiet['worst_row_leak_outside_block'] == 0.0, mode
+              assert quiet['worst_column_leak_outside_block'] == 0.0, mode
+          PYCODE
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ou3-alt-word-rho-${{ github.run_id }}
+          path: /tmp/ou3-alt-word-rho.json
           if-no-files-found: warn
           retention-days: 14
