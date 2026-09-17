@@ -42,7 +42,7 @@ QUALIFICATION = 'OU3_BRMM_INDEFINITE_S_NECESSARY_CONDITION_V1'
 # sensor-execution information argument. Measurement calls continue and every
 # representable unlock comparison is preserved by min(INT_MAX,count).
 AUDITED = {
-    'src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h': 'fabd03e9c3eb6069df107c7413ffb4b33fbdcd1ce06d3923b0c1ceeb3bcd7359',
+    'src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h': '72bffc539ea72f6320ae33feb970dd2ba9255f8e679c3e8415f7884566ca3be0',
     'src/kalman_ou_iii/Kalman3D_Wave_OU_III.h': 'bbc1586529f2f21144cb91e34f3248569178ab6e7a8bb7a1c8a0977d1b06c170',
     'src/kalman_common/SeaStateFusionFilterCommon.h': 'f76b6266ab4f403d2cce61058a79f1fdb5bb55aab1355c62ce2adaf516d7ea9f',
 }

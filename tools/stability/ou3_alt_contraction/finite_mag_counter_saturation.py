@@ -12,7 +12,7 @@ import re
 SIGNED_MAX = (1 << 31) - 1
 QUALIFICATION = 'OU3_ALT_MAG_COUNTER_SATURATION_V1'
 SOURCE = Path(__file__).resolve().parents[3] / 'src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h'
-AUDITED_SOURCE_SHA = 'fabd03e9c3eb6069df107c7413ffb4b33fbdcd1ce06d3923b0c1ceeb3bcd7359'
+AUDITED_SOURCE_SHA = '72bffc539ea72f6320ae33feb970dd2ba9255f8e679c3e8415f7884566ca3be0'
 TUNER_SOURCE = SOURCE.parents[1] / 'tuner/MagAutoTuner.h'
 AUDITED_TUNER_SHA = 'd2b1fd6b2131989da4d7b5671dd0bdca7cc37c23ed9794bf1e737c7d8910fa87'
 AUDITED_UPDATE_SHA = '0dcecf08e66746d2aa2bdad289c768b7337dcdab45201a052dae7186163cf955'

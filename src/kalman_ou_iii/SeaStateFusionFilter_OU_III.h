@@ -2128,16 +2128,48 @@ private:
     //
     // The two axes are separate knobs because the same measurement says they
     // do not want the same number: the per-axis MSE optimum is 1.004 (x) and
-    // 0.685 (y) on these records, and it
-    // was the single scalar's inability to serve both that stopped the sweep
-    // at 0.72 rather than at the pooled minimum.  They are equal by default
-    // because that x/y split is a property of the record set -- every record is
-    // generated at +/-30 degrees, so world x carries three times the horizontal
-    // displacement world y does -- and not of the sea.  A deployment that knows
-    // its own heading relative to the dominant sea can use that; one that does
-    // not must leave them equal.
+    // 0.685 (y) on these records.  They were equal by default on the reading
+    // that the split is a property of the record set rather than of the hull,
+    // every record being generated at +/-30 degrees.  On the pinned vessel-RAO
+    // records that reading does not survive its own arithmetic.
+    //
+    // A fixed +/-30 degree projection puts the same ratio in every record:
+    // cos30/sin30 = 1.732 in RMS, independent of sea state.  The records do not
+    // do that.  Horizontal displacement RMS x/y runs
+    //
+    //   H0.27  2.246 / 2.049      H4.0  1.880 / 1.858      (JONSWAP / PM-Stokes)
+    //   H1.5   2.332 / 2.214      H8.5  1.613 / 1.684
+    //
+    // falling monotonically with wavelength and reaching the geometric value
+    // only in the longest waves.  Geometry alone cannot vary with period; a
+    // hull response can, and this is the shape of one.  The dataset's vessel
+    // carries a keel: sway is resisted by it and surge is not, so the hull
+    // suppresses lateral motion at short periods and follows the orbit at long
+    // ones.  The direction-RAO profile for these records says the same thing
+    // from the other side, carrying separate horizontal time constants (1.0 s
+    // and 0.7 s) rather than one.
+    //
+    // Every record also holds yaw at exactly 0 -- mean 0.000, sd 0.000, all
+    // eight -- so world x and y ARE the vessel's surge and sway here, and this
+    // knob pair is the surge/sway split rather than a world-frame accident.
+    // rho_y therefore comes down to 0.50, the keel-damped axis taking the
+    // tighter integral anchor.  Pooled over four fresh IMU draws and the eight
+    // records: pitch -17 percent, y accelerometer bias -21 percent, 3D
+    // accelerometer bias -2 percent, yaw unchanged at 1.003, against roll +4
+    // percent and x bias +5 percent.  The vertical channels do not move at all
+    // (1.000).  The isotropic 0.5 sweep that was rejected earlier is confirmed
+    // rejected on the same draws for the same reason it was: it costs yaw 5
+    // percent, which the split does not.
+    //
+    // What stays true from the old reading is the frame.  The keel's anisotropy
+    // is a body-frame property and R_S is applied in world NED, so these two
+    // numbers only coincide with surge/sway while the vessel heads north, as it
+    // does in every record here.  Rotating the anisotropy into the body frame
+    // by the estimated heading is the deployment-general form of this and is
+    // not attempted here: with yaw pinned at 0 these records cannot tell the
+    // rotation from the constant, so it would ship unmeasured.
     float R_S_x_factor_ = 0.72f;
-    float R_S_y_factor_ = 0.72f;
+    float R_S_y_factor_ = 0.50f;
     // Horizontal stationary acceleration scale relative to the vertical one.
     // 1.87 was carried from the acceleration-band operating point and never
     // re-measured against the records, which put it at 0.81 (x) and 0.55 (y)

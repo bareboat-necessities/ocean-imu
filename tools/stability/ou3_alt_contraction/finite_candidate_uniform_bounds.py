@@ -77,7 +77,7 @@ def require_commit_config(cfg):
     expected={'pseudo_tau_ratio':D.PSEUDO_RATIO,'pseudo_period_min':D.PSEUDO_MIN,
         'pseudo_period_max':D.PSEUDO_MAX,'pseudo_fixed_period':D.PSEUDO_NOMINAL,
         'min_R_S':D.MIN_RS,'max_R_S':D.MAX_RS,'S_factor':F(1),
-        'R_S_x_factor':B.rn32(F(72,100)),'R_S_y_factor':B.rn32(F(72,100))}
+        'R_S_x_factor':B.rn32(F(72,100)),'R_S_y_factor':B.rn32(F(1,2))}
     if not cfg.tau_scaled_cadence or cfg.cubic_rs_law:
         raise ValueError('candidate supplies require configured SpectralMSE cadence')
     if any(B.rn32(getattr(cfg,name))!=value for name,value in expected.items()):

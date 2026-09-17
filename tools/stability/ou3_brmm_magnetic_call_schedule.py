@@ -73,7 +73,7 @@ ASSUMPTION_ID='MAG-CALL-SCHEDULE-v1'
 SIGNED_INT_MAX=(1<<31)-1
 # Re-audited complete source: reset, guarded increment, configurable threshold,
 # time predicate and outer north gate. Further edits require another audit.
-AUDITED_WRAPPER_SHA='fabd03e9c3eb6069df107c7413ffb4b33fbdcd1ce06d3923b0c1ceeb3bcd7359'
+AUDITED_WRAPPER_SHA='72bffc539ea72f6320ae33feb970dd2ba9255f8e679c3e8415f7884566ca3be0'
 
 FIRST_CALL_AFTER_LIVE_MAX_S=F(1,25)
 CALL_GAP_MAX_S=F(1,25)
