@@ -1,7 +1,7 @@
 {
   "algorithm": "sha256-framed-v1",
-  "replay_fingerprint": "f89339a3264a7ab4b9307299b4168fbcb44f5aaccecf619a54ccc9060fa443d2",
-  "results_file_count": 298,
+  "replay_fingerprint": "42e514b63d670a713655b96bf1ed78aa1412c99eb465530ceac1b818d1aeaea3",
+  "results_file_count": 302,
   "results_files": [
     {
       "kind": "file",
@@ -185,8 +185,28 @@
     },
     {
       "kind": "file",
+      "path": "reports/results/ou3_alt_storage/binary32-coercivity.json",
+      "sha256": "1d8bd5116494a3e92b978cbba16fbb7113a2cfee7c55adae006ce37785c78ef7"
+    },
+    {
+      "kind": "file",
       "path": "reports/results/ou3_alt_storage/carried-quiet-diagnostic.json",
       "sha256": "40a16c13abe0162e3751cf07a54caf88adcc95916784c268da10978fd13e214a"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/ou3_alt_storage/driven-words.json",
+      "sha256": "8c4f160c4cc4116469e255b9f848fb2e3257bbc91a2a018853e4c75f6729a3ae"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/ou3_alt_storage/finite-errors.json",
+      "sha256": "372fe96e1346331b8d578c783f8f42456330fdccf7032c10d18e979423eddb90"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/ou3_alt_storage/service-regimes.json",
+      "sha256": "b33a2c7454a47079c1a1c9d8fde65bc98daecc18f58e4379b456b85d0c35b422"
     },
     {
       "kind": "file",
@@ -266,7 +286,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness.json",
-      "sha256": "ef536ed1a3f551e369d1329a479914922ca00a73255ad96f251a762c23067c4b"
+      "sha256": "4cc0a3d2324a2841e88e93e7998d19c47a60ddd2a3fe5853fcd12432ab834511"
     },
     {
       "kind": "file",
@@ -276,12 +296,12 @@
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_manifest.json",
-      "sha256": "404a113513c48975b3416b68c634f79ea45e06f3526fe39b1a6942f7e51083f0"
+      "sha256": "02be027aea526a96ff1ef6ecac6635510b2bb65bcba3c037de95131c56e51b55"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_paired_effects.csv",
-      "sha256": "4f26323980fae413b235bab8695b44073a908799577f54c3fff1b439ad321821"
+      "sha256": "bff52741e1d42831672d9172323c6a12f9d53ca41d2e26e2cf6751f326cee33e"
     },
     {
       "kind": "file",
@@ -291,22 +311,22 @@
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_raw.csv",
-      "sha256": "252ae84906a9496fcbbb0c18ec36ec6c3a3a9d2d48cadafa6ab348562a9a85e9"
+      "sha256": "e1150ab0fcfdc313e5385e124bcf2fb0b116972168e1503d9447475e384413a3"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_sensitivity.svg",
-      "sha256": "8e9c08bba2da81f75dc6fc0cc3961b93c021d38ce059b8a832d07a3ee4dc810e"
+      "sha256": "2e7dc9f795170ae328b563dfef583e4959ab9316695047d5373f013f126457b7"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_stress.svg",
-      "sha256": "ba12cae40286bee6202906aad730520ed942ee876afd9151db0a403b48413078"
+      "sha256": "a7d1d1e54b98f9c1a7e77e9ddccd1bb2f284b16761432cc64991316d1bd366af"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_summary.csv",
-      "sha256": "387186030202bda3e9dc6c43991d5ec0588b57c8007628afa98064abf8e9dae1"
+      "sha256": "66f2bf7db4fe8cecc856cc9fb1058283d2a17e72d094af241c72059c9d61112c"
     },
     {
       "kind": "file",
@@ -346,57 +366,57 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation.json",
-      "sha256": "1577e89090c68e3f86797fb88c1dc278dc26b0f7d23a3db4220f5f894176299b"
+      "sha256": "77d2fbcd9330cc3e650c40eef5c226ddafe9dde9ef8622161f56c816edc24802"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_attitude.svg",
-      "sha256": "acfa47eab7859d9d9728f37185b1cb567fc5b40e151d662f2f4f53c0cdc3fdd2"
+      "sha256": "ac27430703b3acec8d54104d6e7345ebb79af34477646faf18a17f0a6d748d50"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_covsync.svg",
-      "sha256": "eb7c759fb6ef9ec460fe18dfa5f68ea7c7c1fe42bd9cdd7da69fe7458409e732"
+      "sha256": "fe24fe9688e04979609f61b248475962fb4bfc9ed3b30cc0bb47cf45f8531109"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_displacement.svg",
-      "sha256": "0de021d3939fb34847fff44d5b36d1d5b9dccd2a993cbafaa875e58b2519cd91"
+      "sha256": "5833a2567afffb21fa952ee61a5041bee5acce699dc8ae962530064f01653e2d"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_macros.tex",
-      "sha256": "1377236117421e2366eac3601fff05962d257ebf9a2a8efdeceb21197737b195"
+      "sha256": "ee0bee955eb799ad2133b59aafea164fdbdf243225b9b25747b7b6a8b274bf0e"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_manifest.json",
-      "sha256": "034dce6b9e1fabae61fd900d76ff96ceade02e2a034953181f563ce6fa2fcb8e"
+      "sha256": "084d960bcf529b7fa7b0df5df59d1f06618e842cad65b6ae118d2e74c27f9034"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_paired_effects.csv",
-      "sha256": "a2df16f65e836a10f00654de4078f5ff5a73447367f3e122e003109faedbf059"
+      "sha256": "d19d4311ed4e1a983a20e67ec4c82d2ac4293aa121b2ca1858005721e6ec73f6"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_publication.tex",
-      "sha256": "c94432563037a7bb5b1f6a43cfa2a7cab748e78bec31354552e5601d64acb7e5"
+      "sha256": "8ac67a923cb64e4b961eb3a42153acf503c0efdcd51256ba5e29ffb673f863da"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_raw.csv",
-      "sha256": "1741feb4bfcfcbb053b22db6425c732a03b823db80732f1e182fa67cd41b6f60"
+      "sha256": "46d71e3ae0ab8326270fc63c3a066b97a8258a966e0c3b1263d38abd5cb8c523"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_summary.csv",
-      "sha256": "169385af469a38d823116ec4ed880cb9d1e721f366d653de32058532f0d87bc8"
+      "sha256": "b1469fef7f2f3cc8ad11713f74d10bfdcf69fab979b5e7da90723233b0c78712"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_table.tex",
-      "sha256": "c43457285285876dca13417d071c9dc5817dea8c9408988c02875206827d77b5"
+      "sha256": "1aa1218fa98aa8da19018822448100cb2a453c1840aa9a0ed669774c3e47e31e"
     },
     {
       "kind": "file",
@@ -416,7 +436,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_vertical.svg",
-      "sha256": "b8c46043eff489e7feea01a9dac994d5e6ae0f33715b94c8ec69a5fc7cdf1468"
+      "sha256": "0c150de5c7e30670941a6e166ebdb15a346e83c78f5c0d9083d1d7e73fa68cd4"
     },
     {
       "kind": "file",
@@ -1494,13 +1514,13 @@
       "sha256": "d59590abd2add23cdf5302ec8eface7c7bf7a1f0c641d3251aaef21e66a12ce0"
     }
   ],
-  "results_fingerprint": "313b6ecce431278a70b1c36e574f0f3fba45acda6797d53d347f22cccadaedf4",
+  "results_fingerprint": "4c0ef8ffacfc9603a80310048cfcbd487b42d0c37f5fb6e1fd28b1ecb8b022ed",
   "schema_version": 3,
   "simulation_data": {
     "file": "sim-data-files-vessel-rao-28ft.zip",
     "sha256": "6d6eb92db78e97f1d2456c6b92387993bf23be14a9a6cf26943f0a22fc6fee60"
   },
-  "tracked_replay_file_count": 1319,
+  "tracked_replay_file_count": 1334,
   "tracked_replay_files": [
     {
       "mode": "100755",
@@ -1535,7 +1555,7 @@
     {
       "mode": "100644",
       "path": ".github/workflows/ou3-alt-contraction.yml",
-      "sha256": "e68006bd782f68e8e608625b3c9bf440a0f2ad56923d80ce1022c80e2f4cc81b"
+      "sha256": "f12e65ed2ffeb6d42c66178230b47593ed96ed20d13406fad945e0e51690a1a4"
     },
     {
       "mode": "100644",
@@ -2970,7 +2990,17 @@
     {
       "mode": "100644",
       "path": "tests/ou3_alt_contraction/carried_storage_probe.cpp",
-      "sha256": "fbfa9a3a12c7ad9e2f8b693d4946dae99d7ef6a218f5f2f15513c23310e91396"
+      "sha256": "a7b5da23d4ddc3bd5837c9ad7fac8dad2a7e0b726f0f1864125a3d417eeb5e64"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/ou3_alt_contraction/driven_storage_probe.cpp",
+      "sha256": "564d287a638b2e00885dd2296733d12708aed93f327df1da0e028d78791ceb61"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/ou3_alt_contraction/finite_error_storage_probe.cpp",
+      "sha256": "bdebcb30aa85caf91e92f69219335b1bc0dda69abd9a1939cb7b9cefa7a51f0d"
     },
     {
       "mode": "100644",
@@ -3029,6 +3059,16 @@
     },
     {
       "mode": "100644",
+      "path": "tests/ou3_alt_contraction/test_bias_supply_storage.py",
+      "sha256": "655f2b7e8b6cb5da27ea2686d4da2143c75cbf19f7c33b218adc71b330144e6f"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/ou3_alt_contraction/test_binary32_covariance_coercivity.py",
+      "sha256": "042cd199968fb8eb8f627c5ef7bb4ed04083b6a52388df88475e64a7fbc26052"
+    },
+    {
+      "mode": "100644",
       "path": "tests/ou3_alt_contraction/test_carried_storage_rho_diagnostic.py",
       "sha256": "bdf444a563f2c10800c2fa96e7a9f6b9601fcd252d46aa81ec513f38d8c7706e"
     },
@@ -3056,6 +3096,11 @@
       "mode": "100644",
       "path": "tests/ou3_alt_contraction/test_core.py",
       "sha256": "73122debb9d88914bfde8b6df24f05e748f5a5cb7ac2445ce330f4954ab40216"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/ou3_alt_contraction/test_driven_storage.py",
+      "sha256": "1cf3d7f027d584997a1584335d72b102aeef9935017ef3871d9b55bb0b498ff7"
     },
     {
       "mode": "100644",
@@ -3301,6 +3346,11 @@
       "mode": "100644",
       "path": "tests/ou3_alt_contraction/test_finite_covariance_rank3.py",
       "sha256": "58a1ddae0b4f624acaf196a269322ef06b84d36c6728bc58221d4fbb542ccb55"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/ou3_alt_contraction/test_finite_error_storage.py",
+      "sha256": "d907674ed22a48dbeca5707e82cfabb98922f73f3d71cbbda710394f8bbabcac"
     },
     {
       "mode": "100644",
@@ -4089,6 +4139,11 @@
     },
     {
       "mode": "100644",
+      "path": "tests/ou3_alt_contraction/test_informative_service_theorem.py",
+      "sha256": "bd815ae6fddf38c48ddf42630086f48102d279ab601277f7179574681aa55d01"
+    },
+    {
+      "mode": "100644",
       "path": "tests/ou3_alt_contraction/test_informative_superword_rho_diagnostic.py",
       "sha256": "fc1274707aef4eb0bfaa23978f97f3ffb931bb463ef55af323dceb50e5bfdcfa"
     },
@@ -4136,6 +4191,11 @@
       "mode": "100644",
       "path": "tests/ou3_alt_contraction/test_magnetic_service_formulation.py",
       "sha256": "7ec2732c8569953641d4ad0ebbfd91c78fa806a3fc6ce422e417d973af165e4e"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/ou3_alt_contraction/test_nonuniform_capture_theorem.py",
+      "sha256": "7c1f0756604c5b4086aba99974c6fdbd2ae1990ce1121b304dd669c6b47200cf"
     },
     {
       "mode": "100644",
@@ -5504,8 +5564,18 @@
     },
     {
       "mode": "100644",
+      "path": "tools/stability/ou3_alt_contraction/bias_supply_storage.py",
+      "sha256": "911f6e7c0688ab22a7bba23f37b1984e682e6845aa43bbe182735565b8f841f6"
+    },
+    {
+      "mode": "100644",
+      "path": "tools/stability/ou3_alt_contraction/binary32_covariance_coercivity.py",
+      "sha256": "7f143158f4013f362f5013623c0b3bc177577f47e6f1b3f4ae1593d218a8305a"
+    },
+    {
+      "mode": "100644",
       "path": "tools/stability/ou3_alt_contraction/carried_storage_rho_diagnostic.py",
-      "sha256": "053953b982587e5a6ce19fdc2dcff22ae9529c42a7412023947a9c18be24c355"
+      "sha256": "59b815143635026381fe8e0669a3b3975d95e347f45e3576321a604823c8abb1"
     },
     {
       "mode": "100644",
@@ -5541,6 +5611,11 @@
       "mode": "100644",
       "path": "tools/stability/ou3_alt_contraction/diagnose.py",
       "sha256": "8b1970d3e98d5ab39cfea1b217fcde190e65a9e339adddccd61fe7d79c6be699"
+    },
+    {
+      "mode": "100644",
+      "path": "tools/stability/ou3_alt_contraction/driven_storage_diagnostic.py",
+      "sha256": "a58d0b0ce187deecfb34cb939d8e46094d5cb6b5010613a6b7b6f13c83d9bd93"
     },
     {
       "mode": "100644",
@@ -5806,6 +5881,11 @@
       "mode": "100644",
       "path": "tools/stability/ou3_alt_contraction/finite_core.py",
       "sha256": "56dc37a1aacc274d88f7181399e25101c2575acb70d453d85699c273401071f8"
+    },
+    {
+      "mode": "100644",
+      "path": "tools/stability/ou3_alt_contraction/finite_error_storage_diagnostic.py",
+      "sha256": "83981a403c513a9033e8d6dde627770b655d79ec35a0e691568f54fbda21148a"
     },
     {
       "mode": "100644",
@@ -6594,6 +6674,11 @@
     },
     {
       "mode": "100644",
+      "path": "tools/stability/ou3_alt_contraction/informative_service_theorem.py",
+      "sha256": "008162eaa3e376d6c93c6cb026b0e7384b5975e6a943ed3e0b3b0deae9aeaaad"
+    },
+    {
+      "mode": "100644",
       "path": "tools/stability/ou3_alt_contraction/informative_superword_rho_diagnostic.py",
       "sha256": "a6d90c6f1e17bbdfa473e471d21b7562d9a9368a2e7ffa25aa988647da716082"
     },
@@ -6645,12 +6730,17 @@
     {
       "mode": "100644",
       "path": "tools/stability/ou3_alt_contraction/magnetic_service_formulation.py",
-      "sha256": "4a3c54e95be2a380d1260f19059bd453f5e9f6186e1719d7bc17d61f6bcf59af"
+      "sha256": "aabf6e5e5072b060ab4811fac0a61c86675070c11599a3e032378ac093d305eb"
     },
     {
       "mode": "100644",
       "path": "tools/stability/ou3_alt_contraction/magnetic_service_rho_diagnostic.py",
       "sha256": "690326a788a9cdc5f0d2eba33c0539f7c505a7b4bbc8ea2f955170c906f1703a"
+    },
+    {
+      "mode": "100644",
+      "path": "tools/stability/ou3_alt_contraction/nonuniform_capture_theorem.py",
+      "sha256": "19bc1618ac85dee8f4f61acc800277045ccca3d058f8b1349c3a3a6fc1a38be1"
     },
     {
       "mode": "100644",
@@ -6706,6 +6796,11 @@
       "mode": "100644",
       "path": "tools/stability/ou3_alt_contraction/regional_error_domain.py",
       "sha256": "28a67d74d9dbc5d224afb8ebefe5616e4de058037139ae011959990b05971a7c"
+    },
+    {
+      "mode": "100644",
+      "path": "tools/stability/ou3_alt_contraction/service_regime_diagnostic.py",
+      "sha256": "c73035d3ba5ea09a854cc953fa497447ab25d31ab41277a41b86b587020796dd"
     },
     {
       "mode": "100644",
