@@ -1,3 +1,4 @@
+import copy
 import unittest
 from tools.stability.ou3_alt_contraction import finite_master_guard as G
 
@@ -12,14 +13,14 @@ class Tests(unittest.TestCase):
         self.assertTrue(x['finite_storage_status']['all_admitted_startup_entries_represented'])
         self.assertTrue(x['closed_subobligations']['all_nonzero_fresh_attitudes_represented_by_joint24_atlas'])
         self.assertNotIn('signed_magnetic_counter_safety_on_the_finite_word',x['open_obligations'])
-        self.assertEqual(x['falsified_prerequisites'],{})
+        self.assertEqual(set(x['falsified_prerequisites']),{'declared_joint24_common_storage_contraction'})
         self.assertNotIn('WPE_frequency_source_uniform_supply',x['open_obligations'])
         self.assertNotIn('WPE_machine_vs_exact_period_branch_robustness',x['open_obligations'])
         self.assertTrue(x['closed_subobligations']['independent_WPE_machine_and_exact_branches_composed'])
         self.assertTrue(x['closed_subobligations']['source_uniform_clamped_WPE_frequency_discrepancy'])
         self.assertTrue(x['closed_subobligations']['literal_per_compiler_WPE_usable_latch'])
         self.assertTrue(x['finite_storage_status']['finite_word_counter_safety_closed'])
-        self.assertEqual(x['research_outcome'],'finite_master_qualification_incomplete')
+        self.assertEqual(x['research_outcome'],'declared_joint24_contraction_falsified_before_master_completion')
         self.assertNotIn('startup_accumulation_to_handoff_full_frame_bound',x['open_obligations'])
         self.assertTrue(x['closed_subobligations']['full_magnetic_frame_represented_without_small_angle_capture'])
         self.assertFalse(x['magnetic_frame_bounds']['small_frame_accuracy_required_by_finite_atlas_word'])
@@ -74,5 +75,40 @@ class Tests(unittest.TestCase):
         x=G.build()
         x['open_obligations']['target_libm_and_compiler_profile_correspondence']=False
         self.assertIn('open-obligation status differs from supplying proof components',G.validate(x))
+
+
+class RhoFalsificationTests(unittest.TestCase):
+    """One shared build; G.build() is expensive and these only read it."""
+    @classmethod
+    def setUpClass(cls): cls.report=G.build()
+    def setUp(self): self.x=copy.deepcopy(self.report)
+
+    def test_complete_word_rho_falsification_is_carried(self):
+        rho=self.x['complete_word_rho_feasibility']
+        self.assertEqual(rho['qualification'],'OU3_ALT_COMPLETE_WORD_RHO_FEASIBILITY_DIAGNOSTIC_V1')
+        self.assertTrue(rho['declared_joint24_contraction_falsified'])
+        self.assertEqual(rho['failure_classification'],'theorem_failure')
+        self.assertEqual(rho['rho_floor_over_legal_words'],1.0)
+        self.assertEqual(rho['rho_floor_source'],'exact_unipotent_subspace_algebra')
+        self.assertFalse(rho['storage_search_allowed'])
+        falsified=self.x['falsified_prerequisites']['declared_joint24_common_storage_contraction']
+        self.assertEqual(falsified['classification'],'theorem_failure')
+        self.assertIn('theta_z',falsified['limiting_state_direction'])
+        self.assertIn('bg_z',falsified['limiting_state_direction'])
+
+    def test_falsification_does_not_close_or_remove_a_qualification(self):
+        # The eleven names are orthogonal to the falsification and must not be
+        # laundered into a closed sub-obligation by it.
+        self.assertEqual(len(self.x['open_obligations']),11)
+        self.assertNotIn('declared_joint24_common_storage_contraction',self.x['closed_subobligations'])
+
+    def test_a_dropped_falsification_is_rejected(self):
+        self.x['falsified_prerequisites']={}
+        self.assertIn('falsification inventory differs from the supplying rho diagnostic',G.validate(self.x))
+
+    def test_a_promoting_rho_report_is_rejected(self):
+        self.x['complete_word_rho_feasibility']['storage_search_allowed']=True
+        self.assertIn('rho feasibility diagnostic attempted to unlock storage',G.validate(self.x))
+
 
 if __name__=='__main__': unittest.main()

@@ -19,15 +19,19 @@ contracts are consumed read-only. The [research ledger](ou3-proof-research-state
 contains separate ALT failure analysis. Neither route's tests substitute for
 the other route's certificates.
 
-**Current result:** finite physical prediction and accepted measurement/reset/
-projection identities have exact coefficient checks, with branch-correct thin
-Joseph arithmetic and non-promoting shipping correspondence tests. See the
+**Current result:** the complete-word rho floor is measured and the target of
+this route is falsified. An admitted ungauged legal word gives `rho_floor = 1`
+for every common joint24 storage with the declared `[e_ba, beta_true]` supply;
+see [the feasibility note](ou3-alt-word-rho-feasibility.md). Finite physical
+prediction and accepted measurement/reset/projection identities still have exact
+coefficient checks, with branch-correct thin Joseph arithmetic and non-promoting
+shipping correspondence tests -- see the
 [finite identity derivation](ou3-alt-finite-measurement-proof.md) and current
-[handover](ou3-alt-contraction-handover.md). The source-uniform finite joint24
-runtime word is NOT complete, and no common-storage feasibility on that object
-is claimed. ALT_LIVE_PASS, ALT_STARTUP_PASS and ALT_END_TO_END_PASS remain false.
-Existing P4/P5 are not promoted. The retained frozen-map observer is historical
-exploration, not the new finite word or permission to search its storage.
+[handover](ou3-alt-contraction-handover.md) -- and the source-uniform finite
+joint24 runtime word is still NOT complete. ALT_LIVE_PASS, ALT_STARTUP_PASS and
+ALT_END_TO_END_PASS remain false. Existing P4/P5 are not promoted. The retained
+frozen-map observer is historical exploration, not the new finite word or
+permission to search its storage.
 
 ## 1. The right state and target
 
@@ -270,14 +274,21 @@ The current primary gap remains the explicit finite same-history runtime/source
 graph: frontend/tuner/guard/covariance successors and physical moment/bias
 ancestry must be constrained together, not supplied as independent event data.
 `physical_word.compose_endpoint_lineage` remains a rejected derivative cocycle.
-No source-uniform finite-word rho, common storage, every-prefix bound, useful
-ultimate bound, Live basin, H18->A21 landing or finite capture time is certified.
+No common storage, every-prefix bound, useful ultimate bound, Live basin,
+H18->A21 landing or finite capture time is certified. The finite-word rho floor
+is measured and is exactly one on the ungauged word; see below.
 
-After the finite master exists, run its high-precision feasibility diagnostic,
-then search common joint24 storage with justified bounded neutral/source supply.
-Only a feasible complete master authorizes rigorous enclosure work. Do not infer
-common-storage infeasibility from the missing graph, a failed source validator,
-or an old frozen observer. Preserve the two-strike/architecture-review rule.
+The complete-word rho feasibility diagnostic has now been run ahead of that
+graph, as `AGENTS.md` requires, and it falsifies the target of this section for
+the admitted ungauged word: `(theta_z, bg_z)` is an exactly invariant unipotent
+block, so the projected motion-block spectral radius is one and no common
+joint24 storage with the declared `[e_ba, beta_true]` supply attains `rho<1`.
+`ou3-alt-word-rho-feasibility.md` carries the algebra, the measured floors and
+three replacement routes. The infeasibility is read off the exact invariant
+subspace, not inferred from the missing graph, a failed source validator or an
+old frozen observer. Search common joint24 storage only under a formulation that
+a fresh rho measurement has shown feasible. Preserve the
+two-strike/architecture-review rule.
 
 Individual BIAS0/1/2 definition validators remain separate from aggregate
 fresh-Live admission. The inherited shared Mahony prerequisite failure recorded

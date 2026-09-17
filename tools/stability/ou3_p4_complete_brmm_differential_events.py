@@ -98,6 +98,19 @@ def _const(x, n: int) -> AD.AD:
     return AD.constant(x, n)
 
 
+def _derivative_dimension(z) -> int:
+    """AD derivative width of a state slice, which is NOT its state length.
+
+    A joint24/joint27 lift differentiates an 18- or 21-state slice against more
+    independent variables than the slice has entries.  Constants combined with
+    such a slice must carry the lift width, so the two notions are read
+    separately here; they coincide for an unlifted single-mode state.
+    """
+    if not z:
+        raise ValueError("cannot read the derivative dimension of an empty state slice")
+    return z[0].n
+
+
 def _const_matrix(A: Sequence[Sequence[Interval]], n: int):
     return [[_const(A[i][j], n) for j in range(len(A[i]))] for i in range(len(A))]
 
@@ -269,9 +282,9 @@ def residual_S(z):
 def residual_magnetometer(z, m_body: Sequence[Interval]):
     if len(m_body) != 3:
         raise ValueError("magnetometer source vector must have length three")
-    n = len(z)
+    nd = _derivative_dimension(z)
     E = AD.rotation_from_cayley(z[:3])
-    m = [_const(x, n) for x in m_body]
+    m = [_const(x, nd) for x in m_body]
     Em = AD.matvec(E, m)
     return [Em[i] - m[i] for i in range(3)]
 
@@ -279,16 +292,16 @@ def residual_magnetometer(z, m_body: Sequence[Interval]):
 def residual_accelerometer(z, f_hat, R_hat):
     if len(f_hat) != 3 or _shape(R_hat) != (3, 3):
         raise ValueError("accelerometer source geometry must be 3-vector plus 3x3 rotation")
-    n = len(z)
+    nd = _derivative_dimension(z)
     E = AD.rotation_from_cayley(z[:3])
-    f = [_const(x, n) for x in f_hat]
-    R = _const_matrix(R_hat, n)
+    f = [_const(x, nd) for x in f_hat]
+    R = _const_matrix(R_hat, nd)
     da = z[OFF_AW:OFF_AW + 3]
     Rda = AD.matvec(R, da)
     Ef = AD.matvec(E, f)
     ERda = AD.matvec(E, Rda)
     y = [Ef[i] - f[i] + ERda[i] for i in range(3)]
-    if n == 21:
+    if len(z) == 21:
         y = [y[i] + z[OFF_BA + i] for i in range(3)]
     return y
 

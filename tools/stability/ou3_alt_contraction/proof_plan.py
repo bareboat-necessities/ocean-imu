@@ -10,6 +10,14 @@ from __future__ import annotations
 
 DIAGNOSTIC_ONLY = {"replay", "finite_seed", "unreachable_perturbation", "captured_trace"}
 
+PROMOTING_PHASES = {"storage_search", "high_precision_master", "interval_refinement"}
+
+# The complete-word rho feasibility measurement is required BEFORE rigorous
+# enclosure work, precisely so a false theorem is separated from a bad
+# enclosure.  It therefore runs without a complete physical word, and in
+# exchange it may never promote a gate.
+NON_PROMOTING_PHASES = {"feasibility_diagnostic"}
+
 
 def require_theorem_task(*, obligation: str, evidence_kind: str, complete_physical_word: bool,
                          requested_phase: str) -> None:
@@ -17,8 +25,18 @@ def require_theorem_task(*, obligation: str, evidence_kind: str, complete_physic
         raise RuntimeError("ALT task has no named theorem obligation")
     if evidence_kind in DIAGNOSTIC_ONLY:
         raise RuntimeError("diagnostic-only evidence cannot be the main ALT proof task")
-    if requested_phase in {"storage_search","high_precision_master","interval_refinement"} and not complete_physical_word:
+    if requested_phase in PROMOTING_PHASES and not complete_physical_word:
         raise RuntimeError("complete source-uniform physical word is required before storage/high-precision/refinement")
+
+
+def assert_non_promoting_report(report: dict) -> None:
+    """Reject a feasibility measurement that tries to carry a promotion flag."""
+    if report.get("phase") not in NON_PROMOTING_PHASES:
+        raise RuntimeError("report is not a declared non-promoting ALT phase")
+    for key in ("storage_search_allowed", "ALT_STARTUP_PASS", "ALT_LIVE_PASS",
+                "ALT_END_TO_END_PASS"):
+        if report.get(key) is not False:
+            raise RuntimeError("non-promoting ALT phase attempted to set " + key)
 
 
 def storage_search_allowed(status: dict) -> bool:

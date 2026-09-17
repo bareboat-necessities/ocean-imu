@@ -10,14 +10,16 @@ Read, in this order:
 1. `AGENTS.md`;
 2. `docs/ou3-alt-main-handover.md`;
 3. this file;
-4. `docs/ou3-alt-proof-plan.md`;
-5. ALT section of `docs/ou3-proof-research-state.md`;
-6. `docs/ou3-alt-finite-measurement-proof.md`;
-7. `docs/ou3-alt-finite-core-composition.md`;
-8. `docs/ou3-alt-runtime-primitives.md`;
-9. `docs/ou3-alt-mahony-binary32.md`;
-10. `docs/ou3-alt-live-magnetic-word.md`;
-11. `docs/ou3-brmm-main-handover.md` for the independent original proof track.
+4. `docs/ou3-alt-word-rho-feasibility.md`, which falsifies the declared joint24
+   contraction and sets the current controlling question;
+5. `docs/ou3-alt-proof-plan.md`;
+6. ALT section of `docs/ou3-proof-research-state.md`;
+7. `docs/ou3-alt-finite-measurement-proof.md`;
+8. `docs/ou3-alt-finite-core-composition.md`;
+9. `docs/ou3-alt-runtime-primitives.md`;
+10. `docs/ou3-alt-mahony-binary32.md`;
+11. `docs/ou3-alt-live-magnetic-word.md`;
+12. `docs/ou3-brmm-main-handover.md` for the independent original proof track.
 
 The original P2/P3/P4/P5 route remains independently continuable. Do not weaken, delete, rewrite, or make it depend on ALT. `P3=1e-18` remains frozen.
 

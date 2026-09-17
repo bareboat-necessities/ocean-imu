@@ -138,5 +138,10 @@ usefulness theorem; it is no longer an independent pre-rho master prerequisite.
    and indefinite no-restart tiling follow separately.
 
 The pole and nearby family remain regressions against a universal single-Cayley
-fresh-entry bound. The current atlas covers both. No rho has been estimated
-and no ALT PASS is claimed.
+fresh-entry bound. The current atlas covers both. No ALT PASS is claimed.
+
+rho has since been measured ahead of this dependency list, and the declared
+joint24 contraction is falsified on the admitted ungauged word; see
+`ou3-alt-word-rho-feasibility.md`. The obligations above stay correctly stated
+but are subordinate to `rho_w`, so completing them is no longer the controlling
+work.

@@ -6,6 +6,12 @@ relations and feeds only a conservative status to ``proof_plan.assert_finite_sto
 Closed sub-obligations are named explicitly so stale handoffs cannot keep them as
 blockers; any missing source-uniform arithmetic or literal branch keeps the guard
 fail-closed.
+
+It additionally carries the non-promoting complete-word rho feasibility result
+from ``finite_word_rho_diagnostic``.  That result is a falsification, not a
+qualification: the remaining eleven names stay as they are, but the guard now
+records that finishing them would not by itself reach the declared joint24
+contraction, because an ungauged legal word has rho floor exactly one.
 """
 from __future__ import annotations
 
@@ -49,6 +55,7 @@ from tools.stability.ou3_alt_contraction import finite_frontend_uniform_bounds a
 from tools.stability.ou3_alt_contraction import finite_startup_timeout_alignment_obstruction as TIMEOUT
 from tools.stability.ou3_alt_contraction import finite_candidate_uniform_bounds as CANDIDATE
 from tools.stability.ou3_alt_contraction import finite_machine_startup_core as CORESTART
+from tools.stability.ou3_alt_contraction import finite_word_rho_diagnostic as RHO
 
 QUALIFICATION='OU3_ALT_FINITE_MASTER_GUARD_V1'
 OPEN_QUALIFICATIONS=(
@@ -118,6 +125,9 @@ def build():
     frontend_bounds=FRONTBOUNDS.build()
     candidate_bounds=CANDIDATE.build()
     startup_core=CORESTART.readiness()
+    rho=RHO.guard_probe()
+    rho_failures=RHO.validate(rho)
+    if rho_failures:raise RuntimeError('complete-word rho diagnostic failed: '+repr(rho_failures))
 
     closed={
       'physical_MEMS_all_initialized_scalar_finite_prefix_totality':INPUT.prefix_certificate()['all_initialized_finite_prefixes_totality_closed'],
@@ -191,6 +201,16 @@ def build():
     }
 
     open_obligations=qualification_status()
+    falsified={}
+    if rho['declared_joint24_contraction_falsified']:
+        falsified['declared_joint24_common_storage_contraction']={
+          'supplying_qualification':rho['qualification'],
+          'limiting_word':rho['limiting_word'],
+          'limiting_state_direction':[x['coordinate'] for x in rho['limiting_state_direction']],
+          'rho_floor':rho['rho_floor_over_legal_words'],
+          'rho_floor_source':rho['rho_floor_source'],
+          'classification':rho['failure_classification'],
+        }
 
     finite_status={
       'map_representation':'finite_physical_descriptor_partial',
@@ -213,10 +233,12 @@ def build():
 
     return {
       'qualification':QUALIFICATION,
-      'research_outcome':'finite_master_qualification_incomplete',
+      'research_outcome':('declared_joint24_contraction_falsified_before_master_completion'
+                          if rho['declared_joint24_contraction_falsified']
+                          else 'finite_master_qualification_incomplete'),
       'closed_subobligations':closed,
       'open_obligations':open_obligations,
-      'falsified_prerequisites':{},
+      'falsified_prerequisites':falsified,
       'counter_saturation_certificate':counter_certificate,
       'startup_entry_obstruction':entry,
       'startup_disturbance_obstruction':startup_disturbance,
@@ -238,6 +260,7 @@ def build():
       'magnetic_frame_bounds':capture,
       'attitude_atlas':atlas,
       'conditional_timeout_plus_word_last_sample':CLOCK.MAX_STEPS,
+      'complete_word_rho_feasibility':rho,
       'finite_storage_status':finite_status,
       'finite_storage_guard_error':error,
       'finite_master_guard_closed':False,
@@ -255,8 +278,14 @@ def validate(x):
         f.append('open-obligation status differs from supplying proof components')
     if set(x.get('open_obligations',{})) != set(OPEN_QUALIFICATIONS):
         f.append('open qualification inventory changed without proof')
-    if x.get('falsified_prerequisites') != {}:
-        f.append('obsolete counter falsification retained')
+    rho=x.get('complete_word_rho_feasibility',{})
+    f.extend('complete-word rho diagnostic: '+m for m in RHO.validate(rho))
+    expected_falsified={'declared_joint24_common_storage_contraction'} if rho.get(
+        'declared_joint24_contraction_falsified') else set()
+    if set(x.get('falsified_prerequisites',{})) != expected_falsified:
+        f.append('falsification inventory differs from the supplying rho diagnostic')
+    if rho.get('storage_search_allowed') is not False:
+        f.append('rho feasibility diagnostic attempted to unlock storage')
     f.extend(STARTDIST.validate(x.get('startup_disturbance_obstruction',{})))
     f.extend(SENSOR_CONTRACT.validate(x.get('startup_sensor_contract',{})))
     f.extend(WPEBOUNDS.validate(x.get('bounded_input_WPE_supplies',{})))
@@ -282,7 +311,10 @@ def validate(x):
         f.append('library approximation closure erased firmware compiler prerequisite')
     if x.get('magnetic_frame_bounds')!=CAPTURE.readiness():
         f.append('magnetic frame bound or accuracy qualification changed')
-    if x.get('research_outcome') != 'finite_master_qualification_incomplete':
+    expected_outcome=('declared_joint24_contraction_falsified_before_master_completion'
+                      if rho.get('declared_joint24_contraction_falsified')
+                      else 'finite_master_qualification_incomplete')
+    if x.get('research_outcome') != expected_outcome:
         f.append('research outcome differs from current qualification')
     if x.get('counter_saturation_certificate') != COUNTER.build():
         f.append('counter certificate differs from audited shipping recurrence')

@@ -1,9 +1,18 @@
 # OU-III ALT current handover
 
-The task is to qualify the complete finite source/runtime word before estimating
-rho. `AGENTS.md` and `ou3-alt-proof-plan.md` are normative. The independent
-P2/P3/P4/P5 route continues through `ou3-brmm-main-handover.md`; its thresholds
-and gates are unchanged. The ALT master still withholds storage search.
+rho has now been measured, and the declared joint24 contraction is falsified.
+`ou3-alt-word-rho-feasibility.md` is the controlling result: an admitted ungauged
+legal word -- one with no magnetic event -- carries an exactly invariant
+unipotent `(theta_z, bg_z)` block, so its motion-block spectral radius is one and
+no common storage with the declared `[e_ba, beta_true]` supply attains `rho<1`.
+The obstruction is the formulation, not an enclosure, and no subordinate lemma
+can move it.
+
+The next task is therefore to choose a new formulation, not to finish the
+remaining qualifications. `AGENTS.md` and `ou3-alt-proof-plan.md` are normative.
+The independent P2/P3/P4/P5 route continues through
+`ou3-brmm-main-handover.md`; its thresholds and gates are unchanged. The ALT
+master still withholds storage search.
 
 ## Physical input theorem
 
@@ -95,9 +104,18 @@ observer bound does not prove indefinite clock progress.
 
 ## Next controlling work
 
-Finish universal startup classification, the quaternion lower shell/gauged
-pending-yaw producer, and the full machine covariance/solver envelope. Do not
-replace these with local coefficient boxes or sample maxima. The machine Joseph update can have a small
-positive covariance defect, and the literal first-order attitude reset is not
-orthogonal; both charges must be retained. A complete word must pass the
-finite-master guard before any storage or rho search.
+Pick a replacement formulation from the three routes in
+`ou3-alt-word-rho-feasibility.md` -- gravity-quotient storage, a declared Normal
+Live magnetic service class, or an independently bounded heading supply -- and
+re-measure rho before any enclosure work. The gauged floors are already below
+one with roughly `4.0e-3` distance per 3 s word, so for a gauging route the next
+question is whether interval enclosure over 600 steps fits inside that margin;
+measure the enclosure width before building it.
+
+The eleven qualifications below stay open and correctly stated, but they are
+subordinate to `rho_w`. Do not resume them as the main task: finishing all of
+them would not reach the declared contraction. The machine Joseph update can
+have a small positive covariance defect, and the literal first-order attitude
+reset is not orthogonal; both charges must be retained by whatever formulation
+replaces the falsified one. A complete word must still pass the finite-master
+guard before any storage search.
