@@ -12,9 +12,12 @@ calls <=40 ms apart do not establish accepted informative recurrence. The
 retained below-one gauged spectra do not measure a common-storage upper ratio.
 These distinctions are executable in `magnetic_service_formulation.py`.
 
-The next task is the corrected same-history superword storage measurement,
-not interval refinement or completion of the eleven subordinate qualifications.
-No new source-qualified shipping rho is recorded. `AGENTS.md` and
+The prescribed full-covariance storage law now has a positive native quiet-word
+feasibility result: worst local tangent ratio 0.9771585509 over nine unreseeded
+three-second windows, including H18, A21 and actual H18-to-A21 release. Read the
+carried-native section of `ou3-alt-observability-formulation.md`. This is neither
+a source-uniform shipping rho nor permission for interval refinement.
+`AGENTS.md` and
 `ou3-alt-proof-plan.md` remain normative. The independent P2/P3/P4/P5 route
 continues through `ou3-brmm-main-handover.md`; its thresholds and gates are
 unchanged. The ALT master still withholds storage search and all PASS flags.
@@ -50,7 +53,7 @@ gates prevent those premises from being silently discarded.
 | --- | --- | --- |
 | 1. Timeout/alignment reachability | The 30,002-sample deadline is falsified on a source-audited native wrapper history; that history first reaches Live at 33,447 | A valid universal startup argument; later recovery of one history is insufficient |
 | 2. Near-antiparallel Eigen SVD | Closed at the source-algorithm level: pinned 3x2 QR/Jacobi producer, both pivots/ranks/tiny tails, two-sweep termination, local same-tree FMA family, and first-seed bridge | Target whole-firmware/compiler/FCR correspondence remains a separate deployment row |
-| 3. Universal startup reachability | Both commissioned profiles admit the missed-deadline history; explicit bad equilibria are available as conditional constructions | Reachability or avoidance of the bad startup set from actual construction |
+| 3. Universal startup reachability | Both commissioned profiles admit the missed-deadline history; the antialigned docking state is reached by exact reset replay; an invariant tail is conditional on unaudited rounding budgets | Close tail rounding bounds and indefinite wrapper composition, or prove recovery |
 | 4. Startup deployment supplies | MEMS all-prefix observer and configured frontend bounds, with actual state ancestry | Remaining startup initialization, Racc/MEKF arithmetic and target composition |
 | 5. Target compiler/libm profile | Component compiler, Eigen, libm, scalar namespace, and WPE expression maps are pinned | Whole-firmware call graph and FCR.RM=0 initialization/preservation are not qualified |
 | 6. WPE target selection | Closed for the pinned WPE machine graph: actual mixed FMA/MSUB sites map into the persistent FMA history | Whole-firmware compiler/FCR premise remains outside this component |
@@ -109,16 +112,73 @@ observer bound does not prove indefinite clock progress.
 
 ## Next controlling work
 
-The replacement is selected: gravity-quotient/centre evolution plus informative
-magnetic-service superwords, as specified in `ou3-alt-observability-formulation.md`.
-Measure the projected generalized-eigenvalue ratio for a specified common or
-compatible storage on same-history carried superwords. A yaw-only quotient
-leaves neutral axial bias; call cadence does not guarantee accepted service.
-The retained gauged spectral distance near `3.6e-3` is not yet a storage margin
-or an interval-error budget. No new source-qualified shipping rho is recorded.
+Retain `M(P)=diag(P21^-1,I3)` as a prescribed compatible-storage candidate.
+The positive quiet-word margin is local tangent evidence. Establish its
+uniform coercivity and the finite same-history inequality over admitted
+informative-service histories, preserving nonlinear correction/reset/projection,
+full covariance, actual frontend/tuner values, every H18/A21 edge and all BIAS
+families. No metric fitting, independent endpoint seeds, or covariance floors
+may turn these point observations into universal bounds.
 
-The eleven qualifications remain independently stated but subordinate to this
-measurement. Do not resume them or rigorous interval work as the main task.
-The machine Joseph covariance defect and nonorthogonal first-order reset must
-be retained in the eventual master. Diagnostic results cannot unlock storage
-search: a complete word must still pass the finite-master guard.
+The current feasibility report gives worst rho 0.9771585509 and point amplitude
+margin 0.0114866966; neither is a certified interval-error budget. Covariance
+growth alone can make this metric appear to contract, so uniform covariance
+bounds are a controlling obligation. The observed source is stationary with
+zero nominal residual; nonzero-motion finite maps remain unmeasured.
+
+The eleven-qualification inventory retains its existing closed and open rows.
+The machine
+Joseph covariance defect and nonorthogonal first-order reset must be retained
+in the eventual master. Diagnostic results cannot unlock storage search: the
+complete finite word must still pass the finite-master guard. All theorem
+PASS flags remain false.
+
+## Continuation checkpoint and complete blocker list
+
+Read `ou3-alt-startup-trap.md` and its report first for the exact reached
+startup state and candidate tail. The 30,002-sample root is verified by
+3,660,244 binary32 operations and agrees with native execution. The new tail
+has a source-audited 600-sample native check. Its infinite invariant is still
+conditional on two rounding budgets; do not mark eventual startup refuted.
+
+The finite-master inventory currently has six open rows: 1, 3, 4, 5, 10 and
+11 above. The five other rows are component results under their stated
+premises. All remaining controlling obligations are:
+
+1. Universal startup: the proposed deadline is false. Audit the candidate
+   tail's 16u/64u bounds and prove indefinite guard/gate/clock composition;
+   otherwise establish recovery from the reached bad region. A finite replay
+   cannot choose between those alternatives.
+2. Startup deployment supplies: close initialization, Racc/MEKF and frontend
+   composition on actual construction histories.
+3. Whole-target execution: qualify compiler/libm/Eigen call graph and FCR
+   initialization/preservation; component correspondence is insufficient.
+4. All-event machine totality: bound carried MEKF bias, state, covariance,
+   solves, normalization and roundoff on every admitted prefix.
+5. Complete source-uniform 600-step relation: attach startup roots, pending
+   yaw, magnetic ancestry, quaternion lower shell and rounded CORE/Eigen
+   operations on the same physical/BIAS history.
+6. Ungauged dynamics: establish the gravity quotient and centre-growth
+   argument, retaining neutral yaw and axial gyro bias. Absolute-heading
+   common contraction on every ungauged word remains falsified.
+7. Informative magnetic service: prove or explicitly qualify accepted,
+   informative recurrence. Attempted calls alone supply no such theorem.
+8. Storage: prove uniform coercivity of the prescribed full carried-covariance
+   metric; covariance growth can otherwise mimic error decay.
+9. Uniform finite-error rho: bound the nonlinear same-history complete map
+   over nonzero motion, all BIAS families, H18/A21 and every hybrid edge,
+   including projection, Joseph defect and nonorthogonal reset. The quiet
+   tangent value 0.9771585509 supplies no universal rho.
+10. End-to-end conclusions: establish basin/capture, every-prefix retention,
+    all-time clock progress and ultimate/usefulness bounds. The independent
+    canonical P3 threshold remains 1e-18; original P4/P5 gates are unchanged.
+
+The next falsifiable experiment is the tail rounding audit followed by guard
+and gate composition. If an admitted infinite non-Live history follows, the
+universal startup theorem must be rejected rather than repaired by narrowing
+the input domain. In parallel mathematical scope, a positive rho argument
+requires items 6–9; no finite startup result alone unlocks it.
+
+Document provenance is current under `tools/ou_evidence_contract.py --check
+--study all`. The negative provenance fixture captures and checks its expected
+rejection message; that message is not an error in committed OU3 documents.

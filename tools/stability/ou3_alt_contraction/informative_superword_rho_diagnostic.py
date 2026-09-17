@@ -68,6 +68,8 @@ def diagnose(samples:int=SAMPLES):
                 "mode":mode,"phase":phase.name,"word_horizon_s":word["word_horizon_s"],
                 "literal_event_count":word["literal_event_count"],
                 "service":service,"identity_storage_ratio":rho,
+                "service_information_is_synthetic_proxy":True,
+                "native_carried_frontend_tuner_history":False,
                 "same_literal_joint24_composer_as_PR533":True,
                 "source_uniform_finite_master":False,
             }
@@ -77,7 +79,10 @@ def diagnose(samples:int=SAMPLES):
         "qualification":QUALIFICATION,"samples":samples,"rows":rows,
         "worst_word":worst,"worst_identity_storage_rho_point":worst_rho,
         "identity_storage_strictly_contracts_all_measured_words":worst_rho<1.0,
-        "corrected_formulation_falsified_by_this_experiment":worst_rho>=1.0,
+        "identity_metric_rejected_by_this_experiment":worst_rho>=1.0,
+        # One candidate metric supplies an upper ratio, not a lower bound
+        # across every compatible storage law.
+        "corrected_formulation_falsified_by_this_experiment":False,
         "common_or_compatible_storage_search_still_needed":True,
         "source_uniform_rho_certified":False,"interval_enclosure_authorized":False,
         "storage_search_allowed":False,"ALT_LIVE_PASS":False,
@@ -93,7 +98,7 @@ def validate(d):
         if not row.get("service",{}).get("finite_window_point_service_pass"):f.append(name+" point informative service failed")
         if row.get("source_uniform_finite_master") is not False:f.append(name+" incorrectly promoted source uniformity")
         if row.get("identity_storage_ratio",{}).get("source_uniform_rho_certified") is not False:f.append(name+" rho incorrectly certified")
-    for k in ("source_uniform_rho_certified","interval_enclosure_authorized","storage_search_allowed","ALT_LIVE_PASS"):
+    for k in ("corrected_formulation_falsified_by_this_experiment","source_uniform_rho_certified","interval_enclosure_authorized","storage_search_allowed","ALT_LIVE_PASS"):
         if d.get(k) is not False:f.append(k+" not false")
     return f
 

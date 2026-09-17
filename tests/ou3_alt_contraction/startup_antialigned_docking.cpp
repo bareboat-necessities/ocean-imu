@@ -12,10 +12,14 @@
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <array>
+#include <deque>
+#include <memory>
+#include <vector>
 #define private public
 #include "tuner/VerticalAccelComplementary.h"
-#undef private
 #include "kalman_ou_iii/SeaStateFusionFilter_OU_III.h"
+#undef private
 
 const float g_std=9.80665f;
 static constexpr double rates[]={
@@ -49,7 +53,45 @@ static double yaw(double t){
  return result+omega*(t-150.01);
 }
 
+// Re-run generated proof packets through the public wrapper from construction.
+// Reading private fields is passive; no observer/frontend state is installed.
+static int verify_packets(const char* path){
+ std::ifstream input(path);
+ if(!input)return 2;
+ using Wrapper=SeaStateFusion_OU_III<TrackerType::KALMANF>;
+ Wrapper wrapper;Wrapper::Config cfg;wrapper.begin(cfg);
+ int ordinal=0,steps=0;bool live=false,root_matches=false;
+ float max_weight=0,min_tail_gate=100;
+ while(input>>ordinal){
+  if(ordinal!=++steps)return 2;
+  float values[6];
+  for(float& value:values){
+   std::string word;if(!(input>>word))return 2;
+   char* end=nullptr;value=std::strtof(word.c_str(),&end);
+   if(!end||*end||!std::isfinite(value))return 2;
+  }
+  wrapper.update(.005f,Eigen::Vector3f(values[0],values[1],values[2]),
+      Eigen::Vector3f(values[3],values[4],values[5]));
+  live|=wrapper.isLive();
+  max_weight=std::max(max_weight,wrapper.raw().accelVibrationGuardEngagement());
+  const auto& m=wrapper.raw().vertical_accel_comp_.ahrs_;
+  if(steps==dock){
+   const float actual[7]={m.q0,m.q1,m.q2,m.q3,m.integralFBx,m.integralFBy,m.integralFBz};
+   const float expected[7]={-0x1.22c4cp-4f,-0x1.312dd6p-1f,-0x1.9370ccp-1f,
+       0x1.fc8a84p-4f,0x1.0fae42p-3f,0x1.d04b2ap-5f,-0x1.cb569ep-4f};
+   root_matches=same_state(actual,expected);
+  }
+  if(steps>=dock)min_tail_gate=std::min(min_tail_gate,wrapper.gravity_gate_acc_world_lpf_.state.z());
+ }
+ const auto& m=wrapper.raw().vertical_accel_comp_.ahrs_;
+ std::cout<<"verified "<<steps<<" root_matches "<<root_matches<<" live "<<live
+     <<" weight "<<max_weight<<" min_gate "<<min_tail_gate<<"\n";
+ std::cout<<std::hexfloat<<"final_q "<<m.q0<<' '<<m.q1<<' '<<m.q2<<' '<<m.q3<<"\n";
+ return steps>=dock+600&&root_matches&&!live&&max_weight==0&&min_tail_gate>2 ? 0:2;
+}
+
 int main(int argc,char**argv){
+ if(argc==3 && std::string(argv[1])=="--verify-packets")return verify_packets(argv[2]);
  const int count=argc>2?int(std::strtol(argv[2],nullptr,10)):30602;
  std::ofstream packets;if(argc>1 && std::string(argv[1])!="-")packets.open(argv[1]);
  using Wrapper=SeaStateFusion_OU_III<TrackerType::KALMANF>;
@@ -111,6 +153,13 @@ int main(int argc,char**argv){
    const auto& m=shadow.ahrs_;
    std::cerr<<std::hexfloat<<"dock_q "<<m.q0<<' '<<m.q1<<' '<<m.q2<<' '<<m.q3
        <<" dock_i "<<m.integralFBx<<' '<<m.integralFBy<<' '<<m.integralFBz<<'\n';
+   const auto& guard=wrapper.raw().accel_guard_;
+   std::cerr<<"dock_guard";
+   for(const auto& row:guard.detect_stages_)for(int i=0;i<3;i++)std::cerr<<' '<<row(i);
+   for(int i=0;i<3;i++)std::cerr<<' '<<guard.removed_ms_(i);
+   std::cerr<<" dock_gate";
+   for(int i=0;i<3;i++)std::cerr<<' '<<wrapper.gravity_gate_acc_world_lpf_.state(i);
+   std::cerr<<'\n';
   }
   if(k>=dock)min_lpz=std::min(min_lpz,double(lp.z()));
  }

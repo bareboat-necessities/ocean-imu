@@ -237,11 +237,19 @@ jobs:
       - name: Install diagnostic dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y python3-numpy
+          sudo apt-get install -y g++ libeigen3-dev python3-numpy python3-mpmath
       - name: Test the diagnostic and its anti-promotion guards
         run: |
           export PYTHONPATH="$PWD:$PWD/tools/stability:$PWD/tests/ou3_alt_contraction"
-          python3 -m unittest test_finite_word_rho_diagnostic test_proof_plan -v
+          python3 -m unittest test_finite_word_rho_diagnostic test_proof_plan \
+            test_carried_storage_rho_diagnostic test_informative_superword_rho_diagnostic test_finite_startup_trap -v
+          python3 -m unittest tests.validation.test_ou3_p4_complete_brmm_source_cover_envelope -v
+      - name: Measure prescribed storage on carried native magnetic histories
+        run: |
+          PYTHONPATH="$PWD:$PWD/tools/stability" python3 -m \
+            tools.stability.ou3_alt_contraction.carried_storage_rho_diagnostic \
+            --work /tmp/ou3-alt-carried-storage \
+            --output /tmp/ou3-alt-carried-storage-rho.json
       # The obstruction is established per sample and composes by induction, so
       # a 1 s word protects it.  The canonical 3 s measurement in
       # docs/ou3-alt-word-rho-feasibility.md is a recorded research artifact,
@@ -280,6 +288,8 @@ jobs:
         if: always()
         with:
           name: ou3-alt-word-rho-${{ github.run_id }}
-          path: /tmp/ou3-alt-word-rho.json
+          path: |
+            /tmp/ou3-alt-word-rho.json
+            /tmp/ou3-alt-carried-storage-rho.json
           if-no-files-found: warn
           retention-days: 14

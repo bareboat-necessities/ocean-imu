@@ -1,0 +1,894 @@
+{
+  "ALT_END_TO_END_PASS": false,
+  "ALT_LIVE_PASS": false,
+  "ALT_STARTUP_PASS": false,
+  "finite_error_map_certified": false,
+  "histories": {
+    "A": {
+      "native": {
+        "dt_s": 0.004999999888241291,
+        "mode": "A",
+        "samples": 1800,
+        "source": "stationary_zero_BIAS0_horizontal_field",
+        "startup_samples": 20048
+      },
+      "windows": [
+        {
+          "accepted_magnetic_events": 75,
+          "covariance_after_eigen_extrema": [
+            8.872929007567595e-07,
+            0.04587869289850327
+          ],
+          "covariance_before_eigen_extrema": [
+            9.112404258253431e-07,
+            0.04047819357769969
+          ],
+          "double_vs_extended_terminal_difference": 2.886579864025407e-15,
+          "end_sample": 600,
+          "energy_accounting_residual": 4.7704895589362195e-15,
+          "event_counts": {
+            "12": 600,
+            "2": 600,
+            "22": 75,
+            "32": 22
+          },
+          "identity_storage_ratio": 20.704968487237785,
+          "max_observed_magnetic_gap_s": 0.03999999910593033,
+          "maximizing_direction_energy_change_by_operation": {
+            "100": 0.0,
+            "1002": -0.000977290086848437,
+            "1003": -2.3309882817845743e-05,
+            "1004": 0.0,
+            "1011": -0.022882749100919034,
+            "1021": 0.0,
+            "1031": -6.109475858906423e-05
+          },
+          "mode_at_end": "A",
+          "release_edges": 0,
+          "rho_60_digit_terminal_check": "0.976055556170823728984081642444757846666741933337827097779745",
+          "start_sample": 0,
+          "storage_ratio": {
+            "distance_to_one": 0.02394444382917915,
+            "generalized_eigen_residual_norm": 1.2072381143938196e-13,
+            "maximizing_direction": [
+              -1.3697261790166075e-06,
+              4.019049773899239e-19,
+              -4.077535311953502e-19,
+              0.0009551030327567004,
+              -3.271258472576463e-18,
+              2.9893457089567843e-18,
+              5.629340337560001e-19,
+              0.0004166584833645228,
+              6.950955468949156e-34,
+              -1.0495192668997584e-19,
+              0.00015903418994019374,
+              2.1469056962670166e-34,
+              -1.4494810144698326e-18,
+              -0.0006191313681361251,
+              -1.2699693447991745e-33,
+              4.2539731489262497e-19,
+              1.6533917237877363e-05,
+              1.6180247341372765e-34,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "point_below_one": true,
+            "restricted_storage_condition_number": 44420.98092935504,
+            "rho_point": 0.9760555561708208,
+            "roundoff_outward_enclosed": false,
+            "source_uniform_rho_certified": false,
+            "storage_after_min_eigenvalue": 1.0,
+            "storage_before_min_eigenvalue": 1.0
+          },
+          "transported_heading_bias_gramian": [
+            [
+              32710.491329855267,
+              6533.685477761393
+            ],
+            [
+              6533.685477761393,
+              33010.10121428954
+            ]
+          ],
+          "transported_heading_bias_min_eigenvalue": 26324.893649201895
+        },
+        {
+          "accepted_magnetic_events": 75,
+          "covariance_after_eigen_extrema": [
+            8.645876224323306e-07,
+            0.04953535855636726
+          ],
+          "covariance_before_eigen_extrema": [
+            8.872929007567595e-07,
+            0.04587869289850327
+          ],
+          "double_vs_extended_terminal_difference": 1.7763568394002505e-15,
+          "end_sample": 1200,
+          "energy_accounting_residual": 2.327998904760875e-15,
+          "event_counts": {
+            "12": 600,
+            "2": 600,
+            "22": 75,
+            "32": 22
+          },
+          "identity_storage_ratio": 20.46075813324416,
+          "max_observed_magnetic_gap_s": 0.03999999910593033,
+          "maximizing_direction_energy_change_by_operation": {
+            "100": 0.0,
+            "1002": -0.0009687124309384336,
+            "1003": -2.5138810012981205e-05,
+            "1004": 0.0,
+            "1011": -0.022349086618430155,
+            "1021": 0.0,
+            "1031": -6.420151894093164e-05
+          },
+          "mode_at_end": "A",
+          "release_edges": 0,
+          "rho_60_digit_terminal_check": "0.976592860621678078497044500013257767029458325377048783894642",
+          "start_sample": 600,
+          "storage_ratio": {
+            "distance_to_one": 0.023407139378320174,
+            "generalized_eigen_residual_norm": 2.408784294651731e-13,
+            "maximizing_direction": [
+              3.2925323495878055e-06,
+              9.124094485844223e-19,
+              -1.996732877416379e-19,
+              0.0009425017486794884,
+              -5.48165225273268e-18,
+              -1.1845834038665148e-18,
+              1.0695378058246385e-18,
+              0.00042344577735720107,
+              2.5938661887448917e-34,
+              -3.6575920835236194e-20,
+              0.00022333396930178774,
+              1.3580163636074375e-34,
+              -2.55029160123896e-18,
+              -0.0007014663395084812,
+              -2.229765892404295e-34,
+              7.308716215493297e-19,
+              -2.5148111031711752e-05,
+              2.497507634785397e-35,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "point_below_one": true,
+            "restricted_storage_condition_number": 51705.59529650659,
+            "rho_point": 0.9765928606216798,
+            "roundoff_outward_enclosed": false,
+            "source_uniform_rho_certified": false,
+            "storage_after_min_eigenvalue": 1.0,
+            "storage_before_min_eigenvalue": 1.0
+          },
+          "transported_heading_bias_gramian": [
+            [
+              32712.99913106781,
+              6541.612205730634
+            ],
+            [
+              6541.612205730634,
+              33032.41147122868
+            ]
+          ],
+          "transported_heading_bias_min_eigenvalue": 26329.143861769393
+        },
+        {
+          "accepted_magnetic_events": 75,
+          "covariance_after_eigen_extrema": [
+            8.430297914981217e-07,
+            0.05199279549376544
+          ],
+          "covariance_before_eigen_extrema": [
+            8.645876224323306e-07,
+            0.04953535855636726
+          ],
+          "double_vs_extended_terminal_difference": 2.4424906541753444e-15,
+          "end_sample": 1800,
+          "energy_accounting_residual": 1.7763568394002505e-15,
+          "event_counts": {
+            "12": 600,
+            "2": 600,
+            "22": 75,
+            "32": 22
+          },
+          "identity_storage_ratio": 20.60986831496605,
+          "max_observed_magnetic_gap_s": 0.03999999910593033,
+          "maximizing_direction_energy_change_by_operation": {
+            "100": 0.0,
+            "1002": -0.0009656167441650654,
+            "1003": -2.1474327185133646e-05,
+            "1004": 0.0,
+            "1011": -0.0217929201571877,
+            "1021": 0.0,
+            "1031": -6.206798148378212e-05
+          },
+          "mode_at_end": "A",
+          "release_edges": 0,
+          "rho_60_digit_terminal_check": "0.977157920789977704176401737014499736907806785774662557487454",
+          "start_sample": 1200,
+          "storage_ratio": {
+            "distance_to_one": 0.022842079210019905,
+            "generalized_eigen_residual_norm": 4.570455983413883e-13,
+            "maximizing_direction": [
+              2.5484701872395754e-06,
+              3.554534639766609e-19,
+              -5.400092273259219e-19,
+              0.000930333619096548,
+              -1.7018041262432653e-19,
+              2.2047267865085967e-18,
+              3.665176497640201e-20,
+              0.00041566476364030805,
+              -1.6203243879014185e-34,
+              3.8075776342360664e-21,
+              0.00023356571075656664,
+              -2.1459493530587226e-34,
+              -8.741245940210407e-20,
+              -0.0007169238720618456,
+              2.973151246719454e-34,
+              2.4896574215571696e-20,
+              -2.1611463144019142e-05,
+              -4.0379409621874377e-35,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "point_below_one": true,
+            "restricted_storage_condition_number": 57293.54190272635,
+            "rho_point": 0.9771579207899801,
+            "roundoff_outward_enclosed": false,
+            "source_uniform_rho_certified": false,
+            "storage_after_min_eigenvalue": 1.0,
+            "storage_before_min_eigenvalue": 1.0
+          },
+          "transported_heading_bias_gramian": [
+            [
+              32715.380307940562,
+              6549.137261748338
+            ],
+            [
+              6549.137261748338,
+              33053.59642046877
+            ]
+          ],
+          "transported_heading_bias_min_eigenvalue": 26333.168160771325
+        }
+      ]
+    },
+    "H": {
+      "native": {
+        "dt_s": 0.004999999888241291,
+        "mode": "H",
+        "samples": 1800,
+        "source": "stationary_zero_BIAS0_horizontal_field",
+        "startup_samples": 20048
+      },
+      "windows": [
+        {
+          "accepted_magnetic_events": 75,
+          "covariance_after_eigen_extrema": [
+            8.872927684830615e-07,
+            0.04587855871890332
+          ],
+          "covariance_before_eigen_extrema": [
+            9.112404258253431e-07,
+            0.04047819357769969
+          ],
+          "double_vs_extended_terminal_difference": 9.992007221626409e-16,
+          "end_sample": 600,
+          "energy_accounting_residual": 1.4398204850607499e-15,
+          "event_counts": {
+            "12": 600,
+            "2": 600,
+            "22": 75,
+            "32": 22
+          },
+          "identity_storage_ratio": 20.757463064163634,
+          "max_observed_magnetic_gap_s": 0.03999999910593033,
+          "maximizing_direction_energy_change_by_operation": {
+            "100": 0.0,
+            "1002": -0.0009805237734399348,
+            "1003": -2.3311276596937907e-05,
+            "1004": 0.0,
+            "1011": -0.022882816546418442,
+            "1021": 0.0,
+            "1031": -6.133715304790241e-05
+          },
+          "mode_at_end": "H",
+          "release_edges": 0,
+          "rho_60_digit_terminal_check": "0.976052011250496363710288652062379296360713699109613886998612",
+          "start_sample": 0,
+          "storage_ratio": {
+            "distance_to_one": 0.023947988749504656,
+            "generalized_eigen_residual_norm": 7.970361034922097e-13,
+            "maximizing_direction": [
+              -1.737242464332298e-06,
+              5.329659465816684e-19,
+              -1.416862653690438e-20,
+              0.0009550996537302321,
+              -2.0611647409732065e-18,
+              -8.405687935884695e-20,
+              3.7190109790548315e-19,
+              0.00041697515336725806,
+              -1.0030113800091686e-35,
+              -7.506390973972266e-20,
+              0.0001591580638239665,
+              1.2451006285063402e-36,
+              -9.481475427814737e-19,
+              -0.0006193398410533306,
+              3.9707447469178554e-35,
+              2.8966889221543e-19,
+              1.6404144782591275e-05,
+              -5.4888543807279204e-36,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "point_below_one": true,
+            "restricted_storage_condition_number": 44420.98092935504,
+            "rho_point": 0.9760520112504953,
+            "roundoff_outward_enclosed": false,
+            "source_uniform_rho_certified": false,
+            "storage_after_min_eigenvalue": 1.0,
+            "storage_before_min_eigenvalue": 1.0
+          },
+          "transported_heading_bias_gramian": [
+            [
+              32710.491329855267,
+              6533.685477761393
+            ],
+            [
+              6533.685477761393,
+              33010.10121428954
+            ]
+          ],
+          "transported_heading_bias_min_eigenvalue": 26324.893649201895
+        },
+        {
+          "accepted_magnetic_events": 75,
+          "covariance_after_eigen_extrema": [
+            8.645875458581718e-07,
+            0.04953531098289864
+          ],
+          "covariance_before_eigen_extrema": [
+            8.872927684830615e-07,
+            0.04587855871890332
+          ],
+          "double_vs_extended_terminal_difference": 4.440892098500626e-16,
+          "end_sample": 1200,
+          "energy_accounting_residual": 1.3287981825982342e-15,
+          "event_counts": {
+            "12": 600,
+            "2": 600,
+            "22": 75,
+            "32": 22
+          },
+          "identity_storage_ratio": 20.46121480468957,
+          "max_observed_magnetic_gap_s": 0.03999999910593033,
+          "maximizing_direction_energy_change_by_operation": {
+            "100": 0.0,
+            "1002": -0.0009681691514292765,
+            "1003": -2.5140282822744262e-05,
+            "1004": 0.0,
+            "1011": -0.022349067609024106,
+            "1021": 0.0,
+            "1031": -6.426804046422148e-05
+          },
+          "mode_at_end": "H",
+          "release_edges": 0,
+          "rho_60_digit_terminal_check": "0.976593354916260563061467158476201033000859313820021114699393",
+          "start_sample": 600,
+          "storage_ratio": {
+            "distance_to_one": 0.02340664508373902,
+            "generalized_eigen_residual_norm": 2.297235130609314e-13,
+            "maximizing_direction": [
+              3.2898630407165173e-06,
+              -2.733957019812187e-19,
+              1.599725624134148e-19,
+              0.0009425018934721493,
+              9.290579123919047e-19,
+              9.490545513235157e-19,
+              -1.8736549240045397e-19,
+              0.0004235167150102061,
+              -1.487422968478551e-35,
+              2.9010343644613366e-20,
+              0.00022338197128876904,
+              -2.016546926002087e-35,
+              5.002241671895794e-19,
+              -0.0007015078334105338,
+              3.76810393597926e-35,
+              -1.3756425891576367e-19,
+              -2.5121094013766782e-05,
+              -3.418369676247085e-36,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "point_below_one": true,
+            "restricted_storage_condition_number": 51706.22408788903,
+            "rho_point": 0.976593354916261,
+            "roundoff_outward_enclosed": false,
+            "source_uniform_rho_certified": false,
+            "storage_after_min_eigenvalue": 1.0,
+            "storage_before_min_eigenvalue": 1.0
+          },
+          "transported_heading_bias_gramian": [
+            [
+              32712.99913106781,
+              6541.612205730634
+            ],
+            [
+              6541.612205730634,
+              33032.41147122868
+            ]
+          ],
+          "transported_heading_bias_min_eigenvalue": 26329.143861769393
+        },
+        {
+          "accepted_magnetic_events": 75,
+          "covariance_after_eigen_extrema": [
+            8.430302298016594e-07,
+            0.051992762038199976
+          ],
+          "covariance_before_eigen_extrema": [
+            8.645875458581718e-07,
+            0.04953531098289864
+          ],
+          "double_vs_extended_terminal_difference": 4.440892098500626e-16,
+          "end_sample": 1800,
+          "energy_accounting_residual": 1.2247147740396258e-15,
+          "event_counts": {
+            "12": 600,
+            "2": 600,
+            "22": 75,
+            "32": 22
+          },
+          "identity_storage_ratio": 20.6106131165345,
+          "max_observed_magnetic_gap_s": 0.03999999910593033,
+          "maximizing_direction_energy_change_by_operation": {
+            "100": 0.0,
+            "1002": -0.0009651095390945664,
+            "1003": -2.1474642977858952e-05,
+            "1004": 0.0,
+            "1011": -0.021792952278408387,
+            "1021": 0.0,
+            "1031": -6.19126132547221e-05
+          },
+          "mode_at_end": "H",
+          "release_edges": 0,
+          "rho_60_digit_terminal_check": "0.977158550926266087822535389405569094347698649576589585027413",
+          "start_sample": 1200,
+          "storage_ratio": {
+            "distance_to_one": 0.02284144907373431,
+            "generalized_eigen_residual_norm": 4.550100208230338e-13,
+            "maximizing_direction": [
+              2.549257855340427e-06,
+              -1.3151862201846464e-20,
+              -1.4684607478483794e-19,
+              0.0009303337347133513,
+              -1.2242788842995503e-19,
+              -8.711808575976937e-19,
+              1.9310777478391072e-20,
+              0.0004156664218366555,
+              -6.905922110002764e-35,
+              -6.856511097383921e-21,
+              0.00023358764476315283,
+              -1.2394826259437288e-35,
+              -5.601998930255331e-20,
+              -0.0007168900317048813,
+              8.053826927595121e-35,
+              8.435343723619439e-21,
+              -2.161664987181546e-05,
+              -1.2645553386431566e-35,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "point_below_one": true,
+            "restricted_storage_condition_number": 57293.57451463939,
+            "rho_point": 0.9771585509262657,
+            "roundoff_outward_enclosed": false,
+            "source_uniform_rho_certified": false,
+            "storage_after_min_eigenvalue": 1.0,
+            "storage_before_min_eigenvalue": 1.0
+          },
+          "transported_heading_bias_gramian": [
+            [
+              32715.380307940562,
+              6549.137261748338
+            ],
+            [
+              6549.137261748338,
+              33053.59642046877
+            ]
+          ],
+          "transported_heading_bias_min_eigenvalue": 26333.168160771325
+        }
+      ]
+    },
+    "HA": {
+      "native": {
+        "dt_s": 0.004999999888241291,
+        "mode": "HA",
+        "samples": 1800,
+        "source": "stationary_zero_BIAS0_horizontal_field",
+        "startup_samples": 20048
+      },
+      "windows": [
+        {
+          "accepted_magnetic_events": 75,
+          "covariance_after_eigen_extrema": [
+            8.872927684830615e-07,
+            0.04587855871890332
+          ],
+          "covariance_before_eigen_extrema": [
+            9.112404258253431e-07,
+            0.04047819357769969
+          ],
+          "double_vs_extended_terminal_difference": 9.992007221626409e-16,
+          "end_sample": 600,
+          "energy_accounting_residual": 1.4398204850607499e-15,
+          "event_counts": {
+            "12": 600,
+            "2": 600,
+            "22": 75,
+            "32": 22
+          },
+          "identity_storage_ratio": 20.757463064163634,
+          "max_observed_magnetic_gap_s": 0.03999999910593033,
+          "maximizing_direction_energy_change_by_operation": {
+            "100": 0.0,
+            "1002": -0.0009805237734399348,
+            "1003": -2.3311276596937907e-05,
+            "1004": 0.0,
+            "1011": -0.022882816546418442,
+            "1021": 0.0,
+            "1031": -6.133715304790241e-05
+          },
+          "mode_at_end": "H",
+          "release_edges": 0,
+          "rho_60_digit_terminal_check": "0.976052011250496363710288652062379296360713699109613886998612",
+          "start_sample": 0,
+          "storage_ratio": {
+            "distance_to_one": 0.023947988749504656,
+            "generalized_eigen_residual_norm": 7.970361034922097e-13,
+            "maximizing_direction": [
+              -1.737242464332298e-06,
+              5.329659465816684e-19,
+              -1.416862653690438e-20,
+              0.0009550996537302321,
+              -2.0611647409732065e-18,
+              -8.405687935884695e-20,
+              3.7190109790548315e-19,
+              0.00041697515336725806,
+              -1.0030113800091686e-35,
+              -7.506390973972266e-20,
+              0.0001591580638239665,
+              1.2451006285063402e-36,
+              -9.481475427814737e-19,
+              -0.0006193398410533306,
+              3.9707447469178554e-35,
+              2.8966889221543e-19,
+              1.6404144782591275e-05,
+              -5.4888543807279204e-36,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "point_below_one": true,
+            "restricted_storage_condition_number": 44420.98092935504,
+            "rho_point": 0.9760520112504953,
+            "roundoff_outward_enclosed": false,
+            "source_uniform_rho_certified": false,
+            "storage_after_min_eigenvalue": 1.0,
+            "storage_before_min_eigenvalue": 1.0
+          },
+          "transported_heading_bias_gramian": [
+            [
+              32710.491329855267,
+              6533.685477761393
+            ],
+            [
+              6533.685477761393,
+              33010.10121428954
+            ]
+          ],
+          "transported_heading_bias_min_eigenvalue": 26324.893649201895
+        },
+        {
+          "accepted_magnetic_events": 75,
+          "covariance_after_eigen_extrema": [
+            8.645877394602132e-07,
+            0.04953549210842788
+          ],
+          "covariance_before_eigen_extrema": [
+            8.872927684830615e-07,
+            0.04587855871890332
+          ],
+          "double_vs_extended_terminal_difference": 2.220446049250313e-15,
+          "end_sample": 1200,
+          "energy_accounting_residual": 4.881511861398735e-15,
+          "event_counts": {
+            "12": 600,
+            "2": 600,
+            "22": 75,
+            "32": 22
+          },
+          "identity_storage_ratio": 20.409777424232683,
+          "max_observed_magnetic_gap_s": 0.03999999910593033,
+          "maximizing_direction_energy_change_by_operation": {
+            "100": 0.0,
+            "1002": -0.0009650151313933544,
+            "1003": -2.510182602732949e-05,
+            "1004": 0.0,
+            "1011": -0.02234934297372804,
+            "1021": 0.0,
+            "1031": -6.417535421843208e-05,
+            "1061": 0.0
+          },
+          "mode_at_end": "A",
+          "release_edges": 1,
+          "rho_60_digit_terminal_check": "0.976596364714630136814357356531747567277176937370748813019973",
+          "start_sample": 600,
+          "storage_ratio": {
+            "distance_to_one": 0.023403635285372038,
+            "generalized_eigen_residual_norm": 4.496842644654133e-14,
+            "maximizing_direction": [
+              3.6586216912667836e-06,
+              -1.9900062991418103e-19,
+              7.1786733896235565e-19,
+              0.0009425051687797233,
+              1.6441722791093882e-18,
+              -1.1495632747473093e-18,
+              -2.8379286834107117e-19,
+              0.00042319375311704815,
+              2.832894400000156e-35,
+              2.1362370466639852e-20,
+              0.0002232840598869378,
+              8.002480690573954e-35,
+              7.127765074907102e-19,
+              -0.000701251145720795,
+              1.0968696097144408e-34,
+              -1.9458265561310161e-19,
+              -2.5080981919135875e-05,
+              1.4968675323245922e-35,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "point_below_one": true,
+            "restricted_storage_condition_number": 51706.22408788903,
+            "rho_point": 0.976596364714628,
+            "roundoff_outward_enclosed": false,
+            "source_uniform_rho_certified": false,
+            "storage_after_min_eigenvalue": 1.0,
+            "storage_before_min_eigenvalue": 1.0
+          },
+          "transported_heading_bias_gramian": [
+            [
+              32712.99913106781,
+              6541.612205730634
+            ],
+            [
+              6541.612205730634,
+              33032.41147122868
+            ]
+          ],
+          "transported_heading_bias_min_eigenvalue": 26329.143861769393
+        },
+        {
+          "accepted_magnetic_events": 75,
+          "covariance_after_eigen_extrema": [
+            8.430298237842484e-07,
+            0.05199274718883623
+          ],
+          "covariance_before_eigen_extrema": [
+            8.645877394602132e-07,
+            0.04953549210842788
+          ],
+          "double_vs_extended_terminal_difference": 1.3322676295501878e-15,
+          "end_sample": 1800,
+          "energy_accounting_residual": 3.1051550219984847e-15,
+          "event_counts": {
+            "12": 600,
+            "2": 600,
+            "22": 75,
+            "32": 22
+          },
+          "identity_storage_ratio": 20.610211346435015,
+          "max_observed_magnetic_gap_s": 0.03999999910593033,
+          "maximizing_direction_energy_change_by_operation": {
+            "100": 0.0,
+            "1002": -0.0009656334084654496,
+            "1003": -2.1476668375264306e-05,
+            "1004": 0.0,
+            "1011": -0.02179284920913616,
+            "1021": 0.0,
+            "1031": -6.199433176556915e-05
+          },
+          "mode_at_end": "A",
+          "release_edges": 0,
+          "rho_60_digit_terminal_check": "0.977158046382255779222282265993357500645455642340871280640228",
+          "start_sample": 1200,
+          "storage_ratio": {
+            "distance_to_one": 0.022841953617745547,
+            "generalized_eigen_residual_norm": 2.2904446650174047e-13,
+            "maximizing_direction": [
+              2.5513762873438377e-06,
+              -1.2564019138570294e-19,
+              4.317557613756554e-19,
+              0.0009303338321252291,
+              2.356505464225976e-18,
+              -1.427565138179406e-19,
+              -4.814325322491549e-19,
+              0.0004156068118741913,
+              -3.9144316398162233e-35,
+              2.1482017825850597e-21,
+              0.000233529569482398,
+              -2.4395935748140535e-35,
+              1.1858776838178427e-18,
+              -0.0007168932044644709,
+              4.882973936982042e-35,
+              -3.143774727220699e-19,
+              -2.1638854008048857e-05,
+              -7.854310607771657e-36,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "point_below_one": true,
+            "restricted_storage_condition_number": 57293.00183099587,
+            "rho_point": 0.9771580463822545,
+            "roundoff_outward_enclosed": false,
+            "source_uniform_rho_certified": false,
+            "storage_after_min_eigenvalue": 1.0,
+            "storage_before_min_eigenvalue": 1.0
+          },
+          "transported_heading_bias_gramian": [
+            [
+              32715.380307940562,
+              6549.137261748338
+            ],
+            [
+              6549.137261748338,
+              33053.59642046877
+            ]
+          ],
+          "transported_heading_bias_min_eigenvalue": 26333.168160771325
+        }
+      ]
+    }
+  },
+  "interval_enclosure_authorized": false,
+  "metric_fitted": false,
+  "metric_law": "diag(inverse(full_carried_P21), I3)",
+  "nominal_state_and_innovations_exactly_zero": true,
+  "passive_instrumentation_bit_identity": true,
+  "phase": "feasibility_diagnostic",
+  "probe_sha256": "fbfa9a3a12c7ad9e2f8b693d4946dae99d7ef6a218f5f2f15513c23310e91396",
+  "qualification": "OU3_ALT_NATIVE_CARRIED_COVARIANCE_STORAGE_DIAGNOSTIC_V1",
+  "same_native_history_across_windows": true,
+  "source": "stationary p=v=a=S=0, zero BIAS0, identity attitude, B=(32,0,0) uT",
+  "source_manifest": {
+    "core_sha256": "bbc1586529f2f21144cb91e34f3248569178ab6e7a8bb7a1c8a0977d1b06c170",
+    "overlay_sha256": "1fe425585103b6afe9caf6f537d43ec42de2fd4ab837d97493941b3f16bd0d1a",
+    "patches": [
+      {
+        "anchor": "entry",
+        "insertion": "ou3_alt_probe::record(1, *this);",
+        "signature": "::time_update(\n    Vector3 const& gyr_body, T Ts)"
+      },
+      {
+        "anchor": "    apply_pending_aw_covariance_inflation_();",
+        "insertion": "    ou3_alt_probe::record(3, *this);",
+        "signature": "::time_update(\n    Vector3 const& gyr_body, T Ts)"
+      },
+      {
+        "anchor": "before     apply_pending_aw_covariance_inflation_();",
+        "insertion": "ou3_alt_probe::record(2, *this);",
+        "signature": "::time_update(\n    Vector3 const& gyr_body, T Ts)"
+      },
+      {
+        "anchor": "    symmetrize_Pext_();",
+        "insertion": "    ou3_alt_probe::record(4, *this);",
+        "signature": "::time_update(\n    Vector3 const& gyr_body, T Ts)"
+      },
+      {
+        "anchor": "entry",
+        "insertion": "ou3_alt_probe::Scope<decltype(*this)> alt_scope(10, *this);",
+        "signature": "::measurement_update_acc_only("
+      },
+      {
+        "anchor": "mean and Joseph",
+        "insertion": "innovation / post-mean / post-Joseph observation",
+        "signature": "::measurement_update_acc_only("
+      },
+      {
+        "anchor": "entry",
+        "insertion": "ou3_alt_probe::Scope<decltype(*this)> alt_scope(20, *this);",
+        "signature": "::measurement_update_mag_only("
+      },
+      {
+        "anchor": "mean and Joseph",
+        "insertion": "innovation / post-mean / post-Joseph observation",
+        "signature": "::measurement_update_mag_only("
+      },
+      {
+        "anchor": "entry",
+        "insertion": "ou3_alt_probe::Scope<decltype(*this)> alt_scope(30, *this);",
+        "signature": "::applyIntegralZeroPseudoMeas()"
+      },
+      {
+        "anchor": "mean and Joseph",
+        "insertion": "innovation / post-mean / post-Joseph observation",
+        "signature": "::applyIntegralZeroPseudoMeas()"
+      },
+      {
+        "anchor": "entry",
+        "insertion": "ou3_alt_probe::Scope<decltype(*this)> alt_scope(40, *this);",
+        "signature": "::applyQuaternionCorrectionFromErrorState()"
+      },
+      {
+        "anchor": "    qref.normalize();",
+        "insertion": "    ou3_alt_probe::record(42, *this);",
+        "signature": "::applyQuaternionCorrectionFromErrorState()"
+      },
+      {
+        "anchor": "    apply_error_state_reset_jacobian_(dtheta);",
+        "insertion": "    ou3_alt_probe::record(43, *this);",
+        "signature": "::applyQuaternionCorrectionFromErrorState()"
+      },
+      {
+        "anchor": "    // Clear the local attitude-error state after injection.\n    xext.template head<3>().setZero();",
+        "insertion": "    ou3_alt_probe::record(44, *this);",
+        "signature": "::applyQuaternionCorrectionFromErrorState()"
+      },
+      {
+        "anchor": "entry",
+        "insertion": "ou3_alt_probe::Scope<decltype(*this)> alt_scope(50, *this);",
+        "signature": "::project_acc_bias_()"
+      },
+      {
+        "anchor": "entry",
+        "insertion": "ou3_alt_probe::Scope<decltype(*this)> alt_scope(60, *this);",
+        "signature": "void set_acc_bias_updates_enabled(bool en)"
+      }
+    ],
+    "wrapper_sha256": "fabd03e9c3eb6069df107c7413ffb4b33fbdcd1ce06d3923b0c1ceeb3bcd7359"
+  },
+  "source_uniform_rho_certified": false,
+  "source_uniform_service_certified": false,
+  "storage_search_allowed": false,
+  "tangent_only": true,
+  "uniform_metric_coercivity_certified": false,
+  "worst_mode": "H",
+  "worst_rho_point": 0.9771585509262657,
+  "worst_window_end_sample": 1800
+}
