@@ -10,8 +10,9 @@ Read, in this order:
 1. `AGENTS.md`;
 2. `docs/ou3-alt-main-handover.md`;
 3. this file;
-4. `docs/ou3-alt-word-rho-feasibility.md`, which falsifies the declared joint24
-   contraction and sets the current controlling question;
+4. `docs/ou3-alt-observability-formulation.md`, including the carried native
+   storage measurement; `docs/ou3-alt-word-rho-feasibility.md` remains the
+   negative control for the retired ungauged target;
 5. `docs/ou3-alt-proof-plan.md`;
 6. ALT section of `docs/ou3-proof-research-state.md`;
 7. `docs/ou3-alt-finite-measurement-proof.md`;

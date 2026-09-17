@@ -489,12 +489,52 @@ witness is outside corrected COMPLETE-BRMM and may not be recycled as A or B.
 
 ### Current hypothesis and retained facts
 
-The declared joint24 target is falsified. rho has been measured on the complete
-word ahead of the remaining qualifications, as `AGENTS.md` requires, and an
-admitted ungauged legal word gives `rho_floor = 1` for every common storage.
-The current hypothesis is therefore no longer "finish the finite map, then
-search storage" but "choose a formulation whose rho can be below one". See
-`ou3-alt-word-rho-feasibility.md`. The original P2/P3/P4/P5 route above remains
+The shared source-cover validator rejected the already-declared padded
+velocity/position/three-second primitive limits (5.5, 8.1, 24.3) against stale
+literals (5, 8, 23). This was a validation implementation defect, not failure of
+the physical source or contraction theorem. Its scalar checks now read the
+canonical envelope; regressions accept its bounds and reject oversized,
+nonpositive and nonfinite values. The envelope and proof thresholds are unchanged.
+
+The controlling feasibility experiment now tests a prescribed carried storage
+law, `M(P)=diag(P21^-1,I3)`, on native quiet magnetic histories, retaining the
+full 21-state covariance in H18 and A21 and the actual release edge. It is a
+local differential diagnostic, not a finite-error/source-uniform certificate.
+
+* Failure: the existing 24-sample (0.12 s) identity-metric ratios are
+  H quiet 24.57276, H wave 24.80466, A quiet 24.57100, A wave 24.80293.
+  Classification: failure of that metric, plus an implementation defect in the
+  report flag that calls it falsification of the corrected formulation.
+* Invalidated: Euclidean contraction for those diagnostic maps. Not invalidated:
+  compatible storage or informative-service contraction. The synthetic `[1,t]`
+  service rows and frozen nominal/tuner data do not establish shipping service.
+* Limiter: the full projected storage ratio with an actual carried endpoint
+  metric, including active-bias output rows; identity coordinates mix units.
+* Critic: even a subunit inverse-covariance ratio can be caused by covariance
+  growth. Without uniform metric coercivity it proves no uniform decay.
+* Alternatives: a prescribed Riccati storage law; one common physical metric
+  after the finite-master gate permits its search; nonlinear dissipativity with
+  explicit reset/roundoff supplies. Select the first as a non-promoting native
+  diagnostic because exact linear Kalman covariance identities predict
+  nonexpansion, while transported process/measurement information can make it
+  strict. No fitted metric, eigenvalue floor, or interval refinement is used.
+* Result: that native experiment passes as a point feasibility test; the
+  maximal ratio is 0.9771585509 and the worst point amplitude margin is
+  0.0114866966. The native and uninstrumented sample states are bit-identical.
+* Next falsifiable experiment: derive the uniform covariance/coercivity and
+  same-history finite-error relation for this prescribed storage law. Retain
+  nonzero-residual reset/gain terms and source supplies. A subunit tangent ratio
+  alone does not authorize enclosure or close any finite-master qualification.
+
+
+The retired per-word absolute-heading target remains falsified by the exact
+ungauged pair. The selected magnetic-service formulation now has numerical
+feasibility evidence for a prescribed covariance storage law: worst local
+tangent rho 0.9771585509 over nine consecutive native quiet-source windows,
+including H18/A21/release. Extended composition and a 60-digit terminal solve
+agree within 3e-15. Each window has 75 actual informative magnetic events.
+See `ou3-alt-observability-formulation.md` for the evidence and its limits;
+`ou3-alt-word-rho-feasibility.md` retains the ungauged negative control. The original P2/P3/P4/P5 route above remains
 independent and unchanged. `ou3-alt-proof-plan.md` is normative. All ALT theorem
 gates and `storage_search_allowed` remain false.
 
@@ -1056,16 +1096,14 @@ promotes source membership, capture, retention or stability.
 
 ### Current limiter, DEAD_ENDS and next falsifiable work
 
-The current limiter is the master inequality, not a qualification. On the quiet
-ungauged legal word the restricted spectral radius on `(theta_z, bg_z)` is
-exactly one, so `rho_floor = 1` for every common storage, and heading stays the
-limiting direction on the wave ungauged word too; only under magnetic service
-does the limiter move to weakly observable surge/sway, at a 3 s ratio near
-`0.9964`. The next controlling
-work is choosing a replacement formulation and re-measuring rho, not resuming
-universal startup reachability, full magnetic history or target arithmetic.
-Those remain correctly stated and open, and whatever formulation replaces the
-falsified one still needs them.
+The current limiter is the source-uniform finite-word storage inequality,
+not the identity metric. A native stationary physical source now gives a
+subunit local tangent ratio in the full carried covariance metric, including
+the release edge. This does not establish finite-error dissipation, uniform
+metric coercivity, service recurrence or the complete source graph. The point
+margin is not available to spend on interval errors until those prerequisites
+are bound. The old ungauged full-state target still has exact floor one and
+must remain retired. Universal startup and target arithmetic remain open.
 
 The four-chart runtime, conditional ungauged continuation and source-owned
 empty-startup/later-north composition close their representation/event gaps.

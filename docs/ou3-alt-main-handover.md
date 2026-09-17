@@ -12,9 +12,12 @@ calls <=40 ms apart do not establish accepted informative recurrence. The
 retained below-one gauged spectra do not measure a common-storage upper ratio.
 These distinctions are executable in `magnetic_service_formulation.py`.
 
-The next task is the corrected same-history superword storage measurement,
-not interval refinement or completion of the eleven subordinate qualifications.
-No new source-qualified shipping rho is recorded. `AGENTS.md` and
+The prescribed full-covariance storage law now has a positive native quiet-word
+feasibility result: worst local tangent ratio 0.9771585509 over nine unreseeded
+three-second windows, including H18, A21 and actual H18-to-A21 release. Read the
+carried-native section of `ou3-alt-observability-formulation.md`. This is neither
+a source-uniform shipping rho nor permission for interval refinement.
+`AGENTS.md` and
 `ou3-alt-proof-plan.md` remain normative. The independent P2/P3/P4/P5 route
 continues through `ou3-brmm-main-handover.md`; its thresholds and gates are
 unchanged. The ALT master still withholds storage search and all PASS flags.
@@ -109,16 +112,23 @@ observer bound does not prove indefinite clock progress.
 
 ## Next controlling work
 
-The replacement is selected: gravity-quotient/centre evolution plus informative
-magnetic-service superwords, as specified in `ou3-alt-observability-formulation.md`.
-Measure the projected generalized-eigenvalue ratio for a specified common or
-compatible storage on same-history carried superwords. A yaw-only quotient
-leaves neutral axial bias; call cadence does not guarantee accepted service.
-The retained gauged spectral distance near `3.6e-3` is not yet a storage margin
-or an interval-error budget. No new source-qualified shipping rho is recorded.
+Retain `M(P)=diag(P21^-1,I3)` as a prescribed compatible-storage candidate.
+The positive quiet-word margin is local tangent evidence. Establish its
+uniform coercivity and the finite same-history inequality over admitted
+informative-service histories, preserving nonlinear correction/reset/projection,
+full covariance, actual frontend/tuner values, every H18/A21 edge and all BIAS
+families. No metric fitting, independent endpoint seeds, or covariance floors
+may turn these point observations into universal bounds.
 
-The eleven qualifications remain independently stated but subordinate to this
-measurement. Do not resume them or rigorous interval work as the main task.
-The machine Joseph covariance defect and nonorthogonal first-order reset must
-be retained in the eventual master. Diagnostic results cannot unlock storage
-search: a complete word must still pass the finite-master guard.
+The current feasibility report gives worst rho 0.9771585509 and point amplitude
+margin 0.0114866966; neither is a certified interval-error budget. Covariance
+growth alone can make this metric appear to contract, so uniform covariance
+bounds are a controlling obligation. The observed source is stationary with
+zero nominal residual; nonzero-motion finite maps remain unmeasured.
+
+The eleven-qualification inventory retains its existing closed and open rows.
+The machine
+Joseph covariance defect and nonorthogonal first-order reset must be retained
+in the eventual master. Diagnostic results cannot unlock storage search: the
+complete finite word must still pass the finite-master guard. All theorem
+PASS flags remain false.
