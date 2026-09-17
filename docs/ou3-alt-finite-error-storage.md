@@ -54,13 +54,19 @@ Zero sensor disturbance after the prefix does not eliminate machine supply.
 
 This gives a quantitative target for the remaining proof, not measured constants.
 Fix a history and a declared word domain. Let N0,N1 be positive reference
-metrics and A a linear comparison operator. Suppose **uniformly on that domain**:
+metrics and A a linear comparison operator. The input e denotes the declared
+unsupplied coordinates; the output retains the full storage coordinates. True
+physical beta and any held-bias component assigned to supply must enter D and
+the remainder explicitly. A may therefore be rectangular. More generally the
+input premise below is V_now >= (1-di)||e||_N0^2, which must include any
+initial cross terms rather than discarding them. Suppose **uniformly on that domain**:
 
 - `||A e||_N1 <= a ||e||_N0`;
 - the full finite word satisfies `F(e,d)=A e+r`, with
   `||r||_N1 <= eps ||e||_N0 + b D`;
-- its actual endpoint metrics satisfy `M0(e)>=(1-di)N0` and
-  `M1(e,d)<=(1+do)N1`, where `0<=di<1`, `do>=0`;
+- the actual input energy satisfies `V_now>=(1-di)||e||_N0^2` and
+  the output metric satisfies `M1(e,d)<=(1+do)N1`, where `0<=di<1`,
+  `do>=0` (for a full input vector, `M0>=(1-di)N0` suffices);
 - D includes all physical/model/rounding supply used in the remainder bound.
 
 These hypotheses concern the same carried source/covariance history, including
@@ -81,8 +87,9 @@ This also allows a finite offset at zero error; it cannot be silently set to zer
 
 An exact rational *illustration*, a=989/1000, eps=1/1000,
 di=do=1/500 and eta=1/200, gives rho<1. The a value is above the square root
-of the quiet tangent measurement; it is not a certified universal operator
-bound. `nonlinear_budget()` computes these coefficients exactly and rejects
+of the quiet tangent measurement on its unsupplied motion subspace; it is not
+a certified operator bound on either the full joint24 state or a nonlinear
+source domain. `nonlinear_budget()` computes these coefficients exactly and rejects
 invalid metric budgets. The example explains the available scale: roughly
 0.2% metric variations and a 0.1% norm remainder would fit inside the observed
 margin. None of those hypotheses has been proved for shipping histories.
