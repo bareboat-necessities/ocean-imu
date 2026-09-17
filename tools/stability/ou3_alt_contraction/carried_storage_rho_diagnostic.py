@@ -74,7 +74,9 @@ def high_precision_ratio(A, P0, P1, digits=60):
         return mp.nstr(values[values.rows - 1, 0], digits)
 
 
-def analyze(path, metadata):
+def analyze(path, metadata, window_samples=WINDOW, include_map=False):
+    if not isinstance(window_samples, int) or window_samples <= 0:
+        raise ValueError("positive integer window size required")
     lines = iter(Path(path).read_text().splitlines())
 
     def parse(line):
@@ -141,7 +143,7 @@ def analyze(path, metadata):
             P, mode = next_P, next_mode
             if kind == 100:
                 last_boundary = step
-                if step % WINDOW == 0:
+                if step % window_samples == 0:
                     ratio = FORM.projected_storage_ratio(Phi, M0, next_M,
                                                          FORM.joint24_motion_injection())
                     hp = high_precision_ratio(Phi_high, P0, P)
@@ -157,17 +159,20 @@ def analyze(path, metadata):
                     info = sum((e.transported_whitened_heading_rows.T @
                                 e.transported_whitened_heading_rows for e in events),
                                start=np.zeros((2, 2)))
-                    start = (step - WINDOW) * metadata["dt_s"]
+                    start = (step - window_samples) * metadata["dt_s"]
                     end = step * metadata["dt_s"]
                     gaps = np.diff([start, *(e.time_s for e in events), end])
                     output.append({
-                        "start_sample": step - WINDOW, "end_sample": step,
+                        "start_sample": step - window_samples, "end_sample": step,
                         "mode_at_end": "A" if mode else "H", "release_edges": changes,
                         "storage_ratio": ratio, "rho_60_digit_terminal_check": hp,
                         "double_vs_extended_terminal_difference": abs(float(hp) - ratio["rho_point"]),
                         "identity_storage_ratio": FORM.projected_storage_ratio(
                             Phi, np.eye(24), np.eye(24), FORM.joint24_motion_injection())["rho_point"],
                         "accepted_magnetic_events": len(events),
+                        "minimum_transported_heading_response": min(
+                            (float(np.linalg.norm(e.transported_whitened_heading_rows[:, 0]))
+                             for e in events), default=0.0),
                         "transported_heading_bias_gramian": info.tolist(),
                         "transported_heading_bias_min_eigenvalue": float(np.linalg.eigvalsh(info)[0]),
                         "max_observed_magnetic_gap_s": float(max(gaps)),
@@ -177,6 +182,10 @@ def analyze(path, metadata):
                         "covariance_before_eigen_extrema": np.linalg.eigvalsh(P0)[[0, -1]].tolist(),
                         "covariance_after_eigen_extrema": np.linalg.eigvalsh(P)[[0, -1]].tolist(),
                     })
+                    if include_map:
+                        output[-1]["joint24_tangent_map"] = Phi.tolist()
+                        output[-1]["covariance_before"] = P0.tolist()
+                        output[-1]["covariance_after"] = P.tolist()
                     # Reset the measurement origin ONLY. Native covariance,
                     # frontend, tuner, clock and source history keep running.
                     P0, M0 = P.copy(), next_M
@@ -185,7 +194,7 @@ def analyze(path, metadata):
                     events, operations, counts, changes = [], [], {}, 0
         else:
             raise ValueError("unrecognized native operation")
-    if pending is not None or last_boundary != metadata["samples"] or last_boundary % WINDOW:
+    if pending is not None or last_boundary != metadata["samples"] or last_boundary % window_samples:
         raise ValueError("incomplete native superword")
     return output
 

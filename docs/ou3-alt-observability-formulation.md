@@ -6,7 +6,7 @@ The old requirement of strict coercive joint24 contraction on every admitted 3 s
 
 ALT now uses two regimes. During ungauged intervals the proof works modulo the unobservable heading/axial-bias centre dynamics and must bound finite-prefix growth without claiming absolute-heading contraction. A yaw-only quotient is insufficient because `bg_z` remains neutral. The quotient is legal only when the actual map descends to it: `Q_after^T A N_before = 0`; deleting coordinates is not a proof of equivariance.
 
-After magnetic gauge is established, the full-state theorem is conditional on an informative magnetic-service class. Attempted calls at gaps <=40 ms are retained runtime facts but are not themselves accepted informative observations. The theorem must establish a bound on gaps between accepted informative events and a positive transported heading/bias information floor over each superword.
+After magnetic gauge is established, the full-state theorem is conditional on an informative magnetic-service class. Attempted calls at gaps <=40 ms are retained runtime facts but are not themselves accepted informative observations. The conditional Normal-Live theorem now explicitly assumes a bound on gaps between accepted informative events and a positive transported heading/bias information floor over every overlapping superword. Membership is an additional hypothesis for that regime, not a consequence of attempted calls and not a restriction on the unconditional source theorem. See `ou3-alt-informative-service-theorem.md`.
 
 ## Controlling measurement
 
@@ -20,7 +20,7 @@ The gauged motion-block spectra near 0.9964 reported by PR #533 are feasibility 
 
 ## Magnetic service
 
-For accepted gauged magnetic events in a superword, transport the actual whitened residual sensitivity to the same initial heading/axial-bias coordinates and form `G_B = sum B_i^T B_i`. The selected service class eventually needs explicit constants `T_B` and `alpha_B>0` such that informative-event gaps are <=`T_B` and `G_B >= alpha_B I_2` on the declared window. Those constants are deliberately unset until derived from runtime/source semantics. Rejected calls, ungauged calls, and heading-degenerate rows provide no such service.
+For accepted gauged magnetic events in a superword, transport the actual whitened residual sensitivity to the same initial heading/axial-bias coordinates and form `G_B = sum B_i^T B_i`. The selected conditional service class is parameterized by explicit constants `T_B` and `alpha_B>0` such that informative-event gaps are <=`T_B` and `G_B >= alpha_B I_2` on the declared window. A deployment must declare these constants and assume or prove the resulting accepted-service property. The proof does not infer constants from callback cadence or fit them to diagnostic extrema. Rejected calls, ungauged calls, and heading-degenerate rows provide no such service.
 
 ## Carried native storage feasibility
 
@@ -100,6 +100,6 @@ or relabeling their extrema as universal bounds.
 
 ## Non-promotion
 
-This selection does not certify source-uniform magnetic acceptance, quotient equivariance, a common/compatible storage, a source-uniform rho, interval enclosure, startup, Live, or end-to-end stability. `storage_search_allowed`, `ALT_STARTUP_PASS`, `ALT_LIVE_PASS`, and `ALT_END_TO_END_PASS` remain false. The eleven finite-master qualifications remain open but subordinate until the corrected rho measurement is feasible.
+This selection does not certify source-uniform magnetic acceptance, quotient equivariance, a common/compatible storage, a source-uniform rho, interval enclosure, startup, Live, or end-to-end stability. `storage_search_allowed`, `ALT_STARTUP_PASS`, `ALT_LIVE_PASS`, and `ALT_END_TO_END_PASS` remain false. The finite-master inventory retains six open and five component-closed qualifications; the corrected formulation does not silently close any of them.
 
 The independent P2/P3/P4/P5 proof track is unchanged, including frozen P3 `1e-18`.

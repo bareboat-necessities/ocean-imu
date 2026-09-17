@@ -9,8 +9,20 @@ as its structural negative control, not a positive storage certificate.
 
 A yaw-only quotient still leaves neutral axial gyro bias. Attempted magnetic
 calls <=40 ms apart do not establish accepted informative recurrence. The
+conditional Normal-Live target explicitly assumes accepted informative service
+with declared gap and information constants; read
+`ou3-alt-informative-service-theorem.md`. The
 retained below-one gauged spectra do not measure a common-storage upper ratio.
 These distinctions are executable in `magnetic_service_formulation.py`.
+
+The explicit conditional service theorem and latest regime comparison are in
+`ou3-alt-informative-service-theorem.md`. The retained 40 ms profile measures
+worst rho 0.9765963647 over three seconds and 0.9509988673 over six seconds.
+A yaw-only quotient still has spectral radius 1; the quiet transverse/centre
+split measures rho 0.9766752765 over three seconds, conditional on the measured
+point invariance. Sparse-call stress cases are explicitly outside the retained
+callback profile. None of these point measurements closes uniform coercivity
+or the nonlinear finite-error theorem.
 
 The prescribed full-covariance storage law now has a positive native quiet-word
 feasibility result: worst local tangent ratio 0.9771585509 over nine unreseeded
@@ -21,6 +33,31 @@ a source-uniform shipping rho nor permission for interval refinement.
 `ou3-alt-proof-plan.md` remain normative. The independent P2/P3/P4/P5 route
 continues through `ou3-brmm-main-handover.md`; its thresholds and gates are
 unchanged. The ALT master still withholds storage search and all PASS flags.
+
+## History-dependent capture alternative
+
+The optional weaker target is now explicit in
+`ou3-alt-nonuniform-capture-theorem.md`: assume some finite entry time for each
+history into a predeclared retained tail domain, then prove a history-specific
+strict tail factor, time-uniform tail coercivity and prefix bounds. The scalar
+comparison theorem is proved without any common deadline or computed maximum
+capture time. Truly time-varying factors additionally require initial-product
+decay and a bounded disturbance convolution, or a proved decrement-scaled
+supply. Capture alone and point ratios below one are insufficient.
+
+This weakens the requested conclusion to conditional history-wise eventual
+practical boundedness. It leaves the original uniform target available and
+keeps all filter theorem gates closed until their actual premises are proved.
+
+## Coercivity reduction
+
+`ou3-alt-binary32-coercivity.md` proves that every finite symmetric SPD
+binary32 P21 yields `2^-133 I <= diag(P21^-1,I3) <= 2^5789 I`, including
+its minimum-energy quotient metric. This closes qualitative coercivity on
+that domain without fitting covariance bounds. Exact rational LDL/determinant
+checks pass at 36 native endpoints and all 18,586 recorded covariance event
+boundaries in the three retained-service histories. Infinite finite-SPD domain preservation
+remains an arithmetic obligation, and useful numerical bounds remain open.
 
 ## Physical input theorem
 
@@ -113,8 +150,9 @@ observer bound does not prove indefinite clock progress.
 ## Next controlling work
 
 Retain `M(P)=diag(P21^-1,I3)` as a prescribed compatible-storage candidate.
-The positive quiet-word margin is local tangent evidence. Establish its
-uniform coercivity and the finite same-history inequality over admitted
+The positive quiet-word margin is local tangent evidence. Establish preservation
+of the finite-SPD covariance domain (which now supplies qualitative coercivity)
+and the finite same-history inequality over admitted
 informative-service histories, preserving nonlinear correction/reset/projection,
 full covariance, actual frontend/tuner values, every H18/A21 edge and all BIAS
 families. No metric fitting, independent endpoint seeds, or covariance floors
@@ -161,10 +199,14 @@ premises. All remaining controlling obligations are:
 6. Ungauged dynamics: establish the gravity quotient and centre-growth
    argument, retaining neutral yaw and axial gyro bias. Absolute-heading
    common contraction on every ungauged word remains falsified.
-7. Informative magnetic service: prove or explicitly qualify accepted,
-   informative recurrence. Attempted calls alone supply no such theorem.
-8. Storage: prove uniform coercivity of the prescribed full carried-covariance
-   metric; covariance growth can otherwise mimic error decay.
+7. Informative magnetic service: the conditional assumption is now explicit.
+   Establish deployment membership or retain it as a stated hypothesis; finite
+   audits do not prove infinite recurrence or nonvacuity. Attempted calls alone
+   supply no such theorem.
+8. Storage: the binary32 finite-SPD domain now has a proved uniform coercivity
+   bound. Prove the actual carried covariance remains in that domain at every
+   required tail endpoint. Useful quantitative bounds remain separate; finite
+   point observations cannot establish infinite domain membership.
 9. Uniform finite-error rho: bound the nonlinear same-history complete map
    over nonzero motion, all BIAS families, H18/A21 and every hybrid edge,
    including projection, Joseph defect and nonorthogonal reset. The quiet
@@ -173,8 +215,9 @@ premises. All remaining controlling obligations are:
     all-time clock progress and ultimate/usefulness bounds. The independent
     canonical P3 threshold remains 1e-18; original P4/P5 gates are unchanged.
 
-The next falsifiable experiment is the tail rounding audit followed by guard
-and gate composition. If an admitted infinite non-Live history follows, the
+For Live contraction, the next falsifiable experiment is the service-regime
+comparison in `ou3-alt-informative-service-theorem.md`. The independent startup
+continuation is the tail rounding audit followed by guard and gate composition. If an admitted infinite non-Live history follows, the
 universal startup theorem must be rejected rather than repaired by narrowing
 the input domain. In parallel mathematical scope, a positive rho argument
 requires items 6–9; no finite startup result alone unlocks it.

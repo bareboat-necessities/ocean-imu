@@ -122,7 +122,9 @@ void innovation(int kind, const F& f, const V& r, const N&, const S&,
 
 int main(int argc, char** argv) {
     try {
-        if (argc != 5) return 1;
+        if (argc != 5 && argc != 6) return 1;
+        const int mag_stride = argc == 6 ? std::stoi(argv[5]) : 8;
+        if (mag_stride < 0) return 1;
         const std::string mode = argv[1];
         const int samples = std::stoi(argv[2]);
         if ((mode != "H" && mode != "A" && mode != "HA") || samples < 600) return 1;
@@ -155,7 +157,8 @@ int main(int argc, char** argv) {
         for (current_step = 1; current_step <= samples; ++current_step) {
             if (mode == "HA" && current_step == 601) f.raw().setAccBiasHold(false);
             f.update(.005f, Eigen::Vector3f::Zero(), quiet);
-            if ((startup + current_step) % 8 == 0) f.updateMag(mag);
+            if (mag_stride > 0 && (startup + current_step) % mag_stride == 0)
+                f.updateMag(mag);
             // A later magnetic regauge has its own tangent. Even a zero-angle
             // nominal write cannot be silently represented by identity.
             if (f.mag_refine_done_ != initial_refine_done ||
@@ -170,6 +173,7 @@ int main(int argc, char** argv) {
             states.write(reinterpret_cast<const char*>(core.qref.coeffs().data()), 4 * sizeof(float));
         }
         std::cout << "{\"mode\":\"" << mode << "\",\"startup_samples\":" << startup
+                  << ",\"mag_stride\":" << mag_stride
                   << ",\"samples\":" << samples << ",\"dt_s\":" << std::setprecision(17)
                   << double(.005f) << ",\"source\":\"stationary_zero_BIAS0_horizontal_field\"}\n";
     } catch (const std::exception& e) {

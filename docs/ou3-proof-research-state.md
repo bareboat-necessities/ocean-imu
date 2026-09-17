@@ -14,6 +14,93 @@ changes nothing on this route.
 The end-to-end theorem is still open. `P4_PASS=false` and
 `P5_MAY_START=false` remain intentional fail-closed outputs.
 
+## ALT format-wide coercivity reduction
+
+New mathematical fact: finite binary32 entries lie on q=2^-149 times the
+integers. For SPD P21, det(P)>=q^21 and lambda_max(P)<=21 Fmax. This proves
+`2^-133 I <= diag(P^-1,I3) <= 2^5789 I` on the full finite-SPD domain, including
+the minimum-energy quotient. It closes the qualitative coercivity implication;
+it does not repair the shipping covariance or prove domain preservation.
+Exact rational checks pass at 36 actual native endpoints and all 18,586
+recorded covariance event boundaries in the retained-service histories, without
+eigenvalue floors or fitted constants. See `ou3-alt-binary32-coercivity.md`.
+
+Critic: format compactness can yield uselessly large bounds and must not be
+sold as accuracy or contraction. The controlling remaining quantities are
+finite-SPD preservation and the nonlinear tail rho/supply inequality. This
+new fact justifies revisiting the *existence* of coercivity after the earlier
+unbounded-real-covariance objection; it does not reopen the rejected identity
+metric or full-heading ungauged contraction route. The finite recorded-operation check now passes. Next falsifiable test is
+rounded SPD preservation under nonzero residuals/motion and nonlinear word
+contraction, with any failed pivot reported before further certification.
+
+## ALT nonuniform capture comparison
+
+Current hypothesis: the user-selected weaker result assumes finite entry into
+a predeclared tail domain separately for each history, then establishes a
+history-specific strict tail contraction and coercivity. No common capture
+deadline or source-uniform rho is required for that conditional conclusion.
+The abstract comparison implication is proved in
+`ou3-alt-nonuniform-capture-theorem.md`; shipping premises remain open.
+
+Failed naive weakening: r_j<1 at every word does not imply product decay
+(product (n+2)/(2(n+1)) tends to 1/2). Even product decay does not control
+constant supply (r_j=(j+1)/(j+2), q_j=1 gives V_n=n(n+3)/(2(n+1))).
+Classification: false abstract implications, not a filter counterexample.
+They invalidate promotion from per-word strictness or product decay alone;
+they do not invalidate a fixed strict factor per history. Limiter: accumulated
+forcing, time-uniform tail coercivity and prefix retention, not a numeric
+capture deadline. Exact rational regressions retain both counterexamples.
+
+Critic: do not hide the desired stability conclusion inside "eventual entry"
+or allow a vanishing metric to manufacture decay. Alternatives are a fixed
+strict factor per history, a fading product with bounded convolution gain,
+or a proved supply proportional to the contraction decrement. The first is
+the selected initial route; the latter two are stated precisely as comparison
+corollaries. Next falsifiable shipping experiment remains the actual nonlinear
+moving-source word, plus an independently justified retained tail domain.
+The capture assumption is explicit and does not set ALT_STARTUP_PASS.
+
+## ALT informative-service comparison and critic
+
+Current hypothesis: explicit accepted informative-service assumptions support
+conditional Normal-Live full-state dissipation, while ungauged dynamics need
+an invariant transverse system plus a retained heading/axial-bias centre.
+The unconditional source class and original proof track remain unchanged.
+
+Evidence: twelve native construction-to-root histories, 36 windows, and
+observed/plain bit identity. Retained 40 ms callbacks give worst local tangent
+rho 0.9765963647 (3 s) and 0.9509988673 (6 s) in the prescribed carried-P metric.
+The quiet no-service transverse pair removal gives rho 0.9766752765 (3 s),
+with zero point leakage. The yaw-only quotient retains spectral radius 1.
+Slower callback cases are outside-profile stress experiments, not qualified
+source-uniform evidence. See `ou3-alt-informative-service-theorem.md`.
+
+Failed inference and classification: the no-service full-storage ratio is
+0.9996640645 despite the neutral/unipotent pair. This is a coercivity gap in
+the proof method, not a contradiction of the exact obstruction or a proof of
+stability. It invalidates promotion of a subunit carried-metric point ratio
+without uniform P bounds. The frozen identity-metric route remains rejected;
+its large quotient ratios are retained negative controls, not an invitation
+to refine that metric again. The limiter is now uniform coercivity and the
+same-history nonlinear service/centre relation, not terminal precision
+(the cross-check error is below 3e-15).
+
+Critic: abandon the full-state claim if its coercivity is purchased by
+unbounded covariance growth, or if moving-source centre leakage destroys the
+proposed split. Alternatives are (1) independently prove uniform covariance
+bounds for the prescribed law, (2) construct a physical transverse/centre
+storage with explicit finite-prefix growth, or (3) prove a nonlinear
+informative-service observability inequality directly before choosing storage.
+Next falsifiable experiment: nonzero-motion finite-error words including
+actual rejection patterns at retained callback cadence; measure centre leakage
+and complete-word margin before interval refinement. No metric fitting,
+source restriction, or filter change is permitted.
+
+Infrastructure/implementation defects in the experiment (probe execute mode
+and a Path/string mismatch in parity checking) were repaired without changing
+the byte-identity requirement or mathematical test grid.
+
 ## ALT startup-tail critic and next experiment
 
 Current evidence: exact reset replay reaches the antialigned docking state
