@@ -9,8 +9,20 @@ as its structural negative control, not a positive storage certificate.
 
 A yaw-only quotient still leaves neutral axial gyro bias. Attempted magnetic
 calls <=40 ms apart do not establish accepted informative recurrence. The
+conditional Normal-Live target explicitly assumes accepted informative service
+with declared gap and information constants; read
+`ou3-alt-informative-service-theorem.md`. The
 retained below-one gauged spectra do not measure a common-storage upper ratio.
 These distinctions are executable in `magnetic_service_formulation.py`.
+
+The explicit conditional service theorem and latest regime comparison are in
+`ou3-alt-informative-service-theorem.md`. The retained 40 ms profile measures
+worst rho 0.9765963647 over three seconds and 0.9509988673 over six seconds.
+A yaw-only quotient still has spectral radius 1; the quiet transverse/centre
+split measures rho 0.9766752765 over three seconds, conditional on the measured
+point invariance. Sparse-call stress cases are explicitly outside the retained
+callback profile. None of these point measurements closes uniform coercivity
+or the nonlinear finite-error theorem.
 
 The prescribed full-covariance storage law now has a positive native quiet-word
 feasibility result: worst local tangent ratio 0.9771585509 over nine unreseeded
@@ -161,8 +173,10 @@ premises. All remaining controlling obligations are:
 6. Ungauged dynamics: establish the gravity quotient and centre-growth
    argument, retaining neutral yaw and axial gyro bias. Absolute-heading
    common contraction on every ungauged word remains falsified.
-7. Informative magnetic service: prove or explicitly qualify accepted,
-   informative recurrence. Attempted calls alone supply no such theorem.
+7. Informative magnetic service: the conditional assumption is now explicit.
+   Establish deployment membership or retain it as a stated hypothesis; finite
+   audits do not prove infinite recurrence or nonvacuity. Attempted calls alone
+   supply no such theorem.
 8. Storage: prove uniform coercivity of the prescribed full carried-covariance
    metric; covariance growth can otherwise mimic error decay.
 9. Uniform finite-error rho: bound the nonlinear same-history complete map
@@ -173,8 +187,9 @@ premises. All remaining controlling obligations are:
     all-time clock progress and ultimate/usefulness bounds. The independent
     canonical P3 threshold remains 1e-18; original P4/P5 gates are unchanged.
 
-The next falsifiable experiment is the tail rounding audit followed by guard
-and gate composition. If an admitted infinite non-Live history follows, the
+For Live contraction, the next falsifiable experiment is the service-regime
+comparison in `ou3-alt-informative-service-theorem.md`. The independent startup
+continuation is the tail rounding audit followed by guard and gate composition. If an admitted infinite non-Live history follows, the
 universal startup theorem must be rejected rather than repaired by narrowing
 the input domain. In parallel mathematical scope, a positive rho argument
 requires items 6–9; no finite startup result alone unlocks it.
