@@ -58,13 +58,13 @@ jobs:
           assert r['condition_is_origin_invariant']
           assert r['condition_bounds_every_handoff_centered_S']
           assert r['condition_excludes_nonzero_constant_position_history']
-          assert r['D_S_max_m_s'] is None
+          assert r['D_S_max_m_s'] == 1100.0
           assert r['COMPLETE_BRMM_INDEFINITE_S_THEOREM_CLOSED']
           assert not r['working_radius_sets_physical_D_S']
           assert not r['constant_nonzero_position_zero_velocity_history_admitted']
           assert 'D_S_retention_search_upper_m_s' not in r
-          assert not r['D_S_numeric_qualification_closed']
-          assert not r['COMPLETE_BRMM_INDEFINITE_S_QUALIFIED']
+          assert r['D_S_numeric_qualification_closed']
+          assert r['COMPLETE_BRMM_INDEFINITE_S_QUALIFIED']
           assert k['validation_pass']
           assert k['translation_zero_output_kernel_dimension_before_indefinite_primitives_per_axis']==2
           assert k['translation_zero_output_kernel_dimension_after_bounded_position_per_axis']==1
@@ -129,8 +129,8 @@ jobs:
           assert d['validation_pass'],d['validation_failures']
           assert d['indefinite_source_necessary_condition']['classification']=='B'
           assert d['indefinite_source_target_compatible']
-          assert not d['physical_wave_numeric_source_qualification_closed']
-          assert d['corrected_physical_wave_primitive']['current_missing_numeric_source_qualification_classification']=='E'
+          assert d['physical_wave_numeric_source_qualification_closed']
+          assert d['corrected_physical_wave_primitive']['current_missing_numeric_source_qualification_classification'] is None
           assert not d['P4_PASS'] and not d['P5_MAY_START']
           assert d['P3_delta']==1e-18
           assert s['QUALIFIED_LIVE_HANDOFF_BY_150S_CLOSED']
