@@ -14,6 +14,29 @@ changes nothing on this route.
 The end-to-end theorem is still open. `P4_PASS=false` and
 `P5_MAY_START=false` remain intentional fail-closed outputs.
 
+## ALT finite-error storage feasibility
+
+Current hypothesis: the complete nonlinear carried-storage word admits a
+remainder/metric-variation budget inside the observed tangent margin.
+Evidence: 18 actual startup/pulse histories, H18/A21/release, 54 finite words,
+worst ratio 0.9744158786871832; 72 exact SPD endpoints. See
+`ou3-alt-finite-error-storage.md`. The disturbance creates the error through
+inputs; no state installation or covariance fitting occurs. No mathematical
+failure occurred in this experiment. Initial execution lacked the Eigen
+include path; setting EIGEN_INCLUDE_DIR resolved that infrastructure issue.
+
+Critic: pulse directions are not a supremum and do not excite every limiting
+translation direction. Quiet BIAS0 cannot certify BRMM/BIAS1/2. Rounded maps
+need explicit additive machine supply. Retained fact: finite nonlinear reset,
+projection and release did not destroy the sampled margin. Limiter: uniform
+same-history remainder and metric variation, plus indefinite SPD preservation.
+The conditional triangle/Young comparison now states exactly the needed
+budgets, with an illustrative rational subunit coefficient, not claimed native
+constants. Alternatives are direct nonlinear supply bounds, a retained local
+basin with proved entry, or a different storage if forced-motion residuals
+exhaust the margin. Next falsifiable experiment: actual nonzero motion and
+BIAS1/2 complete words with truth and supply accounted for.
+
 ## ALT format-wide coercivity reduction
 
 New mathematical fact: finite binary32 entries lie on q=2^-149 times the
