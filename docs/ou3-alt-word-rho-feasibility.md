@@ -93,23 +93,43 @@ zero magnetic events inside one 3 s word is legal. The Live covariance seed
 itself records the situation: the ungauged attitude seed "belongs to the gravity
 quotient until magnetic regauge".
 
-## Measured floors on the canonical 3 s word
+## Measured ratios on the canonical 3 s word
 
 600 IMU samples, shipping Live-entry covariance seed, committed tuner schedule,
-S=0 at the committed pseudo-period, accelerometer on every valid sample:
+S=0 at the committed pseudo-period, accelerometer on every valid sample, and
+25 Hz magnetic service in the gauged words:
 
-| Source phase | rho floor | Limiting direction |
-| --- | --- | --- |
-| quiet ungauged | `1` exactly | `theta_z`, `bg_z` |
-| wave ungauged | `0.99954648` | `v_y`, `p_y` |
-| quiet gauged (25 Hz magnetic) | `0.99597048` | translation |
-| wave gauged (25 Hz magnetic) | `0.99604593` | translation |
+| Word | Motion-block ratio | Floor | Limiting direction |
+| --- | --- | --- | --- |
+| H18 quiet ungauged | `1.0000000185` | `1` exactly, certified | `theta_z`, `bg_z` |
+| A21 quiet ungauged | `1.0000000000` | `1` exactly, certified | `theta_z`, `bg_z` |
+| H18 wave ungauged | `0.99949317` | `0.99949317` | `theta_z` (0.96) |
+| A21 wave ungauged | `0.99949318` | not a floor | `theta_z` (0.96) |
+| H18 quiet gauged | `0.99629747` | `0.99629747` | `v_y` (0.70) |
+| A21 quiet gauged | `0.99629748` | not a floor | `v_y` (0.70) |
+| H18 wave gauged | `0.99636186` | `0.99636186` | `v_y` (0.70) |
+| A21 wave gauged | `0.99636187` | not a floor | `v_y` (0.70) |
+
+The two modes agree to eight digits on every phase, which is expected: releasing
+the accelerometer bias changes what is supplied, not what is observable about
+heading. "Not a floor" marks the A21 rows whose kernel is not invariant, per the
+section above.
+
+Heading remains the limiter in both ungauged phases. Only magnetic service moves
+it: the gauged words are limited instead by weakly observable surge/sway, at
+about `3.6e-3` distance to one per 3 s word.
 
 The composed word is a product of hundreds of binary64 Cayley/Joseph operations.
 The deviation of the certified unipotent diagonal from its exact value `1` is a
-direct drift proxy and is `2.3e-8` at 600 samples, so the measured floors are
-meaningful only well outside that. The falsification above rests on the exact
+direct drift proxy and is `9.3e-9` at 600 samples, so the measured ratios are
+meaningful only well outside that. The `1.0000000185` above is drift around an
+exact `1`, not a measurement above one. The falsification rests on the exact
 invariant-subspace algebra, never on a measured radius near one.
+
+The ungauged word maps also grow: `||A_mm||_2` reaches about `29` over 3 s
+against `17` to `23` for the gauged ones. That is the unipotent block acting --
+heading error accumulates linearly in the elapsed horizon -- so even a
+non-strict `rho = 1` would not give a bounded storage.
 
 ## What this does and does not invalidate
 
@@ -122,7 +142,7 @@ Not invalidated:
 - the shipping filter. An unobservable heading under gravity alone is the
   expected physical situation, not an instability;
 - motion ISS with a supply, or a theorem stated on the gravity quotient;
-- the gauged word, whose floors above leave real room: about `4.0e-3` distance
+- the gauged word, whose ratios above leave real room: about `3.6e-3` distance
   to one per 3 s word;
 - the independent P2/P3/P4/P5 route, which is untouched;
 - the eleven finite-master qualifications, which remain open on their own terms.
@@ -131,12 +151,13 @@ Not invalidated:
 
 ## Current limiting quantity
 
-For the ungauged word, `spectral_radius(A_mm) = 1` on `(theta_z, bg_z)`: an
-exact obstruction with no margin to improve.
+For the quiet ungauged word, the restricted spectral radius on `(theta_z, bg_z)`
+is exactly `1`: an exact obstruction with no margin to improve. Heading stays the
+limiting direction in the wave ungauged word too.
 
-For the gauged word, the limiter moves to weakly observable surge/sway (`v_y`,
-`p_y`), at a floor of about `0.9960` per 3 s word. That margin is the one a
-rigorous enclosure would have to survive.
+For the gauged word, the limiter moves to weakly observable surge/sway (`v_y`),
+at about `0.9964` per 3 s word. That `3.6e-3` margin is the one a rigorous
+enclosure would have to survive.
 
 ## Next falsifiable experiments
 
@@ -151,8 +172,8 @@ qualitatively different routes, none a refinement of the failed one:
 2. **Make gauging a hypothesis of the Live word.** Declare a magnetic service
    class for Normal Live, as the non-ALT route already does for
    `MAG-CALL-SCHEDULE-v1`, and re-measure. Falsifiable directly: the gauged
-   floors above are already below one, so the question becomes whether the
-   `0.9960` margin survives interval enclosure over 600 steps -- measure the
+   ratios above are already below one, so the question becomes whether the
+   `3.6e-3` margin survives interval enclosure over 600 steps -- measure the
    enclosure width before building it.
 3. **Supply the heading pair.** Move `(theta_z, bg_z)` into an independently
    bounded neutral port, as `[e_ba, beta_true]` already is. This needs an

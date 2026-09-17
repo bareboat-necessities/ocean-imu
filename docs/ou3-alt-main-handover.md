@@ -108,7 +108,7 @@ Pick a replacement formulation from the three routes in
 `ou3-alt-word-rho-feasibility.md` -- gravity-quotient storage, a declared Normal
 Live magnetic service class, or an independently bounded heading supply -- and
 re-measure rho before any enclosure work. The gauged floors are already below
-one with roughly `4.0e-3` distance per 3 s word, so for a gauging route the next
+one with roughly `3.6e-3` distance per 3 s word, so for a gauging route the next
 question is whether interval enclosure over 600 steps fits inside that margin;
 measure the enclosure width before building it.
 

@@ -552,14 +552,15 @@ conditioned operand. Source-uniform guard/Racc/libm supplies remain open.
   invalidate the shipping filter (heading is genuinely unobservable under
   gravity alone), motion ISS with a supply, a gravity-quotient theorem, the
   gauged word, or the independent P2/P3/P4/P5 route. The current limiting
-  quantity is `spectral_radius(A_mm) = 1` on `(theta_z, bg_z)`, an exact
-  obstruction with no margin; with 25 Hz magnetic service the limiter moves to
-  weakly observable surge/sway at a 3 s floor near `0.9960`. Three qualitatively
+  quantity is the restricted spectral radius `1` on `(theta_z, bg_z)`, an exact
+  obstruction with no margin; heading stays limiting on the wave ungauged word,
+  and only 25 Hz magnetic service moves the limiter to weakly observable
+  surge/sway, at a 3 s ratio near `0.9964`. Three qualitatively
   different next experiments -- gravity-quotient storage, a declared Normal Live
   magnetic service class, or an independently bounded heading supply -- are in
   `ou3-alt-word-rho-feasibility.md`; the gauging route is cheapest to falsify
   because its next question is whether interval enclosure over 600 steps fits
-  inside `4.0e-3`. `finite_word_rho_diagnostic.py` is authoritative and cannot
+  inside `3.6e-3`. `finite_word_rho_diagnostic.py` is authoritative and cannot
   promote a gate.
 
 * **Three joint24 event paths never composed (implementation defect):** the
@@ -1055,10 +1056,12 @@ promotes source membership, capture, retention or stability.
 
 ### Current limiter, DEAD_ENDS and next falsifiable work
 
-The current limiter is the master inequality, not a qualification. On an
-ungauged legal word `spectral_radius(A_mm) = 1` exactly on `(theta_z, bg_z)`,
-so `rho_floor = 1` for every common storage; on a gauged word the limiter is
-weakly observable surge/sway at a 3 s floor near `0.9960`. The next controlling
+The current limiter is the master inequality, not a qualification. On the quiet
+ungauged legal word the restricted spectral radius on `(theta_z, bg_z)` is
+exactly one, so `rho_floor = 1` for every common storage, and heading stays the
+limiting direction on the wave ungauged word too; only under magnetic service
+does the limiter move to weakly observable surge/sway, at a 3 s ratio near
+`0.9964`. The next controlling
 work is choosing a replacement formulation and re-measuring rho, not resuming
 universal startup reachability, full magnetic history or target arithmetic.
 Those remain correctly stated and open, and whatever formulation replaces the
