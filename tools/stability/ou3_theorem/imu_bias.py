@@ -36,6 +36,46 @@ class BiasLimits:
             raise ValueError("bias limits must be finite and nonnegative")
 
 @dataclass(frozen=True)
+class BiasContinuationCertificate:
+    """All-time theorem-side certificate for total residual IMU bias."""
+
+    history_id: str
+    accel_bias_norm_upper_mps2: float
+    accel_bias_rate_norm_upper_mps3: float
+    gyro_bias_norm_upper_rad_s: float
+    gyro_bias_rate_norm_upper_rad_s2: float
+    predecessor_continuity_certified: bool
+    calibration_scope_qualified: bool
+    all_time_continuation_certified: bool
+
+    def __post_init__(self) -> None:
+        if not self.history_id:
+            raise ValueError("nonempty history_id required")
+        vals=(
+            self.accel_bias_norm_upper_mps2,
+            self.accel_bias_rate_norm_upper_mps3,
+            self.gyro_bias_norm_upper_rad_s,
+            self.gyro_bias_rate_norm_upper_rad_s2,
+        )
+        if not all(math.isfinite(v) and v>=0.0 for v in vals):
+            raise ValueError("bias certificate bounds must be finite and nonnegative")
+
+
+def continuation_admitted(cert: BiasContinuationCertificate,
+                          limits: BiasLimits) -> bool:
+    """Validate one persistent total-residual IMU BIAS continuation."""
+    return (
+        cert.accel_bias_norm_upper_mps2 <= limits.B_a_mps2
+        and cert.accel_bias_rate_norm_upper_mps3 <= limits.D_a_mps3
+        and cert.gyro_bias_norm_upper_rad_s <= limits.B_g_rad_s
+        and cert.gyro_bias_rate_norm_upper_rad_s2 <= limits.D_g_rad_s2
+        and cert.predecessor_continuity_certified
+        and cert.calibration_scope_qualified
+        and cert.all_time_continuation_certified
+    )
+
+
+@dataclass(frozen=True)
 class BiasSample:
     history_id: str
     t_s: float
