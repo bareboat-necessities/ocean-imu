@@ -77,6 +77,12 @@
 
 \AtBeginEnvironment{equation}{\small}
 \AtBeginEnvironment{align}{\small}
+\AtBeginEnvironment{gather}{\small}
+\AtBeginEnvironment{multline}{\small}
+\AtBeginEnvironment{equation*}{\small}
+\AtBeginEnvironment{align*}{\small}
+\AtBeginEnvironment{gather*}{\small}
+\AtBeginEnvironment{multline*}{\small}
 \providecommand{\mathdefault}[1]{#1}
 
 \setcounter{topnumber}{5}
@@ -137,6 +143,9 @@
 \DeclareMathOperator{\Cov}{Cov}
 \newcommand{\ts}[1]{\text{#1}}
 \newcommand{\fitcol}[1]{\adjustbox{max width=\columnwidth}{\ensuremath{\displaystyle #1}}}
+% Keep legacy long proof displays inside an IEEE column without changing their
+% mathematical content. The original filter article uses the same column width.
+\newenvironment{studyfitdisplay}{\begin{adjustbox}{max width=\columnwidth}\begin{minipage}{\columnwidth}}{\end{minipage}\end{adjustbox}}
 
 \makeatletter
 \@ifpackageloaded{cite}{\renewcommand{\citepunct}{,\penalty\citepunctpenalty\,}\renewcommand{\citedash}{--}}{}
@@ -144,17 +153,21 @@
 \emergencystretch=2em
 \allowdisplaybreaks
 
-\title{Adaptive OU-Regularized Quaternion MEKF for 3-D Marine Inertial Wave Motion Estimation\\
-Stability Study: Assumptions, Proof Architecture, and Certificates}
+\title{Adaptive OU-Regularized Quaternion MEKF for 3-D Marine Inertial Wave Motion Estimation}
 \author{%
     \IEEEauthorblockN{Mikhail S. Grushinskiy}
     \IEEEauthorblockA{Independent Researcher, USA, Fair Lawn\\
     Bareboat Necessities GitHub Project\\
     Email: mgrouch@users.github.com}%
 }
-\setcounter{tocdepth}{1}
 \newcommand{\studysource}[1]{\par\smallskip
   {\footnotesize\noindent Repository source: \path{#1}.\par}\smallskip}
+\newcounter{studypart}
+\renewcommand{\thestudypart}{\Roman{studypart}}
+\newcommand{\studypart}[1]{%
+  \refstepcounter{studypart}%
+  \section*{Part \thestudypart: #1}%
+}
 \pgfplotsset{compat=1.18}
 
 
@@ -167,24 +180,21 @@ We first state why a physical motion class, qualified bias histories and
 accepted informative magnetic service are necessary, and exactly which
 conclusions depend on them. We distinguish actual Mahony-based startup,
 entry into Live, held/active accelerometer-bias modes, gravity-only centre
-dynamics, and magnetically informed Live dissipation. The selected alternative
-(ALT) proof retains complete same-history finite increments and the full
-covariance, while the original P2/P3/P4/P5 route remains independent. Exact
-algebraic lemmas, conditional comparison theorems, point diagnostics, and
-validated source-uniform certificates have different roles. This study makes
+dynamics, and magnetically informed Live dissipation. The analysis retains complete same-history finite increments and the full
+covariance. Analytical lemmas establish the finite-error structure, while
+validated numerical certificates are used only for bounded inequalities that
+are impractical to close analytically. This study makes
 those roles and the remaining obligations explicit; it does not report a
 completed shipping startup or end-to-end stability theorem.
 \end{abstract}
-\tableofcontents
-\clearpage
 
-\part{Assumptions, objectives, and the selected proof architecture}
+\studypart{Assumptions, objectives, and the selected proof architecture}
 \input{w3d-stability-reader-guide.tex-part}
 \input{w3d-stability-proof-roadmap.tex-part}
 \input{w3d-stability-certificates.tex-part}
 
-\clearpage
-\part{Detailed physical contracts and conditional motion theorem}
+
+\studypart{Detailed physical contracts and conditional motion theorem}
 \label{part:study-contracts}
 The following sections retain the detailed physical definitions and original
 conditional lemmas. Their hypotheses are local to each statement: a narrower
@@ -199,30 +209,28 @@ the current evidence boundary are summarized in Part~I.
 \input{w3d-brmm-stability-theorem.tex-part}
 \input{w3d-brmm-period-bridge.tex-part}
 
-\clearpage
-\part{Independent original route: information and finite-error tools}
+
+\studypart{Information and finite-error analysis}
 \label{part:study-original}
-This route is independently continuable. P2/P3 linear information and Riccati
-results are ingredients, not an ALT or nonlinear P4 certificate. The canonical
-P3 threshold remains $10^{-18}$; P4 and P5 are not promoted by moving these
-lemmas into this study. The gravity-only claims below retain their explicit
-source/information premises. They do not override the ungauged heading/axial
-bias obstruction in Sec.~\ref{sec:study-ungauged}.
+This part develops the information, covariance, and finite-error bounds used by
+the complete finite-word stability argument. Gravity-only results retain their
+explicit information premises and do not override the ungauged heading and
+axial gyro-bias obstruction in Sec.~\ref{sec:study-ungauged}.
 
 \input{w3d-iss-stability.tex-part}
 \input{w3d-analytical-stability-widening.tex-part}
 \input{w3d-stability-widening-phase-c.tex-part}
 \input{w3d-stability-widening-source-path.tex-part}
 
-\clearpage
-\part{Startup, capture, and hybrid transport}
+
+\studypart{Startup, capture, and hybrid transport}
 \label{part:study-startup}
 The implementation description and auxiliary continuous-time arguments below
 must be connected by a shipping reachability and arithmetic proof. A theorem
 whose hypotheses include an accepted handoff set, a retained domain, or a
 contracting word does not establish those hypotheses. In particular it is not
-a universal startup deadline. The two $S$ origins used in the detailed original
-entry graph and in ALT are related explicitly in Sec.~\ref{sec:study-origin}.
+a universal startup deadline. The displacement-integral origin used for Live analysis is fixed at first
+Live entry as described in Sec.~\ref{sec:study-origin}.
 
 \input{w3d-init.tex-part}
 \input{w3d-p5-staged-capture.tex-part}
@@ -230,8 +238,8 @@ entry graph and in ALT are related explicitly in Sec.~\ref{sec:study-origin}.
 \input{w3d-stability-widening-phase-d.tex-part}
 \input{w3d-stability-widening-phase-e.tex-part}
 
-\clearpage
-\part{Stochastic qualification}
+
+\studypart{Stochastic qualification}
 \label{part:study-stochastic}
 \section{Scope of the stochastic extension}
 The deterministic hard-envelope theorem and the following localized stochastic
