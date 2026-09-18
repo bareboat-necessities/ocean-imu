@@ -416,7 +416,9 @@ jobs:
   riccati-p4:
     needs: riccati-p3
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    # The finite physical P4 contract test now executes instead of aborting on
+    # the R_S parity premise, and overran the previous 30 minute budget.
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v6
         with:

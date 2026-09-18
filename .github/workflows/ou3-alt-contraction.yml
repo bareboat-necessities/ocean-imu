@@ -52,7 +52,11 @@ jobs:
   algebra-regressions:
     name: Full inherited ALT regression suite
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    # The full suite is 1391 tests and runs about 38 minutes on a fast host.
+    # The 45 minute budget predates the R_S parity fix, when the shared
+    # prerequisite aborted 51 of 55 modules in about ten minutes; the suite now
+    # does that work and needs headroom over a slower hosted runner.
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v6
         with:
