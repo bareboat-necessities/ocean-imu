@@ -46,11 +46,11 @@ Estimator hold, release, correction, and projection never reset physical truth. 
 
 ## MAGNETIC SERVICE
 
-For each certified tail window rooted at `s`, let `Phi(k,s)` be the ordered differential of the complete preceding same-history shipping execution. Let `H_m,k` and `R_m,k` be the actual sensitivity and covariance of a correction that was actually applied. In normalized heading/axial-gyro-bias root coordinates,
+For each certified tail window rooted at `s`, let `Phi(k,s)` be the ordered differential of the complete preceding same-history shipping execution. Let `H_m,k` be the literal magnetic sensitivity and `S_m,k^act` the actual innovation covariance presented to the shipping factorization for a correction that was actually applied. In normalized heading/axial-gyro-bias root coordinates,
 
-`G_k=R_m,k^(-1/2) H_m,k Phi(k,s) E_hb`
+`G_k=W_k H_m,k Phi(k,s) E_hb`, with `W_k^T W_k=(S_m,k^act)^(-1)`.
 
-or an algebraically equivalent inverse-free factorization. Service requires
+Equivalently, if `S_m,k^act=L_k L_k^T`, use `W_k=L_k^(-1)`. An inverse-free LDLT form is equally valid. The essential point is that the same actual innovation covariance factored by the shipping update is used. Service requires
 
 `sum G_k^T G_k >= mu_M I_2`
 
