@@ -108,7 +108,10 @@ actually performed satisfy
  \quad\text{a.e.}
  \label{eq:bias-cont}
 \end{align}
-The constants are qualified separately. The sampled physical histories obey
+The constants are qualified separately. No decomposition of physical bias is
+required: turn-on offset, thermal drift, strain, hysteresis, aging, correlated
+drift, and other residual mechanisms may occur simultaneously whenever their
+total residual satisfies \eqref{eq:bias-cont}. The sampled physical histories obey
 \begin{align}
  b_{a,k+1}&=b_{a,k}+w_{a,k},&
  \norm{w_{a,k}}&\le D_a\Delta t_k,\nonumber\\
