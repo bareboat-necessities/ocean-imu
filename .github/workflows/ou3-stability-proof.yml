@@ -7,10 +7,19 @@ on:
       - "src/kalman_ou_iii/**"
       - "sensors/full_marine_ins/atomS3R_ins_kalman_ou3/**"
       - "tools/stability/**"
-      - "tests/validation/test_ou3_*.py"
-      - "tests/kalman_ou_iii/**"
+      - "tests/validation/test_ou3_architecture_cleanup.py"
+      - "tests/validation/test_ou3_imu_bias.py"
+      - "tests/validation/test_ou3_magnetic_service.py"
+      - "tests/validation/test_ou3_marine_motion.py"
+      - "tests/validation/test_ou3_no_mag_obstruction.py"
+      - "tests/validation/test_ou3_same_execution.py"
+      - "tests/validation/test_ou3_theorem_status.py"
+      - "tests/kalman_ou_iii/shipping_contract-test.cpp"
+      - "tests/kalman_ou_iii/shipping_transition-test.cpp"
+      - "tests/kalman_ou_iii/Makefile"
       - "docs/ou3-*.md"
       - "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex"
+      - "doc/kalman_ou_iii/w3d-intro.tex-part"
       - "reports/results/ou3_stability/**"
       - ".github/workflows/ou3-stability-proof.yml"
   push:
@@ -18,39 +27,62 @@ on:
     paths:
       - "src/kalman_ou_iii/**"
       - "tools/stability/**"
-      - "tests/validation/test_ou3_*.py"
+      - "tests/validation/test_ou3_architecture_cleanup.py"
+      - "tests/validation/test_ou3_imu_bias.py"
+      - "tests/validation/test_ou3_magnetic_service.py"
+      - "tests/validation/test_ou3_marine_motion.py"
+      - "tests/validation/test_ou3_no_mag_obstruction.py"
+      - "tests/validation/test_ou3_same_execution.py"
+      - "tests/validation/test_ou3_theorem_status.py"
+      - "tests/kalman_ou_iii/shipping_contract-test.cpp"
+      - "tests/kalman_ou_iii/shipping_transition-test.cpp"
       - "docs/ou3-*.md"
       - "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex"
+      - "doc/kalman_ou_iii/w3d-intro.tex-part"
       - "reports/results/ou3_stability/**"
+
 concurrency:
   group: ou3-stability-proof-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 permissions:
   contents: read
+
 jobs:
   contract:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: Compile theorem tooling
+        run: python3 -m py_compile tools/stability/ou3_theorem/*.py
       - name: Validate theorem contracts
-        run: python3 -m unittest discover -v -s tests/validation -p 'test_ou3_*.py'
+        working-directory: tests/validation
+        run: |
+          python3 -m unittest -v \
+            test_ou3_architecture_cleanup \
+            test_ou3_imu_bias \
+            test_ou3_magnetic_service \
+            test_ou3_marine_motion \
+            test_ou3_no_mag_obstruction \
+            test_ou3_same_execution \
+            test_ou3_theorem_status
       - name: Validate provenance and fail-closed status
         run: python3 tools/stability/ou3_theorem/build_evidence.py --output /tmp/ou3-stability-evidence.json
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: ou3-stability-evidence
           path: /tmp/ou3-stability-evidence.json
           retention-days: 7
+
   shipping-transitions:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Install compiler dependencies
         run: sudo apt-get update -qq && sudo apt-get install -y g++ libeigen3-dev
       - name: Build literal shipping regressions
