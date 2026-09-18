@@ -36,7 +36,9 @@ def audit_same_execution(
     all_ids = set().union(*populated) if populated else set()
     failures: list[str] = []
     for name, ids in groups.items():
-        if len(ids) > 1:
+        if not ids:
+            failures.append(f"{name}: missing principal-assumption records")
+        elif len(ids) > 1:
             failures.append(f"{name}: multiple execution ids")
     if len(all_ids) != 1:
         failures.append("principal assumptions are not attached to exactly one execution")
