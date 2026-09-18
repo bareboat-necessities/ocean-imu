@@ -12,10 +12,10 @@
     \cmidrule(lr){2-4}\cmidrule(lr){5-6}
     Multiplier & $\tau$ & $\sigma_{aw}$ & $r_S$ & $\sigma_{aw},r_S$ & $\tau,r_S$ (SpectralMSE) \\
     \midrule
-    0.5 & 5.36 $\pm$ 0.14 & 5.09 $\pm$ 0.14 & 5.87 $\pm$ 0.15 & 5.70 $\pm$ 0.15 & 12.77 $\pm$ 0.35 \\
-    0.75 & 5.17 $\pm$ 0.14 & 5.09 $\pm$ 0.14 & 5.29 $\pm$ 0.14 & 5.25 $\pm$ 0.14 & 6.52 $\pm$ 0.17 \\
+    0.5 & 5.36 $\pm$ 0.14 & 5.09 $\pm$ 0.14 & 5.87 $\pm$ 0.15 & 5.70 $\pm$ 0.15 & 12.87 $\pm$ 0.34 \\
+    0.75 & 5.17 $\pm$ 0.14 & 5.09 $\pm$ 0.14 & 5.29 $\pm$ 0.14 & 5.25 $\pm$ 0.14 & 6.53 $\pm$ 0.17 \\
     1 & 5.09 $\pm$ 0.14 & 5.09 $\pm$ 0.14 & 5.09 $\pm$ 0.14 & 5.09 $\pm$ 0.14 & 5.09 $\pm$ 0.14 \\
-    1.25 & 5.05 $\pm$ 0.15 & 5.09 $\pm$ 0.14 & 5.05 $\pm$ 0.15 & 5.05 $\pm$ 0.15 & 5.39 $\pm$ 0.22 \\
+    1.25 & 5.05 $\pm$ 0.15 & 5.09 $\pm$ 0.14 & 5.05 $\pm$ 0.15 & 5.05 $\pm$ 0.15 & 5.38 $\pm$ 0.22 \\
     1.5 & 5.04 $\pm$ 0.15 & 5.09 $\pm$ 0.14 & 5.09 $\pm$ 0.17 & 5.07 $\pm$ 0.16 & 6.65 $\pm$ 0.33 \\
     \bottomrule
   \end{tabular}
@@ -31,12 +31,12 @@
     \toprule
     Case & Mode & Z [m] & Z [\%$H_s$] & 3D [m] & Pitch [$^\circ$] \\
     \midrule
-    Low motion, $H_s=0.27$ m & Adaptive & 0.011 $\pm$ 0.000 & 4.16 $\pm$ 0.11 & 0.017 $\pm$ 0.000 & 0.26 $\pm$ 0.12 \\
-    Low motion, $H_s=0.05$ m & Adaptive & 0.009 $\pm$ 0.000 & 18.53 $\pm$ 0.83 & 0.017 $\pm$ 0.001 & 0.25 $\pm$ 0.11 \\
-    Controlled 120 s ramp & Adaptive & 0.188 $\pm$ 0.005 & 4.70 $\pm$ 0.11 & 0.395 $\pm$ 0.009 & 0.26 $\pm$ 0.12 \\
-    Controlled 120 s ramp & FixedNominal & 0.426 $\pm$ 0.025 & 10.66 $\pm$ 0.63 & 0.742 $\pm$ 0.041 & 0.35 $\pm$ 0.17 \\
-    Rapid 30 s ramp & Adaptive & 0.194 $\pm$ 0.009 & 4.85 $\pm$ 0.21 & 0.404 $\pm$ 0.010 & 0.26 $\pm$ 0.12 \\
-    Rapid 30 s ramp & FixedNominal & 0.433 $\pm$ 0.025 & 10.83 $\pm$ 0.62 & 0.753 $\pm$ 0.041 & 0.36 $\pm$ 0.18 \\
+    Low motion, $H_s=0.27$ m & Adaptive & 0.011 $\pm$ 0.000 & 4.15 $\pm$ 0.11 & 0.017 $\pm$ 0.000 & 0.26 $\pm$ 0.13 \\
+    Low motion, $H_s=0.05$ m & Adaptive & 0.009 $\pm$ 0.000 & 18.53 $\pm$ 0.83 & 0.016 $\pm$ 0.001 & 0.25 $\pm$ 0.11 \\
+    Controlled 120 s ramp & Adaptive & 0.188 $\pm$ 0.005 & 4.71 $\pm$ 0.12 & 0.401 $\pm$ 0.008 & 0.26 $\pm$ 0.13 \\
+    Controlled 120 s ramp & FixedNominal & 0.431 $\pm$ 0.026 & 10.76 $\pm$ 0.64 & 0.808 $\pm$ 0.049 & 1.32 $\pm$ 0.23 \\
+    Rapid 30 s ramp & Adaptive & 0.194 $\pm$ 0.009 & 4.85 $\pm$ 0.21 & 0.411 $\pm$ 0.011 & 0.26 $\pm$ 0.14 \\
+    Rapid 30 s ramp & FixedNominal & 0.437 $\pm$ 0.025 & 10.93 $\pm$ 0.63 & 0.820 $\pm$ 0.051 & 1.35 $\pm$ 0.24 \\
     \bottomrule
   \end{tabular}
 \end{table*}
