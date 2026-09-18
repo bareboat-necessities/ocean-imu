@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""High-precision outward-rounded algebraic interval primitives for OU-III P3.
+"""High-precision outward-rounded algebraic interval primitives for OU-III analysis.
 
 The binary64 interval layer is intentionally tiny and auditable, but a 600-sample
 full Joseph word can accumulate enough entrywise wrapping that the *box* around a
@@ -12,7 +12,7 @@ binary64 endpoints already certified by the source/model producers, then every
 +,-,*,/ operation is rounded outwards with Python ``decimal`` at a fixed high
 precision.  No transcendental is evaluated here.
 
-This module is suitable for the complete H18/A21 P/Psi/Omega word.  It is not a
+This module is suitable for the complete finite covariance/transition/noise word.  It is not a
 scalar surrogate, a midpoint calculation, or a post-hoc floating eigensolve.
 """
 from __future__ import annotations

@@ -10,7 +10,7 @@ For |x| <= 1/2, exp(x) is enclosed by an exact-rational Taylor polynomial plus
 its Lagrange remainder.  The elementary bound exp(|x|) < 2 on this interval is
 sufficient.
 
-For the P4 SO(3) certificate, sin/cos and the Rodrigues kernels
+For finite-angle SO(3) certification, sin/cos and the Rodrigues kernels
 
     sinc(x) = sin(x)/x,
     cosc(x) = (1-cos(x))/x^2

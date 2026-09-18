@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Validated positive binary64 root/rational-power endpoint enclosures.
 
-The P4 adaptive source cover needs the deployed SpectralMSE map, including
+Finite-precision analysis of the deployed SpectralMSE map needs
 ``sqrt(x)``, ``x^(6/7)`` and the cached ``q_eff^(1/14)``.  Ordinary libm results
 are not theorem bounds.  This module uses binary64 only as a search grid: every
 candidate is converted exactly to :class:`fractions.Fraction` and accepted only

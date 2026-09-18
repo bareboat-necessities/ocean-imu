@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""First-order outward interval automatic differentiation for OU-III P4.
+"""First-order outward interval automatic differentiation for finite-error OU-III maps.
 
-The path-dependent P4 route needs derivatives of the *complete nonlinear word*,
+Finite-error certification needs derivatives of the *complete nonlinear word*,
 not scalar Lipschitz constants accumulated after the fact.  This module provides
 an intentionally small interval-AD layer over :mod:`ou3_interval` and the exact
 Cayley/deployed-quaternion algebra used by the shipping MEKF proof.

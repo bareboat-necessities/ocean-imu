@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Validated positive sqrt/log enclosures for OU-III proof work.
 
-The P4 joint estimator needs the shipping WavePeriodEstimator moment-ratio map,
+Finite-precision analysis needs the shipping WavePeriodEstimator moment-ratio map,
 which contains sqrt and log.  This module keeps those operations out of ordinary
 libm proof arithmetic.
 
