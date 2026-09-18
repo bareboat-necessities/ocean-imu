@@ -56,7 +56,7 @@ The `selected-source.bundle` preserves local source commit 1cb65a24379b74bf59443
 
 The tuning evidence predates direction RAO matching and correction of the v1.2.1 propagation-to reference. Direction measurements from these parameter screens are not publication evidence; use the separate direction ablation and final integrated replay. Attitude/displacement tuning metrics are unaffected by that direction-only branch.
 
-Performance selection does not alter the canonical P3/P4/P5 proof thresholds or imply deployment-domain stability admission. Stability and live-covariance audits are separate obligations.
+Performance selection does not alter the stability-theorem assumptions or imply deployment-domain stability admission. Stability and live-covariance audits are separate obligations.
 
 ## NLO after the PLL clock correction
 
