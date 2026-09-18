@@ -473,6 +473,37 @@ so it must not be folded into unrelated work. Next falsifiable step: subdivide
 that one cell's own certification argument, not the horizontal factor or the
 enclosing tube.
 
+### E/C — two relation producers unmasked by the R_S parity fix (pre-existing)
+
+Implementation defects, not theorem or enclosure failures, and independent of the
+deployed horizontal `R_S` pair. While the class E premise above was failing, the
+correlated outer-enclosure prerequisite aborted the `ou3-p4-joint-estimator-relation`
+producer chain before either of these was reached. Fixing the premise makes them
+visible; it did not create them.
+
+- `ou3_p4_brmm_event_lineage_cover.py:167` calls
+  `ou3_p4_complete_brmm_source_cover_contract.source_cell_from_joint_image` with an
+  `event_source_token` that is neither the image token nor an `:e`-prefixed
+  descendant of it, so `:75` raises `ValueError: detached event token`. The guard is
+  a string comparison with no numeric input.
+- `ou3_p4_brmm_a21_projection_prefix.py:54` does not close the same-`D_theta`
+  correction target: `closed=False` after 26411 attempts, original dimension 34,
+  reduced 31, 3 reset-defect columns removed, 7 hard and 11 nonlinear premises, 7
+  equality-like, 2 chord and 2 cross sectors.
+
+Attribution is settled as pre-existing, by the same method used for class D: both
+fail with byte-identical output at `238a70e`, where the header still carried the
+isotropic `rho_y = 0.72`, and again at `0c69413`. The a21 chart is identical in all
+ten reported fields under both the isotropic and the anisotropic pair, so that
+certificate is not even `rho`-sensitive.
+
+Each is its own change under the `AGENTS.md` taxonomy and must not be folded into
+the parity work. The token mismatch is a plumbing question: establish which
+lineage token the smoke cell should carry. The a21 non-closure is a correction-
+domain question and falls under the two-strike rule, so it needs a failure
+analysis of the limiting sector before another delta-grid or multiplier-grid
+widening is attempted.
+
 ### C/G — downstream same-history joint24 closure
 
 The controlling P4 theorem remains the complete-word, same-history joint24
