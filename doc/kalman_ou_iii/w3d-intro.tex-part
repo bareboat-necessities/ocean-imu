@@ -48,7 +48,7 @@ geodetic position; GNSS-aided absolute trajectory estimation is not evaluated.
 The evidence is primarily synthetic, and the ESP32--S3 exercise establishes
 source portability only. Thermal-calibration performance is not evaluated.
 The separate \href{kalman_ou-w3d-stability-study.pdf}{OU--III stability study}
-contains the BRMM and sensor assumptions, startup-to-Live proof roadmap,
-analytical lemmas and numerical-certificate requirements. That study retains
-both independently continuable proof tracks; this article does not claim a
-completed end-to-end stability certificate.
+states the simultaneous MARINE MOTION, IMU BIAS, and MAGNETIC SERVICE
+assumptions, the single startup-to-certified-tail proof path, and the remaining
+finite-error, retention, and implementation-arithmetic obligations. This
+article does not claim a completed end-to-end stability certificate.
