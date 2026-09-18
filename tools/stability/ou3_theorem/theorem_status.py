@@ -4,6 +4,7 @@ from __future__ import annotations
 def status_report() -> dict:
     obligations={
         "physical_contract_formulation":True,
+        "same_execution_linkage":True,
         "shipping_implementation_provenance":True,
         "constant_nonzero_wave_displacement_rejection":True,
         "same_history_bias_recurrence":True,
