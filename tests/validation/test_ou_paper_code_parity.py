@@ -8,6 +8,7 @@ semantics, startup filtering, and magnetic exponential memory/slew.
 """
 
 from pathlib import Path
+import re
 import unittest
 
 
@@ -36,6 +37,8 @@ class OUPaperCodeParityTests(unittest.TestCase):
         cls.ou3_adapt = text("doc/kalman_ou_iii/w3d-adaptation-motivation.tex-part")
         cls.ou3_obs = text("doc/kalman_ou_iii/w3d-adaptation-observables.tex-part")
         cls.ou3_impl = text("doc/kalman_ou_iii/w3d-fus-methods.tex-part")
+        cls.ou3_axes = text("doc/kalman_ou_iii/w3d-rs-anisotropy-design.tex-part")
+        cls.ou3_conclusion = text("doc/kalman_ou_iii/w3d-conclusion-summary.tex-part")
         cls.ou3_iss = text("doc/kalman_ou_iii/w3d-iss-stability.tex-part")
         cls.ou3_init = text("doc/kalman_ou_iii/w3d-init.tex-part")
         cls.ou3_mag = text("doc/kalman_ou_iii/w3d-mag-hard-iron.tex-part")
@@ -77,6 +80,35 @@ class OUPaperCodeParityTests(unittest.TestCase):
         self.assertIn(r"\tau_\star^{24/7}T_{S,\star}^{-1/2}", self.ou3_impl)
         self.assertIn(r"\sqrt{R_a}=\SI{0.0148}{m.s^{-2}}", self.ou3_adapt)
         self.assertIn("No additional reference-cadence factor is applied", self.ou3_impl)
+
+    def test_ou3_axis_standard_deviations_and_covariance_match_paper(self):
+        # Compare declared defaults with the header, not a historical tuning
+        # study. The core squares these standard deviations to form R_S.
+        factors = {
+            axis: float(value)
+            for axis, value in re.findall(
+                r"float\s+R_S_([xy])_factor_\s*=\s*([0-9.]+)f;", self.ou3_wrap
+            )
+        }
+        self.assertEqual(set(factors), {"x", "y"})
+        factors["z"] = 1.0
+        paper = {
+            axis: float(value)
+            for axis, value in re.findall(
+                r"\\rho_([xyz])\s*(?:&)?=\s*([0-9.]+)", self.ou3_axes
+            )
+        }
+        self.assertEqual(paper, factors)
+        for axis in ("x", "y"):
+            self.assertIn(f"rs_z * R_S_{axis}_factor_", self.ou3_wrap)
+        self.assertIn("R_S = sigma_S.array().square().matrix().asDiagonal();", self.ou3_core)
+        self.assertIn(r"\rho_x^2,\rho_y^2,1", self.ou3_axes)
+        self.assertIn("standard deviations, not covariance entries", self.ou3_axes)
+        self.assertIn("are not rotated with", self.ou3_axes)
+        self.assertIn("float S_factor_      = 1.0f;", self.ou3_wrap)
+        self.assertIn(r"\sigma_{aw,\mathrm{appl}}\mat I_3", self.ou3_axes)
+        self.assertNotIn("current isotropic OU--III configuration", self.ou3_conclusion)
+        self.assertIn("axis-dependent OU--III configuration", self.ou3_conclusion)
 
     def test_common_variance_ewma_is_single_stage_debiased_and_documented(self):
         self.assertIn("struct DebiasedEMA", self.tuner)

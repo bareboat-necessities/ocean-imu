@@ -1,4 +1,4 @@
-\subsection{Per-axis regularizer optimum and isotropic deployment}
+\subsection{Per-axis regularizer optimum and deployed anisotropy}
 \label{sec:adaptation-rs-anisotropy}
 
 The reduced-MSE optimum is scalar but applies independently to each axis.  Let
@@ -12,14 +12,15 @@ Eq.~\eqref{eq:adapt-reduced-mse-pole},
 \end{equation}
 and therefore the anisotropic ratios relative to the vertical channel are
 \begin{equation}
-\boxed{
-\rho_x:=\frac{r_{S,x}^{\star}}{r_{S,z}^{\star}}
+\boxed{\begin{aligned}
+\rho_x^{\star}&:=\frac{r_{S,x}^{\star}}{r_{S,z}^{\star}}
 =\left(\frac{q_x}{q_z}\right)^{1/14}
  \left(\frac{m_{-4,x}}{m_{-4,z}}\right)^{3/7},
-\qquad
-\rho_y:=\frac{r_{S,y}^{\star}}{r_{S,z}^{\star}}
+\\[2pt]
+\rho_y^{\star}&:=\frac{r_{S,y}^{\star}}{r_{S,z}^{\star}}
 =\left(\frac{q_y}{q_z}\right)^{1/14}
- \left(\frac{m_{-4,y}}{m_{-4,z}}\right)^{3/7}.}
+ \left(\frac{m_{-4,y}}{m_{-4,z}}\right)^{3/7}.
+\end{aligned}}
 \label{eq:adapt-rs-axis-ratios}
 \end{equation}
 This expression explains why anisotropy cannot be chosen from drift intensity
@@ -38,27 +39,40 @@ would generally not remain the same after rotating the vessel relative to the
 same sea.  A common horizontal multiplier cannot remove this issue; it merely
 forces two different desired-motion spectra to share one compromise.
 
-The dedicated anisotropy study therefore treated the axis formula as a
-diagnostic rather than as a new fixed tuning law.  Sweeps of the common
-horizontal factor showed the expected $x$--$y$ trade: loosening the horizontal
-anchor helps one projected horizontal channel while degrading the other, with
-little vertical movement, and the pooled three-dimensional endpoint is best
-near the isotropic setting.  A separate sweep of the OU-prior horizontal scale
-likewise moved the optimum toward the isotropic prior.  The deployed
-configuration consequently uses
+The scalar ratios are diagnostics, not a complete-estimator tuning law. The
+current vessel-response study retains separate horizontal regularization
+factors, while the stationary OU-acceleration prior remains isotropic. The
+implemented default is
 \begin{equation}
-\boxed{
-\vct r_S=
-\begin{bmatrix}
-r_{S,\mathrm{filter}}&r_{S,\mathrm{filter}}&r_{S,\mathrm{filter}}
-\end{bmatrix}^{\top},
-\qquad
-(\matg{\Sigma}_{aw}^{\mathrm{stat}})^{1/2}
-=\sigma_{aw,\mathrm{appl}}\mat I_3 .}
+\boxed{\begin{aligned}
+\vct r_S
+ &=r_{S,\mathrm{filter}}
+   \begin{bmatrix}\rho_x&\rho_y&\rho_z\end{bmatrix}^{\top},\\
+\rho_x&=0.72,\qquad \rho_y=0.50,\qquad \rho_z=1,\\
+\mat R_S
+ &=r_{S,\mathrm{filter}}^2
+   \diag\!\left(\rho_x^2,\rho_y^2,1\right).
+\end{aligned}}
 \label{eq:fus-rs-anisotropy}
 \end{equation}
-The choice is empirical over the tested directional ensemble, not a claim that
-$q_x=q_y=q_z$ or that real marine motion is isotropic.  If heading-dependent
-surge/sway spectra and a sufficiently observable horizontal reference are
-available, Eq.~\eqref{eq:adapt-rs-axis-ratios} provides the appropriate route to
-a physically motivated anisotropic extension.
+The factors multiply standard deviations, not covariance entries. The scalar
+$r_{S,\mathrm{filter}}$ is the applied vertical value after the common clamp
+and cadence conversion in
+Sec.~\ref{sec:adaptation-target-implementation}. The independent OU-prior
+setting is
+\begin{equation}
+ (\matg{\Sigma}_{aw}^{\mathrm{stat}})^{1/2}
+ =\sigma_{aw,\mathrm{appl}}\mat I_3 .
+\end{equation}
+Thus an isotropic acceleration prior does not imply an isotropic integral
+pseudo-measurement covariance.
+
+These factors are applied in world NED coordinates and are not rotated with
+heading. The reference vessel-response records hold yaw at zero, so the two
+horizontal axes coincide with surge and sway only in that validation setting.
+Section~\ref{sec:results} discusses the observed axis-dependent response and
+the complete-estimator comparisons. The selected factors are empirical for
+that ensemble; they are neither the exact scalar optima
+$\rho_x^{\star},\rho_y^{\star}$ nor a heading-invariant hull model.
+Heading-dependent rotation of the regularization covariance and validation
+under changing encounter directions remain separate extensions.

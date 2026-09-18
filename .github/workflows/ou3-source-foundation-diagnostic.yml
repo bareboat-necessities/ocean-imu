@@ -22,21 +22,6 @@ jobs:
       - uses: actions/checkout@v6
         with:
           persist-credentials: false
-      - name: Package repair checkout for local validation
-        if: github.ref == 'refs/heads/fix/ci-document-parity-20260918'
-        run: |
-          git archive --format=tar.gz --output=/tmp/ci-repair-source.tar.gz HEAD
-          sudo apt-get update -qq
-          sudo apt-get install -y --no-install-recommends libeigen3-dev
-          tar -czf /tmp/ci-repair-eigen.tar.gz -C /usr/include eigen3
-      - name: Upload repair validation inputs
-        if: github.ref == 'refs/heads/fix/ci-document-parity-20260918'
-        uses: actions/upload-artifact@v6
-        with:
-          name: ci-repair-validation-inputs
-          path: /tmp/ci-repair-*.tar.gz
-          retention-days: 1
-          if-no-files-found: error
       - name: Compile proof tooling
         run: make -C tests/validation build
       - name: Run source-foundation tests individually
@@ -46,6 +31,7 @@ jobs:
           tests=(
             test_ou3_stability_package_integrity
             test_ou3_p4_coordinate_transport_algebra
+            test_ou3_p4_ci_event_prefix
             test_ou3_p4_complete_brmm_correction_information_bound
             test_ou3_result_determinism
             test_ou3_source_domain_contract

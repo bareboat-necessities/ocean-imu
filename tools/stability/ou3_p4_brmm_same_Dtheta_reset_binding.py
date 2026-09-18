@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
 """Bind a real BRMM event's SAME D_theta map to the finite reset graph.
 
-Two logically distinct routes are exposed:
+Three logically distinct routes are exposed:
 
 * ``bind_event`` retains the historical scalar diagnostic. It is not a theorem
   correction-domain proof.
+* ``bind_event_certified_graph`` verifies a local event certificate and binds
+  its actual radius. A local radius above the declared 0.25 chart does NOT
+  qualify the canonical production closure domain.
 * ``bind_event_first_exit`` is the production route. It uses the literal
   estimator-owned D_theta=E_theta*K*Q from the SAME P/H/R/K event and the
   declared nonlinear correction-chart radius from the canonical closure domain.
@@ -59,6 +62,31 @@ def bind_event_first_exit(em:EVENT.EventMaster,delta:float|None=None)->dict:
     q=_entry_q();Pi,sector=RESETIQC.parameterized_reset_iqc(em.D_theta,em.B_theta,q,delta);target=RESETIQC.correction_domain_target(em.D_theta,em.h_index,delta);n=em.coordinate_dimension
     dims=(EVENT.shape(Pi)==(n,n) and EVENT.shape(target)==(n,n));chart=bool(sector['chart_safe'])
     return {'mode':mode,'kind':em.kind,'delta':delta,'declared_correction_chart_delta_used':delta==declared,'broad_reset_utility_max_used_as_production_delta':False,'same_event_Dtheta_map_consumed':True,'same_event_P_H_R_K_ancestry_retained':True,'correction_domain_target':target,'reset_sector':Pi,'reset_sector_contract':sector,'chart_safe_conditionally_on_target':chart,'dimensions_valid':dims,'correction_domain_target_proved_here':False,'correction_domain_target_must_be_proved_by_same_augmented_first_exit_master':True,'attitude_entry_radius_shrunk':False,'rowwise_K_bound_used':False,'independent_K_box_used':False,'scalar_covariance_residual_ceiling_used':False,'closed':bool(dims and chart)}
+def bind_event_certified_graph(em:EVENT.EventMaster,certificate:dict)->dict:
+    """Bind a reverified local graph without changing the frozen first-exit chart.
+
+    A diagnostic prefix may prove a valid local reset sector at a larger
+    radius, but cannot reuse a production enclosure evaluated at 0.25. The
+    returned qualification flag keeps those two scopes explicit.
+    """
+    import ou3_p4_brmm_nonlinear_correction_domain as GRAPH
+    ok,pivots=GRAPH.verify_event_certificate(em,certificate)
+    if not ok:
+        raise ValueError('same-event correction certificate failed outward LDLT')
+    delta=float(certificate['delta']);declared=_declared_correction_chart_radius()
+    Pi,sector=RESETIQC.parameterized_reset_iqc(em.D_theta,em.B_theta,_entry_q(),delta)
+    target=RESETIQC.correction_domain_target(em.D_theta,em.h_index,delta)
+    n=em.coordinate_dimension
+    dims=EVENT.shape(Pi)==(n,n) and EVENT.shape(target)==(n,n)
+    return {'mode':_mode_name(em.mode),'kind':em.kind,'delta':delta,
+            'same_event_Dtheta_map_consumed':True,'reset_sector':Pi,
+            'reset_sector_contract':sector,'correction_domain_target':target,
+            'local_correction_target_reverified':True,'pivot_lowers':pivots,
+            'declared_correction_chart_delta':declared,
+            'within_declared_correction_chart':delta<=declared,
+            'production_correction_domain_target_closed_here':False,
+            'closed':bool(dims and sector['chart_safe'])}
+
 def bind_event(em:EVENT.EventMaster,corr:dict)->dict:
     mode=_mode_name(em.mode)
     if mode not in corr['modes'] or em.kind not in corr['modes'][mode]['events']:raise ValueError('correction certificate lacks event mode/kind')

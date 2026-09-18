@@ -113,7 +113,12 @@ static void test_fresh_wrapper(bool mag, bool zero_proxy) {
     // A C2 periodic BRMM-Q position can remain at 2.1 m for the first 200 s.
     // With S_true(t)=integral_0^t p_true, this gives S_true=2.1*t, NOT zero.
     const double source_S=std::sqrt(3.0)*2.1*physical_time;
-    require(source_S>300,"reachable session-origin S at quiet handoff exceeds the old 300 assumption");
+    require(source_S>0,"session-origin integral is nonzero at a positive-time handoff");
+    // Only the deliberately zero-proxy history forces the timeout. Ordinary
+    // aligned samples can now reach readiness earlier; they need not exceed
+    // 300. Keep the counterexample assertion on the history that proves it.
+    if(zero_proxy)
+        require(source_S>300,"timeout witness exceeds the old session-origin 300 assumption");
     require(physical_time<200,"entire startup stays on the source's constant-position plateau");
     std::cout << "LIVE_ENTRY " << (mag?"mag":"no_mag") << " zero_proxy="<<zero_proxy<<" noise_max="<<noise_max<<" samples="<<k
               <<" shipping_clock="<<f.liveTimeSec()<<" physical_time="<<physical_time
@@ -166,9 +171,15 @@ static void test_quiet_position_ambiguity() {
     require(plus.liveTimeSec()==minus.liveTimeSec(), "same handoff time for both physical histories");
     require(!plus.raw().mekf().acc_bias_updates_enabled(), "fresh pair starts in H18");
     compare_quiet_pair(plus,minus,0.0);
-    // Default magnetic refinement holds bias for 30 s after its Live start.
+    // Refinement starts at max(Live entry, the configured session clock),
+    // not necessarily at Live entry. Cover that actual schedule without
+    // changing the wrapper's startup timeout or refinement configuration.
+    const double live_clock=plus.liveTimeSec();
+    const double refine_end=std::max(live_clock,static_cast<double>(config.mag_refine_start_sec))
+        +static_cast<double>(config.mag_refine_window_sec);
+    const int native_samples=std::max(6600,static_cast<int>(std::ceil((refine_end+3.0-live_clock)/.005)));
     bool active_seen=false;
-    for(int k=1; k<=6600; ++k) {
+    for(int k=1; k<=native_samples; ++k) {
         const double h=.005*static_cast<double>(k);
         plus.update(.005f,V3::Zero(),V3(0,0,-g_std));
         minus.update(.005f,V3::Zero(),V3(0,0,-g_std));
@@ -180,7 +191,8 @@ static void test_quiet_position_ambiguity() {
         active_seen=active_seen || plus.raw().mekf().acc_bias_updates_enabled();
     }
     require(active_seen,"quiet pair executes actual H18 to A21 release");
-    std::cout<<"QUIET_POSITION_AMBIGUITY native_imu_samples=6600 mag_callbacks=3300 A21="<<active_seen
+    std::cout<<"QUIET_POSITION_AMBIGUITY native_imu_samples="<<native_samples
+             <<" mag_callbacks="<<native_samples/2<<" A21="<<active_seen
              <<" exact_pair_difference_at_33s=8.25 unavoidable_pair_error_lower=4.125\n";
 }
 

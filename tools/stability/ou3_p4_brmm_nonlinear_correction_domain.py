@@ -28,7 +28,7 @@ a strict outward-LDLT certificate.  Failure to find one is reported as an
 obstruction and never converted into a proof claim.
 """
 from __future__ import annotations
-import argparse,json
+import argparse,itertools,json,math
 from pathlib import Path
 
 import ou3_p4_brmm_reduced_event_master as EVENT
@@ -65,14 +65,44 @@ def _class_counts(nonlinear):
     cross=[name for name in nonlinear if name.startswith('cross_') and name not in eq]
     return eq,chord,cross
 
+# Search coordinates only: these numbers are never accepted without checking
+# T - sum(lambda_i Pi_i) by the original outward LDLT. Different physical units
+# require different hard-ball weights. Opposite IQCs must not be tied: equal
+# chord retention weights erase every q_chord diagonal from the remainder.
+_HARD_SEED = {
+    'attitude_cayley_norm': 2.0,
+    'gyro_bias_norm_rad_s': 0.1,
+    'velocity_norm_mps': 1e-6,
+    'position_norm_m': 1e-6,
+    'integral_displacement_norm_m_s': 1e-9,
+    'latent_acceleration_norm_mps2': 0.05,
+    'accelerometer_bias_error_norm_mps2': 0.5,
+}
+_NONLINEAR_SEED = {
+    'p_equals_Cm': 32.0,
+    'p_equals_Cf_plus_r': 32.0,
+    'chord_orthogonality_minus': 0.03,
+    'cross_r_norm_from_c': 0.04,
+    'cross_r_dot_d_minus': 0.06,
+}
+
 def _candidate_multipliers(hard,nonlinear,lh,le,lc,lx):
-    vals=[lh for _ in hard]
+    vals=[lh*_HARD_SEED[name] for name in hard]
     for name in nonlinear:
-        if name.startswith('p_equals_') or name.endswith('_plus') or name.endswith('_minus'):vals.append(le)
-        elif name.startswith('chord_'):vals.append(lc)
-        elif name.startswith('cross_'):vals.append(lx)
-        else:vals.append(lc)
+        scale=le if name.startswith('p_equals_') else lx if name.startswith('cross_') else lc
+        vals.append(scale*_NONLINEAR_SEED.get(name,0.0))
     return vals
+
+def _positive_diagonal_possible(target,premises,multipliers):
+    # A nonpositive diagonal upper bound precludes positive definiteness.
+    # This only rejects candidates; it can never certify one.
+    for i in range(len(target)):
+        diagonal=target[i][i]
+        for Pi,lam in zip(premises,multipliers):
+            diagonal=diagonal-EVENT.I(lam)*Pi[i][i]
+        if diagonal.hi<=0:
+            return False
+    return True
 
 def certify_event(em,*,delta_candidates=None,multiplier_grid=None):
     if em.kind not in ('accelerometer','magnetometer'):raise ValueError('nonlinear Joseph event required')
@@ -85,30 +115,59 @@ def certify_event(em,*,delta_candidates=None,multiplier_grid=None):
         delta_candidates=[cap*x for x in (.30,.45,.60,.75,.90,.98)]
     if multiplier_grid is None:
         multiplier_grid=(1e-2,1.0,1e2)
+    grid=tuple(float(x) for x in multiplier_grid)
+    if any(not math.isfinite(x) or x<0 for x in grid):
+        raise ValueError('finite nonnegative multiplier scales required')
+    targets=[(float(delta),HARD.mapped_ball_target(D,hidx,float(delta)))
+             for delta in delta_candidates
+             if 0.0<float(delta)<=float(RESET.CAYLEY_MONOTONE_NORM_MAX)]
+    # Try the balanced seed first when admitted by the supplied search grid.
+    scales=list(itertools.product(grid,repeat=4))
+    if (1.0,1.0,1.0,1.0) in scales:
+        scales.remove((1.0,1.0,1.0,1.0));scales.insert(0,(1.0,1.0,1.0,1.0))
     attempts=0
-    for delta in delta_candidates:
-        if not(0.0<float(delta)<=float(RESET.CAYLEY_MONOTONE_NORM_MAX)):continue
-        target=HARD.mapped_ball_target(D,hidx,float(delta))
-        for lh in multiplier_grid:
-          for le in multiplier_grid:
-            for lc in multiplier_grid:
-              for lx in multiplier_grid:
-                mult=_candidate_multipliers(hard,nonlinear,lh,le,lc,lx);attempts+=1
-                ok,piv=HARD.certify_strict_target(target,premises,mult)
-                if ok:
-                    cert={'delta':float(delta),'hard_multiplier':lh,'equality_multiplier':le,
-                          'chord_multiplier':lc,'cross_multiplier':lx,'pivot_lowers':piv,
-                          'minimum_pivot_lower':min(piv),'attempt':attempts}
-                    return {'closed':True,'certificate':cert,'attempts':attempts,
-                            'original_dimension':em.coordinate_dimension,'reduced_dimension':len(cols),
-                            'reset_defect_columns_removed':3,'hard_premise_count':len(hard),
-                            'nonlinear_premise_count':len(nonlinear),'equality_like_count':len(eq),
-                            'chord_count':len(chord),'cross_count':len(cross)}
+    for lh,le,lc,lx in scales:
+        mult=_candidate_multipliers(hard,nonlinear,lh,le,lc,lx)
+        for delta,target in targets:
+            attempts+=1
+            if not _positive_diagonal_possible(target,premises,mult):
+                continue
+            ok,piv=HARD.certify_strict_target(target,premises,mult)
+            if ok:
+                cert={'delta':delta,'event_source_token':em.source_token,
+                      'estimator_source_token':em.estimator_source_token,'hard_multiplier':lh,'equality_multiplier':le,
+                      'chord_multiplier':lc,'cross_multiplier':lx,
+                      'multiplier_family':'independently_weighted_iqc_seed_v1',
+                      'premise_multipliers':dict(zip(list(hard)+list(nonlinear),mult)),
+                      'pivot_lowers':piv,'minimum_pivot_lower':min(piv),'attempt':attempts}
+                return {'closed':True,'certificate':cert,'attempts':attempts,
+                        'original_dimension':em.coordinate_dimension,'reduced_dimension':len(cols),
+                        'reset_defect_columns_removed':3,'hard_premise_count':len(hard),
+                        'nonlinear_premise_count':len(nonlinear),'equality_like_count':len(eq),
+                        'chord_count':len(chord),'cross_count':len(cross)}
     return {'closed':False,'certificate':None,'attempts':attempts,
             'original_dimension':em.coordinate_dimension,'reduced_dimension':len(cols),
             'reset_defect_columns_removed':3,'hard_premise_count':len(hard),
             'nonlinear_premise_count':len(nonlinear),'equality_like_count':len(eq),
             'chord_count':len(chord),'cross_count':len(cross)}
+
+def verify_event_certificate(em,certificate):
+    """Recheck the actual matrices, never a stored positive-pivot assertion."""
+    if certificate.get('event_source_token')!=em.source_token:
+        raise ValueError('correction certificate event token detached')
+    if certificate.get('estimator_source_token')!=em.estimator_source_token:
+        raise ValueError('correction certificate estimator token detached')
+    delta=float(certificate.get('delta',math.nan))
+    if not(math.isfinite(delta) and 0<delta<=float(RESET.CAYLEY_MONOTONE_NORM_MAX)):
+        raise ValueError('correction certificate radius outside reset utility')
+    _,hidx,D,hard,nonlinear=_reduced_graph(em)
+    premises={**hard,**nonlinear}
+    weights=certificate.get('premise_multipliers',{})
+    if set(weights)!=set(premises):
+        raise ValueError('correction certificate premise set changed')
+    return HARD.certify_strict_target(
+        HARD.mapped_ball_target(D,hidx,delta),list(premises.values()),
+        [weights[name] for name in premises])
 
 def _mag_smoke_cell(im):
     n=18;x=[EVENT.I(0) for _ in range(n)];P=EVENT._identity(n);R=EVENT._identity(3);m=[EVENT.I(.3),EVENT.I(-.1),EVENT.I(.2)]
