@@ -34,3 +34,23 @@ No end-to-end stability claim is authorized while any item remains open.
 `python3 tools/stability/ou3_theorem/build_evidence.py --output /tmp/ou3-stability-evidence.json`
 
 `make -C tests/kalman_ou_iii shipping_contract-test shipping_transition-test && ./tests/kalman_ou_iii/shipping_contract-test && ./tests/kalman_ou_iii/shipping_transition-test`
+
+## Latest continuation
+
+Keep all work on PR #553, `codex/ou3-single-stability-architecture`. The duplicate
+PR #554 is closed. Do not reopen it or introduce another working branch.
+
+The failing cleanup gate was reproduced locally and its seven file-level
+causes removed without an exclusion. The performance replay fingerprint is
+explicitly invalidated; only a new validated full evidence run can replace it.
+New finite-error lemmas retain the joint true-bias/error prediction, separate
+projection defect, conditional Euclidean projection sector, fixed-origin
+integral innovation, and rectangular information transport. None closes the
+complete source-uniform H18/A21 storage inequality.
+
+Run the shared workflow and fingerprint regressions alongside the theorem tests:
+`cd tests/validation && python3 -m unittest -v test_workflow_contract test_ou_replay_fingerprint`.
+The native shipping-transition test also checks actual gain correction,
+nonpositive projection radius, covariance preservation at projection, and the
+invalid-injection branch that bypasses projection. Source-pinned CI archives
+and logs are retained even when a contract fails.

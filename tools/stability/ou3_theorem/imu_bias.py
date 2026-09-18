@@ -13,7 +13,7 @@ def vec(x: Sequence[float]) -> Vec3:
     return y  # type: ignore[return-value]
 
 def norm(x: Sequence[float]) -> float:
-    y=vec(x); return math.sqrt(sum(v*v for v in y))
+    y=vec(x); return math.hypot(*y)
 
 def add(a: Sequence[float],b: Sequence[float]) -> Vec3:
     x,y=vec(a),vec(b); return tuple(u+v for u,v in zip(x,y))  # type: ignore[return-value]
@@ -87,13 +87,15 @@ class BiasSample:
 def successor_allowed(current: Sequence[float],successor: Sequence[float],dt_s: float,
                       amplitude_limit: float,rate_limit: float,*,tolerance: float=0.0) -> bool:
     if not (math.isfinite(dt_s) and dt_s>0.0): return False
-    if min(amplitude_limit,rate_limit,tolerance)<0.0: return False
+    if not all(math.isfinite(v) and v >= 0.0 for v in (amplitude_limit,rate_limit,tolerance)): return False
     return (norm(current)<=amplitude_limit+tolerance and
             norm(successor)<=amplitude_limit+tolerance and
             norm(sub(successor,current))<=rate_limit*dt_s+tolerance)
 
 def audit_bias_trace(samples: Sequence[BiasSample],limits: BiasLimits,*,tolerance: float=0.0) -> dict:
     if not samples: raise ValueError("empty bias history")
+    if not math.isfinite(tolerance) or tolerance < 0.0:
+        raise ValueError("finite nonnegative tolerance required")
     failures=[]; hid=samples[0].history_id
     for i,s in enumerate(samples):
         if s.history_id!=hid: failures.append(f"sample {i}: detached history")
@@ -110,8 +112,8 @@ def audit_bias_trace(samples: Sequence[BiasSample],limits: BiasLimits,*,toleranc
 
 def estimator_prediction_factor(mode: str,phi_ou: float) -> float:
     """Literal accelerometer-bias estimate prediction factor for the shipping mode."""
-    if not math.isfinite(phi_ou) or not (0.0 < phi_ou <= 1.0):
-        raise ValueError("phi_ou must be finite in (0,1]")
+    if not math.isfinite(phi_ou) or not (0.0 <= phi_ou <= 1.0):
+        raise ValueError("phi_ou must be finite in [0,1]")
     if mode=="H18": return 1.0
     if mode=="A21": return phi_ou
     raise ValueError("mode must be H18 or A21")
@@ -156,17 +158,77 @@ def release_error(e_before: Sequence[float]) -> Vec3:
     """H18-to-A21 release changes update permission/covariance, not bias truth/state."""
     return vec(e_before)
 
-def project_ball(x: Sequence[float],radius: float) -> Vec3:
-    if not (math.isfinite(radius) and radius>=0.0): raise ValueError("finite nonnegative radius required")
-    y=vec(x); n=norm(y)
-    return y if n<=radius or n==0.0 else scale(radius/n,y)
+def project_estimate(x: Sequence[float], radius: float) -> Vec3:
+    """Shipping estimate-projection branches, interpreted in real arithmetic.
+
+    A nonpositive radius disables projection; a nonfinite estimate is reset
+    only when projection is enabled. Hardware norm overflow and rounding are
+    separate arithmetic obligations, not silently absorbed into physical bias.
+    """
+    if not math.isfinite(radius):
+        raise ValueError("finite radius required for the proof domain")
+    if len(x) != 3:
+        raise ValueError("expected three-vector")
+    y = tuple(float(v) for v in x)
+    if radius <= 0.0:
+        return y
+    if not all(math.isfinite(v) for v in y):
+        return (0.0, 0.0, 0.0)
+    n = math.hypot(*y)
+    return y if n <= radius else scale(radius / n, y)
+
 
 def projection_defect(estimated_bias_corrected: Sequence[float],radius: float) -> Vec3:
     """r_proj=bhat_corr-Proj_R(bhat_corr), matching the shipping estimate projection."""
     y=vec(estimated_bias_corrected)
-    return sub(y,project_ball(y,radius))
+    return sub(y,project_estimate(y,radius))
 
 def projected_error(b_true: Sequence[float],estimated_bias_corrected: Sequence[float],
                     radius: float) -> Vec3:
     """Post-projection error b_true-Proj_R(bhat_corr)."""
-    return sub(b_true,project_ball(estimated_bias_corrected,radius))
+    return sub(b_true,project_estimate(estimated_bias_corrected,radius))
+
+
+def prediction_joint_blocks(mode: str, phi_ou: float) -> tuple:
+    """Coefficients for z=[e_b;b_true], each scalar multiplying I_3.
+
+    z_next^- = (A tensor I_3) z^+ + (B tensor I_3) w.
+    B has ONE shared physical-increment column, not independent error/truth
+    disturbances. Correction, projection and frame changes are NOT prediction.
+    """
+    phi_e = estimator_prediction_factor(mode, phi_ou)
+    return ((phi_e, 1.0 - phi_e), (0.0, 1.0)), ((1.0,), (1.0,))
+
+
+@dataclass(frozen=True)
+class BiasCorrectionRelation:
+    """Separate correction and projection on one unchanged physical bias."""
+    b_true: Vec3
+    estimate_minus: Vec3
+    applied_increment: Vec3
+    estimate_corrected: Vec3
+    estimate_plus: Vec3
+    e_minus: Vec3
+    e_corrected: Vec3
+    projection_defect: Vec3
+    e_plus: Vec3
+
+
+def correction_projection_relation(b_true: Sequence[float],
+                                   estimate_minus: Sequence[float],
+                                   applied_increment: Sequence[float],
+                                   radius: float) -> BiasCorrectionRelation:
+    """Retain the actual Kalman increment, then the estimate projection.
+
+    These are finite real-arithmetic identities, not a full-state contraction
+    claim. The increment must be sourced from the shipping update, with zero
+    increment on a held/rejected correction. A floating-point trace must carry
+    its arithmetic residual separately.
+    """
+    b, estimate, delta = vec(b_true), vec(estimate_minus), vec(applied_increment)
+    corrected = add(estimate, delta)
+    plus = project_estimate(corrected, radius)
+    return BiasCorrectionRelation(
+        b, estimate, delta, corrected, plus, sub(b, estimate),
+        sub(b, corrected), sub(corrected, plus), sub(b, plus),
+    )

@@ -83,3 +83,31 @@ The block has spectral radius one and produces linear heading growth for nonzero
 ## Current closure
 
 The machine-readable status in `reports/results/ou3_stability/theorem-status.json` intentionally remains open. The next controlling obligation is a finite-error magnetically informed H18 service-superword storage inequality with prefix retention.
+
+## Finite-error operation lemmas
+
+In the complete finite-error storage inequality the bias prediction is a joint
+map on `(e_b,b_true)`, with scalar blocks `[[phi_e,1-phi_e],[0,1]]` tensored
+with `I3`. The physical increment has one shared column `[I3;I3]`. The held
+and active modes differ only through the estimator coefficient; gyro-bias
+self-prediction remains identity. Local absolute continuity gives the physical
+sampled rate bound; an a.e. derivative bound without that regularity is not
+sufficient to rule out jumps.
+
+A correction uses its actual estimate increment. Projection contributes the
+separate defect `d=bhat_corr-project(bhat_corr)`, so `e_plus=e_corr+d`.
+For positive radius and finite completed projection, `|e_plus|<=B_a+R_b`.
+When the true bias is inside the projection ball,
+`|e_plus|^2+|d|^2<=|e_corr|^2`. This is a Euclidean component lemma, not a
+full-state weighted-metric or covariance contraction result. Nonpositive
+radius disables projection. The shipping invalid-attitude-injection return
+bypasses projection and remains outside these finite-domain lemmas.
+
+The persistent marine potential gives `S_true=q(t)-q(T_c)` with one fixed
+origin, hence the actual integral innovation is `-S_hat=e_S-S_true`. The
+physical forcing term cannot be dropped when composing the Kalman corrections.
+Magnetic sensitivity transport accepts rectangular maps at coordinate changes;
+this does not replace the still-open source-qualified release map.
+
+Algebraic lemmas and native regression tests do not establish target arithmetic,
+source-uniform finite-error dissipativity, capture, or retention.

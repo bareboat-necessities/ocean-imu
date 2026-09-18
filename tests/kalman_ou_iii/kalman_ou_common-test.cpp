@@ -106,19 +106,19 @@ bool test_stationary_setters() {
     if (!check(covariance_unchanged(ou2, std_aw), "OU-II std setter changed posterior covariance")) return false;
     if (!check(covariance_unchanged(ou3, std_aw), "OU-III std setter changed posterior covariance")) return false;
 
-    auto p2 = ou2.covariance_full();
-    auto p3 = ou3.covariance_full();
+    auto cov_ou_ii = ou2.covariance_full();
+    auto cov_ou_iii = ou3.covariance_full();
     ou2.set_aw_stationary_corr_std(std_aw, T(-0.2), T(0.15));
     ou3.set_aw_stationary_corr_std(std_aw, T(-0.2), T(0.15));
-    if (!check((ou2.covariance_full()-p2).cwiseAbs().maxCoeff() == T(0), "OU-II corr setter changed posterior covariance")) return false;
-    if (!check((ou3.covariance_full()-p3).cwiseAbs().maxCoeff() == T(0), "OU-III corr setter changed posterior covariance")) return false;
+    if (!check((ou2.covariance_full()-cov_ou_ii).cwiseAbs().maxCoeff() == T(0), "OU-II corr setter changed posterior covariance")) return false;
+    if (!check((ou3.covariance_full()-cov_ou_iii).cwiseAbs().maxCoeff() == T(0), "OU-III corr setter changed posterior covariance")) return false;
 
-    p2 = ou2.covariance_full();
-    p3 = ou3.covariance_full();
+    cov_ou_ii = ou2.covariance_full();
+    cov_ou_iii = ou3.covariance_full();
     ou2.set_aw_stationary_cov_full(full);
     ou3.set_aw_stationary_cov_full(full);
-    if (!check((ou2.covariance_full()-p2).cwiseAbs().maxCoeff() == T(0), "OU-II full setter changed posterior covariance")) return false;
-    if (!check((ou3.covariance_full()-p3).cwiseAbs().maxCoeff() == T(0), "OU-III full setter changed posterior covariance")) return false;
+    if (!check((ou2.covariance_full()-cov_ou_ii).cwiseAbs().maxCoeff() == T(0), "OU-II full setter changed posterior covariance")) return false;
+    if (!check((ou3.covariance_full()-cov_ou_iii).cwiseAbs().maxCoeff() == T(0), "OU-III full setter changed posterior covariance")) return false;
 
     ou2.reset_aw_covariance_to_stationary();
     ou3.reset_aw_covariance_to_stationary();

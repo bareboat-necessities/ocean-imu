@@ -20,7 +20,7 @@ def _vec3(x: Sequence[float]) -> Vec3:
 
 def norm(x: Sequence[float]) -> float:
     a = _vec3(x)
-    return math.sqrt(sum(v * v for v in a))
+    return math.hypot(*a)
 
 def sub(a: Sequence[float], b: Sequence[float]) -> Vec3:
     x, y = _vec3(a), _vec3(b)
@@ -128,7 +128,7 @@ class MarineSample:
             _vec3(self.q_m_s)
 
 def constant_displacement_continuation_admitted(p0_m: Sequence[float]) -> bool:
-    return norm(p0_m) == 0.0
+    return all(v == 0.0 for v in _vec3(p0_m))
 
 def quiet_water_admitted() -> bool:
     return constant_displacement_continuation_admitted((0.0,0.0,0.0))
@@ -180,3 +180,24 @@ def audit_sampled_trace(samples: Sequence[MarineSample], limits: MarineLimits, *
         "constant_nonzero_displacement_continuation_admitted":False,
         "quiet_water_admitted":True,
     }
+
+
+@dataclass(frozen=True)
+class IntegralInnovationRelation:
+    physical_integral: Vec3
+    integral_error: Vec3
+    innovation: Vec3
+
+
+def integral_innovation(q_current: Sequence[float],
+                        fixed_capture_potential: Sequence[float],
+                        estimated_integral: Sequence[float]) -> IntegralInnovationRelation:
+    """r_S=-S_hat=e_S-S_true on the same once-anchored physical potential.
+
+    The caller carries the same capture potential through every superword;
+    this identity neither certifies the continuation nor resets the estimator.
+    """
+    physical = sub(q_current, fixed_capture_potential)
+    error = sub(physical, estimated_integral)
+    residual = scale(-1.0, estimated_integral)
+    return IntegralInnovationRelation(physical, error, residual)

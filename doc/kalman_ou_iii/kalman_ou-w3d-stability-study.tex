@@ -7,6 +7,7 @@
 \usepackage{amsmath,amssymb,amsthm,bm}
 \usepackage{newtxtext,newtxmath}
 \usepackage{booktabs,array,adjustbox}
+\usepackage{balance}
 \usepackage{siunitx}
 \usepackage[final]{microtype}
 \usepackage[breaklinks=true,hidelinks]{hyperref}
@@ -61,7 +62,8 @@ the deployed estimator.
 \section{Marine motion}
 Let $p(t)\in\R^3$ be wave-induced displacement about a local equilibrium,
 $v=\dot p$, $a=\dot v$, with the same history supplying
-$R(t)\in{\rm SO}(3)$ and body rate $\omega(t)$. Require
+$R(t)\in{\rm SO}(3)$ and body rate $\omega(t)$. Here $R$ maps
+body to world and satisfies $\dot R=R[\omega]_\times$ almost everywhere. Require
 \begin{align}
  \norm{p(t)}&\le P_{\max},& \norm{v(t)}&\le V_{\max},\nonumber\\
  \norm{a(t)}&\le A_{\max},& \norm{\omega(t)}&\le\Omega_{\max}.
@@ -77,6 +79,17 @@ Equivalently, $\dot q=p$ has uniformly bounded potential differences. The
 same potential continues through successive certified superwords; it is not
 restarted at word boundaries. A one-time proof-coordinate origin at tail entry
 is permissible only as a coordinate transformation of that same continuation.
+With the origin fixed at capture, put $S_{\rm true}(t)=q(t)-q(T_c)$.
+Consequently $\norm{S_{\rm true}}\le P_{\rm AC}$. The implemented
+zero-integral innovation is
+\begin{equation}
+ r_S=-\hat S=e_S-S_{\rm true},\qquad e_S=S_{\rm true}-\hat S.
+ \label{eq:physical-integral-innovation}
+\end{equation}
+The physical term $-S_{\rm true}$ is therefore retained through every actual
+integral correction. Neither $\hat S$ nor the physical potential is reset at
+certification or at later superword boundaries.
+
 
 \begin{lemma}[Permanent displacement DC is inadmissible]
 If $p(t)\equiv p_0\ne0$, $v(t)=0$, and $a(t)=0$ indefinitely, then
@@ -101,7 +114,7 @@ same-history disturbance.
 
 \section{IMU bias}
 The total residual accelerometer and gyro biases after the calibration
-actually performed satisfy
+actually performed are locally absolutely continuous and satisfy
 \begin{align}
  \norm{b_a(t)}&\le B_a,& \norm{\dot b_a(t)}&\le D_a,\nonumber\\
  \norm{b_g(t)}&\le B_g,& \norm{\dot b_g(t)}&\le D_g
@@ -142,6 +155,17 @@ With physical truth $b_{k+1}=b_k+w_k$, both modes obey the single relation
 \end{equation}
 Equation~\eqref{eq:bias-prediction} is an estimator-mode relation, not a model
 imposed on physical truth.
+For $z_b=(e_b,b)$ the same identity has the joint form
+\begin{equation}
+ \begin{bmatrix}e_{b,k+1}^{-}\\b_{k+1}\end{bmatrix}
+ =\begin{bmatrix}\phi_{e,k}I&(1-\phi_{e,k})I\\0&I\end{bmatrix}
+ \begin{bmatrix}e_{b,k}^{+}\\b_k\end{bmatrix}
+ +\begin{bmatrix}I\\I\end{bmatrix}w_k.
+ \label{eq:bias-joint}
+\end{equation}
+The two rows share one physical increment. Neither independent disturbance
+columns nor an estimator-induced reset of $b$ preserves this relation.
+
 
 Measurement correction is carried separately. If the implemented correction
 changes the estimate by $\Delta\hat b_k$, then
@@ -157,6 +181,36 @@ For the shipping accelerometer-bias projection,
  \operatorname{Proj}_{R_b}(\hat b_{a,k}^{\rm corr}).
  \label{eq:bias-projection}
 \end{align}
+For a finite completed injection with $R_b>0$, write
+$d_{b,k}=\hat b_{a,k}^{\rm corr}-\operatorname{Proj}_{R_b}
+(\hat b_{a,k}^{\rm corr})$. Then
+\begin{equation}
+ e_{b_a,k}^{+}=e_{b_a,k}^{\rm corr}+d_{b,k}.
+ \label{eq:bias-defect}
+\end{equation}
+\begin{lemma}[Estimate-projection bounds]
+For $\norm{b_a}\le B_a$ and an applied positive-radius projection,
+$\norm{e_{b_a}^{+}}\le B_a+R_b$. If additionally $B_a\le R_b$, then
+\begin{equation}
+ \norm{e_{b_a}^{+}}^2+\norm{d_b}^2
+ \le\norm{e_{b_a}^{\rm corr}}^2.
+ \label{eq:bias-projection-sector}
+\end{equation}
+\end{lemma}
+\begin{proof}
+The first bound is the triangle inequality. The projection variational
+inequality gives $(e_{b_a}^{+})^{\mathsf T}d_b\le0$ when $b_a$ lies in
+the ball. Expanding $e_{b_a}^{\rm corr}=e_{b_a}^{+}-d_b$ proves the second.
+\end{proof}
+This Euclidean component inequality is not contraction in a full-state
+covariance-weighted metric. Cross terms and all covariance operations remain
+in the finite-error argument. A nonpositive configured radius disables the
+shipping projection. Moreover, an invalid attitude injection returns before
+projection; excluding or enclosing that branch is an arithmetic/domain
+obligation. The H18--A21 release preserves nominal bias states but applies
+its covariance floor. Any frame change must transport both physical bias and
+its estimate before the next prediction.
+
 Physical bias is unchanged by prediction mode, correction, hold/release, or
 projection. The shipping gyro-bias mean predictor is identity, giving
 $e_{b_g,k+1}^{-}=e_{b_g,k}^{+}+w_{g,k}$ before its actual correction.
@@ -169,7 +223,7 @@ $S_{m,k}^{\rm act}$ be the actual innovation covariance presented to the
 shipping update's factorization for a correction that was actually applied.
 Choose any whitening factor $W_k$ satisfying
 $W_k^\mathsf{T}W_k=(S_{m,k}^{\rm act})^{-1}$. With $E_{hb}$ injecting
-normalized heading and axial gyro-bias coordinates, define
+normalized heading and axial gyro-bias coordinates at the window root, define
 \begin{equation}
  G_k=W_kH_{m,k}\Phi_{k\leftarrow s}E_{hb}.
  \label{eq:G}
@@ -177,7 +231,10 @@ normalized heading and axial gyro-bias coordinates, define
 Equivalently, if $S_{m,k}^{\rm act}=L_kL_k^\mathsf{T}$, one may take
 $W_k=L_k^{-1}$. This square-root choice is algebraic only; the information
 matrix is built from the same $S_{m,k}^{\rm act}$ that the shipping update
-actually factors. For
+actually factors. Transport may be rectangular at an error-coordinate
+change: $H_{m,k}$ uses destination coordinates and $E_{hb}$ uses the
+original root coordinates. This algebra does not certify a release map or
+a finite-error information margin. For
 $T_M<\infty$ and $\mu_M>0$, every certified tail interval must satisfy
 \begin{equation}
  \boxed{\sum_{k\in\mathcal M[s,s+T_M]}G_k^\mathsf{T}G_k
@@ -193,9 +250,11 @@ sensitivities may remain rank deficient.
 \section{Single shipping proof path}
 The theorem uses
 \begin{equation}
-\fitcol{\text{construction}\to\text{capture}\to
-\text{magnetic Live/H18}\to\text{H18}\to\text{A21}\to
-\text{magnetic A21}\to\text{practical stability}.}
+\begin{aligned}
+ &\text{construction}\to\text{capture}\to\text{informed H18}\\
+ &\quad\to\text{H18--A21 release}\to\text{informed A21}\\
+ &\quad\to\text{practical stability}.
+\end{aligned}
 \end{equation}
 The physical bias history is continuous through all modes. The capture time may
 depend on execution and initial state,
@@ -245,6 +304,7 @@ conditional until capture, H18 finite-error dissipation, the H18--A21 release,
 A21 dissipation, recurring service, retention, and implementation arithmetic
 are certified.
 
+\balance
 \section{Declared constants}
 Symbolic assumptions are separated from current numerical certification limits
 in Table~\ref{tab:limits}. A declared value is a testable deployment
@@ -268,6 +328,8 @@ $B_a$ & 0.225167 & m/s$^2$\\
 $D_a$ & 0.001 & m/s$^3$\\
 $B_g$ & 0.020 & rad/s\\
 $D_g$ & $1.0\times10^{-5}$ & rad/s$^2$\\
+$R_b$ (estimate) & 0.4 & m/s$^2$\\
+$\tau_{b,e}$ (estimate) & 5000 & s\\
 $T_M$ & 1.0 & s\\
 $\mu_M$ & 1.0 & normalized\\
 $\norm B$ & 20--75 & $\mu$T\\

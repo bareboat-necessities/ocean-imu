@@ -1,3 +1,6 @@
+import contextlib
+import io
+import json
 import importlib.util
 from pathlib import Path
 import tempfile
@@ -13,6 +16,22 @@ SPEC.loader.exec_module(fingerprint)
 
 
 class ReplayFingerprintClassificationTests(unittest.TestCase):
+    def test_explicit_invalidation_cannot_reuse_even_matching_hashes(self):
+        current = {
+            "schema_version": 3, "algorithm": "sha256-framed-v1",
+            "replay_fingerprint": "abc", "results_fingerprint": "def",
+            "simulation_data": {"sha256": "123"},
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            marker = Path(tmp) / "marker.json"
+            marker.write_text(json.dumps(current), encoding="utf-8")
+            with contextlib.redirect_stdout(io.StringIO()):
+                self.assertTrue(fingerprint.check_record(marker, current))
+            marker.write_text(json.dumps(dict(current, status="invalidated")), encoding="utf-8")
+            with contextlib.redirect_stderr(io.StringIO()) as errors:
+                self.assertFalse(fingerprint.check_record(marker, current))
+            self.assertIn("explicitly invalidated", errors.getvalue())
+
     def test_every_file_under_tests_is_included_regardless_of_extension(self):
         names = [
             "tests/kalman_ou_iii/parameters.txt",

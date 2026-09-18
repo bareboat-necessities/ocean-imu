@@ -6,6 +6,21 @@ A single regional-practical-stability theorem is sought for the shipping estimat
 
 ## Evidence
 
+CI run `35382314754` failed `test_no_retired_architecture_survives_repository`
+with 14 findings across seven files. The causes were stale fingerprint entries,
+shared workflow tests targeting deleted machinery, a dangling study reference,
+and ambiguous simulation/test variable names. The cleanup gate is unchanged;
+the remnants are removed. The replay fingerprint is explicitly invalidated,
+not regenerated from un-replayed results. Scientific simulation settings and
+shipping estimator behavior are unchanged.
+
+The bias graph now retains the shared physical-increment column, separate
+correction/projection defect, and conditional Euclidean projection inequality.
+The marine integral innovation retains the physical potential term. Tests
+cover rectangular magnetic sensitivity transport without certifying a release
+map or source-uniform information floor.
+
+
 Source provenance binds the analysis to shipping code. Structural regressions establish the displacement-DC exclusion, predecessor-constrained bias evolution, one mode-dependent accelerometer-bias prediction relation, separate correction/projection algebra, applied-magnetic-information accounting, and the indefinitely ungauged unipotent obstruction. Literal implementation regressions distinguish magnetic attempts from applied corrections and check state inheritance across Live and bias release.
 
 ## Current limiter
@@ -13,6 +28,18 @@ Source provenance binds the analysis to shipping code. Structural regressions es
 The first controlling mathematical limiter is the absence of a complete finite-error, same-history H18 service-superword inequality with strict dissipation, every-prefix retention, and actual magnetic information. Source-uniform recurring service, capture, H18-to-A21 retention, A21 dissipation, and target arithmetic remain open.
 
 ## Failed approaches / DEAD_ENDS
+
+- Operation-parity failure: a zero-radius proof projection mapped a nonzero
+  estimate to zero, whereas shipping code disables projection. The proof
+  operation is corrected; no estimator change is made. Invalid attitude
+  injection can also bypass projection, so its domain premise is explicit.
+- Admission failure: squared-norm underflow classified tiny nonzero constant
+  wave displacement as quiet water. Componentwise exact zero comparison fixes
+  the required infinite-continuation rejection.
+- Transport failure: a square-only matrix check rejected dimension-changing
+  error-coordinate transport. Source/destination dimensions are now separate;
+  physical release and full-state retention are still open.
+
 
 - Strict full-state contraction over indefinitely ungauged intervals is impossible because the heading/axial-gyro-bias centre block has spectral radius one.
 - Maximum magnetic callback or accepted-packet gap alone cannot prove heading/bias information; frequent collinear sensitivities remain rank deficient.

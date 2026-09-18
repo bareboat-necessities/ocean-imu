@@ -70,6 +70,9 @@ def transported_whitened_rows(
     magnetic update's factorization.  H_m is that update's literal magnetic
     sensitivity, Phi is the complete preceding same-history differential, and
     E_hb injects the normalized heading/axial-gyro-bias root coordinates.
+    Phi may be rectangular across a dimension-changing error-coordinate map;
+    H uses destination coordinates and E uses the original root coordinates.
+    Accepting dimensions does not certify any particular release map.
     Cholesky is used here only as an algebraically equivalent square root of the
     same SPD S; the shipping estimator remains authoritative and unchanged.
     """
@@ -81,8 +84,6 @@ def transported_whitened_rows(
         raise ValueError("innovation covariance/measurement dimension mismatch")
     if len(h[0])!=len(phi):
         raise ValueError("H/Phi dimension mismatch")
-    if len(phi)!=len(phi[0]):
-        raise ValueError("Phi must be square")
     if len(phi[0])!=len(e):
         raise ValueError("Phi/E dimension mismatch")
     if len(e[0])!=2:

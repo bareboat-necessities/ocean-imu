@@ -280,6 +280,9 @@ def check_record(path: Path, current: dict[str, object]) -> bool:
     if not isinstance(recorded, dict):
         print(f"OU evidence fingerprint is not a JSON object: {path}", file=sys.stderr)
         return False
+    if recorded.get("status") == "invalidated":
+        print("OU evidence explicitly invalidated: " + str(recorded.get("reason", "regeneration required")), file=sys.stderr)
+        return False
     if _comparison_view(recorded) != _comparison_view(current):
         print(
             "OU replay/results fingerprint changed: "

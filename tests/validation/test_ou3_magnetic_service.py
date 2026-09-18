@@ -56,4 +56,21 @@ class MagneticServiceTests(unittest.TestCase):
         self.assertEqual(r["actually_applied_informative_events"],0)
         self.assertFalse(r["information_pass"])
 
+    def test_rectangular_error_transport_keeps_original_information_root(self):
+        # A synthetic dimension-changing map checks algebra only; it does not
+        # claim to be a source-qualified shipping release certificate.
+        transition = [[float(i == j) for j in range(18)] for i in range(21)]
+        transition[18][2] = 0.25
+        transition[18][5] = 0.5
+        injection = [[0.0, 0.0] for _ in range(18)]
+        injection[2][0] = 1.0
+        injection[5][1] = 0.02
+        H = [[0.0]*21 for _ in range(3)]
+        H[0][2], H[1][5], H[2][18] = 1.0, 1.0, 1.0
+        S = ((1,0,0),(0,1,0),(0,0,1))
+        rows = transported_whitened_rows(H, S, transition, injection)
+        self.assertEqual(rows, ((1.0,0.0),(0.0,0.02),(0.25,0.01)))
+        with self.assertRaises(ValueError):
+            transported_whitened_rows(H, S, transition, injection + [[0,0]])
+
 if __name__=="__main__": unittest.main()

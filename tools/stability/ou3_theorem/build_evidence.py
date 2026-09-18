@@ -19,11 +19,12 @@ def validate() -> dict:
     provenance=json.loads(PROVENANCE.read_text(encoding="utf-8"))
     committed=json.loads(STATUS.read_text(encoding="utf-8"))
     failures=[]
-    for row in provenance["authoritative_shipping_sources"]:
+    sources = provenance["authoritative_shipping_sources"] + provenance.get("operation_lemma_sources", [])
+    for row in sources:
         path=REPO/row["path"]
-        if not path.is_file(): failures.append(f"missing shipping source: {row['path']}"); continue
+        if not path.is_file(): failures.append(f"missing bound source: {row['path']}"); continue
         actual=git_blob_sha(path)
-        if actual!=row["git_blob_sha"]: failures.append(f"shipping source provenance changed: {row['path']} {row['git_blob_sha']} -> {actual}")
+        if actual!=row["git_blob_sha"]: failures.append(f"source provenance changed: {row['path']} {row['git_blob_sha']} -> {actual}")
     expected=status_report()
     if committed!=expected: failures.append("committed theorem-status.json differs from theorem_status.status_report()")
     return {"validation_pass":not failures,"failures":failures,"base_main_commit":provenance["base_main_commit"],

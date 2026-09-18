@@ -103,8 +103,8 @@ stability certificate or a guarantee for every rest interval.
 `studies.json.gz` contains 18 studies and 1296 complete simulator rows, including
 rejected settings and the integrated paired rerun. `diagnostics*` retain
 full-rate statistics and reduced display series; `calm-check.json` records
-the generated-input hash and exact segments. The earlier bias/reporting
-screens are retained separately in `../rao_parameter_tuning/bias2-continuation`.
+the generated-input hash and exact segments. These records describe the
+finite sigma-horizon experiments, not stability-theorem coverage.
 
 The screening base `8889188` has the same tree as published commit `07d7d14`;
 `screening-source.bundle` preserves its local commit identity. Import that
