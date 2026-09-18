@@ -1,0 +1,75 @@
+{
+  "qualification": "OU3_SHIPPING_PROVENANCE_V1",
+  "base_main_commit": "802747dd6c4f8d381f5db01478aef71cf74070c2",
+  "estimator_behavior_authority": "shipping implementation, not proof model",
+  "authoritative_shipping_sources": [
+    {
+      "path": "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h",
+      "git_blob_sha": "f7aaefdbcdc683fc4d82eda0726380e4e90010f5"
+    },
+    {
+      "path": "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h",
+      "git_blob_sha": "d369bede9c1476fd1d5058e694fadd438a70d4d3"
+    },
+    {
+      "path": "sensors/full_marine_ins/atomS3R_ins_kalman_ou3/atomS3R_ins_kalman_ou3.ino",
+      "git_blob_sha": "58976d6a6fdb37b8e00d43c271c62883a2ccf2b6"
+    }
+  ],
+  "semantic_bindings": {
+    "accelerometer_bias_estimator_prior": "OU mean predictor while active; held while disabled",
+    "accelerometer_bias_estimate_projection_radius_mps2": 0.4,
+    "magnetometer_acceptance": "lastMagDiag().accepted becomes true only after the correction is actually applied",
+    "magnetic_attempt_counter": "the wrapper control counter advances after a forwarded attempt and is not an informative-service certificate",
+    "live_handoff": "the certified tail inherits the actual reached execution",
+    "accel_bias_release": "release enables estimator bias dynamics and does not reset physical accelerometer bias",
+    "magnetic_information_covariance": "lastMagDiag().S records the actual innovation covariance factored by an applied shipping magnetometer correction and is the covariance used by MAGNETIC SERVICE whitening",
+    "joint_bias_prediction": "z=[e_b;b_true] uses [[phi_e I,(1-phi_e) I],[0,I]] with one shared physical-increment column [I;I]. Corrections and projection are separate operations.",
+    "projection_scope": "Positive radius after a finite completed injection; nonpositive radius disables projection; projection changes the estimate but not covariance; invalid attitude injection may bypass projection.",
+    "integral_innovation": "With a single fixed capture origin S_true=q(t)-q(T_c), shipping r_S=-S_hat=e_S-S_true retains the physical potential forcing.",
+    "magnetic_coordinate_transport": "The complete preceding transport may be rectangular between error charts. Dimension compatibility and finite audits do not certify a release map or source-uniform information.",
+    "point_audit_scope": "Supplied finite-error values and structural flags are diagnostic assertions, not a verified source-uniform certificate. Missing bounds, vacuous prefixes and overflow cannot promote completion."
+  },
+  "operation_lemma_sources": [
+    {
+      "path": "tools/stability/ou3_theorem/imu_bias.py",
+      "git_blob_sha": "f9d5d3755c35aedd2ccc9b71313e36e71a090e1a"
+    },
+    {
+      "path": "tools/stability/ou3_theorem/marine_motion.py",
+      "git_blob_sha": "522a85a5b2f02b1794849ede26f4b65be03d231c"
+    },
+    {
+      "path": "tools/stability/ou3_theorem/magnetic_service.py",
+      "git_blob_sha": "5a73347ff64b33c84222210048082ec78d9eacba"
+    },
+    {
+      "path": "tests/validation/test_ou3_imu_bias.py",
+      "git_blob_sha": "c473f7503b1ffbf7f2be859b958a0a19ded9ecb7"
+    },
+    {
+      "path": "tests/validation/test_ou3_marine_motion.py",
+      "git_blob_sha": "634e1ee74838c8016de5ab9a16794097fcaa12e0"
+    },
+    {
+      "path": "tests/validation/test_ou3_magnetic_service.py",
+      "git_blob_sha": "70448e4acfac7a5be8fc4c105f572273d408691b"
+    },
+    {
+      "path": "tests/kalman_ou_iii/shipping_transition-test.cpp",
+      "git_blob_sha": "7abd5f55952430ade16e1a3d76992e20c787ddc2"
+    },
+    {
+      "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex",
+      "git_blob_sha": "fde2637e3a3f174e64b3756fa095cf34de42e97a"
+    },
+    {
+      "path": "tools/stability/ou3_theorem/finite_error.py",
+      "git_blob_sha": "1366851dd3bd8b01c217416c9656c87067fb37d0"
+    },
+    {
+      "path": "tests/validation/test_ou3_finite_error.py",
+      "git_blob_sha": "e515812d6a404cf7bbcfc4c8308de6e5a83fcde6"
+    }
+  ]
+}

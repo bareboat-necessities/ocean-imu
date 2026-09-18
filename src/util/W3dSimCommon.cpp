@@ -30,12 +30,12 @@ ImuNoiseModel make_imu_noise_model(float sigma_white,
     m.rng = std::mt19937(seed);
     m.w = std::normal_distribution<float>(0.0f, sigma_white);
     m.n01 = std::normal_distribution<float>(0.0f, 1.0f);
-    m.bias0.setZero();
+    m.turn_on_bias.setZero();
     m.bias_rw.setZero();
     m.sigma_bias_rw = sigma_bias_rw;
 
     std::uniform_real_distribution<float> ub(-bias_half_range, bias_half_range);
-    m.bias0 = Vector3f(ub(m.rng), ub(m.rng), ub(m.rng));
+    m.turn_on_bias = Vector3f(ub(m.rng), ub(m.rng), ub(m.rng));
     return m;
 }
 
@@ -60,7 +60,7 @@ ImuNoiseModel make_imu_noise_model(float sigma_white,
 
     std::mt19937 initialization_rng(initialization_seed);
     std::uniform_real_distribution<float> ub(-bias_half_range, bias_half_range);
-    m.bias0 = Vector3f(
+    m.turn_on_bias = Vector3f(
         ub(initialization_rng), ub(initialization_rng), ub(initialization_rng));
     return m;
 }
@@ -72,7 +72,7 @@ Vector3f apply_imu_noise(const Vector3f& truth, ImuNoiseModel& m, float dt)
         m.bias_rw += Vector3f(s * m.n01(m.rng), s * m.n01(m.rng), s * m.n01(m.rng));
     }
     Vector3f white(m.w(m.rng), m.w(m.rng), m.w(m.rng));
-    return truth + (m.bias0 + m.bias_rw) + white;
+    return truth + (m.turn_on_bias + m.bias_rw) + white;
 }
 
 MagNoiseModel make_mag_noise_model(float sigma_white_uT,
@@ -89,7 +89,7 @@ MagNoiseModel make_mag_noise_model(float sigma_white_uT,
     m.n01 = std::normal_distribution<float>(0.0f, 1.0f);
 
     std::uniform_real_distribution<float> ub(-bias_residual_range_uT, bias_residual_range_uT);
-    m.bias0_uT = Vector3f(ub(m.rng), ub(m.rng), ub(m.rng));
+    m.turn_on_bias_uT = Vector3f(ub(m.rng), ub(m.rng), ub(m.rng));
     m.bias_rw_uT.setZero();
     m.sigma_bias_rw_uT_sqrt_s = sigma_bias_rw_uT_sqrt_s;
 
@@ -173,7 +173,7 @@ MagNoiseModel make_mag_noise_model(float sigma_white_uT,
     std::mt19937 initialization_rng(initialization_seed);
     std::uniform_real_distribution<float> ub(
         -bias_residual_range_uT, bias_residual_range_uT);
-    m.bias0_uT = Vector3f(
+    m.turn_on_bias_uT = Vector3f(
         ub(initialization_rng), ub(initialization_rng), ub(initialization_rng));
 
     std::uniform_real_distribution<float> us(
@@ -972,7 +972,7 @@ Vector3f apply_mag_noise(const Vector3f& ideal_mag_uT_body, MagNoiseModel& m, fl
         m.bias_rw_uT += Vector3f(s * m.n01(m.rng), s * m.n01(m.rng), s * m.n01(m.rng));
     }
     Vector3f white(m.w_uT(m.rng), m.w_uT(m.rng), m.w_uT(m.rng));
-    return (m.Mis * ideal_mag_uT_body) + (m.bias0_uT + m.bias_rw_uT) + white;
+    return (m.Mis * ideal_mag_uT_body) + (m.turn_on_bias_uT + m.bias_rw_uT) + white;
 }
 
 static void write_tvg_nlo_csv_header(std::ofstream& ofs)
@@ -1296,10 +1296,10 @@ std::optional<W3dSimulationRunResult> W3dSimulationRunner::run(const std::string
         result.errs_yaw.push_back(diffDeg(snap.euler_nautical_deg.z(), y_ref_out));
 
         const Vector3f acc_bias_true_zu = (options_.add_noise && noise_models_.accel_noise)
-            ? (noise_models_.accel_noise->bias0 + noise_models_.accel_noise->bias_rw).eval()
+            ? (noise_models_.accel_noise->turn_on_bias + noise_models_.accel_noise->bias_rw).eval()
             : Vector3f::Zero().eval();
         const Vector3f gyro_bias_true_zu = (options_.add_noise && noise_models_.gyro_noise)
-            ? (noise_models_.gyro_noise->bias0 + noise_models_.gyro_noise->bias_rw).eval()
+            ? (noise_models_.gyro_noise->turn_on_bias + noise_models_.gyro_noise->bias_rw).eval()
             : Vector3f::Zero().eval();
         const Vector3f acc_bias_true_ned = zu_to_ned(acc_bias_true_zu);
         const Vector3f gyro_bias_true_ned = zu_to_ned(gyro_bias_true_zu);
@@ -1308,7 +1308,7 @@ std::optional<W3dSimulationRunResult> W3dSimulationRunner::run(const std::string
         const Vector3f gyro_bias_err = snap.gyro_bias_est_ned - gyro_bias_true_ned;
 
         const Vector3f mag_bias_true_zu = (options_.add_noise && options_.with_mag && noise_models_.mag_noise)
-            ? (noise_models_.mag_noise->bias0_uT + noise_models_.mag_noise->bias_rw_uT).eval()
+            ? (noise_models_.mag_noise->turn_on_bias_uT + noise_models_.mag_noise->bias_rw_uT).eval()
             : Vector3f::Zero().eval();
         const Vector3f mag_bias_true_ned = zu_to_ned(mag_bias_true_zu);
         const Vector3f mag_bias_err = snap.mag_bias_est_ned_uT - mag_bias_true_ned;
@@ -1592,10 +1592,10 @@ std::optional<TvgNloSimulationRunResult> TvgNloSimulationRunner::run(const std::
         result.errs_yaw.push_back(diffDeg(snap.euler_nautical_deg.z(), y_ref_out));
 
         const Vector3f acc_bias_true_zu = (options_.add_noise && noise_models_.accel_noise)
-            ? (noise_models_.accel_noise->bias0 + noise_models_.accel_noise->bias_rw).eval()
+            ? (noise_models_.accel_noise->turn_on_bias + noise_models_.accel_noise->bias_rw).eval()
             : Vector3f::Zero().eval();
         const Vector3f gyro_bias_true_zu = (options_.add_noise && noise_models_.gyro_noise)
-            ? (noise_models_.gyro_noise->bias0 + noise_models_.gyro_noise->bias_rw).eval()
+            ? (noise_models_.gyro_noise->turn_on_bias + noise_models_.gyro_noise->bias_rw).eval()
             : Vector3f::Zero().eval();
         const Vector3f acc_bias_true_ned = zu_to_ned(acc_bias_true_zu);
         const Vector3f gyro_bias_true_ned = zu_to_ned(gyro_bias_true_zu);
@@ -1604,7 +1604,7 @@ std::optional<TvgNloSimulationRunResult> TvgNloSimulationRunner::run(const std::
         const Vector3f gyro_bias_err = snap.gyro_bias_est_ned - gyro_bias_true_ned;
 
         const Vector3f mag_bias_true_zu = (options_.add_noise && options_.with_mag && noise_models_.mag_noise)
-            ? (noise_models_.mag_noise->bias0_uT + noise_models_.mag_noise->bias_rw_uT).eval()
+            ? (noise_models_.mag_noise->turn_on_bias_uT + noise_models_.mag_noise->bias_rw_uT).eval()
             : Vector3f::Zero().eval();
         const Vector3f mag_bias_true_ned = zu_to_ned(mag_bias_true_zu);
         const Vector3f mag_bias_err = snap.mag_bias_est_ned_uT - mag_bias_true_ned;

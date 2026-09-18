@@ -1,10 +1,18 @@
 name: render-stability-study-review
 on:
-  push:
-    branches: [codex/ou3-standalone-stability-study]
+  pull_request:
     paths:
       - .github/workflows/render-stability-study-review.yml
       - doc/kalman_ou_iii/**
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/render-stability-study-review.yml
+      - doc/kalman_ou_iii/**
+concurrency:
+  group: render-stability-study-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 jobs:
@@ -14,12 +22,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install LaTeX
-        run: sudo apt-get update -qq && sudo apt-get install -y texlive-luatex texlive-publishers texlive-latex-extra texlive-science texlive-fonts-recommended texlive-fonts-extra texlive-bibtex-extra
+        run: sudo apt-get update -qq && sudo apt-get install -y texlive-luatex texlive-publishers texlive-latex-extra texlive-science texlive-fonts-recommended texlive-fonts-extra
       - name: Render two-column stability study
         working-directory: doc/kalman_ou_iii
         run: |
-          lualatex -interaction=nonstopmode -halt-on-error kalman_ou-w3d-stability-study.tex
-          bibtex kalman_ou-w3d-stability-study
           lualatex -interaction=nonstopmode -halt-on-error kalman_ou-w3d-stability-study.tex
           lualatex -interaction=nonstopmode -halt-on-error kalman_ou-w3d-stability-study.tex
       - uses: actions/upload-artifact@v4

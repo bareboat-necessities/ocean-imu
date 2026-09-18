@@ -54,33 +54,19 @@ jobs:
             exit 0
           fi
 
-          # Proof-tool changes are exercised by ou3-proof.yml and do not need
-          # the 11-way simulator/document build off main.  Keep this list tied
-          # to the *current complete-BRMM P3->P4 route rather than only the
-          # retired P4/P5 workflow names that used to live here.  Main and
-          # explicit workflow_dispatch are forced through the broad build above.
+          # The focused OU-III stability workflow owns proof-only changes.
+          # Shipping estimator, simulator and general validation changes still
+          # run the broad build.
           proof_only=true
           while IFS= read -r path; do
             case "$path" in
-              .github/workflows/ou3-proof.yml|\
-              .github/workflows/ou3-complete-brmm.yml|\
-              .github/workflows/ou3-brmm-*.yml|\
-              tools/stability/ou3_*.py|\
-              tools/stability/ou3_proof_operating_domain.json|\
-              tools/stability/ou3_brmm_*.json|\
-              tests/validation/test_ou3_p3_*.py|\
-              tests/validation/test_ou3_p4_*.py|\
-              tests/validation/test_ou3_brmm_*.py|\
-              tests/validation/test_ou3_full_process_ucc.py|\
-              tests/validation/test_ou3_implementation_word_language.py|\
-              tests/validation/test_ou3_source_domain_contract.py|\
-              tests/validation/test_ou3_translational_uco_ucc.py|\
-              tests/validation/test_ou3_validated_*.py|\
-              tests/validation/test_ou3_vector_uco_certificate.py|\
-              tests/validation/test_ou3_verified_spd_inverse.py|\
-              tests/validation/test_ou3_proof_cleanup.py|\
-              tests/validation/test_ou3_result_determinism.py|\
-              tests/validation/test_ou3_stability_package_integrity.py)
+              .github/workflows/ou3-stability-proof.yml|\
+              .github/workflows/render-stability-study-review.yml|\
+              tools/stability/*|\
+              tests/validation/test_ou3_*.py|\
+              docs/ou3-*.md|\
+              reports/results/ou3_stability/*|\
+              doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex)
                 ;;
               *)
                 proof_only=false

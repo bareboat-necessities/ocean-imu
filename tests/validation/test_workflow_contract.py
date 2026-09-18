@@ -7,7 +7,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 WORKFLOW = REPO_ROOT / ".github" / "workflows" / "ou-validation.yml"
 BRANCH_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "ou-full-evidence-branch.yml"
 BUILD_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "build.yml"
-PROOF_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "ou3-proof.yml"
+PROOF_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "ou3-stability-proof.yml"
 VALIDATION_MAKEFILE = REPO_ROOT / "tests" / "validation" / "Makefile"
 
 
@@ -168,66 +168,39 @@ class WorkflowContractTests(unittest.TestCase):
         self.assertLess(rebase, fingerprint)
         self.assertLess(fingerprint, validate)
 
-    def test_evidence_gate_is_the_suite_without_the_proof_searches(self):
-        """What the publication gate runs, and why it is not the whole suite.
-
-        The staged OU-III proof searches are three quarters of an hour of
-        interval arithmetic and read source and tooling only: no bundle this
-        repository publishes can move their verdict. Running them inside the
-        twenty-minute commit job is what killed it mid-suite on every main push
-        from 2026-09-03 on, leaving the branch with unpublished evidence and
-        skipping the document build behind it. ou3-proof.yml owns them and
-        budgets hours; `test` still runs everything for a local full pass and
-        for the pull-request smoke gate.
-        """
+    def test_evidence_gate_runs_every_current_validation_test(self):
         makefile = VALIDATION_MAKEFILE.read_text(encoding="utf-8")
-        self.assertIn(
-            "PROOF_SEARCH_TESTS := $(wildcard test_ou3_p2_*.py test_ou3_p3_*.py "
-            "test_ou3_p4_*.py test_ou3_p5_*.py)",
-            makefile,
-        )
-        self.assertIn(
-            "EVIDENCE_TESTS := $(filter-out $(PROOF_SEARCH_TESTS),"
-            "$(wildcard test_*.py))",
-            makefile,
-        )
+        self.assertIn("EVIDENCE_TESTS := $(wildcard test_*.py)", makefile)
         self.assertIn("evidence-test: evidence-contract", makefile)
         self.assertIn("test: evidence-contract", makefile)
-        self.assertIn("python3 -m unittest discover -v -p 'test_*.py'", makefile)
-
-        # Most of the skipped modules are named in the proof workflow. The few
-        # that are not stay covered because the pull-request smoke gate runs
-        # the whole suite, so nothing here drops out of CI entirely.
-        proof = PROOF_WORKFLOW.read_text(encoding="utf-8")
-        directory = REPO_ROOT / "tests" / "validation"
-        skipped = sorted(
-            path.stem
-            for prefix in ("p2", "p3", "p4", "p5")
-            for path in directory.glob(f"test_ou3_{prefix}_*.py")
-        )
-        self.assertTrue(skipped)
-        self.assertTrue(any(name in proof for name in skipped))
-
-        workflow = WORKFLOW.read_text(encoding="utf-8")
-        smoke = workflow[workflow.index("  validate:"):workflow.index("  fingerprint:")]
-        self.assertIn("make -C tests/validation test", smoke)
-
-    def test_brmm_matrix_searches_have_ci_owners_outside_publication(self):
         command = subprocess.check_output(
             ["make", "-s", "-n", "evidence-test"],
             cwd=VALIDATION_MAKEFILE.parent, text=True,
         )
-        tests = command.split("python3 -m unittest -v ")[-1].split()
-        workflows = "\n".join(p.read_text().partition("jobs:")[2]
-                              for p in (REPO_ROOT / ".github/workflows").glob("ou3*.yml"))
-        for path in VALIDATION_MAKEFILE.parent.glob("test_ou3_brmm_*.py"):
-            module = path.stem
-            if module == "test_ou3_brmm_runtime":
-                continue
-            self.assertNotIn(module, tests)
-            self.assertIn(module + "\n", workflows.replace(" \\\n", "\n"))
-        self.assertIn("test_ou_evidence_contract", tests)
-        self.assertIn("test_ou3_brmm_runtime", tests)
+        modules = set(command.split("python3 -m unittest -v ")[-1].split())
+        expected = {path.stem for path in VALIDATION_MAKEFILE.parent.glob("test_*.py")}
+        self.assertEqual(expected, modules)
+        workflow = WORKFLOW.read_text(encoding="utf-8")
+        smoke = workflow[workflow.index("  validate:"):workflow.index("  fingerprint:")]
+        self.assertIn("make -C tests/validation test", smoke)
+
+    def test_single_stability_workflow_covers_contracts_without_promoting_status(self):
+        proof = PROOF_WORKFLOW.read_text(encoding="utf-8")
+        for module in (
+            "test_ou3_architecture_cleanup", "test_ou3_imu_bias",
+            "test_ou3_magnetic_service", "test_ou3_marine_motion",
+            "test_ou3_no_mag_obstruction", "test_ou3_same_execution",
+            "test_ou3_theorem_status",
+        ):
+            self.assertIn(module, proof)
+            self.assertTrue((VALIDATION_MAKEFILE.parent / (module + ".py")).is_file())
+        self.assertIn("tools/stability/ou3_theorem/build_evidence.py", proof)
+        self.assertIn("shipping_contract-test", proof)
+        self.assertIn("shipping_transition-test", proof)
+        for step in ("Validate theorem contracts", "Validate provenance and fail-closed status"):
+            start = proof.index("- name: " + step)
+            end = proof.find("\n      - ", start + 1)
+            self.assertNotIn("continue-on-error", proof[start:end if end >= 0 else None])
 
     def test_commit_job_validates_against_the_regenerated_commit(self):
         """The bundles are made at github.sha, so the gate must see that tree.

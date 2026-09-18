@@ -173,7 +173,7 @@ struct ImuNoiseModel {
     std::mt19937 rng;
     std::normal_distribution<float> w;
     std::normal_distribution<float> n01;
-    Vector3f bias0;
+    Vector3f turn_on_bias;
     Vector3f bias_rw;
     float sigma_bias_rw = 0.0f;
 };
@@ -196,7 +196,7 @@ struct MagNoiseModel {
     std::normal_distribution<float> w_uT;
     std::normal_distribution<float> n01;
 
-    Vector3f bias0_uT;
+    Vector3f turn_on_bias_uT;
     Vector3f bias_rw_uT;
     float sigma_bias_rw_uT_sqrt_s = 0.0f;
 

@@ -1,5 +1,4 @@
 #!/bin/bash -e
-
 sim_status=0
 W3D_COLLECT_ALL_GATES=1 ./kalman_ou_iii-sim || sim_status=$?
 ./accel_vibration_guard-test
@@ -14,9 +13,8 @@ W3D_COLLECT_ALL_GATES=1 ./kalman_ou_iii-sim || sim_status=$?
 ./tuner_coupling-test
 ./tuner_schedule-test
 ./wave_band_sigma-test
-./iss_contract-test
+./shipping_contract-test
+./shipping_transition-test
 ./rs_law-test
-./live_entry_audit-test
 ./startup_init-test
-
 exit "$sim_status"
