@@ -253,12 +253,17 @@ Immediate open items for the next PR are:
    timing is closed.
 8. Close deployment finite-precision enclosure and compose the indefinite
    end-to-end theorem.
-9. Move the R_S source parity premise and the two hard-coded horizontal
-   `0.72` bounds onto the deployed anisotropic pair. The shipping filter now
-   runs `rho_x = 0.72`, `rho_y = 0.50`; see
-   `docs/ou3-rho-anisotropy-proof-plan.md` for the inventory, including the two
-   certificates that stay green while asserting a configuration that no longer
-   ships.
+9. Close the two scaled-OU-process-cell certificates that do not certify:
+   `ou3_brmm_riccati_tube.py:254` and `ou3_source_reachable_matrix_p3.py:247`.
+   Both are pre-existing and independent of the deployed horizontal `R_S`
+   factors, and neither is reached by CI today; see the research state for the
+   settled attribution.
+
+The horizontal `R_S` anisotropy is closed on the proof side. The deployed pair
+is `rho_x = 0.72`, `rho_y = 0.50`, and every premise and numeric bound that
+consumes it now extracts it from `SeaStateFusionFilter_OU_III.h` through
+`ou3_brmm_complete_source.deployed_axis_std_factors()` instead of restating a
+literal, so the next deployment move lands in one place and fails closed.
 
 Classify future failure as A/B/C/D/E/F/G using the established taxonomy. The old
 constant-position witness may not be reused as A or B because it is outside the

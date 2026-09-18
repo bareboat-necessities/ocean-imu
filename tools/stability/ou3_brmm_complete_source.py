@@ -24,6 +24,7 @@ import argparse
 import json
 import math
 from pathlib import Path
+import re
 
 from ou3_interval import Interval, down, up
 import ou3_validated_transcendentals as VT
@@ -44,6 +45,11 @@ REPO = Path(__file__).resolve().parents[2]
 DEFAULT_DOMAIN = REPO / "tools" / "stability" / "ou3_proof_operating_domain.json"
 DEFAULT_RESPONSE_DOMAIN = REPO / "tools" / "stability" / "ou3_brmm_directional_response_domain.json"
 WRAPPER = REPO / "src" / "kalman_ou_iii" / "SeaStateFusionFilter_OU_III.h"
+HORIZONTAL_RS_MEMBERS = ("R_S_x_factor_", "R_S_y_factor_")
+# The deployed setters clamp either horizontal factor into [0, 4]; a zero
+# factor is a singular S observation and is refused here.
+RS_FACTOR_CLAMP_LOWER = 0.0
+RS_FACTOR_CLAMP_UPPER = 4.0
 SCHEMA = 3
 QUALIFICATION = "OU3_BRMM_COMPLETE_NORMAL_LIVE_SOURCE_V3"
 DIM = 3
@@ -81,8 +87,49 @@ def _trace_threshold(cap: float, t: int) -> float:
     return down(down(float(cap) * float(cap)) / float(2 * DIM * t))
 
 
-def _source_rs_parity() -> dict[str, bool]:
+def deployed_horizontal_rs_factors(
+    text: str | None = None,
+) -> tuple[list[float] | None, str]:
+    """Read the shipping horizontal R_S factors out of the deployed header.
+
+    The premise is that the proof is derived for the configuration that ships,
+    so the pair is extracted rather than restated: a deployment move lands here
+    on its own. Fail-closed, and the reason is reported rather than raised: an
+    absent, unparseable, non-finite, non-positive or unclamped factor yields no
+    pair, and the parity premise below then fails on it.
+    """
+    if text is None:
+        text = WRAPPER.read_text(encoding="utf-8")
+    out: list[float] = []
+    for name in HORIZONTAL_RS_MEMBERS:
+        m = re.search(rf"^[ \t]*float\s+{re.escape(name)}\s*=\s*([^;]+?)f\s*;", text, re.M)
+        if m is None:
+            return None, f"{name} is not declared as a single float literal"
+        try:
+            value = float(m.group(1))
+        except ValueError:
+            return None, f"{name} is not a numeric literal: {m.group(1)!r}"
+        if not math.isfinite(value):
+            return None, f"{name} is not finite"
+        if not RS_FACTOR_CLAMP_LOWER < value <= RS_FACTOR_CLAMP_UPPER:
+            return None, f"{name}={value} leaves the deployed setter clamp"
+        out.append(value)
+    return out, ""
+
+
+def deployed_axis_std_factors(
+    text: str | None = None,
+) -> tuple[list[float] | None, str]:
+    """Deployed [rho_x, rho_y, 1]; these multiply std, not variance."""
+    horizontal, reason = deployed_horizontal_rs_factors(text)
+    if horizontal is None:
+        return None, reason
+    return [*horizontal, 1.0], ""
+
+
+def _source_rs_parity() -> tuple[dict[str, bool], list[float] | None, str]:
     text = WRAPPER.read_text(encoding="utf-8")
+    axis_std_factors, axis_reason = deployed_axis_std_factors(text)
     return {
         "deployed_law_is_SpectralMSE": (
             "RSAdaptationLaw rs_law_ = RSAdaptationLaw::SpectralMSE;" in text
@@ -100,10 +147,7 @@ def _source_rs_parity() -> dict[str, bool]:
             and "const float RSb = RSbase * pseudo_update_information_rate_scale_();" in text
             and "mekf_->set_RS_noise(Eigen::Vector3f(" in text
         ),
-        "horizontal_RS_factors_are_0p72": (
-            "float R_S_x_factor_ = 0.72f;" in text
-            and "float R_S_y_factor_ = 0.72f;" in text
-        ),
+        "horizontal_RS_factors_read_from_deployed_source": axis_std_factors is not None,
         "pseudo_period_is_committed_tau_function": (
             "const float requested = pseudo_update_tau_ratio_ * tau;" in text
             and "mekf_->set_pseudo_update_period_s(period);" in text
@@ -118,7 +162,7 @@ def _source_rs_parity() -> dict[str, bool]:
             and "apply_ou_tune_(false);" in text
             and "apply_RS_tune_();" in text
         ),
-    }
+    }, axis_std_factors, axis_reason
 
 
 def build(
@@ -181,7 +225,7 @@ def build(
         + float(rate_tail["failure_probability_upper"])
     )
 
-    rs_parity = _source_rs_parity()
+    rs_parity, rs_axis_std_factors, rs_axis_reason = _source_rs_parity()
     rs_failures = [k for k, ok in rs_parity.items() if not ok]
     sea = moment["sea_family"]
     directional = json.loads(response_domain_path.read_text(encoding="utf-8"))[
@@ -360,7 +404,9 @@ def build(
             "source_parity_failures": rs_failures,
             "deployed_law": "SpectralMSE",
             "actual_applied_R_S_required_at_every_due_S_update": True,
-            "axis_std_factors": [0.72, 0.72, 1.0],
+            "axis_std_factors": rs_axis_std_factors,
+            "axis_std_factors_read_from_deployed_source": True,
+            "axis_std_factor_rejection": rs_axis_reason,
             "extra_information_rate_rescale": 1.0,
             "pseudo_scheduler_recurrence_certificate": bool(
                 scheduler["scheduler_recurrence_certificate"]
@@ -507,8 +553,13 @@ def validate(d: dict) -> list[str]:
     ):
         if rs.get(key) is not True:
             f.append(f"R_S regularizer lost {key}")
-    if rs.get("axis_std_factors") != [0.72, 0.72, 1.0]:
-        f.append("R_S axis factors changed")
+    if rs.get("axis_std_factors_read_from_deployed_source") is not True:
+        f.append("R_S axis factors were restated instead of read from the source")
+    deployed_axis, axis_reason = deployed_axis_std_factors()
+    if deployed_axis is None:
+        f.append(f"deployed R_S axis factors unreadable: {axis_reason}")
+    elif rs.get("axis_std_factors") != deployed_axis:
+        f.append("R_S axis factors do not match the deployed horizontal pair")
     if float(rs.get("extra_information_rate_rescale", math.nan)) != 1.0:
         f.append("SpectralMSE R_S incorrectly received cadence rescale")
     return list(dict.fromkeys(f))

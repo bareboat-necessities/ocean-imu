@@ -9,6 +9,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools"))
 sys.path.insert(0, str(ROOT / "tools" / "stability"))
 
+import ou3_brmm_complete_source as SOURCE  # noqa: E402
 import ou3_brmm_four_s_translation_information as FOUR  # noqa: E402
 
 
@@ -82,7 +83,9 @@ class BrmmFourSTranslationInformationTest(unittest.TestCase):
 
     def test_shipping_rs_cap_and_axis_factors_are_consumed(self):
         d = FOUR.build()
-        self.assertEqual(d["R_S_axis_std_factors"], [0.72, 0.72, 1.0])
+        deployed, reason = SOURCE.deployed_axis_std_factors()
+        self.assertIsNotNone(deployed, reason)
+        self.assertEqual(d["R_S_axis_std_factors"], deployed)
         self.assertLessEqual(d["R_S_applied_base_std"][1], 100.0001)
         vars_ = d["selected_S_record_noise"]["measurement_variance_axis_upper"]
         self.assertEqual(len(vars_), 3)

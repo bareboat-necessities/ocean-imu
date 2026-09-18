@@ -85,7 +85,11 @@ jobs:
             --cov /tmp/ou3_p4_complete_word_covariance.bin \
             --output /tmp/ou3_p4_complete_word_feasibility.json
           python3 - <<'PY'
-          import json
+          import json, sys
+          sys.path.insert(0, 'tools/stability')
+          import ou3_brmm_complete_source as SOURCE
+          axis,reason=SOURCE.deployed_axis_std_factors()
+          assert axis is not None, reason
           d=json.load(open('/tmp/ou3_p4_complete_word_feasibility.json'))
           assert d['canonical_source'] == 'COMPLETE_BRMM_NORMAL_LIVE_WORD'
           assert d['point_same_history_diagnostic_only'] is True
@@ -93,7 +97,8 @@ jobs:
           assert d['filter_changed'] is False
           assert d['declared_domain_changed'] is False
           assert d['actual_applied_RS_used_inside_each_S_gain'] is True
-          assert d['RS_axis_std_factors_declared_by_complete_BRMM'] == [0.72,0.72,1.0]
+          assert d['RS_axis_std_factors_declared_by_complete_BRMM'] == axis, (
+              d['RS_axis_std_factors_declared_by_complete_BRMM'], axis)
           assert d['all_valid_accelerometer_updates_required'] is True
           assert d['all_due_S_updates_required'] is True
           assert d['packet_count_remainder_budget_used'] is False
@@ -141,7 +146,11 @@ jobs:
       - name: Verify scan-word metadata and signed event-ledger invariants
         run: |
           python3 - <<'PY'
-          import csv, json
+          import csv, json, sys
+          sys.path.insert(0, 'tools/stability')
+          import ou3_brmm_complete_source as SOURCE
+          axis,reason=SOURCE.deployed_axis_std_factors()
+          assert axis is not None, reason
           linear=json.load(open('/tmp/ou3_p4_complete_word_feasibility.json'))
           report={
               'qualification':'NON_PROMOTING_COMPLETE_BRMM_P4_SINGLE_SHIPPING_OBSERVER',
@@ -192,8 +201,8 @@ jobs:
               for r in srows:
                   sx=float(r['rs_std_x']); sy=float(r['rs_std_y']); sz=float(r['rs_std_z'])
                   assert sx>0 and sy>0 and sz>0
-                  assert abs(sx/sz-0.72) <= 2e-5, (mode,sx,sz)
-                  assert abs(sy/sz-0.72) <= 2e-5, (mode,sy,sz)
+                  assert abs(sx/sz-axis[0]) <= 2e-5, (mode,sx,sz,axis[0])
+                  assert abs(sy/sz-axis[1]) <= 2e-5, (mode,sy,sz,axis[1])
               report['modes'][mode]={
                   'rho_event_ledger':rho, 'rho_complete_word_linear':linear_rho,
                   'rho_difference_binary32_association_diagnostic':rho-linear_rho,
