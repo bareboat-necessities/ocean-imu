@@ -63,6 +63,7 @@ jobs:
             test_ou3_no_mag_obstruction \
             test_ou3_same_execution \
             test_ou3_theorem_status \
+            test_ou3_finite_error \
             test_workflow_contract \
             test_ou_replay_fingerprint 2>&1 | tee /tmp/ou3-contract-tests.log
       - name: Validate provenance and fail-closed status
