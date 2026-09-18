@@ -16,35 +16,32 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          fetch-depth: 4
+          fetch-depth: 5
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Verify and apply the reviewed source bundle
-        env:
-          MISSING_SEGMENT: >-
-            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
+      - name: Reproduce the already verified source tree
         shell: bash
         run: |
           set -euo pipefail
           python3 - <<'PY'
-          import base64, gzip, hashlib, json, os, pathlib, subprocess
+          import base64, gzip, hashlib, json, pathlib, subprocess
           parent = '6346ba1f27565d4c5420554172f2b59c352d544c'
           transport = '1e72d313101b17869c6afab79692ba6f511a3114'
+          repair = 'b3d61453e0f4da343b46aabe21f0b2bf8a935c15'
           workflow = '.github/workflows/ou3-stability-proof.yml'
           def git(*args):
               return subprocess.check_output(['git', *args], text=True).strip()
-          assert git('rev-parse', 'HEAD^') == '554a141205cdbd10f47db7428fabd251834cd4e2', 'branch changed; reconcile instead of overwriting'
-          assert git('rev-parse', 'HEAD^^^') == parent
+          assert git('rev-parse', 'HEAD^') == repair, 'branch changed; reconcile instead of overwriting'
           assert git('rev-parse', parent + '^{tree}') == '824c651fafbecfed61a7b94af10091bd22eb7aeb'
-          previous = git('show', transport + ':' + workflow)
-          encoded = ''.join(previous.split('PATCH_GZIP_BASE64: >-', 1)[1].split('\n        shell: bash', 1)[0].split())
-          missing = ''.join(os.environ['MISSING_SEGMENT'].split())
+          source = git('show', transport + ':' + workflow)
+          encoded = ''.join(source.split('PATCH_GZIP_BASE64: >-', 1)[1].split('\n        shell: bash', 1)[0].split())
+          fixed = git('show', repair + ':' + workflow)
+          missing = ''.join(fixed.split('MISSING_SEGMENT: >-', 1)[1].split('\n        shell: bash', 1)[0].split())
           left, right = 'KxLLdp7i1', 'Zt2+0bVrTfy+JqmBdKD'
-          assert len(missing) == 2817, len(missing)
-          assert encoded.count(left + right) == 1
+          assert len(missing) == 2817 and encoded.count(left + right) == 1
           encoded = encoded.replace(left + right, left + missing + right)
-          assert len(encoded) == 25692, len(encoded)
+          assert len(encoded) == 25692
           raw = gzip.decompress(base64.b64decode(encoded, validate=True))
           assert hashlib.sha256(raw).hexdigest() == 'a36fbff140a026276422683a36d2318162274cf40cce10513dffa63a76944194'
           bundle = json.loads(raw)
@@ -70,19 +67,21 @@ jobs:
           subprocess.run(['git', 'diff', '--check'], check=True)
           subprocess.run(['git', 'add', '--', *names], check=True)
           assert git('write-tree') == bundle['final_tree'] == 'c92ea6860b985e56f7b46ef555f2b7b4145c03f9'
-          pathlib.Path('/tmp/expected-tree.txt').write_text(bundle['final_tree'])
-          print('Verified all 22 source transformations and final tree; temporary application job removed.')
+          print('Verified exact reviewed source tree and every file hash.')
           PY
       - name: Validate the complete reviewed contract suite
         working-directory: tests/validation
         run: python3 -m unittest -v test_ou3_architecture_cleanup test_ou3_imu_bias test_ou3_magnetic_service test_ou3_marine_motion test_ou3_no_mag_obstruction test_ou3_same_execution test_ou3_theorem_status test_workflow_contract test_ou_replay_fingerprint
       - name: Validate source-bound operation lemmas
         run: python3 tools/stability/ou3_theorem/build_evidence.py --output /tmp/ou3-stability-evidence.json
-      - name: Commit validated source on the existing PR branch
+      - name: Commit source only on the existing PR branch
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git write-tree)" = "$(cat /tmp/expected-tree.txt)"
+          test "$(git write-tree)" = c92ea6860b985e56f7b46ef555f2b7b4145c03f9
+          git checkout HEAD -- .github/workflows/ou3-stability-proof.yml
+          test -z "$(git diff --cached --name-only -- .github/workflows)"
+          test "$(git diff --cached --name-only | wc -l)" -eq 21
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git commit -m 'Fix OU-III CI cleanup and carry exact bias and integral error operations'
