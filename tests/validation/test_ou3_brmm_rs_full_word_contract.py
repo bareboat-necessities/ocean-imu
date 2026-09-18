@@ -19,7 +19,11 @@ class BrmmRSFullWordContractTest(unittest.TestCase):
         self.assertEqual(source.validate(d), [])
         rs = d["R_S_regularizer"]
         self.assertEqual(rs["deployed_law"], "SpectralMSE")
-        self.assertEqual(rs["axis_std_factors"], [0.72, 0.72, 1.0])
+        deployed, reason = source.deployed_axis_std_factors()
+        self.assertIsNotNone(deployed, reason)
+        self.assertEqual(rs["axis_std_factors"], deployed)
+        self.assertTrue(rs["axis_std_factors_read_from_deployed_source"])
+        self.assertEqual(rs["axis_std_factors"][2], 1.0)
         self.assertTrue(rs["actual_applied_R_S_required_at_every_due_S_update"])
         self.assertTrue(rs["all_due_S_updates_remain_in_full_word"])
         self.assertTrue(rs["full_P_column_S_cross_covariance_action_required"])

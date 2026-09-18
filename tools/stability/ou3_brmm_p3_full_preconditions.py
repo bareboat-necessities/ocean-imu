@@ -103,8 +103,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "active_accel_bias_jacobian": "PCt.noalias() += P_all_ba; // J_ba = I" in mekf,
         "deployed_SpectralMSE": "RSAdaptationLaw rs_law_ = RSAdaptationLaw::SpectralMSE;" in wrapper,
         "R_S_horizontal_factors": (
-            "float R_S_x_factor_ = 0.72f;" in wrapper
-            and "float R_S_y_factor_ = 0.72f;" in wrapper
+            COMPLETE.deployed_horizontal_rs_factors(wrapper)[0] is not None
         ),
     }
     source_failures = [k for k, v in source_parity.items() if not v]

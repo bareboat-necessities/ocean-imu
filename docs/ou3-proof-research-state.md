@@ -432,6 +432,47 @@ rather than an assumption needs a forced-acquisition argument
 `timeout_sec = 150 s`), which in turn needs the un-forced `0.35` norm-ratio
 admission above.
 
+### E — horizontal R_S parity premise restated a literal (CLOSED)
+
+CI failure, not a theorem or enclosure failure. The deployed horizontal integral
+regularizer is anisotropic, `rho_x = 0.72` and `rho_y = 0.50`, and three source
+premises asserted the isotropic pair as source text
+(`ou3_brmm_complete_source` R_S parity and `axis_std_factors`,
+`ou3_brmm_p3_full_preconditions` source parity), so
+`P3_source_contract_ready` went false and the correlated outer-enclosure
+prerequisite cascaded into the ALT suite and the evidence gate. Two P4
+certificates, `ou3_p4_innovation_binary32_bounds` and
+`ou3_p4_marginal_correction_obstruction`, hard-coded `0.72` in their numerics
+while validating against their own literal, so they stayed green while bounding
+a configuration that does not ship.
+
+Invalidated: restating a deployed constant in a premise. Every premise and
+numeric bound now extracts the pair through
+`ou3_brmm_complete_source.deployed_axis_std_factors()`, fail-closed on an
+absent, non-finite, non-positive or unclamped factor, and re-checks the emitted
+pair against the header in `validate`. Each of the two numeric bounds was
+re-derived rather than substituted: the innovation `R` eigenvalue bounds are
+monotone in the axis factors and take the deployed min/max, while the marginal
+correction goes as `1/rho_h` and is therefore evaluated on both axes with the
+larger factor binding. No theorem gate moves.
+
+### D — scaled OU process cell does not certify (pre-existing, separable)
+
+Enclosure failure, independent of the deployed `R_S` factors.
+`ou3_brmm_riccati_tube.py:254` cannot certify the scaled OU process cell
+`[0.009999999068167651, 0.010000000000000037]` at depth 20, and
+`ou3_source_reachable_matrix_p3.py:247` cannot certify
+`[0.00041666665735344007, 0.00041667021815050694]`. Attribution is settled as
+pre-existing: both fail with byte-identical cell intervals at `238a70e`, where
+the header still carried the isotropic `rho_y = 0.72`.
+
+Neither is reached by CI. `test_ou3_brmm_riccati_tube` exercises
+`ou3_brmm_riccati_tube_factored`, which closes and is what the class E P4
+modules import as `TUBE`. The obstruction is in the scaled process cell itself,
+so it must not be folded into unrelated work. Next falsifiable step: subdivide
+that one cell's own certification argument, not the horizontal factor or the
+enclosing tube.
+
 ### C/G — downstream same-history joint24 closure
 
 The controlling P4 theorem remains the complete-word, same-history joint24

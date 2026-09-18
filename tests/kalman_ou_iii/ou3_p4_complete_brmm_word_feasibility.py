@@ -18,8 +18,24 @@ import json
 import math
 import struct
 from pathlib import Path
+import sys
 
 import numpy as np
+
+REPO = Path(__file__).resolve().parents[2]
+STABILITY = REPO / "tools" / "stability"
+if str(STABILITY) not in sys.path:
+    sys.path.insert(0, str(STABILITY))
+
+import ou3_brmm_complete_source as SOURCE
+
+
+def deployed_axis_std_factors() -> list[float]:
+    """Deployed [rho_x, rho_y, 1] R_S std factors; fail closed on an unreadable pair."""
+    axis, reason = SOURCE.deployed_axis_std_factors()
+    if axis is None:
+        raise RuntimeError("deployed R_S axis factors unreadable: " + reason)
+    return axis
 
 MAP_MAGIC = b"OU3MAP3\0"
 COV_MAGIC = b"OU3COV1\0"
@@ -212,7 +228,7 @@ def analyze(map_path: Path, cov_path: Path) -> dict:
         "all_valid_accelerometer_updates_required": True,
         "all_due_S_updates_required": True,
         "actual_applied_RS_used_inside_each_S_gain": True,
-        "RS_axis_std_factors_declared_by_complete_BRMM": [0.72, 0.72, 1.0],
+        "RS_axis_std_factors_declared_by_complete_BRMM": deployed_axis_std_factors(),
         "full_shipping_covariance_metric_used": True,
         "H18_A21_separate": True,
         "H_to_A_hybrid_excluded_from_same_mode_word": True,

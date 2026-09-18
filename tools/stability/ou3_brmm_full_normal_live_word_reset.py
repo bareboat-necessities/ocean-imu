@@ -11,6 +11,7 @@ injection, so no small-angle gate is added.
 from __future__ import annotations
 import json
 from pathlib import Path
+import ou3_brmm_complete_source as COMPLETE
 import ou3_brmm_full_normal_live_word as BASE
 import ou3_brmm_full_word_reset_congruence as RESET
 
@@ -58,6 +59,12 @@ def apply_magnetometer(word:LiteralWordState,*,m_body,Rmag,reset_dtheta):
 
 def certify_literal_endpoint(word:LiteralWordState,delta=BASE.USEFUL_GATE): return BASE.certify_literal_endpoint(word,delta)
 
+def deployed_rs_std_xyz(point):
+    """Deployed [rho_x, rho_y, 1] R_S std factors, read from the shipping header."""
+    axis,reason=COMPLETE.deployed_axis_std_factors()
+    if axis is None: raise RuntimeError(f"deployed R_S axis factors unreadable: {reason}")
+    return [point(v) for v in axis]
+
 def _self_test(mode):
     from ou3_interval import Interval,matrix_identity,matrix_point
     n=state_dimension(mode); P0=matrix_point([[2.0 if i==j else 0.0 for j in range(n)] for i in range(n)]); w=initialize_word(mode,P0)
@@ -68,7 +75,7 @@ def _self_test(mode):
     if mode=="A": F,Q=pack_prediction(mode,Faa,Qaa,Fll,Qll,phi_ba=Interval.point(0.999999),Q_ba=matrix_point([[1e-8 if i==j else 0.0 for j in range(3)] for i in range(3)]))
     else: F,Q=pack_prediction(mode,Faa,Qaa,Fll,Qll)
     d=[Interval.point(0.01),Interval.point(-0.005),Interval.point(0.002)]
-    apply_imu_sample(w,F=F,Q=Q,f_cog_body=[Interval.point(0),Interval.point(0),Interval.point(-9.80665)],R_wb=matrix_identity(3),Racc=diagonal_R([0.2]*3),due_S=True,rs_std_xyz=[Interval.point(0.72),Interval.point(0.72),Interval.point(1.0)],Delta_aw=matrix_point([[0.001 if i==j else 0.0 for j in range(3)] for i in range(3)]),S_reset_dtheta=d,acc_reset_dtheta=d)
+    apply_imu_sample(w,F=F,Q=Q,f_cog_body=[Interval.point(0),Interval.point(0),Interval.point(-9.80665)],R_wb=matrix_identity(3),Racc=diagonal_R([0.2]*3),due_S=True,rs_std_xyz=deployed_rs_std_xyz(Interval.point),Delta_aw=matrix_point([[0.001 if i==j else 0.0 for j in range(3)] for i in range(3)]),S_reset_dtheta=d,acc_reset_dtheta=d)
     apply_magnetometer(w,m_body=[Interval.point(20),Interval.point(0),Interval.point(40)],Rmag=diagonal_R([0.3]*3),reset_dtheta=d)
     return {"mode":mode,"decomposition_identity_enclosed":BACKEND.decomposition_identity_enclosed(w.riccati),"event_log":w.event_log,
             "all_three_measurements_followed_immediately_by_reset":w.event_log==["prediction","aw_floor","S_zero","left_reset_S","accelerometer","left_reset_acc","magnetometer","left_reset_mag"]}

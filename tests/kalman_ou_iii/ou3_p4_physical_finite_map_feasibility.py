@@ -38,8 +38,17 @@ if str(STABILITY) not in sys.path:
     sys.path.insert(0, str(STABILITY))
 
 from ou3_interval import Interval, matrix_point
+import ou3_brmm_complete_source as SOURCE
 import ou3_p4_complete_brmm_differential_events as EVENTS
 import ou3_p4_complete_brmm_differential_prediction as PRED
+
+
+def deployed_horizontal_rs_factors() -> list[float]:
+    """Deployed [rho_x, rho_y]; fail closed on an unreadable pair."""
+    horizontal, reason = SOURCE.deployed_horizontal_rs_factors()
+    if horizontal is None:
+        raise RuntimeError("deployed R_S horizontal factors unreadable: " + reason)
+    return horizontal
 
 NX = 21
 OFF_BG = 3
@@ -215,6 +224,9 @@ def build_reset_normalized_linear_path(payload: dict, projection_limit: float) -
     M = np.eye(n)
     path = []
     counts = {name: 0 for name in EVENT_NAMES.values()}
+    # The deployed horizontal factors are anisotropic, so each axis is scored
+    # against its own factor rather than against one shared horizontal value.
+    rs_x_factor, rs_y_factor = deployed_horizontal_rs_factors()
     rs_ratio_max_error = 0.0
     min_R_eig = math.inf
 
@@ -242,8 +254,8 @@ def build_reset_normalized_linear_path(payload: dict, projection_limit: float) -
                 if std[2] > 0:
                     rs_ratio_max_error = max(
                         rs_ratio_max_error,
-                        abs(float(std[0] / std[2]) - 0.72),
-                        abs(float(std[1] / std[2]) - 0.72),
+                        abs(float(std[0] / std[2]) - rs_x_factor),
+                        abs(float(std[1] / std[2]) - rs_y_factor),
                     )
         M = C @ M
         counts[ev["name"]] += 1
@@ -265,6 +277,7 @@ def build_reset_normalized_linear_path(payload: dict, projection_limit: float) -
         "P0": P0, "PN": P, "Q0": Q0, "QN": QN, "M": M,
         "path": path, "rho_linear": rho, "direction": direction,
         "counts": counts, "actual_RS_std_ratio_max_error": rs_ratio_max_error,
+        "deployed_RS_horizontal_std_factors": [rs_x_factor, rs_y_factor],
         "minimum_measurement_R_eigenvalue": min_R_eig,
     }
 

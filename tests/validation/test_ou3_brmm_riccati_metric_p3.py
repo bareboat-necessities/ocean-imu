@@ -93,7 +93,9 @@ class BrmmCompleteSourceP3Test(unittest.TestCase):
         self.assertTrue(a["Q_uses_same_committed_tau_sigma"])
         rs = self.c["R_S_regularizer"]
         self.assertEqual(rs["source_parity_failures"], [])
-        self.assertEqual(rs["axis_std_factors"], [0.72, 0.72, 1.0])
+        deployed, reason = complete.deployed_axis_std_factors()
+        self.assertIsNotNone(deployed, reason)
+        self.assertEqual(rs["axis_std_factors"], deployed)
         self.assertTrue(rs["actual_applied_R_S_required_at_every_due_S_update"])
         self.assertTrue(rs["all_due_S_updates_remain_in_full_word"])
 
