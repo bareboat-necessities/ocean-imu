@@ -1,8 +1,9 @@
 from pathlib import Path
+import re
 import unittest
 
 ROOT=Path(__file__).resolve().parents[2]
-LEGACY_TERMS=["P"+str(i) for i in range(2,6)]+["B"+"IAS"+str(i) for i in range(3)]+["BR"+"MM"]
+LEGACY_TOKEN_RE=re.compile(r"\b(?:P[2-5]|BIAS[0-2]|BRMM)\b")
 LEGACY_PATH_FRAGMENTS=["ou3_"+"p"+str(i) for i in range(2,6)]+["ou3_"+"br"+"mm"]+["bias"+str(i) for i in range(3)]
 SKIP_TOP={".git","third_party","sim-data-files"}
 BINARY_SUFFIXES={".pdf",".png",".jpg",".jpeg",".gif",".svg",".xz",".gz",".zip",".bin",".ico",".woff",".woff2",".ttf"}
@@ -27,9 +28,9 @@ class ArchitectureCleanupTests(unittest.TestCase):
                 text=path.read_text(encoding="utf-8")
             except (UnicodeDecodeError,OSError):
                 continue
-            for term in LEGACY_TERMS:
-                if term in text:
-                    bad.append(f"text:{rel}:{term}")
+            match=LEGACY_TOKEN_RE.search(text)
+            if match:
+                bad.append(f"text:{rel}:{match.group(0)}")
         self.assertEqual([],bad,"retired proof architecture survived:\n"+"\n".join(bad[:200]))
 
     def test_exact_old_proof_workflow_names_are_absent(self):
