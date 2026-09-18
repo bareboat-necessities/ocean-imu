@@ -1,5 +1,9 @@
 # OU-III ALT current handover
 
+For the reader-facing assumptions, theorem roadmap, analytic lemmas and
+certificate interpretation, see the [standalone stability study](../doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex).
+This handover and the executable guards remain the current continuation record.
+
 The selected replacement is gravity-quotient/centre dynamics during ungauged
 intervals plus informative magnetic-service superword dissipativity. Read
 `ou3-alt-observability-formulation.md` for the controlling target and measurement.

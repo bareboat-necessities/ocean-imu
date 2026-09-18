@@ -1,0 +1,206 @@
+\section{Numerical certificates: what they establish and what they do not}
+\label{sec:study-certificates}
+
+The analytic derivations define the inequality and the exact relationships
+between its operands. Numerical work has several different roles: testing
+whether a proposed inequality is plausible, finding a candidate witness,
+validating that witness over a declared domain, and checking that the domain
+really covers the shipping histories. Only their correctly scoped composition
+can establish the final theorem. ``The solver returned success'' is not that
+composition.
+
+\subsection{Four kinds of evidence}
+\begin{description}
+\item[Exact identity or analytic bound.]
+A symbolic polynomial identity, rational coefficient check, determinant
+argument or proved physical-history bound applies to all operands satisfying
+its stated premises. For example the Cayley residual identity is universal
+within its chart. It does not prove that every shipping prefix remains in
+that chart or that its energy decreases.
+\item[Point diagnostic.]
+A native replay, tangent product, generalized eigenvalue, high-precision
+recomputation or finite accepted-service audit describes the measured states
+and source histories. It can falsify a universal assertion with a legal
+counterexample, identify a limiting direction, or justify investigating an
+architecture. Positive observations do not establish a uniform bound.
+\item[Validated inequality certificate.]
+A retained witness with exact rational or outward-rounded interval checks
+proves a specified inequality over its full declared set. Examples include a
+positive-definiteness witness, a lower bound on an information Gramian, an
+LDLT pivot enclosure, a finite-increment quadratic inequality, or a prefix
+transport bound. A local certificate proves only its own inequality on its
+own covered branches; it is not automatically a complete-source certificate.
+\item[Source/runtime coverage and composition.]
+A separate argument binds the complete continuous BRMM and BIAS families,
+all admitted event branches, actual parameter ancestry and target arithmetic
+to the certified relations. It must preserve the same successors and memories
+across words and establish indefinite domain membership. A finite coverage
+sample or a test of the certificate checker is not this universal argument.
+\end{description}
+
+\subsection{What the measured $\rho$ actually is}
+For a represented tangent word $A_w$, a common diagnostic is
+\begin{equation}
+ \rho_w^{\rm point}=
+ \lambda_{\max}\!\left(
+ Z^{\top}A_w^{\top}M(P_{\rm after})A_wZ,
+ Z^{\top}M(P_{\rm before})Z\right).
+ \label{eq:study-point-rho}
+\end{equation}
+$Z$ injects the canonical unsupplied initial coordinates. \emph{All output
+rows} of $A_wZ$ remain, including active bias corrections. Both endpoint
+metrics come from the same prescribed storage law; they are not fitted
+separately to make this ratio small. The generalized eigenvector identifies
+the most costly direction, and operation-by-operation energy changes show
+where the margin is consumed.
+
+The retained quiet, magnetically serviced native experiment measured a worst
+local tangent ratio $0.9771585509$ across nine consecutive-window measurements
+covering H18, A21 and an actual H18-to-A21 release. Its covariance, tuner,
+frontend and clocks were carried from construction without intermediate
+reseeding. This supports keeping the compatible storage law as a candidate.
+It is \emph{not} a source-uniform finite-error $\rho$, a certified interval
+budget, or proof of startup for all histories. The experiment's zero nominal
+residual is essential to the tangent construction; nonzero residuals require
+their actual gain/reset dependence. A 60-digit terminal calculation checks
+conditioning, not outward coverage of all possible trajectories.
+
+The accepted-service regime comparison similarly measures a finite set of
+windows. Slower attempted callback schedules used as stress tests are outside
+the retained 40 ms call profile, even when their finite information audits
+succeed. Neither a spectral radius below one nor an inverse-covariance ratio
+below one can replace the required coercivity and retention proof. In
+particular, unobserved covariance growth can reduce its inverse weight while
+physical error is neutral or growing.
+\studysource{docs/ou3-alt-observability-formulation.md}
+\studysource{reports/results/ou3_alt_storage/carried-quiet-diagnostic.json}
+\studysource{docs/ou3-alt-informative-service-theorem.md}
+
+\subsection{What a complete certificate must contain}
+A reproducible certificate must identify its mathematical claim and a witness,
+not just a green test count. At minimum its record needs the following.
+\begin{enumerate}[leftmargin=1.6em]
+\item \textbf{Domain and quantifiers:} physical and bias family, fixed parameter
+ancestry, H18/A21 mode and transition coverage, initial-state/coordinate domain,
+word length, event phases, and the accepted magnetic-service hypothesis.
+\item \textbf{Actual operands:} full covariance and cross terms, applied
+$R_S,R_a,R_m$, tuning parameters, exact source forcing, gain masks, repairs,
+projection and reset branches. Candidate or requested $R_S$ is not the
+actually committed value used by a measurement.
+\item \textbf{Verified inequalities:} storage positivity/coercivity, strict
+word margin, disturbance gains, every-prefix retention and any chart or
+arithmetic-domain bounds. Strictness must survive the complete rounding
+budget, not merely a displayed decimal approximation.
+\item \textbf{Coverage and arithmetic:} justification that cells cover every
+admitted branch with shared source variables; outward rounding or exact
+arithmetic for the checker; target compiler/library and floating-point
+execution premises; explicit handling of rejected or nonfinite outcomes.
+\item \textbf{Provenance and independent checking:} source revision/hashes,
+parameters, generator/checker commands, retained machine-readable report,
+limiting direction or counterexample, and negative tests that reject stale,
+incomplete or inconsistent evidence.
+\end{enumerate}
+A rational identity test and a source-coverage gate answer different questions.
+A successful checker can correctly verify a report whose \emph{theorem gate is
+false}. Likewise, a positive local pivot or a closed library row may remain
+conditional on a whole-firmware premise that has not been established.
+\studysource{tools/stability/ou3_alt_contraction/finite_master_guard.py}
+\studysource{tools/ou_evidence_contract.py}
+
+\subsection{Finite precision is part of the theorem}
+The target graph must account for binary32 inputs and casts, fused and
+unfused operations, underflow, trigonometric/normalization branches,
+exp/log/sqrt implementations, Eigen decisions, solves, Joseph/reset defects,
+and the covariance actually stored. For example, the target arithmetic
+components retain the execution premise \texttt{FCR.RM=0}; an ISA reset that
+leaves that register undefined, followed by no observed writer, is not a proof
+that round-to-nearest was selected. Component correspondence and full-firmware
+initialization/preservation are separate obligations.
+
+Similarly, saturating integer counters can be safe on every finite prefix
+without proving that floating clocks advance indefinitely. A long finite
+clock lookup does not establish $t_j\to\infty$, and a finite covariance audit
+does not establish permanent membership in the finite-SPD domain. The study
+must not convert these missing execution proofs into silently excluded
+histories.
+\studysource{docs/ou3-alt-target-arithmetic.md}
+\studysource{docs/ou3-alt-machine-core-continuation.md}
+\studysource{docs/ou3-alt-binary32-coercivity.md}
+
+\section{Proof status, dependency order, and continuation}
+\label{sec:study-status}
+
+\subsection{Retained results versus controlling gaps}
+The exact finite measurement descriptors, masked held-covariance algebra,
+true-bias family bounds, prescribed storage law, qualitative finite-SPD
+coercivity lemma and conditional comparison theorem are retained ingredients.
+The ungauged unipotent example is a retained negative result. Positive quiet
+word ratios remain diagnostics. None of those facts closes all the premises
+of Theorem~\ref{thm:study-tail-comparison} for the shipping filter.
+
+The finite-master inventory keeps eleven named qualifications. At the source
+snapshot of this study, rows 1, 3, 4, 5, 10 and 11 are open; the other five are
+component results under their explicit execution premises. This is not a
+percentage of the theorem completed. The controlling work groups naturally as
+follows.
+\begin{description}
+\item[Startup and entry.]
+Resolve universal startup reachability (or keep the explicitly weaker
+history-dependent capture hypothesis); finish initialization, startup supplies
+and the actual rounded entry composition. The reached candidate bad tail
+requires its rounding and indefinite wrapper argument, not a larger timeout.
+\item[Whole-target and all-event safety.]
+Qualify the compiler/library/Eigen call graph and floating environment; prove
+bounds and totality for carried MEKF state, bias, covariance, normalization and
+solves. Component frontend bounds alone do not establish the whole estimator.
+\item[Complete same-history relation.]
+Attach the true physical and BIAS history, startup roots, pending yaw,
+calibration, quaternion lower shell and every rounded CORE/hybrid successor
+to the finite word. Preserve actual applied tuning and one persistent origin.
+\item[Information and centre dynamics.]
+Prove the physical gravity quotient and centre coupling for moving sources;
+retain accepted informative service as a clearly stated hypothesis or establish
+its deployment membership. Attempted calls cannot replace it.
+\item[Finite-error dissipation and retention.]
+Prove indefinite finite-SPD membership, the nonlinear complete-word inequality
+for all three bias families and H18/A21 edges, every-prefix basin/clock
+retention, and the useful ultimate bound. Source-uniform finite errors and
+nonzero motion are not covered by quiet zero-residual tangents.
+\end{description}
+The original track's canonical P3 usefulness threshold remains $10^{-18}$.
+Original P4/P5 and the three ALT PASS flags must remain independently gated;
+no editorial reorganization promotes them.
+
+\subsection{A falsifiable order of work}
+First attach a complete source/runtime relation before attempting a universal
+storage certificate. In parallel, resolve startup reachability as its own
+question, with the actual reached bad state rather than an invented seed.
+For the selected Live architecture, test nonzero-motion finite-error words
+with actual accepted and rejected events at retained cadence, report the
+limiting direction and the gravity-fibre/centre coupling, and compare against
+the fixed compatible storage law. Only then attempt rigorous enclosure where
+a quantitative margin makes it plausible. Validate domain and prefix retention,
+compose the tail theorem, and finally attach the startup conclusion with its
+correct quantifiers. Failure at any stage is evidence to analyze, not a reason
+to weaken the physical domain or bypass a gate.
+
+\subsection{Reproduction and navigation}
+The following commands run from the repository root. The native diagnostic
+requires the Eigen/build dependencies; its output remains diagnostic. The
+provenance command checks evidence lineage, not a new stability inequality.
+\begin{quote}\small\ttfamily
+PYTHONPATH=.:tools/stability OPENBLAS\_NUM\_THREADS=1 python3 -m\\
+\hspace*{1em}tools.stability.ou3\_alt\_contraction.carried\_storage\_rho\_diagnostic\\
+\hspace*{1em}--work /tmp/ou3-alt-carried-storage\\
+\hspace*{1em}--output /tmp/ou3-alt-carried-storage.json
+\end{quote}
+\begin{quote}\small\ttfamily
+python3 tools/ou\_evidence\_contract.py --check --study all
+\end{quote}
+For the current executable obligation inventory and proof continuation use
+\path{docs/ou3-alt-main-handover.md} and
+\path{docs/ou3-alt-proof-plan.md}; for the independent original route use
+\path{docs/ou3-brmm-main-handover.md}. The research ledger
+\path{docs/ou3-proof-research-state.md} distinguishes theorem, method,
+enclosure, conditioning and implementation failures. The detailed sections
+that follow supply the retained mathematics, not a chronological list of PRs.

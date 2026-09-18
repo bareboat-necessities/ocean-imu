@@ -12,17 +12,16 @@ turns those two statistics into the OU schedule.  Below the barrier is the
 recursion couples the attitude states, the OU-driven linear chain, and the
 residual accelerometer bias through three rank--3 correction channels.
 
-The barrier carries the structural property the stability argument relies on.
-Every edge that crosses it points downward: raw inertial and magnetic samples,
-the gated startup handoff of Sec.~\ref{sec:proxy-handoff}, the slewed hard-iron
-correction of Sec.~\ref{sec:mag-hi-apply}, and the staged parameter tuple
+The barrier expresses one-way information flow. Every edge that crosses it
+points downward: raw inertial and magnetic samples, the gated startup handoff
+of Sec.~\ref{sec:proxy-handoff}, the slewed hard-iron correction of
+Sec.~\ref{sec:mag-hi-apply}, and the staged parameter tuple
 $\vartheta_k=(\tau,\sigma_{aw},\vct r_S,T_S)$ of
-Eq.~\eqref{eq:adapt-one-sample-staging}.  No MEKF state, covariance, or
-innovation returns to the front end, so the schedule is an exogenous
-$\mathcal F_{k-1}$-measurable sequence rather than a feedback law, which is
-what makes the source-reachable schedule family of
-Sec.~\ref{sec:iss-source-family} finite and the certificates of
-Sec.~\ref{sec:adaptation} well posed.  The Mahony proxy is therefore not a
+Eq.~\eqref{eq:adapt-one-sample-staging}. No MEKF state, covariance, or innovation
+returns to the front end. Parameters are produced from the carried measurement
+history and applied with the one-sample staging described in
+Sec.~\ref{sec:adaptation}; they are not fitted from the MEKF's own residuals.
+The Mahony proxy is therefore not a
 redundant attitude solution retained for convenience: it exists so that
 levelling, hard-iron geometry, and the sea-state observables can be produced
 without closing a loop through the estimator they schedule.

@@ -1,0 +1,33 @@
+\section{Initialization and Live Operation}
+\label{sec:init_alignment}
+\label{sec:startup-policy}
+
+A private measurement-only Mahony observer runs during startup and continues
+in Live to supply the levelling and sea-state front end. The main MEKF is not
+used to produce its own startup signal or adaptation statistics. Startup
+carries the observer, gravity-direction average, wave-period estimate,
+band/statistics state and staged tuner through the Cold and TunerWarm stages.
+
+\subsection{One-time handoff}
+\label{sec:proxy-handoff}
+The ordinary handoff checks elapsed warmup, sustained gravity alignment,
+angular-rate and tuner-readiness conditions, together with heading availability.
+The configured timeout is an alternative guarded path, not an unconditional
+guarantee of entry at that time. On an actual handoff the wrapper initializes
+the MEKF attitude and covariance, commits the current motion parameters and
+integral regularizer, and starts Live with accelerometer-bias learning held.
+The held and active configurations both retain the full 21-state covariance.
+The source code and complete gate/entry equations are documented in the
+\href{kalman_ou-w3d-stability-study.pdf}{companion stability study}.
+
+\subsection{Magnetic acquisition and subsequent changes}
+\label{sec:mag-two-stage}
+A usable initial magnetic reference supplies heading; an ungauged handoff can
+acquire heading later. Reference refinement, continuous hard-iron correction,
+internal bias unlock and an external hold request have distinct effects. In
+particular, attempted magnetic calls are counted separately from accepted
+innovation updates, and an external hold can keep bias learning disabled.
+Section~\ref{sec:mag-hi-apply} describes the continuous hard-iron path. A Live
+tilt watchdog may also perform an accelerometer-based tilt reinitialization
+while preserving yaw. The companion study treats all these events as explicit
+hybrid maps rather than assuming an uninterrupted fixed-mode Kalman recursion.
