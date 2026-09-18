@@ -155,6 +155,13 @@ Stability Study: Assumptions, Proof Architecture, and Certificates}
 \setcounter{tocdepth}{1}
 \newcommand{\studysource}[1]{\par\smallskip
   {\footnotesize\noindent Repository source: \path{#1}.\par}\smallskip}
+\newcounter{studypart}
+\renewcommand{\thestudypart}{\Roman{studypart}}
+\newcommand{\studypart}[1]{%
+  \refstepcounter{studypart}%
+  \section*{Part \thestudypart: #1}%
+  \addcontentsline{toc}{section}{Part \thestudypart: #1}%
+}
 \pgfplotsset{compat=1.18}
 
 
@@ -178,13 +185,13 @@ completed shipping startup or end-to-end stability theorem.
 \tableofcontents
 \clearpage
 
-\part{Assumptions, objectives, and the selected proof architecture}
+\studypart{Assumptions, objectives, and the selected proof architecture}
 \input{w3d-stability-reader-guide.tex-part}
 \input{w3d-stability-proof-roadmap.tex-part}
 \input{w3d-stability-certificates.tex-part}
 
 \clearpage
-\part{Detailed physical contracts and conditional motion theorem}
+\studypart{Detailed physical contracts and conditional motion theorem}
 \label{part:study-contracts}
 The following sections retain the detailed physical definitions and original
 conditional lemmas. Their hypotheses are local to each statement: a narrower
@@ -200,7 +207,7 @@ the current evidence boundary are summarized in Part~I.
 \input{w3d-brmm-period-bridge.tex-part}
 
 \clearpage
-\part{Independent original route: information and finite-error tools}
+\studypart{Independent original route: information and finite-error tools}
 \label{part:study-original}
 This route is independently continuable. P2/P3 linear information and Riccati
 results are ingredients, not an ALT or nonlinear P4 certificate. The canonical
@@ -215,7 +222,7 @@ bias obstruction in Sec.~\ref{sec:study-ungauged}.
 \input{w3d-stability-widening-source-path.tex-part}
 
 \clearpage
-\part{Startup, capture, and hybrid transport}
+\studypart{Startup, capture, and hybrid transport}
 \label{part:study-startup}
 The implementation description and auxiliary continuous-time arguments below
 must be connected by a shipping reachability and arithmetic proof. A theorem
@@ -231,7 +238,7 @@ entry graph and in ALT are related explicitly in Sec.~\ref{sec:study-origin}.
 \input{w3d-stability-widening-phase-e.tex-part}
 
 \clearpage
-\part{Stochastic qualification}
+\studypart{Stochastic qualification}
 \label{part:study-stochastic}
 \section{Scope of the stochastic extension}
 The deterministic hard-envelope theorem and the following localized stochastic
