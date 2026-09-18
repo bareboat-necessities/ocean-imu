@@ -73,7 +73,10 @@ Pointwise bounds are insufficient. Admission additionally requires
  \qquad t_2\ge t_1 .}
  \label{eq:pac}
 \end{equation}
-Equivalently, $\dot q=p$ has uniformly bounded potential differences.
+Equivalently, $\dot q=p$ has uniformly bounded potential differences. The
+same potential continues through successive certified superwords; it is not
+restarted at word boundaries. A one-time proof-coordinate origin at tail entry
+is permissible only as a coordinate transformation of that same continuation.
 
 \begin{lemma}[Permanent displacement DC is inadmissible]
 If $p(t)\equiv p_0\ne0$, $v(t)=0$, and $a(t)=0$ indefinitely, then
@@ -105,7 +108,10 @@ actually performed satisfy
  \quad\text{a.e.}
  \label{eq:bias-cont}
 \end{align}
-The constants are qualified separately. The sampled physical histories obey
+The constants are qualified separately. No decomposition of physical truth is
+imposed: the aggregate residual may simultaneously include turn-on offset,
+thermal drift, strain, hysteresis, aging, correlated drift, and other
+calibration residuals. The sampled physical histories obey
 \begin{align}
  b_{a,k+1}&=b_{a,k}+w_{a,k},&
  \norm{w_{a,k}}&\le D_a\Delta t_k,\nonumber\\
@@ -189,7 +195,7 @@ The theorem uses
 \begin{equation}
 \fitcol{\text{construction}\to\text{capture}\to
 \text{magnetic Live/H18}\to\text{H18}\to\text{A21}\to
-\text{magnetic A21}.}
+\text{magnetic A21}\to\text{practical stability}.}
 \end{equation}
 The physical bias history is continuous through all modes. The capture time may
 depend on execution and initial state,
@@ -198,6 +204,10 @@ depend on execution and initial state,
 \end{equation}
 No common finite startup deadline is assumed. Live intervals preceding the
 required magnetic information remain part of the finite pre-certified prefix.
+At tail entry the proof inherits, without reseeding, the actual estimator
+state, full covariance, bias estimates, physical bias histories, frontend and
+tuner state, committed parameters, magnetic reference state, scheduler,
+clocks, and physical source continuation.
 
 \section{Necessity of heading information}
 On an interval without informative heading observations, heading error and
