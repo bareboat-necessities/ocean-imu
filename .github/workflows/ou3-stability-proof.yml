@@ -1,5 +1,6 @@
 name: ou3-stability-proof
 on:
+  workflow_dispatch:
   pull_request:
     paths:
       - "AGENTS.md"
