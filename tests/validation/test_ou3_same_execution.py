@@ -51,6 +51,11 @@ class SameExecutionTests(unittest.TestCase):
         r = audit_same_execution(self.marine("h"), self.bias("h"), self.mag("other"))
         self.assertFalse(r["same_execution_pass"])
 
+    def test_missing_principal_contract_fails(self):
+        r = audit_same_execution(self.marine("h"), self.bias("h"), [])
+        self.assertFalse(r["same_execution_pass"])
+        self.assertIn("magnetic_service: missing principal-assumption records", r["failures"])
+
 
 if __name__ == "__main__":
     unittest.main()
