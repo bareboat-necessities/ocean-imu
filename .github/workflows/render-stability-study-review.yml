@@ -2,7 +2,9 @@ name: render-stability-study-review
 on:
   push:
     branches: [codex/ou3-standalone-stability-study]
-    paths: [.github/workflows/render-stability-study-review.yml]
+    paths:
+      - .github/workflows/render-stability-study-review.yml
+      - doc/kalman_ou_iii/**
 permissions:
   contents: read
 jobs:
