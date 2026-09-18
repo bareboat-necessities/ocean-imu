@@ -29,8 +29,8 @@ No end-to-end stability claim is authorized while any item remains open.
 
 ## Reproduction
 
-`python3 -m unittest discover -v -s tests/validation -p 'test_ou3_*.py'`
+`cd tests/validation && python3 -m unittest -v test_ou3_architecture_cleanup test_ou3_imu_bias test_ou3_magnetic_service test_ou3_marine_motion test_ou3_no_mag_obstruction test_ou3_theorem_status`
 
 `python3 tools/stability/ou3_theorem/build_evidence.py --output /tmp/ou3-stability-evidence.json`
 
-`make -C tests/kalman_ou_iii shipping_contract-test shipping_transition-test`
+`make -C tests/kalman_ou_iii shipping_contract-test shipping_transition-test && ./tests/kalman_ou_iii/shipping_contract-test && ./tests/kalman_ou_iii/shipping_transition-test`
