@@ -27,7 +27,8 @@
     "joint_bias_prediction": "z=[e_b;b_true] uses [[phi_e I,(1-phi_e) I],[0,I]] with one shared physical-increment column [I;I]. Corrections and projection are separate operations.",
     "projection_scope": "Positive radius after a finite completed injection; nonpositive radius disables projection; projection changes the estimate but not covariance; invalid attitude injection may bypass projection.",
     "integral_innovation": "With a single fixed capture origin S_true=q(t)-q(T_c), shipping r_S=-S_hat=e_S-S_true retains the physical potential forcing.",
-    "magnetic_coordinate_transport": "The complete preceding transport may be rectangular between error charts. Dimension compatibility and finite audits do not certify a release map or source-uniform information."
+    "magnetic_coordinate_transport": "The complete preceding transport may be rectangular between error charts. Dimension compatibility and finite audits do not certify a release map or source-uniform information.",
+    "point_audit_scope": "Supplied finite-error values and structural flags are diagnostic assertions, not a verified source-uniform certificate. Missing bounds, vacuous prefixes and overflow cannot promote completion."
   },
   "operation_lemma_sources": [
     {
@@ -61,6 +62,14 @@
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex",
       "git_blob_sha": "fde2637e3a3f174e64b3756fa095cf34de42e97a"
+    },
+    {
+      "path": "tools/stability/ou3_theorem/finite_error.py",
+      "git_blob_sha": "1366851dd3bd8b01c217416c9656c87067fb37d0"
+    },
+    {
+      "path": "tests/validation/test_ou3_finite_error.py",
+      "git_blob_sha": "e515812d6a404cf7bbcfc4c8308de6e5a83fcde6"
     }
   ]
 }
