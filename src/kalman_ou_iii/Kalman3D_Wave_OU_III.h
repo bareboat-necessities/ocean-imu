@@ -488,17 +488,10 @@ class Kalman3D_Wave_OU_III {
       Radius of the ball the accelerometer-bias estimate is confined to
       [m/s^2]. Set <= 0 to disable the projection.
 
-      This exists so that the stability analysis in
-      doc/kalman_ou_iii/w3d-iss-stability.tex-part can assume a bounded
-      residual accelerometer-bias error by construction rather than by
-      hypothesis. The bias is excluded from the certified performance
-      coordinate and enters the ISS bound only as an input, so that input has
-      to be bounded for the bound to say anything; nothing else in the filter
-      bounds it, because b_a is a random-walk state.
-
-      The same role is played by the parameter projection Proj() in
-      Bryne/Fossen/Johansen, which confines the gyro-bias estimate to
-      ||b_g|| <= M_b and whose properties that proof uses explicitly.
+      This is an implementation safety projection on the estimated
+      accelerometer-bias state. The stability study treats it as the literal
+      estimator operation it is: physical bias truth is not projected or
+      reset, and post-correction projection is composed separately.
 
       The default is deliberately loose enough never to bind on a healthy
       MEMS unit (0.4 m/s^2 is about 41 mg, against tens of mg of turn-on bias
@@ -664,7 +657,7 @@ class Kalman3D_Wave_OU_III {
 
     bool acc_bias_updates_enabled_ = true;
 
-    // false is the default/proof-compatible policy. true restores the old
+    // false is the default shipping policy. true restores the old
     // immediate marginal replacement for exact regression comparisons.
     bool legacy_aw_covariance_replacement_ = false;
     bool aw_covariance_floor_pending_ = false;
