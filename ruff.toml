@@ -5,9 +5,8 @@
 #
 # The rule set is deliberately narrow: defects, not formatting. The Python here
 # is numerical proof and plotting code written to read like the mathematics it
-# implements, and a formatter would fight that. `black --check` currently wants
-# to reformat 120 of 122 files, which is exactly the kind of diff that buries a
-# real finding.
+# implements, and a formatter would fight that. A formatting-only diff would
+# bury the defects this gate is intended to catch.
 
 target-version = "py311"
 line-length = 120
@@ -19,37 +18,23 @@ exclude = [
 ]
 
 [lint]
-# F  — pyflakes: undefined names, unused imports, f-string mistakes. Real bugs.
+# F  — pyflakes: undefined names, unused imports, f-string mistakes.
 # E9 — syntax and IO errors.
-# B  — flake8-bugbear: mutable default args, loop-variable capture, and other
-#      constructs that are legal but almost always wrong.
+# B  — flake8-bugbear: legal constructs that are usually defects.
 select = ["F", "E9", "B"]
 
 ignore = [
-    # `I` is the identity matrix and `l` is a level index. In linear-algebra
-    # code these are the correct names; renaming them to satisfy a style rule
-    # would make the source harder to check against the papers it implements.
+    # I is the identity matrix and l is a level index in linear-algebra code.
     "E741",
     "E743",
-    # numpy/zip pairs in this code are index-aligned arrays built together a
-    # few lines earlier; `strict=` on all 56 call sites would be ceremony, not
-    # a check. Revisit if a length mismatch ever actually ships.
+    # Existing numerical code uses index-aligned zip inputs built together.
     "B905",
-    # `from ou_* import *` is the established pattern for pulling a study's
-    # parameter block into its driver. Flagging every use of those names is
-    # noise until the star imports themselves are reworked.
+    # Established study drivers may re-export parameter blocks.
     "F405",
 ]
 
 [lint.per-file-ignores]
-# Study drivers re-export their parameter blocks by design.
 "tools/ou_robustness.py" = ["F403"]
 
-# These three retained pre-#491 proof utilities already carry one dead import
-# each on main.  They are not part of the canonical BRMM P3 route and #491 does
-# not modify them.  Keep F401 strict everywhere else (including every new BRMM
-# module) while quarantining this unrelated baseline until those retired/legacy
-# utilities are cleaned or removed in their owning change.
+# This retained generic high-precision helper carries one compatibility import.
 "tools/stability/ou3_decimal_interval.py" = ["F401"]
-"tools/stability/ou3_brmm_full_normal_live_word.py" = ["F401"]
-"tools/stability/ou3_brmm_riccati_tube.py" = ["F401"]
