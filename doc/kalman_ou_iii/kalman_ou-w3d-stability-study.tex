@@ -1,0 +1,254 @@
+\documentclass[11pt]{article}
+\usepackage[margin=27mm]{geometry}
+
+\usepackage{iftex}
+\ifPDFTeX
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\fi
+\usepackage{amsthm}
+\usepackage{amsmath, bm}
+\usepackage{newtxtext,newtxmath}
+\usepackage{textcomp}
+\interdisplaylinepenalty=2500
+\usepackage{pgf}
+\usepackage{pgfplots}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,fit,backgrounds,positioning,calc}
+\usepackage{xcolor}
+\usepackage{float}
+\usepackage{mathrsfs}
+\usepackage{graphicx}
+\usepackage{svg}
+\usepackage{placeins}
+\usepackage{array, booktabs, makecell, adjustbox}
+\usepackage{mathtools}
+\usepackage{nccmath, relsize}
+\usepackage{enumitem}
+\usepackage{balance}
+\usepackage{flafter}
+\usepackage{siunitx}
+\usepackage[final]{microtype}
+\usepackage{etoolbox}
+
+\DeclareRobustCommand{\vct}[1]{\bm{#1}}
+\DeclareRobustCommand{\mat}[1]{\bm{#1}}
+\DeclareRobustCommand{\matg}[1]{\bm{#1}}
+\newcommand{\Quat}{\mathbb{H}}
+\newcommand{\Sph}{\mathbb{S}}
+\newcommand{\SO}{\mathrm{SO}}
+\newcommand{\SE}{\mathrm{SE}}
+\newcommand{\quat}[1]{\vct{#1}}
+\newcommand{\Rot}{\bm{\mathcal{R}}}
+\newcommand{\qconj}[1]{\overline{#1}}
+\newcommand{\qreal}[1]{\operatorname{Re}\! \left(#1\right)}
+\newcommand{\qimag}[1]{\operatorname{Im}\! \left(#1\right)}
+
+\usepackage{xurl}
+\usepackage{cite}
+\usepackage[breaklinks=true,hidelinks]{hyperref}
+\usepackage{bookmark}
+\usepackage[nameinlink,capitalise,noabbrev]{cleveref}
+
+\sisetup{detect-weight=true,detect-family=true,per-mode=symbol}
+\setlist[description]{font=\footnotesize\bfseries,labelsep=0.6em,leftmargin=1.8em}
+
+\pdfstringdefDisableCommands{%
+    \def\SI#1#2{#1 #2}%
+    \def\bm#1{#1}%
+    \def\Skew#1{[#1]_\text{x}}%
+    \def\Id{I}%
+    \def\pct#1{#1\%}%
+    \def\circ{deg}%
+    \def\degree{deg}%
+    \def\propto{∝}%
+    \def\sigma{sigma}%
+    \def\tau{tau}%
+    \def\Phi{Phi}%
+    \def\omega{omega}%
+    \def\_{}%
+    \def\cdot{}%
+    \def\;{ }%
+    \def\I{I}%
+    \def\quat#1{#1}%
+    \def\SO{SO}%
+    \def\SE{SE}%
+    \def\Quat{H}%
+    \def\Sph{S}%
+}
+
+\AtBeginEnvironment{equation}{\small}
+\AtBeginEnvironment{align}{\small}
+\providecommand{\mathdefault}[1]{#1}
+
+\setcounter{topnumber}{5}
+\setcounter{dbltopnumber}{5}
+\renewcommand{\topfraction}{0.95}
+\renewcommand{\dbltopfraction}{0.95}
+\renewcommand{\textfraction}{0.05}
+\renewcommand{\floatpagefraction}{0.9}
+\renewcommand{\dblfloatpagefraction}{0.9}
+\newcommand{\IncludePGF}[1]{\resizebox{\linewidth}{!}{\input{#1}}}
+
+\ifPDFTeX
+\DeclareUnicodeCharacter{2013}{\textendash}
+\DeclareUnicodeCharacter{2014}{\textemdash}
+\DeclareUnicodeCharacter{2018}{\textquoteleft}
+\DeclareUnicodeCharacter{2019}{\textquoteright}
+\DeclareUnicodeCharacter{201C}{\textquotedblleft}
+\DeclareUnicodeCharacter{201D}{\textquotedblright}
+\DeclareUnicodeCharacter{2212}{\textminus}
+\fi
+
+\pdfstringdefDisableCommands{%
+    \def\vct#1{#1}%
+    \def\mat#1{#1}%
+    \def\matg#1{#1}%
+    \def\I{I}%
+}
+
+\newtheoremstyle{bodysmall}{3pt}{3pt}{\normalfont\small}{0pt}{\bfseries\small}{.}{0.5em}{}
+\theoremstyle{bodysmall}
+\newtheorem{lemma}{Lemma}
+\newtheorem{theorem}{Theorem}
+\newtheorem*{theorem*}{Theorem}
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}
+
+\newcommand{\Skew}[1]{\left[#1\right]_\times}
+\newcommand{\Id}{\mat{I}}
+\newcommand{\pct}[1]{#1\%}
+\newcommand{\meanstd}[2]{#1 \pm #2}
+\newcommand{\ci}[2]{#1\,(\,#2\,\text{CI}\,)}
+\newcommand{\Ito}{\mathrm{It\hat{o}}}
+\newcommand{\ItoInt}[2]{\int_0^{#1} #2\, dW_s^{\Ito}}
+\DeclareMathOperator{\proj}{\mathcal{P}}
+\DeclareMathOperator{\clip}{clip}
+\DeclareMathOperator{\wrap}{wrap}
+\DeclareMathOperator{\sgn}{sgn}
+\DeclareMathOperator{\blkdiag}{blkdiag}
+\DeclareMathOperator{\diag}{diag}
+\DeclareMathOperator{\scomp}{scomp}
+\newcommand{\set}[1]{\mathcal{#1}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\C}{\mathbb{C}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\E}{\mathbb{E}}
+\DeclareMathOperator{\Var}{Var}
+\DeclareMathOperator{\Cov}{Cov}
+\newcommand{\ts}[1]{\text{#1}}
+\newcommand{\fitcol}[1]{\adjustbox{max width=\columnwidth}{\ensuremath{\displaystyle #1}}}
+
+\makeatletter
+\@ifpackageloaded{cite}{\renewcommand{\citepunct}{,\penalty\citepunctpenalty\,}\renewcommand{\citedash}{--}}{}
+\makeatother
+\emergencystretch=2em
+\allowdisplaybreaks
+
+\title{Adaptive OU-Regularized Quaternion MEKF\\
+Stability Study: Assumptions, Proof Architecture, and Certificates}
+\author{Mikhail S. Grushinskiy\\
+Independent Researcher, Fair Lawn, USA\\
+Bareboat Necessities GitHub Project\\
+\texttt{mgrouch@users.github.com}}
+\date{Research study; conditional results and open obligations}
+\setcounter{tocdepth}{1}
+\newcommand{\studysource}[1]{\par\smallskip
+  {\footnotesize\noindent Repository source: \path{#1}.\par}\smallskip}
+\pgfplotsset{compat=1.18}
+
+
+\begin{document}
+\maketitle
+\begin{abstract}
+This companion to the OU--III filter and performance article studies the
+stability of the shipping hybrid estimator, not merely a frozen linear model.
+We first state why a physical motion class, qualified bias histories and
+accepted informative magnetic service are necessary, and exactly which
+conclusions depend on them. We distinguish actual Mahony-based startup,
+entry into Live, held/active accelerometer-bias modes, gravity-only centre
+dynamics, and magnetically informed Live dissipation. The selected alternative
+(ALT) proof retains complete same-history finite increments and the full
+covariance, while the original P2/P3/P4/P5 route remains independent. Exact
+algebraic lemmas, conditional comparison theorems, point diagnostics, and
+validated source-uniform certificates have different roles. This study makes
+those roles and the remaining obligations explicit; it does not report a
+completed shipping startup or end-to-end stability theorem.
+\end{abstract}
+\tableofcontents
+\clearpage
+
+\part{Assumptions, objectives, and the selected proof architecture}
+\input{w3d-stability-reader-guide.tex-part}
+\input{w3d-stability-proof-roadmap.tex-part}
+\input{w3d-stability-certificates.tex-part}
+
+\clearpage
+\part{Detailed physical contracts and conditional motion theorem}
+\label{part:study-contracts}
+The following sections retain the detailed physical definitions and original
+conditional lemmas. Their hypotheses are local to each statement: a narrower
+baseline source, continuous observer, or assumed certificate is not a proved
+claim for the padded ALT shipping domain. In particular, the optional BIAS2
+separation condition below is not the mandatory non-relaxing BIAS2 source
+family of Sec.~\ref{sec:study-bias-families}. Numerical implementation scope and
+the current evidence boundary are summarized in Part~I.
+
+\input{w3d-brmm-physical-wave-condition.tex-part}
+\input{w3d-mems-bias-preconditions.tex-part}
+\input{w3d-brmm-stability-theorem.tex-part}
+\input{w3d-brmm-period-bridge.tex-part}
+
+\clearpage
+\part{Independent original route: information and finite-error tools}
+\label{part:study-original}
+This route is independently continuable. P2/P3 linear information and Riccati
+results are ingredients, not an ALT or nonlinear P4 certificate. The canonical
+P3 threshold remains $10^{-18}$; P4 and P5 are not promoted by moving these
+lemmas into this study. The gravity-only claims below retain their explicit
+source/information premises. They do not override the ungauged heading/axial
+bias obstruction in Sec.~\ref{sec:study-ungauged}.
+
+\input{w3d-iss-stability.tex-part}
+\input{w3d-analytical-stability-widening.tex-part}
+\input{w3d-stability-widening-phase-c.tex-part}
+\input{w3d-stability-widening-source-path.tex-part}
+
+\clearpage
+\part{Startup, capture, and hybrid transport}
+\label{part:study-startup}
+The implementation description and auxiliary continuous-time arguments below
+must be connected by a shipping reachability and arithmetic proof. A theorem
+whose hypotheses include an accepted handoff set, a retained domain, or a
+contracting word does not establish those hypotheses. In particular it is not
+a universal startup deadline. The two $S$ origins used in the detailed original
+entry graph and in ALT are related explicitly in Sec.~\ref{sec:study-origin}.
+
+\input{w3d-init.tex-part}
+\input{w3d-p5-staged-capture.tex-part}
+\input{w3d-semiglobal-stability.tex-part}
+\input{w3d-stability-widening-phase-d.tex-part}
+\input{w3d-stability-widening-phase-e.tex-part}
+
+\clearpage
+\part{Stochastic qualification}
+\label{part:study-stochastic}
+\section{Scope of the stochastic extension}
+The deterministic hard-envelope theorem and the following localized stochastic
+results are different statements. Unbounded Gaussian noise does not satisfy a
+fixed compact pathwise bound for all time merely because its variance is small.
+The conditional localization and moment hypotheses below must be proved on
+the same accepted/rejected event history; simulation RMS values do not supply
+them. They do not remove the open deterministic shipping obligations.
+\input{w3d-stability-widening-phase-f.tex-part}
+
+\section*{Acknowledgments and disclosure}
+This work was prepared with supervised assistance from artificial intelligence
+tools for mathematical drafting, code development and editorial preparation.
+The author is responsible for the conceptual development and final revisions,
+declares no conflicts of interest, and received no funding for this research.
+
+\bibliographystyle{IEEEtran}
+\bibliography{w3d,w3d-modern,w3d-iss,w3d-baselines}
+\end{document}

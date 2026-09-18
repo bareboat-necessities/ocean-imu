@@ -138,7 +138,7 @@ def _baseline_fairness_thresholds_and_hardware_limits_are_recorded(self):
 
 
 class ReorganizedPublicationContractTests(unittest.TestCase):
-    def test_article_order_follows_design_then_stability_then_evidence(self):
+    def test_article_order_follows_design_then_evidence(self):
         main = _read("kalman_ou-w3d.tex")
         ordered = [
             r"\input{w3d-state.tex-part}",
@@ -150,10 +150,8 @@ class ReorganizedPublicationContractTests(unittest.TestCase):
             r"\input{w3d-adaptation-deployed-law.tex-part}",
             r"\input{w3d-rs-anisotropy-design.tex-part}",
             r"\input{w3d-fus-methods.tex-part}",
-            r"\input{w3d-init.tex-part}",
+            r"\input{w3d-initialization-overview.tex-part}",
             r"\input{w3d-mag-hard-iron.tex-part}",
-            r"\input{w3d-iss-stability.tex-part}",
-            r"\input{w3d-semiglobal-stability.tex-part}",
             r"\input{w3d-sim-charts.tex-part}",
             r"\input{w3d-results.tex-part}",
             r"\input{w3d-post-results-investigations.tex-part}",

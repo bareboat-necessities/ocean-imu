@@ -1,0 +1,350 @@
+\section{What is being claimed, and what is not}
+\label{sec:study-purpose}
+
+The subject is the \emph{shipping} adaptive OU--III quaternion multiplicative
+EKF (QMEKF), including its initialized measurement-only front end and every
+admitted hybrid event. The companion \href{kalman_ou-w3d.pdf}{filter article}
+contains the model derivation, update equations, tuning design and simulation
+results. This study contains the stability assumptions, proof plan and detailed
+conditional analysis. It is not an assertion that a running filter, a bounded
+covariance, or a good RMS plot has already established stability.
+
+The primary physical objective is bounded accelerometer-bias error together
+with regional practical stability of attitude, gyro-bias and motion errors.
+The latter comprise 18 coordinates; the active estimator still has 21 error
+coordinates and a full $21\times21$ covariance. Bias convergence to zero is
+not a prerequisite for the primary objective. ``Practical'' allows an ultimate
+error floor from bounded model mismatch, physical bias and sensor disturbance.
+Wave displacement is not geodetic position. Absolute heading is a separate,
+information-dependent conclusion.
+
+The proof records distinguish three questions. First, does construction and
+actual Mahony-based startup reach an appropriate Live entry set? Second, is
+that set retained by all permitted Live prefixes and reconfigurations? Third,
+do complete observation windows dissipate error, with explicit gains for the
+forcing that remains? A proof of one question is not a proof of the others.
+The current flags are
+\begin{center}
+\texttt{ALT\_STARTUP\_PASS=false},\quad
+\texttt{ALT\_LIVE\_PASS=false},\\[2pt]
+\texttt{ALT\_END\_TO\_END\_PASS=false}.
+\end{center}
+The original P2/P3/P4/P5 route is retained independently, not rewritten as an
+ALT prerequisite or discarded. Its nonlinear P4/P5 conclusions remain
+unpromoted. The source/status snapshot for this exposition is repository
+revision \texttt{87449cb12fc9}; later numerical reports must identify their own
+source revision and qualification scope.
+
+\paragraph{How to read this study.}
+Part~I explains the current domain, selected architecture, analytic building
+blocks and certificate requirements. Part~\ref{part:study-contracts} supplies
+the detailed physical and bias contracts. Part~\ref{part:study-original}
+retains the independent original information and finite-error route.
+Part~\ref{part:study-startup} develops startup, entry, capture and reset
+transport. Part~\ref{part:study-stochastic} states the additional stochastic
+qualifications. A conditional lemma in those parts is used only after its
+\emph{own} hypotheses have been discharged on the actual source and runtime.
+\studysource{docs/ou3-alt-main-handover.md}
+\studysource{docs/ou3-brmm-main-handover.md}
+
+\section{Why the admissible motion class is restricted}
+\label{sec:study-motion}
+
+An inertial-only estimator cannot recover arbitrary translations, arbitrary
+sensor offsets and arbitrary heading from unrestricted sensor sequences.
+Constant acceleration integrates into unbounded velocity, an unremoved
+constant displacement integrates into the integral state, and gravity alone
+does not observe heading. Restricting the theorem to a physical operating
+class is therefore substantive, not a device for making a numerical check
+pass. Each bound is declared before the proof; a failed proof is not permission
+to discard troublesome physical histories.
+
+\subsection{The physical wave coordinate and one history}
+Write the vessel reference-point motion as
+\begin{equation}
+ x(t)=x_{\rm eq}(t)+p_m(t),\qquad
+ \dot p_m=v_m,\qquad \dot v_m=a_m .
+ \label{eq:study-physical-jet}
+\end{equation}
+The slowly changing equilibrium contains current, propulsion, leeway and the
+choice of global position origin. The quantity estimated here is the
+oscillatory displacement $p_m$, not $x$. An acceleration of $x_{\rm eq}$ that
+actually reaches the IMU cannot be erased by this notation: it must be
+compensated by an implemented model or retained as a declared disturbance.
+Attitude, angular velocity and accelerometer specific force must be generated
+by that same physical history. One may not select independent per-sample
+acceleration vectors, velocities and displacements from their separate bounds.
+
+BRMM requires bounded kinematics and a bounded velocity primitive, excluding
+persistent acceleration DC. Its corrected, complete form also requires the
+hard \emph{all-time} displacement-primitive condition
+\begin{equation}
+ \left\|\int_u^t p_m(s)\,ds\right\|\le D_S
+ \quad\text{for every }u\le t\text{ on every admitted continuation}.
+ \label{eq:study-brmm-primitive}
+\end{equation}
+This excludes a permanent nonzero wave-displacement DC component without
+excluding quiet water or finite intervals of nearly constant displacement.
+It is stronger than bounded $p_m,v_m,a_m$, an empirical mean near zero, or a
+finite list of accepted recurrence windows. For example $p_m(t)=p_0\ne0$ has
+zero $v_m,a_m$ but an unbounded primitive. Even the bounded family
+$p_n(t)=\cos(t/n)$ has primitive diameter $2n$; amplitude bounds alone give no
+uniform $D_S$.
+
+\subsection{Current padded COMPLETE-BRMM envelope}
+\label{sec:study-motion-envelope}
+The current declared physical envelope used by ALT is summarized below. These
+are theorem-domain limits, not a claim that every vessel or every sea fits
+them. They must be checked jointly on a continuous history.
+\begin{center}
+\begin{tabular}{@{}ll@{}}
+\toprule
+Physical quantity & Declared upper bound or band\\
+\midrule
+Significant wave height $H_s$ & $9.35\,\mathrm m$\\
+Wave displacement $\|p_m\|$ & $8.10\,\mathrm m$\\
+Wave velocity $\|v_m\|$ & $5.50\,\mathrm{m/s}$\\
+Wave acceleration $\|a_m\|$ & $8.80\,\mathrm{m/s^2}$\\
+Physical angular rate $\|\omega_b\|$ & $35\,\mathrm{deg/s}$\\
+Declared spectral-certificate frequency band & $[0.018,0.88]\,\mathrm{Hz}$\\
+Displacement-primitive diameter $D_S$ & $1100\,\mathrm{m\,s}$\\
+\bottomrule
+\end{tabular}
+\end{center}
+The padding is declared relative to the reference operating envelope; it is
+not fitted to a replay that happened to converge. A significant-height limit
+or a spectral plot does not prove the pathwise peak and primitive limits.
+The acceleration ceiling lies below $g=9.80665\,\mathrm{m/s^2}$; the resulting
+$g-8.8=1.00665\,\mathrm{m/s^2}$ physical specific-force margin is \emph{before}
+measurement bias and noise. It does not by itself prove an accepted gravity
+gate or a correct Mahony handoff.
+
+A harmonic or spectral realization with a hard inverse-frequency amplitude
+moment gives a useful sufficient certificate of
+\eqref{eq:study-brmm-primitive}: if $p_m=\dot\phi$ and
+$\|\phi\|\le M_{-1}$, then $D_S\le2M_{-1}$. A bounded shaping-state potential
+can supply the same argument. These are ways to establish the physical
+condition, not a requirement to replace arbitrary admitted motions by one
+sinusoid. The detailed original lemmas sometimes use a smaller baseline
+budget; their constants do not automatically certify this padded domain.
+\studysource{docs/ou3-brmm-main-handover.md}
+\studysource{tools/stability/ou3_brmm_complete_source.py}
+
+\subsection{Quiet and oscillatory windows are not full observability}
+BRMM separates quiet windows from recurrent oscillatory ones. On a window,
+center the acceleration and form its energy. The quiet branch permits small
+energy, including exactly zero motion; there is no universal minimum wave
+amplitude. The oscillatory branch requires the declared energy and separated,
+opposing acceleration-lobe conditions. The impulse/primitive bounds remain
+in force on both branches. Their exact constants and quantifiers are given
+in Sec.~\ref{sec:brmm-source} through its source
+contract; they are not inferred from a plot.
+
+These conditions constrain temporal physical motion. They do not imply a
+rank-two heading/gyro-bias information inequality, an all-time accepted
+magnetometer stream, or a favorable sampled mean of normalized gravity.
+Those are separate assumptions or proof obligations. In particular, a
+continuous primitive bound cannot be reused unchanged as a sampled bound
+without a sampling-error argument.
+
+\subsection{The integral origin is fixed once}
+\label{sec:study-origin}
+ALT uses the physical comparison coordinate
+\begin{equation}
+ S_L(t)=\int_{t_L}^{t}p_m(s)\,ds,\qquad S_L(t_L)=0,
+ \label{eq:study-live-origin}
+\end{equation}
+where $t_L$ is the actual first Live time. The original detailed entry graph
+also uses a session primitive $S_0(t)=\int_0^t p_m(s)\,ds$. They differ by the
+one constant $S_0(t_L)$: $S_L=S_0-S_0(t_L)$. Translating a proof between these
+conventions requires carrying that constant through its error and supply
+coordinates. Neither convention reanchors physical position or resets the
+integral at each word, magnetic refinement, or hold/release event. Such
+restarting would hide accumulated physical forcing and change the theorem.
+
+\section{Biases, sensor errors, and deployment scope}
+\label{sec:study-biases}
+
+\subsection{Why true bias, estimated bias, and bias error differ}
+Let $\beta$ denote the entire true residual accelerometer bias in the
+\emph{implemented temperature-centered coordinate}, $\hat b_a$ the estimate,
+and $e_{ba}=\beta-\hat b_a$. Removing a configured temperature mean does not
+remove unknown constant offset, temperature error, hysteresis or PCB strain.
+All terms left by the actual calibration remain in $\beta$ or an explicitly
+named measurement-model disturbance. Scale-factor error multiplies the
+physical signal and cannot silently be treated as a constant offset.
+
+The estimator's bias prior is a model, not a physical decay law. During hold,
+the estimated bias and its covariance treatment change, but the true sensor
+bias continues to evolve. On a prediction with true and estimated transition
+factors $\phi_t,\phi_e$, the composite true-history form gives
+\begin{equation}
+ \beta^+=\phi_t\beta+w,\qquad
+ e_{ba}^{-,+}=\phi_e e_{ba}^{+}+(\phi_t-\phi_e)\beta+w .
+ \label{eq:study-bias-prediction}
+\end{equation}
+The first $+$ on $\beta$ means the next physical endpoint; $e_{ba}^{-,+}$ is
+the next prior error. If deterministic offset terms are kept separately,
+the same identity includes $d_{{\rm det},k+1}-\phi_e d_{{\rm det},k}$.
+An accepted correction adds $-K_b r$ and the actual projection residual to
+the error. That innovation and projection depend on the estimator and must
+remain inside the dynamics, not become independent exogenous noise.
+
+\subsection{The three mandatory source families}
+\label{sec:study-bias-families}
+The executable BIAS0/1/2 families cover different kinds of physical history.
+The proof must admit each separately, with one persistent root and parameter
+history, not substitute whichever family is easiest to certify.
+\begin{description}
+\item[BIAS0: physical composition.]
+A Gauss--Markov component is combined with all unremoved deterministic offset,
+temperature, strain and non-GM terms. Its sampled recurrence retains the driver
+from that same composite history. Hard increment bounds are pathwise
+hypotheses; they are not derived from a noise PSD or standard deviation alone.
+\item[BIAS1: one root and one parameter history.]
+A representative form is
+$\beta(t)=b_0e^{-t/\tau}+A\sin(\omega t+\varphi)+d_{\rm det}(t)$,
+componentwise with qualified parameter bounds. The root, decay parameter,
+amplitude, frequency and phase persist across samples. The driver bound comes
+from the exact difference $\beta(t+h)-\phi_t\beta(t)$, not independently
+selected endpoint biases.
+\item[BIAS2: bounded non-relaxing drift.]
+The physical history has bounded magnitude and variation, and the transition
+interval includes $\phi_t=1$, equivalently the infinite correlation-time
+limit. A bias is not required to decay merely because the filter has a finite
+bias-prior time constant. The same physical drift supplies both true-bias and
+bias-error equations.
+\end{description}
+The current families carry a true-bias component ceiling
+$0.13\,\mathrm{m/s^2}$, hence a norm ceiling $\sqrt3\,0.13\,\mathrm{m/s^2}$.
+A parameter token in the executable contracts forces the word composer to
+retain one history. A per-sample box that forgets the token is not the declared
+family. The source-family validators establish their own algebraic bounds;
+they do not alone prove correct attachment to every shipping event.
+\studysource{tools/stability/ou3_alt_contraction/bias_families.py}
+\studysource{tools/stability/ou3_p4_bias0_family.py}
+\studysource{tools/stability/ou3_p4_bias1_family.py}
+\studysource{tools/stability/ou3_p4_bias2_family.py}
+
+\paragraph{A naming distinction in the detailed lemmas.}
+The older detailed sensor section uses ``BIAS0'' for physical qualification,
+``BIAS1'' for true/error transport, and ``BIAS2'' for an \emph{optional
+measurement-separation sector}. That last BIAS2 condition is not the
+non-relaxing source family above. The sector can strengthen motion gains only
+if its own inequality is proved on the relevant measurement graph. It is not
+implied by bounded drift, by the wave band, or by naming a source ``BIAS2''.
+No bias-convergence or measurement-separation assumption is needed for the
+simple compactness implication
+\begin{equation}
+ \|\hat b_a\|\le R_b,\quad \|\beta\|\le B_b
+ \quad\Longrightarrow\quad \|e_{ba}\|\le R_b+B_b .
+ \label{eq:study-bias-compactness}
+\end{equation}
+Here the configured projection radius is $R_b=0.4\,\mathrm{m/s^2}$; preservation
+of its actual machine implementation remains part of runtime qualification.
+Compact bias error does not mean small motion error or contraction of the
+coupled covariance-weighted state.
+
+\subsection{Commissioned sensor envelopes are conditional}
+The startup profiles distinguish the BMI270/AtomS3R from the MPU6886/AtomS3.
+Their deterministic residual norm envelopes are respectively
+$(\|n_a\|,\|n_g\|)\le(0.30\,\mathrm{m/s^2},0.02\,\mathrm{rad/s})$ and
+$(0.50\,\mathrm{m/s^2},0.03\,\mathrm{rad/s})$.
+The physical gyro-bias contract also bounds its initial value, subsequent
+magnitude and drift; the retained limits are $0.01\,\mathrm{rad/s}$,
+$0.02\,\mathrm{rad/s}$ and $10^{-5}\,\mathrm{rad/s^2}$, respectively.
+These are commissioned-installation theorem hypotheses, not unconditional
+joint guarantees copied from component datasheets.
+
+Startup additionally uses a temporal direction-error contract of the form
+$r=m+\dot\xi$ with $\|m\|\le0.10$ and $\|\xi\|\le1.5\,\mathrm s$.
+This low-frequency/primitive restriction is distinct from instantaneous sensor
+amplitude bounds. The detailed continuous observer lemmas retain their own
+constants and seed conditions; a larger commissioned envelope cannot be
+inserted into a smaller lemma without rechecking its inequality.
+
+For Live arithmetic, the calibrated, mapped binary32 API packets obey
+\begin{equation}
+ \max_i|\mathrm{gyro}_{B,i}|\le35\,\mathrm{rad/s},\qquad
+ \max_i|\mathrm{accel}_{B,i}|\le160\,\mathrm{m/s^2}.
+ \label{eq:study-api-bounds}
+\end{equation}
+These hardware-scale \emph{packet} limits must not be confused with the much
+smaller physical wave-rate limit in Sec.~\ref{sec:study-motion-envelope},
+which is in degrees per second. All limits, residuals, rounding cells and
+physical continuity must hold together. They control arithmetic domains, not
+measurement acceptance or end-to-end convergence.
+
+The current ALT scope fixes the lever arm to zero and excludes wind-heel
+retargeting: the wind-heel angle is zero from construction and
+\texttt{update\_wind\_heel()} is never called. The admitted vibration-guard
+branch remains dormant and transparent; the proof may not quietly disable a
+branch that an admitted source actually activates. Sampling, clocks, missing
+or rejected samples and the target floating-point environment also belong to
+the contract, not to an unmodeled implementation layer.
+\studysource{docs/ou3-alt-live-input-contract.md}
+\studysource{docs/ou3-alt-startup-disturbance-contract.md}
+\studysource{docs/ou3-alt-contraction-handover.md}
+
+\section{Periodic magnetic service: calls, acceptance, and information}
+\label{sec:study-magnetic-service}
+
+A magnetometer can supply heading only through a usable horizontal field and
+updates that the filter actually accepts. The commissioned magnetic source
+\texttt{MAG-BMM150-DET-v1} declares a world-field magnitude between 20 and
+$75\,\mu\mathrm T$, horizontal magnitude at least $15\,\mu\mathrm T$,
+body hard iron at most $5\,\mu\mathrm T$, and deterministic residual at most
+$2\,\mu\mathrm T$ per theorem sample. This does not establish the whole
+startup heading-accumulation history; a tilt-only error bound cannot substitute
+for that history.
+
+\subsection{The attempted-call schedule is not an acceptance theorem}
+\texttt{MAG-CALL-SCHEDULE-v1} requires the first post-Live callback within
+40 ms and subsequent attempted-call gaps at most 40 ms. Attempt counters and
+the internal bias-unlock clock have their own shipping semantics. In
+particular, 250 calls and the strict elapsed-time condition are not the same
+as 250 accepted innovations. Under continuing locally finite service through
+unbounded physical time, the internal unlock condition has its stated timing
+bound; an external hold may nevertheless keep H18 active indefinitely.
+No eventual A21 transition is asserted for arbitrary external hold histories.
+Rejected updates, a pending first-north acquisition, saturation and magnetic
+interference cannot be counted as heading information.
+
+\subsection{The conditional accepted informative-service assumption}
+\label{sec:study-mag-assumption}
+For the strict full-heading conclusion, define a separate Normal-Live regime
+after actual Live entry and heading acquisition. Declare constants
+$T_B,L_B,h_B,\alpha_B>0$ with $L_B\ge2T_B$. For \emph{every overlapping}
+interval $[s,s+L_B]$ contained in that regime, use only accepted, gauged magnetic
+updates and their transported whitened sensitivities
+\begin{equation}
+ B_i=R_i^{-1/2}H_i\Phi_{s,i}E_s .
+ \label{eq:study-magnetic-information}
+\end{equation}
+Here $R_i,H_i$ are the actually applied measurement quantities,
+$\Phi_{s,i}$ retains the preceding full same-history event product, and $E_s$
+embeds the heading/axial gyro-bias pair in a fixed orthonormal frame with
+coordinates measured in radians and radians per second. Arbitrary rescaling
+of that frame cannot be used to manufacture an information floor.
+
+An informative event has $\|B_i[:,0]\|\ge h_B$. The gap between such events,
+including the two boundary gaps, is at most $T_B$, and
+\begin{equation}
+ \sum_{i\in[s,s+L_B]}B_i^{\top}B_i\succeq\alpha_B I_2 .
+ \label{eq:study-pair-information}
+\end{equation}
+Periodicity alone does not imply this rank-two inequality. Multiple heading
+observations must distinguish heading from its drift caused by gyro bias.
+At finite error, the corresponding nonlinear incremental relation is needed;
+a tangent formula is neither the derivative of discontinuous rounding nor a
+finite-error certificate.
+
+This is an explicit hypothesis of the conditional service theorem, not a
+claim that every COMPLETE-BRMM history supplies it. A deployment must either
+establish membership or state it as an assumption. Finite-window audits are
+useful tests but prove neither infinite recurrence nor a nonvacuous infinite
+service class. Quiet water remains physically admissible even when full-heading
+service is absent. The ungauged conclusion must then be different, as explained
+in Sec.~\ref{sec:study-ungauged}.
+\studysource{docs/ou3-alt-informative-service-theorem.md}
+\studysource{tools/stability/ou3_alt_contraction/magnetic_service_formulation.py}

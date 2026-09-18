@@ -3,7 +3,7 @@
 LaTeX normally treats an unresolved cross-reference or citation as a warning and
 still produces a PDF.  For the publication manuscript that is too permissive: a
 stripped table, appendix, or bibliography item can silently become ``??``.  This
-test walks the main manuscript's reachable source files and requires every
+test walks each independent manuscript's reachable source files and requires every
 source-level cross-reference to have a reachable label and every citation key to
 exist in the manuscript bibliography databases.
 
@@ -24,6 +24,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DOC = REPO_ROOT / "doc" / "kalman_ou_iii"
 MAIN = DOC / "kalman_ou-w3d.tex"
+STUDY = DOC / "kalman_ou-w3d-stability-study.tex"
 
 INPUT_RE = re.compile(r"\\input\{([^}]+)\}")
 DEFINITION_RE = re.compile(r"\\(?:provide|new|renew)command\s*\{\s*\\([A-Za-z]+)\s*\}")
@@ -57,8 +58,8 @@ def resolve_input(name: str, standalone: bool = False) -> Path | None:
     return None
 
 
-def reachable_sources() -> dict[Path, str]:
-    pending = [MAIN]
+def reachable_sources(root: Path = MAIN) -> dict[Path, str]:
+    pending = [root]
     sources: dict[Path, str] = {}
     while pending:
         path = pending.pop()
@@ -126,8 +127,10 @@ def bibliography_keys(main_source: str) -> set[str]:
 
 
 class PublicationReferenceTests(unittest.TestCase):
+    root = MAIN
+
     def test_every_reachable_cross_reference_has_a_reachable_label(self):
-        sources = reachable_sources()
+        sources = reachable_sources(self.root)
         labels = {
             label
             for text in sources.values()
@@ -142,8 +145,8 @@ class PublicationReferenceTests(unittest.TestCase):
         self.assertEqual(missing, [], f"unresolved publication references: {missing}")
 
     def test_every_reachable_citation_has_a_bibliography_entry(self):
-        sources = reachable_sources()
-        available = bibliography_keys(sources[MAIN])
+        sources = reachable_sources(self.root)
+        available = bibliography_keys(sources[self.root])
         missing: list[tuple[str, str]] = []
         for path, text in sources.items():
             for group in CITE_RE.findall(text):
@@ -161,7 +164,7 @@ class PublicationReferenceTests(unittest.TestCase):
         # down -- took the paper build down on main.
         defined: set[str] = set()
         early: list[str] = []
-        for path, number, line in typeset_order(MAIN):
+        for path, number, line in typeset_order(self.root):
             names = DEFINITION_RE.findall(line)
             body = DEFINITION_RE.sub("", line)
             for name in MACRO_USE_RE.findall(body):
@@ -176,10 +179,16 @@ class PublicationReferenceTests(unittest.TestCase):
         )
 
     def test_removed_unevaluated_appendices_are_not_referenced(self):
-        sources = reachable_sources()
+        sources = reachable_sources(self.root)
         combined = "\n".join(sources.values())
         for label in ("sec:heel", "sec:gps_fusion"):
             self.assertNotIn(rf"\ref{{{label}}}", combined)
+
+
+class StabilityStudyReferenceTests(PublicationReferenceTests):
+    """The study must resolve independently, without the article's aux file."""
+
+    root = STUDY
 
 
 if __name__ == "__main__":

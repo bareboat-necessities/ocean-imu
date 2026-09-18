@@ -91,9 +91,9 @@ The generic filters leave that optional hull-specific policy disabled.
 
 Temperature is fixed in the scored simulations; no independent thermal
 calibration-error, lag, or hysteresis experiment is performed.  The
-finite-$\tau_b$ residual is therefore a structural model and stability
-assumption, while the empirical test concerns robustness to the injected
-random-walk mismatch.
+finite-$\tau_b$ residual is an estimator model choice, while the empirical
+test concerns robustness to the injected random-walk mismatch. These
+simulations do not qualify a universal physical bias law.
 
 The principal study also uses the committed reference-point configuration, so
 the implemented lever-arm model is not physically validated off-CoG.  The

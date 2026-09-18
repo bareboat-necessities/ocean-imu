@@ -120,8 +120,8 @@ class Ou3ProofCleanupTest(unittest.TestCase):
         offenders = [name for name in sorted(retired) if (WORKFLOWS / name).exists()]
         self.assertEqual([], offenders, "retired extra proof workflows returned")
 
-    def test_master_paper_places_brmm_before_live_stability_without_retired_section(self):
-        paper = (OU3_DOC / "kalman_ou-w3d.tex").read_text(encoding="utf-8")
+    def test_study_places_brmm_before_live_stability_without_retired_section(self):
+        paper = (OU3_DOC / "kalman_ou-w3d-stability-study.tex").read_text(encoding="utf-8")
         ordered = (
             "w3d-mems-bias-preconditions.tex-part",
             "w3d-brmm-stability-theorem.tex-part",
@@ -144,7 +144,7 @@ class Ou3ProofCleanupTest(unittest.TestCase):
                 if source.is_file():
                     visit(source)
 
-        visit(OU3_DOC / "kalman_ou-w3d.tex")
+        visit(OU3_DOC / "kalman_ou-w3d-stability-study.tex")
         for name in ordered:
             self.assertEqual(inputs.count(name), 1, name)
         article = "\n".join(parts)

@@ -27,14 +27,6 @@ The contributions are:
         gyro and residual accelerometer bias, and three exact OU-driven
         $[v,p,S,a_w]$ chains, with $S$ providing soft low-frequency drift
         control;
-  \item a conditional stability framework with bounded accelerometer-bias
-        error and practical stability of the other 18 errors, retaining the
-        full active filter. Model mismatch may leave a nonzero accuracy floor.
-        The linear Riccati implications and independent Mahony startup result
-        supply auxiliary ingredients; quantitative nonlinear source-uniform
-        gains, prefix retention and handoff remain certificate obligations
-        of Theorem~\ref{thm:brmm-bounded-bias-motion}. Full A21 nonlinear
-        contraction is a stronger, unclosed extension;
   \item an exogenous adaptation architecture that estimates wave time scale and
         acceleration level from measurement-only signals and schedules the OU
         prior and integral regularizer.  Sea-similarity arguments determine the
@@ -54,7 +46,9 @@ The contributions are:
 Here, $\vct p$ denotes bounded wave-induced motion about a local reference, not
 geodetic position; GNSS-aided absolute trajectory estimation is not evaluated.
 The evidence is primarily synthetic, and the ESP32--S3 exercise establishes
-source portability only.  The semiglobal result covers the first quality-gated
-proxy-to-Live handoff subject to an explicit Live-basin-entry condition; later
-magnetic re-gauging and tilt re-lock remain separate hard reconfiguration maps.
-Thermal-calibration performance is not evaluated.
+source portability only. Thermal-calibration performance is not evaluated.
+The separate \href{kalman_ou-w3d-stability-study.pdf}{OU--III stability study}
+contains the BRMM and sensor assumptions, startup-to-Live proof roadmap,
+analytical lemmas and numerical-certificate requirements. That study retains
+both independently continuable proof tracks; this article does not claim a
+completed end-to-end stability certificate.

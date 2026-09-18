@@ -3,88 +3,12 @@
 
 This work develops a three-dimensional quaternion MEKF in which a latent
 Ornstein--Uhlenbeck acceleration prior drives velocity, oscillatory displacement,
-and an integral-displacement state whose zero pseudo-measurement provides
-low-frequency drift control. BRMM is the primary physical motion premise: a bounded same-history velocity primitive excludes persistent acceleration DC in both quiet and oscillatory motion. Constant measurement offset remains in BIAS0. The primary nonlinear theorem is conditional
-practical stability of the 18 motion/attitude/gyro-bias errors, together with
-compact accelerometer-bias error, in both filter modes. The bias estimate is
-clamped; a separate BIAS0/1 true-bias envelope is needed to bound its error.
-No bias-error convergence is required. The full active 21-state recursion and
-its covariance cross terms remain unchanged. Finite residual-bias correlation
-supplies an auxiliary linear detectability argument, not nonlinear A21
-contraction. The
-positive OU process floor and exact OU-driven integration chain provide active
-translational process excitation analytically.  Separated accepted
-specific-force--magnetic vector packets provide an explicit sufficient
-attitude/gyro-bias information margin, and the bounded adaptation envelope shows
-that the particular tuning exponents and EMA horizons are performance choices
-rather than stability-critical feedback parameters.  Without an absolute
-heading reference, the same estimator structure descends to the yaw quotient
-rather than assigning convergence to absolute yaw.
-
-The quantitative target is source reachable, but its complete deployed
-certificate remains open. Source-uniform motion/channel gains, every-prefix
-retention, projection-boundary coverage and hybrid entry must still be
-established. The theorem permits a positive model-mismatch floor even with
-sensor noise off; observed percentage accuracy is not a certified uniform
-constant. The full-state constructions below are conditional auxiliary routes,
-not completed proofs of the primary motion target. Separate
-fixed-dimensional graphs are used for the held 18-state and active 21-state
-normal-Live modes, and source-complete words carry path-dependent quadratic
-metrics for the additive coordinates.  Attitude is not reduced to a local
-Euclidean radius: the certificate uses
-$V_R=1-\cos\theta$ and an exact Rodrigues identity for the energy change under
-the implemented finite quaternion correction.  The complete accepted Kalman
-innovation, including the full $S\to\theta$ cross-covariance path, remains in
-that identity.  A rigorous source-word dissipation bound can therefore certify
-any geodesic chart $\theta\le\theta_*<\pi$ on which the exact correction remains
-dissipative after accounting for coupled non-attitude errors.  The antipodal
-set and genuine measurement critical sets remain excluded, so no global MEKF
-convergence claim is made.
-
-Startup is quantitative.  For the measurement-only Mahony gravity-direction
-observer with integral gyro-bias feedback, Sec.~\ref{sec:semiglobal-proxy}
-derives an explicit practical-ISS rate, input gain, tilt envelope, and
-observable-bias envelope on a compact subset of the almost-global basin.  The
-implemented accelerometer reset discards the stored pre-reset attitude.  Under
-$\|a_f\|<g$ its image lies in the desired gravity hemisphere for every prior
-stored attitude, so source-level entry is global with respect to that discarded
-prior state while the subsequent continuous observer remains properly
-almost-global/regional.  The accepted compact handoff set $\mathcal H$ is then
-embedded directly in source-node Lyapunov funnels.  Source-shaped handoff
-reachability is certified by propagating scalar funnel levels over exact
-source-reachable words and jumps rather than recursively enclosing the full
-18--21 dimensional reachable set or propagating coordinate-radius boxes.
-Transient one-sample growth is allowed when the complete certified word
-contracts and every prefix remains proof safe.
-
-A timeout with a heading gauge enters the same full-heading funnel chain.  An
-ungauged timeout instead receives a regional practical-ISS result on the yaw
-quotient; later magnetic acquisition selects a horizontal representative and
-enters the full-heading chain only when its exact jump image is certified.
-Magnetic gauge changes and Live tilt re-locks are explicit hybrid jumps.  The
-jump-followed-by-flow result of Theorem~\ref{thm:hybrid-live-recovery} is
-expressed in the same source-node metric: the tilt reset has a reset-to-funnel
-bound in which discarded pre-reset tilt does not enter the multiplicative loop
-gain, and the mandatory cooldown is bounded by products of certified source-word
-contractions.  Continuous hard-iron correction writes no attitude or covariance
-and remains part of the bounded normal-Live measurement schedule.
-
-Bounded departures from the OU latent-acceleration model enter those same
-source-word inequalities as deterministic disturbances.  Non-OU harmonics,
-hydrodynamic forcing, and bounded correlation-time error therefore enlarge the
-ultimate funnel level rather than invalidate the stability argument.  The
-stochastic qualification also uses the same metric.  A product-manifold distance
-combining $\SO(3)$ geodesic separation and additive-state separation bounds the
-localized noisy-to-zero-noise word endpoint; conditional second/fourth-moment
-bounds then give a constructive regional mean-square drift inequality without
-assuming that NIS gating preserves zero conditional mean.  Conditional Gaussian
-quadratic-form concentration gives an exponential localization-exit bound for
-raw pre-gate noise, while a centered word-boundary martingale decomposition and
-verified conditional increment/variance bounds give a Bernstein/Freedman
-finite-horizon excursion estimate for the funnel energy.  Because Gaussian
-noise has unbounded support, compact-funnel almost-sure invariance is not
-claimed; the exact Gaussian process instead receives a finite-horizon
-high-probability bound combining those two exponential tails.
+and an integral-displacement state. Its zero pseudo-measurement provides
+low-frequency drift control without claiming absolute navigation position.
+The \href{kalman_ou-w3d-stability-study.pdf}{companion stability study}
+contains the admissible-source definitions, conditional theorems and outstanding
+proof obligations; the results here are performance evidence, not a substitute
+for that certification.
 
 The adaptation layer separates sea time scale, OU-prior amplitude, and integral
 regularization.  The measured sea period sets $\tau$, the physical band-limited
@@ -136,23 +60,13 @@ attitude/gravity leakage, gyroscope and accelerometer bias paths, OU-model
 mismatch, cross-covariance coupling, or the full periodic update sequence.
 Section~\ref{sec:adaptation-full-state-h2} formulates that physical displacement
 objective and provides the natural next step for assessing how those couplings
-modify the reduced SpectralMSE exponents and coefficient.  This performance gap
-is distinct from the stability certificate, which already treats bounded
-OU-model mismatch as a disturbance.
+modify the reduced SpectralMSE exponents and coefficient.  This physical-error optimization problem is separate from the stability
+questions developed in the companion study.
 
 The principal limitations remain the primarily simulation-based evidence,
 comparison centered on OU--II, controlled rather than general changing-sea
 cases, fixed-temperature study, lack of physical off-CoG lever-arm validation,
-and incomplete magnetic-distortion model.  The startup and timeout bounds remain
-conditional on declared physical disturbance, seed, heading, and non-attitude
-state bounds.  The widened stability theory is not yet a numerically
-instantiated deployed certificate: the continuous source graph and word
-families, path metrics $P_i$, group weights $a_{R,i}$, largest verified
-$\theta_{*,i}$, exact source-word margin $\mu_W$, handoff funnel levels and
-transition inequalities, hybrid cooldown/reset constants, stochastic
-product-distance/noise constants, conditional covariance envelope
-$\overline\Sigma$, localization threshold $w_*$, and martingale fluctuation
-bounds $(b_W,v_W)$ must still be enclosed rigorously.  The ESP32--S3 exercise
+and incomplete magnetic-distortion model.  The ESP32--S3 exercise
 establishes source portability but not processor, memory, power, or deadline
 margins.  Reported displacement remains bounded wave motion about a local
 reference; no global navigation position is claimed without external aiding.
@@ -164,13 +78,6 @@ reference; no global navigation position is claimed without external aiding.
         Sec.~\ref{sec:adaptation-full-state-h2} at the calibrated sea states and
         compare their predicted minimizing amplitudes and local exponents with
         the deployed SpectralMSE $6/7,41/14$ law and complete-estimator behavior.
-  \item \textbf{Source-funnel certificate instantiation.}  Rigorously enclose
-        the deployed source graph and source-complete word families, solve and
-        verify the path metrics, determine the largest admissible large-angle
-        sectors, bound $\mu_W$, initialize the handoff funnel directly from
-        $\mathcal H$, and evaluate hybrid, Gaussian-localization, and martingale
-        concentration margins.  Report diagnostic coordinate radii only after
-        the funnel certificate itself is established.
   \item \textbf{Transition-aware regularizer amplitude.}  If the full-state
         model predicts a stationary--transition conflict outside the currently
         tested transition, preserve the steady-state regularizer mapping and
