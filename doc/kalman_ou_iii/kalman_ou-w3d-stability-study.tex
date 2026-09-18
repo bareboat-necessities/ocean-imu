@@ -77,6 +77,12 @@
 
 \AtBeginEnvironment{equation}{\small}
 \AtBeginEnvironment{align}{\small}
+\AtBeginEnvironment{gather}{\small}
+\AtBeginEnvironment{multline}{\small}
+\AtBeginEnvironment{equation*}{\small}
+\AtBeginEnvironment{align*}{\small}
+\AtBeginEnvironment{gather*}{\small}
+\AtBeginEnvironment{multline*}{\small}
 \providecommand{\mathdefault}[1]{#1}
 
 \setcounter{topnumber}{5}
@@ -144,8 +150,7 @@
 \emergencystretch=2em
 \allowdisplaybreaks
 
-\title{Adaptive OU-Regularized Quaternion MEKF for 3-D Marine Inertial Wave Motion Estimation\\
-Stability Study: Assumptions, Proof Architecture, and Certificates}
+\title{Adaptive OU-Regularized Quaternion MEKF for 3-D Marine Inertial Wave Motion Estimation}
 \author{%
     \IEEEauthorblockN{Mikhail S. Grushinskiy}
     \IEEEauthorblockA{Independent Researcher, USA, Fair Lawn\\
@@ -159,7 +164,6 @@ Stability Study: Assumptions, Proof Architecture, and Certificates}
 \newcommand{\studypart}[1]{%
   \refstepcounter{studypart}%
   \section*{Part \thestudypart: #1}%
-  \addcontentsline{toc}{section}{Part \thestudypart: #1}%
 }
 \pgfplotsset{compat=1.18}
 
