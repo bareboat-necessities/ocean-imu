@@ -1,6 +1,6 @@
 {
   "qualification": "OU3_SHIPPING_PROVENANCE_V1",
-  "base_main_commit": "80dbd74c1c5badb750bfd45c9480dab2f2a181ce",
+  "base_main_commit": "802747dd6c4f8d381f5db01478aef71cf74070c2",
   "estimator_behavior_authority": "shipping implementation, not proof model",
   "authoritative_shipping_sources": [
     {
@@ -22,6 +22,7 @@
     "magnetometer_acceptance": "lastMagDiag().accepted becomes true only after the correction is actually applied",
     "magnetic_attempt_counter": "the wrapper control counter advances after a forwarded attempt and is not an informative-service certificate",
     "live_handoff": "the certified tail inherits the actual reached execution",
-    "accel_bias_release": "release enables estimator bias dynamics and does not reset physical accelerometer bias"
+    "accel_bias_release": "release enables estimator bias dynamics and does not reset physical accelerometer bias",
+    "magnetic_information_covariance": "lastMagDiag().S records the actual innovation covariance factored by an applied shipping magnetometer correction and is the covariance used by MAGNETIC SERVICE whitening"
   }
 }
