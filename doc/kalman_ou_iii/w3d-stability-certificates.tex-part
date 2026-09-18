@@ -111,7 +111,7 @@ The target graph must account for binary32 inputs and casts, fused and
 unfused operations, underflow, trigonometric/normalization branches,
 exp/log/sqrt implementations, Eigen decisions, solves, Joseph/reset defects,
 and the covariance actually stored. For example, the target arithmetic
-components retain the execution premise \texttt{FCR.RM=0}; an ISA reset that
+components retain the execution premise the stated condition; an ISA reset that
 leaves that register undefined, followed by no observed writer, is not a proof
 that round-to-nearest was selected. Component correspondence and full-firmware
 initialization/preservation are separate obligations.
@@ -137,10 +137,10 @@ The ungauged unipotent example is a retained negative result. Positive quiet
 word ratios remain diagnostics. None of those facts closes all the premises
 of Theorem~\ref{thm:study-tail-comparison} for the shipping filter.
 
-The finite-master inventory keeps eleven named qualifications. At the source
-snapshot of this study, rows 1, 3, 4, 5, 10 and 11 are open; the other five are
-component results under their explicit execution premises. This is not a
-percentage of the theorem completed. The controlling work groups naturally as
+The remaining proof obligations concern startup, forward invariance,
+same-history composition, informative magnetic service, and finite-error
+dissipation. These obligations are logically distinct and must all be closed
+before an end-to-end stability result is asserted. The controlling work groups naturally as
 follows.
 \begin{description}
 \item[Startup and entry.]
@@ -183,15 +183,3 @@ compose the tail theorem, and finally attach the startup conclusion with its
 correct quantifiers. Failure at any stage is evidence to analyze, not a reason
 to weaken the physical domain or bypass a gate.
 
-\subsection{Evidence and navigation}
-The retained numerical evidence, executable obligation inventory and proof
-continuation records are maintained in the repository alongside this study.
-They provide provenance and independent checking for the numerical claims;
-implementation commands and scripting details are intentionally omitted here.
-For the current executable obligation inventory and proof continuation use
-\path{docs/ou3-alt-main-handover.md} and
-\path{docs/ou3-alt-proof-plan.md}; for the independent original route use
-\path{docs/ou3-brmm-main-handover.md}. The research ledger
-\path{docs/ou3-proof-research-state.md} distinguishes theorem, method,
-enclosure, conditioning and implementation failures. The detailed sections
-that follow supply the retained mathematics, not a chronological list of PRs.
