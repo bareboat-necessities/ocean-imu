@@ -152,7 +152,6 @@ Stability Study: Assumptions, Proof Architecture, and Certificates}
     Bareboat Necessities GitHub Project\\
     Email: mgrouch@users.github.com}%
 }
-\setcounter{tocdepth}{1}
 \newcommand{\studysource}[1]{\par\smallskip
   {\footnotesize\noindent Repository source: \path{#1}.\par}\smallskip}
 \newcounter{studypart}
@@ -182,15 +181,13 @@ validated source-uniform certificates have different roles. This study makes
 those roles and the remaining obligations explicit; it does not report a
 completed shipping startup or end-to-end stability theorem.
 \end{abstract}
-\tableofcontents
-\clearpage
 
 \studypart{Assumptions, objectives, and the selected proof architecture}
 \input{w3d-stability-reader-guide.tex-part}
 \input{w3d-stability-proof-roadmap.tex-part}
 \input{w3d-stability-certificates.tex-part}
 
-\clearpage
+
 \studypart{Detailed physical contracts and conditional motion theorem}
 \label{part:study-contracts}
 The following sections retain the detailed physical definitions and original
@@ -206,7 +203,7 @@ the current evidence boundary are summarized in Part~I.
 \input{w3d-brmm-stability-theorem.tex-part}
 \input{w3d-brmm-period-bridge.tex-part}
 
-\clearpage
+
 \studypart{Independent original route: information and finite-error tools}
 \label{part:study-original}
 This route is independently continuable. P2/P3 linear information and Riccati
@@ -221,7 +218,7 @@ bias obstruction in Sec.~\ref{sec:study-ungauged}.
 \input{w3d-stability-widening-phase-c.tex-part}
 \input{w3d-stability-widening-source-path.tex-part}
 
-\clearpage
+
 \studypart{Startup, capture, and hybrid transport}
 \label{part:study-startup}
 The implementation description and auxiliary continuous-time arguments below
@@ -237,7 +234,7 @@ entry graph and in ALT are related explicitly in Sec.~\ref{sec:study-origin}.
 \input{w3d-stability-widening-phase-d.tex-part}
 \input{w3d-stability-widening-phase-e.tex-part}
 
-\clearpage
+
 \studypart{Stochastic qualification}
 \label{part:study-stochastic}
 \section{Scope of the stochastic extension}
