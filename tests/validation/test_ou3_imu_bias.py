@@ -7,8 +7,9 @@ ROOT=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT))
 
 from tools.stability.ou3_theorem.imu_bias import (
-    BiasLimits,BiasSample,accel_prediction_error,accel_prediction_relation,
-    audit_bias_trace,correction_error,estimator_prediction_factor,projected_error,
+    BiasContinuationCertificate,BiasLimits,BiasSample,accel_prediction_error,
+    accel_prediction_relation,audit_bias_trace,continuation_admitted,
+    correction_error,estimator_prediction_factor,projected_error,
     projection_defect,release_error,successor_allowed,
 )
 
@@ -22,6 +23,22 @@ class ImuBiasTests(unittest.TestCase):
         s=[BiasSample("h",0.0,(0.01,0,0),(0.001,0,0)),
            BiasSample("h",1.0,(0.0105,0,0),(0.001005,0,0))]
         self.assertTrue(audit_bias_trace(s,LIMITS)["finite_prefix_pass"])
+
+    def test_all_time_total_residual_certificate_is_fail_closed(self):
+        good=BiasContinuationCertificate(
+            "h",0.20,5.0e-4,0.01,5.0e-6,True,True,True
+        )
+        self.assertTrue(continuation_admitted(good,LIMITS))
+
+        independent_successors=BiasContinuationCertificate(
+            "h",0.20,5.0e-4,0.01,5.0e-6,False,True,True
+        )
+        self.assertFalse(continuation_admitted(independent_successors,LIMITS))
+
+        unqualified_calibration=BiasContinuationCertificate(
+            "h",0.20,5.0e-4,0.01,5.0e-6,True,False,True
+        )
+        self.assertFalse(continuation_admitted(unqualified_calibration,LIMITS))
 
     def test_one_first_class_relation_covers_held_and_active(self):
         phi=math.exp(-0.1/5000.0)
