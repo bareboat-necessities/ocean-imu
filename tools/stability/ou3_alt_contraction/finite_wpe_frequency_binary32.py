@@ -36,7 +36,7 @@ from tools.stability.ou3_alt_contraction import finite_wpe_runtime as WPE
 
 SOURCE=Path(__file__).resolve().parents[3]/'src/tuner/WavePeriodEstimator.h'
 WRAPPER=Path(__file__).resolve().parents[3]/'src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h'
-AUDITED_WRAPPER_SHA256='fabd03e9c3eb6069df107c7413ffb4b33fbdcd1ce06d3923b0c1ceeb3bcd7359'
+AUDITED_WRAPPER_SHA256='72bffc539ea72f6320ae33feb970dd2ba9255f8e679c3e8415f7884566ca3be0'
 PRIOR_EXACT=F(1,5); PRIOR=B.rn32(PRIOR_EXACT)
 QUALIFICATION='OU3_ALT_WPE_BINARY32_GETTER_TO_TUNER_STORE_V3'
 

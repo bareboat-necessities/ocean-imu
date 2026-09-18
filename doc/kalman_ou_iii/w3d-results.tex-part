@@ -49,10 +49,28 @@ it omits attitude-error coupling, axis-dependent bias observability, and the
 directional desired-motion spectrum.  In particular, horizontal desired motion
 is a heading-dependent projection of the same orbital field, so a fixed world
 $x/y$ multiplier would not be invariant to vessel heading.  The supported
-full-filter result is therefore narrower: the retained OU--III horizontal
-$r_S$ standard-deviation factors are equal at $0.72$, with the vertical factor
-one. A sweep to $0.5$ improved training displacement but introduced a fresh-draw
-violation and worsened mean pitch, so it is not the deployed setting.  Further horizontal improvement should target the
+full-filter result is therefore narrower, but it is not isotropic. The pinned
+vessel records are generated from an estimated fin-keel sailboat response, and
+that hull resists sway while leaving surge comparatively free. A fixed
+$\pm30^\circ$ heading projection would put the same horizontal RMS ratio
+$\cos30^\circ/\sin30^\circ=1.732$ in every record; the records instead run
+from $2.33$ at $H_s=\SI{1.5}{m}$ down to $1.61$ at $H_s=\SI{8.5}{m}$, falling
+with wavelength and approaching the geometric value only in the longest waves.
+A heading projection cannot vary with period, so the anisotropy is a hull
+response rather than a property of the record geometry, and every record holds
+yaw at zero, so the world horizontal axes coincide with surge and sway here.
+The deployed factors are accordingly $\rho_x=0.72$ on the free axis and
+$\rho_y=0.50$ on the keel-damped one, with the vertical factor one. Pooled
+over four fresh IMU draws this lowers mean pitch by \SI{17}{\percent} and the
+lateral accelerometer-bias error by \SI{21}{\percent} at a cost of
+\SI{4}{\percent} in roll, leaving yaw and both vertical channels unchanged. An
+isotropic sweep to $0.5$ remains rejected on the same draws: it costs
+\SI{5}{\percent} of yaw, which the anisotropic split does not. Because the
+keel's anisotropy is a body-frame property while $r_S$ is applied in the world
+frame, the two coincide only while the vessel holds the heading these records
+hold; rotating the split by the estimated heading is the deployment-general
+form and is not claimed here, since records that pin yaw cannot measure the
+rotation. Further horizontal improvement should target the
 disturbance itself---tilt error, accelerometer-bias observability, GNSS, or
 another horizontal reference.  No fixed horizontal-to-vertical noise-intensity ratio is inferred from
 the incident wave spectrum.

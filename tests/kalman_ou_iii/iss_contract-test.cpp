@@ -81,7 +81,7 @@ int main() {
     }
     if (!near(f.S_factor_, 1.0f))
         return fail("default OU-III acceleration anisotropy changed");
-    if (!near(f.R_S_x_factor_, 0.72f) || !near(f.R_S_y_factor_, 0.72f))
+    if (!near(f.R_S_x_factor_, 0.72f) || !near(f.R_S_y_factor_, 0.50f))
         return fail("default OU-III horizontal integral-regularizer scale changed");
 
     {
@@ -92,7 +92,7 @@ int main() {
         probe.setRSXFactor(1.87f);
         if (!near(probe.R_S_x_factor_, 1.87f))
             return fail("rho_x > 1 is not expressible");
-        if (!near(probe.R_S_y_factor_, 0.72f))
+        if (!near(probe.R_S_y_factor_, 0.50f))
             return fail("setting rho_x moved rho_y");
         probe.setRSYFactor(0.4f);
         if (!near(probe.R_S_y_factor_, 0.4f) || !near(probe.R_S_x_factor_, 1.87f))

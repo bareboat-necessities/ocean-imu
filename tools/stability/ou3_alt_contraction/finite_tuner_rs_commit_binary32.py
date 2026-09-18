@@ -24,7 +24,7 @@ from tools.stability.ou3_alt_contraction import finite_binary32_arithmetic as B
 FILTER=Path(__file__).resolve().parents[3]/'src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h'
 MEKF=Path(__file__).resolve().parents[3]/'src/kalman_ou_iii/Kalman3D_Wave_OU_III.h'
 ONE=B.rn32(1)
-DEFAULT_X_FACTOR=B.rn32(F(72,100)); DEFAULT_Y_FACTOR=B.rn32(F(72,100))
+DEFAULT_X_FACTOR=B.rn32(F(72,100)); DEFAULT_Y_FACTOR=B.rn32(F(1,2))
 QUALIFICATION='OU3_ALT_RS_COMMIT_BINARY32_V1'
 
 

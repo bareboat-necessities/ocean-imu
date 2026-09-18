@@ -253,6 +253,12 @@ Immediate open items for the next PR are:
    timing is closed.
 8. Close deployment finite-precision enclosure and compose the indefinite
    end-to-end theorem.
+9. Move the R_S source parity premise and the two hard-coded horizontal
+   `0.72` bounds onto the deployed anisotropic pair. The shipping filter now
+   runs `rho_x = 0.72`, `rho_y = 0.50`; see
+   `docs/ou3-rho-anisotropy-proof-plan.md` for the inventory, including the two
+   certificates that stay green while asserting a configuration that no longer
+   ships.
 
 Classify future failure as A/B/C/D/E/F/G using the established taxonomy. The old
 constant-position witness may not be reused as A or B because it is outside the

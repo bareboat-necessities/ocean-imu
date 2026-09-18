@@ -31,7 +31,7 @@ def shipping_runtime(runtime,deployment_cfg,**overrides):
         pseudo_tau_ratio=D.PSEUDO_RATIO,pseudo_period_min=D.PSEUDO_MIN,
         pseudo_period_max=D.PSEUDO_MAX,pseudo_fixed_period=D.PSEUDO_NOMINAL,
         min_R_S=D.MIN_RS,max_R_S=D.MAX_RS,S_factor=F(1),
-        R_S_x_factor=B.rn32(F(72,100)),R_S_y_factor=B.rn32(F(72,100)))
+        R_S_x_factor=B.rn32(F(72,100)),R_S_y_factor=B.rn32(F(1,2)))
     return replace(runtime,candidate_cfg=candidate,commit_cfg=commit,
         bench_noise_sigma=FRONT.BENCH_SIGMA,boundary_bench_noise_sigma=FRONT.BENCH_SIGMA,
         **overrides)
