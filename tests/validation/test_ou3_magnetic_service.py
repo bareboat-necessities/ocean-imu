@@ -5,9 +5,20 @@ import unittest
 ROOT=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT))
 
-from tools.stability.ou3_theorem.magnetic_service import MagneticEvent,audit_window
+from tools.stability.ou3_theorem.magnetic_service import (
+    MagneticEvent,audit_window,transported_whitened_heading_bias_rows,
+)
 
 class MagneticServiceTests(unittest.TestCase):
+    def test_rows_are_built_from_actual_H_S_and_preceding_transition(self):
+        H=((1.0,0.0),(0.0,2.0),(0.0,0.0))
+        S=((4.0,0.0,0.0),(0.0,9.0,0.0),(0.0,0.0,1.0))
+        PhiE=((1.0,0.0),(0.0,1.0))
+        G=transported_whitened_heading_bias_rows(H,S,PhiE)
+        self.assertAlmostEqual(G[0][0],0.5)
+        self.assertAlmostEqual(G[1][1],2.0/3.0)
+        self.assertEqual(G[2],(0.0,0.0))
+
     def event(self,t,rows,*,applied=True,gauged=True,finite=True,saturated=False):
         return MagneticEvent("h",t,applied,gauged,finite,saturated,tuple(rows))
     def test_only_actually_applied_measurements_supply_information(self):
