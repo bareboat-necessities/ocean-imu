@@ -1,88 +1,105 @@
 name: ou3-stability-proof
 on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "AGENTS.md"
+      - "src/kalman_ou_iii/**"
+      - "sensors/full_marine_ins/atomS3R_ins_kalman_ou3/**"
+      - "tools/stability/**"
+      - "tests/validation/test_ou3_*.py"
+      - "tests/kalman_ou_iii/**"
+      - "tests/validation/test_workflow_contract.py"
+      - "docs/ou3-*.md"
+      - "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex"
+      - "doc/kalman_ou_iii/w3d-intro.tex-part"
+      - "reports/results/ou3_stability/**"
+      - "reports/ou_evidence_fingerprint.json"
+      - ".github/workflows/ou3-stability-proof.yml"
   push:
-    branches: [codex/ou3-single-stability-architecture]
-    paths: [.github/workflows/ou3-stability-proof.yml]
-permissions:
-  contents: write
+    branches: [main]
+    paths:
+      - "src/kalman_ou_iii/**"
+      - "tools/stability/**"
+      - "tests/validation/test_ou3_*.py"
+      - "tests/kalman_ou_iii/**"
+      - "docs/ou3-*.md"
+      - "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex"
+      - "doc/kalman_ou_iii/w3d-intro.tex-part"
+      - "reports/results/ou3_stability/**"
+      - "reports/ou_evidence_fingerprint.json"
+      - ".github/workflows/ou3-stability-proof.yml"
+
 concurrency:
-  group: ou3-reviewed-source-application
-  cancel-in-progress: false
+  group: ou3-stability-proof-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
 jobs:
-  apply-reviewed-source:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/codex/ou3-single-stability-architecture'
+  contract:
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v6
         with:
-          fetch-depth: 5
+          persist-credentials: false
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
-      - name: Reproduce the already verified source tree
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 - <<'PY'
-          import base64, gzip, hashlib, json, pathlib, subprocess
-          parent = '6346ba1f27565d4c5420554172f2b59c352d544c'
-          transport = '1e72d313101b17869c6afab79692ba6f511a3114'
-          repair = 'b3d61453e0f4da343b46aabe21f0b2bf8a935c15'
-          workflow = '.github/workflows/ou3-stability-proof.yml'
-          def git(*args):
-              return subprocess.check_output(['git', *args], text=True).strip()
-          assert git('rev-parse', 'HEAD^') == repair, 'branch changed; reconcile instead of overwriting'
-          assert git('rev-parse', parent + '^{tree}') == '824c651fafbecfed61a7b94af10091bd22eb7aeb'
-          source = git('show', transport + ':' + workflow)
-          encoded = ''.join(source.split('PATCH_GZIP_BASE64: >-', 1)[1].split('\n        shell: bash', 1)[0].split())
-          fixed = git('show', repair + ':' + workflow)
-          missing = ''.join(fixed.split('MISSING_SEGMENT: >-', 1)[1].split('\n        shell: bash', 1)[0].split())
-          left, right = 'KxLLdp7i1', 'Zt2+0bVrTfy+JqmBdKD'
-          assert len(missing) == 2817 and encoded.count(left + right) == 1
-          encoded = encoded.replace(left + right, left + missing + right)
-          assert len(encoded) == 25692
-          raw = gzip.decompress(base64.b64decode(encoded, validate=True))
-          assert hashlib.sha256(raw).hexdigest() == 'a36fbff140a026276422683a36d2318162274cf40cce10513dffa63a76944194'
-          bundle = json.loads(raw)
-          assert bundle['schema'] == 1 and len(bundle['entries']) == 22
-          assert bundle['base_tree'] == git('rev-parse', parent + '^{tree}')
-          subprocess.run(['git', 'checkout', parent, '--', workflow], check=True)
-          def blob(data):
-              return hashlib.sha1(b'blob ' + str(len(data)).encode() + b'\0' + data).hexdigest()
-          names = []
-          for entry in bundle['entries']:
-              path = pathlib.Path(entry['path'])
-              assert not path.is_absolute() and '..' not in path.parts
-              assert path.is_file() and not path.is_symlink()
-              assert blob(path.read_bytes()) == entry['old'], 'stale source: ' + str(path)
-              if entry['kind'] == 'patch':
-                  subprocess.run(['git', 'apply', '--whitespace=error', '-'], input=entry['payload'], text=True, check=True)
-              else:
-                  assert entry['kind'] == 'text'
-                  path.write_text(entry['payload'], encoding='utf-8')
-              assert blob(path.read_bytes()) == entry['new'], 'result mismatch: ' + str(path)
-              names.append(str(path))
-          assert len(set(names)) == len(names)
-          subprocess.run(['git', 'diff', '--check'], check=True)
-          subprocess.run(['git', 'add', '--', *names], check=True)
-          assert git('write-tree') == bundle['final_tree'] == 'c92ea6860b985e56f7b46ef555f2b7b4145c03f9'
-          print('Verified exact reviewed source tree and every file hash.')
-          PY
-      - name: Validate the complete reviewed contract suite
+          python-version: "3.12"
+      - name: Compile theorem tooling
+        run: python3 -m py_compile tools/stability/ou3_theorem/*.py
+      - name: Validate theorem contracts
         working-directory: tests/validation
-        run: python3 -m unittest -v test_ou3_architecture_cleanup test_ou3_imu_bias test_ou3_magnetic_service test_ou3_marine_motion test_ou3_no_mag_obstruction test_ou3_same_execution test_ou3_theorem_status test_workflow_contract test_ou_replay_fingerprint
-      - name: Validate source-bound operation lemmas
-        run: python3 tools/stability/ou3_theorem/build_evidence.py --output /tmp/ou3-stability-evidence.json
-      - name: Commit source only on the existing PR branch
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git write-tree)" = c92ea6860b985e56f7b46ef555f2b7b4145c03f9
-          git checkout HEAD -- .github/workflows/ou3-stability-proof.yml
-          test -z "$(git diff --cached --name-only -- .github/workflows)"
-          test "$(git diff --cached --name-only | wc -l)" -eq 21
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git commit -m 'Fix OU-III CI cleanup and carry exact bias and integral error operations'
-          git push origin HEAD:refs/heads/codex/ou3-single-stability-architecture
+          python3 -m unittest -v \
+            test_ou3_architecture_cleanup \
+            test_ou3_imu_bias \
+            test_ou3_magnetic_service \
+            test_ou3_marine_motion \
+            test_ou3_no_mag_obstruction \
+            test_ou3_same_execution \
+            test_ou3_theorem_status \
+            test_workflow_contract \
+            test_ou_replay_fingerprint 2>&1 | tee /tmp/ou3-contract-tests.log
+      - name: Validate provenance and fail-closed status
+        if: ${{ !cancelled() }}
+        run: python3 tools/stability/ou3_theorem/build_evidence.py --output /tmp/ou3-stability-evidence.json
+      - name: Preserve exact checked source and provenance
+        if: ${{ !cancelled() }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git archive --format=tar.gz --prefix=ocean-imu/ HEAD > /tmp/ou3-checked-source.tar.gz
+          git log -1 --format='commit=%H%ntree=%T%nparents=%P' > /tmp/ou3-checked-source.txt
+          sha256sum /tmp/ou3-checked-source.tar.gz >> /tmp/ou3-checked-source.txt
+      - uses: actions/upload-artifact@v6
+        if: ${{ !cancelled() }}
+        with:
+          name: ou3-stability-evidence
+          path: |
+            /tmp/ou3-stability-evidence.json
+            /tmp/ou3-contract-tests.log
+            /tmp/ou3-checked-source.tar.gz
+            /tmp/ou3-checked-source.txt
+          retention-days: 7
+          if-no-files-found: error
+
+  shipping-transitions:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Install compiler dependencies
+        run: sudo apt-get update -qq && sudo apt-get install -y g++ libeigen3-dev
+      - name: Build literal shipping regressions
+        run: make -C tests/kalman_ou_iii shipping_contract-test shipping_transition-test
+      - name: Run literal shipping regressions
+        run: |
+          ./tests/kalman_ou_iii/shipping_contract-test
+          ./tests/kalman_ou_iii/shipping_transition-test
