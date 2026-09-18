@@ -85,15 +85,46 @@ and the x branch is no longer the binding one by construction.
 
 ### C. Adapts on its own
 
-These regex the deployed value out of the header and need no edit (verified by
-inspection, not by a passing run — both are long interval searches):
+`ou3_brmm_tuner_scheduler_step.py:227` regexes the deployed value out of the
+header and needs no edit. This is the pattern the class A and class B modules
+should adopt: read the deployed constants, do not restate them.
 
-- `ou3_brmm_riccati_tube.py:254`
-- `ou3_source_reachable_matrix_p3.py:247`
-- `ou3_brmm_tuner_scheduler_step.py:227`
+`ou3_brmm_riccati_tube_factored` is unaffected and still closes. It is what
+`tests/validation/test_ou3_brmm_riccati_tube.py` actually exercises, and what
+the P4 modules in class B import as `TUBE`, so do not confuse it with the
+unfactored module in class D below.
 
-This is the pattern the class A and class B modules should adopt: read the
-deployed constants, do not restate them.
+### D. Pre-existing certificate failures, not caused by this change
+
+These two regex the deployed factor correctly and the certificate then does not
+close on it:
+
+```
+ou3_brmm_riccati_tube.py:254
+  RuntimeError: cannot certify scaled OU process cell
+                [0.009999999068167651, 0.010000000000000037] at depth 20
+ou3_source_reachable_matrix_p3.py:247
+  RuntimeError: cannot certify scaled OU process cell
+                [0.00041666665735344007, 0.00041667021815050694]
+```
+
+Reproduce with `build()` on the default domain from `tools/stability`:
+
+```
+python3 -c "import ou3_brmm_riccati_tube as m; m.build()"
+python3 -c "import ou3_source_reachable_matrix_p3 as m; m.build()"
+```
+
+**Attribution is settled: pre-existing.** Both builds were run at the parent
+commit `238a70e`, where the header still carried the isotropic `rho_y = 0.72`,
+and both fail there with byte-identical cell intervals. The obstruction is in
+the scaled OU process cell itself and is independent of the horizontal factor,
+so it is separable from the rho work and must not be folded into it. Fix or
+write it up as its own change under the `AGENTS.md` taxonomy.
+
+Neither is reached by `test_ou3_brmm_riccati_tube`, which exercises
+`ou3_brmm_riccati_tube_factored` instead, so CI does not see either failure
+today and no workflow turns red because of them.
 
 ## The work
 
@@ -107,8 +138,10 @@ deployed constants, do not restate them.
    pair, and widen `actual_RS_horizontal_factor` to x and y. Do not simply
    substitute `min(rho_x, rho_y)`: check whether each bound is monotone in the
    factor before taking a worst case, and if it is not, carry both axes.
-3. Re-run the interval searches in class C and confirm they close at the new
-   value rather than assuming they do.
+3. Leave class D alone. It is pre-existing and independent of `rho`; closing
+   those two certificates is separate work with its own change. Do not let it
+   block items 1 and 2, and do not let a green run of them be read as evidence
+   that the rho work is incomplete.
 4. Re-pin the six SHA gates on the filter header if it changes again. They are
    `finite_mahony_prefix_totality.py`, `finite_wpe_frequency_binary32.py`,
    `finite_mag_counter_saturation.py`,
@@ -133,6 +166,8 @@ deployed constants, do not restate them.
 - `ou3_p4_innovation_binary32_bounds` and
   `ou3_p4_marginal_correction_obstruction` report the deployed x and y factors
   and fail when either drifts from the header.
+- Class D is unchanged: both builds still fail exactly as they do at
+  `238a70e`, and no attempt to close them rides this change.
 - `ou3-proof`, `ou3-complete-brmm` and the `ou3-p4-*` workflows are green.
 - No theorem gate moves. `P4_PASS`, `P5_MAY_START` and every `ALT_LIVE_PASS`
   stay false.
