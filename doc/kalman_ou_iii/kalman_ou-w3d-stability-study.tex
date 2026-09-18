@@ -1,5 +1,4 @@
-\documentclass[11pt]{article}
-\usepackage[margin=27mm]{geometry}
+\documentclass[conference]{IEEEtran}
 
 \usepackage{iftex}
 \ifPDFTeX
@@ -44,7 +43,6 @@
 \newcommand{\qreal}[1]{\operatorname{Re}\! \left(#1\right)}
 \newcommand{\qimag}[1]{\operatorname{Im}\! \left(#1\right)}
 
-\usepackage{xurl}
 \usepackage{cite}
 \usepackage[breaklinks=true,hidelinks]{hyperref}
 \usepackage{bookmark}
@@ -146,13 +144,14 @@
 \emergencystretch=2em
 \allowdisplaybreaks
 
-\title{Adaptive OU-Regularized Quaternion MEKF\\
+\title{Adaptive OU-Regularized Quaternion MEKF for 3-D Marine Inertial Wave Motion Estimation\\
 Stability Study: Assumptions, Proof Architecture, and Certificates}
-\author{Mikhail S. Grushinskiy\\
-Independent Researcher, Fair Lawn, USA\\
-Bareboat Necessities GitHub Project\\
-\texttt{mgrouch@users.github.com}}
-\date{Research study; conditional results and open obligations}
+\author{%
+    \IEEEauthorblockN{Mikhail S. Grushinskiy}
+    \IEEEauthorblockA{Independent Researcher, USA, Fair Lawn\\
+    Bareboat Necessities GitHub Project\\
+    Email: mgrouch@users.github.com}%
+}
 \setcounter{tocdepth}{1}
 \newcommand{\studysource}[1]{\par\smallskip
   {\footnotesize\noindent Repository source: \path{#1}.\par}\smallskip}
