@@ -22,6 +22,10 @@ on:
       - "docs/ou3-*.md"
       - "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex"
       - "reports/results/ou3_stability/**"
+concurrency:
+  group: ou3-stability-proof-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 jobs:
