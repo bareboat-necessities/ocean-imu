@@ -1,14 +1,26 @@
 {
   "qualification": "OU3_SINGLE_MARINE_IMU_MAGNETIC_STABILITY_ARCHITECTURE_V1",
-  "principal_assumptions": ["MARINE MOTION", "IMU BIAS", "MAGNETIC SERVICE"],
+  "principal_assumptions": [
+    "MARINE MOTION",
+    "IMU BIAS",
+    "MAGNETIC SERVICE"
+  ],
   "quantifier": "one persistent physical execution belongs to all three assumption classes simultaneously",
-  "proof_path": ["construction", "startup/capture", "magnetically informed Live/H18", "H18-to-A21 release", "magnetically informed A21", "regional practical stability"],
+  "proof_path": [
+    "construction",
+    "startup/capture",
+    "magnetically informed Live/H18",
+    "H18-to-A21 release",
+    "magnetically informed A21",
+    "regional practical stability"
+  ],
   "certified_capture_time": "history dependent T_c(h,x_0) < infinity; no common finite deadline is claimed",
   "parallel_no_magnetometer_stability_path": false,
   "no_heading_service_result_role": "necessity lemma only",
   "shipping_filter_changed_for_proof": false,
   "obligations": {
     "physical_contract_formulation": true,
+    "same_execution_principal_contract_linkage": true,
     "shipping_implementation_provenance": true,
     "constant_nonzero_wave_displacement_rejection": true,
     "same_history_bias_recurrence": true,
