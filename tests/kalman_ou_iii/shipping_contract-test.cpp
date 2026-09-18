@@ -20,9 +20,13 @@ int main(){
     if(f.mekf_->covariance_full().rows()!=21||f.mekf_->covariance_full().cols()!=21) return fail("default shipping state is not 21-dimensional");
     if(!near(f.mekf_->get_acc_bias_time_constant(),5000.0f)) return fail("shipping accelerometer-bias estimator prior changed");
     if(!near(f.mekf_->accel_bias_limit(),0.4f)) return fail("shipping accelerometer-bias estimate projection radius changed");
-    f.mekf_->set_acc_bias_updates_enabled(true);
     f.mekf_->set_acc_bias_time_constant(2.0f);
     const Eigen::Vector3f b0(0.20f,-0.10f,0.05f);
+    f.mekf_->set_initial_acc_bias(b0);
+    f.mekf_->set_acc_bias_updates_enabled(false);
+    f.mekf_->time_update(Eigen::Vector3f::Zero(),0.10f);
+    if(!f.mekf_->get_acc_bias().isApprox(b0,2e-7f)) return fail("held accelerometer-bias estimate prediction is not identity");
+    f.mekf_->set_acc_bias_updates_enabled(true);
     f.mekf_->set_initial_acc_bias(b0);
     f.mekf_->time_update(Eigen::Vector3f::Zero(),0.10f);
     const Eigen::Vector3f expected=b0*std::exp(-0.10f/2.0f);
