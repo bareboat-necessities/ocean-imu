@@ -143,6 +143,9 @@
 \DeclareMathOperator{\Cov}{Cov}
 \newcommand{\ts}[1]{\text{#1}}
 \newcommand{\fitcol}[1]{\adjustbox{max width=\columnwidth}{\ensuremath{\displaystyle #1}}}
+% Keep legacy long proof displays inside an IEEE column without changing their
+% mathematical content. The original filter article uses the same column width.
+\newenvironment{studyfitdisplay}{\begin{adjustbox}{max width=\columnwidth}\begin{minipage}{\columnwidth}}{\end{minipage}\end{adjustbox}}
 
 \makeatletter
 \@ifpackageloaded{cite}{\renewcommand{\citepunct}{,\penalty\citepunctpenalty\,}\renewcommand{\citedash}{--}}{}
