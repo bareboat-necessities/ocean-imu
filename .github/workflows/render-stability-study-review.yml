@@ -12,7 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install LaTeX
-        run: sudo apt-get update -qq && sudo apt-get install -y texlive-luatex texlive-latex-extra texlive-science texlive-fonts-recommended texlive-bibtex-extra
+        run: sudo apt-get update -qq && sudo apt-get install -y texlive-luatex texlive-publishers texlive-latex-extra texlive-science texlive-fonts-recommended texlive-bibtex-extra
       - name: Render two-column stability study
         working-directory: doc/kalman_ou_iii
         run: |
