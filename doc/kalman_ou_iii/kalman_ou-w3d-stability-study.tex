@@ -161,14 +161,17 @@ $e_{b_g,k+1}^{-}=e_{b_g,k}^{+}+w_{g,k}$ before its actual correction.
 \section{Magnetic service}
 For a certified service window rooted at $s$, let $\Phi_{k\leftarrow s}$ be
 the ordered differential of the complete preceding same-history shipping
-evolution. Let $H_{m,k}$ and $R_{m,k}$ be the sensitivity and covariance of a
-magnetic correction that was actually applied. With $E_{hb}$ injecting
-normalized heading and axial gyro-bias coordinates, define
+evolution. Let $H_{m,k}$ and $S_{m,k}$ be the sensitivity and actual innovation
+covariance of a magnetic correction that was actually applied, with
+$S_{m,k}=L_{m,k}L_{m,k}^{\mathsf T}$. With $E_{hb}$ injecting normalized
+heading and axial gyro-bias coordinates, define
 \begin{equation}
- G_k=R_{m,k}^{-1/2}H_{m,k}\Phi_{k\leftarrow s}E_{hb},
+ G_k=L_{m,k}^{-1}H_{m,k}\Phi_{k\leftarrow s}E_{hb}.
  \label{eq:G}
 \end{equation}
-or an algebraically equivalent inverse-free factorization. For
+Thus $G_k^{\mathsf T}G_k$ is the transported information
+$(H\Phi E)^{\mathsf T}S_{m,k}^{-1}(H\Phi E)$ without replacing the
+shipping innovation covariance by a nominal surrogate. For
 $T_M<\infty$ and $\mu_M>0$, every certified tail interval must satisfy
 \begin{equation}
  \boxed{\sum_{k\in\mathcal M[s,s+T_M]}G_k^\mathsf{T}G_k
